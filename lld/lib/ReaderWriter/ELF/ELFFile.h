@@ -52,11 +52,11 @@ template <class ELFT> class ELFFile : public File {
   // A Map is used to hold the atoms that have been divided up
   // after reading the section that contains Merge String attributes
   struct MergeSectionKey {
-    MergeSectionKey(const Elf_Shdr *shdr, int32_t offset)
+    MergeSectionKey(const Elf_Shdr *shdr, int64_t offset)
         : _shdr(shdr), _offset(offset) {}
     // Data members
     const Elf_Shdr *_shdr;
-    int32_t _offset;
+    int64_t _offset;
   };
   struct MergeSectionEq {
     int64_t operator()(const MergeSectionKey &k) const {
@@ -71,12 +71,12 @@ template <class ELFT> class ELFFile : public File {
   };
 
   struct MergeString {
-    MergeString(int32_t offset, StringRef str, const Elf_Shdr *shdr,
+    MergeString(int64_t offset, StringRef str, const Elf_Shdr *shdr,
                 StringRef sectionName)
         : _offset(offset), _string(str), _shdr(shdr),
           _sectionName(sectionName) {}
     // the offset of this atom
-    int32_t _offset;
+    int64_t _offset;
     // The content
     StringRef _string;
     // Section header
@@ -92,13 +92,13 @@ template <class ELFT> class ELFFile : public File {
   /// \brief find a mergeAtom given a start offset
   struct FindByOffset {
     const Elf_Shdr *_shdr;
-    uint64_t _offset;
-    FindByOffset(const Elf_Shdr *shdr, uint64_t offset)
+    int64_t _offset;
+    FindByOffset(const Elf_Shdr *shdr, int64_t offset)
         : _shdr(shdr), _offset(offset) {}
     bool operator()(const ELFMergeAtom<ELFT> *a) {
-      uint64_t off = a->offset();
+      int64_t off = a->offset();
       return (_shdr->sh_name == a->section()) &&
-             ((_offset >= off) && (_offset <= off + a->size()));
+             ((_offset >= off) && (_offset <= off + (int64_t)a->size()));
     }
   };
 
@@ -179,6 +179,12 @@ protected:
   /// \brief After all the Atoms and References are created, update each
   /// Reference's target with the Atom pointer it refers to.
   virtual void updateReferences();
+
+  /// \brief Update the reference if the access corresponds to a merge string
+  /// section.
+  void updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
+                                           const Elf_Sym *symbol,
+                                           const Elf_Shdr *shdr);
 
   /// \brief Return true if the symbol is corresponding to an architecture
   /// specific section. We will let the TargetHandler handle such atoms.
@@ -793,6 +799,35 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym &symbol,
   }
 }
 
+template <class ELFT>
+void ELFFile<ELFT>::updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
+                                                        const Elf_Sym *symbol,
+                                                        const Elf_Shdr *shdr) {
+  // If the target atom is mergeable strefng atom, the atom might have been
+  // merged with other atom having the same contents. Try to find the
+  // merged one if that's the case.
+  int64_t addend = ref->addend();
+  if (addend < 0)
+    addend = 0;
+
+  const MergeSectionKey ms(shdr, addend);
+  auto msec = _mergedSectionMap.find(ms);
+  if (msec != _mergedSectionMap.end()) {
+    ref->setTarget(msec->second);
+    return;
+  }
+
+  // The target atom was not merged. Mergeable atoms are not in
+  // _symbolToAtomMapping, so we cannot find it by calling findAtom(). We
+  // instead call findMergeAtom().
+  if (symbol->getType() != llvm::ELF::STT_SECTION)
+    addend = symbol->st_value + addend;
+  ELFMergeAtom<ELFT> *mergedAtom = findMergeAtom(shdr, addend);
+  ref->setOffset(addend - mergedAtom->offset());
+  ref->setAddend(0);
+  ref->setTarget(mergedAtom);
+}
+
 template <class ELFT> void ELFFile<ELFT>::updateReferences() {
   for (auto &ri : _references) {
     if (ri->kindNamespace() == lld::Reference::KindNamespace::ELF) {
@@ -805,27 +840,7 @@ template <class ELFT> void ELFFile<ELFT>::updateReferences() {
         ri->setTarget(findAtom(symbol));
         continue;
       }
-
-      // If the target atom is mergeable string atom, the atom might have been
-      // merged with other atom having the same contents. Try to find the
-      // merged one if that's the case.
-      uint64_t addend = ri->addend();
-      const MergeSectionKey ms(shdr, addend);
-      auto msec = _mergedSectionMap.find(ms);
-      if (msec != _mergedSectionMap.end()) {
-        ri->setTarget(msec->second);
-        continue;
-      }
-
-      // The target atom was not merged. Mergeable atoms are not in
-      // _symbolToAtomMapping, so we cannot find it by calling findAtom(). We
-      // instead call findMergeAtom().
-      if (symbol->getType() != llvm::ELF::STT_SECTION)
-        addend = symbol->st_value + addend;
-      ELFMergeAtom<ELFT> *mergedAtom = findMergeAtom(shdr, addend);
-      ri->setOffset(addend - mergedAtom->offset());
-      ri->setAddend(0);
-      ri->setTarget(mergedAtom);
+      updateReferenceForMergeStringAccess(ri, symbol, shdr);
     }
   }
 }
