@@ -403,13 +403,13 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 // preprocessed source file(s).  Request that the developer attach the
 // diagnostic information to a bug report.
 void Driver::generateCompilationDiagnostics(Compilation &C,
-                                            const Command *FailingCommand) {
+                                            const Command &FailingCommand) {
   if (C.getArgs().hasArg(options::OPT_fno_crash_diagnostics))
     return;
 
   // Don't try to generate diagnostics for link or dsymutil jobs.
-  if (FailingCommand && (FailingCommand->getCreator().isLinkJob() ||
-                         FailingCommand->getCreator().isDsymutilJob()))
+  if (FailingCommand.getCreator().isLinkJob() ||
+      FailingCommand.getCreator().isDsymutilJob())
     return;
 
   // Print the version of the compiler.
@@ -426,12 +426,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   // Save the original job command(s).
   std::string Cmd;
   llvm::raw_string_ostream OS(Cmd);
-  if (FailingCommand)
-    FailingCommand->Print(OS, "\n", /*Quote*/ false, /*CrashReport*/ true);
-  else
-    // Crash triggered by FORCE_CLANG_DIAGNOSTICS_CRASH, which doesn't have an
-    // associated FailingCommand, so just pass all jobs.
-    C.getJobs().Print(OS, "\n", /*Quote*/ false, /*CrashReport*/ true);
+  FailingCommand.Print(OS, "\n", /*Quote*/ false, /*CrashReport*/ true);
   OS.flush();
 
   // Keep track of whether we produce any errors while trying to produce

@@ -464,8 +464,12 @@ int main(int argc_, const char **argv_) {
   // Force a crash to test the diagnostics.
   if (::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH")) {
     Diags.Report(diag::err_drv_force_crash) << "FORCE_CLANG_DIAGNOSTICS_CRASH";
-    const Command *FailingCommand = nullptr;
-    FailingCommands.push_back(std::make_pair(-1, FailingCommand));
+
+    // Pretend that every command failed.
+    FailingCommands.clear();
+    for (const auto &J : C->getJobs())
+      if (const Command *C = dyn_cast<Command>(&J))
+        FailingCommands.push_back(std::make_pair(-1, C));
   }
 
   for (const auto &P : FailingCommands) {
@@ -483,7 +487,7 @@ int main(int argc_, const char **argv_) {
     DiagnoseCrash |= CommandRes == 3;
 #endif
     if (DiagnoseCrash) {
-      TheDriver.generateCompilationDiagnostics(*C, FailingCommand);
+      TheDriver.generateCompilationDiagnostics(*C, *FailingCommand);
       break;
     }
   }
