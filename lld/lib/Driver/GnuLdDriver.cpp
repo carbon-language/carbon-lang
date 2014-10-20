@@ -305,6 +305,14 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (!parsedArgs->hasArg(OPT_nostdlib))
     addPlatformSearchDirs(*ctx, triple, baseTriple);
 
+  // Handle --demangle option(For compatibility)
+  if (parsedArgs->getLastArg(OPT_demangle))
+    ctx->setDemangleSymbols(true);
+
+  // Handle --no-demangle option.
+  if (parsedArgs->getLastArg(OPT_no_demangle))
+    ctx->setDemangleSymbols(false);
+
   // Figure out output kind ( -r, -static, -shared)
   if (llvm::opt::Arg *kind =
           parsedArgs->getLastArg(OPT_relocatable, OPT_static, OPT_shared,

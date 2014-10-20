@@ -215,6 +215,18 @@ def z : Separate<["-"], "z">,
      Group<grp_customopts>;
 
 //===----------------------------------------------------------------------===//
+/// Symbol options
+//===----------------------------------------------------------------------===//
+def grp_symbolopts : OptionGroup<"opts">,
+     HelpText<"SYMBOL OPTIONS">;
+def demangle : Flag<["--"], "demangle">,
+     HelpText<"Demangle C++ symbols">,
+     Group<grp_symbolopts>;
+def no_demangle : Flag<["--"], "no-demangle">,
+     HelpText<"Dont demangle C++ symbols">,
+     Group<grp_symbolopts>;
+
+//===----------------------------------------------------------------------===//
 /// Optimization Options
 //===----------------------------------------------------------------------===//
 def grp_opts : OptionGroup<"opts">,

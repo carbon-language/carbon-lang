@@ -275,6 +275,11 @@ public:
     return _dynamicallyExportedSymbols.count(name) != 0;
   }
 
+  /// \brief Demangle symbols.
+  std::string demangle(StringRef symbolName) const override;
+  bool demangleSymbols() const { return _demangle; }
+  void setDemangleSymbols(bool d) { _demangle = d; }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -299,6 +304,7 @@ protected:
   bool _dynamicLinkerArg;
   bool _noAllowDynamicLibraries;
   bool _mergeRODataToTextSegment;
+  bool _demangle;
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;
