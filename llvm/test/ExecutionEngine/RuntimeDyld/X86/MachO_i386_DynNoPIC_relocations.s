@@ -6,16 +6,19 @@
 	.align	4, 0x90
 bar:
 	calll	tmp0$pb
+	.globl  tmp0$pb
 tmp0$pb:
 	popl	%eax
 # Test section difference relocation to non-lazy ptr section.
 # rtdyld-check: decode_operand(inst1, 4) = x$non_lazy_ptr - tmp0$pb
+	.globl  inst1
 inst1:
 	movl	x$non_lazy_ptr-tmp0$pb(%eax), %eax
         movl    (%eax), %ebx
 
 # Test VANILLA relocation to jump table.
 # rtdyld-check: decode_operand(inst2, 0) = bling$stub - next_pc(inst2)
+	.globl  inst2
 inst2:
         calll	bling$stub
         addl    %ebx, %eax
@@ -27,11 +30,13 @@ inst3:
 	retl
 
 	.section	__IMPORT,__jump_table,symbol_stubs,pure_instructions+self_modifying_code,5
+	.globl  bling$stub
 bling$stub:
 	.indirect_symbol	bling
 	.ascii	"\364\364\364\364\364"
 
 	.section	__IMPORT,__pointers,non_lazy_symbol_pointers
+	.globl  x$non_lazy_ptr
 x$non_lazy_ptr:
 	.indirect_symbol	x
 	.long	0

@@ -454,6 +454,9 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
       if (Value && Value != UnknownAddressOrSize)
         Result |= SymbolRef::SF_Common;
     }
+
+    if (!(MachOType & MachO::N_PEXT))
+      Result |= SymbolRef::SF_Exported;
   }
 
   if (MachOFlags & (MachO::N_WEAK_REF | MachO::N_WEAK_DEF))

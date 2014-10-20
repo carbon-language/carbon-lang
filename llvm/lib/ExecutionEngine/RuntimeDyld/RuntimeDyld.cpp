@@ -205,10 +205,14 @@ RuntimeDyldImpl::loadObject(std::unique_ptr<ObjectImage> Obj) {
         bool IsCode = SI->isText();
         unsigned SectionID =
             findOrEmitSection(*Obj, *SI, IsCode, LocalSections);
+        // Add the symbol to the local symbol table for this module.
         LocalSymbols[Name.data()] = SymbolLoc(SectionID, SectOffset);
         DEBUG(dbgs() << "\tOffset: " << format("%p", (uintptr_t)SectOffset)
                      << " flags: " << Flags << " SID: " << SectionID);
-        GlobalSymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
+        // If exported, add to the global symbol table for other modules to also link in.
+        if (Flags & SymbolRef::SF_Exported) {
+          GlobalSymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
+        }
       }
     }
     DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name << "\n");
