@@ -360,6 +360,14 @@ def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm0_1020s4:$imm),
   let DecoderMethod = "DecodeThumbAddSpecialReg";
 }
 
+// Thumb1 frame lowering is rather fragile, we hope to be able to use
+// tADDrSPi, but we may need to insert a sequence that clobbers CPSR.
+def tADDframe : PseudoInst<(outs tGPR:$dst), (ins i32imm:$base, i32imm:$offset),
+                           NoItinerary, []>,
+                Requires<[IsThumb, IsThumb1Only]> {
+  let Defs = [CPSR];
+}
+
 // ADD sp, sp, #<imm7>
 def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
                      IIC_iALUi, "add", "\t$Rdn, $imm", []>,
