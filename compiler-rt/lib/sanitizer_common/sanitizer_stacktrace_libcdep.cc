@@ -27,7 +27,6 @@ void StackTrace::PrintStack(const uptr *addr, uptr size) {
     Printf("    <empty stack>\n\n");
     return;
   }
-  InternalScopedBuffer<char> buff(GetPageSizeCached() * 2);
   InternalScopedBuffer<AddressInfo> addr_frames(64);
   InternalScopedString frame_desc(GetPageSizeCached() * 2);
   uptr frame_num = 0;
@@ -39,16 +38,15 @@ void StackTrace::PrintStack(const uptr *addr, uptr size) {
         pc, addr_frames.data(), addr_frames.size());
     if (addr_frames_num == 0) {
       frame_desc.clear();
-      PrintStackFramePrefix(&frame_desc, frame_num, pc);
+      PrintStackFramePrefix(&frame_desc, frame_num++, pc);
       frame_desc.append(" (<unknown module>)");
       Printf("%s\n", frame_desc.data());
-      frame_num++;
       continue;
     }
     for (uptr j = 0; j < addr_frames_num; j++) {
       AddressInfo &info = addr_frames[j];
       frame_desc.clear();
-      PrintStackFramePrefix(&frame_desc, frame_num, pc);
+      PrintStackFramePrefix(&frame_desc, frame_num++, pc);
       if (info.function) {
         frame_desc.append(" in %s", info.function);
         // Print offset in function if we don't know the source file.
@@ -63,7 +61,6 @@ void StackTrace::PrintStack(const uptr *addr, uptr size) {
         PrintModuleAndOffset(&frame_desc, info.module, info.module_offset);
       }
       Printf("%s\n", frame_desc.data());
-      frame_num++;
       info.Clear();
     }
   }
