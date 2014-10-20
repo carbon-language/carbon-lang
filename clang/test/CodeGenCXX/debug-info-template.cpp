@@ -5,7 +5,7 @@
 // CHECK: [[RETAIN]] = metadata !{metadata !{{[0-9]]*}}, metadata [[FOO:![0-9]*]],
 
 
-// CHECK: [[TC:![0-9]*]] = {{.*}}, metadata [[TCARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, 1, 2, 3>]
+// CHECK: [[TC:![0-9]*]] = {{.*}}, metadata [[TCARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &foo::g, 1, 2, 3>]
 // CHECK: [[TCARGS]] = metadata !{metadata [[TCARG1:![0-9]*]], metadata [[TCARG2:![0-9]*]], metadata [[TCARG3:![0-9]*]], metadata [[TCARG4:![0-9]*]], metadata [[TCARG5:![0-9]*]], metadata [[TCARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]]}
 //
 // We seem to be missing file/line/col info on template value parameters -
@@ -32,7 +32,7 @@
 // CHECK: [[FARGS]] = metadata !{null, metadata [[FARG1:![0-9]*]]}
 // CHECK: [[FARG1]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS3foo]
 //
-// CHECK: [[TCARG6]] = metadata !{metadata !"0x30\00f\00{{.*}}", {{[^,]+}}, metadata [[FUNPTR:![0-9]*]], void ()* @_Z4funcv, {{.*}} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[TCARG6]] = metadata !{metadata !"0x30\00f\00{{.*}}", {{[^,]+}}, metadata [[FUNPTR:![0-9]*]], void ()* @_ZN3foo1gEv, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[FUNPTR]] = {{.*}}, metadata [[FUNTYPE:![0-9]*]]} ; [ DW_TAG_pointer_type ]
 // CHECK: [[FUNTYPE]] = {{.*}}, metadata [[FUNARGS:![0-9]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FUNARGS]] = metadata !{null}
@@ -49,7 +49,7 @@
 // CHECK: metadata !"0x2e\00f\00f\00_ZN3foo1fEv\00{{.*}}", metadata [[FTYPE:![0-9]*]], {{.*}} ; [ DW_TAG_subprogram ]
 //
 
-// CHECK: metadata !{metadata !"0x13\00{{.*}}", metadata !{{[0-9]*}}, metadata !"_ZTS2TCIjLj2EXadL_Z3glbEEXadL_ZN3foo1eEEEXadL_ZNS0_1fEvEEXadL_Z4funcvEEJLi1ELi2ELi3EEE", {{.*}}, metadata !"[[TCNESTED:.*]]"} ; [ DW_TAG_structure_type ] [nested]
+// CHECK: metadata !{metadata !"0x13\00{{.*}}", metadata !{{[0-9]*}}, metadata !"_ZTS2TCIjLj2EXadL_Z3glbEEXadL_ZN3foo1eEEEXadL_ZNS0_1fEvEEXadL_ZNS0_1gEvEEJLi1ELi2ELi3EEE", {{.*}}, metadata !"[[TCNESTED:.*]]"} ; [ DW_TAG_structure_type ] [nested]
 // CHECK: metadata [[TCNARGS:![0-9]*]], metadata !"[[TCNT:.*]]"} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr>]
 // CHECK: [[TCNARGS]] = metadata !{metadata [[TCNARG1:![0-9]*]], metadata [[TCNARG2:![0-9]*]], metadata [[TCNARG3:![0-9]*]], metadata [[TCNARG4:![0-9]*]], metadata [[TCNARG5:![0-9]*]], metadata [[TCNARG6:![0-9]*]], metadata [[TCNARG7:![0-9]*]]}
 // CHECK: [[TCNARG1]] = metadata !{metadata !"0x2f\00T\000\000", null, metadata [[INT]], null} ; [ DW_TAG_template_type_parameter ]
@@ -86,7 +86,7 @@
 // CHECK: [[PTOARG1]] = metadata !{metadata !"0x30\00\000\000", null, metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], %struct.PaddingAtEnd* @PaddedObj, null} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS12PaddingAtEnd]
 
-// CHECK: metadata !"[[TCNESTED]]", %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
+// CHECK: metadata !"[[TCNESTED]]", %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &foo::g, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
 
 // CHECK: metadata !"[[TCNT]]", %struct.TC* @tcn, null} ; [ DW_TAG_variable ] [tcn]
 
@@ -95,6 +95,7 @@ struct foo {
   char pad[8]; // make the member pointer to 'e' a bit more interesting (nonzero)
   int e;
   void f();
+  static void g();
 };
 
 typedef int foo::*foo_mem;
@@ -108,7 +109,7 @@ struct TC {
 int glb;
 void func();
 
-TC<unsigned, 2, &glb, &foo::e, &foo::f, &func, 1, 2, 3>::nested tci;
+TC<unsigned, 2, &glb, &foo::e, &foo::f, &foo::g, 1, 2, 3>::nested tci;
 TC<int, -3, nullptr, nullptr, nullptr, nullptr> tcn;
 
 template<typename>
