@@ -236,13 +236,16 @@ SBLaunchInfo::SetProcessPluginName (const char *plugin_name)
 const char *
 SBLaunchInfo::GetShell ()
 {
-    return m_opaque_sp->GetShell();
+    // Constify this string so that it is saved in the string pool.  Otherwise
+    // it would be freed when this function goes out of scope.
+    ConstString shell(m_opaque_sp->GetShell().GetPath().c_str());
+    return shell.AsCString();
 }
 
 void
 SBLaunchInfo::SetShell (const char * path)
 {
-    m_opaque_sp->SetShell (path);
+    m_opaque_sp->SetShell (FileSpec(path, false));
 }
 
 uint32_t

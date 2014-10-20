@@ -35,6 +35,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -2477,7 +2478,7 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
             }
             else if (state == eStateExited)
             {
-                bool with_shell = launch_info.GetShell();
+                bool with_shell = !!launch_info.GetShell();
                 const int exit_status = m_process_sp->GetExitStatus();
                 const char *exit_desc = m_process_sp->GetExitDescription();
 #define LAUNCH_SHELL_MESSAGE "\n'r' and 'run' are aliases that default to launching through a shell.\nTry launching without going through a shell by using 'process launch'."

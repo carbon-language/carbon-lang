@@ -96,6 +96,12 @@ HostInfoWindows::GetProgramFileSpec()
     return m_program_filespec;
 }
 
+FileSpec
+HostInfoWindows::GetDefaultShell()
+{
+    return FileSpec(::getenv("ComSpec"), false);
+}
+
 bool
 HostInfoWindows::ComputePythonDirectory(FileSpec &file_spec)
 {

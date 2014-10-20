@@ -480,9 +480,9 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
 
         case 'c':
             if (option_arg && option_arg[0])
-                launch_info.SetShell (option_arg);
+                launch_info.SetShell (FileSpec(option_arg, false));
             else
-                launch_info.SetShell (LLDB_DEFAULT_SHELL);
+                launch_info.SetShell (HostInfo::GetDefaultShell());
             break;
             
         case 'v':

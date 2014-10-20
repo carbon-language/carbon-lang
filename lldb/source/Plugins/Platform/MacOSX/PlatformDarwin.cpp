@@ -1146,13 +1146,14 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
 int32_t
 PlatformDarwin::GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info)
 {
-    const char *shell = launch_info.GetShell();
-    if (shell == NULL)
+    const FileSpec &shell = launch_info.GetShell();
+    if (!shell)
         return 1;
         
-    const char *shell_name = strrchr (shell, '/');
+    std::string shell_string = shell.GetPath();
+    const char *shell_name = strrchr (shell_string.c_str(), '/');
     if (shell_name == NULL)
-        shell_name = shell;
+        shell_name = shell_string.c_str();
     else
         shell_name++;
     

@@ -554,17 +554,18 @@ PlatformLinux::GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info)
     }
 
     // If we're not launching a shell, we're done.
-    const char *shell = launch_info.GetShell();
-    if (shell == NULL)
+    const FileSpec &shell = launch_info.GetShell();
+    if (!shell)
         return resume_count;
 
+    std::string shell_string = shell.GetPath();
     // We're in a shell, so for sure we have to resume past the shell exec.
     ++resume_count;
 
     // Figure out what shell we're planning on using.
-    const char *shell_name = strrchr (shell, '/');
+    const char *shell_name = strrchr (shell_string.c_str(), '/');
     if (shell_name == NULL)
-        shell_name = shell;
+        shell_name = shell_string.c_str();
     else
         shell_name++;
 

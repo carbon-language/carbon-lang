@@ -33,6 +33,7 @@ class HostInfoWindows : public HostInfoBase
     static bool GetOSKernelDescription(std::string &s);
     static bool GetHostname(std::string &s);
     static FileSpec GetProgramFileSpec();
+    static FileSpec GetDefaultShell();
 
   protected:
     static bool ComputePythonDirectory(FileSpec &file_spec);

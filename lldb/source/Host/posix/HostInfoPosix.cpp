@@ -125,6 +125,12 @@ HostInfoPosix::GetEffectiveGroupID()
     return getegid();
 }
 
+FileSpec
+HostInfoPosix::GetDefaultShell()
+{
+    return FileSpec("/bin/sh", false);
+}
+
 bool
 HostInfoPosix::ComputeSupportExeDirectory(FileSpec &file_spec)
 {

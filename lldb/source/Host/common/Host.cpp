@@ -550,14 +550,14 @@ Host::RunShellCommand (const char *command,
                        int *signo_ptr,
                        std::string *command_output_ptr,
                        uint32_t timeout_sec,
-                       const char *shell)
+                       bool run_in_default_shell)
 {
     Error error;
     ProcessLaunchInfo launch_info;
-    if (shell && shell[0])
+    if (run_in_default_shell)
     {
         // Run the command in a shell
-        launch_info.SetShell(shell);
+        launch_info.SetShell(HostInfo::GetDefaultShell());
         launch_info.GetArguments().AppendArgument(command);
         const bool localhost = true;
         const bool will_debug = false;
