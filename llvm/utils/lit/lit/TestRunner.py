@@ -144,13 +144,16 @@ def executeShCmd(cmd, cfg, cwd, results):
                     named_temp_files.append(f.name)
                     args[i] = f.name
 
-        procs.append(subprocess.Popen(args, cwd=cwd,
-                                      executable = executable,
-                                      stdin = stdin,
-                                      stdout = stdout,
-                                      stderr = stderr,
-                                      env = cfg.environment,
-                                      close_fds = kUseCloseFDs))
+        try:
+            procs.append(subprocess.Popen(args, cwd=cwd,
+                                          executable = executable,
+                                          stdin = stdin,
+                                          stdout = stdout,
+                                          stderr = stderr,
+                                          env = cfg.environment,
+                                          close_fds = kUseCloseFDs))
+        except OSError as e:
+            raise InternalShellError(j, 'Could not create process due to {}'.format(e))
 
         # Immediately close stdin for any process taking stdin from us.
         if stdin == subprocess.PIPE:
