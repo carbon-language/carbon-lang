@@ -41,7 +41,7 @@ struct RelocToApply {
 /// @brief Base class for object file relocation visitors.
 class RelocVisitor {
 public:
-  explicit RelocVisitor(ObjectFile &Obj)
+  explicit RelocVisitor(const ObjectFile &Obj)
     : ObjToVisit(Obj), HasError(false) {}
 
   // TODO: Should handle multiple applied relocations via either passing in the
@@ -60,7 +60,7 @@ public:
   bool error() { return HasError; }
 
 private:
-  ObjectFile &ObjToVisit;
+  const ObjectFile &ObjToVisit;
   bool HasError;
 
   RelocToApply visitELF(uint32_t RelocType, RelocationRef R, uint64_t Value) {

@@ -509,7 +509,7 @@ static bool consumeCompressedDebugSectionHeader(StringRef &data,
   return true;
 }
 
-DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile &Obj)
+DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj)
     : IsLittleEndian(Obj.isLittleEndian()),
       AddressSize(Obj.getBytesInAddress()) {
   for (const SectionRef &Section : Obj.sections()) {
