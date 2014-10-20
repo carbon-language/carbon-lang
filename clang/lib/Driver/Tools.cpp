@@ -3860,6 +3860,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (HaveModules && C.isForDiagnostics()) {
     SmallString<128> VFSDir(Output.getFilename());
     llvm::sys::path::replace_extension(VFSDir, ".cache");
+    // Add the cache directory as a temp so the crash diagnostics pick it up.
+    C.addTempFile(Args.MakeArgString(VFSDir));
+
     llvm::sys::path::append(VFSDir, "vfs");
     CmdArgs.push_back("-module-dependency-dir");
     CmdArgs.push_back(Args.MakeArgString(VFSDir));

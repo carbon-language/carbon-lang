@@ -529,27 +529,22 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
          "PLEASE ATTACH THE FOLLOWING FILES TO THE BUG REPORT:\n"
          "Preprocessed source(s) and associated run script(s) are located at:";
 
-  for (const char *TempFile : TempFiles)
+  SmallString<128> VFS;
+  for (const char *TempFile : TempFiles) {
     Diag(clang::diag::note_drv_command_failed_diag_msg) << TempFile;
+    if (StringRef(TempFile).endswith(".cache")) {
+      // In some cases (modules) we'll dump extra data to help with reproducing
+      // the crash into a directory next to the output.
+      VFS = llvm::sys::path::filename(TempFile);
+      llvm::sys::path::append(VFS, "vfs", "vfs.yaml");
+    }
+  }
 
   // Assume associated files are based off of the first temporary file.
   const char *MainFile = TempFiles[0];
 
-  std::string Script = StringRef(MainFile).rsplit('.').first;
-
-  // In some cases (modules) we'll dump extra data to help with reproducing
-  // the crash into a directory next to the output.
-  // FIXME: We should be able to generate these as extra temp files now that it
-  // won't mess up the run script.
-  SmallString<128> VFS;
-  if (llvm::sys::fs::exists(Script + ".cache")) {
-    Diag(clang::diag::note_drv_command_failed_diag_msg) << Script + ".cache";
-    VFS = llvm::sys::path::filename(Script + ".cache");
-    llvm::sys::path::append(VFS, "vfs", "vfs.yaml");
-  }
-
+  std::string Script = StringRef(MainFile).rsplit('.').first.str() + ".sh";
   std::error_code EC;
-  Script += ".sh";
   llvm::raw_fd_ostream ScriptOS(Script, EC, llvm::sys::fs::F_Excl);
   if (EC) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)
