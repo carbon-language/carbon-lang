@@ -39,8 +39,8 @@ static int getMinValue(uint64_t TSFlags) {
 
   if (isSigned)
     return -1U << (bits - 1);
-  else
-    return 0;
+
+  return 0;
 }
 
 // Return the maximum value that a constant extendable operand can have
@@ -53,8 +53,8 @@ static int getMaxValue(uint64_t TSFlags) {
 
   if (isSigned)
     return ~(-1U << (bits - 1));
-  else
-    return ~(-1U << bits);
+
+  return ~(-1U << bits);
 }
 
 // Return true if the instruction must be extended.
