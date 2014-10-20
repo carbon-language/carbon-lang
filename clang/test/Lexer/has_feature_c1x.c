@@ -1,5 +1,11 @@
-// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=c1x %s -o - | FileCheck --check-prefix=CHECK-1X %s
-// RUN: %clang_cc1 -E %s -o - | FileCheck --check-prefix=CHECK-NO-1X %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=c89 %s -o - | FileCheck --check-prefix=CHECK-NO-1X %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=iso9899:199409 %s -o - | FileCheck --check-prefix=CHECK-NO-1X %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=c99 %s -o - | FileCheck --check-prefix=CHECK-NO-1X %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=c11 %s -o - | FileCheck --check-prefix=CHECK-1X %s
+//
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=gnu89 %s -o - | FileCheck --check-prefix=CHECK-NO-1X %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=gnu99 %s -o - | FileCheck --check-prefix=CHECK-NO-1X %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=gnu11 %s -o - | FileCheck --check-prefix=CHECK-1X %s
 
 #if __has_feature(c_atomic)
 int has_atomic();

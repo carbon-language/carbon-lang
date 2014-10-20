@@ -531,8 +531,8 @@ protected:
     // Solaris headers require _XOPEN_SOURCE to be set to 600 for C99 and
     // newer, but to 500 for everything else.  feature_test.h has a check to
     // ensure that you are not using C99 with an old version of X/Open or C89
-    // with a new version.  
-    if (Opts.C99 || Opts.C11)
+    // with a new version.
+    if (Opts.C99)
       Builder.defineMacro("_XOPEN_SOURCE", "600");
     else
       Builder.defineMacro("_XOPEN_SOURCE", "500");
@@ -4584,7 +4584,7 @@ public:
     if (Opts.FastMath || Opts.FiniteMathOnly)
       Builder.defineMacro("__ARM_FP_FAST");
 
-    if ((Opts.C99 || Opts.C11) && !Opts.Freestanding)
+    if (Opts.C99 && !Opts.Freestanding)
       Builder.defineMacro("__ARM_FP_FENV_ROUNDING");
 
     Builder.defineMacro("__ARM_SIZEOF_WCHAR_T", Opts.ShortWChar ? "2" : "4");

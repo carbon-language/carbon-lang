@@ -121,6 +121,6 @@ struct test22 {
   __attribute((deprecated)) foo_dep e, f;
 };
 
-typedef int test23_ty __attribute((deprecated)); // expected-note {{previous definition is here}}
-typedef int test23_ty; // expected-note {{'test23_ty' has been explicitly marked deprecated here}} expected-warning {{redefinition of typedef 'test23_ty' is a C11 feature}}
+typedef int test23_ty __attribute((deprecated));
+typedef int test23_ty; // expected-note {{'test23_ty' has been explicitly marked deprecated here}}
 test23_ty test23_v; // expected-warning {{'test23_ty' is deprecated}}

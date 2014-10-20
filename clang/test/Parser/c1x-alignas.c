@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -std=c11 -fsyntax-only -verify %s
-// RUN: not %clang_cc1 -pedantic -fsyntax-only %s 2>&1 | FileCheck -check-prefix=CHECK-EXT %s
+// RUN: not %clang_cc1 -std=c99 -pedantic -fsyntax-only %s 2>&1 | FileCheck -check-prefix=CHECK-EXT %s
 
 _Alignas(4) char c1;
 unsigned _Alignas(long) char c2;

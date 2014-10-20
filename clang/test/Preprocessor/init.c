@@ -80,7 +80,7 @@
 // COMMON:#define __ORDER_LITTLE_ENDIAN__ 1234
 // COMMON:#define __ORDER_PDP_ENDIAN__ 3412
 // COMMON:#define __STDC_HOSTED__ 1
-// COMMON:#define __STDC_VERSION__
+// COMMON:#define __STDC_VERSION__ 201112L
 // COMMON:#define __STDC__ 1
 // COMMON:#define __VERSION__
 // COMMON:#define __clang__ 1
@@ -2546,7 +2546,7 @@
 // MIPS32BE:#define __SIZE_TYPE__ unsigned int
 // MIPS32BE:#define __SIZE_WIDTH__ 32
 // MIPS32BE:#define __STDC_HOSTED__ 0
-// MIPS32BE:#define __STDC_VERSION__ 199901L
+// MIPS32BE:#define __STDC_VERSION__ 201112L
 // MIPS32BE:#define __STDC__ 1
 // MIPS32BE:#define __UINT16_C_SUFFIX__ {{$}}
 // MIPS32BE:#define __UINT16_MAX__ 65535
@@ -5458,7 +5458,7 @@
 // PPC-DARWIN:#define __SIZE_TYPE__ long unsigned int
 // PPC-DARWIN:#define __SIZE_WIDTH__ 32
 // PPC-DARWIN:#define __STDC_HOSTED__ 0
-// PPC-DARWIN:#define __STDC_VERSION__ 199901L
+// PPC-DARWIN:#define __STDC_VERSION__ 201112L
 // PPC-DARWIN:#define __STDC__ 1
 // PPC-DARWIN:#define __UINT16_C_SUFFIX__ {{$}}
 // PPC-DARWIN:#define __UINT16_MAX__ 65535

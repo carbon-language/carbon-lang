@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -std=c99 -fsyntax-only -verify -pedantic %s
 // RUN: not %clang_cc1 -E %s 2>&1 | grep 'blonk.c:92:2: error: ABC'
 // RUN: not %clang_cc1 -E %s 2>&1 | grep 'blonk.c:93:2: error: DEF'
 

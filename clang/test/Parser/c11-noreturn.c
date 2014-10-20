@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -std=c11 -fsyntax-only -verify %s
-// RUN: not %clang_cc1 -pedantic -fsyntax-only %s 2>&1 | FileCheck -check-prefix=CHECK-EXT %s
+// RUN: not %clang_cc1 -std=c99 -pedantic -fsyntax-only %s 2>&1 | FileCheck -check-prefix=CHECK-EXT %s
 
 _Noreturn int f();
 int _Noreturn f(); // expected-note {{previous}}

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
-// RUN: %clang_cc1 -fsyntax-only -Wgnu -Wc11-extensions -verify %s
+// RUN: %clang_cc1 -std=gnu99 -fsyntax-only -pedantic -verify %s
+// RUN: %clang_cc1 -std=gnu99 -fsyntax-only -Wgnu -Wc11-extensions -verify %s
 // REQUIRES: LP64
 
 extern int foof() = 1; // expected-error{{illegal initializer (only variables can be initialized)}}

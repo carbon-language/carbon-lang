@@ -73,7 +73,7 @@ Basic Usage
 Intro to how to use a C compiler for newbies.
 
 compile + link compile then link debug info enabling optimizations
-picking a language to use, defaults to C99 by default. Autosenses based
+picking a language to use, defaults to C11 by default. Autosenses based
 on extension. using a makefile
 
 Command Line Options
@@ -1474,9 +1474,12 @@ Differences between various standard modes
 ------------------------------------------
 
 clang supports the -std option, which changes what language mode clang
-uses. The supported modes for C are c89, gnu89, c94, c99, gnu99 and
-various aliases for those modes. If no -std option is specified, clang
-defaults to gnu99 mode.
+uses. The supported modes for C are c89, gnu89, c94, c99, gnu99, c11,
+gnu11, and various aliases for those modes. If no -std option is
+specified, clang defaults to gnu11 mode. Many C99 and C11 features are
+supported in earlier modes as a conforming extension, with a warning. Use
+``-pedantic-errors`` to request an error if a feature from a later standard
+revision is used in an earlier mode.
 
 Differences between all ``c*`` and ``gnu*`` modes:
 
@@ -1513,6 +1516,11 @@ Differences between ``*89`` and ``*99`` modes:
 -  Arrays which are not lvalues are not implicitly promoted to pointers
    in ``*89`` modes.
 -  Some warnings are different.
+
+Differences between ``*99`` and ``*11`` modes:
+
+-  Warnings for use of C11 features are disabled.
+-  ``__STDC_VERSION__`` is defined to ``201112L`` rather than ``199901L``.
 
 c94 mode is identical to c89 mode except that digraphs are enabled in
 c94 mode (FIXME: And ``__STDC_VERSION__`` should be defined!).

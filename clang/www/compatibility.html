@@ -83,10 +83,10 @@
 <!-- ======================================================================= -->
 <h3 id="inline">C99 inline functions</h3>
 <!-- ======================================================================= -->
-<p>By default, Clang builds C code according to the C99 standard,
-which provides different semantics for the <code>inline</code> keyword
-than GCC's default behavior. For example, consider the following
-code:</p>
+<p>By default, Clang builds C code in GNU C11 mode, so it uses standard C99
+semantics for the <code>inline</code> keyword. These semantics are different
+from those in GNU C89 mode, which is the default mode in versions of GCC
+prior to 5.0. For example, consider the following code:</p>
 <pre>
 inline int add(int i, int j) { return i + j; }
 
@@ -110,10 +110,10 @@ Undefined symbols:
       _main in cc-y1jXIr.o
 </pre>
 
-<p>By contrast, GCC's default behavior follows the GNU89 dialect,
-which is the C89 standard plus a lot of extensions.  C89 doesn't have
-an <code>inline</code> keyword, but GCC recognizes it as an extension
-and just treats it as a hint to the optimizer.</p>
+<p>By contrast, GNU C89 mode (used by default in older versions of GCC) is the
+C89 standard plus a lot of extensions. C89 doesn't have an <code>inline</code>
+keyword, but GCC recognizes it as an extension and just treats it as a hint to
+the optimizer.</p>
 
 <p>There are several ways to fix this problem:</p>
 
@@ -130,12 +130,12 @@ and just treats it as a hint to the optimizer.</p>
   for a function to be inlined, nor does it guarantee that it will be.
   Some compilers ignore it completely.  Clang treats it as a mild
   suggestion from the programmer.</li>
-     
+
   <li>Provide an external (non-<code>inline</code>) definition
   of <code>add</code> somewhere else in your program.  The two
   definitions must be equivalent!</li>
 
-  <li>Compile with the GNU89 dialect by adding
+  <li>Compile in the GNU C89 dialect by adding
   <code>-std=gnu89</code> to the set of Clang options. This option is
   only recommended if the program source cannot be changed or if the
   program also relies on additional C89-specific behavior that cannot
