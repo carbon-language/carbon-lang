@@ -384,7 +384,6 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
     {
         if (m_shell)
         {
-            char shell_resolved_path[PATH_MAX];
             std::string shell_executable = m_shell.GetPath();
 
             const char **argv = GetArguments().GetConstArgumentVector ();
