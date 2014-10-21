@@ -176,59 +176,7 @@ static void getMembers() {
     Members.push_back(Arg);
 }
 
-namespace {
-enum class MRICommand { AddMod, Create, Save, End, Invalid };
-}
-
-static std::vector<std::string> MRIMembers;
-static ArchiveOperation parseMRIScript() {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getSTDIN();
-  failIfError(Buf.getError());
-  const MemoryBuffer &Ref = *Buf.get();
-  bool Saved = false;
-
-  for (line_iterator I(Ref, /*SkipBlanks*/ true, ';'), E; I != E; ++I) {
-    StringRef Line = *I;
-    StringRef CommandStr, Rest;
-    std::tie(CommandStr, Rest) = Line.split(' ');
-    auto Command = StringSwitch<MRICommand>(CommandStr.lower())
-                       .Case("addmod", MRICommand::AddMod)
-                       .Case("create", MRICommand::Create)
-                       .Case("save", MRICommand::Save)
-                       .Case("end", MRICommand::End)
-                       .Default(MRICommand::Invalid);
-
-    switch (Command) {
-    case MRICommand::AddMod:
-      MRIMembers.push_back(Rest);
-      break;
-    case MRICommand::Create:
-      Create = true;
-      if (!ArchiveName.empty())
-        fail("Editing multiple archives not supported");
-      if (Saved)
-        fail("File already saved");
-      ArchiveName = Rest;
-      break;
-    case MRICommand::Save:
-      Saved = true;
-      break;
-    case MRICommand::End:
-      break;
-    case MRICommand::Invalid:
-      fail("Unknown command: " + CommandStr);
-    }
-  }
-
-  // Nothing to do if not saved.
-  if (!Saved)
-    exit(0);
-
-  for (auto &M : MRIMembers)
-    Members.push_back(M);
-
-  return ReplaceOrInsert;
-}
+static void runMRIScript();
 
 // Parse the command line options as presented and return the operation
 // specified. Process all modifiers and check to make sure that constraints on
@@ -237,7 +185,7 @@ static ArchiveOperation parseCommandLine() {
   if (MRI) {
     if (!RestOfArgs.empty())
       fail("Cannot mix -M and other options");
-    return parseMRIScript();
+    runMRIScript();
   }
 
   getOptions();
@@ -805,8 +753,9 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
   Out.seek(Pos);
 }
 
-static void performWriteOperation(ArchiveOperation Operation,
-                                  object::Archive *OldArchive) {
+static void
+performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
+                      std::vector<NewArchiveIterator> &NewMembers) {
   SmallString<128> TmpArchive;
   failIfError(sys::fs::createUniqueFile(ArchiveName + ".temp-archive-%%%%%%%.a",
                                         TmpArchiveFD, TmpArchive));
@@ -815,9 +764,6 @@ static void performWriteOperation(ArchiveOperation Operation,
   tool_output_file Output(TemporaryOutput, TmpArchiveFD);
   raw_fd_ostream &Out = Output.os();
   Out << "!<arch>\n";
-
-  std::vector<NewArchiveIterator> NewMembers =
-      computeNewArchiveMembers(Operation, OldArchive);
 
   std::vector<std::pair<unsigned, unsigned> > MemberOffsetRefs;
 
@@ -914,6 +860,18 @@ static void performWriteOperation(ArchiveOperation Operation,
   TemporaryOutput = nullptr;
 }
 
+static void
+performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
+                      std::vector<NewArchiveIterator> *NewMembersP) {
+  if (NewMembersP) {
+    performWriteOperation(Operation, OldArchive, *NewMembersP);
+    return;
+  }
+  std::vector<NewArchiveIterator> NewMembers =
+      computeNewArchiveMembers(Operation, OldArchive);
+  performWriteOperation(Operation, OldArchive, NewMembers);
+}
+
 static void createSymbolTable(object::Archive *OldArchive) {
   // When an archive is created or modified, if the s option is given, the
   // resulting archive will have a current symbol table. If the S option
@@ -924,11 +882,12 @@ static void createSymbolTable(object::Archive *OldArchive) {
   if (OldArchive->hasSymbolTable())
     return;
 
-  performWriteOperation(CreateSymTab, OldArchive);
+  performWriteOperation(CreateSymTab, OldArchive, nullptr);
 }
 
 static void performOperation(ArchiveOperation Operation,
-                             object::Archive *OldArchive) {
+                             object::Archive *OldArchive,
+                             std::vector<NewArchiveIterator> *NewMembers) {
   switch (Operation) {
   case Print:
   case DisplayTable:
@@ -940,7 +899,7 @@ static void performOperation(ArchiveOperation Operation,
   case Move:
   case QuickAppend:
   case ReplaceOrInsert:
-    performWriteOperation(Operation, OldArchive);
+    performWriteOperation(Operation, OldArchive, NewMembers);
     return;
   case CreateSymTab:
     createSymbolTable(OldArchive);
@@ -949,7 +908,8 @@ static void performOperation(ArchiveOperation Operation,
   llvm_unreachable("Unknown operation.");
 }
 
-static int performOperation(ArchiveOperation Operation) {
+static int performOperation(ArchiveOperation Operation,
+                            std::vector<NewArchiveIterator> *NewMembers) {
   // Create or open the archive object.
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
       MemoryBuffer::getFile(ArchiveName, -1, false);
@@ -968,7 +928,7 @@ static int performOperation(ArchiveOperation Operation) {
              << "': " << EC.message() << "!\n";
       return 1;
     }
-    performOperation(Operation, &Archive);
+    performOperation(Operation, &Archive, NewMembers);
     return 0;
   }
 
@@ -983,22 +943,70 @@ static int performOperation(ArchiveOperation Operation) {
     }
   }
 
-  performOperation(Operation, nullptr);
+  performOperation(Operation, nullptr, NewMembers);
   return 0;
+}
+
+static void runMRIScript() {
+  enum class MRICommand { AddMod, Create, Save, End, Invalid };
+
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getSTDIN();
+  failIfError(Buf.getError());
+  const MemoryBuffer &Ref = *Buf.get();
+  bool Saved = false;
+  std::vector<NewArchiveIterator> NewMembers;
+
+  for (line_iterator I(Ref, /*SkipBlanks*/ true, ';'), E; I != E; ++I) {
+    StringRef Line = *I;
+    StringRef CommandStr, Rest;
+    std::tie(CommandStr, Rest) = Line.split(' ');
+    auto Command = StringSwitch<MRICommand>(CommandStr.lower())
+                       .Case("addmod", MRICommand::AddMod)
+                       .Case("create", MRICommand::Create)
+                       .Case("save", MRICommand::Save)
+                       .Case("end", MRICommand::End)
+                       .Default(MRICommand::Invalid);
+
+    switch (Command) {
+    case MRICommand::AddMod:
+      addMember(NewMembers, Rest, sys::path::filename(Rest));
+      break;
+    case MRICommand::Create:
+      Create = true;
+      if (!ArchiveName.empty())
+        fail("Editing multiple archives not supported");
+      if (Saved)
+        fail("File already saved");
+      ArchiveName = Rest;
+      break;
+    case MRICommand::Save:
+      Saved = true;
+      break;
+    case MRICommand::End:
+      break;
+    case MRICommand::Invalid:
+      fail("Unknown command: " + CommandStr);
+    }
+  }
+
+  // Nothing to do if not saved.
+  if (Saved)
+    performOperation(ReplaceOrInsert, &NewMembers);
+  exit(0);
 }
 
 int ar_main(char **argv) {
   // Do our own parsing of the command line because the CommandLine utility
   // can't handle the grouped positional parameters without a dash.
   ArchiveOperation Operation = parseCommandLine();
-  return performOperation(Operation);
+  return performOperation(Operation, nullptr);
 }
 
 int ranlib_main() {
   if (RestOfArgs.size() != 1)
     fail(ToolName + "takes just one archive as argument");
   ArchiveName = RestOfArgs[0];
-  return performOperation(CreateSymTab);
+  return performOperation(CreateSymTab, nullptr);
 }
 
 int main(int argc, char **argv) {

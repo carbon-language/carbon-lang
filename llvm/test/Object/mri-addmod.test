@@ -14,5 +14,23 @@
 ; CHECK-NEXT: 0000000000000000 T main
 ; CHECK-NEXT:                  U puts
 
+; Now test that CREATE overwrites an existing file.
+; RUN: echo create %t.a > %t2.mri
+; RUN: echo addmod %p/Inputs/trivial-object-test2.elf-x86-64 >> %t2.mri
+; RUN: echo save >> %t2.mri
+; RUN: echo end >> %t2.mri
+
+; RUN: llvm-ar -M  < %t2.mri
+; RUN: llvm-nm -M %t.a | FileCheck --check-prefix=NEW %s
+
+; NEW: Archive map
+; NEW-NEXT: foo in trivial-object-test2.elf-x86-64
+; NEW-NEXT: main in trivial-object-test2.elf-x86-64
+
+; NEW: trivial-object-test2.elf-x86-64:
+; NEW-NEXT: 0000000000000000 t bar
+; NEW-NEXT: 0000000000000006 T foo
+; NEW-NEXT: 0000000000000016 T main
+
 ; line_iterator is incompatible to CRLF.
 ; REQUIRES: shell
