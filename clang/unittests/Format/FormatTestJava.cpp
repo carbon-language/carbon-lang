@@ -82,6 +82,8 @@ TEST_F(FormatTestJava, Annotations) {
                "});");
 
   verifyFormat("@Partial @Mock DataLoader loader;");
+  verifyFormat("@SuppressWarnings(value = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\")\n"
+               "public static int iiiiiiiiiiiiiiiiiiiiiiii;");
 }
 
 TEST_F(FormatTestJava, Generics) {
