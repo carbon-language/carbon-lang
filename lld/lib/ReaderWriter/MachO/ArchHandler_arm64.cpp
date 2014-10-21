@@ -120,7 +120,7 @@ public:
                            const normalized::Relocation &reloc2,
                            const DefinedAtom *inAtom,
                            uint32_t offsetInAtom,
-                           uint64_t fixupAddress, bool swap,
+                           uint64_t fixupAddress, bool swap, bool scatterable,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
                            Reference::KindValue *kind,
@@ -418,7 +418,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
 std::error_code ArchHandler_arm64::getPairReferenceInfo(
     const normalized::Relocation &reloc1, const normalized::Relocation &reloc2,
     const DefinedAtom *inAtom, uint32_t offsetInAtom, uint64_t fixupAddress,
-    bool swap, FindAtomBySectionAndAddress atomFromAddress,
+    bool swap, bool scatterable, FindAtomBySectionAndAddress atomFromAddress,
     FindAtomBySymbolIndex atomFromSymbolIndex, Reference::KindValue *kind,
     const lld::Atom **target, Reference::Addend *addend) {
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];

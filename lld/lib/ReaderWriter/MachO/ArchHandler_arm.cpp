@@ -77,7 +77,7 @@ public:
                            const normalized::Relocation &reloc2,
                            const DefinedAtom *inAtom,
                            uint32_t offsetInAtom,
-                           uint64_t fixupAddress, bool swap,
+                           uint64_t fixupAddress, bool swap, bool scatterable,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
                            Reference::KindValue *kind,
@@ -627,6 +627,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
                                      const DefinedAtom *inAtom,
                                      uint32_t offsetInAtom,
                                      uint64_t fixupAddress, bool swap,
+                                     bool scatterable,
                                      FindAtomBySectionAndAddress atomFromAddr,
                                      FindAtomBySymbolIndex atomFromSymbolIndex,
                                      Reference::KindValue *kind,
@@ -795,7 +796,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
     ec = atomFromAddr(0, fromAddress, &fromTarget, &offsetInFrom);
     if (ec)
       return ec;
-    if (fromTarget != inAtom)
+    if (scatterable && (fromTarget != inAtom))
       return make_dynamic_error_code(Twine("SECTDIFF relocation where "
                                            "subtrahend label is not in atom"));
     *kind = delta32;

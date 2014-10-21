@@ -220,12 +220,12 @@ void appendSymbolsInSection(const std::vector<Symbol> &inSymbols,
 void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
                     MachOFile &file, uint64_t symbolAddr, StringRef symbolName,
                     uint16_t symbolDescFlags, Atom::Scope symbolScope,
-                    uint64_t nextSymbolAddr, bool copyRefs) {
+                    uint64_t nextSymbolAddr, bool scatterable, bool copyRefs) {
   // Mach-O symbol table does have size in it. Instead the size is the
   // difference between this and the next symbol.
   uint64_t size = nextSymbolAddr - symbolAddr;
   uint64_t offset = symbolAddr - section.address;
-  bool noDeadStrip = (symbolDescFlags & N_NO_DEAD_STRIP);
+  bool noDeadStrip = (symbolDescFlags & N_NO_DEAD_STRIP) || !scatterable;
   if (section.type == llvm::MachO::S_ZEROFILL) {
     file.addZeroFillDefinedAtom(symbolName, symbolScope, offset, size,
                                 noDeadStrip, copyRefs, &section);
@@ -256,7 +256,8 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
 std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
                                        const Section &section,
                                        const NormalizedFile &normalizedFile,
-                                       MachOFile &file, bool copyRefs) {
+                                       MachOFile &file, bool scatterable,
+                                       bool copyRefs) {
   // Find section's index.
   uint32_t sectIndex = 1;
   for (auto &sect : normalizedFile.sections) {
@@ -309,13 +310,14 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
     // Section has no symbols, put all content in one anoymous atom.
     atomFromSymbol(atomType, section, file, section.address, StringRef(),
                   0, Atom::scopeTranslationUnit,
-                  section.address + section.content.size(), copyRefs);
+                  section.address + section.content.size(),
+                  scatterable, copyRefs);
   }
   else if (symbols.front()->value != section.address) {
     // Section has anonymous content before first symbol.
     atomFromSymbol(atomType, section, file, section.address, StringRef(),
                    0, Atom::scopeTranslationUnit, symbols.front()->value,
-                   copyRefs);
+                   scatterable, copyRefs);
   }
 
   const Symbol *lastSym = nullptr;
@@ -328,7 +330,7 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
           || !lastSym->name.startswith("ltmp")) {
         atomFromSymbol(atomType, section, file, lastSym->value, lastSym->name,
                        lastSym->desc, atomScope(lastSym->scope), sym->value,
-                       copyRefs);
+                       scatterable, copyRefs);
       }
     }
     lastSym = sym;
@@ -336,8 +338,23 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
   if (lastSym != nullptr) {
     atomFromSymbol(atomType, section, file, lastSym->value, lastSym->name,
                    lastSym->desc, atomScope(lastSym->scope),
-                   section.address + section.content.size(), copyRefs);
+                   section.address + section.content.size(),
+                   scatterable, copyRefs);
   }
+
+  // If object built without .subsections_via_symbols, add reference chain.
+  if (!scatterable) {
+    MachODefinedAtom *prevAtom = nullptr;
+    file.eachAtomInSection(section,
+                           [&](MachODefinedAtom *atom, uint64_t offset)->void {
+      if (prevAtom)
+        prevAtom->addReference(0, Reference::kindLayoutAfter, atom, 0,
+                               Reference::KindArch::all,
+                               Reference::KindNamespace::all);
+      prevAtom = atom;
+    });
+  }
+
   return std::error_code();
 }
 
@@ -345,7 +362,8 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
                                const Section &section,
                                bool customSectionName,
                                const NormalizedFile &normalizedFile,
-                               MachOFile &file, bool copyRefs) {
+                               MachOFile &file, bool scatterable,
+                               bool copyRefs) {
   const bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
   const bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
 
@@ -368,7 +386,7 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
   if (atomizeModel == atomizeAtSymbols) {
     // Break section up into atoms each with a fixed size.
     return processSymboledSection(atomType, section, normalizedFile, file,
-                                                                      copyRefs);
+                                  scatterable, copyRefs);
   } else {
     const uint32_t *cfi;
     unsigned int size;
@@ -483,6 +501,7 @@ findAtomCoveringAddress(const NormalizedFile &normalizedFile, MachOFile &file,
 // creates corresponding lld::Reference objects.
 std::error_code convertRelocs(const Section &section,
                               const NormalizedFile &normalizedFile,
+                              bool scatterable,
                               MachOFile &file,
                               ArchHandler &handler) {
   // Utility function for ArchHandler to find atom by its address.
@@ -577,9 +596,10 @@ std::error_code convertRelocs(const Section &section,
     if (handler.isPairedReloc(reloc)) {
      // Handle paired relocations together.
      relocErr = handler.getPairReferenceInfo(reloc, *++it, inAtom,
-                                              offsetInAtom, fixupAddress, swap,
-                                              atomByAddr, atomBySymbol, &kind,
-                                               &target, &addend);
+                                             offsetInAtom, fixupAddress, swap,
+                                             scatterable, atomByAddr,
+                                             atomBySymbol, &kind,
+                                             &target, &addend);
     }
     else {
       // Use ArchHandler to convert relocation record into information
@@ -697,6 +717,8 @@ ErrorOr<std::unique_ptr<lld::File>>
 normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                         bool copyRefs) {
   std::unique_ptr<MachOFile> file(new MachOFile(path));
+  bool scatterable = ((normalizedFile.flags & MH_SUBSECTIONS_VIA_SYMBOLS) != 0);
+
   // Create atoms from each section.
   for (auto &sect : normalizedFile.sections) {
     if (isDebugInfoSection(sect))
@@ -706,7 +728,7 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                                                             customSectionName);
     if (std::error_code ec =
             processSection(atomType, sect, customSectionName, normalizedFile,
-                           *file, copyRefs))
+                           *file, scatterable, copyRefs))
       return ec;
   }
   // Create atoms from undefined symbols.
@@ -726,7 +748,8 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   for (auto &sect : normalizedFile.sections) {
     if (isDebugInfoSection(sect))
       continue;
-    if (std::error_code ec = convertRelocs(sect, normalizedFile, *file, *handler))
+    if (std::error_code ec = convertRelocs(sect, normalizedFile, scatterable,
+                                           *file, *handler))
         return ec;
   }
 
