@@ -1805,6 +1805,9 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     if (Left.Type == TT_JavaAnnotation && Right.isNot(tok::l_paren) &&
         Line.Last->is(tok::l_brace))
       return true;
+    if (Right.is(tok::plus) && Left.is(tok::string_literal) && Right.Next &&
+        Right.Next->is(tok::string_literal))
+      return true;
   }
 
   return false;

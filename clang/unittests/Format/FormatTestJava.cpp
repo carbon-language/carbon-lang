@@ -97,5 +97,10 @@ TEST_F(FormatTestJava, Generics) {
   verifyFormat("A.<B>doSomething();");
 }
 
+TEST_F(FormatTestJava, StringConcatenation) {
+  verifyFormat("String someString = \"abc\"\n"
+               "                    + \"cde\";");
+}
+
 } // end namespace tooling
 } // end namespace clang
