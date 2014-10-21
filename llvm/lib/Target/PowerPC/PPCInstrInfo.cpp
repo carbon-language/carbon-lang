@@ -1754,6 +1754,12 @@ protected:
 
         unsigned OldFMAReg = MI->getOperand(0).getReg();
 
+        // The transformation doesn't work well with things like:
+        //    %vreg5 = A-form-op %vreg5, %vreg11, %vreg5;
+        // so leave such things alone.
+        if (OldFMAReg == KilledProdReg)
+          continue;
+
         assert(OldFMAReg == AddendMI->getOperand(0).getReg() &&
                "Addend copy not tied to old FMA output!");
 
