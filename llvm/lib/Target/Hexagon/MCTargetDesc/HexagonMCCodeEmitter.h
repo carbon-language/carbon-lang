@@ -39,7 +39,7 @@ public:
                          SmallVectorImpl<MCFixup> &Fixups,
                          MCSubtargetInfo const &STI) const override;
 
-  // getBinaryCodeForInstr - TableGen'erated function for getting the
+  // \brief TableGen'erated function for getting the
   // binary encoding for an instruction.
   uint64_t getBinaryCodeForInstr(MCInst const &MI,
                                  SmallVectorImpl<MCFixup> &Fixups,
