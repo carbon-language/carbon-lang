@@ -9,6 +9,10 @@
 #------------------------------------------------------------------------------
 # Little endian
 #------------------------------------------------------------------------------
+# CHECK-EL: and16   $16, $2         # encoding: [0x82,0x44]
+# CHECK-EL: not16   $17, $3         # encoding: [0x0b,0x44]
+# CHECK-EL: or16    $16, $4         # encoding: [0xc4,0x44]
+# CHECK-EL: xor16   $17, $5         # encoding: [0x4d,0x44]
 # CHECK-EL: addius5 $7, -2          # encoding: [0xfc,0x4c]
 # CHECK-EL: addiusp -16             # encoding: [0xf9,0x4f]
 # CHECK-EL: mfhi    $9              # encoding: [0x09,0x46]
@@ -25,6 +29,10 @@
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
+# CHECK-EB: and16   $16, $2         # encoding: [0x44,0x82]
+# CHECK-EB: not16   $17, $3         # encoding: [0x44,0x0b]
+# CHECK-EB: or16    $16, $4         # encoding: [0x44,0xc4]
+# CHECK-EB: xor16   $17, $5         # encoding: [0x44,0x4d]
 # CHECK-EB: addius5 $7, -2          # encoding: [0x4c,0xfc]
 # CHECK-EB: addiusp -16             # encoding: [0x4f,0xf9]
 # CHECK-EB: mfhi    $9              # encoding: [0x46,0x09]
@@ -39,6 +47,10 @@
 # CHECK-EB: jr16    $9              # encoding: [0x45,0x89]
 # CHECK-EB: nop                     # encoding: [0x00,0x00,0x00,0x00]
 
+    and16   $16, $2
+    not16   $17, $3
+    or16    $16, $4
+    xor16   $17, $5
     addius5 $7, -2
     addiusp -16
     mfhi    $9

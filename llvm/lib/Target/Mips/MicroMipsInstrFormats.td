@@ -41,6 +41,18 @@ class MicroMipsInst16<dag outs, dag ins, string asmstr, list<dag> pattern,
 // MicroMIPS 16-bit Instruction Formats
 //===----------------------------------------------------------------------===//
 
+class LOGIC_FM_MM16<bits<4> funct> {
+  bits<3> rt;
+  bits<3> rs;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x11;
+  let Inst{9-6}   = funct;
+  let Inst{5-3}   = rt;
+  let Inst{2-0}   = rs;
+}
+
 class ADDIUS5_FM_MM16 {
   bits<5> rd;
   bits<4> imm;

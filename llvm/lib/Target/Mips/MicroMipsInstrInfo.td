@@ -90,6 +90,21 @@ class LoadMM<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
   let mayLoad = 1;
 }
 
+class LogicRMM16<string opstr, RegisterOperand RO,
+                 InstrItinClass Itin = NoItinerary,
+                 SDPatternOperator OpNode = null_frag> :
+  MicroMipsInst16<(outs RO:$dst), (ins RO:$rs, RO:$rt),
+         !strconcat(opstr, "\t$rt, $rs"),
+         [(set RO:$dst, (OpNode RO:$rs, RO:$rt))], Itin, FrmR> {
+  let isCommutable = 1;
+  let Constraints = "$rt = $dst";
+}
+
+class NotMM16<string opstr, RegisterOperand RO> :
+  MicroMipsInst16<(outs RO:$rt), (ins RO:$rs),
+         !strconcat(opstr, "\t$rt, $rs"),
+         [(set RO:$rt, (not RO:$rs))], NoItinerary, FrmR>;
+
 class AddImmUS5<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$dst), (ins RO:$rd, simm4:$imm),
                   !strconcat(opstr, "\t$rd, $imm"), [], NoItinerary, FrmR> {
@@ -182,6 +197,13 @@ let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
            !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI, opstr>;
 }
 
+def AND16_MM : LogicRMM16<"and16", GPRMM16Opnd, II_AND, and>,
+               LOGIC_FM_MM16<0x2>;
+def OR16_MM  : LogicRMM16<"or16", GPRMM16Opnd, II_OR, or>,
+               LOGIC_FM_MM16<0x3>;
+def XOR16_MM : LogicRMM16<"xor16", GPRMM16Opnd, II_XOR, xor>,
+               LOGIC_FM_MM16<0x1>;
+def NOT16_MM : NotMM16<"not16", GPRMM16Opnd>, LOGIC_FM_MM16<0x0>;
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;
 def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
