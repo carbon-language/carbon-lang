@@ -1246,6 +1246,18 @@ public:
       return Insert(Folder.CreateIntCast(VC, DestTy, isSigned), Name);
     return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned), Name);
   }
+
+  Value *CreateBitOrPointerCast(Value *V, Type *DestTy,
+                                const Twine &Name = "") {
+    if (V->getType() == DestTy)
+      return V;
+    if (V->getType()->isPointerTy() && DestTy->isIntegerTy())
+      return CreatePtrToInt(V, DestTy, Name);
+    if (V->getType()->isIntegerTy() && DestTy->isPointerTy())
+      return CreateIntToPtr(V, DestTy, Name);
+
+    return CreateBitCast(V, DestTy, Name);
+  }
 private:
   // \brief Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', giving a
   // compile time error, instead of converting the string to bool for the
