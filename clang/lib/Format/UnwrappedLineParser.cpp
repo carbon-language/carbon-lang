@@ -1375,9 +1375,10 @@ void UnwrappedLineParser::parseRecord() {
     }
     // The actual identifier can be a nested name specifier, and in macros
     // it is often token-pasted.
-    while (FormatTok->Tok.is(tok::identifier) ||
-           FormatTok->Tok.is(tok::coloncolon) ||
-           FormatTok->Tok.is(tok::hashhash))
+    while (
+        FormatTok->is(tok::identifier) || FormatTok->is(tok::coloncolon) ||
+        FormatTok->is(tok::hashhash) ||
+        (Style.Language == FormatStyle::LK_Java && FormatTok->is(tok::period)))
       nextToken();
 
     // Note that parsing away template declarations here leads to incorrectly

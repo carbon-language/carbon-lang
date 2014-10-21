@@ -57,6 +57,7 @@ TEST_F(FormatTestJava, ClassDeclarations) {
                "    int j;\n"
                "  }\n"
                "}");
+  verifyFormat("public class A extends B.C {}");
 }
 
 TEST_F(FormatTestJava, ThrowsDeclarations) {
