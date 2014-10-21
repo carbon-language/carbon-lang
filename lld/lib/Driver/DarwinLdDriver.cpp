@@ -83,7 +83,7 @@ static std::string canonicalizePath(StringRef path) {
   }
 }
 
-static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
+static void addFile(StringRef path, std::unique_ptr<DarwinInputGraph> &inputGraph,
                     MachOLinkingContext &ctx, bool loadWholeArchive,
                     bool upwardDylib) {
   auto node = llvm::make_unique<MachOFileNode>(path, ctx);
@@ -132,7 +132,7 @@ static std::error_code parseExportsList(StringRef exportFilePath,
 // per line. The <dir> prefix is prepended to each partial path.
 //
 static std::error_code parseFileList(StringRef fileListPath,
-                                     std::unique_ptr<InputGraph> &inputGraph,
+                                     std::unique_ptr<DarwinInputGraph> &inputGraph,
                                      MachOLinkingContext &ctx, bool forceLoad,
                                      raw_ostream &diagnostics) {
   // If there is a comma, split off <dir>.
@@ -468,7 +468,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
-  std::unique_ptr<InputGraph> inputGraph(new InputGraph());
+  std::unique_ptr<DarwinInputGraph> inputGraph(new DarwinInputGraph());
 
   // Now construct the set of library search directories, following ld64's
   // baroque set of accumulated hacks. Mostly, the algorithm constructs

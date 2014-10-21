@@ -50,19 +50,20 @@ public:
 
   /// \brief Initialize the inputgraph
   InputGraph() : _nextElementIndex(0), _currentInputElement(nullptr) {}
+  virtual ~InputGraph();
 
   /// getNextFile returns the next file that needs to be processed by
   /// the resolver. When there are no more files to be processed, an
   /// appropriate InputGraphError is returned. Ordinals are assigned
   /// to files returned by getNextFile, which means ordinals would be
   /// assigned in the way files are resolved.
-  ErrorOr<File &> getNextFile();
+  virtual ErrorOr<File &> getNextFile();
 
   /// Notifies the current input element of Resolver made some progress on
   /// resolving undefined symbols using the current file. Group (representing
   /// --start-group and --end-group) uses that notification to make a decision
   /// whether it should iterate over again or terminate or not.
-  void notifyProgress();
+  virtual void notifyProgress();
 
   /// Adds an observer of getNextFile(). Each time a new file is about to be
   /// returned from getNextFile(), registered observers are called with the file

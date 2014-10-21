@@ -13,6 +13,8 @@
 
 using namespace lld;
 
+InputGraph::~InputGraph() { }
+
 ErrorOr<File &> InputGraph::getNextFile() {
   // Try to get the next file of _currentInputElement. If the current input
   // element points to an archive file, and there's a file left in the archive,
