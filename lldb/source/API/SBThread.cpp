@@ -710,15 +710,11 @@ SBThread::ResumeNewPlan (ExecutionContext &exe_ctx, ThreadPlan *new_plan)
     
     // Why do we need to set the current thread by ID here???
     process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-    sb_error.ref() = process->Resume();
-    
-    if (sb_error.Success())
-    {
-        // If we are doing synchronous mode, then wait for the
-        // process to stop yet again!
-        if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-            process->WaitForProcessToStop (NULL);
-    }
+
+    if (process->GetTarget().GetDebugger().GetAsyncExecution ())
+        sb_error.ref() = process->Resume ();
+    else
+        sb_error.ref() = process->ResumeSynchronous (NULL);
     
     return sb_error;
 }

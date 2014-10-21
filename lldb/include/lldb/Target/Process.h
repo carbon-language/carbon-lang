@@ -1273,7 +1273,9 @@ public:
     //------------------------------------------------------------------
     Error
     Resume();
-    
+
+    Error
+    ResumeSynchronous (Stream *stream);
     //------------------------------------------------------------------
     /// Halts a running process.
     ///
@@ -2680,7 +2682,8 @@ public:
     WaitForProcessToStop (const TimeValue *timeout,
                           lldb::EventSP *event_sp_ptr = NULL,
                           bool wait_always = true,
-                          Listener *hijack_listener = NULL);
+                          Listener *hijack_listener = NULL,
+                          Stream *stream = NULL);
 
 
     //--------------------------------------------------------------------------------------
@@ -2705,7 +2708,28 @@ public:
     WaitForStateChangedEvents (const TimeValue *timeout,
                                lldb::EventSP &event_sp,
                                Listener *hijack_listener); // Pass NULL to use builtin listener
-    
+
+    //--------------------------------------------------------------------------------------
+    /// Centralize the code that handles and prints descriptions for process state changes.
+    ///
+    /// @param[in] event_sp
+    ///     The process state changed event
+    ///
+    /// @param[in] stream
+    ///     The output stream to get the state change description
+    ///
+    /// @param[inout] pop_process_io_handler
+    ///     If this value comes in set to \b true, then pop the Process IOHandler if needed.
+    ///     Else this variable will be set to \b true or \b false to indicate if the process
+    ///     needs to have its process IOHandler popped.
+    ///
+    /// @return
+    ///     \b true if the event describes a process state changed event, \b false otherwise.
+    //--------------------------------------------------------------------------------------
+    static bool
+    HandleProcessStateChangedEvent (const lldb::EventSP &event_sp,
+                                    Stream *stream,
+                                    bool &pop_process_io_handler);
     Event *
     PeekAtStateChangedEvents ();
     
@@ -3183,7 +3207,10 @@ protected:
     
     Error
     HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp);
-    
+
+    bool
+    StateChangedIsExternallyHijacked();
+
 private:
     //------------------------------------------------------------------
     // For Process only

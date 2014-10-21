@@ -29,6 +29,7 @@ bool BPCallback (void *baton,
 }
 
 void test(SBDebugger &dbg, vector<string> args) {
+  dbg.SetAsync(false);  
   SBTarget target = dbg.CreateTarget(args.at(0).c_str());
   if (!target.IsValid()) throw Exception("invalid target");
 

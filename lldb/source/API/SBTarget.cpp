@@ -738,9 +738,9 @@ SBTarget::Launch
             launch_info.GetEnvironmentEntries ().SetArguments (envp);
 
         if (listener.IsValid())
-            error.SetError (target_sp->Launch(listener.ref(), launch_info));
+            error.SetError (target_sp->Launch(listener.ref(), launch_info, NULL));
         else
-            error.SetError (target_sp->Launch(target_sp->GetDebugger().GetListener(), launch_info));
+            error.SetError (target_sp->Launch(target_sp->GetDebugger().GetListener(), launch_info, NULL));
 
         sb_process.SetSP(target_sp->GetProcessSP());
     }
@@ -804,7 +804,7 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
         if (arch_spec.IsValid())
             launch_info.GetArchitecture () = arch_spec;
 
-        error.SetError (target_sp->Launch (target_sp->GetDebugger().GetListener(), launch_info));
+        error.SetError (target_sp->Launch (target_sp->GetDebugger().GetListener(), launch_info, NULL));
         sb_process.SetSP(target_sp->GetProcessSP());
     }
     else
@@ -1004,7 +1004,7 @@ SBTarget::AttachToProcessWithID
                 // If we are doing synchronous mode, then wait for the
                 // process to stop!
                 if (target_sp->GetDebugger().GetAsyncExecution () == false)
-                process_sp->WaitForProcessToStop (NULL);
+                    process_sp->WaitForProcessToStop (NULL);
             }
         }
         else

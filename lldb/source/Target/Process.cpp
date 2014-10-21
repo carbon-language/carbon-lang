@@ -951,7 +951,11 @@ Process::SyncIOHandler (uint64_t timeout_msec)
 }
 
 StateType
-Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr, bool wait_always, Listener *hijack_listener)
+Process::WaitForProcessToStop (const TimeValue *timeout,
+                               EventSP *event_sp_ptr,
+                               bool wait_always,
+                               Listener *hijack_listener,
+                               Stream *stream)
 {
     // We can't just wait for a "stopped" event, because the stopped event may have restarted the target.
     // We have to actually check each event, and in the case of a stopped event check the restarted flag
@@ -985,6 +989,9 @@ Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp
         if (event_sp_ptr && event_sp)
             *event_sp_ptr = event_sp;
 
+        bool pop_process_io_handler = hijack_listener != NULL;
+        Process::HandleProcessStateChangedEvent (event_sp, stream, pop_process_io_handler);
+
         switch (state)
         {
         case eStateCrashed:
@@ -1012,6 +1019,195 @@ Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp
         }
     }
     return state;
+}
+
+bool
+Process::HandleProcessStateChangedEvent (const EventSP &event_sp,
+                                         Stream *stream,
+                                         bool &pop_process_io_handler)
+{
+    const bool handle_pop = pop_process_io_handler == true;
+
+    pop_process_io_handler = false;
+    ProcessSP process_sp = Process::ProcessEventData::GetProcessFromEvent(event_sp.get());
+
+    if (!process_sp)
+        return false;
+
+    StateType event_state = Process::ProcessEventData::GetStateFromEvent (event_sp.get());
+    if (event_state == eStateInvalid)
+        return false;
+
+    switch (event_state)
+    {
+        case eStateInvalid:
+        case eStateUnloaded:
+        case eStateConnected:
+        case eStateAttaching:
+        case eStateLaunching:
+        case eStateStepping:
+        case eStateDetached:
+            {
+                if (stream)
+                    stream->Printf ("Process %" PRIu64 " %s\n",
+                                    process_sp->GetID(),
+                                    StateAsCString (event_state));
+
+                if (event_state == eStateDetached)
+                    pop_process_io_handler = true;
+            }
+            break;
+
+        case eStateRunning:
+            // Don't be chatty when we run...
+            break;
+
+        case eStateExited:
+            if (stream)
+                process_sp->GetStatus(*stream);
+            pop_process_io_handler = true;
+            break;
+
+        case eStateStopped:
+        case eStateCrashed:
+        case eStateSuspended:
+            // Make sure the program hasn't been auto-restarted:
+            if (Process::ProcessEventData::GetRestartedFromEvent (event_sp.get()))
+            {
+                if (stream)
+                {
+                    size_t num_reasons = Process::ProcessEventData::GetNumRestartedReasons(event_sp.get());
+                    if (num_reasons > 0)
+                    {
+                        // FIXME: Do we want to report this, or would that just be annoyingly chatty?
+                        if (num_reasons == 1)
+                        {
+                            const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), 0);
+                            stream->Printf ("Process %" PRIu64 " stopped and restarted: %s\n",
+                                            process_sp->GetID(),
+                                            reason ? reason : "<UNKNOWN REASON>");
+                        }
+                        else
+                        {
+                            stream->Printf ("Process %" PRIu64 " stopped and restarted, reasons:\n",
+                                            process_sp->GetID());
+
+
+                            for (size_t i = 0; i < num_reasons; i++)
+                            {
+                                const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), i);
+                                stream->Printf("\t%s\n", reason ? reason : "<UNKNOWN REASON>");
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Lock the thread list so it doesn't change on us, this is the scope for the locker:
+                {
+                    ThreadList &thread_list = process_sp->GetThreadList();
+                    Mutex::Locker locker (thread_list.GetMutex());
+
+                    ThreadSP curr_thread (thread_list.GetSelectedThread());
+                    ThreadSP thread;
+                    StopReason curr_thread_stop_reason = eStopReasonInvalid;
+                    if (curr_thread)
+                        curr_thread_stop_reason = curr_thread->GetStopReason();
+                    if (!curr_thread ||
+                        !curr_thread->IsValid() ||
+                        curr_thread_stop_reason == eStopReasonInvalid ||
+                        curr_thread_stop_reason == eStopReasonNone)
+                    {
+                        // Prefer a thread that has just completed its plan over another thread as current thread.
+                        ThreadSP plan_thread;
+                        ThreadSP other_thread;
+                        const size_t num_threads = thread_list.GetSize();
+                        size_t i;
+                        for (i = 0; i < num_threads; ++i)
+                        {
+                            thread = thread_list.GetThreadAtIndex(i);
+                            StopReason thread_stop_reason = thread->GetStopReason();
+                            switch (thread_stop_reason)
+                            {
+                                case eStopReasonInvalid:
+                                case eStopReasonNone:
+                                    break;
+
+                                case eStopReasonTrace:
+                                case eStopReasonBreakpoint:
+                                case eStopReasonWatchpoint:
+                                case eStopReasonSignal:
+                                case eStopReasonException:
+                                case eStopReasonExec:
+                                case eStopReasonThreadExiting:
+                                case eStopReasonInstrumentation:
+                                    if (!other_thread)
+                                        other_thread = thread;
+                                    break;
+                                case eStopReasonPlanComplete:
+                                    if (!plan_thread)
+                                        plan_thread = thread;
+                                    break;
+                            }
+                        }
+                        if (plan_thread)
+                            thread_list.SetSelectedThreadByID (plan_thread->GetID());
+                        else if (other_thread)
+                            thread_list.SetSelectedThreadByID (other_thread->GetID());
+                        else
+                        {
+                            if (curr_thread && curr_thread->IsValid())
+                                thread = curr_thread;
+                            else
+                                thread = thread_list.GetThreadAtIndex(0);
+
+                            if (thread)
+                                thread_list.SetSelectedThreadByID (thread->GetID());
+                        }
+                    }
+                }
+                // Drop the ThreadList mutex by here, since GetThreadStatus below might have to run code,
+                // e.g. for Data formatters, and if we hold the ThreadList mutex, then the process is going to
+                // have a hard time restarting the process.
+                if (stream)
+                {
+                    Debugger &debugger = process_sp->GetTarget().GetDebugger();
+                    if (debugger.GetTargetList().GetSelectedTarget().get() == &process_sp->GetTarget())
+                    {
+                        const bool only_threads_with_stop_reason = true;
+                        const uint32_t start_frame = 0;
+                        const uint32_t num_frames = 1;
+                        const uint32_t num_frames_with_source = 1;
+                        process_sp->GetStatus(*stream);
+                        process_sp->GetThreadStatus (*stream,
+                                                     only_threads_with_stop_reason,
+                                                     start_frame,
+                                                     num_frames,
+                                                     num_frames_with_source);
+                    }
+                    else
+                    {
+                        uint32_t target_idx = debugger.GetTargetList().GetIndexOfTarget(process_sp->GetTarget().shared_from_this());
+                        if (target_idx != UINT32_MAX)
+                            stream->Printf ("Target %d: (", target_idx);
+                        else
+                            stream->Printf ("Target <unknown index>: (");
+                        process_sp->GetTarget().Dump (stream, eDescriptionLevelBrief);
+                        stream->Printf (") stopped.\n");
+                    }
+                }
+
+                // Pop the process IO handler
+                pop_process_io_handler = true;
+            }
+            break;
+    }
+
+    if (handle_pop && pop_process_io_handler)
+        process_sp->PopProcessIOHandler();
+
+    return true;
 }
 
 
@@ -1420,6 +1616,17 @@ Process::GetState()
     return m_public_state.GetValue ();
 }
 
+bool
+Process::StateChangedIsExternallyHijacked()
+{
+    if (IsHijackedForEvent(eBroadcastBitStateChanged))
+    {
+        if (strcmp(m_hijacking_listeners.back()->GetName(), "lldb.Process.ResumeSynchronous.hijack"))
+            return true;
+    }
+    return false;
+}
+
 void
 Process::SetPublicState (StateType new_state, bool restarted)
 {
@@ -1432,7 +1639,7 @@ Process::SetPublicState (StateType new_state, bool restarted)
     // On the transition from Run to Stopped, we unlock the writer end of the
     // run lock.  The lock gets locked in Resume, which is the public API
     // to tell the program to run.
-    if (!IsHijackedForEvent(eBroadcastBitStateChanged))
+    if (!StateChangedIsExternallyHijacked())
     {
         if (new_state == eStateDetached)
         {
@@ -1471,6 +1678,36 @@ Process::Resume ()
         return error;
     }
     return PrivateResume();
+}
+
+Error
+Process::ResumeSynchronous (Stream *stream)
+{
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf("Process::ResumeSynchronous -- locking run lock");
+    if (!m_public_run_lock.TrySetRunning())
+    {
+        Error error("Resume request failed - process still running.");
+        if (log)
+            log->Printf ("Process::Resume: -- TrySetRunning failed, not resuming.");
+        return error;
+    }
+
+    ListenerSP listener_sp (new Listener("lldb.Process.ResumeSynchronous.hijack"));
+    HijackProcessEvents(listener_sp.get());
+
+    Error error = PrivateResume();
+
+    StateType state = WaitForProcessToStop (NULL, NULL, true, listener_sp.get(), stream);
+
+    // Undo the hijacking of process events...
+    RestoreProcessEvents();
+
+    if (error.Success() && !StateIsStoppedState(state, false))
+        error.SetErrorStringWithFormat("process not in stopped state after synchronous resume: %s", StateAsCString(state));
+
+    return error;
 }
 
 StateType

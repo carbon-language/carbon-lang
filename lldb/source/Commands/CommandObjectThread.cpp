@@ -663,8 +663,15 @@ protected:
                 }
             }
 
+
             process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-            process->Resume ();
+
+            StreamString stream;
+            Error error;
+            if (synchronous_execution)
+                error = process->ResumeSynchronous (&stream);
+            else
+                error = process->Resume ();
 
             // There is a race condition where this thread will return up the call stack to the main command handler
             // and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
@@ -673,17 +680,12 @@ protected:
 
             if (synchronous_execution)
             {
-                StateType state = process->WaitForProcessToStop (NULL);
-                
-                //EventSP event_sp;
-                //StateType state = process->WaitForStateChangedEvents (NULL, event_sp);
-                //while (! StateIsStoppedState (state))
-                //  {
-                //    state = process->WaitForStateChangedEvents (NULL, event_sp);
-                //  }
+                // If any state changed events had anything to say, add that to the result
+                if (stream.GetData())
+                    result.AppendMessage(stream.GetData());
+
                 process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                 result.SetDidChangeProcessState (true);
-                result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
             else
@@ -902,17 +904,25 @@ public:
                 }
             }
 
+
+            StreamString stream;
+            Error error;
+            if (synchronous_execution)
+                error = process->ResumeSynchronous (&stream);
+            else
+                error = process->Resume ();
+
             // We should not be holding the thread list lock when we do this.
-            Error error (process->Resume());
             if (error.Success())
             {
                 result.AppendMessageWithFormat ("Process %" PRIu64 " resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
-                    state = process->WaitForProcessToStop (NULL);
+                    // If any state changed events had anything to say, add that to the result
+                    if (stream.GetData())
+                        result.AppendMessage(stream.GetData());
 
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
@@ -1233,17 +1243,27 @@ protected:
 
             }
 
+
+
             process->GetThreadList().SetSelectedThreadByID (m_options.m_thread_idx);
-            Error error (process->Resume ());
+
+            StreamString stream;
+            Error error;
+            if (synchronous_execution)
+                error = process->ResumeSynchronous (&stream);
+            else
+                error = process->Resume ();
+
             if (error.Success())
             {
                 result.AppendMessageWithFormat ("Process %" PRIu64 " resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
-                    StateType state = process->WaitForProcessToStop (NULL);
+                    // If any state changed events had anything to say, add that to the result
+                    if (stream.GetData())
+                        result.AppendMessage(stream.GetData());
 
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else

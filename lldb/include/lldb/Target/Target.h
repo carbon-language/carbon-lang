@@ -608,7 +608,8 @@ public:
     
     Error
     Launch (Listener &listener,
-            ProcessLaunchInfo &launch_info);
+            ProcessLaunchInfo &launch_info,
+            Stream *stream); // Optional stream to receive first stop info
 
     //------------------------------------------------------------------
     // This part handles the breakpoints.

@@ -690,14 +690,13 @@ protected:
                                 assert (stored_stop_info_sp.get() == this);
                                 
                                 ThreadPlanSP new_plan_sp(thread_sp->QueueThreadPlanForStepSingleInstruction(false, // step-over
-                                                                                                        false,     // abort_other_plans
-                                                                                                        true));    // stop_other_threads
+                                                                                                            false,     // abort_other_plans
+                                                                                                            true));    // stop_other_threads
                                 new_plan_sp->SetIsMasterPlan (true);
                                 new_plan_sp->SetOkayToDiscard (false);
                                 new_plan_sp->SetPrivate (true);
                                 process->GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
-                                process->Resume ();
-                                process->WaitForProcessToStop (NULL);
+                                process->ResumeSynchronous(NULL);
                                 process->GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
                                 thread_sp->SetStopInfo(stored_stop_info_sp);
                             }

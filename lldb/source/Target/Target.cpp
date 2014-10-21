@@ -2334,7 +2334,7 @@ Target::ClearAllLoadedSections ()
 
 
 Error
-Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
+Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info, Stream *stream)
 {
     Error error;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
@@ -2443,7 +2443,7 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
         {
             ListenerSP hijack_listener_sp (launch_info.GetHijackListener());
 
-            StateType state = m_process_sp->WaitForProcessToStop (NULL, NULL, false, hijack_listener_sp.get());
+            StateType state = m_process_sp->WaitForProcessToStop (NULL, NULL, false, hijack_listener_sp.get(), NULL);
             
             if (state == eStateStopped)
             {
@@ -2461,7 +2461,7 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
 
                     if (synchronous_execution)
                     {
-                        state = m_process_sp->WaitForProcessToStop (NULL, NULL, true, hijack_listener_sp.get());
+                        state = m_process_sp->WaitForProcessToStop (NULL, NULL, true, hijack_listener_sp.get(), stream);
                         const bool must_be_alive = false; // eStateExited is ok, so this must be false
                         if (!StateIsStoppedState(state, must_be_alive))
                         {

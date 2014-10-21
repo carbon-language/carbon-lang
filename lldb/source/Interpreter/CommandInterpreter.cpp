@@ -3141,20 +3141,6 @@ CommandInterpreter::IOHandlerInputComplete (IOHandler &io_handler, std::string &
                     StopReason reason = thread_sp->GetStopReason();
                     if (reason == eStopReasonSignal || reason == eStopReasonException || reason == eStopReasonInstrumentation)
                     {
-                        // If we are printing results, we ought to show the resaon why we are stopping here:
-                        if (io_handler.GetFlags().Test(eHandleCommandFlagPrintResult))
-                        {
-                            if (!result.GetImmediateOutputStream())
-                            {
-                                const uint32_t start_frame = 0;
-                                const uint32_t num_frames = 1;
-                                const uint32_t num_frames_with_source = 1;
-                                thread_sp->GetStatus (*io_handler.GetOutputStreamFile().get(),
-                                                      start_frame,
-                                                      num_frames,
-                                                      num_frames_with_source);
-                            }
-                        }
                         should_stop = true;
                         break;
                     }

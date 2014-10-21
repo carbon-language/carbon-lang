@@ -3097,6 +3097,7 @@ Debugger::GetProcessSTDERR (Process *process, Stream *stream)
     return total_bytes;
 }
 
+
 // This function handles events that were broadcast by the process.
 void
 Debugger::HandleProcessEvent (const EventSP &event_sp)
@@ -3104,7 +3105,7 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
     using namespace lldb;
     const uint32_t event_type = event_sp->GetType();
     ProcessSP process_sp = Process::ProcessEventData::GetProcessFromEvent(event_sp.get());
-    
+
     StreamString output_stream;
     StreamString error_stream;
     const bool gui_enabled = IsForwardingEvents();
@@ -3113,192 +3114,27 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
     {
         bool pop_process_io_handler = false;
         assert (process_sp);
-    
+
         if (event_type & Process::eBroadcastBitSTDOUT || event_type & Process::eBroadcastBitStateChanged)
         {
             GetProcessSTDOUT (process_sp.get(), &output_stream);
         }
-        
+
         if (event_type & Process::eBroadcastBitSTDERR || event_type & Process::eBroadcastBitStateChanged)
         {
             GetProcessSTDERR (process_sp.get(), &error_stream);
         }
-    
+
         if (event_type & Process::eBroadcastBitStateChanged)
         {
-
-            // Drain all stout and stderr so we don't see any output come after
-            // we print our prompts
-            // Something changed in the process;  get the event and report the process's current status and location to
-            // the user.
-            StateType event_state = Process::ProcessEventData::GetStateFromEvent (event_sp.get());
-            if (event_state == eStateInvalid)
-                return;
-            
-            switch (event_state)
-            {
-                case eStateInvalid:
-                case eStateUnloaded:
-                case eStateConnected:
-                case eStateAttaching:
-                case eStateLaunching:
-                case eStateStepping:
-                case eStateDetached:
-                    {
-                        output_stream.Printf("Process %" PRIu64 " %s\n",
-                                             process_sp->GetID(),
-                                             StateAsCString (event_state));
-                        
-                        if (event_state == eStateDetached)
-                            pop_process_io_handler = true;
-                    }
-                    break;
-                    
-                case eStateRunning:
-                    // Don't be chatty when we run...
-                    break;
-                    
-                case eStateExited:
-                    process_sp->GetStatus(output_stream);
-                    pop_process_io_handler = true;
-                    break;
-                    
-                case eStateStopped:
-                case eStateCrashed:
-                case eStateSuspended:
-                    // Make sure the program hasn't been auto-restarted:
-                    if (Process::ProcessEventData::GetRestartedFromEvent (event_sp.get()))
-                    {
-                        size_t num_reasons = Process::ProcessEventData::GetNumRestartedReasons(event_sp.get());
-                        if (num_reasons > 0)
-                        {
-                            // FIXME: Do we want to report this, or would that just be annoyingly chatty?
-                            if (num_reasons == 1)
-                            {
-                                const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), 0);
-                                output_stream.Printf("Process %" PRIu64 " stopped and restarted: %s\n",
-                                                     process_sp->GetID(),
-                                                     reason ? reason : "<UNKNOWN REASON>");
-                            }
-                            else
-                            {
-                                output_stream.Printf("Process %" PRIu64 " stopped and restarted, reasons:\n",
-                                                     process_sp->GetID());
-                                
-
-                                for (size_t i = 0; i < num_reasons; i++)
-                                {
-                                    const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), i);
-                                    output_stream.Printf("\t%s\n", reason ? reason : "<UNKNOWN REASON>");
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Lock the thread list so it doesn't change on us, this is the scope for the locker:
-                        {
-                            ThreadList &thread_list = process_sp->GetThreadList();
-                            Mutex::Locker locker (thread_list.GetMutex());
-                            
-                            ThreadSP curr_thread (thread_list.GetSelectedThread());
-                            ThreadSP thread;
-                            StopReason curr_thread_stop_reason = eStopReasonInvalid;
-                            if (curr_thread)
-                                curr_thread_stop_reason = curr_thread->GetStopReason();
-                            if (!curr_thread ||
-                                !curr_thread->IsValid() ||
-                                curr_thread_stop_reason == eStopReasonInvalid ||
-                                curr_thread_stop_reason == eStopReasonNone)
-                            {
-                                // Prefer a thread that has just completed its plan over another thread as current thread.
-                                ThreadSP plan_thread;
-                                ThreadSP other_thread;
-                                const size_t num_threads = thread_list.GetSize();
-                                size_t i;
-                                for (i = 0; i < num_threads; ++i)
-                                {
-                                    thread = thread_list.GetThreadAtIndex(i);
-                                    StopReason thread_stop_reason = thread->GetStopReason();
-                                    switch (thread_stop_reason)
-                                    {
-                                        case eStopReasonInvalid:
-                                        case eStopReasonNone:
-                                            break;
-                                            
-                                        case eStopReasonTrace:
-                                        case eStopReasonBreakpoint:
-                                        case eStopReasonWatchpoint:
-                                        case eStopReasonSignal:
-                                        case eStopReasonException:
-                                        case eStopReasonExec:
-                                        case eStopReasonThreadExiting:
-                                        case eStopReasonInstrumentation:
-                                            if (!other_thread)
-                                                other_thread = thread;
-                                            break;
-                                        case eStopReasonPlanComplete:
-                                            if (!plan_thread)
-                                                plan_thread = thread;
-                                            break;
-                                    }
-                                }
-                                if (plan_thread)
-                                    thread_list.SetSelectedThreadByID (plan_thread->GetID());
-                                else if (other_thread)
-                                    thread_list.SetSelectedThreadByID (other_thread->GetID());
-                                else
-                                {
-                                    if (curr_thread && curr_thread->IsValid())
-                                        thread = curr_thread;
-                                    else
-                                        thread = thread_list.GetThreadAtIndex(0);
-                                    
-                                    if (thread)
-                                        thread_list.SetSelectedThreadByID (thread->GetID());
-                                }
-                            }
-                        }
-                        // Drop the ThreadList mutex by here, since GetThreadStatus below might have to run code,
-                        // e.g. for Data formatters, and if we hold the ThreadList mutex, then the process is going to
-                        // have a hard time restarting the process.
-
-                        if (GetTargetList().GetSelectedTarget().get() == &process_sp->GetTarget())
-                        {
-                            const bool only_threads_with_stop_reason = true;
-                            const uint32_t start_frame = 0;
-                            const uint32_t num_frames = 1;
-                            const uint32_t num_frames_with_source = 1;
-                            process_sp->GetStatus(output_stream);
-                            process_sp->GetThreadStatus (output_stream,
-                                                         only_threads_with_stop_reason,
-                                                         start_frame,
-                                                         num_frames,
-                                                         num_frames_with_source);
-                        }
-                        else
-                        {
-                            uint32_t target_idx = GetTargetList().GetIndexOfTarget(process_sp->GetTarget().shared_from_this());
-                            if (target_idx != UINT32_MAX)
-                                output_stream.Printf ("Target %d: (", target_idx);
-                            else
-                                output_stream.Printf ("Target <unknown index>: (");
-                            process_sp->GetTarget().Dump (&output_stream, eDescriptionLevelBrief);
-                            output_stream.Printf (") stopped.\n");
-                        }
-                        
-                        // Pop the process IO handler
-                        pop_process_io_handler = true;
-                    }
-                    break;
-            }
+            Process::HandleProcessStateChangedEvent (event_sp, &output_stream, pop_process_io_handler);
         }
-    
+
         if (output_stream.GetSize() || error_stream.GetSize())
         {
             StreamFileSP error_stream_sp (GetOutputFile());
             bool top_io_handler_hid = false;
-            
+
             if (process_sp->ProcessIOHandlerIsActive() == false)
                 top_io_handler_hid = HideTopIOHandler();
 

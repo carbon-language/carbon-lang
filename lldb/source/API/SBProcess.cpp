@@ -739,18 +739,10 @@ SBProcess::Continue ()
     {
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
 
-        Error error (process_sp->Resume());
-        if (error.Success())
-        {
-            if (process_sp->GetTarget().GetDebugger().GetAsyncExecution () == false)
-            {
-                if (log)
-                    log->Printf ("SBProcess(%p)::Continue () waiting for process to stop...",
-                                 static_cast<void*>(process_sp.get()));
-                process_sp->WaitForProcessToStop (NULL);
-            }
-        }
-        sb_error.SetError(error);
+        if (process_sp->GetTarget().GetDebugger().GetAsyncExecution ())
+            sb_error.ref() = process_sp->Resume ();
+        else
+            sb_error.ref() = process_sp->ResumeSynchronous (NULL);
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");

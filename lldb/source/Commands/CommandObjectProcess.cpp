@@ -258,8 +258,9 @@ protected:
             // Save the arguments for subsequent runs in the current target.
             target->SetRunArguments (launch_args);
         }
-        
-        Error error = target->Launch(debugger.GetListener(), m_options.launch_info);
+
+        StreamString stream;
+        Error error = target->Launch(debugger.GetListener(), m_options.launch_info, &stream);
         
         if (error.Success())
         {
@@ -267,6 +268,8 @@ protected:
             ProcessSP process_sp (target->GetProcessSP());
             if (process_sp)
             {
+                if (stream.GetData())
+                    result.AppendMessage(stream.GetData());
                 result.AppendMessageWithFormat ("Process %" PRIu64 " launched: '%s' (%s)\n", process_sp->GetID(), exe_module_sp->GetFileSpec().GetPath().c_str(), archname);
                 result.SetStatus (eReturnStatusSuccessFinishResult);
                 result.SetDidChangeProcessState (true);
@@ -564,15 +567,18 @@ protected:
                     if (error.Success())
                     {
                         result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                        StateType state = process->WaitForProcessToStop (NULL, NULL, false, listener_sp.get());
+                        StreamString stream;
+                        StateType state = process->WaitForProcessToStop (NULL, NULL, false, listener_sp.get(), &stream);
 
                         process->RestoreProcessEvents();
 
                         result.SetDidChangeProcessState (true);
                         
+                        if (stream.GetData())
+                            result.AppendMessage(stream.GetData());
+
                         if (state == eStateStopped)
                         {
-                            result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                             result.SetStatus (eReturnStatusSuccessFinishNoResult);
                         }
                         else
@@ -791,7 +797,12 @@ protected:
                 }
             }
 
-            Error error(process->Resume());
+            StreamString stream;
+            Error error;
+            if (synchronous_execution)
+                error = process->ResumeSynchronous (&stream);
+            else
+                error = process->Resume ();
 
             if (error.Success())
             {
@@ -803,10 +814,11 @@ protected:
                 result.AppendMessageWithFormat ("Process %" PRIu64 " resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
-                    state = process->WaitForProcessToStop (NULL);
+                    // If any state changed events had anything to say, add that to the result
+                    if (stream.GetData())
+                        result.AppendMessage(stream.GetData());
 
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
