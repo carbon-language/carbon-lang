@@ -9162,6 +9162,7 @@ TEST_F(FormatTest, FormatsBlocks) {
 
   verifyFormat("foo(^{ bar(); });");
   verifyFormat("foo(a, ^{ bar(); });");
+  verifyFormat("{ void (^block)(Object *x); }");
 
   verifyFormat("[operation setCompletionBlock:^{ [self onOperationDone]; }];");
   verifyFormat("int i = {[operation setCompletionBlock:^{ [self "

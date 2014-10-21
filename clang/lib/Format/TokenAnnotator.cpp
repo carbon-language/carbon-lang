@@ -127,6 +127,9 @@ private:
       // The first argument to a foreach macro is a declaration.
       Contexts.back().IsForEachMacro = true;
       Contexts.back().IsExpression = false;
+    } else if (Left->Previous && Left->Previous->MatchingParen &&
+               Left->Previous->MatchingParen->Type == TT_ObjCBlockLParen) {
+      Contexts.back().IsExpression = false;
     }
 
     if (StartsObjCMethodExpr) {
