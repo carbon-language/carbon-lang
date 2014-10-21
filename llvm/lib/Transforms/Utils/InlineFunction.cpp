@@ -856,6 +856,12 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
         // originates from the call location. This is important for
         // ((__always_inline__, __nodebug__)) functions which must use caller
         // location for all instructions in their function body.
+
+        // Don't update static allocas, as they may get moved later.
+        if (auto *AI = dyn_cast<AllocaInst>(BI))
+          if (isa<Constant>(AI->getArraySize()))
+            continue;
+
         BI->setDebugLoc(TheCallDL);
       } else {
         BI->setDebugLoc(updateInlinedAtInfo(DL, TheCallDL, BI->getContext()));
