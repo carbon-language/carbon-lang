@@ -424,10 +424,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   CCGenDiagnostics = true;
 
   // Save the original job command(s).
-  std::string Cmd;
-  llvm::raw_string_ostream OS(Cmd);
-  FailingCommand.Print(OS, "\n", /*Quote*/ false, /*CrashReport*/ true);
-  OS.flush();
+  Command Cmd = FailingCommand;
 
   // Keep track of whether we produce any errors while trying to produce
   // preprocessed sources.
@@ -541,36 +538,16 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   }
 
   // Assume associated files are based off of the first temporary file.
-  const char *MainFile = TempFiles[0];
+  CrashReportInfo CrashInfo(TempFiles[0], VFS);
 
-  std::string Script = StringRef(MainFile).rsplit('.').first.str() + ".sh";
+  std::string Script = CrashInfo.Filename.rsplit('.').first.str() + ".sh";
   std::error_code EC;
   llvm::raw_fd_ostream ScriptOS(Script, EC, llvm::sys::fs::F_Excl);
   if (EC) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)
         << "Error generating run script: " + Script + " " + EC.message();
   } else {
-    // Replace the original filename with the preprocessed one.
-    size_t I, E;
-    I = Cmd.find("-main-file-name ");
-    assert(I != std::string::npos && "Expected to find -main-file-name");
-    I += 16;
-    E = Cmd.find(" ", I);
-    assert(E != std::string::npos && "-main-file-name missing argument?");
-    StringRef OldFilename = StringRef(Cmd).slice(I, E);
-    StringRef NewFilename = llvm::sys::path::filename(MainFile);
-    I = StringRef(Cmd).rfind(OldFilename);
-    E = I + OldFilename.size();
-    if (E + 1 < Cmd.size() && Cmd[E] == '"')
-      ++E; // Replace a trailing quote if present.
-    I = Cmd.rfind(" ", I) + 1;
-    Cmd.replace(I, E - I, NewFilename.data(), NewFilename.size());
-    if (!VFS.empty()) {
-      // Add the VFS overlay to the reproduction script.
-      I += NewFilename.size();
-      Cmd.insert(I, std::string(" -ivfsoverlay ") + VFS.c_str());
-    }
-    ScriptOS << Cmd;
+    Cmd.Print(ScriptOS, "\n", /*Quote=*/false, &CrashInfo);
     Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
   }
   Diag(clang::diag::note_drv_command_failed_diag_msg)

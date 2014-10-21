@@ -29,6 +29,14 @@ class Tool;
 // Re-export this as clang::driver::ArgStringList.
 using llvm::opt::ArgStringList;
 
+struct CrashReportInfo {
+  StringRef Filename;
+  StringRef VFSPath;
+
+  CrashReportInfo(StringRef Filename, StringRef VFSPath)
+      : Filename(Filename), VFSPath(VFSPath) {}
+};
+
 class Job {
 public:
   enum JobClass {
@@ -52,9 +60,9 @@ public:
   /// \param OS - The stream to print on.
   /// \param Terminator - A string to print at the end of the line.
   /// \param Quote - Should separate arguments be quoted.
-  /// \param CrashReport - Whether to print for inclusion in a crash report.
-  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
-                     bool Quote, bool CrashReport = false) const = 0;
+  /// \param CrashInfo - Details for inclusion in a crash report.
+  virtual void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
+                     CrashReportInfo *CrashInfo = nullptr) const = 0;
 };
 
 /// Command - An executable path/name and argument vector to
@@ -102,7 +110,7 @@ public:
           const llvm::opt::ArgStringList &_Arguments);
 
   void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
-             bool CrashReport = false) const override;
+             CrashReportInfo *CrashInfo = nullptr) const override;
 
   virtual int Execute(const StringRef **Redirects, std::string *ErrMsg,
                       bool *ExecutionFailed) const;
@@ -141,7 +149,7 @@ public:
                   std::unique_ptr<Command> Fallback_);
 
   void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
-             bool CrashReport = false) const override;
+             CrashReportInfo *CrashInfo = nullptr) const override;
 
   int Execute(const StringRef **Redirects, std::string *ErrMsg,
               bool *ExecutionFailed) const override;
@@ -170,7 +178,7 @@ public:
   virtual ~JobList() {}
 
   void Print(llvm::raw_ostream &OS, const char *Terminator,
-             bool Quote, bool CrashReport = false) const override;
+             bool Quote, CrashReportInfo *CrashInfo = nullptr) const override;
 
   /// Add a job to the list (taking ownership).
   void addJob(std::unique_ptr<Job> J) { Jobs.push_back(std::move(J)); }
