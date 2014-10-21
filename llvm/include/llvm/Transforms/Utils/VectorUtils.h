@@ -36,6 +36,8 @@ static inline bool isTriviallyVectorizable(Intrinsic::ID ID) {
   case Intrinsic::log10:
   case Intrinsic::log2:
   case Intrinsic::fabs:
+  case Intrinsic::minnum:
+  case Intrinsic::maxnum:
   case Intrinsic::copysign:
   case Intrinsic::floor:
   case Intrinsic::ceil:
@@ -153,6 +155,14 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   case LibFunc::fabsf:
   case LibFunc::fabsl:
     return checkUnaryFloatSignature(*CI, Intrinsic::fabs);
+  case LibFunc::fmin:
+  case LibFunc::fminf:
+  case LibFunc::fminl:
+    return checkBinaryFloatSignature(*CI, Intrinsic::minnum);
+  case LibFunc::fmax:
+  case LibFunc::fmaxf:
+  case LibFunc::fmaxl:
+    return checkBinaryFloatSignature(*CI, Intrinsic::maxnum);
   case LibFunc::copysign:
   case LibFunc::copysignf:
   case LibFunc::copysignl:

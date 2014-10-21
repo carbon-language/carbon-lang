@@ -373,6 +373,8 @@ def fdiv       : SDNode<"ISD::FDIV"       , SDTFPBinOp>;
 def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
 def fma        : SDNode<"ISD::FMA"        , SDTFPTernaryOp>;
 def fabs       : SDNode<"ISD::FABS"       , SDTFPUnaryOp>;
+def fminnum    : SDNode<"ISD::FMINNUM"    , SDTFPBinOp>;
+def fmaxnum    : SDNode<"ISD::FMAXNUM"    , SDTFPBinOp>;
 def fgetsign   : SDNode<"ISD::FGETSIGN"   , SDTFPToIntOp>;
 def fneg       : SDNode<"ISD::FNEG"       , SDTFPUnaryOp>;
 def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;

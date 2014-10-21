@@ -8028,9 +8028,9 @@ all types however.
 
       declare float     @llvm.fabs.f32(float  %Val)
       declare double    @llvm.fabs.f64(double %Val)
-      declare x86_fp80  @llvm.fabs.f80(x86_fp80  %Val)
+      declare x86_fp80  @llvm.fabs.f80(x86_fp80 %Val)
       declare fp128     @llvm.fabs.f128(fp128 %Val)
-      declare ppc_fp128 @llvm.fabs.ppcf128(ppc_fp128  %Val)
+      declare ppc_fp128 @llvm.fabs.ppcf128(ppc_fp128 %Val)
 
 Overview:
 """""""""
@@ -8049,6 +8049,89 @@ Semantics:
 
 This function returns the same values as the libm ``fabs`` functions
 would, and handles error conditions in the same way.
+
+'``llvm.minnum.*``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+This is an overloaded intrinsic. You can use ``llvm.minnum`` on any
+floating point or vector of floating point type. Not all targets support
+all types however.
+
+::
+
+      declare float     @llvm.minnum.f32(float %Val)
+      declare double    @llvm.minnum.f64(double %Val)
+      declare x86_fp80  @llvm.minnum.f80(x86_fp80 %Val)
+      declare fp128     @llvm.minnum.f128(fp128 %Val)
+      declare ppc_fp128 @llvm.minnum.ppcf128(ppc_fp128 %Val)
+
+Overview:
+"""""""""
+
+The '``llvm.minnum.*``' intrinsics return the minimum of the two
+arguments.
+
+
+Arguments:
+""""""""""
+
+The arguments and return value are floating point numbers of the same
+type.
+
+Semantics:
+""""""""""
+
+Follows the IEEE-754 semantics for minNum, which also match for libm's
+fmin.
+
+If either operand is a NaN, returns the other non-NaN operand. Returns
+NaN only if both operands are NaN. If the operands compare equal,
+returns a value that compares equal to both operands. This means that
+fmin(+/-0.0, +/-0.0) could return either -0.0 or 0.0.
+
+'``llvm.maxnum.*``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+This is an overloaded intrinsic. You can use ``llvm.maxnum`` on any
+floating point or vector of floating point type. Not all targets support
+all types however.
+
+::
+
+      declare float     @llvm.maxnum.f32(float  %Val)
+      declare double    @llvm.maxnum.f64(double %Val)
+      declare x86_fp80  @llvm.maxnum.f80(x86_fp80  %Val)
+      declare fp128     @llvm.maxnum.f128(fp128 %Val)
+      declare ppc_fp128 @llvm.maxnum.ppcf128(ppc_fp128  %Val)
+
+Overview:
+"""""""""
+
+The '``llvm.maxnum.*``' intrinsics return the maximum of the two
+arguments.
+
+
+Arguments:
+""""""""""
+
+The arguments and return value are floating point numbers of the same
+type.
+
+Semantics:
+""""""""""
+Follows the IEEE-754 semantics for maxNum, which also match for libm's
+fmax.
+
+If either operand is a NaN, returns the other non-NaN operand. Returns
+NaN only if both operands are NaN. If the operands compare equal,
+returns a value that compares equal to both operands. This means that
+fmax(+/-0.0, +/-0.0) could return either -0.0 or 0.0.
 
 '``llvm.copysign.*``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

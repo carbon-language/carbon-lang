@@ -4,6 +4,8 @@ declare float @llvm.sqrt.f32(float) nounwind readonly
 declare float @llvm.fma.f32(float, float, float) nounwind readonly
 declare float @llvm.fmuladd.f32(float, float, float) nounwind readonly
 declare float @llvm.fabs.f32(float) nounwind readonly
+declare float @llvm.minnum.f32(float, float) nounwind readonly
+declare float @llvm.maxnum.f32(float, float) nounwind readonly
 
 ; CHECK-LABEL: @sqrt_test(
 ; CHECK: select
@@ -73,3 +75,36 @@ test_fmuladd.exit:                                   ; preds = %cond.else.i, %en
   ret void
 }
 
+; CHECK-LABEL: @minnum_test(
+; CHECK: select
+define void @minnum_test(float addrspace(1)* noalias nocapture %out, float %a, float %b) nounwind {
+entry:
+  %cmp.i = fcmp olt float %a, 0.000000e+00
+  br i1 %cmp.i, label %test_minnum.exit, label %cond.else.i
+
+cond.else.i:                                      ; preds = %entry
+  %0 = tail call float @llvm.minnum.f32(float %a, float %b) nounwind readnone
+  br label %test_minnum.exit
+
+test_minnum.exit:                                   ; preds = %cond.else.i, %entry
+  %cond.i = phi float [ %0, %cond.else.i ], [ 0x7FF8000000000000, %entry ]
+  store float %cond.i, float addrspace(1)* %out, align 4
+  ret void
+}
+
+; CHECK-LABEL: @maxnum_test(
+; CHECK: select
+define void @maxnum_test(float addrspace(1)* noalias nocapture %out, float %a, float %b) nounwind {
+entry:
+  %cmp.i = fcmp olt float %a, 0.000000e+00
+  br i1 %cmp.i, label %test_maxnum.exit, label %cond.else.i
+
+cond.else.i:                                      ; preds = %entry
+  %0 = tail call float @llvm.maxnum.f32(float %a, float %b) nounwind readnone
+  br label %test_maxnum.exit
+
+test_maxnum.exit:                                   ; preds = %cond.else.i, %entry
+  %cond.i = phi float [ %0, %cond.else.i ], [ 0x7FF8000000000000, %entry ]
+  store float %cond.i, float addrspace(1)* %out, align 4
+  ret void
+}

@@ -2578,6 +2578,8 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
        case Intrinsic::fma:
        case Intrinsic::fmuladd:
        case Intrinsic::fabs:
+       case Intrinsic::minnum:
+       case Intrinsic::maxnum:
          return true;
        // TODO: some fp intrinsics are marked as having the same error handling
        // as libm. They're safe to speculate when they won't error.

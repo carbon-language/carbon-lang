@@ -1228,6 +1228,18 @@ m_BSwap(const Opnd0 &Op0) {
   return m_Intrinsic<Intrinsic::bswap>(Op0);
 }
 
+template<typename Opnd0, typename Opnd1>
+inline typename m_Intrinsic_Ty<Opnd0, Opnd1>::Ty
+m_FMin(const Opnd0 &Op0, const Opnd1 &Op1) {
+  return m_Intrinsic<Intrinsic::minnum>(Op0, Op1);
+}
+
+template<typename Opnd0, typename Opnd1>
+inline typename m_Intrinsic_Ty<Opnd0, Opnd1>::Ty
+m_FMax(const Opnd0 &Op0, const Opnd1 &Op1) {
+  return m_Intrinsic<Intrinsic::maxnum>(Op0, Op1);
+}
+
 } // end namespace PatternMatch
 } // end namespace llvm
 

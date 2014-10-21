@@ -1229,6 +1229,8 @@ Constant *llvm::ConstantFoldLoadThroughGEPIndices(Constant *C,
 bool llvm::canConstantFoldCallTo(const Function *F) {
   switch (F->getIntrinsicID()) {
   case Intrinsic::fabs:
+  case Intrinsic::minnum:
+  case Intrinsic::maxnum:
   case Intrinsic::log:
   case Intrinsic::log2:
   case Intrinsic::log10:
@@ -1625,6 +1627,19 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
           V1.copySign(V2);
           return ConstantFP::get(Ty->getContext(), V1);
         }
+
+        if (IntrinsicID == Intrinsic::minnum) {
+          const APFloat &C1 = Op1->getValueAPF();
+          const APFloat &C2 = Op2->getValueAPF();
+          return ConstantFP::get(Ty->getContext(), minnum(C1, C2));
+        }
+
+        if (IntrinsicID == Intrinsic::maxnum) {
+          const APFloat &C1 = Op1->getValueAPF();
+          const APFloat &C2 = Op2->getValueAPF();
+          return ConstantFP::get(Ty->getContext(), maxnum(C1, C2));
+        }
+
         if (!TLI)
           return nullptr;
         if (Name == "pow" && TLI->has(LibFunc::pow))

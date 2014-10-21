@@ -685,6 +685,8 @@ namespace {
       case Intrinsic::trunc:
       case Intrinsic::floor:
       case Intrinsic::fabs:
+      case Intrinsic::minnum:
+      case Intrinsic::maxnum:
         return Config.VectorizeMath;
       case Intrinsic::bswap:
       case Intrinsic::ctpop:
