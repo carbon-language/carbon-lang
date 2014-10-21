@@ -554,11 +554,9 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   int InsertPos = -1;
   StringRef PosName = sys::path::filename(RelPos);
   if (OldArchive) {
-    for (object::Archive::child_iterator I = OldArchive->child_begin(),
-                                         E = OldArchive->child_end();
-         I != E; ++I) {
+    for (auto &Child : OldArchive->children()) {
       int Pos = Ret.size();
-      ErrorOr<StringRef> NameOrErr = I->getName();
+      ErrorOr<StringRef> NameOrErr = Child.getName();
       failIfError(NameOrErr.getError());
       StringRef Name = NameOrErr.get();
       if (Name == PosName) {
@@ -570,10 +568,11 @@ computeNewArchiveMembers(ArchiveOperation Operation,
       }
 
       std::vector<StringRef>::iterator MemberI = Members.end();
-      InsertAction Action = computeInsertAction(Operation, I, Name, MemberI);
+      InsertAction Action =
+          computeInsertAction(Operation, Child, Name, MemberI);
       switch (Action) {
       case IA_AddOldMember:
-        addMember(Ret, I, Name);
+        addMember(Ret, Child, Name);
         break;
       case IA_AddNewMeber:
         addMember(Ret, *MemberI, Name);
@@ -581,7 +580,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
       case IA_Delete:
         break;
       case IA_MoveOldMember:
-        addMember(Moved, I, Name);
+        addMember(Moved, Child, Name);
         break;
       case IA_MoveNewMember:
         addMember(Moved, *MemberI, Name);
