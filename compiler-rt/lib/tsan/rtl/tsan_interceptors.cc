@@ -396,7 +396,11 @@ static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
 }
 
 static void LongJmp(ThreadState *thr, uptr *env) {
+#if SANITIZER_FREEBSD
+  uptr mangled_sp = env[2];
+#else
   uptr mangled_sp = env[6];
+#endif  // SANITIZER_FREEBSD
   // Find the saved buf by mangled_sp.
   for (uptr i = 0; i < thr->jmp_bufs.Size(); i++) {
     JmpBuf *buf = &thr->jmp_bufs[i];
