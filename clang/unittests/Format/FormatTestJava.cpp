@@ -74,6 +74,9 @@ TEST_F(FormatTestJava, Annotations) {
 
   verifyFormat("@SuppressWarnings(value = \"unchecked\")\n"
                "public void doSomething() {\n}");
+  verifyFormat("@SuppressWarnings(value = \"unchecked\")\n"
+               "@Author(name = \"abc\")\n"
+               "public void doSomething() {\n}");
 
   verifyFormat("DoSomething(new A() {\n"
                "  @Override\n"
