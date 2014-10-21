@@ -51,6 +51,10 @@ private:
     Contexts.back().InTemplateArgument =
         Left->Previous && Left->Previous->Tok.isNot(tok::kw_template);
 
+    if (Style.Language == FormatStyle::LK_Java &&
+        CurrentToken->is(tok::question))
+      next();
+
     while (CurrentToken) {
       if (CurrentToken->is(tok::greater)) {
         Left->MatchingParen = CurrentToken;
@@ -60,7 +64,7 @@ private:
         return true;
       }
       if (CurrentToken->isOneOf(tok::r_paren, tok::r_square, tok::r_brace,
-                                tok::question, tok::colon))
+                                tok::colon, tok::question))
         return false;
       // If a && or || is found and interpreted as a binary operator, this set
       // of angles is likely part of something like "a < b && c > d". If the
@@ -1532,9 +1536,6 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
             (Left.MatchingParen && Left.MatchingParen->Type == TT_CastRParen))
                ? Style.SpacesInCStyleCastParentheses
                : Style.SpacesInParentheses;
-  if (Style.SpacesInAngles &&
-      ((Left.Type == TT_TemplateOpener) != (Right.Type == TT_TemplateCloser)))
-    return true;
   if (Right.isOneOf(tok::semi, tok::comma))
     return false;
   if (Right.is(tok::less) &&
@@ -1550,10 +1551,6 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::coloncolon))
     return false;
-  if (Right.is(tok::coloncolon) && Left.isNot(tok::l_brace))
-    return (Left.is(tok::less) && Style.Standard == FormatStyle::LS_Cpp03) ||
-           !Left.isOneOf(tok::identifier, tok::greater, tok::l_paren,
-                         tok::r_paren, tok::less);
   if (Left.is(tok::less) || Right.isOneOf(tok::greater, tok::less))
     return false;
   if (Right.is(tok::ellipsis))
@@ -1697,6 +1694,12 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (!Style.SpaceBeforeAssignmentOperators &&
       Right.getPrecedence() == prec::Assignment)
     return false;
+  if (Right.is(tok::coloncolon) && Left.isNot(tok::l_brace))
+    return (Left.is(tok::less) && Style.Standard == FormatStyle::LS_Cpp03) ||
+           !Left.isOneOf(tok::identifier, tok::greater, tok::l_paren,
+                         tok::r_paren, tok::less);
+  if ((Left.Type == TT_TemplateOpener) != (Right.Type == TT_TemplateCloser))
+    return Style.SpacesInAngles;
   if ((Right.Type == TT_BinaryOperator && !Left.is(tok::l_paren)) ||
       Left.Type == TT_BinaryOperator || Left.Type == TT_ConditionalExpr)
     return true;

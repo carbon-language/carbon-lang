@@ -78,5 +78,11 @@ TEST_F(FormatTestJava, Annotations) {
   verifyFormat("@Partial @Mock DataLoader loader;");
 }
 
+TEST_F(FormatTestJava, Generics) {
+  verifyFormat("Iterable<?> a;");
+  verifyFormat("Iterable<?> a;");
+  verifyFormat("Iterable<? extends SomeObject> a;");
+}
+
 } // end namespace tooling
 } // end namespace clang
