@@ -138,7 +138,6 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
                            &hTopKey);
     if (lResult == ERROR_SUCCESS) {
       char keyName[256];
-      int bestIndex = -1;
       double bestValue = 0.0;
       DWORD index, size = sizeof(keyName) - 1;
       for (index = 0; RegEnumKeyEx(hTopKey, index, keyName, &size, NULL,
@@ -168,7 +167,6 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
             lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
               (LPBYTE)value, &valueSize);
             if (lResult == ERROR_SUCCESS) {
-              bestIndex = (int)index;
               bestValue = dvalue;
               returnValue = true;
             }
