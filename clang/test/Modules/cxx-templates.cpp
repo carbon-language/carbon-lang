@@ -122,6 +122,10 @@ void g() {
   (void)&WithImplicitSpecialMembers<int>::n;
 
   MergeClassTemplateSpecializations_string s;
+
+  extern TestInjectedClassName::A *use_a;
+  extern TestInjectedClassName::C *use_c;
+  TestInjectedClassName::UseD();
 }
 
 static_assert(Outer<int>::Inner<int>::f() == 1, "");

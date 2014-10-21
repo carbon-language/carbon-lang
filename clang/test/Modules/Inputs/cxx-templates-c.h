@@ -21,3 +21,8 @@ inline MergeAnonUnionMember<> maum_c() { return {}; }
 
 template<typename T> struct DontWalkPreviousDeclAfterMerging { struct Inner { typedef T type; }; };
 typedef DontWalkPreviousDeclAfterMerging<char>::Inner dwpdam_typedef;
+
+namespace TestInjectedClassName {
+  template<typename T> struct X { X(); };
+  typedef X<char[3]> C;
+}

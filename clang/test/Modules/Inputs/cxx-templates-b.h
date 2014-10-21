@@ -24,6 +24,11 @@ template<typename T> template<typename U>
 constexpr int Outer<T>::Inner<U>::g() { return 2; }
 static_assert(Outer<int>::Inner<int>::g() == 2, "");
 
+namespace TestInjectedClassName {
+  template<typename T> struct X { X(); };
+  typedef X<char[2]> B;
+}
+
 @import cxx_templates_b_impl;
 
 template<typename T, typename> struct Identity { typedef T type; };

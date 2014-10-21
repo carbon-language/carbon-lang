@@ -5493,13 +5493,18 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     QualType TST = readType(*Loc.F, Record, Idx); // probably derivable
     // FIXME: ASTContext::getInjectedClassNameType is not currently suitable
     // for AST reading, too much interdependencies.
-    const Type *T;
-    if (const Type *Existing = D->getTypeForDecl())
-      T = Existing;
-    else if (auto *Prev = D->getPreviousDecl())
-      T = Prev->getTypeForDecl();
-    else
+    const Type *T = nullptr;
+    for (auto *DI = D; DI; DI = DI->getPreviousDecl()) {
+      if (const Type *Existing = DI->getTypeForDecl()) {
+        T = Existing;
+        break;
+      }
+    }
+    if (!T) {
       T = new (Context, TypeAlignment) InjectedClassNameType(D, TST);
+      for (auto *DI = D; DI; DI = DI->getPreviousDecl())
+        DI->setTypeForDecl(T);
+    }
     return QualType(T, 0);
   }
 

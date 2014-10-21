@@ -99,3 +99,8 @@ struct MergeAnonUnionMember {
 inline MergeAnonUnionMember<> maum_a() { return {}; }
 
 template<typename T> struct DontWalkPreviousDeclAfterMerging { struct Inner { typedef T type; }; };
+
+namespace TestInjectedClassName {
+  template<typename T> struct X { X(); };
+  typedef X<char[1]> A;
+}
