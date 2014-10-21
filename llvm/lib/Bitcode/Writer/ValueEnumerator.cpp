@@ -509,12 +509,10 @@ void ValueEnumerator::EnumerateMetadata(const Value *MD) {
 
   // Check to see if it's already in!
   unsigned &MDValueID = MDValueMap[MD];
-  if (MDValueID) {
-    // Increment use count.
-    MDValues[MDValueID-1].second++;
+  if (MDValueID)
     return;
-  }
-  MDValues.push_back(std::make_pair(MD, 1U));
+
+  MDValues.push_back(MD);
   MDValueID = MDValues.size();
 
   // Enumerate all non-function-local operands.
@@ -533,12 +531,10 @@ void ValueEnumerator::EnumerateFunctionLocalMetadata(const MDNode *N) {
 
   // Check to see if it's already in!
   unsigned &MDValueID = MDValueMap[N];
-  if (MDValueID) {
-    // Increment use count.
-    MDValues[MDValueID-1].second++;
+  if (MDValueID)
     return;
-  }
-  MDValues.push_back(std::make_pair(N, 1U));
+
+  MDValues.push_back(N);
   MDValueID = MDValues.size();
 
   // To incoroporate function-local information visit all function-local
@@ -766,7 +762,7 @@ void ValueEnumerator::purgeFunction() {
   for (unsigned i = NumModuleValues, e = Values.size(); i != e; ++i)
     ValueMap.erase(Values[i].first);
   for (unsigned i = NumModuleMDValues, e = MDValues.size(); i != e; ++i)
-    MDValueMap.erase(MDValues[i].first);
+    MDValueMap.erase(MDValues[i]);
   for (unsigned i = 0, e = BasicBlocks.size(); i != e; ++i)
     ValueMap.erase(BasicBlocks[i]);
 

@@ -58,7 +58,7 @@ private:
   typedef UniqueVector<const Comdat *> ComdatSetType;
   ComdatSetType Comdats;
 
-  ValueList MDValues;
+  std::vector<const Value *> MDValues;
   SmallVector<const MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
 
@@ -134,7 +134,7 @@ public:
   }
 
   const ValueList &getValues() const { return Values; }
-  const ValueList &getMDValues() const { return MDValues; }
+  const std::vector<const Value *> &getMDValues() const { return MDValues; }
   const SmallVectorImpl<const MDNode *> &getFunctionLocalMDValues() const {
     return FunctionLocalMDs;
   }
