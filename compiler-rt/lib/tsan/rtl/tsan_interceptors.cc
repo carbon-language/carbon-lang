@@ -110,9 +110,14 @@ struct sigaction_t {
     sighandler_t sa_handler;
     void (*sa_sigaction)(int sig, my_siginfo_t *siginfo, void *uctx);
   };
+#if SANITIZER_FREEBSD
+  int sa_flags;
+  __sanitizer_sigset_t sa_mask;
+#else
   __sanitizer_sigset_t sa_mask;
   int sa_flags;
   void (*sa_restorer)();
+#endif
 };
 
 const sighandler_t SIG_DFL = (sighandler_t)0;
