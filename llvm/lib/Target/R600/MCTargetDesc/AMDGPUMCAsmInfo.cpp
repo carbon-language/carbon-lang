@@ -35,7 +35,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfoELF() {
 
   //===--- Global Variable Emission Directives --------------------------===//
   GlobalDirective = ".global";
-  HasSetDirective = false;
   HasAggressiveSymbolFolding = true;
   COMMDirectiveAlignmentIsInBytes = false;
   HasDotTypeDotSizeDirective = false;

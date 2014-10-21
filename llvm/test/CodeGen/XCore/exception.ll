@@ -107,17 +107,12 @@ Exit:
 ; CHECK: .asciiz
 ; CHECK: .byte  3
 ; CHECK: .byte  26
-; CHECK: [[SET0:.L[a-zA-Z0-9_]+]] = [[PRE_G]]-[[START]]
-; CHECK: .long [[SET0]]
-; CHECK: [[SET1:.L[a-zA-Z0-9_]+]] = [[POST_G]]-[[PRE_G]]
-; CHECK: .long [[SET1]]
-; CHECK: [[SET2:.L[a-zA-Z0-9_]+]] = [[LANDING]]-[[START]]
-; CHECK: .long [[SET2]]
+; CHECK: .long [[PRE_G]]-[[START]]
+; CHECK: .long [[POST_G]]-[[PRE_G]]
+; CHECK: .long [[LANDING]]-[[START]]
 ; CHECK: .byte 3
-; CHECK: [[SET3:.L[a-zA-Z0-9_]+]] = [[POST_G]]-[[START]]
-; CHECK: .long [[SET3]]
-; CHECK: [[SET4:.L[a-zA-Z0-9_]+]] = [[END]]-[[POST_G]]
-; CHECK: .long [[SET4]]
+; CHECK: .long [[POST_G]]-[[START]]
+; CHECK: .long [[END]]-[[POST_G]]
 ; CHECK: .long 0
 ; CHECK: .byte 0
 ; CHECK: .byte 1

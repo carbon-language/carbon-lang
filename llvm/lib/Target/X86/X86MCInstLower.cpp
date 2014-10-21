@@ -264,7 +264,8 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     Expr = MCBinaryExpr::CreateSub(Expr,
                             MCSymbolRefExpr::Create(MF.getPICBaseSymbol(), Ctx),
                                    Ctx);
-    if (MO.isJTI() && MAI.hasSetDirective()) {
+    if (MO.isJTI()) {
+      assert(MAI.doesSetDirectiveSuppressesReloc());
       // If .set directive is supported, use it to reduce the number of
       // relocations the assembler will generate for differences between
       // local labels. This is only safe when the symbols are in the same

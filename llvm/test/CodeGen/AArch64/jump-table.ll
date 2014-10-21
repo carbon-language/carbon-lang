@@ -56,15 +56,11 @@ lbl4:
 ; CHECK-NEXT: .xword
 
 ; CHECK-PIC-NOT: .data_region
-; CHECK-PIC: .L[[VAR1:.*]] = .LBB{{.*}}-.LJTI0_0
-; CHECK-PIC-NEXT: .L[[VAR2:.*]] = .LBB{{.*}}-.LJTI0_0
-; CHECK-PIC-NEXT: .L[[VAR3:.*]] = .LBB{{.*}}-.LJTI0_0
-; CHECK-PIC-NEXT: .L[[VAR4:.*]] = .LBB{{.*}}-.LJTI0_0
-; CHECK-PIC-NEXT: .L[[VAR5:.*]] = .LBB{{.*}}-.LJTI0_0
-; CHECK-PIC-NEXT: .LJTI0_0:
-; CHECK-PIC-NEXT: .word .L[[VAR1]]
-; CHECK-PIC-NEXT: .word .L[[VAR2]]
-; CHECK-PIC-NEXT: .word .L[[VAR3]]
-; CHECK-PIC-NEXT: .word .L[[VAR4]]
-; CHECK-PIC-NEXT: .word .L[[VAR5]]
+; CHECK-PIC-NOT: .LJTI0_0
+; CHECK-PIC: .LJTI0_0:
+; CHECK-PIC-NEXT: .word .LBB{{.*}}-.LJTI0_0
+; CHECK-PIC-NEXT: .word .LBB{{.*}}-.LJTI0_0
+; CHECK-PIC-NEXT: .word .LBB{{.*}}-.LJTI0_0
+; CHECK-PIC-NEXT: .word .LBB{{.*}}-.LJTI0_0
+; CHECK-PIC-NEXT: .word .LBB{{.*}}-.LJTI0_0
 ; CHECK-PIC-NOT: .end_data_region

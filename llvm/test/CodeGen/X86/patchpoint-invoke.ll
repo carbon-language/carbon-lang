@@ -38,10 +38,8 @@ threw:
 ; CHECK-NEXT: .byte 3
 ; CHECK-NEXT: .byte 13
 ; Verify that the unwind data covers the entire patchpoint region:
-; CHECK-NEXT: [[RANGE_OFFSET:.L[^ ]*]] = .Ltmp0-[[FUNC_BEGIN]]
-; CHECK-NEXT: .long [[RANGE_OFFSET]]
-; CHECK-NEXT: [[RANGE_LENGTH:.L[^ ]*]] = [[PP_END]]-.Ltmp0
-; CHECK-NEXT: .long [[RANGE_LENGTH]]
+; CHECK-NEXT: .long .Ltmp0-[[FUNC_BEGIN]]
+; CHECK-NEXT: .long [[PP_END]]-.Ltmp0
 
 
 ; Verify that the stackmap section got emitted:

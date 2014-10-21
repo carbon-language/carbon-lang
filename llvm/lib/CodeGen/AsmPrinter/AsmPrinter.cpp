@@ -962,24 +962,21 @@ bool AsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  if (MAI->hasSetDirective()) {
-    OutStreamer.AddBlankLine();
-    for (const auto &Alias : M.aliases()) {
-      MCSymbol *Name = getSymbol(&Alias);
+  OutStreamer.AddBlankLine();
+  for (const auto &Alias : M.aliases()) {
+    MCSymbol *Name = getSymbol(&Alias);
 
-      if (Alias.hasExternalLinkage() || !MAI->getWeakRefDirective())
-        OutStreamer.EmitSymbolAttribute(Name, MCSA_Global);
-      else if (Alias.hasWeakLinkage() || Alias.hasLinkOnceLinkage())
-        OutStreamer.EmitSymbolAttribute(Name, MCSA_WeakReference);
-      else
-        assert(Alias.hasLocalLinkage() && "Invalid alias linkage");
+    if (Alias.hasExternalLinkage() || !MAI->getWeakRefDirective())
+      OutStreamer.EmitSymbolAttribute(Name, MCSA_Global);
+    else if (Alias.hasWeakLinkage() || Alias.hasLinkOnceLinkage())
+      OutStreamer.EmitSymbolAttribute(Name, MCSA_WeakReference);
+    else
+      assert(Alias.hasLocalLinkage() && "Invalid alias linkage");
 
-      EmitVisibility(Name, Alias.getVisibility());
+    EmitVisibility(Name, Alias.getVisibility());
 
-      // Emit the directives as assignments aka .set:
-      OutStreamer.EmitAssignment(Name,
-                                 lowerConstant(Alias.getAliasee(), *this));
-    }
+    // Emit the directives as assignments aka .set:
+    OutStreamer.EmitAssignment(Name, lowerConstant(Alias.getAliasee(), *this));
   }
 
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
@@ -1163,11 +1160,10 @@ void AsmPrinter::EmitJumpTableInfo() {
     // If this jump table was deleted, ignore it.
     if (JTBBs.empty()) continue;
 
-    // For the EK_LabelDifference32 entry, if the target supports .set, emit a
-    // .set directive for each unique entry.  This reduces the number of
-    // relocations the assembler will generate for the jump table.
+    // For the EK_LabelDifference32 entry, if using .set avoids a relocation,
+    /// emit a .set directive for each unique entry.
     if (MJTI->getEntryKind() == MachineJumpTableInfo::EK_LabelDifference32 &&
-        MAI->hasSetDirective()) {
+        MAI->doesSetDirectiveSuppressesReloc()) {
       SmallPtrSet<const MachineBasicBlock*, 16> EmittedSets;
       const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
       const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(MF,JTI,OutContext);
@@ -1240,24 +1236,18 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
   }
 
   case MachineJumpTableInfo::EK_LabelDifference32: {
-    // EK_LabelDifference32 - Each entry is the address of the block minus
-    // the address of the jump table.  This is used for PIC jump tables where
-    // gprel32 is not supported.  e.g.:
+    // Each entry is the address of the block minus the address of the jump
+    // table. This is used for PIC jump tables where gprel32 is not supported.
+    // e.g.:
     //      .word LBB123 - LJTI1_2
-    // If the .set directive is supported, this is emitted as:
+    // If the .set directive avoids relocations, this is emitted as:
     //      .set L4_5_set_123, LBB123 - LJTI1_2
     //      .word L4_5_set_123
-
-    // If we have emitted set directives for the jump table entries, print
-    // them rather than the entries themselves.  If we're emitting PIC, then
-    // emit the table entries as differences between two text section labels.
-    if (MAI->hasSetDirective()) {
-      // If we used .set, reference the .set's symbol.
+    if (MAI->doesSetDirectiveSuppressesReloc()) {
       Value = MCSymbolRefExpr::Create(GetJTSetSymbol(UID, MBB->getNumber()),
                                       OutContext);
       break;
     }
-    // Otherwise, use the difference as the jump table entry.
     Value = MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
     const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(UID), OutContext);
     Value = MCBinaryExpr::CreateSub(Value, JTI, OutContext);
@@ -1441,9 +1431,9 @@ void AsmPrinter::EmitInt32(int Value) const {
   OutStreamer.EmitIntValue(Value, 4);
 }
 
-/// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
-/// in bytes of the directive is specified by Size and Hi/Lo specify the
-/// labels.  This implicitly uses .set if it is available.
+/// Emit something like ".long Hi-Lo" where the size in bytes of the directive
+/// is specified by Size and Hi/Lo specify the labels. This implicitly uses
+/// .set if it avoids relocations.
 void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                                      unsigned Size) const {
   // Get the Hi-Lo expression.
@@ -1452,7 +1442,7 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                             MCSymbolRefExpr::Create(Lo, OutContext),
                             OutContext);
 
-  if (!MAI->hasSetDirective()) {
+  if (!MAI->doesSetDirectiveSuppressesReloc()) {
     OutStreamer.EmitValue(Diff, Size);
     return;
   }

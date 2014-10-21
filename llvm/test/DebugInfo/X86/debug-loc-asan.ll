@@ -22,17 +22,13 @@
 ; We expect two location ranges for the variable.
 
 ; First, it is stored in %rdx:
-; CHECK:      .Lset{{[0-9]+}} = .Lfunc_begin0-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lset{{[0-9]+}}
-; CHECK-NEXT: .Lset{{[0-9]+}} = [[START_LABEL]]-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lset{{[0-9]+}}
+; CHECK:      .quad .Lfunc_begin0-.Lfunc_begin0
+; CHECK-NEXT: .quad [[START_LABEL]]-.Lfunc_begin0
 ; CHECK: DW_OP_reg5
 
 ; Then it's addressed via %rsp:
-; CHECK:      .Lset{{[0-9]+}} = [[START_LABEL]]-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lset{{[0-9]+}}
-; CHECK-NEXT: .Lset{{[0-9]+}} = .Lfunc_end0-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lset{{[0-9]+}}
+; CHECK:      .quad [[START_LABEL]]-.Lfunc_begin0
+; CHECK-NEXT: .Lfunc_end0-.Lfunc_begin0
 ; CHECK: DW_OP_breg7
 ; CHECK-NEXT: [[OFFSET]]
 ; CHECK: DW_OP_deref

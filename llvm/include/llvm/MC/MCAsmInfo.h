@@ -223,8 +223,12 @@ protected:
   /// This is the directive used to declare a global entity.  Defaults to NULL.
   const char *GlobalDirective;
 
-  /// True if the assembler supports the .set directive.  Defaults to true.
-  bool HasSetDirective;
+  /// True if the expression
+  ///   .long f - g
+  /// uses an relocation but it can be supressed by writting
+  ///   a = f - g
+  ///   .long a
+  bool SetDirectiveSuppressesReloc;
 
   /// False if the assembler requires that we use
   /// \code
@@ -442,7 +446,9 @@ public:
   bool getAlignmentIsInBytes() const { return AlignmentIsInBytes; }
   unsigned getTextAlignFillValue() const { return TextAlignFillValue; }
   const char *getGlobalDirective() const { return GlobalDirective; }
-  bool hasSetDirective() const { return HasSetDirective; }
+  bool doesSetDirectiveSuppressesReloc() const {
+    return SetDirectiveSuppressesReloc;
+  }
   bool hasAggressiveSymbolFolding() const { return HasAggressiveSymbolFolding; }
   bool getCOMMDirectiveAlignmentIsInBytes() const {
     return COMMDirectiveAlignmentIsInBytes;

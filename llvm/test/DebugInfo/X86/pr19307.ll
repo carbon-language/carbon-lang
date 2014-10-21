@@ -20,10 +20,8 @@
 ; Verify that we have proper range in debug_loc section:
 ; CHECK: .Ldebug_loc{{[0-9]+}}:
 ; CHECK: DW_OP_breg1
-; CHECK:      .Lset{{[0-9]+}} = [[START_LABEL]]-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lset{{[0-9]+}}
-; CHECK-NEXT: .Lset{{[0-9]+}} = .Lfunc_end0-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lset{{[0-9]+}}
+; CHECK:      .quad [[START_LABEL]]-.Lfunc_begin0
+; CHECK-NEXT: .quad .Lfunc_end0-.Lfunc_begin0
 ; CHECK: DW_OP_breg6
 ; CHECK: DW_OP_deref
 

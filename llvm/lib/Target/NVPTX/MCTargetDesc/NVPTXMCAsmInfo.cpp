@@ -33,8 +33,6 @@ NVPTXMCAsmInfo::NVPTXMCAsmInfo(StringRef TT) {
 
   CommentString = "//";
 
-  HasSetDirective = false;
-
   HasSingleParameterDotFile = false;
 
   InlineAsmStart = " inline asm";
