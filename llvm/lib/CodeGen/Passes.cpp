@@ -693,7 +693,7 @@ FunctionPass *TargetPassConfig::createRegAllocPass(bool Optimized) {
 /// Return true if the default global register allocator is in use and
 /// has not be overriden on the command line with '-regalloc=...'
 bool TargetPassConfig::usingDefaultRegAlloc() const {
-  return RegAlloc == &useDefaultRegisterAllocator;
+  return RegAlloc.getNumOccurrences() == 0;
 }
 
 /// Add the minimum set of target-independent passes that are required for
