@@ -18,18 +18,18 @@
 // CHECK-NEXT: note: diagnostic msg: {{.*}}crash-report-{{.*}}.c
 FOO
 // CHECKSRC: FOO
-// CHECKSH: -cc1
-// CHECKSH: -main-file-name crash-report.c
-// CHECKSH: -D "FOO=BAR"
-// CHECKSH-NOT: -F/tmp/
-// CHECKSH-NOT: -I /tmp/
-// CHECKSH-NOT: -idirafter /tmp/
-// CHECKSH-NOT: -iquote /tmp/
-// CHECKSH-NOT: -isystem /tmp/
-// CHECKSH-NOT: -iprefix /the/prefix
-// CHECKSH-NOT: -iwithprefix /tmp/
-// CHECKSH-NOT: -iwithprefixbefore /tmp/
-// CHECKSH-NOT: -internal-isystem /tmp/
-// CHECKSH-NOT: -internal-externc-isystem /tmp/
-// CHECKSH-NOT: -dwarf-debug-flags
-// CHECKSH: crash-report-{{[^ ]*}}.c
+// CHECKSH: "-cc1"
+// CHECKSH: "-main-file-name" "crash-report.c"
+// CHECKSH: "-D" "FOO=BAR"
+// CHECKSH-NOT: "-F/tmp/"
+// CHECKSH-NOT: "-I" "/tmp/"
+// CHECKSH-NOT: "-idirafter" "/tmp/"
+// CHECKSH-NOT: "-iquote" "/tmp/"
+// CHECKSH-NOT: "-isystem" "/tmp/"
+// CHECKSH-NOT: "-iprefix" "/the/prefix"
+// CHECKSH-NOT: "-iwithprefix" "/tmp/"
+// CHECKSH-NOT: "-iwithprefixbefore" "/tmp/"
+// CHECKSH-NOT: "-internal-isystem" "/tmp/"
+// CHECKSH-NOT: "-internal-externc-isystem" "/tmp/"
+// CHECKSH-NOT: "-dwarf-debug-flags"
+// CHECKSH: "crash-report-{{[^ ]*}}.c"

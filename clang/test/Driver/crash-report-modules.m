@@ -25,8 +25,8 @@ const int x = MODULE_MACRO;
 // CHECKSRC: @import simple;
 // CHECKSRC: const int x = 10;
 
-// CHECKSH: -cc1
-// CHECKSH: -D "FOO=BAR"
-// CHECKSH-NOT: -fmodules-cache-path=/tmp/
-// CHECKSH: crash-report-modules-{{[^ ]*}}.m
-// CHECKSH: -ivfsoverlay crash-report-modules-{{[^ ]*}}.cache/vfs/vfs.yaml
+// CHECKSH: "-cc1"
+// CHECKSH: "-D" "FOO=BAR"
+// CHECKSH-NOT: "-fmodules-cache-path=/tmp/"
+// CHECKSH: "crash-report-modules-{{[^ ]*}}.m"
+// CHECKSH: "-ivfsoverlay" "crash-report-modules-{{[^ ]*}}.cache/vfs/vfs.yaml"

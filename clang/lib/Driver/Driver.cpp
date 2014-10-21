@@ -547,7 +547,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     Diag(clang::diag::note_drv_command_failed_diag_msg)
         << "Error generating run script: " + Script + " " + EC.message();
   } else {
-    Cmd.Print(ScriptOS, "\n", /*Quote=*/false, &CrashInfo);
+    Cmd.Print(ScriptOS, "\n", /*Quote=*/true, &CrashInfo);
     Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
   }
   Diag(clang::diag::note_drv_command_failed_diag_msg)

@@ -73,12 +73,6 @@ static int skipArgs(const char *Flag) {
   return 0;
 }
 
-static bool quoteNextArg(const char *flag) {
-  return llvm::StringSwitch<bool>(flag)
-    .Case("-D", true)
-    .Default(false);
-}
-
 static void PrintArg(raw_ostream &OS, const char *Arg, bool Quote) {
   const bool Escape = std::strpbrk(Arg, "\"\\$");
 
@@ -189,11 +183,6 @@ void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
 
     OS << ' ';
     PrintArg(OS, Arg, Quote);
-
-    if (CrashInfo && quoteNextArg(Arg) && i + 1 < e) {
-      OS << ' ';
-      PrintArg(OS, Args[++i], true);
-    }
   }
 
   if (CrashInfo && !CrashInfo->VFSPath.empty()) {
