@@ -90,6 +90,8 @@ TEST_F(FormatTestJava, Generics) {
   verifyFormat("Iterable<?> a;");
   verifyFormat("Iterable<?> a;");
   verifyFormat("Iterable<? extends SomeObject> a;");
+
+  verifyFormat("A.<B>doSomething();");
 }
 
 } // end namespace tooling

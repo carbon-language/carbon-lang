@@ -1628,6 +1628,11 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Right.is(tok::hash) && Left.is(tok::identifier) && Left.TokenText == "L")
     return false;
+  if (Left.Type == TT_TemplateCloser && Left.MatchingParen &&
+      Left.MatchingParen->Previous &&
+      Left.MatchingParen->Previous->is(tok::period))
+    // A.<B>DoSomething();
+    return false;
   return true;
 }
 
