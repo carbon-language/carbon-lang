@@ -47,7 +47,7 @@ static StringRef ToolName;
 static const char *TemporaryOutput;
 static int TmpArchiveFD = -1;
 
-// fail - Show the error message and exit.
+// Show the error message and exit.
 LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
   outs() << ToolName << ": " << Error << ".\n";
   if (TmpArchiveFD != -1)
@@ -76,9 +76,9 @@ static cl::opt<bool> MRI("M", cl::desc(""));
 
 std::string Options;
 
-// MoreHelp - Provide additional help output explaining the operations and
-// modifiers of llvm-ar. This object instructs the CommandLine library
-// to print the text of the constructor when the --help option is given.
+// Provide additional help output explaining the operations and modifiers of
+// llvm-ar. This object instructs the CommandLine library to print the text of
+// the constructor when the --help option is given.
 static cl::extrahelp MoreHelp(
   "\nOPERATIONS:\n"
   "  d[NsS]       - delete file(s) from the archive\n"
@@ -138,7 +138,7 @@ static std::string ArchiveName;
 // on the command line.
 static std::vector<std::string> Members;
 
-// show_help - Show the error message, the help message and exit.
+// Show the error message, the help message and exit.
 LLVM_ATTRIBUTE_NORETURN static void
 show_help(const std::string &msg) {
   errs() << ToolName << ": " << msg << "\n\n";
@@ -146,8 +146,8 @@ show_help(const std::string &msg) {
   std::exit(1);
 }
 
-// getRelPos - Extract the member filename from the command line for
-// the [relpos] argument associated with a, b, and i modifiers
+// Extract the member filename from the command line for the [relpos] argument
+// associated with a, b, and i modifiers
 static void getRelPos() {
   if(RestOfArgs.size() == 0)
     show_help("Expected [relpos] for a, b, or i modifier");
@@ -162,7 +162,7 @@ static void getOptions() {
   RestOfArgs.erase(RestOfArgs.begin());
 }
 
-// getArchive - Get the archive file name from the command line
+// Get the archive file name from the command line
 static void getArchive() {
   if(RestOfArgs.size() == 0)
     show_help("An archive name must be specified");
@@ -170,8 +170,7 @@ static void getArchive() {
   RestOfArgs.erase(RestOfArgs.begin());
 }
 
-// getMembers - Copy over remaining items in RestOfArgs to our Members vector
-// This is just for clarity.
+// Copy over remaining items in RestOfArgs to our Members vector
 static void getMembers() {
   if(RestOfArgs.size() > 0)
     Members = std::vector<std::string>(RestOfArgs);
@@ -226,9 +225,9 @@ static ArchiveOperation parseMRIScript() {
   return ReplaceOrInsert;
 }
 
-// parseCommandLine - Parse the command line options as presented and return the
-// operation specified. Process all modifiers and check to make sure that
-// constraints on modifier/operation pairs have not been violated.
+// Parse the command line options as presented and return the operation
+// specified. Process all modifiers and check to make sure that constraints on
+// modifier/operation pairs have not been violated.
 static ArchiveOperation parseCommandLine() {
   if (MRI) {
     if (!RestOfArgs.empty())
@@ -338,8 +337,8 @@ static void doPrint(StringRef Name, object::Archive::child_iterator I) {
   outs().write(Data.data(), Data.size());
 }
 
-// putMode - utility function for printing out the file mode when the 't'
-// operation is in verbose mode.
+// Utility function for printing out the file mode when the 't' operation is in
+// verbose mode.
 static void printMode(unsigned mode) {
   if (mode & 004)
     outs() << "r";
@@ -948,7 +947,6 @@ static void performOperation(ArchiveOperation Operation,
 static int ar_main(char **argv);
 static int ranlib_main();
 
-// main - main program for llvm-ar .. see comments in the code
 int main(int argc, char **argv) {
   ToolName = argv[0];
   // Print a stack trace if we signal out.
