@@ -43,6 +43,6 @@
 int main()
 {
     lconv lc;
-    static_assert((std::is_same<__typeof__(setlocale(0, "")), char*>::value), "");
-    static_assert((std::is_same<__typeof__(localeconv()), lconv*>::value), "");
+    static_assert((std::is_same<decltype(setlocale(0, "")), char*>::value), "");
+    static_assert((std::is_same<decltype(localeconv()), lconv*>::value), "");
 }

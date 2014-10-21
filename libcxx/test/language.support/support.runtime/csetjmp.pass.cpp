@@ -19,6 +19,6 @@
 int main()
 {
     std::jmp_buf jb;
-    static_assert((std::is_same<__typeof__(std::longjmp(jb, 0)), void>::value),
-                  "std::is_same<__typeof__(std::longjmp(jb, 0)), void>::value");
+    static_assert((std::is_same<decltype(std::longjmp(jb, 0)), void>::value),
+                  "std::is_same<decltype(std::longjmp(jb, 0)), void>::value");
 }
