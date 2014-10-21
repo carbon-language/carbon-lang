@@ -350,7 +350,7 @@ public:
 
           if (PRegOpt < Allowed.size()) {
             PBQPRAGraph::RawVector NewCosts(G.getNodeCosts(NId));
-            NewCosts[PRegOpt + 1] += CBenefit;
+            NewCosts[PRegOpt + 1] -= CBenefit;
             G.setNodeCosts(NId, std::move(NewCosts));
           }
         } else {
@@ -395,7 +395,7 @@ private:
       for (unsigned J = 0; J != Allowed2.size(); ++J) {
         unsigned PReg2 = Allowed2[J];
         if (PReg1 == PReg2)
-          CostMat[I + 1][J + 1] += -Benefit;
+          CostMat[I + 1][J + 1] -= Benefit;
       }
     }
   }
