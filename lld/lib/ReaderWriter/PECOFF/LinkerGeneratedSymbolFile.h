@@ -337,7 +337,11 @@ private:
 
     // Returns true if a given name exists in an input object file.
     auto defined = [&](StringRef name) -> bool {
-      return _syms->defined().count(_ctx->decorateSymbol(name));
+      StringRef sym = _ctx->decorateSymbol(name);
+      if (_syms->defined().count(sym))
+        return true;
+      std::string ignore;
+      return findDecoratedSymbol(_ctx, _syms.get(), sym, ignore);
     };
 
     switch (_ctx->getSubsystem()) {

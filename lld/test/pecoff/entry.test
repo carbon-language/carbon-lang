@@ -17,6 +17,9 @@ WMAIN: _wmainCRTStartup
 # RUN: not lld -flavor link /out:%t.exe /alternatename:_WinMain=_foo \
 # RUN:   -- %t.obj 2> %t.log
 # RUN: FileCheck -check-prefix=WINMAIN %s < %t.log
+# RUN: not lld -flavor link /out:%t.exe /alternatename:_WinMain@16=_foo \
+# RUN:   -- %t.obj 2> %t.log
+# RUN: FileCheck -check-prefix=WINMAIN %s < %t.log
 
 WINMAIN: _WinMainCRTStartup
 
