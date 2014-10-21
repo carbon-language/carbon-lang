@@ -944,51 +944,6 @@ static void performOperation(ArchiveOperation Operation,
   llvm_unreachable("Unknown operation.");
 }
 
-static int ar_main(char **argv);
-static int ranlib_main();
-
-int main(int argc, char **argv) {
-  ToolName = argv[0];
-  // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
-  PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-
-  // Have the command line options parsed and handle things
-  // like --help and --version.
-  cl::ParseCommandLineOptions(argc, argv,
-    "LLVM Archiver (llvm-ar)\n\n"
-    "  This program archives bitcode files into single libraries\n"
-  );
-
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-
-  StringRef Stem = sys::path::stem(ToolName);
-  if (Stem.find("ar") != StringRef::npos)
-    return ar_main(argv);
-  if (Stem.find("ranlib") != StringRef::npos)
-    return ranlib_main();
-  fail("Not ranlib or ar!");
-}
-
-static int performOperation(ArchiveOperation Operation);
-
-int ranlib_main() {
-  if (RestOfArgs.size() != 1)
-    fail(ToolName + "takes just one archive as argument");
-  ArchiveName = RestOfArgs[0];
-  return performOperation(CreateSymTab);
-}
-
-int ar_main(char **argv) {
-  // Do our own parsing of the command line because the CommandLine utility
-  // can't handle the grouped positional parameters without a dash.
-  ArchiveOperation Operation = parseCommandLine();
-  return performOperation(Operation);
-}
-
 static int performOperation(ArchiveOperation Operation) {
   // Create or open the archive object.
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
@@ -1025,4 +980,44 @@ static int performOperation(ArchiveOperation Operation) {
 
   performOperation(Operation, nullptr);
   return 0;
+}
+
+int ar_main(char **argv) {
+  // Do our own parsing of the command line because the CommandLine utility
+  // can't handle the grouped positional parameters without a dash.
+  ArchiveOperation Operation = parseCommandLine();
+  return performOperation(Operation);
+}
+
+int ranlib_main() {
+  if (RestOfArgs.size() != 1)
+    fail(ToolName + "takes just one archive as argument");
+  ArchiveName = RestOfArgs[0];
+  return performOperation(CreateSymTab);
+}
+
+int main(int argc, char **argv) {
+  ToolName = argv[0];
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  // Have the command line options parsed and handle things
+  // like --help and --version.
+  cl::ParseCommandLineOptions(argc, argv,
+    "LLVM Archiver (llvm-ar)\n\n"
+    "  This program archives bitcode files into single libraries\n"
+  );
+
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
+
+  StringRef Stem = sys::path::stem(ToolName);
+  if (Stem.find("ar") != StringRef::npos)
+    return ar_main(argv);
+  if (Stem.find("ranlib") != StringRef::npos)
+    return ranlib_main();
+  fail("Not ranlib or ar!");
 }
