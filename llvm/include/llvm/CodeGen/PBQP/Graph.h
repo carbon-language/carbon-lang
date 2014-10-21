@@ -190,8 +190,14 @@ namespace PBQP {
 
     // ----- INTERNAL METHODS -----
 
-    NodeEntry& getNode(NodeId NId) { return Nodes[NId]; }
-    const NodeEntry& getNode(NodeId NId) const { return Nodes[NId]; }
+    NodeEntry &getNode(NodeId NId) {
+      assert(NId < Nodes.size() && "Out of bound NodeId");
+      return Nodes[NId];
+    }
+    const NodeEntry &getNode(NodeId NId) const {
+      assert(NId < Nodes.size() && "Out of bound NodeId");
+      return Nodes[NId];
+    }
 
     EdgeEntry& getEdge(EdgeId EId) { return Edges[EId]; }
     const EdgeEntry& getEdge(EdgeId EId) const { return Edges[EId]; }
