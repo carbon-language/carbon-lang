@@ -5087,6 +5087,18 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                              getValue(I.getArgOperand(0))));
     return nullptr;
   }
+  case Intrinsic::minnum:
+    setValue(&I, DAG.getNode(ISD::FMINNUM, sdl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0)),
+                             getValue(I.getArgOperand(1))));
+    return nullptr;
+  case Intrinsic::maxnum:
+    setValue(&I, DAG.getNode(ISD::FMAXNUM, sdl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0)),
+                             getValue(I.getArgOperand(1))));
+    return nullptr;
   case Intrinsic::copysign:
     setValue(&I, DAG.getNode(ISD::FCOPYSIGN, sdl,
                              getValue(I.getArgOperand(0)).getValueType(),
@@ -5887,6 +5899,26 @@ bool SelectionDAGBuilder::visitUnaryFloatCall(const CallInst &I,
   return true;
 }
 
+/// visitBinaryFloatCall - If a call instruction is a unary floating-point
+/// operation (as expected), translate it to an SDNode with the specified opcode
+/// and return true.
+bool SelectionDAGBuilder::visitBinaryFloatCall(const CallInst &I,
+                                               unsigned Opcode) {
+  // Sanity check that it really is a unary floating-point call.
+  if (I.getNumArgOperands() != 2 ||
+      !I.getArgOperand(0)->getType()->isFloatingPointTy() ||
+      I.getType() != I.getArgOperand(0)->getType() ||
+      I.getType() != I.getArgOperand(1)->getType() ||
+      !I.onlyReadsMemory())
+    return false;
+
+  SDValue Tmp0 = getValue(I.getArgOperand(0));
+  SDValue Tmp1 = getValue(I.getArgOperand(1));
+  EVT VT = Tmp0.getValueType();
+  setValue(&I, DAG.getNode(Opcode, getCurSDLoc(), VT, Tmp0, Tmp1));
+  return true;
+}
+
 void SelectionDAGBuilder::visitCall(const CallInst &I) {
   // Handle inline assembly differently.
   if (isa<InlineAsm>(I.getCalledValue())) {
@@ -5941,6 +5973,18 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
       case LibFunc::fabsf:
       case LibFunc::fabsl:
         if (visitUnaryFloatCall(I, ISD::FABS))
+          return;
+        break;
+      case LibFunc::fmin:
+      case LibFunc::fminf:
+      case LibFunc::fminl:
+        if (visitBinaryFloatCall(I, ISD::FMINNUM))
+          return;
+        break;
+      case LibFunc::fmax:
+      case LibFunc::fmaxf:
+      case LibFunc::fmaxl:
+        if (visitBinaryFloatCall(I, ISD::FMAXNUM))
           return;
         break;
       case LibFunc::sin:

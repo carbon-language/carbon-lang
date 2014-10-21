@@ -347,6 +347,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   for (MVT VT : FloatVectorTypes) {
     setOperationAction(ISD::FABS, VT, Expand);
+    setOperationAction(ISD::FMINNUM, VT, Expand);
+    setOperationAction(ISD::FMAXNUM, VT, Expand);
     setOperationAction(ISD::FADD, VT, Expand);
     setOperationAction(ISD::FCEIL, VT, Expand);
     setOperationAction(ISD::FCOS, VT, Expand);

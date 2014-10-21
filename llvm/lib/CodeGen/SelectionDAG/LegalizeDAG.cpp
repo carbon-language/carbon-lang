@@ -3400,6 +3400,16 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Results.push_back(Tmp1);
     break;
   }
+  case ISD::FMINNUM:
+    Results.push_back(ExpandFPLibCall(Node, RTLIB::FMIN_F32, RTLIB::FMIN_F64,
+                                      RTLIB::FMIN_F80, RTLIB::FMIN_F128,
+                                      RTLIB::FMIN_PPCF128));
+    break;
+  case ISD::FMAXNUM:
+    Results.push_back(ExpandFPLibCall(Node, RTLIB::FMAX_F32, RTLIB::FMAX_F64,
+                                      RTLIB::FMAX_F80, RTLIB::FMAX_F128,
+                                      RTLIB::FMAX_PPCF128));
+    break;
   case ISD::FSQRT:
     Results.push_back(ExpandFPLibCall(Node, RTLIB::SQRT_F32, RTLIB::SQRT_F64,
                                       RTLIB::SQRT_F80, RTLIB::SQRT_F128,

@@ -1407,8 +1407,8 @@ defm V_MAX_LEGACY_F32 : VOP2Inst <vop2<0xe>, "V_MAX_LEGACY_F32",
   VOP_F32_F32_F32, AMDGPUfmax
 >;
 
-defm V_MIN_F32 : VOP2Inst <vop2<0xf>, "V_MIN_F32", VOP_F32_F32_F32>;
-defm V_MAX_F32 : VOP2Inst <vop2<0x10>, "V_MAX_F32", VOP_F32_F32_F32>;
+defm V_MIN_F32 : VOP2Inst <vop2<0xf>, "V_MIN_F32", VOP_F32_F32_F32, fminnum>;
+defm V_MAX_F32 : VOP2Inst <vop2<0x10>, "V_MAX_F32", VOP_F32_F32_F32, fmaxnum>;
 defm V_MIN_I32 : VOP2Inst <vop2<0x11>, "V_MIN_I32", VOP_I32_I32_I32, AMDGPUsmin>;
 defm V_MAX_I32 : VOP2Inst <vop2<0x12>, "V_MAX_I32", VOP_I32_I32_I32, AMDGPUsmax>;
 defm V_MIN_U32 : VOP2Inst <vop2<0x13>, "V_MIN_U32", VOP_I32_I32_I32, AMDGPUumin>;
@@ -1593,11 +1593,12 @@ defm V_ADD_F64 : VOP3Inst <vop3<0x164>, "V_ADD_F64",
 defm V_MUL_F64 : VOP3Inst <vop3<0x165>, "V_MUL_F64",
   VOP_F64_F64_F64, fmul
 >;
+
 defm V_MIN_F64 : VOP3Inst <vop3<0x166>, "V_MIN_F64",
-  VOP_F64_F64_F64
+  VOP_F64_F64_F64, fminnum
 >;
 defm V_MAX_F64 : VOP3Inst <vop3<0x167>, "V_MAX_F64",
-  VOP_F64_F64_F64
+  VOP_F64_F64_F64, fmaxnum
 >;
 
 } // isCommutable = 1

@@ -141,6 +141,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 
   // Unary operators
   case ISD::FABS:                       return "fabs";
+  case ISD::FMINNUM:                    return "fminnum";
+  case ISD::FMAXNUM:                    return "fmaxnum";
   case ISD::FNEG:                       return "fneg";
   case ISD::FSQRT:                      return "fsqrt";
   case ISD::FSIN:                       return "fsin";

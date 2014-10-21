@@ -290,6 +290,8 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::FP_TO_UINT:
   case ISD::FNEG:
   case ISD::FABS:
+  case ISD::FMINNUM:
+  case ISD::FMAXNUM:
   case ISD::FCOPYSIGN:
   case ISD::FSQRT:
   case ISD::FSIN:

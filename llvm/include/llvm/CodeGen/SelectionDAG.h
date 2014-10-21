@@ -1067,7 +1067,10 @@ public:
     case ISD::SADDO:
     case ISD::UADDO:
     case ISD::ADDC:
-    case ISD::ADDE: return true;
+    case ISD::ADDE:
+    case ISD::FMINNUM:
+    case ISD::FMAXNUM:
+      return true;
     default: return false;
     }
   }

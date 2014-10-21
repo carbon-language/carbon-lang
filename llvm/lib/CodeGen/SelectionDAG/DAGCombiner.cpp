@@ -290,6 +290,8 @@ namespace {
     SDValue visitFCEIL(SDNode *N);
     SDValue visitFTRUNC(SDNode *N);
     SDValue visitFFLOOR(SDNode *N);
+    SDValue visitFMINNUM(SDNode *N);
+    SDValue visitFMAXNUM(SDNode *N);
     SDValue visitBRCOND(SDNode *N);
     SDValue visitBR_CC(SDNode *N);
     SDValue visitLOAD(SDNode *N);
@@ -1321,6 +1323,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::FNEG:               return visitFNEG(N);
   case ISD::FABS:               return visitFABS(N);
   case ISD::FFLOOR:             return visitFFLOOR(N);
+  case ISD::FMINNUM:            return visitFMINNUM(N);
+  case ISD::FMAXNUM:            return visitFMAXNUM(N);
   case ISD::FCEIL:              return visitFCEIL(N);
   case ISD::FTRUNC:             return visitFTRUNC(N);
   case ISD::BRCOND:             return visitBRCOND(N);
@@ -7488,6 +7492,48 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
             ISD::FMUL, SDLoc(N), VT, N0.getOperand(0),
             DAG.getNode(ISD::FNEG, SDLoc(N), VT, N0.getOperand(1)));
     }
+  }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitFMINNUM(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  const ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  const ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+
+  if (N0CFP && N1CFP) {
+    const APFloat &C0 = N0CFP->getValueAPF();
+    const APFloat &C1 = N1CFP->getValueAPF();
+    return DAG.getConstantFP(minnum(C0, C1), N->getValueType(0));
+  }
+
+  if (N0CFP) {
+    EVT VT = N->getValueType(0);
+    // Canonicalize to constant on RHS.
+    return DAG.getNode(ISD::FMINNUM, SDLoc(N), VT, N1, N0);
+  }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitFMAXNUM(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  const ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  const ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+
+  if (N0CFP && N1CFP) {
+    const APFloat &C0 = N0CFP->getValueAPF();
+    const APFloat &C1 = N1CFP->getValueAPF();
+    return DAG.getConstantFP(maxnum(C0, C1), N->getValueType(0));
+  }
+
+  if (N0CFP) {
+    EVT VT = N->getValueType(0);
+    // Canonicalize to constant on RHS.
+    return DAG.getNode(ISD::FMAXNUM, SDLoc(N), VT, N1, N0);
   }
 
   return SDValue();

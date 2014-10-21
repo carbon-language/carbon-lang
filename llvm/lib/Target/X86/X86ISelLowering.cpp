@@ -811,6 +811,8 @@ void X86TargetLowering::resetOperationActions() {
   setOperationAction(ISD::FLOG10, MVT::f80, Expand);
   setOperationAction(ISD::FEXP, MVT::f80, Expand);
   setOperationAction(ISD::FEXP2, MVT::f80, Expand);
+  setOperationAction(ISD::FMINNUM, MVT::f80, Expand);
+  setOperationAction(ISD::FMAXNUM, MVT::f80, Expand);
 
   // First set operation action for all vector types to either promote
   // (for widening) or expand (for scalarization). Then we will selectively

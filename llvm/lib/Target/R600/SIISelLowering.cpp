@@ -90,6 +90,11 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FSIN, MVT::f32, Custom);
   setOperationAction(ISD::FCOS, MVT::f32, Custom);
 
+  setOperationAction(ISD::FMINNUM, MVT::f32, Legal);
+  setOperationAction(ISD::FMAXNUM, MVT::f32, Legal);
+  setOperationAction(ISD::FMINNUM, MVT::f64, Legal);
+  setOperationAction(ISD::FMAXNUM, MVT::f64, Legal);
+
   // We need to custom lower vector stores from local memory
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v8i32, Custom);
