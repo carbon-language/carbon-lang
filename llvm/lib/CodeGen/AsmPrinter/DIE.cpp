@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
@@ -372,6 +373,29 @@ void DIEString::print(raw_ostream &O) const {
 // DIEEntry Implementation
 //===----------------------------------------------------------------------===//
 
+/// Emit something like ".long Hi+Offset-Lo" where the size in bytes of the
+/// directive is specified by Size and Hi/Lo specify the labels.
+static void emitLabelOffsetDifference(MCStreamer &Streamer, const MCSymbol *Hi,
+                                      uint64_t Offset, const MCSymbol *Lo,
+                                      unsigned Size) {
+  MCContext &Context = Streamer.getContext();
+
+  // Emit Hi+Offset - Lo
+  // Get the Hi+Offset expression.
+  const MCExpr *Plus =
+      MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(Hi, Context),
+                              MCConstantExpr::Create(Offset, Context), Context);
+
+  // Get the Hi+Offset-Lo expression.
+  const MCExpr *Diff = MCBinaryExpr::CreateSub(
+      Plus, MCSymbolRefExpr::Create(Lo, Context), Context);
+
+  // Otherwise, emit with .set (aka assignment).
+  MCSymbol *SetLabel = Context.CreateTempSymbol();
+  Streamer.EmitAssignment(SetLabel, Diff);
+  Streamer.EmitSymbolValue(SetLabel, Size);
+}
+
 /// EmitValue - Emit debug information entry offset.
 ///
 void DIEEntry::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
@@ -390,9 +414,9 @@ void DIEEntry::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
       AP->EmitLabelPlusOffset(CU->getSectionSym(), Addr,
                               DIEEntry::getRefAddrSize(AP));
     else
-      AP->EmitLabelOffsetDifference(CU->getSectionSym(), Addr,
-                                    CU->getSectionSym(),
-                                    DIEEntry::getRefAddrSize(AP));
+      emitLabelOffsetDifference(AP->OutStreamer, CU->getSectionSym(), Addr,
+                                CU->getSectionSym(),
+                                DIEEntry::getRefAddrSize(AP));
   } else
     AP->EmitInt32(Entry.getOffset());
 }

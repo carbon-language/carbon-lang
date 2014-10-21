@@ -349,12 +349,6 @@ public:
   void EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                            unsigned Size) const;
 
-  /// Emit something like ".long Hi+Offset-Lo" where the size in bytes of the
-  /// directive is specified by Size and Hi/Lo specify the labels.  This
-  /// implicitly uses .set if it is available.
-  void EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
-                                 const MCSymbol *Lo, unsigned Size) const;
-
   /// Emit something like ".long Label+Offset" where the size in bytes of the
   /// directive is specified by Size and Label specifies the label.  This
   /// implicitly uses .set if it is available.
