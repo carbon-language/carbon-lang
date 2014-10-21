@@ -73,9 +73,9 @@ public:
   public:
     RegisterContext(unsigned AddressReg, unsigned ShadowReg,
                     unsigned ScratchReg) {
-      for (unsigned Reg : { AddressReg, ShadowReg, ScratchReg }) {
-        BusyRegs.push_back(convReg(Reg, MVT::i64));
-      }
+      BusyRegs.push_back(convReg(AddressReg, MVT::i64));
+      BusyRegs.push_back(convReg(ShadowReg, MVT::i64));
+      BusyRegs.push_back(convReg(ScratchReg, MVT::i64));
     }
 
     unsigned AddressReg(MVT::SimpleValueType VT) const {
