@@ -1,22 +1,27 @@
-// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -s -section-data | FileCheck %s
 
         .file	1 "dir/foo"
         nop
 
-// CHECK:         ('_section_data', '90')
-// CHECK-NEXT:      # Section 1
-// CHECK-NEXT:     (('section_name', '__debug_line\x00\x00\x00\x00')
-// CHECK-NEXT:      ('segment_name', '__DWARF\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:      ('address', 1)
-// CHECK-NEXT:      ('size', 45)
-// CHECK-NEXT:      ('offset', 221)
-// CHECK-NEXT:      ('alignment', 0)
-// CHECK-NEXT:      ('reloc_offset', 0)
-// CHECK-NEXT:      ('num_reloc', 0)
-// CHECK-NEXT:      ('flags', 0x2000000)
-// CHECK-NEXT:      ('reserved1', 0)
-// CHECK-NEXT:      ('reserved2', 0)
-// CHECK-NEXT:     ),
-// CHECK-NEXT:    ('_relocations', [
-// CHECK-NEXT:    ])
-// CHECK-NEXT:    ('_section_data', '29000000 02001e00 00000101 fb0e0d00 01010101 00000001 00000164 69720000 666f6f00 01000000 02000001 01')
+// CHECK:       Section {
+// CHECK:         Index: 1
+// CHECK-NEXT:    Name: __debug_line
+// CHECK-NEXT:    Segment: __DWARF
+// CHECK-NEXT:    Address: 0x1
+// CHECK-NEXT:    Size: 0x2D
+// CHECK-NEXT:    Offset: 221
+// CHECK-NEXT:    Alignment: 0
+// CHECK-NEXT:    RelocationOffset: 0x0
+// CHECK-NEXT:    RelocationCount: 0
+// CHECK-NEXT:    Type: 0x0
+// CHECK-NEXT:    Attributes [ (0x20000)
+// CHECK-NEXT:      Debug (0x20000)
+// CHECK-NEXT:    ]
+// CHECK-NEXT:    Reserved1: 0x0
+// CHECK-NEXT:    Reserved2: 0x0
+// CHECK-NEXT:    SectionData (
+// CHECK-NEXT:      0000: 29000000 02001E00 00000101 FB0E0D00
+// CHECK-NEXT:      0010: 01010101 00000001 00000164 69720000
+// CHECK-NEXT:      0020: 666F6F00 01000000 02000001 01
+// CHECK-NEXT:    )
+// CHECK-NEXT:  }

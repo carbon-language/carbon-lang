@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin9 %s -filetype=obj -o - | macho-dump | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -s | FileCheck %s
 
 // This tests that when producing files for darwin9 or older we make sure
 // that debug_line sections are of a minimum size to avoid the linker bug
@@ -10,16 +10,20 @@
 _c:
         .asciz   "hi\n"
 
-// CHECK:      (('section_name', '__debug_line\x00\x00\x00\x00')
-// CHECK-NEXT:  ('segment_name', '__DWARF\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:  ('address', 4)
-// CHECK-NEXT:  ('size', 44)
-// CHECK-NEXT:  ('offset', 452)
-// CHECK-NEXT:  ('alignment', 0)
-// CHECK-NEXT:  ('reloc_offset', 0)
-// CHECK-NEXT:  ('num_reloc', 0)
-// CHECK-NEXT:  ('flags', 0x2000000)
-// CHECK-NEXT:  ('reserved1', 0)
-// CHECK-NEXT:  ('reserved2', 0)
-// CHECK-NEXT:  ('reserved3', 0)
-// CHECK-NEXT: ),
+// CHECK:       Section {
+// CHECK:         Index: 2
+// CHECK-NEXT:    Name: __debug_line
+// CHECK-NEXT:    Segment: __DWARF
+// CHECK-NEXT:    Address: 0x4
+// CHECK-NEXT:    Size: 0x2C
+// CHECK-NEXT:    Offset: 452
+// CHECK-NEXT:    Alignment: 0
+// CHECK-NEXT:    RelocationOffset: 0x0
+// CHECK-NEXT:    RelocationCount: 0
+// CHECK-NEXT:    Type: 0x0
+// CHECK-NEXT:    Attributes [ (0x20000)
+// CHECK-NEXT:      Debug (0x20000)
+// CHECK-NEXT:    ]
+// CHECK-NEXT:    Reserved1: 0x0
+// CHECK-NEXT:    Reserved2: 0x0
+// CHECK-NEXT:  }
