@@ -495,29 +495,31 @@ void ValueEnumerator::EnumerateMDNodeOperands(const MDNode *N) {
 void ValueEnumerator::EnumerateMetadata(const Value *MD) {
   assert((isa<MDNode>(MD) || isa<MDString>(MD)) && "Invalid metadata kind");
 
-  // Enumerate the type of this value.
-  EnumerateType(MD->getType());
-
+  // Skip function-local nodes themselves, but walk their operands.
   const MDNode *N = dyn_cast<MDNode>(MD);
-
-  // In the module-level pass, skip function-local nodes themselves, but
-  // do walk their operands.
   if (N && N->isFunctionLocal() && N->getFunction()) {
     EnumerateMDNodeOperands(N);
     return;
   }
 
-  // Check to see if it's already in!
-  unsigned &MDValueID = MDValueMap[MD];
-  if (MDValueID)
+  // Insert a dummy ID to block the co-recursive call to
+  // EnumerateMDNodeOperands() from re-visiting MD in a cyclic graph.
+  //
+  // Return early if there's already an ID.
+  if (!MDValueMap.insert(std::make_pair(MD, 0)).second)
     return;
 
-  MDValues.push_back(MD);
-  MDValueID = MDValues.size();
+  // Enumerate the type of this value.
+  EnumerateType(MD->getType());
 
-  // Enumerate all non-function-local operands.
+  // Visit operands first to minimize RAUW.
   if (N)
     EnumerateMDNodeOperands(N);
+
+  // Replace the dummy ID inserted above with the correct one.  MDValueMap may
+  // have changed by inserting operands, so we need a fresh lookup here.
+  MDValues.push_back(MD);
+  MDValueMap[MD] = MDValues.size();
 }
 
 /// EnumerateFunctionLocalMetadataa - Incorporate function-local metadata
