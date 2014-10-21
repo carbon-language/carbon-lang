@@ -183,6 +183,33 @@ void CodeGenFunction::EmitOMPFirstprivateClause(
   }
 }
 
+void CodeGenFunction::EmitOMPPrivateClause(
+    const OMPExecutableDirective &D,
+    CodeGenFunction::OMPPrivateScope &PrivateScope) {
+  auto PrivateFilter = [](const OMPClause *C) -> bool {
+    return C->getClauseKind() == OMPC_private;
+  };
+  for (OMPExecutableDirective::filtered_clause_iterator<decltype(PrivateFilter)>
+           I(D.clauses(), PrivateFilter); I; ++I) {
+    auto *C = cast<OMPPrivateClause>(*I);
+    auto IRef = C->varlist_begin();
+    for (auto IInit : C->private_copies()) {
+      auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+      auto VD = cast<VarDecl>(cast<DeclRefExpr>(IInit)->getDecl());
+      bool IsRegistered =
+          PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value * {
+            // Emit private VarDecl with copy init.
+            EmitDecl(*VD);
+            return GetAddrOfLocalVar(VD);
+          });
+      assert(IsRegistered && "counter already registered as private");
+      // Silence the warning about unused variable.
+      (void)IsRegistered;
+      ++IRef;
+    }
+  }
+}
+
 /// \brief Emits code for OpenMP parallel directive in the parallel region.
 static void EmitOMPParallelCall(CodeGenFunction &CGF,
                                 const OMPParallelDirective &S,

@@ -25,15 +25,15 @@ public:
 const S3 c; // expected-note {{global variable is predetermined as shared}}
 const S3 ca[5]; // expected-note {{global variable is predetermined as shared}}
 extern const int f; // expected-note {{global variable is predetermined as shared}}
-class S4 { // expected-note {{'S4' declared here}}
+class S4 {
   int a;
-  S4();
+  S4(); // expected-note {{implicitly declared private here}}
 public:
   S4(int v):a(v) { }
 };
-class S5 { // expected-note {{'S5' declared here}}
+class S5 {
   int a;
-  S5():a(0) {}
+  S5():a(0) {} // expected-note {{implicitly declared private here}}
 public:
   S5(int v):a(v) { }
 };
@@ -44,8 +44,8 @@ int threadvar;
 int main(int argc, char **argv) {
   const int d = 5; // expected-note {{constant variable is predetermined as shared}}
   const int da[5] = { 0 }; // expected-note {{constant variable is predetermined as shared}}
-  S4 e(4); // expected-note {{'e' defined here}}
-  S5 g(5); // expected-note {{'g' defined here}}
+  S4 e(4);
+  S5 g(5);
   int i;
   int &j = i; // expected-note {{'j' defined here}}
   #pragma omp target
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
   #pragma omp teams private(S2::S2s) // expected-error {{shared variable cannot be private}}
   foo();
   #pragma omp target
-  #pragma omp teams private(e, g) // expected-error 2 {{private variable must have an accessible, unambiguous default constructor}}
+  #pragma omp teams private(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   foo();
   #pragma omp target
   #pragma omp teams private(threadvar) // expected-error {{threadprivate or thread local variable cannot be private}}

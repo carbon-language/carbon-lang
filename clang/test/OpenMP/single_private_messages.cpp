@@ -24,16 +24,16 @@ public:
   S3() : a(0) {}
 };
 const S3 ca[5];
-class S4 { // expected-note {{'S4' declared here}}
+class S4 {
   int a;
-  S4();
+  S4(); // expected-note {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
 };
-class S5 { // expected-note {{'S5' declared here}}
+class S5 {
   int a;
-  S5() : a(0) {}
+  S5() : a(0) {} // expected-note {{implicitly declared private here}}
 
 public:
   S5(int v) : a(v) {}
@@ -92,8 +92,8 @@ int foomain(I argc, C **argv) {
 }
 
 int main(int argc, char **argv) {
-  S4 e(4); // expected-note {{'e' defined here}}
-  S5 g(5); // expected-note {{'g' defined here}}
+  S4 e(4);
+  S5 g(5);
   int i;
   int &j = i;                // expected-note {{'j' defined here}}
 #pragma omp single private // expected-error {{expected '(' after 'private'}}
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
   foo();
 #pragma omp single private(argv[1]) // expected-error {{expected variable name}}
   foo();
-#pragma omp single private(e, g) // expected-error 2 {{private variable must have an accessible, unambiguous default constructor}}
+#pragma omp single private(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   foo();
 #pragma omp single private(h) // expected-error {{threadprivate or thread local variable cannot be private}}
   foo();

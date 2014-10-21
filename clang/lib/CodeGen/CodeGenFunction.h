@@ -113,6 +113,7 @@ class CodeGenFunction : public CodeGenTypeCache {
   void operator=(const CodeGenFunction &) LLVM_DELETED_FUNCTION;
 
   friend class CGCXXABI;
+  friend class CGOpenMPRegionInfo;
 public:
   /// A jump destination is an abstract label, branching to which may
   /// require a jump out through normal cleanups.
@@ -2012,6 +2013,8 @@ public:
                               const VarDecl *VDInit);
   void EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
                                  OMPPrivateScope &PrivateScope);
+  void EmitOMPPrivateClause(const OMPExecutableDirective &D,
+                            OMPPrivateScope &PrivateScope);
 
   void EmitOMPParallelDirective(const OMPParallelDirective &S);
   void EmitOMPSimdDirective(const OMPSimdDirective &S);

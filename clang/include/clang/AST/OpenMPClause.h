@@ -138,7 +138,7 @@ public:
     return llvm::makeArrayRef(
         reinterpret_cast<const Expr *const *>(
             reinterpret_cast<const char *>(this) +
-            llvm::RoundUpToAlignment(sizeof(T), llvm::alignOf<Expr *>())),
+            llvm::RoundUpToAlignment(sizeof(T), llvm::alignOf<const Expr *>())),
         NumVars);
   }
 };
@@ -926,6 +926,7 @@ public:
 /// with the variables 'a' and 'b'.
 ///
 class OMPPrivateClause : public OMPVarListClause<OMPPrivateClause> {
+  friend class OMPClauseReader;
   /// \brief Build clause with number of variables \a N.
   ///
   /// \param StartLoc Starting location of the clause.
@@ -947,6 +948,20 @@ class OMPPrivateClause : public OMPVarListClause<OMPPrivateClause> {
                                            SourceLocation(), SourceLocation(),
                                            N) {}
 
+  /// \brief Sets the list of references to private copies with initializers for
+  /// new private variables.
+  /// \param InitVL List of references.
+  void setPrivateCopies(ArrayRef<Expr *> VL);
+
+  /// \brief Gets the list of references to private copies with initializers for
+  /// new private variables.
+  MutableArrayRef<Expr *> getPrivateCopies() {
+    return MutableArrayRef<Expr *>(varlist_end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getPrivateCopies() const {
+    return llvm::makeArrayRef(varlist_end(), varlist_size());
+  }
+
 public:
   /// \brief Creates clause with a list of variables \a VL.
   ///
@@ -955,16 +970,33 @@ public:
   /// \param LParenLoc Location of '('.
   /// \param EndLoc Ending location of the clause.
   /// \param VL List of references to the variables.
+  /// \param PrivateVL List of references to private copies with initializers.
   ///
   static OMPPrivateClause *Create(const ASTContext &C, SourceLocation StartLoc,
                                   SourceLocation LParenLoc,
-                                  SourceLocation EndLoc, ArrayRef<Expr *> VL);
+                                  SourceLocation EndLoc, ArrayRef<Expr *> VL,
+                                  ArrayRef<Expr *> PrivateVL);
   /// \brief Creates an empty clause with the place for \a N variables.
   ///
   /// \param C AST context.
   /// \param N The number of variables.
   ///
   static OMPPrivateClause *CreateEmpty(const ASTContext &C, unsigned N);
+
+  typedef MutableArrayRef<Expr *>::iterator private_copies_iterator;
+  typedef ArrayRef<const Expr *>::iterator private_copies_const_iterator;
+  typedef llvm::iterator_range<private_copies_iterator> private_copies_range;
+  typedef llvm::iterator_range<private_copies_const_iterator>
+      private_copies_const_range;
+
+  private_copies_range private_copies() {
+    return private_copies_range(getPrivateCopies().begin(),
+                                getPrivateCopies().end());
+  }
+  private_copies_const_range private_copies() const {
+    return private_copies_const_range(getPrivateCopies().begin(),
+                                      getPrivateCopies().end());
+  }
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),

@@ -1176,17 +1176,24 @@ StmtRange OMPClause::children() {
   llvm_unreachable("unknown OMPClause");
 }
 
-OMPPrivateClause *OMPPrivateClause::Create(const ASTContext &C,
-                                           SourceLocation StartLoc,
-                                           SourceLocation LParenLoc,
-                                           SourceLocation EndLoc,
-                                           ArrayRef<Expr *> VL) {
+void OMPPrivateClause::setPrivateCopies(ArrayRef<Expr *> VL) {
+  assert(VL.size() == varlist_size() &&
+         "Number of private copies is not the same as the preallocated buffer");
+  std::copy(VL.begin(), VL.end(), varlist_end());
+}
+
+OMPPrivateClause *
+OMPPrivateClause::Create(const ASTContext &C, SourceLocation StartLoc,
+                         SourceLocation LParenLoc, SourceLocation EndLoc,
+                         ArrayRef<Expr *> VL, ArrayRef<Expr *> PrivateVL) {
+  // Allocate space for private variables and initializer expressions.
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPPrivateClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * VL.size());
-  OMPPrivateClause *Clause = new (Mem) OMPPrivateClause(StartLoc, LParenLoc,
-                                                        EndLoc, VL.size());
+                         2 * sizeof(Expr *) * VL.size());
+  OMPPrivateClause *Clause =
+      new (Mem) OMPPrivateClause(StartLoc, LParenLoc, EndLoc, VL.size());
   Clause->setVarRefs(VL);
+  Clause->setPrivateCopies(PrivateVL);
   return Clause;
 }
 
@@ -1194,7 +1201,7 @@ OMPPrivateClause *OMPPrivateClause::CreateEmpty(const ASTContext &C,
                                                 unsigned N) {
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPPrivateClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * N);
+                         2 * sizeof(Expr *) * N);
   return new (Mem) OMPPrivateClause(N);
 }
 

@@ -322,12 +322,16 @@ void OMPClauseProfiler::VisitOMPSeqCstClause(const OMPSeqCstClause *) {}
 
 template<typename T>
 void OMPClauseProfiler::VisitOMPClauseList(T *Node) {
-  for (auto *I : Node->varlists())
-    Profiler->VisitStmt(I);
+  for (auto *E : Node->varlists()) {
+    Profiler->VisitStmt(E);
+  }
 }
 
 void OMPClauseProfiler::VisitOMPPrivateClause(const OMPPrivateClause *C) {
   VisitOMPClauseList(C);
+  for (auto *E : C->private_copies()) {
+    Profiler->VisitStmt(E);
+  }
 }
 void
 OMPClauseProfiler::VisitOMPFirstprivateClause(const OMPFirstprivateClause *C) {
