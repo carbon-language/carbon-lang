@@ -15,7 +15,7 @@ using namespace llvm;
 namespace llvm {
 
 static void PrintTo(const StringRef &S, ::std::ostream *os) {
-  *os << "(" << (void *)S.data() << "," << S.size() << ") = '";
+  *os << "(" << (const void *)S.data() << "," << S.size() << ") = '";
   for (auto C : S)
     if (C)
       *os << C;
