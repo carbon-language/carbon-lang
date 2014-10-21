@@ -23,7 +23,7 @@ B::B() {}
 
 // CHECK:*** Dumping AST Record Layout
 // CHECK-NEXT:   0 | union B
-// CHECK-NEXT:   0 |   int f1
+// CHECK-NEXT:   0 |   char f1
 // CHECK-NEXT:     | [sizeof=8, dsize=5, align=4
 // CHECK-NEXT:     |  nvsize=5, nvalign=4]
 
