@@ -76,11 +76,6 @@ EnableCondOpt("aarch64-condopt",
               cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
-EnablePBQP("aarch64-pbqp", cl::Hidden,
-           cl::desc("Use PBQP register allocator (experimental)"),
-           cl::init(false));
-
-static cl::opt<bool>
 EnableA53Fix835769("aarch64-fix-cortex-a53-835769", cl::Hidden,
                 cl::desc("Work around Cortex-A53 erratum 835769"),
                 cl::init(false));
@@ -101,14 +96,8 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
                                            CodeGenOpt::Level OL,
                                            bool LittleEndian)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, *this, LittleEndian), isLittle(LittleEndian),
-      usingPBQP(false) {
+      Subtarget(TT, CPU, FS, *this, LittleEndian), isLittle(LittleEndian) {
   initAsmInfo();
-
-  if (EnablePBQP && Subtarget.isCortexA57() && OL != CodeGenOpt::None) {
-    usingPBQP = true;
-    RegisterRegAlloc::setDefault(createDefaultPBQPRegisterAllocator);
-  }
 }
 
 const AArch64Subtarget *
@@ -263,7 +252,7 @@ bool AArch64PassConfig::addPostRegAlloc() {
     addPass(createAArch64DeadRegisterDefinitions());
   if (TM->getOptLevel() != CodeGenOpt::None &&
       TM->getSubtarget<AArch64Subtarget>().isCortexA57() &&
-      !static_cast<const AArch64TargetMachine *>(TM)->isPBQPUsed())
+      usingDefaultRegAlloc())
     // Improve performance for some FP/SIMD code for A57.
     addPass(createAArch64A57FPLoadBalancing());
   return true;

@@ -178,6 +178,10 @@ public:
   /// Return true if the optimized regalloc pipeline is enabled.
   bool getOptimizeRegAlloc() const;
 
+  /// Return true if the default global register allocator is in use and
+  /// has not be overriden on the command line with '-regalloc=...'
+  bool usingDefaultRegAlloc() const;
+
   /// Add common target configurable passes that perform LLVM IR to IR
   /// transforms following machine independent optimization.
   virtual void addIRPasses();

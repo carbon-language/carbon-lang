@@ -1,9 +1,9 @@
-; RUN: llc -mtriple=aarch64-linux-gnu -mcpu=cortex-a57 -aarch64-pbqp -o - %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-linux-gnu -mcpu=cortex-a57 -regalloc=pbqp -pbqp-coalescing -o - %s | FileCheck %s
 
 define i32 @foo(i32 %a) {
 ; CHECK-LABEL: foo:
 ; CHECK: bl bar
-; CHECK-NEXT: bl baz
+; CHECK: bl baz
   %call = call i32 @bar(i32 %a)
   %call1 = call i32 @baz(i32 %call)
   ret i32 %call1
