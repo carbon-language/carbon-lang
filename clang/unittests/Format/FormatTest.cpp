@@ -8924,6 +8924,11 @@ TEST_F(FormatTest, BreakConstructorInitializersBeforeComma) {
                Style);
 }
 
+TEST_F(FormatTest, Destructors) {
+  verifyFormat("void F(int &i) { i.~int(); }");
+  verifyFormat("void F(int &i) { i->~int(); }");
+}
+
 TEST_F(FormatTest, FormatsWithWebKitStyle) {
   FormatStyle Style = getWebKitStyle();
 

@@ -1508,18 +1508,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                                           const FormatToken &Left,
                                           const FormatToken &Right) {
-  if (Style.Language == FormatStyle::LK_Proto) {
-    if (Right.is(tok::period) &&
-        (Left.TokenText == "optional" || Left.TokenText == "required" ||
-         Left.TokenText == "repeated"))
-      return true;
-    if (Right.is(tok::l_paren) &&
-        (Left.TokenText == "returns" || Left.TokenText == "option"))
-      return true;
-  } else if (Style.Language == FormatStyle::LK_JavaScript) {
-    if (Left.TokenText == "var")
-      return true;
-  }
   if (Left.is(tok::kw_return) && Right.isNot(tok::semi))
     return true;
   if (Style.ObjCSpaceAfterProperty && Line.Type == LT_ObjCProperty &&
@@ -1545,8 +1533,6 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       (Left.isOneOf(tok::kw_template, tok::r_paren) ||
        (Line.Type == LT_ObjCDecl && Style.ObjCSpaceBeforeProtocolList)))
     return true;
-  if (Left.is(tok::arrow) || Right.is(tok::arrow))
-    return false;
   if (Left.isOneOf(tok::exclaim, tok::tilde))
     return false;
   if (Left.is(tok::at) &&
@@ -1641,75 +1627,85 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
 }
 
 bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
-                                         const FormatToken &Tok) {
-  if (Tok.Tok.getIdentifierInfo() && Tok.Previous->Tok.getIdentifierInfo())
-    return true; // Never ever merge two identifiers.
-  if (Tok.Previous->Type == TT_ImplicitStringLiteral)
-    return Tok.WhitespaceRange.getBegin() != Tok.WhitespaceRange.getEnd();
-  if (Line.Type == LT_ObjCMethodDecl) {
-    if (Tok.Previous->Type == TT_ObjCMethodSpecifier)
+                                         const FormatToken &Right) {
+  const FormatToken &Left = *Right.Previous;
+  if (Style.Language == FormatStyle::LK_Proto) {
+    if (Right.is(tok::period) &&
+        (Left.TokenText == "optional" || Left.TokenText == "required" ||
+         Left.TokenText == "repeated"))
       return true;
-    if (Tok.Previous->is(tok::r_paren) && Tok.is(tok::identifier))
+    if (Right.is(tok::l_paren) &&
+        (Left.TokenText == "returns" || Left.TokenText == "option"))
+      return true;
+  } else if (Style.Language == FormatStyle::LK_JavaScript) {
+    if (Left.TokenText == "var")
+      return true;
+  }
+  if (Right.Tok.getIdentifierInfo() && Left.Tok.getIdentifierInfo())
+    return true; // Never ever merge two identifiers.
+  if (Left.Type == TT_ImplicitStringLiteral)
+    return Right.WhitespaceRange.getBegin() != Right.WhitespaceRange.getEnd();
+  if (Line.Type == LT_ObjCMethodDecl) {
+    if (Left.Type == TT_ObjCMethodSpecifier)
+      return true;
+    if (Left.is(tok::r_paren) && Right.is(tok::identifier))
       // Don't space between ')' and <id>
       return false;
   }
   if (Line.Type == LT_ObjCProperty &&
-      (Tok.is(tok::equal) || Tok.Previous->is(tok::equal)))
+      (Right.is(tok::equal) || Left.is(tok::equal)))
     return false;
 
-  if (Tok.Type == TT_TrailingReturnArrow ||
-      Tok.Previous->Type == TT_TrailingReturnArrow)
+  if (Right.Type == TT_TrailingReturnArrow ||
+      Left.Type == TT_TrailingReturnArrow)
     return true;
-  if (Tok.Previous->is(tok::comma))
+  if (Left.is(tok::comma))
     return true;
-  if (Tok.is(tok::comma))
+  if (Right.is(tok::comma))
     return false;
-  if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
+  if (Right.Type == TT_CtorInitializerColon || Right.Type == TT_ObjCBlockLParen)
     return true;
-  if (Tok.Previous->Tok.is(tok::kw_operator))
-    return Tok.is(tok::coloncolon);
-  if (Tok.Type == TT_OverloadedOperatorLParen)
+  if (Left.is(tok::kw_operator))
+    return Right.is(tok::coloncolon);
+  if (Right.Type == TT_OverloadedOperatorLParen)
     return false;
-  if (Tok.is(tok::colon))
+  if (Right.is(tok::colon))
     return !Line.First->isOneOf(tok::kw_case, tok::kw_default) &&
-           Tok.getNextNonComment() && Tok.Type != TT_ObjCMethodExpr &&
-           !Tok.Previous->is(tok::question) &&
-           !(Tok.Type == TT_InlineASMColon &&
-             Tok.Previous->is(tok::coloncolon)) &&
-           (Tok.Type != TT_DictLiteral || Style.SpacesInContainerLiterals);
-  if (Tok.Previous->Type == TT_UnaryOperator)
-    return Tok.Type == TT_BinaryOperator;
-  if (Tok.Previous->Type == TT_CastRParen)
-    return Style.SpaceAfterCStyleCast || Tok.Type == TT_BinaryOperator;
-  if (Tok.Previous->is(tok::greater) && Tok.is(tok::greater)) {
-    return Tok.Type == TT_TemplateCloser &&
-           Tok.Previous->Type == TT_TemplateCloser &&
+           Right.getNextNonComment() && Right.Type != TT_ObjCMethodExpr &&
+           !Left.is(tok::question) &&
+           !(Right.Type == TT_InlineASMColon && Left.is(tok::coloncolon)) &&
+           (Right.Type != TT_DictLiteral || Style.SpacesInContainerLiterals);
+  if (Left.Type == TT_UnaryOperator)
+    return Right.Type == TT_BinaryOperator;
+  if (Left.Type == TT_CastRParen)
+    return Style.SpaceAfterCStyleCast || Right.Type == TT_BinaryOperator;
+  if (Left.is(tok::greater) && Right.is(tok::greater)) {
+    return Right.Type == TT_TemplateCloser && Left.Type == TT_TemplateCloser &&
            (Style.Standard != FormatStyle::LS_Cpp11 || Style.SpacesInAngles);
   }
-  if (Tok.isOneOf(tok::arrowstar, tok::periodstar) ||
-      Tok.Previous->isOneOf(tok::arrowstar, tok::periodstar))
+  if (Right.isOneOf(tok::arrow, tok::period, tok::arrowstar, tok::periodstar) ||
+      Left.isOneOf(tok::arrow, tok::period, tok::arrowstar, tok::periodstar))
     return false;
   if (!Style.SpaceBeforeAssignmentOperators &&
-      Tok.getPrecedence() == prec::Assignment)
+      Right.getPrecedence() == prec::Assignment)
     return false;
-  if ((Tok.Type == TT_BinaryOperator && !Tok.Previous->is(tok::l_paren)) ||
-      Tok.Previous->Type == TT_BinaryOperator ||
-      Tok.Previous->Type == TT_ConditionalExpr)
+  if ((Right.Type == TT_BinaryOperator && !Left.is(tok::l_paren)) ||
+      Left.Type == TT_BinaryOperator || Left.Type == TT_ConditionalExpr)
     return true;
-  if (Tok.Previous->Type == TT_TemplateCloser && Tok.is(tok::l_paren))
+  if (Left.Type == TT_TemplateCloser && Right.is(tok::l_paren))
     return Style.SpaceBeforeParens == FormatStyle::SBPO_Always;
-  if (Tok.Type == TT_TemplateOpener && Tok.Previous->is(tok::r_paren) &&
-      Tok.Previous->MatchingParen &&
-      Tok.Previous->MatchingParen->Type == TT_OverloadedOperatorLParen)
+  if (Right.Type == TT_TemplateOpener && Left.is(tok::r_paren) &&
+      Left.MatchingParen &&
+      Left.MatchingParen->Type == TT_OverloadedOperatorLParen)
     return false;
-  if (Tok.is(tok::less) && Tok.Previous->isNot(tok::l_paren) &&
+  if (Right.is(tok::less) && Left.isNot(tok::l_paren) &&
       Line.First->is(tok::hash))
     return true;
-  if (Tok.Type == TT_TrailingUnaryOperator)
+  if (Right.Type == TT_TrailingUnaryOperator)
     return false;
-  if (Tok.Previous->Type == TT_RegexLiteral)
+  if (Left.Type == TT_RegexLiteral)
     return false;
-  return spaceRequiredBetween(Line, *Tok.Previous, Tok);
+  return spaceRequiredBetween(Line, Left, Right);
 }
 
 // Returns 'true' if 'Tok' is a brace we'd want to break before in Allman style.
