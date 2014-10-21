@@ -2287,6 +2287,14 @@ void Verifier::visitInstruction(Instruction &I) {
     visitRangeMetadata(I, Range, I.getType());
   }
 
+  if (I.getMetadata(LLVMContext::MD_nonnull)) {
+    Assert1(I.getType()->isPointerTy(),
+            "nonnull applies only to pointer types", &I);
+    Assert1(isa<LoadInst>(I),
+            "nonnull applies only to load instructions, use attributes"
+            " for calls or invokes", &I);
+  }
+
   InstsInThisBlock.insert(&I);
 }
 
