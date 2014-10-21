@@ -58,7 +58,7 @@ CHECK5-NEXT:        1   0x2010  exportfn7
 CHECK6:      Export Table:
 CHECK6:      DLL name: export.test.tmp6.dll
 CHECK6:       Ordinal      RVA  Name
-CHECK6-NEXT:        1   0x2010  exportfn8
+CHECK6-NEXT:        1   0x2010  ?exportfn8@@YAXXZ
 
 # RUN: lld -flavor link /out:%t6.dll /dll /entry:init \
 # RUN:   /export:exportfn8 /export:exportfn8 -- %t.obj
@@ -67,8 +67,8 @@ CHECK6-NEXT:        1   0x2010  exportfn8
 DUP:      Export Table:
 DUP:      DLL name: export.test.tmp6.dll
 DUP:       Ordinal      RVA  Name
-DUP:            1   0x2010  exportfn8
-DUP-NOT:        1   0x2010  exportfn8
+DUP:            1   0x2010  ?exportfn8@@YAXXZ
+DUP-NOT:        1   0x2010  ?exportfn8@@YAXXZ
 
 # RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
 #

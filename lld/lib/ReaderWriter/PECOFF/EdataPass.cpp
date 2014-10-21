@@ -62,7 +62,8 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
     // One can export a symbol with a different name than the symbol
     // name used in DLL. If such name is specified, use it in the
     // .edata section.
-    ret.push_back(TableEntry(desc.externalName, desc.ordinal, atom, desc.noname));
+    ret.push_back(TableEntry(desc.getExternalName(), desc.ordinal, atom,
+                             desc.noname));
   }
   std::sort(ret.begin(), ret.end(),
             [](const TableEntry &a, const TableEntry &b) {

@@ -392,7 +392,6 @@ static bool parseExport(StringRef option,
     return false;
   if (name.find('=') == StringRef::npos) {
     ret.name = name;
-    ret.externalName = name;
   } else {
     std::tie(ret.externalName, ret.name) = name.split("=");
     if (ret.name.empty())

@@ -30,7 +30,7 @@ createModuleDefinitionFile(const PECOFFLinkingContext &ctx) {
      << "EXPORTS\n";
 
   for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports()) {
-    os << "  " << desc.externalName;
+    os << "  " << desc.getExternalName();
     if (!desc.isPrivate)
       os << " @" << desc.ordinal;
     if (desc.noname)

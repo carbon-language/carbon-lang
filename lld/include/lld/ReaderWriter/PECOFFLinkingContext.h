@@ -61,8 +61,15 @@ public:
   struct ExportDesc {
     ExportDesc()
         : ordinal(-1), noname(false), isData(false), isPrivate(false) {}
+
     bool operator<(const ExportDesc &other) const {
-      return name.compare(other.name) < 0;
+      return getExternalName().compare(other.getExternalName()) < 0;
+    }
+
+    StringRef getExternalName() const {
+      if (!externalName.empty())
+        return externalName;
+      return name;
     }
 
     std::string name;
