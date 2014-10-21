@@ -440,10 +440,12 @@ void PassManagerBuilder::addLTOOptimizationPasses(PassManagerBase &PM) {
   // More loops are countable; try to optimize them.
   PM.add(createIndVarSimplifyPass());
   PM.add(createLoopDeletionPass());
-  PM.add(createLoopVectorizePass(true, true));
+  PM.add(createLoopVectorizePass(DisableUnrollLoops, LoopVectorize));
 
   // More scalar chains could be vectorized due to more alias information
-  PM.add(createSLPVectorizerPass()); // Vectorize parallel scalar chains.
+  if (RunSLPAfterLoopVectorization)
+    if (SLPVectorize)
+      PM.add(createSLPVectorizerPass()); // Vectorize parallel scalar chains.
 
   // After vectorization, assume intrinsics may tell us more about pointer
   // alignments.
