@@ -9,7 +9,7 @@ union A {
 A::A() {}
 
 union B {
-  int f1: 69;
+  char f1: 35;
   B();
 };
 
@@ -24,6 +24,6 @@ B::B() {}
 // CHECK:*** Dumping AST Record Layout
 // CHECK-NEXT:   0 | union B
 // CHECK-NEXT:   0 |   int f1
-// CHECK-NEXT:     | [{{sizeof=16, dsize=9, align=8|sizeof=12, dsize=9, align=4}}
-// CHECK-NEXT:     |  {{nvsize=9, nvalign=8|nvsize=9, nvalign=4}}]
+// CHECK-NEXT:     | [sizeof=8, dsize=5, align=4
+// CHECK-NEXT:     |  nvsize=5, nvalign=4]
 
