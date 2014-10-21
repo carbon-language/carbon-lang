@@ -13,17 +13,13 @@
 // because of the glob (*.c, *.sh)
 // REQUIRES: shell
 
-// RUN: not env FORCE_CLANG_DIAGNOSTICS_CRASH=1 %clang -fsyntax-only -x c /dev/null -lstdc++ 2>&1 | FileCheck %s
-
-// FIXME: Investigating. "fatal error: file 'nul' modified since it was first processed"
-// XFAIL: mingw32
-
 #pragma clang __debug parser_crash
 // CHECK: Preprocessed source(s) and associated run script(s) are located at:
-// CHECK-NEXT: note: diagnostic msg: {{.*}}.c
+// CHECK-NEXT: note: diagnostic msg: {{.*}}crash-report-{{.*}}.c
 FOO
 // CHECKSRC: FOO
 // CHECKSH: -cc1
+// CHECKSH: -main-file-name crash-report.c
 // CHECKSH: -D "FOO=BAR"
 // CHECKSH-NOT: -F/tmp/
 // CHECKSH-NOT: -I /tmp/
