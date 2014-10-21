@@ -2559,17 +2559,6 @@ CastInst *CastInst::CreatePointerBitCastOrAddrSpaceCast(
   return Create(Instruction::BitCast, S, Ty, Name, InsertBefore);
 }
 
-CastInst *CastInst::CreateBitOrPointerCast(Value *S, Type *Ty,
-                                           const Twine &Name,
-                                           Instruction *InsertBefore) {
-  if (S->getType()->isPointerTy() && Ty->isIntegerTy())
-    return Create(Instruction::PtrToInt, S, Ty, Name, InsertBefore);
-  if (S->getType()->isIntegerTy() && Ty->isPointerTy())
-    return Create(Instruction::IntToPtr, S, Ty, Name, InsertBefore);
-
-  return Create(Instruction::BitCast, S, Ty, Name, InsertBefore);
-}
-
 CastInst *CastInst::CreateIntegerCast(Value *C, Type *Ty,
                                       bool isSigned, const Twine &Name,
                                       Instruction *InsertBefore) {
@@ -2725,18 +2714,6 @@ bool CastInst::isBitCastable(Type *SrcTy, Type *DestTy) {
     return false;
 
   return true;
-}
-
-bool CastInst::isBitOrNoopPointerCastable(Type *SrcTy, Type *DestTy,
-                                          const DataLayout *DL) {
-  if (auto *PtrTy = dyn_cast<PointerType>(SrcTy))
-    if (auto *IntTy = dyn_cast<IntegerType>(DestTy))
-      return DL && IntTy->getBitWidth() >= DL->getPointerTypeSizeInBits(PtrTy);
-  if (auto *PtrTy = dyn_cast<PointerType>(DestTy))
-    if (auto *IntTy = dyn_cast<IntegerType>(SrcTy))
-      return DL && IntTy->getBitWidth() >= DL->getPointerTypeSizeInBits(PtrTy);
-
-  return isBitCastable(SrcTy, DestTy);
 }
 
 // Provide a way to get a "cast" where the cast opcode is inferred from the

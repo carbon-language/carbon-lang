@@ -490,19 +490,6 @@ public:
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
-  /// @brief Create a BitCast, a PtrToInt, or an IntToPTr cast instruction.
-  ///
-  /// If the value is a pointer type and the destination an integer type,
-  /// creates a PtrToInt cast. If the value is an integer type and the
-  /// destination a pointer type, creates an IntToPtr cast. Otherwise, creates
-  /// a bitcast.
-  static CastInst *CreateBitOrPointerCast(
-    Value *S,                ///< The pointer value to be casted (operand 0)
-    Type *Ty,          ///< The type to which cast should be made
-    const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
-  );
-
   /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
   static CastInst *CreateIntegerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
@@ -563,17 +550,6 @@ public:
   static bool isBitCastable(
     Type *SrcTy, ///< The Type from which the value should be cast.
     Type *DestTy ///< The Type to which the value should be cast.
-  );
-
-  /// @brief Check whether a bitcast, inttoptr, or ptrtoint cast between these
-  /// types is valid and a no-op.
-  ///
-  /// This ensures that any pointer<->integer cast has enough bits in the
-  /// integer and any other cast is a bitcast.
-  static bool isBitOrNoopPointerCastable(
-    Type *SrcTy, ///< The Type from which the value should be cast.
-    Type *DestTy, ///< The Type to which the value should be cast.
-    const DataLayout *Layout = 0 ///< Optional DataLayout.
   );
 
   /// Returns the opcode necessary to cast Val into Ty using usual casting

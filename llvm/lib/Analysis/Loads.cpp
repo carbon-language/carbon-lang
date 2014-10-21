@@ -176,13 +176,8 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
 
   Type *AccessTy = cast<PointerType>(Ptr->getType())->getElementType();
 
-  // Try to get the DataLayout for this module. This may be null, in which case
-  // the optimizations will be limited.
-  const DataLayout *DL = ScanBB->getDataLayout();
-
-  // Try to get the store size for the type.
-  uint64_t AccessSize = DL ? DL->getTypeStoreSize(AccessTy)
-                           : AA ? AA->getTypeStoreSize(AccessTy) : 0;
+  // If we're using alias analysis to disambiguate get the size of *Ptr.
+  uint64_t AccessSize = AA ? AA->getTypeStoreSize(AccessTy) : 0;
 
   Value *StrippedPtr = Ptr->stripPointerCasts();
 
@@ -207,7 +202,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
       if (AreEquivalentAddressValues(
               LI->getPointerOperand()->stripPointerCasts(), StrippedPtr) &&
-          CastInst::isBitOrNoopPointerCastable(LI->getType(), AccessTy, DL)) {
+          CastInst::isBitCastable(LI->getType(), AccessTy)) {
         if (AATags)
           LI->getAAMetadata(*AATags);
         return LI;
@@ -219,8 +214,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
       // (This is true even if the store is volatile or atomic, although
       // those cases are unlikely.)
       if (AreEquivalentAddressValues(StorePtr, StrippedPtr) &&
-          CastInst::isBitOrNoopPointerCastable(SI->getValueOperand()->getType(),
-                                               AccessTy, DL)) {
+          CastInst::isBitCastable(SI->getValueOperand()->getType(), AccessTy)) {
         if (AATags)
           SI->getAAMetadata(*AATags);
         return SI->getOperand(0);
