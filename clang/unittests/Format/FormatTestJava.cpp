@@ -75,6 +75,12 @@ TEST_F(FormatTestJava, Annotations) {
   verifyFormat("@SuppressWarnings(value = \"unchecked\")\n"
                "public void doSomething() {\n}");
 
+  verifyFormat("DoSomething(new A() {\n"
+               "  @Override\n"
+               "  public String toString() {\n"
+               "  }\n"
+               "});");
+
   verifyFormat("@Partial @Mock DataLoader loader;");
 }
 

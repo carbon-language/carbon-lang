@@ -1797,7 +1797,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.Type == TT_JavaAnnotation && Right.isNot(tok::l_paren) &&
-        Line.MightBeFunctionDecl)
+        Line.Last->is(tok::l_brace))
       return true;
   }
 
