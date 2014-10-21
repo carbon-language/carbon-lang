@@ -1056,7 +1056,7 @@ PlatformDarwin::GetDeveloperDirectory()
                                                      &signo,
                                                      &command_output,
                                                      2,                                     // short timeout
-                                                     NULL);                                 // don't run in a shell
+                                                     false);                                // don't run in a shell
                 if (error.Success() && exit_status == 0 && !command_output.empty())
                 {
                     const char *cmd_output_ptr = command_output.c_str();
