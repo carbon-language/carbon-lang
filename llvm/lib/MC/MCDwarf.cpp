@@ -344,18 +344,6 @@ void MCDwarfLineTable::EmitCU(MCObjectStreamer *MCOS) const {
   for (const auto &LineSec : MCLineSections.getMCLineEntries())
     EmitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
 
-  if (MCOS->getContext().getAsmInfo()->getLinkerRequiresNonEmptyDwarfLines() &&
-      MCLineSections.getMCLineEntries().empty()) {
-    // The darwin9 linker has a bug (see PR8715). For for 32-bit architectures
-    // it requires:
-    // total_length >= prologue_length + 10
-    // We are 4 bytes short, since we have total_length = 51 and
-    // prologue_length = 45
-
-    // The regular end_sequence should be sufficient.
-    MCDwarfLineAddr::Emit(MCOS, INT64_MAX, 0);
-  }
-
   // This is the end of the section, so set the value of the symbol at the end
   // of this section (that was used in a previous expression).
   MCOS->EmitLabel(LineEndSym);

@@ -92,11 +92,6 @@ protected:
   /// is false.
   bool HasStaticCtorDtorReferenceInStaticMode;
 
-  /// True if the linker has a bug and requires that the debug_line section be
-  /// of a minimum size. In practice such a linker requires a non-empty line
-  /// sequence if a file is present.  Default to false.
-  bool LinkerRequiresNonEmptyDwarfLines;
-
   /// This is the maximum possible length of an instruction, which is needed to
   /// compute the size of an inline asm.  Defaults to 4.
   unsigned MaxInstLength;
@@ -404,9 +399,6 @@ public:
   bool hasMachoTBSSDirective() const { return HasMachoTBSSDirective; }
   bool hasStaticCtorDtorReferenceInStaticMode() const {
     return HasStaticCtorDtorReferenceInStaticMode;
-  }
-  bool getLinkerRequiresNonEmptyDwarfLines() const {
-    return LinkerRequiresNonEmptyDwarfLines;
   }
   unsigned getMaxInstLength() const { return MaxInstLength; }
   unsigned getMinInstAlignment() const { return MinInstAlignment; }
