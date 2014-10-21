@@ -178,7 +178,7 @@ static void getMembers() {
 }
 
 namespace {
-enum class MRICommand { Create, Save, End, Invalid };
+enum class MRICommand { AddMod, Create, Save, End, Invalid };
 }
 
 static ArchiveOperation parseMRIScript() {
@@ -192,12 +192,16 @@ static ArchiveOperation parseMRIScript() {
     StringRef CommandStr, Rest;
     std::tie(CommandStr, Rest) = Line.split(' ');
     auto Command = StringSwitch<MRICommand>(CommandStr.lower())
+                       .Case("addmod", MRICommand::AddMod)
                        .Case("create", MRICommand::Create)
                        .Case("save", MRICommand::Save)
                        .Case("end", MRICommand::End)
                        .Default(MRICommand::Invalid);
 
     switch (Command) {
+    case MRICommand::AddMod:
+      Members.push_back(Rest);
+      break;
     case MRICommand::Create:
       Create = true;
       if (!ArchiveName.empty())

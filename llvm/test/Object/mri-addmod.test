@@ -1,0 +1,18 @@
+; RUN: echo create %t.a > %t.mri
+; RUN: echo addmod %p/Inputs/trivial-object-test.elf-x86-64 >> %t.mri
+; RUN: echo save >> %t.mri
+; RUN: echo end >> %t.mri
+
+; RUN: llvm-ar -M  < %t.mri
+; RUN: llvm-nm -M %t.a | FileCheck %s
+
+; CHECK:      Archive map
+; CHECK-NEXT: main in trivial-object-test.elf-x86-64
+
+; CHECK:      trivial-object-test.elf-x86-64:
+; CHECK-NEXT:                  U SomeOtherFunction
+; CHECK-NEXT: 0000000000000000 T main
+; CHECK-NEXT:                  U puts
+
+; line_iterator is incompatible to CRLF.
+; REQUIRES: shell
