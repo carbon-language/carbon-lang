@@ -607,6 +607,8 @@ static StringRef getComplexMultiplyLibCallName(llvm::Type *Ty) {
     return "__multc3";
   case llvm::Type::X86_FP80TyID:
     return "__mulxc3";
+  case llvm::Type::FP128TyID:
+    return "__multc3";
   }
 }
 
@@ -746,6 +748,8 @@ ComplexPairTy ComplexExprEmitter::EmitBinDiv(const BinOpInfo &Op) {
         return EmitComplexBinOpLibCall("__divtc3", LibCallOp);
       case llvm::Type::X86_FP80TyID:
         return EmitComplexBinOpLibCall("__divxc3", LibCallOp);
+      case llvm::Type::FP128TyID:
+        return EmitComplexBinOpLibCall("__divtc3", LibCallOp);
       }
     }
     assert(LHSi && "Can have at most one non-complex operand!");
