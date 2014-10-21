@@ -331,6 +331,7 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
     case LLVMContext::MD_noalias:
     case LLVMContext::MD_nontemporal:
     case LLVMContext::MD_mem_parallel_loop_access:
+    case LLVMContext::MD_nonnull:
       // All of these directly apply.
       NewLoad->setMetadata(ID, N);
       break;
