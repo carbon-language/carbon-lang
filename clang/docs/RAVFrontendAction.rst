@@ -25,7 +25,7 @@ unit.
 
       class FindNamedClassAction : public clang::ASTFrontendAction {
       public:
-        virtual clang::ASTConsumer *CreateASTConsumer(
+        virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(
           clang::CompilerInstance &Compiler, llvm::StringRef InFile) {
           return new FindNamedClassConsumer;
         }
