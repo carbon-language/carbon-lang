@@ -657,6 +657,7 @@ function(configure_lit_site_cfg input output)
 
   set(HOST_CC "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
   set(HOST_CXX "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1}")
+  set(HOST_LDFLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
   configure_file(${input} ${output} @ONLY)
 endfunction()
