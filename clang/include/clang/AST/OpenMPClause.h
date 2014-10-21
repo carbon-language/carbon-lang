@@ -950,7 +950,7 @@ class OMPPrivateClause : public OMPVarListClause<OMPPrivateClause> {
 
   /// \brief Sets the list of references to private copies with initializers for
   /// new private variables.
-  /// \param InitVL List of references.
+  /// \param VL List of references.
   void setPrivateCopies(ArrayRef<Expr *> VL);
 
   /// \brief Gets the list of references to private copies with initializers for
