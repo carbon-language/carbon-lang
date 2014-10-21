@@ -90,6 +90,15 @@ class LoadMM<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
   let mayLoad = 1;
 }
 
+class ArithRMM16<string opstr, RegisterOperand RO, bit isComm = 0,
+                 InstrItinClass Itin = NoItinerary,
+                 SDPatternOperator OpNode = null_frag> :
+  MicroMipsInst16<(outs RO:$rd), (ins RO:$rs, RO:$rt),
+                  !strconcat(opstr, "\t$rd, $rs, $rt"),
+                  [(set RO:$rd, (OpNode RO:$rs, RO:$rt))], Itin, FrmR> {
+  let isCommutable = isComm;
+}
+
 class LogicRMM16<string opstr, RegisterOperand RO,
                  InstrItinClass Itin = NoItinerary,
                  SDPatternOperator OpNode = null_frag> :
@@ -197,6 +206,10 @@ let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
            !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI, opstr>;
 }
 
+def ADDU16_MM : ArithRMM16<"addu16", GPRMM16Opnd, 1, II_ADDU, add>,
+                ARITH_FM_MM16<0>;
+def SUBU16_MM : ArithRMM16<"subu16", GPRMM16Opnd, 0, II_SUBU, sub>,
+                ARITH_FM_MM16<1>;
 def AND16_MM : LogicRMM16<"and16", GPRMM16Opnd, II_AND, and>,
                LOGIC_FM_MM16<0x2>;
 def OR16_MM  : LogicRMM16<"or16", GPRMM16Opnd, II_OR, or>,
