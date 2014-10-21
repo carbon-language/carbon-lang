@@ -1935,3 +1935,7 @@ namespace PR19010 {
   };
   void test() { constexpr Test t; }
 }
+
+void PR21327(int a, int b) {
+  static_assert(&a + 1 != &b, ""); // expected-error {{constant expression}}
+}

@@ -823,7 +823,7 @@ namespace dr70 { // dr70: yes
 namespace dr73 { // dr73: no
   // The resolution to dr73 is unworkable. Consider:
   int a, b;
-  static_assert(&a + 1 != &b, "");
+  static_assert(&a + 1 != &b, ""); // expected-error {{not an integral constant expression}}
 }
 #endif
 

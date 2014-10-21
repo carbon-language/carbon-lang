@@ -6461,6 +6461,27 @@ static bool HasSameBase(const LValue &A, const LValue &B) {
          A.getLValueCallIndex() == B.getLValueCallIndex();
 }
 
+/// \brief Determine whether this is a pointer past the end of the complete
+/// object referred to by the lvalue.
+static bool isOnePastTheEndOfCompleteObject(const ASTContext &Ctx,
+                                            const LValue &LV) {
+  // A null pointer can be viewed as being "past the end" but we don't
+  // choose to look at it that way here.
+  if (!LV.getLValueBase())
+    return false;
+
+  // If the designator is valid and refers to a subobject, we're not pointing
+  // past the end.
+  if (!LV.getLValueDesignator().Invalid &&
+      !LV.getLValueDesignator().isOnePastTheEnd())
+    return false;
+
+  // We're a past-the-end pointer if we point to the byte after the object,
+  // no matter what our type or path is.
+  auto Size = Ctx.getTypeSizeInChars(getType(LV.getLValueBase()));
+  return LV.getLValueOffset() == Size;
+}
+
 namespace {
 
 /// \brief Data recursive integer evaluator of certain binary operators.
@@ -6922,6 +6943,13 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         // We can't tell whether weak symbols will end up pointing to the same
         // object.
         if (IsWeakLValue(LHSValue) || IsWeakLValue(RHSValue))
+          return Error(E);
+        // We can't compare the address of the start of one object with the
+        // past-the-end address of another object, per C++ DR1652.
+        if ((LHSValue.Base && LHSValue.Offset.isZero() &&
+             isOnePastTheEndOfCompleteObject(Info.Ctx, RHSValue)) ||
+            (RHSValue.Base && RHSValue.Offset.isZero() &&
+             isOnePastTheEndOfCompleteObject(Info.Ctx, LHSValue)))
           return Error(E);
         // Pointers with different bases cannot represent the same object.
         // (Note that clang defaults to -fmerge-all-constants, which can
