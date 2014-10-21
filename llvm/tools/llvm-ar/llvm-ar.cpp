@@ -652,11 +652,10 @@ computeNewArchiveMembers(ArchiveOperation Operation,
 
   Ret.insert(Ret.begin() + InsertPos, Members.size(), NewArchiveIterator());
   int Pos = InsertPos;
-  for (std::vector<std::string>::iterator I = Members.begin(),
-         E = Members.end();
-       I != E; ++I, ++Pos) {
-    StringRef Name = sys::path::filename(*I);
-    addMember(Ret, &*I, Name, Pos);
+  for (auto &Member : Members) {
+    StringRef Name = sys::path::filename(Member);
+    addMember(Ret, &Member, Name, Pos);
+    ++Pos;
   }
 
   return Ret;
