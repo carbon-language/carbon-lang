@@ -627,12 +627,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineTypeSize("__INTMAX_MAX__", TI.getIntMaxType(), TI, Builder);
   DefineTypeSize("__SIZE_MAX__", TI.getSizeType(), TI, Builder);
 
-  if (!LangOpts.MSVCCompat) {
-    DefineTypeSize("__UINTMAX_MAX__", TI.getUIntMaxType(), TI, Builder);
-    DefineTypeSize("__PTRDIFF_MAX__", TI.getPtrDiffType(0), TI, Builder);
-    DefineTypeSize("__INTPTR_MAX__", TI.getIntPtrType(), TI, Builder);
-    DefineTypeSize("__UINTPTR_MAX__", TI.getUIntPtrType(), TI, Builder);
-  }
+  DefineTypeSize("__UINTMAX_MAX__", TI.getUIntMaxType(), TI, Builder);
+  DefineTypeSize("__PTRDIFF_MAX__", TI.getPtrDiffType(0), TI, Builder);
+  DefineTypeSize("__INTPTR_MAX__", TI.getIntPtrType(), TI, Builder);
+  DefineTypeSize("__UINTPTR_MAX__", TI.getUIntPtrType(), TI, Builder);
 
   DefineTypeSizeof("__SIZEOF_DOUBLE__", TI.getDoubleWidth(), TI, Builder);
   DefineTypeSizeof("__SIZEOF_FLOAT__", TI.getFloatWidth(), TI, Builder);
@@ -680,12 +678,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineType("__CHAR16_TYPE__", TI.getChar16Type(), Builder);
   DefineType("__CHAR32_TYPE__", TI.getChar32Type(), Builder);
 
-  if (!LangOpts.MSVCCompat) {
-    DefineTypeWidth("__UINTMAX_WIDTH__",  TI.getUIntMaxType(), TI, Builder);
-    DefineType("__UINTPTR_TYPE__", TI.getUIntPtrType(), Builder);
-    DefineFmt("__UINTPTR", TI.getUIntPtrType(), TI, Builder);
-    DefineTypeWidth("__UINTPTR_WIDTH__", TI.getUIntPtrType(), TI, Builder);
-  }
+  DefineTypeWidth("__UINTMAX_WIDTH__",  TI.getUIntMaxType(), TI, Builder);
+  DefineType("__UINTPTR_TYPE__", TI.getUIntPtrType(), Builder);
+  DefineFmt("__UINTPTR", TI.getUIntPtrType(), TI, Builder);
+  DefineTypeWidth("__UINTPTR_WIDTH__", TI.getUIntPtrType(), TI, Builder);
 
   DefineFloatMacros(Builder, "FLT", &TI.getFloatFormat(), "F");
   DefineFloatMacros(Builder, "DBL", &TI.getDoubleFormat(), "");
@@ -719,53 +715,51 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (TI.getLongLongWidth() > TI.getLongWidth())
     DefineExactWidthIntType(TargetInfo::SignedLongLong, TI, Builder);
 
-  if (!LangOpts.MSVCCompat) {
-    DefineExactWidthIntType(TargetInfo::UnsignedChar, TI, Builder);
-    DefineExactWidthIntTypeSize(TargetInfo::UnsignedChar, TI, Builder);
-    DefineExactWidthIntTypeSize(TargetInfo::SignedChar, TI, Builder);
+  DefineExactWidthIntType(TargetInfo::UnsignedChar, TI, Builder);
+  DefineExactWidthIntTypeSize(TargetInfo::UnsignedChar, TI, Builder);
+  DefineExactWidthIntTypeSize(TargetInfo::SignedChar, TI, Builder);
 
-    if (TI.getShortWidth() > TI.getCharWidth()) {
-      DefineExactWidthIntType(TargetInfo::UnsignedShort, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::UnsignedShort, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::SignedShort, TI, Builder);
-    }
-
-    if (TI.getIntWidth() > TI.getShortWidth()) {
-      DefineExactWidthIntType(TargetInfo::UnsignedInt, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::UnsignedInt, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::SignedInt, TI, Builder);
-    }
-
-    if (TI.getLongWidth() > TI.getIntWidth()) {
-      DefineExactWidthIntType(TargetInfo::UnsignedLong, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::UnsignedLong, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::SignedLong, TI, Builder);
-    }
-
-    if (TI.getLongLongWidth() > TI.getLongWidth()) {
-      DefineExactWidthIntType(TargetInfo::UnsignedLongLong, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::UnsignedLongLong, TI, Builder);
-      DefineExactWidthIntTypeSize(TargetInfo::SignedLongLong, TI, Builder);
-    }
-
-    DefineLeastWidthIntType(8, true, TI, Builder);
-    DefineLeastWidthIntType(8, false, TI, Builder);
-    DefineLeastWidthIntType(16, true, TI, Builder);
-    DefineLeastWidthIntType(16, false, TI, Builder);
-    DefineLeastWidthIntType(32, true, TI, Builder);
-    DefineLeastWidthIntType(32, false, TI, Builder);
-    DefineLeastWidthIntType(64, true, TI, Builder);
-    DefineLeastWidthIntType(64, false, TI, Builder);
-
-    DefineFastIntType(8, true, TI, Builder);
-    DefineFastIntType(8, false, TI, Builder);
-    DefineFastIntType(16, true, TI, Builder);
-    DefineFastIntType(16, false, TI, Builder);
-    DefineFastIntType(32, true, TI, Builder);
-    DefineFastIntType(32, false, TI, Builder);
-    DefineFastIntType(64, true, TI, Builder);
-    DefineFastIntType(64, false, TI, Builder);
+  if (TI.getShortWidth() > TI.getCharWidth()) {
+    DefineExactWidthIntType(TargetInfo::UnsignedShort, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::UnsignedShort, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::SignedShort, TI, Builder);
   }
+
+  if (TI.getIntWidth() > TI.getShortWidth()) {
+    DefineExactWidthIntType(TargetInfo::UnsignedInt, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::UnsignedInt, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::SignedInt, TI, Builder);
+  }
+
+  if (TI.getLongWidth() > TI.getIntWidth()) {
+    DefineExactWidthIntType(TargetInfo::UnsignedLong, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::UnsignedLong, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::SignedLong, TI, Builder);
+  }
+
+  if (TI.getLongLongWidth() > TI.getLongWidth()) {
+    DefineExactWidthIntType(TargetInfo::UnsignedLongLong, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::UnsignedLongLong, TI, Builder);
+    DefineExactWidthIntTypeSize(TargetInfo::SignedLongLong, TI, Builder);
+  }
+
+  DefineLeastWidthIntType(8, true, TI, Builder);
+  DefineLeastWidthIntType(8, false, TI, Builder);
+  DefineLeastWidthIntType(16, true, TI, Builder);
+  DefineLeastWidthIntType(16, false, TI, Builder);
+  DefineLeastWidthIntType(32, true, TI, Builder);
+  DefineLeastWidthIntType(32, false, TI, Builder);
+  DefineLeastWidthIntType(64, true, TI, Builder);
+  DefineLeastWidthIntType(64, false, TI, Builder);
+
+  DefineFastIntType(8, true, TI, Builder);
+  DefineFastIntType(8, false, TI, Builder);
+  DefineFastIntType(16, true, TI, Builder);
+  DefineFastIntType(16, false, TI, Builder);
+  DefineFastIntType(32, true, TI, Builder);
+  DefineFastIntType(32, false, TI, Builder);
+  DefineFastIntType(64, true, TI, Builder);
+  DefineFastIntType(64, false, TI, Builder);
 
   if (const char *Prefix = TI.getUserLabelPrefix())
     Builder.defineMacro("__USER_LABEL_PREFIX__", Prefix);
