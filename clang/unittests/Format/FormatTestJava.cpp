@@ -70,6 +70,10 @@ TEST_F(FormatTestJava, Annotations) {
   verifyFormat("@Override\n"
                "@Nullable\n"
                "public String getNameIfPresent() {\n}");
+
+  verifyFormat("@SuppressWarnings(value = \"unchecked\")\n"
+               "public void doSomething() {\n}");
+
   verifyFormat("@Partial @Mock DataLoader loader;");
 }
 

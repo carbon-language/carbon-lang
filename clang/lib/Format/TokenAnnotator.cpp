@@ -184,6 +184,8 @@ private:
 
         if (Left->Type == TT_AttributeParen)
           CurrentToken->Type = TT_AttributeParen;
+        if (Left->Previous && Left->Previous->Type == TT_JavaAnnotation)
+          CurrentToken->Type = TT_JavaAnnotation;
 
         if (!HasMultipleLines)
           Left->PackingKind = PPK_Inconclusive;
@@ -1791,7 +1793,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
         Left.Previous->is(tok::char_constant))
       return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
-    if (Left.Type == TT_JavaAnnotation && Line.MightBeFunctionDecl)
+    if (Left.Type == TT_JavaAnnotation && Right.isNot(tok::l_paren) &&
+        Line.MightBeFunctionDecl)
       return true;
   }
 
