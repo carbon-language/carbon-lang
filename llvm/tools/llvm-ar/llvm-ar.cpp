@@ -947,19 +947,22 @@ static int performOperation(ArchiveOperation Operation,
 }
 
 static void runMRIScript() {
-  enum class MRICommand { AddMod, Create, Save, End, Invalid };
+  enum class MRICommand { AddLib, AddMod, Create, Save, End, Invalid };
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getSTDIN();
   failIfError(Buf.getError());
   const MemoryBuffer &Ref = *Buf.get();
   bool Saved = false;
   std::vector<NewArchiveIterator> NewMembers;
+  std::vector<std::unique_ptr<MemoryBuffer>> ArchiveBuffers;
+  std::vector<std::unique_ptr<object::Archive>> Archives;
 
   for (line_iterator I(Ref, /*SkipBlanks*/ true, ';'), E; I != E; ++I) {
     StringRef Line = *I;
     StringRef CommandStr, Rest;
     std::tie(CommandStr, Rest) = Line.split(' ');
     auto Command = StringSwitch<MRICommand>(CommandStr.lower())
+                       .Case("addlib", MRICommand::AddLib)
                        .Case("addmod", MRICommand::AddMod)
                        .Case("create", MRICommand::Create)
                        .Case("save", MRICommand::Save)
@@ -967,6 +970,22 @@ static void runMRIScript() {
                        .Default(MRICommand::Invalid);
 
     switch (Command) {
+    case MRICommand::AddLib: {
+      auto BufOrErr = MemoryBuffer::getFile(Rest, -1, false);
+      failIfError(BufOrErr.getError(), "Could not open library");
+      ArchiveBuffers.push_back(std::move(*BufOrErr));
+      auto LibOrErr =
+          object::Archive::create(ArchiveBuffers.back()->getMemBufferRef());
+      failIfError(LibOrErr.getError(), "Could not parse library");
+      Archives.push_back(std::move(*LibOrErr));
+      object::Archive &Lib = *Archives.back();
+      for (auto &Member : Lib.children()) {
+        ErrorOr<StringRef> NameOrErr = Member.getName();
+        failIfError(NameOrErr.getError());
+        addMember(NewMembers, Member, *NameOrErr);
+      }
+      break;
+    }
     case MRICommand::AddMod:
       addMember(NewMembers, Rest, sys::path::filename(Rest));
       break;
