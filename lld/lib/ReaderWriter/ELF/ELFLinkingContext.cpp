@@ -22,7 +22,9 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 
-#if HAVE_CXXABI_H
+// FreeBSD 10.0 has cxxabi.h but fails to define HAVE_CXXABI_H due to
+// header dependency issues.
+#if defined(HAVE_CXXABI_H) || defined (__FreeBSD__)
 #include <cxxabi.h>
 #endif
 
