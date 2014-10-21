@@ -1850,8 +1850,8 @@ FormatPromptRecurse
                                 
                                 // TODO use flags for these
                                 const uint32_t type_info_flags = target->GetClangType().GetTypeInfo(NULL);
-                                bool is_array = (type_info_flags & ClangASTType::eTypeIsArray) != 0;
-                                bool is_pointer = (type_info_flags & ClangASTType::eTypeIsPointer) != 0;
+                                bool is_array = (type_info_flags & eTypeIsArray) != 0;
+                                bool is_pointer = (type_info_flags & eTypeIsPointer) != 0;
                                 bool is_aggregate = target->GetClangType().IsAggregateType();
                                 
                                 if ((is_array || is_pointer) && (!is_array_range) && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue) // this should be wrong, but there are some exceptions

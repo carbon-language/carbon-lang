@@ -449,6 +449,14 @@ SBType::IsTypeComplete()
     return m_opaque_sp->GetClangASTType(false).IsCompleteType();
 }
 
+uint32_t
+SBType::GetTypeFlags ()
+{
+    if (!IsValid())
+        return 0;
+    return m_opaque_sp->GetClangASTType(true).GetTypeInfo();
+}
+
 const char*
 SBType::GetName()
 {

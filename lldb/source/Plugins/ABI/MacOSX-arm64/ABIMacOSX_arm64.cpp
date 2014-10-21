@@ -440,11 +440,11 @@ ABIMacOSX_arm64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueO
         }
 
         const uint32_t type_flags = return_value_type.GetTypeInfo (NULL);
-        if (type_flags & ClangASTType::eTypeIsScalar ||
-            type_flags & ClangASTType::eTypeIsPointer)
+        if (type_flags & eTypeIsScalar ||
+            type_flags & eTypeIsPointer)
         {
-            if (type_flags & ClangASTType::eTypeIsInteger ||
-                type_flags & ClangASTType::eTypeIsPointer )
+            if (type_flags & eTypeIsInteger ||
+                type_flags & eTypeIsPointer )
             {
                 // Extract the register context so we can read arguments from registers
                 lldb::offset_t offset = 0;
@@ -477,9 +477,9 @@ ABIMacOSX_arm64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueO
                     error.SetErrorString("We don't support returning longer than 128 bit integer values at present.");
                 }
             }
-            else if (type_flags & ClangASTType::eTypeIsFloat)
+            else if (type_flags & eTypeIsFloat)
             {
-                if (type_flags & ClangASTType::eTypeIsComplex)
+                if (type_flags & eTypeIsComplex)
                 {
                     // Don't handle complex yet.
                     error.SetErrorString ("returning complex float values are not supported");
@@ -519,7 +519,7 @@ ABIMacOSX_arm64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueO
                 }
             }
         }
-        else if (type_flags & ClangASTType::eTypeIsVector)
+        else if (type_flags & eTypeIsVector)
         {
             if (byte_size > 0)
             {
@@ -874,14 +874,14 @@ ABIMacOSX_arm64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_
     const size_t byte_size = return_clang_type.GetByteSize();
 
     const uint32_t type_flags = return_clang_type.GetTypeInfo (NULL);
-    if (type_flags & ClangASTType::eTypeIsScalar ||
-        type_flags & ClangASTType::eTypeIsPointer)
+    if (type_flags & eTypeIsScalar ||
+        type_flags & eTypeIsPointer)
     {
         value.SetValueType(Value::eValueTypeScalar);
         
         bool success = false;
-        if (type_flags & ClangASTType::eTypeIsInteger ||
-            type_flags & ClangASTType::eTypeIsPointer )
+        if (type_flags & eTypeIsInteger ||
+            type_flags & eTypeIsPointer )
         {
             // Extract the register context so we can read arguments from registers
             if (byte_size <= 8)
@@ -890,7 +890,7 @@ ABIMacOSX_arm64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_
                 if (x0_reg_info)
                 {
                     uint64_t raw_value = thread.GetRegisterContext()->ReadRegisterAsUnsigned(x0_reg_info, 0);
-                    const bool is_signed = (type_flags & ClangASTType::eTypeIsSigned) != 0;
+                    const bool is_signed = (type_flags & eTypeIsSigned) != 0;
                     switch (byte_size)
                     {
                         default:
@@ -965,9 +965,9 @@ ABIMacOSX_arm64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_
                 }
             }
         }
-        else if (type_flags & ClangASTType::eTypeIsFloat)
+        else if (type_flags & eTypeIsFloat)
         {
-            if (type_flags & ClangASTType::eTypeIsComplex)
+            if (type_flags & eTypeIsComplex)
             {
                 // Don't handle complex yet.
             }
@@ -1010,7 +1010,7 @@ ABIMacOSX_arm64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_
                                                                ConstString(""));
         
     }
-    else if (type_flags & ClangASTType::eTypeIsVector)
+    else if (type_flags & eTypeIsVector)
     {
         if (byte_size > 0)
         {
@@ -1046,8 +1046,8 @@ ABIMacOSX_arm64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_
             }
         }
     }
-    else if (type_flags & ClangASTType::eTypeIsStructUnion ||
-             type_flags & ClangASTType::eTypeIsClass)
+    else if (type_flags & eTypeIsStructUnion ||
+             type_flags & eTypeIsClass)
     {
         DataExtractor data;
         

@@ -624,7 +624,7 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSArraySyntheticFrontEndCre
     ClangASTType valobj_type(valobj_sp->GetClangType());
     Flags flags(valobj_type.GetTypeInfo());
     
-    if (flags.IsClear(ClangASTType::eTypeIsPointer))
+    if (flags.IsClear(eTypeIsPointer))
     {
         Error error;
         valobj_sp = valobj_sp->AddressOf(error);

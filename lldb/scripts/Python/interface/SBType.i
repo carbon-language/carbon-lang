@@ -286,6 +286,9 @@ public:
 
     bool
     IsTypeComplete ();
+    
+    uint32_t
+    GetTypeFlags ();
 
     %pythoncode %{
         def template_arg_array(self):

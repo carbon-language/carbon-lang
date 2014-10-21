@@ -1261,14 +1261,14 @@ lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& 
     
     ValueObjectSP real_guy_sp = valobj.GetSP();
     
-    if (type_info & ClangASTType::eTypeIsPointer)
+    if (type_info & eTypeIsPointer)
     {
         Error err;
         real_guy_sp = valobj.Dereference(err);
         if (err.Fail() || !real_guy_sp)
             return false;
     }
-    else if (type_info & ClangASTType::eTypeIsReference)
+    else if (type_info & eTypeIsReference)
     {
         real_guy_sp =  valobj.GetChildAtIndex(0, true);
         if (!real_guy_sp)

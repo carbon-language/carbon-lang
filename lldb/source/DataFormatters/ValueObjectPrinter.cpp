@@ -183,7 +183,7 @@ bool
 ValueObjectPrinter::ShouldPrintValueObject ()
 {
     if (m_should_print == eLazyBoolCalculate)
-        m_should_print = (options.m_flat_output == false || m_type_flags.Test (ClangASTType::eTypeHasValue)) ? eLazyBoolYes : eLazyBoolNo;
+        m_should_print = (options.m_flat_output == false || m_type_flags.Test (eTypeHasValue)) ? eLazyBoolYes : eLazyBoolNo;
     return m_should_print == eLazyBoolYes;
 }
 
@@ -199,7 +199,7 @@ bool
 ValueObjectPrinter::IsPtr ()
 {
     if (m_is_ptr == eLazyBoolCalculate)
-        m_is_ptr = m_type_flags.Test (ClangASTType::eTypeIsPointer) ? eLazyBoolYes : eLazyBoolNo;
+        m_is_ptr = m_type_flags.Test (eTypeIsPointer) ? eLazyBoolYes : eLazyBoolNo;
     return m_is_ptr == eLazyBoolYes;
 }
 
@@ -207,7 +207,7 @@ bool
 ValueObjectPrinter::IsRef ()
 {
     if (m_is_ref == eLazyBoolCalculate)
-        m_is_ref = m_type_flags.Test (ClangASTType::eTypeIsReference) ? eLazyBoolYes : eLazyBoolNo;
+        m_is_ref = m_type_flags.Test (eTypeIsReference) ? eLazyBoolYes : eLazyBoolNo;
     return m_is_ref == eLazyBoolYes;
 }
 
@@ -215,7 +215,7 @@ bool
 ValueObjectPrinter::IsAggregate ()
 {
     if (m_is_aggregate == eLazyBoolCalculate)
-        m_is_aggregate = m_type_flags.Test (ClangASTType::eTypeHasChildren) ? eLazyBoolYes : eLazyBoolNo;
+        m_is_aggregate = m_type_flags.Test (eTypeHasChildren) ? eLazyBoolYes : eLazyBoolNo;
     return m_is_aggregate == eLazyBoolYes;
 }
 

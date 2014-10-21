@@ -231,6 +231,9 @@ public:
     
     bool
     IsTypeComplete ();
+    
+    uint32_t
+    GetTypeFlags ();
 
     bool
     GetDescription (lldb::SBStream &description, 

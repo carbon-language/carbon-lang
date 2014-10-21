@@ -208,7 +208,7 @@ ValueObjectChild::UpdateValue ()
             {
                 const bool thread_and_frame_only_if_stopped = true;
                 ExecutionContext exe_ctx (GetExecutionContextRef().Lock(thread_and_frame_only_if_stopped));
-                if (GetClangType().GetTypeInfo() & ClangASTType::eTypeHasValue)
+                if (GetClangType().GetTypeInfo() & lldb::eTypeHasValue)
                     m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
                 else
                     m_error.Clear(); // No value so nothing to read...

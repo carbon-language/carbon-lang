@@ -99,7 +99,7 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
                 if (GetFormat() == eFormatCString)
                 {
                     lldb_private::Flags type_flags(clang_type.GetTypeInfo(NULL)); // disambiguate w.r.t. TypeFormatImpl::Flags
-                    if (type_flags.Test(ClangASTType::eTypeIsPointer) && !type_flags.Test(ClangASTType::eTypeIsObjC))
+                    if (type_flags.Test(eTypeIsPointer) && !type_flags.Test(eTypeIsObjC))
                     {
                         // if we are dumping a pointer as a c-string, get the pointee data as a string
                         TargetSP target_sp(valobj->GetTargetSP());
@@ -209,7 +209,7 @@ TypeFormatImpl_EnumType::FormatObject (ValueObject *valobj,
         {
             if (!type_sp)
                 continue;
-            if ( (type_sp->GetClangForwardType().GetTypeInfo() & ClangASTType::eTypeIsEnumeration) == ClangASTType::eTypeIsEnumeration)
+            if ( (type_sp->GetClangForwardType().GetTypeInfo() & eTypeIsEnumeration) == eTypeIsEnumeration)
             {
                 valobj_enum_type = type_sp->GetClangFullType();
                 m_types.emplace(valobj_key,valobj_enum_type);
