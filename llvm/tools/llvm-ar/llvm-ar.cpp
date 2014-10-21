@@ -136,7 +136,7 @@ static std::string ArchiveName;
 
 // This variable holds the list of member files to proecess, as given
 // on the command line.
-static std::vector<std::string> Members;
+static std::vector<StringRef> Members;
 
 // Show the error message, the help message and exit.
 LLVM_ATTRIBUTE_NORETURN static void
@@ -172,14 +172,15 @@ static void getArchive() {
 
 // Copy over remaining items in RestOfArgs to our Members vector
 static void getMembers() {
-  if(RestOfArgs.size() > 0)
-    Members = std::vector<std::string>(RestOfArgs);
+  for (auto &Arg : RestOfArgs)
+    Members.push_back(Arg);
 }
 
 namespace {
 enum class MRICommand { AddMod, Create, Save, End, Invalid };
 }
 
+static std::vector<std::string> MRIMembers;
 static ArchiveOperation parseMRIScript() {
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getSTDIN();
   failIfError(Buf.getError());
@@ -199,7 +200,7 @@ static ArchiveOperation parseMRIScript() {
 
     switch (Command) {
     case MRICommand::AddMod:
-      Members.push_back(Rest);
+      MRIMembers.push_back(Rest);
       break;
     case MRICommand::Create:
       Create = true;
@@ -222,6 +223,10 @@ static ArchiveOperation parseMRIScript() {
   // Nothing to do if not saved.
   if (!Saved)
     exit(0);
+
+  for (auto &M : MRIMembers)
+    Members.push_back(M);
+
   return ReplaceOrInsert;
 }
 
@@ -459,20 +464,20 @@ class NewArchiveIterator {
 
   object::Archive::child_iterator OldI;
 
-  std::string NewFilename;
+  StringRef NewFilename;
   mutable int NewFD;
   mutable sys::fs::file_status NewStatus;
 
 public:
   NewArchiveIterator(object::Archive::child_iterator I, StringRef Name);
-  NewArchiveIterator(std::string *I, StringRef Name);
+  NewArchiveIterator(StringRef I, StringRef Name);
   NewArchiveIterator();
   bool isNewMember() const;
   StringRef getName() const;
 
   object::Archive::child_iterator getOld() const;
 
-  const char *getNew() const;
+  StringRef getNew() const;
   int getFD() const;
   const sys::fs::file_status &getStatus() const;
 };
@@ -484,8 +489,8 @@ NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
                                        StringRef Name)
     : IsNewMember(false), Name(Name), OldI(I) {}
 
-NewArchiveIterator::NewArchiveIterator(std::string *NewFilename, StringRef Name)
-    : IsNewMember(true), Name(Name), NewFilename(*NewFilename), NewFD(-1) {}
+NewArchiveIterator::NewArchiveIterator(StringRef NewFilename, StringRef Name)
+    : IsNewMember(true), Name(Name), NewFilename(NewFilename), NewFD(-1) {}
 
 StringRef NewArchiveIterator::getName() const { return Name; }
 
@@ -496,9 +501,9 @@ object::Archive::child_iterator NewArchiveIterator::getOld() const {
   return OldI;
 }
 
-const char *NewArchiveIterator::getNew() const {
+StringRef NewArchiveIterator::getNew() const {
   assert(IsNewMember);
-  return NewFilename.c_str();
+  return NewFilename;
 }
 
 int NewArchiveIterator::getFD() const {
@@ -543,16 +548,17 @@ enum InsertAction {
   IA_MoveNewMember
 };
 
-static InsertAction
-computeInsertAction(ArchiveOperation Operation,
-                    object::Archive::child_iterator I, StringRef Name,
-                    std::vector<std::string>::iterator &Pos) {
+static InsertAction computeInsertAction(ArchiveOperation Operation,
+                                        object::Archive::child_iterator I,
+                                        StringRef Name,
+                                        std::vector<StringRef>::iterator &Pos) {
   if (Operation == QuickAppend || Members.empty())
     return IA_AddOldMember;
 
-  std::vector<std::string>::iterator MI = std::find_if(
-      Members.begin(), Members.end(),
-      [Name](StringRef Path) { return Name == sys::path::filename(Path); });
+  auto MI =
+      std::find_if(Members.begin(), Members.end(), [Name](StringRef Path) {
+        return Name == sys::path::filename(Path);
+      });
 
   if (MI == Members.end())
     return IA_AddOldMember;
@@ -615,14 +621,14 @@ computeNewArchiveMembers(ArchiveOperation Operation,
           InsertPos = Pos + 1;
       }
 
-      std::vector<std::string>::iterator MemberI = Members.end();
+      std::vector<StringRef>::iterator MemberI = Members.end();
       InsertAction Action = computeInsertAction(Operation, I, Name, MemberI);
       switch (Action) {
       case IA_AddOldMember:
         addMember(Ret, I, Name);
         break;
       case IA_AddNewMeber:
-        addMember(Ret, &*MemberI, Name);
+        addMember(Ret, *MemberI, Name);
         break;
       case IA_Delete:
         break;
@@ -630,7 +636,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
         addMember(Moved, I, Name);
         break;
       case IA_MoveNewMember:
-        addMember(Moved, &*MemberI, Name);
+        addMember(Moved, *MemberI, Name);
         break;
       }
       if (MemberI != Members.end())
@@ -654,7 +660,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   int Pos = InsertPos;
   for (auto &Member : Members) {
     StringRef Name = sys::path::filename(Member);
-    addMember(Ret, &Member, Name, Pos);
+    addMember(Ret, Member, Name, Pos);
     ++Pos;
   }
 
@@ -823,7 +829,7 @@ static void performWriteOperation(ArchiveOperation Operation,
     MemoryBufferRef MemberRef;
 
     if (Member.isNewMember()) {
-      const char *Filename = Member.getNew();
+      StringRef Filename = Member.getNew();
       int FD = Member.getFD();
       const sys::fs::file_status &Status = Member.getStatus();
       ErrorOr<std::unique_ptr<MemoryBuffer>> MemberBufferOrErr =
@@ -868,7 +874,7 @@ static void performWriteOperation(ArchiveOperation Operation,
 
     MemoryBufferRef File = Members[MemberNum];
     if (I->isNewMember()) {
-      const char *FileName = I->getNew();
+      StringRef FileName = I->getNew();
       const sys::fs::file_status &Status = I->getStatus();
 
       StringRef Name = sys::path::filename(FileName);
