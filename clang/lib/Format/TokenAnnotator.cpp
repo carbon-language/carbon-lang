@@ -826,6 +826,9 @@ private:
         // Line.MightBeFunctionDecl can only be true after the parentheses of a
         // function declaration have been found.
         Current.Type = TT_TrailingAnnotation;
+      } else if (Style.Language == FormatStyle::LK_Java && Current.Previous &&
+                 Current.Previous->is(tok::at)) {
+        Current.Type = TT_JavaAnnotation;
       }
     }
   }
@@ -1786,6 +1789,9 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     // FIXME: This might apply to other languages and token kinds.
     if (Right.is(tok::char_constant) && Left.is(tok::plus) && Left.Previous &&
         Left.Previous->is(tok::char_constant))
+      return true;
+  } else if (Style.Language == FormatStyle::LK_Java) {
+    if (Left.Type == TT_JavaAnnotation && Line.MightBeFunctionDecl)
       return true;
   }
 

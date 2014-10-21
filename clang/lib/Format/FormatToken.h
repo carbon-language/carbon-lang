@@ -46,6 +46,7 @@ enum TokenType {
   TT_ImplicitStringLiteral,
   TT_InheritanceColon,
   TT_InlineASMColon,
+  TT_JavaAnnotation,
   TT_LambdaLSquare,
   TT_LineComment,
   TT_ObjCBlockLBrace,

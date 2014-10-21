@@ -458,6 +458,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
       PreviousNonComment->Type != TT_TemplateCloser &&
       PreviousNonComment->Type != TT_BinaryOperator &&
+      PreviousNonComment->Type != TT_JavaAnnotation &&
       Current.Type != TT_BinaryOperator && !PreviousNonComment->opensScope())
     State.Stack.back().BreakBeforeParameter = true;
 
@@ -533,7 +534,8 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
   if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0)
     return State.Stack.back().VariablePos;
   if ((PreviousNonComment && (PreviousNonComment->ClosesTemplateDeclaration ||
-                              PreviousNonComment->Type == TT_AttributeParen)) ||
+                              PreviousNonComment->Type == TT_AttributeParen ||
+                              PreviousNonComment->Type == TT_JavaAnnotation)) ||
       (!Style.IndentWrappedFunctionNames &&
        (NextNonComment->is(tok::kw_operator) ||
         NextNonComment->Type == TT_FunctionDeclarationName)))

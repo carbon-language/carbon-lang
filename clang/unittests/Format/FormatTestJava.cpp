@@ -64,5 +64,14 @@ TEST_F(FormatTestJava, ThrowsDeclarations) {
                "    throws LooooooooooooooooooooooooooooongException {}");
 }
 
+TEST_F(FormatTestJava, Annotations) {
+  verifyFormat("@Override\n"
+               "public String toString() {\n}");
+  verifyFormat("@Override\n"
+               "@Nullable\n"
+               "public String getNameIfPresent() {\n}");
+  verifyFormat("@Partial @Mock DataLoader loader;");
+}
+
 } // end namespace tooling
 } // end namespace clang
