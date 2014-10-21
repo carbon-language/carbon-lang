@@ -12,13 +12,11 @@ foo:
 main:
 # Test PC-rel branch.
 # rtdyld-check: decode_operand(insn1, 0) = foo - next_pc(insn1)
-	.globl  insn1
 insn1:
         callq	foo
 
 # Test PC-rel signed.
 # rtdyld-check: decode_operand(insn2, 4) = x - next_pc(insn2)
-	.globl  insn2
 insn2:
 	movl	x(%rip), %eax
 
@@ -27,7 +25,6 @@ insn2:
 # references the correct GOT entry address:
 # rtdyld-check: *{8}(stub_addr(test_x86-64.o, __text, y)) = y
 # rtdyld-check: decode_operand(insn3, 4) = stub_addr(test_x86-64.o, __text, y) - next_pc(insn3)
-	.globl  insn3
 insn3:
         movq	y@GOTPCREL(%rip), %rax
 

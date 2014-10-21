@@ -87,10 +87,9 @@ public:
     SF_Absolute = 1U << 3,       // Absolute symbol
     SF_Common = 1U << 4,         // Symbol has common linkage
     SF_Indirect = 1U << 5,       // Symbol is an alias to another symbol
-    SF_Exported = 1U << 6,       // Symbol is visible to other DSOs
-    SF_FormatSpecific = 1U << 7, // Specific to the object file format
+    SF_FormatSpecific = 1U << 6, // Specific to the object file format
                                  // (e.g. section symbols)
-    SF_Thumb = 1U << 8,          // Thumb symbol in a 32-bit ARM binary
+    SF_Thumb = 1U << 7           // Thumb symbol in a 32-bit ARM binary
   };
 
   BasicSymbolRef() : OwningObject(nullptr) { }

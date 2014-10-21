@@ -8,15 +8,12 @@
 bar:
 # Check lower 16-bits of section difference relocation
 # rtdyld-check: decode_operand(insn1, 1) = (foo$non_lazy_ptr-(nextPC+8))[15:0]
-        .globl  insn1
 insn1:
         movw    r0, :lower16:(foo$non_lazy_ptr-(nextPC+8))
 # Check upper 16-bits of section difference relocation
 # rtdyld-check: decode_operand(insn2, 2) = (foo$non_lazy_ptr-(nextPC+8))[31:16]
-        .globl  insn2
 insn2:
         movt    r0, :upper16:(foo$non_lazy_ptr-(nextPC+8))
-        .globl  nextPC
 nextPC:
         add     r1, r0, r0
 
@@ -28,7 +25,6 @@ nextPC:
 # rtdyld-check: *{4}(stub_addr(foo.o, __text, baz) + 4) = baz
 #
 # rtdyld-check: decode_operand(insn3, 0) = stub_addr(foo.o, __text, baz) - (insn3 + 8)
-        .globl  insn3
 insn3:
         bl      baz
 
@@ -48,7 +44,6 @@ insn4:
 # rtdyld-check: *{4}foo$non_lazy_ptr = foo
         .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers
   	.align	2
-        .globl  foo$non_lazy_ptr
 foo$non_lazy_ptr:
 	.indirect_symbol	foo
 	.long	0

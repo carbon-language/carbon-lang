@@ -18,7 +18,6 @@ _foo:
 # and therefore ignored.
 # rtdyld-check:  decode_operand(br1, 0)[25:0] = (_foo - br1)[27:2]
 _test_branch_reloc:
-    .globl  br1
 br1:
     b _foo
     ret
@@ -33,10 +32,8 @@ br1:
     .globl  _test_adrp_ldr
     .align  2
 _test_adrp_ldr:
-    .globl  adrp1
 adrp1:
     adrp x0, _ptr@PAGE
-    .globl  ldr1
 ldr1:
     ldr  x0, [x0, _ptr@PAGEOFF]
     ret
@@ -52,10 +49,8 @@ ldr1:
     .globl  _test_adrp_ldr
     .align  2
 _test_got_adrp_ldr:
-    .globl  adrp2
 adrp2:
     adrp x0, _ptr@GOTPAGE
-    .globl  ldr2
 ldr2:
     ldr  x0, [x0, _ptr@GOTPAGEOFF]
     ret

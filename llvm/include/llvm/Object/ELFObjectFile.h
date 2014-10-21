@@ -177,19 +177,6 @@ protected:
     return DRI;
   }
 
-  bool isExportedToOtherDSO(const Elf_Sym *ESym) const {
-    unsigned char Binding = ESym->getBinding();
-    unsigned char Visibility = ESym->getVisibility();
-
-    if (Binding != ELF::STB_GLOBAL && Binding != ELF::STB_WEAK)
-      return false;
-
-    if (Visibility != ELF::STV_DEFAULT && Visibility != ELF::STV_PROTECTED)
-      return false;
-
-    return true;
-  }
-
   // This flag is used for classof, to distinguish ELFObjectFile from
   // its subclass. If more subclasses will be created, this flag will
   // have to become an enum.
@@ -385,9 +372,6 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb) const {
   if (ESym->getType() == ELF::STT_COMMON ||
       EF.getSymbolTableIndex(ESym) == ELF::SHN_COMMON)
     Result |= SymbolRef::SF_Common;
-
-  if (isExportedToOtherDSO(ESym))
-    Result |= SymbolRef::SF_Exported;
 
   return Result;
 }

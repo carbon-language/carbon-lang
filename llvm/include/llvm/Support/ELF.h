@@ -1458,21 +1458,17 @@ struct Elf32_Sym {
   Elf32_Addr    st_value; // Value or address associated with the symbol
   Elf32_Word    st_size;  // Size of the symbol
   unsigned char st_info;  // Symbol's type and binding attributes
-  unsigned char st_other; // Visibility in the lower 2 bits, the rest is zero
+  unsigned char st_other; // Must be zero; reserved
   Elf32_Half    st_shndx; // Which section (header table index) it's defined in
 
   // These accessors and mutators correspond to the ELF32_ST_BIND,
   // ELF32_ST_TYPE, and ELF32_ST_INFO macros defined in the ELF specification:
   unsigned char getBinding() const { return st_info >> 4; }
   unsigned char getType() const { return st_info & 0x0f; }
-  unsigned char getVisibility() const { return st_other & 0x3; }
   void setBinding(unsigned char b) { setBindingAndType(b, getType()); }
   void setType(unsigned char t) { setBindingAndType(getBinding(), t); }
   void setBindingAndType(unsigned char b, unsigned char t) {
     st_info = (b << 4) + (t & 0x0f);
-  }
-  void setVisibility(unsigned char v) {
-    st_other = (st_other & ~0x3) | (v & 0x3);
   }
 };
 
@@ -1480,7 +1476,7 @@ struct Elf32_Sym {
 struct Elf64_Sym {
   Elf64_Word      st_name;  // Symbol name (index into string table)
   unsigned char   st_info;  // Symbol's type and binding attributes
-  unsigned char   st_other; // Visibility in the lower 2 bits, the rest is zero
+  unsigned char   st_other; // Must be zero; reserved
   Elf64_Half      st_shndx; // Which section (header tbl index) it's defined in
   Elf64_Addr      st_value; // Value or address associated with the symbol
   Elf64_Xword     st_size;  // Size of the symbol
@@ -1489,14 +1485,10 @@ struct Elf64_Sym {
   // symbol table entries.
   unsigned char getBinding() const { return st_info >> 4; }
   unsigned char getType() const { return st_info & 0x0f; }
-  unsigned char getVisibility() const { return st_other & 0x3; }
   void setBinding(unsigned char b) { setBindingAndType(b, getType()); }
   void setType(unsigned char t) { setBindingAndType(getBinding(), t); }
   void setBindingAndType(unsigned char b, unsigned char t) {
     st_info = (b << 4) + (t & 0x0f);
-  }
-  void setVisibility(unsigned char v) {
-    st_other = (st_other & ~0x3) | (v & 0x3);
   }
 };
 
