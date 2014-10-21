@@ -26,6 +26,17 @@ multiclass dashEq<string opt1, string opt2, string help> {
 }
 
 //===----------------------------------------------------------------------===//
+/// LLVM and Target options
+//===----------------------------------------------------------------------===//
+def grp_llvmtarget : OptionGroup<"opts">,
+     HelpText<"LLVM and Target Options">;
+def mllvm : Separate<["-"], "mllvm">,
+     HelpText<"Options to pass to LLVM">, Group<grp_llvmtarget>;
+def target : Separate<["-"], "target">, MetaVarName<"<triple>">,
+     HelpText<"Target triple to link for">,
+     Group<grp_llvmtarget>;
+
+//===----------------------------------------------------------------------===//
 /// Output Kinds
 //===----------------------------------------------------------------------===//
 def grp_kind : OptionGroup<"outs">,
@@ -48,9 +59,6 @@ def Bshareable : Flag<["-"], "Bshareable">, Alias<shared>;
 //===----------------------------------------------------------------------===//
 def grp_general : OptionGroup<"opts">,
      HelpText<"GENERAL OPTIONS">;
-def target : Separate<["-"], "target">, MetaVarName<"<triple>">,
-     HelpText<"Target triple to link for">,
-     Group<grp_general>;
 def output : Separate<["-"], "o">, MetaVarName<"<path>">,
      HelpText<"Path to file to write output">,
      Group<grp_general>;
@@ -231,8 +239,6 @@ def no_demangle : Flag<["--"], "no-demangle">,
 //===----------------------------------------------------------------------===//
 def grp_opts : OptionGroup<"opts">,
      HelpText<"OPTIMIZATIONS">;
-def mllvm : Separate<["-"], "mllvm">,
-     HelpText<"Options to pass to LLVM during LTO">, Group<grp_opts>;
 def hash_style : Joined <["--"], "hash-style=">,
      HelpText<"Set the type of linker's hash table(s)">,
      Group<grp_opts>;
