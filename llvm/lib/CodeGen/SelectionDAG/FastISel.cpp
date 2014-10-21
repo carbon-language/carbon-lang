@@ -2122,8 +2122,8 @@ FastISel::createMachineMemOperandFor(const Instruction *I) const {
   } else
     return nullptr;
 
-  bool IsNonTemporal = I->getMetadata("nontemporal") != nullptr;
-  bool IsInvariant = I->getMetadata("invariant.load") != nullptr;
+  bool IsNonTemporal = I->getMetadata(LLVMContext::MD_nontemporal) != nullptr;
+  bool IsInvariant = I->getMetadata(LLVMContext::MD_invariant_load) != nullptr;
   const MDNode *Ranges = I->getMetadata(LLVMContext::MD_range);
 
   AAMDNodes AAInfo;

@@ -2624,7 +2624,7 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
 
   // A Load tagged w/nonnull metadata is never null. 
   if (const LoadInst *LI = dyn_cast<LoadInst>(V))
-    return LI->getMetadata("nonnull");
+    return LI->getMetadata(LLVMContext::MD_nonnull);
 
   if (ImmutableCallSite CS = V)
     if (CS.isReturnNonNull())

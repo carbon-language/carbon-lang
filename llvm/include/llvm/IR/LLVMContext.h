@@ -55,7 +55,10 @@ public:
     MD_tbaa_struct = 5, // "tbaa.struct"
     MD_invariant_load = 6, // "invariant.load"
     MD_alias_scope = 7, // "alias.scope"
-    MD_noalias = 8 // "noalias"
+    MD_noalias = 8, // "noalias",
+    MD_nontemporal = 9, // "nontemporal"
+    MD_mem_parallel_loop_access = 10, // "llvm.mem.parallel_loop_access"
+    MD_nonnull = 11 // "nonnull"
   };
 
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

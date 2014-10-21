@@ -3480,8 +3480,8 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
   Type *Ty = I.getType();
 
   bool isVolatile = I.isVolatile();
-  bool isNonTemporal = I.getMetadata("nontemporal") != nullptr;
-  bool isInvariant = I.getMetadata("invariant.load") != nullptr;
+  bool isNonTemporal = I.getMetadata(LLVMContext::MD_nontemporal) != nullptr;
+  bool isInvariant = I.getMetadata(LLVMContext::MD_invariant_load) != nullptr;
   unsigned Alignment = I.getAlignment();
 
   AAMDNodes AAInfo;
@@ -3584,7 +3584,7 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
                                           NumValues));
   EVT PtrVT = Ptr.getValueType();
   bool isVolatile = I.isVolatile();
-  bool isNonTemporal = I.getMetadata("nontemporal") != nullptr;
+  bool isNonTemporal = I.getMetadata(LLVMContext::MD_nontemporal) != nullptr;
   unsigned Alignment = I.getAlignment();
 
   AAMDNodes AAInfo;

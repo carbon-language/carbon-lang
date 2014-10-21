@@ -76,6 +76,23 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   unsigned NoAliasID = getMDKindID("noalias");
   assert(NoAliasID == MD_noalias && "noalias kind id drifted");
   (void)NoAliasID;
+
+  // Create the 'nontemporal' metadata kind.
+  unsigned NonTemporalID = getMDKindID("nontemporal");
+  assert(NonTemporalID == MD_nontemporal && "nontemporal kind id drifted");
+  (void)NonTemporalID;
+
+  // Create the 'llvm.mem.parallel_loop_access' metadata kind.
+  unsigned MemParallelLoopAccessID = getMDKindID("llvm.mem.parallel_loop_access");
+  assert(MemParallelLoopAccessID == MD_mem_parallel_loop_access &&
+         "mem_parallel_loop_access kind id drifted");
+  (void)MemParallelLoopAccessID;
+
+
+  // Create the 'nonnull' metadata kind.
+  unsigned NonNullID = getMDKindID("nonnull");
+  assert(NonNullID == MD_nonnull && "nonnull kind id drifted");
+  (void)NonNullID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 

@@ -329,6 +329,8 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
     case LLVMContext::MD_invariant_load:
     case LLVMContext::MD_alias_scope:
     case LLVMContext::MD_noalias:
+    case LLVMContext::MD_nontemporal:
+    case LLVMContext::MD_mem_parallel_loop_access:
       // All of these directly apply.
       NewLoad->setMetadata(ID, N);
       break;
@@ -339,12 +341,6 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
       break;
     }
   }
-  // FIXME: These metadata nodes should really have enumerators and be handled
-  // above.
-  if (MDNode *N = LI.getMetadata("nontemporal"))
-    NewLoad->setMetadata("nontemporal", N);
-  if (MDNode *N = LI.getMetadata("llvm.mem.parallel_loop_access"))
-    NewLoad->setMetadata("llvm.mem.parallel_loop_access", N);
   return NewLoad;
 }
 
