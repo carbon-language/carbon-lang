@@ -62,6 +62,9 @@ class SITargetLowering : public AMDGPUTargetLowering {
 public:
   SITargetLowering(TargetMachine &tm);
 
+  bool isShuffleMaskLegal(const SmallVectorImpl<int> &/*Mask*/,
+                          EVT /*VT*/) const override;
+
   bool isLegalAddressingMode(const AddrMode &AM,
                              Type *Ty) const override;
 

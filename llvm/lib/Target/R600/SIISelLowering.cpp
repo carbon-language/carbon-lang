@@ -117,6 +117,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SETCC, MVT::v2i1, Expand);
   setOperationAction(ISD::SETCC, MVT::v4i1, Expand);
 
+  setOperationAction(ISD::BSWAP, MVT::i32, Legal);
+
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i1, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i1, Custom);
@@ -256,6 +258,13 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 //===----------------------------------------------------------------------===//
 // TargetLowering queries
 //===----------------------------------------------------------------------===//
+
+bool SITargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &,
+                                          EVT) const {
+  // SI has some legal vector types, but no legal vector operations. Say no
+  // shuffles are legal in order to prefer scalarizing some vector operations.
+  return false;
+}
 
 // FIXME: This really needs an address space argument. The immediate offset
 // size is different for different sets of memory instruction sets.
