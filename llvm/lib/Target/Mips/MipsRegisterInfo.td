@@ -283,6 +283,12 @@ class GPR32Class<list<ValueType> regTypes> :
 def GPR32 : GPR32Class<[i32]>;
 def DSPR  : GPR32Class<[v4i8, v2i16]>;
 
+def GPRMM16 : RegisterClass<"Mips", [i32], 32, (add
+  // Return Values and Arguments
+  V0, V1, A0, A1, A2, A3,
+  // Callee save
+  S0, S1)>;
+
 def GPR64 : RegisterClass<"Mips", [i64], 64, (add
 // Reserved
   ZERO_64, AT_64,
@@ -430,6 +436,11 @@ def GPR32AsmOperand : MipsAsmRegOperand {
   let PredicateMethod = "isGPRAsmReg";
 }
 
+def GPRMM16AsmOperand : MipsAsmRegOperand {
+  let Name = "GPRMM16AsmReg";
+  let PredicateMethod = "isMM16AsmReg";
+}
+
 def ACC64DSPAsmOperand : MipsAsmRegOperand {
   let Name = "ACC64DSPAsmReg";
   let PredicateMethod = "isACCAsmReg";
@@ -483,6 +494,10 @@ def MSACtrlAsmOperand : MipsAsmRegOperand {
 
 def GPR32Opnd : RegisterOperand<GPR32> {
   let ParserMatchClass = GPR32AsmOperand;
+}
+
+def GPRMM16Opnd : RegisterOperand<GPRMM16> {
+  let ParserMatchClass = GPRMM16AsmOperand;
 }
 
 def GPR64Opnd : RegisterOperand<GPR64> {
