@@ -6153,8 +6153,17 @@ Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
     return Result;
   }
   case R600::BI__builtin_amdgpu_div_fmas:
-  case R600::BI__builtin_amdgpu_div_fmasf:
-    return emitTernaryFPBuiltin(*this, E, Intrinsic::AMDGPU_div_fmas);
+  case R600::BI__builtin_amdgpu_div_fmasf: {
+    llvm::Value *Src0 = EmitScalarExpr(E->getArg(0));
+    llvm::Value *Src1 = EmitScalarExpr(E->getArg(1));
+    llvm::Value *Src2 = EmitScalarExpr(E->getArg(2));
+    llvm::Value *Src3 = EmitScalarExpr(E->getArg(3));
+
+    llvm::Value *F = CGM.getIntrinsic(Intrinsic::AMDGPU_div_fmas,
+                                      Src0->getType());
+    llvm::Value *Src3ToBool = Builder.CreateIsNotNull(Src3);
+    return Builder.CreateCall4(F, Src0, Src1, Src2, Src3ToBool);
+  }
   case R600::BI__builtin_amdgpu_div_fixup:
   case R600::BI__builtin_amdgpu_div_fixupf:
     return emitTernaryFPBuiltin(*this, E, Intrinsic::AMDGPU_div_fixup);

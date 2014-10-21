@@ -31,16 +31,16 @@ void test_div_scale_f32(global float* out, global int* flagout, float a, float b
 
 // CHECK-LABEL: @test_div_fmas_f32
 // CHECK: call float @llvm.AMDGPU.div.fmas.f32
-void test_div_fmas_f32(global float* out, float a, float b, float c)
+void test_div_fmas_f32(global float* out, float a, float b, float c, int d)
 {
-  *out = __builtin_amdgpu_div_fmasf(a, b, c);
+  *out = __builtin_amdgpu_div_fmasf(a, b, c, d);
 }
 
 // CHECK-LABEL: @test_div_fmas_f64
 // CHECK: call double @llvm.AMDGPU.div.fmas.f64
-void test_div_fmas_f64(global double* out, double a, double b, double c)
+void test_div_fmas_f64(global double* out, double a, double b, double c, int d)
 {
-  *out = __builtin_amdgpu_div_fmas(a, b, c);
+  *out = __builtin_amdgpu_div_fmas(a, b, c, d);
 }
 
 // CHECK-LABEL: @test_div_fixup_f32

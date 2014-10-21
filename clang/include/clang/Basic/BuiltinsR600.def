@@ -16,8 +16,8 @@
 
 BUILTIN(__builtin_amdgpu_div_scale, "dddbb*", "n")
 BUILTIN(__builtin_amdgpu_div_scalef, "fffbb*", "n")
-BUILTIN(__builtin_amdgpu_div_fmas, "dddd", "nc")
-BUILTIN(__builtin_amdgpu_div_fmasf, "ffff", "nc")
+BUILTIN(__builtin_amdgpu_div_fmas, "ddddb", "nc")
+BUILTIN(__builtin_amdgpu_div_fmasf, "ffffb", "nc")
 BUILTIN(__builtin_amdgpu_div_fixup, "dddd", "nc")
 BUILTIN(__builtin_amdgpu_div_fixupf, "ffff", "nc")
 BUILTIN(__builtin_amdgpu_trig_preop, "ddi", "nc")
