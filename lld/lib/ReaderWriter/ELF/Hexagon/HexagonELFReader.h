@@ -40,65 +40,20 @@ struct HexagonELFFileCreateELFTraits {
   }
 };
 
-class HexagonELFObjectReader : public ELFObjectReader {
+class HexagonELFObjectReader
+    : public ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits> {
 public:
   HexagonELFObjectReader(bool atomizeStrings)
-      : ELFObjectReader(atomizeStrings) {}
-
-  bool canParse(file_magic magic, StringRef ext,
-                const MemoryBuffer &buf) const override {
-    const uint8_t *data =
-        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
-    const llvm::object::Elf_Ehdr_Impl<HexagonELFType> *elfHeader =
-        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<HexagonELFType> *>(
-            data);
-    return ELFObjectReader::canParse(magic, ext, buf) &&
-           elfHeader->e_machine == llvm::ELF::EM_HEXAGON;
-  }
-
-  std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
-    std::size_t maxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<HexagonELFFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _atomizeStrings);
-    if (std::error_code ec = f.getError())
-      return ec;
-    result.push_back(std::move(*f));
-    return std::error_code();
-  }
+      : ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits>(
+            atomizeStrings, llvm::ELF::EM_HEXAGON) {}
 };
 
-class HexagonELFDSOReader : public ELFDSOReader {
+class HexagonELFDSOReader
+    : public ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits> {
 public:
-  HexagonELFDSOReader(bool useUndefines) : ELFDSOReader(useUndefines) {}
-
-  bool canParse(file_magic magic, StringRef ext,
-                const MemoryBuffer &buf) const override {
-    const uint8_t *data =
-        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
-    const llvm::object::Elf_Ehdr_Impl<HexagonELFType> *elfHeader =
-        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<HexagonELFType> *>(
-            data);
-    return ELFDSOReader::canParse(magic, ext, buf) &&
-           elfHeader->e_machine == llvm::ELF::EM_HEXAGON;
-  }
-
-  std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
-    std::size_t maxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<HexagonDynamicFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _useUndefines);
-    if (std::error_code ec = f.getError())
-      return ec;
-    result.push_back(std::move(*f));
-    return std::error_code();
-  }
+  HexagonELFDSOReader(bool useUndefines)
+      : ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits>(
+            useUndefines, llvm::ELF::EM_HEXAGON) {}
 };
 
 } // namespace elf

@@ -18,33 +18,18 @@
 namespace lld {
 namespace elf {
 
-struct DynamicFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
-
-  template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool useUndefines) {
-    return lld::elf::DynamicFile<ELFT>::create(std::move(mb), useUndefines);
-  }
-};
-
-struct ELFFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
-
-  template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings) {
-    return lld::elf::ELFFile<ELFT>::create(std::move(mb), atomizeStrings);
-  }
-};
-
+template <typename ELFT, typename ELFTraitsT>
 class ELFObjectReader : public Reader {
 public:
-  ELFObjectReader(bool atomizeStrings) : _atomizeStrings(atomizeStrings) {}
+  typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
+
+  ELFObjectReader(bool atomizeStrings, uint64_t machine)
+      : _atomizeStrings(atomizeStrings), _machine(machine) {}
 
   bool canParse(file_magic magic, StringRef,
-                const MemoryBuffer &) const override {
-    return (magic == llvm::sys::fs::file_magic::elf_relocatable);
+                const MemoryBuffer &buf) const override {
+    return (magic == llvm::sys::fs::file_magic::elf_relocatable &&
+            elfHeader(buf)->e_machine == _machine);
   }
 
   std::error_code
@@ -52,26 +37,38 @@ public:
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<ELFFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _atomizeStrings);
+    auto f =
+        createELF<ELFTraitsT>(llvm::object::getElfArchType(mb->getBuffer()),
+                              maxAlignment, std::move(mb), _atomizeStrings);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
     return std::error_code();
+  }
+
+  const Elf_Ehdr *elfHeader(const MemoryBuffer &buf) const {
+    const uint8_t *data =
+        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
+    return (reinterpret_cast<const Elf_Ehdr *>(data));
   }
 
 protected:
   bool _atomizeStrings;
+  uint64_t _machine;
 };
 
+template <typename ELFT, typename ELFTraitsT>
 class ELFDSOReader : public Reader {
 public:
-  ELFDSOReader(bool useUndefines) : _useUndefines(useUndefines) {}
+  typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
+
+  ELFDSOReader(bool useUndefines, uint64_t machine)
+      : _useUndefines(useUndefines), _machine(machine) {}
 
   bool canParse(file_magic magic, StringRef,
-                const MemoryBuffer &) const override {
-    return (magic == llvm::sys::fs::file_magic::elf_shared_object);
+                const MemoryBuffer &buf) const override {
+    return (magic == llvm::sys::fs::file_magic::elf_shared_object &&
+            elfHeader(buf)->e_machine == _machine);
   }
 
   std::error_code
@@ -79,17 +76,24 @@ public:
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<DynamicFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _useUndefines);
+    auto f =
+        createELF<ELFTraitsT>(llvm::object::getElfArchType(mb->getBuffer()),
+                              maxAlignment, std::move(mb), _useUndefines);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
     return std::error_code();
   }
 
+  const Elf_Ehdr *elfHeader(const MemoryBuffer &buf) const {
+    const uint8_t *data =
+        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
+    return (reinterpret_cast<const Elf_Ehdr *>(data));
+  }
+
 protected:
   bool _useUndefines;
+  uint64_t _machine;
 };
 
 } // namespace elf

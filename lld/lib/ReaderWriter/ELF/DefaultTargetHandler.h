@@ -27,17 +27,11 @@ public:
   DefaultTargetHandler(ELFLinkingContext &context)
       : TargetHandler<ELFT>(context) {}
 
-  const TargetRelocationHandler<ELFT> &getRelocationHandler() const {
-    llvm_unreachable("Target should provide implementation for function ");
-  }
+  const TargetRelocationHandler<ELFT> &getRelocationHandler() const = 0;
 
-  virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) {
-    return std::unique_ptr<Reader>(new ELFObjectReader(atomizeStrings));
-  }
+  virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) = 0;
 
-  virtual std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) {
-    return std::unique_ptr<Reader>(new ELFDSOReader(useShlibUndefines));
-  }
+  virtual std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) = 0;
 
   virtual std::unique_ptr<Writer> getWriter() = 0;
 };

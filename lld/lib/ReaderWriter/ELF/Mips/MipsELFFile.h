@@ -241,6 +241,12 @@ private:
   bool isMips64EL() const { return this->_objFile->isMips64EL(); }
 };
 
+template <class ELFT> class MipsDynamicFile : public DynamicFile<ELFT> {
+public:
+  MipsDynamicFile(const MipsLinkingContext &context, StringRef name)
+      : DynamicFile<ELFT>(context, name) {}
+};
+
 } // elf
 } // lld
 

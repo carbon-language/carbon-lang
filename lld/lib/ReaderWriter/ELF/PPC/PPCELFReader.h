@@ -38,62 +38,20 @@ struct PPCELFFileCreateELFTraits {
   }
 };
 
-class PPCELFObjectReader : public ELFObjectReader {
+class PPCELFObjectReader
+    : public ELFObjectReader<PPCELFType, PPCELFFileCreateELFTraits> {
 public:
-  PPCELFObjectReader(bool atomizeStrings) : ELFObjectReader(atomizeStrings) {}
-
-  bool canParse(file_magic magic, StringRef ext,
-                const MemoryBuffer &buf) const override {
-    const uint8_t *data =
-        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
-    const llvm::object::Elf_Ehdr_Impl<PPCELFType> *elfHeader =
-        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<PPCELFType> *>(data);
-    return ELFObjectReader::canParse(magic, ext, buf) &&
-           elfHeader->e_machine == llvm::ELF::EM_PPC;
-  }
-
-  std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
-    std::size_t maxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<PPCELFFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _atomizeStrings);
-    if (std::error_code ec = f.getError())
-      return ec;
-    result.push_back(std::move(*f));
-    return std::error_code();
-  }
+  PPCELFObjectReader(bool atomizeStrings)
+      : ELFObjectReader<PPCELFType, PPCELFFileCreateELFTraits>(
+            atomizeStrings, llvm::ELF::EM_PPC) {}
 };
 
-class PPCELFDSOReader : public ELFDSOReader {
+class PPCELFDSOReader
+    : public ELFDSOReader<PPCELFType, PPCDynamicFileCreateELFTraits> {
 public:
-  PPCELFDSOReader(bool useUndefines) : ELFDSOReader(useUndefines) {}
-
-  bool canParse(file_magic magic, StringRef ext,
-                const MemoryBuffer &buf) const override {
-    const uint8_t *data =
-        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
-    const llvm::object::Elf_Ehdr_Impl<PPCELFType> *elfHeader =
-        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<PPCELFType> *>(data);
-    return ELFDSOReader::canParse(magic, ext, buf) &&
-           elfHeader->e_machine == llvm::ELF::EM_PPC;
-  }
-
-  std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
-    std::size_t maxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<PPCDynamicFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _useUndefines);
-    if (std::error_code ec = f.getError())
-      return ec;
-    result.push_back(std::move(*f));
-    return std::error_code();
-  }
+  PPCELFDSOReader(bool useUndefines)
+      : ELFDSOReader<PPCELFType, PPCDynamicFileCreateELFTraits>(
+            useUndefines, llvm::ELF::EM_PPC) {}
 };
 
 } // namespace elf

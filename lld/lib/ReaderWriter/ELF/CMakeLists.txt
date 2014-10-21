@@ -18,9 +18,9 @@ target_link_libraries(lldELF ${cmake_2_8_12_INTERFACE}
 
 include_directories(.)
 
-add_subdirectory(AArch64)
-add_subdirectory(Hexagon)
-add_subdirectory(Mips)
-add_subdirectory(PPC)
 add_subdirectory(X86)
 add_subdirectory(X86_64)
+add_subdirectory(PPC)
+add_subdirectory(Mips)
+add_subdirectory(Hexagon)
+add_subdirectory(AArch64)

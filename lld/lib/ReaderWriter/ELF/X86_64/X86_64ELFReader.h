@@ -39,65 +39,20 @@ struct X86_64ELFFileCreateELFTraits {
   }
 };
 
-class X86_64ELFObjectReader : public ELFObjectReader {
+class X86_64ELFObjectReader
+    : public ELFObjectReader<X86_64ELFType, X86_64ELFFileCreateELFTraits> {
 public:
   X86_64ELFObjectReader(bool atomizeStrings)
-      : ELFObjectReader(atomizeStrings) {}
-
-  bool canParse(file_magic magic, StringRef ext,
-                const MemoryBuffer &buf) const override {
-    const uint8_t *data =
-        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
-    const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *elfHeader =
-        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *>(
-            data);
-    return ELFObjectReader::canParse(magic, ext, buf) &&
-           elfHeader->e_machine == llvm::ELF::EM_X86_64;
-  }
-
-  std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
-    std::size_t maxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<X86_64ELFFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _atomizeStrings);
-    if (std::error_code ec = f.getError())
-      return ec;
-    result.push_back(std::move(*f));
-    return std::error_code();
-  }
+      : ELFObjectReader<X86_64ELFType, X86_64ELFFileCreateELFTraits>(
+            atomizeStrings, llvm::ELF::EM_X86_64) {}
 };
 
-class X86_64ELFDSOReader : public ELFDSOReader {
+class X86_64ELFDSOReader
+    : public ELFDSOReader<X86_64ELFType, X86_64DynamicFileCreateELFTraits> {
 public:
-  X86_64ELFDSOReader(bool useUndefines) : ELFDSOReader(useUndefines) {}
-
-  bool canParse(file_magic magic, StringRef ext,
-                const MemoryBuffer &buf) const override {
-    const uint8_t *data =
-        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
-    const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *elfHeader =
-        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *>(
-            data);
-    return ELFDSOReader::canParse(magic, ext, buf) &&
-           elfHeader->e_machine == llvm::ELF::EM_X86_64;
-  }
-
-  std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
-    std::size_t maxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<X86_64DynamicFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
-        std::move(mb), _useUndefines);
-    if (std::error_code ec = f.getError())
-      return ec;
-    result.push_back(std::move(*f));
-    return std::error_code();
-  }
+  X86_64ELFDSOReader(bool useUndefines)
+      : ELFDSOReader<X86_64ELFType, X86_64DynamicFileCreateELFTraits>(
+            useUndefines, llvm::ELF::EM_X86_64) {}
 };
 
 } // namespace elf
