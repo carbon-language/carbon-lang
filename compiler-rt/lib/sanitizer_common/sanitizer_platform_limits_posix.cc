@@ -15,6 +15,14 @@
 
 #include "sanitizer_platform.h"
 #if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC
+// Tests in this file assume that off_t-dependent data structures match the
+// libc ABI. For example, struct dirent here is what readdir() function (as
+// exported from libc) returns, and not the user-facing "dirent", which
+// depends on _FILE_OFFSET_BITS setting.
+// To get this "true" dirent definition, we undefine _FILE_OFFSET_BITS below.
+#ifdef _FILE_OFFSET_BITS
+#undef _FILE_OFFSET_BITS
+#endif
 #if SANITIZER_FREEBSD
 #define _WANT_RTENTRY
 #include <sys/param.h>
