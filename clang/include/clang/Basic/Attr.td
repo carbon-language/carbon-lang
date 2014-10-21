@@ -835,7 +835,7 @@ def NoCommon : InheritableAttr {
 }
 
 def NoDebug : InheritableAttr {
-  let Spellings = [GNU<"nodebug">];
+  let Spellings = [GCC<"nodebug">];
   let Documentation = [Undocumented];
 }
 
