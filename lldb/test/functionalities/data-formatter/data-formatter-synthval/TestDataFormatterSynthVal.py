@@ -90,6 +90,11 @@ class DataFormatterSynthValueTestCase(TestBase):
         
         # check that an aptly defined synthetic provider does not affect one-lining
         self.expect("expression struct S { myInt theInt{12}; }; S()", substrs = ['(theInt = 12)'])
+        
+        # check that we can use a synthetic value in a summary
+        self.runCmd("type summary add hasAnInt -s ${var.theInt}")
+        hi = self.frame().FindVariable("hi")
+        self.assertEqual(hi.GetSummary(), "42")
 
 if __name__ == '__main__':
     import atexit

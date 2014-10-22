@@ -1802,6 +1802,7 @@ FormatPromptRecurse
                                             log->Printf("[Debugger::FormatPrompt] ALL RIGHT: unparsed portion = %s, why stopping = %d,"
                                                " final_value_type %d",
                                                first_unparsed, reason_to_stop, final_value_type);
+                                        target = target->GetQualifiedRepresentationIfAvailable(target->GetDynamicValueType(), true).get();
                                     }
                                 }
                                 else

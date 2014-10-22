@@ -5,11 +5,18 @@ class myInt {
     int val() { return theValue; }
 };
 
+class hasAnInt {
+    public:
+        myInt theInt;
+        hasAnInt() : theInt(42) {}  
+};
+
 myInt operator + (myInt x, myInt y) { return myInt(x.val() + y.val()); }
 
 int main() {
     myInt x{3};
     myInt y{4};
     myInt z {x+y};
+    hasAnInt hi;
     return z.val(); // break here
 }
