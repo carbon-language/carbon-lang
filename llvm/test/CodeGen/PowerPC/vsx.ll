@@ -706,3 +706,14 @@ define <2 x double> @test81(<4 x float> %b) {
 ; CHECK: blr
 }
 
+define double @test82(double %a, double %b, double %c, double %d) {
+entry:
+  %m = fcmp oeq double %c, %d
+  %v = select i1 %m, double %a, double %b
+  ret double %v
+
+; CHECK-LABEL: @test82
+; CHECK: xscmpudp [[REG:[0-9]+]], 3, 4
+; CHECK: beqlr [[REG]]
+}
+

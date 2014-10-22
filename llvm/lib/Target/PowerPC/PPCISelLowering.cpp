@@ -7062,12 +7062,14 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
              MI->getOpcode() == PPC::SELECT_CC_F4 ||
              MI->getOpcode() == PPC::SELECT_CC_F8 ||
              MI->getOpcode() == PPC::SELECT_CC_VRRC ||
+             MI->getOpcode() == PPC::SELECT_CC_VSFRC ||
              MI->getOpcode() == PPC::SELECT_CC_VSRC ||
              MI->getOpcode() == PPC::SELECT_I4 ||
              MI->getOpcode() == PPC::SELECT_I8 ||
              MI->getOpcode() == PPC::SELECT_F4 ||
              MI->getOpcode() == PPC::SELECT_F8 ||
              MI->getOpcode() == PPC::SELECT_VRRC ||
+             MI->getOpcode() == PPC::SELECT_VSFRC ||
              MI->getOpcode() == PPC::SELECT_VSRC) {
     // The incoming instruction knows the destination vreg to set, the
     // condition code register to branch on, the true/false values to
@@ -7100,6 +7102,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
         MI->getOpcode() == PPC::SELECT_F4 ||
         MI->getOpcode() == PPC::SELECT_F8 ||
         MI->getOpcode() == PPC::SELECT_VRRC ||
+        MI->getOpcode() == PPC::SELECT_VSFRC ||
         MI->getOpcode() == PPC::SELECT_VSRC) {
       BuildMI(BB, dl, TII->get(PPC::BC))
         .addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
