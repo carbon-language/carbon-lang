@@ -90,7 +90,7 @@ def BuildMakefile(mydir):
         makefile.write("LDFLAGS = $(CFLAGS) -lobjc -framework Foundation\n")
 
     if ('CXX_SOURCES' in categories.keys()):
-        makefile.write("CXXFLAGS += -std-c++11\n")
+        makefile.write("CXXFLAGS += -std=c++11\n")
 
     makefile.write("include $(LEVEL)/Makefile.rules\n")
     makefile.flush()
