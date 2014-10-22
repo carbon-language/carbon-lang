@@ -779,7 +779,7 @@ private:
       } else if (Current.is(tok::kw_auto)) {
         AutoFound = true;
       } else if (Current.is(tok::arrow) && AutoFound &&
-                 Line.MustBeDeclaration) {
+                 Line.MustBeDeclaration && Current.NestingLevel == 0) {
         Current.Type = TT_TrailingReturnArrow;
       } else if (Current.isOneOf(tok::star, tok::amp, tok::ampamp)) {
         Current.Type =
