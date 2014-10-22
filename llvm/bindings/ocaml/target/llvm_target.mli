@@ -67,7 +67,7 @@ module DataLayout : sig
       See the method [llvm::DataLayout::getStringRepresentation]. *)
   val as_string : t -> string
 
-  (** [add_to_pass_manager dl pm] adds the target data [dl] to
+  (** [add_to_pass_manager pm dl] adds the data layout [dl] to
       the pass manager [pm].
       See the method [llvm::PassManagerBase::add]. *)
   val add_to_pass_manager : [<Llvm.PassManager.any] Llvm.PassManager.t ->
