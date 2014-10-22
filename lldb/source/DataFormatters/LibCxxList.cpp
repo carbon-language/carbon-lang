@@ -25,6 +25,47 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
 
+namespace lldb_private {
+    namespace formatters {
+        class LibcxxStdListSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxStdListSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxStdListSyntheticFrontEnd ();
+        private:
+            bool
+            HasLoop(size_t);
+            
+            size_t m_list_capping_size;
+            static const bool g_use_loop_detect = true;
+            size_t m_loop_detected;
+            lldb::addr_t m_node_address;
+            ValueObject* m_head;
+            ValueObject* m_tail;
+            ClangASTType m_element_type;
+            size_t m_count;
+            std::map<size_t,lldb::ValueObjectSP> m_children;
+        };
+    }
+}
+
 class ListEntry
 {
 public:

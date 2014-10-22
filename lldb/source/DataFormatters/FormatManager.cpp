@@ -1085,6 +1085,7 @@ FormatManager::LoadLibcxxFormatters()
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::multiset synthetic children", ConstString("^std::__1::multiset<.+> >(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::multimap synthetic children", ConstString("^std::__1::multimap<.+> >(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEndCreator, "libc++ std::unordered containers synthetic children", ConstString("^(std::__1::)unordered_(multi)?(map|set)<.+> >$"), stl_synth_flags, true);
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxInitializerListSyntheticFrontEndCreator, "libc++ std::initializer_list synthetic children", ConstString("^std::initializer_list<.+>(( )?&)?$"), stl_synth_flags, true);
     
     libcxx_category_sp->GetRegexTypeSyntheticsContainer()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)deque<.+>(( )?&)?$")),
                                                           SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,

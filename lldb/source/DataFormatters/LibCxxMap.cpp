@@ -25,6 +25,47 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
 
+namespace lldb_private {
+    namespace formatters {
+        class LibcxxStdMapSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxStdMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxStdMapSyntheticFrontEnd ();
+        private:
+            bool
+            GetDataType();
+            
+            void
+            GetValueOffset (const lldb::ValueObjectSP& node);
+            
+            ValueObject* m_tree;
+            ValueObject* m_root_node;
+            ClangASTType m_element_type;
+            uint32_t m_skip_size;
+            size_t m_count;
+            std::map<size_t,lldb::ValueObjectSP> m_children;
+        };
+    }
+}
+
 class MapEntry
 {
 public:

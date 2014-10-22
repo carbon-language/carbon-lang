@@ -646,6 +646,8 @@
 		941BCC8014E48C4000BB969C /* SBTypeFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568714E355F2003A195C /* SBTypeFormat.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8114E48C4000BB969C /* SBTypeSummary.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568814E355F2003A195C /* SBTypeSummary.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8214E48C4000BB969C /* SBTypeSynthetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568914E355F2003A195C /* SBTypeSynthetic.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		942AFF0519F84ABF007B43B4 /* LibCxxVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 942AFF0419F84ABF007B43B4 /* LibCxxVector.cpp */; };
+		942AFF0719F84C02007B43B4 /* LibCxxInitializerList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 942AFF0619F84C02007B43B4 /* LibCxxInitializerList.cpp */; };
 		94380B8219940B0A00BFE4A8 /* StringLexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94380B8119940B0A00BFE4A8 /* StringLexer.cpp */; };
 		9439FB1A19EF140C006FD6A4 /* NSIndexPath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9439FB1919EF140C006FD6A4 /* NSIndexPath.cpp */; };
 		944372DC171F6B4300E57C32 /* RegisterContextDummy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */; };
@@ -1983,6 +1985,8 @@
 		940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBExecutionContext.cpp; path = source/API/SBExecutionContext.cpp; sourceTree = "<group>"; };
 		940B02F719DC970900AD0F52 /* SBExecutionContext.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBExecutionContext.i; sourceTree = "<group>"; };
 		94145430175D7FDE00284436 /* lldb-versioning.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-versioning.h"; path = "include/lldb/lldb-versioning.h"; sourceTree = "<group>"; };
+		942AFF0419F84ABF007B43B4 /* LibCxxVector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxxVector.cpp; path = source/DataFormatters/LibCxxVector.cpp; sourceTree = "<group>"; };
+		942AFF0619F84C02007B43B4 /* LibCxxInitializerList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxxInitializerList.cpp; path = source/DataFormatters/LibCxxInitializerList.cpp; sourceTree = "<group>"; };
 		94380B8019940B0300BFE4A8 /* StringLexer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StringLexer.h; path = include/lldb/Utility/StringLexer.h; sourceTree = "<group>"; };
 		94380B8119940B0A00BFE4A8 /* StringLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringLexer.cpp; path = source/Utility/StringLexer.cpp; sourceTree = "<group>"; };
 		9439FB1919EF140C006FD6A4 /* NSIndexPath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSIndexPath.cpp; path = source/DataFormatters/NSIndexPath.cpp; sourceTree = "<group>"; };
@@ -4322,9 +4326,11 @@
 				94CB255A16B069770059775D /* FormatManager.cpp */,
 				94EE33F218643C6900CD703B /* FormattersContainer.h */,
 				94D0B10A16D5535900EA9C70 /* LibCxx.cpp */,
+				942AFF0619F84C02007B43B4 /* LibCxxInitializerList.cpp */,
 				94CD704F16F8DF1C00CF1E42 /* LibCxxList.cpp */,
 				94CD705116F8F5BC00CF1E42 /* LibCxxMap.cpp */,
 				94EA27CD17DE91750070F505 /* LibCxxUnorderedMap.cpp */,
+				942AFF0419F84ABF007B43B4 /* LibCxxVector.cpp */,
 				94D0B10B16D5535900EA9C70 /* LibStdcpp.cpp */,
 				94D6A0A716CEB55F00833B6E /* NSArray.cpp */,
 				94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */,
@@ -5105,6 +5111,7 @@
 				3FDFED0F19B7D269009756A7 /* ThisThread.cpp in Sources */,
 				2689005F13353E0E00698AC0 /* ClangFunction.cpp in Sources */,
 				2689006013353E0E00698AC0 /* ClangExpressionDeclMap.cpp in Sources */,
+				942AFF0719F84C02007B43B4 /* LibCxxInitializerList.cpp in Sources */,
 				2689006113353E0E00698AC0 /* ClangExpressionParser.cpp in Sources */,
 				2689006213353E0E00698AC0 /* ClangExpressionVariable.cpp in Sources */,
 				2689006313353E0E00698AC0 /* ClangPersistentVariables.cpp in Sources */,
@@ -5249,6 +5256,7 @@
 				26BC17AD18C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.cpp in Sources */,
 				268900F113353E6F00698AC0 /* RegisterContext.cpp in Sources */,
 				268900F213353E6F00698AC0 /* SectionLoadList.cpp in Sources */,
+				942AFF0519F84ABF007B43B4 /* LibCxxVector.cpp in Sources */,
 				268900F313353E6F00698AC0 /* StackFrame.cpp in Sources */,
 				268900F413353E6F00698AC0 /* StackFrameList.cpp in Sources */,
 				268900F513353E6F00698AC0 /* StackID.cpp in Sources */,
