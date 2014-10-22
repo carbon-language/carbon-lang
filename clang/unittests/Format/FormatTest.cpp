@@ -9154,24 +9154,35 @@ TEST_F(FormatTest, FormatsLambdas) {
 }
 
 TEST_F(FormatTest, FormatsBlocks) {
-  verifyFormat("int (^Block)(int, int);");
-  verifyFormat("int (^Block1)(int, int) = ^(int i, int j)");
-  verifyFormat("void (^block)(int) = ^(id test) { int i; };");
-  verifyFormat("void (^block)(int) = ^(int test) { int i; };");
-  verifyFormat("void (^block)(int) = ^id(int test) { int i; };");
-  verifyFormat("void (^block)(int) = ^int(int test) { int i; };");
+  FormatStyle ShortBlocks = getLLVMStyle();
+  ShortBlocks.AllowShortBlocksOnASingleLine = true;
+  verifyFormat("int (^Block)(int, int);", ShortBlocks);
+  verifyFormat("int (^Block1)(int, int) = ^(int i, int j)", ShortBlocks);
+  verifyFormat("void (^block)(int) = ^(id test) { int i; };", ShortBlocks);
+  verifyFormat("void (^block)(int) = ^(int test) { int i; };", ShortBlocks);
+  verifyFormat("void (^block)(int) = ^id(int test) { int i; };", ShortBlocks);
+  verifyFormat("void (^block)(int) = ^int(int test) { int i; };", ShortBlocks);
 
-  verifyFormat("foo(^{ bar(); });");
-  verifyFormat("foo(a, ^{ bar(); });");
-  verifyFormat("{ void (^block)(Object *x); }");
+  verifyFormat("foo(^{ bar(); });", ShortBlocks);
+  verifyFormat("foo(a, ^{ bar(); });", ShortBlocks);
+  verifyFormat("{ void (^block)(Object *x); }", ShortBlocks);
 
-  verifyFormat("[operation setCompletionBlock:^{ [self onOperationDone]; }];");
-  verifyFormat("int i = {[operation setCompletionBlock:^{ [self "
-               "onOperationDone]; }]};");
-  verifyFormat("[operation setCompletionBlock:^(int *i) { f(); }];");
-  verifyFormat("int a = [operation block:^int(int *i) { return 1; }];");
+  verifyFormat("[operation setCompletionBlock:^{\n"
+               "    [self onOperationDone];\n"
+               "}];");
+  verifyFormat("int i = {[operation setCompletionBlock:^{\n"
+               "    [self onOperationDone];\n"
+               "}]};");
+  verifyFormat("[operation setCompletionBlock:^(int *i) {\n"
+               "    f();\n"
+               "}];");
+  verifyFormat("int a = [operation block:^int(int *i) {\n"
+               "    return 1;\n"
+               "}];");
   verifyFormat("[myObject doSomethingWith:arg1\n"
-               "                      aaa:^int(int *a) { return 1; }\n"
+               "                      aaa:^int(int *a) {\n"
+               "                          return 1;\n"
+               "                      }\n"
                "                      bbb:f(a * bbbbbbbb)];");
 
   verifyFormat("[operation setCompletionBlock:^{\n"

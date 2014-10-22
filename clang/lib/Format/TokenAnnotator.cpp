@@ -1782,6 +1782,9 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   } else if (Style.Language == FormatStyle::LK_Proto &&
              Left.isNot(tok::l_brace) && Right.Type == TT_SelectorName) {
     return true;
+  } else if (Left.Type == TT_ObjCBlockLBrace &&
+             !Style.AllowShortBlocksOnASingleLine) {
+    return true;
   }
 
   // If the last token before a '}' is a comma or a trailing comment, the
