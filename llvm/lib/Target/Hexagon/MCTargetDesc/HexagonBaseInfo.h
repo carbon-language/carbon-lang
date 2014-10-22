@@ -20,6 +20,8 @@
 #include "HexagonMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#include <stdint.h>
+
 namespace llvm {
 
 /// HexagonII - This namespace holds all of the target specific flags that
@@ -187,6 +189,15 @@ namespace HexagonII {
 
     // Offset from the base of the SDA.
     MO_GPREL
+  };
+
+  enum class InstParseBits : uint32_t {
+    INST_PARSE_MASK       = 0x0000c000,
+    INST_PARSE_PACKET_END = 0x0000c000,
+    INST_PARSE_LOOP_END   = 0x00008000,
+    INST_PARSE_NOT_END    = 0x00004000,
+    INST_PARSE_DUPLEX     = 0x00000000,
+    INST_PARSE_EXTENDER   = 0x00000000
   };
 
 } // End namespace HexagonII.

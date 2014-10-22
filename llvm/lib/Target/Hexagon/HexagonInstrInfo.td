@@ -225,7 +225,7 @@ def AND_ri : ALU32_ri<(outs IntRegs:$dst),
                                            s10ExtPred:$src2))]>, ImmRegRel;
 
 // Nop.
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isCodeGenOnly = 0 in
 def NOP : ALU32_rr<(outs), (ins),
           "nop",
           []>;
@@ -753,7 +753,7 @@ def HexagonBR_JT: SDNode<"HexagonISD::BR_JT", SDHexagonBR_JT, [SDNPHasChain]>;
 
 let InputType = "imm", isBarrier = 1, isPredicable = 1,
 Defs = [PC], isExtendable = 1, opExtendable = 0, isExtentSigned = 1,
-opExtentBits = 24 in
+opExtentBits = 24, isCodeGenOnly = 0 in
 class T_JMP <dag InsDag, list<dag> JumpList = []>
             : JInst<(outs), InsDag,
             "jump $dst" , JumpList> {
