@@ -343,6 +343,10 @@ def parseIntegratedTestScriptCommands(source_path):
         # Read the entire file contents.
         data = f.read()
 
+        # Ensure the data ends with a newline.
+        if not data.endswith('\n'):
+            data = data + '\n'
+
         # Iterate over the matches.
         line_number = 1
         last_match_position = 0
