@@ -137,6 +137,8 @@ VALID_SYMBOL = "Got a valid symbol"
 
 VALID_TARGET = "Got a valid target"
 
+VALID_PLATFORM = "Got a valid platform"
+
 VALID_TYPE = "Got a valid type"
 
 VALID_VARIABLE = "Got a valid variable"

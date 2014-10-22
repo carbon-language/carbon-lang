@@ -46,6 +46,7 @@ int c(int val)
 
 int main (int argc, char const *argv[])
 {
+    // Set a break at entry to main.
     int A1 = a(1);  // a(1) -> b(1) -> c(1)
     printf("a(1) returns %d\n", A1);
     

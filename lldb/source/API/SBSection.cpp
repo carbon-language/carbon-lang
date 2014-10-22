@@ -250,6 +250,14 @@ SBSection::GetSectionType ()
     return eSectionTypeInvalid;
 }
 
+uint32_t
+SBSection::GetTargetByteSize ()
+{
+    SectionSP section_sp (GetSP());
+    if (section_sp.get())
+        return section_sp->GetTargetByteSize();
+    return 0;
+}
 
 bool
 SBSection::operator == (const SBSection &rhs)

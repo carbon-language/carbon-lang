@@ -90,6 +90,20 @@ public:
     SectionType
     GetSectionType ();
 
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Return the size of a target's byte represented by this section
+    /// in numbers of host bytes. Note that certain architectures have
+    /// varying minimum addressable unit (i.e. byte) size for their 
+    /// CODE or DATA buses.
+    ///
+    /// @return
+    ///     The number of host (8-bit) bytes needed to hold a target byte
+    //------------------------------------------------------------------
+    ") GetTargetByteSize;
+    uint32_t
+    GetTargetByteSize ();
+
     bool
     GetDescription (lldb::SBStream &description);
     
@@ -126,6 +140,9 @@ public:
 
         __swig_getmethods__["type"] = GetSectionType
         if _newclass: type = property(GetSectionType, None, doc='''A read only property that returns an lldb enumeration value (see enumerations that start with "lldb.eSectionType") that represents the type of this section (code, data, etc.).''')
+
+        __swig_getmethods__["target_byte_size"] = GetTargetByteSize
+        if _newclass: target_byte_size = property(GetTargetByteSize, None, doc='''A read only property that returns the size of a target byte represented by this section as a number of host bytes.''')
 
     %}
 

@@ -2284,6 +2284,12 @@ Target::ResolveLoadAddress (addr_t load_addr, Address &so_addr, uint32_t stop_id
 }
 
 bool
+Target::ResolveFileAddress (lldb::addr_t file_addr, Address &resolved_addr)
+{
+    return m_images.ResolveFileAddress(file_addr, resolved_addr);
+}
+
+bool
 Target::SetSectionLoadAddress (const SectionSP &section_sp, addr_t new_section_load_addr, bool warn_multiple)
 {
     const addr_t old_section_load_addr = m_section_load_history.GetSectionLoadAddress (SectionLoadHistory::eStopIDNow, section_sp);

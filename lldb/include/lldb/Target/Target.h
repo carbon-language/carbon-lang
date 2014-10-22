@@ -1133,6 +1133,9 @@ public:
     Error
     Install(ProcessLaunchInfo *launch_info);
     
+    bool
+    ResolveFileAddress (lldb::addr_t load_addr,
+                        Address &so_addr);
     
     bool
     ResolveLoadAddress (lldb::addr_t load_addr,
