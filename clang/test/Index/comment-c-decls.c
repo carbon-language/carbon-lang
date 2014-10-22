@@ -101,4 +101,4 @@ int (^Block) (int i, int j);
  *\brief block declaration
 */
 int (^Block1) (int i, int j) = ^(int i, int j) { return i + j; };
-// CHECK: <Declaration>int (^Block1)(int, int) = ^(int i, int j) {}</Declaration>
+// CHECK: <Declaration>int (^Block1)(int, int) = ^(int i, int j) {\n}</Declaration>
