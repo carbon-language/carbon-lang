@@ -8062,11 +8062,11 @@ all types however.
 
 ::
 
-      declare float     @llvm.minnum.f32(float %Val)
-      declare double    @llvm.minnum.f64(double %Val)
-      declare x86_fp80  @llvm.minnum.f80(x86_fp80 %Val)
-      declare fp128     @llvm.minnum.f128(fp128 %Val)
-      declare ppc_fp128 @llvm.minnum.ppcf128(ppc_fp128 %Val)
+      declare float     @llvm.minnum.f32(float %Val0, float %Val1)
+      declare double    @llvm.minnum.f64(double %Val0, double %Val1)
+      declare x86_fp80  @llvm.minnum.f80(x86_fp80 %Val0, x86_fp80 %Val1)
+      declare fp128     @llvm.minnum.f128(fp128 %Val0, fp128 %Val1)
+      declare ppc_fp128 @llvm.minnum.ppcf128(ppc_fp128 %Val0, ppc_fp128 %Val1)
 
 Overview:
 """""""""
@@ -8104,11 +8104,11 @@ all types however.
 
 ::
 
-      declare float     @llvm.maxnum.f32(float  %Val)
-      declare double    @llvm.maxnum.f64(double %Val)
-      declare x86_fp80  @llvm.maxnum.f80(x86_fp80  %Val)
-      declare fp128     @llvm.maxnum.f128(fp128 %Val)
-      declare ppc_fp128 @llvm.maxnum.ppcf128(ppc_fp128  %Val)
+      declare float     @llvm.maxnum.f32(float  %Val0, float  %Val1l)
+      declare double    @llvm.maxnum.f64(double %Val0, double %Val1)
+      declare x86_fp80  @llvm.maxnum.f80(x86_fp80  %Val0, x86_fp80  %Val1)
+      declare fp128     @llvm.maxnum.f128(fp128 %Val0, fp128 %Val1)
+      declare ppc_fp128 @llvm.maxnum.ppcf128(ppc_fp128  %Val0, ppc_fp128  %Val1)
 
 Overview:
 """""""""
