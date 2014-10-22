@@ -107,6 +107,15 @@ protected:
     return Result;
   }
 
+  // Inserts a declaration to a function defined elsewhere
+  template <typename FuncType>
+  Function *insertExternalReferenceToFunction(Module *M, StringRef Name) {
+    Function *Result = Function::Create(
+                         TypeBuilder<FuncType, false>::get(Context),
+                         GlobalValue::ExternalLinkage, Name, M);
+    return Result;
+  }
+
   // Inserts an declaration to a function defined elsewhere
   Function *insertExternalReferenceToFunction(Module *M, StringRef Name,
                                               FunctionType *FuncTy) {

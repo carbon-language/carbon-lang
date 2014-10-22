@@ -357,7 +357,7 @@ void *MCJIT::getPointerToFunction(Function *F) {
   if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
     bool AbortOnFailure = !F->hasExternalWeakLinkage();
     void *Addr = getPointerToNamedFunction(Name, AbortOnFailure);
-    addGlobalMapping(F, Addr);
+    updateGlobalMapping(F, Addr);
     return Addr;
   }
 

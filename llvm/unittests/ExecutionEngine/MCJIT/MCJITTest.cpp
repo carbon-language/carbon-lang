@@ -187,4 +187,16 @@ TEST_F(MCJITTest, multiple_functions) {
 
 #endif /*!defined(__arm__)*/
 
+TEST_F(MCJITTest, multiple_decl_lookups) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
+  Function *Foo = insertExternalReferenceToFunction<void(void)>(M.get(), "_exit");
+  createJIT(std::move(M));
+  void *A = TheJIT->getPointerToFunction(Foo);
+  void *B = TheJIT->getPointerToFunction(Foo);
+
+  EXPECT_TRUE(A != 0) << "Failed lookup - test not correctly configured.";
+  EXPECT_EQ(A, B) << "Repeat calls to getPointerToFunction fail.";
+}
+
 }
