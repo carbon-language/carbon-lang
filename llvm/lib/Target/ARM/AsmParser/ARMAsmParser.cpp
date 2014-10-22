@@ -5976,7 +5976,9 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
       return Error(Operands[3]->getStartLoc(),
                    "writeback operator '!' not allowed when base register "
                    "in register list");
-
+    if (listContainsReg(Inst, 3 + HasWritebackToken, ARM::SP))
+      return Error(Operands[3 + HasWritebackToken]->getStartLoc(),
+                   "SP not allowed in register list");
     break;
   }
   case ARM::LDMIA_UPD:
@@ -5987,7 +5989,19 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
     // UNPREDICTABLE on v7 upwards. Goodness knows what they did before.
     if (!hasV7Ops())
       break;
-    // Fallthrough
+    if (listContainsReg(Inst, 3, Inst.getOperand(0).getReg()))
+      return Error(Operands.back()->getStartLoc(),
+                   "writeback register not allowed in register list");
+    break;
+  case ARM::t2LDMIA:
+  case ARM::t2LDMDB:
+  case ARM::t2STMIA:
+  case ARM::t2STMDB: {
+    if (listContainsReg(Inst, 3, ARM::SP))
+      return Error(Operands.back()->getStartLoc(),
+                   "SP not allowed in register list");
+    break;
+  }
   case ARM::t2LDMIA_UPD:
   case ARM::t2LDMDB_UPD:
   case ARM::t2STMIA_UPD:
@@ -5995,6 +6009,10 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
     if (listContainsReg(Inst, 3, Inst.getOperand(0).getReg()))
       return Error(Operands.back()->getStartLoc(),
                    "writeback register not allowed in register list");
+
+    if (listContainsReg(Inst, 4, ARM::SP))
+      return Error(Operands.back()->getStartLoc(),
+                   "SP not allowed in register list");
     break;
   }
   case ARM::sysLDMIA_UPD:
@@ -6063,6 +6081,9 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
       return Error(Operands[4]->getStartLoc(),
                    "writeback operator '!' not allowed when base register "
                    "in register list");
+    if (listContainsReg(Inst, 4, ARM::SP) && !inITBlock())
+      return Error(Operands.back()->getStartLoc(),
+                   "SP not allowed in register list");
     break;
   }
   case ARM::tADDrSP: {

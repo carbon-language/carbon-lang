@@ -2,6 +2,8 @@
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS < %t %s
 @ RUN: not llvm-mc -triple=thumbv5-apple-darwin < %s 2> %t
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS-V5 < %t %s
+@ RUN: not llvm-mc -triple=thumbv7m < %s 2> %t
+@ RUN: FileCheck --check-prefix=CHECK-ERRORS-V7M < %t %s
 @ RUN: not llvm-mc -triple=thumbv8 < %s 2> %t
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS-V8 < %t %s
 
@@ -59,6 +61,13 @@ error: invalid operand for instruction
         ldm r2!, {r2, r3, r4}
         ldm r2!, {r2, r3, r4, r10}
         ldmdb r2!, {r2, r3, r4}
+        ldm r0, {r2, sp}
+        ldmia r0, {r2-r3, sp}
+        ldmia r0!, {r2-r3, sp}
+        ldmfd r2, {r1, r3-r6, sp}
+        ldmfd r2!, {r1, r3-r6, sp}
+        ldmdb r1, {r2, r3, sp}
+        ldmdb r1!, {r2, r3, sp} 
 @ CHECK-ERRORS: error: registers must be in range r0-r7
 @ CHECK-ERRORS:         ldm r2!, {r5, r8}
 @ CHECK-ERRORS:                  ^
@@ -74,6 +83,27 @@ error: invalid operand for instruction
 @ CHECK-ERRORS-V8: error: writeback register not allowed in register list
 @ CHECK-ERRORS-V8:         ldmdb r2!, {r2, r3, r4}
 @ CHECK-ERRORS-V8:                 ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         ldm r0, {r2, sp}
+@ CHECK-ERRORS-V7M:                 ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         ldmia r0, {r2-r3, sp}
+@ CHECK-ERRORS-V7M:                   ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         ldmia r0!, {r2-r3, sp}
+@ CHECK-ERRORS-V7M:                    ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         ldmfd r2, {r1, r3-r6, sp}
+@ CHECK-ERRORS-V7M:                   ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         ldmfd r2!, {r1, r3-r6, sp}
+@ CHECK-ERRORS-V7M:                    ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         ldmdb r1, {r2, r3, sp}
+@ CHECK-ERRORS-V7M:                   ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         ldmdb r1!, {r2, r3, sp}
+@ CHECK-ERRORS-V7M:                    ^
 
 @ Invalid writeback and register lists for PUSH/POP
         pop {r1, r2, r10}
@@ -91,6 +121,10 @@ error: invalid operand for instruction
         stm r1!, {r2, r9}
         stm r2!, {r2, r9}
         stmdb r2!, {r0, r2}
+        stm r1!, {r2, sp}
+        stmia r4!, {r0-r3, sp}
+        stmdb r1, {r2, r3, sp}
+        stmdb r1!, {r2, r3, sp}
 @ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         stm r1, {r2, r6}
 @ CHECK-ERRORS:         ^
@@ -103,6 +137,18 @@ error: invalid operand for instruction
 @ CHECK-ERRORS-V8: error: writeback register not allowed in register list
 @ CHECK-ERRORS-V8:         stmdb r2!, {r0, r2}
 @ CHECK-ERRORS-V8:                  ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         stm r1!, {r2, sp}
+@ CHECK-ERRORS-V7M:                  ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         stmia r4!, {r0-r3, sp}
+@ CHECK-ERRORS-V7M:                    ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         stmdb r1, {r2, r3, sp}
+@ CHECK-ERRORS-V7M:                   ^
+@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M:         stmdb r1!, {r2, r3, sp}
+@ CHECK-ERRORS-V7M:                    ^
 
 @ Out of range immediates for LSL instruction.
         lsls r4, r5, #-1
