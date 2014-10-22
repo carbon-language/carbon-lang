@@ -1308,8 +1308,7 @@ void Parser::ProhibitCXX11Attributes(ParsedAttributesWithRange &attrs) {
 /// [C++11/C11] static_assert-declaration
 ///         others... [FIXME]
 ///
-Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
-                                                unsigned Context,
+Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
                                                 SourceLocation &DeclEnd,
                                           ParsedAttributesWithRange &attrs) {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
@@ -1333,7 +1332,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
       SingleDecl = ParseNamespace(Context, DeclEnd, InlineLoc);
       break;
     }
-    return ParseSimpleDeclaration(Stmts, Context, DeclEnd, attrs,
+    return ParseSimpleDeclaration(Context, DeclEnd, attrs,
                                   true);
   case tok::kw_namespace:
     ProhibitAttributes(attrs);
@@ -1349,7 +1348,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
     SingleDecl = ParseStaticAssertDeclaration(DeclEnd);
     break;
   default:
-    return ParseSimpleDeclaration(Stmts, Context, DeclEnd, attrs, true);
+    return ParseSimpleDeclaration(Context, DeclEnd, attrs, true);
   }
 
   // This routine returns a DeclGroup, if the thing we parsed only contains a
@@ -1375,7 +1374,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
 /// of a simple-declaration. If we find that we are, we also parse the
 /// for-range-initializer, and place it here.
 Parser::DeclGroupPtrTy
-Parser::ParseSimpleDeclaration(StmtVector &Stmts, unsigned Context,
+Parser::ParseSimpleDeclaration(unsigned Context,
                                SourceLocation &DeclEnd,
                                ParsedAttributesWithRange &Attrs,
                                bool RequireSemi, ForRangeInit *FRI) {
