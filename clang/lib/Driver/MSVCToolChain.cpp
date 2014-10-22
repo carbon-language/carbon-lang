@@ -212,6 +212,71 @@ bool MSVCToolChain::getWindowsSDKDir(std::string &path, int &major,
   return hasSDKDir && !path.empty();
 }
 
+// Gets the library path required to link against the Windows SDK.
+bool MSVCToolChain::getWindowsSDKLibraryPath(std::string &path) const {
+  std::string sdkPath;
+  int sdkMajor = 0;
+  int sdkMinor = 0;
+
+  path.clear();
+  if (!getWindowsSDKDir(sdkPath, sdkMajor, sdkMinor))
+    return false;
+
+  llvm::SmallString<128> libPath(sdkPath);
+  llvm::sys::path::append(libPath, "Lib");
+  if (sdkMajor <= 7) {
+    switch (getArch()) {
+    // In Windows SDK 7.x, x86 libraries are directly in the Lib folder.
+    case llvm::Triple::x86:
+      break;
+    case llvm::Triple::x86_64:
+      llvm::sys::path::append(libPath, "x64");
+      break;
+    case llvm::Triple::arm:
+      // It is not necessary to link against Windows SDK 7.x when targeting ARM.
+      return false;
+    default:
+      return false;
+    }
+  } else {
+    // Windows SDK 8.x installs libraries in a folder whose names depend on the
+    // version of the OS you're targeting.  By default choose the newest, which
+    // usually corresponds to the version of the OS you've installed the SDK on.
+    char *tests[] = {"winv6.3", "win8", "win7"};
+    bool found = false;
+    for (char *test : tests) {
+      llvm::SmallString<128> testPath(libPath);
+      llvm::sys::path::append(testPath, test);
+      if (llvm::sys::fs::exists(testPath.c_str())) {
+        libPath = testPath;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      return false;
+
+    llvm::sys::path::append(libPath, "um");
+    switch (getArch()) {
+    case llvm::Triple::x86:
+      llvm::sys::path::append(libPath, "x86");
+      break;
+    case llvm::Triple::x86_64:
+      llvm::sys::path::append(libPath, "x64");
+      break;
+    case llvm::Triple::arm:
+      llvm::sys::path::append(libPath, "arm");
+      break;
+    default:
+      return false;
+    }
+  }
+
+  path = libPath.str();
+  return true;
+}
+
 // Get the location to use for Visual Studio binaries.  The location priority
 // is: %VCINSTALLDIR% > %PATH% > newest copy of Visual Studio installed on
 // system (as reported by the registry).

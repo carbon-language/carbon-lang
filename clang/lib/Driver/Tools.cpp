@@ -7854,6 +7854,39 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-defaultlib:libcmt");
   }
 
+  if (!llvm::sys::Process::GetEnv("LIB")) {
+    // If the VC environment hasn't been configured (perhaps because the user
+    // did not run vcvarsall), try to build a consistent link environment.  If
+    // the environment variable is set however, assume the user knows what he's
+    // doing.
+    std::string VisualStudioDir;
+    const auto &MSVC = static_cast<const toolchains::MSVCToolChain &>(getToolChain());
+    if (MSVC.getVisualStudioInstallDir(VisualStudioDir)) {
+      SmallString<128> LibDir(VisualStudioDir);
+      llvm::sys::path::append(LibDir, "VC", "lib");
+      switch (MSVC.getArch()) {
+      case llvm::Triple::x86:
+        // x86 just puts the libraries directly in lib
+        break;
+      case llvm::Triple::x86_64:
+        llvm::sys::path::append(LibDir, "amd64");
+        break;
+      case llvm::Triple::arm:
+        llvm::sys::path::append(LibDir, "arm");
+        break;
+      default:
+        break;
+      }
+      CmdArgs.push_back(
+          Args.MakeArgString(std::string("-libpath:") + LibDir.c_str()));
+    }
+
+    std::string WindowsSdkLibPath;
+    if (MSVC.getWindowsSDKLibraryPath(WindowsSdkLibPath))
+      CmdArgs.push_back(Args.MakeArgString(std::string("-libpath:") +
+                                           WindowsSdkLibPath.c_str()));
+  }
+
   CmdArgs.push_back("-nologo");
 
   if (Args.hasArg(options::OPT_g_Group)) {
