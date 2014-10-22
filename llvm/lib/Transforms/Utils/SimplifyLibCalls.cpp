@@ -40,6 +40,13 @@ static cl::opt<bool>
     ColdErrorCalls("error-reporting-is-cold", cl::init(true), cl::Hidden,
                    cl::desc("Treat error-reporting calls as cold"));
 
+static cl::opt<bool>
+    EnableUnsafeFPShrink("enable-double-float-shrink", cl::Hidden,
+                         cl::init(false),
+                         cl::desc("Enable unsafe double to float "
+                                  "shrinking for math lib calls"));
+
+
 //===----------------------------------------------------------------------===//
 // Helper Functions
 //===----------------------------------------------------------------------===//
@@ -1989,6 +1996,20 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
   IRBuilder<> Builder(CI);
   bool isCallingConvC = CI->getCallingConv() == llvm::CallingConv::C;
 
+  // Command-line parameter overrides function attribute.
+  if (EnableUnsafeFPShrink.getNumOccurrences() > 0)
+    UnsafeFPShrink = EnableUnsafeFPShrink;
+  else if (Callee->hasFnAttribute("unsafe-fp-math")) {
+    // FIXME: This is the same problem as described in optimizeSqrt().
+    // If calls gain access to IR-level FMF, then use that instead of a
+    // function attribute.
+
+    // Check for unsafe-fp-math = true.
+    Attribute Attr = Callee->getFnAttribute("unsafe-fp-math");
+    if (Attr.getValueAsString() == "true")
+      UnsafeFPShrink = true;
+  }
+
   // Next check for intrinsics.
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI)) {
     if (!isCallingConvC)
@@ -2182,11 +2203,10 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
 }
 
 LibCallSimplifier::LibCallSimplifier(const DataLayout *DL,
-                                     const TargetLibraryInfo *TLI,
-                                     bool UnsafeFPShrink) :
+                                     const TargetLibraryInfo *TLI) :
                                      DL(DL),
                                      TLI(TLI),
-                                     UnsafeFPShrink(UnsafeFPShrink) {
+                                     UnsafeFPShrink(false) {
 }
 
 void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) const {
