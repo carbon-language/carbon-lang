@@ -449,8 +449,7 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     bool should_stop = true;
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
 
-    IncrementHitCount();
-
+    // Do this first, if a location is disabled, it shouldn't increment its hit count.
     if (!IsEnabled())
         return false;
 
@@ -472,6 +471,13 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     }
     
     return should_stop;
+}
+
+void
+BreakpointLocation::BumpHitCount()
+{
+    if (IsEnabled())
+        IncrementHitCount();
 }
 
 bool

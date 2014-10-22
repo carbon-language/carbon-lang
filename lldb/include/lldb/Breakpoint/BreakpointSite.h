@@ -259,6 +259,12 @@ public:
 private:
     friend class Process;
     friend class BreakpointLocation;
+    // The StopInfoBreakpoint knows when it is processing a hit for a thread for a site, so let it be the
+    // one to manage setting the location hit count once and only once.
+    friend class StopInfoBreakpoint;
+
+    void
+    BumpHitCounts();
 
     //------------------------------------------------------------------
     /// The method removes the owner at \a break_loc_id from this breakpoint list.

@@ -196,3 +196,4 @@ BreakpointLocationCollection::GetDescription (Stream *s, lldb::DescriptionLevel 
         (*pos)->GetDescription(s, level);
     }
 }
+

@@ -182,6 +182,7 @@ public:
                 {
                     ExecutionContext exe_ctx (thread_sp->GetStackFrameAtIndex(0));
                     StoppointCallbackContext context (event_ptr, exe_ctx, true);
+                    bp_site_sp->BumpHitCounts();
                     m_should_stop = bp_site_sp->ShouldStop (&context);
                 }
                 else
@@ -403,10 +404,21 @@ protected:
 
                     // Let's copy the breakpoint locations out of the site and store them in a local list.  That way if
                     // one of the breakpoint actions changes the site, then we won't be operating on a bad list.
+                    // For safety's sake let's also grab an extra reference to the breakpoint owners of the locations we're
+                    // going to examine, since the locations are going to have to get back to their breakpoints, and the
+                    // locations don't keep their owners alive.  I'm just sticking the BreakpointSP's in a vector since
+                    // I'm only really using it to locally increment their retain counts.
 
                     BreakpointLocationCollection site_locations;
+                    std::vector<lldb::BreakpointSP> location_owners;
+
                     for (size_t j = 0; j < num_owners; j++)
-                        site_locations.Add(bp_site_sp->GetOwnerAtIndex(j));
+                    {
+                        BreakpointLocationSP loc(bp_site_sp->GetOwnerAtIndex(j));
+                        site_locations.Add(loc);
+                        location_owners.push_back(loc->GetBreakpoint().shared_from_this());
+
+                    }
 
                     for (size_t j = 0; j < num_owners; j++)
                     {

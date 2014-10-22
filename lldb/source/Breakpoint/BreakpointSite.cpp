@@ -199,6 +199,15 @@ BreakpointSite::ValidForThisThread (Thread *thread)
     return m_owners.ValidForThisThread(thread);
 }
 
+void
+BreakpointSite::BumpHitCounts()
+{
+    for (BreakpointLocationSP loc_sp : m_owners.BreakpointLocations())
+    {
+        loc_sp->BumpHitCount();
+    }
+}
+
 bool
 BreakpointSite::IntersectsRange(lldb::addr_t addr, size_t size, lldb::addr_t *intersect_addr, size_t *intersect_size, size_t *opcode_offset) const
 {

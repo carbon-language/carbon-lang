@@ -387,6 +387,7 @@ public:
     bool EquivalentToLocation(BreakpointLocation &location);
     
 protected:
+    friend class BreakpointSite;
     friend class BreakpointLocationList;
     friend class Process;
 
@@ -412,6 +413,9 @@ protected:
 private:
     void
     SwapLocation (lldb::BreakpointLocationSP swap_from);
+
+    void
+    BumpHitCount();
 
 
     //------------------------------------------------------------------
