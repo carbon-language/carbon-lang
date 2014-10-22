@@ -104,7 +104,7 @@ protected:
   unsigned getFunctionLoc(Function &F);
   bool emitAnnotations(Function &F);
   unsigned getInstWeight(Instruction &I);
-  unsigned getBlockWeight(BasicBlock *B);
+  unsigned getBlockWeight(BasicBlock *BB);
   void printEdgeWeight(raw_ostream &OS, Edge E);
   void printBlockWeight(raw_ostream &OS, BasicBlock *BB);
   void printBlockEquivalence(raw_ostream &OS, BasicBlock *BB);
@@ -233,23 +233,23 @@ unsigned SampleProfileLoader::getInstWeight(Instruction &Inst) {
 
 /// \brief Compute the weight of a basic block.
 ///
-/// The weight of basic block \p B is the maximum weight of all the
-/// instructions in B. The weight of \p B is computed and cached in
+/// The weight of basic block \p BB is the maximum weight of all the
+/// instructions in BB. The weight of \p BB is computed and cached in
 /// the BlockWeights map.
 ///
-/// \param B The basic block to query.
+/// \param BB The basic block to query.
 ///
-/// \returns The computed weight of B.
-unsigned SampleProfileLoader::getBlockWeight(BasicBlock *B) {
-  // If we've computed B's weight before, return it.
+/// \returns The computed weight of BB.
+unsigned SampleProfileLoader::getBlockWeight(BasicBlock *BB) {
+  // If we've computed BB's weight before, return it.
   std::pair<BlockWeightMap::iterator, bool> Entry =
-      BlockWeights.insert(std::make_pair(B, 0));
+      BlockWeights.insert(std::make_pair(BB, 0));
   if (!Entry.second)
     return Entry.first->second;
 
-  // Otherwise, compute and cache B's weight.
+  // Otherwise, compute and cache BB's weight.
   unsigned Weight = 0;
-  for (auto &I : B->getInstList()) {
+  for (auto &I : BB->getInstList()) {
     unsigned InstWeight = getInstWeight(I);
     if (InstWeight > Weight)
       Weight = InstWeight;
@@ -267,10 +267,10 @@ unsigned SampleProfileLoader::getBlockWeight(BasicBlock *B) {
 bool SampleProfileLoader::computeBlockWeights(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "Block weights\n");
-  for (auto B = F.begin(), E = F.end(); B != E; ++B) {
-    unsigned Weight = getBlockWeight(B);
+  for (auto &BB : F) {
+    unsigned Weight = getBlockWeight(&BB);
     Changed |= (Weight > 0);
-    DEBUG(printBlockWeight(dbgs(), B));
+    DEBUG(printBlockWeight(dbgs(), &BB));
   }
 
   return Changed;
@@ -302,8 +302,7 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
 void SampleProfileLoader::findEquivalencesFor(
     BasicBlock *BB1, SmallVector<BasicBlock *, 8> Descendants,
     DominatorTreeBase<BasicBlock> *DomTree) {
-  for (auto I = Descendants.begin(), E = Descendants.end(); I != E; ++I) {
-    BasicBlock *BB2 = *I;
+  for (auto *BB2 : Descendants) {
     bool IsDomParent = DomTree->dominates(BB2, BB1);
     bool IsInSameLoop = LI->getLoopFor(BB1) == LI->getLoopFor(BB2);
     if (BB1 != BB2 && VisitedBlocks.insert(BB2) && IsDomParent &&
@@ -338,8 +337,8 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
   SmallVector<BasicBlock *, 8> DominatedBBs;
   DEBUG(dbgs() << "\nBlock equivalence classes\n");
   // Find equivalence sets based on dominance and post-dominance information.
-  for (auto B = F.begin(), E = F.end(); B != E; ++B) {
-    BasicBlock *BB1 = B;
+  for (auto &BB : F) {
+    BasicBlock *BB1 = &BB;
 
     // Compute BB1's equivalence class once.
     if (EquivalenceClass.count(BB1)) {
@@ -386,8 +385,8 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
   // each equivalence class has the largest weight, assign that weight
   // to all the blocks in that equivalence class.
   DEBUG(dbgs() << "\nAssign the same weight to all blocks in the same class\n");
-  for (auto B = F.begin(), E = F.end(); B != E; ++B) {
-    BasicBlock *BB = B;
+  for (auto &BI : F) {
+    BasicBlock *BB = &BI;
     BasicBlock *EquivBB = EquivalenceClass[BB];
     if (BB != EquivBB)
       BlockWeights[BB] = BlockWeights[EquivBB];
@@ -430,8 +429,8 @@ unsigned SampleProfileLoader::visitEdge(Edge E, unsigned *NumUnknownEdges,
 bool SampleProfileLoader::propagateThroughEdges(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "\nPropagation through edges\n");
-  for (auto BI = F.begin(), EI = F.end(); BI != EI; ++BI) {
-    BasicBlock *BB = BI;
+  for (auto &BI : F) {
+    BasicBlock *BB = &BI;
 
     // Visit all the predecessor and successor edges to determine
     // which ones have a weight assigned already. Note that it doesn't
@@ -532,8 +531,8 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
 /// We are interested in unique edges. If a block B1 has multiple
 /// edges to another block B2, we only add a single B1->B2 edge.
 void SampleProfileLoader::buildEdges(Function &F) {
-  for (auto I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock *B1 = I;
+  for (auto &BI : F) {
+    BasicBlock *B1 = &BI;
 
     // Add predecessors for B1.
     SmallPtrSet<BasicBlock *, 16> Visited;
@@ -559,15 +558,15 @@ void SampleProfileLoader::buildEdges(Function &F) {
 
 /// \brief Propagate weights into edges
 ///
-/// The following rules are applied to every block B in the CFG:
+/// The following rules are applied to every block BB in the CFG:
 ///
-/// - If B has a single predecessor/successor, then the weight
+/// - If BB has a single predecessor/successor, then the weight
 ///   of that edge is the weight of the block.
 ///
 /// - If all incoming or outgoing edges are known except one, and the
 ///   weight of the block is already known, the weight of the unknown
 ///   edge will be the weight of the block minus the sum of all the known
-///   edges. If the sum of all the known edges is larger than B's weight,
+///   edges. If the sum of all the known edges is larger than BB's weight,
 ///   we set the unknown edge weight to zero.
 ///
 /// - If there is a self-referential edge, and the weight of the block is
@@ -594,9 +593,9 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   // edge weights computed during propagation.
   DEBUG(dbgs() << "\nPropagation complete. Setting branch weights\n");
   MDBuilder MDB(F.getContext());
-  for (auto I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock *B = I;
-    TerminatorInst *TI = B->getTerminator();
+  for (auto &BI : F) {
+    BasicBlock *BB = &BI;
+    TerminatorInst *TI = BB->getTerminator();
     if (TI->getNumSuccessors() == 1)
       continue;
     if (!isa<BranchInst>(TI) && !isa<SwitchInst>(TI))
@@ -608,7 +607,7 @@ void SampleProfileLoader::propagateWeights(Function &F) {
     bool AllWeightsZero = true;
     for (unsigned I = 0; I < TI->getNumSuccessors(); ++I) {
       BasicBlock *Succ = TI->getSuccessor(I);
-      Edge E = std::make_pair(B, Succ);
+      Edge E = std::make_pair(BB, Succ);
       unsigned Weight = EdgeWeights[E];
       DEBUG(dbgs() << "\t"; printEdgeWeight(dbgs(), E));
       Weights.push_back(Weight);
@@ -636,9 +635,9 @@ void SampleProfileLoader::propagateWeights(Function &F) {
 /// \returns a valid DISubprogram, if found. Otherwise, it returns an empty
 /// DISubprogram.
 static const DISubprogram getDISubprogram(Function &F, const LLVMContext &Ctx) {
-  for (auto I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock *B = I;
-    for (auto &Inst : B->getInstList()) {
+  for (auto &BI : F) {
+    BasicBlock *BB = &BI;
+    for (auto &Inst : BB->getInstList()) {
       DebugLoc DLoc = Inst.getDebugLoc();
       if (DLoc.isUnknown())
         continue;
@@ -694,15 +693,15 @@ unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
 ///
 /// 3- Propagation of block weights into edges. This uses a simple
 ///    propagation heuristic. The following rules are applied to every
-///    block B in the CFG:
+///    block BB in the CFG:
 ///
-///    - If B has a single predecessor/successor, then the weight
+///    - If BB has a single predecessor/successor, then the weight
 ///      of that edge is the weight of the block.
 ///
 ///    - If all the edges are known except one, and the weight of the
 ///      block is already known, the weight of the unknown edge will
 ///      be the weight of the block minus the sum of all the known
-///      edges. If the sum of all the known edges is larger than B's weight,
+///      edges. If the sum of all the known edges is larger than BB's weight,
 ///      we set the unknown edge weight to zero.
 ///
 ///    - If there is a self-referential edge, and the weight of the block is
@@ -720,7 +719,7 @@ unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
 /// work here.
 ///
 /// Once all the branch weights are computed, we emit the MD_prof
-/// metadata on B using the computed values for each of its branches.
+/// metadata on BB using the computed values for each of its branches.
 ///
 /// \param F The function to query.
 ///
