@@ -32,8 +32,9 @@
 #define MEM_IS_SHADOW(mem) \
   ((uptr)mem >= 0x200000000000ULL && (uptr)mem <= 0x400000000000ULL)
 
-const int kMsanParamTlsSizeInWords = 100;
-const int kMsanRetvalTlsSizeInWords = 100;
+// These constants must be kept in sync with the ones in MemorySanitizer.cc.
+const int kMsanParamTlsSize = 800;
+const int kMsanRetvalTlsSize = 800;
 
 namespace __msan {
 extern int msan_inited;
