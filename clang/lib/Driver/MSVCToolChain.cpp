@@ -14,11 +14,13 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Path.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Process.h"
 
 // Include the necessary headers to interface with the Windows registry and
 // environment.
@@ -77,61 +79,65 @@ bool MSVCToolChain::isPICDefaultForced() const {
   return getArch() == llvm::Triple::x86_64;
 }
 
+#ifdef USE_WIN32
+static bool readFullStringValue(HKEY hkey, const char *valueName,
+                                std::string &value) {
+  // FIXME: We should be using the W versions of the registry functions, but
+  // doing so requires UTF8 / UTF16 conversions similar to how we handle command
+  // line arguments.  The UTF8 conversion functions are not exposed publicly
+  // from LLVM though, so in order to do this we will probably need to create
+  // a registry abstraction in LLVMSupport that is Windows only.
+  DWORD result = 0;
+  DWORD valueSize = 0;
+  DWORD type = 0;
+  // First just query for the required size.
+  result = RegQueryValueEx(hkey, valueName, NULL, &type, NULL, &valueSize);
+  if (result != ERROR_SUCCESS || type != REG_SZ)
+    return false;
+  std::vector<BYTE> buffer(valueSize);
+  result = RegQueryValueEx(hkey, valueName, NULL, NULL, &buffer[0], &valueSize);
+  if (result == ERROR_SUCCESS)
+    value.assign(reinterpret_cast<const char *>(buffer.data()));
+  return result;
+}
+#endif
+
 /// \brief Read registry string.
 /// This also supports a means to look for high-versioned keys by use
 /// of a $VERSION placeholder in the key path.
 /// $VERSION in the key path is a placeholder for the version number,
 /// causing the highest value path to be searched for and used.
-/// I.e. "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\$VERSION".
-/// There can be additional characters in the component.  Only the numberic
-/// characters are compared.
+/// I.e. "SOFTWARE\\Microsoft\\VisualStudio\\$VERSION".
+/// There can be additional characters in the component.  Only the numeric
+/// characters are compared.  This function only searches HKLM.
 static bool getSystemRegistryString(const char *keyPath, const char *valueName,
-                                    char *value, size_t maxLength) {
+                                    std::string &value, std::string *phValue) {
 #ifndef USE_WIN32
   return false;
 #else
-  HKEY hRootKey = NULL;
+  HKEY hRootKey = HKEY_LOCAL_MACHINE;
   HKEY hKey = NULL;
-  const char* subKey = NULL;
-  DWORD valueType;
-  DWORD valueSize = maxLength - 1;
+  DWORD valueSize = 0;
   long lResult;
   bool returnValue = false;
 
-  if (strncmp(keyPath, "HKEY_CLASSES_ROOT\\", 18) == 0) {
-    hRootKey = HKEY_CLASSES_ROOT;
-    subKey = keyPath + 18;
-  } else if (strncmp(keyPath, "HKEY_USERS\\", 11) == 0) {
-    hRootKey = HKEY_USERS;
-    subKey = keyPath + 11;
-  } else if (strncmp(keyPath, "HKEY_LOCAL_MACHINE\\", 19) == 0) {
-    hRootKey = HKEY_LOCAL_MACHINE;
-    subKey = keyPath + 19;
-  } else if (strncmp(keyPath, "HKEY_CURRENT_USER\\", 18) == 0) {
-    hRootKey = HKEY_CURRENT_USER;
-    subKey = keyPath + 18;
-  } else {
-    return false;
-  }
-
-  const char *placeHolder = strstr(subKey, "$VERSION");
-  char bestName[256];
-  bestName[0] = '\0';
+  const char *placeHolder = strstr(keyPath, "$VERSION");
+  std::string bestName;
   // If we have a $VERSION placeholder, do the highest-version search.
   if (placeHolder) {
     const char *keyEnd = placeHolder - 1;
     const char *nextKey = placeHolder;
     // Find end of previous key.
-    while ((keyEnd > subKey) && (*keyEnd != '\\'))
+    while ((keyEnd > keyPath) && (*keyEnd != '\\'))
       keyEnd--;
     // Find end of key containing $VERSION.
     while (*nextKey && (*nextKey != '\\'))
       nextKey++;
-    size_t partialKeyLength = keyEnd - subKey;
+    size_t partialKeyLength = keyEnd - keyPath;
     char partialKey[256];
     if (partialKeyLength > sizeof(partialKey))
       partialKeyLength = sizeof(partialKey);
-    strncpy(partialKey, subKey, partialKeyLength);
+    strncpy(partialKey, keyPath, partialKeyLength);
     partialKey[partialKeyLength] = '\0';
     HKEY hTopKey = NULL;
     lResult = RegOpenKeyEx(hRootKey, partialKey, 0, KEY_READ | KEY_WOW64_32KEY,
@@ -157,17 +163,17 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
         if (dvalue > bestValue) {
           // Test that InstallDir is indeed there before keeping this index.
           // Open the chosen key path remainder.
-          strcpy(bestName, keyName);
+          bestName = keyName;
           // Append rest of key.
-          strncat(bestName, nextKey, sizeof(bestName) - 1);
-          bestName[sizeof(bestName) - 1] = '\0';
-          lResult = RegOpenKeyEx(hTopKey, bestName, 0,
+          bestName.append(nextKey);
+          lResult = RegOpenKeyEx(hTopKey, bestName.c_str(), 0,
                                  KEY_READ | KEY_WOW64_32KEY, &hKey);
           if (lResult == ERROR_SUCCESS) {
-            lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
-              (LPBYTE)value, &valueSize);
+            lResult = readFullStringValue(hKey, valueName, value);
             if (lResult == ERROR_SUCCESS) {
               bestValue = dvalue;
+              if (phValue)
+                *phValue = bestName;
               returnValue = true;
             }
             RegCloseKey(hKey);
@@ -178,13 +184,14 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
       RegCloseKey(hTopKey);
     }
   } else {
-    lResult = RegOpenKeyEx(hRootKey, subKey, 0, KEY_READ | KEY_WOW64_32KEY,
-                           &hKey);
+    lResult =
+        RegOpenKeyEx(hRootKey, keyPath, 0, KEY_READ | KEY_WOW64_32KEY, &hKey);
     if (lResult == ERROR_SUCCESS) {
-      lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
-        (LPBYTE)value, &valueSize);
+      lResult = readFullStringValue(hKey, valueName, value);
       if (lResult == ERROR_SUCCESS)
         returnValue = true;
+      if (phValue)
+        phValue->clear();
       RegCloseKey(hKey);
     }
   }
@@ -193,61 +200,130 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
 }
 
 /// \brief Get Windows SDK installation directory.
-static bool getWindowsSDKDir(std::string &path) {
-  char windowsSDKInstallDir[256];
+bool MSVCToolChain::getWindowsSDKDir(std::string &path, int &major,
+                                     int &minor) const {
+  std::string sdkVersion;
   // Try the Windows registry.
   bool hasSDKDir = getSystemRegistryString(
-   "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\$VERSION",
-                                           "InstallationFolder",
-                                           windowsSDKInstallDir,
-                                           sizeof(windowsSDKInstallDir) - 1);
-    // If we have both vc80 and vc90, pick version we were compiled with.
-  if (hasSDKDir && windowsSDKInstallDir[0]) {
-    path = windowsSDKInstallDir;
-    return true;
+      "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\$VERSION",
+      "InstallationFolder", path, &sdkVersion);
+  if (!sdkVersion.empty())
+    ::sscanf(sdkVersion.c_str(), "v%d.%d", &major, &minor);
+  return hasSDKDir && !path.empty();
+}
+
+// Get the location to use for Visual Studio binaries.  The location priority
+// is: %VCINSTALLDIR% > %PATH% > newest copy of Visual Studio installed on
+// system (as reported by the registry).
+bool MSVCToolChain::getVisualStudioBinariesFolder(const char *clangProgramPath,
+                                                  std::string &path) const {
+  path.clear();
+
+  SmallString<128> BinDir;
+
+  // First check the environment variables that vsvars32.bat sets.
+  llvm::Optional<std::string> VcInstallDir =
+      llvm::sys::Process::GetEnv("VCINSTALLDIR");
+  if (VcInstallDir.hasValue()) {
+    BinDir = VcInstallDir.getValue();
+    llvm::sys::path::append(BinDir, "bin");
+  } else {
+    // Next walk the PATH, trying to find a cl.exe in the path.  If we find one,
+    // use that.  However, make sure it's not clang's cl.exe.
+    llvm::Optional<std::string> OptPath = llvm::sys::Process::GetEnv("PATH");
+    if (OptPath.hasValue()) {
+      const char EnvPathSeparatorStr[] = {llvm::sys::EnvPathSeparator, '\0'};
+      SmallVector<StringRef, 8> PathSegments;
+      llvm::SplitString(OptPath.getValue(), PathSegments, EnvPathSeparatorStr);
+
+      for (StringRef PathSegment : PathSegments) {
+        if (PathSegment.empty())
+          continue;
+
+        SmallString<128> FilePath(PathSegment);
+        llvm::sys::path::append(FilePath, "cl.exe");
+        if (llvm::sys::fs::can_execute(FilePath.c_str()) &&
+            !llvm::sys::fs::equivalent(FilePath.c_str(), clangProgramPath)) {
+          // If we found it on the PATH, use it exactly as is with no
+          // modifications.
+          path = PathSegment;
+          return true;
+        }
+      }
+    }
+
+    std::string installDir;
+    // With no VCINSTALLDIR and nothing on the PATH, if we can't find it in the
+    // registry then we have no choice but to fail.
+    if (!getVisualStudioInstallDir(installDir))
+      return false;
+
+    // Regardless of what binary we're ultimately trying to find, we make sure
+    // that this is a Visual Studio directory by checking for cl.exe.  We use
+    // cl.exe instead of other binaries like link.exe because programs such as
+    // GnuWin32 also have a utility called link.exe, so cl.exe is the least
+    // ambiguous.
+    BinDir = installDir;
+    llvm::sys::path::append(BinDir, "VC", "bin");
+    SmallString<128> ClPath(BinDir);
+    llvm::sys::path::append(ClPath, "cl.exe");
+
+    if (!llvm::sys::fs::can_execute(ClPath.c_str()))
+      return false;
   }
-  return false;
+
+  if (BinDir.empty())
+    return false;
+
+  switch (getArch()) {
+  case llvm::Triple::x86:
+    break;
+  case llvm::Triple::x86_64:
+    llvm::sys::path::append(BinDir, "amd64");
+    break;
+  case llvm::Triple::arm:
+    llvm::sys::path::append(BinDir, "arm");
+    break;
+  default:
+    // Whatever this is, Visual Studio doesn't have a toolchain for it.
+    return false;
+  }
+  path = BinDir.str();
+  return true;
 }
 
 // Get Visual Studio installation directory.
-static bool getVisualStudioDir(std::string &path) {
+bool MSVCToolChain::getVisualStudioInstallDir(std::string &path) const {
   // First check the environment variables that vsvars32.bat sets.
-  const char* vcinstalldir = getenv("VCINSTALLDIR");
+  const char *vcinstalldir = getenv("VCINSTALLDIR");
   if (vcinstalldir) {
-    char *p = const_cast<char *>(strstr(vcinstalldir, "\\VC"));
-    if (p)
-      *p = '\0';
     path = vcinstalldir;
+    path = path.substr(0, path.find("\\VC"));
     return true;
   }
 
-  char vsIDEInstallDir[256];
-  char vsExpressIDEInstallDir[256];
+  std::string vsIDEInstallDir;
+  std::string vsExpressIDEInstallDir;
   // Then try the windows registry.
-  bool hasVCDir = getSystemRegistryString(
-    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\$VERSION",
-    "InstallDir", vsIDEInstallDir, sizeof(vsIDEInstallDir) - 1);
-  bool hasVCExpressDir = getSystemRegistryString(
-    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VCExpress\\$VERSION",
-    "InstallDir", vsExpressIDEInstallDir, sizeof(vsExpressIDEInstallDir) - 1);
-    // If we have both vc80 and vc90, pick version we were compiled with.
-  if (hasVCDir && vsIDEInstallDir[0]) {
-    char *p = (char*)strstr(vsIDEInstallDir, "\\Common7\\IDE");
-    if (p)
-      *p = '\0';
-    path = vsIDEInstallDir;
+  bool hasVCDir =
+      getSystemRegistryString("SOFTWARE\\Microsoft\\VisualStudio\\$VERSION",
+                              "InstallDir", vsIDEInstallDir, nullptr);
+  if (hasVCDir && !vsIDEInstallDir.empty()) {
+    path = vsIDEInstallDir.substr(0, vsIDEInstallDir.find("\\Common7\\IDE"));
     return true;
   }
 
-  if (hasVCExpressDir && vsExpressIDEInstallDir[0]) {
-    char *p = (char*)strstr(vsExpressIDEInstallDir, "\\Common7\\IDE");
-    if (p)
-      *p = '\0';
-    path = vsExpressIDEInstallDir;
+  bool hasVCExpressDir =
+      getSystemRegistryString("SOFTWARE\\Microsoft\\VCExpress\\$VERSION",
+                              "InstallDir", vsExpressIDEInstallDir, nullptr);
+  if (hasVCExpressDir && !vsExpressIDEInstallDir.empty()) {
+    path = vsExpressIDEInstallDir.substr(
+        0, vsIDEInstallDir.find("\\Common7\\IDE"));
     return true;
   }
 
   // Try the environment.
+  const char *vs120comntools = getenv("VS120COMNTOOLS");
   const char *vs100comntools = getenv("VS100COMNTOOLS");
   const char *vs90comntools = getenv("VS90COMNTOOLS");
   const char *vs80comntools = getenv("VS80COMNTOOLS");
@@ -255,7 +331,9 @@ static bool getVisualStudioDir(std::string &path) {
   const char *vscomntools = nullptr;
 
   // Find any version we can
-  if (vs100comntools)
+  if (vs120comntools)
+    vscomntools = vs120comntools;
+  else if (vs100comntools)
     vscomntools = vs100comntools;
   else if (vs90comntools)
     vscomntools = vs90comntools;
@@ -268,6 +346,15 @@ static bool getVisualStudioDir(std::string &path) {
     return true;
   }
   return false;
+}
+
+void MSVCToolChain::AddSystemIncludeWithSubfolder(const ArgList &DriverArgs,
+                                                  ArgStringList &CC1Args,
+                                                  const std::string &folder,
+                                                  const char *subfolder) const {
+  llvm::SmallString<128> path(folder);
+  llvm::sys::path::append(path, subfolder);
+  addSystemInclude(DriverArgs, CC1Args, path.str());
 }
 
 void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
@@ -296,23 +383,28 @@ void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   }
 
   std::string VSDir;
-  std::string WindowsSDKDir;
 
   // When built with access to the proper Windows APIs, try to actually find
   // the correct include paths first.
-  if (getVisualStudioDir(VSDir)) {
-    SmallString<128> P;
-    P = VSDir;
-    llvm::sys::path::append(P, "VC\\include");
-    addSystemInclude(DriverArgs, CC1Args, P.str());
-    if (getWindowsSDKDir(WindowsSDKDir)) {
-      P = WindowsSDKDir;
-      llvm::sys::path::append(P, "include");
-      addSystemInclude(DriverArgs, CC1Args, P.str());
+  if (getVisualStudioInstallDir(VSDir)) {
+    AddSystemIncludeWithSubfolder(DriverArgs, CC1Args, VSDir, "VC\\include");
+
+    std::string WindowsSDKDir;
+    int major, minor;
+    if (getWindowsSDKDir(WindowsSDKDir, major, minor)) {
+      if (major >= 8) {
+        AddSystemIncludeWithSubfolder(DriverArgs, CC1Args, WindowsSDKDir,
+                                      "include\\shared");
+        AddSystemIncludeWithSubfolder(DriverArgs, CC1Args, WindowsSDKDir,
+                                      "include\\um");
+        AddSystemIncludeWithSubfolder(DriverArgs, CC1Args, WindowsSDKDir,
+                                      "include\\winrt");
+      } else {
+        AddSystemIncludeWithSubfolder(DriverArgs, CC1Args, WindowsSDKDir,
+                                      "include");
+      }
     } else {
-      P = VSDir;
-      llvm::sys::path::append(P, "VC\\PlatformSDK\\Include");
-      addSystemInclude(DriverArgs, CC1Args, P.str());
+      addSystemInclude(DriverArgs, CC1Args, VSDir);
     }
     return;
   }

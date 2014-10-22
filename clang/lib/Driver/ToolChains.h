@@ -745,7 +745,17 @@ public:
   AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                                llvm::opt::ArgStringList &CC1Args) const override;
 
+  bool getWindowsSDKDir(std::string &path, int &major, int &minor) const;
+  bool getVisualStudioInstallDir(std::string &path) const;
+  bool getVisualStudioBinariesFolder(const char *clangProgramPath,
+                                     std::string &path) const;
+
 protected:
+  void AddSystemIncludeWithSubfolder(const llvm::opt::ArgList &DriverArgs,
+                                     llvm::opt::ArgStringList &CC1Args,
+                                     const std::string &folder,
+                                     const char *subfolder) const;
+
   Tool *buildLinker() const override;
   Tool *buildAssembler() const override;
 };
