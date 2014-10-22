@@ -344,8 +344,8 @@ def parseIntegratedTestScriptCommands(source_path):
         data = f.read()
 
         # Ensure the data ends with a newline.
-        if not data.endswith('\n'):
-            data = data + '\n'
+        if not data.endswith(to_bytes('\n')):
+            data = data + to_bytes('\n')
 
         # Iterate over the matches.
         line_number = 1
