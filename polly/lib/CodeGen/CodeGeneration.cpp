@@ -822,7 +822,7 @@ int ClastStmtCodeGen::getNumberOfIterations(const clast_for *For) {
 }
 
 void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
-  DEBUG(dbgs() << "Vectorizing loop '" << F->iterator << "'\n";);
+  DEBUG(dbgs() << "Vectorizing loop '" << F->iterator << "'\n");
   int VectorWidth = getNumberOfIterations(F);
 
   Value *LB = ExpGen.codegen(F->LB, getIntPtrTy());

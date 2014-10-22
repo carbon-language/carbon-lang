@@ -309,7 +309,11 @@ void Dependences::calculateDependences(Scop &S) {
       isl_union_map_domain(isl_union_map_copy(StmtSchedule)));
   STMT_WAR = isl_union_map_intersect_domain(isl_union_map_copy(WAR),
                                             isl_union_map_domain(StmtSchedule));
-  DEBUG(dbgs() << "Wrapped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
+  DEBUG({
+    dbgs() << "Wrapped Dependences:\n";
+    printScop(dbgs());
+    dbgs() << "\n";
+  });
 
   // To handle reduction dependences we proceed as follows:
   // 1) Aggregate all possible reduction dependences, namely all self
@@ -352,8 +356,11 @@ void Dependences::calculateDependences(Scop &S) {
     addPrivatizationDependences();
   }
 
-  DEBUG(dbgs() << "Final Wrapped Dependences:\n"; printScop(dbgs());
-        dbgs() << "\n");
+  DEBUG({
+    dbgs() << "Final Wrapped Dependences:\n";
+    printScop(dbgs());
+    dbgs() << "\n";
+  });
 
   // RED_SIN is used to collect all reduction dependences again after we
   // split them according to the causing memory accesses. The current assumption
@@ -397,7 +404,11 @@ void Dependences::calculateDependences(Scop &S) {
   RED = isl_union_map_zip(RED);
   TC_RED = isl_union_map_zip(TC_RED);
 
-  DEBUG(dbgs() << "Zipped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
+  DEBUG({
+    dbgs() << "Zipped Dependences:\n";
+    printScop(dbgs());
+    dbgs() << "\n";
+  });
 
   RAW = isl_union_set_unwrap(isl_union_map_domain(RAW));
   WAW = isl_union_set_unwrap(isl_union_map_domain(WAW));
@@ -405,8 +416,11 @@ void Dependences::calculateDependences(Scop &S) {
   RED = isl_union_set_unwrap(isl_union_map_domain(RED));
   TC_RED = isl_union_set_unwrap(isl_union_map_domain(TC_RED));
 
-  DEBUG(dbgs() << "Unwrapped Dependences:\n"; printScop(dbgs());
-        dbgs() << "\n");
+  DEBUG({
+    dbgs() << "Unwrapped Dependences:\n";
+    printScop(dbgs());
+    dbgs() << "\n";
+  });
 
   RAW = isl_union_map_union(RAW, STMT_RAW);
   WAW = isl_union_map_union(WAW, STMT_WAW);

@@ -471,12 +471,20 @@ bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
     return false;
 
   SCEVValidator Validator(R, SE, BaseAddress);
-  DEBUG(dbgs() << "\n"; dbgs() << "Expr: " << *Expr << "\n";
-        dbgs() << "Region: " << R->getNameStr() << "\n"; dbgs() << " -> ");
+  DEBUG({
+    dbgs() << "\n";
+    dbgs() << "Expr: " << *Expr << "\n";
+    dbgs() << "Region: " << R->getNameStr() << "\n";
+    dbgs() << " -> ";
+  });
 
   ValidatorResult Result = Validator.visit(Expr);
 
-  DEBUG(if (Result.isValid()) dbgs() << "VALID\n"; dbgs() << "\n";);
+  DEBUG({
+    if (Result.isValid())
+      dbgs() << "VALID\n";
+    dbgs() << "\n";
+  });
 
   return Result.isValid();
 }
