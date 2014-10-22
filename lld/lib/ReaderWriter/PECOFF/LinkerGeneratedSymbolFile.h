@@ -12,6 +12,7 @@
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "llvm/Support/Allocator.h"
+#include <algorithm>
 #include <mutex>
 
 using llvm::COFF::WindowsSubsystem;
@@ -253,15 +254,33 @@ public:
   }
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
+    typedef PECOFFLinkingContext::ExportDesc ExportDesc;
     auto it = _exportedSyms.find(sym);
     if (it == _exportedSyms.end())
       return nullptr;
     std::string replace;
     if (!findDecoratedSymbol(_ctx, _syms.get(), sym.str(), replace))
       return nullptr;
-    it->second->name = replace;
-    if (_ctx->deadStrip())
-      _ctx->addDeadStripRoot(_ctx->allocate(replace));
+    ExportDesc *desc = it->second;
+
+    // We found a decorated symbol. There may be another symbol that
+    // has the same decorated name. If that's the case, we remove the
+    // duplicate item.
+    std::vector<ExportDesc> &exp = _ctx->getDllExports();
+    auto isFound = std::find_if(
+        exp.begin(), exp.end(),
+        [&](ExportDesc &e) { return e.getExternalName().equals(replace); });
+    if (isFound != exp.end()) {
+      exp.erase(
+          std::remove_if(exp.begin(), exp.end(),
+                         [&](ExportDesc &e) { return &e == desc; }),
+          exp.end());
+    } else {
+      it->second->name = replace;
+      if (_ctx->deadStrip())
+        _ctx->addDeadStripRoot(_ctx->allocate(replace));
+    }
+
     return new (_alloc) impl::SymbolRenameFile(sym, replace);
   }
 
