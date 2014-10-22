@@ -42,10 +42,11 @@ namespace reader {
 
 /// \brief Specifies the kind of module that has been loaded.
 enum ModuleKind {
-  MK_Module,   ///< File is a module proper.
-  MK_PCH,      ///< File is a PCH file treated as such.
-  MK_Preamble, ///< File is a PCH file treated as the preamble.
-  MK_MainFile  ///< File is a PCH file treated as the actual main file.
+  MK_ImplicitModule, ///< File is an implicitly-loaded module.
+  MK_ExplicitModule, ///< File is an explicitly-loaded module.
+  MK_PCH,            ///< File is a PCH file treated as such.
+  MK_Preamble,       ///< File is a PCH file treated as the preamble.
+  MK_MainFile        ///< File is a PCH file treated as the actual main file.
 };
 
 /// \brief Information about the contents of a DeclContext.

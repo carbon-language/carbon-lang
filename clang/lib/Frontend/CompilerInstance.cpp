@@ -1040,7 +1040,7 @@ static bool compileAndLoadModule(CompilerInstance &ImportingInstance,
     // Try to read the module file, now that we've compiled it.
     ASTReader::ASTReadResult ReadResult =
         ImportingInstance.getModuleManager()->ReadAST(
-            ModuleFileName, serialization::MK_Module, ImportLoc,
+            ModuleFileName, serialization::MK_ImplicitModule, ImportLoc,
             ModuleLoadCapabilities);
 
     if (ReadResult == ASTReader::OutOfDate &&
@@ -1268,6 +1268,53 @@ void CompilerInstance::createModuleManager() {
 }
 
 ModuleLoadResult
+CompilerInstance::loadModuleFile(StringRef FileName, SourceLocation Loc) {
+  if (!ModuleManager)
+    createModuleManager();
+  if (!ModuleManager)
+    return ModuleLoadResult();
+
+  // Load the module if this is the first time we've been told about this file.
+  auto *MF = ModuleManager->getModuleManager().lookup(FileName);
+  if (!MF) {
+    struct ReadModuleNameListener : ASTReaderListener {
+      std::function<void(StringRef)> OnRead;
+      ReadModuleNameListener(std::function<void(StringRef)> F) : OnRead(F) {}
+      void ReadModuleName(StringRef ModuleName) override { OnRead(ModuleName); }
+    };
+
+    // Register listener to track the modules that are loaded by explicitly
+    // loading a module file. We suppress any attempts to implicitly load
+    // module files for any such module.
+    ASTReader::ListenerScope OnReadModuleName(
+        *ModuleManager,
+        llvm::make_unique<ReadModuleNameListener>([&](StringRef ModuleName) {
+      auto &PP = getPreprocessor();
+      auto *NameII = PP.getIdentifierInfo(ModuleName);
+      auto *Module = PP.getHeaderSearchInfo().lookupModule(ModuleName, false);
+      if (!KnownModules.insert(std::make_pair(NameII, Module)).second)
+        getDiagnostics().Report(Loc, diag::err_module_already_loaded)
+            << ModuleName << FileName;
+    }));
+
+    if (ModuleManager->ReadAST(FileName, serialization::MK_ExplicitModule, Loc,
+                               ASTReader::ARR_None) != ASTReader::Success)
+      return ModuleLoadResult();
+
+    MF = ModuleManager->getModuleManager().lookup(FileName);
+    assert(MF && "unexpectedly failed to load module file");
+  }
+
+  if (MF->ModuleName.empty()) {
+    getDiagnostics().Report(Loc, diag::err_module_file_not_module)
+      << FileName;
+    return ModuleLoadResult();
+  }
+  auto *Module = PP->getHeaderSearchInfo().lookupModule(MF->ModuleName, false);
+  return ModuleLoadResult(Module, false);
+}
+
+ModuleLoadResult
 CompilerInstance::loadModule(SourceLocation ImportLoc,
                              ModuleIdPath Path,
                              Module::NameVisibilityKind Visibility,
@@ -1330,8 +1377,9 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
     // Try to load the module file.
     unsigned ARRFlags = ASTReader::ARR_OutOfDate | ASTReader::ARR_Missing;
-    switch (ModuleManager->ReadAST(ModuleFileName, serialization::MK_Module,
-                                   ImportLoc, ARRFlags)) {
+    switch (ModuleManager->ReadAST(ModuleFileName,
+                                   serialization::MK_ImplicitModule, ImportLoc,
+                                   ARRFlags)) {
     case ASTReader::Success:
       break;
 

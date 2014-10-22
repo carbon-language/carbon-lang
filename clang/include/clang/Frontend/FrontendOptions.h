@@ -230,6 +230,10 @@ public:
   /// The list of plugins to load.
   std::vector<std::string> Plugins;
 
+  /// \brief The list of additional prebuilt module files to load before
+  /// processing the input.
+  std::vector<std::string> ModuleFiles;
+
   /// \brief The list of AST files to merge.
   std::vector<std::string> ASTMergeFiles;
 

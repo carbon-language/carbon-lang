@@ -153,7 +153,7 @@ def warn_incompatible_analyzer_plugin_api : Warning<
     InGroup<DiagGroup<"analyzer-incompatible-plugin"> >;
 def note_incompatible_analyzer_plugin_api : Note<
     "current API version is '%0', but plugin was compiled with version '%1'">;
-    
+
 def err_module_map_not_found : Error<"module map file '%0' not found">, 
   DefaultFatal;
 def err_missing_module_name : Error<
@@ -187,6 +187,10 @@ def remark_module_build_done : Remark<"finished building module '%0'">,
 def err_conflicting_module_names : Error<
   "conflicting module names specified: '-fmodule-name=%0' and "
   "'-fmodule-implementation-of %1'">;
+def err_module_already_loaded : Error<
+  "module '%0' has already been loaded; cannot load module file '%1'">;
+def err_module_file_not_module : Error<
+  "AST file '%0' was not built as a module">, DefaultFatal;
 
 def err_missing_vfs_overlay_file : Error<
   "virtual filesystem overlay file '%0' not found">, DefaultFatal;

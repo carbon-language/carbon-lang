@@ -3833,7 +3833,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // definitions.
   Args.AddAllArgs(CmdArgs, options::OPT_fmodule_map_file);
 
-  // -fmodule-cache-path specifies where our module files should be written.
+  // -fmodule-file can be used to specify files containing precompiled modules.
+  Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
+
+  // -fmodule-cache-path specifies where our implicitly-built module files
+  // should be written.
   SmallString<128> ModuleCachePath;
   if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path))
     ModuleCachePath = A->getValue();

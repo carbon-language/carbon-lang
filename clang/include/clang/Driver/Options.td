@@ -641,7 +641,7 @@ def fbuild_session_file : Joined<["-"], "fbuild-session-file=">,
 def fmodules_validate_once_per_build_session : Flag<["-"], "fmodules-validate-once-per-build-session">,
   Group<i_Group>, Flags<[CC1Option]>,
   HelpText<"Don't verify input files for the modules if the module has been "
-           "successfully validate or loaded during this build session">;
+           "successfully validated or loaded during this build session">;
 def fmodules_validate_system_headers : Flag<["-"], "fmodules-validate-system-headers">,
   Group<i_Group>, Flags<[CC1Option]>,
   HelpText<"Validate the system headers that a module depends on when loading the module">;
@@ -657,6 +657,9 @@ def fmodule_name : JoinedOrSeparate<["-"], "fmodule-name=">, Group<f_Group>,
 def fmodule_map_file : Joined<["-"], "fmodule-map-file=">,
   Group<f_Group>, Flags<[DriverOption,CC1Option]>, MetaVarName<"<file>">,
   HelpText<"Load this module map file">;
+def fmodule_file : Joined<["-"], "fmodule-file=">,
+  Group<f_Group>, Flags<[DriverOption,CC1Option]>,
+  HelpText<"Load this precompiled module file">, MetaVarName<"<file>">;
 def fmodules_ignore_macro : Joined<["-"], "fmodules-ignore-macro=">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Ignore the definition of the given macro when building and loading modules">;
 def fmodules_decluse : Flag <["-"], "fmodules-decluse">, Group<f_Group>,

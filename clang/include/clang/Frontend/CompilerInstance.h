@@ -691,6 +691,8 @@ public:
   // Create module manager.
   void createModuleManager();
 
+  ModuleLoadResult loadModuleFile(StringRef FileName, SourceLocation Loc);
+
   ModuleLoadResult loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
                               Module::NameVisibilityKind Visibility,
                               bool IsInclusionDirective) override;

@@ -206,6 +206,9 @@ public:
                            std::unique_ptr<ASTReaderListener> Second)
       : First(std::move(First)), Second(std::move(Second)) {}
 
+  std::unique_ptr<ASTReaderListener> takeFirst() { return std::move(First); }
+  std::unique_ptr<ASTReaderListener> takeSecond() { return std::move(Second); }
+
   bool ReadFullVersionInformation(StringRef FullVersion) override;
   void ReadModuleName(StringRef ModuleName) override;
   void ReadModuleMapFile(StringRef ModuleMapPath) override;
@@ -1389,12 +1392,17 @@ public:
   void makeNamesVisible(const HiddenNames &Names, Module *Owner,
                         bool FromFinalization);
 
+  /// \brief Take the AST callbacks listener.
+  std::unique_ptr<ASTReaderListener> takeListener() {
+    return std::move(Listener);
+  }
+
   /// \brief Set the AST callbacks listener.
   void setListener(std::unique_ptr<ASTReaderListener> Listener) {
     this->Listener = std::move(Listener);
   }
 
-  /// \brief Add an AST callbak listener.
+  /// \brief Add an AST callback listener.
   ///
   /// Takes ownership of \p L.
   void addListener(std::unique_ptr<ASTReaderListener> L) {
@@ -1403,6 +1411,30 @@ public:
                                                       std::move(Listener));
     Listener = std::move(L);
   }
+
+  /// RAII object to temporarily add an AST callback listener.
+  class ListenerScope {
+    ASTReader &Reader;
+    bool Chained;
+
+  public:
+    ListenerScope(ASTReader &Reader, std::unique_ptr<ASTReaderListener> L)
+        : Reader(Reader), Chained(false) {
+      auto Old = Reader.takeListener();
+      if (Old) {
+        Chained = true;
+        L = llvm::make_unique<ChainedASTReaderListener>(std::move(L),
+                                                        std::move(Old));
+      }
+      Reader.setListener(std::move(L));
+    }
+    ~ListenerScope() {
+      auto New = Reader.takeListener();
+      if (Chained)
+        Reader.setListener(static_cast<ChainedASTReaderListener *>(New.get())
+                               ->takeSecond());
+    }
+  };
 
   /// \brief Set the AST deserialization listener.
   void setDeserializationListener(ASTDeserializationListener *Listener,
