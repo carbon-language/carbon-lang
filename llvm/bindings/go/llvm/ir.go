@@ -956,6 +956,7 @@ func (v Value) Visibility() Visibility      { return Visibility(C.LLVMGetVisibil
 func (v Value) SetVisibility(vi Visibility) { C.LLVMSetVisibility(v.C, C.LLVMVisibility(vi)) }
 func (v Value) Alignment() int              { return int(C.LLVMGetAlignment(v.C)) }
 func (v Value) SetAlignment(a int)          { C.LLVMSetAlignment(v.C, C.unsigned(a)) }
+func (v Value) SetUnnamedAddr(ua bool)      { C.LLVMSetUnnamedAddr(v.C, boolToLLVMBool(ua)) }
 
 // Operations on global variables
 func AddGlobal(m Module, t Type, name string) (v Value) {
