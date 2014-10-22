@@ -630,6 +630,30 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   }
 }
 
+/// \brief Locate the DISubprogram for F.
+///
+/// We look for the first instruction that has a debug annotation
+/// leading back to \p F.
+///
+/// \returns a valid DISubprogram, if found. Otherwise, it returns an empty
+/// DISubprogram.
+static const DISubprogram getDISubprogram(Function &F, const LLVMContext &Ctx) {
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    BasicBlock *B = I;
+    for (BasicBlock::iterator BI = B->begin(), BE = B->end(); BI != BE; ++BI) {
+      Instruction &Inst = *BI;
+      DebugLoc DLoc = Inst.getDebugLoc();
+      if (DLoc.isUnknown())
+        continue;
+      const MDNode *Scope = DLoc.getScopeNode(Ctx);
+      DISubprogram Subprogram = getDISubprogram(Scope);
+      return Subprogram.describes(&F) ? Subprogram : DISubprogram();
+    }
+  }
+
+  return DISubprogram();
+}
+
 /// \brief Get the line number for the function header.
 ///
 /// This looks up function \p F in the current compilation unit and
@@ -642,19 +666,12 @@ void SampleProfileLoader::propagateWeights(Function &F) {
 /// \returns the line number where \p F is defined. If it returns 0,
 ///          it means that there is no debug information available for \p F.
 unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
-  NamedMDNode *CUNodes = F.getParent()->getNamedMetadata("llvm.dbg.cu");
-  if (CUNodes) {
-    for (unsigned I = 0, E1 = CUNodes->getNumOperands(); I != E1; ++I) {
-      DICompileUnit CU(CUNodes->getOperand(I));
-      DIArray Subprograms = CU.getSubprograms();
-      for (unsigned J = 0, E2 = Subprograms.getNumElements(); J != E2; ++J) {
-        DISubprogram Subprogram(Subprograms.getElement(J));
-        if (Subprogram.describes(&F))
-          return Subprogram.getLineNumber();
-      }
-    }
-  }
+  const DISubprogram &S = getDISubprogram(F, *Ctx);
+  if (S.isSubprogram())
+    return S.getLineNumber();
 
+  // If could not find the start of \p F, emit a diagnostic to inform the user
+  // about the missed opportunity.
   F.getContext().diagnose(DiagnosticInfoSampleProfile(
       "No debug information found in function " + F.getName()));
   return 0;

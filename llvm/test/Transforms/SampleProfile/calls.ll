@@ -15,7 +15,12 @@
 ;   printf("sum is %d\n", s);
 ;   return 0;
 ; }
-
+;
+; Note that this test is missing the llvm.dbg.cu annotation. This emulates
+; the effect of the user having only used -fprofile-sample-use without
+; -gmlt when invoking the driver. In those cases, we need to track source
+; location information but we do not have to generate debug info in the
+; final binary.
 @.str = private unnamed_addr constant [11 x i8] c"sum is %d\0A\00", align 1
 
 ; Function Attrs: nounwind uwtable
@@ -84,7 +89,6 @@ while.end:                                        ; preds = %while.cond
 
 declare i32 @printf(i8*, ...) #2
 
-!llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
