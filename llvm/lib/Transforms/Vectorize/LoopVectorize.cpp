@@ -1026,8 +1026,6 @@ class LoopVectorizeHints {
   Hint Interleave;
   /// Vectorization forced
   Hint Force;
-  /// Array to help iterating through all hints.
-  Hint *Hints[3]; // avoiding initialisation due to MSVC2012
 
   /// Return the loop metadata prefix.
   static StringRef Prefix() { return "llvm.loop."; }
@@ -1044,11 +1042,6 @@ public:
         Interleave("interleave.count", DisableInterleaving, HK_UNROLL),
         Force("vectorize.enable", FK_Undefined, HK_FORCE),
         TheLoop(L) {
-    // FIXME: Move this up initialisation when MSVC requirement is 2013+
-    Hints[0] = &Width;
-    Hints[1] = &Interleave;
-    Hints[2] = &Force;
-
     // Populate values with existing loop metadata.
     getHintsFromMetadata();
 
@@ -1063,13 +1056,8 @@ public:
   /// Mark the loop L as already vectorized by setting the width to 1.
   void setAlreadyVectorized() {
     Width.Value = Interleave.Value = 1;
-    // FIXME: Change all lines below for this when we can use MSVC 2013+
-    //writeHintsToMetadata({ Width, Unroll });
-    std::vector<Hint> hints;
-    hints.reserve(2);
-    hints.emplace_back(Width);
-    hints.emplace_back(Interleave);
-    writeHintsToMetadata(std::move(hints));
+    Hint Hints[] = {Width, Interleave};
+    writeHintsToMetadata(Hints);
   }
 
   /// Dumps all the hint information.
@@ -1144,6 +1132,7 @@ private:
     if (!C) return;
     unsigned Val = C->getZExtValue();
 
+    Hint *Hints[] = {&Width, &Interleave, &Force};
     for (auto H : Hints) {
       if (Name == H->Name) {
         if (H->validate(Val))
@@ -1158,14 +1147,13 @@ private:
   /// Create a new hint from name / value pair.
   MDNode *createHintMetadata(StringRef Name, unsigned V) const {
     LLVMContext &Context = TheLoop->getHeader()->getContext();
-    SmallVector<Value*, 2> Vals;
-    Vals.push_back(MDString::get(Context, Name));
-    Vals.push_back(ConstantInt::get(Type::getInt32Ty(Context), V));
+    Value *Vals[] = {MDString::get(Context, Name),
+                     ConstantInt::get(Type::getInt32Ty(Context), V)};
     return MDNode::get(Context, Vals);
   }
 
   /// Matches metadata with hint name.
-  bool matchesHintMetadataName(MDNode *Node, std::vector<Hint> &HintTypes) {
+  bool matchesHintMetadataName(MDNode *Node, ArrayRef<Hint> HintTypes) {
     MDString* Name = dyn_cast<MDString>(Node->getOperand(0));
     if (!Name)
       return false;
@@ -1177,7 +1165,7 @@ private:
   }
 
   /// Sets current hints into loop metadata, keeping other values intact.
-  void writeHintsToMetadata(std::vector<Hint> HintTypes) {
+  void writeHintsToMetadata(ArrayRef<Hint> HintTypes) {
     if (HintTypes.size() == 0)
       return;
 
