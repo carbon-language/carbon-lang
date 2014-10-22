@@ -2525,7 +2525,7 @@ namespace {
 
     const CXXRecordDecl *RD = Constructor->getParent();
 
-    if (RD->getDescribedClassTemplate() != nullptr)
+    if (RD->getDescribedClassTemplate())
       return;
 
     // Holds fields that are uninitialized.
