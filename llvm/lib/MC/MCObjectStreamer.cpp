@@ -148,7 +148,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   // If there is a current fragment, mark the symbol as pointing into it.
   // Otherwise queue the label and set its fragment pointer when we emit the
   // next fragment.
-  if (dyn_cast_or_null<MCDataFragment>(getCurrentFragment())) {
+  if (auto *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment())) {
     SD.setFragment(F);
     SD.setOffset(F->getContents().size());
   } else {
