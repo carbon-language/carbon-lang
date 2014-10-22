@@ -47,24 +47,6 @@ public:
 };
 }
 
-static const uint16_t IntRegDecoderTable[] = {
-    Hexagon::R0,  Hexagon::R1,  Hexagon::R2,  Hexagon::R3,  Hexagon::R4,
-    Hexagon::R5,  Hexagon::R6,  Hexagon::R7,  Hexagon::R8,  Hexagon::R9,
-    Hexagon::R10, Hexagon::R11, Hexagon::R12, Hexagon::R13, Hexagon::R14,
-    Hexagon::R15, Hexagon::R16, Hexagon::R17, Hexagon::R18, Hexagon::R19,
-    Hexagon::R20, Hexagon::R21, Hexagon::R22, Hexagon::R23, Hexagon::R24,
-    Hexagon::R25, Hexagon::R26, Hexagon::R27, Hexagon::R28, Hexagon::R29,
-    Hexagon::R30, Hexagon::R31};
-
-static const uint16_t DoubleRegDecoderTable[] = {
-    Hexagon::D0,  Hexagon::D1,  Hexagon::D2,  Hexagon::D3,
-    Hexagon::D4,  Hexagon::D5,  Hexagon::D6,  Hexagon::D7,
-    Hexagon::D8,  Hexagon::D9,  Hexagon::D10, Hexagon::D11,
-    Hexagon::D12, Hexagon::D13, Hexagon::D14, Hexagon::D15};
-
-static const uint16_t PredRegDecoderTable[] = {Hexagon::P0, Hexagon::P1,
-                                               Hexagon::P2, Hexagon::P3};
-
 #include "HexagonGenDisassemblerTables.inc"
 
 static MCDisassembler *createHexagonDisassembler(Target const &T,
