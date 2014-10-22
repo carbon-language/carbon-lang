@@ -719,6 +719,21 @@ let Uses = [RM] in {
 } // neverHasSideEffects
 } // AddedComplexity
 
+// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
+// instruction selection into a branch sequence.
+let usesCustomInserter = 1,    // Expanded after instruction selection.
+    PPC970_Single = 1 in {
+
+  def SELECT_CC_VSRC: Pseudo<(outs vsrc:$dst),
+                             (ins crrc:$cond, vsrc:$T, vsrc:$F, i32imm:$BROPC),
+                             "#SELECT_CC_VSRC",
+                             []>;
+  def SELECT_VSRC: Pseudo<(outs vsrc:$dst), (ins crbitrc:$cond,
+                          vsrc:$T, vsrc:$F), "#SELECT_VSRC",
+                          [(set v2f64:$dst,
+                                (select i1:$cond, v2f64:$T, v2f64:$F))]>;
+}
+
 def : InstAlias<"xvmovdp $XT, $XB",
                 (XVCPSGNDP vsrc:$XT, vsrc:$XB, vsrc:$XB)>;
 def : InstAlias<"xvmovsp $XT, $XB",
@@ -819,6 +834,20 @@ def : Pat<(v4i32 (load xoaddr:$src)), (LXVW4X xoaddr:$src)>;
 // Stores.
 def : Pat<(store v4i32:$rS, xoaddr:$dst),
           (STXVW4X $rS, xoaddr:$dst)>;
+
+// Selects.
+def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETLT)),
+          (SELECT_VSRC (CRANDC $rhs, $lhs), $tval, $fval)>;
+def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETLE)),
+          (SELECT_VSRC (CRORC  $rhs, $lhs), $tval, $fval)>;
+def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETEQ)),
+          (SELECT_VSRC (CREQV $lhs, $rhs), $tval, $fval)>;
+def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETGE)),
+          (SELECT_VSRC (CRORC  $lhs, $rhs), $tval, $fval)>;
+def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETGT)),
+          (SELECT_VSRC (CRANDC $lhs, $rhs), $tval, $fval)>;
+def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETNE)),
+          (SELECT_VSRC (CRXOR $lhs, $rhs), $tval, $fval)>;
 
 } // AddedComplexity
 } // HasVSX
