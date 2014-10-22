@@ -3154,7 +3154,7 @@ SDValue DAGCombiner::MatchBSwapHWordLow(SDNode *N, SDValue N0, SDValue N1,
 /// ((x & 0x0000ff00) >> 8) |
 /// ((x & 0x00ff0000) << 8) |
 /// ((x & 0xff000000) >> 8)
-static bool isBSwapHWordElement(SDValue N, SmallVectorImpl<SDNode *> &Parts) {
+static bool isBSwapHWordElement(SDValue N, MutableArrayRef<SDNode *> Parts) {
   if (!N.getNode()->hasOneUse())
     return false;
 
@@ -3237,7 +3237,6 @@ SDValue DAGCombiner::MatchBSwapHWord(SDNode *N, SDValue N0, SDValue N1) {
   if (!TLI.isOperationLegal(ISD::BSWAP, VT))
     return SDValue();
 
-  SmallVector<SDNode*,4> Parts(4, (SDNode*)nullptr);
   // Look for either
   // (or (or (and), (and)), (or (and), (and)))
   // (or (or (or (and), (and)), (and)), (and))
@@ -3245,6 +3244,7 @@ SDValue DAGCombiner::MatchBSwapHWord(SDNode *N, SDValue N0, SDValue N1) {
     return SDValue();
   SDValue N00 = N0.getOperand(0);
   SDValue N01 = N0.getOperand(1);
+  SDNode *Parts[4] = {};
 
   if (N1.getOpcode() == ISD::OR &&
       N00.getNumOperands() == 2 && N01.getNumOperands() == 2) {

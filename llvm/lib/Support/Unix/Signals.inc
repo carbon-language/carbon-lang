@@ -349,13 +349,6 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
   sys::fs::createTemporaryFile("symbolizer-output", "", OutputFile);
   FileRemover InputRemover(InputFile.c_str());
   FileRemover OutputRemover(OutputFile.c_str());
-  std::vector<const StringRef *> Redirects(3, nullptr);
-  StringRef InputFileStr(InputFile);
-  StringRef OutputFileStr(OutputFile);
-  StringRef StderrFileStr;
-  Redirects[0] = &InputFileStr;
-  Redirects[1] = &OutputFileStr;
-  Redirects[2] = &StderrFileStr;
 
   {
     raw_fd_ostream Input(InputFD, true);
@@ -365,10 +358,15 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
     }
   }
 
+  StringRef InputFileStr(InputFile);
+  StringRef OutputFileStr(OutputFile);
+  StringRef StderrFileStr;
+  const StringRef *Redirects[] = {&InputFileStr, &OutputFileStr,
+                                  &StderrFileStr};
   const char *Args[] = {"llvm-symbolizer", "--functions=linkage", "--inlining",
                         "--demangle", nullptr};
   int RunResult =
-      sys::ExecuteAndWait(LLVMSymbolizerPath, Args, nullptr, Redirects.data());
+      sys::ExecuteAndWait(LLVMSymbolizerPath, Args, nullptr, Redirects);
   if (RunResult != 0)
     return false;
 
