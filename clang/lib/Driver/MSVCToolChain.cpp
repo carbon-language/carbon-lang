@@ -242,9 +242,9 @@ bool MSVCToolChain::getWindowsSDKLibraryPath(std::string &path) const {
     // Windows SDK 8.x installs libraries in a folder whose names depend on the
     // version of the OS you're targeting.  By default choose the newest, which
     // usually corresponds to the version of the OS you've installed the SDK on.
-    char *tests[] = {"winv6.3", "win8", "win7"};
+    const char *tests[] = {"winv6.3", "win8", "win7"};
     bool found = false;
-    for (char *test : tests) {
+    for (const char *test : tests) {
       llvm::SmallString<128> testPath(libPath);
       llvm::sys::path::append(testPath, test);
       if (llvm::sys::fs::exists(testPath.c_str())) {
