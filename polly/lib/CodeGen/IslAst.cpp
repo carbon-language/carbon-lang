@@ -25,6 +25,7 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
+#include "polly/Support/GICHelper.h"
 #include "llvm/Support/Debug.h"
 
 #include "isl/union_map.h"
@@ -491,7 +492,10 @@ void IslAstInfo::printScop(raw_ostream &OS) const {
 
   OS << ":: isl ast :: " << F->getName() << " :: " << S.getRegion().getNameStr()
      << "\n";
-  DEBUG(dbgs() << S.getContextStr() << "\n"; isl_union_map_dump(Schedule));
+  DEBUG({
+    dbgs() << S.getContextStr() << "\n";
+    dbgs() << stringFromIslObj(Schedule);
+  });
   OS << "\nif (" << RtCStr << ")\n\n";
   OS << AstStr << "\n";
   OS << "else\n";

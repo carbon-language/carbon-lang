@@ -30,6 +30,7 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
+#include "polly/Support/GICHelper.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -501,11 +502,9 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   }
 
   DEBUG(dbgs() << "\n\nCompute schedule from: ");
-  DEBUG(dbgs() << "Domain := "; isl_union_set_dump(Domain); dbgs() << ";\n");
-  DEBUG(dbgs() << "Proximity := "; isl_union_map_dump(Proximity);
-        dbgs() << ";\n");
-  DEBUG(dbgs() << "Validity := "; isl_union_map_dump(Validity);
-        dbgs() << ";\n");
+  DEBUG(dbgs() << "Domain := " << stringFromIslObj(Domain) << ";\n");
+  DEBUG(dbgs() << "Proximity := " << stringFromIslObj(Proximity) << ";\n");
+  DEBUG(dbgs() << "Validity := " << stringFromIslObj(Validity) << ";\n");
 
   int IslFusionStrategy;
 
@@ -555,7 +554,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   if (!Schedule)
     return false;
 
-  DEBUG(dbgs() << "Schedule := "; isl_schedule_dump(Schedule); dbgs() << ";\n");
+  DEBUG(dbgs() << "Schedule := " << stringFromIslObj(Schedule) << ";\n");
 
   isl_union_map *ScheduleMap = getScheduleMap(Schedule);
 
