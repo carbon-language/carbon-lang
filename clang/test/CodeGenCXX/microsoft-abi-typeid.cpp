@@ -31,11 +31,10 @@ const std::type_info* test3_typeid() { return &typeid(*fn()); }
 // CHECK:        tail call i8* @__RTtypeid(i8* null)
 // CHECK-NEXT:   unreachable
 // CHECK:        [[THIS:%.*]] = bitcast %struct.A* [[CALL]] to i8*
-// CHECK-NEXT:   [[VBTBLP:%.*]] = bitcast %struct.A* [[CALL]] to i8**
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i8** [[VBTBLP]], align 4
-// CHECK-NEXT:   [[VBSLOT:%.*]] = getelementptr inbounds i8* [[VBTBL]], i32 4
-// CHECK-NEXT:   [[VBITCST:%.*]] = bitcast i8* [[VBSLOT]] to i32*
-// CHECK-NEXT:   [[VBASE_OFFS:%.*]] = load i32* [[VBITCST]], align 4
+// CHECK-NEXT:   [[VBTBLP:%.*]] = getelementptr inbounds %struct.A* [[CALL]], i32 0, i32 0
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBTBLP]], align 4
+// CHECK-NEXT:   [[VBSLOT:%.*]] = getelementptr inbounds i32* [[VBTBL]], i32 1
+// CHECK-NEXT:   [[VBASE_OFFS:%.*]] = load i32* [[VBSLOT]], align 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8* [[THIS]], i32 [[VBASE_OFFS]]
 // CHECK-NEXT:   [[RT:%.*]] = tail call i8* @__RTtypeid(i8* [[ADJ]])
 // CHECK-NEXT:   [[RET:%.*]] = bitcast i8* [[RT]] to %struct.type_info*

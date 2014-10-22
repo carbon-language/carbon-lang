@@ -72,10 +72,9 @@ G::G() {}  // Forces vftable emission.
 // CHECK: %[[VTORDISP_NEG:.*]] = sub i32 0, %[[VTORDISP]]
 // CHECK: %[[VTORDISP_ADJUSTED_i8:.*]] = getelementptr i8* %[[ECX_i8]], i32 %[[VTORDISP_NEG]]
 // CHECK: %[[VBPTR_i8:.*]] = getelementptr inbounds i8* %[[VTORDISP_ADJUSTED_i8]], i32 -16
-// CHECK: %[[VBPTR:.*]] = bitcast i8* %[[VBPTR_i8]] to i8**
-// CHECK: %[[VBTABLE:.*]] = load i8** %[[VBPTR]]
-// CHECK: %[[VBOFFSET_PTR_i8:.*]] = getelementptr inbounds i8* %[[VBTABLE]], i32 12
-// CHECK: %[[VBOFFSET_PTR:.*]] = bitcast i8* %[[VBOFFSET_PTR_i8]] to i32*
+// CHECK: %[[VBPTR:.*]] = bitcast i8* %[[VBPTR_i8]] to i32**
+// CHECK: %[[VBTABLE:.*]] = load i32** %[[VBPTR]]
+// CHECK: %[[VBOFFSET_PTR:.*]] = getelementptr inbounds i32* %[[VBTABLE]], i32 3
 // CHECK: %[[VBASE_OFFSET:.*]] = load i32* %[[VBOFFSET_PTR]]
 // CHECK: %[[VBASE:.*]] = getelementptr inbounds i8* %[[VBPTR_i8]], i32 %[[VBASE_OFFSET]]
 // CHECK: %[[ARG_i8:.*]] = getelementptr i8* %[[VBASE]], i32 8

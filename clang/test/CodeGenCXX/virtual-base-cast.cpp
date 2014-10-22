@@ -20,11 +20,10 @@ A* a() { return x; }
 
 // MSVC: @"\01?a@@YAPAUA@@XZ"() [[NUW:#[0-9]+]] {
 // MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 0
-// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i8**
-// MSVC:   %[[vbtable:.*]] = load i8** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i8* {{.*}}, i32 4
-// MSVC:   %[[entry_i32:.*]] = bitcast i8* %[[entry]] to i32*
-// MSVC:   %[[offset:.*]] = load i32* %[[entry_i32]]
+// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
+// MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 1
+// MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 0, %[[offset]]
 // MSVC: }
 
@@ -38,11 +37,10 @@ B* b() { return x; }
 // Same as 'a' except we use a different vbtable offset.
 // MSVC: @"\01?b@@YAPAUB@@XZ"() [[NUW:#[0-9]+]] {
 // MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 0
-// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i8**
-// MSVC:   %[[vbtable:.*]] = load i8** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i8* {{.*}}, i32 8
-// MSVC:   %[[entry_i32:.*]] = bitcast i8* %[[entry]] to i32*
-// MSVC:   %[[offset:.*]] = load i32* %[[entry_i32]]
+// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
+// MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 2
+// MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 0, %[[offset]]
 // MSVC: }
 
@@ -58,11 +56,10 @@ BB* c() { return x; }
 // Same as 'a' except we use a different vbtable offset.
 // MSVC: @"\01?c@@YAPAUBB@@XZ"() [[NUW:#[0-9]+]] {
 // MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 0
-// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i8**
-// MSVC:   %[[vbtable:.*]] = load i8** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i8* {{.*}}, i32 16
-// MSVC:   %[[entry_i32:.*]] = bitcast i8* %[[entry]] to i32*
-// MSVC:   %[[offset:.*]] = load i32* %[[entry_i32]]
+// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
+// MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 4
+// MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 0, %[[offset]]
 // MSVC: }
 
@@ -78,11 +75,10 @@ BB* d() { return y; }
 // final add.
 // MSVC: @"\01?d@@YAPAUBB@@XZ"() [[NUW:#[0-9]+]] {
 // MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 4
-// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i8**
-// MSVC:   %[[vbtable:.*]] = load i8** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i8* {{.*}}, i32 16
-// MSVC:   %[[entry_i32:.*]] = bitcast i8* %[[entry]] to i32*
-// MSVC:   %[[offset:.*]] = load i32* %[[entry_i32]]
+// MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
+// MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 4
+// MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 4, %[[offset]]
 // MSVC: }
 

@@ -457,6 +457,7 @@ private:
                                        int32_t VBPtrOffset,
                                        int32_t VBTableOffset,
                                        llvm::Value **VBPtr = nullptr) {
+    assert(VBTableOffset % 4 == 0 && "should be byte offset into table of i32s");
     llvm::Value *VBPOffset = llvm::ConstantInt::get(CGM.IntTy, VBPtrOffset),
                 *VBTOffset = llvm::ConstantInt::get(CGM.IntTy, VBTableOffset);
     return GetVBaseOffsetFromVBPtr(CGF, Base, VBPOffset, VBTOffset, VBPtr);
@@ -917,9 +918,10 @@ void MicrosoftCXXABI::EmitVBPtrStores(CodeGenFunction &CGF,
       Offs += Layout.getVBaseClassOffset(VBT->getVBaseWithVPtr());
     llvm::Value *VBPtr =
         CGF.Builder.CreateConstInBoundsGEP1_64(ThisInt8Ptr, Offs.getQuantity());
-    VBPtr = CGF.Builder.CreateBitCast(VBPtr, GV->getType()->getPointerTo(0),
+    llvm::Value *GVPtr = CGF.Builder.CreateConstInBoundsGEP2_32(GV, 0, 0);
+    VBPtr = CGF.Builder.CreateBitCast(VBPtr, GVPtr->getType()->getPointerTo(0),
                                       "vbptr." + VBT->ReusingBase->getName());
-    CGF.Builder.CreateStore(GV, VBPtr);
+    CGF.Builder.CreateStore(GVPtr, VBPtr);
   }
 }
 
@@ -2237,11 +2239,17 @@ MicrosoftCXXABI::GetVBaseOffsetFromVBPtr(CodeGenFunction &CGF,
   llvm::Value *VBPtr =
     Builder.CreateInBoundsGEP(This, VBPtrOffset, "vbptr");
   if (VBPtrOut) *VBPtrOut = VBPtr;
-  VBPtr = Builder.CreateBitCast(VBPtr, CGM.Int8PtrTy->getPointerTo(0));
+  VBPtr = Builder.CreateBitCast(VBPtr,
+                                CGM.Int32Ty->getPointerTo(0)->getPointerTo(0));
   llvm::Value *VBTable = Builder.CreateLoad(VBPtr, "vbtable");
 
+  // Translate from byte offset to table index. It improves analyzability.
+  llvm::Value *VBTableIndex = Builder.CreateAShr(
+      VBTableOffset, llvm::ConstantInt::get(VBTableOffset->getType(), 2),
+      "vbtindex", /*isExact=*/true);
+
   // Load an i32 offset from the vb-table.
-  llvm::Value *VBaseOffs = Builder.CreateInBoundsGEP(VBTable, VBTableOffset);
+  llvm::Value *VBaseOffs = Builder.CreateInBoundsGEP(VBTable, VBTableIndex);
   VBaseOffs = Builder.CreateBitCast(VBaseOffs, CGM.Int32Ty->getPointerTo(0));
   return Builder.CreateLoad(VBaseOffs, "vbase_offs");
 }
