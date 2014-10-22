@@ -64,6 +64,15 @@ int AddressSafetyOk(int *a) { return *a; }
 // ASAN:  BlacklistedFunction{{.*}}) [[WITH]]
 int BlacklistedFunction(int *a) { return *a; }
 
+#define GENERATE_FUNC(name) \
+    int name(int *a) { return *a; }
+
+// WITHOUT: GeneratedFunction{{.*}}) [[NOATTR]]
+// BLFILE:  GeneratedFunction{{.*}}) [[NOATTR]]
+// BLFUNC:  GeneratedFunction{{.*}}) [[WITH]]
+// ASAN:    GeneratedFunction{{.*}}) [[WITH]]
+GENERATE_FUNC(GeneratedFunction)
+
 // WITHOUT:  TemplateAddressSafetyOk{{.*}}) [[NOATTR]]
 // BLFILE:  TemplateAddressSafetyOk{{.*}}) [[NOATTR]]
 // BLFUNC:  TemplateAddressSafetyOk{{.*}}) [[WITH]]
