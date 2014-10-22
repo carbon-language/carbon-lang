@@ -25,6 +25,162 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
 
+namespace lldb_private {
+    namespace formatters {
+        class NSSetISyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        private:
+            struct DataDescriptor_32
+            {
+                uint32_t _used : 26;
+                uint32_t _szidx : 6;
+            };
+            struct DataDescriptor_64
+            {
+                uint64_t _used : 58;
+                uint32_t _szidx : 6;
+            };
+            
+            struct SetItemDescriptor
+            {
+                lldb::addr_t item_ptr;
+                lldb::ValueObjectSP valobj_sp;
+            };
+            
+        public:
+            NSSetISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSSetISyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint8_t m_ptr_size;
+            DataDescriptor_32 *m_data_32;
+            DataDescriptor_64 *m_data_64;
+            lldb::addr_t m_data_ptr;
+            std::vector<SetItemDescriptor> m_children;
+        };
+        
+        class NSOrderedSetSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        private:
+            
+        public:
+            NSOrderedSetSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSOrderedSetSyntheticFrontEnd ();
+        private:
+            uint32_t m_count;
+            std::map<uint32_t,lldb::ValueObjectSP> m_children;
+        };
+        
+        class NSSetMSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        private:
+            struct DataDescriptor_32
+            {
+                uint32_t _used : 26;
+                uint32_t _size;
+                uint32_t _mutations;
+                uint32_t _objs_addr;
+            };
+            struct DataDescriptor_64
+            {
+                uint64_t _used : 58;
+                uint64_t _size;
+                uint64_t _mutations;
+                uint64_t _objs_addr;
+            };
+            struct SetItemDescriptor
+            {
+                lldb::addr_t item_ptr;
+                lldb::ValueObjectSP valobj_sp;
+            };
+        public:
+            NSSetMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSSetMSyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint8_t m_ptr_size;
+            DataDescriptor_32 *m_data_32;
+            DataDescriptor_64 *m_data_64;
+            std::vector<SetItemDescriptor> m_children;
+        };
+        
+        class NSSetCodeRunningSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            NSSetCodeRunningSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSSetCodeRunningSyntheticFrontEnd ();
+        };
+    }
+}
+
 template<bool cf_style>
 bool
 lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& stream)
