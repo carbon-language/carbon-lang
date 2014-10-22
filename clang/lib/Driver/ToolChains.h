@@ -727,10 +727,10 @@ public:
   bool isPICDefaultForced() const override;
 };
 
-class LLVM_LIBRARY_VISIBILITY Windows : public ToolChain {
+class LLVM_LIBRARY_VISIBILITY MSVCToolChain : public ToolChain {
 public:
-  Windows(const Driver &D, const llvm::Triple &Triple,
-          const llvm::opt::ArgList &Args);
+  MSVCToolChain(const Driver &D, const llvm::Triple &Triple,
+                const llvm::opt::ArgList &Args);
 
   bool IsIntegratedAssemblerDefault() const override;
   bool IsUnwindTablesDefault() const override;
