@@ -20,7 +20,10 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Timer.h"
 #include <deque>
+#include <memory>
 #include <set>
 
 namespace clang {
@@ -292,17 +295,32 @@ private:
 class MatchASTVisitor : public RecursiveASTVisitor<MatchASTVisitor>,
                         public ASTMatchFinder {
 public:
- MatchASTVisitor(const MatchFinder::MatchersByType *Matchers)
-     : Matchers(Matchers), ActiveASTContext(nullptr) {}
+  MatchASTVisitor(const MatchFinder::MatchersByType *Matchers,
+                  const MatchFinder::MatchFinderOptions &Options)
+      : Matchers(Matchers), Options(Options), ActiveASTContext(nullptr) {}
+
+  ~MatchASTVisitor() {
+    if (Options.CheckProfiling) {
+      Options.CheckProfiling->Records = std::move(TimeByBucket);
+    }
+  }
 
   void onStartOfTranslationUnit() {
-    for (MatchCallback *MC : Matchers->AllCallbacks)
+    const bool EnableCheckProfiling = Options.CheckProfiling.hasValue();
+    for (MatchCallback *MC : Matchers->AllCallbacks) {
+      TimeRegion Timer(EnableCheckProfiling ? &TimeByBucket[MC->getID()]
+                                            : nullptr);
       MC->onStartOfTranslationUnit();
+    }
   }
 
   void onEndOfTranslationUnit() {
-    for (MatchCallback *MC : Matchers->AllCallbacks)
+    const bool EnableCheckProfiling = Options.CheckProfiling.hasValue();
+    for (MatchCallback *MC : Matchers->AllCallbacks) {
+      TimeRegion Timer(EnableCheckProfiling ? &TimeByBucket[MC->getID()]
+                                            : nullptr);
       MC->onEndOfTranslationUnit();
+    }
   }
 
   void set_active_ast_context(ASTContext *NewActiveASTContext) {
@@ -471,12 +489,30 @@ public:
   bool shouldUseDataRecursionFor(clang::Stmt *S) const { return false; }
 
 private:
+  class TimeRegion {
+  public:
+    TimeRegion(llvm::TimeRecord *Record) : Record(Record) {
+      if (Record)
+        *Record -= llvm::TimeRecord::getCurrentTime(true);
+    }
+    ~TimeRegion() {
+      if (Record)
+        *Record += llvm::TimeRecord::getCurrentTime(false);
+    }
+
+  private:
+    llvm::TimeRecord *Record;
+  };
+
   /// \brief Runs all the \p Matchers on \p Node.
   ///
   /// Used by \c matchDispatch() below.
   template <typename T, typename MC>
   void matchImpl(const T &Node, const MC &Matchers) {
+    const bool EnableCheckProfiling = Options.CheckProfiling.hasValue();
     for (const auto &MP : Matchers) {
+      TimeRegion Timer(EnableCheckProfiling ? &TimeByBucket[MP.second->getID()]
+                                            : nullptr);
       BoundNodesTreeBuilder Builder;
       if (MP.first.matches(Node, this, &Builder)) {
         MatchVisitor Visitor(ActiveASTContext, MP.second);
@@ -627,7 +663,13 @@ private:
     return false;
   }
 
+  /// \brief Bucket to record map.
+  ///
+  /// Used to get the appropriate bucket for each matcher.
+  llvm::StringMap<llvm::TimeRecord> TimeByBucket;
+
   const MatchFinder::MatchersByType *Matchers;
+  const MatchFinder::MatchFinderOptions &Options;
   ASTContext *ActiveASTContext;
 
   // Maps a canonical type to its TypedefDecls.
@@ -790,7 +832,8 @@ MatchFinder::MatchResult::MatchResult(const BoundNodes &Nodes,
 MatchFinder::MatchCallback::~MatchCallback() {}
 MatchFinder::ParsingDoneTestCallback::~ParsingDoneTestCallback() {}
 
-MatchFinder::MatchFinder() : ParsingDone(nullptr) {}
+MatchFinder::MatchFinder(MatchFinderOptions Options)
+    : Options(std::move(Options)), ParsingDone(nullptr) {}
 
 MatchFinder::~MatchFinder() {}
 
@@ -860,13 +903,13 @@ std::unique_ptr<ASTConsumer> MatchFinder::newASTConsumer() {
 
 void MatchFinder::match(const clang::ast_type_traits::DynTypedNode &Node,
                         ASTContext &Context) {
-  internal::MatchASTVisitor Visitor(&Matchers);
+  internal::MatchASTVisitor Visitor(&Matchers, Options);
   Visitor.set_active_ast_context(&Context);
   Visitor.match(Node);
 }
 
 void MatchFinder::matchAST(ASTContext &Context) {
-  internal::MatchASTVisitor Visitor(&Matchers);
+  internal::MatchASTVisitor Visitor(&Matchers, Options);
   Visitor.set_active_ast_context(&Context);
   Visitor.onStartOfTranslationUnit();
   Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -877,6 +920,8 @@ void MatchFinder::registerTestCallbackAfterParsing(
     MatchFinder::ParsingDoneTestCallback *NewParsingDone) {
   ParsingDone = NewParsingDone;
 }
+
+StringRef MatchFinder::MatchCallback::getID() const { return "<unknown>"; }
 
 } // end namespace ast_matchers
 } // end namespace clang

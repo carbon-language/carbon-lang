@@ -42,6 +42,8 @@
 #define LLVM_CLANG_ASTMATCHERS_ASTMATCHFINDER_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Timer.h"
 
 namespace clang {
 
@@ -102,6 +104,12 @@ public:
     ///
     /// Optionally override to do per translation unit tasks.
     virtual void onEndOfTranslationUnit() {}
+
+    /// \brief An id used to group the matchers.
+    ///
+    /// This id is used, for example, for the profiling output.
+    /// It defaults to "<unknown>".
+    virtual StringRef getID() const;
   };
 
   /// \brief Called when parsing is finished. Intended for testing only.
@@ -111,7 +119,22 @@ public:
     virtual void run() = 0;
   };
 
-  MatchFinder();
+  struct MatchFinderOptions {
+    struct Profiling {
+      Profiling(llvm::StringMap<llvm::TimeRecord> &Records)
+          : Records(Records) {}
+
+      /// \brief Per bucket timing information.
+      llvm::StringMap<llvm::TimeRecord> &Records;
+    };
+
+    /// \brief Enables per-check timers.
+    ///
+    /// It prints a report after match.
+    llvm::Optional<Profiling> CheckProfiling;
+  };
+
+  MatchFinder(MatchFinderOptions Options = MatchFinderOptions());
   ~MatchFinder();
 
   /// \brief Adds a matcher to execute when running over the AST.
@@ -190,6 +213,8 @@ public:
 
 private:
   MatchersByType Matchers;
+
+  MatchFinderOptions Options;
 
   /// \brief Called when parsing is done.
   ParsingDoneTestCallback *ParsingDone;
