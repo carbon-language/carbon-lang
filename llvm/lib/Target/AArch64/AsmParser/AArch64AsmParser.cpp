@@ -19,6 +19,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -74,6 +75,8 @@ private:
   bool showMatchError(SMLoc Loc, unsigned ErrCode);
 
   bool parseDirectiveWord(unsigned Size, SMLoc L);
+  bool parseDirectiveInst(SMLoc L);
+
   bool parseDirectiveTLSDescCall(SMLoc L);
 
   bool parseDirectiveLOH(StringRef LOH, SMLoc L);
@@ -3912,6 +3915,11 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
 /// ParseDirective parses the arm specific directives
 bool AArch64AsmParser::ParseDirective(AsmToken DirectiveID) {
+  const MCObjectFileInfo::Environment Format =
+    getContext().getObjectFileInfo()->getObjectFileType();
+  bool IsMachO = Format == MCObjectFileInfo::IsMachO;
+  bool IsCOFF = Format == MCObjectFileInfo::IsCOFF;
+
   StringRef IDVal = DirectiveID.getIdentifier();
   SMLoc Loc = DirectiveID.getLoc();
   if (IDVal == ".hword")
@@ -3926,6 +3934,11 @@ bool AArch64AsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveLtorg(Loc);
   if (IDVal == ".unreq")
     return parseDirectiveUnreq(DirectiveID.getLoc());
+
+  if (!IsMachO && !IsCOFF) {
+    if (IDVal == ".inst")
+      return parseDirectiveInst(Loc);
+  }
 
   return parseDirectiveLOH(IDVal, Loc);
 }
@@ -3949,6 +3962,46 @@ bool AArch64AsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
         return Error(L, "unexpected token in directive");
       Parser.Lex();
     }
+  }
+
+  Parser.Lex();
+  return false;
+}
+
+/// parseDirectiveInst
+///  ::= .inst opcode [, ...]
+bool AArch64AsmParser::parseDirectiveInst(SMLoc Loc) {
+  if (getLexer().is(AsmToken::EndOfStatement)) {
+    Parser.eatToEndOfStatement();
+    Error(Loc, "expected expression following directive");
+    return false;
+  }
+
+  for (;;) {
+    const MCExpr *Expr;
+
+    if (getParser().parseExpression(Expr)) {
+      Error(Loc, "expected expression");
+      return false;
+    }
+
+    const MCConstantExpr *Value = dyn_cast_or_null<MCConstantExpr>(Expr);
+    if (!Value) {
+      Error(Loc, "expected constant expression");
+      return false;
+    }
+
+    getTargetStreamer().emitInst(Value->getValue());
+
+    if (getLexer().is(AsmToken::EndOfStatement))
+      break;
+
+    if (getLexer().isNot(AsmToken::Comma)) {
+      Error(Loc, "unexpected token in directive");
+      return false;
+    }
+
+    Parser.Lex(); // Eat comma.
   }
 
   Parser.Lex();

@@ -91,7 +91,6 @@ public:
   AArch64TargetStreamer(MCStreamer &S);
   ~AArch64TargetStreamer();
 
-
   void finish() override;
 
   /// Callback used to implement the ldr= pseudo.
@@ -102,6 +101,9 @@ public:
   /// Callback used to implemnt the .ltorg directive.
   /// Emit contents of constant pool for the current section.
   void emitCurrentConstantPool();
+
+  /// Callback used to implement the .inst directive.
+  virtual void emitInst(uint32_t Inst);
 
 private:
   std::unique_ptr<AssemblerConstantPools> ConstantPools;
