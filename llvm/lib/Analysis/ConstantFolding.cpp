@@ -55,7 +55,8 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
   // Catch the obvious splat cases.
   if (C->isNullValue() && !DestTy->isX86_MMXTy())
     return Constant::getNullValue(DestTy);
-  if (C->isAllOnesValue() && !DestTy->isX86_MMXTy())
+  if (C->isAllOnesValue() && !DestTy->isX86_MMXTy() &&
+      !DestTy->isPtrOrPtrVectorTy()) // Don't get ones for ptr types!
     return Constant::getAllOnesValue(DestTy);
 
   // Handle a vector->integer cast.
@@ -197,7 +198,7 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
 
   // Handle: bitcast (<2 x i64> <i64 0, i64 1> to <4 x i32>)
   unsigned Ratio = NumDstElt/NumSrcElt;
-  unsigned DstBitSize = DstEltTy->getPrimitiveSizeInBits();
+  unsigned DstBitSize = TD.getTypeSizeInBits(DstEltTy);
 
   // Loop over each source value, expanding into multiple results.
   for (unsigned i = 0; i != NumSrcElt; ++i) {
@@ -212,6 +213,15 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
       Constant *Elt = ConstantExpr::getLShr(Src,
                                   ConstantInt::get(Src->getType(), ShiftAmt));
       ShiftAmt += isLittleEndian ? DstBitSize : -DstBitSize;
+
+      // Truncate the element to an integer with the same pointer size and
+      // convert the element back to a pointer using a inttoptr.
+      if (DstEltTy->isPointerTy()) {
+        IntegerType *DstIntTy = Type::getIntNTy(C->getContext(), DstBitSize);
+        Constant *CE = ConstantExpr::getTrunc(Elt, DstIntTy);
+        Result.push_back(ConstantExpr::getIntToPtr(CE, DstEltTy));
+        continue;
+      }
 
       // Truncate and remember this piece.
       Result.push_back(ConstantExpr::getTrunc(Elt, DstEltTy));
