@@ -37,7 +37,8 @@ struct COFFParser {
   }
 
   bool useBigObj() const {
-    return Obj.Sections.size() > COFF::MaxNumberOfSections16;
+    return static_cast<int32_t>(Obj.Sections.size()) >
+           COFF::MaxNumberOfSections16;
   }
 
   unsigned getHeaderSize() const {
