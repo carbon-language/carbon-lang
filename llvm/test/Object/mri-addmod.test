@@ -1,5 +1,5 @@
 ; RUN: echo create %t.a > %t.mri
-; RUN: echo addmod %p/Inputs/trivial-object-test.elf-x86-64 >> %t.mri
+; RUN: echo "addmod  \"%p/Inputs/trivial-object-test.elf-x86-64\" " >> %t.mri
 ; RUN: echo save >> %t.mri
 ; RUN: echo end >> %t.mri
 

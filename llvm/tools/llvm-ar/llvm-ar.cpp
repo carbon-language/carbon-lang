@@ -961,6 +961,9 @@ static void runMRIScript() {
     StringRef Line = *I;
     StringRef CommandStr, Rest;
     std::tie(CommandStr, Rest) = Line.split(' ');
+    Rest = Rest.trim();
+    if (!Rest.empty() && Rest.front() == '"' && Rest.back() == '"')
+      Rest = Rest.drop_front().drop_back();
     auto Command = StringSwitch<MRICommand>(CommandStr.lower())
                        .Case("addlib", MRICommand::AddLib)
                        .Case("addmod", MRICommand::AddMod)
