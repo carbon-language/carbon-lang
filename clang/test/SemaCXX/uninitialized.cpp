@@ -1220,3 +1220,46 @@ namespace init_list {
     {}
   };
 }
+
+namespace template_class {
+class Foo {
+ public:
+    int *Create() { return nullptr; }
+};
+
+template <typename T>
+class A {
+public:
+  // Don't warn on foo here.
+  A() : ptr(foo->Create()) {}
+
+private:
+  Foo *foo = new Foo;
+  int *ptr;
+};
+
+template <typename T>
+class B {
+public:
+  // foo is uninitialized here, but class B is never instantiated.
+  B() : ptr(foo->Create()) {}
+
+private:
+  Foo *foo;
+  int *ptr;
+};
+
+template <typename T>
+class C {
+public:
+  C() : ptr(foo->Create()) {}
+  // expected-warning@-1 {{field 'foo' is uninitialized when used here}}
+private:
+  Foo *foo;
+  int *ptr;
+};
+
+C<int> c;
+// expected-note@-1 {{in instantiation of member function 'template_class::C<int>::C' requested here}}
+
+}
