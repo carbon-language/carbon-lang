@@ -640,7 +640,6 @@ bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
     if (DiagLevel >= DiagnosticIDs::Error &&
         Diag.Client->IncludeInDiagnosticCounts()) {
       ++Diag.NumErrors;
-      ++Diag.NumErrorsSuppressed;
     }
 
     return false;

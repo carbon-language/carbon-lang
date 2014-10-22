@@ -101,7 +101,6 @@ void DiagnosticsEngine::Reset() {
   
   NumWarnings = 0;
   NumErrors = 0;
-  NumErrorsSuppressed = 0;
   TrapNumErrorsOccurred = 0;
   TrapNumUnrecoverableErrorsOccurred = 0;
   

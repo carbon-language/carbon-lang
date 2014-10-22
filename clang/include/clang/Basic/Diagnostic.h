@@ -302,7 +302,6 @@ private:
 
   unsigned NumWarnings;         ///< Number of warnings reported
   unsigned NumErrors;           ///< Number of errors reported
-  unsigned NumErrorsSuppressed; ///< Number of errors suppressed
 
   /// \brief A function pointer that converts an opaque diagnostic
   /// argument to a strings.
