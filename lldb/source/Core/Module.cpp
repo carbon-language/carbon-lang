@@ -1730,6 +1730,8 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
             {
                 if (CPPLanguageRuntime::StripNamespacesFromVariableName (name_cstr, base_name_start, base_name_end))
                     lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
+                else
+                    lookup_name_type_mask = eFunctionNameTypeFull;
             }
             else
             {
