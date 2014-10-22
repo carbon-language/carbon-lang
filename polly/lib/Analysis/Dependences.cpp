@@ -188,7 +188,7 @@ void Dependences::addPrivatizationDependences() {
   // FIXME: Apply the current schedule instead of assuming the identity schedule
   //        here. The current approach is only valid as long as we compute the
   //        dependences only with the initial (identity schedule). Any other
-  //        schedule could change "the direction of the backward depenendes" we
+  //        schedule could change "the direction of the backward dependences" we
   //        want to eliminate here.
   isl_union_set *UDeltas = isl_union_map_deltas(isl_union_map_copy(TC_RED));
   isl_union_set *Universe = isl_union_set_universe(isl_union_set_copy(UDeltas));
