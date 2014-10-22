@@ -274,7 +274,7 @@ SourceLocation Stmt::getLocEnd() const {
 
 CompoundStmt::CompoundStmt(const ASTContext &C, ArrayRef<Stmt*> Stmts,
                            SourceLocation LB, SourceLocation RB)
-  : Stmt(CompoundStmtClass), LBracLoc(LB), RBracLoc(RB) {
+  : Stmt(CompoundStmtClass), LBraceLoc(LB), RBraceLoc(RB) {
   CompoundStmtBits.NumStmts = Stmts.size();
   assert(CompoundStmtBits.NumStmts == Stmts.size() &&
          "NumStmts doesn't fit in bits of CompoundStmtBits.NumStmts!");

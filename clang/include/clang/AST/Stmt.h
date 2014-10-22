@@ -552,14 +552,17 @@ public:
 ///
 class CompoundStmt : public Stmt {
   Stmt** Body;
-  SourceLocation LBracLoc, RBracLoc;
+  SourceLocation LBraceLoc, RBraceLoc;
+
+  friend class ASTStmtReader;
+
 public:
   CompoundStmt(const ASTContext &C, ArrayRef<Stmt*> Stmts,
                SourceLocation LB, SourceLocation RB);
 
   // \brief Build an empty compound statement with a location.
   explicit CompoundStmt(SourceLocation Loc)
-    : Stmt(CompoundStmtClass), Body(nullptr), LBracLoc(Loc), RBracLoc(Loc) {
+    : Stmt(CompoundStmtClass), Body(nullptr), LBraceLoc(Loc), RBraceLoc(Loc) {
     CompoundStmtBits.NumStmts = 0;
   }
 
@@ -618,13 +621,11 @@ public:
     return const_reverse_body_iterator(body_begin());
   }
 
-  SourceLocation getLocStart() const LLVM_READONLY { return LBracLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RBracLoc; }
+  SourceLocation getLocStart() const LLVM_READONLY { return LBraceLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return RBraceLoc; }
 
-  SourceLocation getLBracLoc() const { return LBracLoc; }
-  void setLBracLoc(SourceLocation L) { LBracLoc = L; }
-  SourceLocation getRBracLoc() const { return RBracLoc; }
-  void setRBracLoc(SourceLocation L) { RBracLoc = L; }
+  SourceLocation getLBracLoc() const { return LBraceLoc; }
+  SourceLocation getRBracLoc() const { return RBraceLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CompoundStmtClass;
