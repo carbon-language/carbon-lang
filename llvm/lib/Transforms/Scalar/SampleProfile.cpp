@@ -673,7 +673,9 @@ unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
   // If could not find the start of \p F, emit a diagnostic to inform the user
   // about the missed opportunity.
   F.getContext().diagnose(DiagnosticInfoSampleProfile(
-      "No debug information found in function " + F.getName()));
+      "No debug information found in function " + F.getName() +
+          ": Function profile not used",
+      DS_Warning));
   return 0;
 }
 
