@@ -3526,7 +3526,7 @@ TEST_F(FormatTest, TrailingReturnType) {
                "    -> alias::tensor<Order, T, mem::tag::cpu> {}");
   verifyFormat("auto SomeFunction(A aaaaaaaaaaaaaaaaaaaaa) const\n"
                "    -> decltype(f(aaaaaaaaaaaaaaaaaaaaa)) {}");
-  verifyFormat("auto doSomething(Aaaaaa* aaaaaa) -> decltype(aaaaaa->f()) {}");
+  verifyFormat("auto doSomething(Aaaaaa *aaaaaa) -> decltype(aaaaaa->f()) {}");
 
   // Not trailing return types.
   verifyFormat("void f() { auto a = b->c(); }");
