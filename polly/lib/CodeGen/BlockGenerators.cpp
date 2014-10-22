@@ -34,11 +34,10 @@
 using namespace llvm;
 using namespace polly;
 
-static cl::opt<bool>
-    Aligned("enable-polly-aligned",
-            cl::desc("Assumed aligned memory accesses."), cl::Hidden,
-            cl::value_desc("OpenMP code generation enabled if true"),
-            cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+static cl::opt<bool> Aligned("enable-polly-aligned",
+                             cl::desc("Assumed aligned memory accesses."),
+                             cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                             cl::cat(PollyCategory));
 
 static cl::opt<bool, true>
     SCEVCodegenF("polly-codegen-scev",
