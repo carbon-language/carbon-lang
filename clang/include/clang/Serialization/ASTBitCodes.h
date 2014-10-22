@@ -638,7 +638,10 @@ namespace clang {
       /// \brief Specifies a conflict with another module.
       SUBMODULE_CONFLICT = 12,
       /// \brief Specifies a header that is private to this submodule.
-      SUBMODULE_PRIVATE_HEADER = 13
+      SUBMODULE_PRIVATE_HEADER = 13,
+      /// \brief Specifies a header that is part of the module but must be
+      /// textually included.
+      SUBMODULE_TEXTUAL_HEADER = 14,
     };
 
     /// \brief Record types used within a comments block.

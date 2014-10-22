@@ -267,6 +267,12 @@ As an example, the module map file for the C standard library might look a bit l
 .. parsed-literal::
 
   module std [system] [extern_c] {
+    module assert {
+      textual header "assert.h"
+      header "bits/assert-decls.h"
+      export *
+    }
+
     module complex {
       header "complex.h"
       export *
@@ -299,11 +305,11 @@ Module map files use a simplified form of the C99 lexer, with the same rules for
 
 .. parsed-literal::
 
-  ``config_macros`` ``export``     ``module``
+  ``config_macros`` ``export``     ``private``
   ``conflict``      ``framework``  ``requires``
-  ``exclude``       ``header``     ``private``
+  ``exclude``       ``header``     ``textual``
   ``explicit``      ``link``       ``umbrella``
-  ``extern``        ``use``
+  ``extern``        ``module``     ``use``
 
 Module map file
 ---------------
@@ -331,7 +337,7 @@ A module declaration describes a module, including the headers that contribute t
     ``explicit``:sub:`opt` ``framework``:sub:`opt` ``module`` *module-id* *attributes*:sub:`opt` '{' *module-member** '}'
     ``extern`` ``module`` *module-id* *string-literal*
 
-The *module-id* should consist of only a single *identifier*, which provides the name of the module being defined. Each module shall have a single definition. 
+The *module-id* should consist of only a single *identifier*, which provides the name of the module being defined. Each module shall have a single definition.
 
 The ``explicit`` qualifier can only be applied to a submodule, i.e., a module that is nested within another module. The contents of explicit submodules are only made available when the submodule itself was explicitly named in an import declaration or was re-exported from an imported module.
 
@@ -441,9 +447,10 @@ A header declaration specifies that a particular header is associated with the e
   *header-declaration*:
     ``umbrella``:sub:`opt` ``header`` *string-literal*
     ``private`` ``header`` *string-literal*
+    ``textual`` ``header`` *string-literal*
     ``exclude`` ``header`` *string-literal*
 
-A header declaration that does not contain ``exclude`` specifies a header that contributes to the enclosing module. Specifically, when the module is built, the named header will be parsed and its declarations will be (logically) placed into the enclosing submodule.
+A header declaration that does not contain ``exclude`` nor ``textual`` specifies a header that contributes to the enclosing module. Specifically, when the module is built, the named header will be parsed and its declarations will be (logically) placed into the enclosing submodule.
 
 A header with the ``umbrella`` specifier is called an umbrella header. An umbrella header includes all of the headers within its directory (and any subdirectories), and is typically used (in the ``#include`` world) to easily access the full API provided by a particular library. With modules, an umbrella header is a convenient shortcut that eliminates the need to write out ``header`` declarations for every library header. A given directory can only contain a single umbrella header.
 
@@ -454,6 +461,8 @@ A header with the ``umbrella`` specifier is called an umbrella header. An umbrel
     about headers not covered by the umbrella header or the module map.
 
 A header with the ``private`` specifier may not be included from outside the module itself.
+
+A header with the ``textual`` specifier will not be included when the module is built, and will be textually included if it is named by a ``#include`` directive. However, it is considered to be part of the module for the purpose of checking *use-declaration*\s.
 
 A header with the ``exclude`` specifier is excluded from the module. It will not be included when the module is built, nor will it be considered to be part of the module.
 

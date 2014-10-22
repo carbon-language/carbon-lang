@@ -315,8 +315,15 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
 
 ModuleMap::KnownHeader
 ModuleMap::findModuleForHeader(const FileEntry *File,
-                               Module *RequestingModule) {
+                               Module *RequestingModule,
+                               bool IncludeTextualHeaders) {
   HeadersMap::iterator Known = findKnownHeader(File);
+
+  auto MakeResult = [&](ModuleMap::KnownHeader R) -> ModuleMap::KnownHeader {
+    if (!IncludeTextualHeaders && R.getRole() == ModuleMap::TextualHeader)
+      return ModuleMap::KnownHeader();
+    return R;
+  };
 
   if (Known != Headers.end()) {
     ModuleMap::KnownHeader Result = KnownHeader();
@@ -336,7 +343,7 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
       // If 'File' is part of 'RequestingModule', 'RequestingModule' is the
       // module we are looking for.
       if (I->getModule() == RequestingModule)
-        return *I;
+        return MakeResult(*I);
 
       // If uses need to be specified explicitly, we are only allowed to return
       // modules that are explicitly used by the requesting module.
@@ -349,10 +356,11 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
       // are going to get.
       // FIXME: If we have a RequestingModule, we should prefer the header from
       // that module.
-      if (I->getRole() == ModuleMap::NormalHeader)
+      if (I->getRole() == ModuleMap::NormalHeader ||
+          I->getRole() == ModuleMap::TextualHeader)
         break;
     }
-    return Result;
+    return MakeResult(Result);
   }
 
   SmallVector<const DirectoryEntry *, 2> SkippedDirs;
@@ -422,9 +430,9 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
     if (!Result->isAvailable())
       return KnownHeader();
 
-    return Headers[File].back();
+    return MakeResult(Headers[File].back());
   }
-  
+
   return KnownHeader();
 }
 
@@ -785,6 +793,8 @@ void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
                           ModuleHeaderRole Role) {
   if (Role == ExcludedHeader) {
     Mod->ExcludedHeaders.push_back(Header);
+  } else if (Role == TextualHeader) {
+    Mod->TextualHeaders.push_back(Header);
   } else {
     if (Role == PrivateHeader)
       Mod->PrivateHeaders.push_back(Header);
@@ -946,6 +956,7 @@ namespace clang {
       RequiresKeyword,
       Star,
       StringLiteral,
+      TextualKeyword,
       LBrace,
       RBrace,
       LSquare,
@@ -1096,6 +1107,7 @@ retry:
                  .Case("module", MMToken::ModuleKeyword)
                  .Case("private", MMToken::PrivateKeyword)
                  .Case("requires", MMToken::RequiresKeyword)
+                 .Case("textual", MMToken::TextualKeyword)
                  .Case("umbrella", MMToken::UmbrellaKeyword)
                  .Case("use", MMToken::UseKeyword)
                  .Default(MMToken::Identifier);
@@ -1463,6 +1475,17 @@ void ModuleMapParser::parseModuleDecl() {
       parseRequiresDecl();
       break;
 
+    case MMToken::TextualKeyword: {
+      SourceLocation TextualLoc = consumeToken();
+      if (Tok.is(MMToken::HeaderKeyword)) {
+        parseHeaderDecl(MMToken::TextualKeyword, TextualLoc);
+      } else {
+        Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header)
+          << "textual";
+      }
+      break;
+    }
+
     case MMToken::UmbrellaKeyword: {
       SourceLocation UmbrellaLoc = consumeToken();
       if (Tok.is(MMToken::HeaderKeyword))
@@ -1650,8 +1673,12 @@ static void appendSubframeworkPaths(Module *Mod,
 /// \brief Parse a header declaration.
 ///
 ///   header-declaration:
-///     'umbrella'[opt] 'header' string-literal
 ///     'exclude'[opt] 'header' string-literal
+///     'private'[opt] 'header' string-literal
+///     'textual'[opt] 'header' string-literal
+///     'umbrella'[opt] 'header' string-literal
+///
+/// FIXME: Support 'private textual header'.
 void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
                                       SourceLocation LeadingLoc) {
   assert(Tok.is(MMToken::HeaderKeyword));
@@ -1747,6 +1774,8 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
         Role = ModuleMap::ExcludedHeader;
       else if (LeadingToken == MMToken::PrivateKeyword)
         Role = ModuleMap::PrivateHeader;
+      else if (LeadingToken == MMToken::TextualKeyword)
+        Role = ModuleMap::TextualHeader;
       else
         assert(LeadingToken == MMToken::HeaderKeyword);
 
@@ -1839,6 +1868,7 @@ void ModuleMapParser::parseExportDecl() {
   ModuleId ParsedModuleId;
   bool Wildcard = false;
   do {
+    // FIXME: Support string-literal module names here.
     if (Tok.is(MMToken::Identifier)) {
       ParsedModuleId.push_back(std::make_pair(Tok.getString(), 
                                               Tok.getLocation()));
@@ -1936,6 +1966,7 @@ void ModuleMapParser::parseConfigMacros() {
   }
 
   // If we don't have an identifier, we're done.
+  // FIXME: Support macros with the same name as a keyword here.
   if (!Tok.is(MMToken::Identifier))
     return;
 
@@ -1952,6 +1983,7 @@ void ModuleMapParser::parseConfigMacros() {
     consumeToken();
 
     // We expect to see a macro name here.
+    // FIXME: Support macros with the same name as a keyword here.
     if (!Tok.is(MMToken::Identifier)) {
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_config_macro);
       break;
@@ -2117,6 +2149,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
       }
 
       consumeToken();
+      // FIXME: Support string-literal module names here.
       if (!Tok.is(MMToken::Identifier)) {
         Diags.Report(Tok.getLocation(), diag::err_mmap_missing_exclude_name);
         break;

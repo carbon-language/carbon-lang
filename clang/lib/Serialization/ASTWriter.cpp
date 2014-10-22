@@ -2405,6 +2405,11 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   unsigned ExcludedHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
 
   Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_TEXTUAL_HEADER));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
+  unsigned TextualHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
+
+  Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_PRIVATE_HEADER));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
   unsigned PrivateHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
@@ -2481,7 +2486,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Stream.EmitRecordWithBlob(UmbrellaDirAbbrev, Record, 
                                 UmbrellaDir->getName());      
     }
-    
+
     // Emit the headers.
     for (unsigned I = 0, N = Mod->NormalHeaders.size(); I != N; ++I) {
       Record.clear();
@@ -2495,6 +2500,13 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Record.push_back(SUBMODULE_EXCLUDED_HEADER);
       Stream.EmitRecordWithBlob(ExcludedHeaderAbbrev, Record, 
                                 Mod->ExcludedHeaders[I]->getName());
+    }
+    // Emit the textual headers.
+    for (unsigned I = 0, N = Mod->TextualHeaders.size(); I != N; ++I) {
+      Record.clear();
+      Record.push_back(SUBMODULE_TEXTUAL_HEADER);
+      Stream.EmitRecordWithBlob(TextualHeaderAbbrev, Record, 
+                                Mod->TextualHeaders[I]->getName());
     }
     // Emit the private headers.
     for (unsigned I = 0, N = Mod->PrivateHeaders.size(); I != N; ++I) {

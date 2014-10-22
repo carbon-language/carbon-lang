@@ -38,6 +38,7 @@ module XG {
   use XC
   use XE
   use XJ
+  use XK
 }
 
 module XH {
@@ -50,6 +51,14 @@ module XH {
 
 module XJ {
   header "j.h"
+}
+
+module XK {
+  textual header "k.h"
+}
+
+module XL {
+  textual header "l.h"
 }
 
 module XS {

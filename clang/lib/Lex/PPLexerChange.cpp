@@ -519,7 +519,8 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
           continue;
 
         // If it's not part of a module and not unknown, complain.
-        if (!ModMap.findModuleForHeader(File) &&
+        if (!ModMap.findModuleForHeader(File, nullptr,
+                                        /*IncludeTextualHeaders*/true) &&
             !ModMap.isHeaderInUnavailableModule(File)) {
           Diag(StartLoc, diag::warn_forgotten_module_header)
             << File->getName() << Mod->getFullModuleName();

@@ -87,6 +87,10 @@ public:
   /// \brief The headers that are explicitly excluded from this module.
   SmallVector<const FileEntry *, 2> ExcludedHeaders;
 
+  /// \brief The headers that are logically part of this module but
+  /// must be textually included.
+  SmallVector<const FileEntry *, 2> TextualHeaders;
+
   /// \brief The headers that are private to this module.
   SmallVector<const FileEntry *, 2> PrivateHeaders;
 

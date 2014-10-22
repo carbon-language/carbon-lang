@@ -71,6 +71,9 @@ public:
     NormalHeader,
     /// \brief This header is included but private.
     PrivateHeader,
+    /// \brief This header is part of the module (for layering purposes) but
+    /// should be textually included.
+    TextualHeader,
     /// \brief This header is explicitly excluded from the module.
     ExcludedHeader
     // Caution: Adding an enumerator needs other changes.
@@ -249,11 +252,16 @@ public:
   /// used from.  Used to disambiguate if a header is present in multiple
   /// modules.
   ///
+  /// \param IncludeTextualHeaders If \c true, also find textual headers. By
+  /// default, these are treated like excluded headers and result in no known
+  /// header being found.
+  ///
   /// \returns The module KnownHeader, which provides the module that owns the
   /// given header file.  The KnownHeader is default constructed to indicate
   /// that no module owns this header file.
   KnownHeader findModuleForHeader(const FileEntry *File,
-                                  Module *RequestingModule = nullptr);
+                                  Module *RequestingModule = nullptr,
+                                  bool IncludeTextualHeaders = false);
 
   /// \brief Reports errors if a module must not include a specific file.
   ///

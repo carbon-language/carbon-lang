@@ -338,27 +338,23 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
     OS << "\n";
   }
 
-  for (unsigned I = 0, N = NormalHeaders.size(); I != N; ++I) {
-    OS.indent(Indent + 2);
-    OS << "header \"";
-    OS.write_escaped(NormalHeaders[I]->getName());
-    OS << "\"\n";
+  struct HeaderKind {
+    StringRef Prefix;
+    const SmallVectorImpl<const FileEntry *> &Headers;
+  } Kinds[] = {{"", NormalHeaders},
+               {"exclude ", ExcludedHeaders},
+               {"textual ", TextualHeaders},
+               {"private ", PrivateHeaders}};
+
+  for (auto &K : Kinds) {
+    for (auto *H : K.Headers) {
+      OS.indent(Indent + 2);
+      OS << K.Prefix << "header \"";
+      OS.write_escaped(H->getName());
+      OS << "\"\n";
+    }
   }
 
-  for (unsigned I = 0, N = ExcludedHeaders.size(); I != N; ++I) {
-    OS.indent(Indent + 2);
-    OS << "exclude header \"";
-    OS.write_escaped(ExcludedHeaders[I]->getName());
-    OS << "\"\n";
-  }
-
-  for (unsigned I = 0, N = PrivateHeaders.size(); I != N; ++I) {
-    OS.indent(Indent + 2);
-    OS << "private header \"";
-    OS.write_escaped(PrivateHeaders[I]->getName());
-    OS << "\"\n";
-  }
-  
   for (submodule_const_iterator MI = submodule_begin(), MIEnd = submodule_end();
        MI != MIEnd; ++MI)
     // Print inferred subframework modules so that we don't need to re-infer
