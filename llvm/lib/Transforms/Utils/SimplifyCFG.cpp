@@ -1061,7 +1061,8 @@ static bool HoistThenElseCodeToIf(BranchInst *BI, const DataLayout *DL) {
       LLVMContext::MD_tbaa,
       LLVMContext::MD_range,
       LLVMContext::MD_fpmath,
-      LLVMContext::MD_invariant_load
+      LLVMContext::MD_invariant_load,
+      LLVMContext::MD_nonnull
     };
     combineMetadata(I1, I2, KnownIDs);
     I2->eraseFromParent();
@@ -1311,6 +1312,8 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
     if (!I2->use_empty())
       I2->replaceAllUsesWith(I1);
     I1->intersectOptionalDataWith(I2);
+    // TODO: Use combineMetadata here to preserve what metadata we can
+    // (analogous to the hoisting case above).
     I2->eraseFromParent();
 
     if (UpdateRE1)
