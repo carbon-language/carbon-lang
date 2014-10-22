@@ -38,6 +38,17 @@ __declspec(allocate("read_flag_section")) int unreferenced = 0;
 extern __declspec(allocate("read_flag_section")) int referenced = 42;
 int *user() { return &referenced; }
 
+#pragma section("no_section_attributes")
+// A pragma section with no section attributes is read/write.
+__declspec(allocate("no_section_attributes")) int implicitly_read_write = 42;
+
+#pragma section("long_section", long)
+// Pragma section ignores "long".
+__declspec(allocate("long_section")) long long_var = 42;
+
+#pragma section("short_section", short)
+// Pragma section ignores "short".
+__declspec(allocate("short_section")) short short_var = 42;
 }
 
 //CHECK: @D = global i32 1
@@ -54,5 +65,8 @@ int *user() { return &referenced; }
 //CHECK: @TEST2 = global i32 0, section ".bss1"
 //CHECK: @unreferenced = constant i32 0, section "read_flag_section"
 //CHECK: @referenced = constant i32 42, section "read_flag_section"
+//CHECK: @implicitly_read_write = global i32 42, section "no_section_attributes"
+//CHECK: @long_var = global i32 42, section "long_section"
+//CHECK: @short_var = global i16 42, section "short_section"
 //CHECK: define void @g()
 //CHECK: define void @h() {{.*}} section ".my_code"

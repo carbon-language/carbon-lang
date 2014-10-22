@@ -532,9 +532,18 @@ bool Parser::HandlePragmaMSSection(StringRef PragmaName,
         << PragmaName;
     return false;
   }
-  int SectionFlags = 0;
+  int SectionFlags = ASTContext::PSF_Read;
+  bool SectionFlagsAreDefault = true;
   while (Tok.is(tok::comma)) {
     PP.Lex(Tok); // ,
+    // Ignore "long" and "short".
+    // They are undocumented, but widely used, section attributes which appear
+    // to do nothing.
+    if (Tok.is(tok::kw_long) || Tok.is(tok::kw_short)) {
+      PP.Lex(Tok); // long/short
+      continue;
+    }
+
     if (!Tok.isAnyIdentifier()) {
       PP.Diag(PragmaLocation, diag::warn_pragma_expected_action_or_r_paren)
           << PragmaName;
@@ -560,8 +569,13 @@ bool Parser::HandlePragmaMSSection(StringRef PragmaName,
       return false;
     }
     SectionFlags |= Flag;
+    SectionFlagsAreDefault = false;
     PP.Lex(Tok); // Identifier
   }
+  // If no section attributes are specified, the section will be marked as
+  // read/write.
+  if (SectionFlagsAreDefault)
+    SectionFlags |= ASTContext::PSF_Write;
   if (Tok.isNot(tok::r_paren)) {
     PP.Diag(PragmaLocation, diag::warn_pragma_expected_rparen) << PragmaName;
     return false;
