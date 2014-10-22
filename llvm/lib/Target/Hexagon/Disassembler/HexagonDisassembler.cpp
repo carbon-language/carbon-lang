@@ -65,39 +65,6 @@ static const uint16_t DoubleRegDecoderTable[] = {
 static const uint16_t PredRegDecoderTable[] = {Hexagon::P0, Hexagon::P1,
                                                Hexagon::P2, Hexagon::P3};
 
-static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst, unsigned RegNo,
-                                               uint64_t /*Address*/,
-                                               void const *Decoder) {
-  if (RegNo > 31)
-    return MCDisassembler::Fail;
-
-  unsigned Register = IntRegDecoderTable[RegNo];
-  Inst.addOperand(MCOperand::CreateReg(Register));
-  return MCDisassembler::Success;
-}
-
-static DecodeStatus DecodeDoubleRegsRegisterClass(MCInst &Inst, unsigned RegNo,
-                                                  uint64_t /*Address*/,
-                                                  void const *Decoder) {
-  if (RegNo > 15)
-    return MCDisassembler::Fail;
-
-  unsigned Register = DoubleRegDecoderTable[RegNo];
-  Inst.addOperand(MCOperand::CreateReg(Register));
-  return MCDisassembler::Success;
-}
-
-static DecodeStatus DecodePredRegsRegisterClass(MCInst &Inst, unsigned RegNo,
-                                                uint64_t /*Address*/,
-                                                void const *Decoder) {
-  if (RegNo > 3)
-    return MCDisassembler::Fail;
-
-  unsigned Register = PredRegDecoderTable[RegNo];
-  Inst.addOperand(MCOperand::CreateReg(Register));
-  return MCDisassembler::Success;
-}
-
 #include "HexagonGenDisassemblerTables.inc"
 
 static MCDisassembler *createHexagonDisassembler(Target const &T,
