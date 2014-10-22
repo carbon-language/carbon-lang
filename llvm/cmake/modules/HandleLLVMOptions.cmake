@@ -393,7 +393,7 @@ endif()
 
 # Turn on -gsplit-dwarf if requested
 if(LLVM_USE_SPLIT_DWARF)
-  add_llvm_definitions("-gsplit-dwarf")
+  add_definitions("-gsplit-dwarf")
 endif()
 
 add_llvm_definitions( -D__STDC_CONSTANT_MACROS )
