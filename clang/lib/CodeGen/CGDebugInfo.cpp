@@ -2606,13 +2606,16 @@ void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder,
   // Set our current location.
   setLocation(Loc);
 
-  // Create a new lexical block and push it on the stack.
-  CreateLexicalBlock(Loc);
-
   // Emit a line table change for the current location inside the new scope.
   Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(getLineNumber(Loc),
                                   getColumnNumber(Loc),
                                   LexicalBlockStack.back()));
+
+  if (DebugKind <= CodeGenOptions::DebugLineTablesOnly)
+    return;
+
+  // Create a new lexical block and push it on the stack.
+  CreateLexicalBlock(Loc);
 }
 
 /// EmitLexicalBlockEnd - Constructs the debug code for exiting a declarative
@@ -2624,6 +2627,9 @@ void CGDebugInfo::EmitLexicalBlockEnd(CGBuilderTy &Builder,
   // Provide an entry in the line table for the end of the block.
   EmitLocation(Builder, Loc);
 
+  if (DebugKind <= CodeGenOptions::DebugLineTablesOnly)
+    return;
+
   LexicalBlockStack.pop_back();
 }
 
@@ -2634,8 +2640,11 @@ void CGDebugInfo::EmitFunctionEnd(CGBuilderTy &Builder) {
   assert(RCount <= LexicalBlockStack.size() && "Region stack mismatch");
 
   // Pop all regions for this function.
-  while (LexicalBlockStack.size() != RCount)
-    EmitLexicalBlockEnd(Builder, CurLoc);
+  while (LexicalBlockStack.size() != RCount) {
+    // Provide an entry in the line table for the end of the block.
+    EmitLocation(Builder, CurLoc);
+    LexicalBlockStack.pop_back();
+  }
   FnBeginRegionCount.pop_back();
 }
 

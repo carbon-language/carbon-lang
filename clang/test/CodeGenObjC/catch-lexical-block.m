@@ -10,6 +10,6 @@ void f0() {
 // We should have 3 lexical blocks here at the moment, including one
 // for the catch block.
 // CHECK: lexical_block
-// CHECK: lexical_block
 // CHECK: auto_variable
+// CHECK: lexical_block
 // CHECK: lexical_block

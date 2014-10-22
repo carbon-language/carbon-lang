@@ -39,9 +39,9 @@ void func() {
   // FIXME: Do not include scopes that have only other scopes (and no variables
   // or using declarations) as direct children, they just waste
   // space/relocations/etc.
-  // CHECK: [[FOR_BODY:![0-9]+]] = metadata !{metadata !"0xb\00[[@LINE-4]]\00{{.*}}", metadata !{{[0-9]+}}, metadata [[FOR]]} ; [ DW_TAG_lexical_block ]
-  // CHECK: = metadata !{metadata !"0x100\00{{.*}}", metadata [[FOR_COMPOUND:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [b] [line [[@LINE+2]]]
-  // CHECK: [[FOR_COMPOUND]] = metadata !{metadata !"0xb\00[[@LINE-6]]\00{{.*}}", metadata !{{[0-9]+}}, metadata [[FOR_BODY]]} ; [ DW_TAG_lexical_block ]
+  // CHECK: = metadata !{metadata !"0x100\00{{.*}}", metadata [[FOR_COMPOUND:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [b] [line [[@LINE+3]]]
+  // CHECK: [[FOR_COMPOUND]] = metadata !{metadata !"0xb\00[[@LINE-5]]\00{{.*}}", metadata !{{[0-9]+}}, metadata [[FOR_BODY:![0-9]+]]} ; [ DW_TAG_lexical_block ]
+  // CHECK: [[FOR_BODY]] = metadata !{metadata !"0xb\00[[@LINE-6]]\00{{.*}}", metadata !{{[0-9]+}}, metadata [[FOR]]} ; [ DW_TAG_lexical_block ]
     bool b = i % 2;
   }
 
