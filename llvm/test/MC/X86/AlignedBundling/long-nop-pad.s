@@ -14,7 +14,7 @@ foo:
 # To align this group to a bundle end, we need a 15-byte NOP and a 12-byte NOP.
 # CHECK:        0:  nop
 # CHECK-NEXT:   f:  nop
-# CHECK-NEXT:   1b: callq
+# CHECK:   1b: callq
 
 # This push instruction is 1 byte long
   .bundle_lock align_to_end
