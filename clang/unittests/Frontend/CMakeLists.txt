@@ -9,4 +9,5 @@ target_link_libraries(FrontendTests
   clangAST
   clangFrontend
   clangLex
+  clangSema
   )
