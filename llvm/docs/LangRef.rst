@@ -8051,7 +8051,7 @@ This function returns the same values as the libm ``fabs`` functions
 would, and handles error conditions in the same way.
 
 '``llvm.minnum.*``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
@@ -8093,7 +8093,7 @@ returns a value that compares equal to both operands. This means that
 fmin(+/-0.0, +/-0.0) could return either -0.0 or 0.0.
 
 '``llvm.maxnum.*``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
