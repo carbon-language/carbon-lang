@@ -48,6 +48,7 @@
 #define POLLY_SCOP_DETECTION_H
 
 #include "llvm/Pass.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 
 #include "polly/ScopDetectionDiagnostic.h"
@@ -118,6 +119,10 @@ extern llvm::StringRef PollySkipFnAttr;
 /// @brief Pass to detect the maximal static control parts (Scops) of a
 /// function.
 class ScopDetection : public FunctionPass {
+public:
+  typedef SetVector<const Region *> RegionSet;
+
+private:
   //===--------------------------------------------------------------------===//
   ScopDetection(const ScopDetection &) LLVM_DELETED_FUNCTION;
   const ScopDetection &operator=(const ScopDetection &) LLVM_DELETED_FUNCTION;
@@ -155,7 +160,6 @@ class ScopDetection : public FunctionPass {
   };
 
   // Remember the valid regions
-  typedef std::set<const Region *> RegionSet;
   RegionSet ValidRegions;
 
   // Remember a list of errors for every region.

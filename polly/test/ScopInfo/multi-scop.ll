@@ -33,6 +33,6 @@ for.end170:                                       ; preds = %for.body81
   ret void
 }
 
-; CHECK: Valid Region for Scop: for.body81 => for.end170
 ; CHECK: Valid Region for Scop: entry.split => for.end
+; CHECK: Valid Region for Scop: for.body81 => for.end170
 
