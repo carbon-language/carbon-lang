@@ -15,6 +15,8 @@
 #define LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCTARGETDESC_H
 
 namespace llvm {
+struct InstrItinerary;
+struct InstrStage;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
