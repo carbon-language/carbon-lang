@@ -41,6 +41,6 @@ bool SanitizerBlacklist::isBlacklistedFile(StringRef FileName,
 bool SanitizerBlacklist::isBlacklistedLocation(SourceLocation Loc,
                                                StringRef Category) const {
   return !Loc.isInvalid() &&
-         isBlacklistedFile(SM.getFilename(SM.getSpellingLoc(Loc)), Category);
+         isBlacklistedFile(SM.getFilename(SM.getFileLoc(Loc)), Category);
 }
 
