@@ -2092,10 +2092,11 @@ ASTNodeImporter::ImportTemplateArgument(const TemplateArgument &From) {
   }
 
   case TemplateArgument::Declaration: {
-    ValueDecl *FromD = From.getAsDecl();
-    if (ValueDecl *To = cast_or_null<ValueDecl>(Importer.Import(FromD)))
-      return TemplateArgument(To, From.getParamTypeForDecl());
-    return TemplateArgument();
+    ValueDecl *To = cast_or_null<ValueDecl>(Importer.Import(From.getAsDecl()));
+    QualType ToType = Importer.Import(From.getParamTypeForDecl());
+    if (!To || ToType.isNull())
+      return TemplateArgument();
+    return TemplateArgument(To, ToType);
   }
 
   case TemplateArgument::NullPtr: {
