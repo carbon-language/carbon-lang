@@ -1016,14 +1016,14 @@ static void runMRIScript() {
   exit(0);
 }
 
-int ar_main(char **argv) {
+static int ar_main(char **argv) {
   // Do our own parsing of the command line because the CommandLine utility
   // can't handle the grouped positional parameters without a dash.
   ArchiveOperation Operation = parseCommandLine();
   return performOperation(Operation, nullptr);
 }
 
-int ranlib_main() {
+static int ranlib_main() {
   if (RestOfArgs.size() != 1)
     fail(ToolName + "takes just one archive as argument");
   ArchiveName = RestOfArgs[0];
