@@ -32,7 +32,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "hexagon-disassembler"
 
-using DecodeStatus = MCDisassembler::DecodeStatus;
+// Pull DecodeStatus and its enum values into the global namespace.
+typedef llvm::MCDisassembler::DecodeStatus DecodeStatus;
 
 namespace {
 /// \brief Hexagon disassembler for all Hexagon platforms.
