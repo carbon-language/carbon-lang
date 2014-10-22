@@ -156,19 +156,17 @@ bool haveSameParity(unsigned reg1, unsigned reg2) {
 
 }
 
-bool A57PBQPConstraints::addIntraChainConstraint(PBQPRAGraph &G, unsigned Rd,
+bool A57ChainingConstraint::addIntraChainConstraint(PBQPRAGraph &G, unsigned Rd,
                                                  unsigned Ra) {
   if (Rd == Ra)
     return false;
 
-  const TargetRegisterInfo &TRI =
-    *G.getMetadata().MF.getTarget().getSubtargetImpl()->getRegisterInfo();
   LiveIntervals &LIs = G.getMetadata().LIS;
 
-  if (TRI.isPhysicalRegister(Rd) || TRI.isPhysicalRegister(Ra)) {
-    DEBUG(dbgs() << "Rd is a physical reg:" << TRI.isPhysicalRegister(Rd)
+  if (TRI->isPhysicalRegister(Rd) || TRI->isPhysicalRegister(Ra)) {
+    DEBUG(dbgs() << "Rd is a physical reg:" << TRI->isPhysicalRegister(Rd)
           << '\n');
-    DEBUG(dbgs() << "Ra is a physical reg:" << TRI.isPhysicalRegister(Ra)
+    DEBUG(dbgs() << "Ra is a physical reg:" << TRI->isPhysicalRegister(Ra)
           << '\n');
     return false;
   }
@@ -196,7 +194,7 @@ bool A57PBQPConstraints::addIntraChainConstraint(PBQPRAGraph &G, unsigned Rd,
       unsigned pRd = (*vRdAllowed)[i];
       for (unsigned j = 0, je = vRaAllowed->size(); j != je; ++j) {
         unsigned pRa = (*vRaAllowed)[j];
-        if (livesOverlap && TRI.regsOverlap(pRd, pRa))
+        if (livesOverlap && TRI->regsOverlap(pRd, pRa))
           costs[i + 1][j + 1] = std::numeric_limits<PBQP::PBQPNum>::infinity();
         else
           costs[i + 1][j + 1] = haveSameParity(pRd, pRa) ? 0.0 : 1.0;
@@ -242,23 +240,20 @@ bool A57PBQPConstraints::addIntraChainConstraint(PBQPRAGraph &G, unsigned Rd,
   return true;
 }
 
-void A57PBQPConstraints::addInterChainConstraint(PBQPRAGraph &G, unsigned Rd,
+void A57ChainingConstraint::addInterChainConstraint(PBQPRAGraph &G, unsigned Rd,
                                                  unsigned Ra) {
-  const TargetRegisterInfo &TRI =
-    *G.getMetadata().MF.getTarget().getSubtargetImpl()->getRegisterInfo();
-  (void)TRI;
   LiveIntervals &LIs = G.getMetadata().LIS;
 
   // Do some Chain management
   if (Chains.count(Ra)) {
     if (Rd != Ra) {
-      DEBUG(dbgs() << "Moving acc chain from " << PrintReg(Ra, &TRI) << " to "
-                   << PrintReg(Rd, &TRI) << '\n';);
+      DEBUG(dbgs() << "Moving acc chain from " << PrintReg(Ra, TRI) << " to "
+                   << PrintReg(Rd, TRI) << '\n';);
       Chains.remove(Ra);
       Chains.insert(Rd);
     }
   } else {
-    DEBUG(dbgs() << "Creating new acc chain for " << PrintReg(Rd, &TRI)
+    DEBUG(dbgs() << "Creating new acc chain for " << PrintReg(Rd, TRI)
                  << '\n';);
     Chains.insert(Rd);
   }
@@ -322,24 +317,41 @@ void A57PBQPConstraints::addInterChainConstraint(PBQPRAGraph &G, unsigned Rd,
   }
 }
 
-void A57PBQPConstraints::apply(PBQPRAGraph &G) {
-  MachineFunction &MF = G.getMetadata().MF;
+static bool regJustKilledBefore(const LiveIntervals &LIs, unsigned reg,
+                                const MachineInstr &MI) {
+  LiveInterval LI = LIs.getInterval(reg);
+  SlotIndex SI = LIs.getInstructionIndex(&MI);
+  return LI.expiredAt(SI);
+}
 
-  const TargetRegisterInfo &TRI =
-    *MF.getTarget().getSubtargetImpl()->getRegisterInfo();
-  (void)TRI;
+void A57ChainingConstraint::apply(PBQPRAGraph &G) {
+  const MachineFunction &MF = G.getMetadata().MF;
+  LiveIntervals &LIs = G.getMetadata().LIS;
+
+  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
   DEBUG(MF.dump());
 
-  for (MachineFunction::const_iterator mbbItr = MF.begin(), mbbEnd = MF.end();
-       mbbItr != mbbEnd; ++mbbItr) {
-    const MachineBasicBlock *MBB = &*mbbItr;
+  for (const auto &MBB: MF) {
     Chains.clear(); // FIXME: really needed ? Could not work at MF level ?
 
-    for (MachineBasicBlock::const_iterator miItr = MBB->begin(),
-                                           miEnd = MBB->end();
-         miItr != miEnd; ++miItr) {
-      const MachineInstr *MI = &*miItr;
-      switch (MI->getOpcode()) {
+    for (const auto &MI: MBB) {
+
+      // Forget Chains which have expired
+      for (auto r : Chains) {
+        SmallVector<unsigned, 8> toDel;
+        if(regJustKilledBefore(LIs, r, MI)) {
+          DEBUG(dbgs() << "Killing chain " << PrintReg(r, TRI) << " at ";
+                MI.print(dbgs()););
+          toDel.push_back(r);
+        }
+
+        while (!toDel.empty()) {
+          Chains.remove(toDel.back());
+          toDel.pop_back();
+        }
+      }
+
+      switch (MI.getOpcode()) {
       case AArch64::FMSUBSrrr:
       case AArch64::FMADDSrrr:
       case AArch64::FNMSUBSrrr:
@@ -348,8 +360,8 @@ void A57PBQPConstraints::apply(PBQPRAGraph &G) {
       case AArch64::FMADDDrrr:
       case AArch64::FNMSUBDrrr:
       case AArch64::FNMADDDrrr: {
-        unsigned Rd = MI->getOperand(0).getReg();
-        unsigned Ra = MI->getOperand(3).getReg();
+        unsigned Rd = MI.getOperand(0).getReg();
+        unsigned Ra = MI.getOperand(3).getReg();
 
         if (addIntraChainConstraint(G, Rd, Ra))
           addInterChainConstraint(G, Rd, Ra);
@@ -358,26 +370,13 @@ void A57PBQPConstraints::apply(PBQPRAGraph &G) {
 
       case AArch64::FMLAv2f32:
       case AArch64::FMLSv2f32: {
-        unsigned Rd = MI->getOperand(0).getReg();
+        unsigned Rd = MI.getOperand(0).getReg();
         addInterChainConstraint(G, Rd, Rd);
         break;
       }
 
       default:
-        // Forget Chains which have been killed
-        for (auto r : Chains) {
-          SmallVector<unsigned, 8> toDel;
-          if (MI->killsRegister(r)) {
-            DEBUG(dbgs() << "Killing chain " << PrintReg(r, &TRI) << " at ";
-                  MI->print(dbgs()););
-            toDel.push_back(r);
-          }
-
-          while (!toDel.empty()) {
-            Chains.remove(toDel.back());
-            toDel.pop_back();
-          }
-        }
+        break;
       }
     }
   }

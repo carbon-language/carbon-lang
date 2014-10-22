@@ -137,5 +137,8 @@ bool AArch64Subtarget::enableEarlyIfConversion() const {
 
 std::unique_ptr<PBQPRAConstraint>
 AArch64Subtarget::getCustomPBQPConstraints() const {
-  return llvm::make_unique<A57PBQPConstraints>();
+  if (!isCortexA57())
+    return nullptr;
+
+  return llvm::make_unique<A57ChainingConstraint>();
 }

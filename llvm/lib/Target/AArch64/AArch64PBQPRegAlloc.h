@@ -15,14 +15,15 @@
 
 namespace llvm {
 
-class A57PBQPConstraints : public PBQPRAConstraint {
+/// Add the accumulator chaining constraint to a PBQP graph
+class A57ChainingConstraint : public PBQPRAConstraint {
 public:
-
   // Add A57 specific constraints to the PBQP graph.
   void apply(PBQPRAGraph &G) override;
 
 private:
   SmallSetVector<unsigned, 32> Chains;
+  const TargetRegisterInfo *TRI;
 
   // Add the accumulator chaining constraint, inside the chain, i.e. so that
   // parity(Rd) == parity(Ra).
@@ -32,7 +33,6 @@ private:
   // Add constraints between existing chains
   void addInterChainConstraint(PBQPRAGraph &G, unsigned Rd, unsigned Ra);
 };
-
 }
 
 #endif // LLVM_LIB_TARGET_AARCH64_AARCH64PBQPREGALOC_H
