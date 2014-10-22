@@ -31,8 +31,6 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
-#include "lldb/Target/StackFrame.h"
-#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -4233,120 +4231,6 @@ CommandObjectTypeFilterAdd::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
-//-------------------------------------------------------------------------
-// CommandObjectTypeInfo
-//-------------------------------------------------------------------------
-
-class CommandObjectTypeInfo : public CommandObjectParsed
-{
-public:
-    CommandObjectTypeInfo (CommandInterpreter &interpreter) :
-    CommandObjectParsed (interpreter,
-                         "type info",
-                         "Discover formatters applied to a variable.",
-                         NULL,
-                         eFlagRequiresFrame |
-                         eFlagTryTargetAPILock |
-                         eFlagProcessMustBeLaunched |
-                         eFlagProcessMustBePaused |
-                         eFlagRequiresProcess)
-    {
-        CommandArgumentEntry type_arg;
-        CommandArgumentData type_style_arg;
-        
-        type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatPlus;
-        
-        type_arg.push_back (type_style_arg);
-        
-        m_arguments.push_back (type_arg);
-    }
-    
-    ~CommandObjectTypeInfo ()
-    {
-    }
-    
-protected:
-    bool
-    DoExecute (Args& command, CommandReturnObject &result)
-    {
-        const size_t argc = command.GetArgumentCount();
-        
-        auto frame_sp(m_interpreter.GetDebugger().GetSelectedTarget()->GetProcessSP()->GetThreadList().GetSelectedThread()->GetSelectedFrame());
-        
-        for (size_t i = 0; i < argc; i++)
-        {
-            const char* varName = command.GetArgumentAtIndex(i);
-            if (!varName || 0 == varName[0])
-                continue;
-            
-            VariableSP var_sp;
-            Error error;
-            
-            ValueObjectSP valobj_sp(frame_sp->GetValueForVariableExpressionPath(varName, lldb::eDynamicDontRunTarget, 0, var_sp, error));
-            if (valobj_sp)
-            {
-                valobj_sp = valobj_sp->GetQualifiedRepresentationIfAvailable(lldb::eDynamicDontRunTarget, true);
-                
-                auto format_sp(valobj_sp->GetValueFormat());
-                auto summary_sp(valobj_sp->GetSummaryFormat());
-                auto synth_sp(valobj_sp->GetSyntheticChildren());
-                auto validator_sp(valobj_sp->GetValidator());
-                
-                if (format_sp)
-                {
-                    result.GetOutputStream().Printf("Value %s has a custom format: %s\n",
-                                                    varName,
-                                                    format_sp->GetDescription().c_str());
-                }
-                else
-                {
-                    result.GetOutputStream().Printf("Value %s has no custom format\n", varName);
-                }
-                
-                if (summary_sp)
-                {
-                    result.GetOutputStream().Printf("Value %s has a custom summary: %s\n",
-                                                    varName,
-                                                    summary_sp->GetDescription().c_str());
-                }
-                else
-                {
-                    result.GetOutputStream().Printf("Value %s has no custom summary\n", varName);
-                }
-
-                if (synth_sp)
-                {
-                    result.GetOutputStream().Printf("Value %s has a custom synthetic provider: %s\n",
-                                                    varName,
-                                                    synth_sp->GetDescription().c_str());
-                }
-                else
-                {
-                    result.GetOutputStream().Printf("Value %s has no custom synthetic provider\n", varName);
-                }
-
-                if (validator_sp)
-                {
-                    result.GetOutputStream().Printf("Value %s has a custom validator: %s\n",
-                                                    varName,
-                                                    validator_sp->GetDescription().c_str());
-                }
-                else
-                {
-                    result.GetOutputStream().Printf("Value %s has no custom validator\n", varName);
-                }
-                
-            }
-            else
-                result.AppendWarningWithFormat("Could not resolve '%s' to a local variable\n", varName);
-        }
-        
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        return result.Succeeded();
-    }
-};
-
 class CommandObjectTypeFormat : public CommandObjectMultiword
 {
 public:
@@ -4467,7 +4351,6 @@ CommandObjectType::CommandObjectType (CommandInterpreter &interpreter) :
                             "type [<sub-command-options>]")
 {
     LoadSubCommand ("category",  CommandObjectSP (new CommandObjectTypeCategory (interpreter)));
-    LoadSubCommand ("info",      CommandObjectSP (new CommandObjectTypeInfo (interpreter)));
     LoadSubCommand ("filter",    CommandObjectSP (new CommandObjectTypeFilter (interpreter)));
     LoadSubCommand ("format",    CommandObjectSP (new CommandObjectTypeFormat (interpreter)));
     LoadSubCommand ("summary",   CommandObjectSP (new CommandObjectTypeSummary (interpreter)));
