@@ -111,6 +111,7 @@ Run lldb test suite using a separate process for each test file.
 
     print "Ran %d tests." % num_tests
     if len(failed) > 0:
+        failed.sort()
         print "Failing Tests (%d)" % len(failed)
         for f in failed:
           print "FAIL: LLDB (suite) :: %s (%s)" % (f, system_info)
