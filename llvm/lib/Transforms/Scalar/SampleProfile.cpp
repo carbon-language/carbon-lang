@@ -249,8 +249,8 @@ unsigned SampleProfileLoader::getBlockWeight(BasicBlock *B) {
 
   // Otherwise, compute and cache B's weight.
   unsigned Weight = 0;
-  for (BasicBlock::iterator I = B->begin(), E = B->end(); I != E; ++I) {
-    unsigned InstWeight = getInstWeight(*I);
+  for (auto &I : B->getInstList()) {
+    unsigned InstWeight = getInstWeight(I);
     if (InstWeight > Weight)
       Weight = InstWeight;
   }
@@ -267,7 +267,7 @@ unsigned SampleProfileLoader::getBlockWeight(BasicBlock *B) {
 bool SampleProfileLoader::computeBlockWeights(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "Block weights\n");
-  for (Function::iterator B = F.begin(), E = F.end(); B != E; ++B) {
+  for (auto B = F.begin(), E = F.end(); B != E; ++B) {
     unsigned Weight = getBlockWeight(B);
     Changed |= (Weight > 0);
     DEBUG(printBlockWeight(dbgs(), B));
@@ -302,9 +302,7 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
 void SampleProfileLoader::findEquivalencesFor(
     BasicBlock *BB1, SmallVector<BasicBlock *, 8> Descendants,
     DominatorTreeBase<BasicBlock> *DomTree) {
-  for (SmallVectorImpl<BasicBlock *>::iterator I = Descendants.begin(),
-                                               E = Descendants.end();
-       I != E; ++I) {
+  for (auto I = Descendants.begin(), E = Descendants.end(); I != E; ++I) {
     BasicBlock *BB2 = *I;
     bool IsDomParent = DomTree->dominates(BB2, BB1);
     bool IsInSameLoop = LI->getLoopFor(BB1) == LI->getLoopFor(BB2);
@@ -340,7 +338,7 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
   SmallVector<BasicBlock *, 8> DominatedBBs;
   DEBUG(dbgs() << "\nBlock equivalence classes\n");
   // Find equivalence sets based on dominance and post-dominance information.
-  for (Function::iterator B = F.begin(), E = F.end(); B != E; ++B) {
+  for (auto B = F.begin(), E = F.end(); B != E; ++B) {
     BasicBlock *BB1 = B;
 
     // Compute BB1's equivalence class once.
@@ -388,7 +386,7 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
   // each equivalence class has the largest weight, assign that weight
   // to all the blocks in that equivalence class.
   DEBUG(dbgs() << "\nAssign the same weight to all blocks in the same class\n");
-  for (Function::iterator B = F.begin(), E = F.end(); B != E; ++B) {
+  for (auto B = F.begin(), E = F.end(); B != E; ++B) {
     BasicBlock *BB = B;
     BasicBlock *EquivBB = EquivalenceClass[BB];
     if (BB != EquivBB)
@@ -432,7 +430,7 @@ unsigned SampleProfileLoader::visitEdge(Edge E, unsigned *NumUnknownEdges,
 bool SampleProfileLoader::propagateThroughEdges(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "\nPropagation through edges\n");
-  for (Function::iterator BI = F.begin(), EI = F.end(); BI != EI; ++BI) {
+  for (auto BI = F.begin(), EI = F.end(); BI != EI; ++BI) {
     BasicBlock *BB = BI;
 
     // Visit all the predecessor and successor edges to determine
@@ -447,16 +445,16 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
 
       if (i == 0) {
         // First, visit all predecessor edges.
-        for (size_t I = 0; I < Predecessors[BB].size(); I++) {
-          Edge E = std::make_pair(Predecessors[BB][I], BB);
+        for (auto *Pred : Predecessors[BB]) {
+          Edge E = std::make_pair(Pred, BB);
           TotalWeight += visitEdge(E, &NumUnknownEdges, &UnknownEdge);
           if (E.first == E.second)
             SelfReferentialEdge = E;
         }
       } else {
         // On the second round, visit all successor edges.
-        for (size_t I = 0; I < Successors[BB].size(); I++) {
-          Edge E = std::make_pair(BB, Successors[BB][I]);
+        for (auto *Succ : Successors[BB]) {
+          Edge E = std::make_pair(BB, Succ);
           TotalWeight += visitEdge(E, &NumUnknownEdges, &UnknownEdge);
         }
       }
@@ -534,7 +532,7 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
 /// We are interested in unique edges. If a block B1 has multiple
 /// edges to another block B2, we only add a single B1->B2 edge.
 void SampleProfileLoader::buildEdges(Function &F) {
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+  for (auto I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *B1 = I;
 
     // Add predecessors for B1.
@@ -596,7 +594,7 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   // edge weights computed during propagation.
   DEBUG(dbgs() << "\nPropagation complete. Setting branch weights\n");
   MDBuilder MDB(F.getContext());
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+  for (auto I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *B = I;
     TerminatorInst *TI = B->getTerminator();
     if (TI->getNumSuccessors() == 1)
@@ -638,10 +636,9 @@ void SampleProfileLoader::propagateWeights(Function &F) {
 /// \returns a valid DISubprogram, if found. Otherwise, it returns an empty
 /// DISubprogram.
 static const DISubprogram getDISubprogram(Function &F, const LLVMContext &Ctx) {
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+  for (auto I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *B = I;
-    for (BasicBlock::iterator BI = B->begin(), BE = B->end(); BI != BE; ++BI) {
-      Instruction &Inst = *BI;
+    for (auto &Inst : B->getInstList()) {
       DebugLoc DLoc = Inst.getDebugLoc();
       if (DLoc.isUnknown())
         continue;
