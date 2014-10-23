@@ -92,10 +92,45 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
 
 void ARMInstrInfo::expandLoadStackGuard(MachineBasicBlock::iterator MI,
                                         Reloc::Model RM) const {
-  if (RM == Reloc::PIC_)
-    expandLoadStackGuardBase(MI, ARM::LDRLIT_ga_pcrel, ARM::LDRi12, RM);
-  else
-    expandLoadStackGuardBase(MI, ARM::LDRLIT_ga_abs, ARM::LDRi12, RM);
+  MachineFunction &MF = *MI->getParent()->getParent();
+  const ARMSubtarget &Subtarget = MF.getTarget().getSubtarget<ARMSubtarget>();
+
+  if (!Subtarget.useMovt(MF)) {
+    if (RM == Reloc::PIC_)
+      expandLoadStackGuardBase(MI, ARM::LDRLIT_ga_pcrel, ARM::LDRi12, RM);
+    else
+      expandLoadStackGuardBase(MI, ARM::LDRLIT_ga_abs, ARM::LDRi12, RM);
+    return;
+  }
+
+  if (RM != Reloc::PIC_) {
+    expandLoadStackGuardBase(MI, ARM::MOVi32imm, ARM::LDRi12, RM);
+    return;
+  }
+
+  const GlobalValue *GV =
+      cast<GlobalValue>((*MI->memoperands_begin())->getValue());
+
+  if (!Subtarget.GVIsIndirectSymbol(GV, RM)) {
+    expandLoadStackGuardBase(MI, ARM::MOV_ga_pcrel, ARM::LDRi12, RM);
+    return;
+  }
+
+  MachineBasicBlock &MBB = *MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
+  unsigned Reg = MI->getOperand(0).getReg();
+  MachineInstrBuilder MIB;
+
+  MIB = BuildMI(MBB, MI, DL, get(ARM::MOV_ga_pcrel_ldr), Reg)
+            .addGlobalAddress(GV, 0, ARMII::MO_NONLAZY);
+  unsigned Flag = MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant;
+  MachineMemOperand *MMO = MBB.getParent()->getMachineMemOperand(
+      MachinePointerInfo::getGOT(), Flag, 4, 4);
+  MIB.addMemOperand(MMO);
+  MIB = BuildMI(MBB, MI, DL, get(ARM::LDRi12), Reg);
+  MIB.addReg(Reg, RegState::Kill).addImm(0);
+  MIB.setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+  AddDefaultPred(MIB);
 }
 
 namespace {

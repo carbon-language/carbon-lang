@@ -1,6 +1,9 @@
 ; RUN: llc < %s -mtriple=arm-apple-ios -relocation-model=pic -no-integrated-as | FileCheck %s -check-prefix=PIC
 ; RUN: llc < %s -mtriple=arm-apple-ios -relocation-model=static -no-integrated-as | FileCheck %s -check-prefix=NO-PIC -check-prefix=STATIC
 ; RUN: llc < %s -mtriple=arm-apple-ios -relocation-model=dynamic-no-pic -no-integrated-as | FileCheck %s  -check-prefix=NO-PIC -check-prefix=DYNAMIC-NO-PIC
+; RUN: llc < %s -mtriple=armv7-apple-ios -mcpu=cortex-a8 -relocation-model=pic -no-integrated-as | FileCheck %s -check-prefix=PIC-V7
+; RUN: llc < %s -mtriple=armv7-apple-ios -mcpu=cortex-a8 -relocation-model=static -no-integrated-as | FileCheck %s -check-prefix=STATIC-V7
+; RUN: llc < %s -mtriple=armv7-apple-ios -mcpu=cortex-a8 -relocation-model=dynamic-no-pic -no-integrated-as | FileCheck %s -check-prefix=DYNAMIC-NO-PIC-V7
 
 ;PIC:   foo2
 ;PIC:   ldr [[R0:r[0-9]+]], [[LABEL0:LCPI[0-9_]+]]
@@ -22,6 +25,27 @@
 
 ;DYNAMIC-NO-PIC:      [[LABEL0]]:
 ;DYNAMIC-NO-PIC-NEXT:   .long L___stack_chk_guard$non_lazy_ptr
+
+;PIC-V7:   movw [[R0:r[0-9]+]], :lower16:(L___stack_chk_guard$non_lazy_ptr-([[LABEL0:LPC[0-9_]+]]+8))
+;PIC-V7:   movt [[R0]], :upper16:(L___stack_chk_guard$non_lazy_ptr-([[LABEL0]]+8))
+;PIC-V7: [[LABEL0]]:
+;PIC-V7:   ldr [[R0]], {{\[}}pc, [[R0]]{{\]}}
+;PIC-V7:   ldr [[R0]], {{\[}}[[R0]]{{\]}}
+
+;PIC-V7: L___stack_chk_guard$non_lazy_ptr:
+;PIC-V7:   .indirect_symbol        ___stack_chk_guard
+
+;STATIC-V7: movw [[R0:r[0-9]+]], :lower16:___stack_chk_guard
+;STATIC-V7: movt [[R0]], :upper16:___stack_chk_guard
+;STATIC-V7: ldr  [[R0]], {{\[}}[[R0]]{{\]}}
+
+;DYNAMIC-NO-PIC-V7: movw [[R0:r[0-9]+]], :lower16:L___stack_chk_guard$non_lazy_ptr
+;DYNAMIC-NO-PIC-V7: movt [[R0]], :upper16:L___stack_chk_guard$non_lazy_ptr
+;DYNAMIC-NO-PIC-V7: ldr  [[R0]], {{\[}}[[R0]]{{\]}}
+;DYNAMIC-NO-PIC-V7: ldr  [[R0]], {{\[}}[[R0]]{{\]}}
+
+;DYNAMIC-NO-PIC-V7: L___stack_chk_guard$non_lazy_ptr:
+;DYNAMIC-NO-PIC-V7:   .indirect_symbol        ___stack_chk_guard
 
 ; Function Attrs: nounwind ssp
 define i32 @test_stack_guard_remat() #0 {
