@@ -182,6 +182,8 @@ size_t
 ConnectionGenericFile::Read(void *dst, size_t dst_len, uint32_t timeout_usec, lldb::ConnectionStatus &status, Error *error_ptr)
 {
     ReturnInfo return_info;
+    BOOL result = 0;
+    DWORD bytes_read = 0;
 
     if (error_ptr)
         error_ptr->Clear();
@@ -194,7 +196,7 @@ ConnectionGenericFile::Read(void *dst, size_t dst_len, uint32_t timeout_usec, ll
 
     m_overlapped.hEvent = m_event_handles[kBytesAvailableEvent];
 
-    BOOL result = ::ReadFile(m_file, dst, dst_len, NULL, &m_overlapped);
+    result = ::ReadFile(m_file, dst, dst_len, NULL, &m_overlapped);
     if (result || ::GetLastError() == ERROR_IO_PENDING)
     {
         if (!result)
@@ -222,7 +224,6 @@ ConnectionGenericFile::Read(void *dst, size_t dst_len, uint32_t timeout_usec, ll
             }
         }
         // The data is ready.  Figure out how much was read and return;
-        DWORD bytes_read = 0;
         if (!::GetOverlappedResult(m_file, &m_overlapped, &bytes_read, FALSE))
         {
             DWORD result_error = ::GetLastError();
@@ -279,6 +280,8 @@ size_t
 ConnectionGenericFile::Write(const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr)
 {
     ReturnInfo return_info;
+    DWORD bytes_written = 0;
+    BOOL result = 0;
 
     if (error_ptr)
         error_ptr->Clear();
@@ -292,14 +295,13 @@ ConnectionGenericFile::Write(const void *src, size_t src_len, lldb::ConnectionSt
     m_overlapped.hEvent = NULL;
 
     // Writes are not interruptible like reads are, so just block until it's done.
-    BOOL result = ::WriteFile(m_file, src, src_len, NULL, &m_overlapped);
+    result = ::WriteFile(m_file, src, src_len, NULL, &m_overlapped);
     if (!result && ::GetLastError() != ERROR_IO_PENDING)
     {
         return_info.Set(0, eConnectionStatusError, ::GetLastError());
         goto finish;
     }
 
-    DWORD bytes_written = 0;
     if (!::GetOverlappedResult(m_file, &m_overlapped, &bytes_written, TRUE))
     {
         return_info.Set(bytes_written, eConnectionStatusError, ::GetLastError());
