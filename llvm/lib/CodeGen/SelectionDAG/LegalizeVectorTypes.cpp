@@ -454,11 +454,11 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_BITCAST(SDNode *N) {
                      N->getValueType(0), Elt);
 }
 
-/// ScalarizeVecOp_EXTEND - If the value to extend is a vector that needs
-/// to be scalarized, it must be <1 x ty>.  Extend the element instead.
+/// ScalarizeVecOp_UnaryOp - If the input is a vector that needs to be
+/// scalarized, it must be <1 x ty>.  Do the operation on the element instead.
 SDValue DAGTypeLegalizer::ScalarizeVecOp_UnaryOp(SDNode *N) {
   assert(N->getValueType(0).getVectorNumElements() == 1 &&
-         "Unexected vector type!");
+         "Unexpected vector type!");
   SDValue Elt = GetScalarizedVector(N->getOperand(0));
   SDValue Op = DAG.getNode(N->getOpcode(), SDLoc(N),
                            N->getValueType(0).getScalarType(), Elt);
