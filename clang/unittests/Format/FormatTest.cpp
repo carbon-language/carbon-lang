@@ -111,6 +111,7 @@ TEST_F(FormatTest, NestedNameSpecifiers) {
   verifyFormat("vector<::Type> v;");
   verifyFormat("::ns::SomeFunction(::ns::SomeOtherFunction())");
   verifyFormat("static constexpr bool Bar = decltype(bar())::value;");
+  verifyFormat("bool a = 2 < ::SomeFunction();");
 }
 
 TEST_F(FormatTest, OnlyGeneratesNecessaryReplacements) {

@@ -1701,9 +1701,10 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       Right.getPrecedence() == prec::Assignment)
     return false;
   if (Right.is(tok::coloncolon) && Left.isNot(tok::l_brace))
-    return (Left.is(tok::less) && Style.Standard == FormatStyle::LS_Cpp03) ||
-           !Left.isOneOf(tok::identifier, tok::greater, tok::l_paren,
-                         tok::r_paren, tok::less);
+    return (Left.Type == TT_TemplateOpener &&
+            Style.Standard == FormatStyle::LS_Cpp03) ||
+           !(Left.isOneOf(tok::identifier, tok::l_paren, tok::r_paren) ||
+             Left.Type == TT_TemplateCloser || Left.Type == TT_TemplateOpener);
   if ((Left.Type == TT_TemplateOpener) != (Right.Type == TT_TemplateCloser))
     return Style.SpacesInAngles;
   if ((Right.Type == TT_BinaryOperator && !Left.is(tok::l_paren)) ||
