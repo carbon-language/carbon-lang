@@ -55,9 +55,6 @@ int C::count = 0;
 template <class T>
 std::weak_ptr<T> source (std::shared_ptr<T> p) { return std::weak_ptr<T>(p); }
 
-template <class T>
-void sink (std::weak_ptr<T> &&) {}
-
 int main()
 {
     static_assert(( std::is_convertible<std::weak_ptr<A>, std::weak_ptr<B> >::value), "");

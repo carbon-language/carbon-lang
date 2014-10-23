@@ -55,8 +55,10 @@ int C::count = 0;
 template <class T>
 std::weak_ptr<T> source (std::shared_ptr<T> p) { return std::weak_ptr<T>(p); }
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class T>
 void sink (std::weak_ptr<T> &&) {}
+#endif
 
 int main()
 {
@@ -98,6 +100,7 @@ int main()
     assert(B::count == 0);
     assert(A::count == 0);
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::shared_ptr<A> ps(new A);
         std::weak_ptr<A> pA = source(ps);
@@ -107,4 +110,5 @@ int main()
     }
     assert(B::count == 0);
     assert(A::count == 0);
+#endif
 }
