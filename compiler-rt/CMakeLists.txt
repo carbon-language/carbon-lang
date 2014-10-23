@@ -246,10 +246,15 @@ if(MSVC)
   # Replace the /MD[d] flags with /MT.
   # FIXME: In fact, sanitizers should support both /MT and /MD, see PR20214.
   if(COMPILER_RT_HAS_MT_FLAG)
-    string(REPLACE "/MDd" "/MT" CMAKE_CXX_FLAGS_DEBUG
-           "${CMAKE_CXX_FLAGS_DEBUG}")
-    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE
-           "${CMAKE_CXX_FLAGS_RELEASE}")
+    foreach(flag_var
+      CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+      CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+      if(${flag_var} MATCHES "/MD")
+        string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+      elseif(${flag_var} MATCHES "/MDd")
+        string(REGEX REPLACE "/MDd" "/MT" ${flag_var} "${${flag_var}}")
+      endif()
+    endforeach()
   endif()
   append_list_if(COMPILER_RT_HAS_Oy_FLAG /Oy- SANITIZER_COMMON_CFLAGS)
   append_list_if(COMPILER_RT_HAS_GS_FLAG /GS- SANITIZER_COMMON_CFLAGS)
