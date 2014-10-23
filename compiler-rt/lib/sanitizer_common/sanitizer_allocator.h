@@ -1015,12 +1015,15 @@ class LargeMmapAllocator {
     if (map_size < size) return AllocatorReturnNull();  // Overflow.
     uptr map_beg = reinterpret_cast<uptr>(
         MmapOrDie(map_size, "LargeMmapAllocator"));
+    CHECK(IsAligned(map_beg, page_size_));
     MapUnmapCallback().OnMap(map_beg, map_size);
     uptr map_end = map_beg + map_size;
     uptr res = map_beg + page_size_;
     if (res & (alignment - 1))  // Align.
       res += alignment - (res & (alignment - 1));
-    CHECK_EQ(0, res & (alignment - 1));
+    CHECK(IsAligned(res, alignment));
+    CHECK(IsAligned(res, page_size_));
+    CHECK_GE(res + size, map_beg);
     CHECK_LE(res + size, map_end);
     Header *h = GetHeader(res);
     h->size = size;
