@@ -253,12 +253,6 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
   HeadersMap::iterator Known = findKnownHeader(File);
   if (Known != Headers.end()) {
     for (const KnownHeader &Header : Known->second) {
-      // Excluded headers don't really belong to a module.
-      if (Header.getRole() == ModuleMap::ExcludedHeader) {
-        Excluded = true;
-        continue;
-      }
-
       // If 'File' is part of 'RequestingModule' we can definitely include it.
       if (Header.getModule() == RequestingModule)
         return;
@@ -281,6 +275,8 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
       // We have found a module that we can happily use.
       return;
     }
+
+    Excluded = true;
   }
 
   // We have found a header, but it is private.
@@ -332,10 +328,6 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
     for (SmallVectorImpl<KnownHeader>::iterator I = Known->second.begin(),
                                                 E = Known->second.end();
          I != E; ++I) {
-      // Cannot use a module if the header is excluded in it.
-      if (I->getRole() == ModuleMap::ExcludedHeader)
-        continue;
-
       // Cannot use a module if it is unavailable.
       if (!I->getModule()->isAvailable())
         continue;
@@ -791,9 +783,7 @@ void ModuleMap::setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir) {
 
 void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
                           ModuleHeaderRole Role) {
-  if (Role == ExcludedHeader) {
-    Mod->ExcludedHeaders.push_back(Header);
-  } else if (Role == TextualHeader) {
+  if (Role == TextualHeader) {
     Mod->TextualHeaders.push_back(Header);
   } else {
     if (Role == PrivateHeader)
@@ -804,6 +794,16 @@ void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
     HeaderInfo.MarkFileModuleHeader(Header, Role, isCompilingModuleHeader);
   }
   Headers[Header].push_back(KnownHeader(Mod, Role));
+}
+
+void ModuleMap::excludeHeader(Module *Mod, const FileEntry *Header) {
+  Mod->ExcludedHeaders.push_back(Header);
+
+  // Add this as a known header so we won't implicitly add it to any
+  // umbrella directory module.
+  // FIXME: Should we only exclude it from umbrella modules within the
+  // specified module?
+  (void) Headers[Header];
 }
 
 const FileEntry *
@@ -1767,12 +1767,12 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
         // Record this umbrella header.
         Map.setUmbrellaHeader(ActiveModule, File);
       }
+    } else if (LeadingToken == MMToken::ExcludeKeyword) {
+      Map.excludeHeader(ActiveModule, File);
     } else {
       // Record this header.
       ModuleMap::ModuleHeaderRole Role = ModuleMap::NormalHeader;
-      if (LeadingToken == MMToken::ExcludeKeyword)
-        Role = ModuleMap::ExcludedHeader;
-      else if (LeadingToken == MMToken::PrivateKeyword)
+      if (LeadingToken == MMToken::PrivateKeyword)
         Role = ModuleMap::PrivateHeader;
       else if (LeadingToken == MMToken::TextualKeyword)
         Role = ModuleMap::TextualHeader;

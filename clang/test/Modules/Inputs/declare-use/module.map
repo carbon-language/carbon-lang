@@ -61,5 +61,10 @@ module XL {
   textual header "l.h"
 }
 
+module XM {
+  private textual header "m.h"
+  textual header "m2.h"
+}
+
 module XS {
 }

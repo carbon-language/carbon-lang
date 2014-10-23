@@ -74,8 +74,6 @@ public:
     /// \brief This header is part of the module (for layering purposes) but
     /// should be textually included.
     TextualHeader,
-    /// \brief This header is explicitly excluded from the module.
-    ExcludedHeader
     // Caution: Adding an enumerator needs other changes.
     // Adjust the number of bits for KnownHeader::Storage.
     // Adjust the bitfield HeaderFileInfo::HeaderRole size.
@@ -99,8 +97,8 @@ public:
     ModuleHeaderRole getRole() const { return Storage.getInt(); }
 
     /// \brief Whether this header is available in the module.
-    bool isAvailable() const { 
-      return getRole() != ExcludedHeader && getModule()->isAvailable(); 
+    bool isAvailable() const {
+      return getModule()->isAvailable();
     }
 
     // \brief Whether this known header is valid (i.e., it has an
@@ -443,6 +441,9 @@ public:
   /// \param Role The role of the header wrt the module.
   void addHeader(Module *Mod, const FileEntry *Header,
                  ModuleHeaderRole Role);
+
+  /// \brief Marks this header as being excluded from the given module.
+  void excludeHeader(Module *Mod, const FileEntry *Header);
 
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
