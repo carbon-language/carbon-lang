@@ -20,6 +20,7 @@
 #include <cassert>
 
 #include "../test_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {
@@ -48,4 +49,36 @@ int main()
         assert(f.valid());
     }
     assert(test_alloc_base::count == 0);
+    // Test with a minimal allocator
+    {
+        std::promise<int> p(std::allocator_arg, bare_allocator<void>());
+        std::future<int> f = p.get_future();
+        assert(f.valid());
+    }
+    {
+        std::promise<int&> p(std::allocator_arg, bare_allocator<void>());
+        std::future<int&> f = p.get_future();
+        assert(f.valid());
+    }
+    {
+        std::promise<void> p(std::allocator_arg, bare_allocator<void>());
+        std::future<void> f = p.get_future();
+        assert(f.valid());
+    }
+    // Test with a minimal allocator that returns class-type pointers
+    {
+        std::promise<int> p(std::allocator_arg, min_allocator<void>());
+        std::future<int> f = p.get_future();
+        assert(f.valid());
+    }
+    {
+        std::promise<int&> p(std::allocator_arg, min_allocator<void>());
+        std::future<int&> f = p.get_future();
+        assert(f.valid());
+    }
+    {
+        std::promise<void> p(std::allocator_arg, min_allocator<void>());
+        std::future<void> f = p.get_future();
+        assert(f.valid());
+    }
 }

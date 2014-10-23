@@ -20,6 +20,7 @@
 #include <cassert>
 
 #include "../../test_allocator.h"
+#include "min_allocator.h"
 
 class A
 {
@@ -94,4 +95,30 @@ int main()
         assert(f.get() == 4);
     }
     assert(test_alloc_base::count == 0);
+    A::n_copies = 0;
+    A::n_moves  = 0;
+    {
+        std::packaged_task<double(int, char)> p(std::allocator_arg,
+                                                bare_allocator<void>(), A(5));
+        assert(p.valid());
+        std::future<double> f = p.get_future();
+        p(3, 'a');
+        assert(f.get() == 105.0);
+        assert(A::n_copies == 0);
+        assert(A::n_moves > 0);
+    }
+    A::n_copies = 0;
+    A::n_moves  = 0;
+    {
+        std::packaged_task<double(int, char)> p(std::allocator_arg,
+                                                min_allocator<void>(), A(5));
+        assert(p.valid());
+        std::future<double> f = p.get_future();
+        p(3, 'a');
+        assert(f.get() == 105.0);
+        assert(A::n_copies == 0);
+        assert(A::n_moves > 0);
+    }
+    A::n_copies = 0;
+    A::n_moves  = 0;
 }

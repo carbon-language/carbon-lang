@@ -783,9 +783,12 @@ __assoc_state_alloc<_Rp, _Alloc>::__on_zero_shared() _NOEXCEPT
 {
     if (this->__state_ & base::__constructed)
         reinterpret_cast<_Rp*>(_VSTD::addressof(this->__value_))->~_Rp();
-    typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
+    typedef typename __allocator_traits_rebind<_Alloc, __assoc_state_alloc>::type _A;
+    typedef allocator_traits<_A> _ATraits;
+    typedef pointer_traits<typename _ATraits::pointer> _PTraits;
+    _A __a(__alloc_);
     this->~__assoc_state_alloc();
-    __a.deallocate(this, 1);
+    __a.deallocate(_PTraits::pointer_to(*this), 1);
 }
 
 template <class _Rp, class _Alloc>
@@ -806,9 +809,12 @@ template <class _Rp, class _Alloc>
 void
 __assoc_state_alloc<_Rp&, _Alloc>::__on_zero_shared() _NOEXCEPT
 {
-    typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
+    typedef typename __allocator_traits_rebind<_Alloc, __assoc_state_alloc>::type _A;
+    typedef allocator_traits<_A> _ATraits;
+    typedef pointer_traits<typename _ATraits::pointer> _PTraits;
+    _A __a(__alloc_);
     this->~__assoc_state_alloc();
-    __a.deallocate(this, 1);
+    __a.deallocate(_PTraits::pointer_to(*this), 1);
 }
 
 template <class _Alloc>
@@ -829,9 +835,12 @@ template <class _Alloc>
 void
 __assoc_sub_state_alloc<_Alloc>::__on_zero_shared() _NOEXCEPT
 {
-    typename _Alloc::template rebind<__assoc_sub_state_alloc>::other __a(__alloc_);
+    typedef typename __allocator_traits_rebind<_Alloc, __assoc_sub_state_alloc>::type _A;
+    typedef allocator_traits<_A> _ATraits;
+    typedef pointer_traits<typename _ATraits::pointer> _PTraits;
+    _A __a(__alloc_);
     this->~__assoc_sub_state_alloc();
-    __a.deallocate(this, 1);
+    __a.deallocate(_PTraits::pointer_to(*this), 1);
 }
 
 template <class _Rp, class _Fp>
@@ -1414,12 +1423,13 @@ template <class _Rp>
 template <class _Alloc>
 promise<_Rp>::promise(allocator_arg_t, const _Alloc& __a0)
 {
-    typedef typename _Alloc::template rebind<__assoc_state_alloc<_Rp, _Alloc> >::other _A2;
+    typedef __assoc_state_alloc<_Rp, _Alloc> _State;
+    typedef typename __allocator_traits_rebind<_Alloc, _State>::type _A2;
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a(__a0);
-    unique_ptr<__assoc_state_alloc<_Rp, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
-    ::new(__hold.get()) __assoc_state_alloc<_Rp, _Alloc>(__a0);
-    __state_ = __hold.release();
+    unique_ptr<_State, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold.get()))) _State(__a0);
+    __state_ = _VSTD::addressof(*__hold.release());
 }
 
 template <class _Rp>
@@ -1587,12 +1597,13 @@ template <class _Rp>
 template <class _Alloc>
 promise<_Rp&>::promise(allocator_arg_t, const _Alloc& __a0)
 {
-    typedef typename _Alloc::template rebind<__assoc_state_alloc<_Rp&, _Alloc> >::other _A2;
+    typedef __assoc_state_alloc<_Rp&, _Alloc> _State;
+    typedef typename __allocator_traits_rebind<_Alloc, _State>::type _A2;
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a(__a0);
-    unique_ptr<__assoc_state_alloc<_Rp&, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
-    ::new(__hold.get()) __assoc_state_alloc<_Rp&, _Alloc>(__a0);
-    __state_ = __hold.release();
+    unique_ptr<_State, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold.get()))) _State(__a0);
+    __state_ = _VSTD::addressof(*__hold.release());
 }
 
 template <class _Rp>
@@ -1723,12 +1734,13 @@ public:
 template <class _Alloc>
 promise<void>::promise(allocator_arg_t, const _Alloc& __a0)
 {
-    typedef typename _Alloc::template rebind<__assoc_sub_state_alloc<_Alloc> >::other _A2;
+    typedef __assoc_sub_state_alloc<_Alloc> _State;
+    typedef typename __allocator_traits_rebind<_Alloc, _State>::type _A2;
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a(__a0);
-    unique_ptr<__assoc_sub_state_alloc<_Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
-    ::new(__hold.get()) __assoc_sub_state_alloc<_Alloc>(__a0);
-    __state_ = __hold.release();
+    unique_ptr<_State, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold.get()))) _State(__a0);
+    __state_ = _VSTD::addressof(*__hold.release());
 }
 
 template <class _Rp>
@@ -1808,10 +1820,12 @@ template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
 void
 __packaged_task_func<_Fp, _Alloc, _Rp(_ArgTypes...)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__packaged_task_func>::other _Ap;
+    typedef typename __allocator_traits_rebind<_Alloc, __packaged_task_func>::type _Ap;
+    typedef allocator_traits<_Ap> _ATraits;
+    typedef pointer_traits<typename _ATraits::pointer> _PTraits;
     _Ap __a(__f_.second());
     __f_.~__compressed_pair<_Fp, _Alloc>();
-    __a.deallocate(this, 1);
+    __a.deallocate(_PTraits::pointer_to(*this), 1);
 }
 
 template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
@@ -1900,7 +1914,6 @@ __packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(
                                   allocator_arg_t, const _Alloc& __a0, _Fp&& __f)
     : __f_(nullptr)
 {
-    typedef allocator_traits<_Alloc> __alloc_traits;
     typedef typename remove_reference<typename decay<_Fp>::type>::type _FR;
     typedef __packaged_task_func<_FR, _Alloc, _Rp(_ArgTypes...)> _FF;
     if (sizeof(_FF) <= sizeof(__buf_))
@@ -1910,18 +1923,13 @@ __packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(
     }
     else
     {
-        typedef typename __alloc_traits::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-            rebind_alloc<_FF>
-#else
-            rebind_alloc<_FF>::other
-#endif
-                                                     _Ap;
+        typedef typename __allocator_traits_rebind<_Alloc, _FF>::type _Ap;
         _Ap __a(__a0);
         typedef __allocator_destructor<_Ap> _Dp;
         unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
-        ::new (__hold.get()) _FF(_VSTD::forward<_Fp>(__f), _Alloc(__a));
-        __f_ = __hold.release();
+        ::new (static_cast<void*>(_VSTD::addressof(*__hold.get())))
+            _FF(_VSTD::forward<_Fp>(__f), _Alloc(__a));
+        __f_ = _VSTD::addressof(*__hold.release());
     }
 }
 
