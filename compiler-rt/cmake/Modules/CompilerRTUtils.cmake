@@ -2,6 +2,7 @@
 # define a handy helper function for it. The compile flags setting in CMake
 # has serious issues that make its syntax challenging at best.
 function(set_target_compile_flags target)
+  set(argstring "")
   foreach(arg ${ARGN})
     set(argstring "${argstring} ${arg}")
   endforeach()
@@ -9,6 +10,7 @@ function(set_target_compile_flags target)
 endfunction()
 
 function(set_target_link_flags target)
+  set(argstring "")
   foreach(arg ${ARGN})
     set(argstring "${argstring} ${arg}")
   endforeach()
