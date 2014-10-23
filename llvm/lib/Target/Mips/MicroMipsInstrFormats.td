@@ -114,6 +114,17 @@ class MOVE_FM_MM16<bits<6> funct> {
   let Inst{4-0}   = rs;
 }
 
+class LI_FM_MM16 {
+  bits<3> rd;
+  bits<7> imm;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x3b;
+  let Inst{9-7}   = rd;
+  let Inst{6-0}   = imm;
+}
+
 class JALR_FM_MM16<bits<5> op> {
   bits<5> rs;
 

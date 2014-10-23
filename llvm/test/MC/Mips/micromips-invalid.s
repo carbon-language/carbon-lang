@@ -13,3 +13,5 @@
   srl16   $4, $9, 6  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   sll16   $3, $16, 9 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
   srl16   $4, $5, 15 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  li16  $8, -1 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  li16  $4, -2 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range

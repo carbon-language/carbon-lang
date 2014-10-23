@@ -1,6 +1,7 @@
 def addrimm12 : ComplexPattern<iPTR, 2, "selectIntAddrMM", [frameindex]>;
 
 def simm4 : Operand<i32>;
+def simm7 : Operand<i32>;
 
 def simm12 : Operand<i32> {
   let DecoderMethod = "DecodeSimm12";
@@ -19,6 +20,8 @@ def uimm3_shift : Operand<i32> {
 }
 
 def immZExt2Shift : ImmLeaf<i32, [{return Imm >= 1 && Imm <= 8;}]>;
+
+def immLi16 : ImmLeaf<i32, [{return Imm >= -1 && Imm <= 126;}]>;
 
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
@@ -154,6 +157,13 @@ class MoveMM16<string opstr, RegisterOperand RO, bit isComm = 0,
   let isReMaterializable = 1;
 }
 
+class LoadImmMM16<string opstr, Operand Od, RegisterOperand RO,
+                  SDPatternOperator imm_type = null_frag> :
+  MicroMipsInst16<(outs RO:$rd), (ins Od:$imm),
+                  !strconcat(opstr, "\t$rd, $imm"), [], NoItinerary, FrmI> {
+  let isReMaterializable = 1;
+}
+
 // 16-bit Jump and Link (Call)
 class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
@@ -240,6 +250,8 @@ def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
 def MFLO16_MM : MoveFromHILOMM<"mflo", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x12>;
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
+def LI16_MM : LoadImmMM16<"li16", simm7, GPRMM16Opnd, immLi16>,
+              LI_FM_MM16, IsAsCheapAsAMove;
 def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
 def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;
 def JRC16_MM : JumpRegCMM16<"jrc", GPR32Opnd>, JALR_FM_MM16<0x0d>;
