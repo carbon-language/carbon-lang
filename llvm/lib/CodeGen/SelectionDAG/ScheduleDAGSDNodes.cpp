@@ -119,15 +119,20 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
     return;
 
   unsigned ResNo = User->getOperand(2).getResNo();
-  if (Def->isMachineOpcode()) {
+  if (Def->getOpcode() == ISD::CopyFromReg &&
+      cast<RegisterSDNode>(Def->getOperand(1))->getReg() == Reg) {
+    PhysReg = Reg;
+  } else if (Def->isMachineOpcode()) {
     const MCInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (ResNo >= II.getNumDefs() &&
-        II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
+        II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg)
       PhysReg = Reg;
-      const TargetRegisterClass *RC =
+  }
+
+  if (PhysReg != 0) {
+    const TargetRegisterClass *RC =
         TRI->getMinimalPhysRegClass(Reg, Def->getValueType(ResNo));
-      Cost = RC->getCopyCost();
-    }
+    Cost = RC->getCopyCost();
   }
 }
 
