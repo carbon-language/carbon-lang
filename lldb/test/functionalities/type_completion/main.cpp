@@ -36,14 +36,14 @@ int main (int argc, const char * argv[])
 	p.push_back(NameAndAddress("Enrico","123 Main Street"));
 	p.push_back(NameAndAddress("Foo","10710 Johnson Avenue")); // Set break point at this line.
 	p.push_back(NameAndAddress("Arpia","6956 Florey Street"));
-	p.push_back(NameAndAddress("Apple","1 Infinite Loop"));
+	p.push_back(NameAndAddress("Apple","1 Infinite Loop")); // Set break point at this line.
 	p.push_back(NameAndAddress("Richard","9500 Gilman Drive"));
 	p.push_back(NameAndAddress("Bar","3213 Windsor Rd"));
 
 	for (int j = 0; j<p.size(); j++)
 	{
 		NameAndAddress guy = p[j];
-		std::cout << "Person " << j << " is named " << guy.GetName() << " and lives at " << guy.GetAddress() << std::endl;
+		std::cout << "Person " << j << " is named " << guy.GetName() << " and lives at " << guy.GetAddress() << std::endl; // Set break point at this line.
 	}
 
 	return 0;
