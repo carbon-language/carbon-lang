@@ -770,7 +770,7 @@ DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV) {
 void DwarfDebug::createAbstractVariable(const DIVariable &Var,
                                         LexicalScope *Scope) {
   auto AbsDbgVariable = make_unique<DbgVariable>(Var, DIExpression(), this);
-  addNonArgumentScopeVariable(Scope, AbsDbgVariable.get());
+  InfoHolder.addNonArgumentScopeVariable(Scope, AbsDbgVariable.get());
   AbstractVariables[Var] = std::move(AbsDbgVariable);
 }
 
@@ -1256,39 +1256,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
   if (InfoHolder.addCurrentFnArgument(Var, LS))
     return;
-  addNonArgumentScopeVariable(LS, Var);
-}
-
-void DwarfDebug::addNonArgumentScopeVariable(LexicalScope *LS,
-                                             DbgVariable *Var) {
-  SmallVectorImpl<DbgVariable *> &Vars = ScopeVariables[LS];
-  DIVariable DV = Var->getVariable();
-  // Variables with positive arg numbers are parameters.
-  if (unsigned ArgNum = DV.getArgNumber()) {
-    // Keep all parameters in order at the start of the variable list to ensure
-    // function types are correct (no out-of-order parameters)
-    //
-    // This could be improved by only doing it for optimized builds (unoptimized
-    // builds have the right order to begin with), searching from the back (this
-    // would catch the unoptimized case quickly), or doing a binary search
-    // rather than linear search.
-    SmallVectorImpl<DbgVariable *>::iterator I = Vars.begin();
-    while (I != Vars.end()) {
-      unsigned CurNum = (*I)->getVariable().getArgNumber();
-      // A local (non-parameter) variable has been found, insert immediately
-      // before it.
-      if (CurNum == 0)
-        break;
-      // A later indexed parameter has been found, insert immediately before it.
-      if (CurNum > ArgNum)
-        break;
-      ++I;
-    }
-    Vars.insert(I, Var);
-    return;
-  }
-
-  Vars.push_back(Var);
+  InfoHolder.addNonArgumentScopeVariable(LS, Var);
 }
 
 // Gather and emit post-function debug information.
