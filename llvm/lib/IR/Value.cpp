@@ -773,6 +773,8 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
 void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
   assert(Old->HasValueHandle &&"Should only be called if ValueHandles present");
   assert(Old != New && "Changing value into itself!");
+  assert(Old->getType() == New->getType() &&
+         "replaceAllUses of value with new value of different type!");
 
   // Get the linked list base, which is guaranteed to exist since the
   // HasValueHandle flag is set.

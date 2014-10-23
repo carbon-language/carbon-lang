@@ -1370,7 +1370,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       if (!Caller->use_empty() &&
           // void -> non-void is handled specially
           !NewRetTy->isVoidTy())
-      return false;   // Cannot transform this return value.
+        return false;   // Cannot transform this return value.
     }
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
@@ -1589,8 +1589,14 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   if (!Caller->use_empty())
     ReplaceInstUsesWith(*Caller, NV);
-  else if (Caller->hasValueHandle())
-    ValueHandleBase::ValueIsRAUWd(Caller, NV);
+  else if (Caller->hasValueHandle()) {
+    if (OldRetTy == NV->getType())
+      ValueHandleBase::ValueIsRAUWd(Caller, NV);
+    else
+      // We cannot call ValueIsRAUWd with a different type, and the
+      // actual tracked value will disappear.
+      ValueHandleBase::ValueIsDeleted(Caller);
+  }
 
   EraseInstFromFunction(*Caller);
   return true;
