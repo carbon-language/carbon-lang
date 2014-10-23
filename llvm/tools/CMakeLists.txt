@@ -74,6 +74,12 @@ else()
   ignore_llvm_tool_subdirectory(gold)
 endif()
 
+if( LLVM_BUILD_LLVM_DYLIB )
+  add_llvm_tool_subdirectory(llvm-shlib)
+else()
+  ignore_llvm_tool_subdirectory(llvm-shlib)
+endif()
+
 add_llvm_external_project(clang)
 
 if( NOT LLVM_INCLUDE_TOOLS STREQUAL "bootstrap-only" )
