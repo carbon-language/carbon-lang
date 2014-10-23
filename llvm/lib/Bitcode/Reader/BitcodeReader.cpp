@@ -2071,7 +2071,8 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
       // creating now, so that we can match up the body with them later.
       if (!isProto) {
         FunctionsWithBodies.push_back(Func);
-        if (LazyStreamer) DeferredFunctionInfo[Func] = 0;
+        if (LazyStreamer)
+          DeferredFunctionInfo[Func] = 0;
       }
       break;
     }
