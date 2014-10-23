@@ -301,6 +301,9 @@ namespace llvm {
 
       UMUL, // LOW, HI, FLAGS = umul LHS, RHS
 
+      // 8-bit SMUL/UMUL - AX, FLAGS = smul8/umul8 AL, RHS
+      SMUL8, UMUL8,
+
       // MUL_IMM - X86 specific multiply by immediate.
       MUL_IMM,
 

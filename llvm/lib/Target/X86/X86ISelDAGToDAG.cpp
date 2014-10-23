@@ -2218,6 +2218,25 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     return CurDAG->SelectNodeTo(Node, ShlOp, NVT, SDValue(New, 0),
                                 getI8Imm(ShlVal));
   }
+  case X86ISD::UMUL8:
+  case X86ISD::SMUL8: {
+    SDValue N0 = Node->getOperand(0);
+    SDValue N1 = Node->getOperand(1);
+
+    Opc = (Opcode == X86ISD::SMUL8 ? X86::IMUL8r : X86::MUL8r);
+
+    SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, X86::AL,
+                                          N0, SDValue()).getValue(1);
+
+    SDVTList VTs = CurDAG->getVTList(NVT, MVT::i32);
+    SDValue Ops[] = {N1, InFlag};
+    SDNode *CNode = CurDAG->getMachineNode(Opc, dl, VTs, Ops);
+
+    ReplaceUses(SDValue(Node, 0), SDValue(CNode, 0));
+    ReplaceUses(SDValue(Node, 1), SDValue(CNode, 1));
+    return nullptr;
+  }
+
   case X86ISD::UMUL: {
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
