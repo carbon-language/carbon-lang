@@ -199,6 +199,13 @@ static cl::opt<bool> ClWrapIndirectCallsFast("msan-wrap-indirect-calls-fast",
        cl::desc("Do not wrap indirect calls with target in the same module"),
        cl::Hidden, cl::init(true));
 
+// This is an experiment to enable handling of cases where shadow is a non-zero
+// compile-time constant. For some unexplainable reason they were silently
+// ignored in the instrumentation.
+static cl::opt<bool> ClCheckConstantShadow("msan-check-constant-shadow",
+       cl::desc("Insert checks for constant shadow values"),
+       cl::Hidden, cl::init(false));
+
 namespace {
 
 /// \brief An instrumentation pass implementing detection of uninitialized
@@ -563,7 +570,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       // TODO(eugenis): handle non-zero constant shadow by inserting an
       // unconditional check (can not simply fail compilation as this could
       // be in the dead code).
-      if (isa<Constant>(ConvertedShadow)) return;
+      if (!ClCheckConstantShadow)
+        if (isa<Constant>(ConvertedShadow)) return;
       unsigned TypeSizeInBits =
           MS.DL->getTypeSizeInBits(ConvertedShadow->getType());
       unsigned SizeIndex = TypeSizeToSizeIndex(TypeSizeInBits);
@@ -619,8 +627,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     DEBUG(dbgs() << "  SHAD0 : " << *Shadow << "\n");
     Value *ConvertedShadow = convertToShadowTyNoVec(Shadow, IRB);
     DEBUG(dbgs() << "  SHAD1 : " << *ConvertedShadow << "\n");
-    // See the comment in materializeStores().
-    if (isa<Constant>(ConvertedShadow)) return;
+    // See the comment in storeOrigin().
+    if (!ClCheckConstantShadow)
+      if (isa<Constant>(ConvertedShadow)) return;
     unsigned TypeSizeInBits =
         MS.DL->getTypeSizeInBits(ConvertedShadow->getType());
     unsigned SizeIndex = TypeSizeToSizeIndex(TypeSizeInBits);
