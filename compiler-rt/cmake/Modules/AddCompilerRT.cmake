@@ -52,8 +52,12 @@ macro(add_compiler_rt_runtime name arch type)
     # Setup compile flags and definitions.
     set_target_compile_flags(${name}
       ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
-    set_target_link_flags(${name}
-      ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
+    if (NOT MSVC)
+      # We do not want any custom link flags set on MSVC; especially not the
+      # compiler flags, as with other compilers.
+      set_target_link_flags(${name}
+        ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
+    endif()
     set_property(TARGET ${name} APPEND PROPERTY
       COMPILE_DEFINITIONS ${LIB_DEFS})
     # Setup correct output directory in the build tree.
