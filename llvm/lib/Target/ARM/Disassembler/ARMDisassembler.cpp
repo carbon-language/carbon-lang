@@ -3269,6 +3269,11 @@ static DecodeStatus DecodeT2LoadShift(MCInst &Inst, unsigned Insn,
   unsigned Rt = fieldFromInstruction(Insn, 12, 4);
   unsigned Rn = fieldFromInstruction(Insn, 16, 4);
 
+  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
+                                                          .getFeatureBits();
+  bool hasMP = featureBits & ARM::FeatureMP;
+  bool hasV7Ops = featureBits & ARM::HasV7Ops;
+
   if (Rn == 15) {
     switch (Inst.getOpcode()) {
     case ARM::t2LDRBs:
@@ -3304,11 +3309,10 @@ static DecodeStatus DecodeT2LoadShift(MCInst &Inst, unsigned Insn,
     case ARM::t2LDRSHs:
       return MCDisassembler::Fail;
     case ARM::t2LDRHs:
-      // FIXME: this instruction is only available with MP extensions,
-      // this should be checked first but we don't have access to the
-      // feature bits here.
       Inst.setOpcode(ARM::t2PLDWs);
       break;
+    case ARM::t2LDRSBs:
+      Inst.setOpcode(ARM::t2PLIs);
     default:
       break;
     }
@@ -3316,8 +3320,14 @@ static DecodeStatus DecodeT2LoadShift(MCInst &Inst, unsigned Insn,
 
   switch (Inst.getOpcode()) {
     case ARM::t2PLDs:
-    case ARM::t2PLDWs:
+      break;
     case ARM::t2PLIs:
+      if (!hasV7Ops)
+        return MCDisassembler::Fail;
+      break;
+    case ARM::t2PLDWs:
+      if (!hasV7Ops || !hasMP)
+        return MCDisassembler::Fail;
       break;
     default:
       if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
@@ -3343,6 +3353,12 @@ static DecodeStatus DecodeT2LoadImm8(MCInst &Inst, unsigned Insn,
   unsigned imm = fieldFromInstruction(Insn, 0, 8);
   imm |= (U << 8);
   imm |= (Rn << 9);
+  unsigned add = fieldFromInstruction(Insn, 9, 1);
+
+  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
+                                                          .getFeatureBits();
+  bool hasMP = featureBits & ARM::FeatureMP;
+  bool hasV7Ops = featureBits & ARM::HasV7Ops;
 
   if (Rn == 15) {
     switch (Inst.getOpcode()) {
@@ -3377,6 +3393,13 @@ static DecodeStatus DecodeT2LoadImm8(MCInst &Inst, unsigned Insn,
     switch (Inst.getOpcode()) {
     case ARM::t2LDRSHi8:
       return MCDisassembler::Fail;
+    case ARM::t2LDRHi8:
+      if (!add)
+        Inst.setOpcode(ARM::t2PLDWi8);
+      break;
+    case ARM::t2LDRSBi8:
+      Inst.setOpcode(ARM::t2PLIi8);
+      break;
     default:
       break;
     }
@@ -3384,9 +3407,15 @@ static DecodeStatus DecodeT2LoadImm8(MCInst &Inst, unsigned Insn,
 
   switch (Inst.getOpcode()) {
   case ARM::t2PLDi8:
-  case ARM::t2PLIi8:
-  case ARM::t2PLDWi8:
     break;
+  case ARM::t2PLIi8:
+    if (!hasV7Ops)
+      return MCDisassembler::Fail;
+    break;
+  case ARM::t2PLDWi8:
+      if (!hasV7Ops || !hasMP)
+        return MCDisassembler::Fail;
+      break;
   default:
     if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
       return MCDisassembler::Fail;
@@ -3405,6 +3434,11 @@ static DecodeStatus DecodeT2LoadImm12(MCInst &Inst, unsigned Insn,
   unsigned Rt = fieldFromInstruction(Insn, 12, 4);
   unsigned imm = fieldFromInstruction(Insn, 0, 12);
   imm |= (Rn << 13);
+
+  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
+                                                          .getFeatureBits();
+  bool hasMP = (featureBits & ARM::FeatureMP);
+  bool hasV7Ops = (featureBits & ARM::HasV7Ops);
 
   if (Rn == 15) {
     switch (Inst.getOpcode()) {
@@ -3440,7 +3474,10 @@ static DecodeStatus DecodeT2LoadImm12(MCInst &Inst, unsigned Insn,
     case ARM::t2LDRSHi12:
       return MCDisassembler::Fail;
     case ARM::t2LDRHi12:
-      Inst.setOpcode(ARM::t2PLDi12);
+      Inst.setOpcode(ARM::t2PLDWi12);
+      break;
+    case ARM::t2LDRSBi12:
+      Inst.setOpcode(ARM::t2PLIi12);
       break;
     default:
       break;
@@ -3449,9 +3486,15 @@ static DecodeStatus DecodeT2LoadImm12(MCInst &Inst, unsigned Insn,
 
   switch (Inst.getOpcode()) {
   case ARM::t2PLDi12:
-  case ARM::t2PLDWi12:
-  case ARM::t2PLIi12:
     break;
+  case ARM::t2PLIi12:
+    if (!hasV7Ops)
+      return MCDisassembler::Fail;
+    break;
+  case ARM::t2PLDWi12:
+      if (!hasV7Ops || !hasMP)
+        return MCDisassembler::Fail;
+      break;
   default:
     if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
       return MCDisassembler::Fail;
@@ -3509,6 +3552,10 @@ static DecodeStatus DecodeT2LoadLabel(MCInst &Inst, unsigned Insn,
   unsigned U = fieldFromInstruction(Insn, 23, 1);
   int imm = fieldFromInstruction(Insn, 0, 12);
 
+  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
+                                                          .getFeatureBits();
+  bool hasV7Ops = (featureBits & ARM::HasV7Ops);
+
   if (Rt == 15) {
     switch (Inst.getOpcode()) {
       case ARM::t2LDRBpci:
@@ -3527,7 +3574,10 @@ static DecodeStatus DecodeT2LoadLabel(MCInst &Inst, unsigned Insn,
 
   switch(Inst.getOpcode()) {
   case ARM::t2PLDpci:
+    break;
   case ARM::t2PLIpci:
+    if (!hasV7Ops)
+      return MCDisassembler::Fail;
     break;
   default:
     if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
