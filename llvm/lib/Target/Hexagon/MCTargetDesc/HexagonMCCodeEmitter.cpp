@@ -38,7 +38,7 @@ enum class ParseField { duplex = 0x0, last0 = 0x1, last1 = 0x2, end = 0x3 };
 uint32_t getPacketBits(HexagonMCInst const &HMI) {
   unsigned const ParseFieldOffset = 14;
   ParseField Field = HMI.isPacketEnd() ? ParseField::end : ParseField::last0;
-  return static_cast<uint32_t>(Field) << ParseFieldOffset;
+  return static_cast <uint32_t> (Field) << ParseFieldOffset;
 }
 void emitLittleEndian(uint64_t Binary, raw_ostream &OS) {
   OS << static_cast<uint8_t>((Binary >> 0x00) & 0xff);
@@ -57,9 +57,8 @@ void HexagonMCCodeEmitter::EncodeInstruction(MCInst const &MI, raw_ostream &OS,
                                              SmallVectorImpl<MCFixup> &Fixups,
                                              MCSubtargetInfo const &STI) const {
   HexagonMCInst const &HMB = static_cast<HexagonMCInst const &>(MI);
-  uint64_t Binary =
-      getBinaryCodeForInstr(HMB, Fixups, STI) | getPacketBits(HMB);
-  Binary |= getPacketBits(HMB);
+  uint64_t Binary = getBinaryCodeForInstr(HMB, Fixups, STI) | getPacketBits(HMB);
+  assert(HMB.getDesc().getSize() == 4 && "All instructions should be 32bit");
   emitLittleEndian(Binary, OS);
   ++MCNumEmitted;
 }

@@ -34,7 +34,7 @@ using namespace llvm;
 #define GET_REGINFO_MC_DESC
 #include "HexagonGenRegisterInfo.inc"
 
-static llvm::MCInstrInfo *createHexagonMCInstrInfo() {
+static MCInstrInfo *createHexagonMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitHexagonMCInstrInfo(X);
   return X;

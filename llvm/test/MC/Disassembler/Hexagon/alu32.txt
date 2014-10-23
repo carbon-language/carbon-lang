@@ -1,4 +1,0 @@
-# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
-
-0x11 0xdf 0x15 0xf3
-# CHECK: r17 = add(r21, r31)
