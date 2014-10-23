@@ -672,6 +672,18 @@ namespace PR19933 {
   // MSC-DAG: @"\01?y@?$D@$0CK@@PR19933@@2HA" = available_externally dllimport global i32 0
 }
 
+namespace PR21355 {
+  struct __declspec(dllimport) S {
+    virtual ~S();
+  };
+  S::~S() {}
+
+  // S::~S is a key function, so we would ordinarily emit a strong definition for
+  // the vtable. However, S is imported, so the vtable should be too.
+
+  // GNU-DAG: @_ZTVN7PR213551SE = available_externally dllimport unnamed_addr constant [4 x i8*]
+}
+
 // MS ignores DLL attributes on partial specializations.
 template <typename T> struct PartiallySpecializedClassTemplate {};
 template <typename T> struct __declspec(dllimport) PartiallySpecializedClassTemplate<T*> { void f() {} };

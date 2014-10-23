@@ -677,7 +677,8 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
 
   // We're at the end of the translation unit, so the current key
   // function is fully correct.
-  if (const CXXMethodDecl *keyFunction = Context.getCurrentKeyFunction(RD)) {
+  const CXXMethodDecl *keyFunction = Context.getCurrentKeyFunction(RD);
+  if (keyFunction && !RD->hasAttr<DLLImportAttr>()) {
     // If this class has a key function, use that to determine the
     // linkage of the vtable.
     const FunctionDecl *def = nullptr;
