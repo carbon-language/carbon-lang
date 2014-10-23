@@ -2305,6 +2305,7 @@ bool ModuleMapParser::parseModuleMapFile() {
     case MMToken::RequiresKeyword:
     case MMToken::Star:
     case MMToken::StringLiteral:
+    case MMToken::TextualKeyword:
     case MMToken::UmbrellaKeyword:
     case MMToken::UseKeyword:
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_module);
