@@ -88,12 +88,27 @@ static void dumpApplePropertyAttribute(raw_ostream &OS, uint64_t Val) {
   OS << ")";
 }
 
+static void dumpRanges(raw_ostream &OS, const DWARFAddressRangesVector& Ranges,
+                       unsigned AddressSize, unsigned Indent) {
+  if (Ranges.empty())
+    return;
+
+  for (const auto &Range: Ranges) {
+    OS << '\n';
+    OS.indent(Indent);
+    OS << format("[0x%0*" PRIx64 " - 0x%0*" PRIx64 ")",
+                 AddressSize*2, Range.first,
+                 AddressSize*2, Range.second);
+  }
+}
+
 void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
                                                DWARFUnit *u,
                                                uint32_t *offset_ptr,
                                                uint16_t attr, uint16_t form,
                                                unsigned indent) const {
-  OS << "            ";
+  const char BaseIndent[] = "            ";
+  OS << BaseIndent;
   OS.indent(indent+2);
   const char *attrString = AttributeString(attr);
   if (attrString)
@@ -149,6 +164,9 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
   } else if (attr == DW_AT_APPLE_property_attribute) {
     if (Optional<uint64_t> OptVal = formValue.getAsUnsignedConstant())
       dumpApplePropertyAttribute(OS, *OptVal);
+  } else if (attr == DW_AT_ranges) {
+    dumpRanges(OS, getAddressRanges(u), u->getAddressByteSize(),
+               sizeof(BaseIndent)+indent+4);
   }
 
   OS << ")\n";

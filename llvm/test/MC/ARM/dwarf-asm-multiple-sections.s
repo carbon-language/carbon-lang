@@ -25,7 +25,7 @@ b:
 // DWARF: .debug_info contents:
 // DWARF: 0x{{[0-9a-f]+}}: DW_TAG_compile_unit [1]
 // CHECK-NOT-DWARF: DW_TAG_
-// DWARF: DW_AT_ranges [DW_FORM_data4]      (0x00000000)
+// DWARF: DW_AT_ranges [DW_FORM_data4]      (0x00000000
 
 // DWARF: 0x{{[0-9a-f]+}}:   DW_TAG_label [2] *
 // DWARF-NEXT: DW_AT_name [DW_FORM_string]     ("a")
