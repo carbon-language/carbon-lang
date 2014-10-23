@@ -245,11 +245,6 @@ public:
   /// operation.
   bool ReplaceText(SourceRange range, SourceRange replacementRange);
 
-  /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
-  /// printer to generate the replacement code.  This returns true if the input
-  /// could not be rewritten, or false if successful.
-  bool ReplaceStmt(Stmt *From, Stmt *To);
-
   /// \brief Increase indentation for the lines between the given source range.
   /// To determine what the indentation should be, 'parentIndent' is used
   /// that should be at a source location with an indentation one degree

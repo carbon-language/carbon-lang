@@ -10,7 +10,6 @@ add_clang_library(clangRewrite
   TokenRewriter.cpp
 
   LINK_LIBS
-  clangAST
   clangBasic
   clangLex
   )
