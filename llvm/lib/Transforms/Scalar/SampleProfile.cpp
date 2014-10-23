@@ -627,29 +627,6 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   }
 }
 
-/// \brief Locate the DISubprogram for F.
-///
-/// We look for the first instruction that has a debug annotation
-/// leading back to \p F.
-///
-/// \returns a valid DISubprogram, if found. Otherwise, it returns an empty
-/// DISubprogram.
-static const DISubprogram getDISubprogram(Function &F, const LLVMContext &Ctx) {
-  for (auto &BI : F) {
-    BasicBlock *BB = &BI;
-    for (auto &Inst : BB->getInstList()) {
-      DebugLoc DLoc = Inst.getDebugLoc();
-      if (DLoc.isUnknown())
-        continue;
-      const MDNode *Scope = DLoc.getScopeNode(Ctx);
-      DISubprogram Subprogram = getDISubprogram(Scope);
-      return Subprogram.describes(&F) ? Subprogram : DISubprogram();
-    }
-  }
-
-  return DISubprogram();
-}
-
 /// \brief Get the line number for the function header.
 ///
 /// This looks up function \p F in the current compilation unit and
@@ -662,7 +639,7 @@ static const DISubprogram getDISubprogram(Function &F, const LLVMContext &Ctx) {
 /// \returns the line number where \p F is defined. If it returns 0,
 ///          it means that there is no debug information available for \p F.
 unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
-  const DISubprogram &S = getDISubprogram(F, *Ctx);
+  DISubprogram S = getDISubprogram(&F);
   if (S.isSubprogram())
     return S.getLineNumber();
 

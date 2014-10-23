@@ -961,6 +961,11 @@ public:
 /// \brief Find subprogram that is enclosing this scope.
 DISubprogram getDISubprogram(const MDNode *Scope);
 
+/// \brief Find debug info for a given function.
+/// \returns a valid DISubprogram, if found. Otherwise, it returns an empty
+/// DISubprogram.
+DISubprogram getDISubprogram(const Function *F);
+
 /// \brief Find underlying composite type.
 DICompositeType getDICompositeType(DIType T);
 

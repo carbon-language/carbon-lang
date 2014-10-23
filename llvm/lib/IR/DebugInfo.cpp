@@ -912,6 +912,24 @@ DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   return DISubprogram();
 }
 
+DISubprogram llvm::getDISubprogram(const Function *F) {
+  // We look for the first instr that has a debug annotation leading back to F.
+  const LLVMContext &Ctx = F->getParent()->getContext();
+  for (auto &BB : *F) {
+    for (auto &Inst : BB.getInstList()) {
+      DebugLoc DLoc = Inst.getDebugLoc();
+      if (DLoc.isUnknown())
+        continue;
+      const MDNode *Scope = DLoc.getScopeNode(Ctx);
+      DISubprogram Subprogram = getDISubprogram(Scope);
+      if (Subprogram.describes(F))
+       return Subprogram;
+    }
+  }
+
+  return DISubprogram();
+}
+
 DICompositeType llvm::getDICompositeType(DIType T) {
   if (T.isCompositeType())
     return DICompositeType(T);
