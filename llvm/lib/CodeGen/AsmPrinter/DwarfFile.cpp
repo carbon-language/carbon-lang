@@ -20,9 +20,7 @@
 namespace llvm {
 DwarfFile::DwarfFile(AsmPrinter *AP, DwarfDebug &DD, StringRef Pref,
                      BumpPtrAllocator &DA)
-    : Asm(AP), DD(DD), StrPool(DA, *Asm, Pref) {
-  (void)this->DD;
-}
+    : Asm(AP), DD(DD), StrPool(DA, *Asm, Pref) {}
 
 DwarfFile::~DwarfFile() {}
 
