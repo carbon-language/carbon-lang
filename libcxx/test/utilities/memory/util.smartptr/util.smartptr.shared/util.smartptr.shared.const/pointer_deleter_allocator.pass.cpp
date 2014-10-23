@@ -15,6 +15,7 @@
 #include <cassert>
 #include "../test_deleter.h"
 #include "test_allocator.h"
+#include "min_allocator.h"
 
 struct A
 {
@@ -26,6 +27,7 @@ struct A
 };
 
 int A::count = 0;
+
 
 int main()
 {
@@ -48,4 +50,40 @@ int main()
     assert(test_deleter<A>::dealloc_count == 1);
     assert(test_allocator<A>::count == 0);
     assert(test_allocator<A>::alloc_count == 0);
+    test_deleter<A>::dealloc_count = 0;
+    // Test an allocator with a minimal interface
+    {
+    A* ptr = new A;
+    std::shared_ptr<A> p(ptr, test_deleter<A>(3), bare_allocator<void>());
+    assert(A::count == 1);
+    assert(p.use_count() == 1);
+    assert(p.get() == ptr);
+    test_deleter<A>* d = std::get_deleter<test_deleter<A> >(p);
+    assert(test_deleter<A>::count == 1);
+    assert(test_deleter<A>::dealloc_count == 0);
+    assert(d);
+    assert(d->state() == 3);
+    }
+    assert(A::count == 0);
+    assert(test_deleter<A>::count == 0);
+    assert(test_deleter<A>::dealloc_count == 1);
+    test_deleter<A>::dealloc_count = 0;
+#if __cplusplus >= 201103L
+    // Test an allocator that returns class-type pointers
+    {
+    A* ptr = new A;
+    std::shared_ptr<A> p(ptr, test_deleter<A>(3), min_allocator<void>());
+    assert(A::count == 1);
+    assert(p.use_count() == 1);
+    assert(p.get() == ptr);
+    test_deleter<A>* d = std::get_deleter<test_deleter<A> >(p);
+    assert(test_deleter<A>::count == 1);
+    assert(test_deleter<A>::dealloc_count == 0);
+    assert(d);
+    assert(d->state() == 3);
+    }
+    assert(A::count == 0);
+    assert(test_deleter<A>::count == 0);
+    assert(test_deleter<A>::dealloc_count == 1);
+#endif
 }

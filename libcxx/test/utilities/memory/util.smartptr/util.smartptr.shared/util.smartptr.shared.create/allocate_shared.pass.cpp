@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cassert>
 #include "test_allocator.h"
+#include "min_allocator.h"
 
 int new_count = 0;
 
@@ -54,4 +55,24 @@ int main()
     }
     assert(A::count == 0);
     assert(test_allocator<A>::alloc_count == 0);
+#if __cplusplus >= 201103L
+    {
+    int i = 67;
+    char c = 'e';
+    std::shared_ptr<A> p = std::allocate_shared<A>(min_allocator<void>(), i, c);
+    assert(A::count == 1);
+    assert(p->get_int() == 67);
+    assert(p->get_char() == 'e');
+    }
+    assert(A::count == 0);
+    {
+    int i = 68;
+    char c = 'f';
+    std::shared_ptr<A> p = std::allocate_shared<A>(bare_allocator<void>(), i, c);
+    assert(A::count == 1);
+    assert(p->get_int() == 68);
+    assert(p->get_char() == 'f');
+    }
+    assert(A::count == 0);
+#endif
 }

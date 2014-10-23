@@ -3677,9 +3677,13 @@ template <class _Tp, class _Dp, class _Alloc>
 void
 __shared_ptr_pointer<_Tp, _Dp, _Alloc>::__on_zero_shared_weak() _NOEXCEPT
 {
-    typename _Alloc::template rebind<__shared_ptr_pointer>::other __a(__data_.second());
+    typedef typename __allocator_traits_rebind<_Alloc, __shared_ptr_pointer>::type _A;
+    typedef allocator_traits<_A> _ATraits;
+    typedef pointer_traits<typename _ATraits::pointer> _PTraits;
+
+    _A __a(__data_.second());
     __data_.second().~_Alloc();
-    __a.deallocate(this, 1);
+    __a.deallocate(_PTraits::pointer_to(*this), 1);
 }
 
 template <class _Tp, class _Alloc>
@@ -3742,9 +3746,12 @@ template <class _Tp, class _Alloc>
 void
 __shared_ptr_emplace<_Tp, _Alloc>::__on_zero_shared_weak() _NOEXCEPT
 {
-    typename _Alloc::template rebind<__shared_ptr_emplace>::other __a(__data_.first());
+    typedef typename __allocator_traits_rebind<_Alloc, __shared_ptr_emplace>::type _A;
+    typedef allocator_traits<_A> _ATraits;
+    typedef pointer_traits<typename _ATraits::pointer> _PTraits;
+    _A __a(__data_.first());
     __data_.first().~_Alloc();
-    __a.deallocate(this, 1);
+    __a.deallocate(_PTraits::pointer_to(*this), 1);
 }
 
 template<class _Tp> class _LIBCPP_TYPE_VIS_ONLY enable_shared_from_this;
@@ -4090,12 +4097,13 @@ shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d, _Alloc __a,
     {
 #endif  // _LIBCPP_NO_EXCEPTIONS
         typedef __shared_ptr_pointer<_Yp*, _Dp, _Alloc> _CntrlBlk;
-        typedef typename _Alloc::template rebind<_CntrlBlk>::other _A2;
+        typedef typename __allocator_traits_rebind<_Alloc, _CntrlBlk>::type _A2;
         typedef __allocator_destructor<_A2> _D2;
         _A2 __a2(__a);
         unique_ptr<_CntrlBlk, _D2> __hold2(__a2.allocate(1), _D2(__a2, 1));
-        ::new(__hold2.get()) _CntrlBlk(__p, __d, __a);
-        __cntrl_ = __hold2.release();
+        ::new(static_cast<void*>(_VSTD::addressof(*__hold2.get())))
+            _CntrlBlk(__p, __d, __a);
+        __cntrl_ = _VSTD::addressof(*__hold2.release());
         __enable_weak_this(__p);
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
@@ -4117,12 +4125,13 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t __p, _Dp __d, _Alloc __a)
     {
 #endif  // _LIBCPP_NO_EXCEPTIONS
         typedef __shared_ptr_pointer<nullptr_t, _Dp, _Alloc> _CntrlBlk;
-        typedef typename _Alloc::template rebind<_CntrlBlk>::other _A2;
+        typedef typename __allocator_traits_rebind<_Alloc, _CntrlBlk>::type _A2;
         typedef __allocator_destructor<_A2> _D2;
         _A2 __a2(__a);
         unique_ptr<_CntrlBlk, _D2> __hold2(__a2.allocate(1), _D2(__a2, 1));
-        ::new(__hold2.get()) _CntrlBlk(__p, __d, __a);
-        __cntrl_ = __hold2.release();
+        ::new(static_cast<void*>(_VSTD::addressof(*__hold2.get())))
+            _CntrlBlk(__p, __d, __a);
+        __cntrl_ = _VSTD::addressof(*__hold2.release());
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
@@ -4282,14 +4291,15 @@ shared_ptr<_Tp>
 shared_ptr<_Tp>::allocate_shared(const _Alloc& __a, _Args&& ...__args)
 {
     typedef __shared_ptr_emplace<_Tp, _Alloc> _CntrlBlk;
-    typedef typename _Alloc::template rebind<_CntrlBlk>::other _A2;
+    typedef typename __allocator_traits_rebind<_Alloc, _CntrlBlk>::type _A2;
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a2(__a);
     unique_ptr<_CntrlBlk, _D2> __hold2(__a2.allocate(1), _D2(__a2, 1));
-    ::new(__hold2.get()) _CntrlBlk(__a, _VSTD::forward<_Args>(__args)...);
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold2.get())))
+        _CntrlBlk(__a, _VSTD::forward<_Args>(__args)...);
     shared_ptr<_Tp> __r;
     __r.__ptr_ = __hold2.get()->get();
-    __r.__cntrl_ = __hold2.release();
+    __r.__cntrl_ = _VSTD::addressof(*__hold2.release());
     __r.__enable_weak_this(__r.__ptr_);
     return __r;
 }
@@ -4373,14 +4383,15 @@ shared_ptr<_Tp>
 shared_ptr<_Tp>::allocate_shared(const _Alloc& __a)
 {
     typedef __shared_ptr_emplace<_Tp, _Alloc> _CntrlBlk;
-    typedef typename _Alloc::template rebind<_CntrlBlk>::other _Alloc2;
+    typedef typename __allocator_traits_rebind<_Alloc, _CntrlBlk>::type _Alloc2;
     typedef __allocator_destructor<_Alloc2> _D2;
     _Alloc2 __alloc2(__a);
     unique_ptr<_CntrlBlk, _D2> __hold2(__alloc2.allocate(1), _D2(__alloc2, 1));
-    ::new(__hold2.get()) _CntrlBlk(__a);
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold2.get())))
+        _CntrlBlk(__a);
     shared_ptr<_Tp> __r;
     __r.__ptr_ = __hold2.get()->get();
-    __r.__cntrl_ = __hold2.release();
+    __r.__cntrl_ = _VSTD::addressof(*__hold2.release());
     __r.__enable_weak_this(__r.__ptr_);
     return __r;
 }
@@ -4391,14 +4402,15 @@ shared_ptr<_Tp>
 shared_ptr<_Tp>::allocate_shared(const _Alloc& __a, _A0& __a0)
 {
     typedef __shared_ptr_emplace<_Tp, _Alloc> _CntrlBlk;
-    typedef typename _Alloc::template rebind<_CntrlBlk>::other _Alloc2;
+    typedef typename __allocator_traits_rebind<_Alloc, _CntrlBlk>::type _Alloc2;
     typedef __allocator_destructor<_Alloc2> _D2;
     _Alloc2 __alloc2(__a);
     unique_ptr<_CntrlBlk, _D2> __hold2(__alloc2.allocate(1), _D2(__alloc2, 1));
-    ::new(__hold2.get()) _CntrlBlk(__a, __a0);
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold2.get())))
+        _CntrlBlk(__a, __a0);
     shared_ptr<_Tp> __r;
     __r.__ptr_ = __hold2.get()->get();
-    __r.__cntrl_ = __hold2.release();
+    __r.__cntrl_ = _VSTD::addressof(*__hold2.release());
     __r.__enable_weak_this(__r.__ptr_);
     return __r;
 }
@@ -4409,14 +4421,15 @@ shared_ptr<_Tp>
 shared_ptr<_Tp>::allocate_shared(const _Alloc& __a, _A0& __a0, _A1& __a1)
 {
     typedef __shared_ptr_emplace<_Tp, _Alloc> _CntrlBlk;
-    typedef typename _Alloc::template rebind<_CntrlBlk>::other _Alloc2;
+    typedef typename __allocator_traits_rebind<_Alloc, _CntrlBlk>::type _Alloc2;
     typedef __allocator_destructor<_Alloc2> _D2;
     _Alloc2 __alloc2(__a);
     unique_ptr<_CntrlBlk, _D2> __hold2(__alloc2.allocate(1), _D2(__alloc2, 1));
-    ::new(__hold2.get()) _CntrlBlk(__a, __a0, __a1);
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold2.get())))
+        _CntrlBlk(__a, __a0, __a1);
     shared_ptr<_Tp> __r;
     __r.__ptr_ = __hold2.get()->get();
-    __r.__cntrl_ = __hold2.release();
+    __r.__cntrl_ = _VSTD::addressof(*__hold2.release());
     __r.__enable_weak_this(__r.__ptr_);
     return __r;
 }
@@ -4427,14 +4440,15 @@ shared_ptr<_Tp>
 shared_ptr<_Tp>::allocate_shared(const _Alloc& __a, _A0& __a0, _A1& __a1, _A2& __a2)
 {
     typedef __shared_ptr_emplace<_Tp, _Alloc> _CntrlBlk;
-    typedef typename _Alloc::template rebind<_CntrlBlk>::other _Alloc2;
+    typedef typename __allocator_traits_rebind<_Alloc, _CntrlBlk>::type _Alloc2;
     typedef __allocator_destructor<_Alloc2> _D2;
     _Alloc2 __alloc2(__a);
     unique_ptr<_CntrlBlk, _D2> __hold2(__alloc2.allocate(1), _D2(__alloc2, 1));
-    ::new(__hold2.get()) _CntrlBlk(__a, __a0, __a1, __a2);
+    ::new(static_cast<void*>(_VSTD::addressof(*__hold2.get())))
+        _CntrlBlk(__a, __a0, __a1, __a2);
     shared_ptr<_Tp> __r;
     __r.__ptr_ = __hold2.get()->get();
-    __r.__cntrl_ = __hold2.release();
+    __r.__cntrl_ = _VSTD::addressof(*__hold2.release());
     __r.__enable_weak_this(__r.__ptr_);
     return __r;
 }
