@@ -170,6 +170,18 @@ class JRADDIUSP_FM_MM16<bits<5> op> {
   let Inst{4-0}   = imm;
 }
 
+class ADDIUR1SP_FM_MM16 {
+  bits<3> rd;
+  bits<6> imm;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x1b;
+  let Inst{9-7}   = rd;
+  let Inst{6-1}   = imm;
+  let Inst{0}     = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // MicroMIPS 32-bit Instruction Formats
 //===----------------------------------------------------------------------===//

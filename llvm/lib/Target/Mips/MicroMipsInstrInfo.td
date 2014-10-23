@@ -11,6 +11,10 @@ def uimm5_lsl2 : Operand<OtherVT> {
   let EncoderMethod = "getUImm5Lsl2Encoding";
 }
 
+def uimm6_lsl2 : Operand<i32> {
+  let EncoderMethod = "getUImm6Lsl2Encoding";
+}
+
 def simm9_addiusp : Operand<i32> {
   let EncoderMethod = "getSImm9AddiuspValue";
 }
@@ -149,6 +153,10 @@ class AddImmUS5<string opstr, RegisterOperand RO> :
   let isCommutable = 1;
 }
 
+class AddImmUR1SP<string opstr, RegisterOperand RO> :
+  MicroMipsInst16<(outs RO:$rd), (ins uimm6_lsl2:$imm),
+                  !strconcat(opstr, "\t$rd, $imm"), [], NoItinerary, FrmR>;
+
 class AddImmUSP<string opstr> :
   MicroMipsInst16<(outs), (ins simm9_addiusp:$imm),
                   !strconcat(opstr, "\t$imm"), [], NoItinerary, FrmI>;
@@ -256,6 +264,7 @@ def SLL16_MM : ShiftIMM16<"sll16", uimm3_shift, GPRMM16Opnd, shl,
                           immZExt2Shift, II_SLL>, SHIFT_FM_MM16<0>;
 def SRL16_MM : ShiftIMM16<"srl16", uimm3_shift, GPRMM16Opnd, srl,
                           immZExt2Shift, II_SRL>, SHIFT_FM_MM16<1>;
+def ADDIUR1SP_MM : AddImmUR1SP<"addiur1sp", GPRMM16Opnd>, ADDIUR1SP_FM_MM16;
 def ADDIUR2_MM : AddImmUR2<"addiur2", GPRMM16Opnd>, ADDIUR2_FM_MM16;
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;
 def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
