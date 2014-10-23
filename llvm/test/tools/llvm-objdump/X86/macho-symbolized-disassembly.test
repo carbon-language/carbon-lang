@@ -1,8 +1,25 @@
 // RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s -check-prefix=OBJ
 // RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.exe.macho-x86_64 | FileCheck %s -check-prefix=EXE
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/ObjC.obj.macho-x86_64 | FileCheck %s -check-prefix=ObjC-OBJ
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/ObjC.exe.macho-x86_64 | FileCheck %s -check-prefix=ObjC-EXE
 
 OBJ: 0000000000000008	leaq	L_.str(%rip), %rax      ## literal pool for: "Hello world\n"
 OBJ: 0000000000000026	callq	_printf
 
 EXE: 0000000100000f38	leaq	0x4f(%rip), %rax        ## literal pool for: "Hello world\n"
 EXE: 0000000100000f56	callq	0x100000f6c             ## symbol stub for: _printf
+
+ObjC-OBJ: 0000000000000008	leaq	0xb1(%rip), %rax        ## Objc cfstring ref: @"The current date and time is: %@"
+ObjC-OBJ: 0000000000000016	movq	0x4b(%rip), %rcx        ## Objc class ref: NSObject
+ObjC-OBJ: 000000000000001d	movq	0x64(%rip), %rsi        ## Objc selector ref: new
+ObjC-OBJ: 0000000000000034	movq	0x35(%rip), %rax        ## Objc class ref: NSDate
+ObjC-OBJ: 000000000000003b	movq	0x4e(%rip), %rsi        ## Objc selector ref: date
+
+ObjC-EXE: 0000000100000ee8	leaq	0x159(%rip), %rax       ## Objc cfstring ref: @"The current date and time is: %@"
+ObjC-EXE: 0000000100000ef6	movq	0x13b(%rip), %rcx       ## Objc class ref: _OBJC_CLASS_$_NSObject
+ObjC-EXE: 0000000100000efd	movq	0x124(%rip), %rsi       ## Objc selector ref: new
+ObjC-EXE: 0000000100000f0b	callq	0x100000f4a             ## Objc message: +[NSObject new]
+ObjC-EXE: 0000000100000f14	movq	0x125(%rip), %rax       ## Objc class ref: _OBJC_CLASS_$_NSDate
+ObjC-EXE: 0000000100000f1b	movq	0x10e(%rip), %rsi       ## Objc selector ref: date
+ObjC-EXE: 0000000100000f25	callq	0x100000f4a             ## Objc message: +[NSDate date]
+ObjC-EXE: 0000000100000f33	callq	0x100000f44             ## symbol stub for: _NSLog

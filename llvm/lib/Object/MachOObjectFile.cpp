@@ -2345,11 +2345,47 @@ MachOObjectFile::getDataInCodeTableEntry(uint32_t DataOffset,
 }
 
 MachO::symtab_command MachOObjectFile::getSymtabLoadCommand() const {
-  return getStruct<MachO::symtab_command>(this, SymtabLoadCmd);
+  if (SymtabLoadCmd)
+    return getStruct<MachO::symtab_command>(this, SymtabLoadCmd);
+
+  // If there is no SymtabLoadCmd return a load command with zero'ed fields.
+  MachO::symtab_command Cmd;
+  Cmd.cmd = MachO::LC_SYMTAB;
+  Cmd.cmdsize = sizeof(MachO::symtab_command);
+  Cmd.symoff = 0;
+  Cmd.nsyms = 0;
+  Cmd.stroff = 0;
+  Cmd.strsize = 0;
+  return Cmd;
 }
 
 MachO::dysymtab_command MachOObjectFile::getDysymtabLoadCommand() const {
-  return getStruct<MachO::dysymtab_command>(this, DysymtabLoadCmd);
+  if (DysymtabLoadCmd)
+    return getStruct<MachO::dysymtab_command>(this, DysymtabLoadCmd);
+
+  // If there is no DysymtabLoadCmd return a load command with zero'ed fields.
+  MachO::dysymtab_command Cmd;
+  Cmd.cmd = MachO::LC_DYSYMTAB;
+  Cmd.cmdsize = sizeof(MachO::dysymtab_command);
+  Cmd.ilocalsym = 0;
+  Cmd.nlocalsym = 0;
+  Cmd.iextdefsym = 0;
+  Cmd.nextdefsym = 0;
+  Cmd.iundefsym = 0;
+  Cmd.nundefsym = 0;
+  Cmd.tocoff = 0;
+  Cmd.ntoc = 0;
+  Cmd.modtaboff = 0;
+  Cmd.nmodtab = 0;
+  Cmd.extrefsymoff = 0;
+  Cmd.nextrefsyms = 0;
+  Cmd.indirectsymoff = 0;
+  Cmd.nindirectsyms = 0;
+  Cmd.extreloff = 0;
+  Cmd.nextrel = 0;
+  Cmd.locreloff = 0;
+  Cmd.nlocrel = 0;
+  return Cmd;
 }
 
 MachO::linkedit_data_command
