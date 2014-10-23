@@ -6,6 +6,7 @@ config.python_executable     = "@PYTHON_EXECUTABLE@"
 config.enable_shared         = @LIBCXXABI_ENABLE_SHARED@
 config.libcxx_includes       = "@LIBCXXABI_LIBCXX_INCLUDES@"
 config.llvm_unwinder         = @LIBCXXABI_USE_LLVM_UNWINDER@
+config.llvm_use_sanitizer    = "@LLVM_USE_SANITIZER@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@LIBCXXABI_SOURCE_DIR@/test/lit.cfg")
