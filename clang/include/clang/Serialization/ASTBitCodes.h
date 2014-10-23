@@ -288,7 +288,10 @@ namespace clang {
 
       /// \brief Record code for the module map file that was used to build this
       /// AST file.
-      MODULE_MAP_FILE = 14
+      MODULE_MAP_FILE = 14,
+
+      /// \brief Record code for the signature that identifiers this AST file.
+      SIGNATURE = 15
     };
 
     /// \brief Record types that occur within the input-files block

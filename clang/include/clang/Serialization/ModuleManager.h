@@ -179,6 +179,12 @@ public:
   /// \param ExpectedModTime The expected modification time of the module
   /// file, used for validation. This will be zero if unknown.
   ///
+  /// \param ExpectedSignature The expected signature of the module file, used
+  /// for validation. This will be zero if unknown.
+  ///
+  /// \param ReadSignature Reads the signature from an AST file without actually
+  /// loading it.
+  ///
   /// \param Module A pointer to the module file if the module was successfully
   /// loaded.
   ///
@@ -191,6 +197,9 @@ public:
                             SourceLocation ImportLoc,
                             ModuleFile *ImportedBy, unsigned Generation,
                             off_t ExpectedSize, time_t ExpectedModTime,
+                            ASTFileSignature ExpectedSignature,
+                            std::function<ASTFileSignature(llvm::BitstreamReader &)>
+                                ReadSignature,
                             ModuleFile *&Module,
                             std::string &ErrorStr);
 

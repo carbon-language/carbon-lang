@@ -591,6 +591,10 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
         off_t StoredSize = (off_t)Record[Idx++];
         time_t StoredModTime = (time_t)Record[Idx++];
 
+        // Skip the stored signature.
+        // FIXME: we could read the signature out of the import and validate it.
+        Idx++;
+
         // Retrieve the imported file name.
         unsigned Length = Record[Idx++];
         SmallString<128> ImportedFile(Record.begin() + Idx,

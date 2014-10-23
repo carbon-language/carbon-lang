@@ -97,6 +97,8 @@ public:
   bool isNotFound() const { return Val.getInt() == NotFound; }
 };
 
+typedef unsigned ASTFileSignature;
+
 /// \brief Information about a module that has been loaded by the ASTReader.
 ///
 /// Each instance of the Module class corresponds to a single AST file, which
@@ -151,6 +153,10 @@ public:
 
   /// \brief The file entry for the module file.
   const FileEntry *File;
+
+  /// \brief The signature of the module file, which may be used along with size
+  /// and modification time to identify this particular file.
+  ASTFileSignature Signature;
 
   /// \brief Whether this module has been directly imported by the
   /// user.

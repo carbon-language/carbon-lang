@@ -57,6 +57,9 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
                          SourceLocation ImportLoc, ModuleFile *ImportedBy,
                          unsigned Generation,
                          off_t ExpectedSize, time_t ExpectedModTime,
+                         ASTFileSignature ExpectedSignature,
+                         std::function<ASTFileSignature(llvm::BitstreamReader &)>
+                             ReadSignature,
                          ModuleFile *&Module,
                          std::string &ErrorStr) {
   Module = nullptr;
@@ -130,6 +133,21 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     // Initialize the stream
     New->StreamFile.init((const unsigned char *)New->Buffer->getBufferStart(),
                          (const unsigned char *)New->Buffer->getBufferEnd());
+
+    if (ExpectedSignature) {
+      New->Signature = ReadSignature(New->StreamFile);
+      if (New->Signature != ExpectedSignature) {
+        ErrorStr = New->Signature ? "signature mismatch"
+                                  : "could not read module signature";
+
+        // Remove the module file immediately, since removeModules might try to
+        // invalidate the file cache for Entry, and that is not safe if this
+        // module is *itself* up to date, but has an out-of-date importer.
+        Modules.erase(Entry);
+        Chain.pop_back();
+        return OutOfDate;
+      }
+    }
   }
   
   if (ImportedBy) {
