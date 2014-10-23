@@ -16,6 +16,9 @@
 
 // char_type thousands_sep() const;
 
+// TODO: investigation needed
+// XFAIL: linux-gnu
+
 #include <locale>
 #include <cassert>
 

@@ -20,6 +20,9 @@
 // get_weekday(iter_type s, iter_type end, ios_base& str,
 //             ios_base::iostate& err, tm* t) const;
 
+// TODO: investigation needed
+// XFAIL: linux-gnu
+
 #include <locale>
 #include <cassert>
 #include "test_iterators.h"

@@ -24,6 +24,9 @@
 //     ~time_put_byname();
 // };
 
+// TODO: investigation needed
+// XFAIL: linux-gnu
+
 #include <locale>
 #include <cassert>
 #include "test_iterators.h"

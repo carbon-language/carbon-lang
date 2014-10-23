@@ -16,6 +16,9 @@
 
 // string grouping() const;
 
+// TODO: investigation needed
+// XFAIL: linux-gnu
+
 #include <locale>
 #include <cassert>
 

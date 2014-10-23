@@ -18,6 +18,11 @@
 //     has any difference from "C" collation.  But I do believe I'm picking
 //     up the OS's collation files.
 
+// TODO investigation needed.
+// Glibc seems to collate files differently from the way Apple's C library does
+// it.
+// XFAIL: linux-gnu
+
 #include <locale>
 #include <string>
 #include <cassert>

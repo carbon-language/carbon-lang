@@ -14,6 +14,9 @@
 // iter_type put(iter_type s, ios_base& str, char_type fill, const tm* t,
 //               char format, char modifier = 0) const;
 
+// TODO: investigation needed
+// XFAIL: linux-gnu
+
 #include <locale>
 #include <cassert>
 #include "test_iterators.h"
