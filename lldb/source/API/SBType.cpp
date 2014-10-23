@@ -477,7 +477,7 @@ lldb::TypeClass
 SBType::GetTypeClass ()
 {
     if (IsValid())
-        return m_opaque_sp->GetClangASTType(false).GetTypeClass();
+        return m_opaque_sp->GetClangASTType(true).GetTypeClass();
     return lldb::eTypeClassInvalid;
 }
 
