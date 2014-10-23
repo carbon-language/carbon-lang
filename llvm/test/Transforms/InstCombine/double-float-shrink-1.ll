@@ -279,6 +279,14 @@ define float @sqrt_test(float %f) {
 ; CHECK: call float @sqrtf(float %f)
 }
 
+define double @sqrt_test2(float %f) {
+   %conv = fpext float %f to double
+   %call = call double @sqrt(double %conv)
+   ret double %call
+; CHECK-LABEL: sqrt_test2
+; CHECK: call double @sqrt(double %conv)
+}
+
 define float @sqrt_int_test(float %f) {
    %conv = fpext float %f to double
    %call = call double @llvm.sqrt.f64(double %conv)
@@ -288,13 +296,14 @@ define float @sqrt_int_test(float %f) {
 ; CHECK: call float @llvm.sqrt.f32(float %f)
 }
 
-define double @sqrt_test2(float %f) {
+define double @sqrt_int_test2(float %f) {
    %conv = fpext float %f to double
-   %call = call double @sqrt(double %conv)
+   %call = call double @llvm.sqrt.f64(double %conv)
    ret double %call
-; CHECK-LABEL: sqrt_test2
-; CHECK: call double @sqrt(double %conv)
+; CHECK-LABEL: sqrt_int_test2
+; CHECK: call double @llvm.sqrt.f64(double %conv)
 }
+
 define float @tan_test(float %f) {
    %conv = fpext float %f to double
    %call = call double @tan(double %conv)
@@ -330,7 +339,12 @@ define double @tanh_test2(float %f) {
 
 declare double @tanh(double) #1
 declare double @tan(double) #1
-declare double @sqrt(double) #1
+
+; sqrt is a special case: the shrinking optimization 
+; is valid even without unsafe-fp-math.
+declare double @sqrt(double) 
+declare double @llvm.sqrt.f64(double) 
+
 declare double @sin(double) #1
 declare double @log2(double) #1
 declare double @log1p(double) #1
@@ -348,6 +362,5 @@ declare double @acosh(double) #1
 declare double @asin(double) #1
 declare double @asinh(double) #1
 
-declare double @llvm.sqrt.f64(double) #1
 attributes #1 = { "unsafe-fp-math"="true" }
 

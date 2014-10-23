@@ -1317,42 +1317,6 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
     }
   }
 
-  // Fold (fptrunc (sqrt (fpext x))) -> (sqrtf x)
-  // Note that we restrict this transformation based on
-  // TLI->has(LibFunc::sqrtf), even for the sqrt intrinsic, because
-  // TLI->has(LibFunc::sqrtf) is sufficient to guarantee that the
-  // single-precision intrinsic can be expanded in the backend.
-  CallInst *Call = dyn_cast<CallInst>(CI.getOperand(0));
-  if (Call && Call->getCalledFunction() && TLI->has(LibFunc::sqrtf) &&
-      (Call->getCalledFunction()->getName() == TLI->getName(LibFunc::sqrt) ||
-       Call->getCalledFunction()->getIntrinsicID() == Intrinsic::sqrt) &&
-      Call->getNumArgOperands() == 1 &&
-      Call->hasOneUse()) {
-    CastInst *Arg = dyn_cast<CastInst>(Call->getArgOperand(0));
-    if (Arg && Arg->getOpcode() == Instruction::FPExt &&
-        CI.getType()->isFloatTy() &&
-        Call->getType()->isDoubleTy() &&
-        Arg->getType()->isDoubleTy() &&
-        Arg->getOperand(0)->getType()->isFloatTy()) {
-      Function *Callee = Call->getCalledFunction();
-      Module *M = CI.getParent()->getParent()->getParent();
-      Constant *SqrtfFunc = (Callee->getIntrinsicID() == Intrinsic::sqrt) ?
-        Intrinsic::getDeclaration(M, Intrinsic::sqrt, Builder->getFloatTy()) :
-        M->getOrInsertFunction("sqrtf", Callee->getAttributes(),
-                               Builder->getFloatTy(), Builder->getFloatTy(),
-                               NULL);
-      CallInst *ret = CallInst::Create(SqrtfFunc, Arg->getOperand(0),
-                                       "sqrtfcall");
-      ret->setAttributes(Callee->getAttributes());
-
-
-      // Remove the old Call.  With -fmath-errno, it won't get marked readnone.
-      ReplaceInstUsesWith(*Call, UndefValue::get(Call->getType()));
-      EraseInstFromFunction(*Call);
-      return ret;
-    }
-  }
-
   return nullptr;
 }
 
