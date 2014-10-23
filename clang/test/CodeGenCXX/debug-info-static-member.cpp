@@ -42,9 +42,10 @@ int main()
 // CHECK: ![[DECL_C:[0-9]+]] = metadata !{metadata !"0xd\00c\00{{.*}}", {{.*}} [ DW_TAG_member ] [c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
 // CHECK: metadata !"0xd\00const_c\00{{.*}}", {{.*}} [ DW_TAG_member ] [const_c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
 // CHECK: metadata !"0xd\00x_a\00{{.*}}", {{.*}} [ DW_TAG_member ] [x_a] {{.*}} [public] [static]
-// CHECK: metadata !{metadata !"0x34\00a\00{{.*}}", {{.*}} @_ZN1C1aE, metadata ![[DECL_A]]} ; [ DW_TAG_variable ] [a] {{.*}} [def]
-// CHECK: metadata !{metadata !"0x34\00b\00{{.*}}", {{.*}} @_ZN1C1bE, metadata ![[DECL_B]]} ; [ DW_TAG_variable ] [b] {{.*}} [def]
-// CHECK: metadata !{metadata !"0x34\00c\00{{.*}}", {{.*}} @_ZN1C1cE, metadata ![[DECL_C]]} ; [ DW_TAG_variable ] [c] {{.*}} [def]
+// CHECK: [[NS_X:![0-9]+]] = {{.*}} ; [ DW_TAG_namespace ] [x]
+// CHECK: metadata !{metadata !"0x34\00a\00{{.*}}", null, {{.*}} @_ZN1C1aE, metadata ![[DECL_A]]} ; [ DW_TAG_variable ] [a] {{.*}} [def]
+// CHECK: metadata !{metadata !"0x34\00b\00{{.*}}", null, {{.*}} @_ZN1C1bE, metadata ![[DECL_B]]} ; [ DW_TAG_variable ] [b] {{.*}} [def]
+// CHECK: metadata !{metadata !"0x34\00c\00{{.*}}", null, {{.*}} @_ZN1C1cE, metadata ![[DECL_C]]} ; [ DW_TAG_variable ] [c] {{.*}} [def]
 
 // Verify that even when a static member declaration is created lazily when
 // creating the definition, the declaration line is that of the canonical
@@ -57,3 +58,12 @@ struct V {
 };
 // CHECK: i32 42} ; [ DW_TAG_member ] [const_va] [line [[@LINE-2]],
 const int V::const_va;
+
+namespace x {
+struct y {
+  static int z;
+};
+int y::z;
+}
+
+// CHECK: metadata !{metadata !"0x34\00z\00{{.*}}", metadata [[NS_X]], {{.*}} ; [ DW_TAG_variable ] [z] {{.*}} [def]

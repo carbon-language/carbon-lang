@@ -3186,8 +3186,15 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   if (LinkageName == DeclName)
     LinkageName = StringRef();
 
-  llvm::DIDescriptor DContext =
-    getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()));
+  // Since we emit declarations (DW_AT_members) for static members, place the
+  // definition of those static members in the namespace they were declared in
+  // in the source code (the lexical decl context).
+  // FIXME: Generalize this for even non-member global variables where the
+  // declaration and definition may have different lexical decl contexts, once
+  // we have support for emitting declarations of (non-member) global variables.
+  llvm::DIDescriptor DContext = getContextDescriptor(
+      dyn_cast<Decl>(D->isStaticDataMember() ? D->getLexicalDeclContext()
+                                             : D->getDeclContext()));
 
   // Attempt to store one global variable for the declaration - even if we
   // emit a lot of fields.
