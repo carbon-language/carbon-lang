@@ -249,7 +249,7 @@ struct DisassembleInfo {
   const char *class_name;
   const char *selector_name;
   char *method;
-  BindTable *BindTable;
+  BindTable *bindtable;
 };
 
 // SymbolizerGetOpInfo() is the operand information call back function.
@@ -1392,7 +1392,7 @@ static void DisassembleInputMachO2(StringRef Filename,
     SymbolizerInfo.class_name = nullptr;
     SymbolizerInfo.selector_name = nullptr;
     SymbolizerInfo.method = nullptr;
-    SymbolizerInfo.BindTable = nullptr;
+    SymbolizerInfo.bindtable = nullptr;
 
     // Disassemble symbol by symbol.
     for (unsigned SymIdx = 0; SymIdx != Symbols.size(); SymIdx++) {
@@ -1569,8 +1569,8 @@ static void DisassembleInputMachO2(StringRef Filename,
     }
     if (SymbolizerInfo.method != nullptr)
       free(SymbolizerInfo.method);
-    if (SymbolizerInfo.BindTable != nullptr)
-      delete SymbolizerInfo.BindTable;
+    if (SymbolizerInfo.bindtable != nullptr)
+      delete SymbolizerInfo.bindtable;
   }
 }
 
@@ -3412,8 +3412,8 @@ void llvm::printMachOWeakBindTable(const object::MachOObjectFile *Obj) {
 // name is returned.  If not nullptr is returned.
 static const char *get_dyld_bind_info_symbolname(uint64_t ReferenceValue,
                                                  struct DisassembleInfo *info) {
-  if (info->BindTable == nullptr) {
-    info->BindTable = new (BindTable);
+  if (info->bindtable == nullptr) {
+    info->bindtable = new (BindTable);
     SegInfo sectionTable(info->O);
     for (const llvm::object::MachOBindEntry &Entry : info->O->bindTable()) {
       uint32_t SegIndex = Entry.segmentIndex();
@@ -3423,11 +3423,11 @@ static const char *get_dyld_bind_info_symbolname(uint64_t ReferenceValue,
       StringRef name = Entry.symbolName();
       if (!name.empty())
         SymbolName = name.data();
-      info->BindTable->push_back(std::make_pair(Address, SymbolName));
+      info->bindtable->push_back(std::make_pair(Address, SymbolName));
     }
   }
-  for (bind_table_iterator BI = info->BindTable->begin(),
-                           BE = info->BindTable->end();
+  for (bind_table_iterator BI = info->bindtable->begin(),
+                           BE = info->bindtable->end();
        BI != BE; ++BI) {
     uint64_t Address = BI->first;
     if (ReferenceValue == Address) {
