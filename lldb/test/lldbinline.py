@@ -103,6 +103,7 @@ def CleanMakefile():
 class InlineTest(TestBase):
     # Internal implementation
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def buildDsymWithImplicitMakefile(self):
         BuildMakefile(self.mydir)
         self.buildDsym()
@@ -111,6 +112,7 @@ class InlineTest(TestBase):
         BuildMakefile(self.mydir)
         self.buildDwarf()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
         self.buildDsymWithImplicitMakefile()
         self.do_test()
