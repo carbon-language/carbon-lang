@@ -248,9 +248,17 @@ public:
   }
   void setAlternateName(StringRef def, StringRef weak);
 
-  void addNoDefaultLib(StringRef path) { _noDefaultLibs.insert(path); }
+  void addNoDefaultLib(StringRef path) {
+    if (path.endswith_lower(".lib"))
+      _noDefaultLibs.insert(path.drop_back(4).lower());
+    else
+      _noDefaultLibs.insert(path.lower());
+  }
+
   bool hasNoDefaultLib(StringRef path) const {
-    return _noDefaultLibs.count(path) == 1;
+    if (path.endswith_lower(".lib"))
+      return _noDefaultLibs.count(path.drop_back(4).lower()) > 0;
+    return _noDefaultLibs.count(path.lower()) > 0;
   }
 
   void setNoDefaultLibAll(bool val) { _noDefaultLibAll = val; }
