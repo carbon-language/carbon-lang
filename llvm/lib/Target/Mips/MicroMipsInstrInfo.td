@@ -19,6 +19,10 @@ def uimm3_shift : Operand<i32> {
   let EncoderMethod = "getUImm3Mod8Encoding";
 }
 
+def simm3_lsa2 : Operand<i32> {
+  let EncoderMethod = "getSImm3Lsa2Value";
+}
+
 def immZExt2Shift : ImmLeaf<i32, [{return Imm >= 1 && Imm <= 8;}]>;
 
 def immLi16 : ImmLeaf<i32, [{return Imm >= -1 && Imm <= 126;}]>;
@@ -130,6 +134,13 @@ class ShiftIMM16<string opstr, Operand ImmOpnd,
   MicroMipsInst16<(outs RO:$rd), (ins RO:$rt, ImmOpnd:$shamt),
                   !strconcat(opstr, "\t$rd, $rt, $shamt"),
                   [(set RO:$rd, (OpNode RO:$rt, PF:$shamt))], Itin, FrmR>;
+
+class AddImmUR2<string opstr, RegisterOperand RO> :
+  MicroMipsInst16<(outs RO:$rd), (ins RO:$rs, simm3_lsa2:$imm),
+                  !strconcat(opstr, "\t$rd, $rs, $imm"),
+                  [], NoItinerary, FrmR> {
+  let isCommutable = 1;
+}
 
 class AddImmUS5<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$dst), (ins RO:$rd, simm4:$imm),
@@ -245,6 +256,7 @@ def SLL16_MM : ShiftIMM16<"sll16", uimm3_shift, GPRMM16Opnd, shl,
                           immZExt2Shift, II_SLL>, SHIFT_FM_MM16<0>;
 def SRL16_MM : ShiftIMM16<"srl16", uimm3_shift, GPRMM16Opnd, srl,
                           immZExt2Shift, II_SRL>, SHIFT_FM_MM16<1>;
+def ADDIUR2_MM : AddImmUR2<"addiur2", GPRMM16Opnd>, ADDIUR2_FM_MM16;
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;
 def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;

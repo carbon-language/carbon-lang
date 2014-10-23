@@ -81,6 +81,20 @@ class SHIFT_FM_MM16<bits<1> funct> {
   let Inst{0}     = funct;
 }
 
+class ADDIUR2_FM_MM16 {
+  bits<3> rd;
+  bits<3> rs;
+  bits<3> imm;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x1b;
+  let Inst{9-7}   = rd;
+  let Inst{6-4}   = rs;
+  let Inst{3-1}   = imm;
+  let Inst{0}     = 0;
+}
+
 class ADDIUS5_FM_MM16 {
   bits<5> rd;
   bits<4> imm;
