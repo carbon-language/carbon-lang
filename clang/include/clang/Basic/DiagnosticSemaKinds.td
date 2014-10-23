@@ -2500,6 +2500,10 @@ def warn_impcast_pointer_to_bool : Warning<
     "address of%select{| function| array}0 '%1' will always evaluate to "
     "'true'">,
     InGroup<PointerBoolConversion>;
+def warn_cast_nonnull_to_bool : Warning<
+    "nonnull parameter '%0' will always evaluate to "
+    "'true'">,
+    InGroup<PointerBoolConversion>;
 def warn_this_bool_conversion : Warning<
   "'this' pointer cannot be null in well-defined C++ code; pointer may be "
   "assumed to always convert to true">, InGroup<UndefinedBoolConversion>;
@@ -2511,6 +2515,10 @@ def warn_address_of_reference_bool_conversion : Warning<
 def warn_null_pointer_compare : Warning<
     "comparison of %select{address of|function|array}0 '%1' %select{not |}2"
     "equal to a null pointer is always %select{true|false}2">,
+    InGroup<TautologicalPointerCompare>;
+def warn_nonnull_parameter_compare : Warning<
+    "comparison of nonnull parameter '%0' %select{not |}1"
+    "equal to a null pointer is always %select{true|false}1">,
     InGroup<TautologicalPointerCompare>;
 def warn_this_null_compare : Warning<
   "'this' pointer cannot be null in well-defined C++ code; comparison may be "

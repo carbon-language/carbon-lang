@@ -6678,7 +6678,37 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
   // Weak Decls can be null.
   if (!D || D->isWeak())
     return;
-
+  // Check for parameter decl with nonnull attribute
+  if (ParmVarDecl* PV = dyn_cast<ParmVarDecl>(D)) {
+    if (FunctionDecl* FD = dyn_cast<FunctionDecl>(PV->getDeclContext())) {
+      unsigned NumArgs = FD->getNumParams();
+      llvm::SmallBitVector AttrNonNull(NumArgs);
+      for (const auto *NonNull : FD->specific_attrs<NonNullAttr>()) {
+        if (!NonNull->args_size()) {
+          AttrNonNull.set(0, NumArgs);
+          break;
+        }
+        for (unsigned Val : NonNull->args()) {
+          if (Val >= NumArgs)
+            continue;
+          AttrNonNull.set(Val);
+        }
+      }
+      if (!AttrNonNull.empty())
+        for (unsigned i = 0; i < NumArgs; ++i)
+          if (FD->getParamDecl(i) == PV && AttrNonNull[i]) {
+            std::string Str;
+            llvm::raw_string_ostream S(Str);
+            E->printPretty(S, nullptr, getPrintingPolicy());
+            unsigned DiagID = IsCompare ? diag::warn_nonnull_parameter_compare
+                                        : diag::warn_cast_nonnull_to_bool;
+            Diag(E->getExprLoc(), DiagID) << S.str() << E->getSourceRange()
+              << Range << IsEqual;
+            return;
+          }
+    }
+  }
+  
   QualType T = D->getType();
   const bool IsArray = T->isArrayType();
   const bool IsFunction = T->isFunctionType();
