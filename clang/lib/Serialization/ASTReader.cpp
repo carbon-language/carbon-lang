@@ -2252,6 +2252,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
   // Read all of the records and blocks in the control block.
   RecordData Record;
+  unsigned NumInputs = 0;
+  unsigned NumUserInputs = 0;
   while (1) {
     llvm::BitstreamEntry Entry = Stream.advance();
     
@@ -2264,12 +2266,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       const HeaderSearchOptions &HSOpts =
           PP.getHeaderSearchInfo().getHeaderSearchOpts();
 
-      // All user input files reside at the index range [0, Record[1]), and
-      // system input files reside at [Record[1], Record[0]).
-      // Record is the one from INPUT_FILE_OFFSETS.
-      unsigned NumInputs = Record[0];
-      unsigned NumUserInputs = Record[1];
-
+      // All user input files reside at the index range [0, NumUserInputs), and
+      // system input files reside at [NumUserInputs, NumInputs).
       if (!DisableValidation &&
           (ValidateSystemInputs || !HSOpts.ModulesValidateOncePerBuildSession ||
            F.InputFilesValidationTimestamp <= HSOpts.BuildSessionTimestamp)) {
@@ -2485,8 +2483,10 @@ ASTReader::ReadControlBlock(ModuleFile &F,
               ReadModuleMapFileBlock(Record, F, ImportedBy, ClientLoadCapabilities))
         return Result;
     case INPUT_FILE_OFFSETS:
+      NumInputs = Record[0];
+      NumUserInputs = Record[1];
       F.InputFileOffsets = (const uint32_t *)Blob.data();
-      F.InputFilesLoaded.resize(Record[0]);
+      F.InputFilesLoaded.resize(NumInputs);
       break;
     }
   }
