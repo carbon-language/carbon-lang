@@ -49,6 +49,9 @@
 ; CHECK: DW_AT_GNU_pubnames [DW_FORM_flag_present]   (true)
 ; CHECK-NOT: DW_AT_GNU_pubtypes [
 
+; CHECK: [[STATIC_MEM_VAR:0x[0-9a-f]+]]: DW_TAG_variable
+; CHECK-NEXT: DW_AT_specification {{.*}} "static_member_variable"
+
 ; CHECK: [[C:0x[0-9a-f]+]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "C"
 
@@ -66,20 +69,23 @@
 ; CHECK: [[INT:0x[0-9a-f]+]]: DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "int"
 
-; CHECK: [[STATIC_MEM_VAR:0x[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}} "static_member_variable"
-
 ; CHECK: [[GLOB_VAR:0x[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_variable"
 
 ; CHECK: [[NS:0x[0-9a-f]+]]: DW_TAG_namespace
 ; CHECK-NEXT: DW_AT_name {{.*}} "ns"
 
-; CHECK: DW_TAG_variable
+; CHECK: [[GLOB_NS_VAR:0x[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_namespace_variable"
+; CHECK-NOT: DW_AT_specification
+; CHECK: DW_AT_location
+; CHECK-NOT: DW_AT_specification
 
-; CHECK: DW_TAG_variable
+; CHECK: [[D_VAR:0x[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "d"
+; CHECK-NOT: DW_AT_specification
+; CHECK: DW_AT_location
+; CHECK-NOT: DW_AT_specification
 
 ; CHECK: [[D:0x[0-9a-f]+]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "D"
@@ -89,12 +95,6 @@
 ; CHECK: DW_AT_MIPS_linkage_name
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name {{.*}} "global_namespace_function"
-
-; CHECK: [[GLOB_NS_VAR:0x[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}} "_ZN2ns25global_namespace_variableE"
-
-; CHECK: [[D_VAR:0x[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}} "_ZN2ns1dE"
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
@@ -116,7 +116,7 @@
 ; CHECK: [[OUTER_ANON:.*]]:  DW_TAG_namespace
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK-NOT:     DW_AT_name
-; CHECK: DW_TAG_variable
+; CHECK: [[OUTER_ANON_C:.*]]: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
 ; CHECK:       DW_AT_name {{.*}} "c"
 ; CHECK-NOT: {{DW_TAG|NULL}}
@@ -129,9 +129,6 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   NULL
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK: [[OUTER_ANON_C:.*]]: DW_TAG_variable
-; CHECK-NOT: DW_TAG
-; CHECK-NEXT:   DW_AT_specification {{.*}} "_ZN5outer12_GLOBAL__N_11cE"
 
 ; CHECK: [[ANON:.*]]: DW_TAG_namespace
 ; CHECK-NOT:   DW_AT_name
@@ -139,24 +136,18 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "inner"
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:      DW_TAG_variable
+; CHECK: [[ANON_INNER_B:.*]]: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
 ; CHECK:       DW_AT_name {{.*}} "b"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:     NULL
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:    DW_TAG_variable
+; CHECK: [[ANON_I:.*]]: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "i"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   NULL
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK: [[ANON_INNER_B:.*]]: DW_TAG_variable
-; CHECK-NOT: DW_TAG
-; CHECK-NEXT:   DW_AT_specification {{.*}} "_ZN12_GLOBAL__N_15inner1bE"
-; CHECK: [[ANON_I:.*]]: DW_TAG_variable
-; CHECK-NOT: DW_TAG
-; CHECK-NEXT:   DW_AT_specification {{.*}} "_ZN12_GLOBAL__N_11iE"
 
 ; CHECK: [[MEM_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
@@ -312,7 +303,7 @@ attributes #1 = { nounwind readnone }
 !30 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !7} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
 !31 = metadata !{metadata !"0x2e\00f7\00f7\00_Z2f7v\0054\000\001\000\006\00256\000\0054", metadata !1, metadata !23, metadata !13, null, i32 ()* @_Z2f7v, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 54] [def] [f7]
 !32 = metadata !{metadata !33, metadata !34, metadata !35, metadata !36, metadata !37, metadata !38, metadata !41, metadata !44}
-!33 = metadata !{metadata !"0x34\00static_member_variable\00static_member_variable\00_ZN1C22static_member_variableE\007\000\001", metadata !4, metadata !23, metadata !7, i32* @_ZN1C22static_member_variableE, metadata !6} ; [ DW_TAG_variable ] [static_member_variable] [line 7] [def]
+!33 = metadata !{metadata !"0x34\00static_member_variable\00static_member_variable\00_ZN1C22static_member_variableE\007\000\001", null, metadata !23, metadata !7, i32* @_ZN1C22static_member_variableE, metadata !6} ; [ DW_TAG_variable ] [static_member_variable] [line 7] [def]
 !34 = metadata !{metadata !"0x34\00global_variable\00global_variable\00\0017\000\001", null, metadata !23, metadata !"_ZTS1C", %struct.C* @global_variable, null} ; [ DW_TAG_variable ] [global_variable] [line 17] [def]
 !35 = metadata !{metadata !"0x34\00global_namespace_variable\00global_namespace_variable\00_ZN2ns25global_namespace_variableE\0027\000\001", metadata !16, metadata !23, metadata !7, i32* @_ZN2ns25global_namespace_variableE, null} ; [ DW_TAG_variable ] [global_namespace_variable] [line 27] [def]
 !36 = metadata !{metadata !"0x34\00d\00d\00_ZN2ns1dE\0030\000\001", metadata !16, metadata !23, metadata !"_ZTSN2ns1DE", %"struct.ns::D"* @_ZN2ns1dE, null} ; [ DW_TAG_variable ] [d] [line 30] [def]

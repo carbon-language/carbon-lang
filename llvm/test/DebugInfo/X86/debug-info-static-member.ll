@@ -1,5 +1,5 @@
 ; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-unknown-linux-gnu -dwarf-version=4
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=PRESENT
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=PRESENT 
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=ABSENT
 ; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-apple-darwin -dwarf-version=4
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=DARWINP
@@ -68,7 +68,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !8 = metadata !{metadata !9}
 !9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{metadata !12, metadata !27, metadata !28}
-!12 = metadata !{metadata !"0x34\00a\00a\00_ZN1C1aE\0014\000\001", metadata !13, metadata !6, metadata !9, i32* @_ZN1C1aE, metadata !15} ; [ DW_TAG_variable ] [a] [line 14] [def]
+!12 = metadata !{metadata !"0x34\00a\00a\00_ZN1C1aE\0014\000\001", null, metadata !6, metadata !9, i32* @_ZN1C1aE, metadata !15} ; [ DW_TAG_variable ] [a] [line 14] [def]
 !13 = metadata !{metadata !"0x2\00C\001\0032\0032\000\000\000", metadata !33, null, null, metadata !14, null, null, null} ; [ DW_TAG_class_type ] [C] [line 1, size 32, align 32, offset 0] [def] [from ]
 !14 = metadata !{metadata !15, metadata !16, metadata !19, metadata !20, metadata !23, metadata !24, metadata !26}
 !15 = metadata !{metadata !"0xd\00a\003\000\000\000\004097", metadata !33, metadata !13, metadata !9, null} ; [ DW_TAG_member ] [a] [line 3, size 0, align 0, offset 0] [private] [static] [from int]
@@ -83,8 +83,8 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !24 = metadata !{metadata !"0xd\00const_c\0010\000\000\000\004099", metadata !33, metadata !13, metadata !25, i32 18} ; [ DW_TAG_member ] [const_c] [line 10, size 0, align 0, offset 0] [static] [from ]
 !25 = metadata !{metadata !"0x26\00\000\000\000\000\000", null, null, metadata !9} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from int]
 !26 = metadata !{metadata !"0xd\00d\0011\0032\0032\000\003", metadata !33, metadata !13, metadata !9} ; [ DW_TAG_member ] [d] [line 11, size 32, align 32, offset 0] [from int]
-!27 = metadata !{metadata !"0x34\00b\00b\00_ZN1C1bE\0015\000\001", metadata !13, metadata !6, metadata !9, i32* @_ZN1C1bE, metadata !19} ; [ DW_TAG_variable ] [b] [line 15] [def]
-!28 = metadata !{metadata !"0x34\00c\00c\00_ZN1C1cE\0016\000\001", metadata !13, metadata !6, metadata !9, i32* @_ZN1C1cE, metadata !23} ; [ DW_TAG_variable ] [c] [line 16] [def]
+!27 = metadata !{metadata !"0x34\00b\00b\00_ZN1C1bE\0015\000\001", null, metadata !6, metadata !9, i32* @_ZN1C1bE, metadata !19} ; [ DW_TAG_variable ] [b] [line 15] [def]
+!28 = metadata !{metadata !"0x34\00c\00c\00_ZN1C1cE\0016\000\001", null, metadata !6, metadata !9, i32* @_ZN1C1cE, metadata !23} ; [ DW_TAG_variable ] [c] [line 16] [def]
 !29 = metadata !{metadata !"0x100\00instance_C\0020\000", metadata !5, metadata !6, metadata !13} ; [ DW_TAG_auto_variable ] [instance_C] [line 20]
 !30 = metadata !{i32 20, i32 0, metadata !5, null}
 !31 = metadata !{i32 21, i32 0, metadata !5, null}
@@ -95,6 +95,10 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; (for variables) or DW_AT_const_value (for constants).
 ;
 ; PRESENT:      .debug_info contents:
+; PRESENT:      DW_TAG_variable
+; PRESENT-NEXT: DW_AT_specification {{.*}} "a"
+; PRESENT-NEXT: DW_AT_location
+; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
 ; PRESENT:      DW_TAG_class_type
 ; PRESENT-NEXT: DW_AT_name {{.*}} "C"
 ; PRESENT:      DW_TAG_member
@@ -131,10 +135,6 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; PRESENT:      NULL
 ; Definitions point back to their declarations, and have a location.
 ; PRESENT:      DW_TAG_variable
-; PRESENT-NEXT: DW_AT_specification {{.*}} "a"
-; PRESENT-NEXT: DW_AT_location
-; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
-; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} "b"
 ; PRESENT-NEXT: DW_AT_location
 ; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1bE"
@@ -145,6 +145,10 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 ; For Darwin gdb:
 ; DARWINP:      .debug_info contents:
+; DARWINP:      DW_TAG_variable
+; DARWINP-NEXT: DW_AT_specification {{.*}} "a"
+; DARWINP-NEXT: DW_AT_location
+; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
 ; DARWINP:      DW_TAG_class_type
 ; DARWINP-NEXT: DW_AT_name {{.*}} "C"
 ; DARWINP:      DW_TAG_member
@@ -180,10 +184,6 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; DARWINP:      NULL
 ; Definitions point back to their declarations, and have a location.
-; DARWINP:      DW_TAG_variable
-; DARWINP-NEXT: DW_AT_specification {{.*}} "a"
-; DARWINP-NEXT: DW_AT_location
-; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
 ; DARWINP:      DW_TAG_variable
 ; DARWINP-NEXT: DW_AT_specification {{.*}} "b"
 ; DARWINP-NEXT: DW_AT_location
