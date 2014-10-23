@@ -18,8 +18,11 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 
 namespace llvm {
-DwarfFile::DwarfFile(AsmPrinter *AP, StringRef Pref, BumpPtrAllocator &DA)
-    : Asm(AP), StrPool(DA, *Asm, Pref) {}
+DwarfFile::DwarfFile(AsmPrinter *AP, DwarfDebug &DD, StringRef Pref,
+                     BumpPtrAllocator &DA)
+    : Asm(AP), DD(DD), StrPool(DA, *Asm, Pref) {
+  (void)this->DD;
+}
 
 DwarfFile::~DwarfFile() {}
 
@@ -48,7 +51,7 @@ void DwarfFile::addUnit(std::unique_ptr<DwarfUnit> U) {
 
 // Emit the various dwarf units to the unit section USection with
 // the abbreviations going into ASection.
-void DwarfFile::emitUnits(DwarfDebug *DD, const MCSymbol *ASectionSym) {
+void DwarfFile::emitUnits(const MCSymbol *ASectionSym) {
   for (const auto &TheU : CUs) {
     DIE &Die = TheU->getUnitDie();
     const MCSection *USection = TheU->getSection();
@@ -63,7 +66,7 @@ void DwarfFile::emitUnits(DwarfDebug *DD, const MCSymbol *ASectionSym) {
 
     TheU->emitHeader(ASectionSym);
 
-    DD->emitDIE(Die);
+    DD.emitDIE(Die);
     Asm->OutStreamer.EmitLabel(TheU->getLabelEnd());
   }
 }

@@ -170,9 +170,10 @@ static LLVM_CONSTEXPR DwarfAccelTable::Atom TypeAtoms[] = {
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), FirstCU(nullptr), PrevLabel(nullptr),
-      GlobalRangeCount(0), InfoHolder(A, "info_string", DIEValueAllocator),
+      GlobalRangeCount(0),
+      InfoHolder(A, *this, "info_string", DIEValueAllocator),
       UsedNonDefaultText(false),
-      SkeletonHolder(A, "skel_string", DIEValueAllocator),
+      SkeletonHolder(A, *this, "skel_string", DIEValueAllocator),
       IsDarwin(Triple(A->getTargetTriple()).isOSDarwin()),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                        dwarf::DW_FORM_data4)),
@@ -1522,7 +1523,7 @@ void DwarfDebug::emitDIE(DIE &Die) {
 void DwarfDebug::emitDebugInfo() {
   DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
 
-  Holder.emitUnits(this, DwarfAbbrevSectionSym);
+  Holder.emitUnits(DwarfAbbrevSectionSym);
 }
 
 // Emit the abbreviation section.
@@ -2165,7 +2166,7 @@ void DwarfDebug::emitDebugInfoDWO() {
   assert(useSplitDwarf() && "No split dwarf debug info?");
   // Don't pass an abbrev symbol, using a constant zero instead so as not to
   // emit relocations into the dwo file.
-  InfoHolder.emitUnits(this, /* AbbrevSymbol */ nullptr);
+  InfoHolder.emitUnits(/* AbbrevSymbol */ nullptr);
 }
 
 // Emit the .debug_abbrev.dwo section for separated dwarf. This contains the
