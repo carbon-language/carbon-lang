@@ -67,6 +67,20 @@ class LOGIC_FM_MM16<bits<4> funct> {
   let Inst{2-0}   = rs;
 }
 
+class SHIFT_FM_MM16<bits<1> funct> {
+  bits<3> rd;
+  bits<3> rt;
+  bits<3> shamt;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x09;
+  let Inst{9-7}   = rd;
+  let Inst{6-4}   = rt;
+  let Inst{3-1}   = shamt;
+  let Inst{0}     = funct;
+}
+
 class ADDIUS5_FM_MM16 {
   bits<5> rd;
   bits<4> imm;

@@ -14,6 +14,12 @@ def simm9_addiusp : Operand<i32> {
   let EncoderMethod = "getSImm9AddiuspValue";
 }
 
+def uimm3_shift : Operand<i32> {
+  let EncoderMethod = "getUImm3Mod8Encoding";
+}
+
+def immZExt2Shift : ImmLeaf<i32, [{return Imm >= 1 && Imm <= 8;}]>;
+
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops GPR32, simm12);
@@ -113,6 +119,14 @@ class NotMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$rt), (ins RO:$rs),
          !strconcat(opstr, "\t$rt, $rs"),
          [(set RO:$rt, (not RO:$rs))], NoItinerary, FrmR>;
+
+class ShiftIMM16<string opstr, Operand ImmOpnd,
+                 RegisterOperand RO, SDPatternOperator OpNode = null_frag,
+                 SDPatternOperator PF = null_frag,
+                 InstrItinClass Itin = NoItinerary> :
+  MicroMipsInst16<(outs RO:$rd), (ins RO:$rt, ImmOpnd:$shamt),
+                  !strconcat(opstr, "\t$rd, $rt, $shamt"),
+                  [(set RO:$rd, (OpNode RO:$rt, PF:$shamt))], Itin, FrmR>;
 
 class AddImmUS5<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$dst), (ins RO:$rd, simm4:$imm),
@@ -217,6 +231,10 @@ def OR16_MM  : LogicRMM16<"or16", GPRMM16Opnd, II_OR, or>,
 def XOR16_MM : LogicRMM16<"xor16", GPRMM16Opnd, II_XOR, xor>,
                LOGIC_FM_MM16<0x1>;
 def NOT16_MM : NotMM16<"not16", GPRMM16Opnd>, LOGIC_FM_MM16<0x0>;
+def SLL16_MM : ShiftIMM16<"sll16", uimm3_shift, GPRMM16Opnd, shl,
+                          immZExt2Shift, II_SLL>, SHIFT_FM_MM16<0>;
+def SRL16_MM : ShiftIMM16<"srl16", uimm3_shift, GPRMM16Opnd, srl,
+                          immZExt2Shift, II_SRL>, SHIFT_FM_MM16<1>;
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;
 def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;

@@ -9,3 +9,7 @@
   not16   $18, $9   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   or16    $16, $10  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   xor16   $15, $5   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  sll16   $1, $16, 5 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  srl16   $4, $9, 6  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  sll16   $3, $16, 9 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  srl16   $4, $5, 15 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range

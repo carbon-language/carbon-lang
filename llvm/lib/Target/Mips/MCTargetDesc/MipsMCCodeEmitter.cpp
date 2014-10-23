@@ -692,4 +692,13 @@ MipsMCCodeEmitter::getSimm18Lsl3Encoding(const MCInst &MI, unsigned OpNo,
   return 0;
 }
 
+unsigned
+MipsMCCodeEmitter::getUImm3Mod8Encoding(const MCInst &MI, unsigned OpNo,
+                                        SmallVectorImpl<MCFixup> &Fixups,
+                                        const MCSubtargetInfo &STI) const {
+  assert(MI.getOperand(OpNo).isImm());
+  const MCOperand &MO = MI.getOperand(OpNo);
+  return MO.getImm() % 8;
+}
+
 #include "MipsGenMCCodeEmitter.inc"

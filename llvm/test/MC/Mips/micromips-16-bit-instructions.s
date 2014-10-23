@@ -15,6 +15,8 @@
 # CHECK-EL: not16   $17, $3         # encoding: [0x0b,0x44]
 # CHECK-EL: or16    $16, $4         # encoding: [0xc4,0x44]
 # CHECK-EL: xor16   $17, $5         # encoding: [0x4d,0x44]
+# CHECK-EL: sll16   $3, $16, 5      # encoding: [0x8a,0x25]
+# CHECK-EL: srl16   $4, $17, 6      # encoding: [0x1d,0x26]
 # CHECK-EL: addius5 $7, -2          # encoding: [0xfc,0x4c]
 # CHECK-EL: addiusp -16             # encoding: [0xf9,0x4f]
 # CHECK-EL: mfhi    $9              # encoding: [0x09,0x46]
@@ -37,6 +39,8 @@
 # CHECK-EB: not16   $17, $3         # encoding: [0x44,0x0b]
 # CHECK-EB: or16    $16, $4         # encoding: [0x44,0xc4]
 # CHECK-EB: xor16   $17, $5         # encoding: [0x44,0x4d]
+# CHECK-EB: sll16   $3, $16, 5      # encoding: [0x25,0x8a]
+# CHECK-EB: srl16   $4, $17, 6      # encoding: [0x26,0x1d]
 # CHECK-EB: addius5 $7, -2          # encoding: [0x4c,0xfc]
 # CHECK-EB: addiusp -16             # encoding: [0x4f,0xf9]
 # CHECK-EB: mfhi    $9              # encoding: [0x46,0x09]
@@ -57,6 +61,8 @@
     not16   $17, $3
     or16    $16, $4
     xor16   $17, $5
+    sll16   $3, $16, 5
+    srl16   $4, $17, 6
     addius5 $7, -2
     addiusp -16
     mfhi    $9
