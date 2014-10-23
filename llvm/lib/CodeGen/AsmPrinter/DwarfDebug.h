@@ -194,9 +194,6 @@ class DwarfDebug : public AsmPrinterHandler {
   typedef DenseMap<const MCSection *, SmallVector<SymbolCU, 8> > SectionMapType;
   SectionMapType SectionMap;
 
-  // List of arguments for current function.
-  SmallVector<DbgVariable *, 8> CurrentFnArguments;
-
   LexicalScopes LScopes;
 
   // Collection of abstract subprogram DIEs.
@@ -674,10 +671,6 @@ public:
 
   SmallPtrSet<const MDNode *, 16> &getProcessedSPNodes() {
     return ProcessedSPNodes;
-  }
-
-  SmallVector<DbgVariable *, 8> &getCurrentFnArguments() {
-    return CurrentFnArguments;
   }
 };
 } // End of namespace llvm

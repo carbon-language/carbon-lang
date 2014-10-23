@@ -84,7 +84,6 @@ public:
   /// \brief Returns the string pool.
   DwarfStringPool &getStringPool() { return StrPool; }
 
-  bool addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope);
   void addNonArgumentScopeVariable(LexicalScope *LS, DbgVariable *Var);
 };
 }

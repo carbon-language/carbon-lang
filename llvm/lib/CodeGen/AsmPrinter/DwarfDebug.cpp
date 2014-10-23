@@ -1254,8 +1254,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 }
 
 void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
-  if (InfoHolder.addCurrentFnArgument(Var, LS))
-    return;
   InfoHolder.addNonArgumentScopeVariable(LS, Var);
 }
 
@@ -1297,7 +1295,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   if (TheCU.getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly &&
       LScopes.getAbstractScopesList().empty() && !IsDarwin) {
     assert(ScopeVariables.empty());
-    assert(CurrentFnArguments.empty());
     assert(DbgValues.empty());
     // FIXME: This wouldn't be true in LTO with a -g (with inlining) CU followed
     // by a -gmlt CU. Add a test and remove this assertion.
@@ -1337,7 +1334,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // DbgVariables except those that are also in AbstractVariables (since they
   // can be used cross-function)
   ScopeVariables.clear();
-  CurrentFnArguments.clear();
   DbgValues.clear();
   LabelsBeforeInsn.clear();
   LabelsAfterInsn.clear();

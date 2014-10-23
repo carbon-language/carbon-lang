@@ -27,6 +27,10 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_variable
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_variable
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_unspecified_parameters
 ;
 ; Variadic C++ member function.

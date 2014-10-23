@@ -155,28 +155,6 @@ void DwarfFile::emitStrings(const MCSection *StrSection,
   StrPool.emit(*Asm, StrSection, OffsetSection);
 }
 
-// If Var is a current function argument then add it to CurrentFnArguments list.
-bool DwarfFile::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
-  if (Scope->getParent())
-    return false;
-  DIVariable DV = Var->getVariable();
-  if (DV.getTag() != dwarf::DW_TAG_arg_variable)
-    return false;
-  unsigned ArgNo = DV.getArgNumber();
-  if (ArgNo == 0)
-    return false;
-
-  auto &CurrentFnArguments = DD.getCurrentFnArguments();
-
-  // llvm::Function argument size is not good indicator of how many
-  // arguments does the function have at source level.
-  if (ArgNo > CurrentFnArguments.size())
-    CurrentFnArguments.resize(ArgNo * 2);
-  assert(!CurrentFnArguments[ArgNo - 1]);
-  CurrentFnArguments[ArgNo - 1] = Var;
-  return true;
-}
-
 void DwarfFile::addNonArgumentScopeVariable(LexicalScope *LS,
                                             DbgVariable *Var) {
   SmallVectorImpl<DbgVariable *> &Vars = DD.getScopeVariables()[LS];
@@ -200,6 +178,7 @@ void DwarfFile::addNonArgumentScopeVariable(LexicalScope *LS,
       // A later indexed parameter has been found, insert immediately before it.
       if (CurNum > ArgNum)
         break;
+      assert(CurNum != ArgNum);
       ++I;
     }
     Vars.insert(I, Var);
