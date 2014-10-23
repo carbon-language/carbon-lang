@@ -30,8 +30,9 @@ set(LLVM_TEST_DEPENDS
           llvm-cov
           llvm-diff
           llvm-dis
-          llvm-extract
           llvm-dwarfdump
+          llvm-extract
+          llvm-go
           llvm-link
           llvm-lto
           llvm-mc

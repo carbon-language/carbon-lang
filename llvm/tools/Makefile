@@ -74,4 +74,8 @@ ifneq ($(ENABLE_SHARED),1)
   endif
 endif
 
+ifneq (,$(filter go,$(BINDINGS_TO_BUILD)))
+  PARALLEL_DIRS += llvm-go
+endif
+
 include $(LEVEL)/Makefile.common

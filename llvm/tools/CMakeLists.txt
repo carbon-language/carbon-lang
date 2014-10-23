@@ -52,6 +52,8 @@ add_llvm_tool_subdirectory(llvm-c-test)
 add_llvm_tool_subdirectory(obj2yaml)
 add_llvm_tool_subdirectory(yaml2obj)
 
+add_llvm_tool_subdirectory(llvm-go)
+
 if(NOT CYGWIN AND LLVM_ENABLE_PIC)
   add_llvm_tool_subdirectory(lto)
   add_llvm_tool_subdirectory(llvm-lto)
