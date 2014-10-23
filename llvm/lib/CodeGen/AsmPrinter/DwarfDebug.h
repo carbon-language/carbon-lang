@@ -334,6 +334,7 @@ class DwarfDebug : public AsmPrinterHandler {
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
+  void addNonArgumentScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
   const SmallVectorImpl<std::unique_ptr<DwarfUnit>> &getUnits() {
     return InfoHolder.getUnits();
@@ -491,7 +492,8 @@ class DwarfDebug : public AsmPrinterHandler {
   bool addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope);
 
   /// \brief Populate LexicalScope entries with variables' info.
-  void collectVariableInfo(SmallPtrSetImpl<const MDNode *> &ProcessedVars);
+  void collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
+                           SmallPtrSetImpl<const MDNode *> &ProcessedVars);
 
   /// \brief Build the location list for all DBG_VALUEs in the
   /// function that describe the same variable.

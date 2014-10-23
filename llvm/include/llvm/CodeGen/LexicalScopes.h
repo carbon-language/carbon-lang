@@ -148,12 +148,6 @@ public:
   /// empty - Return true if there is any lexical scope information available.
   bool empty() { return CurrentFnLexicalScope == nullptr; }
 
-  /// isCurrentFunctionScope - Return true if given lexical scope represents
-  /// current function.
-  bool isCurrentFunctionScope(const LexicalScope *LS) {
-    return LS == CurrentFnLexicalScope;
-  }
-
   /// getCurrentFunctionScope - Return lexical scope for the current function.
   LexicalScope *getCurrentFunctionScope() const {
     return CurrentFnLexicalScope;

@@ -769,7 +769,7 @@ DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV) {
 void DwarfDebug::createAbstractVariable(const DIVariable &Var,
                                         LexicalScope *Scope) {
   auto AbsDbgVariable = make_unique<DbgVariable>(Var, DIExpression(), this);
-  addScopeVariable(Scope, AbsDbgVariable.get());
+  addNonArgumentScopeVariable(Scope, AbsDbgVariable.get());
   AbstractVariables[Var] = std::move(AbsDbgVariable);
 }
 
@@ -795,7 +795,7 @@ DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(const DIVariable &DV,
 
 // If Var is a current function argument then add it to CurrentFnArguments list.
 bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
-  if (!LScopes.isCurrentFunctionScope(Scope))
+  if (Scope->getParent())
     return false;
   DIVariable DV = Var->getVariable();
   if (DV.getTag() != dwarf::DW_TAG_arg_variable)
@@ -983,10 +983,8 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
 
 // Find variables for each lexical scope.
 void
-DwarfDebug::collectVariableInfo(SmallPtrSetImpl<const MDNode *> &Processed) {
-  LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
-
+DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
+                                SmallPtrSetImpl<const MDNode *> &Processed) {
   // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMMITable(Processed);
 
@@ -1028,7 +1026,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSetImpl<const MDNode *> &Processed) {
 
     DotDebugLocEntries.resize(DotDebugLocEntries.size() + 1);
     DebugLocList &LocList = DotDebugLocEntries.back();
-    LocList.CU = TheCU;
+    LocList.CU = &TheCU;
     LocList.Label =
         Asm->GetTempSymbol("debug_loc", DotDebugLocEntries.size() - 1);
 
@@ -1037,7 +1035,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSetImpl<const MDNode *> &Processed) {
   }
 
   // Collect info for variables that were optimized out.
-  DIArray Variables = DISubprogram(FnScope->getScopeNode()).getVariables();
+  DIArray Variables = SP.getVariables();
   for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
     DIVariable DV(Variables.getElement(i));
     assert(DV.isVariable());
@@ -1280,6 +1278,11 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
   if (addCurrentFnArgument(Var, LS))
     return;
+  addNonArgumentScopeVariable(LS, Var);
+}
+
+void DwarfDebug::addNonArgumentScopeVariable(LexicalScope *LS,
+                                             DbgVariable *Var) {
   SmallVectorImpl<DbgVariable *> &Vars = ScopeVariables[LS];
   DIVariable DV = Var->getVariable();
   // Variables with positive arg numbers are parameters.
@@ -1333,11 +1336,12 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Set DwarfDwarfCompileUnitID in MCContext to default value.
   Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
-  SmallPtrSet<const MDNode *, 16> ProcessedVars;
-  collectVariableInfo(ProcessedVars);
-
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  DwarfCompileUnit &TheCU = *SPMap.lookup(FnScope->getScopeNode());
+  DISubprogram SP(FnScope->getScopeNode());
+  DwarfCompileUnit &TheCU = *SPMap.lookup(SP);
+
+  SmallPtrSet<const MDNode *, 16> ProcessedVars;
+  collectVariableInfo(TheCU, SP, ProcessedVars);
 
   // Add the range of this function to the list of ranges for the CU.
   TheCU.addRange(RangeSpan(FunctionBeginSym, FunctionEndSym));
