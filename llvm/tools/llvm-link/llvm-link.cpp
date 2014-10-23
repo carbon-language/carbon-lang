@@ -62,7 +62,7 @@ static std::unique_ptr<Module>
 loadFile(const char *argv0, const std::string &FN, LLVMContext &Context) {
   SMDiagnostic Err;
   if (Verbose) errs() << "Loading '" << FN << "'\n";
-  std::unique_ptr<Module> Result = parseIRFile(FN, Err, Context);
+  std::unique_ptr<Module> Result = getLazyIRFileModule(FN, Err, Context);
   if (!Result)
     Err.print(argv0, errs());
 
@@ -78,19 +78,11 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
-  unsigned BaseArg = 0;
-  std::string ErrorMessage;
-
-  std::unique_ptr<Module> Composite =
-      loadFile(argv[0], InputFilenames[BaseArg], Context);
-  if (!Composite.get()) {
-    errs() << argv[0] << ": error loading file '"
-           << InputFilenames[BaseArg] << "'\n";
-    return 1;
-  }
-
+  auto Composite = make_unique<Module>("llvm-link", Context);
   Linker L(Composite.get(), SuppressWarnings);
-  for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
+
+  std::string ErrorMessage;
+  for (unsigned i = 0; i < InputFilenames.size(); ++i) {
     std::unique_ptr<Module> M = loadFile(argv[0], InputFilenames[i], Context);
     if (!M.get()) {
       errs() << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
