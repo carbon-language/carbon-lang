@@ -2267,10 +2267,6 @@ collectSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
 // C runtime, etc). Returns true if sanitizer system deps need to be linked in.
 static bool addSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
                                  ArgStringList &CmdArgs) {
-  // Don't link in any sanitizer runtimes if we have no system libraries.
-  if (Args.hasArg(options::OPT_nostdlib) ||
-      Args.hasArg(options::OPT_nodefaultlibs))
-    return false;
   SmallVector<StringRef, 4> SharedRuntimes, StaticRuntimes,
       HelperStaticRuntimes;
   collectSanitizerRuntimes(TC, Args, SharedRuntimes, StaticRuntimes,
