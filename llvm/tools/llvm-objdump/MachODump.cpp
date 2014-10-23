@@ -821,7 +821,7 @@ const char *get_objc2_64bit_class_name(uint64_t pointer_value,
     const char *symbol_name = get_symbol_64(offset, S, info, n_value);
     if (symbol_name == nullptr)
       return nullptr;
-    const char *class_name = rindex(symbol_name, '$');
+    const char *class_name = strrchr(symbol_name, '$');
     if (class_name != nullptr && class_name[1] == '_' && class_name[2] != '\0')
       return class_name + 2;
     else
@@ -978,7 +978,7 @@ const char *GuessLiteralPointer(uint64_t ReferenceValue, uint64_t ReferencePC,
     const char *name = get_dyld_bind_info_symbolname(ReferenceValue, info);
     if (name != nullptr) {
       *ReferenceType = LLVMDisassembler_ReferenceType_Out_Objc_Class_Ref;
-      const char *class_name = rindex(name, '$');
+      const char *class_name = strrchr(name, '$');
       if (class_name != nullptr && class_name[1] == '_' &&
           class_name[2] != '\0') {
         info->class_name = class_name + 2;
@@ -1074,8 +1074,8 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
   }
 
   const char *SymbolName = nullptr;
-  if (ReferenceValue != 0xffffffffffffffffLLU &&
-      ReferenceValue != 0xfffffffffffffffeLLU) {
+  if (ReferenceValue != 0xffffffffffffffffULL &&
+      ReferenceValue != 0xfffffffffffffffeULL) {
     StringRef name = info->AddrMap->lookup(ReferenceValue);
     if (!name.empty())
       SymbolName = name.data();
