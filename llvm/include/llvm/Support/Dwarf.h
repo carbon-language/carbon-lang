@@ -7,9 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains constants used for implementing Dwarf debug support.  For
-// Details on the Dwarf 3 specfication see DWARF Debugging Information Format
-// V.3 reference manual http://dwarf.freestandards.org ,
+// \file
+// \brief This file contains constants used for implementing Dwarf
+// debug support.
+//
+// For details on the Dwarf specfication see the latest DWARF Debugging
+// Information Format standard document on http://www.dwarfstd.org. This
+// file often includes support for non-released standard features.
 //
 //===----------------------------------------------------------------------===//
 
@@ -782,95 +786,6 @@ enum ApplePropertyAttributes {
   DW_APPLE_PROPERTY_unsafe_unretained = 0x800
 };
 
-/// TagString - Return the string for the specified tag.
-///
-const char *TagString(unsigned Tag);
-
-/// ChildrenString - Return the string for the specified children flag.
-///
-const char *ChildrenString(unsigned Children);
-
-/// AttributeString - Return the string for the specified attribute.
-///
-const char *AttributeString(unsigned Attribute);
-
-/// FormEncodingString - Return the string for the specified form encoding.
-///
-const char *FormEncodingString(unsigned Encoding);
-
-/// OperationEncodingString - Return the string for the specified operation
-/// encoding.
-const char *OperationEncodingString(unsigned Encoding);
-
-/// AttributeEncodingString - Return the string for the specified attribute
-/// encoding.
-const char *AttributeEncodingString(unsigned Encoding);
-
-/// DecimalSignString - Return the string for the specified decimal sign
-/// attribute.
-const char *DecimalSignString(unsigned Sign);
-
-/// EndianityString - Return the string for the specified endianity.
-///
-const char *EndianityString(unsigned Endian);
-
-/// AccessibilityString - Return the string for the specified accessibility.
-///
-const char *AccessibilityString(unsigned Access);
-
-/// VisibilityString - Return the string for the specified visibility.
-///
-const char *VisibilityString(unsigned Visibility);
-
-/// VirtualityString - Return the string for the specified virtuality.
-///
-const char *VirtualityString(unsigned Virtuality);
-
-/// LanguageString - Return the string for the specified language.
-///
-const char *LanguageString(unsigned Language);
-
-/// CaseString - Return the string for the specified identifier case.
-///
-const char *CaseString(unsigned Case);
-
-/// ConventionString - Return the string for the specified calling convention.
-///
-const char *ConventionString(unsigned Convention);
-
-/// InlineCodeString - Return the string for the specified inline code.
-///
-const char *InlineCodeString(unsigned Code);
-
-/// ArrayOrderString - Return the string for the specified array order.
-///
-const char *ArrayOrderString(unsigned Order);
-
-/// DiscriminantString - Return the string for the specified discriminant
-/// descriptor.
-const char *DiscriminantString(unsigned Discriminant);
-
-/// LNStandardString - Return the string for the specified line number standard.
-///
-const char *LNStandardString(unsigned Standard);
-
-/// LNExtendedString - Return the string for the specified line number extended
-/// opcode encodings.
-const char *LNExtendedString(unsigned Encoding);
-
-/// MacinfoString - Return the string for the specified macinfo type encodings.
-///
-const char *MacinfoString(unsigned Encoding);
-
-/// CallFrameString - Return the string for the specified call frame instruction
-/// encodings.
-const char *CallFrameString(unsigned Encoding);
-
-/// ApplePropertyString - Return the string for the specified Apple
-/// property bit. This function is meant to return the symbolic name
-/// for 1 bit of the DW_AT_APPLE_property attribute, not for the whole attribute.
-const char *ApplePropertyString(unsigned);
-
 // Constants for the DWARF5 Accelerator Table Proposal
 enum AcceleratorTable {
   // Data layout descriptors.
@@ -893,9 +808,6 @@ enum AcceleratorTable {
   DW_hash_function_djb = 0u
 };
 
-/// AtomTypeString - Return the string for the specified Atom type.
-const char *AtomTypeString(unsigned Atom);
-
 // Constants for the GNU pubnames/pubtypes extensions supporting gdb index.
 enum GDBIndexEntryKind {
   GIEK_NONE,
@@ -908,15 +820,51 @@ enum GDBIndexEntryKind {
   GIEK_UNUSED7
 };
 
-const char *GDBIndexEntryKindString(GDBIndexEntryKind Kind);
-
 enum GDBIndexEntryLinkage {
   GIEL_EXTERNAL,
   GIEL_STATIC
 };
 
+/// \defgroup DwarfConstantsDumping Dwarf constants dumping functions
+///
+/// All these functions map their argument's value back to the
+/// corresponding enumerator name or return nullptr if the value isn't
+/// known.
+///
+/// @{
+const char *TagString(unsigned Tag);
+const char *ChildrenString(unsigned Children);
+const char *AttributeString(unsigned Attribute);
+const char *FormEncodingString(unsigned Encoding);
+const char *OperationEncodingString(unsigned Encoding);
+const char *AttributeEncodingString(unsigned Encoding);
+const char *DecimalSignString(unsigned Sign);
+const char *EndianityString(unsigned Endian);
+const char *AccessibilityString(unsigned Access);
+const char *VisibilityString(unsigned Visibility);
+const char *VirtualityString(unsigned Virtuality);
+const char *LanguageString(unsigned Language);
+const char *CaseString(unsigned Case);
+const char *ConventionString(unsigned Convention);
+const char *InlineCodeString(unsigned Code);
+const char *ArrayOrderString(unsigned Order);
+const char *DiscriminantString(unsigned Discriminant);
+const char *LNStandardString(unsigned Standard);
+const char *LNExtendedString(unsigned Encoding);
+const char *MacinfoString(unsigned Encoding);
+const char *CallFrameString(unsigned Encoding);
+const char *ApplePropertyString(unsigned);
+const char *AtomTypeString(unsigned Atom);
+const char *GDBIndexEntryKindString(GDBIndexEntryKind Kind);
 const char *GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
+/// @}
 
+/// \brief Returns the symbolic string representing Val when used as a value
+/// for attribute Attr.
+const char *AttributeValueString(uint16_t Attr, unsigned Val);
+
+/// \brief Decsribes an entry of the various gnu_pub* debug sections.
+/// 
 /// The gnu_pub* kind looks like:
 ///
 /// 0-3  reserved
@@ -948,9 +896,6 @@ private:
   };
 };
 
-/// Returns the symbolic string representing Val when used as a value
-/// for attribute Attr.
-const char *AttributeValueString(uint16_t Attr, unsigned Val);
 
 } // End of namespace dwarf
 
