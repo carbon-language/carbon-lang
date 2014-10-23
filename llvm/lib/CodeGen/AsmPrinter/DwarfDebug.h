@@ -487,10 +487,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// ending of a scope.
   void identifyScopeMarkers();
 
-  /// \brief If Var is an current function argument that add it in
-  /// CurrentFnArguments list.
-  bool addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope);
-
   /// \brief Populate LexicalScope entries with variables' info.
   void collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
                            SmallPtrSetImpl<const MDNode *> &ProcessedVars);
