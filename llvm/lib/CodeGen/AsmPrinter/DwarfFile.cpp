@@ -70,6 +70,7 @@ void DwarfFile::emitUnits(const MCSymbol *ASectionSym) {
     Asm->OutStreamer.EmitLabel(TheU->getLabelEnd());
   }
 }
+
 // Compute the size and offset for each DIE.
 void DwarfFile::computeSizeAndOffsets() {
   // Offset from the first CU in the debug info section is 0 initially.
@@ -154,5 +155,27 @@ void DwarfFile::emitAbbrevs(const MCSection *Section) {
 void DwarfFile::emitStrings(const MCSection *StrSection,
                             const MCSection *OffsetSection) {
   StrPool.emit(*Asm, StrSection, OffsetSection);
+}
+
+// If Var is a current function argument then add it to CurrentFnArguments list.
+bool DwarfFile::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
+  if (Scope->getParent())
+    return false;
+  DIVariable DV = Var->getVariable();
+  if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+    return false;
+  unsigned ArgNo = DV.getArgNumber();
+  if (ArgNo == 0)
+    return false;
+
+  auto &CurrentFnArguments = DD.getCurrentFnArguments();
+
+  // llvm::Function argument size is not good indicator of how many
+  // arguments does the function have at source level.
+  if (ArgNo > CurrentFnArguments.size())
+    CurrentFnArguments.resize(ArgNo * 2);
+  assert(!CurrentFnArguments[ArgNo - 1]);
+  CurrentFnArguments[ArgNo - 1] = Var;
+  return true;
 }
 }

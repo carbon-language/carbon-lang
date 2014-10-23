@@ -794,29 +794,6 @@ DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(const DIVariable &DV,
     createAbstractVariable(Cleansed, Scope);
 }
 
-// If Var is a current function argument then add it to CurrentFnArguments list.
-bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
-  if (Scope->getParent())
-    return false;
-  DIVariable DV = Var->getVariable();
-  if (DV.getTag() != dwarf::DW_TAG_arg_variable)
-    return false;
-  unsigned ArgNo = DV.getArgNumber();
-  if (ArgNo == 0)
-    return false;
-
-  size_t Size = CurrentFnArguments.size();
-  if (Size == 0)
-    CurrentFnArguments.resize(CurFn->getFunction()->arg_size());
-  // llvm::Function argument size is not good indicator of how many
-  // arguments does the function have at source level.
-  if (ArgNo > Size)
-    CurrentFnArguments.resize(ArgNo * 2);
-  assert(!CurrentFnArguments[ArgNo - 1]);
-  CurrentFnArguments[ArgNo - 1] = Var;
-  return true;
-}
-
 // Collect variable information from side table maintained by MMI.
 void DwarfDebug::collectVariableInfoFromMMITable(
     SmallPtrSetImpl<const MDNode *> &Processed) {
@@ -1277,7 +1254,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 }
 
 void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
-  if (addCurrentFnArgument(Var, LS))
+  if (InfoHolder.addCurrentFnArgument(Var, LS))
     return;
   addNonArgumentScopeVariable(LS, Var);
 }

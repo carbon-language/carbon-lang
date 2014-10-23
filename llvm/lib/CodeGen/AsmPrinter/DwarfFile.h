@@ -24,10 +24,12 @@
 
 namespace llvm {
 class AsmPrinter;
+class DbgVariable;
 class DwarfUnit;
 class DIEAbbrev;
 class MCSymbol;
 class DIE;
+class LexicalScope;
 class StringRef;
 class DwarfDebug;
 class MCSection;
@@ -81,6 +83,8 @@ public:
 
   /// \brief Returns the string pool.
   DwarfStringPool &getStringPool() { return StrPool; }
+
+  bool addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope);
 };
 }
 #endif
