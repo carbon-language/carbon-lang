@@ -4356,21 +4356,30 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     // Read a record.
     StringRef Blob;
     Record.clear();
-    switch (F.Stream.readRecord(Entry.ID, Record, &Blob)) {
+    auto Kind = F.Stream.readRecord(Entry.ID, Record, &Blob);
+
+    if ((Kind == SUBMODULE_METADATA) != First) {
+      Error("submodule metadata record should be at beginning of block");
+      return Failure;
+    }
+    First = false;
+
+    // Submodule information is only valid if we have a current module.
+    // FIXME: Should we error on these cases?
+    if (!CurrentModule && Kind != SUBMODULE_METADATA &&
+        Kind != SUBMODULE_DEFINITION)
+      continue;
+
+    switch (Kind) {
     default:  // Default behavior: ignore.
       break;
-      
-    case SUBMODULE_DEFINITION: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
 
+    case SUBMODULE_DEFINITION: {
       if (Record.size() < 8) {
         Error("malformed module definition");
         return Failure;
       }
-      
+
       StringRef Name = Blob;
       unsigned Idx = 0;
       SubmoduleID GlobalID = getGlobalSubmoduleID(F, Record[Idx++]);
@@ -4440,14 +4449,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
         
     case SUBMODULE_UMBRELLA_HEADER: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-      
       if (const FileEntry *Umbrella = PP.getFileManager().getFile(Blob)) {
         if (!CurrentModule->getUmbrellaHeader())
           ModMap.setUmbrellaHeader(CurrentModule, Umbrella);
@@ -4461,14 +4462,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
         
     case SUBMODULE_HEADER: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-      
       // We lazily associate headers with their modules via the HeaderInfoTable.
       // FIXME: Re-evaluate this section; maybe only store InputFile IDs instead
       // of complete filenames or remove it entirely.
@@ -4476,14 +4469,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
 
     case SUBMODULE_EXCLUDED_HEADER: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-      
       // We lazily associate headers with their modules via the HeaderInfoTable.
       // FIXME: Re-evaluate this section; maybe only store InputFile IDs instead
       // of complete filenames or remove it entirely.
@@ -4491,14 +4476,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
 
     case SUBMODULE_PRIVATE_HEADER: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-      
       // We lazily associate headers with their modules via the HeaderInfoTable.
       // FIXME: Re-evaluate this section; maybe only store InputFile IDs instead
       // of complete filenames or remove it entirely.
@@ -4506,27 +4483,11 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
 
     case SUBMODULE_TOPHEADER: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-
       CurrentModule->addTopHeaderFilename(Blob);
       break;
     }
 
     case SUBMODULE_UMBRELLA_DIR: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-      
-      if (!CurrentModule)
-        break;
-      
       if (const DirectoryEntry *Umbrella
                                   = PP.getFileManager().getDirectory(Blob)) {
         if (!CurrentModule->getUmbrellaDir())
@@ -4541,12 +4502,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
         
     case SUBMODULE_METADATA: {
-      if (!First) {
-        Error("submodule metadata record not at beginning of block");
-        return Failure;
-      }
-      First = false;
-      
       F.BaseSubmoduleID = getTotalNumSubmodules();
       F.LocalNumSubmodules = Record[0];
       unsigned LocalBaseSubmoduleID = Record[1];
@@ -4567,14 +4522,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
         
     case SUBMODULE_IMPORTS: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-      
-      if (!CurrentModule)
-        break;
-      
       for (unsigned Idx = 0; Idx != Record.size(); ++Idx) {
         UnresolvedModuleRef Unresolved;
         Unresolved.File = &F;
@@ -4588,14 +4535,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
 
     case SUBMODULE_EXPORTS: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-      
-      if (!CurrentModule)
-        break;
-      
       for (unsigned Idx = 0; Idx + 1 < Record.size(); Idx += 2) {
         UnresolvedModuleRef Unresolved;
         Unresolved.File = &F;
@@ -4612,53 +4551,21 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       break;
     }
     case SUBMODULE_REQUIRES: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-
       CurrentModule->addRequirement(Blob, Record[0], Context.getLangOpts(),
                                     Context.getTargetInfo());
       break;
     }
 
     case SUBMODULE_LINK_LIBRARY:
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-
       CurrentModule->LinkLibraries.push_back(
                                          Module::LinkLibrary(Blob, Record[0]));
       break;
 
     case SUBMODULE_CONFIG_MACRO:
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-
       CurrentModule->ConfigMacros.push_back(Blob.str());
       break;
 
     case SUBMODULE_CONFLICT: {
-      if (First) {
-        Error("missing submodule metadata record at beginning of block");
-        return Failure;
-      }
-
-      if (!CurrentModule)
-        break;
-
       UnresolvedModuleRef Unresolved;
       Unresolved.File = &F;
       Unresolved.Mod = CurrentModule;
