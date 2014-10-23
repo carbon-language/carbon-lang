@@ -167,18 +167,8 @@ static void SetUpDiagnosticLog(DiagnosticOptions *DiagOpts,
 static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
                                        DiagnosticsEngine &Diags,
                                        StringRef OutputFile) {
-  std::error_code EC;
-  auto OS = llvm::make_unique<llvm::raw_fd_ostream>(OutputFile.str(), EC,
-                                                    llvm::sys::fs::F_None);
-
-  if (EC) {
-    Diags.Report(diag::warn_fe_serialized_diag_failure) << OutputFile
-                                                        << EC.message();
-    return;
-  }
-
   auto SerializedConsumer =
-      clang::serialized_diags::create(std::move(OS), DiagOpts);
+      clang::serialized_diags::create(OutputFile, DiagOpts);
 
   assert(Diags.ownsClient());
   Diags.setClient(new ChainedDiagnosticConsumer(

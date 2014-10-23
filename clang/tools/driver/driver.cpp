@@ -19,6 +19,8 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/ChainedDiagnosticConsumer.h"
+#include "clang/Frontend/SerializedDiagnosticPrinter.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -445,6 +447,16 @@ int main(int argc_, const char **argv_) {
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
 
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
+
+  if (!DiagOpts->DiagnosticSerializationFile.empty()) {
+    auto SerializedConsumer =
+        clang::serialized_diags::create(DiagOpts->DiagnosticSerializationFile,
+                                        &*DiagOpts, /*MergeChildRecords=*/true);
+    Diags.setClient(new ChainedDiagnosticConsumer(
+        std::unique_ptr<DiagnosticConsumer>(Diags.takeClient()),
+        std::move(SerializedConsumer)));
+  }
+
   ProcessWarningOptions(Diags, *DiagOpts, /*ReportDiags=*/false);
 
   Driver TheDriver(Path, llvm::sys::getDefaultTargetTriple(), Diags);
@@ -492,10 +504,12 @@ int main(int argc_, const char **argv_) {
     }
   }
 
+  Diags.getClient()->finish();
+
   // If any timers were active but haven't been destroyed yet, print their
   // results now.  This happens in -disable-free mode.
   llvm::TimerGroup::printAll(llvm::errs());
-  
+
   llvm::llvm_shutdown();
 
 #ifdef LLVM_ON_WIN32

@@ -731,6 +731,9 @@ def ProfileInstrUnprofiled : DiagGroup<"profile-instr-unprofiled">;
 // AddressSanitizer frontent instrumentation remarks.
 def SanitizeAddressRemarks : DiagGroup<"sanitize-address">;
 
+// Issues with serialized diagnostics.
+def SerializedDiagnostics : DiagGroup<"serialized-diagnostics">;
+
 // A warning group for warnings about code that clang accepts when
 // compiling CUDA C/C++ but which is not compatible with the CUDA spec.
 def CudaCompat : DiagGroup<"cuda-compat">;

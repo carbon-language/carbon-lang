@@ -33,8 +33,9 @@ namespace serialized_diags {
 /// This allows wrapper tools for Clang to get diagnostics from Clang
 /// (via libclang) without needing to parse Clang's command line output.
 ///
-std::unique_ptr<DiagnosticConsumer> create(std::unique_ptr<raw_ostream> OS,
-                                           DiagnosticOptions *diags);
+std::unique_ptr<DiagnosticConsumer> create(StringRef OutputFile,
+                                           DiagnosticOptions *Diags,
+                                           bool MergeChildRecords = false);
 
 } // end serialized_diags namespace
 } // end clang namespace

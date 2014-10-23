@@ -95,9 +95,12 @@ def err_fe_no_pch_in_dir : Error<
 def err_fe_action_not_available : Error<
     "action %0 not compiled in">;
 
+def warn_fe_serialized_diag_merge_failure : Warning<
+    "unable to merge a subprocess's serialized diagnostics">,
+    InGroup<SerializedDiagnostics>;
 def warn_fe_serialized_diag_failure : Warning<
     "unable to open file %0 for serializing diagnostics (%1)">,
-    InGroup<DiagGroup<"serialized-diagnostics">>;
+    InGroup<SerializedDiagnostics>;
 
 def err_verify_missing_line : Error<
     "missing or invalid line number following '@' in expected %0">;
