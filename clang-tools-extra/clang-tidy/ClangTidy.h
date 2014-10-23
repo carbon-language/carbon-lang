@@ -152,6 +152,7 @@ public:
 
 private:
   void run(const ast_matchers::MatchFinder::MatchResult &Result) override;
+  StringRef getID() const override { return CheckName; }
   std::string CheckName;
   ClangTidyContext *Context;
 
@@ -196,11 +197,15 @@ std::vector<std::string> getCheckNames(const ClangTidyOptions &Options);
 ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
+///
+/// \param Profile if provided, it enables check profile collection in
+/// MatchFinder, and will contain the result of the profile.
 ClangTidyStats
 runClangTidy(std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider,
              const tooling::CompilationDatabase &Compilations,
              ArrayRef<std::string> InputFiles,
-             std::vector<ClangTidyError> *Errors);
+             std::vector<ClangTidyError> *Errors,
+             ProfileData *Profile = nullptr);
 
 // FIXME: This interface will need to be significantly extended to be useful.
 // FIXME: Implement confidence levels for displaying/fixing errors.

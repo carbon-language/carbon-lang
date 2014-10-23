@@ -216,8 +216,13 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   std::vector<std::unique_ptr<ClangTidyCheck>> Checks;
   CheckFactories->createChecks(&Context, Checks);
 
+  ast_matchers::MatchFinder::MatchFinderOptions FinderOptions;
+  if (auto *P = Context.getCheckProfileData())
+    FinderOptions.CheckProfiling.emplace(P->Records);
+
   std::unique_ptr<ast_matchers::MatchFinder> Finder(
-      new ast_matchers::MatchFinder);
+      new ast_matchers::MatchFinder(std::move(FinderOptions)));
+
   for (auto &Check : Checks) {
     Check->registerMatchers(&*Finder);
     Check->registerPPCallbacks(Compiler);
@@ -356,9 +361,12 @@ ClangTidyStats
 runClangTidy(std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider,
              const tooling::CompilationDatabase &Compilations,
              ArrayRef<std::string> InputFiles,
-             std::vector<ClangTidyError> *Errors) {
+             std::vector<ClangTidyError> *Errors, ProfileData *Profile) {
   ClangTool Tool(Compilations, InputFiles);
   clang::tidy::ClangTidyContext Context(std::move(OptionsProvider));
+  if (Profile)
+    Context.setCheckProfileData(Profile);
+
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
   Tool.setDiagnosticConsumer(&DiagConsumer);

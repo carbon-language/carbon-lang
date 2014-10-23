@@ -98,6 +98,11 @@ DumpConfig("dump-config",
            cl::desc("Dumps configuration in the YAML format to stdout."),
            cl::init(false), cl::cat(ClangTidyCategory));
 
+static cl::opt<bool> EnableCheckProfile(
+    "enable-check-profile",
+    cl::desc("Enable per-check timing profiles, and print a report to stderr."),
+    cl::init(false), cl::cat(ClangTidyCategory));
+
 static cl::opt<bool> AnalyzeTemporaryDtors(
     "analyze-temporary-dtors",
     cl::desc("Enable temporary destructor-aware analysis in\n"
@@ -141,6 +146,45 @@ static void printStats(const ClangTidyStats &Stats) {
       llvm::errs() << "Use -header-filter='.*' to display errors from all "
                       "non-system headers.\n";
   }
+}
+
+static void printProfileData(const ProfileData &Profile,
+                             llvm::raw_ostream &OS) {
+  // Time is first to allow for sorting by it.
+  std::vector<std::pair<llvm::TimeRecord, StringRef>> Timers;
+  TimeRecord Total;
+
+  for (const auto& P : Profile.Records) {
+    Timers.emplace_back(P.getValue(), P.getKey());
+    Total += P.getValue();
+  }
+
+  std::sort(Timers.begin(), Timers.end());
+
+  std::string Line = "===" + std::string(73, '-') + "===\n";
+  OS << Line;
+
+  if (Total.getUserTime())
+    OS << "   ---User Time---";
+  if (Total.getSystemTime())
+    OS << "   --System Time--";
+  if (Total.getProcessTime())
+    OS << "   --User+System--";
+  OS << "   ---Wall Time---";
+  if (Total.getMemUsed())
+    OS << "  ---Mem---";
+  OS << "  --- Name ---\n";
+
+  // Loop through all of the timing data, printing it out.
+  for (auto I = Timers.rbegin(), E = Timers.rend(); I != E; ++I) {
+    I->first.print(Total, OS);
+    OS << I->second << '\n';
+  }
+
+  Total.print(Total, OS);
+  OS << "Total\n";
+  OS << Line << "\n";
+  OS.flush();
 }
 
 std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider() {
@@ -220,10 +264,13 @@ int clangTidyMain(int argc, const char **argv) {
     return 1;
   }
 
+  ProfileData Profile;
+
   std::vector<ClangTidyError> Errors;
   ClangTidyStats Stats =
       runClangTidy(std::move(OptionsProvider), OptionsParser.getCompilations(),
-                   OptionsParser.getSourcePathList(), &Errors);
+                   OptionsParser.getSourcePathList(), &Errors,
+                   EnableCheckProfile ? &Profile : nullptr);
   handleErrors(Errors, Fix);
 
   if (!ExportFixes.empty() && !Errors.empty()) {
@@ -237,6 +284,9 @@ int clangTidyMain(int argc, const char **argv) {
   }
 
   printStats(Stats);
+  if (EnableCheckProfile)
+    printProfileData(Profile, llvm::errs());
+
   return 0;
 }
 

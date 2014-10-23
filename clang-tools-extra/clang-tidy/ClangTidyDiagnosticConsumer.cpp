@@ -162,7 +162,8 @@ bool GlobList::contains(StringRef S, bool Contains) {
 
 ClangTidyContext::ClangTidyContext(
     std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider)
-    : DiagEngine(nullptr), OptionsProvider(std::move(OptionsProvider)) {
+    : DiagEngine(nullptr), OptionsProvider(std::move(OptionsProvider)),
+      Profile(nullptr) {
   // Before the first translation unit we can get errors related to command-line
   // parsing, use empty string for the file name in this case.
   setCurrentFile("");
@@ -219,6 +220,10 @@ const ClangTidyGlobalOptions &ClangTidyContext::getGlobalOptions() const {
 
 const ClangTidyOptions &ClangTidyContext::getOptions() const {
   return CurrentOptions;
+}
+
+void ClangTidyContext::setCheckProfileData(ProfileData *P) {
+  Profile = P;
 }
 
 GlobList &ClangTidyContext::getChecksFilter() {
