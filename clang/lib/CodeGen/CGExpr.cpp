@@ -210,7 +210,6 @@ pushTemporaryCleanup(CodeGenFunction &CGF, const MaterializeTemporaryExpr *M,
 
       case SD_Automatic:
       case SD_FullExpression:
-        assert(!ObjCARCReferenceLifetimeType->isArrayType());
         CodeGenFunction::Destroyer *Destroy;
         CleanupKind CleanupKind;
         if (Lifetime == Qualifiers::OCL_Strong) {
@@ -317,11 +316,12 @@ LValue CodeGenFunction::
 EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *M) {
   const Expr *E = M->GetTemporaryExpr();
 
+    // FIXME: ideally this would use EmitAnyExprToMem, however, we cannot do so
+    // as that will cause the lifetime adjustment to be lost for ARC
   if (getLangOpts().ObjCAutoRefCount &&
       M->getType()->isObjCLifetimeType() &&
       M->getType().getObjCLifetime() != Qualifiers::OCL_None &&
       M->getType().getObjCLifetime() != Qualifiers::OCL_ExplicitNone) {
-    // FIXME: Fold this into the general case below.
     llvm::Value *Object = createReferenceTemporary(*this, M, E);
     LValue RefTempDst = MakeAddrLValue(Object, M->getType());
 
@@ -332,7 +332,21 @@ EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *M) {
       Var->setInitializer(CGM.EmitNullConstant(E->getType()));
     }
 
-    EmitScalarInit(E, M->getExtendingDecl(), RefTempDst, false);
+    switch (getEvaluationKind(E->getType())) {
+    default: llvm_unreachable("expected scalar or aggregate expression");
+    case TEK_Scalar:
+      EmitScalarInit(E, M->getExtendingDecl(), RefTempDst, false);
+      break;
+    case TEK_Aggregate: {
+      CharUnits Alignment = getContext().getTypeAlignInChars(E->getType());
+      EmitAggExpr(E, AggValueSlot::forAddr(Object, Alignment,
+                                           E->getType().getQualifiers(),
+                                           AggValueSlot::IsDestructed,
+                                           AggValueSlot::DoesNotNeedGCBarriers,
+                                           AggValueSlot::IsNotAliased));
+      break;
+    }
+    }
 
     pushTemporaryCleanup(*this, M, E, Object);
     return RefTempDst;
