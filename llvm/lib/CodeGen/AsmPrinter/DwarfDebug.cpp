@@ -770,7 +770,7 @@ DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV) {
 void DwarfDebug::createAbstractVariable(const DIVariable &Var,
                                         LexicalScope *Scope) {
   auto AbsDbgVariable = make_unique<DbgVariable>(Var, DIExpression(), this);
-  InfoHolder.addNonArgumentScopeVariable(Scope, AbsDbgVariable.get());
+  InfoHolder.addScopeVariable(Scope, AbsDbgVariable.get());
   AbstractVariables[Var] = std::move(AbsDbgVariable);
 }
 
@@ -813,7 +813,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     ConcreteVariables.push_back(make_unique<DbgVariable>(DV, Expr, this));
     DbgVariable *RegVar = ConcreteVariables.back().get();
     RegVar->setFrameIndex(VI.Slot);
-    addScopeVariable(Scope, RegVar);
+    InfoHolder.addScopeVariable(Scope, RegVar);
   }
 }
 
@@ -993,7 +993,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
     ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
     ConcreteVariables.push_back(make_unique<DbgVariable>(MInsn, this));
     DbgVariable *RegVar = ConcreteVariables.back().get();
-    addScopeVariable(Scope, RegVar);
+    InfoHolder.addScopeVariable(Scope, RegVar);
 
     // Check if the first DBG_VALUE is valid for the rest of the function.
     if (Ranges.size() == 1 && Ranges.front().second == nullptr)
@@ -1023,7 +1023,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
       ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
       DIExpression NoExpr;
       ConcreteVariables.push_back(make_unique<DbgVariable>(DV, NoExpr, this));
-      addScopeVariable(Scope, ConcreteVariables.back().get());
+      InfoHolder.addScopeVariable(Scope, ConcreteVariables.back().get());
     }
   }
 }
@@ -1251,10 +1251,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
         // poorly if we do that. Revisit this with caution/GDB (7.5+) testing.
         DWARF2_FLAG_IS_STMT);
   }
-}
-
-void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
-  InfoHolder.addNonArgumentScopeVariable(LS, Var);
 }
 
 // Gather and emit post-function debug information.

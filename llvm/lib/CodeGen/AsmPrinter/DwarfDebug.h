@@ -330,8 +330,6 @@ class DwarfDebug : public AsmPrinterHandler {
 
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
-  void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
-
   const SmallVectorImpl<std::unique_ptr<DwarfUnit>> &getUnits() {
     return InfoHolder.getUnits();
   }
