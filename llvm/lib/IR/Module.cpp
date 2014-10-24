@@ -389,12 +389,6 @@ void Module::setMaterializer(GVMaterializer *GVM) {
   Materializer.reset(GVM);
 }
 
-bool Module::isMaterializable(const GlobalValue *GV) const {
-  if (Materializer)
-    return Materializer->isMaterializable(GV);
-  return false;
-}
-
 bool Module::isDematerializable(const GlobalValue *GV) const {
   if (Materializer)
     return Materializer->isDematerializable(GV);

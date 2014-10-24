@@ -84,6 +84,7 @@ private:
   // (19 + 3 + 2 + 1 + 2 + 5) == 32.
   unsigned SubClassData : 19;
 protected:
+  static const unsigned GlobalValueSubClassDataBits = 19;
   unsigned getGlobalValueSubClassData() const {
     return SubClassData;
   }
@@ -325,6 +326,13 @@ public:
   /// Return true if the primary definition of this global value is outside of
   /// the current translation unit.
   bool isDeclaration() const;
+
+  bool isDeclarationForLinker() const {
+    if (hasAvailableExternallyLinkage())
+      return true;
+
+    return isDeclaration();
+  }
 
   /// This method unlinks 'this' from the containing module, but does not delete
   /// it.

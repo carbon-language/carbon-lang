@@ -213,6 +213,12 @@ void Argument::removeAttr(AttributeSet AS) {
 // Helper Methods in Function
 //===----------------------------------------------------------------------===//
 
+bool Function::isMaterializable() const {
+  return getGlobalObjectSubClassData();
+}
+
+void Function::setIsMaterializable(bool V) { setGlobalObjectSubClassData(V); }
+
 LLVMContext &Function::getContext() const {
   return getType()->getContext();
 }
@@ -247,6 +253,7 @@ Function::Function(FunctionType *Ty, LinkageTypes Linkage, const Twine &name,
                    Linkage, name) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
          "invalid return type");
+  setIsMaterializable(false);
   SymTab = new ValueSymbolTable();
 
   // If the function has arguments, mark them as lazily built.
@@ -318,6 +325,8 @@ void Function::setParent(Module *parent) {
 // delete.
 //
 void Function::dropAllReferences() {
+  setIsMaterializable(false);
+
   for (iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
 

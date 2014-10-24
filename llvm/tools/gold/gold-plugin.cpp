@@ -418,18 +418,8 @@ static void keepGlobalValue(GlobalValue &GV,
   assert(!GV.isDiscardableIfUnused());
 }
 
-static bool isDeclaration(const GlobalValue &V) {
-  if (V.hasAvailableExternallyLinkage())
-    return true;
-
-  if (V.isMaterializable())
-    return false;
-
-  return V.isDeclaration();
-}
-
 static void internalize(GlobalValue &GV) {
-  if (isDeclaration(GV))
+  if (GV.isDeclarationForLinker())
     return; // We get here if there is a matching asm definition.
   if (!GV.hasLocalLinkage())
     GV.setLinkage(GlobalValue::InternalLinkage);
@@ -492,6 +482,9 @@ static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
   Module *M = GO->getParent();
   GlobalObject *Ret;
   if (auto *F = dyn_cast<Function>(GO)) {
+    if (F->isMaterializable())
+      F->Materialize();
+
     auto *NewF = Function::Create(F->getFunctionType(), F->getLinkage(),
                                   F->getName(), M);
 
@@ -620,7 +613,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
     case LDPR_RESOLVED_EXEC:
     case LDPR_RESOLVED_DYN:
     case LDPR_UNDEF:
-      assert(isDeclaration(*GV));
+      assert(GV->isDeclarationForLinker());
       break;
 
     case LDPR_PREVAILING_DEF_IRONLY: {
@@ -666,12 +659,6 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
     Sym.name = nullptr;
     Sym.comdat_key = nullptr;
   }
-
-  if (!Drop.empty())
-    // This is horrible. Given how lazy loading is implemented, dropping
-    // the body while there is a materializer present doesn't work, the
-    // linker will just read the body back.
-    M->materializeAllPermanently();
 
   ValueToValueMapTy VM;
   LocalValueMaterializer Materializer(Drop);

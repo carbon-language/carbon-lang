@@ -143,6 +143,9 @@ public:
   /// arguments.
   bool isVarArg() const;
 
+  bool isMaterializable() const;
+  void setIsMaterializable(bool V);
+
   /// getIntrinsicID - This method returns the ID number of the specified
   /// function, or Intrinsic::not_intrinsic if the function is not an
   /// intrinsic, or if the pointer is null.  This value is always defined to be

@@ -204,16 +204,6 @@ std::error_code IRObjectFile::printSymbolName(raw_ostream &OS,
   return object_error::success;
 }
 
-static bool isDeclaration(const GlobalValue &V) {
-  if (V.hasAvailableExternallyLinkage())
-    return true;
-
-  if (V.isMaterializable())
-    return false;
-
-  return V.isDeclaration();
-}
-
 uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   const GlobalValue *GV = getGV(Symb);
 
@@ -224,7 +214,7 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   }
 
   uint32_t Res = BasicSymbolRef::SF_None;
-  if (isDeclaration(*GV))
+  if (GV->isDeclarationForLinker())
     Res |= BasicSymbolRef::SF_Undefined;
   if (GV->hasPrivateLinkage())
     Res |= BasicSymbolRef::SF_FormatSpecific;

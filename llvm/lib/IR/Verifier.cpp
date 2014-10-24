@@ -2632,7 +2632,7 @@ bool llvm::verifyModule(const Module &M, raw_ostream *OS) {
 
   bool Broken = false;
   for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isDeclaration())
+    if (!I->isDeclaration() && !I->isMaterializable())
       Broken |= !V.verify(*I);
 
   // Note that this function's return value is inverted from what you would

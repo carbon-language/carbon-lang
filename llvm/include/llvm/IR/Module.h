@@ -469,9 +469,6 @@ public:
   /// Retrieves the GVMaterializer, if any, for this Module.
   GVMaterializer *getMaterializer() const { return Materializer.get(); }
 
-  /// True if the definition of GV has yet to be materializedfrom the
-  /// GVMaterializer.
-  bool isMaterializable(const GlobalValue *GV) const;
   /// Returns true if this GV was loaded from this Module's GVMaterializer and
   /// the GVMaterializer knows how to dematerialize the GV.
   bool isDematerializable(const GlobalValue *GV) const;

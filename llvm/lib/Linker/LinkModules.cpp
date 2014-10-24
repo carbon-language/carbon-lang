@@ -672,21 +672,10 @@ bool ModuleLinker::getComdatResult(const Comdat *SrcC,
                                        LinkFromSrc);
 }
 
-// FIXME: Duplicated from the gold plugin. This should be refactored somewhere.
-static bool isDeclaration(const GlobalValue &V) {
-  if (V.hasAvailableExternallyLinkage())
-    return true;
-
-  if (V.isMaterializable())
-    return false;
-
-  return V.isDeclaration();
-}
-
 bool ModuleLinker::shouldLinkFromSource(const GlobalValue &Dest,
                                         const GlobalValue &Src) {
-  bool SrcIsDeclaration = isDeclaration(Src);
-  bool DestIsDeclaration = isDeclaration(Dest);
+  bool SrcIsDeclaration = Src.isDeclarationForLinker();
+  bool DestIsDeclaration = Dest.isDeclarationForLinker();
 
   // FIXME: Make datalayout mandatory and just use getDataLayout().
   DataLayout DL(Dest.getParent());
@@ -1635,13 +1624,15 @@ bool ModuleLinker::run() {
           SF->getPrefixData(), ValueMap, RF_None, &TypeMap, &ValMaterializer));
     }
 
-    // Skip if no body (function is external) or materialize.
-    if (SF->isDeclaration()) {
-      if (!SF->isMaterializable())
-        continue;
+    // Materialize if needed.
+    if (SF->isMaterializable()) {
       if (SF->Materialize(&ErrorMsg))
         return true;
     }
+
+    // Skip if no body (function is external).
+    if (SF->isDeclaration())
+      continue;
 
     linkFunctionBody(DF, SF);
     SF->Dematerialize();
@@ -1684,13 +1675,15 @@ bool ModuleLinker::run() {
                                    &ValMaterializer));
       }
 
-      // Materialize if necessary.
-      if (SF->isDeclaration()) {
-        if (!SF->isMaterializable())
-          continue;
+      // Materialize if needed.
+      if (SF->isMaterializable()) {
         if (SF->Materialize(&ErrorMsg))
           return true;
       }
+
+      // Skip if no body (function is external).
+      if (SF->isDeclaration())
+        continue;
 
       // Erase from vector *before* the function body is linked - linkFunctionBody could
       // invalidate I.

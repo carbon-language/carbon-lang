@@ -32,10 +32,6 @@ protected:
 public:
   virtual ~GVMaterializer();
 
-  /// True if GV can be materialized from whatever backing store this
-  /// GVMaterializer uses and has not been materialized yet.
-  virtual bool isMaterializable(const GlobalValue *GV) const = 0;
-
   /// True if GV has been materialized and can be dematerialized back to
   /// whatever backing store this GVMaterializer uses.
   virtual bool isDematerializable(const GlobalValue *GV) const = 0;
