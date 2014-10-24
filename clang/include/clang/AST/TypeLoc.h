@@ -1567,6 +1567,8 @@ public:
   void setUnderlyingTInfo(TypeSourceInfo* TI) const {
     this->getLocalData()->UnderlyingTInfo = TI;
   }
+
+  void initializeLocal(ASTContext &Context, SourceLocation Loc);
 };
 
 // FIXME: location of the 'decltype' and parens.

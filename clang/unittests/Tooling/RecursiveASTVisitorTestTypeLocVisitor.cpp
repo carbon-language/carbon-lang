@@ -79,4 +79,15 @@ TEST(RecursiveASTVisitor, VisitsObjCPropertyType) {
       TypeLocVisitor::Lang_OBJC));
 }
 
+TEST(RecursiveASTVisitor, VisitInvalidType) {
+  TypeLocVisitor Visitor;
+  // FIXME: It would be nice to have information about subtypes of invalid type
+  //Visitor.ExpectMatch("typeof(struct F *) []", 1, 1);
+  // Even if the full type is invalid, it should still find sub types
+  //Visitor.ExpectMatch("struct F", 1, 19);
+  EXPECT_FALSE(Visitor.runOver(
+      "__typeof__(struct F*) var[invalid];\n",
+      TypeLocVisitor::Lang_C));
+}
+
 } // end anonymous namespace

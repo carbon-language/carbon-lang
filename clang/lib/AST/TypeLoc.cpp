@@ -312,6 +312,14 @@ TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
   return TL;
 }
 
+void TypeOfTypeLoc::initializeLocal(ASTContext &Context,
+                                       SourceLocation Loc) {
+  TypeofLikeTypeLoc<TypeOfTypeLoc, TypeOfType, TypeOfTypeLocInfo>
+      ::initializeLocal(Context, Loc);
+  this->getLocalData()->UnderlyingTInfo = Context.getTrivialTypeSourceInfo(
+      getUnderlyingType(), Loc);
+}
+
 void ElaboratedTypeLoc::initializeLocal(ASTContext &Context, 
                                         SourceLocation Loc) {
   setElaboratedKeywordLoc(Loc);
