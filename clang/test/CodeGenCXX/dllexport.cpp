@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=GNU --check-prefix=G32 %s
 // RUN: %clang_cc1 -triple x86_64-windows-gnu  -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=GNU --check-prefix=G64 %s
 
-// RUN: %clang_cc1 -triple i686-pc-win32 -O1 -mconstructor-aliases -disable-llvm-optzns -std=c++1y -emit-llvm -o - %s | FileCheck %s --check-prefix=MSC --check-prefix=M32
-
 // Helper structs to make templates more expressive.
 struct ImplicitInst_Exported {};
 struct ExplicitDecl_Exported {};
@@ -606,6 +604,15 @@ template <typename T> struct __declspec(dllimport) ExplicitlyInstantiatedWithDif
 template struct __declspec(dllexport) ExplicitlyInstantiatedWithDifferentAttr<int>;
 USEMEMFUNC(ExplicitlyInstantiatedWithDifferentAttr<int>, f);
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?f@?$ExplicitlyInstantiatedWithDifferentAttr@H@@QAEXXZ"
+
+// Don't create weak dllexport aliases. (PR21373)
+struct NonExportedBaseClass {
+  virtual ~NonExportedBaseClass();
+};
+NonExportedBaseClass::~NonExportedBaseClass() {}
+
+struct __declspec(dllexport) ExportedDerivedClass : NonExportedBaseClass {};
+// M32-DAG: weak_odr dllexport x86_thiscallcc void @"\01??1ExportedDerivedClass@@UAE@XZ"
 
 
 //===----------------------------------------------------------------------===//

@@ -119,6 +119,11 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   if (!llvm::GlobalAlias::isValidLinkage(Linkage))
     return true;
 
+  // Don't create a weak alias for a dllexport'd symbol.
+  if (AliasDecl.getDecl()->hasAttr<DLLExportAttr>() &&
+      llvm::GlobalValue::isWeakForLinker(Linkage))
+    return true;
+
   llvm::GlobalValue::LinkageTypes TargetLinkage =
       getFunctionLinkage(TargetDecl);
 
