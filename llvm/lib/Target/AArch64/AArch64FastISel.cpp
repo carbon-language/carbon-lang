@@ -2181,6 +2181,12 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
     SrcReg = fastEmitInst_extractsubreg(MVT::i32, SrcReg, SrcIsKill,
                                         AArch64::sub_32);
 
+  if ((BW < 32) && !IsBitTest) {
+    EVT CmpEVT = TLI.getValueType(Ty, true);
+    SrcReg =
+        emitIntExt(CmpEVT.getSimpleVT(), SrcReg, MVT::i32, /*isZExt*/ true);
+  }
+
   // Emit the combined compare and branch instruction.
   SrcReg = constrainOperandRegClass(II, SrcReg,  II.getNumDefs());
   MachineInstrBuilder MIB =

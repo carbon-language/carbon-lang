@@ -1,8 +1,9 @@
 ; RUN: llc -fast-isel -fast-isel-abort -aarch64-atomic-cfg-tidy=0 -verify-machineinstrs -mtriple=aarch64-apple-darwin < %s | FileCheck %s
 
-define i32 @icmp_eq_i1(i1 signext %a) {
+define i32 @icmp_eq_i1(i1 %a) {
 ; CHECK-LABEL: icmp_eq_i1
-; CHECK:       cbz w0, {{LBB.+_2}}
+; CHECK:       and [[REG:w[0-9]+]], w0, #0x1
+; CHECK:       cbz [[REG]], {{LBB.+_2}}
   %1 = icmp eq i1 %a, 0
   br i1 %1, label %bb1, label %bb2
 bb2:
@@ -11,9 +12,10 @@ bb1:
   ret i32 0
 }
 
-define i32 @icmp_eq_i8(i8 signext %a) {
+define i32 @icmp_eq_i8(i8 %a) {
 ; CHECK-LABEL: icmp_eq_i8
-; CHECK:       cbz w0, {{LBB.+_2}}
+; CHECK:       uxtb [[REG:w[0-9]+]], w0
+; CHECK:       cbz [[REG]], {{LBB.+_2}}
   %1 = icmp eq i8 %a, 0
   br i1 %1, label %bb1, label %bb2
 bb2:
@@ -22,9 +24,10 @@ bb1:
   ret i32 0
 }
 
-define i32 @icmp_eq_i16(i16 signext %a) {
+define i32 @icmp_eq_i16(i16 %a) {
 ; CHECK-LABEL: icmp_eq_i16
-; CHECK:       cbz w0, {{LBB.+_2}}
+; CHECK:       uxth [[REG:w[0-9]+]], w0
+; CHECK:       cbz [[REG]], {{LBB.+_2}}
   %1 = icmp eq i16 %a, 0
   br i1 %1, label %bb1, label %bb2
 bb2:
