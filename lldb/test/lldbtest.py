@@ -1014,12 +1014,12 @@ class Base(unittest2.TestCase):
                 self.child.sendline('settings set interpreter.prompt-on-quit false')
                 self.child.sendline('quit')
                 self.child.expect(pexpect.EOF)
-            except ValueError, ExceptionPexpect:
+            except (ValueError, pexpect.ExceptionPexpect):
                 # child is already terminated
                 pass
-
-            # Give it one final blow to make sure the child is terminated.
-            self.child.close()
+	    finally:
+		# Give it one final blow to make sure the child is terminated.
+		self.child.close()
 
 
     def tearDown(self):
