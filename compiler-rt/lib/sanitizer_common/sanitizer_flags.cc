@@ -67,6 +67,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->suppressions = "";
   f->print_suppressions = true;
   f->disable_coredump = (SANITIZER_WORDSIZE == 64);
+  f->symbolize_inline_frames = true;
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -158,6 +159,8 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
       "Disable core dumping. By default, disable_core=1 on 64-bit to avoid "
       "dumping a 16T+ core file. Ignored on OSes that don't dump core by"
       "default and for sanitizers that don't reserve lots of virtual memory.");
+  ParseFlag(str, &f->symbolize_inline_frames, "symbolize_inline_frames",
+            "Print inlined frames in stacktraces. Defaults to true.");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)

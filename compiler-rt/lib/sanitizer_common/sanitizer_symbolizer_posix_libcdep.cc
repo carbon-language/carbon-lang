@@ -348,7 +348,12 @@ class LLVMSymbolizerProcess : public SymbolizerProcess {
 #else
     const char* const kSymbolizerArch = "--default-arch=unknown";
 #endif
-    execl(path_to_binary, path_to_binary, kSymbolizerArch, (char *)0);
+
+    const char *const inline_flag = common_flags()->symbolize_inline_frames
+                                        ? "--inlining=true"
+                                        : "--inlining=false";
+    execl(path_to_binary, path_to_binary, inline_flag, kSymbolizerArch,
+          (char *)0);
   }
 };
 
