@@ -702,7 +702,8 @@ namespace llvm {
     SDValue DAGCombineTruncBoolExt(SDNode *N, DAGCombinerInfo &DCI) const;
 
     SDValue getRsqrtEstimate(SDValue Operand, DAGCombinerInfo &DCI,
-                             unsigned &RefinementSteps) const override;
+                             unsigned &RefinementSteps,
+                             bool &UseOneConstNR) const override;
     SDValue getRecipEstimate(SDValue Operand, DAGCombinerInfo &DCI,
                              unsigned &RefinementSteps) const override;
 

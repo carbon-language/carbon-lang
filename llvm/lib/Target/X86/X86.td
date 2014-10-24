@@ -182,6 +182,8 @@ def FeatureSlowLEA : SubtargetFeature<"slow-lea", "SlowLEA", "true",
                                    "LEA instruction with certain arguments is slow">;
 def FeatureSlowIncDec : SubtargetFeature<"slow-incdec", "SlowIncDec", "true",
                                    "INC and DEC instructions are slower than ADD and SUB">;
+def FeatureUseSqrtEst : SubtargetFeature<"use-sqrt-est", "UseSqrtEst", "true",
+                            "Use RSQRT* to optimize square root calculations">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -347,7 +349,8 @@ def : ProcessorModel<"btver2", BtVer2Model,
                      [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
                       FeaturePRFCHW, FeatureAES, FeaturePCLMUL,
                       FeatureBMI, FeatureF16C, FeatureMOVBE,
-                      FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD]>;
+                      FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD,
+                      FeatureUseSqrtEst]>;
 
 // Bulldozer
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,

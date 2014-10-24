@@ -2652,13 +2652,16 @@ public:
   /// The RefinementSteps output is the number of Newton-Raphson refinement
   /// iterations required to generate a sufficient (though not necessarily
   /// IEEE-754 compliant) estimate for the value type.
+  /// The boolean UseOneConstNR output is used to select a Newton-Raphson
+  /// algorithm implementation that uses one constant or two constants.
   /// A target may choose to implement its own refinement within this function.
   /// If that's true, then return '0' as the number of RefinementSteps to avoid
   /// any further refinement of the estimate.
   /// An empty SDValue return means no estimate sequence can be created.
   virtual SDValue getRsqrtEstimate(SDValue Operand,
                               DAGCombinerInfo &DCI,
-                              unsigned &RefinementSteps) const {
+                              unsigned &RefinementSteps,
+                              bool &UseOneConstNR) const {
     return SDValue();
   }
 

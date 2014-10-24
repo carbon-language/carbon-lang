@@ -1017,6 +1017,11 @@ namespace llvm {
 
     /// Convert a comparison if required by the subtarget.
     SDValue ConvertCmpIfNecessary(SDValue Cmp, SelectionDAG &DAG) const;
+
+    /// Use rsqrt* to speed up sqrt calculations.
+    SDValue getRsqrtEstimate(SDValue Operand, DAGCombinerInfo &DCI,
+                             unsigned &RefinementSteps,
+                             bool &UseOneConstNR) const override;
   };
 
   namespace X86 {

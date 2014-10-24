@@ -1,4 +1,5 @@
-; RUN: llc < %s -mcpu=core2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=core2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=btver2 | FileCheck %s --check-prefix=BTVER2
 
 ; generated using "clang -S -O2 -ffast-math -emit-llvm sqrt.c" from
 ; #include <math.h>
@@ -52,8 +53,58 @@ entry:
   ret x86_fp80 %call
 }
 
-; Function Attrs: nounwind readnone
 declare x86_fp80 @__sqrtl_finite(x86_fp80) #1
+
+; If the target's sqrtss and divss instructions are substantially
+; slower than rsqrtss with a Newton-Raphson refinement, we should
+; generate the estimate sequence.
+define float @reciprocal_square_root(float %x) #0 {
+  %sqrt = tail call float @llvm.sqrt.f32(float %x)
+  %div = fdiv fast float 1.0, %sqrt
+  ret float %div
+
+; CHECK-LABEL: reciprocal_square_root:
+; CHECK: sqrtss
+; CHECK-NEXT: movss
+; CHECK-NEXT: divss
+; CHECK-NEXT: retq
+; BTVER2-LABEL: reciprocal_square_root:
+; BTVER2: vrsqrtss
+; BTVER2-NEXT: vmulss
+; BTVER2-NEXT: vmulss
+; BTVER2-NEXT: vmulss
+; BTVER2-NEXT: vaddss
+; BTVER2-NEXT: vmulss
+; BTVER2-NEXT: retq
+}
+
+declare float @llvm.sqrt.f32(float) #1
+
+; If the target's sqrtps and divps instructions are substantially
+; slower than rsqrtps with a Newton-Raphson refinement, we should
+; generate the estimate sequence.
+define <4 x float> @reciprocal_square_root_v4f32(<4 x float> %x) #0 {
+  %sqrt = tail call <4 x float> @llvm.sqrt.v4f32(<4 x float> %x)
+  %div = fdiv fast <4 x float> <float 1.0, float 1.0, float 1.0, float 1.0>, %sqrt
+  ret <4 x float> %div
+
+; CHECK-LABEL: reciprocal_square_root_v4f32:
+; CHECK: sqrtps
+; CHECK-NEXT: movaps
+; CHECK-NEXT: divps
+; CHECK-NEXT: retq
+; BTVER2-LABEL: reciprocal_square_root_v4f32:
+; BTVER2: vrsqrtps
+; BTVER2-NEXT: vmulps
+; BTVER2-NEXT: vmulps
+; BTVER2-NEXT: vmulps
+; BTVER2-NEXT: vaddps
+; BTVER2-NEXT: vmulps
+; BTVER2-NEXT: retq
+}
+
+declare <4 x float> @llvm.sqrt.v4f32(<4 x float>) #1
+
 
 attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="true" "no-nans-fp-math"="true" "unsafe-fp-math"="true" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="true" "no-nans-fp-math"="true" "unsafe-fp-math"="true" "use-soft-float"="false" }

@@ -7466,7 +7466,8 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
 SDValue PPCTargetLowering::getRsqrtEstimate(SDValue Operand,
                                             DAGCombinerInfo &DCI,
-                                            unsigned &RefinementSteps) const {
+                                            unsigned &RefinementSteps,
+                                            bool &UseOneConstNR) const {
   EVT VT = Operand.getValueType();
   if ((VT == MVT::f32 && Subtarget.hasFRSQRTES()) ||
       (VT == MVT::f64 && Subtarget.hasFRSQRTE())  ||
@@ -7479,6 +7480,7 @@ SDValue PPCTargetLowering::getRsqrtEstimate(SDValue Operand,
     RefinementSteps = Subtarget.hasRecipPrec() ? 1 : 3;
     if (VT.getScalarType() == MVT::f64)
       ++RefinementSteps;
+    UseOneConstNR = true;
     return DCI.DAG.getNode(PPCISD::FRSQRTE, SDLoc(Operand), VT, Operand);
   }
   return SDValue();
