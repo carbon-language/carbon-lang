@@ -4351,3 +4351,27 @@ vextractf32x4  $3, %zmm3, %xmm1 {%k1}
 // CHECK: vextracti64x4 $1
 // CHECK: encoding: [0x62,0x53,0xfd,0xcb,0x3b,0xf4,0x01]
 vextracti64x4  $1, %zmm14, %ymm12 {%k3} {z}
+
+// CHECK: vfmadd231ps
+// CHECK: encoding: [0x62,0xb2,0x1d,0x48,0xb8,0xe7]
+vfmadd231ps %zmm23, %zmm12, %zmm4
+
+// CHECK: vfmsub231pd
+// CHECK: encoding: [0x62,0xe2,0xed,0x48,0xba,0x73,0x08]
+vfmsub231pd 0x200(%rbx), %zmm2, %zmm22
+
+// CHECK: vfmaddsub231ps
+// CHECK: encoding: [0x62,0xd2,0x65,0x4b,0xb6,0xec]
+vfmaddsub231ps %zmm12, %zmm3, %zmm5 {%k3}
+
+// CHECK: vfmsubadd231pd
+// CHECK: encoding: [0x62,0x72,0x85,0xc5,0xb7,0xdd]
+vfmsubadd231pd %zmm5, %zmm31, %zmm11 {%k5}{z}
+
+// CHECK: vfnmadd231ps
+// CHECK: encoding: [0x62,0xf2,0x4d,0x48,0xbc,0xfd]
+vfnmadd231ps %zmm5, %zmm6, %zmm7
+
+// CHECK: vfnmsub231pd
+// CHECK: encoding: [0x62,0xf2,0xcd,0x48,0xbe,0xfd]
+vfnmsub231pd %zmm5, %zmm6, %zmm7

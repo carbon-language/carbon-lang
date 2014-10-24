@@ -3356,40 +3356,44 @@ multiclass avx512_fma3p_rm<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
 }
 } // Constraints = "$src1 = $dst"
 
-multiclass avx512_fma3p_forms<bits<8> opc213,
+multiclass avx512_fma3p_forms<bits<8> opc213, bits<8> opc231,
                               string OpcodeStr, X86VectorVTInfo VTI,
                               SDPatternOperator OpNode> {
   defm v213 : avx512_fma3p_rm<opc213, !strconcat(OpcodeStr, "213", VTI.Suffix),
                               VTI, OpNode>,
               EVEX_V512, EVEX_CD8<VTI.EltSize, CD8VF>;
+
+  defm v231 : avx512_fma3p_rm<opc231, !strconcat(OpcodeStr, "231", VTI.Suffix),
+                              VTI>,
+              EVEX_V512, EVEX_CD8<VTI.EltSize, CD8VF>;
 }
 
 let ExeDomain = SSEPackedSingle in {
-  defm VFMADDPSZ    : avx512_fma3p_forms<0xA8, "vfmadd",
+  defm VFMADDPSZ    : avx512_fma3p_forms<0xA8, 0xB8, "vfmadd",
                                          v16f32_info, X86Fmadd>;
-  defm VFMSUBPSZ    : avx512_fma3p_forms<0xAA, "vfmsub",
+  defm VFMSUBPSZ    : avx512_fma3p_forms<0xAA, 0xBA, "vfmsub",
                                          v16f32_info, X86Fmsub>;
-  defm VFMADDSUBPSZ : avx512_fma3p_forms<0xA6, "vfmaddsub",
+  defm VFMADDSUBPSZ : avx512_fma3p_forms<0xA6, 0xB6, "vfmaddsub",
                                          v16f32_info, X86Fmaddsub>;
-  defm VFMSUBADDPSZ : avx512_fma3p_forms<0xA7, "vfmsubadd",
+  defm VFMSUBADDPSZ : avx512_fma3p_forms<0xA7, 0xB7, "vfmsubadd",
                                          v16f32_info, X86Fmsubadd>;
-  defm VFNMADDPSZ   : avx512_fma3p_forms<0xAC, "vfnmadd",
+  defm VFNMADDPSZ   : avx512_fma3p_forms<0xAC, 0xBC, "vfnmadd",
                                          v16f32_info, X86Fnmadd>;
-  defm VFNMSUBPSZ   : avx512_fma3p_forms<0xAE, "vfnmsub",
+  defm VFNMSUBPSZ   : avx512_fma3p_forms<0xAE, 0xBE, "vfnmsub",
                                          v16f32_info, X86Fnmsub>;
 }
 let ExeDomain = SSEPackedDouble in {
-  defm VFMADDPDZ    : avx512_fma3p_forms<0xA8, "vfmadd",
+  defm VFMADDPDZ    : avx512_fma3p_forms<0xA8, 0xB8, "vfmadd",
                                          v8f64_info, X86Fmadd>, VEX_W;
-  defm VFMSUBPDZ    : avx512_fma3p_forms<0xAA, "vfmsub",
+  defm VFMSUBPDZ    : avx512_fma3p_forms<0xAA, 0xBA, "vfmsub",
                                          v8f64_info, X86Fmsub>, VEX_W;
-  defm VFMADDSUBPDZ : avx512_fma3p_forms<0xA6, "vfmaddsub",
+  defm VFMADDSUBPDZ : avx512_fma3p_forms<0xA6, 0xB6, "vfmaddsub",
                                          v8f64_info, X86Fmaddsub>, VEX_W;
-  defm VFMSUBADDPDZ : avx512_fma3p_forms<0xA7, "vfmsubadd",
+  defm VFMSUBADDPDZ : avx512_fma3p_forms<0xA7, 0xB7, "vfmsubadd",
                                          v8f64_info, X86Fmsubadd>, VEX_W;
-  defm VFNMADDPDZ :   avx512_fma3p_forms<0xAC, "vfnmadd",
+  defm VFNMADDPDZ :   avx512_fma3p_forms<0xAC, 0xBC, "vfnmadd",
                                          v8f64_info, X86Fnmadd>, VEX_W;
-  defm VFNMSUBPDZ :   avx512_fma3p_forms<0xAE, "vfnmsub",
+  defm VFNMSUBPDZ :   avx512_fma3p_forms<0xAE, 0xBE, "vfnmsub",
                                          v8f64_info, X86Fnmsub>, VEX_W;
 }
 
