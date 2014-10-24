@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
-// RUN: %clang_cc1 %s -fsyntax-only -std=c++11 -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
+// RUN: %clang_cc1 %s -fsyntax-only -fcxx-exceptions -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
+// RUN: %clang_cc1 %s -fsyntax-only -fcxx-exceptions -std=c++11 -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
 
 // A destructor may be marked noreturn and should still influence the CFG.
 void pr6884_abort() __attribute__((noreturn));
@@ -245,3 +245,20 @@ namespace LambdaVsTemporaryDtor {
   } // ok, initialization of lambda does not return
 }
 #endif
+
+// Ensure that function-try-blocks also check for return values properly.
+int functionTryBlock1(int s) try {
+  return 0;
+} catch (...) {
+} // expected-warning {{control may reach end of non-void function}}
+
+int functionTryBlock2(int s) try {
+} catch (...) {
+  return 0;
+} // expected-warning {{control may reach end of non-void function}}
+
+int functionTryBlock3(int s) try {
+  return 0;
+} catch (...) {
+  return 0;
+} // ok, both paths return.
