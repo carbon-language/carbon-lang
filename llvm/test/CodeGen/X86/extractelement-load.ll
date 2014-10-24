@@ -46,3 +46,19 @@ bb:
   store double %.sroa.3.24.vec.extract, double* undef, align 8
   unreachable
 }
+
+; Case where a load is unary shuffled, then bitcast (to a type with the same
+; number of elements) before extractelement.
+; This is testing for an assertion - the extraction was assuming that the undef
+; second shuffle operand was a post-bitcast type instead of a pre-bitcast type.
+define i64 @t4(<2 x double>* %a) {
+; CHECK-LABEL: t4:
+; CHECK: mov
+; CHECK: ret
+  %b = load <2 x double>* %a, align 16
+  %c = shufflevector <2 x double> %b, <2 x double> %b, <2 x i32> <i32 1, i32 0>
+  %d = bitcast <2 x double> %c to <2 x i64>
+  %e = extractelement <2 x i64> %d, i32 1
+  ret i64 %e
+}
+
