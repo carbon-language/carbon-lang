@@ -38,7 +38,7 @@ public:
 
   /// Make sure the given GlobalValue is fully read.
   ///
-  virtual std::error_code Materialize(GlobalValue *GV) = 0;
+  virtual std::error_code materialize(GlobalValue *GV) = 0;
 
   /// If the given GlobalValue is read in, and if the GVMaterializer supports
   /// it, release the memory for the GV, and set it up to be materialized

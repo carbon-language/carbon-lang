@@ -1626,8 +1626,10 @@ bool ModuleLinker::run() {
 
     // Materialize if needed.
     if (SF->isMaterializable()) {
-      if (SF->Materialize(&ErrorMsg))
+      if (std::error_code EC = SF->materialize()) {
+        ErrorMsg = EC.message();
         return true;
+      }
     }
 
     // Skip if no body (function is external).
@@ -1677,8 +1679,10 @@ bool ModuleLinker::run() {
 
       // Materialize if needed.
       if (SF->isMaterializable()) {
-        if (SF->Materialize(&ErrorMsg))
+        if (std::error_code EC = SF->materialize()) {
+          ErrorMsg = EC.message();
           return true;
+        }
       }
 
       // Skip if no body (function is external).

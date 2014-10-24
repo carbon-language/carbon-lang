@@ -21,6 +21,8 @@
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/DerivedTypes.h"
 
+#include <system_error>
+
 namespace llvm {
 
 class Comdat;
@@ -311,7 +313,7 @@ public:
   /// Make sure this GlobalValue is fully read. If the module is corrupt, this
   /// returns true and fills in the optional string with information about the
   /// problem.  If successful, this returns false.
-  bool Materialize(std::string *ErrInfo = nullptr);
+  std::error_code materialize();
 
   /// If this GlobalValue is read in, and if the GVMaterializer supports it,
   /// release the memory for the function, and set it up to be materialized

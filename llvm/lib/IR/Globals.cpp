@@ -36,8 +36,8 @@ bool GlobalValue::isMaterializable() const {
 bool GlobalValue::isDematerializable() const {
   return getParent() && getParent()->isDematerializable(this);
 }
-bool GlobalValue::Materialize(std::string *ErrInfo) {
-  return getParent()->Materialize(this, ErrInfo);
+std::error_code GlobalValue::materialize() {
+  return getParent()->materialize(this);
 }
 void GlobalValue::Dematerialize() {
   getParent()->Dematerialize(this);

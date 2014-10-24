@@ -56,7 +56,7 @@ std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
       return Error(BitcodeError::NeverResolvedFunctionFromBlockAddress);
 
     // Try to materialize F.
-    if (std::error_code EC = Materialize(F))
+    if (std::error_code EC = materialize(F))
       return EC;
   }
   assert(BasicBlockFwdRefs.empty() && "Function missing from queue");
@@ -3282,7 +3282,7 @@ std::error_code BitcodeReader::FindFunctionInStream(
 
 void BitcodeReader::releaseBuffer() { Buffer.release(); }
 
-std::error_code BitcodeReader::Materialize(GlobalValue *GV) {
+std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   Function *F = dyn_cast<Function>(GV);
   // If it's not a function or is already material, ignore the request.
   if (!F || !F->isMaterializable())
@@ -3358,7 +3358,7 @@ std::error_code BitcodeReader::MaterializeModule(Module *M) {
   for (Module::iterator F = TheModule->begin(), E = TheModule->end();
        F != E; ++F) {
     if (F->isMaterializable()) {
-      if (std::error_code EC = Materialize(F))
+      if (std::error_code EC = materialize(F))
         return EC;
     }
   }

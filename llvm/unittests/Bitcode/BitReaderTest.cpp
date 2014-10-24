@@ -69,7 +69,7 @@ TEST(BitReaderTest, DematerializeFunctionPreservesLinkageType) {
 
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
-  M->getFunction("func")->Materialize();
+  M->getFunction("func")->materialize();
   EXPECT_FALSE(M->getFunction("func")->empty());
   EXPECT_TRUE(M->getFunction("func")->getLinkage() ==
               GlobalValue::InternalLinkage);
@@ -121,7 +121,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionBefore) {
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
   // Materialize @before, pulling in @func.
-  EXPECT_FALSE(M->getFunction("before")->Materialize());
+  EXPECT_FALSE(M->getFunction("before")->materialize());
   EXPECT_FALSE(M->getFunction("func")->empty());
   EXPECT_TRUE(M->getFunction("other")->empty());
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
@@ -153,7 +153,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionAfter) {
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
   // Materialize @after, pulling in @func.
-  EXPECT_FALSE(M->getFunction("after")->Materialize());
+  EXPECT_FALSE(M->getFunction("after")->materialize());
   EXPECT_FALSE(M->getFunction("func")->empty());
   EXPECT_TRUE(M->getFunction("other")->empty());
   EXPECT_FALSE(verifyModule(*M, &dbgs()));

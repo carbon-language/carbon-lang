@@ -217,9 +217,9 @@ int main(int argc, char **argv) {
     for (size_t i = 0, e = GVs.size(); i != e; ++i) {
       GlobalValue *GV = GVs[i];
       if (GV->isMaterializable()) {
-        std::string ErrInfo;
-        if (GV->Materialize(&ErrInfo)) {
-          errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
+        if (std::error_code EC = GV->materialize()) {
+          errs() << argv[0] << ": error reading input: " << EC.message()
+                 << "\n";
           return 1;
         }
       }
@@ -229,18 +229,18 @@ int main(int argc, char **argv) {
     SmallPtrSet<GlobalValue *, 8> GVSet(GVs.begin(), GVs.end());
     for (auto &G : M->globals()) {
       if (!GVSet.count(&G) && G.isMaterializable()) {
-        std::string ErrInfo;
-        if (G.Materialize(&ErrInfo)) {
-          errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
+        if (std::error_code EC = G.materialize()) {
+          errs() << argv[0] << ": error reading input: " << EC.message()
+                 << "\n";
           return 1;
         }
       }
     }
     for (auto &F : *M) {
       if (!GVSet.count(&F) && F.isMaterializable()) {
-        std::string ErrInfo;
-        if (F.Materialize(&ErrInfo)) {
-          errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
+        if (std::error_code EC = F.materialize()) {
+          errs() << argv[0] << ": error reading input: " << EC.message()
+                 << "\n";
           return 1;
         }
       }
