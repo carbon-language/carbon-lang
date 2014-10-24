@@ -5899,12 +5899,12 @@ bool SelectionDAGBuilder::visitUnaryFloatCall(const CallInst &I,
   return true;
 }
 
-/// visitBinaryFloatCall - If a call instruction is a unary floating-point
+/// visitBinaryFloatCall - If a call instruction is a binary floating-point
 /// operation (as expected), translate it to an SDNode with the specified opcode
 /// and return true.
 bool SelectionDAGBuilder::visitBinaryFloatCall(const CallInst &I,
                                                unsigned Opcode) {
-  // Sanity check that it really is a unary floating-point call.
+  // Sanity check that it really is a binary floating-point call.
   if (I.getNumArgOperands() != 2 ||
       !I.getArgOperand(0)->getType()->isFloatingPointTy() ||
       I.getType() != I.getArgOperand(0)->getType() ||
