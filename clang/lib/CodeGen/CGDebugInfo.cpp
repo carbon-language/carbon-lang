@@ -1324,6 +1324,8 @@ CollectTemplateParams(const TemplateParameterList *TPList,
     case TemplateArgument::Expression: {
       const Expr *E = TA.getAsExpr();
       QualType T = E->getType();
+      if (E->isGLValue())
+        T = CGM.getContext().getLValueReferenceType(T);
       llvm::Value *V = CGM.EmitConstantExpr(E, T);
       assert(V && "Expression in template argument isn't constant");
       llvm::DIType TTy = getOrCreateType(T, Unit);
