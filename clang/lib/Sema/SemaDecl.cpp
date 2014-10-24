@@ -7943,12 +7943,12 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
 
   // Semantic checking for this function declaration (in isolation).
 
-  // Diagnose the use of callee-cleanup calls on unprototyped functions.
+  // Diagnose calling conventions that don't support variadic calls.
   QualType NewQType = Context.getCanonicalType(NewFD->getType());
   const FunctionType *NewType = cast<FunctionType>(NewQType);
   if (isa<FunctionNoProtoType>(NewType)) {
     FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
-    if (isCalleeCleanup(NewTypeInfo.getCC())) {
+    if (!supportsVariadicCall(NewTypeInfo.getCC())) {
       // Windows system headers sometimes accidentally use stdcall without
       // (void) parameters, so use a default-error warning in this case :-/
       int DiagID = NewTypeInfo.getCC() == CC_X86StdCall

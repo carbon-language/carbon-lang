@@ -837,6 +837,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
           Tok.is(tok::kw___stdcall) ||
           Tok.is(tok::kw___fastcall) ||
           Tok.is(tok::kw___thiscall) ||
+          Tok.is(tok::kw___vectorcall) ||
           Tok.is(tok::kw___unaligned))
         return TPResult::True; // attributes indicate declaration
       TPResult TPR = TryParseDeclarator(mayBeAbstract, mayHaveIdentifier);
@@ -984,6 +985,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___stdcall:
   case tok::kw___fastcall:
   case tok::kw___thiscall:
+  case tok::kw___vectorcall:
   case tok::kw___unaligned:
   case tok::kw___vector:
   case tok::kw___pixel:
@@ -1254,6 +1256,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
   case tok::kw___stdcall:
   case tok::kw___fastcall:
   case tok::kw___thiscall:
+  case tok::kw___vectorcall:
   case tok::kw___w64:
   case tok::kw___sptr:
   case tok::kw___uptr:

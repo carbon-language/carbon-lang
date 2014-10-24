@@ -365,3 +365,5 @@ void TypedefNewDelete::operator delete[](void *) { }
 // CHECK-DAG: ??3TypedefNewDelete@@SAXPAX@Z
 // CHECK-DAG: ??_VTypedefNewDelete@@SAXPAX@Z
 
+void __vectorcall vector_func() { }
+// CHECK-DAG: @"\01?vector_func@@YQXXZ"

@@ -673,6 +673,9 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
     case CC_X86ThisCall:
       OS << " __attribute__((thiscall))";
       break;
+    case CC_X86VectorCall:
+      OS << " __attribute__((vectorcall))";
+      break;
     case CC_X86Pascal:
       OS << " __attribute__((pascal))";
       break;
@@ -1235,6 +1238,7 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   case AttributedType::attr_fastcall: OS << "fastcall"; break;
   case AttributedType::attr_stdcall: OS << "stdcall"; break;
   case AttributedType::attr_thiscall: OS << "thiscall"; break;
+  case AttributedType::attr_vectorcall: OS << "vectorcall"; break;
   case AttributedType::attr_pascal: OS << "pascal"; break;
   case AttributedType::attr_ms_abi: OS << "ms_abi"; break;
   case AttributedType::attr_sysv_abi: OS << "sysv_abi"; break;

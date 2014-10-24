@@ -11,11 +11,14 @@ void __thiscall CrcGenerateTableThiscall(void);
 void __thiscall CrcGenerateTableThiscall() {}
 void __pascal CrcGenerateTablePascal(void);
 void __pascal CrcGenerateTablePascal() {}
+void __vectorcall CrcGenerateTableVectorcall(void);
+void __vectorcall CrcGenerateTableVectorcall() {}
 
-void __fastcall CrcGenerateTableNoProtoFastcall() {} // expected-error{{function with no prototype cannot use the callee-cleanup fastcall calling convention}}
-void __stdcall CrcGenerateTableNoProtoStdcall() {} // expected-warning{{function with no prototype cannot use the callee-cleanup stdcall calling convention}}
-void __thiscall CrcGenerateTableNoProtoThiscall() {} // expected-error{{function with no prototype cannot use the callee-cleanup thiscall calling convention}}
-void __pascal CrcGenerateTableNoProtoPascal() {} // expected-error{{function with no prototype cannot use the callee-cleanup pascal calling convention}}
+void __fastcall CrcGenerateTableNoProtoFastcall() {} // expected-error{{function with no prototype cannot use the fastcall calling convention}}
+void __stdcall CrcGenerateTableNoProtoStdcall() {} // expected-warning{{function with no prototype cannot use the stdcall calling convention}}
+void __thiscall CrcGenerateTableNoProtoThiscall() {} // expected-error{{function with no prototype cannot use the thiscall calling convention}}
+void __pascal CrcGenerateTableNoProtoPascal() {} // expected-error{{function with no prototype cannot use the pascal calling convention}}
+void __vectorcall CrcGenerateTableNoProtoVectorcall() {} // expected-error{{function with no prototype cannot use the vectorcall calling convention}}
 
 // Regular calling convention is fine.
 void CrcGenerateTableNoProto() {}

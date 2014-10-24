@@ -20,6 +20,12 @@ void __thiscall f6(void) {
   f3();
 // CHECK: call x86_thiscallcc void @f3()
 }
+// FIXME: Add this to LLVM.
+void __vectorcall f61(void) {
+// CHECK-LABEL: define void @f61()
+  f3();
+// CHECK: call x86_thiscallcc void @f3()
+}
 
 // PR5280
 void (__fastcall *pf1)(void) = f1;
@@ -28,19 +34,22 @@ void (__thiscall *pf3)(void) = f3;
 void (__fastcall *pf4)(void) = f4;
 void (__stdcall *pf5)(void) = f5;
 void (__thiscall *pf6)(void) = f6;
+void (__vectorcall *pf7)(void) = f61;
 
 int main(void) {
-    f4(); f5(); f6();
+    f4(); f5(); f6(); f61();
     // CHECK: call x86_fastcallcc void @f4()
     // CHECK: call x86_stdcallcc void @f5()
     // CHECK: call x86_thiscallcc void @f6()
-    pf1(); pf2(); pf3(); pf4(); pf5(); pf6();
+    // CHECK: call void @f61()
+    pf1(); pf2(); pf3(); pf4(); pf5(); pf6(); pf7();
     // CHECK: call x86_fastcallcc void %{{.*}}()
     // CHECK: call x86_stdcallcc void %{{.*}}()
     // CHECK: call x86_thiscallcc void %{{.*}}()
     // CHECK: call x86_fastcallcc void %{{.*}}()
     // CHECK: call x86_stdcallcc void %{{.*}}()
     // CHECK: call x86_thiscallcc void %{{.*}}()
+    // CHECK: call void %{{.*}}()
     return 0;
 }
 

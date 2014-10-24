@@ -10,6 +10,7 @@ void            free_func_default(); // expected-note 2 {{previous declaration i
 void __cdecl    free_func_cdecl(); // expected-note 2 {{previous declaration is here}}
 void __stdcall  free_func_stdcall(); // expected-note 2 {{previous declaration is here}}
 void __fastcall free_func_fastcall(); // expected-note 2 {{previous declaration is here}}
+void __vectorcall free_func_vectorcall(); // expected-note 2 {{previous declaration is here}}
 
 void __cdecl    free_func_default();
 void __stdcall  free_func_default(); // expected-error {{function declared 'stdcall' here was previously declared without calling convention}}
@@ -26,6 +27,10 @@ void __fastcall free_func_stdcall(); // expected-error {{function declared 'fast
 void __cdecl    free_func_fastcall(); // expected-error {{function declared 'cdecl' here was previously declared 'fastcall'}}
 void __stdcall  free_func_fastcall(); // expected-error {{function declared 'stdcall' here was previously declared 'fastcall'}}
 void            free_func_fastcall();
+
+void __cdecl    free_func_vectorcall(); // expected-error {{function declared 'cdecl' here was previously declared 'vectorcall'}}
+void __stdcall  free_func_vectorcall(); // expected-error {{function declared 'stdcall' here was previously declared 'vectorcall'}}
+void            free_func_vectorcall();
 
 // Overloaded functions may have different calling conventions
 void __fastcall free_func_default(int);
@@ -45,6 +50,8 @@ struct S {
   void __cdecl    member_cdecl2(); // expected-note {{previous declaration is here}}
   void __thiscall member_thiscall1();
   void __thiscall member_thiscall2(); // expected-note {{previous declaration is here}}
+  void __vectorcall member_vectorcall1();
+  void __vectorcall member_vectorcall2(); // expected-note {{previous declaration is here}}
 
   // Typedefs carrying the __cdecl convention are adjusted to __thiscall.
   void_fun_t           member_typedef_default; // expected-note {{previous declaration is here}}
@@ -82,6 +89,9 @@ void __thiscall S::member_cdecl2() {} // expected-error {{function declared 'thi
 
 void            S::member_thiscall1() {}
 void __cdecl    S::member_thiscall2() {} // expected-error {{function declared 'cdecl' here was previously declared 'thiscall'}}
+
+void            S::member_vectorcall1() {}
+void __cdecl    S::member_vectorcall2() {} // expected-error {{function declared 'cdecl' here was previously declared 'vectorcall'}}
 
 void            S::static_member_default1() {}
 void __cdecl    S::static_member_default2() {}
@@ -143,9 +153,10 @@ void __attribute__((noreturn)) __stdcall __attribute__((regparm(1))) multi_attri
 void multi_attribute(int x) { __builtin_unreachable(); }
 
 
+// expected-error@+3 {{vectorcall and cdecl attributes are not compatible}}
 // expected-error@+2 {{stdcall and cdecl attributes are not compatible}}
 // expected-error@+1 {{fastcall and cdecl attributes are not compatible}}
-void __cdecl __cdecl __stdcall __cdecl __fastcall multi_cc(int x);
+void __cdecl __cdecl __stdcall __cdecl __fastcall __vectorcall multi_cc(int x);
 
 template <typename T> void __stdcall StdcallTemplate(T) {}
 template <> void StdcallTemplate<int>(int) {}
