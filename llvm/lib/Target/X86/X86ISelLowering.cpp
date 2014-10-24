@@ -14383,13 +14383,14 @@ SDValue X86TargetLowering::getRsqrtEstimate(SDValue Op,
   EVT VT = Op.getValueType();
   
   // SSE1 has rsqrtss and rsqrtps.
-  // TODO: Add support for AVX (v8f32) and AVX512 (v16f32).
+  // TODO: Add support for AVX512 (v16f32).
   // It is likely not profitable to do this for f64 because a double-precision
   // rsqrt estimate with refinement on x86 prior to FMA requires at least 16
   // instructions: convert to single, rsqrtss, convert back to double, refine
   // (3 steps = at least 13 insts). If an 'rsqrtsd' variant was added to the ISA
   // along with FMA, this could be a throughput win.
-  if (Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)) {
+  if ((Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)) ||
+      (Subtarget->hasAVX() && VT == MVT::v8f32)) {
     RefinementSteps = 1;
     UseOneConstNR = false;
     return DCI.DAG.getNode(X86ISD::FRSQRT, SDLoc(Op), VT, Op);
