@@ -347,6 +347,7 @@ public:
            "Dbg values are not emitted in LDV");
     EmitDone = false;
     ModifiedMF = false;
+    LS.reset();
   }
 
   /// mapVirtReg - Map virtual register to an equivalence class.
