@@ -64,6 +64,7 @@ using namespace lldb_private;
 
 static uint32_t g_shared_debugger_refcount = 0;
 static lldb::user_id_t g_unique_id = 1;
+static size_t g_debugger_event_thread_stack_bytes = 8 * 1024 * 1024;
 
 #pragma mark Static Functions
 
@@ -3322,11 +3323,9 @@ Debugger::StartEventHandlerThread()
 {
     if (!m_event_handler_thread.IsJoinable())
     {
-        m_event_handler_thread = ThreadLauncher::LaunchThread ("lldb.debugger.event-handler",
-                                                               EventHandlerThread,
-                                                               this,
-                                                               NULL,
-                                                               8*1024*1024); // Use larger 8MB stack for this thread
+        // Use larger 8MB stack for this thread
+        m_event_handler_thread = ThreadLauncher::LaunchThread("lldb.debugger.event-handler", EventHandlerThread, this, NULL,
+                                                              g_debugger_event_thread_stack_bytes);
     }
     return m_event_handler_thread.IsJoinable();
 }

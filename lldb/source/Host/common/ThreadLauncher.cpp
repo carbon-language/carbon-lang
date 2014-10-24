@@ -32,7 +32,8 @@ ThreadLauncher::LaunchThread(llvm::StringRef name, lldb::thread_func_t thread_fu
     HostThreadCreateInfo *info_ptr = new HostThreadCreateInfo(name.data(), thread_function, thread_arg);
     lldb::thread_t thread;
 #ifdef _WIN32
-    thread = (lldb::thread_t)::_beginthreadex(0, 0, HostNativeThread::ThreadCreateTrampoline, info_ptr, 0, NULL);
+    thread =
+        (lldb::thread_t)::_beginthreadex(0, (unsigned)min_stack_byte_size, HostNativeThread::ThreadCreateTrampoline, info_ptr, 0, NULL);
     if (thread == (lldb::thread_t)(-1L))
         error.SetError(::GetLastError(), eErrorTypeWin32);
 #else
