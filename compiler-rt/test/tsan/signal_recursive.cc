@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static const int kSigSuspend = SIGPWR;
-static const int kSigRestart = SIGXCPU;
+static const int kSigSuspend = SIGUSR1;
+static const int kSigRestart = SIGUSR2;
 static sigset_t g_suspend_handler_mask;
 
 static sem_t g_thread_suspend_ack_sem;
