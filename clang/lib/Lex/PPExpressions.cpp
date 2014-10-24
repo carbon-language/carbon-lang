@@ -103,7 +103,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   }
 
   // If we don't have a pp-identifier now, this is an error.
-  if (PP.CheckMacroName(PeekTok, 0))
+  if (PP.CheckMacroName(PeekTok, MU_Other))
     return true;
 
   // Otherwise, we got an identifier, is it defined to something?
