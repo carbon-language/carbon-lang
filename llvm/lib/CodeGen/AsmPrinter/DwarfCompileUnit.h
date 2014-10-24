@@ -123,6 +123,10 @@ public:
 
   DIE &constructAbstractSubprogramScopeDIE(LexicalScope *Scope);
 
+  /// \brief Construct import_module DIE.
+  std::unique_ptr<DIE>
+  constructImportedEntityDIE(const DIImportedEntity &Module);
+
   void finishSubprogramDefinition(DISubprogram SP);
 };
 
