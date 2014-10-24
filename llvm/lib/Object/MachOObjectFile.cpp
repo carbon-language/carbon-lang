@@ -2460,8 +2460,9 @@ ArrayRef<uint8_t> MachOObjectFile::getDyldInfoExportsTrie() const {
 ArrayRef<uint8_t> MachOObjectFile::getUuid() const {
   if (!UuidLoadCmd)
     return ArrayRef<uint8_t>();
-  MachO::uuid_command Uuid = getStruct<MachO::uuid_command>(this, UuidLoadCmd);
-  return ArrayRef<uint8_t>(Uuid.uuid, 16);
+  // Returning a pointer is fine as uuid doesn't need endian swapping.
+  const char *Ptr = UuidLoadCmd + offsetof(MachO::uuid_command, uuid);
+  return ArrayRef<uint8_t>(reinterpret_cast<const uint8_t *>(Ptr), 16);
 }
 
 StringRef MachOObjectFile::getStringTableData() const {
