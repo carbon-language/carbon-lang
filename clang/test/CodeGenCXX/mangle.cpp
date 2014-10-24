@@ -991,3 +991,25 @@ namespace test48 {
   template void f<S>(S::u *);
   // CHECK-LABEL: define weak_odr void @_ZN6test481fINS_1SEEEvPTuNT_1uE(%"union.test48::S::u"*)
 }
+
+namespace test49 {
+  template <int>
+  struct S {};
+
+  template <template <int> class T>
+  T<3> fin(T<3>);
+
+  auto v = fin<S>;
+  // CHECK-LABEL: declare void @_ZN6test493finINS_1SEEET_ILi3EES3_()
+}
+
+namespace test50 {
+  template <int>
+  struct S {};
+
+  template <template <int> class T>
+  T<3> fin(T<4>);
+
+  auto v = fin<S>;
+  // CHECK-LABEL: declare void @_ZN6test503finINS_1SEEET_ILi3EES2_ILi4EE()
+}
