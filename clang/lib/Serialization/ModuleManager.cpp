@@ -145,6 +145,7 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
         // module is *itself* up to date, but has an out-of-date importer.
         Modules.erase(Entry);
         Chain.pop_back();
+        delete New;
         return OutOfDate;
       }
     }
