@@ -179,11 +179,14 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     if (A_Base == B_Base && A_Base)
       report_fatal_error("unsupported relocation with identical base", false);
 
-    // A subtraction expression where both symbols are undefined is a
+    // A subtraction expression where either symbol is undefined is a
     // non-relocatable expression.
-    if (A->isUndefined() && B->isUndefined())
-      report_fatal_error("unsupported relocation with subtraction expression",
-                         false);
+    if (A->isUndefined() || B->isUndefined()) {
+      StringRef Name = A->isUndefined() ? A->getName() : B->getName();
+      Asm.getContext().FatalError(Fixup.getLoc(),
+        "unsupported relocation with subtraction expression, symbol '" + 
+        Name + "' can not be undefined in a subtraction expression");
+    }
 
     Value += Writer->getSymbolAddress(&A_SD, Layout) -
       (!A_Base ? 0 : Writer->getSymbolAddress(A_Base, Layout));
