@@ -38,10 +38,6 @@ uptr GetRSS() {
 void InitializePlatform() {
 }
 
-void FinalizePlatform() {
-  fflush(0);
-}
-
 }  // namespace __tsan
 
 #endif  // SANITIZER_WINDOWS

@@ -461,6 +461,11 @@ class SizeClassAllocator64 {
     }
   }
 
+  static uptr AdditionalSize() {
+    return RoundUpTo(sizeof(RegionInfo) * kNumClassesRounded,
+                     GetPageSizeCached());
+  }
+
   typedef SizeClassMap SizeClassMapT;
   static const uptr kNumClasses = SizeClassMap::kNumClasses;
   static const uptr kNumClassesRounded = SizeClassMap::kNumClassesRounded;
@@ -489,11 +494,6 @@ class SizeClassAllocator64 {
     uptr n_allocated, n_freed;  // Just stats.
   };
   COMPILER_CHECK(sizeof(RegionInfo) >= kCacheLineSize);
-
-  static uptr AdditionalSize() {
-    return RoundUpTo(sizeof(RegionInfo) * kNumClassesRounded,
-                     GetPageSizeCached());
-  }
 
   RegionInfo *GetRegionInfo(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);

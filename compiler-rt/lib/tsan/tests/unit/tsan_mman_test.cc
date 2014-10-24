@@ -103,7 +103,7 @@ TEST(Mman, UsableSize) {
   EXPECT_EQ(20U, user_alloc_usable_size(p2));
   user_free(thr, pc, p);
   user_free(thr, pc, p2);
-  EXPECT_EQ(0U, user_alloc_usable_size((void*)0x123));
+  EXPECT_EQ(0U, user_alloc_usable_size((void*)0x4123));
 }
 
 TEST(Mman, Stats) {

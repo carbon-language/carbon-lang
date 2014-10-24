@@ -63,6 +63,9 @@ void *__libc_stack_end = 0;
 
 namespace __tsan {
 
+static uptr g_data_start;
+static uptr g_data_end;
+
 const uptr kPageSize = 4096;
 
 enum {
@@ -77,22 +80,26 @@ enum {
   MemCount  = 8,
 };
 
-void FillProfileCallback(uptr start, uptr rss, bool file,
+void FillProfileCallback(uptr p, uptr rss, bool file,
                          uptr *mem, uptr stats_size) {
   mem[MemTotal] += rss;
-  start >>= 40;
-  if (start < 0x10)
+  if (p >= kShadowBeg && p < kShadowEnd)
     mem[MemShadow] += rss;
-  else if (start >= 0x20 && start < 0x30)
-    mem[file ? MemFile : MemMmap] += rss;
-  else if (start >= 0x30 && start < 0x40)
+  else if (p >= kMetaShadowBeg && p < kMetaShadowEnd)
     mem[MemMeta] += rss;
-  else if (start >= 0x7e)
-    mem[file ? MemFile : MemMmap] += rss;
-  else if (start >= 0x60 && start < 0x62)
-    mem[MemTrace] += rss;
-  else if (start >= 0x7d && start < 0x7e)
+#ifndef TSAN_GO
+  else if (p >= kHeapMemBeg && p < kHeapMemEnd)
     mem[MemHeap] += rss;
+  else if (p >= kLoAppMemBeg && p < kLoAppMemEnd)
+    mem[file ? MemFile : MemMmap] += rss;
+  else if (p >= kHiAppMemBeg && p < kHiAppMemEnd)
+    mem[file ? MemFile : MemMmap] += rss;
+#else
+  else if (p >= kAppMemBeg && p < kAppMemEnd)
+    mem[file ? MemFile : MemMmap] += rss;
+#endif
+  else if (p >= kTraceMemBeg && p < kTraceMemEnd)
+    mem[MemTrace] += rss;
   else
     mem[MemOther] += rss;
 }
@@ -142,7 +149,7 @@ uptr GetRSS() {
 void FlushShadowMemoryCallback(
     const SuspendedThreadsList &suspended_threads_list,
     void *argument) {
-  FlushUnneededShadowMemory(kLinuxShadowBeg, kLinuxShadowEnd - kLinuxShadowBeg);
+  FlushUnneededShadowMemory(kShadowBeg, kShadowEnd - kShadowBeg);
 }
 #endif
 
@@ -223,12 +230,12 @@ static void MapRodata() {
 
 void InitializeShadowMemory() {
   // Map memory shadow.
-  uptr shadow = (uptr)MmapFixedNoReserve(kLinuxShadowBeg,
-    kLinuxShadowEnd - kLinuxShadowBeg);
-  if (shadow != kLinuxShadowBeg) {
+  uptr shadow = (uptr)MmapFixedNoReserve(kShadowBeg,
+    kShadowEnd - kShadowBeg);
+  if (shadow != kShadowBeg) {
     Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
     Printf("FATAL: Make sure to compile with -fPIE and "
-               "to link with -pie (%p, %p).\n", shadow, kLinuxShadowBeg);
+               "to link with -pie (%p, %p).\n", shadow, kShadowBeg);
     Die();
   }
   // This memory range is used for thread stacks and large user mmaps.
@@ -240,72 +247,22 @@ void InitializeShadowMemory() {
       0x10000000000ULL * kShadowMultiplier, MADV_NOHUGEPAGE);
 #endif
   DPrintf("memory shadow: %zx-%zx (%zuGB)\n",
-      kLinuxShadowBeg, kLinuxShadowEnd,
-      (kLinuxShadowEnd - kLinuxShadowBeg) >> 30);
+      kShadowBeg, kShadowEnd,
+      (kShadowEnd - kShadowBeg) >> 30);
 
   // Map meta shadow.
-  if (MemToMeta(kLinuxAppMemBeg) < (u32*)kMetaShadow) {
-    Printf("ThreadSanitizer: bad meta shadow (%p -> %p < %p)\n",
-        kLinuxAppMemBeg, MemToMeta(kLinuxAppMemBeg), kMetaShadow);
-    Die();
-  }
-  if (MemToMeta(kLinuxAppMemEnd) >= (u32*)(kMetaShadow + kMetaSize)) {
-    Printf("ThreadSanitizer: bad meta shadow (%p -> %p >= %p)\n",
-        kLinuxAppMemEnd, MemToMeta(kLinuxAppMemEnd), kMetaShadow + kMetaSize);
-    Die();
-  }
-  uptr meta = (uptr)MmapFixedNoReserve(kMetaShadow, kMetaSize);
-  if (meta != kMetaShadow) {
+  uptr meta = (uptr)MmapFixedNoReserve(kMetaShadowBeg,
+      kMetaShadowEnd - kMetaShadowBeg);
+  if (meta != kMetaShadowBeg) {
     Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
     Printf("FATAL: Make sure to compile with -fPIE and "
-               "to link with -pie (%p, %p).\n", meta, kMetaShadow);
+               "to link with -pie (%p, %p).\n", meta, kMetaShadowBeg);
     Die();
   }
   DPrintf("meta shadow: %zx-%zx (%zuGB)\n",
       kMetaShadow, kMetaShadow + kMetaSize, kMetaSize >> 30);
 
-  // Protect gaps.
-  const uptr kClosedLowBeg  = 0x200000;
-  const uptr kClosedLowEnd  = kLinuxShadowBeg - 1;
-  const uptr kClosedMidBeg = kLinuxShadowEnd + 1;
-  const uptr kClosedMidEnd = min(min(kLinuxAppMemBeg, kTraceMemBegin),
-      kMetaShadow);
-
-  ProtectRange(kClosedLowBeg, kClosedLowEnd);
-  ProtectRange(kClosedMidBeg, kClosedMidEnd);
-  VPrintf(2, "kClosedLow   %zx-%zx (%zuGB)\n",
-      kClosedLowBeg, kClosedLowEnd, (kClosedLowEnd - kClosedLowBeg) >> 30);
-  VPrintf(2, "kClosedMid   %zx-%zx (%zuGB)\n",
-      kClosedMidBeg, kClosedMidEnd, (kClosedMidEnd - kClosedMidBeg) >> 30);
-  VPrintf(2, "app mem: %zx-%zx (%zuGB)\n",
-      kLinuxAppMemBeg, kLinuxAppMemEnd,
-      (kLinuxAppMemEnd - kLinuxAppMemBeg) >> 30);
-  VPrintf(2, "stack: %zx\n", (uptr)&shadow);
-
   MapRodata();
-}
-#endif
-
-static uptr g_data_start;
-static uptr g_data_end;
-
-#ifndef TSAN_GO
-static void CheckPIE() {
-  // Ensure that the binary is indeed compiled with -pie.
-  MemoryMappingLayout proc_maps(true);
-  uptr start, end;
-  if (proc_maps.Next(&start, &end,
-                     /*offset*/0, /*filename*/0, /*filename_size*/0,
-                     /*protection*/0)) {
-    if ((u64)start < kLinuxAppMemBeg) {
-      Printf("FATAL: ThreadSanitizer can not mmap the shadow memory ("
-             "something is mapped at 0x%zx < 0x%zx)\n",
-             start, kLinuxAppMemBeg);
-      Printf("FATAL: Make sure to compile with -fPIE"
-             " and to link with -pie.\n");
-      Die();
-    }
-  }
 }
 
 static void InitDataSeg() {
@@ -333,6 +290,28 @@ static void InitDataSeg() {
   CHECK_LT((uptr)&g_data_start, g_data_end);
 }
 
+static void CheckAndProtect() {
+  // Ensure that the binary is indeed compiled with -pie.
+  MemoryMappingLayout proc_maps(true);
+  uptr p, end;
+  while (proc_maps.Next(&p, &end, 0, 0, 0, 0)) {
+    if (IsAppMem(p))
+      continue;
+    if (p >= kHeapMemEnd &&
+        p < kHeapMemEnd + PrimaryAllocator::AdditionalSize())
+      continue;
+    if (p >= 0xf000000000000000ull)  // vdso
+      break;
+    Printf("FATAL: ThreadSanitizer: unexpected memory mapping %p-%p\n", p, end);
+    Die();
+  }
+
+  ProtectRange(kLoAppMemEnd, kShadowBeg);
+  ProtectRange(kShadowEnd, kMetaShadowBeg);
+  ProtectRange(kMetaShadowEnd, kTraceMemBeg);
+  ProtectRange(kTraceMemEnd, kHeapMemBeg);
+  ProtectRange(kHeapMemEnd + PrimaryAllocator::AdditionalSize(), kHiAppMemBeg);
+}
 #endif  // #ifndef TSAN_GO
 
 void InitializePlatform() {
@@ -368,7 +347,7 @@ void InitializePlatform() {
   }
 
 #ifndef TSAN_GO
-  CheckPIE();
+  CheckAndProtect();
   InitTlsSize();
   InitDataSeg();
 #endif
