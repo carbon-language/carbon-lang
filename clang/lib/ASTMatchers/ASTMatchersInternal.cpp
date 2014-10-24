@@ -71,17 +71,15 @@ class IdDynMatcher : public DynMatcherInterface {
 /// We only ever need one instance of this matcher, so we create a global one
 /// and reuse it to reduce the overhead of the matcher and increase the chance
 /// of cache hits.
-struct TrueMatcherImpl {
-  TrueMatcherImpl() : Instance(new Impl) {}
-  const IntrusiveRefCntPtr<DynMatcherInterface> Instance;
-
-  class Impl : public DynMatcherInterface {
-   public:
-    bool dynMatches(const ast_type_traits::DynTypedNode &, ASTMatchFinder *,
-                    BoundNodesTreeBuilder *) const override {
-      return true;
-    }
-  };
+class TrueMatcherImpl : public DynMatcherInterface {
+public:
+  TrueMatcherImpl() {
+    Retain(); // Reference count will never become zero.
+  }
+  bool dynMatches(const ast_type_traits::DynTypedNode &, ASTMatchFinder *,
+                  BoundNodesTreeBuilder *) const override {
+    return true;
+  }
 };
 static llvm::ManagedStatic<TrueMatcherImpl> TrueMatcherInstance;
 
@@ -107,7 +105,7 @@ DynTypedMatcher DynTypedMatcher::constructVariadic(
 
 DynTypedMatcher DynTypedMatcher::trueMatcher(
     ast_type_traits::ASTNodeKind NodeKind) {
-  return DynTypedMatcher(NodeKind, NodeKind, TrueMatcherInstance->Instance);
+  return DynTypedMatcher(NodeKind, NodeKind, &*TrueMatcherInstance);
 }
 
 DynTypedMatcher DynTypedMatcher::dynCastTo(
