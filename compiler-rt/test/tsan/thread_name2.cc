@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#if defined(__FreeBSD__)
+#include <pthread_np.h>
+#define pthread_setname_np pthread_set_name_np
+#endif
+
 int Global;
 
 void *Thread1(void *x) {
@@ -29,4 +34,3 @@ int main() {
 // CHECK: WARNING: ThreadSanitizer: data race
 // CHECK:   Thread T1 'foobar1'
 // CHECK:   Thread T2 'foobar2'
-
