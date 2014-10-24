@@ -51,7 +51,7 @@ std::initializer_list<I *> il = { [I new] };
 
 // CHECK: [[POOL:%.*]] = {{.*}} call {{.*}} i8* @objc_autoreleasePoolPush()
 // CHECK: [[INSTANCE:%.*]] = {{.*}} call {{.*}} i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* {{.*}}, i8* {{.*}})
-// CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[INSTANCE]] to [[POOL]]*
-// CHECK-NEXT: store [[POOL]]* [[CAST]], [[POOL]]** getelementptr inbounds ([1 x [[POOL]]*]* @_ZGR2il_, i32 0, i32 0)
+// CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[INSTANCE]] to %0*
+// CHECK-NEXT: store %0* [[CAST]], %0** getelementptr inbounds ([1 x %0*]* @_ZGR2il_, i32 0, i32 0)
 // CHECK: {{.*}} call {{.*}} void @objc_autoreleasePoolPop(i8* [[POOL]])
 
