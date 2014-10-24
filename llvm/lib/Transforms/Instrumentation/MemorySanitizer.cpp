@@ -1062,9 +1062,16 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// UMR warning in runtime if the value is not fully defined.
   void insertShadowCheck(Value *Val, Instruction *OrigIns) {
     assert(Val);
-    Instruction *Shadow = dyn_cast_or_null<Instruction>(getShadow(Val));
-    if (!Shadow) return;
-    Instruction *Origin = dyn_cast_or_null<Instruction>(getOrigin(Val));
+    Value *Shadow, *Origin;
+    if (ClCheckConstantShadow) {
+      Shadow = getShadow(Val);
+      if (!Shadow) return;
+      Origin = getOrigin(Val);
+    } else {
+      Shadow = dyn_cast_or_null<Instruction>(getShadow(Val));
+      if (!Shadow) return;
+      Origin = dyn_cast_or_null<Instruction>(getOrigin(Val));
+    }
     insertShadowCheck(Shadow, Origin, OrigIns);
   }
 
