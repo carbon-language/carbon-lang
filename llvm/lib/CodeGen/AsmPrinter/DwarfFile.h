@@ -50,6 +50,9 @@ class DwarfFile {
 
   DwarfStringPool StrPool;
 
+  // Collection of dbg variables of a scope.
+  DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8>> ScopeVariables;
+
 public:
   DwarfFile(AsmPrinter *AP, DwarfDebug &DD, StringRef Pref,
             BumpPtrAllocator &DA);
@@ -85,6 +88,10 @@ public:
   DwarfStringPool &getStringPool() { return StrPool; }
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
+
+  DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8>> &getScopeVariables() {
+    return ScopeVariables;
+  }
 };
 }
 #endif

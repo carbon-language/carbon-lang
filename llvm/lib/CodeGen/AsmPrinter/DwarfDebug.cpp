@@ -1284,7 +1284,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // subroutines inside it.
   if (TheCU.getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly &&
       LScopes.getAbstractScopesList().empty() && !IsDarwin) {
-    assert(ScopeVariables.empty());
+    assert(InfoHolder.getScopeVariables().empty());
     assert(DbgValues.empty());
     // FIXME: This wouldn't be true in LTO with a -g (with inlining) CU followed
     // by a -gmlt CU. Add a test and remove this assertion.
@@ -1323,7 +1323,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Ownership of DbgVariables is a bit subtle - ScopeVariables owns all the
   // DbgVariables except those that are also in AbstractVariables (since they
   // can be used cross-function)
-  ScopeVariables.clear();
+  InfoHolder.getScopeVariables().clear();
   DbgValues.clear();
   LabelsBeforeInsn.clear();
   LabelsAfterInsn.clear();

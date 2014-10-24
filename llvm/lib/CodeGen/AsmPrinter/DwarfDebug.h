@@ -193,11 +193,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // Collection of abstract subprogram DIEs.
   DenseMap<const MDNode *, DIE *> AbstractSPDies;
 
-  // Collection of dbg variables of a scope.
-  typedef DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8> >
-  ScopeVariablesMap;
-  ScopeVariablesMap ScopeVariables;
-
   // Collection of abstract variables.
   DenseMap<const MDNode *, std::unique_ptr<DbgVariable>> AbstractVariables;
   SmallVector<std::unique_ptr<DbgVariable>, 64> ConcreteVariables;
@@ -658,8 +653,6 @@ public:
   DenseMap<const MDNode *, DIE *> &getAbstractSPDies() {
     return AbstractSPDies;
   }
-
-  ScopeVariablesMap &getScopeVariables() { return ScopeVariables; }
 
   SmallPtrSet<const MDNode *, 16> &getProcessedSPNodes() {
     return ProcessedSPNodes;

@@ -530,7 +530,7 @@ DIE *DwarfCompileUnit::createScopeChildrenDIE(
     unsigned *ChildScopeCount) {
   DIE *ObjectPointer = nullptr;
 
-  for (DbgVariable *DV : DD->getScopeVariables().lookup(Scope))
+  for (DbgVariable *DV : DU->getScopeVariables().lookup(Scope))
     Children.push_back(constructVariableDIE(*DV, *Scope, ObjectPointer));
 
   unsigned ChildCountWithoutScopes = Children.size();
