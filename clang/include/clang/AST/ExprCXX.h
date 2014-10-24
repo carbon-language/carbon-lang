@@ -1165,6 +1165,13 @@ public:
 
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
+  typedef llvm::iterator_range<arg_iterator> arg_range;
+  typedef llvm::iterator_range<const_arg_iterator> arg_const_range;
+
+  arg_range arguments() { return arg_range(arg_begin(), arg_end()); }
+  arg_const_range arguments() const {
+    return arg_const_range(arg_begin(), arg_end());
+  }
 
   arg_iterator arg_begin() { return Args; }
   arg_iterator arg_end() { return Args + NumArgs; }
