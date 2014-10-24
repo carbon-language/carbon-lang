@@ -169,8 +169,7 @@ static LLVM_CONSTEXPR DwarfAccelTable::Atom TypeAtoms[] = {
     DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1)};
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
-    : Asm(A), MMI(Asm->MMI), FirstCU(nullptr), PrevLabel(nullptr),
-      GlobalRangeCount(0),
+    : Asm(A), MMI(Asm->MMI), PrevLabel(nullptr), GlobalRangeCount(0),
       InfoHolder(A, *this, "info_string", DIEValueAllocator),
       UsedNonDefaultText(false),
       SkeletonHolder(A, *this, "skel_string", DIEValueAllocator),
@@ -403,9 +402,6 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
     NewCU.addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
                   dwarf::DW_FORM_data1, RVer);
 
-  if (!FirstCU)
-    FirstCU = &NewCU;
-
   if (useSplitDwarf()) {
     NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoDWOSection(),
                       DwarfInfoDWOSectionSym);
@@ -438,8 +434,6 @@ void DwarfDebug::beginModule() {
 
   FunctionDIs = makeSubprogramMap(*M);
 
-  // If module has named metadata anchors then use them, otherwise scan the
-  // module using debug info finder to collect debug info.
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (!CU_Nodes)
     return;
@@ -687,7 +681,10 @@ void DwarfDebug::endModule() {
   assert(CurFn == nullptr);
   assert(CurMI == nullptr);
 
-  if (!FirstCU)
+  // If we aren't actually generating debug info (check beginModule -
+  // conditionalized on !DisableDebugInfoPrinting and the presence of the
+  // llvm.dbg.cu metadata node)
+  if (!DwarfInfoSectionSym)
     return;
 
   // End any existing sections.
@@ -741,9 +738,6 @@ void DwarfDebug::endModule() {
   // clean up.
   SPMap.clear();
   AbstractVariables.clear();
-
-  // Reset these for the next Module if we have one.
-  FirstCU = nullptr;
 }
 
 // Find abstract variable, if any, associated with Var.
