@@ -761,6 +761,34 @@ protected:
   Tool *buildAssembler() const override;
 };
 
+class LLVM_LIBRARY_VISIBILITY CrossWindowsToolChain : public Generic_GCC {
+public:
+  CrossWindowsToolChain(const Driver &D, const llvm::Triple &T,
+                        const llvm::opt::ArgList &Args);
+
+  bool IsIntegratedAssemblerDefault() const override { return true; }
+  bool IsUnwindTablesDefault() const override;
+  bool isPICDefault() const override;
+  bool isPIEDefault() const override;
+  bool isPICDefaultForced() const override;
+
+  unsigned int GetDefaultStackProtectorLevel(bool KernelOrKext) const override {
+    return 0;
+  }
+
+  void AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                                 llvm::opt::ArgStringList &CC1Args)
+      const override;
+  void AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                                    llvm::opt::ArgStringList &CC1Args)
+      const override;
+  void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
+                           llvm::opt::ArgStringList &CmdArgs) const override;
+
+protected:
+  Tool *buildLinker() const override;
+  Tool *buildAssembler() const override;
+};
 
 class LLVM_LIBRARY_VISIBILITY XCore : public ToolChain {
 public:

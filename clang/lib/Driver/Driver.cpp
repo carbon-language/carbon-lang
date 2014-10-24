@@ -2039,6 +2039,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
         else
           TC = new toolchains::Generic_GCC(*this, Target, Args);
         break;
+      case llvm::Triple::Itanium:
+        TC = new toolchains::CrossWindowsToolChain(*this, Target, Args);
+        break;
       case llvm::Triple::MSVC:
       case llvm::Triple::UnknownEnvironment:
         TC = new toolchains::MSVCToolChain(*this, Target, Args);

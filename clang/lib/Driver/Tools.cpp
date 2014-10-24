@@ -2138,6 +2138,14 @@ static void addClangRTLinux(
     CmdArgs.push_back("-lgcc_eh");
 }
 
+static void addClangRTWindows(const ToolChain &TC, const ArgList &Args,
+                              ArgStringList &CmdArgs) {
+  SmallString<128> LibClangRT = getCompilerRTLibDir(TC);
+  llvm::sys::path::append(LibClangRT, Twine("libclang_rt.builtins-") +
+                          getArchNameForCompilerRTLib(TC) + ".lib");
+  CmdArgs.push_back(Args.MakeArgString(LibClangRT));
+}
+
 static void addProfileRT(
     const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs) {
   if (!(Args.hasFlag(options::OPT_fprofile_arcs, options::OPT_fno_profile_arcs,
@@ -7288,7 +7296,15 @@ static void AddRunTimeLibs(const ToolChain &TC, const Driver &D,
 
   switch(RLT) {
   case ToolChain::RLT_CompilerRT:
-    addClangRTLinux(TC, Args, CmdArgs);
+    switch (TC.getTriple().getOS()) {
+    default: llvm_unreachable("unsupported OS");
+    case llvm::Triple::Win32:
+      addClangRTWindows(TC, Args, CmdArgs);
+      break;
+    case llvm::Triple::Linux:
+      addClangRTLinux(TC, Args, CmdArgs);
+      break;
+    }
     break;
   case ToolChain::RLT_Libgcc:
     AddLibgcc(TC.getTriple(), D, CmdArgs, Args);
@@ -8114,3 +8130,181 @@ void XCore::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("xcc"));
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
 }
+
+void CrossWindows::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                          const InputInfo &Output,
+                                          const InputInfoList &Inputs,
+                                          const ArgList &Args,
+                                          const char *LinkingOutput) const {
+  const auto &TC =
+      static_cast<const toolchains::CrossWindowsToolChain &>(getToolChain());
+  ArgStringList CmdArgs;
+  const char *Exec;
+
+  switch (TC.getArch()) {
+  default: llvm_unreachable("unsupported architecture");
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    break;
+  case llvm::Triple::x86:
+    CmdArgs.push_back("--32");
+    break;
+  case llvm::Triple::x86_64:
+    CmdArgs.push_back("--64");
+    break;
+  }
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA, options::OPT_Xassembler);
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  for (const auto &Input : Inputs)
+    CmdArgs.push_back(Input.getFilename());
+
+  const std::string Assembler = TC.GetProgramPath("as");
+  Exec = Args.MakeArgString(Assembler);
+
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+}
+
+void CrossWindows::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                      const InputInfo &Output,
+                                      const InputInfoList &Inputs,
+                                      const ArgList &Args,
+                                      const char *LinkingOutput) const {
+  const auto &TC =
+      static_cast<const toolchains::CrossWindowsToolChain &>(getToolChain());
+  const llvm::Triple &T = TC.getTriple();
+  const Driver &D = TC.getDriver();
+  SmallString<128> EntryPoint;
+  ArgStringList CmdArgs;
+  const char *Exec;
+
+  // Silence warning for "clang -g foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_g_Group);
+  // and "clang -emit-llvm foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_emit_llvm);
+  // and for "clang -w foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_w);
+  // Other warning options are already handled somewhere else.
+
+  if (!D.SysRoot.empty())
+    CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
+
+  if (Args.hasArg(options::OPT_pie))
+    CmdArgs.push_back("-pie");
+  if (Args.hasArg(options::OPT_rdynamic))
+    CmdArgs.push_back("-export-dynamic");
+  if (Args.hasArg(options::OPT_s))
+    CmdArgs.push_back("--strip-all");
+
+  CmdArgs.push_back("-m");
+  switch (TC.getArch()) {
+  default: llvm_unreachable("unsupported architecture");
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    // FIXME: this is incorrect for WinCE
+    CmdArgs.push_back("thumb2pe");
+    break;
+  case llvm::Triple::x86:
+    CmdArgs.push_back("i386pe");
+    EntryPoint.append("_");
+    break;
+  case llvm::Triple::x86_64:
+    CmdArgs.push_back("i386pep");
+    break;
+  }
+
+  if (Args.hasArg(options::OPT_shared)) {
+    switch (T.getArch()) {
+    default: llvm_unreachable("unsupported architecture");
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+    case llvm::Triple::x86_64:
+      EntryPoint.append("_DllMainCRTStartup");
+      break;
+    case llvm::Triple::x86:
+      EntryPoint.append("_DllMainCRTStartup@12");
+      break;
+    }
+
+    CmdArgs.push_back("-shared");
+    CmdArgs.push_back("-Bdynamic");
+
+    CmdArgs.push_back("--enable-auto-image-base");
+
+    CmdArgs.push_back("--entry");
+    CmdArgs.push_back(Args.MakeArgString(EntryPoint));
+  } else {
+    EntryPoint.append("mainCRTStartup");
+
+    CmdArgs.push_back(Args.hasArg(options::OPT_static) ? "-Bstatic"
+                                                       : "-Bdynamic");
+
+    if (!Args.hasArg(options::OPT_nostdlib) &&
+        !Args.hasArg(options::OPT_nostartfiles)) {
+      CmdArgs.push_back("--entry");
+      CmdArgs.push_back(Args.MakeArgString(EntryPoint));
+    }
+
+    // FIXME: handle subsystem
+  }
+
+  // NOTE: deal with multiple definitions on Windows (e.g. COMDAT)
+  CmdArgs.push_back("--allow-multiple-definitions");
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_rdynamic)) {
+    SmallString<261> ImpLib(Output.getFilename());
+    llvm::sys::path::replace_extension(ImpLib, ".lib");
+
+    CmdArgs.push_back("--out-implib");
+    CmdArgs.push_back(Args.MakeArgString(ImpLib));
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    const std::string CRTPath(D.SysRoot + "/usr/lib/");
+    const char *CRTBegin;
+
+    CRTBegin =
+        Args.hasArg(options::OPT_shared) ? "crtbeginS.obj" : "crtbegin.obj";
+    CmdArgs.push_back(Args.MakeArgString(CRTPath + CRTBegin));
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+
+  const auto &Paths = TC.getFilePaths();
+  for (const auto &Path : Paths)
+    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+
+  AddLinkerInputs(TC, Inputs, Args, CmdArgs);
+
+  if (D.CCCIsCXX() && !Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
+    bool StaticCXX = Args.hasArg(options::OPT_static_libstdcxx) &&
+                     !Args.hasArg(options::OPT_static);
+    if (StaticCXX)
+      CmdArgs.push_back("-Bstatic");
+    TC.AddCXXStdlibLibArgs(Args, CmdArgs);
+    if (StaticCXX)
+      CmdArgs.push_back("-Bdynamic");
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib)) {
+    if (!Args.hasArg(options::OPT_nodefaultlibs)) {
+      // TODO handle /MT[d] /MD[d]
+      CmdArgs.push_back("-lmsvcrt");
+      AddRunTimeLibs(TC, D, CmdArgs, Args);
+    }
+  }
+
+  const std::string Linker = TC.GetProgramPath("ld");
+  Exec = Args.MakeArgString(Linker);
+
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+}
+

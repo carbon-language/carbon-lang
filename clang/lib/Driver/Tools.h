@@ -645,6 +645,32 @@ namespace XCore {
   };
 } // end namespace XCore.
 
+namespace CrossWindows {
+class LLVM_LIBRARY_VISIBILITY Assemble : public Tool {
+public:
+  Assemble(const ToolChain &TC) : Tool("CrossWindows::Assemble", "as", TC) { }
+
+  bool hasIntegratedCPP() const override { return false; }
+
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+
+class LLVM_LIBRARY_VISIBILITY Link : public Tool {
+public:
+  Link(const ToolChain &TC) : Tool("CrossWindows::Link", "ld", TC, RF_Full) {}
+
+  bool hasIntegratedCPP() const override { return false; }
+  bool isLinkJob() const override { return true; }
+
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+}
 
 } // end namespace toolchains
 } // end namespace driver
