@@ -89,11 +89,7 @@ Error
 ProcessWindows::DoLaunch(Module *exe_module,
                          ProcessLaunchInfo &launch_info)
 {
-    Error error;
-    ProcessLauncherWindows launcher;
-    HostProcess process = launcher.LaunchProcess(launch_info, error);
-    launch_info.SetProcessID(process.GetProcessId());
-    return error;
+    return Host::LaunchProcess(launch_info);
 }
 
 Error
