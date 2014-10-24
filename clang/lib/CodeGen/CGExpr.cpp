@@ -313,8 +313,8 @@ createReferenceTemporary(CodeGenFunction &CGF,
   llvm_unreachable("unknown storage duration");
 }
 
-LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
-                                           const MaterializeTemporaryExpr *M) {
+LValue CodeGenFunction::
+EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *M) {
   const Expr *E = M->GetTemporaryExpr();
 
   if (getLangOpts().ObjCAutoRefCount &&
@@ -342,8 +342,8 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
   SmallVector<SubobjectAdjustment, 2> Adjustments;
   E = E->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
 
-  for (unsigned I = 0, N = CommaLHSs.size(); I != N; ++I)
-    EmitIgnoredExpr(CommaLHSs[I]);
+  for (const auto &Ignored : CommaLHSs)
+    EmitIgnoredExpr(Ignored);
 
   if (const auto *opaque = dyn_cast<OpaqueValueExpr>(E)) {
     if (opaque->getType()->isRecordType()) {
