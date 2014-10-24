@@ -202,7 +202,7 @@ ModuleMap::findHeaderInUmbrellaDirs(const FileEntry *File,
   return KnownHeader();
 }
 
-// Returns 'true' if 'RequestingModule directly uses 'RequestedModule'.
+// Returns true if RequestingModule directly uses RequestedModule.
 static bool directlyUses(const Module *RequestingModule,
                          const Module *RequestedModule) {
   return std::find(RequestingModule->DirectUses.begin(),
@@ -214,19 +214,19 @@ static bool violatesPrivateInclude(Module *RequestingModule,
                                    const FileEntry *IncFileEnt,
                                    ModuleMap::ModuleHeaderRole Role,
                                    Module *RequestedModule) {
-  #ifndef NDEBUG
+  bool IsPrivateRole = Role & ModuleMap::PrivateHeader;
+#ifndef NDEBUG
   // Check for consistency between the module header role
   // as obtained from the lookup and as obtained from the module.
   // This check is not cheap, so enable it only for debugging.
-  SmallVectorImpl<const FileEntry *> &PvtHdrs
-      = RequestedModule->PrivateHeaders;
-  SmallVectorImpl<const FileEntry *>::iterator Look
-      = std::find(PvtHdrs.begin(), PvtHdrs.end(), IncFileEnt);
-  bool IsPrivate = Look != PvtHdrs.end();
-  assert((IsPrivate && Role == ModuleMap::PrivateHeader)
-               || (!IsPrivate && Role != ModuleMap::PrivateHeader));
-  #endif
-  return Role == ModuleMap::PrivateHeader &&
+  bool IsPrivate = false;
+  for (auto *Hdrs : {&RequestedModule->PrivateHeaders,
+                     &RequestedModule->PrivateTextualHeaders})
+    IsPrivate |=
+        std::find(Hdrs->begin(), Hdrs->end(), IncFileEnt) != Hdrs->end();
+  assert(IsPrivate == IsPrivateRole && "inconsistent headers and roles");
+#endif
+  return IsPrivateRole &&
          RequestedModule->getTopLevelModule() != RequestingModule;
 }
 
@@ -316,13 +316,13 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
   HeadersMap::iterator Known = findKnownHeader(File);
 
   auto MakeResult = [&](ModuleMap::KnownHeader R) -> ModuleMap::KnownHeader {
-    if (!IncludeTextualHeaders && R.getRole() == ModuleMap::TextualHeader)
+    if (!IncludeTextualHeaders && (R.getRole() & ModuleMap::TextualHeader))
       return ModuleMap::KnownHeader();
     return R;
   };
 
   if (Known != Headers.end()) {
-    ModuleMap::KnownHeader Result = KnownHeader();
+    ModuleMap::KnownHeader Result;
 
     // Iterate over all modules that 'File' is part of to find the best fit.
     for (SmallVectorImpl<KnownHeader>::iterator I = Known->second.begin(),
@@ -343,14 +343,9 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
           !directlyUses(RequestingModule, I->getModule()))
         continue;
 
-      Result = *I;
-      // If 'File' is a public header of this module, this is as good as we
-      // are going to get.
-      // FIXME: If we have a RequestingModule, we should prefer the header from
-      // that module.
-      if (I->getRole() == ModuleMap::NormalHeader ||
-          I->getRole() == ModuleMap::TextualHeader)
-        break;
+      // Prefer a public header over a private header.
+      if (!Result || (Result.getRole() & ModuleMap::PrivateHeader))
+        Result = *I;
     }
     return MakeResult(Result);
   }
@@ -783,13 +778,12 @@ void ModuleMap::setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir) {
 
 void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
                           ModuleHeaderRole Role) {
-  if (Role == TextualHeader) {
-    Mod->TextualHeaders.push_back(Header);
-  } else {
-    if (Role == PrivateHeader)
-      Mod->PrivateHeaders.push_back(Header);
-    else
-      Mod->NormalHeaders.push_back(Header);
+  auto HeaderLists = {&Mod->NormalHeaders, &Mod->PrivateHeaders,
+                      &Mod->TextualHeaders, &Mod->PrivateTextualHeaders};
+  assert(Role >= 0 && Role < HeaderLists.size() && "unknown header role");
+  HeaderLists.begin()[Role]->push_back(Header);
+
+  if (!(Role & TextualHeader)) {
     bool isCompilingModuleHeader = Mod->getTopLevelModule() == CompilingModule;
     HeaderInfo.MarkFileModuleHeader(Header, Role, isCompilingModuleHeader);
   }
@@ -1475,16 +1469,9 @@ void ModuleMapParser::parseModuleDecl() {
       parseRequiresDecl();
       break;
 
-    case MMToken::TextualKeyword: {
-      SourceLocation TextualLoc = consumeToken();
-      if (Tok.is(MMToken::HeaderKeyword)) {
-        parseHeaderDecl(MMToken::TextualKeyword, TextualLoc);
-      } else {
-        Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header)
-          << "textual";
-      }
+    case MMToken::TextualKeyword:
+      parseHeaderDecl(MMToken::TextualKeyword, consumeToken());
       break;
-    }
 
     case MMToken::UmbrellaKeyword: {
       SourceLocation UmbrellaLoc = consumeToken();
@@ -1494,31 +1481,17 @@ void ModuleMapParser::parseModuleDecl() {
         parseUmbrellaDirDecl(UmbrellaLoc);
       break;
     }
-        
-    case MMToken::ExcludeKeyword: {
-      SourceLocation ExcludeLoc = consumeToken();
-      if (Tok.is(MMToken::HeaderKeyword)) {
-        parseHeaderDecl(MMToken::ExcludeKeyword, ExcludeLoc);
-      } else {
-        Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header)
-          << "exclude";
-      }
+
+    case MMToken::ExcludeKeyword:
+      parseHeaderDecl(MMToken::ExcludeKeyword, consumeToken());
       break;
-    }
-      
-    case MMToken::PrivateKeyword: {
-      SourceLocation PrivateLoc = consumeToken();
-      if (Tok.is(MMToken::HeaderKeyword)) {
-        parseHeaderDecl(MMToken::PrivateKeyword, PrivateLoc);
-      } else {
-        Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header)
-          << "private";
-      }
+
+    case MMToken::PrivateKeyword:
+      parseHeaderDecl(MMToken::PrivateKeyword, consumeToken());
       break;
-    }
-      
+
     case MMToken::HeaderKeyword:
-      parseHeaderDecl(MMToken::HeaderKeyword, SourceLocation());
+      parseHeaderDecl(MMToken::HeaderKeyword, consumeToken());
       break;
 
     case MMToken::LinkKeyword:
@@ -1673,16 +1646,37 @@ static void appendSubframeworkPaths(Module *Mod,
 /// \brief Parse a header declaration.
 ///
 ///   header-declaration:
-///     'exclude'[opt] 'header' string-literal
-///     'private'[opt] 'header' string-literal
 ///     'textual'[opt] 'header' string-literal
-///     'umbrella'[opt] 'header' string-literal
+///     'private' 'textual'[opt] 'header' string-literal
+///     'exclude' 'header' string-literal
+///     'umbrella' 'header' string-literal
 ///
 /// FIXME: Support 'private textual header'.
 void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
                                       SourceLocation LeadingLoc) {
-  assert(Tok.is(MMToken::HeaderKeyword));
-  consumeToken();
+  // We've already consumed the first token.
+  ModuleMap::ModuleHeaderRole Role = ModuleMap::NormalHeader;
+  if (LeadingToken == MMToken::PrivateKeyword) {
+    Role = ModuleMap::PrivateHeader;
+    // 'private' may optionally be followed by 'textual'.
+    if (Tok.is(MMToken::TextualKeyword)) {
+      LeadingToken = Tok.Kind;
+      consumeToken();
+    }
+  }
+  if (LeadingToken == MMToken::TextualKeyword)
+    Role = ModuleMap::ModuleHeaderRole(Role | ModuleMap::TextualHeader);
+
+  if (LeadingToken != MMToken::HeaderKeyword) {
+    if (!Tok.is(MMToken::HeaderKeyword)) {
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header)
+          << (LeadingToken == MMToken::PrivateKeyword ? "private" :
+              LeadingToken == MMToken::ExcludeKeyword ? "exclude" :
+              LeadingToken == MMToken::TextualKeyword ? "textual" : "umbrella");
+      return;
+    }
+    consumeToken();
+  }
 
   // Parse the header name.
   if (!Tok.is(MMToken::StringLiteral)) {
@@ -1770,21 +1764,13 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
     } else if (LeadingToken == MMToken::ExcludeKeyword) {
       Map.excludeHeader(ActiveModule, File);
     } else {
-      // Record this header.
-      ModuleMap::ModuleHeaderRole Role = ModuleMap::NormalHeader;
-      if (LeadingToken == MMToken::PrivateKeyword)
-        Role = ModuleMap::PrivateHeader;
-      else if (LeadingToken == MMToken::TextualKeyword)
-        Role = ModuleMap::TextualHeader;
-      else
-        assert(LeadingToken == MMToken::HeaderKeyword);
-
       // If there is a builtin counterpart to this file, add it now, before
       // the "real" header, so we build the built-in one first when building
       // the module.
       if (BuiltinFile)
         Map.addHeader(ActiveModule, BuiltinFile, Role);
 
+      // Record this header.
       Map.addHeader(ActiveModule, File, Role);
     }
   } else if (LeadingToken != MMToken::ExcludeKeyword) {

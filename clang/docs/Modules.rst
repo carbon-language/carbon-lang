@@ -445,9 +445,8 @@ A header declaration specifies that a particular header is associated with the e
 .. parsed-literal::
 
   *header-declaration*:
-    ``umbrella``:sub:`opt` ``header`` *string-literal*
-    ``private`` ``header`` *string-literal*
-    ``textual`` ``header`` *string-literal*
+    ``private``:sub:`opt` ``textual``:sub:`opt` ``header`` *string-literal*
+    ``umbrella`` ``header`` *string-literal*
     ``exclude`` ``header`` *string-literal*
 
 A header declaration that does not contain ``exclude`` nor ``textual`` specifies a header that contributes to the enclosing module. Specifically, when the module is built, the named header will be parsed and its declarations will be (logically) placed into the enclosing submodule.
@@ -464,14 +463,14 @@ A header with the ``private`` specifier may not be included from outside the mod
 
 A header with the ``textual`` specifier will not be included when the module is built, and will be textually included if it is named by a ``#include`` directive. However, it is considered to be part of the module for the purpose of checking *use-declaration*\s.
 
-A header with the ``exclude`` specifier is excluded from the module. It will not be included when the module is built, nor will it be considered to be part of the module.
+A header with the ``exclude`` specifier is excluded from the module. It will not be included when the module is built, nor will it be considered to be part of the module, even if an ``umbrella`` header or directory would otherwise make it part of the module.
 
-**Example**: The C header ``assert.h`` is an excellent candidate for an excluded header, because it is meant to be included multiple times (possibly with different ``NDEBUG`` settings).
+**Example**: The C header ``assert.h`` is an excellent candidate for a textual header, because it is meant to be included multiple times (possibly with different ``NDEBUG`` settings). However, declarations within it should typically be split into a separate modular header.
 
 .. parsed-literal::
 
   module std [system] {
-    exclude header "assert.h"
+    textual header "assert.h"
   }
 
 A given header shall not be referenced by more than one *header-declaration*.

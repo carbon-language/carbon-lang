@@ -65,20 +65,21 @@ private:
   llvm::StringMap<Module *> Modules;
 
 public:
-  /// \brief Describes the role of a module header.
+  /// \brief Flags describing the role of a module header.
   enum ModuleHeaderRole {
     /// \brief This header is normally included in the module.
-    NormalHeader,
+    NormalHeader  = 0x0,
     /// \brief This header is included but private.
-    PrivateHeader,
+    PrivateHeader = 0x1,
     /// \brief This header is part of the module (for layering purposes) but
     /// should be textually included.
-    TextualHeader,
+    TextualHeader = 0x2,
     // Caution: Adding an enumerator needs other changes.
     // Adjust the number of bits for KnownHeader::Storage.
     // Adjust the bitfield HeaderFileInfo::HeaderRole size.
     // Adjust the HeaderFileInfoTrait::ReadData streaming.
     // Adjust the HeaderFileInfoTrait::EmitData streaming.
+    // Adjust ModuleMap::addHeader.
   };
 
   /// \brief A header that is known to reside within a given module,

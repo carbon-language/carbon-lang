@@ -2370,7 +2370,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   }
   
   // Enter the submodule description block.
-  Stream.EnterSubblock(SUBMODULE_BLOCK_ID, /*bits for abbreviations*/4);
+  Stream.EnterSubblock(SUBMODULE_BLOCK_ID, /*bits for abbreviations*/5);
   
   // Write the abbreviations needed for the submodules block.
   using namespace llvm;
@@ -2429,6 +2429,11 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_PRIVATE_HEADER));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
   unsigned PrivateHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
+
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_PRIVATE_TEXTUAL_HEADER));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
+  unsigned PrivateTextualHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
 
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_LINK_LIBRARY));
@@ -2504,40 +2509,25 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     }
 
     // Emit the headers.
-    for (unsigned I = 0, N = Mod->NormalHeaders.size(); I != N; ++I) {
+    struct {
+      unsigned Kind;
+      unsigned Abbrev;
+      ArrayRef<const FileEntry*> Headers;
+    } HeaderLists[] = {
+      {SUBMODULE_HEADER, HeaderAbbrev, Mod->NormalHeaders},
+      {SUBMODULE_TEXTUAL_HEADER, TextualHeaderAbbrev, Mod->TextualHeaders},
+      {SUBMODULE_PRIVATE_HEADER, PrivateHeaderAbbrev, Mod->PrivateHeaders},
+      {SUBMODULE_PRIVATE_TEXTUAL_HEADER, PrivateTextualHeaderAbbrev,
+       Mod->PrivateTextualHeaders},
+      {SUBMODULE_EXCLUDED_HEADER, ExcludedHeaderAbbrev, Mod->ExcludedHeaders},
+      {SUBMODULE_TOPHEADER, TopHeaderAbbrev,
+       Mod->getTopHeaders(PP->getFileManager())}
+    };
+    for (auto &HL : HeaderLists) {
       Record.clear();
-      Record.push_back(SUBMODULE_HEADER);
-      Stream.EmitRecordWithBlob(HeaderAbbrev, Record, 
-                                Mod->NormalHeaders[I]->getName());
-    }
-    // Emit the excluded headers.
-    for (unsigned I = 0, N = Mod->ExcludedHeaders.size(); I != N; ++I) {
-      Record.clear();
-      Record.push_back(SUBMODULE_EXCLUDED_HEADER);
-      Stream.EmitRecordWithBlob(ExcludedHeaderAbbrev, Record, 
-                                Mod->ExcludedHeaders[I]->getName());
-    }
-    // Emit the textual headers.
-    for (unsigned I = 0, N = Mod->TextualHeaders.size(); I != N; ++I) {
-      Record.clear();
-      Record.push_back(SUBMODULE_TEXTUAL_HEADER);
-      Stream.EmitRecordWithBlob(TextualHeaderAbbrev, Record, 
-                                Mod->TextualHeaders[I]->getName());
-    }
-    // Emit the private headers.
-    for (unsigned I = 0, N = Mod->PrivateHeaders.size(); I != N; ++I) {
-      Record.clear();
-      Record.push_back(SUBMODULE_PRIVATE_HEADER);
-      Stream.EmitRecordWithBlob(PrivateHeaderAbbrev, Record, 
-                                Mod->PrivateHeaders[I]->getName());
-    }
-    ArrayRef<const FileEntry *>
-      TopHeaders = Mod->getTopHeaders(PP->getFileManager());
-    for (unsigned I = 0, N = TopHeaders.size(); I != N; ++I) {
-      Record.clear();
-      Record.push_back(SUBMODULE_TOPHEADER);
-      Stream.EmitRecordWithBlob(TopHeaderAbbrev, Record,
-                                TopHeaders[I]->getName());
+      Record.push_back(HL.Kind);
+      for (auto *H : HL.Headers)
+        Stream.EmitRecordWithBlob(HL.Abbrev, Record, H->getName());
     }
 
     // Emit the imports. 
