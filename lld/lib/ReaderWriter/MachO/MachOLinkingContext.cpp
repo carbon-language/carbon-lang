@@ -715,6 +715,26 @@ bool MachOLinkingContext::sectionAligned(StringRef seg, StringRef sect,
 
 
 void MachOLinkingContext::addExportSymbol(StringRef sym) {
+  // Support old crufty export lists with bogus entries.
+  if (sym.endswith(".eh") || sym.startswith(".objc_category_name_")) {
+    llvm::errs() << "warning: ignoring " << sym << " in export list\n";
+    return;
+  }
+  // Only i386 MacOSX uses old ABI, so don't change those.
+  if ((_os != OS::macOSX) || (_arch != arch_x86)) {
+    // ObjC has two differnent ABIs.  Be nice and allow one export list work for
+    // both ABIs by renaming symbols.
+    if (sym.startswith(".objc_class_name_")) {
+      std::string abi2className("_OBJC_CLASS_$_");
+      abi2className += sym.substr(17);
+      _exportedSymbols.insert(copy(abi2className));
+      std::string abi2metaclassName("_OBJC_METACLASS_$_");
+      abi2metaclassName += sym.substr(17);
+      _exportedSymbols.insert(copy(abi2metaclassName));
+      return;
+    }
+  }
+
   // FIXME: Support wildcards.
   _exportedSymbols.insert(sym);
 }
