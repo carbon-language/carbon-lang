@@ -23,10 +23,7 @@ defined-atoms:
 # CHECK:     Name: __text
 # CHECK:     Segment: __TEXT
 # CHECK:     Size: 0x1
-# CHECK:     Offset: 4027
-
-# CHECK-LABEL: Section {
-# CHECK:     Name: __unwind_info
+# CHECK:     Offset: 4095
 
 # CHECK-LABEL: Section {
 # CHECK:     Name: __data

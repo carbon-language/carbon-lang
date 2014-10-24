@@ -1,4 +1,4 @@
-# RUN: lld -flavor darwin -arch x86_64 %s -o %t -e start
+# RUN: lld -flavor darwin -arch x86_64 %s -o %t -e start %p/Inputs/libSystem.yaml
 # RUN: llvm-readobj -sections %t | FileCheck %s
 
 # Make sure data gets put at offset
@@ -25,36 +25,12 @@ defined-atoms:
      type:            data
      content:         [ 01 ]
 
---- !mach-o
-arch:            x86_64
-file-type:       MH_DYLIB
-flags:           [ ]
-install-name:    /usr/lib/libSystem.B.dylib
-sections:
-  - segment:         __TEXT
-    section:         __text
-    type:            S_REGULAR
-    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    address:         0x0000000000000000
-    content:         [ 0x55 ]
-
-global-symbols:
-  - name:            dyld_stub_binder
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000000
-
-
 
 # CHECK-LABEL: Section {
 # CHECK:     Name: __text
 # CHECK:     Segment: __TEXT
 # CHECK:     Size: 0x1
 # CHECK:     Offset: 0
-
-# CHECK-LABEL: Section {
-# CHECK:     Name: __unwind_info
 
 # CHECK-LABEL: Section {
 # CHECK:     Name: __data

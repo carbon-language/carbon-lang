@@ -500,6 +500,9 @@ void MachOFileLayout::buildFileOffsets() {
                   << ", fileOffset=" << _segInfo[&sg].fileOffset << "\n");
 
     uint32_t segFileSize = 0;
+    // A segment that is not zero-fill must use a least one page of disk space.
+    if (sg.access)
+      segFileSize = _file.pageSize;
     for (const Section *s : _segInfo[&sg].sections) {
       uint32_t sectOffset = s->address - sg.address;
       uint32_t sectFileSize =

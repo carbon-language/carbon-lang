@@ -394,9 +394,19 @@ void Util::organizeSections() {
       si->finalSectionIndex = sectionIndex++;
     }
   } else {
-    // Main executables, need a zero-page segment
-    if (_context.outputMachOType() == llvm::MachO::MH_EXECUTE)
+    switch (_context.outputMachOType()){
+    case llvm::MachO::MH_EXECUTE:
+      // Main executables, need a zero-page segment
       segmentForName("__PAGEZERO");
+      // Fall into next case.
+    case llvm::MachO::MH_DYLIB:
+    case llvm::MachO::MH_BUNDLE:
+      // All dynamic code needs TEXT segment to hold the load commands.
+      segmentForName("__TEXT");
+      break;
+    default:
+      break;
+    }
     // Group sections into segments.
     for (SectionInfo *si : _sectionInfos) {
       SegmentInfo *seg = segmentForName(si->segmentName);

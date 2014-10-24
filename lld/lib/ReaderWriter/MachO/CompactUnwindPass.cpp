@@ -291,6 +291,10 @@ private:
 
     collectDwarfFrameEntries(mergedFile, dwarfFrames);
 
+    // Skip rest of pass if no unwind info.
+    if (unwindLocs.empty() && dwarfFrames.empty())
+      return;
+
     // FIXME: if there are more than 4 personality functions then we need to
     // defer to DWARF info for the ones we don't put in the list. They should
     // also probably be sorted by frequency.
