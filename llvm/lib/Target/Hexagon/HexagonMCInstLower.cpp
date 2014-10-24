@@ -24,8 +24,8 @@
 
 using namespace llvm;
 
-static MCOperand GetSymbolRef(const MachineOperand& MO, const MCSymbol* Symbol,
-                              HexagonAsmPrinter& Printer) {
+static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
+                              HexagonAsmPrinter &Printer) {
   MCContext &MC = Printer.OutContext;
   const MCExpr *ME;
 
@@ -39,10 +39,10 @@ static MCOperand GetSymbolRef(const MachineOperand& MO, const MCSymbol* Symbol,
 }
 
 // Create an MCInst from a MachineInstr
-void llvm::HexagonLowerToMC(const MachineInstr* MI, HexagonMCInst& MCI,
-                            HexagonAsmPrinter& AP) {
-  MCI.setOpcode(MI->getOpcode());
-  MCI.setDesc(MI->getDesc());
+void llvm::HexagonLowerToMC(const MachineInstr *MI, HexagonMCInst &MCI,
+                            HexagonAsmPrinter &AP) {
+  assert(MCI.getOpcode() == static_cast<unsigned>(MI->getOpcode()) &&
+         "MCI opcode should have been set on construction");
 
   for (unsigned i = 0, e = MI->getNumOperands(); i < e; i++) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -54,7 +54,8 @@ void llvm::HexagonLowerToMC(const MachineInstr* MI, HexagonMCInst& MCI,
       llvm_unreachable("unknown operand type");
     case MachineOperand::MO_Register:
       // Ignore all implicit register operands.
-      if (MO.isImplicit()) continue;
+      if (MO.isImplicit())
+        continue;
       MCO = MCOperand::CreateReg(MO.getReg());
       break;
     case MachineOperand::MO_FPImmediate: {
@@ -68,16 +69,15 @@ void llvm::HexagonLowerToMC(const MachineInstr* MI, HexagonMCInst& MCI,
       MCO = MCOperand::CreateImm(MO.getImm());
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      MCO = MCOperand::CreateExpr
-              (MCSymbolRefExpr::Create(MO.getMBB()->getSymbol(),
-               AP.OutContext));
+      MCO = MCOperand::CreateExpr(
+          MCSymbolRefExpr::Create(MO.getMBB()->getSymbol(), AP.OutContext));
       break;
     case MachineOperand::MO_GlobalAddress:
       MCO = GetSymbolRef(MO, AP.getSymbol(MO.getGlobal()), AP);
       break;
     case MachineOperand::MO_ExternalSymbol:
-      MCO = GetSymbolRef(MO, AP.GetExternalSymbolSymbol(MO.getSymbolName()),
-                         AP);
+      MCO =
+          GetSymbolRef(MO, AP.GetExternalSymbolSymbol(MO.getSymbolName()), AP);
       break;
     case MachineOperand::MO_JumpTableIndex:
       MCO = GetSymbolRef(MO, AP.GetJTISymbol(MO.getIndex()), AP);
@@ -86,7 +86,8 @@ void llvm::HexagonLowerToMC(const MachineInstr* MI, HexagonMCInst& MCI,
       MCO = GetSymbolRef(MO, AP.GetCPISymbol(MO.getIndex()), AP);
       break;
     case MachineOperand::MO_BlockAddress:
-      MCO = GetSymbolRef(MO, AP.GetBlockAddressSymbol(MO.getBlockAddress()),AP);
+      MCO =
+          GetSymbolRef(MO, AP.GetBlockAddressSymbol(MO.getBlockAddress()), AP);
       break;
     }
 
