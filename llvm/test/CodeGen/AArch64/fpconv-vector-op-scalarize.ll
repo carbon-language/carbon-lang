@@ -7,8 +7,8 @@
 
 define <1 x double> @test_sitofp(<1 x i1> %in) {
 ; CHECK-LABEL: test_sitofp:
-; CHECK:       sbfx  w8, w0, #0, #1
-; CHECK-NEXT:  scvtf d0, w8
+; CHECK:       sbfx  [[GPR:w[0-9]+]], w0, #0, #1
+; CHECK-NEXT:  scvtf d0, [[GPR]]
 ; CHECK-NEXT:  ret
 entry:
   %0 = sitofp <1 x i1> %in to <1 x double>
@@ -17,8 +17,8 @@ entry:
 
 define <1 x double> @test_uitofp(<1 x i1> %in) {
 ; CHECK-LABEL: test_uitofp:
-; CHECK:       and   w8, w0, #0x1
-; CHECK-NEXT:  ucvtf d0, w8
+; CHECK:       and   [[GPR:w[0-9]+]], w0, #0x1
+; CHECK-NEXT:  ucvtf d0, [[GPR]]
 ; CHECK-NEXT:  ret
 entry:
   %0 = uitofp <1 x i1> %in to <1 x double>
