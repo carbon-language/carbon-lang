@@ -41,6 +41,10 @@
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
 
+#if SANITIZER_FREEBSD
+#define pthread_setname_np pthread_set_name_np
+#endif
+
 #ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
 #define COMMON_INTERCEPTOR_INITIALIZE_RANGE(p, size) {}
 #endif
