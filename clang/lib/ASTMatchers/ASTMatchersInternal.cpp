@@ -23,8 +23,8 @@ namespace internal {
 void BoundNodesTreeBuilder::visitMatches(Visitor *ResultVisitor) {
   if (Bindings.empty())
     Bindings.push_back(BoundNodesMap());
-  for (unsigned i = 0, e = Bindings.size(); i != e; ++i) {
-    ResultVisitor->visitMatch(BoundNodes(Bindings[i]));
+  for (BoundNodesMap &Binding : Bindings) {
+    ResultVisitor->visitMatch(BoundNodes(Binding));
   }
 }
 
@@ -152,9 +152,7 @@ bool DynTypedMatcher::canConvertTo(ast_type_traits::ASTNodeKind To) const {
 }
 
 void BoundNodesTreeBuilder::addMatch(const BoundNodesTreeBuilder &Other) {
-  for (unsigned i = 0, e = Other.Bindings.size(); i != e; ++i) {
-    Bindings.push_back(Other.Bindings[i]);
-  }
+  Bindings.append(Other.Bindings.begin(), Other.Bindings.end());
 }
 
 bool NotUnaryOperator(const ast_type_traits::DynTypedNode DynNode,
@@ -184,8 +182,8 @@ bool AllOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
   // allOf leads to one matcher for each alternative in the first
   // matcher combined with each alternative in the second matcher.
   // Thus, we can reuse the same Builder.
-  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
-    if (!InnerMatchers[i].matches(DynNode, Finder, Builder))
+  for (const DynTypedMatcher &InnerMatcher : InnerMatchers) {
+    if (!InnerMatcher.matches(DynNode, Finder, Builder))
       return false;
   }
   return true;
@@ -197,9 +195,9 @@ bool EachOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
                             ArrayRef<DynTypedMatcher> InnerMatchers) {
   BoundNodesTreeBuilder Result;
   bool Matched = false;
-  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
+  for (const DynTypedMatcher &InnerMatcher : InnerMatchers) {
     BoundNodesTreeBuilder BuilderInner(*Builder);
-    if (InnerMatchers[i].matches(DynNode, Finder, &BuilderInner)) {
+    if (InnerMatcher.matches(DynNode, Finder, &BuilderInner)) {
       Matched = true;
       Result.addMatch(BuilderInner);
     }
@@ -212,9 +210,9 @@ bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
                            ASTMatchFinder *Finder,
                            BoundNodesTreeBuilder *Builder,
                            ArrayRef<DynTypedMatcher> InnerMatchers) {
-  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
+  for (const DynTypedMatcher &InnerMatcher : InnerMatchers) {
     BoundNodesTreeBuilder Result = *Builder;
-    if (InnerMatchers[i].matches(DynNode, Finder, &Result)) {
+    if (InnerMatcher.matches(DynNode, Finder, &Result)) {
       *Builder = std::move(Result);
       return true;
     }

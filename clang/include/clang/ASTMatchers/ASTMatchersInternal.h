@@ -139,8 +139,8 @@ public:
                   const ast_type_traits::DynTypedNode &DynNode) {
     if (Bindings.empty())
       Bindings.push_back(BoundNodesMap());
-    for (unsigned i = 0, e = Bindings.size(); i != e; ++i)
-      Bindings[i].addNode(Id, DynNode);
+    for (BoundNodesMap &Binding : Bindings)
+      Binding.addNode(Id, DynNode);
   }
 
   /// \brief Adds a branch in the tree.
@@ -1346,8 +1346,9 @@ BindableMatcher<T> makeAllOfComposite(
   }
 
   std::vector<DynTypedMatcher> DynMatchers;
-  for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
-    DynMatchers.push_back(*InnerMatchers[i]);
+  DynMatchers.reserve(InnerMatchers.size());
+  for (const auto *InnerMatcher : InnerMatchers) {
+    DynMatchers.push_back(*InnerMatcher);
   }
   // FIXME: Use DynTypedMatcher::constructVariadic() instead.
   return BindableMatcher<T>(new VariadicOperatorMatcherInterface<T>(

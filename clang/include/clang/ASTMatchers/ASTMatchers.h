@@ -2362,10 +2362,9 @@ AST_MATCHER(CXXCtorInitializer, isWritten) {
 AST_POLYMORPHIC_MATCHER_P(hasAnyArgument, AST_POLYMORPHIC_SUPPORTED_TYPES_2(
                                               CallExpr, CXXConstructExpr),
                           internal::Matcher<Expr>, InnerMatcher) {
-  for (unsigned I = 0; I < Node.getNumArgs(); ++I) {
+  for (const Expr *Arg : Node.arguments()) {
     BoundNodesTreeBuilder Result(*Builder);
-    if (InnerMatcher.matches(*Node.getArg(I)->IgnoreParenImpCasts(), Finder,
-                             &Result)) {
+    if (InnerMatcher.matches(*Arg->IgnoreParenImpCasts(), Finder, &Result)) {
       *Builder = std::move(Result);
       return true;
     }
