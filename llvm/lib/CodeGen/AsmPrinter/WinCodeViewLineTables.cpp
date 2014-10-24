@@ -168,14 +168,15 @@ void WinCodeViewLineTables::endModule() {
 }
 
 static void EmitLabelDiff(MCStreamer &Streamer,
-                          const MCSymbol *From, const MCSymbol *To) {
+                          const MCSymbol *From, const MCSymbol *To,
+                          unsigned int Size = 4) {
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
   MCContext &Context = Streamer.getContext();
   const MCExpr *FromRef = MCSymbolRefExpr::Create(From, Variant, Context),
                *ToRef   = MCSymbolRefExpr::Create(To, Variant, Context);
   const MCExpr *AddrDelta =
       MCBinaryExpr::Create(MCBinaryExpr::Sub, ToRef, FromRef, Context);
-  Streamer.EmitValue(AddrDelta, 4);
+  Streamer.EmitValue(AddrDelta, Size);
 }
 
 void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
@@ -188,6 +189,44 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   if (FI.Instrs.empty())
     return;
   assert(FI.End && "Don't know where the function ends?");
+
+  const StringRef FuncName = getDISubprogram(GV).getDisplayName();
+  // Emit a symbol subsection, required by VS2012+ to find function boundaries.
+  MCSymbol *SymbolsBegin = Asm->MMI->getContext().CreateTempSymbol(),
+           *SymbolsEnd = Asm->MMI->getContext().CreateTempSymbol();
+  Asm->OutStreamer.AddComment("Symbol subsection for " + Twine(FuncName));
+  Asm->EmitInt32(COFF::DEBUG_SYMBOL_SUBSECTION);
+  EmitLabelDiff(Asm->OutStreamer, SymbolsBegin, SymbolsEnd);
+  Asm->OutStreamer.EmitLabel(SymbolsBegin);
+  {
+    MCSymbol *ProcSegmentBegin = Asm->MMI->getContext().CreateTempSymbol(),
+             *ProcSegmentEnd = Asm->MMI->getContext().CreateTempSymbol();
+    EmitLabelDiff(Asm->OutStreamer, ProcSegmentBegin, ProcSegmentEnd, 2);
+    Asm->OutStreamer.EmitLabel(ProcSegmentBegin);
+
+    Asm->EmitInt16(COFF::DEBUG_SYMBOL_TYPE_PROC_START);
+    // Some bytes of this segment don't seem to be required for basic debugging,
+    // so just fill them with zeroes.
+    Asm->OutStreamer.EmitFill(12, 0);
+    // This is the important bit that tells the debugger where the function
+    // code is located and what's its size:
+    EmitLabelDiff(Asm->OutStreamer, Fn, FI.End);
+    Asm->OutStreamer.EmitFill(12, 0);
+    Asm->OutStreamer.EmitCOFFSecRel32(Fn);
+    Asm->OutStreamer.EmitCOFFSectionIndex(Fn);
+    Asm->EmitInt8(0);
+    // Emit the function name as a null-terminated string.
+    Asm->OutStreamer.EmitBytes(FuncName);
+    Asm->EmitInt8(0);
+    Asm->OutStreamer.EmitLabel(ProcSegmentEnd);
+
+    // We're done with this function.
+    Asm->EmitInt16(0x0002);
+    Asm->EmitInt16(COFF::DEBUG_SYMBOL_TYPE_PROC_END);
+  }
+  Asm->OutStreamer.EmitLabel(SymbolsEnd);
+  // Every subsection must be aligned to a 4-byte boundary.
+  Asm->OutStreamer.EmitFill((-FuncName.size()) % 4, 0);
 
   // PCs/Instructions are grouped into segments sharing the same filename.
   // Pre-calculate the lengths (in instructions) of these segments and store
@@ -206,13 +245,12 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   FilenameSegmentLengths[LastSegmentEnd] = FI.Instrs.size() - LastSegmentEnd;
 
   // Emit a line table subsection, requred to do PC-to-file:line lookup.
-  Asm->OutStreamer.AddComment(
-      "Line table subsection for " + Twine(Fn->getName()));
+  Asm->OutStreamer.AddComment("Line table subsection for " + Twine(FuncName));
   Asm->EmitInt32(COFF::DEBUG_LINE_TABLE_SUBSECTION);
-  MCSymbol *SubsectionBegin = Asm->MMI->getContext().CreateTempSymbol(),
-           *SubsectionEnd = Asm->MMI->getContext().CreateTempSymbol();
-  EmitLabelDiff(Asm->OutStreamer, SubsectionBegin, SubsectionEnd);
-  Asm->OutStreamer.EmitLabel(SubsectionBegin);
+  MCSymbol *LineTableBegin = Asm->MMI->getContext().CreateTempSymbol(),
+           *LineTableEnd = Asm->MMI->getContext().CreateTempSymbol();
+  EmitLabelDiff(Asm->OutStreamer, LineTableBegin, LineTableEnd);
+  Asm->OutStreamer.EmitLabel(LineTableBegin);
 
   // Identify the function this subsection is for.
   Asm->OutStreamer.EmitCOFFSecRel32(Fn);
@@ -262,7 +300,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
 
   if (FileSegmentEnd)
     Asm->OutStreamer.EmitLabel(FileSegmentEnd);
-  Asm->OutStreamer.EmitLabel(SubsectionEnd);
+  Asm->OutStreamer.EmitLabel(LineTableEnd);
 }
 
 void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {

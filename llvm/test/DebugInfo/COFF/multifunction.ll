@@ -52,6 +52,27 @@
 ;
 ; X86-LABEL: .section        .debug$S,"rd"
 ; X86-NEXT: .long   4
+; Symbol subsection for x
+; X86-NEXT: .long   241
+; X86-NEXT: .long [[F1_END:.*]]-[[F1_START:.*]]
+; X86-NEXT: [[F1_START]]:
+; X86-NEXT: .short [[PROC_SEGMENT_END:.*]]-[[PROC_SEGMENT_START:.*]]
+; X86-NEXT: [[PROC_SEGMENT_START]]:
+; X86-NEXT: .short  4423
+; X86-NEXT: .zero   12
+; X86-NEXT: .long [[END_OF_X]]-_x
+; X86-NEXT: .zero   12
+; X86-NEXT: .secrel32 _x
+; X86-NEXT: .secidx _x
+; X86-NEXT: .byte   0
+; X86-NEXT: .byte   120
+; X86-NEXT: .byte   0
+; X86-NEXT: [[PROC_SEGMENT_END]]:
+; X86-NEXT: .short  2
+; X86-NEXT: .short  4431
+; X86-NEXT: [[F1_END]]:
+; Padding
+; X86-NEXT: .zero   3
 ; Line table subsection for x
 ; X86-NEXT: .long   242
 ; X86-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
@@ -70,6 +91,27 @@
 ; X86-NEXT: .long   5
 ; X86-NEXT: [[FILE_SEGMENT_END]]:
 ; X86-NEXT: [[F2_END]]:
+; Symbol subsection for y
+; X86-NEXT: .long   241
+; X86-NEXT: .long [[F1_END:.*]]-[[F1_START:.*]]
+; X86-NEXT: [[F1_START]]:
+; X86-NEXT: .short [[PROC_SEGMENT_END:.*]]-[[PROC_SEGMENT_START:.*]]
+; X86-NEXT: [[PROC_SEGMENT_START]]:
+; X86-NEXT: .short  4423
+; X86-NEXT: .zero   12
+; X86-NEXT: .long [[END_OF_Y]]-_y
+; X86-NEXT: .zero   12
+; X86-NEXT: .secrel32 _y
+; X86-NEXT: .secidx _y
+; X86-NEXT: .byte   0
+; X86-NEXT: .byte   121
+; X86-NEXT: .byte   0
+; X86-NEXT: [[PROC_SEGMENT_END]]:
+; X86-NEXT: .short  2
+; X86-NEXT: .short  4431
+; X86-NEXT: [[F1_END]]:
+; Padding
+; X86-NEXT: .zero   3
 ; Line table subsection for y
 ; X86-NEXT: .long   242
 ; X86-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
@@ -88,6 +130,27 @@
 ; X86-NEXT: .long   9
 ; X86-NEXT: [[FILE_SEGMENT_END]]:
 ; X86-NEXT: [[F2_END]]:
+; Symbol subsection for f
+; X86-NEXT: .long   241
+; X86-NEXT: .long [[F1_END:.*]]-[[F1_START:.*]]
+; X86-NEXT: [[F1_START]]:
+; X86-NEXT: .short [[PROC_SEGMENT_END:.*]]-[[PROC_SEGMENT_START:.*]]
+; X86-NEXT: [[PROC_SEGMENT_START]]:
+; X86-NEXT: .short  4423
+; X86-NEXT: .zero   12
+; X86-NEXT: .long [[END_OF_F]]-_f
+; X86-NEXT: .zero   12
+; X86-NEXT: .secrel32 _f
+; X86-NEXT: .secidx _f
+; X86-NEXT: .byte   0
+; X86-NEXT: .byte   102
+; X86-NEXT: .byte   0
+; X86-NEXT: [[PROC_SEGMENT_END]]:
+; X86-NEXT: .short  2
+; X86-NEXT: .short  4431
+; X86-NEXT: [[F1_END]]:
+; Padding
+; X86-NEXT: .zero   3
 ; Line table subsection for f
 ; X86-NEXT: .long   242
 ; X86-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
@@ -128,13 +191,58 @@
 ; OBJ32:      Characteristics [ (0x42100040)
 ; OBJ32:      ]
 ; OBJ32:      Relocations [
-; OBJ32-NEXT:   0xC IMAGE_REL_I386_SECREL _x
-; OBJ32-NEXT:   0x10 IMAGE_REL_I386_SECTION _x
-; OBJ32-NEXT:   0x3C IMAGE_REL_I386_SECREL _y
-; OBJ32-NEXT:   0x40 IMAGE_REL_I386_SECTION _y
-; OBJ32-NEXT:   0x6C IMAGE_REL_I386_SECREL _f
-; OBJ32-NEXT:   0x70 IMAGE_REL_I386_SECTION _f
+; OBJ32-NEXT:   0x2C IMAGE_REL_I386_SECREL _x
+; OBJ32-NEXT:   0x30 IMAGE_REL_I386_SECTION _x
+; OBJ32-NEXT:   0x44 IMAGE_REL_I386_SECREL _x
+; OBJ32-NEXT:   0x48 IMAGE_REL_I386_SECTION _x
+; OBJ32-NEXT:   0x94 IMAGE_REL_I386_SECREL _y
+; OBJ32-NEXT:   0x98 IMAGE_REL_I386_SECTION _y
+; OBJ32-NEXT:   0xAC IMAGE_REL_I386_SECREL _y
+; OBJ32-NEXT:   0xB0 IMAGE_REL_I386_SECTION _y
+; OBJ32-NEXT:   0xFC IMAGE_REL_I386_SECREL _f
+; OBJ32-NEXT:   0x100 IMAGE_REL_I386_SECTION _f
+; OBJ32-NEXT:   0x114 IMAGE_REL_I386_SECREL _f
+; OBJ32-NEXT:   0x118 IMAGE_REL_I386_SECTION _f
 ; OBJ32-NEXT: ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   Type: 0xF1
+; OBJ32-NOT:    ]
+; OBJ32:        ProcStart {
+; OBJ32-NEXT:     FunctionName: x
+; OBJ32-NEXT:     Section: _x
+; OBJ32-NEXT:     CodeSize: 0x6
+; OBJ32-NEXT:   }
+; OBJ32-NEXT:   ProcEnd
+; OBJ32-NEXT: ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   Type: 0xF2
+; OBJ32:      ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   Type: 0xF1
+; OBJ32-NOT:    ]
+; OBJ32:        ProcStart {
+; OBJ32-NEXT:     FunctionName: y
+; OBJ32-NEXT:     Section: _y
+; OBJ32-NEXT:     CodeSize: 0x6
+; OBJ32-NEXT:   }
+; OBJ32-NEXT:   ProcEnd
+; OBJ32-NEXT: ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   Type: 0xF2
+; OBJ32:      ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   Type: 0xF1
+; OBJ32-NOT:    ]
+; OBJ32:        ProcStart {
+; OBJ32-NEXT:     FunctionName: f
+; OBJ32-NEXT:     Section: _f
+; OBJ32-NEXT:     CodeSize: 0x10
+; OBJ32-NEXT:   }
+; OBJ32-NEXT:   ProcEnd
+; OBJ32-NEXT: ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   Type: 0xF2
+; OBJ32:      ]
 ; OBJ32:      FunctionLineTable [
 ; OBJ32-NEXT:   Name: _x
 ; OBJ32-NEXT:   CodeSize: 0x6
@@ -205,6 +313,27 @@
 ;
 ; X64-LABEL: .section        .debug$S,"rd"
 ; X64-NEXT: .long   4
+; Symbol subsection for x
+; X64-NEXT: .long   241
+; X64-NEXT: .long [[F1_END:.*]]-[[F1_START:.*]]
+; X64-NEXT: [[F1_START]]:
+; X64-NEXT: .short [[PROC_SEGMENT_END:.*]]-[[PROC_SEGMENT_START:.*]]
+; X64-NEXT: [[PROC_SEGMENT_START]]:
+; X64-NEXT: .short  4423
+; X64-NEXT: .zero   12
+; X64-NEXT: .long [[END_OF_X]]-x
+; X64-NEXT: .zero   12
+; X64-NEXT: .secrel32 x
+; X64-NEXT: .secidx x
+; X64-NEXT: .byte   0
+; X64-NEXT: .byte   120
+; X64-NEXT: .byte   0
+; X64-NEXT: [[PROC_SEGMENT_END]]:
+; X64-NEXT: .short  2
+; X64-NEXT: .short  4431
+; X64-NEXT: [[F1_END]]:
+; Padding
+; X64-NEXT: .zero   3
 ; Line table subsection for x
 ; X64-NEXT: .long   242
 ; X64-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
@@ -225,6 +354,27 @@
 ; X64-NEXT: .long   5
 ; X64-NEXT: [[FILE_SEGMENT_END]]:
 ; X64-NEXT: [[F2_END]]:
+; Symbol subsection for y
+; X64-NEXT: .long   241
+; X64-NEXT: .long [[F1_END:.*]]-[[F1_START:.*]]
+; X64-NEXT: [[F1_START]]:
+; X64-NEXT: .short [[PROC_SEGMENT_END:.*]]-[[PROC_SEGMENT_START:.*]]
+; X64-NEXT: [[PROC_SEGMENT_START]]:
+; X64-NEXT: .short  4423
+; X64-NEXT: .zero   12
+; X64-NEXT: .long [[END_OF_Y]]-y
+; X64-NEXT: .zero   12
+; X64-NEXT: .secrel32 y
+; X64-NEXT: .secidx y
+; X64-NEXT: .byte   0
+; X64-NEXT: .byte   121
+; X64-NEXT: .byte   0
+; X64-NEXT: [[PROC_SEGMENT_END]]:
+; X64-NEXT: .short  2
+; X64-NEXT: .short  4431
+; X64-NEXT: [[F1_END]]:
+; Padding
+; X64-NEXT: .zero   3
 ; Line table subsection for y
 ; X64-NEXT: .long   242
 ; X64-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
@@ -245,6 +395,27 @@
 ; X64-NEXT: .long   9
 ; X64-NEXT: [[FILE_SEGMENT_END]]:
 ; X64-NEXT: [[F2_END]]:
+; Symbol subsection for f
+; X64-NEXT: .long   241
+; X64-NEXT: .long [[F1_END:.*]]-[[F1_START:.*]]
+; X64-NEXT: [[F1_START]]:
+; X64-NEXT: .short [[PROC_SEGMENT_END:.*]]-[[PROC_SEGMENT_START:.*]]
+; X64-NEXT: [[PROC_SEGMENT_START]]:
+; X64-NEXT: .short  4423
+; X64-NEXT: .zero   12
+; X64-NEXT: .long [[END_OF_F]]-f
+; X64-NEXT: .zero   12
+; X64-NEXT: .secrel32 f
+; X64-NEXT: .secidx f
+; X64-NEXT: .byte   0
+; X64-NEXT: .byte   102
+; X64-NEXT: .byte   0
+; X64-NEXT: [[PROC_SEGMENT_END]]:
+; X64-NEXT: .short  2
+; X64-NEXT: .short  4431
+; X64-NEXT: [[F1_END]]:
+; Padding
+; X64-NEXT: .zero   3
 ; Line table subsection for f
 ; X64-NEXT: .long   242
 ; X64-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
@@ -287,13 +458,58 @@
 ; OBJ64:      Characteristics [ (0x42100040)
 ; OBJ64:      ]
 ; OBJ64:      Relocations [
-; OBJ64-NEXT:   0xC IMAGE_REL_AMD64_SECREL x
-; OBJ64-NEXT:   0x10 IMAGE_REL_AMD64_SECTION x
-; OBJ64-NEXT:   0x44 IMAGE_REL_AMD64_SECREL y
-; OBJ64-NEXT:   0x48 IMAGE_REL_AMD64_SECTION y
-; OBJ64-NEXT:   0x7C IMAGE_REL_AMD64_SECREL f
-; OBJ64-NEXT:   0x80 IMAGE_REL_AMD64_SECTION f
+; OBJ64-NEXT:   0x2C IMAGE_REL_AMD64_SECREL x
+; OBJ64-NEXT:   0x30 IMAGE_REL_AMD64_SECTION x
+; OBJ64-NEXT:   0x44 IMAGE_REL_AMD64_SECREL x
+; OBJ64-NEXT:   0x48 IMAGE_REL_AMD64_SECTION x
+; OBJ64-NEXT:   0x9C IMAGE_REL_AMD64_SECREL y
+; OBJ64-NEXT:   0xA0 IMAGE_REL_AMD64_SECTION y
+; OBJ64-NEXT:   0xB4 IMAGE_REL_AMD64_SECREL y
+; OBJ64-NEXT:   0xB8 IMAGE_REL_AMD64_SECTION y
+; OBJ64-NEXT:   0x10C IMAGE_REL_AMD64_SECREL f
+; OBJ64-NEXT:   0x110 IMAGE_REL_AMD64_SECTION f
+; OBJ64-NEXT:   0x124 IMAGE_REL_AMD64_SECREL f
+; OBJ64-NEXT:   0x128 IMAGE_REL_AMD64_SECTION f
 ; OBJ64-NEXT: ]
+; OBJ64:      Subsection [
+; OBJ64-NEXT:   Type: 0xF1
+; OBJ64-NOT:    ]
+; OBJ64:        ProcStart {
+; OBJ64-NEXT:     FunctionName: x
+; OBJ64-NEXT:     Section: x
+; OBJ64-NEXT:     CodeSize: 0xE
+; OBJ64-NEXT:   }
+; OBJ64-NEXT:   ProcEnd
+; OBJ64-NEXT: ]
+; OBJ64:      Subsection [
+; OBJ64-NEXT:   Type: 0xF2
+; OBJ64:      ]
+; OBJ64:      Subsection [
+; OBJ64-NEXT:   Type: 0xF1
+; OBJ64-NOT:    ]
+; OBJ64:        ProcStart {
+; OBJ64-NEXT:     FunctionName: y
+; OBJ64-NEXT:     Section: y
+; OBJ64-NEXT:     CodeSize: 0xE
+; OBJ64-NEXT:   }
+; OBJ64-NEXT:   ProcEnd
+; OBJ64-NEXT: ]
+; OBJ64:      Subsection [
+; OBJ64-NEXT:   Type: 0xF2
+; OBJ64:      ]
+; OBJ64:      Subsection [
+; OBJ64-NEXT:   Type: 0xF1
+; OBJ64-NOT:    ]
+; OBJ64:        ProcStart {
+; OBJ64-NEXT:     FunctionName: f
+; OBJ64-NEXT:     Section: f
+; OBJ64-NEXT:     CodeSize: 0x18
+; OBJ64-NEXT:   }
+; OBJ64-NEXT:   ProcEnd
+; OBJ64-NEXT: ]
+; OBJ64:      Subsection [
+; OBJ64-NEXT:   Type: 0xF2
+; OBJ64:      ]
 ; OBJ64:      FunctionLineTable [
 ; OBJ64-NEXT:   Name: x
 ; OBJ64-NEXT:   CodeSize: 0xE
