@@ -46,10 +46,8 @@ void AssumptionTracker::CallCallbackVH::deleted() {
 
 AssumptionTracker::FunctionCallsMap::iterator
 AssumptionTracker::scanFunction(Function *F) {
-  auto IP =
-    CachedAssumeCalls.insert(std::make_pair(FunctionCallbackVH(F, this),
-                                            std::unique_ptr<CallHandleSet>(
-                                              new CallHandleSet())));
+  auto IP = CachedAssumeCalls.insert(std::make_pair(
+      FunctionCallbackVH(F, this), llvm::make_unique<CallHandleSet>()));
   assert(IP.second && "Scanning function already in the map?");
 
   FunctionCallsMap::iterator I = IP.first;
@@ -58,7 +56,7 @@ AssumptionTracker::scanFunction(Function *F) {
   // to our cache.
   for (BasicBlock &B : *F)
     for (Instruction &II : B)
-      if (match(cast<Value>(&II), m_Intrinsic<Intrinsic::assume>(m_Value())))
+      if (match(&II, m_Intrinsic<Intrinsic::assume>()))
         I->second->insert(CallCallbackVH(&II, this));
 
   return I;
@@ -69,10 +67,8 @@ void AssumptionTracker::verifyAnalysis() const {
   for (const auto &I : CachedAssumeCalls) {
     for (const BasicBlock &B : cast<Function>(*I.first))
       for (const Instruction &II : B) {
-        Instruction *C = const_cast<Instruction*>(&II);
-        if (match(C, m_Intrinsic<Intrinsic::assume>(m_Value()))) {
-          assert(I.second->count(CallCallbackVH(C,
-                   const_cast<AssumptionTracker*>(this))) &&
+        if (match(&II, m_Intrinsic<Intrinsic::assume>())) {
+          assert(I.second->find_as(&II) != I.second->end() &&
                  "Assumption in scanned function not in cache");
         }
     }
@@ -81,8 +77,7 @@ void AssumptionTracker::verifyAnalysis() const {
 }
 
 void AssumptionTracker::registerAssumption(CallInst *CI) {
-  assert(match(cast<Value>(CI),
-               m_Intrinsic<Intrinsic::assume>(m_Value())) &&
+  assert(match(CI, m_Intrinsic<Intrinsic::assume>()) &&
          "Registered call does not call @llvm.assume");
   assert(CI->getParent() &&
          "Cannot register @llvm.assume call not in a basic block");

@@ -86,7 +86,7 @@ public:
     Worklist.Add(I);
 
     using namespace llvm::PatternMatch;
-    if ((match(I, m_Intrinsic<Intrinsic::assume>(m_Value()))))
+    if (match(I, m_Intrinsic<Intrinsic::assume>()))
       AT->registerAssumption(cast<CallInst>(I));
   }
 };

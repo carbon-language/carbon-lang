@@ -32,7 +32,6 @@
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Operator.h"
 
 namespace llvm {
@@ -1158,8 +1157,10 @@ struct IntrinsicID_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    IntrinsicInst *II = dyn_cast<IntrinsicInst>(V);
-    return II && II->getIntrinsicID() == ID;
+    if (const CallInst *CI = dyn_cast<CallInst>(V))
+      if (const Function *F = CI->getCalledFunction())
+        return F->getIntrinsicID() == ID;
+    return false;
   }
 };
 
