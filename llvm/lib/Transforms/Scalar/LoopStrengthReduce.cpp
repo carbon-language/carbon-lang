@@ -3117,9 +3117,14 @@ void
 LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
   SmallVector<const SCEV *, 8> Worklist(RegUses.begin(), RegUses.end());
   SmallPtrSet<const SCEV *, 8> Inserted;
+  SmallPtrSet<const SCEV *, 32> Done;
 
   while (!Worklist.empty()) {
     const SCEV *S = Worklist.pop_back_val();
+
+    // Don't process the same SCEV twice
+    if (!Done.insert(S))
+      continue;
 
     if (const SCEVNAryExpr *N = dyn_cast<SCEVNAryExpr>(S))
       Worklist.append(N->op_begin(), N->op_end());
