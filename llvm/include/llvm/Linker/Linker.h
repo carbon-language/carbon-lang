@@ -11,14 +11,10 @@
 #define LLVM_LINKER_LINKER_H
 
 #include "llvm/ADT/SmallPtrSet.h"
-#include <string>
 
 namespace llvm {
 
-class Comdat;
-class GlobalValue;
 class Module;
-class StringRef;
 class StructType;
 
 /// This class provides the core functionality of linking in LLVM. It keeps a
@@ -32,7 +28,7 @@ class Linker {
       PreserveSource = 1 // Preserve the source module.
     };
 
-    Linker(Module *M, bool SuppressWarnings=false);
+    Linker(Module *M);
     ~Linker();
 
     Module *getModule() const { return Composite; }
@@ -43,19 +39,16 @@ class Linker {
     /// If \p ErrorMsg is not null, information about any error is written
     /// to it.
     /// Returns true on error.
-    bool linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg);
-    bool linkInModule(Module *Src, std::string *ErrorMsg) {
-      return linkInModule(Src, Linker::DestroySource, ErrorMsg);
+    bool linkInModule(Module *Src, unsigned Mode);
+    bool linkInModule(Module *Src) {
+      return linkInModule(Src, Linker::DestroySource);
     }
 
-    static bool LinkModules(Module *Dest, Module *Src, unsigned Mode,
-                            std::string *ErrorMsg);
+    static bool LinkModules(Module *Dest, Module *Src, unsigned Mode);
 
   private:
     Module *Composite;
     SmallPtrSet<StructType*, 32> IdentifiedStructTypes;
-
-    bool SuppressWarnings;
 };
 
 } // End llvm namespace

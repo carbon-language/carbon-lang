@@ -47,6 +47,7 @@ enum DiagnosticSeverity {
 enum DiagnosticKind {
   DK_InlineAsm,
   DK_StackSize,
+  DK_Linker,
   DK_DebugMetadataVersion,
   DK_SampleProfile,
   DK_OptimizationRemark,

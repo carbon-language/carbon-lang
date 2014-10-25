@@ -64,7 +64,7 @@ struct LTOCodeGenerator {
   ~LTOCodeGenerator();
 
   // Merge given module, return true on success.
-  bool addModule(struct LTOModule*, std::string &errMsg);
+  bool addModule(struct LTOModule *);
 
   void setTargetOptions(TargetOptions options);
   void setDebugInfo(lto_debug_model);

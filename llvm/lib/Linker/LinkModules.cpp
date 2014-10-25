@@ -17,6 +17,9 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/TypeFinder.h"
 #include "llvm/Support/CommandLine.h"
@@ -376,6 +379,20 @@ namespace {
     Value *materializeValueFor(Value *V) override;
   };
 
+  namespace {
+  class LinkDiagnosticInfo : public DiagnosticInfo {
+    const Twine &Msg;
+
+  public:
+    LinkDiagnosticInfo(DiagnosticSeverity Severity, const Twine &Msg);
+    void print(DiagnosticPrinter &DP) const override;
+  };
+  LinkDiagnosticInfo::LinkDiagnosticInfo(DiagnosticSeverity Severity,
+                                         const Twine &Msg)
+      : DiagnosticInfo(DK_Linker, Severity), Msg(Msg) {}
+  void LinkDiagnosticInfo::print(DiagnosticPrinter &DP) const { DP << Msg; }
+  }
+
   /// ModuleLinker - This is an implementation class for the LinkModules
   /// function, which is the entrypoint for this file.
   class ModuleLinker {
@@ -406,27 +423,25 @@ namespace {
     // Vector of functions to lazily link in.
     std::vector<Function*> LazilyLinkFunctions;
 
-    bool SuppressWarnings;
-
   public:
-    std::string ErrorMsg;
-
-    ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM, unsigned mode,
-                 bool SuppressWarnings=false)
+    ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM, unsigned mode)
         : DstM(dstM), SrcM(srcM), TypeMap(Set),
-          ValMaterializer(TypeMap, DstM, LazilyLinkFunctions), Mode(mode),
-          SuppressWarnings(SuppressWarnings) {}
+          ValMaterializer(TypeMap, DstM, LazilyLinkFunctions), Mode(mode) {}
 
     bool run();
 
   private:
-    bool shouldLinkFromSource(const GlobalValue &Dest, const GlobalValue &Src);
+    bool shouldLinkFromSource(bool &LinkFromSrc, const GlobalValue &Dest,
+                              const GlobalValue &Src);
 
-    /// emitError - Helper method for setting a message and returning an error
-    /// code.
+    /// Helper method for setting a message and returning an error code.
     bool emitError(const Twine &Message) {
-      ErrorMsg = Message.str();
+      DstM->getContext().diagnose(LinkDiagnosticInfo(DS_Error, Message));
       return true;
+    }
+
+    void emitWarning(const Twine &Message) {
+      DstM->getContext().diagnose(LinkDiagnosticInfo(DS_Warning, Message));
     }
 
     bool getComdatLeader(Module *M, StringRef ComdatName,
@@ -672,7 +687,8 @@ bool ModuleLinker::getComdatResult(const Comdat *SrcC,
                                        LinkFromSrc);
 }
 
-bool ModuleLinker::shouldLinkFromSource(const GlobalValue &Dest,
+bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
+                                        const GlobalValue &Dest,
                                         const GlobalValue &Src) {
   bool SrcIsDeclaration = Src.isDeclarationForLinker();
   bool DestIsDeclaration = Dest.isDeclarationForLinker();
@@ -683,42 +699,56 @@ bool ModuleLinker::shouldLinkFromSource(const GlobalValue &Dest,
   if (SrcIsDeclaration) {
     // If Src is external or if both Src & Dest are external..  Just link the
     // external globals, we aren't adding anything.
-    if (Src.hasDLLImportStorageClass())
+    if (Src.hasDLLImportStorageClass()) {
       // If one of GVs is marked as DLLImport, result should be dllimport'ed.
-      return DestIsDeclaration;
+      LinkFromSrc = DestIsDeclaration;
+      return false;
+    }
     // If the Dest is weak, use the source linkage.
-    return Dest.hasExternalWeakLinkage();
+    LinkFromSrc = Dest.hasExternalWeakLinkage();
+    return false;
   }
 
-  if (DestIsDeclaration)
+  if (DestIsDeclaration) {
     // If Dest is external but Src is not:
-    return true;
+    LinkFromSrc = true;
+    return false;
+  }
 
   if (Src.hasCommonLinkage()) {
-    if (Dest.hasLinkOnceLinkage() || Dest.hasWeakLinkage())
-      return true;
-
-    if (!Dest.hasCommonLinkage())
+    if (Dest.hasLinkOnceLinkage() || Dest.hasWeakLinkage()) {
+      LinkFromSrc = true;
       return false;
+    }
+
+    if (!Dest.hasCommonLinkage()) {
+      LinkFromSrc = false;
+      return false;
+    }
 
     uint64_t DestSize = DL.getTypeAllocSize(Dest.getType()->getElementType());
     uint64_t SrcSize = DL.getTypeAllocSize(Src.getType()->getElementType());
-    return SrcSize > DestSize;
+    LinkFromSrc = SrcSize > DestSize;
+    return false;
   }
 
   if (Src.isWeakForLinker()) {
     assert(!Dest.hasExternalWeakLinkage());
     assert(!Dest.hasAvailableExternallyLinkage());
 
-    if (Dest.hasLinkOnceLinkage() && Src.hasWeakLinkage())
-      return true;
+    if (Dest.hasLinkOnceLinkage() && Src.hasWeakLinkage()) {
+      LinkFromSrc = true;
+      return false;
+    }
 
+    LinkFromSrc = false;
     return false;
   }
 
   if (Dest.isWeakForLinker()) {
     assert(Src.hasExternalLinkage());
-    return true;
+    LinkFromSrc = true;
+    return false;
   }
 
   assert(!Src.hasExternalWeakLinkage());
@@ -742,9 +772,7 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   assert(!Src->hasLocalLinkage() &&
          "If Src has internal linkage, Dest shouldn't be set!");
 
-  assert(ErrorMsg.empty());
-  LinkFromSrc = shouldLinkFromSource(*Dest, *Src);
-  if (!ErrorMsg.empty())
+  if (shouldLinkFromSource(LinkFromSrc, *Dest, *Src))
     return true;
 
   if (LinkFromSrc)
@@ -1470,10 +1498,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     case Module::Warning: {
       // Emit a warning if the values differ.
       if (SrcOp->getOperand(2) != DstOp->getOperand(2)) {
-        if (!SuppressWarnings) {
-          errs() << "WARNING: linking module flags '" << ID->getString()
-                 << "': IDs have conflicting values";
-        }
+        emitWarning("linking module flags '" + ID->getString() +
+                    "': IDs have conflicting values");
       }
       continue;
     }
@@ -1540,23 +1566,19 @@ bool ModuleLinker::run() {
 
   if (SrcM->getDataLayout() && DstM->getDataLayout() &&
       *SrcM->getDataLayout() != *DstM->getDataLayout()) {
-    if (!SuppressWarnings) {
-      errs() << "WARNING: Linking two modules of different data layouts: '"
-             << SrcM->getModuleIdentifier() << "' is '"
-             << SrcM->getDataLayoutStr() << "' whereas '"
-             << DstM->getModuleIdentifier() << "' is '"
-             << DstM->getDataLayoutStr() << "'\n";
-    }
+    emitWarning("Linking two modules of different data layouts: '" +
+                SrcM->getModuleIdentifier() + "' is '" +
+                SrcM->getDataLayoutStr() + "' whereas '" +
+                DstM->getModuleIdentifier() + "' is '" +
+                DstM->getDataLayoutStr() + "'\n");
   }
   if (!SrcM->getTargetTriple().empty() &&
       DstM->getTargetTriple() != SrcM->getTargetTriple()) {
-    if (!SuppressWarnings) {
-      errs() << "WARNING: Linking two modules of different target triples: "
-             << SrcM->getModuleIdentifier() << "' is '"
-             << SrcM->getTargetTriple() << "' whereas '"
-             << DstM->getModuleIdentifier() << "' is '"
-             << DstM->getTargetTriple() << "'\n";
-    }
+    emitWarning("Linking two modules of different target triples: " +
+                SrcM->getModuleIdentifier() + "' is '" +
+                SrcM->getTargetTriple() + "' whereas '" +
+                DstM->getModuleIdentifier() + "' is '" +
+                DstM->getTargetTriple() + "'\n");
   }
 
   // Append the module inline asm string.
@@ -1626,10 +1648,8 @@ bool ModuleLinker::run() {
 
     // Materialize if needed.
     if (SF->isMaterializable()) {
-      if (std::error_code EC = SF->materialize()) {
-        ErrorMsg = EC.message();
-        return true;
-      }
+      if (std::error_code EC = SF->materialize())
+        return emitError(EC.message());
     }
 
     // Skip if no body (function is external).
@@ -1679,10 +1699,8 @@ bool ModuleLinker::run() {
 
       // Materialize if needed.
       if (SF->isMaterializable()) {
-        if (std::error_code EC = SF->materialize()) {
-          ErrorMsg = EC.message();
-          return true;
-        }
+        if (std::error_code EC = SF->materialize())
+          return emitError(EC.message());
       }
 
       // Skip if no body (function is external).
@@ -1711,8 +1729,7 @@ bool ModuleLinker::run() {
   return false;
 }
 
-Linker::Linker(Module *M, bool SuppressWarnings)
-    : Composite(M), SuppressWarnings(SuppressWarnings) {
+Linker::Linker(Module *M) : Composite(M) {
   TypeFinder StructTypes;
   StructTypes.run(*M, true);
   IdentifiedStructTypes.insert(StructTypes.begin(), StructTypes.end());
@@ -1726,15 +1743,9 @@ void Linker::deleteModule() {
   Composite = nullptr;
 }
 
-bool Linker::linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg) {
-  ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src, Mode,
-                         SuppressWarnings);
-  if (TheLinker.run()) {
-    if (ErrorMsg)
-      *ErrorMsg = TheLinker.ErrorMsg;
-    return true;
-  }
-  return false;
+bool Linker::linkInModule(Module *Src, unsigned Mode) {
+  ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src, Mode);
+  return TheLinker.run();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1746,10 +1757,9 @@ bool Linker::linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg) {
 /// error occurs, true is returned and ErrorMsg (if not null) is set to indicate
 /// the problem.  Upon failure, the Dest module could be in a modified state,
 /// and shouldn't be relied on to be consistent.
-bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode,
-                         std::string *ErrorMsg) {
+bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode) {
   Linker L(Dest);
-  return L.linkInModule(Src, Mode, ErrorMsg);
+  return L.linkInModule(Src, Mode);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1758,10 +1768,6 @@ bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode,
 
 LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
                          LLVMLinkerMode Mode, char **OutMessages) {
-  std::string Messages;
-  LLVMBool Result = Linker::LinkModules(unwrap(Dest), unwrap(Src),
-                                        Mode, OutMessages? &Messages : nullptr);
-  if (OutMessages)
-    *OutMessages = strdup(Messages.c_str());
+  LLVMBool Result = Linker::LinkModules(unwrap(Dest), unwrap(Src), Mode);
   return Result;
 }

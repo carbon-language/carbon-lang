@@ -777,9 +777,8 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
       M->setTargetTriple(DefaultTriple);
     }
 
-    std::string ErrMsg;
-    if (L.linkInModule(M.get(), &ErrMsg))
-      message(LDPL_FATAL, "Failed to link module: %s", ErrMsg.c_str());
+    if (L.linkInModule(M.get()))
+      message(LDPL_FATAL, "Failed to link module");
   }
 
   for (const auto &Name : Internalize) {

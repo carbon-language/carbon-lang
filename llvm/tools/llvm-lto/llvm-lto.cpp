@@ -143,12 +143,8 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-
-    if (!CodeGen.addModule(Module.get(), error)) {
-      errs() << argv[0] << ": error adding file '" << InputFilenames[i]
-             << "': " << error << "\n";
+    if (!CodeGen.addModule(Module.get()))
       return 1;
-    }
 
     unsigned NumSyms = Module->getSymbolCount();
     for (unsigned I = 0; I < NumSyms; ++I) {

@@ -205,7 +205,7 @@ lto_code_gen_t lto_codegen_create(void) {
 void lto_codegen_dispose(lto_code_gen_t cg) { delete unwrap(cg); }
 
 bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod) {
-  return !unwrap(cg)->addModule(unwrap(mod), sLastErrorString);
+  return !unwrap(cg)->addModule(unwrap(mod));
 }
 
 bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {

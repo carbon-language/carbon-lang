@@ -218,16 +218,12 @@ static Module *TestMergedProgram(const BugDriver &BD, Module *M1, Module *M2,
                                  bool DeleteInputs, std::string &Error,
                                  bool &Broken) {
   // Link the two portions of the program back to together.
-  std::string ErrorMsg;
   if (!DeleteInputs) {
     M1 = CloneModule(M1);
     M2 = CloneModule(M2);
   }
-  if (Linker::LinkModules(M1, M2, Linker::DestroySource, &ErrorMsg)) {
-    errs() << BD.getToolName() << ": Error linking modules together:"
-           << ErrorMsg << '\n';
+  if (Linker::LinkModules(M1, M2, Linker::DestroySource))
     exit(1);
-  }
   delete M2;   // We are done with this module.
 
   // Execute the program.
@@ -396,13 +392,9 @@ static bool ExtractLoops(BugDriver &BD,
                                                   F->getFunctionType()));
       }
 
-      std::string ErrorMsg;
-      if (Linker::LinkModules(ToNotOptimize, ToOptimizeLoopExtracted, 
-                              Linker::DestroySource, &ErrorMsg)){
-        errs() << BD.getToolName() << ": Error linking modules together:"
-               << ErrorMsg << '\n';
+      if (Linker::LinkModules(ToNotOptimize, ToOptimizeLoopExtracted,
+                              Linker::DestroySource))
         exit(1);
-      }
 
       MiscompiledFunctions.clear();
       for (unsigned i = 0, e = MisCompFunctions.size(); i != e; ++i) {
@@ -430,13 +422,10 @@ static bool ExtractLoops(BugDriver &BD,
     // extraction both didn't break the program, and didn't mask the problem.
     // Replace the current program with the loop extracted version, and try to
     // extract another loop.
-    std::string ErrorMsg;
-    if (Linker::LinkModules(ToNotOptimize, ToOptimizeLoopExtracted, 
-                            Linker::DestroySource, &ErrorMsg)){
-      errs() << BD.getToolName() << ": Error linking modules together:"
-             << ErrorMsg << '\n';
+    if (Linker::LinkModules(ToNotOptimize, ToOptimizeLoopExtracted,
+                            Linker::DestroySource))
       exit(1);
-    }
+
     delete ToOptimizeLoopExtracted;
 
     // All of the Function*'s in the MiscompiledFunctions list are in the old
@@ -612,13 +601,8 @@ static bool ExtractBlocks(BugDriver &BD,
       MisCompFunctions.push_back(std::make_pair(I->getName(),
                                                 I->getFunctionType()));
 
-  std::string ErrorMsg;
-  if (Linker::LinkModules(ProgClone, Extracted.get(), Linker::DestroySource, 
-                          &ErrorMsg)) {
-    errs() << BD.getToolName() << ": Error linking modules together:"
-           << ErrorMsg << '\n';
+  if (Linker::LinkModules(ProgClone, Extracted.get(), Linker::DestroySource))
     exit(1);
-  }
 
   // Set the new program and delete the old one.
   BD.setNewProgram(ProgClone);

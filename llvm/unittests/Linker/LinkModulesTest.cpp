@@ -88,7 +88,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
   Builder.CreateRet(ConstantPointerNull::get(Type::getInt8PtrTy(Ctx)));
 
   Module *LinkedModule = new Module("MyModuleLinked", Ctx);
-  Linker::LinkModules(LinkedModule, M.get(), Linker::PreserveSource, nullptr);
+  Linker::LinkModules(LinkedModule, M.get(), Linker::PreserveSource);
 
   // Delete the original module.
   M.reset();
@@ -143,11 +143,11 @@ TEST_F(LinkModuleTest, EmptyModule) {
   GV->setInitializer(ConstantStruct::get(STy, F));
 
   Module *EmptyM = new Module("EmptyModule1", Ctx);
-  Linker::LinkModules(EmptyM, InternalM, Linker::PreserveSource, nullptr);
+  Linker::LinkModules(EmptyM, InternalM, Linker::PreserveSource);
 
   delete EmptyM;
   EmptyM = new Module("EmptyModule2", Ctx);
-  Linker::LinkModules(InternalM, EmptyM, Linker::PreserveSource, nullptr);
+  Linker::LinkModules(InternalM, EmptyM, Linker::PreserveSource);
 
   delete EmptyM;
   delete InternalM;

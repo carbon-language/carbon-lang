@@ -14,6 +14,8 @@
 
 #include "llvm/Linker/Linker.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
@@ -69,6 +71,25 @@ loadFile(const char *argv0, const std::string &FN, LLVMContext &Context) {
   return Result;
 }
 
+static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
+  unsigned Severity = DI.getSeverity();
+  switch (Severity) {
+  case DS_Error:
+    errs() << "ERROR: ";
+  case DS_Warning:
+    if (SuppressWarnings)
+      return;
+    errs() << "WARNING: ";
+    break;
+  case DS_Remark:
+  case DS_Note:
+    llvm_unreachable("Only expecting warnings and errors");
+  }
+
+  DiagnosticPrinterRawOStream DP(errs());
+  DI.print(DP);
+}
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -79,9 +100,9 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   auto Composite = make_unique<Module>("llvm-link", Context);
-  Linker L(Composite.get(), SuppressWarnings);
+  Linker L(Composite.get());
 
-  std::string ErrorMessage;
+  Context.setDiagnosticHandler(diagnosticHandler);
   for (unsigned i = 0; i < InputFilenames.size(); ++i) {
     std::unique_ptr<Module> M = loadFile(argv[0], InputFilenames[i], Context);
     if (!M.get()) {
@@ -91,11 +112,8 @@ int main(int argc, char **argv) {
 
     if (Verbose) errs() << "Linking in '" << InputFilenames[i] << "'\n";
 
-    if (L.linkInModule(M.get(), &ErrorMessage)) {
-      errs() << argv[0] << ": link error in '" << InputFilenames[i]
-             << "': " << ErrorMessage << "\n";
+    if (L.linkInModule(M.get()))
       return 1;
-    }
   }
 
   if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;
