@@ -19,6 +19,9 @@ let i32_type = Llvm.i32_type context
 let i64_type = Llvm.i64_type context
 let double_type = Llvm.double_type context
 
+let () =
+  assert (Llvm_executionengine.initialize_native_target ())
+
 let bomb msg =
   prerr_endline msg;
   exit 2
