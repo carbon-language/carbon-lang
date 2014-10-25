@@ -566,6 +566,13 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVUPSYrr,      X86::VMOVUPSYrm,          0 },
     { X86::VPERMILPDYri,    X86::VPERMILPDYmi,        0 },
     { X86::VPERMILPSYri,    X86::VPERMILPSYmi,        0 },
+    { X86::VRCPPSYr,        X86::VRCPPSYm,            0 },
+    { X86::VRCPPSYr_Int,    X86::VRCPPSYm_Int,        0 },
+    { X86::VRSQRTPSYr,      X86::VRSQRTPSYm,          0 },
+    { X86::VSQRTPDYr,       X86::VSQRTPDYm,           0 },
+    { X86::VSQRTPSYr,       X86::VSQRTPSYm,           0 },
+    { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
+    { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
 
     // AVX2 foldable instructions
     { X86::VPABSBrr256,     X86::VPABSBrm256,         0 },
@@ -574,13 +581,6 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFDYri,      X86::VPSHUFDYmi,          0 },
     { X86::VPSHUFHWYri,     X86::VPSHUFHWYmi,         0 },
     { X86::VPSHUFLWYri,     X86::VPSHUFLWYmi,         0 },
-    { X86::VRCPPSYr,        X86::VRCPPSYm,            0 },
-    { X86::VRCPPSYr_Int,    X86::VRCPPSYm_Int,        0 },
-    { X86::VRSQRTPSYr,      X86::VRSQRTPSYm,          0 },
-    { X86::VSQRTPDYr,       X86::VSQRTPDYm,           0 },
-    { X86::VSQRTPSYr,       X86::VSQRTPSYm,           0 },
-    { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
-    { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
 
     // BMI/BMI2/LZCNT/POPCNT/TBM foldable instructions
     { X86::BEXTR32rr,       X86::BEXTR32rm,           0 },
