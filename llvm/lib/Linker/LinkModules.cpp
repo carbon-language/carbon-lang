@@ -1766,8 +1766,33 @@ bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode) {
 // C API.
 //===----------------------------------------------------------------------===//
 
+static void bindingDiagnosticHandler(const llvm::DiagnosticInfo &DI,
+                                     void *Context) {
+  if (DI.getSeverity() != DS_Error)
+    return;
+
+  std::string *Message = (std::string *)Context;
+  {
+    raw_string_ostream Stream(*Message);
+    DiagnosticPrinterRawOStream DP(Stream);
+    DI.print(DP);
+  }
+}
+
+
 LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
                          LLVMLinkerMode Mode, char **OutMessages) {
-  LLVMBool Result = Linker::LinkModules(unwrap(Dest), unwrap(Src), Mode);
+  Module *D = unwrap(Dest);
+  LLVMContext &Ctx = D->getContext();
+
+  LLVMContext::DiagnosticHandlerTy OldHandler = Ctx.getDiagnosticHandler();
+  void *OldDiagnosticContext = Ctx.getDiagnosticContext();
+  std::string Message;
+  Ctx.setDiagnosticHandler(bindingDiagnosticHandler, &Message);
+  LLVMBool Result = Linker::LinkModules(D, unwrap(Src), Mode);
+  Ctx.setDiagnosticHandler(OldHandler, OldDiagnosticContext);
+
+  if (OutMessages && Result)
+    *OutMessages = strdup(Message.c_str());
   return Result;
 }
