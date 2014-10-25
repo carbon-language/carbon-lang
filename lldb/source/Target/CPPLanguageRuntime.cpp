@@ -11,6 +11,8 @@
 
 #include <string.h>
 
+#include "llvm/ADT/StringRef.h"
+
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -190,19 +192,15 @@ CPPLanguageRuntime::IsCPPMangledName (const char *name)
 }
 
 bool
-CPPLanguageRuntime::StripNamespacesFromVariableName (const char *name, const char *&base_name_start, const char *&base_name_end)
+CPPLanguageRuntime::ExtractContextAndIdentifier (const char *name, llvm::StringRef &context, llvm::StringRef &identifier)
 {
-    static RegularExpression g_basename_regex("([A-Za-z_][A-Za-z_0-9]*::)+([A-Za-z_][A-Za-z_0-9]*)$");
-    RegularExpression::Match match(2);
+    static RegularExpression g_basename_regex("^(([A-Za-z_][A-Za-z_0-9]*::)*)([A-Za-z_][A-Za-z_0-9]*)$");
+    RegularExpression::Match match(4);
     if (g_basename_regex.Execute (name, &match))
     {
-        llvm::StringRef basename;
-        if (match.GetMatchAtIndex(name, 2, basename))
-        {
-            base_name_start = basename.data();
-            base_name_end = base_name_start + basename.size();
-            return true;
-        }
+        match.GetMatchAtIndex(name, 1, context);
+        match.GetMatchAtIndex(name, 3, identifier);
+        return true;
     }
     return false;
 }

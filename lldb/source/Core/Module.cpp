@@ -1710,8 +1710,9 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
     const char *name_cstr = name.GetCString();
     lookup_name_type_mask = eFunctionNameTypeNone;
     match_name_after_lookup = false;
-    const char *base_name_start = NULL;
-    const char *base_name_end = NULL;
+
+    llvm::StringRef basename;
+    llvm::StringRef context;
     
     if (name_type_mask & eFunctionNameTypeAuto)
     {
@@ -1725,18 +1726,16 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
                 lookup_name_type_mask |= eFunctionNameTypeSelector;
             
             CPPLanguageRuntime::MethodName cpp_method (name);
-            llvm::StringRef basename (cpp_method.GetBasename());
+            basename = cpp_method.GetBasename();
             if (basename.empty())
             {
-                if (CPPLanguageRuntime::StripNamespacesFromVariableName (name_cstr, base_name_start, base_name_end))
+                if (CPPLanguageRuntime::ExtractContextAndIdentifier (name_cstr, context, basename))
                     lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
                 else
                     lookup_name_type_mask = eFunctionNameTypeFull;
             }
             else
             {
-                base_name_start = basename.data();
-                base_name_end = base_name_start + basename.size();
                 lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
             }
         }
@@ -1751,9 +1750,7 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
             CPPLanguageRuntime::MethodName cpp_method (name);
             if (cpp_method.IsValid())
             {
-                llvm::StringRef basename (cpp_method.GetBasename());
-                base_name_start = basename.data();
-                base_name_end = base_name_start + basename.size();
+                basename = cpp_method.GetBasename();
 
                 if (!cpp_method.GetQualifiers().empty())
                 {
@@ -1766,12 +1763,9 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
             }
             else
             {
-                if (!CPPLanguageRuntime::StripNamespacesFromVariableName (name_cstr, base_name_start, base_name_end))
-                {
-                    lookup_name_type_mask &= ~(eFunctionNameTypeMethod | eFunctionNameTypeBase);
-                    if (lookup_name_type_mask == eFunctionNameTypeNone)
-                        return;
-                }
+                // If the CPP method parser didn't manage to chop this up, try to fill in the base name if we can.
+                // If a::b::c is passed in, we need to just look up "c", and then we'll filter the result later.
+                CPPLanguageRuntime::ExtractContextAndIdentifier (name_cstr, context, basename);
             }
         }
         
@@ -1786,16 +1780,13 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
         }
     }
     
-    if (base_name_start &&
-        base_name_end &&
-        base_name_start != name_cstr &&
-        base_name_start < base_name_end)
+    if (!basename.empty())
     {
         // The name supplied was a partial C++ path like "a::count". In this case we want to do a
         // lookup on the basename "count" and then make sure any matching results contain "a::count"
         // so that it would match "b::a::count" and "a::count". This is why we set "match_name_after_lookup"
         // to true
-        lookup_name.SetCStringWithLength(base_name_start, base_name_end - base_name_start);
+        lookup_name.SetString(basename);
         match_name_after_lookup = true;
     }
     else

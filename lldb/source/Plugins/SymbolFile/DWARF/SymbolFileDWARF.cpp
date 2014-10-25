@@ -3197,13 +3197,13 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
         if (m_apple_names_ap.get())
         {
             const char *name_cstr = name.GetCString();
-            const char *base_name_start;
-            const char *base_name_end = NULL;
+            llvm::StringRef basename;
+            llvm::StringRef context;
 
-            if (!CPPLanguageRuntime::StripNamespacesFromVariableName(name_cstr, base_name_start, base_name_end))
-                base_name_start = name_cstr;
+            if (!CPPLanguageRuntime::ExtractContextAndIdentifier(name_cstr, context, basename))
+                basename = name_cstr;
 
-            m_apple_names_ap->FindByName (base_name_start, die_offsets);
+            m_apple_names_ap->FindByName (basename.data(), die_offsets);
         }
     }
     else

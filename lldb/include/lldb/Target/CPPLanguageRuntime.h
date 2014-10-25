@@ -132,9 +132,16 @@ public:
     
     static bool
     IsCPPMangledName(const char *name);
-    
+
+    // Extract C++ context and identifier from a string using heuristic matching (as opposed to
+    // CPPLanguageRuntime::MethodName which has to have a fully qualified C++ name with parens and arguments.
+    // If the name is a lone C identifier (e.g. C) or a qualified C identifier (e.g. A::B::C) it will return true,
+    // and identifier will be the identifier (C and C respectively) and the context will be "" and "A::B::" respectively.
+    // If the name fails the heuristic matching for a qualified or unqualified C/C++ identifier, then it will return false
+    // and identifier and context will be unchanged.
+
     static bool
-    StripNamespacesFromVariableName (const char *name, const char *&base_name_start, const char *&base_name_end);
+    ExtractContextAndIdentifier (const char *name, llvm::StringRef &context, llvm::StringRef &identifier);
     
     // in some cases, compilers will output different names for one same type. when that happens, it might be impossible
     // to construct SBType objects for a valid type, because the name that is available is not the same as the name that
