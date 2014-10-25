@@ -6,7 +6,7 @@ int f(void);
 
 #ifdef BITCODE
 
-// CHECK-BC: 'f': symbol multiply defined
+// CHECK-BC: fatal error: cannot link module {{.*}}'f': symbol multiply defined
 int f(void) {
   return 42;
 }
