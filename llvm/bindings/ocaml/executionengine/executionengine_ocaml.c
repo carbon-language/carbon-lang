@@ -200,6 +200,24 @@ llvm_ee_create_jit(LLVMModuleRef M, value OptLevel) {
   return JIT;
 }
 
+/* llmodule -> llcompileroption -> ExecutionEngine.t */
+CAMLprim LLVMExecutionEngineRef
+llvm_ee_create_mcjit(LLVMModuleRef M, value OptRecord) {
+  LLVMExecutionEngineRef MCJIT;
+  char *Error;
+  struct LLVMMCJITCompilerOptions Options = {
+         .OptLevel = Int_val(Field(OptRecord, 0)),
+         .CodeModel = Int_val(Field(OptRecord, 1)),
+         .NoFramePointerElim = Int_val(Field(OptRecord, 2)),
+         .EnableFastISel = Int_val(Field(OptRecord, 3)),
+         .MCJMM = NULL
+  };
+  if (LLVMCreateMCJITCompilerForModule(&MCJIT, M, &Options,
+                                      sizeof(Options), &Error))
+    llvm_raise(llvm_ee_error_exn, Error);
+  return MCJIT;
+}
+
 /* ExecutionEngine.t -> unit */
 CAMLprim value llvm_ee_dispose(LLVMExecutionEngineRef EE) {
   LLVMDisposeExecutionEngine(EE);

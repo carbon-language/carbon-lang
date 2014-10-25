@@ -14,9 +14,19 @@ external register_exns: exn -> unit
   = "llvm_register_ee_exns"
 
 
+module CodeModel = struct
+  type t =
+    | Default
+    | JIT_default
+    | Small
+    | Kernel
+    | Medium
+    | Large
+end
+
 module GenericValue = struct
   type t
-  
+
   external of_float: Llvm.lltype -> float -> t
     = "llvm_genericvalue_of_float"
   external of_pointer: 'a -> t
@@ -29,7 +39,7 @@ module GenericValue = struct
     = "llvm_genericvalue_of_nativeint"
   external of_int64: Llvm.lltype -> int64 -> t
     = "llvm_genericvalue_of_int64"
-  
+
   external as_float: Llvm.lltype -> t -> float
     = "llvm_genericvalue_as_float"
   external as_pointer: t -> 'a
@@ -47,21 +57,36 @@ end
 
 module ExecutionEngine = struct
   type t
-  
+
+  type compileroptions = {
+    opt_level: int;
+    code_model: CodeModel.t;
+    no_framepointer_elim: bool;
+    enable_fast_isel: bool;
+  }
+
+  let default_compiler_options = {
+    opt_level = 0;
+    code_model = CodeModel.JIT_default;
+    no_framepointer_elim = false;
+    enable_fast_isel = false }
+
   (* FIXME: Ocaml is not running this setup code unless we use 'val' in the
             interface, which causes the emission of a stub for each function;
-            using 'external' in the module allows direct calls into 
+            using 'external' in the module allows direct calls into
             ocaml_executionengine.c. This is hardly fatal, but it is unnecessary
-            overhead on top of the two stubs that are already invoked for each 
+            overhead on top of the two stubs that are already invoked for each
             call into LLVM. *)
   let _ = register_exns (Error "")
-  
+
   external create: Llvm.llmodule -> t
     = "llvm_ee_create"
   external create_interpreter: Llvm.llmodule -> t
     = "llvm_ee_create_interpreter"
   external create_jit: Llvm.llmodule -> int -> t
     = "llvm_ee_create_jit"
+  external create_mcjit: Llvm.llmodule -> compileroptions -> t
+    = "llvm_ee_create_mcjit"
   external dispose: t -> unit
     = "llvm_ee_dispose"
   external add_module: Llvm.llmodule -> t -> unit
@@ -85,9 +110,9 @@ module ExecutionEngine = struct
 
   external data_layout : t -> Llvm_target.DataLayout.t
     = "llvm_ee_get_data_layout"
-  
+
   (* The following are not bound. Patches are welcome.
-  
+
   add_global_mapping: llvalue -> llgenericvalue -> t -> unit
   clear_all_global_mappings: t -> unit
   update_global_mapping: llvalue -> llgenericvalue -> t -> unit
@@ -103,7 +128,7 @@ module ExecutionEngine = struct
   disable_lazy_compilation: t -> unit
   lazy_compilation_enabled: t -> bool
   install_lazy_function_creator: (string -> llgenericvalue) -> t -> unit
-  
+
    *)
 end
 

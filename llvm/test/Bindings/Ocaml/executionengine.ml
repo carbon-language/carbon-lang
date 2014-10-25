@@ -44,62 +44,72 @@ let test_genericvalue () =
   let tu = (1, 2) in
   let ptrgv = GenericValue.of_pointer tu in
   assert (tu = GenericValue.as_pointer ptrgv);
-  
+
   let fpgv = GenericValue.of_float double_type 2. in
   assert (2. = GenericValue.as_float double_type fpgv);
-  
+
   let intgv = GenericValue.of_int i32_type 3 in
   assert (3  = GenericValue.as_int intgv);
-  
+
   let i32gv = GenericValue.of_int32 i32_type (Int32.of_int 4) in
   assert ((Int32.of_int 4) = GenericValue.as_int32 i32gv);
-  
+
   let nigv = GenericValue.of_nativeint i32_type (Nativeint.of_int 5) in
   assert ((Nativeint.of_int 5) = GenericValue.as_nativeint nigv);
-  
+
   let i64gv = GenericValue.of_int64 i64_type (Int64.of_int 6) in
   assert ((Int64.of_int 6) = GenericValue.as_int64 i64gv)
 
-let test_executionengine () =
+let test_executionengine engine =
   (* create *)
   let m = create_module (global_context ()) "test_module" in
   let main = define_main_fn m 42 in
-  
+
   let m2 = create_module (global_context ()) "test_module2" in
   define_plus m2;
-  
-  let ee = ExecutionEngine.create m in
+
+  let ee =
+    match engine with
+    | `Interpreter -> ExecutionEngine.create_interpreter m
+    | `JIT -> ExecutionEngine.create_jit m 0
+    | `MCJIT -> ExecutionEngine.create_mcjit m ExecutionEngine.default_compiler_options
+  in
   ExecutionEngine.add_module m2 ee;
-  
+
   (* run_static_ctors *)
   ExecutionEngine.run_static_ctors ee;
-  
+
   (* run_function_as_main *)
   let res = ExecutionEngine.run_function_as_main main [|"test"|] [||] ee in
   if 42 != res then bomb "main did not return 42";
-  
+
   (* free_machine_code *)
   ExecutionEngine.free_machine_code main ee;
-  
+
   (* find_function *)
   match ExecutionEngine.find_function "dne" ee with
   | Some _ -> raise (Failure "find_function 'dne' failed")
   | None ->
-  
+
   match ExecutionEngine.find_function "plus" ee with
   | None -> raise (Failure "find_function 'plus' failed")
   | Some plus ->
-  
-  (* run_function *)
-  let res = ExecutionEngine.run_function plus
-                                         [| GenericValue.of_int i32_type 2;
-                                            GenericValue.of_int i32_type 2 |]
-                                         ee in
-  if 4 != GenericValue.as_int res then bomb "plus did not work";
-  
+
+  begin match engine with
+  | `MCJIT -> () (* Currently can only invoke 0-ary functions *)
+  | `JIT -> () (* JIT is now a shim around MCJIT, jokes on you *)
+  | _ ->
+    (* run_function *)
+    let res = ExecutionEngine.run_function plus
+                                           [| GenericValue.of_int i32_type 2;
+                                              GenericValue.of_int i32_type 2 |]
+                                           ee in
+    if 4 != GenericValue.as_int res then bomb "plus did not work";
+  end;
+
   (* remove_module *)
   Llvm.dispose_module (ExecutionEngine.remove_module m2 ee);
-  
+
   (* run_static_dtors *)
   ExecutionEngine.run_static_dtors ee;
 
@@ -109,10 +119,13 @@ let test_executionengine () =
   (* Demonstrate that a garbage pointer wasn't returned. *)
   let ty = DataLayout.intptr_type context dl in
   if ty != i32_type && ty != i64_type then bomb "target_data did not work";
-  
+
   (* dispose *)
   ExecutionEngine.dispose ee
 
-let _ =
+let () =
   test_genericvalue ();
-  test_executionengine ()
+  test_executionengine `Interpreter;
+  test_executionengine `JIT;
+  test_executionengine `MCJIT;
+  ()
