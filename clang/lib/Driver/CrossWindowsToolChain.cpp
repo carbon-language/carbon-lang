@@ -82,14 +82,8 @@ AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
 
   case ToolChain::CST_Libstdcxx:
     addSystemInclude(DriverArgs, CC1Args, SysRoot + "/usr/incldue/c++");
-    switch (Triple.getArch()) {
-    default: llvm_unreachable("unsupported architecture");
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-      addSystemInclude(DriverArgs, CC1Args,
-                       SysRoot + "/usr/include/c++/" + Triple.str());
-      break;
-    }
+    addSystemInclude(DriverArgs, CC1Args,
+                     SysRoot + "/usr/include/c++/" + Triple.str());
     addSystemInclude(DriverArgs, CC1Args,
                      SysRoot + "/usr/include/c++/backwards");
   }
