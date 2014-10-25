@@ -1355,7 +1355,12 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     //  .param .align 16 .b8 retval0[<size-in-bytes>], or
     //  .param .b<size-in-bits> retval0
     unsigned resultsz = TD->getTypeAllocSizeInBits(retTy);
-    if (retTy->isSingleValueType()) {
+    // Emit ".param .b<size-in-bits> retval0" instead of byte arrays only for
+    // these three types to match the logic in
+    // NVPTXAsmPrinter::printReturnValStr and NVPTXTargetLowering::getPrototype.
+    // Plus, this behavior is consistent with nvcc's.
+    if (retTy->isFloatingPointTy() || retTy->isIntegerTy() ||
+        retTy->isPointerTy()) {
       // Scalar needs to be at least 32bit wide
       if (resultsz < 32)
         resultsz = 32;
