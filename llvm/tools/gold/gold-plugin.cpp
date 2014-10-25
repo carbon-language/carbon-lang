@@ -483,7 +483,7 @@ static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
   GlobalObject *Ret;
   if (auto *F = dyn_cast<Function>(GO)) {
     if (F->isMaterializable()) {
-      if (std::error_code EC = F->materialize())
+      if (F->materialize())
         message(LDPL_FATAL, "LLVM gold plugin has failed to read a function");
 
     }
