@@ -153,13 +153,16 @@ namespace clang {
 
       // Link LinkModule into this module if present, preserving its validity.
       if (LinkModule) {
-        std::string ErrorMsg;
-        if (Linker::LinkModules(M, LinkModule.get(), Linker::PreserveSource,
-                                &ErrorMsg)) {
-          Diags.Report(diag::err_fe_cannot_link_module)
-            << LinkModule->getModuleIdentifier() << ErrorMsg;
+        LLVMContext &Ctx = LinkModule->getContext();
+        LLVMContext::DiagnosticHandlerTy OldHandler =
+            Ctx.getDiagnosticHandler();
+        void *OldDiagnosticContext = Ctx.getDiagnosticContext();
+        Ctx.setDiagnosticHandler(linkerDiagnosticHandler, this);
+        bool Failed =
+            Linker::LinkModules(M, LinkModule.get(), Linker::PreserveSource);
+        Ctx.setDiagnosticHandler(OldHandler, OldDiagnosticContext);
+        if (Failed)
           return;
-        }
       }
 
       // Install an inline asm handler so that diagnostics get printed through
@@ -221,6 +224,13 @@ namespace clang {
       SourceLocation Loc = SourceLocation::getFromRawEncoding(LocCookie);
       ((BackendConsumer*)Context)->InlineAsmDiagHandler2(SM, Loc);
     }
+
+    static void linkerDiagnosticHandler(const llvm::DiagnosticInfo &DI,
+                                        void *Context) {
+      ((BackendConsumer *)Context)->linkerDiagnosticHandlerImpl(DI);
+    }
+
+    void linkerDiagnosticHandlerImpl(const llvm::DiagnosticInfo &DI);
 
     static void DiagnosticHandler(const llvm::DiagnosticInfo &DI,
                                   void *Context) {
@@ -495,6 +505,21 @@ void BackendConsumer::OptimizationRemarkHandler(
 void BackendConsumer::OptimizationFailureHandler(
     const llvm::DiagnosticInfoOptimizationFailure &D) {
   EmitOptimizationMessage(D, diag::warn_fe_backend_optimization_failure);
+}
+
+void BackendConsumer::linkerDiagnosticHandlerImpl(const DiagnosticInfo &DI) {
+  if (DI.getSeverity() != DS_Error)
+    return;
+
+  std::string MsgStorage;
+  {
+    raw_string_ostream Stream(MsgStorage);
+    DiagnosticPrinterRawOStream DP(Stream);
+    DI.print(DP);
+  }
+
+  Diags.Report(diag::err_fe_cannot_link_module)
+      << LinkModule->getModuleIdentifier() << MsgStorage;
 }
 
 /// \brief This function is invoked when the backend needs
