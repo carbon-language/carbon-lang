@@ -720,16 +720,16 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   Instruction *NewGEP = GEP->clone();
   NewGEP->insertBefore(GEP);
 
-  uint64_t ElementTypeSizeOfGEP =
-      DL->getTypeAllocSize(GEP->getType()->getElementType());
+  // Per ANSI C standard, signed / unsigned = unsigned and signed % unsigned =
+  // unsigned.. Therefore, we cast ElementTypeSizeOfGEP to signed because it is
+  // used with unsigned integers later.
+  int64_t ElementTypeSizeOfGEP = static_cast<int64_t>(
+      DL->getTypeAllocSize(GEP->getType()->getElementType()));
   Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
   if (AccumulativeByteOffset % ElementTypeSizeOfGEP == 0) {
     // Very likely. As long as %gep is natually aligned, the byte offset we
     // extracted should be a multiple of sizeof(*%gep).
-    // Per ANSI C standard, signed / unsigned = unsigned. Therefore, we
-    // cast ElementTypeSizeOfGEP to signed.
-    int64_t Index =
-        AccumulativeByteOffset / static_cast<int64_t>(ElementTypeSizeOfGEP);
+    int64_t Index = AccumulativeByteOffset / ElementTypeSizeOfGEP;
     NewGEP = GetElementPtrInst::Create(
         NewGEP, ConstantInt::get(IntPtrTy, Index, true), GEP->getName(), GEP);
   } else {
