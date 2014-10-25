@@ -234,3 +234,22 @@ entry:
 ; CHECK-LABEL: @and(
 ; CHECK: getelementptr [32 x [32 x float]]* @float_2d_array
 ; CHECK-NOT: getelementptr
+
+; The code that rebuilds an OR expression used to be buggy, and failed on this
+; test.
+define float* @shl_add_or(i64 %a, float* %ptr) {
+; CHECK-LABEL: @shl_add_or(
+entry:
+  %shl = shl i64 %a, 2
+  %add = add i64 %shl, 12
+  %or = or i64 %add, 1
+; CHECK: [[OR:%or[0-9]*]] = add i64 %shl, 1
+  ; ((a << 2) + 12) and 1 have no common bits. Therefore,
+  ; SeparateConstOffsetFromGEP is able to extract the 12.
+  ; TODO(jingyue): We could reassociate the expression to combine 12 and 1.
+  %p = getelementptr float* %ptr, i64 %or
+; CHECK: [[PTR:%[a-zA-Z0-9]+]] = getelementptr float* %ptr, i64 [[OR]]
+; CHECK: getelementptr float* [[PTR]], i64 12
+  ret float* %p
+; CHECK-NEXT: ret
+}

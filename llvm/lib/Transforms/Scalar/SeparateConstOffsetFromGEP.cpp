@@ -519,8 +519,13 @@ Value *ConstantOffsetExtractor::removeConstOffset(unsigned ChainIndex) {
     //
     // Replacing the "or" with "add" is fine, because
     //   a | (b + 5) = a + (b + 5) = (a + b) + 5
-    return BinaryOperator::CreateAdd(BO->getOperand(0), BO->getOperand(1),
-                                     BO->getName(), IP);
+    if (OpNo == 0) {
+      return BinaryOperator::CreateAdd(NextInChain, TheOther, BO->getName(),
+                                       IP);
+    } else {
+      return BinaryOperator::CreateAdd(TheOther, NextInChain, BO->getName(),
+                                       IP);
+    }
   }
 
   // We can reuse BO in this case, because the new expression shares the same
