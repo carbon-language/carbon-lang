@@ -233,14 +233,14 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
       // in place and avoid copies where possible.
       unsigned CurStrLen = Result.size();
       Result.resize(CurStrLen+Tok.getLength());
-      const char *BufPtr = &Result[CurStrLen];
+      const char *BufPtr = Result.data() + CurStrLen;
       bool Invalid = false;
       unsigned ActualTokLen = PP.getSpelling(Tok, BufPtr, &Invalid);
 
       if (!Invalid) {
         // If getSpelling returned a pointer to an already uniqued version of
         // the string instead of filling in BufPtr, memcpy it onto our string.
-        if (BufPtr != &Result[CurStrLen])
+        if (ActualTokLen && BufPtr != &Result[CurStrLen])
           memcpy(&Result[CurStrLen], BufPtr, ActualTokLen);
 
         // If the token was dirty, the spelling may be shorter than the token.

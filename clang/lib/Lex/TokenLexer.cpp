@@ -531,12 +531,13 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       memcpy(&Buffer[0], BufPtr, LHSLen);
     if (Invalid)
       return true;
-    
-    BufPtr = &Buffer[LHSLen];
+
+    BufPtr = Buffer.data() + LHSLen;
     unsigned RHSLen = PP.getSpelling(RHS, BufPtr, &Invalid);
     if (Invalid)
       return true;
-    if (BufPtr != &Buffer[LHSLen])   // Really, we want the chars in Buffer!
+    if (RHSLen && BufPtr != &Buffer[LHSLen])
+      // Really, we want the chars in Buffer!
       memcpy(&Buffer[LHSLen], BufPtr, RHSLen);
 
     // Trim excess space.

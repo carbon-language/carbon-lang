@@ -34,3 +34,11 @@ int VA;   // expected-warning {{__VA_ARGS__ can only appear in the expansion of 
 
 #define LOG_ON_ERROR(x) x ## #y; // expected-error {{'#' is not followed by a macro parameter}}
 LOG_ON_ERROR(0);
+
+#define PR21379A(x) printf ##x // expected-note {{macro 'PR21379A' defined here}}
+PR21379A(0 {, }) // expected-error {{too many arguments provided to function-like macro invocation}}
+                 // expected-note@-1 {{parentheses are required around macro argument containing braced initializer list}}
+
+#define PR21379B(x) printf #x // expected-note {{macro 'PR21379B' defined here}}
+PR21379B(0 {, }) // expected-error {{too many arguments provided to function-like macro invocation}}
+                 // expected-note@-1 {{parentheses are required around macro argument containing braced initializer list}}
