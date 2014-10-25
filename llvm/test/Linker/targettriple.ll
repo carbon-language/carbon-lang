@@ -5,6 +5,9 @@
 ; RUN: llvm-link %s %S/Inputs/targettriple-b.ll -S -o - 2>%t.b.err | FileCheck %s
 ; RUN: cat %t.b.err | FileCheck --check-prefix=WARN-B %s
 
+; RUN: llvm-link -suppress-warnings %s %S/Inputs/targettriple-b.ll -S -o - 2>%t.no-warn.err | FileCheck %s
+; RUN: (echo foo ;cat %t.no-warn.err) | FileCheck --check-prefix=WARN-A %s
+
 target triple = "e"
 
 ; CHECK: target triple = "e"
