@@ -1052,8 +1052,18 @@ Instruction *InstCombiner::FoldICmpCstShrCst(ICmpInst &I, Value *Op, Value *A,
   APInt AP1 = CI1->getValue();
   APInt AP2 = CI2->getValue();
 
-  assert(AP2 != 0 && "Handled in InstSimplify");
-  assert(!AP2.isAllOnesValue() && "Handled in InstSimplify");
+  // Don't bother doing any work for cases which InstSimplify handles.
+  if (AP2 == 0)
+    return nullptr;
+  bool IsAShr = isa<AShrOperator>(Op);
+  if (IsAShr) {
+    if (AP2.isAllOnesValue())
+      return nullptr;
+    if (AP2.isNegative() != AP1.isNegative())
+      return nullptr;
+    if (AP2.sgt(AP1))
+      return nullptr;
+  }
 
   if (!AP1)
     // 'A' must be large enough to shift out the highest set bit.
@@ -1062,13 +1072,6 @@ Instruction *InstCombiner::FoldICmpCstShrCst(ICmpInst &I, Value *Op, Value *A,
 
   if (AP1 == AP2)
     return getICmp(I.ICMP_EQ, A, ConstantInt::getNullValue(A->getType()));
-
-  bool IsAShr = isa<AShrOperator>(Op);
-  // If we are dealing with an arithmetic shift, both constants should agree in
-  // sign.  InstSimplify's SimplifyICmpInst range analysis is supposed to catch
-  // the cases when they disagree.
-  assert((!IsAShr || (AP1.isNegative() == AP2.isNegative() && AP1.sgt(AP2))) &&
-         "Handled in InstSimplify");
 
   // Get the distance between the highest bit that's set.
   int Shift;
@@ -1109,7 +1112,9 @@ Instruction *InstCombiner::FoldICmpCstShlCst(ICmpInst &I, Value *Op, Value *A,
   APInt AP1 = CI1->getValue();
   APInt AP2 = CI2->getValue();
 
-  assert(AP2 != 0 && "Handled in InstSimplify");
+  // Don't bother doing any work for cases which InstSimplify handles.
+  if (AP2 == 0)
+    return nullptr;
 
   unsigned AP2TrailingZeros = AP2.countTrailingZeros();
 
@@ -2591,11 +2596,13 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (match(Op0, m_AShr(m_ConstantInt(CI2), m_Value(A))) ||
           match(Op0, m_LShr(m_ConstantInt(CI2), m_Value(A)))) {
         // (icmp eq/ne (ashr/lshr const2, A), const1)
-        return FoldICmpCstShrCst(I, Op0, A, CI, CI2);
+        if (Instruction *Inst = FoldICmpCstShrCst(I, Op0, A, CI, CI2))
+          return Inst;
       }
       if (match(Op0, m_Shl(m_ConstantInt(CI2), m_Value(A)))) {
         // (icmp eq/ne (shl const2, A), const1)
-        return FoldICmpCstShlCst(I, Op0, A, CI, CI2);
+        if (Instruction *Inst = FoldICmpCstShlCst(I, Op0, A, CI, CI2))
+          return Inst;
       }
     }
 
