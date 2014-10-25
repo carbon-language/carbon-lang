@@ -3116,14 +3116,13 @@ bool LSRInstance::InsertFormula(LSRUse &LU, unsigned LUIdx, const Formula &F) {
 void
 LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
   SmallVector<const SCEV *, 8> Worklist(RegUses.begin(), RegUses.end());
-  SmallPtrSet<const SCEV *, 8> Inserted;
-  SmallPtrSet<const SCEV *, 32> Done;
+  SmallPtrSet<const SCEV *, 32> Visited;
 
   while (!Worklist.empty()) {
     const SCEV *S = Worklist.pop_back_val();
 
     // Don't process the same SCEV twice
-    if (!Done.insert(S))
+    if (!Visited.insert(S))
       continue;
 
     if (const SCEVNAryExpr *N = dyn_cast<SCEVNAryExpr>(S))
@@ -3134,7 +3133,6 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
       Worklist.push_back(D->getLHS());
       Worklist.push_back(D->getRHS());
     } else if (const SCEVUnknown *US = dyn_cast<SCEVUnknown>(S)) {
-      if (!Inserted.insert(US)) continue;
       const Value *V = US->getValue();
       if (const Instruction *Inst = dyn_cast<Instruction>(V)) {
         // Look for instructions defined outside the loop.
