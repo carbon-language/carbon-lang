@@ -444,7 +444,7 @@ void PassManagerBuilder::addLTOOptimizationPasses(PassManagerBase &PM) {
   // More loops are countable; try to optimize them.
   PM.add(createIndVarSimplifyPass());
   PM.add(createLoopDeletionPass());
-  PM.add(createLoopVectorizePass(DisableUnrollLoops, LoopVectorize));
+  PM.add(createLoopVectorizePass(true, LoopVectorize));
 
   // More scalar chains could be vectorized due to more alias information
   if (RunSLPAfterLoopVectorization)

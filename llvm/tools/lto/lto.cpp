@@ -32,6 +32,10 @@ static cl::opt<bool>
 DisableGVNLoadPRE("disable-gvn-loadpre", cl::init(false),
   cl::desc("Do not run the GVN load PRE pass"));
 
+static cl::opt<bool>
+DisableLTOVectorization("disable-lto-vectorization", cl::init(false),
+  cl::desc("Do not run loop or slp vectorization during LTO"));
+
 // Holds most recent error string.
 // *** Not thread safe ***
 static std::string sLastErrorString;
@@ -252,7 +256,8 @@ const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
     parsedOptions = true;
   }
   return unwrap(cg)->compile(length, DisableOpt, DisableInline,
-                             DisableGVNLoadPRE, sLastErrorString);
+                             DisableGVNLoadPRE, DisableLTOVectorization,
+                             sLastErrorString);
 }
 
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
@@ -261,8 +266,9 @@ bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
     lto_add_attrs(cg);
     parsedOptions = true;
   }
-  return !unwrap(cg)->compile_to_file(name, DisableOpt, DisableInline,
-                                      DisableGVNLoadPRE, sLastErrorString);
+  return !unwrap(cg)->compile_to_file(
+      name, DisableOpt, DisableInline, DisableGVNLoadPRE,
+      DisableLTOVectorization, sLastErrorString);
 }
 
 void lto_codegen_debug_options(lto_code_gen_t cg, const char *opt) {

@@ -39,6 +39,10 @@ DisableGVNLoadPRE("disable-gvn-loadpre", cl::init(false),
   cl::desc("Do not run the GVN load PRE pass"));
 
 static cl::opt<bool>
+DisableLTOVectorization("disable-lto-vectorization", cl::init(false),
+  cl::desc("Do not run loop or slp vectorization during LTO"));
+
+static cl::opt<bool>
 UseDiagnosticHandler("use-diagnostic-handler", cl::init(false),
   cl::desc("Use a diagnostic handler to test the handler interface"));
 
@@ -179,8 +183,9 @@ int main(int argc, char **argv) {
   if (!OutputFilename.empty()) {
     size_t len = 0;
     std::string ErrorInfo;
-    const void *Code = CodeGen.compile(&len, DisableOpt, DisableInline,
-                                       DisableGVNLoadPRE, ErrorInfo);
+    const void *Code =
+        CodeGen.compile(&len, DisableOpt, DisableInline, DisableGVNLoadPRE,
+                        DisableLTOVectorization, ErrorInfo);
     if (!Code) {
       errs() << argv[0]
              << ": error compiling the code: " << ErrorInfo << "\n";
@@ -200,7 +205,8 @@ int main(int argc, char **argv) {
     std::string ErrorInfo;
     const char *OutputName = nullptr;
     if (!CodeGen.compile_to_file(&OutputName, DisableOpt, DisableInline,
-                                 DisableGVNLoadPRE, ErrorInfo)) {
+                                 DisableGVNLoadPRE, DisableLTOVectorization,
+                                 ErrorInfo)) {
       errs() << argv[0]
              << ": error compiling the code: " << ErrorInfo
              << "\n";
