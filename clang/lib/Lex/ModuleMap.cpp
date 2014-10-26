@@ -220,8 +220,9 @@ static bool violatesPrivateInclude(Module *RequestingModule,
   // as obtained from the lookup and as obtained from the module.
   // This check is not cheap, so enable it only for debugging.
   bool IsPrivate = false;
-  for (auto *Hdrs : {&RequestedModule->PrivateHeaders,
-                     &RequestedModule->PrivateTextualHeaders})
+  auto HeaderList = {&RequestedModule->PrivateHeaders,
+                     &RequestedModule->PrivateTextualHeaders};
+  for (auto *Hdrs : HeaderList)
     IsPrivate |=
         std::find(Hdrs->begin(), Hdrs->end(), IncFileEnt) != Hdrs->end();
   assert(IsPrivate == IsPrivateRole && "inconsistent headers and roles");
