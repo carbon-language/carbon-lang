@@ -692,4 +692,4 @@ _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_STD_VER > 11
 
-#endif  // _LIBCPP_ARRAY
+#endif  // _LIBCPP_OPTIONAL
