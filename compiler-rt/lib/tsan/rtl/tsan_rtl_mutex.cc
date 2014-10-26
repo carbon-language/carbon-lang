@@ -475,12 +475,11 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   InternalScopedBuffer<StackTrace> stacks(2 * DDReport::kMaxLoopSize);
   uptr dummy_pc = 0x42;
   for (int i = 0; i < r->n; i++) {
-    uptr size;
     for (int j = 0; j < (flags()->second_deadlock_stack ? 2 : 1); j++) {
       u32 stk = r->loop[i].stk[j];
       if (stk) {
-        const uptr *trace = StackDepotGet(stk, &size);
-        stacks[i].Init(const_cast<uptr *>(trace), size);
+        __sanitizer::StackTrace stack = StackDepotGet(stk);
+        stacks[i].Init(const_cast<uptr *>(stack.trace), stack.size);
       } else {
         // Sometimes we fail to extract the stack trace (FIXME: investigate),
         // but we should still produce some stack trace in the report.

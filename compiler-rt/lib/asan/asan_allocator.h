@@ -45,8 +45,8 @@ class AsanChunkView {
   uptr AllocTid();
   uptr FreeTid();
   bool Eq(const AsanChunkView &c) const { return chunk_ == c.chunk_; }
-  void GetAllocStack(StackTrace *stack);
-  void GetFreeStack(StackTrace *stack);
+  StackTrace GetAllocStack();
+  StackTrace GetFreeStack();
   bool AddrIsInside(uptr addr, uptr access_size, sptr *offset) {
     if (addr >= Beg() && (addr + access_size) <= End()) {
       *offset = addr - Beg();
@@ -139,20 +139,20 @@ struct AsanThreadLocalMallocStorage {
   AsanThreadLocalMallocStorage() {}
 };
 
-void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
+void *asan_memalign(uptr alignment, uptr size, BufferedStackTrace *stack,
                     AllocType alloc_type);
-void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type);
-void asan_sized_free(void *ptr, uptr size, StackTrace *stack,
+void asan_free(void *ptr, BufferedStackTrace *stack, AllocType alloc_type);
+void asan_sized_free(void *ptr, uptr size, BufferedStackTrace *stack,
                      AllocType alloc_type);
 
-void *asan_malloc(uptr size, StackTrace *stack);
-void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack);
-void *asan_realloc(void *p, uptr size, StackTrace *stack);
-void *asan_valloc(uptr size, StackTrace *stack);
-void *asan_pvalloc(uptr size, StackTrace *stack);
+void *asan_malloc(uptr size, BufferedStackTrace *stack);
+void *asan_calloc(uptr nmemb, uptr size, BufferedStackTrace *stack);
+void *asan_realloc(void *p, uptr size, BufferedStackTrace *stack);
+void *asan_valloc(uptr size, BufferedStackTrace *stack);
+void *asan_pvalloc(uptr size, BufferedStackTrace *stack);
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
-                          StackTrace *stack);
+                        BufferedStackTrace *stack);
 uptr asan_malloc_usable_size(void *ptr, uptr pc, uptr bp);
 
 uptr asan_mz_size(const void *ptr);

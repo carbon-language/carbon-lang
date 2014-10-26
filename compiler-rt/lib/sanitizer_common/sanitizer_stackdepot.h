@@ -15,6 +15,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_stacktrace.h"
 
 namespace __sanitizer {
 
@@ -35,10 +36,11 @@ struct StackDepotHandle {
 const int kStackDepotMaxUseCount = 1U << 20;
 
 StackDepotStats *StackDepotGetStats();
+// FIXME: Pass StackTrace as an input argument here.
 u32 StackDepotPut(const uptr *stack, uptr size);
 StackDepotHandle StackDepotPut_WithHandle(const uptr *stack, uptr size);
 // Retrieves a stored stack trace by the id.
-const uptr *StackDepotGet(u32 id, uptr *size);
+StackTrace StackDepotGet(u32 id);
 
 void StackDepotLockAll();
 void StackDepotUnlockAll();

@@ -20,30 +20,26 @@ namespace __sanitizer {
 TEST(SanitizerCommon, StackDepotBasic) {
   uptr s1[] = {1, 2, 3, 4, 5};
   u32 i1 = StackDepotPut(s1, ARRAY_SIZE(s1));
-  uptr sz1 = 0;
-  const uptr *sp1 = StackDepotGet(i1, &sz1);
-  EXPECT_NE(sp1, (uptr*)0);
-  EXPECT_EQ(sz1, ARRAY_SIZE(s1));
-  EXPECT_EQ(internal_memcmp(sp1, s1, sizeof(s1)), 0);
+  StackTrace stack = StackDepotGet(i1);
+  EXPECT_NE(stack.trace, (uptr*)0);
+  EXPECT_EQ(ARRAY_SIZE(s1), stack.size);
+  EXPECT_EQ(0, internal_memcmp(stack.trace, s1, sizeof(s1)));
 }
 
 TEST(SanitizerCommon, StackDepotAbsent) {
-  uptr sz1 = 0;
-  const uptr *sp1 = StackDepotGet((1 << 30) - 1, &sz1);
-  EXPECT_EQ(sp1, (uptr*)0);
+  StackTrace stack = StackDepotGet((1 << 30) - 1);
+  EXPECT_EQ((uptr*)0, stack.trace);
 }
 
 TEST(SanitizerCommon, StackDepotEmptyStack) {
   u32 i1 = StackDepotPut(0, 0);
-  uptr sz1 = 0;
-  const uptr *sp1 = StackDepotGet(i1, &sz1);
-  EXPECT_EQ(sp1, (uptr*)0);
+  StackTrace stack = StackDepotGet(i1);
+  EXPECT_EQ((uptr*)0, stack.trace);
 }
 
 TEST(SanitizerCommon, StackDepotZeroId) {
-  uptr sz1 = 0;
-  const uptr *sp1 = StackDepotGet(0, &sz1);
-  EXPECT_EQ(sp1, (uptr*)0);
+  StackTrace stack = StackDepotGet(0);
+  EXPECT_EQ((uptr*)0, stack.trace);
 }
 
 TEST(SanitizerCommon, StackDepotSame) {
@@ -51,11 +47,10 @@ TEST(SanitizerCommon, StackDepotSame) {
   u32 i1 = StackDepotPut(s1, ARRAY_SIZE(s1));
   u32 i2 = StackDepotPut(s1, ARRAY_SIZE(s1));
   EXPECT_EQ(i1, i2);
-  uptr sz1 = 0;
-  const uptr *sp1 = StackDepotGet(i1, &sz1);
-  EXPECT_NE(sp1, (uptr*)0);
-  EXPECT_EQ(sz1, ARRAY_SIZE(s1));
-  EXPECT_EQ(internal_memcmp(sp1, s1, sizeof(s1)), 0);
+  StackTrace stack = StackDepotGet(i1);
+  EXPECT_NE(stack.trace, (uptr*)0);
+  EXPECT_EQ(ARRAY_SIZE(s1), stack.size);
+  EXPECT_EQ(0, internal_memcmp(stack.trace, s1, sizeof(s1)));
 }
 
 TEST(SanitizerCommon, StackDepotSeveral) {
@@ -80,12 +75,12 @@ TEST(SanitizerCommon, StackDepotReverseMap) {
   StackDepotReverseMap map;
 
   for (uptr i = 0; i < 4; i++) {
-    uptr sz_depot, sz_map;
-    const uptr *sp_depot, *sp_map;
-    sp_depot = StackDepotGet(ids[i], &sz_depot);
+    uptr sz_map;
+    const uptr *sp_map;
+    StackTrace stack = StackDepotGet(ids[i]);
     sp_map = map.Get(ids[i], &sz_map);
-    EXPECT_EQ(sz_depot, sz_map);
-    EXPECT_EQ(sp_depot, sp_map);
+    EXPECT_EQ(stack.size, sz_map);
+    EXPECT_EQ(stack.trace, sp_map);
   }
 }
 

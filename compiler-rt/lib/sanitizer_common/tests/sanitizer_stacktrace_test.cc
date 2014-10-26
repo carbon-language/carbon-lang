@@ -35,7 +35,7 @@ class FastUnwindTest : public ::testing::Test {
   uptr start_pc;
   uptr fake_top;
   uptr fake_bottom;
-  StackTrace trace;
+  BufferedStackTrace trace;
 };
 
 static uptr PC(uptr idx) {
@@ -139,7 +139,7 @@ TEST_F(FastUnwindTest, FPBelowPrevFP) {
 TEST(SlowUnwindTest, ShortStackTrace) {
   if (StackTrace::WillUseFastUnwind(false))
     return;
-  StackTrace stack;
+  BufferedStackTrace stack;
   uptr pc = StackTrace::GetCurrentPc();
   uptr bp = GET_CURRENT_FRAME();
   stack.Unwind(0, pc, bp, 0, 0, 0, false);

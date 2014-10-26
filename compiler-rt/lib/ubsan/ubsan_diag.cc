@@ -33,7 +33,7 @@ static void MaybePrintStackTrace(uptr pc, uptr bp) {
   // under ASan).
   if (StackTrace::WillUseFastUnwind(false))
     return;
-  StackTrace stack;
+  BufferedStackTrace stack;
   stack.Unwind(kStackTraceMax, pc, bp, 0, 0, 0, false);
   stack.Print();
 }

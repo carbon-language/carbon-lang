@@ -57,35 +57,41 @@ void NORETURN
 void NORETURN ReportSIGSEGV(const char *description, uptr pc, uptr sp, uptr bp,
                             void *context, uptr addr);
 void NORETURN ReportNewDeleteSizeMismatch(uptr addr, uptr delete_size,
-                                          StackTrace *free_stack);
-void NORETURN ReportDoubleFree(uptr addr, StackTrace *free_stack);
-void NORETURN ReportFreeNotMalloced(uptr addr, StackTrace *free_stack);
-void NORETURN ReportAllocTypeMismatch(uptr addr, StackTrace *free_stack,
+                                          BufferedStackTrace *free_stack);
+void NORETURN ReportDoubleFree(uptr addr, BufferedStackTrace *free_stack);
+void NORETURN ReportFreeNotMalloced(uptr addr, BufferedStackTrace *free_stack);
+void NORETURN ReportAllocTypeMismatch(uptr addr, BufferedStackTrace *free_stack,
                                       AllocType alloc_type,
                                       AllocType dealloc_type);
-void NORETURN ReportMallocUsableSizeNotOwned(uptr addr,
-                                             StackTrace *stack);
 void NORETURN
-ReportSanitizerGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack);
-void NORETURN ReportStringFunctionMemoryRangesOverlap(
-    const char *function, const char *offset1, uptr length1,
-    const char *offset2, uptr length2, StackTrace *stack);
+    ReportMallocUsableSizeNotOwned(uptr addr, BufferedStackTrace *stack);
 void NORETURN
-ReportStringFunctionSizeOverflow(uptr offset, uptr size, StackTrace *stack);
+    ReportSanitizerGetAllocatedSizeNotOwned(uptr addr,
+                                            BufferedStackTrace *stack);
 void NORETURN
-ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end, uptr old_mid,
-                                             uptr new_mid, StackTrace *stack);
+    ReportStringFunctionMemoryRangesOverlap(const char *function,
+                                            const char *offset1, uptr length1,
+                                            const char *offset2, uptr length2,
+                                            BufferedStackTrace *stack);
+void NORETURN ReportStringFunctionSizeOverflow(uptr offset, uptr size,
+                                               BufferedStackTrace *stack);
+void NORETURN
+    ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end,
+                                                 uptr old_mid, uptr new_mid,
+                                                 BufferedStackTrace *stack);
 
 void NORETURN
 ReportODRViolation(const __asan_global *g1, u32 stack_id1,
                    const __asan_global *g2, u32 stack_id2);
 
 // Mac-specific errors and warnings.
-void WarnMacFreeUnallocated(
-    uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack);
-void NORETURN ReportMacMzReallocUnknown(
-    uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack);
-void NORETURN ReportMacCfReallocUnknown(
-    uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack);
+void WarnMacFreeUnallocated(uptr addr, uptr zone_ptr, const char *zone_name,
+                            BufferedStackTrace *stack);
+void NORETURN ReportMacMzReallocUnknown(uptr addr, uptr zone_ptr,
+                                        const char *zone_name,
+                                        BufferedStackTrace *stack);
+void NORETURN ReportMacCfReallocUnknown(uptr addr, uptr zone_ptr,
+                                        const char *zone_name,
+                                        BufferedStackTrace *stack);
 
 }  // namespace __asan

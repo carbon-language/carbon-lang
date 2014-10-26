@@ -13,16 +13,11 @@
 #ifndef TSAN_STACK_TRACE_H
 #define TSAN_STACK_TRACE_H
 
-//#include "sanitizer_common/sanitizer_atomic.h"
-//#include "sanitizer_common/sanitizer_common.h"
-//#include "sanitizer_common/sanitizer_deadlock_detector_interface.h"
 #include "tsan_defs.h"
-//#include "tsan_clock.h"
-//#include "tsan_mutex.h"
-//#include "tsan_dense_alloc.h"
 
 namespace __tsan {
 
+// FIXME: Delete this class in favor of __sanitizer::StackTrace.
 class StackTrace {
  public:
   StackTrace();
@@ -38,7 +33,6 @@ class StackTrace {
   uptr Size() const;
   uptr Get(uptr i) const;
   const uptr *Begin() const;
-  void CopyFrom(const StackTrace& other);
 
  private:
   uptr n_;

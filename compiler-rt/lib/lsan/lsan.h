@@ -15,17 +15,17 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 
-#define GET_STACK_TRACE(max_size, fast)                                     \
-  StackTrace stack;                                                         \
-  {                                                                         \
-    uptr stack_top = 0, stack_bottom = 0;                                   \
-    ThreadContext *t;                                                       \
-    if (fast && (t = CurrentThreadContext())) {                             \
-      stack_top = t->stack_end();                                           \
-      stack_bottom = t->stack_begin();                                      \
-    }                                                                       \
-    stack.Unwind(max_size, StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(), \
-                 /* context */ 0, stack_top, stack_bottom, fast);           \
+#define GET_STACK_TRACE(max_size, fast)                                        \
+  BufferedStackTrace stack;                                                    \
+  {                                                                            \
+    uptr stack_top = 0, stack_bottom = 0;                                      \
+    ThreadContext *t;                                                          \
+    if (fast && (t = CurrentThreadContext())) {                                \
+      stack_top = t->stack_end();                                              \
+      stack_bottom = t->stack_begin();                                         \
+    }                                                                          \
+    stack.Unwind(max_size, StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(),    \
+                 /* context */ 0, stack_top, stack_bottom, fast);              \
   }
 
 #define GET_STACK_TRACE_FATAL \

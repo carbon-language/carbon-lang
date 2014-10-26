@@ -95,7 +95,7 @@ uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
 }
 
 struct UnwindTraceArg {
-  StackTrace *stack;
+  BufferedStackTrace *stack;
   uptr max_depth;
 };
 
@@ -103,27 +103,27 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx, void *param) {
   UnwindTraceArg *arg = (UnwindTraceArg*)param;
   CHECK_LT(arg->stack->size, arg->max_depth);
   uptr pc = Unwind_GetIP(ctx);
-  arg->stack->trace[arg->stack->size++] = pc;
+  arg->stack->trace_buffer[arg->stack->size++] = pc;
   if (arg->stack->size == arg->max_depth) return UNWIND_STOP;
   return UNWIND_CONTINUE;
 }
 
-void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
+void BufferedStackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   CHECK_GE(max_depth, 2);
   size = 0;
   UnwindTraceArg arg = {this, Min(max_depth + 1, kStackTraceMax)};
   _Unwind_Backtrace(Unwind_Trace, &arg);
   // We need to pop a few frames so that pc is on top.
   uptr to_pop = LocatePcInTrace(pc);
-  // trace[0] belongs to the current function so we always pop it.
+  // trace_buffer[0] belongs to the current function so we always pop it.
   if (to_pop == 0)
     to_pop = 1;
   PopStackFrames(to_pop);
-  trace[0] = pc;
+  trace_buffer[0] = pc;
 }
 
-void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
-                                            uptr max_depth) {
+void BufferedStackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
+                                                    uptr max_depth) {
   CHECK_GE(max_depth, 2);
   if (!unwind_backtrace_signal_arch) {
     SlowUnwindStack(pc, max_depth);
@@ -145,7 +145,7 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
   // +2 compensate for libcorkscrew unwinder returning addresses of call
   // instructions instead of raw return addresses.
   for (sptr i = 0; i < res; ++i)
-    trace[size++] = frames[i].absolute_pc + 2;
+    trace_buffer[size++] = frames[i].absolute_pc + 2;
 }
 
 }  // namespace __sanitizer

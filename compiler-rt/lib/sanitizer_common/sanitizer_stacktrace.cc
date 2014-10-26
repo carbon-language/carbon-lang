@@ -65,11 +65,10 @@ static inline uhwptr *GetCanonicFrame(uptr bp,
 #endif
 }
 
-void StackTrace::FastUnwindStack(uptr pc, uptr bp,
-                                 uptr stack_top, uptr stack_bottom,
-                                 uptr max_depth) {
+void BufferedStackTrace::FastUnwindStack(uptr pc, uptr bp, uptr stack_top,
+                                         uptr stack_bottom, uptr max_depth) {
   CHECK_GE(max_depth, 2);
-  trace[0] = pc;
+  trace_buffer[0] = pc;
   size = 1;
   if (stack_top < 4096) return;  // Sanity check for stack top.
   uhwptr *frame = GetCanonicFrame(bp, stack_top, stack_bottom);
@@ -82,7 +81,7 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
          size < max_depth) {
     uhwptr pc1 = frame[1];
     if (pc1 != pc) {
-      trace[size++] = (uptr) pc1;
+      trace_buffer[size++] = (uptr) pc1;
     }
     bottom = (uptr)frame;
     frame = GetCanonicFrame((uptr)frame[0], stack_top, bottom);
@@ -93,15 +92,15 @@ static bool MatchPc(uptr cur_pc, uptr trace_pc, uptr threshold) {
   return cur_pc - trace_pc <= threshold || trace_pc - cur_pc <= threshold;
 }
 
-void StackTrace::PopStackFrames(uptr count) {
+void BufferedStackTrace::PopStackFrames(uptr count) {
   CHECK_LT(count, size);
   size -= count;
   for (uptr i = 0; i < size; ++i) {
-    trace[i] = trace[i + count];
+    trace_buffer[i] = trace_buffer[i + count];
   }
 }
 
-uptr StackTrace::LocatePcInTrace(uptr pc) {
+uptr BufferedStackTrace::LocatePcInTrace(uptr pc) {
   // Use threshold to find PC in stack trace, as PC we want to unwind from may
   // slightly differ from return address in the actual unwinded stack trace.
   const int kPcThreshold = 288;

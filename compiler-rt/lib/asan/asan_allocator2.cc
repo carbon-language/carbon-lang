@@ -182,20 +182,19 @@ uptr AsanChunkView::UsedSize() { return chunk_->UsedSize(); }
 uptr AsanChunkView::AllocTid() { return chunk_->alloc_tid; }
 uptr AsanChunkView::FreeTid() { return chunk_->free_tid; }
 
-static void GetStackTraceFromId(u32 id, StackTrace *stack) {
+static StackTrace GetStackTraceFromId(u32 id) {
   CHECK(id);
-  uptr size = 0;
-  const uptr *trace = StackDepotGet(id, &size);
-  CHECK(trace);
-  stack->CopyFrom(trace, size);
+  StackTrace res = StackDepotGet(id);
+  CHECK(res.trace);
+  return res;
 }
 
-void AsanChunkView::GetAllocStack(StackTrace *stack) {
-  GetStackTraceFromId(chunk_->alloc_context_id, stack);
+StackTrace AsanChunkView::GetAllocStack() {
+  return GetStackTraceFromId(chunk_->alloc_context_id);
 }
 
-void AsanChunkView::GetFreeStack(StackTrace *stack) {
-  GetStackTraceFromId(chunk_->free_context_id, stack);
+StackTrace AsanChunkView::GetFreeStack() {
+  return GetStackTraceFromId(chunk_->free_context_id);
 }
 
 struct QuarantineCallback;
@@ -263,7 +262,7 @@ void ReInitializeAllocator() {
   quarantine.Init((uptr)flags()->quarantine_size, kMaxThreadLocalQuarantine);
 }
 
-static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
+static void *Allocate(uptr size, uptr alignment, BufferedStackTrace *stack,
                       AllocType alloc_type, bool can_fill) {
   if (UNLIKELY(!asan_inited))
     AsanInitFromRtl();
@@ -391,15 +390,16 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   return res;
 }
 
-static void ReportInvalidFree(void *ptr, u8 chunk_state, StackTrace *stack) {
+static void ReportInvalidFree(void *ptr, u8 chunk_state,
+                              BufferedStackTrace *stack) {
   if (chunk_state == CHUNK_QUARANTINE)
     ReportDoubleFree((uptr)ptr, stack);
   else
     ReportFreeNotMalloced((uptr)ptr, stack);
 }
 
-static void AtomicallySetQuarantineFlag(AsanChunk *m,
-                                        void *ptr, StackTrace *stack) {
+static void AtomicallySetQuarantineFlag(AsanChunk *m, void *ptr,
+                                        BufferedStackTrace *stack) {
   u8 old_chunk_state = CHUNK_ALLOCATED;
   // Flip the chunk_state atomically to avoid race on double-free.
   if (!atomic_compare_exchange_strong((atomic_uint8_t*)m, &old_chunk_state,
@@ -410,8 +410,8 @@ static void AtomicallySetQuarantineFlag(AsanChunk *m,
 
 // Expects the chunk to already be marked as quarantined by using
 // AtomicallySetQuarantineFlag.
-static void QuarantineChunk(AsanChunk *m, void *ptr,
-                            StackTrace *stack, AllocType alloc_type) {
+static void QuarantineChunk(AsanChunk *m, void *ptr, BufferedStackTrace *stack,
+                            AllocType alloc_type) {
   CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
 
   if (m->alloc_type != alloc_type && flags()->alloc_dealloc_mismatch)
@@ -447,7 +447,7 @@ static void QuarantineChunk(AsanChunk *m, void *ptr,
   }
 }
 
-static void Deallocate(void *ptr, uptr delete_size, StackTrace *stack,
+static void Deallocate(void *ptr, uptr delete_size, BufferedStackTrace *stack,
                        AllocType alloc_type) {
   uptr p = reinterpret_cast<uptr>(ptr);
   if (p == 0) return;
@@ -464,7 +464,8 @@ static void Deallocate(void *ptr, uptr delete_size, StackTrace *stack,
   QuarantineChunk(m, ptr, stack, alloc_type);
 }
 
-static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
+static void *Reallocate(void *old_ptr, uptr new_size,
+                        BufferedStackTrace *stack) {
   CHECK(old_ptr && new_size);
   uptr p = reinterpret_cast<uptr>(old_ptr);
   uptr chunk_beg = p - kChunkHeaderSize;
@@ -577,25 +578,25 @@ void PrintInternalAllocatorStats() {
   allocator.PrintStats();
 }
 
-void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
+void *asan_memalign(uptr alignment, uptr size, BufferedStackTrace *stack,
                     AllocType alloc_type) {
   return Allocate(size, alignment, stack, alloc_type, true);
 }
 
-void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type) {
+void asan_free(void *ptr, BufferedStackTrace *stack, AllocType alloc_type) {
   Deallocate(ptr, 0, stack, alloc_type);
 }
 
-void asan_sized_free(void *ptr, uptr size, StackTrace *stack,
+void asan_sized_free(void *ptr, uptr size, BufferedStackTrace *stack,
                      AllocType alloc_type) {
   Deallocate(ptr, size, stack, alloc_type);
 }
 
-void *asan_malloc(uptr size, StackTrace *stack) {
+void *asan_malloc(uptr size, BufferedStackTrace *stack) {
   return Allocate(size, 8, stack, FROM_MALLOC, true);
 }
 
-void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
+void *asan_calloc(uptr nmemb, uptr size, BufferedStackTrace *stack) {
   if (CallocShouldReturnNullDueToOverflow(size, nmemb))
     return AllocatorReturnNull();
   void *ptr = Allocate(nmemb * size, 8, stack, FROM_MALLOC, false);
@@ -606,7 +607,7 @@ void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
   return ptr;
 }
 
-void *asan_realloc(void *p, uptr size, StackTrace *stack) {
+void *asan_realloc(void *p, uptr size, BufferedStackTrace *stack) {
   if (p == 0)
     return Allocate(size, 8, stack, FROM_MALLOC, true);
   if (size == 0) {
@@ -616,11 +617,11 @@ void *asan_realloc(void *p, uptr size, StackTrace *stack) {
   return Reallocate(p, size, stack);
 }
 
-void *asan_valloc(uptr size, StackTrace *stack) {
+void *asan_valloc(uptr size, BufferedStackTrace *stack) {
   return Allocate(size, GetPageSizeCached(), stack, FROM_MALLOC, true);
 }
 
-void *asan_pvalloc(uptr size, StackTrace *stack) {
+void *asan_pvalloc(uptr size, BufferedStackTrace *stack) {
   uptr PageSize = GetPageSizeCached();
   size = RoundUpTo(size, PageSize);
   if (size == 0) {
@@ -631,7 +632,7 @@ void *asan_pvalloc(uptr size, StackTrace *stack) {
 }
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
-                        StackTrace *stack) {
+                        BufferedStackTrace *stack) {
   void *ptr = Allocate(size, alignment, stack, FROM_MALLOC, true);
   CHECK(IsAligned((uptr)ptr, alignment));
   *memptr = ptr;

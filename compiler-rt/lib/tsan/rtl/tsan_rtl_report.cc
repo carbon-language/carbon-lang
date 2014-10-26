@@ -107,12 +107,11 @@ static void StackStripMain(ReportStack *stack) {
 ReportStack *SymbolizeStackId(u32 stack_id) {
   if (stack_id == 0)
     return 0;
-  uptr ssz = 0;
-  const uptr *stack = StackDepotGet(stack_id, &ssz);
-  if (stack == 0)
+  __sanitizer::StackTrace stack = StackDepotGet(stack_id);
+  if (stack.trace == nullptr)
     return 0;
   StackTrace trace;
-  trace.Init(stack, ssz);
+  trace.Init(stack.trace, stack.size);
   return SymbolizeStack(trace);
 }
 
@@ -691,14 +690,15 @@ void PrintCurrentStack(ThreadState *thr, uptr pc) {
 
 void PrintCurrentStackSlow() {
 #ifndef TSAN_GO
-  __sanitizer::StackTrace *ptrace = new(internal_alloc(MBlockStackTrace,
-      sizeof(__sanitizer::StackTrace))) __sanitizer::StackTrace;
+  __sanitizer::BufferedStackTrace *ptrace = new(
+      internal_alloc(MBlockStackTrace, sizeof(__sanitizer::BufferedStackTrace)))
+      __sanitizer::BufferedStackTrace();
   ptrace->Unwind(kStackTraceMax, __sanitizer::StackTrace::GetCurrentPc(), 0, 0,
                  0, 0, false);
   for (uptr i = 0; i < ptrace->size / 2; i++) {
-    uptr tmp = ptrace->trace[i];
-    ptrace->trace[i] = ptrace->trace[ptrace->size - i - 1];
-    ptrace->trace[ptrace->size - i - 1] = tmp;
+    uptr tmp = ptrace->trace_buffer[i];
+    ptrace->trace_buffer[i] = ptrace->trace_buffer[ptrace->size - i - 1];
+    ptrace->trace_buffer[ptrace->size - i - 1] = tmp;
   }
   StackTrace trace;
   trace.Init(ptrace->trace, ptrace->size);

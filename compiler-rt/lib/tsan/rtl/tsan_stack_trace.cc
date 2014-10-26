@@ -10,7 +10,6 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
-//#include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_stack_trace.h"
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
@@ -85,11 +84,6 @@ void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
     s_[n_] = toppc;
     n_++;
   }
-}
-
-void StackTrace::CopyFrom(const StackTrace& other) {
-  Reset();
-  Init(other.Begin(), other.Size());
 }
 
 bool StackTrace::IsEmpty() const {

@@ -86,22 +86,19 @@ uptr AsanGetStack(uptr addr, uptr *trace, uptr size, u32 *thread_id,
   AsanChunkView chunk = FindHeapChunkByAddress(addr);
   if (!chunk.IsValid()) return 0;
 
-  StackTrace stack;
+  StackTrace stack(nullptr, 0);
   if (alloc_stack) {
     if (chunk.AllocTid() == kInvalidTid) return 0;
-    chunk.GetAllocStack(&stack);
+    stack = chunk.GetAllocStack();
     if (thread_id) *thread_id = chunk.AllocTid();
   } else {
     if (chunk.FreeTid() == kInvalidTid) return 0;
-    chunk.GetFreeStack(&stack);
+    stack = chunk.GetFreeStack();
     if (thread_id) *thread_id = chunk.FreeTid();
   }
 
   if (trace && size) {
-    if (size > kStackTraceMax)
-      size = kStackTraceMax;
-    if (size > stack.size)
-      size = stack.size;
+    size = Min(size, Min(stack.size, kStackTraceMax));
     for (uptr i = 0; i < size; i++)
       trace[i] = StackTrace::GetPreviousInstructionPc(stack.trace[i]);
 

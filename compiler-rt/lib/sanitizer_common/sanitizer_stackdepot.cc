@@ -18,6 +18,7 @@
 
 namespace __sanitizer {
 
+// FIXME: Get rid of this class in favor of StackTrace.
 struct StackDepotDesc {
   const uptr *stack;
   uptr size;
@@ -122,10 +123,9 @@ StackDepotHandle StackDepotPut_WithHandle(const uptr *stack, uptr size) {
   return theDepot.Put(desc);
 }
 
-const uptr *StackDepotGet(u32 id, uptr *size) {
+StackTrace StackDepotGet(u32 id) {
   StackDepotDesc desc = theDepot.Get(id);
-  *size = desc.size;
-  return desc.stack;
+  return StackTrace(desc.stack, desc.size);
 }
 
 void StackDepotLockAll() {

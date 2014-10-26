@@ -22,18 +22,18 @@ static void PrintStackFramePrefix(InternalScopedString *buffer, uptr frame_num,
   buffer->append("    #%zu 0x%zx", frame_num, pc);
 }
 
-void StackTrace::PrintStack(const uptr *addr, uptr size) {
-  if (addr == 0 || size == 0) {
+void StackTrace::Print() const {
+  if (trace == nullptr || size == 0) {
     Printf("    <empty stack>\n\n");
     return;
   }
   InternalScopedBuffer<AddressInfo> addr_frames(64);
   InternalScopedString frame_desc(GetPageSizeCached() * 2);
   uptr frame_num = 0;
-  for (uptr i = 0; i < size && addr[i]; i++) {
+  for (uptr i = 0; i < size && trace[i]; i++) {
     // PCs in stack traces are actually the return addresses, that is,
     // addresses of the next instructions after the call.
-    uptr pc = GetPreviousInstructionPc(addr[i]);
+    uptr pc = GetPreviousInstructionPc(trace[i]);
     uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
         pc, addr_frames.data(), addr_frames.size());
     if (addr_frames_num == 0) {
@@ -68,9 +68,9 @@ void StackTrace::PrintStack(const uptr *addr, uptr size) {
   Printf("\n");
 }
 
-void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, void *context,
-                        uptr stack_top, uptr stack_bottom,
-                        bool request_fast_unwind) {
+void BufferedStackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, void *context,
+                                uptr stack_top, uptr stack_bottom,
+                                bool request_fast_unwind) {
   top_frame_bp = (max_depth > 0) ? bp : 0;
   // Avoid doing any work for small max_depth.
   if (max_depth == 0) {
@@ -79,7 +79,7 @@ void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, void *context,
   }
   if (max_depth == 1) {
     size = 1;
-    trace[0] = pc;
+    trace_buffer[0] = pc;
     return;
   }
   if (!WillUseFastUnwind(request_fast_unwind)) {

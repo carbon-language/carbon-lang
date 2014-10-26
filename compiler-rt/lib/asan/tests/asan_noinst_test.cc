@@ -52,19 +52,19 @@ TEST(AddressSanitizer, InternalSimpleDeathTest) {
 
 static void MallocStress(size_t n) {
   u32 seed = my_rand();
-  StackTrace stack1;
-  stack1.trace[0] = 0xa123;
-  stack1.trace[1] = 0xa456;
+  BufferedStackTrace stack1;
+  stack1.trace_buffer[0] = 0xa123;
+  stack1.trace_buffer[1] = 0xa456;
   stack1.size = 2;
 
-  StackTrace stack2;
-  stack2.trace[0] = 0xb123;
-  stack2.trace[1] = 0xb456;
+  BufferedStackTrace stack2;
+  stack2.trace_buffer[0] = 0xb123;
+  stack2.trace_buffer[1] = 0xb456;
   stack2.size = 2;
 
-  StackTrace stack3;
-  stack3.trace[0] = 0xc123;
-  stack3.trace[1] = 0xc456;
+  BufferedStackTrace stack3;
+  stack3.trace_buffer[0] = 0xc123;
+  stack3.trace_buffer[1] = 0xc456;
   stack3.size = 2;
 
   std::vector<void *> vec;
@@ -140,8 +140,8 @@ TEST(AddressSanitizer, DISABLED_InternalPrintShadow) {
 }
 
 TEST(AddressSanitizer, QuarantineTest) {
-  StackTrace stack;
-  stack.trace[0] = 0x890;
+  BufferedStackTrace stack;
+  stack.trace_buffer[0] = 0x890;
   stack.size = 1;
 
   const int size = 1024;
@@ -161,8 +161,8 @@ TEST(AddressSanitizer, QuarantineTest) {
 void *ThreadedQuarantineTestWorker(void *unused) {
   (void)unused;
   u32 seed = my_rand();
-  StackTrace stack;
-  stack.trace[0] = 0x890;
+  BufferedStackTrace stack;
+  stack.trace_buffer[0] = 0x890;
   stack.size = 1;
 
   for (size_t i = 0; i < 1000; i++) {
@@ -188,8 +188,8 @@ TEST(AddressSanitizer, ThreadedQuarantineTest) {
 
 void *ThreadedOneSizeMallocStress(void *unused) {
   (void)unused;
-  StackTrace stack;
-  stack.trace[0] = 0x890;
+  BufferedStackTrace stack;
+  stack.trace_buffer[0] = 0x890;
   stack.size = 1;
   const size_t kNumMallocs = 1000;
   for (int iter = 0; iter < 1000; iter++) {
@@ -241,8 +241,8 @@ TEST(AddressSanitizer, LoadStoreCallbacks) {
   uptr buggy_ptr;
 
   __asan_test_only_reported_buggy_pointer = &buggy_ptr;
-  StackTrace stack;
-  stack.trace[0] = 0x890;
+  BufferedStackTrace stack;
+  stack.trace_buffer[0] = 0x890;
   stack.size = 1;
 
   for (uptr len = 16; len <= 32; len++) {
