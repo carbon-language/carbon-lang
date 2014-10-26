@@ -399,12 +399,9 @@ void FileManager::FixupRelativePath(SmallVectorImpl<char> &path) const {
   path = NewPath;
 }
 
-std::unique_ptr<llvm::MemoryBuffer>
-FileManager::getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
-                              bool isVolatile, bool ShouldCloseOpenFile) {
-  std::unique_ptr<llvm::MemoryBuffer> Result;
-  std::error_code ec;
-
+llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
+FileManager::getBufferForFile(const FileEntry *Entry, bool isVolatile,
+                              bool ShouldCloseOpenFile) {
   uint64_t FileSize = Entry->getSize();
   // If there's a high enough chance that the file have changed since we
   // got its size, force a stat before opening it.
@@ -414,10 +411,9 @@ FileManager::getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
   const char *Filename = Entry->getName();
   // If the file is already open, use the open file descriptor.
   if (Entry->File) {
-    ec = Entry->File->getBuffer(Filename, Result, FileSize,
-                                /*RequiresNullTerminator=*/true, isVolatile);
-    if (ErrorStr)
-      *ErrorStr = ec.message();
+    auto Result =
+        Entry->File->getBuffer(Filename, FileSize,
+                               /*RequiresNullTerminator=*/true, isVolatile);
     // FIXME: we need a set of APIs that can make guarantees about whether a
     // FileEntry is open or not.
     if (ShouldCloseOpenFile)
@@ -427,40 +423,24 @@ FileManager::getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
 
   // Otherwise, open the file.
 
-  if (FileSystemOpts.WorkingDir.empty()) {
-    ec = FS->getBufferForFile(Filename, Result, FileSize,
-                              /*RequiresNullTerminator=*/true, isVolatile);
-    if (ec && ErrorStr)
-      *ErrorStr = ec.message();
-    return Result;
-  }
+  if (FileSystemOpts.WorkingDir.empty())
+    return FS->getBufferForFile(Filename, FileSize,
+                                /*RequiresNullTerminator=*/true, isVolatile);
 
   SmallString<128> FilePath(Entry->getName());
   FixupRelativePath(FilePath);
-  ec = FS->getBufferForFile(FilePath.str(), Result, FileSize,
-                            /*RequiresNullTerminator=*/true, isVolatile);
-  if (ec && ErrorStr)
-    *ErrorStr = ec.message();
-  return Result;
+  return FS->getBufferForFile(FilePath.str(), FileSize,
+                              /*RequiresNullTerminator=*/true, isVolatile);
 }
 
-std::unique_ptr<llvm::MemoryBuffer>
-FileManager::getBufferForFile(StringRef Filename, std::string *ErrorStr) {
-  std::unique_ptr<llvm::MemoryBuffer> Result;
-  std::error_code ec;
-  if (FileSystemOpts.WorkingDir.empty()) {
-    ec = FS->getBufferForFile(Filename, Result);
-    if (ec && ErrorStr)
-      *ErrorStr = ec.message();
-    return Result;
-  }
+llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
+FileManager::getBufferForFile(StringRef Filename) {
+  if (FileSystemOpts.WorkingDir.empty())
+    return FS->getBufferForFile(Filename);
 
   SmallString<128> FilePath(Filename);
   FixupRelativePath(FilePath);
-  ec = FS->getBufferForFile(FilePath.c_str(), Result);
-  if (ec && ErrorStr)
-    *ErrorStr = ec.message();
-  return Result;
+  return FS->getBufferForFile(FilePath.c_str());
 }
 
 /// getStatValue - Get the 'stat' information for the specified path,

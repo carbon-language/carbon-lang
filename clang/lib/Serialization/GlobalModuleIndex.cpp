@@ -494,9 +494,7 @@ namespace {
 bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
   // Open the module file.
 
-  std::string ErrorStr;
-  std::unique_ptr<llvm::MemoryBuffer> Buffer =
-      FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true);
+  auto Buffer = FileMgr.getBufferForFile(File, /*isVolatile=*/true);
   if (!Buffer) {
     return true;
   }
@@ -504,8 +502,8 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
   // Initialize the input stream
   llvm::BitstreamReader InStreamFile;
   llvm::BitstreamCursor InStream;
-  InStreamFile.init((const unsigned char *)Buffer->getBufferStart(),
-                  (const unsigned char *)Buffer->getBufferEnd());
+  InStreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
+                    (const unsigned char *)(*Buffer)->getBufferEnd());
   InStream.init(InStreamFile);
 
   // Sniff for the signature.

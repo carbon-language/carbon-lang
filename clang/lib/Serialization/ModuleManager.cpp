@@ -107,27 +107,26 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
       New->Buffer = std::move(Buffer);
     } else {
       // Open the AST file.
-      std::error_code ec;
+      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buf(
+          (std::error_code()));
       if (FileName == "-") {
-        llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buf =
-            llvm::MemoryBuffer::getSTDIN();
-        ec = Buf.getError();
-        if (ec)
-          ErrorStr = ec.message();
-        else
-          New->Buffer = std::move(Buf.get());
+        Buf = llvm::MemoryBuffer::getSTDIN();
       } else {
         // Leave the FileEntry open so if it gets read again by another
         // ModuleManager it must be the same underlying file.
         // FIXME: Because FileManager::getFile() doesn't guarantee that it will
         // give us an open file, this may not be 100% reliable.
-        New->Buffer = FileMgr.getBufferForFile(New->File, &ErrorStr,
-                                               /*IsVolatile*/ false,
-                                               /*ShouldClose*/ false);
+        Buf = FileMgr.getBufferForFile(New->File,
+                                       /*IsVolatile=*/false,
+                                       /*ShouldClose=*/false);
       }
-      
-      if (!New->Buffer)
+
+      if (!Buf) {
+        ErrorStr = Buf.getError().message();
         return Missing;
+      }
+
+      New->Buffer = std::move(*Buf);
     }
     
     // Initialize the stream

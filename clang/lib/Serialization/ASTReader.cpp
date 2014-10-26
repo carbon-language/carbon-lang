@@ -4074,19 +4074,18 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
                                              FileManager &FileMgr,
                                              DiagnosticsEngine &Diags) {
   // Open the AST file.
-  std::string ErrStr;
-  std::unique_ptr<llvm::MemoryBuffer> Buffer =
-      FileMgr.getBufferForFile(ASTFileName, &ErrStr);
+  auto Buffer = FileMgr.getBufferForFile(ASTFileName);
   if (!Buffer) {
-    Diags.Report(diag::err_fe_unable_to_read_pch_file) << ASTFileName << ErrStr;
+    Diags.Report(diag::err_fe_unable_to_read_pch_file)
+        << ASTFileName << Buffer.getError().message();
     return std::string();
   }
 
   // Initialize the stream
   llvm::BitstreamReader StreamFile;
   BitstreamCursor Stream;
-  StreamFile.init((const unsigned char *)Buffer->getBufferStart(),
-                  (const unsigned char *)Buffer->getBufferEnd());
+  StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
+                  (const unsigned char *)(*Buffer)->getBufferEnd());
   Stream.init(StreamFile);
 
   // Sniff for the signature.
@@ -4163,9 +4162,7 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
                                         FileManager &FileMgr,
                                         ASTReaderListener &Listener) {
   // Open the AST file.
-  std::string ErrStr;
-  std::unique_ptr<llvm::MemoryBuffer> Buffer =
-      FileMgr.getBufferForFile(Filename, &ErrStr);
+  auto Buffer = FileMgr.getBufferForFile(Filename);
   if (!Buffer) {
     return true;
   }
@@ -4173,8 +4170,8 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
   // Initialize the stream
   llvm::BitstreamReader StreamFile;
   BitstreamCursor Stream;
-  StreamFile.init((const unsigned char *)Buffer->getBufferStart(),
-                  (const unsigned char *)Buffer->getBufferEnd());
+  StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
+                  (const unsigned char *)(*Buffer)->getBufferEnd());
   Stream.init(StreamFile);
 
   // Sniff for the signature.

@@ -89,11 +89,9 @@ public:
   /// \brief Get the status of the file.
   virtual llvm::ErrorOr<Status> status() = 0;
   /// \brief Get the contents of the file as a \p MemoryBuffer.
-  virtual std::error_code getBuffer(const Twine &Name,
-                                    std::unique_ptr<llvm::MemoryBuffer> &Result,
-                                    int64_t FileSize = -1,
-                                    bool RequiresNullTerminator = true,
-                                    bool IsVolatile = false) = 0;
+  virtual llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
+  getBuffer(const Twine &Name, int64_t FileSize = -1,
+            bool RequiresNullTerminator = true, bool IsVolatile = false) = 0;
   /// \brief Closes the file.
   virtual std::error_code close() = 0;
   /// \brief Sets the name to use for this file.
@@ -188,16 +186,14 @@ public:
   /// \brief Get the status of the entry at \p Path, if one exists.
   virtual llvm::ErrorOr<Status> status(const Twine &Path) = 0;
   /// \brief Get a \p File object for the file at \p Path, if one exists.
-  virtual std::error_code openFileForRead(const Twine &Path,
-                                          std::unique_ptr<File> &Result) = 0;
+  virtual llvm::ErrorOr<std::unique_ptr<File>>
+  openFileForRead(const Twine &Path) = 0;
 
   /// This is a convenience method that opens a file, gets its content and then
   /// closes the file.
-  std::error_code getBufferForFile(const Twine &Name,
-                                   std::unique_ptr<llvm::MemoryBuffer> &Result,
-                                   int64_t FileSize = -1,
-                                   bool RequiresNullTerminator = true,
-                                   bool IsVolatile = false);
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
+  getBufferForFile(const Twine &Name, int64_t FileSize = -1,
+                   bool RequiresNullTerminator = true, bool IsVolatile = false);
 
   /// \brief Get a directory_iterator for \p Dir.
   /// \note The 'end' iterator is directory_iterator().
@@ -231,8 +227,8 @@ public:
   void pushOverlay(IntrusiveRefCntPtr<FileSystem> FS);
 
   llvm::ErrorOr<Status> status(const Twine &Path) override;
-  std::error_code openFileForRead(const Twine &Path,
-                                  std::unique_ptr<File> &Result) override;
+  llvm::ErrorOr<std::unique_ptr<File>>
+  openFileForRead(const Twine &Path) override;
   directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override;
 
   typedef FileSystemList::reverse_iterator iterator;

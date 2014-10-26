@@ -717,14 +717,14 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
     // pick up the correct size, and simply override their contents as we do for
     // STDIN.
     if (File->isNamedPipe()) {
-      std::string ErrorStr;
-      if (std::unique_ptr<llvm::MemoryBuffer> MB =
-              FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true)) {
+      auto MB = FileMgr.getBufferForFile(File, /*isVolatile=*/true);
+      if (MB) {
         // Create a new virtual file that will have the correct size.
-        File = FileMgr.getVirtualFile(InputFile, MB->getBufferSize(), 0);
-        SourceMgr.overrideFileContents(File, std::move(MB));
+        File = FileMgr.getVirtualFile(InputFile, (*MB)->getBufferSize(), 0);
+        SourceMgr.overrideFileContents(File, std::move(*MB));
       } else {
-        Diags.Report(diag::err_cannot_open_file) << InputFile << ErrorStr;
+        Diags.Report(diag::err_cannot_open_file) << InputFile
+                                                 << MB.getError().message();
         return false;
       }
     }

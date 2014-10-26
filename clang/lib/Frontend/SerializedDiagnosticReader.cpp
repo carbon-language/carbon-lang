@@ -21,13 +21,13 @@ std::error_code SerializedDiagnosticReader::readDiagnostics(StringRef File) {
   FileSystemOptions FO;
   FileManager FileMgr(FO);
 
-  std::unique_ptr<llvm::MemoryBuffer> Buffer = FileMgr.getBufferForFile(File);
+  auto Buffer = FileMgr.getBufferForFile(File);
   if (!Buffer)
     return SDError::CouldNotLoad;
 
   llvm::BitstreamReader StreamFile;
-  StreamFile.init((const unsigned char *)Buffer->getBufferStart(),
-                  (const unsigned char *)Buffer->getBufferEnd());
+  StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
+                  (const unsigned char *)(*Buffer)->getBufferEnd());
 
   llvm::BitstreamCursor Stream;
   Stream.init(StreamFile);

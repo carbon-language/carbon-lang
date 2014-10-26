@@ -101,9 +101,8 @@ class RewriterTestContext {
     // descriptor, which might not see the changes made.
     // FIXME: Figure out whether there is a way to get the SourceManger to
     // reopen the file.
-    std::unique_ptr<const llvm::MemoryBuffer> FileBuffer(
-        Files.getBufferForFile(Path, nullptr));
-    return FileBuffer->getBuffer();
+    auto FileBuffer = Files.getBufferForFile(Path);
+    return (*FileBuffer)->getBuffer();
   }
 
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;

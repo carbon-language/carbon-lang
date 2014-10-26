@@ -94,11 +94,9 @@ llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
     return Buffer.getPointer();
   }    
 
-  std::string ErrorStr;
   bool isVolatile = SM.userFilesAreVolatile() && !IsSystemFile;
-  Buffer.setPointer(SM.getFileManager()
-                        .getBufferForFile(ContentsEntry, &ErrorStr, isVolatile)
-                        .release());
+  auto BufferOrError =
+      SM.getFileManager().getBufferForFile(ContentsEntry, isVolatile);
 
   // If we were unable to open the file, then we are in an inconsistent
   // situation where the content cache referenced a file which no longer
@@ -110,7 +108,7 @@ llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
   // currently handle returning a null entry here. Ideally we should detect
   // that we are in an inconsistent situation and error out as quickly as
   // possible.
-  if (!Buffer.getPointer()) {
+  if (!BufferOrError) {
     StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
     Buffer.setPointer(MemoryBuffer::getNewMemBuffer(ContentsEntry->getSize(),
                                                     "<invalid>").release());
@@ -119,18 +117,21 @@ llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
       Ptr[i] = FillStr[i % FillStr.size()];
 
     if (Diag.isDiagnosticInFlight())
-      Diag.SetDelayedDiagnostic(diag::err_cannot_open_file, 
-                                ContentsEntry->getName(), ErrorStr);
-    else 
+      Diag.SetDelayedDiagnostic(diag::err_cannot_open_file,
+                                ContentsEntry->getName(),
+                                BufferOrError.getError().message());
+    else
       Diag.Report(Loc, diag::err_cannot_open_file)
-        << ContentsEntry->getName() << ErrorStr;
+          << ContentsEntry->getName() << BufferOrError.getError().message();
 
     Buffer.setInt(Buffer.getInt() | InvalidFlag);
     
     if (Invalid) *Invalid = true;
     return Buffer.getPointer();
   }
-  
+
+  Buffer.setPointer(BufferOrError->release());
+
   // Check that the file's size is the same as in the file entry (which may
   // have come from a stat cache).
   if (getRawBuffer()->getBufferSize() != (size_t)ContentsEntry->getSize()) {

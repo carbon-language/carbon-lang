@@ -683,10 +683,10 @@ void PrintPreambleAction::ExecuteAction() {
   }
 
   CompilerInstance &CI = getCompilerInstance();
-  if (std::unique_ptr<llvm::MemoryBuffer> Buffer =
-          CI.getFileManager().getBufferForFile(getCurrentFile())) {
+  auto Buffer = CI.getFileManager().getBufferForFile(getCurrentFile());
+  if (Buffer) {
     unsigned Preamble =
-        Lexer::ComputePreamble(Buffer->getBuffer(), CI.getLangOpts()).first;
-    llvm::outs().write(Buffer->getBufferStart(), Preamble);
+        Lexer::ComputePreamble((*Buffer)->getBuffer(), CI.getLangOpts()).first;
+    llvm::outs().write((*Buffer)->getBufferStart(), Preamble);
   }
 }

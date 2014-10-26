@@ -647,18 +647,15 @@ CodeGenAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   // loaded from bitcode, do so now.
   const std::string &LinkBCFile = CI.getCodeGenOpts().LinkBitcodeFile;
   if (!LinkModuleToUse && !LinkBCFile.empty()) {
-    std::string ErrorStr;
-
-    std::unique_ptr<llvm::MemoryBuffer> BCBuf =
-      CI.getFileManager().getBufferForFile(LinkBCFile, &ErrorStr);
+    auto BCBuf = CI.getFileManager().getBufferForFile(LinkBCFile);
     if (!BCBuf) {
       CI.getDiagnostics().Report(diag::err_cannot_open_file)
-        << LinkBCFile << ErrorStr;
+          << LinkBCFile << BCBuf.getError().message();
       return nullptr;
     }
 
     ErrorOr<llvm::Module *> ModuleOrErr =
-        getLazyBitcodeModule(std::move(BCBuf), *VMContext);
+        getLazyBitcodeModule(std::move(*BCBuf), *VMContext);
     if (std::error_code EC = ModuleOrErr.getError()) {
       CI.getDiagnostics().Report(diag::err_cannot_open_file)
         << LinkBCFile << EC.message();
