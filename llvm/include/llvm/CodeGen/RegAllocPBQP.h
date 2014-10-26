@@ -82,13 +82,43 @@ public:
                  ConservativelyAllocatable,
                  NotProvablyAllocatable } ReductionState;
 
-  NodeMetadata() : RS(Unprocessed), DeniedOpts(0), OptUnsafeEdges(nullptr){}
+  NodeMetadata()
+    : RS(Unprocessed), NumOpts(0), DeniedOpts(0), OptUnsafeEdges(nullptr),
+      VReg(0) {}
 
+  // FIXME: Re-implementing default behavior to work around MSVC. Remove once
+  // MSVC synthesizes move constructors properly.
+  NodeMetadata(const NodeMetadata &Other)
+    : RS(Other.RS), NumOpts(Other.NumOpts), DeniedOpts(Other.DeniedOpts),
+      OptUnsafeEdges(new unsigned[NumOpts]), VReg(Other.VReg),
+      OptionRegs(Other.OptionRegs) {
+    std::copy(&Other.OptUnsafeEdges[0], &Other.OptUnsafeEdges[NumOpts],
+              &OptUnsafeEdges[0]);
+  }
+
+  // FIXME: Re-implementing default behavior to work around MSVC. Remove once
+  // MSVC synthesizes move constructors properly.
   NodeMetadata(NodeMetadata &&Other)
     : RS(Other.RS), NumOpts(Other.NumOpts), DeniedOpts(Other.DeniedOpts),
       OptUnsafeEdges(std::move(Other.OptUnsafeEdges)), VReg(Other.VReg),
       OptionRegs(std::move(Other.OptionRegs)) {}
 
+  // FIXME: Re-implementing default behavior to work around MSVC. Remove once
+  // MSVC synthesizes move constructors properly.
+  NodeMetadata& operator=(const NodeMetadata &Other) {
+    RS = Other.RS;
+    NumOpts = Other.NumOpts;
+    DeniedOpts = Other.DeniedOpts;
+    OptUnsafeEdges = std::unique_ptr<unsigned[]>(new unsigned[NumOpts]);
+    std::copy(&Other.OptUnsafeEdges[0], &Other.OptUnsafeEdges[NumOpts],
+              &OptUnsafeEdges[0]);
+    VReg = Other.VReg;
+    OptionRegs = Other.OptionRegs;
+    return *this;
+  }
+
+  // FIXME: Re-implementing default behavior to work around MSVC. Remove once
+  // MSVC synthesizes move constructors properly.
   NodeMetadata& operator=(NodeMetadata &&Other) {
     RS = Other.RS;
     NumOpts = Other.NumOpts;
@@ -138,9 +168,6 @@ public:
   }
 
 private:
-  NodeMetadata(const NodeMetadata&) LLVM_DELETED_FUNCTION;
-  void operator=(const NodeMetadata&) LLVM_DELETED_FUNCTION;
-
   ReductionState RS;
   unsigned NumOpts;
   unsigned DeniedOpts;
