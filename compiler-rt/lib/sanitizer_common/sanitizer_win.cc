@@ -483,7 +483,7 @@ void BufferedStackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
                      &stack_frame, &ctx, NULL, &SymFunctionTableAccess64,
                      &SymGetModuleBase64, NULL) &&
          size < Min(max_depth, kStackTraceMax)) {
-    trace[size++] = (uptr)stack_frame.AddrPC.Offset;
+    trace_buffer[size++] = (uptr)stack_frame.AddrPC.Offset;
   }
 }
 #endif  // #if !SANITIZER_GO
