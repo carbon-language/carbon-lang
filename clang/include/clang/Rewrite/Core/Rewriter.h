@@ -27,7 +27,6 @@ namespace clang {
   class LangOptions;
   class Rewriter;
   class SourceManager;
-  class Stmt;
 
 /// RewriteBuffer - As code is rewritten, SourceBuffer's from the original
 /// input with modifications get a new RewriteBuffer associated with them.  The
@@ -254,10 +253,6 @@ public:
     return IncreaseIndentation(CharSourceRange::getTokenRange(range),
                                parentIndent);
   }
-
-  /// ConvertToString converts statement 'From' to a string using the
-  /// pretty printer.
-  std::string ConvertToString(Stmt *From);
 
   /// getEditBuffer - This is like getRewriteBufferFor, but always returns a
   /// buffer, and allows you to write on it directly.  This is useful if you

@@ -15,7 +15,6 @@
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/PrettyPrinter.h"
-#include "clang/AST/Stmt.h"
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -326,14 +325,6 @@ bool Rewriter::ReplaceText(SourceRange range, SourceRange replacementRange) {
                                                 FID);
   StringRef MB = SourceMgr->getBufferData(FID);
   return ReplaceText(start, origLength, MB.substr(newOffs, newLength));
-}
-
-std::string Rewriter::ConvertToString(Stmt *From) {
-  assert(From != nullptr && "Expected non-null Stmt");
-  std::string SStr;
-  llvm::raw_string_ostream S(SStr);
-  From->printPretty(S, nullptr, PrintingPolicy(*LangOpts));
-  return S.str();
 }
 
 bool Rewriter::IncreaseIndentation(CharSourceRange range,
