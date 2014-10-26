@@ -1112,8 +1112,8 @@ void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DITypeArray Args) {
       createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
     } else {
       DIE &Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
-      addType(Arg, DIType(Ty));
-      if (DIType(Ty).isArtificial())
+      addType(Arg, Ty);
+      if (Ty.isArtificial())
         addFlag(Arg, dwarf::DW_AT_artificial);
     }
   }
