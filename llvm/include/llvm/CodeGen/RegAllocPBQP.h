@@ -62,20 +62,15 @@ public:
     delete[] ColCounts;
   }
 
-  ~MatrixMetadata() {
-    delete[] UnsafeRows;
-    delete[] UnsafeCols;
-  }
-
   unsigned getWorstRow() const { return WorstRow; }
   unsigned getWorstCol() const { return WorstCol; }
-  const bool* getUnsafeRows() const { return UnsafeRows; }
-  const bool* getUnsafeCols() const { return UnsafeCols; }
+  const bool* getUnsafeRows() const { return UnsafeRows.get(); }
+  const bool* getUnsafeCols() const { return UnsafeCols.get(); }
 
 private:
   unsigned WorstRow, WorstCol;
-  bool* UnsafeRows;
-  bool* UnsafeCols;
+  std::unique_ptr<bool[]> UnsafeRows;
+  std::unique_ptr<bool[]> UnsafeCols;
 };
 
 class NodeMetadata {
@@ -88,7 +83,6 @@ public:
                  NotProvablyAllocatable } ReductionState;
 
   NodeMetadata() : RS(Unprocessed), DeniedOpts(0), OptUnsafeEdges(nullptr){}
-  ~NodeMetadata() { delete[] OptUnsafeEdges; }
 
   void setVReg(unsigned VReg) { this->VReg = VReg; }
   unsigned getVReg() const { return VReg; }
@@ -100,7 +94,7 @@ public:
 
   void setup(const Vector& Costs) {
     NumOpts = Costs.getLength() - 1;
-    OptUnsafeEdges = new unsigned[NumOpts]();
+    OptUnsafeEdges = std::unique_ptr<unsigned[]>(new unsigned[NumOpts]());
   }
 
   ReductionState getReductionState() const { return RS; }
@@ -124,15 +118,15 @@ public:
 
   bool isConservativelyAllocatable() const {
     return (DeniedOpts < NumOpts) ||
-      (std::find(OptUnsafeEdges, OptUnsafeEdges + NumOpts, 0) !=
-       OptUnsafeEdges + NumOpts);
+      (std::find(&OptUnsafeEdges[0], &OptUnsafeEdges[NumOpts], 0) !=
+       &OptUnsafeEdges[NumOpts]);
   }
 
 private:
   ReductionState RS;
   unsigned NumOpts;
   unsigned DeniedOpts;
-  unsigned* OptUnsafeEdges;
+  std::unique_ptr<unsigned[]> OptUnsafeEdges;
   unsigned VReg;
   OptionToRegMap OptionRegs;
 };
