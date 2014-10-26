@@ -157,16 +157,16 @@ end
     See the [llvm::ICmpInst::Predicate] enumeration. *)
 module Icmp : sig
   type t =
-  | Eq  (* Equal *)
-  | Ne  (* Not equal *)
-  | Ugt (* Unsigned greater than *)
-  | Uge (* Unsigned greater or equal *)
-  | Ult (* Unsigned less than *)
-  | Ule (* Unsigned less or equal *)
-  | Sgt (* Signed greater than *)
-  | Sge (* Signed greater or equal *)
-  | Slt (* Signed less than *)
-  | Sle (* Signed less or equal *)
+  | Eq  (** Equal *)
+  | Ne  (** Not equal *)
+  | Ugt (** Unsigned greater than *)
+  | Uge (** Unsigned greater or equal *)
+  | Ult (** Unsigned less than *)
+  | Ule (** Unsigned less or equal *)
+  | Sgt (** Signed greater than *)
+  | Sge (** Signed greater or equal *)
+  | Slt (** Signed less than *)
+  | Sle (** Signed less or equal *)
 end
 
 (** The predicate for a floating-point comparison ([fcmp]) instruction.
@@ -175,38 +175,38 @@ end
     See the [llvm::FCmpInst::Predicate] enumeration. *)
 module Fcmp : sig
   type t =
-  | False (* Always false *)
-  | Oeq   (* Ordered and equal *)
-  | Ogt   (* Ordered and greater than *)
-  | Oge   (* Ordered and greater or equal *)
-  | Olt   (* Ordered and less than *)
-  | Ole   (* Ordered and less or equal *)
-  | One   (* Ordered and not equal *)
-  | Ord   (* Ordered (no operand is NaN) *)
-  | Uno   (* Unordered (one operand at least is NaN) *)
-  | Ueq   (* Unordered and equal *)
-  | Ugt   (* Unordered and greater than *)
-  | Uge   (* Unordered and greater or equal *)
-  | Ult   (* Unordered and less than *)
-  | Ule   (* Unordered and less or equal *)
-  | Une   (* Unordered and not equal *)
-  | True  (* Always true *)
+  | False (** Always false *)
+  | Oeq   (** Ordered and equal *)
+  | Ogt   (** Ordered and greater than *)
+  | Oge   (** Ordered and greater or equal *)
+  | Olt   (** Ordered and less than *)
+  | Ole   (** Ordered and less or equal *)
+  | One   (** Ordered and not equal *)
+  | Ord   (** Ordered (no operand is NaN) *)
+  | Uno   (** Unordered (one operand at least is NaN) *)
+  | Ueq   (** Unordered and equal *)
+  | Ugt   (** Unordered and greater than *)
+  | Uge   (** Unordered and greater or equal *)
+  | Ult   (** Unordered and less than *)
+  | Ule   (** Unordered and less or equal *)
+  | Une   (** Unordered and not equal *)
+  | True  (** Always true *)
 end
 
 (** The opcodes for LLVM instructions and constant expressions. *)
 module Opcode : sig
   type t =
-  | Invalid (* not an instruction *)
-  (* Terminator Instructions *)
-  | Ret
+  | Invalid (** Not an instruction *)
+
+  | Ret (** Terminator Instructions *)
   | Br
   | Switch
   | IndirectBr
   | Invoke
   | Invalid2
   | Unreachable
-  (* Standard Binary Operators *)
-  | Add
+
+  | Add (** Standard Binary Operators *)
   | FAdd
   | Sub
   | FSub
@@ -218,20 +218,20 @@ module Opcode : sig
   | URem
   | SRem
   | FRem
-  (* Logical Operators *)
-  | Shl
+
+  | Shl (** Logical Operators *)
   | LShr
   | AShr
   | And
   | Or
   | Xor
-  (* Memory Operators *)
-  | Alloca
+
+  | Alloca (** Memory Operators *)
   | Load
   | Store
   | GetElementPtr
-  (* Cast Operators *)
-  | Trunc
+
+  | Trunc (** Cast Operators *)
   | ZExt
   | SExt
   | FPToUI
@@ -243,8 +243,8 @@ module Opcode : sig
   | PtrToInt
   | IntToPtr
   | BitCast
-  (* Other Operators *)
-  | ICmp
+
+  | ICmp (** Other Operators *)
   | FCmp
   | PHI
   | Call
@@ -291,7 +291,7 @@ module AtomicOrdering : sig
   | NotAtomic
   | Unordered
   | Monotonic
-  | Invalid (* removed due to API changes *)
+  | Invalid (** removed due to API changes *)
   | Acquire
   | Release
   | AcqiureRelease
@@ -651,7 +651,7 @@ val x86_mmx_type : llcontext -> lltype
 val type_by_name : llmodule -> string -> lltype option
 
 
-(* {6 Values} *)
+(** {6 Values} *)
 
 (** [type_of v] returns the type of the value [v].
     See the method [llvm::Value::getType]. *)
@@ -682,7 +682,7 @@ val string_of_llvalue : llvalue -> string
 val replace_all_uses_with : llvalue -> llvalue -> unit
 
 
-(* {6 Uses} *)
+(** {6 Uses} *)
 
 (** [use_begin v] returns the first position in the use list for the value [v].
     [use_begin] and [use_succ] can e used to iterate over the use list in order.
@@ -714,7 +714,7 @@ val fold_left_uses : ('a -> lluse -> 'a) -> 'a -> llvalue -> 'a
 val fold_right_uses : (lluse -> 'a -> 'a) -> llvalue -> 'a -> 'a
 
 
-(* {6 Users} *)
+(** {6 Users} *)
 
 (** [operand v i] returns the operand at index [i] for the value [v]. See the
     method [llvm::User::getOperand]. *)
