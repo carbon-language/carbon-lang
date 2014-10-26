@@ -51,6 +51,8 @@ HostThreadWindows::Join(lldb::thread_result_t *result)
     }
     else
         error.SetError(ERROR_INVALID_HANDLE, eErrorTypeWin32);
+
+    Reset ();
     return error;
 }
 
