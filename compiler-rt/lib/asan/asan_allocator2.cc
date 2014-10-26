@@ -354,7 +354,7 @@ static void *Allocate(uptr size, uptr alignment, BufferedStackTrace *stack,
     meta[1] = chunk_beg;
   }
 
-  m->alloc_context_id = StackDepotPut(stack->trace, stack->size);
+  m->alloc_context_id = StackDepotPut(*stack);
 
   uptr size_rounded_down_to_granularity = RoundDownTo(size, SHADOW_GRANULARITY);
   // Unpoison the bulk of the memory region.
@@ -423,7 +423,7 @@ static void QuarantineChunk(AsanChunk *m, void *ptr, BufferedStackTrace *stack,
     CHECK_EQ(m->free_tid, kInvalidTid);
   AsanThread *t = GetCurrentThread();
   m->free_tid = t ? t->tid() : 0;
-  m->free_context_id = StackDepotPut(stack->trace, stack->size);
+  m->free_context_id = StackDepotPut(*stack);
   // Poison the region.
   PoisonShadow(m->Beg(),
                RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),

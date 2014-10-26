@@ -280,7 +280,7 @@ u32 ChainOrigin(u32 id, StackTrace *stack) {
     }
   }
 
-  StackDepotHandle h = StackDepotPut_WithHandle(stack->trace, stack->size);
+  StackDepotHandle h = StackDepotPut_WithHandle(*stack);
   if (!h.valid()) return id;
 
   if (flags()->origin_history_per_stack_limit > 0) {

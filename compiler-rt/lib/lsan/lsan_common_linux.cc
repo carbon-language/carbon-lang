@@ -94,11 +94,10 @@ void ProcessGlobalRegions(Frontier *frontier) {
 
 static uptr GetCallerPC(u32 stack_id, StackDepotReverseMap *map) {
   CHECK(stack_id);
-  uptr size = 0;
-  const uptr *trace = map->Get(stack_id, &size);
+  StackTrace stack = map->Get(stack_id);
   // The top frame is our malloc/calloc/etc. The next frame is the caller.
-  if (size >= 2)
-    return trace[1];
+  if (stack.size >= 2)
+    return stack.trace[1];
   return 0;
 }
 

@@ -462,8 +462,8 @@ u32 CurrentStackId(ThreadState *thr, uptr pc) {
     thr->shadow_stack_pos[0] = pc;
     thr->shadow_stack_pos++;
   }
-  u32 id = StackDepotPut(thr->shadow_stack,
-                         thr->shadow_stack_pos - thr->shadow_stack);
+  u32 id = StackDepotPut(__sanitizer::StackTrace(
+      thr->shadow_stack, thr->shadow_stack_pos - thr->shadow_stack));
   if (pc != 0)
     thr->shadow_stack_pos--;
   return id;

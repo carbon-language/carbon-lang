@@ -29,16 +29,13 @@ struct StackDepotHandle {
   u32 id();
   int use_count();
   void inc_use_count_unsafe();
-  uptr size();
-  uptr *stack();
 };
 
 const int kStackDepotMaxUseCount = 1U << 20;
 
 StackDepotStats *StackDepotGetStats();
-// FIXME: Pass StackTrace as an input argument here.
-u32 StackDepotPut(const uptr *stack, uptr size);
-StackDepotHandle StackDepotPut_WithHandle(const uptr *stack, uptr size);
+u32 StackDepotPut(StackTrace stack);
+StackDepotHandle StackDepotPut_WithHandle(StackTrace stack);
 // Retrieves a stored stack trace by the id.
 StackTrace StackDepotGet(u32 id);
 
@@ -52,7 +49,7 @@ void StackDepotUnlockAll();
 class StackDepotReverseMap {
  public:
   StackDepotReverseMap();
-  const uptr *Get(u32 id, uptr *size);
+  StackTrace Get(u32 id);
 
  private:
   struct IdDescPair {

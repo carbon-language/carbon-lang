@@ -30,7 +30,7 @@ namespace __asan {
 void AsanThreadContext::OnCreated(void *arg) {
   CreateThreadContextArgs *args = static_cast<CreateThreadContextArgs*>(arg);
   if (args->stack)
-    stack_id = StackDepotPut(args->stack->trace, args->stack->size);
+    stack_id = StackDepotPut(*args->stack);
   thread = args->thread;
   thread->set_context(this);
 }

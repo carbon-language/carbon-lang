@@ -102,7 +102,7 @@ static void *MsanAllocate(StackTrace *stack, uptr size, uptr alignment,
   } else if (flags()->poison_in_malloc) {
     __msan_poison(allocated, size);
     if (__msan_get_track_origins()) {
-      u32 stack_id = StackDepotPut(stack->trace, stack->size);
+      u32 stack_id = StackDepotPut(*stack);
       CHECK(stack_id);
       u32 id;
       ChainedOriginDepotPut(stack_id, Origin::kHeapRoot, &id);
@@ -125,7 +125,7 @@ void MsanDeallocate(StackTrace *stack, void *p) {
   if (flags()->poison_in_free) {
     __msan_poison(p, size);
     if (__msan_get_track_origins()) {
-      u32 stack_id = StackDepotPut(stack->trace, stack->size);
+      u32 stack_id = StackDepotPut(*stack);
       CHECK(stack_id);
       u32 id;
       ChainedOriginDepotPut(stack_id, Origin::kHeapRoot, &id);

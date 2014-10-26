@@ -371,8 +371,8 @@ static void CollectLeaksCb(uptr chunk, void *arg) {
     u32 stack_trace_id = 0;
     if (resolution > 0) {
       StackTrace stack = StackDepotGet(m.stack_trace_id());
-      uptr size = Min(stack.size, resolution);
-      stack_trace_id = StackDepotPut(stack.trace, size);
+      stack.size = Min(stack.size, resolution);
+      stack_trace_id = StackDepotPut(stack);
     } else {
       stack_trace_id = m.stack_trace_id();
     }

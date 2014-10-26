@@ -217,7 +217,7 @@ using namespace __asan;  // NOLINT
 void __asan_register_globals(__asan_global *globals, uptr n) {
   if (!flags()->report_globals) return;
   GET_STACK_TRACE_FATAL_HERE;
-  u32 stack_id = StackDepotPut(stack.trace, stack.size);
+  u32 stack_id = StackDepotPut(stack);
   BlockingMutexLock lock(&mu_for_globals);
   if (!global_registration_site_vector)
     global_registration_site_vector =
