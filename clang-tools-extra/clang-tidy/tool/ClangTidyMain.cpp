@@ -302,6 +302,10 @@ static int GoogleModuleAnchorDestination = GoogleModuleAnchorSource;
 extern volatile int MiscModuleAnchorSource;
 static int MiscModuleAnchorDestination = MiscModuleAnchorSource;
 
+// This anchor is used to force the linker to link the ReadabilityModule.
+extern volatile int ReadabilityModuleAnchorSource;
+static int ReadabilityModuleAnchorDestination = ReadabilityModuleAnchorSource;
+
 } // namespace tidy
 } // namespace clang
 

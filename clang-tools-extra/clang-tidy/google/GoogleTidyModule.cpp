@@ -22,7 +22,9 @@
 #include "UnnamedNamespaceInHeaderCheck.h"
 #include "UsingNamespaceDirectiveCheck.h"
 #include "../readability/BracesAroundStatementsCheck.h"
+#include "../readability/FunctionSize.h"
 #include "../readability/NamespaceCommentCheck.h"
+#include "../readability/RedundantSmartptrGet.h"
 
 using namespace clang::ast_matchers;
 
@@ -54,10 +56,14 @@ public:
         "google-readability-function");
     CheckFactories.registerCheck<readability::TodoCommentCheck>(
         "google-readability-todo");
-    CheckFactories.registerCheck<readability::NamespaceCommentCheck>(
-        "google-readability-namespace-comments");
     CheckFactories.registerCheck<readability::BracesAroundStatementsCheck>(
         "google-readability-braces-around-statements");
+    CheckFactories.registerCheck<readability::FunctionSizeCheck>(
+        "google-readability-function-size");
+    CheckFactories.registerCheck<readability::NamespaceCommentCheck>(
+        "google-readability-namespace-comments");
+    CheckFactories.registerCheck<readability::RedundantSmartptrGet>(
+        "google-readability-redundant-smartptr-get");
   }
 
   ClangTidyOptions getModuleOptions() override {
@@ -65,6 +71,7 @@ public:
     auto &Opts = Options.CheckOptions;
     Opts["google-readability-braces-around-statements.ShortStatementLines"] =
         "1";
+    Opts["google-readability-function-size.StatementThreshold"] = "800";
     Opts["google-readability-namespace-comments.ShortNamespaceLines"] = "1";
     Opts["google-readability-namespace-comments.SpacesBeforeComments"] = "2";
     return Options;

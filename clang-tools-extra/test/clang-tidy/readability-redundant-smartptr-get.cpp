@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-redundant-smartptr-get %t
+// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s readability-redundant-smartptr-get %t
 // REQUIRES: shell
 
 #define NULL __null
@@ -49,7 +49,7 @@ void Positive() {
   BarPtr u;
   // CHECK-FIXES: BarPtr u;
   BarPtr().get()->Do();
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Redundant get() call on smart pointer. [misc-redundant-smartptr-get]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Redundant get() call on smart pointer. [readability-redundant-smartptr-get]
   // CHECK-MESSAGES: BarPtr().get()->Do();
   // CHECK-FIXES: BarPtr()->Do();
 

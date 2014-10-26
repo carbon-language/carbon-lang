@@ -9,10 +9,10 @@ include_directories(${CLANG_LINT_SOURCE_DIR})
 add_extra_unittest(ClangTidyTests
   ClangTidyDiagnosticConsumerTest.cpp
   ClangTidyOptionsTest.cpp
-  LLVMModuleTest.cpp
-  ReadabilityChecksTest.cpp
   GoogleModuleTest.cpp
-  MiscModuleTest.cpp)
+  LLVMModuleTest.cpp
+  MiscModuleTest.cpp
+  ReadabilityModuleTest.cpp)
 
 target_link_libraries(ClangTidyTests
   clangAST
@@ -23,7 +23,7 @@ target_link_libraries(ClangTidyTests
   clangTidyGoogleModule
   clangTidyLLVMModule
   clangTidyMiscModule
-  clangTidyReadability
+  clangTidyReadabilityModule
   clangTidyUtils
   clangTooling
   )

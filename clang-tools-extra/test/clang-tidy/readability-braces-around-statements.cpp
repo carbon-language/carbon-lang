@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-braces-around-statements %t
+// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s readability-braces-around-statements %t
 // REQUIRES: shell
 
 void do_something(const char *) {}

@@ -15,6 +15,4 @@ add_clang_library(clangTidyMiscModule
   clangBasic
   clangLex
   clangTidy
-  # Some readability checks are currently registered in the misc module.
-  clangTidyReadability
   )

@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
 // RUN: mkdir -p %t
 // RUN: sed 's#// *[A-Z-][A-Z-]*:.*#//#' %s > %t/t.cpp
-// RUN: echo '{ Checks: "-*,misc-function-size", CheckOptions: [{key: misc-function-size.LineThreshold, value: 0}, {key: misc-function-size.StatementThreshold, value: 0}, {key: misc-function-size.BranchThreshold, value: 0}]}' > %t/.clang-tidy
+// RUN: echo '{ Checks: "-*,readability-function-size", CheckOptions: [{key: readability-function-size.LineThreshold, value: 0}, {key: readability-function-size.StatementThreshold, value: 0}, {key: readability-function-size.BranchThreshold, value: 0}]}' > %t/.clang-tidy
 // RUN: clang-tidy %t/t.cpp -- -std=c++11 2>&1 | FileCheck %s -implicit-check-not='{{warning:|error:|note:}}'
 
 void foo1() {

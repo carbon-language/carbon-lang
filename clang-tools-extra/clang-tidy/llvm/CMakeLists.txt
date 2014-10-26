@@ -12,7 +12,7 @@ add_clang_library(clangTidyLLVMModule
   clangBasic
   clangLex
   clangTidy
-  clangTidyReadability
+  clangTidyReadabilityModule
   clangTidyUtils
   clangTooling
   )
