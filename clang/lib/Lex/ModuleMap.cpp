@@ -220,8 +220,9 @@ static bool violatesPrivateInclude(Module *RequestingModule,
   // as obtained from the lookup and as obtained from the module.
   // This check is not cheap, so enable it only for debugging.
   bool IsPrivate = false;
-  auto HeaderList = {&RequestedModule->PrivateHeaders,
-                     &RequestedModule->PrivateTextualHeaders};
+  SmallVectorImpl<const FileEntry *> *HeaderList[] =
+      {&RequestedModule->PrivateHeaders,
+       &RequestedModule->PrivateTextualHeaders};
   for (auto *Hdrs : HeaderList)
     IsPrivate |=
         std::find(Hdrs->begin(), Hdrs->end(), IncFileEnt) != Hdrs->end();
