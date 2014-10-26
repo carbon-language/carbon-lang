@@ -735,18 +735,27 @@ def : Pat<(v8i32 (X86VBroadcastm (v8i1 VK8WM:$mask), (loadi32 addr:$src))),
 //---
 
 multiclass avx512_mask_broadcast<bits<8> opc, string OpcodeStr,
-                       RegisterClass DstRC, RegisterClass KRC,
-                       ValueType OpVT, ValueType SrcVT> {
-def rr : AVX512XS8I<opc, MRMDestReg, (outs DstRC:$dst), (ins KRC:$src),
+                       RegisterClass KRC> {
+let Predicates = [HasCDI] in
+def Zrr : AVX512XS8I<opc, MRMSrcReg, (outs VR512:$dst), (ins KRC:$src),
                   !strconcat(OpcodeStr, " \t{$src, $dst|$dst, $src}"),
-                  []>, EVEX;
+                  []>, EVEX, EVEX_V512;
+                  
+let Predicates = [HasCDI, HasVLX] in {
+def Z128rr : AVX512XS8I<opc, MRMSrcReg, (outs VR128:$dst), (ins KRC:$src),
+                  !strconcat(OpcodeStr, " \t{$src, $dst|$dst, $src}"),
+                  []>, EVEX, EVEX_V128;
+def Z256rr : AVX512XS8I<opc, MRMSrcReg, (outs VR256:$dst), (ins KRC:$src),
+                  !strconcat(OpcodeStr, " \t{$src, $dst|$dst, $src}"),
+                  []>, EVEX, EVEX_V256;
+}
 }
 
 let Predicates = [HasCDI] in {
-defm VPBROADCASTMW2D : avx512_mask_broadcast<0x3A, "vpbroadcastmw2d", VR512,
-                                             VK16, v16i32, v16i1>, EVEX_V512;
-defm VPBROADCASTMB2Q : avx512_mask_broadcast<0x2A, "vpbroadcastmb2q", VR512,
-                                            VK8, v8i64, v8i1>, EVEX_V512, VEX_W;
+defm VPBROADCASTMW2D : avx512_mask_broadcast<0x3A, "vpbroadcastmw2d",
+                                             VK16>;
+defm VPBROADCASTMB2Q : avx512_mask_broadcast<0x2A, "vpbroadcastmb2q",
+                                             VK8>, VEX_W;
 }
 
 //===----------------------------------------------------------------------===//
