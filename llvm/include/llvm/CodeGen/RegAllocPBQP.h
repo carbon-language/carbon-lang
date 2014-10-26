@@ -109,9 +109,9 @@ public:
     RS = Other.RS;
     NumOpts = Other.NumOpts;
     DeniedOpts = Other.DeniedOpts;
-    OptUnsafeEdges = std::unique_ptr<unsigned[]>(new unsigned[NumOpts]);
-    std::copy(&Other.OptUnsafeEdges[0], &Other.OptUnsafeEdges[NumOpts],
-              &OptUnsafeEdges[0]);
+    OptUnsafeEdges.reset(new unsigned[NumOpts]);
+    std::copy(Other.OptUnsafeEdges.get(), Other.OptUnsafeEdges.get() + NumOpts,
+              OptUnsafeEdges.get());
     VReg = Other.VReg;
     OptionRegs = Other.OptionRegs;
     return *this;
