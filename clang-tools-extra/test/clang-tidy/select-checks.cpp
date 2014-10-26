@@ -1,13 +1,11 @@
-// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: clang-tidy %t.cpp -fix -checks='-*,llvm-*' --
-// RUN: FileCheck -input-file=%t.cpp %s
-// RUN: clang-tidy %s -checks='-*,an-unknown-check' -- 2>&1 | FileCheck -check-prefix=CHECK2 %s
+// RUN: clang-tidy %s -checks='-*,llvm-namespace-*' -- 2>&1 | FileCheck -implicit-check-not='{{warning:|error:}}' %s
+// RUN: clang-tidy %s -checks='-*,an-unknown-check' -- 2>&1 | FileCheck -implicit-check-not='{{warning:|error:}}' -check-prefix=CHECK2 %s
 
 // CHECK2: Error: no checks enabled.
 
 namespace i {
 }
-// CHECK: } // namespace i
+// CHECK: :[[@LINE-2]]:11: warning: namespace not terminated with a closing comment [llvm-namespace-comment]
 
-class A { A(int i); }; // Not fixing this, because the check is in google-.
-// CHECK: class A { A(int i); };
+// Expect no warnings from the google-explicit-constructor check:
+class A { A(int i); };
