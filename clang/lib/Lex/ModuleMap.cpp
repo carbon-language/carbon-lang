@@ -778,10 +778,22 @@ void ModuleMap::setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir) {
 
 void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
                           ModuleHeaderRole Role) {
-  auto HeaderLists = {&Mod->NormalHeaders, &Mod->PrivateHeaders,
-                      &Mod->TextualHeaders, &Mod->PrivateTextualHeaders};
-  assert(Role >= 0 && Role < HeaderLists.size() && "unknown header role");
-  HeaderLists.begin()[Role]->push_back(Header);
+  switch ((int)Role) {
+  default:
+    llvm_unreachable("unknown header role");
+  case NormalHeader:
+    Mod->NormalHeaders.push_back(Header);
+    break;
+  case PrivateHeader:
+    Mod->PrivateHeaders.push_back(Header);
+    break;
+  case TextualHeader:
+    Mod->TextualHeaders.push_back(Header);
+    break;
+  case PrivateHeader | TextualHeader:
+    Mod->PrivateTextualHeaders.push_back(Header);
+    break;
+  }
 
   if (!(Role & TextualHeader)) {
     bool isCompilingModuleHeader = Mod->getTopLevelModule() == CompilingModule;
