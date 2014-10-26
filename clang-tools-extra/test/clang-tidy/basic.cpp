@@ -1,6 +1,4 @@
-// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: clang-tidy %t.cpp -checks='-*,llvm-namespace-comment' -- > %t2.cpp
-// RUN: FileCheck -input-file=%t2.cpp %s
+// RUN: clang-tidy %s -checks='-*,llvm-namespace-comment' -- | FileCheck %s
 
 namespace i {
 }
