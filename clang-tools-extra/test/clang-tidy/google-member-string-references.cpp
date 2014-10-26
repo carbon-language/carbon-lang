@@ -1,4 +1,5 @@
-// RUN: clang-tidy %s -checks='-*,google-runtime-member-string-references' -- | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: $(dirname %s)/check_clang_tidy.sh %s google-runtime-member-string-references %t
+// REQUIRES: shell
 
 namespace std {
 template<typename T>
@@ -12,7 +13,7 @@ class string {};
 
 struct A {
   const std::string &s;
-// CHECK: :[[@LINE-1]]:3: warning: const string& members are dangerous. It is much better to use alternatives, such as pointers or simple constants.
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: const string& members are dangerous. It is much better to use alternatives, such as pointers or simple constants. [google-runtime-member-string-references]
 };
 
 struct B {
@@ -28,14 +29,14 @@ struct D {
   D();
   const T &s;
   const std::string &s2;
-// CHECK: :[[@LINE-1]]:3: warning: const string& members are dangerous. It is much better to use alternatives, such as pointers or simple constants.
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: const string& members are dangerous.
 };
 
 D<std::string> d;
 
 struct AA {
   const string &s;
-// CHECK: :[[@LINE-1]]:3: warning: const string& members are dangerous. It is much better to use alternatives, such as pointers or simple constants.
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: const string& members are dangerous.
 };
 
 struct BB {

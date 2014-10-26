@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-use-override %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-use-override %t
 // REQUIRES: shell
 
 #define ABSTRACT = 0

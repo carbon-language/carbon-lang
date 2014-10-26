@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-unused-raii %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-unused-raii %t
 // REQUIRES: shell
 
 struct Foo {

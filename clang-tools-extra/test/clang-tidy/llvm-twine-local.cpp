@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s llvm-twine-local %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s llvm-twine-local %t
 // REQUIRES: shell
 
 namespace llvm {

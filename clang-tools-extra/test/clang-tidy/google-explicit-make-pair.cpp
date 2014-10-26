@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-build-explicit-make-pair %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s google-build-explicit-make-pair %t
 // REQUIRES: shell
 
 namespace std {

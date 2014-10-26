@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-swapped-arguments %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-swapped-arguments %t
 // REQUIRES: shell
 
 void F(int, double);

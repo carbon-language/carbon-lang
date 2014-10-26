@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-readability-casting %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s google-readability-casting %t
 // REQUIRES: shell
 
 bool g() { return false; }

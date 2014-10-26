@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s readability-redundant-smartptr-get %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-redundant-smartptr-get %t
 // REQUIRES: shell
 
 #define NULL __null

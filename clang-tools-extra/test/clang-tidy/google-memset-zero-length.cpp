@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-runtime-memset %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s google-runtime-memset %t
 // REQUIRES: shell
 
 void *memset(void *, int, __SIZE_TYPE__);

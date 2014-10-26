@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-readability-todo %t -config="{User: 'some user'}" --
+// RUN: $(dirname %s)/check_clang_tidy.sh %s google-readability-todo %t -config="{User: 'some user'}" --
 // REQUIRES: shell
 
 //   TODOfix this1

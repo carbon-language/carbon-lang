@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-readability-namespace-comments %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s google-readability-namespace-comments %t
 // REQUIRES: shell
 
 // CHECK-MESSAGES: :[[@LINE+2]]:11: warning: namespace not terminated with a closing comment [google-readability-namespace-comments]
