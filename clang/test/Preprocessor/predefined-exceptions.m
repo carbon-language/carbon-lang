@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -x objective-c -fobjc-exceptions -fexceptions -E -dM %s | FileCheck -check-prefix=CHECK-OBJC-NOCXX %s 
 // CHECK-OBJC-NOCXX: #define OBJC_ZEROCOST_EXCEPTIONS 1
-// CHECK-OBJC-NOCXX-NOT: #define __EXCEPTIONS 1
+// CHECK-OBJC-NOCXX: #define __EXCEPTIONS 1
 
 // RUN: %clang_cc1 -x objective-c++ -fobjc-exceptions -fexceptions -fcxx-exceptions -E -dM %s | FileCheck -check-prefix=CHECK-OBJC-CXX %s 
 // CHECK-OBJC-CXX: #define OBJC_ZEROCOST_EXCEPTIONS 1
