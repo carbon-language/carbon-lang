@@ -2,6 +2,10 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#if defined(__linux__)
+#include <sys/prctl.h>
+#endif
+
 volatile int g_thread_2_continuing = 0;
 
 void *
@@ -38,6 +42,21 @@ int main(int argc, char const *argv[])
 {
     pthread_t thread_1;
     pthread_t thread_2;
+
+#if defined(__linux__)
+    // Immediately enable any ptracer so that we can allow the stub attach
+    // operation to succeed.  Some Linux kernels are locked down so that
+    // only an ancestor process can be a ptracer of a process.  This disables that
+    // restriction.  Without it, attach-related stub tests will fail.
+#if defined(PR_SET_PTRACER) && defined(PR_SET_PTRACER_ANY)
+    int prctl_result;
+
+    // For now we execute on best effort basis.  If this fails for
+    // some reason, so be it.
+    prctl_result = prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
+    (void) prctl_result;
+#endif
+#endif
 
     // Create a new thread
     pthread_create (&thread_1, NULL, thread_1_func, NULL);
