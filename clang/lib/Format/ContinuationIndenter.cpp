@@ -122,6 +122,12 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
       State.Stack[State.Stack.size() - 2].HasMultipleNestedBlocks)
     return false;
 
+  // Don't break after very short return types (e.g. "void") as that is often
+  // unexpected.
+  if (Current.Type == TT_FunctionDeclarationName &&
+      !Style.AlwaysBreakAfterDefinitionReturnType && State.Column < 6)
+    return false;
+
   return !State.Stack.back().NoLineBreak;
 }
 
