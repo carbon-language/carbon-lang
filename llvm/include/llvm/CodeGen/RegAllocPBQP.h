@@ -175,7 +175,7 @@ private:
 /// \brief Holds solver state and other metadata relevant to each PBQP RA node.
 class NodeMetadata {
 public:
-  typedef AllowedRegVector AllowedRegVector;
+  typedef RegAlloc::AllowedRegVector AllowedRegVector;
 
   typedef enum { Unprocessed,
                  OptimallyReducible,
