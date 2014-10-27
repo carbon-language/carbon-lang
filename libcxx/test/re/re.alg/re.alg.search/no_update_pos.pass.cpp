@@ -25,9 +25,9 @@ int main()
     // of the text.
 
     const char *text = "aaa\naa";
-    std::regex re{"^a"};
-    std::cregex_iterator it{text, text+6, re};
-    std::cregex_iterator end{};
+    std::regex re("^a");
+    std::cregex_iterator it(text, text+6, re);
+    std::cregex_iterator end = std::cregex_iterator();
 
     assert(it->str() == "a");
     assert(it->position(0) == 0);

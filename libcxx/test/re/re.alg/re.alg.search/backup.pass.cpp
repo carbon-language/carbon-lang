@@ -26,10 +26,10 @@ int main()
     // This regex_iterator uses regex_search(__wrap_iter<_Iter> __first, ...)
     // Test for http://llvm.org/bugs/show_bug.cgi?id=16240 fixed in r185273.
     {
-        std::string s{"aaaa a"};
-        std::regex re{"\\ba"};
-        std::sregex_iterator it{s.begin(), s.end(), re};
-        std::sregex_iterator end{};
+        std::string s("aaaa a");
+        std::regex re("\\ba");
+        std::sregex_iterator it(s.begin(), s.end(), re);
+        std::sregex_iterator end = std::sregex_iterator();
 
         assert(it->position(0) == 0);
         assert(it->length(0) == 1);
@@ -44,11 +44,11 @@ int main()
 
     // This regex_iterator uses regex_search(_BidirectionalIterator __first, ...)
     {
-        std::string s{"aaaa a"};
-        std::list<char> l{s.begin(), s.end()};
-        std::regex re{"\\ba"};
-        std::regex_iterator<std::list<char>::iterator> it{l.begin(), l.end(), re};
-        std::regex_iterator<std::list<char>::iterator> end{};
+        std::string s("aaaa a");
+        std::list<char> l(s.begin(), s.end());
+        std::regex re("\\ba");
+        std::regex_iterator<std::list<char>::iterator> it(l.begin(), l.end(), re);
+        std::regex_iterator<std::list<char>::iterator> end = std::regex_iterator<std::list<char>::iterator>();
 
         assert(it->position(0) == 0);
         assert(it->length(0) == 1);

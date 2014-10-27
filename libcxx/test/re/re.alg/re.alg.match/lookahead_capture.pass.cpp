@@ -27,10 +27,10 @@
 int main()
 {
     {
-        std::regex re{"^(?=(.))a$"};
+        std::regex re("^(?=(.))a$");
         assert(re.mark_count() == 1);
 
-        std::string s{"a"};
+        std::string s("a");
         std::smatch m;
         assert(std::regex_match(s, m, re));
         assert(m.size() == 2);
@@ -39,10 +39,10 @@ int main()
     }
 
     {
-        std::regex re{"^(a)(?=(.))(b)$"};
+        std::regex re("^(a)(?=(.))(b)$");
         assert(re.mark_count() == 3);
 
-        std::string s{"ab"};
+        std::string s("ab");
         std::smatch m;
         assert(std::regex_match(s, m, re));
         assert(m.size() == 4);
@@ -53,10 +53,10 @@ int main()
     }
 
     {
-        std::regex re{"^(.)(?=(.)(?=.(.)))(...)$"};
+        std::regex re("^(.)(?=(.)(?=.(.)))(...)$");
         assert(re.mark_count() == 4);
 
-        std::string s{"abcd"};
+        std::string s("abcd");
         std::smatch m;
         assert(std::regex_match(s, m, re));
         assert(m.size() == 5);
@@ -68,10 +68,10 @@ int main()
     }
 
     {
-        std::regex re{"^(a)(?!([^b]))(.c)$"};
+        std::regex re("^(a)(?!([^b]))(.c)$");
         assert(re.mark_count() == 3);
 
-        std::string s{"abc"};
+        std::string s("abc");
         std::smatch m;
         assert(std::regex_match(s, m, re));
         assert(m.size() == 4);
@@ -82,10 +82,10 @@ int main()
     }
 
     {
-        std::regex re{"^(?!((b)))(?=(.))(?!(abc)).b$"};
+        std::regex re("^(?!((b)))(?=(.))(?!(abc)).b$");
         assert(re.mark_count() == 4);
 
-        std::string s{"ab"};
+        std::string s("ab");
         std::smatch m;
         assert(std::regex_match(s, m, re));
         assert(m.size() == 5);

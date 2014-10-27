@@ -25,9 +25,9 @@
 void
 test1()
 {
-    std::string re{"\\{a\\}"};
-    std::string target{"{a}"};
-    std::regex regex{re};
+    std::string re("\\{a\\}");
+    std::string target("{a}");
+    std::regex regex(re);
     std::smatch smatch;
     assert((std::regex_match(target, smatch, regex)));
 }
@@ -35,9 +35,9 @@ test1()
 void
 test2()
 {
-    std::string re{"\\{a\\}"};
-    std::string target{"{a}"};
-    std::regex regex{re, std::regex::extended};
+    std::string re("\\{a\\}");
+    std::string target("{a}");
+    std::regex regex(re, std::regex::extended);
     std::smatch smatch;
     assert((std::regex_match(target, smatch, regex)));
 }
@@ -45,9 +45,9 @@ test2()
 void
 test3()
 {
-    std::string re{"\\{a\\}"};
-    std::string target{"{a}"};
-    std::regex regex{re, std::regex::awk};
+    std::string re("\\{a\\}");
+    std::string target("{a}");
+    std::regex regex(re, std::regex::awk);
     std::smatch smatch;
     assert((std::regex_match(target, smatch, regex)));
 }
@@ -55,9 +55,9 @@ test3()
 void
 test4()
 {
-    std::string re{"\\{a\\}"};
-    std::string target{"{a}"};
-    std::regex regex{re, std::regex::egrep};
+    std::string re("\\{a\\}");
+    std::string target("{a}");
+    std::regex regex(re, std::regex::egrep);
     std::smatch smatch;
     assert((std::regex_match(target, smatch, regex)));
 }
