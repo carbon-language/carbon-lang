@@ -1209,11 +1209,21 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
-  EmitAndCountInstruction(TmpInst);
 
   // Stackmap shadows cannot include branch targets, so we can count the bytes
-  // in a call towards the shadow, but must flush the shadow immediately after
-  // to account for the return from the call.
-  if (MI->isCall())
+  // in a call towards the shadow, but must ensure that the no thread returns
+  // in to the stackmap shadow.  The only way to achieve this is if the call
+  // is at the end of the shadow.
+  if (MI->isCall()) {
+    // Count then size of the call towards the shadow
+    SMShadowTracker.count(TmpInst, getSubtargetInfo());
+    // Then flush the shadow so that we fill with nops before the call, not
+    // after it.
     SMShadowTracker.emitShadowPadding(OutStreamer, getSubtargetInfo());
+    // Then emit the call
+    OutStreamer.EmitInstruction(TmpInst, getSubtargetInfo());
+    return;
+  }
+
+  EmitAndCountInstruction(TmpInst);
 }
