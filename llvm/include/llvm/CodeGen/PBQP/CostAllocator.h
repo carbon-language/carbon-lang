@@ -28,7 +28,7 @@ namespace PBQP {
 template <typename ValueT>
 class ValuePool {
 public:
-  typedef std::shared_ptr<ValueT> PoolRef;
+  typedef std::shared_ptr<const ValueT> PoolRef;
 
 private:
 
@@ -38,7 +38,6 @@ private:
     PoolEntry(ValuePool &Pool, ValueKeyT Value)
         : Pool(Pool), Value(std::move(Value)) {}
     ~PoolEntry() { Pool.removeEntry(this); }
-    ValueT& getValue() { return Value; }
     const ValueT& getValue() const { return Value; }
   private:
     ValuePool &Pool;

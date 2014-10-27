@@ -174,10 +174,10 @@ bool A57ChainingConstraint::addIntraChainConstraint(PBQPRAGraph &G, unsigned Rd,
   PBQPRAGraph::NodeId node1 = G.getMetadata().getNodeIdForVReg(Rd);
   PBQPRAGraph::NodeId node2 = G.getMetadata().getNodeIdForVReg(Ra);
 
-  const PBQPRAGraph::NodeMetadata::OptionToRegMap *vRdAllowed =
-    &G.getNodeMetadata(node1).getOptionRegs();
-  const PBQPRAGraph::NodeMetadata::OptionToRegMap *vRaAllowed =
-    &G.getNodeMetadata(node2).getOptionRegs();
+  const PBQPRAGraph::NodeMetadata::AllowedRegVector *vRdAllowed =
+    &G.getNodeMetadata(node1).getAllowedRegs();
+  const PBQPRAGraph::NodeMetadata::AllowedRegVector *vRaAllowed =
+    &G.getNodeMetadata(node2).getAllowedRegs();
 
   PBQPRAGraph::EdgeId edge = G.findEdge(node1, node2);
 
@@ -268,12 +268,12 @@ void A57ChainingConstraint::addInterChainConstraint(PBQPRAGraph &G, unsigned Rd,
 
     const LiveInterval &lr = LIs.getInterval(r);
     if (ld.overlaps(lr)) {
-      const PBQPRAGraph::NodeMetadata::OptionToRegMap *vRdAllowed =
-        &G.getNodeMetadata(node1).getOptionRegs();
+      const PBQPRAGraph::NodeMetadata::AllowedRegVector *vRdAllowed =
+        &G.getNodeMetadata(node1).getAllowedRegs();
 
       PBQPRAGraph::NodeId node2 = G.getMetadata().getNodeIdForVReg(r);
-      const PBQPRAGraph::NodeMetadata::OptionToRegMap *vRrAllowed =
-        &G.getNodeMetadata(node2).getOptionRegs();
+      const PBQPRAGraph::NodeMetadata::AllowedRegVector *vRrAllowed =
+        &G.getNodeMetadata(node2).getAllowedRegs();
 
       PBQPRAGraph::EdgeId edge = G.findEdge(node1, node2);
       assert(edge != G.invalidEdgeId() &&

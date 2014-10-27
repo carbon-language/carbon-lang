@@ -387,9 +387,29 @@ namespace PBQP {
       return NId;
     }
 
+    /// @brief Add a node bypassing the cost allocator.
+    /// @param Costs Cost vector ptr for the new node (must be convertible to
+    ///        VectorPtr).
+    /// @return Node iterator for the added node.
+    ///
+    ///   This method allows for fast addition of a node whose costs don't need
+    /// to be passed through the cost allocator. The most common use case for
+    /// this is when duplicating costs from an existing node (when using a
+    /// pooling allocator). These have already been uniqued, so we can avoid
+    /// re-constructing and re-uniquing them by attaching them directly to the
+    /// new node.
+    template <typename OtherVectorPtrT>
+    NodeId addNodeBypassingCostAllocator(OtherVectorPtrT Costs) {
+      NodeId NId = addConstructedNode(NodeEntry(Costs));
+      if (Solver)
+        Solver->handleAddNode(NId);
+      return NId;
+    }
+
     /// @brief Add an edge between the given nodes with the given costs.
     /// @param N1Id First node.
     /// @param N2Id Second node.
+    /// @param Costs Cost matrix for new edge.
     /// @return Edge iterator for the added edge.
     template <typename OtherVectorT>
     EdgeId addEdge(NodeId N1Id, NodeId N2Id, OtherVectorT Costs) {
@@ -399,6 +419,31 @@ namespace PBQP {
       // Get cost matrix from the problem domain.
       MatrixPtr AllocatedCosts = CostAlloc.getMatrix(std::move(Costs));
       EdgeId EId = addConstructedEdge(EdgeEntry(N1Id, N2Id, AllocatedCosts));
+      if (Solver)
+        Solver->handleAddEdge(EId);
+      return EId;
+    }
+
+    /// @brief Add an edge bypassing the cost allocator.
+    /// @param N1Id First node.
+    /// @param N2Id Second node.
+    /// @param Costs Cost matrix for new edge.
+    /// @return Edge iterator for the added edge.
+    ///
+    ///   This method allows for fast addition of an edge whose costs don't need
+    /// to be passed through the cost allocator. The most common use case for
+    /// this is when duplicating costs from an existing edge (when using a
+    /// pooling allocator). These have already been uniqued, so we can avoid
+    /// re-constructing and re-uniquing them by attaching them directly to the
+    /// new edge.
+    template <typename OtherMatrixPtrT>
+    NodeId addEdgeBypassingCostAllocator(NodeId N1Id, NodeId N2Id,
+                                         OtherMatrixPtrT Costs) {
+      assert(getNodeCosts(N1Id).getLength() == Costs->getRows() &&
+             getNodeCosts(N2Id).getLength() == Costs->getCols() &&
+             "Matrix dimensions mismatch.");
+      // Get cost matrix from the problem domain.
+      EdgeId EId = addConstructedEdge(EdgeEntry(N1Id, N2Id, Costs));
       if (Solver)
         Solver->handleAddEdge(EId);
       return EId;
@@ -431,10 +476,24 @@ namespace PBQP {
       getNode(NId).Costs = AllocatedCosts;
     }
 
-    /// @brief Get a node's cost vector (const version).
+    /// @brief Get a VectorPtr to a node's cost vector. Rarely useful - use
+    ///        getNodeCosts where possible.
+    /// @param NId Node id.
+    /// @return VectorPtr to node cost vector.
+    ///
+    ///   This method is primarily useful for duplicating costs quickly by
+    /// bypassing the cost allocator. See addNodeBypassingCostAllocator. Prefer
+    /// getNodeCosts when dealing with node cost values.
+    const VectorPtr& getNodeCostsPtr(NodeId NId) const {
+      return getNode(NId).Costs;
+    }
+
+    /// @brief Get a node's cost vector.
     /// @param NId Node id.
     /// @return Node cost vector.
-    const Vector& getNodeCosts(NodeId NId) const { return *getNode(NId).Costs; }
+    const Vector& getNodeCosts(NodeId NId) const {
+      return *getNodeCostsPtr(NId);
+    }
 
     NodeMetadata& getNodeMetadata(NodeId NId) {
       return getNode(NId).Metadata;
@@ -459,19 +518,31 @@ namespace PBQP {
       getEdge(EId).Costs = AllocatedCosts;
     }
 
-    /// @brief Get an edge's cost matrix (const version).
+    /// @brief Get a MatrixPtr to a node's cost matrix. Rarely useful - use
+    ///        getEdgeCosts where possible.
+    /// @param EId Edge id.
+    /// @return MatrixPtr to edge cost matrix.
+    ///
+    ///   This method is primarily useful for duplicating costs quickly by
+    /// bypassing the cost allocator. See addNodeBypassingCostAllocator. Prefer
+    /// getEdgeCosts when dealing with edge cost values.
+    const MatrixPtr& getEdgeCostsPtr(EdgeId EId) const {
+      return getEdge(EId).Costs;
+    }
+
+    /// @brief Get an edge's cost matrix.
     /// @param EId Edge id.
     /// @return Edge cost matrix.
     const Matrix& getEdgeCosts(EdgeId EId) const {
       return *getEdge(EId).Costs;
     }
 
-    EdgeMetadata& getEdgeMetadata(EdgeId NId) {
-      return getEdge(NId).Metadata;
+    EdgeMetadata& getEdgeMetadata(EdgeId EId) {
+      return getEdge(EId).Metadata;
     }
 
-    const EdgeMetadata& getEdgeMetadata(EdgeId NId) const {
-      return getEdge(NId).Metadata;
+    const EdgeMetadata& getEdgeMetadata(EdgeId EId) const {
+      return getEdge(EId).Metadata;
     }
 
     /// @brief Get the first node connected to this edge.
