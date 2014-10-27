@@ -97,8 +97,8 @@ typename StackDepotBase<Node, kReservedBits, kTabSizeLog>::handle_type
 StackDepotBase<Node, kReservedBits, kTabSizeLog>::Put(args_type args,
                                                       bool *inserted) {
   if (inserted) *inserted = false;
-  if (!args.is_valid()) return handle_type();
-  uptr h = args.hash();
+  if (!Node::is_valid(args)) return handle_type();
+  uptr h = Node::hash(args);
   atomic_uintptr_t *p = &tab[h % kTabSize];
   uptr v = atomic_load(p, memory_order_consume);
   Node *s = (Node *)(v & ~1);

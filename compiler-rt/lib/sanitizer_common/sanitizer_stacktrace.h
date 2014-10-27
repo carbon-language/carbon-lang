@@ -39,27 +39,6 @@ struct StackTrace {
   // Prints a symbolized stacktrace, followed by an empty line.
   void Print() const;
 
-  u32 hash() const {
-    // murmur2
-    const u32 m = 0x5bd1e995;
-    const u32 seed = 0x9747b28c;
-    const u32 r = 24;
-    u32 h = seed ^ (size * sizeof(uptr));
-    for (uptr i = 0; i < size; i++) {
-      u32 k = trace[i];
-      k *= m;
-      k ^= k >> r;
-      k *= m;
-      h *= m;
-      h ^= k;
-    }
-    h ^= h >> 13;
-    h *= m;
-    h ^= h >> 15;
-    return h;
-  }
-  bool is_valid() const { return size > 0 && trace; }
-
   static bool WillUseFastUnwind(bool request_fast_unwind) {
     // Check if fast unwind is available. Fast unwind is the only option on Mac.
     // It is also the only option on FreeBSD as the slow unwinding that

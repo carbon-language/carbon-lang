@@ -47,6 +47,28 @@ struct StackDepotNode {
   static uptr storage_size(const args_type &args) {
     return sizeof(StackDepotNode) + (args.size - 1) * sizeof(uptr);
   }
+  static u32 hash(const args_type &args) {
+    // murmur2
+    const u32 m = 0x5bd1e995;
+    const u32 seed = 0x9747b28c;
+    const u32 r = 24;
+    u32 h = seed ^ (args.size * sizeof(uptr));
+    for (uptr i = 0; i < args.size; i++) {
+      u32 k = args.trace[i];
+      k *= m;
+      k ^= k >> r;
+      k *= m;
+      h *= m;
+      h ^= k;
+    }
+    h ^= h >> 13;
+    h *= m;
+    h ^= h >> 15;
+    return h;
+  }
+  static bool is_valid(const args_type &args) {
+    return args.size > 0 && args.trace;
+  }
   void store(const args_type &args, u32 hash) {
     atomic_store(&hash_and_use_count, hash & kHashMask, memory_order_relaxed);
     size = args.size;
