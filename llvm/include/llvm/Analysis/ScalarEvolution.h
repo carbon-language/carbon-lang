@@ -129,9 +129,11 @@ namespace llvm {
     /// purposes.
     void print(raw_ostream &OS) const;
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
     /// dump - This method is used for debugging.
     ///
     void dump() const;
+#endif
   };
 
   // Specialize FoldingSetTrait for SCEV to avoid needing to compute
