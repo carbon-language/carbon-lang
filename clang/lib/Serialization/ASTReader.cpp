@@ -4314,8 +4314,7 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
       unsigned Idx = 0, N = Record.size();
       while (Idx < N) {
         // Read information about the AST file.
-        ModuleKind ImportedKind = (ModuleKind)Record[Idx++];
-        Idx += 4; // ImportLoc, Size, ModTime, Signature
+        Idx += 5; // ImportLoc, Size, ModTime, Signature
         unsigned Length = Record[Idx++];
         SmallString<128> ImportedFile(Record.begin() + Idx,
                                       Record.begin() + Idx + Length);
