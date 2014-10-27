@@ -2,8 +2,8 @@
 # - Change 'binary' if clang-format is not on the path (see below).
 # - Add to your .vimrc:
 #
-#   map <C-I> :pyf <path-to-this-file>/clang-format.py<CR>
-#   imap <C-I> <ESC>:pyf <path-to-this-file>/clang-format.py<CR>i
+#   map <C-I> :pyf <path-to-this-file>/clang-format.py<cr>
+#   imap <C-I> <c-o>:pyf <path-to-this-file>/clang-format.py<cr><cr>
 #
 # The first line enables clang-format for NORMAL and VISUAL mode, the second
 # line adds support for INSERT mode. Change "C-I" to another binding if you
