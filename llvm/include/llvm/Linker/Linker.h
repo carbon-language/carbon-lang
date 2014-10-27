@@ -12,8 +12,10 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 
-namespace llvm {
+#include <functional>
 
+namespace llvm {
+class DiagnosticInfo;
 class Module;
 class StructType;
 
@@ -28,6 +30,10 @@ class Linker {
       PreserveSource = 1 // Preserve the source module.
     };
 
+    typedef std::function<void(const DiagnosticInfo &)>
+        DiagnosticHandlerFunction;
+
+    Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
     Linker(Module *M);
     ~Linker();
 
@@ -44,11 +50,18 @@ class Linker {
       return linkInModule(Src, Linker::DestroySource);
     }
 
-    static bool LinkModules(Module *Dest, Module *Src, unsigned Mode);
+    static bool
+    LinkModules(Module *Dest, Module *Src, unsigned Mode,
+                DiagnosticHandlerFunction DiagnosticHandler);
+
+    static bool
+    LinkModules(Module *Dest, Module *Src, unsigned Mode);
+
 
   private:
     Module *Composite;
     SmallPtrSet<StructType*, 32> IdentifiedStructTypes;
+    DiagnosticHandlerFunction DiagnosticHandler;
 };
 
 } // End llvm namespace

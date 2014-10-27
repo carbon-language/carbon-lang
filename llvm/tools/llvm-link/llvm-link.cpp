@@ -71,11 +71,12 @@ loadFile(const char *argv0, const std::string &FN, LLVMContext &Context) {
   return Result;
 }
 
-static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
+static void diagnosticHandler(const DiagnosticInfo &DI) {
   unsigned Severity = DI.getSeverity();
   switch (Severity) {
   case DS_Error:
     errs() << "ERROR: ";
+    break;
   case DS_Warning:
     if (SuppressWarnings)
       return;
@@ -88,6 +89,7 @@ static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
 
   DiagnosticPrinterRawOStream DP(errs());
   DI.print(DP);
+  errs() << '\n';
 }
 
 int main(int argc, char **argv) {
@@ -100,9 +102,8 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   auto Composite = make_unique<Module>("llvm-link", Context);
-  Linker L(Composite.get());
+  Linker L(Composite.get(), diagnosticHandler);
 
-  Context.setDiagnosticHandler(diagnosticHandler);
   for (unsigned i = 0; i < InputFilenames.size(); ++i) {
     std::unique_ptr<Module> M = loadFile(argv[0], InputFilenames[i], Context);
     if (!M.get()) {

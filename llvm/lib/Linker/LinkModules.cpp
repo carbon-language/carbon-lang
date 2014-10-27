@@ -418,10 +418,14 @@ namespace {
     // Vector of functions to lazily link in.
     std::vector<Function*> LazilyLinkFunctions;
 
+    Linker::DiagnosticHandlerFunction DiagnosticHandler;
+
   public:
-    ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM, unsigned mode)
+    ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM, unsigned mode,
+                 Linker::DiagnosticHandlerFunction DiagnosticHandler)
         : DstM(dstM), SrcM(srcM), TypeMap(Set),
-          ValMaterializer(TypeMap, DstM, LazilyLinkFunctions), Mode(mode) {}
+          ValMaterializer(TypeMap, DstM, LazilyLinkFunctions), Mode(mode),
+          DiagnosticHandler(DiagnosticHandler) {}
 
     bool run();
 
@@ -431,12 +435,12 @@ namespace {
 
     /// Helper method for setting a message and returning an error code.
     bool emitError(const Twine &Message) {
-      DstM->getContext().diagnose(LinkDiagnosticInfo(DS_Error, Message));
+      DiagnosticHandler(LinkDiagnosticInfo(DS_Error, Message));
       return true;
     }
 
     void emitWarning(const Twine &Message) {
-      DstM->getContext().diagnose(LinkDiagnosticInfo(DS_Warning, Message));
+      DiagnosticHandler(LinkDiagnosticInfo(DS_Warning, Message));
     }
 
     bool getComdatLeader(Module *M, StringRef ComdatName,
@@ -1721,7 +1725,13 @@ bool ModuleLinker::run() {
   return false;
 }
 
-Linker::Linker(Module *M) : Composite(M) {
+Linker::Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler)
+    : Composite(M), DiagnosticHandler(DiagnosticHandler) {}
+
+Linker::Linker(Module *M)
+    : Composite(M), DiagnosticHandler([this](const DiagnosticInfo &DI) {
+                      Composite->getContext().diagnose(DI);
+                    }) {
   TypeFinder StructTypes;
   StructTypes.run(*M, true);
   IdentifiedStructTypes.insert(StructTypes.begin(), StructTypes.end());
@@ -1736,7 +1746,7 @@ void Linker::deleteModule() {
 }
 
 bool Linker::linkInModule(Module *Src, unsigned Mode) {
-  ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src, Mode);
+  ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src, Mode, DiagnosticHandler);
   return TheLinker.run();
 }
 
@@ -1749,6 +1759,12 @@ bool Linker::linkInModule(Module *Src, unsigned Mode) {
 /// true is returned and ErrorMsg (if not null) is set to indicate the problem.
 /// Upon failure, the Dest module could be in a modified state, and shouldn't be
 /// relied on to be consistent.
+bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode,
+                         DiagnosticHandlerFunction DiagnosticHandler) {
+  Linker L(Dest, DiagnosticHandler);
+  return L.linkInModule(Src, Mode);
+}
+
 bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode) {
   Linker L(Dest);
   return L.linkInModule(Src, Mode);
@@ -1758,31 +1774,15 @@ bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode) {
 // C API.
 //===----------------------------------------------------------------------===//
 
-static void bindingDiagnosticHandler(const llvm::DiagnosticInfo &DI,
-                                     void *Context) {
-  if (DI.getSeverity() != DS_Error)
-    return;
-
-  std::string *Message = (std::string *)Context;
-  {
-    raw_string_ostream Stream(*Message);
-    DiagnosticPrinterRawOStream DP(Stream);
-    DI.print(DP);
-  }
-}
-
-
 LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
                          LLVMLinkerMode Mode, char **OutMessages) {
   Module *D = unwrap(Dest);
-  LLVMContext &Ctx = D->getContext();
-
-  LLVMContext::DiagnosticHandlerTy OldHandler = Ctx.getDiagnosticHandler();
-  void *OldDiagnosticContext = Ctx.getDiagnosticContext();
   std::string Message;
-  Ctx.setDiagnosticHandler(bindingDiagnosticHandler, &Message);
-  LLVMBool Result = Linker::LinkModules(D, unwrap(Src), Mode);
-  Ctx.setDiagnosticHandler(OldHandler, OldDiagnosticContext);
+  raw_string_ostream Stream(Message);
+  DiagnosticPrinterRawOStream DP(Stream);
+
+  LLVMBool Result = Linker::LinkModules(
+      D, unwrap(Src), Mode, [&](const DiagnosticInfo &DI) { DI.print(DP); });
 
   if (OutMessages && Result)
     *OutMessages = strdup(Message.c_str());
