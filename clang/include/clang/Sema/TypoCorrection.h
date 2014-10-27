@@ -247,11 +247,13 @@ class CorrectionCandidateCallback {
 public:
   static const unsigned InvalidDistance = TypoCorrection::InvalidDistance;
 
-  CorrectionCandidateCallback()
+  explicit CorrectionCandidateCallback(IdentifierInfo *Typo = nullptr,
+                                       NestedNameSpecifier *TypoNNS = nullptr)
       : WantTypeSpecifiers(true), WantExpressionKeywords(true),
         WantCXXNamedCasts(true), WantFunctionLikeCasts(true),
         WantRemainingKeywords(true), WantObjCSuper(false),
-        IsObjCIvarLookup(false), IsAddressOfOperand(false) {}
+        IsObjCIvarLookup(false), IsAddressOfOperand(false), Typo(Typo),
+        TypoNNS(TypoNNS) {}
 
   virtual ~CorrectionCandidateCallback() {}
 
@@ -274,8 +276,13 @@ public:
   /// the default RankCandidate returns either 0 or InvalidDistance depending
   /// whether ValidateCandidate returns true or false.
   virtual unsigned RankCandidate(const TypoCorrection &candidate) {
-    return ValidateCandidate(candidate) ? 0 : InvalidDistance;
+    return (!MatchesTypo(candidate) && ValidateCandidate(candidate))
+               ? 0
+               : InvalidDistance;
   }
+
+  void setTypoName(IdentifierInfo *II) { Typo = II; }
+  void setTypoNNS(NestedNameSpecifier *NNS) { TypoNNS = NNS; }
 
   // Flags for context-dependent keywords. WantFunctionLikeCasts is only
   // used/meaningful when WantCXXNamedCasts is false.
@@ -290,6 +297,18 @@ public:
   // when looking up results.
   bool IsObjCIvarLookup;
   bool IsAddressOfOperand;
+
+protected:
+  bool MatchesTypo(const TypoCorrection &candidate) {
+    return Typo && candidate.isResolved() && !candidate.requiresImport() &&
+           candidate.getCorrectionAsIdentifierInfo() == Typo &&
+           // FIXME: This probably does not return true when both
+           // NestedNameSpecifiers have the same textual representation.
+           candidate.getCorrectionSpecifier() == TypoNNS;
+  }
+
+  IdentifierInfo *Typo;
+  NestedNameSpecifier *TypoNNS;
 };
 
 /// @brief Simple template class for restricting typo correction candidates

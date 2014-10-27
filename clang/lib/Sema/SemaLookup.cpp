@@ -3278,6 +3278,49 @@ static void LookupPotentialTypoResult(Sema &SemaRef,
                                       bool isObjCIvarLookup,
                                       bool FindHidden);
 
+/// \brief Check whether the declarations found for a typo correction are
+/// visible, and if none of them are, convert the correction to an 'import
+/// a module' correction.
+static void checkCorrectionVisibility(Sema &SemaRef, TypoCorrection &TC) {
+  if (TC.begin() == TC.end())
+    return;
+
+  TypoCorrection::decl_iterator DI = TC.begin(), DE = TC.end();
+
+  for (/**/; DI != DE; ++DI)
+    if (!LookupResult::isVisible(SemaRef, *DI))
+      break;
+  // Nothing to do if all decls are visible.
+  if (DI == DE)
+    return;
+
+  llvm::SmallVector<NamedDecl*, 4> NewDecls(TC.begin(), DI);
+  bool AnyVisibleDecls = !NewDecls.empty();
+
+  for (/**/; DI != DE; ++DI) {
+    NamedDecl *VisibleDecl = *DI;
+    if (!LookupResult::isVisible(SemaRef, *DI))
+      VisibleDecl = findAcceptableDecl(SemaRef, *DI);
+
+    if (VisibleDecl) {
+      if (!AnyVisibleDecls) {
+        // Found a visible decl, discard all hidden ones.
+        AnyVisibleDecls = true;
+        NewDecls.clear();
+      }
+      NewDecls.push_back(VisibleDecl);
+    } else if (!AnyVisibleDecls && !(*DI)->isModulePrivate())
+      NewDecls.push_back(*DI);
+  }
+
+  if (NewDecls.empty())
+    TC = TypoCorrection();
+  else {
+    TC.setCorrectionDecls(NewDecls);
+    TC.setRequiresImport(!AnyVisibleDecls);
+  }
+}
+
 // Fill the supplied vector with the IdentifierInfo pointers for each piece of
 // the given NestedNameSpecifier (i.e. given a NestedNameSpecifier "foo::bar::",
 // fill the vector with the IdentifierInfo pointers for "foo" and "bar").
@@ -3388,9 +3431,11 @@ void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
     return;
 
   // If the correction is resolved but is not viable, ignore it.
-  if (Correction.isResolved() &&
-      !isCandidateViable(*CorrectionValidator, Correction))
-    return;
+  if (Correction.isResolved()) {
+    checkCorrectionVisibility(SemaRef, Correction);
+    if (!Correction || !isCandidateViable(*CorrectionValidator, Correction))
+      return;
+  }
 
   TypoResultList &CList =
       CorrectionResults[Correction.getEditDistance(false)][Name];
@@ -3464,7 +3509,7 @@ const TypoCorrection &TypoCorrectionConsumer::getNextCorrection() {
     }
 
     TypoCorrection TC = RI->second.pop_back_val();
-    if (TC.isResolved() || resolveCorrection(TC)) {
+    if (TC.isResolved() || TC.requiresImport() || resolveCorrection(TC)) {
       ValidatedCorrections.push_back(TC);
       return ValidatedCorrections[CurrentTCIndex];
     }
@@ -3512,6 +3557,7 @@ retry_lookup:
     // Store all of the Decls for overloaded symbols
     for (auto *TRD : Result)
       Candidate.addCorrectionDecl(TRD);
+    checkCorrectionVisibility(SemaRef, Candidate);
     if (!isCandidateViable(*CorrectionValidator, Candidate)) {
       if (SearchNamespaces)
         QualifiedResults.push_back(Candidate);
@@ -3942,49 +3988,6 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       if (SemaRef.getLangOpts().CPlusPlus11)
         Consumer.addKeywordResult("static_assert");
     }
-  }
-}
-
-/// \brief Check whether the declarations found for a typo correction are
-/// visible, and if none of them are, convert the correction to an 'import
-/// a module' correction.
-static void checkCorrectionVisibility(Sema &SemaRef, TypoCorrection &TC) {
-  if (TC.begin() == TC.end())
-    return;
-
-  TypoCorrection::decl_iterator DI = TC.begin(), DE = TC.end();
-
-  for (/**/; DI != DE; ++DI)
-    if (!LookupResult::isVisible(SemaRef, *DI))
-      break;
-  // Nothing to do if all decls are visible.
-  if (DI == DE)
-    return;
-
-  llvm::SmallVector<NamedDecl*, 4> NewDecls(TC.begin(), DI);
-  bool AnyVisibleDecls = !NewDecls.empty();
-
-  for (/**/; DI != DE; ++DI) {
-    NamedDecl *VisibleDecl = *DI;
-    if (!LookupResult::isVisible(SemaRef, *DI))
-      VisibleDecl = findAcceptableDecl(SemaRef, *DI);
-
-    if (VisibleDecl) {
-      if (!AnyVisibleDecls) {
-        // Found a visible decl, discard all hidden ones.
-        AnyVisibleDecls = true;
-        NewDecls.clear();
-      }
-      NewDecls.push_back(VisibleDecl);
-    } else if (!AnyVisibleDecls && !(*DI)->isModulePrivate())
-      NewDecls.push_back(*DI);
-  }
-
-  if (NewDecls.empty())
-    TC = TypoCorrection();
-  else {
-    TC.setCorrectionDecls(NewDecls);
-    TC.setRequiresImport(!AnyVisibleDecls);
   }
 }
 
