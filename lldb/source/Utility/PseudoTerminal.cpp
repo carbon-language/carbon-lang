@@ -66,7 +66,11 @@ PseudoTerminal::CloseMasterFileDescriptor ()
 {
     if (m_master_fd >= 0)
     {
+    // Don't call 'close' on m_master_fd for Windows as a dummy implementation of
+    // posix_openpt above always gives it a 0 value.
+#ifndef _WIN32
         ::close (m_master_fd);
+#endif
         m_master_fd = invalid_fd;
     }
 }
