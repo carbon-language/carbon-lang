@@ -762,39 +762,36 @@ defm VPBROADCASTMB2Q : avx512_mask_broadcast<0x2A, "vpbroadcastmb2q",
 // AVX-512 - VPERM
 //
 // -- immediate form --
-multiclass avx512_perm_imm<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                         SDNode OpNode, PatFrag mem_frag, 
-                         X86MemOperand x86memop, ValueType OpVT> {
-  def ri : AVX512AIi8<opc, MRMSrcReg, (outs RC:$dst),
-                     (ins RC:$src1, i8imm:$src2),
+multiclass avx512_perm_imm<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                           X86VectorVTInfo _> {
+  let ExeDomain = _.ExeDomain in {
+  def ri : AVX512AIi8<opc, MRMSrcReg, (outs _.RC:$dst),
+                     (ins _.RC:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
                          " \t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                     [(set RC:$dst,
-                       (OpVT (OpNode RC:$src1, (i8 imm:$src2))))]>,
+                     [(set _.RC:$dst,
+                       (_.VT (OpNode _.RC:$src1, (i8 imm:$src2))))]>,
                      EVEX;
-  def mi : AVX512AIi8<opc, MRMSrcMem, (outs RC:$dst),
-                     (ins x86memop:$src1, i8imm:$src2),
+  def mi : AVX512AIi8<opc, MRMSrcMem, (outs _.RC:$dst),
+                     (ins _.MemOp:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
                          " \t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                     [(set RC:$dst,
-                       (OpVT (OpNode (mem_frag addr:$src1),
-                              (i8 imm:$src2))))]>, EVEX;
+                     [(set _.RC:$dst,
+                       (_.VT (OpNode (_.MemOpFrag addr:$src1),
+                              (i8 imm:$src2))))]>,
+           EVEX, EVEX_CD8<_.EltSize, CD8VF>;
+}
 }
 
-defm VPERMQZ  : avx512_perm_imm<0x00, "vpermq", VR512, X86VPermi, memopv8i64,
-                        i512mem, v8i64>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-let ExeDomain = SSEPackedDouble in 
-defm VPERMPDZ  : avx512_perm_imm<0x01, "vpermpd", VR512, X86VPermi, memopv8f64, 
-                        f512mem, v8f64>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPERMQZ :    avx512_perm_imm<0x00, "vpermq", X86VPermi, v8i64_info>,
+                  EVEX_V512, VEX_W;
+defm VPERMPDZ :   avx512_perm_imm<0x01, "vpermpd", X86VPermi, v8f64_info>,
+                  EVEX_V512, VEX_W;
 
-let ExeDomain = SSEPackedSingle in
-defm VPERMILPSZ : avx512_perm_imm<0x04, "vpermilps", VR512, X86VPermilpi,
-                      memopv16f32, f512mem, v16f32>, EVEX_V512,
-                      EVEX_CD8<32, CD8VF>;
-let ExeDomain = SSEPackedDouble in
-defm VPERMILPDZ : avx512_perm_imm<0x05, "vpermilpd", VR512, X86VPermilpi,
-                      memopv8f64, f512mem, v8f64>, EVEX_V512,
-                      VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPERMILPSZ : avx512_perm_imm<0x04, "vpermilps", X86VPermilpi, v16f32_info>,
+                  EVEX_V512;
+defm VPERMILPDZ : avx512_perm_imm<0x05, "vpermilpd", X86VPermilpi, v8f64_info>,
+                  EVEX_V512, VEX_W;
 
 def : Pat<(v16i32 (X86VPermilpi VR512:$src1, (i8 imm:$imm))),
           (VPERMILPSZri VR512:$src1, imm:$imm)>;
