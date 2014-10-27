@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "TreeTransform.h"
 #include "TypeLocBuilder.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTLambda.h"
@@ -5914,6 +5915,103 @@ static void CheckIfAnyEnclosingLambdasMustCaptureAnyPotentialCaptures(
   CurrentLSI->clearPotentialCaptures();
 }
 
+namespace {
+class TransformTypos : public TreeTransform<TransformTypos> {
+  typedef TreeTransform<TransformTypos> BaseTransform;
+
+  llvm::SmallSetVector<TypoExpr *, 2> TypoExprs;
+  llvm::SmallDenseMap<TypoExpr *, ExprResult, 2> TransformCache;
+
+  /// \brief Emit diagnostics for all of the TypoExprs encountered.
+  /// If the TypoExprs were successfully corrected, then the diagnostics should
+  /// suggest the corrections. Otherwise the diagnostics will not suggest
+  /// anything (having been passed an empty TypoCorrection).
+  void EmitAllDiagnostics() {
+    for (auto E : TypoExprs) {
+      TypoExpr *TE = cast<TypoExpr>(E);
+      auto &State = SemaRef.getTypoExprState(TE);
+      if (State.DiagHandler)
+        State.DiagHandler(State.Consumer->getCurrentCorrection());
+      SemaRef.clearDelayedTypo(TE);
+    }
+  }
+
+  /// \brief If corrections for the first TypoExpr have been exhausted for a
+  /// given combination of the other TypoExprs, retry those corrections against
+  /// the next combination of substitutions for the other TypoExprs by advancing
+  /// to the next potential correction of the second TypoExpr. For the second
+  /// and subsequent TypoExprs, if its stream of corrections has been exhausted,
+  /// the stream is reset and the next TypoExpr's stream is advanced by one (a
+  /// TypoExpr's correction stream is advanced by removing the TypoExpr from the
+  /// TransformCache). Returns true if there is still any untried combinations
+  /// of corrections.
+  bool CheckAndAdvanceTypoExprCorrectionStreams() {
+    for (auto TE : TypoExprs) {
+      auto &State = SemaRef.getTypoExprState(TE);
+      TransformCache.erase(TE);
+      if (!State.Consumer->finished())
+        return true;
+      State.Consumer->resetCorrectionStream();
+    }
+    return false;
+  }
+
+public:
+  TransformTypos(Sema &SemaRef) : BaseTransform(SemaRef) {}
+
+  ExprResult TransformLambdaExpr(LambdaExpr *E) { return Owned(E); }
+
+  ExprResult Transform(Expr *E) {
+    ExprResult res;
+    bool error = false;
+    while (true) {
+      Sema::SFINAETrap Trap(SemaRef);
+      res = TransformExpr(E);
+      error = Trap.hasErrorOccurred();
+
+      // Exit if either the transform was valid or if there were no TypoExprs
+      // to transform that still have any untried correction candidates..
+      if (!(error || res.isInvalid()) ||
+          !CheckAndAdvanceTypoExprCorrectionStreams())
+        break;
+    }
+
+    EmitAllDiagnostics();
+
+    return res;
+  }
+
+  ExprResult TransformTypoExpr(TypoExpr *E) {
+    // If the TypoExpr hasn't been seen before, record it. Otherwise, return the
+    // cached transformation result if there is one and the TypoExpr isn't the
+    // first one that was encountered.
+    auto &CacheEntry = TransformCache[E];
+    if (!TypoExprs.insert(E) && !CacheEntry.isUnset()) {
+      return CacheEntry;
+    }
+
+    auto &State = SemaRef.getTypoExprState(E);
+    assert(State.Consumer && "Cannot transform a cleared TypoExpr");
+
+    // For the first TypoExpr and an uncached TypoExpr, find the next likely
+    // typo correction and return it.
+    while (TypoCorrection TC = State.Consumer->getNextCorrection()) {
+      LookupResult R(SemaRef,
+                     State.Consumer->getLookupResult().getLookupNameInfo(),
+                     State.Consumer->getLookupResult().getLookupKind());
+      if (!TC.isKeyword())
+        R.addDecl(TC.getCorrectionDecl());
+      ExprResult NE =
+          SemaRef.BuildDeclarationNameExpr(CXXScopeSpec(), R, false);
+      assert(!NE.isUnset() &&
+             "Typo was transformed into a valid-but-null ExprResult");
+      if (!NE.isInvalid())
+        return CacheEntry = NE;
+    }
+    return CacheEntry = ExprError();
+  }
+};
+}
 
 ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
                                      bool DiscardedValue,
@@ -5957,6 +6055,22 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
       return ExprError();
 
     FullExpr = IgnoredValueConversions(FullExpr.get());
+    if (FullExpr.isInvalid())
+      return ExprError();
+  }
+
+  // If the current evaluation context indicates there are uncorrected typos
+  // and the current expression isn't guaranteed to not have typos, try to
+  // resolve any TypoExpr nodes that might be in the expression.
+  if (ExprEvalContexts.back().NumTypos &&
+      (FullExpr.get()->isTypeDependent() ||
+       FullExpr.get()->isValueDependent() ||
+       FullExpr.get()->isInstantiationDependent())) {
+    auto TyposResolved = DelayedTypos.size();
+    FullExpr = TransformTypos(*this).Transform(FullExpr.get());
+    TyposResolved -= DelayedTypos.size();
+    if (TyposResolved)
+      ExprEvalContexts.back().NumTypos -= TyposResolved;
     if (FullExpr.isInvalid())
       return ExprError();
   }

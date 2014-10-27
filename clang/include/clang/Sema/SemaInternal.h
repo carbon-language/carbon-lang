@@ -101,8 +101,10 @@ public:
                          DeclContext *MemberContext,
                          bool EnteringContext)
       : Typo(TypoName.getName().getAsIdentifierInfo()), CurrentTCIndex(0),
-        SemaRef(SemaRef), S(S), SS(SS), CorrectionValidator(std::move(CCC)),
-        MemberContext(MemberContext), Result(SemaRef, TypoName, LookupKind),
+        SemaRef(SemaRef), S(S),
+        SS(SS ? llvm::make_unique<CXXScopeSpec>(*SS) : nullptr),
+        CorrectionValidator(std::move(CCC)), MemberContext(MemberContext),
+        Result(SemaRef, TypoName, LookupKind),
         Namespaces(SemaRef.Context, SemaRef.CurContext, SS),
         EnteringContext(EnteringContext), SearchNamespaces(false) {
     Result.suppressDiagnostics();
@@ -165,6 +167,13 @@ public:
   /// corrections in order before returning any new corrections).
   void resetCorrectionStream() {
     CurrentTCIndex = 0;
+  }
+
+  /// \brief Return whether the end of the stream of corrections has been
+  /// reached.
+  bool finished() {
+    return CorrectionResults.empty() &&
+           CurrentTCIndex >= ValidatedCorrections.size();
   }
 
   ASTContext &getContext() const { return SemaRef.Context; }
@@ -246,7 +255,7 @@ private:
 
   Sema &SemaRef;
   Scope *S;
-  CXXScopeSpec *SS;
+  std::unique_ptr<CXXScopeSpec> SS;
   std::unique_ptr<CorrectionCandidateCallback> CorrectionValidator;
   DeclContext *MemberContext;
   LookupResult Result;

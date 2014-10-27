@@ -168,6 +168,7 @@ namespace clang {
   class TypedefDecl;
   class TypedefNameDecl;
   class TypeLoc;
+  class TypoCorrectionConsumer;
   class UnqualifiedId;
   class UnresolvedLookupExpr;
   class UnresolvedMemberExpr;
@@ -768,6 +769,10 @@ public:
     /// this expression evaluation context.
     unsigned NumCleanupObjects;
 
+    /// \brief The number of typos encountered during this expression evaluation
+    /// context (i.e. the number of TypoExprs created).
+    unsigned NumTypos;
+
     llvm::SmallPtrSet<Expr*, 2> SavedMaybeODRUseExprs;
 
     /// \brief The lambdas that are present within this context, if it
@@ -801,6 +806,7 @@ public:
                                       bool IsDecltype)
       : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
         IsDecltype(IsDecltype), NumCleanupObjects(NumCleanupObjects),
+        NumTypos(0),
         ManglingContextDecl(ManglingContextDecl), MangleNumbering() { }
 
     /// \brief Retrieve the mangling numbering context, used to consistently
@@ -2585,8 +2591,22 @@ public:
                                                    bool ConstThis,
                                                    bool VolatileThis);
 
+  typedef std::function<void(const TypoCorrection &)> TypoDiagnosticGenerator;
+
 private:
   bool CppLookupName(LookupResult &R, Scope *S);
+
+  struct TypoExprState {
+    std::unique_ptr<TypoCorrectionConsumer> Consumer;
+    TypoDiagnosticGenerator DiagHandler;
+  };
+
+  /// \brief The set of unhandled TypoExprs and their associated state.
+  llvm::MapVector<TypoExpr *, TypoExprState> DelayedTypos;
+
+  /// \brief Creates a new TypoExpr AST node.
+  TypoExpr *createDelayedTypo(std::unique_ptr<TypoCorrectionConsumer> TCC,
+                              TypoDiagnosticGenerator TDG);
 
   // \brief The set of known/encountered (unique, canonicalized) NamespaceDecls.
   //
@@ -2598,7 +2618,24 @@ private:
   /// source.
   bool LoadedExternalKnownNamespaces;
 
+  /// \brief Helper for CorrectTypo and CorrectTypoDelayed used to create and
+  /// populate a new TypoCorrectionConsumer. Returns nullptr if typo correction
+  /// should be skipped entirely.
+  std::unique_ptr<TypoCorrectionConsumer>
+  makeTypoCorrectionConsumer(const DeclarationNameInfo &Typo,
+                             Sema::LookupNameKind LookupKind, Scope *S,
+                             CXXScopeSpec *SS,
+                             std::unique_ptr<CorrectionCandidateCallback> CCC,
+                             DeclContext *MemberContext, bool EnteringContext,
+                             const ObjCObjectPointerType *OPT,
+                             bool ErrorRecovery, bool &IsUnqualifiedLookup);
+
 public:
+  const TypoExprState &getTypoExprState(TypoExpr *TE) const;
+
+  /// \brief Clears the state of the given TypoExpr.
+  void clearDelayedTypo(TypoExpr *TE);
+
   /// \brief Look up a name, looking for a single declaration.  Return
   /// null if the results were absent, ambiguous, or overloaded.
   ///
@@ -2675,6 +2712,16 @@ public:
                              bool EnteringContext = false,
                              const ObjCObjectPointerType *OPT = nullptr,
                              bool RecordFailure = true);
+
+  TypoExpr *CorrectTypoDelayed(const DeclarationNameInfo &Typo,
+                               Sema::LookupNameKind LookupKind, Scope *S,
+                               CXXScopeSpec *SS,
+                               std::unique_ptr<CorrectionCandidateCallback> CCC,
+                               TypoDiagnosticGenerator TDG,
+                               CorrectTypoKind Mode,
+                               DeclContext *MemberContext = nullptr,
+                               bool EnteringContext = false,
+                               const ObjCObjectPointerType *OPT = nullptr);
 
   void diagnoseTypo(const TypoCorrection &Correction,
                     const PartialDiagnostic &TypoDiag,
