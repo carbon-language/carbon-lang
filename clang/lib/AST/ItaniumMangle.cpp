@@ -2627,6 +2627,7 @@ recurse:
   case Expr::ParenListExprClass:
   case Expr::LambdaExprClass:
   case Expr::MSPropertyRefExprClass:
+  case Expr::TypoExprClass:  // This should no longer exist in the AST by now.
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.

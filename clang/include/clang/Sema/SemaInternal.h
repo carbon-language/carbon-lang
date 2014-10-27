@@ -149,6 +149,9 @@ public:
   /// in the consumer.
   TypoCorrection getNextCorrection();
 
+  ASTContext &getContext() const { return SemaRef.Context; }
+  const LookupResult &getLookupResult() const { return Result; }
+
 private:
   class NamespaceSpecifierSet {
     struct SpecifierInfo {

@@ -4846,6 +4846,24 @@ public:
     return child_range(SubExprs, SubExprs+NumSubExprs);
   }
 };
+
+/// TypoExpr - Internal placeholder for expressions where typo correction
+/// still needs to be performed and/or an error diagnostic emitted.
+class TypoExpr : public Expr {
+public:
+  TypoExpr(QualType T)
+      : Expr(TypoExprClass, T, VK_LValue, OK_Ordinary,
+             /*isTypeDependent*/ true,
+             /*isValueDependent*/ true,
+             /*isInstantiationDependent*/ true,
+             /*containsUnexpandedParameterPack*/ false) {
+    assert(T->isDependentType() && "TypoExpr given a non-dependent type");
+  }
+
+  child_range children() { return child_range(); }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+};
 }  // end namespace clang
 
 #endif

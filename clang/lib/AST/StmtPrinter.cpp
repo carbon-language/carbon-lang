@@ -2166,6 +2166,11 @@ void StmtPrinter::VisitOpaqueValueExpr(OpaqueValueExpr *Node) {
   PrintExpr(Node->getSourceExpr());
 }
 
+void StmtPrinter::VisitTypoExpr(TypoExpr *Node) {
+  // TODO: Print something reasonable for a TypoExpr, if necessary.
+  assert(false && "Cannot print TypoExpr nodes");
+}
+
 void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
   OS << "__builtin_astype(";
   PrintExpr(Node->getSrcExpr());

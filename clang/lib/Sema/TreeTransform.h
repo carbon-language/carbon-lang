@@ -7323,6 +7323,12 @@ TreeTransform<Derived>::TransformOpaqueValueExpr(OpaqueValueExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformTypoExpr(TypoExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformPseudoObjectExpr(PseudoObjectExpr *E) {
   // Rebuild the syntactic form.  The original syntactic form has
   // opaque-value expressions in it, so strip those away and rebuild
