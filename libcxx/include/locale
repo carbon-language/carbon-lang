@@ -2970,6 +2970,8 @@ __double_or_nothing(unique_ptr<_Tp, void(*)(void*)>& __b, _Tp*& __n, _Tp*& __e)
     size_t __cur_cap = static_cast<size_t>(__e-__b.get()) * sizeof(_Tp);
     size_t __new_cap = __cur_cap < numeric_limits<size_t>::max() / 2 ?
                        2 * __cur_cap : numeric_limits<size_t>::max();
+    if (__new_cap == 0)
+        __new_cap = sizeof(_Tp);
     size_t __n_off = static_cast<size_t>(__n - __b.get());
     _Tp* __t = (_Tp*)realloc(__owns ? __b.get() : 0, __new_cap);
     if (__t == 0)

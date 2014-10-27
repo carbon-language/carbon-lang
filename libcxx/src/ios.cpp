@@ -154,6 +154,16 @@ atomic<int> ios_base::__xindex_ = ATOMIC_VAR_INIT(0);
 int ios_base::__xindex_ = 0;
 #endif
 
+template <typename _Tp>
+static size_t __ios_new_cap(size_t __req_size, size_t __current_cap)
+{ // Precondition: __req_size > __current_cap
+	const size_t mx = std::numeric_limits<size_t>::max() / sizeof(_Tp);
+	if (__req_size < mx/2)
+		return _VSTD::max(2 * __current_cap, __req_size);
+	else
+		return mx;
+}
+
 int
 ios_base::xalloc()
 {
@@ -166,14 +176,8 @@ ios_base::iword(int index)
     size_t req_size = static_cast<size_t>(index)+1;
     if (req_size > __iarray_cap_)
     {
-        size_t newcap;
-        const size_t mx = std::numeric_limits<size_t>::max();
-        if (req_size < mx/2)
-            newcap = _VSTD::max(2 * __iarray_cap_, req_size);
-        else
-            newcap = mx;
-        size_t newsize = newcap * sizeof(long);
-        long* iarray = static_cast<long*>(realloc(__iarray_, newsize));
+        size_t newcap = __ios_new_cap<long>(req_size, __iarray_cap_);
+        long* iarray = static_cast<long*>(realloc(__iarray_, newcap * sizeof(long)));
         if (iarray == 0)
         {
             setstate(badbit);
@@ -182,8 +186,9 @@ ios_base::iword(int index)
             return error;
         }
         __iarray_ = iarray;
-        for (long* p = __iarray_ + __iarray_size_; __iarray_cap_ < newcap; ++__iarray_cap_, ++p)
+        for (long* p = __iarray_ + __iarray_size_; p < __iarray_ + newcap; ++p)
             *p = 0;
+        __iarray_cap_ = newcap;
     }
     __iarray_size_ = max<size_t>(__iarray_size_, req_size);
     return __iarray_[index];
@@ -195,14 +200,8 @@ ios_base::pword(int index)
     size_t req_size = static_cast<size_t>(index)+1;
     if (req_size > __parray_cap_)
     {
-        size_t newcap;
-        const size_t mx = std::numeric_limits<size_t>::max();
-        if (req_size < mx/2)
-            newcap = _VSTD::max(2 * __parray_cap_, req_size);
-        else
-            newcap = mx;
-        size_t newsize = newcap * sizeof(void*);
-        void** parray = static_cast<void**>(realloc(__parray_, newsize));
+        size_t newcap = __ios_new_cap<void *>(req_size, __iarray_cap_);
+        void** parray = static_cast<void**>(realloc(__parray_, newcap * sizeof(void *)));
         if (parray == 0)
         {
             setstate(badbit);
@@ -211,8 +210,9 @@ ios_base::pword(int index)
             return error;
         }
         __parray_ = parray;
-        for (void** p = __parray_ + __parray_size_; __parray_cap_ < newcap; ++__parray_cap_, ++p)
+        for (void** p = __parray_ + __parray_size_; p < __parray_ + newcap; ++p)
             *p = 0;
+        __parray_cap_ = newcap;
     }
     __parray_size_ = max<size_t>(__parray_size_, req_size);
     return __parray_[index];
@@ -226,22 +226,16 @@ ios_base::register_callback(event_callback fn, int index)
     size_t req_size = __event_size_ + 1;
     if (req_size > __event_cap_)
     {
-        size_t newcap;
-        const size_t mx = std::numeric_limits<size_t>::max();
-        if (req_size < mx/2)
-            newcap = _VSTD::max(2 * __event_cap_, req_size);
-        else
-            newcap = mx;
-        size_t newesize = newcap * sizeof(event_callback);
-        event_callback* fns = static_cast<event_callback*>(realloc(__fn_, newesize));
+        size_t newcap = __ios_new_cap<event_callback>(req_size, __event_cap_);
+        event_callback* fns = static_cast<event_callback*>(realloc(__fn_, newcap * sizeof(event_callback)));
         if (fns == 0)
             setstate(badbit);
         __fn_ = fns;
-        size_t newisize = newcap * sizeof(int);
-        int* indxs = static_cast<int *>(realloc(__index_, newisize));
+        int* indxs = static_cast<int *>(realloc(__index_, newcap * sizeof(int)));
         if (indxs == 0)
             setstate(badbit);
         __index_ = indxs;
+        __event_cap_ = newcap;
     }
     __fn_[__event_size_] = fn;
     __index_[__event_size_] = index;
