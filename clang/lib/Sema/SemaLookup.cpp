@@ -3444,7 +3444,11 @@ void TypoCorrectionConsumer::addNamespaces(
   }
 }
 
-TypoCorrection TypoCorrectionConsumer::getNextCorrection() {
+const TypoCorrection &TypoCorrectionConsumer::getNextCorrection() {
+  if (++CurrentTCIndex < ValidatedCorrections.size())
+    return ValidatedCorrections[CurrentTCIndex];
+
+  CurrentTCIndex = ValidatedCorrections.size();
   while (!CorrectionResults.empty()) {
     auto DI = CorrectionResults.begin();
     if (DI->second.empty()) {
@@ -3460,16 +3464,20 @@ TypoCorrection TypoCorrectionConsumer::getNextCorrection() {
     }
 
     TypoCorrection TC = RI->second.pop_back_val();
-    if (TC.isResolved() || resolveCorrection(TC))
-      return TC;
+    if (TC.isResolved() || resolveCorrection(TC)) {
+      ValidatedCorrections.push_back(TC);
+      return ValidatedCorrections[CurrentTCIndex];
+    }
   }
-  return TypoCorrection();
+  return ValidatedCorrections[0];  // The empty correction.
 }
 
 bool TypoCorrectionConsumer::resolveCorrection(TypoCorrection &Candidate) {
   IdentifierInfo *Name = Candidate.getCorrectionAsIdentifierInfo();
   DeclContext *TempMemberContext = MemberContext;
   CXXScopeSpec *TempSS = SS;
+  if (Candidate.getCorrectionRange().isInvalid())
+    Candidate.setCorrectionRange(TempSS, Result.getLookupNameInfo());
 retry_lookup:
   LookupPotentialTypoResult(SemaRef, Result, Name, S, TempSS, TempMemberContext,
                             EnteringContext,

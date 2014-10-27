@@ -100,12 +100,14 @@ public:
                          std::unique_ptr<CorrectionCandidateCallback> CCC,
                          DeclContext *MemberContext,
                          bool EnteringContext)
-      : Typo(TypoName.getName().getAsIdentifierInfo()), SemaRef(SemaRef), S(S),
-        SS(SS), CorrectionValidator(std::move(CCC)), MemberContext(MemberContext),
-        Result(SemaRef, TypoName, LookupKind),
+      : Typo(TypoName.getName().getAsIdentifierInfo()), CurrentTCIndex(0),
+        SemaRef(SemaRef), S(S), SS(SS), CorrectionValidator(std::move(CCC)),
+        MemberContext(MemberContext), Result(SemaRef, TypoName, LookupKind),
         Namespaces(SemaRef.Context, SemaRef.CurContext, SS),
         EnteringContext(EnteringContext), SearchNamespaces(false) {
     Result.suppressDiagnostics();
+    // Arrange for ValidatedCorrections[0] to always be an empty correction.
+    ValidatedCorrections.push_back(TypoCorrection());
   }
 
   bool includeHiddenDecls() const override { return true; }
@@ -117,7 +119,9 @@ public:
   void addKeywordResult(StringRef Keyword);
   void addCorrection(TypoCorrection Correction);
 
-  bool empty() const { return CorrectionResults.empty(); }
+  bool empty() const {
+    return CorrectionResults.empty() && ValidatedCorrections.size() == 1;
+  }
 
   /// \brief Return the list of TypoCorrections for the given identifier from
   /// the set of corrections that have the closest edit distance, if any.
@@ -147,7 +151,21 @@ public:
   /// starting with the corrections that have the closest edit distance. An
   /// empty TypoCorrection is returned once no more viable corrections remain
   /// in the consumer.
-  TypoCorrection getNextCorrection();
+  const TypoCorrection &getNextCorrection();
+
+  /// \brief Get the last correction returned by getNextCorrection().
+  const TypoCorrection &getCurrentCorrection() {
+    return CurrentTCIndex < ValidatedCorrections.size()
+               ? ValidatedCorrections[CurrentTCIndex]
+               : ValidatedCorrections[0];  // The empty correction.
+  }
+
+  /// \brief Reset the consumer's position in the stream of viable corrections
+  /// (i.e. getNextCorrection() will return each of the previously returned
+  /// corrections in order before returning any new corrections).
+  void resetCorrectionStream() {
+    CurrentTCIndex = 0;
+  }
 
   ASTContext &getContext() const { return SemaRef.Context; }
   const LookupResult &getLookupResult() const { return Result; }
@@ -222,6 +240,9 @@ private:
   /// The pointer value being set to the current DeclContext indicates
   /// whether there is a keyword with this name.
   TypoEditDistanceMap CorrectionResults;
+
+  SmallVector<TypoCorrection, 4> ValidatedCorrections;
+  size_t CurrentTCIndex;
 
   Sema &SemaRef;
   Scope *S;
