@@ -37,5 +37,5 @@ static CFStringRef _s;
 
 CFArrayRef _array()
 {
-    return (__bridge CFArrayRef)@[(__bridge NSString *)_s]; // expected-warning {{__bridge cast of collection literal of type 'NSArray *' to "bridgeable" C type 'CFArrayRef' (aka 'const struct __CFArray *') causes early release of the collection}}
+    return (__bridge CFArrayRef)@[(__bridge NSString *)_s]; // expected-error {{__bridge cast of collection literal of type 'NSArray *' to bridgeable type 'CFArrayRef' (aka 'const struct __CFArray *') causes early release of the collection}}
 }
