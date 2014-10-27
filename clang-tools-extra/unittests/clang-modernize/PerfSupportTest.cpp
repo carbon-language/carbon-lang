@@ -56,7 +56,7 @@ TEST(PerfSupport, collectSourcePerfData) {
   TransformOptions Options;
   TransformA A(Options);
   TransformB B(Options);
-  
+
   // The actual durations don't matter. Below only their relative ordering is
   // tested to ensure times, labels, and sources all stay together properly.
   A.addTiming("FileA.cpp", TimeRecord::getCurrentTime(/*Start=*/true));
