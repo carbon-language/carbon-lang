@@ -137,7 +137,7 @@ private:
   typedef ValuePool<AllowedRegVector> AllowedRegVecPool;
 public:
 
-  typedef typename AllowedRegVecPool::PoolRef AllowedRegVecRef;
+  typedef AllowedRegVecPool::PoolRef AllowedRegVecRef;
 
   GraphMetadata(MachineFunction &MF,
                 LiveIntervals &LIS,
