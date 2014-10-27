@@ -307,18 +307,20 @@ public:
 
   void onStartOfTranslationUnit() {
     const bool EnableCheckProfiling = Options.CheckProfiling.hasValue();
+    TimeBucketRegion Timer;
     for (MatchCallback *MC : Matchers->AllCallbacks) {
-      TimeRegion Timer(EnableCheckProfiling ? &TimeByBucket[MC->getID()]
-                                            : nullptr);
+      if (EnableCheckProfiling)
+        Timer.setBucket(&TimeByBucket[MC->getID()]);
       MC->onStartOfTranslationUnit();
     }
   }
 
   void onEndOfTranslationUnit() {
     const bool EnableCheckProfiling = Options.CheckProfiling.hasValue();
+    TimeBucketRegion Timer;
     for (MatchCallback *MC : Matchers->AllCallbacks) {
-      TimeRegion Timer(EnableCheckProfiling ? &TimeByBucket[MC->getID()]
-                                            : nullptr);
+      if (EnableCheckProfiling)
+        Timer.setBucket(&TimeByBucket[MC->getID()]);
       MC->onEndOfTranslationUnit();
     }
   }
@@ -489,19 +491,32 @@ public:
   bool shouldUseDataRecursionFor(clang::Stmt *S) const { return false; }
 
 private:
-  class TimeRegion {
+  class TimeBucketRegion {
   public:
-    TimeRegion(llvm::TimeRecord *Record) : Record(Record) {
-      if (Record)
-        *Record -= llvm::TimeRecord::getCurrentTime(true);
-    }
-    ~TimeRegion() {
-      if (Record)
-        *Record += llvm::TimeRecord::getCurrentTime(false);
+    TimeBucketRegion() : Bucket(nullptr) {}
+    ~TimeBucketRegion() { setBucket(nullptr); }
+
+    /// \brief Start timing for \p NewBucket.
+    ///
+    /// If there was a bucket already set, it will finish the timing for that
+    /// other bucket.
+    /// \p NewBucket will be timed until the next call to \c setBucket() or
+    /// until the \c TimeBucketRegion is destroyed.
+    /// If \p NewBucket is the same as the currently timed bucket, this call
+    /// does nothing.
+    void setBucket(llvm::TimeRecord *NewBucket) {
+      if (Bucket != NewBucket) {
+        auto Now = llvm::TimeRecord::getCurrentTime(true);
+        if (Bucket)
+          *Bucket += Now;
+        if (NewBucket)
+          *NewBucket -= Now;
+        Bucket = NewBucket;
+      }
     }
 
   private:
-    llvm::TimeRecord *Record;
+    llvm::TimeRecord *Bucket;
   };
 
   /// \brief Runs all the \p Matchers on \p Node.
@@ -510,9 +525,10 @@ private:
   template <typename T, typename MC>
   void matchImpl(const T &Node, const MC &Matchers) {
     const bool EnableCheckProfiling = Options.CheckProfiling.hasValue();
+    TimeBucketRegion Timer;
     for (const auto &MP : Matchers) {
-      TimeRegion Timer(EnableCheckProfiling ? &TimeByBucket[MP.second->getID()]
-                                            : nullptr);
+      if (EnableCheckProfiling)
+        Timer.setBucket(&TimeByBucket[MP.second->getID()]);
       BoundNodesTreeBuilder Builder;
       if (MP.first.matches(Node, this, &Builder)) {
         MatchVisitor Visitor(ActiveASTContext, MP.second);
