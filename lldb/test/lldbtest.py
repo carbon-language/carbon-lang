@@ -565,8 +565,8 @@ def skipIfNoSBHeaders(func):
     def wrapper(*args, **kwargs):
         from unittest2 import case
         self = args[0]
+        header = os.path.join(self.lib_dir, 'LLDB.framework', 'Versions','Current','Headers','LLDB.h')
         platform = sys.platform
-        header = os.path.join(os.environ["LLDB_SRC"], "include", "lldb", "API", "LLDB.h")
         if not os.path.exists(header):
             self.skipTest("skip because LLDB.h header not found")
         else:
