@@ -376,7 +376,7 @@ void CGOpenMPRuntime::EmitOMPSerialCall(CodeGenFunction &CGF,
   CGF.EmitRuntimeCall(RTLFn, EndSerArgs);
 }
 
-// If we’re inside an (outlined) parallel region, use the region info’s
+// If we're inside an (outlined) parallel region, use the region info's
 // thread-ID variable (it is passed in a first argument of the outlined function
 // as "kmp_int32 *gtid"). Otherwise, if we're not inside parallel region, but in
 // regular serial code region, get thread ID by calling kmp_int32

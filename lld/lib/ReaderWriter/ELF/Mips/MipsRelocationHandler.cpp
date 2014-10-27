@@ -106,7 +106,7 @@ static void relocGeneralLo16(uint8_t *location, uint64_t S, int64_t A) {
 }
 
 /// \brief R_MIPS_GPREL32
-/// local: rel32 A + S + GP0 – GP (truncate)
+/// local: rel32 A + S + GP0 - GP (truncate)
 static void relocGPRel32(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
                          uint64_t GP) {
   int32_t result = A + S + 0 - GP;

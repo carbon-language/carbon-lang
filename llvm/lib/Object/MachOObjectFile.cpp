@@ -1609,7 +1609,7 @@ void ExportEntry::pushDownUntilBottom() {
 // string that is the accumulation of all edge strings along the parent chain
 // to this point.
 //
-// There is one “export” node for each exported symbol.  But because some
+// There is one "export" node for each exported symbol.  But because some
 // symbols may be a prefix of another symbol (e.g. _dup and _dup2), an export
 // node may have child nodes too.  
 //
