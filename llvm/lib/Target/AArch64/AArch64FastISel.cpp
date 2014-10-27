@@ -2118,7 +2118,7 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
       return false;
 
     if (const auto *AI = dyn_cast<BinaryOperator>(LHS))
-      if (AI->getOpcode() == Instruction::And) {
+      if (AI->getOpcode() == Instruction::And && isValueAvailable(AI)) {
         const Value *AndLHS = AI->getOperand(0);
         const Value *AndRHS = AI->getOperand(1);
 
@@ -2165,7 +2165,7 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
   bool Is64Bit = BW == 64;
   if (TestBit < 32 && TestBit >= 0)
     Is64Bit = false;
-  
+
   unsigned Opc = OpcTable[IsBitTest][IsCmpNE][Is64Bit];
   const MCInstrDesc &II = TII.get(Opc);
 
