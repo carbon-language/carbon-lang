@@ -267,11 +267,16 @@ unsigned SanitizerArgs::filterUnsupportedKinds(const ToolChain &TC,
                                                const llvm::opt::Arg *A,
                                                bool DiagnoseErrors,
                                                unsigned &DiagnosedKinds) {
+  bool IsFreeBSD = TC.getTriple().getOS() == llvm::Triple::FreeBSD;
   bool IsLinux = TC.getTriple().getOS() == llvm::Triple::Linux;
   bool IsX86 = TC.getTriple().getArch() == llvm::Triple::x86;
   bool IsX86_64 = TC.getTriple().getArch() == llvm::Triple::x86_64;
   if (!(IsLinux && IsX86_64)) {
-    filterUnsupportedMask(TC, Kinds, Thread | Memory | DataFlow, Args, A,
+    filterUnsupportedMask(TC, Kinds, Memory | DataFlow, Args, A,
+                          DiagnoseErrors, DiagnosedKinds);
+  }
+  if (!((IsLinux || IsFreeBSD) && IsX86_64)) {
+    filterUnsupportedMask(TC, Kinds, Thread, Args, A,
                           DiagnoseErrors, DiagnosedKinds);
   }
   if (!(IsLinux && (IsX86 || IsX86_64))) {
