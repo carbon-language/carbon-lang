@@ -1084,3 +1084,12 @@ define float @overflow_sitofp() {
 ; CHECK-NEXT: ret float undef 
 }
 
+define i32 @PR21388(i32* %v) {
+  %icmp = icmp slt i32* %v, null
+  %sext = sext i1 %icmp to i32
+  ret i32 %sext
+; CHECK-LABEL: @PR21388(
+; CHECK-NEXT: %[[icmp:.*]] = icmp slt i32* %v, null
+; CHECK-NEXT: %[[sext:.*]] = sext i1 %[[icmp]] to i32
+; CHECK-NEXT: ret i32 %[[sext]]
+}
