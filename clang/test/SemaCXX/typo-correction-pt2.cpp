@@ -28,7 +28,7 @@ struct A {
 };
 struct B : A {
   using A::CreateFoo;
-  void CreateFoo(int, int);
+  void CreateFoo(int, int);  // expected-note {{'CreateFoo' declared here}}
 };
 void f(B &x) {
   x.Createfoo(0,0);  // expected-error {{no member named 'Createfoo' in 'PR13387::B'; did you mean 'CreateFoo'?}}

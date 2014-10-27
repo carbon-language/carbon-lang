@@ -5921,6 +5921,7 @@ class TransformTypos : public TreeTransform<TransformTypos> {
 
   llvm::SmallSetVector<TypoExpr *, 2> TypoExprs;
   llvm::SmallDenseMap<TypoExpr *, ExprResult, 2> TransformCache;
+  llvm::SmallDenseMap<OverloadExpr *, Expr *, 4> OverloadResolution;
 
   /// \brief Emit diagnostics for all of the TypoExprs encountered.
   /// If the TypoExprs were successfully corrected, then the diagnostics should
@@ -5930,8 +5931,21 @@ class TransformTypos : public TreeTransform<TransformTypos> {
     for (auto E : TypoExprs) {
       TypoExpr *TE = cast<TypoExpr>(E);
       auto &State = SemaRef.getTypoExprState(TE);
-      if (State.DiagHandler)
-        State.DiagHandler(State.Consumer->getCurrentCorrection());
+      if (State.DiagHandler) {
+        TypoCorrection TC = State.Consumer->getCurrentCorrection();
+        ExprResult Replacement = TransformCache[TE];
+
+        // Extract the NamedDecl from the transformed TypoExpr and add it to the
+        // TypoCorrection, replacing the existing decls. This ensures the right
+        // NamedDecl is used in diagnostics e.g. in the case where overload
+        // resolution was used to select one from several possible decls that
+        // had been stored in the TypoCorrection.
+        if (auto *ND = getDeclFromExpr(
+                Replacement.isInvalid() ? nullptr : Replacement.get()))
+          TC.setCorrectionDecl(ND);
+
+        State.DiagHandler(TC);
+      }
       SemaRef.clearDelayedTypo(TE);
     }
   }
@@ -5956,8 +5970,37 @@ class TransformTypos : public TreeTransform<TransformTypos> {
     return false;
   }
 
+  NamedDecl *getDeclFromExpr(Expr *E) {
+    if (auto *OE = dyn_cast_or_null<OverloadExpr>(E))
+      E = OverloadResolution[OE];
+
+    if (!E)
+      return nullptr;
+    if (auto *DRE = dyn_cast<DeclRefExpr>(E))
+      return DRE->getDecl();
+    if (auto *ME = dyn_cast<MemberExpr>(E))
+      return ME->getMemberDecl();
+    // FIXME: Add any other expr types that could be be seen by the delayed typo
+    // correction TreeTransform for which the corresponding TypoCorrection could
+    // contain multple decls.
+    return nullptr;
+  }
+
 public:
   TransformTypos(Sema &SemaRef) : BaseTransform(SemaRef) {}
+
+  ExprResult RebuildCallExpr(Expr *Callee, SourceLocation LParenLoc,
+                                   MultiExprArg Args,
+                                   SourceLocation RParenLoc,
+                                   Expr *ExecConfig = nullptr) {
+    auto Result = BaseTransform::RebuildCallExpr(Callee, LParenLoc, Args,
+                                                 RParenLoc, ExecConfig);
+    if (auto *OE = dyn_cast<OverloadExpr>(Callee)) {
+      if (!Result.isInvalid() && Result.get())
+        OverloadResolution[OE] = cast<CallExpr>(Result.get())->getCallee();
+    }
+    return Result;
+  }
 
   ExprResult TransformLambdaExpr(LambdaExpr *E) { return Owned(E); }
 

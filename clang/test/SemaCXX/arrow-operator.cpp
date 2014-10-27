@@ -52,14 +52,15 @@ class wrapped_ptr {
 
 class Worker {
  public:
-  void DoSomething();
+  void DoSomething(); // expected-note {{'DoSomething' declared here}}
   void Chuck();
 };
 
 void test() {
   wrapped_ptr<Worker> worker(new Worker);
   worker.DoSomething(); // expected-error {{no member named 'DoSomething' in 'arrow_suggest::wrapped_ptr<arrow_suggest::Worker>'; did you mean to use '->' instead of '.'?}}
-  worker.DoSamething(); // expected-error {{no member named 'DoSamething' in 'arrow_suggest::wrapped_ptr<arrow_suggest::Worker>'}}
+  worker.DoSamething(); // expected-error {{no member named 'DoSamething' in 'arrow_suggest::wrapped_ptr<arrow_suggest::Worker>'; did you mean to use '->' instead of '.'?}} \
+                        // expected-error {{no member named 'DoSamething' in 'arrow_suggest::Worker'; did you mean 'DoSomething'?}}
   worker.Chuck(); // expected-error {{no member named 'Chuck' in 'arrow_suggest::wrapped_ptr<arrow_suggest::Worker>'; did you mean 'Check'?}}
 }
 
