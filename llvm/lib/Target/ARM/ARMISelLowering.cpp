@@ -3632,12 +3632,18 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
     //   select c, a, b
     // We only do this in unsafe-fp-math, because signed zeros and NaNs are
     // handled differently than the original code sequence.
-    if (getTargetMachine().Options.UnsafeFPMath && LHS == TrueVal &&
-        RHS == FalseVal) {
-      if (CC == ISD::SETOGT || CC == ISD::SETUGT)
-        return DAG.getNode(ARMISD::VMAXNM, dl, VT, TrueVal, FalseVal);
-      if (CC == ISD::SETOLT || CC == ISD::SETULT)
-        return DAG.getNode(ARMISD::VMINNM, dl, VT, TrueVal, FalseVal);
+    if (getTargetMachine().Options.UnsafeFPMath) {
+      if (LHS == TrueVal && RHS == FalseVal) {
+        if (CC == ISD::SETOGT || CC == ISD::SETUGT)
+          return DAG.getNode(ARMISD::VMAXNM, dl, VT, TrueVal, FalseVal);
+        if (CC == ISD::SETOLT || CC == ISD::SETULT)
+          return DAG.getNode(ARMISD::VMINNM, dl, VT, TrueVal, FalseVal);
+      } else if (LHS == FalseVal && RHS == TrueVal) {
+        if (CC == ISD::SETOLT || CC == ISD::SETULT)
+          return DAG.getNode(ARMISD::VMAXNM, dl, VT, TrueVal, FalseVal);
+        if (CC == ISD::SETOGT || CC == ISD::SETUGT)
+          return DAG.getNode(ARMISD::VMINNM, dl, VT, TrueVal, FalseVal);
+      }
     }
 
     bool swpCmpOps = false;
