@@ -1277,6 +1277,9 @@ private:
       return true;
     }
 
+    if (Previous.Children[0]->First->MustBreakBefore)
+      return false;
+
     // Cannot merge multiple statements into a single line.
     if (Previous.Children.size() > 1)
       return false;
