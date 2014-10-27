@@ -877,9 +877,8 @@ void ScopDetection::printLocations(llvm::Function &F) {
   }
 }
 
-void
-ScopDetection::emitMissedRemarksForValidRegions(const Function &F,
-                                                const RegionSet &ValidRegions) {
+void ScopDetection::emitMissedRemarksForValidRegions(
+    const Function &F, const RegionSet &ValidRegions) {
   for (const Region *R : ValidRegions) {
     const Region *Parent = R->getParent();
     if (Parent && !Parent->isTopLevelRegion() && RejectLogs.count(Parent))
