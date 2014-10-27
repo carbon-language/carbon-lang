@@ -2132,6 +2132,10 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
             LHS = AndLHS;
           }
       }
+
+    if (VT == MVT::i1)
+      TestBit = 0;
+
     IsCmpNE = Predicate == CmpInst::ICMP_NE;
   } else if (Predicate == CmpInst::ICMP_SLT) {
     if (!isa<Constant>(RHS))
