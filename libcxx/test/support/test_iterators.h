@@ -13,6 +13,12 @@
 #include <iterator>
 #include <cassert>
 
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#define DELETE_FUNCTION = delete
+#else
+#define DELETE_FUNCTION
+#endif
+
 template <class It>
 class output_iterator
 {
@@ -40,7 +46,7 @@ public:
         {output_iterator tmp(*this); ++(*this); return tmp;}
 
     template <class T>
-    void operator,(T const &);
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class It>
@@ -76,7 +82,7 @@ public:
         {return !(x == y);}
 
     template <class T>
-    void operator,(T const &);
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -128,7 +134,7 @@ public:
         {return !(x == y);}
 
     template <class T>
-    void operator,(T const &);
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -179,7 +185,7 @@ public:
         {bidirectional_iterator tmp(*this); --(*this); return tmp;}
 
     template <class T>
-    void operator,(T const &);
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -241,7 +247,7 @@ public:
     reference operator[](difference_type n) const {return it_[n];}
 
     template <class T>
-    void operator,(T const &);
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -422,5 +428,7 @@ inline Iter base(comma_iterator<Iter> i) { return i.base(); }
 
 template <class Iter>    // everything else
 inline Iter base(Iter i) { return i; }
+
+#undef DELETE_FUNCTION
 
 #endif  // ITERATORS_H

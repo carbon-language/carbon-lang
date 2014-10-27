@@ -1327,7 +1327,7 @@ __is_permutation(_ForwardIterator1 __first1, _ForwardIterator1 __last1,
                  forward_iterator_tag, forward_iterator_tag )
 {
     // shorten sequences as much as possible by lopping of any equal parts
-    for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+    for (; __first1 != __last1 && __first2 != __last2; ++__first1, (void) ++__first2)
         if (!__pred(*__first1, *__first2))
             goto __not_done;
     return __first1 == __last1 && __first2 == __last2;
