@@ -1592,8 +1592,12 @@ AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
 
 AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([cxxabi.h])
+dnl size_t must be defined before including cxxabi.h on FreeBSD 10.0.
+AC_CHECK_HEADERS([cxxabi.h], [], [],
+[#include <stddef.h>
+])
 AC_LANG_POP([C++])
+
 AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h inttypes.h link.h])
 AC_CHECK_HEADERS([malloc.h setjmp.h signal.h stdint.h termios.h unistd.h])
 AC_CHECK_HEADERS([utime.h])
