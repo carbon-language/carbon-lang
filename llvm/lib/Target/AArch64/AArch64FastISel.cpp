@@ -2087,12 +2087,12 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
   const Value *LHS = CI->getOperand(0);
   const Value *RHS = CI->getOperand(1);
 
-  Type *Ty = LHS->getType();
-    if (!Ty->isIntegerTy())
-      return false;
+  MVT VT;
+  if (!isTypeSupported(LHS->getType(), VT))
+    return false;
 
-  unsigned BW = cast<IntegerType>(Ty)->getBitWidth();
-  if (BW != 1 && BW != 8 && BW != 16 && BW != 32 && BW != 64)
+  unsigned BW = VT.getSizeInBits();
+  if (BW > 64)
     return false;
 
   MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
@@ -2107,14 +2107,14 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
   int TestBit = -1;
   bool IsCmpNE;
   if ((Predicate == CmpInst::ICMP_EQ) || (Predicate == CmpInst::ICMP_NE)) {
-    if (const auto *C = dyn_cast<ConstantInt>(LHS))
+    if (const auto *C = dyn_cast<Constant>(LHS))
       if (C->isNullValue())
         std::swap(LHS, RHS);
 
-    if (!isa<ConstantInt>(RHS))
+    if (!isa<Constant>(RHS))
       return false;
 
-    if (!cast<ConstantInt>(RHS)->isNullValue())
+    if (!cast<Constant>(RHS)->isNullValue())
       return false;
 
     if (const auto *AI = dyn_cast<BinaryOperator>(LHS))
@@ -2134,10 +2134,10 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
       }
     IsCmpNE = Predicate == CmpInst::ICMP_NE;
   } else if (Predicate == CmpInst::ICMP_SLT) {
-    if (!isa<ConstantInt>(RHS))
+    if (!isa<Constant>(RHS))
       return false;
 
-    if (!cast<ConstantInt>(RHS)->isNullValue())
+    if (!cast<Constant>(RHS)->isNullValue())
       return false;
 
     TestBit = BW - 1;
@@ -2178,11 +2178,8 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
     SrcReg = fastEmitInst_extractsubreg(MVT::i32, SrcReg, SrcIsKill,
                                         AArch64::sub_32);
 
-  if ((BW < 32) && !IsBitTest) {
-    EVT CmpEVT = TLI.getValueType(Ty, true);
-    SrcReg =
-        emitIntExt(CmpEVT.getSimpleVT(), SrcReg, MVT::i32, /*isZExt*/ true);
-  }
+  if ((BW < 32) && !IsBitTest)
+    SrcReg = emitIntExt(VT, SrcReg, MVT::i32, /*IsZExt=*/true);
 
   // Emit the combined compare and branch instruction.
   SrcReg = constrainOperandRegClass(II, SrcReg,  II.getNumDefs());
