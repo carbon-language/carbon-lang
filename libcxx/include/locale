@@ -456,7 +456,7 @@ __scan_keyword(_InputIterator& __b, _InputIterator __e,
     size_t __n_does_match = 0;       // but none of them definitely do
     // Initialize all statuses to __might_match, except for "" keywords are __does_match
     unsigned char* __st = __status;
-    for (_ForwardIterator __ky = __kb; __ky != __ke; ++__ky, ++__st)
+    for (_ForwardIterator __ky = __kb; __ky != __ke; ++__ky, (void) ++__st)
     {
         if (!__ky->empty())
             *__st = __might_match;
@@ -482,7 +482,7 @@ __scan_keyword(_InputIterator& __b, _InputIterator __e,
         // If the keyword doesn't match this character, then change the keyword
         //    to doesn't match
         __st = __status;
-        for (_ForwardIterator __ky = __kb; __ky != __ke; ++__ky, ++__st)
+        for (_ForwardIterator __ky = __kb; __ky != __ke; ++__ky, (void) ++__st)
         {
             if (*__st == __might_match)
             {
@@ -516,7 +516,7 @@ __scan_keyword(_InputIterator& __b, _InputIterator __e,
             if (__n_might_match + __n_does_match > 1)
             {
                 __st = __status;
-                for (_ForwardIterator __ky = __kb; __ky != __ke; ++__ky, ++__st)
+                for (_ForwardIterator __ky = __kb; __ky != __ke; ++__ky, (void) ++__st)
                 {
                     if (*__st == __does_match && __ky->size() != __indx+1)
                     {
@@ -531,7 +531,7 @@ __scan_keyword(_InputIterator& __b, _InputIterator __e,
     if (__b == __e)
         __err |= ios_base::eofbit;
     // Return the first matching result
-    for (__st = __status; __kb != __ke; ++__kb, ++__st)
+    for (__st = __status; __kb != __ke; ++__kb, (void) ++__st)
         if (*__st == __does_match)
             break;
     if (__kb == __ke)
@@ -1857,7 +1857,7 @@ __get_up_to_n_digits(_InputIterator& __b, _InputIterator __e,
         return 0;
     }
     int __r = __ct.narrow(__c, 0) - '0';
-    for (++__b, --__n; __b != __e && __n > 0; ++__b, --__n)
+    for (++__b, (void) --__n; __b != __e && __n > 0; ++__b, (void) --__n)
     {
         // get next digit
         __c = *__b;

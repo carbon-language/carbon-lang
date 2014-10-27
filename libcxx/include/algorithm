@@ -1189,7 +1189,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 equal(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2, _BinaryPredicate __pred)
 {
-    for (; __first1 != __last1; ++__first1, ++__first2)
+    for (; __first1 != __last1; ++__first1, (void) ++__first2)
         if (!__pred(*__first1, *__first2))
             return false;
     return true;
@@ -1213,7 +1213,7 @@ __equal(_InputIterator1 __first1, _InputIterator1 __last1,
         _InputIterator2 __first2, _InputIterator2 __last2, _BinaryPredicate __pred,
         input_iterator_tag, input_iterator_tag )
 {
-    for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+    for (; __first1 != __last1 && __first2 != __last2; ++__first1, (void) ++__first2)
         if (!__pred(*__first1, *__first2))
             return false;
     return __first1 == __last1 && __first2 == __last2;
@@ -1267,7 +1267,7 @@ is_permutation(_ForwardIterator1 __first1, _ForwardIterator1 __last1,
                _ForwardIterator2 __first2, _BinaryPredicate __pred)
 {
     // shorten sequences as much as possible by lopping of any equal parts
-    for (; __first1 != __last1; ++__first1, ++__first2)
+    for (; __first1 != __last1; ++__first1, (void) ++__first2)
         if (!__pred(*__first1, *__first2))
             goto __not_done;
     return true;
@@ -1745,7 +1745,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
 __copy(_InputIterator __first, _InputIterator __last, _OutputIterator __result)
 {
-    for (; __first != __last; ++__first, ++__result)
+    for (; __first != __last; ++__first, (void) ++__result)
         *__result = *__first;
     return __result;
 }
@@ -1874,7 +1874,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
 __move(_InputIterator __first, _InputIterator __last, _OutputIterator __result)
 {
-    for (; __first != __last; ++__first, ++__result)
+    for (; __first != __last; ++__first, (void) ++__result)
         *__result = _VSTD::move(*__first);
     return __result;
 }
@@ -1950,7 +1950,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
 transform(_InputIterator __first, _InputIterator __last, _OutputIterator __result, _UnaryOperation __op)
 {
-    for (; __first != __last; ++__first, ++__result)
+    for (; __first != __last; ++__first, (void) ++__result)
         *__result = __op(*__first);
     return __result;
 }
@@ -1961,7 +1961,7 @@ _OutputIterator
 transform(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2,
           _OutputIterator __result, _BinaryOperation __binary_op)
 {
-    for (; __first1 != __last1; ++__first1, ++__first2, ++__result)
+    for (; __first1 != __last1; ++__first1, (void) ++__first2, ++__result)
         *__result = __binary_op(*__first1, *__first2);
     return __result;
 }
@@ -1998,7 +1998,7 @@ _OutputIterator
 replace_copy(_InputIterator __first, _InputIterator __last, _OutputIterator __result,
              const _Tp& __old_value, const _Tp& __new_value)
 {
-    for (; __first != __last; ++__first, ++__result)
+    for (; __first != __last; ++__first, (void) ++__result)
         if (*__first == __old_value)
             *__result = __new_value;
         else
@@ -2014,7 +2014,7 @@ _OutputIterator
 replace_copy_if(_InputIterator __first, _InputIterator __last, _OutputIterator __result,
                 _Predicate __pred, const _Tp& __new_value)
 {
-    for (; __first != __last; ++__first, ++__result)
+    for (; __first != __last; ++__first, (void) ++__result)
         if (__pred(*__first))
             *__result = __new_value;
         else
@@ -2029,7 +2029,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
 __fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_)
 {
-    for (; __n > 0; ++__first, --__n)
+    for (; __n > 0; ++__first, (void) --__n)
         *__first = __value_;
     return __first;
 }
@@ -2103,7 +2103,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
 generate_n(_OutputIterator __first, _Size __n, _Generator __gen)
 {
-    for (; __n > 0; ++__first, --__n)
+    for (; __n > 0; ++__first, (void) --__n)
         *__first = __gen();
     return __first;
 }
@@ -4372,7 +4372,7 @@ __buffered_inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator 
     if (__len1 <= __len2)
     {
         value_type* __p = __buff;
-        for (_BidirectionalIterator __i = __first; __i != __middle; __d.__incr((value_type*)0), ++__i, ++__p)
+        for (_BidirectionalIterator __i = __first; __i != __middle; __d.__incr((value_type*)0), (void) ++__i, ++__p)
             ::new(__p) value_type(_VSTD::move(*__i));
         __merge<_Compare>(move_iterator<value_type*>(__buff),
                           move_iterator<value_type*>(__p),
@@ -4383,7 +4383,7 @@ __buffered_inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator 
     else
     {
         value_type* __p = __buff;
-        for (_BidirectionalIterator __i = __middle; __i != __last; __d.__incr((value_type*)0), ++__i, ++__p)
+        for (_BidirectionalIterator __i = __middle; __i != __last; __d.__incr((value_type*)0), (void) ++__i, ++__p)
             ::new(__p) value_type(_VSTD::move(*__i));
         typedef reverse_iterator<_BidirectionalIterator> _RBi;
         typedef reverse_iterator<value_type*> _Rv;
@@ -4408,7 +4408,7 @@ __inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator __middle,
         if (__len2 == 0)
             return;
         // shrink [__first, __middle) as much as possible (with no moves), returning if it shrinks to 0
-        for (; true; ++__first, --__len1)
+        for (; true; ++__first, (void) --__len1)
         {
             if (__len1 == 0)
                 return;
@@ -5067,7 +5067,7 @@ __partial_sort_copy(_InputIterator __first, _InputIterator __last,
     _RandomAccessIterator __r = __result_first;
     if (__r != __result_last)
     {
-        for (; __first != __last && __r != __result_last; ++__first, ++__r)
+        for (; __first != __last && __r != __result_last; (void) ++__first, ++__r)
             *__r = *__first;
         __make_heap<_Compare>(__result_first, __r, __comp);
         typename iterator_traits<_RandomAccessIterator>::difference_type __len = __r - __result_first;
@@ -5589,7 +5589,7 @@ bool
 __lexicographical_compare(_InputIterator1 __first1, _InputIterator1 __last1,
                           _InputIterator2 __first2, _InputIterator2 __last2, _Compare __comp)
 {
-    for (; __first2 != __last2; ++__first1, ++__first2)
+    for (; __first2 != __last2; ++__first1, (void) ++__first2)
     {
         if (__first1 == __last1 || __comp(*__first1, *__first2))
             return true;

@@ -207,7 +207,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _ForwardIterator2
 swap_ranges(_ForwardIterator1 __first1, _ForwardIterator1 __last1, _ForwardIterator2 __first2)
 {
-    for(; __first1 != __last1; ++__first1, ++__first2)
+    for(; __first1 != __last1; ++__first1, (void) ++__first2)
         swap(*__first1, *__first2);
     return __first2;
 }

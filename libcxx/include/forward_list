@@ -991,7 +991,7 @@ forward_list<_Tp, _Alloc>::assign(_InputIterator __f, _InputIterator __l)
     iterator __i = before_begin();
     iterator __j = _VSTD::next(__i);
     iterator __e = end();
-    for (; __j != __e && __f != __l; ++__i, ++__j, ++__f)
+    for (; __j != __e && __f != __l; ++__i, (void) ++__j, ++__f)
         *__j = *__f;
     if (__j == __e)
         insert_after(__i, __f, __l);
@@ -1201,7 +1201,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
         try
         {
 #endif  // _LIBCPP_NO_EXCEPTIONS
-            for (++__f; __f != __l; ++__f, __last = __last->__next_)
+            for (++__f; __f != __l; ++__f, ((void)(__last = __last->__next_)))
             {
                 __h.reset(__node_traits::allocate(__a, 1));
                 __node_traits::construct(__a, _VSTD::addressof(__h->__value_), *__f);

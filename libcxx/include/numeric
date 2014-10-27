@@ -91,7 +91,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _Tp
 inner_product(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2, _Tp __init)
 {
-    for (; __first1 != __last1; ++__first1, ++__first2)
+    for (; __first1 != __last1; ++__first1, (void) ++__first2)
         __init = __init + *__first1 * *__first2;
     return __init;
 }
@@ -102,7 +102,7 @@ _Tp
 inner_product(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2,
               _Tp __init, _BinaryOperation1 __binary_op1, _BinaryOperation2 __binary_op2)
 {
-    for (; __first1 != __last1; ++__first1, ++__first2)
+    for (; __first1 != __last1; ++__first1, (void) ++__first2)
         __init = __binary_op1(__init, __binary_op2(*__first1, *__first2));
     return __init;
 }
@@ -116,7 +116,7 @@ partial_sum(_InputIterator __first, _InputIterator __last, _OutputIterator __res
     {
         typename iterator_traits<_InputIterator>::value_type __t(*__first);
         *__result = __t;
-        for (++__first, ++__result; __first != __last; ++__first, ++__result)
+        for (++__first, (void) ++__result; __first != __last; ++__first, (void) ++__result)
         {
             __t = __t + *__first;
             *__result = __t;
@@ -135,7 +135,7 @@ partial_sum(_InputIterator __first, _InputIterator __last, _OutputIterator __res
     {
         typename iterator_traits<_InputIterator>::value_type __t(*__first);
         *__result = __t;
-        for (++__first, ++__result; __first != __last; ++__first, ++__result)
+        for (++__first, (void) ++__result; __first != __last; ++__first, (void) ++__result)
         {
             __t = __binary_op(__t, *__first);
             *__result = __t;
@@ -153,7 +153,7 @@ adjacent_difference(_InputIterator __first, _InputIterator __last, _OutputIterat
     {
         typename iterator_traits<_InputIterator>::value_type __t1(*__first);
         *__result = __t1;
-        for (++__first, ++__result; __first != __last; ++__first, ++__result)
+        for (++__first, (void) ++__result; __first != __last; ++__first, (void) ++__result)
         {
             typename iterator_traits<_InputIterator>::value_type __t2(*__first);
             *__result = __t2 - __t1;
@@ -173,7 +173,7 @@ adjacent_difference(_InputIterator __first, _InputIterator __last, _OutputIterat
     {
         typename iterator_traits<_InputIterator>::value_type __t1(*__first);
         *__result = __t1;
-        for (++__first, ++__result; __first != __last; ++__first, ++__result)
+        for (++__first, (void) ++__result; __first != __last; ++__first, (void) ++__result)
         {
             typename iterator_traits<_InputIterator>::value_type __t2(*__first);
             *__result = __binary_op(__t2, __t1);
@@ -188,7 +188,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 iota(_ForwardIterator __first, _ForwardIterator __last, _Tp __value_)
 {
-    for (; __first != __last; ++__first, ++__value_)
+    for (; __first != __last; ++__first, (void) ++__value_)
         *__first = __value_;
 }
 

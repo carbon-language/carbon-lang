@@ -1588,7 +1588,7 @@ deque<_Tp, _Allocator>::assign(_InputIter __f, _InputIter __l,
 {
     iterator __i = __base::begin();
     iterator __e = __base::end();
-    for (; __f != __l && __i != __e; ++__f, ++__i)
+    for (; __f != __l && __i != __e; ++__f, (void) ++__i)
         *__i = *__f;
     if (__f != __l)
         __append(__f, __l);
@@ -2160,7 +2160,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, _BiIter __f, _BiIter __l,
         if (__n > __de)
         {
             __m = __de < __n / 2 ? _VSTD::next(__f, __de) : _VSTD::prev(__l, __n - __de);
-            for (_BiIter __j = __m; __j != __l; ++__i, ++__j, ++__base::size())
+            for (_BiIter __j = __m; __j != __l; ++__i, (void) ++__j, ++__base::size())
                 __alloc_traits::construct(__a, _VSTD::addressof(*__i), *__j);
             __n = __de;
         }
@@ -2200,7 +2200,7 @@ deque<_Tp, _Allocator>::__append(_ForIter __f, _ForIter __l,
     if (__n > __back_capacity)
         __add_back_capacity(__n - __back_capacity);
     // __n <= __back_capacity
-    for (iterator __i = __base::end(); __f != __l; ++__i, ++__f, ++__base::size())
+    for (iterator __i = __base::end(); __f != __l; ++__i, (void) ++__f, ++__base::size())
         __alloc_traits::construct(__a, _VSTD::addressof(*__i), *__f);
 }
 
