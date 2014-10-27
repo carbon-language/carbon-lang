@@ -4459,6 +4459,11 @@ def note_arc_retain_cycle_owner : Note<
 def warn_arc_object_memaccess : Warning<
   "%select{destination for|source of}0 this %1 call is a pointer to "
   "ownership-qualified type %2">, InGroup<ARCNonPodMemAccess>;
+  
+def warn_arc_consumed_object_released : Warning<
+  "__bridge cast of collection literal of type %1 to \"bridgeable\" C "
+  "type %0 causes early release of the collection">,
+  InGroup<ARCBridgeCastRelease>;
 
 let CategoryName = "ARC and @properties" in {
 
