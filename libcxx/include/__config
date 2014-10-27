@@ -226,12 +226,8 @@
 #endif
 
 #if __cplusplus < 201103L
-#ifdef __linux__
-#define _LIBCPP_HAS_NO_UNICODE_CHARS
-#else
 typedef __char16_t char16_t;
 typedef __char32_t char32_t;
-#endif
 #endif
 
 #if !(__has_feature(cxx_exceptions))
