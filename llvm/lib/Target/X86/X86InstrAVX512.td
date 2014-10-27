@@ -783,14 +783,37 @@ multiclass avx512_perm_imm<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 }
 
+multiclass avx512_permil<bits<8> OpcImm, bits<8> OpcVar, X86VectorVTInfo _,
+                         X86VectorVTInfo Ctrl> :
+     avx512_perm_imm<OpcImm, "vpermil" # _.Suffix, X86VPermilpi, _> {
+  let ExeDomain = _.ExeDomain in {
+    def rr : AVX5128I<OpcVar, MRMSrcReg, (outs _.RC:$dst),
+                     (ins _.RC:$src1, _.RC:$src2),
+                     !strconcat("vpermil" # _.Suffix,
+                         " \t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set _.RC:$dst,
+                         (_.VT (X86VPermilpv _.RC:$src1,
+                                  (Ctrl.VT Ctrl.RC:$src2))))]>,
+             EVEX_4V;
+    def rm : AVX5128I<OpcVar, MRMSrcMem, (outs _.RC:$dst),
+                     (ins _.RC:$src1, Ctrl.MemOp:$src2),
+                     !strconcat("vpermil" # _.Suffix,
+                         " \t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set _.RC:$dst,
+                         (_.VT (X86VPermilpv _.RC:$src1,
+                                  (Ctrl.VT (Ctrl.MemOpFrag addr:$src2)))))]>,
+             EVEX_4V;
+  }
+}
+
 defm VPERMQZ :    avx512_perm_imm<0x00, "vpermq", X86VPermi, v8i64_info>,
                   EVEX_V512, VEX_W;
 defm VPERMPDZ :   avx512_perm_imm<0x01, "vpermpd", X86VPermi, v8f64_info>,
                   EVEX_V512, VEX_W;
 
-defm VPERMILPSZ : avx512_perm_imm<0x04, "vpermilps", X86VPermilpi, v16f32_info>,
+defm VPERMILPSZ : avx512_permil<0x04, 0x0C, v16f32_info, v16i32_info>,
                   EVEX_V512;
-defm VPERMILPDZ : avx512_perm_imm<0x05, "vpermilpd", X86VPermilpi, v8f64_info>,
+defm VPERMILPDZ : avx512_permil<0x05, 0x0D, v8f64_info, v8i64_info>,
                   EVEX_V512, VEX_W;
 
 def : Pat<(v16i32 (X86VPermilpi VR512:$src1, (i8 imm:$imm))),
