@@ -1768,7 +1768,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     return Right.NewlinesBefore > 0;
   } else if (Right.Previous->is(tok::l_brace) && Right.NestingLevel == 1 &&
              Style.Language == FormatStyle::LK_Proto) {
-    // Don't enums onto single lines in protocol buffers.
+    // Don't put enums onto single lines in protocol buffers.
     return true;
   } else if (Style.Language == FormatStyle::LK_JavaScript &&
              Right.is(tok::r_brace) && Left.is(tok::l_brace) &&
