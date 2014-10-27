@@ -9,7 +9,7 @@
 //
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
-// Linux-specific code.
+// Linux- and FreeBSD-specific code.
 //===----------------------------------------------------------------------===//
 
 
@@ -269,6 +269,20 @@ static void InitDataSeg() {
   MemoryMappingLayout proc_maps(true);
   uptr start, end, offset;
   char name[128];
+#if SANITIZER_FREEBSD
+  // On FreeBSD BSS is usually the last block allocated within the
+  // low range and heap is the last block allocated within the range
+  // 0x800000000-0x8ffffffff.
+  while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name),
+                        /*protection*/ 0)) {
+    DPrintf("%p-%p %p %s\n", start, end, offset, name);
+    if ((start & 0xffff00000000ULL) == 0 && (end & 0xffff00000000ULL) == 0 &&
+        name[0] == '\0') {
+      g_data_start = start;
+      g_data_end = end;
+    }
+  }
+#else
   bool prev_is_data = false;
   while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name),
                         /*protection*/ 0)) {
@@ -284,6 +298,7 @@ static void InitDataSeg() {
       g_data_end = end;
     prev_is_data = is_data;
   }
+#endif
   DPrintf("guessed data_start=%p data_end=%p\n",  g_data_start, g_data_end);
   CHECK_LT(g_data_start, g_data_end);
   CHECK_GE((uptr)&g_data_start, g_data_start);
@@ -410,4 +425,4 @@ int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
 
 }  // namespace __tsan
 
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD
