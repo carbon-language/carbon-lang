@@ -78,11 +78,9 @@ class AArch64FastISel final : public FastISel {
       return Base.Reg;
     }
     void setOffsetReg(unsigned Reg) {
-      assert(isRegBase() && "Invalid offset register access!");
       OffsetReg = Reg;
     }
     unsigned getOffsetReg() const {
-      assert(isRegBase() && "Invalid offset register access!");
       return OffsetReg;
     }
     void setFI(unsigned FI) {
@@ -810,22 +808,23 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
   }
   } // end switch
 
-  if (Addr.getReg()) {
-    if (!Addr.getOffsetReg()) {
-      unsigned Reg = getRegForValue(Obj);
-      if (!Reg)
-        return false;
-      Addr.setOffsetReg(Reg);
-      return true;
-    }
-    return false;
+  if (Addr.isRegBase() && !Addr.getReg()) {
+    unsigned Reg = getRegForValue(Obj);
+    if (!Reg)
+      return false;
+    Addr.setReg(Reg);
+    return true;
   }
 
-  unsigned Reg = getRegForValue(Obj);
-  if (!Reg)
-    return false;
-  Addr.setReg(Reg);
-  return true;
+  if (!Addr.getOffsetReg()) {
+    unsigned Reg = getRegForValue(Obj);
+    if (!Reg)
+      return false;
+    Addr.setOffsetReg(Reg);
+    return true;
+  }
+
+  return false;
 }
 
 bool AArch64FastISel::computeCallAddress(const Value *V, Address &Addr) {
@@ -942,8 +941,7 @@ bool AArch64FastISel::simplifyAddress(Address &Addr, MVT VT) {
   // Cannot encode an offset register and an immediate offset in the same
   // instruction. Fold the immediate offset into the load/store instruction and
   // emit an additonal add to take care of the offset register.
-  if (!ImmediateOffsetNeedsLowering && Addr.getOffset() && Addr.isRegBase() &&
-      Addr.getOffsetReg())
+  if (!ImmediateOffsetNeedsLowering && Addr.getOffset() && Addr.getOffsetReg())
     RegisterOffsetNeedsLowering = true;
 
   // Cannot encode zero register as base.
@@ -953,7 +951,8 @@ bool AArch64FastISel::simplifyAddress(Address &Addr, MVT VT) {
   // If this is a stack pointer and the offset needs to be simplified then put
   // the alloca address into a register, set the base type back to register and
   // continue. This should almost never happen.
-  if (ImmediateOffsetNeedsLowering && Addr.isFIBase()) {
+  if ((ImmediateOffsetNeedsLowering || Addr.getOffsetReg()) && Addr.isFIBase())
+  {
     unsigned ResultReg = createResultReg(&AArch64::GPR64spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADDXri),
             ResultReg)
@@ -1050,10 +1049,8 @@ void AArch64FastISel::addLoadStoreOperands(Address &Addr,
       MIB.addReg(Addr.getOffsetReg());
       MIB.addImm(IsSigned);
       MIB.addImm(Addr.getShift() != 0);
-    } else {
-      MIB.addReg(Addr.getReg());
-      MIB.addImm(Offset);
-    }
+    } else
+      MIB.addReg(Addr.getReg()).addImm(Offset);
   }
 
   if (MMO)

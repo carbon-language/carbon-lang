@@ -599,3 +599,29 @@ define i64 @kill_reg(i64 %a) {
   ret i64 %5
 }
 
+define void @store_fi(i64 %i) {
+; CHECK-LABEL: store_fi
+; CHECK:       mov [[REG:x[0-9]+]], sp
+; CHECK:       str {{w[0-9]+}}, {{\[}}[[REG]], x0, lsl #2{{\]}}
+  %1 = alloca [8 x i32]
+  %2 = ptrtoint [8 x i32]* %1 to i64
+  %3 = mul i64 %i, 4
+  %4 = add i64 %2, %3
+  %5 = inttoptr i64 %4 to i32*
+  store i32 47, i32* %5, align 4
+  ret void
+}
+
+define i32 @load_fi(i64 %i) {
+; CHECK-LABEL: load_fi
+; CHECK:       mov [[REG:x[0-9]+]], sp
+; CHECK:       ldr {{w[0-9]+}}, {{\[}}[[REG]], x0, lsl #2{{\]}}
+  %1 = alloca [8 x i32]
+  %2 = ptrtoint [8 x i32]* %1 to i64
+  %3 = mul i64 %i, 4
+  %4 = add i64 %2, %3
+  %5 = inttoptr i64 %4 to i32*
+  %6 = load i32* %5, align 4
+  ret i32 %6
+}
+
