@@ -13,6 +13,7 @@
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
@@ -27,28 +28,54 @@ namespace normalized {
 
 using llvm::sys::getSwappedBytes;
 
-inline uint16_t read16(bool swap, uint16_t value) {
-    return (swap ? getSwappedBytes(value) : value);
+ using llvm::support::ubig16_t;
+ using llvm::support::ubig32_t;
+ using llvm::support::ubig64_t;
+
+ using llvm::support::ulittle16_t;
+ using llvm::support::ulittle32_t;
+ using llvm::support::ulittle64_t;
+
+template<typename T>
+static inline uint16_t read16(const T *loc, bool isBig) {
+  assert((uint64_t)loc % llvm::alignOf<T>() == 0 &&
+         "invalid pointer alignment");
+  return isBig ? *(ubig16_t *)loc : *(ulittle16_t *)loc;
 }
 
-inline uint32_t read32(bool swap, uint32_t value) {
-    return (swap ? getSwappedBytes(value) : value);
+template<typename T>
+static inline uint32_t read32(const T *loc, bool isBig) {
+  assert((uint64_t)loc % llvm::alignOf<T>() == 0 &&
+         "invalid pointer alignment");
+  return isBig ? *(ubig32_t *)loc : *(ulittle32_t *)loc;
 }
 
-inline uint64_t read64(bool swap, uint64_t value) {
-    return (swap ? getSwappedBytes(value) : value);
+template<typename T>
+static inline uint64_t read64(const T *loc, bool isBig) {
+  assert((uint64_t)loc % llvm::alignOf<T>() == 0 &&
+         "invalid pointer alignment");
+  return isBig ? *(ubig64_t *)loc : *(ulittle64_t *)loc;
 }
 
-inline void write16(int16_t &loc, bool swap, int16_t value) {
-    loc = (swap ? getSwappedBytes(value) : value);
+inline void write16(uint8_t *loc, uint16_t value, bool isBig) {
+  if (isBig)
+    *(ubig16_t *)loc = value;
+  else
+    *(ulittle16_t *)loc = value;
 }
 
-inline void write32(int32_t &loc, bool swap, int32_t value) {
-    loc = (swap ? getSwappedBytes(value) : value);
+inline void write32(uint8_t *loc, uint32_t value, bool isBig) {
+  if (isBig)
+    *(ubig32_t *)loc = value;
+  else
+    *(ulittle32_t *)loc = value;
 }
 
-inline void write64(uint64_t &loc, bool swap, uint64_t value) {
-    loc = (swap ? getSwappedBytes(value) : value);
+inline void write64(uint8_t *loc, uint64_t value, bool isBig) {
+  if (isBig)
+    *(ubig64_t *)loc = value;
+  else
+    *(ulittle64_t *)loc = value;
 }
 
 inline uint32_t
@@ -69,11 +96,10 @@ bitFieldSet(uint32_t &bits, bool isBigEndianBigField, uint32_t newBits,
   bits |= (newBits << shift);
 }
 
-inline Relocation
-unpackRelocation(const llvm::MachO::any_relocation_info &r, bool swap,
-                                                            bool isBigEndian) {
-  uint32_t r0 = read32(swap, r.r_word0);
-  uint32_t r1 = read32(swap, r.r_word1);
+inline Relocation unpackRelocation(const llvm::MachO::any_relocation_info &r,
+                                   bool isBigEndian) {
+  uint32_t r0 = read32(&r.r_word0, isBigEndian);
+  uint32_t r1 = read32(&r.r_word1, isBigEndian);
 
   Relocation result;
   if (r0 & llvm::MachO::R_SCATTERED) {

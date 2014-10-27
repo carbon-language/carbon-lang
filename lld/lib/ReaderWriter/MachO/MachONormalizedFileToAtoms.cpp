@@ -365,7 +365,7 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
                                MachOFile &file, bool scatterable,
                                bool copyRefs) {
   const bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
-  const bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
+  const bool isBig = MachOLinkingContext::isBigEndian(normalizedFile.arch);
 
   // Get info on how to atomize section.
   unsigned int       sizeMultiple;
@@ -423,7 +423,7 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
       case atomizeCFI:
         // Break section up into dwarf unwind CFIs (FDE or CIE).
         cfi = reinterpret_cast<const uint32_t *>(&section.content[offset]);
-        size = read32(swap, *cfi) + 4;
+        size = read32(&section.content[offset], isBig) + 4;
         if (offset+size > section.content.size()) {
           return make_dynamic_error_code(Twine(Twine("Section ")
                                          + section.segmentName
@@ -572,7 +572,7 @@ std::error_code convertRelocs(const Section &section,
     }
   };
 
-  const bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
+  const bool isBig = MachOLinkingContext::isBigEndian(normalizedFile.arch);
   // Use old-school iterator so that paired relocations can be grouped.
   for (auto it=section.relocations.begin(), e=section.relocations.end();
                                                                 it != e; ++it) {
@@ -595,18 +595,16 @@ std::error_code convertRelocs(const Section &section,
     std::error_code relocErr;
     if (handler.isPairedReloc(reloc)) {
      // Handle paired relocations together.
-     relocErr = handler.getPairReferenceInfo(reloc, *++it, inAtom,
-                                             offsetInAtom, fixupAddress, swap,
-                                             scatterable, atomByAddr,
-                                             atomBySymbol, &kind,
-                                             &target, &addend);
+      relocErr = handler.getPairReferenceInfo(
+          reloc, *++it, inAtom, offsetInAtom, fixupAddress, isBig, scatterable,
+          atomByAddr, atomBySymbol, &kind, &target, &addend);
     }
     else {
       // Use ArchHandler to convert relocation record into information
       // needed to instantiate an lld::Reference object.
-      relocErr = handler.getReferenceInfo(reloc, inAtom, offsetInAtom,
-                                          fixupAddress,swap, atomByAddr,
-                                         atomBySymbol, &kind, &target, &addend);
+      relocErr = handler.getReferenceInfo(
+          reloc, inAtom, offsetInAtom, fixupAddress, isBig, atomByAddr,
+          atomBySymbol, &kind, &target, &addend);
     }
     if (relocErr) {
       return make_dynamic_error_code(
@@ -638,18 +636,18 @@ bool isDebugInfoSection(const Section &section) {
   return section.segmentName.equals("__DWARF");
 }
 
-static int64_t readSPtr(bool is64, bool swap, const uint8_t *addr) {
+static int64_t readSPtr(bool is64, bool isBig, const uint8_t *addr) {
   if (is64)
-    return read64(swap, *reinterpret_cast<const uint64_t *>(addr));
+    return read64(addr, isBig);
 
-  int32_t res = read32(swap, *reinterpret_cast<const uint32_t *>(addr));
+  int32_t res = read32(addr, isBig);
   return res;
 }
 
 std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
                                      MachOFile &file,
                                      mach_o::ArchHandler &handler) {
-  const bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
+  const bool isBig = MachOLinkingContext::isBigEndian(normalizedFile.arch);
   const bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
 
   const Section *ehFrameSection = nullptr;
@@ -668,7 +666,7 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
                          [&](MachODefinedAtom *atom, uint64_t offset) -> void {
     assert(atom->contentType() == DefinedAtom::typeCFI);
 
-    if (ArchHandler::isDwarfCIE(swap, atom))
+    if (ArchHandler::isDwarfCIE(isBig, atom))
       return;
 
     // Compiler wasn't lazy and actually told us what it meant.
@@ -676,14 +674,14 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
       return;
 
     const uint8_t *frameData = atom->rawContent().data();
-    uint32_t size = read32(swap, *(uint32_t *)frameData);
+    uint32_t size = read32(frameData, isBig);
     uint64_t cieFieldInFDE = size == 0xffffffffU
                                    ? sizeof(uint32_t) + sizeof(uint64_t)
                                    : sizeof(uint32_t);
 
     // Linker needs to fixup a reference from the FDE to its parent CIE (a
     // 32-bit byte offset backwards in the __eh_frame section).
-    uint32_t cieDelta = read32(swap, *(uint32_t *)(frameData + cieFieldInFDE));
+    uint32_t cieDelta = read32(frameData + cieFieldInFDE, isBig);
     uint64_t cieAddress = ehFrameSection->address + offset + cieFieldInFDE;
     cieAddress -= cieDelta;
 
@@ -699,7 +697,7 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
     // (hopefully)
     uint64_t rangeFieldInFDE = cieFieldInFDE + sizeof(uint32_t);
 
-    int64_t functionFromFDE = readSPtr(is64, swap, frameData + rangeFieldInFDE);
+    int64_t functionFromFDE = readSPtr(is64, isBig, frameData + rangeFieldInFDE);
     uint64_t rangeStart = ehFrameSection->address + offset + rangeFieldInFDE;
     rangeStart += functionFromFDE;
 

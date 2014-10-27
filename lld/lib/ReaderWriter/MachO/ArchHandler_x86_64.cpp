@@ -13,6 +13,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm::MachO;
@@ -20,6 +22,12 @@ using namespace lld::mach_o::normalized;
 
 namespace lld {
 namespace mach_o {
+
+using llvm::support::ulittle32_t;
+using llvm::support::ulittle64_t;
+
+using llvm::support::little32_t;
+using llvm::support::little64_t;
 
 class ArchHandler_x86_64 : public ArchHandler {
 public:
@@ -200,13 +208,10 @@ private:
                              uint64_t fixupAddress,
                              uint64_t targetAddress,
                              uint64_t inAtomAddress);
-
-  const bool _swap;
 };
 
 
-ArchHandler_x86_64::ArchHandler_x86_64() :
-  _swap(!MachOLinkingContext::isHostEndian(MachOLinkingContext::arch_x86_64)) {}
+ArchHandler_x86_64::ArchHandler_x86_64() { }
 
 ArchHandler_x86_64::~ArchHandler_x86_64() { }
 
@@ -335,25 +340,25 @@ ArchHandler_x86_64::getReferenceInfo(const Relocation &reloc,
   case ripRel32:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = readS32(swap, fixupContent);
+    *addend = *(little32_t *)fixupContent;
     return std::error_code();
   case ripRel32Minus1:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = readS32(swap, fixupContent) + 1;
+    *addend = *(little32_t *)fixupContent + 1;
     return std::error_code();
   case ripRel32Minus2:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = readS32(swap, fixupContent) + 2;
+    *addend = *(little32_t *)fixupContent + 2;
     return std::error_code();
   case ripRel32Minus4:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = readS32(swap, fixupContent) + 4;
+    *addend = *(little32_t *)fixupContent + 4;
     return std::error_code();
   case ripRel32Anon:
-    targetAddress = fixupAddress + 4 + readS32(swap, fixupContent);
+    targetAddress = fixupAddress + 4 + *(little32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   case ripRel32GotLoad:
   case ripRel32Got:
@@ -364,10 +369,10 @@ ArchHandler_x86_64::getReferenceInfo(const Relocation &reloc,
   case pointer64:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = readS64(swap, fixupContent);
+    *addend = *(little64_t *)fixupContent;
     return std::error_code();
   case pointer64Anon:
-    targetAddress = readS64(swap, fixupContent);
+    targetAddress = *(little64_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   default:
     llvm_unreachable("bad reloc kind");
@@ -422,18 +427,18 @@ ArchHandler_x86_64::getPairReferenceInfo(const normalized::Relocation &reloc1,
   case delta64:
     if (E ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = readS64(swap, fixupContent) + offsetInAtom;
+    *addend = *(little64_t *)fixupContent + offsetInAtom;
     return std::error_code();
   case delta32:
     if (E ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = readS32(swap, fixupContent) + offsetInAtom;
+    *addend = *(little32_t *)fixupContent + offsetInAtom;
     return std::error_code();
   case delta64Anon:
-    targetAddress = offsetInAtom + readS64(swap, fixupContent);
+    targetAddress = offsetInAtom + *(little64_t *)fixupContent;
     return atomFromAddress(reloc2.symbol, targetAddress, target, addend);
   case delta32Anon:
-    targetAddress = offsetInAtom + readS32(swap, fixupContent);
+    targetAddress = offsetInAtom + *(little32_t *)fixupContent;
     return atomFromAddress(reloc2.symbol, targetAddress, target, addend);
   default:
     llvm_unreachable("bad reloc pair kind");
@@ -468,52 +473,52 @@ void ArchHandler_x86_64::generateAtomContent(
 }
 
 void ArchHandler_x86_64::applyFixupFinal(
-    const Reference &ref, uint8_t *location, uint64_t fixupAddress,
+    const Reference &ref, uint8_t *loc, uint64_t fixupAddress,
     uint64_t targetAddress, uint64_t inAtomAddress, uint64_t imageBaseAddress,
     FindAddressForAtom findSectionAddress) {
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
+  ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::x86_64);
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
-  uint64_t *loc64 = reinterpret_cast<uint64_t *>(location);
   switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
   case branch32:
   case ripRel32:
   case ripRel32Anon:
   case ripRel32Got:
   case ripRel32GotLoad:
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
+    *loc32 = targetAddress - (fixupAddress + 4) + ref.addend();
     return;
   case pointer64:
   case pointer64Anon:
-    write64(*loc64, _swap, targetAddress + ref.addend());
+    *loc64 = targetAddress + ref.addend();
     return;
   case ripRel32Minus1:
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 5)) + ref.addend());
+    *loc32 = targetAddress - (fixupAddress + 5) + ref.addend();
     return;
   case ripRel32Minus2:
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 6)) + ref.addend());
+    *loc32 = targetAddress - (fixupAddress + 6) + ref.addend();
     return;
   case ripRel32Minus4:
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 8)) + ref.addend());
+    *loc32 = targetAddress - (fixupAddress + 8) + ref.addend();
     return;
   case delta32:
   case delta32Anon:
-    write32(*loc32, _swap, (targetAddress - fixupAddress) + ref.addend());
+    *loc32 = targetAddress - fixupAddress + ref.addend();
     return;
   case delta64:
   case delta64Anon:
   case unwindFDEToFunction:
-    write64(*loc64, _swap, (targetAddress - fixupAddress) + ref.addend());
+    *loc64 = targetAddress - fixupAddress + ref.addend();
     return;
   case ripRel32GotLoadNowLea:
     // Change MOVQ to LEA
-    assert(location[-2] == 0x8B);
-    location[-2] = 0x8D;
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
+    assert(loc[-2] == 0x8B);
+    loc[-2] = 0x8D;
+    *loc32 = targetAddress - (fixupAddress + 4) + ref.addend();
     return;
   case negDelta32:
-    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
+    *loc32 = fixupAddress - targetAddress + ref.addend();
     return;
   case lazyPointer:
   case lazyImmediateLocation:
@@ -521,13 +526,12 @@ void ArchHandler_x86_64::applyFixupFinal(
     return;
   case imageOffset:
   case imageOffsetGot:
-    write32(*loc32, _swap, (targetAddress - imageBaseAddress) + ref.addend());
+    *loc32 = (targetAddress - imageBaseAddress) + ref.addend();
     return;
   case unwindInfoToEhFrame: {
     uint64_t val = targetAddress - findSectionAddress(*ref.target()) + ref.addend();
     assert(val < 0xffffffU && "offset in __eh_frame too large");
-    uint32_t encoding = read32(_swap, *loc32) & 0xff000000U;
-    write32(*loc32, _swap, encoding | val);
+    *loc32 = (*loc32 & 0xff000000U) | val;
     return;
   }
   case invalid:
@@ -539,51 +543,51 @@ void ArchHandler_x86_64::applyFixupFinal(
 
 
 void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
-                                               uint8_t *location,
+                                               uint8_t *loc,
                                                uint64_t fixupAddress,
                                                uint64_t targetAddress,
                                                uint64_t inAtomAddress)  {
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
-  uint64_t *loc64 = reinterpret_cast<uint64_t *>(location);
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
+  ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
   switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
   case branch32:
   case ripRel32:
   case ripRel32Got:
   case ripRel32GotLoad:
-    write32(*loc32, _swap, ref.addend());
+    *loc32 = ref.addend();
     return;
   case ripRel32Anon:
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
+    *loc32 = (targetAddress - (fixupAddress + 4)) + ref.addend();
     return;
   case pointer64:
-    write64(*loc64, _swap, ref.addend());
+    *loc64 = ref.addend();
     return;
   case pointer64Anon:
-    write64(*loc64, _swap, targetAddress + ref.addend());
+    *loc64 = targetAddress + ref.addend();
     return;
   case ripRel32Minus1:
-    write32(*loc32, _swap, ref.addend() - 1);
+    *loc32 = ref.addend() - 1;
     return;
   case ripRel32Minus2:
-    write32(*loc32, _swap, ref.addend() - 2);
+    *loc32 = ref.addend() - 2;
     return;
   case ripRel32Minus4:
-    write32(*loc32, _swap, ref.addend() - 4);
+    *loc32 = ref.addend() - 4;
     return;
   case delta32:
-    write32(*loc32, _swap, ref.addend() + inAtomAddress - fixupAddress);
+    *loc32 = ref.addend() + inAtomAddress - fixupAddress;
     return;
   case delta32Anon:
-    write32(*loc32, _swap, (targetAddress - fixupAddress) + ref.addend());
+    *loc32 = (targetAddress - fixupAddress) + ref.addend();
     return;
   case delta64:
-    write64(*loc64, _swap, ref.addend() + inAtomAddress - fixupAddress);
+    *loc64 = ref.addend() + inAtomAddress - fixupAddress;
     return;
   case delta64Anon:
-    write64(*loc64, _swap, (targetAddress - fixupAddress) + ref.addend());
+    *loc64 = (targetAddress - fixupAddress) + ref.addend();
     return;
   case negDelta32:
-    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
+    *loc32 = fixupAddress - targetAddress + ref.addend();
     return;
   case ripRel32GotLoadNowLea:
     llvm_unreachable("ripRel32GotLoadNowLea implies GOT pass was run");

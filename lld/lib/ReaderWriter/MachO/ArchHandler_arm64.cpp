@@ -13,6 +13,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 
@@ -21,6 +23,12 @@ using namespace lld::mach_o::normalized;
 
 namespace lld {
 namespace mach_o {
+
+using llvm::support::ulittle32_t;
+using llvm::support::ulittle64_t;
+
+using llvm::support::little32_t;
+using llvm::support::little64_t;
 
 class ArchHandler_arm64 : public ArchHandler {
 public:
@@ -109,7 +117,7 @@ public:
   std::error_code getReferenceInfo(const normalized::Relocation &reloc,
                                    const DefinedAtom *inAtom,
                                    uint32_t offsetInAtom,
-                                   uint64_t fixupAddress, bool swap,
+                                   uint64_t fixupAddress, bool isBig,
                                    FindAtomBySectionAndAddress atomFromAddress,
                                    FindAtomBySymbolIndex atomFromSymbolIndex,
                                    Reference::KindValue *kind,
@@ -120,7 +128,7 @@ public:
                            const normalized::Relocation &reloc2,
                            const DefinedAtom *inAtom,
                            uint32_t offsetInAtom,
-                           uint64_t fixupAddress, bool swap, bool scatterable,
+                           uint64_t fixupAddress, bool isBig, bool scatterable,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
                            Reference::KindValue *kind,
@@ -190,13 +198,9 @@ private:
   static uint32_t setDisplacementInADRP(uint32_t instr, int64_t disp);
   static Arm64_Kinds offset12KindFromInstruction(uint32_t instr);
   static uint32_t setImm12(uint32_t instr, uint32_t offset);
-
-  const bool _swap;
 };
 
-ArchHandler_arm64::ArchHandler_arm64()
-  : _swap(!MachOLinkingContext::isHostEndian(MachOLinkingContext::arch_arm64)) {
-}
+ArchHandler_arm64::ArchHandler_arm64() {}
 
 ArchHandler_arm64::~ArchHandler_arm64() {}
 
@@ -334,7 +338,7 @@ uint32_t ArchHandler_arm64::setImm12(uint32_t instruction, uint32_t offset) {
 
 std::error_code ArchHandler_arm64::getReferenceInfo(
     const Relocation &reloc, const DefinedAtom *inAtom, uint32_t offsetInAtom,
-    uint64_t fixupAddress, bool swap,
+    uint64_t fixupAddress, bool isBig,
     FindAtomBySectionAndAddress atomFromAddress,
     FindAtomBySymbolIndex atomFromSymbolIndex, Reference::KindValue *kind,
     const lld::Atom **target, Reference::Addend *addend) {
@@ -356,7 +360,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
     return std::error_code();
   case ARM64_RELOC_PAGEOFF12                   | rExtern | rLength4:
     // ex: ldr x0, [x1, _foo@PAGEOFF]
-    *kind = offset12KindFromInstruction(readS32(swap, fixupContent));
+    *kind = offset12KindFromInstruction(*(little32_t *)fixupContent);
     if (auto ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
     *addend = 0;
@@ -394,7 +398,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
     *kind = pointer64;
     if (auto ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = readS64(swap, fixupContent);
+    *addend = *(little64_t *)fixupContent;
     return std::error_code();
   case ARM64_RELOC_POINTER_TO_GOT              | rExtern | rLength8:
     // ex: .quad _foo@GOT
@@ -454,7 +458,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
     *kind = delta64;
     if (auto ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = readS64(swap, fixupContent) + offsetInAtom;
+    *addend = *(little64_t *)fixupContent + offsetInAtom;
     return std::error_code();
   case ((ARM64_RELOC_SUBTRACTOR                  | rExtern | rLength4) << 16 |
          ARM64_RELOC_UNSIGNED                    | rExtern | rLength4):
@@ -462,7 +466,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
     *kind = delta32;
     if (auto ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = readS32(swap, fixupContent) + offsetInAtom;
+    *addend = *(little32_t *)fixupContent + offsetInAtom;
     return std::error_code();
   default:
     return make_dynamic_error_code(Twine("unsupported arm64 relocation pair"));
@@ -494,86 +498,79 @@ void ArchHandler_arm64::generateAtomContent(
   }
 }
 
-void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *location,
+void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *loc,
                                         uint64_t fixupAddress,
                                         uint64_t targetAddress,
                                         uint64_t inAtomAddress) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::AArch64);
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
-  uint64_t *loc64 = reinterpret_cast<uint64_t *>(location);
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
+  ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
   int32_t displacement;
   uint32_t instruction;
   uint32_t value32;
   switch (static_cast<Arm64_Kinds>(ref.kindValue())) {
   case branch26:
     displacement = (targetAddress - fixupAddress) + ref.addend();
-    value32 = setDisplacementInBranch26(*loc32, displacement);
-    write32(*loc32, _swap, value32);
+    *loc32 = setDisplacementInBranch26(*loc32, displacement);
     return;
   case page21:
   case gotPage21:
   case tlvPage21:
     displacement =
         ((targetAddress + ref.addend()) & (-4096)) - (fixupAddress & (-4096));
-    value32 = setDisplacementInADRP(*loc32, displacement);
-    write32(*loc32, _swap, value32);
+    *loc32 = setDisplacementInADRP(*loc32, displacement);
     return;
   case offset12:
   case gotOffset12:
   case tlvOffset12:
     displacement = (targetAddress + ref.addend()) & 0x00000FFF;
-    value32 = setImm12(*loc32, displacement);
-    write32(*loc32, _swap, value32);
+    *loc32 = setImm12(*loc32, displacement);
     return;
   case offset12scale2:
     displacement = (targetAddress + ref.addend()) & 0x00000FFF;
     assert(((displacement & 0x1) == 0) &&
            "scaled imm12 not accessing 2-byte aligneds");
-    value32 = setImm12(*loc32, displacement >> 1);
-    write32(*loc32, _swap, value32);
+    *loc32 = setImm12(*loc32, displacement >> 1);
     return;
   case offset12scale4:
     displacement = (targetAddress + ref.addend()) & 0x00000FFF;
     assert(((displacement & 0x3) == 0) &&
            "scaled imm12 not accessing 4-byte aligned");
-    value32 = setImm12(*loc32, displacement >> 2);
-    write32(*loc32, _swap, value32);
+    *loc32 = setImm12(*loc32, displacement >> 2);
     return;
   case offset12scale8:
     displacement = (targetAddress + ref.addend()) & 0x00000FFF;
     assert(((displacement & 0x7) == 0) &&
            "scaled imm12 not accessing 8-byte aligned");
-    value32 = setImm12(*loc32, displacement >> 3);
-    write32(*loc32, _swap, value32);
+    *loc32 = setImm12(*loc32, displacement >> 3);
     return;
   case offset12scale16:
     displacement = (targetAddress + ref.addend()) & 0x00000FFF;
     assert(((displacement & 0xF) == 0) &&
            "scaled imm12 not accessing 16-byte aligned");
-    value32 = setImm12(*loc32, displacement >> 4);
-    write32(*loc32, _swap, value32);
+    *loc32 = setImm12(*loc32, displacement >> 4);
     return;
   case addOffset12:
-    instruction = read32(_swap, *loc32);
+    instruction = *loc32;
     assert(((instruction & 0xFFC00000) == 0xF9400000) &&
            "GOT reloc is not an LDR instruction");
     displacement = (targetAddress + ref.addend()) & 0x00000FFF;
     value32 = 0x91000000 | (instruction & 0x000003FF);
     instruction = setImm12(value32, displacement);
-    write32(*loc32, _swap, instruction);
+    *loc32 = instruction;
     return;
   case pointer64:
   case pointer64ToGOT:
-    write64(*loc64, _swap, targetAddress + ref.addend());
+    *loc64 = targetAddress + ref.addend();
     return;
   case delta64:
-    write64(*loc64, _swap, (targetAddress - fixupAddress) + ref.addend());
+    *loc64 = (targetAddress - fixupAddress) + ref.addend();
     return;
   case delta32:
   case delta32ToGOT:
-    write32(*loc32, _swap, (targetAddress - fixupAddress) + ref.addend());
+    *loc32 = (targetAddress - fixupAddress) + ref.addend();
     return;
   case lazyPointer:
   case lazyImmediateLocation:
@@ -587,26 +584,23 @@ void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *location,
 }
 
 void ArchHandler_arm64::applyFixupRelocatable(const Reference &ref,
-                                              uint8_t *location,
+                                              uint8_t *loc,
                                               uint64_t fixupAddress,
                                               uint64_t targetAddress,
                                               uint64_t inAtomAddress) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::AArch64);
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
-  uint64_t *loc64 = reinterpret_cast<uint64_t *>(location);
-  uint32_t value32;
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
+  ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
   switch (static_cast<Arm64_Kinds>(ref.kindValue())) {
   case branch26:
-    value32 = setDisplacementInBranch26(*loc32, 0);
-    write32(*loc32, _swap, value32);
+    *loc32 = setDisplacementInBranch26(*loc32, 0);
     return;
   case page21:
   case gotPage21:
   case tlvPage21:
-    value32 = setDisplacementInADRP(*loc32, 0);
-    write32(*loc32, _swap, value32);
+    *loc32 = setDisplacementInADRP(*loc32, 0);
     return;
   case offset12:
   case offset12scale2:
@@ -615,23 +609,22 @@ void ArchHandler_arm64::applyFixupRelocatable(const Reference &ref,
   case offset12scale16:
   case gotOffset12:
   case tlvOffset12:
-    value32 = setImm12(*loc32, 0);
-    write32(*loc32, _swap, value32);
+    *loc32 = setImm12(*loc32, 0);
     return;
   case pointer64:
-    write64(*loc64, _swap, ref.addend());
+    *loc64 = ref.addend();
     return;
   case delta64:
-    write64(*loc64, _swap, ref.addend() + inAtomAddress - fixupAddress);
+    *loc64 = ref.addend() + inAtomAddress - fixupAddress;
     return;
   case delta32:
-    write32(*loc32, _swap, ref.addend() + inAtomAddress - fixupAddress);
+    *loc32 = ref.addend() + inAtomAddress - fixupAddress;
     return;
   case pointer64ToGOT:
-    write64(*loc64, _swap, 0);
+    *loc64 = 0;
     return;
   case delta32ToGOT:
-    write32(*loc32, _swap, -fixupAddress);
+    *loc32 = -fixupAddress;
     return;
   case addOffset12:
     llvm_unreachable("lazy reference kind implies GOT pass was run");

@@ -13,6 +13,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm::MachO;
@@ -20,6 +22,12 @@ using namespace lld::mach_o::normalized;
 
 namespace lld {
 namespace mach_o {
+
+using llvm::support::ulittle16_t;
+using llvm::support::ulittle32_t;
+
+using llvm::support::little16_t;
+using llvm::support::little32_t;
 
 class ArchHandler_x86 : public ArchHandler {
 public:
@@ -156,16 +164,13 @@ private:
                              uint64_t fixupAddress,
                              uint64_t targetAddress,
                              uint64_t inAtomAddress);
-
-  const bool _swap;
 };
 
 //===----------------------------------------------------------------------===//
 //  ArchHandler_x86
 //===----------------------------------------------------------------------===//
 
-ArchHandler_x86::ArchHandler_x86() :
-  _swap(!MachOLinkingContext::isHostEndian(MachOLinkingContext::arch_x86)) {}
+ArchHandler_x86::ArchHandler_x86() {}
   
 ArchHandler_x86::~ArchHandler_x86() { }
   
@@ -257,18 +262,18 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind = branch32;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = fixupAddress + 4 + readS32(swap, fixupContent);
+    *addend = fixupAddress + 4 + *(little32_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rPcRel | rLength4:
     // ex: call _foo (and _foo defined)
     *kind = branch32;
-    targetAddress = fixupAddress + 4 + readS32(swap, fixupContent);
+    targetAddress = fixupAddress + 4 + *(little32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength4:
     // ex: call _foo+n (and _foo defined)
     *kind = branch32;
-    targetAddress = fixupAddress + 4 + readS32(swap, fixupContent);
+    targetAddress = fixupAddress + 4 + *(little32_t *)fixupContent;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
     *addend = targetAddress - reloc.value;
@@ -278,18 +283,18 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind = branch16;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = fixupAddress + 2 + readS16(swap, fixupContent);
+    *addend = fixupAddress + 2 + *(little16_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rPcRel | rLength2:
     // ex: callw _foo (and _foo defined)
     *kind = branch16;
-    targetAddress = fixupAddress + 2 + readS16(swap, fixupContent);
+  targetAddress = fixupAddress + 2 + *(little16_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength2:
     // ex: callw _foo+n (and _foo defined)
     *kind = branch16;
-    targetAddress = fixupAddress + 2 + readS16(swap, fixupContent);
+    targetAddress = fixupAddress + 2 + *(little16_t *)fixupContent;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
     *addend = targetAddress - reloc.value;
@@ -303,7 +308,7 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
                                                                  : pointer32;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = readU32(swap, fixupContent);
+    *addend = *(ulittle32_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rLength4:
     // ex: movl	_foo, %eax   (and _foo defined)
@@ -312,7 +317,7 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind =
         ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X) ? abs32
                                                                  : pointer32;
-    targetAddress = readU32(swap, fixupContent);
+    targetAddress = *(ulittle32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rLength4:
@@ -323,7 +328,7 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
                                                                  : pointer32;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
-    *addend = readU32(swap, fixupContent) - reloc.value;
+    *addend = *(ulittle32_t *)fixupContent - reloc.value;
     break;
   default:
     return make_dynamic_error_code(Twine("unsupported i386 relocation type"));
@@ -359,7 +364,7 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
          GENERIC_RELOC_PAIR | rScattered | rLength4):
     toAddress = reloc1.value;
     fromAddress = reloc2.value;
-    value = readS32(swap, fixupContent);
+    value = *(little32_t *)fixupContent;
     ec = atomFromAddr(0, toAddress, target, &offsetInTo);
     if (ec)
       return ec;
@@ -425,34 +430,33 @@ void ArchHandler_x86::generateAtomContent(const DefinedAtom &atom,
   }
 }
 
-void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *location,
+void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *loc,
                                       uint64_t fixupAddress,
                                       uint64_t targetAddress,
                                       uint64_t inAtomAddress) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::x86);
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
-  int16_t *loc16 = reinterpret_cast<int16_t *>(location);
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   switch (ref.kindValue()) {
   case branch32:
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
+    *loc32 = (targetAddress - (fixupAddress + 4)) + ref.addend();
     break;
   case branch16:
-    write16(*loc16, _swap, (targetAddress - (fixupAddress + 2)) + ref.addend());
+    *loc32 = (targetAddress - (fixupAddress + 2)) + ref.addend();
     break;
   case pointer32:
   case abs32:
-    write32(*loc32, _swap, targetAddress + ref.addend());
+    *loc32 = targetAddress + ref.addend();
     break;
   case funcRel32:
-    write32(*loc32, _swap, targetAddress - inAtomAddress + ref.addend()); 
+    *loc32 = targetAddress - inAtomAddress + ref.addend();
     break;
   case delta32:
-    write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
+    *loc32 = targetAddress - fixupAddress + ref.addend();
     break;
   case negDelta32:
-    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
+    *loc32 = fixupAddress - targetAddress + ref.addend();
     break;
   case modeCode:
   case modeData:
@@ -467,38 +471,38 @@ void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *location,
 }
 
 void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
-                                               uint8_t *location,
+                                               uint8_t *loc,
                                                uint64_t fixupAddress,
                                                uint64_t targetAddress,
                                                uint64_t inAtomAddress) {
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
-  int16_t *loc16 = reinterpret_cast<int16_t *>(location);
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
+  ulittle16_t *loc16 = reinterpret_cast<ulittle16_t *>(loc);
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   switch (ref.kindValue()) {
   case branch32:
     if (useExternalReloc)
-      write32(*loc32, _swap, ref.addend() - (fixupAddress + 4));
+      *loc32 = ref.addend() - (fixupAddress + 4);
     else
-      write32(*loc32, _swap, (targetAddress - (fixupAddress+4)) + ref.addend());
+      *loc32  =(targetAddress - (fixupAddress+4)) + ref.addend();
     break;
   case branch16:
     if (useExternalReloc)
-      write16(*loc16, _swap, ref.addend() - (fixupAddress + 2));
+      *loc16 = ref.addend() - (fixupAddress + 2);
     else
-      write16(*loc16, _swap, (targetAddress - (fixupAddress+2)) + ref.addend());
+      *loc16 = (targetAddress - (fixupAddress+2)) + ref.addend();
     break;
   case pointer32:
   case abs32:
-    write32(*loc32, _swap, targetAddress + ref.addend());
+    *loc32 = targetAddress + ref.addend();
     break;
   case funcRel32:
-    write32(*loc32, _swap, targetAddress - inAtomAddress + ref.addend()); // FIXME
+    *loc32 = targetAddress - inAtomAddress + ref.addend(); // FIXME
     break;
   case delta32:
-    write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
+    *loc32 = targetAddress - fixupAddress + ref.addend();
     break;
   case negDelta32:
-    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
+    *loc32 = fixupAddress - targetAddress + ref.addend();
     break;
   case modeCode:
   case modeData:

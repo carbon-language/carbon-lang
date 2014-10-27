@@ -53,14 +53,14 @@ namespace normalized {
 
 // Utility to call a lambda expression on each load command.
 static std::error_code forEachLoadCommand(
-    StringRef lcRange, unsigned lcCount, bool swap, bool is64,
+    StringRef lcRange, unsigned lcCount, bool isBig, bool is64,
     std::function<bool(uint32_t cmd, uint32_t size, const char *lc)> func) {
   const char* p = lcRange.begin();
   for (unsigned i=0; i < lcCount; ++i) {
     const load_command *lc = reinterpret_cast<const load_command*>(p);
     load_command lcCopy;
     const load_command *slc = lc;
-    if (swap) {
+    if (isBig != llvm::sys::IsBigEndianHost) {
       memcpy(&lcCopy, lc, sizeof(load_command));
       swapStruct(lcCopy);
       slc = &lcCopy;
@@ -78,7 +78,7 @@ static std::error_code forEachLoadCommand(
 }
 
 static std::error_code appendRelocations(Relocations &relocs, StringRef buffer,
-                                         bool swap, bool bigEndian,
+                                         bool bigEndian,
                                          uint32_t reloff, uint32_t nreloc) {
   if ((reloff + nreloc*8) > buffer.size())
     return make_error_code(llvm::errc::executable_format_error);
@@ -86,24 +86,24 @@ static std::error_code appendRelocations(Relocations &relocs, StringRef buffer,
             reinterpret_cast<const any_relocation_info*>(buffer.begin()+reloff);
 
   for(uint32_t i=0; i < nreloc; ++i) {
-    relocs.push_back(unpackRelocation(relocsArray[i], swap, bigEndian));
+    relocs.push_back(unpackRelocation(relocsArray[i], bigEndian));
   }
   return std::error_code();
 }
 
 static std::error_code
-appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool swap,
-                      bool bigEndian, uint32_t istOffset, uint32_t istCount,
+appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool isBig,
+                      uint32_t istOffset, uint32_t istCount,
                       uint32_t startIndex, uint32_t count) {
   if ((istOffset + istCount*4) > buffer.size())
     return make_error_code(llvm::errc::executable_format_error);
   if (startIndex+count  > istCount)
     return make_error_code(llvm::errc::executable_format_error);
-  const uint32_t *indirectSymbolArray =
-            reinterpret_cast<const uint32_t*>(buffer.begin()+istOffset);
+  const uint8_t *indirectSymbolArray = (const uint8_t *)buffer.data();
 
   for(uint32_t i=0; i < count; ++i) {
-    isyms.push_back(read32(swap, indirectSymbolArray[startIndex+i]));
+    isyms.push_back(read32(
+        indirectSymbolArray + (startIndex + i) * sizeof(uint32_t), isBig));
   }
   return std::error_code();
 }
@@ -116,23 +116,23 @@ template <typename T> static T readBigEndian(T t) {
 }
 
 
-static bool isMachOHeader(const mach_header *mh, bool &is64, bool &swap) {
-  switch (mh->magic) {
+static bool isMachOHeader(const mach_header *mh, bool &is64, bool &isBig) {
+  switch (read32(&mh->magic, false)) {
   case llvm::MachO::MH_MAGIC:
     is64 = false;
-    swap = false;
+    isBig = false;
     return true;
   case llvm::MachO::MH_MAGIC_64:
     is64 = true;
-    swap = false;
+    isBig = false;
     return true;
   case llvm::MachO::MH_CIGAM:
     is64 = false;
-    swap = true;
+    isBig = true;
     return true;
   case llvm::MachO::MH_CIGAM_64:
     is64 = true;
-    swap = true;
+    isBig = true;
     return true;
   default:
     return false;
@@ -154,17 +154,18 @@ bool isThinObjectFile(StringRef path, MachOLinkingContext::Arch &arch) {
   // If file buffer does not start with MH_MAGIC (and variants), not obj file.
   const mach_header *mh = reinterpret_cast<const mach_header *>(
                                                             fileBuffer.begin());
-  bool is64, swap;
-  if (!isMachOHeader(mh, is64, swap))
+  bool is64, isBig;
+  if (!isMachOHeader(mh, is64, isBig))
     return false;
 
   // If not MH_OBJECT, not object file.
-  if (read32(swap, mh->filetype) != MH_OBJECT)
+  if (read32(&mh->filetype, isBig) != MH_OBJECT)
     return false;
 
   // Lookup up arch from cpu/subtype pair.
-  arch = MachOLinkingContext::archFromCpuType(read32(swap, mh->cputype),
-                                              read32(swap, mh->cpusubtype));
+  arch = MachOLinkingContext::archFromCpuType(
+      read32(&mh->cputype, isBig),
+      read32(&mh->cpusubtype, isBig));
   return true;
 }
 
@@ -217,14 +218,14 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   }
 
   // Determine endianness and pointer size for mach-o file.
-  bool is64, swap;
-  if (!isMachOHeader(mh, is64, swap))
+  bool is64, isBig;
+  if (!isMachOHeader(mh, is64, isBig))
     return make_error_code(llvm::errc::executable_format_error);
 
   // Endian swap header, if needed.
   mach_header headerCopy;
   const mach_header *smh = mh;
-  if (swap) {
+  if (isBig != llvm::sys::IsBigEndianHost) {
     memcpy(&headerCopy, mh, sizeof(mach_header));
     swapStruct(headerCopy);
     smh = &headerCopy;
@@ -247,7 +248,6 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
                                   + MachOLinkingContext::nameFromArch(f->arch)
                                   + ")" ));
   }
-  bool isBigEndianArch = MachOLinkingContext::isBigEndian(f->arch);
   // Copy file type and flags
   f->fileType = HeaderFileType(smh->filetype);
   f->flags = smh->flags;
@@ -256,13 +256,13 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   // Pre-scan load commands looking for indirect symbol table.
   uint32_t indirectSymbolTableOffset = 0;
   uint32_t indirectSymbolTableCount = 0;
-  std::error_code ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
+  std::error_code ec = forEachLoadCommand(lcRange, lcCount, isBig, is64,
                                           [&](uint32_t cmd, uint32_t size,
                                               const char *lc) -> bool {
     if (cmd == LC_DYSYMTAB) {
       const dysymtab_command *d = reinterpret_cast<const dysymtab_command*>(lc);
-      indirectSymbolTableOffset = read32(swap, d->indirectsymoff);
-      indirectSymbolTableCount = read32(swap, d->nindirectsyms);
+      indirectSymbolTableOffset = read32(&d->indirectsymoff, isBig);
+      indirectSymbolTableCount = read32(&d->nindirectsyms, isBig);
       return true;
     }
     return false;
@@ -274,16 +274,14 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   const data_in_code_entry *dataInCode = nullptr;
   const dyld_info_command *dyldInfo = nullptr;
   uint32_t dataInCodeSize = 0;
-  ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
+  ec = forEachLoadCommand(lcRange, lcCount, isBig, is64,
                     [&] (uint32_t cmd, uint32_t size, const char* lc) -> bool {
     switch(cmd) {
     case LC_SEGMENT_64:
       if (is64) {
         const segment_command_64 *seg =
                               reinterpret_cast<const segment_command_64*>(lc);
-        const unsigned sectionCount = (swap
-                                       ? llvm::sys::getSwappedBytes(seg->nsects)
-                                       : seg->nsects);
+        const unsigned sectionCount = read32(&seg->nsects, isBig);
         const section_64 *sects = reinterpret_cast<const section_64*>
                                   (lc + sizeof(segment_command_64));
         const unsigned lcSize = sizeof(segment_command_64)
@@ -296,26 +294,27 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           Section section;
           section.segmentName = getString16(sect->segname);
           section.sectionName = getString16(sect->sectname);
-          section.type        = (SectionType)(read32(swap, sect->flags)
-                                                                & SECTION_TYPE);
-          section.attributes  = read32(swap, sect->flags) & SECTION_ATTRIBUTES;
-          section.alignment   = read32(swap, sect->align);
-          section.address     = read64(swap, sect->addr);
+          section.type = (SectionType)(read32(&sect->flags, isBig) &
+                                       SECTION_TYPE);
+          section.attributes  = read32(&sect->flags, isBig) & SECTION_ATTRIBUTES;
+          section.alignment   = read32(&sect->align, isBig);
+          section.address     = read64(&sect->addr, isBig);
           const uint8_t *content =
-              (uint8_t *)start + read32(swap, sect->offset);
-          size_t contentSize = read64(swap, sect->size);
+            (uint8_t *)start + read32(&sect->offset, isBig);
+          size_t contentSize = read64(&sect->size, isBig);
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
           section.content = llvm::makeArrayRef(content, contentSize);
-          appendRelocations(section.relocations, mb->getBuffer(),
-                            swap, isBigEndianArch, read32(swap, sect->reloff),
-                                                   read32(swap, sect->nreloc));
+          appendRelocations(section.relocations, mb->getBuffer(), isBig,
+                            read32(&sect->reloff, isBig),
+                            read32(&sect->nreloc, isBig));
           if (section.type == S_NON_LAZY_SYMBOL_POINTERS) {
             appendIndirectSymbols(section.indirectSymbols, mb->getBuffer(),
-                                  swap, isBigEndianArch,
+                                  isBig,
                                   indirectSymbolTableOffset,
                                   indirectSymbolTableCount,
-                                  read32(swap, sect->reserved1), contentSize/4);
+                                  read32(&sect->reserved1, isBig),
+                                  contentSize/4);
           }
           f->sections.push_back(section);
         }
@@ -325,9 +324,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       if (!is64) {
         const segment_command *seg =
                               reinterpret_cast<const segment_command*>(lc);
-        const unsigned sectionCount = (swap
-                                       ? llvm::sys::getSwappedBytes(seg->nsects)
-                                       : seg->nsects);
+        const unsigned sectionCount = read32(&seg->nsects, isBig);
         const section *sects = reinterpret_cast<const section*>
                                   (lc + sizeof(segment_command));
         const unsigned lcSize = sizeof(segment_command)
@@ -340,26 +337,26 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           Section section;
           section.segmentName = getString16(sect->segname);
           section.sectionName = getString16(sect->sectname);
-          section.type        = (SectionType)(read32(swap, sect->flags)
-                                                                & SECTION_TYPE);
-          section.attributes  = read32(swap, sect->flags) & SECTION_ATTRIBUTES;
-          section.alignment   = read32(swap, sect->align);
-          section.address     = read32(swap, sect->addr);
+          section.type = (SectionType)(read32(&sect->flags, isBig) &
+                                       SECTION_TYPE);
+          section.attributes =
+              read32((uint8_t *)&sect->flags, isBig) & SECTION_ATTRIBUTES;
+          section.alignment   = read32(&sect->align, isBig);
+          section.address     = read32(&sect->addr, isBig);
           const uint8_t *content =
-              (uint8_t *)start + read32(swap, sect->offset);
-          size_t contentSize = read32(swap, sect->size);
+            (uint8_t *)start + read32(&sect->offset, isBig);
+          size_t contentSize = read32(&sect->size, isBig);
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
           section.content = llvm::makeArrayRef(content, contentSize);
-          appendRelocations(section.relocations, mb->getBuffer(),
-                            swap, isBigEndianArch, read32(swap, sect->reloff),
-                                                   read32(swap, sect->nreloc));
+          appendRelocations(section.relocations, mb->getBuffer(), isBig,
+                            read32(&sect->reloff, isBig),
+                            read32(&sect->nreloc, isBig));
           if (section.type == S_NON_LAZY_SYMBOL_POINTERS) {
-            appendIndirectSymbols(section.indirectSymbols, mb->getBuffer(),
-                                  swap, isBigEndianArch,
-                                  indirectSymbolTableOffset,
-                                  indirectSymbolTableCount,
-                                  read32(swap, sect->reserved1), contentSize/4);
+            appendIndirectSymbols(
+                section.indirectSymbols, mb->getBuffer(), isBig,
+                indirectSymbolTableOffset, indirectSymbolTableCount,
+                read32(&sect->reserved1, isBig), contentSize / 4);
           }
           f->sections.push_back(section);
         }
@@ -367,15 +364,16 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       break;
     case LC_SYMTAB: {
       const symtab_command *st = reinterpret_cast<const symtab_command*>(lc);
-      const char *strings = start + read32(swap, st->stroff);
-      const uint32_t strSize = read32(swap, st->strsize);
+      const char *strings = start + read32(&st->stroff, isBig);
+      const uint32_t strSize = read32(&st->strsize, isBig);
       // Validate string pool and symbol table all in buffer.
-      if ( read32(swap, st->stroff)+read32(swap, st->strsize)
-                                                        > objSize )
+      if (read32((uint8_t *)&st->stroff, isBig) +
+              read32((uint8_t *)&st->strsize, isBig) >
+          objSize)
         return true;
       if (is64) {
-        const uint32_t symOffset = read32(swap, st->symoff);
-        const uint32_t symCount = read32(swap, st->nsyms);
+        const uint32_t symOffset = read32(&st->symoff, isBig);
+        const uint32_t symCount = read32(&st->nsyms, isBig);
         if ( symOffset+(symCount*sizeof(nlist_64)) > objSize)
           return true;
         const nlist_64 *symbols =
@@ -384,7 +382,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
         for(uint32_t i=0; i < symCount; ++i) {
           const nlist_64 *sin = &symbols[i];
           nlist_64 tempSym;
-          if (swap) {
+          if (isBig != llvm::sys::IsBigEndianHost) {
             tempSym = *sin; swapStruct(tempSym); sin = &tempSym;
           }
           Symbol sout;
@@ -404,8 +402,8 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
             f->localSymbols.push_back(sout);
         }
       } else {
-        const uint32_t symOffset = read32(swap, st->symoff);
-        const uint32_t symCount = read32(swap, st->nsyms);
+        const uint32_t symOffset = read32(&st->symoff, isBig);
+        const uint32_t symCount = read32(&st->nsyms, isBig);
         if ( symOffset+(symCount*sizeof(nlist)) > objSize)
           return true;
         const nlist *symbols =
@@ -414,7 +412,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
         for(uint32_t i=0; i < symCount; ++i) {
           const nlist *sin = &symbols[i];
           nlist tempSym;
-          if (swap) {
+          if (isBig != llvm::sys::IsBigEndianHost) {
             tempSym = *sin; swapStruct(tempSym); sin = &tempSym;
           }
           Symbol sout;
@@ -438,15 +436,15 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       break;
     case LC_ID_DYLIB: {
       const dylib_command *dl = reinterpret_cast<const dylib_command*>(lc);
-      f->installName = lc + read32(swap, dl->dylib.name);
+      f->installName = lc + read32(&dl->dylib.name, isBig);
       }
       break;
     case LC_DATA_IN_CODE: {
       const linkedit_data_command *ldc =
                             reinterpret_cast<const linkedit_data_command*>(lc);
-      dataInCode = reinterpret_cast<const data_in_code_entry*>(
-                                            start + read32(swap, ldc->dataoff));
-      dataInCodeSize = read32(swap, ldc->datasize);
+      dataInCode = reinterpret_cast<const data_in_code_entry *>(
+          start + read32(&ldc->dataoff, isBig));
+      dataInCodeSize = read32(&ldc->datasize, isBig);
       }
       break;
     case LC_LOAD_DYLIB:
@@ -455,7 +453,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     case LC_LOAD_UPWARD_DYLIB: {
       const dylib_command *dl = reinterpret_cast<const dylib_command*>(lc);
       DependentDylib entry;
-      entry.path = lc + read32(swap, dl->dylib.name);
+      entry.path = lc + read32(&dl->dylib.name, isBig);
       entry.kind = LoadCommandType(cmd);
       f->dependentDylibs.push_back(entry);
       }
@@ -474,9 +472,10 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     // Convert on-disk data_in_code_entry array to DataInCode vector.
     for (unsigned i=0; i < dataInCodeSize/sizeof(data_in_code_entry); ++i) {
       DataInCode entry;
-      entry.offset = read32(swap, dataInCode[i].offset);
-      entry.length = read16(swap, dataInCode[i].length);
-      entry.kind   = (DataRegionType)read16(swap, dataInCode[i].kind);
+      entry.offset = read32(&dataInCode[i].offset, isBig);
+      entry.length = read16(&dataInCode[i].length, isBig);
+      entry.kind =
+          (DataRegionType)read16((uint8_t *)&dataInCode[i].kind, isBig);
       f->dataInCode.push_back(entry);
     }
   }

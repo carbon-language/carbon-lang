@@ -66,7 +66,7 @@ struct UnwindInfoPage {
 
 class UnwindInfoAtom : public SimpleDefinedAtom {
 public:
-  UnwindInfoAtom(ArchHandler &archHandler, const File &file, bool swap,
+  UnwindInfoAtom(ArchHandler &archHandler, const File &file, bool isBig,
                  std::vector<uint32_t> commonEncodings,
                  std::vector<const Atom *> personalities,
                  std::vector<UnwindInfoPage> pages, uint32_t numLSDAs)
@@ -79,7 +79,7 @@ public:
         _lsdaIndexOffset(_topLevelIndexOffset +
                          3 * (pages.size() + 1) * sizeof(uint32_t)),
         _firstPageOffset(_lsdaIndexOffset + 2 * numLSDAs * sizeof(uint32_t)),
-        _swap(swap) {
+        _isBig(isBig) {
 
     addHeader(commonEncodings.size(), personalities.size(), pages.size());
     addCommonEncodings(commonEncodings);
@@ -110,21 +110,22 @@ public:
     uint32_t headerSize = 7 * sizeof(uint32_t);
     _contents.resize(headerSize);
 
-    int32_t *headerEntries = (int32_t *)_contents.data();
+    uint8_t *headerEntries = _contents.data();
     // version
-    write32(headerEntries[0], _swap, 1);
+    write32(headerEntries, 1, _isBig);
     // commonEncodingsArraySectionOffset
-    write32(headerEntries[1], _swap, _commonEncodingsOffset);
+    write32(headerEntries + sizeof(uint32_t), _commonEncodingsOffset, _isBig);
     // commonEncodingsArrayCount
-    write32(headerEntries[2], _swap, numCommon);
+    write32(headerEntries + 2 * sizeof(uint32_t), numCommon, _isBig);
     // personalityArraySectionOffset
-    write32(headerEntries[3], _swap, _personalityArrayOffset);
+    write32(headerEntries + 3 * sizeof(uint32_t), _personalityArrayOffset,
+            _isBig);
     // personalityArrayCount
-    write32(headerEntries[4], _swap, numPersonalities);
+    write32(headerEntries + 4 * sizeof(uint32_t), numPersonalities, _isBig);
     // indexSectionOffset
-    write32(headerEntries[5], _swap, _topLevelIndexOffset);
+    write32(headerEntries + 5 * sizeof(uint32_t), _topLevelIndexOffset, _isBig);
     // indexCount
-    write32(headerEntries[6], _swap, numPages + 1);
+    write32(headerEntries + 6 * sizeof(uint32_t), numPages + 1, _isBig);
   }
 
   /// Add the list of common encodings to the section; this is simply an array
@@ -134,11 +135,13 @@ public:
 
     _contents.resize(_commonEncodingsOffset +
                      commonEncodings.size() * sizeof(uint32_t));
-    int32_t *commonEncodingsArea =
-        reinterpret_cast<int32_t *>(_contents.data() + _commonEncodingsOffset);
+    uint8_t *commonEncodingsArea =
+        reinterpret_cast<uint8_t *>(_contents.data() + _commonEncodingsOffset);
 
-    for (uint32_t encoding : commonEncodings)
-      write32(*commonEncodingsArea++, _swap, encoding);
+    for (uint32_t encoding : commonEncodings) {
+      write32(commonEncodingsArea, encoding, _isBig);
+      commonEncodingsArea += sizeof(uint32_t);
+    }
   }
 
   void addPersonalityFunctions(std::vector<const Atom *> personalities) {
@@ -160,16 +163,16 @@ public:
 
     // The most difficult job here is calculating the LSDAs; everything else
     // follows fairly naturally, but we can't state where the first
-    int32_t *indexData = (int32_t *)&_contents[_topLevelIndexOffset];
+    uint8_t *indexData = &_contents[_topLevelIndexOffset];
     uint32_t numLSDAs = 0;
     for (unsigned i = 0; i < pages.size(); ++i) {
       // functionOffset
       addImageReference(_topLevelIndexOffset + 3 * i * sizeof(uint32_t),
                         pages[i].entries[0].rangeStart);
       // secondLevelPagesSectionOffset
-      write32(indexData[3 * i + 1], _swap, pageLoc);
-      write32(indexData[3 * i + 2], _swap,
-              _lsdaIndexOffset + numLSDAs * 2 * sizeof(uint32_t));
+      write32(indexData + (3 * i + 1) * sizeof(uint32_t), pageLoc, _isBig);
+      write32(indexData + (3 * i + 2) * sizeof(uint32_t),
+              _lsdaIndexOffset + numLSDAs * 2 * sizeof(uint32_t), _isBig);
 
       for (auto &entry : pages[i].entries)
         if (entry.lsdaLocation)
@@ -182,8 +185,8 @@ public:
                           3 * pages.size() * sizeof(uint32_t),
                       finalEntry.rangeStart, finalEntry.rangeLength);
     // secondLevelPagesSectionOffset => 0
-    indexData[3 * pages.size() + 2] =
-        _lsdaIndexOffset + numLSDAs * 2 * sizeof(uint32_t);
+    write32(indexData + (3 * pages.size() + 2) * sizeof(uint32_t),
+            _lsdaIndexOffset + numLSDAs * 2 * sizeof(uint32_t), _isBig);
   }
 
   void addLSDAIndexes(std::vector<UnwindInfoPage> &pages, uint32_t numLSDAs) {
@@ -218,18 +221,17 @@ public:
     using normalized::write32;
     using normalized::write16;
     // 2 => regular page
-    write32(*(int32_t *)&_contents[curPageOffset], _swap, 2);
+    write32(&_contents[curPageOffset], 2, _isBig);
     // offset of 1st entry
-    write16(*(int16_t *)&_contents[curPageOffset + 4], _swap, headerSize);
-    write16(*(int16_t *)&_contents[curPageOffset + 6], _swap,
-            page.entries.size());
+    write16(&_contents[curPageOffset + 4], headerSize, _isBig);
+    write16(&_contents[curPageOffset + 6], page.entries.size(), _isBig);
 
     uint32_t pagePos = curPageOffset + headerSize;
     for (auto &entry : page.entries) {
       addImageReference(pagePos, entry.rangeStart);
 
-      write32(reinterpret_cast<int32_t *>(_contents.data() + pagePos)[1], _swap,
-              entry.encoding);
+      write32(_contents.data() + pagePos + sizeof(uint32_t), entry.encoding,
+              _isBig);
       if ((entry.encoding & 0x0f000000U) ==
           _archHandler.dwarfCompactUnwindType())
         addEhFrameReference(pagePos + sizeof(uint32_t), entry.ehFrame);
@@ -263,7 +265,7 @@ private:
   uint32_t _topLevelIndexOffset;
   uint32_t _lsdaIndexOffset;
   uint32_t _firstPageOffset;
-  bool _swap;
+  bool _isBig;
 };
 
 /// Pass for instantiating and optimizing GOT slots.
@@ -273,7 +275,7 @@ public:
   CompactUnwindPass(const MachOLinkingContext &context)
       : _context(context), _archHandler(_context.archHandler()),
         _file("<mach-o Compact Unwind Pass>"),
-        _swap(!MachOLinkingContext::isHostEndian(_context.arch())) {}
+        _isBig(MachOLinkingContext::isBigEndian(_context.arch())) {}
 
 private:
   void perform(std::unique_ptr<MutableFile> &mergedFile) override {
@@ -337,7 +339,7 @@ private:
 
     // FIXME: we should also erase all compact-unwind atoms; their job is done.
     UnwindInfoAtom *unwind = new (_file.allocator())
-        UnwindInfoAtom(_archHandler, _file, _swap, std::vector<uint32_t>(),
+        UnwindInfoAtom(_archHandler, _file, _isBig, std::vector<uint32_t>(),
                        personalities, pages, numLSDAs);
     mergedFile->addAtom(*unwind);
   }
@@ -404,8 +406,9 @@ private:
 
     using normalized::read32;
     entry.rangeLength =
-        read32(_swap, ((uint32_t *)atom->rawContent().data())[2]);
-    entry.encoding = read32(_swap, ((uint32_t *)atom->rawContent().data())[3]);
+        read32(atom->rawContent().data() + 2 * sizeof(uint32_t), _isBig);
+    entry.encoding =
+        read32(atom->rawContent().data() + 3 * sizeof(uint32_t), _isBig);
     return entry;
   }
 
@@ -415,7 +418,7 @@ private:
     for (const DefinedAtom *ehFrameAtom : mergedFile->defined()) {
       if (ehFrameAtom->contentType() != DefinedAtom::typeCFI)
         continue;
-      if (ArchHandler::isDwarfCIE(_swap, ehFrameAtom))
+      if (ArchHandler::isDwarfCIE(_isBig, ehFrameAtom))
         continue;
 
       if (const Atom *function = _archHandler.fdeTargetFunction(ehFrameAtom))
@@ -506,7 +509,7 @@ private:
   const MachOLinkingContext &_context;
   mach_o::ArchHandler &_archHandler;
   MachOFile _file;
-  bool _swap;
+  bool _isBig;
 };
 
 void addCompactUnwindPass(PassManager &pm, const MachOLinkingContext &ctx) {

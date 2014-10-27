@@ -124,31 +124,31 @@ void ArchHandler::appendReloc(normalized::Relocations &relocs, uint32_t offset,
 }
 
 
-int16_t ArchHandler::readS16(bool swap, const uint8_t *addr) {
-  return read16(swap, *reinterpret_cast<const uint16_t*>(addr));
+int16_t ArchHandler::readS16(const uint8_t *addr, bool isBig) {
+    return read16(addr, isBig);
 }
 
-int32_t ArchHandler::readS32(bool swap, const uint8_t *addr) {
-  return read32(swap, *reinterpret_cast<const uint32_t*>(addr));
+int32_t ArchHandler::readS32(const uint8_t *addr, bool isBig) {
+  return read32(addr, isBig);
 }
 
-uint32_t ArchHandler::readU32(bool swap, const uint8_t *addr) {
-  return read32(swap, *reinterpret_cast<const uint32_t*>(addr));
+uint32_t ArchHandler::readU32(const uint8_t *addr, bool isBig) {
+  return read32(addr, isBig);
 }
 
-int64_t ArchHandler::readS64(bool swap, const uint8_t *addr) {
-  return read64(swap, *reinterpret_cast<const uint64_t*>(addr));
+  int64_t ArchHandler::readS64(const uint8_t *addr, bool isBig) {
+  return read64(addr, isBig);
 }
 
-bool ArchHandler::isDwarfCIE(bool swap, const DefinedAtom *atom) {
+bool ArchHandler::isDwarfCIE(bool isBig, const DefinedAtom *atom) {
   assert(atom->contentType() == DefinedAtom::typeCFI);
-  uint32_t size = read32(swap, *(uint32_t *)atom->rawContent().data());
+  uint32_t size = read32(atom->rawContent().data(), isBig);
 
   uint32_t idOffset = sizeof(uint32_t);
   if (size == 0xffffffffU)
     idOffset += sizeof(uint64_t);
 
-  return read32(swap, *(uint32_t *)(atom->rawContent().data() + idOffset)) == 0;
+  return read32(atom->rawContent().data() + idOffset, isBig) == 0;
 }
 
 const Atom *ArchHandler::fdeTargetFunction(const DefinedAtom *fde) {

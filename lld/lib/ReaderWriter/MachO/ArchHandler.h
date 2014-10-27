@@ -118,7 +118,7 @@ public:
           getReferenceInfo(const normalized::Relocation &reloc,
                            const DefinedAtom *inAtom,
                            uint32_t offsetInAtom,
-                           uint64_t fixupAddress, bool swap,
+                           uint64_t fixupAddress, bool isBigEndian,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
                            Reference::KindValue *kind, 
@@ -134,7 +134,7 @@ public:
                            const normalized::Relocation &reloc2,
                            const DefinedAtom *inAtom,
                            uint32_t offsetInAtom,
-                           uint64_t fixupAddress, bool swap, bool scatterable,
+                           uint64_t fixupAddress, bool isBig, bool scatterable,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
                            Reference::KindValue *kind, 
@@ -211,7 +211,7 @@ public:
   }
 
   /// Does a given unwind-cfi atom represent a CIE (as opposed to an FDE).
-  static bool isDwarfCIE(bool swap, const DefinedAtom *atom);
+  static bool isDwarfCIE(bool isBig, const DefinedAtom *atom);
 
   struct ReferenceInfo {
     Reference::KindArch arch;
@@ -288,10 +288,10 @@ protected:
                           RelocPattern pattern);
 
 
-  static int16_t  readS16(bool swap, const uint8_t *addr);
-  static int32_t  readS32(bool swap, const uint8_t *addr);
-  static uint32_t readU32(bool swap, const uint8_t *addr);
-  static int64_t  readS64(bool swap, const uint8_t *addr);
+  static int16_t  readS16(const uint8_t *addr, bool isBig);
+  static int32_t  readS32(const uint8_t *addr, bool isBig);
+  static uint32_t readU32(const uint8_t *addr, bool isBig);
+  static int64_t  readS64(const uint8_t *addr, bool isBig);
 };
 
 } // namespace mach_o

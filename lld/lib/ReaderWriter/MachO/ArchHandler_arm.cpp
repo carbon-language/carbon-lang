@@ -13,6 +13,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm::MachO;
@@ -20,6 +22,10 @@ using namespace lld::mach_o::normalized;
 
 namespace lld {
 namespace mach_o {
+
+using llvm::support::ulittle32_t;
+using llvm::support::little32_t;
+
 
 class ArchHandler_arm : public ArchHandler {
 public:
@@ -191,16 +197,13 @@ private:
                              uint64_t targetAddress,
                              uint64_t inAtomAddress, bool &thumbMode,
                              bool targetIsThumb);
-  
-  const bool _swap;
 };
 
 //===----------------------------------------------------------------------===//
 //  ArchHandler_arm
 //===----------------------------------------------------------------------===//
 
-ArchHandler_arm::ArchHandler_arm() :
-  _swap(!MachOLinkingContext::isHostEndian(MachOLinkingContext::arch_armv7)) {}
+ArchHandler_arm::ArchHandler_arm() { }
 
 ArchHandler_arm::~ArchHandler_arm() { }
 
@@ -511,14 +514,14 @@ uint32_t ArchHandler_arm::clearThumbBit(uint32_t value, const Atom *target) {
 
 std::error_code ArchHandler_arm::getReferenceInfo(
     const Relocation &reloc, const DefinedAtom *inAtom, uint32_t offsetInAtom,
-    uint64_t fixupAddress, bool swap,
+    uint64_t fixupAddress, bool isBig,
     FindAtomBySectionAndAddress atomFromAddress,
     FindAtomBySymbolIndex atomFromSymbolIndex, Reference::KindValue *kind,
     const lld::Atom **target, Reference::Addend *addend) {
   typedef std::error_code E;
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   uint64_t targetAddress;
-  uint32_t instruction = readU32(swap, fixupContent);
+  uint32_t instruction = *(ulittle32_t *)fixupContent;
   int32_t displacement;
   switch (relocPattern(reloc)) {
   case ARM_THUMB_RELOC_BR22 | rPcRel | rExtern | rLength4:
@@ -626,7 +629,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
                                      const normalized::Relocation &reloc2,
                                      const DefinedAtom *inAtom,
                                      uint32_t offsetInAtom,
-                                     uint64_t fixupAddress, bool swap,
+                                     uint64_t fixupAddress, bool isBig,
                                      bool scatterable,
                                      FindAtomBySectionAndAddress atomFromAddr,
                                      FindAtomBySymbolIndex atomFromSymbolIndex,
@@ -778,7 +781,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
   }
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   std::error_code ec;
-  uint32_t instruction = readU32(swap, fixupContent);
+  uint32_t instruction = *(ulittle32_t *)fixupContent;
   uint32_t value;
   uint32_t fromAddress;
   uint32_t toAddress;
@@ -898,7 +901,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
   return std::error_code();
 }
 
-void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
+void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *loc,
                                       uint64_t fixupAddress,
                                       uint64_t targetAddress,
                                       uint64_t inAtomAddress,
@@ -906,7 +909,7 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::ARM);
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   int32_t displacement;
   uint16_t value16;
   uint32_t value32;
@@ -923,76 +926,76 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case thumb_bl22:
     assert(thumbMode);
     displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
-    value32 = setDisplacementInThumbBranch(*loc32, fixupAddress, displacement,
-                                           targetIsThumb);
-    write32(*loc32, _swap, value32);
+    value32 = setDisplacementInThumbBranch(*loc32, fixupAddress,
+                                           displacement, targetIsThumb);
+    *loc32 = value32;
     break;
   case thumb_movw:
     assert(thumbMode);
     value16 = (targetAddress + ref.addend()) & 0xFFFF;
     if (targetIsThumb)
       value16 |= 1;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case thumb_movt:
     assert(thumbMode);
     value16 = (targetAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case thumb_movw_funcRel:
     assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
     if (targetIsThumb)
       value16 |= 1;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case thumb_movt_funcRel:
     assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case arm_b24:
   case arm_bl24:
    assert(!thumbMode);
     displacement = (targetAddress - (fixupAddress + 8)) + ref.addend();
     value32 = setDisplacementInArmBranch(*loc32, displacement, targetIsThumb);
-    write32(*loc32, _swap, value32);
+    *loc32 = value32;
     break;
   case arm_movw:
     assert(!thumbMode);
     value16 = (targetAddress + ref.addend()) & 0xFFFF;
     if (targetIsThumb)
       value16 |= 1;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case arm_movt:
     assert(!thumbMode);
     value16 = (targetAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case arm_movw_funcRel:
     assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
     if (targetIsThumb)
       value16 |= 1;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case arm_movt_funcRel:
     assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case pointer32:
     if (targetIsThumb)
-      write32(*loc32, _swap, targetAddress + ref.addend() + 1);
+      *loc32 = targetAddress + ref.addend() + 1;
     else
-      write32(*loc32, _swap, targetAddress + ref.addend());
+      *loc32 = targetAddress + ref.addend();
     break;
   case delta32:
     if (targetIsThumb)
-      write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend() + 1);
+      *loc32 = targetAddress - fixupAddress + ref.addend() + 1;
     else
-      write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
+      *loc32 = targetAddress - fixupAddress + ref.addend();
     break;
   case lazyPointer:
   case lazyImmediateLocation:
@@ -1058,15 +1061,14 @@ bool ArchHandler_arm::useExternalRelocationTo(const Atom &target) {
   return false;
 }
 
-void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
-                                             uint8_t *location,
-                                             uint64_t fixupAddress,
-                                             uint64_t targetAddress,
-                                             uint64_t inAtomAddress,
-                                             bool &thumbMode,
-                                             bool targetIsThumb) {
+void ArchHandler_arm::applyFixupRelocatable(const Reference &ref, uint8_t *loc,
+                                            uint64_t fixupAddress,
+                                            uint64_t targetAddress,
+                                            uint64_t inAtomAddress,
+                                            bool &thumbMode,
+                                            bool targetIsThumb) {
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
-  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   int32_t displacement;
   uint16_t value16;
   uint32_t value32;
@@ -1086,9 +1088,9 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       displacement = (ref.addend() - (fixupAddress + 4));
     else
       displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
-    value32 = setDisplacementInThumbBranch(*loc32, fixupAddress, displacement,
-                                           targetIsThumb);
-    write32(*loc32, _swap, value32);
+    value32 = setDisplacementInThumbBranch(*loc32, fixupAddress,
+                                           displacement, targetIsThumb);
+    *loc32 = value32;
     break;
   case thumb_movw:
     assert(thumbMode);
@@ -1096,7 +1098,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       value16 = ref.addend() & 0xFFFF;
     else
       value16 = (targetAddress + ref.addend()) & 0xFFFF;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case thumb_movt:
     assert(thumbMode);
@@ -1104,17 +1106,17 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       value16 = ref.addend() >> 16;
     else
       value16 = (targetAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case thumb_movw_funcRel:
     assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case thumb_movt_funcRel:
     assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
+    *loc32 = setWordFromThumbMov(*loc32, value16);
     break;
   case arm_b24:
   case arm_bl24:
@@ -1123,8 +1125,9 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       displacement = (ref.addend() - (fixupAddress + 8));
     else
       displacement = (targetAddress - (fixupAddress + 8)) + ref.addend();
-    value32 = setDisplacementInArmBranch(*loc32, displacement, targetIsThumb);
-    write32(*loc32, _swap, value32);
+    value32 = setDisplacementInArmBranch(*loc32, displacement,
+                                         targetIsThumb);
+    *loc32 = value32;
     break;
   case arm_movw:
     assert(!thumbMode);
@@ -1132,7 +1135,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       value16 = ref.addend() & 0xFFFF;
     else
       value16 = (targetAddress + ref.addend()) & 0xFFFF;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case arm_movt:
     assert(!thumbMode);
@@ -1140,23 +1143,23 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       value16 = ref.addend() >> 16;
     else
       value16 = (targetAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case arm_movw_funcRel:
     assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case arm_movt_funcRel:
     assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
-    write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
+    *loc32 = setWordFromArmMov(*loc32, value16);
     break;
   case pointer32:
-    write32(*loc32, _swap, targetAddress + ref.addend());
+    *loc32 = targetAddress + ref.addend();
     break;
   case delta32:
-    write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
+    *loc32 = targetAddress - fixupAddress + ref.addend();
     break;
   case lazyPointer:
   case lazyImmediateLocation:
