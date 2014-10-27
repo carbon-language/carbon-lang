@@ -872,11 +872,13 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
     ThreadState *thr = cur_thread();
     // Thread-local state is not initialized yet.
     ScopedIgnoreInterceptors ignore;
+    ThreadIgnoreBegin(thr, 0);
     if (pthread_setspecific(g_thread_finalize_key,
                             (void *)kPthreadDestructorIterations)) {
       Printf("ThreadSanitizer: failed to set thread key\n");
       Die();
     }
+    ThreadIgnoreEnd(thr, 0);
     while ((tid = atomic_load(&p->tid, memory_order_acquire)) == 0)
       pthread_yield();
     atomic_store(&p->tid, 0, memory_order_release);
