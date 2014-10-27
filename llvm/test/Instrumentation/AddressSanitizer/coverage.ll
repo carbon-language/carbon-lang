@@ -4,6 +4,7 @@
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=1  -S | FileCheck %s --check-prefix=CHECK1
 ; RUN: opt < %s -asan -asan-module -asan-coverage=3 -asan-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK3
+; RUN: opt < %s -asan -asan-module -asan-coverage=4 -S | FileCheck %s --check-prefix=CHECK4
 
 ; RUN: opt < %s -asan -asan-module -asan-coverage=0 -asan-globals=0 -S | \
 ; RUN:     FileCheck %s --check-prefix=CHECK0
@@ -44,7 +45,7 @@ entry:
 
 ; CHECK1-LABEL: define internal void @asan.module_ctor
 ; CHECK1-NOT: ret
-; CHECK1: call void @__sanitizer_cov_module_init(i64 1)
+; CHECK1: call void @__sanitizer_cov_module_init(i64 2)
 ; CHECK1: ret
 
 
@@ -57,7 +58,7 @@ entry:
 
 ; CHECK2-LABEL: define internal void @asan.module_ctor
 ; CHECK2-NOT: ret
-; CHECK2: call void @__sanitizer_cov_module_init(i64 3)
+; CHECK2: call void @__sanitizer_cov_module_init(i64 4)
 ; CHECK2: ret
 
 ; CHECK3-LABEL: define void @foo
@@ -68,3 +69,18 @@ entry:
 ; CHECK3-NOT: call void @__sanitizer_cov
 ; CHECK3: ret void
 
+
+%struct.StructWithVptr = type { i32 (...)** }
+
+define void @CallViaVptr(%struct.StructWithVptr* %foo) uwtable sanitize_address {
+entry:
+  %0 = bitcast %struct.StructWithVptr* %foo to void (%struct.StructWithVptr*)***
+  %vtable = load void (%struct.StructWithVptr*)*** %0, align 8
+  %1 = load void (%struct.StructWithVptr*)** %vtable, align 8
+  tail call void %1(%struct.StructWithVptr* %foo)
+  ret void
+}
+
+; CHECK4-LABEL: define void @CallViaVptr
+; CHECK4: call void @__sanitizer_cov_indir_call16
+; CHECK4: ret void
