@@ -375,6 +375,8 @@ TEST(DeclarationMatcher, hasDeclContext) {
                       "}",
                       recordDecl(hasDeclContext(namespaceDecl(
                           hasName("M"), hasDeclContext(namespaceDecl()))))));
+
+  EXPECT_TRUE(matches("class D{};", decl(hasDeclContext(decl()))));
 }
 
 TEST(DeclarationMatcher, LinkageSpecification) {

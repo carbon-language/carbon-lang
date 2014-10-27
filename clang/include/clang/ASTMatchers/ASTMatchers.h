@@ -3567,8 +3567,9 @@ AST_MATCHER_P(ElaboratedType, namesType, internal::Matcher<QualType>,
 /// \c recordDecl(hasDeclContext(namedDecl(hasName("M")))) matches the
 /// declaration of \c class \c D.
 AST_MATCHER_P(Decl, hasDeclContext, internal::Matcher<Decl>, InnerMatcher) {
-  return InnerMatcher.matches(*Decl::castFromDeclContext(Node.getDeclContext()),
-                              Finder, Builder);
+  const DeclContext *DC = Node.getDeclContext();
+  if (!DC) return false;
+  return InnerMatcher.matches(*Decl::castFromDeclContext(DC), Finder, Builder);
 }
 
 /// \brief Matches nested name specifiers.
