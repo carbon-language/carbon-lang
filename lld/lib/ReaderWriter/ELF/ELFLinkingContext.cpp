@@ -22,9 +22,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 
-// FreeBSD 10.0 has cxxabi.h but fails to define HAVE_CXXABI_H due to
-// header dependency issues.
-#if defined(HAVE_CXXABI_H) || defined (__FreeBSD__)
+#if defined(HAVE_CXXABI_H)
 #include <cxxabi.h>
 #endif
 
@@ -274,7 +272,7 @@ std::string ELFLinkingContext::demangle(StringRef symbolName) const {
   if (!symbolName.startswith("_Z"))
     return symbolName;
 
-#if defined(HAVE_CXXABI_H) || defined (__FreeBSD__)
+#if defined(HAVE_CXXABI_H)
   SmallString<256> symBuff;
   StringRef nullTermSym = Twine(symbolName).toNullTerminatedStringRef(symBuff);
   const char *cstr = nullTermSym.data();

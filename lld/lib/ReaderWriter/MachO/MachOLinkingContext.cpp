@@ -27,9 +27,7 @@
 #include "llvm/Support/Path.h"
 #include <algorithm>
 
-// FreeBSD 10.0 has cxxabi.h but fails to define HAVE_CXXABI_H due to
-// header dependency issues.
-#if defined(HAVE_CXXABI_H) || defined(__FreeBSD__)
+#if defined(HAVE_CXXABI_H)
 #include <cxxabi.h>
 #endif
 
@@ -761,7 +759,7 @@ std::string MachOLinkingContext::demangle(StringRef symbolName) const {
   if (!symbolName.startswith("__Z"))
     return symbolName;
 
-#if defined(HAVE_CXXABI_H) || defined(__FreeBSD__)
+#if defined(HAVE_CXXABI_H)
   SmallString<256> symBuff;
   StringRef nullTermSym = Twine(symbolName).toNullTerminatedStringRef(symBuff);
   // Mach-O has extra leading underscore that needs to be removed.
