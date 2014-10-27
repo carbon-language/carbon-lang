@@ -2603,8 +2603,8 @@ private:
     TypoDiagnosticGenerator DiagHandler;
     TypoRecoveryCallback RecoveryHandler;
     TypoExprState();
-    TypoExprState(TypoExprState&& other);
-    TypoExprState& operator=(TypoExprState&& other);
+    TypoExprState(TypoExprState&& other) LLVM_NOEXCEPT;
+    TypoExprState& operator=(TypoExprState&& other) LLVM_NOEXCEPT;
   };
 
   /// \brief The set of unhandled TypoExprs and their associated state.

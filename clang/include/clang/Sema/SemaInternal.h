@@ -267,12 +267,12 @@ private:
 
 inline Sema::TypoExprState::TypoExprState() {}
 
-inline Sema::TypoExprState::TypoExprState(TypoExprState &&other) {
+inline Sema::TypoExprState::TypoExprState(TypoExprState &&other) LLVM_NOEXCEPT {
   *this = std::move(other);
 }
 
 inline Sema::TypoExprState &Sema::TypoExprState::operator=(
-    Sema::TypoExprState &&other) {
+    Sema::TypoExprState &&other) LLVM_NOEXCEPT {
   Consumer = std::move(other.Consumer);
   DiagHandler = std::move(other.DiagHandler);
   RecoveryHandler = std::move(RecoveryHandler);
