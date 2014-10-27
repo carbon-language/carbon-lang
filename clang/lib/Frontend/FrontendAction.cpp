@@ -383,16 +383,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
            "doesn't support modules");
   }
 
-  // If we were asked to load any module files, do so now. Don't make any names
-  // from those modules visible.
-  for (const auto &ModuleFile : CI.getFrontendOpts().ModuleFiles) {
-    // FIXME: Use a better source location here. Perhaps inject something
-    // into the predefines buffer to represent these module files.
-    if (!CI.loadModuleFile(ModuleFile,
-                           CI.getSourceManager().getLocForStartOfFile(
-                               CI.getSourceManager().getMainFileID())))
+  // If we were asked to load any module files, do so now.
+  for (const auto &ModuleFile : CI.getFrontendOpts().ModuleFiles)
+    if (!CI.loadModuleFile(ModuleFile))
       goto failure;
-  }
 
   // If there is a layout overrides file, attach an external AST source that
   // provides the layouts from that file.

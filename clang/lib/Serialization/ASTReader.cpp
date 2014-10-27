@@ -4188,6 +4188,7 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
 
   bool NeedsInputFiles = Listener.needsInputFileVisitation();
   bool NeedsSystemInputFiles = Listener.needsSystemInputFileVisitation();
+  bool NeedsImports = Listener.needsImportVisitation();
   BitstreamCursor InputFilesCursor;
   if (NeedsInputFiles) {
     InputFilesCursor = Stream;
@@ -4302,6 +4303,24 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
         }
         if (!shouldContinue)
           break;
+      }
+      break;
+    }
+
+    case IMPORTS: {
+      if (!NeedsImports)
+        break;
+
+      unsigned Idx = 0, N = Record.size();
+      while (Idx < N) {
+        // Read information about the AST file.
+        ModuleKind ImportedKind = (ModuleKind)Record[Idx++];
+        Idx += 4; // ImportLoc, Size, ModTime, Signature
+        unsigned Length = Record[Idx++];
+        SmallString<128> ImportedFile(Record.begin() + Idx,
+                                      Record.begin() + Idx + Length);
+        Idx += Length;
+        Listener.visitImport(ImportedFile);
       }
       break;
     }

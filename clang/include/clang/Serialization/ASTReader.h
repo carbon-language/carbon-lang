@@ -193,6 +193,13 @@ public:
                               bool isOverridden) {
     return true;
   }
+
+  /// \brief Returns true if this \c ASTReaderListener wants to receive the
+  /// imports of the AST file via \c visitImport, false otherwise.
+  virtual bool needsImportVisitation() const { return false; }
+  /// \brief If needsImportVisitation returns \c true, this is called for each
+  /// AST file imported by this AST file.
+  virtual void visitImport(StringRef Filename) {}
 };
 
 /// \brief Simple wrapper class for chaining listeners.

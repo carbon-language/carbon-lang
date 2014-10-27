@@ -190,8 +190,10 @@ def remark_module_build_done : Remark<"finished building module '%0'">,
 def err_conflicting_module_names : Error<
   "conflicting module names specified: '-fmodule-name=%0' and "
   "'-fmodule-implementation-of %1'">;
-def err_module_already_loaded : Error<
-  "module '%0' has already been loaded; cannot load module file '%1'">;
+def err_conflicting_module_files : Error<
+  "module '%0' is defined in both '%1' and '%2'">;
+def err_module_file_not_found : Error<
+  "file '%0' is not a precompiled module file">, DefaultFatal;
 def err_module_file_not_module : Error<
   "AST file '%0' was not built as a module">, DefaultFatal;
 
