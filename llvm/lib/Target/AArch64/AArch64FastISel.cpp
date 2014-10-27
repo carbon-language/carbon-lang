@@ -1084,7 +1084,7 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
   RetVT.SimpleTy = std::max(RetVT.SimpleTy, MVT::i32);
 
   // Canonicalize immediates to the RHS first.
-  if (UseAdd && isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS))
+  if (UseAdd && isa<Constant>(LHS) && !isa<Constant>(RHS))
     std::swap(LHS, RHS);
 
   // Canonicalize mul by power of 2 to the RHS.
@@ -1118,7 +1118,11 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
     else
       ResultReg = emitAddSub_ri(UseAdd, RetVT, LHSReg, LHSIsKill, Imm, SetFlags,
                                 WantResult);
-  }
+  } else if (const auto *C = dyn_cast<Constant>(RHS))
+    if (C->isNullValue())
+      ResultReg = emitAddSub_ri(UseAdd, RetVT, LHSReg, LHSIsKill, 0, SetFlags,
+                                WantResult);
+
   if (ResultReg)
     return ResultReg;
 
