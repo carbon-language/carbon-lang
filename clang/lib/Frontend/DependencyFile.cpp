@@ -22,6 +22,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
@@ -113,10 +114,18 @@ void DependencyCollector::maybeAddDependency(StringRef Filename, bool FromModule
     Dependencies.push_back(Filename);
 }
 
+static bool isSpecialFilename(StringRef Filename) {
+  return llvm::StringSwitch<bool>(Filename)
+      .Case("<built-in>", true)
+      .Case("<stdin>", true)
+      .Default(false);
+}
+
 bool DependencyCollector::sawDependency(StringRef Filename, bool FromModule,
                                        bool IsSystem, bool IsModuleFile,
                                        bool IsMissing) {
-  return Filename != "<built-in>" && (needSystemDependencies() || !IsSystem);
+  return !isSpecialFilename(Filename) &&
+         (needSystemDependencies() || !IsSystem);
 }
 
 DependencyCollector::~DependencyCollector() { }
@@ -218,7 +227,7 @@ void DependencyFileGenerator::AttachToASTReader(ASTReader &R) {
 /// considered as a dependency.
 bool DFGImpl::FileMatchesDepCriteria(const char *Filename,
                                      SrcMgr::CharacteristicKind FileType) {
-  if (strcmp("<built-in>", Filename) == 0)
+  if (isSpecialFilename(Filename))
     return false;
 
   if (IncludeSystemHeaders)
