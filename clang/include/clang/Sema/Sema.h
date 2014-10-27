@@ -2602,6 +2602,9 @@ private:
     std::unique_ptr<TypoCorrectionConsumer> Consumer;
     TypoDiagnosticGenerator DiagHandler;
     TypoRecoveryCallback RecoveryHandler;
+    TypoExprState();
+    TypoExprState(TypoExprState&& other);
+    TypoExprState& operator=(TypoExprState&& other);
   };
 
   /// \brief The set of unhandled TypoExprs and their associated state.

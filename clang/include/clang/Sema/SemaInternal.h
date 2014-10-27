@@ -265,6 +265,20 @@ private:
   bool SearchNamespaces;
 };
 
+inline Sema::TypoExprState::TypoExprState() {}
+
+inline Sema::TypoExprState::TypoExprState(TypoExprState &&other) {
+  *this = std::move(other);
+}
+
+inline Sema::TypoExprState &Sema::TypoExprState::operator=(
+    Sema::TypoExprState &&other) {
+  Consumer = std::move(other.Consumer);
+  DiagHandler = std::move(other.DiagHandler);
+  RecoveryHandler = std::move(RecoveryHandler);
+  return *this;
+}
+
 } // end namespace clang
 
 #endif
