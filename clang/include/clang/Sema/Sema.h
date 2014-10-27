@@ -5138,6 +5138,10 @@ public:
 
   /// CheckOverrideControl - Check C++11 override control semantics.
   void CheckOverrideControl(NamedDecl *D);
+    
+  /// DiagnoseAbsenceOfOverrideControl - Diagnose if 'override' keyword was
+  /// not used in the declaration of an overriding method.
+  void DiagnoseAbsenceOfOverrideControl(NamedDecl *D);
 
   /// CheckForFunctionMarkedFinal - Checks whether a virtual member function
   /// overrides a virtual member function marked 'final', according to
