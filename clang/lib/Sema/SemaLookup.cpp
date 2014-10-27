@@ -4332,6 +4332,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 /// \param TDG A TypoDiagnosticGenerator functor that will be used to print
 /// diagnostics when the actual typo correction is attempted.
 ///
+/// \param TRC A TypoRecoveryCallback functor that will be used to build an
+/// Expr from a typo correction candidate.
+///
 /// \param MemberContext if non-NULL, the context in which to look for
 /// a member access expression.
 ///
@@ -4350,7 +4353,7 @@ TypoExpr *Sema::CorrectTypoDelayed(
     const DeclarationNameInfo &TypoName, Sema::LookupNameKind LookupKind,
     Scope *S, CXXScopeSpec *SS,
     std::unique_ptr<CorrectionCandidateCallback> CCC,
-    TypoDiagnosticGenerator TDG, CorrectTypoKind Mode,
+    TypoDiagnosticGenerator TDG, TypoRecoveryCallback TRC, CorrectTypoKind Mode,
     DeclContext *MemberContext, bool EnteringContext,
     const ObjCObjectPointerType *OPT) {
   assert(CCC && "CorrectTypoDelayed requires a CorrectionCandidateCallback");
@@ -4375,7 +4378,7 @@ TypoExpr *Sema::CorrectTypoDelayed(
     return nullptr;
 
   ExprEvalContexts.back().NumTypos++;
-  return createDelayedTypo(std::move(Consumer), std::move(TDG));
+  return createDelayedTypo(std::move(Consumer), std::move(TDG), std::move(TRC));
 }
 
 void TypoCorrection::addCorrectionDecl(NamedDecl *CDecl) {
@@ -4575,14 +4578,15 @@ void Sema::diagnoseTypo(const TypoCorrection &Correction,
       << CorrectedQuotedStr << (ErrorRecovery ? FixItHint() : FixTypo);
 }
 
-TypoExpr *
-Sema::createDelayedTypo(std::unique_ptr<TypoCorrectionConsumer> TCC,
-                        TypoDiagnosticGenerator TDG) {
+TypoExpr *Sema::createDelayedTypo(std::unique_ptr<TypoCorrectionConsumer> TCC,
+                                  TypoDiagnosticGenerator TDG,
+                                  TypoRecoveryCallback TRC) {
   assert(TCC && "createDelayedTypo requires a valid TypoCorrectionConsumer");
   auto TE = new (Context) TypoExpr(Context.DependentTy);
   auto &State = DelayedTypos[TE];
   State.Consumer = std::move(TCC);
   State.DiagHandler = std::move(TDG);
+  State.RecoveryHandler = std::move(TRC);
   return TE;
 }
 

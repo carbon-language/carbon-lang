@@ -5996,13 +5996,17 @@ public:
     // For the first TypoExpr and an uncached TypoExpr, find the next likely
     // typo correction and return it.
     while (TypoCorrection TC = State.Consumer->getNextCorrection()) {
-      LookupResult R(SemaRef,
-                     State.Consumer->getLookupResult().getLookupNameInfo(),
-                     State.Consumer->getLookupResult().getLookupKind());
-      if (!TC.isKeyword())
-        R.addDecl(TC.getCorrectionDecl());
-      ExprResult NE =
-          SemaRef.BuildDeclarationNameExpr(CXXScopeSpec(), R, false);
+      ExprResult NE;
+      if (State.RecoveryHandler) {
+        NE = State.RecoveryHandler(SemaRef, E, TC);
+      } else {
+        LookupResult R(SemaRef,
+                       State.Consumer->getLookupResult().getLookupNameInfo(),
+                       State.Consumer->getLookupResult().getLookupKind());
+        if (!TC.isKeyword())
+          R.addDecl(TC.getCorrectionDecl());
+        NE = SemaRef.BuildDeclarationNameExpr(CXXScopeSpec(), R, false);
+      }
       assert(!NE.isUnset() &&
              "Typo was transformed into a valid-but-null ExprResult");
       if (!NE.isInvalid())

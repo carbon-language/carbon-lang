@@ -17,6 +17,7 @@
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Ownership.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
