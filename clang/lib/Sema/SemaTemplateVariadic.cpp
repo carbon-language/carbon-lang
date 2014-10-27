@@ -838,7 +838,6 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
   LookupName(R, S);
 
   NamedDecl *ParameterPack = nullptr;
-  ParameterPackValidatorCCC Validator;
   switch (R.getResultKind()) {
   case LookupResult::Found:
     ParameterPack = R.getFoundDecl();
@@ -846,9 +845,10 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
     
   case LookupResult::NotFound:
   case LookupResult::NotFoundInCurrentInstantiation:
-    if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
-                                               R.getLookupKind(), S, nullptr,
-                                               Validator, CTK_ErrorRecovery)) {
+    if (TypoCorrection Corrected =
+            CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(), S, nullptr,
+                        llvm::make_unique<ParameterPackValidatorCCC>(),
+                        CTK_ErrorRecovery)) {
       diagnoseTypo(Corrected,
                    PDiag(diag::err_sizeof_pack_no_pack_name_suggest) << &Name,
                    PDiag(diag::note_parameter_pack_here));

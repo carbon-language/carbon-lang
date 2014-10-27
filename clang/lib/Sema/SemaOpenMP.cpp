@@ -646,10 +646,9 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
 
   VarDecl *VD;
   if (!Lookup.isSingleResult()) {
-    VarDeclFilterCCC Validator(*this);
-    if (TypoCorrection Corrected =
-            CorrectTypo(Id, LookupOrdinaryName, CurScope, nullptr, Validator,
-                        CTK_ErrorRecovery)) {
+    if (TypoCorrection Corrected = CorrectTypo(
+            Id, LookupOrdinaryName, CurScope, nullptr,
+            llvm::make_unique<VarDeclFilterCCC>(*this), CTK_ErrorRecovery)) {
       diagnoseTypo(Corrected,
                    PDiag(Lookup.empty()
                              ? diag::err_undeclared_var_use_suggest

@@ -1131,14 +1131,14 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
       // a parse error one way or another. In that case, tell the caller that
       // this is ambiguous. Typo-correct to type and expression keywords and
       // to types and identifiers, in order to try to recover from errors.
-      CorrectionCandidateCallback TypoCorrection;
-      TypoCorrection.WantRemainingKeywords = false;
-      TypoCorrection.WantTypeSpecifiers =
+      auto TypoCorrection = llvm::make_unique<CorrectionCandidateCallback>();
+      TypoCorrection->WantRemainingKeywords = false;
+      TypoCorrection->WantTypeSpecifiers =
           Next.is(tok::l_paren) || Next.is(tok::r_paren) ||
           Next.is(tok::greater) || Next.is(tok::l_brace) ||
           Next.is(tok::identifier);
       switch (TryAnnotateName(false /* no nested name specifier */,
-                              &TypoCorrection)) {
+                              std::move(TypoCorrection))) {
       case ANK_Error:
         return TPResult::Error;
       case ANK_TentativeDecl:

@@ -93,15 +93,15 @@ class TypoCorrectionConsumer : public VisibleDeclConsumer {
   typedef std::map<unsigned, TypoResultsMap> TypoEditDistanceMap;
 
 public:
-  explicit TypoCorrectionConsumer(Sema &SemaRef,
-                                  const DeclarationNameInfo &TypoName,
-                                  Sema::LookupNameKind LookupKind,
-                                  Scope *S, CXXScopeSpec *SS,
-                                  CorrectionCandidateCallback &CCC,
-                                  DeclContext *MemberContext,
-                                  bool EnteringContext)
+  TypoCorrectionConsumer(Sema &SemaRef,
+                         const DeclarationNameInfo &TypoName,
+                         Sema::LookupNameKind LookupKind,
+                         Scope *S, CXXScopeSpec *SS,
+                         std::unique_ptr<CorrectionCandidateCallback> CCC,
+                         DeclContext *MemberContext,
+                         bool EnteringContext)
       : Typo(TypoName.getName().getAsIdentifierInfo()), SemaRef(SemaRef), S(S),
-        SS(SS), CorrectionValidator(CCC), MemberContext(MemberContext),
+        SS(SS), CorrectionValidator(std::move(CCC)), MemberContext(MemberContext),
         Result(SemaRef, TypoName, LookupKind),
         Namespaces(SemaRef.Context, SemaRef.CurContext, SS),
         EnteringContext(EnteringContext), SearchNamespaces(false) {
@@ -226,7 +226,7 @@ private:
   Sema &SemaRef;
   Scope *S;
   CXXScopeSpec *SS;
-  CorrectionCandidateCallback &CorrectionValidator;
+  std::unique_ptr<CorrectionCandidateCallback> CorrectionValidator;
   DeclContext *MemberContext;
   LookupResult Result;
   NamespaceSpecifierSet Namespaces;

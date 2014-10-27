@@ -1674,10 +1674,11 @@ Sema::DecomposeUnqualifiedId(const UnqualifiedId &Id,
 /// Diagnose an empty lookup.
 ///
 /// \return false if new lookup candidates were found
-bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
-                               CorrectionCandidateCallback &CCC,
-                               TemplateArgumentListInfo *ExplicitTemplateArgs,
-                               ArrayRef<Expr *> Args) {
+bool
+Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
+                          std::unique_ptr<CorrectionCandidateCallback> CCC,
+                          TemplateArgumentListInfo *ExplicitTemplateArgs,
+                          ArrayRef<Expr *> Args) {
   DeclarationName Name = R.getLookupName();
 
   unsigned diagnostic = diag::err_undeclared_var_use;
@@ -1795,7 +1796,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   // We didn't find anything, so try to correct for a typo.
   TypoCorrection Corrected;
   if (S && (Corrected = CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(),
-                                    S, &SS, CCC, CTK_ErrorRecovery))) {
+                                    S, &SS, std::move(CCC), CTK_ErrorRecovery))) {
     std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
     bool DroppedSpecifier =
         Corrected.WillReplaceSpecifier() && Name.getAsString() == CorrectedStr;
@@ -1942,14 +1943,12 @@ recoverFromMSUnqualifiedLookup(Sema &S, ASTContext &Context,
       TemplateArgs);
 }
 
-ExprResult Sema::ActOnIdExpression(Scope *S,
-                                   CXXScopeSpec &SS,
-                                   SourceLocation TemplateKWLoc,
-                                   UnqualifiedId &Id,
-                                   bool HasTrailingLParen,
-                                   bool IsAddressOfOperand,
-                                   CorrectionCandidateCallback *CCC,
-                                   bool IsInlineAsmIdentifier) {
+ExprResult
+Sema::ActOnIdExpression(Scope *S, CXXScopeSpec &SS,
+                        SourceLocation TemplateKWLoc, UnqualifiedId &Id,
+                        bool HasTrailingLParen, bool IsAddressOfOperand,
+                        std::unique_ptr<CorrectionCandidateCallback> CCC,
+                        bool IsInlineAsmIdentifier) {
   assert(!(IsAddressOfOperand && HasTrailingLParen) &&
          "cannot be direct & operand and have a trailing lparen");
   if (SS.isInvalid())
@@ -2061,11 +2060,12 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 
     // If this name wasn't predeclared and if this is not a function
     // call, diagnose the problem.
-    CorrectionCandidateCallback DefaultValidator;
-    DefaultValidator.IsAddressOfOperand = IsAddressOfOperand;
+    auto DefaultValidator = llvm::make_unique<CorrectionCandidateCallback>();
+    DefaultValidator->IsAddressOfOperand = IsAddressOfOperand;
     assert((!CCC || CCC->IsAddressOfOperand == IsAddressOfOperand) &&
            "Typo correction callback misconfigured");
-    if (DiagnoseEmptyLookup(S, SS, R, CCC ? *CCC : DefaultValidator))
+    if (DiagnoseEmptyLookup(S, SS, R,
+                            CCC ? std::move(CCC) : std::move(DefaultValidator)))
       return ExprError();
 
     assert(!R.empty() &&
@@ -4088,11 +4088,12 @@ static TypoCorrection TryTypoCorrectionForCall(Sema &S, Expr *Fn,
   MemberExpr *ME = dyn_cast<MemberExpr>(Fn);
   DeclarationName FuncName = FDecl->getDeclName();
   SourceLocation NameLoc = ME ? ME->getMemberLoc() : Fn->getLocStart();
-  FunctionCallCCC CCC(S, FuncName.getAsIdentifierInfo(), Args.size(), ME);
 
   if (TypoCorrection Corrected = S.CorrectTypo(
           DeclarationNameInfo(FuncName, NameLoc), Sema::LookupOrdinaryName,
-          S.getScopeForContext(S.CurContext), nullptr, CCC,
+          S.getScopeForContext(S.CurContext), nullptr,
+          llvm::make_unique<FunctionCallCCC>(S, FuncName.getAsIdentifierInfo(),
+                                             Args.size(), ME),
           Sema::CTK_ErrorRecovery)) {
     if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
       if (Corrected.isOverloaded()) {

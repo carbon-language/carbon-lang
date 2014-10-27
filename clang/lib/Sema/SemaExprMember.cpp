@@ -622,11 +622,10 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   // We didn't find anything with the given name, so try to correct
   // for typos.
   DeclarationName Name = R.getLookupName();
-  RecordMemberExprValidatorCCC Validator(RTy);
-  TypoCorrection Corrected = SemaRef.CorrectTypo(R.getLookupNameInfo(),
-                                                 R.getLookupKind(), nullptr,
-                                                 &SS, Validator,
-                                                 Sema::CTK_ErrorRecovery, DC);
+  TypoCorrection Corrected =
+      SemaRef.CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(), nullptr, &SS,
+                          llvm::make_unique<RecordMemberExprValidatorCCC>(RTy),
+                          Sema::CTK_ErrorRecovery, DC);
   R.clear();
   if (Corrected.isResolved() && !Corrected.isKeyword()) {
     R.setLookupName(Corrected.getCorrection());
@@ -1262,11 +1261,11 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
 
     if (!IV) {
       // Attempt to correct for typos in ivar names.
-      DeclFilterCCC<ObjCIvarDecl> Validator;
-      Validator.IsObjCIvarLookup = IsArrow;
+      auto Validator = llvm::make_unique<DeclFilterCCC<ObjCIvarDecl>>();
+      Validator->IsObjCIvarLookup = IsArrow;
       if (TypoCorrection Corrected = S.CorrectTypo(
               R.getLookupNameInfo(), Sema::LookupMemberName, nullptr, nullptr,
-              Validator, Sema::CTK_ErrorRecovery, IDecl)) {
+              std::move(Validator), Sema::CTK_ErrorRecovery, IDecl)) {
         IV = Corrected.getCorrectionDeclAs<ObjCIvarDecl>();
         S.diagnoseTypo(
             Corrected,

@@ -883,13 +883,13 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     UnqualifiedId Name;
     CXXScopeSpec ScopeSpec;
     SourceLocation TemplateKWLoc;
-    CastExpressionIdValidator Validator(isTypeCast != NotTypeCast,
-                                        isTypeCast != IsTypeCast);
-    Validator.IsAddressOfOperand = isAddressOfOperand;
+    auto Validator = llvm::make_unique<CastExpressionIdValidator>(
+        isTypeCast != NotTypeCast, isTypeCast != IsTypeCast);
+    Validator->IsAddressOfOperand = isAddressOfOperand;
     Name.setIdentifier(&II, ILoc);
     Res = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, TemplateKWLoc,
                                     Name, Tok.is(tok::l_paren),
-                                    isAddressOfOperand, &Validator);
+                                    isAddressOfOperand, std::move(Validator));
     break;
   }
   case tok::char_constant:     // constant: character-constant
