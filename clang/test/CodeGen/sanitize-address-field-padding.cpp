@@ -55,6 +55,36 @@ class ClassWithVirtualBase : public virtual VirtualBase {
 
 ClassWithVirtualBase class_with_virtual_base;
 
+class WithFlexibleArray1 {
+ public:
+  WithFlexibleArray1() {}
+  ~WithFlexibleArray1() {}
+  int make_it_non_standard_layout;
+ private:
+  char private1[33];
+  int flexible[];  // Don't insert padding after this field.
+};
+
+WithFlexibleArray1 with_flexible_array1;
+// CHECK: %class.WithFlexibleArray1 = type { i32, [12 x i8], [33 x i8], [15 x i8], [0 x i32] }
+
+class WithFlexibleArray2 {
+ public:
+  char x[21];
+  WithFlexibleArray1 flex1;  // Don't insert padding after this field.
+};
+
+WithFlexibleArray2 with_flexible_array2;
+// CHECK: %class.WithFlexibleArray2 = type { [21 x i8], [11 x i8], %class.WithFlexibleArray1 }
+
+class WithFlexibleArray3 {
+ public:
+  char x[13];
+  WithFlexibleArray2 flex2;  // Don't insert padding after this field.
+};
+
+WithFlexibleArray3 with_flexible_array3;
+
 
 class Negative1 {
  public:
