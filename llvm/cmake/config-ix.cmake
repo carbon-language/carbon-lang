@@ -42,6 +42,7 @@ function(check_type_exists type files variable)
 endfunction()
 
 # include checks
+check_include_file_cxx(cxxabi.h HAVE_CXXABI_H)
 check_include_file(dirent.h HAVE_DIRENT_H)
 check_include_file(dlfcn.h HAVE_DLFCN_H)
 check_include_file(errno.h HAVE_ERRNO_H)
@@ -79,12 +80,6 @@ check_symbol_exists(FE_INEXACT "fenv.h" HAVE_DECL_FE_INEXACT)
 
 check_include_file(mach/mach.h HAVE_MACH_MACH_H)
 check_include_file(mach-o/dyld.h HAVE_MACH_O_DYLD_H)
-
-# size_t must be defined before including cxxabi.h on FreeBSD 10.0.
-check_cxx_source_compiles("
-#include <stddef.h>
-#include <cxxabi.h>
-" HAVE_CXXABI_H)
 
 # library checks
 if( NOT PURE_WINDOWS )
