@@ -251,8 +251,8 @@ void InitializeShadowMemory() {
       (kShadowEnd - kShadowBeg) >> 30);
 
   // Map meta shadow.
-  uptr meta = (uptr)MmapFixedNoReserve(kMetaShadowBeg,
-      kMetaShadowEnd - kMetaShadowBeg);
+  uptr meta_size = kMetaShadowEnd - kMetaShadowBeg;
+  uptr meta = (uptr)MmapFixedNoReserve(kMetaShadowBeg, meta_size);
   if (meta != kMetaShadowBeg) {
     Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
     Printf("FATAL: Make sure to compile with -fPIE and "
@@ -260,7 +260,7 @@ void InitializeShadowMemory() {
     Die();
   }
   DPrintf("meta shadow: %zx-%zx (%zuGB)\n",
-      kMetaShadow, kMetaShadow + kMetaSize, kMetaSize >> 30);
+      meta, meta + meta_size, meta_size >> 30);
 
   MapRodata();
 }
