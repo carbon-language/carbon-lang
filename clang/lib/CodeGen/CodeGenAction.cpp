@@ -153,15 +153,9 @@ namespace clang {
 
       // Link LinkModule into this module if present, preserving its validity.
       if (LinkModule) {
-        LLVMContext &Ctx = LinkModule->getContext();
-        LLVMContext::DiagnosticHandlerTy OldHandler =
-            Ctx.getDiagnosticHandler();
-        void *OldDiagnosticContext = Ctx.getDiagnosticContext();
-        Ctx.setDiagnosticHandler(linkerDiagnosticHandler, this);
-        bool Failed =
-            Linker::LinkModules(M, LinkModule.get(), Linker::PreserveSource);
-        Ctx.setDiagnosticHandler(OldHandler, OldDiagnosticContext);
-        if (Failed)
+        if (Linker::LinkModules(
+                M, LinkModule.get(), Linker::PreserveSource,
+                [=](const DiagnosticInfo &DI) { linkerDiagnosticHandler(DI); }))
           return;
       }
 
@@ -225,12 +219,7 @@ namespace clang {
       ((BackendConsumer*)Context)->InlineAsmDiagHandler2(SM, Loc);
     }
 
-    static void linkerDiagnosticHandler(const llvm::DiagnosticInfo &DI,
-                                        void *Context) {
-      ((BackendConsumer *)Context)->linkerDiagnosticHandlerImpl(DI);
-    }
-
-    void linkerDiagnosticHandlerImpl(const llvm::DiagnosticInfo &DI);
+    void linkerDiagnosticHandler(const llvm::DiagnosticInfo &DI);
 
     static void DiagnosticHandler(const llvm::DiagnosticInfo &DI,
                                   void *Context) {
@@ -507,7 +496,7 @@ void BackendConsumer::OptimizationFailureHandler(
   EmitOptimizationMessage(D, diag::warn_fe_backend_optimization_failure);
 }
 
-void BackendConsumer::linkerDiagnosticHandlerImpl(const DiagnosticInfo &DI) {
+void BackendConsumer::linkerDiagnosticHandler(const DiagnosticInfo &DI) {
   if (DI.getSeverity() != DS_Error)
     return;
 
