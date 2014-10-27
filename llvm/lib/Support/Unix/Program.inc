@@ -335,7 +335,6 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
   pid_t ChildPid = PI.Pid;
   if (WaitUntilTerminates) {
     SecondsToWait = 0;
-    ChildPid = -1; // mimic a wait() using waitpid()
   } else if (SecondsToWait) {
     // Install a timeout handler.  The handler itself does nothing, but the
     // simple fact of having a handler at all causes the wait below to return
