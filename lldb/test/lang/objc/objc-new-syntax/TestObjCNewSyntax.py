@@ -21,6 +21,7 @@ class ObjCNewSyntaxTestCase(TestBase):
         self.expr()
 
     @dwarf_test
+    @skipIfFreeBSD
     @skipIfLinux
     def test_expr_with_dwarf(self):
         self.buildDwarf()
