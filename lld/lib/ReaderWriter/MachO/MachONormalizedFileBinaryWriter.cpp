@@ -415,6 +415,12 @@ uint32_t MachOFileLayout::loadCommandsSize(uint32_t &count) {
     ++count;
   }
 
+  // Add LC_DATA_IN_CODE if needed
+  if (!_file.dataInCode.empty()) {
+    size += sizeof(linkedit_data_command);
+    ++count;
+  }
+
   return size;
 }
 
@@ -822,6 +828,17 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       memcpy(lc+sizeof(dylib_command), dep.path.begin(), dep.path.size());
       lc[sizeof(dylib_command)+dep.path.size()] = '\0';
       lc += size;
+    }
+    // Add LC_DATA_IN_CODE if needed.
+    if (_dataInCodeSize != 0) {
+      linkedit_data_command* dl = reinterpret_cast<linkedit_data_command*>(lc);
+      dl->cmd      = LC_DATA_IN_CODE;
+      dl->cmdsize  = sizeof(linkedit_data_command);
+      dl->dataoff  = _startOfDataInCode;
+      dl->datasize = _dataInCodeSize;
+      if (_swap)
+        swapStruct(*dl);
+      lc += sizeof(linkedit_data_command);
     }
   }
   return ec;
@@ -1242,6 +1259,7 @@ void MachOFileLayout::writeLinkEditContent() {
     writeLazyBindingInfo();
     // TODO: add weak binding info
     writeExportInfo();
+    writeDataInCodeInfo();
     writeSymbolTable();
   }
 }
