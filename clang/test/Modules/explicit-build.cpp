@@ -125,7 +125,7 @@
 // RUN:            -fmodule-map-file=%S/Inputs/explicit-build/module.modulemap \
 // RUN:            %s 2>&1 | FileCheck --check-prefix=CHECK-MULTIPLE-AS %s
 //
-// CHECK-MULTIPLE-AS: error: module 'a' is defined in both '{{.*}}/a{{.*}}.pcm' and '{{.*}}/a{{.*}}.pcm'
+// CHECK-MULTIPLE-AS: error: module 'a' is defined in both '{{.*}}/a{{.*}}.pcm' and '{{.*[/\\]}}a{{.*}}.pcm'
 
 // -------------------------------
 // Try to import a PCH with -fmodule-file=
