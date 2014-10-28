@@ -104,6 +104,7 @@ let test_constants () =
   ignore (define_global "const_int" c m);
   insist (i32_type = type_of c);
   insist (is_constant c);
+  insist (Some (-1L) = int64_of_const c);
 
   (* CHECK: const_sext_int{{.*}}i64{{.*}}-1
    *)
@@ -111,6 +112,7 @@ let test_constants () =
   let c = const_int i64_type (-1) in
   ignore (define_global "const_sext_int" c m);
   insist (i64_type = type_of c);
+  insist (Some (-1L) = int64_of_const c);
 
   (* CHECK: const_zext_int64{{.*}}i64{{.*}}4294967295
    *)
@@ -118,6 +120,7 @@ let test_constants () =
   let c = const_of_int64 i64_type (Int64.of_string "4294967295") false in
   ignore (define_global "const_zext_int64" c m);
   insist (i64_type = type_of c);
+  insist (Some 4294967295L = int64_of_const c);
 
   (* CHECK: const_int_string{{.*}}i32{{.*}}-1
    *)
@@ -126,6 +129,16 @@ let test_constants () =
   ignore (define_global "const_int_string" c m);
   insist (i32_type = type_of c);
   insist (None = (string_of_const c));
+  insist (None = float_of_const c);
+  insist (Some (-1L) = int64_of_const c);
+
+  (* CHECK: const_int64{{.*}}i64{{.*}}9223372036854775807
+   *)
+  group "max int64";
+  let c = const_of_int64 i64_type 9223372036854775807L true in
+  ignore (define_global "const_int64" c m) ;
+  insist (i64_type = type_of c);
+  insist (Some 9223372036854775807L = int64_of_const c);
 
   if Sys.word_size = 64; then begin
     group "long int";
@@ -150,20 +163,35 @@ let test_constants () =
 
   (* CHECK: const_single{{.*}}2.75
    * CHECK: const_double{{.*}}3.1459
-   * CHECK: const_double_string{{.*}}1.25
+   * CHECK: const_double_string{{.*}}2
+   * CHECK: const_fake_fp128{{.*}}0xL00000000000000004000000000000000
+   * CHECK: const_fp128_string{{.*}}0xLF3CB1CCF26FBC178452FB4EC7F91973F
    *)
   begin group "real";
     let cs = const_float float_type 2.75 in
     ignore (define_global "const_single" cs m);
     insist (float_type = type_of cs);
-    
+    insist (float_of_const cs = Some 2.75);
+
     let cd = const_float double_type 3.1459 in
     ignore (define_global "const_double" cd m);
     insist (double_type = type_of cd);
+    insist (float_of_const cd = Some 3.1459);
 
-    let cd = const_float_of_string double_type "1.25" in
+    let cd = const_float_of_string double_type "2" in
     ignore (define_global "const_double_string" cd m);
-    insist (double_type = type_of cd)
+    insist (double_type = type_of cd);
+    insist (float_of_const cd = Some 2.);
+
+    let cd = const_float fp128_type 2. in
+    ignore (define_global "const_fake_fp128" cd m);
+    insist (fp128_type = type_of cd);
+    insist (float_of_const cd = Some 2.);
+
+    let cd = const_float_of_string fp128_type "1e400" in
+    ignore (define_global "const_fp128_string" cd m);
+    insist (fp128_type = type_of cd);
+    insist (float_of_const cd = None);
   end;
   
   let one = const_int i16_type 1 in
@@ -996,10 +1024,22 @@ let test_builder () =
      * CHECK: %build_is_not_null = icmp ne i8* %X1, null
      * CHECK: %build_ptrdiff
      *)
-    ignore (build_icmp Icmp.Ne    p1 p2 "build_icmp_ne" atentry);
-    ignore (build_icmp Icmp.Sle   p2 p1 "build_icmp_sle" atentry);
-    ignore (build_fcmp Fcmp.False f1 f2 "build_fcmp_false" atentry);
-    ignore (build_fcmp Fcmp.True  f2 f1 "build_fcmp_true" atentry);
+    let c = build_icmp Icmp.Ne    p1 p2 "build_icmp_ne" atentry in
+    insist (Some Icmp.Ne = icmp_predicate c);
+    insist (None = fcmp_predicate c);
+
+    let c = build_icmp Icmp.Sle   p2 p1 "build_icmp_sle" atentry in
+    insist (Some Icmp.Sle = icmp_predicate c);
+    insist (None = fcmp_predicate c);
+
+    let c = build_fcmp Fcmp.False f1 f2 "build_fcmp_false" atentry in
+    (* insist (Some Fcmp.False = fcmp_predicate c); *)
+    insist (None = icmp_predicate c);
+
+    let c = build_fcmp Fcmp.True  f2 f1 "build_fcmp_true" atentry in
+    (* insist (Some Fcmp.True = fcmp_predicate c); *)
+    insist (None = icmp_predicate c);
+
     let g0 = declare_global (pointer_type i8_type) "g0" m in
     let g1 = declare_global (pointer_type i8_type) "g1" m in
     let p0 = build_load g0 "X0" atentry in
