@@ -466,6 +466,8 @@ external int64_of_const : llvalue -> Int64.t option
 external const_int_of_string : lltype -> string -> int -> llvalue
                              = "llvm_const_int_of_string"
 external const_float : lltype -> float -> llvalue = "llvm_const_float"
+external float_of_const : llvalue -> float option
+                        = "llvm_float_of_const"
 external const_float_of_string : lltype -> string -> llvalue
                                = "llvm_const_float_of_string"
 
@@ -955,6 +957,7 @@ external instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
 
 external instr_opcode : llvalue -> Opcode.t = "llvm_instr_get_opcode"
 external icmp_predicate : llvalue -> Icmp.t option = "llvm_instr_icmp_predicate"
+external fcmp_predicate : llvalue -> Fcmp.t option = "llvm_instr_fcmp_predicate"
 external instr_clone : llvalue -> llvalue = "llvm_instr_clone"
 
 let rec iter_instrs_range f i e =

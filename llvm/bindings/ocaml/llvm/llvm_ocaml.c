@@ -734,6 +734,22 @@ CAMLprim LLVMValueRef llvm_const_float(LLVMTypeRef RealTy, value N) {
   return LLVMConstReal(RealTy, Double_val(N));
 }
 
+
+/* llvalue -> float */
+CAMLprim value llvm_float_of_const(LLVMValueRef Const)
+{
+  if (LLVMIsAConstantFP(Const)) {
+    LLVMBool LosesInfo;
+    double res = LLVMConstRealGetDouble(Const, &LosesInfo);
+    if (LosesInfo)
+        return Val_int(0);
+    value Option = alloc(1, 0);
+    Field(Option, 0) = caml_copy_double(res);
+    return Option;
+  }
+  return Val_int(0);
+}
+
 /* lltype -> string -> llvalue */
 CAMLprim LLVMValueRef llvm_const_float_of_string(LLVMTypeRef RealTy, value S) {
   return LLVMConstRealOfStringAndSize(RealTy, String_val(S),
@@ -1353,6 +1369,18 @@ CAMLprim value llvm_instr_icmp_predicate(LLVMValueRef Val) {
   if (x) {
     value Option = alloc(1, 0);
     Field(Option, 0) = Val_int(x - LLVMIntEQ);
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
+}
+
+/* llvalue -> FCmp.t option */
+CAMLprim value llvm_instr_fcmp_predicate(LLVMValueRef Val) {
+  CAMLparam0();
+  int x = LLVMGetFCmpPredicate(Val);
+  if (x) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = Val_int(x - LLVMRealPredicateFalse);
     CAMLreturn(Option);
   }
   CAMLreturn(Val_int(0));

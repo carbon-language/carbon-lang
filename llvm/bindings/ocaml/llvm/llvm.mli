@@ -842,6 +842,11 @@ val const_int_of_string : lltype -> string -> int -> llvalue
     value [n]. See the method [llvm::ConstantFP::get]. *)
 val const_float : lltype -> float -> llvalue
 
+(** [float_of_const c] returns the float value of the [c] constant float.
+    None is returned if this is not an float constant.
+    See the method [llvm::ConstantFP::getDoubleValue].*)
+val float_of_const : llvalue -> float option
+
 (** [const_float_of_string ty s] returns the floating point constant of type
     [ty] and value [n]. See the method [llvm::ConstantFP::get]. *)
 val const_float_of_string : lltype -> string -> llvalue
@@ -1698,6 +1703,10 @@ val instr_opcode : llvalue -> Opcode.t
 (** [icmp_predicate i] returns the [Icmp.t] corresponding to an [icmp]
     instruction [i]. *)
 val icmp_predicate : llvalue -> Icmp.t option
+
+(** [fcmp_predicate i] returns the [fcmp.t] corresponding to an [fcmp]
+    instruction [i]. *)
+val fcmp_predicate : llvalue -> Fcmp.t option
 
 (** [inst_clone i] returns a copy of instruction [i],
     The instruction has no parent, and no name.
