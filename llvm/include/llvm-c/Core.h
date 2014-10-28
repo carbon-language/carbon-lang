@@ -1549,6 +1549,14 @@ unsigned long long LLVMConstIntGetZExtValue(LLVMValueRef ConstantVal);
 long long LLVMConstIntGetSExtValue(LLVMValueRef ConstantVal);
 
 /**
+ * Obtain the double value for an floating point constant value.
+ * losesInfo indicates if some precision was lost in the conversion.
+ *
+ * @see llvm::ConstantFP::getDoubleValue
+ */
+double LLVMConstRealGetDouble(LLVMValueRef ConstantVal, LLVMBool *losesInfo);
+
+/**
  * @}
  */
 
@@ -2407,6 +2415,16 @@ LLVMOpcode   LLVMGetInstructionOpcode(LLVMValueRef Inst);
  * @see llvm::ICmpInst::getPredicate()
  */
 LLVMIntPredicate LLVMGetICmpPredicate(LLVMValueRef Inst);
+
+/**
+ * Obtain the float predicate of an instruction.
+ *
+ * This is only valid for instructions that correspond to llvm::FCmpInst
+ * or llvm::ConstantExpr whose opcode is llvm::Instruction::FCmp.
+ *
+ * @see llvm::FCmpInst::getPredicate()
+ */
+LLVMRealPredicate LLVMGetFCmpPredicate(LLVMValueRef Inst);
 
 /**
  * Create a copy of 'this' instruction that is identical in all ways
