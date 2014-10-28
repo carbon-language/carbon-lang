@@ -684,15 +684,17 @@ template void MemFunTmpl::importedStatic<ExplicitInst_Imported>();
 template<> __declspec(dllimport) void MemFunTmpl::importedNormal<ExplicitSpec_Imported>();
 template<> __declspec(dllimport) void MemFunTmpl::importedNormal<ExplicitSpec_Def_Imported>() {} // error on mingw
 template<> __declspec(dllimport) inline void MemFunTmpl::importedNormal<ExplicitSpec_InlineDef_Imported>() {}
-#ifndef MSABI
-// expected-error@-3{{dllimport cannot be applied to non-inline function definition}}
+#if 1
+// FIXME: This should not be an error when targeting MSVC. (PR21406)
+// expected-error@-4{{dllimport cannot be applied to non-inline function definition}}
 #endif
 
 template<> __declspec(dllimport) void MemFunTmpl::importedStatic<ExplicitSpec_Imported>();
 template<> __declspec(dllimport) void MemFunTmpl::importedStatic<ExplicitSpec_Def_Imported>() {} // error on mingw
 template<> __declspec(dllimport) inline void MemFunTmpl::importedStatic<ExplicitSpec_InlineDef_Imported>() {}
-#ifndef MSABI
-// expected-error@-3{{dllimport cannot be applied to non-inline function definition}}
+#if 1
+// FIXME: This should not be an error when targeting MSVC. (PR21406)
+// expected-error@-4{{dllimport cannot be applied to non-inline function definition}}
 #endif
 
 // Not importing specialization of an imported member function template without
@@ -715,15 +717,17 @@ template __declspec(dllimport) void MemFunTmpl::staticDef<ExplicitInst_Imported>
 template<> __declspec(dllimport) void MemFunTmpl::normalDef<ExplicitSpec_Imported>();
 template<> __declspec(dllimport) void MemFunTmpl::normalDef<ExplicitSpec_Def_Imported>() {} // error on mingw
 template<> __declspec(dllimport) inline void MemFunTmpl::normalDef<ExplicitSpec_InlineDef_Imported>() {}
-#ifndef MSABI
-// expected-error@-3{{dllimport cannot be applied to non-inline function definition}}
+#if 1
+// FIXME: This should not be an error when targeting MSVC. (PR21406)
+// expected-error@-4{{dllimport cannot be applied to non-inline function definition}}
 #endif
 
 template<> __declspec(dllimport) void MemFunTmpl::staticDef<ExplicitSpec_Imported>();
 template<> __declspec(dllimport) void MemFunTmpl::staticDef<ExplicitSpec_Def_Imported>() {} // error on mingw
 template<> __declspec(dllimport) inline void MemFunTmpl::staticDef<ExplicitSpec_InlineDef_Imported>() {}
-#ifndef MSABI
-// expected-error@-3{{dllimport cannot be applied to non-inline function definition}}
+#if 1
+// FIXME: This should not be an error when targeting MSVC. (PR21406)
+// expected-error@-4{{dllimport cannot be applied to non-inline function definition}}
 #endif
 
 
