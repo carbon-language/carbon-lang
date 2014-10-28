@@ -40,7 +40,7 @@ let test_transforms () =
   let fty = function_type void_type [| |] in
   let fn = define_function "fn" fty m in
   ignore (build_ret_void (builder_at_end context (entry_block fn)));
-  
+
   ignore (PassManager.create_function m
            ++ add_verifier
            ++ add_constant_propagation

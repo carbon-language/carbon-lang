@@ -83,7 +83,7 @@ let test_target () =
     set_target_triple trip m;
     insist (trip = target_triple m)
   end;
-  
+
   begin group "layout";
     let layout = "e" in
     set_data_layout layout m;
@@ -193,12 +193,12 @@ let test_constants () =
     insist (fp128_type = type_of cd);
     insist (float_of_const cd = None);
   end;
-  
+
   let one = const_int i16_type 1 in
   let two = const_int i16_type 2 in
   let three = const_int i32_type 3 in
   let four = const_int i32_type 4 in
-  
+
   (* CHECK: const_array{{.*}}[i32 3, i32 4]
    *)
   group "array";
@@ -230,7 +230,7 @@ let test_constants () =
   let c = const_null (packed_struct_type context [| i1_type; i8_type; i64_type;
                                                     double_type |]) in
   ignore (define_global "const_null" c m);
-  
+
   (* CHECK: const_all_ones{{.*}}-1
    *)
   group "all ones";
@@ -243,7 +243,7 @@ let test_constants () =
     let c = const_pointer_null (pointer_type i64_type) in
     ignore (define_global "const_pointer_null" c m);
   end;
-  
+
   (* CHECK: const_undef{{.*}}undef
    *)
   group "undef";
@@ -251,7 +251,7 @@ let test_constants () =
   ignore (define_global "const_undef" c m);
   insist (i1_type = type_of c);
   insist (is_undef c);
-  
+
   group "constant arithmetic";
   (* CHECK: @const_neg = global i64 sub
    * CHECK: @const_nsw_neg = global i64 sub nsw
@@ -318,7 +318,7 @@ let test_constants () =
   ignore (define_global "const_xor" (const_xor foldbomb five) m);
   ignore (define_global "const_icmp" (const_icmp Icmp.Sle foldbomb five) m);
   ignore (define_global "const_fcmp" (const_fcmp Fcmp.Ole ffoldbomb ffive) m);
-  
+
   group "constant casts";
   (* CHECK: const_trunc{{.*}}trunc
    * CHECK: const_sext{{.*}}sext
@@ -345,7 +345,7 @@ let test_constants () =
   ignore (define_global "const_sitofp" (const_sitofp foldbomb double_type) m);
   ignore (define_global "const_fptoui" (const_fptoui ffoldbomb i32_type) m);
   ignore (define_global "const_fptosi" (const_fptosi ffoldbomb i32_type) m);
-  ignore (define_global "const_ptrtoint" (const_ptrtoint 
+  ignore (define_global "const_ptrtoint" (const_ptrtoint
     (const_gep (const_null (pointer_type i8_type))
                [| const_int i32_type 1 |])
     i32_type) m);
@@ -354,7 +354,7 @@ let test_constants () =
   ignore (define_global "const_bitcast" (const_bitcast ffoldbomb i64_type) m);
   ignore (define_global "const_intcast"
           (const_intcast foldbomb i128_type ~is_signed:false) m);
-  
+
   group "misc constants";
   (* CHECK: const_size_of{{.*}}getelementptr{{.*}}null
    * CHECK: const_gep{{.*}}getelementptr
@@ -431,14 +431,14 @@ let test_global_values () =
   let g = define_global "GVal03" zero32 m ++
           set_section "Hanalei" in
   insist ("Hanalei" = section g);
-  
+
   (* CHECK: GVal04{{.*}}hidden
    *)
   group "visibility";
   let g = define_global "GVal04" zero32 m ++
           set_visibility Visibility.Hidden in
   insist (Visibility.Hidden = visibility g);
-  
+
   (* CHECK: GVal05{{.*}}align 128
    *)
   group "alignment";
@@ -475,7 +475,7 @@ let test_global_variables () =
     insist (match lookup_global "QGVar01" m with Some x -> x = g
                                               | None -> false);
   end;
-  
+
   group "definitions"; begin
     (* CHECK: @GVar02 = global i32 42
      * CHECK: @GVar03 = global i32 42
@@ -531,30 +531,30 @@ let test_global_variables () =
   insist (not (is_global_constant g));
   set_global_constant true g;
   insist (is_global_constant g);
-  
+
   begin group "iteration";
     let m = create_module context "temp" in
-    
+
     insist (At_end m = global_begin m);
     insist (At_start m = global_end m);
-    
+
     let g1 = declare_global i32_type "One" m in
     let g2 = declare_global i32_type "Two" m in
-    
+
     insist (Before g1 = global_begin m);
     insist (Before g2 = global_succ g1);
     insist (At_end m = global_succ g2);
-    
+
     insist (After g2 = global_end m);
     insist (After g1 = global_pred g2);
     insist (At_start m = global_pred g1);
-    
+
     let lf s x = s ^ "->" ^ value_name x in
     insist ("->One->Two" = fold_left_globals lf "" m);
-    
+
     let rf x s = value_name x ^ "<-" ^ s in
     insist ("One<-Two<-" = fold_right_globals rf m "");
-    
+
     dispose_module m
   end
 
@@ -629,7 +629,7 @@ let test_aliases () =
 let test_functions () =
   let ty = function_type i32_type [| i32_type; i64_type |] in
   let ty2 = function_type i8_type [| i8_type; i64_type |] in
-  
+
   (* CHECK: declare i32 @Fn1(i32, i64)
    *)
   begin group "declare";
@@ -645,13 +645,13 @@ let test_functions () =
                                              | None -> false);
     insist (m == global_parent fn)
   end;
-  
+
   (* CHECK-NOWHERE-NOT: Fn2
    *)
   group "delete";
   let fn = declare_function "Fn2" ty m in
   delete_function fn;
-  
+
   (* CHECK: define{{.*}}Fn3
    *)
   group "define";
@@ -659,7 +659,7 @@ let test_functions () =
   insist (not (is_declaration fn));
   insist (1 = Array.length (basic_blocks fn));
   ignore (build_unreachable (builder_at_end context (entry_block fn)));
-  
+
   (* CHECK: define{{.*}}Fn4{{.*}}Param1{{.*}}Param2
    *)
   group "params";
@@ -673,7 +673,7 @@ let test_functions () =
   set_value_name "Param1" params.(0);
   set_value_name "Param2" params.(1);
   ignore (build_unreachable (builder_at_end context (entry_block fn)));
-  
+
   (* CHECK: fastcc{{.*}}Fn5
    *)
   group "callconv";
@@ -682,7 +682,7 @@ let test_functions () =
   set_function_call_conv CallConv.fast fn;
   insist (CallConv.fast = function_call_conv fn);
   ignore (build_unreachable (builder_at_end context (entry_block fn)));
-  
+
   begin group "gc";
     (* CHECK: Fn6{{.*}}gc{{.*}}shadowstack
      *)
@@ -695,30 +695,30 @@ let test_functions () =
     set_gc (Some "shadowstack") fn;
     ignore (build_unreachable (builder_at_end context (entry_block fn)));
   end;
-  
+
   begin group "iteration";
     let m = create_module context "temp" in
-    
+
     insist (At_end m = function_begin m);
     insist (At_start m = function_end m);
-    
+
     let f1 = define_function "One" ty m in
     let f2 = define_function "Two" ty m in
-    
+
     insist (Before f1 = function_begin m);
     insist (Before f2 = function_succ f1);
     insist (At_end m = function_succ f2);
-    
+
     insist (After f2 = function_end m);
     insist (After f1 = function_pred f2);
     insist (At_start m = function_pred f1);
-    
+
     let lf s x = s ^ "->" ^ value_name x in
     insist ("->One->Two" = fold_left_functions lf "" m);
-    
+
     let rf x s = value_name x ^ "<-" ^ s in
     insist ("One<-Two<-" = fold_right_functions rf m "");
-    
+
     dispose_module m
   end
 
@@ -728,12 +728,12 @@ let test_functions () =
 let test_params () =
   begin group "iteration";
     let m = create_module context "temp" in
-    
+
     let vf = define_function "void" (function_type void_type [| |]) m in
-    
+
     insist (At_end vf = param_begin vf);
     insist (At_start vf = param_end vf);
-    
+
     let ty = function_type void_type [| i32_type; i32_type |] in
     let f = define_function "f" ty m in
     let p1 = param f 0 in
@@ -750,17 +750,17 @@ let test_params () =
     insist (Before p1 = param_begin f);
     insist (Before p2 = param_succ p1);
     insist (At_end f = param_succ p2);
-    
+
     insist (After p2 = param_end f);
     insist (After p1 = param_pred p2);
     insist (At_start f = param_pred p1);
-    
+
     let lf s x = s ^ "->" ^ value_name x in
     insist ("->One->Two" = fold_left_params lf "" f);
-    
+
     let rf x s = value_name x ^ "<-" ^ s in
     insist ("One<-Two<-" = fold_right_params rf f "");
-    
+
     dispose_module m
   end
 
@@ -769,7 +769,7 @@ let test_params () =
 
 let test_basic_blocks () =
   let ty = function_type void_type [| |] in
-  
+
   (* CHECK: Bb1
    *)
   group "entry";
@@ -777,14 +777,14 @@ let test_basic_blocks () =
   let bb = append_block context "Bb1" fn in
   insist (bb = entry_block fn);
   ignore (build_unreachable (builder_at_end context bb));
-  
+
   (* CHECK-NOWHERE-NOT: Bb2
    *)
   group "delete";
   let fn = declare_function "X2" ty m in
   let bb = append_block context "Bb2" fn in
   delete_block bb;
-  
+
   group "insert";
   let fn = declare_function "X3" ty m in
   let bbb = append_block context "b" fn in
@@ -792,7 +792,7 @@ let test_basic_blocks () =
   insist ([| bba; bbb |] = basic_blocks fn);
   ignore (build_unreachable (builder_at_end context bba));
   ignore (build_unreachable (builder_at_end context bbb));
-  
+
   (* CHECK: Bb3
    *)
   group "name/value";
@@ -802,7 +802,7 @@ let test_basic_blocks () =
   let bbv = value_of_block bb in
   set_value_name "Bb3" bbv;
   insist ("Bb3" = value_name bbv);
-  
+
   group "casts";
   let fn = define_function "X5" ty m in
   let bb = entry_block fn in
@@ -810,31 +810,31 @@ let test_basic_blocks () =
   insist (bb = block_of_value (value_of_block bb));
   insist (value_is_block (value_of_block bb));
   insist (not (value_is_block (const_null i32_type)));
-  
+
   begin group "iteration";
     let m = create_module context "temp" in
     let f = declare_function "Temp" (function_type i32_type [| |]) m in
-    
+
     insist (At_end f = block_begin f);
     insist (At_start f = block_end f);
-    
+
     let b1 = append_block context "One" f in
     let b2 = append_block context "Two" f in
-    
+
     insist (Before b1 = block_begin f);
     insist (Before b2 = block_succ b1);
     insist (At_end f = block_succ b2);
-    
+
     insist (After b2 = block_end f);
     insist (After b1 = block_pred b2);
     insist (At_start f = block_pred b1);
-    
+
     let lf s x = s ^ "->" ^ value_name (value_of_block x) in
     insist ("->One->Two" = fold_left_blocks lf "" f);
-    
+
     let rf x s = value_name (value_of_block x) ^ "<-" ^ s in
     insist ("One<-Two<-" = fold_right_blocks rf f "");
-    
+
     dispose_module m
   end
 
@@ -848,27 +848,27 @@ let test_instructions () =
     let f = define_function "f" fty m in
     let bb = entry_block f in
     let b = builder_at context (At_end bb) in
-    
+
     insist (At_end bb = instr_begin bb);
     insist (At_start bb = instr_end bb);
-    
+
     let i1 = build_add (param f 0) (param f 1) "One" b in
     let i2 = build_sub (param f 0) (param f 1) "Two" b in
-    
+
     insist (Before i1 = instr_begin bb);
     insist (Before i2 = instr_succ i1);
     insist (At_end bb = instr_succ i2);
-    
+
     insist (After i2 = instr_end bb);
     insist (After i1 = instr_pred i2);
     insist (At_start bb = instr_pred i1);
-    
+
     let lf s x = s ^ "->" ^ value_name x in
     insist ("->One->Two" = fold_left_instrs lf "" bb);
-    
+
     let rf x s = value_name x ^ "<-" ^ s in
     insist ("One<-Two<-" = fold_right_instrs rf bb "");
-    
+
     dispose_module m
   end;
 
@@ -895,14 +895,14 @@ let test_instructions () =
 
 let test_builder () =
   let (++) x f = f x; x in
-  
+
   begin group "parent";
     insist (try
               ignore (insertion_block (builder context));
               false
             with Not_found ->
               true);
-    
+
     let fty = function_type void_type [| i32_type |] in
     let fn = define_function "BuilderParent" fty m in
     let bb = entry_block fn in
@@ -910,13 +910,13 @@ let test_builder () =
     let p = param fn 0 in
     let sum = build_add p p "sum" b in
     ignore (build_ret_void b);
-    
+
     insist (fn = block_parent bb);
     insist (fn = param_parent p);
     insist (bb = instr_parent sum);
     insist (bb = insertion_block b)
   end;
-  
+
   group "ret void";
   begin
     (* CHECK: ret void
@@ -938,7 +938,7 @@ let test_builder () =
       let agg = [| const_int i8_type 4; const_int i64_type 5 |] in
       ignore (build_aggregate_ret agg b)
   end;
-  
+
   (* The rest of the tests will use one big function. *)
   let fty = function_type i32_type [| i32_type; i32_type |] in
   let fn = define_function "X7" fty m in
@@ -947,7 +947,7 @@ let test_builder () =
   let p2 = param fn 1 ++ set_value_name "P2" in
   let f1 = build_uitofp p1 float_type "F1" atentry in
   let f2 = build_uitofp p2 float_type "F2" atentry in
-  
+
   let bb00 = append_block context "Bb00" fn in
   ignore (build_unreachable (builder_at_end context bb00));
 
@@ -1202,7 +1202,7 @@ let test_builder () =
     insist (is_conditional br = false) ;
     insist (get_branch br = Some (`Unconditional bb02)) ;
   end;
-  
+
   group "cond_br"; begin
     (* CHECK: br{{.*}}build_br{{.*}}Bb03{{.*}}Bb00
      *)
@@ -1216,7 +1216,7 @@ let test_builder () =
     insist (is_conditional br = true) ;
     insist (get_branch br = Some (`Conditional (cond, bb03, bb00))) ;
   end;
-  
+
   group "switch"; begin
     (* CHECK: switch{{.*}}P1{{.*}}SwiBlock3
      * CHECK: 2,{{.*}}SwiBlock2
@@ -1263,7 +1263,7 @@ let test_builder () =
     ignore (add_destination ibr bb2);
     ignore (add_destination ibr bb3)
   end;
-  
+
   group "invoke"; begin
     (* CHECK: build_invoke{{.*}}invoke{{.*}}P1{{.*}}P2
      * CHECK: to{{.*}}Bb04{{.*}}unwind{{.*}}Bblpad
@@ -1272,7 +1272,7 @@ let test_builder () =
     let b = builder_at_end context bb04 in
     ignore (build_invoke fn [| p1; p2 |] bb04 bblpad "build_invoke" b)
   end;
-  
+
   group "unreachable"; begin
     (* CHECK: unreachable
      *)
@@ -1280,11 +1280,11 @@ let test_builder () =
     let b = builder_at_end context bb06 in
     ignore (build_unreachable b)
   end;
-  
+
   group "arithmetic"; begin
     let bb07 = append_block context "Bb07" fn in
     let b = builder_at_end context bb07 in
-    
+
     (* CHECK: %build_add = add i32 %P1, %P2
      * CHECK: %build_nsw_add = add nsw i32 %P1, %P2
      * CHECK: %build_nuw_add = add nuw i32 %P1, %P2
@@ -1348,7 +1348,7 @@ let test_builder () =
     ignore (build_not p1 "build_not" b);
     ignore (build_unreachable b)
   end;
-  
+
   group "memory"; begin
     let bb08 = append_block context "Bb08" fn in
     let b = builder_at_end context bb08 in
@@ -1409,18 +1409,18 @@ let test_builder () =
      *)
     let b1 = append_block context "PhiBlock1" fn in
     let b2 = append_block context "PhiBlock2" fn in
-    
+
     let jb = append_block context "PhiJoinBlock" fn in
     ignore (build_br jb (builder_at_end context b1));
     ignore (build_br jb (builder_at_end context b2));
     let at_jb = builder_at_end context jb in
-    
+
     let phi = build_phi [(p1, b1)] "PhiNode" at_jb in
     insist ([(p1, b1)] = incoming phi);
-    
+
     add_incoming (p2, b2) phi;
     insist ([(p1, b1); (p2, b2)] = incoming phi);
-    
+
     ignore (build_unreachable at_jb);
   end
 
@@ -1442,12 +1442,12 @@ let test_pass_manager () =
              ++ PassManager.run_module m
              ++ PassManager.dispose)
   end;
-  
+
   begin group "function pass manager";
     let fty = function_type void_type [| |] in
     let fn = define_function "FunctionPassManager" fty m in
     ignore (build_ret_void (builder_at_end context (entry_block fn)));
-    
+
     ignore (PassManager.create_function m
              ++ PassManager.initialize
              ++ PassManager.run_function fn
@@ -1474,7 +1474,7 @@ let test_writer () =
 
   group "writer";
   insist (write_bitcode_file m filename);
-  
+
   dispose_module m
 
 

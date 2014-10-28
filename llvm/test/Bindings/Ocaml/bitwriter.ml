@@ -39,7 +39,7 @@ let temp_bitcode ?unbuffered m =
 
 let _ =
   let m = Llvm.create_module context "ocaml_test_module" in
-  
+
   test (Llvm_bitwriter.write_bitcode_file m Sys.argv.(1));
   let file_buf = read_file Sys.argv.(1) in
 
