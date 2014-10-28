@@ -2956,15 +2956,11 @@ const SCEV *DependenceAnalysis::addToCoefficient(const SCEV *Expr,
                              AddRec->getNoWrapFlags());
   }
   if (SE->isLoopInvariant(AddRec, TargetLoop))
-    return SE->getAddRecExpr(AddRec,
-                             Value,
-                             TargetLoop,
-                             SCEV::FlagAnyWrap);
-  return SE->getAddRecExpr(addToCoefficient(AddRec->getStart(),
-                                            TargetLoop, Value),
-                           AddRec->getStepRecurrence(*SE),
-                           AddRec->getLoop(),
-                           AddRec->getNoWrapFlags());
+    return SE->getAddRecExpr(AddRec, Value, TargetLoop, SCEV::FlagAnyWrap);
+  return SE->getAddRecExpr(
+      addToCoefficient(AddRec->getStart(), TargetLoop, Value),
+      AddRec->getStepRecurrence(*SE), AddRec->getLoop(),
+      AddRec->getNoWrapFlags());
 }
 
 

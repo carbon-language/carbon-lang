@@ -196,9 +196,8 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
         if (!Arg->getType()->isPointerTy())
           continue;
         ModRefResult ArgMask;
-        Location CS1Loc =
-          getArgLocation(CS1, (unsigned) std::distance(CS1.arg_begin(), I),
-                         ArgMask);
+        Location CS1Loc = getArgLocation(
+            CS1, (unsigned)std::distance(CS1.arg_begin(), I), ArgMask);
         // ArgMask indicates what CS1 might do to CS1Loc; if CS1 might Mod
         // CS1Loc, then we care about either a Mod or a Ref by CS2. If CS1
         // might Ref, then we care only about a Mod by CS2.

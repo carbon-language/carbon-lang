@@ -148,7 +148,7 @@ namespace {
   char GVExtractorPass::ID = 0;
 }
 
-ModulePass *llvm::createGVExtractionPass(std::vector<GlobalValue*>& GVs,
+ModulePass *llvm::createGVExtractionPass(std::vector<GlobalValue *> &GVs,
                                          bool deleteFn) {
   return new GVExtractorPass(GVs, deleteFn);
 }

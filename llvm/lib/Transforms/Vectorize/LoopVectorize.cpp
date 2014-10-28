@@ -4270,7 +4270,7 @@ void AccessAnalysis::processMemAccesses() {
 
         // Create sets of pointers connected by a shared alias set and
         // underlying object.
-        typedef SmallVector<Value*, 16> ValueVector;
+        typedef SmallVector<Value *, 16> ValueVector;
         ValueVector TempObjects;
         GetUnderlyingObjects(Ptr, TempObjects, DL);
         for (Value *UnderlyingObj : TempObjects) {
@@ -5396,7 +5396,10 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     // If the trip count that we found modulo the vectorization factor is not
     // zero then we require a tail.
     if (VF < 2) {
-      emitAnalysis(Report() << "cannot optimize for size and vectorize at the same time. Enable vectorization of this loop with '#pragma clang loop vectorize(enable)' when compiling with -Os");
+      emitAnalysis(Report() << "cannot optimize for size and vectorize at the "
+                               "same time. Enable vectorization of this loop "
+                               "with '#pragma clang loop vectorize(enable)' "
+                               "when compiling with -Os");
       DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
       return Factor;
     }

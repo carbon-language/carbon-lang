@@ -215,9 +215,7 @@ protected:
       typedef SmallVector<SimpleLoopReduction, 16> SmallReductionVector;
 
       // Add a new possible reduction.
-      void addSLR(SimpleLoopReduction &SLR) {
-        PossibleReds.push_back(SLR);
-      }
+      void addSLR(SimpleLoopReduction &SLR) { PossibleReds.push_back(SLR); }
 
       // Setup to track possible reductions corresponding to the provided
       // rerolling scale. Only reductions with a number of non-PHI instructions
@@ -225,7 +223,8 @@ protected:
       // are filled in:
       //   - A set of all possible instructions in eligible reductions.
       //   - A set of all PHIs in eligible reductions
-      //   - A set of all reduced values (last instructions) in eligible reductions.
+      //   - A set of all reduced values (last instructions) in eligible
+      //     reductions.
       void restrictToScale(uint64_t Scale,
                            SmallInstructionSet &PossibleRedSet,
                            SmallInstructionSet &PossibleRedPHISet,
@@ -1109,8 +1108,8 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
                                             Preheader->getTerminator());
         }
 
-        Value *Cond = new ICmpInst(BI, CmpInst::ICMP_EQ, NewIV, ICMinus1,
-                                   "exitcond");
+        Value *Cond =
+            new ICmpInst(BI, CmpInst::ICMP_EQ, NewIV, ICMinus1, "exitcond");
         BI->setCondition(Cond);
 
         if (BI->getSuccessor(1) != Header)
