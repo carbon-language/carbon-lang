@@ -149,6 +149,12 @@ public:
     bool
     IsPolymorphicClass ();
     
+    bool
+    IsArrayType ();
+    
+    bool
+    IsTypedefType ();
+    
     lldb::SBType
     GetPointerType();
     
@@ -166,6 +172,9 @@ public:
 
     lldb::SBType
     GetUnqualifiedType();
+    
+    lldb::SBType
+    GetArrayElementType ();
 
     lldb::SBType
     GetCanonicalType();

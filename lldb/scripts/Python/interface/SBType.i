@@ -206,6 +206,12 @@ public:
     bool
     IsPolymorphicClass ();
     
+    bool
+    IsArrayType ();
+    
+    bool
+    IsTypedefType ();
+    
     lldb::SBType
     GetPointerType();
 
@@ -226,6 +232,9 @@ public:
     
     lldb::SBType
     GetCanonicalType();
+    
+    lldb::SBType
+    GetArrayElementType ();
 
     lldb::BasicType
     GetBasicType();
