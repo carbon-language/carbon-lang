@@ -410,8 +410,6 @@ namespace {
 
     std::vector<AppendingVarInfo> AppendingVars;
 
-    unsigned Mode; // Mode to treat source module.
-
     // Set of items not to link in from source.
     SmallPtrSet<const Value*, 16> DoNotLinkFromSource;
 
@@ -421,10 +419,10 @@ namespace {
     Linker::DiagnosticHandlerFunction DiagnosticHandler;
 
   public:
-    ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM, unsigned mode,
+    ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM,
                  Linker::DiagnosticHandlerFunction DiagnosticHandler)
         : DstM(dstM), SrcM(srcM), TypeMap(Set),
-          ValMaterializer(TypeMap, DstM, LazilyLinkFunctions), Mode(mode),
+          ValMaterializer(TypeMap, DstM, LazilyLinkFunctions),
           DiagnosticHandler(DiagnosticHandler) {}
 
     bool run();
@@ -1337,25 +1335,17 @@ void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
     ValueMap[I] = DI;
   }
 
-  if (Mode == Linker::DestroySource) {
-    // Splice the body of the source function into the dest function.
-    Dst->getBasicBlockList().splice(Dst->end(), Src->getBasicBlockList());
+  // Splice the body of the source function into the dest function.
+  Dst->getBasicBlockList().splice(Dst->end(), Src->getBasicBlockList());
 
-    // At this point, all of the instructions and values of the function are now
-    // copied over.  The only problem is that they are still referencing values in
-    // the Source function as operands.  Loop through all of the operands of the
-    // functions and patch them up to point to the local versions.
-    for (Function::iterator BB = Dst->begin(), BE = Dst->end(); BB != BE; ++BB)
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        RemapInstruction(I, ValueMap, RF_IgnoreMissingEntries,
-                         &TypeMap, &ValMaterializer);
-
-  } else {
-    // Clone the body of the function into the dest function.
-    SmallVector<ReturnInst*, 8> Returns; // Ignore returns.
-    CloneFunctionInto(Dst, Src, ValueMap, false, Returns, "", nullptr,
-                      &TypeMap, &ValMaterializer);
-  }
+  // At this point, all of the instructions and values of the function are now
+  // copied over.  The only problem is that they are still referencing values in
+  // the Source function as operands.  Loop through all of the operands of the
+  // functions and patch them up to point to the local versions.
+  for (Function::iterator BB = Dst->begin(), BE = Dst->end(); BB != BE; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      RemapInstruction(I, ValueMap, RF_IgnoreMissingEntries, &TypeMap,
+                       &ValMaterializer);
 
   // There is no need to map the arguments anymore.
   for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();
@@ -1745,8 +1735,9 @@ void Linker::deleteModule() {
   Composite = nullptr;
 }
 
-bool Linker::linkInModule(Module *Src, unsigned Mode) {
-  ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src, Mode, DiagnosticHandler);
+bool Linker::linkInModule(Module *Src) {
+  ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src,
+                         DiagnosticHandler);
   return TheLinker.run();
 }
 
@@ -1759,15 +1750,15 @@ bool Linker::linkInModule(Module *Src, unsigned Mode) {
 /// true is returned and ErrorMsg (if not null) is set to indicate the problem.
 /// Upon failure, the Dest module could be in a modified state, and shouldn't be
 /// relied on to be consistent.
-bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode,
+bool Linker::LinkModules(Module *Dest, Module *Src,
                          DiagnosticHandlerFunction DiagnosticHandler) {
   Linker L(Dest, DiagnosticHandler);
-  return L.linkInModule(Src, Mode);
+  return L.linkInModule(Src);
 }
 
-bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode) {
+bool Linker::LinkModules(Module *Dest, Module *Src) {
   Linker L(Dest);
-  return L.linkInModule(Src, Mode);
+  return L.linkInModule(Src);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1782,7 +1773,7 @@ LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
   DiagnosticPrinterRawOStream DP(Stream);
 
   LLVMBool Result = Linker::LinkModules(
-      D, unwrap(Src), Mode, [&](const DiagnosticInfo &DI) { DI.print(DP); });
+      D, unwrap(Src), [&](const DiagnosticInfo &DI) { DI.print(DP); });
 
   if (OutMessages && Result)
     *OutMessages = strdup(Message.c_str());

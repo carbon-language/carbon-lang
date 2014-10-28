@@ -25,11 +25,6 @@ class StructType;
 /// something with it after the linking.
 class Linker {
   public:
-    enum LinkerMode {
-      DestroySource = 0, // Allow source module to be destroyed.
-      PreserveSource = 1 // Preserve the source module.
-    };
-
     typedef std::function<void(const DiagnosticInfo &)>
         DiagnosticHandlerFunction;
 
@@ -40,23 +35,14 @@ class Linker {
     Module *getModule() const { return Composite; }
     void deleteModule();
 
-    /// \brief Link \p Src into the composite. The source is destroyed if
-    /// \p Mode is DestroySource and preserved if it is PreserveSource.
-    /// If \p ErrorMsg is not null, information about any error is written
-    /// to it.
+    /// \brief Link \p Src into the composite. The source is destroyed.
     /// Returns true on error.
-    bool linkInModule(Module *Src, unsigned Mode);
-    bool linkInModule(Module *Src) {
-      return linkInModule(Src, Linker::DestroySource);
-    }
+    bool linkInModule(Module *Src);
 
-    static bool
-    LinkModules(Module *Dest, Module *Src, unsigned Mode,
-                DiagnosticHandlerFunction DiagnosticHandler);
+    static bool LinkModules(Module *Dest, Module *Src,
+                            DiagnosticHandlerFunction DiagnosticHandler);
 
-    static bool
-    LinkModules(Module *Dest, Module *Src, unsigned Mode);
-
+    static bool LinkModules(Module *Dest, Module *Src);
 
   private:
     Module *Composite;

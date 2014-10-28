@@ -126,7 +126,7 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
     if (!M.get()) return true;
 
     outs() << "Linking in input file: '" << Filenames[i] << "'\n";
-    if (Linker::LinkModules(Program, M.get(), Linker::DestroySource))
+    if (Linker::LinkModules(Program, M.get()))
       return true;
   }
 

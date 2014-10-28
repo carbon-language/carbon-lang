@@ -88,7 +88,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
   Builder.CreateRet(ConstantPointerNull::get(Type::getInt8PtrTy(Ctx)));
 
   Module *LinkedModule = new Module("MyModuleLinked", Ctx);
-  Linker::LinkModules(LinkedModule, M.get(), Linker::PreserveSource);
+  Linker::LinkModules(LinkedModule, M.get());
 
   // Delete the original module.
   M.reset();
@@ -122,12 +122,13 @@ TEST_F(LinkModuleTest, BlockAddress) {
   delete LinkedModule;
 }
 
-TEST_F(LinkModuleTest, EmptyModule) {
+static Module *getInternal(LLVMContext &Ctx) {
   Module *InternalM = new Module("InternalModule", Ctx);
   FunctionType *FTy = FunctionType::get(
       Type::getVoidTy(Ctx), Type::getInt8PtrTy(Ctx), false /*=isVarArgs*/);
 
-  F = Function::Create(FTy, Function::InternalLinkage, "bar", InternalM);
+  Function *F =
+      Function::Create(FTy, Function::InternalLinkage, "bar", InternalM);
   F->setCallingConv(CallingConv::C);
 
   BasicBlock *BB = BasicBlock::Create(Ctx, "", F);
@@ -141,16 +142,19 @@ TEST_F(LinkModuleTest, EmptyModule) {
                          GlobalValue::InternalLinkage, nullptr, "g");
 
   GV->setInitializer(ConstantStruct::get(STy, F));
+  return InternalM;
+}
 
-  Module *EmptyM = new Module("EmptyModule1", Ctx);
-  Linker::LinkModules(EmptyM, InternalM, Linker::PreserveSource);
+TEST_F(LinkModuleTest, EmptyModule) {
+  std::unique_ptr<Module> InternalM(getInternal(Ctx));
+  std::unique_ptr<Module> EmptyM(new Module("EmptyModule1", Ctx));
+  Linker::LinkModules(EmptyM.get(), InternalM.get());
+}
 
-  delete EmptyM;
-  EmptyM = new Module("EmptyModule2", Ctx);
-  Linker::LinkModules(InternalM, EmptyM, Linker::PreserveSource);
-
-  delete EmptyM;
-  delete InternalM;
+TEST_F(LinkModuleTest, EmptyModule2) {
+  std::unique_ptr<Module> InternalM(getInternal(Ctx));
+  std::unique_ptr<Module> EmptyM(new Module("EmptyModule1", Ctx));
+  Linker::LinkModules(InternalM.get(), EmptyM.get());
 }
 
 } // end anonymous namespace
