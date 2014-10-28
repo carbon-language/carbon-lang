@@ -588,8 +588,8 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
     else {
       if (ctx.outputMachOType() != llvm::MachO::MH_DYLIB) {
-        diagnostics << "-single_module only used when creating a dylib\n";
-        return false;
+        diagnostics << "warning: -single_module being ignored. "
+                       "It is only for use when producing a dylib\n";
       }
     }
   }
