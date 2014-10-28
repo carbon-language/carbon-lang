@@ -1,10 +1,10 @@
 ##===- docs/Makefile ---------------------------------------*- Makefile -*-===##
-# 
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 ##===----------------------------------------------------------------------===##
 
 LEVEL      := ..
@@ -121,7 +121,8 @@ regen-ocamldoc:
 	$(Verb) $(MKDIR) $(PROJ_OBJ_DIR)/ocamldoc/html
 	$(Verb) \
 		$(OCAMLDOC) -d $(PROJ_OBJ_DIR)/ocamldoc/html -sort -colorize-code -html \
-		`$(FIND) $(LEVEL)/bindings/ocaml -name "*.odoc" -exec echo -load '{}' ';'`
+		`$(FIND) $(LEVEL)/bindings/ocaml -name "*.odoc" \
+		         -path "*/$(BuildMode)/*.odoc" -exec echo -load '{}' ';'`
 
 uninstall-local::
 	$(Echo) Uninstalling Documentation
