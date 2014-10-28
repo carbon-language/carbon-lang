@@ -4527,15 +4527,27 @@ void Parser::ParseDeclarator(Declarator &D) {
   ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
 }
 
-static bool isPtrOperatorToken(tok::TokenKind Kind, const LangOptions &Lang) {
+static bool isPtrOperatorToken(tok::TokenKind Kind, const LangOptions &Lang,
+                               unsigned TheContext) {
   if (Kind == tok::star || Kind == tok::caret)
     return true;
 
-  // We parse rvalue refs in C++03, because otherwise the errors are scary.
   if (!Lang.CPlusPlus)
     return false;
 
-  return Kind == tok::amp || Kind == tok::ampamp;
+  if (Kind == tok::amp)
+    return true;
+
+  // We parse rvalue refs in C++03, because otherwise the errors are scary.
+  // But we must not parse them in conversion-type-ids and new-type-ids, since
+  // those can be legitimately followed by a && operator.
+  // (The same thing can in theory happen after a trailing-return-type, but
+  // since those are a C++11 feature, there is no rejects-valid issue there.)
+  if (Kind == tok::ampamp)
+    return Lang.CPlusPlus11 || (TheContext != Declarator::ConversionIdContext &&
+                                TheContext != Declarator::CXXNewContext);
+
+  return false;
 }
 
 /// ParseDeclaratorInternal - Parse a C or C++ declarator. The direct-declarator
@@ -4615,7 +4627,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 
   tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
-  if (!isPtrOperatorToken(Kind, getLangOpts())) {
+  if (!isPtrOperatorToken(Kind, getLangOpts(), D.getContext())) {
     if (DirectDeclParser)
       (this->*DirectDeclParser)(D);
     return;
@@ -4810,7 +4822,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           !D.hasGroupingParens() &&
           !Actions.containsUnexpandedParameterPacks(D))) {
       SourceLocation EllipsisLoc = ConsumeToken();
-      if (isPtrOperatorToken(Tok.getKind(), getLangOpts())) {
+      if (isPtrOperatorToken(Tok.getKind(), getLangOpts(), D.getContext())) {
         // The ellipsis was put in the wrong place. Recover, and explain to
         // the user what they should have done.
         ParseDeclarator(D);
