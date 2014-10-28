@@ -562,6 +562,25 @@
 				</tbody>
 			</table>
                 
+                <p>Starting with SVN r220821, you can also specify ${var.script:<i>pythonFuncName</i>}.
+                  <br/>It is expected that the function name you use specifies a function whose signature is the same
+                  as a Python summary function. The return string from the function will be placed verbatim in the output.
+                  <br/><br/>
+                  You cannot use element access, or formatting symbols, in combination with this syntax. For example the following:
+                  <table class="stats" width="620" cellspacing="0">
+                          <td class="content">
+                          	${var.element[0].script:myFunctionName%@}
+                          </td>
+                  <table>
+                  is not valid and will cause the summary to fail to evaluate.
+                  </p>
+                  
+                    </div>
+                  </div>
+                  <div class="post">
+                    <h1 class="postheader">Element inlining</h1>
+                    <div class="postcontent">
+                
               <p>Option <code>--inline-children</code> (<code>-c</code>) to <code>type summary add</code>
                 tells LLDB not to look for a summary string, but instead
                 to just print a listing of all the object's children on
