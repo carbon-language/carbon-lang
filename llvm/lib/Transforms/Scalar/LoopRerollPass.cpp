@@ -241,10 +241,9 @@ protected:
 
             PossibleRedSet.insert(PossibleReds[i].getPHI());
             PossibleRedIdx[PossibleReds[i].getPHI()] = i;
-            for (SimpleLoopReduction::iterator J = PossibleReds[i].begin(),
-                 JE = PossibleReds[i].end(); J != JE; ++J) {
-              PossibleRedSet.insert(*J);
-              PossibleRedIdx[*J] = i;
+            for (Instruction *J : PossibleReds[i]) {
+              PossibleRedSet.insert(J);
+              PossibleRedIdx[J] = i;
             }
           }
       }
@@ -659,16 +658,15 @@ bool LoopReroll::ReductionTracker::validateSelected() {
        RI != RIE; ++RI) {
     int i = *RI;
     int PrevIter = 0, BaseCount = 0, Count = 0;
-    for (SimpleLoopReduction::iterator J = PossibleReds[i].begin(),
-         JE = PossibleReds[i].end(); J != JE; ++J) {
-        // Note that all instructions in the chain must have been found because
-        // all instructions in the function must have been assigned to some
-        // iteration.
-      int Iter = PossibleRedIter[*J];
+    for (Instruction *J : PossibleReds[i]) {
+      // Note that all instructions in the chain must have been found because
+      // all instructions in the function must have been assigned to some
+      // iteration.
+      int Iter = PossibleRedIter[J];
       if (Iter != PrevIter && Iter != PrevIter + 1 &&
           !PossibleReds[i].getReducedValue()->isAssociative()) {
         DEBUG(dbgs() << "LRR: Out-of-order non-associative reduction: " <<
-                        *J << "\n");
+                        J << "\n");
         return false;
       }
 
