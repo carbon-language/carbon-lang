@@ -4275,16 +4275,16 @@ def : Pat <(v8f64 (int_x86_avx512_rcp28_pd (v8f64 VR512:$src),
 
 multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr,
                               SDNode OpNode, X86VectorVTInfo _>{
-  defm rr: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+  defm r: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src), OpcodeStr, "$src", "$src",
                          (_.FloatVT (OpNode _.RC:$src))>, EVEX;
   let mayLoad = 1 in {
-    defm rm: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
+    defm m: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                            (ins _.MemOp:$src), OpcodeStr, "$src", "$src",
                            (OpNode (_.FloatVT
                              (bitconvert (_.LdFrag addr:$src))))>, EVEX;
 
-    defm rmb: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
+    defm mb: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                             (ins _.ScalarMemOp:$src), OpcodeStr,
                             "${src}"##_.BroadcastStr, "${src}"##_.BroadcastStr,
                             (OpNode (_.FloatVT
@@ -4388,10 +4388,10 @@ defm VSQRT  : avx512_sqrt_scalar<0x51, "sqrt",
 let Predicates = [HasAVX512] in {
   def : Pat<(v16f32 (int_x86_avx512_sqrt_ps_512 (v16f32 VR512:$src1),
                     (bc_v16f32 (v16i32 immAllZerosV)), (i16 -1), FROUND_CURRENT)),
-                   (VSQRTPSZrr VR512:$src1)>;
+                   (VSQRTPSZr VR512:$src1)>;
   def : Pat<(v8f64 (int_x86_avx512_sqrt_pd_512 (v8f64 VR512:$src1),
                     (bc_v8f64 (v16i32 immAllZerosV)), (i8 -1), FROUND_CURRENT)),
-                   (VSQRTPDZrr VR512:$src1)>;
+                   (VSQRTPDZr VR512:$src1)>;
   
   def : Pat<(f32 (fsqrt FR32X:$src)),
             (VSQRTSSZr (f32 (IMPLICIT_DEF)), FR32X:$src)>;

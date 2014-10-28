@@ -5468,10 +5468,10 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VSQRTSSm:
   case X86::VSQRTSSm_Int:
   case X86::VSQRTSSr:
-  case X86::VSQRTPDZrm:
-  case X86::VSQRTPDZrr:
-  case X86::VSQRTPSZrm:
-  case X86::VSQRTPSZrr:
+  case X86::VSQRTPDZm:
+  case X86::VSQRTPDZr:
+  case X86::VSQRTPSZm:
+  case X86::VSQRTPSZr:
   case X86::VSQRTSDZm:
   case X86::VSQRTSDZm_Int:
   case X86::VSQRTSDZr:
