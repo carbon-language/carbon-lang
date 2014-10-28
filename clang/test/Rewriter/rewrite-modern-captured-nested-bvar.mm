@@ -32,4 +32,4 @@ int main() {
 
 // CHECK 2: (__Block_byref_BYREF_VAR_CHECK_0 *)BYREF_VAR_CHECK
 // CHECK: {(void*)0,(__Block_byref_BYREF_VAR_CHECK_0 *)&BYREF_VAR_CHECK, 0, sizeof(__Block_byref_BYREF_VAR_CHECK_0), 'a'}
-// CHECK: __Block_byref_BYREF_VAR_CHECK_0 *)&BYREF_VAR_CHECK, (__Block_byref_d_1 *)&d, 570425344));
+// CHECK: __Block_byref_BYREF_VAR_CHECK_0 *)&BYREF_VAR_CHECK, (__Block_byref_d_1 *)&d, 570425344)));

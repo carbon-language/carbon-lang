@@ -70,7 +70,7 @@ static int global_x = 10;
 void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); };
 
 // CHECK: static __global_block_block_impl_0 __global_global_block_block_impl_0((void *)__global_block_block_func_0, &__global_block_block_desc_0_DATA);
-// CHECK: void (*global_block)(void) = (void (*)())&__global_global_block_block_impl_0;
+// CHECK: void (*global_block)(void) = ((void (*)())&__global_global_block_block_impl_0);
 
 typedef void (^void_block_t)(void);
 

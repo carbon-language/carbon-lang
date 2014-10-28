@@ -5526,6 +5526,10 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
                              VK_RValue, OK_Ordinary, SourceLocation());
   NewRep = NoTypeInfoCStyleCastExpr(Context, FType, CK_BitCast,
                                     NewRep);
+  // Put Paren around the call.
+  NewRep = new (Context) ParenExpr(SourceLocation(), SourceLocation(),
+                                   NewRep);
+  
   BlockDeclRefs.clear();
   BlockByRefDecls.clear();
   BlockByRefDeclsPtrSet.clear();
