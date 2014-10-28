@@ -4273,32 +4273,24 @@ def : Pat <(v8f64 (int_x86_avx512_rcp28_pd (v8f64 VR512:$src),
               (bc_v8f64 (v16i32 immAllZerosV)), (i8 -1), FROUND_NO_EXC)),
            (VRCP28PDZrb VR512:$src)>;
 
-multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                              OpndItins itins_s, OpndItins itins_d> {
-  def PSZrr :AVX512PSI<opc, MRMSrcReg, (outs VR512:$dst), (ins VR512:$src),
-             !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-             [(set VR512:$dst, (v16f32 (OpNode VR512:$src)))], itins_s.rr>,
-             EVEX, EVEX_V512;
+multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr,
+                              SDNode OpNode, X86VectorVTInfo _>{
+  defm rr: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                         (ins _.RC:$src), OpcodeStr, "$src", "$src",
+                         (_.FloatVT (OpNode _.RC:$src))>, EVEX;
+  let mayLoad = 1 in {
+    defm rm: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                           (ins _.MemOp:$src), OpcodeStr, "$src", "$src",
+                           (OpNode (_.FloatVT
+                             (bitconvert (_.LdFrag addr:$src))))>, EVEX;
 
-  let mayLoad = 1 in
-  def PSZrm : AVX512PSI<opc, MRMSrcMem, (outs VR512:$dst), (ins f512mem:$src),
-              !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-              [(set VR512:$dst, 
-                (OpNode (v16f32 (bitconvert (memopv16f32 addr:$src)))))],
-              itins_s.rm>, EVEX, EVEX_V512, EVEX_CD8<32, CD8VF>;
-
-  def PDZrr : AVX512PDI<opc, MRMSrcReg, (outs VR512:$dst), (ins VR512:$src),
-              !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-              [(set VR512:$dst, (v8f64 (OpNode VR512:$src)))], itins_d.rr>,
-              EVEX, EVEX_V512;
-
-  let mayLoad = 1 in
-    def PDZrm : AVX512PDI<opc, MRMSrcMem, (outs VR512:$dst), (ins f512mem:$src),
-                !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-                [(set VR512:$dst, (OpNode
-                  (v8f64 (bitconvert (memopv16f32 addr:$src)))))],
-                itins_d.rm>, EVEX, EVEX_V512, EVEX_CD8<64, CD8VF>;
-
+    defm rmb: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                            (ins _.ScalarMemOp:$src), OpcodeStr,
+                            "${src}"##_.BroadcastStr, "${src}"##_.BroadcastStr,
+                            (OpNode (_.FloatVT
+                              (X86VBroadcast (_.ScalarLdFrag addr:$src))))>,
+                            EVEX, EVEX_B;
+  }
 }
 
 multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,
@@ -4362,12 +4354,36 @@ multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,
   }
 }
 
+multiclass avx512_sqrt_packed_all<bits<8> opc, string OpcodeStr,
+                                  SDNode OpNode> {
+  defm PSZ : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
+                                v16f32_info>,
+                                EVEX_V512, PS, EVEX_CD8<32, CD8VF>;
+  defm PDZ : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode,
+                                v8f64_info>,
+                                EVEX_V512, VEX_W, PD, EVEX_CD8<64, CD8VF>;
+  // Define only if AVX512VL feature is present.
+  let Predicates = [HasVLX] in {
+    defm PSZ128 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"),
+                                     OpNode, v4f32x_info>,
+                                     EVEX_V128, PS, EVEX_CD8<32, CD8VF>;
+    defm PSZ256 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"),
+                                     OpNode, v8f32x_info>,
+                                     EVEX_V256, PS, EVEX_CD8<32, CD8VF>;
+    defm PDZ128 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "pd"),
+                                     OpNode, v2f64x_info>,
+                                     EVEX_V128, VEX_W, PD, EVEX_CD8<64, CD8VF>;
+    defm PDZ256 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "pd"),
+                                     OpNode, v4f64x_info>,
+                                     EVEX_V256, VEX_W, PD, EVEX_CD8<64, CD8VF>;
+  }
+}
+
+defm VSQRT : avx512_sqrt_packed_all<0x51, "vsqrt", fsqrt>;
 
 defm VSQRT  : avx512_sqrt_scalar<0x51, "sqrt", 
                 int_x86_avx512_sqrt_ss, int_x86_avx512_sqrt_sd, 
-                SSE_SQRTSS, SSE_SQRTSD>,
-              avx512_sqrt_packed<0x51, "vsqrt", fsqrt,
-                SSE_SQRTPS, SSE_SQRTPD>;
+                SSE_SQRTSS, SSE_SQRTSD>;
 
 let Predicates = [HasAVX512] in {
   def : Pat<(v16f32 (int_x86_avx512_sqrt_ps_512 (v16f32 VR512:$src1),
