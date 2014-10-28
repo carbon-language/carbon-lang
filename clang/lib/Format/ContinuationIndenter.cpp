@@ -917,10 +917,10 @@ void ContinuationIndenter::moveStateToNewBlock(LineState &State) {
   if (fakeRParenSpecialCase(State))
     consumeRParens(State, *State.NextToken->MatchingParen);
 
-  // For some reason, ObjC blocks are indented like continuations.
+  // ObjC block sometimes follow special indentation rules.
   unsigned NewIndent = State.Stack.back().LastSpace +
                        (State.NextToken->Type == TT_ObjCBlockLBrace
-                            ? Style.ContinuationIndentWidth
+                            ? Style.ObjCBlockIndentWidth
                             : Style.IndentWidth);
   State.Stack.push_back(ParenState(
       NewIndent, /*NewIndentLevel=*/State.Stack.back().IndentLevel + 1,

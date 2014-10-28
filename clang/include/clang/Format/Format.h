@@ -244,6 +244,9 @@ struct FormatStyle {
   /// initializer lists.
   unsigned ConstructorInitializerIndentWidth;
 
+  /// \brief The number of characters to use for indentation of ObjC blocks.
+  unsigned ObjCBlockIndentWidth;
+
   /// \brief If \c true, always break after function definition return types.
   ///
   /// More truthfully called 'break before the identifier following the type
@@ -390,8 +393,6 @@ struct FormatStyle {
 
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
-           ConstructorInitializerIndentWidth ==
-               R.ConstructorInitializerIndentWidth &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
            AlignTrailingComments == R.AlignTrailingComments &&
            AllowAllParametersOfDeclarationOnNextLine ==
@@ -418,6 +419,8 @@ struct FormatStyle {
            ColumnLimit == R.ColumnLimit &&
            ConstructorInitializerAllOnOneLineOrOnePerLine ==
                R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
+           ConstructorInitializerIndentWidth ==
+               R.ConstructorInitializerIndentWidth &&
            DerivePointerAlignment == R.DerivePointerAlignment &&
            ExperimentalAutoDetectBinPacking ==
                R.ExperimentalAutoDetectBinPacking &&
@@ -428,6 +431,7 @@ struct FormatStyle {
            KeepEmptyLinesAtTheStartOfBlocks ==
                R.KeepEmptyLinesAtTheStartOfBlocks &&
            NamespaceIndentation == R.NamespaceIndentation &&
+           ObjCBlockIndentWidth == R.ObjCBlockIndentWidth &&
            ObjCSpaceAfterProperty == R.ObjCSpaceAfterProperty &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
            PenaltyBreakComment == R.PenaltyBreakComment &&

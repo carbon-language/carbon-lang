@@ -8119,13 +8119,13 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
 
   // This shouldn't affect ObjC blocks..
   verifyFormat("[self doSomeThingWithACompletionHandler:^{\n"
-               "    // ...\n"
-               "    int i;\n"
+               "  // ...\n"
+               "  int i;\n"
                "}];",
                AllmanBraceStyle);
   verifyFormat("void (^block)(void) = ^{\n"
-               "    // ...\n"
-               "    int i;\n"
+               "  // ...\n"
+               "  int i;\n"
                "};",
                AllmanBraceStyle);
   // .. or dict literals.
@@ -8459,6 +8459,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("AccessModifierOffset: -1234", AccessModifierOffset, -1234);
   CHECK_PARSE("ConstructorInitializerIndentWidth: 1234",
               ConstructorInitializerIndentWidth, 1234u);
+  CHECK_PARSE("ObjCBlockIndentWidth: 1234", ObjCBlockIndentWidth, 1234u);
   CHECK_PARSE("ColumnLimit: 1234", ColumnLimit, 1234u);
   CHECK_PARSE("MaxEmptyLinesToKeep: 1234", MaxEmptyLinesToKeep, 1234u);
   CHECK_PARSE("PenaltyBreakBeforeFirstCallParameter: 1234",
@@ -9177,82 +9178,89 @@ TEST_F(FormatTest, FormatsBlocks) {
   verifyFormat("{ void (^block)(Object *x); }", ShortBlocks);
 
   verifyFormat("[operation setCompletionBlock:^{\n"
-               "    [self onOperationDone];\n"
+               "  [self onOperationDone];\n"
                "}];");
   verifyFormat("int i = {[operation setCompletionBlock:^{\n"
-               "    [self onOperationDone];\n"
+               "  [self onOperationDone];\n"
                "}]};");
   verifyFormat("[operation setCompletionBlock:^(int *i) {\n"
-               "    f();\n"
+               "  f();\n"
                "}];");
   verifyFormat("int a = [operation block:^int(int *i) {\n"
-               "    return 1;\n"
+               "  return 1;\n"
                "}];");
   verifyFormat("[myObject doSomethingWith:arg1\n"
                "                      aaa:^int(int *a) {\n"
-               "                          return 1;\n"
+               "                        return 1;\n"
                "                      }\n"
                "                      bbb:f(a * bbbbbbbb)];");
 
   verifyFormat("[operation setCompletionBlock:^{\n"
-               "    [self.delegate newDataAvailable];\n"
+               "  [self.delegate newDataAvailable];\n"
                "}];",
                getLLVMStyleWithColumns(60));
   verifyFormat("dispatch_async(_fileIOQueue, ^{\n"
-               "    NSString *path = [self sessionFilePath];\n"
-               "    if (path) {\n"
-               "      // ...\n"
-               "    }\n"
+               "  NSString *path = [self sessionFilePath];\n"
+               "  if (path) {\n"
+               "    // ...\n"
+               "  }\n"
                "});");
   verifyFormat("[[SessionService sharedService]\n"
                "    loadWindowWithCompletionBlock:^(SessionWindow *window) {\n"
-               "        if (window) {\n"
-               "          [self windowDidLoad:window];\n"
-               "        } else {\n"
-               "          [self errorLoadingWindow];\n"
-               "        }\n"
+               "      if (window) {\n"
+               "        [self windowDidLoad:window];\n"
+               "      } else {\n"
+               "        [self errorLoadingWindow];\n"
+               "      }\n"
                "    }];");
   verifyFormat("void (^largeBlock)(void) = ^{\n"
-               "    // ...\n"
+               "  // ...\n"
                "};\n",
                getLLVMStyleWithColumns(40));
   verifyFormat("[[SessionService sharedService]\n"
                "    loadWindowWithCompletionBlock: //\n"
                "        ^(SessionWindow *window) {\n"
-               "            if (window) {\n"
-               "              [self windowDidLoad:window];\n"
-               "            } else {\n"
-               "              [self errorLoadingWindow];\n"
-               "            }\n"
+               "          if (window) {\n"
+               "            [self windowDidLoad:window];\n"
+               "          } else {\n"
+               "            [self errorLoadingWindow];\n"
+               "          }\n"
                "        }];",
                getLLVMStyleWithColumns(60));
   verifyFormat("[myObject doSomethingWith:arg1\n"
                "    firstBlock:^(Foo *a) {\n"
-               "        // ...\n"
-               "        int i;\n"
+               "      // ...\n"
+               "      int i;\n"
                "    }\n"
                "    secondBlock:^(Bar *b) {\n"
-               "        // ...\n"
-               "        int i;\n"
+               "      // ...\n"
+               "      int i;\n"
                "    }\n"
                "    thirdBlock:^Foo(Bar *b) {\n"
-               "        // ...\n"
-               "        int i;\n"
+               "      // ...\n"
+               "      int i;\n"
                "    }];");
   verifyFormat("[myObject doSomethingWith:arg1\n"
                "               firstBlock:-1\n"
                "              secondBlock:^(Bar *b) {\n"
-               "                  // ...\n"
-               "                  int i;\n"
+               "                // ...\n"
+               "                int i;\n"
                "              }];");
 
   verifyFormat("f(^{\n"
-               "    @autoreleasepool {\n"
-               "      if (a) {\n"
-               "        g();\n"
-               "      }\n"
+               "  @autoreleasepool {\n"
+               "    if (a) {\n"
+               "      g();\n"
                "    }\n"
+               "  }\n"
                "});");
+
+  FormatStyle FourIndent = getLLVMStyle();
+  FourIndent.ObjCBlockIndentWidth = 4;
+  verifyFormat("[operation setCompletionBlock:^{\n"
+               "    [self onOperationDone];\n"
+               "}];",
+               FourIndent);
 }
 
 TEST_F(FormatTest, SupportsCRLF) {
