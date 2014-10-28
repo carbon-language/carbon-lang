@@ -743,7 +743,8 @@ static void HandleByValArgumentInit(Value *Dst, Value *Src, Module *M,
 static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
                                   const Function *CalledFunc,
                                   InlineFunctionInfo &IFI,
-                                  unsigned ByValAlignment) {
+                                  unsigned ByValAlignment,
+                                  bool &AddedNewAllocas) {
   PointerType *ArgTy = cast<PointerType>(Arg->getType());
   Type *AggTy = ArgTy->getElementType();
 
@@ -785,6 +786,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   
   // Uses of the argument in the function should use our new alloca
   // instead.
+  AddedNewAllocas = true;
   return NewAlloca;
 }
 
@@ -958,6 +960,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   SmallVector<ReturnInst*, 8> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
   Function::iterator FirstNewBlock;
+  bool AddedNewAllocas = false;
 
   { // Scope to destroy VMap after cloning.
     ValueToValueMapTy VMap;
@@ -981,7 +984,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       // modify the struct.
       if (CS.isByValArgument(ArgNo)) {
         ActualArg = HandleByValArgument(ActualArg, TheCall, CalledFunc, IFI,
-                                        CalledFunc->getParamAlignment(ArgNo+1));
+                                        CalledFunc->getParamAlignment(ArgNo+1),
+                                        AddedNewAllocas);
         if (ActualArg != *AI)
           ByValInit.push_back(std::make_pair(ActualArg, (Value*) *AI));
       }
@@ -1096,9 +1100,18 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
         //    f -> musttail g ->     tail f  ==>  f ->     tail f
         //    f ->          g -> musttail f  ==>  f ->          f
         //    f ->          g ->     tail f  ==>  f ->          f
+        //
+        // If an alloca was introduced in the frame due to a byval parameter
+        // being passed to a subsequent call, tail calls must have the tail
+        // stripped as they may not access variables in the caller's stack.
+        // A single alloca ripples through out as the alloca may be aliased by
+        // bitcasts or may escape and be mutated outside of the function.
         CallInst::TailCallKind ChildTCK = CI->getTailCallKind();
         ChildTCK = std::min(CallSiteTailKind, ChildTCK);
-        CI->setTailCallKind(ChildTCK);
+        if (AddedNewAllocas)
+          CI->setTailCallKind(CallInst::TCK_None);
+        else
+          CI->setTailCallKind(ChildTCK);
         InlinedMustTailCalls |= CI->isMustTailCall();
 
         // Calls inlined through a 'nounwind' call site should be marked

@@ -34,7 +34,7 @@ define void @frob(i32* %x) {
 ; CHECK: %[[VAL:.*]] = load i32* %x
 ; CHECK: store i32 %[[VAL]], i32* %[[POS]]
 ; CHECK: {{^ *}}call void @ext(i32* %[[POS]]
-; CHECK: tail call void @ext(i32* null)
+; CHECK: {{^ *}}call void @ext(i32* null)
 ; CHECK: ret void
   tail call void @qux(i32* byval %x)
   ret void

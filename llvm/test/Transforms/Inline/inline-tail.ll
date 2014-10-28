@@ -49,42 +49,6 @@ define void @test_musttail_basic_a(i32* %p) {
   ret void
 }
 
-; Don't insert lifetime end markers here, the lifetime is trivially over due
-; the return.
-; CHECK: define void @test_byval_a(
-; CHECK: musttail call void @test_byval_c(
-; CHECK-NEXT: ret void
-
-declare void @test_byval_c(i32* byval %p)
-define internal void @test_byval_b(i32* byval %p) {
-  musttail call void @test_byval_c(i32* byval %p)
-  ret void
-}
-define void @test_byval_a(i32* byval %p) {
-  musttail call void @test_byval_b(i32* byval %p)
-  ret void
-}
-
-; Don't insert a stack restore, we're about to return.
-; CHECK: define void @test_dynalloca_a(
-; CHECK: call i8* @llvm.stacksave(
-; CHECK: alloca i8, i32 %n
-; CHECK: musttail call void @test_dynalloca_c(
-; CHECK-NEXT: ret void
-
-declare void @escape(i8* %buf)
-declare void @test_dynalloca_c(i32* byval %p, i32 %n)
-define internal void @test_dynalloca_b(i32* byval %p, i32 %n) alwaysinline {
-  %buf = alloca i8, i32 %n              ; dynamic alloca
-  call void @escape(i8* %buf)           ; escape it
-  musttail call void @test_dynalloca_c(i32* byval %p, i32 %n)
-  ret void
-}
-define void @test_dynalloca_a(i32* byval %p, i32 %n) {
-  musttail call void @test_dynalloca_b(i32* byval %p, i32 %n)
-  ret void
-}
-
 ; We can't merge the returns.
 ; CHECK: define void @test_multiret_a(
 ; CHECK: musttail call void @test_multiret_c(
