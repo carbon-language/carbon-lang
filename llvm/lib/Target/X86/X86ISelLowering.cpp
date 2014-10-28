@@ -10231,7 +10231,6 @@ static SDValue lowerV8I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
-  assert(Subtarget->hasDQI() && "We can only lower v8i64 with AVX-512-DQI");
 
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v8i64, V1, V2, Mask, DAG);
@@ -10247,7 +10246,6 @@ static SDValue lowerV16I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
-  assert(Subtarget->hasDQI() && "We can only lower v16i32 with AVX-512-DQI!");
 
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v16i32, V1, V2, Mask, DAG);
@@ -10299,6 +10297,11 @@ static SDValue lower512BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Subtarget->hasAVX512() &&
          "Cannot lower 512-bit vectors w/ basic ISA!");
 
+  // Check for being able to broadcast a single element.
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(VT.SimpleTy, DL, V1,
+                                                        Mask, Subtarget, DAG))
+    return Broadcast;
+
   // Dispatch to each element type for lowering. If we don't have supprot for
   // specific element type shuffles at 512 bits, immediately split them and
   // lower them. Each lowering routine of a given type is allowed to assume that
@@ -10309,13 +10312,9 @@ static SDValue lower512BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   case MVT::v16f32:
     return lowerV16F32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v8i64:
-    if (Subtarget->hasDQI())
-      return lowerV8I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
-    break;
+    return lowerV8I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v16i32:
-    if (Subtarget->hasDQI())
-      return lowerV16I32VectorShuffle(Op, V1, V2, Subtarget, DAG);
-    break;
+    return lowerV16I32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v32i16:
     if (Subtarget->hasBWI())
       return lowerV32I16VectorShuffle(Op, V1, V2, Subtarget, DAG);

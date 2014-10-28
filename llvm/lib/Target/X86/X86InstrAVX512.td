@@ -711,6 +711,16 @@ def : Pat<(v16f32 (X86VBroadcast (v4f32 VR128X:$src))),
 def : Pat<(v8f64 (X86VBroadcast (v2f64 VR128X:$src))),
           (VBROADCASTSDZrr VR128X:$src)>;
 
+def : Pat<(v16f32 (X86VBroadcast (v16f32 VR512:$src))),
+          (VBROADCASTSSZrr (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm))>;
+def : Pat<(v8f64 (X86VBroadcast (v8f64 VR512:$src))),
+          (VBROADCASTSDZrr (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm))>;
+
+def : Pat<(v16i32 (X86VBroadcast (v16i32 VR512:$src))),
+          (VPBROADCASTDZrr (EXTRACT_SUBREG (v16i32 VR512:$src), sub_xmm))>;
+def : Pat<(v8i64 (X86VBroadcast (v8i64 VR512:$src))),
+          (VPBROADCASTQZrr (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm))>;
+
 def : Pat<(v16f32 (int_x86_avx512_vbroadcast_ss_ps_512 (v4f32 VR128X:$src))),
           (VBROADCASTSSZrr VR128X:$src)>;
 def : Pat<(v8f64 (int_x86_avx512_vbroadcast_sd_pd_512 (v2f64 VR128X:$src))),

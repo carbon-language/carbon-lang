@@ -453,10 +453,7 @@ entry:
 define <8 x i64> @andqbrst(<8 x i64> %p1, i64* %ap) {
 ; CHECK-LABEL: andqbrst:
 ; CHECK:       ## BB#0: ## %entry
-; CHECK-NEXT:    vmovq (%rdi), %xmm1
-; CHECK-NEXT:    vpbroadcastq %xmm1, %ymm1
-; CHECK-NEXT:    vinserti64x4 $1, %ymm1, %zmm1, %zmm1
-; CHECK-NEXT:    vpandq %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpandq (%rdi){1to8}, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
 entry:
   %a = load i64* %ap, align 8

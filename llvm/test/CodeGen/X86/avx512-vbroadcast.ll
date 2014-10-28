@@ -3,9 +3,7 @@
 define   <16 x i32> @_inreg16xi32(i32 %a) {
 ; CHECK-LABEL: _inreg16xi32:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovd %edi, %xmm0
-; CHECK-NEXT:    vpbroadcastd %xmm0, %ymm0
-; CHECK-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
+; CHECK-NEXT:    vpbroadcastd %edi, %zmm0
 ; CHECK-NEXT:    retq
   %b = insertelement <16 x i32> undef, i32 %a, i32 0
   %c = shufflevector <16 x i32> %b, <16 x i32> undef, <16 x i32> zeroinitializer
@@ -15,9 +13,7 @@ define   <16 x i32> @_inreg16xi32(i32 %a) {
 define   <8 x i64> @_inreg8xi64(i64 %a) {
 ; CHECK-LABEL: _inreg8xi64:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovq %rdi, %xmm0
-; CHECK-NEXT:    vpbroadcastq %xmm0, %ymm0
-; CHECK-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
+; CHECK-NEXT:    vpbroadcastq %rdi, %zmm0
 ; CHECK-NEXT:    retq
   %b = insertelement <8 x i64> undef, i64 %a, i32 0
   %c = shufflevector <8 x i64> %b, <8 x i64> undef, <8 x i32> zeroinitializer
@@ -27,9 +23,7 @@ define   <8 x i64> @_inreg8xi64(i64 %a) {
 define   <16 x float> @_inreg16xfloat(float %a) {
 ; CHECK-LABEL: _inreg16xfloat:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:      ## kill: XMM0<def> XMM0<kill> ZMM0<def>
-; CHECK-NEXT:    vbroadcastss %xmm0, %ymm0
-; CHECK-NEXT:    vinsertf64x4 $1, %ymm0, %zmm0, %zmm0
+; CHECK-NEXT:    vbroadcastss %xmm0, %zmm0
 ; CHECK-NEXT:    retq
   %b = insertelement <16 x float> undef, float %a, i32 0
   %c = shufflevector <16 x float> %b, <16 x float> undef, <16 x i32> zeroinitializer
@@ -39,9 +33,7 @@ define   <16 x float> @_inreg16xfloat(float %a) {
 define   <8 x double> @_inreg8xdouble(double %a) {
 ; CHECK-LABEL: _inreg8xdouble:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:      ## kill: XMM0<def> XMM0<kill> ZMM0<def>
-; CHECK-NEXT:    vbroadcastsd %xmm0, %ymm0
-; CHECK-NEXT:    vinsertf64x4 $1, %ymm0, %zmm0, %zmm0
+; CHECK-NEXT:    vbroadcastsd %xmm0, %zmm0
 ; CHECK-NEXT:    retq
   %b = insertelement <8 x double> undef, double %a, i32 0
   %c = shufflevector <8 x double> %b, <8 x double> undef, <8 x i32> zeroinitializer
@@ -51,8 +43,7 @@ define   <8 x double> @_inreg8xdouble(double %a) {
 define   <16 x i32> @_xmm16xi32(<16 x i32> %a) {
 ; CHECK-LABEL: _xmm16xi32:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpbroadcastd %xmm0, %ymm0
-; CHECK-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
+; CHECK-NEXT:    vpbroadcastd %xmm0, %zmm0
 ; CHECK-NEXT:    retq
   %b = shufflevector <16 x i32> %a, <16 x i32> undef, <16 x i32> zeroinitializer
   ret <16 x i32> %b
@@ -61,8 +52,7 @@ define   <16 x i32> @_xmm16xi32(<16 x i32> %a) {
 define   <16 x float> @_xmm16xfloat(<16 x float> %a) {
 ; CHECK-LABEL: _xmm16xfloat:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vbroadcastss %xmm0, %ymm0
-; CHECK-NEXT:    vinsertf64x4 $1, %ymm0, %zmm0, %zmm0
+; CHECK-NEXT:    vbroadcastss %xmm0, %zmm0
 ; CHECK-NEXT:    retq
   %b = shufflevector <16 x float> %a, <16 x float> undef, <16 x i32> zeroinitializer
   ret <16 x float> %b

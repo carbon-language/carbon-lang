@@ -6,8 +6,7 @@ target triple = "x86_64-unknown-unknown"
 define <8 x double> @shuffle_v8f64_00000000(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00000000:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
-; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm0, %zmm0
+; ALL-NEXT:    vbroadcastsd %xmm0, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
   ret <8 x double> %shuffle
@@ -729,8 +728,7 @@ define <8 x double> @shuffle_v8f64_f511235a(<8 x double> %a, <8 x double> %b) {
 define <8 x i64> @shuffle_v8i64_00000000(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00000000:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
-; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
+; ALL-NEXT:    vpbroadcastq %xmm0, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
   ret <8 x i64> %shuffle
