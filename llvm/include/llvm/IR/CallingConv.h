@@ -140,7 +140,11 @@ namespace CallingConv {
     /// convention differs from the more common \c X86_64_SysV convention
     /// in a number of ways, most notably in that XMM registers used to pass
     /// arguments are shadowed by GPRs, and vice versa.
-    X86_64_Win64 = 79
+    X86_64_Win64 = 79,
+
+    /// \brief MSVC calling convention that passes vectors and vector aggregates
+    /// in SSE registers.
+    X86_VectorCall = 80
   };
 } // End CallingConv namespace
 
