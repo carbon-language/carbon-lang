@@ -5269,6 +5269,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                "LoooooooooooooooooooooooooooooooongFunctionDeclaration();");
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
                "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType MACRO\n"
+               "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType const\n"
                "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
   verifyFormat("decltype(LoooooooooooooooooooooooooooooooooooooooongName)\n"

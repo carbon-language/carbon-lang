@@ -1263,8 +1263,7 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
 // function declaration.
 static bool isFunctionDeclarationName(const FormatToken &Current) {
   if (Current.Type != TT_StartOfName ||
-      Current.NestingLevel != 0 ||
-      Current.Previous->Type == TT_StartOfName)
+      Current.NestingLevel != 0)
     return false;
   const FormatToken *Next = Current.Next;
   for (; Next; Next = Next->Next) {
