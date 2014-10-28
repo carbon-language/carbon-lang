@@ -99,8 +99,7 @@ public:
     NSDict_initWithObjectsAndKeys,
     NSDict_initWithObjectsForKeys,
     NSDict_objectForKey,
-    NSMutableDict_setObjectForKey,
-    NSDict_initWithObjectsForKeysCount
+    NSMutableDict_setObjectForKey
   };
   static const unsigned NumNSDictionaryMethods = 12;
   
