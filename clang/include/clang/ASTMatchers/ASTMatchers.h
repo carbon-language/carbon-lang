@@ -586,6 +586,15 @@ AST_MATCHER_P(TemplateArgument, equalsIntegralValue,
   return Node.getAsIntegral().toString(10) == Value;
 }
 
+/// \brief Matches any value declaration.
+///
+/// Example matches A, B, C and F
+/// \code
+///   enum X { A, B, C };
+///   void F();
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<Decl, ValueDecl> valueDecl;
+
 /// \brief Matches C++ constructor declarations.
 ///
 /// Example matches Foo::Foo() and Foo::Foo(int)

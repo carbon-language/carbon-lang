@@ -827,6 +827,13 @@ TEST(Has, MatchesChildTypes) {
       varDecl(hasName("i"), hasType(qualType(has(pointerType()))))));
 }
 
+TEST(ValueDecl, Matches) {
+  EXPECT_TRUE(matches("enum EnumType { EnumValue };",
+                      valueDecl(hasType(asString("enum EnumType")))));
+  EXPECT_TRUE(matches("void FunctionDecl();",
+                      valueDecl(hasType(asString("void (void)")))));
+}
+
 TEST(Enum, DoesNotMatchClasses) {
   EXPECT_TRUE(notMatches("class X {};", enumDecl(hasName("X"))));
 }

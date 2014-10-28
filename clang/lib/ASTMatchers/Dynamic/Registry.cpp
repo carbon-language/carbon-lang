@@ -325,6 +325,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(userDefinedLiteral);
   REGISTER_MATCHER(usingDecl);
   REGISTER_MATCHER(usingDirectiveDecl);
+  REGISTER_MATCHER(valueDecl);
   REGISTER_MATCHER(varDecl);
   REGISTER_MATCHER(variableArrayType);
   REGISTER_MATCHER(whileStmt);
