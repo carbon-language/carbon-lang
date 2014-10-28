@@ -1451,6 +1451,43 @@ CAMLprim value llvm_set_volatile(value IsVolatile,
   return Val_unit;
 }
 
+
+/*--.. Operations on terminators ...........................................--*/
+
+/* llvalue -> int -> llbasicblock */
+CAMLprim LLVMBasicBlockRef llvm_successor(LLVMValueRef V, value I) {
+  return LLVMGetSuccessor(V, Int_val(I));
+}
+
+/* llvalue -> int -> llvalue -> unit */
+CAMLprim value llvm_set_successor(LLVMValueRef U, value I, LLVMBasicBlockRef B) {
+  LLVMSetSuccessor(U, Int_val(I), B);
+  return Val_unit;
+}
+
+/* llvalue -> int */
+CAMLprim value llvm_num_successors(LLVMValueRef V) {
+  return Val_int(LLVMGetNumSuccessors(V));
+}
+
+/*--.. Operations on branch ................................................--*/
+
+/* llvalue -> llvalue */
+CAMLprim LLVMValueRef llvm_condition(LLVMValueRef V) {
+  return LLVMGetCondition(V);
+}
+
+/* llvalue -> llvalue -> unit */
+CAMLprim value llvm_set_condition(LLVMValueRef B, LLVMValueRef C) {
+  LLVMSetCondition(B, C);
+  return Val_unit;
+}
+
+/* llvalue -> bool */
+CAMLprim value llvm_is_conditional(LLVMValueRef V) {
+  return Val_bool(LLVMIsConditional(V));
+}
+
 /*--... Operations on phi nodes ............................................--*/
 
 /* (llvalue * llbasicblock) -> llvalue -> unit */

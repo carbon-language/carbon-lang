@@ -1197,7 +1197,10 @@ let test_builder () =
      *)
     let bb02 = append_block context "Bb02" fn in
     let b = builder_at_end context bb02 in
-    ignore (build_br bb02 b)
+    let br = build_br bb02 b in
+    insist (successors br = [| bb02 |]) ;
+    insist (is_conditional br = false) ;
+    insist (get_branch br = Some (`Unconditional bb02)) ;
   end;
   
   group "cond_br"; begin
@@ -1206,7 +1209,12 @@ let test_builder () =
     let bb03 = append_block context "Bb03" fn in
     let b = builder_at_end context bb03 in
     let cond = build_trunc p1 i1_type "build_br" b in
-    ignore (build_cond_br cond bb03 bb00 b)
+    let br = build_cond_br cond bb03 bb00 b in
+    insist (num_successors br = 2) ;
+    insist (successor br 0 = bb03) ;
+    insist (successor br 1 = bb00) ;
+    insist (is_conditional br = true) ;
+    insist (get_branch br = Some (`Conditional (cond, bb03, bb00))) ;
   end;
   
   group "switch"; begin
@@ -1222,6 +1230,8 @@ let test_builder () =
         ignore (add_case si (const_int i32_type 2) bb2);
         insist (switch_default_dest si = bb3);
     end;
+    insist (num_successors si = 2) ;
+    insist (get_branch si = None) ;
   end;
 
   group "malloc/free"; begin

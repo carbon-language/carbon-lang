@@ -1767,6 +1767,52 @@ val is_volatile : llvalue -> bool
     [llvm::StoreInst::setVolatile]. *)
 val set_volatile : bool -> llvalue -> unit
 
+(** {7 Operations on terminators} *)
+
+(** [is_terminator v] returns true if the instruction [v] is a terminator. *)
+val is_terminator : llvalue -> bool
+
+(** [successor v i] returns the successor at index [i] for the value [v].
+    See the method [llvm::TerminatorInst::getSuccessor]. *)
+val successor : llvalue -> int -> llbasicblock
+
+(** [set_successor v i o] sets the successor of the value [v] at the index [i] to
+    the value [o].
+    See the method [llvm::TerminatorInst::setSuccessor]. *)
+val set_successor : llvalue -> int -> llbasicblock -> unit
+
+(** [num_successors v] returns the number of successors for the value [v].
+    See the method [llvm::TerminatorInst::getNumSuccessors]. *)
+val num_successors : llvalue -> int
+
+(** [successors v] returns the successors of [v]. *)
+val successors : llvalue -> llbasicblock array
+
+(** [iter_successors f v] applies function f to each successor [v] in order. Tail recursive. *)
+val iter_successors : (llbasicblock -> unit) -> llvalue -> unit
+
+(** [fold_successors f v init] is [f (... (f init vN) ...) v1] where [v1,...,vN] are the successors of [v]. Tail recursive. *)
+val fold_successors : (llbasicblock -> 'a -> 'a) -> llvalue -> 'a -> 'a
+
+(** {7 Operations on branches} *)
+
+(** [is_conditional v] returns true if the branch instruction [v] is conditional.
+    See the method [llvm::BranchInst::isConditional]. *)
+val is_conditional : llvalue -> bool
+
+(** [condition v] return the condition of the branch instruction [v].
+    See the method [llvm::BranchInst::getCondition]. *)
+val condition : llvalue -> llvalue
+
+(** [set_condition v c] sets the condition of the branch instruction [v] to the value [c].
+    See the method [llvm::BranchInst::setCondition]. *)
+val set_condition : llvalue -> llvalue -> unit
+
+(** [get_branch c] returns a description of the branch instruction [c]. *)
+val get_branch : llvalue ->
+  [ `Conditional of llvalue * llbasicblock * llbasicblock
+  | `Unconditional of llbasicblock ]
+    option
 
 (** {7 Operations on phi nodes} *)
 

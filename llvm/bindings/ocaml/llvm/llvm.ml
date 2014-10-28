@@ -1026,6 +1026,63 @@ external set_tail_call : bool -> llvalue -> unit = "llvm_set_tail_call"
 external is_volatile : llvalue -> bool = "llvm_is_volatile"
 external set_volatile : bool -> llvalue -> unit = "llvm_set_volatile"
 
+(*--... Operations on terminators ..........................................--*)
+
+let is_terminator llv =
+  let open ValueKind in
+  let open Opcode in
+  match classify_value llv with
+    | Instruction (Br | IndirectBr | Invoke | Resume | Ret | Switch | Unreachable)
+      -> true
+    | _ -> false
+
+external successor : llvalue -> int -> llbasicblock = "llvm_successor"
+external set_successor : llvalue -> int -> llbasicblock -> unit
+                       = "llvm_set_successor"
+external num_successors : llvalue -> int = "llvm_num_successors"
+
+let successors llv =
+  if not (is_terminator llv) then
+    raise (Invalid_argument "Llvm.successors can only be used on terminators")
+  else
+    Array.init (num_successors llv) (successor llv)
+
+let iter_successors f llv =
+  if not (is_terminator llv) then
+    raise (Invalid_argument "Llvm.iter_successors can only be used on terminators")
+  else
+    for i = 0 to num_successors llv - 1 do
+      f (successor llv i)
+    done
+
+let fold_successors f llv z =
+  if not (is_terminator llv) then
+    raise (Invalid_argument "Llvm.fold_successors can only be used on terminators")
+  else
+    let n = num_successors llv in
+    let rec aux i acc =
+      if i >= n then acc
+      else begin
+        let llb = successor llv i in
+        aux (i+1) (f llb acc)
+      end
+    in aux 0 z
+
+
+(*--... Operations on branches .............................................--*)
+external condition : llvalue -> llvalue = "llvm_condition"
+external set_condition : llvalue -> llvalue -> unit
+                       = "llvm_set_condition"
+external is_conditional : llvalue -> bool = "llvm_is_conditional"
+
+let get_branch llv =
+  if classify_value llv <> ValueKind.Instruction Opcode.Br then
+    None
+  else if is_conditional llv then
+    Some (`Conditional (condition llv, successor llv 0, successor llv 1))
+  else
+    Some (`Unconditional (successor llv 0))
+
 (*--... Operations on phi nodes ............................................--*)
 external add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
                       = "llvm_add_incoming"
