@@ -245,18 +245,29 @@ struct __make_tuple_types
 
 // __tuple_convertible
 
-template <bool, class _Tp, class _Up>
+template <class, class>
 struct __tuple_convertible_imp : public false_type {};
 
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
-struct __tuple_convertible_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
+struct __tuple_convertible_imp<__tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
     : public integral_constant<bool,
                                is_convertible<_Tp0, _Up0>::value &&
-                               __tuple_convertible_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
+                               __tuple_convertible_imp<__tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
 
 template <>
-struct __tuple_convertible_imp<true, __tuple_types<>, __tuple_types<> >
+struct __tuple_convertible_imp<__tuple_types<>, __tuple_types<> >
     : public true_type {};
+
+template <bool, class, class>
+struct __tuple_convertible_apply : public false_type {};
+
+template <class _Tp, class _Up>
+struct __tuple_convertible_apply<true, _Tp, _Up>
+  : public __tuple_convertible_imp<
+      typename __make_tuple_types<_Tp>::type
+    , typename __make_tuple_types<_Up>::type
+    >
+{};
 
 template <class _Tp, class _Up, bool = __tuple_like<typename remove_reference<_Tp>::type>::value,
                                 bool = __tuple_like<_Up>::value>
@@ -265,25 +276,35 @@ struct __tuple_convertible
 
 template <class _Tp, class _Up>
 struct __tuple_convertible<_Tp, _Up, true, true>
-    : public __tuple_convertible_imp<tuple_size<typename remove_reference<_Tp>::type>::value ==
-                                     tuple_size<_Up>::value,
-             typename __make_tuple_types<_Tp>::type, typename __make_tuple_types<_Up>::type>
+    : public __tuple_convertible_apply<tuple_size<typename remove_reference<_Tp>::type>::value ==
+                                     tuple_size<_Up>::value, _Tp, _Up>
 {};
 
 // __tuple_constructible
 
-template <bool, class _Tp, class _Up>
+template <class, class>
 struct __tuple_constructible_imp : public false_type {};
 
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
-struct __tuple_constructible_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
+struct __tuple_constructible_imp<__tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
     : public integral_constant<bool,
                                is_constructible<_Up0, _Tp0>::value &&
-                               __tuple_constructible_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
+                               __tuple_constructible_imp<__tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
 
 template <>
-struct __tuple_constructible_imp<true, __tuple_types<>, __tuple_types<> >
+struct __tuple_constructible_imp<__tuple_types<>, __tuple_types<> >
     : public true_type {};
+
+template <bool _SameSize, class, class>
+struct __tuple_constructible_apply : public false_type {};
+
+template <class _Tp, class _Up>
+struct __tuple_constructible_apply<true, _Tp, _Up>
+  : public __tuple_constructible_imp<
+      typename __make_tuple_types<_Tp>::type
+    , typename __make_tuple_types<_Up>::type
+    >
+{};
 
 template <class _Tp, class _Up, bool = __tuple_like<typename remove_reference<_Tp>::type>::value,
                                 bool = __tuple_like<_Up>::value>
@@ -292,25 +313,35 @@ struct __tuple_constructible
 
 template <class _Tp, class _Up>
 struct __tuple_constructible<_Tp, _Up, true, true>
-    : public __tuple_constructible_imp<tuple_size<typename remove_reference<_Tp>::type>::value ==
-                                     tuple_size<_Up>::value,
-             typename __make_tuple_types<_Tp>::type, typename __make_tuple_types<_Up>::type>
+    : public __tuple_constructible_apply<tuple_size<typename remove_reference<_Tp>::type>::value ==
+                                     tuple_size<_Up>::value, _Tp, _Up>
 {};
 
 // __tuple_assignable
 
-template <bool, class _Tp, class _Up>
+template <class, class>
 struct __tuple_assignable_imp : public false_type {};
 
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
-struct __tuple_assignable_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
+struct __tuple_assignable_imp<__tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
     : public integral_constant<bool,
                                is_assignable<_Up0&, _Tp0>::value &&
-                               __tuple_assignable_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
+                               __tuple_assignable_imp<__tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
 
 template <>
-struct __tuple_assignable_imp<true, __tuple_types<>, __tuple_types<> >
+struct __tuple_assignable_imp<__tuple_types<>, __tuple_types<> >
     : public true_type {};
+
+template <bool, class, class>
+struct __tuple_assignable_apply : public false_type {};
+
+template <class _Tp, class _Up>
+struct __tuple_assignable_apply<true, _Tp, _Up>
+  : __tuple_assignable_imp<
+      typename __make_tuple_types<_Tp>::type
+    , typename __make_tuple_types<_Up>::type
+    >
+{};
 
 template <class _Tp, class _Up, bool = __tuple_like<typename remove_reference<_Tp>::type>::value,
                                 bool = __tuple_like<_Up>::value>
@@ -319,9 +350,8 @@ struct __tuple_assignable
 
 template <class _Tp, class _Up>
 struct __tuple_assignable<_Tp, _Up, true, true>
-    : public __tuple_assignable_imp<tuple_size<typename remove_reference<_Tp>::type>::value ==
-                                    tuple_size<_Up>::value,
-             typename __make_tuple_types<_Tp>::type, typename __make_tuple_types<_Up>::type>
+    : public __tuple_assignable_apply<tuple_size<typename remove_reference<_Tp>::type>::value ==
+                                    tuple_size<_Up>::value, _Tp, _Up>
 {};
 
 _LIBCPP_END_NAMESPACE_STD
