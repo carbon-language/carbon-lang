@@ -3,6 +3,8 @@ from lldbtest import *
 import lldbutil
 import os
 import new
+import unittest2
+import sys
 
 def source_type(filename):
     _, extension = os.path.splitext(filename)
@@ -53,7 +55,6 @@ class CommandParser:
                         self.breakpoints.append(current_breakpoint)
                     else:
                         current_breakpoint['command'] = current_breakpoint['command'] + "\n" + command
-        print self.breakpoints
 
     def set_breakpoints(self, target):
         for breakpoint in self.breakpoints:
@@ -113,11 +114,11 @@ class InlineTest(TestBase):
         self.buildDwarf()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym(self):
+    def __test_with_dsym(self):
         self.buildDsymWithImplicitMakefile()
         self.do_test()
 
-    def test_with_dwarf(self):
+    def __test_with_dwarf(self):
         self.buildDwarfWithImplicitMakefile()
         self.do_test()
 
@@ -161,7 +162,17 @@ class InlineTest(TestBase):
         report_str = "%s expected: %s got: %s"%(expression, expected_result, answer)
         self.assertTrue(answer == expected_result, report_str)
 
-def MakeInlineTest(__file, __globals):
+def ApplyDecoratorsToFunction(func, decorators):
+    tmp = func
+    if type(decorators) == list:
+        for decorator in decorators:
+            tmp = decorator(tmp)
+    elif hasattr(decorators, '__call__'):
+        tmp = decorators(tmp)
+    return tmp
+    
+
+def MakeInlineTest(__file, __globals, decorators=None):
     # Derive the test name from the current file name
     file_basename = os.path.basename(__file)
     InlineTest.mydir = TestBase.compute_mydir(__file)
@@ -170,6 +181,10 @@ def MakeInlineTest(__file, __globals):
     # Build the test case 
     test = new.classobj(test_name, (InlineTest,), {})
     test.name = test_name
+
+    test.test_with_dsym = ApplyDecoratorsToFunction(test._InlineTest__test_with_dsym, decorators)
+    test.test_with_dwarf = ApplyDecoratorsToFunction(test._InlineTest__test_with_dwarf, decorators)
+
     # Add the test case to the globals, and hide InlineTest
     __globals.update({test_name : test})
 
