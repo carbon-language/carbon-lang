@@ -14,8 +14,8 @@ target triple = "x86_64-apple-macosx"
 ; <rdar://problem/18675020>
 
 ; CHECK-LABEL: test:
-; CHECK: vmovdqa {{.*#+}} xmm1 = [65533,124,125,14807]
-; CHECK: vmovdqa {{.*#+}} xmm1 = [65535,0,0,65535]
+; CHECK: vmovdqa {{.*#+}} xmm0 = [65535,0,0,65535]
+; CHECK: vmovdqa {{.*#+}} xmm2 = [65533,124,125,14807]
 ; CHECK: ret
 define void @test(<4 x i16>* %a, <4 x i16>* %b) {
 body:

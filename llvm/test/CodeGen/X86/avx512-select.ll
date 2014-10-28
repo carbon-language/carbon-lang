@@ -48,3 +48,47 @@ define <16 x double> @select04(<16 x double> %a, <16 x double> %b) {
   %sel = select <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false>, <16 x double> %a, <16 x double> %b
   ret <16 x double> %sel
 }
+
+; CHECK-LABEL: select05
+; CHECK: kmovw   %esi, %k0
+; CHECK-NEXT: kmovw   %edi, %k1
+; CHECK-NEXT: korw    %k1, %k0, %k0
+; CHECK-NEXT: kmovw   %k0, %eax
+define i8 @select05(i8 %a.0, i8 %m) {
+  %mask = bitcast i8 %m to <8 x i1>
+  %a = bitcast i8 %a.0 to <8 x i1>
+  %r = select <8 x i1> %mask, <8 x i1> <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>, <8 x i1> %a
+  %res = bitcast <8 x i1> %r to i8
+  ret i8 %res;
+}
+
+; CHECK-LABEL: select06
+; CHECK: kmovw   %esi, %k0
+; CHECK-NEXT: kmovw   %edi, %k1
+; CHECK-NEXT: kandw    %k1, %k0, %k0
+; CHECK-NEXT: kmovw   %k0, %eax
+define i8 @select06(i8 %a.0, i8 %m) {
+  %mask = bitcast i8 %m to <8 x i1>
+  %a = bitcast i8 %a.0 to <8 x i1>
+  %r = select <8 x i1> %mask, <8 x i1> %a, <8 x i1> zeroinitializer
+  %res = bitcast <8 x i1> %r to i8
+  ret i8 %res;
+}
+
+; CHECK-LABEL: select07
+; CHECK-DAG:  kmovw   %edx, %k0
+; CHECK-DAG:  kmovw   %edi, %k1
+; CHECK-DAG:  kmovw   %esi, %k2
+; CHECK: kandw %k0, %k1, %k1
+; CHECK-NEXT: knotw    %k0, %k0
+; CHECK-NEXT: kandw    %k0, %k2, %k0
+; CHECK-NEXT: korw %k0, %k1, %k0
+; CHECK-NEXT: kmovw   %k0, %eax
+define i8 @select07(i8 %a.0, i8 %b.0, i8 %m) {
+  %mask = bitcast i8 %m to <8 x i1>
+  %a = bitcast i8 %a.0 to <8 x i1>
+  %b = bitcast i8 %b.0 to <8 x i1>
+  %r = select <8 x i1> %mask, <8 x i1> %a, <8 x i1> %b
+  %res = bitcast <8 x i1> %r to i8
+  ret i8 %res;
+}
