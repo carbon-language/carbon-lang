@@ -992,6 +992,10 @@ private:
         (InTemplateArgument && NextToken->Tok.isAnyIdentifier()))
       return TT_BinaryOperator;
 
+    // "&&(" is quite unlikely to be two successive unary "&".
+    if (Tok.is(tok::ampamp) && NextToken && NextToken->is(tok::l_paren))
+      return TT_BinaryOperator;
+
     // This catches some cases where evaluation order is used as control flow:
     //   aaa && aaa->f();
     const FormatToken *NextNextToken = NextToken->getNextNonComment();
