@@ -108,11 +108,6 @@ check-local-all:: lit.site.cfg Unit/lit.site.cfg extra-site-cfgs
 clean::
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test -name Output -type d -print`
 
-ifneq ($(OCAMLOPT),)
-CC_FOR_OCAMLOPT := $(shell $(OCAMLOPT) -config | grep native_c_compiler | sed -e 's/native_c_compiler: //')
-CXX_FOR_OCAMLOPT := $(subst gcc,g++,$(CC_FOR_OCAMLOPT))
-endif
-
 FORCE:
 
 ifeq ($(DISABLE_ASSERTIONS),1)
@@ -132,7 +127,9 @@ lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@SHLIBEXT@=$(SHLIBEXT)=g >> lit.tmp
 	@$(ECHOPATH) s=@EXEEXT@=$(EXEEXT)=g >> lit.tmp
 	@$(ECHOPATH) s=@PYTHON_EXECUTABLE@=$(PYTHON)=g >> lit.tmp
-	@$(ECHOPATH) s=@OCAMLOPT@=$(OCAMLOPT) -cc $(subst *,'\\\"',*$(subst =,"\\=",$(CXX_FOR_OCAMLOPT))*) -cclib -L$(LibDir) -I $(LibDir)/ocaml=g >> lit.tmp
+	@$(ECHOPATH) s=@OCAMLC@=$(OCAMLC)=g >> lit.tmp
+	@$(ECHOPATH) s=@OCAMLOPT@=$(OCAMLOPT)=g >> lit.tmp
+	@$(ECHOPATH) s=@OCAMLFLAGS@=-cclib -lstdc++ -cclib -L$(LibDir) -I $(LibDir)/ocaml=g >> lit.tmp
 	@$(ECHOPATH) s=@GO_EXECUTABLE@=$(GO)=g >> lit.tmp
 	@$(ECHOPATH) s!@HOST_CC@!$(CC)!g >> lit.tmp
 	@$(ECHOPATH) s!@HOST_CXX@!$(CXX)!g >> lit.tmp

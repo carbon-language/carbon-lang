@@ -1,7 +1,7 @@
 (* RUN: rm -rf %t.builddir
  * RUN: mkdir -p %t.builddir
  * RUN: cp %s %t.builddir
- * RUN: %ocamlopt -warn-error A llvm.cmxa llvm_analysis.cmxa %t.builddir/analysis.ml -o %t
+ * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_analysis.%cma %t.builddir/analysis.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)
