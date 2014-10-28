@@ -124,6 +124,7 @@ An overview of all the command-line options:
     -list-checks             - List all enabled checks and exit. Use with
                                -checks='*' to list all available checks.
     -p=<string>              - Build path
+    -system-headers          - Display the errors from system headers
 
   -p <build-path> is used to read a compile command database.
 
