@@ -4647,7 +4647,7 @@ def warn_logical_and_in_logical_or : Warning<
   "'&&' within '||'">, InGroup<LogicalOpParentheses>;
 
 def warn_overloaded_shift_in_comparison :Warning<
-  "overloaded operator %select{>>|<<}0 has lower precedence than "
+  "overloaded operator %select{>>|<<}0 has higher precedence than "
   "comparison operator">,
   InGroup<OverloadedShiftOpParentheses>;
 def note_evaluate_comparison_first :Note<

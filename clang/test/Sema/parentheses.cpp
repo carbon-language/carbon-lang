@@ -47,7 +47,7 @@ void f(Stream& s, bool b) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-5]]:15-[[@LINE-5]]:15}:"("
   // CHECK: fix-it:"{{.*}}":{[[@LINE-6]]:32-[[@LINE-6]]:32}:")"
 
-  (void)(s << 5 == 1); // expected-warning {{overloaded operator << has lower precedence than comparison operator}} \
+  (void)(s << 5 == 1); // expected-warning {{overloaded operator << has higher precedence than comparison operator}} \
                        // expected-note {{place parentheses around the '<<' expression to silence this warning}} \
                        // expected-note {{place parentheses around comparison expression to evaluate it first}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:10}:"("
@@ -55,7 +55,7 @@ void f(Stream& s, bool b) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-5]]:15-[[@LINE-5]]:15}:"("
   // CHECK: fix-it:"{{.*}}":{[[@LINE-6]]:21-[[@LINE-6]]:21}:")"
 
-  (void)(s >> 5 == 1); // expected-warning {{overloaded operator >> has lower precedence than comparison operator}} \
+  (void)(s >> 5 == 1); // expected-warning {{overloaded operator >> has higher precedence than comparison operator}} \
                        // expected-note {{place parentheses around the '>>' expression to silence this warning}} \
                        // expected-note {{place parentheses around comparison expression to evaluate it first}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:10}:"("
