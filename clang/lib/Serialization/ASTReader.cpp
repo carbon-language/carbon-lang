@@ -2155,12 +2155,23 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
   bool IsOutOfDate = false;
 
   // For an overridden file, there is nothing to validate.
-  if (!Overridden && (StoredSize != File->getSize()
-#if !defined(LLVM_ON_WIN32)
+  if (!Overridden && //
+      (StoredSize != File->getSize() ||
+#if defined(LLVM_ON_WIN32)
+       false
+#else
        // In our regression testing, the Windows file system seems to
        // have inconsistent modification times that sometimes
        // erroneously trigger this error-handling path.
-       || StoredTime != File->getModificationTime()
+       //
+       // This also happens in networked file systems, so disable this
+       // check if validation is disabled or if we have an explicitly
+       // built PCM file.
+       //
+       // FIXME: Should we also do this for PCH files? They could also
+       // reasonably get shared across a network during a distributed build.
+       (StoredTime != File->getModificationTime() && !DisableValidation &&
+        F.Kind != MK_ExplicitModule)
 #endif
        )) {
     if (Complain) {
@@ -2423,6 +2434,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case DIAGNOSTIC_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_OutOfDate)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
+          F.Kind != MK_ExplicitModule &&
           ParseDiagnosticOptions(Record, Complain, *Listener) &&
           !DisableValidation)
         return OutOfDate;
@@ -2432,6 +2444,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case FILE_SYSTEM_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
+          F.Kind != MK_ExplicitModule &&
           ParseFileSystemOptions(Record, Complain, *Listener) &&
           !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
@@ -2441,6 +2454,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case HEADER_SEARCH_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
+          F.Kind != MK_ExplicitModule &&
           ParseHeaderSearchOptions(Record, Complain, *Listener) &&
           !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
@@ -2450,6 +2464,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case PREPROCESSOR_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
+          F.Kind != MK_ExplicitModule &&
           ParsePreprocessorOptions(Record, Complain, *Listener,
                                    SuggestedPredefines) &&
           !DisableValidation && !AllowConfigurationMismatch)
