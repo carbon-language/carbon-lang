@@ -795,14 +795,14 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     if (!VI.Var)
       continue;
     Processed.insert(VI.Var);
-    DIVariable DV(VI.Var);
-    DIExpression Expr(VI.Expr);
     LexicalScope *Scope = LScopes.findLexicalScope(VI.Loc);
 
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;
 
+    DIVariable DV(VI.Var);
+    DIExpression Expr(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
     ConcreteVariables.push_back(make_unique<DbgVariable>(DV, Expr, this));
     DbgVariable *RegVar = ConcreteVariables.back().get();
