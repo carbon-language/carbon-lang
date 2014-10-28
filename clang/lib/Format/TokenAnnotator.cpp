@@ -982,7 +982,7 @@ private:
 
     if (PrevToken->Tok.isLiteral() ||
         PrevToken->isOneOf(tok::r_paren, tok::r_square, tok::kw_true,
-                           tok::kw_false) ||
+                           tok::kw_false, tok::r_brace) ||
         NextToken->Tok.isLiteral() ||
         NextToken->isOneOf(tok::kw_true, tok::kw_false) ||
         NextToken->isUnaryOperator() ||
