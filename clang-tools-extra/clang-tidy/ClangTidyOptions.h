@@ -66,6 +66,9 @@ struct ClangTidyOptions {
   /// main files will always be displayed.
   llvm::Optional<std::string> HeaderFilterRegex;
 
+  /// \brief Output warnings from system headers matching \c HeaderFilterRegex.
+  llvm::Optional<bool> SystemHeaders;
+
   /// \brief Turns on temporary destructor-based analysis.
   llvm::Optional<bool> AnalyzeTemporaryDtors;
 

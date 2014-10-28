@@ -101,6 +101,7 @@ ClangTidyOptions ClangTidyOptions::getDefaults() {
   ClangTidyOptions Options;
   Options.Checks = "";
   Options.HeaderFilterRegex = "";
+  Options.SystemHeaders = false;
   Options.AnalyzeTemporaryDtors = false;
   Options.User = llvm::None;
   for (ClangTidyModuleRegistry::iterator I = ClangTidyModuleRegistry::begin(),
@@ -122,6 +123,8 @@ ClangTidyOptions::mergeWith(const ClangTidyOptions &Other) const {
 
   if (Other.HeaderFilterRegex)
     Result.HeaderFilterRegex = Other.HeaderFilterRegex;
+  if (Other.SystemHeaders)
+    Result.SystemHeaders = Other.SystemHeaders;
   if (Other.AnalyzeTemporaryDtors)
     Result.AnalyzeTemporaryDtors = Other.AnalyzeTemporaryDtors;
   if (Other.User)

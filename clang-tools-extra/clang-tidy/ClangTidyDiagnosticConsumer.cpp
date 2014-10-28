@@ -367,7 +367,8 @@ void ClangTidyDiagnosticConsumer::checkFilters(SourceLocation Location) {
   }
 
   const SourceManager &Sources = Diags->getSourceManager();
-  if (Sources.isInSystemHeader(Location))
+  if (!*Context.getOptions().SystemHeaders &&
+      Sources.isInSystemHeader(Location))
     return;
 
   // FIXME: We start with a conservative approach here, but the actual type of
