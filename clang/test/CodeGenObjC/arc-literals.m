@@ -8,8 +8,8 @@
 // CHECK: c"numberWithUnsignedInt:\00"
 // CHECK: c"numberWithUnsignedLongLong:\00"
 // CHECK: c"numberWithChar:\00"
-// CHECK: c"initWithObjects:count:\00"
-// CHECK: c"initWithObjects:forKeys:count:\00"
+// CHECK: c"arrayWithObjects:count:\00"
+// CHECK: c"dictionaryWithObjects:forKeys:count:\00"
 // CHECK: c"prop\00"
 
 // CHECK-LABEL: define void @test_numeric()
@@ -53,12 +53,10 @@ void test_array(id a, id b) {
   // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T:%.*]]** @"\01L_OBJC_CLASSLIST
   // CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[CLASS_T]]* [[T0]] to i8*
-
-  // CHECK-NEXT: [[ALLOC:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* [[T1]], i8* [[SEL]])
-  // CHECK-NEXT: [[T9:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
-  // CHECK-NEXT: [[T10:%.*]] = bitcast [2 x i8*]* [[OBJECTS]] to i8**
-  // CHECK-NEXT: [[ARRAYINIT:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8**, i64)*)(i8* [[ALLOC]], i8* [[T9]], i8** [[T10]], i64 2)
-  // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[V0]], i8* [[V1]])
+  // CHECK-NEXT: [[T2:%.*]] = bitcast [2 x i8*]* [[OBJECTS]] to i8**
+  // CHECK-NEXT: [[T3:%.*]] = call i8* bitcast ({{.*@objc_msgSend.*}})(i8* [[T1]], i8* [[SEL]], i8** [[T2]], i64 2)
+  // CHECK-NEXT: [[T4:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T3]])
+  // CHECK: call void (...)* @clang.arc.use(i8* [[V0]], i8* [[V1]])
   id arr = @[a, b];
 
   // CHECK: call void @objc_release
@@ -98,12 +96,10 @@ void test_dictionary(id k1, id o1, id k2, id o2) {
   // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T:%.*]]** @"\01L_OBJC_CLASSLIST
   // CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[CLASS_T]]* [[T0]] to i8*
-
-  // CHECK-NEXT: [[ALLOC:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* [[T1]], i8* [[SEL]])
-  // CHECK-NEXT: [[T15:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
-  // CHECK-NEXT: [[T16:%.*]] = bitcast [2 x i8*]* [[OBJECTS]] to i8**
-  // CHECK-NEXT: [[T17:%.*]] = bitcast [2 x i8*]* [[KEYS]] to i8**
-  // CHECK-NEXT: [[INIT:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8**, i8**, i64)*)(i8* [[ALLOC]], i8* [[T15]], i8** [[T16]], i8** [[T17]], i64 2)
+  // CHECK-NEXT: [[T2:%.*]] = bitcast [2 x i8*]* [[OBJECTS]] to i8**
+  // CHECK-NEXT: [[T3:%.*]] = bitcast [2 x i8*]* [[KEYS]] to i8**
+  // CHECK-NEXT: [[T4:%.*]] = call i8* bitcast ({{.*@objc_msgSend.*}})(i8* [[T1]], i8* [[SEL]], i8** [[T2]], i8** [[T3]], i64 2)
+  // CHECK-NEXT: [[T5:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T4]])
   // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[V0]], i8* [[V1]], i8* [[V2]], i8* [[V3]])
 
   id dict = @{ k1 : o1, k2 : o2 };
@@ -142,15 +138,13 @@ void test_property(B *b) {
   // Store to array.
   // CHECK-NEXT: store i8* [[V1]], i8** [[T0]]
 
-  // Invoke initWithObjects:count:
+  // Invoke arrayWithObjects:count:
   // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T]]** @"\01L_OBJC_CLASSLIST
   // CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[CLASS_T]]* [[T0]] to i8*
-
-  // CHECK-NEXT: [[ALLOC:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* [[T1]], i8* [[SEL]])
-  // CHECK-NEXT: [[T9:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
-  // CHECK-NEXT: [[T10:%.*]] = bitcast [1 x i8*]* [[OBJECTS]] to i8**
-  // CHECK-NEXT: [[INIT:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8**, i64)*)(i8* [[ALLOC]], i8* [[T9]], i8** [[T10]], i64 1)
+  // CHECK-NEXT: [[T2:%.*]] = bitcast [1 x i8*]* [[OBJECTS]] to i8**
+  // CHECK-NEXT: [[T3:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}}(i8* [[T1]], i8* [[SEL]], i8** [[T2]], i64 1)
+  // CHECK-NEXT: call i8* @objc_retainAutoreleasedReturnValue(i8* [[T3]])
   // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[V1]])
   // CHECK-NEXT: bitcast
   // CHECK-NEXT: bitcast

@@ -879,7 +879,6 @@ void ASTStmtWriter::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
   for (unsigned i = 0; i < E->getNumElements(); i++)
     Writer.AddStmt(E->getElement(i));
   Writer.AddDeclRef(E->getArrayWithObjectsMethod(), Record);
-  Writer.AddDeclRef(E->getArrayAllocMethod(), Record);
   Writer.AddSourceRange(E->getSourceRange(), Record);
   Code = serialization::EXPR_OBJC_ARRAY_LITERAL;
 }
@@ -902,7 +901,6 @@ void ASTStmtWriter::VisitObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
   }
     
   Writer.AddDeclRef(E->getDictWithObjectsMethod(), Record);
-  Writer.AddDeclRef(E->getDictAllocMethod(), Record);
   Writer.AddSourceRange(E->getSourceRange(), Record);
   Code = serialization::EXPR_OBJC_DICTIONARY_LITERAL;
 }

@@ -124,14 +124,6 @@ Selector NSAPI::getNSArraySelector(NSArrayMethodKind MK) const {
       Sel = Ctx.Selectors.getSelector(2, KeyIdents);
       break;
     }
-    case NSArr_initWithObjectsCount: {
-      IdentifierInfo *KeyIdents[] = {
-        &Ctx.Idents.get("initWithObjects"),
-        &Ctx.Idents.get("count")
-      };
-      Sel = Ctx.Selectors.getSelector(2, KeyIdents);
-      break;
-    }
     }
     return (NSArraySelectors[MK] = Sel);
   }
@@ -215,15 +207,6 @@ Selector NSAPI::getNSDictionarySelector(
         &Ctx.Idents.get("forKey")
       };
       Sel = Ctx.Selectors.getSelector(2, KeyIdents);
-      break;
-    }
-    case NSDict_initWithObjectsForKeysCount: {
-      IdentifierInfo *KeyIdents[] = {
-        &Ctx.Idents.get("initWithObjects"),
-        &Ctx.Idents.get("forKeys"),
-        &Ctx.Idents.get("count")
-      };
-      Sel = Ctx.Selectors.getSelector(3, KeyIdents);
       break;
     }
     }
