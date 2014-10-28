@@ -24,7 +24,7 @@ if ( NOT LLD_BUILT_STANDALONE )
   set(LLD_TEST_DEPS
     FileCheck not llvm-nm
     lld llvm-config llvm-objdump llvm-readobj yaml2obj obj2yaml
-    linker-script-test macho-dump
+    linker-script-test macho-dump llvm-mc
     LLDUnitTests
     )
   set(LLD_TEST_PARAMS
