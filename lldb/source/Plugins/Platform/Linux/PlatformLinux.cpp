@@ -21,6 +21,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
@@ -532,6 +533,33 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
             static const uint8_t g_hex_opcode[] = { 0x0c, 0xdb, 0x00, 0x54 };
             trap_opcode = g_hex_opcode;
             trap_opcode_size = sizeof(g_hex_opcode);
+        }
+        break;
+    case llvm::Triple::arm:
+        {
+            // The ARM reference recommends the use of 0xe7fddefe and 0xdefe
+            // but the linux kernel does otherwise.
+            static const uint8_t g_arm_breakpoint_opcode[] = { 0xf0, 0x01, 0xf0, 0xe7 };
+            static const uint8_t g_thumb_breakpoint_opcode[] = { 0x01, 0xde };
+
+            lldb::BreakpointLocationSP bp_loc_sp (bp_site->GetOwnerAtIndex (0));
+            AddressClass addr_class = eAddressClassUnknown;
+
+            if (bp_loc_sp)
+                addr_class = bp_loc_sp->GetAddress ().GetAddressClass ();
+
+            if (addr_class == eAddressClassCodeAlternateISA 
+                || (addr_class == eAddressClassUnknown 
+                    && bp_loc_sp->GetAddress().GetOffset() & 1))
+            {
+                trap_opcode = g_thumb_breakpoint_opcode;
+                trap_opcode_size = sizeof(g_thumb_breakpoint_opcode);
+            }
+            else
+            {
+                trap_opcode = g_arm_breakpoint_opcode;
+                trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
+            }
         }
         break;
     }
