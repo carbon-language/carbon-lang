@@ -8254,7 +8254,7 @@ void CrossWindows::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // NOTE: deal with multiple definitions on Windows (e.g. COMDAT)
-  CmdArgs.push_back("--allow-multiple-definitions");
+  CmdArgs.push_back("--allow-multiple-definition");
 
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
