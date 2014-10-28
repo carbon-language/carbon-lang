@@ -132,6 +132,7 @@ ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_call
                                           SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
                                           SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
                                           SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
+                                          SWIGPythonScriptKeyword_Value swig_run_script_keyword_value,
                                           SWIGPython_GetDynamicSetting swig_plugin_get,
                                           SWIGPythonCreateScriptedThreadPlan swig_thread_plan_script,
                                           SWIGPythonCallThreadPlan swig_call_thread_plan)
@@ -157,6 +158,7 @@ ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_call
                                                     swig_run_script_keyword_thread,
                                                     swig_run_script_keyword_target,
                                                     swig_run_script_keyword_frame,
+                                                    swig_run_script_keyword_value,
                                                     swig_plugin_get,
                                                     swig_thread_plan_script,
                                                     swig_call_thread_plan);

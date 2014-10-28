@@ -679,6 +679,12 @@ LLDBSWIGPythonRunScriptKeywordFrame (const char* python_function_name,
                                      lldb::StackFrameSP& frame,
                                      std::string& output);
 
+extern "C" bool
+LLDBSWIGPythonRunScriptKeywordValue (const char* python_function_name,
+                                     const char* session_dictionary_name,
+                                     lldb::ValueObjectSP& value,
+                                     std::string& output);
+
 extern "C" void*
 LLDBSWIGPython_GetDynamicSetting (void* module,
                                   const char* setting,
@@ -715,6 +721,7 @@ SBCommandInterpreter::InitializeSWIG ()
                                                   LLDBSWIGPythonRunScriptKeywordThread,
                                                   LLDBSWIGPythonRunScriptKeywordTarget,
                                                   LLDBSWIGPythonRunScriptKeywordFrame,
+                                                  LLDBSWIGPythonRunScriptKeywordValue,
                                                   LLDBSWIGPython_GetDynamicSetting,
                                                   LLDBSwigPythonCreateScriptedThreadPlan,
                                                   LLDBSWIGPythonCallThreadPlan);

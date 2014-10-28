@@ -67,6 +67,7 @@ static ScriptInterpreter::SWIGPythonScriptKeyword_Process g_swig_run_script_keyw
 static ScriptInterpreter::SWIGPythonScriptKeyword_Thread g_swig_run_script_keyword_thread = nullptr;
 static ScriptInterpreter::SWIGPythonScriptKeyword_Target g_swig_run_script_keyword_target = nullptr;
 static ScriptInterpreter::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = nullptr;
+static ScriptInterpreter::SWIGPythonScriptKeyword_Value g_swig_run_script_keyword_value = nullptr;
 static ScriptInterpreter::SWIGPython_GetDynamicSetting g_swig_plugin_get = nullptr;
 static ScriptInterpreter::SWIGPythonCreateScriptedThreadPlan g_swig_thread_plan_script = nullptr;
 static ScriptInterpreter::SWIGPythonCallThreadPlan g_swig_call_thread_plan = nullptr;
@@ -2376,6 +2377,38 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
     }
     return ret_val;
 }
+    
+bool
+ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
+                                                 ValueObject *value,
+                                                 std::string& output,
+                                                 Error& error)
+{
+    bool ret_val;
+    if (!value)
+    {
+        error.SetErrorString("no value");
+        return false;
+    }
+    if (!impl_function || !impl_function[0])
+    {
+        error.SetErrorString("no function to execute");
+        return false;
+    }
+    if (!g_swig_run_script_keyword_value)
+    {
+        error.SetErrorString("internal helper function missing");
+        return false;
+    }
+    {
+        ValueObjectSP value_sp(value->GetSP());
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
+        ret_val = g_swig_run_script_keyword_value (impl_function, m_dictionary_name.c_str(), value_sp, output);
+        if (!ret_val)
+            error.SetErrorString("python script evaluation failed");
+    }
+    return ret_val;
+}
 
 uint64_t replace_all(std::string& str, const std::string& oldStr, const std::string& newStr)
 {
@@ -2676,6 +2709,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
                                                 SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
                                                 SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
                                                 SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
+                                                SWIGPythonScriptKeyword_Value swig_run_script_keyword_value,
                                                 SWIGPython_GetDynamicSetting swig_plugin_get,
                                                 SWIGPythonCreateScriptedThreadPlan swig_thread_plan_script,
                                                 SWIGPythonCallThreadPlan swig_call_thread_plan)
@@ -2700,6 +2734,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
     g_swig_run_script_keyword_thread = swig_run_script_keyword_thread;
     g_swig_run_script_keyword_target = swig_run_script_keyword_target;
     g_swig_run_script_keyword_frame = swig_run_script_keyword_frame;
+    g_swig_run_script_keyword_value = swig_run_script_keyword_value;
     g_swig_plugin_get = swig_plugin_get;
     g_swig_thread_plan_script = swig_thread_plan_script;
     g_swig_call_thread_plan = swig_call_thread_plan;

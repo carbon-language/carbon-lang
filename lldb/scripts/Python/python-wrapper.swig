@@ -1060,6 +1060,44 @@ std::string& output)
 }
 
 SWIGEXPORT bool
+LLDBSWIGPythonRunScriptKeywordValue
+(const char* python_function_name,
+const char* session_dictionary_name,
+lldb::ValueObjectSP& value,
+std::string& output)
+
+{
+    bool retval = false;
+
+    if (python_function_name == NULL || python_function_name[0] == '\0' || !session_dictionary_name)
+        return retval;
+
+    lldb::SBValue value_sb(value);
+    
+    {
+        PyErr_Cleaner py_err_cleaner(true);
+        
+        PyCallable pfunc = PyCallable::FindWithFunctionName(python_function_name,session_dictionary_name);
+        
+        if (!pfunc)
+            return retval;
+        
+        PyObject* session_dict = NULL;
+        PyObject* pvalue = NULL;
+        pvalue = pfunc(value_sb, session_dict = FindSessionDictionary(session_dictionary_name));
+        
+        Py_XINCREF (session_dict);
+        
+        if (PyObjectToString(pvalue,output))
+            retval = true;
+        
+        Py_XDECREF(pvalue);
+    }
+    
+    return retval;
+}
+
+SWIGEXPORT bool
 LLDBSwigPythonCallModuleInit 
 (
     const char *python_module_name,

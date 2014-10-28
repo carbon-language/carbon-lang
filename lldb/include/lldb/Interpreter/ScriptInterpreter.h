@@ -152,6 +152,11 @@ public:
                                                                  const char* session_dictionary_name,
                                                                  lldb::StackFrameSP& frame,
                                                                  std::string& output);
+
+    typedef bool            (*SWIGPythonScriptKeyword_Value)    (const char* python_function_name,
+                                                                 const char* session_dictionary_name,
+                                                                 lldb::ValueObjectSP& value,
+                                                                 std::string& output);
     
     typedef void*           (*SWIGPython_GetDynamicSetting)     (void* module,
                                                                  const char* setting,
@@ -556,6 +561,16 @@ public:
     }
     
     virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            ValueObject* value,
+                            std::string& output,
+                            Error& error)
+    {
+        error.SetErrorString("unimplemented");
+        return false;
+    }
+    
+    virtual bool
     GetDocumentationForItem (const char* item, std::string& dest)
     {
 		dest.clear();
@@ -621,6 +636,7 @@ public:
                            SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
                            SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
                            SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
+                           SWIGPythonScriptKeyword_Value swig_run_script_keyword_value,
                            SWIGPython_GetDynamicSetting swig_plugin_get,
                            SWIGPythonCreateScriptedThreadPlan swig_thread_plan_script,
                            SWIGPythonCallThreadPlan swig_call_thread_plan);

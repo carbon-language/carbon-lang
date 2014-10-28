@@ -232,6 +232,12 @@ public:
                             Error& error);
     
     virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            ValueObject* value,
+                            std::string& output,
+                            Error& error);
+    
+    virtual bool
     LoadScriptingModule (const char* filename,
                          bool can_reload,
                          bool init_session,
@@ -296,6 +302,7 @@ public:
                            SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
                            SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
                            SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
+                           SWIGPythonScriptKeyword_Value swig_run_script_keyword_value,
                            SWIGPython_GetDynamicSetting swig_plugin_get,
                            SWIGPythonCreateScriptedThreadPlan swig_thread_plan_script,
                            SWIGPythonCallThreadPlan swig_call_thread_plan);
