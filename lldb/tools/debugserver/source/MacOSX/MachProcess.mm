@@ -2000,9 +2000,7 @@ MachProcess::LaunchForDebug
                     break; // We tried a BKS launch, but didn't succeed lets get out
             }
         }
-        // In case the executable name has a ".app" fragment which confuses our debugserver,
-        // let's do an intentional fallthrough here...
-        launch_flavor = eLaunchFlavorPosixSpawn;
+        break;
 #endif
 #ifdef WITH_SPRINGBOARD
 
@@ -2032,9 +2030,7 @@ MachProcess::LaunchForDebug
                     break; // We tried a springboard launch, but didn't succeed lets get out
             }
         }
-        // In case the executable name has a ".app" fragment which confuses our debugserver,
-        // let's do an intentional fallthrough here...
-        launch_flavor = eLaunchFlavorPosixSpawn;
+        break;
 
 #endif
 

@@ -10,6 +10,7 @@
 	<array>
 		<string>/Developer/usr/bin/debugserver</string>
 		<string>--lockdown</string>
+        <string>--launch=backboard</string>
 	</array>
 </dict>
 </plist>
