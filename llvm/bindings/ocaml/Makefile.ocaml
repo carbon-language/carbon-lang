@@ -1,20 +1,20 @@
 ##===- bindings/ocaml/Makefile.ocaml -----------------------*- Makefile -*-===##
-# 
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 ##===----------------------------------------------------------------------===##
-# 
+#
 # An OCaml library is a unique project type in the context of LLVM, so rules are
 # here rather than in Makefile.rules.
-# 
+#
 # Reference materials on installing OCaml libraries:
-# 
+#
 #   https://fedoraproject.org/wiki/Packaging/OCaml
 #   http://pkg-ocaml-maint.alioth.debian.org/ocaml_packaging_policy.txt
-# 
+#
 ##===----------------------------------------------------------------------===##
 
 include $(LEVEL)/Makefile.config
@@ -68,7 +68,7 @@ OCAMLAFLAGS += $(patsubst %,-cclib %, \
                                           $(UsedLibs))
 endif
 endif
- 
+
 # -g was introduced in 3.10.0.
 #ifneq ($(ENABLE_OPTIMIZED),1)
 #  OCAMLDEBUGFLAG := -g
@@ -225,7 +225,7 @@ install-a:: $(LibraryA)
 	$(Echo) "Installing $(BuildMode) $(DestA)"
 	$(Verb) $(MKDIR) $(PROJ_libocamldir)
 	$(Verb) $(INSTALL) $(LibraryA) $(DestA)
-	$(Verb) 
+	$(Verb)
 
 uninstall-a::
 	$(Echo) "Uninstalling $(DestA)"

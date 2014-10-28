@@ -40,10 +40,10 @@ CAMLprim value llvm_register_core_exns(value IoError) {
 static void llvm_raise(value Prototype, char *Message) {
   CAMLparam1(Prototype);
   CAMLlocal1(CamlMessage);
-  
+
   CamlMessage = copy_string(Message);
   LLVMDisposeMessage(Message);
-  
+
   raise_with_arg(Prototype, CamlMessage);
   abort(); /* NOTREACHED */
 #ifdef CAMLnoreturn
@@ -1181,10 +1181,10 @@ CAMLprim value llvm_gc(LLVMValueRef Fn) {
   const char *GC;
   CAMLparam0();
   CAMLlocal2(Name, Option);
-  
+
   if ((GC = LLVMGetGC(Fn))) {
     Name = copy_string(GC);
-    
+
     Option = alloc(1, 0);
     Field(Option, 0) = Name;
     CAMLreturn(Option);
@@ -1439,20 +1439,20 @@ CAMLprim value llvm_incoming(LLVMValueRef PhiNode) {
   unsigned I;
   CAMLparam0();
   CAMLlocal3(Hd, Tl, Tmp);
-  
+
   /* Build a tuple list of them. */
   Tl = Val_int(0);
   for (I = LLVMCountIncoming(PhiNode); I != 0; ) {
     Hd = alloc(2, 0);
     Store_field(Hd, 0, (value) LLVMGetIncomingValue(PhiNode, --I));
     Store_field(Hd, 1, (value) LLVMGetIncomingBlock(PhiNode, I));
-    
+
     Tmp = alloc(2, 0);
     Store_field(Tmp, 0, Hd);
     Store_field(Tmp, 1, Tl);
     Tl = Tmp;
   }
-  
+
   CAMLreturn(Tl);
 }
 
@@ -2085,9 +2085,9 @@ CAMLprim LLVMValueRef llvm_build_fcmp(value Pred,
 CAMLprim LLVMValueRef llvm_build_phi(value Incoming, value Name, value B) {
   value Hd, Tl;
   LLVMValueRef FirstValue, PhiNode;
-  
+
   assert(Incoming != Val_int(0) && "Empty list passed to Llvm.build_phi!");
-  
+
   Hd = Field(Incoming, 0);
   FirstValue = (LLVMValueRef) Field(Hd, 0);
   PhiNode = LLVMBuildPhi(Builder_val(B), LLVMTypeOf(FirstValue),
@@ -2098,7 +2098,7 @@ CAMLprim LLVMValueRef llvm_build_phi(value Incoming, value Name, value B) {
     LLVMAddIncoming(PhiNode, (LLVMValueRef*) &Field(Hd, 0),
                     (LLVMBasicBlockRef*) &Field(Hd, 1), 1);
   }
-  
+
   return PhiNode;
 }
 
@@ -2134,7 +2134,7 @@ CAMLprim LLVMValueRef llvm_build_insertelement(LLVMValueRef Vec,
                                                LLVMValueRef Element,
                                                LLVMValueRef Idx,
                                                value Name, value B) {
-  return LLVMBuildInsertElement(Builder_val(B), Vec, Element, Idx, 
+  return LLVMBuildInsertElement(Builder_val(B), Vec, Element, Idx,
                                 String_val(Name));
 }
 
@@ -2186,11 +2186,11 @@ CAMLprim value llvm_memorybuffer_of_file(value Path) {
   CAMLparam1(Path);
   char *Message;
   LLVMMemoryBufferRef MemBuf;
-  
+
   if (LLVMCreateMemoryBufferWithContentsOfFile(String_val(Path),
                                                &MemBuf, &Message))
     llvm_raise(llvm_ioerror_exn, Message);
-  
+
   CAMLreturn((value) MemBuf);
 }
 
@@ -2199,10 +2199,10 @@ CAMLprim value llvm_memorybuffer_of_file(value Path) {
 CAMLprim LLVMMemoryBufferRef llvm_memorybuffer_of_stdin(value Unit) {
   char *Message;
   LLVMMemoryBufferRef MemBuf;
-  
+
   if (LLVMCreateMemoryBufferWithSTDIN(&MemBuf, &Message))
     llvm_raise(llvm_ioerror_exn, Message);
-  
+
   return MemBuf;
 }
 

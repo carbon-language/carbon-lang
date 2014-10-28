@@ -106,7 +106,7 @@ external add_cfg_simplification : [<Llvm.PassManager.any] Llvm.PassManager.t
 (** See the [llvm::createTailCallEliminationPass] function. *)
 external
 add_tail_call_elimination : [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
-                          = "llvm_add_tail_call_elimination" 
+                          = "llvm_add_tail_call_elimination"
 
 (** See the [llvm::createGVNPass] function. *)
 external add_gvn : [<Llvm.PassManager.any] Llvm.PassManager.t

@@ -31,10 +31,10 @@ CAMLprim value llvm_register_bitreader_exns(value Error) {
 static void llvm_raise(value Prototype, char *Message) {
   CAMLparam1(Prototype);
   CAMLlocal1(CamlMessage);
-  
+
   CamlMessage = copy_string(Message);
   LLVMDisposeMessage(Message);
-  
+
   raise_with_arg(Prototype, CamlMessage);
   abort(); /* NOTREACHED */
 #ifdef CAMLnoreturn
@@ -50,11 +50,11 @@ CAMLprim value llvm_get_module(LLVMContextRef C, LLVMMemoryBufferRef MemBuf) {
   CAMLparam0();
   CAMLlocal2(Variant, MessageVal);
   char *Message;
-  
+
   LLVMModuleRef M;
   if (LLVMGetBitcodeModuleInContext(C, MemBuf, &M, &Message))
     llvm_raise(llvm_bitreader_error_exn, Message);
-  
+
   CAMLreturn((value) M);
 }
 
@@ -65,9 +65,9 @@ CAMLprim value llvm_parse_bitcode(LLVMContextRef C,
   CAMLlocal2(Variant, MessageVal);
   LLVMModuleRef M;
   char *Message;
-  
+
   if (LLVMParseBitcodeInContext(C, MemBuf, &M, &Message))
     llvm_raise(llvm_bitreader_error_exn, Message);
-  
+
   CAMLreturn((value) M);
 }

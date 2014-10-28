@@ -25,10 +25,10 @@
 CAMLprim value llvm_verify_module(LLVMModuleRef M) {
   CAMLparam0();
   CAMLlocal2(String, Option);
-  
+
   char *Message;
   int Result = LLVMVerifyModule(M, LLVMReturnStatusAction, &Message);
-  
+
   if (0 == Result) {
     Option = Val_int(0);
   } else {
@@ -36,9 +36,9 @@ CAMLprim value llvm_verify_module(LLVMModuleRef M) {
     String = copy_string(Message);
     Store_field(Option, 0, String);
   }
-  
+
   LLVMDisposeMessage(Message);
-  
+
   CAMLreturn(Option);
 }
 

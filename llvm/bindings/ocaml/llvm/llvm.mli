@@ -849,7 +849,7 @@ val const_float_of_string : lltype -> string -> llvalue
 (** {7 Operations on composite constants} *)
 
 (** [const_string c s] returns the constant [i8] array with the values of the
-    characters in the string [s] in the context [c]. The array is not 
+    characters in the string [s] in the context [c]. The array is not
     null-terminated (but see {!const_stringz}). This value can in turn be used
     as the initializer for a global variable. See the method
     [llvm::ConstantArray::get]. *)
@@ -2419,7 +2419,7 @@ module MemoryBuffer : sig
       path [p]. If the file could not be read, then [IoError msg] is
       raised. *)
   val of_file : string -> llmemorybuffer
-  
+
   (** [of_stdin ()] is the memory buffer containing the contents of standard input.
       If standard input is empty, then [IoError msg] is raised. *)
   val of_stdin : unit -> llmemorybuffer
@@ -2430,7 +2430,7 @@ module MemoryBuffer : sig
 
   (** [as_string mb] is the string containing the contents of memory buffer [mb]. *)
   val as_string : llmemorybuffer -> string
-  
+
   (** Disposes of a memory buffer. *)
   val dispose : llmemorybuffer -> unit
 end
@@ -2442,13 +2442,13 @@ module PassManager : sig
   (**  *)
   type 'a t
   type any = [ `Module | `Function ]
-  
+
   (** [PassManager.create ()] constructs a new whole-module pass pipeline. This
       type of pipeline is suitable for link-time optimization and whole-module
       transformations.
       See the constructor of [llvm::PassManager]. *)
   val create : unit -> [ `Module ] t
-  
+
   (** [PassManager.create_function m] constructs a new function-by-function
       pass pipeline over the module [m]. It does not take ownership of [m].
       This type of pipeline is suitable for code generation and JIT compilation
@@ -2467,19 +2467,19 @@ module PassManager : sig
       the module, [false] otherwise.
       See the [llvm::FunctionPassManager::doInitialization] method. *)
   val initialize : [ `Function ] t -> bool
-  
+
   (** [run_function f fpm] executes all of the function passes scheduled in the
       function pass manager [fpm] over the function [f]. Returns [true] if any
       of the passes modified [f], [false] otherwise.
       See the [llvm::FunctionPassManager::run] method. *)
   val run_function : llvalue -> [ `Function ] t -> bool
-  
+
   (** [finalize fpm] finalizes all of the function passes scheduled in in the
       function pass manager [fpm]. Returns [true] if any of the passes
       modified the module, [false] otherwise.
       See the [llvm::FunctionPassManager::doFinalization] method. *)
   val finalize : [ `Function ] t -> bool
-  
+
   (** Frees the memory of a pass pipeline. For function pipelines, does not free
       the module.
       See the destructor of [llvm::BasePassManager]. *)
