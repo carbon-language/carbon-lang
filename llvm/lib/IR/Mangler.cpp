@@ -120,7 +120,8 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
   const Function *MSFunc = dyn_cast<Function>(GV);
   if (Name.startswith("\01"))
     MSFunc = nullptr; // Don't mangle when \01 is present.
-  CallingConv::ID CC = MSFunc ? MSFunc->getCallingConv() : CallingConv::C;
+  CallingConv::ID CC =
+      MSFunc ? MSFunc->getCallingConv() : (unsigned)CallingConv::C;
   if (!DL->hasMicrosoftFastStdCallMangling() &&
       CC != CallingConv::X86_VectorCall)
     MSFunc = nullptr;
