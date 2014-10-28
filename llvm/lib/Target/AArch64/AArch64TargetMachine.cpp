@@ -251,7 +251,8 @@ bool AArch64PassConfig::addPostRegAlloc() {
   if (TM->getOptLevel() != CodeGenOpt::None && EnableDeadRegisterElimination)
     addPass(createAArch64DeadRegisterDefinitions());
   if (TM->getOptLevel() != CodeGenOpt::None &&
-      TM->getSubtarget<AArch64Subtarget>().isCortexA57() &&
+      (TM->getSubtarget<AArch64Subtarget>().isCortexA53() ||
+       TM->getSubtarget<AArch64Subtarget>().isCortexA57()) &&
       usingDefaultRegAlloc())
     // Improve performance for some FP/SIMD code for A57.
     addPass(createAArch64A57FPLoadBalancing());
