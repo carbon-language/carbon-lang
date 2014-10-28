@@ -5034,7 +5034,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
       "template <class T, class = typename std::enable_if<\n"
       "                       std::is_integral<T>::value &&\n"
       "                       (sizeof(T) > 1 || sizeof(T) < 8)>::type>\n"
-      "void F();");
+      "void F();", getLLVMStyleWithColumns(76));
 
   verifyIndependentOfContext("MACRO(int *i);");
   verifyIndependentOfContext("MACRO(auto *a);");
