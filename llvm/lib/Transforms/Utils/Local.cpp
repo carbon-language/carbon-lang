@@ -1074,9 +1074,9 @@ bool llvm::LowerDbgDeclare(Function &F) {
         else if (LoadInst *LI = dyn_cast<LoadInst>(U))
           ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
         else if (CallInst *CI = dyn_cast<CallInst>(U)) {
-	  // This is a call by-value or some other instruction that
-	  // takes a pointer to the variable. Insert a *value*
-	  // intrinsic that describes the alloca.
+          // This is a call by-value or some other instruction that
+          // takes a pointer to the variable. Insert a *value*
+          // intrinsic that describes the alloca.
           auto DbgVal = DIB.insertDbgValueIntrinsic(
               AI, 0, DIVariable(DDI->getVariable()),
               DIExpression(DDI->getExpression()), CI);
@@ -1204,7 +1204,7 @@ static bool markAliveBlocks(BasicBlock *BB,
                    dyn_cast<ConstantInt>(II->getArgOperand(0)))
             MakeUnreachable = Cond->isZero();
 
-          if (MakeUnreachable) { 
+          if (MakeUnreachable) {
             // Don't insert a call to llvm.trap right before the unreachable.
             changeToUnreachable(BBI, false);
             Changed = true;

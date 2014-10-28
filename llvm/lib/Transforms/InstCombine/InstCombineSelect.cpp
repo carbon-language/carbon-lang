@@ -392,11 +392,11 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
 ///
 /// This also tries to turn
 /// --- Single bit tests:
-/// if ((x & C) == 0) x |= C	to  x |= C
-/// if ((x & C) != 0) x ^= C	to  x &= ~C
-/// if ((x & C) == 0) x ^= C	to  x |= C
-/// if ((x & C) != 0) x &= ~C	to  x &= ~C
-/// if ((x & C) == 0) x &= ~C	to  nothing
+/// if ((x & C) == 0) x |= C    to  x |= C
+/// if ((x & C) != 0) x ^= C    to  x &= ~C
+/// if ((x & C) == 0) x ^= C    to  x |= C
+/// if ((x & C) != 0) x &= ~C   to  x &= ~C
+/// if ((x & C) == 0) x &= ~C   to  nothing
 static Value *foldSelectICmpAndOr(SelectInst &SI, Value *TrueVal,
                                   Value *FalseVal,
                                   InstCombiner::BuilderTy *Builder) {

@@ -238,7 +238,7 @@ protected:
           if (PossibleReds[i].size() % Scale == 0) {
             PossibleRedLastSet.insert(PossibleReds[i].getReducedValue());
             PossibleRedPHISet.insert(PossibleReds[i].getPHI());
-      
+
             PossibleRedSet.insert(PossibleReds[i].getPHI());
             PossibleRedIdx[PossibleReds[i].getPHI()] = i;
             for (SimpleLoopReduction::iterator J = PossibleReds[i].begin(),
@@ -487,7 +487,7 @@ void LoopReroll::collectInLoopUserSet(Loop *L,
           if (PN->getIncomingBlock(U) == L->getHeader())
             continue;
         }
-  
+
         if (L->contains(User) && !Exclude.count(User)) {
           Queue.push_back(User);
         }
@@ -661,9 +661,9 @@ bool LoopReroll::ReductionTracker::validateSelected() {
     int PrevIter = 0, BaseCount = 0, Count = 0;
     for (SimpleLoopReduction::iterator J = PossibleReds[i].begin(),
          JE = PossibleReds[i].end(); J != JE; ++J) {
-	// Note that all instructions in the chain must have been found because
-	// all instructions in the function must have been assigned to some
-	// iteration.
+        // Note that all instructions in the chain must have been found because
+        // all instructions in the function must have been assigned to some
+        // iteration.
       int Iter = PossibleRedIter[*J];
       if (Iter != PrevIter && Iter != PrevIter + 1 &&
           !PossibleReds[i].getReducedValue()->isAssociative()) {
@@ -881,7 +881,7 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
           // needed because otherwise isSafeToSpeculativelyExecute returns
           // false on PHI nodes.
           if (!isSimpleLoadStore(J2) && !isSafeToSpeculativelyExecute(J2, DL))
-            FutureSideEffects = true; 
+            FutureSideEffects = true;
         }
 
         ++J2;
@@ -952,9 +952,9 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
         for (unsigned j = 0; j < J1->getNumOperands() && !MatchFailed; ++j) {
           Value *Op2 = J2->getOperand(j);
 
-	  // If this is part of a reduction (and the operation is not
-	  // associatve), then we match all operands, but not those that are
-	  // part of the reduction.
+          // If this is part of a reduction (and the operation is not
+          // associatve), then we match all operands, but not those that are
+          // part of the reduction.
           if (InReduction)
             if (Instruction *Op2I = dyn_cast<Instruction>(Op2))
               if (Reductions.isPairInSame(J2, Op2I))
@@ -968,11 +968,11 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
             Op2 = IV;
 
           if (J1->getOperand(Swapped ? unsigned(!j) : j) != Op2) {
-	    // If we've not already decided to swap the matched operands, and
-	    // we've not already matched our first operand (note that we could
-	    // have skipped matching the first operand because it is part of a
-	    // reduction above), and the instruction is commutative, then try
-	    // the swapped match.
+            // If we've not already decided to swap the matched operands, and
+            // we've not already matched our first operand (note that we could
+            // have skipped matching the first operand because it is part of a
+            // reduction above), and the instruction is commutative, then try
+            // the swapped match.
             if (!Swapped && J1->isCommutative() && !SomeOpMatched &&
                 J1->getOperand(!j) == Op2) {
               Swapped = true;
@@ -1069,7 +1069,7 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
       continue;
     }
 
-    ++J; 
+    ++J;
   }
 
   // Insert the new induction variable.
@@ -1110,7 +1110,7 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
           ICMinus1 = Expander.expandCodeFor(ICMinus1SCEV, NewIV->getType(),
                                             Preheader->getTerminator());
         }
- 
+
         Value *Cond = new ICmpInst(BI, CmpInst::ICMP_EQ, NewIV, ICMinus1,
                                    "exitcond");
         BI->setCondition(Cond);
@@ -1182,4 +1182,3 @@ bool LoopReroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   return Changed;
 }
-

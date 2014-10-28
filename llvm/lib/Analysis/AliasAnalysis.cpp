@@ -199,9 +199,9 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
         Location CS1Loc =
           getArgLocation(CS1, (unsigned) std::distance(CS1.arg_begin(), I),
                          ArgMask);
-	// ArgMask indicates what CS1 might do to CS1Loc; if CS1 might Mod
-	// CS1Loc, then we care about either a Mod or a Ref by CS2. If CS1
-	// might Ref, then we care only about a Mod by CS2.
+        // ArgMask indicates what CS1 might do to CS1Loc; if CS1 might Mod
+        // CS1Loc, then we care about either a Mod or a Ref by CS2. If CS1
+        // might Ref, then we care only about a Mod by CS2.
         ModRefResult ArgR = getModRefInfo(CS2, CS1Loc);
         if (((ArgMask & Mod) != NoModRef && (ArgR & ModRef) != NoModRef) ||
             ((ArgMask & Ref) != NoModRef && (ArgR & Mod)    != NoModRef))
@@ -293,7 +293,7 @@ AliasAnalysis::getLocation(const AtomicRMWInst *RMWI) {
                   getTypeStoreSize(RMWI->getValOperand()->getType()), AATags);
 }
 
-AliasAnalysis::Location 
+AliasAnalysis::Location
 AliasAnalysis::getLocationForSource(const MemTransferInst *MTI) {
   uint64_t Size = UnknownSize;
   if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
@@ -303,11 +303,11 @@ AliasAnalysis::getLocationForSource(const MemTransferInst *MTI) {
   // to both the source and the destination.
   AAMDNodes AATags;
   MTI->getAAMetadata(AATags);
-  
+
   return Location(MTI->getRawSource(), Size, AATags);
 }
 
-AliasAnalysis::Location 
+AliasAnalysis::Location
 AliasAnalysis::getLocationForDest(const MemIntrinsic *MTI) {
   uint64_t Size = UnknownSize;
   if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
@@ -317,7 +317,7 @@ AliasAnalysis::getLocationForDest(const MemIntrinsic *MTI) {
   // to both the source and the destination.
   AAMDNodes AATags;
   MTI->getAAMetadata(AATags);
- 
+
   return Location(MTI->getRawDest(), Size, AATags);
 }
 
@@ -440,7 +440,7 @@ AliasAnalysis::callCapturesBefore(const Instruction *I,
     // assume that the call could touch the pointer, even though it doesn't
     // escape.
     if (isNoAlias(AliasAnalysis::Location(*CI),
-		  AliasAnalysis::Location(Object)))
+                  AliasAnalysis::Location(Object)))
       continue;
     if (CS.doesNotAccessMemory(ArgNo))
       continue;
@@ -557,4 +557,3 @@ bool llvm::isIdentifiedFunctionLocal(const Value *V)
 {
   return isa<AllocaInst>(V) || isNoAliasCall(V) || isNoAliasArgument(V);
 }
-
