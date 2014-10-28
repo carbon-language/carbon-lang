@@ -409,6 +409,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   GoogleStyle.PenaltyBreakBeforeFirstCallParameter = 1;
 
   if (Language == FormatStyle::LK_Java) {
+    GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
     GoogleStyle.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
     GoogleStyle.ColumnLimit = 100;
     GoogleStyle.SpaceAfterCStyleCast = true;
