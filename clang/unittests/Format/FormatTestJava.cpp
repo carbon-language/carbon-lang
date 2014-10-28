@@ -62,7 +62,7 @@ TEST_F(FormatTestJava, ClassDeclarations) {
 
 TEST_F(FormatTestJava, ThrowsDeclarations) {
   verifyFormat("public void doSooooooooooooooooooooooooooomething()\n"
-               "    throws LooooooooooooooooooooooooooooongException {}");
+               "    throws LooooooooooooooooooooooooooooongException {\n}");
 }
 
 TEST_F(FormatTestJava, Annotations) {
