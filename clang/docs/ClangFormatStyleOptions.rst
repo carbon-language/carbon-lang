@@ -371,6 +371,9 @@ the configuration (without a prefix: ``Auto``).
     Indent in all namespaces.
 
 
+**ObjCBlockIndentWidth** (``unsigned``)
+  The number of characters to use for indentation of ObjC blocks.
+
 **ObjCSpaceAfterProperty** (``bool``)
   Add a space after ``@property`` in Objective-C, i.e. use
   ``\@property (readonly)`` instead of ``\@property(readonly)``.
