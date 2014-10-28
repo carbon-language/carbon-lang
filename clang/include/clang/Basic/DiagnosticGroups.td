@@ -422,7 +422,6 @@ def : DiagGroup<"arc-abi">;
 def ARCUnsafeRetainedAssign : DiagGroup<"arc-unsafe-retained-assign">;
 def ARCRetainCycles : DiagGroup<"arc-retain-cycles">;
 def ARCNonPodMemAccess : DiagGroup<"arc-non-pod-memaccess">;
-def ARCBridgeCastRelease : DiagGroup<"arc-bridge-cast-release">;
 def AutomaticReferenceCounting : DiagGroup<"arc",
                                            [ARCUnsafeRetainedAssign,
                                             ARCRetainCycles,

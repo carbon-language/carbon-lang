@@ -4075,22 +4075,11 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
     // Okay: id -> CF
     CK = CK_BitCast;
     switch (Kind) {
-      case OBC_Bridge: {
-        const ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(SubExpr);
-        while (implCE && implCE->getCastKind() ==  CK_BitCast)
-          implCE = dyn_cast<ImplicitCastExpr>(implCE->getSubExpr());
-        if (implCE && (implCE->getCastKind() == CK_ARCConsumeObject))
-          if (const Expr *LitExp = implCE->getSubExpr())
-            if ((isa<ObjCArrayLiteral>(LitExp) ||
-                 isa<ObjCDictionaryLiteral>(LitExp)) &&
-                T->isCARCBridgableType())
-              Diag(BridgeKeywordLoc, diag::warn_arc_consumed_object_released)
-                << T << implCE->getType();
-        // Reclaiming a value that's going to be __bridge-casted to CF
-        // is very dangerous, so we don't do it.
-        SubExpr = maybeUndoReclaimObject(SubExpr);
-        break;
-      }
+    case OBC_Bridge:
+      // Reclaiming a value that's going to be __bridge-casted to CF
+      // is very dangerous, so we don't do it.
+      SubExpr = maybeUndoReclaimObject(SubExpr);
+      break;
       
     case OBC_BridgeRetained:        
       // Produce the object before casting it.
