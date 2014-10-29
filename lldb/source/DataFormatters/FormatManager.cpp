@@ -1212,6 +1212,10 @@ FormatManager::LoadObjCFormatters()
     .SetHideItemNames(false);
 
     TypeCategoryImpl::SharedPointer objc_category_sp = GetCategory(m_objc_category_name);
+    TypeCategoryImpl::SharedPointer appkit_category_sp = GetCategory(m_appkit_category_name);
+    TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);
+    TypeCategoryImpl::SharedPointer coregraphics_category_sp = GetCategory(m_coregraphics_category_name);
+    TypeCategoryImpl::SharedPointer coreservices_category_sp = GetCategory(m_coreservices_category_name);
     
     lldb::TypeSummaryImplSP ObjC_BOOL_summary(new CXXFunctionSummaryFormat(objc_flags, lldb_private::formatters::ObjCBOOLSummaryProvider,""));
     objc_category_sp->GetTypeSummariesContainer()->Add(ConstString("BOOL"),
@@ -1247,8 +1251,6 @@ FormatManager::LoadObjCFormatters()
                       ConstString("__block_literal_generic"),
                       objc_flags);
 
-    TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);
-
     AddStringSummary(corefoundation_category_sp,
                      "${var.years} years, ${var.months} months, ${var.days} days, ${var.hours} hours, ${var.minutes} minutes ${var.seconds} seconds",
                      ConstString("CFGregorianUnits"),
@@ -1257,28 +1259,28 @@ FormatManager::LoadObjCFormatters()
                      "location=${var.location} length=${var.length}",
                      ConstString("CFRange"),
                      objc_flags);
-    AddStringSummary(corefoundation_category_sp,
+
+    AddStringSummary(appkit_category_sp,
                      "(x=${var.x}, y=${var.y})",
                      ConstString("NSPoint"),
                      objc_flags);
-    AddStringSummary(corefoundation_category_sp,
+    AddStringSummary(appkit_category_sp,
                      "location=${var.location}, length=${var.length}",
                      ConstString("NSRange"),
                      objc_flags);
-    AddStringSummary(corefoundation_category_sp,
+    AddStringSummary(appkit_category_sp,
                      "${var.origin}, ${var.size}",
                      ConstString("NSRect"),
                      objc_flags);
-    AddStringSummary(corefoundation_category_sp,
+    AddStringSummary(appkit_category_sp,
                      "(${var.origin}, ${var.size}), ...",
                      ConstString("NSRectArray"),
                      objc_flags);
-    AddStringSummary(objc_category_sp,
+    AddStringSummary(appkit_category_sp,
                      "(width=${var.width}, height=${var.height})",
                      ConstString("NSSize"),
                      objc_flags);
     
-    TypeCategoryImpl::SharedPointer coregraphics_category_sp = GetCategory(m_coregraphics_category_name);
     
     AddStringSummary(coregraphics_category_sp,
                      "(width=${var.width}, height=${var.height})",
@@ -1292,8 +1294,6 @@ FormatManager::LoadObjCFormatters()
                      "origin=${var.origin} size=${var.size}",
                      ConstString("CGRect"),
                      objc_flags);
-    
-    TypeCategoryImpl::SharedPointer coreservices_category_sp = GetCategory(m_coreservices_category_name);
     
     AddStringSummary(coreservices_category_sp,
                      "red=${var.red} green=${var.green} blue=${var.blue}",
@@ -1323,8 +1323,6 @@ FormatManager::LoadObjCFormatters()
                      "origin=${var.origin} size=${var.size}",
                      ConstString("HIRect"),
                      objc_flags);
-    
-    TypeCategoryImpl::SharedPointer appkit_category_sp = GetCategory(m_appkit_category_name);
     
     TypeSummaryImpl::Flags appkit_flags;
     appkit_flags.SetCascades(true)
