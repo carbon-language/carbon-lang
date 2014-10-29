@@ -13,8 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/PrettyPrinter.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
