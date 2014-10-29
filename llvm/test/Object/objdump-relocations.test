@@ -27,9 +27,9 @@ COFF-x86-64: IMAGE_REL_AMD64_REL32 puts
 COFF-x86-64: IMAGE_REL_AMD64_REL32 SomeOtherFunction
 
 ELF-i386: .text
-ELF-i386: R_386_32
-ELF-i386: R_386_PC32
-ELF-i386: R_386_PC32
+ELF-i386: R_386_32 .rodata.str1.1
+ELF-i386: R_386_PC32 puts
+ELF-i386: R_386_PC32 SomeOtherFunction
 
 ELF-x86-64: .text
 ELF-x86-64: R_X86_64_32S .rodata.str1.1

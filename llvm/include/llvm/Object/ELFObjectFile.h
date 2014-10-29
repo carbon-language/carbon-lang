@@ -738,6 +738,7 @@ std::error_code ELFObjectFile<ELFT>::getRelocationValueString(
     Result.append(fmtbuf.begin(), fmtbuf.end());
     break;
   }
+  case ELF::EM_386:
   case ELF::EM_ARM:
   case ELF::EM_HEXAGON:
   case ELF::EM_MIPS:
