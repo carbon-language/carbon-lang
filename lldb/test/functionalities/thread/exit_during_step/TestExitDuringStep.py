@@ -49,18 +49,21 @@ class ExitDuringStepTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.exit_during_step_in_test()
 
+    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
     @dwarf_test
     def test_with_dwarf(self):
         """Test thread exit during step handling."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.exit_during_step_inst_test()
 
+    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
     @dwarf_test
     def test_step_over_with_dwarf(self):
         """Test thread exit during step-over handling."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.exit_during_step_over_test()
 
+    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
     @dwarf_test
     def test_step_in_with_dwarf(self):
         """Test thread exit during step-in handling."""
