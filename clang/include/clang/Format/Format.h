@@ -15,8 +15,10 @@
 #ifndef LLVM_CLANG_FORMAT_FORMAT_H
 #define LLVM_CLANG_FORMAT_FORMAT_H
 
-#include "clang/Frontend/FrontendAction.h"
-#include "clang/Tooling/Refactoring.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Tooling/Core/Replacement.h"
+#include "llvm/ADT/ArrayRef.h"
+#include <stack>
 #include <system_error>
 
 namespace clang {
