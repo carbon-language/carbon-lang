@@ -4,7 +4,7 @@
 @mode_table = global [4 x i32] zeroinitializer		; <[4 x i32]*> [#uses=1]
 
 ; CHECK-LABEL: @f(
-; CHECK-NOT: bb4
+; CHECK-NOT: bb:
 define i8 @f() {
 entry:
 	tail call i32 @fegetround( )		; <i32>:0 [#uses=1]

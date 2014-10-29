@@ -194,8 +194,13 @@ static void RewriteUsesOfClonedInstructions(BasicBlock *OrigHeader,
 /// heuristics. We handle a single arithmetic instruction along with any type
 /// conversions.
 static bool shouldSpeculateInstrs(BasicBlock::iterator Begin,
-                                  BasicBlock::iterator End) {
+                                  BasicBlock::iterator End, Loop *L) {
   bool seenIncrement = false;
+  bool MultiExitLoop = false;
+
+  if (!L->getExitingBlock())
+    MultiExitLoop = true;
+
   for (BasicBlock::iterator I = Begin; I != End; ++I) {
 
     if (!isSafeToSpeculativelyExecute(I))
@@ -219,11 +224,33 @@ static bool shouldSpeculateInstrs(BasicBlock::iterator Begin,
     case Instruction::Xor:
     case Instruction::Shl:
     case Instruction::LShr:
-    case Instruction::AShr:
+    case Instruction::AShr: {
+      Value *IVOpnd = nullptr;
+      if (isa<ConstantInt>(I->getOperand(0)))
+        IVOpnd = I->getOperand(1);
+
+      if (isa<ConstantInt>(I->getOperand(1))) {
+        if (IVOpnd)
+          return false;
+
+        IVOpnd = I->getOperand(0);
+      }
+
+      // If increment operand is used outside of the loop, this speculation
+      // could cause extra live range interference.
+      if (MultiExitLoop && IVOpnd) {
+        for (User *UseI : IVOpnd->users()) {
+          auto *UserInst = cast<Instruction>(UseI);
+          if (!L->contains(UserInst))
+            return false;
+        }
+      }
+
       if (seenIncrement)
         return false;
       seenIncrement = true;
       break;
+    }
     case Instruction::Trunc:
     case Instruction::ZExt:
     case Instruction::SExt:
@@ -259,7 +286,7 @@ bool LoopRotate::simplifyLoopLatch(Loop *L) {
   if (!BI)
     return false;
 
-  if (!shouldSpeculateInstrs(Latch->begin(), Jmp))
+  if (!shouldSpeculateInstrs(Latch->begin(), Jmp, L))
     return false;
 
   DEBUG(dbgs() << "Folding loop latch " << Latch->getName() << " into "
