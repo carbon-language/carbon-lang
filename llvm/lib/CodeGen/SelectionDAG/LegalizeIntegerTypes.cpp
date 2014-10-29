@@ -965,7 +965,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_VECTOR(SDNode *N) {
   EVT VecVT = N->getValueType(0);
   unsigned NumElts = VecVT.getVectorNumElements();
   assert(!((NumElts & 1) && (!TLI.isTypeLegal(VecVT))) &&
-		 "Legal vector of one illegal element?");
+         "Legal vector of one illegal element?");
 
   // Promote the inserted value.  The type does not need to match the
   // vector element type.  Check that any extra bits introduced will be

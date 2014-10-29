@@ -2703,7 +2703,7 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, const APInt &Divisor,
                                   SelectionDAG &DAG, bool IsAfterLegalization,
                                   std::vector<SDNode *> *Created) const {
   assert(Created && "No vector to hold udiv ops.");
-  
+
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
 
@@ -2780,7 +2780,7 @@ verifyReturnAddressArgumentIsConstant(SDValue Op, SelectionDAG &DAG) const {
 
 bool TargetLowering::expandMUL(SDNode *N, SDValue &Lo, SDValue &Hi, EVT HiLoVT,
                                SelectionDAG &DAG, SDValue LL, SDValue LH,
-			       SDValue RL, SDValue RH) const {
+                               SDValue RL, SDValue RH) const {
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
 
@@ -2813,8 +2813,8 @@ bool TargetLowering::expandMUL(SDNode *N, SDValue &Lo, SDValue &Hi, EVT HiLoVT,
       // The inputs are both zero-extended.
       if (HasUMUL_LOHI) {
         // We can emit a umul_lohi.
-        Lo = DAG.getNode(ISD::UMUL_LOHI, dl,
-	                 DAG.getVTList(HiLoVT, HiLoVT), LL, RL);
+        Lo = DAG.getNode(ISD::UMUL_LOHI, dl, DAG.getVTList(HiLoVT, HiLoVT), LL,
+                         RL);
         Hi = SDValue(Lo.getNode(), 1);
         return true;
       }
@@ -2829,8 +2829,8 @@ bool TargetLowering::expandMUL(SDNode *N, SDValue &Lo, SDValue &Hi, EVT HiLoVT,
       // The input values are both sign-extended.
       if (HasSMUL_LOHI) {
         // We can emit a smul_lohi.
-        Lo = DAG.getNode(ISD::SMUL_LOHI, dl,
-	                 DAG.getVTList(HiLoVT, HiLoVT), LL, RL);
+        Lo = DAG.getNode(ISD::SMUL_LOHI, dl, DAG.getVTList(HiLoVT, HiLoVT), LL,
+                         RL);
         Hi = SDValue(Lo.getNode(), 1);
         return true;
       }

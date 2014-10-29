@@ -2759,8 +2759,8 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
       if (AddrMode.BaseOffs) {
         Value *V = ConstantInt::get(IntPtrTy, AddrMode.BaseOffs);
         if (ResultIndex) {
-	  // We need to add this separately from the scale above to help with
-	  // SDAG consecutive load/store merging.
+          // We need to add this separately from the scale above to help with
+          // SDAG consecutive load/store merging.
           if (ResultPtr->getType() != I8PtrTy)
             ResultPtr = Builder.CreateBitCast(ResultPtr, I8PtrTy);
           ResultPtr = Builder.CreateGEP(ResultPtr, ResultIndex, "sunkaddr");
