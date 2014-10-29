@@ -192,8 +192,6 @@ bad_alloc::what() const _NOEXCEPT
 
 #endif // !__GLIBCXX__
 
-#endif //LIBCXXRT
-
 bad_array_new_length::bad_array_new_length() _NOEXCEPT
 {
 }
@@ -201,6 +199,8 @@ bad_array_new_length::bad_array_new_length() _NOEXCEPT
 bad_array_new_length::~bad_array_new_length() _NOEXCEPT
 {
 }
+
+#endif //LIBCXXRT
 
 const char*
 bad_array_length::what() const _NOEXCEPT
