@@ -53,14 +53,14 @@ using namespace llvm;
 using namespace object;
 
 static cl::opt<bool>
-  UseDbg("g", cl::desc("Print line information from debug info if available"));
+    UseDbg("g",
+           cl::desc("Print line information from debug info if available"));
 
-static cl::opt<std::string>
-  DSYMFile("dsym", cl::desc("Use .dSYM file for debug info"));
+static cl::opt<std::string> DSYMFile("dsym",
+                                     cl::desc("Use .dSYM file for debug info"));
 
-static cl::opt<bool>
-    FullLeadingAddr("full-leading-addr",
-                    cl::desc("Print full leading address"));
+static cl::opt<bool> FullLeadingAddr("full-leading-addr",
+                                     cl::desc("Print full leading address"));
 
 static cl::opt<bool>
     PrintImmHex("print-imm-hex",
@@ -124,9 +124,8 @@ typedef std::pair<uint64_t, DiceRef> DiceTableEntry;
 typedef std::vector<DiceTableEntry> DiceTable;
 typedef DiceTable::iterator dice_table_iterator;
 
-static bool
-compareDiceTableEntries(const DiceTableEntry i,
-                        const DiceTableEntry j) {
+static bool compareDiceTableEntries(const DiceTableEntry i,
+                                    const DiceTableEntry j) {
   return i.first == j.first;
 }
 
@@ -138,15 +137,11 @@ static void DumpDataInCode(const char *bytes, uint64_t Size,
   case MachO::DICE_KIND_DATA:
     switch (Size) {
     case 4:
-      Value = bytes[3] << 24 |
-              bytes[2] << 16 |
-              bytes[1] << 8 |
-              bytes[0];
+      Value = bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
       outs() << "\t.long " << Value;
       break;
     case 2:
-      Value = bytes[1] << 8 |
-              bytes[0];
+      Value = bytes[1] << 8 | bytes[0];
       outs() << "\t.short " << Value;
       break;
     case 1:
@@ -161,15 +156,11 @@ static void DumpDataInCode(const char *bytes, uint64_t Size,
     outs() << "\t.byte " << Value << "\t@ KIND_JUMP_TABLE8";
     break;
   case MachO::DICE_KIND_JUMP_TABLE16:
-    Value = bytes[1] << 8 |
-            bytes[0];
+    Value = bytes[1] << 8 | bytes[0];
     outs() << "\t.short " << Value << "\t@ KIND_JUMP_TABLE16";
     break;
   case MachO::DICE_KIND_JUMP_TABLE32:
-    Value = bytes[3] << 24 |
-            bytes[2] << 16 |
-            bytes[1] << 8 |
-            bytes[0];
+    Value = bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
     outs() << "\t.long " << Value << "\t@ KIND_JUMP_TABLE32";
     break;
   default:
@@ -196,20 +187,18 @@ static void getSectionsAndSymbols(const MachO::mach_header Header,
   MachOObjectFile::LoadCommandInfo Command =
       MachOObj->getFirstLoadCommandInfo();
   bool BaseSegmentAddressSet = false;
-  for (unsigned i = 0; ; ++i) {
+  for (unsigned i = 0;; ++i) {
     if (Command.C.cmd == MachO::LC_FUNCTION_STARTS) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
       MachO::linkedit_data_command LLC =
-        MachOObj->getLinkeditDataLoadCommand(Command);
+          MachOObj->getLinkeditDataLoadCommand(Command);
 
       MachOObj->ReadULEB128s(LLC.dataoff, FoundFns);
-    }
-    else if (Command.C.cmd == MachO::LC_SEGMENT) {
-      MachO::segment_command SLC =
-        MachOObj->getSegmentLoadCommand(Command);
+    } else if (Command.C.cmd == MachO::LC_SEGMENT) {
+      MachO::segment_command SLC = MachOObj->getSegmentLoadCommand(Command);
       StringRef SegName = SLC.segname;
-      if(!BaseSegmentAddressSet && SegName != "__PAGEZERO") {
+      if (!BaseSegmentAddressSet && SegName != "__PAGEZERO") {
         BaseSegmentAddressSet = true;
         BaseSegmentAddress = SLC.vmaddr;
       }
@@ -1098,12 +1087,12 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
         *ReferenceType = LLVMDisassembler_ReferenceType_Out_SymbolStub;
     } else
 #if HAVE_CXXABI_H
-    if (SymbolName != nullptr && strncmp(SymbolName, "__Z", 3) == 0) {
+        if (SymbolName != nullptr && strncmp(SymbolName, "__Z", 3) == 0) {
       if (info->demangled_name != nullptr)
         free(info->demangled_name);
       int status;
-      info->demangled_name = abi::__cxa_demangle(SymbolName + 1, nullptr,
-                                                 nullptr, &status);
+      info->demangled_name =
+          abi::__cxa_demangle(SymbolName + 1, nullptr, nullptr, &status);
       if (info->demangled_name != nullptr) {
         *ReferenceName = info->demangled_name;
         *ReferenceType = LLVMDisassembler_ReferenceType_DeMangled_Name;
@@ -1125,8 +1114,8 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
     if (info->demangled_name != nullptr)
       free(info->demangled_name);
     int status;
-    info->demangled_name = abi::__cxa_demangle(SymbolName + 1, nullptr, nullptr,
-                                               &status);
+    info->demangled_name =
+        abi::__cxa_demangle(SymbolName + 1, nullptr, nullptr, &status);
     if (info->demangled_name != nullptr) {
       *ReferenceName = info->demangled_name;
       *ReferenceType = LLVMDisassembler_ReferenceType_DeMangled_Name;
@@ -1154,6 +1143,7 @@ class DisasmMemoryObject : public MemoryObject {
   const uint8_t *Bytes;
   uint64_t Size;
   uint64_t BasePC;
+
 public:
   DisasmMemoryObject(const uint8_t *bytes, uint64_t size, uint64_t basePC)
       : Bytes(bytes), Size(size), BasePC(basePC) {}
@@ -1369,8 +1359,7 @@ static void DisassembleInputMachO2(StringRef Filename,
       continue;
 
     StringRef SectName;
-    if (Sections[SectIdx].getName(SectName) ||
-        SectName != "__text")
+    if (Sections[SectIdx].getName(SectName) || SectName != "__text")
       continue; // Skip non-text sections
 
     DataRefImpl DR = Sections[SectIdx].getRawDataRefImpl();
@@ -1452,7 +1441,7 @@ static void DisassembleInputMachO2(StringRef Filename,
       // the end of the section.
       bool containsNextSym = false;
       uint64_t NextSym = 0;
-      uint64_t NextSymIdx = SymIdx+1;
+      uint64_t NextSymIdx = SymIdx + 1;
       while (Symbols.size() > NextSymIdx) {
         SymbolRef::Type NextSymType;
         Symbols[NextSymIdx].getType(NextSymType);
@@ -1467,7 +1456,7 @@ static void DisassembleInputMachO2(StringRef Filename,
       }
 
       uint64_t SectSize = Sections[SectIdx].getSize();
-      uint64_t End = containsNextSym ?  NextSym : SectSize;
+      uint64_t End = containsNextSym ? NextSym : SectSize;
       uint64_t Size;
 
       symbolTableWorked = true;
@@ -1500,10 +1489,10 @@ static void DisassembleInputMachO2(StringRef Filename,
         // instruction to be disassembled.
         DiceTable Dice;
         Dice.push_back(std::make_pair(PC, DiceRef()));
-        dice_table_iterator DTI = std::search(Dices.begin(), Dices.end(),
-                                              Dice.begin(), Dice.end(),
-                                              compareDiceTableEntries);
-        if (DTI != Dices.end()){
+        dice_table_iterator DTI =
+            std::search(Dices.begin(), Dices.end(), Dice.begin(), Dice.end(),
+                        compareDiceTableEntries);
+        if (DTI != Dices.end()) {
           uint16_t Length;
           DTI->second.getLength(Length);
           DumpBytes(StringRef(Bytes.data() + Index, Length));
@@ -1538,8 +1527,7 @@ static void DisassembleInputMachO2(StringRef Filename,
 
           // Print debug info.
           if (diContext) {
-            DILineInfo dli =
-              diContext->getLineInfoForAddress(PC);
+            DILineInfo dli = diContext->getLineInfoForAddress(PC);
             // Print valid line info if it changed.
             if (dli != lastLine && dli.Line != 0)
               outs() << "\t## " << dli.FileName << ':' << dli.Line << ':'
@@ -1549,7 +1537,7 @@ static void DisassembleInputMachO2(StringRef Filename,
           outs() << "\n";
         } else {
           unsigned int Arch = MachOOF->getArch();
-          if (Arch == Triple::x86_64 || Arch == Triple::x86){
+          if (Arch == Triple::x86_64 || Arch == Triple::x86) {
             outs() << format("\t.byte 0x%02x #bad opcode\n",
                              *(Bytes.data() + Index) & 0xff);
             Size = 1; // skip exactly one illegible byte and move on.
@@ -1588,7 +1576,7 @@ static void DisassembleInputMachO2(StringRef Filename,
           outs() << "\n";
         } else {
           unsigned int Arch = MachOOF->getArch();
-          if (Arch == Triple::x86_64 || Arch == Triple::x86){
+          if (Arch == Triple::x86_64 || Arch == Triple::x86) {
             outs() << format("\t.byte 0x%02x #bad opcode\n",
                              *(Bytes.data() + Index) & 0xff);
             InstSize = 1; // skip exactly one illegible byte and move on.
@@ -1609,7 +1597,6 @@ static void DisassembleInputMachO2(StringRef Filename,
   }
 }
 
-
 //===----------------------------------------------------------------------===//
 // __compact_unwind section dumping
 //===----------------------------------------------------------------------===//
@@ -1617,13 +1604,13 @@ static void DisassembleInputMachO2(StringRef Filename,
 namespace {
 
 template <typename T> static uint64_t readNext(const char *&Buf) {
-    using llvm::support::little;
-    using llvm::support::unaligned;
+  using llvm::support::little;
+  using llvm::support::unaligned;
 
-    uint64_t Val = support::endian::read<T, little, unaligned>(Buf);
-    Buf += sizeof(T);
-    return Val;
-  }
+  uint64_t Val = support::endian::read<T, little, unaligned>(Buf);
+  Buf += sizeof(T);
+  return Val;
+}
 
 struct CompactUnwindEntry {
   uint32_t OffsetInSection;
@@ -1639,7 +1626,7 @@ struct CompactUnwindEntry {
   RelocationRef LSDAReloc;
 
   CompactUnwindEntry(StringRef Contents, unsigned Offset, bool Is64)
-    : OffsetInSection(Offset) {
+      : OffsetInSection(Offset) {
     if (Is64)
       read<uint64_t>(Contents.data() + Offset);
     else
@@ -1647,8 +1634,7 @@ struct CompactUnwindEntry {
   }
 
 private:
-  template<typename UIntPtr>
-  void read(const char *Buf) {
+  template <typename UIntPtr> void read(const char *Buf) {
     FunctionAddr = readNext<UIntPtr>(Buf);
     Length = readNext<uint32_t>(Buf);
     CompactEncoding = readNext<uint32_t>(Buf);
@@ -1670,8 +1656,7 @@ private:
 ///    referenced section.
 static void findUnwindRelocNameAddend(const MachOObjectFile *Obj,
                                       std::map<uint64_t, SymbolRef> &Symbols,
-                                      const RelocationRef &Reloc,
-                                      uint64_t Addr,
+                                      const RelocationRef &Reloc, uint64_t Addr,
                                       StringRef &Name, uint64_t &Addend) {
   if (Reloc.getSymbol() != Obj->symbol_end()) {
     Reloc.getSymbol()->getName(Name);
@@ -1713,8 +1698,7 @@ static void findUnwindRelocNameAddend(const MachOObjectFile *Obj,
 
 static void printUnwindRelocDest(const MachOObjectFile *Obj,
                                  std::map<uint64_t, SymbolRef> &Symbols,
-                                 const RelocationRef &Reloc,
-                                 uint64_t Addr) {
+                                 const RelocationRef &Reloc, uint64_t Addr) {
   StringRef Name;
   uint64_t Addend;
 
@@ -1778,15 +1762,14 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
            << format("0x%" PRIx32, Entry.OffsetInSection) << ":\n";
 
     // 1. Start of the region this entry applies to.
-    outs() << "    start:                "
-           << format("0x%" PRIx64, Entry.FunctionAddr) << ' ';
-    printUnwindRelocDest(Obj, Symbols, Entry.FunctionReloc,
-                         Entry.FunctionAddr);
+    outs() << "    start:                " << format("0x%" PRIx64,
+                                                     Entry.FunctionAddr) << ' ';
+    printUnwindRelocDest(Obj, Symbols, Entry.FunctionReloc, Entry.FunctionAddr);
     outs() << '\n';
 
     // 2. Length of the region this entry applies to.
-    outs() << "    length:               "
-           << format("0x%" PRIx32, Entry.Length) << '\n';
+    outs() << "    length:               " << format("0x%" PRIx32, Entry.Length)
+           << '\n';
     // 3. The 32-bit compact encoding.
     outs() << "    compact encoding:     "
            << format("0x%08" PRIx32, Entry.CompactEncoding) << '\n';
@@ -1802,8 +1785,8 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
 
     // 5. This entry's language-specific data area.
     if (Entry.LSDAReloc.getObjectFile()) {
-      outs() << "    LSDA:                 "
-             << format("0x%" PRIx64, Entry.LSDAAddr) << ' ';
+      outs() << "    LSDA:                 " << format("0x%" PRIx64,
+                                                       Entry.LSDAAddr) << ' ';
       printUnwindRelocDest(Obj, Symbols, Entry.LSDAReloc, Entry.LSDAAddr);
       outs() << '\n';
     }
@@ -1829,11 +1812,9 @@ static void printRegularSecondLevelUnwindPage(const char *PageStart) {
     uint32_t Encoding = readNext<uint32_t>(Pos);
 
     outs() << "      [" << i << "]: "
-           << "function offset="
-           << format("0x%08" PRIx32, FunctionOffset) << ", "
-           << "encoding="
-           << format("0x%08" PRIx32, Encoding)
-           << '\n';
+           << "function offset=" << format("0x%08" PRIx32, FunctionOffset)
+           << ", "
+           << "encoding=" << format("0x%08" PRIx32, Encoding) << '\n';
   }
 }
 
@@ -1866,18 +1847,16 @@ static void printCompressedSecondLevelUnwindPage(
       Encoding = PageEncodings[EncodingIdx - CommonEncodings.size()];
 
     outs() << "      [" << i << "]: "
-           << "function offset="
-           << format("0x%08" PRIx32, FunctionOffset) << ", "
-           << "encoding[" << EncodingIdx << "]="
-           << format("0x%08" PRIx32, Encoding)
-           << '\n';
+           << "function offset=" << format("0x%08" PRIx32, FunctionOffset)
+           << ", "
+           << "encoding[" << EncodingIdx
+           << "]=" << format("0x%08" PRIx32, Encoding) << '\n';
   }
 }
 
-static void
-printMachOUnwindInfoSection(const MachOObjectFile *Obj,
-                            std::map<uint64_t, SymbolRef> &Symbols,
-                            const SectionRef &UnwindInfo) {
+static void printMachOUnwindInfoSection(const MachOObjectFile *Obj,
+                                        std::map<uint64_t, SymbolRef> &Symbols,
+                                        const SectionRef &UnwindInfo) {
 
   assert(Obj->isLittleEndian() &&
          "There should not be a big-endian .o with __unwind_info");
@@ -1938,7 +1917,6 @@ printMachOUnwindInfoSection(const MachOObjectFile *Obj,
            << '\n';
   }
 
-
   //===----------------------------------
   // Personality functions used in this executable
   //===----------------------------------
@@ -1980,14 +1958,12 @@ printMachOUnwindInfoSection(const MachOObjectFile *Obj,
     IndexEntries.push_back(Entry);
 
     outs() << "    [" << i << "]: "
-           << "function offset="
-           << format("0x%08" PRIx32, Entry.FunctionOffset) << ", "
+           << "function offset=" << format("0x%08" PRIx32, Entry.FunctionOffset)
+           << ", "
            << "2nd level page offset="
            << format("0x%08" PRIx32, Entry.SecondLevelPageStart) << ", "
-           << "LSDA offset="
-           << format("0x%08" PRIx32, Entry.LSDAStart) << '\n';
+           << "LSDA offset=" << format("0x%08" PRIx32, Entry.LSDAStart) << '\n';
   }
-
 
   //===----------------------------------
   // Next come the LSDA tables
@@ -2004,10 +1980,9 @@ printMachOUnwindInfoSection(const MachOObjectFile *Obj,
     uint32_t FunctionOffset = readNext<uint32_t>(Pos);
     uint32_t LSDAOffset = readNext<uint32_t>(Pos);
     outs() << "    [" << i << "]: "
-           << "function offset="
-           << format("0x%08" PRIx32, FunctionOffset) << ", "
-           << "LSDA offset="
-           << format("0x%08" PRIx32, LSDAOffset) << '\n';
+           << "function offset=" << format("0x%08" PRIx32, FunctionOffset)
+           << ", "
+           << "LSDA offset=" << format("0x%08" PRIx32, LSDAOffset) << '\n';
   }
 
   //===----------------------------------
@@ -2040,7 +2015,6 @@ printMachOUnwindInfoSection(const MachOObjectFile *Obj,
                                            CommonEncodings);
     else
       llvm_unreachable("Do not know how to print this kind of 2nd level page");
-
   }
 }
 
@@ -2068,7 +2042,6 @@ void llvm::printMachOUnwindInfo(const MachOObjectFile *Obj) {
       printMachOUnwindInfoSection(Obj, Symbols, Section);
     else if (SectName == "__eh_frame")
       outs() << "llvm-objdump: warning: unhandled __eh_frame section\n";
-
   }
 }
 
@@ -2859,7 +2832,7 @@ static void PrintDyldLoadCommand(MachO::dylinker_command dyld,
   if (dyld.name >= dyld.cmdsize)
     outs() << "         name ?(bad offset " << dyld.name << ")\n";
   else {
-    const char *P = (const char *)(Ptr)+dyld.name;
+    const char *P = (const char *)(Ptr) + dyld.name;
     outs() << "         name " << P << " (offset " << dyld.name << ")\n";
   }
 }
@@ -2977,7 +2950,7 @@ static void PrintDylibCommand(MachO::dylib_command dl, const char *Ptr) {
   else
     outs() << "\n";
   if (dl.dylib.name < dl.cmdsize) {
-    const char *P = (const char *)(Ptr)+dl.dylib.name;
+    const char *P = (const char *)(Ptr) + dl.dylib.name;
     outs() << "         name " << P << " (offset " << dl.dylib.name << ")\n";
   } else {
     outs() << "         name ?(bad offset " << dl.dylib.name << ")\n";
@@ -3177,8 +3150,8 @@ void llvm::printMachOExportsTrie(const object::MachOObjectFile *Obj) {
     if (ReExport)
       outs() << "[re-export] ";
     else
-      outs()
-          << format("0x%08llX  ", Entry.address()); // FIXME:add in base address
+      outs() << format("0x%08llX  ",
+                       Entry.address()); // FIXME:add in base address
     outs() << Entry.name();
     if (WeakDef || ThreadLocal || Resolver || Abs) {
       bool NeedsComma = false;
@@ -3219,7 +3192,6 @@ void llvm::printMachOExportsTrie(const object::MachOObjectFile *Obj) {
     outs() << "\n";
   }
 }
-
 
 //===----------------------------------------------------------------------===//
 // rebase table dumping
@@ -3318,10 +3290,9 @@ void llvm::printMachORebaseTable(const object::MachOObjectFile *Obj) {
     uint64_t Address = sectionTable.address(SegIndex, OffsetInSeg);
 
     // Table lines look like: __DATA  __nl_symbol_ptr  0x0000F00C  pointer
-    outs() << format("%-8s %-18s 0x%08" PRIX64 "  %s\n", 
-                     SegmentName.str().c_str(),
-                     SectionName.str().c_str(), Address,
-                     Entry.typeName().str().c_str());
+    outs() << format("%-8s %-18s 0x%08" PRIX64 "  %s\n",
+                     SegmentName.str().c_str(), SectionName.str().c_str(),
+                     Address, Entry.typeName().str().c_str());
   }
 }
 
@@ -3336,8 +3307,8 @@ static StringRef ordinalName(const object::MachOObjectFile *Obj, int Ordinal) {
     return "flat-namespace";
   default:
     if (Ordinal > 0) {
-      std::error_code EC = Obj->getLibraryShortNameByIndex(Ordinal-1, 
-                                                           DylibName);
+      std::error_code EC =
+          Obj->getLibraryShortNameByIndex(Ordinal - 1, DylibName);
       if (EC)
         return "<<bad library ordinal>>";
       return DylibName;
@@ -3368,14 +3339,13 @@ void llvm::printMachOBindTable(const object::MachOObjectFile *Obj) {
     StringRef Attr;
     if (Entry.flags() & MachO::BIND_SYMBOL_FLAGS_WEAK_IMPORT)
       Attr = " (weak_import)";
-    outs() << left_justify(SegmentName, 8)  << " "
+    outs() << left_justify(SegmentName, 8) << " "
            << left_justify(SectionName, 18) << " "
            << format_hex(Address, 10, true) << " "
            << left_justify(Entry.typeName(), 8) << " "
-           << format_decimal(Entry.addend(), 8)  << " "  
+           << format_decimal(Entry.addend(), 8) << " "
            << left_justify(ordinalName(Obj, Entry.ordinal()), 16) << " "
-           << Entry.symbolName() 
-           << Attr << "\n";
+           << Entry.symbolName() << Attr << "\n";
   }
 }
 
@@ -3398,14 +3368,13 @@ void llvm::printMachOLazyBindTable(const object::MachOObjectFile *Obj) {
 
     // Table lines look like:
     //  __DATA  __got  0x00012010 libSystem ___stack_chk_guard
-    outs() << left_justify(SegmentName, 8)  << " "
+    outs() << left_justify(SegmentName, 8) << " "
            << left_justify(SectionName, 18) << " "
            << format_hex(Address, 10, true) << " "
            << left_justify(ordinalName(Obj, Entry.ordinal()), 16) << " "
            << Entry.symbolName() << "\n";
   }
 }
-
 
 //===----------------------------------------------------------------------===//
 // weak bind table dumping
@@ -3432,12 +3401,12 @@ void llvm::printMachOWeakBindTable(const object::MachOObjectFile *Obj) {
 
     // Table lines look like:
     // __DATA  __data  0x00001000  pointer    0   _foo
-    outs() << left_justify(SegmentName, 8)  << " "
+    outs() << left_justify(SegmentName, 8) << " "
            << left_justify(SectionName, 18) << " "
            << format_hex(Address, 10, true) << " "
            << left_justify(Entry.typeName(), 8) << " "
-           << format_decimal(Entry.addend(), 8)  << "   "  
-           << Entry.symbolName() << "\n";
+           << format_decimal(Entry.addend(), 8) << "   " << Entry.symbolName()
+           << "\n";
   }
 }
 
