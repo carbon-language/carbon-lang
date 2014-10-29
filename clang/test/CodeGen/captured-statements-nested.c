@@ -108,7 +108,7 @@ void test_nest_block() {
 
   // CHECK2: define internal void @{{.*}}test_nest_block_block_invoke
   //
-  // CHECK2: [[Z:%[0-9a-z_]*]] = alloca i{{[0-9]+}}
+  // CHECK2: [[Z:%[0-9a-z_]*]] = alloca i{{[0-9]+}},
   // CHECK2: alloca %struct.anon{{.*}}
   //
   // CHECK2: store i{{[0-9]+}}
