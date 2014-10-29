@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686--windows -fms-compatibility -Oz -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686--windows -fms-compatibility -Oz -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK -check-prefix CHECK-I386
 // RUN: %clang_cc1 -triple thumbv7--windows -fms-compatibility -Oz -emit-llvm %s -o - | FileCheck %s
 
 void *test_InterlockedExchangePointer(void * volatile *Target, void *Value) {
@@ -36,3 +36,16 @@ long test_InterlockedExchange(long *Target, long Value) {
 // CHECK:   %[[EXCHANGE:[0-9]+]] = atomicrmw xchg i32* %Target, i32 %Value seq_cst
 // CHECK:   ret i32 %[[EXCHANGE:[0-9]+]]
 // CHECK: }
+
+#if defined(__i386__)
+long test__readfsdword(unsigned long Offset) {
+  return __readfsdword(Offset);
+}
+
+// CHECK-I386: define i32 @test__readfsdword(i32 %Offset){{.*}}{
+// CHECK-I386:   %0 = inttoptr i32 %Offset to i32 addrspace(257)*
+// CHECK-I386:   %1 = load volatile i32 addrspace(257)* %0, align 4
+// CHECK-I386:   ret i32 %1
+// CHECK-I386: }
+#endif
+

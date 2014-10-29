@@ -1624,6 +1624,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     RMWI->setVolatile(true);
     return RValue::get(RMWI);
   }
+  case Builtin::BI__readfsdword: {
+    Value *IntToPtr =
+      Builder.CreateIntToPtr(EmitScalarExpr(E->getArg(0)),
+                             llvm::PointerType::get(CGM.Int32Ty, 257));
+    LoadInst *Load =
+        Builder.CreateAlignedLoad(IntToPtr, /*Align=*/4, /*isVolatile=*/true);
+    return RValue::get(Load);
+  }
   }
 
   // If this is an alias for a lib function (e.g. __builtin_sin), emit

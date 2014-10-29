@@ -703,6 +703,7 @@ LANGBUILTIN(_InterlockedDecrement, "LiLiD*", "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(_InterlockedExchangeAdd, "LiLiD*Li", "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(_InterlockedExchangePointer, "v*v*D*v*", "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(_InterlockedExchange, "LiLiD*Li", "n", ALL_MS_LANGUAGES)
+LANGBUILTIN(__readfsdword, "ULiULi", "n", ALL_MS_LANGUAGES)
 
 // C99 library functions
 // C99 stdlib.h

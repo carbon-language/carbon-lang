@@ -861,10 +861,6 @@ static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 __readfsbyte(unsigned long __offset) {
   return *__ptr_to_addr_space(257, unsigned char, __offset);
 }
-static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
-__readfsdword(unsigned long __offset) {
-  return *__ptr_to_addr_space(257, unsigned long, __offset);
-}
 static __inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
 __readfsqword(unsigned long __offset) {
   return *__ptr_to_addr_space(257, unsigned __int64, __offset);
