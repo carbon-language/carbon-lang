@@ -1,4 +1,4 @@
-; RUN: opt -dse -inline -S %s | FileCheck %s
+; RUN: opt -basicaa -dse -inline -S %s | FileCheck %s
 
 declare void @external(i32* byval)
 declare i32 @identity(i32* byval)
@@ -19,7 +19,6 @@ define void @inliner_without_alloca() {
 
 ; CHECK-LABEL: inliner_without_alloca
 ; CHECK-NEXT: %local.i = alloca i32
-; CHECK: store i32 42, i32* %local.i
 ; CHECK: tail call void @external
 ; CHECK: ret
 
@@ -34,7 +33,6 @@ define i32 @inliner_with_alloca() {
 
 ; CHECK-LABEL: inliner_with_alloca
 ; CHECK: %local = alloca i32
-; CHECK: store i32 42, i32* %local
 ; CHECK: %1 = tail call i32 @identity
 ; CHECK: ret i32 %1
 
@@ -53,6 +51,6 @@ define void @strip_tail(i32* %value) {
 
 ; CHECK-LABEL: strip_tail
 ; CHECK: %value1 = alloca i32
-; CHECK: {{^ *}}call void @external
+; CHECK-NOT: tail call void @external
 ; CHECK: ret void
 
