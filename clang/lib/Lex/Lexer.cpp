@@ -2319,7 +2319,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr,
         '/', '/', '/', '/',  '/', '/', '/', '/'
       };
       while (CurPtr+16 <= BufferEnd &&
-             !vec_any_eq(*(vector unsigned char*)CurPtr, Slashes))
+             !vec_any_eq(*(const vector unsigned char*)CurPtr, Slashes))
         CurPtr += 16;
 #else
       // Scan for '/' quickly.  Many block comments are very large.
