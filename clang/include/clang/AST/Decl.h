@@ -3218,6 +3218,13 @@ public:
   /// function object.
   bool isLambda() const;
 
+  /// \brief Determine whether this record is a record for captured variables in
+  /// CapturedStmt construct.
+  bool isCapturedRecord() const;
+  /// \brief Mark the record as a record for captured variables in CapturedStmt
+  /// construct.
+  void setCapturedRecord();
+
   /// getDefinition - Returns the RecordDecl that actually defines
   ///  this struct/union/class.  When determining whether or not a
   ///  struct/union/class is completely defined, one should use this

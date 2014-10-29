@@ -1982,15 +1982,18 @@ public:
 /// @endcode
 class CapturedStmt : public Stmt {
 public:
-  /// \brief The different capture forms: by 'this' or by reference, etc.
+  /// \brief The different capture forms: by 'this', by reference, capture for
+  /// variable-length array type etc.
   enum VariableCaptureKind {
     VCK_This,
-    VCK_ByRef
+    VCK_ByRef,
+    VCK_VLAType,
   };
 
-  /// \brief Describes the capture of either a variable or 'this'.
+  /// \brief Describes the capture of either a variable, or 'this', or
+  /// variable-length array type.
   class Capture {
-    llvm::PointerIntPair<VarDecl *, 1, VariableCaptureKind> VarAndKind;
+    llvm::PointerIntPair<VarDecl *, 2, VariableCaptureKind> VarAndKind;
     SourceLocation Loc;
 
   public:
@@ -2012,6 +2015,10 @@ public:
       case VCK_ByRef:
         assert(Var && "capturing by reference must have a variable!");
         break;
+      case VCK_VLAType:
+        assert(!Var &&
+               "Variable-length array type capture cannot have a variable!");
+        break;
       }
     }
 
@@ -2026,13 +2033,20 @@ public:
     bool capturesThis() const { return getCaptureKind() == VCK_This; }
 
     /// \brief Determine whether this capture handles a variable.
-    bool capturesVariable() const { return getCaptureKind() != VCK_This; }
+    bool capturesVariable() const { return getCaptureKind() == VCK_ByRef; }
+
+    /// \brief Determine whether this capture handles a variable-length array
+    /// type.
+    bool capturesVariableArrayType() const {
+      return getCaptureKind() == VCK_VLAType;
+    }
 
     /// \brief Retrieve the declaration of the variable being captured.
     ///
-    /// This operation is only valid if this capture does not capture 'this'.
+    /// This operation is only valid if this capture captures a variable.
     VarDecl *getCapturedVar() const {
-      assert(!capturesThis() && "No variable available for 'this' capture");
+      assert(capturesVariable() &&
+             "No variable available for 'this' or VAT capture");
       return VarAndKind.getPointer();
     }
     friend class ASTStmtReader;

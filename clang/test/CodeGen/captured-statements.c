@@ -4,6 +4,8 @@
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-2
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-3
 
+typedef __INTPTR_TYPE__ intptr_t;
+
 int foo();
 int global;
 
@@ -61,15 +63,16 @@ void test3(int size) {
 }
 
 // Capture VLA array
-void test4(int size, int vla_arr[size]) {
+void test4(intptr_t size, intptr_t vla_arr[size]) {
   #pragma clang __debug captured
   {
     vla_arr[0] = 1;
   }
-  // CHECK-3: test4([[INT:i.+]] {{.*}}[[SIZE:%.+]], [[INT]]*
-  // CHECK-3: store [[INT]] {{.*}}[[SIZE]], [[INT]]* [[SIZE_ADDR:%.+]],
+  // CHECK-3: test4([[INTPTR_T:i.+]] {{.*}}[[SIZE_ARG:%.+]], [[INTPTR_T]]*
+  // CHECK-3: store [[INTPTR_T]] {{.*}}[[SIZE_ARG]], [[INTPTR_T]]* [[SIZE_ADDR:%.+]],
+  // CHECK-3: [[SIZE:%.+]] = load [[INTPTR_T]]* [[SIZE_ADDR]],
   // CHECK-3: [[REF:%.+]] = getelementptr inbounds
-  // CHECK-3: store [[INT]]* [[SIZE_ADDR]], [[INT]]** [[REF]]
+  // CHECK-3: store [[INTPTR_T]] [[SIZE]], [[INTPTR_T]]* [[REF]]
   // CHECK-3: call void @__captured_stmt
 }
 

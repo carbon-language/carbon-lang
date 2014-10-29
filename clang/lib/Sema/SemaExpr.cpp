@@ -12219,29 +12219,29 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation ExprLoc,
           // Unknown size indication requires no size computation.
           // Otherwise, evaluate and record it.
           if (auto Size = VAT->getSizeExpr()) {
-            if (auto LSI = dyn_cast<LambdaScopeInfo>(CSI)) {
-              if (!LSI->isVLATypeCaptured(VAT)) {
+            if (!CSI->isVLATypeCaptured(VAT)) {
+              RecordDecl *CapRecord = nullptr;
+              if (auto LSI = dyn_cast<LambdaScopeInfo>(CSI)) {
+                CapRecord = LSI->Lambda;
+              } else if (auto CRSI = dyn_cast<CapturedRegionScopeInfo>(CSI)) {
+                CapRecord = CRSI->TheRecordDecl;
+              }
+              if (CapRecord) {
                 auto ExprLoc = Size->getExprLoc();
                 auto SizeType = Context.getSizeType();
-                auto Lambda = LSI->Lambda;
-
                 // Build the non-static data member.
                 auto Field = FieldDecl::Create(
-                    Context, Lambda, ExprLoc, ExprLoc,
+                    Context, CapRecord, ExprLoc, ExprLoc,
                     /*Id*/ nullptr, SizeType, /*TInfo*/ nullptr,
                     /*BW*/ nullptr, /*Mutable*/ false,
                     /*InitStyle*/ ICIS_NoInit);
                 Field->setImplicit(true);
                 Field->setAccess(AS_private);
                 Field->setCapturedVLAType(VAT);
-                Lambda->addDecl(Field);
+                CapRecord->addDecl(Field);
 
-                LSI->addVLATypeCapture(ExprLoc, SizeType);
+                CSI->addVLATypeCapture(ExprLoc, SizeType);
               }
-            } else {
-              // Immediately mark all referenced vars for CapturedStatements,
-              // they all are captured by reference.
-              MarkDeclarationsReferencedInExpr(Size);
             }
           }
           QTy = VAT->getElementType();
