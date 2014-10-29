@@ -3330,8 +3330,10 @@ SourceRange FieldDecl::getSourceRange() const {
 }
 
 void FieldDecl::setCapturedVLAType(const VariableArrayType *VLAType) {
-  assert(isVLATypeCapturingAllowed(getParent()) &&
+  bool fVLATypeCapturingAllowed = isVLATypeCapturingAllowed(getParent());
+  assert(fVLATypeCapturingAllowed &&
          "capturing type in non-lambda or captured record.");
+  (void)fVLATypeCapturingAllowed;
   assert(InitStorage.getInt() == ISK_BitWidthOrNothing &&
          InitStorage.getPointer() == nullptr &&
          "bit width, initializer or captured type already set");
