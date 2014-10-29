@@ -18,7 +18,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "llvm/ADT/ArrayRef.h"
-#include <stack>
 #include <system_error>
 
 namespace clang {

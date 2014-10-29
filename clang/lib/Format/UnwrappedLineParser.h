@@ -20,6 +20,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Format/Format.h"
 #include <list>
+#include <stack>
 
 namespace clang {
 namespace format {
