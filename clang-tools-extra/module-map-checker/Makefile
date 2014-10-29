@@ -17,8 +17,8 @@ TOOL_NO_EXPORTS = 1
 
 LINK_COMPONENTS := mcparser bitreader support mc option TransformUtils
 USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
-           clangTooling.a clangParse.a clangSema.a clangAnalysis.a \
-           clangEdit.a clangAST.a clangLex.a clangBasic.a
+           clangTooling.a clangToolingCore.a clangParse.a clangSema.a \
+	   clangAnalysis.a clangEdit.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
 

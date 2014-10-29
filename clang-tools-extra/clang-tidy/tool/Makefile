@@ -20,9 +20,9 @@ USEDLIBS = clangTidy.a clangTidyLLVMModule.a clangTidyGoogleModule.a \
 	   clangTidyMiscModule.a clangTidyReadability.a clangTidyUtils.a \
 	   clangStaticAnalyzerFrontend.a clangStaticAnalyzerCheckers.a \
 	   clangStaticAnalyzerCore.a \
-	   clangFormat.a clangASTMatchers.a clangTooling.a clangFrontend.a \
-	   clangSerialization.a clangDriver.a clangParse.a clangSema.a \
-	   clangAnalysis.a clangRewriteFrontend.a clangRewrite.a \
+	   clangFormat.a clangASTMatchers.a clangTooling.a clangToolingCore.a \
+	   clangFrontend.a clangSerialization.a clangDriver.a clangParse.a \
+	   clangSema.a clangAnalysis.a clangRewriteFrontend.a clangRewrite.a \
 	   clangEdit.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
