@@ -50,6 +50,7 @@ class EventAPITestCase(TestBase):
         self.buildDsym()
         self.do_add_listener_to_broadcaster()
 
+    @skipIfFreeBSD # llvm.org/pr21325
     @python_api_test
     @dwarf_test
     def test_add_listener_to_broadcaster_with_dwarf(self):
