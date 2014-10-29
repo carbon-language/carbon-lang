@@ -87,7 +87,9 @@ let test_target_machine () =
   assert_equal (TM.cpu machine) "";
   assert_equal (TM.features machine) "";
   ignore (TM.data_layout machine);
-  TM.set_verbose_asm true machine
+  TM.set_verbose_asm true machine;
+  let pm = PassManager.create () in
+  TM.add_analysis_passes pm machine
 
 
 (*===-- Code Emission -----------------------------------------------------===*)

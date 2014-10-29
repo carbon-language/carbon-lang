@@ -374,3 +374,10 @@ CAMLprim LLVMMemoryBufferRef llvm_targetmachine_emit_to_memory_buffer(
 
   return Buffer;
 }
+
+/* TargetMachine.t -> Llvm.PassManager.t -> unit */
+CAMLprim value llvm_targetmachine_add_analysis_passes(LLVMPassManagerRef PM,
+                                                      value Machine) {
+  LLVMAddAnalysisPasses(TargetMachine_val(Machine), PM);
+  return Val_unit;
+}
