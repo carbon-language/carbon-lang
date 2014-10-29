@@ -1420,14 +1420,14 @@ private:
     if (Tokens.size() < 2)
       return false;
     FormatToken *Previous = Tokens[Tokens.size() - 2];
-    if (Previous->isNot(tok::unknown) || Previous->TokenText != "\\" ||
-        Tokens.back()->NewlinesBefore != 0)
+    if (Previous->isNot(tok::unknown) || Previous->TokenText != "\\")
       return false;
-    Previous->ColumnWidth += Tokens.back()->ColumnWidth;
+    ++Previous->ColumnWidth;
     StringRef Text = Previous->TokenText;
-    Previous->TokenText =
-        StringRef(Text.data(), Text.size() + Tokens.back()->TokenText.size());
+    Previous->TokenText = StringRef(Text.data(), Text.size() + 1);
+    resetLexer(SourceMgr.getFileOffset(Tokens.back()->Tok.getLocation()) + 1);
     Tokens.resize(Tokens.size() - 1);
+    Column = Previous->OriginalColumn + Previous->ColumnWidth;
     return true;
   }
 
@@ -1460,15 +1460,10 @@ private:
                          tok::question, tok::kw_return) ||
            I[1]->isBinaryOperator())) {
         if (MightEndWithEscapedSlash) {
-          StringRef Buffer = SourceMgr.getBufferData(ID);
           // This regex literal ends in '\//'. Skip past the '//' of the last
           // token and re-start lexing from there.
-          int offset =
-              SourceMgr.getFileOffset(Tokens.back()->Tok.getLocation()) + 2;
-          Lex.reset(new Lexer(SourceMgr.getLocForStartOfFile(ID),
-                              getFormattingLangOpts(Style), Buffer.begin(),
-                              Buffer.begin() + offset, Buffer.end()));
-          Lex->SetKeepWhitespaceMode(true);
+          SourceLocation Loc = Tokens.back()->Tok.getLocation();
+          resetLexer(SourceMgr.getFileOffset(Loc) + 2);
         }
         Tokens.resize(Tokens.size() - TokenCount);
         Tokens.back()->Tok.setKind(tok::unknown);
@@ -1763,6 +1758,14 @@ private:
                                  Tok.TokenText == "/* clang-format off */")) {
       FormattingDisabled = true;
     }
+  }
+
+  void resetLexer(unsigned Offset) {
+    StringRef Buffer = SourceMgr.getBufferData(ID);
+    Lex.reset(new Lexer(SourceMgr.getLocForStartOfFile(ID),
+                        getFormattingLangOpts(Style), Buffer.begin(),
+                        Buffer.begin() + Offset, Buffer.end()));
+    Lex->SetKeepWhitespaceMode(true);
   }
 };
 
