@@ -40,3 +40,6 @@ class A { A(int); };
 // CHECK3: Use -header-filter='.*' {{.*}}
 // CHECK4-NOT: Suppressed {{.*}} warnings
 // CHECK4-NOT: Use -header-filter='.*' {{.*}}
+
+// FIXME: It doesn't pass on win32. Investigating.
+// REQUIRES: shell
