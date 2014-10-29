@@ -41,7 +41,7 @@ def mk_quote_string_for_target(value):
     """
     mk_quote_string_for_target(target_name) -> str
 
-    Return a quoted form of the given target_name suitable for including in a 
+    Return a quoted form of the given target_name suitable for including in a
     Makefile as a target name.
     """
 
@@ -340,7 +340,7 @@ subdirectories = %s
             # Compute the llvm-config "component name". For historical reasons,
             # this is lowercased based on the library name.
             llvmconfig_component_name = c.get_llvmconfig_component_name()
-            
+
             # Get the library name, or None for LibraryGroups.
             if c.type_name == 'Library' or c.type_name == 'OptionalLibrary':
                 library_name = c.get_prefixed_library_name()
@@ -430,14 +430,14 @@ subdirectories = %s
         traversed to include their required libraries.
         """
 
-        assert ci.type_name in ('Library', 'LibraryGroup', 'TargetGroup')
+        assert ci.type_name in ('Library', 'OptionalLibrary', 'LibraryGroup', 'TargetGroup')
 
         for name in ci.required_libraries:
             # Get the dependency info.
             dep = self.component_info_map[name]
 
             # If it is a library, yield it.
-            if dep.type_name == 'Library':
+            if dep.type_name == 'Library' or dep.type_name == 'OptionalLibrary':
                 yield dep
                 continue
 
@@ -492,7 +492,7 @@ subdirectories = %s
             if (path.startswith(self.source_root) and os.path.exists(path)):
                 yield path
 
-    def write_cmake_fragment(self, output_path):
+    def write_cmake_fragment(self, output_path, enabled_optional_components):
         """
         write_cmake_fragment(output_path) -> None
 
@@ -561,8 +561,13 @@ configure_file(\"%s\"
 # names to required libraries, in a way that is easily accessed from CMake.
 """)
         for ci in self.ordered_component_infos:
-            # We only write the information for libraries currently.
-            if ci.type_name != 'Library':
+            # Skip optional components which are not enabled.
+            if ci.type_name == 'OptionalLibrary' \
+                and ci.name not in enabled_optional_components:
+                continue
+
+            # We only write the information for certain components currently.
+            if ci.type_name not in ('Library', 'OptionalLibrary'):
                 continue
 
             f.write("""\
@@ -573,7 +578,7 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
 
         f.close()
 
-    def write_cmake_exports_fragment(self, output_path):
+    def write_cmake_exports_fragment(self, output_path, enabled_optional_components):
         """
         write_cmake_exports_fragment(output_path) -> None
 
@@ -595,8 +600,13 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
 # dependencies of libraries imported from LLVM.
 """)
         for ci in self.ordered_component_infos:
+            # Skip optional components which are not enabled.
+            if ci.type_name == 'OptionalLibrary' \
+                and ci.name not in enabled_optional_components:
+                continue
+
             # We only write the information for libraries currently.
-            if ci.type_name != 'Library':
+            if ci.type_name not in ('Library', 'OptionalLibrary'):
                 continue
 
             # Skip disabled targets.
@@ -905,9 +915,11 @@ given by --build-root) at the same SUBPATH""",
 
     # Write out the cmake fragment, if requested.
     if opts.write_cmake_fragment:
-        project_info.write_cmake_fragment(opts.write_cmake_fragment)
+        project_info.write_cmake_fragment(opts.write_cmake_fragment,
+                                          opts.optional_components)
     if opts.write_cmake_exports_fragment:
-        project_info.write_cmake_exports_fragment(opts.write_cmake_exports_fragment)
+        project_info.write_cmake_exports_fragment(opts.write_cmake_exports_fragment,
+                                                  opts.optional_components)
 
     # Configure target definition files, if requested.
     if opts.configure_target_def_files:

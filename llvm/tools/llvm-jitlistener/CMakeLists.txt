@@ -10,7 +10,6 @@ set(LLVM_LINK_COMPONENTS
   inteljitevents
   interpreter
   irreader
-  jit
   mcjit
   nativecodegen
   object
