@@ -78,10 +78,9 @@ static std::vector<std::string> Cleanup;
 static llvm::TargetOptions TargetOpts;
 
 namespace options {
-  enum generate_bc { BC_NO, BC_ALSO, BC_ONLY };
+  enum generate_bc { BC_NO, BC_ONLY, BC_SAVE_TEMPS };
   static bool generate_api_file = false;
   static generate_bc generate_bc_file = BC_NO;
-  static std::string bc_path;
   static std::string obj_path;
   static std::string extra_library_path;
   static std::string triple;
@@ -111,18 +110,8 @@ namespace options {
       obj_path = opt.substr(strlen("obj-path="));
     } else if (opt == "emit-llvm") {
       generate_bc_file = BC_ONLY;
-    } else if (opt == "also-emit-llvm") {
-      generate_bc_file = BC_ALSO;
-    } else if (opt.startswith("also-emit-llvm=")) {
-      llvm::StringRef path = opt.substr(strlen("also-emit-llvm="));
-      generate_bc_file = BC_ALSO;
-      if (!bc_path.empty()) {
-        message(LDPL_WARNING, "Path to the output IL file specified twice. "
-                              "Discarding %s",
-                opt_);
-      } else {
-        bc_path = path;
-      }
+    } else if (opt == "save-temps") {
+      generate_bc_file = BC_SAVE_TEMPS;
     } else {
       // Save this option to pass to the code generator.
       // ParseCommandLineOptions() expects argv[0] to be program name. Lazily
@@ -691,6 +680,14 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   passes.run(M);
 }
 
+static void saveBCFile(StringRef Path, Module &M) {
+  std::error_code EC;
+  raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
+  if (EC)
+    message(LDPL_FATAL, "Failed to write the output file.");
+  WriteBitcodeToFile(&M, OS);
+}
+
 static void codegen(Module &M) {
   const std::string &TripleStr = M.getTargetTriple();
   Triple TheTriple(TripleStr);
@@ -714,6 +711,9 @@ static void codegen(Module &M) {
       CodeModel::Default, CodeGenOpt::Aggressive));
 
   runLTOPasses(M, *TM);
+
+  if (options::generate_bc_file == options::BC_SAVE_TEMPS)
+    saveBCFile(output_name + ".opt.bc", M);
 
   PassManager CodeGenPasses;
   CodeGenPasses.add(new DataLayoutPass());
@@ -800,17 +800,9 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
     std::string path;
     if (options::generate_bc_file == options::BC_ONLY)
       path = output_name;
-    else if (!options::bc_path.empty())
-      path = options::bc_path;
     else
       path = output_name + ".bc";
-    {
-      std::error_code EC;
-      raw_fd_ostream OS(path, EC, sys::fs::OpenFlags::F_None);
-      if (EC)
-        message(LDPL_FATAL, "Failed to write the output file.");
-      WriteBitcodeToFile(L.getModule(), OS);
-    }
+    saveBCFile(path, *L.getModule());
     if (options::generate_bc_file == options::BC_ONLY)
       return LDPS_OK;
   }
