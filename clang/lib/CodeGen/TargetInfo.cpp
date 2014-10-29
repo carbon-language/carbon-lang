@@ -5055,6 +5055,10 @@ ABIArgInfo NVPTXABIInfo::classifyArgumentType(QualType Ty) const {
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
+  // Return aggregates type as indirect by value
+  if (isAggregateTypeForABI(Ty))
+    return ABIArgInfo::getIndirect(0, /* byval */ true);
+
   return (Ty->isPromotableIntegerType() ?
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
