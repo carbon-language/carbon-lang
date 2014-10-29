@@ -12,7 +12,7 @@
 // The pass creates a polyhedral description of the Scops detected by the Scop
 // detection derived from their LLVM-IR code.
 //
-// This represantation is shared among several tools in the polyhedral
+// This representation is shared among several tools in the polyhedral
 // community, which are e.g. Cloog, Pluto, Loopo, Graphite.
 //
 //===----------------------------------------------------------------------===//
