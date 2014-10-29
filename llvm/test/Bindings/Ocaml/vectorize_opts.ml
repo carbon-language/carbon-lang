@@ -35,7 +35,7 @@ let m = create_module context filename
 (*===-- Transforms --------------------------------------------------------===*)
 
 let test_transforms () =
-  let (++) x f = ignore (f x); x in
+  let (++) x f = f x; x in
 
   let fty = function_type void_type [| |] in
   let fn = define_function "fn" fty m in

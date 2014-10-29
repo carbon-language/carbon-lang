@@ -56,12 +56,6 @@ CAMLprim value llvm_add_always_inliner(LLVMPassManagerRef PM) {
 }
 
 /* [`Module] Llvm.PassManager.t -> unit */
-CAMLprim value llvm_add_always_inliner_pass(LLVMPassManagerRef PM) {
-  LLVMAddAlwaysInlinerPass(PM);
-  return Val_unit;
-}
-
-/* [`Module] Llvm.PassManager.t -> unit */
 CAMLprim value llvm_add_global_dce(LLVMPassManagerRef PM) {
   LLVMAddGlobalDCEPass(PM);
   return Val_unit;
@@ -74,7 +68,7 @@ CAMLprim value llvm_add_global_optimizer(LLVMPassManagerRef PM) {
 }
 
 /* [`Module] Llvm.PassManager.t -> unit */
-CAMLprim value llvm_add_ipc_propagation(LLVMPassManagerRef PM) {
+CAMLprim value llvm_add_ip_constant_propagation(LLVMPassManagerRef PM) {
   LLVMAddIPConstantPropagationPass(PM);
   return Val_unit;
 }
@@ -91,7 +85,7 @@ CAMLprim value llvm_add_ipsccp(LLVMPassManagerRef PM) {
   return Val_unit;
 }
 
-/* [`Module] Llvm.PassManager.t -> bool -> unit */
+/* [`Module] Llvm.PassManager.t -> all_but_main:bool -> unit */
 CAMLprim value llvm_add_internalize(LLVMPassManagerRef PM, value AllButMain) {
   LLVMAddInternalizePass(PM, Bool_val(AllButMain));
   return Val_unit;

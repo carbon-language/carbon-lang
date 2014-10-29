@@ -35,45 +35,50 @@ let m = create_module context filename
 (*===-- Transforms --------------------------------------------------------===*)
 
 let test_transforms () =
-  let (++) x f = ignore (f x); x in
+  let (++) x f = f x; x in
 
   let fty = function_type void_type [| |] in
   let fn = define_function "fn" fty m in
   ignore (build_ret_void (builder_at_end context (entry_block fn)));
 
   ignore (PassManager.create_function m
-           ++ add_verifier
-           ++ add_constant_propagation
-           ++ add_sccp
-           ++ add_dead_store_elimination
            ++ add_aggressive_dce
+           ++ add_alignment_from_assumptions
+           ++ add_cfg_simplification
+           ++ add_dead_store_elimination
+           ++ add_scalarizer
+           ++ add_merged_load_store_motion
+           ++ add_gvn
+           ++ add_ind_var_simplification
+           ++ add_instruction_combination
+           ++ add_jump_threading
+           ++ add_licm
+           ++ add_loop_deletion
+           ++ add_loop_idiom
+           ++ add_loop_rotation
+           ++ add_loop_reroll
+           ++ add_loop_unroll
+           ++ add_loop_unswitch
+           ++ add_memcpy_opt
+           ++ add_partially_inline_lib_calls
+           ++ add_lower_switch
+           ++ add_memory_to_register_promotion
+           ++ add_reassociation
+           ++ add_sccp
            ++ add_scalar_repl_aggregation
            ++ add_scalar_repl_aggregation_ssa
            ++ add_scalar_repl_aggregation_with_threshold 4
-           ++ add_ind_var_simplification
-           ++ add_instruction_combination
-           ++ add_licm
-           ++ add_loop_unswitch
-           ++ add_loop_unroll
-           ++ add_loop_rotation
-           ++ add_memory_to_register_promotion
-           ++ add_memory_to_register_demotion
-           ++ add_reassociation
-           ++ add_jump_threading
-           ++ add_cfg_simplification
-           ++ add_tail_call_elimination
-           ++ add_gvn
-           ++ add_memcpy_opt
-           ++ add_loop_deletion
-           ++ add_loop_idiom
            ++ add_lib_call_simplification
+           ++ add_tail_call_elimination
+           ++ add_constant_propagation
+           ++ add_memory_to_register_demotion
+           ++ add_verifier
            ++ add_correlated_value_propagation
            ++ add_early_cse
            ++ add_lower_expect_intrinsic
            ++ add_type_based_alias_analysis
+           ++ add_scoped_no_alias_alias_analysis
            ++ add_basic_alias_analysis
-           ++ add_partially_inline_lib_calls
-           ++ add_verifier
            ++ PassManager.initialize
            ++ PassManager.run_function fn
            ++ PassManager.finalize

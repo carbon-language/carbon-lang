@@ -36,7 +36,7 @@ let m = create_module context filename
 (*===-- Transforms --------------------------------------------------------===*)
 
 let test_transforms () =
-  let (++) x f = ignore (f x); x in
+  let (++) x f = f x; x in
 
   let fty = function_type i8_type [| |] in
   let fn = define_function "fn" fty m in
@@ -58,7 +58,7 @@ let test_transforms () =
            ++ add_ipc_propagation
            ++ add_prune_eh
            ++ add_ipsccp
-           ++ add_internalize
+           ++ add_internalize ~all_but_main:true
            ++ add_strip_dead_prototypes
            ++ add_strip_symbols
            ++ PassManager.run_module m
