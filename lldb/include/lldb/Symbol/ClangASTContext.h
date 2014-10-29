@@ -14,8 +14,10 @@
 #include <stdint.h>
 
 // C++ Includes
+#include <initializer_list>
 #include <string>
 #include <vector>
+#include <utility>
 
 // Other libraries and framework includes
 #include "llvm/ADT/SmallVector.h"
@@ -243,6 +245,10 @@ public:
         
         return clang_type;
     }
+    
+    ClangASTType
+    GetOrCreateStructForIdentifier (const ConstString &type_name,
+                                    const std::initializer_list< std::pair < const char *, ClangASTType > >& type_fields);
 
     //------------------------------------------------------------------
     // Structure, Unions, Classes

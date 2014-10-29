@@ -23,6 +23,8 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
+#include "lldb/Utility/ProcessStructReader.h"
+
 #include <algorithm>
 
 using namespace lldb;
@@ -1037,6 +1039,26 @@ lldb_private::formatters::NSTaggedString_SummaryProvider (ObjCLanguageRuntime::C
     return true;
 }
 
+static ClangASTType
+GetNSPathStore2Type (Target &target)
+{
+    static ConstString g_type_name("__lldb_autogen_nspathstore2");
+
+    ClangASTContext *ast_ctx = target.GetScratchClangASTContext();
+    
+    if (!ast_ctx)
+        return ClangASTType();
+    
+    ClangASTType voidstar = ast_ctx->GetBasicType(lldb::eBasicTypeVoid).GetPointerType();
+    ClangASTType uint32 = ast_ctx->GetIntTypeFromBitSize(32, false);
+    
+    return ast_ctx->GetOrCreateStructForIdentifier(g_type_name, {
+        {"isa",voidstar},
+        {"lengthAndRef",uint32},
+        {"buffer",voidstar}
+    });
+}
+
 bool
 lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
@@ -1182,7 +1204,10 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     }
     else if (is_special)
     {
-        uint64_t location = valobj_addr + (ptr_size == 8 ? 12 : 8);
+        ProcessStructReader reader(valobj.GetProcessSP().get(), valobj.GetValueAsUnsigned(0), GetNSPathStore2Type(*valobj.GetTargetSP()));
+        explicit_length = reader.GetField<uint32_t>(ConstString("lengthAndRef")) >> 20;
+        lldb::addr_t location = valobj.GetValueAsUnsigned(0) + ptr_size + 4;
+        
         ReadUTFBufferAndDumpToStreamOptions<UTF16> options;
         options.SetConversionFunction(ConvertUTF16toUTF8);
         options.SetLocation(location);
