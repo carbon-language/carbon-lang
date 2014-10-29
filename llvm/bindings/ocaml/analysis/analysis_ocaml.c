@@ -20,7 +20,6 @@
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 
-
 /* Llvm.llmodule -> string option */
 CAMLprim value llvm_verify_module(LLVMModuleRef M) {
   CAMLparam0();

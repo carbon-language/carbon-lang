@@ -15,6 +15,7 @@ LEVEL := ../../..
 LIBRARYNAME := llvm
 UsedComponents := core
 UsedOcamlLibs := llvm
+ExtraLibs := -lstdc++
 
 include ../Makefile.ocaml
 

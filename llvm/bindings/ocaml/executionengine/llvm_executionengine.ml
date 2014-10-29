@@ -1,4 +1,4 @@
-(*===-- llvm_executionengine.ml - LLVM OCaml Interface ----------*- C++ -*-===*
+(*===-- llvm_executionengine.ml - LLVM OCaml Interface --------*- OCaml -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -7,21 +7,18 @@
  *
  *===----------------------------------------------------------------------===*)
 
-
 exception Error of string
 
-external register_exns: exn -> unit
-  = "llvm_register_ee_exns"
-
+let () = Callback.register_exception "Llvm_executionengine.Error" (Error "")
 
 module CodeModel = struct
   type t =
-    | Default
-    | JIT_default
-    | Small
-    | Kernel
-    | Medium
-    | Large
+  | Default
+  | JIT_default
+  | Small
+  | Kernel
+  | Medium
+  | Large
 end
 
 module GenericValue = struct
@@ -70,14 +67,6 @@ module ExecutionEngine = struct
     code_model = CodeModel.JIT_default;
     no_framepointer_elim = false;
     enable_fast_isel = false }
-
-  (* FIXME: Ocaml is not running this setup code unless we use 'val' in the
-            interface, which causes the emission of a stub for each function;
-            using 'external' in the module allows direct calls into
-            ocaml_executionengine.c. This is hardly fatal, but it is unnecessary
-            overhead on top of the two stubs that are already invoked for each
-            call into LLVM. *)
-  let _ = register_exns (Error "")
 
   external create: Llvm.llmodule -> t
     = "llvm_ee_create"

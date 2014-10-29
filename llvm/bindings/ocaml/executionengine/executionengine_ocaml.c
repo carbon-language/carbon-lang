@@ -15,37 +15,15 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
+#include <string.h>
+#include <assert.h>
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm-c/Target.h"
 #include "caml/alloc.h"
 #include "caml/custom.h"
 #include "caml/fail.h"
 #include "caml/memory.h"
-#include <string.h>
-#include <assert.h>
-
-/* Force the LLVM interpreter and JIT to be linked in. */
-void llvm_initialize(void) {
-  LLVMLinkInInterpreter();
-  LLVMLinkInMCJIT();
-}
-
-/* unit -> bool */
-CAMLprim value llvm_initialize_native_target(value Unit) {
-  return Val_bool(!LLVMInitializeNativeTarget() &&
-                  !LLVMInitializeNativeAsmParser() &&
-                  !LLVMInitializeNativeAsmPrinter());
-}
-
-/* Can't use the recommended caml_named_value mechanism for backwards
-   compatibility reasons. This is largely equivalent. */
-static value llvm_ee_error_exn;
-
-CAMLprim value llvm_register_ee_exns(value Error) {
-  llvm_ee_error_exn = Field(Error, 0);
-  register_global_root(&llvm_ee_error_exn);
-  return Val_unit;
-}
+#include "caml/callback.h"
 
 static void llvm_raise(value Prototype, char *Message) {
   CAMLparam1(Prototype);
@@ -55,12 +33,8 @@ static void llvm_raise(value Prototype, char *Message) {
   LLVMDisposeMessage(Message);
 
   raise_with_arg(Prototype, CamlMessage);
-  abort(); /* NOTREACHED */
-#ifdef CAMLnoreturn
-  CAMLnoreturn; /* Silences warnings, but is missing in some versions. */
-#endif
+  CAMLnoreturn;
 }
-
 
 /*--... Operations on generic values .......................................--*/
 
@@ -71,15 +45,13 @@ static void llvm_finalize_generic_value(value GenVal) {
 }
 
 static struct custom_operations generic_value_ops = {
-  (char *) "LLVMGenericValue",
+  (char *) "Llvm_executionengine.GenericValue.t",
   llvm_finalize_generic_value,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
-  custom_deserialize_default
-#ifdef custom_compare_ext_default
-  , custom_compare_ext_default
-#endif
+  custom_deserialize_default,
+  custom_compare_ext_default
 };
 
 static value alloc_generic_value(LLVMGenericValueRef Ref) {
@@ -173,12 +145,22 @@ CAMLprim value llvm_genericvalue_as_nativeint(value GenVal) {
 
 /*--... Operations on execution engines ....................................--*/
 
+/* unit -> bool */
+CAMLprim value llvm_initialize_native_target(value Unit) {
+  LLVMLinkInInterpreter();
+  LLVMLinkInMCJIT();
+
+  return Val_bool(!LLVMInitializeNativeTarget() &&
+                  !LLVMInitializeNativeAsmParser() &&
+                  !LLVMInitializeNativeAsmPrinter());
+}
+
 /* llmodule -> ExecutionEngine.t */
 CAMLprim LLVMExecutionEngineRef llvm_ee_create(LLVMModuleRef M) {
   LLVMExecutionEngineRef Interp;
   char *Error;
   if (LLVMCreateExecutionEngineForModule(&Interp, M, &Error))
-    llvm_raise(llvm_ee_error_exn, Error);
+    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
   return Interp;
 }
 
@@ -188,7 +170,7 @@ llvm_ee_create_interpreter(LLVMModuleRef M) {
   LLVMExecutionEngineRef Interp;
   char *Error;
   if (LLVMCreateInterpreterForModule(&Interp, M, &Error))
-    llvm_raise(llvm_ee_error_exn, Error);
+    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
   return Interp;
 }
 
@@ -198,7 +180,7 @@ llvm_ee_create_jit(LLVMModuleRef M, value OptLevel) {
   LLVMExecutionEngineRef JIT;
   char *Error;
   if (LLVMCreateJITCompilerForModule(&JIT, M, Int_val(OptLevel), &Error))
-    llvm_raise(llvm_ee_error_exn, Error);
+    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
   return JIT;
 }
 
@@ -207,16 +189,18 @@ CAMLprim LLVMExecutionEngineRef
 llvm_ee_create_mcjit(LLVMModuleRef M, value OptRecord) {
   LLVMExecutionEngineRef MCJIT;
   char *Error;
-  struct LLVMMCJITCompilerOptions Options = {
-         .OptLevel = Int_val(Field(OptRecord, 0)),
-         .CodeModel = Int_val(Field(OptRecord, 1)),
-         .NoFramePointerElim = Int_val(Field(OptRecord, 2)),
-         .EnableFastISel = Int_val(Field(OptRecord, 3)),
-         .MCJMM = NULL
-  };
+  struct LLVMMCJITCompilerOptions Options;
+
+  LLVMInitializeMCJITCompilerOptions(&Options, sizeof(Options));
+  Options.OptLevel = Int_val(Field(OptRecord, 0));
+  Options.CodeModel = Int_val(Field(OptRecord, 1));
+  Options.NoFramePointerElim = Int_val(Field(OptRecord, 2));
+  Options.EnableFastISel = Int_val(Field(OptRecord, 3));
+  Options.MCJMM = NULL;
+
   if (LLVMCreateMCJITCompilerForModule(&MCJIT, M, &Options,
                                       sizeof(Options), &Error))
-    llvm_raise(llvm_ee_error_exn, Error);
+    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
   return MCJIT;
 }
 
@@ -238,7 +222,7 @@ CAMLprim LLVMModuleRef llvm_ee_remove_module(LLVMModuleRef M,
   LLVMModuleRef RemovedModule;
   char *Error;
   if (LLVMRemoveModule(EE, M, &RemovedModule, &Error))
-    llvm_raise(llvm_ee_error_exn, Error);
+    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
   return RemovedModule;
 }
 
@@ -350,9 +334,9 @@ extern value llvm_alloc_data_layout(LLVMTargetDataRef TargetData);
 CAMLprim value llvm_ee_get_data_layout(LLVMExecutionEngineRef EE) {
   value DataLayout;
   LLVMTargetDataRef OrigDataLayout;
-  OrigDataLayout = LLVMGetExecutionEngineTargetData(EE);
-
   char* TargetDataCStr;
+
+  OrigDataLayout = LLVMGetExecutionEngineTargetData(EE);
   TargetDataCStr = LLVMCopyStringRepOfTargetData(OrigDataLayout);
   DataLayout = llvm_alloc_data_layout(LLVMCreateTargetData(TargetDataCStr));
   LLVMDisposeMessage(TargetDataCStr);

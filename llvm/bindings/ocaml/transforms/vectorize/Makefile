@@ -7,7 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 #
-# This is the makefile for the Objective Caml Llvm_vectorize_opts interface.
+# This is the makefile for the Objective Caml Llvm_vectorize interface.
 #
 ##===----------------------------------------------------------------------===##
 

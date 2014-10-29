@@ -21,16 +21,9 @@
 #include "caml/fail.h"
 #include "caml/memory.h"
 #include "caml/custom.h"
+#include "caml/callback.h"
 
 /*===---- Exceptions ------------------------------------------------------===*/
-
-static value llvm_target_error_exn;
-
-CAMLprim value llvm_register_target_exns(value Error) {
-  llvm_target_error_exn = Field(Error, 0);
-  register_global_root(&llvm_target_error_exn);
-  return Val_unit;
-}
 
 static void llvm_raise(value Prototype, char *Message) {
   CAMLparam1(Prototype);
@@ -40,10 +33,7 @@ static void llvm_raise(value Prototype, char *Message) {
   LLVMDisposeMessage(Message);
 
   raise_with_arg(Prototype, CamlMessage);
-  abort(); /* NOTREACHED */
-#ifdef CAMLnoreturn
-  CAMLnoreturn; /* Silences warnings, but is missing in some versions. */
-#endif
+  CAMLnoreturn;
 }
 
 static value llvm_string_of_message(char* Message) {
@@ -62,15 +52,13 @@ static void llvm_finalize_data_layout(value DataLayout) {
 }
 
 static struct custom_operations llvm_data_layout_ops = {
-  (char *) "LLVMDataLayout",
+  (char *) "Llvm_target.DataLayout.t",
   llvm_finalize_data_layout,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
-  custom_deserialize_default
-#ifdef custom_compare_ext_default
-  , custom_compare_ext_default
-#endif
+  custom_deserialize_default,
+  custom_compare_ext_default
 };
 
 value llvm_alloc_data_layout(LLVMTargetDataRef DataLayout) {
@@ -219,7 +207,7 @@ CAMLprim LLVMTargetRef llvm_target_by_triple(value Triple) {
   char *Error;
 
   if(LLVMGetTargetFromTriple(String_val(Triple), &T, &Error))
-    llvm_raise(llvm_target_error_exn, Error);
+    llvm_raise(*caml_named_value("Llvm_target.Error"), Error);
 
   return T;
 }
@@ -258,15 +246,13 @@ static void llvm_finalize_target_machine(value Machine) {
 }
 
 static struct custom_operations llvm_target_machine_ops = {
-  (char *) "LLVMTargetMachine",
+  (char *) "Llvm_target.TargetMachine.t",
   llvm_finalize_target_machine,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
-  custom_deserialize_default
-#ifdef custom_compare_ext_default
-  , custom_compare_ext_default
-#endif
+  custom_deserialize_default,
+  custom_compare_ext_default
 };
 
 static value llvm_alloc_targetmachine(LLVMTargetMachineRef Machine) {
@@ -337,6 +323,7 @@ CAMLprim value llvm_targetmachine_features(value Machine) {
 CAMLprim value llvm_targetmachine_data_layout(value Machine) {
   CAMLparam1(Machine);
   CAMLlocal1(DataLayout);
+  char *TargetDataCStr;
 
   /* LLVMGetTargetMachineData returns a pointer owned by the TargetMachine,
      so it is impossible to wrap it with llvm_alloc_target_data, which assumes
@@ -344,7 +331,6 @@ CAMLprim value llvm_targetmachine_data_layout(value Machine) {
   LLVMTargetDataRef OrigDataLayout;
   OrigDataLayout = LLVMGetTargetMachineData(TargetMachine_val(Machine));
 
-  char* TargetDataCStr;
   TargetDataCStr = LLVMCopyStringRepOfTargetData(OrigDataLayout);
   DataLayout = llvm_alloc_data_layout(LLVMCreateTargetData(TargetDataCStr));
   LLVMDisposeMessage(TargetDataCStr);
@@ -361,12 +347,12 @@ CAMLprim value llvm_targetmachine_set_verbose_asm(value Verb, value Machine) {
 /* Llvm.llmodule -> CodeGenFileType.t -> string -> TargetMachine.t -> unit */
 CAMLprim value llvm_targetmachine_emit_to_file(LLVMModuleRef Module,
                             value FileType, value FileName, value Machine) {
-  char* ErrorMessage;
+  char *ErrorMessage;
 
   if(LLVMTargetMachineEmitToFile(TargetMachine_val(Machine), Module,
                                  String_val(FileName), Int_val(FileType),
                                  &ErrorMessage)) {
-    llvm_raise(llvm_target_error_exn, ErrorMessage);
+    llvm_raise(*caml_named_value("Llvm_target.Error"), ErrorMessage);
   }
 
   return Val_unit;
@@ -377,13 +363,13 @@ CAMLprim value llvm_targetmachine_emit_to_file(LLVMModuleRef Module,
 CAMLprim LLVMMemoryBufferRef llvm_targetmachine_emit_to_memory_buffer(
                                 LLVMModuleRef Module, value FileType,
                                 value Machine) {
-  char* ErrorMessage;
+  char *ErrorMessage;
   LLVMMemoryBufferRef Buffer;
 
   if(LLVMTargetMachineEmitToMemoryBuffer(TargetMachine_val(Machine), Module,
                                          Int_val(FileType), &ErrorMessage,
                                          &Buffer)) {
-    llvm_raise(llvm_target_error_exn, ErrorMessage);
+    llvm_raise(*caml_named_value("Llvm_target.Error"), ErrorMessage);
   }
 
   return Buffer;

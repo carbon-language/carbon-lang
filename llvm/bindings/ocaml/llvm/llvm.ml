@@ -1,4 +1,4 @@
-(*===-- llvm/llvm.ml - LLVM Ocaml Interface --------------------------------===*
+(*===-- llvm/llvm.ml - LLVM OCaml Interface -------------------------------===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -278,8 +278,7 @@ end
 
 exception IoError of string
 
-external register_exns : exn -> unit = "llvm_register_core_exns"
-let _ = register_exns (IoError "")
+let () = Callback.register_exception "Llvm.IoError" (IoError "")
 
 external install_fatal_error_handler : (string -> unit) -> unit
                                      = "llvm_install_fatal_error_handler"

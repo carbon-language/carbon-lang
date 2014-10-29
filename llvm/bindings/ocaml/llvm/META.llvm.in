@@ -4,7 +4,6 @@ description = "LLVM OCaml bindings"
 archive(byte) = "llvm.cma"
 archive(native) = "llvm.cmxa"
 directory = "."
-linkopts = "-ccopt -lstdc++"
 
 package "analysis" (
     requires = "llvm"

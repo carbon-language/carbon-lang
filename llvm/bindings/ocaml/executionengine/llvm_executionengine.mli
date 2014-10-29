@@ -1,4 +1,4 @@
-(*===-- llvm_executionengine.mli - LLVM OCaml Interface ---------*- C++ -*-===*
+(*===-- llvm_executionengine.mli - LLVM OCaml Interface -------*- OCaml -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -10,19 +10,19 @@
 (** JIT Interpreter.
 
     This interface provides an OCaml API for LLVM execution engine (JIT/
-    interpreter), the classes in the ExecutionEngine library. *)
+    interpreter), the classes in the [ExecutionEngine] library. *)
 
 exception Error of string
 
 (** The JIT code model. See [llvm::CodeModel::Model]. *)
 module CodeModel : sig
   type t =
-    | Default
-    | JIT_default
-    | Small
-    | Kernel
-    | Medium
-    | Large
+  | Default
+  | JIT_default
+  | Small
+  | Kernel
+  | Medium
+  | Large
 end
 
 module GenericValue: sig

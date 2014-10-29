@@ -47,8 +47,7 @@ end
 
 exception Error of string
 
-external register_exns : exn -> unit = "llvm_register_target_exns"
-let _ = register_exns (Error "")
+let () = Callback.register_exception "Llvm_target.Error" (Error "")
 
 module DataLayout = struct
   type t

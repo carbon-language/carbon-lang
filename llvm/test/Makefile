@@ -129,7 +129,7 @@ lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@PYTHON_EXECUTABLE@=$(PYTHON)=g >> lit.tmp
 	@$(ECHOPATH) s=@OCAMLC@=$(OCAMLC)=g >> lit.tmp
 	@$(ECHOPATH) s=@OCAMLOPT@=$(OCAMLOPT)=g >> lit.tmp
-	@$(ECHOPATH) s=@OCAMLFLAGS@=-cclib -lstdc++ -cclib -L$(LibDir) -I $(LibDir)/ocaml $(addprefix -cclib ,$(LDFLAGS))=g >> lit.tmp
+	@$(ECHOPATH) s=@OCAMLFLAGS@=-cclib -L$(LibDir) -I $(LibDir)/ocaml $(addprefix -cclib ,$(LDFLAGS))=g >> lit.tmp
 	@$(ECHOPATH) s=@GO_EXECUTABLE@=$(GO)=g >> lit.tmp
 	@$(ECHOPATH) s!@HOST_CC@!$(CC)!g >> lit.tmp
 	@$(ECHOPATH) s!@HOST_CXX@!$(CXX)!g >> lit.tmp

@@ -61,11 +61,11 @@ ifneq ($(ObjectsO),)
 OCAMLAFLAGS += $(patsubst %,-cclib %, \
                  $(filter-out -L$(LibDir),-l$(LIBRARYNAME) \
                                           $(shell $(LLVM_CONFIG) --ldflags)) \
-                                          $(UsedLibs))
+                                          $(UsedLibs) $(ExtraLibs))
 else
 OCAMLAFLAGS += $(patsubst %,-cclib %, \
                  $(filter-out -L$(LibDir),$(shell $(LLVM_CONFIG) --ldflags)) \
-                                          $(UsedLibs))
+                                          $(UsedLibs) $(ExtraLibs))
 endif
 endif
 
@@ -481,6 +481,7 @@ printcamlvars::
 	$(Echo) "DestSharedLib: " '$(DestSharedLib)'
 	$(Echo) "UsedLibs     : " '$(UsedLibs)'
 	$(Echo) "UsedLibNames : " '$(UsedLibNames)'
+	$(Echo) "ExtraLibs    : " '$(ExtraLibs)'
 
 .PHONY: printcamlvars   build-cmis \
             clean-a     clean-cmis     clean-cma     clean-cmxa \

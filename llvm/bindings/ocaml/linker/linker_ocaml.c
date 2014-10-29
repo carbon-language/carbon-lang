@@ -19,14 +19,7 @@
 #include "caml/alloc.h"
 #include "caml/memory.h"
 #include "caml/fail.h"
-
-static value llvm_linker_error_exn;
-
-CAMLprim value llvm_register_linker_exns(value Error) {
-  llvm_linker_error_exn = Field(Error, 0);
-  register_global_root(&llvm_linker_error_exn);
-  return Val_unit;
-}
+#include "caml/callback.h"
 
 static void llvm_raise(value Prototype, char *Message) {
   CAMLparam1(Prototype);
@@ -36,19 +29,15 @@ static void llvm_raise(value Prototype, char *Message) {
   LLVMDisposeMessage(Message);
 
   raise_with_arg(Prototype, CamlMessage);
-  abort(); /* NOTREACHED */
-#ifdef CAMLnoreturn
-  CAMLnoreturn; /* Silences warnings, but is missing in some versions. */
-#endif
+  CAMLnoreturn;
 }
 
-/* llmodule -> llmodule -> Mode.t -> unit
-   raises Error msg on error */
+/* llmodule -> llmodule -> Mode.t -> unit */
 CAMLprim value llvm_link_modules(LLVMModuleRef Dst, LLVMModuleRef Src, value Mode) {
   char* Message;
 
   if (LLVMLinkModules(Dst, Src, Int_val(Mode), &Message))
-    llvm_raise(llvm_linker_error_exn, Message);
+    llvm_raise(*caml_named_value("Llvm_linker.Error"), Message);
 
   return Val_unit;
 }

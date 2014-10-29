@@ -1,4 +1,4 @@
-##===- bindings/ocaml/all_backends/Makefile ----------------------*- Makefile -*-===##
+##===- bindings/ocaml/all_backends/Makefile ----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,7 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 #
-# This is the makefile for the Objective Caml Llvm_backends interface.
+# This is the makefile for the Objective Caml Llvm_all_backends interface.
 #
 ##===----------------------------------------------------------------------===##
 
