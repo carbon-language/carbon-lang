@@ -35,11 +35,10 @@ static cl::extrahelp ClangTidyHelp(
     "  option, command-line option takes precedence. The effective\n"
     "  configuration can be inspected using -dump-config.\n\n");
 
-const char DefaultChecks[] =
-    "*,"                       // Enable all checks, except these:
-    "-clang-analyzer-alpha*,"  // Too many false positives.
-    "-llvm-include-order,"     // Not implemented yet.
-    "-google-*,";              // Doesn't apply to LLVM.
+const char DefaultChecks[] =  // Enable these checks:
+    "clang-diagnostic-*,"     //   * compiler diagnostics
+    "clang-analyzer-*,"       //   * Static Analyzer checks
+    "-clang-analyzer-alpha*"; //   * but not alpha checks: many false positives
 
 static cl::opt<std::string>
 Checks("checks", cl::desc("Comma-separated list of globs with optional '-'\n"
