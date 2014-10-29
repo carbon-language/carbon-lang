@@ -286,6 +286,8 @@ external reset_fatal_error_handler : unit -> unit
                                    = "llvm_reset_fatal_error_handler"
 external enable_pretty_stacktrace : unit -> unit
                                   = "llvm_enable_pretty_stacktrace"
+external parse_command_line_options : ?overview:string -> string array -> unit
+                                    = "llvm_parse_command_line_options"
 
 type ('a, 'b) llpos =
 | At_end of 'a

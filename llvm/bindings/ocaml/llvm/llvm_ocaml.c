@@ -60,6 +60,17 @@ CAMLprim value llvm_enable_pretty_stacktrace(value Unit) {
   return Val_unit;
 }
 
+CAMLprim value llvm_parse_command_line_options(value Overview, value Args) {
+  char *COverview;
+  if (Overview == Val_int(0)) {
+    COverview = NULL;
+  } else {
+    COverview = String_val(Field(Overview, 0));
+  }
+  LLVMParseCommandLineOptions(Wosize_val(Args), (const char* const*) Op_val(Args), COverview);
+  return Val_unit;
+}
+
 static value alloc_variant(int tag, void *Value) {
   value Iter = alloc_small(1, tag);
   Field(Iter, 0) = Val_op(Value);

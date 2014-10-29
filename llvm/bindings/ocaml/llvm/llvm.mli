@@ -381,6 +381,14 @@ val install_fatal_error_handler : (string -> unit) -> unit
 (** [reset_fatal_error_handler ()] resets LLVM's fatal error handler. *)
 val reset_fatal_error_handler : unit -> unit
 
+(** [parse_command_line_options ?overview args] parses [args] using
+    the LLVM command line parser. Note that the only stable thing about this
+    function is its signature; you cannot rely on any particular set of command
+    line arguments being interpreted the same way across LLVM versions.
+
+    See the function [llvm::cl::ParseCommandLineOptions()]. *)
+val parse_command_line_options : ?overview:string -> string array -> unit
+
 (** {6 Contexts} *)
 
 (** [create_context ()] creates a context for storing the "global" state in
