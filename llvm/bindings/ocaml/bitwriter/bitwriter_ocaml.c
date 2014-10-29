@@ -43,3 +43,8 @@ CAMLprim value llvm_write_bitcode_to_fd(value U, LLVMModuleRef M, value FD) {
   Result = LLVMWriteBitcodeToFD(M, Int_val(FD), 0, Unbuffered);
   return Val_bool(Result == 0);
 }
+
+/* Llvm.llmodule -> Llvm.llmemorybuffer */
+CAMLprim LLVMMemoryBufferRef llvm_write_bitcode_to_memory_buffer(LLVMModuleRef M) {
+  return LLVMWriteBitcodeToMemoryBuffer(M);
+}

@@ -45,4 +45,5 @@ let _ =
 
   test (file_buf = temp_bitcode m);
   test (file_buf = temp_bitcode ~unbuffered:false m);
-  test (file_buf = temp_bitcode ~unbuffered:true m)
+  test (file_buf = temp_bitcode ~unbuffered:true m);
+  test (file_buf = Llvm.MemoryBuffer.as_string (Llvm_bitwriter.write_bitcode_to_memory_buffer m))
