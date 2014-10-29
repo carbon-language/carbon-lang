@@ -9,7 +9,6 @@ target_link_libraries(clang-format
   clangFormat
   clangLex
   clangRewrite
-  clangTooling
   )
 
 install(TARGETS clang-format RUNTIME DESTINATION bin)

@@ -1,4 +1,4 @@
-##===- clang/lib/Tooling/Makefile ---------------------------*- Makefile -*-===##
+##===- clang/lib/Tooling/Core/Makefile ---------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,8 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../..
-LIBRARYNAME := clangTooling
-PARALLEL_DIRS := Core
+CLANG_LEVEL := ../../..
+LIBRARYNAME := clangToolingCore
 
 include $(CLANG_LEVEL)/Makefile

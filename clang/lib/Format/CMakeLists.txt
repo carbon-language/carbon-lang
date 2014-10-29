@@ -12,5 +12,5 @@ add_clang_library(clangFormat
   LINK_LIBS
   clangBasic
   clangLex
-  clangTooling
+  clangToolingCore
   )
