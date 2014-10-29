@@ -64,8 +64,6 @@ public:
 
   ~IslNodeBuilder() { delete Rewriter; }
 
-  /// @brief Add the mappings from array id's to array llvm::Value's.
-  void addMemoryAccesses(Scop &S);
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
   IslExprBuilder &getExprBuilder() { return ExprBuilder; }
@@ -561,15 +559,6 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
   isl_set_free(Context);
 }
 
-void IslNodeBuilder::addMemoryAccesses(Scop &S) {
-  for (ScopStmt *Stmt : S)
-    for (MemoryAccess *MA : *Stmt) {
-      isl_id *Id = MA->getArrayId();
-      IDToValue[Id] = MA->getBaseAddr();
-      isl_id_free(Id);
-    }
-}
-
 namespace {
 class IslCodeGeneration : public ScopPass {
 public:
@@ -620,7 +609,6 @@ public:
     PollyIRBuilder Builder = createPollyIRBuilder(EnteringBB, Annotator);
 
     IslNodeBuilder NodeBuilder(Builder, Annotator, this, *LI, *SE, *DT);
-    NodeBuilder.addMemoryAccesses(S);
     NodeBuilder.addParameters(S.getContext());
 
     Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
