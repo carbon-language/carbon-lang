@@ -1018,7 +1018,7 @@ This directory contains most of the source files of the LLVM system. In LLVM,
 almost all code exists in libraries, making it very easy to share code among the
 different `tools`_.
 
-``llvm/lib/VMCore/``
+``llvm/lib/IR/``
 
   This directory holds the core LLVM source files that implement core classes
   like Instruction and BasicBlock.
