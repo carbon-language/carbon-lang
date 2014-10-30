@@ -1,7 +1,6 @@
 (* RUN: cp %s %T/target.ml
- * RUN: %ocamlcomp -g -warn-error A -package llvm.target -package llvm.executionengine -linkpkg %T/target.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.target -package llvm.all_backends -linkpkg %T/target.ml -o %t
  * RUN: %t %t.bc
- * REQUIRES: native, object-emission
  * XFAIL: vg_leak
  *)
 
@@ -12,7 +11,7 @@
 open Llvm
 open Llvm_target
 
-let _ = Llvm_executionengine.initialize_native_target ()
+let () = Llvm_all_backends.initialize ()
 
 let context = global_context ()
 let i32_type = Llvm.i32_type context
@@ -112,5 +111,5 @@ let _ =
   test_target_data ();
   test_target ();
   test_target_machine ();
-  (* test_code_emission (); *) (* broken without AsmParser support *)
+  test_code_emission ();
   dispose_module m
