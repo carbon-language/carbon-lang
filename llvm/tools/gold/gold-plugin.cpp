@@ -677,6 +677,7 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   PMB.VerifyInput = true;
   PMB.VerifyOutput = true;
   PMB.LoopVectorize = true;
+  PMB.SLPVectorize = true;
   PMB.populateLTOPassManager(passes, &TM);
   passes.run(M);
 }
