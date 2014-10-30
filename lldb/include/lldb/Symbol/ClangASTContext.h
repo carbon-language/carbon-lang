@@ -248,7 +248,8 @@ public:
     
     ClangASTType
     GetOrCreateStructForIdentifier (const ConstString &type_name,
-                                    const std::initializer_list< std::pair < const char *, ClangASTType > >& type_fields);
+                                    const std::initializer_list< std::pair < const char *, ClangASTType > >& type_fields,
+                                    bool packed = false);
 
     //------------------------------------------------------------------
     // Structure, Unions, Classes

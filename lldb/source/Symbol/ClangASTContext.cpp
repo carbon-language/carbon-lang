@@ -1857,7 +1857,8 @@ ClangASTContext::CreateArrayType (const ClangASTType &element_type,
 
 ClangASTType
 ClangASTContext::GetOrCreateStructForIdentifier (const ConstString &type_name,
-                                                 const std::initializer_list< std::pair < const char *, ClangASTType > >& type_fields)
+                                                 const std::initializer_list< std::pair < const char *, ClangASTType > >& type_fields,
+                                                 bool packed)
 {
     ClangASTType type;
     if ((type = GetTypeForIdentifier<clang::CXXRecordDecl>(type_name)).IsValid())
@@ -1866,6 +1867,8 @@ ClangASTContext::GetOrCreateStructForIdentifier (const ConstString &type_name,
     type.StartTagDeclarationDefinition();
     for (const auto& field : type_fields)
         type.AddFieldToRecordType(field.first, field.second, lldb::eAccessPublic, 0);
+    if (packed)
+        type.SetIsPacked();
     type.CompleteTagDeclarationDefinition();
     return type;
 }

@@ -4946,6 +4946,17 @@ ClangASTType::BuildIndirectFields ()
     }
 }
 
+void
+ClangASTType::SetIsPacked ()
+{
+    clang::RecordDecl *record_decl = GetAsRecordDecl();
+    
+    if (!record_decl)
+        return;
+    
+    record_decl->addAttr(clang::PackedAttr::CreateImplicit(*m_ast));
+}
+
 clang::VarDecl *
 ClangASTType::AddVariableToRecordType (const char *name,
                                        const ClangASTType &var_type,
