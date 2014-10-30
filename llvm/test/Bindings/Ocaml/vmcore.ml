@@ -442,7 +442,14 @@ let test_global_values () =
   group "alignment";
   let g = define_global "GVal05" zero32 m ++
           set_alignment 128 in
-  insist (128 = alignment g)
+  insist (128 = alignment g);
+
+  (* CHECK: GVal06{{.*}}dllexport
+   *)
+  group "dll_storage_class";
+  let g = define_global "GVal06" zero32 m ++
+          set_dll_storage_class DLLStorageClass.DLLExport in
+  insist (DLLStorageClass.DLLExport = dll_storage_class g)
 
 
 (*===-- Global Variables --------------------------------------------------===*)

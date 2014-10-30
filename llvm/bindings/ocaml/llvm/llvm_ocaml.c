@@ -957,6 +957,17 @@ CAMLprim value llvm_set_visibility(value Viz, LLVMValueRef Global) {
   return Val_unit;
 }
 
+/* llvalue -> DLLStorageClass.t */
+CAMLprim value llvm_dll_storage_class(LLVMValueRef Global) {
+  return Val_int(LLVMGetDLLStorageClass(Global));
+}
+
+/* DLLStorageClass.t -> llvalue -> unit */
+CAMLprim value llvm_set_dll_storage_class(value Viz, LLVMValueRef Global) {
+  LLVMSetDLLStorageClass(Global, Int_val(Viz));
+  return Val_unit;
+}
+
 /* llvalue -> int */
 CAMLprim value llvm_alignment(LLVMValueRef Global) {
   return Val_int(LLVMGetAlignment(Global));

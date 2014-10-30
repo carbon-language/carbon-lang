@@ -105,6 +105,15 @@ module Visibility : sig
   | Protected
 end
 
+(** The DLL storage class of a global value, accessed with {!dll_storage_class} and
+    {!set_dll_storage_class}. See [llvm::GlobalValue::DLLStorageClassTypes]. *)
+module DLLStorageClass : sig
+  type t =
+  | Default
+  | DLLImport
+  | DLLExport
+end
+
 (** The following calling convention values may be accessed with
     {!function_call_conv} and {!set_function_call_conv}. Calling
     conventions are open-ended. *)
@@ -1258,6 +1267,14 @@ val visibility : llvalue -> Visibility.t
 (** [set_visibility v g] sets the linker visibility of the global value [g] to
     [v]. See the method [llvm::GlobalValue::setVisibility]. *)
 val set_visibility : Visibility.t -> llvalue -> unit
+
+(** [dll_storage_class g] returns the DLL storage class of the global value [g].
+    See the method [llvm::GlobalValue::getDLLStorageClass]. *)
+val dll_storage_class : llvalue -> DLLStorageClass.t
+
+(** [set_dll_storage_class v g] sets the DLL storage class of the global value [g] to
+    [v]. See the method [llvm::GlobalValue::setDLLStorageClass]. *)
+val set_dll_storage_class : DLLStorageClass.t -> llvalue -> unit
 
 (** [alignment g] returns the required alignment of the global value [g].
     See the method [llvm::GlobalValue::getAlignment]. *)
