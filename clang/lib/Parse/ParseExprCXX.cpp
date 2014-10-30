@@ -1402,7 +1402,7 @@ ExprResult Parser::ParseCXXUuidof() {
 ///         ::[opt] nested-name-specifier[opt] ~type-name
 ///       
 ExprResult 
-Parser::ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
+Parser::ParseCXXPseudoDestructor(Expr *Base, SourceLocation OpLoc,
                                  tok::TokenKind OpKind,
                                  CXXScopeSpec &SS,
                                  ParsedType ObjectType) {

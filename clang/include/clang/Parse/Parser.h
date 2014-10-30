@@ -264,7 +264,6 @@ public:
   typedef clang::MemInitResult     MemInitResult;
   typedef clang::TypeResult        TypeResult;
 
-  typedef Expr *ExprArg;
   typedef MutableArrayRef<Stmt*> MultiStmtArg;
   typedef Sema::FullExprArg FullExprArg;
 
@@ -1445,7 +1444,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2.4: C++ Pseudo-Destructor Expressions
-  ExprResult ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
+  ExprResult ParseCXXPseudoDestructor(Expr *Base, SourceLocation OpLoc,
                                             tok::TokenKind OpKind,
                                             CXXScopeSpec &SS,
                                             ParsedType ObjectType);
@@ -1545,10 +1544,10 @@ private:
   ExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
                                             SourceLocation SuperLoc,
                                             ParsedType ReceiverType,
-                                            ExprArg ReceiverExpr);
+                                            Expr *ReceiverExpr);
   ExprResult ParseAssignmentExprWithObjCMessageExprStart(
       SourceLocation LBracloc, SourceLocation SuperLoc,
-      ParsedType ReceiverType, ExprArg ReceiverExpr);
+      ParsedType ReceiverType, Expr *ReceiverExpr);
   bool ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr);
     
   //===--------------------------------------------------------------------===//

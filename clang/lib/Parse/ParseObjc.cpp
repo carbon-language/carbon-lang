@@ -2399,7 +2399,7 @@ ExprResult
 Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        SourceLocation SuperLoc,
                                        ParsedType ReceiverType,
-                                       ExprArg ReceiverExpr) {
+                                       Expr *ReceiverExpr) {
   InMessageExpressionRAIIObject InMessage(*this, true);
 
   if (Tok.is(tok::code_completion)) {
