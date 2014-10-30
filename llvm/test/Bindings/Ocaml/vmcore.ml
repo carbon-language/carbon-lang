@@ -1,5 +1,5 @@
 (* RUN: cp %s %T/vmcore.ml
- * RUN: %ocamlcomp -warn-error A -package llvm.analysis -package llvm.bitwriter -linkpkg %T/vmcore.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.analysis -package llvm.bitwriter -linkpkg %T/vmcore.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc > %t.ll
  * RUN: FileCheck %s < %t.ll

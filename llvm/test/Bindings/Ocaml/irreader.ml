@@ -1,5 +1,5 @@
 (* RUN: cp %s %T/irreader.ml
- * RUN: %ocamlcomp -warn-error A -package llvm.irreader -linkpkg %T/irreader.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.irreader -linkpkg %T/irreader.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)

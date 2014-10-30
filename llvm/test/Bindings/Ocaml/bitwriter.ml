@@ -1,5 +1,5 @@
 (* RUN: cp %s %T/bitwriter.ml
- * RUN: %ocamlcomp -warn-error A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc
  * XFAIL: vg_leak

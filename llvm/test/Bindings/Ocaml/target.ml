@@ -1,5 +1,5 @@
 (* RUN: cp %s %T/target.ml
- * RUN: %ocamlcomp -warn-error A -package llvm.target -package llvm.executionengine -linkpkg %T/target.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.target -package llvm.executionengine -linkpkg %T/target.ml -o %t
  * RUN: %t %t.bc
  * REQUIRES: native, object-emission
  * XFAIL: vg_leak

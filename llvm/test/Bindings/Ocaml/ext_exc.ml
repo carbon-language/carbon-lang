@@ -1,5 +1,5 @@
 (* RUN: cp %s %T/ext_exc.ml
- * RUN: %ocamlcomp -warn-error A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)

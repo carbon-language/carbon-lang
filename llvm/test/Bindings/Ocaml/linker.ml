@@ -1,5 +1,5 @@
 (* RUN: cp %s %T/linker.ml
- * RUN: %ocamlcomp -warn-error A -package llvm.linker -linkpkg %T/linker.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.linker -linkpkg %T/linker.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)

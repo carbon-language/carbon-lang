@@ -1,5 +1,5 @@
 (* RUN: cp %s %T/analysis.ml
- * RUN: %ocamlcomp -warn-error A -package llvm.analysis -linkpkg %T/analysis.ml -o %t
+ * RUN: %ocamlcomp -g -warn-error A -package llvm.analysis -linkpkg %T/analysis.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)
