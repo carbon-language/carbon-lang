@@ -129,6 +129,10 @@ def avx512vl_i32_info : AVX512VLVectorVTInfo<v16i32_info, v8i32x_info,
                                              v4i32x_info>;
 def avx512vl_i64_info : AVX512VLVectorVTInfo<v8i64_info, v4i64x_info,
                                              v2i64x_info>;
+def avx512vl_f32_info : AVX512VLVectorVTInfo<v16f32_info, v8f32x_info,
+                                             v4f32x_info>;
+def avx512vl_f64_info : AVX512VLVectorVTInfo<v8f64_info, v4f64x_info,
+                                             v2f64x_info>;
 
 // This multiclass generates the masking variants from the non-masking
 // variant.  It only provides the assembly pieces for the masking variants.
@@ -573,36 +577,57 @@ def VEXTRACTPSzmr : AVX512AIi8<0x17, MRMDestMem, (outs),
 //===---------------------------------------------------------------------===//
 // AVX-512 BROADCAST
 //---
-multiclass avx512_fp_broadcast<bits<8> opc, string OpcodeStr, 
-                         RegisterClass DestRC,
-                         RegisterClass SrcRC, X86MemOperand x86memop> {
-  def rr : AVX5128I<opc, MRMSrcReg, (outs DestRC:$dst), (ins SrcRC:$src),
-         !strconcat(OpcodeStr, " \t{$src, $dst|$dst, $src}"),
-         []>, EVEX;
-  def rm : AVX5128I<opc, MRMSrcMem, (outs DestRC:$dst), (ins x86memop:$src),
-        !strconcat(OpcodeStr, " \t{$src, $dst|$dst, $src}"),[]>, EVEX;
+multiclass avx512_fp_broadcast<bits<8> opc, SDNode OpNode, RegisterClass SrcRC,
+                              ValueType svt, X86VectorVTInfo _> {
+  defm r : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                   (ins SrcRC:$src), "vbroadcast"## !subst("p", "s", _.Suffix),
+                   "$src", "$src", (_.VT (OpNode (svt SrcRC:$src)))>,
+                   T8PD, EVEX;
+
+  let mayLoad = 1 in {
+    defm m : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                     (ins _.ScalarMemOp:$src),
+                     "vbroadcast"##!subst("p", "s", _.Suffix), "$src", "$src",
+                     (_.VT (OpNode (_.ScalarLdFrag addr:$src)))>,
+                     T8PD, EVEX;
+  }
 }
+
+multiclass avx512_fp_broadcast_vl<bits<8> opc, SDNode OpNode,
+                                  AVX512VLVectorVTInfo _> {
+  defm Z  : avx512_fp_broadcast<opc, OpNode, VR128X, _.info128.VT, _.info512>,
+                             EVEX_V512;
+
+  let Predicates = [HasVLX] in {
+    defm Z256  : avx512_fp_broadcast<opc, OpNode, VR128X, _.info128.VT, _.info256>,
+                                  EVEX_V256;
+  }
+}
+
 let ExeDomain = SSEPackedSingle in {
-  defm VBROADCASTSSZ  : avx512_fp_broadcast<0x18, "vbroadcastss", VR512,
-                                       VR128X, f32mem>,
-                                       EVEX_V512, EVEX_CD8<32, CD8VT1>;
+  defm VBROADCASTSS  : avx512_fp_broadcast_vl<0x18, X86VBroadcast,
+                              avx512vl_f32_info>, EVEX_CD8<32, CD8VT1>;
+   let Predicates = [HasVLX] in {
+     defm VBROADCASTSSZ128  : avx512_fp_broadcast<0x18, X86VBroadcast, VR128X,
+                                     v4f32, v4f32x_info>, EVEX_V128,
+                                     EVEX_CD8<32, CD8VT1>;
+   }
 }
 
 let ExeDomain = SSEPackedDouble in {
-  defm VBROADCASTSDZ  : avx512_fp_broadcast<0x19, "vbroadcastsd", VR512,
-                                       VR128X, f64mem>,
-                                       EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+  defm VBROADCASTSD  : avx512_fp_broadcast_vl<0x19, X86VBroadcast,
+                              avx512vl_f64_info>, VEX_W, EVEX_CD8<64, CD8VT1>;
 }
 
 def : Pat<(v16f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSSZrm addr:$src)>;
+          (VBROADCASTSSZm addr:$src)>;
 def : Pat<(v8f64 (X86VBroadcast (loadf64 addr:$src))),
-          (VBROADCASTSDZrm addr:$src)>;
+          (VBROADCASTSDZm addr:$src)>;
 
 def : Pat<(int_x86_avx512_vbroadcast_ss_512 addr:$src),
-          (VBROADCASTSSZrm addr:$src)>;
+          (VBROADCASTSSZm addr:$src)>;
 def : Pat<(int_x86_avx512_vbroadcast_sd_512 addr:$src),
-          (VBROADCASTSDZrm addr:$src)>;
+          (VBROADCASTSDZm addr:$src)>;
 
 multiclass avx512_int_broadcast_reg<bits<8> opc, string OpcodeStr,
                           RegisterClass SrcRC, RegisterClass KRC> {
@@ -711,14 +736,14 @@ def : Pat<(v8i64 (int_x86_avx512_pbroadcastq_512 (v2i64 VR128X:$src))),
           (VPBROADCASTQZrr VR128X:$src)>;
 
 def : Pat<(v16f32 (X86VBroadcast (v4f32 VR128X:$src))),
-          (VBROADCASTSSZrr VR128X:$src)>;
+          (VBROADCASTSSZr VR128X:$src)>;
 def : Pat<(v8f64 (X86VBroadcast (v2f64 VR128X:$src))),
-          (VBROADCASTSDZrr VR128X:$src)>;
+          (VBROADCASTSDZr VR128X:$src)>;
 
 def : Pat<(v16f32 (X86VBroadcast (v16f32 VR512:$src))),
-          (VBROADCASTSSZrr (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm))>;
+          (VBROADCASTSSZr (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm))>;
 def : Pat<(v8f64 (X86VBroadcast (v8f64 VR512:$src))),
-          (VBROADCASTSDZrr (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm))>;
+          (VBROADCASTSDZr (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm))>;
 
 def : Pat<(v16i32 (X86VBroadcast (v16i32 VR512:$src))),
           (VPBROADCASTDZrr (EXTRACT_SUBREG (v16i32 VR512:$src), sub_xmm))>;
@@ -726,16 +751,16 @@ def : Pat<(v8i64 (X86VBroadcast (v8i64 VR512:$src))),
           (VPBROADCASTQZrr (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm))>;
 
 def : Pat<(v16f32 (int_x86_avx512_vbroadcast_ss_ps_512 (v4f32 VR128X:$src))),
-          (VBROADCASTSSZrr VR128X:$src)>;
+          (VBROADCASTSSZr VR128X:$src)>;
 def : Pat<(v8f64 (int_x86_avx512_vbroadcast_sd_pd_512 (v2f64 VR128X:$src))),
-          (VBROADCASTSDZrr VR128X:$src)>;
+          (VBROADCASTSDZr VR128X:$src)>;
     
 // Provide fallback in case the load node that is used in the patterns above
 // is used by additional users, which prevents the pattern selection.
 def : Pat<(v16f32 (X86VBroadcast FR32X:$src)),
-          (VBROADCASTSSZrr (COPY_TO_REGCLASS FR32X:$src, VR128X))>;
+          (VBROADCASTSSZr (COPY_TO_REGCLASS FR32X:$src, VR128X))>;
 def : Pat<(v8f64 (X86VBroadcast FR64X:$src)),
-          (VBROADCASTSDZrr (COPY_TO_REGCLASS FR64X:$src, VR128X))>;
+          (VBROADCASTSDZr (COPY_TO_REGCLASS FR64X:$src, VR128X))>;
 
 
 let Predicates = [HasAVX512] in {
