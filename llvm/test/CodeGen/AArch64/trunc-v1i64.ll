@@ -61,3 +61,22 @@ define <8 x i8> @test_v1i8_1(<1 x i64> %in0) {
   %2 = trunc <8 x i64> %1 to <8 x i8>
   ret <8 x i8> %2
 }
+
+; PR20777: v1i1 is also problematic, but we can't widen it, so we extract_elt
+; the i64 out of the v1i64 operand, and truncate that scalar instead.
+
+define <1 x i1> @test_v1i1_0(<1 x i64> %in0) {
+; CHECK-LABEL: test_v1i1_0:
+; CHECK: fmov w0, s0
+  %1 = trunc <1 x i64> %in0 to <1 x i1>
+  ret <1 x i1> %1
+}
+
+define i1 @test_v1i1_1(<1 x i64> %in0) {
+; CHECK-LABEL: test_v1i1_1:
+; CHECK: fmov [[REG:w[0-9]+]], s0
+  %1 = trunc <1 x i64> %in0 to <1 x i1>
+; CHECK: and w0, [[REG]], #0x1
+  %2 = extractelement <1 x i1> %1, i32 0
+  ret i1 %2
+}
