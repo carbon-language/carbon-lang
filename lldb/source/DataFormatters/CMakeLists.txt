@@ -19,6 +19,7 @@ add_lldb_library(lldbDataFormatters
   NSDictionary.cpp
   NSIndexPath.cpp
   NSSet.cpp
+  StringPrinter.cpp
   TypeCategory.cpp
   TypeCategoryMap.cpp
   TypeFormat.cpp
