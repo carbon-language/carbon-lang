@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A-3 unix.%cma llvm.%cma llvm_bitwriter.%cma %t.builddir/bitwriter.ml -o %t
+(* RUN: cp %s %T/bitwriter.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc
  * XFAIL: vg_leak

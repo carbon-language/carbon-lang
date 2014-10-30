@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_passmgr_builder.%cma %t.builddir/passmgr_builder.ml -o %t
+(* RUN: cp %s %T/passmgr_builder.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.passmgr_builder -linkpkg %T/passmgr_builder.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)

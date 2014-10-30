@@ -1,9 +1,8 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_target.%cma llvm_executionengine.%cma %t.builddir/executionengine.ml -o %t
+(* RUN: cp %s %T/executionengine.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.executionengine -linkpkg %T/executionengine.ml -o %t
  * RUN: %t
- * XFAIL: vg_leak hexagon
+ * REQUIRES: native, object-emission
+ * XFAIL: vg_leak
  *)
 
 open Llvm

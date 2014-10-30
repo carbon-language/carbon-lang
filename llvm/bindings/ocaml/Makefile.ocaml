@@ -20,8 +20,8 @@
 include $(LEVEL)/Makefile.config
 
 # CFLAGS needs to be set before Makefile.rules is included.
-CXX.Flags += -I"$(shell $(OCAMLC) -where)"
-C.Flags += -I"$(shell $(OCAMLC) -where)"
+CXX.Flags += -I"$(shell $(OCAMLFIND) c -where)"
+C.Flags += -I"$(shell $(OCAMLFIND) c -where)"
 
 ifeq ($(ENABLE_SHARED),1)
 LINK_COMPONENTS := all
@@ -55,7 +55,7 @@ endif
 endif
 
 # Tools
-OCAMLCFLAGS += -I $(ObjDir) -I $(OcamlDir)
+OCAMLCFLAGS += -I $(OcamlDir)
 ifndef IS_CLEANING_TARGET
 ifneq ($(ObjectsO),)
 OCAMLAFLAGS += $(patsubst %,-cclib %, \
@@ -73,9 +73,9 @@ ifneq ($(ENABLE_OPTIMIZED),1)
   OCAMLDEBUGFLAG := -g
 endif
 
-Compile.CMI  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
-Compile.CMO  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
-Compile.CMX  := $(strip $(OCAMLOPT) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+Compile.CMI  := $(strip $(OCAMLFIND) c -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+Compile.CMO  := $(strip $(OCAMLFIND) c -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+Compile.CMX  := $(strip $(OCAMLFIND) opt -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 
 ifdef OCAMLSTUBS
 # Avoid the need for LD_LIBRARY_PATH
@@ -87,26 +87,20 @@ endif
 endif
 
 ifdef OCAMLSTUBS
-Archive.CMA  := $(strip $(OCAMLC) -a -dllib -l$(LIBRARYNAME) $(OCAMLDEBUGFLAG) \
-                                  -o)
+Archive.CMA  := $(strip $(OCAMLFIND) c -a -dllib -l$(LIBRARYNAME) $(OCAMLDEBUGFLAG) \
+                                       -o)
 else
-Archive.CMA  := $(strip $(OCAMLC) -a -custom $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) \
-                                  -o)
+Archive.CMA  := $(strip $(OCAMLFIND) c -a -custom $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) \
+                                       -o)
 endif
 
 ifdef OCAMLSTUBS
-Archive.CMXA := $(strip $(OCAMLOPT) -a $(patsubst %,-cclib %, \
+Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(patsubst %,-cclib %, \
                                     $(LLVMLibsOptions) -l$(LIBRARYNAME) \
                                     -L$(SharedLibDir) $(OCAMLRPATH)) \
                                     $(OCAMLDEBUGFLAG) -o)
 else
-Archive.CMXA := $(strip $(OCAMLOPT) -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) -o)
-endif
-
-ifdef OCAMLOPT
-Archive.EXE := $(strip $(OCAMLOPT) -cc $(CXX) $(OCAMLCFLAGS) $(UsedOcamlLibs:%=%.cmxa) $(OCAMLDEBUGFLAG) -o)
-else
-Archive.EXE := $(strip $(OCAMLC) -cc $(CXX) $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG:%=%.cma) -o)
+Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) -o)
 endif
 
 # Source files
@@ -190,7 +184,7 @@ $(ObjectsCMI): $(UsedOcamlInterfaces:%=$(OcamlDir)/%.cmi)
 ifdef LIBRARYNAME
 $(ObjDir)/$(LIBRARYNAME).ocamldep: $(OcamlSources) $(OcamlHeaders) \
                                    $(OcamlDir)/.dir $(ObjDir)/.dir
-	$(Verb) $(OCAMLDEP) $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeaders) > $@
+	$(Verb) $(OCAMLFIND) dep $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeaders) > $@
 
 -include $(ObjDir)/$(LIBRARYNAME).ocamldep
 endif
@@ -198,7 +192,7 @@ endif
 ifdef TOOLNAME
 $(ObjDir)/$(TOOLNAME).ocamldep: $(OcamlSources) $(OcamlHeaders) \
                                 $(OcamlDir)/.dir $(ObjDir)/.dir
-	$(Verb) $(OCAMLDEP) $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeaders) > $@
+	$(Verb) $(OCAMLFIND) dep $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeaders) > $@
 
 -include $(ObjDir)/$(TOOLNAME).ocamldep
 endif
@@ -367,8 +361,8 @@ endif
 ##===- Build optimized ocaml archive (.ml's -> .cmx's -> .cmxa, .a) -------===##
 
 # The ocamlopt compiler is supported on a set of targets disjoint from LLVM's.
-# If unavailable, 'configure' will not define OCAMLOPT in Makefile.config.
-ifdef OCAMLOPT
+# If unavailable, 'configure' will set HAVE_OCAMLOPT to 0 in Makefile.config.
+ifeq ($(HAVE_OCAMLOPT),1)
 
 $(OcamlDir)/%.cmx: $(ObjDir)/%.cmx
 	$(Verb) $(CP) -f $< $@
@@ -418,31 +412,11 @@ uninstall-cmxa::
 endif
 endif
 
-##===- Build executables --------------------------------------------------===##
-
-ifdef TOOLNAME
-all-local:: $(OutputEXE)
-clean-local:: clean-exe
-
-$(OutputEXE): $(ToolEXE) $(OcamlDir)/.dir
-	$(Verb) $(CP) -f $< $@
-
-ifndef OCAMLOPT
-$(ToolEXE): $(ObjectsCMO) $(OcamlDir)/.dir
-	$(Echo) "Archiving $(notdir $@) for $(BuildMode) build"
-	$(Verb) $(Archive.EXE) $@ $(ObjectsCMO)
-else
-$(ToolEXE): $(ObjectsCMX) $(OcamlDir)/.dir
-	$(Echo) "Archiving $(notdir $@) for $(BuildMode) build"
-	$(Verb) $(Archive.EXE) $@ $(ObjectsCMX)
-endif
-endif
-
 ##===- Generate documentation ---------------------------------------------===##
 
 $(ObjDir)/$(LIBRARYNAME).odoc: $(ObjectsCMI)
 	$(Echo) "Documenting $(notdir $@)"
-	$(Verb) $(OCAMLDOC) -I $(ObjDir) -I $(OcamlDir) -dump $@ $(OcamlHeaders)
+	$(Verb) $(OCAMLFIND) doc -I $(ObjDir) -I $(OcamlDir) -dump $@ $(OcamlHeaders)
 
 ocamldoc: $(ObjDir)/$(LIBRARYNAME).odoc
 
@@ -453,9 +427,7 @@ printcamlvars::
 	$(Echo) "LLVM_CONFIG  : " '$(LLVM_CONFIG)'
 	$(Echo) "OCAMLCFLAGS  : " '$(OCAMLCFLAGS)'
 	$(Echo) "OCAMLAFLAGS  : " '$(OCAMLAFLAGS)'
-	$(Echo) "OCAMLC       : " '$(OCAMLC)'
-	$(Echo) "OCAMLOPT     : " '$(OCAMLOPT)'
-	$(Echo) "OCAMLDEP     : " '$(OCAMLDEP)'
+	$(Echo) "OCAMLFIND    : " '$(OCAMLFIND)'
 	$(Echo) "Compile.CMI  : " '$(Compile.CMI)'
 	$(Echo) "Compile.CMO  : " '$(Compile.CMO)'
 	$(Echo) "Archive.CMA  : " '$(Archive.CMA)'

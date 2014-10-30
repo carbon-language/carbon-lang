@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_ipo.%cma llvm_target.%cma %t.builddir/ipo_opts.ml -o %t
+(* RUN: cp %s %T/ipo_opts.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.ipo -linkpkg %T/ipo_opts.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)

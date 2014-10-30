@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_analysis.%cma llvm_bitwriter.%cma %t.builddir/vmcore.ml -o %t
+(* RUN: cp %s %T/vmcore.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.analysis -package llvm.bitwriter -linkpkg %T/vmcore.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc > %t.ll
  * RUN: FileCheck %s < %t.ll

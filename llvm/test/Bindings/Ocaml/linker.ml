@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_linker.%cma %t.builddir/linker.ml -o %t
+(* RUN: cp %s %T/linker.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.linker -linkpkg %T/linker.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)

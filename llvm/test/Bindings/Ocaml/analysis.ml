@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_analysis.%cma %t.builddir/analysis.ml -o %t
+(* RUN: cp %s %T/analysis.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.analysis -linkpkg %T/analysis.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)

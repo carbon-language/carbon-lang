@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -warn-error A llvm.%cma llvm_scalar_opts.%cma llvm_target.%cma %t.builddir/scalar_opts.ml -o %t
+(* RUN: cp %s %T/scalar_opts.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.scalar_opts -linkpkg %T/scalar_opts.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)

@@ -1,7 +1,5 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlcomp -g -warn-error A llvm.%cma llvm_target.%cma llvm_executionengine.%cma %t.builddir/target.ml -o %t
+(* RUN: cp %s %T/target.ml
+ * RUN: %ocamlcomp -warn-error A -package llvm.target -package llvm.executionengine -linkpkg %T/target.ml -o %t
  * RUN: %t %t.bc
  * REQUIRES: native, object-emission
  * XFAIL: vg_leak

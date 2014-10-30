@@ -753,10 +753,7 @@ GZIPBIN
 PDFROFF
 ZIP
 GO
-OCAMLC
-OCAMLOPT
-OCAMLDEP
-OCAMLDOC
+OCAMLFIND
 GAS
 HAVE_LINK_VERSION_SCRIPT
 EGREP
@@ -788,6 +785,8 @@ LLVM_INFODIR
 LLVM_MANDIR
 LLVM_CONFIGTIME
 BINDINGS_TO_BUILD
+HAVE_OCAMLOPT
+HAVE_OCAML_OUNIT
 OCAML_LIBDIR
 ENABLE_VISIBILITY_INLINES_HIDDEN
 RPATH
@@ -6909,18 +6908,18 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-for ac_prog in ocamlc
+for ac_prog in ocamlfind
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_OCAMLC+set}" = set; then
+if test "${ac_cv_path_OCAMLFIND+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  case $OCAMLC in
+  case $OCAMLFIND in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_OCAMLC="$OCAMLC" # Let the user override the test with a path.
+  ac_cv_path_OCAMLFIND="$OCAMLFIND" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -6930,7 +6929,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_OCAMLC="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_OCAMLFIND="$as_dir/$ac_word$ac_exec_ext"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -6941,152 +6940,17 @@ IFS=$as_save_IFS
   ;;
 esac
 fi
-OCAMLC=$ac_cv_path_OCAMLC
-if test -n "$OCAMLC"; then
-  { echo "$as_me:$LINENO: result: $OCAMLC" >&5
-echo "${ECHO_T}$OCAMLC" >&6; }
+OCAMLFIND=$ac_cv_path_OCAMLFIND
+if test -n "$OCAMLFIND"; then
+  { echo "$as_me:$LINENO: result: $OCAMLFIND" >&5
+echo "${ECHO_T}$OCAMLFIND" >&6; }
 else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
 
 
-  test -n "$OCAMLC" && break
-done
-
-for ac_prog in ocamlopt
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_OCAMLOPT+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $OCAMLOPT in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_OCAMLOPT="$OCAMLOPT" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_OCAMLOPT="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-OCAMLOPT=$ac_cv_path_OCAMLOPT
-if test -n "$OCAMLOPT"; then
-  { echo "$as_me:$LINENO: result: $OCAMLOPT" >&5
-echo "${ECHO_T}$OCAMLOPT" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-  test -n "$OCAMLOPT" && break
-done
-
-for ac_prog in ocamldep
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_OCAMLDEP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $OCAMLDEP in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_OCAMLDEP="$OCAMLDEP" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_OCAMLDEP="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-OCAMLDEP=$ac_cv_path_OCAMLDEP
-if test -n "$OCAMLDEP"; then
-  { echo "$as_me:$LINENO: result: $OCAMLDEP" >&5
-echo "${ECHO_T}$OCAMLDEP" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-  test -n "$OCAMLDEP" && break
-done
-
-for ac_prog in ocamldoc
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_OCAMLDOC+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $OCAMLDOC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_OCAMLDOC="$OCAMLDOC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_OCAMLDOC="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-OCAMLDOC=$ac_cv_path_OCAMLDOC
-if test -n "$OCAMLDOC"; then
-  { echo "$as_me:$LINENO: result: $OCAMLDOC" >&5
-echo "${ECHO_T}$OCAMLDOC" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-  test -n "$OCAMLDOC" && break
+  test -n "$OCAMLFIND" && break
 done
 
 for ac_prog in gas as
@@ -18301,7 +18165,7 @@ _ACEOF
 
 if test "$BINDINGS_TO_BUILD" = auto ; then
   BINDINGS_TO_BUILD=""
-  if test "x$OCAMLC" != x -a "x$OCAMLDEP" != x ; then
+  if test "x$OCAMLFIND" != x ; then
     BINDINGS_TO_BUILD="ocaml $BINDINGS_TO_BUILD"
   fi
   if test "x$GO" != x ; then
@@ -18317,25 +18181,39 @@ binding_prereqs_failed=0
 for a_binding in $BINDINGS_TO_BUILD ; do
   case "$a_binding" in
   ocaml)
-    if test "x$OCAMLC" = x ; then
-      { echo "$as_me:$LINENO: WARNING: --enable-bindings=ocaml specified, but ocamlc not found. Try configure OCAMLC=/path/to/ocamlc" >&5
-echo "$as_me: WARNING: --enable-bindings=ocaml specified, but ocamlc not found. Try configure OCAMLC=/path/to/ocamlc" >&2;}
+    if test "x$OCAMLFIND" = x ; then
+      { echo "$as_me:$LINENO: WARNING: --enable-bindings=ocaml specified, but ocamlfind not found. Try configure OCAMLFIND=/path/to/ocamlfind" >&5
+echo "$as_me: WARNING: --enable-bindings=ocaml specified, but ocamlfind not found. Try configure OCAMLFIND=/path/to/ocamlfind" >&2;}
       binding_prereqs_failed=1
     fi
-    if test "x$OCAMLDEP" = x ; then
-      { echo "$as_me:$LINENO: WARNING: --enable-bindings=ocaml specified, but ocamldep not found. Try configure OCAMLDEP=/path/to/ocamldep" >&5
-echo "$as_me: WARNING: --enable-bindings=ocaml specified, but ocamldep not found. Try configure OCAMLDEP=/path/to/ocamldep" >&2;}
+
+    if $OCAMLFIND opt -version >/dev/null 2>/dev/null ; then
+      HAVE_OCAMLOPT=1
+    else
+      HAVE_OCAMLOPT=0
+    fi
+
+
+    if ! $OCAMLFIND query ctypes >/dev/null 2>/dev/null; then
+      { echo "$as_me:$LINENO: WARNING: --enable-bindings=ocaml specified, but ctypes is not installed" >&5
+echo "$as_me: WARNING: --enable-bindings=ocaml specified, but ctypes is not installed" >&2;}
       binding_prereqs_failed=1
     fi
-    if test "x$OCAMLOPT" = x ; then
-      { echo "$as_me:$LINENO: WARNING: --enable-bindings=ocaml specified, but ocamlopt not found. Try configure OCAMLOPT=/path/to/ocamlopt" >&5
-echo "$as_me: WARNING: --enable-bindings=ocaml specified, but ocamlopt not found. Try configure OCAMLOPT=/path/to/ocamlopt" >&2;}
+
+    if $OCAMLFIND query oUnit >/dev/null 2>/dev/null; then
+      HAVE_OCAML_OUNIT=1
+    else
+      HAVE_OCAML_OUNIT=0
+      { echo "$as_me:$LINENO: WARNING: --enable-bindings=ocaml specified, but OUnit 2 is not installed. Tests will not run" >&5
+echo "$as_me: WARNING: --enable-bindings=ocaml specified, but OUnit 2 is not installed. Tests will not run" >&2;}
           fi
+
+
     if test "x$with_ocaml_libdir" != xauto ; then
       OCAML_LIBDIR=$with_ocaml_libdir
 
     else
-      ocaml_stdlib="`"$OCAMLC" -where`"
+      ocaml_stdlib="`"$OCAMLFIND" ocamlc -where`"
       if test "$LLVM_PREFIX" '<' "$ocaml_stdlib" -a "$ocaml_stdlib" '<' "$LLVM_PREFIX~"
       then
         # ocaml stdlib is beneath our prefix; use stdlib
@@ -19391,10 +19269,7 @@ GZIPBIN!$GZIPBIN$ac_delim
 PDFROFF!$PDFROFF$ac_delim
 ZIP!$ZIP$ac_delim
 GO!$GO$ac_delim
-OCAMLC!$OCAMLC$ac_delim
-OCAMLOPT!$OCAMLOPT$ac_delim
-OCAMLDEP!$OCAMLDEP$ac_delim
-OCAMLDOC!$OCAMLDOC$ac_delim
+OCAMLFIND!$OCAMLFIND$ac_delim
 GAS!$GAS$ac_delim
 HAVE_LINK_VERSION_SCRIPT!$HAVE_LINK_VERSION_SCRIPT$ac_delim
 EGREP!$EGREP$ac_delim
@@ -19426,6 +19301,8 @@ LLVM_INFODIR!$LLVM_INFODIR$ac_delim
 LLVM_MANDIR!$LLVM_MANDIR$ac_delim
 LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
 BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
+HAVE_OCAMLOPT!$HAVE_OCAMLOPT$ac_delim
+HAVE_OCAML_OUNIT!$HAVE_OCAML_OUNIT$ac_delim
 OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
 RPATH!$RPATH$ac_delim
@@ -19435,7 +19312,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 96; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 95; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -19454,7 +19331,7 @@ fi
 
 cat >>$CONFIG_STATUS <<_ACEOF
 cat >"\$tmp/subs-2.sed" <<\CEOF$ac_eof
-/@[a-zA-Z_][a-zA-Z_0-9]*@/!b
+/@[a-zA-Z_][a-zA-Z_0-9]*@/!b end
 _ACEOF
 sed '
 s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g
@@ -19467,6 +19344,8 @@ N; s/^.*\n//; s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g; b n
 ' >>$CONFIG_STATUS <conf$$subs.sed
 rm -f conf$$subs.sed
 cat >>$CONFIG_STATUS <<_ACEOF
+:end
+s/|#_!!_#|//g
 CEOF$ac_eof
 _ACEOF
 
@@ -19714,7 +19593,7 @@ s&@abs_builddir@&$ac_abs_builddir&;t t
 s&@abs_top_builddir@&$ac_abs_top_builddir&;t t
 s&@INSTALL@&$ac_INSTALL&;t t
 $ac_datarootdir_hack
-" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" | sed 's/|#_!!_#|//g' >$tmp/out
+" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" >$tmp/out
 
 test -z "$ac_datarootdir_hack$ac_datarootdir_seen" &&
   { ac_out=`sed -n '/\${datarootdir}/p' "$tmp/out"`; test -n "$ac_out"; } &&
