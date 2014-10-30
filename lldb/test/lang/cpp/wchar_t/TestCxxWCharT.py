@@ -67,7 +67,7 @@ class CxxWCharTTestCase(TestBase):
             substrs = ['(int) foo_x.object = '])
 
         # Check that we can run expressions that return wchar_t
-        self.expect("expression L'a'",substrs = ['(wchar_t) $',"61 L'a'"])
+        self.expect("expression L'a'",substrs = ['(wchar_t) $',"L'a'"])
 
         # Mazel Tov if this works!
         self.expect("frame variable mazeltov",
