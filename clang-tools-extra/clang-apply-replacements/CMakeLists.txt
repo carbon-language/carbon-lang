@@ -8,7 +8,6 @@ add_clang_library(clangApplyReplacements
   LINK_LIBS
   clangBasic
   clangRewrite
-  clangTooling
   clangToolingCore
   )
 

@@ -10,7 +10,6 @@ target_link_libraries(clang-apply-replacements
   clangBasic
   clangFormat
   clangRewrite
-  clangTooling
   clangToolingCore
   )
 

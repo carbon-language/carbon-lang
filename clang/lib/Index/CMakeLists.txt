@@ -13,8 +13,6 @@ add_clang_library(clangIndex
   clangAST
   clangBasic
   clangFormat
-  clangLex
   clangRewrite
-  clangTooling
   clangToolingCore
   )
