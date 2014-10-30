@@ -457,8 +457,8 @@ static llvm::Value *emitHash16Bytes(CGBuilderTy &Builder, llvm::Value *Low,
 }
 
 bool CodeGenFunction::sanitizePerformTypeCheck() const {
-  return SanOpts->Null | SanOpts->Alignment | SanOpts->ObjectSize |
-         SanOpts->Vptr;
+  return SanOpts.Null | SanOpts.Alignment | SanOpts.ObjectSize |
+         SanOpts.Vptr;
 }
 
 void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
@@ -480,7 +480,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
 
   bool AllowNullPointers = TCK == TCK_DowncastPointer || TCK == TCK_Upcast ||
                            TCK == TCK_UpcastToVirtualBase;
-  if ((SanOpts->Null || AllowNullPointers) && !SkipNullCheck) {
+  if ((SanOpts.Null || AllowNullPointers) && !SkipNullCheck) {
     // The glvalue must not be an empty glvalue.
     Cond = Builder.CreateICmpNE(
         Address, llvm::Constant::getNullValue(Address->getType()));
@@ -496,7 +496,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     }
   }
 
-  if (SanOpts->ObjectSize && !Ty->isIncompleteType()) {
+  if (SanOpts.ObjectSize && !Ty->isIncompleteType()) {
     uint64_t Size = getContext().getTypeSizeInChars(Ty).getQuantity();
 
     // The glvalue must refer to a large enough storage region.
@@ -515,7 +515,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
 
   uint64_t AlignVal = 0;
 
-  if (SanOpts->Alignment) {
+  if (SanOpts.Alignment) {
     AlignVal = Alignment.getQuantity();
     if (!Ty->isIncompleteType() && !AlignVal)
       AlignVal = getContext().getTypeAlignInChars(Ty).getQuantity();
@@ -550,7 +550,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   //    -- the [pointer or glvalue] is used to access a non-static data member
   //       or call a non-static member function
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
-  if (SanOpts->Vptr &&
+  if (SanOpts.Vptr &&
       (TCK == TCK_MemberAccess || TCK == TCK_MemberCall ||
        TCK == TCK_DowncastPointer || TCK == TCK_DowncastReference ||
        TCK == TCK_UpcastToVirtualBase) &&
@@ -673,7 +673,7 @@ static llvm::Value *getArrayIndexingBound(
 void CodeGenFunction::EmitBoundsCheck(const Expr *E, const Expr *Base,
                                       llvm::Value *Index, QualType IndexType,
                                       bool Accessed) {
-  assert(SanOpts->ArrayBounds &&
+  assert(SanOpts.ArrayBounds &&
          "should not be called unless adding bounds checks");
   SanitizerScope SanScope(this);
 
@@ -775,7 +775,7 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
 
 LValue CodeGenFunction::EmitCheckedLValue(const Expr *E, TypeCheckKind TCK) {
   LValue LV;
-  if (SanOpts->ArrayBounds && isa<ArraySubscriptExpr>(E))
+  if (SanOpts.ArrayBounds && isa<ArraySubscriptExpr>(E))
     LV = EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E), /*Accessed*/true);
   else
     LV = EmitLValue(E);
@@ -1148,8 +1148,8 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
       CGM.DecorateInstruction(Load, TBAAPath, false/*ConvertTypeToTag*/);
   }
 
-  if ((SanOpts->Bool && hasBooleanRepresentation(Ty)) ||
-      (SanOpts->Enum && Ty->getAs<EnumType>())) {
+  if ((SanOpts.Bool && hasBooleanRepresentation(Ty)) ||
+      (SanOpts.Enum && Ty->getAs<EnumType>())) {
     SanitizerScope SanScope(this);
     llvm::APInt Min, End;
     if (getRangeForType(*this, Ty, Min, End, true)) {
@@ -2170,7 +2170,6 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
                                 ArrayRef<llvm::Constant *> StaticArgs,
                                 ArrayRef<llvm::Value *> DynamicArgs,
                                 CheckRecoverableKind RecoverKind) {
-  assert(SanOpts != &SanitizerOptions::Disabled);
   assert(IsSanitizerScope);
 
   if (CGM.getCodeGenOpts().SanitizeUndefinedTrapOnError) {
@@ -2292,7 +2291,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
   QualType IdxTy  = E->getIdx()->getType();
   bool IdxSigned = IdxTy->isSignedIntegerOrEnumerationType();
 
-  if (SanOpts->ArrayBounds)
+  if (SanOpts.ArrayBounds)
     EmitBoundsCheck(E, E->getBase(), Idx, IdxTy, Accessed);
 
   // If the base is a vector type, then we are forming a vector element lvalue
@@ -3223,7 +3222,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   if (const FunctionDecl* FD = dyn_cast_or_null<const FunctionDecl>(TargetDecl))
     ForceColumnInfo = FD->isInlineSpecified();
 
-  if (getLangOpts().CPlusPlus && SanOpts->Function &&
+  if (getLangOpts().CPlusPlus && SanOpts.Function &&
       (!TargetDecl || !isa<FunctionDecl>(TargetDecl))) {
     if (llvm::Constant *PrefixSig =
             CGM.getTargetCodeGenInfo().getUBSanFunctionSignature(CGM)) {

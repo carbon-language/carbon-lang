@@ -833,18 +833,16 @@ namespace {
   class CopyingValueRepresentation {
   public:
     explicit CopyingValueRepresentation(CodeGenFunction &CGF)
-        : CGF(CGF), SO(*CGF.SanOpts), OldSanOpts(CGF.SanOpts) {
-      SO.Bool = false;
-      SO.Enum = false;
-      CGF.SanOpts = &SO;
+        : CGF(CGF), OldSanOpts(CGF.SanOpts) {
+      CGF.SanOpts.Bool = false;
+      CGF.SanOpts.Enum = false;
     }
     ~CopyingValueRepresentation() {
       CGF.SanOpts = OldSanOpts;
     }
   private:
     CodeGenFunction &CGF;
-    SanitizerOptions SO;
-    const SanitizerOptions *OldSanOpts;
+    SanitizerOptions OldSanOpts;
   };
 }
 

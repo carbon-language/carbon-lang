@@ -38,7 +38,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
       Builder(cgm.getModule().getContext(), llvm::ConstantFolder(),
               CGBuilderInserterTy(this)),
       CurFn(nullptr), CapturedStmtInfo(nullptr),
-      SanOpts(&CGM.getLangOpts().Sanitize), IsSanitizerScope(false),
+      SanOpts(CGM.getLangOpts().Sanitize), IsSanitizerScope(false),
       CurFuncIsThunk(false), AutoreleaseResult(false), SawAsmBlock(false),
       BlockInfo(nullptr), BlockPointer(nullptr),
       LambdaThisCaptureField(nullptr), NormalCleanupDest(nullptr),
@@ -580,7 +580,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   assert(CurFn->isDeclaration() && "Function already has body?");
 
   if (CGM.isInSanitizerBlacklist(Fn, Loc))
-    SanOpts = &SanitizerOptions::Disabled;
+    SanOpts.clear();
 
   // Pass inline keyword to optimizer if it appears explicitly on any
   // declaration. Also, in the case of -fno-inline attach NoInline
@@ -604,7 +604,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
 
   // If we are checking function types, emit a function type signature as
   // prefix data.
-  if (getLangOpts().CPlusPlus && SanOpts->Function) {
+  if (getLangOpts().CPlusPlus && SanOpts.Function) {
     if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
       if (llvm::Constant *PrefixSig =
               CGM.getTargetCodeGenInfo().getUBSanFunctionSignature(CGM)) {
@@ -895,7 +895,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   //   function call is used by the caller, the behavior is undefined.
   if (getLangOpts().CPlusPlus && !FD->hasImplicitReturnZero() && !SawAsmBlock &&
       !FD->getReturnType()->isVoidType() && Builder.GetInsertBlock()) {
-    if (SanOpts->Return) {
+    if (SanOpts.Return) {
       SanitizerScope SanScope(this);
       EmitCheck(Builder.getFalse(), "missing_return",
                 EmitCheckSourceLocation(FD->getLocation()),
@@ -1550,7 +1550,7 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
           //   If the size is an expression that is not an integer constant
           //   expression [...] each time it is evaluated it shall have a value
           //   greater than zero.
-          if (SanOpts->VLABound &&
+          if (SanOpts.VLABound &&
               size->getType()->isSignedIntegerType()) {
             SanitizerScope SanScope(this);
             llvm::Value *Zero = llvm::Constant::getNullValue(Size->getType());

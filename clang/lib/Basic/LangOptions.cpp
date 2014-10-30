@@ -14,14 +14,21 @@
 
 using namespace clang;
 
-const SanitizerOptions SanitizerOptions::Disabled = {};
+SanitizerOptions::SanitizerOptions() {
+#define SANITIZER(NAME, ID) ID = 0;
+#include "clang/Basic/Sanitizers.def"
+  SanitizeAddressFieldPadding = 0;
+}
+
+void SanitizerOptions::clear() {
+  SanitizerOptions Default;
+  *this = std::move(Default);
+}
 
 LangOptions::LangOptions() {
 #define LANGOPT(Name, Bits, Default, Description) Name = Default;
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) set##Name(Default);
 #include "clang/Basic/LangOptions.def"
-
-  Sanitize = SanitizerOptions::Disabled;
 }
 
 void LangOptions::resetNonModularOptions() {
@@ -33,7 +40,7 @@ void LangOptions::resetNonModularOptions() {
 
   // FIXME: This should not be reset; modules can be different with different
   // sanitizer options (this affects __has_feature(address_sanitizer) etc).
-  Sanitize = SanitizerOptions::Disabled;
+  Sanitize.clear();
 
   CurrentModule.clear();
   ImplementationOfModule.clear();

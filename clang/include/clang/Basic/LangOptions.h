@@ -34,8 +34,10 @@ struct SanitizerOptions {
   /// (files, functions, variables) should not be instrumented.
   std::string BlacklistFile;
 
-  /// \brief Cached set of sanitizer options with all sanitizers disabled.
-  static const SanitizerOptions Disabled;
+  SanitizerOptions();
+
+  /// \brief Disable all sanitizers.
+  void clear();
 };
 
 /// Bitfields of LangOptions, split out from LangOptions in order to ensure that

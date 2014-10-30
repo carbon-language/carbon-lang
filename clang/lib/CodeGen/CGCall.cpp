@@ -2240,7 +2240,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 
   llvm::Instruction *Ret;
   if (RV) {
-    if (SanOpts->ReturnsNonnullAttribute) {
+    if (SanOpts.ReturnsNonnullAttribute) {
       if (auto RetNNAttr = CurGD.getDecl()->getAttr<ReturnsNonNullAttr>()) {
         SanitizerScope SanScope(this);
         llvm::Value *Cond = Builder.CreateICmpNE(
@@ -2567,7 +2567,7 @@ void CallArgList::freeArgumentMemory(CodeGenFunction &CGF) const {
 static void emitNonNullArgCheck(CodeGenFunction &CGF, RValue RV,
                                 QualType ArgType, SourceLocation ArgLoc,
                                 const FunctionDecl *FD, unsigned ParmNum) {
-  if (!CGF.SanOpts->NonnullAttribute || !FD)
+  if (!CGF.SanOpts.NonnullAttribute || !FD)
     return;
   auto PVD = ParmNum < FD->getNumParams() ? FD->getParamDecl(ParmNum) : nullptr;
   unsigned ArgNo = PVD ? PVD->getFunctionScopeIndex() : ParmNum;
