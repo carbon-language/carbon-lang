@@ -464,22 +464,33 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
 {
     uint64_t size = 0;
     ValueObjectSP location_sp((ValueObject*)nullptr);
+    
     if (!ExtractLibcxxStringInfo(valobj, location_sp, size))
         return false;
+    
     if (size == 0)
     {
         stream.Printf("\"\"");
         return true;
     }
+    
     if (!location_sp)
         return false;
-    Error error;
-    if (location_sp->ReadPointedString(stream,
-                                       error,
-                                       0, // max length is decided by the settings
-                                       false) == 0) // do not honor array (terminates on first 0 byte even for a char[])
-        stream.Printf("\"\""); // if nothing was read, print an empty string
-    return error.Success();
+    
+    DataExtractor extractor;
+    size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
+    location_sp->GetPointeeData(extractor, 0, size);
+    
+    lldb_private::formatters::ReadBufferAndDumpToStreamOptions options;
+    options.SetData(extractor); // none of this matters for a string - pass some defaults
+    options.SetStream(&stream);
+    options.SetPrefixToken(0);
+    options.SetQuote('"');
+    options.SetSourceSize(size);
+    options.SetEscapeNonPrintables(true);
+    lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
+    
+    return true;
 }
 
 bool

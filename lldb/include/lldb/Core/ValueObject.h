@@ -812,7 +812,7 @@ public:
     IsCStringContainer (bool check_pointer = false);
     
     size_t
-    ReadPointedString (Stream& s,
+    ReadPointedString (lldb::DataBufferSP& buffer_sp,
                        Error& error,
                        uint32_t max_length = 0,
                        bool honor_array = true,
