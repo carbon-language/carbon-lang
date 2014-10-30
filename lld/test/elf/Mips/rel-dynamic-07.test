@@ -130,7 +130,7 @@ FileHeader:
   Data:    ELFDATA2LSB
   Type:    ET_REL
   Machine: EM_MIPS
-  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
 
 Sections:
 - Name:         .text
@@ -175,7 +175,7 @@ FileHeader:
   Data: ELFDATA2LSB
   Type: ET_REL
   Machine: EM_MIPS
-  Flags: [EF_MIPS_PIC, EF_MIPS_CPIC]
+  Flags: [EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
 
 Sections:
 - Name: .text

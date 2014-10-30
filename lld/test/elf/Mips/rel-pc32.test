@@ -17,6 +17,7 @@ FileHeader: !FileHeader
   Data: ELFDATA2LSB
   Type: ET_REL
   Machine: EM_MIPS
+  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
 
 Sections:
 - Name: .text
