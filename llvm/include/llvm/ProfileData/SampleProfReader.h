@@ -86,9 +86,8 @@ public:
 
   /// \brief Report a parse error message.
   void reportParseError(int64_t LineNumber, Twine Msg) const {
-    DiagnosticInfoSampleProfile Diag(Buffer->getBufferIdentifier(), LineNumber,
-                                     Msg);
-    Ctx.diagnose(Diag);
+    Ctx.diagnose(DiagnosticInfoSampleProfile(Buffer->getBufferIdentifier(),
+                                             LineNumber, Msg));
   }
 
   /// \brief Create a sample profile reader appropriate to the file format.

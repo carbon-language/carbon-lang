@@ -77,6 +77,6 @@ public:
 
 } // End namespace sampleprof
 
-} // End namespace sampleprof
+} // End namespace llvm
 
 #endif // LLVM_PROFILEDATA_SAMPLEPROFWRITER_H
