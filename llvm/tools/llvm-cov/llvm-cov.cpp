@@ -20,19 +20,19 @@
 using namespace llvm;
 
 /// \brief The main entry point for the 'show' subcommand.
-int show_main(int argc, const char **argv);
+int showMain(int argc, const char *argv[]);
 
 /// \brief The main entry point for the 'report' subcommand.
-int report_main(int argc, const char **argv);
+int reportMain(int argc, const char *argv[]);
 
 /// \brief The main entry point for the 'convert-for-testing' subcommand.
-int convert_for_testing_main(int argc, const char **argv);
+int convertForTestingMain(int argc, const char *argv[]);
 
 /// \brief The main entry point for the gcov compatible coverage tool.
-int gcov_main(int argc, const char **argv);
+int gcovMain(int argc, const char *argv[]);
 
 /// \brief Top level help.
-int help_main(int argc, const char **argv) {
+int helpMain(int argc, const char *argv[]) {
   errs() << "OVERVIEW: LLVM code coverage tool\n\n"
          << "USAGE: llvm-cov {gcov|report|show}\n";
   return 0;
@@ -41,24 +41,23 @@ int help_main(int argc, const char **argv) {
 int main(int argc, const char **argv) {
   // If argv[0] is or ends with 'gcov', always be gcov compatible
   if (sys::path::stem(argv[0]).endswith_lower("gcov"))
-    return gcov_main(argc, argv);
+    return gcovMain(argc, argv);
 
   // Check if we are invoking a specific tool command.
   if (argc > 1) {
-    typedef int (*MainFunction)(int, const char **);
-    MainFunction func =
-        StringSwitch<MainFunction>(argv[1])
-            .Case("convert-for-testing", convert_for_testing_main)
-            .Case("gcov", gcov_main)
-            .Case("report", report_main)
-            .Case("show", show_main)
-            .Cases("-h", "-help", "--help", help_main)
-            .Default(nullptr);
+    typedef int (*MainFunction)(int, const char *[]);
+    MainFunction Func = StringSwitch<MainFunction>(argv[1])
+                            .Case("convert-for-testing", convertForTestingMain)
+                            .Case("gcov", gcovMain)
+                            .Case("report", reportMain)
+                            .Case("show", showMain)
+                            .Cases("-h", "-help", "--help", helpMain)
+                            .Default(nullptr);
 
-    if (func) {
+    if (Func) {
       std::string Invocation = std::string(argv[0]) + " " + argv[1];
       argv[1] = Invocation.c_str();
-      return func(argc - 1, argv + 1);
+      return Func(argc - 1, argv + 1);
     }
   }
 
@@ -75,5 +74,5 @@ int main(int argc, const char **argv) {
   errs().resetColor();
   errs() << "\n";
 
-  return gcov_main(argc, argv);
+  return gcovMain(argc, argv);
 }

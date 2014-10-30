@@ -473,12 +473,12 @@ int CodeCoverageTool::report(int argc, const char **argv,
   return 0;
 }
 
-int show_main(int argc, const char **argv) {
+int showMain(int argc, const char *argv[]) {
   CodeCoverageTool Tool;
   return Tool.run(CodeCoverageTool::Show, argc, argv);
 }
 
-int report_main(int argc, const char **argv) {
+int reportMain(int argc, const char *argv[]) {
   CodeCoverageTool Tool;
   return Tool.run(CodeCoverageTool::Report, argc, argv);
 }
