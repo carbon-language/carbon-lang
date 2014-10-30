@@ -10,6 +10,7 @@
 #include "lldb/lldb-python.h"
 
 #include "lldb/DataFormatters/CXXFormatterFunctions.h"
+#include "lldb/DataFormatters/StringPrinter.h"
 
 #include "llvm/Support/ConvertUTF.h"
 
@@ -189,281 +190,6 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
     return valobj_sp;
 }
 
-// use this call if you already have an LLDB-side buffer for the data
-template<typename SourceDataType>
-static bool
-DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType**,
-                                                            const SourceDataType*,
-                                                            UTF8**,
-                                                            UTF8*,
-                                                            ConversionFlags),
-                       DataExtractor& data,
-                       Stream& stream,
-                       char prefix_token = '@',
-                       char quote = '"',
-                       uint32_t sourceSize = 0)
-{
-    if (prefix_token != 0)
-        stream.Printf("%c",prefix_token);
-    if (quote != 0)
-        stream.Printf("%c",quote);
-    if (data.GetByteSize() && data.GetDataStart() && data.GetDataEnd())
-    {
-        const int bufferSPSize = data.GetByteSize();
-        if (sourceSize == 0)
-        {
-            const int origin_encoding = 8*sizeof(SourceDataType);
-            sourceSize = bufferSPSize/(origin_encoding / 4);
-        }
-        
-        SourceDataType *data_ptr = (SourceDataType*)data.GetDataStart();
-        SourceDataType *data_end_ptr = data_ptr + sourceSize;
-        
-        while (data_ptr < data_end_ptr)
-        {
-            if (!*data_ptr)
-            {
-                data_end_ptr = data_ptr;
-                break;
-            }
-            data_ptr++;
-        }
-        
-        data_ptr = (SourceDataType*)data.GetDataStart();
-        
-        lldb::DataBufferSP utf8_data_buffer_sp;
-        UTF8* utf8_data_ptr = nullptr;
-        UTF8* utf8_data_end_ptr = nullptr;
-        
-        if (ConvertFunction)
-        {
-            utf8_data_buffer_sp.reset(new DataBufferHeap(4*bufferSPSize,0));
-            utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
-            utf8_data_end_ptr = utf8_data_ptr + utf8_data_buffer_sp->GetByteSize();
-            ConvertFunction ( (const SourceDataType**)&data_ptr, data_end_ptr, &utf8_data_ptr, utf8_data_end_ptr, lenientConversion );
-            utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes(); // needed because the ConvertFunction will change the value of the data_ptr
-        }
-        else
-        {
-            // just copy the pointers - the cast is necessary to make the compiler happy
-            // but this should only happen if we are reading UTF8 data
-            utf8_data_ptr = (UTF8*)data_ptr;
-            utf8_data_end_ptr = (UTF8*)data_end_ptr;
-        }
-        
-        // since we tend to accept partial data (and even partially malformed data)
-        // we might end up with no NULL terminator before the end_ptr
-        // hence we need to take a slower route and ensure we stay within boundaries
-        for (;utf8_data_ptr != utf8_data_end_ptr; utf8_data_ptr++)
-        {
-            if (!*utf8_data_ptr)
-                break;
-            stream.Printf("%c",*utf8_data_ptr);
-        }
-    }
-    if (quote != 0)
-        stream.Printf("%c",quote);
-    return true;
-}
-
-template<typename SourceDataType>
-class ReadUTFBufferAndDumpToStreamOptions
-{
-public:
-    typedef ConversionResult (*ConvertFunctionType) (const SourceDataType**,
-                                                     const SourceDataType*,
-                                                     UTF8**,
-                                                     UTF8*,
-                                                     ConversionFlags);
-    
-    ReadUTFBufferAndDumpToStreamOptions () :
-    m_conversion_function(NULL),
-    m_location(0),
-    m_process_sp(),
-    m_stream(NULL),
-    m_prefix_token('@'),
-    m_quote('"'),
-    m_source_size(0),
-    m_needs_zero_termination(true)
-    {
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetConversionFunction (ConvertFunctionType f)
-    {
-        m_conversion_function = f;
-        return *this;
-    }
-    
-    ConvertFunctionType
-    GetConversionFunction () const
-    {
-        return m_conversion_function;
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetLocation (uint64_t l)
-    {
-        m_location = l;
-        return *this;
-    }
-    
-    uint64_t
-    GetLocation () const
-    {
-        return m_location;
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetProcessSP (ProcessSP p)
-    {
-        m_process_sp = p;
-        return *this;
-    }
-    
-    ProcessSP
-    GetProcessSP () const
-    {
-        return m_process_sp;
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetStream (Stream* s)
-    {
-        m_stream = s;
-        return *this;
-    }
-    
-    Stream*
-    GetStream () const
-    {
-        return m_stream;
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetPrefixToken (char p)
-    {
-        m_prefix_token = p;
-        return *this;
-    }
-    
-    char
-    GetPrefixToken () const
-    {
-        return m_prefix_token;
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetQuote (char q)
-    {
-        m_quote = q;
-        return *this;
-    }
-    
-    char
-    GetQuote () const
-    {
-        return m_quote;
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetSourceSize (uint32_t s)
-    {
-        m_source_size = s;
-        return *this;
-    }
-    
-    uint32_t
-    GetSourceSize () const
-    {
-        return m_source_size;
-    }
-    
-    ReadUTFBufferAndDumpToStreamOptions&
-    SetNeedsZeroTermination (bool z)
-    {
-        m_needs_zero_termination = z;
-        return *this;
-    }
-    
-    bool
-    GetNeedsZeroTermination () const
-    {
-        return m_needs_zero_termination;
-    }
-    
-private:
-    ConvertFunctionType m_conversion_function;
-    uint64_t m_location;
-    ProcessSP m_process_sp;
-    Stream* m_stream;
-    char m_prefix_token;
-    char m_quote;
-    uint32_t m_source_size;
-    bool m_needs_zero_termination;
-};
-
-template<typename SourceDataType>
-static bool
-ReadUTFBufferAndDumpToStream (const ReadUTFBufferAndDumpToStreamOptions<SourceDataType>& options)
-{
-    if (options.GetLocation() == 0 || options.GetLocation() == LLDB_INVALID_ADDRESS)
-        return false;
-    
-    ProcessSP process_sp(options.GetProcessSP());
-    
-    if (!process_sp)
-        return false;
-
-    const int type_width = sizeof(SourceDataType);
-    const int origin_encoding = 8 * type_width ;
-    if (origin_encoding != 8 && origin_encoding != 16 && origin_encoding != 32)
-        return false;
-    // if not UTF8, I need a conversion function to return proper UTF8
-    if (origin_encoding != 8 && !options.GetConversionFunction())
-        return false;
-    
-    if (!options.GetStream())
-        return false;
-
-    uint32_t sourceSize = options.GetSourceSize();
-    bool needs_zero_terminator = options.GetNeedsZeroTermination();
-    
-    if (!sourceSize)
-    {
-        sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
-        needs_zero_terminator = true;
-    }
-    else
-        sourceSize = std::min(sourceSize,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
-    
-    const int bufferSPSize = sourceSize * type_width;
-
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
-    
-    if (!buffer_sp->GetBytes())
-        return false;
-    
-    Error error;
-    char *buffer = reinterpret_cast<char *>(buffer_sp->GetBytes()); 
-
-    size_t data_read = 0;
-    if (needs_zero_terminator)
-        data_read = process_sp->ReadStringFromMemory(options.GetLocation(), buffer, bufferSPSize, error, type_width);
-    else
-        data_read = process_sp->ReadMemoryFromInferior(options.GetLocation(), (char*)buffer_sp->GetBytes(), bufferSPSize, error);
-
-    if (error.Fail() || data_read == 0)
-    {
-        options.GetStream()->Printf("unable to read data");
-        return true;
-    }
-    
-    DataExtractor data(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
-    
-    return DumpUTFBufferToStream(options.GetConversionFunction(), data, *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), sourceSize);
-}
-
 bool
 lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
@@ -476,14 +202,13 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
     if (!valobj_addr)
         return false;
     
-    ReadUTFBufferAndDumpToStreamOptions<UTF16> options;
+    ReadStringAndDumpToStreamOptions options;
     options.SetLocation(valobj_addr);
-    options.SetConversionFunction(ConvertUTF16toUTF8);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
     options.SetPrefixToken('u');
     
-    if (!ReadUTFBufferAndDumpToStream(options))
+    if (!ReadStringAndDumpToStream<StringElementType::UTF16>(options))
     {
         stream.Printf("Summary Unavailable");
         return true;
@@ -504,14 +229,13 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     if (!valobj_addr)
         return false;
     
-    ReadUTFBufferAndDumpToStreamOptions<UTF32> options;
+    ReadStringAndDumpToStreamOptions options;
     options.SetLocation(valobj_addr);
-    options.SetConversionFunction(ConvertUTF32toUTF8);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
     options.SetPrefixToken('U');
     
-    if (!ReadUTFBufferAndDumpToStream(options))
+    if (!ReadStringAndDumpToStream<StringElementType::UTF32>(options))
     {
         stream.Printf("Summary Unavailable");
         return true;
@@ -545,45 +269,20 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     ClangASTType wchar_clang_type = ClangASTContext::GetBasicType(ast, lldb::eBasicTypeWChar);
     const uint32_t wchar_size = wchar_clang_type.GetBitSize();
 
+    ReadStringAndDumpToStreamOptions options;
+    options.SetLocation(data_addr);
+    options.SetProcessSP(process_sp);
+    options.SetStream(&stream);
+    options.SetPrefixToken('L');
+    
     switch (wchar_size)
     {
         case 8:
-        {
-            // utf 8
-            
-            ReadUTFBufferAndDumpToStreamOptions<UTF8> options;
-            options.SetLocation(data_addr);
-            options.SetConversionFunction(nullptr);
-            options.SetProcessSP(process_sp);
-            options.SetStream(&stream);
-            options.SetPrefixToken('L');
-
-            return ReadUTFBufferAndDumpToStream(options);
-        }
+            return ReadStringAndDumpToStream<StringElementType::UTF8>(options);
         case 16:
-        {
-            // utf 16
-            ReadUTFBufferAndDumpToStreamOptions<UTF16> options;
-            options.SetLocation(data_addr);
-            options.SetConversionFunction(ConvertUTF16toUTF8);
-            options.SetProcessSP(process_sp);
-            options.SetStream(&stream);
-            options.SetPrefixToken('L');
-            
-            return ReadUTFBufferAndDumpToStream(options);
-        }
+            return ReadStringAndDumpToStream<StringElementType::UTF16>(options);
         case 32:
-        {
-            // utf 32
-            ReadUTFBufferAndDumpToStreamOptions<UTF32> options;
-            options.SetLocation(data_addr);
-            options.SetConversionFunction(ConvertUTF32toUTF8);
-            options.SetProcessSP(process_sp);
-            options.SetStream(&stream);
-            options.SetPrefixToken('L');
-            
-            return ReadUTFBufferAndDumpToStream(options);
-        }
+            return ReadStringAndDumpToStream<StringElementType::UTF32>(options);
         default:
             stream.Printf("size for wchar_t is not valid");
             return true;
@@ -606,7 +305,14 @@ lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& st
     if (!value.empty())
         stream.Printf("%s ", value.c_str());
 
-    return DumpUTFBufferToStream<UTF16>(ConvertUTF16toUTF8,data,stream, 'u','\'',1);
+    ReadBufferAndDumpToStreamOptions options;
+    options.SetData(data);
+    options.SetStream(&stream);
+    options.SetPrefixToken('u');
+    options.SetQuote('\'');
+    options.SetSourceSize(1);
+    
+    return ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
 }
 
 bool
@@ -624,7 +330,14 @@ lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& st
     if (!value.empty())
         stream.Printf("%s ", value.c_str());
     
-    return DumpUTFBufferToStream<UTF32>(ConvertUTF32toUTF8,data,stream, 'U','\'',1);
+    ReadBufferAndDumpToStreamOptions options;
+    options.SetData(data);
+    options.SetStream(&stream);
+    options.SetPrefixToken('U');
+    options.SetQuote('\'');
+    options.SetSourceSize(1);
+    
+    return ReadBufferAndDumpToStream<StringElementType::UTF32>(options);
 }
 
 bool
@@ -637,55 +350,14 @@ lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& str
     if (error.Fail())
         return false;
     
-    clang::ASTContext* ast = valobj.GetClangType().GetASTContext();
+    ReadBufferAndDumpToStreamOptions options;
+    options.SetData(data);
+    options.SetStream(&stream);
+    options.SetPrefixToken('L');
+    options.SetQuote('\'');
+    options.SetSourceSize(1);
     
-    if (!ast)
-        return false;
-    
-    ClangASTType wchar_clang_type = ClangASTContext::GetBasicType(ast, lldb::eBasicTypeWChar);
-    const uint32_t wchar_size = wchar_clang_type.GetBitSize();
-    std::string value;
-    
-    switch (wchar_size)
-    {
-        case 8:
-            // utf 8
-            valobj.GetValueAsCString(lldb::eFormatChar, value);
-            if (!value.empty())
-                stream.Printf("%s ", value.c_str());
-            return DumpUTFBufferToStream<UTF8>(nullptr,
-                                               data,
-                                               stream,
-                                               'L',
-                                               '\'',
-                                               1);
-        case 16:
-            // utf 16
-            valobj.GetValueAsCString(lldb::eFormatUnicode16, value);
-            if (!value.empty())
-                stream.Printf("%s ", value.c_str());
-            return DumpUTFBufferToStream<UTF16>(ConvertUTF16toUTF8,
-                                                data,
-                                                stream,
-                                                'L',
-                                                '\'',
-                                                1);
-        case 32:
-            // utf 32
-            valobj.GetValueAsCString(lldb::eFormatUnicode32, value);
-            if (!value.empty())
-                stream.Printf("%s ", value.c_str());
-            return DumpUTFBufferToStream<UTF32>(ConvertUTF32toUTF8,
-                                                data,
-                                                stream,
-                                                'L',
-                                                '\'',
-                                                1);
-        default:
-            stream.Printf("size for wchar_t is not valid");
-            return true;
-    }
-    return true;
+    return ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
 }
 
 // the field layout in a libc++ string (cap, side, data or data, size, cap)
@@ -1153,8 +825,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             return false;
         if (has_explicit_length && is_unicode)
         {
-            ReadUTFBufferAndDumpToStreamOptions<UTF16> options;
-            options.SetConversionFunction(ConvertUTF16toUTF8);
+            ReadStringAndDumpToStreamOptions options;
             options.SetLocation(location);
             options.SetProcessSP(process_sp);
             options.SetStream(&stream);
@@ -1162,10 +833,20 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             options.SetQuote('"');
             options.SetSourceSize(explicit_length);
             options.SetNeedsZeroTermination(false);
-            return ReadUTFBufferAndDumpToStream (options);
+            return ReadStringAndDumpToStream<StringElementType::UTF16>(options);
         }
         else
-            return ReadAsciiBufferAndDumpToStream(location+1,process_sp,stream, explicit_length);
+        {
+            ReadStringAndDumpToStreamOptions options;
+            options.SetLocation(location+1);
+            options.SetProcessSP(process_sp);
+            options.SetStream(&stream);
+            options.SetPrefixToken('@');
+            options.SetSourceSize(explicit_length);
+            options.SetNeedsZeroTermination(false);
+            
+            return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
+        }
     }
     else if (is_inline && has_explicit_length && !is_unicode && !is_special && !is_mutable)
     {
@@ -1191,8 +872,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             if (error.Fail())
                 return false;
         }
-        ReadUTFBufferAndDumpToStreamOptions<UTF16> options;
-        options.SetConversionFunction(ConvertUTF16toUTF8);
+        ReadStringAndDumpToStreamOptions options;
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
@@ -1200,7 +880,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
-        return ReadUTFBufferAndDumpToStream (options);
+        return ReadStringAndDumpToStream<StringElementType::UTF16> (options);
     }
     else if (is_special)
     {
@@ -1208,8 +888,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         explicit_length = reader.GetField<uint32_t>(ConstString("lengthAndRef")) >> 20;
         lldb::addr_t location = valobj.GetValueAsUnsigned(0) + ptr_size + 4;
         
-        ReadUTFBufferAndDumpToStreamOptions<UTF16> options;
-        options.SetConversionFunction(ConvertUTF16toUTF8);
+        ReadStringAndDumpToStreamOptions options;
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
@@ -1217,14 +896,20 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
-        return ReadUTFBufferAndDumpToStream (options);
+        return ReadStringAndDumpToStream<StringElementType::UTF16> (options);
     }
     else if (is_inline)
     {
         uint64_t location = valobj_addr + 2*ptr_size;
         if (!has_explicit_length)
             location++;
-        return ReadAsciiBufferAndDumpToStream(location,process_sp,stream,explicit_length);
+        ReadStringAndDumpToStreamOptions options;
+        options.SetLocation(location);
+        options.SetProcessSP(process_sp);
+        options.SetStream(&stream);
+        options.SetPrefixToken('@');
+        options.SetSourceSize(explicit_length);
+        return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
     }
     else
     {
@@ -1234,7 +919,13 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             return false;
         if (has_explicit_length && !has_null)
             explicit_length++; // account for the fact that there is no NULL and we need to have one added
-        return ReadAsciiBufferAndDumpToStream(location,process_sp,stream,explicit_length);
+        ReadStringAndDumpToStreamOptions options;
+        options.SetLocation(location);
+        options.SetProcessSP(process_sp);
+        options.SetPrefixToken('@');
+        options.SetStream(&stream);
+        options.SetSourceSize(explicit_length);
+        return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
     }
 }
 
