@@ -268,14 +268,6 @@ public:
   typedef MutableArrayRef<Stmt*> MultiStmtArg;
   typedef Sema::FullExprArg FullExprArg;
 
-  ExprResult ExprError() { return ExprResult(true); }
-  StmtResult StmtError() { return StmtResult(true); }
-
-  ExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
-  StmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
-
-  ExprResult ExprEmpty() { return ExprResult(false); }
-
   // Parsing methods.
 
   /// Initialize - Warm up the parser.
