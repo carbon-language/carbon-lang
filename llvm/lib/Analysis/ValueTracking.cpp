@@ -1502,6 +1502,23 @@ static bool isGEPKnownNonNull(GEPOperator *GEP, const DataLayout *DL,
   return false;
 }
 
+/// Does the 'Range' metadata (which must be a valid MD_range operand list)
+/// ensure that the value it's attached to is never Value?  'RangeType' is
+/// is the type of the value described by the range.
+static bool rangeMetadataExcludesValue(MDNode* Ranges,
+                                       const APInt& Value) {
+  const unsigned NumRanges = Ranges->getNumOperands() / 2;
+  assert(NumRanges >= 1);
+  for (unsigned i = 0; i < NumRanges; ++i) {
+    ConstantInt *Lower = cast<ConstantInt>(Ranges->getOperand(2*i + 0));
+    ConstantInt *Upper = cast<ConstantInt>(Ranges->getOperand(2*i + 1));
+    ConstantRange Range(Lower->getValue(), Upper->getValue());
+    if (Range.contains(Value))
+      return false;
+  }
+  return true;
+}
+
 /// isKnownNonZero - Return true if the given value is known to be non-zero
 /// when defined.  For vectors return true if every element is known to be
 /// non-zero when defined.  Supports values with integer or pointer type and
@@ -1516,6 +1533,18 @@ bool isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth,
       return true;
     // TODO: Handle vectors
     return false;
+  }
+
+  if (Instruction* I = dyn_cast<Instruction>(V)) {
+    if (MDNode *Ranges = I->getMetadata(LLVMContext::MD_range)) {
+      // If the possible ranges don't contain zero, then the value is
+      // definitely non-zero.
+      if (IntegerType* Ty = dyn_cast<IntegerType>(V->getType())) {
+        const APInt ZeroValue(Ty->getBitWidth(), 0);
+        if (rangeMetadataExcludesValue(Ranges, ZeroValue))
+          return true;
+      }
+    }
   }
 
   // The remaining tests are all recursive, so bail out if we hit the limit.
