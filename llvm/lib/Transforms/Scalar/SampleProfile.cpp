@@ -740,8 +740,7 @@ bool SampleProfileLoader::doInitialization(Module &M) {
   if (std::error_code EC =
           SampleProfileReader::create(Filename, Reader, M.getContext())) {
     std::string Msg = "Could not open profile: " + EC.message();
-    DiagnosticInfoSampleProfile Diag(Filename.data(), Msg);
-    M.getContext().diagnose(Diag);
+    M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
     return false;
   }
   ProfileIsValid = (Reader->read() == sampleprof_error::success);
