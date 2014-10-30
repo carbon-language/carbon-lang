@@ -1052,9 +1052,8 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
         if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
           DGVar->setAlignment(Alignment);
 
-          if (DGVar->isDeclaration() && SGV->isConstant() &&
-              !DGVar->isConstant())
-            DGVar->setConstant(true);
+          if (DGVar->isDeclaration() && !SGV->isConstant())
+            DGVar->setConstant(false);
         }
 
         // Set calculated linkage, visibility and unnamed_addr.
