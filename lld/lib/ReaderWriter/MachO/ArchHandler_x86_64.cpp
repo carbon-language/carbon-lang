@@ -364,7 +364,7 @@ ArchHandler_x86_64::getReferenceInfo(const Relocation &reloc,
   case ripRel32Got:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = 0;
+    *addend = *(little32_t *)fixupContent;
     return std::error_code();
   case pointer64:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
