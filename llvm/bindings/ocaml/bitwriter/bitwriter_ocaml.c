@@ -21,8 +21,6 @@
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 
-/*===-- BitWriter ---------------------------------------------------------===*/
-
 /* Llvm.llmodule -> string -> bool */
 CAMLprim value llvm_write_bitcode_file(LLVMModuleRef M, value Path) {
   int Result = LLVMWriteBitcodeToFile(M, String_val(Path));

@@ -25,14 +25,16 @@
 #include "caml/fail.h"
 #include "caml/callback.h"
 
-static void llvm_raise(value Prototype, char *Message) {
-  CAMLparam1(Prototype);
-  CAMLlocal1(CamlMessage);
-
-  CamlMessage = copy_string(Message);
+value llvm_string_of_message(char* Message) {
+  value String = caml_copy_string(Message);
   LLVMDisposeMessage(Message);
 
-  raise_with_arg(Prototype, CamlMessage);
+  return String;
+}
+
+void llvm_raise(value Prototype, char *Message) {
+  CAMLparam1(Prototype);
+  raise_with_arg(Prototype, llvm_string_of_message(Message));
   CAMLnoreturn;
 }
 

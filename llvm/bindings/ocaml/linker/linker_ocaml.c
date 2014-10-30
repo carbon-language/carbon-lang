@@ -21,16 +21,7 @@
 #include "caml/fail.h"
 #include "caml/callback.h"
 
-static void llvm_raise(value Prototype, char *Message) {
-  CAMLparam1(Prototype);
-  CAMLlocal1(CamlMessage);
-
-  CamlMessage = copy_string(Message);
-  LLVMDisposeMessage(Message);
-
-  raise_with_arg(Prototype, CamlMessage);
-  CAMLnoreturn;
-}
+void llvm_raise(value Prototype, char *Message);
 
 /* llmodule -> llmodule -> Mode.t -> unit */
 CAMLprim value llvm_link_modules(LLVMModuleRef Dst, LLVMModuleRef Src, value Mode) {

@@ -18,18 +18,7 @@
 #include "caml/memory.h"
 #include "caml/callback.h"
 
-static void llvm_raise(value Prototype, char *Message) {
-  CAMLparam1(Prototype);
-  CAMLlocal1(CamlMessage);
-
-  CamlMessage = copy_string(Message);
-  LLVMDisposeMessage(Message);
-
-  raise_with_arg(Prototype, CamlMessage);
-  CAMLnoreturn;
-}
-
-/*===-- BitReader --------------------------------------------------------===*/
+void llvm_raise(value Prototype, char *Message);
 
 /* Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule */
 CAMLprim LLVMModuleRef llvm_get_module(LLVMContextRef C, LLVMMemoryBufferRef MemBuf) {

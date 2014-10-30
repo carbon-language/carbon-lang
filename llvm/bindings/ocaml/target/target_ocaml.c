@@ -23,25 +23,8 @@
 #include "caml/custom.h"
 #include "caml/callback.h"
 
-/*===---- Exceptions ------------------------------------------------------===*/
-
-static void llvm_raise(value Prototype, char *Message) {
-  CAMLparam1(Prototype);
-  CAMLlocal1(CamlMessage);
-
-  CamlMessage = copy_string(Message);
-  LLVMDisposeMessage(Message);
-
-  raise_with_arg(Prototype, CamlMessage);
-  CAMLnoreturn;
-}
-
-static value llvm_string_of_message(char* Message) {
-  value String = caml_copy_string(Message);
-  LLVMDisposeMessage(Message);
-
-  return String;
-}
+void llvm_raise(value Prototype, char *Message);
+value llvm_string_of_message(char* Message);
 
 /*===---- Data Layout -----------------------------------------------------===*/
 
