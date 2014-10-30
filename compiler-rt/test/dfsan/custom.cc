@@ -813,6 +813,11 @@ void test_sprintf() {
   assert(strcmp(buf, "Hello world!") == 0);
   ASSERT_READ_LABEL(buf, sizeof(buf), 0);
 
+  // Test for extra arguments.
+  assert(sprintf(buf, "Hello world!", 42, "hello") == 12);
+  assert(strcmp(buf, "Hello world!") == 0);
+  ASSERT_READ_LABEL(buf, sizeof(buf), 0);
+
   // Test formatting & label propagation (multiple conversion specifiers): %s,
   // %d, %n, %f, and %%.
   const char* s = "world";
