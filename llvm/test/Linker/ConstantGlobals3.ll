@@ -1,9 +1,6 @@
-; Test that appending linkage works correctly when arrays are the same size.
+; RUN: llvm-link %s %S/Inputs/ConstantGlobals3.ll -S | FileCheck %s
+; RUN: llvm-link %S/Inputs/ConstantGlobals3.ll %s -S | FileCheck %s
 
-; RUN: echo "@X = external constant [1 x i32] " | \
-; RUN:   llvm-as > %t.2.bc
-; RUN: llvm-as < %s > %t.1.bc
-; RUN: llvm-link %t.1.bc %t.2.bc -S | FileCheck %s
-; CHECK: constant
+; CHECK: @X = external constant [1 x i32]
 
-@X = external global [1 x i32]		; <[1 x i32]*> [#uses=0]
+@X = external global [1 x i32]
