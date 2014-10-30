@@ -431,6 +431,9 @@ val create_module : llcontext -> string -> llmodule
     [llvm::Module::~Module]. *)
 val dispose_module : llmodule -> unit
 
+(** [clone_module m] returns an exact copy of module [m]. *)
+val clone_module : llmodule -> llmodule
+
 (** [target_triple m] is the target specifier for the module [m], something like
     [i686-apple-darwin8]. See the method [llvm::Module::getTargetTriple]. *)
 val target_triple: llmodule -> string
