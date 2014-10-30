@@ -7,6 +7,7 @@ target_link_libraries(clang-rename
   clangIndex
   clangRename
   clangRewrite
-  clangTooling)
+  clangTooling
+  )
 
 install(TARGETS clang-rename RUNTIME DESTINATION bin)
