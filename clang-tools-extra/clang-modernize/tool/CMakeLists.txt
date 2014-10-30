@@ -41,6 +41,7 @@ target_link_libraries(clang-modernize
   clangFrontend
   clangLex
   clangTooling
+  clangToolingCore
   modernizeCore
   )
 

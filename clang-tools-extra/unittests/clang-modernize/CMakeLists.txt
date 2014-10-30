@@ -28,5 +28,6 @@ target_link_libraries(ClangModernizeTests
   clangBasic
   clangFrontend
   clangTooling
+  clangToolingCore
   modernizeCore
   )

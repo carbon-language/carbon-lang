@@ -16,4 +16,5 @@ add_clang_library(clangIndex
   clangLex
   clangRewrite
   clangTooling
+  clangToolingCore
   )

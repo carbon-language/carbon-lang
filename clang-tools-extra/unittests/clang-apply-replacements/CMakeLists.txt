@@ -14,4 +14,5 @@ add_extra_unittest(ClangApplyReplacementsTests
 target_link_libraries(ClangApplyReplacementsTests
   clangApplyReplacements
   clangTooling
+  clangToolingCore
   )

@@ -9,6 +9,7 @@ add_clang_library(clangApplyReplacements
   clangBasic
   clangRewrite
   clangTooling
+  clangToolingCore
   )
 
 include_directories(

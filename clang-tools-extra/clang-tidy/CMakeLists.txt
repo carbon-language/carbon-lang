@@ -21,6 +21,7 @@ add_clang_library(clangTidy
   clangStaticAnalyzerCore
   clangStaticAnalyzerFrontend
   clangTooling
+  clangToolingCore
   )
 
 add_subdirectory(tool)
