@@ -17,103 +17,18 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/ProfileData/SampleProf.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 
-using namespace llvm;
-
-namespace sampleprof {
-
-/// \brief Represents the relative location of an instruction.
-///
-/// Instruction locations are specified by the line offset from the
-/// beginning of the function (marked by the line where the function
-/// header is) and the discriminator value within that line.
-///
-/// The discriminator value is useful to distinguish instructions
-/// that are on the same line but belong to different basic blocks
-/// (e.g., the two post-increment instructions in "if (p) x++; else y++;").
-struct LineLocation {
-  LineLocation(int L, unsigned D) : LineOffset(L), Discriminator(D) {}
-  int LineOffset;
-  unsigned Discriminator;
-};
-} // End namespace sampleprof
-
 namespace llvm {
-template <> struct DenseMapInfo<sampleprof::LineLocation> {
-  typedef DenseMapInfo<int> OffsetInfo;
-  typedef DenseMapInfo<unsigned> DiscriminatorInfo;
-  static inline sampleprof::LineLocation getEmptyKey() {
-    return sampleprof::LineLocation(OffsetInfo::getEmptyKey(),
-                                    DiscriminatorInfo::getEmptyKey());
-  }
-  static inline sampleprof::LineLocation getTombstoneKey() {
-    return sampleprof::LineLocation(OffsetInfo::getTombstoneKey(),
-                                    DiscriminatorInfo::getTombstoneKey());
-  }
-  static inline unsigned getHashValue(sampleprof::LineLocation Val) {
-    return DenseMapInfo<std::pair<int, unsigned>>::getHashValue(
-        std::pair<int, unsigned>(Val.LineOffset, Val.Discriminator));
-  }
-  static inline bool isEqual(sampleprof::LineLocation LHS,
-                             sampleprof::LineLocation RHS) {
-    return LHS.LineOffset == RHS.LineOffset &&
-           LHS.Discriminator == RHS.Discriminator;
-  }
-};
-}
 
 namespace sampleprof {
-
-typedef DenseMap<LineLocation, unsigned> BodySampleMap;
-
-/// \brief Representation of the samples collected for a function.
-///
-/// This data structure contains all the collected samples for the body
-/// of a function. Each sample corresponds to a LineLocation instance
-/// within the body of the function.
-class FunctionSamples {
-public:
-  FunctionSamples()
-      : TotalSamples(0), TotalHeadSamples(0) {}
-  void print(raw_ostream & OS);
-  void addTotalSamples(unsigned Num) { TotalSamples += Num; }
-  void addHeadSamples(unsigned Num) { TotalHeadSamples += Num; }
-  void addBodySamples(int LineOffset, unsigned Discriminator, unsigned Num) {
-    assert(LineOffset >= 0);
-    BodySamples[LineLocation(LineOffset, Discriminator)] += Num;
-  }
-
-  /// \brief Return the number of samples collected at the given location.
-  /// Each location is specified by \p LineOffset and \p Discriminator.
-  unsigned samplesAt(int LineOffset, unsigned Discriminator) {
-    return BodySamples.lookup(LineLocation(LineOffset, Discriminator));
-  }
-
-  bool empty() { return BodySamples.empty(); }
-
-private:
-  /// \brief Total number of samples collected inside this function.
-  ///
-  /// Samples are cumulative, they include all the samples collected
-  /// inside this function and all its inlined callees.
-  unsigned TotalSamples;
-
-  /// \brief Total number of samples collected at the head of the function.
-  unsigned TotalHeadSamples;
-
-  /// \brief Map instruction locations to collected samples.
-  ///
-  /// Each entry in this map contains the number of samples
-  /// collected at the corresponding line offset. All line locations
-  /// are an offset from the start of the function.
-  BodySampleMap BodySamples;
-};
 
 /// \brief Sample-based profile reader.
 ///
@@ -139,19 +54,24 @@ private:
 ///      protection against source code shuffling, line numbers should
 ///      be relative to the start of the function.
 ///
-/// The reader supports two file formats: text and bitcode. The text format
-/// is useful for debugging and testing, while the bitcode format is more
+/// The reader supports two file formats: text and binary. The text format
+/// is useful for debugging and testing, while the binary format is more
 /// compact. They can both be used interchangeably.
 class SampleProfileReader {
 public:
-  SampleProfileReader(const Module &M, StringRef F)
-      : Profiles(0), Filename(F), M(M) {}
+  SampleProfileReader(std::unique_ptr<MemoryBuffer> B, LLVMContext &C)
+      : Profiles(0), Ctx(C), Buffer(std::move(B)) {}
+
+  virtual ~SampleProfileReader() {}
 
   /// \brief Print all the profiles to dbgs().
   void dump();
 
-  /// \brief Load sample profiles from the associated file.
-  bool load();
+  /// \brief Read and validate the file header.
+  virtual std::error_code readHeader() = 0;
+
+  /// \brief Read sample profiles from the associated file.
+  virtual std::error_code read() = 0;
 
   /// \brief Print the profile for \p FName on stream \p OS.
   void printFunctionProfile(raw_ostream &OS, StringRef FName);
@@ -166,14 +86,17 @@ public:
 
   /// \brief Report a parse error message.
   void reportParseError(int64_t LineNumber, Twine Msg) const {
-    DiagnosticInfoSampleProfile Diag(Filename.data(), LineNumber, Msg);
-    M.getContext().diagnose(Diag);
+    DiagnosticInfoSampleProfile Diag(Buffer->getBufferIdentifier(), LineNumber,
+                                     Msg);
+    Ctx.diagnose(Diag);
   }
 
-protected:
-  bool loadText();
-  bool loadBitcode() { llvm_unreachable("not implemented"); }
+  /// \brief Create a sample profile reader appropriate to the file format.
+  static std::error_code create(std::string Filename,
+                                std::unique_ptr<SampleProfileReader> &Reader,
+                                LLVMContext &C);
 
+protected:
   /// \brief Map every function to its associated profile.
   ///
   /// The profile of every function executed at runtime is collected
@@ -181,14 +104,68 @@ protected:
   /// to their corresponding profiles.
   StringMap<FunctionSamples> Profiles;
 
-  /// \brief Path name to the file holding the profile data.
-  StringRef Filename;
+  /// \brief LLVM context used to emit diagnostics.
+  LLVMContext &Ctx;
 
-  /// \brief Module being compiled. Used to access the current
-  /// LLVM context for diagnostics.
-  const Module &M;
+  /// \brief Memory buffer holding the profile file.
+  std::unique_ptr<MemoryBuffer> Buffer;
+};
+
+class SampleProfileReaderText : public SampleProfileReader {
+public:
+  SampleProfileReaderText(std::unique_ptr<MemoryBuffer> B, LLVMContext &C)
+      : SampleProfileReader(std::move(B), C) {}
+
+  /// \brief Read and validate the file header.
+  std::error_code readHeader() override { return sampleprof_error::success; }
+
+  /// \brief Read sample profiles from the associated file.
+  std::error_code read() override;
+};
+
+class SampleProfileReaderBinary : public SampleProfileReader {
+public:
+  SampleProfileReaderBinary(std::unique_ptr<MemoryBuffer> B, LLVMContext &C)
+      : SampleProfileReader(std::move(B), C), Data(nullptr), End(nullptr) {}
+
+  /// \brief Read and validate the file header.
+  std::error_code readHeader() override;
+
+  /// \brief Read sample profiles from the associated file.
+  std::error_code read() override;
+
+  /// \brief Return true if \p Buffer is in the format supported by this class.
+  static bool hasFormat(const MemoryBuffer &Buffer);
+
+protected:
+  /// \brief Read a numeric value of type T from the profile.
+  ///
+  /// If an error occurs during decoding, a diagnostic message is emitted and
+  /// EC is set.
+  ///
+  /// \returns the read value.
+  template <typename T> ErrorOr<T> readNumber();
+
+  /// \brief Read a string from the profile.
+  ///
+  /// If an error occurs during decoding, a diagnostic message is emitted and
+  /// EC is set.
+  ///
+  /// \returns the read value.
+  ErrorOr<StringRef> readString();
+
+  /// \brief Return true if we've reached the end of file.
+  bool at_eof() const { return Data >= End; }
+
+  /// \brief Points to the current location in the buffer.
+  const uint8_t *Data;
+
+  /// \brief Points to the end of the buffer.
+  const uint8_t *End;
 };
 
 } // End namespace sampleprof
+
+} // End namespace llvm
 
 #endif // LLVM_PROFILEDATA_SAMPLEPROFREADER_H

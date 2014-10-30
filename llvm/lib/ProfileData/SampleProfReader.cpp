@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the class that reads LLVM sample profiles. It
-// supports two file formats: text and bitcode. The textual representation
-// is useful for debugging and testing purposes. The bitcode representation
+// supports two file formats: text and binary. The textual representation
+// is useful for debugging and testing purposes. The binary representation
 // is more compact, resulting in smaller file sizes. However, they can
 // both be used interchangeably.
 //
@@ -95,13 +95,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/SampleProfReader.h"
+#include "llvm/ProfileData/SampleProfWriter.h" // REMOVE
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/LineIterator.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Regex.h"
 
-using namespace sampleprof;
+using namespace llvm::sampleprof;
 using namespace llvm;
 
 /// \brief Print the samples collected for a function on stream \p OS.
@@ -112,10 +114,22 @@ void FunctionSamples::print(raw_ostream &OS) {
      << " sampled lines\n";
   for (BodySampleMap::const_iterator SI = BodySamples.begin(),
                                      SE = BodySamples.end();
-       SI != SE; ++SI)
-    OS << "\tline offset: " << SI->first.LineOffset
-       << ", discriminator: " << SI->first.Discriminator
-       << ", number of samples: " << SI->second << "\n";
+       SI != SE; ++SI) {
+    LineLocation Loc = SI->first;
+    SampleRecord Sample = SI->second;
+    OS << "\tline offset: " << Loc.LineOffset
+       << ", discriminator: " << Loc.Discriminator
+       << ", number of samples: " << Sample.getSamples();
+    if (Sample.hasCalls()) {
+      OS << ", calls:";
+      for (SampleRecord::CallTargetList::const_iterator
+               I = Sample.getCallTargets().begin(),
+               E = Sample.getCallTargets().end();
+           I != E; ++I)
+        OS << " " << (*I).first << ":" << (*I).second;
+    }
+    OS << "\n";
+  }
   OS << "\n";
 }
 
@@ -125,7 +139,7 @@ void FunctionSamples::print(raw_ostream &OS) {
 /// \param FName Name of the function to print.
 void SampleProfileReader::printFunctionProfile(raw_ostream &OS,
                                                StringRef FName) {
-  OS << "Function: " << FName << ":\n";
+  OS << "Function: " << FName << ": ";
   Profiles[FName].print(OS);
 }
 
@@ -150,22 +164,15 @@ void SampleProfileReader::dump() {
 /// the expected format.
 ///
 /// \returns true if the file was loaded successfully, false otherwise.
-bool SampleProfileReader::loadText() {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
-      MemoryBuffer::getFile(Filename);
-  if (std::error_code EC = BufferOrErr.getError()) {
-    std::string Msg(EC.message());
-    M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
-    return false;
-  }
-  MemoryBuffer &Buffer = *BufferOrErr.get();
-  line_iterator LineIt(Buffer, /*SkipBlanks=*/true, '#');
+std::error_code SampleProfileReaderText::read() {
+  line_iterator LineIt(*Buffer, /*SkipBlanks=*/true, '#');
 
   // Read the profile of each function. Since each function may be
   // mentioned more than once, and we are collecting flat profiles,
   // accumulate samples as we parse them.
   Regex HeadRE("^([^0-9].*):([0-9]+):([0-9]+)$");
-  Regex LineSample("^([0-9]+)\\.?([0-9]+)?: ([0-9]+)(.*)$");
+  Regex LineSampleRE("^([0-9]+)\\.?([0-9]+)?: ([0-9]+)(.*)$");
+  Regex CallSampleRE(" +([^0-9 ][^ ]*):([0-9]+)");
   while (!LineIt.is_at_eof()) {
     // Read the header of each function.
     //
@@ -179,11 +186,11 @@ bool SampleProfileReader::loadText() {
     //
     // The only requirement we place on the identifier, then, is that it
     // should not begin with a number.
-    SmallVector<StringRef, 3> Matches;
+    SmallVector<StringRef, 4> Matches;
     if (!HeadRE.match(*LineIt, &Matches)) {
       reportParseError(LineIt.line_number(),
                        "Expected 'mangled_name:NUM:NUM', found " + *LineIt);
-      return false;
+      return sampleprof_error::malformed;
     }
     assert(Matches.size() == 4);
     StringRef FName = Matches[1];
@@ -199,11 +206,11 @@ bool SampleProfileReader::loadText() {
     // Now read the body. The body of the function ends when we reach
     // EOF or when we see the start of the next function.
     while (!LineIt.is_at_eof() && isdigit((*LineIt)[0])) {
-      if (!LineSample.match(*LineIt, &Matches)) {
+      if (!LineSampleRE.match(*LineIt, &Matches)) {
         reportParseError(
             LineIt.line_number(),
             "Expected 'NUM[.NUM]: NUM[ mangled_name:NUM]*', found " + *LineIt);
-        return false;
+        return sampleprof_error::malformed;
       }
       assert(Matches.size() == 5);
       unsigned LineOffset, NumSamples, Discriminator = 0;
@@ -212,27 +219,194 @@ bool SampleProfileReader::loadText() {
         Matches[2].getAsInteger(10, Discriminator);
       Matches[3].getAsInteger(10, NumSamples);
 
-      // FIXME: Handle called targets (in Matches[4]).
+      // If there are function calls in this line, generate a call sample
+      // entry for each call.
+      std::string CallsLine(Matches[4]);
+      while (CallsLine != "") {
+        SmallVector<StringRef, 3> CallSample;
+        if (!CallSampleRE.match(CallsLine, &CallSample)) {
+          reportParseError(LineIt.line_number(),
+                           "Expected 'mangled_name:NUM', found " + CallsLine);
+          return sampleprof_error::malformed;
+        }
+        StringRef CalledFunction = CallSample[1];
+        unsigned CalledFunctionSamples;
+        CallSample[2].getAsInteger(10, CalledFunctionSamples);
+        FProfile.addCalledTargetSamples(LineOffset, Discriminator,
+                                        CalledFunction, CalledFunctionSamples);
+        CallsLine = CallSampleRE.sub("", CallsLine);
+      }
 
-      // When dealing with instruction weights, we use the value
-      // zero to indicate the absence of a sample. If we read an
-      // actual zero from the profile file, return it as 1 to
-      // avoid the confusion later on.
-      if (NumSamples == 0)
-        NumSamples = 1;
       FProfile.addBodySamples(LineOffset, Discriminator, NumSamples);
       ++LineIt;
     }
   }
 
-  return true;
+  return sampleprof_error::success;
 }
 
-/// \brief Load execution samples from a file.
+template <typename T>
+ErrorOr<T> SampleProfileReaderBinary::readNumber() {
+  unsigned NumBytesRead = 0;
+  std::error_code EC;
+  uint64_t Val = decodeULEB128(Data, &NumBytesRead);
+
+  if (Val > std::numeric_limits<T>::max())
+    EC = sampleprof_error::malformed;
+  else if (Data + NumBytesRead > End)
+    EC = sampleprof_error::truncated;
+  else
+    EC = sampleprof_error::success;
+
+  if (EC) {
+    reportParseError(0, EC.message());
+    return EC;
+  }
+
+  Data += NumBytesRead;
+  return static_cast<T>(Val);
+}
+
+ErrorOr<StringRef> SampleProfileReaderBinary::readString() {
+  std::error_code EC;
+  StringRef Str(reinterpret_cast<const char *>(Data));
+  if (Data + Str.size() + 1 > End) {
+    EC = sampleprof_error::truncated;
+    reportParseError(0, EC.message());
+    return EC;
+  }
+
+  Data += Str.size() + 1;
+  return Str;
+}
+
+std::error_code SampleProfileReaderBinary::read() {
+  while (!at_eof()) {
+    auto FName(readString());
+    if (std::error_code EC = FName.getError())
+      return EC;
+
+    Profiles[*FName] = FunctionSamples();
+    FunctionSamples &FProfile = Profiles[*FName];
+
+    auto Val = readNumber<unsigned>();
+    if (std::error_code EC = Val.getError())
+      return EC;
+    FProfile.addTotalSamples(*Val);
+
+    Val = readNumber<unsigned>();
+    if (std::error_code EC = Val.getError())
+      return EC;
+    FProfile.addHeadSamples(*Val);
+
+    // Read the samples in the body.
+    auto NumRecords = readNumber<unsigned>();
+    if (std::error_code EC = NumRecords.getError())
+      return EC;
+    for (unsigned I = 0; I < *NumRecords; ++I) {
+      auto LineOffset = readNumber<uint64_t>();
+      if (std::error_code EC = LineOffset.getError())
+        return EC;
+
+      auto Discriminator = readNumber<uint64_t>();
+      if (std::error_code EC = Discriminator.getError())
+        return EC;
+
+      auto NumSamples = readNumber<uint64_t>();
+      if (std::error_code EC = NumSamples.getError())
+        return EC;
+
+      auto NumCalls = readNumber<unsigned>();
+      if (std::error_code EC = NumCalls.getError())
+        return EC;
+
+      for (unsigned J = 0; J < *NumCalls; ++J) {
+        auto CalledFunction(readString());
+        if (std::error_code EC = CalledFunction.getError())
+          return EC;
+
+        auto CalledFunctionSamples = readNumber<uint64_t>();
+        if (std::error_code EC = CalledFunctionSamples.getError())
+          return EC;
+
+        FProfile.addCalledTargetSamples(*LineOffset, *Discriminator,
+                                        *CalledFunction,
+                                        *CalledFunctionSamples);
+      }
+
+      FProfile.addBodySamples(*LineOffset, *Discriminator, *NumSamples);
+    }
+  }
+
+  return sampleprof_error::success;
+}
+
+std::error_code SampleProfileReaderBinary::readHeader() {
+  Data = reinterpret_cast<const uint8_t *>(Buffer->getBufferStart());
+  End = Data + Buffer->getBufferSize();
+
+  // Read and check the magic identifier.
+  auto Magic = readNumber<uint64_t>();
+  if (std::error_code EC = Magic.getError())
+    return EC;
+  else if (*Magic != SPMagic())
+    return sampleprof_error::bad_magic;
+
+  // Read the version number.
+  auto Version = readNumber<uint64_t>();
+  if (std::error_code EC = Version.getError())
+    return EC;
+  else if (*Version != SPVersion())
+    return sampleprof_error::unsupported_version;
+
+  return sampleprof_error::success;
+}
+
+bool SampleProfileReaderBinary::hasFormat(const MemoryBuffer &Buffer) {
+  const uint8_t *Data =
+      reinterpret_cast<const uint8_t *>(Buffer.getBufferStart());
+  uint64_t Magic = decodeULEB128(Data);
+  return Magic == SPMagic();
+}
+
+/// \brief Prepare a memory buffer for the contents of \p Filename.
 ///
-/// This function examines the header of the given file to determine
-/// whether to use the text or the bitcode loader.
-bool SampleProfileReader::load() {
-  // TODO Actually detect the file format.
-  return loadText();
+/// \returns an error code indicating the status of the buffer.
+static std::error_code
+setupMemoryBuffer(std::string Filename, std::unique_ptr<MemoryBuffer> &Buffer) {
+  auto BufferOrErr = MemoryBuffer::getFileOrSTDIN(Filename);
+  if (std::error_code EC = BufferOrErr.getError())
+    return EC;
+  Buffer = std::move(BufferOrErr.get());
+
+  // Sanity check the file.
+  if (Buffer->getBufferSize() > std::numeric_limits<unsigned>::max())
+    return sampleprof_error::too_large;
+
+  return sampleprof_error::success;
+}
+
+/// \brief Create a sample profile reader based on the format of the input file.
+///
+/// \param Filename The file to open.
+///
+/// \param Reader The reader to instantiate according to \p Filename's format.
+///
+/// \param C The LLVM context to use to emit diagnostics.
+///
+/// \returns an error code indicating the status of the created reader.
+std::error_code
+SampleProfileReader::create(std::string Filename,
+                            std::unique_ptr<SampleProfileReader> &Reader,
+                            LLVMContext &C) {
+  std::unique_ptr<MemoryBuffer> Buffer;
+  if (std::error_code EC = setupMemoryBuffer(Filename, Buffer))
+    return EC;
+
+  if (SampleProfileReaderBinary::hasFormat(*Buffer))
+    Reader.reset(new SampleProfileReaderBinary(std::move(Buffer), C));
+  else
+    Reader.reset(new SampleProfileReaderText(std::move(Buffer), C));
+
+  return Reader->readHeader();
 }
