@@ -1,5 +1,10 @@
 #include <winbase.h>
 
+#ifdef MemoryFence
+// WinNT.h seems to define a MemoryFence macro.
+#undef MemoryFence
+#endif
+
 void llvm::call_once(once_flag &flag, void (*fptr)(void)) {
   while (flag != Done) {
     if (flag == Wait) {
