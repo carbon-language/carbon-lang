@@ -676,6 +676,7 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   PMB.Inliner = createFunctionInliningPass();
   PMB.VerifyInput = true;
   PMB.VerifyOutput = true;
+  PMB.LoopVectorize = true;
   PMB.populateLTOPassManager(passes, &TM);
   passes.run(M);
 }
