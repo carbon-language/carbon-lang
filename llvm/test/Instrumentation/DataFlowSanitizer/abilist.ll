@@ -12,8 +12,21 @@ define i32 @functional(i32 %a, i32 %b) {
   ret i32 %c
 }
 
+; CHECK: define i32 (i32, i32)* @discardg(i32)
+; CHECK: %[[CALL:.*]] = call { i32 (i32, i32)*, i16 } @"dfs$g"(i32 %0, i16 0)
+; CHECK: %[[XVAL:.*]] = extractvalue { i32 (i32, i32)*, i16 } %[[CALL]], 0
+; CHECK: ret {{.*}} %[[XVAL]]
+@discardg = alias i32 (i32, i32)* (i32)* @g
+
 declare void @custom1(i32 %a, i32 %b)
 
+; CHECK: define linkonce_odr { i32, i16 } @"dfsw$custom2"(i32, i32, i16, i16)
+; CHECK: %[[LABELRETURN2:.*]] = alloca i16
+; CHECK: %[[RV:.*]] = call i32 @__dfsw_custom2
+; CHECK: %[[RVSHADOW:.*]] = load i16* %[[LABELRETURN2]]
+; CHECK: insertvalue {{.*}}[[RV]], 0
+; CHECK: insertvalue {{.*}}[[RVSHADOW]], 1
+; CHECK: ret { i32, i16 }
 declare i32 @custom2(i32 %a, i32 %b)
 
 declare void @custom3(i32 %a, ...)
@@ -25,7 +38,9 @@ declare void @customcb(i32 (i32)* %cb)
 declare i32 @cb(i32)
 
 ; CHECK: @"dfs$f"
-define void @f() {
+define void @f(i32 %x) {
+  ; CHECK: %[[LABELVA2:.*]] = alloca [2 x i16]
+  ; CHECK: %[[LABELVA1:.*]] = alloca [2 x i16]
   ; CHECK: %[[LABELRETURN:.*]] = alloca i16
 
   ; CHECK: call void @__dfsw_custom1(i32 1, i32 2, i16 0, i16 0)
@@ -37,28 +52,21 @@ define void @f() {
   ; CHECK: call void @__dfsw_customcb({{.*}} @"dfst0$customcb", i8* bitcast ({{.*}} @"dfs$cb" to i8*), i16 0)
   call void @customcb(i32 (i32)* @cb)
 
-  ; CHECK: call void (i32, ...)* @__dfsw_custom3(i32 1, i32 2, i32 3, i16 0, i16 0, i16 0)
-  call void (i32, ...)* @custom3(i32 1, i32 2, i32 3)
+  ; CHECK: %[[LABELVA1_0:.*]] = getelementptr inbounds [2 x i16]* %[[LABELVA1]], i32 0, i32 0
+  ; CHECK: store i16 0, i16* %[[LABELVA1_0]]
+  ; CHECK: %[[LABELVA1_1:.*]] = getelementptr inbounds [2 x i16]* %[[LABELVA1]], i32 0, i32 1
+  ; CHECK: store i16 %{{.*}}, i16* %[[LABELVA1_1]]
+  ; CHECK: %[[LABELVA1_0A:.*]] = getelementptr inbounds [2 x i16]* %[[LABELVA1]], i32 0, i32 0
+  ; CHECK: call void (i32, i16, i16*, ...)* @__dfsw_custom3(i32 1, i16 0, i16* %[[LABELVA1_0A]], i32 2, i32 %{{.*}})
+  call void (i32, ...)* @custom3(i32 1, i32 2, i32 %x)
 
-  ; CHECK: call i32 (i32, ...)* @__dfsw_custom4(i32 1, i32 2, i32 3, i16 0, i16 0, i16 0, i16* %[[LABELRETURN]])
+  ; CHECK: %[[LABELVA2_0:.*]] = getelementptr inbounds [2 x i16]* %[[LABELVA2]], i32 0, i32 0
+  ; CHECK: %[[LABELVA2_0A:.*]] = getelementptr inbounds [2 x i16]* %[[LABELVA2]], i32 0, i32 0
+  ; CHECK: call i32 (i32, i16, i16*, i16*, ...)* @__dfsw_custom4(i32 1, i16 0, i16* %[[LABELVA2_0A]], i16* %[[LABELRETURN]], i32 2, i32 3)
   call i32 (i32, ...)* @custom4(i32 1, i32 2, i32 3)
 
   ret void
 }
-
-; CHECK: define i32 (i32, i32)* @discardg(i32)
-; CHECK: %[[CALL:.*]] = call { i32 (i32, i32)*, i16 } @"dfs$g"(i32 %0, i16 0)
-; CHECK: %[[XVAL:.*]] = extractvalue { i32 (i32, i32)*, i16 } %[[CALL]], 0
-; CHECK: ret {{.*}} %[[XVAL]]
-@discardg = alias i32 (i32, i32)* (i32)* @g
-
-; CHECK: define linkonce_odr { i32, i16 } @"dfsw$custom2"(i32, i32, i16, i16)
-; CHECK: %[[LABELRETURN2:.*]] = alloca i16
-; CHECK: %[[RV:.*]] = call i32 @__dfsw_custom2
-; CHECK: %[[RVSHADOW:.*]] = load i16* %[[LABELRETURN2]]
-; CHECK: insertvalue {{.*}}[[RV]], 0
-; CHECK: insertvalue {{.*}}[[RVSHADOW]], 1
-; CHECK: ret { i32, i16 }
 
 ; CHECK: @"dfs$g"
 define i32 (i32, i32)* @g(i32) {
@@ -75,8 +83,8 @@ define i32 (i32, i32)* @g(i32) {
 
 ; CHECK: declare void @__dfsw_custom1(i32, i32, i16, i16)
 ; CHECK: declare i32 @__dfsw_custom2(i32, i32, i16, i16, i16*)
-; CHECK: declare void @__dfsw_custom3(i32, ...)
-; CHECK: declare i32 @__dfsw_custom4(i32, ...)
+; CHECK: declare void @__dfsw_custom3(i32, i16, i16*, ...)
+; CHECK: declare i32 @__dfsw_custom4(i32, i16, i16*, i16*, ...)
 
 ; CHECK-LABEL: define linkonce_odr i32 @"dfst0$customcb"(i32 (i32)*, i32, i16, i16*)
 ; CHECK: %[[BC:.*]] = bitcast i32 (i32)* %0 to { i32, i16 } (i32, i16)*
@@ -85,3 +93,4 @@ define i32 (i32, i32)* @g(i32) {
 ; CHECK: %[[XVAL1:.*]] = extractvalue { i32, i16 } %[[CALL]], 1
 ; CHECK: store i16 %[[XVAL1]], i16* %3
 ; CHECK: ret i32 %[[XVAL0]]
+

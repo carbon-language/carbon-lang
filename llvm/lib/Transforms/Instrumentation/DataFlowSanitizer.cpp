@@ -389,12 +389,6 @@ FunctionType *DataFlowSanitizer::getTrampolineFunctionType(FunctionType *T) {
 }
 
 FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
-  if (T->isVarArg()) {
-    // The labels are passed after all the arguments so there is no need to
-    // adjust the function type.
-    return T;
-  }
-
   llvm::SmallVector<Type *, 4> ArgTypes;
   for (FunctionType::param_iterator i = T->param_begin(), e = T->param_end();
        i != e; ++i) {
@@ -409,10 +403,12 @@ FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
   }
   for (unsigned i = 0, e = T->getNumParams(); i != e; ++i)
     ArgTypes.push_back(ShadowTy);
+  if (T->isVarArg())
+    ArgTypes.push_back(ShadowPtrTy);
   Type *RetType = T->getReturnType();
   if (!RetType->isVoidTy())
     ArgTypes.push_back(ShadowPtrTy);
-  return FunctionType::get(T->getReturnType(), ArgTypes, false);
+  return FunctionType::get(T->getReturnType(), ArgTypes, T->isVarArg());
 }
 
 bool DataFlowSanitizer::doInitialization(Module &M) {
@@ -1419,7 +1415,7 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
         std::vector<Value *> Args;
 
         CallSite::arg_iterator i = CS.arg_begin();
-        for (unsigned n = CS.arg_size(); n != 0; ++i, --n) {
+        for (unsigned n = FT->getNumParams(); n != 0; ++i, --n) {
           Type *T = (*i)->getType();
           FunctionType *ParamFT;
           if (isa<PointerType>(T) &&
@@ -1439,8 +1435,22 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
         }
 
         i = CS.arg_begin();
-        for (unsigned n = CS.arg_size(); n != 0; ++i, --n)
+        for (unsigned n = FT->getNumParams(); n != 0; ++i, --n)
           Args.push_back(DFSF.getShadow(*i));
+
+        if (FT->isVarArg()) {
+          auto LabelVAAlloca =
+              new AllocaInst(ArrayType::get(DFSF.DFS.ShadowTy,
+                                            CS.arg_size() - FT->getNumParams()),
+                             "labelva", DFSF.F->getEntryBlock().begin());
+
+          for (unsigned n = 0; i != CS.arg_end(); ++i, ++n) {
+            auto LabelVAPtr = IRB.CreateStructGEP(LabelVAAlloca, n);
+            IRB.CreateStore(DFSF.getShadow(*i), LabelVAPtr);
+          }
+
+          Args.push_back(IRB.CreateStructGEP(LabelVAAlloca, 0));
+        }
 
         if (!FT->getReturnType()->isVoidTy()) {
           if (!DFSF.LabelReturnAlloca) {
@@ -1450,6 +1460,9 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
           }
           Args.push_back(DFSF.LabelReturnAlloca);
         }
+
+        for (i = CS.arg_begin() + FT->getNumParams(); i != CS.arg_end(); ++i)
+          Args.push_back(*i);
 
         CallInst *CustomCI = IRB.CreateCall(CustomF, Args);
         CustomCI->setCallingConv(CI->getCallingConv());
