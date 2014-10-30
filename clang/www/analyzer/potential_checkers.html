@@ -461,12 +461,22 @@ unix.Malloc</span>.
 <p>Source: C++03 3.7.3.1p2; C++11 3.7.4.1p2.</p></div></div></td>
 <td><div class="exampleContainer expandable">
 <div class="example"><pre>
-int *p = malloc(0);
-*p = 1; // warn
+#include &lt;memory&gt;
+
+void test() {
+  int *p = (int *)malloc(0);
+  *p = 1; // warn
+  free(p);
+}
 </pre></div>
 <div class="example"><pre>
-int *p = new int{};
-int i = *p; // warn
+void f(int);
+
+void test() {
+  int *p = new int[0];
+  f(*p); // warn
+  delete[] p;
+}
 </pre></div></div></td>
 <td class="aligned"></td></tr>
 
