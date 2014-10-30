@@ -102,6 +102,7 @@ add_llvm_library(LLVMSupport
   Unix/Program.inc
   Unix/RWMutex.inc
   Unix/Signals.inc
+  Unix/Threading.inc
   Unix/ThreadLocal.inc
   Unix/TimeValue.inc
   Unix/Watchdog.inc
@@ -114,6 +115,7 @@ add_llvm_library(LLVMSupport
   Windows/Program.inc
   Windows/RWMutex.inc
   Windows/Signals.inc
+  Windows/Threading.inc
   Windows/ThreadLocal.inc
   Windows/TimeValue.inc
   Windows/Watchdog.inc
