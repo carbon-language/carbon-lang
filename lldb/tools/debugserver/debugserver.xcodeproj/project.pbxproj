@@ -134,7 +134,6 @@
 		9457ECF61419864100DFE7D8 /* stack_logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stack_logging.h; sourceTree = "<group>"; };
 		AF0934BA18E12B92005A11FD /* Genealogy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Genealogy.h; sourceTree = "<group>"; };
 		AF0934BB18E12B92005A11FD /* GenealogySPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GenealogySPI.h; sourceTree = "<group>"; };
-		AF5B2E72150EB6020075D7FD /* com.apple.debugserver-secure.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "com.apple.debugserver-secure.plist"; sourceTree = "<group>"; };
 		AF61C60418F75ABC00B48D9D /* debugserver-macosx-entitlements.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "debugserver-macosx-entitlements.plist"; sourceTree = "<group>"; };
 		AF67ABFF0D34604D0022D128 /* PseudoTerminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PseudoTerminal.cpp; sourceTree = "<group>"; };
 		AF67AC000D34604D0022D128 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminal.h; sourceTree = "<group>"; };
@@ -205,7 +204,6 @@
 				26242C390DDBD33C0054A4CC /* debugserver-entitlements.plist */,
 				AF61C60418F75ABC00B48D9D /* debugserver-macosx-entitlements.plist */,
 				26A4BAED0D498B7D00A9BEAB /* com.apple.debugserver.plist */,
-				AF5B2E72150EB6020075D7FD /* com.apple.debugserver-secure.plist */,
 				EF88788B0D9C7558001831DA /* com.apple.debugserver.applist.plist */,
 			);
 			name = Resources;
