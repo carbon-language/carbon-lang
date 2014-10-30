@@ -495,10 +495,9 @@ namespace {
     void writeDump(raw_ostream &OS) const override {
     }
     void writeDumpChildren(raw_ostream &OS) const override {
-      OS << "    if (SA->is" << getUpperName() << "Expr()) {\n";
-      OS << "      lastChild();\n";
+      OS << "    if (SA->is" << getUpperName() << "Expr())\n";
       OS << "      dumpStmt(SA->get" << getUpperName() << "Expr());\n";
-      OS << "    } else\n";
+      OS << "    else\n";
       OS << "      dumpType(SA->get" << getUpperName()
          << "Type()->getType());\n";
     }
@@ -921,7 +920,6 @@ namespace {
     void writeDump(raw_ostream &OS) const override {}
 
     void writeDumpChildren(raw_ostream &OS) const override {
-      OS << "    lastChild();\n";
       OS << "    dumpStmt(SA->get" << getUpperName() << "());\n";
     }
     void writeHasChildren(raw_ostream &OS) const override { OS << "true"; }
@@ -976,11 +974,8 @@ namespace {
     void writeDumpChildren(raw_ostream &OS) const override {
       OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
          << "_iterator I = SA->" << getLowerName() << "_begin(), E = SA->"
-         << getLowerName() << "_end(); I != E; ++I) {\n";
-      OS << "      if (I + 1 == E)\n";
-      OS << "        lastChild();\n";
+         << getLowerName() << "_end(); I != E; ++I)\n";
       OS << "      dumpStmt(*I);\n";
-      OS << "    }\n";
     }
 
     void writeHasChildren(raw_ostream &OS) const override {
@@ -2698,25 +2693,8 @@ void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS) {
       for (const auto *Arg : Args)
         createArgument(*Arg, R.getName())->writeDump(OS);
 
-      // Code for detecting the last child.
-      OS << "    bool OldMoreChildren = hasMoreChildren();\n";
-      OS << "    bool MoreChildren;\n";
-
-      for (auto AI = Args.begin(), AE = Args.end(); AI != AE; ++AI) {
-        // More code for detecting the last child.
-        OS << "    MoreChildren = OldMoreChildren";
-        for (auto Next = AI + 1; Next != AE; ++Next) {
-          OS << " || ";
-          createArgument(**Next, R.getName())->writeHasChildren(OS);
-        }
-        OS << ";\n";
-        OS << "    setMoreChildren(MoreChildren);\n";
-
+      for (auto AI = Args.begin(), AE = Args.end(); AI != AE; ++AI)
         createArgument(**AI, R.getName())->writeDumpChildren(OS);
-      }
-
-      // Reset the last child.
-      OS << "    setMoreChildren(OldMoreChildren);\n";
     }
     OS <<
       "    break;\n"

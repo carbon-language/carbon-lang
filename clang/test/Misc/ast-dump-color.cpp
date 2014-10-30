@@ -29,8 +29,8 @@ struct Invalid {
   __attribute__((noinline)) Invalid(error);
 } Invalid;
 
-//CHECK: {{^}}[[Blue:.\[0;34m]][[RESET:.\[0m]][[GREEN:.\[0;1;32m]]TranslationUnitDecl[[RESET]][[Yellow:.\[0;33m]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]<invalid sloc>[[RESET]]> [[Yellow]]<invalid sloc>[[RESET]]{{$}}
-//CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]TypedefDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]<invalid sloc>[[RESET]]> [[Yellow]]<invalid sloc>[[RESET]] implicit[[CYAN:.\[0;1;36m]] __int128_t[[RESET]] [[Green:.\[0;32m]]'__int128'[[RESET]]{{$}}
+//CHECK: {{^}}[[GREEN:.\[0;1;32m]]TranslationUnitDecl[[RESET:.\[0m]][[Yellow:.\[0;33m]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]<invalid sloc>[[RESET]]> [[Yellow]]<invalid sloc>[[RESET]]{{$}}
+//CHECK: {{^}}[[Blue:.\[0;34m]]|-[[RESET]][[GREEN]]TypedefDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]<invalid sloc>[[RESET]]> [[Yellow]]<invalid sloc>[[RESET]] implicit[[CYAN:.\[0;1;36m]] __int128_t[[RESET]] [[Green:.\[0;32m]]'__int128'[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]TypedefDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]<invalid sloc>[[RESET]]> [[Yellow]]<invalid sloc>[[RESET]] implicit[[CYAN]] __uint128_t[[RESET]] [[Green]]'unsigned __int128'[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]TypedefDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]<invalid sloc>[[RESET]]> [[Yellow]]<invalid sloc>[[RESET]] implicit[[CYAN]] __builtin_va_list[[RESET]] [[Green]]'__va_list_tag [1]'[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]VarDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]{{.*}}ast-dump-color.cpp:6:1[[RESET]], [[Yellow]]col:5[[RESET]]> [[Yellow]]col:5[[RESET]][[CYAN]] Test[[RESET]] [[Green]]'int'[[RESET]]
