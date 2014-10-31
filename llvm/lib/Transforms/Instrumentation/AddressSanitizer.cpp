@@ -1408,12 +1408,14 @@ void AddressSanitizer::InjectCoverageForIndirectCalls(
   for (auto I : IndirCalls) {
     IRBuilder<> IRB(I);
     CallSite CS(I);
+    Value *Callee = CS.getCalledValue();
+    if (dyn_cast<InlineAsm>(Callee)) continue;
     GlobalVariable *CalleeCache = new GlobalVariable(
         *F.getParent(), Ty, false, GlobalValue::PrivateLinkage,
         Constant::getNullValue(Ty), "__asan_gen_callee_cache");
     CalleeCache->setAlignment(kCacheAlignment);
     IRB.CreateCall2(AsanCovIndirCallFunction,
-                    IRB.CreatePointerCast(CS.getCalledValue(), IntptrTy),
+                    IRB.CreatePointerCast(Callee, IntptrTy),
                     IRB.CreatePointerCast(CalleeCache, IntptrTy));
   }
 }

@@ -79,6 +79,7 @@ entry:
   %1 = load void (%struct.StructWithVptr*)** %vtable, align 8
   tail call void %1(%struct.StructWithVptr* %foo)
   tail call void %1(%struct.StructWithVptr* %foo)
+  tail call void asm sideeffect "", ""()
   ret void
 }
 
