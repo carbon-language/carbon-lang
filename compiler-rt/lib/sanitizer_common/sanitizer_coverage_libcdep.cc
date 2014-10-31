@@ -325,7 +325,7 @@ void CoverageData::DumpCallerCalleePairs() {
   auto sym = Symbolizer::GetOrInit();
   if (!sym)
     return;
-  InternalScopedString out(4096 * 16);
+  InternalScopedString out(32 << 20);
   uptr total = 0;
   for (uptr i = 0; i < max_idx; i++) {
     uptr *cc_cache = cc_array[i];
