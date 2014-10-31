@@ -1,6 +1,7 @@
 set(LLVM_LINK_COMPONENTS
   Core
   ExecutionEngine
+  MC
   MCJIT
   Support
   nativecodegen
