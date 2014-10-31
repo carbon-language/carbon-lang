@@ -153,6 +153,24 @@ public:
     return getMetadataImpl(Kind);
   }
 
+  /// Get the the metadata as an MDNode.
+  ///
+  /// \pre Any KindID metadata is implemented using \a MDNode.
+  MDNode *getMDNode(unsigned KindID) const {
+    if (!hasMetadata())
+      return nullptr;
+    return getMDNodeImpl(KindID);
+  }
+
+  /// Get the the metadata as an MDNode.
+  ///
+  /// \pre Any KindID metadata is implemented using \a MDNode.
+  MDNode *getMDNode(StringRef Kind) const {
+    if (!hasMetadata())
+      return nullptr;
+    return getMDNodeImpl(Kind);
+  }
+
   /// getAllMetadata - Get all metadata attached to this Instruction.  The first
   /// element of each pair returned is the KindID, the second element is the
   /// metadata value.  This list is returned sorted by the KindID.
@@ -273,6 +291,8 @@ private:
   // These are all implemented in Metadata.cpp.
   MDNode *getMetadataImpl(unsigned KindID) const;
   MDNode *getMetadataImpl(StringRef Kind) const;
+  MDNode *getMDNodeImpl(unsigned KindID) const;
+  MDNode *getMDNodeImpl(StringRef Kind) const;
   void getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,MDNode*> > &)const;
   void getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
                                            MDNode*> > &) const;

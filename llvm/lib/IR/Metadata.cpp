@@ -609,6 +609,14 @@ MDNode *Instruction::getMetadataImpl(StringRef Kind) const {
   return getMetadataImpl(getContext().getMDKindID(Kind));
 }
 
+MDNode *Instruction::getMDNodeImpl(unsigned KindID) const {
+  return getMetadataImpl(KindID);
+}
+
+MDNode *Instruction::getMDNodeImpl(StringRef Kind) const {
+  return getMetadataImpl(Kind);
+}
+
 void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
   SmallSet<unsigned, 5> KnownSet;
   KnownSet.insert(KnownIDs.begin(), KnownIDs.end());
