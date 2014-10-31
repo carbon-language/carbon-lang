@@ -1,4 +1,4 @@
-##===- bindings/ocaml/transforms/scalar/Makefile -----------*- Makefile -*-===##
+##===- bindings/ocaml/transforms/scalar_opts/Makefile ------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

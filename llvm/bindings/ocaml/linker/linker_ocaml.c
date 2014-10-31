@@ -1,4 +1,4 @@
-/*===-- linker_ocaml.c - LLVM Ocaml Glue ------------------------*- C++ -*-===*\
+/*===-- linker_ocaml.c - LLVM OCaml Glue ------------------------*- C++ -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
 |*                                                                            *|
