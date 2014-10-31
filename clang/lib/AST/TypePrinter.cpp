@@ -1432,18 +1432,6 @@ PrintTemplateArgumentList(raw_ostream &OS,
   OS << '>';
 }
 
-void QualType::dump(const char *msg) const {
-  if (msg)
-    llvm::errs() << msg << ": ";
-  LangOptions LO;
-  print(llvm::errs(), PrintingPolicy(LO), "identifier");
-  llvm::errs() << '\n';
-}
-
-LLVM_DUMP_METHOD void QualType::dump() const { dump(nullptr); }
-
-LLVM_DUMP_METHOD void Type::dump() const { QualType(this, 0).dump(); }
-
 std::string Qualifiers::getAsString() const {
   LangOptions LO;
   return getAsString(PrintingPolicy(LO));
