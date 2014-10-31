@@ -68,8 +68,7 @@ typedef volatile sys::cas_flag once_flag;
 ///
 /// \param flag Flag used for tracking whether or not this has run.
 /// \param UserFn Function to call once.
-void call_once(once_flag&, void (*)(void));
-
+void call_once(once_flag &flag, void (*UserFn)(void));
 }
 
 #endif
