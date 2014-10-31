@@ -3283,11 +3283,6 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
   return false;
 }
 
-static bool isVLATypeCapturingAllowed(const RecordDecl *RD) {
-  // Allow variable-length array capturing in Lambdas and CapturedStmts.
-  return RD->isLambda() || RD->isCapturedRecord();
-}
-
 unsigned FieldDecl::getBitWidthValue(const ASTContext &Ctx) const {
   assert(isBitField() && "not a bitfield");
   Expr *BitWidth = static_cast<Expr *>(InitStorage.getPointer());
@@ -3330,10 +3325,8 @@ SourceRange FieldDecl::getSourceRange() const {
 }
 
 void FieldDecl::setCapturedVLAType(const VariableArrayType *VLAType) {
-  bool fVLATypeCapturingAllowed = isVLATypeCapturingAllowed(getParent());
-  assert(fVLATypeCapturingAllowed &&
+  assert((RD->isLambda() || RD->isCapturedRecord()) &&
          "capturing type in non-lambda or captured record.");
-  (void)fVLATypeCapturingAllowed;
   assert(InitStorage.getInt() == ISK_BitWidthOrNothing &&
          InitStorage.getPointer() == nullptr &&
          "bit width, initializer or captured type already set");
