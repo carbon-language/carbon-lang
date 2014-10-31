@@ -85,6 +85,15 @@ const TargetInfo &ABIInfo::getTarget() const {
   return CGT.getTarget();
 }
 
+bool ABIInfo::isHomogeneousAggregateBaseType(QualType Ty) const {
+  return false;
+}
+
+bool ABIInfo::isHomogeneousAggregateSmallEnough(const Type *Base,
+                                                uint64_t Members) const {
+  return false;
+}
+
 void ABIArgInfo::dump() const {
   raw_ostream &OS = llvm::errs();
   OS << "(ABIArgInfo Kind=";
@@ -3044,11 +3053,13 @@ public:
 
   bool isPromotableTypeForABI(QualType Ty) const;
   bool isAlignedParamType(QualType Ty) const;
-  bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
-                              uint64_t &Members) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType Ty) const;
+
+  bool isHomogeneousAggregateBaseType(QualType Ty) const override;
+  bool isHomogeneousAggregateSmallEnough(const Type *Ty,
+                                         uint64_t Members) const override;
 
   // TODO: We can add more logic to computeInfo to improve performance.
   // Example: For aggregate arguments that fit in a register, we could
@@ -3192,9 +3203,8 @@ PPC64_SVR4_ABIInfo::isAlignedParamType(QualType Ty) const {
 /// isHomogeneousAggregate - Return true if a type is an ELFv2 homogeneous
 /// aggregate.  Base is set to the base element type, and Members is set
 /// to the number of base elements.
-bool
-PPC64_SVR4_ABIInfo::isHomogeneousAggregate(QualType Ty, const Type *&Base,
-                                           uint64_t &Members) const {
+bool ABIInfo::isHomogeneousAggregate(QualType Ty, const Type *&Base,
+                                     uint64_t &Members) const {
   if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
     uint64_t NElements = AT->getSize().getZExtValue();
     if (NElements == 0)
@@ -3263,19 +3273,9 @@ PPC64_SVR4_ABIInfo::isHomogeneousAggregate(QualType Ty, const Type *&Base,
       Ty = CT->getElementType();
     }
 
-    // Homogeneous aggregates for ELFv2 must have base types of float,
-    // double, long double, or 128-bit vectors.
-    if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
-      if (BT->getKind() != BuiltinType::Float &&
-          BT->getKind() != BuiltinType::Double &&
-          BT->getKind() != BuiltinType::LongDouble)
-        return false;
-    } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
-      if (getContext().getTypeSize(VT) != 128)
-        return false;
-    } else {
+    // Most ABIs only support float, double, and some vector type widths.
+    if (!isHomogeneousAggregateBaseType(Ty))
       return false;
-    }
 
     // The base type must be the same for all members.  Types that
     // agree in both total size and mode (float vs. vector) are
@@ -3288,14 +3288,34 @@ PPC64_SVR4_ABIInfo::isHomogeneousAggregate(QualType Ty, const Type *&Base,
         getContext().getTypeSize(Base) != getContext().getTypeSize(TyPtr))
       return false;
   }
+  return Members > 0 && isHomogeneousAggregateSmallEnough(Base, Members);
+}
 
+bool PPC64_SVR4_ABIInfo::isHomogeneousAggregateBaseType(QualType Ty) const {
+  // Homogeneous aggregates for ELFv2 must have base types of float,
+  // double, long double, or 128-bit vectors.
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+    if (BT->getKind() == BuiltinType::Float ||
+        BT->getKind() == BuiltinType::Double ||
+        BT->getKind() == BuiltinType::LongDouble)
+      return true;
+  }
+  if (const VectorType *VT = Ty->getAs<VectorType>()) {
+    if (getContext().getTypeSize(VT) == 128)
+      return true;
+  }
+  return false;
+}
+
+bool PPC64_SVR4_ABIInfo::isHomogeneousAggregateSmallEnough(
+    const Type *Base, uint64_t Members) const {
   // Vector types require one register, floating point types require one
   // or two registers depending on their size.
-  uint32_t NumRegs = Base->isVectorType() ? 1 :
-                       (getContext().getTypeSize(Base) + 63) / 64;
+  uint32_t NumRegs =
+      Base->isVectorType() ? 1 : (getContext().getTypeSize(Base) + 63) / 64;
 
   // Homogeneous Aggregates may occupy at most 8 registers.
-  return (Members > 0 && Members * NumRegs <= 8);
+  return Members * NumRegs <= 8;
 }
 
 ABIArgInfo
@@ -3586,6 +3606,10 @@ private:
   ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &AllocatedVFP,
                                   bool &IsHA, unsigned &AllocatedGPR,
                                   bool &IsSmallAggr, bool IsNamedArg) const;
+  bool isHomogeneousAggregateBaseType(QualType Ty) const override;
+  bool isHomogeneousAggregateSmallEnough(const Type *Ty,
+                                         uint64_t Members) const override;
+
   bool isIllegalVectorType(QualType Ty) const;
 
   virtual void computeInfo(CGFunctionInfo &FI) const {
@@ -3681,11 +3705,6 @@ public:
 };
 }
 
-static bool isARMHomogeneousAggregate(QualType Ty, const Type *&Base,
-                                   ASTContext &Context,
-                                   bool isAArch64,
-                                   uint64_t *HAMembers = nullptr);
-
 ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty,
                                                 unsigned &AllocatedVFP,
                                                 bool &IsHA,
@@ -3765,7 +3784,7 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty,
   // Homogeneous Floating-point Aggregates (HFAs) need to be expanded.
   const Type *Base = nullptr;
   uint64_t Members = 0;
-  if (isARMHomogeneousAggregate(Ty, Base, getContext(), true, &Members)) {
+  if (isHomogeneousAggregate(Ty, Base, Members)) {
     IsHA = true;
     if (!IsNamedArg && isDarwinPCS()) {
       // With the Darwin ABI, variadic arguments are always passed on the stack
@@ -3823,7 +3842,8 @@ ABIArgInfo AArch64ABIInfo::classifyReturnType(QualType RetTy) const {
     return ABIArgInfo::getIgnore();
 
   const Type *Base = nullptr;
-  if (isARMHomogeneousAggregate(RetTy, Base, getContext(), true))
+  uint64_t Members = 0;
+  if (isHomogeneousAggregate(RetTy, Base, Members))
     // Homogeneous Floating-point Aggregates (HFAs) are returned directly.
     return ABIArgInfo::getDirect();
 
@@ -3851,9 +3871,35 @@ bool AArch64ABIInfo::isIllegalVectorType(QualType Ty) const {
   return false;
 }
 
-static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
-                                     int AllocatedGPR, int AllocatedVFP,
-                                     bool IsIndirect, CodeGenFunction &CGF) {
+bool AArch64ABIInfo::isHomogeneousAggregateBaseType(QualType Ty) const {
+  // Homogeneous aggregates for AAPCS64 must have base types of a floating
+  // point type or a short-vector type. This is the same as the 32-bit ABI,
+  // but with the difference that any floating-point type is allowed,
+  // including __fp16.
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+    if (BT->isFloatingPoint())
+      return true;
+  } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
+    unsigned VecSize = getContext().getTypeSize(VT);
+    if (VecSize == 64 || VecSize == 128)
+      return true;
+  }
+  return false;
+}
+
+bool AArch64ABIInfo::isHomogeneousAggregateSmallEnough(const Type *Base,
+                                                       uint64_t Members) const {
+  return Members <= 4;
+}
+
+llvm::Value *AArch64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                          CodeGenFunction &CGF) const {
+  unsigned AllocatedGPR = 0, AllocatedVFP = 0;
+  bool IsHA = false, IsSmallAggr = false;
+  ABIArgInfo AI = classifyArgumentType(Ty, AllocatedVFP, IsHA, AllocatedGPR,
+                                       IsSmallAggr, false /*IsNamedArg*/);
+  bool IsIndirect = AI.isIndirect();
+
   // The AArch64 va_list type and handling is specified in the Procedure Call
   // Standard, section B.4:
   //
@@ -3959,8 +4005,8 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   }
 
   const Type *Base = nullptr;
-  uint64_t NumMembers;
-  bool IsHFA = isARMHomogeneousAggregate(Ty, Base, Ctx, true, &NumMembers);
+  uint64_t NumMembers = 0;
+  bool IsHFA = isHomogeneousAggregate(Ty, Base, NumMembers);
   if (IsHFA && NumMembers > 1) {
     // Homogeneous aggregates passed in registers will have their elements split
     // and stored 16-bytes apart regardless of size (they're notionally in qN,
@@ -4079,18 +4125,6 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
-llvm::Value *AArch64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                          CodeGenFunction &CGF) const {
-
-  unsigned AllocatedGPR = 0, AllocatedVFP = 0;
-  bool IsHA = false, IsSmallAggr = false;
-  ABIArgInfo AI = classifyArgumentType(Ty, AllocatedVFP, IsHA, AllocatedGPR,
-                                       IsSmallAggr, false /*IsNamedArg*/);
-
-  return EmitAArch64VAArg(VAListAddr, Ty, AllocatedGPR, AllocatedVFP,
-                          AI.isIndirect(), CGF);
-}
-
 llvm::Value *AArch64ABIInfo::EmitDarwinVAArg(llvm::Value *VAListAddr, QualType Ty,
                                            CodeGenFunction &CGF) const {
   // We do not support va_arg for aggregates or illegal vector types.
@@ -4103,7 +4137,8 @@ llvm::Value *AArch64ABIInfo::EmitDarwinVAArg(llvm::Value *VAListAddr, QualType T
   uint64_t Align = CGF.getContext().getTypeAlign(Ty) / 8;
 
   const Type *Base = nullptr;
-  bool isHA = isARMHomogeneousAggregate(Ty, Base, getContext(), true);
+  uint64_t Members = 0;
+  bool isHA = isHomogeneousAggregate(Ty, Base, Members);
 
   bool isIndirect = false;
   // Arguments bigger than 16 bytes which aren't homogeneous aggregates should
@@ -4209,6 +4244,10 @@ private:
   ABIArgInfo classifyArgumentType(QualType RetTy, bool isVariadic,
                                   bool &IsCPRC) const;
   bool isIllegalVectorType(QualType Ty) const;
+
+  bool isHomogeneousAggregateBaseType(QualType Ty) const override;
+  bool isHomogeneousAggregateSmallEnough(const Type *Ty,
+                                         uint64_t Members) const override;
 
   void computeInfo(CGFunctionInfo &FI) const override;
 
@@ -4389,101 +4428,6 @@ void ARMABIInfo::setRuntimeCC() {
     RuntimeCC = abiCC;
 }
 
-/// isARMHomogeneousAggregate - Return true if a type is an AAPCS-VFP homogeneous
-/// aggregate.  If HAMembers is non-null, the number of base elements
-/// contained in the type is returned through it; this is used for the
-/// recursive calls that check aggregate component types.
-static bool isARMHomogeneousAggregate(QualType Ty, const Type *&Base,
-                                   ASTContext &Context, bool isAArch64,
-                                   uint64_t *HAMembers) {
-  uint64_t Members = 0;
-  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
-    if (!isARMHomogeneousAggregate(AT->getElementType(), Base, Context, isAArch64, &Members))
-      return false;
-    Members *= AT->getSize().getZExtValue();
-  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    const RecordDecl *RD = RT->getDecl();
-    if (RD->hasFlexibleArrayMember())
-      return false;
-
-    Members = 0;
-    for (const auto *FD : RD->fields()) {
-      uint64_t FldMembers;
-      if (!isARMHomogeneousAggregate(FD->getType(), Base, Context, isAArch64, &FldMembers))
-        return false;
-
-      Members = (RD->isUnion() ?
-                 std::max(Members, FldMembers) : Members + FldMembers);
-    }
-  } else {
-    Members = 1;
-    if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
-      Members = 2;
-      Ty = CT->getElementType();
-    }
-
-    // Homogeneous aggregates for AAPCS-VFP must have base types of float,
-    // double, or 64-bit or 128-bit vectors. "long double" has the same machine
-    // type as double, so it is also allowed as a base type.
-    // Homogeneous aggregates for AAPCS64 must have base types of a floating
-    // point type or a short-vector type. This is the same as the 32-bit ABI,
-    // but with the difference that any floating-point type is allowed,
-    // including __fp16.
-    if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
-      if (isAArch64) {
-        if (!BT->isFloatingPoint())
-          return false;
-      } else {
-        if (BT->getKind() != BuiltinType::Float &&
-            BT->getKind() != BuiltinType::Double &&
-            BT->getKind() != BuiltinType::LongDouble)
-          return false;
-      }
-    } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
-      unsigned VecSize = Context.getTypeSize(VT);
-      if (VecSize != 64 && VecSize != 128)
-        return false;
-    } else {
-      return false;
-    }
-
-    // The base type must be the same for all members.  Vector types of the
-    // same total size are treated as being equivalent here.
-    const Type *TyPtr = Ty.getTypePtr();
-    if (!Base)
-      Base = TyPtr;
-
-    if (Base != TyPtr) {
-      // Homogeneous aggregates are defined as containing members with the
-      // same machine type. There are two cases in which two members have
-      // different TypePtrs but the same machine type:
-
-      // 1) Vectors of the same length, regardless of the type and number
-      //    of their members.
-      const bool SameLengthVectors = Base->isVectorType() && TyPtr->isVectorType()
-        && (Context.getTypeSize(Base) == Context.getTypeSize(TyPtr));
-
-      // 2) In the 32-bit AAPCS, `double' and `long double' have the same
-      //    machine type. This is not the case for the 64-bit AAPCS.
-      const bool SameSizeDoubles =
-           (   (   Base->isSpecificBuiltinType(BuiltinType::Double)
-                && TyPtr->isSpecificBuiltinType(BuiltinType::LongDouble))
-            || (   Base->isSpecificBuiltinType(BuiltinType::LongDouble)
-                && TyPtr->isSpecificBuiltinType(BuiltinType::Double)))
-        && (Context.getTypeSize(Base) == Context.getTypeSize(TyPtr));
-
-      if (!SameLengthVectors && !SameSizeDoubles)
-        return false;
-    }
-  }
-
-  // Homogeneous Aggregates can have at most 4 members of the base type.
-  if (HAMembers)
-    *HAMembers = Members;
-
-  return (Members > 0 && Members <= 4);
-}
-
 /// markAllocatedVFPs - update VFPRegs according to the alignment and
 /// number of VFP registers (unit is S register) requested.
 void ARMABIInfo::markAllocatedVFPs(unsigned Alignment,
@@ -4640,7 +4584,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
     // into VFP registers.
     const Type *Base = nullptr;
     uint64_t Members = 0;
-    if (isARMHomogeneousAggregate(Ty, Base, getContext(), false, &Members)) {
+    if (isHomogeneousAggregate(Ty, Base, Members)) {
       assert(Base && "Base class should be set for homogeneous aggregate");
       // Base can be a floating-point or a vector.
       if (Base->isVectorType()) {
@@ -4845,7 +4789,8 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
   // Check for homogeneous aggregates with AAPCS-VFP.
   if (getABIKind() == AAPCS_VFP && !isVariadic) {
     const Type *Base = nullptr;
-    if (isARMHomogeneousAggregate(RetTy, Base, getContext(), false)) {
+    uint64_t Members;
+    if (isHomogeneousAggregate(RetTy, Base, Members)) {
       assert(Base && "Base class should be set for homogeneous aggregate");
       // Homogeneous Aggregates are returned directly.
       return ABIArgInfo::getDirect(nullptr, 0, nullptr, !isAAPCS_VFP);
@@ -4889,6 +4834,27 @@ bool ARMABIInfo::isIllegalVectorType(QualType Ty) const {
     return Size <= 32;
   }
   return false;
+}
+
+bool ARMABIInfo::isHomogeneousAggregateBaseType(QualType Ty) const {
+  // Homogeneous aggregates for AAPCS-VFP must have base types of float,
+  // double, or 64-bit or 128-bit vectors.
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+    if (BT->getKind() == BuiltinType::Float ||
+        BT->getKind() == BuiltinType::Double ||
+        BT->getKind() == BuiltinType::LongDouble)
+      return true;
+  } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
+    unsigned VecSize = getContext().getTypeSize(VT);
+    if (VecSize == 64 || VecSize == 128)
+      return true;
+  }
+  return false;
+}
+
+bool ARMABIInfo::isHomogeneousAggregateSmallEnough(const Type *Base,
+                                                   uint64_t Members) const {
+  return Members <= 4;
 }
 
 llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,

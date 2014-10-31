@@ -549,10 +549,13 @@ struct ConstantArrayExpansion : TypeExpansion {
 };
 
 struct RecordExpansion : TypeExpansion {
+  SmallVector<const CXXBaseSpecifier *, 1> Bases;
+
   SmallVector<const FieldDecl *, 1> Fields;
 
-  RecordExpansion(SmallVector<const FieldDecl *, 1> &&Fields)
-      : TypeExpansion(TEK_Record), Fields(Fields) {}
+  RecordExpansion(SmallVector<const CXXBaseSpecifier *, 1> &&Bases,
+                  SmallVector<const FieldDecl *, 1> &&Fields)
+      : TypeExpansion(TEK_Record), Bases(Bases), Fields(Fields) {}
   static bool classof(const TypeExpansion *TE) {
     return TE->Kind == TEK_Record;
   }
@@ -582,6 +585,7 @@ getTypeExpansion(QualType Ty, const ASTContext &Context) {
         AT->getElementType(), AT->getSize().getZExtValue());
   }
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    SmallVector<const CXXBaseSpecifier *, 1> Bases;
     SmallVector<const FieldDecl *, 1> Fields;
     const RecordDecl *RD = RT->getDecl();
     assert(!RD->hasFlexibleArrayMember() &&
@@ -604,13 +608,21 @@ getTypeExpansion(QualType Ty, const ASTContext &Context) {
       if (LargestFD)
         Fields.push_back(LargestFD);
     } else {
+      if (const auto *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+        assert(!CXXRD->isDynamicClass() &&
+               "cannot expand vtable pointers in dynamic classes");
+        for (const CXXBaseSpecifier &BS : CXXRD->bases())
+          Bases.push_back(&BS);
+      }
+
       for (const auto *FD : RD->fields()) {
         assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
         Fields.push_back(FD);
       }
     }
-    return llvm::make_unique<RecordExpansion>(std::move(Fields));
+    return llvm::make_unique<RecordExpansion>(std::move(Bases),
+                                              std::move(Fields));
   }
   if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
     return llvm::make_unique<ComplexExpansion>(CT->getElementType());
@@ -625,6 +637,8 @@ static int getExpansionSize(QualType Ty, const ASTContext &Context) {
   }
   if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
     int Res = 0;
+    for (auto BS : RExp->Bases)
+      Res += getExpansionSize(BS->getType(), Context);
     for (auto FD : RExp->Fields)
       Res += getExpansionSize(FD->getType(), Context);
     return Res;
@@ -644,9 +658,10 @@ CodeGenTypes::getExpandedTypes(QualType Ty,
       getExpandedTypes(CAExp->EltTy, TI);
     }
   } else if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
-    for (auto FD : RExp->Fields) {
+    for (auto BS : RExp->Bases)
+      getExpandedTypes(BS->getType(), TI);
+    for (auto FD : RExp->Fields)
       getExpandedTypes(FD->getType(), TI);
-    }
   } else if (auto CExp = dyn_cast<ComplexExpansion>(Exp.get())) {
     llvm::Type *EltTy = ConvertType(CExp->EltTy);
     *TI++ = EltTy;
@@ -670,6 +685,17 @@ void CodeGenFunction::ExpandTypeFromArgs(
       ExpandTypeFromArgs(CAExp->EltTy, LV, AI);
     }
   } else if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
+    llvm::Value *This = LV.getAddress();
+    for (const CXXBaseSpecifier *BS : RExp->Bases) {
+      // Perform a single step derived-to-base conversion.
+      llvm::Value *Base =
+          GetAddressOfBaseClass(This, Ty->getAsCXXRecordDecl(), &BS, &BS + 1,
+                                /*NullCheckValue=*/false, SourceLocation());
+      LValue SubLV = MakeAddrLValue(Base, BS->getType());
+
+      // Recurse onto bases.
+      ExpandTypeFromArgs(BS->getType(), SubLV, AI);
+    }
     for (auto FD : RExp->Fields) {
       // FIXME: What are the right qualifiers here?
       LValue SubLV = EmitLValueForField(LV, FD);
@@ -701,7 +727,20 @@ void CodeGenFunction::ExpandTypeToArgs(
       ExpandTypeToArgs(CAExp->EltTy, EltRV, IRFuncTy, IRCallArgs, IRCallArgPos);
     }
   } else if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
-    LValue LV = MakeAddrLValue(RV.getAggregateAddr(), Ty);
+    llvm::Value *This = RV.getAggregateAddr();
+    for (const CXXBaseSpecifier *BS : RExp->Bases) {
+      // Perform a single step derived-to-base conversion.
+      llvm::Value *Base =
+          GetAddressOfBaseClass(This, Ty->getAsCXXRecordDecl(), &BS, &BS + 1,
+                                /*NullCheckValue=*/false, SourceLocation());
+      RValue BaseRV = RValue::getAggregate(Base);
+
+      // Recurse onto bases.
+      ExpandTypeToArgs(BS->getType(), BaseRV, IRFuncTy, IRCallArgs,
+                       IRCallArgPos);
+    }
+
+    LValue LV = MakeAddrLValue(This, Ty);
     for (auto FD : RExp->Fields) {
       RValue FldRV = EmitRValueForField(LV, FD, SourceLocation());
       ExpandTypeToArgs(FD->getType(), FldRV, IRFuncTy, IRCallArgs,

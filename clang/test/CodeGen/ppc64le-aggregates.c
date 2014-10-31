@@ -1,4 +1,3 @@
-// REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -faltivec -triple powerpc64le-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
 // Test homogeneous float aggregate passing and returning.
@@ -15,6 +14,8 @@ struct f9 { float f[9]; };
 
 struct fab { float a; float b; };
 struct fabc { float a; float b; float c; };
+
+struct f2a2b { float a[2]; float b[2]; };
 
 // CHECK: define [1 x float] @func_f1(float inreg %x.coerce)
 struct f1 func_f1(struct f1 x) { return x; }
@@ -48,6 +49,9 @@ struct fab func_fab(struct fab x) { return x; }
 
 // CHECK: define [3 x float] @func_fabc([3 x float] %x.coerce)
 struct fabc func_fabc(struct fabc x) { return x; }
+
+// CHECK: define [4 x float] @func_f2a2b([4 x float] %x.coerce)
+struct f2a2b func_f2a2b(struct f2a2b x) { return x; }
 
 // CHECK-LABEL: @call_f1
 // CHECK: %[[TMP:[^ ]+]] = load float* getelementptr inbounds (%struct.f1* @global_f1, i32 0, i32 0, i32 0), align 1
