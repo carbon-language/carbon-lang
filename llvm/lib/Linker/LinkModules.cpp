@@ -690,9 +690,6 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
   bool SrcIsDeclaration = Src.isDeclarationForLinker();
   bool DestIsDeclaration = Dest.isDeclarationForLinker();
 
-  // FIXME: Make datalayout mandatory and just use getDataLayout().
-  DataLayout DL(Dest.getParent());
-
   if (SrcIsDeclaration) {
     // If Src is external or if both Src & Dest are external..  Just link the
     // external globals, we aren't adding anything.
@@ -722,6 +719,9 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
       LinkFromSrc = false;
       return false;
     }
+
+    // FIXME: Make datalayout mandatory and just use getDataLayout().
+    DataLayout DL(Dest.getParent());
 
     uint64_t DestSize = DL.getTypeAllocSize(Dest.getType()->getElementType());
     uint64_t SrcSize = DL.getTypeAllocSize(Src.getType()->getElementType());
