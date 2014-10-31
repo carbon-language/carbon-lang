@@ -62,6 +62,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -115,6 +116,7 @@ void initializeAArch64ConditionOptimizerPass(PassRegistry &);
 INITIALIZE_PASS_BEGIN(AArch64ConditionOptimizer, "aarch64-condopt",
                       "AArch64 CondOpt Pass", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_END(AArch64ConditionOptimizer, "aarch64-condopt",
                     "AArch64 CondOpt Pass", false, false)
 
@@ -125,6 +127,8 @@ FunctionPass *llvm::createAArch64ConditionOptimizerPass() {
 void AArch64ConditionOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineDominatorTree>();
   AU.addPreserved<MachineDominatorTree>();
+  AU.addRequired<LiveIntervals>();
+  AU.addPreserved<LiveIntervals>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -134,13 +138,11 @@ void AArch64ConditionOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
 MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
     MachineBasicBlock *MBB) {
   MachineBasicBlock::iterator I = MBB->getFirstTerminator();
-  if (I == MBB->end()) {
+  if (I == MBB->end())
     return nullptr;
-  }
 
-  if (I->getOpcode() != AArch64::Bcc) {
-      return nullptr;
-  }
+  if (I->getOpcode() != AArch64::Bcc)
+    return nullptr;
 
   // Now find the instruction controlling the terminator.
   for (MachineBasicBlock::iterator B = MBB->begin(); I != B;) {
@@ -153,7 +155,11 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
     // cmn is an alias for adds with a dead destination register.
     case AArch64::ADDSWri:
     case AArch64::ADDSXri:
-      return I;
+      if (I->getOperand(0).isDead())
+        return I;
+
+      DEBUG(dbgs() << "Destination of cmp is not dead, " << *I << '\n');
+      return nullptr;
 
     // Prevent false positive case like:
     // cmp      w19, #0
