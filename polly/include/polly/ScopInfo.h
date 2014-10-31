@@ -621,6 +621,9 @@ private:
   /// Isl context.
   isl_ctx *IslCtx;
 
+  /// @brief A map from basic blocks to SCoP statements.
+  DenseMap<BasicBlock *, ScopStmt *> StmtMap;
+
   /// Constraints on parameters.
   isl_set *Context;
 
@@ -799,6 +802,9 @@ public:
 
   /// @brief Get an isl string representing the assumed context.
   std::string getAssumedContextStr() const;
+
+  /// @brief Return the stmt for the given @p BB or nullptr if none.
+  ScopStmt *getStmtForBasicBlock(BasicBlock *BB) const;
 
   /// @name Statements Iterators
   ///

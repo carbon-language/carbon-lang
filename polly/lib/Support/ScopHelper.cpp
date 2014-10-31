@@ -88,11 +88,8 @@ BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
 
 static void replaceScopAndRegionEntry(polly::Scop *S, BasicBlock *OldEntry,
                                       BasicBlock *NewEntry) {
-  for (polly::ScopStmt *Stmt : *S)
-    if (Stmt->getBasicBlock() == OldEntry) {
-      Stmt->setBasicBlock(NewEntry);
-      break;
-    }
+  if (polly::ScopStmt *Stmt = S->getStmtForBasicBlock(OldEntry))
+    Stmt->setBasicBlock(NewEntry);
 
   S->getRegion().replaceEntryRecursive(NewEntry);
 }

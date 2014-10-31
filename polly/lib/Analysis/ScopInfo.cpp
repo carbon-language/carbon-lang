@@ -1722,8 +1722,12 @@ void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
       if (isTrivialBB(BB, tempScop))
         continue;
 
-      Stmts.push_back(
-          new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, Scatter));
+      ScopStmt *Stmt =
+          new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, Scatter);
+
+      // Insert all statements into the statement map and the statement vector.
+      StmtMap[BB] = Stmt;
+      Stmts.push_back(Stmt);
 
       // Increasing the Scattering function is OK for the moment, because
       // we are using a depth first iterator and the program is well structured.
@@ -1737,6 +1741,13 @@ void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
   Scatter[loopDepth] = 0;
   NestLoops.pop_back();
   ++Scatter[loopDepth - 1];
+}
+
+ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
+  const auto &StmtMapIt = StmtMap.find(BB);
+  if (StmtMapIt == StmtMap.end())
+    return nullptr;
+  return StmtMapIt->second;
 }
 
 //===----------------------------------------------------------------------===//
