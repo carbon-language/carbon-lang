@@ -23,12 +23,12 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/CBindingWrapping.h"
 
 namespace llvm {
-  class MDNode;
 
 /// \brief This provides the default implementation of the IRBuilder
 /// 'InsertHelper' method that is called whenever an instruction is created by

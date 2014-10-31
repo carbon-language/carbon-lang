@@ -176,9 +176,9 @@ public:
 
   /// setMetadata - Set the metadata of the specified kind to the specified
   /// node.  This updates/replaces metadata if already present, or removes it if
-  /// Node is null.
-  void setMetadata(unsigned KindID, MDNode *Node);
-  void setMetadata(StringRef Kind, MDNode *Node);
+  /// MD is null.
+  void setMetadata(unsigned KindID, Value *MD);
+  void setMetadata(StringRef Kind, Value *MD);
 
   /// \brief Drop unknown metadata.
   /// Passes are required to drop metadata they don't understand. This is a

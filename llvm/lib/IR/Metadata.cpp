@@ -600,9 +600,9 @@ StringRef NamedMDNode::getName() const {
 // Instruction Metadata method implementations.
 //
 
-void Instruction::setMetadata(StringRef Kind, MDNode *Node) {
-  if (!Node && !hasMetadata()) return;
-  setMetadata(getContext().getMDKindID(Kind), Node);
+void Instruction::setMetadata(StringRef Kind, Value *MD) {
+  if (!MD && !hasMetadata()) return;
+  setMetadata(getContext().getMDKindID(Kind), MD);
 }
 
 MDNode *Instruction::getMetadataImpl(StringRef Kind) const {
@@ -655,9 +655,12 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
 
 /// setMetadata - Set the metadata of of the specified kind to the specified
 /// node.  This updates/replaces metadata if already present, or removes it if
-/// Node is null.
-void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
-  if (!Node && !hasMetadata()) return;
+/// MD is null.
+void Instruction::setMetadata(unsigned KindID, Value *MD) {
+  if (!MD && !hasMetadata()) return;
+
+  // For now, we only expect MDNodes here.
+  MDNode *Node = cast<MDNode>(MD);
 
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg) {
