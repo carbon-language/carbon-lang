@@ -390,21 +390,24 @@ ClassDescriptorV2::Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)>
     
     if (ivar_func)
     {
-        ivar_list_t ivar_list;
-        if (!ivar_list.Read(process, class_ro->m_ivars_ptr))
-            return false;
-        
-        if (ivar_list.m_entsize != ivar_t::GetSize(process))
-            return false;
-        
-        ivar_t ivar;
-        
-        for (uint32_t i = 0, e = ivar_list.m_count; i < e; ++i)
-        {
-            ivar.Read(process, ivar_list.m_first_ptr + (i * ivar_list.m_entsize));
+        if (class_ro->m_ivars_ptr != 0)
+        {            
+            ivar_list_t ivar_list;
+            if (!ivar_list.Read(process, class_ro->m_ivars_ptr))
+                return false;
             
-            if (ivar_func(ivar.m_name.c_str(), ivar.m_type.c_str(), ivar.m_offset_ptr, ivar.m_size))
-                break;
+            if (ivar_list.m_entsize != ivar_t::GetSize(process))
+                return false;
+            
+            ivar_t ivar;
+            
+            for (uint32_t i = 0, e = ivar_list.m_count; i < e; ++i)
+            {
+                ivar.Read(process, ivar_list.m_first_ptr + (i * ivar_list.m_entsize));
+                
+                if (ivar_func(ivar.m_name.c_str(), ivar.m_type.c_str(), ivar.m_offset_ptr, ivar.m_size))
+                    break;
+            }
         }
     }
     
@@ -524,9 +527,9 @@ ClassDescriptorV2::iVarsStorage::fill (AppleObjCRuntimeV2& runtime, ClassDescrip
                         nullptr,
                         nullptr,
                         [this,process,encoding_to_type_sp](const char * name, const char * type, lldb::addr_t offset_ptr, uint64_t size) -> bool {
-                 const bool allow_unknownanytype = false;
+                 const bool for_expression = false;
                  const bool stop_loop = false;
-                 ClangASTType ivar_type = encoding_to_type_sp->RealizeType(type, allow_unknownanytype);
+                 ClangASTType ivar_type = encoding_to_type_sp->RealizeType(type, for_expression);
                  if (ivar_type)
                  {
                      Scalar offset_scalar;
