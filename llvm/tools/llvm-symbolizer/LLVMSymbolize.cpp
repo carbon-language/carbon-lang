@@ -326,7 +326,7 @@ ObjectFile *LLVMSymbolizer::lookUpDsymFile(const std::string &ExePath,
     if (EC != errc::no_such_file_or_directory && !error(EC)) {
       OwningBinary<Binary> B = std::move(BinaryOrErr.get());
       ObjectFile *DbgObj =
-          getObjectFileFromBinary(B.getBinary().get(), ArchName);
+          getObjectFileFromBinary(B.getBinary(), ArchName);
       const MachOObjectFile *MachDbgObj =
           dyn_cast<const MachOObjectFile>(DbgObj);
       if (!MachDbgObj) continue;
@@ -350,7 +350,7 @@ LLVMSymbolizer::getOrCreateObjects(const std::string &Path,
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(Path);
   if (!error(BinaryOrErr.getError())) {
     OwningBinary<Binary> &B = BinaryOrErr.get();
-    Obj = getObjectFileFromBinary(B.getBinary().get(), ArchName);
+    Obj = getObjectFileFromBinary(B.getBinary(), ArchName);
     if (!Obj) {
       ObjectPair Res = std::make_pair(nullptr, nullptr);
       ObjectPairForPathArch[std::make_pair(Path, ArchName)] = Res;
@@ -369,7 +369,7 @@ LLVMSymbolizer::getOrCreateObjects(const std::string &Path,
         BinaryOrErr = createBinary(DebugBinaryPath);
         if (!error(BinaryOrErr.getError())) {
           OwningBinary<Binary> B = std::move(BinaryOrErr.get());
-          DbgObj = getObjectFileFromBinary(B.getBinary().get(), ArchName);
+          DbgObj = getObjectFileFromBinary(B.getBinary(), ArchName);
           addOwningBinary(std::move(B));
         }
       }

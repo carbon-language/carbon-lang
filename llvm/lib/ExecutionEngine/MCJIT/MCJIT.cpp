@@ -109,8 +109,11 @@ void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
 }
 
 void MCJIT::addObjectFile(object::OwningBinary<object::ObjectFile> Obj) {
-  addObjectFile(std::move(Obj.getBinary()));
-  Buffers.push_back(std::move(Obj.getBuffer()));
+  std::unique_ptr<object::ObjectFile> ObjFile;
+  std::unique_ptr<MemoryBuffer> MemBuf;
+  std::tie(ObjFile, MemBuf) = Obj.takeBinary();
+  addObjectFile(std::move(ObjFile));
+  Buffers.push_back(std::move(MemBuf));
 }
 
 void MCJIT::addArchive(object::OwningBinary<object::Archive> A) {
@@ -290,7 +293,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
     return Addr;
 
   for (object::OwningBinary<object::Archive> &OB : Archives) {
-    object::Archive *A = OB.getBinary().get();
+    object::Archive *A = OB.getBinary();
     // Look for our symbols in each Archive
     object::Archive::child_iterator ChildIt = A->findSym(Name);
     if (ChildIt != A->child_end()) {

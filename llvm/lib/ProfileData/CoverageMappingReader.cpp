@@ -485,7 +485,7 @@ ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
 }
 
 std::error_code ObjectFileCoverageMappingReader::readHeader() {
-  ObjectFile *OF = Object.getBinary().get();
+  const ObjectFile *OF = Object.getBinary();
   if (!OF)
     return getError();
   auto BytesInAddress = OF->getBytesInAddress();

@@ -81,9 +81,12 @@ private:
   // Owns all the parsed binaries and object files.
   SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;
   SmallVector<std::unique_ptr<MemoryBuffer>, 4> MemoryBuffers;
-  void addOwningBinary(OwningBinary<Binary> Bin) {
-    ParsedBinariesAndObjects.push_back(std::move(Bin.getBinary()));
-    MemoryBuffers.push_back(std::move(Bin.getBuffer()));
+  void addOwningBinary(OwningBinary<Binary> OwningBin) {
+    std::unique_ptr<Binary> Bin;
+    std::unique_ptr<MemoryBuffer> MemBuf;
+    std::tie(Bin, MemBuf) = OwningBin.takeBinary();
+    ParsedBinariesAndObjects.push_back(std::move(Bin));
+    MemoryBuffers.push_back(std::move(MemBuf));
   }
 
   // Owns module info objects.
