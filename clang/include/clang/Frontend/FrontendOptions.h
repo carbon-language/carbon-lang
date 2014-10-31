@@ -184,12 +184,15 @@ public:
     ObjCMT_NsAtomicIOSOnlyProperty = 0x400,
     /// \brief Enable inferring NS_DESIGNATED_INITIALIZER for ObjC methods.
     ObjCMT_DesignatedInitializer = 0x800,
+    /// \brief Enable converting setter/getter expressions to property-dot syntx.
+    ObjCMT_PropertyDotSyntax = 0x1000,
     ObjCMT_MigrateDecls = (ObjCMT_ReadonlyProperty | ObjCMT_ReadwriteProperty |
                            ObjCMT_Annotation | ObjCMT_Instancetype |
                            ObjCMT_NsMacros | ObjCMT_ProtocolConformance |
                            ObjCMT_NsAtomicIOSOnlyProperty |
                            ObjCMT_DesignatedInitializer),
-    ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting | ObjCMT_MigrateDecls)
+    ObjCMT_MigrateAll = (ObjCMT_Literals | ObjCMT_Subscripting |
+                         ObjCMT_MigrateDecls | ObjCMT_PropertyDotSyntax)
   };
   unsigned ObjCMTAction;
   std::string ObjCMTWhiteListPath;

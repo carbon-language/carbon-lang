@@ -886,6 +886,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_Literals;
   if (Args.hasArg(OPT_objcmt_migrate_subscripting))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_Subscripting;
+  if (Args.hasArg(OPT_objcmt_migrate_property_dot_syntax))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_PropertyDotSyntax;
   if (Args.hasArg(OPT_objcmt_migrate_property))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_Property;
   if (Args.hasArg(OPT_objcmt_migrate_readonly_property))

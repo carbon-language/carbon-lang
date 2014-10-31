@@ -181,6 +181,8 @@ def objcmt_migrate_readonly_property : Flag<["-"], "objcmt-migrate-readonly-prop
   HelpText<"Enable migration to modern ObjC readonly property">;
 def objcmt_migrate_readwrite_property : Flag<["-"], "objcmt-migrate-readwrite-property">, Flags<[CC1Option]>,
   HelpText<"Enable migration to modern ObjC readwrite property">;
+def objcmt_migrate_property_dot_syntax : Flag<["-"], "objcmt-migrate-property-dot-syntax">, Flags<[CC1Option]>,
+  HelpText<"Enable migration of setter/getter messages to property-dot syntax">;
 def objcmt_migrate_annotation : Flag<["-"], "objcmt-migrate-annotation">, Flags<[CC1Option]>,
   HelpText<"Enable migration to property and method annotations">;
 def objcmt_migrate_instancetype : Flag<["-"], "objcmt-migrate-instancetype">, Flags<[CC1Option]>,
