@@ -25,6 +25,13 @@
 // Can use the module if -I flags change.
 // RUN: %clang_cc1 -fmodules -DBAR=2 -I. -x c++ -fmodule-map-file=%t/map -fmodule-file=%t/tmp.pcm -verify -I%t %s
 
+// Can use the module if -O flags change.
+// RUN: %clang_cc1 -fmodules -DBAR=2 -Os -x c++ -fmodule-map-file=%t/map -fmodule-file=%t/tmp.pcm -verify -I%t %s
+//
+// RUN: %clang_cc1 -fmodules -DFOO=1 -O2 -x c++ -fmodule-name=tmp %t/map -emit-module -o %t/tmp-O2.pcm
+// RUN: %clang_cc1 -fmodules -DBAR=2 -O0 -x c++ -fmodule-map-file=%t/map -fmodule-file=%t/tmp-O2.pcm -verify -I%t %s
+// RUN: %clang_cc1 -fmodules -DBAR=2 -Os -x c++ -fmodule-map-file=%t/map -fmodule-file=%t/tmp-O2.pcm -verify -I%t %s
+
 #include "tmp.h" // expected-no-diagnostics
 
 #ifndef BAR

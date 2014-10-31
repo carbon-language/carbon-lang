@@ -115,7 +115,8 @@ public:
   ///
   /// \returns true to indicate the options are invalid or false otherwise.
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts,
-                                   bool Complain) {
+                                   bool Complain,
+                                   bool AllowCompatibleDifferences) {
     return false;
   }
 
@@ -219,7 +220,8 @@ public:
   bool ReadFullVersionInformation(StringRef FullVersion) override;
   void ReadModuleName(StringRef ModuleName) override;
   void ReadModuleMapFile(StringRef ModuleMapPath) override;
-  bool ReadLanguageOptions(const LangOptions &LangOpts, bool Complain) override;
+  bool ReadLanguageOptions(const LangOptions &LangOpts, bool Complain,
+                           bool AllowCompatibleDifferences) override;
   bool ReadTargetOptions(const TargetOptions &TargetOpts,
                          bool Complain) override;
   bool ReadDiagnosticOptions(IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts,
@@ -251,8 +253,8 @@ public:
   PCHValidator(Preprocessor &PP, ASTReader &Reader)
     : PP(PP), Reader(Reader) {}
 
-  bool ReadLanguageOptions(const LangOptions &LangOpts,
-                           bool Complain) override;
+  bool ReadLanguageOptions(const LangOptions &LangOpts, bool Complain,
+                           bool AllowCompatibleDifferences) override;
   bool ReadTargetOptions(const TargetOptions &TargetOpts,
                          bool Complain) override;
   bool ReadDiagnosticOptions(IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts,
@@ -1149,7 +1151,8 @@ private:
   ASTReadResult ReadSubmoduleBlock(ModuleFile &F,
                                    unsigned ClientLoadCapabilities);
   static bool ParseLanguageOptions(const RecordData &Record, bool Complain,
-                                   ASTReaderListener &Listener);
+                                   ASTReaderListener &Listener,
+                                   bool AllowCompatibleDifferences);
   static bool ParseTargetOptions(const RecordData &Record, bool Complain,
                                  ASTReaderListener &Listener);
   static bool ParseDiagnosticOptions(const RecordData &Record, bool Complain,

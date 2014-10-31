@@ -508,8 +508,8 @@ public:
       : PP(PP), Context(Context), LangOpt(LangOpt), TargetOpts(TargetOpts),
         Target(Target), Counter(Counter), InitializedLanguage(false) {}
 
-  bool ReadLanguageOptions(const LangOptions &LangOpts,
-                           bool Complain) override {
+  bool ReadLanguageOptions(const LangOptions &LangOpts, bool Complain,
+                           bool AllowCompatibleDifferences) override {
     if (InitializedLanguage)
       return false;
     

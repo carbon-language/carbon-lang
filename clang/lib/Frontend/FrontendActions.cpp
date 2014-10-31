@@ -431,8 +431,8 @@ namespace {
       Out.indent(2) << "Module map file: " << ModuleMapPath << "\n";
     }
 
-    bool ReadLanguageOptions(const LangOptions &LangOpts,
-                             bool Complain) override {
+    bool ReadLanguageOptions(const LangOptions &LangOpts, bool Complain,
+                             bool AllowCompatibleDifferences) override {
       Out.indent(2) << "Language options:\n";
 #define LANGOPT(Name, Bits, Default, Description) \
       DUMP_BOOLEAN(LangOpts.Name, Description);
