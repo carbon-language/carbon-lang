@@ -347,3 +347,67 @@ return:                                           ; preds = %if.end, %land.lhs.t
   %retval.0 = phi i32 [ 0, %if.end ], [ 123, %land.lhs.true ]
   ret i32 %retval.0
 }
+
+; Test in the following case, we don't hit 'cmp' and trigger a false positive
+; cmp  w19, #0
+; cinc w0, w19, gt
+; ...
+; fcmp d8, #0.0
+; b.gt .LBB0_5
+
+define i32 @fcmpri(i32 %argc, i8** nocapture readonly %argv) {
+
+; CHECK-LABEL: fcmpri:
+; CHECK: cmp w0, #2
+; CHECK: b.lt .LBB9_3
+; CHECK-NOT: cmp w0, #1
+; CHECK-NOT: b.le .LBB9_3
+
+; CHECK-LABEL-DAG: .LBB9_3
+; CHECK: cmp w19, #0
+; CHECK: fcmp d8, #0.0
+; CHECK: b.gt .LBB9_5
+; CHECK-NOT: cmp w19, #1
+; CHECK-NOT: b.ge .LBB9_5
+
+entry:
+  %cmp = icmp sgt i32 %argc, 1
+  br i1 %cmp, label %land.lhs.true, label %if.end
+
+land.lhs.true:                                    ; preds = %entry
+  %arrayidx = getelementptr inbounds i8** %argv, i64 1
+  %0 = load i8** %arrayidx, align 8
+  %cmp1 = icmp eq i8* %0, null
+  br i1 %cmp1, label %if.end, label %return
+
+if.end:                                           ; preds = %land.lhs.true, %entry
+  %call = call i32 @zoo(i32 1)
+  %call2 = call double @yoo(i32 -1)
+  %cmp4 = icmp sgt i32 %call, 0
+  %add = zext i1 %cmp4 to i32
+  %cond = add nsw i32 %add, %call
+  %call7 = call i32 @xoo(i32 %cond, i32 2)
+  %cmp9 = fcmp ogt double %call2, 0.000000e+00
+  br i1 %cmp9, label %cond.end14, label %cond.false12
+
+cond.false12:                                     ; preds = %if.end
+  %sub = fadd fast double %call2, -1.000000e+00
+  br label %cond.end14
+
+cond.end14:                                       ; preds = %if.end, %cond.false12
+  %cond15 = phi double [ %sub, %cond.false12 ], [ %call2, %if.end ]
+  %call16 = call i32 @woo(double %cond15, double -2.000000e+00)
+  br label %return
+
+return:                                           ; preds = %land.lhs.true, %cond.end14
+  %retval.0 = phi i32 [ 4, %cond.end14 ], [ 3, %land.lhs.true ]
+  ret i32 %retval.0
+}
+
+declare i32 @zoo(i32)
+
+declare double @yoo(i32)
+
+declare i32 @xoo(i32, i32)
+
+declare i32 @woo(double, double)

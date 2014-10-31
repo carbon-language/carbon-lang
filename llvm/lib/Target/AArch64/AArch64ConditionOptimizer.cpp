@@ -155,6 +155,17 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
     case AArch64::ADDSXri:
       return I;
 
+    // Prevent false positive case like:
+    // cmp      w19, #0
+    // cinc     w0, w19, gt
+    // ...
+    // fcmp     d8, #0.0
+    // b.gt     .LBB0_5
+    case AArch64::FCMPDri:
+    case AArch64::FCMPSri:
+    case AArch64::FCMPESri:
+    case AArch64::FCMPEDri:
+
     case AArch64::SUBSWrr:
     case AArch64::SUBSXrr:
     case AArch64::ADDSWrr:
