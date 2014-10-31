@@ -1739,7 +1739,7 @@ ClangASTContext::CreateFunctionDeclaration (DeclContext *decl_ctx,
                                           DeclarationName (&ast->Idents.get(name)),
                                           function_clang_type.GetQualType(),
                                           nullptr,
-                                          (FunctionDecl::StorageClass)storage,
+                                          (clang::StorageClass)storage,
                                           is_inline,
                                           hasWrittenPrototype,
                                           isConstexprSpecified);
@@ -1753,7 +1753,7 @@ ClangASTContext::CreateFunctionDeclaration (DeclContext *decl_ctx,
                                           DeclarationName (),
                                           function_clang_type.GetQualType(),
                                           nullptr,
-                                          (FunctionDecl::StorageClass)storage,
+                                          (clang::StorageClass)storage,
                                           is_inline,
                                           hasWrittenPrototype,
                                           isConstexprSpecified);
@@ -1805,7 +1805,7 @@ ClangASTContext::CreateParameterDeclaration (const char *name, const ClangASTTyp
                                 name && name[0] ? &ast->Idents.get(name) : nullptr,
                                 param_type.GetQualType(),
                                 nullptr,
-                                (VarDecl::StorageClass)storage,
+                                (clang::StorageClass)storage,
                                 nullptr);
 }
 
