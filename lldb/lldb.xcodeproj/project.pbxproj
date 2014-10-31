@@ -751,6 +751,21 @@
 		AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37E10917C861F20061E18E /* ProcessRunLock.cpp */; };
 		AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */; };
 		AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */; };
+		AF77E08F1A033C700096C0EA /* ABISysV_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E08D1A033C700096C0EA /* ABISysV_ppc.cpp */; };
+		AF77E0901A033C700096C0EA /* ABISysV_ppc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E08E1A033C700096C0EA /* ABISysV_ppc.h */; };
+		AF77E0931A033C7F0096C0EA /* ABISysV_ppc64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0911A033C7F0096C0EA /* ABISysV_ppc64.cpp */; };
+		AF77E0941A033C7F0096C0EA /* ABISysV_ppc64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0921A033C7F0096C0EA /* ABISysV_ppc64.h */; };
+		AF77E0971A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0951A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */; };
+		AF77E0981A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0961A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h */; };
+		AF77E0A01A033D360096C0EA /* RegisterContext_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0991A033D360096C0EA /* RegisterContext_powerpc.h */; };
+		AF77E0A11A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E09A1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp */; };
+		AF77E0A21A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E09B1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h */; };
+		AF77E0A31A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E09C1A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp */; };
+		AF77E0A41A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E09D1A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp */; };
+		AF77E0A51A033D360096C0EA /* RegisterContextPOSIX_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E09E1A033D360096C0EA /* RegisterContextPOSIX_powerpc.h */; };
+		AF77E0A61A033D360096C0EA /* RegisterInfos_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E09F1A033D360096C0EA /* RegisterInfos_powerpc.h */; };
+		AF77E0A91A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0A71A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.cpp */; };
+		AF77E0AA1A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0A81A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h */; };
 		AF81DEFA1828A23F0042CF19 /* SystemRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF81DEF91828A23F0042CF19 /* SystemRuntime.cpp */; };
 		AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF90106315AB7C5700FF120D /* lldb.1 */; };
 		AF9107EE168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */; };
@@ -2187,6 +2202,21 @@
 		AF68D2551255416E002FF25B /* RegisterContextLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextLLDB.h; path = Utility/RegisterContextLLDB.h; sourceTree = "<group>"; };
 		AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindLLDB.cpp; path = Utility/UnwindLLDB.cpp; sourceTree = "<group>"; };
 		AF68D3301255A110002FF25B /* UnwindLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindLLDB.h; path = Utility/UnwindLLDB.h; sourceTree = "<group>"; };
+		AF77E08D1A033C700096C0EA /* ABISysV_ppc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_ppc.cpp; path = "SysV-ppc/ABISysV_ppc.cpp"; sourceTree = "<group>"; };
+		AF77E08E1A033C700096C0EA /* ABISysV_ppc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_ppc.h; path = "SysV-ppc/ABISysV_ppc.h"; sourceTree = "<group>"; };
+		AF77E0911A033C7F0096C0EA /* ABISysV_ppc64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_ppc64.cpp; path = "SysV-ppc64/ABISysV_ppc64.cpp"; sourceTree = "<group>"; };
+		AF77E0921A033C7F0096C0EA /* ABISysV_ppc64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_ppc64.h; path = "SysV-ppc64/ABISysV_ppc64.h"; sourceTree = "<group>"; };
+		AF77E0951A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_powerpc.cpp; sourceTree = "<group>"; };
+		AF77E0961A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_powerpc.h; sourceTree = "<group>"; };
+		AF77E0991A033D360096C0EA /* RegisterContext_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContext_powerpc.h; path = Utility/RegisterContext_powerpc.h; sourceTree = "<group>"; };
+		AF77E09A1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextFreeBSD_powerpc.cpp; path = Utility/RegisterContextFreeBSD_powerpc.cpp; sourceTree = "<group>"; };
+		AF77E09B1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextFreeBSD_powerpc.h; path = Utility/RegisterContextFreeBSD_powerpc.h; sourceTree = "<group>"; };
+		AF77E09C1A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMacOSXFrameBackchain.cpp; path = Utility/RegisterContextMacOSXFrameBackchain.cpp; sourceTree = "<group>"; };
+		AF77E09D1A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextPOSIX_powerpc.cpp; path = Utility/RegisterContextPOSIX_powerpc.cpp; sourceTree = "<group>"; };
+		AF77E09E1A033D360096C0EA /* RegisterContextPOSIX_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextPOSIX_powerpc.h; path = Utility/RegisterContextPOSIX_powerpc.h; sourceTree = "<group>"; };
+		AF77E09F1A033D360096C0EA /* RegisterInfos_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterInfos_powerpc.h; path = Utility/RegisterInfos_powerpc.h; sourceTree = "<group>"; };
+		AF77E0A71A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXCore_powerpc.cpp; sourceTree = "<group>"; };
+		AF77E0A81A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXCore_powerpc.h; sourceTree = "<group>"; };
 		AF81DEF91828A23F0042CF19 /* SystemRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemRuntime.cpp; path = source/Target/SystemRuntime.cpp; sourceTree = "<group>"; };
 		AF90106315AB7C5700FF120D /* lldb.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = lldb.1; path = docs/lldb.1; sourceTree = "<group>"; };
 		AF9107E91685709A00DBCD3C /* ARM64_GCC_Registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARM64_GCC_Registers.h; path = source/Utility/ARM64_GCC_Registers.h; sourceTree = "<group>"; };
@@ -3120,8 +3150,8 @@
 				AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */,
 				AF23B4DA19009C66003E2A58 /* FreeBSDSignals.h */,
 				AF1729D4182C907200E0AB97 /* HistoryThread.cpp */,
-				AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */,
 				AF061F89182C980000B6A19C /* HistoryThread.h */,
+				AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */,
 				AF061F8A182C980000B6A19C /* HistoryUnwind.h */,
 				B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */,
 				B28058A2139988C6002D96D0 /* InferiorCallPOSIX.h */,
@@ -3130,6 +3160,7 @@
 				23059A0619532B96007B8189 /* LinuxSignals.h */,
 				23173F8B192BA93F005C708F /* lldb-x86-register-enums.h */,
 				26474C9E18D0CAEC0073DEBA /* RegisterContext_mips64.h */,
+				AF77E0991A033D360096C0EA /* RegisterContext_powerpc.h */,
 				26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */,
 				26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */,
 				26957D9313D381C900670048 /* RegisterContextDarwin_arm.h */,
@@ -3145,6 +3176,8 @@
 				26474CA318D0CB070073DEBA /* RegisterContextFreeBSD_i386.h */,
 				26474CA418D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp */,
 				26474CA518D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h */,
+				AF77E09A1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp */,
+				AF77E09B1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h */,
 				26474CA618D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp */,
 				26474CA718D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h */,
 				AF061F85182C97ED00B6A19C /* RegisterContextHistory.cpp */,
@@ -3161,14 +3194,14 @@
 				26474CB918D0CB2D0073DEBA /* RegisterContextMach_i386.h */,
 				26474CBA18D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp */,
 				26474CBB18D0CB2D0073DEBA /* RegisterContextMach_x86_64.h */,
+				AF77E09C1A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp */,
+				26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */,
 				262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */,
 				262D24E513FB8710002D1960 /* RegisterContextMemory.h */,
-				26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */,
-				26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */,
-				26474CC218D0CB5B0073DEBA /* RegisterContextMemory.cpp */,
-				26474CC318D0CB5B0073DEBA /* RegisterContextMemory.h */,
 				26474CC418D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp */,
 				26474CC518D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h */,
+				AF77E09D1A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp */,
+				AF77E09E1A033D360096C0EA /* RegisterContextPOSIX_powerpc.h */,
 				26474CC618D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp */,
 				26474CC718D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h */,
 				26474CC818D0CB5B0073DEBA /* RegisterContextPOSIX.h */,
@@ -3177,15 +3210,19 @@
 				23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */,
 				26474CD018D0CB700073DEBA /* RegisterInfos_i386.h */,
 				26474CD118D0CB710073DEBA /* RegisterInfos_mips64.h */,
+				AF77E09F1A033D360096C0EA /* RegisterInfos_powerpc.h */,
 				26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */,
-				2615DBC91208B5FC0021781D /* StopInfoMachException.h */,
 				2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */,
+				2615DBC91208B5FC0021781D /* StopInfoMachException.h */,
 				26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */,
 				26F4A21B13FBA31A0064B613 /* ThreadMemory.h */,
 				AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */,
 				AF68D3301255A110002FF25B /* UnwindLLDB.h */,
-				26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */,
 				26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */,
+				26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */,
+				26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */,
+				26474CC218D0CB5B0073DEBA /* RegisterContextMemory.cpp */,
+				26474CC318D0CB5B0073DEBA /* RegisterContextMemory.h */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
@@ -3197,6 +3234,8 @@
 				26BC17A318C7F4CB00D2196D /* ProcessElfCore.h */,
 				26BC17A418C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.cpp */,
 				26BC17A518C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.h */,
+				AF77E0A71A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.cpp */,
+				AF77E0A81A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h */,
 				26BC17A618C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.cpp */,
 				26BC17A718C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h */,
 				26BC17A818C7F4CB00D2196D /* ThreadElfCore.cpp */,
@@ -3220,6 +3259,8 @@
 				26BC17BF18C7F4FA00D2196D /* ProcessPOSIXLog.h */,
 				26BC17D118C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.cpp */,
 				26BC17D218C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h */,
+				AF77E0951A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */,
+				AF77E0961A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h */,
 				26BC17D318C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.cpp */,
 				26BC17D418C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h */,
 			);
@@ -3976,6 +4017,8 @@
 				26DB3E061379E7AD0080DC73 /* MacOSX-arm */,
 				26DB3E0A1379E7AD0080DC73 /* MacOSX-arm64 */,
 				26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */,
+				AF77E08B1A033C3E0096C0EA /* SysV-ppc */,
+				AF77E08C1A033C4B0096C0EA /* SysV-ppc64 */,
 				26DB3E121379E7AD0080DC73 /* SysV-x86_64 */,
 			);
 			path = ABI;
@@ -4401,6 +4444,24 @@
 			path = GDB;
 			sourceTree = "<group>";
 		};
+		AF77E08B1A033C3E0096C0EA /* SysV-ppc */ = {
+			isa = PBXGroup;
+			children = (
+				AF77E08D1A033C700096C0EA /* ABISysV_ppc.cpp */,
+				AF77E08E1A033C700096C0EA /* ABISysV_ppc.h */,
+			);
+			name = "SysV-ppc";
+			sourceTree = "<group>";
+		};
+		AF77E08C1A033C4B0096C0EA /* SysV-ppc64 */ = {
+			isa = PBXGroup;
+			children = (
+				AF77E0911A033C7F0096C0EA /* ABISysV_ppc64.cpp */,
+				AF77E0921A033C7F0096C0EA /* ABISysV_ppc64.h */,
+			);
+			name = "SysV-ppc64";
+			sourceTree = "<group>";
+		};
 		EDC6D49114E5C15C001B75F8 /* launcherXPCService */ = {
 			isa = PBXGroup;
 			children = (
@@ -4510,15 +4571,19 @@
 				26BC179D18C7F2CB00D2196D /* JITLoader.h in Headers */,
 				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
 				AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */,
+				AF77E0AA1A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h in Headers */,
 				AF2BCA6D18C7EFDE005B4526 /* JITLoaderGDB.h in Headers */,
 				232CB61E191E00CD00EF39FC /* SoftwareBreakpoint.h in Headers */,
 				26BC17B218C7F4CB00D2196D /* ThreadElfCore.h in Headers */,
+				AF77E0A51A033D360096C0EA /* RegisterContextPOSIX_powerpc.h in Headers */,
+				AF77E0A61A033D360096C0EA /* RegisterInfos_powerpc.h in Headers */,
 				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
 				AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */,
 				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
 				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
 				26AB54121832DC3400EADFF3 /* RegisterCheckpoint.h in Headers */,
 				26AB92131819D74600E63F3E /* DWARFDataExtractor.h in Headers */,
+				AF77E0941A033C7F0096C0EA /* ABISysV_ppc64.h in Headers */,
 				945759681534941F005A9070 /* PlatformPOSIX.h in Headers */,
 				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
 				260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */,
@@ -4548,16 +4613,20 @@
 				490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */,
 				26EFC4CE18CFAF0D00865D87 /* ObjectFileJIT.h in Headers */,
 				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
+				AF77E0901A033C700096C0EA /* ABISysV_ppc.h in Headers */,
 				260A39A619647A3A004B4130 /* Pipe.h in Headers */,
 				26D1804516CEE12500EDFB5B /* KQueue.h in Headers */,
+				AF77E0A21A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h in Headers */,
 				260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */,
 				AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */,
 				260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */,
 				260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */,
 				AF0F6E511739A76D009180FE /* RegisterContextKDP_arm64.h in Headers */,
+				AF77E0A01A033D360096C0EA /* RegisterContext_powerpc.h in Headers */,
 				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
 				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
 				3FDFE53319A29304009756A7 /* HostInfoPosix.h in Headers */,
+				AF77E0981A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */,
 				AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */,
 				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
 				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
@@ -4992,8 +5061,10 @@
 				26474CCD18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp in Sources */,
 				2689FFEF13353DB600698AC0 /* Breakpoint.cpp in Sources */,
 				2689FFF113353DB600698AC0 /* BreakpointID.cpp in Sources */,
+				AF77E0A91A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.cpp in Sources */,
 				2689FFF313353DB600698AC0 /* BreakpointIDList.cpp in Sources */,
 				2689FFF513353DB600698AC0 /* BreakpointList.cpp in Sources */,
+				AF77E08F1A033C700096C0EA /* ABISysV_ppc.cpp in Sources */,
 				94CD704D16F8DDEA00CF1E42 /* CF.cpp in Sources */,
 				2689FFF713353DB600698AC0 /* BreakpointLocation.cpp in Sources */,
 				2689FFF913353DB600698AC0 /* BreakpointLocationCollection.cpp in Sources */,
@@ -5068,6 +5139,7 @@
 				236124A51986B4E2004EFC37 /* Socket.cpp in Sources */,
 				3FDFDDBF199D345E009756A7 /* FileCache.cpp in Sources */,
 				AF1729D7182C907200E0AB97 /* HistoryUnwind.cpp in Sources */,
+				AF77E0A11A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp in Sources */,
 				2689003B13353E0400698AC0 /* EmulateInstruction.cpp in Sources */,
 				2689003C13353E0400698AC0 /* Error.cpp in Sources */,
 				2689003D13353E0400698AC0 /* Event.cpp in Sources */,
@@ -5154,6 +5226,7 @@
 				2689007F13353E2200698AC0 /* CommandCompletions.cpp in Sources */,
 				26CEB5F218762056008F575A /* CommandObjectGUI.cpp in Sources */,
 				2689008013353E2200698AC0 /* CommandInterpreter.cpp in Sources */,
+				AF77E0A41A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp in Sources */,
 				AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */,
 				2689008113353E2200698AC0 /* CommandObject.cpp in Sources */,
 				2689008313353E2200698AC0 /* CommandObjectMultiword.cpp in Sources */,
@@ -5318,12 +5391,14 @@
 				4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */,
 				AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */,
 				2377C2F819E613C100737875 /* PipePosix.cpp in Sources */,
+				AF77E0931A033C7F0096C0EA /* ABISysV_ppc64.cpp in Sources */,
 				26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */,
 				26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */,
 				94CD131A19BA33B400DB7BED /* TypeValidator.cpp in Sources */,
 				26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */,
 				26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
+				AF77E0971A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp in Sources */,
 				AFDFDFD119E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
 				9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */,
@@ -5375,6 +5450,7 @@
 				94CD7D0919A3FBA300908B7C /* AppleObjCClassDescriptorV2.cpp in Sources */,
 				265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */,
 				265205AA13D3E3F700132FE2 /* RegisterContextKDP_i386.cpp in Sources */,
+				AF77E0A31A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp in Sources */,
 				265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */,
 				2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */,
 				26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */,
