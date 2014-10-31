@@ -243,6 +243,10 @@ if( MSVC )
     -wd4345 # Suppress 'behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized'
     -wd4351 # Suppress 'new behavior: elements of array 'array' will be default initialized'
     -wd4355 # Suppress ''this' : used in base member initializer list'
+    -wd4456 # Suppress 'declaration of 'var' hides local variable'
+    -wd4457 # Suppress 'declaration of 'var' hides function parameter'
+    -wd4458 # Suppress 'declaration of 'var' hides class member'
+    -wd4459 # Suppress 'declaration of 'var' hides global declaration'
     -wd4503 # Suppress ''identifier' : decorated name length exceeded, name was truncated'
     -wd4624 # Suppress ''derived class' : destructor could not be generated because a base class destructor is inaccessible'
     -wd4722 # Suppress 'function' : destructor never returns, potential memory leak
