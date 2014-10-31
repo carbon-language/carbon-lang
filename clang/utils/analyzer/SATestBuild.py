@@ -170,7 +170,7 @@ SBOutputDirReferencePrefix = "Ref"
 # The list of checkers used during analyzes.
 # Currently, consists of all the non-experimental checkers, plus a few alpha
 # checkers we don't want to regress on.
-Checkers="alpha.unix.SimpleStream,alpha.security.taint,alpha.cplusplus.NewDeleteLeaks,core,cplusplus,deadcode,security,unix,osx"
+Checkers="alpha.unix.SimpleStream,alpha.security.taint,cplusplus.NewDeleteLeaks,core,cplusplus,deadcode,security,unix,osx"
 
 Verbose = 1
 
