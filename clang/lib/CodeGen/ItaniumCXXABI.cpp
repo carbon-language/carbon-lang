@@ -106,8 +106,11 @@ public:
                                          llvm::Value *Addr,
                                          const MemberPointerType *MPT) override;
 
-  llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF, llvm::Value *ptr,
-                                      QualType type) override;
+  void emitVirtualObjectDelete(CodeGenFunction &CGF,
+                               const FunctionDecl *OperatorDelete,
+                               llvm::Value *Ptr, QualType ElementType,
+                               bool UseGlobalDelete,
+                               const CXXDestructorDecl *Dtor) override;
 
   void EmitFundamentalRTTIDescriptor(QualType Type);
   void EmitFundamentalRTTIDescriptors();
@@ -187,10 +190,11 @@ public:
                                          llvm::Value *This,
                                          llvm::Type *Ty) override;
 
-  void EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                 const CXXDestructorDecl *Dtor,
-                                 CXXDtorType DtorType, llvm::Value *This,
-                                 const CXXMemberCallExpr *CE) override;
+  llvm::Value *EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                         const CXXDestructorDecl *Dtor,
+                                         CXXDtorType DtorType,
+                                         llvm::Value *This,
+                                         const CXXMemberCallExpr *CE) override;
 
   void emitVirtualInheritanceTables(const CXXRecordDecl *RD) override;
 
@@ -847,21 +851,38 @@ bool ItaniumCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
 
 /// The Itanium ABI always places an offset to the complete object
 /// at entry -2 in the vtable.
-llvm::Value *ItaniumCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
-                                                   llvm::Value *ptr,
-                                                   QualType type) {
-  // Grab the vtable pointer as an intptr_t*.
-  llvm::Value *vtable = CGF.GetVTablePtr(ptr, CGF.IntPtrTy->getPointerTo());
+void ItaniumCXXABI::emitVirtualObjectDelete(
+    CodeGenFunction &CGF, const FunctionDecl *OperatorDelete, llvm::Value *Ptr,
+    QualType ElementType, bool UseGlobalDelete, const CXXDestructorDecl *Dtor) {
+  if (UseGlobalDelete) {
+    // Derive the complete-object pointer, which is what we need
+    // to pass to the deallocation function.
 
-  // Track back to entry -2 and pull out the offset there.
-  llvm::Value *offsetPtr = 
-    CGF.Builder.CreateConstInBoundsGEP1_64(vtable, -2, "complete-offset.ptr");
-  llvm::LoadInst *offset = CGF.Builder.CreateLoad(offsetPtr);
-  offset->setAlignment(CGF.PointerAlignInBytes);
+    // Grab the vtable pointer as an intptr_t*.
+    llvm::Value *VTable = CGF.GetVTablePtr(Ptr, CGF.IntPtrTy->getPointerTo());
 
-  // Apply the offset.
-  ptr = CGF.Builder.CreateBitCast(ptr, CGF.Int8PtrTy);
-  return CGF.Builder.CreateInBoundsGEP(ptr, offset);
+    // Track back to entry -2 and pull out the offset there.
+    llvm::Value *OffsetPtr = CGF.Builder.CreateConstInBoundsGEP1_64(
+        VTable, -2, "complete-offset.ptr");
+    llvm::LoadInst *Offset = CGF.Builder.CreateLoad(OffsetPtr);
+    Offset->setAlignment(CGF.PointerAlignInBytes);
+
+    // Apply the offset.
+    llvm::Value *CompletePtr = CGF.Builder.CreateBitCast(Ptr, CGF.Int8PtrTy);
+    CompletePtr = CGF.Builder.CreateInBoundsGEP(CompletePtr, Offset);
+
+    // If we're supposed to call the global delete, make sure we do so
+    // even if the destructor throws.
+    CGF.pushCallObjectDeleteCleanup(OperatorDelete, CompletePtr, ElementType);
+  }
+
+  // FIXME: Provide a source location here even though there's no
+  // CXXMemberCallExpr for dtor call.
+  CXXDtorType DtorType = UseGlobalDelete ? Dtor_Complete : Dtor_Deleting;
+  EmitVirtualDestructorCall(CGF, Dtor, DtorType, Ptr, /*CE=*/nullptr);
+
+  if (UseGlobalDelete)
+    CGF.PopCleanupBlock();
 }
 
 static llvm::Constant *getItaniumDynamicCastFn(CodeGenFunction &CGF) {
@@ -1333,11 +1354,9 @@ llvm::Value *ItaniumCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   return CGF.Builder.CreateLoad(VFuncPtr);
 }
 
-void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                              const CXXDestructorDecl *Dtor,
-                                              CXXDtorType DtorType,
-                                              llvm::Value *This,
-                                              const CXXMemberCallExpr *CE) {
+llvm::Value *ItaniumCXXABI::EmitVirtualDestructorCall(
+    CodeGenFunction &CGF, const CXXDestructorDecl *Dtor, CXXDtorType DtorType,
+    llvm::Value *This, const CXXMemberCallExpr *CE) {
   assert(CE == nullptr || CE->arg_begin() == CE->arg_end());
   assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
 
@@ -1349,6 +1368,7 @@ void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
 
   CGF.EmitCXXMemberOrOperatorCall(Dtor, Callee, ReturnValueSlot(), This,
                                   /*ImplicitParam=*/nullptr, QualType(), CE);
+  return nullptr;
 }
 
 void ItaniumCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {

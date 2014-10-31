@@ -24,10 +24,10 @@
 using namespace clang;
 using namespace CodeGen;
 
-RValue CodeGenFunction::EmitCXXMemberOrOperatorCall(
-    const CXXMethodDecl *MD, llvm::Value *Callee, ReturnValueSlot ReturnValue,
-    llvm::Value *This, llvm::Value *ImplicitParam, QualType ImplicitParamTy,
-    const CallExpr *CE) {
+static RequiredArgs commonEmitCXXMemberOrOperatorCall(
+    CodeGenFunction &CGF, const CXXMethodDecl *MD, llvm::Value *Callee,
+    ReturnValueSlot ReturnValue, llvm::Value *This, llvm::Value *ImplicitParam,
+    QualType ImplicitParamTy, const CallExpr *CE, CallArgList &Args) {
   assert(CE == nullptr || isa<CXXMemberCallExpr>(CE) ||
          isa<CXXOperatorCallExpr>(CE));
   assert(MD->isInstance() &&
@@ -39,14 +39,13 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorCall(
   SourceLocation CallLoc;
   if (CE)
     CallLoc = CE->getExprLoc();
-  EmitTypeCheck(isa<CXXConstructorDecl>(MD) ? TCK_ConstructorCall
-                                            : TCK_MemberCall,
-                CallLoc, This, getContext().getRecordType(MD->getParent()));
-
-  CallArgList Args;
+  CGF.EmitTypeCheck(
+      isa<CXXConstructorDecl>(MD) ? CodeGenFunction::TCK_ConstructorCall
+                                  : CodeGenFunction::TCK_MemberCall,
+      CallLoc, This, CGF.getContext().getRecordType(MD->getParent()));
 
   // Push the this ptr.
-  Args.add(RValue::get(This), MD->getThisType(getContext()));
+  Args.add(RValue::get(This), MD->getThisType(CGF.getContext()));
 
   // If there is an implicit parameter (e.g. VTT), emit it.
   if (ImplicitParam) {
@@ -60,15 +59,37 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorCall(
   if (CE) {
     // Special case: skip first argument of CXXOperatorCall (it is "this").
     unsigned ArgsToSkip = isa<CXXOperatorCallExpr>(CE) ? 1 : 0;
-    EmitCallArgs(Args, FPT, CE->arg_begin() + ArgsToSkip, CE->arg_end(),
-                 CE->getDirectCallee());
+    CGF.EmitCallArgs(Args, FPT, CE->arg_begin() + ArgsToSkip, CE->arg_end(),
+                     CE->getDirectCallee());
   } else {
     assert(
         FPT->getNumParams() == 0 &&
         "No CallExpr specified for function with non-zero number of arguments");
   }
+  return required;
+}
 
+RValue CodeGenFunction::EmitCXXMemberOrOperatorCall(
+    const CXXMethodDecl *MD, llvm::Value *Callee, ReturnValueSlot ReturnValue,
+    llvm::Value *This, llvm::Value *ImplicitParam, QualType ImplicitParamTy,
+    const CallExpr *CE) {
+  const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
+  CallArgList Args;
+  RequiredArgs required = commonEmitCXXMemberOrOperatorCall(
+      *this, MD, Callee, ReturnValue, This, ImplicitParam, ImplicitParamTy, CE,
+      Args);
   return EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, required),
+                  Callee, ReturnValue, Args, MD);
+}
+
+RValue CodeGenFunction::EmitCXXStructorCall(
+    const CXXMethodDecl *MD, llvm::Value *Callee, ReturnValueSlot ReturnValue,
+    llvm::Value *This, llvm::Value *ImplicitParam, QualType ImplicitParamTy,
+    const CallExpr *CE, StructorType Type) {
+  CallArgList Args;
+  commonEmitCXXMemberOrOperatorCall(*this, MD, Callee, ReturnValue, This,
+                                    ImplicitParam, ImplicitParamTy, CE, Args);
+  return EmitCall(CGM.getTypes().arrangeCXXStructorDeclaration(MD, Type),
                   Callee, ReturnValue, Args, MD);
 }
 
@@ -1389,6 +1410,14 @@ namespace {
   };
 }
 
+void
+CodeGenFunction::pushCallObjectDeleteCleanup(const FunctionDecl *OperatorDelete,
+                                             llvm::Value *CompletePtr,
+                                             QualType ElementType) {
+  EHStack.pushCleanup<CallObjectDelete>(NormalAndEHCleanup, CompletePtr,
+                                        OperatorDelete, ElementType);
+}
+
 /// Emit the code for deleting a single object.
 static void EmitObjectDelete(CodeGenFunction &CGF,
                              const FunctionDecl *OperatorDelete,
@@ -1404,30 +1433,8 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
       Dtor = RD->getDestructor();
 
       if (Dtor->isVirtual()) {
-        if (UseGlobalDelete) {
-          // If we're supposed to call the global delete, make sure we do so
-          // even if the destructor throws.
-
-          // Derive the complete-object pointer, which is what we need
-          // to pass to the deallocation function.
-          llvm::Value *completePtr =
-            CGF.CGM.getCXXABI().adjustToCompleteObject(CGF, Ptr, ElementType);
-
-          CGF.EHStack.pushCleanup<CallObjectDelete>(NormalAndEHCleanup,
-                                                    completePtr, OperatorDelete,
-                                                    ElementType);
-        }
-
-        // FIXME: Provide a source location here even though there's no
-        // CXXMemberCallExpr for dtor call.
-        CXXDtorType DtorType = UseGlobalDelete ? Dtor_Complete : Dtor_Deleting;
-        CGF.CGM.getCXXABI().EmitVirtualDestructorCall(CGF, Dtor, DtorType, Ptr,
-                                                      nullptr);
-
-        if (UseGlobalDelete) {
-          CGF.PopCleanupBlock();
-        }
-
+        CGF.CGM.getCXXABI().emitVirtualObjectDelete(
+            CGF, OperatorDelete, Ptr, ElementType, UseGlobalDelete, Dtor);
         return;
       }
     }

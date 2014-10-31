@@ -214,8 +214,11 @@ CodeGenTypes::arrangeCXXStructorDeclaration(const CXXMethodDecl *MD,
       (MD->isVariadic() ? RequiredArgs(argTypes.size()) : RequiredArgs::All);
 
   FunctionType::ExtInfo extInfo = FTP->getExtInfo();
-  CanQualType resultType =
-      TheCXXABI.HasThisReturn(GD) ? argTypes.front() : Context.VoidTy;
+  CanQualType resultType = TheCXXABI.HasThisReturn(GD)
+                               ? argTypes.front()
+                               : TheCXXABI.hasMostDerivedReturn(GD)
+                                     ? CGM.getContext().VoidPtrTy
+                                     : Context.VoidTy;
   return arrangeLLVMFunctionInfo(resultType, true, argTypes, extInfo, required);
 }
 
@@ -233,8 +236,11 @@ CodeGenTypes::arrangeCXXConstructorCall(const CallArgList &args,
   CanQual<FunctionProtoType> FPT = GetFormalType(D);
   RequiredArgs Required = RequiredArgs::forPrototypePlus(FPT, 1 + ExtraArgs);
   GlobalDecl GD(D, CtorKind);
-  CanQualType ResultType =
-      TheCXXABI.HasThisReturn(GD) ? ArgTypes.front() : Context.VoidTy;
+  CanQualType ResultType = TheCXXABI.HasThisReturn(GD)
+                               ? ArgTypes.front()
+                               : TheCXXABI.hasMostDerivedReturn(GD)
+                                     ? CGM.getContext().VoidPtrTy
+                                     : Context.VoidTy;
 
   FunctionType::ExtInfo Info = FPT->getExtInfo();
   return arrangeLLVMFunctionInfo(ResultType, true, ArgTypes, Info, Required);

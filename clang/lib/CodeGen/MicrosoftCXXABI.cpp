@@ -43,6 +43,7 @@ public:
         CompleteObjectLocatorType(nullptr) {}
 
   bool HasThisReturn(GlobalDecl GD) const override;
+  bool hasMostDerivedReturn(GlobalDecl GD) const override;
 
   bool classifyReturnType(CGFunctionInfo &FI) const override;
 
@@ -65,9 +66,11 @@ public:
   StringRef GetPureVirtualCallName() override { return "_purecall"; }
   StringRef GetDeletedVirtualCallName() override { return "_purecall"; }
 
-  llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
-                                      llvm::Value *ptr,
-                                      QualType type) override;
+  void emitVirtualObjectDelete(CodeGenFunction &CGF,
+                               const FunctionDecl *OperatorDelete,
+                               llvm::Value *Ptr, QualType ElementType,
+                               bool UseGlobalDelete,
+                               const CXXDestructorDecl *Dtor) override;
 
   llvm::GlobalVariable *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
                                                    const VPtrInfo *Info);
@@ -211,10 +214,11 @@ public:
                                          llvm::Value *This,
                                          llvm::Type *Ty) override;
 
-  void EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                 const CXXDestructorDecl *Dtor,
-                                 CXXDtorType DtorType, llvm::Value *This,
-                                 const CXXMemberCallExpr *CE) override;
+  llvm::Value *EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                         const CXXDestructorDecl *Dtor,
+                                         CXXDtorType DtorType,
+                                         llvm::Value *This,
+                                         const CXXMemberCallExpr *CE) override;
 
   void adjustCallArgsForDestructorThunk(CodeGenFunction &CGF, GlobalDecl GD,
                                         CallArgList &CallArgs) override {
@@ -641,11 +645,16 @@ MicrosoftCXXABI::getRecordArgABI(const CXXRecordDecl *RD) const {
   llvm_unreachable("invalid enum");
 }
 
-llvm::Value *MicrosoftCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
-                                                     llvm::Value *ptr,
-                                                     QualType type) {
-  // FIXME: implement
-  return ptr;
+void MicrosoftCXXABI::emitVirtualObjectDelete(
+    CodeGenFunction &CGF, const FunctionDecl *OperatorDelete, llvm::Value *Ptr,
+    QualType ElementType, bool UseGlobalDelete, const CXXDestructorDecl *Dtor) {
+  // FIXME: Provide a source location here even though there's no
+  // CXXMemberCallExpr for dtor call.
+  CXXDtorType DtorType = UseGlobalDelete ? Dtor_Complete : Dtor_Deleting;
+  llvm::Value *MDThis =
+      EmitVirtualDestructorCall(CGF, Dtor, DtorType, Ptr, /*CE=*/nullptr);
+  if (UseGlobalDelete)
+    CGF.EmitDeleteCall(OperatorDelete, MDThis, ElementType);
 }
 
 /// \brief Gets the offset to the virtual base that contains the vfptr for
@@ -793,6 +802,15 @@ llvm::Value *MicrosoftCXXABI::GetVirtualBaseClassOffset(
 
 bool MicrosoftCXXABI::HasThisReturn(GlobalDecl GD) const {
   return isa<CXXConstructorDecl>(GD.getDecl());
+}
+
+static bool isDeletingDtor(GlobalDecl GD) {
+  return isa<CXXDestructorDecl>(GD.getDecl()) &&
+         GD.getDtorType() == Dtor_Deleting;
+}
+
+bool MicrosoftCXXABI::hasMostDerivedReturn(GlobalDecl GD) const {
+  return isDeletingDtor(GD);
 }
 
 bool MicrosoftCXXABI::classifyReturnType(CGFunctionInfo &FI) const {
@@ -1059,14 +1077,6 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualFunctionCall(
   return This;
 }
 
-static bool IsDeletingDtor(GlobalDecl GD) {
-  const CXXMethodDecl* MD = cast<CXXMethodDecl>(GD.getDecl());
-  if (isa<CXXDestructorDecl>(MD)) {
-    return GD.getDtorType() == Dtor_Deleting;
-  }
-  return false;
-}
-
 void MicrosoftCXXABI::addImplicitStructorParams(CodeGenFunction &CGF,
                                                 QualType &ResTy,
                                                 FunctionArgList &Params) {
@@ -1087,7 +1097,7 @@ void MicrosoftCXXABI::addImplicitStructorParams(CodeGenFunction &CGF,
     else
       Params.push_back(IsMostDerived);
     getStructorImplicitParamDecl(CGF) = IsMostDerived;
-  } else if (IsDeletingDtor(CGF.CurGD)) {
+  } else if (isDeletingDtor(CGF.CurGD)) {
     ImplicitParamDecl *ShouldDelete
       = ImplicitParamDecl::Create(Context, nullptr,
                                   CGF.CurGD.getDecl()->getLocation(),
@@ -1133,6 +1143,9 @@ void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   ///    HasThisReturn only specifies a contract, not the implementation    
   if (HasThisReturn(CGF.CurGD))
     CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
+  else if (hasMostDerivedReturn(CGF.CurGD))
+    CGF.Builder.CreateStore(CGF.EmitCastToVoidPtr(getThisValue(CGF)),
+                            CGF.ReturnValue);
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
   if (isa<CXXConstructorDecl>(MD) && MD->getParent()->getNumVBases()) {
@@ -1144,7 +1157,7 @@ void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
           "is_most_derived");
   }
 
-  if (IsDeletingDtor(CGF.CurGD)) {
+  if (isDeletingDtor(CGF.CurGD)) {
     assert(getStructorImplicitParamDecl(CGF) &&
            "no implicit parameter for a deleting destructor?");
     getStructorImplicitParamValue(CGF)
@@ -1192,9 +1205,10 @@ void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
                                                     This, false);
   }
 
-  CGF.EmitCXXMemberOrOperatorCall(DD, Callee, ReturnValueSlot(), This,
-                                  /*ImplicitParam=*/nullptr,
-                                  /*ImplicitParamTy=*/QualType(), nullptr);
+  CGF.EmitCXXStructorCall(DD, Callee, ReturnValueSlot(), This,
+                          /*ImplicitParam=*/nullptr,
+                          /*ImplicitParamTy=*/QualType(), nullptr,
+                          getFromDtorType(Type));
 }
 
 void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
@@ -1402,11 +1416,9 @@ llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   return Builder.CreateLoad(VFuncPtr);
 }
 
-void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                                const CXXDestructorDecl *Dtor,
-                                                CXXDtorType DtorType,
-                                                llvm::Value *This,
-                                                const CXXMemberCallExpr *CE) {
+llvm::Value *MicrosoftCXXABI::EmitVirtualDestructorCall(
+    CodeGenFunction &CGF, const CXXDestructorDecl *Dtor, CXXDtorType DtorType,
+    llvm::Value *This, const CXXMemberCallExpr *CE) {
   assert(CE == nullptr || CE->arg_begin() == CE->arg_end());
   assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
 
@@ -1424,8 +1436,10 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
                              DtorType == Dtor_Deleting);
 
   This = adjustThisArgumentForVirtualFunctionCall(CGF, GD, This, true);
-  CGF.EmitCXXMemberOrOperatorCall(Dtor, Callee, ReturnValueSlot(), This,
-                                  ImplicitParam, Context.IntTy, CE);
+  RValue RV = CGF.EmitCXXStructorCall(Dtor, Callee, ReturnValueSlot(), This,
+                                      ImplicitParam, Context.IntTy, CE,
+                                      StructorType::Deleting);
+  return RV.getScalarVal();
 }
 
 const VBTableGlobals &

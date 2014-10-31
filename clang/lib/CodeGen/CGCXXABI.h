@@ -93,6 +93,8 @@ public:
   /// when called virtually, and code generation does not support the case.
   virtual bool HasThisReturn(GlobalDecl GD) const { return false; }
 
+  virtual bool hasMostDerivedReturn(GlobalDecl GD) const { return false; }
+
   /// If the C++ ABI requires the given type be returned in a particular way,
   /// this method sets RetAI and returns true.
   virtual bool classifyReturnType(CGFunctionInfo &FI) const = 0;
@@ -207,14 +209,11 @@ protected:
   CharUnits getMemberPointerPathAdjustment(const APValue &MP);
 
 public:
-  /// Adjust the given non-null pointer to an object of polymorphic
-  /// type to point to the complete object.
-  ///
-  /// The IR type of the result should be a pointer but is otherwise
-  /// irrelevant.
-  virtual llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
-                                              llvm::Value *ptr,
-                                              QualType type) = 0;
+  virtual void emitVirtualObjectDelete(CodeGenFunction &CGF,
+                                       const FunctionDecl *OperatorDelete,
+                                       llvm::Value *Ptr, QualType ElementType,
+                                       bool UseGlobalDelete,
+                                       const CXXDestructorDecl *Dtor) = 0;
 
   virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) = 0;
 
@@ -359,11 +358,10 @@ public:
                                                  llvm::Type *Ty) = 0;
 
   /// Emit the ABI-specific virtual destructor call.
-  virtual void EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                         const CXXDestructorDecl *Dtor,
-                                         CXXDtorType DtorType,
-                                         llvm::Value *This,
-                                         const CXXMemberCallExpr *CE) = 0;
+  virtual llvm::Value *
+  EmitVirtualDestructorCall(CodeGenFunction &CGF, const CXXDestructorDecl *Dtor,
+                            CXXDtorType DtorType, llvm::Value *This,
+                            const CXXMemberCallExpr *CE) = 0;
 
   virtual void adjustCallArgsForDestructorThunk(CodeGenFunction &CGF,
                                                 GlobalDecl GD,
