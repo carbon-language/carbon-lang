@@ -1200,8 +1200,12 @@ void TargetLoweringBase::computeRegisterProperties() {
         TransformToType[i] = MVT::Other;
         if (PreferredAction == TypeScalarizeVector)
           ValueTypeActions.setTypeAction(VT, TypeScalarizeVector);
-        else
+        else if (PreferredAction == TypeSplitVector)
           ValueTypeActions.setTypeAction(VT, TypeSplitVector);
+        else
+          // Set type action according to the number of elements.
+          ValueTypeActions.setTypeAction(VT, NElts == 1 ? TypeScalarizeVector
+                                                        : TypeSplitVector);
       } else {
         TransformToType[i] = NVT;
         ValueTypeActions.setTypeAction(VT, TypeWidenVector);
