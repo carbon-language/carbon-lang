@@ -2399,7 +2399,7 @@ makeTemplateArgumentListInfo(Sema &S, TemplateIdAnnotation &TemplateId) {
 
 DeclResult Sema::ActOnVarTemplateSpecialization(
     Scope *S, Declarator &D, TypeSourceInfo *DI, SourceLocation TemplateKWLoc,
-    TemplateParameterList *TemplateParams, VarDecl::StorageClass SC,
+    TemplateParameterList *TemplateParams, StorageClass SC,
     bool IsPartialSpecialization) {
   // D must be variable template id.
   assert(D.getName().getKind() == UnqualifiedId::IK_TemplateId &&
