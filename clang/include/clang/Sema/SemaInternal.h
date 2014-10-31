@@ -275,7 +275,7 @@ inline Sema::TypoExprState &Sema::TypoExprState::operator=(
     Sema::TypoExprState &&other) LLVM_NOEXCEPT {
   Consumer = std::move(other.Consumer);
   DiagHandler = std::move(other.DiagHandler);
-  RecoveryHandler = std::move(RecoveryHandler);
+  RecoveryHandler = std::move(other.RecoveryHandler);
   return *this;
 }
 
