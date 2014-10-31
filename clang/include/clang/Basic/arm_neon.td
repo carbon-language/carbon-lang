@@ -1077,7 +1077,7 @@ def VDUP_LANE2: WOpInst<"vdup_laneq", "dji",
                   "csilUcUsUiUlPcPshfdQcQsQiQlQPcQPsQUcQUsQUiQUlQhQfQdPlQPl",
                         OP_DUP_LN>;
 def DUP_N   : WOpInst<"vdup_n", "ds", "dQdPlQPl", OP_DUP>;
-def MOV_N   : WOpInst<"vmov_n", "ds", "dQd", OP_DUP>;
+def MOV_N   : WOpInst<"vmov_n", "ds", "dQdPlQPl", OP_DUP>;
 
 ////////////////////////////////////////////////////////////////////////////////
 def COMBINE : NoTestOpInst<"vcombine", "kdd", "dPl", OP_CONC>;

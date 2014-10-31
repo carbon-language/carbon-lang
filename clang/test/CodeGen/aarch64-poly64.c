@@ -102,6 +102,18 @@ poly64x2_t test_vdupq_n_p64(poly64_t a) {
   // CHECK: dup {{v[0-9]+}}.2d, {{x[0-9]+}}
 }
 
+poly64x1_t test_vmov_n_p64(poly64_t a) {
+  // CHECK-LABEL: test_vmov_n_p64
+  return vmov_n_p64(a);
+  // CHECK: fmov {{d[0-9]+}}, {{x[0-9]+}}
+}
+
+poly64x2_t test_vmovq_n_p64(poly64_t a) {
+  // CHECK-LABEL: test_vmovq_n_p64
+  return vmovq_n_p64(a);
+  // CHECK: dup {{v[0-9]+}}.2d, {{x[0-9]+}}
+}
+
 poly64x1_t test_vdup_lane_p64(poly64x1_t vec) {
   // CHECK-LABEL: test_vdup_lane_p64
   return vdup_lane_p64(vec, 0);
