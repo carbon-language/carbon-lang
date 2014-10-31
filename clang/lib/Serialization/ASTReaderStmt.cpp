@@ -635,7 +635,7 @@ void ASTStmtReader::VisitCastExpr(CastExpr *E) {
   unsigned NumBaseSpecs = Record[Idx++];
   assert(NumBaseSpecs == E->path_size());
   E->setSubExpr(Reader.ReadSubExpr());
-  E->setCastKind((CastExpr::CastKind)Record[Idx++]);
+  E->setCastKind((CastKind)Record[Idx++]);
   CastExpr::path_iterator BaseI = E->path_begin();
   while (NumBaseSpecs--) {
     CXXBaseSpecifier *BaseSpec = new (Reader.getContext()) CXXBaseSpecifier;

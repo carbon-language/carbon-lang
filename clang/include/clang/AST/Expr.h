@@ -2658,9 +2658,6 @@ public:
 /// representation in the source code (ExplicitCastExpr's derived
 /// classes).
 class CastExpr : public Expr {
-public:
-  typedef clang::CastKind CastKind;
-
 private:
   Stmt *Op;
 
