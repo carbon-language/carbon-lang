@@ -128,6 +128,8 @@ public:
   constructImportedEntityDIE(const DIImportedEntity &Module);
 
   void finishSubprogramDefinition(DISubprogram SP);
+
+  void collectDeadVariables(DISubprogram SP);
 };
 
 } // end llvm namespace

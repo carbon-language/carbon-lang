@@ -525,26 +525,7 @@ void DwarfDebug::collectDeadVariables() {
         DISubprogram SP(Subprograms.getElement(i));
         if (ProcessedSPNodes.count(SP) != 0)
           continue;
-        assert(SP.isSubprogram() &&
-               "CU's subprogram list contains a non-subprogram");
-        assert(SP.isDefinition() &&
-               "CU's subprogram list contains a subprogram declaration");
-        DIArray Variables = SP.getVariables();
-        if (Variables.getNumElements() == 0)
-          continue;
-
-        DIE *SPDIE = AbstractSPDies.lookup(SP);
-        if (!SPDIE)
-          SPDIE = SPCU->getDIE(SP);
-        assert(SPDIE);
-        for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
-          DIVariable DV(Variables.getElement(vi));
-          assert(DV.isVariable());
-          DbgVariable NewVar(DV, DIExpression(nullptr), this);
-          auto VariableDie = SPCU->constructVariableDIE(NewVar);
-          SPCU->applyVariableAttributes(NewVar, *VariableDie);
-          SPDIE->addChild(std::move(VariableDie));
-        }
+        SPCU->collectDeadVariables(SP);
       }
     }
   }

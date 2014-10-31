@@ -663,5 +663,26 @@ void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
       applySubprogramAttributesToDefinition(SP, *D);
   }
 }
+void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
+  assert(SP.isSubprogram() && "CU's subprogram list contains a non-subprogram");
+  assert(SP.isDefinition() &&
+         "CU's subprogram list contains a subprogram declaration");
+  DIArray Variables = SP.getVariables();
+  if (Variables.getNumElements() == 0)
+    return;
+
+  DIE *SPDIE = DD->getAbstractSPDies().lookup(SP);
+  if (!SPDIE)
+    SPDIE = getDIE(SP);
+  assert(SPDIE);
+  for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
+    DIVariable DV(Variables.getElement(vi));
+    assert(DV.isVariable());
+    DbgVariable NewVar(DV, DIExpression(nullptr), DD);
+    auto VariableDie = constructVariableDIE(NewVar);
+    applyVariableAttributes(NewVar, *VariableDie);
+    SPDIE->addChild(std::move(VariableDie));
+  }
+}
 
 } // end llvm namespace
