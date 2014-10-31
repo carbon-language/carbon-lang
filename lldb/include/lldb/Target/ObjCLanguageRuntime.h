@@ -278,10 +278,10 @@ public:
     class EncodingToType
     {
     public:
-        virtual ClangASTType RealizeType (ClangASTContext& ast_ctx, const char* name, bool allow_unknownanytype);
-        virtual ClangASTType RealizeType (const char* name, bool allow_unknownanytype);
+        virtual ClangASTType RealizeType (ClangASTContext& ast_ctx, const char* name, bool for_expression);
+        virtual ClangASTType RealizeType (const char* name, bool for_expression);
         
-        virtual ClangASTType RealizeType (clang::ASTContext& ast_ctx, const char* name, bool allow_unknownanytype) = 0;
+        virtual ClangASTType RealizeType (clang::ASTContext& ast_ctx, const char* name, bool for_expression) = 0;
         
         virtual ~EncodingToType();
         

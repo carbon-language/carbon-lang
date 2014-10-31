@@ -31,7 +31,7 @@ namespace lldb_private {
     {
     public:
         AppleObjCTypeEncodingParser (ObjCLanguageRuntime& runtime);
-        virtual ClangASTType RealizeType (clang::ASTContext &ast_ctx, const char* name, bool allow_unknownanytype);
+        virtual ClangASTType RealizeType (clang::ASTContext &ast_ctx, const char* name, bool for_expression);
         virtual ~AppleObjCTypeEncodingParser() {}
         
     private:
@@ -45,34 +45,36 @@ namespace lldb_private {
         };
         
         clang::QualType
-        BuildType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype, uint32_t *bitfield_bit_size = nullptr);
+        BuildType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression, uint32_t *bitfield_bit_size = nullptr);
 
         clang::QualType
-        BuildStruct (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
+        BuildStruct (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression);
         
         clang::QualType
-        BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype, char opener, char closer, uint32_t kind);
+        BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression, char opener, char closer, uint32_t kind);
         
         clang::QualType
-        BuildUnion (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
+        BuildUnion (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression);
         
         clang::QualType
-        BuildArray (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
+        BuildArray (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression);
         
         std::string
         ReadStructName(lldb_utility::StringLexer& type);
         
         StructElement
-        ReadStructElement (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
+        ReadStructElement (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression);
         
         clang::QualType
-        BuildObjCObjectType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
+        BuildObjCObjectPointerType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression);
         
         uint32_t
         ReadNumber (lldb_utility::StringLexer& type);
         
         std::string
         ReadQuotedString(lldb_utility::StringLexer& type);
+        
+        ObjCLanguageRuntime& m_runtime;
     };
     
 } // namespace lldb_private

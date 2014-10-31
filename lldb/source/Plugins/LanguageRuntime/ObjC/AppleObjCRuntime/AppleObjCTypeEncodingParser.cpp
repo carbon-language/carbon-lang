@@ -21,7 +21,8 @@ using namespace lldb_private;
 using namespace lldb_utility;
 
 AppleObjCTypeEncodingParser::AppleObjCTypeEncodingParser (ObjCLanguageRuntime& runtime) :
-ObjCLanguageRuntime::EncodingToType()
+    ObjCLanguageRuntime::EncodingToType(),
+    m_runtime(runtime)
 {
     if (!m_scratch_ast_ctx_ap)
         m_scratch_ast_ctx_ap.reset(new ClangASTContext(runtime.GetProcess()->GetTarget().GetArchitecture().GetTriple().str().c_str()));
@@ -64,7 +65,7 @@ bitfield(0)
 {}
 
 AppleObjCTypeEncodingParser::StructElement
-AppleObjCTypeEncodingParser::ReadStructElement (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype)
+AppleObjCTypeEncodingParser::ReadStructElement (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression)
 {
     StructElement retval;
     if (type.NextIf('"'))
@@ -72,25 +73,25 @@ AppleObjCTypeEncodingParser::ReadStructElement (clang::ASTContext &ast_ctx, lldb
     if (!type.NextIf('"'))
         return retval;
     uint32_t bitfield_size = 0;
-    retval.type = BuildType(ast_ctx, type, allow_unknownanytype, &bitfield_size);
+    retval.type = BuildType(ast_ctx, type, for_expression, &bitfield_size);
     retval.bitfield = bitfield_size;
     return retval;
 }
 
 clang::QualType
-AppleObjCTypeEncodingParser::BuildStruct (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype)
+AppleObjCTypeEncodingParser::BuildStruct (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression)
 {
-    return BuildAggregate(ast_ctx, type, allow_unknownanytype, '{', '}', clang::TTK_Struct);
+    return BuildAggregate(ast_ctx, type, for_expression, '{', '}', clang::TTK_Struct);
 }
 
 clang::QualType
-AppleObjCTypeEncodingParser::BuildUnion (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype)
+AppleObjCTypeEncodingParser::BuildUnion (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression)
 {
-    return BuildAggregate(ast_ctx, type, allow_unknownanytype, '(', ')', clang::TTK_Union);
+    return BuildAggregate(ast_ctx, type, for_expression, '(', ')', clang::TTK_Union);
 }
 
 clang::QualType
-AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype, char opener, char closer, uint32_t kind)
+AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression, char opener, char closer, uint32_t kind)
 {
     if (!type.NextIf(opener))
         return clang::QualType();
@@ -108,7 +109,7 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
         }
         else
         {
-            auto element = ReadStructElement(ast_ctx, type, allow_unknownanytype);
+            auto element = ReadStructElement(ast_ctx, type, for_expression);
             if (element.type.isNull())
                 break;
             else
@@ -144,12 +145,12 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
 }
 
 clang::QualType
-AppleObjCTypeEncodingParser::BuildArray (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype)
+AppleObjCTypeEncodingParser::BuildArray (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression)
 {
     if (!type.NextIf('['))
         return clang::QualType();
     uint32_t size = ReadNumber(type);
-    clang::QualType element_type(BuildType(ast_ctx, type, allow_unknownanytype));
+    clang::QualType element_type(BuildType(ast_ctx, type, for_expression));
     if (!type.NextIf(']'))
         return clang::QualType();
     ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
@@ -164,17 +165,45 @@ AppleObjCTypeEncodingParser::BuildArray (clang::ASTContext &ast_ctx, lldb_utilit
 // to avoid exposing the ivar info to the expression evaluator, consume but ignore the type info
 // and always return an 'id'; if anything, dynamic typing will resolve things for us anyway
 clang::QualType
-AppleObjCTypeEncodingParser::BuildObjCObjectType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype)
+AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool for_expression)
 {
     if (!type.NextIf('@'))
         return clang::QualType();
+    
+    std::string name;
+    
     if (type.NextIf('"'))
-        ReadQuotedString(type);
-    return ast_ctx.getObjCIdType();;
+        name = ReadQuotedString(type);
+    
+    if (for_expression && !name.empty() && name[0] != '<')
+    {
+        TypeVendor *type_vendor = m_runtime.GetTypeVendor();
+        
+        assert (type_vendor); // how are we parsing type encodings for expressions if a type vendor isn't in play?
+        assert (type_vendor->GetClangASTContext() == &ast_ctx); // it doesn't make sense for us to be looking in other places
+        
+        const bool append = false;
+        const uint32_t max_matches = 1;
+        std::vector<ClangASTType> types;
+        
+        uint32_t num_types = type_vendor->FindTypes(ConstString(name),
+                                                    append,
+                                                    max_matches,
+                                                    types);
+
+        assert(num_types); // how can a type be mentioned in runtime type signatures and not be in the runtime?
+
+        return types[0].GetPointerType().GetQualType();
+    }
+    else
+    {
+        // We're going to resolve this dynamically anyway, so just smile and wave.
+        return ast_ctx.getObjCIdType();
+    }
 }
 
 clang::QualType
-AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer& type, bool allow_unknownanytype, uint32_t *bitfield_bit_size)
+AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer& type, bool for_expression, uint32_t *bitfield_bit_size)
 {
     if (!type.HasAtLeast(1))
         return clang::QualType();
@@ -238,7 +267,7 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     
     if (type.NextIf('r'))
     {
-        clang::QualType target_type = BuildType(ast_ctx, type, allow_unknownanytype);
+        clang::QualType target_type = BuildType(ast_ctx, type, for_expression);
         if (target_type.isNull())
             return clang::QualType();
         else if (target_type == ast_ctx.UnknownAnyTy)
@@ -249,7 +278,7 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     
     if (type.NextIf('^'))
     {
-        if (!allow_unknownanytype && type.NextIf('?'))
+        if (!for_expression && type.NextIf('?'))
         {
             // if we are not supporting the concept of unknownAny, but what is being created here is an unknownAny*, then
             // we can just get away with a void*
@@ -259,7 +288,7 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
         }
         else
         {
-            clang::QualType target_type = BuildType(ast_ctx, type, allow_unknownanytype);
+            clang::QualType target_type = BuildType(ast_ctx, type, for_expression);
             if (target_type.isNull())
                 return clang::QualType();
             else if (target_type == ast_ctx.UnknownAnyTy)
@@ -270,30 +299,30 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     }
     
     if (type.NextIf('?'))
-        return allow_unknownanytype ? ast_ctx.UnknownAnyTy : clang::QualType();
+        return for_expression ? ast_ctx.UnknownAnyTy : clang::QualType();
     
     if (type.Peek() == '{')
-        return BuildStruct(ast_ctx, type, allow_unknownanytype);
+        return BuildStruct(ast_ctx, type, for_expression);
     
     if (type.Peek() == '[')
-        return BuildArray(ast_ctx, type, allow_unknownanytype);
+        return BuildArray(ast_ctx, type, for_expression);
     
     if (type.Peek() == '(')
-        return BuildUnion(ast_ctx, type, allow_unknownanytype);
+        return BuildUnion(ast_ctx, type, for_expression);
     
     if (type.Peek() == '@')
-        return BuildObjCObjectType(ast_ctx, type, allow_unknownanytype);
+        return BuildObjCObjectPointerType(ast_ctx, type, for_expression);
     
     return clang::QualType();
 }
 
 ClangASTType
-AppleObjCTypeEncodingParser::RealizeType (clang::ASTContext &ast_ctx, const char* name, bool allow_unknownanytype)
+AppleObjCTypeEncodingParser::RealizeType (clang::ASTContext &ast_ctx, const char* name, bool for_expression)
 {
     if (name && name[0])
     {
         StringLexer lexer(name);
-        clang::QualType qual_type = BuildType(ast_ctx, lexer, allow_unknownanytype);
+        clang::QualType qual_type = BuildType(ast_ctx, lexer, for_expression);
         return ClangASTType(&ast_ctx, qual_type.getAsOpaquePtr());
     }
     return ClangASTType();
