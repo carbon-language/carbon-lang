@@ -8709,7 +8709,7 @@ TEST_F(FormatTest, UsesLanguageForBasedOnStyle) {
   Style.Language = FormatStyle::LK_JavaScript;
   Style.BreakBeforeTernaryOperators = true;
   EXPECT_EQ(0, parseConfiguration("BasedOnStyle: Google", &Style).value());
-  EXPECT_FALSE(Style.BreakBeforeTernaryOperators);
+  EXPECT_FALSE(Style.SpacesInContainerLiterals);
 
   Style.BreakBeforeTernaryOperators = true;
   EXPECT_EQ(0, parseConfiguration("---\n"
@@ -8718,7 +8718,7 @@ TEST_F(FormatTest, UsesLanguageForBasedOnStyle) {
               "Language: JavaScript\n"
               "IndentWidth: 76\n"
               "...\n", &Style).value());
-  EXPECT_FALSE(Style.BreakBeforeTernaryOperators);
+  EXPECT_FALSE(Style.SpacesInContainerLiterals);
   EXPECT_EQ(76u, Style.IndentWidth);
   EXPECT_EQ(FormatStyle::LK_JavaScript, Style.Language);
 }
