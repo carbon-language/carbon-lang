@@ -121,7 +121,7 @@ public:
 
   DIE *createAndAddScopeChildren(LexicalScope *Scope, DIE &ScopeDIE);
 
-  DIE &constructAbstractSubprogramScopeDIE(LexicalScope *Scope);
+  void constructAbstractSubprogramScopeDIE(LexicalScope *Scope);
 
   /// \brief Construct import_module DIE.
   std::unique_ptr<DIE>

@@ -337,15 +337,11 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
 
   const MDNode *SP = Scope->getScopeNode();
 
-  DIE *&AbsDef = AbstractSPDies[SP];
-  if (AbsDef)
-    return;
-
   ProcessedSPNodes.insert(SP);
 
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
-  AbsDef = &SPMap[SP]->constructAbstractSubprogramScopeDIE(Scope);
+  SPMap[SP]->constructAbstractSubprogramScopeDIE(Scope);
 }
 
 void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE &D) const {

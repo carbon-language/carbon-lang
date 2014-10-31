@@ -586,8 +586,12 @@ DIE *DwarfCompileUnit::createAndAddScopeChildren(LexicalScope *Scope,
   return ObjectPointer;
 }
 
-DIE &
+void
 DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
+  DIE *&AbsDef = DD->getAbstractSPDies()[Scope->getScopeNode()];
+  if (AbsDef)
+    return;
+
   DISubprogram SP(Scope->getScopeNode());
 
   DIE *ContextDIE;
@@ -604,15 +608,14 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
 
   // Passing null as the associated DIDescriptor because the abstract definition
   // shouldn't be found by lookup.
-  DIE &AbsDef =
-      createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, DIDescriptor());
-  applySubprogramAttributesToDefinition(SP, AbsDef);
+  AbsDef =
+      &createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, DIDescriptor());
+  applySubprogramAttributesToDefinition(SP, *AbsDef);
 
   if (getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
-    addUInt(AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-  if (DIE *ObjectPointer = createAndAddScopeChildren(Scope, AbsDef))
-    addDIEEntry(AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
-  return AbsDef;
+    addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+  if (DIE *ObjectPointer = createAndAddScopeChildren(Scope, *AbsDef))
+    addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
 
 std::unique_ptr<DIE>
