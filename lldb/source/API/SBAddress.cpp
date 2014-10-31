@@ -23,19 +23,19 @@ using namespace lldb_private;
 
 
 SBAddress::SBAddress () :
-    m_opaque_ap ()
+    m_opaque_ap (new Address())
 {
 }
 
 SBAddress::SBAddress (const Address *lldb_object_ptr) :
-    m_opaque_ap ()
+    m_opaque_ap (new Address())
 {
     if (lldb_object_ptr)
         ref() = *lldb_object_ptr;
 }
 
 SBAddress::SBAddress (const SBAddress &rhs) :
-    m_opaque_ap ()
+    m_opaque_ap (new Address())
 {
     if (rhs.IsValid())
         ref() = rhs.ref();
@@ -49,7 +49,7 @@ SBAddress::SBAddress (lldb::SBSection section, lldb::addr_t offset) :
 
 // Create an address by resolving a load address using the supplied target
 SBAddress::SBAddress (lldb::addr_t load_addr, lldb::SBTarget &target) :
-    m_opaque_ap()
+    m_opaque_ap(new Address())
 {    
     SetLoadAddress (load_addr, target);
 }
@@ -68,7 +68,7 @@ SBAddress::operator = (const SBAddress &rhs)
         if (rhs.IsValid())
             ref() = rhs.ref();
         else
-            m_opaque_ap.reset();
+            m_opaque_ap.reset (new Address());
     }
     return *this;
 }
@@ -82,7 +82,7 @@ SBAddress::IsValid () const
 void
 SBAddress::Clear ()
 {
-    m_opaque_ap.reset();
+    m_opaque_ap.reset (new Address());
 }
 
 void
@@ -100,13 +100,13 @@ SBAddress::SetAddress (const Address *lldb_object_ptr)
     if (lldb_object_ptr)
         ref() =  *lldb_object_ptr;
     else
-        m_opaque_ap.reset();
+        m_opaque_ap.reset (new Address());
 }
 
 lldb::addr_t
 SBAddress::GetFileAddress () const
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         return m_opaque_ap->GetFileAddress();
     else
         return LLDB_INVALID_ADDRESS;
@@ -121,7 +121,7 @@ SBAddress::GetLoadAddress (const SBTarget &target) const
     TargetSP target_sp (target.GetSP());
     if (target_sp)
     {
-        if (m_opaque_ap.get())
+        if (m_opaque_ap->IsValid())
         {
             Mutex::Locker api_locker (target_sp->GetAPIMutex());
             addr = m_opaque_ap->GetLoadAddress (target_sp.get());
@@ -162,7 +162,7 @@ SBAddress::SetLoadAddress (lldb::addr_t load_addr, lldb::SBTarget &target)
 bool
 SBAddress::OffsetAddress (addr_t offset)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
     {
         addr_t addr_offset = m_opaque_ap->GetOffset();
         if (addr_offset != LLDB_INVALID_ADDRESS)
@@ -178,7 +178,7 @@ lldb::SBSection
 SBAddress::GetSection ()
 {
     lldb::SBSection sb_section;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         sb_section.SetSP (m_opaque_ap->GetSection());
     return sb_section;
 }
@@ -186,7 +186,7 @@ SBAddress::GetSection ()
 lldb::addr_t
 SBAddress::GetOffset ()
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         return m_opaque_ap->GetOffset();
     return 0;
 }
@@ -233,7 +233,7 @@ SBAddress::GetDescription (SBStream &description)
     // Call "ref()" on the stream to make sure it creates a backing stream in
     // case there isn't one already...
     Stream &strm = description.ref();
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
     {
         m_opaque_ap->Dump (&strm,
                            NULL,
@@ -255,7 +255,7 @@ SBModule
 SBAddress::GetModule ()
 {
     SBModule sb_module;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         sb_module.SetSP (m_opaque_ap->GetModule());
     return sb_module;
 }
@@ -264,7 +264,7 @@ SBSymbolContext
 SBAddress::GetSymbolContext (uint32_t resolve_scope)
 {
     SBSymbolContext sb_sc;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         m_opaque_ap->CalculateSymbolContext (&sb_sc.ref(), resolve_scope);
     return sb_sc;
 }
@@ -273,7 +273,7 @@ SBCompileUnit
 SBAddress::GetCompileUnit ()
 {
     SBCompileUnit sb_comp_unit;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         sb_comp_unit.reset(m_opaque_ap->CalculateSymbolContextCompileUnit());
     return sb_comp_unit;
 }
@@ -282,7 +282,7 @@ SBFunction
 SBAddress::GetFunction ()
 {
     SBFunction sb_function;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         sb_function.reset(m_opaque_ap->CalculateSymbolContextFunction());
     return sb_function;
 }
@@ -291,7 +291,7 @@ SBBlock
 SBAddress::GetBlock ()
 {
     SBBlock sb_block;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         sb_block.SetPtr(m_opaque_ap->CalculateSymbolContextBlock());
     return sb_block;
 }
@@ -300,7 +300,7 @@ SBSymbol
 SBAddress::GetSymbol ()
 {
     SBSymbol sb_symbol;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         sb_symbol.reset(m_opaque_ap->CalculateSymbolContextSymbol());
     return sb_symbol;
 }
@@ -309,7 +309,7 @@ SBLineEntry
 SBAddress::GetLineEntry ()
 {
     SBLineEntry sb_line_entry;
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
     {
         LineEntry line_entry;
         if (m_opaque_ap->CalculateSymbolContextLineEntry (line_entry))
@@ -321,7 +321,7 @@ SBAddress::GetLineEntry ()
 AddressClass
 SBAddress::GetAddressClass ()
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap->IsValid())
         return m_opaque_ap->GetAddressClass();
     return eAddressClassInvalid;
 }
