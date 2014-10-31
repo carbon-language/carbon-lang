@@ -326,13 +326,13 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
             trap_opcode_size = sizeof(g_i386_opcode);
         }
         break;
-	case llvm::Triple::ppc:
-	case llvm::Triple::ppc64:
-		{
-			static const uint8_t g_ppc_opcode[] = { 0x7f, 0xe0, 0x00, 0x08 };
-			trap_opcode = g_ppc_opcode;
-			trap_opcode_size = sizeof(g_ppc_opcode);
-		}
+    case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
+        {
+            static const uint8_t g_ppc_opcode[] = { 0x7f, 0xe0, 0x00, 0x08 };
+            trap_opcode = g_ppc_opcode;
+            trap_opcode_size = sizeof(g_ppc_opcode);
+        }
     }
 
     if (bp_site->SetTrapOpcode(trap_opcode, trap_opcode_size))

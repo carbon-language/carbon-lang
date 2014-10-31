@@ -19,7 +19,6 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Host.h"
 #include "lldb/Utility/SafeMachO.h"
-#include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Host/Endian.h"

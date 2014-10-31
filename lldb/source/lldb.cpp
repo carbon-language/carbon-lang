@@ -229,6 +229,7 @@ lldb_private::Terminate ()
     ABIMacOSX_arm::Terminate();
     ABIMacOSX_arm64::Terminate();
     ABISysV_x86_64::Terminate();
+    ABISysV_ppc::Terminate();
     ABISysV_ppc64::Terminate();
     DisassemblerLLVMC::Terminate();
     ObjectContainerBSDArchive::Terminate();

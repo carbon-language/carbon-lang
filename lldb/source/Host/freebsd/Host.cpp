@@ -301,6 +301,8 @@ GetAuxvData32(lldb_private::Process *process)
     DataBufferSP buf_sp;
     std::unique_ptr<DataBufferHeap> buf_ap(new DataBufferHeap(1024, 0));
 
+    // TODO:FIXME: Need a way to get this dynamically, instead of a magic
+    // constant that only works on a single architecture.
     ps_strings_addr = (void *)0xffffdff0;
     pid.piod_op = PIOD_READ_D;
     pid.piod_addr = &ps_strings;

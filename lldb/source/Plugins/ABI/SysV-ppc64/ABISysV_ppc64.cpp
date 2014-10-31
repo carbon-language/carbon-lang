@@ -637,6 +637,30 @@ ABISysV_ppc64::GetReturnValueObjectSimple (Thread &thread,
             }
             else
             {
+                const size_t byte_size = return_clang_type.GetByteSize();
+                if (byte_size <= sizeof(long double))
+                {
+                    const RegisterInfo *f1_info = reg_ctx->GetRegisterInfoByName("f1", 0);
+                    RegisterValue f1_value;
+                    if (reg_ctx->ReadRegister (f1_info, f1_value))
+                    {
+                        DataExtractor data;
+                        if (f1_value.GetData(data))
+                        {
+                            lldb::offset_t offset = 0;
+                            if (byte_size == sizeof(float))
+                            {
+                                value.GetScalar() = (float) data.GetFloat(&offset);
+                                success = true;
+                            }
+                            else if (byte_size == sizeof(double))
+                            {
+                                value.GetScalar() = (double) data.GetDouble(&offset);
+                                success = true;
+                            }
+                        }
+                    }
+                }
             }
         }
 
