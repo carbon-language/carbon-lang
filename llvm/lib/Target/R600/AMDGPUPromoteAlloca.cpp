@@ -234,7 +234,8 @@ static bool tryPromoteAllocaToVector(AllocaInst *Alloca) {
   return true;
 }
 
-static void collectUsesWithPtrTypes(Value *Val, std::vector<Value*> &WorkList) {
+static bool collectUsesWithPtrTypes(Value *Val, std::vector<Value*> &WorkList) {
+  bool Success = true;
   for (User *User : Val->users()) {
     if(std::find(WorkList.begin(), WorkList.end(), User) != WorkList.end())
       continue;
@@ -242,11 +243,20 @@ static void collectUsesWithPtrTypes(Value *Val, std::vector<Value*> &WorkList) {
       WorkList.push_back(User);
       continue;
     }
+
+    // FIXME: Correctly handle ptrtoint instructions.
+    Instruction *UseInst = dyn_cast<Instruction>(User);
+    if (UseInst && UseInst->getOpcode() == Instruction::PtrToInt)
+      return false;
+
     if (!User->getType()->isPointerTy())
       continue;
+
     WorkList.push_back(User);
-    collectUsesWithPtrTypes(User, WorkList);
+
+    Success &= collectUsesWithPtrTypes(User, WorkList);
   }
+  return Success;
 }
 
 void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
@@ -271,6 +281,13 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
 
   if (AllocaSize > LocalMemAvailable) {
     DEBUG(dbgs() << " Not enough local memory to promote alloca.\n");
+    return;
+  }
+
+  std::vector<Value*> WorkList;
+
+  if (!collectUsesWithPtrTypes(&I, WorkList)) {
+    DEBUG(dbgs() << " Do not know how to convert all uses\n");
     return;
   }
 
@@ -319,10 +336,6 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   I.mutateType(Offset->getType());
   I.replaceAllUsesWith(Offset);
   I.eraseFromParent();
-
-  std::vector<Value*> WorkList;
-
-  collectUsesWithPtrTypes(Offset, WorkList);
 
   for (std::vector<Value*>::iterator i = WorkList.begin(),
                                      e = WorkList.end(); i != e; ++i) {

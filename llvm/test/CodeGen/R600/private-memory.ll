@@ -290,3 +290,22 @@ entry:
   ret void
 }
 
+; AMDGPUPromoteAlloca does not know how to handle ptrtoint.  When it
+; finds one, it should stop trying to promote.
+
+; FUNC-LABEL: ptrtoint:
+; SI-NOT: DS_WRITE
+; SI: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen
+; SI: BUFFER_LOAD_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x5
+define void @ptrtoint(i32 addrspace(1)* %out, i32 %a, i32 %b) {
+  %alloca = alloca [16 x i32]
+  %tmp0 = getelementptr [16 x i32]* %alloca, i32 0, i32 %a
+  store i32 5, i32* %tmp0
+  %tmp1 = ptrtoint [16 x i32]* %alloca to i32
+  %tmp2 = add i32 %tmp1, 5
+  %tmp3 = inttoptr i32 %tmp2 to i32*
+  %tmp4 = getelementptr i32* %tmp3, i32 %b
+  %tmp5 = load i32* %tmp4
+  store i32 %tmp5, i32 addrspace(1)* %out
+  ret void
+}
