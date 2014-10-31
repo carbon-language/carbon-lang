@@ -660,7 +660,7 @@ void Instruction::setMetadata(unsigned KindID, Value *MD) {
   if (!MD && !hasMetadata()) return;
 
   // For now, we only expect MDNodes here.
-  MDNode *Node = cast<MDNode>(MD);
+  MDNode *Node = cast_or_null<MDNode>(MD);
 
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg) {
