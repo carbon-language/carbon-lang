@@ -48,6 +48,7 @@ enum TokenType {
   TT_InlineASMColon,
   TT_JavaAnnotation,
   TT_LambdaLSquare,
+  TT_LeadingJavaAnnotation,
   TT_LineComment,
   TT_ObjCBlockLBrace,
   TT_ObjCBlockLParen,

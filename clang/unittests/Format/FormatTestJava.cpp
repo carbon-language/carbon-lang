@@ -84,9 +84,15 @@ TEST_F(FormatTestJava, Annotations) {
                "  }\n"
                "});");
 
+  verifyFormat("void SomeFunction(@Nullable String something) {\n"
+               "}");
+
   verifyFormat("@Partial @Mock DataLoader loader;");
   verifyFormat("@SuppressWarnings(value = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\")\n"
                "public static int iiiiiiiiiiiiiiiiiiiiiiii;");
+
+  verifyFormat("@SomeAnnotation(\"With some really looooooooooooooong text\")\n"
+               "private static final long something = 0L;");
 }
 
 TEST_F(FormatTestJava, Generics) {

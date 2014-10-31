@@ -190,6 +190,8 @@ private:
           CurrentToken->Type = TT_AttributeParen;
         if (Left->Previous && Left->Previous->Type == TT_JavaAnnotation)
           CurrentToken->Type = TT_JavaAnnotation;
+        if (Left->Previous && Left->Previous->Type == TT_LeadingJavaAnnotation)
+          CurrentToken->Type = TT_LeadingJavaAnnotation;
 
         if (!HasMultipleLines)
           Left->PackingKind = PPK_Inconclusive;
@@ -835,7 +837,12 @@ private:
         Current.Type = TT_TrailingAnnotation;
       } else if (Style.Language == FormatStyle::LK_Java && Current.Previous &&
                  Current.Previous->is(tok::at)) {
-        Current.Type = TT_JavaAnnotation;
+        const FormatToken& AtToken = *Current.Previous;
+        if (!AtToken.Previous ||
+            AtToken.Previous->Type == TT_LeadingJavaAnnotation)
+          Current.Type = TT_LeadingJavaAnnotation;
+        else
+          Current.Type = TT_JavaAnnotation;
       }
     }
   }
@@ -1460,6 +1467,9 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 150;
   }
 
+  if (Left.Type == TT_LeadingJavaAnnotation)
+    return 1;
+
   if (Right.Type == TT_TrailingAnnotation &&
       (!Right.Next || Right.Next->isNot(tok::l_paren))) {
     // Moving trailing annotations to the next line is fine for ObjC method
@@ -1811,7 +1821,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
         Left.Previous->is(tok::char_constant))
       return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
-    if (Left.Type == TT_JavaAnnotation && Right.isNot(tok::l_paren) &&
+    if (Left.Type == TT_LeadingJavaAnnotation && Right.isNot(tok::l_paren) &&
         Line.Last->is(tok::l_brace))
       return true;
     if (Right.is(tok::plus) && Left.is(tok::string_literal) && Right.Next &&
@@ -1835,7 +1845,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.Tok.getObjCKeywordID() == tok::objc_interface)
     return false;
-  if (Left.Type == TT_JavaAnnotation)
+  if (Left.Type == TT_JavaAnnotation || Left.Type == TT_LeadingJavaAnnotation)
     return true;
   if (Right.Type == TT_StartOfName ||
       Right.Type == TT_FunctionDeclarationName || Right.is(tok::kw_operator))
