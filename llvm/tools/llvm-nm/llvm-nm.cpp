@@ -721,18 +721,14 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
     // Check section type.
     if (Characteristics & COFF::IMAGE_SCN_CNT_CODE)
       return 't';
-    else if (Characteristics & COFF::IMAGE_SCN_MEM_READ &&
-             ~Characteristics & COFF::IMAGE_SCN_MEM_WRITE) // Read only.
-      return 'r';
-    else if (Characteristics & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
-      return 'd';
-    else if (Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+    if (Characteristics & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
+      return Characteristics & COFF::IMAGE_SCN_MEM_WRITE ? 'd' : 'r';
+    if (Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
       return 'b';
-    else if (Characteristics & COFF::IMAGE_SCN_LNK_INFO)
+    if (Characteristics & COFF::IMAGE_SCN_LNK_INFO)
       return 'i';
-
     // Check for section symbol.
-    else if (Symb.isSectionDefinition())
+    if (Symb.isSectionDefinition())
       return 's';
   }
 

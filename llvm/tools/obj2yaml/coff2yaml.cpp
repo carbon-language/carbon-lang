@@ -161,7 +161,7 @@ void COFFDumper::dumpSymbols(unsigned NumSymbols) {
             reinterpret_cast<const object::coff_aux_bf_and_ef_symbol *>(
                 AuxData.data());
         dumpbfAndEfLineInfo(&Sym, ObjBES);
-      } else if (Symbol.isWeakExternal()) {
+      } else if (Symbol.isAnyUndefined()) {
         // This symbol represents a weak external definition.
         assert(Symbol.getNumberOfAuxSymbols() == 1 &&
                "Expected a single aux symbol to describe this weak symbol!");

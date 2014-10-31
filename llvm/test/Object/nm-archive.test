@@ -1,4 +1,4 @@
-RUN: llvm-nm %p/Inputs/archive-test.a-coff-i386 \
+RUN: llvm-nm -a %p/Inputs/archive-test.a-coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF
 
 COFF: trivial-object-test.coff-i386:
@@ -9,7 +9,7 @@ COFF-NEXT:          U _SomeOtherFunction
 COFF-NEXT: 00000000 T _main
 COFF-NEXT:          U _puts
 
-RUN: llvm-nm -o %p/Inputs/archive-test.a-coff-i386 \
+RUN: llvm-nm -a -o %p/Inputs/archive-test.a-coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF-o
 
 COFF-o: {{.*}}/archive-test.a-coff-i386:trivial-object-test.coff-i386: 00000000 d .data

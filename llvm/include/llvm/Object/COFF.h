@@ -301,9 +301,26 @@ public:
 
   uint8_t getComplexType() const { return (getType() & 0xF0) >> 4; }
 
+  bool isExternal() const {
+    return getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL;
+  }
+
+  bool isCommon() const {
+    return isExternal() && getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED &&
+           getValue() != 0;
+  }
+
+  bool isUndefined() const {
+    return isExternal() && getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED &&
+           getValue() == 0;
+  }
+
+  bool isWeakExternal() const {
+    return getStorageClass() == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
+  }
+
   bool isFunctionDefinition() const {
-    return getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-           getBaseType() == COFF::IMAGE_SYM_TYPE_NULL &&
+    return isExternal() && getBaseType() == COFF::IMAGE_SYM_TYPE_NULL &&
            getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION &&
            !COFF::isReservedSectionNumber(getSectionNumber());
   }
@@ -312,10 +329,8 @@ public:
     return getStorageClass() == COFF::IMAGE_SYM_CLASS_FUNCTION;
   }
 
-  bool isWeakExternal() const {
-    return getStorageClass() == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL ||
-           (getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-            getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED && getValue() == 0);
+  bool isAnyUndefined() const {
+    return isUndefined() || isWeakExternal();
   }
 
   bool isFileRecord() const {
@@ -329,6 +344,8 @@ public:
         getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
         getSectionNumber() == COFF::IMAGE_SYM_ABSOLUTE;
     bool isOrdinarySection = getStorageClass() == COFF::IMAGE_SYM_CLASS_STATIC;
+    if (!getNumberOfAuxSymbols())
+      return false;
     return isAppdomainGlobal || isOrdinarySection;
   }
 

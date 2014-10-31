@@ -147,39 +147,54 @@ std::error_code COFFObjectFile::getSymbolName(DataRefImpl Ref,
 std::error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
                                                  uint64_t &Result) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
-  const coff_section *Section = nullptr;
-  if (std::error_code EC = getSection(Symb.getSectionNumber(), Section))
-    return EC;
 
-  if (Symb.getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED)
+  if (Symb.isAnyUndefined()) {
     Result = UnknownAddressOrSize;
-  else if (Section)
+    return object_error::success;
+  }
+  if (Symb.isCommon()) {
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  }
+  int32_t SectionNumber = Symb.getSectionNumber();
+  if (!COFF::isReservedSectionNumber(SectionNumber)) {
+    const coff_section *Section = nullptr;
+    if (std::error_code EC = getSection(SectionNumber, Section))
+      return EC;
+
     Result = Section->VirtualAddress + Symb.getValue();
-  else
-    Result = Symb.getValue();
+    return object_error::success;
+  }
+
+  Result = Symb.getValue();
   return object_error::success;
 }
 
 std::error_code COFFObjectFile::getSymbolType(DataRefImpl Ref,
                                               SymbolRef::Type &Result) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
+  int32_t SectionNumber = Symb.getSectionNumber();
   Result = SymbolRef::ST_Other;
 
-  if (Symb.getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-      Symb.getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED) {
+  if (Symb.isAnyUndefined()) {
     Result = SymbolRef::ST_Unknown;
   } else if (Symb.isFunctionDefinition()) {
     Result = SymbolRef::ST_Function;
-  } else {
-      uint32_t Characteristics = 0;
-      if (!COFF::isReservedSectionNumber(Symb.getSectionNumber())) {
-        const coff_section *Section = nullptr;
-        if (std::error_code EC = getSection(Symb.getSectionNumber(), Section))
-          return EC;
-        Characteristics = Section->Characteristics;
-    }
-    if (Characteristics & COFF::IMAGE_SCN_MEM_READ &&
-        ~Characteristics & COFF::IMAGE_SCN_MEM_WRITE) // Read only.
+  } else if (Symb.isCommon()) {
+    Result = SymbolRef::ST_Data;
+  } else if (Symb.isFileRecord()) {
+    Result = SymbolRef::ST_File;
+  } else if (SectionNumber == COFF::IMAGE_SYM_DEBUG) {
+    Result = SymbolRef::ST_Debug;
+  } else if (!COFF::isReservedSectionNumber(SectionNumber)) {
+    const coff_section *Section = nullptr;
+    if (std::error_code EC = getSection(SectionNumber, Section))
+      return EC;
+    uint32_t Characteristics = Section->Characteristics;
+    if (Characteristics & COFF::IMAGE_SCN_CNT_CODE)
+      Result = SymbolRef::ST_Function;
+    else if (Characteristics & (COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA))
       Result = SymbolRef::ST_Data;
   }
   return object_error::success;
@@ -189,50 +204,66 @@ uint32_t COFFObjectFile::getSymbolFlags(DataRefImpl Ref) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
   uint32_t Result = SymbolRef::SF_None;
 
-  // TODO: Correctly set SF_FormatSpecific, SF_Common
-
-  if (Symb.getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED) {
-    if (Symb.getValue() == 0)
-      Result |= SymbolRef::SF_Undefined;
-    else
-      Result |= SymbolRef::SF_Common;
-  }
-
-
-  // TODO: This are certainly too restrictive.
-  if (Symb.getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL)
+  if (Symb.isExternal() || Symb.isWeakExternal())
     Result |= SymbolRef::SF_Global;
 
-  if (Symb.getStorageClass() == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL)
+  if (Symb.isWeakExternal())
     Result |= SymbolRef::SF_Weak;
 
   if (Symb.getSectionNumber() == COFF::IMAGE_SYM_ABSOLUTE)
     Result |= SymbolRef::SF_Absolute;
+
+  if (Symb.isFileRecord())
+    Result |= SymbolRef::SF_FormatSpecific;
+
+  if (Symb.isSectionDefinition())
+    Result |= SymbolRef::SF_FormatSpecific;
+
+  if (Symb.isCommon())
+    Result |= SymbolRef::SF_Common;
+
+  if (Symb.isAnyUndefined())
+    Result |= SymbolRef::SF_Undefined;
 
   return Result;
 }
 
 std::error_code COFFObjectFile::getSymbolSize(DataRefImpl Ref,
                                               uint64_t &Result) const {
+  COFFSymbolRef Symb = getCOFFSymbol(Ref);
+
+  if (Symb.isAnyUndefined()) {
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  }
+  if (Symb.isCommon()) {
+    Result = Symb.getValue();
+    return object_error::success;
+  }
+  if (Symb.isFunctionDefinition()) {
+    ArrayRef<uint8_t> AuxData = getSymbolAuxData(Symb);
+    if (!AuxData.empty()) {
+      const auto *CAFD =
+          reinterpret_cast<const coff_aux_function_definition *>(
+              AuxData.data());
+      Result = CAFD->TotalSize;
+      return object_error::success;
+    }
+  }
   // FIXME: Return the correct size. This requires looking at all the symbols
   //        in the same section as this symbol, and looking for either the next
   //        symbol, or the end of the section.
-  COFFSymbolRef Symb = getCOFFSymbol(Ref);
-  const coff_section *Section = nullptr;
-  if (std::error_code EC = getSection(Symb.getSectionNumber(), Section))
-    return EC;
+  int32_t SectionNumber = Symb.getSectionNumber();
+  if (!COFF::isReservedSectionNumber(SectionNumber)) {
+    const coff_section *Section = nullptr;
+    if (std::error_code EC = getSection(SectionNumber, Section))
+      return EC;
 
-  if (Symb.getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED) {
-    if (Symb.getValue() == 0)
-      Result = UnknownAddressOrSize;
-    else
-      Result = Symb.getValue();
-  } else if (Section) {
     Result = Section->SizeOfRawData - Symb.getValue();
-  } else {
-    Result = 0;
+    return object_error::success;
   }
 
+  Result = 0;
   return object_error::success;
 }
 

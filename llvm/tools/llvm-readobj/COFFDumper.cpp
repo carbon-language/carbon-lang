@@ -857,7 +857,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printHex("PointerToLineNumber", Aux->PointerToLinenumber);
       W.printHex("PointerToNextFunction", Aux->PointerToNextFunction);
 
-    } else if (Symbol.isWeakExternal()) {
+    } else if (Symbol.isAnyUndefined()) {
       const coff_aux_weak_external *Aux;
       if (error(getSymbolAuxData(Obj, Symbol, I, Aux)))
         break;

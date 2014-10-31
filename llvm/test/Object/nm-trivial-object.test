@@ -1,6 +1,6 @@
-RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-nm - \
+RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-nm -a - \
 RUN:         | FileCheck %s -check-prefix COFF
-RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm - \
+RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm -a - \
 RUN:         | FileCheck %s -check-prefix COFF
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
@@ -36,7 +36,7 @@ RUN: llvm-nm -p -a %p/Inputs/macho-hello-g.macho-x86_64 \
 RUN:         | FileCheck %s -check-prefix macho-pa
 RUN: llvm-nm -u %p/Inputs/macho-hello-g.macho-x86_64 \
 RUN:         | FileCheck %s -check-prefix macho-u
-RUN: llvm-nm -S %p/Inputs/common.coff-i386 \
+RUN: llvm-nm -S -a %p/Inputs/common.coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF-COMMON
 RUN: llvm-nm %p/Inputs/relocatable-with-section-address.elf-x86-64 \
 RUN:         | FileCheck %s -check-prefix ELF-SEC-ADDR64
