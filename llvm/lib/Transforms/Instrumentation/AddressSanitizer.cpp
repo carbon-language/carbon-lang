@@ -1405,13 +1405,13 @@ void AddressSanitizer::InjectCoverageForIndirectCalls(
   const int kCacheSize = 16;
   const int kCacheAlignment = 64;  // Align for better performance.
   Type *Ty = ArrayType::get(IntptrTy, kCacheSize);
-  GlobalVariable *CalleeCache =
-      new GlobalVariable(*F.getParent(), Ty, false, GlobalValue::PrivateLinkage,
-                         Constant::getNullValue(Ty), "__asan_gen_callee_cache");
-  CalleeCache->setAlignment(kCacheAlignment);
   for (auto I : IndirCalls) {
     IRBuilder<> IRB(I);
     CallSite CS(I);
+    GlobalVariable *CalleeCache = new GlobalVariable(
+        *F.getParent(), Ty, false, GlobalValue::PrivateLinkage,
+        Constant::getNullValue(Ty), "__asan_gen_callee_cache");
+    CalleeCache->setAlignment(kCacheAlignment);
     IRB.CreateCall2(AsanCovIndirCallFunction,
                     IRB.CreatePointerCast(CS.getCalledValue(), IntptrTy),
                     IRB.CreatePointerCast(CalleeCache, IntptrTy));

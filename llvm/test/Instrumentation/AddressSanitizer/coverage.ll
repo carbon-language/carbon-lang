@@ -78,9 +78,13 @@ entry:
   %vtable = load void (%struct.StructWithVptr*)*** %0, align 8
   %1 = load void (%struct.StructWithVptr*)** %vtable, align 8
   tail call void %1(%struct.StructWithVptr* %foo)
+  tail call void %1(%struct.StructWithVptr* %foo)
   ret void
 }
 
+; We expect to see two calls to __sanitizer_cov_indir_call16
+; with different values of second argument.
 ; CHECK4-LABEL: define void @CallViaVptr
-; CHECK4: call void @__sanitizer_cov_indir_call16
+; CHECK4: call void @__sanitizer_cov_indir_call16({{.*}},[[CACHE:.*]])
+; CHECK4-NOT: call void @__sanitizer_cov_indir_call16({{.*}},[[CACHE]])
 ; CHECK4: ret void
