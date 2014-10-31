@@ -49,10 +49,11 @@ static void mangleFunctionBlock(MangleContext &Context,
 
 void MangleContext::anchor() { }
 
-enum StdOrFastCC {
-  SOF_OTHER,
-  SOF_FAST,
-  SOF_STD
+enum CCMangling {
+  CCM_Other,
+  CCM_Fast,
+  CCM_Vector,
+  CCM_Std
 };
 
 static bool isExternC(const NamedDecl *ND) {
@@ -61,20 +62,22 @@ static bool isExternC(const NamedDecl *ND) {
   return cast<VarDecl>(ND)->isExternC();
 }
 
-static StdOrFastCC getStdOrFastCallMangling(const ASTContext &Context,
-                                            const NamedDecl *ND) {
+static CCMangling getCallingConvMangling(const ASTContext &Context,
+                                         const NamedDecl *ND) {
   const TargetInfo &TI = Context.getTargetInfo();
   const llvm::Triple &Triple = TI.getTriple();
-  if (!Triple.isOSWindows() || Triple.getArch() != llvm::Triple::x86)
-    return SOF_OTHER;
+  if (!Triple.isOSWindows() ||
+      !(Triple.getArch() == llvm::Triple::x86 ||
+        Triple.getArch() == llvm::Triple::x86_64))
+    return CCM_Other;
 
   if (Context.getLangOpts().CPlusPlus && !isExternC(ND) &&
       TI.getCXXABI() == TargetCXXABI::Microsoft)
-    return SOF_OTHER;
+    return CCM_Other;
 
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
   if (!FD)
-    return SOF_OTHER;
+    return CCM_Other;
   QualType T = FD->getType();
 
   const FunctionType *FT = T->castAs<FunctionType>();
@@ -82,19 +85,21 @@ static StdOrFastCC getStdOrFastCallMangling(const ASTContext &Context,
   CallingConv CC = FT->getCallConv();
   switch (CC) {
   default:
-    return SOF_OTHER;
+    return CCM_Other;
   case CC_X86FastCall:
-    return SOF_FAST;
+    return CCM_Fast;
   case CC_X86StdCall:
-    return SOF_STD;
+    return CCM_Std;
+  case CC_X86VectorCall:
+    return CCM_Vector;
   }
 }
 
 bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
   const ASTContext &ASTContext = getASTContext();
 
-  StdOrFastCC CC = getStdOrFastCallMangling(ASTContext, D);
-  if (CC != SOF_OTHER)
+  CCMangling CC = getCallingConvMangling(ASTContext, D);
+  if (CC != CCM_Other)
     return true;
 
   // In C, functions with no attributes never need to be mangled. Fastpath them.
@@ -131,10 +136,10 @@ void MangleContext::mangleName(const NamedDecl *D, raw_ostream &Out) {
   }
 
   const ASTContext &ASTContext = getASTContext();
-  StdOrFastCC CC = getStdOrFastCallMangling(ASTContext, D);
+  CCMangling CC = getCallingConvMangling(ASTContext, D);
   bool MCXX = shouldMangleCXXName(D);
   const TargetInfo &TI = Context.getTargetInfo();
-  if (CC == SOF_OTHER || (MCXX && TI.getCXXABI() == TargetCXXABI::Microsoft)) {
+  if (CC == CCM_Other || (MCXX && TI.getCXXABI() == TargetCXXABI::Microsoft)) {
     if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))
       mangleObjCMethodName(OMD, Out);
     else
@@ -143,9 +148,9 @@ void MangleContext::mangleName(const NamedDecl *D, raw_ostream &Out) {
   }
 
   Out << '\01';
-  if (CC == SOF_STD)
+  if (CC == CCM_Std)
     Out << '_';
-  else
+  else if (CC == CCM_Fast)
     Out << '@';
 
   if (!MCXX)
@@ -158,6 +163,8 @@ void MangleContext::mangleName(const NamedDecl *D, raw_ostream &Out) {
   const FunctionDecl *FD = cast<FunctionDecl>(D);
   const FunctionType *FT = FD->getType()->castAs<FunctionType>();
   const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT);
+  if (CC == CCM_Vector)
+    Out << '@';
   Out << '@';
   if (!Proto) {
     Out << '0';
@@ -169,9 +176,11 @@ void MangleContext::mangleName(const NamedDecl *D, raw_ostream &Out) {
     if (!MD->isStatic())
       ++ArgWords;
   for (const auto &AT : Proto->param_types())
-    // Size should be aligned to DWORD boundary
-    ArgWords += llvm::RoundUpToAlignment(ASTContext.getTypeSize(AT), 32) / 32;
-  Out << 4 * ArgWords;
+    // Size should be aligned to pointer size.
+    ArgWords += llvm::RoundUpToAlignment(ASTContext.getTypeSize(AT),
+                                         TI.getPointerWidth(0)) /
+                TI.getPointerWidth(0);
+  Out << ((TI.getPointerWidth(0) / 8) * ArgWords);
 }
 
 void MangleContext::mangleGlobalBlock(const BlockDecl *BD,

@@ -508,18 +508,39 @@ static llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
   return Ty;
 }
 
+/// Returns true if this type can be passed in SSE registers with the
+/// X86_VectorCall calling convention. Shared between x86_32 and x86_64.
+static bool isX86VectorTypeForVectorCall(ASTContext &Context, QualType Ty) {
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+    if (BT->isFloatingPoint() && BT->getKind() != BuiltinType::Half)
+      return true;
+  } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
+    // vectorcall can pass XMM, YMM, and ZMM vectors. We don't pass SSE1 MMX
+    // registers specially.
+    unsigned VecSize = Context.getTypeSize(VT);
+    if (VecSize == 128 || VecSize == 256 || VecSize == 512)
+      return true;
+  }
+  return false;
+}
+
+/// Returns true if this aggregate is small enough to be passed in SSE registers
+/// in the X86_VectorCall calling convention. Shared between x86_32 and x86_64.
+static bool isX86VectorCallAggregateSmallEnough(uint64_t NumMembers) {
+  return NumMembers <= 4;
+}
+
 //===----------------------------------------------------------------------===//
 // X86-32 ABI Implementation
 //===----------------------------------------------------------------------===//
 
 /// \brief Similar to llvm::CCState, but for Clang.
 struct CCState {
-  CCState(unsigned CC) : CC(CC), FreeRegs(0) {}
+  CCState(unsigned CC) : CC(CC), FreeRegs(0), FreeSSERegs(0) {}
 
   unsigned CC;
   unsigned FreeRegs;
-  unsigned StackOffset;
-  bool UseInAlloca;
+  unsigned FreeSSERegs;
 };
 
 /// X86_32ABIInfo - The X86-32 ABI information.
@@ -538,6 +559,17 @@ class X86_32ABIInfo : public ABIInfo {
 
   static bool isRegisterSize(unsigned Size) {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
+  }
+
+  bool isHomogeneousAggregateBaseType(QualType Ty) const override {
+    // FIXME: Assumes vectorcall is in use.
+    return isX86VectorTypeForVectorCall(getContext(), Ty);
+  }
+
+  bool isHomogeneousAggregateSmallEnough(const Type *Ty,
+                                         uint64_t NumMembers) const override {
+    // FIXME: Assumes vectorcall is in use.
+    return isX86VectorCallAggregateSmallEnough(NumMembers);
   }
 
   bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context) const;
@@ -767,6 +799,14 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy, CCState &State) con
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
+  const Type *Base = nullptr;
+  uint64_t NumElts = 0;
+  if (State.CC == llvm::CallingConv::X86_VectorCall &&
+      isHomogeneousAggregate(RetTy, Base, NumElts)) {
+    // The LLVM struct type for such an aggregate should lower properly.
+    return ABIArgInfo::getDirect();
+  }
+
   if (const VectorType *VT = RetTy->getAs<VectorType>()) {
     // On Darwin, some vectors are returned in registers.
     if (IsDarwinVectorABI) {
@@ -939,7 +979,8 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, CCState &State,
 
   State.FreeRegs -= SizeInRegs;
 
-  if (State.CC == llvm::CallingConv::X86_FastCall) {
+  if (State.CC == llvm::CallingConv::X86_FastCall ||
+      State.CC == llvm::CallingConv::X86_VectorCall) {
     if (Size > 32)
       return false;
 
@@ -964,17 +1005,36 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, CCState &State,
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
                                                CCState &State) const {
   // FIXME: Set alignment on indirect arguments.
-  if (isAggregateTypeForABI(Ty)) {
-    if (const RecordType *RT = Ty->getAs<RecordType>()) {
-      // Check with the C++ ABI first.
-      CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI());
-      if (RAA == CGCXXABI::RAA_Indirect) {
-        return getIndirectResult(Ty, false, State);
-      } else if (RAA == CGCXXABI::RAA_DirectInMemory) {
-        // The field index doesn't matter, we'll fix it up later.
-        return ABIArgInfo::getInAlloca(/*FieldIndex=*/0);
-      }
 
+  // Check with the C++ ABI first.
+  const RecordType *RT = Ty->getAs<RecordType>();
+  if (RT) {
+    CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI());
+    if (RAA == CGCXXABI::RAA_Indirect) {
+      return getIndirectResult(Ty, false, State);
+    } else if (RAA == CGCXXABI::RAA_DirectInMemory) {
+      // The field index doesn't matter, we'll fix it up later.
+      return ABIArgInfo::getInAlloca(/*FieldIndex=*/0);
+    }
+  }
+
+  // vectorcall adds the concept of a homogenous vector aggregate, similar
+  // to other targets.
+  const Type *Base = nullptr;
+  uint64_t NumElts = 0;
+  if (State.CC == llvm::CallingConv::X86_VectorCall &&
+      isHomogeneousAggregate(Ty, Base, NumElts)) {
+    if (State.FreeSSERegs >= NumElts) {
+      State.FreeSSERegs -= NumElts;
+      if (Ty->isBuiltinType() || Ty->isVectorType())
+        return ABIArgInfo::getDirect();
+      return ABIArgInfo::getExpand();
+    }
+    return getIndirectResult(Ty, /*ByVal=*/false, State);
+  }
+
+  if (isAggregateTypeForABI(Ty)) {
+    if (RT) {
       // Structs are always byval on win32, regardless of what they contain.
       if (IsWin32StructABI)
         return getIndirectResult(Ty, true, State);
@@ -1006,7 +1066,9 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     if (getContext().getTypeSize(Ty) <= 4*32 &&
         canExpandIndirectArgument(Ty, getContext()))
       return ABIArgInfo::getExpandWithPadding(
-          State.CC == llvm::CallingConv::X86_FastCall, PaddingType);
+          State.CC == llvm::CallingConv::X86_FastCall ||
+              State.CC == llvm::CallingConv::X86_VectorCall,
+          PaddingType);
 
     return getIndirectResult(Ty, true, State);
   }
@@ -1049,7 +1111,10 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   CCState State(FI.getCallingConvention());
   if (State.CC == llvm::CallingConv::X86_FastCall)
     State.FreeRegs = 2;
-  else if (FI.getHasRegParm())
+  else if (State.CC == llvm::CallingConv::X86_VectorCall) {
+    State.FreeRegs = 2;
+    State.FreeSSERegs = 6;
+  } else if (FI.getHasRegParm())
     State.FreeRegs = FI.getRegParm();
   else
     State.FreeRegs = DefaultNumRegisterParameters;
@@ -1434,7 +1499,8 @@ public:
 /// WinX86_64ABIInfo - The Windows X86_64 ABI information.
 class WinX86_64ABIInfo : public ABIInfo {
 
-  ABIArgInfo classify(QualType Ty, bool IsReturnType) const;
+  ABIArgInfo classify(QualType Ty, unsigned &FreeSSERegs,
+                      bool IsReturnType) const;
 
 public:
   WinX86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
@@ -1443,6 +1509,17 @@ public:
 
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                          CodeGenFunction &CGF) const override;
+
+  bool isHomogeneousAggregateBaseType(QualType Ty) const override {
+    // FIXME: Assumes vectorcall is in use.
+    return isX86VectorTypeForVectorCall(getContext(), Ty);
+  }
+
+  bool isHomogeneousAggregateSmallEnough(const Type *Ty,
+                                         uint64_t NumMembers) const override {
+    // FIXME: Assumes vectorcall is in use.
+    return isX86VectorCallAggregateSmallEnough(NumMembers);
+  }
 };
 
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
@@ -2844,7 +2921,8 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
-ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
+ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, unsigned &FreeSSERegs,
+                                      bool IsReturnType) const {
 
   if (Ty->isVoidType())
     return ABIArgInfo::getIgnore();
@@ -2852,7 +2930,9 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
-  uint64_t Size = getContext().getTypeSize(Ty);
+  TypeInfo Info = getContext().getTypeInfo(Ty);
+  uint64_t Width = Info.Width;
+  unsigned Align = getContext().toCharUnitsFromBits(Info.Align).getQuantity();
 
   const RecordType *RT = Ty->getAs<RecordType>();
   if (RT) {
@@ -2865,10 +2945,25 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
     // FIXME: mingw-w64-gcc emits 128-bit struct as i128
-    if (Size == 128 && getTarget().getTriple().isWindowsGNUEnvironment())
+    if (Width == 128 && getTarget().getTriple().isWindowsGNUEnvironment())
       return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
-                                                          Size));
+                                                          Width));
   }
+
+  // vectorcall adds the concept of a homogenous vector aggregate, similar to
+  // other targets.
+  const Type *Base = nullptr;
+  uint64_t NumElts = 0;
+  if (FreeSSERegs && isHomogeneousAggregate(Ty, Base, NumElts)) {
+    if (FreeSSERegs >= NumElts) {
+      FreeSSERegs -= NumElts;
+      if (IsReturnType || Ty->isBuiltinType() || Ty->isVectorType())
+        return ABIArgInfo::getDirect();
+      return ABIArgInfo::getExpand();
+    }
+    return ABIArgInfo::getIndirect(Align, /*ByVal=*/false);
+  }
+
 
   if (Ty->isMemberPointerType()) {
     // If the member pointer is represented by an LLVM int or ptr, pass it
@@ -2881,11 +2976,11 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
   if (RT || Ty->isMemberPointerType()) {
     // MS x64 ABI requirement: "Any argument that doesn't fit in 8 bytes, or is
     // not 1, 2, 4, or 8 bytes, must be passed by reference."
-    if (Size > 64 || !llvm::isPowerOf2_64(Size))
+    if (Width > 64 || !llvm::isPowerOf2_64(Width))
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
     // Otherwise, coerce it to a small integer.
-    return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(), Size));
+    return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(), Width));
   }
 
   // Bool type is always extended to the ABI, other builtin types are not
@@ -2898,11 +2993,18 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
 }
 
 void WinX86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
-  if (!getCXXABI().classifyReturnType(FI))
-    FI.getReturnInfo() = classify(FI.getReturnType(), true);
+  bool IsVectorCall =
+      FI.getCallingConvention() == llvm::CallingConv::X86_VectorCall;
 
+  // We can use up to 4 SSE return registers with vectorcall.
+  unsigned FreeSSERegs = IsVectorCall ? 4 : 0;
+  if (!getCXXABI().classifyReturnType(FI))
+    FI.getReturnInfo() = classify(FI.getReturnType(), FreeSSERegs, true);
+
+  // We can use up to 6 SSE register parameters with vectorcall.
+  FreeSSERegs = IsVectorCall ? 6 : 0;
   for (auto &I : FI.arguments())
-    I.info = classify(I.type, false);
+    I.info = classify(I.type, FreeSSERegs, false);
 }
 
 llvm::Value *WinX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,

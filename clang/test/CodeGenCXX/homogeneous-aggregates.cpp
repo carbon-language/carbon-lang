@@ -1,6 +1,13 @@
-// RUNxX: %clang_cc1 -triple powerpc64le-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=PPC
+// RUN: %clang_cc1 -triple powerpc64le-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=PPC
 // RUN: %clang_cc1 -mfloat-abi hard -triple armv7-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=ARM32
 // RUN: %clang_cc1 -mfloat-abi hard -triple aarch64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=ARM64
+// RUN: %clang_cc1 -mfloat-abi hard -triple x86_64-unknown-windows-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=X64
+
+#if defined(__x86_64__)
+#define CC __attribute__((vectorcall))
+#else
+#define CC
+#endif
 
 // Test that C++ classes are correctly classified as homogeneous aggregates.
 
@@ -34,24 +41,26 @@ struct D5 : I1, I2, I3 {}; // homogeneous aggregate
 // PPC: define void @_Z7func_D12D1(%struct.D1* noalias sret %agg.result, [3 x i64] %x.coerce)
 // ARM32: define arm_aapcs_vfpcc void @_Z7func_D12D1(%struct.D1* noalias sret %agg.result, { [3 x i64] } %x.coerce)
 // ARM64: define void @_Z7func_D12D1(%struct.D1* noalias sret %agg.result, %struct.D1* %x)
-D1 func_D1(D1 x) { return x; }
+// X64: define x86_vectorcallcc void @"\01_Z7func_D12D1@@24"(%struct.D1* noalias sret %agg.result, %struct.D1* %x)
+D1 CC func_D1(D1 x) { return x; }
 
 // PPC: define [3 x double] @_Z7func_D22D2([3 x double] %x.coerce)
 // ARM32: define arm_aapcs_vfpcc %struct.D2 @_Z7func_D22D2(%struct.D2 %x.coerce)
 // ARM64: define %struct.D2 @_Z7func_D22D2(double %x.0, double %x.1, double %x.2)
-D2 func_D2(D2 x) { return x; }
+// X64: define x86_vectorcallcc %struct.D2 @"\01_Z7func_D22D2@@24"(double %x.0, double %x.1, double %x.2)
+D2 CC func_D2(D2 x) { return x; }
 
 // PPC: define void @_Z7func_D32D3(%struct.D3* noalias sret %agg.result, [4 x i64] %x.coerce)
 // ARM32: define arm_aapcs_vfpcc void @_Z7func_D32D3(%struct.D3* noalias sret %agg.result, { [4 x i64] } %x.coerce)
 // ARM64: define void @_Z7func_D32D3(%struct.D3* noalias sret %agg.result, %struct.D3* %x)
-D3 func_D3(D3 x) { return x; }
+D3 CC func_D3(D3 x) { return x; }
 
 // PPC: define [4 x double] @_Z7func_D42D4([4 x double] %x.coerce)
 // ARM32: define arm_aapcs_vfpcc %struct.D4 @_Z7func_D42D4(%struct.D4 %x.coerce)
 // ARM64: define %struct.D4 @_Z7func_D42D4(double %x.0, double %x.1, double %x.2, double %x.3)
-D4 func_D4(D4 x) { return x; }
+D4 CC func_D4(D4 x) { return x; }
 
-D5 func_D5(D5 x) { return x; }
+D5 CC func_D5(D5 x) { return x; }
 // PPC: define [3 x double] @_Z7func_D52D5([3 x double] %x.coerce)
 // ARM32: define arm_aapcs_vfpcc %struct.D5 @_Z7func_D52D5(%struct.D5 %x.coerce)
 
@@ -92,3 +101,27 @@ void call_D5(D5 *p) {
 // ARM64: getelementptr inbounds %struct.Base2* %{{.*}}, i32 0, i32 0
 // ARM64: load double*
 // ARM64: call %struct.D5 @_Z7func_D52D5(double %{{.*}}, double %{{.*}}, double %{{.*}})
+
+struct Empty { };
+struct Float1 { float x; };
+struct Float2 { float y; };
+struct HVAWithEmptyBase : Float1, Empty, Float2 { float z; };
+
+// PPC: define void @_Z15with_empty_base16HVAWithEmptyBase([3 x float] %a.coerce)
+// ARM64: define void @_Z15with_empty_base16HVAWithEmptyBase(float %a.0, float %a.1, float %a.2)
+// ARM32: define arm_aapcs_vfpcc void @_Z15with_empty_base16HVAWithEmptyBase(%struct.HVAWithEmptyBase %a.coerce)
+void CC with_empty_base(HVAWithEmptyBase a) {}
+
+// FIXME: MSVC doesn't consider this an HVA becuase of the empty base.
+// X64: define x86_vectorcallcc void @"\01_Z15with_empty_base16HVAWithEmptyBase@@16"(float %a.0, float %a.1, float %a.2)
+
+struct HVAWithEmptyBitField : Float1, Float2 {
+  int : 0; // Takes no space.
+  float z;
+};
+
+// PPC: define void @_Z19with_empty_bitfield20HVAWithEmptyBitField([3 x float] %a.coerce)
+// ARM64: define void @_Z19with_empty_bitfield20HVAWithEmptyBitField(float %a.0, float %a.1, float %a.2)
+// ARM32: define arm_aapcs_vfpcc void @_Z19with_empty_bitfield20HVAWithEmptyBitField(%struct.HVAWithEmptyBitField %a.coerce)
+// X64: define x86_vectorcallcc void @"\01_Z19with_empty_bitfield20HVAWithEmptyBitField@@16"(float %a.0, float %a.1, float %a.2)
+void CC with_empty_bitfield(HVAWithEmptyBitField a) {}

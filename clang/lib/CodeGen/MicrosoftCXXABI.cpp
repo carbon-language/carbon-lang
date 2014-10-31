@@ -617,8 +617,15 @@ MicrosoftCXXABI::getRecordArgABI(const CXXRecordDecl *RD) const {
     if (RD->hasNonTrivialCopyConstructor())
       return RAA_Indirect;
 
-    // Win64 passes objects larger than 8 bytes indirectly.
-    if (getContext().getTypeSize(RD->getTypeForDecl()) > 64)
+    // If an object has a destructor, we'd really like to pass it indirectly
+    // because it allows us to elide copies.  Unfortunately, MSVC makes that
+    // impossible for small types, which it will pass in a single register or
+    // stack slot. Most objects with dtors are large-ish, so handle that early.
+    // We can't call out all large objects as being indirect because there are
+    // multiple x64 calling conventions and the C++ ABI code shouldn't dictate
+    // how we pass large POD types.
+    if (RD->hasNonTrivialDestructor() &&
+        getContext().getTypeSize(RD->getTypeForDecl()) > 64)
       return RAA_Indirect;
 
     // We have a trivial copy constructor or no copy constructors, but we have

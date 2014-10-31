@@ -50,7 +50,7 @@ static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
   // TODO: Add support for __pascal to LLVM.
   case CC_X86Pascal: return llvm::CallingConv::C;
   // TODO: Add support for __vectorcall to LLVM.
-  case CC_X86VectorCall: return llvm::CallingConv::C;
+  case CC_X86VectorCall: return llvm::CallingConv::X86_VectorCall;
   }
 }
 
@@ -603,6 +603,9 @@ getTypeExpansion(QualType Ty, const ASTContext &Context) {
       CharUnits UnionSize = CharUnits::Zero();
 
       for (const auto *FD : RD->fields()) {
+        // Skip zero length bitfields.
+        if (FD->isBitField() && FD->getBitWidthValue(Context) == 0)
+          continue;
         assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
         CharUnits FieldSize = Context.getTypeSizeInChars(FD->getType());
@@ -622,6 +625,9 @@ getTypeExpansion(QualType Ty, const ASTContext &Context) {
       }
 
       for (const auto *FD : RD->fields()) {
+        // Skip zero length bitfields.
+        if (FD->isBitField() && FD->getBitWidthValue(Context) == 0)
+          continue;
         assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
         Fields.push_back(FD);
