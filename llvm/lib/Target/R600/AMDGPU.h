@@ -57,7 +57,6 @@ extern char &SILoadStoreOptimizerID;
 FunctionPass *createAMDGPUPromoteAlloca(const AMDGPUSubtarget &ST);
 Pass *createAMDGPUStructurizeCFGPass();
 FunctionPass *createAMDGPUISelDag(TargetMachine &tm);
-ModulePass *createAMDGPUAlwaysInlinePass();
 
 /// \brief Creates an AMDGPU-specific Target Transformation Info pass.
 ImmutablePass *
