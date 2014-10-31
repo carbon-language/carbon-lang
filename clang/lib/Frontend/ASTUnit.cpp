@@ -2326,6 +2326,10 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Set the language options appropriately.
   LangOpts = *CCInvocation->getLangOpts();
 
+  // Spell-checking and warnings are wasteful during code-completion.
+  LangOpts.SpellChecking = false;
+  CCInvocation->getDiagnosticOpts().IgnoreWarnings = true;
+
   std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
