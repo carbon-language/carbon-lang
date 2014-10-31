@@ -4,16 +4,21 @@
 ; The values in this file are strong, the ones in Inputs/visibility.ll are weak,
 ; but we should still get the visibility from them.
 
+
+$c1 = comdat any
+
 ; Variables
-; CHECK: @v1 = hidden global i32 0
+; CHECK-DAG: @v1 = hidden global i32 0
 @v1 = global i32 0
 
-; CHECK: @v2 = protected  global i32 0
+; CHECK-DAG: @v2 = protected  global i32 0
 @v2 = global i32 0
 
-; CHECK: @v3 = hidden global i32 0
+; CHECK-DAG: @v3 = hidden global i32 0
 @v3 = protected global i32 0
 
+; CHECK-DAG: @v4 = hidden global i32 1, comdat $c1
+@v4 = global i32 1, comdat $c1
 
 ; Aliases
 ; CHECK: @a1 = hidden alias i32* @v1
