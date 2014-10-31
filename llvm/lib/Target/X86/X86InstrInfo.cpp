@@ -3992,7 +3992,7 @@ static void expandLoadStackGuard(MachineInstrBuilder &MIB,
   unsigned Flag = MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant;
   MachineMemOperand *MMO = MBB.getParent()->
       getMachineMemOperand(MachinePointerInfo::getGOT(), Flag, 8, 8);
-  MachineBasicBlock::iterator I = MIB;
+  MachineBasicBlock::iterator I = MIB.getInstr();
 
   BuildMI(MBB, I, DL, TII.get(X86::MOV64rm), Reg).addReg(X86::RIP).addImm(1)
       .addReg(0).addGlobalAddress(GV, 0, X86II::MO_GOTPCREL).addReg(0)

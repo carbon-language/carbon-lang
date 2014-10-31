@@ -283,7 +283,7 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   LIS->getInterval(DestReg); // Create new LI
 
   DEBUG(dbgs() << "Inserted read2: " << *Read2 << '\n');
-  return Read2;
+  return Read2.getInstr();
 }
 
 MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
@@ -347,7 +347,7 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
   LIS->repairIntervalsInRange(MBB, Write2, Write2, OrigRegs);
 
   DEBUG(dbgs() << "Inserted write2 inst: " << *Write2 << '\n');
-  return Write2;
+  return Write2.getInstr();
 }
 
 // Scan through looking for adjacent LDS operations with constant offsets from

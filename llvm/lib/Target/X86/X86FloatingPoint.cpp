@@ -834,7 +834,9 @@ FPS::freeStackSlotBefore(MachineBasicBlock::iterator I, unsigned FPRegNo) {
   RegMap[TopReg]    = OldSlot;
   RegMap[FPRegNo]   = ~0;
   Stack[--StackTop] = ~0;
-  return BuildMI(*MBB, I, DebugLoc(), TII->get(X86::ST_FPrr)).addReg(STReg);
+  return BuildMI(*MBB, I, DebugLoc(), TII->get(X86::ST_FPrr))
+      .addReg(STReg)
+      .getInstr();
 }
 
 /// adjustLiveRegs - Kill and revive registers such that exactly the FP

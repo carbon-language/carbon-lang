@@ -188,7 +188,7 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
                                              true/*isImp*/, false/*isKill*/));
 
     MachineInstr *LastITMI = MI;
-    MachineBasicBlock::iterator InsertPos = MIB;
+    MachineBasicBlock::iterator InsertPos = MIB.getInstr();
     ++MBBI;
 
     // Form IT block.

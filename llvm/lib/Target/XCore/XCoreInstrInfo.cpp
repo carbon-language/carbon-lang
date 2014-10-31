@@ -446,16 +446,19 @@ MachineBasicBlock::iterator XCoreInstrInfo::loadImmediate(
     dl = MI->getDebugLoc();
   if (isImmMskBitp(Value)) {
     int N = Log2_32(Value) + 1;
-    return BuildMI(MBB, MI, dl, get(XCore::MKMSK_rus), Reg).addImm(N);
+    return BuildMI(MBB, MI, dl, get(XCore::MKMSK_rus), Reg)
+        .addImm(N)
+        .getInstr();
   }
   if (isImmU16(Value)) {
     int Opcode = isImmU6(Value) ? XCore::LDC_ru6 : XCore::LDC_lru6;
-    return BuildMI(MBB, MI, dl, get(Opcode), Reg).addImm(Value);
+    return BuildMI(MBB, MI, dl, get(Opcode), Reg).addImm(Value).getInstr();
   }
   MachineConstantPool *ConstantPool = MBB.getParent()->getConstantPool();
   const Constant *C = ConstantInt::get(
         Type::getInt32Ty(MBB.getParent()->getFunction()->getContext()), Value);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
   return BuildMI(MBB, MI, dl, get(XCore::LDWCP_lru6), Reg)
-            .addConstantPoolIndex(Idx);
+      .addConstantPoolIndex(Idx)
+      .getInstr();
 }

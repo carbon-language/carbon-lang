@@ -58,6 +58,10 @@ public:
   MachineInstr *operator->() const { return MI; }
   operator MachineBasicBlock::iterator() const { return MI; }
 
+  /// If conversion operators fail, use this method to get the MachineInstr
+  /// explicitly.
+  MachineInstr *getInstr() const { return MI; }
+
   /// addReg - Add a new virtual register operand...
   ///
   const
