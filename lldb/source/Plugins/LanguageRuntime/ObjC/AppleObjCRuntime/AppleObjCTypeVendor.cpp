@@ -449,8 +449,12 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
     auto superclass_func = [interface_decl, this](ObjCLanguageRuntime::ObjCISA isa)
     {
         clang::ObjCInterfaceDecl *superclass_decl = GetDeclForISA(isa);
+        
         if (!superclass_decl)
             return;
+        
+        FinishDecl(superclass_decl);
+        
         interface_decl->setSuperClass(superclass_decl);
     };
     
