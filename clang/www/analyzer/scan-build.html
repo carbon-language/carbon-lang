@@ -124,11 +124,34 @@ files:</p>
 
 <h3 id="scanbuild_forwindowsusers">For Windows Users</h3>
 
-<p>Windows users must have Perl installed to use scan-build. Currently scan-build 
-is known to work with the msys perl port.</p>
+<p>Windows users must have Perl installed to use scan-build.</p>
 
-<p>scan-build.bat script allows you to launch scan-build in the same way as it described in the Basic Usage section above.
-All you need to be able to invoke scan-build from an arbitrary location is to add the path to scan-build to your PATH environment variable.</p>
+<p><tt>scan-build.bat</tt> script allows you to launch scan-build in the same
+way as it described in the Basic Usage section above. To invoke scan-build from
+an arbitrary location, add the path to the folder containing scan-build.bat to
+your PATH environment variable.</p>
+
+<p>If you have unexpected compilation/make problems when running scan-build
+with MinGW/MSYS the following information may be helpful:</p>
+
+<ul>
+ <li> If getting unexpected <tt>"fatal error: no input files"</tt> while 
+building with MSYS make from the Windows cmd, try one of the these 
+solutions:</li>
+ <ul>
+ <li> Use MinGW <tt>mingw32-make</tt> instead of MSYS <tt>make</tt> and
+exclude the path to MSYS from PATH to prevent <tt>mingw32-make</tt> from using
+MSYS utils. MSYS utils are dependent on the MSYS runtime and they are not
+intended for being run from the Windows cmd. Specifically, makefile commands
+with backslashed quotes may be heavily corrupted when passed for execution.</li>
+ <li> Run <tt>make</tt> from the sh shell:
+<pre class="code_example">
+$ <span class="code_highlight">scan-build</span> <i>[scan-build options]</i> sh -c "make <i>[make options]</i>"
+</pre></li>
+ </ul>
+ <li> If getting <tt>"Error : *** target pattern contains no `%'"</tt> while 
+using GNU Make 3.81, try to use another version of make.</li>
+</ul>
 
 <h3 id="scanbuild_otheroptions">Other Options</h3>
 
