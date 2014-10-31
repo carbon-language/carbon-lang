@@ -26,26 +26,26 @@ using namespace sys;
 // will therefore deadlock if a thread tries to acquire a read lock
 // multiple times.
 
-RWMutexImpl::RWMutexImpl() : data_(new Mutex(false)) { }
+RWMutexImpl::RWMutexImpl() : data_(new MutexImpl(false)) { }
 
 RWMutexImpl::~RWMutexImpl() {
-  delete static_cast<Mutex *>(data_);
+  delete static_cast<MutexImpl *>(data_);
 }
 
 bool RWMutexImpl::reader_acquire() {
-  return static_cast<Mutex *>(data_)->acquire();
+  return static_cast<MutexImpl *>(data_)->acquire();
 }
 
 bool RWMutexImpl::reader_release() {
-  return static_cast<Mutex *>(data_)->release();
+  return static_cast<MutexImpl *>(data_)->release();
 }
 
 bool RWMutexImpl::writer_acquire() {
-  return static_cast<Mutex *>(data_)->acquire();
+  return static_cast<MutexImpl *>(data_)->acquire();
 }
 
 bool RWMutexImpl::writer_release() {
-  return static_cast<Mutex *>(data_)->release();
+  return static_cast<MutexImpl *>(data_)->release();
 }
 
 }
