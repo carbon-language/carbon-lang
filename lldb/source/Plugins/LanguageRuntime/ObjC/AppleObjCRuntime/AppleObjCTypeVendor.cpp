@@ -340,7 +340,7 @@ public:
         const bool isDefined = false;
         const clang::ObjCMethodDecl::ImplementationControl impControl = clang::ObjCMethodDecl::None;
         const bool HasRelatedResultType = false;
-        const bool allow_unknownanytype = true;
+        const bool for_expression = true;
         
         std::vector <clang::IdentifierInfo *> selector_components;
         
@@ -366,7 +366,7 @@ public:
         
         clang::Selector sel = ast_ctx.Selectors.getSelector(is_zero_argument ? 0 : selector_components.size(), selector_components.data());
         
-        clang::QualType ret_type = type_realizer_sp->RealizeType(interface_decl->getASTContext(), m_type_vector[0].c_str(), allow_unknownanytype).GetQualType();
+        clang::QualType ret_type = type_realizer_sp->RealizeType(interface_decl->getASTContext(), m_type_vector[0].c_str(), for_expression).GetQualType();
         
         if (ret_type.isNull())
             return NULL;
@@ -392,8 +392,8 @@ public:
              ai != ae;
              ++ai)
         {
-            const bool allow_unknownanytype = true;
-            clang::QualType arg_type = type_realizer_sp->RealizeType(ast_ctx, m_type_vector[ai].c_str(), allow_unknownanytype).GetQualType();
+            const bool for_expression = true;
+            clang::QualType arg_type = type_realizer_sp->RealizeType(ast_ctx, m_type_vector[ai].c_str(), for_expression).GetQualType();
             
             if (arg_type.isNull())
                 return NULL; // well, we just wasted a bunch of time.  Wish we could delete the stuff we'd just made!
@@ -490,6 +490,42 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         return false;
     };
     
+    auto ivar_func = [log, interface_decl, this](const char *name, const char *type, lldb::addr_t offset_ptr, uint64_t size) -> bool
+    {
+        if (!name || !type)
+            return false;
+        
+        const bool for_expression = true;
+        
+        if (log)
+            log->Printf("[  AOTV::FD] Instance variable [%s] [%s], offset at %" PRIx64, name, type, offset_ptr);
+        
+        ClangASTType ivar_type = m_runtime.GetEncodingToType()->RealizeType(m_ast_ctx, type, for_expression);
+        
+        if (ivar_type.IsValid())
+        {
+            clang::TypeSourceInfo * const type_source_info = nullptr;
+            const bool is_synthesized = false;
+            clang::ObjCIvarDecl *ivar_decl = clang::ObjCIvarDecl::Create (*m_ast_ctx.getASTContext(),
+                                                                          interface_decl,
+                                                                          clang::SourceLocation(),
+                                                                          clang::SourceLocation(),
+                                                                          &m_ast_ctx.getASTContext()->Idents.get(name),
+                                                                          ivar_type.GetQualType(),
+                                                                          type_source_info,                      // TypeSourceInfo *
+                                                                          clang::ObjCIvarDecl::Public,
+                                                                          0,
+                                                                          is_synthesized);
+            
+            if (ivar_decl)
+            {
+                interface_decl->addDecl(ivar_decl);
+            }
+        }
+        
+        return false;
+    };
+    
     if (log)
     {
         ASTDumper method_dumper ((clang::Decl*)interface_decl);
@@ -501,7 +537,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
     if (!descriptor->Describe(superclass_func,
                               instance_method_func,
                               class_method_func,
-                              std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> (nullptr)))
+                              ivar_func))
         return false;
     
     if (log)
