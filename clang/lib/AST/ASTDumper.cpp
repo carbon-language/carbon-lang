@@ -152,8 +152,8 @@ namespace  {
           OS << '\n';
           ColorScope Color(*this, IndentColor);
           OS << Prefix << (isLastChild ? '`' : '|') << '-';
-          Prefix.push_back(isLastChild ? ' ' : '|');
-          Prefix.push_back(' ');
+          this->Prefix.push_back(isLastChild ? ' ' : '|');
+          this->Prefix.push_back(' ');
         }
 
         FirstChild = true;
@@ -166,11 +166,11 @@ namespace  {
         // Dump those ones out now.
         while (Depth < Pending.size()) {
           Pending.back()(true);
-          Pending.pop_back();
+          this->Pending.pop_back();
         }
 
         // Restore the old prefix.
-        Prefix.resize(Prefix.size() - 2);
+        this->Prefix.resize(Prefix.size() - 2);
       };
 
       if (FirstChild) {
