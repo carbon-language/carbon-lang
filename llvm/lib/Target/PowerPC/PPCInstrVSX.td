@@ -643,24 +643,36 @@ let Uses = [RM] in {
   let isCommutable = 1 in {
   def XSMAXDP : XX3Form<60, 160,
                         (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
-                        "xsmaxdp $XT, $XA, $XB", IIC_VecFP, []>;
+                        "xsmaxdp $XT, $XA, $XB", IIC_VecFP,
+                        [(set vsfrc:$XT,
+                              (int_ppc_vsx_xsmaxdp vsfrc:$XA, vsfrc:$XB))]>;
   def XSMINDP : XX3Form<60, 168,
                         (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
-                        "xsmindp $XT, $XA, $XB", IIC_VecFP, []>;
+                        "xsmindp $XT, $XA, $XB", IIC_VecFP,
+                        [(set vsfrc:$XT,
+                              (int_ppc_vsx_xsmindp vsfrc:$XA, vsfrc:$XB))]>;
 
   def XVMAXDP : XX3Form<60, 224,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                        "xvmaxdp $XT, $XA, $XB", IIC_VecFP, []>;
+                        "xvmaxdp $XT, $XA, $XB", IIC_VecFP,
+                        [(set vsrc:$XT,
+                              (int_ppc_vsx_xvmaxdp vsrc:$XA, vsrc:$XB))]>;
   def XVMINDP : XX3Form<60, 232,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                        "xvmindp $XT, $XA, $XB", IIC_VecFP, []>;
+                        "xvmindp $XT, $XA, $XB", IIC_VecFP,
+                        [(set vsrc:$XT,
+                              (int_ppc_vsx_xvmindp vsrc:$XA, vsrc:$XB))]>;
 
   def XVMAXSP : XX3Form<60, 192,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                        "xvmaxsp $XT, $XA, $XB", IIC_VecFP, []>;
+                        "xvmaxsp $XT, $XA, $XB", IIC_VecFP,
+                        [(set vsrc:$XT,
+                              (int_ppc_vsx_xvmaxsp vsrc:$XA, vsrc:$XB))]>;
   def XVMINSP : XX3Form<60, 200,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                        "xvminsp $XT, $XA, $XB", IIC_VecFP, []>;
+                        "xvminsp $XT, $XA, $XB", IIC_VecFP,
+                        [(set vsrc:$XT,
+                              (int_ppc_vsx_xvminsp vsrc:$XA, vsrc:$XB))]>;
   } // isCommutable
 } // Uses = [RM]
 

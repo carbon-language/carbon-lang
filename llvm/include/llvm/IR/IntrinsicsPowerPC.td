@@ -47,6 +47,13 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
                               list<IntrinsicProperty> properties>
     : GCCBuiltin<!strconcat("__builtin_altivec_", GCCIntSuffix)>,
       Intrinsic<ret_types, param_types, properties>;
+
+  /// PowerPC_VSX_Intrinsic - Base class for all VSX intrinsics.
+  class PowerPC_VSX_Intrinsic<string GCCIntSuffix, list<LLVMType> ret_types,
+                              list<LLVMType> param_types,
+                              list<IntrinsicProperty> properties>
+    : GCCBuiltin<!strconcat("__builtin_vsx_", GCCIntSuffix)>,
+      Intrinsic<ret_types, param_types, properties>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -85,6 +92,32 @@ class PowerPC_Vec_HHH_Intrinsic<string GCCIntSuffix>
 class PowerPC_Vec_WWW_Intrinsic<string GCCIntSuffix> 
   : PowerPC_Vec_Intrinsic<GCCIntSuffix,
                           [llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty],
+                          [IntrNoMem]>;
+
+
+//===----------------------------------------------------------------------===//
+// PowerPC VSX Intrinsic Class Definitions.
+//
+
+/// PowerPC_VSX_Vec_DDD_Intrinsic - A PowerPC intrinsic that takes two v2f64
+/// vectors and returns one.  These intrinsics have no side effects.
+class PowerPC_VSX_Vec_DDD_Intrinsic<string GCCIntSuffix>
+  : PowerPC_VSX_Intrinsic<GCCIntSuffix,
+                          [llvm_v2f64_ty], [llvm_v2f64_ty, llvm_v2f64_ty],
+                          [IntrNoMem]>;
+
+/// PowerPC_VSX_Vec_FFF_Intrinsic - A PowerPC intrinsic that takes two v4f32
+/// vectors and returns one.  These intrinsics have no side effects.
+class PowerPC_VSX_Vec_FFF_Intrinsic<string GCCIntSuffix>
+  : PowerPC_VSX_Intrinsic<GCCIntSuffix,
+                          [llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty],
+                          [IntrNoMem]>;
+
+/// PowerPC_VSX_Sca_DDD_Intrinsic - A PowerPC intrinsic that takes two f64
+/// scalars and returns one.  These intrinsics have no side effects.
+class PowerPC_VSX_Sca_DDD_Intrinsic<string GCCIntSuffix>
+  : PowerPC_VSX_Intrinsic<GCCIntSuffix,
+                          [llvm_double_ty], [llvm_double_ty, llvm_double_ty],
                           [IntrNoMem]>;
 
 
@@ -476,3 +509,21 @@ def int_ppc_altivec_vexptefp  : PowerPC_Vec_FF_Intrinsic<"vexptefp">;
 def int_ppc_altivec_vlogefp   : PowerPC_Vec_FF_Intrinsic<"vlogefp">;
 def int_ppc_altivec_vrefp     : PowerPC_Vec_FF_Intrinsic<"vrefp">;
 def int_ppc_altivec_vrsqrtefp : PowerPC_Vec_FF_Intrinsic<"vrsqrtefp">;
+
+
+//===----------------------------------------------------------------------===//
+// PowerPC VSX Intrinsic Definitions.
+
+let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
+
+// Vector maximum.
+def int_ppc_vsx_xvmaxdp : PowerPC_VSX_Vec_DDD_Intrinsic<"xvmaxdp">;
+def int_ppc_vsx_xvmaxsp : PowerPC_VSX_Vec_FFF_Intrinsic<"xvmaxsp">;
+def int_ppc_vsx_xsmaxdp : PowerPC_VSX_Sca_DDD_Intrinsic<"xsmaxdp">;
+
+// Vector minimum.
+def int_ppc_vsx_xvmindp : PowerPC_VSX_Vec_DDD_Intrinsic<"xvmindp">;
+def int_ppc_vsx_xvminsp : PowerPC_VSX_Vec_FFF_Intrinsic<"xvminsp">;
+def int_ppc_vsx_xsmindp : PowerPC_VSX_Sca_DDD_Intrinsic<"xsmindp">;
+
+}
