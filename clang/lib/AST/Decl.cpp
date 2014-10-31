@@ -3325,7 +3325,7 @@ SourceRange FieldDecl::getSourceRange() const {
 }
 
 void FieldDecl::setCapturedVLAType(const VariableArrayType *VLAType) {
-  assert((RD->isLambda() || RD->isCapturedRecord()) &&
+  assert((getParent()->isLambda() || getParent()->isCapturedRecord()) &&
          "capturing type in non-lambda or captured record.");
   assert(InitStorage.getInt() == ISK_BitWidthOrNothing &&
          InitStorage.getPointer() == nullptr &&
