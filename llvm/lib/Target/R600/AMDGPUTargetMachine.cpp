@@ -80,6 +80,7 @@ public:
     return nullptr;
   }
 
+  void addIRPasses() override;
   void addCodeGenPrepare() override;
   bool addPreISel() override;
   bool addInstSelector() override;
@@ -104,6 +105,19 @@ void AMDGPUTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
   // appropriate.
   PM.add(createBasicTargetTransformInfoPass(this));
   PM.add(createAMDGPUTargetTransformInfoPass(this));
+}
+
+void AMDGPUPassConfig::addIRPasses() {
+  // Function calls are not supported, so make sure we inline everything.
+  addPass(createAMDGPUAlwaysInlinePass());
+  addPass(createAlwaysInlinerPass());
+  // We need to add the barrier noop pass, otherwise adding the function
+  // inlining pass will cause all of the PassConfigs passes to be run
+  // one function at a time, which means if we have a nodule with two
+  // functions, then we will generate code for the first function
+  // without ever running any passes on the second.
+  addPass(createBarrierNoopPass());
+  TargetPassConfig::addIRPasses();
 }
 
 void AMDGPUPassConfig::addCodeGenPrepare() {
