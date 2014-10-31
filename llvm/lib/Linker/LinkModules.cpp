@@ -403,9 +403,9 @@ namespace {
     ValueToValueMapTy ValueMap;
 
     struct AppendingVarInfo {
-      GlobalVariable *NewGV;  // New aggregate global in dest module.
-      Constant *DstInit;      // Old initializer from dest module.
-      Constant *SrcInit;      // Old initializer from src module.
+      GlobalVariable *NewGV;   // New aggregate global in dest module.
+      const Constant *DstInit; // Old initializer from dest module.
+      const Constant *SrcInit; // Old initializer from src module.
     };
 
     std::vector<AppendingVarInfo> AppendingVars;
@@ -462,7 +462,7 @@ namespace {
 
     /// Given a global in the source module, return the global in the
     /// destination module that is being linked to, if any.
-    GlobalValue *getLinkedToGlobal(GlobalValue *SrcGV) {
+    GlobalValue *getLinkedToGlobal(const GlobalValue *SrcGV) {
       // If the source has no name it can't link.  If it has local linkage,
       // there is no name match-up going on.
       if (!SrcGV->hasName() || SrcGV->hasLocalLinkage())
@@ -486,8 +486,9 @@ namespace {
     void upgradeMismatchedGlobalArray(StringRef Name);
     void upgradeMismatchedGlobals();
 
-    bool linkAppendingVarProto(GlobalVariable *DstGV, GlobalVariable *SrcGV);
-    bool linkGlobalProto(GlobalVariable *SrcGV);
+    bool linkAppendingVarProto(GlobalVariable *DstGV,
+                               const GlobalVariable *SrcGV);
+    bool linkGlobalProto(const GlobalVariable *SrcGV);
     bool linkFunctionProto(Function *SrcF);
     bool linkAliasProto(GlobalAlias *SrcA);
     bool linkModuleFlagsMetadata();
@@ -944,7 +945,7 @@ void ModuleLinker::upgradeMismatchedGlobals() {
 /// If there were any appending global variables, link them together now.
 /// Return true on error.
 bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
-                                         GlobalVariable *SrcGV) {
+                                         const GlobalVariable *SrcGV) {
 
   if (!SrcGV->hasAppendingLinkage() || !DstGV->hasAppendingLinkage())
     return emitError("Linking globals named '" + SrcGV->getName() +
@@ -1011,7 +1012,7 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
 
 /// Loop through the global variables in the src module and merge them into the
 /// dest module.
-bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
+bool ModuleLinker::linkGlobalProto(const GlobalVariable *SGV) {
   GlobalValue *DGV = getLinkedToGlobal(SGV);
   llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
   bool HasUnnamedAddr = SGV->hasUnnamedAddr();
@@ -1261,7 +1262,8 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   return false;
 }
 
-static void getArrayElements(Constant *C, SmallVectorImpl<Constant*> &Dest) {
+static void getArrayElements(const Constant *C,
+                             SmallVectorImpl<Constant *> &Dest) {
   unsigned NumElements = cast<ArrayType>(C->getType())->getNumElements();
 
   for (unsigned i = 0; i != NumElements; ++i)
