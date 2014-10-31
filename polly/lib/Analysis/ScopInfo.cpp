@@ -723,7 +723,7 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
 }
 
-void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
+void ScopStmt::buildAccesses(TempScop &tempScop) {
   for (const auto &AccessPair : *tempScop.getAccessFunctions(BB)) {
     const IRAccess &Access = AccessPair.first;
     Instruction *AccessInst = AccessPair.second;
@@ -867,7 +867,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
 
   Domain = buildDomain(tempScop, CurRegion);
   buildScattering(Scatter);
-  buildAccesses(tempScop, CurRegion);
+  buildAccesses(tempScop);
   checkForReductions();
 }
 

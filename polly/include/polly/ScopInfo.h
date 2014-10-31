@@ -444,7 +444,7 @@ class ScopStmt {
                                             TempScop &tempScop);
   __isl_give isl_set *buildDomain(TempScop &tempScop, const Region &CurRegion);
   void buildScattering(SmallVectorImpl<unsigned> &Scatter);
-  void buildAccesses(TempScop &tempScop, const Region &CurRegion);
+  void buildAccesses(TempScop &tempScop);
 
   /// @brief Detect and mark reductions in the ScopStmt
   void checkForReductions();
