@@ -74,7 +74,7 @@ template <class T> struct DominatingPointer<T,false> : InvariantValue<T*> {};
 
 template <class T> struct DominatingValue<T*> : DominatingPointer<T> {};
 
-enum CleanupKind {
+enum CleanupKind : unsigned {
   EHCleanup = 0x1,
   NormalCleanup = 0x2,
   NormalAndEHCleanup = EHCleanup | NormalCleanup,

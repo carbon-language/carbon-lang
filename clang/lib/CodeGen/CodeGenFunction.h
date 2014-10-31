@@ -289,11 +289,11 @@ public:
   /// Header for data within LifetimeExtendedCleanupStack.
   struct LifetimeExtendedCleanupHeader {
     /// The size of the following cleanup object.
-    size_t Size : 29;
+    unsigned Size : 29;
     /// The kind of cleanup to push: a value from the CleanupKind enumeration.
     unsigned Kind : 3;
 
-    size_t getSize() const { return Size; }
+    size_t getSize() const { return size_t(Size); }
     CleanupKind getKind() const { return static_cast<CleanupKind>(Kind); }
   };
 
