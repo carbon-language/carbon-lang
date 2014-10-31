@@ -53,7 +53,7 @@ LinuxSignals::Reset()
     AddSignal (24,   "SIGXCPU",   "XCPU",    false,   true , true , "CPU resource exceeded");
     AddSignal (25,   "SIGXFSZ",   "XFSZ",    false,   true , true , "file size limit exceeded");
     AddSignal (26,   "SIGVTALRM", "VTALRM",  false,   true , true , "virtual time alarm");
-    AddSignal (27,   "SIGPROF",   "PROF",    false,   true , true , "profiling time alarm");
+    AddSignal (27,   "SIGPROF",   "PROF",    false,   false, false, "profiling time alarm");
     AddSignal (28,   "SIGWINCH",  "WINCH",   false,   true , true , "window size changes");
     AddSignal (29,   "SIGPOLL",   "POLL",    false,   true , true , "pollable event");
     AddSignal (29,   "SIGIO",     "IO",      false,   true , true , "input/output ready");
