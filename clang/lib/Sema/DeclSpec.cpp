@@ -18,6 +18,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h" // FIXME: remove this back-dependency!
 #include "clang/Sema/LocInfoType.h"
@@ -689,11 +690,6 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
   }
   TypeSpecType = T;
   TypeSpecOwned = false;
-  if (TypeAltiVecVector && !TypeAltiVecBool && (TypeSpecType == TST_double)) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
-    DiagID = diag::err_invalid_vector_decl_spec;
-    return true;
-  }
   return false;
 }
 
@@ -987,6 +983,13 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
       if ((TypeSpecType == TST_char) || (TypeSpecType == TST_int) ||
           (TypeSpecWidth != TSW_unspecified))
         TypeSpecSign = TSS_unsigned;
+    } else if (TypeSpecType == TST_double) {
+      // vector long double and vector long long double are never allowed.
+      // vector double is OK for Power7 and later.
+      if (TypeSpecWidth == TSW_long || TypeSpecWidth == TSW_longlong)
+        Diag(D, TSWLoc, diag::err_invalid_vector_long_double_decl_spec);
+      else if (!PP.getTargetInfo().hasFeature("vsx"))
+        Diag(D, TSTLoc, diag::err_invalid_vector_double_decl_spec);
     } else if (TypeSpecWidth == TSW_long) {
       Diag(D, TSWLoc, diag::warn_vector_long_decl_spec_combination)
         << getSpecifierName((TST)TypeSpecType, Policy);

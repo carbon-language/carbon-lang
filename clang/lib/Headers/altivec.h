@@ -2667,8 +2667,20 @@ vec_max(vector unsigned int __a, vector bool int __b)
 static vector float __ATTRS_o_ai
 vec_max(vector float __a, vector float __b)
 {
+#ifdef __VSX__
+  return __builtin_vsx_xvmaxsp(__a, __b);
+#else
   return __builtin_altivec_vmaxfp(__a, __b);
+#endif
 }
+
+#ifdef __VSX__
+static vector double __ATTRS_o_ai
+vec_max(vector double __a, vector double __b)
+{
+  return __builtin_vsx_xvmaxdp(__a, __b);
+}
+#endif
 
 /* vec_vmaxsb */
 
@@ -2795,7 +2807,11 @@ vec_vmaxuw(vector unsigned int __a, vector bool int __b)
 static vector float __attribute__((__always_inline__))
 vec_vmaxfp(vector float __a, vector float __b)
 {
+#ifdef __VSX__
+  return __builtin_vsx_xvmaxsp(__a, __b);
+#else
   return __builtin_altivec_vmaxfp(__a, __b);
+#endif
 }
 
 /* vec_mergeh */
@@ -3299,8 +3315,20 @@ vec_min(vector unsigned int __a, vector bool int __b)
 static vector float __ATTRS_o_ai
 vec_min(vector float __a, vector float __b)
 {
+#ifdef __VSX__
+  return __builtin_vsx_xvminsp(__a, __b);
+#else
   return __builtin_altivec_vminfp(__a, __b);
+#endif
 }
+
+#ifdef __VSX__
+static vector double __ATTRS_o_ai
+vec_min(vector double __a, vector double __b)
+{
+  return __builtin_vsx_xvmindp(__a, __b);
+}
+#endif
 
 /* vec_vminsb */
 
@@ -3427,7 +3455,11 @@ vec_vminuw(vector unsigned int __a, vector bool int __b)
 static vector float __attribute__((__always_inline__))
 vec_vminfp(vector float __a, vector float __b)
 {
+#ifdef __VSX__
+  return __builtin_vsx_xvminsp(__a, __b);
+#else
   return __builtin_altivec_vminfp(__a, __b);
+#endif
 }
 
 /* vec_mladd */

@@ -341,6 +341,10 @@ def err_invalid_vector_decl_spec : Error<
   "cannot use '%0' with '__vector'">;
 def err_invalid_vector_bool_decl_spec : Error<
   "cannot use '%0' with '__vector bool'">;
+def err_invalid_vector_double_decl_spec : Error <
+  "use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)">;
+def err_invalid_vector_long_double_decl_spec : Error<
+  "cannot use 'long double' with '__vector'">;
 def warn_vector_long_decl_spec_combination : Warning<
   "Use of 'long' with '__vector' is deprecated">, InGroup<Deprecated>;
 def err_friend_invalid_in_context : Error<
