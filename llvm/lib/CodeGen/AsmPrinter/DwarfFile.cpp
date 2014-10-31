@@ -182,7 +182,7 @@ void DwarfFile::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
       // location (eg: via a macro, or without column info, etc)) and then
       // their arguments are conflated as well.
       assert((LS->getParent() || CurNum != ArgNum) &&
-             "Missing parameter for top level (non-inlined) function");
+             "Duplicate argument for top level (non-inlined) function");
       ++I;
     }
     Vars.insert(I, Var);
