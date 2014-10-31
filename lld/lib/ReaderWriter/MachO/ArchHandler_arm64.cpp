@@ -458,7 +458,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
     *kind = delta64;
     if (auto ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = *(little64_t *)fixupContent + offsetInAtom;
+    *addend = (int64_t)*(little64_t *)fixupContent + offsetInAtom;
     return std::error_code();
   case ((ARM64_RELOC_SUBTRACTOR                  | rExtern | rLength4) << 16 |
          ARM64_RELOC_UNSIGNED                    | rExtern | rLength4):
@@ -466,7 +466,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
     *kind = delta32;
     if (auto ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = *(little32_t *)fixupContent + offsetInAtom;
+    *addend = (int32_t)*(little32_t *)fixupContent + offsetInAtom;
     return std::error_code();
   default:
     return make_dynamic_error_code(Twine("unsupported arm64 relocation pair"));

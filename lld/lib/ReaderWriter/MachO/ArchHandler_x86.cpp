@@ -262,18 +262,18 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind = branch32;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = fixupAddress + 4 + *(little32_t *)fixupContent;
+    *addend = fixupAddress + 4 + (int32_t)*(little32_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rPcRel | rLength4:
     // ex: call _foo (and _foo defined)
     *kind = branch32;
-    targetAddress = fixupAddress + 4 + *(little32_t *)fixupContent;
+    targetAddress = fixupAddress + 4 + (int32_t)*(little32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength4:
     // ex: call _foo+n (and _foo defined)
     *kind = branch32;
-    targetAddress = fixupAddress + 4 + *(little32_t *)fixupContent;
+    targetAddress = fixupAddress + 4 + (int32_t)*(little32_t *)fixupContent;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
     *addend = targetAddress - reloc.value;
@@ -283,18 +283,18 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind = branch16;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = fixupAddress + 2 + *(little16_t *)fixupContent;
+    *addend = fixupAddress + 2 + (int16_t)*(little16_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rPcRel | rLength2:
     // ex: callw _foo (and _foo defined)
     *kind = branch16;
-  targetAddress = fixupAddress + 2 + *(little16_t *)fixupContent;
+    targetAddress = fixupAddress + 2 + (int16_t)*(little16_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength2:
     // ex: callw _foo+n (and _foo defined)
     *kind = branch16;
-    targetAddress = fixupAddress + 2 + *(little16_t *)fixupContent;
+    targetAddress = fixupAddress + 2 + (int16_t)*(little16_t *)fixupContent;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
     *addend = targetAddress - reloc.value;
