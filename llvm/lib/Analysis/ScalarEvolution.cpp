@@ -6964,9 +6964,19 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                                       : ICmpInst::ICMP_ULT;
   const SCEV *Start = IV->getStart();
   const SCEV *End = RHS;
-  if (!isLoopEntryGuardedByCond(L, Cond, getMinusSCEV(Start, Stride), RHS))
-    End = IsSigned ? getSMaxExpr(RHS, Start)
-                   : getUMaxExpr(RHS, Start);
+  if (!isLoopEntryGuardedByCond(L, Cond, getMinusSCEV(Start, Stride), RHS)) {
+    const SCEV *Diff = getMinusSCEV(RHS, Start);
+    // If we have NoWrap set, then we can assume that the increment won't
+    // overflow, in which case if RHS - Start is a constant, we don't need to
+    // do a max operation since we can just figure it out statically
+    if (NoWrap && isa<SCEVConstant>(Diff)) {
+      APInt D = dyn_cast<const SCEVConstant>(Diff)->getValue()->getValue();
+      if (D.isNegative())
+        End = Start;
+    } else
+      End = IsSigned ? getSMaxExpr(RHS, Start)
+                     : getUMaxExpr(RHS, Start);
+  }
 
   const SCEV *BECount = computeBECount(getMinusSCEV(End, Start), Stride, false);
 
@@ -7035,9 +7045,19 @@ ScalarEvolution::HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
 
   const SCEV *Start = IV->getStart();
   const SCEV *End = RHS;
-  if (!isLoopEntryGuardedByCond(L, Cond, getAddExpr(Start, Stride), RHS))
-    End = IsSigned ? getSMinExpr(RHS, Start)
-                   : getUMinExpr(RHS, Start);
+  if (!isLoopEntryGuardedByCond(L, Cond, getAddExpr(Start, Stride), RHS)) {
+    const SCEV *Diff = getMinusSCEV(RHS, Start);
+    // If we have NoWrap set, then we can assume that the increment won't
+    // overflow, in which case if RHS - Start is a constant, we don't need to
+    // do a max operation since we can just figure it out statically
+    if (NoWrap && isa<SCEVConstant>(Diff)) {
+      APInt D = dyn_cast<const SCEVConstant>(Diff)->getValue()->getValue();
+      if (!D.isNegative())
+        End = Start;
+    } else
+      End = IsSigned ? getSMinExpr(RHS, Start)
+                     : getUMinExpr(RHS, Start);
+  }
 
   const SCEV *BECount = computeBECount(getMinusSCEV(Start, End), Stride, false);
 

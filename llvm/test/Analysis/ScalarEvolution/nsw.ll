@@ -123,9 +123,8 @@ exit:
   ret i32 %result
 }
 
-; TODO: This could fold down to '1'
 ; CHECK-LABEL: PR12375
-; CHECK: -->  {(4 + %arg),+,4}<nuw><%bb1>		Exits: (4 + (4 * ((-1 + (-1 * %arg) + ((4 + %arg) umax (8 + %arg)<nsw>)) /u 4)) + %arg)
+; CHECK: -->  {(4 + %arg),+,4}<nuw><%bb1>		Exits: (8 + %arg)<nsw>
 define i32 @PR12375(i32* readnone %arg) {
 bb:
   %tmp = getelementptr inbounds i32* %arg, i64 2
@@ -156,5 +155,25 @@ bb2:                                              ; preds = %bb2, %bb
   br i1 %tmp3, label %bb2, label %bb5
 
 bb5:                                              ; preds = %bb2
+  ret void
+}
+
+declare void @f(i32)
+
+; CHECK-LABEL: nswnowrap
+; CHECK: --> {(1 + %v),+,1}<nsw><%for.body>   Exits: (2 + %v)
+define void @nswnowrap(i32 %v) {
+entry:
+  %add = add nsw i32 %v, 1
+  br label %for.body
+
+for.body:
+  %i.04 = phi i32 [ %v, %entry ], [ %inc, %for.body ]
+  %inc = add nsw i32 %i.04, 1
+  tail call void @f(i32 %i.04)
+  %cmp = icmp slt i32 %i.04, %add
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:
   ret void
 }
