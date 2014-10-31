@@ -1,7 +1,3 @@
-; This file is used by visibility1.ll, so it doesn't actually do anything itself
-;
-; RUN: true
-
 ; Variables
 @v1 = weak hidden global i32 0
 @v2 = weak protected global i32 0

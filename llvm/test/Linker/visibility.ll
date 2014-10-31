@@ -1,7 +1,7 @@
-; RUN: llvm-link %s %p/visibility2.ll -S | FileCheck %s
-; RUN: llvm-link %p/visibility2.ll %s -S | FileCheck %s
+; RUN: llvm-link %s %p/Inputs/visibility.ll -S | FileCheck %s
+; RUN: llvm-link %p/Inputs/visibility.ll %s -S | FileCheck %s
 
-; The values in this file are strong, the ones in visibility2.ll are weak,
+; The values in this file are strong, the ones in Inputs/visibility.ll are weak,
 ; but we should still get the visibility from them.
 
 ; Variables
