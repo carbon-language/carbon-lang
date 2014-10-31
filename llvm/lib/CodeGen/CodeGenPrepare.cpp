@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -63,6 +64,7 @@ STATISTIC(NumRetsDup,    "Number of return instructions duplicated");
 STATISTIC(NumDbgValueMoved, "Number of debug value instructions moved");
 STATISTIC(NumSelectsExpanded, "Number of selects turned into branches");
 STATISTIC(NumAndCmpsMoved, "Number of and/cmp's pushed into branches");
+STATISTIC(NumStoreExtractExposed, "Number of store(extractelement) exposed");
 
 static cl::opt<bool> DisableBranchOpts(
   "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
@@ -80,6 +82,14 @@ static cl::opt<bool> EnableAndCmpSinking(
    "enable-andcmp-sinking", cl::Hidden, cl::init(true),
    cl::desc("Enable sinkinig and/cmp into branches."));
 
+static cl::opt<bool> DisableStoreExtract(
+    "disable-cgp-store-extract", cl::Hidden, cl::init(false),
+    cl::desc("Disable store(extract) optimizations in CodeGenPrepare"));
+
+static cl::opt<bool> StressStoreExtract(
+    "stress-cgp-store-extract", cl::Hidden, cl::init(false),
+    cl::desc("Stress test store(extract) optimizations in CodeGenPrepare"));
+
 namespace {
 typedef SmallPtrSet<Instruction *, 16> SetOfInstrs;
 typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
@@ -89,6 +99,7 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
     /// transformation profitability.
     const TargetMachine *TM;
     const TargetLowering *TLI;
+    const TargetTransformInfo *TTI;
     const TargetLibraryInfo *TLInfo;
     DominatorTree *DT;
 
@@ -118,7 +129,7 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit CodeGenPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), TM(TM), TLI(nullptr) {
+        : FunctionPass(ID), TM(TM), TLI(nullptr), TTI(nullptr) {
         initializeCodeGenPreparePass(*PassRegistry::getPassRegistry());
       }
     bool runOnFunction(Function &F) override;
@@ -128,6 +139,7 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetTransformInfo>();
     }
 
   private:
@@ -144,6 +156,7 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
     bool OptimizeExtUses(Instruction *I);
     bool OptimizeSelectInst(SelectInst *SI);
     bool OptimizeShuffleVectorInst(ShuffleVectorInst *SI);
+    bool OptimizeExtractElementInst(Instruction *Inst);
     bool DupRetToEnableTailCallOpts(BasicBlock *BB);
     bool PlaceDbgValues(Function &F);
     bool sinkAndCmp(Function &F);
@@ -171,6 +184,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   if (TM)
     TLI = TM->getSubtargetImpl()->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfo>();
+  TTI = &getAnalysis<TargetTransformInfo>();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
@@ -3168,6 +3182,367 @@ bool CodeGenPrepare::OptimizeShuffleVectorInst(ShuffleVectorInst *SVI) {
   return MadeChange;
 }
 
+namespace {
+/// \brief Helper class to promote a scalar operation to a vector one.
+/// This class is used to move downward extractelement transition.
+/// E.g.,
+/// a = vector_op <2 x i32>
+/// b = extractelement <2 x i32> a, i32 0
+/// c = scalar_op b
+/// store c
+///
+/// =>
+/// a = vector_op <2 x i32>
+/// c = vector_op a (equivalent to scalar_op on the related lane)
+/// * d = extractelement <2 x i32> c, i32 0
+/// * store d
+/// Assuming both extractelement and store can be combine, we get rid of the
+/// transition.
+class VectorPromoteHelper {
+  /// Used to perform some checks on the legality of vector operations.
+  const TargetLowering &TLI;
+
+  /// Used to estimated the cost of the promoted chain.
+  const TargetTransformInfo &TTI;
+
+  /// The transition being moved downwards.
+  Instruction *Transition;
+  /// The sequence of instructions to be promoted.
+  SmallVector<Instruction *, 4> InstsToBePromoted;
+  /// Cost of combining a store and an extract.
+  unsigned StoreExtractCombineCost;
+  /// Instruction that will be combined with the transition.
+  Instruction *CombineInst;
+
+  /// \brief The instruction that represents the current end of the transition.
+  /// Since we are faking the promotion until we reach the end of the chain
+  /// of computation, we need a way to get the current end of the transition.
+  Instruction *getEndOfTransition() const {
+    if (InstsToBePromoted.empty())
+      return Transition;
+    return InstsToBePromoted.back();
+  }
+
+  /// \brief Return the index of the original value in the transition.
+  /// E.g., for "extractelement <2 x i32> c, i32 1" the original value,
+  /// c, is at index 0.
+  unsigned getTransitionOriginalValueIdx() const {
+    assert(isa<ExtractElementInst>(Transition) &&
+           "Other kind of transitions are not supported yet");
+    return 0;
+  }
+
+  /// \brief Return the index of the index in the transition.
+  /// E.g., for "extractelement <2 x i32> c, i32 0" the index
+  /// is at index 1.
+  unsigned getTransitionIdx() const {
+    assert(isa<ExtractElementInst>(Transition) &&
+           "Other kind of transitions are not supported yet");
+    return 1;
+  }
+
+  /// \brief Get the type of the transition.
+  /// This is the type of the original value.
+  /// E.g., for "extractelement <2 x i32> c, i32 1" the type of the
+  /// transition is <2 x i32>.
+  Type *getTransitionType() const {
+    return Transition->getOperand(getTransitionOriginalValueIdx())->getType();
+  }
+
+  /// \brief Promote \p ToBePromoted by moving \p Def downward through.
+  /// I.e., we have the following sequence:
+  /// Def = Transition <ty1> a to <ty2>
+  /// b = ToBePromoted <ty2> Def, ...
+  /// =>
+  /// b = ToBePromoted <ty1> a, ...
+  /// Def = Transition <ty1> ToBePromoted to <ty2>
+  void promoteImpl(Instruction *ToBePromoted);
+
+  /// \brief Check whether or not it is profitable to promote all the
+  /// instructions enqueued to be promoted.
+  bool isProfitableToPromote() {
+    Value *ValIdx = Transition->getOperand(getTransitionOriginalValueIdx());
+    unsigned Index = isa<ConstantInt>(ValIdx)
+                         ? cast<ConstantInt>(ValIdx)->getZExtValue()
+                         : -1;
+    Type *PromotedType = getTransitionType();
+
+    StoreInst *ST = cast<StoreInst>(CombineInst);
+    unsigned AS = ST->getPointerAddressSpace();
+    unsigned Align = ST->getAlignment();
+    // Check if this store is supported.
+    if (!TLI.allowsMisalignedMemoryAccesses(
+            EVT::getEVT(ST->getValueOperand()->getType()), AS, Align)) {
+      // If this is not supported, there is no way we can combine
+      // the extract with the store.
+      return false;
+    }
+
+    // The scalar chain of computation has to pay for the transition
+    // scalar to vector.
+    // The vector chain has to account for the combining cost.
+    uint64_t ScalarCost =
+        TTI.getVectorInstrCost(Transition->getOpcode(), PromotedType, Index);
+    uint64_t VectorCost = StoreExtractCombineCost;
+    for (const auto &Inst : InstsToBePromoted) {
+      // Compute the cost.
+      // By construction, all instructions being promoted are arithmetic ones.
+      // Moreover, one argument is a constant that can be viewed as a splat
+      // constant.
+      Value *Arg0 = Inst->getOperand(0);
+      bool IsArg0Constant = isa<UndefValue>(Arg0) || isa<ConstantInt>(Arg0) ||
+                            isa<ConstantFP>(Arg0);
+      TargetTransformInfo::OperandValueKind Arg0OVK =
+          IsArg0Constant ? TargetTransformInfo::OK_UniformConstantValue
+                         : TargetTransformInfo::OK_AnyValue;
+      TargetTransformInfo::OperandValueKind Arg1OVK =
+          !IsArg0Constant ? TargetTransformInfo::OK_UniformConstantValue
+                          : TargetTransformInfo::OK_AnyValue;
+      ScalarCost += TTI.getArithmeticInstrCost(
+          Inst->getOpcode(), Inst->getType(), Arg0OVK, Arg1OVK);
+      VectorCost += TTI.getArithmeticInstrCost(Inst->getOpcode(), PromotedType,
+                                               Arg0OVK, Arg1OVK);
+    }
+    DEBUG(dbgs() << "Estimated cost of computation to be promoted:\nScalar: "
+                 << ScalarCost << "\nVector: " << VectorCost << '\n');
+    return ScalarCost > VectorCost;
+  }
+
+  /// \brief Generate a constant vector with \p Val with the same
+  /// number of elements as the transition.
+  /// \p UseSplat defines whether or not \p Val should be replicated
+  /// accross the whole vector.
+  /// In other words, if UseSplat == true, we generate <Val, Val, ..., Val>,
+  /// otherwise we generate a vector with as many undef as possible:
+  /// <undef, ..., undef, Val, undef, ..., undef> where \p Val is only
+  /// used at the index of the extract.
+  Value *getConstantVector(Constant *Val, bool UseSplat) const {
+    unsigned ExtractIdx = UINT_MAX;
+    if (!UseSplat) {
+      // If we cannot determine where the constant must be, we have to
+      // use a splat constant.
+      Value *ValExtractIdx = Transition->getOperand(getTransitionIdx());
+      if (ConstantInt *CstVal = dyn_cast<ConstantInt>(ValExtractIdx))
+        ExtractIdx = CstVal->getSExtValue();
+      else
+        UseSplat = true;
+    }
+
+    unsigned End = getTransitionType()->getVectorNumElements();
+    if (UseSplat)
+      return ConstantVector::getSplat(End, Val);
+
+    SmallVector<Constant *, 4> ConstVec;
+    UndefValue *UndefVal = UndefValue::get(Val->getType());
+    for (unsigned Idx = 0; Idx != End; ++Idx) {
+      if (Idx == ExtractIdx)
+        ConstVec.push_back(Val);
+      else
+        ConstVec.push_back(UndefVal);
+    }
+    return ConstantVector::get(ConstVec);
+  }
+
+  /// \brief Check if promoting to a vector type an operand at \p OperandIdx
+  /// in \p Use can trigger undefined behavior.
+  static bool canCauseUndefinedBehavior(const Instruction *Use,
+                                        unsigned OperandIdx) {
+    // This is not safe to introduce undef when the operand is on
+    // the right hand side of a division-like instruction.
+    if (OperandIdx != 1)
+      return false;
+    switch (Use->getOpcode()) {
+    default:
+      return false;
+    case Instruction::SDiv:
+    case Instruction::UDiv:
+    case Instruction::SRem:
+    case Instruction::URem:
+      return true;
+    case Instruction::FDiv:
+    case Instruction::FRem:
+      return !Use->hasNoNaNs();
+    }
+    llvm_unreachable(nullptr);
+  }
+
+public:
+  VectorPromoteHelper(const TargetLowering &TLI, const TargetTransformInfo &TTI,
+                      Instruction *Transition, unsigned CombineCost)
+      : TLI(TLI), TTI(TTI), Transition(Transition),
+        StoreExtractCombineCost(CombineCost), CombineInst(nullptr) {
+    assert(Transition && "Do not know how to promote null");
+  }
+
+  /// \brief Check if we can promote \p ToBePromoted to \p Type.
+  bool canPromote(const Instruction *ToBePromoted) const {
+    // We could support CastInst too.
+    return isa<BinaryOperator>(ToBePromoted);
+  }
+
+  /// \brief Check if it is profitable to promote \p ToBePromoted
+  /// by moving downward the transition through.
+  bool shouldPromote(const Instruction *ToBePromoted) const {
+    // Promote only if all the operands can be statically expanded.
+    // Indeed, we do not want to introduce any new kind of transitions.
+    for (const Use &U : ToBePromoted->operands()) {
+      const Value *Val = U.get();
+      if (Val == getEndOfTransition()) {
+        // If the use is a division and the transition is on the rhs,
+        // we cannot promote the operation, otherwise we may create a
+        // division by zero.
+        if (canCauseUndefinedBehavior(ToBePromoted, U.getOperandNo()))
+          return false;
+        continue;
+      }
+      if (!isa<ConstantInt>(Val) && !isa<UndefValue>(Val) &&
+          !isa<ConstantFP>(Val))
+        return false;
+    }
+    // Check that the resulting operation is legal.
+    int ISDOpcode = TLI.InstructionOpcodeToISD(ToBePromoted->getOpcode());
+    if (!ISDOpcode)
+      return false;
+    return StressStoreExtract ||
+           TLI.isOperationLegalOrCustom(ISDOpcode,
+                                        EVT::getEVT(getTransitionType(), true));
+  }
+
+  /// \brief Check whether or not \p Use can be combined
+  /// with the transition.
+  /// I.e., is it possible to do Use(Transition) => AnotherUse?
+  bool canCombine(const Instruction *Use) { return isa<StoreInst>(Use); }
+
+  /// \brief Record \p ToBePromoted as part of the chain to be promoted.
+  void enqueueForPromotion(Instruction *ToBePromoted) {
+    InstsToBePromoted.push_back(ToBePromoted);
+  }
+
+  /// \brief Set the instruction that will be combined with the transition.
+  void recordCombineInstruction(Instruction *ToBeCombined) {
+    assert(canCombine(ToBeCombined) && "Unsupported instruction to combine");
+    CombineInst = ToBeCombined;
+  }
+
+  /// \brief Promote all the instructions enqueued for promotion if it is
+  /// is profitable.
+  /// \return True if the promotion happened, false otherwise.
+  bool promote() {
+    // Check if there is something to promote.
+    // Right now, if we do not have anything to combine with,
+    // we assume the promotion is not profitable.
+    if (InstsToBePromoted.empty() || !CombineInst)
+      return false;
+
+    // Check cost.
+    if (!StressStoreExtract && !isProfitableToPromote())
+      return false;
+
+    // Promote.
+    for (auto &ToBePromoted : InstsToBePromoted)
+      promoteImpl(ToBePromoted);
+    InstsToBePromoted.clear();
+    return true;
+  }
+};
+} // End of anonymous namespace.
+
+void VectorPromoteHelper::promoteImpl(Instruction *ToBePromoted) {
+  // At this point, we know that all the operands of ToBePromoted but Def
+  // can be statically promoted.
+  // For Def, we need to use its parameter in ToBePromoted:
+  // b = ToBePromoted ty1 a
+  // Def = Transition ty1 b to ty2
+  // Move the transition down.
+  // 1. Replace all uses of the promoted operation by the transition.
+  // = ... b => = ... Def.
+  assert(ToBePromoted->getType() == Transition->getType() &&
+         "The type of the result of the transition does not match "
+         "the final type");
+  ToBePromoted->replaceAllUsesWith(Transition);
+  // 2. Update the type of the uses.
+  // b = ToBePromoted ty2 Def => b = ToBePromoted ty1 Def.
+  Type *TransitionTy = getTransitionType();
+  ToBePromoted->mutateType(TransitionTy);
+  // 3. Update all the operands of the promoted operation with promoted
+  // operands.
+  // b = ToBePromoted ty1 Def => b = ToBePromoted ty1 a.
+  for (Use &U : ToBePromoted->operands()) {
+    Value *Val = U.get();
+    Value *NewVal = nullptr;
+    if (Val == Transition)
+      NewVal = Transition->getOperand(getTransitionOriginalValueIdx());
+    else if (isa<UndefValue>(Val) || isa<ConstantInt>(Val) ||
+             isa<ConstantFP>(Val)) {
+      // Use a splat constant if it is not safe to use undef.
+      NewVal = getConstantVector(
+          cast<Constant>(Val),
+          isa<UndefValue>(Val) ||
+              canCauseUndefinedBehavior(ToBePromoted, U.getOperandNo()));
+    } else
+      assert(0 && "Did you modified shouldPromote and forgot to update this?");
+    ToBePromoted->setOperand(U.getOperandNo(), NewVal);
+  }
+  Transition->removeFromParent();
+  Transition->insertAfter(ToBePromoted);
+  Transition->setOperand(getTransitionOriginalValueIdx(), ToBePromoted);
+}
+
+/// Some targets can do store(extractelement) with one instruction.
+/// Try to push the extractelement towards the stores when the target
+/// has this feature and this is profitable.
+bool CodeGenPrepare::OptimizeExtractElementInst(Instruction *Inst) {
+  unsigned CombineCost = UINT_MAX;
+  if (DisableStoreExtract || !TLI ||
+      (!StressStoreExtract &&
+       !TLI->canCombineStoreAndExtract(Inst->getOperand(0)->getType(),
+                                       Inst->getOperand(1), CombineCost)))
+    return false;
+
+  // At this point we know that Inst is a vector to scalar transition.
+  // Try to move it down the def-use chain, until:
+  // - We can combine the transition with its single use
+  //   => we got rid of the transition.
+  // - We escape the current basic block
+  //   => we would need to check that we are moving it at a cheaper place and
+  //      we do not do that for now.
+  BasicBlock *Parent = Inst->getParent();
+  DEBUG(dbgs() << "Found an interesting transition: " << *Inst << '\n');
+  VectorPromoteHelper VPH(*TLI, *TTI, Inst, CombineCost);
+  // If the transition has more than one use, assume this is not going to be
+  // beneficial.
+  while (Inst->hasOneUse()) {
+    Instruction *ToBePromoted = cast<Instruction>(*Inst->user_begin());
+    DEBUG(dbgs() << "Use: " << *ToBePromoted << '\n');
+
+    if (ToBePromoted->getParent() != Parent) {
+      DEBUG(dbgs() << "Instruction to promote is in a different block ("
+                   << ToBePromoted->getParent()->getName()
+                   << ") than the transition (" << Parent->getName() << ").\n");
+      return false;
+    }
+
+    if (VPH.canCombine(ToBePromoted)) {
+      DEBUG(dbgs() << "Assume " << *Inst << '\n'
+                   << "will be combined with: " << *ToBePromoted << '\n');
+      VPH.recordCombineInstruction(ToBePromoted);
+      bool Changed = VPH.promote();
+      NumStoreExtractExposed += Changed;
+      return Changed;
+    }
+
+    DEBUG(dbgs() << "Try promoting.\n");
+    if (!VPH.canPromote(ToBePromoted) || !VPH.shouldPromote(ToBePromoted))
+      return false;
+
+    DEBUG(dbgs() << "Promoting is possible... Enqueue for promotion!\n");
+
+    VPH.enqueueForPromotion(ToBePromoted);
+    Inst = ToBePromoted;
+  }
+  return false;
+}
+
 bool CodeGenPrepare::OptimizeInst(Instruction *I) {
   if (PHINode *P = dyn_cast<PHINode>(I)) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
@@ -3261,6 +3636,9 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
 
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(I))
     return OptimizeShuffleVectorInst(SVI);
+
+  if (isa<ExtractElementInst>(I))
+    return OptimizeExtractElementInst(I);
 
   return false;
 }

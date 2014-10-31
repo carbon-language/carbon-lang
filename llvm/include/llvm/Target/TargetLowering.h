@@ -262,7 +262,15 @@ public:
   bool isMaskAndBranchFoldingLegal() const {
     return MaskAndBranchFoldingIsLegal;
   }
-  
+
+  /// Return true if the target can combine store(extractelement VectorTy,
+  /// Idx).
+  /// \p Cost[out] gives the cost of that transformation when this is true.
+  virtual bool canCombineStoreAndExtract(Type *VectorTy, Value *Idx,
+                                         unsigned &Cost) const {
+    return false;
+  }
+
   /// Return true if target supports floating point exceptions.
   bool hasFloatingPointExceptions() const {
     return HasFloatingPointExceptions;

@@ -410,6 +410,9 @@ namespace llvm {
 
     bool useLoadStackGuardNode() const override;
 
+    bool canCombineStoreAndExtract(Type *VectorTy, Value *Idx,
+                                   unsigned &Cost) const override;
+
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(MVT VT) const override;
