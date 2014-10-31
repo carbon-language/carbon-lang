@@ -55,7 +55,8 @@ endif
 endif
 
 # Tools
-OCAMLCFLAGS += -I $(OcamlDir)
+OCAMLCFLAGS += -I $(OcamlDir) $(addprefix -package ,$(FindlibPackages))
+
 ifndef IS_CLEANING_TARGET
 ifneq ($(ObjectsO),)
 OCAMLAFLAGS += $(patsubst %,-cclib %, \

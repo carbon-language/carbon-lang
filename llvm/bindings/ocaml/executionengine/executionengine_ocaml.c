@@ -27,118 +27,8 @@
 
 void llvm_raise(value Prototype, char *Message);
 
-/*--... Operations on generic values .......................................--*/
-
-#define Genericvalue_val(v)  (*(LLVMGenericValueRef *)(Data_custom_val(v)))
-
-static void llvm_finalize_generic_value(value GenVal) {
-  LLVMDisposeGenericValue(Genericvalue_val(GenVal));
-}
-
-static struct custom_operations generic_value_ops = {
-  (char *) "Llvm_executionengine.GenericValue.t",
-  llvm_finalize_generic_value,
-  custom_compare_default,
-  custom_hash_default,
-  custom_serialize_default,
-  custom_deserialize_default,
-  custom_compare_ext_default
-};
-
-static value alloc_generic_value(LLVMGenericValueRef Ref) {
-  value Val = alloc_custom(&generic_value_ops, sizeof(LLVMGenericValueRef), 0, 1);
-  Genericvalue_val(Val) = Ref;
-  return Val;
-}
-
-/* Llvm.lltype -> float -> t */
-CAMLprim value llvm_genericvalue_of_float(LLVMTypeRef Ty, value N) {
-  CAMLparam1(N);
-  CAMLreturn(alloc_generic_value(
-    LLVMCreateGenericValueOfFloat(Ty, Double_val(N))));
-}
-
-/* 'a -> t */
-CAMLprim value llvm_genericvalue_of_pointer(value V) {
-  CAMLparam1(V);
-  CAMLreturn(alloc_generic_value(LLVMCreateGenericValueOfPointer(Op_val(V))));
-}
-
-/* Llvm.lltype -> int -> t */
-CAMLprim value llvm_genericvalue_of_int(LLVMTypeRef Ty, value Int) {
-  return alloc_generic_value(LLVMCreateGenericValueOfInt(Ty, Int_val(Int), 1));
-}
-
-/* Llvm.lltype -> int32 -> t */
-CAMLprim value llvm_genericvalue_of_int32(LLVMTypeRef Ty, value Int32) {
-  CAMLparam1(Int32);
-  CAMLreturn(alloc_generic_value(
-    LLVMCreateGenericValueOfInt(Ty, Int32_val(Int32), 1)));
-}
-
-/* Llvm.lltype -> nativeint -> t */
-CAMLprim value llvm_genericvalue_of_nativeint(LLVMTypeRef Ty, value NatInt) {
-  CAMLparam1(NatInt);
-  CAMLreturn(alloc_generic_value(
-    LLVMCreateGenericValueOfInt(Ty, Nativeint_val(NatInt), 1)));
-}
-
-/* Llvm.lltype -> int64 -> t */
-CAMLprim value llvm_genericvalue_of_int64(LLVMTypeRef Ty, value Int64) {
-  CAMLparam1(Int64);
-  CAMLreturn(alloc_generic_value(
-    LLVMCreateGenericValueOfInt(Ty, Int64_val(Int64), 1)));
-}
-
-/* Llvm.lltype -> t -> float */
-CAMLprim value llvm_genericvalue_as_float(LLVMTypeRef Ty, value GenVal) {
-  CAMLparam1(GenVal);
-  CAMLreturn(copy_double(
-    LLVMGenericValueToFloat(Ty, Genericvalue_val(GenVal))));
-}
-
-/* t -> 'a */
-CAMLprim value llvm_genericvalue_as_pointer(value GenVal) {
-  return Val_op(LLVMGenericValueToPointer(Genericvalue_val(GenVal)));
-}
-
-/* t -> int */
-CAMLprim value llvm_genericvalue_as_int(value GenVal) {
-  assert(LLVMGenericValueIntWidth(Genericvalue_val(GenVal)) <= 8 * sizeof(value)
-         && "Generic value too wide to treat as an int!");
-  return Val_int(LLVMGenericValueToInt(Genericvalue_val(GenVal), 1));
-}
-
-/* t -> int32 */
-CAMLprim value llvm_genericvalue_as_int32(value GenVal) {
-  CAMLparam1(GenVal);
-  assert(LLVMGenericValueIntWidth(Genericvalue_val(GenVal)) <= 32
-         && "Generic value too wide to treat as an int32!");
-  CAMLreturn(copy_int32(LLVMGenericValueToInt(Genericvalue_val(GenVal), 1)));
-}
-
-/* t -> int64 */
-CAMLprim value llvm_genericvalue_as_int64(value GenVal) {
-  CAMLparam1(GenVal);
-  assert(LLVMGenericValueIntWidth(Genericvalue_val(GenVal)) <= 64
-         && "Generic value too wide to treat as an int64!");
-  CAMLreturn(copy_int64(LLVMGenericValueToInt(Genericvalue_val(GenVal), 1)));
-}
-
-/* t -> nativeint */
-CAMLprim value llvm_genericvalue_as_nativeint(value GenVal) {
-  CAMLparam1(GenVal);
-  assert(LLVMGenericValueIntWidth(Genericvalue_val(GenVal)) <= 8 * sizeof(value)
-         && "Generic value too wide to treat as a nativeint!");
-  CAMLreturn(copy_nativeint(LLVMGenericValueToInt(Genericvalue_val(GenVal),1)));
-}
-
-
-/*--... Operations on execution engines ....................................--*/
-
 /* unit -> bool */
-CAMLprim value llvm_initialize_native_target(value Unit) {
-  LLVMLinkInInterpreter();
+CAMLprim value llvm_ee_initialize(value Unit) {
   LLVMLinkInMCJIT();
 
   return Val_bool(!LLVMInitializeNativeTarget() &&
@@ -146,48 +36,22 @@ CAMLprim value llvm_initialize_native_target(value Unit) {
                   !LLVMInitializeNativeAsmPrinter());
 }
 
-/* llmodule -> ExecutionEngine.t */
-CAMLprim LLVMExecutionEngineRef llvm_ee_create(LLVMModuleRef M) {
-  LLVMExecutionEngineRef Interp;
-  char *Error;
-  if (LLVMCreateExecutionEngineForModule(&Interp, M, &Error))
-    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
-  return Interp;
-}
-
-/* llmodule -> ExecutionEngine.t */
-CAMLprim LLVMExecutionEngineRef
-llvm_ee_create_interpreter(LLVMModuleRef M) {
-  LLVMExecutionEngineRef Interp;
-  char *Error;
-  if (LLVMCreateInterpreterForModule(&Interp, M, &Error))
-    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
-  return Interp;
-}
-
-/* llmodule -> int -> ExecutionEngine.t */
-CAMLprim LLVMExecutionEngineRef
-llvm_ee_create_jit(LLVMModuleRef M, value OptLevel) {
-  LLVMExecutionEngineRef JIT;
-  char *Error;
-  if (LLVMCreateJITCompilerForModule(&JIT, M, Int_val(OptLevel), &Error))
-    llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
-  return JIT;
-}
-
 /* llmodule -> llcompileroption -> ExecutionEngine.t */
-CAMLprim LLVMExecutionEngineRef
-llvm_ee_create_mcjit(LLVMModuleRef M, value OptRecord) {
+CAMLprim LLVMExecutionEngineRef llvm_ee_create(value OptRecordOpt, LLVMModuleRef M) {
+  value OptRecord;
   LLVMExecutionEngineRef MCJIT;
   char *Error;
   struct LLVMMCJITCompilerOptions Options;
 
   LLVMInitializeMCJITCompilerOptions(&Options, sizeof(Options));
-  Options.OptLevel = Int_val(Field(OptRecord, 0));
-  Options.CodeModel = Int_val(Field(OptRecord, 1));
-  Options.NoFramePointerElim = Int_val(Field(OptRecord, 2));
-  Options.EnableFastISel = Int_val(Field(OptRecord, 3));
-  Options.MCJMM = NULL;
+  if (OptRecordOpt != Val_int(0)) {
+    OptRecord = Field(OptRecordOpt, 0);
+    Options.OptLevel = Int_val(Field(OptRecord, 0));
+    Options.CodeModel = Int_val(Field(OptRecord, 1));
+    Options.NoFramePointerElim = Int_val(Field(OptRecord, 2));
+    Options.EnableFastISel = Int_val(Field(OptRecord, 3));
+    Options.MCJMM = NULL;
+  }
 
   if (LLVMCreateMCJITCompilerForModule(&MCJIT, M, &Options,
                                       sizeof(Options), &Error))
@@ -208,43 +72,12 @@ CAMLprim value llvm_ee_add_module(LLVMModuleRef M, LLVMExecutionEngineRef EE) {
 }
 
 /* llmodule -> ExecutionEngine.t -> llmodule */
-CAMLprim LLVMModuleRef llvm_ee_remove_module(LLVMModuleRef M,
-                                             LLVMExecutionEngineRef EE) {
+CAMLprim value llvm_ee_remove_module(LLVMModuleRef M, LLVMExecutionEngineRef EE) {
   LLVMModuleRef RemovedModule;
   char *Error;
   if (LLVMRemoveModule(EE, M, &RemovedModule, &Error))
     llvm_raise(*caml_named_value("Llvm_executionengine.Error"), Error);
-  return RemovedModule;
-}
-
-/* string -> ExecutionEngine.t -> llvalue option */
-CAMLprim value llvm_ee_find_function(value Name, LLVMExecutionEngineRef EE) {
-  CAMLparam1(Name);
-  CAMLlocal1(Option);
-  LLVMValueRef Found;
-  if (LLVMFindFunction(EE, String_val(Name), &Found))
-    CAMLreturn(Val_unit);
-  Option = alloc(1, 0);
-  Field(Option, 0) = Val_op(Found);
-  CAMLreturn(Option);
-}
-
-/* llvalue -> GenericValue.t array -> ExecutionEngine.t -> GenericValue.t */
-CAMLprim value llvm_ee_run_function(LLVMValueRef F, value Args,
-                                    LLVMExecutionEngineRef EE) {
-  unsigned NumArgs;
-  LLVMGenericValueRef Result, *GVArgs;
-  unsigned I;
-
-  NumArgs = Wosize_val(Args);
-  GVArgs = (LLVMGenericValueRef*) malloc(NumArgs * sizeof(LLVMGenericValueRef));
-  for (I = 0; I != NumArgs; ++I)
-    GVArgs[I] = Genericvalue_val(Field(Args, I));
-
-  Result = LLVMRunFunction(EE, F, NumArgs, GVArgs);
-
-  free(GVArgs);
-  return alloc_generic_value(Result);
+  return Val_unit;
 }
 
 /* ExecutionEngine.t -> unit */
@@ -256,66 +89,6 @@ CAMLprim value llvm_ee_run_static_ctors(LLVMExecutionEngineRef EE) {
 /* ExecutionEngine.t -> unit */
 CAMLprim value llvm_ee_run_static_dtors(LLVMExecutionEngineRef EE) {
   LLVMRunStaticDestructors(EE);
-  return Val_unit;
-}
-
-/* llvalue -> string array -> (string * string) array -> ExecutionEngine.t ->
-   int */
-CAMLprim value llvm_ee_run_function_as_main(LLVMValueRef F,
-                                            value Args, value Env,
-                                            LLVMExecutionEngineRef EE) {
-  CAMLparam2(Args, Env);
-  int I, NumArgs, NumEnv, EnvSize, Result;
-  const char **CArgs, **CEnv;
-  char *CEnvBuf, *Pos;
-
-  NumArgs = Wosize_val(Args);
-  NumEnv = Wosize_val(Env);
-
-  /* Build the environment. */
-  CArgs = (const char **) malloc(NumArgs * sizeof(char*));
-  for (I = 0; I != NumArgs; ++I)
-    CArgs[I] = String_val(Field(Args, I));
-
-  /* Compute the size of the environment string buffer. */
-  for (I = 0, EnvSize = 0; I != NumEnv; ++I) {
-    EnvSize += strlen(String_val(Field(Field(Env, I), 0))) + 1;
-    EnvSize += strlen(String_val(Field(Field(Env, I), 1))) + 1;
-  }
-
-  /* Build the environment. */
-  CEnv = (const char **) malloc((NumEnv + 1) * sizeof(char*));
-  CEnvBuf = (char*) malloc(EnvSize);
-  Pos = CEnvBuf;
-  for (I = 0; I != NumEnv; ++I) {
-    char *Name  = String_val(Field(Field(Env, I), 0)),
-         *Value = String_val(Field(Field(Env, I), 1));
-    int NameLen  = strlen(Name),
-        ValueLen = strlen(Value);
-
-    CEnv[I] = Pos;
-    memcpy(Pos, Name, NameLen);
-    Pos += NameLen;
-    *Pos++ = '=';
-    memcpy(Pos, Value, ValueLen);
-    Pos += ValueLen;
-    *Pos++ = '\0';
-  }
-  CEnv[NumEnv] = NULL;
-
-  Result = LLVMRunFunctionAsMain(EE, F, NumArgs, CArgs, CEnv);
-
-  free(CArgs);
-  free(CEnv);
-  free(CEnvBuf);
-
-  CAMLreturn(Val_int(Result));
-}
-
-/* llvalue -> ExecutionEngine.t -> unit */
-CAMLprim value llvm_ee_free_machine_code(LLVMValueRef F,
-                                         LLVMExecutionEngineRef EE) {
-  LLVMFreeMachineCodeForFunction(EE, F);
   return Val_unit;
 }
 
@@ -333,4 +106,17 @@ CAMLprim value llvm_ee_get_data_layout(LLVMExecutionEngineRef EE) {
   LLVMDisposeMessage(TargetDataCStr);
 
   return DataLayout;
+}
+
+/* Llvm.llvalue -> int64 -> llexecutionengine -> unit */
+CAMLprim value llvm_ee_add_global_mapping(LLVMValueRef Global, value Ptr,
+                                          LLVMExecutionEngineRef EE) {
+  LLVMAddGlobalMapping(EE, Global, (void*) (Int64_val(Ptr)));
+  return Val_unit;
+}
+
+/* Llvm.llvalue -> llexecutionengine -> int64 */
+CAMLprim value llvm_ee_get_pointer_to_global(LLVMValueRef Global,
+                                             LLVMExecutionEngineRef EE) {
+  return caml_copy_int64((int64_t) LLVMGetPointerToGlobal(EE, Global));
 }

@@ -19,20 +19,17 @@ let i64_type = Llvm.i64_type context
 let double_type = Llvm.double_type context
 
 let () =
-  assert (Llvm_executionengine.initialize_native_target ())
+  assert (Llvm_executionengine.initialize ())
 
 let bomb msg =
   prerr_endline msg;
   exit 2
 
-let define_main_fn m retval =
-  let fn =
-    let str_arr_type = pointer_type (pointer_type i8_type) in
-    define_function "main" (function_type i32_type [| i32_type;
-                                                      str_arr_type;
-                                                      str_arr_type |]) m in
+let define_getglobal m pg =
+  let fn = define_function "getglobal" (function_type i32_type [||]) m in
   let b = builder_at_end (global_context ()) (entry_block fn) in
-  ignore (build_ret (const_int i32_type retval) b);
+  let g = build_call pg [||] "" b in
+  ignore (build_ret g b);
   fn
 
 let define_plus m =
@@ -40,94 +37,67 @@ let define_plus m =
                                                              i32_type |]) m in
   let b = builder_at_end (global_context ()) (entry_block fn) in
   let add = build_add (param fn 0) (param fn 1) "sum" b in
-  ignore (build_ret add b)
+  ignore (build_ret add b);
+  fn
 
-let test_genericvalue () =
-  let tu = (1, 2) in
-  let ptrgv = GenericValue.of_pointer tu in
-  assert (tu = GenericValue.as_pointer ptrgv);
+let test_executionengine () =
+  let open Ctypes in
 
-  let fpgv = GenericValue.of_float double_type 2. in
-  assert (2. = GenericValue.as_float double_type fpgv);
-
-  let intgv = GenericValue.of_int i32_type 3 in
-  assert (3  = GenericValue.as_int intgv);
-
-  let i32gv = GenericValue.of_int32 i32_type (Int32.of_int 4) in
-  assert ((Int32.of_int 4) = GenericValue.as_int32 i32gv);
-
-  let nigv = GenericValue.of_nativeint i32_type (Nativeint.of_int 5) in
-  assert ((Nativeint.of_int 5) = GenericValue.as_nativeint nigv);
-
-  let i64gv = GenericValue.of_int64 i64_type (Int64.of_int 6) in
-  assert ((Int64.of_int 6) = GenericValue.as_int64 i64gv)
-
-let test_executionengine engine =
   (* create *)
   let m = create_module (global_context ()) "test_module" in
-  let main = define_main_fn m 42 in
+  let ee = create m in
 
+  (* add plus *)
+  let plus = define_plus m in
+
+  (* add module *)
   let m2 = create_module (global_context ()) "test_module2" in
-  define_plus m2;
+  add_module m2 ee;
 
-  let ee =
-    match engine with
-    | `Interpreter -> ExecutionEngine.create_interpreter m
-    | `JIT -> ExecutionEngine.create_jit m 0
-    | `MCJIT -> ExecutionEngine.create_mcjit m ExecutionEngine.default_compiler_options
-  in
-  ExecutionEngine.add_module m2 ee;
+  (* add global mapping *)
+  (* BROKEN: see PR20656 *)
+  (* let g = declare_function "g" (function_type i32_type [||]) m2 in
+  let cg = coerce (Foreign.funptr (void @-> returning int32_t)) (ptr void)
+                                  (fun () -> 42l) in
+  add_global_mapping g cg ee;
+
+  (* check g *)
+  let cg' = get_pointer_to_global g (ptr void) ee in
+  if 0 <> ptr_compare cg cg' then bomb "int pointers to g differ";
+
+  (* add getglobal *)
+  let getglobal = define_getglobal m2 g in*)
 
   (* run_static_ctors *)
-  ExecutionEngine.run_static_ctors ee;
+  run_static_ctors ee;
 
-  (* run_function_as_main *)
-  let res = ExecutionEngine.run_function_as_main main [|"test"|] [||] ee in
-  if 42 != res then bomb "main did not return 42";
+  (* call plus *)
+  let cplusty = Foreign.funptr (int32_t @-> int32_t @-> returning int32_t) in
+  let cplus   = get_pointer_to_global plus cplusty ee in
+  if 4l <> cplus 2l 2l then bomb "plus didn't work";
 
-  (* free_machine_code *)
-  ExecutionEngine.free_machine_code main ee;
-
-  (* find_function *)
-  match ExecutionEngine.find_function "dne" ee with
-  | Some _ -> raise (Failure "find_function 'dne' failed")
-  | None ->
-
-  match ExecutionEngine.find_function "plus" ee with
-  | None -> raise (Failure "find_function 'plus' failed")
-  | Some plus ->
-
-  begin match engine with
-  | `MCJIT -> () (* Currently can only invoke 0-ary functions *)
-  | `JIT -> () (* JIT is now a shim around MCJIT, jokes on you *)
-  | _ ->
-    (* run_function *)
-    let res = ExecutionEngine.run_function plus
-                                           [| GenericValue.of_int i32_type 2;
-                                              GenericValue.of_int i32_type 2 |]
-                                           ee in
-    if 4 != GenericValue.as_int res then bomb "plus did not work";
-  end;
+  (* call getglobal *)
+  (* let cgetglobalty = Foreign.funptr (void @-> returning int32_t) in
+  let cgetglobal   = get_pointer_to_global getglobal cgetglobalty ee in
+  if 42l <> cgetglobal () then bomb "getglobal didn't work"; *)
 
   (* remove_module *)
-  Llvm.dispose_module (ExecutionEngine.remove_module m2 ee);
+  remove_module m2 ee;
+  dispose_module m2;
 
   (* run_static_dtors *)
-  ExecutionEngine.run_static_dtors ee;
+  run_static_dtors ee;
 
   (* Show that the data layout binding links and runs.*)
-  let dl = ExecutionEngine.data_layout ee in
+  let dl = data_layout ee in
 
   (* Demonstrate that a garbage pointer wasn't returned. *)
   let ty = DataLayout.intptr_type context dl in
   if ty != i32_type && ty != i64_type then bomb "target_data did not work";
 
   (* dispose *)
-  ExecutionEngine.dispose ee
+  dispose ee
 
 let () =
-  test_genericvalue ();
-  test_executionengine `Interpreter;
-  test_executionengine `JIT;
-  test_executionengine `MCJIT;
-  ()
+  test_executionengine ();
+  Gc.compact ()

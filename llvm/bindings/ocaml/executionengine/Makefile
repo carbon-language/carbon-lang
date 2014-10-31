@@ -15,5 +15,6 @@ LEVEL := ../../..
 LIBRARYNAME := llvm_executionengine
 UsedComponents := executionengine mcjit interpreter native
 UsedOcamlInterfaces := llvm llvm_target
+FindlibPackages := ctypes
 
 include ../Makefile.ocaml
