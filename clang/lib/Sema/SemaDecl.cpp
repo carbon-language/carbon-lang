@@ -8434,11 +8434,14 @@ namespace {
     }
 
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
-      if (E->getNumArgs() > 0)
-        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->getArg(0)))
-          HandleDeclRefExpr(DRE);
+      Expr *Callee = E->getCallee();
 
-      Inherited::VisitCXXOperatorCallExpr(E);
+      if (isa<UnresolvedLookupExpr>(Callee))
+        return Inherited::VisitCXXOperatorCallExpr(E);
+
+      Visit(Callee);
+      for (auto Arg: E->arguments())
+        HandleValue(Arg->IgnoreParenImpCasts());
     }
 
     void VisitUnaryOperator(UnaryOperator *E) {

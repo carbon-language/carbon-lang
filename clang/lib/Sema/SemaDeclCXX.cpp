@@ -2494,6 +2494,17 @@ namespace {
       Inherited::VisitCallExpr(E);
     }
 
+    void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+      Expr *Callee = E->getCallee();
+
+      if (isa<UnresolvedLookupExpr>(Callee))
+        return Inherited::VisitCXXOperatorCallExpr(E);
+
+      Visit(Callee);
+      for (auto Arg : E->arguments())
+        HandleValue(Arg->IgnoreParenImpCasts(), false /*AddressOf*/);
+    }
+
     void VisitBinaryOperator(BinaryOperator *E) {
       // If a field assignment is detected, remove the field from the
       // uninitiailized field set.

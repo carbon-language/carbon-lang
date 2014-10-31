@@ -183,7 +183,11 @@ class A {
     A(A *a) {}
     A(A &&a) {}
     ~A();
+    bool operator!();
+    bool operator!=(const A&);
 };
+
+bool operator!=(int, const A&);
 
 A getA() { return A(); }
 A getA(int x) { return A(); }
@@ -243,6 +247,13 @@ void setupA(bool x) {
   A a38({a38});  // expected-warning {{variable 'a38' is uninitialized when used within its own initialization}}
   A a39 = {a39};  // expected-warning {{variable 'a39' is uninitialized when used within its own initialization}}
   A a40 = A({a40});  // expected-warning {{variable 'a40' is uninitialized when used within its own initialization}}
+
+  A a41 = !a41;  // expected-warning {{variable 'a41' is uninitialized when used within its own initialization}}
+  A a42 = !(a42);  // expected-warning {{variable 'a42' is uninitialized when used within its own initialization}}
+  A a43 = a43 != a42;  // expected-warning {{variable 'a43' is uninitialized when used within its own initialization}}
+  A a44 = a43 != a44;  // expected-warning {{variable 'a44' is uninitialized when used within its own initialization}}
+  A a45 = a45 != a45;  // expected-warning 2{{variable 'a45' is uninitialized when used within its own initialization}}
+  A a46 = 0 != a46;  // expected-warning {{variable 'a46' is uninitialized when used within its own initialization}}
 }
 
 bool cond;
@@ -294,6 +305,14 @@ A a37(const_refA(a37));
 A a38({a38});  // expected-warning {{variable 'a38' is uninitialized when used within its own initialization}}
 A a39 = {a39};  // expected-warning {{variable 'a39' is uninitialized when used within its own initialization}}
 A a40 = A({a40});  // expected-warning {{variable 'a40' is uninitialized when used within its own initialization}}
+
+A a41 = !a41;  // expected-warning {{variable 'a41' is uninitialized when used within its own initialization}}
+A a42 = !(a42);  // expected-warning {{variable 'a42' is uninitialized when used within its own initialization}}
+A a43 = a43 != a42;  // expected-warning {{variable 'a43' is uninitialized when used within its own initialization}}
+A a44 = a43 != a44;  // expected-warning {{variable 'a44' is uninitialized when used within its own initialization}}
+A a45 = a45 != a45;  // expected-warning 2{{variable 'a45' is uninitialized when used within its own initialization}}
+
+A a46 = 0 != a46;  // expected-warning {{variable 'a46' is uninitialized when used within its own initialization}}
 
 class T {
   A a, a2;
@@ -348,6 +367,13 @@ class T {
   T(bool (*)[38]) : a({a}) {}  // expected-warning {{field 'a' is uninitialized when used here}}
   T(bool (*)[39]) : a{a} {}  // expected-warning {{field 'a' is uninitialized when used here}}
   T(bool (*)[40]) : a({a}) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+
+  T(bool (*)[41]) : a(!a) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[42]) : a(!(a)) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[43]) : a(), a2(a2 != a) {}  // expected-warning {{field 'a2' is uninitialized when used here}}
+  T(bool (*)[44]) : a(), a2(a != a2) {}  // expected-warning {{field 'a2' is uninitialized when used here}}
+  T(bool (*)[45]) : a(a != a) {}  // expected-warning 2{{field 'a' is uninitialized when used here}}
+  T(bool (*)[46]) : a(0 != a) {}  // expected-warning {{field 'a' is uninitialized when used here}}
 };
 
 struct B {
