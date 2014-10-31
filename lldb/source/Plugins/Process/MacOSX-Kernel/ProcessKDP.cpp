@@ -439,7 +439,12 @@ ProcessKDP::DidAttach (ArchSpec &process_arch)
         log->Printf ("ProcessKDP::DidAttach()");
     if (GetID() != LLDB_INVALID_PROCESS_ID)
     {
-        // TODO: figure out the register context that we will use
+        uint32_t cpu = m_comm.GetCPUType();
+        if (cpu)
+        {
+            uint32_t sub = m_comm.GetCPUSubtype();
+            process_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
+        }
     }
 }
 
