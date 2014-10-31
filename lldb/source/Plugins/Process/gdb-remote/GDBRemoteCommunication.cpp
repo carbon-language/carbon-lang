@@ -411,74 +411,77 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
         // it off with an invalid value that is the same as the current
         // index.
         size_t content_start = 0;
-        size_t content_length = 0;
+        size_t content_length = std::string::npos;
         size_t total_length = 0;
         size_t checksum_idx = std::string::npos;
 
-        switch (m_bytes[0])
+        while (!m_bytes.empty() && content_length == std::string::npos)
         {
-            case '+':       // Look for ack
-            case '-':       // Look for cancel
-            case '\x03':    // ^C to halt target
-                content_length = total_length = 1;  // The command is one byte long...
-                break;
+            switch (m_bytes[0])
+            {
+                case '+':       // Look for ack
+                case '-':       // Look for cancel
+                case '\x03':    // ^C to halt target
+                    content_length = total_length = 1;  // The command is one byte long...
+                    break;
 
-            case '$':
-                // Look for a standard gdb packet?
-                {
-                    size_t hash_pos = m_bytes.find('#');
-                    if (hash_pos != std::string::npos)
+                case '$':
+                    // Look for a standard gdb packet?
                     {
-                        if (hash_pos + 2 < m_bytes.size())
+                        size_t hash_pos = m_bytes.find('#');
+                        if (hash_pos != std::string::npos)
                         {
-                            checksum_idx = hash_pos + 1;
-                            // Skip the dollar sign
-                            content_start = 1; 
-                            // Don't include the # in the content or the $ in the content length
-                            content_length = hash_pos - 1;  
-                            
-                            total_length = hash_pos + 3; // Skip the # and the two hex checksum bytes
-                        }
-                        else
-                        {
-                            // Checksum bytes aren't all here yet
-                            content_length = std::string::npos;
+                            if (hash_pos + 2 < m_bytes.size())
+                            {
+                                checksum_idx = hash_pos + 1;
+                                // Skip the dollar sign
+                                content_start = 1;
+                                // Don't include the # in the content or the $ in the content length
+                                content_length = hash_pos - 1;
+
+                                total_length = hash_pos + 3; // Skip the # and the two hex checksum bytes
+                            }
+                            else
+                            {
+                                // Checksum bytes aren't all here yet
+                                content_length = std::string::npos;
+                            }
                         }
                     }
-                }
-                break;
+                    break;
 
-            default:
-                {
-                    // We have an unexpected byte and we need to flush all bad 
-                    // data that is in m_bytes, so we need to find the first
-                    // byte that is a '+' (ACK), '-' (NACK), \x03 (CTRL+C interrupt),
-                    // or '$' character (start of packet header) or of course,
-                    // the end of the data in m_bytes...
-                    const size_t bytes_len = m_bytes.size();
-                    bool done = false;
-                    uint32_t idx;
-                    for (idx = 1; !done && idx < bytes_len; ++idx)
+                default:
                     {
-                        switch (m_bytes[idx])
+                        // We have an unexpected byte and we need to flush all bad
+                        // data that is in m_bytes, so we need to find the first
+                        // byte that is a '+' (ACK), '-' (NACK), \x03 (CTRL+C interrupt),
+                        // or '$' character (start of packet header) or of course,
+                        // the end of the data in m_bytes...
+                        const size_t bytes_len = m_bytes.size();
+                        bool done = false;
+                        uint32_t idx;
+                        for (idx = 1; !done && idx < bytes_len; ++idx)
                         {
-                        case '+':
-                        case '-':
-                        case '\x03':
-                        case '$':
-                            done = true;
-                            break;
-                                
-                        default:
-                            break;
+                            switch (m_bytes[idx])
+                            {
+                            case '+':
+                            case '-':
+                            case '\x03':
+                            case '$':
+                                done = true;
+                                break;
+
+                            default:
+                                break;
+                            }
                         }
+                        if (log)
+                            log->Printf ("GDBRemoteCommunication::%s tossing %u junk bytes: '%.*s'",
+                                         __FUNCTION__, idx - 1, idx - 1, m_bytes.c_str());
+                        m_bytes.erase(0, idx - 1);
                     }
-                    if (log)
-                        log->Printf ("GDBRemoteCommunication::%s tossing %u junk bytes: '%.*s'",
-                                     __FUNCTION__, idx, idx, m_bytes.c_str());
-                    m_bytes.erase(0, idx);
-                }
-                break;
+                    break;
+            }
         }
 
         if (content_length == std::string::npos)
