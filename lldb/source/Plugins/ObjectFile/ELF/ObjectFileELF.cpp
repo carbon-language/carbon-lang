@@ -1724,6 +1724,7 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
     static ConstString rodata1_section_name(".rodata1");
     static ConstString data2_section_name(".data1");
     static ConstString bss_section_name(".bss");
+    static ConstString opd_section_name(".opd");    // For ppc64
 
     //StreamFile strm(stdout, false);
     unsigned i;

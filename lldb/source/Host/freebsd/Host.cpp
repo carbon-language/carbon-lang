@@ -286,6 +286,49 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
     return false;
 }
 
+static lldb::DataBufferSP
+GetAuxvData32(lldb_private::Process *process)
+{
+    struct {
+        uint32_t ps_argvstr;
+        int ps_nargvstr;
+        uint32_t ps_envstr;
+        int ps_nenvstr;
+    } ps_strings;
+    void *ps_strings_addr, *auxv_addr;
+    struct privElf32_Auxinfo { int a_type; unsigned int a_val; } aux_info32[AT_COUNT];
+    struct ptrace_io_desc pid;
+    DataBufferSP buf_sp;
+    std::unique_ptr<DataBufferHeap> buf_ap(new DataBufferHeap(1024, 0));
+
+    ps_strings_addr = (void *)0xffffdff0;
+    pid.piod_op = PIOD_READ_D;
+    pid.piod_addr = &ps_strings;
+    pid.piod_offs = ps_strings_addr;
+    pid.piod_len = sizeof(ps_strings);
+    if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
+        perror("failed to fetch ps_strings");
+        buf_ap.release();
+        goto done;
+    }
+
+    auxv_addr = (void *)(ps_strings.ps_envstr + sizeof(uint32_t) * (ps_strings.ps_nenvstr + 1));
+
+    pid.piod_addr = aux_info32;
+    pid.piod_offs = auxv_addr;
+    pid.piod_len = sizeof(aux_info32);
+    if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
+        perror("failed to fetch aux_info");
+        buf_ap.release();
+        goto done;
+    }
+    memcpy(buf_ap->GetBytes(), aux_info32, pid.piod_len);
+    buf_sp.reset(buf_ap.release());
+
+    done:
+    return buf_sp;
+}
+
 lldb::DataBufferSP
 Host::GetAuxvData(lldb_private::Process *process)
 {
@@ -296,6 +339,10 @@ Host::GetAuxvData(lldb_private::Process *process)
    struct ps_strings ps_strings;
    struct ptrace_io_desc pid;
    DataBufferSP buf_sp;
+
+   if (process->GetAddressByteSize() < HostInfo::GetArchitecture().GetAddressByteSize())
+           return GetAuxvData32(process);
+
    std::unique_ptr<DataBufferHeap> buf_ap(new DataBufferHeap(1024, 0));
 
    if (::sysctl(mib, 2, &ps_strings_addr, &ps_strings_size, NULL, 0) == 0) {

@@ -113,6 +113,7 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
             log->Printf("PT_GETREGS: ax=0x%lx", r->r_rax);
         }
 #endif
+#ifndef __powerpc__
         if (req == PT_GETDBREGS || req == PT_SETDBREGS) {
             struct dbreg *r = (struct dbreg *) addr;
             char setget = (req == PT_GETDBREGS) ? 'G' : 'S';
@@ -120,6 +121,7 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
             for (int i = 0; i <= 7; i++)
                 log->Printf("PT_%cETDBREGS: dr[%d]=0x%lx", setget, i, r->dr[i]);
         }
+#endif
     }
      
     return result;

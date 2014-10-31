@@ -19,6 +19,7 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Host.h"
 #include "lldb/Utility/SafeMachO.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Host/Endian.h"
@@ -84,7 +85,7 @@ static const CoreDefinition g_core_definitions[] =
 
     { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64 , ArchSpec::eCore_mips64          , "mips64"    },
     
-    { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_generic     , "ppc"       },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_generic     , "powerpc"   },
     { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_ppc601      , "ppc601"    },
     { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_ppc602      , "ppc602"    },
     { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_ppc603      , "ppc603"    },
@@ -98,7 +99,7 @@ static const CoreDefinition g_core_definitions[] =
     { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_ppc7450     , "ppc7450"   },
     { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_ppc970      , "ppc970"    },
     
-    { eByteOrderBig   , 8, 4, 4, llvm::Triple::ppc64  , ArchSpec::eCore_ppc64_generic   , "ppc64"     },
+    { eByteOrderBig   , 8, 4, 4, llvm::Triple::ppc64  , ArchSpec::eCore_ppc64_generic   , "powerpc64" },
     { eByteOrderBig   , 8, 4, 4, llvm::Triple::ppc64  , ArchSpec::eCore_ppc64_ppc970_64 , "ppc970-64" },
     
     { eByteOrderLittle, 4, 4, 4, llvm::Triple::sparc  , ArchSpec::eCore_sparc_generic   , "sparc"     },

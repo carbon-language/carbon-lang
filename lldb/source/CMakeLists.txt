@@ -80,6 +80,8 @@ set( LLDB_USED_LIBS
   lldbPluginABIMacOSX_i386
   lldbPluginABISysV_x86_64
   lldbPluginABISysV_hexagon
+  lldbPluginABISysV_ppc
+  lldbPluginABISysV_ppc64
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
   lldbPluginObjectFilePECOFF

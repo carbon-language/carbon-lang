@@ -12,5 +12,6 @@ add_lldb_library(lldbPluginProcessPOSIX
   ProcessPOSIXLog.cpp
   RegisterContextPOSIXProcessMonitor_arm64.cpp
   RegisterContextPOSIXProcessMonitor_mips64.cpp
+  RegisterContextPOSIXProcessMonitor_powerpc.cpp
   RegisterContextPOSIXProcessMonitor_x86.cpp
   )
