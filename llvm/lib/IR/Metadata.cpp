@@ -745,8 +745,8 @@ Value *Instruction::getMetadataImpl(unsigned KindID) const {
   return nullptr;
 }
 
-void Instruction::getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,
-                                       MDNode*> > &Result) const {
+void Instruction::getAllMetadataImpl(
+    SmallVectorImpl<std::pair<unsigned, Value *>> &Result) const {
   Result.clear();
   
   // Handle 'dbg' as a special case since it is not stored in the hash table.

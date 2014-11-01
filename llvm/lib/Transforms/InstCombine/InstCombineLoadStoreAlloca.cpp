@@ -304,7 +304,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
 static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewTy) {
   Value *Ptr = LI.getPointerOperand();
   unsigned AS = LI.getPointerAddressSpace();
-  SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
+  SmallVector<std::pair<unsigned, Value *>, 8> MD;
   LI.getAllMetadata(MD);
 
   LoadInst *NewLoad = IC.Builder->CreateAlignedLoad(
@@ -312,7 +312,7 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
       LI.getAlignment(), LI.getName());
   for (const auto &MDPair : MD) {
     unsigned ID = MDPair.first;
-    MDNode *N = MDPair.second;
+    Value *N = MDPair.second;
     // Note, essentially every kind of metadata should be preserved here! This
     // routine is supposed to clone a load instruction changing *only its type*.
     // The only metadata it makes sense to drop is metadata which is invalidated

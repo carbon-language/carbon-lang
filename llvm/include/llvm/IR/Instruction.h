@@ -174,7 +174,8 @@ public:
   /// getAllMetadata - Get all metadata attached to this Instruction.  The first
   /// element of each pair returned is the KindID, the second element is the
   /// metadata value.  This list is returned sorted by the KindID.
-  void getAllMetadata(SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs)const{
+  void
+  getAllMetadata(SmallVectorImpl<std::pair<unsigned, Value *>> &MDs) const {
     if (hasMetadata())
       getAllMetadataImpl(MDs);
   }
@@ -293,7 +294,8 @@ private:
   Value *getMetadataImpl(StringRef Kind) const;
   MDNode *getMDNodeImpl(unsigned KindID) const;
   MDNode *getMDNodeImpl(StringRef Kind) const;
-  void getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,MDNode*> > &)const;
+  void
+  getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned, Value *>> &) const;
   void getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
                                            MDNode*> > &) const;
   void clearMetadataHashEntries();
