@@ -34,7 +34,7 @@ class DwarfCompileUnit : public DwarfUnit {
   unsigned stmtListIndex;
 
   /// Skeleton unit associated with this unit.
-  DwarfUnit *Skeleton;
+  DwarfCompileUnit *Skeleton;
 
   /// \brief Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
@@ -46,7 +46,7 @@ public:
                    DwarfDebug *DW, DwarfFile *DWU);
 
   DwarfCompileUnit *getSkeleton() const {
-    return static_cast<DwarfCompileUnit *>(Skeleton);
+    return Skeleton;
   }
 
   void initStmtList(MCSymbol *DwarfLineSectionSym);
@@ -155,7 +155,7 @@ public:
   }
 
   /// Set the skeleton unit associated with this unit.
-  void setSkeleton(DwarfUnit &Skel) { Skeleton = &Skel; }
+  void setSkeleton(DwarfCompileUnit &Skel) { Skeleton = &Skel; }
 };
 
 } // end llvm namespace
