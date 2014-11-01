@@ -127,9 +127,6 @@ class TempScop {
   // The Region.
   Region &R;
 
-  // The max loop depth of this Scop
-  unsigned MaxLoopDepth;
-
   // Remember the bounds of loops, to help us build iteration domain of BBs.
   const LoopBoundMapType &LoopBounds;
   const BBCondMapType &BBConds;
@@ -141,8 +138,7 @@ class TempScop {
 
   explicit TempScop(Region &r, LoopBoundMapType &loopBounds,
                     BBCondMapType &BBCmps, AccFuncMapType &accFuncMap)
-      : R(r), MaxLoopDepth(0), LoopBounds(loopBounds), BBConds(BBCmps),
-        AccFuncMap(accFuncMap) {}
+      : R(r), LoopBounds(loopBounds), BBConds(BBCmps), AccFuncMap(accFuncMap) {}
 
 public:
   ~TempScop();
@@ -151,11 +147,6 @@ public:
   ///
   /// @return The maximum Region contained by this Scop.
   Region &getMaxRegion() const { return R; }
-
-  /// @brief Get the maximum loop depth of Region R.
-  ///
-  /// @return The maximum loop depth of Region R.
-  unsigned getMaxLoopDepth() const { return MaxLoopDepth; }
 
   /// @brief Get the loop bounds of the given loop.
   ///

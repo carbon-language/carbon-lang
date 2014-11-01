@@ -73,8 +73,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const BBCond &Cond) {
 TempScop::~TempScop() {}
 
 void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
-  OS << "Scop: " << R.getNameStr() << ", Max Loop Depth: " << MaxLoopDepth
-     << "\n";
+  OS << "Scop: " << R.getNameStr() << "\n";
 
   printDetail(OS, SE, LI, &R, 0);
 }
@@ -216,7 +215,6 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
 
 void TempScopInfo::buildLoopBounds(TempScop &Scop) {
   Region &R = Scop.getMaxRegion();
-  unsigned MaxLoopDepth = 0;
 
   for (auto const &BB : R.blocks()) {
     Loop *L = LI->getLoopFor(BB);
@@ -229,15 +227,7 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
 
     const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
     LoopBounds[L] = BackedgeTakenCount;
-
-    Loop *OL = R.outermostLoopInRegion(L);
-    unsigned LoopDepth = L->getLoopDepth() - OL->getLoopDepth() + 1;
-
-    if (LoopDepth > MaxLoopDepth)
-      MaxLoopDepth = LoopDepth;
   }
-
-  Scop.MaxLoopDepth = MaxLoopDepth;
 }
 
 void TempScopInfo::buildAffineCondition(Value &V, bool inverted,

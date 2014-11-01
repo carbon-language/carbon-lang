@@ -1416,10 +1416,30 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   return Valid;
 }
 
+static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI) {
+  unsigned MinLD = INT_MAX, MaxLD = 0;
+  for (BasicBlock *BB : R.blocks()) {
+    if (Loop *L = LI.getLoopFor(BB)) {
+      unsigned LD = L->getLoopDepth();
+      MinLD = std::min(MinLD, LD);
+      MaxLD = std::max(MaxLD, LD);
+    }
+  }
+
+  // Handle the case that there is no loop in the SCoP first.
+  if (MaxLD == 0)
+    return 1;
+
+  assert(MinLD >= 1 && "Minimal loop depth should be at least one");
+  assert(MaxLD >= MinLD &&
+         "Maximal loop depth was smaller than mininaml loop depth?");
+  return MaxLD - MinLD + 1;
+}
+
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            isl_ctx *Context)
     : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
-      MaxLoopDepth(tempScop.getMaxLoopDepth()) {
+      MaxLoopDepth(getMaxLoopDepthInRegion(tempScop.getMaxRegion(), LI)) {
   IslCtx = Context;
   buildContext();
 
@@ -1785,7 +1805,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   // Statistics.
   ++ScopFound;
-  if (tempScop->getMaxLoopDepth() > 0)
+  if (scop->getMaxLoopDepth() > 0)
     ++RichScopFound;
 
   scop = new Scop(*tempScop, LI, SE, ctx);
