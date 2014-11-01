@@ -44,9 +44,21 @@ __lzcnt32(unsigned int __X)
   return __X ? __builtin_clz(__X) : 32;
 }
 
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_lzcnt_u32(unsigned int __X)
+{
+  return __X ? __builtin_clz(__X) : 32;
+}
+
 #ifdef __x86_64__
 static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
 __lzcnt64(unsigned long long __X)
+{
+  return __X ? __builtin_clzll(__X) : 64;
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
+_lzcnt_u64(unsigned long long __X)
 {
   return __X ? __builtin_clzll(__X) : 64;
 }
