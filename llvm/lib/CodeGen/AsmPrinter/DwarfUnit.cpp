@@ -1730,6 +1730,10 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
 }
 
 void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) const {
+  // Emit size of content not including length itself
+  Asm->OutStreamer.AddComment("Length of Unit");
+  Asm->EmitInt32(getHeaderSize() + UnitDie.getSize());
+
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(DD->getDwarfVersion());
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");

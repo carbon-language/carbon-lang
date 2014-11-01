@@ -55,13 +55,6 @@ void DwarfFile::emitUnits(const MCSymbol *ASectionSym) {
     const MCSection *USection = TheU->getSection();
     Asm->OutStreamer.SwitchSection(USection);
 
-    // Emit the compile units header.
-    Asm->OutStreamer.EmitLabel(TheU->getLabelBegin());
-
-    // Emit size of content not including length itself
-    Asm->OutStreamer.AddComment("Length of Unit");
-    Asm->EmitInt32(TheU->getHeaderSize() + Die.getSize());
-
     TheU->emitHeader(ASectionSym);
 
     DD.emitDIE(Die);

@@ -686,4 +686,12 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
   }
 }
 
+void DwarfCompileUnit::emitHeader(const MCSymbol *ASectionSym) const {
+  // Emit the compile units header.
+  Asm->OutStreamer.EmitLabel(LabelBegin);
+
+  DwarfUnit::emitHeader(ASectionSym);
+}
+
+
 } // end llvm namespace

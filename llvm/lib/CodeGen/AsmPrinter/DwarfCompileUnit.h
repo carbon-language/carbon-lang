@@ -177,6 +177,8 @@ public:
     return sizeof(uint32_t) + // Length field
         getHeaderSize() + UnitDie.getSize();
   }
+
+  void emitHeader(const MCSymbol *ASectionSym) const override;
 };
 
 } // end llvm namespace
