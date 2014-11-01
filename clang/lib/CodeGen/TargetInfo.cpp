@@ -3714,7 +3714,7 @@ private:
 
   bool isIllegalVectorType(QualType Ty) const;
 
-  virtual void computeInfo(CGFunctionInfo &FI) const {
+  virtual void computeInfo(CGFunctionInfo &FI) const override {
     // To correctly handle Homogeneous Aggregate, we need to keep track of the
     // number of SIMD and Floating-point registers allocated so far.
     // If the argument is an HFA or an HVA and there are sufficient unallocated
@@ -3786,7 +3786,7 @@ private:
                               CodeGenFunction &CGF) const;
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                 CodeGenFunction &CGF) const {
+                                 CodeGenFunction &CGF) const override {
     return isDarwinPCS() ? EmitDarwinVAArg(VAListAddr, Ty, CGF)
                          : EmitAAPCSVAArg(VAListAddr, Ty, CGF);
   }
