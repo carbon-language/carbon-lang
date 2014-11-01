@@ -2474,6 +2474,8 @@ namespace {
       Expr *Callee = E->getCallee();
       if (isa<MemberExpr>(Callee)) {
         HandleValue(Callee, false /*AddressOf*/);
+        for (auto Arg : E->arguments())
+          Visit(Arg);
         return;
       }
 

@@ -173,7 +173,7 @@ class A {
     static int count;
     int get() const { return num; }
     int get2() { return num; }
-    void set(int x) { num = x; }
+    int set(int x) { num = x; return num; }
     static int zero() { return 0; }
 
     A() {}
@@ -254,6 +254,10 @@ void setupA(bool x) {
   A a44 = a43 != a44;  // expected-warning {{variable 'a44' is uninitialized when used within its own initialization}}
   A a45 = a45 != a45;  // expected-warning 2{{variable 'a45' is uninitialized when used within its own initialization}}
   A a46 = 0 != a46;  // expected-warning {{variable 'a46' is uninitialized when used within its own initialization}}
+
+  A a47(a47.set(a47.num));  // expected-warning 2{{variable 'a47' is uninitialized when used within its own initialization}}
+  A a48(a47.set(a48.num));  // expected-warning {{variable 'a48' is uninitialized when used within its own initialization}}
+  A a49(a47.set(a48.num));
 }
 
 bool cond;
@@ -313,6 +317,10 @@ A a44 = a43 != a44;  // expected-warning {{variable 'a44' is uninitialized when 
 A a45 = a45 != a45;  // expected-warning 2{{variable 'a45' is uninitialized when used within its own initialization}}
 
 A a46 = 0 != a46;  // expected-warning {{variable 'a46' is uninitialized when used within its own initialization}}
+
+A a47(a47.set(a47.num));  // expected-warning 2{{variable 'a47' is uninitialized when used within its own initialization}}
+A a48(a47.set(a48.num));  // expected-warning {{variable 'a48' is uninitialized when used within its own initialization}}
+A a49(a47.set(a48.num));
 
 class T {
   A a, a2;
@@ -374,6 +382,11 @@ class T {
   T(bool (*)[44]) : a(), a2(a != a2) {}  // expected-warning {{field 'a2' is uninitialized when used here}}
   T(bool (*)[45]) : a(a != a) {}  // expected-warning 2{{field 'a' is uninitialized when used here}}
   T(bool (*)[46]) : a(0 != a) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+
+  T(bool (*)[47]) : a2(a2.set(a2.num)) {}  // expected-warning 2{{field 'a2' is uninitialized when used here}}
+  T(bool (*)[48]) : a2(a.set(a2.num)) {}  // expected-warning {{field 'a2' is uninitialized when used here}}
+  T(bool (*)[49]) : a2(a.set(a.num)) {}
+
 };
 
 struct B {
