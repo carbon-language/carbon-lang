@@ -138,17 +138,11 @@ protected:
   /// The end of the unit within its section.
   MCSymbol *LabelEnd;
 
-  /// Skeleton unit associated with this unit.
-  DwarfUnit *Skeleton;
-
   DwarfUnit(unsigned UID, dwarf::Tag, DICompileUnit CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
 public:
   virtual ~DwarfUnit();
-
-  /// Set the skeleton unit associated with this unit.
-  void setSkeleton(DwarfUnit &Skel) { Skeleton = &Skel; }
 
   /// Pass in the SectionSym even though we could recreate it in every compile
   /// unit (type units will have actually distinct symbols once they're in
@@ -168,25 +162,9 @@ public:
     return Section;
   }
 
-  /// If there's a skeleton then return the section symbol for the skeleton
-  /// unit, otherwise return the section symbol for this unit.
-  MCSymbol *getLocalSectionSym() const {
-    if (Skeleton)
-      return Skeleton->getSectionSym();
-    return getSectionSym();
-  }
-
   MCSymbol *getSectionSym() const {
     assert(Section);
     return SectionSym;
-  }
-
-  /// If there's a skeleton then return the begin label for the skeleton unit,
-  /// otherwise return the local label for this unit.
-  MCSymbol *getLocalLabelBegin() const {
-    if (Skeleton)
-      return Skeleton->getLabelBegin();
-    return getLabelBegin();
   }
 
   MCSymbol *getLabelBegin() const {
