@@ -1579,7 +1579,7 @@ void DwarfDebug::emitDebugPubSection(
     if (Globals.empty())
       continue;
 
-    if (auto Skeleton = TheU->getSkeleton())
+    if (auto *Skeleton = TheU->getSkeleton())
       TheU = Skeleton;
     unsigned ID = TheU->getUniqueID();
 
