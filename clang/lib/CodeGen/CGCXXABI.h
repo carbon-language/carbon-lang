@@ -210,9 +210,8 @@ protected:
 
 public:
   virtual void emitVirtualObjectDelete(CodeGenFunction &CGF,
-                                       const FunctionDecl *OperatorDelete,
+                                       const CXXDeleteExpr *DE,
                                        llvm::Value *Ptr, QualType ElementType,
-                                       bool UseGlobalDelete,
                                        const CXXDestructorDecl *Dtor) = 0;
 
   virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) = 0;

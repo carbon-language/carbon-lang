@@ -106,10 +106,8 @@ public:
                                          llvm::Value *Addr,
                                          const MemberPointerType *MPT) override;
 
-  void emitVirtualObjectDelete(CodeGenFunction &CGF,
-                               const FunctionDecl *OperatorDelete,
+  void emitVirtualObjectDelete(CodeGenFunction &CGF, const CXXDeleteExpr *DE,
                                llvm::Value *Ptr, QualType ElementType,
-                               bool UseGlobalDelete,
                                const CXXDestructorDecl *Dtor) override;
 
   void EmitFundamentalRTTIDescriptor(QualType Type);
@@ -851,9 +849,12 @@ bool ItaniumCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
 
 /// The Itanium ABI always places an offset to the complete object
 /// at entry -2 in the vtable.
-void ItaniumCXXABI::emitVirtualObjectDelete(
-    CodeGenFunction &CGF, const FunctionDecl *OperatorDelete, llvm::Value *Ptr,
-    QualType ElementType, bool UseGlobalDelete, const CXXDestructorDecl *Dtor) {
+void ItaniumCXXABI::emitVirtualObjectDelete(CodeGenFunction &CGF,
+                                            const CXXDeleteExpr *DE,
+                                            llvm::Value *Ptr,
+                                            QualType ElementType,
+                                            const CXXDestructorDecl *Dtor) {
+  bool UseGlobalDelete = DE->isGlobalDelete();
   if (UseGlobalDelete) {
     // Derive the complete-object pointer, which is what we need
     // to pass to the deallocation function.
@@ -873,7 +874,8 @@ void ItaniumCXXABI::emitVirtualObjectDelete(
 
     // If we're supposed to call the global delete, make sure we do so
     // even if the destructor throws.
-    CGF.pushCallObjectDeleteCleanup(OperatorDelete, CompletePtr, ElementType);
+    CGF.pushCallObjectDeleteCleanup(DE->getOperatorDelete(), CompletePtr,
+                                    ElementType);
   }
 
   // FIXME: Provide a source location here even though there's no

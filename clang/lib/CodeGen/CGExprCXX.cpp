@@ -1420,10 +1420,9 @@ CodeGenFunction::pushCallObjectDeleteCleanup(const FunctionDecl *OperatorDelete,
 
 /// Emit the code for deleting a single object.
 static void EmitObjectDelete(CodeGenFunction &CGF,
-                             const FunctionDecl *OperatorDelete,
+                             const CXXDeleteExpr *DE,
                              llvm::Value *Ptr,
-                             QualType ElementType,
-                             bool UseGlobalDelete) {
+                             QualType ElementType) {
   // Find the destructor for the type, if applicable.  If the
   // destructor is virtual, we'll just emit the vcall and return.
   const CXXDestructorDecl *Dtor = nullptr;
@@ -1433,8 +1432,8 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
       Dtor = RD->getDestructor();
 
       if (Dtor->isVirtual()) {
-        CGF.CGM.getCXXABI().emitVirtualObjectDelete(
-            CGF, OperatorDelete, Ptr, ElementType, UseGlobalDelete, Dtor);
+        CGF.CGM.getCXXABI().emitVirtualObjectDelete(CGF, DE, Ptr, ElementType,
+                                                    Dtor);
         return;
       }
     }
@@ -1443,6 +1442,7 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
   // Make sure that we call delete even if the dtor throws.
   // This doesn't have to a conditional cleanup because we're going
   // to pop it off in a second.
+  const FunctionDecl *OperatorDelete = DE->getOperatorDelete();
   CGF.EHStack.pushCleanup<CallObjectDelete>(NormalAndEHCleanup,
                                             Ptr, OperatorDelete, ElementType);
 
@@ -1619,8 +1619,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   if (E->isArrayForm()) {
     EmitArrayDelete(*this, E, Ptr, DeleteTy);
   } else {
-    EmitObjectDelete(*this, E->getOperatorDelete(), Ptr, DeleteTy,
-                     E->isGlobalDelete());
+    EmitObjectDelete(*this, E, Ptr, DeleteTy);
   }
 
   EmitBlock(DeleteEnd);

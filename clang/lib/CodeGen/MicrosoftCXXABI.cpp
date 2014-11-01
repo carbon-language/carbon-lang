@@ -66,10 +66,8 @@ public:
   StringRef GetPureVirtualCallName() override { return "_purecall"; }
   StringRef GetDeletedVirtualCallName() override { return "_purecall"; }
 
-  void emitVirtualObjectDelete(CodeGenFunction &CGF,
-                               const FunctionDecl *OperatorDelete,
+  void emitVirtualObjectDelete(CodeGenFunction &CGF, const CXXDeleteExpr *DE,
                                llvm::Value *Ptr, QualType ElementType,
-                               bool UseGlobalDelete,
                                const CXXDestructorDecl *Dtor) override;
 
   llvm::GlobalVariable *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
@@ -652,16 +650,19 @@ MicrosoftCXXABI::getRecordArgABI(const CXXRecordDecl *RD) const {
   llvm_unreachable("invalid enum");
 }
 
-void MicrosoftCXXABI::emitVirtualObjectDelete(
-    CodeGenFunction &CGF, const FunctionDecl *OperatorDelete, llvm::Value *Ptr,
-    QualType ElementType, bool UseGlobalDelete, const CXXDestructorDecl *Dtor) {
+void MicrosoftCXXABI::emitVirtualObjectDelete(CodeGenFunction &CGF,
+                                              const CXXDeleteExpr *DE,
+                                              llvm::Value *Ptr,
+                                              QualType ElementType,
+                                              const CXXDestructorDecl *Dtor) {
   // FIXME: Provide a source location here even though there's no
   // CXXMemberCallExpr for dtor call.
+  bool UseGlobalDelete = DE->isGlobalDelete();
   CXXDtorType DtorType = UseGlobalDelete ? Dtor_Complete : Dtor_Deleting;
   llvm::Value *MDThis =
       EmitVirtualDestructorCall(CGF, Dtor, DtorType, Ptr, /*CE=*/nullptr);
   if (UseGlobalDelete)
-    CGF.EmitDeleteCall(OperatorDelete, MDThis, ElementType);
+    CGF.EmitDeleteCall(DE->getOperatorDelete(), MDThis, ElementType);
 }
 
 /// \brief Gets the offset to the virtual base that contains the vfptr for
