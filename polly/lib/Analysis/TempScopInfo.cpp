@@ -213,23 +213,6 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
   Accs.insert(Accs.end(), Functions.begin(), Functions.end());
 }
 
-void TempScopInfo::buildLoopBounds(TempScop &Scop) {
-  Region &R = Scop.getMaxRegion();
-
-  for (auto const &BB : R.blocks()) {
-    Loop *L = LI->getLoopFor(BB);
-
-    if (!L || !R.contains(L))
-      continue;
-
-    if (LoopBounds.find(L) != LoopBounds.end())
-      continue;
-
-    const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
-    LoopBounds[L] = BackedgeTakenCount;
-  }
-}
-
 void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
                                         Comparison **Comp) const {
   if (ConstantInt *C = dyn_cast<ConstantInt>(&V)) {
@@ -312,14 +295,12 @@ void TempScopInfo::buildCondition(BasicBlock *BB, BasicBlock *RegionEntry) {
 }
 
 TempScop *TempScopInfo::buildTempScop(Region &R) {
-  TempScop *TScop = new TempScop(R, LoopBounds, BBConds, AccFuncMap);
+  TempScop *TScop = new TempScop(R, BBConds, AccFuncMap);
 
   for (const auto &BB : R.blocks()) {
     buildAccessFunctions(R, *BB);
     buildCondition(BB, R.getEntry());
   }
-
-  buildLoopBounds(*TScop);
 
   return TScop;
 }
@@ -372,7 +353,6 @@ TempScopInfo::~TempScopInfo() { clear(); }
 
 void TempScopInfo::clear() {
   BBConds.clear();
-  LoopBounds.clear();
   AccFuncMap.clear();
   DeleteContainerSeconds(TempScops);
   TempScops.clear();

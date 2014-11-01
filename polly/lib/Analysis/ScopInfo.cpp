@@ -788,6 +788,7 @@ __isl_give isl_set *ScopStmt::addLoopBoundsToDomain(__isl_take isl_set *Domain,
   Space = isl_set_get_space(Domain);
   LocalSpace = isl_local_space_from_space(Space);
 
+  ScalarEvolution *SE = getParent()->getSE();
   for (int i = 0, e = getNumIterators(); i != e; ++i) {
     isl_aff *Zero = isl_aff_zero_on_domain(isl_local_space_copy(LocalSpace));
     isl_pw_aff *IV =
@@ -799,7 +800,7 @@ __isl_give isl_set *ScopStmt::addLoopBoundsToDomain(__isl_take isl_set *Domain,
 
     // IV <= LatchExecutions.
     const Loop *L = getLoopForDimension(i);
-    const SCEV *LatchExecutions = tempScop.getLoopBound(L);
+    const SCEV *LatchExecutions = SE->getBackedgeTakenCount(L);
     isl_pw_aff *UpperBound = SCEVAffinator::getPwAff(this, LatchExecutions);
     isl_set *UpperBoundSet = isl_pw_aff_le_set(IV, UpperBound);
     Domain = isl_set_intersect(Domain, UpperBoundSet);
