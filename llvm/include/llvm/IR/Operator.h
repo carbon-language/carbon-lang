@@ -358,6 +358,8 @@ class LShrOperator
 };
 
 
+class ZExtOperator : public ConcreteOperator<Operator, Instruction::ZExt> {};
+
 
 class GEPOperator
   : public ConcreteOperator<Operator, Instruction::GetElementPtr> {
