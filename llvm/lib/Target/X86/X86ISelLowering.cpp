@@ -22479,22 +22479,22 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
 
-  // Simplify vector selection if the selector will be produced by CMPP*/PCMP*.
-  if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
-      // Check if SETCC has already been promoted
-      TLI.getSetCCResultType(*DAG.getContext(), VT) == CondVT &&
-      // Check that condition value type matches vselect operand type
-      CondVT == VT) { 
-
+  // Simplify vector selection if condition value type matches vselect
+  // operand type
+  if (N->getOpcode() == ISD::VSELECT && CondVT == VT) {
     assert(Cond.getValueType().isVector() &&
            "vector select expects a vector selector!");
 
     bool TValIsAllOnes = ISD::isBuildVectorAllOnes(LHS.getNode());
     bool FValIsAllZeros = ISD::isBuildVectorAllZeros(RHS.getNode());
 
-    if (!TValIsAllOnes && !FValIsAllZeros) {
-      // Try invert the condition if true value is not all 1s and false value
-      // is not all 0s.
+    // Try invert the condition if true value is not all 1s and false value
+    // is not all 0s.
+    if (!TValIsAllOnes && !FValIsAllZeros &&
+        // Check if the selector will be produced by CMPP*/PCMP*
+        Cond.getOpcode() == ISD::SETCC &&
+        // Check if SETCC has already been promoted
+        TLI.getSetCCResultType(*DAG.getContext(), VT) == CondVT) {
       bool TValIsAllZeros = ISD::isBuildVectorAllZeros(LHS.getNode());
       bool FValIsAllOnes = ISD::isBuildVectorAllOnes(RHS.getNode());
 
