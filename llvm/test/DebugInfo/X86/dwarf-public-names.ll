@@ -41,6 +41,7 @@
 
 ; Skip the output to the header of the pubnames section.
 ; LINUX: debug_pubnames
+; LINUX: unit_size = 0x00000128
 
 ; Check for each name in the output.
 ; LINUX-DAG: "ns"
