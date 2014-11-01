@@ -914,17 +914,16 @@ DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
 
 DISubprogram llvm::getDISubprogram(const Function *F) {
   // We look for the first instr that has a debug annotation leading back to F.
-  const LLVMContext &Ctx = F->getParent()->getContext();
   for (auto &BB : *F) {
-    for (auto &Inst : BB.getInstList()) {
-      DebugLoc DLoc = Inst.getDebugLoc();
-      if (DLoc.isUnknown())
-        continue;
-      const MDNode *Scope = DLoc.getScopeNode(Ctx);
-      DISubprogram Subprogram = getDISubprogram(Scope);
-      if (Subprogram.describes(F))
-       return Subprogram;
-    }
+    auto Inst = std::find_if(BB.begin(), BB.end(), [](const Instruction &Inst) {
+      return !Inst.getDebugLoc().isUnknown();
+    });
+    if (Inst == BB.end())
+      continue;
+    DebugLoc DLoc = Inst->getDebugLoc();
+    const MDNode *Scope = DLoc.getScopeNode(F->getParent()->getContext());
+    DISubprogram Subprogram = getDISubprogram(Scope);
+    return Subprogram.describes(F) ? Subprogram : DISubprogram();
   }
 
   return DISubprogram();
