@@ -1088,10 +1088,10 @@ public:
 
   void addReplacement(StringRef Name, llvm::Constant *C);
 private:
-
   llvm::Constant *
   GetOrCreateLLVMFunction(StringRef MangledName, llvm::Type *Ty, GlobalDecl D,
                           bool ForVTable, bool DontDefer = false,
+                          bool IsThunk = false,
                           llvm::AttributeSet ExtraAttrs = llvm::AttributeSet());
 
   llvm::Constant *GetOrCreateLLVMGlobal(StringRef MangledName,
@@ -1101,9 +1101,8 @@ private:
   void setNonAliasAttributes(const Decl *D, llvm::GlobalObject *GO);
 
   /// Set function attributes for a function declaration.
-  void SetFunctionAttributes(GlobalDecl GD,
-                             llvm::Function *F,
-                             bool IsIncompleteFunction);
+  void SetFunctionAttributes(GlobalDecl GD, llvm::Function *F,
+                             bool IsIncompleteFunction, bool IsThunk);
 
   void EmitGlobalDefinition(GlobalDecl D, llvm::GlobalValue *GV = nullptr);
 

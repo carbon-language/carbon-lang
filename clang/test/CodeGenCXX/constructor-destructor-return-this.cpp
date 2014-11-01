@@ -10,7 +10,7 @@
 class A {
 public:
   A();
-  ~A();
+  virtual ~A();
 
 private:
   int x_;
@@ -19,7 +19,7 @@ private:
 class B : public A {
 public:
   B(int *i);
-  ~B();
+  virtual ~B();
 
 private:
   int *i_;
@@ -44,7 +44,7 @@ B::~B() { }
 // CHECKIOS5-LABEL: define %class.B* @_ZN1BD1Ev(%class.B* %this)
 
 // CHECKMS-LABEL: define x86_thiscallcc %class.B* @"\01??0B@@QAE@PAH@Z"(%class.B* returned %this, i32* %i)
-// CHECKMS-LABEL: define x86_thiscallcc void @"\01??1B@@QAE@XZ"(%class.B* %this)
+// CHECKMS-LABEL: define x86_thiscallcc void @"\01??1B@@UAE@XZ"(%class.B* %this)
 
 class C : public A, public B {
 public:
@@ -61,19 +61,25 @@ C::~C() { }
 // CHECKGEN-LABEL: define void @_ZN1CC1EPiPc(%class.C* %this, i32* %i, i8* %c)
 // CHECKGEN-LABEL: define void @_ZN1CD2Ev(%class.C* %this)
 // CHECKGEN-LABEL: define void @_ZN1CD1Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZThn8_N1CD1Ev(%class.C* %this)
 // CHECKGEN-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZThn8_N1CD0Ev(%class.C* %this)
 
 // CHECKARM-LABEL: define %class.C* @_ZN1CC2EPiPc(%class.C* returned %this, i32* %i, i8* %c)
 // CHECKARM-LABEL: define %class.C* @_ZN1CC1EPiPc(%class.C* returned %this, i32* %i, i8* %c)
 // CHECKARM-LABEL: define %class.C* @_ZN1CD2Ev(%class.C* returned %this)
 // CHECKARM-LABEL: define %class.C* @_ZN1CD1Ev(%class.C* returned %this)
+// CHECKARM-LABEL: define %class.C* @_ZThn8_N1CD1Ev(%class.C* %this)
 // CHECKARM-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
+// CHECKARM-LABEL: define void @_ZThn8_N1CD0Ev(%class.C* %this)
 
 // CHECKIOS5-LABEL: define %class.C* @_ZN1CC2EPiPc(%class.C* %this, i32* %i, i8* %c)
 // CHECKIOS5-LABEL: define %class.C* @_ZN1CC1EPiPc(%class.C* %this, i32* %i, i8* %c)
 // CHECKIOS5-LABEL: define %class.C* @_ZN1CD2Ev(%class.C* %this)
 // CHECKIOS5-LABEL: define %class.C* @_ZN1CD1Ev(%class.C* %this)
+// CHECKIOS5-LABEL: define %class.C* @_ZThn8_N1CD1Ev(%class.C* %this)
 // CHECKIOS5-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
+// CHECKIOS5-LABEL: define void @_ZThn8_N1CD0Ev(%class.C* %this)
 
 // CHECKMS-LABEL: define x86_thiscallcc %class.C* @"\01??0C@@QAE@PAHPAD@Z"(%class.C* returned %this, i32* %i, i8* %c)
 // CHECKMS-LABEL: define x86_thiscallcc void @"\01??1C@@UAE@XZ"(%class.C* %this)
@@ -103,7 +109,7 @@ D::~D() { }
 // CHECKIOS5-LABEL: define %class.D* @_ZN1DD1Ev(%class.D* %this)
 
 // CHECKMS-LABEL: define x86_thiscallcc %class.D* @"\01??0D@@QAE@XZ"(%class.D* returned %this, i32 %is_most_derived)
-// CHECKMS-LABEL: define x86_thiscallcc void @"\01??1D@@QAE@XZ"(%class.D* %this)
+// CHECKMS-LABEL: define x86_thiscallcc void @"\01??1D@@UAE@XZ"(%class.D*)
 
 class E {
 public:
