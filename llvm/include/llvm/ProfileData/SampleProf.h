@@ -16,6 +16,8 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <system_error>
@@ -30,7 +32,8 @@ enum class sampleprof_error {
   unsupported_version,
   too_large,
   truncated,
-  malformed
+  malformed,
+  unrecognized_format
 };
 
 inline std::error_code make_error_code(sampleprof_error E) {
@@ -110,27 +113,49 @@ namespace sampleprof {
 /// will be a list of one or more functions.
 class SampleRecord {
 public:
-  typedef SmallVector<std::pair<std::string, unsigned>, 8> CallTargetList;
+  typedef StringMap<unsigned> CallTargetMap;
 
   SampleRecord() : NumSamples(0), CallTargets() {}
 
   /// \brief Increment the number of samples for this record by \p S.
-  void addSamples(unsigned S) { NumSamples += S; }
+  ///
+  /// Sample counts accumulate using saturating arithmetic, to avoid wrapping
+  /// around unsigned integers.
+  void addSamples(unsigned S) {
+    if (NumSamples <= std::numeric_limits<unsigned>::max() - S)
+      NumSamples += S;
+    else
+      NumSamples = std::numeric_limits<unsigned>::max();
+  }
 
   /// \brief Add called function \p F with samples \p S.
-  void addCalledTarget(std::string F, unsigned S) {
-    CallTargets.push_back(std::make_pair(F, S));
+  ///
+  /// Sample counts accumulate using saturating arithmetic, to avoid wrapping
+  /// around unsigned integers.
+  void addCalledTarget(StringRef F, unsigned S) {
+    unsigned &TargetSamples = CallTargets[F];
+    if (TargetSamples <= std::numeric_limits<unsigned>::max() - S)
+      TargetSamples += S;
+    else
+      TargetSamples = std::numeric_limits<unsigned>::max();
   }
 
   /// \brief Return true if this sample record contains function calls.
   bool hasCalls() const { return CallTargets.size() > 0; }
 
   unsigned getSamples() const { return NumSamples; }
-  const CallTargetList &getCallTargets() const { return CallTargets; }
+  const CallTargetMap &getCallTargets() const { return CallTargets; }
+
+  /// \brief Merge the samples in \p Other into this record.
+  void merge(const SampleRecord &Other) {
+    addSamples(Other.getSamples());
+    for (const auto &I : Other.getCallTargets())
+      addCalledTarget(I.first(), I.second);
+  }
 
 private:
   unsigned NumSamples;
-  CallTargetList CallTargets;
+  CallTargetMap CallTargets;
 };
 
 typedef DenseMap<LineLocation, SampleRecord> BodySampleMap;
@@ -143,7 +168,7 @@ typedef DenseMap<LineLocation, SampleRecord> BodySampleMap;
 class FunctionSamples {
 public:
   FunctionSamples() : TotalSamples(0), TotalHeadSamples(0) {}
-  void print(raw_ostream &OS);
+  void print(raw_ostream &OS = dbgs());
   void addTotalSamples(unsigned Num) { TotalSamples += Num; }
   void addHeadSamples(unsigned Num) { TotalHeadSamples += Num; }
   void addBodySamples(int LineOffset, unsigned Discriminator, unsigned Num) {
@@ -163,10 +188,16 @@ public:
                                                                          Num);
   }
 
+  /// \brief Return the sample record at the given location.
+  /// Each location is specified by \p LineOffset and \p Discriminator.
+  SampleRecord &sampleRecordAt(const LineLocation &Loc) {
+    return BodySamples[Loc];
+  }
+
   /// \brief Return the number of samples collected at the given location.
   /// Each location is specified by \p LineOffset and \p Discriminator.
   unsigned samplesAt(int LineOffset, unsigned Discriminator) {
-    return BodySamples[LineLocation(LineOffset, Discriminator)].getSamples();
+    return sampleRecordAt(LineLocation(LineOffset, Discriminator)).getSamples();
   }
 
   bool empty() const { return BodySamples.empty(); }
@@ -180,6 +211,17 @@ public:
 
   /// \brief Return all the samples collected in the body of the function.
   const BodySampleMap &getBodySamples() const { return BodySamples; }
+
+  /// \brief Merge the samples in \p Other into this one.
+  void merge(const FunctionSamples &Other) {
+    addTotalSamples(Other.getTotalSamples());
+    addHeadSamples(Other.getHeadSamples());
+    for (const auto &I : Other.getBodySamples()) {
+      const LineLocation &Loc = I.first;
+      const SampleRecord &Rec = I.second;
+      sampleRecordAt(Loc).merge(Rec);
+    }
+  }
 
 private:
   /// \brief Total number of samples collected inside this function.

@@ -30,19 +30,16 @@ using namespace llvm::sampleprof;
 using namespace llvm;
 
 /// \brief Write samples to a text file.
-bool SampleProfileWriterText::write(const Function &F,
-                                    const FunctionSamples &S) {
+bool SampleProfileWriterText::write(StringRef FName, const FunctionSamples &S) {
   if (S.empty())
     return true;
 
-  OS << F.getName() << ":" << S.getTotalSamples() << ":" << S.getHeadSamples()
+  OS << FName << ":" << S.getTotalSamples() << ":" << S.getHeadSamples()
      << "\n";
 
-  for (BodySampleMap::const_iterator I = S.getBodySamples().begin(),
-                                     E = S.getBodySamples().end();
-       I != E; ++I) {
-    LineLocation Loc = I->first;
-    SampleRecord Sample = I->second;
+  for (const auto &I : S.getBodySamples()) {
+    LineLocation Loc = I.first;
+    const SampleRecord &Sample = I.second;
     if (Loc.Discriminator == 0)
       OS << Loc.LineOffset << ": ";
     else
@@ -50,11 +47,8 @@ bool SampleProfileWriterText::write(const Function &F,
 
     OS << Sample.getSamples();
 
-    for (SampleRecord::CallTargetList::const_iterator
-             I = Sample.getCallTargets().begin(),
-             E = Sample.getCallTargets().end();
-         I != E; ++I)
-      OS << " " << (*I).first << ":" << (*I).second;
+    for (const auto &J : Sample.getCallTargets())
+      OS << " " << J.first() << ":" << J.second;
     OS << "\n";
   }
 
@@ -75,31 +69,26 @@ SampleProfileWriterBinary::SampleProfileWriterBinary(StringRef F,
 /// \brief Write samples to a binary file.
 ///
 /// \returns true if the samples were written successfully, false otherwise.
-bool SampleProfileWriterBinary::write(const Function &F,
+bool SampleProfileWriterBinary::write(StringRef FName,
                                       const FunctionSamples &S) {
   if (S.empty())
     return true;
 
-  OS << F.getName();
+  OS << FName;
   encodeULEB128(0, OS);
   encodeULEB128(S.getTotalSamples(), OS);
   encodeULEB128(S.getHeadSamples(), OS);
   encodeULEB128(S.getBodySamples().size(), OS);
-  for (BodySampleMap::const_iterator I = S.getBodySamples().begin(),
-                                     E = S.getBodySamples().end();
-       I != E; ++I) {
-    LineLocation Loc = I->first;
-    SampleRecord Sample = I->second;
+  for (const auto &I : S.getBodySamples()) {
+    LineLocation Loc = I.first;
+    const SampleRecord &Sample = I.second;
     encodeULEB128(Loc.LineOffset, OS);
     encodeULEB128(Loc.Discriminator, OS);
     encodeULEB128(Sample.getSamples(), OS);
     encodeULEB128(Sample.getCallTargets().size(), OS);
-    for (SampleRecord::CallTargetList::const_iterator
-             I = Sample.getCallTargets().begin(),
-             E = Sample.getCallTargets().end();
-         I != E; ++I) {
-      std::string Callee = (*I).first;
-      unsigned CalleeSamples = (*I).second;
+    for (const auto &J : Sample.getCallTargets()) {
+      std::string Callee = J.first();
+      unsigned CalleeSamples = J.second;
       OS << Callee;
       encodeULEB128(0, OS);
       encodeULEB128(CalleeSamples, OS);
@@ -107,4 +96,29 @@ bool SampleProfileWriterBinary::write(const Function &F,
   }
 
   return true;
+}
+
+/// \brief Create a sample profile writer based on the specified format.
+///
+/// \param Filename The file to create.
+///
+/// \param Writer The writer to instantiate according to the specified format.
+///
+/// \param Format Encoding format for the profile file.
+///
+/// \returns an error code indicating the status of the created writer.
+std::error_code
+SampleProfileWriter::create(StringRef Filename,
+                            std::unique_ptr<SampleProfileWriter> &Writer,
+                            SampleProfileFormat Format) {
+  std::error_code EC;
+
+  if (Format == SPF_Binary)
+    Writer.reset(new SampleProfileWriterBinary(Filename, EC));
+  else if (Format == SPF_Text)
+    Writer.reset(new SampleProfileWriterText(Filename, EC));
+  else
+    EC = sampleprof_error::unrecognized_format;
+
+  return EC;
 }

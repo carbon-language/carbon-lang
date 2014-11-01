@@ -36,6 +36,8 @@ class SampleProfErrorCategoryType : public std::error_category {
       return "Truncated profile data";
     case sampleprof_error::malformed:
       return "Malformed profile data";
+    case sampleprof_error::unrecognized_format:
+      return "Unrecognized profile encoding format";
     }
     llvm_unreachable("A value of sampleprof_error has no message.");
   }

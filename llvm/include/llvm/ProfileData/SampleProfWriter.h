@@ -24,6 +24,8 @@ namespace llvm {
 
 namespace sampleprof {
 
+enum SampleProfileFormat { SPF_None = 0, SPF_Text, SPF_Binary, SPF_GCC };
+
 /// \brief Sample-based profile writer. Base class.
 class SampleProfileWriter {
 public:
@@ -32,20 +34,46 @@ public:
       : OS(Filename, EC, Flags) {}
   virtual ~SampleProfileWriter() {}
 
-  /// \brief Write sample profiles in \p S for function \p F.
+  /// \brief Write sample profiles in \p S for function \p FName.
   ///
   /// \returns true if the file was updated successfully. False, otherwise.
-  virtual bool write(const Function &F, const FunctionSamples &S) = 0;
+  virtual bool write(StringRef FName, const FunctionSamples &S) = 0;
+
+  /// \brief Write sample profiles in \p S for function \p F.
+  bool write(const Function &F, const FunctionSamples &S) {
+    return write(F.getName(), S);
+  }
 
   /// \brief Write all the sample profiles for all the functions in \p M.
   ///
   /// \returns true if the file was updated successfully. False, otherwise.
   bool write(const Module &M, StringMap<FunctionSamples> &P) {
-    for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (!write((*I), P[I->getName()]))
+    for (const auto &F : M) {
+      StringRef Name = F.getName();
+      if (!write(Name, P[Name]))
         return false;
+    }
     return true;
   }
+
+  /// \brief Write all the sample profiles in the given map of samples.
+  ///
+  /// \returns true if the file was updated successfully. False, otherwise.
+  bool write(StringMap<FunctionSamples> &ProfileMap) {
+    for (auto &I : ProfileMap) {
+      StringRef FName = I.first();
+      FunctionSamples &Profile = I.second;
+      if (!write(FName, Profile))
+        return false;
+    }
+    return true;
+  }
+
+  /// \brief Profile writer factory. Create a new writer based on the value of
+  /// \p Format.
+  static std::error_code create(StringRef Filename,
+                                std::unique_ptr<SampleProfileWriter> &Result,
+                                SampleProfileFormat Format);
 
 protected:
   /// \brief Output stream where to emit the profile to.
@@ -58,7 +86,7 @@ public:
   SampleProfileWriterText(StringRef F, std::error_code &EC)
       : SampleProfileWriter(F, EC, sys::fs::F_Text) {}
 
-  bool write(const Function &F, const FunctionSamples &S) override;
+  bool write(StringRef FName, const FunctionSamples &S) override;
   bool write(const Module &M, StringMap<FunctionSamples> &P) {
     return SampleProfileWriter::write(M, P);
   }
@@ -69,7 +97,7 @@ class SampleProfileWriterBinary : public SampleProfileWriter {
 public:
   SampleProfileWriterBinary(StringRef F, std::error_code &EC);
 
-  bool write(const Function &F, const FunctionSamples &S) override;
+  bool write(StringRef F, const FunctionSamples &S) override;
   bool write(const Module &M, StringMap<FunctionSamples> &P) {
     return SampleProfileWriter::write(M, P);
   }

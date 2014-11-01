@@ -95,7 +95,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/SampleProfReader.h"
-#include "llvm/ProfileData/SampleProfWriter.h" // REMOVE
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/LEB128.h"
@@ -112,50 +111,36 @@ using namespace llvm;
 void FunctionSamples::print(raw_ostream &OS) {
   OS << TotalSamples << ", " << TotalHeadSamples << ", " << BodySamples.size()
      << " sampled lines\n";
-  for (BodySampleMap::const_iterator SI = BodySamples.begin(),
-                                     SE = BodySamples.end();
-       SI != SE; ++SI) {
-    LineLocation Loc = SI->first;
-    SampleRecord Sample = SI->second;
+  for (const auto &SI : BodySamples) {
+    LineLocation Loc = SI.first;
+    const SampleRecord &Sample = SI.second;
     OS << "\tline offset: " << Loc.LineOffset
        << ", discriminator: " << Loc.Discriminator
        << ", number of samples: " << Sample.getSamples();
     if (Sample.hasCalls()) {
       OS << ", calls:";
-      for (SampleRecord::CallTargetList::const_iterator
-               I = Sample.getCallTargets().begin(),
-               E = Sample.getCallTargets().end();
-           I != E; ++I)
-        OS << " " << (*I).first << ":" << (*I).second;
+      for (const auto &I : Sample.getCallTargets())
+        OS << " " << I.first() << ":" << I.second;
     }
     OS << "\n";
   }
   OS << "\n";
 }
 
-/// \brief Print the function profile for \p FName on stream \p OS.
+/// \brief Dump the function profile for \p FName.
 ///
-/// \param OS Stream to emit the output to.
 /// \param FName Name of the function to print.
-void SampleProfileReader::printFunctionProfile(raw_ostream &OS,
-                                               StringRef FName) {
+/// \param OS Stream to emit the output to.
+void SampleProfileReader::dumpFunctionProfile(StringRef FName,
+                                              raw_ostream &OS) {
   OS << "Function: " << FName << ": ";
   Profiles[FName].print(OS);
 }
 
-/// \brief Dump the function profile for \p FName.
-///
-/// \param FName Name of the function to print.
-void SampleProfileReader::dumpFunctionProfile(StringRef FName) {
-  printFunctionProfile(dbgs(), FName);
-}
-
-/// \brief Dump all the function profiles found.
-void SampleProfileReader::dump() {
-  for (StringMap<FunctionSamples>::const_iterator I = Profiles.begin(),
-                                                  E = Profiles.end();
-       I != E; ++I)
-    dumpFunctionProfile(I->getKey());
+/// \brief Dump all the function profiles found on stream \p OS.
+void SampleProfileReader::dump(raw_ostream &OS) {
+  for (const auto &I : Profiles)
+    dumpFunctionProfile(I.getKey(), OS);
 }
 
 /// \brief Load samples from a text file.
@@ -245,8 +230,7 @@ std::error_code SampleProfileReaderText::read() {
   return sampleprof_error::success;
 }
 
-template <typename T>
-ErrorOr<T> SampleProfileReaderBinary::readNumber() {
+template <typename T> ErrorOr<T> SampleProfileReaderBinary::readNumber() {
   unsigned NumBytesRead = 0;
   std::error_code EC;
   uint64_t Val = decodeULEB128(Data, &NumBytesRead);
@@ -396,7 +380,7 @@ setupMemoryBuffer(std::string Filename, std::unique_ptr<MemoryBuffer> &Buffer) {
 ///
 /// \returns an error code indicating the status of the created reader.
 std::error_code
-SampleProfileReader::create(std::string Filename,
+SampleProfileReader::create(StringRef Filename,
                             std::unique_ptr<SampleProfileReader> &Reader,
                             LLVMContext &C) {
   std::unique_ptr<MemoryBuffer> Buffer;

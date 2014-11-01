@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ProfileData/SampleProf.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -64,9 +65,6 @@ public:
 
   virtual ~SampleProfileReader() {}
 
-  /// \brief Print all the profiles to dbgs().
-  void dump();
-
   /// \brief Read and validate the file header.
   virtual std::error_code readHeader() = 0;
 
@@ -74,15 +72,18 @@ public:
   virtual std::error_code read() = 0;
 
   /// \brief Print the profile for \p FName on stream \p OS.
-  void printFunctionProfile(raw_ostream &OS, StringRef FName);
+  void dumpFunctionProfile(StringRef FName, raw_ostream &OS = dbgs());
 
-  /// \brief Print the profile for \p FName on dbgs().
-  void dumpFunctionProfile(StringRef FName);
+  /// \brief Print all the profiles on stream \p OS.
+  void dump(raw_ostream &OS = dbgs());
 
   /// \brief Return the samples collected for function \p F.
   FunctionSamples *getSamplesFor(const Function &F) {
     return &Profiles[F.getName()];
   }
+
+  /// \brief Return all the profiles.
+  StringMap<FunctionSamples> &getProfiles() { return Profiles; }
 
   /// \brief Report a parse error message.
   void reportParseError(int64_t LineNumber, Twine Msg) const {
@@ -91,7 +92,7 @@ public:
   }
 
   /// \brief Create a sample profile reader appropriate to the file format.
-  static std::error_code create(std::string Filename,
+  static std::error_code create(StringRef Filename,
                                 std::unique_ptr<SampleProfileReader> &Reader,
                                 LLVMContext &C);
 
