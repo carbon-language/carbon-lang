@@ -43,7 +43,7 @@
 static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
 __tzcnt_u16(unsigned short __X)
 {
-  return __builtin_ctzs(__X);
+  return __X ? __builtin_ctzs(__X) : 16;
 }
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
@@ -87,7 +87,7 @@ __blsr_u32(unsigned int __X)
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __tzcnt_u32(unsigned int __X)
 {
-  return __builtin_ctz(__X);
+  return __X ? __builtin_ctz(__X) : 32;
 }
 
 #ifdef __x86_64__
@@ -140,7 +140,7 @@ __blsr_u64(unsigned long long __X)
 static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
 __tzcnt_u64(unsigned long long __X)
 {
-  return __builtin_ctzll(__X);
+  return __X ? __builtin_ctzll(__X) : 64;
 }
 
 #endif /* __x86_64__ */
