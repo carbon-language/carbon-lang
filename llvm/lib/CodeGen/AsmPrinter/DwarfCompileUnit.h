@@ -173,6 +173,10 @@ public:
     this->SectionSym = SectionSym;
   }
 
+  unsigned getLength() {
+    return sizeof(uint32_t) + // Length field
+        getHeaderSize() + UnitDie.getSize();
+  }
 };
 
 } // end llvm namespace

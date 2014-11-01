@@ -23,7 +23,7 @@
 ; CHECK: DW_TAG_variable
 ; CHECK: .long [[TYPE:.*]] # DW_AT_type
 ; CHECK: DW_TAG_structure_type
-; CHECK: debug_info_end0
+; CHECK: debug_info_begin1
 ; CHECK: DW_TAG_compile_unit
 ; CHECK-NOT: DW_TAG_structure_type
 ; This variable's type is in the 1st CU.
@@ -31,7 +31,7 @@
 ; Make sure this is relocatable.
 ; CHECK: .quad .Lsection_info+[[TYPE]] # DW_AT_type
 ; CHECK-NOT: DW_TAG_structure_type
-; CHECK: debug_info_end1
+; CHECK: .section
 
 ; CHECK-DWARF: DW_TAG_compile_unit
 ; CHECK-DWARF: 0x[[ADDR:.*]]: DW_TAG_structure_type

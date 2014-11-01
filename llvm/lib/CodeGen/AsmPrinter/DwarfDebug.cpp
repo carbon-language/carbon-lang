@@ -1598,7 +1598,7 @@ void DwarfDebug::emitDebugPubSection(
     Asm->EmitSectionOffset(TheU->getLabelBegin(), TheU->getSectionSym());
 
     Asm->OutStreamer.AddComment("Compilation Unit Length");
-    Asm->EmitLabelDifference(TheU->getLabelEnd(), TheU->getLabelBegin(), 4);
+    Asm->EmitInt32(TheU->getLength());
 
     // Emit the pubnames for this compilation unit.
     for (const auto &GI : Globals) {

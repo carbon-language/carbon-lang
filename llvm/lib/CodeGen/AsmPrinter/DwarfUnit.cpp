@@ -1750,8 +1750,6 @@ void DwarfUnit::initSection(const MCSection *Section) {
   this->Section = Section;
   this->LabelBegin =
       Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
-  this->LabelEnd =
-      Asm->GetTempSymbol(Section->getLabelEndName(), getUniqueID());
 }
 
 void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) const {

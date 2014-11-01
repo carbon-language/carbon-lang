@@ -37,7 +37,7 @@
 
 ; Skip the output to the header of the pubnames section.
 ; CHECK: debug_pubnames
-; CHECK: version = 0x0002
+; CHECK: version = 0x0002 {{.*}} unit_size = 0x00000128
 
 ; Check for each name in the output.
 ; CHECK-DAG: "ns"

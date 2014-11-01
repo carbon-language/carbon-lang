@@ -65,7 +65,6 @@ void DwarfFile::emitUnits(const MCSymbol *ASectionSym) {
     TheU->emitHeader(ASectionSym);
 
     DD.emitDIE(Die);
-    Asm->OutStreamer.EmitLabel(TheU->getLabelEnd());
   }
 }
 

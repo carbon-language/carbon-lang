@@ -132,9 +132,6 @@ protected:
   /// The start of the unit within its section.
   MCSymbol *LabelBegin;
 
-  /// The end of the unit within its section.
-  MCSymbol *LabelEnd;
-
   DwarfUnit(unsigned UID, dwarf::Tag, DICompileUnit CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
@@ -150,11 +147,6 @@ public:
   MCSymbol *getLabelBegin() const {
     assert(Section);
     return LabelBegin;
-  }
-
-  MCSymbol *getLabelEnd() const {
-    assert(Section);
-    return LabelEnd;
   }
 
   // Accessors.
