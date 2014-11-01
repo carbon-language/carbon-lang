@@ -36,6 +36,9 @@ class DwarfCompileUnit : public DwarfUnit {
   /// Skeleton unit associated with this unit.
   DwarfCompileUnit *Skeleton;
 
+  /// A label at the start of the non-dwo section related to this unit.
+  MCSymbol *SectionSym;
+
   /// \brief Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
   std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
@@ -156,6 +159,20 @@ public:
 
   /// Set the skeleton unit associated with this unit.
   void setSkeleton(DwarfCompileUnit &Skel) { Skeleton = &Skel; }
+
+  MCSymbol *getSectionSym() const {
+    assert(Section);
+    return SectionSym;
+  }
+
+  /// Pass in the SectionSym even though we could recreate it in every compile
+  /// unit (type units will have actually distinct symbols once they're in
+  /// comdat sections).
+  void initSection(const MCSection *Section, MCSymbol *SectionSym) {
+    DwarfUnit::initSection(Section);
+    this->SectionSym = SectionSym;
+  }
+
 };
 
 } // end llvm namespace

@@ -2151,8 +2151,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   NewTU.setTypeSignature(Signature);
 
   if (useSplitDwarf())
-    NewTU.initSection(Asm->getObjFileLowering().getDwarfTypesDWOSection(),
-                      DwarfTypesDWOSectionSym);
+    NewTU.initSection(Asm->getObjFileLowering().getDwarfTypesDWOSection());
   else {
     CU.applyStmtList(UnitDie);
     NewTU.initSection(

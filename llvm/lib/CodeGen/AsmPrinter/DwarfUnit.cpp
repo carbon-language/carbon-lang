@@ -1745,6 +1745,15 @@ void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) const {
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }
 
+void DwarfUnit::initSection(const MCSection *Section) {
+  assert(!this->Section);
+  this->Section = Section;
+  this->LabelBegin =
+      Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
+  this->LabelEnd =
+      Asm->GetTempSymbol(Section->getLabelEndName(), getUniqueID());
+}
+
 void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) const {
   DwarfUnit::emitHeader(ASectionSym);
   Asm->OutStreamer.AddComment("Type Signature");
@@ -1755,16 +1764,3 @@ void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) const {
                                 sizeof(Ty->getOffset()));
 }
 
-void DwarfTypeUnit::initSection(const MCSection *Section) {
-  assert(!this->Section);
-  this->Section = Section;
-  // Since each type unit is contained in its own COMDAT section, the begin
-  // label and the section label are the same. Using the begin label emission in
-  // DwarfDebug to emit the section label as well is slightly subtle/sneaky, but
-  // the only other alternative of lazily constructing start-of-section labels
-  // and storing a mapping in DwarfDebug (or AsmPrinter).
-  this->SectionSym = this->LabelBegin =
-      Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
-  this->LabelEnd =
-      Asm->GetTempSymbol(Section->getLabelEndName(), getUniqueID());
-}

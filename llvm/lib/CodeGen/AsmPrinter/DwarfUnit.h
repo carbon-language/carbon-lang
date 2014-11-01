@@ -129,9 +129,6 @@ protected:
   /// The section this unit will be emitted in.
   const MCSection *Section;
 
-  /// A label at the start of the non-dwo section related to this unit.
-  MCSymbol *SectionSym;
-
   /// The start of the unit within its section.
   MCSymbol *LabelBegin;
 
@@ -141,30 +138,13 @@ protected:
   DwarfUnit(unsigned UID, dwarf::Tag, DICompileUnit CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
+  void initSection(const MCSection *Section);
 public:
   virtual ~DwarfUnit();
-
-  /// Pass in the SectionSym even though we could recreate it in every compile
-  /// unit (type units will have actually distinct symbols once they're in
-  /// comdat sections).
-  void initSection(const MCSection *Section, MCSymbol *SectionSym) {
-    assert(!this->Section);
-    this->Section = Section;
-    this->SectionSym = SectionSym;
-    this->LabelBegin =
-        Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
-    this->LabelEnd =
-        Asm->GetTempSymbol(Section->getLabelEndName(), getUniqueID());
-  }
 
   const MCSection *getSection() const {
     assert(Section);
     return Section;
-  }
-
-  MCSymbol *getSectionSym() const {
-    assert(Section);
-    return SectionSym;
   }
 
   MCSymbol *getLabelBegin() const {
@@ -503,10 +483,6 @@ public:
     return DwarfUnit::getHeaderSize() + sizeof(uint64_t) + // Type Signature
            sizeof(uint32_t);                               // Type DIE Offset
   }
-  void initSection(const MCSection *Section);
-  // Bring in the base function (taking two args, including the section symbol)
-  // for use when building DWO type units (they don't go in unique comdat
-  // sections)
   using DwarfUnit::initSection;
   DwarfCompileUnit &getCU() override { return CU; }
 
