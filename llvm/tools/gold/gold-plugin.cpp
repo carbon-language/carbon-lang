@@ -471,10 +471,8 @@ static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
   Module *M = GO->getParent();
   GlobalObject *Ret;
   if (auto *F = dyn_cast<Function>(GO)) {
-    if (F->isMaterializable()) {
-      if (F->materialize())
-        message(LDPL_FATAL, "LLVM gold plugin has failed to read a function");
-
+    if (F->materialize())
+      message(LDPL_FATAL, "LLVM gold plugin has failed to read a function");
     }
 
     auto *NewF = Function::Create(F->getFunctionType(), F->getLinkage(),

@@ -337,11 +337,7 @@ ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
   if (RelocM == Reloc::Static)
     return false;
 
-  // Materializable GVs (in JIT lazy compilation mode) do not require an extra
-  // load from stub.
-  bool isDecl = GV->hasAvailableExternallyLinkage();
-  if (GV->isDeclaration() && !GV->isMaterializable())
-    isDecl = true;
+  bool isDecl = GV->isDeclarationForLinker();
 
   if (!isTargetMachO()) {
     // Extra load is needed for all externally visible.
