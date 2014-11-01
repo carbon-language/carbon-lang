@@ -1804,24 +1804,25 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
   }
 
-  // Statistics.
-  ++ScopFound;
-  if (scop->getMaxLoopDepth() > 0)
-    ++RichScopFound;
-
   scop = new Scop(*tempScop, LI, SE, ctx);
 
-  if (!PollyUseRuntimeAliasChecks)
+  if (!PollyUseRuntimeAliasChecks) {
+    // Statistics.
+    ++ScopFound;
+    if (scop->getMaxLoopDepth() > 0)
+      ++RichScopFound;
     return false;
+  }
 
   // If a problem occurs while building the alias groups we need to delete
   // this SCoP and pretend it wasn't valid in the first place.
-  if (scop->buildAliasGroups(AA))
+  if (scop->buildAliasGroups(AA)) {
+    // Statistics.
+    ++ScopFound;
+    if (scop->getMaxLoopDepth() > 0)
+      ++RichScopFound;
     return false;
-
-  --ScopFound;
-  if (tempScop->getMaxLoopDepth() > 0)
-    --RichScopFound;
+  }
 
   DEBUG(dbgs()
         << "\n\nNOTE: Run time checks for " << scop->getNameStr()
