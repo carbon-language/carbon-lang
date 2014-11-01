@@ -1479,3 +1479,35 @@ define i1 @shl_ap1_non_zero_ap2_non_zero_ap1_3(i32 %a) {
  %cmp = icmp eq i32 %shl, 50
  ret i1 %cmp
 }
+
+; CHECK-LABEL: @icmp_sgt_zero_add_nsw
+; CHECK-NEXT: icmp sgt i32 %a, -1
+define i1 @icmp_sgt_zero_add_nsw(i32 %a) {
+ %add = add nsw i32 %a, 1
+ %cmp = icmp sgt i32 %add, 0
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @icmp_sge_zero_add_nsw
+; CHECK-NEXT: icmp sgt i32 %a, -2
+define i1 @icmp_sge_zero_add_nsw(i32 %a) {
+ %add = add nsw i32 %a, 1
+ %cmp = icmp sge i32 %add, 0
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @icmp_slt_zero_add_nsw
+; CHECK-NEXT: icmp slt i32 %a, -1
+define i1 @icmp_slt_zero_add_nsw(i32 %a) {
+ %add = add nsw i32 %a, 1
+ %cmp = icmp slt i32 %add, 0
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @icmp_sle_zero_add_nsw
+; CHECK-NEXT: icmp slt i32 %a, 0
+define i1 @icmp_sle_zero_add_nsw(i32 %a) {
+ %add = add nsw i32 %a, 1
+ %cmp = icmp sle i32 %add, 0
+ ret i1 %cmp
+}
