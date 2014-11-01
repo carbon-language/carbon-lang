@@ -862,7 +862,7 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   switch (I->getOpcode()) {
   default: break;
   case Instruction::Load:
-    if (MDNode *MD = cast<LoadInst>(I)->getMetadata(LLVMContext::MD_range))
+    if (MDNode *MD = cast<LoadInst>(I)->getMDNode(LLVMContext::MD_range))
       computeKnownBitsFromRangeMetadata(*MD, KnownZero);
     break;
   case Instruction::And: {
@@ -1261,7 +1261,7 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   }
   case Instruction::Call:
   case Instruction::Invoke:
-    if (MDNode *MD = cast<Instruction>(I)->getMetadata(LLVMContext::MD_range))
+    if (MDNode *MD = cast<Instruction>(I)->getMDNode(LLVMContext::MD_range))
       computeKnownBitsFromRangeMetadata(*MD, KnownZero);
     // If a range metadata is attached to this IntrinsicInst, intersect the
     // explicit range specified by the metadata and the implicit range of
@@ -1536,7 +1536,7 @@ bool isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth,
   }
 
   if (Instruction* I = dyn_cast<Instruction>(V)) {
-    if (MDNode *Ranges = I->getMetadata(LLVMContext::MD_range)) {
+    if (MDNode *Ranges = I->getMDNode(LLVMContext::MD_range)) {
       // If the possible ranges don't contain zero, then the value is
       // definitely non-zero.
       if (IntegerType* Ty = dyn_cast<IntegerType>(V->getType())) {

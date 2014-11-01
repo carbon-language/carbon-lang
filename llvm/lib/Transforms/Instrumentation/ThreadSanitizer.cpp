@@ -231,7 +231,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
 }
 
 static bool isVtableAccess(Instruction *I) {
-  if (MDNode *Tag = I->getMetadata(LLVMContext::MD_tbaa))
+  if (MDNode *Tag = I->getMDNode(LLVMContext::MD_tbaa))
     return Tag->isTBAAVtableAccess();
   return false;
 }

@@ -319,7 +319,7 @@ bool llvm::getAlign(const Function &F, unsigned index, unsigned &align) {
 }
 
 bool llvm::getAlign(const CallInst &I, unsigned index, unsigned &align) {
-  if (MDNode *alignNode = I.getMetadata("callalign")) {
+  if (MDNode *alignNode = I.getMDNode("callalign")) {
     for (int i = 0, n = alignNode->getNumOperands(); i < n; i++) {
       if (const ConstantInt *CI =
               dyn_cast<ConstantInt>(alignNode->getOperand(i))) {

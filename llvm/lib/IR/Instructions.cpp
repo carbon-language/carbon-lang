@@ -791,7 +791,7 @@ void BranchInst::swapSuccessors() {
 
   // Update profile metadata if present and it matches our structural
   // expectations.
-  MDNode *ProfileData = getMetadata(LLVMContext::MD_prof);
+  MDNode *ProfileData = getMDNode(LLVMContext::MD_prof);
   if (!ProfileData || ProfileData->getNumOperands() != 3)
     return;
 
@@ -2072,8 +2072,7 @@ void BinaryOperator::andIRFlags(const Value *V) {
 /// An accuracy of 0.0 means that the operation should be performed with the
 /// default precision.
 float FPMathOperator::getFPAccuracy() const {
-  const MDNode *MD =
-    cast<Instruction>(this)->getMetadata(LLVMContext::MD_fpmath);
+  const MDNode *MD = cast<Instruction>(this)->getMDNode(LLVMContext::MD_fpmath);
   if (!MD)
     return 0.0;
   ConstantFP *Accuracy = cast<ConstantFP>(MD->getOperand(0));

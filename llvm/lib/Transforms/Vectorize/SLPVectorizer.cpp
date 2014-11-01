@@ -197,7 +197,7 @@ static Instruction *propagateMetadata(Instruction *I, ArrayRef<Value *> VL) {
 
     for (int i = 1, e = VL.size(); MD && i != e; i++) {
       Instruction *I = cast<Instruction>(VL[i]);
-      MDNode *IMD = I->getMetadata(Kind);
+      MDNode *IMD = I->getMDNode(Kind);
 
       switch (Kind) {
       default:

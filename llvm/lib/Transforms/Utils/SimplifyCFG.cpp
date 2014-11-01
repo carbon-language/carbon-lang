@@ -643,7 +643,7 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
 
     // Collect branch weights into a vector.
     SmallVector<uint32_t, 8> Weights;
-    MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
+    MDNode *MD = SI->getMDNode(LLVMContext::MD_prof);
     bool HasWeight = MD && (MD->getNumOperands() == 2 + SI->getNumCases());
     if (HasWeight)
       for (unsigned MD_i = 1, MD_e = MD->getNumOperands(); MD_i < MD_e;
@@ -738,7 +738,7 @@ static int ConstantIntSortPredicate(ConstantInt *const *P1,
 }
 
 static inline bool HasBranchWeights(const Instruction* I) {
-  MDNode* ProfMD = I->getMetadata(LLVMContext::MD_prof);
+  MDNode *ProfMD = I->getMDNode(LLVMContext::MD_prof);
   if (ProfMD && ProfMD->getOperand(0))
     if (MDString* MDS = dyn_cast<MDString>(ProfMD->getOperand(0)))
       return MDS->getString().equals("branch_weights");
@@ -751,7 +751,7 @@ static inline bool HasBranchWeights(const Instruction* I) {
 /// metadata.
 static void GetBranchWeights(TerminatorInst *TI,
                              SmallVectorImpl<uint64_t> &Weights) {
-  MDNode* MD = TI->getMetadata(LLVMContext::MD_prof);
+  MDNode *MD = TI->getMDNode(LLVMContext::MD_prof);
   assert(MD);
   for (unsigned i = 1, e = MD->getNumOperands(); i < e; ++i) {
     ConstantInt *CI = cast<ConstantInt>(MD->getOperand(i));
@@ -1970,7 +1970,7 @@ static bool ExtractBranchMetadata(BranchInst *BI,
                                   uint64_t &ProbTrue, uint64_t &ProbFalse) {
   assert(BI->isConditional() &&
          "Looking for probabilities on unconditional branch?");
-  MDNode *ProfileData = BI->getMetadata(LLVMContext::MD_prof);
+  MDNode *ProfileData = BI->getMDNode(LLVMContext::MD_prof);
   if (!ProfileData || ProfileData->getNumOperands() != 3) return false;
   ConstantInt *CITrue = dyn_cast<ConstantInt>(ProfileData->getOperand(1));
   ConstantInt *CIFalse = dyn_cast<ConstantInt>(ProfileData->getOperand(2));

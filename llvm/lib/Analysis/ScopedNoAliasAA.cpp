@@ -213,13 +213,13 @@ ScopedNoAliasAA::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
   if (!EnableScopedNoAlias)
     return AliasAnalysis::getModRefInfo(CS, Loc);
 
-  if (!mayAliasInScopes(Loc.AATags.Scope,
-        CS.getInstruction()->getMetadata(LLVMContext::MD_noalias)))
+  if (!mayAliasInScopes(Loc.AATags.Scope, CS.getInstruction()->getMDNode(
+                                              LLVMContext::MD_noalias)))
     return NoModRef;
 
   if (!mayAliasInScopes(
-        CS.getInstruction()->getMetadata(LLVMContext::MD_alias_scope),
-        Loc.AATags.NoAlias))
+          CS.getInstruction()->getMDNode(LLVMContext::MD_alias_scope),
+          Loc.AATags.NoAlias))
     return NoModRef;
 
   return AliasAnalysis::getModRefInfo(CS, Loc);
@@ -231,13 +231,13 @@ ScopedNoAliasAA::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
     return AliasAnalysis::getModRefInfo(CS1, CS2);
 
   if (!mayAliasInScopes(
-        CS1.getInstruction()->getMetadata(LLVMContext::MD_alias_scope),
-        CS2.getInstruction()->getMetadata(LLVMContext::MD_noalias)))
+          CS1.getInstruction()->getMDNode(LLVMContext::MD_alias_scope),
+          CS2.getInstruction()->getMDNode(LLVMContext::MD_noalias)))
     return NoModRef;
 
   if (!mayAliasInScopes(
-        CS2.getInstruction()->getMetadata(LLVMContext::MD_alias_scope),
-        CS1.getInstruction()->getMetadata(LLVMContext::MD_noalias)))
+          CS2.getInstruction()->getMDNode(LLVMContext::MD_alias_scope),
+          CS1.getInstruction()->getMDNode(LLVMContext::MD_noalias)))
     return NoModRef;
 
   return AliasAnalysis::getModRefInfo(CS1, CS2);

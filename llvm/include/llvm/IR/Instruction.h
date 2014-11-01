@@ -141,14 +141,14 @@ public:
 
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
-  MDNode *getMetadata(unsigned KindID) const {
+  Value *getMetadata(unsigned KindID) const {
     if (!hasMetadata()) return nullptr;
     return getMetadataImpl(KindID);
   }
 
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
-  MDNode *getMetadata(StringRef Kind) const {
+  Value *getMetadata(StringRef Kind) const {
     if (!hasMetadata()) return nullptr;
     return getMetadataImpl(Kind);
   }
@@ -289,8 +289,8 @@ private:
   }
 
   // These are all implemented in Metadata.cpp.
-  MDNode *getMetadataImpl(unsigned KindID) const;
-  MDNode *getMetadataImpl(StringRef Kind) const;
+  Value *getMetadataImpl(unsigned KindID) const;
+  Value *getMetadataImpl(StringRef Kind) const;
   MDNode *getMDNodeImpl(unsigned KindID) const;
   MDNode *getMDNodeImpl(StringRef Kind) const;
   void getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,MDNode*> > &)const;

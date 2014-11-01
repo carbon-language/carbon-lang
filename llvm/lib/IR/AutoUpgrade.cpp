@@ -579,7 +579,7 @@ void llvm::UpgradeCallsToIntrinsic(Function* F) {
 }
 
 void llvm::UpgradeInstWithTBAATag(Instruction *I) {
-  MDNode *MD = I->getMetadata(LLVMContext::MD_tbaa);
+  MDNode *MD = I->getMDNode(LLVMContext::MD_tbaa);
   assert(MD && "UpgradeInstWithTBAATag should have a TBAA tag");
   // Check if the tag uses struct-path aware TBAA format.
   if (isa<MDNode>(MD->getOperand(0)) && MD->getNumOperands() >= 3)

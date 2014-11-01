@@ -493,7 +493,7 @@ TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
 
   // If this is an "immutable" type, we can assume the call doesn't write
   // to memory.
-  if (const MDNode *M = CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+  if (const MDNode *M = CS.getInstruction()->getMDNode(LLVMContext::MD_tbaa))
     if ((!isStructPathTBAA(M) && TBAANode(M).TypeIsImmutable()) ||
         (isStructPathTBAA(M) && TBAAStructTagNode(M).TypeIsImmutable()))
       Min = OnlyReadsMemory;
@@ -514,8 +514,7 @@ TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     return AliasAnalysis::getModRefInfo(CS, Loc);
 
   if (const MDNode *L = Loc.AATags.TBAA)
-    if (const MDNode *M =
-          CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+    if (const MDNode *M = CS.getInstruction()->getMDNode(LLVMContext::MD_tbaa))
       if (!Aliases(L, M))
         return NoModRef;
 
@@ -528,10 +527,9 @@ TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   if (!EnableTBAA)
     return AliasAnalysis::getModRefInfo(CS1, CS2);
 
-  if (const MDNode *M1 =
-        CS1.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+  if (const MDNode *M1 = CS1.getInstruction()->getMDNode(LLVMContext::MD_tbaa))
     if (const MDNode *M2 =
-          CS2.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
+            CS2.getInstruction()->getMDNode(LLVMContext::MD_tbaa))
       if (!Aliases(M1, M2))
         return NoModRef;
 
@@ -614,21 +612,21 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
 
 void Instruction::getAAMetadata(AAMDNodes &N, bool Merge) const {
   if (Merge)
-    N.TBAA = MDNode::getMostGenericTBAA(N.TBAA,
-                                        getMetadata(LLVMContext::MD_tbaa));
+    N.TBAA =
+        MDNode::getMostGenericTBAA(N.TBAA, getMDNode(LLVMContext::MD_tbaa));
   else
-    N.TBAA = getMetadata(LLVMContext::MD_tbaa);
+    N.TBAA = getMDNode(LLVMContext::MD_tbaa);
 
   if (Merge)
-    N.Scope = MDNode::intersect(N.Scope,
-                                getMetadata(LLVMContext::MD_alias_scope));
+    N.Scope =
+        MDNode::intersect(N.Scope, getMDNode(LLVMContext::MD_alias_scope));
   else
-    N.Scope = getMetadata(LLVMContext::MD_alias_scope);
+    N.Scope = getMDNode(LLVMContext::MD_alias_scope);
 
   if (Merge)
-    N.NoAlias = MDNode::intersect(N.NoAlias,
-                                  getMetadata(LLVMContext::MD_noalias));
+    N.NoAlias =
+        MDNode::intersect(N.NoAlias, getMDNode(LLVMContext::MD_noalias));
   else
-    N.NoAlias = getMetadata(LLVMContext::MD_noalias);
+    N.NoAlias = getMDNode(LLVMContext::MD_noalias);
 }
 

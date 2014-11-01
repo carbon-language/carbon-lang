@@ -96,7 +96,7 @@ DiagnosticInfoInlineAsm::DiagnosticInfoInlineAsm(const Instruction &I,
                                                  DiagnosticSeverity Severity)
     : DiagnosticInfo(DK_InlineAsm, Severity), LocCookie(0), MsgStr(MsgStr),
       Instr(&I) {
-  if (const MDNode *SrcLoc = I.getMetadata("srcloc")) {
+  if (const MDNode *SrcLoc = I.getMDNode("srcloc")) {
     if (SrcLoc->getNumOperands() != 0)
       if (const ConstantInt *CI = dyn_cast<ConstantInt>(SrcLoc->getOperand(0)))
         LocCookie = CI->getZExtValue();

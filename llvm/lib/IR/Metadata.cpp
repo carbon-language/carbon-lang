@@ -605,16 +605,16 @@ void Instruction::setMetadata(StringRef Kind, Value *MD) {
   setMetadata(getContext().getMDKindID(Kind), MD);
 }
 
-MDNode *Instruction::getMetadataImpl(StringRef Kind) const {
+Value *Instruction::getMetadataImpl(StringRef Kind) const {
   return getMetadataImpl(getContext().getMDKindID(Kind));
 }
 
 MDNode *Instruction::getMDNodeImpl(unsigned KindID) const {
-  return getMetadataImpl(KindID);
+  return cast_or_null<MDNode>(getMetadataImpl(KindID));
 }
 
 MDNode *Instruction::getMDNodeImpl(StringRef Kind) const {
-  return getMetadataImpl(Kind);
+  return cast_or_null<MDNode>(getMetadataImpl(Kind));
 }
 
 void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
@@ -729,7 +729,7 @@ void Instruction::setAAMetadata(const AAMDNodes &N) {
   setMetadata(LLVMContext::MD_noalias, N.NoAlias);
 }
 
-MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
+Value *Instruction::getMetadataImpl(unsigned KindID) const {
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg)
     return DbgLoc.getAsMDNode(getContext());

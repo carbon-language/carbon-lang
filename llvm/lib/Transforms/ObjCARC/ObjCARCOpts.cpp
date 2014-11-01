@@ -825,7 +825,7 @@ static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
   // reference to said Node. Otherwise just return 0.
   if (Instruction *Inst = dyn_cast<Instruction>(Ptr)) {
     MDNode *Node;
-    if (!(Node = Inst->getMetadata(NodeId))) {
+    if (!(Node = Inst->getMDNode(NodeId))) {
       // We do not have any node. Generate and attatch the hash MDString to the
       // instruction.
 
@@ -1736,7 +1736,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
       NestingDetected = true;
     }
 
-    MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
+    MDNode *ReleaseMetadata = Inst->getMDNode(ImpreciseReleaseMDKind);
     Sequence NewSeq = ReleaseMetadata ? S_MovableRelease : S_Release;
     ANNOTATE_BOTTOMUP(Inst, Arg, S.GetSeq(), NewSeq);
     S.ResetSequenceProgress(NewSeq);
@@ -2017,7 +2017,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
     Sequence OldSeq = S.GetSeq();
 
-    MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
+    MDNode *ReleaseMetadata = Inst->getMDNode(ImpreciseReleaseMDKind);
 
     switch (OldSeq) {
     case S_Retain:

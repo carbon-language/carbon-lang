@@ -3668,7 +3668,7 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
 /// metadata present in the IR.
 static Optional<ConstantRange> GetRangeFromMetadata(Value *V) {
   if (Instruction *I = dyn_cast<Instruction>(V)) {
-    if (MDNode *MD = I->getMetadata(LLVMContext::MD_range)) {
+    if (MDNode *MD = I->getMDNode(LLVMContext::MD_range)) {
       ConstantRange TotalRange(
           cast<IntegerType>(I->getType())->getBitWidth(), false);
 

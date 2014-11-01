@@ -128,7 +128,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
       // Check to see if this branch is going to the same place as the default
       // dest.  If so, eliminate it as an explicit compare.
       if (i.getCaseSuccessor() == DefaultDest) {
-        MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
+        MDNode *MD = SI->getMDNode(LLVMContext::MD_prof);
         unsigned NCases = SI->getNumCases();
         // Fold the case metadata into the default if there will be any branches
         // left, unless the metadata doesn't match the switch.
@@ -206,7 +206,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
       BranchInst *NewBr = Builder.CreateCondBr(Cond,
                                                FirstCase.getCaseSuccessor(),
                                                SI->getDefaultDest());
-      MDNode* MD = SI->getMetadata(LLVMContext::MD_prof);
+      MDNode *MD = SI->getMDNode(LLVMContext::MD_prof);
       if (MD && MD->getNumOperands() == 3) {
         ConstantInt *SICase = dyn_cast<ConstantInt>(MD->getOperand(2));
         ConstantInt *SIDef = dyn_cast<ConstantInt>(MD->getOperand(1));
@@ -1313,7 +1313,7 @@ void llvm::combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsign
   K->getAllMetadataOtherThanDebugLoc(Metadata);
   for (unsigned i = 0, n = Metadata.size(); i < n; ++i) {
     unsigned Kind = Metadata[i].first;
-    MDNode *JMD = J->getMetadata(Kind);
+    MDNode *JMD = J->getMDNode(Kind);
     MDNode *KMD = Metadata[i].second;
 
     switch (Kind) {
