@@ -54,6 +54,9 @@ class DwarfFile {
   // Collection of dbg variables of a scope.
   DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8>> ScopeVariables;
 
+  // Collection of abstract subprogram DIEs.
+  DenseMap<const MDNode *, DIE *> AbstractSPDies;
+
 public:
   DwarfFile(AsmPrinter *AP, DwarfDebug &DD, StringRef Pref,
             BumpPtrAllocator &DA);
@@ -92,6 +95,10 @@ public:
 
   DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8>> &getScopeVariables() {
     return ScopeVariables;
+  }
+
+  DenseMap<const MDNode *, DIE *> &getAbstractSPDies() {
+    return AbstractSPDies;
   }
 };
 }

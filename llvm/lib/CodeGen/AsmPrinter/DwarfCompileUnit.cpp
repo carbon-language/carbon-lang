@@ -416,7 +416,7 @@ DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
   DISubprogram InlinedSP = getDISubprogram(DS);
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
-  DIE *OriginDIE = DD->getAbstractSPDies()[InlinedSP];
+  DIE *OriginDIE = DU->getAbstractSPDies()[InlinedSP];
   assert(OriginDIE && "Unable to find original DIE for an inlined subprogram.");
 
   auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
@@ -588,7 +588,7 @@ DIE *DwarfCompileUnit::createAndAddScopeChildren(LexicalScope *Scope,
 
 void
 DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
-  DIE *&AbsDef = DD->getAbstractSPDies()[Scope->getScopeNode()];
+  DIE *&AbsDef = DU->getAbstractSPDies()[Scope->getScopeNode()];
   if (AbsDef)
     return;
 
@@ -648,7 +648,7 @@ DwarfCompileUnit::constructImportedEntityDIE(const DIImportedEntity &Module) {
 
 void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
   DIE *D = getDIE(SP);
-  if (DIE *AbsSPDIE = DD->getAbstractSPDies().lookup(SP)) {
+  if (DIE *AbsSPDIE = DU->getAbstractSPDies().lookup(SP)) {
     if (D)
       // If this subprogram has an abstract definition, reference that
       addDIEEntry(*D, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
@@ -671,7 +671,7 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
   if (Variables.getNumElements() == 0)
     return;
 
-  DIE *SPDIE = DD->getAbstractSPDies().lookup(SP);
+  DIE *SPDIE = DU->getAbstractSPDies().lookup(SP);
   if (!SPDIE)
     SPDIE = getDIE(SP);
   assert(SPDIE);
