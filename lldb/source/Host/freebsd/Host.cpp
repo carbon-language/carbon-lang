@@ -286,95 +286,22 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
     return false;
 }
 
-static lldb::DataBufferSP
-GetAuxvData32(lldb_private::Process *process)
-{
-    struct {
-        uint32_t ps_argvstr;
-        int ps_nargvstr;
-        uint32_t ps_envstr;
-        int ps_nenvstr;
-    } ps_strings;
-    void *ps_strings_addr, *auxv_addr;
-    struct privElf32_Auxinfo { int a_type; unsigned int a_val; } aux_info32[AT_COUNT];
-    struct ptrace_io_desc pid;
-    DataBufferSP buf_sp;
-    std::unique_ptr<DataBufferHeap> buf_ap(new DataBufferHeap(1024, 0));
-
-    // TODO:FIXME: Need a way to get this dynamically, instead of a magic
-    // constant that only works on a single architecture.
-    ps_strings_addr = (void *)0xffffdff0;
-    pid.piod_op = PIOD_READ_D;
-    pid.piod_addr = &ps_strings;
-    pid.piod_offs = ps_strings_addr;
-    pid.piod_len = sizeof(ps_strings);
-    if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
-        perror("failed to fetch ps_strings");
-        buf_ap.release();
-        goto done;
-    }
-
-    auxv_addr = (void *)(ps_strings.ps_envstr + sizeof(uint32_t) * (ps_strings.ps_nenvstr + 1));
-
-    pid.piod_addr = aux_info32;
-    pid.piod_offs = auxv_addr;
-    pid.piod_len = sizeof(aux_info32);
-    if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
-        perror("failed to fetch aux_info");
-        buf_ap.release();
-        goto done;
-    }
-    memcpy(buf_ap->GetBytes(), aux_info32, pid.piod_len);
-    buf_sp.reset(buf_ap.release());
-
-    done:
-    return buf_sp;
-}
-
 lldb::DataBufferSP
 Host::GetAuxvData(lldb_private::Process *process)
 {
-   int mib[2] = { CTL_KERN, KERN_PS_STRINGS };
-   void *ps_strings_addr, *auxv_addr;
-   size_t ps_strings_size = sizeof(void *);
-   Elf_Auxinfo aux_info[AT_COUNT];
-   struct ps_strings ps_strings;
-   struct ptrace_io_desc pid;
+   int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_AUXV, 0 };
+   size_t auxv_size = AT_COUNT * sizeof(Elf_Auxinfo);
    DataBufferSP buf_sp;
 
-   if (process->GetAddressByteSize() < HostInfo::GetArchitecture().GetAddressByteSize())
-           return GetAuxvData32(process);
+   std::unique_ptr<DataBufferHeap> buf_ap(new DataBufferHeap(auxv_size, 0));
 
-   std::unique_ptr<DataBufferHeap> buf_ap(new DataBufferHeap(1024, 0));
-
-   if (::sysctl(mib, 2, &ps_strings_addr, &ps_strings_size, NULL, 0) == 0) {
-           pid.piod_op = PIOD_READ_D;
-           pid.piod_addr = &ps_strings;
-           pid.piod_offs = ps_strings_addr;
-           pid.piod_len = sizeof(ps_strings);
-           if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
-                   perror("failed to fetch ps_strings");
-                   buf_ap.release();
-                   goto done;
-           }
-
-           auxv_addr = ps_strings.ps_envstr + ps_strings.ps_nenvstr + 1;
-
-           pid.piod_addr = aux_info;
-           pid.piod_offs = auxv_addr;
-           pid.piod_len = sizeof(aux_info);
-           if (::ptrace(PT_IO, process->GetID(), (caddr_t)&pid, 0)) {
-                   perror("failed to fetch aux_info");
-                   buf_ap.release();
-                   goto done;
-           }
-           memcpy(buf_ap->GetBytes(), aux_info, pid.piod_len);
+   mib[3] = process->GetID();
+   if (::sysctl(mib, 4, buf_ap->GetBytes(), &auxv_size, NULL, 0) == 0) {
            buf_sp.reset(buf_ap.release());
    } else {
-           perror("sysctl failed on ps_strings");
+           perror("sysctl failed on auxv");
    }
 
-   done:
    return buf_sp;
 }
 
