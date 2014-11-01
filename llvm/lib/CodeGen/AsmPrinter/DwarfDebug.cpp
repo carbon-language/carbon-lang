@@ -576,7 +576,7 @@ void DwarfDebug::finalizeModuleInfo() {
     // FIXME: We should use ranges allow reordering of code ala
     // .subsections_via_symbols in mach-o. This would mean turning on
     // ranges for all subprogram DIEs for mach-o.
-    DwarfCompileUnit &U = SkCU ? *SkCU : *TheCU;
+    DwarfCompileUnit &U = SkCU ? *SkCU : TheCU;
     unsigned NumRanges = TheCU.getRanges().size();
     if (NumRanges) {
       if (NumRanges > 1) {
