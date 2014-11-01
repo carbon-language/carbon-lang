@@ -17,7 +17,7 @@
 #define __has_include(inc) 0
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(LIBCXXRT)
     #include <cxxabi.h>
 
     #ifndef _LIBCPPABI_VERSION
