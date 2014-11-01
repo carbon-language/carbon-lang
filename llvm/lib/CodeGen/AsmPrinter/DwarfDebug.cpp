@@ -550,8 +550,7 @@ void DwarfDebug::finalizeModuleInfo() {
     if (TheU->getUnitDie().getTag() == dwarf::DW_TAG_compile_unit) {
       // If we're splitting the dwarf out now that we've got the entire
       // CU then add the dwo id to it.
-      DwarfCompileUnit *SkCU =
-          static_cast<DwarfCompileUnit *>(TheU->getSkeleton());
+      DwarfCompileUnit *SkCU = TheU->getSkeleton();
       if (useSplitDwarf()) {
         // Emit a unique identifier for this CU.
         uint64_t ID = DIEHash(Asm).computeCUSignature(TheU->getUnitDie());
@@ -1580,7 +1579,7 @@ void DwarfDebug::emitDebugPubSection(
     if (Globals.empty())
       continue;
 
-    if (auto Skeleton = static_cast<DwarfCompileUnit *>(TheU->getSkeleton()))
+    if (auto Skeleton = TheU->getSkeleton())
       TheU = Skeleton;
     unsigned ID = TheU->getUniqueID();
 

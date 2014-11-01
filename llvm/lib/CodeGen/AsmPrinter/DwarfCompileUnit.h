@@ -42,6 +42,10 @@ public:
   DwarfCompileUnit(unsigned UID, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
 
+  DwarfCompileUnit *getSkeleton() const {
+    return static_cast<DwarfCompileUnit *>(Skeleton);
+  }
+
   void initStmtList(MCSymbol *DwarfLineSectionSym);
 
   /// Apply the DW_AT_stmt_list from this compile unit to the specified DIE.
