@@ -150,9 +150,6 @@ public:
   /// Set the skeleton unit associated with this unit.
   void setSkeleton(DwarfUnit &Skel) { Skeleton = &Skel; }
 
-  /// Get the skeleton unit associated with this unit.
-  DwarfUnit *getSkeleton() const { return Skeleton; }
-
   /// Pass in the SectionSym even though we could recreate it in every compile
   /// unit (type units will have actually distinct symbols once they're in
   /// comdat sections).
