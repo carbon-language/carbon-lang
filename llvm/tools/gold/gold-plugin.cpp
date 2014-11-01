@@ -473,7 +473,6 @@ static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
   if (auto *F = dyn_cast<Function>(GO)) {
     if (F->materialize())
       message(LDPL_FATAL, "LLVM gold plugin has failed to read a function");
-    }
 
     auto *NewF = Function::Create(F->getFunctionType(), F->getLinkage(),
                                   F->getName(), M);
