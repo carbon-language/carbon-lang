@@ -199,6 +199,14 @@ public:
   /// Add an address attribute to a die based on the location provided.
   void addAddress(DIE &Die, dwarf::Attribute Attribute,
                   const MachineLocation &Location, bool Indirect = false);
+
+  /// Start with the address based on the location provided, and generate the
+  /// DWARF information necessary to find the actual variable (navigating the
+  /// extra location information encoded in the type) based on the starting
+  /// location.  Add the DWARF information to the die.
+  void addComplexAddress(const DbgVariable &DV, DIE &Die,
+                         dwarf::Attribute Attribute,
+                         const MachineLocation &Location);
 };
 
 } // end llvm namespace

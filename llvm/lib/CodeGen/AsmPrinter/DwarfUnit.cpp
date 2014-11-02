@@ -493,65 +493,6 @@ void DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
   addSInt(TheDie, dwarf::DW_FORM_sdata, Offset);
 }
 
-/// addComplexAddress - Start with the address based on the location provided,
-/// and generate the DWARF information necessary to find the actual variable
-/// given the extra address information encoded in the DbgVariable, starting
-/// from the starting location.  Add the DWARF information to the die.
-///
-void DwarfUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
-                                  dwarf::Attribute Attribute,
-                                  const MachineLocation &Location) {
-  DIELoc *Loc = new (DIEValueAllocator) DIELoc();
-  unsigned N = DV.getNumAddrElements();
-  unsigned i = 0;
-  if (Location.isReg()) {
-    if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_plus) {
-      assert(!DV.getVariable().isIndirect() &&
-             "double indirection not handled");
-      // If first address element is OpPlus then emit
-      // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
-      addRegisterOffset(*Loc, Location.getReg(), DV.getAddrElement(1));
-      i = 2;
-    } else if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_deref) {
-      assert(!DV.getVariable().isIndirect() &&
-             "double indirection not handled");
-      addRegisterOpPiece(*Loc, Location.getReg(),
-                         DV.getExpression().getPieceSize(),
-                         DV.getExpression().getPieceOffset());
-      i = 3;
-    } else
-      addRegisterOpPiece(*Loc, Location.getReg());
-  } else
-    addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
-
-  for (; i < N; ++i) {
-    uint64_t Element = DV.getAddrElement(i);
-    if (Element == dwarf::DW_OP_plus) {
-      addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-      addUInt(*Loc, dwarf::DW_FORM_udata, DV.getAddrElement(++i));
-
-    } else if (Element == dwarf::DW_OP_deref) {
-      if (!Location.isReg())
-        addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
-
-    } else if (Element == dwarf::DW_OP_piece) {
-      const unsigned SizeOfByte = 8;
-      unsigned PieceOffsetInBits = DV.getAddrElement(++i)*SizeOfByte;
-      unsigned PieceSizeInBits = DV.getAddrElement(++i)*SizeOfByte;
-      // Emit DW_OP_bit_piece Size Offset.
-      assert(PieceSizeInBits > 0 && "piece has zero size");
-      addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_bit_piece);
-      addUInt(*Loc, dwarf::DW_FORM_udata, PieceSizeInBits);
-      addUInt(*Loc, dwarf::DW_FORM_udata, PieceOffsetInBits);
-
-    } else
-      llvm_unreachable("unknown DIBuilder Opcode");
-  }
-
-  // Now attach the location information to the DIE.
-  addBlock(Die, Attribute, Loc);
-}
-
 /* Byref variables, in Blocks, are declared by the programmer as "SomeType
    VarName;", but the compiler creates a __Block_byref_x_VarName struct, and
    gives the variable VarName either the struct, or a pointer to the struct, as

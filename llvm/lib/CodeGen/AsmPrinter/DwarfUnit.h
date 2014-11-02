@@ -283,14 +283,6 @@ public:
   /// addRegisterOffset - Add register offset.
   void addRegisterOffset(DIELoc &TheDie, unsigned Reg, int64_t Offset);
 
-  /// addComplexAddress - Start with the address based on the location provided,
-  /// and generate the DWARF information necessary to find the actual variable
-  /// (navigating the extra location information encoded in the type) based on
-  /// the starting location.  Add the DWARF information to the die.
-  void addComplexAddress(const DbgVariable &DV, DIE &Die,
-                         dwarf::Attribute Attribute,
-                         const MachineLocation &Location);
-
   // FIXME: Should be reformulated in terms of addComplexAddress.
   /// addBlockByrefAddress - Start with the address based on the location
   /// provided, and generate the DWARF information necessary to find the
