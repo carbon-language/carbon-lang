@@ -37,6 +37,12 @@ protected:
     return format(Code, 0, Code.size(), Style);
   }
 
+  static FormatStyle getStyleWithColumns(unsigned ColumnLimit) {
+    FormatStyle Style = getGoogleStyle(FormatStyle::LK_Java);
+    Style.ColumnLimit = ColumnLimit;
+    return Style;
+  }
+
   static void verifyFormat(
       llvm::StringRef Code,
       const FormatStyle &Style = getGoogleStyle(FormatStyle::LK_Java)) {
@@ -58,6 +64,19 @@ TEST_F(FormatTestJava, ClassDeclarations) {
                "  }\n"
                "}");
   verifyFormat("public class A extends B.C {}");
+
+  verifyFormat("abstract class SomeClass extends SomeOtherClass\n"
+               "    implements SomeInterface {}",
+               getStyleWithColumns(60));
+  verifyFormat("abstract class SomeClass\n"
+               "    extends SomeOtherClass\n"
+               "    implements SomeInterface {}",
+               getStyleWithColumns(40));
+  verifyFormat("abstract class SomeClass\n"
+               "    extends SomeOtherClass\n"
+               "    implements SomeInterface,\n"
+               "               AnotherInterface {}",
+               getStyleWithColumns(40));
 }
 
 TEST_F(FormatTestJava, ThrowsDeclarations) {

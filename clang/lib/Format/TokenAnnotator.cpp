@@ -1064,7 +1064,8 @@ static int PrecedenceArrowAndPeriod = prec::PointerToMember + 2;
 /// operator precedence.
 class ExpressionParser {
 public:
-  ExpressionParser(AnnotatedLine &Line) : Current(Line.First) {}
+  ExpressionParser(const FormatStyle &Style, AnnotatedLine &Line)
+      : Style(Style), Current(Line.First) {}
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
@@ -1167,6 +1168,11 @@ private:
         return Current->getPrecedence();
       else if (Current->isOneOf(tok::period, tok::arrow))
         return PrecedenceArrowAndPeriod;
+      else if (Style.Language == FormatStyle::LK_Java &&
+               Current->is(tok::identifier) &&
+               (Current->TokenText == "extends" ||
+                Current->TokenText == "implements"))
+        return 0;
     }
     return -1;
   }
@@ -1224,6 +1230,7 @@ private:
       Current = Current->Next;
   }
 
+  const FormatStyle &Style;
   FormatToken *Current;
 };
 
@@ -1256,7 +1263,7 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
   if (Line.Type == LT_Invalid)
     return;
 
-  ExpressionParser ExprParser(Line);
+  ExpressionParser ExprParser(Style, Line);
   ExprParser.parse();
 
   if (Line.First->Type == TT_ObjCMethodSpecifier)
@@ -1837,7 +1844,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   const FormatToken &Left = *Right.Previous;
 
   if (Style.Language == FormatStyle::LK_Java) {
-    if (Left.is(tok::identifier) && Left.TokenText == "throws")
+    if (Left.is(tok::identifier) &&
+        (Left.TokenText == "throws" || Left.TokenText == "extends" ||
+         Left.TokenText == "implements"))
       return false;
   }
 
