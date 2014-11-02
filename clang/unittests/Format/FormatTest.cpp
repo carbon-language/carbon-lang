@@ -4889,6 +4889,7 @@ TEST_F(FormatTest, UnderstandsNewAndDelete) {
   verifyFormat("auto aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
                "    new (aaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaa))\n"
                "        typename aaaaaaaaaaaaaaaaaaaaaaaa();");
+  verifyFormat("delete[] h->p;");
 }
 
 TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
