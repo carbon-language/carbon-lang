@@ -127,5 +127,31 @@ TEST_F(FormatTestJava, StringConcatenation) {
                "                    + \"cde\";");
 }
 
+TEST_F(FormatTestJava, TryCatchFinally) {
+  verifyFormat("try {\n"
+               "  Something();\n"
+               "} catch (SomeException e) {\n"
+               "  HandleException(e);\n"
+               "}");
+  verifyFormat("try {\n"
+               "  Something();\n"
+               "} finally {\n"
+               "  AlwaysDoThis();\n"
+               "}");
+  verifyFormat("try {\n"
+               "  Something();\n"
+               "} catch (SomeException e) {\n"
+               "  HandleException(e);\n"
+               "} finally {\n"
+               "  AlwaysDoThis();\n"
+               "}");
+
+  verifyFormat("try {\n"
+               "  Something();\n"
+               "} catch (SomeException | OtherException e) {\n"
+               "  HandleException(e);\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang

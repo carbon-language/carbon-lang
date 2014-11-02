@@ -1174,7 +1174,8 @@ void UnwrappedLineParser::parseTryCatch() {
     --Line->Level;
   }
   while (FormatTok->is(tok::kw_catch) ||
-         (Style.Language == FormatStyle::LK_JavaScript &&
+         ((Style.Language == FormatStyle::LK_Java ||
+           Style.Language == FormatStyle::LK_JavaScript) &&
           FormatTok->TokenText == "finally")) {
     nextToken();
     while (FormatTok->isNot(tok::l_brace)) {
