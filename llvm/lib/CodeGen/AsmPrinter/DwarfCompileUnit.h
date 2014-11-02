@@ -210,6 +210,7 @@ public:
 
   /// Add a Dwarf loclistptr attribute data and value.
   void addLocationList(DIE &Die, dwarf::Attribute Attribute, unsigned Index);
+  void applyVariableAttributes(const DbgVariable &Var, DIE &VariableDie);
 };
 
 } // end llvm namespace

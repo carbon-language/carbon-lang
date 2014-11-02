@@ -1381,17 +1381,6 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
     addFlag(SPDie, dwarf::DW_AT_explicit);
 }
 
-void DwarfUnit::applyVariableAttributes(const DbgVariable &Var,
-                                        DIE &VariableDie) {
-  StringRef Name = Var.getName();
-  if (!Name.empty())
-    addString(VariableDie, dwarf::DW_AT_name, Name);
-  addSourceLine(VariableDie, Var.getVariable());
-  addType(VariableDie, Var.getType());
-  if (Var.isArtificial())
-    addFlag(VariableDie, dwarf::DW_AT_artificial);
-}
-
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
 void DwarfUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy) {
   DIE &DW_Subrange = createAndAddDIE(dwarf::DW_TAG_subrange_type, Buffer);

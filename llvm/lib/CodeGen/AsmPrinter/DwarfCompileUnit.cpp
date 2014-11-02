@@ -809,4 +809,15 @@ void DwarfCompileUnit::addLocationList(DIE &Die, dwarf::Attribute Attribute,
                                                 : dwarf::DW_FORM_data4;
   Die.addValue(Attribute, Form, Value);
 }
+
+void DwarfUnit::applyVariableAttributes(const DbgVariable &Var,
+                                        DIE &VariableDie) {
+  StringRef Name = Var.getName();
+  if (!Name.empty())
+    addString(VariableDie, dwarf::DW_AT_name, Name);
+  addSourceLine(VariableDie, Var.getVariable());
+  addType(VariableDie, Var.getType());
+  if (Var.isArtificial())
+    addFlag(VariableDie, dwarf::DW_AT_artificial);
+}
 } // end llvm namespace
