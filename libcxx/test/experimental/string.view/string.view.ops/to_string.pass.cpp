@@ -24,8 +24,8 @@ template<typename CharT>
 void test ( const CharT *s ) {
     typedef std::basic_string<CharT> String ;
     {
-    std::experimental::basic_string_view<CharT> sv1 ( s );
-    String                                      str1 = (String) sv1;
+    const std::experimental::basic_string_view<CharT> sv1 ( s );
+    String                                            str1 = (String) sv1;
     
     assert ( sv1.size() == str1.size ());
     assert ( std::char_traits<CharT>::compare ( sv1.data(), str1.data(),  sv1.size()) == 0 );
@@ -38,8 +38,8 @@ void test ( const CharT *s ) {
     }
 
     {
-    std::experimental::basic_string_view<CharT> sv1;
-    String                                      str1 = (String) sv1;
+    const std::experimental::basic_string_view<CharT> sv1;
+    String                                            str1 = (String) sv1;
 
     assert ( sv1.size() == str1.size ());
     assert ( std::char_traits<CharT>::compare ( sv1.data(), str1.data(), sv1.size()) == 0 );

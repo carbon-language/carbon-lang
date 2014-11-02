@@ -349,7 +349,8 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
 
         template<class _Allocator = allocator<_CharT> >
         _LIBCPP_INLINE_VISIBILITY
-        basic_string<_CharT, _Traits, _Allocator> to_string( const _Allocator& __a = _Allocator())
+        basic_string<_CharT, _Traits, _Allocator>
+        to_string( const _Allocator& __a = _Allocator()) const
         { return basic_string<_CharT, _Traits, _Allocator> ( begin(), end(), __a ); }
 
         size_type copy(_CharT* __s, size_type __n, size_type __pos = 0) const
