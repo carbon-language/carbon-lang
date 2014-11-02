@@ -142,7 +142,14 @@ function(add_llvm_symbol_exports target_name export_file)
   set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} PARENT_SCOPE)
 endfunction(add_llvm_symbol_exports)
 
-function(add_dead_strip target_name)
+function(add_link_opts target_name)
+  # Pass -O3 to the linker. This enabled different optimizations on different
+  # linkers.
+  if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR WIN32))
+    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                 LINK_FLAGS " -Wl,-O3")
+  endif()
+
   if(NOT LLVM_NO_DEAD_STRIP)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       # ld64's implementation of -dead_strip breaks tools that use plugins.
@@ -157,7 +164,7 @@ function(add_dead_strip target_name)
                    LINK_FLAGS " -Wl,--gc-sections")
     endif()
   endif()
-endfunction(add_dead_strip)
+endfunction(add_link_opts)
 
 # Set each output directory according to ${CMAKE_CONFIGURATION_TYPES}.
 # Note: Don't set variables CMAKE_*_OUTPUT_DIRECTORY any more,
@@ -287,7 +294,7 @@ function(llvm_add_library name)
   endif()
   set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
   llvm_update_compile_flags(${name})
-  add_dead_strip( ${name} )
+  add_link_opts( ${name} )
   if(ARG_OUTPUT_NAME)
     set_target_properties(${name}
       PROPERTIES
@@ -445,7 +452,7 @@ macro(add_llvm_executable name)
     add_executable(${name} ${ALL_FILES})
   endif()
   llvm_update_compile_flags(${name})
-  add_dead_strip( ${name} )
+  add_link_opts( ${name} )
 
   # Do not add -Dname_EXPORTS to the command-line when building files in this
   # target. Doing so is actively harmful for the modules build because it
