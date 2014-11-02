@@ -23,8 +23,11 @@ import subprocess
 import sys
 import vim
 
+# set g:clang_format_path to the path to clang-format if it is not on the path
 # Change this to the full path if clang-format is not on the path.
 binary = 'clang-format'
+if vim.eval('exists("g:clang_format_path")'):
+  binary = vim.eval('g:clang_format_path')
 
 # Change this to format according to other formatting styles. See the output of
 # 'clang-format --help' for a list of supported styles. The default looks for
