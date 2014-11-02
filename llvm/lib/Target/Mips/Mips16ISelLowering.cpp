@@ -244,9 +244,10 @@ Mips16TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
 }
 
-bool Mips16TargetLowering::isEligibleForTailCallOptimization(
-    const CCState &CCInfo, unsigned NextStackOffset,
-    const MipsFunctionInfo &FI) const {
+bool Mips16TargetLowering::
+isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
+                                  unsigned NextStackOffset,
+                                  const MipsFunctionInfo& FI) const {
   // No tail call optimization for mips16.
   return false;
 }

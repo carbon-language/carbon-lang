@@ -1167,14 +1167,15 @@ MipsSETargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
 }
 
-bool MipsSETargetLowering::isEligibleForTailCallOptimization(
-    const CCState &CCInfo, unsigned NextStackOffset,
-    const MipsFunctionInfo &FI) const {
+bool MipsSETargetLowering::
+isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
+                                  unsigned NextStackOffset,
+                                  const MipsFunctionInfo& FI) const {
   if (!EnableMipsTailCalls)
     return false;
 
   // Return false if either the callee or caller has a byval argument.
-  if (CCInfo.getInRegsParamsCount() > 0 || FI.hasByvalArg())
+  if (MipsCCInfo.hasByValArg() || FI.hasByvalArg())
     return false;
 
   // Return true if the callee's argument area is no larger than the
