@@ -687,8 +687,9 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
 }
 
 void DwarfCompileUnit::emitHeader(const MCSymbol *ASectionSym) const {
-  // Emit the compile units header.
-  Asm->OutStreamer.EmitLabel(LabelBegin);
+  // Don't bother labeling the .dwo unit, as its offset isn't used.
+  if (!Skeleton)
+    Asm->OutStreamer.EmitLabel(LabelBegin);
 
   DwarfUnit::emitHeader(ASectionSym);
 }

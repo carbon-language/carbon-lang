@@ -158,8 +158,11 @@ public:
   void initSection(const MCSection *Section, MCSymbol *SectionSym) {
     DwarfUnit::initSection(Section);
     this->SectionSym = SectionSym;
-    LabelBegin =
-        Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
+
+    // Don't bother labeling the .dwo unit, as its offset isn't used.
+    if (!Skeleton)
+      LabelBegin =
+          Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
   }
 
   unsigned getLength() {
