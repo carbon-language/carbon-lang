@@ -225,13 +225,6 @@ void DwarfUnit::addLocalString(DIE &Die, dwarf::Attribute Attribute,
   Die.addValue(Attribute, dwarf::DW_FORM_strp, Str);
 }
 
-/// addExpr - Add a Dwarf expression attribute data and value.
-///
-void DwarfUnit::addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr) {
-  DIEValue *Value = new (DIEValueAllocator) DIEExpr(Expr);
-  Die.addValue((dwarf::Attribute)0, Form, Value);
-}
-
 /// addLabel - Add a Dwarf label attribute data and value.
 ///
 void DwarfUnit::addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,

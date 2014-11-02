@@ -213,9 +213,6 @@ public:
   void addLocalString(DIE &Die, dwarf::Attribute Attribute,
                       StringRef Str);
 
-  /// addExpr - Add a Dwarf expression attribute data and value.
-  void addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr);
-
   /// addLabel - Add a Dwarf label attribute data and value.
   void addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,
                 const MCSymbol *Label);

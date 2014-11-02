@@ -820,4 +820,11 @@ void DwarfCompileUnit::applyVariableAttributes(const DbgVariable &Var,
   if (Var.isArtificial())
     addFlag(VariableDie, dwarf::DW_AT_artificial);
 }
+
+/// Add a Dwarf expression attribute data and value.
+void DwarfCompileUnit::addExpr(DIELoc &Die, dwarf::Form Form,
+                               const MCExpr *Expr) {
+  DIEValue *Value = new (DIEValueAllocator) DIEExpr(Expr);
+  Die.addValue((dwarf::Attribute)0, Form, Value);
+}
 } // end llvm namespace
