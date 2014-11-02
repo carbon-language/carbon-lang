@@ -453,6 +453,13 @@ namespace {
     bool getComdatResult(const Comdat *SrcC, Comdat::SelectionKind &SK,
                          bool &LinkFromSrc);
 
+    /// This analyzes the two global values and determines what the result will
+    /// look like in the destination module.
+    bool getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
+                          GlobalValue::LinkageTypes &LT,
+                          GlobalValue::VisibilityTypes &Vis,
+                          bool &LinkFromSrc);
+
     /// Given a global in the source module, return the global in the
     /// destination module that is being linked to, if any.
     GlobalValue *getLinkedToGlobal(const GlobalValue *SrcGV) {
@@ -481,15 +488,9 @@ namespace {
 
     bool linkAppendingVarProto(GlobalVariable *DstGV,
                                const GlobalVariable *SrcGV);
-
-    bool linkGlobalValueProto(GlobalValue *GV);
-    GlobalValue *linkGlobalVariableProto(const GlobalVariable *SGVar,
-                                         GlobalValue *DGV, bool LinkFromSrc);
-    GlobalValue *linkFunctionProto(const Function *SF, GlobalValue *DGV,
-                                   bool LinkFromSrc);
-    GlobalValue *linkGlobalAliasProto(const GlobalAlias *SGA, GlobalValue *DGV,
-                                      bool LinkFromSrc);
-
+    bool linkGlobalProto(const GlobalVariable *SrcGV);
+    bool linkFunctionProto(Function *SrcF);
+    bool linkAliasProto(GlobalAlias *SrcA);
     bool linkModuleFlagsMetadata();
 
     void linkAppendingVarInit(const AppendingVarInfo &AVI);
@@ -687,12 +688,6 @@ bool ModuleLinker::getComdatResult(const Comdat *SrcC,
 bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
                                         const GlobalValue &Dest,
                                         const GlobalValue &Src) {
-  // We always have to add Src if it has appending linkage.
-  if (Src.hasAppendingLinkage()) {
-    LinkFromSrc = true;
-    return false;
-  }
-
   bool SrcIsDeclaration = Src.isDeclarationForLinker();
   bool DestIsDeclaration = Dest.isDeclarationForLinker();
 
@@ -760,6 +755,36 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
          "Unexpected linkage type!");
   return emitError("Linking globals named '" + Src.getName() +
                    "': symbol multiply defined!");
+}
+
+/// This analyzes the two global values and determines what the result will look
+/// like in the destination module. In particular, it computes the resultant
+/// linkage type and visibility, computes whether the global in the source
+/// should be copied over to the destination (replacing the existing one), and
+/// computes whether this linkage is an error or not.
+bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
+                                    GlobalValue::LinkageTypes &LT,
+                                    GlobalValue::VisibilityTypes &Vis,
+                                    bool &LinkFromSrc) {
+  assert(Dest && "Must have two globals being queried");
+  assert(!Src->hasLocalLinkage() &&
+         "If Src has internal linkage, Dest shouldn't be set!");
+
+  if (shouldLinkFromSource(LinkFromSrc, *Dest, *Src))
+    return true;
+
+  if (LinkFromSrc)
+    LT = Src->getLinkage();
+  else
+    LT = Dest->getLinkage();
+
+  // Compute the visibility. We follow the rules in the System V Application
+  // Binary Interface.
+  assert(!GlobalValue::isLocalLinkage(LT) &&
+         "Symbols with local linkage should not be merged");
+  Vis = isLessConstraining(Src->getVisibility(), Dest->getVisibility()) ?
+    Dest->getVisibility() : Src->getVisibility();
+  return false;
 }
 
 /// Loop over all of the linked values to compute type mappings.  For example,
@@ -985,164 +1010,256 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
   return false;
 }
 
-bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
+/// Loop through the global variables in the src module and merge them into the
+/// dest module.
+bool ModuleLinker::linkGlobalProto(const GlobalVariable *SGV) {
   GlobalValue *DGV = getLinkedToGlobal(SGV);
-  bool LinkFromSrc = true;
-  Comdat *C = nullptr;
-  GlobalValue::VisibilityTypes Visibility = SGV->getVisibility();
+  llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
   bool HasUnnamedAddr = SGV->hasUnnamedAddr();
+  unsigned Alignment = SGV->getAlignment();
 
+  bool LinkFromSrc = false;
+  Comdat *DC = nullptr;
   if (const Comdat *SC = SGV->getComdat()) {
     Comdat::SelectionKind SK;
     std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
-    C = DstM->getOrInsertComdat(SC->getName());
-    C->setSelectionKind(SK);
-  } else if (DGV) {
-    if (shouldLinkFromSource(LinkFromSrc, *DGV, *SGV))
-      return true;
-  }
-
-  if (!LinkFromSrc) {
-    // Track the source global so that we don't attempt to copy it over when
-    // processing global initializers.
-    DoNotLinkFromSource.insert(SGV);
-
-    if (DGV)
-      // Make sure to remember this mapping.
-      ValueMap[SGV] =
-          ConstantExpr::getBitCast(DGV, TypeMap.get(SGV->getType()));
+    DC = DstM->getOrInsertComdat(SC->getName());
+    DC->setSelectionKind(SK);
   }
 
   if (DGV) {
-    Visibility = isLessConstraining(Visibility, DGV->getVisibility())
-                     ? DGV->getVisibility()
-                     : Visibility;
-    HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
-  }
+    if (!DC) {
+      // Concatenation of appending linkage variables is magic and handled later.
+      if (DGV->hasAppendingLinkage() || SGV->hasAppendingLinkage())
+        return linkAppendingVarProto(cast<GlobalVariable>(DGV), SGV);
 
-  if (!LinkFromSrc && !DGV)
-    return false;
+      // Determine whether linkage of these two globals follows the source
+      // module's definition or the destination module's definition.
+      GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+      GlobalValue::VisibilityTypes NV;
+      if (getLinkageResult(DGV, SGV, NewLinkage, NV, LinkFromSrc))
+        return true;
+      NewVisibility = NV;
+      HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
+      if (DGV->hasCommonLinkage() && SGV->hasCommonLinkage())
+        Alignment = std::max(Alignment, DGV->getAlignment());
+      else if (!LinkFromSrc)
+        Alignment = DGV->getAlignment();
 
-  GlobalValue *NewGV;
-  if (auto *SGVar = dyn_cast<GlobalVariable>(SGV)) {
-    NewGV = linkGlobalVariableProto(SGVar, DGV, LinkFromSrc);
-    if (!NewGV)
-      return true;
-  } else if (auto *SF = dyn_cast<Function>(SGV)) {
-    NewGV = linkFunctionProto(SF, DGV, LinkFromSrc);
-  } else {
-    NewGV = linkGlobalAliasProto(cast<GlobalAlias>(SGV), DGV, LinkFromSrc);
-  }
+      // If we're not linking from the source, then keep the definition that we
+      // have.
+      if (!LinkFromSrc) {
+        // Special case for const propagation.
+        if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
+          DGVar->setAlignment(Alignment);
 
-  if (NewGV) {
-    if (NewGV != DGV)
-      copyGVAttributes(NewGV, SGV);
+          if (DGVar->isDeclaration() && !SGV->isConstant())
+            DGVar->setConstant(false);
+        }
 
-    NewGV->setUnnamedAddr(HasUnnamedAddr);
-    NewGV->setVisibility(Visibility);
-
-    if (auto *NewGO = dyn_cast<GlobalObject>(NewGV)) {
-      if (C)
-        NewGO->setComdat(C);
-    }
-
-    // Make sure to remember this mapping.
-    if (NewGV != DGV) {
-      if (DGV) {
-        DGV->replaceAllUsesWith(
-            ConstantExpr::getBitCast(NewGV, DGV->getType()));
-        DGV->eraseFromParent();
+        // Set calculated linkage, visibility and unnamed_addr.
+        DGV->setLinkage(NewLinkage);
+        DGV->setVisibility(*NewVisibility);
+        DGV->setUnnamedAddr(HasUnnamedAddr);
       }
-      ValueMap[SGV] = NewGV;
+    }
+
+    if (!LinkFromSrc) {
+      // Make sure to remember this mapping.
+      ValueMap[SGV] = ConstantExpr::getBitCast(DGV,TypeMap.get(SGV->getType()));
+
+      // Track the source global so that we don't attempt to copy it over when
+      // processing global initializers.
+      DoNotLinkFromSource.insert(SGV);
+
+      return false;
     }
   }
 
-  return false;
-}
-
-/// Loop through the global variables in the src module and merge them into the
-/// dest module.
-GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
-                                                   GlobalValue *DGV,
-                                                   bool LinkFromSrc) {
-  unsigned Alignment = 0;
-  bool ClearConstant = false;
-
-  if (DGV) {
-    // Concatenation of appending linkage variables is magic and handled later.
-    if (DGV->hasAppendingLinkage()) {
-      if (linkAppendingVarProto(cast<GlobalVariable>(DGV), SGVar))
-        return nullptr;
-      return DGV;
-    }
-
-    if (DGV->hasCommonLinkage() && SGVar->hasCommonLinkage())
-      Alignment = std::max(SGVar->getAlignment(), DGV->getAlignment());
-
-    auto *DGVar = dyn_cast<GlobalVariable>(DGV);
-    if (!SGVar->isConstant() || (DGVar && !DGVar->isConstant()))
-      ClearConstant = true;
-  }
-
-  if (!LinkFromSrc) {
-    if (auto *NewGVar = dyn_cast<GlobalVariable>(DGV)) {
-      if (Alignment)
-        NewGVar->setAlignment(Alignment);
-      if (NewGVar->isDeclaration() && ClearConstant)
-        NewGVar->setConstant(false);
-    }
-    return DGV;
+  // If the Comdat this variable was inside of wasn't selected, skip it.
+  if (DC && !DGV && !LinkFromSrc) {
+    DoNotLinkFromSource.insert(SGV);
+    return false;
   }
 
   // No linking to be performed or linking from the source: simply create an
   // identical version of the symbol over in the dest module... the
   // initializer will be filled in later by LinkGlobalInits.
-  GlobalVariable *NewDGV = new GlobalVariable(
-      *DstM, TypeMap.get(SGVar->getType()->getElementType()),
-      SGVar->isConstant(), SGVar->getLinkage(), /*init*/ nullptr,
-      SGVar->getName(), /*insertbefore*/ nullptr, SGVar->getThreadLocalMode(),
-      SGVar->getType()->getAddressSpace());
+  GlobalVariable *NewDGV =
+    new GlobalVariable(*DstM, TypeMap.get(SGV->getType()->getElementType()),
+                       SGV->isConstant(), SGV->getLinkage(), /*init*/nullptr,
+                       SGV->getName(), /*insertbefore*/nullptr,
+                       SGV->getThreadLocalMode(),
+                       SGV->getType()->getAddressSpace());
+  // Propagate alignment, visibility and section info.
+  copyGVAttributes(NewDGV, SGV);
+  NewDGV->setAlignment(Alignment);
+  if (NewVisibility)
+    NewDGV->setVisibility(*NewVisibility);
+  NewDGV->setUnnamedAddr(HasUnnamedAddr);
 
-  if (Alignment)
-    NewDGV->setAlignment(Alignment);
+  if (DC)
+    NewDGV->setComdat(DC);
 
-  return NewDGV;
+  if (DGV) {
+    DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV, DGV->getType()));
+    DGV->eraseFromParent();
+  }
+
+  // Make sure to remember this mapping.
+  ValueMap[SGV] = NewDGV;
+  return false;
 }
 
 /// Link the function in the source module into the destination module if
 /// needed, setting up mapping information.
-GlobalValue *ModuleLinker::linkFunctionProto(const Function *SF,
-                                             GlobalValue *DGV,
-                                             bool LinkFromSrc) {
-  if (!LinkFromSrc)
-    return DGV;
+bool ModuleLinker::linkFunctionProto(Function *SF) {
+  GlobalValue *DGV = getLinkedToGlobal(SF);
+  llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
+  bool HasUnnamedAddr = SF->hasUnnamedAddr();
+
+  bool LinkFromSrc = false;
+  Comdat *DC = nullptr;
+  if (const Comdat *SC = SF->getComdat()) {
+    Comdat::SelectionKind SK;
+    std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
+    DC = DstM->getOrInsertComdat(SC->getName());
+    DC->setSelectionKind(SK);
+  }
+
+  if (DGV) {
+    if (!DC) {
+      GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+      GlobalValue::VisibilityTypes NV;
+      if (getLinkageResult(DGV, SF, NewLinkage, NV, LinkFromSrc))
+        return true;
+      NewVisibility = NV;
+      HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
+
+      if (!LinkFromSrc) {
+        // Set calculated linkage
+        DGV->setLinkage(NewLinkage);
+        DGV->setVisibility(*NewVisibility);
+        DGV->setUnnamedAddr(HasUnnamedAddr);
+      }
+    }
+
+    if (!LinkFromSrc) {
+      // Make sure to remember this mapping.
+      ValueMap[SF] = ConstantExpr::getBitCast(DGV, TypeMap.get(SF->getType()));
+
+      // Track the function from the source module so we don't attempt to remap
+      // it.
+      DoNotLinkFromSource.insert(SF);
+
+      return false;
+    }
+  }
 
   // If the function is to be lazily linked, don't create it just yet.
   // The ValueMaterializerTy will deal with creating it if it's used.
   if (!DGV && (SF->hasLocalLinkage() || SF->hasLinkOnceLinkage() ||
                SF->hasAvailableExternallyLinkage())) {
     DoNotLinkFromSource.insert(SF);
-    return nullptr;
+    return false;
+  }
+
+  // If the Comdat this function was inside of wasn't selected, skip it.
+  if (DC && !DGV && !LinkFromSrc) {
+    DoNotLinkFromSource.insert(SF);
+    return false;
   }
 
   // If there is no linkage to be performed or we are linking from the source,
   // bring SF over.
-  return Function::Create(TypeMap.get(SF->getFunctionType()), SF->getLinkage(),
-                          SF->getName(), DstM);
+  Function *NewDF = Function::Create(TypeMap.get(SF->getFunctionType()),
+                                     SF->getLinkage(), SF->getName(), DstM);
+  copyGVAttributes(NewDF, SF);
+  if (NewVisibility)
+    NewDF->setVisibility(*NewVisibility);
+  NewDF->setUnnamedAddr(HasUnnamedAddr);
+
+  if (DC)
+    NewDF->setComdat(DC);
+
+  if (DGV) {
+    // Any uses of DF need to change to NewDF, with cast.
+    DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDF, DGV->getType()));
+    DGV->eraseFromParent();
+  }
+
+  ValueMap[SF] = NewDF;
+  return false;
 }
 
 /// Set up prototypes for any aliases that come over from the source module.
-GlobalValue *ModuleLinker::linkGlobalAliasProto(const GlobalAlias *SGA,
-                                                GlobalValue *DGV,
-                                                bool LinkFromSrc) {
-  if (!LinkFromSrc)
-    return DGV;
+bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
+  GlobalValue *DGV = getLinkedToGlobal(SGA);
+  llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
+  bool HasUnnamedAddr = SGA->hasUnnamedAddr();
+
+  bool LinkFromSrc = false;
+  Comdat *DC = nullptr;
+  if (const Comdat *SC = SGA->getComdat()) {
+    Comdat::SelectionKind SK;
+    std::tie(SK, LinkFromSrc) = ComdatsChosen[SC];
+    DC = DstM->getOrInsertComdat(SC->getName());
+    DC->setSelectionKind(SK);
+  }
+
+  if (DGV) {
+    if (!DC) {
+      GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+      GlobalValue::VisibilityTypes NV;
+      if (getLinkageResult(DGV, SGA, NewLinkage, NV, LinkFromSrc))
+        return true;
+      NewVisibility = NV;
+      HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
+
+      if (!LinkFromSrc) {
+        // Set calculated linkage.
+        DGV->setLinkage(NewLinkage);
+        DGV->setVisibility(*NewVisibility);
+        DGV->setUnnamedAddr(HasUnnamedAddr);
+      }
+    }
+
+    if (!LinkFromSrc) {
+      // Make sure to remember this mapping.
+      ValueMap[SGA] = ConstantExpr::getBitCast(DGV,TypeMap.get(SGA->getType()));
+
+      // Track the alias from the source module so we don't attempt to remap it.
+      DoNotLinkFromSource.insert(SGA);
+
+      return false;
+    }
+  }
+
+  // If the Comdat this alias was inside of wasn't selected, skip it.
+  if (DC && !DGV && !LinkFromSrc) {
+    DoNotLinkFromSource.insert(SGA);
+    return false;
+  }
 
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
   auto *PTy = cast<PointerType>(TypeMap.get(SGA->getType()));
-  return GlobalAlias::create(PTy->getElementType(), PTy->getAddressSpace(),
-                             SGA->getLinkage(), SGA->getName(), DstM);
+  auto *NewDA =
+      GlobalAlias::create(PTy->getElementType(), PTy->getAddressSpace(),
+                          SGA->getLinkage(), SGA->getName(), DstM);
+  copyGVAttributes(NewDA, SGA);
+  if (NewVisibility)
+    NewDA->setVisibility(*NewVisibility);
+  NewDA->setUnnamedAddr(HasUnnamedAddr);
+
+  if (DGV) {
+    // Any uses of DGV need to change to NewDA, with cast.
+    DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDA, DGV->getType()));
+    DGV->eraseFromParent();
+  }
+
+  ValueMap[SGA] = NewDA;
+  return false;
 }
 
 static void getArrayElements(const Constant *C,
@@ -1482,7 +1599,7 @@ bool ModuleLinker::run() {
   // initializers (which could refer to functions not yet mapped over).
   for (Module::global_iterator I = SrcM->global_begin(),
        E = SrcM->global_end(); I != E; ++I)
-    if (linkGlobalValueProto(I))
+    if (linkGlobalProto(I))
       return true;
 
   // Link the functions together between the two modules, without doing function
@@ -1491,13 +1608,13 @@ bool ModuleLinker::run() {
   // all of the global values that may be referenced are available in our
   // ValueMap.
   for (Module::iterator I = SrcM->begin(), E = SrcM->end(); I != E; ++I)
-    if (linkGlobalValueProto(I))
+    if (linkFunctionProto(I))
       return true;
 
   // If there were any aliases, link them now.
   for (Module::alias_iterator I = SrcM->alias_begin(),
        E = SrcM->alias_end(); I != E; ++I)
-    if (linkGlobalValueProto(I))
+    if (linkAliasProto(I))
       return true;
 
   for (unsigned i = 0, e = AppendingVars.size(); i != e; ++i)
