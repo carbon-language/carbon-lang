@@ -541,8 +541,8 @@ private:
       }
     } else {
       while (CurrentToken) {
-        if (CurrentToken->is(tok::string_literal))
-          // Mark these string literals as "implicit" literals, too, so that
+        if (CurrentToken->isNot(tok::comment))
+          // Mark these tokens as "implicit" string literals, so that
           // they are not split or line-wrapped.
           CurrentToken->Type = TT_ImplicitStringLiteral;
         next();
@@ -622,7 +622,7 @@ public:
     // should not break the line).
     IdentifierInfo *Info = CurrentToken->Tok.getIdentifierInfo();
     if (Info && Info->getPPKeywordID() == tok::pp_import &&
-        CurrentToken->Next && CurrentToken->Next->is(tok::string_literal)) {
+        CurrentToken->Next) {
       next();
       parseIncludeDirective();
       return LT_Other;
