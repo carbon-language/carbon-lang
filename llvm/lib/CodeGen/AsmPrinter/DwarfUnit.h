@@ -306,11 +306,6 @@ public:
                             dwarf::Attribute Attribute,
                             const MachineLocation &Location);
 
-  /// addVariableAddress - Add DW_AT_location attribute for a
-  /// DbgVariable based on provided MachineLocation.
-  void addVariableAddress(const DbgVariable &DV, DIE &Die,
-                          MachineLocation Location);
-
   /// addType - Add a new type attribute to the specified entity. This takes
   /// and attribute parameter because DW_AT_friend attributes are also
   /// type references.

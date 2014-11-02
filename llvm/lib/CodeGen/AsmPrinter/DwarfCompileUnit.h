@@ -191,6 +191,11 @@ public:
 
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
+
+  /// Add DW_AT_location attribute for a DbgVariable based on provided
+  /// MachineLocation.
+  void addVariableAddress(const DbgVariable &DV, DIE &Die,
+                          MachineLocation Location);
 };
 
 } // end llvm namespace

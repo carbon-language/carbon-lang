@@ -411,19 +411,6 @@ void DwarfUnit::addSourceLine(DIE &Die, DINameSpace NS) {
   addSourceLine(Die, NS.getLineNumber(), NS.getFilename(), NS.getDirectory());
 }
 
-/// addVariableAddress - Add DW_AT_location attribute for a
-/// DbgVariable based on provided MachineLocation.
-void DwarfUnit::addVariableAddress(const DbgVariable &DV, DIE &Die,
-                                   MachineLocation Location) {
-  if (DV.variableHasComplexAddress())
-    addComplexAddress(DV, Die, dwarf::DW_AT_location, Location);
-  else if (DV.isBlockByrefVariable())
-    addBlockByrefAddress(DV, Die, dwarf::DW_AT_location, Location);
-  else
-    addAddress(Die, dwarf::DW_AT_location, Location,
-               DV.getVariable().isIndirect());
-}
-
 /// addRegisterOp - Add register operand.
 // FIXME: Ideally, this would share the implementation with
 // AsmPrinter::EmitDwarfRegOpPiece.

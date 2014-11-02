@@ -712,4 +712,16 @@ void DwarfCompileUnit::addGlobalType(DIType Ty, const DIE &Die,
   GlobalTypes[FullName] = &Die;
 }
 
+/// addVariableAddress - Add DW_AT_location attribute for a
+/// DbgVariable based on provided MachineLocation.
+void DwarfCompileUnit::addVariableAddress(const DbgVariable &DV, DIE &Die,
+                                          MachineLocation Location) {
+  if (DV.variableHasComplexAddress())
+    addComplexAddress(DV, Die, dwarf::DW_AT_location, Location);
+  else if (DV.isBlockByrefVariable())
+    addBlockByrefAddress(DV, Die, dwarf::DW_AT_location, Location);
+  else
+    addAddress(Die, dwarf::DW_AT_location, Location,
+               DV.getVariable().isIndirect());
+}
 } // end llvm namespace
