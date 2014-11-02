@@ -2403,11 +2403,12 @@ def : Pat <
 // FIXME: Should use S_OR_B32
 def : Pat <
   (fneg (fabs f64:$src)),
-    (f64 (INSERT_SUBREG
-      (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
-       (i32 (EXTRACT_SUBREG f64:$src, sub0)), sub0),
+  (REG_SEQUENCE VReg_64,
+    (i32 (EXTRACT_SUBREG f64:$src, sub0)),
+    sub0,
     (V_OR_B32_e32 (EXTRACT_SUBREG f64:$src, sub1),
-                  (V_MOV_B32_e32 0x80000000)), sub1)) // Set sign bit.
+                  (V_MOV_B32_e32 0x80000000)), // Set sign bit.
+    sub1)
 >;
 
 def : Pat <
@@ -2422,20 +2423,22 @@ def : Pat <
 
 def : Pat <
   (fabs f64:$src),
-    (f64 (INSERT_SUBREG
-      (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
-       (i32 (EXTRACT_SUBREG f64:$src, sub0)), sub0),
+  (REG_SEQUENCE VReg_64,
+    (i32 (EXTRACT_SUBREG f64:$src, sub0)),
+    sub0,
     (V_AND_B32_e32 (EXTRACT_SUBREG f64:$src, sub1),
-                    (V_MOV_B32_e32 0x7fffffff)), sub1)) // Set sign bit.
+                   (V_MOV_B32_e32 0x7fffffff)), // Set sign bit.
+     sub1)
 >;
 
 def : Pat <
   (fneg f64:$src),
-    (f64 (INSERT_SUBREG
-      (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
-       (i32 (EXTRACT_SUBREG f64:$src, sub0)), sub0),
+  (REG_SEQUENCE VReg_64,
+    (i32 (EXTRACT_SUBREG f64:$src, sub0)),
+    sub0,
     (V_XOR_B32_e32 (EXTRACT_SUBREG f64:$src, sub1),
-                    (V_MOV_B32_e32 0x80000000)), sub1))
+                   (V_MOV_B32_e32 0x80000000)),
+    sub1)
 >;
 
 /********** ================== **********/
@@ -2505,27 +2508,23 @@ def : Pat<
 
 def : Pat <
   (int_AMDGPU_cube v4f32:$src),
-  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
+  (REG_SEQUENCE VReg_128,
     (V_CUBETC_F32 0 /* src0_modifiers */, (EXTRACT_SUBREG $src, sub0),
                   0 /* src1_modifiers */, (EXTRACT_SUBREG $src, sub1),
                   0 /* src2_modifiers */, (EXTRACT_SUBREG $src, sub2),
-                  0 /* clamp */, 0 /* omod */),
-                  sub0),
+                  0 /* clamp */, 0 /* omod */), sub0,
     (V_CUBESC_F32 0 /* src0_modifiers */, (EXTRACT_SUBREG $src, sub0),
                   0 /* src1_modifiers */,(EXTRACT_SUBREG $src, sub1),
                   0 /* src2_modifiers */,(EXTRACT_SUBREG $src, sub2),
-                  0 /* clamp */, 0 /* omod */),
-                  sub1),
+                  0 /* clamp */, 0 /* omod */), sub1,
     (V_CUBEMA_F32 0 /* src1_modifiers */,(EXTRACT_SUBREG $src, sub0),
                   0 /* src1_modifiers */,(EXTRACT_SUBREG $src, sub1),
                   0 /* src1_modifiers */,(EXTRACT_SUBREG $src, sub2),
-                  0 /* clamp */, 0 /* omod */),
-                  sub2),
+                  0 /* clamp */, 0 /* omod */), sub2,
     (V_CUBEID_F32 0 /* src1_modifiers */,(EXTRACT_SUBREG $src, sub0),
                   0 /* src1_modifiers */,(EXTRACT_SUBREG $src, sub1),
                   0 /* src1_modifiers */,(EXTRACT_SUBREG $src, sub2),
-                  0 /* clamp */, 0 /* omod */),
-                  sub3)
+                  0 /* clamp */, 0 /* omod */), sub3)
 >;
 
 def : Pat <
@@ -2581,7 +2580,7 @@ def : Pat <
 def : Vop3ModPat<V_MAD_F32, VOP_F32_F32_F32_F32, AMDGPUmad>;
 
 
-defm : BFIPatterns <V_BFI_B32, S_MOV_B32>;
+defm : BFIPatterns <V_BFI_B32, S_MOV_B32, SReg_64>;
 def : ROTRPattern <V_ALIGNBIT_B32>;
 
 /********** ======================= **********/
@@ -2968,37 +2967,35 @@ def : Pat<(i32 (sext_inreg i32:$src, i1)),
 // Handle sext_inreg in i64
 def : Pat <
   (i64 (sext_inreg i64:$src, i1)),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (S_BFE_I32 (EXTRACT_SUBREG i64:$src, sub0), 65536), sub0), // 0 | 1 << 16
+  (REG_SEQUENCE SReg_64,
+    (S_BFE_I32 (EXTRACT_SUBREG i64:$src, sub0), 65536), sub0, // 0 | 1 << 16
     (S_MOV_B32 -1), sub1)
 >;
 
 def : Pat <
   (i64 (sext_inreg i64:$src, i8)),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (S_SEXT_I32_I8 (EXTRACT_SUBREG i64:$src, sub0)), sub0),
+  (REG_SEQUENCE SReg_64,
+    (S_SEXT_I32_I8 (EXTRACT_SUBREG i64:$src, sub0)), sub0,
     (S_MOV_B32 -1), sub1)
 >;
 
 def : Pat <
   (i64 (sext_inreg i64:$src, i16)),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (S_SEXT_I32_I16 (EXTRACT_SUBREG i64:$src, sub0)), sub0),
+  (REG_SEQUENCE SReg_64,
+    (S_SEXT_I32_I16 (EXTRACT_SUBREG i64:$src, sub0)), sub0,
     (S_MOV_B32 -1), sub1)
 >;
 
 class ZExt_i64_i32_Pat <SDNode ext> : Pat <
   (i64 (ext i32:$src)),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $src, sub0),
-    (S_MOV_B32 0), sub1)
+  (REG_SEQUENCE SReg_64, $src, sub0, (S_MOV_B32 0), sub1)
 >;
 
 class ZExt_i64_i1_Pat <SDNode ext> : Pat <
   (i64 (ext i1:$src)),
-  (INSERT_SUBREG
-    (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-      (V_CNDMASK_B32_e64 (i32 0), (i32 1), $src), sub0),
-    (S_MOV_B32 0), sub1)
+    (REG_SEQUENCE VReg_64,
+      (V_CNDMASK_B32_e64 (i32 0), (i32 1), $src), sub0,
+      (S_MOV_B32 0), sub1)
 >;
 
 
@@ -3009,17 +3006,14 @@ def : ZExt_i64_i1_Pat<anyext>;
 
 def : Pat <
   (i64 (sext i32:$src)),
-    (INSERT_SUBREG
-      (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $src, sub0),
-      (S_ASHR_I32 $src, 31), sub1)
+    (REG_SEQUENCE SReg_64, $src, sub0,
+    (S_ASHR_I32 $src, 31), sub1)
 >;
 
 def : Pat <
   (i64 (sext i1:$src)),
-  (INSERT_SUBREG
-    (INSERT_SUBREG
-      (i64 (IMPLICIT_DEF)),
-      (V_CNDMASK_B32_e64 0, -1, $src), sub0),
+  (REG_SEQUENCE VReg_64,
+    (V_CNDMASK_B32_e64 0, -1, $src), sub0,
     (V_CNDMASK_B32_e64 0, -1, $src), sub1)
 >;
 

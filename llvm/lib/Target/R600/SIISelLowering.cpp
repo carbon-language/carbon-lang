@@ -1943,7 +1943,8 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
   if (TII->isMIMG(Node->getMachineOpcode()))
     adjustWritemask(Node, DAG);
 
-  if (Node->getMachineOpcode() == AMDGPU::INSERT_SUBREG) {
+  if (Node->getMachineOpcode() == AMDGPU::INSERT_SUBREG ||
+      Node->getMachineOpcode() == AMDGPU::REG_SEQUENCE) {
     legalizeTargetIndependentNode(Node, DAG);
     return Node;
   }
