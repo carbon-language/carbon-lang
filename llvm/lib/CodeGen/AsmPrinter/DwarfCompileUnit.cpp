@@ -810,8 +810,8 @@ void DwarfCompileUnit::addLocationList(DIE &Die, dwarf::Attribute Attribute,
   Die.addValue(Attribute, Form, Value);
 }
 
-void DwarfUnit::applyVariableAttributes(const DbgVariable &Var,
-                                        DIE &VariableDie) {
+void DwarfCompileUnit::applyVariableAttributes(const DbgVariable &Var,
+                                               DIE &VariableDie) {
   StringRef Name = Var.getName();
   if (!Name.empty())
     addString(VariableDie, dwarf::DW_AT_name, Name);
