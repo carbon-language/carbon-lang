@@ -174,9 +174,11 @@ public:
   /// context for a global name.
   std::string getParentContextString(DIScope Context) const;
 
-  /// addGlobalName - Add a new global entity to the compile unit.
-  ///
+  /// Add a new global name to the compile unit.
   void addGlobalName(StringRef Name, DIE &Die, DIScope Context);
+
+  /// Add a new global type to the compile unit.
+  void addGlobalType(DIType Ty, const DIE &Die, DIScope Context);
 
   /// addAccelNamespace - Add a new name to the namespace accelerator table.
   void addAccelNamespace(StringRef Name, const DIE &Die);

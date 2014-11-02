@@ -976,11 +976,9 @@ void DwarfUnit::updateAcceleratorTables(DIScope Context, DIType Ty,
     unsigned Flags = IsImplementation ? dwarf::DW_FLAG_type_implementation : 0;
     DD->addAccelType(Ty.getName(), TyDIE, Flags);
 
-    if ((!Context || Context.isCompileUnit() || Context.isFile() ||
-         Context.isNameSpace()) &&
-        getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
-      GlobalTypes[getParentContextString(Context) + Ty.getName().str()] =
-          &TyDIE;
+    if (!Context || Context.isCompileUnit() || Context.isFile() ||
+        Context.isNameSpace())
+      addGlobalType(Ty, TyDIE, Context);
   }
 }
 
@@ -1011,6 +1009,14 @@ void DwarfUnit::addGlobalName(StringRef Name, DIE &Die, DIScope Context) {
     return;
   std::string FullName = getParentContextString(Context) + Name.str();
   GlobalNames[FullName] = &Die;
+}
+
+/// Add a new global type to the unit.
+void DwarfUnit::addGlobalType(DIType Ty, const DIE &Die, DIScope Context) {
+  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+    return;
+  std::string FullName = getParentContextString(Context) + Ty.getName().str();
+  GlobalTypes[FullName] = &Die;
 }
 
 /// getParentContextString - Walks the metadata parent chain in a language
