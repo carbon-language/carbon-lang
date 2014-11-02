@@ -827,4 +827,12 @@ void DwarfCompileUnit::addExpr(DIELoc &Die, dwarf::Form Form,
   DIEValue *Value = new (DIEValueAllocator) DIEExpr(Expr);
   Die.addValue((dwarf::Attribute)0, Form, Value);
 }
+
+void DwarfCompileUnit::applySubprogramAttributesToDefinition(DISubprogram SP,
+                                                             DIE &SPDie) {
+  DISubprogram SPDecl = SP.getFunctionDeclaration();
+  DIScope Context = resolve(SPDecl ? SPDecl.getContext() : SP.getContext());
+  applySubprogramAttributes(SP, SPDie);
+  addGlobalName(SP.getName(), SPDie, Context);
+}
 } // end llvm namespace

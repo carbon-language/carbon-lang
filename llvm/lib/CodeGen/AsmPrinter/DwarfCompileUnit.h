@@ -214,6 +214,8 @@ public:
 
   /// Add a Dwarf expression attribute data and value.
   void addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr);
+
+  void applySubprogramAttributesToDefinition(DISubprogram SP, DIE &SPDie);
 };
 
 } // end llvm namespace
