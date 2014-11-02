@@ -1525,6 +1525,18 @@ void DwarfUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy) {
     addUInt(DW_Subrange, dwarf::DW_AT_count, None, Count);
 }
 
+DIE *DwarfUnit::getIndexTyDie() {
+  if (IndexTyDie)
+    return IndexTyDie;
+  // Construct an integer type to use for indexes.
+  IndexTyDie = &createAndAddDIE(dwarf::DW_TAG_base_type, UnitDie);
+  addString(*IndexTyDie, dwarf::DW_AT_name, "sizetype");
+  addUInt(*IndexTyDie, dwarf::DW_AT_byte_size, None, sizeof(int64_t));
+  addUInt(*IndexTyDie, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
+          dwarf::DW_ATE_unsigned);
+  return IndexTyDie;
+}
+
 /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
 void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   if (CTy.isVector())
@@ -1537,15 +1549,6 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   // FIXME: This type should be passed down from the front end
   // as different languages may have different sizes for indexes.
   DIE *IdxTy = getIndexTyDie();
-  if (!IdxTy) {
-    // Construct an integer type to use for indexes.
-    IdxTy = &createAndAddDIE(dwarf::DW_TAG_base_type, UnitDie);
-    addString(*IdxTy, dwarf::DW_AT_name, "sizetype");
-    addUInt(*IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int64_t));
-    addUInt(*IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
-            dwarf::DW_ATE_unsigned);
-    setIndexTyDie(IdxTy);
-  }
 
   // Add subranges to array type.
   DIArray Elements = CTy.getElements();

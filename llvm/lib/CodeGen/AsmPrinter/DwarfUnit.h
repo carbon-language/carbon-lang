@@ -430,7 +430,7 @@ private:
   }
 
   // getIndexTyDie - Get an anonymous type for index type.
-  DIE *getIndexTyDie() { return IndexTyDie; }
+  DIE *getIndexTyDie();
 
   // setIndexTyDie - Set D as anonymous type for index which can be reused
   // later.
