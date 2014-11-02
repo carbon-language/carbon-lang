@@ -1957,9 +1957,9 @@ def : Pat <
 
 def : Pat <
   (i64 (ctpop i64:$src)),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (S_BCNT1_I32_B64 $src), sub0),
-    (S_MOV_B32 0), sub1)
+    (i64 (REG_SEQUENCE SReg_64,
+     (S_BCNT1_I32_B64 $src), sub0,
+     (S_MOV_B32 0), sub1))
 >;
 
 //===----------------------------------------------------------------------===//

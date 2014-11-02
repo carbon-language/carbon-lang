@@ -805,7 +805,7 @@ def DBG_VALUE : Instruction {
 }
 def REG_SEQUENCE : Instruction {
   let OutOperandList = (outs unknown:$dst);
-  let InOperandList = (ins variable_ops);
+  let InOperandList = (ins unknown:$supersrc, variable_ops);
   let AsmString = "";
   let neverHasSideEffects = 1;
   let isAsCheapAsAMove = 1;

@@ -1387,7 +1387,7 @@ static EEVT::TypeSet getImplicitType(Record *R, unsigned ResNo,
 
   if (R->isSubClassOf("SubRegIndex")) {
     assert(ResNo == 0 && "SubRegisterIndices only produce one result!");
-    return EEVT::TypeSet();
+    return EEVT::TypeSet(MVT::i32, TP);
   }
 
   if (R->isSubClassOf("ValueType")) {
@@ -1529,7 +1529,16 @@ TreePatternNode::isCommutativeIntrinsic(const CodeGenDAGPatterns &CDP) const {
   return false;
 }
 
+static bool isOperandClass(const TreePatternNode *N, StringRef Class) {
+  if (!N->isLeaf())
+    return N->getOperator()->isSubClassOf(Class);
 
+  DefInit *DI = dyn_cast<DefInit>(N->getLeafValue());
+  if (DI && DI->getDef()->isSubClassOf(Class))
+    return true;
+
+  return false;
+}
 /// ApplyTypeConstraints - Apply all of the type constraints relevant to
 /// this node and its children in the tree.  This returns true if it makes a
 /// change, false otherwise.  If a type contradiction is found, flag an error.
@@ -1689,6 +1698,34 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       assert(getChild(0)->getNumTypes() == 1 && "FIXME: Unhandled");
       MadeChange |= UpdateNodeType(0, getChild(0)->getExtType(0), TP);
       MadeChange |= getChild(0)->UpdateNodeType(0, getExtType(0), TP);
+    } else if (getOperator()->getName() == "REG_SEQUENCE") {
+      // We need to do extra, custom typechecking for REG_SEQUENCE since it is
+      // variadic.
+
+      unsigned NChild = getNumChildren();
+      if (NChild < 3) {
+        TP.error("REG_SEQUENCE requires at least 3 operands!");
+        return false;
+      }
+
+      if (NChild % 2 == 0) {
+        TP.error("REG_SEQUENCE requires an odd number of operands!");
+        return false;
+      }
+
+      if (!isOperandClass(getChild(0), "RegisterClass")) {
+        TP.error("REG_SEQUENCE requires a RegisterClass for first operand!");
+        return false;
+      }
+
+      for (unsigned I = 1; I < NChild; I += 2) {
+        TreePatternNode *SubIdxChild = getChild(I + 1);
+        if (!isOperandClass(SubIdxChild, "SubRegIndex")) {
+          TP.error("REG_SEQUENCE requires a SubRegIndex for operand " +
+                   itostr(I + 1) + "!");
+          return false;
+        }
+      }
     }
 
     unsigned ChildNo = 0;
@@ -1749,7 +1786,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= Child->UpdateNodeTypeFromInst(ChildResNo, OperandNode, TP);
     }
 
-    if (ChildNo != getNumChildren()) {
+    if (!InstInfo.Operands.isVariadic && ChildNo != getNumChildren()) {
       TP.error("Instruction '" + getOperator()->getName() +
                "' was provided too many operands!");
       return false;
