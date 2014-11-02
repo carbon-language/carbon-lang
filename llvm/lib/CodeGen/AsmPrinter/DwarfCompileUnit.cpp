@@ -694,5 +694,22 @@ void DwarfCompileUnit::emitHeader(const MCSymbol *ASectionSym) const {
   DwarfUnit::emitHeader(ASectionSym);
 }
 
+/// addGlobalName - Add a new global name to the compile unit.
+void DwarfCompileUnit::addGlobalName(StringRef Name, DIE &Die,
+                                     DIScope Context) {
+  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+    return;
+  std::string FullName = getParentContextString(Context) + Name.str();
+  GlobalNames[FullName] = &Die;
+}
+
+/// Add a new global type to the unit.
+void DwarfCompileUnit::addGlobalType(DIType Ty, const DIE &Die,
+                                     DIScope Context) {
+  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+    return;
+  std::string FullName = getParentContextString(Context) + Ty.getName().str();
+  GlobalTypes[FullName] = &Die;
+}
 
 } // end llvm namespace

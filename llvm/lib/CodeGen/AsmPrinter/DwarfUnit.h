@@ -96,12 +96,6 @@ protected:
   /// descriptors to debug information entries using a DIEEntry proxy.
   DenseMap<const MDNode *, DIEEntry *> MDNodeToDIEEntryMap;
 
-  /// GlobalNames - A map of globally visible named entities for this unit.
-  StringMap<const DIE *> GlobalNames;
-
-  /// GlobalTypes - A map of globally visible types for this unit.
-  StringMap<const DIE *> GlobalTypes;
-
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
   
@@ -146,8 +140,6 @@ public:
   uint16_t getLanguage() const { return CUNode.getLanguage(); }
   DICompileUnit getCUNode() const { return CUNode; }
   DIE &getUnitDie() { return UnitDie; }
-  const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
-  const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
   unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
   void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
@@ -175,10 +167,10 @@ public:
   std::string getParentContextString(DIScope Context) const;
 
   /// Add a new global name to the compile unit.
-  void addGlobalName(StringRef Name, DIE &Die, DIScope Context);
+  virtual void addGlobalName(StringRef Name, DIE &Die, DIScope Context) {}
 
   /// Add a new global type to the compile unit.
-  void addGlobalType(DIType Ty, const DIE &Die, DIScope Context);
+  virtual void addGlobalType(DIType Ty, const DIE &Die, DIScope Context) {}
 
   /// addAccelNamespace - Add a new name to the namespace accelerator table.
   void addAccelNamespace(StringRef Name, const DIE &Die);

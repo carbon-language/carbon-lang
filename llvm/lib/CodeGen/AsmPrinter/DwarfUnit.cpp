@@ -1003,22 +1003,6 @@ void DwarfUnit::addType(DIE &Entity, DIType Ty, dwarf::Attribute Attribute) {
   addDIEEntry(Entity, Attribute, Entry);
 }
 
-/// addGlobalName - Add a new global name to the compile unit.
-void DwarfUnit::addGlobalName(StringRef Name, DIE &Die, DIScope Context) {
-  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
-    return;
-  std::string FullName = getParentContextString(Context) + Name.str();
-  GlobalNames[FullName] = &Die;
-}
-
-/// Add a new global type to the unit.
-void DwarfUnit::addGlobalType(DIType Ty, const DIE &Die, DIScope Context) {
-  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
-    return;
-  std::string FullName = getParentContextString(Context) + Ty.getName().str();
-  GlobalTypes[FullName] = &Die;
-}
-
 /// getParentContextString - Walks the metadata parent chain in a language
 /// specific manner (using the compile unit language) and returns
 /// it as a string. This is done at the metadata level because DIEs may

@@ -396,10 +396,9 @@ class DwarfDebug : public AsmPrinterHandler {
   /// index.
   void emitDebugPubTypes(bool GnuStyle = false);
 
-  void
-  emitDebugPubSection(bool GnuStyle, const MCSection *PSec, StringRef Name,
-                      const StringMap<const DIE *> &(DwarfUnit::*Accessor)()
-                      const);
+  void emitDebugPubSection(
+      bool GnuStyle, const MCSection *PSec, StringRef Name,
+      const StringMap<const DIE *> &(DwarfCompileUnit::*Accessor)() const);
 
   /// \brief Emit visible names into a debug str section.
   void emitDebugStr();

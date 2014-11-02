@@ -1562,12 +1562,13 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
                : Asm->getObjFileLowering().getDwarfPubNamesSection();
 
-  emitDebugPubSection(GnuStyle, PSec, "Names", &DwarfUnit::getGlobalNames);
+  emitDebugPubSection(GnuStyle, PSec, "Names",
+                      &DwarfCompileUnit::getGlobalNames);
 }
 
 void DwarfDebug::emitDebugPubSection(
     bool GnuStyle, const MCSection *PSec, StringRef Name,
-    const StringMap<const DIE *> &(DwarfUnit::*Accessor)() const) {
+    const StringMap<const DIE *> &(DwarfCompileUnit::*Accessor)() const) {
   for (const auto &NU : CUMap) {
     DwarfCompileUnit *TheU = NU.second;
 
@@ -1631,7 +1632,8 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
                : Asm->getObjFileLowering().getDwarfPubTypesSection();
 
-  emitDebugPubSection(GnuStyle, PSec, "Types", &DwarfUnit::getGlobalTypes);
+  emitDebugPubSection(GnuStyle, PSec, "Types",
+                      &DwarfCompileUnit::getGlobalTypes);
 }
 
 // Emit visible names into a debug str section.

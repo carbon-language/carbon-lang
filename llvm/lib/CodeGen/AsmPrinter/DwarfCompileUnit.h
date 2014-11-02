@@ -42,6 +42,12 @@ class DwarfCompileUnit : public DwarfUnit {
   /// The start of the unit within its section.
   MCSymbol *LabelBegin;
 
+  /// GlobalNames - A map of globally visible named entities for this unit.
+  StringMap<const DIE *> GlobalNames;
+
+  /// GlobalTypes - A map of globally visible types for this unit.
+  StringMap<const DIE *> GlobalTypes;
+
   /// \brief Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
   std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
@@ -176,6 +182,15 @@ public:
     assert(Section);
     return LabelBegin;
   }
+
+  /// Add a new global name to the compile unit.
+  void addGlobalName(StringRef Name, DIE &Die, DIScope Context) override;
+
+  /// Add a new global type to the compile unit.
+  void addGlobalType(DIType Ty, const DIE &Die, DIScope Context) override;
+
+  const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
+  const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 };
 
 } // end llvm namespace
