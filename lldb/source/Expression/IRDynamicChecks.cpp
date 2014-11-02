@@ -514,7 +514,7 @@ private:
         {
             // This metadata is set by IRForTarget::MaybeHandleCall().
 
-            MDNode *metadata = call_inst->getMetadata("lldb.call.realName");
+            MDNode *metadata = call_inst->getMDNode("lldb.call.realName");
 
             if (!metadata)
                 return true;

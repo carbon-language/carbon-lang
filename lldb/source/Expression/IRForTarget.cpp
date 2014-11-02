@@ -1210,7 +1210,7 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc)
 
     AllocaInst *alloc = dyn_cast<AllocaInst>(persistent_alloc);
 
-    MDNode *alloc_md = alloc->getMetadata("clang.decl.ptr");
+    MDNode *alloc_md = alloc->getMDNode("clang.decl.ptr");
 
     if (!alloc_md || !alloc_md->getNumOperands())
         return false;
