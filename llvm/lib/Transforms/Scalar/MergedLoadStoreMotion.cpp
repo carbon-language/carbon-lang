@@ -131,7 +131,9 @@ private:
   BasicBlock *getDiamondTail(BasicBlock *BB);
   bool isDiamondHead(BasicBlock *BB);
   // Routines for hoisting loads
-  bool isLoadHoistBarrier(Instruction *Inst);
+  bool isLoadHoistBarrierInRange(const Instruction& Start,
+                                 const Instruction& End,
+                                 LoadInst* LI);
   LoadInst *canHoistFromBlock(BasicBlock *BB, LoadInst *LI);
   void hoistInstruction(BasicBlock *BB, Instruction *HoistCand,
                         Instruction *ElseInst);
@@ -232,27 +234,12 @@ bool MergedLoadStoreMotion::isDiamondHead(BasicBlock *BB) {
 /// being loaded or protect against the load from happening
 /// it is considered a hoist barrier.
 ///
-bool MergedLoadStoreMotion::isLoadHoistBarrier(Instruction *Inst) {
-  // FIXME: A call with no side effects should not be a barrier.
-  // Aren't all such calls covered by mayHaveSideEffects() below?
-  // Then this check can be removed.
-  if (isa<CallInst>(Inst))
-    return true;
-  if (isa<TerminatorInst>(Inst))
-    return true;
-  // FIXME: Conservatively let a store instruction block the load.
-  // Use alias analysis instead.
-  if (isa<StoreInst>(Inst))
-    return true;
-  // Note: mayHaveSideEffects covers all instructions that could
-  // trigger a change to state. Eg. in-flight stores have to be executed
-  // before ordered loads or fences, calls could invoke functions that store
-  // data to memory etc.
-  if (Inst->mayHaveSideEffects()) {
-    return true;
-  }
-  DEBUG(dbgs() << "No Hoist Barrier\n");
-  return false;
+
+bool MergedLoadStoreMotion::isLoadHoistBarrierInRange(const Instruction& Start, 
+                                                      const Instruction& End,
+                                                      LoadInst* LI) {
+  AliasAnalysis::Location Loc = AA->getLocation(LI);
+  return AA->canInstructionRangeModify(Start, End, Loc);
 }
 
 ///
@@ -262,33 +249,29 @@ bool MergedLoadStoreMotion::isLoadHoistBarrier(Instruction *Inst) {
 /// and it can be hoisted from \p BB, return that load.
 /// Otherwise return Null.
 ///
-LoadInst *MergedLoadStoreMotion::canHoistFromBlock(BasicBlock *BB,
-                                                   LoadInst *LI) {
-  LoadInst *I = nullptr;
-  assert(isa<LoadInst>(LI));
-  if (LI->isUsedOutsideOfBlock(LI->getParent()))
-    return nullptr;
+LoadInst *MergedLoadStoreMotion::canHoistFromBlock(BasicBlock *BB1,
+                                                   LoadInst *Load0) {
 
-  for (BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); BBI != BBE;
+  for (BasicBlock::iterator BBI = BB1->begin(), BBE = BB1->end(); BBI != BBE;
        ++BBI) {
     Instruction *Inst = BBI;
 
     // Only merge and hoist loads when their result in used only in BB
-    if (isLoadHoistBarrier(Inst))
-      break;
-    if (!isa<LoadInst>(Inst))
-      continue;
-    if (Inst->isUsedOutsideOfBlock(Inst->getParent()))
+    if (!isa<LoadInst>(Inst) || Inst->isUsedOutsideOfBlock(BB1))
       continue;
 
-    AliasAnalysis::Location LocLI = AA->getLocation(LI);
-    AliasAnalysis::Location LocInst = AA->getLocation((LoadInst *)Inst);
-    if (AA->isMustAlias(LocLI, LocInst) && LI->getType() == Inst->getType()) {
-      I = (LoadInst *)Inst;
-      break;
+    LoadInst *Load1 = dyn_cast<LoadInst>(Inst);
+    BasicBlock *BB0 = Load0->getParent();
+
+    AliasAnalysis::Location Loc0 = AA->getLocation(Load0);
+    AliasAnalysis::Location Loc1 = AA->getLocation(Load1);
+    if (AA->isMustAlias(Loc0, Loc1) && Load0->isSameOperationAs(Load1) &&
+        !isLoadHoistBarrierInRange(BB1->front(), *Load1, Load1) &&
+        !isLoadHoistBarrierInRange(BB0->front(), *Load0, Load0)) {
+      return Load1;
     }
   }
-  return I;
+  return nullptr;
 }
 
 ///
@@ -385,15 +368,10 @@ bool MergedLoadStoreMotion::mergeLoads(BasicBlock *BB) {
 
     Instruction *I = BBI;
     ++BBI;
-    if (isLoadHoistBarrier(I))
-      break;
 
     // Only move non-simple (atomic, volatile) loads.
-    if (!isa<LoadInst>(I))
-      continue;
-
-    LoadInst *L0 = (LoadInst *)I;
-    if (!L0->isSimple())
+    LoadInst *L0 = dyn_cast<LoadInst>(I);
+    if (!L0 || !L0->isSimple() || L0->isUsedOutsideOfBlock(Succ0))
       continue;
 
     ++NLoads;
