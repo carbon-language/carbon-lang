@@ -129,9 +129,6 @@ protected:
   /// The section this unit will be emitted in.
   const MCSection *Section;
 
-  /// The start of the unit within its section.
-  MCSymbol *LabelBegin;
-
   DwarfUnit(unsigned UID, dwarf::Tag, DICompileUnit CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
@@ -142,11 +139,6 @@ public:
   const MCSection *getSection() const {
     assert(Section);
     return Section;
-  }
-
-  MCSymbol *getLabelBegin() const {
-    assert(Section);
-    return LabelBegin;
   }
 
   // Accessors.

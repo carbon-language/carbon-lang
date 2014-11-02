@@ -39,6 +39,9 @@ class DwarfCompileUnit : public DwarfUnit {
   /// A label at the start of the non-dwo section related to this unit.
   MCSymbol *SectionSym;
 
+  /// The start of the unit within its section.
+  MCSymbol *LabelBegin;
+
   /// \brief Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
   std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
@@ -171,6 +174,8 @@ public:
   void initSection(const MCSection *Section, MCSymbol *SectionSym) {
     DwarfUnit::initSection(Section);
     this->SectionSym = SectionSym;
+    LabelBegin =
+        Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
   }
 
   unsigned getLength() {
@@ -179,6 +184,11 @@ public:
   }
 
   void emitHeader(const MCSymbol *ASectionSym) const override;
+
+  MCSymbol *getLabelBegin() const {
+    assert(Section);
+    return LabelBegin;
+  }
 };
 
 } // end llvm namespace
