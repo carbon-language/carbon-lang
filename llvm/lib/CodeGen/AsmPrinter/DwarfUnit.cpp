@@ -201,10 +201,14 @@ void DwarfUnit::addSInt(DIELoc &Die, Optional<dwarf::Form> Form,
 /// table.
 void DwarfUnit::addString(DIE &Die, dwarf::Attribute Attribute,
                           StringRef String) {
-
-  if (!DD->useSplitDwarf())
+  if (!isDwoUnit())
     return addLocalString(Die, Attribute, String);
 
+  addIndexedString(Die, Attribute, String);
+}
+
+void DwarfUnit::addIndexedString(DIE &Die, dwarf::Attribute Attribute,
+                                 StringRef String) {
   unsigned idx = DU->getStringPool().getIndex(*Asm, String);
   DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
   DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
@@ -1632,3 +1636,8 @@ void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) const {
                                 sizeof(Ty->getOffset()));
 }
 
+bool DwarfTypeUnit::isDwoUnit() const {
+  // Since there are no skeleton type units, all type units are dwo type units
+  // when split DWARF is being used.
+  return DD->useSplitDwarf();
+}

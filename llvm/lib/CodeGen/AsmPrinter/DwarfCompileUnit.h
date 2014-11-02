@@ -53,6 +53,8 @@ class DwarfCompileUnit : public DwarfUnit {
   std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
                                                 bool Abstract);
 
+  bool isDwoUnit() const override;
+
 public:
   DwarfCompileUnit(unsigned UID, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);

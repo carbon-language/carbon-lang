@@ -836,4 +836,8 @@ void DwarfCompileUnit::applySubprogramAttributesToDefinition(DISubprogram SP,
                                            DIBuilder::LineTablesOnly);
   addGlobalName(SP.getName(), SPDie, Context);
 }
+
+bool DwarfCompileUnit::isDwoUnit() const {
+  return DD->useSplitDwarf() && Skeleton;
+}
 } // end llvm namespace

@@ -362,6 +362,8 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   DwarfCompileUnit &NewCU = *OwnedUnit;
   DIE &Die = NewCU.getUnitDie();
   InfoHolder.addUnit(std::move(OwnedUnit));
+  if (useSplitDwarf())
+    NewCU.setSkeleton(constructSkeletonCU(NewCU));
 
   // LTO with assembly output shares a single line table amongst multiple CUs.
   // To avoid the compilation directory being ambiguous, let the line table
@@ -398,11 +400,10 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
     NewCU.addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
                   dwarf::DW_FORM_data1, RVer);
 
-  if (useSplitDwarf()) {
+  if (useSplitDwarf())
     NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoDWOSection(),
                       DwarfInfoDWOSectionSym);
-    NewCU.setSkeleton(constructSkeletonCU(NewCU));
-  } else
+  else
     NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
                       DwarfInfoSectionSym);
 
@@ -2041,11 +2042,11 @@ void DwarfDebug::emitDebugRanges() {
 
 void DwarfDebug::initSkeletonUnit(const DwarfUnit &U, DIE &Die,
                                   std::unique_ptr<DwarfUnit> NewU) {
-  NewU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
+  NewU->addString(Die, dwarf::DW_AT_GNU_dwo_name,
                        U.getCUNode().getSplitDebugFilename());
 
   if (!CompilationDir.empty())
-    NewU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+    NewU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
   addGnuPubAttributes(*NewU, Die);
 

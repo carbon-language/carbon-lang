@@ -127,6 +127,12 @@ protected:
             DwarfDebug *DW, DwarfFile *DWU);
 
   void initSection(const MCSection *Section);
+
+  /// Add a string attribute data and value.
+  void addLocalString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
+
+  void addIndexedString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
+
 public:
   virtual ~DwarfUnit();
 
@@ -208,10 +214,6 @@ public:
 
   /// addString - Add a string attribute data and value.
   void addString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
-
-  /// addLocalString - Add a string attribute data and value.
-  void addLocalString(DIE &Die, dwarf::Attribute Attribute,
-                      StringRef Str);
 
   /// addLabel - Add a Dwarf label attribute data and value.
   void addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,
@@ -412,14 +414,18 @@ private:
   /// If this is a named finished type then include it in the list of types for
   /// the accelerator tables.
   void updateAcceleratorTables(DIScope Context, DIType Ty, const DIE &TyDIE);
+
+  virtual bool isDwoUnit() const = 0;
 };
 
 class DwarfTypeUnit : public DwarfUnit {
-private:
   uint64_t TypeSignature;
   const DIE *Ty;
   DwarfCompileUnit &CU;
   MCDwarfDwoLineTable *SplitLineTable;
+
+  unsigned getOrCreateSourceID(StringRef File, StringRef Directory) override;
+  bool isDwoUnit() const override;
 
 public:
   DwarfTypeUnit(unsigned UID, DwarfCompileUnit &CU, AsmPrinter *A,
@@ -438,9 +444,6 @@ public:
   }
   using DwarfUnit::initSection;
   DwarfCompileUnit &getCU() override { return CU; }
-
-protected:
-  unsigned getOrCreateSourceID(StringRef File, StringRef Directory) override;
 };
 } // end llvm namespace
 #endif
