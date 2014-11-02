@@ -262,11 +262,6 @@ public:
   void addSourceLine(DIE &Die, DINameSpace NS);
   void addSourceLine(DIE &Die, DIObjCProperty Ty);
 
-  /// addAddress - Add an address attribute to a die based on the location
-  /// provided.
-  void addAddress(DIE &Die, dwarf::Attribute Attribute,
-                  const MachineLocation &Location, bool Indirect = false);
-
   /// addConstantValue - Add constant value entry in variable DIE.
   void addConstantValue(DIE &Die, const MachineOperand &MO, DIType Ty);
   void addConstantValue(DIE &Die, const ConstantInt *CI, DIType Ty);

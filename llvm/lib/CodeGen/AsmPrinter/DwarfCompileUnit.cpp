@@ -724,4 +724,23 @@ void DwarfCompileUnit::addVariableAddress(const DbgVariable &DV, DIE &Die,
     addAddress(Die, dwarf::DW_AT_location, Location,
                DV.getVariable().isIndirect());
 }
+
+/// Add an address attribute to a die based on the location provided.
+void DwarfCompileUnit::addAddress(DIE &Die, dwarf::Attribute Attribute,
+                                  const MachineLocation &Location,
+                                  bool Indirect) {
+  DIELoc *Loc = new (DIEValueAllocator) DIELoc();
+
+  if (Location.isReg() && !Indirect)
+    addRegisterOpPiece(*Loc, Location.getReg());
+  else {
+    addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
+    if (Indirect && !Location.isReg()) {
+      addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    }
+  }
+
+  // Now attach the location information to the DIE.
+  addBlock(Die, Attribute, Loc);
+}
 } // end llvm namespace

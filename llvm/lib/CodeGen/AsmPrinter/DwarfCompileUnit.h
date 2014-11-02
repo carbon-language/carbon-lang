@@ -196,6 +196,9 @@ public:
   /// MachineLocation.
   void addVariableAddress(const DbgVariable &DV, DIE &Die,
                           MachineLocation Location);
+  /// Add an address attribute to a die based on the location provided.
+  void addAddress(DIE &Die, dwarf::Attribute Attribute,
+                  const MachineLocation &Location, bool Indirect = false);
 };
 
 } // end llvm namespace
