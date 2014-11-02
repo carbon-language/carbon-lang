@@ -157,5 +157,11 @@ TEST_F(FormatTestJava, TryCatchFinally) {
                "}");
 }
 
+TEST_F(FormatTestJava, SynchronizedKeyword) {
+  verifyFormat("synchronized (mData) {\n"
+               "  // ...\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang
