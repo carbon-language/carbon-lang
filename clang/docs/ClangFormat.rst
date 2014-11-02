@@ -96,8 +96,8 @@ This can be integrated by adding the following to your `.vimrc`:
 
 .. code-block:: vim
 
-  map <C-K> :pyf <path-to-this-file>/clang-format.py<cr><cr>
-  imap <C-K> <c-o>:pyf <path-to-this-file>/clang-format.py<cr><cr>
+  map <C-K> :pyf <path-to-this-file>/clang-format.py<cr>
+  imap <C-K> <c-o>:pyf <path-to-this-file>/clang-format.py<cr>
 
 The first line enables :program:`clang-format` for NORMAL and VISUAL mode, the
 second line adds support for INSERT mode. Change "C-K" to another binding if
