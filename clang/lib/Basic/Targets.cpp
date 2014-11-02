@@ -1136,9 +1136,11 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
 }
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
-  return (Feature == "powerpc" ||
-	  (Feature == "vsx" && HasVSX) ||
-	  (Feature == "power8-vector" && HasP8Vector));
+  return llvm::StringSwitch<bool>(Feature)
+    .Case("powerpc", true)
+    .Case("vsx", HasVSX)
+    .Case("power8-vector", HasP8Vector)
+    .Default(false);
 }
 
   
