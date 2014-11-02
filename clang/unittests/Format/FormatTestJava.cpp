@@ -120,6 +120,10 @@ TEST_F(FormatTestJava, Generics) {
   verifyFormat("Iterable<? extends SomeObject> a;");
 
   verifyFormat("A.<B>doSomething();");
+
+  verifyFormat("@Override\n"
+               "public Map<String, ?> getAll() {\n"
+               "}");
 }
 
 TEST_F(FormatTestJava, StringConcatenation) {
