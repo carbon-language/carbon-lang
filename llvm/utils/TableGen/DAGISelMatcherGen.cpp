@@ -718,7 +718,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   CodeGenInstruction &II = CGT.getInstruction(Op);
   const DAGInstruction &Inst = CGP.getInstruction(Op);
 
-  // If we can, get the pattern for the instruction we're generating.  We derive
+  // If we can, get the pattern for the instruction we're generating. We derive
   // a variety of information from this pattern, such as whether it has a chain.
   //
   // FIXME2: This is extremely dubious for several reasons, not the least of
