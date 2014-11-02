@@ -222,9 +222,6 @@ public:
 
   void addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label);
 
-  /// addLocationList - Add a Dwarf loclistptr attribute data and value.
-  void addLocationList(DIE &Die, dwarf::Attribute Attribute, unsigned Index);
-
   /// addSectionOffset - Add an offset into a section attribute data and value.
   ///
   void addSectionOffset(DIE &Die, dwarf::Attribute Attribute, uint64_t Integer);

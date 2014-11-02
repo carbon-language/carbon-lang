@@ -207,6 +207,9 @@ public:
   void addComplexAddress(const DbgVariable &DV, DIE &Die,
                          dwarf::Attribute Attribute,
                          const MachineLocation &Location);
+
+  /// Add a Dwarf loclistptr attribute data and value.
+  void addLocationList(DIE &Die, dwarf::Attribute Attribute, unsigned Index);
 };
 
 } // end llvm namespace

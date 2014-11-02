@@ -800,4 +800,13 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   // Now attach the location information to the DIE.
   addBlock(Die, Attribute, Loc);
 }
+
+/// Add a Dwarf loclistptr attribute data and value.
+void DwarfCompileUnit::addLocationList(DIE &Die, dwarf::Attribute Attribute,
+                                       unsigned Index) {
+  DIEValue *Value = new (DIEValueAllocator) DIELocList(Index);
+  dwarf::Form Form = DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
+                                                : dwarf::DW_FORM_data4;
+  Die.addValue(Attribute, Form, Value);
+}
 } // end llvm namespace
