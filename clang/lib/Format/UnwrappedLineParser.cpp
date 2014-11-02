@@ -1362,6 +1362,9 @@ void UnwrappedLineParser::parseEnum() {
   // We fall through to parsing a structural element afterwards, so that in
   // enum A {} n, m;
   // "} n, m;" will end up in one unwrapped line.
+  // This does not apply for Java.
+  if (Style.Language == FormatStyle::LK_Java)
+    addUnwrappedLine();
 }
 
 void UnwrappedLineParser::parseRecord() {

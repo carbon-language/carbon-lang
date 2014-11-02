@@ -79,6 +79,19 @@ TEST_F(FormatTestJava, ClassDeclarations) {
                getStyleWithColumns(40));
 }
 
+TEST_F(FormatTestJava, EnumDeclarations) {
+  verifyFormat("enum SomeThing { ABC, CDE }");
+  verifyFormat("enum SomeThing {\n"
+               "  ABC,\n"
+               "  CDE,\n"
+               "}");
+  verifyFormat("public class SomeClass {\n"
+               "  enum SomeThing { ABC, CDE }\n"
+               "  void f() {\n"
+               "  }\n"
+               "}");
+}
+
 TEST_F(FormatTestJava, ThrowsDeclarations) {
   verifyFormat("public void doSooooooooooooooooooooooooooomething()\n"
                "    throws LooooooooooooooooooooooooooooongException {\n}");
