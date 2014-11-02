@@ -144,22 +144,6 @@ public:
 
   void collectDeadVariables(DISubprogram SP);
 
-  /// If there's a skeleton then return the begin label for the skeleton unit,
-  /// otherwise return the local label for this unit.
-  MCSymbol *getLocalLabelBegin() const {
-    if (Skeleton)
-      return Skeleton->getLabelBegin();
-    return getLabelBegin();
-  }
-
-  /// If there's a skeleton then return the section symbol for the skeleton
-  /// unit, otherwise return the section symbol for this unit.
-  MCSymbol *getLocalSectionSym() const {
-    if (Skeleton)
-      return Skeleton->getSectionSym();
-    return getSectionSym();
-  }
-
   /// Set the skeleton unit associated with this unit.
   void setSkeleton(DwarfCompileUnit &Skel) { Skeleton = &Skel; }
 
