@@ -299,7 +299,8 @@ public:
   /// getOrCreateSubprogramDIE - Create new DIE using SP.
   DIE *getOrCreateSubprogramDIE(DISubprogram SP);
 
-  void applySubprogramAttributes(DISubprogram SP, DIE &SPDie);
+  void applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
+                                 bool Minimal = false);
 
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
   /// given DIType.

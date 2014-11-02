@@ -1257,7 +1257,8 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   return &SPDie;
 }
 
-void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
+void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
+                                          bool Minimal) {
   DIE *DeclDie = nullptr;
   StringRef DeclLinkageName;
   if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
@@ -1292,7 +1293,7 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
     addString(SPDie, dwarf::DW_AT_name, SP.getName());
 
   // Skip the rest of the attributes under -gmlt to save space.
-  if(getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+  if (Minimal)
     return;
 
   addSourceLine(SPDie, SP);

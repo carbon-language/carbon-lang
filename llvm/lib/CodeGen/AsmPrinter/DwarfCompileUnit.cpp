@@ -832,7 +832,8 @@ void DwarfCompileUnit::applySubprogramAttributesToDefinition(DISubprogram SP,
                                                              DIE &SPDie) {
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   DIScope Context = resolve(SPDecl ? SPDecl.getContext() : SP.getContext());
-  applySubprogramAttributes(SP, SPDie);
+  applySubprogramAttributes(SP, SPDie, getCUNode().getEmissionKind() ==
+                                           DIBuilder::LineTablesOnly);
   addGlobalName(SP.getName(), SPDie, Context);
 }
 } // end llvm namespace
