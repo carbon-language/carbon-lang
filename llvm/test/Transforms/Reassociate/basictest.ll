@@ -203,7 +203,7 @@ define i32 @test14(i32 %X1, i32 %X2) {
 
 ; CHECK-LABEL: @test14
 ; CHECK-NEXT: sub i32 %X1, %X2
-; CHECK-NEXT: mul i32 %tmp, 47
+; CHECK-NEXT: mul i32 %B2, 47
 ; CHECK-NEXT: ret i32
 }
 

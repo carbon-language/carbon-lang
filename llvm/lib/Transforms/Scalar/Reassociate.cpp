@@ -193,9 +193,8 @@ namespace {
     Value *OptimizeMul(BinaryOperator *I, SmallVectorImpl<ValueEntry> &Ops);
     Value *RemoveFactorFromExpression(Value *V, Value *Factor);
     void EraseInst(Instruction *I);
-    void optimizeFAddNegExpr(ConstantFP *ConstOperand, Instruction *I,
-                             int OperandNr);
     void OptimizeInst(Instruction *I);
+    Instruction *canonicalizeNegConstExpr(Instruction *I);
   };
 }
 
@@ -1930,31 +1929,105 @@ void Reassociate::EraseInst(Instruction *I) {
     }
 }
 
-void Reassociate::optimizeFAddNegExpr(ConstantFP *ConstOperand, Instruction *I,
-                                      int OperandNr) {
+// Canonicalize expressions of the following form:
+//  x + (-Constant * y) -> x - (Constant * y)
+//  x - (-Constant * y) -> x + (Constant * y)
+Instruction *Reassociate::canonicalizeNegConstExpr(Instruction *I) {
+  if (!I->hasOneUse() || I->getType()->isVectorTy())
+    return nullptr;
+
+  // Must have at least one constant operand.
+  Constant *C0 = dyn_cast<Constant>(I->getOperand(0));
+  Constant *C1 = dyn_cast<Constant>(I->getOperand(1));
+  if (!C0 && !C1)
+    return nullptr;
+
+  // Must be a negative ConstantInt or ConstantFP.
+  Constant *C = C0 ? C0 : C1;
+  unsigned ConstIdx = C0 ? 0 : 1;
+  if (auto *CI = dyn_cast<ConstantInt>(C)) {
+    if (!CI->isNegative())
+      return nullptr;
+  } else if (auto *CF = dyn_cast<ConstantFP>(C)) {
+    if (!CF->isNegative())
+      return nullptr;
+  } else
+    return nullptr;
+
+  // User must be a binary operator with one or more uses.
+  Instruction *User = I->user_back();
+  if (!isa<BinaryOperator>(User) || !User->getNumUses())
+    return nullptr;
+
+  // Must be a binary operator with higher precedence that add/sub.
+  switch(I->getOpcode()) {
+  default:
+    return nullptr;
+  case Instruction::Mul:
+  case Instruction::FMul:
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+  case Instruction::FDiv:
+  case Instruction::URem:
+  case Instruction::SRem:
+  case Instruction::FRem:
+   break;
+  }
+
+  unsigned UserOpcode = User->getOpcode();
+  if (UserOpcode != Instruction::Add && UserOpcode != Instruction::FAdd &&
+      UserOpcode != Instruction::Sub && UserOpcode != Instruction::FSub)
+    return nullptr;
+
+  // Subtraction is not commutative. Explicitly, the following transform is
+  // not valid: (-Constant * y) - x  -> x + (Constant * y)
+  if (!User->isCommutative() && User->getOperand(1) != I)
+    return nullptr;
+
   // Change the sign of the constant.
-  APFloat Val = ConstOperand->getValueAPF();
-  Val.changeSign();
-  I->setOperand(0, ConstantFP::get(ConstOperand->getContext(), Val));
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
+    I->setOperand(ConstIdx, ConstantInt::get(CI->getContext(), -CI->getValue()));
+  else {
+    ConstantFP *CF = cast<ConstantFP>(C);
+    APFloat Val = CF->getValueAPF();
+    Val.changeSign();
+    I->setOperand(ConstIdx, ConstantFP::get(CF->getContext(), Val));
+  }
 
-  assert(I->hasOneUse() && "Only a single use can be replaced.");
-  Instruction *Parent = I->user_back();
+  // Canonicalize I to RHS to simplify the next bit of logic. E.g.,
+  // ((-Const*y) + x) -> (x + (-Const*y)).
+  if (User->getOperand(0) == I && User->isCommutative())
+    cast<BinaryOperator>(User)->swapOperands();
 
-  Value *OtherOperand = Parent->getOperand(1 - OperandNr);
+  Value *Op0 = User->getOperand(0);
+  Value *Op1 = User->getOperand(1);
+  BinaryOperator *NI;
+  switch(UserOpcode) {
+  default:
+    llvm_unreachable("Unexpected Opcode!");
+  case Instruction::Add:
+    NI = BinaryOperator::CreateSub(Op0, Op1);
+    break;
+  case Instruction::Sub:
+    NI = BinaryOperator::CreateAdd(Op0, Op1);
+    break;
+  case Instruction::FAdd:
+    NI = BinaryOperator::CreateFSub(Op0, Op1);
+    NI->setFastMathFlags(cast<FPMathOperator>(User)->getFastMathFlags());
+    break;
+  case Instruction::FSub:
+    NI = BinaryOperator::CreateFAdd(Op0, Op1);
+    NI->setFastMathFlags(cast<FPMathOperator>(User)->getFastMathFlags());
+    break;
+  }
 
-  unsigned Opcode = Parent->getOpcode();
-  assert(Opcode == Instruction::FAdd ||
-         (Opcode == Instruction::FSub && Parent->getOperand(1) == I));
-
-  BinaryOperator *NI = Opcode == Instruction::FAdd
-                           ? BinaryOperator::CreateFSub(OtherOperand, I)
-                           : BinaryOperator::CreateFAdd(OtherOperand, I);
-  NI->setFastMathFlags(cast<FPMathOperator>(Parent)->getFastMathFlags());
-  NI->insertBefore(Parent);
-  NI->setName(Parent->getName() + ".repl");
-  Parent->replaceAllUsesWith(NI);
+  NI->insertBefore(User);
+  NI->setName(User->getName());
+  User->replaceAllUsesWith(NI);
   NI->setDebugLoc(I->getDebugLoc());
+  RedoInsts.insert(I);
   MadeChange = true;
+  return NI;
 }
 
 /// OptimizeInst - Inspect and optimize the given instruction. Note that erasing
@@ -1977,6 +2050,10 @@ void Reassociate::OptimizeInst(Instruction *I) {
       I = NI;
     }
 
+  // Canonicalize negative constants out of expressions.
+  if (Instruction *Res = canonicalizeNegConstExpr(I))
+    I = Res;
+
   // Commute floating point binary operators, to canonicalize the order of their
   // operands.  This can potentially expose more CSE opportunities, and makes
   // writing other transformations simpler.
@@ -1994,24 +2071,6 @@ void Reassociate::OptimizeInst(Instruction *I) {
       if (RHSRank < LHSRank) {
         I->setOperand(0, RHS);
         I->setOperand(1, LHS);
-      }
-    }
-
-    // Reassociate: x + -ConstantFP * y -> x - ConstantFP * y
-    // The FMul can also be an FDiv, and FAdd can be a FSub.
-    if (Opcode == Instruction::FMul || Opcode == Instruction::FDiv) {
-      if (ConstantFP *LHSConst = dyn_cast<ConstantFP>(I->getOperand(0))) {
-        if (LHSConst->isNegative() && I->hasOneUse()) {
-          Instruction *Parent = I->user_back();
-          if (Parent->getOpcode() == Instruction::FAdd) {
-            if (Parent->getOperand(0) == I)
-              optimizeFAddNegExpr(LHSConst, I, 0);
-            else if (Parent->getOperand(1) == I)
-              optimizeFAddNegExpr(LHSConst, I, 1);
-          } else if (Parent->getOpcode() == Instruction::FSub)
-            if (Parent->getOperand(1) == I)
-              optimizeFAddNegExpr(LHSConst, I, 1);
-        }
       }
     }
 
