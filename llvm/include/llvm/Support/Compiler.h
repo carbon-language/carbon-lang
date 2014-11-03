@@ -66,7 +66,7 @@
 #define LLVM_MSC_PREREQ(version) 0
 #endif
 
-#if !defined(_MSC_VER) || (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190022129LL)
+#if !defined(_MSC_VER) || defined(__clang__) || LLVM_MSC_PREREQ(1900)
 #define LLVM_NOEXCEPT noexcept
 #else
 #define LLVM_NOEXCEPT
