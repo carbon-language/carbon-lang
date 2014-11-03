@@ -189,10 +189,18 @@ llvm::Constant *CodeGenModule::getOrCreateStaticVarDecl(
   llvm::Type *LTy = getTypes().ConvertTypeForMem(Ty);
   unsigned AddrSpace =
       GetGlobalVarAddressSpace(&D, getContext().getTargetAddressSpace(Ty));
+
+  // Local address space cannot have an initializer.
+  llvm::Constant *Init = nullptr;
+  if (Ty.getAddressSpace() != LangAS::opencl_local)
+    Init = EmitNullConstant(Ty);
+  else
+    Init = llvm::UndefValue::get(LTy);
+
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
-                             EmitNullConstant(D.getType()), Name, nullptr,
+                             Init, Name, nullptr,
                              llvm::GlobalVariable::NotThreadLocal,
                              AddrSpace);
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
