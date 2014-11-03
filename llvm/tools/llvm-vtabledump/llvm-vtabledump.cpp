@@ -68,38 +68,69 @@ static void reportError(StringRef Input, std::error_code EC) {
   reportError(Input, EC.message());
 }
 
+static SmallVectorImpl<SectionRef> &getRelocSections(const ObjectFile *Obj,
+                                                     const SectionRef &Sec) {
+  static bool MappingDone = false;
+  static std::map<SectionRef, SmallVector<SectionRef, 1>> SectionRelocMap;
+  if (!MappingDone) {
+    for (const SectionRef &Section : Obj->sections()) {
+      section_iterator Sec2 = Section.getRelocatedSection();
+      if (Sec2 != Obj->section_end())
+        SectionRelocMap[*Sec2].push_back(Section);
+    }
+    MappingDone = true;
+  }
+  return SectionRelocMap[Sec];
+}
+
 static bool collectRelocatedSymbols(const ObjectFile *Obj,
-                                    object::section_iterator SecI, StringRef *I,
-                                    StringRef *E) {
-  for (const object::RelocationRef &Reloc : SecI->relocations()) {
-    if (I == E)
-      break;
-    const object::symbol_iterator RelocSymI = Reloc.getSymbol();
-    if (RelocSymI == Obj->symbol_end())
-      continue;
-    StringRef RelocSymName;
-    if (error(RelocSymI->getName(RelocSymName)))
-      return true;
-    *I = RelocSymName;
-    ++I;
+                                    const SectionRef &Sec, uint64_t SecAddress,
+                                    uint64_t SymAddress, uint64_t SymSize,
+                                    StringRef *I, StringRef *E) {
+  uint64_t SymOffset = SymAddress - SecAddress;
+  uint64_t SymEnd = SymOffset + SymSize;
+  for (const SectionRef &SR : getRelocSections(Obj, Sec)) {
+    for (const object::RelocationRef &Reloc : SR.relocations()) {
+      if (I == E)
+        break;
+      const object::symbol_iterator RelocSymI = Reloc.getSymbol();
+      if (RelocSymI == Obj->symbol_end())
+        continue;
+      StringRef RelocSymName;
+      if (error(RelocSymI->getName(RelocSymName)))
+        return true;
+      uint64_t Offset;
+      if (error(Reloc.getOffset(Offset)))
+        return true;
+      if (Offset >= SymOffset && Offset < SymEnd) {
+        *I = RelocSymName;
+        ++I;
+      }
+    }
   }
   return false;
 }
 
 static bool collectRelocationOffsets(
-    const ObjectFile *Obj, object::section_iterator SecI, StringRef SymName,
+    const ObjectFile *Obj, const SectionRef &Sec, uint64_t SecAddress,
+    uint64_t SymAddress, uint64_t SymSize, StringRef SymName,
     std::map<std::pair<StringRef, uint64_t>, StringRef> &Collection) {
-  for (const object::RelocationRef &Reloc : SecI->relocations()) {
-    const object::symbol_iterator RelocSymI = Reloc.getSymbol();
-    if (RelocSymI == Obj->symbol_end())
-      continue;
-    StringRef RelocSymName;
-    if (error(RelocSymI->getName(RelocSymName)))
-      return true;
-    uint64_t Offset;
-    if (error(Reloc.getOffset(Offset)))
-      return true;
-    Collection[std::make_pair(SymName, Offset)] = RelocSymName;
+  uint64_t SymOffset = SymAddress - SecAddress;
+  uint64_t SymEnd = SymOffset + SymSize;
+  for (const SectionRef &SR : getRelocSections(Obj, Sec)) {
+    for (const object::RelocationRef &Reloc : SR.relocations()) {
+      const object::symbol_iterator RelocSymI = Reloc.getSymbol();
+      if (RelocSymI == Obj->symbol_end())
+        continue;
+      StringRef RelocSymName;
+      if (error(RelocSymI->getName(RelocSymName)))
+        return true;
+      uint64_t Offset;
+      if (error(Reloc.getOffset(Offset)))
+        return true;
+      if (Offset >= SymOffset && Offset < SymEnd)
+        Collection[std::make_pair(SymName, Offset - SymOffset)] = RelocSymName;
+    }
   }
   return false;
 }
@@ -129,6 +160,14 @@ static void dumpVTables(const ObjectFile *Obj) {
   std::map<std::pair<StringRef, uint64_t>, StringRef> BCAEntries;
   std::map<StringRef, BaseClassDescriptor> BCDs;
   std::map<StringRef, TypeDescriptor> TDs;
+
+  std::map<std::pair<StringRef, uint64_t>, StringRef> VTableSymEntries;
+  std::map<std::pair<StringRef, uint64_t>, int64_t> VTableDataEntries;
+  std::map<std::pair<StringRef, uint64_t>, StringRef> VTTEntries;
+  std::map<StringRef, StringRef> TINames;
+
+  uint8_t BytesInAddress = Obj->getBytesInAddress();
+
   for (const object::SymbolRef &Sym : Obj->symbols()) {
     StringRef SymName;
     if (error(Sym.getName(SymName)))
@@ -139,37 +178,46 @@ static void dumpVTables(const ObjectFile *Obj) {
     // Skip external symbols.
     if (SecI == Obj->section_end())
       continue;
-    bool IsBSS = SecI->isBSS();
-    bool IsVirtual = SecI->isVirtual();
+    const SectionRef &Sec = *SecI;
     // Skip virtual or BSS sections.
-    if (IsBSS || IsVirtual)
+    if (Sec.isBSS() || Sec.isVirtual())
       continue;
     StringRef SecContents;
-    if (error(SecI->getContents(SecContents)))
+    if (error(Sec.getContents(SecContents)))
       return;
+    uint64_t SymAddress, SymSize;
+    if (error(Sym.getAddress(SymAddress)) || error(Sym.getSize(SymSize)))
+      return;
+    uint64_t SecAddress = Sec.getAddress();
+    uint64_t SecSize = Sec.getSize();
+    uint64_t SymOffset = SymAddress - SecAddress;
+    StringRef SymContents = SecContents.substr(SymOffset, SymSize);
+
     // VFTables in the MS-ABI start with '??_7' and are contained within their
     // own COMDAT section.  We then determine the contents of the VFTable by
     // looking at each relocation in the section.
     if (SymName.startswith("??_7")) {
       // Each relocation either names a virtual method or a thunk.  We note the
       // offset into the section and the symbol used for the relocation.
-      collectRelocationOffsets(Obj, SecI, SymName, VFTableEntries);
+      collectRelocationOffsets(Obj, Sec, SecAddress, SecAddress, SecSize,
+                               SymName, VFTableEntries);
     }
     // VBTables in the MS-ABI start with '??_8' and are filled with 32-bit
     // offsets of virtual bases.
     else if (SymName.startswith("??_8")) {
       ArrayRef<little32_t> VBTableData(
-          reinterpret_cast<const little32_t *>(SecContents.data()),
-          SecContents.size() / sizeof(little32_t));
+          reinterpret_cast<const little32_t *>(SymContents.data()),
+          SymContents.size() / sizeof(little32_t));
       VBTables[SymName] = VBTableData;
     }
     // Complete object locators in the MS-ABI start with '??_R4'
     else if (SymName.startswith("??_R4")) {
       CompleteObjectLocator COL;
       COL.Data = ArrayRef<little32_t>(
-          reinterpret_cast<const little32_t *>(SecContents.data()), 3);
+          reinterpret_cast<const little32_t *>(SymContents.data()), 3);
       StringRef *I = std::begin(COL.Symbols), *E = std::end(COL.Symbols);
-      if (collectRelocatedSymbols(Obj, SecI, I, E))
+      if (collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I,
+                                  E))
         return;
       COLs[SymName] = COL;
     }
@@ -177,9 +225,10 @@ static void dumpVTables(const ObjectFile *Obj) {
     else if (SymName.startswith("??_R3")) {
       ClassHierarchyDescriptor CHD;
       CHD.Data = ArrayRef<little32_t>(
-          reinterpret_cast<const little32_t *>(SecContents.data()), 3);
+          reinterpret_cast<const little32_t *>(SymContents.data()), 3);
       StringRef *I = std::begin(CHD.Symbols), *E = std::end(CHD.Symbols);
-      if (collectRelocatedSymbols(Obj, SecI, I, E))
+      if (collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I,
+                                  E))
         return;
       CHDs[SymName] = CHD;
     }
@@ -187,34 +236,64 @@ static void dumpVTables(const ObjectFile *Obj) {
     else if (SymName.startswith("??_R2")) {
       // Each relocation names a base class descriptor.  We note the offset into
       // the section and the symbol used for the relocation.
-      collectRelocationOffsets(Obj, SecI, SymName, BCAEntries);
+      collectRelocationOffsets(Obj, Sec, SecAddress, SymAddress, SymSize,
+                               SymName, BCAEntries);
     }
     // Base class descriptors in the MS-ABI start with '??_R1'
     else if (SymName.startswith("??_R1")) {
       BaseClassDescriptor BCD;
       BCD.Data = ArrayRef<little32_t>(
-          reinterpret_cast<const little32_t *>(SecContents.data()) + 1,
-          5);
+          reinterpret_cast<const little32_t *>(SymContents.data()) + 1, 5);
       StringRef *I = std::begin(BCD.Symbols), *E = std::end(BCD.Symbols);
-      if (collectRelocatedSymbols(Obj, SecI, I, E))
+      if (collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I,
+                                  E))
         return;
       BCDs[SymName] = BCD;
     }
     // Type descriptors in the MS-ABI start with '??_R0'
     else if (SymName.startswith("??_R0")) {
-      uint8_t BytesInAddress = Obj->getBytesInAddress();
-      const char *DataPtr =
-          SecContents.drop_front(Obj->getBytesInAddress()).data();
+      const char *DataPtr = SymContents.drop_front(BytesInAddress).data();
       TypeDescriptor TD;
       if (BytesInAddress == 8)
         TD.AlwaysZero = *reinterpret_cast<const little64_t *>(DataPtr);
       else
         TD.AlwaysZero = *reinterpret_cast<const little32_t *>(DataPtr);
-      TD.MangledName = SecContents.drop_front(Obj->getBytesInAddress() * 2);
+      TD.MangledName = SymContents.drop_front(BytesInAddress * 2);
       StringRef *I = std::begin(TD.Symbols), *E = std::end(TD.Symbols);
-      if (collectRelocatedSymbols(Obj, SecI, I, E))
+      if (collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I,
+                                  E))
         return;
       TDs[SymName] = TD;
+    }
+    // Construction vtables in the Itanium ABI start with '_ZTT' or '__ZTT'.
+    else if (SymName.startswith("_ZTT") || SymName.startswith("__ZTT")) {
+      collectRelocationOffsets(Obj, Sec, SecAddress, SymAddress, SymSize,
+                               SymName, VTTEntries);
+    }
+    // Typeinfo names in the Itanium ABI start with '_ZTS' or '__ZTS'.
+    else if (SymName.startswith("_ZTS") || SymName.startswith("__ZTS")) {
+      TINames[SymName] = SymContents.slice(0, SymContents.find('\0'));
+    }
+    // Vtables in the Itanium ABI start with '_ZTV' or '__ZTV'.
+    else if (SymName.startswith("_ZTV") || SymName.startswith("__ZTV")) {
+      collectRelocationOffsets(Obj, Sec, SecAddress, SymAddress, SymSize,
+                               SymName, VTableSymEntries);
+      for (uint64_t SymOffI = 0; SymOffI < SymSize; SymOffI += BytesInAddress) {
+        auto Key = std::make_pair(SymName, SymOffI);
+        if (VTableSymEntries.count(Key))
+          continue;
+        const char *DataPtr = SymContents.substr(SymOffI, BytesInAddress).data();
+        int64_t VData;
+        if (BytesInAddress == 8)
+          VData = *reinterpret_cast<const little64_t *>(DataPtr);
+        else
+          VData = *reinterpret_cast<const little32_t *>(DataPtr);
+        VTableDataEntries[Key] = VData;
+      }
+    }
+    // Typeinfo structures in the Itanium ABI start with '_ZTI' or '__ZTI'.
+    else if (SymName.startswith("_ZTI") || SymName.startswith("__ZTI")) {
+      // FIXME: Do something with these!
     }
   }
   for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &VFTableEntry :
@@ -224,8 +303,7 @@ static void dumpVTables(const ObjectFile *Obj) {
     StringRef SymName = VFTableEntry.second;
     outs() << VFTableName << '[' << Offset << "]: " << SymName << '\n';
   }
-  for (const std::pair<StringRef, ArrayRef<little32_t>> &VBTable :
-       VBTables) {
+  for (const std::pair<StringRef, ArrayRef<little32_t>> &VBTable : VBTables) {
     StringRef VBTableName = VBTable.first;
     uint32_t Idx = 0;
     for (little32_t Offset : VBTable.second) {
@@ -277,6 +355,47 @@ static void dumpVTables(const ObjectFile *Obj) {
     outs().write_escaped(TD.MangledName.rtrim(StringRef("\0", 1)),
                          /*UseHexEscapes=*/true)
         << '\n';
+  }
+  for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &VTTPair :
+       VTTEntries) {
+    StringRef VTTName = VTTPair.first.first;
+    uint64_t VTTOffset = VTTPair.first.second;
+    StringRef VTTEntry = VTTPair.second;
+    outs() << VTTName << '[' << VTTOffset << "]: " << VTTEntry << '\n';
+  }
+  for (const std::pair<StringRef, StringRef> &TIPair : TINames) {
+    StringRef TIName = TIPair.first;
+    outs() << TIName << ": " << TIPair.second << '\n';
+  }
+  auto VTableSymI = VTableSymEntries.begin();
+  auto VTableSymE = VTableSymEntries.end();
+  auto VTableDataI = VTableDataEntries.begin();
+  auto VTableDataE = VTableDataEntries.end();
+  for (;;) {
+    bool SymDone = VTableSymI == VTableSymE;
+    bool DataDone = VTableDataI == VTableDataE;
+    if (SymDone && DataDone)
+      break;
+    if (!SymDone && (DataDone || VTableSymI->first < VTableDataI->first)) {
+      StringRef VTableName = VTableSymI->first.first;
+      uint64_t Offset = VTableSymI->first.second;
+      StringRef VTableEntry = VTableSymI->second;
+      outs() << VTableName << '[' << Offset << "]: ";
+      outs() << VTableEntry;
+      outs() << '\n';
+      ++VTableSymI;
+      continue;
+    }
+    if (!DataDone && (SymDone || VTableDataI->first < VTableSymI->first)) {
+      StringRef VTableName = VTableDataI->first.first;
+      uint64_t Offset = VTableDataI->first.second;
+      int64_t VTableEntry = VTableDataI->second;
+      outs() << VTableName << '[' << Offset << "]: ";
+      outs() << VTableEntry;
+      outs() << '\n';
+      ++VTableDataI;
+      continue;
+    }
   }
 }
 
