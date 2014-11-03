@@ -86,6 +86,7 @@ TEST_F(FormatTestJava, ClassDeclarations) {
 
 TEST_F(FormatTestJava, EnumDeclarations) {
   verifyFormat("enum SomeThing { ABC, CDE }");
+  verifyFormat("enum SomeThing { ABC, CDE };");
   verifyFormat("enum SomeThing {\n"
                "  ABC,\n"
                "  CDE,\n"
