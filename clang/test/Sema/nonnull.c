@@ -83,28 +83,3 @@ void redecl_test(void *p) {
   redecl(p, 0); // expected-warning{{null passed}}
   redecl(0, p); // expected-warning{{null passed}}
 }
-
-// rdar://18712242
-#define NULL (void*)0
-__attribute__((__nonnull__))
-int evil_nonnull_func(int* pointer, void * pv)
-{
-   if (pointer == NULL) {  // expected-warning {{comparison of nonnull parameter 'pointer' equal to a null pointer is always false}}
-     return 0;
-   } else {
-     return *pointer;
-   } 
-
-   if (pv == NULL) {} // expected-warning {{comparison of nonnull parameter 'pv' equal to a null pointer is always false}}
-}
-
-int another_evil_nonnull_func(int* pointer, char ch, void * pv) __attribute__((nonnull(1, 3)));
-int another_evil_nonnull_func(int* pointer, char ch, void * pv) {
-   if (pointer == NULL) { // expected-warning {{comparison of nonnull parameter 'pointer' equal to a null pointer is always false}}
-     return 0;
-   } else {
-     return *pointer;
-   } 
-
-   if (pv == NULL) {} // expected-warning {{comparison of nonnull parameter 'pv' equal to a null pointer is always false}}
-}
