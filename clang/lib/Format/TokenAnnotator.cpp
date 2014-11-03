@@ -472,7 +472,7 @@ private:
         return false;
       break;
     case tok::less:
-      if (Tok->Previous && !Tok->Previous->Tok.isLiteral() && parseAngle())
+      if ((!Tok->Previous || !Tok->Previous->Tok.isLiteral()) && parseAngle())
         Tok->Type = TT_TemplateOpener;
       else {
         Tok->Type = TT_BinaryOperator;
