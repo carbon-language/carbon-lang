@@ -23,9 +23,6 @@ for ARG in "$@"
 
 if [[ $OK -eq "1" ]]; then
   echo "Error: clang-format reported formatting differences"
-  # Temporarily disable formatting check until we understand if clang-format
-  # commit r221125 was intended to change C++ formatting.
-  exit 0
   exit 1
 else
   echo "OK: clang-format reported no formatting differences"
