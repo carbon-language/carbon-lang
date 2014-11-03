@@ -81,7 +81,7 @@ OCAMLAFLAGS += $(patsubst %,-cclib %, \
 endif
 endif
 
-ifneq ($(ENABLE_OPTIMIZED),1)
+ifneq ($(DEBUG_SYMBOLS),1)
   OCAMLDEBUGFLAG := -g
 endif
 
