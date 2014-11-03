@@ -4633,6 +4633,12 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   if (!ClassAttr)
     return;
 
+  if (!Class->isExternallyVisible()) {
+    S.Diag(Class->getLocation(), diag::err_attribute_dll_not_extern)
+        << Class << ClassAttr;
+    return;
+  }
+
   if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
       !ClassAttr->isInherited()) {
     // Diagnose dll attributes on members of class with dll attribute.

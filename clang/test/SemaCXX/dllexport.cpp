@@ -327,6 +327,10 @@ template<> __declspec(dllexport) inline void funcTmpl<ExplicitSpec_InlineDef_Exp
 // Classes
 //===----------------------------------------------------------------------===//
 
+namespace {
+  struct __declspec(dllexport) AnonymousClass {}; // expected-error{{(anonymous namespace)::AnonymousClass' must have external linkage when declared 'dllexport'}}
+}
+
 class __declspec(dllexport) ClassDecl;
 
 class __declspec(dllexport) ClassDef {};

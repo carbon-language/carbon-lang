@@ -1197,6 +1197,10 @@ template<typename T> template<typename U> __declspec(dllimport) constexpr int CT
 // Classes
 //===----------------------------------------------------------------------===//
 
+namespace {
+  struct __declspec(dllimport) AnonymousClass {}; // expected-error{{(anonymous namespace)::AnonymousClass' must have external linkage when declared 'dllimport'}}
+}
+
 class __declspec(dllimport) ClassDecl;
 
 class __declspec(dllimport) ClassDef { };
