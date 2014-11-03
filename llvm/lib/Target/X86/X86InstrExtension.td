@@ -97,13 +97,23 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
 let neverHasSideEffects = 1, isCodeGenOnly = 1 in {
 def MOVZX32_NOREXrr8 : I<0xB6, MRMSrcReg,
                          (outs GR32_NOREX:$dst), (ins GR8_NOREX:$src),
-                         "movz{bl|x}\t{$src, $dst|$dst, $src}",
+                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
                          [], IIC_MOVZX>, TB, Sched<[WriteALU]>;
 let mayLoad = 1 in
 def MOVZX32_NOREXrm8 : I<0xB6, MRMSrcMem,
                          (outs GR32_NOREX:$dst), (ins i8mem_NOREX:$src),
-                         "movz{bl|x}\t{$src, $dst|$dst, $src}",
+                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
                          [], IIC_MOVZX>, TB, Sched<[WriteALULd]>;
+
+def MOVSX32_NOREXrr8 : I<0xBE, MRMSrcReg,
+                         (outs GR32_NOREX:$dst), (ins GR8_NOREX:$src),
+                         "movs{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
+                         [], IIC_MOVSX>, TB, Sched<[WriteALU]>;
+let mayLoad = 1 in
+def MOVSX32_NOREXrm8 : I<0xBE, MRMSrcMem,
+                         (outs GR32_NOREX:$dst), (ins i8mem_NOREX:$src),
+                         "movs{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
+                         [], IIC_MOVSX>, TB, Sched<[WriteALULd]>;
 }
 
 // MOVSX64rr8 always has a REX prefix and it has an 8-bit register

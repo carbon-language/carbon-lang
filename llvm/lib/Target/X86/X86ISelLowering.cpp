@@ -19080,6 +19080,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SBB:                return "X86ISD::SBB";
   case X86ISD::SMUL:               return "X86ISD::SMUL";
   case X86ISD::UMUL:               return "X86ISD::UMUL";
+  case X86ISD::SDIVREM8_SEXT_HREG: return "X86ISD::SDIVREM8_SEXT_HREG";
+  case X86ISD::UDIVREM8_ZEXT_HREG: return "X86ISD::UDIVREM8_ZEXT_HREG";
   case X86ISD::INC:                return "X86ISD::INC";
   case X86ISD::DEC:                return "X86ISD::DEC";
   case X86ISD::OR:                 return "X86ISD::OR";
@@ -24278,13 +24280,29 @@ static SDValue PerformSIGN_EXTEND_INREGCombine(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
                                   const X86Subtarget *Subtarget) {
+  SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  // (i8,i32 sext (sdivrem (i8 x, i8 y)) ->
+  // (i8,i32 (sdivrem_sext_hreg (i8 x, i8 y)
+  // This exposes the sext to the sdivrem lowering, so that it directly extends
+  // from AH (which we otherwise need to do contortions to access).
+  if (N0.getOpcode() == ISD::SDIVREM && N0.getResNo() == 1 &&
+      N0.getValueType() == MVT::i8 && VT == MVT::i32) {
+    SDLoc dl(N);
+    SDVTList NodeTys = DAG.getVTList(MVT::i8, VT);
+    SDValue R = DAG.getNode(X86ISD::SDIVREM8_SEXT_HREG, dl, NodeTys,
+                            N0.getOperand(0), N0.getOperand(1));
+    DAG.ReplaceAllUsesOfValueWith(N0.getValue(0), R.getValue(0));
+    return R.getValue(1);
+  }
+
   if (!DCI.isBeforeLegalizeOps())
     return SDValue();
 
   if (!Subtarget->hasFp256())
     return SDValue();
 
-  EVT VT = N->getValueType(0);
   if (VT.isVector() && VT.getSizeInBits() == 256) {
     SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget);
     if (R.getNode())
@@ -24375,6 +24393,20 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
     SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget);
     if (R.getNode())
       return R;
+  }
+
+  // (i8,i32 zext (udivrem (i8 x, i8 y)) ->
+  // (i8,i32 (udivrem_zext_hreg (i8 x, i8 y)
+  // This exposes the zext to the udivrem lowering, so that it directly extends
+  // from AH (which we otherwise need to do contortions to access).
+  if (N0.getOpcode() == ISD::UDIVREM &&
+      N0.getResNo() == 1 && N0.getValueType() == MVT::i8 &&
+      (VT == MVT::i32 || VT == MVT::i64)) {
+    SDVTList NodeTys = DAG.getVTList(MVT::i8, VT);
+    SDValue R = DAG.getNode(X86ISD::UDIVREM8_ZEXT_HREG, dl, NodeTys,
+                            N0.getOperand(0), N0.getOperand(1));
+    DAG.ReplaceAllUsesOfValueWith(N0.getValue(0), R.getValue(0));
+    return R.getValue(1);
   }
 
   return SDValue();
