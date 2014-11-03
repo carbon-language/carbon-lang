@@ -17,15 +17,15 @@ class TestingConfig:
         """
         # Set the environment based on the command line arguments.
         environment = {
-            'LIBRARY_PATH' : os.environ.get('LIBRARY_PATH',''),
-            'LD_LIBRARY_PATH' : os.environ.get('LD_LIBRARY_PATH',''),
             'PATH' : os.pathsep.join(litConfig.path +
                                      [os.environ.get('PATH','')]),
-            'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
-            'TERM' : os.environ.get('TERM',''),
             'LLVM_DISABLE_CRASH_REPORT' : '1',
-            'LD_PRELOAD' : os.environ.get('LD_PRELOAD',''),
             }
+
+        pass_vars = ['LIBRARY_PATH', 'LD_LIBRARY_PATH', 'SYSTEMROOT', 'TERM',
+                     'LD_PRELOAD']
+        for var in pass_vars:
+            environment[var] = os.environ.get(var, '')
 
         if sys.platform == 'win32':
             environment.update({
