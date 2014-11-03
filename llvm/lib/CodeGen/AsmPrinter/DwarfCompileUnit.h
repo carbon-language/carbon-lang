@@ -55,6 +55,10 @@ class DwarfCompileUnit : public DwarfUnit {
   // List of ranges for a given compile unit.
   SmallVector<RangeSpan, 1> CURanges;
 
+  // The base address of this unit, if any. Used for relative references in
+  // ranges/locs.
+  const MCSymbol *BaseAddress;
+
   /// \brief Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
   std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
@@ -233,6 +237,9 @@ public:
 
   /// getRanges - Get the list of ranges for this unit.
   const SmallVectorImpl<RangeSpan> &getRanges() const { return CURanges; }
+
+  void setBaseAddress(const MCSymbol *Base) { BaseAddress = Base; }
+  const MCSymbol *getBaseAddress() const { return BaseAddress; }
 };
 
 } // end llvm namespace

@@ -592,6 +592,7 @@ void DwarfDebug::finalizeModuleInfo() {
         U.addUInt(U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
       } else {
         const RangeSpan &Range = TheCU.getRanges().back();
+        TheCU.setBaseAddress(Range.getStart());
         U.attachLowHighPC(U.getUnitDie(), Range.getStart(), Range.getEnd());
       }
     }
@@ -1791,9 +1792,7 @@ void DwarfDebug::emitDebugLoc() {
       // Set up the range. This range is relative to the entry point of the
       // compile unit. This is a hard coded 0 for low_pc when we're emitting
       // ranges, or the DW_AT_low_pc on the compile unit otherwise.
-      if (CU->getRanges().size() == 1) {
-        // Grab the begin symbol from the first range as our base.
-        const MCSymbol *Base = CU->getRanges()[0].getStart();
+      if (auto *Base = CU->getBaseAddress()) {
         Asm->EmitLabelDifference(Entry.getBeginSym(), Base, Size);
         Asm->EmitLabelDifference(Entry.getEndSym(), Base, Size);
       } else {
@@ -2003,9 +2002,7 @@ void DwarfDebug::emitDebugRanges() {
         const MCSymbol *End = Range.getEnd();
         assert(Begin && "Range without a begin symbol?");
         assert(End && "Range without an end symbol?");
-        if (TheCU->getRanges().size() == 1) {
-          // Grab the begin symbol from the first range as our base.
-          const MCSymbol *Base = TheCU->getRanges()[0].getStart();
+        if (auto *Base = TheCU->getBaseAddress()) {
           Asm->EmitLabelDifference(Begin, Base, Size);
           Asm->EmitLabelDifference(End, Base, Size);
         } else {

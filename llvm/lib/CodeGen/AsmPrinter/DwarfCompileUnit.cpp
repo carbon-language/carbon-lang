@@ -19,7 +19,7 @@ DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DICompileUnit Node,
                                    AsmPrinter *A, DwarfDebug *DW,
                                    DwarfFile *DWU)
     : DwarfUnit(UID, dwarf::DW_TAG_compile_unit, Node, A, DW, DWU),
-      Skeleton(nullptr), LabelBegin(nullptr) {
+      Skeleton(nullptr), LabelBegin(nullptr), BaseAddress(nullptr) {
   insertDIE(Node, &getUnitDie());
 }
 
