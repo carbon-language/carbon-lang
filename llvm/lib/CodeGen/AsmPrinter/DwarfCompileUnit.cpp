@@ -372,40 +372,46 @@ void DwarfCompileUnit::addSectionDelta(DIE &Die, dwarf::Attribute Attribute,
                Value);
 }
 
-void
-DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
-                                    const SmallVectorImpl<InsnRange> &Range) {
+void DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
+                                         SmallVector<RangeSpan, 2> Range) {
   // Emit offset in .debug_range as a relocatable label. emitDIE will handle
   // emitting it appropriately.
-  MCSymbol *RangeSym =
-      Asm->GetTempSymbol("debug_ranges", DD->getNextRangeNumber());
-
   auto *RangeSectionSym = DD->getRangeSectionSym();
+
+  RangeSpanList List(
+      Asm->GetTempSymbol("debug_ranges", DD->getNextRangeNumber()),
+      std::move(Range));
 
   // Under fission, ranges are specified by constant offsets relative to the
   // CU's DW_AT_GNU_ranges_base.
-  if (DD->useSplitDwarf())
-    addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, RangeSym, RangeSectionSym);
+  if (isDwoUnit())
+    addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, List.getSym(),
+                    RangeSectionSym);
   else
-    addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, RangeSym, RangeSectionSym);
-
-  RangeSpanList List(RangeSym);
-  for (const InsnRange &R : Range)
-    List.addRange(RangeSpan(DD->getLabelBeforeInsn(R.first),
-                            DD->getLabelAfterInsn(R.second)));
+    addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, List.getSym(),
+                    RangeSectionSym);
 
   // Add the range list to the set of ranges to be emitted.
   (Skeleton ? Skeleton : this)->CURangeLists.push_back(std::move(List));
 }
 
 void DwarfCompileUnit::attachRangesOrLowHighPC(
+    DIE &Die, SmallVector<RangeSpan, 2> Ranges) {
+  if (Ranges.size() == 1) {
+    const auto &single = Ranges.front();
+    attachLowHighPC(Die, single.getStart(), single.getEnd());
+  } else
+    addScopeRangeList(Die, std::move(Ranges));
+}
+
+void DwarfCompileUnit::attachRangesOrLowHighPC(
     DIE &Die, const SmallVectorImpl<InsnRange> &Ranges) {
-  assert(!Ranges.empty());
-  if (Ranges.size() == 1)
-    attachLowHighPC(Die, DD->getLabelBeforeInsn(Ranges.front().first),
-                    DD->getLabelAfterInsn(Ranges.front().second));
-  else
-    addScopeRangeList(Die, Ranges);
+  SmallVector<RangeSpan, 2> List;
+  List.reserve(Ranges.size());
+  for (const InsnRange &R : Ranges)
+    List.push_back(RangeSpan(DD->getLabelBeforeInsn(R.first),
+                             DD->getLabelAfterInsn(R.second)));
+  attachRangesOrLowHighPC(Die, std::move(List));
 }
 
 // This scope represents inlined body of a function. Construct DIE to
