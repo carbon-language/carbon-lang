@@ -356,18 +356,18 @@ bool SampleProfileReaderBinary::hasFormat(const MemoryBuffer &Buffer) {
 /// \brief Prepare a memory buffer for the contents of \p Filename.
 ///
 /// \returns an error code indicating the status of the buffer.
-static std::error_code
-setupMemoryBuffer(std::string Filename, std::unique_ptr<MemoryBuffer> &Buffer) {
+static ErrorOr<std::unique_ptr<MemoryBuffer>>
+setupMemoryBuffer(std::string Filename) {
   auto BufferOrErr = MemoryBuffer::getFileOrSTDIN(Filename);
   if (std::error_code EC = BufferOrErr.getError())
     return EC;
-  Buffer = std::move(BufferOrErr.get());
+  auto Buffer = std::move(BufferOrErr.get());
 
   // Sanity check the file.
   if (Buffer->getBufferSize() > std::numeric_limits<unsigned>::max())
     return sampleprof_error::too_large;
 
-  return sampleprof_error::success;
+  return std::move(Buffer);
 }
 
 /// \brief Create a sample profile reader based on the format of the input file.
@@ -379,18 +379,21 @@ setupMemoryBuffer(std::string Filename, std::unique_ptr<MemoryBuffer> &Buffer) {
 /// \param C The LLVM context to use to emit diagnostics.
 ///
 /// \returns an error code indicating the status of the created reader.
-std::error_code
-SampleProfileReader::create(StringRef Filename,
-                            std::unique_ptr<SampleProfileReader> &Reader,
-                            LLVMContext &C) {
-  std::unique_ptr<MemoryBuffer> Buffer;
-  if (std::error_code EC = setupMemoryBuffer(Filename, Buffer))
+ErrorOr<std::unique_ptr<SampleProfileReader>>
+SampleProfileReader::create(StringRef Filename, LLVMContext &C) {
+  auto BufferOrError = setupMemoryBuffer(Filename);
+  if (std::error_code EC = BufferOrError.getError())
     return EC;
 
+  auto Buffer = std::move(BufferOrError.get());
+  std::unique_ptr<SampleProfileReader> Reader;
   if (SampleProfileReaderBinary::hasFormat(*Buffer))
     Reader.reset(new SampleProfileReaderBinary(std::move(Buffer), C));
   else
     Reader.reset(new SampleProfileReaderText(std::move(Buffer), C));
 
-  return Reader->readHeader();
+  if (std::error_code EC = Reader->readHeader())
+    return EC;
+
+  return std::move(Reader);
 }

@@ -49,10 +49,11 @@ void mergeInstrProfile(cl::list<std::string> Inputs, StringRef OutputFilename) {
 
   InstrProfWriter Writer;
   for (const auto &Filename : Inputs) {
-    std::unique_ptr<InstrProfReader> Reader;
-    if (std::error_code ec = InstrProfReader::create(Filename, Reader))
+    auto ReaderOrErr = InstrProfReader::create(Filename);
+    if (std::error_code ec = ReaderOrErr.getError())
       exitWithError(ec.message(), Filename);
 
+    auto Reader = std::move(ReaderOrErr.get());
     for (const auto &I : *Reader)
       if (std::error_code EC =
               Writer.addFunctionCounts(I.Name, I.Hash, I.Counts))
@@ -66,18 +67,19 @@ void mergeInstrProfile(cl::list<std::string> Inputs, StringRef OutputFilename) {
 void mergeSampleProfile(cl::list<std::string> Inputs, StringRef OutputFilename,
                         sampleprof::SampleProfileFormat OutputFormat) {
   using namespace sampleprof;
-  std::unique_ptr<SampleProfileWriter> Writer;
-  if (std::error_code EC = SampleProfileWriter::create(OutputFilename.data(),
-                                                       Writer, OutputFormat))
+  auto WriterOrErr = SampleProfileWriter::create(OutputFilename, OutputFormat);
+  if (std::error_code EC = WriterOrErr.getError())
     exitWithError(EC.message(), OutputFilename);
 
+  auto Writer = std::move(WriterOrErr.get());
   StringMap<FunctionSamples> ProfileMap;
   for (const auto &Filename : Inputs) {
-    std::unique_ptr<SampleProfileReader> Reader;
-    if (std::error_code EC =
-            SampleProfileReader::create(Filename, Reader, getGlobalContext()))
+    auto ReaderOrErr =
+        SampleProfileReader::create(Filename, getGlobalContext());
+    if (std::error_code EC = ReaderOrErr.getError())
       exitWithError(EC.message(), Filename);
 
+    auto Reader = std::move(ReaderOrErr.get());
     if (std::error_code EC = Reader->read())
       exitWithError(EC.message(), Filename);
 
@@ -129,10 +131,11 @@ int merge_main(int argc, const char *argv[]) {
 int showInstrProfile(std::string Filename, bool ShowCounts,
                      bool ShowAllFunctions, std::string ShowFunction,
                      raw_fd_ostream &OS) {
-  std::unique_ptr<InstrProfReader> Reader;
-  if (std::error_code EC = InstrProfReader::create(Filename, Reader))
+  auto ReaderOrErr = InstrProfReader::create(Filename);
+  if (std::error_code EC = ReaderOrErr.getError())
     exitWithError(EC.message(), Filename);
 
+  auto Reader = std::move(ReaderOrErr.get());
   uint64_t MaxFunctionCount = 0, MaxBlockCount = 0;
   size_t ShownFunctions = 0, TotalFunctions = 0;
   for (const auto &Func : *Reader) {
@@ -182,11 +185,11 @@ int showSampleProfile(std::string Filename, bool ShowCounts,
                       bool ShowAllFunctions, std::string ShowFunction,
                       raw_fd_ostream &OS) {
   using namespace sampleprof;
-  std::unique_ptr<SampleProfileReader> Reader;
-  if (std::error_code EC =
-          SampleProfileReader::create(Filename, Reader, getGlobalContext()))
+  auto ReaderOrErr = SampleProfileReader::create(Filename, getGlobalContext());
+  if (std::error_code EC = ReaderOrErr.getError())
     exitWithError(EC.message(), Filename);
 
+  auto Reader = std::move(ReaderOrErr.get());
   Reader->read();
   if (ShowAllFunctions || ShowFunction.empty())
     Reader->dump(OS);

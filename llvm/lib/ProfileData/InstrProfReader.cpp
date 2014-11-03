@@ -21,31 +21,33 @@
 
 using namespace llvm;
 
-static std::error_code
-setupMemoryBuffer(std::string Path, std::unique_ptr<MemoryBuffer> &Buffer) {
+static ErrorOr<std::unique_ptr<MemoryBuffer>>
+setupMemoryBuffer(std::string Path) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
       MemoryBuffer::getFileOrSTDIN(Path);
   if (std::error_code EC = BufferOrErr.getError())
     return EC;
-  Buffer = std::move(BufferOrErr.get());
+  auto Buffer = std::move(BufferOrErr.get());
 
   // Sanity check the file.
   if (Buffer->getBufferSize() > std::numeric_limits<unsigned>::max())
     return instrprof_error::too_large;
-  return instrprof_error::success;
+  return std::move(Buffer);
 }
 
 static std::error_code initializeReader(InstrProfReader &Reader) {
   return Reader.readHeader();
 }
 
-std::error_code
-InstrProfReader::create(std::string Path,
-                        std::unique_ptr<InstrProfReader> &Result) {
+ErrorOr<std::unique_ptr<InstrProfReader>>
+InstrProfReader::create(std::string Path) {
   // Set up the buffer to read.
-  std::unique_ptr<MemoryBuffer> Buffer;
-  if (std::error_code EC = setupMemoryBuffer(Path, Buffer))
+  auto BufferOrError = setupMemoryBuffer(Path);
+  if (std::error_code EC = BufferOrError.getError())
     return EC;
+
+  auto Buffer = std::move(BufferOrError.get());
+  std::unique_ptr<InstrProfReader> Result;
 
   // Create the reader.
   if (IndexedInstrProfReader::hasFormat(*Buffer))
@@ -58,16 +60,20 @@ InstrProfReader::create(std::string Path,
     Result.reset(new TextInstrProfReader(std::move(Buffer)));
 
   // Initialize the reader and return the result.
-  return initializeReader(*Result);
+  if (std::error_code EC = initializeReader(*Result))
+    return EC;
+
+  return std::move(Result);
 }
 
 std::error_code IndexedInstrProfReader::create(
     std::string Path, std::unique_ptr<IndexedInstrProfReader> &Result) {
   // Set up the buffer to read.
-  std::unique_ptr<MemoryBuffer> Buffer;
-  if (std::error_code EC = setupMemoryBuffer(Path, Buffer))
+  auto BufferOrError = setupMemoryBuffer(Path);
+  if (std::error_code EC = BufferOrError.getError())
     return EC;
 
+  auto Buffer = std::move(BufferOrError.get());
   // Create the reader.
   if (!IndexedInstrProfReader::hasFormat(*Buffer))
     return instrprof_error::bad_magic;

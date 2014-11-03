@@ -18,6 +18,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ProfileData/InstrProf.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/EndianStream.h"
@@ -94,8 +95,7 @@ public:
 
   /// Factory method to create an appropriately typed reader for the given
   /// instrprof file.
-  static std::error_code create(std::string Path,
-                                std::unique_ptr<InstrProfReader> &Result);
+  static ErrorOr<std::unique_ptr<InstrProfReader>> create(std::string Path);
 };
 
 /// Reader for the simple text based instrprof format.

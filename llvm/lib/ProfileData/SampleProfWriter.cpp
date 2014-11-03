@@ -107,11 +107,10 @@ bool SampleProfileWriterBinary::write(StringRef FName,
 /// \param Format Encoding format for the profile file.
 ///
 /// \returns an error code indicating the status of the created writer.
-std::error_code
-SampleProfileWriter::create(StringRef Filename,
-                            std::unique_ptr<SampleProfileWriter> &Writer,
-                            SampleProfileFormat Format) {
+ErrorOr<std::unique_ptr<SampleProfileWriter>>
+SampleProfileWriter::create(StringRef Filename, SampleProfileFormat Format) {
   std::error_code EC;
+  std::unique_ptr<SampleProfileWriter> Writer;
 
   if (Format == SPF_Binary)
     Writer.reset(new SampleProfileWriterBinary(Filename, EC));
@@ -120,5 +119,8 @@ SampleProfileWriter::create(StringRef Filename,
   else
     EC = sampleprof_error::unrecognized_format;
 
-  return EC;
+  if (EC)
+    return EC;
+
+  return std::move(Writer);
 }

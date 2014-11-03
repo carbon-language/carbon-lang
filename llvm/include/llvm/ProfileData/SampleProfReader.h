@@ -92,9 +92,8 @@ public:
   }
 
   /// \brief Create a sample profile reader appropriate to the file format.
-  static std::error_code create(StringRef Filename,
-                                std::unique_ptr<SampleProfileReader> &Reader,
-                                LLVMContext &C);
+  static ErrorOr<std::unique_ptr<SampleProfileReader>>
+  create(StringRef Filename, LLVMContext &C);
 
 protected:
   /// \brief Map every function to its associated profile.

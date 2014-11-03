@@ -17,6 +17,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/ProfileData/SampleProf.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -71,9 +72,8 @@ public:
 
   /// \brief Profile writer factory. Create a new writer based on the value of
   /// \p Format.
-  static std::error_code create(StringRef Filename,
-                                std::unique_ptr<SampleProfileWriter> &Result,
-                                SampleProfileFormat Format);
+  static ErrorOr<std::unique_ptr<SampleProfileWriter>>
+  create(StringRef Filename, SampleProfileFormat Format);
 
 protected:
   /// \brief Output stream where to emit the profile to.
