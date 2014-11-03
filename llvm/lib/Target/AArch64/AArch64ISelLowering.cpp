@@ -1158,9 +1158,9 @@ static SDValue getAArch64Cmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
         break;
       case ISD::SETLE:
       case ISD::SETGT:
-        if ((VT == MVT::i32 && C != 0x7fffffff &&
+        if ((VT == MVT::i32 && C != INT32_MAX &&
              isLegalArithImmed((uint32_t)(C + 1))) ||
-            (VT == MVT::i64 && C != 0x7ffffffffffffffULL &&
+            (VT == MVT::i64 && C != INT64_MAX &&
              isLegalArithImmed(C + 1ULL))) {
           CC = (CC == ISD::SETLE) ? ISD::SETLT : ISD::SETGE;
           C = (VT == MVT::i32) ? (uint32_t)(C + 1) : C + 1;
@@ -1169,9 +1169,9 @@ static SDValue getAArch64Cmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
         break;
       case ISD::SETULE:
       case ISD::SETUGT:
-        if ((VT == MVT::i32 && C != 0xffffffff &&
+        if ((VT == MVT::i32 && C != UINT32_MAX &&
              isLegalArithImmed((uint32_t)(C + 1))) ||
-            (VT == MVT::i64 && C != 0xfffffffffffffffULL &&
+            (VT == MVT::i64 && C != UINT64_MAX &&
              isLegalArithImmed(C + 1ULL))) {
           CC = (CC == ISD::SETULE) ? ISD::SETULT : ISD::SETUGE;
           C = (VT == MVT::i32) ? (uint32_t)(C + 1) : C + 1;
