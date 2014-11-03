@@ -4,14 +4,19 @@
 
 // This is fine, as CrcGenerateTable*() has a prototype.
 void __fastcall CrcGenerateTableFastcall(void);
+void __fastcall CrcGenerateTableFastcall();
 void __fastcall CrcGenerateTableFastcall() {}
 void __stdcall CrcGenerateTableStdcall(void);
+void __stdcall CrcGenerateTableStdcall();
 void __stdcall CrcGenerateTableStdcall() {}
 void __thiscall CrcGenerateTableThiscall(void);
+void __thiscall CrcGenerateTableThiscall();
 void __thiscall CrcGenerateTableThiscall() {}
 void __pascal CrcGenerateTablePascal(void);
+void __pascal CrcGenerateTablePascal();
 void __pascal CrcGenerateTablePascal() {}
 void __vectorcall CrcGenerateTableVectorcall(void);
+void __vectorcall CrcGenerateTableVectorcall();
 void __vectorcall CrcGenerateTableVectorcall() {}
 
 void __fastcall CrcGenerateTableNoProtoFastcall(); // expected-error{{function with no prototype cannot use the fastcall calling convention}}

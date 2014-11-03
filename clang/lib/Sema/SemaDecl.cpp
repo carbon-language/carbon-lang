@@ -7383,10 +7383,21 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (!NewFD->isInvalidDecl() && NewFD->isMSVCRTEntryPoint())
       CheckMSVCRTEntryPoint(NewFD);
 
+    if (!NewFD->isInvalidDecl())
+      D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
+                                                  isExplicitSpecialization));
+    else if (!Previous.empty())
+      // Make graceful recovery from an invalid redeclaration.
+      D.setRedeclaration(true);
+    assert((NewFD->isInvalidDecl() || !D.isRedeclaration() ||
+            Previous.getResultKind() != LookupResult::FoundOverloaded) &&
+           "previous declaration set still overloaded");
+
     // Diagnose no-prototype function declarations with calling conventions that
-    // don't support variadic calls.
-    const FunctionType *FT = R->castAs<FunctionType>();
-    if (FT->isFunctionNoProtoType() && !D.isFunctionDefinition()) {
+    // don't support variadic calls. Only do this in C and do it after merging
+    // possibly prototyped redeclarations.
+    const FunctionType *FT = NewFD->getType()->castAs<FunctionType>();
+    if (isa<FunctionNoProtoType>(FT) && !D.isFunctionDefinition()) {
       CallingConv CC = FT->getExtInfo().getCC();
       if (!supportsVariadicCall(CC)) {
         // Windows system headers sometimes accidentally use stdcall without
@@ -7397,16 +7408,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
             << FunctionType::getNameForCallConv(CC);
       }
     }
-
-    if (!NewFD->isInvalidDecl())
-      D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
-                                                  isExplicitSpecialization));
-    else if (!Previous.empty())
-      // Make graceful recovery from an invalid redeclaration.
-      D.setRedeclaration(true);
-    assert((NewFD->isInvalidDecl() || !D.isRedeclaration() ||
-            Previous.getResultKind() != LookupResult::FoundOverloaded) &&
-           "previous declaration set still overloaded");
   } else {
     // C++11 [replacement.functions]p3:
     //  The program's definitions shall not be specified as inline.
