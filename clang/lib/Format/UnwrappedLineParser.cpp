@@ -1354,10 +1354,11 @@ void UnwrappedLineParser::parseEnum() {
   if (FormatTok->Tok.is(tok::l_brace)) {
     FormatTok->BlockKind = BK_Block;
     bool HasError = !parseBracedList(/*ContinueOnSemicolons=*/true);
-    if (FormatTok->is(tok::semi))
-      nextToken();
-    if (HasError)
+    if (HasError) {
+      if (FormatTok->is(tok::semi))
+        nextToken();
       addUnwrappedLine();
+    }
   }
   // We fall through to parsing a structural element afterwards, so that in
   // enum A {} n, m;
