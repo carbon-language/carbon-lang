@@ -356,12 +356,8 @@ def : ProcessorModel<"cortex-a8",   CortexA8Model,
                                      FeatureAClass]>;
 def : ProcessorModel<"cortex-a9",   CortexA9Model,
                                     [ProcA9, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureHasRAS,
+                                     FeatureDSPThumb2, FeatureHasRAS, FeatureMP,
                                      FeatureAClass]>;
-def : ProcessorModel<"cortex-a9-mp", CortexA9Model,
-                                    [ProcA9, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureMP,
-                                     FeatureHasRAS, FeatureAClass]>;
 
 // FIXME: A12 has currently the same Schedule model as A9
 def : ProcessorModel<"cortex-a12", CortexA9Model,

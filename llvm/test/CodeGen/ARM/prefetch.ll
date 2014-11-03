@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=thumb-eabi -mattr=-thumb2 %s -o - | FileCheck %s -check-prefix CHECK-T1
 ; RUN: llc -mtriple=thumb-eabi -mattr=+v7 %s -o - | FileCheck %s -check-prefix=THUMB2
 ; RUN: llc -mtriple=arm-eabi -mattr=+v7 %s -o - | FileCheck %s -check-prefix=ARM
-; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a9-mp %s -o - | FileCheck %s -check-prefix=ARM-MP
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a9 %s -o - | FileCheck %s -check-prefix=ARM-MP
 ; rdar://8601536
 
 ; CHECK-T1-NOT: pld
