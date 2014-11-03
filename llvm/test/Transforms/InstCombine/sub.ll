@@ -540,3 +540,13 @@ define i32 @test45(i32 %x, i32 %y) {
 ; CHECK-NEXT: %sub = and i32 %x, %y
 ; CHECK: ret i32 %sub
 }
+
+define i32 @test46(i32 %x, i32 %y) {
+ %or = or i32 %x, %y
+ %sub = sub i32 %or, %x
+ ret i32 %sub
+; CHECK-LABEL: @test46(
+; CHECK-NEXT: %x.not = xor i32 %x, -1
+; CHECK-NEXT: %sub = and i32 %y, %x.not
+; CHECK: ret i32 %sub
+}

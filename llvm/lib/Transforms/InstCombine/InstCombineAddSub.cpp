@@ -1431,11 +1431,11 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
             Z2 = dyn_cast<Constant>(B2); B = B1;
         } else if (match(B1, m_AnyZero()) && match(A2, m_AnyZero())) {
             Z1 = dyn_cast<Constant>(B1); B = B2;
-            Z2 = dyn_cast<Constant>(A2); A = A1; 
+            Z2 = dyn_cast<Constant>(A2); A = A1;
         }
-        
-        if (Z1 && Z2 && 
-            (I.hasNoSignedZeros() || 
+
+        if (Z1 && Z2 &&
+            (I.hasNoSignedZeros() ||
              (Z1->isNegativeZeroValue() && Z2->isNegativeZeroValue()))) {
           return SelectInst::Create(C, A, B);
         }
@@ -1594,7 +1594,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     // -(X >>u 31) -> (X >>s 31)
     // -(X >>s 31) -> (X >>u 31)
     if (C->isZero()) {
-      Value *X; 
+      Value *X;
       ConstantInt *CI;
       if (match(Op1, m_LShr(m_Value(X), m_ConstantInt(CI))) &&
           // Verify we are shifting out everything but the sign bit.
@@ -1609,7 +1609,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   }
 
 
-  { 
+  {
     Value *Y;
     // X-(X+Y) == -Y    X-(Y+X) == -Y
     if (match(Op1, m_Add(m_Specific(Op0), m_Value(Y))) ||
@@ -1628,6 +1628,15 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         (match(Op0, m_Or(m_Specific(A), m_Specific(B))) ||
          match(Op0, m_Or(m_Specific(B), m_Specific(A)))))
       return BinaryOperator::CreateAnd(A, B);
+  }
+
+  if (Op0->hasOneUse()) {
+    Value *Y = nullptr;
+    // ((X | Y) - X) --> (~X & Y)
+    if (match(Op0, m_Or(m_Value(Y), m_Specific(Op1))) ||
+        match(Op0, m_Or(m_Specific(Op1), m_Value(Y))))
+      return BinaryOperator::CreateAnd(
+          Y, Builder->CreateNot(Op1, Op1->getName() + ".not"));
   }
 
   if (Op1->hasOneUse()) {
