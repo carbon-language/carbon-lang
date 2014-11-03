@@ -98,7 +98,6 @@ public:
   Interposable interposable() const override { return interposeNo; }
   Merge merge() const override { return mergeNo; }
   Alignment alignment() const override { return Alignment(0); }
-  SectionChoice sectionChoice() const = 0;
   StringRef customSectionName() const override { return ""; }
   SectionPosition sectionPosition() const override {
     return sectionPositionAny;

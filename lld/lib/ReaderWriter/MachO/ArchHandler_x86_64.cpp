@@ -137,7 +137,7 @@ public:
                            const lld::Atom **target, 
                            Reference::Addend *addend) override;
 
-  virtual bool needsLocalSymbolInRelocatableFile(const DefinedAtom *atom) {
+  bool needsLocalSymbolInRelocatableFile(const DefinedAtom *atom) override {
     return (atom->contentType() == DefinedAtom::typeCString);
   }
 

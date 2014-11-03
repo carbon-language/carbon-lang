@@ -733,8 +733,6 @@ public:
 
   ContentPermissions permissions() const override { return permRW_; }
 
-  virtual ArrayRef<uint8_t> rawContent() const = 0;
-
   Alignment alignment() const override {
     // The alignment should be 8 byte aligned
     return Alignment(3);
@@ -766,8 +764,6 @@ public:
   uint64_t size() const override { return rawContent().size(); }
 
   ContentPermissions permissions() const override { return permR_X; }
-
-  virtual ArrayRef<uint8_t> rawContent() const = 0;
 
   Alignment alignment() const override {
     return Alignment(4); // 16
@@ -860,8 +856,6 @@ public:
   uint64_t size() const override { return rawContent().size(); }
 
   ContentPermissions permissions() const override { return permRW_; }
-
-  virtual ArrayRef<uint8_t> rawContent() const = 0;
 
   Alignment alignment() const override { return size(); }
 

@@ -192,7 +192,8 @@ public:
       : SharedLibraryFile(path), _installName(installName) {
   }
 
-  virtual const SharedLibraryAtom *exports(StringRef name, bool isData) const {
+  const SharedLibraryAtom *exports(StringRef name,
+                                   bool isData) const override {
     // Pass down _installName and _allocator so that if this requested symbol
     // is re-exported through this dylib, the SharedLibraryAtom's loadName()
     // is this dylib installName and not the implementation dylib's.
