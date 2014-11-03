@@ -1,5 +1,7 @@
 (* RUN: cp %s %T/executionengine.ml
- * RUN: %ocamlcomp -g -warn-error A -package llvm.executionengine -linkpkg %T/executionengine.ml -o %t
+ * RUN: %ocamlc -g -warn-error A -package llvm.executionengine -linkpkg %T/executionengine.ml -o %t
+ * RUN: %t
+ * RUN: %ocamlopt -g -warn-error A -package llvm.executionengine -linkpkg %T/executionengine.ml -o %t
  * RUN: %t
  * REQUIRES: native, object-emission
  * XFAIL: vg_leak

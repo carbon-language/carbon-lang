@@ -1,5 +1,7 @@
 (* RUN: cp %s %T/passmgr_builder.ml
- * RUN: %ocamlcomp -g -warn-error A -package llvm.passmgr_builder -linkpkg %T/passmgr_builder.ml -o %t
+ * RUN: %ocamlc -g -warn-error A -package llvm.passmgr_builder -linkpkg %T/passmgr_builder.ml -o %t
+ * RUN: %t %t.bc
+ * RUN: %ocamlopt -g -warn-error A -package llvm.passmgr_builder -linkpkg %T/passmgr_builder.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)

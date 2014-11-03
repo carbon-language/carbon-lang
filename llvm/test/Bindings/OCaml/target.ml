@@ -1,5 +1,6 @@
 (* RUN: cp %s %T/target.ml
- * RUN: %ocamlcomp -g -warn-error A -package llvm.target -package llvm.all_backends -linkpkg %T/target.ml -o %t
+ * RUN: %ocamlc -g -warn-error A -package llvm.target -package llvm.all_backends -linkpkg %T/target.ml -o %t
+ * RUN: %ocamlopt -g -warn-error A -package llvm.target -package llvm.all_backends -linkpkg %T/target.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)

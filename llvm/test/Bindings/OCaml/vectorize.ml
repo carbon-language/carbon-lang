@@ -1,5 +1,7 @@
 (* RUN: cp %s %T/vectorize_opts.ml
- * RUN: %ocamlcomp -g -warn-error A -package llvm.vectorize -linkpkg %T/vectorize_opts.ml -o %t
+ * RUN: %ocamlc -g -warn-error A -package llvm.vectorize -linkpkg %T/vectorize_opts.ml -o %t
+ * RUN: %t %t.bc
+ * RUN: %ocamlopt -g -warn-error A -package llvm.vectorize -linkpkg %T/vectorize_opts.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)
