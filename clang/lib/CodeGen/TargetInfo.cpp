@@ -3072,11 +3072,19 @@ llvm::Value *NaClX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 
 
 // PowerPC-32
-
 namespace {
-class PPC32TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
+/// PPC32_SVR4_ABIInfo - The 32-bit PowerPC ELF (SVR4) ABI information.
+class PPC32_SVR4_ABIInfo : public DefaultABIInfo {
 public:
-  PPC32TargetCodeGenInfo(CodeGenTypes &CGT) : DefaultTargetCodeGenInfo(CGT) {}
+  PPC32_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT) : DefaultABIInfo(CGT) {}
+
+  llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                         CodeGenFunction &CGF) const override;
+};
+
+class PPC32TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  PPC32TargetCodeGenInfo(CodeGenTypes &CGT) : TargetCodeGenInfo(new PPC32_SVR4_ABIInfo(CGT)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const override {
     // This is recovered from gcc output.
@@ -3091,6 +3099,96 @@ public:
   }
 };
 
+}
+
+llvm::Value *PPC32_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
+                                           QualType Ty,
+                                           CodeGenFunction &CGF) const {
+  if (const ComplexType *CTy = Ty->getAs<ComplexType>()) {
+    // TODO: Implement this. For now ignore.
+    (void)CTy;
+    return nullptr;
+  }
+
+  bool isI64 = Ty->isIntegerType() && getContext().getTypeSize(Ty) == 64;
+  bool isInt = Ty->isIntegerType() || Ty->isPointerType() || Ty->isAggregateType();
+  llvm::Type *CharPtr = CGF.Int8PtrTy;
+  llvm::Type *CharPtrPtr = CGF.Int8PtrPtrTy;
+
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *GPRPtr = Builder.CreateBitCast(VAListAddr, CharPtr, "gprptr");
+  llvm::Value *GPRPtrAsInt = Builder.CreatePtrToInt(GPRPtr, CGF.Int32Ty);
+  llvm::Value *FPRPtrAsInt = Builder.CreateAdd(GPRPtrAsInt, Builder.getInt32(1));
+  llvm::Value *FPRPtr = Builder.CreateIntToPtr(FPRPtrAsInt, CharPtr);
+  llvm::Value *OverflowAreaPtrAsInt = Builder.CreateAdd(FPRPtrAsInt, Builder.getInt32(3));
+  llvm::Value *OverflowAreaPtr = Builder.CreateIntToPtr(OverflowAreaPtrAsInt, CharPtrPtr);
+  llvm::Value *RegsaveAreaPtrAsInt = Builder.CreateAdd(OverflowAreaPtrAsInt, Builder.getInt32(4));
+  llvm::Value *RegsaveAreaPtr = Builder.CreateIntToPtr(RegsaveAreaPtrAsInt, CharPtrPtr);
+  llvm::Value *GPR = Builder.CreateLoad(GPRPtr, false, "gpr");
+  // Align GPR when TY is i64.
+  if (isI64) {
+    llvm::Value *GPRAnd = Builder.CreateAnd(GPR, Builder.getInt8(1));
+    llvm::Value *CC64 = Builder.CreateICmpEQ(GPRAnd, Builder.getInt8(1));
+    llvm::Value *GPRPlusOne = Builder.CreateAdd(GPR, Builder.getInt8(1));
+    GPR = Builder.CreateSelect(CC64, GPRPlusOne, GPR);
+  }
+  llvm::Value *FPR = Builder.CreateLoad(FPRPtr, false, "fpr");
+  llvm::Value *OverflowArea = Builder.CreateLoad(OverflowAreaPtr, false, "overflow_area");
+  llvm::Value *OverflowAreaAsInt = Builder.CreatePtrToInt(OverflowArea, CGF.Int32Ty);
+  llvm::Value *RegsaveArea = Builder.CreateLoad(RegsaveAreaPtr, false, "regsave_area");
+  llvm::Value *RegsaveAreaAsInt = Builder.CreatePtrToInt(RegsaveArea, CGF.Int32Ty);
+
+  llvm::Value *CC = Builder.CreateICmpULT(isInt ? GPR : FPR,
+                                          Builder.getInt8(8), "cond");
+
+  llvm::Value *RegConstant = Builder.CreateMul(isInt ? GPR : FPR,
+                                               Builder.getInt8(isInt ? 4 : 8));
+
+  llvm::Value *OurReg = Builder.CreateAdd(RegsaveAreaAsInt, Builder.CreateSExt(RegConstant, CGF.Int32Ty));
+
+  if (Ty->isFloatingType())
+    OurReg = Builder.CreateAdd(OurReg, Builder.getInt32(32));
+
+  llvm::BasicBlock *UsingRegs = CGF.createBasicBlock("using_regs");
+  llvm::BasicBlock *UsingOverflow = CGF.createBasicBlock("using_overflow");
+  llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
+
+  Builder.CreateCondBr(CC, UsingRegs, UsingOverflow);
+
+  CGF.EmitBlock(UsingRegs);
+
+  llvm::Type *PTy = llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  llvm::Value *Result1 = Builder.CreateIntToPtr(OurReg, PTy);
+  // Increase the GPR/FPR indexes.
+  if (isInt) {
+    GPR = Builder.CreateAdd(GPR, Builder.getInt8(isI64 ? 2 : 1));
+    Builder.CreateStore(GPR, GPRPtr);
+  } else {
+    FPR = Builder.CreateAdd(FPR, Builder.getInt8(1));
+    Builder.CreateStore(FPR, FPRPtr);
+  }
+  CGF.EmitBranch(Cont);
+
+  CGF.EmitBlock(UsingOverflow);
+
+  // Increase the overflow area.
+  llvm::Value *Result2 = Builder.CreateIntToPtr(OverflowAreaAsInt, PTy);
+  OverflowAreaAsInt = Builder.CreateAdd(OverflowAreaAsInt, Builder.getInt32(isInt ? 4 : 8));
+  Builder.CreateStore(Builder.CreateIntToPtr(OverflowAreaAsInt, CharPtr), OverflowAreaPtr);
+  CGF.EmitBranch(Cont);
+
+  CGF.EmitBlock(Cont);
+
+  llvm::PHINode *Result = CGF.Builder.CreatePHI(PTy, 2, "vaarg.addr");
+  Result->addIncoming(Result1, UsingRegs);
+  Result->addIncoming(Result2, UsingOverflow);
+
+  if (Ty->isAggregateType()) {
+    llvm::Value *AGGPtr = Builder.CreateBitCast(Result, CharPtrPtr, "aggrptr")  ;
+    return Builder.CreateLoad(AGGPtr, false, "aggr");
+  }
+
+  return Result;
 }
 
 bool
