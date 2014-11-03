@@ -77,6 +77,11 @@ TEST_F(FormatTestJava, ClassDeclarations) {
                "    implements SomeInterface,\n"
                "               AnotherInterface {}",
                getStyleWithColumns(40));
+  verifyFormat("@SomeAnnotation()\n"
+               "abstract class aaaaaaaaaaaa extends bbbbbbbbbbbbbbb\n"
+               "    implements cccccccccccc {\n"
+               "}",
+               getStyleWithColumns(76));
 }
 
 TEST_F(FormatTestJava, EnumDeclarations) {

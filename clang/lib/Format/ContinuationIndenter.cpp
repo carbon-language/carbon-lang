@@ -428,7 +428,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
        !State.Stack.back().AvoidBinPacking) ||
       Previous.Type == TT_BinaryOperator)
     State.Stack.back().BreakBeforeParameter = false;
-  if (Previous.Type == TT_TemplateCloser && Current.NestingLevel == 0)
+  if ((Previous.Type == TT_TemplateCloser ||
+       Previous.Type == TT_JavaAnnotation) &&
+      Current.NestingLevel == 0)
     State.Stack.back().BreakBeforeParameter = false;
   if (NextNonComment->is(tok::question) ||
       (PreviousNonComment && PreviousNonComment->is(tok::question)))

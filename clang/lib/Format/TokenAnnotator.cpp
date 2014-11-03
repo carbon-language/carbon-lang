@@ -1474,15 +1474,17 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       Left.Type == TT_InheritanceColon)
     return 2;
 
+  if (Left.Type == TT_LeadingJavaAnnotation)
+    return 1;
+  if (Style.Language == FormatStyle::LK_Java && Right.TokenText == "implements")
+    return 2;
+
   if (Right.isMemberAccess()) {
     if (Left.is(tok::r_paren) && Left.MatchingParen &&
         Left.MatchingParen->ParameterCount > 0)
       return 20; // Should be smaller than breaking at a nested comma.
     return 150;
   }
-
-  if (Left.Type == TT_LeadingJavaAnnotation)
-    return 1;
 
   if (Right.Type == TT_TrailingAnnotation &&
       (!Right.Next || Right.Next->isNot(tok::l_paren))) {
