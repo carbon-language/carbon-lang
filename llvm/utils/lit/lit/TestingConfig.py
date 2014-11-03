@@ -24,6 +24,7 @@ class TestingConfig:
             'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
             'TERM' : os.environ.get('TERM',''),
             'LLVM_DISABLE_CRASH_REPORT' : '1',
+            'LD_PRELOAD' : os.environ.get('LD_PRELOAD',''),
             }
 
         if sys.platform == 'win32':
