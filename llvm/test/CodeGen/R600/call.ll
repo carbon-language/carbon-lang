@@ -1,7 +1,7 @@
 ; RUN: not llc -march=r600 -mcpu=SI -verify-machineinstrs< %s 2>&1 | FileCheck %s
 ; RUN: not llc -march=r600 -mcpu=cypress < %s 2>&1 | FileCheck %s
 
-; CHECK: error: unsupported call to function defined_function in test_call
+; CHECK: error: unsupported call to function external_function in test_call_external
 
 
 declare i32 @external_function(i32) nounwind
