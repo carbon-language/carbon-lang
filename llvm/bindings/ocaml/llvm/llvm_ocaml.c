@@ -1590,11 +1590,12 @@ CAMLprim value llvm_position_builder(value Pos, value B) {
 }
 
 /* llbuilder -> llbasicblock */
-CAMLprim LLVMBasicBlockRef llvm_insertion_block(value B) {
+CAMLprim value llvm_insertion_block(value B) {
+  CAMLparam0();
   LLVMBasicBlockRef InsertBlock = LLVMGetInsertBlock(Builder_val(B));
   if (!InsertBlock)
-    raise_not_found();
-  return InsertBlock;
+    caml_raise_not_found();
+  CAMLreturn((value) InsertBlock);
 }
 
 /* llvalue -> string -> llbuilder -> unit */
