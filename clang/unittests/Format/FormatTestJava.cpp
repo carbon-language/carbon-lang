@@ -140,8 +140,9 @@ TEST_F(FormatTestJava, Generics) {
   verifyFormat("A.<B>doSomething();");
 
   verifyFormat("@Override\n"
-               "public Map<String, ?> getAll() {\n"
-               "}");
+               "public Map<String, ?> getAll() {\n}");
+
+  verifyFormat("public static <R> ArrayList<R> get() {\n}");
 }
 
 TEST_F(FormatTestJava, StringConcatenation) {
