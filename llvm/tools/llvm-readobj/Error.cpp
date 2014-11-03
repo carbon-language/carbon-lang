@@ -24,7 +24,7 @@ public:
 };
 } // namespace
 
-const char *_readobj_error_category::name() const {
+const char *_readobj_error_category::name() const LLVM_NOEXCEPT {
   return "llvm.readobj";
 }
 
