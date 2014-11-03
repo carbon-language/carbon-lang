@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c99 %s
-// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c11 %s
-// RUN: %clang_cc1 -triple i686-mingw32   -fsyntax-only -verify -std=c11 %s
-// RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify -std=c99 %s
+// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c99 -DMS %s
+// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c11 -DMS %s
+// RUN: %clang_cc1 -triple i686-mingw32   -fsyntax-only -verify -std=c11 -DGNU %s
+// RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify -std=c99 -DGNU %s
 
 // Invalid usage.
 __declspec(dllimport) typedef int typedef1; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
@@ -122,6 +122,10 @@ void (*FunForInit)() = &decl2A;
 __declspec(dllimport) void def() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}
 
 // Import inline function.
+#ifdef GNU
+// expected-warning@+3{{'dllimport' attribute ignored on inline function}}
+// expected-warning@+3{{'dllimport' attribute ignored on inline function}}
+#endif
 __declspec(dllimport) inline void inlineFunc1() {}
 inline void __attribute__((dllimport)) inlineFunc2() {}
 
@@ -146,12 +150,21 @@ __declspec(dllimport) void redecl4(); // expected-error{{redeclaration of 'redec
 __declspec(dllimport) void redecl5(); // expected-warning{{redeclaration of 'redecl5' should not add 'dllimport' attribute}}
 
 
-// Inline redeclarations are fine.
+// Inline redeclarations.
+#ifdef GNU
+// expected-warning@+3{{'redecl6' redeclared inline; 'dllimport' attribute ignored}}
+#endif
 __declspec(dllimport) void redecl6();
                       inline void redecl6() {}
 
-                      void redecl7(); // expected-note{{previous declaration is here}}
-__declspec(dllimport) inline void redecl7() {} // expected-warning{{redeclaration of 'redecl7' should not add 'dllimport' attribute}}
+#ifdef MS
+// expected-note@+5{{previous declaration is here}}
+// expected-warning@+5{{redeclaration of 'redecl7' should not add 'dllimport' attribute}}
+#else
+// expected-warning@+3{{'dllimport' attribute ignored on inline function}}
+#endif
+                      void redecl7();
+__declspec(dllimport) inline void redecl7() {}
 
 // External linkage is required.
 __declspec(dllimport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllimport'}}

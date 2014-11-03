@@ -2003,6 +2003,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setDLLStorageClass(llvm::GlobalVariable::DLLImportStorageClass);
   else if (D->hasAttr<DLLExportAttr>())
     GV->setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
+  else
+    GV->setDLLStorageClass(llvm::GlobalVariable::DefaultStorageClass);
 
   if (Linkage == llvm::GlobalVariable::CommonLinkage)
     // common vars aren't constant even if declared const.
@@ -2338,6 +2340,12 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
   // declarations).
   auto *Fn = cast<llvm::Function>(GV);
   setFunctionLinkage(GD, Fn);
+  if (D->hasAttr<DLLImportAttr>())
+    GV->setDLLStorageClass(llvm::GlobalVariable::DLLImportStorageClass);
+  else if (D->hasAttr<DLLExportAttr>())
+    GV->setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
+  else
+    GV->setDLLStorageClass(llvm::GlobalVariable::DefaultStorageClass);
 
   // FIXME: this is redundant with part of setFunctionDefinitionAttributes
   setGlobalVisibility(Fn, D);

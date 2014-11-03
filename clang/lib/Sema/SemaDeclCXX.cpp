@@ -4655,7 +4655,9 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
     // Don't inherit dll attribute until the template is instantiated.
     return;
 
-  bool ClassExported = ClassAttr->getKind() == attr::DLLExport;
+  // The class is either imported or exported.
+  const bool ClassExported = ClassAttr->getKind() == attr::DLLExport;
+  const bool ClassImported = !ClassExported;
 
   // Force declaration of implicit members so they can inherit the attribute.
   S.ForceDeclarationOfImplicitMembers(Class);
@@ -4674,15 +4676,22 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
     if (!VD && !MD)
       continue;
 
-    // Don't process deleted methods.
-    if (MD && MD->isDeleted())
-      continue;
+    if (MD) {
+      // Don't process deleted methods.
+      if (MD->isDeleted())
+        continue;
 
-    if (MD && MD->isMoveAssignmentOperator() && !ClassExported &&
-        MD->isInlined()) {
-      // Current MSVC versions don't export the move assignment operators, so
-      // don't attempt to import them if we have a definition.
-      continue;
+      if (MD->isMoveAssignmentOperator() && ClassImported && MD->isInlined()) {
+        // Current MSVC versions don't export the move assignment operators, so
+        // don't attempt to import them if we have a definition.
+        continue;
+      }
+
+      if (MD->isInlined() && ClassImported &&
+          !S.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+        // MinGW does not import inline functions.
+        continue;
+      }
     }
 
     if (!getDLLAttr(Member)) {

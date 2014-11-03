@@ -3999,6 +3999,16 @@ static void handleDLLAttr(Sema &S, Decl *D, const AttributeList &A) {
     return;
   }
 
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->isInlined() && A.getKind() == AttributeList::AT_DLLImport &&
+        !S.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+      // MinGW doesn't allow dllimport on inline functions.
+      S.Diag(A.getRange().getBegin(), diag::warn_attribute_ignored_on_inline)
+          << A.getName();
+      return;
+    }
+  }
+
   unsigned Index = A.getAttributeSpellingListIndex();
   Attr *NewAttr = A.getKind() == AttributeList::AT_DLLExport
                       ? (Attr *)S.mergeDLLExportAttr(D, A.getRange(), Index)

@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c11 -O0 -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-windows-msvc -emit-llvm -std=c11 -O0 -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c11 -O0 -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-windows-gnu  -emit-llvm -std=c11 -O0 -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c11 -O1 -o - %s | FileCheck --check-prefix=O1 %s
-// RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c11 -O1 -o - %s | FileCheck --check-prefix=O1 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c11 -O0 -o - %s | FileCheck --check-prefix=CHECK --check-prefix=MS %s
+// RUN: %clang_cc1 -triple x86_64-windows-msvc -emit-llvm -std=c11 -O0 -o - %s | FileCheck --check-prefix=CHECK --check-prefix=MS %s
+// RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c11 -O0 -o - %s | FileCheck --check-prefix=CHECK --check-prefix=GNU %s
+// RUN: %clang_cc1 -triple x86_64-windows-gnu  -emit-llvm -std=c11 -O0 -o - %s | FileCheck --check-prefix=CHECK --check-prefix=GNU %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c11 -O1 -o - %s | FileCheck --check-prefix=O1 --check-prefix=MO1 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c11 -O1 -o - %s | FileCheck --check-prefix=O1 --check-prefix=GO1 %s
 
 #define JOIN2(x, y) x##y
 #define JOIN(x, y) JOIN2(x, y)
@@ -79,14 +79,18 @@ __declspec(dllimport) void decl(void);
 void (*use_decl)(void) = &decl;
 
 // Import inline function.
-// CHECK-DAG: declare dllimport void @inlineFunc()
-// O1-DAG: define available_externally dllimport void @inlineFunc()
+// MS-DAG: declare dllimport void @inlineFunc()
+// MO1-DAG: define available_externally dllimport void @inlineFunc()
+// GNU-DAG: declare void @inlineFunc()
+// GO1-DAG: define available_externally void @inlineFunc()
 __declspec(dllimport) inline void inlineFunc(void) {}
 USE(inlineFunc)
 
 // inline attributes
-// CHECK-DAG: declare dllimport void @noinline()
-// O1-DAG: define available_externally dllimport void @noinline()
+// MS-DAG: declare dllimport void @noinline()
+// MO1-DAG: define available_externally dllimport void @noinline()
+// GNU-DAG: declare void @noinline()
+// GO1-DAG: define available_externally void @noinline()
 // CHECK-NOT: @alwaysInline()
 // O1-NOT: @alwaysInline()
 __declspec(dllimport) __attribute__((noinline)) inline void noinline(void) {}

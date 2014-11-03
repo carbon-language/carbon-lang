@@ -5185,6 +5185,14 @@ static void checkDLLAttributeRedeclaration(Sema &S, NamedDecl *OldDecl,
     S.Diag(OldImportAttr->getLocation(), diag::note_previous_attribute);
     OldDecl->dropAttr<DLLImportAttr>();
     NewDecl->dropAttr<DLLImportAttr>();
+  } else if (IsInline && OldImportAttr &&
+             !S.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+    // In MinGW, seeing a function declared inline drops the dllimport attribute.
+    OldDecl->dropAttr<DLLImportAttr>();
+    NewDecl->dropAttr<DLLImportAttr>();
+    S.Diag(NewDecl->getLocation(),
+           diag::warn_dllimport_dropped_from_inline_function)
+        << NewDecl << OldImportAttr;
   }
 }
 

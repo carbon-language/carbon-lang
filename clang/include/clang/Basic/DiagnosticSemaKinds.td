@@ -2114,7 +2114,13 @@ def err_attribute_aligned_too_great : Error<
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
   "%q0 redeclared without %1 attribute: previous %1 ignored">,
   InGroup<DiagGroup<"inconsistent-dllimport">>;
+def warn_dllimport_dropped_from_inline_function : Warning<
+  "%q0 redeclared inline; %1 attribute ignored">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_ignored : Warning<"%0 attribute ignored">,
+  InGroup<IgnoredAttributes>;
+def warn_attribute_ignored_on_inline :
+  Warning<"%0 attribute ignored on inline function">,
   InGroup<IgnoredAttributes>;
 def warn_attribute_after_definition_ignored : Warning<
   "attribute %0 after definition is ignored">,
