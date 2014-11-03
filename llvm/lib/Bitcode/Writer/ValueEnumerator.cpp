@@ -321,7 +321,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   EnumerateValueSymbolTable(M->getValueSymbolTable());
   EnumerateNamedMetadata(M);
 
-  SmallVector<std::pair<unsigned, MDNode*>, 8> MDs;
+  SmallVector<std::pair<unsigned, Value *>, 8> MDs;
 
   // Enumerate types used by function bodies and argument lists.
   for (const Function &F : *M) {
@@ -347,7 +347,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
         MDs.clear();
         I.getAllMetadataOtherThanDebugLoc(MDs);
         for (unsigned i = 0, e = MDs.size(); i != e; ++i)
-          EnumerateMetadata(MDs[i].second);
+          EnumerateMetadata(cast<MDNode>(MDs[i].second));
 
         if (!I.getDebugLoc().isUnknown()) {
           MDNode *Scope, *IA;
@@ -741,10 +741,10 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
             FnLocalMDVector.push_back(MD);
       }
 
-      SmallVector<std::pair<unsigned, MDNode*>, 8> MDs;
+      SmallVector<std::pair<unsigned, Value *>, 8> MDs;
       I->getAllMetadataOtherThanDebugLoc(MDs);
       for (unsigned i = 0, e = MDs.size(); i != e; ++i) {
-        MDNode *N = MDs[i].second;
+        auto *N = cast<MDNode>(MDs[i].second);
         if (N->isFunctionLocal() && N->getFunction())
           FnLocalMDVector.push_back(N);
       }

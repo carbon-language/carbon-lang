@@ -770,9 +770,8 @@ void Instruction::getAllMetadataImpl(
     array_pod_sort(Result.begin(), Result.end());
 }
 
-void Instruction::
-getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
-                                    MDNode*> > &Result) const {
+void Instruction::getAllMetadataOtherThanDebugLocImpl(
+    SmallVectorImpl<std::pair<unsigned, Value *>> &Result) const {
   Result.clear();
   assert(hasMetadataHashEntry() &&
          getContext().pImpl->MetadataStore.count(this) &&

@@ -182,8 +182,8 @@ public:
 
   /// getAllMetadataOtherThanDebugLoc - This does the same thing as
   /// getAllMetadata, except that it filters out the debug location.
-  void getAllMetadataOtherThanDebugLoc(SmallVectorImpl<std::pair<unsigned,
-                                       MDNode*> > &MDs) const {
+  void getAllMetadataOtherThanDebugLoc(
+      SmallVectorImpl<std::pair<unsigned, Value *>> &MDs) const {
     if (hasMetadataOtherThanDebugLoc())
       getAllMetadataOtherThanDebugLocImpl(MDs);
   }
@@ -296,8 +296,8 @@ private:
   MDNode *getMDNodeImpl(StringRef Kind) const;
   void
   getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned, Value *>> &) const;
-  void getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
-                                           MDNode*> > &) const;
+  void getAllMetadataOtherThanDebugLocImpl(
+      SmallVectorImpl<std::pair<unsigned, Value *>> &) const;
   void clearMetadataHashEntries();
 public:
   //===--------------------------------------------------------------------===//

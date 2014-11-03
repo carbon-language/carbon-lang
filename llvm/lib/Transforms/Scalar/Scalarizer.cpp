@@ -327,12 +327,11 @@ bool Scalarizer::canTransferMetadata(unsigned Tag) {
 // Transfer metadata from Op to the instructions in CV if it is known
 // to be safe to do so.
 void Scalarizer::transferMetadata(Instruction *Op, const ValueVector &CV) {
-  SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
+  SmallVector<std::pair<unsigned, Value *>, 4> MDs;
   Op->getAllMetadataOtherThanDebugLoc(MDs);
   for (unsigned I = 0, E = CV.size(); I != E; ++I) {
     if (Instruction *New = dyn_cast<Instruction>(CV[I])) {
-      for (SmallVectorImpl<std::pair<unsigned, MDNode *> >::iterator
-             MI = MDs.begin(), ME = MDs.end(); MI != ME; ++MI)
+      for (auto MI = MDs.begin(), ME = MDs.end(); MI != ME; ++MI)
         if (canTransferMetadata(MI->first))
           New->setMetadata(MI->first, MI->second);
       New->setDebugLoc(Op->getDebugLoc());

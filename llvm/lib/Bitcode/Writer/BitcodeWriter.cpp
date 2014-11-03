@@ -848,7 +848,7 @@ static void WriteMetadataAttachment(const Function &F,
 
   // Write metadata attachments
   // METADATA_ATTACHMENT - [m x [value, [n x [id, mdnode]]]
-  SmallVector<std::pair<unsigned, MDNode*>, 4> MDs;
+  SmallVector<std::pair<unsigned, Value *>, 4> MDs;
 
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();

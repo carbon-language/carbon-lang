@@ -40,7 +40,7 @@ void TypeFinder::run(const Module &M, bool onlyNamed) {
   }
 
   // Get types from functions.
-  SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
+  SmallVector<std::pair<unsigned, Value *>, 4> MDForInst;
   for (Module::const_iterator FI = M.begin(), E = M.end(); FI != E; ++FI) {
     incorporateType(FI->getType());
 
@@ -71,7 +71,7 @@ void TypeFinder::run(const Module &M, bool onlyNamed) {
         // Incorporate types hiding in metadata.
         I.getAllMetadataOtherThanDebugLoc(MDForInst);
         for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
-          incorporateMDNode(MDForInst[i].second);
+          incorporateMDNode(cast<MDNode>(MDForInst[i].second));
 
         MDForInst.clear();
       }

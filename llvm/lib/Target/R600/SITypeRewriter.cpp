@@ -87,7 +87,8 @@ void SITypeRewriter::visitLoadInst(LoadInst &I) {
     Value *BitCast = Builder.CreateBitCast(Ptr,
         PointerType::get(v4i32,PtrTy->getPointerAddressSpace()));
     LoadInst *Load = Builder.CreateLoad(BitCast);
-    SmallVector <std::pair<unsigned, MDNode*>, 8> MD;
+    // FIXME: Should the DebugLoc really get dropped here?
+    SmallVector<std::pair<unsigned, Value *>, 8> MD;
     I.getAllMetadataOtherThanDebugLoc(MD);
     for (unsigned i = 0, e = MD.size(); i != e; ++i) {
       Load->setMetadata(MD[i].first, MD[i].second);

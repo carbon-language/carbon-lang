@@ -531,7 +531,7 @@ static std::string getDebugLocString(const Loop *L) {
 
 /// \brief Propagate known metadata from one instruction to another.
 static void propagateMetadata(Instruction *To, const Instruction *From) {
-  SmallVector<std::pair<unsigned, MDNode *>, 4> Metadata;
+  SmallVector<std::pair<unsigned, Value *>, 4> Metadata;
   From->getAllMetadataOtherThanDebugLoc(Metadata);
 
   for (auto M : Metadata) {

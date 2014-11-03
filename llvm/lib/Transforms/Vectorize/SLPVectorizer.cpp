@@ -188,12 +188,12 @@ static void propagateIRFlags(Value *I, ArrayRef<Value *> VL) {
 /// \returns \p I after propagating metadata from \p VL.
 static Instruction *propagateMetadata(Instruction *I, ArrayRef<Value *> VL) {
   Instruction *I0 = cast<Instruction>(VL[0]);
-  SmallVector<std::pair<unsigned, MDNode *>, 4> Metadata;
+  SmallVector<std::pair<unsigned, Value *>, 4> Metadata;
   I0->getAllMetadataOtherThanDebugLoc(Metadata);
 
   for (unsigned i = 0, n = Metadata.size(); i != n; ++i) {
     unsigned Kind = Metadata[i].first;
-    MDNode *MD = Metadata[i].second;
+    MDNode *MD = cast_or_null<MDNode>(Metadata[i].second);
 
     for (int i = 1, e = VL.size(); MD && i != e; i++) {
       Instruction *I = cast<Instruction>(VL[i]);
