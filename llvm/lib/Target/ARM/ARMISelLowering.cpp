@@ -10557,6 +10557,8 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         return RCPair(0U, &ARM::hGPRRegClass);
       break;
     case 'r':
+      if (Subtarget->isThumb1Only())
+        return RCPair(0U, &ARM::tGPRRegClass);
       return RCPair(0U, &ARM::GPRRegClass);
     case 'w':
       if (VT == MVT::Other)
