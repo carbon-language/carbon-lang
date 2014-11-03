@@ -8,5 +8,5 @@ CHECK: kw_output_format: OUTPUT_FORMAT
 CHECK: l_paren: (
 CHECK: identifier: elf64-x86-64
 CHECK: r_paren: )
-CHECK: OUTPUT_FORMAT(elf64-x86-64)
+CHECK: OUTPUT_FORMAT("elf64-x86-64")
 */
