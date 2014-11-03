@@ -245,6 +245,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_fabs:
+  case Builtin::BI__builtin_fabsf:
+  case Builtin::BI__builtin_fabsl: {
+    Value *Arg1 = EmitScalarExpr(E->getArg(0));
+    Value *Result = EmitFAbs(*this, Arg1);
+    return RValue::get(Result);
+  }
   case Builtin::BI__builtin_fmod:
   case Builtin::BI__builtin_fmodf:
   case Builtin::BI__builtin_fmodl: {
