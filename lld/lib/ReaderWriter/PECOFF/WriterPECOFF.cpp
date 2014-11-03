@@ -872,7 +872,8 @@ private:
   void reorderSEHTableEntriesX64(uint8_t *bufferStart);
 
   void addChunk(Chunk *chunk);
-  void addSectionChunk(SectionChunk *chunk, SectionHeaderTableChunk *table);
+  void addSectionChunk(std::unique_ptr<SectionChunk> chunk,
+                       SectionHeaderTableChunk *table);
   void setImageSizeOnDisk();
   uint64_t
   calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
@@ -982,9 +983,10 @@ void PECOFFWriter::build(const File &linkedFile) {
   for (auto i : atoms) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
-    auto *section = new AtomChunk(_ctx, sectionName, contents);
+    std::unique_ptr<SectionChunk> section(
+        new AtomChunk(_ctx, sectionName, contents));
     if (section->size() > 0)
-      addSectionChunk(section, sectionTable);
+      addSectionChunk(std::move(section), sectionTable);
   }
 
   // Build atom to its RVA map.
@@ -996,12 +998,12 @@ void PECOFFWriter::build(const File &linkedFile) {
   // relocated. So we can create the ".reloc" section which contains
   // all the relocation sites.
   if (_ctx.getBaseRelocationEnabled()) {
-    BaseRelocChunk *baseReloc = new BaseRelocChunk(_chunks, _ctx);
+    std::unique_ptr<SectionChunk> baseReloc(new BaseRelocChunk(_chunks, _ctx));
     if (baseReloc->size()) {
-      addSectionChunk(baseReloc, sectionTable);
+      SectionChunk &ref = *baseReloc;
+      addSectionChunk(std::move(baseReloc), sectionTable);
       dataDirectory->setField(DataDirectoryIndex::BASE_RELOCATION_TABLE,
-                              baseReloc->getVirtualAddress(),
-                              baseReloc->size());
+                              ref.getVirtualAddress(), ref.size());
     }
   }
 
@@ -1177,18 +1179,19 @@ void PECOFFWriter::addChunk(Chunk *chunk) {
   _chunks.push_back(std::unique_ptr<Chunk>(chunk));
 }
 
-void PECOFFWriter::addSectionChunk(SectionChunk *chunk,
+void PECOFFWriter::addSectionChunk(std::unique_ptr<SectionChunk> chunk,
                                    SectionHeaderTableChunk *table) {
-  _chunks.push_back(std::unique_ptr<Chunk>(chunk));
-  table->addSection(chunk);
+  SectionChunk &ref = *chunk;
+  _chunks.push_back(std::move(chunk));
+  table->addSection(&ref);
   _numSections++;
 
   // Compute and set the starting address of sections when loaded in
   // memory. They are different from positions on disk because sections need
   // to be sector-aligned on disk but page-aligned in memory.
-  chunk->setVirtualAddress(_imageSizeInMemory);
+  ref.setVirtualAddress(_imageSizeInMemory);
   _imageSizeInMemory = llvm::RoundUpToAlignment(
-      _imageSizeInMemory + chunk->size(), _ctx.getPageSize());
+      _imageSizeInMemory + ref.size(), _ctx.getPageSize());
 }
 
 void PECOFFWriter::setImageSizeOnDisk() {
