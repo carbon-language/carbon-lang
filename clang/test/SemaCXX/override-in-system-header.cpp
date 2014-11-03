@@ -8,10 +8,12 @@ struct A
 {
   virtual void x();
   END_COM_MAP;
+  IFACEMETHOD(Initialize)();
 };
  
 struct B : A
 {
   virtual void x() override;
   END_COM_MAP;
+  IFACEMETHOD(Initialize)();
 };

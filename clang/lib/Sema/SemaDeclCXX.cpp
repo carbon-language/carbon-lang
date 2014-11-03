@@ -1905,12 +1905,14 @@ void Sema::DiagnoseAbsenceOfOverrideControl(NamedDecl *D) {
       isa<CXXDestructorDecl>(MD))
     return;
 
-  if (MD->getLocation().isMacroID()) {
-    SourceLocation MacroLoc = getSourceManager().getSpellingLoc(MD->getLocation());
-    if (getSourceManager().isInSystemHeader(MacroLoc))
+  SourceLocation Loc = MD->getLocation();
+  SourceLocation SpellingLoc = Loc;
+  if (getSourceManager().isMacroArgExpansion(Loc))
+    SpellingLoc = getSourceManager().getImmediateExpansionRange(Loc).first;
+  SpellingLoc = getSourceManager().getSpellingLoc(SpellingLoc);
+  if (SpellingLoc.isValid() && getSourceManager().isInSystemHeader(SpellingLoc))
       return;
-  }
-  
+    
   if (MD->size_overridden_methods() > 0) {
     Diag(MD->getLocation(), diag::warn_function_marked_not_override_overriding)
       << MD->getDeclName();
