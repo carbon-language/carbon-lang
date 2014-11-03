@@ -53,7 +53,15 @@ endif
 #    from toplevels.
 ifneq ($(ObjectsO),)
 ifeq ($(ENABLE_SHARED),1)
-OCAMLSTUBS := 1
+OCAMLSTUBS     := 1
+OCAMLSTUBFLAGS := $(patsubst %,-cclib %, $(LLVMLibsOptions) -l$(LIBRARYNAME))
+endif
+endif
+
+# Avoid the need for LD_LIBRARY_PATH
+ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+ifneq ($(HOST_OS),Darwin)
+OCAMLRPATH     := $(RPATH) -Wl,'$$ORIGIN/../../lib'
 endif
 endif
 
@@ -82,15 +90,6 @@ Compile.CMO  := $(strip $(OCAMLFIND) c -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 Compile.CMX  := $(strip $(OCAMLFIND) opt -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 
 ifdef OCAMLSTUBS
-# Avoid the need for LD_LIBRARY_PATH
-ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
-ifneq ($(HOST_OS),Darwin)
-OCAMLRPATH   := $(RPATH) -Wl,'$(SharedLibDir)'
-endif
-endif
-endif
-
-ifdef OCAMLSTUBS
 Archive.CMA  := $(strip $(OCAMLFIND) c -a -dllib -l$(LIBRARYNAME) $(OCAMLDEBUGFLAG) \
                                        -o)
 else
@@ -99,10 +98,7 @@ Archive.CMA  := $(strip $(OCAMLFIND) c -a -custom $(OCAMLAFLAGS) $(OCAMLDEBUGFLA
 endif
 
 ifdef OCAMLSTUBS
-Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(patsubst %,-cclib %, \
-                                    $(LLVMLibsOptions) -l$(LIBRARYNAME) \
-                                    -L$(SharedLibDir) $(OCAMLRPATH)) \
-                                    $(OCAMLDEBUGFLAG) -o)
+Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(OCAMLSTUBFLAGS) $(OCAMLDEBUGFLAG) -o)
 else
 Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) -o)
 endif
@@ -431,6 +427,9 @@ printcamlvars::
 	$(Echo) "LLVM_CONFIG  : " '$(LLVM_CONFIG)'
 	$(Echo) "OCAMLCFLAGS  : " '$(OCAMLCFLAGS)'
 	$(Echo) "OCAMLAFLAGS  : " '$(OCAMLAFLAGS)'
+	$(Echo) "OCAMLRPATH   : " '$(OCAMLRPATH)'
+	$(Echo) "OCAMLSTUBS   : " '$(OCAMLSTUBS)'
+	$(Echo) "OCAMLSTUBFLAGS : " '$(OCAMLSTUBFLAGS)'
 	$(Echo) "OCAMLFIND    : " '$(OCAMLFIND)'
 	$(Echo) "Compile.CMI  : " '$(Compile.CMI)'
 	$(Echo) "Compile.CMO  : " '$(Compile.CMO)'
@@ -438,6 +437,7 @@ printcamlvars::
 	$(Echo) "Compile.CMX  : " '$(Compile.CMX)'
 	$(Echo) "Archive.CMXA : " '$(Archive.CMXA)'
 	$(Echo) "CAML_LIBDIR  : " '$(CAML_LIBDIR)'
+	$(Echo) "LibraryA     : " '$(LibraryA)'
 	$(Echo) "LibraryCMA   : " '$(LibraryCMA)'
 	$(Echo) "LibraryCMXA  : " '$(LibraryCMXA)'
 	$(Echo) "SharedLib    : " '$(SharedLib)'
