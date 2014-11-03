@@ -210,61 +210,61 @@ static inline uint64_t ror(uint64_t elt, unsigned size) {
 /// as the immediate operand of a logical instruction for the given register
 /// size.  If so, return true with "encoding" set to the encoded value in
 /// the form N:immr:imms.
-static inline bool processLogicalImmediate(uint64_t imm, unsigned regSize,
-                                           uint64_t &encoding) {
-  if (imm == 0ULL || imm == ~0ULL ||
-      (regSize != 64 && (imm >> regSize != 0 || imm == ~0U)))
+static inline bool processLogicalImmediate(uint64_t Imm, unsigned RegSize,
+                                           uint64_t &Encoding) {
+  if (Imm == 0ULL || Imm == ~0ULL ||
+      (RegSize != 64 && (Imm >> RegSize != 0 || Imm == ~0U)))
     return false;
 
   // First, determine the element size.
-  unsigned size = regSize;
+  unsigned Size = RegSize;
 
   do {
-    size /= 2;
-    uint64_t mask = (1ULL << size) - 1;
+    Size /= 2;
+    uint64_t Mask = (1ULL << Size) - 1;
 
-    if ((imm & mask) != ((imm >> size) & mask)) {
-      size *= 2;
+    if ((Imm & Mask) != ((Imm >> Size) & Mask)) {
+      Size *= 2;
       break;
     }
-  } while (size > 2);
+  } while (Size > 2);
 
   // Second, determine the rotation to make the element be: 0^m 1^n.
-  uint32_t cto, i;
-  uint64_t mask = ((uint64_t)-1LL) >> (64 - size);
-  imm &= mask;
+  uint32_t CTO, I;
+  uint64_t Mask = ((uint64_t)-1LL) >> (64 - Size);
+  Imm &= Mask;
 
-  if (isShiftedMask_64(imm)) {
-    i = countTrailingZeros(imm);
-    cto = CountTrailingOnes_64(imm >> i);
+  if (isShiftedMask_64(Imm)) {
+    I = countTrailingZeros(Imm);
+    CTO = CountTrailingOnes_64(Imm >> I);
   } else {
-    imm |= ~mask;
-    if (!isShiftedMask_64(~imm))
+    Imm |= ~Mask;
+    if (!isShiftedMask_64(~Imm))
       return false;
 
-    unsigned clo = CountLeadingOnes_64(imm);
-    i = 64 - clo;
-    cto = clo + CountTrailingOnes_64(imm) - (64 - size);
+    unsigned CLO = CountLeadingOnes_64(Imm);
+    I = 64 - CLO;
+    CTO = CLO + CountTrailingOnes_64(Imm) - (64 - Size);
   }
 
-  // Encode in immr the number of RORs it would take to get *from* 0^m 1^n
+  // Encode in Immr the number of RORs it would take to get *from* 0^m 1^n
   // to our target value, where i is the number of RORs to go the opposite
   // direction.
-  assert(size > i && "i should be smaller than element size");
-  unsigned immr = (size - i) & (size - 1);
+  assert(Size > I && "I should be smaller than element Size");
+  unsigned Immr = (Size - I) & (Size - 1);
 
   // If size has a 1 in the n'th bit, create a value that has zeroes in
   // bits [0, n] and ones above that.
-  uint64_t nimms = ~(size-1) << 1;
+  uint64_t NImms = ~(Size-1) << 1;
 
   // Or the CTO value into the low bits, which must be below the Nth bit
   // bit mentioned above.
-  nimms |= (cto-1);
+  NImms |= (CTO-1);
 
   // Extract the seventh bit and toggle it to create the N field.
-  unsigned N = ((nimms >> 6) & 1) ^ 1;
+  unsigned N = ((NImms >> 6) & 1) ^ 1;
 
-  encoding = (N << 12) | (immr << 6) | (nimms & 0x3f);
+  Encoding = (N << 12) | (Immr << 6) | (NImms & 0x3f);
   return true;
 }
 
