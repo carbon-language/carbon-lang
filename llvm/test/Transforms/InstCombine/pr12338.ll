@@ -6,7 +6,6 @@ entry:
 
 for.cond:
   %local = phi <1 x i32> [ <i32 0>, %entry ], [ %phi2, %cond.end47 ]
-; CHECK: sub <1 x i32> <i32 92>, %local
   %phi3 = sub <1 x i32> zeroinitializer, %local
   br label %cond.end
 
@@ -19,6 +18,7 @@ cond.end:
 
 cond.end47:
   %sum = add <1 x i32> %cond, <i32 92>
+; CHECK: sub <1 x i32> <i32 -92>, %cond
   %phi2 = sub <1 x i32> zeroinitializer, %sum
   br label %for.cond
 }
