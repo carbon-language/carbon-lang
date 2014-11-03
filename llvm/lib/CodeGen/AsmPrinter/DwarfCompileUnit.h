@@ -226,16 +226,10 @@ public:
 
   void applySubprogramAttributesToDefinition(DISubprogram SP, DIE &SPDie);
 
-  /// addRangeList - Add an address range list to the list of range lists.
-  void addRangeList(RangeSpanList Ranges) {
-    CURangeLists.push_back(std::move(Ranges));
-  }
-
   /// getRangeLists - Get the vector of range lists.
   const SmallVectorImpl<RangeSpanList> &getRangeLists() const {
     return CURangeLists;
   }
-  SmallVectorImpl<RangeSpanList> &getRangeLists() { return CURangeLists; }
 
   /// getRanges - Get the list of ranges for this unit.
   const SmallVectorImpl<RangeSpan> &getRanges() const { return CURanges; }
