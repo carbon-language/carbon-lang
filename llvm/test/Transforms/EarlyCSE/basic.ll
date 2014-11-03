@@ -1,5 +1,6 @@
 ; RUN: opt < %s -S -early-cse | FileCheck %s
 
+declare void @llvm.assume(i1) nounwind
 
 ; CHECK-LABEL: @test1(
 define void @test1(i8 %V, i32 *%P) {
@@ -42,6 +43,16 @@ define i32 @test2(i32 *%P) {
   ; CHECK: ret i32 0
 }
 
+; CHECK-LABEL: @test2a(
+define i32 @test2a(i32 *%P, i1 %b) {
+  %V1 = load i32* %P
+  tail call void @llvm.assume(i1 %b)
+  %V2 = load i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: ret i32 0
+}
+
 ;; Cross block load value numbering.
 ; CHECK-LABEL: @test3(
 define i32 @test3(i32 *%P, i1 %Cond) {
@@ -51,6 +62,22 @@ T:
   store i32 4, i32* %P
   ret i32 42
 F:
+  %V2 = load i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: F:
+  ; CHECK: ret i32 0
+}
+
+; CHECK-LABEL: @test3a(
+define i32 @test3a(i32 *%P, i1 %Cond, i1 %b) {
+  %V1 = load i32* %P
+  br i1 %Cond, label %T, label %F
+T:
+  store i32 4, i32* %P
+  ret i32 42
+F:
+  tail call void @llvm.assume(i1 %b)
   %V2 = load i32* %P
   %Diff = sub i32 %V1, %V2
   ret i32 %Diff
@@ -92,6 +119,15 @@ define i32 @test5(i32 *%P) {
 ; CHECK-LABEL: @test6(
 define i32 @test6(i32 *%P) {
   store i32 42, i32* %P
+  %V1 = load i32* %P
+  ret i32 %V1
+  ; CHECK: ret i32 42
+}
+
+; CHECK-LABEL: @test6a(
+define i32 @test6a(i32 *%P, i1 %b) {
+  store i32 42, i32* %P
+  tail call void @llvm.assume(i1 %b)
   %V1 = load i32* %P
   ret i32 %V1
   ; CHECK: ret i32 42
