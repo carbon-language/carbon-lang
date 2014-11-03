@@ -19,6 +19,9 @@
 
 include $(LEVEL)/Makefile.config
 
+# We have our own rules for building static libraries.
+NO_BUILD_ARCHIVE = 1
+
 # CFLAGS needs to be set before Makefile.rules is included.
 CXX.Flags += -I"$(shell $(OCAMLFIND) c -where)"
 C.Flags += -I"$(shell $(OCAMLFIND) c -where)"
