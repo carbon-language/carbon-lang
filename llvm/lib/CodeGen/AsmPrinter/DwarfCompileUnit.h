@@ -232,7 +232,7 @@ public:
 
   /// getRangeLists - Get the vector of range lists.
   const SmallVectorImpl<RangeSpanList> &getRangeLists() const {
-    return CURangeLists;
+    return (Skeleton ? Skeleton : this)->CURangeLists;
   }
 
   /// getRanges - Get the list of ranges for this unit.

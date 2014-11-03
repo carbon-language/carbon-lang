@@ -565,7 +565,7 @@ void DwarfDebug::finalizeModuleInfo() {
       if (!AddrPool.isEmpty())
         SkCU->addSectionLabel(SkCU->getUnitDie(), dwarf::DW_AT_GNU_addr_base,
                               DwarfAddrSectionSym, DwarfAddrSectionSym);
-      if (!TheCU.getRangeLists().empty())
+      if (!SkCU->getRangeLists().empty())
         SkCU->addSectionLabel(SkCU->getUnitDie(), dwarf::DW_AT_GNU_ranges_base,
                               DwarfDebugRangeSectionSym,
                               DwarfDebugRangeSectionSym);

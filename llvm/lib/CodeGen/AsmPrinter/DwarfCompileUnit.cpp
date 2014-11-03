@@ -395,7 +395,7 @@ DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
                             DD->getLabelAfterInsn(R.second)));
 
   // Add the range list to the set of ranges to be emitted.
-  CURangeLists.push_back(std::move(List));
+  (Skeleton ? Skeleton : this)->CURangeLists.push_back(std::move(List));
 }
 
 void DwarfCompileUnit::attachRangesOrLowHighPC(
