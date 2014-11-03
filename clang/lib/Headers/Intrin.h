@@ -160,9 +160,6 @@ void __writefsword(unsigned long, unsigned short);
 void __writemsr(unsigned long, unsigned __int64);
 static __inline__
 void *_AddressOfReturnAddress(void);
-unsigned int _andn_u32(unsigned int, unsigned int);
-unsigned int _bextr_u32(unsigned int, unsigned int, unsigned int);
-unsigned int _bextri_u32(unsigned int, unsigned int);
 static __inline__
 unsigned char _BitScanForward(unsigned long *_Index, unsigned long _Mask);
 static __inline__
@@ -175,20 +172,9 @@ static __inline__
 unsigned char _bittestandreset(long *, long);
 static __inline__
 unsigned char _bittestandset(long *, long);
-unsigned int _blcfill_u32(unsigned int);
-unsigned int _blci_u32(unsigned int);
-unsigned int _blcic_u32(unsigned int);
-unsigned int _blcmsk_u32(unsigned int);
-unsigned int _blcs_u32(unsigned int);
-unsigned int _blsfill_u32(unsigned int);
-unsigned int _blsi_u32(unsigned int);
-unsigned int _blsic_u32(unsigned int);
-unsigned int _blsmsk_u32(unsigned int);
-unsigned int _blsr_u32(unsigned int);
 unsigned __int64 __cdecl _byteswap_uint64(unsigned __int64);
 unsigned long __cdecl _byteswap_ulong(unsigned long);
 unsigned short __cdecl _byteswap_ushort(unsigned short);
-unsigned _bzhi_u32(unsigned int, unsigned int);
 void __cdecl _disable(void);
 void __cdecl _enable(void);
 void __cdecl _fxrstor(void const *);
@@ -266,7 +252,6 @@ unsigned long __cdecl _lrotl(unsigned long, int);
 static __inline__
 unsigned long __cdecl _lrotr(unsigned long, int);
 static __inline__
-unsigned int _lzcnt_u32(unsigned int);
 static __inline__
 void _ReadBarrier(void);
 static __inline__
@@ -274,8 +259,6 @@ void _ReadWriteBarrier(void);
 static __inline__
 void *_ReturnAddress(void);
 unsigned int _rorx_u32(unsigned int, const unsigned int);
-int __cdecl _rdrand16_step(unsigned short *);
-int __cdecl _rdrand32_step(unsigned int *);
 static __inline__
 unsigned int __cdecl _rotl(unsigned int _Value, int _Shift);
 static __inline__
@@ -301,12 +284,8 @@ unsigned int _shrx_u32(unsigned int, unsigned int);
 void _Store_HLERelease(long volatile *, long);
 void _Store64_HLERelease(__int64 volatile *, __int64);
 void _StorePointer_HLERelease(void *volatile *, void *);
-unsigned int _t1mskc_u32(unsigned int);
-unsigned int _tzcnt_u32(unsigned int);
-unsigned int _tzmsk_u32(unsigned int);
 static __inline__
 void _WriteBarrier(void);
-void _xabort(const unsigned int imm);
 unsigned __int32 xbegin(void);
 void _xend(void);
 static __inline__
@@ -315,7 +294,6 @@ void __cdecl _xrstor(void const *, unsigned __int64);
 void __cdecl _xsave(void *, unsigned __int64);
 void __cdecl _xsaveopt(void *, unsigned __int64);
 void __cdecl _xsetbv(unsigned int, unsigned __int64);
-unsigned char _xtest(void);
 
 /* These additional intrinsics are turned on in x64/amd64/x86_64 mode. */
 #ifdef __x86_64__
@@ -364,9 +342,6 @@ void __writegsbyte(unsigned long, unsigned char);
 void __writegsdword(unsigned long, unsigned long);
 void __writegsqword(unsigned long, unsigned __int64);
 void __writegsword(unsigned long, unsigned short);
-unsigned __int64 _andn_u64(unsigned __int64, unsigned __int64);
-unsigned __int64 _bextr_u64(unsigned __int64, unsigned int, unsigned int);
-unsigned __int64 _bextri_u64(unsigned __int64, unsigned int);
 static __inline__
 unsigned char _BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask);
 static __inline__
@@ -379,18 +354,7 @@ static __inline__
 unsigned char _bittestandreset64(__int64 *, __int64);
 static __inline__
 unsigned char _bittestandset64(__int64 *, __int64);
-unsigned __int64 _blcfill_u64(unsigned __int64);
-unsigned __int64 _blci_u64(unsigned __int64);
-unsigned __int64 _blcic_u64(unsigned __int64);
-unsigned __int64 _blcmsk_u64(unsigned __int64);
-unsigned __int64 _blcs_u64(unsigned __int64);
-unsigned __int64 _blsfill_u64(unsigned __int64);
-unsigned __int64 _blsi_u64(unsigned __int64);
-unsigned __int64 _blsic_u64(unsigned __int64);
-unsigned __int64 _blsmsk_u64(unsigned __int64);
-unsigned __int64 _blsr_u64(unsigned __int64);
 unsigned __int64 __cdecl _byteswap_uint64(unsigned __int64);
-unsigned __int64 _bzhi_u64(unsigned __int64, unsigned int);
 void __cdecl _fxrstor64(void const *);
 void __cdecl _fxsave64(void *);
 long _InterlockedAnd_np(long volatile *_Value, long _Mask);
@@ -444,7 +408,6 @@ __int64 _InterlockedXor64(__int64 volatile *_Value, __int64 _Mask);
 __int64 _InterlockedXor64_np(__int64 volatile *_Value, __int64 _Mask);
 char _InterlockedXor8_np(char volatile *_Value, char _Mask);
 static __inline__
-unsigned __int64 _lzcnt_u64(unsigned __int64);
 __int64 _mul128(__int64 _Multiplier, __int64 _Multiplicand,
                 __int64 *_HighProduct);
 unsigned int __cdecl _readfsbase_u32(void);
@@ -458,8 +421,6 @@ int __cdecl _setjmpex(jmp_buf);
 #endif
 unsigned __int64 _shlx_u64(unsigned __int64, unsigned int);
 unsigned __int64 shrx_u64(unsigned __int64, unsigned int);
-unsigned __int64 _tzcnt_u64(unsigned __int64);
-unsigned __int64 _tzmsk_u64(unsigned __int64);
 unsigned __int64 _umul128(unsigned __int64 _Multiplier,
                           unsigned __int64 _Multiplicand,
                           unsigned __int64 *_HighProduct);
@@ -545,12 +506,6 @@ _BitScanReverse(unsigned long *_Index, unsigned long _Mask) {
   *_Index = 31 - __builtin_clzl(_Mask);
   return 1;
 }
-static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
-_lzcnt_u32(unsigned int a) {
-  if (!a)
-    return 32;
-  return __builtin_clzl(a);
-}
 static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
 __popcnt16(unsigned short value) {
   return __builtin_popcount((int)value);
@@ -607,13 +562,6 @@ _BitScanReverse64(unsigned long *_Index, unsigned __int64 _Mask) {
     return 0;
   *_Index = 63 - __builtin_clzll(_Mask);
   return 1;
-}
-static
-__inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
-_lzcnt_u64(unsigned __int64 a) {
-  if (!a)
-    return 64;
-  return __builtin_clzll(a);
 }
 static __inline__
 unsigned __int64 __attribute__((__always_inline__, __nodebug__))
