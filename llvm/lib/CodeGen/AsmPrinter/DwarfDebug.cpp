@@ -591,7 +591,7 @@ void DwarfDebug::finalizeModuleInfo() {
         // 2.17.3).
         U.addUInt(U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
       } else {
-        RangeSpan &Range = TheCU.getRanges().back();
+        const RangeSpan &Range = TheCU.getRanges().back();
         U.attachLowHighPC(U.getUnitDie(), Range.getStart(), Range.getEnd());
       }
     }

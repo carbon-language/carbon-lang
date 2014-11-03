@@ -107,9 +107,6 @@ protected:
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
-  // List of ranges for a given compile unit.
-  SmallVector<RangeSpan, 1> CURanges;
-
   // DIEValueAllocator - All DIEValues are allocated through this allocator.
   BumpPtrAllocator DIEValueAllocator;
 
@@ -148,10 +145,6 @@ public:
 
   /// hasContent - Return true if this compile unit has something to write out.
   bool hasContent() const { return !UnitDie.getChildren().empty(); }
-
-  /// getRanges - Get the list of ranges for this unit.
-  const SmallVectorImpl<RangeSpan> &getRanges() const { return CURanges; }
-  SmallVectorImpl<RangeSpan> &getRanges() { return CURanges; }
 
   /// getParentContextString - Get a string containing the language specific
   /// context for a global name.
