@@ -750,7 +750,7 @@ CAMLprim value llvm_float_of_const(LLVMValueRef Const)
   if (LLVMIsAConstantFP(Const)) {
     Result = LLVMConstRealGetDouble(Const, &LosesInfo);
     if (LosesInfo)
-        return Val_int(0);
+        CAMLreturn(Val_int(0));
 
     Option = alloc(1, 0);
     Field(Option, 0) = caml_copy_double(Result);
@@ -1590,12 +1590,11 @@ CAMLprim value llvm_position_builder(value Pos, value B) {
 }
 
 /* llbuilder -> llbasicblock */
-CAMLprim value llvm_insertion_block(value B) {
-  CAMLparam0();
+CAMLprim LLVMBasicBlockRef llvm_insertion_block(value B) {
   LLVMBasicBlockRef InsertBlock = LLVMGetInsertBlock(Builder_val(B));
   if (!InsertBlock)
     caml_raise_not_found();
-  CAMLreturn((value) InsertBlock);
+  return InsertBlock;
 }
 
 /* llvalue -> string -> llbuilder -> unit */
