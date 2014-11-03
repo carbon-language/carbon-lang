@@ -625,6 +625,16 @@ BUILTIN(__builtin_ia32_rdrand16_step, "UiUs*", "")
 BUILTIN(__builtin_ia32_rdrand32_step, "UiUi*", "")
 BUILTIN(__builtin_ia32_rdrand64_step, "UiULLi*", "")
 
+// FSGSBASE
+BUILTIN(__builtin_ia32_rdfsbase32, "Ui", "")
+BUILTIN(__builtin_ia32_rdfsbase64, "ULLi", "")
+BUILTIN(__builtin_ia32_rdgsbase32, "Ui", "")
+BUILTIN(__builtin_ia32_rdgsbase64, "ULLi", "")
+BUILTIN(__builtin_ia32_wrfsbase32, "vUi", "")
+BUILTIN(__builtin_ia32_wrfsbase64, "vULLi", "")
+BUILTIN(__builtin_ia32_wrgsbase32, "vUi", "")
+BUILTIN(__builtin_ia32_wrgsbase64, "vULLi", "")
+
 // ADX
 BUILTIN(__builtin_ia32_addcarryx_u32, "UcUcUiUiUi*", "")
 BUILTIN(__builtin_ia32_addcarryx_u64, "UcUcULLiULLiULLi*", "")

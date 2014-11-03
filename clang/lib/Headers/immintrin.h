@@ -118,6 +118,58 @@ _rdrand64_step(unsigned long long *__p)
 #endif
 #endif /* __RDRND__ */
 
+#ifdef __FSGSBASE__
+#ifdef __x86_64__
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_readfsbase_u32(void)
+{
+  return __builtin_ia32_rdfsbase32();
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
+_readfsbase_u64(void)
+{
+  return __builtin_ia32_rdfsbase64();
+}
+
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_readgsbase_u32(void)
+{
+  return __builtin_ia32_rdgsbase32();
+}
+
+static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
+_readgsbase_u64(void)
+{
+  return __builtin_ia32_rdgsbase64();
+}
+
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+_writefsbase_u32(unsigned int __V)
+{
+  return __builtin_ia32_wrfsbase32(__V);
+}
+
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+_writefsbase_u64(unsigned long long __V)
+{
+  return __builtin_ia32_wrfsbase64(__V);
+}
+
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+_writegsbase_u32(unsigned int __V)
+{
+  return __builtin_ia32_wrgsbase32(__V);
+}
+
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+_writegsbase_u64(unsigned long long __V)
+{
+  return __builtin_ia32_wrgsbase64(__V);
+}
+#endif
+#endif /* __FSGSBASE__ */
+
 #ifdef __RTM__
 #include <rtmintrin.h>
 #endif

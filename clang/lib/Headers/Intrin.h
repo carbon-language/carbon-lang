@@ -410,10 +410,6 @@ char _InterlockedXor8_np(char volatile *_Value, char _Mask);
 static __inline__
 __int64 _mul128(__int64 _Multiplier, __int64 _Multiplicand,
                 __int64 *_HighProduct);
-unsigned int __cdecl _readfsbase_u32(void);
-unsigned __int64 __cdecl _readfsbase_u64(void);
-unsigned int __cdecl _readgsbase_u32(void);
-unsigned __int64 __cdecl _readgsbase_u64(void);
 unsigned __int64 _rorx_u64(unsigned __int64, const unsigned int);
 __int64 _sarx_i64(__int64, unsigned int);
 #if __STDC_HOSTED__
@@ -424,10 +420,6 @@ unsigned __int64 shrx_u64(unsigned __int64, unsigned int);
 unsigned __int64 _umul128(unsigned __int64 _Multiplier,
                           unsigned __int64 _Multiplicand,
                           unsigned __int64 *_HighProduct);
-void __cdecl _writefsbase_u32(unsigned int);
-void _cdecl _writefsbase_u64(unsigned __int64);
-void __cdecl _writegsbase_u32(unsigned int);
-void __cdecl _writegsbase_u64(unsigned __int64);
 void __cdecl _xrstor64(void const *, unsigned __int64);
 void __cdecl _xsave64(void *, unsigned __int64);
 void __cdecl _xsaveopt64(void *, unsigned __int64);

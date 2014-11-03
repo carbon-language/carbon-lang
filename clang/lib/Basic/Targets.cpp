@@ -1709,6 +1709,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasPCLMUL;
   bool HasLZCNT;
   bool HasRDRND;
+  bool HasFSGSBASE;
   bool HasBMI;
   bool HasBMI2;
   bool HasPOPCNT;
@@ -1886,12 +1887,12 @@ public:
   X86TargetInfo(const llvm::Triple &Triple)
       : TargetInfo(Triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
         XOPLevel(NoXOP), HasAES(false), HasPCLMUL(false), HasLZCNT(false),
-        HasRDRND(false), HasBMI(false), HasBMI2(false), HasPOPCNT(false),
-        HasRTM(false), HasPRFCHW(false), HasRDSEED(false), HasADX(false),
-        HasTBM(false), HasFMA(false), HasF16C(false), HasAVX512CD(false),
-        HasAVX512ER(false), HasAVX512PF(false), HasAVX512DQ(false),
-        HasAVX512BW(false), HasAVX512VL(false), HasSHA(false), HasCX16(false),
-        CPU(CK_Generic), FPMath(FP_Default) {
+        HasRDRND(false), HasFSGSBASE(false), HasBMI(false), HasBMI2(false),
+        HasPOPCNT(false), HasRTM(false), HasPRFCHW(false), HasRDSEED(false),
+        HasADX(false), HasTBM(false), HasFMA(false), HasF16C(false),
+        HasAVX512CD(false), HasAVX512ER(false), HasAVX512PF(false),
+        HasAVX512DQ(false), HasAVX512BW(false), HasAVX512VL(false),
+        HasSHA(false), HasCX16(false), CPU(CK_Generic), FPMath(FP_Default) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -2193,6 +2194,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "pclmul", true);
     setFeatureEnabledImpl(Features, "rdrnd", true);
     setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "fsgsbase", true);
     break;
   case CK_CoreAVX2:
     setFeatureEnabledImpl(Features, "avx2", true);
@@ -2201,6 +2203,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "rdrnd", true);
     setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "fsgsbase", true);
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "bmi2", true);
     setFeatureEnabledImpl(Features, "rtm", true);
@@ -2214,6 +2217,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "rdrnd", true);
     setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "fsgsbase", true);
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "bmi2", true);
     setFeatureEnabledImpl(Features, "rtm", true);
@@ -2232,6 +2236,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "rdrnd", true);
     setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "fsgsbase", true);
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "bmi2", true);
     setFeatureEnabledImpl(Features, "rtm", true);
@@ -2250,6 +2255,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "rdrnd", true);
     setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "fsgsbase", true);
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "bmi2", true);
     setFeatureEnabledImpl(Features, "rtm", true);
@@ -2329,8 +2335,10 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "avx2", true);
     setFeatureEnabledImpl(Features, "bmi2", true);
     // FALLTHROUGH
-  case CK_BDVER2:
   case CK_BDVER3:
+    setFeatureEnabledImpl(Features, "fsgsbase", true);
+    // FALLTHROUGH
+  case CK_BDVER2:
     setFeatureEnabledImpl(Features, "xop", true);
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "aes", true);
@@ -2549,6 +2557,11 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "rdrnd") {
       HasRDRND = true;
+      continue;
+    }
+
+    if (Feature == "fsgsbase") {
+      HasFSGSBASE = true;
       continue;
     }
 
@@ -2889,6 +2902,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasRDRND)
     Builder.defineMacro("__RDRND__");
 
+  if (HasFSGSBASE)
+    Builder.defineMacro("__FSGSBASE__");
+
   if (HasBMI)
     Builder.defineMacro("__BMI__");
 
@@ -3037,6 +3053,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("tbm", HasTBM)
       .Case("lzcnt", HasLZCNT)
       .Case("rdrnd", HasRDRND)
+      .Case("fsgsbase", HasFSGSBASE)
       .Case("mm3dnow", MMX3DNowLevel >= AMD3DNow)
       .Case("mm3dnowa", MMX3DNowLevel >= AMD3DNowAthlon)
       .Case("mmx", MMX3DNowLevel >= MMX)
