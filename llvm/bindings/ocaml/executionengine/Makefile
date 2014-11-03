@@ -13,7 +13,7 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm_executionengine
-UsedComponents := executionengine mcjit interpreter native
+UsedComponents := executionengine mcjit native
 UsedOcamlInterfaces := llvm llvm_target
 FindlibPackages := ctypes
 
