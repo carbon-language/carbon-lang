@@ -90,8 +90,9 @@ Compile.CMO  := $(strip $(OCAMLFIND) c -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 Compile.CMX  := $(strip $(OCAMLFIND) opt -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 
 ifdef OCAMLSTUBS
-Archive.CMA  := $(strip $(OCAMLFIND) c -a -dllib -l$(LIBRARYNAME) $(OCAMLDEBUGFLAG) \
-                                       -o)
+# -dllib is engaged with ocamlc builds, $(OCAMLSTUBFLAGS) in ocamlc -custom builds.
+Archive.CMA  := $(strip $(OCAMLFIND) c -a -dllib -l$(LIBRARYNAME) $(OCAMLSTUBFLAGS) \
+																			 $(OCAMLDEBUGFLAG) -o)
 else
 Archive.CMA  := $(strip $(OCAMLFIND) c -a -custom $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) \
                                        -o)
