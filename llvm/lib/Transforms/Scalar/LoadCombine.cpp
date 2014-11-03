@@ -15,6 +15,8 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/DataLayout.h"
@@ -51,11 +53,12 @@ struct LoadPOPPair {
 class LoadCombine : public BasicBlockPass {
   LLVMContext *C;
   const DataLayout *DL;
+  AliasAnalysis *AA;
 
 public:
   LoadCombine()
       : BasicBlockPass(ID),
-        C(nullptr), DL(nullptr) {
+        C(nullptr), DL(nullptr), AA(nullptr) {
     initializeSROAPass(*PassRegistry::getPassRegistry());
   }
   
@@ -225,19 +228,23 @@ bool LoadCombine::runOnBasicBlock(BasicBlock &BB) {
   if (skipOptnoneFunction(BB) || !DL)
     return false;
 
+  AA = &getAnalysis<AliasAnalysis>();
+
   IRBuilder<true, TargetFolder>
   TheBuilder(BB.getContext(), TargetFolder(DL));
   Builder = &TheBuilder;
 
   DenseMap<const Value *, SmallVector<LoadPOPPair, 8>> LoadMap;
+  AliasSetTracker AST(*AA);
 
   bool Combined = false;
   unsigned Index = 0;
   for (auto &I : BB) {
-    if (I.mayWriteToMemory() || I.mayThrow()) {
+    if (I.mayThrow() || (I.mayWriteToMemory() && AST.containsUnknown(&I))) {
       if (combineLoads(LoadMap))
         Combined = true;
       LoadMap.clear();
+      AST.clear();
       continue;
     }
     LoadInst *LI = dyn_cast<LoadInst>(&I);
@@ -250,6 +257,7 @@ bool LoadCombine::runOnBasicBlock(BasicBlock &BB) {
     if (!POP.Pointer)
       continue;
     LoadMap[POP.Pointer].push_back(LoadPOPPair(LI, POP, Index++));
+    AST.add(LI);
   }
   if (combineLoads(LoadMap))
     Combined = true;
@@ -258,6 +266,9 @@ bool LoadCombine::runOnBasicBlock(BasicBlock &BB) {
 
 void LoadCombine::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
+
+  AU.addRequired<AliasAnalysis>();
+  AU.addPreserved<AliasAnalysis>();
 }
 
 char LoadCombine::ID = 0;
@@ -266,5 +277,9 @@ BasicBlockPass *llvm::createLoadCombinePass() {
   return new LoadCombine();
 }
 
-INITIALIZE_PASS(LoadCombine, "load-combine", "Combine Adjacent Loads", false,
-                false)
+INITIALIZE_PASS_BEGIN(LoadCombine, "load-combine", "Combine Adjacent Loads",
+                      false, false)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_END(LoadCombine, "load-combine", "Combine Adjacent Loads",
+                    false, false)
+

@@ -370,6 +370,10 @@ public:
   /// alias sets.
   bool containsPointer(Value *P, uint64_t Size, const AAMDNodes &AAInfo) const;
 
+  /// Return true if the specified instruction "may" (or must) alias one of the
+  /// members in any of the sets.
+  bool containsUnknown(Instruction *I) const;
+
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.
   AliasAnalysis &getAliasAnalysis() const { return AA; }

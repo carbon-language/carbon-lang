@@ -242,7 +242,12 @@ bool AliasSetTracker::containsPointer(Value *Ptr, uint64_t Size,
   return false;
 }
 
-
+bool AliasSetTracker::containsUnknown(Instruction *Inst) const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    if (!I->Forward && I->aliasesUnknownInst(Inst, AA))
+      return true;
+  return false;
+}
 
 AliasSet *AliasSetTracker::findAliasSetForUnknownInst(Instruction *Inst) {
   AliasSet *FoundSet = nullptr;
