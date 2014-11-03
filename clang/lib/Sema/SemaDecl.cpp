@@ -7383,6 +7383,21 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (!NewFD->isInvalidDecl() && NewFD->isMSVCRTEntryPoint())
       CheckMSVCRTEntryPoint(NewFD);
 
+    // Diagnose no-prototype function declarations with calling conventions that
+    // don't support variadic calls.
+    const FunctionType *FT = R->castAs<FunctionType>();
+    if (FT->isFunctionNoProtoType() && !D.isFunctionDefinition()) {
+      CallingConv CC = FT->getExtInfo().getCC();
+      if (!supportsVariadicCall(CC)) {
+        // Windows system headers sometimes accidentally use stdcall without
+        // (void) parameters, so we relax this to a warning.
+        int DiagID =
+            CC == CC_X86StdCall ? diag::warn_cconv_knr : diag::err_cconv_knr;
+        Diag(NewFD->getLocation(), DiagID)
+            << FunctionType::getNameForCallConv(CC);
+      }
+    }
+
     if (!NewFD->isInvalidDecl())
       D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
                                                   isExplicitSpecialization));
@@ -7947,21 +7962,6 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   }
 
   // Semantic checking for this function declaration (in isolation).
-
-  // Diagnose calling conventions that don't support variadic calls.
-  QualType NewQType = Context.getCanonicalType(NewFD->getType());
-  const FunctionType *NewType = cast<FunctionType>(NewQType);
-  if (isa<FunctionNoProtoType>(NewType)) {
-    FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
-    if (!supportsVariadicCall(NewTypeInfo.getCC())) {
-      // Windows system headers sometimes accidentally use stdcall without
-      // (void) parameters, so use a default-error warning in this case :-/
-      int DiagID = NewTypeInfo.getCC() == CC_X86StdCall
-          ? diag::warn_cconv_knr : diag::err_cconv_knr;
-      Diag(NewFD->getLocation(), DiagID)
-          << FunctionType::getNameForCallConv(NewTypeInfo.getCC());
-    }
-  }
 
   if (getLangOpts().CPlusPlus) {
     // C++-specific checks.
