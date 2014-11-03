@@ -3,7 +3,6 @@ version = "@PACKAGE_VERSION@"
 description = "LLVM OCaml bindings"
 archive(byte) = "llvm.cma"
 archive(native) = "llvm.cmxa"
-exists_if(toplevel) = "dllllvm.so"
 directory = "."
 
 package "analysis" (
