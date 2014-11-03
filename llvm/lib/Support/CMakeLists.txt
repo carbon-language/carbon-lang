@@ -145,6 +145,7 @@ if( NOT MSVC )
     if ( LLVM_ENABLE_ZLIB AND HAVE_LIBZ )
       set(system_libs ${system_libs} z)
     endif()
+    set(system_libs ${system_libs} m)
   endif( MINGW )
 endif( NOT MSVC )
 
