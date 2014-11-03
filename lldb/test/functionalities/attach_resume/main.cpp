@@ -16,7 +16,7 @@ void *start(void *data)
     {
         if ( idx == 0 )
             std::this_thread::sleep_for(std::chrono::microseconds(1));
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // Set breakpoint here
     }
     return 0;
 }
