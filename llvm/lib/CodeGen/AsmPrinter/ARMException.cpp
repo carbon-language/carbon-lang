@@ -66,7 +66,7 @@ void ARMException::beginFunction(const MachineFunction *MF) {
          "non-EH CFI not yet supported in prologue with EHABI lowering");
   if (MoveType == AsmPrinter::CFI_M_Debug) {
     shouldEmitCFI = true;
-    Asm->OutStreamer.EmitCFIStartProc(false);
+    Asm->OutStreamer.EmitCFIStartProc(false, Asm->CurrentFnSym);
   }
 }
 
