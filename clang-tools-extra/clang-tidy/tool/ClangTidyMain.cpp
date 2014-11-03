@@ -64,7 +64,7 @@ HeaderFilter("header-filter",
 
 static cl::opt<bool>
     SystemHeaders("system-headers",
-                  cl::desc("Display the errors from system headers"),
+                  cl::desc("Display the errors from system headers."),
                   cl::init(false), cl::cat(ClangTidyCategory));
 static cl::opt<std::string>
 LineFilter("line-filter",
@@ -78,8 +78,18 @@ LineFilter("line-filter",
                     "  ]"),
            cl::init(""), cl::cat(ClangTidyCategory));
 
-static cl::opt<bool> Fix("fix", cl::desc("Fix detected errors if possible."),
-                         cl::init(false), cl::cat(ClangTidyCategory));
+static cl::opt<bool>
+    Fix("fix", cl::desc("Apply suggested fixes. Without -fix-errors\n"
+                        "clang-tidy will bail out if any compilation\n"
+                        "errors were found."),
+        cl::init(false), cl::cat(ClangTidyCategory));
+
+static cl::opt<bool>
+    FixErrors("fix-errors",
+              cl::desc("Apply suggested fixes even if compilation errors\n"
+                       "were found. If compiler errors have attached\n"
+                       "fix-its, clang-tidy will apply them as well."),
+              cl::init(false), cl::cat(ClangTidyCategory));
 
 static cl::opt<bool>
 ListChecks("list-checks",
@@ -277,7 +287,15 @@ int clangTidyMain(int argc, const char **argv) {
       runClangTidy(std::move(OptionsProvider), OptionsParser.getCompilations(),
                    OptionsParser.getSourcePathList(), &Errors,
                    EnableCheckProfile ? &Profile : nullptr);
-  handleErrors(Errors, Fix);
+  bool FoundErrors =
+      std::find_if(Errors.begin(), Errors.end(), [](const ClangTidyError &E) {
+        return E.DiagLevel == ClangTidyError::Error;
+      }) != Errors.end();
+
+  const bool DisableFixes = Fix && FoundErrors && !FixErrors;
+
+  // -fix-errors implies -fix.
+  handleErrors(Errors, (FixErrors || Fix) && !DisableFixes);
 
   if (!ExportFixes.empty() && !Errors.empty()) {
     std::error_code EC;
@@ -290,6 +308,10 @@ int clangTidyMain(int argc, const char **argv) {
   }
 
   printStats(Stats);
+  if (DisableFixes)
+    llvm::errs() << "Found compiler errors, but -fix-error was not specified.\n"
+                    "Fixes have NOT been applied.\n\n";
+
   if (EnableCheckProfile)
     printProfileData(Profile, llvm::errs());
 
