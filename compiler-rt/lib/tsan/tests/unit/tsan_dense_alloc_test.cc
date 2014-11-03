@@ -36,7 +36,7 @@ TEST(DenseSlabAlloc, Basic) {
     for (int i = 0; i < N; i++) {
       IndexT idx = alloc.Alloc(&cache);
       blocks[i] = idx;
-      EXPECT_NE(idx, 0);
+      EXPECT_NE(idx, 0U);
       int *v = alloc.Map(idx);
       *v = i;
     }
