@@ -34,14 +34,14 @@ value llvm_string_of_message(char* Message) {
 
 void llvm_raise(value Prototype, char *Message) {
   CAMLparam1(Prototype);
-  raise_with_arg(Prototype, llvm_string_of_message(Message));
+  caml_raise_with_arg(Prototype, llvm_string_of_message(Message));
   CAMLnoreturn;
 }
 
 static value llvm_fatal_error_handler;
 
 static void llvm_fatal_error_trampoline(const char *Reason) {
-  callback(llvm_fatal_error_handler, copy_string(Reason));
+  callback(llvm_fatal_error_handler, caml_copy_string(Reason));
 }
 
 CAMLprim value llvm_install_fatal_error_handler(value Handler) {
@@ -155,7 +155,7 @@ CAMLprim value llvm_dispose_module(LLVMModuleRef M) {
 
 /* llmodule -> string */
 CAMLprim value llvm_target_triple(LLVMModuleRef M) {
-  return copy_string(LLVMGetTarget(M));
+  return caml_copy_string(LLVMGetTarget(M));
 }
 
 /* string -> llmodule -> unit */
@@ -166,7 +166,7 @@ CAMLprim value llvm_set_target_triple(value Trip, LLVMModuleRef M) {
 
 /* llmodule -> string */
 CAMLprim value llvm_data_layout(LLVMModuleRef M) {
-  return copy_string(LLVMGetDataLayout(M));
+  return caml_copy_string(LLVMGetDataLayout(M));
 }
 
 /* string -> llmodule -> unit */
@@ -539,7 +539,7 @@ CAMLprim value llvm_classify_value(LLVMValueRef Val) {
 
 /* llvalue -> string */
 CAMLprim value llvm_value_name(LLVMValueRef Val) {
-  return copy_string(LLVMGetValueName(Val));
+  return caml_copy_string(LLVMGetValueName(Val));
 }
 
 /* string -> llvalue -> unit */
@@ -937,7 +937,7 @@ CAMLprim value llvm_set_linkage(value Linkage, LLVMValueRef Global) {
 
 /* llvalue -> string */
 CAMLprim value llvm_section(LLVMValueRef Global) {
-  return copy_string(LLVMGetSection(Global));
+  return caml_copy_string(LLVMGetSection(Global));
 }
 
 /* string -> llvalue -> unit */
@@ -1220,7 +1220,7 @@ CAMLprim value llvm_gc(LLVMValueRef Fn) {
   CAMLlocal2(Name, Option);
 
   if ((GC = LLVMGetGC(Fn))) {
-    Name = copy_string(GC);
+    Name = caml_copy_string(GC);
 
     Option = alloc(1, 0);
     Field(Option, 0) = Name;
