@@ -110,10 +110,6 @@ protected:
   // List of ranges for a given compile unit.
   SmallVector<RangeSpan, 1> CURanges;
 
-  // List of range lists for a given compile unit, separate from the ranges for
-  // the CU itself.
-  SmallVector<RangeSpanList, 1> CURangeLists;
-
   // DIEValueAllocator - All DIEValues are allocated through this allocator.
   BumpPtrAllocator DIEValueAllocator;
 
@@ -156,17 +152,6 @@ public:
   /// getRanges - Get the list of ranges for this unit.
   const SmallVectorImpl<RangeSpan> &getRanges() const { return CURanges; }
   SmallVectorImpl<RangeSpan> &getRanges() { return CURanges; }
-
-  /// addRangeList - Add an address range list to the list of range lists.
-  void addRangeList(RangeSpanList Ranges) {
-    CURangeLists.push_back(std::move(Ranges));
-  }
-
-  /// getRangeLists - Get the vector of range lists.
-  const SmallVectorImpl<RangeSpanList> &getRangeLists() const {
-    return CURangeLists;
-  }
-  SmallVectorImpl<RangeSpanList> &getRangeLists() { return CURangeLists; }
 
   /// getParentContextString - Get a string containing the language specific
   /// context for a global name.

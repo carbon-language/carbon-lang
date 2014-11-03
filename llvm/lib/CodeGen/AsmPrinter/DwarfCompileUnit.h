@@ -48,6 +48,10 @@ class DwarfCompileUnit : public DwarfUnit {
   /// GlobalTypes - A map of globally visible types for this unit.
   StringMap<const DIE *> GlobalTypes;
 
+  // List of range lists for a given compile unit, separate from the ranges for
+  // the CU itself.
+  SmallVector<RangeSpanList, 1> CURangeLists;
+
   /// \brief Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
   std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
@@ -218,6 +222,17 @@ public:
   void addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr);
 
   void applySubprogramAttributesToDefinition(DISubprogram SP, DIE &SPDie);
+
+  /// addRangeList - Add an address range list to the list of range lists.
+  void addRangeList(RangeSpanList Ranges) {
+    CURangeLists.push_back(std::move(Ranges));
+  }
+
+  /// getRangeLists - Get the vector of range lists.
+  const SmallVectorImpl<RangeSpanList> &getRangeLists() const {
+    return CURangeLists;
+  }
+  SmallVectorImpl<RangeSpanList> &getRangeLists() { return CURangeLists; }
 };
 
 } // end llvm namespace
