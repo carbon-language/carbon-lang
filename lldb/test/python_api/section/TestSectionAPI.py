@@ -46,12 +46,21 @@ class SectionAPITestCase(TestBase):
         mod = target.GetModuleAtIndex(0)
         data_section = None
         for s in mod.sections:
-            if ".data" == s.name:
+            sect_type = s.GetSectionType()
+            if sect_type == lldb.eSectionTypeData:
                 data_section = s
                 break
+            elif sect_type == lldb.eSectionTypeContainer:
+                for i in range(s.GetNumSubSections()):
+                    ss = s.GetSubSectionAtIndex(i)
+                    sect_type = ss.GetSectionType()
+                    if sect_type == lldb.eSectionTypeData:
+                        data_section = ss
+                        break                    
 
         self.assertIsNotNone(data_section)
         return data_section
+
         
 if __name__ == '__main__':
     import atexit
