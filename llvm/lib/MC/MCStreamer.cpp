@@ -211,14 +211,14 @@ void MCStreamer::EmitCFISections(bool EH, bool Debug) {
   assert(EH || Debug);
 }
 
-void MCStreamer::EmitCFIStartProc(bool IsSimple, MCSymbol *FuncSym) {
+void MCStreamer::EmitCFIStartProc(bool IsSimple) {
   MCDwarfFrameInfo *CurFrame = getCurrentDwarfFrameInfo();
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a frame before finishing the previous one!");
 
   MCDwarfFrameInfo Frame;
   Frame.IsSimple = IsSimple;
-  EmitCFIStartProcImpl(Frame, FuncSym);
+  EmitCFIStartProcImpl(Frame);
 
   const MCAsmInfo* MAI = Context.getAsmInfo();
   if (MAI) {
@@ -233,8 +233,8 @@ void MCStreamer::EmitCFIStartProc(bool IsSimple, MCSymbol *FuncSym) {
   DwarfFrameInfos.push_back(Frame);
 }
 
-void MCStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame,
-                                      MCSymbol *FuncSym) {}
+void MCStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
+}
 
 void MCStreamer::EmitCFIEndProc() {
   EnsureValidDwarfFrame();

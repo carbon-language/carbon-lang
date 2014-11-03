@@ -1,6 +1,5 @@
 // RUN: llvm-mc -triple aarch64-none-linux-gnu -filetype=obj %s -o %t
-// RUN: llvm-objdump -s %t | FileCheck %s --check-prefix=CHECK
-// RUN: llvm-readobj -r %t | FileCheck %s --check-prefix=RELOC
+// RUN: llvm-objdump -s %t | FileCheck %s
         .text
         .globl foo
         .type foo,@function
@@ -47,11 +46,3 @@ foo:
 // 00000000: PC begin for this FDE is at 00000000 (relocation is applied here)
 // 04000000: FDE applies up to PC begin+0x14
 // 00: Augmentation string length 0 for this FDE
-
-
-// Check the relocations applied to the .eh_frame section.
-// These must not contain section-relative relocations to a section which
-// is part of a group, as it could be removed.
-// RELOC: Section ({{[0-9]+}}) .rela.eh_frame {
-// RELOC-NEXT:   0x{{[0-9A-F]+}} R_AARCH64_PREL32 foo 0x0
-// RELOC-NEXT: }

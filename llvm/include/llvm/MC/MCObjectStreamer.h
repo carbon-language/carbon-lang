@@ -41,8 +41,7 @@ class MCObjectStreamer : public MCStreamer {
   SmallVector<MCSymbolData *, 2> PendingLabels;
 
   virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo&) = 0;
-  void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame,
-                            MCSymbol *FuncSym) override;
+  void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
   void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;
 
   // If any labels have been emitted but not assigned fragments, ensure that

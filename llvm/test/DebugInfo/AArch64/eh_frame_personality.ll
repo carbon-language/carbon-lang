@@ -1,6 +1,5 @@
 ; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu %s -filetype=obj -o %t
-; RUN: llvm-objdump -s %t | FileCheck %s --check-prefix=CHECK
-; RUN: llvm-readobj -r %t | FileCheck %s --check-prefix=RELOC
+; RUN: llvm-objdump -s %t | FileCheck %s
 
 declare i32 @__gxx_personality_v0(...)
 
@@ -45,12 +44,3 @@ clean:
 ; 00: Second part of aug (language-specific data): absolute pointer format used
 ; 1b: pointer format: pc-relative signed 4-byte. Just like GNU.
 ; 0c 1f 00: Initial instructions ("DW_CFA_def_cfa x31 ofs 0" in this case)
-
-; Check the relocations applied to the .eh_frame section.
-; These must not contain section-relative relocations to a section which
-; is part of a group, as it could be removed.
-; RELOC: Section ({{[0-9]+}}) .rela.eh_frame {
-; RELOC-NEXT:   0x{{[0-9A-F]+}} R_AARCH64_ABS64 __gxx_personality_v0 0x0
-; RELOC-NEXT:   0x{{[0-9A-F]+}} R_AARCH64_PREL32 foo 0x0
-; RELOC-NEXT:   0x{{[0-9A-F]+}} R_AARCH64_ABS64 .gcc_except_table 0x0
-; RELOC-NEXT: }

@@ -172,9 +172,6 @@ private:
   /// \brief Are we parsing ms-style inline assembly?
   bool ParsingInlineAsm;
 
-  /// \brief The last symbol we emitted, used for call frame information.
-  MCSymbol *LastFuncSymbol;
-
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
@@ -494,8 +491,7 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
     : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
       PlatformParser(nullptr), CurBuffer(_SM.getMainFileID()),
       MacrosEnabledFlag(true), HadError(false), CppHashLineNumber(0),
-      AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false),
-      LastFuncSymbol(nullptr) {
+      AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();
@@ -1308,9 +1304,6 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
     // Emit the label.
     if (!ParsingInlineAsm)
       Out.EmitLabel(Sym);
-
-    // Record the symbol, so that it can be used for call frame information
-    LastFuncSymbol = Sym;
 
     // If we are generating dwarf for assembly source files then gather the
     // info to make a dwarf label entry for this label if needed.
@@ -2968,7 +2961,7 @@ bool AsmParser::parseDirectiveCFIStartProc() {
     if (parseIdentifier(Simple) || Simple != "simple")
       return TokError("unexpected token in .cfi_startproc directive");
 
-  getStreamer().EmitCFIStartProc(!Simple.empty(), LastFuncSymbol);
+  getStreamer().EmitCFIStartProc(!Simple.empty());
   return false;
 }
 

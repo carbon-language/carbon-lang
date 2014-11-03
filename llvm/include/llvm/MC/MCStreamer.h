@@ -198,7 +198,7 @@ class MCStreamer {
 protected:
   MCStreamer(MCContext &Ctx);
 
-  virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame, MCSymbol *FuncSym);
+  virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
 
   WinEH::FrameInfo *getCurrentWinFrameInfo() {
@@ -661,7 +661,7 @@ public:
 
   virtual MCSymbol *getDwarfLineTableSymbol(unsigned CUID);
   virtual void EmitCFISections(bool EH, bool Debug);
-  void EmitCFIStartProc(bool IsSimple, MCSymbol *FuncSym);
+  void EmitCFIStartProc(bool IsSimple);
   void EmitCFIEndProc();
   virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
   virtual void EmitCFIDefCfaOffset(int64_t Offset);

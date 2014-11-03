@@ -54,8 +54,7 @@ private:
   unsigned UseDwarfDirectory : 1;
 
   void EmitRegisterName(int64_t Register);
-  void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame,
-                            MCSymbol *FuncSym) override;
+  void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
   void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;
 
 public:
@@ -926,8 +925,7 @@ void MCAsmStreamer::EmitCFISections(bool EH, bool Debug) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame,
-                                         MCSymbol *FuncSym) {
+void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
   OS << "\t.cfi_startproc";
   if (Frame.IsSimple)
     OS << " simple";
