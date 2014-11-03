@@ -94,7 +94,7 @@ static llvm::ErrorOr<uint64_t> parseDecimal(StringRef str) {
   for (auto &c : str) {
     res *= 10;
     if (c < '0' || c > '9')
-      return std::errc::io_error;
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
     res += c - '0';
   }
   return res;
@@ -105,7 +105,7 @@ static llvm::ErrorOr<uint64_t> parseOctal(StringRef str) {
   for (auto &c : str) {
     res <<= 3;
     if (c < '0' || c > '7')
-      return std::errc::io_error;
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
     res += c - '0';
   }
   return res;
@@ -116,7 +116,7 @@ static llvm::ErrorOr<uint64_t> parseBinary(StringRef str) {
   for (auto &c : str) {
     res <<= 1;
     if (c != '0' && c != '1')
-      return std::errc::io_error;
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
     res += c - '0';
   }
   return res;
@@ -133,7 +133,7 @@ static llvm::ErrorOr<uint64_t> parseHex(StringRef str) {
     else if (c >= 'A' && c <= 'F')
       res += c - 'A' + 10;
     else
-      return std::errc::io_error;
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
   }
   return res;
 }
