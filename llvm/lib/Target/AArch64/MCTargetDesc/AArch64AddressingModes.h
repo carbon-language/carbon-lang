@@ -216,61 +216,56 @@ static inline bool processLogicalImmediate(uint64_t imm, unsigned regSize,
       (regSize != 64 && (imm >> regSize != 0 || imm == ~0U)))
     return false;
 
-  unsigned size = 2;
-  uint64_t eltVal = imm;
-
   // First, determine the element size.
-  while (size < regSize) {
-    unsigned numElts = regSize / size;
-    unsigned mask = (1ULL << size) - 1;
-    uint64_t lowestEltVal = imm & mask;
+  unsigned size = regSize;
 
-    bool allMatched = true;
-    for (unsigned i = 1; i < numElts; ++i) {
-     uint64_t currEltVal = (imm >> (i*size)) & mask;
-      if (currEltVal != lowestEltVal) {
-        allMatched = false;
-        break;
-      }
-    }
+  do {
+    size /= 2;
+    uint64_t mask = (1ULL << size) - 1;
 
-    if (allMatched) {
-      eltVal = lowestEltVal;
+    if ((imm & mask) != ((imm >> size) & mask)) {
+      size *= 2;
       break;
     }
-
-    size *= 2;
-  }
+  } while (size > 2);
 
   // Second, determine the rotation to make the element be: 0^m 1^n.
-  for (unsigned i = 0; i < size; ++i) {
-    eltVal = ror(eltVal, size);
-    uint32_t clz = countLeadingZeros(eltVal) - (64 - size);
-    uint32_t cto = CountTrailingOnes_64(eltVal);
+  uint32_t cto, i;
+  uint64_t mask = ((uint64_t)-1LL) >> (64 - size);
+  imm &= mask;
 
-    if (clz + cto == size) {
-      // Encode in immr the number of RORs it would take to get *from* this
-      // element value to our target value, where i+1 is the number of RORs
-      // to go the opposite direction.
-      unsigned immr = size - (i + 1);
+  if (isShiftedMask_64(imm)) {
+    i = countTrailingZeros(imm);
+    cto = CountTrailingOnes_64(imm >> i);
+  } else {
+    imm |= ~mask;
+    if (!isShiftedMask_64(~imm))
+      return false;
 
-      // If size has a 1 in the n'th bit, create a value that has zeroes in
-      // bits [0, n] and ones above that.
-      uint64_t nimms = ~(size-1) << 1;
-
-      // Or the CTO value into the low bits, which must be below the Nth bit
-      // bit mentioned above.
-      nimms |= (cto-1);
-
-      // Extract the seventh bit and toggle it to create the N field.
-      unsigned N = ((nimms >> 6) & 1) ^ 1;
-
-      encoding = (N << 12) | (immr << 6) | (nimms & 0x3f);
-      return true;
-    }
+    unsigned clo = CountLeadingOnes_64(imm);
+    i = 64 - clo;
+    cto = clo + CountTrailingOnes_64(imm) - (64 - size);
   }
 
-  return false;
+  // Encode in immr the number of RORs it would take to get *from* 0^m 1^n
+  // to our target value, where i is the number of RORs to go the opposite
+  // direction.
+  assert(size > i && "i should be smaller than element size");
+  unsigned immr = (size - i) & (size - 1);
+
+  // If size has a 1 in the n'th bit, create a value that has zeroes in
+  // bits [0, n] and ones above that.
+  uint64_t nimms = ~(size-1) << 1;
+
+  // Or the CTO value into the low bits, which must be below the Nth bit
+  // bit mentioned above.
+  nimms |= (cto-1);
+
+  // Extract the seventh bit and toggle it to create the N field.
+  unsigned N = ((nimms >> 6) & 1) ^ 1;
+
+  encoding = (N << 12) | (immr << 6) | (nimms & 0x3f);
+  return true;
 }
 
 /// isLogicalImmediate - Return true if the immediate is valid for a logical
