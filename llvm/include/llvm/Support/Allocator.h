@@ -119,8 +119,8 @@ void printBumpPtrAllocatorStats(unsigned NumSlabs, size_t BytesAllocated,
 /// \brief Allocate memory in an ever growing pool, as if by bump-pointer.
 ///
 /// This isn't strictly a bump-pointer allocator as it uses backing slabs of
-/// memory rather than relying on boundless contiguous heap. However, it has
-/// bump-pointer semantics in that is a monotonically growing pool of memory
+/// memory rather than relying on a boundless contiguous heap. However, it has
+/// bump-pointer semantics in that it is a monotonically growing pool of memory
 /// where every allocation is found by merely allocating the next N bytes in
 /// the slab, or the next N bytes in the next slab.
 ///
