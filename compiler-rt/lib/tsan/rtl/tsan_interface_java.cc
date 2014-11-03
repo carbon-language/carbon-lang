@@ -61,7 +61,7 @@ static JavaContext *jctx;
 #define SCOPED_JAVA_FUNC(func) \
   ThreadState *thr = cur_thread(); \
   const uptr caller_pc = GET_CALLER_PC(); \
-  const uptr pc = __sanitizer::StackTrace::GetCurrentPc(); \
+  const uptr pc = StackTrace::GetCurrentPc(); \
   (void)pc; \
   ScopedJavaFunc scoped(thr, caller_pc); \
 /**/

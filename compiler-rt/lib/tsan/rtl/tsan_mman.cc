@@ -66,12 +66,12 @@ static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
   if (atomic_load(&thr->in_signal_handler, memory_order_relaxed) == 0 ||
       !flags()->report_signal_unsafe)
     return;
-  StackTrace stack;
-  stack.ObtainCurrent(thr, pc);
+  VarSizeStackTrace stack;
+  ObtainCurrentStack(thr, pc, &stack);
   ThreadRegistryLock l(ctx->thread_registry);
   ScopedReport rep(ReportTypeSignalUnsafe);
   if (!IsFiredSuppression(ctx, rep, stack)) {
-    rep.AddStack(&stack, true);
+    rep.AddStack(stack, true);
     OutputReport(thr, rep);
   }
 }

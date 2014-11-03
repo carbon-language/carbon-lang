@@ -64,6 +64,7 @@ struct BufferedStackTrace : public StackTrace {
 
   BufferedStackTrace() : StackTrace(trace_buffer, 0), top_frame_bp(0) {}
 
+  void Init(const uptr *pcs, uptr cnt, uptr extra_top_pc = 0);
   void Unwind(uptr max_depth, uptr pc, uptr bp, void *context, uptr stack_top,
               uptr stack_bottom, bool request_fast_unwind);
 
@@ -75,6 +76,9 @@ struct BufferedStackTrace : public StackTrace {
                                   uptr max_depth);
   void PopStackFrames(uptr count);
   uptr LocatePcInTrace(uptr pc);
+
+  BufferedStackTrace(const BufferedStackTrace &);
+  void operator=(const BufferedStackTrace &);
 };
 
 }  // namespace __sanitizer

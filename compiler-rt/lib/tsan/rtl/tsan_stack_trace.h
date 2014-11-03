@@ -13,34 +13,25 @@
 #ifndef TSAN_STACK_TRACE_H
 #define TSAN_STACK_TRACE_H
 
+#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "tsan_defs.h"
 
 namespace __tsan {
 
-// FIXME: Delete this class in favor of __sanitizer::StackTrace.
-class StackTrace {
- public:
-  StackTrace();
-  // Initialized the object in "static mode",
-  // in this mode it never calls malloc/free but uses the provided buffer.
-  StackTrace(uptr *buf, uptr cnt);
-  ~StackTrace();
-  void Reset();
+// StackTrace which calls malloc/free to allocate the buffer for
+// addresses in stack traces.
+struct VarSizeStackTrace : public StackTrace {
+  uptr *trace_buffer;  // Owned.
 
-  void Init(const uptr *pcs, uptr cnt);
-  void ObtainCurrent(ThreadState *thr, uptr toppc);
-  bool IsEmpty() const;
-  uptr Size() const;
-  uptr Get(uptr i) const;
-  const uptr *Begin() const;
+  VarSizeStackTrace();
+  ~VarSizeStackTrace();
+  void Init(const uptr *pcs, uptr cnt, uptr extra_top_pc = 0);
 
  private:
-  uptr n_;
-  uptr *s_;
-  const uptr c_;
+  void ResizeBuffer(uptr new_size);
 
-  StackTrace(const StackTrace&);
-  void operator = (const StackTrace&);
+  VarSizeStackTrace(const VarSizeStackTrace &);
+  void operator=(const VarSizeStackTrace &);
 };
 
 }  // namespace __tsan

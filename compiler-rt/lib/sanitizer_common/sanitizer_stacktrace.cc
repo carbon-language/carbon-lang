@@ -36,6 +36,15 @@ uptr StackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
 }
 
+void BufferedStackTrace::Init(const uptr *pcs, uptr cnt, uptr extra_top_pc) {
+  size = cnt + !!extra_top_pc;
+  CHECK_LE(size, kStackTraceMax);
+  internal_memcpy(trace_buffer, pcs, cnt * sizeof(trace_buffer[0]));
+  if (extra_top_pc)
+    trace_buffer[cnt] = extra_top_pc;
+  top_frame_bp = 0;
+}
+
 // Check if given pointer points into allocated stack area.
 static inline bool IsValidFrame(uptr frame, uptr stack_top, uptr stack_bottom) {
   return frame > stack_bottom && frame < stack_top - 2 * sizeof (uhwptr);

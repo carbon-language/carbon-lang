@@ -43,7 +43,6 @@ const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
 const int kClkBits = 42;
 const unsigned kMaxTidReuse = (1 << (64 - kClkBits)) - 1;
 const uptr kShadowStackSize = 64 * 1024;
-const uptr kTraceStackSize = 256;
 
 #ifdef TSAN_SHADOW_COUNT
 # if TSAN_SHADOW_COUNT == 2 \
@@ -174,7 +173,6 @@ struct Context;
 struct ReportStack;
 class ReportDesc;
 class RegionAlloc;
-class StackTrace;
 
 // Descriptor of user's memory block.
 struct MBlock {

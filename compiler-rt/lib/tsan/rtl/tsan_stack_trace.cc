@@ -16,91 +16,31 @@
 
 namespace __tsan {
 
-StackTrace::StackTrace()
-    : n_()
-    , s_()
-    , c_() {
+VarSizeStackTrace::VarSizeStackTrace()
+    : StackTrace(nullptr, 0), trace_buffer(nullptr) {}
+
+VarSizeStackTrace::~VarSizeStackTrace() {
+  ResizeBuffer(0);
 }
 
-StackTrace::StackTrace(uptr *buf, uptr cnt)
-    : n_()
-    , s_(buf)
-    , c_(cnt) {
-  CHECK_NE(buf, 0);
-  CHECK_NE(cnt, 0);
-}
-
-StackTrace::~StackTrace() {
-  Reset();
-}
-
-void StackTrace::Reset() {
-  if (s_ && !c_) {
-    CHECK_NE(n_, 0);
-    internal_free(s_);
-    s_ = 0;
+void VarSizeStackTrace::ResizeBuffer(uptr new_size) {
+  if (trace_buffer) {
+    internal_free(trace_buffer);
   }
-  n_ = 0;
+  trace_buffer =
+      (new_size > 0)
+          ? (uptr *)internal_alloc(MBlockStackTrace,
+                                   new_size * sizeof(trace_buffer[0]))
+          : nullptr;
+  trace = trace_buffer;
+  size = new_size;
 }
 
-void StackTrace::Init(const uptr *pcs, uptr cnt) {
-  Reset();
-  if (cnt == 0)
-    return;
-  if (c_) {
-    CHECK_NE(s_, 0);
-    CHECK_LE(cnt, c_);
-  } else {
-    s_ = (uptr*)internal_alloc(MBlockStackTrace, cnt * sizeof(s_[0]));
-  }
-  n_ = cnt;
-  internal_memcpy(s_, pcs, cnt * sizeof(s_[0]));
-}
-
-void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
-  Reset();
-  n_ = thr->shadow_stack_pos - thr->shadow_stack;
-  if (n_ + !!toppc == 0)
-    return;
-  uptr start = 0;
-  if (c_) {
-    CHECK_NE(s_, 0);
-    if (n_ + !!toppc > c_) {
-      start = n_ - c_ + !!toppc;
-      n_ = c_ - !!toppc;
-    }
-  } else {
-    // Cap potentially huge stacks.
-    if (n_ + !!toppc > kTraceStackSize) {
-      start = n_ - kTraceStackSize + !!toppc;
-      n_ = kTraceStackSize - !!toppc;
-    }
-    s_ = (uptr*)internal_alloc(MBlockStackTrace,
-                               (n_ + !!toppc) * sizeof(s_[0]));
-  }
-  for (uptr i = 0; i < n_; i++)
-    s_[i] = thr->shadow_stack[start + i];
-  if (toppc) {
-    s_[n_] = toppc;
-    n_++;
-  }
-}
-
-bool StackTrace::IsEmpty() const {
-  return n_ == 0;
-}
-
-uptr StackTrace::Size() const {
-  return n_;
-}
-
-uptr StackTrace::Get(uptr i) const {
-  CHECK_LT(i, n_);
-  return s_[i];
-}
-
-const uptr *StackTrace::Begin() const {
-  return s_;
+void VarSizeStackTrace::Init(const uptr *pcs, uptr cnt, uptr extra_top_pc) {
+  ResizeBuffer(cnt + !!extra_top_pc);
+  internal_memcpy(trace_buffer, pcs, cnt * sizeof(trace_buffer[0]));
+  if (extra_top_pc)
+    trace_buffer[cnt] = extra_top_pc;
 }
 
 }  // namespace __tsan
