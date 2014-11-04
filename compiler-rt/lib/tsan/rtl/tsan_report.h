@@ -13,6 +13,7 @@
 #ifndef TSAN_REPORT_H
 #define TSAN_REPORT_H
 
+#include "sanitizer_common/sanitizer_symbolizer.h"
 #include "tsan_defs.h"
 #include "tsan_vector.h"
 
@@ -36,14 +37,12 @@ enum ReportType {
 
 struct ReportStack {
   ReportStack *next;
-  char *module;
-  uptr offset;
-  uptr pc;
-  char *func;
-  char *file;
-  int line;
-  int col;
+  AddressInfo info;
   bool suppressable;
+  static ReportStack *New(uptr addr);
+
+ private:
+  ReportStack();
 };
 
 struct ReportMopMutex {

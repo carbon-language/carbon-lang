@@ -36,28 +36,6 @@ void ExitSymbolizer() {
   thr->ignore_interceptors--;
 }
 
-ReportStack *NewReportStackEntry(uptr addr) {
-  ReportStack *ent = (ReportStack*)internal_alloc(MBlockReportStack,
-                                                  sizeof(ReportStack));
-  internal_memset(ent, 0, sizeof(*ent));
-  ent->pc = addr;
-  return ent;
-}
-
-static ReportStack *NewReportStackEntry(const AddressInfo &info) {
-  ReportStack *ent = NewReportStackEntry(info.address);
-  if (info.module)
-    ent->module = internal_strdup(info.module);
-  ent->offset = info.module_offset;
-  if (info.function)
-    ent->func = internal_strdup(info.function);
-  if (info.file)
-    ent->file = internal_strdup(info.file);
-  ent->line = info.line;
-  ent->col = info.column;
-  return ent;
-}
-
 // Denotes fake PC values that come from JIT/JAVA/etc.
 // For such PC values __tsan_symbolize_external() will be called.
 const uptr kExternalPCBit = 1ULL << 60;
@@ -85,16 +63,14 @@ ReportStack *SymbolizeCode(uptr addr) {
     static char func_buf[1024];
     static char file_buf[1024];
     int line, col;
+    ReportStack *ent = ReportStack::New(addr);
     if (!__tsan_symbolize_external(addr, func_buf, sizeof(func_buf),
                                   file_buf, sizeof(file_buf), &line, &col))
-      return NewReportStackEntry(addr);
-    ReportStack *ent = NewReportStackEntry(addr);
-    ent->module = 0;
-    ent->offset = 0;
-    ent->func = internal_strdup(func_buf);
-    ent->file = internal_strdup(file_buf);
-    ent->line = line;
-    ent->col = col;
+      return ent;
+    ent->info.function = internal_strdup(func_buf);
+    ent->info.file = internal_strdup(file_buf);
+    ent->info.line = line;
+    ent->info.column = col;
     return ent;
   }
   static const uptr kMaxAddrFrames = 16;
@@ -104,13 +80,12 @@ ReportStack *SymbolizeCode(uptr addr) {
   uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
       addr, addr_frames.data(), kMaxAddrFrames);
   if (addr_frames_num == 0)
-    return NewReportStackEntry(addr);
+    return ReportStack::New(addr);
   ReportStack *top = 0;
   ReportStack *bottom = 0;
   for (uptr i = 0; i < addr_frames_num; i++) {
-    ReportStack *cur_entry = NewReportStackEntry(addr_frames[i]);
-    CHECK(cur_entry);
-    addr_frames[i].Clear();
+    ReportStack *cur_entry = ReportStack::New(addr);
+    cur_entry->info = addr_frames[i];
     if (i == 0)
       top = cur_entry;
     else

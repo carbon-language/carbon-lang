@@ -66,9 +66,9 @@ static void StackStripMain(ReportStack *stack) {
 
   if (last_frame2 == 0)
     return;
-  const char *last = last_frame->func;
+  const char *last = last_frame->info.function;
 #ifndef TSAN_GO
-  const char *last2 = last_frame2->func;
+  const char *last2 = last_frame2->info.function;
   // Strip frame above 'main'
   if (last2 && 0 == internal_strcmp(last2, "main")) {
     last_frame2->next = 0;
@@ -122,10 +122,10 @@ static ReportStack *SymbolizeStack(StackTrace trace) {
     CHECK_NE(ent, 0);
     ReportStack *last = ent;
     while (last->next) {
-      last->pc = pc;  // restore original pc for report
+      last->info.address = pc;  // restore original pc for report
       last = last->next;
     }
-    last->pc = pc;  // restore original pc for report
+    last->info.address = pc;  // restore original pc for report
     last->next = stack;
     stack = ent;
   }
@@ -558,10 +558,13 @@ static bool IsFiredSuppression(Context *ctx,
 }
 
 bool FrameIsInternal(const ReportStack *frame) {
-  return frame != 0 && frame->file != 0
-      && (internal_strstr(frame->file, "tsan_interceptors.cc") ||
-          internal_strstr(frame->file, "sanitizer_common_interceptors.inc") ||
-          internal_strstr(frame->file, "tsan_interface_"));
+  if (frame == 0)
+    return false;
+  const char *file = frame->info.file;
+  return file != 0 &&
+         (internal_strstr(file, "tsan_interceptors.cc") ||
+          internal_strstr(file, "sanitizer_common_interceptors.inc") ||
+          internal_strstr(file, "tsan_interface_"));
 }
 
 static bool RaceBetweenAtomicAndFree(ThreadState *thr) {

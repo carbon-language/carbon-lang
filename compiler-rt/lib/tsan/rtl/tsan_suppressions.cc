@@ -93,13 +93,14 @@ uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp) {
     return 0;
   Suppression *s;
   for (const ReportStack *frame = stack; frame; frame = frame->next) {
-    if (SuppressionContext::Get()->Match(frame->func, stype, &s) ||
-        SuppressionContext::Get()->Match(frame->file, stype, &s) ||
-        SuppressionContext::Get()->Match(frame->module, stype, &s)) {
+    const AddressInfo &info = frame->info;
+    if (SuppressionContext::Get()->Match(info.function, stype, &s) ||
+        SuppressionContext::Get()->Match(info.file, stype, &s) ||
+        SuppressionContext::Get()->Match(info.module, stype, &s)) {
       DPrintf("ThreadSanitizer: matched suppression '%s'\n", s->templ);
       s->hit_count++;
       *sp = s;
-      return frame->pc;
+      return info.address;
     }
   }
   return 0;

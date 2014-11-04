@@ -13,9 +13,19 @@
 #include "tsan_report.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 
 namespace __tsan {
+
+ReportStack::ReportStack() : next(nullptr), info(), suppressable(false) {}
+
+ReportStack *ReportStack::New(uptr addr) {
+  void *mem = internal_alloc(MBlockReportStack, sizeof(ReportStack));
+  ReportStack *res = new(mem) ReportStack();
+  res->info.address = addr;
+  return res;
+}
 
 class Decorator: public __sanitizer::SanitizerCommonDecorator {
  public:
@@ -108,16 +118,18 @@ void PrintStack(const ReportStack *ent) {
     return;
   }
   for (int i = 0; ent; ent = ent->next, i++) {
+    const AddressInfo &info = ent->info;
     Printf("    #%d %s %s:%d", i,
-           StripFunctionName(ent->func, "__interceptor_"),
-           StripPathPrefix(ent->file, common_flags()->strip_path_prefix),
-           ent->line);
-    if (ent->col)
-      Printf(":%d", ent->col);
-    if (ent->module && ent->offset) {
-      Printf(" (%s+%p)\n", StripModuleName(ent->module), (void*)ent->offset);
+           StripFunctionName(info.function, "__interceptor_"),
+           StripPathPrefix(info.file, common_flags()->strip_path_prefix),
+           info.line);
+    if (info.column)
+      Printf(":%d", info.column);
+    if (info.module && info.module_offset) {
+      Printf(" (%s+%p)\n", StripModuleName(info.module),
+             (void *)info.module_offset);
     } else {
-      Printf(" (%p)\n", (void*)ent->pc);
+      Printf(" (%p)\n", (void *)info.address);
     }
   }
   Printf("\n");
@@ -318,8 +330,10 @@ void PrintReport(const ReportDesc *rep) {
   if (rep->typ == ReportTypeThreadLeak && rep->count > 1)
     Printf("  And %d more similar thread leaks.\n\n", rep->count - 1);
 
-  if (ReportStack *ent = SkipTsanInternalFrames(ChooseSummaryStack(rep)))
-    ReportErrorSummary(rep_typ_str, ent->file, ent->line, ent->func);
+  if (ReportStack *ent = SkipTsanInternalFrames(ChooseSummaryStack(rep))) {
+    const AddressInfo &info = ent->info;
+    ReportErrorSummary(rep_typ_str, info.file, info.line, info.function);
+  }
 
   Printf("==================\n");
 }
@@ -334,8 +348,9 @@ void PrintStack(const ReportStack *ent) {
     return;
   }
   for (int i = 0; ent; ent = ent->next, i++) {
-    Printf("  %s()\n      %s:%d +0x%zx\n",
-        ent->func, ent->file, ent->line, (void*)ent->offset);
+    const AddressInfo &info = ent->info;
+    Printf("  %s()\n      %s:%d +0x%zx\n", info.function, info.file, info.line,
+           (void *)info.module_offset);
   }
 }
 
