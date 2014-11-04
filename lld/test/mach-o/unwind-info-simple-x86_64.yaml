@@ -24,6 +24,7 @@
 # CHECK:       [2]: function offset=0x00000efd, encoding=0x04000018
 # CHECK:       [3]: function offset=0x00000efe, encoding=0x04000040
 # CHECK:       [4]: function offset=0x00000eff, encoding=0x00000000
+# CHECK-NOT: Contents of __compact_unwind section
 
 --- !native
 path:            '<linker-internal>'

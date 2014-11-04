@@ -445,6 +445,13 @@ MutableFile::DefinedAtomRange Resolver::MergedFile::definedAtoms() {
       _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
 }
 
+void Resolver::MergedFile::removeDefinedAtomsIf(
+    std::function<bool(const DefinedAtom *)> pred) {
+  auto &atoms = _definedAtoms._atoms;
+  auto newEnd = std::remove_if(atoms.begin(), atoms.end(), pred);
+  atoms.erase(newEnd, atoms.end());
+}
+
 void Resolver::MergedFile::addAtoms(std::vector<const Atom *> &all) {
   ScopedTask task(getDefaultDomain(), "addAtoms");
   DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver final atom list:\n");

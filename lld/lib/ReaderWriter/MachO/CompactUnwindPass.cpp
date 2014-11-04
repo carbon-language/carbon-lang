@@ -337,11 +337,15 @@ private:
             << " has " << entriesInPage << " entries\n");
     } while (pageStart < unwindInfos.size());
 
-    // FIXME: we should also erase all compact-unwind atoms; their job is done.
     UnwindInfoAtom *unwind = new (_file.allocator())
         UnwindInfoAtom(_archHandler, _file, _isBig, std::vector<uint32_t>(),
                        personalities, pages, numLSDAs);
     mergedFile->addAtom(*unwind);
+
+    // Finally, remove all __compact_unwind atoms now that we've processed them.
+    mergedFile->removeDefinedAtomsIf([](const DefinedAtom *atom) {
+      return atom->contentType() == DefinedAtom::typeCompactUnwindInfo;
+    });
   }
 
   void collectCompactUnwindEntries(

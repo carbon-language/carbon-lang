@@ -89,7 +89,11 @@ private:
     void addAtoms(std::vector<const Atom*>& atoms);
 
     void addAtom(const Atom& atom) override;
+
     DefinedAtomRange definedAtoms() override;
+
+    void removeDefinedAtomsIf(
+        std::function<bool(const DefinedAtom *)> pred) override;
 
   private:
     atom_collection_vector<DefinedAtom>         _definedAtoms;

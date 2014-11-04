@@ -17,6 +17,7 @@
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/range.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <functional>
 #include <vector>
 
 namespace lld {
@@ -221,6 +222,9 @@ public:
 
   typedef range<std::vector<const DefinedAtom *>::iterator> DefinedAtomRange;
   virtual DefinedAtomRange definedAtoms() = 0;
+
+  virtual void
+  removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) = 0;
 
 protected:
   /// \brief only subclasses of MutableFile can be instantiated

@@ -40,6 +40,12 @@ public:
     }
   }
 
+  void removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) {
+    auto &atoms = _definedAtoms._atoms;
+    auto newEnd = std::remove_if(atoms.begin(), atoms.end(), pred);
+    atoms.erase(newEnd, atoms.end());
+  }
+
   const atom_collection<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }

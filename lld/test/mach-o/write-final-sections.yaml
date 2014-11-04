@@ -140,17 +140,9 @@ defined-atoms:
 # CHECK-NEXT: 0000: 0D000000 00000000
 # CHECK-NEXT: )
 
-# FIXME: this should really end up in __TEXT,__unwind_info after being
-# processed. Most important fact here is that its presence doesn't trigger an
-# assert, but __LD,__compact_unwind is a harmless enough place to stash it.
-
   - type:            compact-unwind
     content:         [ 0E, 00, 00, 00, 00, 00, 00, 00 ]
-# CHECK: Name: __compact_unwind
-# CHECK: Segment: __LD
-# CHECK: SectionData (
-# CHECK-NEXT: 0000: 0E000000 00000000
-# CHECK-NEXT: )
+# CHECK-NOT: Name: __compact_unwind
 
 
 --- !mach-o
