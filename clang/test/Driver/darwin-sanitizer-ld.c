@@ -6,9 +6,9 @@
 
 // CHECK-ASAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ASAN: stdc++
-// CHECK-ASAN: /lib/darwin/libclang_rt.asan_osx_dynamic.dylib"
+// CHECK-ASAN: libclang_rt.asan_osx_dynamic.dylib"
 // CHECK-ASAN: "-rpath" "@executable_path"
-// CHECK-ASAN: "-rpath" "{{.*}}/lib/darwin"
+// CHECK-ASAN: "-rpath" "{{.*}}lib{{.*}}darwin"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fsanitize=address -mios-simulator-version-min=7.0 %s -o %t.o 2>&1 \
@@ -16,9 +16,9 @@
 
 // CHECK-ASAN-IOSSIM: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ASAN-IOSSIM: lc++
-// CHECK-ASAN-IOSSIM: /lib/darwin/libclang_rt.asan_iossim_dynamic.dylib"
+// CHECK-ASAN-IOSSIM: libclang_rt.asan_iossim_dynamic.dylib"
 // CHECK-ASAN-IOSSIM: "-rpath" "@executable_path"
-// CHECK-ASAN-IOSSIM: "-rpath" "{{.*}}/lib/darwin"
+// CHECK-ASAN-IOSSIM: "-rpath" "{{.*}}lib{{.*}}darwin"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fPIC -shared -fsanitize=address %s -o %t.so 2>&1 \
@@ -26,9 +26,9 @@
 
 // CHECK-DYN-ASAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-DYN-ASAN: "-dylib"
-// CHECK-DYN-ASAN: /lib/darwin/libclang_rt.asan_osx_dynamic.dylib"
+// CHECK-DYN-ASAN: libclang_rt.asan_osx_dynamic.dylib"
 // CHECK-DYN-ASAN: "-rpath" "@executable_path"
-// CHECK-DYN-ASAN: "-rpath" "{{.*}}/lib/darwin"
+// CHECK-DYN-ASAN: "-rpath" "{{.*}}lib{{.*}}darwin"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fsanitize=undefined %s -o %t.o 2>&1 \
