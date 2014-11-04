@@ -236,7 +236,8 @@ public:
                          llvm::opt::ArgStringList &CmdArgs,
                          StringRef DarwinLibName,
                          bool AlwaysLink = false,
-                         bool IsEmbedded = false) const;
+                         bool IsEmbedded = false,
+                         bool AddRPath = false) const;
 
   /// }
   /// @name ToolChain Implementation
