@@ -11,7 +11,7 @@
 
 // locale() throw();
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <locale>
 #include <new>

@@ -9,7 +9,7 @@
 
 // test operator new replacement
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <new>
 #include <cstddef>

@@ -14,7 +14,7 @@
 // template <MoveConstructible  R, MoveConstructible ... ArgTypes>
 //   void swap(function<R(ArgTypes...)>&, function<R(ArgTypes...)>&);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <functional>
 #include <new>

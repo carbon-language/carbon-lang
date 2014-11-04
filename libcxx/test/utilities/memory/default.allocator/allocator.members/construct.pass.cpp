@@ -12,7 +12,7 @@
 // allocator:
 // template <class... Args> void construct(pointer p, Args&&... args);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <memory>
 #include <new>

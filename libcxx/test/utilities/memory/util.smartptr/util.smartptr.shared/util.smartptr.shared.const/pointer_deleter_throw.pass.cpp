@@ -13,7 +13,7 @@
 
 // template<class Y, class D> shared_ptr(Y* p, D d);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <memory>
 #include <cassert>

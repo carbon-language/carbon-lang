@@ -17,7 +17,7 @@
 //     // unspecified
 // };
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 // Not a portable test
 

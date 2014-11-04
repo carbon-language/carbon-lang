@@ -11,7 +11,7 @@
 
 // template <class Facet> locale combine(const locale& other) const;
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <locale>
 #include <new>

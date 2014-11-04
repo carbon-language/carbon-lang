@@ -13,7 +13,7 @@
 
 // template<class T, class... Args> shared_ptr<T> make_shared(Args&&... args);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <memory>
 #include <new>

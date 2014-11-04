@@ -13,7 +13,7 @@
 
 // function& operator=(const function& f);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <functional>
 #include <new>

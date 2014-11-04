@@ -11,7 +11,7 @@
 
 // template<class Y> explicit shared_ptr(auto_ptr<Y>&& r);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <memory>
 #include <new>

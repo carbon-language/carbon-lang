@@ -13,7 +13,7 @@
 
 // function& operator=(nullptr_t);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <functional>
 #include <new>

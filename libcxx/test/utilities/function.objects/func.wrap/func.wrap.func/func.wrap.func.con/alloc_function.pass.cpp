@@ -13,7 +13,7 @@
 
 // template<class A> function(allocator_arg_t, const A&, const function&);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <functional>
 #include <new>

@@ -13,7 +13,7 @@
 
 // void swap(function& other);
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <functional>
 #include <new>

@@ -9,7 +9,7 @@
 
 // test operator new [] nothrow by replacing only operator new
 
-// UNSUPPORTED: asan
+// UNSUPPORTED: asan, msan
 
 #include <new>
 #include <cstddef>
