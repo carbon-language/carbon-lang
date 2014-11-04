@@ -93,11 +93,6 @@ FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
              clEnumValEnd));
 
 cl::opt<bool>
-DisableRedZone("disable-red-zone",
-               cl::desc("Do not emit code that uses the red zone."),
-               cl::init(false));
-
-cl::opt<bool>
 EnableFPMAD("enable-fp-mad",
             cl::desc("Enable less precise MAD instructions to be generated"),
             cl::init(false));
