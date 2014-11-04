@@ -90,8 +90,7 @@ INITIALIZE_PASS_END(InstCombiner, "instcombine",
                 "Combine redundant instructions", false, false)
 
 void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<DominatorTreeWrapperPass>();
-  AU.addPreserved<LoopInfo>();
+  AU.setPreservesCFG();
   AU.addRequired<AssumptionTracker>();
   AU.addRequired<TargetLibraryInfo>();
 }

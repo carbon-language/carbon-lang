@@ -778,12 +778,12 @@ namespace {
 
 char LoopSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopSimplify, "loop-simplify",
-                "Canonicalize natural loops", true, false)
+                "Canonicalize natural loops", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_END(LoopSimplify, "loop-simplify",
-                "Canonicalize natural loops", true, false)
+                "Canonicalize natural loops", false, false)
 
 // Publicly exposed interface to pass...
 char &llvm::LoopSimplifyID = LoopSimplify::ID;
