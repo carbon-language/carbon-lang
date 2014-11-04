@@ -283,7 +283,7 @@ void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,
 // and DW_AT_high_pc attributes. If there are global variables in this
 // scope then create and insert DIEs for these variables.
 DIE &DwarfCompileUnit::updateSubprogramScopeDIE(DISubprogram SP) {
-  DIE *SPDie = getOrCreateSubprogramDIE(SP);
+  DIE *SPDie = getOrCreateSubprogramDIE(SP, includeMinimalInlineScopes());
 
   attachLowHighPC(*SPDie, DD->getFunctionBeginSym(), DD->getFunctionEndSym());
   if (!DD->getCurrentFunction()->getTarget().Options.DisableFramePointerElim(
@@ -291,7 +291,7 @@ DIE &DwarfCompileUnit::updateSubprogramScopeDIE(DISubprogram SP) {
     addFlag(*SPDie, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
   // Only include DW_AT_frame_base in full debug info
-  if (getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly) {
+  if (!includeMinimalInlineScopes()) {
     const TargetRegisterInfo *RI =
         Asm->TM.getSubtargetImpl()->getRegisterInfo();
     MachineLocation Location(RI->getFrameRegister(*Asm->MF));
@@ -341,10 +341,14 @@ void DwarfCompileUnit::constructScopeDIE(
     // null and the children will be added to the scope DIE.
     createScopeChildrenDIE(Scope, Children, &ChildScopeCount);
 
-    // There is no need to emit empty lexical block DIE.
-    for (const auto &E : DD->findImportedEntitiesForScope(DS))
-      Children.push_back(
-          constructImportedEntityDIE(DIImportedEntity(E.second)));
+    // Skip imported directives in gmlt-like data.
+    if (!includeMinimalInlineScopes()) {
+      // There is no need to emit empty lexical block DIE.
+      for (const auto &E : DD->findImportedEntitiesForScope(DS))
+        Children.push_back(
+            constructImportedEntityDIE(DIImportedEntity(E.second)));
+    }
+
     // If there are only other scopes as children, put them directly in the
     // parent instead, as this scope would serve no purpose.
     if (Children.size() == ChildScopeCount) {
@@ -576,7 +580,8 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   // If we have more than one elements and the last one is null, it is a
   // variadic function.
   if (FnArgs.getNumElements() > 1 &&
-      !FnArgs.getElement(FnArgs.getNumElements() - 1))
+      !FnArgs.getElement(FnArgs.getNumElements() - 1) &&
+      !includeMinimalInlineScopes())
     ScopeDIE.addChild(make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
 }
 
@@ -603,11 +608,13 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
 
   DIE *ContextDIE;
 
+  if (includeMinimalInlineScopes())
+    ContextDIE = &getUnitDie();
   // Some of this is duplicated from DwarfUnit::getOrCreateSubprogramDIE, with
   // the important distinction that the DIDescriptor is not associated with the
   // DIE (since the DIDescriptor will be associated with the concrete DIE, if
   // any). It could be refactored to some common utility function.
-  if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
+  else if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
     ContextDIE = &getUnitDie();
     getOrCreateSubprogramDIE(SPDecl);
   } else
@@ -619,7 +626,7 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
       &createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, DIDescriptor());
   applySubprogramAttributesToDefinition(SP, *AbsDef);
 
-  if (getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
+  if (!includeMinimalInlineScopes())
     addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   if (DIE *ObjectPointer = createAndAddScopeChildren(Scope, *AbsDef))
     addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
@@ -660,7 +667,7 @@ void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
       // If this subprogram has an abstract definition, reference that
       addDIEEntry(*D, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
   } else {
-    if (!D && getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
+    if (!D && !includeMinimalInlineScopes())
       // Lazily construct the subprogram if we didn't see either concrete or
       // inlined versions during codegen. (except in -gmlt ^ where we want
       // to omit these entirely)
@@ -703,7 +710,7 @@ void DwarfCompileUnit::emitHeader(const MCSymbol *ASectionSym) const {
 /// addGlobalName - Add a new global name to the compile unit.
 void DwarfCompileUnit::addGlobalName(StringRef Name, DIE &Die,
                                      DIScope Context) {
-  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+  if (includeMinimalInlineScopes())
     return;
   std::string FullName = getParentContextString(Context) + Name.str();
   GlobalNames[FullName] = &Die;
@@ -712,7 +719,7 @@ void DwarfCompileUnit::addGlobalName(StringRef Name, DIE &Die,
 /// Add a new global type to the unit.
 void DwarfCompileUnit::addGlobalType(DIType Ty, const DIE &Die,
                                      DIScope Context) {
-  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+  if (includeMinimalInlineScopes())
     return;
   std::string FullName = getParentContextString(Context) + Ty.getName().str();
   GlobalTypes[FullName] = &Die;
@@ -838,12 +845,16 @@ void DwarfCompileUnit::applySubprogramAttributesToDefinition(DISubprogram SP,
                                                              DIE &SPDie) {
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   DIScope Context = resolve(SPDecl ? SPDecl.getContext() : SP.getContext());
-  applySubprogramAttributes(SP, SPDie, getCUNode().getEmissionKind() ==
-                                           DIBuilder::LineTablesOnly);
+  applySubprogramAttributes(SP, SPDie, includeMinimalInlineScopes());
   addGlobalName(SP.getName(), SPDie, Context);
 }
 
 bool DwarfCompileUnit::isDwoUnit() const {
   return DD->useSplitDwarf() && Skeleton;
+}
+
+bool DwarfCompileUnit::includeMinimalInlineScopes() const {
+  return getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly ||
+         (DD->useSplitDwarf() && !Skeleton);
 }
 } // end llvm namespace

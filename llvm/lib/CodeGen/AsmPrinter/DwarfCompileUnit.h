@@ -66,6 +66,8 @@ class DwarfCompileUnit : public DwarfUnit {
 
   bool isDwoUnit() const override;
 
+  bool includeMinimalInlineScopes() const;
+
 public:
   DwarfCompileUnit(unsigned UID, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);

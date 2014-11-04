@@ -1233,20 +1233,23 @@ DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
 }
 
 /// getOrCreateSubprogramDIE - Create new DIE using SP.
-DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
+DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP, bool Minimal) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE (as is the case for member function
   // declarations).
-  DIE *ContextDIE = getOrCreateContextDIE(resolve(SP.getContext()));
+  DIE *ContextDIE =
+      Minimal ? &getUnitDie() : getOrCreateContextDIE(resolve(SP.getContext()));
 
   if (DIE *SPDie = getDIE(SP))
     return SPDie;
 
   if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
-    // Add subprogram definitions to the CU die directly.
-    ContextDIE = &getUnitDie();
-    // Build the decl now to ensure it precedes the definition.
-    getOrCreateSubprogramDIE(SPDecl);
+    if (!Minimal) {
+      // Add subprogram definitions to the CU die directly.
+      ContextDIE = &getUnitDie();
+      // Build the decl now to ensure it precedes the definition.
+      getOrCreateSubprogramDIE(SPDecl);
+    }
   }
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
@@ -1261,8 +1264,8 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   return &SPDie;
 }
 
-void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
-                                          bool Minimal) {
+bool DwarfUnit::applySubprogramDefinitionAttributes(DISubprogram SP,
+                                                    DIE &SPDie) {
   DIE *DeclDie = nullptr;
   StringRef DeclLinkageName;
   if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
@@ -1285,12 +1288,20 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
               GlobalValue::getRealLinkageName(LinkageName));
 
-  if (DeclDie) {
-    // Refer to the function declaration where all the other attributes will be
-    // found.
-    addDIEEntry(SPDie, dwarf::DW_AT_specification, *DeclDie);
-    return;
-  }
+  if (!DeclDie)
+    return false;
+
+  // Refer to the function declaration where all the other attributes will be
+  // found.
+  addDIEEntry(SPDie, dwarf::DW_AT_specification, *DeclDie);
+  return true;
+}
+
+void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
+                                          bool Minimal) {
+  if (!Minimal)
+    if (applySubprogramDefinitionAttributes(SP, SPDie))
+      return;
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())
