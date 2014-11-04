@@ -5,9 +5,7 @@
 // RUN: %clang_asan -dead_strip -O2 %s -o %t.exe
 // RUN: rm -f %t.symbols %t.interface
 
-// RUN: nm -g `otool -L %t.exe | grep "asan_osx_dynamic.dylib" | \
-// RUN:                       tr -d '\011' | \
-// RUN:                       sed "s/.dylib.*/.dylib/"` \
+// RUN: nm -g `%clang_asan %s -fsanitize=address -### 2>&1 | grep "libclang_rt.asan_osx_dynamic.dylib" | sed -e 's/.*"\(.*libclang_rt.asan_osx_dynamic.dylib\)".*/\1/'` \
 // RUN:   | grep " T " | sed "s/.* T //" \
 // RUN:   | grep "__asan_" | sed "s/___asan_/__asan_/" \
 // RUN:   | sed -E "s/__asan_init_v[0-9]+/__asan_init/" \
