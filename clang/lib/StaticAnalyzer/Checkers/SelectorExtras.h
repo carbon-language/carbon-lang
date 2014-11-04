@@ -34,7 +34,7 @@ static inline Selector getKeywordSelector(ASTContext &Ctx, va_list argp) {
   return getKeywordSelectorImpl(Ctx, First, argp);
 }
 
-END_WITH_NULL
+LLVM_END_WITH_NULL
 static inline Selector getKeywordSelector(ASTContext &Ctx,
                                           const char *First, ...) {
   va_list argp;
@@ -44,7 +44,7 @@ static inline Selector getKeywordSelector(ASTContext &Ctx,
   return result;
 }
 
-END_WITH_NULL
+LLVM_END_WITH_NULL
 static inline void lazyInitKeywordSelector(Selector &Sel, ASTContext &Ctx,
                                            const char *First, ...) {
   if (!Sel.isNull())

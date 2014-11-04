@@ -58,7 +58,7 @@ class LazyRuntimeFunction {
 
     /// Initialises the lazy function with the name, return type, and the types
     /// of the arguments.
-    END_WITH_NULL
+    LLVM_END_WITH_NULL
     void init(CodeGenModule *Mod, const char *name,
         llvm::Type *RetTy, ...) {
        CGM =Mod;
