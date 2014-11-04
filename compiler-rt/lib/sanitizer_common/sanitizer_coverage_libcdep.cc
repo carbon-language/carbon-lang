@@ -387,7 +387,7 @@ static void CovDump() {
         CHECK_LE(diff, 0xffffffffU);
         offsets.push_back(static_cast<u32>(diff));
       }
-      char *module_name = StripModuleName(module.data());
+      const char *module_name = StripModuleName(module.data());
       if (cov_sandboxed) {
         if (cov_fd >= 0) {
           CovWritePacked(internal_getpid(), module_name, offsets.data(),
@@ -407,7 +407,6 @@ static void CovDump() {
                   vb - old_vb);
         }
       }
-      InternalFree(module_name);
     }
   }
   if (cov_fd >= 0)

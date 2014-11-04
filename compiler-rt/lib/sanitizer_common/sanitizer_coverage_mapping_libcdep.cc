@@ -80,7 +80,7 @@ void CovUpdateMapping(uptr caller_pc) {
 
   text.append("%d\n", sizeof(uptr) * 8);
   for (int i = 0; i < n_modules; ++i) {
-    char *module_name = StripModuleName(modules[i].full_name());
+    const char *module_name = StripModuleName(modules[i].full_name());
     for (unsigned j = 0; j < modules[i].n_ranges(); ++j) {
       if (modules[i].address_range_executable(j)) {
         uptr start = modules[i].address_range_start(j);
@@ -91,7 +91,6 @@ void CovUpdateMapping(uptr caller_pc) {
           cached_mapping.SetModuleRange(start, end);
       }
     }
-    InternalFree(module_name);
   }
 
   int err;

@@ -155,6 +155,14 @@ const char *StripPathPrefix(const char *filepath,
   return pos;
 }
 
+const char *StripModuleName(const char *module) {
+  if (module == 0)
+    return 0;
+  if (const char *slash_pos = internal_strrchr(module, '/'))
+    return slash_pos + 1;
+  return module;
+}
+
 void PrintSourceLocation(InternalScopedString *buffer, const char *file,
                          int line, int column) {
   CHECK(file);
@@ -215,17 +223,6 @@ bool LoadedModule::containsAddress(uptr address) const {
       return true;
   }
   return false;
-}
-
-char *StripModuleName(const char *module) {
-  if (module == 0)
-    return 0;
-  const char *short_module_name = internal_strrchr(module, '/');
-  if (short_module_name)
-    short_module_name += 1;
-  else
-    short_module_name = module;
-  return internal_strdup(short_module_name);
 }
 
 static atomic_uintptr_t g_total_mmaped;
