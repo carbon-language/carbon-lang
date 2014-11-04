@@ -46,10 +46,10 @@ namespace lldb_private {
         GetPluginDescriptionStatic (bool is_host);
 
         virtual lldb_private::ConstString
-        GetPluginName();
+        GetPluginName() override;
         
         virtual uint32_t
-        GetPluginVersion()
+        GetPluginVersion() override
         {
             return 1;
         }
@@ -61,47 +61,47 @@ namespace lldb_private {
         ResolveExecutable (const FileSpec &exe_file,
                            const ArchSpec &arch,
                            lldb::ModuleSP &module_sp,
-                           const FileSpecList *module_search_paths_ptr);
+                           const FileSpecList *module_search_paths_ptr) override;
 
         virtual const char *
-        GetDescription ()
+        GetDescription () override
         {
             return GetPluginDescriptionStatic(IsHost());
         }
 
         virtual void
-        GetStatus (Stream &strm);
+        GetStatus (Stream &strm) override;
 
         virtual Error
         GetFileWithUUID (const FileSpec &platform_file,
-                         const UUID* uuid, FileSpec &local_file);
+                         const UUID* uuid, FileSpec &local_file) override;
 
         virtual bool
-        GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
+        GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info) override;
 
         virtual bool
-        GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
+        GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch) override;
 
         virtual size_t
         GetSoftwareBreakpointTrapOpcode (Target &target, 
-                                         BreakpointSite *bp_site);
+                                         BreakpointSite *bp_site) override;
 
         virtual lldb_private::Error
-        LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info);
+        LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info) override;
 
         virtual lldb::ProcessSP
         Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
-               Target *target, Listener &listener, Error &error);
+               Target *target, Listener &listener, Error &error) override;
 
         // Kalimba processes can not be launched by spawning and attaching.
         virtual bool
-        CanDebugProcess ()
+        CanDebugProcess () override
         {
             return false;
         }
 
         virtual void
-        CalculateTrapHandlerSymbolNames ();
+        CalculateTrapHandlerSymbolNames () override;
 
         Error
         LaunchNativeProcess (

@@ -42,104 +42,104 @@ public:
     // Process protocol.
     //------------------------------------------------------------------
     virtual void
-    Finalize();
+    Finalize() override;
 
     virtual bool
-    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name);
+    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
 
     virtual lldb_private::Error
-    WillLaunch(lldb_private::Module *module);
+    WillLaunch(lldb_private::Module *module) override;
 
     virtual lldb_private::Error
-    DoAttachToProcessWithID(lldb::pid_t pid);
+    DoAttachToProcessWithID(lldb::pid_t pid) override;
 
     virtual lldb_private::Error
-    DoAttachToProcessWithID (lldb::pid_t pid, const lldb_private::ProcessAttachInfo &attach_info);
+    DoAttachToProcessWithID (lldb::pid_t pid, const lldb_private::ProcessAttachInfo &attach_info) override;
 
     virtual lldb_private::Error
     DoLaunch (lldb_private::Module *exe_module, 
-              lldb_private::ProcessLaunchInfo &launch_info);
+              lldb_private::ProcessLaunchInfo &launch_info) override;
 
     virtual void
-    DidLaunch();
+    DidLaunch() override;
 
     virtual lldb_private::Error
-    DoResume();
+    DoResume() override;
 
     virtual lldb_private::Error
-    DoHalt(bool &caused_stop);
+    DoHalt(bool &caused_stop) override;
 
     virtual lldb_private::Error
-    DoDetach(bool keep_stopped) = 0;
+    DoDetach(bool keep_stopped) override = 0;
 
     virtual lldb_private::Error
-    DoSignal(int signal);
+    DoSignal(int signal) override;
 
     virtual lldb_private::Error
-    DoDestroy();
+    DoDestroy() override;
 
     virtual void
-    DoDidExec();
+    DoDidExec() override;
 
     virtual void
-    RefreshStateAfterStop();
+    RefreshStateAfterStop() override;
 
     virtual bool
-    IsAlive();
+    IsAlive() override;
 
     virtual size_t
     DoReadMemory(lldb::addr_t vm_addr,
                  void *buf,
                  size_t size,
-                 lldb_private::Error &error);
+                 lldb_private::Error &error) override;
 
     virtual size_t
     DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size,
-                  lldb_private::Error &error);
+                  lldb_private::Error &error) override;
 
     virtual lldb::addr_t
     DoAllocateMemory(size_t size, uint32_t permissions,
-                     lldb_private::Error &error);
+                     lldb_private::Error &error) override;
 
     virtual lldb_private::Error
-    DoDeallocateMemory(lldb::addr_t ptr);
+    DoDeallocateMemory(lldb::addr_t ptr) override;
 
     virtual size_t
     GetSoftwareBreakpointTrapOpcode(lldb_private::BreakpointSite* bp_site);
 
     virtual lldb_private::Error
-    EnableBreakpointSite(lldb_private::BreakpointSite *bp_site);
+    EnableBreakpointSite(lldb_private::BreakpointSite *bp_site) override;
 
     virtual lldb_private::Error
-    DisableBreakpointSite(lldb_private::BreakpointSite *bp_site);
+    DisableBreakpointSite(lldb_private::BreakpointSite *bp_site) override;
 
     virtual lldb_private::Error
-    EnableWatchpoint(lldb_private::Watchpoint *wp, bool notify = true);
+    EnableWatchpoint(lldb_private::Watchpoint *wp, bool notify = true) override;
 
     virtual lldb_private::Error
-    DisableWatchpoint(lldb_private::Watchpoint *wp, bool notify = true);
+    DisableWatchpoint(lldb_private::Watchpoint *wp, bool notify = true) override;
 
     virtual lldb_private::Error
-    GetWatchpointSupportInfo(uint32_t &num);
+    GetWatchpointSupportInfo(uint32_t &num) override;
 
     virtual lldb_private::Error
-    GetWatchpointSupportInfo(uint32_t &num, bool &after);
+    GetWatchpointSupportInfo(uint32_t &num, bool &after) override;
 
     virtual uint32_t
     UpdateThreadListIfNeeded();
 
     virtual bool
     UpdateThreadList(lldb_private::ThreadList &old_thread_list, 
-                     lldb_private::ThreadList &new_thread_list) = 0;
+                     lldb_private::ThreadList &new_thread_list) override = 0;
 
     virtual lldb::ByteOrder
     GetByteOrder() const;
 
     virtual lldb::addr_t
-    GetImageInfoAddress();
+    GetImageInfoAddress() override;
 
     virtual size_t
-    PutSTDIN(const char *buf, size_t len, lldb_private::Error &error);
+    PutSTDIN(const char *buf, size_t len, lldb_private::Error &error) override;
 
     const lldb::DataBufferSP
     GetAuxvData () override;
