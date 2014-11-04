@@ -83,6 +83,23 @@ static void CheckCodeGenerationOptions(const Driver &D, const ArgList &Args) {
         << A->getAsString(Args) << "-static";
 }
 
+// Add backslashes to escape spaces and other backslashes.
+// This is used for the space-separated argument list specified with
+// the -dwarf-debug-flags option.
+static void EscapeSpacesAndBackslashes(const char *Arg,
+                                       SmallVectorImpl<char> &Res) {
+  for ( ; *Arg; ++Arg) {
+    switch (*Arg) {
+    default: break;
+    case ' ':
+    case '\\':
+      Res.push_back('\\');
+      break;
+    }
+    Res.push_back(*Arg);
+  }
+}
+
 // Quote target names for inclusion in GNU Make dependency files.
 // Only the characters '$', '#', ' ', '\t' are quoted.
 static void QuoteTarget(StringRef Target,
@@ -4465,8 +4482,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     SmallString<256> Flags;
     Flags += Exec;
     for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
+      SmallString<128> EscapedArg;
+      EscapeSpacesAndBackslashes(OriginalArgs[i], EscapedArg);
       Flags += " ";
-      Flags += OriginalArgs[i];
+      Flags += EscapedArg;
     }
     CmdArgs.push_back("-dwarf-debug-flags");
     CmdArgs.push_back(Args.MakeArgString(Flags.str()));
@@ -4896,8 +4915,10 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     const char *Exec = getToolChain().getDriver().getClangProgramPath();
     Flags += Exec;
     for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
+      SmallString<128> EscapedArg;
+      EscapeSpacesAndBackslashes(OriginalArgs[i], EscapedArg);
       Flags += " ";
-      Flags += OriginalArgs[i];
+      Flags += EscapedArg;
     }
     CmdArgs.push_back("-dwarf-debug-flags");
     CmdArgs.push_back(Args.MakeArgString(Flags.str()));
