@@ -12,9 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "WindowsSupport.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/WindowsError.h"
 #include <cstdio>
 #include <fcntl.h>
 #include <io.h>
@@ -67,6 +69,68 @@ std::string sys::FindProgramByName(const std::string &progName) {
     return "";
 
   return std::string(result.data(), result.size());
+}
+
+ErrorOr<std::string> sys::findProgramByName(StringRef Name,
+                                            ArrayRef<StringRef> Paths) {
+  assert(!Name.empty() && "Must have a name!");
+
+  if (Name.find_first_of("/\\") != StringRef::npos)
+    return std::string(Name);
+
+  const char16_t *Path = nullptr;
+  std::u16string PathStorage;
+  if (!Paths.empty()) {
+    PathStorage.reserve(Paths.size() * MAX_PATH);
+    for (int i = 0; i < Paths.size(); ++i) {
+      if (i)
+        PathStorage.push_back(';');
+      StringRef P = Paths[i];
+      SmallVector<wchar_t, MAX_PATH> TmpPath;
+      if (std::error_code EC = windows::UTF8ToUTF16(P, TmpPath))
+        return EC;
+      PathStorage.append(TmpPath.begin(), TmpPath.end());
+    }
+    Path = PathStorage.c_str();
+  }
+
+  SmallVector<wchar_t, MAX_PATH> U16Name;
+  if (std::error_code EC = windows::UTF8ToUTF16(Name, U16Name))
+    return EC;
+
+  SmallVector<StringRef, 12> PathExts;
+  PathExts.push_back("");
+  SplitString(std::getenv("PATHEXT"), PathExts, ";");
+
+  SmallVector<wchar_t, MAX_PATH> U16Result;
+  DWORD Len = MAX_PATH;
+  for (StringRef Ext : PathExts) {
+    SmallVector<wchar_t, MAX_PATH> U16Ext;
+    if (std::error_code EC = windows::UTF8ToUTF16(Ext, U16Ext))
+      return EC;
+
+    do {
+      U16Result.reserve(Len);
+      Len = ::SearchPathW((const wchar_t *)Path, c_str(U16Name),
+                          U16Ext.empty() ? nullptr : c_str(U16Ext),
+                          U16Result.capacity(), U16Result.data(), nullptr);
+    } while (Len > U16Result.capacity());
+
+    if (Len != 0)
+      break; // Found it.
+  }
+
+  if (Len == 0)
+    return mapWindowsError(::GetLastError());
+
+  U16Result.set_size(Len);
+
+  SmallVector<char, MAX_PATH> U8Result;
+  if (std::error_code EC =
+          windows::UTF16ToUTF8(U16Result.data(), U16Result.size(), U8Result))
+    return EC;
+
+  return std::string(U8Result.begin(), U8Result.end());
 }
 
 static HANDLE RedirectIO(const StringRef *path, int fd, std::string* ErrMsg) {

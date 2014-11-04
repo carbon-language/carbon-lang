@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_PROGRAM_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Path.h"
 #include <system_error>
 
@@ -62,6 +63,23 @@ struct ProcessInfo {
   /// @returns A string containing the path of the program or an empty string if
   /// the program could not be found.
   std::string FindProgramByName(const std::string& name);
+
+  /// \brief Find the first executable file \p Name in \p Paths.
+  ///
+  /// This does not perform hashing as a shell would but instead stats each PATH
+  /// entry individually so should generally be avoided. Core LLVM library
+  /// functions and options should instead require fully specified paths.
+  ///
+  /// \param Name name of the executable to find. If it contains any system
+  ///   slashes, it will be returned as is.
+  /// \param Paths optional list of paths to search for \p Name. If empty it
+  ///   will use the system PATH environment instead.
+  ///
+  /// \returns The fully qualified path to the first \p Name in \p Paths if it
+  ///   exists. \p Name if \p Name has slashes in it. Otherwise an error.
+  ErrorOr<std::string>
+  findProgramByName(StringRef Name,
+                    ArrayRef<StringRef> Paths = ArrayRef<StringRef>());
 
   // These functions change the specified standard stream (stdin or stdout) to
   // binary mode. They return errc::success if the specified stream

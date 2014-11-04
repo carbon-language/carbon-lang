@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
@@ -98,6 +99,33 @@ sys::FindProgramByName(const std::string& progName) {
     }
   }
   return "";
+}
+
+ErrorOr<std::string> sys::findProgramByName(StringRef Name,
+                                            ArrayRef<StringRef> Paths) {
+  assert(!Name.empty() && "Must have a name!");
+  // Use the given path verbatim if it contains any slashes; this matches
+  // the behavior of sh(1) and friends.
+  if (Name.find('/') != StringRef::npos)
+    return std::string(Name);
+
+  if (Paths.empty()) {
+    SmallVector<StringRef, 16> SearchPaths;
+    SplitString(std::getenv("PATH"), SearchPaths, ":");
+    return findProgramByName(Name, SearchPaths);
+  }
+
+  for (auto Path : Paths) {
+    if (Path.empty())
+      continue;
+
+    // Check to see if this first directory contains the executable...
+    SmallString<128> FilePath(Path);
+    sys::path::append(FilePath, Name);
+    if (sys::fs::can_execute(FilePath.c_str()))
+      return std::string(FilePath.str()); // Found the executable!
+  }
+  return std::errc::no_such_file_or_directory;
 }
 
 static bool RedirectIO(const StringRef *Path, int FD, std::string* ErrMsg) {
