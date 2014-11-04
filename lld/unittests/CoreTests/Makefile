@@ -9,6 +9,6 @@
 
 LLD_LEVEL = ../..
 TESTNAME = CoreTest
-USEDLIBS = gtest.a LLVMOption.a LLVMSupport.a
+LLVMLIBS = gtest.a LLVMOption.a LLVMSupport.a
 
 include $(LLD_LEVEL)/unittests/Makefile
