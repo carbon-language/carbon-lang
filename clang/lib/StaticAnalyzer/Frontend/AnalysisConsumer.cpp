@@ -788,7 +788,9 @@ UbigraphViz::~UbigraphViz() {
   Out.reset();
   llvm::errs() << "Running 'ubiviz' program... ";
   std::string ErrMsg;
-  std::string Ubiviz = llvm::sys::FindProgramByName("ubiviz");
+  std::string Ubiviz;
+  if (auto Path = llvm::sys::findProgramByName("ubiviz"))
+    Ubiviz = *Path;
   std::vector<const char*> args;
   args.push_back(Ubiviz.c_str());
   args.push_back(Filename.c_str());
