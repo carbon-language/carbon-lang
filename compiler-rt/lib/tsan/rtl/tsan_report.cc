@@ -27,6 +27,15 @@ ReportStack *ReportStack::New(uptr addr) {
   return res;
 }
 
+ReportLocation::ReportLocation(ReportLocationType type)
+    : type(type), global(), heap_chunk_start(0), heap_chunk_size(0), tid(0),
+      fd(0), suppressable(false), stack(nullptr) {}
+
+ReportLocation *ReportLocation::New(ReportLocationType type) {
+  void *mem = internal_alloc(MBlockReportStack, sizeof(ReportLocation));
+  return new(mem) ReportLocation(type);
+}
+
 class Decorator: public __sanitizer::SanitizerCommonDecorator {
  public:
   Decorator() : SanitizerCommonDecorator() { }
@@ -172,12 +181,15 @@ static void PrintLocation(const ReportLocation *loc) {
   bool print_stack = false;
   Printf("%s", d.Location());
   if (loc->type == ReportLocationGlobal) {
-    Printf("  Location is global '%s' of size %zu at %p (%s+%p)\n\n", loc->name,
-           loc->size, loc->addr, StripModuleName(loc->module), loc->offset);
+    const DataInfo &global = loc->global;
+    Printf("  Location is global '%s' of size %zu at %p (%s+%p)\n\n",
+           global.name, global.size, global.start,
+           StripModuleName(global.module), global.module_offset);
   } else if (loc->type == ReportLocationHeap) {
     char thrbuf[kThreadBufSize];
     Printf("  Location is heap block of size %zu at %p allocated by %s:\n",
-        loc->size, loc->addr, thread_name(thrbuf, loc->tid));
+           loc->heap_chunk_size, loc->heap_chunk_start,
+           thread_name(thrbuf, loc->tid));
     print_stack = true;
   } else if (loc->type == ReportLocationStack) {
     Printf("  Location is stack of %s.\n\n", thread_name(thrbuf, loc->tid));

@@ -114,13 +114,13 @@ uptr IsSuppressed(ReportType typ, const ReportLocation *loc, Suppression **sp) {
   if (stype == SuppressionNone)
     return 0;
   Suppression *s;
-  if (SuppressionContext::Get()->Match(loc->name, stype, &s) ||
-      SuppressionContext::Get()->Match(loc->file, stype, &s) ||
-      SuppressionContext::Get()->Match(loc->module, stype, &s)) {
+  const DataInfo &global = loc->global;
+  if (SuppressionContext::Get()->Match(global.name, stype, &s) ||
+      SuppressionContext::Get()->Match(global.module, stype, &s)) {
       DPrintf("ThreadSanitizer: matched suppression '%s'\n", s->templ);
       s->hit_count++;
       *sp = s;
-      return loc->addr;
+      return global.start;
   }
   return 0;
 }

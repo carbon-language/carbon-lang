@@ -99,18 +99,8 @@ ReportLocation *SymbolizeData(uptr addr) {
   DataInfo info;
   if (!Symbolizer::GetOrInit()->SymbolizeData(addr, &info))
     return 0;
-  ReportLocation *ent = (ReportLocation*)internal_alloc(MBlockReportStack,
-                                                        sizeof(ReportLocation));
-  internal_memset(ent, 0, sizeof(*ent));
-  ent->type = ReportLocationGlobal;
-  if (info.module)
-    ent->module = internal_strdup(info.module);
-  ent->offset = info.module_offset;
-  if (info.name)
-    ent->name = internal_strdup(info.name);
-  ent->addr = info.start;
-  ent->size = info.size;
-  info.Clear();
+  ReportLocation *ent = ReportLocation::New(ReportLocationGlobal);
+  ent->global = info;
   return ent;
 }
 

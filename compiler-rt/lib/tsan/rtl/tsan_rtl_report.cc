@@ -303,13 +303,11 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
   int creat_tid = -1;
   u32 creat_stack = 0;
   if (FdLocation(addr, &fd, &creat_tid, &creat_stack)) {
-    void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
-    ReportLocation *loc = new(mem) ReportLocation();
-    rep_->locs.PushBack(loc);
-    loc->type = ReportLocationFD;
+    ReportLocation *loc = ReportLocation::New(ReportLocationFD);
     loc->fd = fd;
     loc->tid = creat_tid;
     loc->stack = SymbolizeStackId(creat_stack);
+    rep_->locs.PushBack(loc);
     ThreadContext *tctx = FindThreadByUidLocked(creat_tid);
     if (tctx)
       AddThread(tctx);
@@ -324,33 +322,25 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
   }
   if (b != 0) {
     ThreadContext *tctx = FindThreadByTidLocked(b->tid);
-    void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
-    ReportLocation *loc = new(mem) ReportLocation();
-    rep_->locs.PushBack(loc);
-    loc->type = ReportLocationHeap;
-    loc->addr = (uptr)allocator()->GetBlockBegin((void*)addr);
-    loc->size = b->siz;
+    ReportLocation *loc = ReportLocation::New(ReportLocationHeap);
+    loc->heap_chunk_start = (uptr)allocator()->GetBlockBegin((void *)addr);
+    loc->heap_chunk_size = b->siz;
     loc->tid = tctx ? tctx->tid : b->tid;
-    loc->name = 0;
-    loc->file = 0;
-    loc->line = 0;
-    loc->stack = 0;
     loc->stack = SymbolizeStackId(b->stk);
+    rep_->locs.PushBack(loc);
     if (tctx)
       AddThread(tctx);
     return;
   }
   bool is_stack = false;
   if (ThreadContext *tctx = IsThreadStackOrTls(addr, &is_stack)) {
-    void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
-    ReportLocation *loc = new(mem) ReportLocation();
-    rep_->locs.PushBack(loc);
-    loc->type = is_stack ? ReportLocationStack : ReportLocationTLS;
+    ReportLocation *loc =
+        ReportLocation::New(is_stack ? ReportLocationStack : ReportLocationTLS);
     loc->tid = tctx->tid;
+    rep_->locs.PushBack(loc);
     AddThread(tctx);
   }
-  ReportLocation *loc = SymbolizeData(addr);
-  if (loc) {
+  if (ReportLocation *loc = SymbolizeData(addr)) {
     loc->suppressable = true;
     rep_->locs.PushBack(loc);
     return;
