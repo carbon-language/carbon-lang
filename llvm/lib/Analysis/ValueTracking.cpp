@@ -39,8 +39,8 @@ using namespace llvm::PatternMatch;
 
 const unsigned MaxDepth = 6;
 
-/// getBitWidth - Returns the bitwidth of the given scalar or pointer type (if
-/// unknown returns 0).  For vector types, returns the element type's bitwidth.
+/// Returns the bitwidth of the given scalar or pointer type (if unknown returns
+/// 0). For vector types, returns the element type's bitwidth.
 static unsigned getBitWidth(Type *Ty, const DataLayout *TD) {
   if (unsigned BitWidth = Ty->getScalarSizeInBits())
     return BitWidth;
@@ -1322,8 +1322,8 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
 }
 
-/// ComputeSignBit - Determine whether the sign bit is known to be zero or
-/// one.  Convenience wrapper around computeKnownBits.
+/// Determine whether the sign bit is known to be zero or one.
+/// Convenience wrapper around computeKnownBits.
 void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
                     const DataLayout *TD, unsigned Depth,
                     const Query &Q) {
@@ -1340,9 +1340,9 @@ void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
   KnownZero = ZeroBits[BitWidth - 1];
 }
 
-/// isKnownToBeAPowerOfTwo - Return true if the given value is known to have exactly one
+/// Return true if the given value is known to have exactly one
 /// bit set when defined. For vectors return true if every element is known to
-/// be a power of two when defined.  Supports values with integer or pointer
+/// be a power of two when defined. Supports values with integer or pointer
 /// types and vectors of integers.
 bool isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth,
                             const Query &Q) {
@@ -1519,10 +1519,10 @@ static bool rangeMetadataExcludesValue(MDNode* Ranges,
   return true;
 }
 
-/// isKnownNonZero - Return true if the given value is known to be non-zero
-/// when defined.  For vectors return true if every element is known to be
-/// non-zero when defined.  Supports values with integer or pointer type and
-/// vectors of integers.
+/// Return true if the given value is known to be non-zero when defined.
+/// For vectors return true if every element is known to be non-zero when
+/// defined. Supports values with integer or pointer type and vectors of
+/// integers.
 bool isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth,
                     const Query &Q) {
   if (Constant *C = dyn_cast<Constant>(V)) {
@@ -1667,9 +1667,9 @@ bool isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth,
   return KnownOne != 0;
 }
 
-/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
-/// this predicate to simplify operations downstream.  Mask is known to be zero
-/// for bits that V cannot have.
+/// Return true if 'V & Mask' is known to be zero.  We use this predicate to
+/// simplify operations downstream. Mask is known to be zero for bits that V
+/// cannot have.
 ///
 /// This function is defined on values with integer type, values with pointer
 /// type (but only if TD is non-null), and vectors of integers.  In the case
@@ -1686,11 +1686,11 @@ bool MaskedValueIsZero(Value *V, const APInt &Mask,
 
 
 
-/// ComputeNumSignBits - Return the number of times the sign bit of the
-/// register is replicated into the other bits.  We know that at least 1 bit
-/// is always equal to the sign bit (itself), but other cases can give us
-/// information.  For example, immediately after an "ashr X, 2", we know that
-/// the top 3 bits are all equal to each other, so we return 3.
+/// Return the number of times the sign bit of the register is replicated into
+/// the other bits. We know that at least 1 bit is always equal to the sign bit
+/// (itself), but other cases can give us information. For example, immediately
+/// after an "ashr X, 2", we know that the top 3 bits are all equal to each
+/// other, so we return 3.
 ///
 /// 'Op' must have a scalar integer type.
 ///
@@ -1862,9 +1862,9 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
   return std::max(FirstAnswer, std::min(TyBits, Mask.countLeadingZeros()));
 }
 
-/// ComputeMultiple - This function computes the integer multiple of Base that
-/// equals V.  If successful, it returns true and returns the multiple in
-/// Multiple.  If unsuccessful, it returns false. It looks
+/// This function computes the integer multiple of Base that equals V.
+/// If successful, it returns true and returns the multiple in
+/// Multiple. If unsuccessful, it returns false. It looks
 /// through SExt instructions only if LookThroughSExt is true.
 bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
                            bool LookThroughSExt, unsigned Depth) {
@@ -1982,8 +1982,8 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
   return false;
 }
 
-/// CannotBeNegativeZero - Return true if we can prove that the specified FP
-/// value is never equal to -0.0.
+/// Return true if we can prove that the specified FP value is never equal to
+/// -0.0.
 ///
 /// NOTE: this function will need to be revisited when we support non-default
 /// rounding modes!
@@ -2036,8 +2036,8 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
   return false;
 }
 
-/// isBytewiseValue - If the specified value can be set by repeating the same
-/// byte in memory, return the i8 value that it is represented with.  This is
+/// If the specified value can be set by repeating the same byte in memory,
+/// return the i8 value that it is represented with.  This is
 /// true for all i8 values obviously, but is also true for i32 0, i32 -1,
 /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
 /// byte store (e.g. i16 0x1234), return null.
@@ -2185,7 +2185,7 @@ static Value *BuildSubAggregate(Value *From, ArrayRef<unsigned> idx_range,
   return BuildSubAggregate(From, To, IndexedType, Idxs, IdxSkip, InsertBefore);
 }
 
-/// FindInsertedValue - Given an aggregrate and an sequence of indices, see if
+/// Given an aggregrate and an sequence of indices, see if
 /// the scalar value indexed is already around as a register, for example if it
 /// were inserted directly into the aggregrate.
 ///
@@ -2275,9 +2275,8 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
   return nullptr;
 }
 
-/// GetPointerBaseWithConstantOffset - Analyze the specified pointer to see if
-/// it can be expressed as a base pointer plus a constant offset.  Return the
-/// base and offset to the caller.
+/// Analyze the specified pointer to see if it can be expressed as a base
+/// pointer plus a constant offset. Return the base and offset to the caller.
 Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
                                               const DataLayout *DL) {
   // Without DataLayout, conservatively assume 64-bit offsets, which is
@@ -2314,9 +2313,9 @@ Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 }
 
 
-/// getConstantStringInfo - This function computes the length of a
-/// null-terminated C string pointed to by V.  If successful, it returns true
-/// and returns the string in Str.  If unsuccessful, it returns false.
+/// This function computes the length of a null-terminated C string pointed to
+/// by V. If successful, it returns true and returns the string in Str.
+/// If unsuccessful, it returns false.
 bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
                                  uint64_t Offset, bool TrimAtNul) {
   assert(V);
@@ -2400,7 +2399,7 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
 // nodes.
 // TODO: See if we can integrate these two together.
 
-/// GetStringLengthH - If we can compute the length of the string pointed to by
+/// If we can compute the length of the string pointed to by
 /// the specified pointer, return 'len+1'.  If we can't, return 0.
 static uint64_t GetStringLengthH(Value *V, SmallPtrSetImpl<PHINode*> &PHIs) {
   // Look through noop bitcast instructions.
@@ -2449,7 +2448,7 @@ static uint64_t GetStringLengthH(Value *V, SmallPtrSetImpl<PHINode*> &PHIs) {
   return StrData.size()+1;
 }
 
-/// GetStringLength - If we can compute the length of the string pointed to by
+/// If we can compute the length of the string pointed to by
 /// the specified pointer, return 'len+1'.  If we can't, return 0.
 uint64_t llvm::GetStringLength(Value *V) {
   if (!V->getType()->isPointerTy()) return 0;
@@ -2522,9 +2521,7 @@ llvm::GetUnderlyingObjects(Value *V,
   } while (!Worklist.empty());
 }
 
-/// onlyUsedByLifetimeMarkers - Return true if the only users of this pointer
-/// are lifetime markers.
-///
+/// Return true if the only users of this pointer are lifetime markers.
 bool llvm::onlyUsedByLifetimeMarkers(const Value *V) {
   for (const User *U : V->users()) {
     const IntrinsicInst *II = dyn_cast<IntrinsicInst>(U);
@@ -2639,8 +2636,7 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   }
 }
 
-/// isKnownNonNull - Return true if we know that the specified value is never
-/// null.
+/// Return true if we know that the specified value is never null.
 bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   // Alloca never returns null, malloc might.
   if (isa<AllocaInst>(V)) return true;
