@@ -150,11 +150,17 @@ public:
   void apply(PBQPRAGraph &G) override {
     LiveIntervals &LIS = G.getMetadata().LIS;
 
+    // A minimum spill costs, so that register constraints can can be set
+    // without normalization in the [0.0:MinSpillCost( interval.
+    const PBQP::PBQPNum MinSpillCost = 10.0;
+
     for (auto NId : G.nodeIds()) {
       PBQP::PBQPNum SpillCost =
         LIS.getInterval(G.getNodeMetadata(NId).getVReg()).weight;
       if (SpillCost == 0.0)
         SpillCost = std::numeric_limits<PBQP::PBQPNum>::min();
+      else
+        SpillCost += MinSpillCost;
       PBQPRAGraph::RawVector NodeCosts(G.getNodeCosts(NId));
       NodeCosts[PBQP::RegAlloc::getSpillOptionIdx()] = SpillCost;
       G.setNodeCosts(NId, std::move(NodeCosts));
@@ -350,11 +356,8 @@ public:
         unsigned DstReg = CP.getDstReg();
         unsigned SrcReg = CP.getSrcReg();
 
-        const float CopyFactor = 0.5; // Cost of copy relative to load. Current
-                                      // value plucked randomly out of the air.
-
-        PBQP::PBQPNum CBenefit =
-          CopyFactor * LiveIntervals::getSpillWeight(false, true, &MBFI, &MI);
+        const float Scale = 1.0f / MBFI.getEntryFreq();
+        PBQP::PBQPNum CBenefit = MBFI.getBlockFreq(&MBB).getFrequency() * Scale;
 
         if (CP.isPhys()) {
           if (!MF.getRegInfo().isAllocatable(DstReg))
@@ -607,12 +610,20 @@ void RegAllocPBQP::finalizeAlloc(MachineFunction &MF,
   }
 }
 
+static inline float normalizePBQPSpillWeight(float UseDefFreq, unsigned Size,
+                                         unsigned NumInstr) {
+  // All intervals have a spill weight that is mostly proportional to the number
+  // of uses, with uses in loops having a bigger weight.
+  return NumInstr * normalizeSpillWeight(UseDefFreq, Size, 1);
+}
+
 bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   MachineBlockFrequencyInfo &MBFI =
     getAnalysis<MachineBlockFrequencyInfo>();
 
-  calculateSpillWeightsAndHints(LIS, MF, getAnalysis<MachineLoopInfo>(), MBFI);
+  calculateSpillWeightsAndHints(LIS, MF, getAnalysis<MachineLoopInfo>(), MBFI,
+                                normalizePBQPSpillWeight);
 
   VirtRegMap &VRM = getAnalysis<VirtRegMap>();
 

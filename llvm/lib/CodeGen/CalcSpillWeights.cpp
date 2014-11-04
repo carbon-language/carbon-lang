@@ -100,6 +100,7 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   MachineLoop *loop = nullptr;
   bool isExiting = false;
   float totalWeight = 0;
+  unsigned numInstr = 0; // Number of instructions using li
   SmallPtrSet<MachineInstr*, 8> visited;
 
   // Find the best physreg hint and the best virtreg hint.
@@ -116,6 +117,7 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
        I = mri.reg_instr_begin(li.reg), E = mri.reg_instr_end();
        I != E; ) {
     MachineInstr *mi = &*(I++);
+    numInstr++;
     if (mi->isIdentityCopy() || mi->isImplicitDef() || mi->isDebugValue())
       continue;
     if (!visited.insert(mi))
@@ -189,5 +191,5 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   if (isRematerializable(li, LIS, *MF.getSubtarget().getInstrInfo()))
     totalWeight *= 0.5F;
 
-  li.weight = normalize(totalWeight, li.getSize());
+  li.weight = normalize(totalWeight, li.getSize(), numInstr);
 }

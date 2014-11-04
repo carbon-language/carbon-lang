@@ -1789,9 +1789,11 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
         // instructions.
         //
         // Try to guess the size of the new interval.
-        const float EstWeight = normalizeSpillWeight(blockFreq * (NewGaps + 1),
-                                 Uses[SplitBefore].distance(Uses[SplitAfter]) +
-                                 (LiveBefore + LiveAfter)*SlotIndex::InstrDist);
+        const float EstWeight = normalizeSpillWeight(
+            blockFreq * (NewGaps + 1),
+            Uses[SplitBefore].distance(Uses[SplitAfter]) +
+                (LiveBefore + LiveAfter) * SlotIndex::InstrDist,
+            1);
         // Would this split be possible to allocate?
         // Never allocate all gaps, we wouldn't be making progress.
         DEBUG(dbgs() << " w=" << EstWeight);

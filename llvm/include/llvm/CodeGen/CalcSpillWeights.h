@@ -30,8 +30,10 @@ namespace llvm {
   /// @param UseDefFreq Expected number of executed use and def instructions
   ///                   per function call. Derived from block frequencies.
   /// @param Size       Size of live interval as returnexd by getSize()
+  /// @param NumInstr   Number of instructions using this live interval
   ///
-  static inline float normalizeSpillWeight(float UseDefFreq, unsigned Size) {
+  static inline float normalizeSpillWeight(float UseDefFreq, unsigned Size,
+                                           unsigned NumInstr) {
     // The constant 25 instructions is added to avoid depending too much on
     // accidental SlotIndex gaps for small intervals. The effect is that small
     // intervals have a spill weight that is mostly proportional to the number
@@ -44,7 +46,7 @@ namespace llvm {
   /// spill weight and allocation hint.
   class VirtRegAuxInfo {
   public:
-    typedef float (*NormalizingFn)(float, unsigned);
+    typedef float (*NormalizingFn)(float, unsigned, unsigned);
 
   private:
     MachineFunction &MF;
