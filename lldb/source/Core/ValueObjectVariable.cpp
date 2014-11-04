@@ -248,6 +248,8 @@ ValueObjectVariable::UpdateValue ()
                     Value value(m_value);
                     value.SetContext(Value::eContextTypeVariable, variable);
                     m_error = value.GetValueAsData(&exe_ctx, m_data, 0, GetModule().get());
+                    
+                    SetValueDidChange (value_type != old_value.GetValueType() || m_value.GetScalar() != old_value.GetScalar());
                 }
                 break;
             }
