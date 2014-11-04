@@ -116,12 +116,6 @@ typedef signed int ssize_t;
 # define UINT64_MAX 0xffffffffffffffffULL
 #endif
 
-#if __GNUC__ > 3
-#define END_WITH_NULL __attribute__((sentinel))
-#else
-#define END_WITH_NULL
-#endif
-
 #ifndef HUGE_VALF
 #define HUGE_VALF (float)HUGE_VAL
 #endif

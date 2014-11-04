@@ -218,7 +218,7 @@ public:
                             StringRef Name,
                             bool isPacked = false);
   static StructType *create(LLVMContext &Context, ArrayRef<Type*> Elements);
-  static StructType *create(StringRef Name, Type *elt1, ...) END_WITH_NULL;
+  static StructType *create(StringRef Name, Type *elt1, ...) LLVM_END_WITH_NULL;
 
   /// StructType::get - This static method is the primary way to create a
   /// literal StructType.
@@ -233,7 +233,7 @@ public:
   /// structure types by specifying the elements as arguments.  Note that this
   /// method always returns a non-packed struct, and requires at least one
   /// element type.
-  static StructType *get(Type *elt1, ...) END_WITH_NULL;
+  static StructType *get(Type *elt1, ...) LLVM_END_WITH_NULL;
 
   bool isPacked() const { return (getSubclassData() & SCDB_Packed) != 0; }
   
@@ -263,7 +263,7 @@ public:
 
   /// setBody - Specify a body for an opaque identified type.
   void setBody(ArrayRef<Type*> Elements, bool isPacked = false);
-  void setBody(Type *elt1, ...) END_WITH_NULL;
+  void setBody(Type *elt1, ...) LLVM_END_WITH_NULL;
   
   /// isValidElementType - Return true if the specified type is valid as a
   /// element type.

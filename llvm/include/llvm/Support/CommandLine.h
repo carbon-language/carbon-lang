@@ -513,9 +513,9 @@ public:
   }
 };
 
-template<class DataType>
-ValuesClass<DataType> END_WITH_NULL values(const char *Arg, DataType Val,
-                                           const char *Desc, ...) {
+template <class DataType>
+ValuesClass<DataType> LLVM_END_WITH_NULL
+values(const char *Arg, DataType Val, const char *Desc, ...) {
     va_list ValueArgs;
     va_start(ValueArgs, Desc);
     ValuesClass<DataType> Vals(Arg, Val, Desc, ValueArgs);
