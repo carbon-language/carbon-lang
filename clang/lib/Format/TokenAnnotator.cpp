@@ -1862,6 +1862,10 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
         (Left.TokenText == "throws" || Left.TokenText == "extends" ||
          Left.TokenText == "implements"))
       return false;
+    if (Right.is(tok::identifier) &&
+        (Right.TokenText == "throws" || Right.TokenText == "extends" ||
+         Right.TokenText == "implements"))
+      return true;
   }
 
   if (Left.is(tok::at))

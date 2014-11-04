@@ -82,6 +82,11 @@ TEST_F(FormatTestJava, ClassDeclarations) {
                "    implements cccccccccccc {\n"
                "}",
                getStyleWithColumns(76));
+  verifyFormat("@SomeAnnotation()\n"
+               "abstract class aaaaaaaaa<a> extends bbbbbbbbbbbb<b>\n"
+               "    implements cccccccccccc {\n"
+               "}",
+               getStyleWithColumns(76));
 }
 
 TEST_F(FormatTestJava, EnumDeclarations) {
