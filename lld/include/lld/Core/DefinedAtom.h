@@ -318,7 +318,7 @@ public:
   static ContentPermissions permissions(ContentType type);
 
   /// Utility function to check if the atom occupies file space
-  virtual bool occupiesDiskSpace() const {
+  bool occupiesDiskSpace() const {
     ContentType atomContentType = contentType();
     return !(atomContentType == DefinedAtom::typeZeroFill ||
              atomContentType == DefinedAtom::typeZeroFillFast ||
