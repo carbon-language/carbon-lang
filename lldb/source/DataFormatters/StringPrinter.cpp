@@ -316,78 +316,6 @@ GetPrintable(StringElementType type, uint8_t* buffer, uint8_t* buffer_end, uint8
     }
 }
 
-template <>
-bool
-lldb_private::formatters::ReadStringAndDumpToStream<StringElementType::ASCII> (ReadStringAndDumpToStreamOptions options)
-{
-    assert(options.GetStream() && "need a Stream to print the string to");
-    Error my_error;
-    size_t my_data_read;
-    
-    ProcessSP process_sp(options.GetProcessSP());
-    
-    if (process_sp.get() == nullptr || options.GetLocation() == 0)
-        return false;
-    
-    size_t size;
-    
-    if (options.GetSourceSize() == 0)
-        size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
-    else
-        size = std::min(options.GetSourceSize(),process_sp->GetTarget().GetMaximumSizeOfStringSummary());
-    
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(size,0));
-    
-    my_data_read = process_sp->ReadCStringFromMemory(options.GetLocation(), (char*)buffer_sp->GetBytes(), size, my_error);
-    
-    if (my_error.Fail())
-        return false;
-    
-    char prefix_token = options.GetPrefixToken();
-    char quote = options.GetQuote();
-    
-    if (prefix_token != 0)
-        options.GetStream()->Printf("%c%c",prefix_token,quote);
-    else if (quote != 0)
-        options.GetStream()->Printf("%c",quote);
-    
-    uint8_t* data_end = buffer_sp->GetBytes()+buffer_sp->GetByteSize();
-    
-    // since we tend to accept partial data (and even partially malformed data)
-    // we might end up with no NULL terminator before the end_ptr
-    // hence we need to take a slower route and ensure we stay within boundaries
-    for (uint8_t* data = buffer_sp->GetBytes(); *data && (data < data_end);)
-    {
-        if (options.GetEscapeNonPrintables())
-        {
-            uint8_t* next_data = nullptr;
-            auto printable = GetPrintable(StringElementType::ASCII, data, data_end, next_data);
-            auto printable_bytes = printable.GetBytes();
-            auto printable_size = printable.GetSize();
-            if (!printable_bytes || !next_data)
-            {
-                // GetPrintable() failed on us - print one byte in a desperate resync attempt
-                printable_bytes = data;
-                printable_size = 1;
-                next_data = data+1;
-            }
-            for (int c = 0; c < printable_size; c++)
-                options.GetStream()->Printf("%c", *(printable_bytes+c));
-            data = (uint8_t*)next_data;
-        }
-        else
-        {
-            options.GetStream()->Printf("%c",*data);
-            data++;
-        }
-    }
-    
-    if (quote != 0)
-        options.GetStream()->Printf("%c",quote);
-    
-    return true;
-}
-
 // use this call if you already have an LLDB-side buffer for the data
 template<typename SourceDataType>
 static bool
@@ -488,6 +416,84 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
     return true;
 }
 
+namespace lldb_private
+{
+
+namespace formatters
+{
+
+template <>
+bool
+ReadStringAndDumpToStream<StringElementType::ASCII> (ReadStringAndDumpToStreamOptions options)
+{
+    assert(options.GetStream() && "need a Stream to print the string to");
+    Error my_error;
+    size_t my_data_read;
+
+    ProcessSP process_sp(options.GetProcessSP());
+
+    if (process_sp.get() == nullptr || options.GetLocation() == 0)
+        return false;
+
+    size_t size;
+
+    if (options.GetSourceSize() == 0)
+        size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+    else
+        size = std::min(options.GetSourceSize(),process_sp->GetTarget().GetMaximumSizeOfStringSummary());
+
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(size,0));
+
+    my_data_read = process_sp->ReadCStringFromMemory(options.GetLocation(), (char*)buffer_sp->GetBytes(), size, my_error);
+
+    if (my_error.Fail())
+        return false;
+
+    char prefix_token = options.GetPrefixToken();
+    char quote = options.GetQuote();
+
+    if (prefix_token != 0)
+        options.GetStream()->Printf("%c%c",prefix_token,quote);
+    else if (quote != 0)
+        options.GetStream()->Printf("%c",quote);
+
+    uint8_t* data_end = buffer_sp->GetBytes()+buffer_sp->GetByteSize();
+
+    // since we tend to accept partial data (and even partially malformed data)
+    // we might end up with no NULL terminator before the end_ptr
+    // hence we need to take a slower route and ensure we stay within boundaries
+    for (uint8_t* data = buffer_sp->GetBytes(); *data && (data < data_end);)
+    {
+        if (options.GetEscapeNonPrintables())
+        {
+            uint8_t* next_data = nullptr;
+            auto printable = GetPrintable(StringElementType::ASCII, data, data_end, next_data);
+            auto printable_bytes = printable.GetBytes();
+            auto printable_size = printable.GetSize();
+            if (!printable_bytes || !next_data)
+            {
+                // GetPrintable() failed on us - print one byte in a desperate resync attempt
+                printable_bytes = data;
+                printable_size = 1;
+                next_data = data+1;
+            }
+            for (int c = 0; c < printable_size; c++)
+                options.GetStream()->Printf("%c", *(printable_bytes+c));
+            data = (uint8_t*)next_data;
+        }
+        else
+        {
+            options.GetStream()->Printf("%c",*data);
+            data++;
+        }
+    }
+
+    if (quote != 0)
+        options.GetStream()->Printf("%c",quote);
+
+    return true;
+}
+
 template<typename SourceDataType>
 static bool
 ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
@@ -501,12 +507,12 @@ ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
 
     if (options.GetLocation() == 0 || options.GetLocation() == LLDB_INVALID_ADDRESS)
         return false;
-    
+
     lldb::ProcessSP process_sp(options.GetProcessSP());
-    
+
     if (!process_sp)
         return false;
-    
+
     const int type_width = sizeof(SourceDataType);
     const int origin_encoding = 8 * type_width ;
     if (origin_encoding != 8 && origin_encoding != 16 && origin_encoding != 32)
@@ -514,13 +520,13 @@ ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
     // if not UTF8, I need a conversion function to return proper UTF8
     if (origin_encoding != 8 && !ConvertFunction)
         return false;
-    
+
     if (!options.GetStream())
         return false;
-    
+
     uint32_t sourceSize = options.GetSourceSize();
     bool needs_zero_terminator = options.GetNeedsZeroTermination();
-    
+
     if (!sourceSize)
     {
         sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
@@ -528,37 +534,37 @@ ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
     }
     else
         sourceSize = std::min(sourceSize,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
-    
+
     const int bufferSPSize = sourceSize * type_width;
-    
+
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
-    
+
     if (!buffer_sp->GetBytes())
         return false;
-    
+
     Error error;
     char *buffer = reinterpret_cast<char *>(buffer_sp->GetBytes());
-    
+
     size_t data_read = 0;
     if (needs_zero_terminator)
         data_read = process_sp->ReadStringFromMemory(options.GetLocation(), buffer, bufferSPSize, error, type_width);
     else
         data_read = process_sp->ReadMemoryFromInferior(options.GetLocation(), (char*)buffer_sp->GetBytes(), bufferSPSize, error);
-    
+
     if (error.Fail() || data_read == 0)
     {
         options.GetStream()->Printf("unable to read data");
         return true;
     }
-    
+
     DataExtractor data(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
-    
+
     return DumpUTFBufferToStream(ConvertFunction, data, *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), sourceSize, options.GetEscapeNonPrintables());
 }
 
 template <>
 bool
-lldb_private::formatters::ReadStringAndDumpToStream<StringElementType::UTF8> (ReadStringAndDumpToStreamOptions options)
+ReadStringAndDumpToStream<StringElementType::UTF8> (ReadStringAndDumpToStreamOptions options)
 {
     return ReadUTFBufferAndDumpToStream<UTF8>(options,
                                               nullptr);
@@ -566,7 +572,7 @@ lldb_private::formatters::ReadStringAndDumpToStream<StringElementType::UTF8> (Re
 
 template <>
 bool
-lldb_private::formatters::ReadStringAndDumpToStream<StringElementType::UTF16> (ReadStringAndDumpToStreamOptions options)
+ReadStringAndDumpToStream<StringElementType::UTF16> (ReadStringAndDumpToStreamOptions options)
 {
     return ReadUTFBufferAndDumpToStream<UTF16>(options,
                                                ConvertUTF16toUTF8);
@@ -574,7 +580,7 @@ lldb_private::formatters::ReadStringAndDumpToStream<StringElementType::UTF16> (R
 
 template <>
 bool
-lldb_private::formatters::ReadStringAndDumpToStream<StringElementType::UTF32> (ReadStringAndDumpToStreamOptions options)
+ReadStringAndDumpToStream<StringElementType::UTF32> (ReadStringAndDumpToStreamOptions options)
 {
     return ReadUTFBufferAndDumpToStream<UTF32>(options,
                                                ConvertUTF32toUTF8);
@@ -582,7 +588,7 @@ lldb_private::formatters::ReadStringAndDumpToStream<StringElementType::UTF32> (R
 
 template <>
 bool
-lldb_private::formatters::ReadBufferAndDumpToStream<StringElementType::UTF8> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::UTF8> (ReadBufferAndDumpToStreamOptions options)
 {
     assert(options.GetStream() && "need a Stream to print the string to");
 
@@ -591,7 +597,7 @@ lldb_private::formatters::ReadBufferAndDumpToStream<StringElementType::UTF8> (Re
 
 template <>
 bool
-lldb_private::formatters::ReadBufferAndDumpToStream<StringElementType::ASCII> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::ASCII> (ReadBufferAndDumpToStreamOptions options)
 {
     // treat ASCII the same as UTF8
     // FIXME: can we optimize ASCII some more?
@@ -600,18 +606,22 @@ lldb_private::formatters::ReadBufferAndDumpToStream<StringElementType::ASCII> (R
 
 template <>
 bool
-lldb_private::formatters::ReadBufferAndDumpToStream<StringElementType::UTF16> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::UTF16> (ReadBufferAndDumpToStreamOptions options)
 {
     assert(options.GetStream() && "need a Stream to print the string to");
-    
+
     return DumpUTFBufferToStream(ConvertUTF16toUTF8, options.GetData(), *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), options.GetSourceSize(), options.GetEscapeNonPrintables());
 }
 
 template <>
 bool
-lldb_private::formatters::ReadBufferAndDumpToStream<StringElementType::UTF32> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::UTF32> (ReadBufferAndDumpToStreamOptions options)
 {
     assert(options.GetStream() && "need a Stream to print the string to");
-    
+
     return DumpUTFBufferToStream(ConvertUTF32toUTF8, options.GetData(), *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), options.GetSourceSize(), options.GetEscapeNonPrintables());
 }
+
+} // namespace formatters
+
+} // namespace lldb_private
