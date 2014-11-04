@@ -1,5 +1,3 @@
-// REQUIRES: shell
-
 // RUN: rm -rf %t
 // RUN: mkdir %t
 // RUN: echo 'module tmp { header "tmp.h" }' > %t/map

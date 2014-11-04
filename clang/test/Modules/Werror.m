@@ -1,4 +1,3 @@
-// REQUIRES: shell
 // RUN: rm -rf %t
 // RUN: rm -rf %t-saved
 // RUN: mkdir -p %t-saved

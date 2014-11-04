@@ -1,4 +1,3 @@
-// REQUIRES: shell
 // RUN: rm -rf %t
 // RUN: mkdir %t
 // RUN: echo '// A' > %t/A.h

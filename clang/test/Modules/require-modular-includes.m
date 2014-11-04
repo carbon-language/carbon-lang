@@ -1,5 +1,4 @@
 // RUN: rm -rf %t
-// REQUIRES: shell
 
 // Including a header from the imported module
 // RUN: echo '@import FromImportedModuleOK;' | \

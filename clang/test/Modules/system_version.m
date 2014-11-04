@@ -1,6 +1,5 @@
 // Test checking that we're hashing a system version file in the
 // module hash.
-// REQUIRES: shell
 
 // First, build a system root.
 // RUN: rm -rf %t

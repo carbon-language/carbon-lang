@@ -1,7 +1,6 @@
 // Ensure that when rebuilding a module we don't save its old modtime when
 // building modules that depend on it.
 
-// REQUIRES: shell
 // RUN: rm -rf %t
 // RUN: mkdir -p %t
 // This could be replaced by diamond_*, except we want to modify the top header

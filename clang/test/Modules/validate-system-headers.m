@@ -38,6 +38,4 @@
 // RUN: %clang_cc1 -isystem %t/Inputs/usr/include -fmodules -fmodules-validate-system-headers -fmodules-cache-path=%t/ModuleCache -fdisable-module-hash -x objective-c-header -fsyntax-only %s -fbuild-session-timestamp=1390000000 -fmodules-validate-once-per-build-session
 // RUN: not diff %t/ModuleCache/Foo.pcm %t/Foo.pcm.saved
 
-// REQUIRES: shell
-
 @import Foo;

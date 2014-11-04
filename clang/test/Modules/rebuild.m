@@ -1,4 +1,3 @@
-// REQUIRES: shell
 // RUN: rm -rf %t
 
 // Build Module and set its timestamp
