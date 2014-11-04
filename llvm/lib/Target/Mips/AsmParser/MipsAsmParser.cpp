@@ -200,6 +200,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetNoDspDirective();
   bool parseSetReorderDirective();
   bool parseSetNoReorderDirective();
+  bool parseSetMips16Directive();
   bool parseSetNoMips16Directive();
   bool parseSetFpDirective();
   bool parseSetPopDirective();
@@ -2783,14 +2784,32 @@ bool MipsAsmParser::parseSetNoDspDirective() {
   return false;
 }
 
-bool MipsAsmParser::parseSetNoMips16Directive() {
-  Parser.Lex();
+bool MipsAsmParser::parseSetMips16Directive() {
+  Parser.Lex(); // Eat "mips16".
+
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     reportParseError("unexpected token, expected end of statement");
     return false;
   }
-  // For now do nothing.
+
+  setFeatureBits(Mips::FeatureMips16, "mips16");
+  getTargetStreamer().emitDirectiveSetMips16();
+  Parser.Lex(); // Consume the EndOfStatement.
+  return false;
+}
+
+bool MipsAsmParser::parseSetNoMips16Directive() {
+  Parser.Lex(); // Eat "nomips16".
+
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  clearFeatureBits(Mips::FeatureMips16, "mips16");
+  getTargetStreamer().emitDirectiveSetNoMips16();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -2939,9 +2958,6 @@ bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
     break;
   case Mips::FeatureMicroMips:
     getTargetStreamer().emitDirectiveSetMicroMips();
-    break;
-  case Mips::FeatureMips16:
-    getTargetStreamer().emitDirectiveSetMips16();
     break;
   case Mips::FeatureMips1:
     selectArch("mips1");
@@ -3131,7 +3147,7 @@ bool MipsAsmParser::parseDirectiveSet() {
   } else if (Tok.getString() == "nomacro") {
     return parseSetNoMacroDirective();
   } else if (Tok.getString() == "mips16") {
-    return parseSetFeature(Mips::FeatureMips16);
+    return parseSetMips16Directive();
   } else if (Tok.getString() == "nomips16") {
     return parseSetNoMips16Directive();
   } else if (Tok.getString() == "nomicromips") {
