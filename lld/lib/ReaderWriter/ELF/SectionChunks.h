@@ -59,11 +59,10 @@ public:
   virtual bool isLoadableSection() const { return false; }
 
   /// \brief Assign file offsets starting at offset.
-  virtual void assignOffsets(uint64_t offset) {}
+  virtual void assignFileOffsets(uint64_t offset) {}
 
-  /// \brief Assign virtual addresses starting at addr. Addr is modified to be
-  /// the next available virtual address.
-  virtual void assignVirtualAddress(uint64_t &addr) {}
+  /// \brief Assign virtual addresses starting at addr.
+  virtual void assignVirtualAddress(uint64_t addr) {}
 
   uint64_t getFlags() const { return _flags; }
   uint64_t getEntSize() const { return _entSize; }
@@ -195,7 +194,7 @@ public:
   /// \brief Set the virtual address of each Atom in the Section. This
   /// routine gets called after the linker fixes up the virtual address
   /// of the section
-  virtual void assignVirtualAddress(uint64_t &addr) {
+  virtual void assignVirtualAddress(uint64_t addr) {
     for (auto &ai : _atoms) {
       ai->_virtualAddr = addr + ai->_fileOffset;
     }
@@ -203,7 +202,7 @@ public:
 
   /// \brief Set the file offset of each Atom in the section. This routine
   /// gets called after the linker fixes up the section offset
-  virtual void assignOffsets(uint64_t offset) {
+  virtual void assignFileOffsets(uint64_t offset) {
     for (auto &ai : _atoms) {
       ai->_fileOffset = offset + ai->_fileOffset;
     }

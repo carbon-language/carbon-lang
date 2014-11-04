@@ -52,9 +52,10 @@ public:
   StringRef name() const { return _name; }
   // Kind of chunk
   Kind kind() const { return _kind; }
-  uint64_t        fileSize() const { return _fsize; }
-  void            setAlign(uint64_t align) { _align2 = align; }
-  uint64_t        align2() const { return _align2; }
+  virtual uint64_t fileSize() const { return _fsize; }
+  virtual void setFileSize(uint64_t sz) { _fsize = sz; }
+  virtual void setAlign(uint64_t align) { _align2 = align; }
+  virtual uint64_t align2() const { return _align2; }
 
   // The ordinal value of the chunk
   uint64_t            ordinal() const { return _ordinal;}
@@ -66,8 +67,8 @@ public:
   uint64_t            fileOffset() const { return _fileoffset; }
   void               setFileOffset(uint64_t offset) { _fileoffset = offset; }
   // Output start address of the chunk
-  void               setVAddr(uint64_t start) { _start = start; }
-  uint64_t            virtualAddr() const { return _start; }
+  virtual void setVirtualAddr(uint64_t start) { _start = start; }
+  virtual uint64_t virtualAddr() const { return _start; }
   // Memory size of the chunk
   uint64_t memSize() const { return _msize; }
   void setMemSize(uint64_t msize) { _msize = msize; }

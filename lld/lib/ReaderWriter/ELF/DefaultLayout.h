@@ -215,9 +215,7 @@ public:
 
   void assignVirtualAddress() override;
 
-  void assignOffsetsForMiscSections();
-
-  void assignFileOffsets() override;
+  void assignFileOffsetsForMiscSections();
 
   /// Inline functions
   inline range<AbsoluteAtomIterT> absoluteAtoms() { return _absoluteAtoms; }
@@ -734,32 +732,15 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   }
 }
 
-template <class ELFT> void DefaultLayout<ELFT>::assignFileOffsets() {
-  // TODO: Do we want to give a chance for the targetHandlers
-  // to sort segments in an arbitrary order?
-  std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
-  int ordinal = 0;
-  // Compute the number of segments that might be needed, so that the
-  // size of the program header can be computed
-  uint64_t offset = 0;
-  for (auto si : _segments) {
-    si->setOrdinal(++ordinal);
-    // Don't assign offsets for segments that are not loadable
-    if (si->segmentType() != llvm::ELF::PT_LOAD)
-      continue;
-    si->assignOffsets(offset);
-    offset += si->fileSize();
-  }
-}
-
 template<class ELFT>
 void
 DefaultLayout<ELFT>::assignVirtualAddress() {
   if (_segments.empty())
     return;
 
+  std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
+
   uint64_t virtualAddress = _context.getBaseAddress();
-  ELFLinkingContext::OutputMagic outputMagic = _context.getOutputMagic();
 
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address
@@ -777,6 +758,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   firstLoadSegment->prepend(_programHeader);
   firstLoadSegment->prepend(_elfHeader);
   bool newSegmentHeaderAdded = true;
+  bool virtualAddressAssigned = false;
   while (true) {
     for (auto si : _segments) {
       si->finalize();
@@ -784,24 +766,10 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
       if (si->segmentType() != llvm::ELF::PT_NULL)
         newSegmentHeaderAdded = _programHeader->addSegment(si);
     }
-    if (!newSegmentHeaderAdded)
+    if (!newSegmentHeaderAdded && virtualAddressAssigned)
       break;
-    uint64_t fileoffset = 0;
+    virtualAddressAssigned = true;
     uint64_t address = virtualAddress;
-    // Fix the offsets after adding the program header
-    for (auto &si : _segments) {
-      if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
-          (si->segmentType() != llvm::ELF::PT_NULL))
-        continue;
-      // Align the segment to a page boundary only if the output mode is
-      // not OutputMagic::NMAGIC/OutputMagic::OMAGIC
-      if (outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
-          outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
-        fileoffset =
-            llvm::RoundUpToAlignment(fileoffset, _context.getPageSize());
-      si->assignOffsets(fileoffset);
-      fileoffset = si->fileOffset() + si->fileSize();
-    }
     // start assigning virtual addresses
     for (auto &si : _segments) {
       if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
@@ -809,22 +777,19 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
         continue;
 
       if (si->segmentType() == llvm::ELF::PT_NULL) {
-        // Handle Non allocatable sections.
-        uint64_t nonLoadableAddr = 0;
-        si->setVAddr(nonLoadableAddr);
-        si->assignVirtualAddress(nonLoadableAddr);
+        si->assignVirtualAddress(0 /*non loadable*/);
       } else {
-        si->setVAddr(virtualAddress);
-        // The first segment has the virtualAddress set to the base address as
-        // we have added the file header and the program header don't align the
-        // first segment to the pagesize
         si->assignVirtualAddress(address);
-        si->setMemSize(address - virtualAddress);
-        if (outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
-            outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
-          virtualAddress =
-              llvm::RoundUpToAlignment(address, _context.getPageSize());
       }
+      address = si->virtualAddr() + si->memSize();
+    }
+    uint64_t fileoffset = 0;
+    for (auto &si : _segments) {
+      if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
+          (si->segmentType() != llvm::ELF::PT_NULL))
+        continue;
+      si->assignFileOffsets(fileoffset);
+      fileoffset = si->fileOffset() + si->fileSize();
     }
     _programHeader->resetProgramHeaders();
   }
@@ -833,7 +798,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   for (auto &si : _sections) {
     section = dyn_cast<Section<ELFT>>(si);
     if (section && DefaultLayout<ELFT>::hasOutputSegment(section))
-      section->assignOffsets(section->fileOffset());
+      section->assignFileOffsets(section->fileOffset());
   }
   // Set the size of the merged Sections
   for (auto msi : _mergedSections) {
@@ -873,9 +838,8 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   }
 }
 
-template<class ELFT>
-void
-DefaultLayout<ELFT>::assignOffsetsForMiscSections() {
+template <class ELFT>
+void DefaultLayout<ELFT>::assignFileOffsetsForMiscSections() {
   uint64_t fileoffset = 0;
   uint64_t size = 0;
   for (auto si : _segments) {
@@ -894,7 +858,7 @@ DefaultLayout<ELFT>::assignOffsetsForMiscSections() {
       continue;
     fileoffset = llvm::RoundUpToAlignment(fileoffset, si->align2());
     si->setFileOffset(fileoffset);
-    si->setVAddr(0);
+    si->setVirtualAddr(0);
     fileoffset += si->fileSize();
   }
 }

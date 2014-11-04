@@ -265,7 +265,7 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
     if (!mergedSec->hasSegment())
       _shdrtab->appendSection(mergedSec);
   }
-  _layout.assignOffsetsForMiscSections();
+  _layout.assignFileOffsetsForMiscSections();
   for (auto sec : _layout.sections())
     if (auto section = dyn_cast<Section<ELFT>>(sec))
       if (!DefaultLayout<ELFT>::hasOutputSegment(section))
@@ -377,7 +377,6 @@ std::error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   // contained in them, in anyway the targets may want
   _layout.doPreFlight();
 
-  _layout.assignFileOffsets();
   _layout.assignVirtualAddress();
 
   // Finalize the default value of symbols that the linker adds

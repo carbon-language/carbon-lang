@@ -43,7 +43,7 @@ public:
   void e_shentsize(uint16_t shentsize) { _eh.e_shentsize = shentsize; }
   void e_shnum(uint16_t shnum)         { _eh.e_shnum = shnum; }
   void e_shstrndx(uint16_t shstrndx)   { _eh.e_shstrndx = shstrndx; }
-  uint64_t  fileSize()                 { return sizeof (Elf_Ehdr); }
+  uint64_t fileSize() const { return sizeof(Elf_Ehdr); }
 
   static inline bool classof(const Chunk<ELFT> *c) {
     return c->Kind() == Chunk<ELFT>::Kind::ELFHeader;
@@ -125,9 +125,7 @@ public:
 
   void resetProgramHeaders() { _phi = _ph.begin(); }
 
-  uint64_t  fileSize() {
-    return sizeof(Elf_Phdr) * _ph.size();
-  }
+  uint64_t fileSize() const { return sizeof(Elf_Phdr) * _ph.size(); }
 
   static inline bool classof(const Chunk<ELFT> *c) {
     return c->Kind() == Chunk<ELFT>::Kind::ProgramHeader;
@@ -271,7 +269,7 @@ public:
 
   void finalize() {}
 
-  inline uint64_t fileSize() { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
+  uint64_t fileSize() const { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
 
   inline uint64_t entsize() {
     return sizeof(Elf_Shdr);

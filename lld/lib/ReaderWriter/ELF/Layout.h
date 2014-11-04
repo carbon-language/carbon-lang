@@ -47,8 +47,6 @@ public:
   virtual void assignSectionsToSegments() = 0;
   /// associates a virtual address to the segment, section, and the atom
   virtual void assignVirtualAddress() = 0;
-  /// associates a file offset to the segment, section and the atom
-  virtual void assignFileOffsets() = 0;
 
 public:
   Layout() {}
