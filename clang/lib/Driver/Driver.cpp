@@ -1847,7 +1847,8 @@ Driver::generatePrefixedToolNames(const char *Tool, const ToolChain &TC,
   Names.push_back(Tool);
 }
 
-bool ScanDirForExecutable(SmallString<128> &Dir, ArrayRef<std::string> Names) {
+static bool ScanDirForExecutable(SmallString<128> &Dir,
+                                 ArrayRef<std::string> Names) {
   for (const auto &Name : Names) {
     llvm::sys::path::append(Dir, Name);
     if (llvm::sys::fs::can_execute(Twine(Dir)))
