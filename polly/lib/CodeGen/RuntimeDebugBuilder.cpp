@@ -43,7 +43,13 @@ void RuntimeDebugBuilder::createFlush(PollyIRBuilder &Builder) {
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Builder.CreateCall(F, Constant::getNullValue(Builder.getInt8PtrTy()));
+  // fflush(NULL) flushes _all_ open output streams.
+  //
+  // fflush is declared as 'int fflush(FILE *stream)'. As we only pass on a NULL
+  // pointer, the type we point to does conceptually not matter. However, if
+  // fflush is already declared in this translation unit, we use the very same
+  // type to ensure that LLVM does not complain about mismatching types.
+  Builder.CreateCall(F, Constant::getNullValue(F->arg_begin()->getType()));
 }
 
 void RuntimeDebugBuilder::createStrPrinter(PollyIRBuilder &Builder,
