@@ -82,7 +82,7 @@ ErrorOr<std::string> sys::findProgramByName(StringRef Name,
   std::u16string PathStorage;
   if (!Paths.empty()) {
     PathStorage.reserve(Paths.size() * MAX_PATH);
-    for (int i = 0; i < Paths.size(); ++i) {
+    for (unsigned i = 0; i < Paths.size(); ++i) {
       if (i)
         PathStorage.push_back(';');
       StringRef P = Paths[i];
