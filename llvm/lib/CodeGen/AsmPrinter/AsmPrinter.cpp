@@ -222,14 +222,12 @@ bool AsmPrinter::doInitialization(Module &M) {
   }
 
   if (MAI->doesSupportDebugInformation()) {
-    if (Triple(TM.getTargetTriple()).isKnownWindowsMSVCEnvironment()) {
+    if (Triple(TM.getTargetTriple()).isKnownWindowsMSVCEnvironment())
       Handlers.push_back(HandlerInfo(new WinCodeViewLineTables(this),
                                      DbgTimerName,
                                      CodeViewLineTablesGroupName));
-    } else {
-      DD = new DwarfDebug(this, &M);
-      Handlers.push_back(HandlerInfo(DD, DbgTimerName, DWARFGroupName));
-    }
+    DD = new DwarfDebug(this, &M);
+    Handlers.push_back(HandlerInfo(DD, DbgTimerName, DWARFGroupName));
   }
 
   EHStreamer *ES = nullptr;

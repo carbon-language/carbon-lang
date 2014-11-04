@@ -13,13 +13,14 @@
 ;  6 }
 
 ; X86-LABEL: _f:
-; X86-NEXT: # BB
+; X86:      # BB
 ; X86-NEXT: [[ASM_LINE:^L.*]]:{{$}}
 ; X86:      [[CALL_LINE:^L.*]]:{{$}}
-; X86-NEXT: calll   _g
+; X86:      calll   _g
 ; X86-NEXT: [[RETURN_STMT:.*]]:
-; X86-NEXT: ret
-; X86-NEXT: [[END_OF_F:.*]]:
+; X86:      ret
+; X86-NEXT: L{{.*}}:
+; X86-NEXT: [[END_OF_F:^L.*]]:
 ;
 ; X86-LABEL: .section        .debug$S,"rd"
 ; X86-NEXT: .long   4
@@ -115,14 +116,15 @@
 
 ; X64-LABEL: f:
 ; X64-NEXT: [[START:.*]]:{{$}}
-; X64-NEXT: # BB
-; X64-NEXT: subq    $40, %rsp
+; X64:      # BB
+; X64:      subq    $40, %rsp
 ; X64-NEXT: [[ASM_LINE:.*]]:{{$}}
 ; X64:      [[CALL_LINE:.*]]:{{$}}
-; X64-NEXT: callq   g
+; X64:      callq   g
 ; X64-NEXT: [[EPILOG_AND_RET:.*]]:
-; X64-NEXT: addq    $40, %rsp
+; X64:      addq    $40, %rsp
 ; X64-NEXT: ret
+; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[END_OF_F:.*]]:
 ;
 ; X64-LABEL: .section        .debug$S,"rd"
@@ -239,7 +241,7 @@ attributes #2 = { nounwind }
 
 !0 = metadata !{metadata !"0x11\0012\00clang version 3.5 \000\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [D:\/<unknown>] [DW_LANG_C99]
 !1 = metadata !{metadata !"<unknown>", metadata !"D:\5C"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{metadata !"0x2e\00f\00f\00\003\000\001\000\006\00256\000\003", metadata !5, metadata !6, metadata !7, null, void ()* @f, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 3] [def] [f]
 !5 = metadata !{metadata !"asm.c", metadata !"D:\5C"}

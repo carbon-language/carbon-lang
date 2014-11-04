@@ -18,7 +18,7 @@
 ; X86-LABEL: {{^}}"?bar@@YAXHZZ":
 ; X86-NEXT: # BB
 ; X86-NEXT: [[JMP_LINE:^L.*]]:{{$}}
-; X86-NEXT: jmp "?foo@@YAXXZ"
+; X86:      jmp "?foo@@YAXXZ"
 ; X86-NEXT: [[END_OF_BAR:^L.*]]:{{$}}
 ; X86-NOT:  ret
 
