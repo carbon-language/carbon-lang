@@ -25,13 +25,9 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-FuncUnwinders::FuncUnwinders
-(
-    UnwindTable& unwind_table, 
-    AddressRange range
-) : 
-    m_unwind_table(unwind_table), 
-    m_range(range), 
+FuncUnwinders::FuncUnwinders (UnwindTable& unwind_table, AddressRange range) : 
+    m_unwind_table (unwind_table), 
+    m_range (range), 
     m_mutex (Mutex::eMutexTypeRecursive),
     m_unwind_plan_call_site_sp (), 
     m_unwind_plan_non_call_site_sp (), 
@@ -42,29 +38,17 @@ FuncUnwinders::FuncUnwinders
     m_tried_unwind_fast (false),
     m_tried_unwind_arch_default (false),
     m_tried_unwind_arch_default_at_func_entry (false),
-    m_first_non_prologue_insn() 
+    m_first_non_prologue_insn ()
 {
 }
 
-FuncUnwinders::~FuncUnwinders () 
+FuncUnwinders::~FuncUnwinders ()
 { 
 }
 
 UnwindPlanSP
 FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
 {
-    // Lock the mutex to ensure we can always give out the most appropriate
-    // information. We want to make sure if someone requests a call site unwind
-    // plan, that they get one and don't run into a race condition where one
-    // thread has started to create the unwind plan and has put it into 
-    // m_unwind_plan_call_site_sp, and have another thread enter this function
-    // and return the partially filled in m_unwind_plan_call_site_sp pointer.
-    // We also want to make sure that we lock out other unwind plans from
-    // being accessed until this one is done creating itself in case someone
-    // had some code like:
-    //  UnwindPlan *best_unwind_plan = ...GetUnwindPlanAtCallSite (...)
-    //  if (best_unwind_plan == NULL)
-    //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
     if (m_tried_unwind_at_call_site == false && m_unwind_plan_call_site_sp.get() == nullptr)
     {
@@ -96,18 +80,6 @@ FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
 UnwindPlanSP
 FuncUnwinders::GetUnwindPlanAtNonCallSite (Target& target, Thread& thread, int current_offset)
 {
-    // Lock the mutex to ensure we can always give out the most appropriate
-    // information. We want to make sure if someone requests an unwind
-    // plan, that they get one and don't run into a race condition where one
-    // thread has started to create the unwind plan and has put it into 
-    // the unique pointer member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the unique pointer.
-    // We also want to make sure that we lock out other unwind plans from
-    // being accessed until this one is done creating itself in case someone
-    // had some code like:
-    //  UnwindPlan *best_unwind_plan = ...GetUnwindPlanAtCallSite (...)
-    //  if (best_unwind_plan == NULL)
-    //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
     if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == nullptr)
     {
@@ -121,9 +93,11 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Target& target, Thread& thread, int c
                 // For 0th frame on i386 & x86_64, we fetch eh_frame and try using assembly profiler
                 // to augment it into asynchronous unwind table.
                 GetUnwindPlanAtCallSite(current_offset);
-                if (m_unwind_plan_call_site_sp) {
+                if (m_unwind_plan_call_site_sp) 
+                {
                     UnwindPlan* plan = new UnwindPlan (*m_unwind_plan_call_site_sp);
-                    if (assembly_profiler_sp->AugmentUnwindPlanFromCallSite (m_range, thread, *plan)) {
+                    if (assembly_profiler_sp->AugmentUnwindPlanFromCallSite (m_range, thread, *plan)) 
+                    {
                         m_unwind_plan_non_call_site_sp.reset (plan);
                         return m_unwind_plan_non_call_site_sp;
                     }
@@ -141,18 +115,6 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Target& target, Thread& thread, int c
 UnwindPlanSP
 FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
 {
-    // Lock the mutex to ensure we can always give out the most appropriate
-    // information. We want to make sure if someone requests an unwind
-    // plan, that they get one and don't run into a race condition where one
-    // thread has started to create the unwind plan and has put it into 
-    // the unique pointer member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the unique pointer.
-    // We also want to make sure that we lock out other unwind plans from
-    // being accessed until this one is done creating itself in case someone
-    // had some code like:
-    //  UnwindPlan *best_unwind_plan = ...GetUnwindPlanAtCallSite (...)
-    //  if (best_unwind_plan == NULL)
-    //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
     if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == nullptr)
     {
@@ -171,18 +133,6 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
 UnwindPlanSP
 FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
 {
-    // Lock the mutex to ensure we can always give out the most appropriate
-    // information. We want to make sure if someone requests an unwind
-    // plan, that they get one and don't run into a race condition where one
-    // thread has started to create the unwind plan and has put it into 
-    // the unique pointer member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the unique pointer.
-    // We also want to make sure that we lock out other unwind plans from
-    // being accessed until this one is done creating itself in case someone
-    // had some code like:
-    //  UnwindPlan *best_unwind_plan = ...GetUnwindPlanAtCallSite (...)
-    //  if (best_unwind_plan == NULL)
-    //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
     if (m_tried_unwind_arch_default == false && m_unwind_plan_arch_default_sp.get() == nullptr)
     {
@@ -207,20 +157,9 @@ FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
 UnwindPlanSP
 FuncUnwinders::GetUnwindPlanArchitectureDefaultAtFunctionEntry (Thread& thread)
 {
-    // Lock the mutex to ensure we can always give out the most appropriate
-    // information. We want to make sure if someone requests an unwind
-    // plan, that they get one and don't run into a race condition where one
-    // thread has started to create the unwind plan and has put it into 
-    // the unique pointer member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the unique pointer.
-    // We also want to make sure that we lock out other unwind plans from
-    // being accessed until this one is done creating itself in case someone
-    // had some code like:
-    //  UnwindPlan *best_unwind_plan = ...GetUnwindPlanAtCallSite (...)
-    //  if (best_unwind_plan == NULL)
-    //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_arch_default_at_func_entry == false && m_unwind_plan_arch_default_at_func_entry_sp.get() == nullptr)
+    if (m_tried_unwind_arch_default_at_func_entry == false 
+        && m_unwind_plan_arch_default_at_func_entry_sp.get() == nullptr)
     {
         m_tried_unwind_arch_default_at_func_entry = true;
         Address current_pc;
@@ -249,7 +188,6 @@ FuncUnwinders::GetFirstNonPrologueInsn (Target& target)
     ExecutionContext exe_ctx (target.shared_from_this(), false);
     UnwindAssemblySP assembly_profiler_sp (GetUnwindAssemblyProfiler());
     if (assembly_profiler_sp)
-    if (assembly_profiler_sp)
         assembly_profiler_sp->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
     return m_first_non_prologue_insn;
 }
@@ -258,16 +196,6 @@ const Address&
 FuncUnwinders::GetFunctionStartAddress () const
 {
     return m_range.GetBaseAddress();
-}
-
-void
-FuncUnwinders::InvalidateNonCallSiteUnwindPlan (lldb_private::Thread& thread)
-{
-    UnwindPlanSP arch_default = GetUnwindPlanArchitectureDefault (thread);
-    if (arch_default && m_tried_unwind_at_call_site)
-    {
-        m_unwind_plan_call_site_sp = arch_default;
-    }
 }
 
 lldb::UnwindAssemblySP

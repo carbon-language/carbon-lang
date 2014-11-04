@@ -174,8 +174,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     {
         // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
         // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
-        if (reg_ctx_sp->IsCompletedStackWalk() == false
-            && m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
         {
             return AddOneMoreFrame (abi);
         }

@@ -62,8 +62,7 @@ RegisterContextLLDB::RegisterContextLLDB
     m_sym_ctx_valid (false),
     m_frame_number (frame_number),
     m_registers(),
-    m_parent_unwind (unwind_lldb),
-    m_completed_stack_walk (false)
+    m_parent_unwind (unwind_lldb)
 {
     m_sym_ctx.Clear(false);
     m_sym_ctx_valid = false;
@@ -307,7 +306,6 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (pc == 0)
     {
         m_frame_type = eNotAValidFrame;
-        m_completed_stack_walk = true;
         UnwindLogMsg ("this frame has a pc of 0x0");
         return;
     }
@@ -388,10 +386,6 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                 {
                     UnwindLogMsg ("could not find a valid cfa address");
                     m_frame_type = eNotAValidFrame;
-                    if (cfa_regval == 0 || cfa_regval == 1)
-                    {
-                        m_completed_stack_walk = true;
-                    }
                     return;
                 }
 
@@ -588,10 +582,6 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     {
         UnwindLogMsg ("could not find a valid cfa address");
         m_frame_type = eNotAValidFrame;
-        if (cfa_regval == 0 || cfa_regval == 1)
-        {
-            m_completed_stack_walk = true;
-        }
         return;
     }
 
@@ -1040,11 +1030,10 @@ RegisterContextLLDB::IsValid () const
     return m_frame_type != eNotAValidFrame;
 }
 
-bool
-RegisterContextLLDB::IsCompletedStackWalk () const
-{
-    return m_completed_stack_walk;
-}
+// After the final stack frame in a stack walk we'll get one invalid (eNotAValidFrame) stack frame --
+// one past the end of the stack walk.  But higher-level code will need to tell the differnece between
+// "the unwind plan below this frame failed" versus "we successfully completed the stack walk" so
+// this method helps to disambiguate that.
 
 bool
 RegisterContextLLDB::IsTrapHandlerFrame () const
@@ -1420,15 +1409,6 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
     
     if (active_row && active_row->GetCFARegister() != LLDB_INVALID_REGNUM)
     {
-        FuncUnwindersSP func_unwinders_sp;
-        if (m_sym_ctx_valid && m_current_pc.IsValid() && m_current_pc.GetModule())
-        {
-            func_unwinders_sp = m_current_pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
-            if (func_unwinders_sp)
-            {
-                func_unwinders_sp->InvalidateNonCallSiteUnwindPlan (m_thread);
-            }
-        }
         m_registers.clear();
         m_full_unwind_plan_sp = m_fallback_unwind_plan_sp;
         addr_t cfa_regval = LLDB_INVALID_ADDRESS;
@@ -1437,8 +1417,9 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
             m_cfa = cfa_regval + active_row->GetCFAOffset ();
         }
 
-        UnwindLogMsg ("full unwind plan '%s' has been replaced by architecture default unwind plan '%s' for this function from now on.",
-                      original_full_unwind_plan_sp->GetSourceName().GetCString(), m_fallback_unwind_plan_sp->GetSourceName().GetCString());
+        UnwindLogMsg ("trying to unwind from this function with the UnwindPlan '%s' because UnwindPlan '%s' failed.", 
+                      m_fallback_unwind_plan_sp->GetSourceName().GetCString(),
+                      original_full_unwind_plan_sp->GetSourceName().GetCString());
         m_fallback_unwind_plan_sp.reset();
     }
 
