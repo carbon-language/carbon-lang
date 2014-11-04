@@ -30,7 +30,15 @@ createModuleDefinitionFile(const PECOFFLinkingContext &ctx) {
      << "EXPORTS\n";
 
   for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports()) {
-    os << "  " << desc.getExternalName();
+    // Symbol names in a module-definition file will be mangled by lib.exe,
+    // so we need to demangle them before writing to a .def file.
+    os << "  ";
+    if (!desc.externalName.empty()) {
+      os << desc.externalName;
+    } else {
+      os << ctx.undecorateSymbol(desc.name);
+    }
+
     if (!desc.isPrivate)
       os << " @" << desc.ordinal;
     if (desc.noname)
