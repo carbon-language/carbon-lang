@@ -1,5 +1,3 @@
-REQUIRES: shell
-
 Test that no temporary file is left behind on error.
 
 RUN: rm -rf %t

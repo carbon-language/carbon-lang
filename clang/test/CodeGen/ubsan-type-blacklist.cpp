@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple x86_64-linux-gnu -fsanitize=vptr -emit-llvm %s -o - | FileCheck %s --check-prefix=DEFAULT
 // RUN: %clang_cc1 -triple x86_64-linux-gnu -fsanitize=vptr -fsanitize-blacklist=%t-type.blacklist -emit-llvm %s -o - | FileCheck %s --check-prefix=TYPE
 
-// REQUIRES: shell
-
 class Bar {
 public:
   virtual ~Bar() {}

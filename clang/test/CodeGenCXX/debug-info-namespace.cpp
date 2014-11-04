@@ -77,7 +77,5 @@ using B::i;
 
 // CHECK-NOLIMIT: ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [def] [from ]
 
-// FIXME: It is confused on win32 to generate file entry when dosish filename is given.
-// REQUIRES: shell
 // REQUIRES: shell-preserves-root
 // REQUIRES: dw2

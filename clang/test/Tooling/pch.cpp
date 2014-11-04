@@ -9,7 +9,6 @@
 // the test file with an unrelated include as second translation unit.
 // Test for an non-empty file after clang-check is executed.
 // RUN: clang-check -ast-dump "%S/Inputs/pch.cpp" "%s" -- -include-pch %t1 -I "%S" -c >%t2 2>&1
-// REQUIRES: shell
 // RUN: test -s %t2
 
 #include "Inputs/pch-fail.h"

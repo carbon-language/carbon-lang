@@ -7,7 +7,6 @@
 // RUN: %clang -fbuild-session-file=doesntexist -### %s 2>&1 | FileCheck -check-prefix=NOFILE %s
 // NOFILE: no such file or directory: 'doesntexist'
 
-// REQUIRES: shell
 // RUN: touch -m -a -t 201008011501 %t.build-session-file
 // RUN: %clang -fbuild-session-file=%t.build-session-file -### %s 2>&1 | FileCheck -check-prefix=TIMESTAMP_ONLY %s
 
