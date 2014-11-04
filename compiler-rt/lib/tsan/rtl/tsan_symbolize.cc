@@ -110,6 +110,7 @@ ReportLocation *SymbolizeData(uptr addr) {
     ent->name = internal_strdup(info.name);
   ent->addr = info.start;
   ent->size = info.size;
+  info.Clear();
   return ent;
 }
 

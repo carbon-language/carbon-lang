@@ -589,8 +589,7 @@ class POSIXSymbolizer : public Symbolizer {
       return false;
     const char *module_name = module->full_name();
     uptr module_offset = addr - module->base_address();
-    internal_memset(info, 0, sizeof(*info));
-    info->address = addr;
+    info->Clear();
     info->module = internal_strdup(module_name);
     info->module_offset = module_offset;
     // First, try to use libbacktrace symbolizer (if it's available).

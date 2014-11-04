@@ -61,13 +61,23 @@ struct AddressInfo {
   }
 };
 
+// For now, DataInfo is used to describe global variable.
 struct DataInfo {
-  uptr address;
   char *module;
   uptr module_offset;
   char *name;
   uptr start;
   uptr size;
+
+  DataInfo() {
+    internal_memset(this, 0, sizeof(DataInfo));
+  }
+
+  void Clear() {
+    InternalFree(module);
+    InternalFree(name);
+    internal_memset(this, 0, sizeof(DataInfo));
+  }
 };
 
 class Symbolizer {
