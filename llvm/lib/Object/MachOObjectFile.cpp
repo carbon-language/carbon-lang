@@ -219,11 +219,6 @@ static unsigned getPlainRelocationType(const MachOObjectFile *O,
   return RE.r_word1 & 0xf;
 }
 
-static unsigned
-getScatteredRelocationType(const MachO::any_relocation_info &RE) {
-  return (RE.r_word0 >> 24) & 0xf;
-}
-
 static uint32_t getSectionFlags(const MachOObjectFile *O,
                                 DataRefImpl Sec) {
   if (O->is64Bit()) {
