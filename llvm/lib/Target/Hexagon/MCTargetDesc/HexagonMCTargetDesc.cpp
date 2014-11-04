@@ -13,7 +13,7 @@
 
 #include "HexagonMCTargetDesc.h"
 #include "HexagonMCAsmInfo.h"
-#include "MCTargetDesc/HexagonInstPrinter.h"
+#include "InstPrinter/HexagonInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -34,7 +34,7 @@ using namespace llvm;
 #define GET_REGINFO_MC_DESC
 #include "HexagonGenRegisterInfo.inc"
 
-static llvm::MCInstrInfo *createHexagonMCInstrInfo() {
+static MCInstrInfo *createHexagonMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitHexagonMCInstrInfo(X);
   return X;
