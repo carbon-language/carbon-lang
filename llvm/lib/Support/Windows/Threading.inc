@@ -1,4 +1,4 @@
-#include <winbase.h>
+ #include <windows.h>
 
 #ifdef MemoryFence
 // WinNT.h seems to define a MemoryFence macro.
