@@ -328,9 +328,11 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
   // FIXME: Subtract necessary number from StackTrace entries to turn return addresses
   // into actual instruction addresses.
   // Use llvm-symbolizer tool to symbolize the stack traces.
-  std::string LLVMSymbolizerPath = sys::FindProgramByName("llvm-symbolizer");
-  if (LLVMSymbolizerPath.empty())
+  ErrorOr<std::string> LLVMSymbolizerPathOrErr =
+      sys::findProgramByName("llvm-symbolizer");
+  if (!LLVMSymbolizerPathOrErr)
     return false;
+  const std::string &LLVMSymbolizerPath = *LLVMSymbolizerPathOrErr;
   // We don't know argv0 or the address of main() at this point, but try
   // to guess it anyway (it's possible on some platforms).
   std::string MainExecutableName = sys::fs::getMainExecutable(nullptr, nullptr);

@@ -32,45 +32,6 @@ using namespace sys;
 
 ProcessInfo::ProcessInfo() : ProcessHandle(0), Pid(0), ReturnCode(0) {}
 
-// This function just uses the PATH environment variable to find the program.
-std::string sys::FindProgramByName(const std::string &progName) {
-  // Check some degenerate cases
-  if (progName.length() == 0) // no program
-    return "";
-  std::string temp = progName;
-  // Return paths with slashes verbatim.
-  if (progName.find('\\') != std::string::npos ||
-      progName.find('/') != std::string::npos)
-    return temp;
-
-  // At this point, the file name is valid and does not contain slashes.
-  // Let Windows search for it.
-  SmallVector<wchar_t, MAX_PATH> progNameUnicode;
-  if (windows::UTF8ToUTF16(progName, progNameUnicode))
-    return "";
-
-  SmallVector<wchar_t, MAX_PATH> buffer;
-  DWORD len = MAX_PATH;
-  do {
-    buffer.reserve(len);
-    len = ::SearchPathW(NULL, progNameUnicode.data(), L".exe",
-                        buffer.capacity(), buffer.data(), NULL);
-
-    // See if it wasn't found.
-    if (len == 0)
-      return "";
-
-    // Buffer was too small; grow and retry.
-  } while (len > buffer.capacity());
-
-  buffer.set_size(len);
-  SmallVector<char, MAX_PATH> result;
-  if (windows::UTF16ToUTF8(buffer.begin(), buffer.size(), result))
-    return "";
-
-  return std::string(result.data(), result.size());
-}
-
 ErrorOr<std::string> sys::findProgramByName(StringRef Name,
                                             ArrayRef<StringRef> Paths) {
   assert(!Name.empty() && "Must have a name!");

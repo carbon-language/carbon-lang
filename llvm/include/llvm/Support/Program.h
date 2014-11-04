@@ -52,18 +52,6 @@ struct ProcessInfo {
   ProcessInfo();
 };
 
-  /// This function attempts to locate a program in the operating
-  /// system's file system using some pre-determined set of locations to search
-  /// (e.g. the PATH on Unix). Paths with slashes are returned unmodified.
-  ///
-  /// It does not perform hashing as a shell would but instead stats each PATH
-  /// entry individually so should generally be avoided. Core LLVM library
-  /// functions and options should instead require fully specified paths.
-  ///
-  /// @returns A string containing the path of the program or an empty string if
-  /// the program could not be found.
-  std::string FindProgramByName(const std::string& name);
-
   /// \brief Find the first executable file \p Name in \p Paths.
   ///
   /// This does not perform hashing as a shell would but instead stats each PATH
@@ -100,7 +88,7 @@ struct ProcessInfo {
   /// -2 indicates a crash during execution or timeout
   int ExecuteAndWait(
       StringRef Program, ///< Path of the program to be executed. It is
-      /// presumed this is the result of the FindProgramByName method.
+      /// presumed this is the result of the findProgramByName method.
       const char **args, ///< A vector of strings that are passed to the
       ///< program.  The first element should be the name of the program.
       ///< The list *must* be terminated by a null char* entry.
