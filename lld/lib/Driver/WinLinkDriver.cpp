@@ -306,11 +306,12 @@ static bool convertResourceFiles(PECOFFLinkingContext &ctx,
 
   // Construct CVTRES.EXE command line and execute it.
   std::string program = "cvtres.exe";
-  std::string programPath = llvm::sys::FindProgramByName(program);
-  if (programPath.empty()) {
+  ErrorOr<std::string> programPathOrErr = llvm::sys::findProgramByName(program);
+  if (!programPathOrErr) {
     llvm::errs() << "Unable to find " << program << " in PATH\n";
     return false;
   }
+  const std::string &programPath = *programPathOrErr;
 
   std::vector<const char *> args;
   args.push_back(programPath.c_str());
@@ -562,11 +563,12 @@ static bool createManifestResourceFile(PECOFFLinkingContext &ctx,
 
   // Run RC.EXE /fo tmp.res tmp.rc
   std::string program = "rc.exe";
-  std::string programPath = llvm::sys::FindProgramByName(program);
-  if (programPath.empty()) {
+  ErrorOr<std::string> programPathOrErr = llvm::sys::findProgramByName(program);
+  if (!programPathOrErr) {
     diag << "Unable to find " << program << " in PATH\n";
     return false;
   }
+  const std::string &programPath = *programPathOrErr;
   std::vector<const char *> args;
   args.push_back(programPath.c_str());
   args.push_back("/fo");
@@ -794,11 +796,12 @@ static bool maybeRunLibCommand(int argc, const char **argv, raw_ostream &diag) {
     return false;
   if (!StringRef(argv[1]).equals_lower("/lib"))
     return false;
-  std::string path = llvm::sys::FindProgramByName("lib.exe");
-  if (path.empty()) {
+  ErrorOr<std::string> pathOrErr = llvm::sys::findProgramByName("lib.exe");
+  if (!pathOrErr) {
     diag << "Unable to find lib.exe in PATH\n";
     return true;
   }
+  const std::string &path = *pathOrErr;
 
   // Run lib.exe
   std::vector<const char *> vec;
