@@ -1404,6 +1404,14 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
     if (m_fallback_unwind_plan_sp.get() == NULL)
         return false;
 
+    if (m_full_unwind_plan_sp.get() == NULL)
+        return false;
+
+    // If a compiler generated unwind plan failed, trying the arch default unwindplan
+    // isn't going to do any better.
+    if (m_full_unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolYes)
+        return false;
+
     UnwindPlanSP original_full_unwind_plan_sp = m_full_unwind_plan_sp;
     UnwindPlan::RowSP active_row = m_fallback_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
     
