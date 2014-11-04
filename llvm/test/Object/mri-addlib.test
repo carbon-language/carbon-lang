@@ -12,6 +12,3 @@
 ; CHECK-NEXT: very_long_bytecode_file_name.bc
 ; CHECK-NEXT: IsNAN.o
 ; CHECK-NEXT: test
-
-; line_iterator is incompatible to CRLF.
-; REQUIRES: shell

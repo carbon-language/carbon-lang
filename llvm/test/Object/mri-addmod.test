@@ -31,6 +31,3 @@
 ; NEW-NEXT: 0000000000000000 t bar
 ; NEW-NEXT: 0000000000000006 T foo
 ; NEW-NEXT: 0000000000000016 T main
-
-; line_iterator is incompatible to CRLF.
-; REQUIRES: shell
