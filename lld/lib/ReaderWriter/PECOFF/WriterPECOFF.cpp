@@ -65,6 +65,7 @@ public:
   enum Kind {
     kindHeader,
     kindSection,
+    kindStringTable,
     kindAtomChunk
   };
 
@@ -151,6 +152,10 @@ public:
     _peHeader.AddressOfEntryPoint = address;
   }
 
+  void setPointerToSymbolTable(uint32_t rva) {
+    _coffHeader.PointerToSymbolTable = rva;
+  }
+
 private:
   llvm::object::coff_file_header _coffHeader;
   PEHeader _peHeader;
@@ -169,6 +174,37 @@ private:
   static llvm::object::coff_section createSectionHeader(SectionChunk *chunk);
 
   std::vector<SectionChunk *> _sections;
+};
+
+class StringTableChunk : public Chunk {
+public:
+  StringTableChunk() : Chunk(kindStringTable) {}
+
+  static bool classof(const Chunk *c) {
+    return c->getKind() == kindStringTable;
+  }
+
+  uint32_t addSectionName(StringRef sectionName) {
+    if (_stringTable.empty())
+      _stringTable.insert(_stringTable.begin(), 4, 0);
+    uint32_t offset = _stringTable.size();
+    _stringTable.insert(_stringTable.end(), sectionName.begin(),
+                        sectionName.end());
+    _stringTable.push_back('\0');
+    return offset;
+  }
+
+  uint64_t size() const override { return _stringTable.size(); }
+
+  void write(uint8_t *buffer) override {
+    if (_stringTable.empty())
+      return;
+    *reinterpret_cast<ulittle32_t *>(_stringTable.data()) = _stringTable.size();
+    std::memcpy(buffer, _stringTable.data(), _stringTable.size());
+  }
+
+private:
+  std::vector<char> _stringTable;
 };
 
 class SectionChunk : public Chunk {
@@ -191,15 +227,20 @@ public:
   uint64_t getVirtualAddress() { return _virtualAddress; }
   virtual void setVirtualAddress(uint32_t rva) { _virtualAddress = rva; }
 
+  uint32_t getStringTableOffset() const { return _stringTableOffset; }
+  void setStringTableOffset(uint32_t offset) { _stringTableOffset = offset; }
+
 protected:
   SectionChunk(Kind kind, StringRef sectionName, uint32_t characteristics)
       : Chunk(kind), _sectionName(sectionName),
-        _characteristics(characteristics), _virtualAddress(0) {}
+        _characteristics(characteristics), _virtualAddress(0),
+        _stringTableOffset(0) {}
 
 private:
   StringRef _sectionName;
   const uint32_t _characteristics;
   uint64_t _virtualAddress;
+  uint32_t _stringTableOffset;
 };
 
 /// An AtomChunk represents a section containing atoms.
@@ -750,15 +791,15 @@ llvm::object::coff_section
 SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
   llvm::object::coff_section header;
 
-  // Section name must be equal to or less than 8 characters in the
-  // executable. Longer names will be truncated.
+  // We have extended the COFF specification by allowing section names to be
+  // greater than eight characters.  We achieve this by adding the section names
+  // to the string table.  Binutils' linker, ld, performs the same trick.
   StringRef sectionName = chunk->getSectionName();
-
-  // Name field must be NUL-padded. If the name is exactly 8 byte long,
-  // there's no terminating NUL.
-  std::memset(header.Name, 0, sizeof(header.Name));
-  std::strncpy(header.Name, sectionName.data(),
-               std::min(sizeof(header.Name), sectionName.size()));
+  std::memset(header.Name, 0, llvm::COFF::NameSize);
+  if (uint32_t stringTableOffset = chunk->getStringTableOffset())
+    sprintf(header.Name, "/%u", stringTableOffset);
+  else
+    std::strncpy(header.Name, sectionName.data(), sectionName.size());
 
   uint32_t characteristics = chunk->getCharacteristics();
   header.VirtualSize = chunk->size();
@@ -873,7 +914,8 @@ private:
 
   void addChunk(Chunk *chunk);
   void addSectionChunk(std::unique_ptr<SectionChunk> chunk,
-                       SectionHeaderTableChunk *table);
+                       SectionHeaderTableChunk *table,
+                       StringTableChunk *stringTable);
   void setImageSizeOnDisk();
   uint64_t
   calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
@@ -974,10 +1016,12 @@ void PECOFFWriter::build(const File &linkedFile) {
   auto *peHeader = new PEHeaderChunk<PEHeader>(_ctx);
   auto *dataDirectory = new DataDirectoryChunk();
   auto *sectionTable = new SectionHeaderTableChunk();
+  auto *stringTable = new StringTableChunk();
   addChunk(dosStub);
   addChunk(peHeader);
   addChunk(dataDirectory);
   addChunk(sectionTable);
+  addChunk(stringTable);
 
   // Create sections and add the atoms to them.
   for (auto i : atoms) {
@@ -986,7 +1030,7 @@ void PECOFFWriter::build(const File &linkedFile) {
     std::unique_ptr<SectionChunk> section(
         new AtomChunk(_ctx, sectionName, contents));
     if (section->size() > 0)
-      addSectionChunk(std::move(section), sectionTable);
+      addSectionChunk(std::move(section), sectionTable, stringTable);
   }
 
   // Build atom to its RVA map.
@@ -1001,13 +1045,18 @@ void PECOFFWriter::build(const File &linkedFile) {
     std::unique_ptr<SectionChunk> baseReloc(new BaseRelocChunk(_chunks, _ctx));
     if (baseReloc->size()) {
       SectionChunk &ref = *baseReloc;
-      addSectionChunk(std::move(baseReloc), sectionTable);
+      addSectionChunk(std::move(baseReloc), sectionTable, stringTable);
       dataDirectory->setField(DataDirectoryIndex::BASE_RELOCATION_TABLE,
                               ref.getVirtualAddress(), ref.size());
     }
   }
 
   setImageSizeOnDisk();
+  // N.B. Currently released versions of dumpbin do not appropriately handle
+  // symbol tables which NumberOfSymbols set to zero but a non-zero
+  // PointerToSymbolTable.
+  if (stringTable->size())
+    peHeader->setPointerToSymbolTable(stringTable->fileOffset());
 
   for (std::unique_ptr<Chunk> &chunk : _chunks) {
     SectionChunk *section = dyn_cast<SectionChunk>(chunk.get());
@@ -1180,11 +1229,18 @@ void PECOFFWriter::addChunk(Chunk *chunk) {
 }
 
 void PECOFFWriter::addSectionChunk(std::unique_ptr<SectionChunk> chunk,
-                                   SectionHeaderTableChunk *table) {
+                                   SectionHeaderTableChunk *table,
+                                   StringTableChunk *stringTable) {
   SectionChunk &ref = *chunk;
   _chunks.push_back(std::move(chunk));
   table->addSection(&ref);
   _numSections++;
+
+  StringRef sectionName = ref.getSectionName();
+  if (sectionName.size() > llvm::COFF::NameSize) {
+    uint32_t stringTableOffset = stringTable->addSectionName(sectionName);
+    ref.setStringTableOffset(stringTableOffset);
+  }
 
   // Compute and set the starting address of sections when loaded in
   // memory. They are different from positions on disk because sections need
