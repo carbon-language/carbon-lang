@@ -479,6 +479,15 @@ void RegAllocPBQP::findVRegIntervalsToAlloc(const MachineFunction &MF,
   }
 }
 
+static bool isACalleeSavedRegister(unsigned reg, const TargetRegisterInfo &TRI,
+                                   const MachineFunction &MF) {
+  const MCPhysReg *CSR = TRI.getCalleeSavedRegs(&MF);
+  for (unsigned i = 0; CSR[i] != 0; ++i)
+    if (TRI.regsOverlap(reg, CSR[i]))
+      return true;
+  return false;
+}
+
 void RegAllocPBQP::initializeGraph(PBQPRAGraph &G) {
   MachineFunction &MF = G.getMetadata().MF;
 
@@ -523,6 +532,13 @@ void RegAllocPBQP::initializeGraph(PBQPRAGraph &G) {
     }
 
     PBQPRAGraph::RawVector NodeCosts(VRegAllowed.size() + 1, 0);
+
+    // Tweak cost of callee saved registers, as using then force spilling and
+    // restoring them. This would only happen in the prologue / epilogue though.
+    for (unsigned i = 0; i != VRegAllowed.size(); ++i)
+      if (isACalleeSavedRegister(VRegAllowed[i], TRI, MF))
+        NodeCosts[1 + i] += 1.0;
+
     PBQPRAGraph::NodeId NId = G.addNode(std::move(NodeCosts));
     G.getNodeMetadata(NId).setVReg(VReg);
     G.getNodeMetadata(NId).setAllowedRegs(
