@@ -2805,7 +2805,7 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
       RC = &AArch64::GPR32RegClass;
     } else {
       OrrOpc = AArch64::ORRXri;
-      OrrRC = &AArch64::GPR64RegClass;
+      OrrRC = &AArch64::GPR64spRegClass;
       BitSize = 64;
       ZeroReg = AArch64::XZR;
       Opc = AArch64::MADDXrrr;
