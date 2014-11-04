@@ -11,6 +11,8 @@
 
 // template<class Y> explicit shared_ptr(Y* p);
 
+// UNSUPPORTED: asan
+
 #include <memory>
 #include <new>
 #include <cstdlib>

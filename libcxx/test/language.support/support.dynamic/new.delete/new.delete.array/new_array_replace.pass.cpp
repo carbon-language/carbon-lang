@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
- // test operator new[] replacement by replacing only operator new
+// test operator new[] replacement by replacing only operator new
+
+// UNSUPPORTED: asan
 
 #include <new>
 #include <cstddef>

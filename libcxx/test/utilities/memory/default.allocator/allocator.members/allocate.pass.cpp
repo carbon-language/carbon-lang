@@ -12,6 +12,8 @@
 // allocator:
 // pointer allocate(size_type n, allocator<void>::const_pointer hint=0);
 
+// UNSUPPORTED: asan
+
 #include <memory>
 #include <new>
 #include <cstdlib>

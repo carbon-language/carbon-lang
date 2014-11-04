@@ -12,6 +12,8 @@
 // allocator:
 // template <class... Args> void construct(pointer p, Args&&... args);
 
+// UNSUPPORTED: asan
+
 #include <memory>
 #include <new>
 #include <cstdlib>

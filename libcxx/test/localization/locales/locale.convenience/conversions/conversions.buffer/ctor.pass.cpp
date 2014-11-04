@@ -14,6 +14,8 @@
 // wbuffer_convert(streambuf *bytebuf = 0, Codecvt *pcvt = new Codecvt,
 //                 state_type state = state_type());
 
+// UNSUPPORTED: asan
+
 #include <locale>
 #include <codecvt>
 #include <sstream>

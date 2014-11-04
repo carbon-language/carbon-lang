@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
- // test operator new[]
+// test operator new[]
+
 
 #include <new>
 #include <cstddef>

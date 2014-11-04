@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
- // test operator new replacement
+// test operator new replacement
+
+// UNSUPPORTED: asan
 
 #include <new>
 #include <cstddef>

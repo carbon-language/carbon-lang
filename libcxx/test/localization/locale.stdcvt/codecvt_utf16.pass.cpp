@@ -17,6 +17,8 @@
 //     // unspecified
 // };
 
+// UNSUPPORTED: asan
+
 // Not a portable test
 
 #include <codecvt>

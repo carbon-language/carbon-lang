@@ -13,6 +13,8 @@
 
 // ~ctype();
 
+// UNSUPPORTED: asan
+
 #include <locale>
 #include <cassert>
 #include <new>

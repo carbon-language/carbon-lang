@@ -13,6 +13,8 @@
 
 // void swap(function& other);
 
+// UNSUPPORTED: asan
+
 #include <functional>
 #include <new>
 #include <cstdlib>

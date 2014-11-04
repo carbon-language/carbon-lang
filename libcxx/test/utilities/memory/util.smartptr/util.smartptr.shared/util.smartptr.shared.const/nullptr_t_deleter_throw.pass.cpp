@@ -13,6 +13,8 @@
 
 // template<class D> shared_ptr(nullptr_t, D d);
 
+// UNSUPPORTED: asan
+
 #include <memory>
 #include <cassert>
 #include <new>

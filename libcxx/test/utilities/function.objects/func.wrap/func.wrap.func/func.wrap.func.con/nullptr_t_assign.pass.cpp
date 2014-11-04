@@ -13,6 +13,8 @@
 
 // function& operator=(nullptr_t);
 
+// UNSUPPORTED: asan
+
 #include <functional>
 #include <new>
 #include <cstdlib>
