@@ -804,6 +804,12 @@ loopnext:
     //  [ 0xc3 ] ret
     //  [ 0xe8 xx xx xx xx ] call __stack_chk_fail  (this is sometimes the final insn in the function)
 
+    // or
+
+    //  [ 0x5d ] mov %rbp, %rsp  (aka pop %rbp)
+    //  [ 0xc3 ] ret
+    //  [ 0x0f 0x1f 0x44 xx xx ] nopl (%rax,%rax)   (aka nop)
+
     // We want to add a Row describing how to unwind when we're stopped on the 'ret' instruction where the
     // CFA is no longer defined in terms of rbp, but is now defined in terms of rsp like on function entry.
     // (or the 'jmp' instruction in the second case)
@@ -831,6 +837,11 @@ loopnext:
                 ret_insn_offset = m_func_bounds.GetByteSize() - 5;
             }
             else if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3 && bytebuf[2] == 0xe8) // mov & ret & call
+            {
+                ret_insn_offset = m_func_bounds.GetByteSize() - 6;
+            }
+            else if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3 
+                     && bytebuf[2] == 0x0f && bytebuf[3] == 0x1f & bytebuf[4] == 0x44) // mov & ret & nop
             {
                 ret_insn_offset = m_func_bounds.GetByteSize() - 6;
             }
