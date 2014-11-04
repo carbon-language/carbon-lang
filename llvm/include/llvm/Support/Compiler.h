@@ -140,10 +140,8 @@
 #endif
 
 #if __has_attribute(sentinel) || LLVM_GNUC_PREREQ(3, 0, 0)
-#define END_WITH_NULL __attribute__((sentinel))
 #define LLVM_END_WITH_NULL __attribute__((sentinel))
 #else
-#define END_WITH_NULL
 #define LLVM_END_WITH_NULL
 #endif
 
