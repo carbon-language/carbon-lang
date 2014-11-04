@@ -58,7 +58,7 @@ public:
                               bool &quit);
 
     virtual bool
-    GetThreadSuffixSupported ()
+    GetThreadSuffixSupported () override
     {
         return true;
     }
