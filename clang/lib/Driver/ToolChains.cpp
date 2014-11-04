@@ -2088,8 +2088,8 @@ std::string Hexagon_TC::GetGnuDir(const std::string &InstalledDir) {
 
 static void GetHexagonLibraryPaths(
   const ArgList &Args,
-  const std::string Ver,
-  const std::string MarchString,
+  const std::string &Ver,
+  const std::string &MarchString,
   const std::string &InstalledDir,
   ToolChain::path_list *LibPaths)
 {
