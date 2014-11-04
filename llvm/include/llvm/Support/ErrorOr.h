@@ -68,9 +68,9 @@ public:
 /// \endcode
 ///
 ///
-/// An implicit conversion to bool provides a way to check if there was an
-/// error. The unary * and -> operators provide pointer like access to the
-/// value. Accessing the value when there is an error has undefined behavior.
+/// Implicit conversion to bool returns true if there is a usable value. The
+/// unary * and -> operators provide pointer like access to the value. Accessing
+/// the value when there is an error has undefined behavior.
 ///
 /// When T is a reference type the behaivor is slightly different. The reference
 /// is held in a std::reference_wrapper<std::remove_reference<T>::type>, and
