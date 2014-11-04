@@ -18,29 +18,22 @@ end:
 }
 
 ; CHECK-LABEL: @pr21377(
-define void @pr21377(i32, i32) {
+define void @pr21377(i32) {
 entry:
-  br label %while.cond.i
+  br label %while.body
 
-while.cond.i:                                     ; preds = %while.end.i, %entry
-  %g.0.i = phi i64 [ 0, %entry ], [ %phitmp5.i, %while.end.i ]
-  br i1 undef, label %fn2.exit, label %while.body.i
+while.body:                                       ; preds = %if.end, %entry
+  %phi1 = phi i64 [ undef, %entry ], [ %or2, %if.end ]
+  %zext = zext i32 %0 to i64
+  br i1 undef, label %if.end, label %if.else
 
-while.body.i:                                     ; preds = %while.cond.i
-  %conv.i = zext i32 %0 to i64
-  %phitmp3.i = or i64 %g.0.i, %conv.i
-  br label %while.cond3.i
+if.else:                                          ; preds = %while.body
+  %or1 = or i64 %phi1, %zext
+  %and = and i64 %or1, 4294967295
+  br label %if.end
 
-while.cond3.i:                                    ; preds = %while.cond3.i, %while.body.i
-  %g.1.i = phi i64 [ %phitmp3.i, %while.body.i ], [ 0, %while.cond3.i ]
-  br i1 undef, label %while.end.i, label %while.cond3.i
-
-while.end.i:                                      ; preds = %while.cond3.i
-  %conv.i.i = zext i32 %1 to i64
-  %or7.i = or i64 %g.1.i, %conv.i.i
-  %phitmp5.i = and i64 %or7.i, 4294967295
-  br label %while.cond.i
-
-fn2.exit:                                         ; preds = %while.cond.i
-  ret void
+if.end:                                           ; preds = %if.else, %while.body
+  %phi2 = phi i64 [ %and, %if.else ], [ undef, %while.body ]
+  %or2 = or i64 %phi2, %zext
+  br label %while.body
 }
