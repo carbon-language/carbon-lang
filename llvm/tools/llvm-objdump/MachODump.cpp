@@ -124,8 +124,8 @@ typedef std::pair<uint64_t, DiceRef> DiceTableEntry;
 typedef std::vector<DiceTableEntry> DiceTable;
 typedef DiceTable::iterator dice_table_iterator;
 
-static bool compareDiceTableEntries(const DiceTableEntry i,
-                                    const DiceTableEntry j) {
+static bool compareDiceTableEntries(const DiceTableEntry &i,
+                                    const DiceTableEntry &j) {
   return i.first == j.first;
 }
 
