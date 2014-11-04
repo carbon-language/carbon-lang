@@ -23,7 +23,7 @@ entry:
 ; STATIC-LABEL:   f1:
 ; STATIC:   lui     $[[R0:[0-9]+]], %tprel_hi(t1)
 ; STATIC:   addiu   $[[R1:[0-9]+]], $[[R0]], %tprel_lo(t1)
-; STATIC:   rdhwr   $3, $hwr_ulr
+; STATIC:   rdhwr   $3, $29
 ; STATIC:   addu    $[[R2:[0-9]+]], $3, $[[R1]]
 ; STATIC:   lw      $2, 0($[[R2]])
 }
@@ -51,7 +51,7 @@ entry:
 ; STATIC-LABEL:   f2:
 ; STATIC:   lui     $[[R0:[0-9]+]], %hi(__gnu_local_gp)
 ; STATIC:   addiu   $[[GP:[0-9]+]], $[[R0]], %lo(__gnu_local_gp)
-; STATIC:   rdhwr   $3, $hwr_ulr
+; STATIC:   rdhwr   $3, $29
 ; STATIC:   lw      $[[R0:[0-9]+]], %gottprel(t2)($[[GP]])
 ; STATIC:   addu    $[[R1:[0-9]+]], $3, $[[R0]]
 ; STATIC:   lw      $2, 0($[[R1]])

@@ -94,7 +94,7 @@
 # CHECK:  move    $7, $8         # encoding: [0x21,0x38,0x00,0x01]
 # CHECK:  .set    push
 # CHECK:  .set    mips32r2
-# CHECK:  rdhwr   $5, $hwr_ulr
+# CHECK:  rdhwr   $5, $29
 # CHECK:  .set    pop            # encoding: [0x3b,0xe8,0x05,0x7c]
     add    $9,$6,$7
     add    $9,$6,17767

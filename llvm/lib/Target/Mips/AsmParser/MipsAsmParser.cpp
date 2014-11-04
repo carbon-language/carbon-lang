@@ -222,8 +222,6 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   int matchCPURegisterName(StringRef Symbol);
 
-  int matchHWRegsRegisterName(StringRef Symbol);
-
   int matchRegisterByNumber(unsigned RegNum, unsigned RegClass);
 
   int matchFPURegisterName(StringRef Name);
@@ -859,14 +857,6 @@ public:
   createFGRReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
                MipsAsmParser &Parser) {
     return CreateReg(Index, RegKind_FGR, RegInfo, S, E, Parser);
-  }
-
-  /// Create a register that is definitely a HWReg.
-  /// This is typically only used for named registers such as $hwr_cpunum.
-  static std::unique_ptr<MipsOperand>
-  createHWRegsReg(unsigned Index, const MCRegisterInfo *RegInfo,
-                  SMLoc S, SMLoc E, MipsAsmParser &Parser) {
-    return CreateReg(Index, RegKind_HWRegs, RegInfo, S, E, Parser);
   }
 
   /// Create a register that is definitely an FCC.
@@ -1805,20 +1795,6 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
   return CC;
 }
 
-int MipsAsmParser::matchHWRegsRegisterName(StringRef Name) {
-  int CC;
-
-  CC = StringSwitch<unsigned>(Name)
-           .Case("hwr_cpunum", 0)
-           .Case("hwr_synci_step", 1)
-           .Case("hwr_cc", 2)
-           .Case("hwr_ccres", 3)
-           .Case("hwr_ulr", 29)
-           .Default(-1);
-
-  return CC;
-}
-
 int MipsAsmParser::matchFPURegisterName(StringRef Name) {
 
   if (Name[0] == 'f') {
@@ -2298,13 +2274,6 @@ MipsAsmParser::matchAnyRegisterNameWithoutDollar(OperandVector &Operands,
   int Index = matchCPURegisterName(Identifier);
   if (Index != -1) {
     Operands.push_back(MipsOperand::createGPRReg(
-        Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
-    return MatchOperand_Success;
-  }
-
-  Index = matchHWRegsRegisterName(Identifier);
-  if (Index != -1) {
-    Operands.push_back(MipsOperand::createHWRegsReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
   }
