@@ -155,6 +155,12 @@
         seleqz.d $f0, $f2, $f4   # CHECK: seleqz.d $f0, $f2, $f4 # encoding: [0x46,0x24,0x10,0x14]
         selnez.s $f0, $f2, $f4   # CHECK: selnez.s $f0, $f2, $f4 # encoding: [0x46,0x04,0x10,0x17]
         selnez.d $f0, $f2, $f4   # CHECK: selnez.d $f0, $f2, $f4 # encoding: [0x46,0x24,0x10,0x17]
+        # FIXME: Use the code generator in order to print the .set directives
+        #        instead of the instruction printer.
+        rdhwr   $sp,$11          # CHECK:      .set  push
+                                 # CHECK-NEXT: .set  mips32r2
+                                 # CHECK-NEXT: rdhwr $sp, $11
+                                 # CHECK-NEXT: .set  pop         # encoding: [0x7c,0x1d,0x58,0x3b]
         rint.s $f2, $f4          # CHECK: rint.s $f2, $f4        # encoding: [0x46,0x00,0x20,0x9a]
         rint.d $f2, $f4          # CHECK: rint.d $f2, $f4        # encoding: [0x46,0x20,0x20,0x9a]
         class.s $f2, $f4         # CHECK: class.s $f2, $f4       # encoding: [0x46,0x00,0x20,0x9b]

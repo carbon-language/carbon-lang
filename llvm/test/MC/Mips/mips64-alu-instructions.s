@@ -87,7 +87,7 @@
 # CHECK:  move    $7, $8         # encoding: [0x2d,0x38,0x00,0x01]
 # CHECK:  .set    push
 # CHECK:  .set    mips32r2
-# CHECK:  rdhwr   $5, $29
+# CHECK:  rdhwr   $5, $hwr_ulr
 # CHECK:  .set    pop            # encoding: [0x3b,0xe8,0x05,0x7c]
 
     dadd    $9,$6,$7

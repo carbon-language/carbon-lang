@@ -151,7 +151,12 @@
         or        $2, 4                # CHECK: ori $2, $2, 4           # encoding: [0x34,0x42,0x00,0x04]
         pause                          # CHECK: pause # encoding:  [0x00,0x00,0x01,0x40]
         pref      1, 8($5)             # CHECK: pref 1, 8($5)           # encoding: [0xcc,0xa1,0x00,0x08]
-        rdhwr     $sp,$11              
+        # FIXME: Use the code generator in order to print the .set directives
+        #        instead of the instruction printer.
+        rdhwr     $sp,$11              # CHECK:      .set  push
+                                       # CHECK-NEXT: .set  mips32r2
+                                       # CHECK-NEXT: rdhwr $sp, $11
+                                       # CHECK-NEXT: .set  pop          # encoding: [0x7c,0x1d,0x58,0x3b]
         rotr      $1,15                # CHECK: rotr $1, $1, 15         # encoding: [0x00,0x21,0x0b,0xc2]
         rotr      $1,$14,15            # CHECK: rotr $1, $14, 15        # encoding: [0x00,0x2e,0x0b,0xc2]
         rotrv     $1,$14,$15           # CHECK: rotrv $1, $14, $15      # encoding: [0x01,0xee,0x08,0x46]
