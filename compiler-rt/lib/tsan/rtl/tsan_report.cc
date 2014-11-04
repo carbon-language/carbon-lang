@@ -102,10 +102,13 @@ void PrintStack(const ReportStack *ent) {
     Printf("    #%d %s %s:%d", i, ent->func, ent->file, ent->line);
     if (ent->col)
       Printf(":%d", ent->col);
-    if (ent->module && ent->offset)
-      Printf(" (%s+%p)\n", ent->module, (void*)ent->offset);
-    else
+    if (ent->module && ent->offset) {
+      char *stripped_module = StripModuleName(ent->module);
+      Printf(" (%s+%p)\n", stripped_module, (void*)ent->offset);
+      InternalFree(stripped_module);
+    } else {
       Printf(" (%p)\n", (void*)ent->pc);
+    }
   }
   Printf("\n");
 }
@@ -147,8 +150,10 @@ static void PrintLocation(const ReportLocation *loc) {
   bool print_stack = false;
   Printf("%s", d.Location());
   if (loc->type == ReportLocationGlobal) {
+    char *stripped_module = StripModuleName(loc->module);
     Printf("  Location is global '%s' of size %zu at %p (%s+%p)\n\n",
-               loc->name, loc->size, loc->addr, loc->module, loc->offset);
+               loc->name, loc->size, loc->addr, stripped_module, loc->offset);
+    InternalFree(stripped_module);
   } else if (loc->type == ReportLocationHeap) {
     char thrbuf[kThreadBufSize];
     Printf("  Location is heap block of size %zu at %p allocated by %s:\n",

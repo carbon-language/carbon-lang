@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %T/simple_stack2_bin && %deflake %run %T/simple_stack2_bin | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -44,10 +44,10 @@ int main() {
 
 // CHECK:      WARNING: ThreadSanitizer: data race
 // CHECK-NEXT:   Write of size 4 at {{.*}} by thread T1:
-// CHECK-NEXT:     #0 foo1{{.*}} {{.*}}simple_stack2.cc:9{{(:3)?}} ({{.*}})
-// CHECK-NEXT:     #1 bar1{{.*}} {{.*}}simple_stack2.cc:16{{(:3)?}} ({{.*}})
-// CHECK-NEXT:     #2 Thread1{{.*}} {{.*}}simple_stack2.cc:34{{(:3)?}} ({{.*}})
+// CHECK-NEXT:     #0 foo1{{.*}} {{.*}}simple_stack2.cc:9{{(:3)?}} (simple_stack2_bin+{{.*}})
+// CHECK-NEXT:     #1 bar1{{.*}} {{.*}}simple_stack2.cc:16{{(:3)?}} (simple_stack2_bin+{{.*}})
+// CHECK-NEXT:     #2 Thread1{{.*}} {{.*}}simple_stack2.cc:34{{(:3)?}} (simple_stack2_bin+{{.*}})
 // CHECK:        Previous read of size 4 at {{.*}} by main thread:
-// CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack2.cc:20{{(:3)?}} ({{.*}})
-// CHECK-NEXT:     #1 bar2{{.*}} {{.*}}simple_stack2.cc:29{{(:3)?}} ({{.*}})
-// CHECK-NEXT:     #2 main{{.*}} {{.*}}simple_stack2.cc:41{{(:3)?}} ({{.*}})
+// CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack2.cc:20{{(:3)?}} (simple_stack2_bin+{{.*}})
+// CHECK-NEXT:     #1 bar2{{.*}} {{.*}}simple_stack2.cc:29{{(:3)?}} (simple_stack2_bin+{{.*}})
+// CHECK-NEXT:     #2 main{{.*}} {{.*}}simple_stack2.cc:41{{(:3)?}} (simple_stack2_bin+{{.*}})
