@@ -93,13 +93,25 @@ static const char *ReportTypeString(ReportType typ) {
   return "";
 }
 
+static const char *StripFunctionName(const char *function, const char *prefix) {
+  if (function == 0) return 0;
+  if (prefix == 0) return function;
+  uptr prefix_len = internal_strlen(prefix);
+  if (0 == internal_strncmp(function, prefix, prefix_len))
+    return function + prefix_len;
+  return function;
+}
+
 void PrintStack(const ReportStack *ent) {
   if (ent == 0) {
     Printf("    [failed to restore the stack]\n\n");
     return;
   }
   for (int i = 0; ent; ent = ent->next, i++) {
-    Printf("    #%d %s %s:%d", i, ent->func, ent->file, ent->line);
+    Printf("    #%d %s %s:%d", i,
+           StripFunctionName(ent->func, "__interceptor_"),
+           StripPathPrefix(ent->file, common_flags()->strip_path_prefix),
+           ent->line);
     if (ent->col)
       Printf(":%d", ent->col);
     if (ent->module && ent->offset) {

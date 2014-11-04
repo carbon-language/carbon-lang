@@ -59,18 +59,7 @@ bool WEAK OnReport(const ReportDesc *rep, bool suppressed) {
 static void StackStripMain(ReportStack *stack) {
   ReportStack *last_frame = 0;
   ReportStack *last_frame2 = 0;
-  const char *prefix = "__interceptor_";
-  uptr prefix_len = internal_strlen(prefix);
-  const char *path_prefix = common_flags()->strip_path_prefix;
-  uptr path_prefix_len = internal_strlen(path_prefix);
-  char *pos;
   for (ReportStack *ent = stack; ent; ent = ent->next) {
-    if (ent->func && 0 == internal_strncmp(ent->func, prefix, prefix_len))
-      ent->func += prefix_len;
-    if (ent->file && (pos = internal_strstr(ent->file, path_prefix)))
-      ent->file = pos + path_prefix_len;
-    if (ent->file && ent->file[0] == '.' && ent->file[1] == '/')
-      ent->file += 2;
     last_frame2 = last_frame;
     last_frame = ent;
   }
