@@ -25,7 +25,10 @@ ifeq ($(HOST_OS),Darwin)
 DIRS += debugserver
 endif
 
+ifeq ($(ENABLE_WERROR),0)
 DIRS += lldb-mi
+endif
+
 DIRS += driver
 
 include $(LLDB_LEVEL)/Makefile
