@@ -726,6 +726,10 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
       return false;
   }
 
+  // If they are not in the same section, we can't compute the diff.
+  if (&SecA != &SecB)
+    return false;
+
   const MCFragment *FA = Asm.getSymbolData(SA).getFragment();
 
   // Bail if the symbol has no fragment.
@@ -733,12 +737,7 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
     return false;
 
   A_Base = FA->getAtom();
-  if (!A_Base)
-    return false;
-
   B_Base = FB.getAtom();
-  if (!B_Base)
-    return false;
 
   // If the atoms are the same, they are guaranteed to have the same address.
   if (A_Base == B_Base)
