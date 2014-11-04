@@ -11,6 +11,7 @@
 #define liblldb_Predicate_h_
 #if defined(__cplusplus)
 
+#include "lldb/lldb-defines.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Condition.h"
 #include <stdint.h>

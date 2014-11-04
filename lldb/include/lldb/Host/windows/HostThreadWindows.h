@@ -31,9 +31,6 @@ class HostThreadWindows : public HostNativeThreadBase
     virtual void Reset();
 
     lldb::tid_t GetThreadId() const;
-
-  protected:
-    llvm::SmallString<32> m_thread_name;
 };
 }
 

@@ -13,12 +13,19 @@
 // C Includes
 
 // C++ Includes
+#include <map>
 #include <queue>
 
 // Other libraries and framework includes
+#include "lldb/Host/HostThread.h"
 #include "lldb/Target/Process.h"
 
 class ProcessMonitor;
+
+namespace lldb_private
+{
+class HostProcess;
+}
 
 class ProcessWindows :
     public lldb_private::Process
@@ -49,6 +56,8 @@ public:
     //------------------------------------------------------------------
     ProcessWindows(lldb_private::Target& target,
                    lldb_private::Listener &listener);
+
+    ~ProcessWindows();
 
     virtual lldb_private::Error
     DoDetach(bool keep_stopped);
@@ -99,11 +108,7 @@ public:
     virtual bool
     IsAlive ();
 
-    virtual size_t
-    DoReadMemory (lldb::addr_t vm_addr, 
-                  void *buf, 
-                  size_t size,
-                  lldb_private::Error &error);
+    virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error);
 };
 
 #endif  // liblldb_Plugins_Process_Windows_ProcessWindows_H_
