@@ -40,8 +40,7 @@ public:
   ///
   /// \returns Modified sequence of command line arguments.
   virtual CommandLineArguments Adjust(const CommandLineArguments &Args) = 0;
-  virtual ~ArgumentsAdjuster() {
-  }
+  virtual ~ArgumentsAdjuster() {}
 };
 
 /// \brief Syntax check only command line adjuster.
@@ -58,6 +57,22 @@ class ClangStripOutputAdjuster : public ArgumentsAdjuster {
   CommandLineArguments Adjust(const CommandLineArguments &Args) override;
 };
 
+class InsertArgumentAdjuster : public ArgumentsAdjuster {
+public:
+  enum Position { BEGIN, END };
+
+  InsertArgumentAdjuster(const CommandLineArguments &Extra, Position Pos)
+      : Extra(Extra), Pos(Pos) {}
+
+  InsertArgumentAdjuster(const char *Extra, Position Pos)
+      : Extra(1, std::string(Extra)), Pos(Pos) {}
+
+  CommandLineArguments Adjust(const CommandLineArguments &Args) override;
+
+private:
+  const CommandLineArguments Extra;
+  const Position Pos;
+};
 } // end namespace tooling
 } // end namespace clang
 

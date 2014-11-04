@@ -54,6 +54,22 @@ ClangStripOutputAdjuster::Adjust(const CommandLineArguments &Args) {
   return AdjustedArgs;
 }
 
+CommandLineArguments
+InsertArgumentAdjuster::Adjust(const CommandLineArguments &Args) {
+  CommandLineArguments Return(Args);
+
+  CommandLineArguments::iterator I;
+  if (Pos == END) {
+    I = Return.end();
+  } else {
+    I = Return.begin();
+    ++I; // To leave the program name in place
+  }
+
+  Return.insert(I, Extra.begin(), Extra.end());
+  return Return;
+}
+
 } // end namespace tooling
 } // end namespace clang
 

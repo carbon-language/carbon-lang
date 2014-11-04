@@ -78,15 +78,6 @@ static cl::opt<bool> FixWhatYouCan(
     cl::desc(Options->getOptionHelpText(options::OPT_fix_what_you_can)),
     cl::cat(ClangCheckCategory));
 
-static cl::list<std::string> ArgsAfter(
-    "extra-arg",
-    cl::desc("Additional argument to append to the compiler command line"),
-    cl::cat(ClangCheckCategory));
-static cl::list<std::string> ArgsBefore(
-    "extra-arg-before",
-    cl::desc("Additional argument to prepend to the compiler command line"),
-    cl::cat(ClangCheckCategory));
-
 namespace {
 
 // FIXME: Move FixItRewriteInPlace from lib/Rewrite/Frontend/FrontendActions.cpp
@@ -140,58 +131,21 @@ public:
   }
 };
 
-class InsertAdjuster: public clang::tooling::ArgumentsAdjuster {
-public:
-  enum Position { BEGIN, END };
-
-  InsertAdjuster(const CommandLineArguments &Extra, Position Pos)
-    : Extra(Extra), Pos(Pos) {
-  }
-
-  InsertAdjuster(const char *Extra, Position Pos)
-    : Extra(1, std::string(Extra)), Pos(Pos) {
-  }
-
-  virtual CommandLineArguments
-  Adjust(const CommandLineArguments &Args) override {
-    CommandLineArguments Return(Args);
-
-    CommandLineArguments::iterator I;
-    if (Pos == END) {
-      I = Return.end();
-    } else {
-      I = Return.begin();
-      ++I; // To leave the program name in place
-    }
-
-    Return.insert(I, Extra.begin(), Extra.end());
-    return Return;
-  }
-
-private:
-  const CommandLineArguments Extra;
-  const Position Pos;
-};
-
-} // namespace
-
-// Anonymous namespace here causes problems with gcc <= 4.4 on MacOS 10.6.
-// "Non-global symbol: ... can't be a weak_definition"
-namespace clang_check {
 class ClangCheckActionFactory {
 public:
   std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
     if (ASTList)
       return clang::CreateASTDeclNodeLister();
     if (ASTDump)
-      return clang::CreateASTDumper(ASTDumpFilter, /*DumpDecls*/ true,
-                                    /*DumpLookups*/ false);
+      return clang::CreateASTDumper(ASTDumpFilter, /*DumpDecls=*/true,
+                                    /*DumpLookups=*/false);
     if (ASTPrint)
       return clang::CreateASTPrinter(&llvm::outs(), ASTDumpFilter);
     return llvm::make_unique<clang::ASTConsumer>();
   }
 };
-}
+
+} // namespace
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -202,21 +156,13 @@ int main(int argc, const char **argv) {
   // Clear adjusters because -fsyntax-only is inserted by the default chain.
   Tool.clearArgumentsAdjusters();
   Tool.appendArgumentsAdjuster(new ClangStripOutputAdjuster());
-  if (ArgsAfter.size() > 0) {
-    Tool.appendArgumentsAdjuster(new InsertAdjuster(ArgsAfter,
-          InsertAdjuster::END));
-  }
-  if (ArgsBefore.size() > 0) {
-    Tool.appendArgumentsAdjuster(new InsertAdjuster(ArgsBefore,
-          InsertAdjuster::BEGIN));
-  }
 
   // Running the analyzer requires --analyze. Other modes can work with the
   // -fsyntax-only option.
-  Tool.appendArgumentsAdjuster(new InsertAdjuster(
-        Analyze ? "--analyze" : "-fsyntax-only", InsertAdjuster::BEGIN));
+  Tool.appendArgumentsAdjuster(new InsertArgumentAdjuster(
+      Analyze ? "--analyze" : "-fsyntax-only", InsertArgumentAdjuster::BEGIN));
 
-  clang_check::ClangCheckActionFactory CheckFactory;
+  ClangCheckActionFactory CheckFactory;
   std::unique_ptr<FrontendActionFactory> FrontendFactory;
 
   // Choose the correct factory based on the selected mode.

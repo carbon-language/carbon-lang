@@ -89,6 +89,8 @@ public:
 private:
   std::unique_ptr<CompilationDatabase> Compilations;
   std::vector<std::string> SourcePathList;
+  std::vector<std::string> ExtraArgsBefore;
+  std::vector<std::string> ExtraArgsAfter;
 };
 
 }  // namespace tooling

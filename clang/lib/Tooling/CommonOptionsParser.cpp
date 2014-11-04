@@ -25,6 +25,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
+#include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
 
@@ -53,6 +54,42 @@ const char *const CommonOptionsParser::HelpMessage =
     "\tsuffix of a path in the compile command database.\n"
     "\n";
 
+class ArgumentsAdjustingCompilations : public CompilationDatabase {
+public:
+  ArgumentsAdjustingCompilations(
+      std::unique_ptr<CompilationDatabase> Compilations)
+      : Compilations(std::move(Compilations)) {}
+
+  void appendArgumentsAdjuster(std::unique_ptr<ArgumentsAdjuster> Adjuster) {
+    Adjusters.push_back(std::move(Adjuster));
+  }
+
+  std::vector<CompileCommand>
+  getCompileCommands(StringRef FilePath) const override {
+    return adjustCommands(Compilations->getCompileCommands(FilePath));
+  }
+
+  std::vector<std::string> getAllFiles() const override {
+    return Compilations->getAllFiles();
+  }
+
+  std::vector<CompileCommand> getAllCompileCommands() const override {
+    return adjustCommands(Compilations->getAllCompileCommands());
+  }
+
+private:
+  std::unique_ptr<CompilationDatabase> Compilations;
+  std::vector<std::unique_ptr<ArgumentsAdjuster>> Adjusters;
+
+  std::vector<CompileCommand>
+  adjustCommands(std::vector<CompileCommand> Commands) const {
+    for (CompileCommand &Command : Commands)
+      for (const auto &Adjuster : Adjusters)
+        Command.CommandLine = Adjuster->Adjust(Command.CommandLine);
+    return Commands;
+  }
+};
+
 CommonOptionsParser::CommonOptionsParser(int &argc, const char **argv,
                                          cl::OptionCategory &Category,
                                          const char *Overview) {
@@ -63,6 +100,16 @@ CommonOptionsParser::CommonOptionsParser(int &argc, const char **argv,
 
   static cl::list<std::string> SourcePaths(
       cl::Positional, cl::desc("<source0> [... <sourceN>]"), cl::OneOrMore,
+      cl::cat(Category));
+
+  static cl::list<std::string> ArgsAfter(
+      "extra-arg",
+      cl::desc("Additional argument to append to the compiler command line"),
+      cl::cat(Category));
+
+  static cl::list<std::string> ArgsBefore(
+      "extra-arg-before",
+      cl::desc("Additional argument to prepend to the compiler command line"),
       cl::cat(Category));
 
   // Hide unrelated options.
@@ -91,4 +138,14 @@ CommonOptionsParser::CommonOptionsParser(int &argc, const char **argv,
     if (!Compilations)
       llvm::report_fatal_error(ErrorMessage);
   }
+  auto AdjustingCompilations =
+      llvm::make_unique<ArgumentsAdjustingCompilations>(
+          std::move(Compilations));
+  AdjustingCompilations->appendArgumentsAdjuster(
+      llvm::make_unique<InsertArgumentAdjuster>(ArgsBefore,
+                                                InsertArgumentAdjuster::BEGIN));
+  AdjustingCompilations->appendArgumentsAdjuster(
+      llvm::make_unique<InsertArgumentAdjuster>(ArgsAfter,
+                                                InsertArgumentAdjuster::END));
+  Compilations = std::move(AdjustingCompilations);
 }
