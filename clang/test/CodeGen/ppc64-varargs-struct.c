@@ -19,90 +19,90 @@ void testva (int n, ...)
 // CHECK: bitcast %struct.x* %t to i8*
 // CHECK: bitcast %struct.x* %{{[0-9]+}} to i8*
 // CHECK: call void @llvm.memcpy
-// CHECK-PPC:  %arraydecay = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
-// CHECK-PPC-NEXT:  %gprptr = bitcast %struct.__va_list_tag* %arraydecay to i8*
-// CHECK-PPC-NEXT:  %0 = ptrtoint i8* %gprptr to i32
-// CHECK-PPC-NEXT:  %1 = add i32 %0, 1
-// CHECK-PPC-NEXT:  %2 = inttoptr i32 %1 to i8*
-// CHECK-PPC-NEXT:  %3 = add i32 %1, 3
-// CHECK-PPC-NEXT:  %4 = inttoptr i32 %3 to i8**
-// CHECK-PPC-NEXT:  %5 = add i32 %3, 4
-// CHECK-PPC-NEXT:  %6 = inttoptr i32 %5 to i8**
-// CHECK-PPC-NEXT:  %gpr = load i8* %gprptr
-// CHECK-PPC-NEXT:  %fpr = load i8* %2
-// CHECK-PPC-NEXT:  %overflow_area = load i8** %4
-// CHECK-PPC-NEXT:  %7 = ptrtoint i8* %overflow_area to i32
-// CHECK-PPC-NEXT:  %regsave_area = load i8** %6
-// CHECK-PPC-NEXT:  %8 = ptrtoint i8* %regsave_area to i32
-// CHECK-PPC-NEXT:  %cond = icmp ult i8 %gpr, 8
-// CHECK-PPC-NEXT:  %9 = mul i8 %gpr, 4
-// CHECK-PPC-NEXT:  %10 = sext i8 %9 to i32
-// CHECK-PPC-NEXT:  %11 = add i32 %8, %10
-// CHECK-PPC-NEXT:  br i1 %cond, label %using_regs, label %using_overflow
+// CHECK-PPC:  [[ARRAYDECAY:%[a-z0-9]+]] = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
+// CHECK-PPC-NEXT:  [[GPRPTR:%[a-z0-9]+]] = bitcast %struct.__va_list_tag* [[ARRAYDECAY]] to i8*
+// CHECK-PPC-NEXT:  [[ZERO:%[0-9]+]] = ptrtoint i8* [[GPRPTR]] to i32
+// CHECK-PPC-NEXT:  [[ONE:%[0-9]+]] = add i32 [[ZERO]], 1
+// CHECK-PPC-NEXT:  [[TWO:%[0-9]+]] = inttoptr i32 [[ONE]] to i8*
+// CHECK-PPC-NEXT:  [[THREE:%[0-9]+]] = add i32 [[ONE]], 3
+// CHECK-PPC-NEXT:  [[FOUR:%[0-9]+]] = inttoptr i32 [[THREE]] to i8**
+// CHECK-PPC-NEXT:  [[FIVE:%[0-9]+]] = add i32 [[THREE]], 4
+// CHECK-PPC-NEXT:  [[SIX:%[0-9]+]] = inttoptr i32 [[FIVE]] to i8**
+// CHECK-PPC-NEXT:  [[GPR:%[a-z0-9]+]] = load i8* [[GPRPTR]]
+// CHECK-PPC-NEXT:  [[FPR:%[a-z0-9]+]] = load i8* [[TWO]] 
+// CHECK-PPC-NEXT:  [[OVERFLOW_AREA:%[a-z_0-9]+]] = load i8** [[FOUR]]
+// CHECK-PPC-NEXT:  [[SEVEN:%[0-9]+]] = ptrtoint i8* [[OVERFLOW_AREA]] to i32
+// CHECK-PPC-NEXT:  [[REGSAVE_AREA:%[a-z_0-9]+]] = load i8** [[SIX]]
+// CHECK-PPC-NEXT:  [[EIGHT:%[0-9]+]] = ptrtoint i8* [[REGSAVE_AREA]] to i32
+// CHECK-PPC-NEXT:  [[COND:%[a-z0-9]+]] = icmp ult i8 [[GPR]], 8
+// CHECK-PPC-NEXT:  [[NINE:%[0-9]+]] = mul i8 [[GPR]], 4
+// CHECK-PPC-NEXT:  [[TEN:%[0-9]+]] = sext i8 [[NINE]] to i32
+// CHECK-PPC-NEXT:  [[ELEVEN:%[0-9]+]] = add i32 [[EIGHT]], [[TEN]]
+// CHECK-PPC-NEXT:  br i1 [[COND]], label [[USING_REGS:%[a-z_0-9]+]], label [[USING_OVERFLOW:%[a-z_0-9]+]]
 //
-// CHECK-PPC-LABEL:using_regs:                                       ; preds = %entry
-// CHECK-PPC-NEXT:  %12 = inttoptr i32 %11 to %struct.x*
-// CHECK-PPC-NEXT:  %13 = add i8 %gpr, 1
-// CHECK-PPC-NEXT:  store i8 %13, i8* %gprptr
-// CHECK-PPC-NEXT:  br label %cont
+// CHECK-PPC1:[[USING_REGS]]
+// CHECK-PPC:  [[TWELVE:%[0-9]+]] = inttoptr i32 [[ELEVEN]] to %struct.x*
+// CHECK-PPC-NEXT:  [[THIRTEEN:%[0-9]+]] = add i8 [[GPR]], 1
+// CHECK-PPC-NEXT:  store i8 [[THIRTEEN]], i8* [[GPRPTR]]
+// CHECK-PPC-NEXT:  br label [[CONT:%[a-z0-9]+]]
 //
-// CHECK-PPC-LABEL:using_overflow:                                   ; preds = %entry
-// CHECK-PPC-NEXT:  %14 = inttoptr i32 %7 to %struct.x*
-// CHECK-PPC-NEXT:  %15 = add i32 %7, 4
-// CHECK-PPC-NEXT:  %16 = inttoptr i32 %15 to i8*
-// CHECK-PPC-NEXT:  store i8* %16, i8** %4
-// CHECK-PPC-NEXT:  br label %cont
+// CHECK-PPC1:[[USING_OVERFLOW]]
+// CHECK-PPC:  [[FOURTEEN:%[0-9]+]] = inttoptr i32 [[SEVEN]] to %struct.x*
+// CHECK-PPC-NEXT:  [[FIFTEEN:%[0-9]+]] = add i32 [[SEVEN]], 4
+// CHECK-PPC-NEXT:  [[SIXTEEN:%[0-9]+]] = inttoptr i32 [[FIFTEEN]] to i8*
+// CHECK-PPC-NEXT:  store i8* [[SIXTEEN]], i8** [[FOUR]]
+// CHECK-PPC-NEXT:  br label [[CONT]]
 //
-// CHECK-PPC-LABEL:cont:                                             ; preds = %using_overflow, %using_regs
-// CHECK-PPC-NEXT:  %vaarg.addr = phi %struct.x* [ %12, %using_regs ], [ %14, %using_overflow ]
-// CHECK-PPC-NEXT:  %aggrptr = bitcast %struct.x* %vaarg.addr to i8**
-// CHECK-PPC-NEXT:  %aggr = load i8** %aggrptr
-// CHECK-PPC-NEXT:  %17 = bitcast %struct.x* %t to i8*
-// CHECK-PPC-NEXT:  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %17, i8* %aggr, i32 16, i32 8, i1 false)
+// CHECK-PPC1:[[CONT]]
+// CHECK-PPC:  [[VAARG_ADDR:%[a-z.0-9]+]] = phi %struct.x* [ [[TWELVE]], [[USING_REGS]] ], [ [[FOURTEEN]], [[USING_OVERFLOW]] ]
+// CHECK-PPC-NEXT:  [[AGGRPTR:%[a-z0-9]+]] = bitcast %struct.x* [[VAARG_ADDR]] to i8**
+// CHECK-PPC-NEXT:  [[AGGR:%[a-z0-9]+]] = load i8** [[AGGRPTR]]
+// CHECK-PPC-NEXT:  [[SEVENTEEN:%[0-9]+]] = bitcast %struct.x* %t to i8*
+// CHECK-PPC-NEXT:  call void @llvm.memcpy.p0i8.p0i8.i32(i8* [[SEVENTEEN]], i8* [[AGGR]], i32 16, i32 8, i1 false)
 
   int v = va_arg (ap, int);
 // CHECK: ptrtoint i8* %{{[a-z.0-9]*}} to i64
 // CHECK: add i64 %{{[0-9]+}}, 4
 // CHECK: inttoptr i64 %{{[0-9]+}} to i8*
 // CHECK: bitcast i8* %{{[0-9]+}} to i32*
-// CHECK-PPC:  %arraydecay1 = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
-// CHECK-PPC-NEXT:  %gprptr2 = bitcast %struct.__va_list_tag* %arraydecay1 to i8*
-// CHECK-PPC-NEXT:  %18 = ptrtoint i8* %gprptr2 to i32
-// CHECK-PPC-NEXT:  %19 = add i32 %18, 1
-// CHECK-PPC-NEXT:  %20 = inttoptr i32 %19 to i8*
-// CHECK-PPC-NEXT:  %21 = add i32 %19, 3
-// CHECK-PPC-NEXT:  %22 = inttoptr i32 %21 to i8**
-// CHECK-PPC-NEXT:  %23 = add i32 %21, 4
-// CHECK-PPC-NEXT:  %24 = inttoptr i32 %23 to i8**
-// CHECK-PPC-NEXT:  %gpr3 = load i8* %gprptr2
-// CHECK-PPC-NEXT:  %fpr4 = load i8* %20
-// CHECK-PPC-NEXT:  %overflow_area5 = load i8** %22
-// CHECK-PPC-NEXT:  %25 = ptrtoint i8* %overflow_area5 to i32
-// CHECK-PPC-NEXT:  %regsave_area6 = load i8** %24
-// CHECK-PPC-NEXT:  %26 = ptrtoint i8* %regsave_area6 to i32
-// CHECK-PPC-NEXT:  %cond7 = icmp ult i8 %gpr3, 8
-// CHECK-PPC-NEXT:  %27 = mul i8 %gpr3, 4
-// CHECK-PPC-NEXT:  %28 = sext i8 %27 to i32
-// CHECK-PPC-NEXT:  %29 = add i32 %26, %28
-// CHECK-PPC-NEXT:  br i1 %cond7, label %using_regs8, label %using_overflow9
+// CHECK-PPC:  [[ARRAYDECAY1:%[a-z0-9]+]] = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
+// CHECK-PPC-NEXT:  [[GPRPTR1:%[a-z0-9]+]] = bitcast %struct.__va_list_tag* [[ARRAYDECAY1]] to i8*
+// CHECK-PPC-NEXT:  [[EIGHTEEN:%[0-9]+]] = ptrtoint i8* [[GPRPTR1]] to i32
+// CHECK-PPC-NEXT:  [[NINETEEN:%[0-9]+]] = add i32 [[EIGHTEEN]], 1
+// CHECK-PPC-NEXT:  [[TWENTY:%[0-9]+]] = inttoptr i32 [[NINETEEN]] to i8*
+// CHECK-PPC-NEXT:  [[TWENTYONE:%[0-9]+]] = add i32 [[NINETEEN]], 3
+// CHECK-PPC-NEXT:  [[TWENTYTWO:%[0-9]+]] = inttoptr i32 [[TWENTYONE]] to i8**
+// CHECK-PPC-NEXT:  [[TWENTYTHREE:%[0-9]+]] = add i32 [[TWENTYONE]], 4
+// CHECK-PPC-NEXT:  [[TWENTYFOUR:%[0-9]+]] = inttoptr i32 [[TWENTYTHREE]] to i8**
+// CHECK-PPC-NEXT:  [[GPR1:%[a-z0-9]+]] = load i8* [[GPRPTR1]]
+// CHECK-PPC-NEXT:  [[FPR1:%[a-z0-9]+]] = load i8* [[TWENTY]]
+// CHECK-PPC-NEXT:  [[OVERFLOW_AREA1:%[a-z_0-9]+]] = load i8** [[TWENTYTWO]]
+// CHECK-PPC-NEXT:  [[TWENTYFIVE:%[0-9]+]] = ptrtoint i8* [[OVERFLOW_AREA1]] to i32
+// CHECK-PPC-NEXT:  [[REGSAVE_AREA1:%[a-z_0-9]+]] = load i8** [[TWENTYFOUR]]
+// CHECK-PPC-NEXT:  [[TWENTYSIX:%[0-9]+]] = ptrtoint i8* [[REGSAVE_AREA1]] to i32
+// CHECK-PPC-NEXT:  [[COND1:%[a-z0-9]+]] = icmp ult i8 [[GPR1]], 8
+// CHECK-PPC-NEXT:  [[TWENTYSEVEN:%[0-9]+]] = mul i8 [[GPR1]], 4
+// CHECK-PPC-NEXT:  [[TWENTYEIGHT:%[0-9]+]] = sext i8 [[TWENTYSEVEN]] to i32
+// CHECK-PPC-NEXT:  [[TWENTYNINE:%[0-9]+]] = add i32 [[TWENTYSIX]], [[TWENTYEIGHT]]
+// CHECK-PPC-NEXT:  br i1 [[COND1]], label [[USING_REGS1:%[a-z_0-9]+]], label [[USING_OVERFLOW1:%[a-z_0-9]+]]
 //
-// CHECK-PPC-LABEL:using_regs8:                                      ; preds = %cont
-// CHECK-PPC-NEXT:  %30 = inttoptr i32 %29 to i32*
-// CHECK-PPC-NEXT:  %31 = add i8 %gpr3, 1
-// CHECK-PPC-NEXT:  store i8 %31, i8* %gprptr2
-// CHECK-PPC-NEXT:  br label %cont10
+// CHECK-PPC1:[[USING_REGS1]]:
+// CHECK-PPC:  [[THIRTY:%[0-9]+]] = inttoptr i32 [[TWENTYNINE]] to i32*
+// CHECK-PPC-NEXT:  [[THIRTYONE:%[0-9]+]] = add i8 [[GPR1]], 1
+// CHECK-PPC-NEXT:  store i8 [[THIRTYONE]], i8* [[GPRPTR1]]
+// CHECK-PPC-NEXT:  br label [[CONT1:%[a-z0-9]+]]
 //
-// CHECK-PPC-LABEL:using_overflow9:                                  ; preds = %cont
-// CHECK-PPC-NEXT:  %32 = inttoptr i32 %25 to i32*
-// CHECK-PPC-NEXT:  %33 = add i32 %25, 4
-// CHECK-PPC-NEXT:  %34 = inttoptr i32 %33 to i8*
-// CHECK-PPC-NEXT:  store i8* %34, i8** %22
-// CHECK-PPC-NEXT:  br label %cont10
+// CHECK-PPC1:[[USING_OVERFLOW1]]:
+// CHECK-PPC:  [[THIRTYTWO:%[0-9]+]] = inttoptr i32 [[TWENTYFIVE]] to i32*
+// CHECK-PPC-NEXT:  [[THIRTYTHREE:%[0-9]+]] = add i32 [[TWENTYFIVE]], 4
+// CHECK-PPC-NEXT:  [[THIRTYFOUR:%[0-9]+]] = inttoptr i32 [[THIRTYTHREE]] to i8*
+// CHECK-PPC-NEXT:  store i8* [[THIRTYFOUR]], i8** [[TWENTYTWO]]
+// CHECK-PPC-NEXT:  br label [[CONT1]]
 //
-// CHECK-PPC-LABEL:cont10:                                           ; preds = %using_overflow9, %using_regs8
-// CHECK-PPC-NEXT:  %vaarg.addr11 = phi i32* [ %30, %using_regs8 ], [ %32, %using_overflow9 ]
-// CHECK-PPC-NEXT:  %35 = load i32* %vaarg.addr11
-// CHECK-PPC-NEXT:  store i32 %35, i32* %v, align 4
+// CHECK-PPC1:[[CONT1]]:
+// CHECK-PPC:  [[VAARG_ADDR1:%[a-z.0-9]+]] = phi i32* [ [[THIRTY]], [[USING_REGS1]] ], [ [[THIRTYTWO]], [[USING_OVERFLOW1]] ]
+// CHECK-PPC-NEXT:  [[THIRTYFIVE:%[0-9]+]] = load i32* [[VAARG_ADDR1]]
+// CHECK-PPC-NEXT:  store i32 [[THIRTYFIVE]], i32* %v, align 4
 
 #ifdef __powerpc64__
   __int128_t u = va_arg (ap, __int128_t);
