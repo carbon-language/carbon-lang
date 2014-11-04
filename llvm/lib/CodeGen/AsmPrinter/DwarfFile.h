@@ -57,6 +57,11 @@ class DwarfFile {
   // Collection of abstract subprogram DIEs.
   DenseMap<const MDNode *, DIE *> AbstractSPDies;
 
+  /// Maps MDNodes for type system with the corresponding DIEs. These DIEs can
+  /// be shared across CUs, that is why we keep the map here instead
+  /// of in DwarfCompileUnit.
+  DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
+
 public:
   DwarfFile(AsmPrinter *AP, DwarfDebug &DD, StringRef Pref,
             BumpPtrAllocator &DA);
@@ -99,6 +104,13 @@ public:
 
   DenseMap<const MDNode *, DIE *> &getAbstractSPDies() {
     return AbstractSPDies;
+  }
+
+  void insertDIE(const MDNode *TypeMD, DIE *Die) {
+    MDTypeNodeToDieMap.insert(std::make_pair(TypeMD, Die));
+  }
+  DIE *getDIE(const MDNode *TypeMD) {
+    return MDTypeNodeToDieMap.lookup(TypeMD);
   }
 };
 }

@@ -141,7 +141,7 @@ static bool isShareableAcrossCUs(DIDescriptor D) {
 /// will be kept in DwarfDebug for shareable DIEs.
 DIE *DwarfUnit::getDIE(DIDescriptor D) const {
   if (isShareableAcrossCUs(D))
-    return DD->getDIE(D);
+    return DU->getDIE(D);
   return MDNodeToDieMap.lookup(D);
 }
 
@@ -150,7 +150,7 @@ DIE *DwarfUnit::getDIE(DIDescriptor D) const {
 /// will be kept in DwarfDebug for shareable DIEs.
 void DwarfUnit::insertDIE(DIDescriptor Desc, DIE *D) {
   if (isShareableAcrossCUs(Desc)) {
-    DD->insertDIE(Desc, D);
+    DU->insertDIE(Desc, D);
     return;
   }
   MDNodeToDieMap.insert(std::make_pair(Desc, D));

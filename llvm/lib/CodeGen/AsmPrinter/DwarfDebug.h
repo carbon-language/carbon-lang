@@ -173,11 +173,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // Maps a CU DIE with its corresponding DwarfCompileUnit.
   DenseMap<const DIE *, DwarfCompileUnit *> CUDieMap;
 
-  /// Maps MDNodes for type system with the corresponding DIEs. These DIEs can
-  /// be shared across CUs, that is why we keep the map here instead
-  /// of in DwarfCompileUnit.
-  DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
-
   // List of all labels used in aranges generation.
   std::vector<SymbolCU> ArangeLabels;
 
@@ -496,13 +491,6 @@ public:
   DwarfDebug(AsmPrinter *A, Module *M);
 
   ~DwarfDebug() override;
-
-  void insertDIE(const MDNode *TypeMD, DIE *Die) {
-    MDTypeNodeToDieMap.insert(std::make_pair(TypeMD, Die));
-  }
-  DIE *getDIE(const MDNode *TypeMD) {
-    return MDTypeNodeToDieMap.lookup(TypeMD);
-  }
 
   /// \brief Emit all Dwarf sections that should come prior to the
   /// content.
