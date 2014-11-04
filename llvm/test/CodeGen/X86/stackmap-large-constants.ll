@@ -28,7 +28,7 @@
 ; Patchpoint ID
 ; CHECK-NEXT: 	.quad	0
 ; Instruction offset
-; CHECK-NEXT: 	.long	Ltmp3-_foo
+; CHECK-NEXT: 	.long	L{{.*}}-_foo
 ; reserved
 ; CHECK-NEXT: 	.short	0
 ; # locations
@@ -58,7 +58,7 @@ define void @foo() {
 ; Patchpoint ID
 ; CHECK-NEXT: 	.quad	0
 ; Instruction Offset
-; CHECK-NEXT: 	.long	Ltmp7-_bar
+; CHECK-NEXT: 	.long	L{{.*}}-_bar
 ; reserved
 ; CHECK-NEXT: 	.short	0
 ; # locations
