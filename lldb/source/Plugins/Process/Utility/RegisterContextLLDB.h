@@ -73,6 +73,9 @@ public:
     IsValid () const;
 
     bool
+    IsCompletedStackWalk () const;
+
+    bool
     IsTrapHandlerFrame () const;
 
     bool
@@ -239,6 +242,10 @@ private:
     std::map<uint32_t, lldb_private::UnwindLLDB::RegisterLocation> m_registers; // where to find reg values for this frame
 
     lldb_private::UnwindLLDB& m_parent_unwind;    // The UnwindLLDB that is creating this RegisterContextLLDB
+
+    bool m_completed_stack_walk;                  // indicates that we completed a full stack walk 
+                                                  // (this frame is likely eNotAValidFrame aka !IsValid())
+                                                  // and we should not continue trying to unwind
 
     //------------------------------------------------------------------
     // For RegisterContextLLDB only

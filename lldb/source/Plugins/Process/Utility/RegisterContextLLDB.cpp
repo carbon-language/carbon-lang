@@ -62,7 +62,8 @@ RegisterContextLLDB::RegisterContextLLDB
     m_sym_ctx_valid (false),
     m_frame_number (frame_number),
     m_registers(),
-    m_parent_unwind (unwind_lldb)
+    m_parent_unwind (unwind_lldb),
+    m_completed_stack_walk (false)
 {
     m_sym_ctx.Clear(false);
     m_sym_ctx_valid = false;
@@ -306,6 +307,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (pc == 0)
     {
         m_frame_type = eNotAValidFrame;
+        m_completed_stack_walk = true;
         UnwindLogMsg ("this frame has a pc of 0x0");
         return;
     }
@@ -386,6 +388,10 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                 {
                     UnwindLogMsg ("could not find a valid cfa address");
                     m_frame_type = eNotAValidFrame;
+                    if (cfa_regval == 0 || cfa_regval == 1)
+                    {
+                        m_completed_stack_walk = true;
+                    }
                     return;
                 }
 
@@ -582,6 +588,10 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     {
         UnwindLogMsg ("could not find a valid cfa address");
         m_frame_type = eNotAValidFrame;
+        if (cfa_regval == 0 || cfa_regval == 1)
+        {
+            m_completed_stack_walk = true;
+        }
         return;
     }
 
@@ -1028,6 +1038,12 @@ bool
 RegisterContextLLDB::IsValid () const
 {
     return m_frame_type != eNotAValidFrame;
+}
+
+bool
+RegisterContextLLDB::IsCompletedStackWalk () const
+{
+    return m_completed_stack_walk;
 }
 
 bool
