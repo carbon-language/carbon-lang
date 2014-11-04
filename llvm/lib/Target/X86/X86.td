@@ -355,27 +355,30 @@ def : ProcessorModel<"btver2", BtVer2Model,
 // Bulldozer
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
-                               FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD]>;
+                               FeatureAVX, FeatureSSE4A, FeatureLZCNT,
+                               FeaturePOPCNT, FeatureSlowSHLD]>;
 // Piledriver
 def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
-                               FeatureF16C, FeatureLZCNT,
-                               FeaturePOPCNT, FeatureBMI, FeatureTBM,
-                               FeatureFMA, FeatureSlowSHLD]>;
+                               FeatureAVX, FeatureSSE4A, FeatureF16C,
+                               FeatureLZCNT, FeaturePOPCNT, FeatureBMI,
+                               FeatureTBM, FeatureFMA, FeatureSlowSHLD]>;
 
 // Steamroller
 def : Proc<"bdver3",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
-                               FeatureF16C, FeatureLZCNT,
-                               FeaturePOPCNT, FeatureBMI,  FeatureTBM,
-                               FeatureFMA, FeatureFSGSBase]>;
+                               FeatureAVX, FeatureSSE4A, FeatureF16C,
+                               FeatureLZCNT, FeaturePOPCNT, FeatureBMI,
+                               FeatureTBM, FeatureFMA, FeatureSlowSHLD,
+                               FeatureFSGSBase]>;
 
 // Excavator
 def : Proc<"bdver4",          [FeatureAVX2, FeatureXOP, FeatureFMA4,
                                FeatureCMPXCHG16B, FeatureAES, FeaturePRFCHW,
                                FeaturePCLMUL, FeatureF16C, FeatureLZCNT,
                                FeaturePOPCNT, FeatureBMI, FeatureBMI2,
-                               FeatureTBM, FeatureFMA, FeatureFSGSBase]>;
+                               FeatureTBM, FeatureFMA, FeatureSSE4A,
+                               FeatureFSGSBase]>;
 
 def : Proc<"geode",           [Feature3DNowA]>;
 
