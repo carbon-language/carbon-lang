@@ -17,6 +17,7 @@
 #define LLVM_CLANG_LIB_FORMAT_CONTINUATIONINDENTER_H
 
 #include "Encoding.h"
+#include "FormatToken.h"
 #include "clang/Format/Format.h"
 #include "llvm/Support/Regex.h"
 
@@ -35,8 +36,9 @@ class ContinuationIndenter {
 public:
   /// \brief Constructs a \c ContinuationIndenter to format \p Line starting in
   /// column \p FirstIndent.
-  ContinuationIndenter(const FormatStyle &Style, SourceManager &SourceMgr,
-                       WhitespaceManager &Whitespaces,
+  ContinuationIndenter(const FormatStyle &Style,
+                       const AdditionalKeywords &Keywords,
+                       SourceManager &SourceMgr, WhitespaceManager &Whitespaces,
                        encoding::Encoding Encoding,
                        bool BinPackInconclusiveFunctions);
 
@@ -134,6 +136,7 @@ private:
   bool nextIsMultilineString(const LineState &State);
 
   FormatStyle Style;
+  const AdditionalKeywords &Keywords;
   SourceManager &SourceMgr;
   WhitespaceManager &Whitespaces;
   encoding::Encoding Encoding;

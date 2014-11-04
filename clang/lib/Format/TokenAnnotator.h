@@ -108,8 +108,8 @@ private:
 /// \c UnwrappedLine.
 class TokenAnnotator {
 public:
-  TokenAnnotator(const FormatStyle &Style, IdentifierInfo &Ident_in)
-      : Style(Style), Ident_in(Ident_in) {}
+  TokenAnnotator(const FormatStyle &Style, const AdditionalKeywords &Keywords)
+      : Style(Style), Keywords(Keywords) {}
 
   /// \brief Adapts the indent levels of comment lines to the indent of the
   /// subsequent line.
@@ -139,8 +139,7 @@ private:
 
   const FormatStyle &Style;
 
-  // Contextual keywords:
-  IdentifierInfo &Ident_in;
+  const AdditionalKeywords &Keywords;
 };
 
 } // end namespace format

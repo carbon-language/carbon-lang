@@ -1334,10 +1334,10 @@ public:
   FormatTokenLexer(SourceManager &SourceMgr, FileID ID, FormatStyle &Style,
                    encoding::Encoding Encoding)
       : FormatTok(nullptr), IsFirstToken(true), GreaterStashed(false),
-        Column(0), TrailingWhitespace(0),
-        SourceMgr(SourceMgr), ID(ID), Style(Style),
-        IdentTable(getFormattingLangOpts(Style)), Encoding(Encoding),
-        FirstInLineIndex(0), FormattingDisabled(false) {
+        Column(0), TrailingWhitespace(0), SourceMgr(SourceMgr), ID(ID),
+        Style(Style), IdentTable(getFormattingLangOpts(Style)),
+        Keywords(IdentTable), Encoding(Encoding), FirstInLineIndex(0),
+        FormattingDisabled(false) {
     Lex.reset(new Lexer(ID, SourceMgr.getBuffer(ID), SourceMgr,
                         getFormattingLangOpts(Style)));
     Lex->SetKeepWhitespaceMode(true);
@@ -1359,7 +1359,7 @@ public:
     return Tokens;
   }
 
-  IdentifierTable &getIdentTable() { return IdentTable; }
+  const AdditionalKeywords &getKeywords() { return Keywords; }
 
 private:
   void tryMergePreviousTokens() {
@@ -1722,6 +1722,7 @@ private:
   FileID ID;
   FormatStyle &Style;
   IdentifierTable IdentTable;
+  AdditionalKeywords Keywords;
   encoding::Encoding Encoding;
   llvm::SpecificBumpPtrAllocator<FormatToken> Allocator;
   // Index (in 'Tokens') of the last token that starts a new line.
@@ -1805,7 +1806,8 @@ public:
     tooling::Replacements Result;
     FormatTokenLexer Tokens(SourceMgr, ID, Style, Encoding);
 
-    UnwrappedLineParser Parser(Style, Tokens.lex(), *this);
+    UnwrappedLineParser Parser(Style, Tokens.getKeywords(), Tokens.lex(),
+                               *this);
     bool StructuralError = Parser.parse();
     assert(UnwrappedLines.rbegin()->empty());
     for (unsigned Run = 0, RunE = UnwrappedLines.size(); Run + 1 != RunE;
@@ -1836,7 +1838,7 @@ public:
 
   tooling::Replacements format(SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
                                bool StructuralError, FormatTokenLexer &Tokens) {
-    TokenAnnotator Annotator(Style, Tokens.getIdentTable().get("in"));
+    TokenAnnotator Annotator(Style, Tokens.getKeywords());
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.annotate(*AnnotatedLines[i]);
     }
@@ -1847,7 +1849,8 @@ public:
     computeAffectedLines(AnnotatedLines.begin(), AnnotatedLines.end());
 
     Annotator.setCommentLineLevels(AnnotatedLines);
-    ContinuationIndenter Indenter(Style, SourceMgr, Whitespaces, Encoding,
+    ContinuationIndenter Indenter(Style, Tokens.getKeywords(), SourceMgr,
+                                  Whitespaces, Encoding,
                                   BinPackInconclusiveFunctions);
     UnwrappedLineFormatter Formatter(&Indenter, &Whitespaces, Style);
     Formatter.format(AnnotatedLines, /*DryRun=*/false);

@@ -57,12 +57,13 @@ static bool startsNextParameter(const FormatToken &Current,
 }
 
 ContinuationIndenter::ContinuationIndenter(const FormatStyle &Style,
+                                           const AdditionalKeywords &Keywords,
                                            SourceManager &SourceMgr,
                                            WhitespaceManager &Whitespaces,
                                            encoding::Encoding Encoding,
                                            bool BinPackInconclusiveFunctions)
-    : Style(Style), SourceMgr(SourceMgr), Whitespaces(Whitespaces),
-      Encoding(Encoding),
+    : Style(Style), Keywords(Keywords), SourceMgr(SourceMgr),
+      Whitespaces(Whitespaces), Encoding(Encoding),
       BinPackInconclusiveFunctions(BinPackInconclusiveFunctions),
       CommentPragmasRegex(Style.CommentPragmas) {}
 
@@ -507,8 +508,8 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     NextNonComment = &Current;
 
   // Java specific bits.
-  if (Style.Language == FormatStyle::LK_Java && Current.is(tok::identifier) &&
-      (Current.TokenText == "implements" || Current.TokenText == "extends"))
+  if (Style.Language == FormatStyle::LK_Java &&
+      Current.isOneOf(Keywords.kw_implements, Keywords.kw_extends))
     return std::max(State.Stack.back().LastSpace,
                     State.Stack.back().Indent + Style.ContinuationIndentWidth);
 
@@ -673,7 +674,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       }
       State.Stack[State.Stack.size() - 2].JSFunctionInlined = false;
     }
-    if (Current.TokenText == "function")
+    if (Current.is(Keywords.kw_function))
       State.Stack.back().JSFunctionInlined =
           !Newline && Previous && Previous->Type != TT_DictLiteral &&
           Previous->Type != TT_ConditionalExpr &&

@@ -32,9 +32,9 @@ namespace {
 class AnnotatingParser {
 public:
   AnnotatingParser(const FormatStyle &Style, AnnotatedLine &Line,
-                   IdentifierInfo &Ident_in)
+                   const AdditionalKeywords &Keywords)
       : Style(Style), Line(Line), CurrentToken(Line.First),
-        KeywordVirtualFound(false), AutoFound(false), Ident_in(Ident_in) {
+        KeywordVirtualFound(false), AutoFound(false), Keywords(Keywords) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
     resetTokenMetadata(CurrentToken);
   }
@@ -353,7 +353,7 @@ private:
     if (Current->Type == TT_LambdaLSquare ||
         (Current->is(tok::caret) && Current->Type == TT_UnaryOperator) ||
         (Style.Language == FormatStyle::LK_JavaScript &&
-         Current->TokenText == "function")) {
+         Current->is(Keywords.kw_function))) {
       ++Left->BlockParameterCount;
     }
     if (Current->is(tok::comma)) {
@@ -513,8 +513,7 @@ private:
       parseTemplateDeclaration();
       break;
     case tok::identifier:
-      if (Line.First->is(tok::kw_for) &&
-          Tok->Tok.getIdentifierInfo() == &Ident_in)
+      if (Line.First->is(tok::kw_for) && Tok->is(Keywords.kw_in))
         Tok->Type = TT_ObjCForIn;
       break;
     case tok::comma:
@@ -909,7 +908,7 @@ private:
                          Tok.Previous->Type == TT_TemplateCloser ||
                          Tok.Previous->isSimpleTypeSpecifier();
     if (Style.Language == FormatStyle::LK_JavaScript && Tok.Next &&
-        Tok.Next->TokenText == "in")
+        Tok.Next->is(Keywords.kw_in))
       return false;
     bool ParensCouldEndDecl =
         Tok.Next && Tok.Next->isOneOf(tok::equal, tok::semi, tok::l_brace);
@@ -1061,7 +1060,7 @@ private:
   FormatToken *CurrentToken;
   bool KeywordVirtualFound;
   bool AutoFound;
-  IdentifierInfo &Ident_in;
+  const AdditionalKeywords &Keywords;
 };
 
 static int PrecedenceUnaryOperator = prec::PointerToMember + 1;
@@ -1071,8 +1070,9 @@ static int PrecedenceArrowAndPeriod = prec::PointerToMember + 2;
 /// operator precedence.
 class ExpressionParser {
 public:
-  ExpressionParser(const FormatStyle &Style, AnnotatedLine &Line)
-      : Style(Style), Current(Line.First) {}
+  ExpressionParser(const FormatStyle &Style, const AdditionalKeywords &Keywords,
+                   AnnotatedLine &Line)
+      : Style(Style), Keywords(Keywords), Current(Line.First) {}
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
@@ -1176,9 +1176,7 @@ private:
       else if (Current->isOneOf(tok::period, tok::arrow))
         return PrecedenceArrowAndPeriod;
       else if (Style.Language == FormatStyle::LK_Java &&
-               Current->is(tok::identifier) &&
-               (Current->TokenText == "extends" ||
-                Current->TokenText == "implements"))
+               Current->isOneOf(Keywords.kw_extends, Keywords.kw_implements))
         return 0;
     }
     return -1;
@@ -1238,6 +1236,7 @@ private:
   }
 
   const FormatStyle &Style;
+  const AdditionalKeywords &Keywords;
   FormatToken *Current;
 };
 
@@ -1265,12 +1264,12 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
        I != E; ++I) {
     annotate(**I);
   }
-  AnnotatingParser Parser(Style, Line, Ident_in);
+  AnnotatingParser Parser(Style, Line, Keywords);
   Line.Type = Parser.parseLine();
   if (Line.Type == LT_Invalid)
     return;
 
-  ExpressionParser ExprParser(Style, Line);
+  ExpressionParser ExprParser(Style, Keywords, Line);
   ExprParser.parse();
 
   if (Line.First->Type == TT_ObjCMethodSpecifier)
@@ -1476,7 +1475,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Left.Type == TT_LeadingJavaAnnotation)
     return 1;
-  if (Style.Language == FormatStyle::LK_Java && Right.TokenText == "implements")
+  if (Style.Language == FormatStyle::LK_Java &&
+      Right.is(Keywords.kw_implements))
     return 2;
 
   if (Right.isMemberAccess()) {
@@ -1673,17 +1673,17 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   const FormatToken &Left = *Right.Previous;
   if (Style.Language == FormatStyle::LK_Proto) {
     if (Right.is(tok::period) &&
-        (Left.TokenText == "optional" || Left.TokenText == "required" ||
-         Left.TokenText == "repeated"))
+        Left.isOneOf(Keywords.kw_optional, Keywords.kw_required,
+                     Keywords.kw_repeated))
       return true;
     if (Right.is(tok::l_paren) &&
-        (Left.TokenText == "returns" || Left.TokenText == "option"))
+        Left.isOneOf(Keywords.kw_returns, Keywords.kw_option))
       return true;
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
-    if (Left.TokenText == "var")
+    if (Left.is(Keywords.kw_var))
       return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
-    if (Left.TokenText == "synchronized" && Right.is(tok::l_paren))
+    if (Left.is(Keywords.kw_synchronized) && Right.is(tok::l_paren))
       return Style.SpaceBeforeParens != FormatStyle::SBPO_Never;
     if (Left.is(tok::kw_static) && Right.Type == TT_TemplateOpener)
       return true;
@@ -1858,13 +1858,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   const FormatToken &Left = *Right.Previous;
 
   if (Style.Language == FormatStyle::LK_Java) {
-    if (Left.is(tok::identifier) &&
-        (Left.TokenText == "throws" || Left.TokenText == "extends" ||
-         Left.TokenText == "implements"))
+    if (Left.isOneOf(Keywords.kw_throws, Keywords.kw_extends,
+                     Keywords.kw_implements))
       return false;
-    if (Right.is(tok::identifier) &&
-        (Right.TokenText == "throws" || Right.TokenText == "extends" ||
-         Right.TokenText == "implements"))
+    if (Right.isOneOf(Keywords.kw_throws, Keywords.kw_extends,
+                      Keywords.kw_implements))
       return true;
   }
 

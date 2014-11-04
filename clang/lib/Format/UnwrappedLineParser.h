@@ -60,7 +60,9 @@ class FormatTokenSource;
 
 class UnwrappedLineParser {
 public:
-  UnwrappedLineParser(const FormatStyle &Style, ArrayRef<FormatToken *> Tokens,
+  UnwrappedLineParser(const FormatStyle &Style,
+                      const AdditionalKeywords &Keywords,
+                      ArrayRef<FormatToken *> Tokens,
                       UnwrappedLineConsumer &Callback);
 
   /// Returns true in case of a structural error.
@@ -158,6 +160,8 @@ private:
   bool StructuralError;
 
   const FormatStyle &Style;
+  const AdditionalKeywords &Keywords;
+
   FormatTokenSource *Tokens;
   UnwrappedLineConsumer &Callback;
 
