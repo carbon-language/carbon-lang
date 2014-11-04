@@ -235,8 +235,9 @@ FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
     llvm::ErrorOr<ClangTidyOptions> ParsedOptions =
         ConfigHandler.second((*Text)->getBuffer());
     if (!ParsedOptions) {
-      llvm::errs() << "Error parsing " << ConfigFile << ": "
-                   << ParsedOptions.getError().message() << "\n";
+      if (ParsedOptions.getError())
+        llvm::errs() << "Error parsing " << ConfigFile << ": "
+                     << ParsedOptions.getError().message() << "\n";
       continue;
     }
 
