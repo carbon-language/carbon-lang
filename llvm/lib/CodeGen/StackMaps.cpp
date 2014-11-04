@@ -220,8 +220,7 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
        I != E; ++I) {
     // Constants are encoded as sign-extended integers.
     // -1 is directly encoded as .long 0xFFFFFFFF with no constant pool.
-    if (I->LocType == Location::Constant &&
-        ((I->Offset + (int64_t(1)<<31)) >> 32) != 0) {
+    if (I->LocType == Location::Constant && !isInt<32>(I->Offset)) {
       I->LocType = Location::ConstantIndex;
       auto Result = ConstPool.insert(std::make_pair(I->Offset, I->Offset));
       I->Offset = Result.first - ConstPool.begin();
