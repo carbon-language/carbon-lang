@@ -2426,6 +2426,28 @@ defm FMOV : FPMoveImmediate<"fmov">;
 //===----------------------------------------------------------------------===//
 
 defm ABS    : SIMDTwoVectorBHSD<0, 0b01011, "abs", int_aarch64_neon_abs>;
+def : Pat<(xor (v8i8 (AArch64vashr V64:$src, (i32 7))),
+               (v8i8 (add V64:$src, (AArch64vashr V64:$src, (i32 7))))),
+          (ABSv8i8 V64:$src)>;
+def : Pat<(xor (v4i16 (AArch64vashr V64:$src, (i32 15))),
+               (v4i16 (add V64:$src, (AArch64vashr V64:$src, (i32 15))))),
+          (ABSv4i16 V64:$src)>;
+def : Pat<(xor (v2i32 (AArch64vashr V64:$src, (i32 31))),
+               (v2i32 (add V64:$src, (AArch64vashr V64:$src, (i32 31))))),
+          (ABSv2i32 V64:$src)>;
+def : Pat<(xor (v16i8 (AArch64vashr V128:$src, (i32 7))),
+               (v16i8 (add V128:$src, (AArch64vashr V128:$src, (i32 7))))),
+          (ABSv16i8 V128:$src)>;
+def : Pat<(xor (v8i16 (AArch64vashr V128:$src, (i32 15))),
+               (v8i16 (add V128:$src, (AArch64vashr V128:$src, (i32 15))))),
+          (ABSv8i16 V128:$src)>;
+def : Pat<(xor (v4i32 (AArch64vashr V128:$src, (i32 31))),
+               (v4i32 (add V128:$src, (AArch64vashr V128:$src, (i32 31))))),
+          (ABSv4i32 V128:$src)>;
+def : Pat<(xor (v2i64 (AArch64vashr V128:$src, (i32 63))),
+               (v2i64 (add V128:$src, (AArch64vashr V128:$src, (i32 63))))),
+          (ABSv2i64 V128:$src)>;
+
 defm CLS    : SIMDTwoVectorBHS<0, 0b00100, "cls", int_aarch64_neon_cls>;
 defm CLZ    : SIMDTwoVectorBHS<1, 0b00100, "clz", ctlz>;
 defm CMEQ   : SIMDCmpTwoVector<0, 0b01001, "cmeq", AArch64cmeqz>;

@@ -802,3 +802,73 @@ define <2 x i64> @sabdl_from_extract_dup(<4 x i32> %lhs, i32 %rhs) {
   %res1 = zext <2 x i32> %res to <2 x i64>
   ret <2 x i64> %res1
 }
+
+define <2 x i32> @abspattern1(<2 x i32> %a) nounwind {
+; CHECK-LABEL: abspattern1:
+; CHECK: abs.2s
+; CHECK-NEXT: ret
+        %tmp1neg = sub <2 x i32> zeroinitializer, %a
+        %b = icmp sge <2 x i32> %a, zeroinitializer
+        %abs = select <2 x i1> %b, <2 x i32> %a, <2 x i32> %tmp1neg
+        ret <2 x i32> %abs
+}
+
+define <4 x i16> @abspattern2(<4 x i16> %a) nounwind {
+; CHECK-LABEL: abspattern2:
+; CHECK: abs.4h
+; CHECK-NEXT: ret
+        %tmp1neg = sub <4 x i16> zeroinitializer, %a
+        %b = icmp sgt <4 x i16> %a, zeroinitializer
+        %abs = select <4 x i1> %b, <4 x i16> %a, <4 x i16> %tmp1neg
+        ret <4 x i16> %abs
+}
+
+define <8 x i8> @abspattern3(<8 x i8> %a) nounwind {
+; CHECK-LABEL: abspattern3:
+; CHECK: abs.8b
+; CHECK-NEXT: ret
+        %tmp1neg = sub <8 x i8> zeroinitializer, %a
+        %b = icmp slt <8 x i8> %a, zeroinitializer
+        %abs = select <8 x i1> %b, <8 x i8> %tmp1neg, <8 x i8> %a
+        ret <8 x i8> %abs
+}
+
+define <4 x i32> @abspattern4(<4 x i32> %a) nounwind {
+; CHECK-LABEL: abspattern4:
+; CHECK: abs.4s
+; CHECK-NEXT: ret
+        %tmp1neg = sub <4 x i32> zeroinitializer, %a
+        %b = icmp sge <4 x i32> %a, zeroinitializer
+        %abs = select <4 x i1> %b, <4 x i32> %a, <4 x i32> %tmp1neg
+        ret <4 x i32> %abs
+}
+
+define <8 x i16> @abspattern5(<8 x i16> %a) nounwind {
+; CHECK-LABEL: abspattern5:
+; CHECK: abs.8h
+; CHECK-NEXT: ret
+        %tmp1neg = sub <8 x i16> zeroinitializer, %a
+        %b = icmp sgt <8 x i16> %a, zeroinitializer
+        %abs = select <8 x i1> %b, <8 x i16> %a, <8 x i16> %tmp1neg
+        ret <8 x i16> %abs
+}
+
+define <16 x i8> @abspattern6(<16 x i8> %a) nounwind {
+; CHECK-LABEL: abspattern6:
+; CHECK: abs.16b
+; CHECK-NEXT: ret
+        %tmp1neg = sub <16 x i8> zeroinitializer, %a
+        %b = icmp slt <16 x i8> %a, zeroinitializer
+        %abs = select <16 x i1> %b, <16 x i8> %tmp1neg, <16 x i8> %a
+        ret <16 x i8> %abs
+}
+
+define <2 x i64> @abspattern7(<2 x i64> %a) nounwind {
+; CHECK-LABEL: abspattern7:
+; CHECK: abs.2d
+; CHECK-NEXT: ret
+        %tmp1neg = sub <2 x i64> zeroinitializer, %a
+        %b = icmp sle <2 x i64> %a, zeroinitializer
+        %abs = select <2 x i1> %b, <2 x i64> %tmp1neg, <2 x i64> %a
+        ret <2 x i64> %abs
+}
