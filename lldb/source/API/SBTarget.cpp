@@ -1306,13 +1306,11 @@ SBTarget::ReadMemory (const SBAddress addr,
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
-        lldb_private::Address addr_priv(addr.GetFileAddress(), NULL);
-        lldb_private::Error err_priv;    
-        bytes_read = target_sp->ReadMemory(addr_priv, false, buf, size, err_priv);
-        if(err_priv.Fail())
-        {
-            sb_error.SetError(err_priv.GetError(), err_priv.GetType());
-        }
+        bytes_read = target_sp->ReadMemory(addr.ref(), false, buf, size, sb_error.ref());
+    }
+    else
+    {
+        sb_error.SetErrorString("invalid target");
     }
 
     return bytes_read;
