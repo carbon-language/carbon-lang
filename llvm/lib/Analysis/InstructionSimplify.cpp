@@ -1371,8 +1371,7 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
 
   // (X << A) >> A -> X
   Value *X;
-  if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1))) &&
-      cast<OverflowingBinaryOperator>(Op0)->hasNoUnsignedWrap())
+  if (match(Op0, m_NUWShl(m_Value(X), m_Specific(Op1))))
     return X;
 
   return nullptr;
