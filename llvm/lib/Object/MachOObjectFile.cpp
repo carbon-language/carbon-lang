@@ -2150,6 +2150,11 @@ uint32_t MachOObjectFile::getScatteredRelocationValue(
   return RE.r_word1;
 }
 
+uint32_t MachOObjectFile::getScatteredRelocationType(
+    const MachO::any_relocation_info &RE) const {
+  return (RE.r_word0 >> 24) & 0xf;
+}
+
 unsigned MachOObjectFile::getAnyRelocationAddress(
     const MachO::any_relocation_info &RE) const {
   if (isRelocationScattered(RE))

@@ -248,6 +248,21 @@ struct DisassembleInfo {
   BindTable *bindtable;
 };
 
+// GuessSymbolName is passed the address of what might be a symbol and a
+// pointer to the DisassembleInfo struct.  It returns the name of a symbol
+// with that address or nullptr if no symbol is found with that address.
+static const char *GuessSymbolName(uint64_t value,
+                                   struct DisassembleInfo *info) {
+  const char *SymbolName = nullptr;
+  // A DenseMap can't lookup up some values.
+  if (value != 0xffffffffffffffffULL && value != 0xfffffffffffffffeULL) {
+    StringRef name = info->AddrMap->lookup(value);
+    if (!name.empty())
+      SymbolName = name.data();
+  }
+  return SymbolName;
+}
+
 // SymbolizerGetOpInfo() is the operand information call back function.
 // This is called to get the symbolic information for operand(s) of an
 // instruction when it is being done.  This routine does this from
@@ -281,6 +296,83 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
 
   unsigned int Arch = info->O->getArch();
   if (Arch == Triple::x86) {
+    if (Size != 1 && Size != 2 && Size != 4 && Size != 0)
+      return 0;
+    // First search the section's relocation entries (if any) for an entry
+    // for this section offset.
+    uint32_t sect_addr = info->S.getAddress();
+    uint32_t sect_offset = (Pc + Offset) - sect_addr;
+    bool reloc_found = false;
+    DataRefImpl Rel;
+    MachO::any_relocation_info RE;
+    bool isExtern = false;
+    SymbolRef Symbol;
+    bool r_scattered = false;
+    uint32_t r_value, pair_r_value, r_type;
+    for (const RelocationRef &Reloc : info->S.relocations()) {
+      uint64_t RelocOffset;
+      Reloc.getOffset(RelocOffset);
+      if (RelocOffset == sect_offset) {
+        Rel = Reloc.getRawDataRefImpl();
+        RE = info->O->getRelocation(Rel);
+        r_scattered = info->O->isRelocationScattered(RE);
+        if (r_scattered) {
+          r_value = info->O->getScatteredRelocationValue(RE);
+          r_type = info->O->getScatteredRelocationType(RE);
+          if (r_type == MachO::GENERIC_RELOC_SECTDIFF ||
+              r_type == MachO::GENERIC_RELOC_LOCAL_SECTDIFF) {
+            DataRefImpl RelNext = Rel;
+            info->O->moveRelocationNext(RelNext);
+            MachO::any_relocation_info RENext;
+            RENext = info->O->getRelocation(RelNext);
+            if (info->O->isRelocationScattered(RENext))
+              pair_r_value = info->O->getPlainRelocationSymbolNum(RENext);
+            else
+              return 0;
+          }
+        } else {
+          isExtern = info->O->getPlainRelocationExternal(RE);
+          if (isExtern) {
+            symbol_iterator RelocSym = Reloc.getSymbol();
+            Symbol = *RelocSym;
+          }
+        }
+        reloc_found = true;
+        break;
+      }
+    }
+    if (reloc_found && isExtern) {
+      StringRef SymName;
+      Symbol.getName(SymName);
+      const char *name = SymName.data();
+      op_info->AddSymbol.Present = 1;
+      op_info->AddSymbol.Name = name;
+      // For i386 extern relocation entries the value in the instruction is
+      // the offset from the symbol, and value is already set in op_info->Value.
+      return 1;
+    }
+    if (reloc_found && (r_type == MachO::GENERIC_RELOC_SECTDIFF ||
+                        r_type == MachO::GENERIC_RELOC_LOCAL_SECTDIFF)) {
+      const char *add = GuessSymbolName(r_value, info);
+      const char *sub = GuessSymbolName(pair_r_value, info);
+      uint32_t offset = value - (r_value - pair_r_value);
+      op_info->AddSymbol.Present = 1;
+      if (add != nullptr)
+        op_info->AddSymbol.Name = add;
+      else
+        op_info->AddSymbol.Value = r_value;
+      op_info->SubtractSymbol.Present = 1;
+      if (sub != nullptr)
+        op_info->SubtractSymbol.Name = sub;
+      else
+        op_info->SubtractSymbol.Value = pair_r_value;
+      op_info->Value = offset;
+      return 1;
+    }
+    // TODO:
+    // Second search the external relocation entries of a fully linked image
+    // (if any) for an entry that matches this segment offset.
+    // uint32_t seg_offset = (Pc + Offset);
     return 0;
   } else if (Arch == Triple::x86_64) {
     if (Size != 1 && Size != 2 && Size != 4 && Size != 0)
@@ -716,13 +808,7 @@ const char *get_symbol_64(uint32_t sect_offset, SectionRef S,
   //
   // NOTE: need add passing the ReferenceValue to this routine.  Then that code
   // would simply be this:
-  //
-  // if (ReferenceValue != 0xffffffffffffffffLLU &&
-  //     ReferenceValue != 0xfffffffffffffffeLLU) {
-  //   StringRef name = info->AddrMap->lookup(ReferenceValue);
-  //   if (!name.empty())
-  //     SymbolName = name.data();
-  // }
+  // SymbolName = GuessSymbolName(ReferenceValue, info);
 
   return SymbolName;
 }
@@ -1071,13 +1157,7 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
     return nullptr;
   }
 
-  const char *SymbolName = nullptr;
-  if (ReferenceValue != 0xffffffffffffffffULL &&
-      ReferenceValue != 0xfffffffffffffffeULL) {
-    StringRef name = info->AddrMap->lookup(ReferenceValue);
-    if (!name.empty())
-      SymbolName = name.data();
-  }
+  const char *SymbolName = GuessSymbolName(ReferenceValue, info);
 
   if (*ReferenceType == LLVMDisassembler_ReferenceType_In_Branch) {
     *ReferenceName = GuessIndirectSymbol(ReferenceValue, info);

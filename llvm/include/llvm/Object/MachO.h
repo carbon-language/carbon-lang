@@ -322,6 +322,8 @@ public:
                                     const MachO::any_relocation_info &RE) const;
   uint32_t getScatteredRelocationValue(
                                     const MachO::any_relocation_info &RE) const;
+  uint32_t getScatteredRelocationType(
+                                    const MachO::any_relocation_info &RE) const;
   unsigned getAnyRelocationAddress(const MachO::any_relocation_info &RE) const;
   unsigned getAnyRelocationPCRel(const MachO::any_relocation_info &RE) const;
   unsigned getAnyRelocationLength(const MachO::any_relocation_info &RE) const;
