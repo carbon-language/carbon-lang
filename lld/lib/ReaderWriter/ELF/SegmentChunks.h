@@ -487,7 +487,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       (*si)->setVirtualAddr(curSliceAddress);
 
       // Handle TLS.
-      if (auto section = dyn_cast<AtomSection<ELFT>>(*si)) {
+      if (auto section = dyn_cast<Section<ELFT>>(*si)) {
         if (section->getSegmentType() == llvm::ELF::PT_TLS) {
           tlsStartAddr =
               llvm::RoundUpToAlignment(tlsStartAddr, (*si)->align2());
@@ -542,7 +542,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         (*si)->setVirtualAddr(curSliceAddress);
         startSectionIter = si;
         startSection = currSection;
-        if (auto section = dyn_cast<AtomSection<ELFT>>(*si))
+        if (auto section = dyn_cast<Section<ELFT>>(*si))
           section->assignVirtualAddress(newAddr);
         curSliceSize = newAddr - curSliceAddress + (*si)->memSize();
         sliceAlign = (*si)->align2();
@@ -551,7 +551,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
           sliceAlign = (*si)->align2();
         (*si)->setVirtualAddr(newAddr);
         // Handle TLS.
-        if (auto section = dyn_cast<AtomSection<ELFT>>(*si)) {
+        if (auto section = dyn_cast<Section<ELFT>>(*si)) {
           if (section->getSegmentType() == llvm::ELF::PT_TLS) {
             tlsStartAddr =
                 llvm::RoundUpToAlignment(tlsStartAddr, (*si)->align2());
