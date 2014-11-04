@@ -33,9 +33,10 @@
 //
 // It doesn't make sense on msys bash.
 // REQUIRES: shell-preserves-root
-// Even running under cmd.exe and not the msys shell, the msys 1.0 env
-// command will *not* preserve root, expanding / into C:/MINGW/MSYS/1.0.
-// To see, from the command prompt of cmd.exe run:
+//
+// This test will fail with MSYS env.exe, since it does not preserve root,
+// expanding / into C:/MINGW/MSYS/1.0. To see the problem, from cmd.exe run:
+//
 //   env SDKROOT=/ cmd //c echo %SDKROOT%
-// To be sure we have real env program from a real shell and not the MSYS one:
-// REQUIRES: shell
+//
+// This test passes using env.exe from GnuWin32.
