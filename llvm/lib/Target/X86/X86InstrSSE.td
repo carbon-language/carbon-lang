@@ -7537,31 +7537,33 @@ multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
 
 let Predicates = [HasAVX] in {
   let isCommutable = 0 in {
-    let ExeDomain = SSEPackedSingle in {
-    defm VBLENDPS : SS41I_binop_rmi_int<0x0C, "vblendps", int_x86_sse41_blendps,
-                                        VR128, loadv4f32, f128mem, 0,
-                                        DEFAULT_ITINS_FBLENDSCHED>, VEX_4V;
-    defm VBLENDPSY : SS41I_binop_rmi_int<0x0C, "vblendps",
-                                    int_x86_avx_blend_ps_256, VR256, loadv8f32,
-                                    f256mem, 0, DEFAULT_ITINS_FBLENDSCHED>,
-                                    VEX_4V, VEX_L;
-    }
-    let ExeDomain = SSEPackedDouble in {
-    defm VBLENDPD : SS41I_binop_rmi_int<0x0D, "vblendpd", int_x86_sse41_blendpd,
-                                        VR128, loadv2f64, f128mem, 0,
-                                        DEFAULT_ITINS_FBLENDSCHED>, VEX_4V;
-    defm VBLENDPDY : SS41I_binop_rmi_int<0x0D, "vblendpd",
-                                     int_x86_avx_blend_pd_256,VR256, loadv4f64,
-                                     f256mem, 0, DEFAULT_ITINS_FBLENDSCHED>,
-                                     VEX_4V, VEX_L;
-    }
+    defm VMPSADBW : SS41I_binop_rmi_int<0x42, "vmpsadbw", int_x86_sse41_mpsadbw,
+                                        VR128, loadv2i64, i128mem, 0,
+                                        DEFAULT_ITINS_MPSADSCHED>, VEX_4V;
+  }
+
+  let ExeDomain = SSEPackedSingle in {
+  defm VBLENDPS : SS41I_binop_rmi_int<0x0C, "vblendps", int_x86_sse41_blendps,
+                                      VR128, loadv4f32, f128mem, 0,
+                                      DEFAULT_ITINS_FBLENDSCHED>, VEX_4V;
+  defm VBLENDPSY : SS41I_binop_rmi_int<0x0C, "vblendps",
+                                  int_x86_avx_blend_ps_256, VR256, loadv8f32,
+                                  f256mem, 0, DEFAULT_ITINS_FBLENDSCHED>,
+                                  VEX_4V, VEX_L;
+  }
+  let ExeDomain = SSEPackedDouble in {
+  defm VBLENDPD : SS41I_binop_rmi_int<0x0D, "vblendpd", int_x86_sse41_blendpd,
+                                      VR128, loadv2f64, f128mem, 0,
+                                      DEFAULT_ITINS_FBLENDSCHED>, VEX_4V;
+  defm VBLENDPDY : SS41I_binop_rmi_int<0x0D, "vblendpd",
+                                   int_x86_avx_blend_pd_256,VR256, loadv4f64,
+                                   f256mem, 0, DEFAULT_ITINS_FBLENDSCHED>,
+                                   VEX_4V, VEX_L;
+  }
   defm VPBLENDW : SS41I_binop_rmi_int<0x0E, "vpblendw", int_x86_sse41_pblendw,
                                       VR128, loadv2i64, i128mem, 0,
                                       DEFAULT_ITINS_BLENDSCHED>, VEX_4V;
-  defm VMPSADBW : SS41I_binop_rmi_int<0x42, "vmpsadbw", int_x86_sse41_mpsadbw,
-                                      VR128, loadv2i64, i128mem, 0,
-                                      DEFAULT_ITINS_MPSADSCHED>, VEX_4V;
-  }
+
   let ExeDomain = SSEPackedSingle in
   defm VDPPS : SS41I_binop_rmi_int<0x40, "vdpps", int_x86_sse41_dpps,
                                    VR128, loadv4f32, f128mem, 0,
@@ -7589,6 +7591,10 @@ let Predicates = [HasAVX2] in {
 
 let Constraints = "$src1 = $dst" in {
   let isCommutable = 0 in {
+  defm MPSADBW : SS41I_binop_rmi_int<0x42, "mpsadbw", int_x86_sse41_mpsadbw,
+                                     VR128, memopv2i64, i128mem,
+                                     1, SSE_MPSADBW_ITINS>;
+  }
   let ExeDomain = SSEPackedSingle in
   defm BLENDPS : SS41I_binop_rmi_int<0x0C, "blendps", int_x86_sse41_blendps,
                                      VR128, memopv4f32, f128mem,
@@ -7600,10 +7606,6 @@ let Constraints = "$src1 = $dst" in {
   defm PBLENDW : SS41I_binop_rmi_int<0x0E, "pblendw", int_x86_sse41_pblendw,
                                      VR128, memopv2i64, i128mem,
                                      1, SSE_INTALU_ITINS_BLEND_P>;
-  defm MPSADBW : SS41I_binop_rmi_int<0x42, "mpsadbw", int_x86_sse41_mpsadbw,
-                                     VR128, memopv2i64, i128mem,
-                                     1, SSE_MPSADBW_ITINS>;
-  }
   let ExeDomain = SSEPackedSingle in
   defm DPPS : SS41I_binop_rmi_int<0x40, "dpps", int_x86_sse41_dpps,
                                   VR128, memopv4f32, f128mem, 1,
@@ -8827,12 +8829,10 @@ multiclass AVX2_binop_rmi_int<bits<8> opc, string OpcodeStr,
         Sched<[WriteBlendLd, ReadAfterLd]>, VEX_4V;
 }
 
-let isCommutable = 0 in {
 defm VPBLENDD : AVX2_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_128,
                                    VR128, loadv2i64, i128mem>;
 defm VPBLENDDY : AVX2_binop_rmi_int<0x02, "vpblendd", int_x86_avx2_pblendd_256,
                                     VR256, loadv4i64, i256mem>, VEX_L;
-}
 
 def : Pat<(v4i32 (X86Blendi (v4i32 VR128:$src1), (v4i32 VR128:$src2),
                   imm:$mask)),

@@ -369,7 +369,8 @@ define <4 x i32> @combine_bitwise_ops_test3b(<4 x i32> %a, <4 x i32> %b, <4 x i3
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    pxor %xmm1, %xmm0
 ; SSE41-NEXT:    pxor %xmm1, %xmm1
-; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
+; SSE41-NEXT:    movdqa	%xmm1, %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: combine_bitwise_ops_test3b:
@@ -411,8 +412,7 @@ define <4 x i32> @combine_bitwise_ops_test4b(<4 x i32> %a, <4 x i32> %b, <4 x i3
 ; SSE41-LABEL: combine_bitwise_ops_test4b:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    pand %xmm1, %xmm0
-; SSE41-NEXT:    pblendw {{.*#+}} xmm2 = xmm2[0,1],xmm0[2,3],xmm2[4,5],xmm0[6,7]
-; SSE41-NEXT:    movdqa %xmm2, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1],xmm0[2,3],xmm2[4,5],xmm0[6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: combine_bitwise_ops_test4b:
@@ -452,8 +452,7 @@ define <4 x i32> @combine_bitwise_ops_test5b(<4 x i32> %a, <4 x i32> %b, <4 x i3
 ; SSE41-LABEL: combine_bitwise_ops_test5b:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    por %xmm1, %xmm0
-; SSE41-NEXT:    pblendw {{.*#+}} xmm2 = xmm2[0,1],xmm0[2,3],xmm2[4,5],xmm0[6,7]
-; SSE41-NEXT:    movdqa %xmm2, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1],xmm0[2,3],xmm2[4,5],xmm0[6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: combine_bitwise_ops_test5b:
@@ -1170,8 +1169,7 @@ define <4 x float> @combine_test2(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_test2:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test2:
@@ -1237,8 +1235,7 @@ define <4 x float> @combine_test5(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_test5:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm1[0],xmm0[1],xmm1[2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test5:
@@ -1299,8 +1296,7 @@ define <4 x i32> @combine_test7(<4 x i32> %a, <4 x i32> %b) {
 ;
 ; SSE41-LABEL: combine_test7:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3,4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: combine_test7:
@@ -1371,8 +1367,7 @@ define <4 x i32> @combine_test10(<4 x i32> %a, <4 x i32> %b) {
 ;
 ; SSE41-LABEL: combine_test10:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1],xmm0[2,3],xmm1[4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1],xmm0[2,3],xmm1[4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: combine_test10:
@@ -1415,8 +1410,7 @@ define <4 x float> @combine_test12(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_test12:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test12:
@@ -1479,8 +1473,7 @@ define <4 x float> @combine_test15(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_test15:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm1[0],xmm0[1],xmm1[2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test15:
@@ -1518,8 +1511,7 @@ define <4 x i32> @combine_test17(<4 x i32> %a, <4 x i32> %b) {
 ;
 ; SSE41-LABEL: combine_test17:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3,4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: combine_test17:
@@ -1587,8 +1579,7 @@ define <4 x i32> @combine_test20(<4 x i32> %a, <4 x i32> %b) {
 ;
 ; SSE41-LABEL: combine_test20:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1],xmm0[2,3],xmm1[4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1],xmm0[2,3],xmm1[4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: combine_test20:
@@ -1632,10 +1623,9 @@ define <4 x float> @combine_test1b(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_test1b:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    movaps %xmm1, %xmm2
-; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm2[0],xmm0[1],xmm2[2],xmm0[3]
-; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,0],xmm2[0,0]
-; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[2,0],xmm2[2,0]
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2],xmm0[3]
+; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,0],xmm0[0,0]
+; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[2,0],xmm0[2,0]
 ; SSE41-NEXT:    movaps %xmm1, %xmm0
 ; SSE41-NEXT:    retq
 ;
@@ -1673,11 +1663,9 @@ define <4 x float> @combine_test2b(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_test2b:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    movaps %xmm1, %xmm2
-; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm2[0],xmm0[1],xmm2[2],xmm0[3]
-; SSE41-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm1[1,1]
-; SSE41-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
-; SSE41-NEXT:    movaps %xmm2, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2],xmm0[3]
+; SSE41-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,0],xmm1[1,1]
+; SSE41-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,1,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test2b:
@@ -1736,10 +1724,9 @@ define <4 x float> @combine_test4b(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_test4b:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    movaps %xmm1, %xmm2
-; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm2[0],xmm0[1],xmm2[2],xmm0[3]
-; SSE41-NEXT:    shufps {{.*#+}} xmm2 = xmm2[2,0],xmm1[3,0]
-; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1],xmm2[0,2]
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2],xmm0[3]
+; SSE41-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,0],xmm1[3,0]
+; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1],xmm0[0,2]
 ; SSE41-NEXT:    movaps %xmm1, %xmm0
 ; SSE41-NEXT:    retq
 ;
@@ -2006,8 +1993,7 @@ define <4 x float> @combine_blend_01(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_blend_01:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSE41-NEXT:    movapd %xmm1, %xmm0
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_blend_01:
@@ -2036,8 +2022,7 @@ define <4 x float> @combine_blend_02(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_blend_02:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm1[0],xmm0[1],xmm1[2],xmm0[3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2],xmm0[3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_blend_02:
@@ -2070,8 +2055,7 @@ define <4 x float> @combine_blend_123(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_blend_123:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_blend_123:
@@ -2153,8 +2137,7 @@ define <4 x float> @combine_undef_input_test1(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_undef_input_test1:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSE41-NEXT:    movapd %xmm1, %xmm0
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_input_test1:
@@ -2343,8 +2326,7 @@ define <4 x float> @combine_undef_input_test11(<4 x float> %a, <4 x float> %b) {
 ;
 ; SSE41-LABEL: combine_undef_input_test11:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    blendpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSE41-NEXT:    movapd %xmm1, %xmm0
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_input_test11:

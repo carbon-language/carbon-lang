@@ -202,8 +202,7 @@ define <8 x i16> @vsel_8xi16(<8 x i16> %v1, <8 x i16> %v2) {
 ;
 ; SSE41-LABEL: vsel_8xi16:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3],xmm0[4],xmm1[5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3],xmm0[4],xmm1[5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: vsel_8xi16:
@@ -518,10 +517,8 @@ define <8 x float> @constant_blendvps_avx(<8 x float> %xyzw, <8 x float> %abcd) 
 ;
 ; SSE41-LABEL: constant_blendvps_avx:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm2[0,1,2],xmm0[3]
-; SSE41-NEXT:    blendps {{.*#+}} xmm3 = xmm3[0,1,2],xmm1[3]
-; SSE41-NEXT:    movaps %xmm2, %xmm0
-; SSE41-NEXT:    movaps %xmm3, %xmm1
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm2[0,1,2],xmm0[3]
+; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm3[0,1,2],xmm1[3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: constant_blendvps_avx:
@@ -637,10 +634,8 @@ define <8 x float> @blend_shufflevector_8xfloat(<8 x float> %a, <8 x float> %b) 
 ;
 ; SSE41-LABEL: blend_shufflevector_8xfloat:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm0[0],xmm2[1,2,3]
-; SSE41-NEXT:    blendps {{.*#+}} xmm3 = xmm3[0,1],xmm1[2],xmm3[3]
-; SSE41-NEXT:    movaps %xmm2, %xmm0
-; SSE41-NEXT:    movaps %xmm3, %xmm1
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm3[0,1],xmm1[2],xmm3[3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: blend_shufflevector_8xfloat:
@@ -694,8 +689,7 @@ define <4 x i64> @blend_shufflevector_4xi64(<4 x i64> %a, <4 x i64> %b) {
 ;
 ; SSE41-LABEL: blend_shufflevector_4xi64:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    pblendw {{.*#+}} xmm2 = xmm2[0,1,2,3],xmm0[4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm2, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1,2,3],xmm0[4,5,6,7]
 ; SSE41-NEXT:    movaps %xmm3, %xmm1
 ; SSE41-NEXT:    retq
 ;
