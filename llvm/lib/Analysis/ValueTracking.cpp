@@ -80,7 +80,7 @@ struct Query {
 };
 } // end anonymous namespace
 
-// Given the provided Value and, potentially, a context instruction, returned
+// Given the provided Value and, potentially, a context instruction, return
 // the preferred context instruction (if any).
 static const Instruction *safeCxtI(const Value *V, const Instruction *CxtI) {
   // If we've been provided with a context instruction, then use that (provided
