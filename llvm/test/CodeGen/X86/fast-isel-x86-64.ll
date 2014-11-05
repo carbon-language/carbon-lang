@@ -302,3 +302,13 @@ define void @test23(i8* noalias sret %result) {
 }
 
 declare i8* @foo23()
+
+declare void @takesi32ptr(i32* %arg)
+
+; CHECK-LABEL: allocamaterialize
+define void @allocamaterialize() {
+  %a = alloca i32
+; CHECK: leaq {{.*}}, %rdi
+  call void @takesi32ptr(i32* %a)
+  ret void
+}
