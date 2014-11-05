@@ -19383,7 +19383,9 @@ X86TargetLowering::isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
     return (isMOVLMask(Mask, SVT)  ||
             isCommutedMOVLMask(Mask, SVT, true) ||
             isSHUFPMask(Mask, SVT) ||
-            isSHUFPMask(Mask, SVT, /* Commuted */ true));
+            isSHUFPMask(Mask, SVT, /* Commuted */ true) ||
+            isBlendMask(Mask, SVT, Subtarget->hasSSE41(),
+                        Subtarget->hasInt256()));
   }
   return false;
 }

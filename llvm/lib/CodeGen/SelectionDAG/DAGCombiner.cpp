@@ -11293,7 +11293,7 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
         if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
           Indices.push_back(i);
         else if (cast<ConstantSDNode>(Elt)->isNullValue())
-          Indices.push_back(NumElts);
+          Indices.push_back(NumElts+i);
         else
           return SDValue();
       }
