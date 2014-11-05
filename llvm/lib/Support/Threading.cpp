@@ -110,10 +110,3 @@ void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
 }
 
 #endif
-
-#if defined(LLVM_ON_UNIX)
-#include "Unix/Threading.inc"
-#else
-#include "Windows/Threading.inc"
-#endif
-
