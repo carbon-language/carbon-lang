@@ -1,4 +1,4 @@
-; RUN: echo '!9 = metadata !{metadata !"%T/version.ll", metadata !0}' > %t1
+; RUN: echo '!9 = metadata !{metadata !"%/T/version.ll", metadata !0}' > %t1
 ; RUN: cat %s %t1 > %t2
 ; RUN: opt -insert-gcov-profiling -disable-output < %t2
 ; RUN: head -c8 %T/version.gcno | grep '^oncg\*204'
@@ -11,8 +11,6 @@
 define void @test() {
   ret void, !dbg !8
 }
-
-; REQUIRES: shell
 
 !llvm.gcov = !{!9}
 !llvm.dbg.cu = !{!0}

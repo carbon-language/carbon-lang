@@ -1,10 +1,8 @@
-; RUN: echo '!9 = metadata !{metadata !"%T/linkagename.ll", metadata !0}' > %t1
+; RUN: echo '!9 = metadata !{metadata !"%/T/linkagename.ll", metadata !0}' > %t1
 ; RUN: cat %s %t1 > %t2
 ; RUN: opt -insert-gcov-profiling -disable-output < %t2
 ; RUN: grep _Z3foov %T/linkagename.gcno
 ; RUN: rm %T/linkagename.gcno
-
-; REQUIRES: shell
 
 define void @_Z3foov() {
 entry:
