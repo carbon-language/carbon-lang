@@ -2,9 +2,15 @@ add_clang_executable(c-arcmt-test
   c-arcmt-test.c
   )
 
-target_link_libraries(c-arcmt-test
-  libclang
-  )
+if (LLVM_BUILD_STATIC)
+  target_link_libraries(c-arcmt-test
+    libclang_static
+    )
+else()
+  target_link_libraries(c-arcmt-test
+    libclang
+    )
+endif()
 
 set_target_properties(c-arcmt-test
   PROPERTIES

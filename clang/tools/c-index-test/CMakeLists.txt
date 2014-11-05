@@ -9,9 +9,15 @@ if(NOT MSVC)
     )
 endif()
 
-target_link_libraries(c-index-test
-  libclang
+if (LLVM_BUILD_STATIC)
+  target_link_libraries(c-index-test
+    libclang_static
   )
+else()
+  target_link_libraries(c-index-test
+    libclang
+  )
+endif()
 
 set_target_properties(c-index-test
   PROPERTIES
