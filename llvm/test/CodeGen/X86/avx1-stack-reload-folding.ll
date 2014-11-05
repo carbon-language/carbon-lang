@@ -3,14 +3,32 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-unknown"
 
-; Function Attrs: nounwind readonly uwtable
-define <32 x double> @_Z14vstack_foldDv32_dS_(<32 x double> %a, <32 x double> %b) #0 {
-  %1 = fadd <32 x double> %a, %b
-  %2 = fsub <32 x double> %a, %b
-  %3 = fmul <32 x double> %1, %2
-  ret <32 x double> %3
+; Stack reload folding tests - we use the 'big vectors' pattern to guarantee spilling to stack.
+;
+; Many of these tests are primarily to check memory folding with specific instructions. Using a basic
+; load/cvt/store pattern to test for this would mean that it wouldn't be the memory folding code thats
+; being tested - the load-execute version of the instruction from the tables would be matched instead.
 
-  ;CHECK-NOT:  vmovapd {{.*#+}} 32-byte Reload
+define void @stack_fold_vmulpd(<64 x double>* %a, <64 x double>* %b, <64 x double>* %c) {
   ;CHECK:       vmulpd {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
-  ;CHECK-NOT:  vmovapd {{.*#+}} 32-byte Reload
+  %1 = load <64 x double>* %a
+  %2 = load <64 x double>* %b
+  %3 = fadd <64 x double> %1, %2
+  %4 = fsub <64 x double> %1, %2
+  %5 = fmul <64 x double> %3, %4
+  store <64 x double> %5, <64 x double>* %c
+  ret void
+}
+
+define void @stack_fold_cvtdq2ps(<128 x i32>* %a, <128 x i32>* %b, <128 x float>* %c) {
+  ;CHECK:   vcvtdq2ps {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = load <128 x i32>* %a
+  %2 = load <128 x i32>* %b
+  %3 = and <128 x i32> %1, %2
+  %4 = xor <128 x i32> %1, %2
+  %5 = sitofp <128 x i32> %3 to <128 x float>
+  %6 = sitofp <128 x i32> %4 to <128 x float>
+  %7 = fadd <128 x float> %5, %6
+  store <128 x float> %7, <128 x float>* %c
+  ret void
 }

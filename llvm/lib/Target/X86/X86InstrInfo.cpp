@@ -448,6 +448,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::CVTSD2SIrr,      X86::CVTSD2SIrm,          0 },
     { X86::CVTSS2SI64rr,    X86::CVTSS2SI64rm,        0 },
     { X86::CVTSS2SIrr,      X86::CVTSS2SIrm,          0 },
+    { X86::CVTDQ2PSrr,      X86::CVTDQ2PSrm,          TB_ALIGN_16 },
     { X86::CVTTPD2DQrr,     X86::CVTTPD2DQrm,         TB_ALIGN_16 },
     { X86::CVTTPS2DQrr,     X86::CVTTPS2DQrm,         TB_ALIGN_16 },
     { X86::Int_CVTTSD2SI64rr,X86::Int_CVTTSD2SI64rm,  0 },
@@ -526,6 +527,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VCVTSD2SIrr,     X86::VCVTSD2SIrm,         0 },
     { X86::VCVTSS2SI64rr,   X86::VCVTSS2SI64rm,       0 },
     { X86::VCVTSS2SIrr,     X86::VCVTSS2SIrm,         0 },
+    { X86::VCVTDQ2PSrr,     X86::VCVTDQ2PSrm,         0 },
     { X86::VMOV64toPQIrr,   X86::VMOVQI2PQIrm,        0 },
     { X86::VMOV64toSDrr,    X86::VMOV64toSDrm,        0 },
     { X86::VMOVAPDrr,       X86::VMOVAPDrm,           TB_ALIGN_16 },
@@ -559,6 +561,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VBROADCASTSSrr,  X86::VBROADCASTSSrm,      TB_NO_REVERSE },
 
     // AVX 256-bit foldable instructions
+    { X86::VCVTDQ2PSYrr,    X86::VCVTDQ2PSYrm,        0 },
     { X86::VMOVAPDYrr,      X86::VMOVAPDYrm,          TB_ALIGN_32 },
     { X86::VMOVAPSYrr,      X86::VMOVAPSYrm,          TB_ALIGN_32 },
     { X86::VMOVDQAYrr,      X86::VMOVDQAYrm,          TB_ALIGN_32 },
