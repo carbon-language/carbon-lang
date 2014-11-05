@@ -27,15 +27,6 @@ def simm3_lsa2 : Operand<i32> {
   let EncoderMethod = "getSImm3Lsa2Value";
 }
 
-def uimm4_andi : Operand<i32> {
-  let EncoderMethod = "getUImm4AndValue";
-}
-
-def immZExtAndi16 : ImmLeaf<i32,
-  [{return (Imm == 128 || (Imm >= 1 && Imm <= 4) || Imm == 7 || Imm == 8 ||
-            Imm == 15 || Imm == 16 || Imm == 31 || Imm == 32 || Imm == 63 ||
-            Imm == 64 || Imm == 255 || Imm == 32768 || Imm == 65535 );}]>;
-
 def immZExt2Shift : ImmLeaf<i32, [{return Imm >= 1 && Imm <= 8;}]>;
 
 def immLi16 : ImmLeaf<i32, [{return Imm >= -1 && Imm <= 126;}]>;
@@ -125,11 +116,6 @@ class ArithRMM16<string opstr, RegisterOperand RO, bit isComm = 0,
   let isCommutable = isComm;
 }
 
-class AndImmMM16<string opstr, RegisterOperand RO,
-                 InstrItinClass Itin = NoItinerary> :
-  MicroMipsInst16<(outs RO:$rd), (ins RO:$rs, uimm4_andi:$imm),
-                  !strconcat(opstr, "\t$rd, $rs, $imm"), [], Itin, FrmI>;
-
 class LogicRMM16<string opstr, RegisterOperand RO,
                  InstrItinClass Itin = NoItinerary,
                  SDPatternOperator OpNode = null_frag> :
@@ -145,10 +131,13 @@ class NotMM16<string opstr, RegisterOperand RO> :
          !strconcat(opstr, "\t$rt, $rs"),
          [(set RO:$rt, (not RO:$rs))], NoItinerary, FrmR>;
 
-class ShiftIMM16<string opstr, Operand ImmOpnd, RegisterOperand RO,
+class ShiftIMM16<string opstr, Operand ImmOpnd,
+                 RegisterOperand RO, SDPatternOperator OpNode = null_frag,
+                 SDPatternOperator PF = null_frag,
                  InstrItinClass Itin = NoItinerary> :
   MicroMipsInst16<(outs RO:$rd), (ins RO:$rt, ImmOpnd:$shamt),
-                  !strconcat(opstr, "\t$rd, $rt, $shamt"), [], Itin, FrmR>;
+                  !strconcat(opstr, "\t$rd, $rt, $shamt"),
+                  [(set RO:$rd, (OpNode RO:$rt, PF:$shamt))], Itin, FrmR>;
 
 class AddImmUR2<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$rd), (ins RO:$rs, simm3_lsa2:$imm),
@@ -264,7 +253,6 @@ def ADDU16_MM : ArithRMM16<"addu16", GPRMM16Opnd, 1, II_ADDU, add>,
                 ARITH_FM_MM16<0>;
 def SUBU16_MM : ArithRMM16<"subu16", GPRMM16Opnd, 0, II_SUBU, sub>,
                 ARITH_FM_MM16<1>;
-def ANDI16_MM : AndImmMM16<"andi16", GPRMM16Opnd, II_AND>, ANDI_FM_MM16<0x0b>;
 def AND16_MM : LogicRMM16<"and16", GPRMM16Opnd, II_AND, and>,
                LOGIC_FM_MM16<0x2>;
 def OR16_MM  : LogicRMM16<"or16", GPRMM16Opnd, II_OR, or>,
@@ -272,10 +260,10 @@ def OR16_MM  : LogicRMM16<"or16", GPRMM16Opnd, II_OR, or>,
 def XOR16_MM : LogicRMM16<"xor16", GPRMM16Opnd, II_XOR, xor>,
                LOGIC_FM_MM16<0x1>;
 def NOT16_MM : NotMM16<"not16", GPRMM16Opnd>, LOGIC_FM_MM16<0x0>;
-def SLL16_MM : ShiftIMM16<"sll16", uimm3_shift, GPRMM16Opnd, II_SLL>,
-               SHIFT_FM_MM16<0>;
-def SRL16_MM : ShiftIMM16<"srl16", uimm3_shift, GPRMM16Opnd, II_SRL>,
-               SHIFT_FM_MM16<1>;
+def SLL16_MM : ShiftIMM16<"sll16", uimm3_shift, GPRMM16Opnd, shl,
+                          immZExt2Shift, II_SLL>, SHIFT_FM_MM16<0>;
+def SRL16_MM : ShiftIMM16<"srl16", uimm3_shift, GPRMM16Opnd, srl,
+                          immZExt2Shift, II_SRL>, SHIFT_FM_MM16<1>;
 def ADDIUR1SP_MM : AddImmUR1SP<"addiur1sp", GPRMM16Opnd>, ADDIUR1SP_FM_MM16;
 def ADDIUR2_MM : AddImmUR2<"addiur2", GPRMM16Opnd>, ADDIUR2_FM_MM16;
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;
@@ -509,25 +497,6 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def TLBWI_MM : MMRel, TLB<"tlbwi">, COP0_TLB_FM_MM<0x8d>;
   def TLBWR_MM : MMRel, TLB<"tlbwr">, COP0_TLB_FM_MM<0xcd>;
 }
-
-//===----------------------------------------------------------------------===//
-// MicroMips arbitrary patterns that map to one or more instructions
-//===----------------------------------------------------------------------===//
-
-def : MipsPat<(and GPRMM16:$src, immZExtAndi16:$imm),
-              (ANDI16_MM GPRMM16:$src, immZExtAndi16:$imm)>;
-def : MipsPat<(and GPR32:$src, immZExt16:$imm),
-              (ANDi_MM GPR32:$src, immZExt16:$imm)>;
-
-def : MipsPat<(shl GPRMM16:$src, immZExt2Shift:$imm),
-              (SLL16_MM GPRMM16:$src, immZExt2Shift:$imm)>;
-def : MipsPat<(shl GPR32:$src, immZExt5:$imm),
-              (SLL_MM GPR32:$src, immZExt5:$imm)>;
-
-def : MipsPat<(srl GPRMM16:$src, immZExt2Shift:$imm),
-              (SRL16_MM GPRMM16:$src, immZExt2Shift:$imm)>;
-def : MipsPat<(srl GPR32:$src, immZExt5:$imm),
-              (SRL_MM GPR32:$src, immZExt5:$imm)>;
 
 //===----------------------------------------------------------------------===//
 // MicroMips instruction aliases

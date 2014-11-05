@@ -1105,10 +1105,9 @@ def SLTi  : MMRel, SetCC_I<"slti", setlt, simm16, immSExt16, GPR32Opnd>,
             SLTI_FM<0xa>;
 def SLTiu : MMRel, SetCC_I<"sltiu", setult, simm16, immSExt16, GPR32Opnd>,
             SLTI_FM<0xb>;
-let AdditionalPredicates = [NotInMicroMips] in {
 def ANDi  : MMRel, ArithLogicI<"andi", uimm16, GPR32Opnd, II_ANDI, immZExt16,
-                               and>, ADDI_FM<0xc>;
-}
+                               and>,
+            ADDI_FM<0xc>;
 def ORi   : MMRel, ArithLogicI<"ori", uimm16, GPR32Opnd, II_ORI, immZExt16,
                                or>,
             ADDI_FM<0xd>;
@@ -1138,12 +1137,10 @@ def XOR   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, II_XOR, xor>,
 def NOR   : MMRel, LogicNOR<"nor", GPR32Opnd>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
-let AdditionalPredicates = [NotInMicroMips] in {
 def SLL  : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, II_SLL, shl,
                                    immZExt5>, SRA_FM<0, 0>;
 def SRL  : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd, II_SRL, srl,
                                    immZExt5>, SRA_FM<2, 0>;
-}
 def SRA  : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd, II_SRA, sra,
                                    immZExt5>, SRA_FM<3, 0>;
 def SLLV : MMRel, shift_rotate_reg<"sllv", GPR32Opnd, II_SLLV, shl>,
