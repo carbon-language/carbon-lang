@@ -10,6 +10,8 @@
 #ifndef liblldb_Plugins_Process_Windows_DebugProcessLauncher_H_
 #define liblldb_Plugins_Process_Windows_DebugProcessLauncher_H_
 
+#include "ForwardDecl.h"
+
 #include "lldb/Host/ProcessLauncher.h"
 #include "lldb/lldb-forward.h"
 
@@ -29,11 +31,11 @@ namespace lldb_private
 class DebugProcessLauncher : public ProcessLauncher
 {
   public:
-    explicit DebugProcessLauncher(lldb::ProcessSP process_plugin);
+    explicit DebugProcessLauncher(DebugDelegateSP debug_delegate);
     virtual HostProcess LaunchProcess(const ProcessLaunchInfo &launch_info, Error &error);
 
   private:
-    lldb::ProcessSP m_process_plugin;
+    DebugDelegateSP m_debug_delegate;
 };
 }
 

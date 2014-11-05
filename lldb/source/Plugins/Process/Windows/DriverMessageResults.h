@@ -10,6 +10,8 @@
 #ifndef liblldb_Plugins_Process_Windows_DriverMessageResults_H_
 #define liblldb_Plugins_Process_Windows_DriverMessageResults_H_
 
+#include "ForwardDecl.h"
+
 #include "lldb/Core/Error.h"
 #include "lldb/Host/HostProcess.h"
 
@@ -17,10 +19,6 @@
 
 namespace lldb_private
 {
-
-class DriverMessage;
-class DriverMessageResult;
-class DriverLaunchProcessMessage;
 
 class DriverMessageResult : public llvm::ThreadSafeRefCountedBase<DriverMessageResult>
 {

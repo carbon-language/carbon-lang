@@ -10,7 +10,8 @@
 #ifndef liblldb_Plugins_Process_Windows_DebugDriverThread_H_
 #define liblldb_Plugins_Process_Windows_DebugDriverThread_H_
 
-#include "IDebugEventHandler.h"
+#include "ForwardDecl.h"
+#include "IDebugDelegate.h"
 
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/windows/windows.h"
@@ -18,16 +19,8 @@
 
 #include <map>
 
-class ProcessWindows;
-
 namespace lldb_private
 {
-class DriverMessage;
-class DriverMessageResult;
-class DriverLaunchProcessMessage;
-class DriverLaunchProcessMessageResult;
-
-class DebugOneProcessThread;
 
 //----------------------------------------------------------------------
 // DebugDriverThread
@@ -36,9 +29,14 @@ class DebugOneProcessThread;
 // debugger to do different things like launching processes, attaching to
 // processes, etc.
 //----------------------------------------------------------------------
-class DebugDriverThread : public IDebugEventHandler
+class DebugDriverThread : public IDebugDelegate
 {
     friend class DebugOneProcessThread;
+    struct DebugMapEntry
+    {
+        DebugDelegateSP m_delegate;
+        std::shared_ptr<DebugOneProcessThread> m_slave;
+    };
 
   public:
     virtual ~DebugDriverThread();
@@ -59,7 +57,7 @@ class DebugDriverThread : public IDebugEventHandler
     const DriverMessageResult *HandleDriverMessage(const DriverMessage *message);
     const DriverLaunchProcessMessageResult *HandleDriverMessage(const DriverLaunchProcessMessage *launch_message);
 
-    // Debug event handlers.  These are invoked on the driver thread by way of QueueUserAPC as
+    // Debug delegate handlers.  These are invoked on the driver thread by way of QueueUserAPC as
     // events happen in the inferiors.
     virtual void OnProcessLaunched(const ProcessMessageCreateProcess &message) override;
     virtual void OnExitProcess(const ProcessMessageExitProcess &message) override;
@@ -74,7 +72,7 @@ class DebugDriverThread : public IDebugEventHandler
 
     static DebugDriverThread *m_instance;
 
-    std::map<lldb::pid_t, std::shared_ptr<DebugOneProcessThread>> m_debugged_processes;
+    std::map<lldb::pid_t, DebugMapEntry> m_debugged_processes;
 
     HANDLE m_driver_message_event;
     HANDLE m_shutdown_event;

@@ -48,15 +48,15 @@ DriverMessage::CompleteMessage(const DriverMessageResult *result)
     m_completion_predicate.SetValue(result, eBroadcastAlways);
 }
 
-DriverLaunchProcessMessage::DriverLaunchProcessMessage(const ProcessLaunchInfo &launch_info, lldb::ProcessSP process_plugin)
+DriverLaunchProcessMessage::DriverLaunchProcessMessage(const ProcessLaunchInfo &launch_info, DebugDelegateSP debug_delegate)
     : DriverMessage(DriverMessageType::eLaunchProcess)
     , m_launch_info(launch_info)
-    , m_process_plugin(process_plugin)
+    , m_debug_delegate(debug_delegate)
 {
 }
 
 DriverLaunchProcessMessage *
-DriverLaunchProcessMessage::Create(const ProcessLaunchInfo &launch_info, lldb::ProcessSP process_plugin)
+DriverLaunchProcessMessage::Create(const ProcessLaunchInfo &launch_info, DebugDelegateSP debug_delegate)
 {
-    return new DriverLaunchProcessMessage(launch_info, process_plugin);
+    return new DriverLaunchProcessMessage(launch_info, debug_delegate);
 }

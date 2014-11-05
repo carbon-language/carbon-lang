@@ -9,6 +9,7 @@ add_lldb_library(lldbPluginProcessWindows
   DebugOneProcessThread.cpp
   DebugProcessLauncher.cpp
   DebugDriverThread.cpp
+  LocalDebugDelegate.cpp
   ProcessWindows.cpp
   )
 

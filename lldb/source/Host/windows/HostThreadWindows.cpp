@@ -19,17 +19,25 @@ using namespace lldb_private;
 
 HostThreadWindows::HostThreadWindows()
     : HostNativeThreadBase()
+    , m_owns_handle(true)
 {
 }
 
 HostThreadWindows::HostThreadWindows(lldb::thread_t thread)
     : HostNativeThreadBase(thread)
+    , m_owns_handle(true)
 {
 }
 
 HostThreadWindows::~HostThreadWindows()
 {
     Reset();
+}
+
+void
+HostThreadWindows::SetOwnsHandle(bool owns)
+{
+    m_owns_handle = owns;
 }
 
 Error
@@ -75,7 +83,7 @@ HostThreadWindows::GetThreadId() const
 void
 HostThreadWindows::Reset()
 {
-    if (m_thread != LLDB_INVALID_HOST_THREAD)
+    if (m_owns_handle && m_thread != LLDB_INVALID_HOST_THREAD)
         ::CloseHandle(m_thread);
 
     HostNativeThreadBase::Reset();

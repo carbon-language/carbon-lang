@@ -10,6 +10,8 @@
 #ifndef liblldb_Plugins_Process_Windows_DriverMessages_H_
 #define liblldb_Plugins_Process_Windows_DriverMessages_H_
 
+#include "ForwardDecl.h"
+
 #include "lldb/Host/Predicate.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/windows/windows.h"
@@ -17,15 +19,9 @@
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
-#include <map>
-#include <memory>
-
-class ProcessWindows;
-
 namespace lldb_private
 {
-class DriverMessage;
-class DriverMessageResult;
+
 class ProcessLaunchInfo;
 
 enum class DriverMessageType
@@ -62,7 +58,7 @@ class DriverMessage : public llvm::ThreadSafeRefCountedBase<DriverMessage>
 class DriverLaunchProcessMessage : public DriverMessage
 {
   public:
-    static DriverLaunchProcessMessage *Create(const ProcessLaunchInfo &launch_info, lldb::ProcessSP m_process_plugin);
+    static DriverLaunchProcessMessage *Create(const ProcessLaunchInfo &launch_info, DebugDelegateSP debug_delegate);
 
     const ProcessLaunchInfo &
     GetLaunchInfo() const
@@ -70,17 +66,17 @@ class DriverLaunchProcessMessage : public DriverMessage
         return m_launch_info;
     }
 
-    lldb::ProcessSP
-    GetProcessPlugin() const
+    DebugDelegateSP
+    GetDebugDelegate() const
     {
-        return m_process_plugin;
+        return m_debug_delegate;
     }
 
   private:
-    DriverLaunchProcessMessage(const ProcessLaunchInfo &launch_info, lldb::ProcessSP m_process_plugin);
+    DriverLaunchProcessMessage(const ProcessLaunchInfo &launch_info, DebugDelegateSP debug_delegate);
 
     const ProcessLaunchInfo &m_launch_info;
-    lldb::ProcessSP m_process_plugin;
+    DebugDelegateSP m_debug_delegate;
 };
 }
 

@@ -127,13 +127,15 @@ DebugDriverThread::HandleDriverMessage(const DriverLaunchProcessMessage *launch_
     // Create a DebugOneProcessThread which will do the actual creation and enter a debug loop on
     // a background thread, only returning after the process has been created on the background
     // thread.
-    std::shared_ptr<DebugOneProcessThread> slave(new DebugOneProcessThread(m_driver_thread));
-    const DriverLaunchProcessMessageResult *result = slave->DebugLaunch(launch_message);
+    DebugMapEntry map_entry;
+    map_entry.m_delegate = launch_message->GetDebugDelegate();
+    map_entry.m_slave.reset(new DebugOneProcessThread(m_driver_thread));
+    const DriverLaunchProcessMessageResult *result = map_entry.m_slave->DebugLaunch(launch_message);
     if (result && result->GetError().Success())
     {
         if (log)
             log->Printf("DebugDriverThread launched process '%s' with PID %d.", exe, result->GetProcess().GetProcessId());
-        m_debugged_processes.insert(std::make_pair(result->GetProcess().GetProcessId(), slave));
+        m_debugged_processes.insert(std::make_pair(result->GetProcess().GetProcessId(), map_entry));
     }
     else
     {
@@ -153,9 +155,18 @@ DebugDriverThread::OnExitProcess(const ProcessMessageExitProcess &message)
 {
     lldb::pid_t pid = message.GetProcess().GetProcessId();
 
-    m_debugged_processes.erase(pid);
+    // We invoke the delegate on the DriverThread rather than on the DebugOneProcessThread
+    // so that invoking delegates is thread-safe amongst each other.  e.g. Two delegate invocations
+    // are guaranteed to happen from the same thread.  Additionally, this guarantees that the
+    // driver thread has a chance to clean up after itself before notifying processes of the debug
+    // events, guaranteeing that no races happen whereby a process tries to kick off a new action
+    // as a result of some event, but the request for that new action gets picked up by the driver
+    // thread before the driver thread gets notified of the state change.
+    auto iter = m_debugged_processes.find(pid);
+    if (iter != m_debugged_processes.end())
+        iter->second.m_delegate->OnExitProcess(message);
 
-    Process::SetProcessExitStatus(nullptr, pid, true, 0, message.GetExitCode());
+    m_debugged_processes.erase(iter);
 }
 
 void
@@ -199,7 +210,10 @@ DebugDriverThread::OnDebuggerError(const ProcessMessageDebuggerError &message)
     Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     lldb::pid_t pid = message.GetProcess().GetProcessId();
-    m_debugged_processes.erase(pid);
+    auto iter = m_debugged_processes.find(pid);
+    if (iter != m_debugged_processes.end())
+        iter->second.m_delegate->OnDebuggerError(message);
+    m_debugged_processes.erase(iter);
 
     if (log)
     {

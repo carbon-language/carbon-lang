@@ -1,4 +1,4 @@
-//===-- IDebugEventHandler.h ------------------------------------*- C++ -*-===//
+//===-- IDebugDelegate.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_Plugins_Process_Windows_IDebugEventHandler_H_
-#define liblldb_Plugins_Process_Windows_IDebugEventHandler_H_
+#ifndef liblldb_Plugins_Process_Windows_IDebugDelegate_H_
+#define liblldb_Plugins_Process_Windows_IDebugDelegate_H_
 
 namespace lldb_private
 {
@@ -25,15 +25,15 @@ class ProcessMessageDebugString;
 class ProcessMessageDebuggerError;
 
 //----------------------------------------------------------------------
-// IDebugEventHandler
+// IDebugDelegate
 //
-// IDebugEventHandler defines an interface which allows implementors to receive
+// IDebugDelegate defines an interface which allows implementors to receive
 // notification of events that happen in a debugged process.
 //----------------------------------------------------------------------
-class IDebugEventHandler
+class IDebugDelegate
 {
   public:
-    virtual ~IDebugEventHandler() {}
+    virtual ~IDebugDelegate() {}
 
     virtual void OnProcessLaunched(const ProcessMessageCreateProcess &message) = 0;
     virtual void OnExitProcess(const ProcessMessageExitProcess &message) = 0;

@@ -31,17 +31,25 @@ struct MonitorInfo
 
 HostProcessWindows::HostProcessWindows()
     : HostNativeProcessBase()
+    , m_owns_handle(true)
 {
 }
 
 HostProcessWindows::HostProcessWindows(lldb::process_t process)
     : HostNativeProcessBase(process)
+    , m_owns_handle(true)
 {
 }
 
 HostProcessWindows::~HostProcessWindows()
 {
     Close();
+}
+
+void
+HostProcessWindows::SetOwnsHandle(bool owns)
+{
+    m_owns_handle = owns;
 }
 
 Error HostProcessWindows::Terminate()
@@ -123,7 +131,7 @@ HostProcessWindows::MonitorThread(void *thread_arg)
 
 void HostProcessWindows::Close()
 {
-    if (m_process != LLDB_INVALID_PROCESS)
+    if (m_owns_handle && m_process != LLDB_INVALID_PROCESS)
         ::CloseHandle(m_process);
     m_process = nullptr;
 }

@@ -25,6 +25,8 @@ class HostProcessWindows : public HostNativeProcessBase
     explicit HostProcessWindows(lldb::process_t process);
     ~HostProcessWindows();
 
+    void SetOwnsHandle(bool owns);
+
     virtual Error Terminate();
     virtual Error GetMainModule(FileSpec &file_spec) const;
 
@@ -37,6 +39,8 @@ class HostProcessWindows : public HostNativeProcessBase
     static lldb::thread_result_t MonitorThread(void *thread_arg);
 
     void Close();
+
+    bool m_owns_handle;
 };
 }
 

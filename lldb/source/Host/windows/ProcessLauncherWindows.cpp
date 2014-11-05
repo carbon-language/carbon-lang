@@ -38,9 +38,13 @@ ProcessLauncherWindows::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
     startupinfo.hStdInput = stdin_handle;
     startupinfo.hStdOutput = stdout_handle;
 
+    DWORD flags = CREATE_NEW_CONSOLE;
+    if (launch_info.GetFlags().Test(eLaunchFlagDebug))
+        flags |= DEBUG_ONLY_THIS_PROCESS;
+
     executable = launch_info.GetExecutableFile().GetPath();
     launch_info.GetArguments().GetQuotedCommandString(commandLine);
-    BOOL result = ::CreateProcessA(executable.c_str(), const_cast<char *>(commandLine.c_str()), NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL,
+    BOOL result = ::CreateProcessA(executable.c_str(), const_cast<char *>(commandLine.c_str()), NULL, NULL, TRUE, flags, NULL,
                                    launch_info.GetWorkingDirectory(), &startupinfo, &pi);
     if (result)
     {

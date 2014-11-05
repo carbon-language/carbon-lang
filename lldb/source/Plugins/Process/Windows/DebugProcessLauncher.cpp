@@ -19,15 +19,15 @@
 using namespace lldb;
 using namespace lldb_private;
 
-DebugProcessLauncher::DebugProcessLauncher(lldb::ProcessSP process_plugin)
-    : m_process_plugin(process_plugin)
+DebugProcessLauncher::DebugProcessLauncher(DebugDelegateSP debug_delegate)
+    : m_debug_delegate(debug_delegate)
 {
 }
 
 HostProcess
 DebugProcessLauncher::LaunchProcess(const ProcessLaunchInfo &launch_info, Error &error)
 {
-    DriverLaunchProcessMessage *message = DriverLaunchProcessMessage::Create(launch_info, m_process_plugin);
+    DriverLaunchProcessMessage *message = DriverLaunchProcessMessage::Create(launch_info, m_debug_delegate);
     DebugDriverThread::GetInstance().PostDebugMessage(message);
     const DriverLaunchProcessMessageResult *result = static_cast<const DriverLaunchProcessMessageResult *>(message->WaitForCompletion());
     error = result->GetError();

@@ -29,6 +29,8 @@
 
 #include "DebugDriverThread.h"
 #include "DebugProcessLauncher.h"
+#include "LocalDebugDelegate.h"
+#include "ProcessMessages.h"
 #include "ProcessWindows.h"
 
 using namespace lldb;
@@ -109,7 +111,8 @@ ProcessWindows::DoLaunch(Module *exe_module,
         // If we're trying to debug this process, we need to use a
         // DebugProcessLauncher so that we can enter a WaitForDebugEvent loop
         // on the same thread that does the CreateProcess.
-        DebugProcessLauncher launcher(shared_from_this());
+        DebugDelegateSP delegate(new LocalDebugDelegate(shared_from_this()));
+        DebugProcessLauncher launcher(delegate);
         process = launcher.LaunchProcess(launch_info, result);
     }
     else
@@ -199,7 +202,6 @@ ProcessWindows::DoReadMemory(lldb::addr_t vm_addr,
     return 0;
 }
 
-
 bool
 ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
 {
@@ -211,4 +213,55 @@ ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
     if (exe_module_sp.get())
         return exe_module_sp->GetFileSpec().Exists();
     return false;
+}
+
+void
+ProcessWindows::OnProcessLaunched(const ProcessMessageCreateProcess &message)
+{
+}
+
+void
+ProcessWindows::OnExitProcess(const ProcessMessageExitProcess &message)
+{
+    SetProcessExitStatus(nullptr, GetID(), true, 0, message.GetExitCode());
+}
+
+void
+ProcessWindows::OnDebuggerConnected(const ProcessMessageDebuggerConnected &message)
+{
+}
+
+void
+ProcessWindows::OnDebugException(const ProcessMessageException &message)
+{
+}
+
+void
+ProcessWindows::OnCreateThread(const ProcessMessageCreateThread &message)
+{
+}
+
+void
+ProcessWindows::OnExitThread(const ProcessMessageExitThread &message)
+{
+}
+
+void
+ProcessWindows::OnLoadDll(const ProcessMessageLoadDll &message)
+{
+}
+
+void
+ProcessWindows::OnUnloadDll(const ProcessMessageUnloadDll &message)
+{
+}
+
+void
+ProcessWindows::OnDebugString(const ProcessMessageDebugString &message)
+{
+}
+
+void
+ProcessWindows::OnDebuggerError(const ProcessMessageDebuggerError &message)
+{
 }
