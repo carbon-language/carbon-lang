@@ -297,6 +297,7 @@ MacosVersion GetMacosVersionInternal() {
         case '1': return MACOS_VERSION_LION;
         case '2': return MACOS_VERSION_MOUNTAIN_LION;
         case '3': return MACOS_VERSION_MAVERICKS;
+        case '4': return MACOS_VERSION_YOSEMITE;
         default: return MACOS_VERSION_UNKNOWN;
       }
     }
