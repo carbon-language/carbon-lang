@@ -256,7 +256,9 @@ class GlobalsMetadata {
     NamedMDNode *Globals = M.getNamedMetadata("llvm.asan.globals");
     if (!Globals)
       return;
-    for (auto MDN : Globals->operands()) {
+    for (const Value *MDV : Globals->operands()) {
+      const MDNode *MDN = cast<MDNode>(MDV);
+
       // Metadata node contains the global and the fields of "Entry".
       assert(MDN->getNumOperands() == 5);
       Value *V = MDN->getOperand(0);

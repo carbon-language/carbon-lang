@@ -450,8 +450,8 @@ void DwarfDebug::beginModule() {
 
   SingleCU = CU_Nodes->getNumOperands() == 1;
 
-  for (MDNode *N : CU_Nodes->operands()) {
-    DICompileUnit CUNode(N);
+  for (Value *N : CU_Nodes->operands()) {
+    DICompileUnit CUNode(cast<MDNode>(N));
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
     DIArray ImportedEntities = CUNode.getImportedEntities();
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
@@ -526,8 +526,8 @@ void DwarfDebug::collectDeadVariables() {
   const Module *M = MMI->getModule();
 
   if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
-    for (MDNode *N : CU_Nodes->operands()) {
-      DICompileUnit TheCU(N);
+    for (Value *N : CU_Nodes->operands()) {
+      DICompileUnit TheCU(cast<MDNode>(N));
       // Construct subprogram DIE and add variables DIEs.
       DwarfCompileUnit *SPCU =
           static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));

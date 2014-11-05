@@ -237,10 +237,10 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-/// \brief A tuple of MDNodes.
+/// \brief A tuple of metadata nodes.
 ///
 /// Despite its name, a NamedMDNode isn't itself an MDNode. NamedMDNodes belong
-/// to modules, have names, and contain lists of MDNodes.
+/// to modules, have names, and contain lists of metadata nodes.
 class NamedMDNode : public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
   friend struct ilist_traits<NamedMDNode>;
@@ -250,7 +250,7 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
 
   std::string Name;
   Module *Parent;
-  void *Operands; // SmallVector<TrackingVH<MDNode>, 4>
+  void *Operands; // SmallVector<TrackingVH<Value>, 4>
 
   void setParent(Module *M) { Parent = M; }
 
@@ -305,7 +305,10 @@ public:
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
 
-  MDNode *getOperand(unsigned i) const;
+  Value *getOperand(unsigned i) const;
+  MDNode *getOperandAsMDNode(unsigned i) const {
+    return cast_or_null<MDNode>(getOperand(i));
+  }
   unsigned getNumOperands() const;
   void addOperand(Value *M);
   StringRef getName() const;
@@ -315,11 +318,11 @@ public:
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...
   //
-  typedef op_iterator_impl<MDNode*, MDNode> op_iterator;
+  typedef op_iterator_impl<Value *, Value> op_iterator;
   op_iterator op_begin() { return op_iterator(this, 0); }
   op_iterator op_end()   { return op_iterator(this, getNumOperands()); }
 
-  typedef op_iterator_impl<const MDNode*, MDNode> const_op_iterator;
+  typedef op_iterator_impl<const Value *, Value> const_op_iterator;
   const_op_iterator op_begin() const { return const_op_iterator(this, 0); }
   const_op_iterator op_end()   const { return const_op_iterator(this, getNumOperands()); }
 

@@ -1398,7 +1398,7 @@ void AsmPrinter::EmitModuleIdents(Module &M) {
 
   if (const NamedMDNode *NMD = M.getNamedMetadata("llvm.ident")) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      const MDNode *N = NMD->getOperand(i);
+      const MDNode *N = NMD->getOperandAsMDNode(i);
       assert(N->getNumOperands() == 1 &&
              "llvm.ident metadata entry can have only one operand");
       const MDString *S = cast<MDString>(N->getOperand(0));

@@ -276,7 +276,8 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
   const NamedMDNode *ModFlags = getModuleFlagsMetadata();
   if (!ModFlags) return;
 
-  for (const MDNode *Flag : ModFlags->operands()) {
+  for (const Value *FlagMD : ModFlags->operands()) {
+    const MDNode *Flag = cast<MDNode>(FlagMD);
     ModFlagBehavior MFB;
     if (Flag->getNumOperands() >= 3 &&
         isValidModFlagBehavior(Flag->getOperand(0), MFB) &&

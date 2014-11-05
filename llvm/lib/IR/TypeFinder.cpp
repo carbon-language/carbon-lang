@@ -81,7 +81,7 @@ void TypeFinder::run(const Module &M, bool onlyNamed) {
          E = M.named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-      incorporateMDNode(NMD->getOperand(i));
+      incorporateMDNode(NMD->getOperandAsMDNode(i));
   }
 }
 

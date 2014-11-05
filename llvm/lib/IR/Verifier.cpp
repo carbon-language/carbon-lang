@@ -555,7 +555,7 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
 
 void Verifier::visitNamedMDNode(const NamedMDNode &NMD) {
   for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i) {
-    MDNode *MD = NMD.getOperand(i);
+    MDNode *MD = NMD.getOperandAsMDNode(i);
     if (!MD)
       continue;
 
@@ -624,7 +624,7 @@ void Verifier::visitModuleIdents(const Module &M) {
   // llvm.ident takes a list of metadata entry. Each entry has only one string.
   // Scan each llvm.ident entry and make sure that this requirement is met.
   for (unsigned i = 0, e = Idents->getNumOperands(); i != e; ++i) {
-    const MDNode *N = Idents->getOperand(i);
+    const MDNode *N = Idents->getOperandAsMDNode(i);
     Assert1(N->getNumOperands() == 1,
             "incorrect number of operands in llvm.ident metadata", N);
     Assert1(isa<MDString>(N->getOperand(0)),
@@ -642,7 +642,7 @@ void Verifier::visitModuleFlags(const Module &M) {
   DenseMap<const MDString*, const MDNode*> SeenIDs;
   SmallVector<const MDNode*, 16> Requirements;
   for (unsigned I = 0, E = Flags->getNumOperands(); I != E; ++I) {
-    visitModuleFlag(Flags->getOperand(I), SeenIDs, Requirements);
+    visitModuleFlag(Flags->getOperandAsMDNode(I), SeenIDs, Requirements);
   }
 
   // Validate that the requirements in the module are valid.

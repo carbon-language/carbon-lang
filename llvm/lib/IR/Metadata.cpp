@@ -555,14 +555,13 @@ MDNode *MDNode::getMostGenericRange(MDNode *A, MDNode *B) {
 // NamedMDNode implementation.
 //
 
-static SmallVector<TrackingVH<MDNode>, 4> &getNMDOps(void *Operands) {
-  return *(SmallVector<TrackingVH<MDNode>, 4>*)Operands;
+static SmallVector<TrackingVH<Value>, 4> &getNMDOps(void *Operands) {
+  return *(SmallVector<TrackingVH<Value>, 4> *)Operands;
 }
 
 NamedMDNode::NamedMDNode(const Twine &N)
-  : Name(N.str()), Parent(nullptr),
-    Operands(new SmallVector<TrackingVH<MDNode>, 4>()) {
-}
+    : Name(N.str()), Parent(nullptr),
+      Operands(new SmallVector<TrackingVH<Value>, 4>()) {}
 
 NamedMDNode::~NamedMDNode() {
   dropAllReferences();
@@ -573,7 +572,7 @@ unsigned NamedMDNode::getNumOperands() const {
   return (unsigned)getNMDOps(Operands).size();
 }
 
-MDNode *NamedMDNode::getOperand(unsigned i) const {
+Value *NamedMDNode::getOperand(unsigned i) const {
   assert(i < getNumOperands() && "Invalid Operand number!");
   return &*getNMDOps(Operands)[i];
 }
@@ -582,7 +581,7 @@ void NamedMDNode::addOperand(Value *V) {
   auto *M = cast<MDNode>(V);
   assert(!M->isFunctionLocal() &&
          "NamedMDNode operands must not be function-local!");
-  getNMDOps(Operands).push_back(TrackingVH<MDNode>(M));
+  getNMDOps(Operands).push_back(TrackingVH<Value>(M));
 }
 
 void NamedMDNode::eraseFromParent() {

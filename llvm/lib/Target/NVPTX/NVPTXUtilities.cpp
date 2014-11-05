@@ -73,7 +73,7 @@ static void cacheAnnotationFromMD(const Module *m, const GlobalValue *gv) {
     return;
   key_val_pair_t tmp;
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-    const MDNode *elem = NMD->getOperand(i);
+    const MDNode *elem = NMD->getOperandAsMDNode(i);
 
     Value *entity = elem->getOperand(0);
     // entity may be null due to DCE

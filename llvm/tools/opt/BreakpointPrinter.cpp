@@ -55,7 +55,7 @@ struct BreakpointPrinter : public ModulePass {
     if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.sp"))
       for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
         std::string Name;
-        DISubprogram SP(NMD->getOperand(i));
+        DISubprogram SP(cast_or_null<MDNode>(NMD->getOperand(i)));
         assert((!SP || SP.isSubprogram()) &&
                "A MDNode in llvm.dbg.sp should be null or a DISubprogram.");
         if (!SP)
