@@ -176,6 +176,7 @@ struct Elf_Sym_Base<ELFType<TargetEndianness, MaxAlign, true> > {
 template <class ELFT>
 struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
   using Elf_Sym_Base<ELFT>::st_info;
+  using Elf_Sym_Base<ELFT>::st_other;
 
   // These accessors and mutators correspond to the ELF32_ST_BIND,
   // ELF32_ST_TYPE, and ELF32_ST_INFO macros defined in the ELF specification:
@@ -186,6 +187,9 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
   void setBindingAndType(unsigned char b, unsigned char t) {
     st_info = (b << 4) + (t & 0x0f);
   }
+
+  /// Access to the STV_xxx flag stored in the first two bits of st_other.
+  unsigned char getVisibility() const { return st_other & 0x3; }
 };
 
 /// Elf_Versym: This is the structure of entries in the SHT_GNU_versym section

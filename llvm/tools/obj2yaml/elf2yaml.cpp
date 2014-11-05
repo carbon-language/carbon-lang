@@ -133,7 +133,7 @@ std::error_code ELFDumper<ELFT>::dumpSymbol(Elf_Sym_Iter Sym,
   S.Type = Sym->getType();
   S.Value = Sym->st_value;
   S.Size = Sym->st_size;
-  S.Visibility = Sym->st_other & 0x3;
+  S.Visibility = Sym->getVisibility();
 
   ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(Sym);
   if (std::error_code EC = NameOrErr.getError())
