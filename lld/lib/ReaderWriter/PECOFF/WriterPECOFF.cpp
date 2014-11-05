@@ -113,6 +113,7 @@ public:
     ArrayRef<uint8_t> array = _context.getDosStub();
     std::memcpy(buffer, array.data(), array.size());
     auto *header = reinterpret_cast<llvm::object::dos_header *>(buffer);
+    header->AddressOfRelocationTable = sizeof(llvm::object::dos_header);
     header->AddressOfNewExeHeader = _size;
   }
 

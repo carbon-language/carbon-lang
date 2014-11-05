@@ -59,6 +59,25 @@ FILE-NEXT:   SizeOfStackCommit: 4096
 FILE-NEXT:   SizeOfHeapReserve: 1048576
 FILE-NEXT:   SizeOfHeapCommit: 4096
 FILE-NEXT:   NumberOfRvaAndSize: 16
+FILE:      DOSHeader {
+FILE-NEXT:   Magic: MZ
+FILE-NEXT:   UsedBytesInTheLastPage: 0
+FILE-NEXT:   FileSizeInPages: 0
+FILE-NEXT:   NumberOfRelocationItems: 0
+FILE-NEXT:   HeaderSizeInParagraphs: 0
+FILE-NEXT:   MinimumExtraParagraphs: 0
+FILE-NEXT:   MaximumExtraParagraphs: 0
+FILE-NEXT:   InitialRelativeSS: 0
+FILE-NEXT:   InitialSP: 0
+FILE-NEXT:   Checksum: 0
+FILE-NEXT:   InitialIP: 0
+FILE-NEXT:   InitialRelativeCS: 0
+FILE-NEXT:   AddressOfRelocationTable: 64
+FILE-NEXT:   OverlayNumber: 0
+FILE-NEXT:   OEMid: 0
+FILE-NEXT:   OEMinfo: 0
+FILE-NEXT:   AddressOfNewExeHeader: 128
+FILE-NEXT: }
 
 SECTIONS:      Format: COFF-i386
 SECTIONS-NEXT: Arch: i386
