@@ -134,6 +134,7 @@ else()
     test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
     test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
+    test_target_arch(powerpc64le ${TARGET_64_BIT_CFLAGS})
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
     if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "mipsel|mips64el")
       # regex for mipsel, mips64el                                                                                                                                                                                 
@@ -169,9 +170,9 @@ endfunction()
 
 # Arhcitectures supported by compiler-rt libraries.
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 i686 powerpc64 arm aarch64 mips mips64 mipsel mips64el)
+  x86_64 i386 i686 powerpc64 powerpc64le arm aarch64 mips mips64 mipsel mips64el)
 filter_available_targets(ASAN_SUPPORTED_ARCH
-  x86_64 i386 i686 powerpc64 arm mips mipsel)
+  x86_64 i386 i686 powerpc64 powerpc64le arm mips mipsel)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 # LSan common files should be available on all architectures supported
