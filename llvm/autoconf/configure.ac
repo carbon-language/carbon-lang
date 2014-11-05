@@ -1386,7 +1386,27 @@ then
     CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
   fi
 fi
-AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED])
+
+dnl Check for misbehaving -Wcomment (gcc-4.7 has this) and maybe add
+dnl -Wno-comment to the flags.
+no_comment=
+llvm_cv_old_cxxflags="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS -Wcomment -Werror"
+AC_COMPILE_IFELSE(
+[
+  AC_LANG_SOURCE([[// Comment \o\
+// Another comment
+int main() { return 0; }
+  ]])
+],
+[
+  no_comment=-Wno-comment
+],
+[])
+AC_SUBST(NO_COMMENT, [$no_comment])
+CXXFLAGS="$llvm_cv_old_cxxflags"
+
+AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED $NO_COMMENT])
 
 AC_ARG_WITH([python],
             [AS_HELP_STRING([--with-python], [path to python])],
