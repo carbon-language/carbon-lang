@@ -517,17 +517,6 @@ FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
       return ec;
     assert(sec && "SectionIndex > 0, Sec must be non-null!");
 
-    // Skip if it's a section symbol for a COMDAT section. A section symbol
-    // has the name of the section and value 0. A translation unit may contain
-    // multiple COMDAT sections whose section name are the same. We don't want
-    // to make atoms for them as they would become duplicate symbols.
-    StringRef sectionName;
-    if (std::error_code ec = _obj->getSectionName(sec, sectionName))
-      return ec;
-    if (_symbolName[sym] == sectionName && sym.getValue() == 0 &&
-        _merge[sec] != DefinedAtom::mergeNo)
-      continue;
-
     uint8_t sc = sym.getStorageClass();
     if (sc != llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL &&
         sc != llvm::COFF::IMAGE_SYM_CLASS_STATIC &&

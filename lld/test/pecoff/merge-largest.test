@@ -19,6 +19,6 @@ READOBJ-NEXT: Sections [
 READOBJ-NEXT:   Section {
 READOBJ-NEXT:     Number: 1
 READOBJ-NEXT:     Name: .text (2E 74 65 78 74 00 00 00)
-READOBJ-NEXT:     VirtualSize: 0x8
+READOBJ-NEXT:     VirtualSize: 0x12
 READOBJ-NEXT:     VirtualAddress: 0x1000
 READOBJ-NEXT:     RawDataSize: 512
