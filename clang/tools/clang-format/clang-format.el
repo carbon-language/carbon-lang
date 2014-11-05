@@ -54,3 +54,5 @@
         (dotimes (index (length orig-windows))
           (set-window-start (nth index orig-windows)
                             (nth index orig-window-starts)))))))
+
+(provide 'clang-format)
