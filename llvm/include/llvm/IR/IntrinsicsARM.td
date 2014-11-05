@@ -341,10 +341,6 @@ def int_arm_neon_vqneg : Neon_1Arg_Intrinsic;
 
 // Vector Count Leading Sign/Zero Bits.
 def int_arm_neon_vcls : Neon_1Arg_Intrinsic;
-def int_arm_neon_vclz : Neon_1Arg_Intrinsic;
-
-// Vector Count One Bits.
-def int_arm_neon_vcnt : Neon_1Arg_Intrinsic;
 
 // Vector Reciprocal Estimate.
 def int_arm_neon_vrecpe : Neon_1Arg_Intrinsic;

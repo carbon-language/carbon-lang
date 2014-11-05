@@ -476,14 +476,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     CI->eraseFromParent();
     return;
 
-  case Intrinsic::arm_neon_vclz: {
-    // Change name from llvm.arm.neon.vclz.* to llvm.ctlz.*
-    CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
-                                               Builder.getFalse(),
-                                               "llvm.ctlz." + Name.substr(14)));
-    CI->eraseFromParent();
-    return;
-  }
   case Intrinsic::ctpop: {
     CI->replaceAllUsesWith(Builder.CreateCall(NewFn, CI->getArgOperand(0)));
     CI->eraseFromParent();
