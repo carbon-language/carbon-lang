@@ -29,6 +29,9 @@ declare void @custom1(i32 %a, i32 %b)
 ; CHECK: ret { i32, i16 }
 declare i32 @custom2(i32 %a, i32 %b)
 
+; CHECK: define linkonce_odr void @"dfsw$custom3"(i32, i16, i16*, ...)
+; CHECK: call void @__dfsan_vararg_wrapper(i8*
+; CHECK: unreachable
 declare void @custom3(i32 %a, ...)
 
 declare i32 @custom4(i32 %a, ...)
@@ -83,8 +86,6 @@ define i32 (i32, i32)* @g(i32) {
 
 ; CHECK: declare void @__dfsw_custom1(i32, i32, i16, i16)
 ; CHECK: declare i32 @__dfsw_custom2(i32, i32, i16, i16, i16*)
-; CHECK: declare void @__dfsw_custom3(i32, i16, i16*, ...)
-; CHECK: declare i32 @__dfsw_custom4(i32, i16, i16*, i16*, ...)
 
 ; CHECK-LABEL: define linkonce_odr i32 @"dfst0$customcb"(i32 (i32)*, i32, i16, i16*)
 ; CHECK: %[[BC:.*]] = bitcast i32 (i32)* %0 to { i32, i16 } (i32, i16)*
@@ -94,3 +95,5 @@ define i32 (i32, i32)* @g(i32) {
 ; CHECK: store i16 %[[XVAL1]], i16* %3
 ; CHECK: ret i32 %[[XVAL0]]
 
+; CHECK: declare void @__dfsw_custom3(i32, i16, i16*, ...)
+; CHECK: declare i32 @__dfsw_custom4(i32, i16, i16*, i16*, ...)

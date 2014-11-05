@@ -234,12 +234,14 @@ class DataFlowSanitizer : public ModulePass {
   FunctionType *DFSanUnimplementedFnTy;
   FunctionType *DFSanSetLabelFnTy;
   FunctionType *DFSanNonzeroLabelFnTy;
+  FunctionType *DFSanVarargWrapperFnTy;
   Constant *DFSanUnionFn;
   Constant *DFSanCheckedUnionFn;
   Constant *DFSanUnionLoadFn;
   Constant *DFSanUnimplementedFn;
   Constant *DFSanSetLabelFn;
   Constant *DFSanNonzeroLabelFn;
+  Constant *DFSanVarargWrapperFn;
   MDNode *ColdCallWeights;
   DFSanABIList ABIList;
   DenseMap<Value *, Function *> UnwrappedFnMap;
@@ -439,6 +441,8 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
                                         DFSanSetLabelArgs, /*isVarArg=*/false);
   DFSanNonzeroLabelFnTy = FunctionType::get(
       Type::getVoidTy(*Ctx), None, /*isVarArg=*/false);
+  DFSanVarargWrapperFnTy = FunctionType::get(
+      Type::getVoidTy(*Ctx), Type::getInt8PtrTy(*Ctx), /*isVarArg=*/false);
 
   if (GetArgTLSPtr) {
     Type *ArgTLSTy = ArrayType::get(ShadowTy, 64);
@@ -518,15 +522,26 @@ DataFlowSanitizer::buildWrapperFunction(Function *F, StringRef NewFName,
                                        AttributeSet::ReturnIndex));
 
   BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", NewF);
-  std::vector<Value *> Args;
-  unsigned n = FT->getNumParams();
-  for (Function::arg_iterator ai = NewF->arg_begin(); n != 0; ++ai, --n)
-    Args.push_back(&*ai);
-  CallInst *CI = CallInst::Create(F, Args, "", BB);
-  if (FT->getReturnType()->isVoidTy())
-    ReturnInst::Create(*Ctx, BB);
-  else
-    ReturnInst::Create(*Ctx, CI, BB);
+  if (F->isVarArg()) {
+    NewF->removeAttributes(
+        AttributeSet::FunctionIndex,
+        AttributeSet().addAttribute(*Ctx, AttributeSet::FunctionIndex,
+                                    "split-stack"));
+    CallInst::Create(DFSanVarargWrapperFn,
+                     IRBuilder<>(BB).CreateGlobalStringPtr(F->getName()), "",
+                     BB);
+    new UnreachableInst(*Ctx, BB);
+  } else {
+    std::vector<Value *> Args;
+    unsigned n = FT->getNumParams();
+    for (Function::arg_iterator ai = NewF->arg_begin(); n != 0; ++ai, --n)
+      Args.push_back(&*ai);
+    CallInst *CI = CallInst::Create(F, Args, "", BB);
+    if (FT->getReturnType()->isVoidTy())
+      ReturnInst::Create(*Ctx, BB);
+    else
+      ReturnInst::Create(*Ctx, CI, BB);
+  }
 
   return NewF;
 }
@@ -617,6 +632,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
   }
   DFSanNonzeroLabelFn =
       Mod->getOrInsertFunction("__dfsan_nonzero_label", DFSanNonzeroLabelFnTy);
+  DFSanVarargWrapperFn = Mod->getOrInsertFunction("__dfsan_vararg_wrapper",
+                                                  DFSanVarargWrapperFnTy);
 
   std::vector<Function *> FnsToInstrument;
   llvm::SmallPtrSet<Function *, 2> FnsWithNativeABI;
@@ -627,7 +644,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         i != DFSanUnionLoadFn &&
         i != DFSanUnimplementedFn &&
         i != DFSanSetLabelFn &&
-        i != DFSanNonzeroLabelFn)
+        i != DFSanNonzeroLabelFn &&
+        i != DFSanVarargWrapperFn)
       FnsToInstrument.push_back(&*i);
   }
 
@@ -1362,6 +1380,11 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
     visitOperandShadowInst(*CS.getInstruction());
     return;
   }
+
+  // Calls to this function are synthesized in wrappers, and we shouldn't
+  // instrument them.
+  if (F == DFSF.DFS.DFSanVarargWrapperFn)
+    return;
 
   assert(!(cast<FunctionType>(
       CS.getCalledValue()->getType()->getPointerElementType())->isVarArg() &&
