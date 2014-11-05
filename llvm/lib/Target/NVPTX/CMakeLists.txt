@@ -29,6 +29,7 @@ set(NVPTXCodeGen_sources
   NVPTXMCExpr.cpp
   NVPTXReplaceImageHandles.cpp
   NVPTXImageOptimizer.cpp
+  NVPTXLowerStructArgs.cpp
   )
 
 add_llvm_target(NVPTXCodeGen ${NVPTXCodeGen_sources})
