@@ -147,6 +147,15 @@ extern "C" SANITIZER_INTERFACE_ATTRIBUTE void __dfsan_nonzero_label() {
     Report("WARNING: DataFlowSanitizer: saw nonzero label\n");
 }
 
+// Indirect call to an uninstrumented vararg function. We don't have a way of
+// handling these at the moment.
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE void
+__dfsan_vararg_wrapper(const char *fname) {
+  Report("FATAL: DataFlowSanitizer: unsupported indirect call to vararg "
+         "function %s\n", fname);
+  Die();
+}
+
 // Like __dfsan_union, but for use from the client or custom functions.  Hence
 // the equality comparison is done here before calling __dfsan_union.
 SANITIZER_INTERFACE_ATTRIBUTE dfsan_label

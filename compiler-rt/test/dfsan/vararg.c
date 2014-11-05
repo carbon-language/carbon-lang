@@ -1,0 +1,24 @@
+// RUN: %clang_dfsan -m64 %s -o %t
+// RUN: not %run %t 2>&1 | FileCheck %s
+// RUN: %run %t foo
+// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t
+// RUN: not %run %t 2>&1 | FileCheck %s
+// RUN: %run %t foo
+
+#include <stdio.h>
+
+int do_nothing(const char *format, ...) {
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  int (*fp)(const char *, ...);
+
+  if (argc > 1)
+    fp = do_nothing;
+  else
+    fp = printf;
+
+  // CHECK: FATAL: DataFlowSanitizer: unsupported indirect call to vararg function printf
+  fp("hello %s\n", "world");
+}
