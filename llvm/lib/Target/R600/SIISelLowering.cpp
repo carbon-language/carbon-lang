@@ -2019,6 +2019,50 @@ MachineSDNode *SITargetLowering::wrapAddr64Rsrc(SelectionDAG &DAG,
 #endif
 }
 
+/// \brief Return a resource descriptor with the 'Add TID' bit enabled
+///        The TID (Thread ID) is multipled by the stride value (bits [61:48]
+///        of the resource descriptor) to create an offset, which is added to the
+///        resource ponter.
+MachineSDNode *SITargetLowering::buildRSRC(SelectionDAG &DAG,
+                                           SDLoc DL,
+                                           SDValue Ptr,
+                                           uint32_t RsrcDword1,
+                                           uint64_t RsrcDword2And3) const {
+  SDValue PtrLo = DAG.getTargetExtractSubreg(AMDGPU::sub0, DL, MVT::i32, Ptr);
+  SDValue PtrHi = DAG.getTargetExtractSubreg(AMDGPU::sub1, DL, MVT::i32, Ptr);
+  if (RsrcDword1) {
+    PtrHi = SDValue(DAG.getMachineNode(AMDGPU::S_OR_B32, DL, MVT::i32, PtrHi,
+                                     DAG.getConstant(RsrcDword1, MVT::i32)), 0);
+  }
+
+  SDValue DataLo = buildSMovImm32(DAG, DL,
+                                  RsrcDword2And3 & UINT64_C(0xFFFFFFFF));
+  SDValue DataHi = buildSMovImm32(DAG, DL, RsrcDword2And3 >> 32);
+
+  const SDValue Ops[] = {
+    DAG.getTargetConstant(AMDGPU::SReg_128RegClassID, MVT::i32),
+    PtrLo,
+    DAG.getTargetConstant(AMDGPU::sub0, MVT::i32),
+    PtrHi,
+    DAG.getTargetConstant(AMDGPU::sub1, MVT::i32),
+    DataLo,
+    DAG.getTargetConstant(AMDGPU::sub2, MVT::i32),
+    DataHi,
+    DAG.getTargetConstant(AMDGPU::sub3, MVT::i32)
+  };
+
+  return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::v4i32, Ops);
+}
+
+MachineSDNode *SITargetLowering::buildScratchRSRC(SelectionDAG &DAG,
+                                                  SDLoc DL,
+                                                  SDValue Ptr) const {
+  uint64_t Rsrc = AMDGPU::RSRC_DATA_FORMAT | AMDGPU::RSRC_TID_ENABLE |
+                  0xffffffff; // Size
+
+  return buildRSRC(DAG, DL, Ptr, 0, Rsrc);
+}
+
 MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
                                                 SelectionDAG &DAG) const {
 
