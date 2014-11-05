@@ -1,4 +1,4 @@
-//===-- llvm/GlobalObject.h - Class to represent a global object *- C++ -*-===//
+//===-- llvm/GlobalObject.h - Class to represent global objects -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
