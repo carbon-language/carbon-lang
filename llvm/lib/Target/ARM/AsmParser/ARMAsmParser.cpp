@@ -270,6 +270,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool hasThumb2DSP() const {
     return STI.getFeatureBits() & ARM::FeatureDSPThumb2;
   }
+  bool hasD16() const {
+    return STI.getFeatureBits() & ARM::FeatureD16;
+  }
 
   void SwitchMode() {
     uint64_t FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
@@ -2987,6 +2990,10 @@ int ARMAsmParser::tryParseRegister() {
     Parser.Lex(); // Eat identifier token.
     return Entry->getValue();
   }
+
+  // Some FPUs only have 16 D registers, so D16-D31 are invalid
+  if (hasD16() && RegNum >= ARM::D16 && RegNum <= ARM::D31)
+    return -1;
 
   Parser.Lex(); // Eat identifier token.
 

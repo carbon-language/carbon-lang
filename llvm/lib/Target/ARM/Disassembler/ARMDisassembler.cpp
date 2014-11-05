@@ -1017,7 +1017,11 @@ static const uint16_t DPRDecoderTable[] = {
 
 static DecodeStatus DecodeDPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder) {
-  if (RegNo > 31)
+  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
+                                                          .getFeatureBits();
+  bool hasD16 = featureBits & ARM::FeatureD16;
+
+  if (RegNo > 31 || (hasD16 && RegNo > 15))
     return MCDisassembler::Fail;
 
   unsigned Register = DPRDecoderTable[RegNo];

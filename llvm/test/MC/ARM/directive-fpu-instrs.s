@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple armv7-unknown-linux-gnueabi -mattr=+vfp3,+d16,-neon %s
+// RUN: llvm-mc -triple armv7-unknown-linux-gnueabi -mattr=+vfp3,-neon %s
 
 .fpu neon
 VAND d3, d5, d5
