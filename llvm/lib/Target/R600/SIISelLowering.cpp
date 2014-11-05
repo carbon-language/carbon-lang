@@ -606,37 +606,11 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   MachineBasicBlock::iterator I = *MI;
   const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
       getTargetMachine().getSubtargetImpl()->getInstrInfo());
-  MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
 
   switch (MI->getOpcode()) {
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
-  case AMDGPU::SI_ADDR64_RSRC: {
-    unsigned SuperReg = MI->getOperand(0).getReg();
-    unsigned SubRegLo = MRI.createVirtualRegister(&AMDGPU::SGPR_64RegClass);
-    unsigned SubRegHi = MRI.createVirtualRegister(&AMDGPU::SGPR_64RegClass);
-    unsigned SubRegHiHi = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
-    unsigned SubRegHiLo = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B64), SubRegLo)
-            .addOperand(MI->getOperand(1));
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B32), SubRegHiLo)
-            .addImm(0);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B32), SubRegHiHi)
-            .addImm(AMDGPU::RSRC_DATA_FORMAT >> 32);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::REG_SEQUENCE), SubRegHi)
-            .addReg(SubRegHiLo)
-            .addImm(AMDGPU::sub0)
-            .addReg(SubRegHiHi)
-            .addImm(AMDGPU::sub1);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::REG_SEQUENCE), SuperReg)
-            .addReg(SubRegLo)
-            .addImm(AMDGPU::sub0_sub1)
-            .addReg(SubRegHi)
-            .addImm(AMDGPU::sub2_sub3);
-    MI->eraseFromParent();
-    break;
-  }
   case AMDGPU::V_SUB_F64: {
     unsigned DestReg = MI->getOperand(0).getReg();
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F64), DestReg)
@@ -1995,6 +1969,56 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   }
 }
 
+static SDValue buildSMovImm32(SelectionDAG &DAG, SDLoc DL, uint64_t Val) {
+  SDValue K = DAG.getTargetConstant(Val, MVT::i32);
+  return SDValue(DAG.getMachineNode(AMDGPU::S_MOV_B32, DL, MVT::i32, K), 0);
+}
+
+MachineSDNode *SITargetLowering::wrapAddr64Rsrc(SelectionDAG &DAG,
+                                                SDLoc DL,
+                                                SDValue Ptr) const {
+#if 1
+    // XXX - Workaround for moveToVALU not handling different register class
+    // inserts for REG_SEQUENCE.
+
+    // Build the half of the subregister with the constants.
+    const SDValue Ops0[] = {
+      DAG.getTargetConstant(AMDGPU::SGPR_64RegClassID, MVT::i32),
+      buildSMovImm32(DAG, DL, 0),
+      DAG.getTargetConstant(AMDGPU::sub0, MVT::i32),
+      buildSMovImm32(DAG, DL, AMDGPU::RSRC_DATA_FORMAT >> 32),
+      DAG.getTargetConstant(AMDGPU::sub1, MVT::i32)
+    };
+
+    SDValue SubRegHi = SDValue(DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL,
+                                                  MVT::v2i32, Ops0), 0);
+
+    // Combine the constants and the pointer.
+    const SDValue Ops1[] = {
+      DAG.getTargetConstant(AMDGPU::SReg_128RegClassID, MVT::i32),
+      Ptr,
+      DAG.getTargetConstant(AMDGPU::sub0_sub1, MVT::i32),
+      SubRegHi,
+      DAG.getTargetConstant(AMDGPU::sub2_sub3, MVT::i32)
+    };
+
+    return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::v4i32, Ops1);
+#else
+    const SDValue Ops[] = {
+      DAG.getTargetConstant(AMDGPU::SReg_128RegClassID, MVT::i32),
+      Ptr,
+      DAG.getTargetConstant(AMDGPU::sub0_sub1, MVT::i32),
+      buildSMovImm32(DAG, DL, 0),
+      DAG.getTargetConstant(AMDGPU::sub2, MVT::i32),
+      buildSMovImm32(DAG, DL, AMDGPU::RSRC_DATA_FORMAT >> 32),
+      DAG.getTargetConstant(AMDGPU::sub3, MVT::i32)
+    };
+
+    return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::v4i32, Ops);
+
+#endif
+}
+
 MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
                                                 SelectionDAG &DAG) const {
 
@@ -2020,9 +2044,10 @@ MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
       return N;
     }
     ConstantSDNode *Offset = cast<ConstantSDNode>(N->getOperand(1));
-    MachineSDNode *RSrc = DAG.getMachineNode(AMDGPU::SI_ADDR64_RSRC, DL,
-                                             MVT::i128,
-                                             DAG.getConstant(0, MVT::i64));
+
+    const SDValue Zero64 = DAG.getTargetConstant(0, MVT::i64);
+    SDValue Ptr(DAG.getMachineNode(AMDGPU::S_MOV_B64, DL, MVT::i64, Zero64), 0);
+    MachineSDNode *RSrc = wrapAddr64Rsrc(DAG, DL, Ptr);
 
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(SDValue(RSrc, 0));

@@ -105,6 +105,8 @@ public:
   SDValue CreateLiveInRegister(SelectionDAG &DAG, const TargetRegisterClass *RC,
                                unsigned Reg, EVT VT) const override;
   void legalizeTargetIndependentNode(SDNode *Node, SelectionDAG &DAG) const;
+
+  MachineSDNode *wrapAddr64Rsrc(SelectionDAG &DAG, SDLoc DL, SDValue Ptr) const;
 };
 
 } // End namespace llvm

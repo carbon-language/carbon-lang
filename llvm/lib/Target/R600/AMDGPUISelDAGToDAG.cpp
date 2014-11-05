@@ -850,11 +850,6 @@ bool AMDGPUDAGToDAGISel::SelectDS64Bit4ByteAligned(SDValue Addr, SDValue &Base,
   return true;
 }
 
-static SDValue wrapAddr64Rsrc(SelectionDAG *DAG, SDLoc DL, SDValue Ptr) {
-  return SDValue(DAG->getMachineNode(AMDGPU::SI_ADDR64_RSRC, DL, MVT::v4i32,
-                                     Ptr), 0);
-}
-
 static bool isLegalMUBUFImmOffset(const ConstantSDNode *Imm) {
   return isUInt<12>(Imm->getZExtValue());
 }
@@ -930,9 +925,14 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
   ConstantSDNode *C = cast<ConstantSDNode>(Addr64);
   if (C->getSExtValue()) {
     SDLoc DL(Addr);
-    SRsrc = wrapAddr64Rsrc(CurDAG, DL, Ptr);
+
+    const SITargetLowering& Lowering =
+      *static_cast<const SITargetLowering*>(getTargetLowering());
+
+    SRsrc = SDValue(Lowering.wrapAddr64Rsrc(*CurDAG, DL, Ptr), 0);
     return true;
   }
+
   return false;
 }
 
@@ -951,7 +951,6 @@ static SDValue buildSMovImm32(SelectionDAG *DAG, SDLoc DL, uint64_t Val) {
 
 static SDValue buildRSRC(SelectionDAG *DAG, SDLoc DL, SDValue Ptr,
                          uint32_t RsrcDword1, uint64_t RsrcDword2And3) {
-
   SDValue PtrLo = DAG->getTargetExtractSubreg(AMDGPU::sub0, DL, MVT::i32, Ptr);
   SDValue PtrHi = DAG->getTargetExtractSubreg(AMDGPU::sub1, DL, MVT::i32, Ptr);
   if (RsrcDword1) {

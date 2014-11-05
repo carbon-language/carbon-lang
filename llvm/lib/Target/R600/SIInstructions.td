@@ -1802,14 +1802,6 @@ def SI_INDIRECT_DST_V16 : SI_INDIRECT_DST<VReg_512>;
 
 let usesCustomInserter = 1 in {
 
-// This pseudo instruction takes a pointer as input and outputs a resource
-// constant that can be used with the ADDR64 MUBUF instructions.
-def SI_ADDR64_RSRC : InstSI <
-  (outs SReg_128:$srsrc),
-  (ins SSrc_64:$ptr),
-  "", []
->;
-
 def V_SUB_F64 : InstSI <
   (outs VReg_64:$dst),
   (ins VReg_64:$src0, VReg_64:$src1),
