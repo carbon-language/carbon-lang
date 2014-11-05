@@ -6,12 +6,22 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-struct sigaction user_sigaction;
-struct sigaction original_sigaction;
+struct sigaction original_sigaction_sigbus;
+struct sigaction original_sigaction_sigsegv;
 
 void User_OnSIGSEGV(int signum, siginfo_t *siginfo, void *context) {
   fprintf(stderr, "User sigaction called\n");
+  struct sigaction original_sigaction;
+  if (signum == SIGBUS)
+    original_sigaction = original_sigaction_sigbus;
+  else if (signum == SIGSEGV)
+    original_sigaction = original_sigaction_sigsegv;
+  else {
+    printf("Invalid signum");
+    exit(1);
+  }
   if (original_sigaction.sa_flags | SA_SIGINFO)
     original_sigaction.sa_sigaction(signum, siginfo, context);
   else
@@ -23,21 +33,22 @@ int DoSEGV() {
   return *x;
 }
 
-int main() {
+int InstallHandler(int signum, struct sigaction *original_sigaction) {
+  struct sigaction user_sigaction;
   user_sigaction.sa_sigaction = User_OnSIGSEGV;
   user_sigaction.sa_flags = SA_SIGINFO;
-#if defined(__APPLE__) && !defined(__LP64__)
-  // On 32-bit Darwin KERN_PROTECTION_FAILURE (SIGBUS) is delivered.
-  int signum = SIGBUS;
-#else
-  // On 64-bit Darwin KERN_INVALID_ADDRESS (SIGSEGV) is delivered.
-  // On Linux SIGSEGV is delivered as well.
-  int signum = SIGSEGV;
-#endif
-  if (sigaction(signum, &user_sigaction, &original_sigaction)) {
+  if (sigaction(signum, &user_sigaction, original_sigaction)) {
     perror("sigaction");
     return 1;
   }
+  return 0;
+}
+
+int main() {
+  // Let's install handlers for both SIGSEGV and SIGBUS, since pre-Yosemite
+  // 32-bit Darwin triggers SIGBUS instead.
+  if (InstallHandler(SIGSEGV, &original_sigaction_sigsegv)) return 1;
+  if (InstallHandler(SIGBUS, &original_sigaction_sigbus)) return 1;
   fprintf(stderr, "User sigaction installed\n");
   return DoSEGV();
 }
