@@ -812,17 +812,14 @@ void UnwrappedLineParser::parseStructuralElement() {
           parseLabel();
           return;
         }
-        // Recognize function-like macro usages without trailing semicolon.
-        if (FormatTok->Tok.is(tok::l_paren)) {
+        // Recognize function-like macro usages without trailing semicolon as
+        // well as free-standing macrose like Q_OBJECT.
+        bool FunctionLike = FormatTok->is(tok::l_paren);
+        if (FunctionLike)
           parseParens();
-          if (FormatTok->NewlinesBefore > 0 &&
-              tokenCanStartNewLine(FormatTok->Tok) && Text == Text.upper()) {
-            addUnwrappedLine();
-            return;
-          }
-        } else if (FormatTok->HasUnescapedNewline && Text.size() >= 5 &&
-                   Text == Text.upper()) {
-          // Recognize free-standing macros like Q_OBJECT.
+        if (FormatTok->NewlinesBefore > 0 &&
+            (Text.size() >= 5 || FunctionLike) &&
+            tokenCanStartNewLine(FormatTok->Tok) && Text == Text.upper()) {
           addUnwrappedLine();
           return;
         }

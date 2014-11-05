@@ -2569,6 +2569,11 @@ TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
                    "     Q_Object\n"
                    "  A() {\n}\n"
                    "}  ;"));
+
+  // Only if the next line can actually start an unwrapped line.
+  EXPECT_EQ("SOME_WEIRD_LOG_MACRO << SomeThing;",
+            format("SOME_WEIRD_LOG_MACRO\n"
+                   "<< SomeThing;"));
 }
 
 TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
