@@ -714,7 +714,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   FType = CGM.getContext().IntTy;
   EltTys.push_back(CreateMemberType(Unit, FType, "__flags", &FieldOffset));
   EltTys.push_back(CreateMemberType(Unit, FType, "__reserved", &FieldOffset));
-  FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
+  FType = CGM.getContext().getPointerType(Ty->getPointeeType());
   EltTys.push_back(CreateMemberType(Unit, FType, "__FuncPtr", &FieldOffset));
 
   FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
@@ -2953,7 +2953,9 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   fields.push_back(createFieldType("__reserved", C.IntTy, 0, loc, AS_public,
                                    blockLayout->getElementOffsetInBits(2),
                                    tunit, tunit));
-  fields.push_back(createFieldType("__FuncPtr", C.VoidPtrTy, 0, loc, AS_public,
+  auto *FnTy = block.getBlockExpr()->getFunctionType();
+  auto FnPtrType = CGM.getContext().getPointerType(FnTy->desugar());
+  fields.push_back(createFieldType("__FuncPtr", FnPtrType, 0, loc, AS_public,
                                    blockLayout->getElementOffsetInBits(3),
                                    tunit, tunit));
   fields.push_back(createFieldType(
