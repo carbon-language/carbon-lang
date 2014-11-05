@@ -32,6 +32,8 @@ class TestObjCIvarStripped(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
+        self.dbg.HandleCommand("add-dsym a.out.dSYM")
+
         breakpoint = target.BreakpointCreateByLocation(self.main_source, self.stop_line)
         self.assertTrue(breakpoint.IsValid() and breakpoint.GetNumLocations() > 0, VALID_BREAKPOINT)
 
