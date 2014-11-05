@@ -575,7 +575,7 @@ unsigned NamedMDNode::getNumOperands() const {
 
 MDNode *NamedMDNode::getOperand(unsigned i) const {
   assert(i < getNumOperands() && "Invalid Operand number!");
-  return dyn_cast<MDNode>(&*getNMDOps(Operands)[i]);
+  return &*getNMDOps(Operands)[i];
 }
 
 void NamedMDNode::addOperand(MDNode *M) {
