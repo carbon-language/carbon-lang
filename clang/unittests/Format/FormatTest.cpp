@@ -1964,7 +1964,8 @@ TEST_F(FormatTest, FormatsEnum) {
   verifyFormat("enum E { // comment\n"
                "  ONE,\n"
                "  TWO\n"
-               "};");
+               "};\n"
+               "int i;");
 }
 
 TEST_F(FormatTest, FormatsEnumsWithErrors) {
