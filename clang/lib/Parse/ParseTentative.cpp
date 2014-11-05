@@ -1006,6 +1006,28 @@ bool Parser::isTentativelyDeclared(IdentifierInfo *II) {
       != TentativelyDeclaredIdentifiers.end();
 }
 
+namespace {
+class TentativeParseCCC : public CorrectionCandidateCallback {
+public:
+  TentativeParseCCC(const Token &Next) {
+    WantRemainingKeywords = false;
+    WantTypeSpecifiers = Next.is(tok::l_paren) || Next.is(tok::r_paren) ||
+                         Next.is(tok::greater) || Next.is(tok::l_brace) ||
+                         Next.is(tok::identifier);
+  }
+
+  bool ValidateCandidate(const TypoCorrection &Candidate) override {
+    // Reject any candidate that only resolves to instance members since they
+    // aren't viable as standalone identifiers instead of member references.
+    if (Candidate.isResolved() && !Candidate.isKeyword() &&
+        std::all_of(Candidate.begin(), Candidate.end(),
+                    [](NamedDecl *ND) { return ND->isCXXInstanceMember(); }))
+      return false;
+
+    return CorrectionCandidateCallback::ValidateCandidate(Candidate);
+  }
+};
+}
 /// isCXXDeclarationSpecifier - Returns TPResult::True if it is a declaration
 /// specifier, TPResult::False if it is not, TPResult::Ambiguous if it could
 /// be either a decl-specifier or a function-style cast, and TPResult::Error
@@ -1131,14 +1153,8 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
       // a parse error one way or another. In that case, tell the caller that
       // this is ambiguous. Typo-correct to type and expression keywords and
       // to types and identifiers, in order to try to recover from errors.
-      auto TypoCorrection = llvm::make_unique<CorrectionCandidateCallback>();
-      TypoCorrection->WantRemainingKeywords = false;
-      TypoCorrection->WantTypeSpecifiers =
-          Next.is(tok::l_paren) || Next.is(tok::r_paren) ||
-          Next.is(tok::greater) || Next.is(tok::l_brace) ||
-          Next.is(tok::identifier);
       switch (TryAnnotateName(false /* no nested name specifier */,
-                              std::move(TypoCorrection))) {
+                              llvm::make_unique<TentativeParseCCC>(Next))) {
       case ANK_Error:
         return TPResult::Error;
       case ANK_TentativeDecl:
