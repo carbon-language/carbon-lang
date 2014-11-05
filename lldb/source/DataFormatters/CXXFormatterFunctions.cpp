@@ -202,7 +202,7 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
     if (!valobj_addr)
         return false;
     
-    ReadStringAndDumpToStreamOptions options;
+    ReadStringAndDumpToStreamOptions options(valobj);
     options.SetLocation(valobj_addr);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
@@ -229,7 +229,7 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     if (!valobj_addr)
         return false;
     
-    ReadStringAndDumpToStreamOptions options;
+    ReadStringAndDumpToStreamOptions options(valobj);
     options.SetLocation(valobj_addr);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
@@ -269,7 +269,7 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     ClangASTType wchar_clang_type = ClangASTContext::GetBasicType(ast, lldb::eBasicTypeWChar);
     const uint32_t wchar_size = wchar_clang_type.GetBitSize();
 
-    ReadStringAndDumpToStreamOptions options;
+    ReadStringAndDumpToStreamOptions options(valobj);
     options.SetLocation(data_addr);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
@@ -305,7 +305,7 @@ lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& st
     if (!value.empty())
         stream.Printf("%s ", value.c_str());
 
-    ReadBufferAndDumpToStreamOptions options;
+    ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(data);
     options.SetStream(&stream);
     options.SetPrefixToken('u');
@@ -330,7 +330,7 @@ lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& st
     if (!value.empty())
         stream.Printf("%s ", value.c_str());
     
-    ReadBufferAndDumpToStreamOptions options;
+    ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(data);
     options.SetStream(&stream);
     options.SetPrefixToken('U');
@@ -350,7 +350,7 @@ lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& str
     if (error.Fail())
         return false;
     
-    ReadBufferAndDumpToStreamOptions options;
+    ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(data);
     options.SetStream(&stream);
     options.SetPrefixToken('L');
@@ -481,13 +481,12 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
     size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
     location_sp->GetPointeeData(extractor, 0, size);
     
-    lldb_private::formatters::ReadBufferAndDumpToStreamOptions options;
+    ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(extractor); // none of this matters for a string - pass some defaults
     options.SetStream(&stream);
     options.SetPrefixToken(0);
     options.SetQuote('"');
     options.SetSourceSize(size);
-    options.SetEscapeNonPrintables(true);
     lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
     
     return true;
@@ -836,7 +835,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             return false;
         if (has_explicit_length && is_unicode)
         {
-            ReadStringAndDumpToStreamOptions options;
+            ReadStringAndDumpToStreamOptions options(valobj);
             options.SetLocation(location);
             options.SetProcessSP(process_sp);
             options.SetStream(&stream);
@@ -848,7 +847,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         }
         else
         {
-            ReadStringAndDumpToStreamOptions options;
+            ReadStringAndDumpToStreamOptions options(valobj);
             options.SetLocation(location+1);
             options.SetProcessSP(process_sp);
             options.SetStream(&stream);
@@ -883,7 +882,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             if (error.Fail())
                 return false;
         }
-        ReadStringAndDumpToStreamOptions options;
+        ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
@@ -899,7 +898,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         explicit_length = reader.GetField<uint32_t>(ConstString("lengthAndRef")) >> 20;
         lldb::addr_t location = valobj.GetValueAsUnsigned(0) + ptr_size + 4;
         
-        ReadStringAndDumpToStreamOptions options;
+        ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
@@ -914,7 +913,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         uint64_t location = valobj_addr + 2*ptr_size;
         if (!has_explicit_length)
             location++;
-        ReadStringAndDumpToStreamOptions options;
+        ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
@@ -930,7 +929,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             return false;
         if (has_explicit_length && !has_null)
             explicit_length++; // account for the fact that there is no NULL and we need to have one added
-        ReadStringAndDumpToStreamOptions options;
+        ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetPrefixToken('@');

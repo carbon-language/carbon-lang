@@ -348,6 +348,9 @@ public:
     GetAutoOneLineSummaries () const;
     
     bool
+    GetEscapeNonPrintables () const;
+    
+    bool
     GetNotifyVoid () const;
 
     

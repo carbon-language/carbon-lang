@@ -144,7 +144,8 @@ g_properties[] =
 {   "thread-format",            OptionValue::eTypeString , true, 0    , DEFAULT_THREAD_FORMAT, NULL, "The default thread format string to use when displaying thread information." },
 {   "use-external-editor",      OptionValue::eTypeBoolean, true, false, NULL, NULL, "Whether to use an external editor or not." },
 {   "use-color",                OptionValue::eTypeBoolean, true, true , NULL, NULL, "Whether to use Ansi color codes or not." },
-{   "auto-one-line-summaries",     OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will automatically display small structs in one-liner format (default: true)." },
+{   "auto-one-line-summaries",  OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will automatically display small structs in one-liner format (default: true)." },
+{   "escape-non-printables",    OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will automatically escape non-printable and escape characters when formatting strings." },
 
     {   NULL,                       OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
 };
@@ -165,7 +166,8 @@ enum
     ePropertyThreadFormat,
     ePropertyUseExternalEditor,
     ePropertyUseColor,
-    ePropertyAutoOneLineSummaries
+    ePropertyAutoOneLineSummaries,
+    ePropertyEscapeNonPrintables
 };
 
 Debugger::LoadPluginCallbackType Debugger::g_load_plugin_callback = NULL;
@@ -177,6 +179,7 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
                             const char *value)
 {
     bool is_load_script = strcmp(property_path,"target.load-script-from-symbol-file") == 0;
+    bool is_escape_non_printables = strcmp(property_path, "escape-non-printables") == 0;
     TargetSP target_sp;
     LoadScriptFromSymFile load_script_old_value;
     if (is_load_script && exe_ctx->GetTargetSP())
@@ -223,6 +226,10 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
                     }
                 }
             }
+        }
+        else if (is_escape_non_printables)
+        {
+            DataVisualization::ForceUpdate();
         }
     }
     return error;
@@ -366,7 +373,13 @@ Debugger::GetAutoOneLineSummaries () const
 {
     const uint32_t idx = ePropertyAutoOneLineSummaries;
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, true);
+}
 
+bool
+Debugger::GetEscapeNonPrintables () const
+{
+    const uint32_t idx = ePropertyEscapeNonPrintables;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, true);
 }
 
 #pragma mark Debugger

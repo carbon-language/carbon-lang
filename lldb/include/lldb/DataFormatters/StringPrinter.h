@@ -41,6 +41,8 @@ namespace lldb_private {
             {
             }
             
+            ReadStringAndDumpToStreamOptions (ValueObject& valobj);
+            
             ReadStringAndDumpToStreamOptions&
             SetLocation (uint64_t l)
             {
@@ -169,6 +171,8 @@ namespace lldb_private {
             m_escape_non_printables(true)
             {
             }
+            
+            ReadBufferAndDumpToStreamOptions (ValueObject& valobj);
             
             ReadBufferAndDumpToStreamOptions&
             SetData (DataExtractor d)

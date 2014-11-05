@@ -10,7 +10,9 @@
 #include "lldb/DataFormatters/StringPrinter.h"
 
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
@@ -415,6 +417,19 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
         stream.Printf("%c",quote);
     return true;
 }
+
+lldb_private::formatters::ReadStringAndDumpToStreamOptions::ReadStringAndDumpToStreamOptions (ValueObject& valobj) :
+    ReadStringAndDumpToStreamOptions()
+{
+    SetEscapeNonPrintables(valobj.GetTargetSP()->GetDebugger().GetEscapeNonPrintables());
+}
+
+lldb_private::formatters::ReadBufferAndDumpToStreamOptions::ReadBufferAndDumpToStreamOptions (ValueObject& valobj) :
+    ReadBufferAndDumpToStreamOptions()
+{
+    SetEscapeNonPrintables(valobj.GetTargetSP()->GetDebugger().GetEscapeNonPrintables());
+}
+
 
 namespace lldb_private
 {
