@@ -187,5 +187,6 @@ def MakeInlineTest(__file, __globals, decorators=None):
 
     # Add the test case to the globals, and hide InlineTest
     __globals.update({test_name : test})
-
+    
+    return test
 

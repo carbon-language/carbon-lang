@@ -999,6 +999,8 @@ class Base(unittest2.TestCase):
             with recording(self, traceAlways) as sbuf:
                 print >> sbuf, "Adding tearDown hook:", getsource_if_available(hook)
             self.hooks.append(hook)
+        
+        return self
 
     def deletePexpectChild(self):
         # This is for the case of directly spawning 'lldb' and interacting with it
@@ -1033,7 +1035,14 @@ class Base(unittest2.TestCase):
         for hook in reversed(self.hooks):
             with recording(self, traceAlways) as sbuf:
                 print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
-            hook()
+            import inspect
+            hook_argc = len(inspect.getargspec(hook).args)
+            if hook_argc == 0:
+                hook()
+            elif hook_argc == 1:
+                hook(self)
+            else:
+                hook() # try the plain call and hope it works
 
         del self.hooks
 
