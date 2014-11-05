@@ -330,3 +330,17 @@ define i1 @exact_lshr_ne_noexactlog(i8 %a) {
  %cmp = icmp ne i8 %shr, 30
  ret i1 %cmp
 }
+
+; CHECK-LABEL: @exact_lshr_lowbit
+; CHECK-NEXT: ret i32 7
+define i32 @exact_lshr_lowbit(i32 %shiftval) {
+  %shr = lshr exact i32 7, %shiftval
+  ret i32 %shr
+}
+
+; CHECK-LABEL: @exact_ashr_lowbit
+; CHECK-NEXT: ret i32 7
+define i32 @exact_ashr_lowbit(i32 %shiftval) {
+  %shr = ashr exact i32 7, %shiftval
+  ret i32 %shr
+}
