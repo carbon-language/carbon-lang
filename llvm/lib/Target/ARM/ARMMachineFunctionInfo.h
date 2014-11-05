@@ -86,6 +86,7 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// areas.
   unsigned GPRCS1Size;
   unsigned GPRCS2Size;
+  unsigned DPRCSAlignGapSize;
   unsigned DPRCSSize;
 
   /// NumAlignedDPRCS2Regs - The number of callee-saved DPRs that are saved in
@@ -134,7 +135,7 @@ public:
     RestoreSPFromFP(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
-    GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
+    GPRCS1Size(0), GPRCS2Size(0), DPRCSAlignGapSize(0), DPRCSSize(0),
     NumAlignedDPRCS2Regs(0),
     JumpTableUId(0), PICLabelUId(0),
     VarArgsFrameIndex(0), HasITBlocks(false), GlobalBaseReg(0) {}
@@ -183,10 +184,12 @@ public:
 
   unsigned getGPRCalleeSavedArea1Size() const { return GPRCS1Size; }
   unsigned getGPRCalleeSavedArea2Size() const { return GPRCS2Size; }
+  unsigned getDPRCalleeSavedGapSize() const   { return DPRCSAlignGapSize; }
   unsigned getDPRCalleeSavedAreaSize()  const { return DPRCSSize; }
 
   void setGPRCalleeSavedArea1Size(unsigned s) { GPRCS1Size = s; }
   void setGPRCalleeSavedArea2Size(unsigned s) { GPRCS2Size = s; }
+  void setDPRCalleeSavedGapSize(unsigned s)   { DPRCSAlignGapSize = s; }
   void setDPRCalleeSavedAreaSize(unsigned s)  { DPRCSSize = s; }
 
   unsigned getArgumentStackSize() const { return ArgumentStackSize; }

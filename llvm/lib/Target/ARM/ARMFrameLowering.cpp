@@ -260,10 +260,11 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Determine starting offsets of spill areas.
   bool HasFP = hasFP(MF);
-  unsigned DPRCSOffset  = NumBytes - (ArgRegsSaveSize + GPRCS1Size
-                                      + GPRCS2Size + DPRCSSize);
-  unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
-  unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
+  unsigned GPRCS1Offset = NumBytes - ArgRegsSaveSize - GPRCS1Size;
+  unsigned GPRCS2Offset = GPRCS1Offset - GPRCS2Size;
+  unsigned DPRAlign = DPRCSSize ? std::min(8U, Align) : 4U;
+  unsigned DPRGapSize = (GPRCS1Size + GPRCS2Size + ArgRegsSaveSize) % DPRAlign;
+  unsigned DPRCSOffset = GPRCS2Offset - DPRGapSize - DPRCSSize;
   int FramePtrOffsetInPush = 0;
   if (HasFP) {
     FramePtrOffsetInPush = MFI->getObjectOffset(FramePtrSpillFI)
@@ -278,6 +279,15 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Move past area 2.
   if (GPRCS2Size > 0)
     GPRCS2Push = LastPush = MBBI++;
+
+  // Prolog/epilog inserter assumes we correctly align DPRs on the stack, so our
+  // .cfi_offset operations will reflect that.
+  if (DPRGapSize) {
+    assert(DPRGapSize == 4 && "unexpected alignment requirements for DPRs");
+    if (!tryFoldSPUpdateIntoPushPop(STI, MF, LastPush, DPRGapSize))
+      emitSPUpdate(isARM, MBB, MBBI, dl, TII, -DPRGapSize,
+                   MachineInstr::FrameSetup);
+  }
 
   // Move past area 3.
   if (DPRCSSize > 0) {
@@ -508,6 +518,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   AFI->setGPRCalleeSavedArea1Size(GPRCS1Size);
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
+  AFI->setDPRCalleeSavedGapSize(DPRGapSize);
   AFI->setDPRCalleeSavedAreaSize(DPRCSSize);
 
   // If we need dynamic stack realignment, do it here. Be paranoid and make
@@ -613,6 +624,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
     NumBytes -= (ArgRegsSaveSize +
                  AFI->getGPRCalleeSavedArea1Size() +
                  AFI->getGPRCalleeSavedArea2Size() +
+                 AFI->getDPRCalleeSavedGapSize() +
                  AFI->getDPRCalleeSavedAreaSize());
 
     // Reset SP based on frame pointer only if the stack frame extends beyond
@@ -661,6 +673,12 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
       while (MBBI->getOpcode() == ARM::VLDMDIA_UPD)
         MBBI++;
     }
+    if (AFI->getDPRCalleeSavedGapSize()) {
+      assert(AFI->getDPRCalleeSavedGapSize() == 4 &&
+             "unexpected DPR alignment gap");
+      emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getDPRCalleeSavedGapSize());
+    }
+
     if (AFI->getGPRCalleeSavedArea2Size()) MBBI++;
     if (AFI->getGPRCalleeSavedArea1Size()) MBBI++;
   }
