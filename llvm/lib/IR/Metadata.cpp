@@ -578,7 +578,8 @@ MDNode *NamedMDNode::getOperand(unsigned i) const {
   return &*getNMDOps(Operands)[i];
 }
 
-void NamedMDNode::addOperand(MDNode *M) {
+void NamedMDNode::addOperand(Value *V) {
+  auto *M = cast<MDNode>(V);
   assert(!M->isFunctionLocal() &&
          "NamedMDNode operands must not be function-local!");
   getNMDOps(Operands).push_back(TrackingVH<MDNode>(M));

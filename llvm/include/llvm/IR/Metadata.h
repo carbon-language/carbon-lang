@@ -307,7 +307,7 @@ public:
 
   MDNode *getOperand(unsigned i) const;
   unsigned getNumOperands() const;
-  void addOperand(MDNode *M);
+  void addOperand(Value *M);
   StringRef getName() const;
   void print(raw_ostream &ROS) const;
   void dump() const;
