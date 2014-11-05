@@ -870,6 +870,19 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
       break;
     }
 
+    // Special handling of 'NA' only when applied to introduced or
+    // deprecated.
+    if ((Keyword == Ident_introduced || Keyword == Ident_deprecated) &&
+        Tok.is(tok::identifier)) {
+      IdentifierInfo *NA = Tok.getIdentifierInfo();
+      if (NA->getName() == "NA") {
+        ConsumeToken();
+        if (Keyword == Ident_introduced)
+          UnavailableLoc = KeywordLoc;
+        continue;
+      }
+    }
+    
     SourceRange VersionRange;
     VersionTuple Version = ParseVersionTuple(VersionRange);
 
