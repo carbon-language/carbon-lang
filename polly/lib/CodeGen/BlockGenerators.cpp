@@ -88,15 +88,6 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
     return New;
   }
 
-  // Or it is probably a scop-constant value defined as global, function
-  // parameter or an instruction not within the scop.
-  if (isa<GlobalValue>(Old) || isa<Argument>(Old))
-    return const_cast<Value *>(Old);
-
-  if (const Instruction *Inst = dyn_cast<Instruction>(Old))
-    if (!Statement.getParent()->getRegion().contains(Inst->getParent()))
-      return const_cast<Value *>(Old);
-
   if (Value *New = BBMap.lookup(Old))
     return New;
 
@@ -117,8 +108,16 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
       }
     }
 
-  // Now the scalar dependence is neither available nor SCEVCodegenable, this
-  // should never happen in the current code generator.
+  // A scop-constant value defined by a global or a function parameter.
+  if (isa<GlobalValue>(Old) || isa<Argument>(Old))
+    return const_cast<Value *>(Old);
+
+  // A scop-constant value defined by an instruction executed outside the scop.
+  if (const Instruction *Inst = dyn_cast<Instruction>(Old))
+    if (!Statement.getParent()->getRegion().contains(Inst->getParent()))
+      return const_cast<Value *>(Old);
+
+  // The scalar dependence is neither available nor SCEVCodegenable.
   llvm_unreachable("Unexpected scalar dependence in region!");
   return nullptr;
 }

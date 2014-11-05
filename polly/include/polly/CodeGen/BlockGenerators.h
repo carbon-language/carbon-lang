@@ -103,10 +103,11 @@ protected:
   /// @brief Get the new version of a value.
   ///
   /// Given an old value, we first check if a new version of this value is
-  /// available in the BBMap or GlobalMap. If the value is scop constant, we
-  /// assume it is a parameter and return the old value. In case it is not and
-  /// the value can be recomputed using SCEV, we do so. If the value can still
-  /// not be derived, this function will assert.
+  /// available in the BBMap or GlobalMap. In case it is not and the value can
+  /// be recomputed using SCEV, we do so. If we can not recompute a value
+  /// using SCEV, but we understand that the value is constant within the scop,
+  /// we return the old value.  If the value can still not be derived, this
+  /// function will assert.
   ///
   /// @param Old       The old Value.
   /// @param BBMap     A mapping from old values to their new values
