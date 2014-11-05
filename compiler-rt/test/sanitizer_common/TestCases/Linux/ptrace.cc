@@ -1,6 +1,4 @@
 // RUN: %clangxx -O0 %s -o %t && %run %t
-// XFAIL: arm-linux-gnueabi
-// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <assert.h>
 #include <signal.h>
