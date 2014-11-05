@@ -4,7 +4,7 @@
 ; FUNC-LABEL: {{^}}rint_f32:
 ; R600: RNDNE
 
-; SI: V_RNDNE_F32_e32
+; SI: v_rndne_f32_e32
 define void @rint_f32(float addrspace(1)* %out, float %in) {
 entry:
   %0 = call float @llvm.rint.f32(float %in) #0
@@ -16,8 +16,8 @@ entry:
 ; R600: RNDNE
 ; R600: RNDNE
 
-; SI: V_RNDNE_F32_e32
-; SI: V_RNDNE_F32_e32
+; SI: v_rndne_f32_e32
+; SI: v_rndne_f32_e32
 define void @rint_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %in) {
 entry:
   %0 = call <2 x float> @llvm.rint.v2f32(<2 x float> %in) #0
@@ -31,10 +31,10 @@ entry:
 ; R600: RNDNE
 ; R600: RNDNE
 
-; SI: V_RNDNE_F32_e32
-; SI: V_RNDNE_F32_e32
-; SI: V_RNDNE_F32_e32
-; SI: V_RNDNE_F32_e32
+; SI: v_rndne_f32_e32
+; SI: v_rndne_f32_e32
+; SI: v_rndne_f32_e32
+; SI: v_rndne_f32_e32
 define void @rint_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %in) {
 entry:
   %0 = call <4 x float> @llvm.rint.v4f32(<4 x float> %in) #0
@@ -45,7 +45,7 @@ entry:
 ; FUNC-LABEL: {{^}}legacy_amdil_round_nearest_f32:
 ; R600: RNDNE
 
-; SI: V_RNDNE_F32_e32
+; SI: v_rndne_f32_e32
 define void @legacy_amdil_round_nearest_f32(float addrspace(1)* %out, float %in) {
 entry:
   %0 = call float @llvm.AMDIL.round.nearest.f32(float %in) #0

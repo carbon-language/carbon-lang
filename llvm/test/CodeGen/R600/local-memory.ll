@@ -15,16 +15,16 @@
 ; CI-NEXT: .long 32768
 
 ; EG: LDS_WRITE
-; SI-NOT: S_WQM_B64
-; SI: DS_WRITE_B32
+; SI-NOT: s_wqm_b64
+; SI: ds_write_b32
 
 ; GROUP_BARRIER must be the last instruction in a clause
 ; EG: GROUP_BARRIER
 ; EG-NEXT: ALU clause
-; SI: S_BARRIER
+; SI: s_barrier
 
 ; EG: LDS_READ_RET
-; SI: DS_READ_B32 {{v[0-9]+}},
+; SI: ds_read_b32 {{v[0-9]+}},
 
 define void @local_memory(i32 addrspace(1)* %out) {
 entry:

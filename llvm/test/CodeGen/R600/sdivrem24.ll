@@ -2,10 +2,10 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}sdiv24_i8:
-; SI: V_CVT_F32_I32
-; SI: V_CVT_F32_I32
-; SI: V_RCP_F32
-; SI: V_CVT_I32_F32
+; SI: v_cvt_f32_i32
+; SI: v_cvt_f32_i32
+; SI: v_rcp_f32
+; SI: v_cvt_i32_f32
 
 ; EG: INT_TO_FLT
 ; EG-DAG: INT_TO_FLT
@@ -21,10 +21,10 @@ define void @sdiv24_i8(i8 addrspace(1)* %out, i8 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}sdiv24_i16:
-; SI: V_CVT_F32_I32
-; SI: V_CVT_F32_I32
-; SI: V_RCP_F32
-; SI: V_CVT_I32_F32
+; SI: v_cvt_f32_i32
+; SI: v_cvt_f32_i32
+; SI: v_rcp_f32
+; SI: v_cvt_i32_f32
 
 ; EG: INT_TO_FLT
 ; EG-DAG: INT_TO_FLT
@@ -40,10 +40,10 @@ define void @sdiv24_i16(i16 addrspace(1)* %out, i16 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}sdiv24_i32:
-; SI: V_CVT_F32_I32
-; SI: V_CVT_F32_I32
-; SI: V_RCP_F32
-; SI: V_CVT_I32_F32
+; SI: v_cvt_f32_i32
+; SI: v_cvt_f32_i32
+; SI: v_rcp_f32
+; SI: v_cvt_i32_f32
 
 ; EG: INT_TO_FLT
 ; EG-DAG: INT_TO_FLT
@@ -63,8 +63,8 @@ define void @sdiv24_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}sdiv25_i32:
-; SI-NOT: V_CVT_F32_I32
-; SI-NOT: V_RCP_F32
+; SI-NOT: v_cvt_f32_i32
+; SI-NOT: v_rcp_f32
 
 ; EG-NOT: INT_TO_FLT
 ; EG-NOT: RECIP_IEEE
@@ -82,8 +82,8 @@ define void @sdiv25_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}test_no_sdiv24_i32_1:
-; SI-NOT: V_CVT_F32_I32
-; SI-NOT: V_RCP_F32
+; SI-NOT: v_cvt_f32_i32
+; SI-NOT: v_rcp_f32
 
 ; EG-NOT: INT_TO_FLT
 ; EG-NOT: RECIP_IEEE
@@ -101,8 +101,8 @@ define void @test_no_sdiv24_i32_1(i32 addrspace(1)* %out, i32 addrspace(1)* %in)
 }
 
 ; FUNC-LABEL: {{^}}test_no_sdiv24_i32_2:
-; SI-NOT: V_CVT_F32_I32
-; SI-NOT: V_RCP_F32
+; SI-NOT: v_cvt_f32_i32
+; SI-NOT: v_rcp_f32
 
 ; EG-NOT: INT_TO_FLT
 ; EG-NOT: RECIP_IEEE
@@ -120,10 +120,10 @@ define void @test_no_sdiv24_i32_2(i32 addrspace(1)* %out, i32 addrspace(1)* %in)
 }
 
 ; FUNC-LABEL: {{^}}srem24_i8:
-; SI: V_CVT_F32_I32
-; SI: V_CVT_F32_I32
-; SI: V_RCP_F32
-; SI: V_CVT_I32_F32
+; SI: v_cvt_f32_i32
+; SI: v_cvt_f32_i32
+; SI: v_rcp_f32
+; SI: v_cvt_i32_f32
 
 ; EG: INT_TO_FLT
 ; EG-DAG: INT_TO_FLT
@@ -139,10 +139,10 @@ define void @srem24_i8(i8 addrspace(1)* %out, i8 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}srem24_i16:
-; SI: V_CVT_F32_I32
-; SI: V_CVT_F32_I32
-; SI: V_RCP_F32
-; SI: V_CVT_I32_F32
+; SI: v_cvt_f32_i32
+; SI: v_cvt_f32_i32
+; SI: v_rcp_f32
+; SI: v_cvt_i32_f32
 
 ; EG: INT_TO_FLT
 ; EG-DAG: INT_TO_FLT
@@ -158,10 +158,10 @@ define void @srem24_i16(i16 addrspace(1)* %out, i16 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}srem24_i32:
-; SI: V_CVT_F32_I32
-; SI: V_CVT_F32_I32
-; SI: V_RCP_F32
-; SI: V_CVT_I32_F32
+; SI: v_cvt_f32_i32
+; SI: v_cvt_f32_i32
+; SI: v_rcp_f32
+; SI: v_cvt_i32_f32
 
 ; EG: INT_TO_FLT
 ; EG-DAG: INT_TO_FLT
@@ -181,8 +181,8 @@ define void @srem24_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}srem25_i32:
-; SI-NOT: V_CVT_F32_I32
-; SI-NOT: V_RCP_F32
+; SI-NOT: v_cvt_f32_i32
+; SI-NOT: v_rcp_f32
 
 ; EG-NOT: INT_TO_FLT
 ; EG-NOT: RECIP_IEEE
@@ -200,8 +200,8 @@ define void @srem25_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: {{^}}test_no_srem24_i32_1:
-; SI-NOT: V_CVT_F32_I32
-; SI-NOT: V_RCP_F32
+; SI-NOT: v_cvt_f32_i32
+; SI-NOT: v_rcp_f32
 
 ; EG-NOT: INT_TO_FLT
 ; EG-NOT: RECIP_IEEE
@@ -219,8 +219,8 @@ define void @test_no_srem24_i32_1(i32 addrspace(1)* %out, i32 addrspace(1)* %in)
 }
 
 ; FUNC-LABEL: {{^}}test_no_srem24_i32_2:
-; SI-NOT: V_CVT_F32_I32
-; SI-NOT: V_RCP_F32
+; SI-NOT: v_cvt_f32_i32
+; SI-NOT: v_rcp_f32
 
 ; EG-NOT: INT_TO_FLT
 ; EG-NOT: RECIP_IEEE

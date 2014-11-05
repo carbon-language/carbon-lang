@@ -5,10 +5,10 @@
 
 
 ; FUNC-LABEL: {{^}}select_v4i8:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
 define void @select_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> %a, <4 x i8> %b, i8 %c) nounwind {
   %cmp = icmp eq i8 %c, 0
   %select = select i1 %cmp, <4 x i8> %a, <4 x i8> %b
@@ -17,10 +17,10 @@ define void @select_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> %a, <4 x i8> %b, 
 }
 
 ; FUNC-LABEL: {{^}}select_v4i16:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
 define void @select_v4i16(<4 x i16> addrspace(1)* %out, <4 x i16> %a, <4 x i16> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <4 x i16> %a, <4 x i16> %b
@@ -29,9 +29,9 @@ define void @select_v4i16(<4 x i16> addrspace(1)* %out, <4 x i16> %a, <4 x i16> 
 }
 
 ; FUNC-LABEL: {{^}}select_v2i32:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: BUFFER_STORE_DWORDX2
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: buffer_store_dwordx2
 define void @select_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <2 x i32> %a, <2 x i32> %b
@@ -40,11 +40,11 @@ define void @select_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> 
 }
 
 ; FUNC-LABEL: {{^}}select_v4i32:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: BUFFER_STORE_DWORDX4
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: buffer_store_dwordx4
 define void @select_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %a, <4 x i32> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <4 x i32> %a, <4 x i32> %b
@@ -53,14 +53,14 @@ define void @select_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %a, <4 x i32> 
 }
 
 ; FUNC-LABEL: {{^}}select_v8i32:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
 define void @select_v8i32(<8 x i32> addrspace(1)* %out, <8 x i32> %a, <8 x i32> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <8 x i32> %a, <8 x i32> %b
@@ -69,7 +69,7 @@ define void @select_v8i32(<8 x i32> addrspace(1)* %out, <8 x i32> %a, <8 x i32> 
 }
 
 ; FUNC-LABEL: {{^}}select_v2f32:
-; SI: BUFFER_STORE_DWORDX2
+; SI: buffer_store_dwordx2
 define void @select_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x float> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <2 x float> %a, <2 x float> %b
@@ -78,7 +78,7 @@ define void @select_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x f
 }
 
 ; FUNC-LABEL: {{^}}select_v4f32:
-; SI: BUFFER_STORE_DWORDX4
+; SI: buffer_store_dwordx4
 define void @select_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %a, <4 x float> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <4 x float> %a, <4 x float> %b
@@ -87,14 +87,14 @@ define void @select_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %a, <4 x f
 }
 
 ; FUNC-LABEL: {{^}}select_v8f32:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
 define void @select_v8f32(<8 x float> addrspace(1)* %out, <8 x float> %a, <8 x float> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <8 x float> %a, <8 x float> %b
@@ -103,10 +103,10 @@ define void @select_v8f32(<8 x float> addrspace(1)* %out, <8 x float> %a, <8 x f
 }
 
 ; FUNC-LABEL: {{^}}select_v2f64:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
 define void @select_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %a, <2 x double> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <2 x double> %a, <2 x double> %b
@@ -115,14 +115,14 @@ define void @select_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %a, <2 x
 }
 
 ; FUNC-LABEL: {{^}}select_v4f64:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
 define void @select_v4f64(<4 x double> addrspace(1)* %out, <4 x double> %a, <4 x double> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <4 x double> %a, <4 x double> %b
@@ -131,22 +131,22 @@ define void @select_v4f64(<4 x double> addrspace(1)* %out, <4 x double> %a, <4 x
 }
 
 ; FUNC-LABEL: {{^}}select_v8f64:
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
 define void @select_v8f64(<8 x double> addrspace(1)* %out, <8 x double> %a, <8 x double> %b, i32 %c) nounwind {
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <8 x double> %a, <8 x double> %b

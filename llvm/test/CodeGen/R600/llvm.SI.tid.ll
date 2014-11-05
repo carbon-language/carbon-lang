@@ -1,7 +1,7 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK: V_MBCNT_LO_U32_B32_e64
-;CHECK: V_MBCNT_HI_U32_B32_e32
+;CHECK: v_mbcnt_lo_u32_b32_e64
+;CHECK: v_mbcnt_hi_u32_b32_e32
 
 define void @main(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg) "ShaderType"="0" {
 main_body:

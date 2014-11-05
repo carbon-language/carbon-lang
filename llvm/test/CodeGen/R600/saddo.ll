@@ -48,8 +48,8 @@ define void @s_saddo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64
 }
 
 ; FUNC-LABEL: {{^}}v_saddo_i64:
-; SI: V_ADD_I32
-; SI: V_ADDC_U32
+; SI: v_add_i32
+; SI: v_addc_u32
 define void @v_saddo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
   %a = load i64 addrspace(1)* %aptr, align 4
   %b = load i64 addrspace(1)* %bptr, align 4

@@ -34,7 +34,7 @@ define void @setcc_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %
 
 ; FUNC-LABEL: {{^}}f32_oeq:
 ; R600: SETE_DX10
-; SI: V_CMP_EQ_F32
+; SI: v_cmp_eq_f32
 define void @f32_oeq(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp oeq float %a, %b
@@ -45,7 +45,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}f32_ogt:
 ; R600: SETGT_DX10
-; SI: V_CMP_GT_F32
+; SI: v_cmp_gt_f32
 define void @f32_ogt(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ogt float %a, %b
@@ -56,7 +56,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}f32_oge:
 ; R600: SETGE_DX10
-; SI: V_CMP_GE_F32
+; SI: v_cmp_ge_f32
 define void @f32_oge(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp oge float %a, %b
@@ -67,7 +67,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}f32_olt:
 ; R600: SETGT_DX10
-; SI: V_CMP_LT_F32
+; SI: v_cmp_lt_f32
 define void @f32_olt(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp olt float %a, %b
@@ -78,7 +78,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}f32_ole:
 ; R600: SETGE_DX10
-; SI: V_CMP_LE_F32
+; SI: v_cmp_le_f32
 define void @f32_ole(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ole float %a, %b
@@ -94,11 +94,11 @@ entry:
 ; R600-DAG: SETNE_DX10
 ; R600-DAG: AND_INT
 ; R600-DAG: SETNE_INT
-; SI: V_CMP_O_F32
-; SI: V_CMP_NEQ_F32
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_AND_B32_e32
+; SI: v_cmp_o_f32
+; SI: v_cmp_neq_f32
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_and_b32_e32
 define void @f32_one(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp one float %a, %b
@@ -112,7 +112,7 @@ entry:
 ; R600-DAG: SETE_DX10
 ; R600-DAG: AND_INT
 ; R600-DAG: SETNE_INT
-; SI: V_CMP_O_F32
+; SI: v_cmp_o_f32
 define void @f32_ord(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ord float %a, %b
@@ -128,11 +128,11 @@ entry:
 ; R600-DAG: SETE_DX10
 ; R600-DAG: OR_INT
 ; R600-DAG: SETNE_INT
-; SI: V_CMP_U_F32
-; SI: V_CMP_EQ_F32
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_OR_B32_e32
+; SI: v_cmp_u_f32
+; SI: v_cmp_eq_f32
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_or_b32_e32
 define void @f32_ueq(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ueq float %a, %b
@@ -144,11 +144,11 @@ entry:
 ; FUNC-LABEL: {{^}}f32_ugt:
 ; R600: SETGE
 ; R600: SETE_DX10
-; SI: V_CMP_U_F32
-; SI: V_CMP_GT_F32
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_OR_B32_e32
+; SI: v_cmp_u_f32
+; SI: v_cmp_gt_f32
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_or_b32_e32
 define void @f32_ugt(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ugt float %a, %b
@@ -160,11 +160,11 @@ entry:
 ; FUNC-LABEL: {{^}}f32_uge:
 ; R600: SETGT
 ; R600: SETE_DX10
-; SI: V_CMP_U_F32
-; SI: V_CMP_GE_F32
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_OR_B32_e32
+; SI: v_cmp_u_f32
+; SI: v_cmp_ge_f32
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_or_b32_e32
 define void @f32_uge(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp uge float %a, %b
@@ -176,11 +176,11 @@ entry:
 ; FUNC-LABEL: {{^}}f32_ult:
 ; R600: SETGE
 ; R600: SETE_DX10
-; SI: V_CMP_U_F32
-; SI: V_CMP_LT_F32
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_OR_B32_e32
+; SI: v_cmp_u_f32
+; SI: v_cmp_lt_f32
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_or_b32_e32
 define void @f32_ult(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ult float %a, %b
@@ -192,11 +192,11 @@ entry:
 ; FUNC-LABEL: {{^}}f32_ule:
 ; R600: SETGT
 ; R600: SETE_DX10
-; SI: V_CMP_U_F32
-; SI: V_CMP_LE_F32
-; SI: V_CNDMASK_B32_e64
-; SI: V_CNDMASK_B32_e64
-; SI: V_OR_B32_e32
+; SI: v_cmp_u_f32
+; SI: v_cmp_le_f32
+; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64
+; SI: v_or_b32_e32
 define void @f32_ule(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ule float %a, %b
@@ -207,7 +207,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}f32_une:
 ; R600: SETNE_DX10
-; SI: V_CMP_NEQ_F32
+; SI: v_cmp_neq_f32
 define void @f32_une(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp une float %a, %b
@@ -221,7 +221,7 @@ entry:
 ; R600: SETNE_DX10
 ; R600: OR_INT
 ; R600: SETNE_INT
-; SI: V_CMP_U_F32
+; SI: v_cmp_u_f32
 define void @f32_uno(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp uno float %a, %b
@@ -236,7 +236,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_eq:
 ; R600: SETE_INT
-; SI: V_CMP_EQ_I32
+; SI: v_cmp_eq_i32
 define void @i32_eq(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp eq i32 %a, %b
@@ -247,7 +247,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_ne:
 ; R600: SETNE_INT
-; SI: V_CMP_NE_I32
+; SI: v_cmp_ne_i32
 define void @i32_ne(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp ne i32 %a, %b
@@ -258,7 +258,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_ugt:
 ; R600: SETGT_UINT
-; SI: V_CMP_GT_U32
+; SI: v_cmp_gt_u32
 define void @i32_ugt(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp ugt i32 %a, %b
@@ -269,7 +269,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_uge:
 ; R600: SETGE_UINT
-; SI: V_CMP_GE_U32
+; SI: v_cmp_ge_u32
 define void @i32_uge(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp uge i32 %a, %b
@@ -280,7 +280,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_ult:
 ; R600: SETGT_UINT
-; SI: V_CMP_LT_U32
+; SI: v_cmp_lt_u32
 define void @i32_ult(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp ult i32 %a, %b
@@ -291,7 +291,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_ule:
 ; R600: SETGE_UINT
-; SI: V_CMP_LE_U32
+; SI: v_cmp_le_u32
 define void @i32_ule(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp ule i32 %a, %b
@@ -302,7 +302,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_sgt:
 ; R600: SETGT_INT
-; SI: V_CMP_GT_I32
+; SI: v_cmp_gt_i32
 define void @i32_sgt(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp sgt i32 %a, %b
@@ -313,7 +313,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_sge:
 ; R600: SETGE_INT
-; SI: V_CMP_GE_I32
+; SI: v_cmp_ge_i32
 define void @i32_sge(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp sge i32 %a, %b
@@ -324,7 +324,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_slt:
 ; R600: SETGT_INT
-; SI: V_CMP_LT_I32
+; SI: v_cmp_lt_i32
 define void @i32_slt(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp slt i32 %a, %b
@@ -335,7 +335,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}i32_sle:
 ; R600: SETGE_INT
-; SI: V_CMP_LE_I32
+; SI: v_cmp_le_i32
 define void @i32_sle(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp sle i32 %a, %b

@@ -4,7 +4,7 @@
 ; the wrong register class is used for the REG_SEQUENCE instructions.
 
 ; CHECK: {{^}}main:
-; CHECK: IMAGE_SAMPLE_B v{{\[[0-9]:[0-9]\]}}, 15, 0, 0, 0, 0, 0, 0, 0, v{{\[[0-9]:[0-9]\]}}
+; CHECK: image_sample_b v{{\[[0-9]:[0-9]\]}}, 15, 0, 0, 0, 0, 0, 0, 0, v{{\[[0-9]:[0-9]\]}}
 
 define void @main(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:

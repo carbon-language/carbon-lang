@@ -6,8 +6,8 @@
 
 
 ; CHECK-LABEL: {{^}}branch_use_flat_i32:
-; CHECK: FLAT_STORE_DWORD {{v[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, [M0, FLAT_SCRATCH]
-; CHECK: S_ENDPGM
+; CHECK: flat_store_dword {{v[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, [M0, FLAT_SCRATCH]
+; CHECK: s_endpgm
 define void @branch_use_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* %gptr, i32 addrspace(3)* %lptr, i32 %x, i32 %c) #0 {
 entry:
   %cmp = icmp ne i32 %c, 0
@@ -35,10 +35,10 @@ end:
 ; remove generic pointers.
 
 ; CHECK-LABEL: {{^}}store_flat_i32:
-; CHECK: V_MOV_B32_e32 v[[DATA:[0-9]+]], {{s[0-9]+}}
-; CHECK: V_MOV_B32_e32 v[[LO_VREG:[0-9]+]], {{s[0-9]+}}
-; CHECK: V_MOV_B32_e32 v[[HI_VREG:[0-9]+]], {{s[0-9]+}}
-; CHECK: FLAT_STORE_DWORD v[[DATA]], v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
+; CHECK: v_mov_b32_e32 v[[DATA:[0-9]+]], {{s[0-9]+}}
+; CHECK: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], {{s[0-9]+}}
+; CHECK: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], {{s[0-9]+}}
+; CHECK: flat_store_dword v[[DATA]], v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
 define void @store_flat_i32(i32 addrspace(1)* %gptr, i32 %x) #0 {
   %fptr = addrspacecast i32 addrspace(1)* %gptr to i32 addrspace(4)*
   store i32 %x, i32 addrspace(4)* %fptr, align 4
@@ -46,7 +46,7 @@ define void @store_flat_i32(i32 addrspace(1)* %gptr, i32 %x) #0 {
 }
 
 ; CHECK-LABEL: {{^}}store_flat_i64:
-; CHECK: FLAT_STORE_DWORDX2
+; CHECK: flat_store_dwordx2
 define void @store_flat_i64(i64 addrspace(1)* %gptr, i64 %x) #0 {
   %fptr = addrspacecast i64 addrspace(1)* %gptr to i64 addrspace(4)*
   store i64 %x, i64 addrspace(4)* %fptr, align 8
@@ -54,7 +54,7 @@ define void @store_flat_i64(i64 addrspace(1)* %gptr, i64 %x) #0 {
 }
 
 ; CHECK-LABEL: {{^}}store_flat_v4i32:
-; CHECK: FLAT_STORE_DWORDX4
+; CHECK: flat_store_dwordx4
 define void @store_flat_v4i32(<4 x i32> addrspace(1)* %gptr, <4 x i32> %x) #0 {
   %fptr = addrspacecast <4 x i32> addrspace(1)* %gptr to <4 x i32> addrspace(4)*
   store <4 x i32> %x, <4 x i32> addrspace(4)* %fptr, align 16
@@ -62,7 +62,7 @@ define void @store_flat_v4i32(<4 x i32> addrspace(1)* %gptr, <4 x i32> %x) #0 {
 }
 
 ; CHECK-LABEL: {{^}}store_flat_trunc_i16:
-; CHECK: FLAT_STORE_SHORT
+; CHECK: flat_store_short
 define void @store_flat_trunc_i16(i16 addrspace(1)* %gptr, i32 %x) #0 {
   %fptr = addrspacecast i16 addrspace(1)* %gptr to i16 addrspace(4)*
   %y = trunc i32 %x to i16
@@ -71,7 +71,7 @@ define void @store_flat_trunc_i16(i16 addrspace(1)* %gptr, i32 %x) #0 {
 }
 
 ; CHECK-LABEL: {{^}}store_flat_trunc_i8:
-; CHECK: FLAT_STORE_BYTE
+; CHECK: flat_store_byte
 define void @store_flat_trunc_i8(i8 addrspace(1)* %gptr, i32 %x) #0 {
   %fptr = addrspacecast i8 addrspace(1)* %gptr to i8 addrspace(4)*
   %y = trunc i32 %x to i8
@@ -82,7 +82,7 @@ define void @store_flat_trunc_i8(i8 addrspace(1)* %gptr, i32 %x) #0 {
 
 
 ; CHECK-LABEL @load_flat_i32:
-; CHECK: FLAT_LOAD_DWORD
+; CHECK: flat_load_dword
 define void @load_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i32 addrspace(1)* %gptr to i32 addrspace(4)*
   %fload = load i32 addrspace(4)* %fptr, align 4
@@ -91,7 +91,7 @@ define void @load_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noa
 }
 
 ; CHECK-LABEL @load_flat_i64:
-; CHECK: FLAT_LOAD_DWORDX2
+; CHECK: flat_load_dwordx2
 define void @load_flat_i64(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i64 addrspace(1)* %gptr to i64 addrspace(4)*
   %fload = load i64 addrspace(4)* %fptr, align 4
@@ -100,7 +100,7 @@ define void @load_flat_i64(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noa
 }
 
 ; CHECK-LABEL @load_flat_v4i32:
-; CHECK: FLAT_LOAD_DWORDX4
+; CHECK: flat_load_dwordx4
 define void @load_flat_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast <4 x i32> addrspace(1)* %gptr to <4 x i32> addrspace(4)*
   %fload = load <4 x i32> addrspace(4)* %fptr, align 4
@@ -109,7 +109,7 @@ define void @load_flat_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> add
 }
 
 ; CHECK-LABEL @sextload_flat_i8:
-; CHECK: FLAT_LOAD_SBYTE
+; CHECK: flat_load_sbyte
 define void @sextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i8 addrspace(1)* %gptr to i8 addrspace(4)*
   %fload = load i8 addrspace(4)* %fptr, align 4
@@ -119,7 +119,7 @@ define void @sextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* n
 }
 
 ; CHECK-LABEL @zextload_flat_i8:
-; CHECK: FLAT_LOAD_UBYTE
+; CHECK: flat_load_ubyte
 define void @zextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i8 addrspace(1)* %gptr to i8 addrspace(4)*
   %fload = load i8 addrspace(4)* %fptr, align 4
@@ -129,7 +129,7 @@ define void @zextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* n
 }
 
 ; CHECK-LABEL @sextload_flat_i16:
-; CHECK: FLAT_LOAD_SSHORT
+; CHECK: flat_load_sshort
 define void @sextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i16 addrspace(1)* %gptr to i16 addrspace(4)*
   %fload = load i16 addrspace(4)* %fptr, align 4
@@ -139,7 +139,7 @@ define void @sextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)*
 }
 
 ; CHECK-LABEL @zextload_flat_i16:
-; CHECK: FLAT_LOAD_USHORT
+; CHECK: flat_load_ushort
 define void @zextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i16 addrspace(1)* %gptr to i16 addrspace(4)*
   %fload = load i16 addrspace(4)* %fptr, align 4
@@ -155,12 +155,12 @@ define void @zextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)*
 
 ; Check for prologue initializing special SGPRs pointing to scratch.
 ; CHECK-LABEL: {{^}}store_flat_scratch:
-; CHECK: S_MOVK_I32 flat_scratch_lo, 0
-; CHECK-NO-PROMOTE: S_MOVK_I32 flat_scratch_hi, 40
-; CHECK-PROMOTE: S_MOVK_I32 flat_scratch_hi, 0
-; CHECK: FLAT_STORE_DWORD
-; CHECK: S_BARRIER
-; CHECK: FLAT_LOAD_DWORD
+; CHECK: s_movk_i32 flat_scratch_lo, 0
+; CHECK-NO-PROMOTE: s_movk_i32 flat_scratch_hi, 40
+; CHECK-PROMOTE: s_movk_i32 flat_scratch_hi, 0
+; CHECK: flat_store_dword
+; CHECK: s_barrier
+; CHECK: flat_load_dword
 define void @store_flat_scratch(i32 addrspace(1)* noalias %out, i32) #0 {
   %alloca = alloca i32, i32 9, align 4
   %x = call i32 @llvm.r600.read.tidig.x() #3

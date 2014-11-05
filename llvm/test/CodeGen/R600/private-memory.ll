@@ -11,13 +11,13 @@ declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 ; R600: LDS_READ
 ; R600: LDS_READ
 
-; SI-PROMOTE: DS_WRITE_B32
-; SI-PROMOTE: DS_WRITE_B32
-; SI-PROMOTE: DS_READ_B32
-; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: ds_write_b32
+; SI-PROMOTE: ds_write_b32
+; SI-PROMOTE: ds_read_b32
+; SI-PROMOTE: ds_read_b32
 
-; SI-ALLOCA: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x70,0xe0
-; SI-ALLOCA: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x70,0xe0
+; SI-ALLOCA: buffer_store_dword v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x70,0xe0
+; SI-ALLOCA: buffer_store_dword v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x70,0xe0
 define void @mova_same_clause(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* nocapture %in) {
 entry:
   %stack = alloca [5 x i32], align 4
@@ -47,8 +47,8 @@ entry:
 
 ; FUNC-LABEL: {{^}}multiple_structs:
 ; R600-NOT: MOVA_INT
-; SI-NOT: V_MOVREL
-; SI-NOT: V_MOVREL
+; SI-NOT: v_movrel
+; SI-NOT: v_movrel
 %struct.point = type { i32, i32 }
 
 define void @multiple_structs(i32 addrspace(1)* %out) {
@@ -78,7 +78,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}direct_loop:
 ; R600-NOT: MOVA_INT
-; SI-NOT: V_MOVREL
+; SI-NOT: v_movrel
 
 define void @direct_loop(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
@@ -116,9 +116,9 @@ for.end:
 
 ; R600: MOVA_INT
 
-; SI-PROMOTE-DAG: BUFFER_STORE_SHORT v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x68,0xe0
-; SI-PROMOTE-DAG: BUFFER_STORE_SHORT v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x2 ; encoding: [0x02,0x10,0x68,0xe0
-; SI-PROMOTE: BUFFER_LOAD_SSHORT v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}}
+; SI-PROMOTE-DAG: buffer_store_short v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x68,0xe0
+; SI-PROMOTE-DAG: buffer_store_short v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x2 ; encoding: [0x02,0x10,0x68,0xe0
+; SI-PROMOTE: buffer_load_sshort v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}}
 define void @short_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
   %0 = alloca [2 x i16]
@@ -137,8 +137,8 @@ entry:
 
 ; R600: MOVA_INT
 
-; SI-DAG: BUFFER_STORE_BYTE v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x60,0xe0
-; SI-DAG: BUFFER_STORE_BYTE v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x1 ; encoding: [0x01,0x10,0x60,0xe0
+; SI-DAG: buffer_store_byte v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen ; encoding: [0x00,0x10,0x60,0xe0
+; SI-DAG: buffer_store_byte v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x1 ; encoding: [0x01,0x10,0x60,0xe0
 define void @char_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
   %0 = alloca [2 x i8]
@@ -161,7 +161,7 @@ entry:
 ; Additional check in case the move ends up in the last slot
 ; R600-NOT: MOV * TO.X
 
-; SI-NOT: V_MOV_B32_e{{(32|64)}} v0
+; SI-NOT: v_mov_b32_e{{(32|64)}} v0
 define void @work_item_info(i32 addrspace(1)* %out, i32 %in) {
 entry:
   %0 = alloca [2 x i32]
@@ -183,7 +183,7 @@ entry:
 ; R600_CHECK: MOV
 ; R600_CHECK: [[CHAN:[XYZW]]]+
 ; R600-NOT: [[CHAN]]+
-; SI: V_MOV_B32_e32 v3
+; SI: v_mov_b32_e32 v3
 define void @no_overlap(i32 addrspace(1)* %out, i32 %in) {
 entry:
   %0 = alloca [3 x i8], align 1
@@ -294,9 +294,9 @@ entry:
 ; finds one, it should stop trying to promote.
 
 ; FUNC-LABEL: ptrtoint:
-; SI-NOT: DS_WRITE
-; SI: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen
-; SI: BUFFER_LOAD_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x5
+; SI-NOT: ds_write
+; SI: buffer_store_dword v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen
+; SI: buffer_load_dword v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x5
 define void @ptrtoint(i32 addrspace(1)* %out, i32 %a, i32 %b) {
   %alloca = alloca [16 x i32]
   %tmp0 = getelementptr [16 x i32]* %alloca, i32 0, i32 %a

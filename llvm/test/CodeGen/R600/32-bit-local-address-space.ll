@@ -11,8 +11,8 @@
 ; instructions with B64, U64, and I64 take 64-bit operands.
 
 ; FUNC-LABEL: {{^}}local_address_load:
-; CHECK: V_MOV_B32_e{{32|64}} [[PTR:v[0-9]]]
-; CHECK: DS_READ_B32 v{{[0-9]+}}, [[PTR]]
+; CHECK: v_mov_b32_e{{32|64}} [[PTR:v[0-9]]]
+; CHECK: ds_read_b32 v{{[0-9]+}}, [[PTR]]
 define void @local_address_load(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = load i32 addrspace(3)* %in
@@ -21,9 +21,9 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}local_address_gep:
-; CHECK: S_ADD_I32 [[SPTR:s[0-9]]]
-; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; CHECK: DS_READ_B32 [[VPTR]]
+; CHECK: s_add_i32 [[SPTR:s[0-9]]]
+; CHECK: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
+; CHECK: ds_read_b32 [[VPTR]]
 define void @local_address_gep(i32 addrspace(1)* %out, i32 addrspace(3)* %in, i32 %offset) {
 entry:
   %0 = getelementptr i32 addrspace(3)* %in, i32 %offset
@@ -33,8 +33,8 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}local_address_gep_const_offset:
-; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], s{{[0-9]+}}
-; CHECK: DS_READ_B32 v{{[0-9]+}}, [[VPTR]], 0x4,
+; CHECK: v_mov_b32_e32 [[VPTR:v[0-9]+]], s{{[0-9]+}}
+; CHECK: ds_read_b32 v{{[0-9]+}}, [[VPTR]], 0x4,
 define void @local_address_gep_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = getelementptr i32 addrspace(3)* %in, i32 1
@@ -45,9 +45,9 @@ entry:
 
 ; Offset too large, can't fold into 16-bit immediate offset.
 ; FUNC-LABEL: {{^}}local_address_gep_large_const_offset:
-; CHECK: S_ADD_I32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 0x10004
-; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; CHECK: DS_READ_B32 [[VPTR]]
+; CHECK: s_add_i32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 0x10004
+; CHECK: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
+; CHECK: ds_read_b32 [[VPTR]]
 define void @local_address_gep_large_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = getelementptr i32 addrspace(3)* %in, i32 16385
@@ -57,8 +57,8 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}null_32bit_lds_ptr:
-; CHECK: V_CMP_NE_I32
-; CHECK-NOT: V_CMP_NE_I32
+; CHECK: v_cmp_ne_i32
+; CHECK-NOT: v_cmp_ne_i32
 ; CHECK: V_CNDMASK_B32
 define void @null_32bit_lds_ptr(i32 addrspace(1)* %out, i32 addrspace(3)* %lds) nounwind {
   %cmp = icmp ne i32 addrspace(3)* %lds, null
@@ -68,9 +68,9 @@ define void @null_32bit_lds_ptr(i32 addrspace(1)* %out, i32 addrspace(3)* %lds) 
 }
 
 ; FUNC-LABEL: {{^}}mul_32bit_ptr:
-; CHECK: V_MUL_LO_I32
-; CHECK-NEXT: V_ADD_I32_e32
-; CHECK-NEXT: DS_READ_B32
+; CHECK: v_mul_lo_i32
+; CHECK-NEXT: v_add_i32_e32
+; CHECK-NEXT: ds_read_b32
 define void @mul_32bit_ptr(float addrspace(1)* %out, [3 x float] addrspace(3)* %lds, i32 %tid) {
   %ptr = getelementptr [3 x float] addrspace(3)* %lds, i32 %tid, i32 0
   %val = load float addrspace(3)* %ptr
@@ -81,8 +81,8 @@ define void @mul_32bit_ptr(float addrspace(1)* %out, [3 x float] addrspace(3)* %
 @g_lds = addrspace(3) global float zeroinitializer, align 4
 
 ; FUNC-LABEL: {{^}}infer_ptr_alignment_global_offset:
-; CHECK: V_MOV_B32_e32 [[REG:v[0-9]+]], 0
-; CHECK: DS_READ_B32 v{{[0-9]+}}, [[REG]]
+; CHECK: v_mov_b32_e32 [[REG:v[0-9]+]], 0
+; CHECK: ds_read_b32 v{{[0-9]+}}, [[REG]]
 define void @infer_ptr_alignment_global_offset(float addrspace(1)* %out, i32 %tid) {
   %val = load float addrspace(3)* @g_lds
   store float %val, float addrspace(1)* %out
@@ -94,23 +94,23 @@ define void @infer_ptr_alignment_global_offset(float addrspace(1)* %out, i32 %ti
 @dst = addrspace(3) global [16384 x i32] zeroinitializer
 
 ; FUNC-LABEL: {{^}}global_ptr:
-; CHECK: DS_WRITE_B32
+; CHECK: ds_write_b32
 define void @global_ptr() nounwind {
   store i32 addrspace(3)* getelementptr ([16384 x i32] addrspace(3)* @dst, i32 0, i32 16), i32 addrspace(3)* addrspace(3)* @ptr
   ret void
 }
 
 ; FUNC-LABEL: {{^}}local_address_store:
-; CHECK: DS_WRITE_B32
+; CHECK: ds_write_b32
 define void @local_address_store(i32 addrspace(3)* %out, i32 %val) {
   store i32 %val, i32 addrspace(3)* %out
   ret void
 }
 
 ; FUNC-LABEL: {{^}}local_address_gep_store:
-; CHECK: S_ADD_I32 [[SADDR:s[0-9]+]],
-; CHECK: V_MOV_B32_e32 [[ADDR:v[0-9]+]], [[SADDR]]
-; CHECK: DS_WRITE_B32 [[ADDR]], v{{[0-9]+}},
+; CHECK: s_add_i32 [[SADDR:s[0-9]+]],
+; CHECK: v_mov_b32_e32 [[ADDR:v[0-9]+]], [[SADDR]]
+; CHECK: ds_write_b32 [[ADDR]], v{{[0-9]+}},
 define void @local_address_gep_store(i32 addrspace(3)* %out, i32, i32 %val, i32 %offset) {
   %gep = getelementptr i32 addrspace(3)* %out, i32 %offset
   store i32 %val, i32 addrspace(3)* %gep, align 4
@@ -118,9 +118,9 @@ define void @local_address_gep_store(i32 addrspace(3)* %out, i32, i32 %val, i32 
 }
 
 ; FUNC-LABEL: {{^}}local_address_gep_const_offset_store:
-; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], s{{[0-9]+}}
-; CHECK: V_MOV_B32_e32 [[VAL:v[0-9]+]], s{{[0-9]+}}
-; CHECK: DS_WRITE_B32 [[VPTR]], [[VAL]], 0x4
+; CHECK: v_mov_b32_e32 [[VPTR:v[0-9]+]], s{{[0-9]+}}
+; CHECK: v_mov_b32_e32 [[VAL:v[0-9]+]], s{{[0-9]+}}
+; CHECK: ds_write_b32 [[VPTR]], [[VAL]], 0x4
 define void @local_address_gep_const_offset_store(i32 addrspace(3)* %out, i32 %val) {
   %gep = getelementptr i32 addrspace(3)* %out, i32 1
   store i32 %val, i32 addrspace(3)* %gep, align 4
@@ -129,9 +129,9 @@ define void @local_address_gep_const_offset_store(i32 addrspace(3)* %out, i32 %v
 
 ; Offset too large, can't fold into 16-bit immediate offset.
 ; FUNC-LABEL: {{^}}local_address_gep_large_const_offset_store:
-; CHECK: S_ADD_I32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 0x10004
-; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; CHECK: DS_WRITE_B32 [[VPTR]], v{{[0-9]+}}, 0
+; CHECK: s_add_i32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 0x10004
+; CHECK: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
+; CHECK: ds_write_b32 [[VPTR]], v{{[0-9]+}}, 0
 define void @local_address_gep_large_const_offset_store(i32 addrspace(3)* %out, i32 %val) {
   %gep = getelementptr i32 addrspace(3)* %out, i32 16385
   store i32 %val, i32 addrspace(3)* %gep, align 4

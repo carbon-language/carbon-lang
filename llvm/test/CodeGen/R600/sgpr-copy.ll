@@ -3,8 +3,8 @@
 ; This test checks that no VGPR to SGPR copies are created by the register
 ; allocator.
 ; CHECK-LABEL: {{^}}phi1:
-; CHECK: S_BUFFER_LOAD_DWORD [[DST:s[0-9]]], {{s\[[0-9]+:[0-9]+\]}}, 0
-; CHECK: V_MOV_B32_e32 v{{[0-9]}}, [[DST]]
+; CHECK: s_buffer_load_dword [[DST:s[0-9]]], {{s\[[0-9]+:[0-9]+\]}}, 0
+; CHECK: v_mov_b32_e32 v{{[0-9]}}, [[DST]]
 
 define void @phi1(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
@@ -228,10 +228,10 @@ declare i32 @llvm.SI.packf16(float, float) #1
 ; an assertion failure.
 
 ; CHECK-LABEL: {{^}}sample_v3:
-; CHECK: IMAGE_SAMPLE
-; CHECK: IMAGE_SAMPLE
-; CHECK: EXP
-; CHECK: S_ENDPGM
+; CHECK: image_sample
+; CHECK: image_sample
+; CHECK: exp
+; CHECK: s_endpgm
 define void @sample_v3([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 
 entry:
@@ -270,9 +270,9 @@ endif:
 !2 = metadata !{metadata !"const", null, i32 1}
 
 ; CHECK-LABEL: {{^}}copy1:
-; CHECK: BUFFER_LOAD_DWORD
-; CHECK: V_ADD
-; CHECK: S_ENDPGM
+; CHECK: buffer_load_dword
+; CHECK: v_add
+; CHECK: s_endpgm
 define void @copy1(float addrspace(1)* %out, float addrspace(1)* %in0) {
 entry:
   %0 = load float addrspace(1)* %in0
@@ -297,7 +297,7 @@ endif:
 
 ; This test is just checking that we don't crash / assertion fail.
 ; CHECK-LABEL: {{^}}copy2:
-; CHECK: S_ENDPGM
+; CHECK: s_endpgm
 
 define void @copy2([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 entry:

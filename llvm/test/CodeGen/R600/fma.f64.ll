@@ -6,7 +6,7 @@ declare <4 x double> @llvm.fma.v4f64(<4 x double>, <4 x double>, <4 x double>) n
 
 
 ; FUNC-LABEL: {{^}}fma_f64:
-; SI: V_FMA_F64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\]}}
+; SI: v_fma_f64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\]}}
 define void @fma_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2, double addrspace(1)* %in3) {
    %r0 = load double addrspace(1)* %in1
@@ -18,8 +18,8 @@ define void @fma_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; FUNC-LABEL: {{^}}fma_v2f64:
-; SI: V_FMA_F64
-; SI: V_FMA_F64
+; SI: v_fma_f64
+; SI: v_fma_f64
 define void @fma_v2f64(<2 x double> addrspace(1)* %out, <2 x double> addrspace(1)* %in1,
                        <2 x double> addrspace(1)* %in2, <2 x double> addrspace(1)* %in3) {
    %r0 = load <2 x double> addrspace(1)* %in1
@@ -31,10 +31,10 @@ define void @fma_v2f64(<2 x double> addrspace(1)* %out, <2 x double> addrspace(1
 }
 
 ; FUNC-LABEL: {{^}}fma_v4f64:
-; SI: V_FMA_F64
-; SI: V_FMA_F64
-; SI: V_FMA_F64
-; SI: V_FMA_F64
+; SI: v_fma_f64
+; SI: v_fma_f64
+; SI: v_fma_f64
+; SI: v_fma_f64
 define void @fma_v4f64(<4 x double> addrspace(1)* %out, <4 x double> addrspace(1)* %in1,
                        <4 x double> addrspace(1)* %in2, <4 x double> addrspace(1)* %in3) {
    %r0 = load <4 x double> addrspace(1)* %in1

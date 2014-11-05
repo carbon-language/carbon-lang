@@ -3,8 +3,8 @@
 
 ; FUNC-LABEL: {{^}}fp_to_uint_i32:
 ; EG: FLT_TO_UINT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
-; SI: V_CVT_U32_F32_e32
-; SI: S_ENDPGM
+; SI: v_cvt_u32_f32_e32
+; SI: s_endpgm
 define void @fp_to_uint_i32 (i32 addrspace(1)* %out, float %in) {
   %conv = fptoui float %in to i32
   store i32 %conv, i32 addrspace(1)* %out
@@ -14,8 +14,8 @@ define void @fp_to_uint_i32 (i32 addrspace(1)* %out, float %in) {
 ; FUNC-LABEL: {{^}}fp_to_uint_v2i32:
 ; EG: FLT_TO_UINT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; EG: FLT_TO_UINT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-; SI: V_CVT_U32_F32_e32
-; SI: V_CVT_U32_F32_e32
+; SI: v_cvt_u32_f32_e32
+; SI: v_cvt_u32_f32_e32
 
 define void @fp_to_uint_v2i32(<2 x i32> addrspace(1)* %out, <2 x float> %in) {
   %result = fptoui <2 x float> %in to <2 x i32>
@@ -28,10 +28,10 @@ define void @fp_to_uint_v2i32(<2 x i32> addrspace(1)* %out, <2 x float> %in) {
 ; EG: FLT_TO_UINT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: FLT_TO_UINT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; EG: FLT_TO_UINT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
-; SI: V_CVT_U32_F32_e32
-; SI: V_CVT_U32_F32_e32
-; SI: V_CVT_U32_F32_e32
-; SI: V_CVT_U32_F32_e32
+; SI: v_cvt_u32_f32_e32
+; SI: v_cvt_u32_f32_e32
+; SI: v_cvt_u32_f32_e32
+; SI: v_cvt_u32_f32_e32
 
 define void @fp_to_uint_v4i32(<4 x i32> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
   %value = load <4 x float> addrspace(1) * %in
@@ -63,7 +63,7 @@ define void @fp_to_uint_v4i32(<4 x i32> addrspace(1)* %out, <4 x float> addrspac
 ; EG-DAG: CNDE_INT
 ; EG-DAG: CNDE_INT
 
-; SI: S_ENDPGM
+; SI: s_endpgm
 define void @fp_to_uint_i64(i64 addrspace(1)* %out, float %x) {
   %conv = fptoui float %x to i64
   store i64 %conv, i64 addrspace(1)* %out
@@ -114,7 +114,7 @@ define void @fp_to_uint_i64(i64 addrspace(1)* %out, float %x) {
 ; EG-DAG: CNDE_INT
 ; EG-DAG: CNDE_INT
 
-; SI: S_ENDPGM
+; SI: s_endpgm
 define void @fp_to_uint_v2i64(<2 x i64> addrspace(1)* %out, <2 x float> %x) {
   %conv = fptoui <2 x float> %x to <2 x i64>
   store <2 x i64> %conv, <2 x i64> addrspace(1)* %out
@@ -207,7 +207,7 @@ define void @fp_to_uint_v2i64(<2 x i64> addrspace(1)* %out, <2 x float> %x) {
 ; EG-DAG: CNDE_INT
 ; EG-DAG: CNDE_INT
 
-; SI: S_ENDPGM
+; SI: s_endpgm
 define void @fp_to_uint_v4i64(<4 x i64> addrspace(1)* %out, <4 x float> %x) {
   %conv = fptoui <4 x float> %x to <4 x i64>
   store <4 x i64> %conv, <4 x i64> addrspace(1)* %out

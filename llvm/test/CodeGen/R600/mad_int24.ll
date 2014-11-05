@@ -8,8 +8,8 @@
 ; Make sure we aren't masking the inputs.
 ; CM-NOT: AND
 ; CM: MULADD_INT24
-; SI-NOT: AND
-; SI: V_MAD_I32_I24
+; SI-NOT: and
+; SI: v_mad_i32_i24
 define void @i32_mad24(i32 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) {
 entry:
   %0 = shl i32 %a, 8

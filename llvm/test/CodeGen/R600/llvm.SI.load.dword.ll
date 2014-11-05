@@ -4,10 +4,10 @@
 ; ESGS ring buffer
 
 ; CHECK-LABEL: {{^}}main:
-; CHECK: BUFFER_LOAD_DWORD
-; CHECK: BUFFER_LOAD_DWORD
-; CHECK: BUFFER_LOAD_DWORD
-; CHECK: BUFFER_LOAD_DWORD
+; CHECK: buffer_load_dword
+; CHECK: buffer_load_dword
+; CHECK: buffer_load_dword
+; CHECK: buffer_load_dword
 
 define void @main([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, [2 x <16 x i8>] addrspace(2)* byval, [17 x <16 x i8>] addrspace(2)* inreg, [17 x <16 x i8>] addrspace(2)* inreg, i32, i32, i32, i32) #0 {
 main_body:

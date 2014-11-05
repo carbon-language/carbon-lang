@@ -1,9 +1,9 @@
 ; RUN: llc -march=r600 -mcpu=tahiti < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8:
-; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: S_ENDPGM
+; SI: buffer_load_dword [[REG:v[0-9]+]]
+; SI: buffer_store_dword [[REG]]
+; SI: s_endpgm
 define void @test_copy_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load <4 x i8> addrspace(1)* %in, align 4
   store <4 x i8> %val, <4 x i8> addrspace(1)* %out, align 4
@@ -11,10 +11,10 @@ define void @test_copy_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> addrspace(1)* 
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8_x2:
-; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: S_ENDPGM
+; SI: buffer_load_dword [[REG:v[0-9]+]]
+; SI: buffer_store_dword [[REG]]
+; SI: buffer_store_dword [[REG]]
+; SI: s_endpgm
 define void @test_copy_v4i8_x2(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(1)* %out1, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load <4 x i8> addrspace(1)* %in, align 4
   store <4 x i8> %val, <4 x i8> addrspace(1)* %out0, align 4
@@ -23,11 +23,11 @@ define void @test_copy_v4i8_x2(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8_x3:
-; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: S_ENDPGM
+; SI: buffer_load_dword [[REG:v[0-9]+]]
+; SI: buffer_store_dword [[REG]]
+; SI: buffer_store_dword [[REG]]
+; SI: buffer_store_dword [[REG]]
+; SI: s_endpgm
 define void @test_copy_v4i8_x3(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(1)* %out1, <4 x i8> addrspace(1)* %out2, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load <4 x i8> addrspace(1)* %in, align 4
   store <4 x i8> %val, <4 x i8> addrspace(1)* %out0, align 4
@@ -37,12 +37,12 @@ define void @test_copy_v4i8_x3(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8_x4:
-; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: BUFFER_STORE_DWORD [[REG]]
-; SI: S_ENDPGM
+; SI: buffer_load_dword [[REG:v[0-9]+]]
+; SI: buffer_store_dword [[REG]]
+; SI: buffer_store_dword [[REG]]
+; SI: buffer_store_dword [[REG]]
+; SI: buffer_store_dword [[REG]]
+; SI: s_endpgm
 define void @test_copy_v4i8_x4(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(1)* %out1, <4 x i8> addrspace(1)* %out2, <4 x i8> addrspace(1)* %out3, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load <4 x i8> addrspace(1)* %in, align 4
   store <4 x i8> %val, <4 x i8> addrspace(1)* %out0, align 4
@@ -53,33 +53,33 @@ define void @test_copy_v4i8_x4(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8_extra_use:
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI-DAG: V_ADD
-; SI-DAG: V_ADD
-; SI-DAG: V_ADD
-; SI-DAG: V_ADD
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI_DAG: BUFFER_STORE_BYTE
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI-DAG: v_add
+; SI-DAG: v_add
+; SI-DAG: v_add
+; SI-DAG: v_add
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI_DAG: buffer_store_byte
 
 ; After scalarizing v4i8 loads is fixed.
-; XSI: BUFFER_LOAD_DWORD
+; XSI: buffer_load_dword
 ; XSI: V_BFE
 ; XSI: V_ADD
 ; XSI: V_ADD
 ; XSI: V_ADD
-; XSI: BUFFER_STORE_DWORD
-; XSI: BUFFER_STORE_DWORD
+; XSI: buffer_store_dword
+; XSI: buffer_store_dword
 
-; SI: S_ENDPGM
+; SI: s_endpgm
 define void @test_copy_v4i8_extra_use(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(1)* %out1, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load <4 x i8> addrspace(1)* %in, align 4
   %add = add <4 x i8> %val, <i8 9, i8 9, i8 9, i8 9>
@@ -89,35 +89,35 @@ define void @test_copy_v4i8_extra_use(<4 x i8> addrspace(1)* %out0, <4 x i8> add
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8_x2_extra_use:
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI-DAG: V_ADD
-; SI-DAG: V_ADD
-; SI-DAG: V_ADD
-; SI-DAG: V_ADD
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI_DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI-DAG: BUFFER_STORE_BYTE
-; SI_DAG: BUFFER_STORE_BYTE
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI-DAG: v_add
+; SI-DAG: v_add
+; SI-DAG: v_add
+; SI-DAG: v_add
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI_DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI-DAG: buffer_store_byte
+; SI_DAG: buffer_store_byte
 
-; XSI: BUFFER_LOAD_DWORD
+; XSI: buffer_load_dword
 ; XSI: BFE
-; XSI: BUFFER_STORE_DWORD
+; XSI: buffer_store_dword
 ; XSI: V_ADD
-; XSI: BUFFER_STORE_DWORD
-; XSI-NEXT: BUFFER_STORE_DWORD
+; XSI: buffer_store_dword
+; XSI-NEXT: buffer_store_dword
 
-; SI: S_ENDPGM
+; SI: s_endpgm
 define void @test_copy_v4i8_x2_extra_use(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(1)* %out1, <4 x i8> addrspace(1)* %out2, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load <4 x i8> addrspace(1)* %in, align 4
   %add = add <4 x i8> %val, <i8 9, i8 9, i8 9, i8 9>
@@ -128,9 +128,9 @@ define void @test_copy_v4i8_x2_extra_use(<4 x i8> addrspace(1)* %out0, <4 x i8> 
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v3i8:
-; SI-NOT: BFE
-; SI-NOT: BFI
-; SI: S_ENDPGM
+; SI-NOT: bfe
+; SI-NOT: bfi
+; SI: s_endpgm
 define void @test_copy_v3i8(<3 x i8> addrspace(1)* %out, <3 x i8> addrspace(1)* %in) nounwind {
   %val = load <3 x i8> addrspace(1)* %in, align 4
   store <3 x i8> %val, <3 x i8> addrspace(1)* %out, align 4
@@ -138,11 +138,11 @@ define void @test_copy_v3i8(<3 x i8> addrspace(1)* %out, <3 x i8> addrspace(1)* 
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8_volatile_load:
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: S_ENDPGM
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: s_endpgm
 define void @test_copy_v4i8_volatile_load(<4 x i8> addrspace(1)* %out, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load volatile <4 x i8> addrspace(1)* %in, align 4
   store <4 x i8> %val, <4 x i8> addrspace(1)* %out, align 4
@@ -150,15 +150,15 @@ define void @test_copy_v4i8_volatile_load(<4 x i8> addrspace(1)* %out, <4 x i8> 
 }
 
 ; FUNC-LABEL: {{^}}test_copy_v4i8_volatile_store:
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_STORE_BYTE
-; SI: BUFFER_STORE_BYTE
-; SI: BUFFER_STORE_BYTE
-; SI: BUFFER_STORE_BYTE
-; SI: S_ENDPGM
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: buffer_store_byte
+; SI: s_endpgm
 define void @test_copy_v4i8_volatile_store(<4 x i8> addrspace(1)* %out, <4 x i8> addrspace(1)* %in) nounwind {
   %val = load <4 x i8> addrspace(1)* %in, align 4
   store volatile <4 x i8> %val, <4 x i8> addrspace(1)* %out, align 4

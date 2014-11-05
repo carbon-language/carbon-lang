@@ -7,7 +7,7 @@
 ;===------------------------------------------------------------------------===;
 ; FUNC-LABEL: {{^}}store_i1:
 ; EG-CHECK: MEM_RAT MSKOR
-; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: buffer_store_byte
 define void @store_i1(i1 addrspace(1)* %out) {
 entry:
   store i1 true, i1 addrspace(1)* %out
@@ -35,7 +35,7 @@ entry:
 ; EG-CHECK: MOV * T[[RW_GPR]].Z, 0.0
 
 ; SI-CHECK-LABEL: {{^}}store_i8:
-; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: buffer_store_byte
 
 define void @store_i8(i8 addrspace(1)* %out, i8 %in) {
 entry:
@@ -64,7 +64,7 @@ entry:
 ; EG-CHECK: MOV * T[[RW_GPR]].Z, 0.0
 
 ; SI-CHECK-LABEL: {{^}}store_i16:
-; SI-CHECK: BUFFER_STORE_SHORT
+; SI-CHECK: buffer_store_short
 define void @store_i16(i16 addrspace(1)* %out, i16 %in) {
 entry:
   store i16 %in, i16 addrspace(1)* %out
@@ -75,8 +75,8 @@ entry:
 ; EG-CHECK: MEM_RAT MSKOR
 ; EG-CHECK-NOT: MEM_RAT MSKOR
 ; SI-CHECK-LABEL: {{^}}store_v2i8:
-; SI-CHECK: BUFFER_STORE_BYTE
-; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: buffer_store_byte
+; SI-CHECK: buffer_store_byte
 define void @store_v2i8(<2 x i8> addrspace(1)* %out, <2 x i32> %in) {
 entry:
   %0 = trunc <2 x i32> %in to <2 x i8>
@@ -90,8 +90,8 @@ entry:
 ; CM-CHECK-LABEL: {{^}}store_v2i16:
 ; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
 ; SI-CHECK-LABEL: {{^}}store_v2i16:
-; SI-CHECK: BUFFER_STORE_SHORT
-; SI-CHECK: BUFFER_STORE_SHORT
+; SI-CHECK: buffer_store_short
+; SI-CHECK: buffer_store_short
 define void @store_v2i16(<2 x i16> addrspace(1)* %out, <2 x i32> %in) {
 entry:
   %0 = trunc <2 x i32> %in to <2 x i16>
@@ -104,10 +104,10 @@ entry:
 ; CM-CHECK-LABEL: {{^}}store_v4i8:
 ; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
 ; SI-CHECK-LABEL: {{^}}store_v4i8:
-; SI-CHECK: BUFFER_STORE_BYTE
-; SI-CHECK: BUFFER_STORE_BYTE
-; SI-CHECK: BUFFER_STORE_BYTE
-; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: buffer_store_byte
+; SI-CHECK: buffer_store_byte
+; SI-CHECK: buffer_store_byte
+; SI-CHECK: buffer_store_byte
 define void @store_v4i8(<4 x i8> addrspace(1)* %out, <4 x i32> %in) {
 entry:
   %0 = trunc <4 x i32> %in to <4 x i8>
@@ -121,7 +121,7 @@ entry:
 ; CM-CHECK-LABEL: {{^}}store_f32:
 ; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK-LABEL: {{^}}store_f32:
-; SI-CHECK: BUFFER_STORE_DWORD
+; SI-CHECK: buffer_store_dword
 
 define void @store_f32(float addrspace(1)* %out, float %in) {
   store float %in, float addrspace(1)* %out
@@ -135,11 +135,11 @@ define void @store_f32(float addrspace(1)* %out, float %in) {
 ; EG-CHECK: MEM_RAT MSKOR
 ; EG-CHECK-NOT: MEM_RAT MSKOR
 ; SI-CHECK-LABEL: {{^}}store_v4i16:
-; SI-CHECK: BUFFER_STORE_SHORT
-; SI-CHECK: BUFFER_STORE_SHORT
-; SI-CHECK: BUFFER_STORE_SHORT
-; SI-CHECK: BUFFER_STORE_SHORT
-; SI-CHECK-NOT: BUFFER_STORE_BYTE
+; SI-CHECK: buffer_store_short
+; SI-CHECK: buffer_store_short
+; SI-CHECK: buffer_store_short
+; SI-CHECK: buffer_store_short
+; SI-CHECK-NOT: buffer_store_byte
 define void @store_v4i16(<4 x i16> addrspace(1)* %out, <4 x i32> %in) {
 entry:
   %0 = trunc <4 x i32> %in to <4 x i16>
@@ -153,7 +153,7 @@ entry:
 ; CM-CHECK-LABEL: {{^}}store_v2f32:
 ; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
 ; SI-CHECK-LABEL: {{^}}store_v2f32:
-; SI-CHECK: BUFFER_STORE_DWORDX2
+; SI-CHECK: buffer_store_dwordx2
 
 define void @store_v2f32(<2 x float> addrspace(1)* %out, float %a, float %b) {
 entry:
@@ -170,7 +170,7 @@ entry:
 ; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
 ; CM-CHECK-NOT: MEM_RAT_CACHELESS STORE_DWORD
 ; SI-CHECK-LABEL: {{^}}store_v4i32:
-; SI-CHECK: BUFFER_STORE_DWORDX4
+; SI-CHECK: buffer_store_dwordx4
 define void @store_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %in) {
 entry:
   store <4 x i32> %in, <4 x i32> addrspace(1)* %out
@@ -179,7 +179,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}store_i64_i8:
 ; EG-CHECK: MEM_RAT MSKOR
-; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: buffer_store_byte
 define void @store_i64_i8(i8 addrspace(1)* %out, i64 %in) {
 entry:
   %0 = trunc i64 %in to i8
@@ -189,7 +189,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}store_i64_i16:
 ; EG-CHECK: MEM_RAT MSKOR
-; SI-CHECK: BUFFER_STORE_SHORT
+; SI-CHECK: buffer_store_short
 define void @store_i64_i16(i16 addrspace(1)* %out, i64 %in) {
 entry:
   %0 = trunc i64 %in to i16
@@ -203,7 +203,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}store_local_i1:
 ; EG-CHECK: LDS_BYTE_WRITE
-; SI-CHECK: DS_WRITE_B8
+; SI-CHECK: ds_write_b8
 define void @store_local_i1(i1 addrspace(3)* %out) {
 entry:
   store i1 true, i1 addrspace(3)* %out
@@ -213,7 +213,7 @@ entry:
 ; EG-CHECK-LABEL: {{^}}store_local_i8:
 ; EG-CHECK: LDS_BYTE_WRITE
 ; SI-CHECK-LABEL: {{^}}store_local_i8:
-; SI-CHECK: DS_WRITE_B8
+; SI-CHECK: ds_write_b8
 define void @store_local_i8(i8 addrspace(3)* %out, i8 %in) {
   store i8 %in, i8 addrspace(3)* %out
   ret void
@@ -222,7 +222,7 @@ define void @store_local_i8(i8 addrspace(3)* %out, i8 %in) {
 ; EG-CHECK-LABEL: {{^}}store_local_i16:
 ; EG-CHECK: LDS_SHORT_WRITE
 ; SI-CHECK-LABEL: {{^}}store_local_i16:
-; SI-CHECK: DS_WRITE_B16
+; SI-CHECK: ds_write_b16
 define void @store_local_i16(i16 addrspace(3)* %out, i16 %in) {
   store i16 %in, i16 addrspace(3)* %out
   ret void
@@ -233,8 +233,8 @@ define void @store_local_i16(i16 addrspace(3)* %out, i16 %in) {
 ; CM-CHECK-LABEL: {{^}}store_local_v2i16:
 ; CM-CHECK: LDS_WRITE
 ; SI-CHECK-LABEL: {{^}}store_local_v2i16:
-; SI-CHECK: DS_WRITE_B16
-; SI-CHECK: DS_WRITE_B16
+; SI-CHECK: ds_write_b16
+; SI-CHECK: ds_write_b16
 define void @store_local_v2i16(<2 x i16> addrspace(3)* %out, <2 x i16> %in) {
 entry:
   store <2 x i16> %in, <2 x i16> addrspace(3)* %out
@@ -246,10 +246,10 @@ entry:
 ; CM-CHECK-LABEL: {{^}}store_local_v4i8:
 ; CM-CHECK: LDS_WRITE
 ; SI-CHECK-LABEL: {{^}}store_local_v4i8:
-; SI-CHECK: DS_WRITE_B8
-; SI-CHECK: DS_WRITE_B8
-; SI-CHECK: DS_WRITE_B8
-; SI-CHECK: DS_WRITE_B8
+; SI-CHECK: ds_write_b8
+; SI-CHECK: ds_write_b8
+; SI-CHECK: ds_write_b8
+; SI-CHECK: ds_write_b8
 define void @store_local_v4i8(<4 x i8> addrspace(3)* %out, <4 x i8> %in) {
 entry:
   store <4 x i8> %in, <4 x i8> addrspace(3)* %out
@@ -263,7 +263,7 @@ entry:
 ; CM-CHECK: LDS_WRITE
 ; CM-CHECK: LDS_WRITE
 ; SI-CHECK-LABEL: {{^}}store_local_v2i32:
-; SI-CHECK: DS_WRITE_B64
+; SI-CHECK: ds_write_b64
 define void @store_local_v2i32(<2 x i32> addrspace(3)* %out, <2 x i32> %in) {
 entry:
   store <2 x i32> %in, <2 x i32> addrspace(3)* %out
@@ -281,10 +281,10 @@ entry:
 ; CM-CHECK: LDS_WRITE
 ; CM-CHECK: LDS_WRITE
 ; SI-CHECK-LABEL: {{^}}store_local_v4i32:
-; SI-CHECK: DS_WRITE_B32
-; SI-CHECK: DS_WRITE_B32
-; SI-CHECK: DS_WRITE_B32
-; SI-CHECK: DS_WRITE_B32
+; SI-CHECK: ds_write_b32
+; SI-CHECK: ds_write_b32
+; SI-CHECK: ds_write_b32
+; SI-CHECK: ds_write_b32
 define void @store_local_v4i32(<4 x i32> addrspace(3)* %out, <4 x i32> %in) {
 entry:
   store <4 x i32> %in, <4 x i32> addrspace(3)* %out
@@ -293,7 +293,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}store_local_i64_i8:
 ; EG-CHECK: LDS_BYTE_WRITE
-; SI-CHECK: DS_WRITE_B8
+; SI-CHECK: ds_write_b8
 define void @store_local_i64_i8(i8 addrspace(3)* %out, i64 %in) {
 entry:
   %0 = trunc i64 %in to i8
@@ -303,7 +303,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}store_local_i64_i16:
 ; EG-CHECK: LDS_SHORT_WRITE
-; SI-CHECK: DS_WRITE_B16
+; SI-CHECK: ds_write_b16
 define void @store_local_i64_i16(i16 addrspace(3)* %out, i64 %in) {
 entry:
   %0 = trunc i64 %in to i16
@@ -323,7 +323,7 @@ entry:
 ; CM-CHECK-LABEL: {{^}}vecload2:
 ; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
 ; SI-CHECK-LABEL: {{^}}vecload2:
-; SI-CHECK: BUFFER_STORE_DWORDX2
+; SI-CHECK: buffer_store_dwordx2
 define void @vecload2(i32 addrspace(1)* nocapture %out, i32 addrspace(2)* nocapture %mem) #0 {
 entry:
   %0 = load i32 addrspace(2)* %mem, align 4
@@ -349,8 +349,8 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 ; CM-CHECK: STORE_DWORD
 ; CM-CHECK: STORE_DWORD
 ; CM-CHECK: STORE_DWORD
-; SI: BUFFER_STORE_DWORDX2
-; SI: BUFFER_STORE_DWORDX2
+; SI: buffer_store_dwordx2
+; SI: buffer_store_dwordx2
 define void @i128-const-store(i32 addrspace(1)* %out) {
 entry:
   store i32 1, i32 addrspace(1)* %out, align 4

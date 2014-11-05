@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK: V_RCP_IFLAG_F32_e32
+;CHECK: v_rcp_iflag_f32_e32
 
 define void @test(i32 %p, i32 %q) {
    %i = udiv i32 %p, %q

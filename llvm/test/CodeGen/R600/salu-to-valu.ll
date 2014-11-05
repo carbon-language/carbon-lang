@@ -9,13 +9,13 @@
 
 ; CHECK-LABEL: {{^}}mubuf:
 
-; Make sure we aren't using VGPRs for the source operand of S_MOV_B64
-; CHECK-NOT: S_MOV_B64 s[{{[0-9]+:[0-9]+}}], v
+; Make sure we aren't using VGPRs for the source operand of s_mov_b64
+; CHECK-NOT: s_mov_b64 s[{{[0-9]+:[0-9]+}}], v
 
 ; Make sure we aren't using VGPR's for the srsrc operand of BUFFER_LOAD_*
 ; instructions
-; CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64
-; CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64
+; CHECK: buffer_load_ubyte v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64
+; CHECK: buffer_load_ubyte v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64
 define void @mubuf(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
 entry:
   %0 = call i32 @llvm.r600.read.tidig.x() #1
@@ -50,8 +50,8 @@ attributes #1 = { nounwind readnone }
 ; Test moving an SMRD instruction to the VALU
 
 ; CHECK-LABEL: {{^}}smrd_valu:
-; CHECK: BUFFER_LOAD_DWORD [[OUT:v[0-9]+]]
-; CHECK: BUFFER_STORE_DWORD [[OUT]]
+; CHECK: buffer_load_dword [[OUT:v[0-9]+]]
+; CHECK: buffer_store_dword [[OUT]]
 
 define void @smrd_valu(i32 addrspace(2)* addrspace(1)* %in, i32 %a, i32 addrspace(1)* %out) {
 entry:
@@ -78,7 +78,7 @@ endif:
 ; Test moving ann SMRD with an immediate offset to the VALU
 
 ; CHECK-LABEL: {{^}}smrd_valu2:
-; CHECK: BUFFER_LOAD_DWORD
+; CHECK: buffer_load_dword
 define void @smrd_valu2(i32 addrspace(1)* %out, [8 x i32] addrspace(2)* %in) {
 entry:
   %0 = call i32 @llvm.r600.read.tidig.x() nounwind readnone
@@ -90,8 +90,8 @@ entry:
 }
 
 ; CHECK-LABEL: {{^}}s_load_imm_v8i32:
-; CHECK: BUFFER_LOAD_DWORDX4
-; CHECK: BUFFER_LOAD_DWORDX4
+; CHECK: buffer_load_dwordx4
+; CHECK: buffer_load_dwordx4
 define void @s_load_imm_v8i32(<8 x i32> addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) {
 entry:
   %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -103,10 +103,10 @@ entry:
 }
 
 ; CHECK-LABEL: {{^}}s_load_imm_v16i32:
-; CHECK: BUFFER_LOAD_DWORDX4
-; CHECK: BUFFER_LOAD_DWORDX4
-; CHECK: BUFFER_LOAD_DWORDX4
-; CHECK: BUFFER_LOAD_DWORDX4
+; CHECK: buffer_load_dwordx4
+; CHECK: buffer_load_dwordx4
+; CHECK: buffer_load_dwordx4
+; CHECK: buffer_load_dwordx4
 define void @s_load_imm_v16i32(<16 x i32> addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) {
 entry:
   %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1

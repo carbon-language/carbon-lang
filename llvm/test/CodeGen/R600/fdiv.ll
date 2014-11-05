@@ -11,8 +11,8 @@
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[3].X, PS
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].W, PS
 
-; SI-DAG: V_RCP_F32
-; SI-DAG: V_MUL_F32
+; SI-DAG: v_rcp_f32
+; SI-DAG: v_mul_f32
 define void @fdiv_f32(float addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fdiv float %a, %b
@@ -28,10 +28,10 @@ entry:
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[3].X, PS
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].W, PS
 
-; SI-DAG: V_RCP_F32
-; SI-DAG: V_MUL_F32
-; SI-DAG: V_RCP_F32
-; SI-DAG: V_MUL_F32
+; SI-DAG: v_rcp_f32
+; SI-DAG: v_mul_f32
+; SI-DAG: v_rcp_f32
+; SI-DAG: v_mul_f32
 define void @fdiv_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x float> %b) {
 entry:
   %0 = fdiv <2 x float> %a, %b
@@ -49,14 +49,14 @@ entry:
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}, PS
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}, PS
 
-; SI-DAG: V_RCP_F32
-; SI-DAG: V_MUL_F32
-; SI-DAG: V_RCP_F32
-; SI-DAG: V_MUL_F32
-; SI-DAG: V_RCP_F32
-; SI-DAG: V_MUL_F32
-; SI-DAG: V_RCP_F32
-; SI-DAG: V_MUL_F32
+; SI-DAG: v_rcp_f32
+; SI-DAG: v_mul_f32
+; SI-DAG: v_rcp_f32
+; SI-DAG: v_mul_f32
+; SI-DAG: v_rcp_f32
+; SI-DAG: v_mul_f32
+; SI-DAG: v_rcp_f32
+; SI-DAG: v_mul_f32
 define void @fdiv_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x float> addrspace(1)* %in, i32 1
   %a = load <4 x float> addrspace(1) * %in

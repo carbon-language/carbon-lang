@@ -4,7 +4,7 @@
 ; R600-CHECK: {{^}}amdgpu_trunc:
 ; R600-CHECK: TRUNC T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK: {{^}}amdgpu_trunc:
-; SI-CHECK: V_TRUNC_F32
+; SI-CHECK: v_trunc_f32
 
 define void @amdgpu_trunc(float addrspace(1)* %out, float %x) {
 entry:

@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: {{^}}kilp_gs_const:
-; SI: S_MOV_B64 exec, 0
+; SI: s_mov_b64 exec, 0
 define void @kilp_gs_const() #0 {
 main_body:
   %0 = icmp ule i32 0, 3

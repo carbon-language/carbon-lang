@@ -3,7 +3,7 @@
 
 
 ; FUNC-LABEL: {{^}}v_fsub_f32:
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
 define void @v_fsub_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %b_ptr = getelementptr float addrspace(1)* %in, i32 1
   %a = load float addrspace(1)* %in, align 4
@@ -16,7 +16,7 @@ define void @v_fsub_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
 ; FUNC-LABEL: {{^}}s_fsub_f32:
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, -KC0[2].W
 
-; SI: V_SUB_F32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; SI: v_sub_f32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
 define void @s_fsub_f32(float addrspace(1)* %out, float %a, float %b) {
   %sub = fsub float %a, %b
   store float %sub, float addrspace(1)* %out, align 4
@@ -32,8 +32,8 @@ declare void @llvm.AMDGPU.store.output(float, i32)
 ; R600-DAG: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].W, -KC0[3].Y
 
 ; FIXME: Should be using SGPR directly for first operand
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
 define void @fsub_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x float> %b) {
   %sub = fsub <2 x float> %a, %b
   store <2 x float> %sub, <2 x float> addrspace(1)* %out, align 8
@@ -46,10 +46,10 @@ define void @fsub_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x flo
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
 
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
 define void @v_fsub_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x float> addrspace(1)* %in, i32 1
   %a = load <4 x float> addrspace(1)* %in, align 16
@@ -62,11 +62,11 @@ define void @v_fsub_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(
 ; FIXME: Should be using SGPR directly for first operand
 
 ; FUNC-LABEL: {{^}}s_fsub_v4f32:
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
-; SI: S_ENDPGM
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_subrev_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: s_endpgm
 define void @s_fsub_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %a, <4 x float> %b) {
   %result = fsub <4 x float> %a, %b
   store <4 x float> %result, <4 x float> addrspace(1)* %out, align 16

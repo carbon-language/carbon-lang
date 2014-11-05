@@ -6,8 +6,8 @@
 
 ; FUNC-LABEL: {{^}}test_i8:
 ; EG: CF_END
-; SI: BUFFER_STORE_BYTE
-; SI: S_ENDPGM
+; SI: buffer_store_byte
+; SI: s_endpgm
 define void @test_i8( i32 %s, i8 addrspace(1)* %out) #3 {
   %arrayidx = getelementptr inbounds [1 x i8] addrspace(2)* @a, i32 0, i32 %s
   %1 = load i8 addrspace(2)* %arrayidx, align 1
@@ -19,8 +19,8 @@ define void @test_i8( i32 %s, i8 addrspace(1)* %out) #3 {
 
 ; FUNC-LABEL: {{^}}test_i16:
 ; EG: CF_END
-; SI: BUFFER_STORE_SHORT
-; SI: S_ENDPGM
+; SI: buffer_store_short
+; SI: s_endpgm
 define void @test_i16( i32 %s, i16 addrspace(1)* %out) #3 {
   %arrayidx = getelementptr inbounds [1 x i16] addrspace(2)* @b, i32 0, i32 %s
   %1 = load i16 addrspace(2)* %arrayidx, align 2

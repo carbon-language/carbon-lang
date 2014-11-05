@@ -18,8 +18,8 @@
 ; this consistently on evergreen GPUs.
 ; EG-CHECK: LDS_WRITE
 ; EG-CHECK: LDS_WRITE
-; SI-CHECK: DS_WRITE_B32 {{v[0-9]*}}, v[[ADDRW:[0-9]*]]
-; SI-CHECK-NOT: DS_WRITE_B32 {{v[0-9]*}}, v[[ADDRW]]
+; SI-CHECK: ds_write_b32 {{v[0-9]*}}, v[[ADDRW:[0-9]*]]
+; SI-CHECK-NOT: ds_write_b32 {{v[0-9]*}}, v[[ADDRW]]
 
 ; GROUP_BARRIER must be the last instruction in a clause
 ; EG-CHECK: GROUP_BARRIER
@@ -29,10 +29,10 @@
 ; constant offsets.
 ; EG-CHECK: LDS_READ_RET {{[*]*}} OQAP, {{PV|T}}[[ADDRR:[0-9]*\.[XYZW]]]
 ; EG-CHECK-NOT: LDS_READ_RET {{[*]*}} OQAP, T[[ADDRR]]
-; SI: V_ADD_I32_e32 [[SIPTR:v[0-9]+]], 16, v{{[0-9]+}}
-; SI: DS_READ_B32 {{v[0-9]+}}, [[SIPTR]] [M0]
-; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]] offset:16 [M0]
-; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR]] [M0]
+; SI: v_add_i32_e32 [[SIPTR:v[0-9]+]], 16, v{{[0-9]+}}
+; SI: ds_read_b32 {{v[0-9]+}}, [[SIPTR]] [M0]
+; CI: ds_read_b32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]] offset:16 [M0]
+; CI: ds_read_b32 {{v[0-9]+}}, [[ADDRR]] [M0]
 
 define void @local_memory_two_objects(i32 addrspace(1)* %out) {
 entry:

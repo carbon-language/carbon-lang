@@ -4,7 +4,7 @@
 declare i32 @llvm.AMDGPU.bfm(i32, i32) nounwind readnone
 
 ; FUNC-LABEL: {{^}}bfm_arg_arg:
-; SI: V_BFM
+; SI: v_bfm
 ; EG: BFM_INT
 define void @bfm_arg_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src1) nounwind {
   %bfm = call i32 @llvm.AMDGPU.bfm(i32 %src0, i32 %src1) nounwind readnone
@@ -13,7 +13,7 @@ define void @bfm_arg_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src1) nounwind 
 }
 
 ; FUNC-LABEL: {{^}}bfm_arg_imm:
-; SI: V_BFM
+; SI: v_bfm
 ; EG: BFM_INT
 define void @bfm_arg_imm(i32 addrspace(1)* %out, i32 %src0) nounwind {
   %bfm = call i32 @llvm.AMDGPU.bfm(i32 %src0, i32 123) nounwind readnone
@@ -22,7 +22,7 @@ define void @bfm_arg_imm(i32 addrspace(1)* %out, i32 %src0) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}bfm_imm_arg:
-; SI: V_BFM
+; SI: v_bfm
 ; EG: BFM_INT
 define void @bfm_imm_arg(i32 addrspace(1)* %out, i32 %src1) nounwind {
   %bfm = call i32 @llvm.AMDGPU.bfm(i32 123, i32 %src1) nounwind readnone
@@ -31,7 +31,7 @@ define void @bfm_imm_arg(i32 addrspace(1)* %out, i32 %src1) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}bfm_imm_imm:
-; SI: V_BFM
+; SI: v_bfm
 ; EG: BFM_INT
 define void @bfm_imm_imm(i32 addrspace(1)* %out) nounwind {
   %bfm = call i32 @llvm.AMDGPU.bfm(i32 123, i32 456) nounwind readnone

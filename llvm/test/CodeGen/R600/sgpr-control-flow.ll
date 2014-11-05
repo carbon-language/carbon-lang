@@ -8,8 +8,8 @@
 ; threads will execute the same code paths, so we don't need to worry
 ; about instructions in different blocks overwriting each other.
 ; SI-LABEL: {{^}}sgpr_if_else_salu_br:
-; SI: S_ADD
-; SI: S_ADD
+; SI: s_add
+; SI: s_add
 
 define void @sgpr_if_else_salu_br(i32 addrspace(1)* %out, i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) {
 entry:
@@ -35,8 +35,8 @@ endif:
 ; different threads will take different control flow paths.
 
 ; SI-LABEL: {{^}}sgpr_if_else_valu_br:
-; SI: S_ADD_I32 [[SGPR:s[0-9]+]]
-; SI-NOT: S_ADD_I32 [[SGPR]]
+; SI: s_add_i32 [[SGPR:s[0-9]+]]
+; SI-NOT: s_add_i32 [[SGPR]]
 
 define void @sgpr_if_else_valu_br(i32 addrspace(1)* %out, float %a, i32 %b, i32 %c, i32 %d, i32 %e) {
 entry:

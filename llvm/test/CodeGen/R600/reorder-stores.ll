@@ -1,15 +1,15 @@
 ; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: {{^}}no_reorder_v2f64_global_load_store:
-; SI: BUFFER_LOAD_DWORDX2
-; SI: BUFFER_LOAD_DWORDX2
-; SI: BUFFER_LOAD_DWORDX2
-; SI: BUFFER_LOAD_DWORDX2
-; SI: BUFFER_STORE_DWORDX2
-; SI: BUFFER_STORE_DWORDX2
-; SI: BUFFER_STORE_DWORDX2
-; SI: BUFFER_STORE_DWORDX2
-; SI: S_ENDPGM
+; SI: buffer_load_dwordx2
+; SI: buffer_load_dwordx2
+; SI: buffer_load_dwordx2
+; SI: buffer_load_dwordx2
+; SI: buffer_store_dwordx2
+; SI: buffer_store_dwordx2
+; SI: buffer_store_dwordx2
+; SI: buffer_store_dwordx2
+; SI: s_endpgm
 define void @no_reorder_v2f64_global_load_store(<2 x double> addrspace(1)* nocapture %x, <2 x double> addrspace(1)* nocapture %y) nounwind {
   %tmp1 = load <2 x double> addrspace(1)* %x, align 16
   %tmp4 = load <2 x double> addrspace(1)* %y, align 16
@@ -19,11 +19,11 @@ define void @no_reorder_v2f64_global_load_store(<2 x double> addrspace(1)* nocap
 }
 
 ; SI-LABEL: {{^}}no_reorder_scalarized_v2f64_local_load_store:
-; SI: DS_READ_B64
-; SI: DS_READ_B64
-; SI: DS_WRITE_B64
-; SI: DS_WRITE_B64
-; SI: S_ENDPGM
+; SI: ds_read_b64
+; SI: ds_read_b64
+; SI: ds_write_b64
+; SI: ds_write_b64
+; SI: s_endpgm
 define void @no_reorder_scalarized_v2f64_local_load_store(<2 x double> addrspace(3)* nocapture %x, <2 x double> addrspace(3)* nocapture %y) nounwind {
   %tmp1 = load <2 x double> addrspace(3)* %x, align 16
   %tmp4 = load <2 x double> addrspace(3)* %y, align 16
@@ -33,47 +33,47 @@ define void @no_reorder_scalarized_v2f64_local_load_store(<2 x double> addrspace
 }
 
 ; SI-LABEL: {{^}}no_reorder_split_v8i32_global_load_store:
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
 
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
 
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
 
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
+; SI: buffer_load_dword
 
 
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
 
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
 
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
 
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: S_ENDPGM
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: s_endpgm
 define void @no_reorder_split_v8i32_global_load_store(<8 x i32> addrspace(1)* nocapture %x, <8 x i32> addrspace(1)* nocapture %y) nounwind {
   %tmp1 = load <8 x i32> addrspace(1)* %x, align 32
   %tmp4 = load <8 x i32> addrspace(1)* %y, align 32
@@ -83,12 +83,12 @@ define void @no_reorder_split_v8i32_global_load_store(<8 x i32> addrspace(1)* no
 }
 
 ; SI-LABEL: {{^}}no_reorder_extload_64:
-; SI: DS_READ_B64
-; SI: DS_READ_B64
-; SI: DS_WRITE_B64
-; SI-NOT: DS_READ
-; SI: DS_WRITE_B64
-; SI: S_ENDPGM
+; SI: ds_read_b64
+; SI: ds_read_b64
+; SI: ds_write_b64
+; SI-NOT: ds_read
+; SI: ds_write_b64
+; SI: s_endpgm
 define void @no_reorder_extload_64(<2 x i32> addrspace(3)* nocapture %x, <2 x i32> addrspace(3)* nocapture %y) nounwind {
   %tmp1 = load <2 x i32> addrspace(3)* %x, align 8
   %tmp4 = load <2 x i32> addrspace(3)* %y, align 8

@@ -9,10 +9,10 @@ declare i32 @llvm.r600.read.tidig.x() #1
 ; ordering the loads so that the lower address loads come first.
 
 ; FUNC-LABEL: {{^}}cluster_global_arg_loads:
-; SI-DAG: BUFFER_LOAD_DWORD [[REG0:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0{{$}}
-; SI-DAG: BUFFER_LOAD_DWORD [[REG1:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0 offset:0x4
-; SI: BUFFER_STORE_DWORD [[REG0]]
-; SI: BUFFER_STORE_DWORD [[REG1]]
+; SI-DAG: buffer_load_dword [[REG0:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0{{$}}
+; SI-DAG: buffer_load_dword [[REG1:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0 offset:0x4
+; SI: buffer_store_dword [[REG0]]
+; SI: buffer_store_dword [[REG1]]
 define void @cluster_global_arg_loads(i32 addrspace(1)* %out0, i32 addrspace(1)* %out1, i32 addrspace(1)* %ptr) #0 {
   %load0 = load i32 addrspace(1)* %ptr, align 4
   %gep = getelementptr i32 addrspace(1)* %ptr, i32 1
@@ -25,8 +25,8 @@ define void @cluster_global_arg_loads(i32 addrspace(1)* %out0, i32 addrspace(1)*
 ; Test for a crach in SIInstrInfo::areLoadsFromSameBasePtr() when checking
 ; an MUBUF load which does not have a vaddr operand.
 ; FUNC-LABEL: {{^}}same_base_ptr_crash:
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_LOAD_DWORD
+; SI: buffer_load_dword
+; SI: buffer_load_dword
 define void @same_base_ptr_crash(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i32 %offset) {
 entry:
   %out1 = getelementptr i32 addrspace(1)* %out, i32 %offset

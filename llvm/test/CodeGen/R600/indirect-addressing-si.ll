@@ -4,8 +4,8 @@
 ; indexing of vectors.
 
 ; CHECK: extract_w_offset
-; CHECK: S_MOV_B32 m0
-; CHECK-NEXT: V_MOVRELS_B32_e32
+; CHECK: s_mov_b32 m0
+; CHECK-NEXT: v_movrels_b32_e32
 define void @extract_w_offset(float addrspace(1)* %out, i32 %in) {
 entry:
   %0 = add i32 %in, 1
@@ -15,8 +15,8 @@ entry:
 }
 
 ; CHECK: extract_wo_offset
-; CHECK: S_MOV_B32 m0
-; CHECK-NEXT: V_MOVRELS_B32_e32
+; CHECK: s_mov_b32 m0
+; CHECK-NEXT: v_movrels_b32_e32
 define void @extract_wo_offset(float addrspace(1)* %out, i32 %in) {
 entry:
   %0 = extractelement <4 x float> <float 1.0, float 2.0, float 3.0, float 4.0>, i32 %in
@@ -25,8 +25,8 @@ entry:
 }
 
 ; CHECK: insert_w_offset
-; CHECK: S_MOV_B32 m0
-; CHECK-NEXT: V_MOVRELD_B32_e32
+; CHECK: s_mov_b32 m0
+; CHECK-NEXT: v_movreld_b32_e32
 define void @insert_w_offset(float addrspace(1)* %out, i32 %in) {
 entry:
   %0 = add i32 %in, 1
@@ -37,8 +37,8 @@ entry:
 }
 
 ; CHECK: insert_wo_offset
-; CHECK: S_MOV_B32 m0
-; CHECK-NEXT: V_MOVRELD_B32_e32
+; CHECK: s_mov_b32 m0
+; CHECK-NEXT: v_movreld_b32_e32
 define void @insert_wo_offset(float addrspace(1)* %out, i32 %in) {
 entry:
   %0 = insertelement <4 x float> <float 1.0, float 2.0, float 3.0, float 4.0>, float 5.0, i32 %in

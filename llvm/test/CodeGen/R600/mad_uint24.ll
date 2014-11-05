@@ -4,7 +4,7 @@
 
 ; FUNC-LABEL: {{^}}u32_mad24:
 ; EG: MULADD_UINT24
-; SI: V_MAD_U32_U24
+; SI: v_mad_u32_u24
 
 define void @u32_mad24(i32 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) {
 entry:
@@ -24,8 +24,8 @@ entry:
 ; The result must be sign-extended
 ; EG: BFE_INT {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[MAD_CHAN]], 0.0, literal.x
 ; EG: 16
-; SI: V_MAD_U32_U24 [[MAD:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
-; SI: V_BFE_I32 v{{[0-9]}}, [[MAD]], 0, 16
+; SI: v_mad_u32_u24 [[MAD:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
+; SI: v_bfe_i32 v{{[0-9]}}, [[MAD]], 0, 16
 
 define void @i16_mad24(i32 addrspace(1)* %out, i16 %a, i16 %b, i16 %c) {
 entry:
@@ -41,8 +41,8 @@ entry:
 ; The result must be sign-extended
 ; EG: BFE_INT {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[MAD_CHAN]], 0.0, literal.x
 ; EG: 8
-; SI: V_MAD_U32_U24 [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
-; SI: V_BFE_I32 v{{[0-9]}}, [[MUL]], 0, 8
+; SI: v_mad_u32_u24 [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
+; SI: v_bfe_i32 v{{[0-9]}}, [[MUL]], 0, 8
 
 define void @i8_mad24(i32 addrspace(1)* %out, i8 %a, i8 %b, i8 %c) {
 entry:
@@ -62,7 +62,7 @@ entry:
 ; Check that the select instruction is not deleted.
 ; FUNC-LABEL: {{^}}i24_i32_i32_mad:
 ; EG: CNDE_INT
-; SI: V_CNDMASK
+; SI: v_cndmask
 define void @i24_i32_i32_mad(i32 addrspace(1)* %out, i32 %a, i32 %b, i32 %c, i32 %d) {
 entry:
   %0 = ashr i32 %a, 8

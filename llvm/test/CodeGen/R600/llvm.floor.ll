@@ -4,7 +4,7 @@
 ; R600-CHECK: {{^}}f32:
 ; R600-CHECK: FLOOR
 ; SI-CHECK: {{^}}f32:
-; SI-CHECK: V_FLOOR_F32_e32
+; SI-CHECK: v_floor_f32_e32
 define void @f32(float addrspace(1)* %out, float %in) {
 entry:
   %0 = call float @llvm.floor.f32(float %in)
@@ -16,8 +16,8 @@ entry:
 ; R600-CHECK: FLOOR
 ; R600-CHECK: FLOOR
 ; SI-CHECK: {{^}}v2f32:
-; SI-CHECK: V_FLOOR_F32_e32
-; SI-CHECK: V_FLOOR_F32_e32
+; SI-CHECK: v_floor_f32_e32
+; SI-CHECK: v_floor_f32_e32
 define void @v2f32(<2 x float> addrspace(1)* %out, <2 x float> %in) {
 entry:
   %0 = call <2 x float> @llvm.floor.v2f32(<2 x float> %in)
@@ -31,10 +31,10 @@ entry:
 ; R600-CHECK: FLOOR
 ; R600-CHECK: FLOOR
 ; SI-CHECK: {{^}}v4f32:
-; SI-CHECK: V_FLOOR_F32_e32
-; SI-CHECK: V_FLOOR_F32_e32
-; SI-CHECK: V_FLOOR_F32_e32
-; SI-CHECK: V_FLOOR_F32_e32
+; SI-CHECK: v_floor_f32_e32
+; SI-CHECK: v_floor_f32_e32
+; SI-CHECK: v_floor_f32_e32
+; SI-CHECK: v_floor_f32_e32
 define void @v4f32(<4 x float> addrspace(1)* %out, <4 x float> %in) {
 entry:
   %0 = call <4 x float> @llvm.floor.v4f32(<4 x float> %in)

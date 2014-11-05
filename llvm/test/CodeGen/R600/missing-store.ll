@@ -6,11 +6,11 @@
 ; resulting in losing the store to gptr
 
 ; FUNC-LABEL: {{^}}missing_store_reduced:
-; SI: DS_READ_B64
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_LOAD_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: S_ENDPGM
+; SI: ds_read_b64
+; SI: buffer_store_dword
+; SI: buffer_load_dword
+; SI: buffer_store_dword
+; SI: s_endpgm
 define void @missing_store_reduced(i32 addrspace(1)* %out, i32 addrspace(1)* %gptr) #0 {
   %ptr0 = load i32 addrspace(2)* addrspace(3)* @ptr_load, align 8
   %ptr2 = getelementptr inbounds i32 addrspace(2)* %ptr0, i64 2

@@ -3,7 +3,7 @@
 
 ; FUNC-LABEL: {{^}}test_barrier_local:
 ; EG: GROUP_BARRIER
-; SI: S_BARRIER
+; SI: s_barrier
 
 define void @test_barrier_local(i32 addrspace(1)* %out) {
 entry:

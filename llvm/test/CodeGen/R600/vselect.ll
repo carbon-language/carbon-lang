@@ -6,8 +6,8 @@
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: {{^}}test_select_v2i32:
-;SI-CHECK: V_CNDMASK_B32_e64
-;SI-CHECK: V_CNDMASK_B32_e64
+;SI-CHECK: v_cndmask_b32_e64
+;SI-CHECK: v_cndmask_b32_e64
 
 define void @test_select_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in0, <2 x i32> addrspace(1)* %in1) {
 entry:
@@ -24,8 +24,8 @@ entry:
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: {{^}}test_select_v2f32:
-;SI-CHECK: V_CNDMASK_B32_e64
-;SI-CHECK: V_CNDMASK_B32_e64
+;SI-CHECK: v_cndmask_b32_e64
+;SI-CHECK: v_cndmask_b32_e64
 
 define void @test_select_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrspace(1)* %in0, <2 x float> addrspace(1)* %in1) {
 entry:
@@ -44,10 +44,10 @@ entry:
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: {{^}}test_select_v4i32:
-;SI-CHECK: V_CNDMASK_B32_e64
-;SI-CHECK: V_CNDMASK_B32_e64
-;SI-CHECK: V_CNDMASK_B32_e64
-;SI-CHECK: V_CNDMASK_B32_e64
+;SI-CHECK: v_cndmask_b32_e64
+;SI-CHECK: v_cndmask_b32_e64
+;SI-CHECK: v_cndmask_b32_e64
+;SI-CHECK: v_cndmask_b32_e64
 
 define void @test_select_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in0, <4 x i32> addrspace(1)* %in1) {
 entry:

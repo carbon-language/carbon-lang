@@ -41,7 +41,7 @@ for.end:                                          ; preds = %for.body, %entry
 
 ; COMMON-LABEL: {{^}}branch_false:
 ; SI: .text
-; SI-NEXT: S_ENDPGM
+; SI-NEXT: s_endpgm
 define void @branch_false(i8 addrspace(1)* nocapture %main, i32 %main_stride) #0 {
 entry:
   br i1 false, label %for.end, label %for.body.lr.ph
@@ -77,7 +77,7 @@ for.end:                                          ; preds = %for.body, %entry
 
 ; COMMON-LABEL: {{^}}branch_undef:
 ; SI: .text
-; SI-NEXT: S_ENDPGM
+; SI-NEXT: s_endpgm
 define void @branch_undef(i8 addrspace(1)* nocapture %main, i32 %main_stride) #0 {
 entry:
   br i1 undef, label %for.end, label %for.body.lr.ph

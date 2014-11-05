@@ -6,9 +6,9 @@
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW
 
 ; SI-CHECK: {{^}}test:
-; SI-CHECK: S_MOV_B32 [[ZERO:s[0-9]]], 0{{$}}
-; SI-CHECK: V_MOV_B32_e32 v[[V_ZERO:[0-9]]], [[ZERO]]
-; SI-CHECK: BUFFER_STORE_DWORDX2 v[0:[[V_ZERO]]{{\]}}
+; SI-CHECK: s_mov_b32 [[ZERO:s[0-9]]], 0{{$}}
+; SI-CHECK: v_mov_b32_e32 v[[V_ZERO:[0-9]]], [[ZERO]]
+; SI-CHECK: buffer_store_dwordx2 v[0:[[V_ZERO]]{{\]}}
 define void @test(i64 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) {
 entry:
   %0 = mul i32 %a, %b
@@ -19,7 +19,7 @@ entry:
 }
 
 ; SI-CHECK-LABEL: {{^}}testi1toi32:
-; SI-CHECK: V_CNDMASK_B32
+; SI-CHECK: v_cndmask_b32
 define void @testi1toi32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
   %0 = icmp eq i32 %a, %b
@@ -29,9 +29,9 @@ entry:
 }
 
 ; SI-CHECK-LABEL: {{^}}zext_i1_to_i64:
-; SI-CHECK: V_CMP_EQ_I32
-; SI-CHECK: V_CNDMASK_B32
-; SI-CHECK: S_MOV_B32 s{{[0-9]+}}, 0
+; SI-CHECK: v_cmp_eq_i32
+; SI-CHECK: v_cndmask_b32
+; SI-CHECK: s_mov_b32 s{{[0-9]+}}, 0
 define void @zext_i1_to_i64(i64 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %cmp = icmp eq i32 %a, %b
   %ext = zext i1 %cmp to i64

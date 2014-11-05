@@ -1,11 +1,11 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: {{^}}load_i8_to_f32:
-; SI: BUFFER_LOAD_UBYTE [[LOADREG:v[0-9]+]],
-; SI-NOT: BFE
-; SI-NOT: LSHR
-; SI: V_CVT_F32_UBYTE0_e32 [[CONV:v[0-9]+]], [[LOADREG]]
-; SI: BUFFER_STORE_DWORD [[CONV]],
+; SI: buffer_load_ubyte [[LOADREG:v[0-9]+]],
+; SI-NOT: bfe
+; SI-NOT: lshr
+; SI: v_cvt_f32_ubyte0_e32 [[CONV:v[0-9]+]], [[LOADREG]]
+; SI: buffer_store_dword [[CONV]],
 define void @load_i8_to_f32(float addrspace(1)* noalias %out, i8 addrspace(1)* noalias %in) nounwind {
   %load = load i8 addrspace(1)* %in, align 1
   %cvt = uitofp i8 %load to float
@@ -14,13 +14,13 @@ define void @load_i8_to_f32(float addrspace(1)* noalias %out, i8 addrspace(1)* n
 }
 
 ; SI-LABEL: {{^}}load_v2i8_to_v2f32:
-; SI: BUFFER_LOAD_USHORT [[LOADREG:v[0-9]+]],
-; SI-NOT: BFE
-; SI-NOT: LSHR
-; SI-NOT: AND
-; SI-DAG: V_CVT_F32_UBYTE1_e32 v[[HIRESULT:[0-9]+]], [[LOADREG]]
-; SI-DAG: V_CVT_F32_UBYTE0_e32 v[[LORESULT:[0-9]+]], [[LOADREG]]
-; SI: BUFFER_STORE_DWORDX2 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
+; SI: buffer_load_ushort [[LOADREG:v[0-9]+]],
+; SI-NOT: bfe
+; SI-NOT: lshr
+; SI-NOT: and
+; SI-DAG: v_cvt_f32_ubyte1_e32 v[[HIRESULT:[0-9]+]], [[LOADREG]]
+; SI-DAG: v_cvt_f32_ubyte0_e32 v[[LORESULT:[0-9]+]], [[LOADREG]]
+; SI: buffer_store_dwordx2 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
 define void @load_v2i8_to_v2f32(<2 x float> addrspace(1)* noalias %out, <2 x i8> addrspace(1)* noalias %in) nounwind {
   %load = load <2 x i8> addrspace(1)* %in, align 1
   %cvt = uitofp <2 x i8> %load to <2 x float>
@@ -29,12 +29,12 @@ define void @load_v2i8_to_v2f32(<2 x float> addrspace(1)* noalias %out, <2 x i8>
 }
 
 ; SI-LABEL: {{^}}load_v3i8_to_v3f32:
-; SI-NOT: BFE
-; SI-NOT: V_CVT_F32_UBYTE3_e32
-; SI-DAG: V_CVT_F32_UBYTE2_e32
-; SI-DAG: V_CVT_F32_UBYTE1_e32
-; SI-DAG: V_CVT_F32_UBYTE0_e32
-; SI: BUFFER_STORE_DWORDX2 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
+; SI-NOT: bfe
+; SI-NOT: v_cvt_f32_ubyte3_e32
+; SI-DAG: v_cvt_f32_ubyte2_e32
+; SI-DAG: v_cvt_f32_ubyte1_e32
+; SI-DAG: v_cvt_f32_ubyte0_e32
+; SI: buffer_store_dwordx2 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
 define void @load_v3i8_to_v3f32(<3 x float> addrspace(1)* noalias %out, <3 x i8> addrspace(1)* noalias %in) nounwind {
   %load = load <3 x i8> addrspace(1)* %in, align 1
   %cvt = uitofp <3 x i8> %load to <3 x float>
@@ -43,18 +43,18 @@ define void @load_v3i8_to_v3f32(<3 x float> addrspace(1)* noalias %out, <3 x i8>
 }
 
 ; SI-LABEL: {{^}}load_v4i8_to_v4f32:
-; We can't use BUFFER_LOAD_DWORD here, because the load is byte aligned, and
-; BUFFER_LOAD_DWORD requires dword alignment.
-; SI: BUFFER_LOAD_USHORT
-; SI: BUFFER_LOAD_USHORT
-; SI: V_OR_B32_e32 [[LOADREG:v[0-9]+]]
-; SI-NOT: BFE
-; SI-NOT: LSHR
-; SI-DAG: V_CVT_F32_UBYTE3_e32 v[[HIRESULT:[0-9]+]], [[LOADREG]]
-; SI-DAG: V_CVT_F32_UBYTE2_e32 v{{[0-9]+}}, [[LOADREG]]
-; SI-DAG: V_CVT_F32_UBYTE1_e32 v{{[0-9]+}}, [[LOADREG]]
-; SI-DAG: V_CVT_F32_UBYTE0_e32 v[[LORESULT:[0-9]+]], [[LOADREG]]
-; SI: BUFFER_STORE_DWORDX4 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
+; We can't use buffer_load_dword here, because the load is byte aligned, and
+; buffer_load_dword requires dword alignment.
+; SI: buffer_load_ushort
+; SI: buffer_load_ushort
+; SI: v_or_b32_e32 [[LOADREG:v[0-9]+]]
+; SI-NOT: bfe
+; SI-NOT: lshr
+; SI-DAG: v_cvt_f32_ubyte3_e32 v[[HIRESULT:[0-9]+]], [[LOADREG]]
+; SI-DAG: v_cvt_f32_ubyte2_e32 v{{[0-9]+}}, [[LOADREG]]
+; SI-DAG: v_cvt_f32_ubyte1_e32 v{{[0-9]+}}, [[LOADREG]]
+; SI-DAG: v_cvt_f32_ubyte0_e32 v[[LORESULT:[0-9]+]], [[LOADREG]]
+; SI: buffer_store_dwordx4 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
 define void @load_v4i8_to_v4f32(<4 x float> addrspace(1)* noalias %out, <4 x i8> addrspace(1)* noalias %in) nounwind {
   %load = load <4 x i8> addrspace(1)* %in, align 1
   %cvt = uitofp <4 x i8> %load to <4 x float>
@@ -62,27 +62,27 @@ define void @load_v4i8_to_v4f32(<4 x float> addrspace(1)* noalias %out, <4 x i8>
   ret void
 }
 
-; XXX - This should really still be able to use the V_CVT_F32_UBYTE0
+; XXX - This should really still be able to use the v_cvt_f32_ubyte0
 ; for each component, but computeKnownBits doesn't handle vectors very
 ; well.
 
 ; SI-LABEL: {{^}}load_v4i8_to_v4f32_2_uses:
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: BUFFER_LOAD_UBYTE
-; SI: V_CVT_F32_UBYTE0_e32
-; SI: V_CVT_F32_UBYTE0_e32
-; SI: V_CVT_F32_UBYTE0_e32
-; SI: V_CVT_F32_UBYTE0_e32
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: buffer_load_ubyte
+; SI: v_cvt_f32_ubyte0_e32
+; SI: v_cvt_f32_ubyte0_e32
+; SI: v_cvt_f32_ubyte0_e32
+; SI: v_cvt_f32_ubyte0_e32
 
 ; XXX - replace with this when v4i8 loads aren't scalarized anymore.
-; XSI: BUFFER_LOAD_DWORD
-; XSI: V_CVT_F32_U32_e32
-; XSI: V_CVT_F32_U32_e32
-; XSI: V_CVT_F32_U32_e32
-; XSI: V_CVT_F32_U32_e32
-; SI: S_ENDPGM
+; XSI: buffer_load_dword
+; XSI: v_cvt_f32_u32_e32
+; XSI: v_cvt_f32_u32_e32
+; XSI: v_cvt_f32_u32_e32
+; XSI: v_cvt_f32_u32_e32
+; SI: s_endpgm
 define void @load_v4i8_to_v4f32_2_uses(<4 x float> addrspace(1)* noalias %out, <4 x i8> addrspace(1)* noalias %out2, <4 x i8> addrspace(1)* noalias %in) nounwind {
   %load = load <4 x i8> addrspace(1)* %in, align 4
   %cvt = uitofp <4 x i8> %load to <4 x float>
@@ -94,7 +94,7 @@ define void @load_v4i8_to_v4f32_2_uses(<4 x float> addrspace(1)* noalias %out, <
 
 ; Make sure this doesn't crash.
 ; SI-LABEL: {{^}}load_v7i8_to_v7f32:
-; SI: S_ENDPGM
+; SI: s_endpgm
 define void @load_v7i8_to_v7f32(<7 x float> addrspace(1)* noalias %out, <7 x i8> addrspace(1)* noalias %in) nounwind {
   %load = load <7 x i8> addrspace(1)* %in, align 1
   %cvt = uitofp <7 x i8> %load to <7 x float>
@@ -103,27 +103,27 @@ define void @load_v7i8_to_v7f32(<7 x float> addrspace(1)* noalias %out, <7 x i8>
 }
 
 ; SI-LABEL: {{^}}load_v8i8_to_v8f32:
-; SI: BUFFER_LOAD_DWORDX2 v{{\[}}[[LOLOAD:[0-9]+]]:[[HILOAD:[0-9]+]]{{\]}},
-; SI-NOT: BFE
-; SI-NOT: LSHR
-; SI-DAG: V_CVT_F32_UBYTE3_e32 v{{[0-9]+}}, v[[LOLOAD]]
-; SI-DAG: V_CVT_F32_UBYTE2_e32 v{{[0-9]+}}, v[[LOLOAD]]
-; SI-DAG: V_CVT_F32_UBYTE1_e32 v{{[0-9]+}}, v[[LOLOAD]]
-; SI-DAG: V_CVT_F32_UBYTE0_e32 v{{[0-9]+}}, v[[LOLOAD]]
-; SI-DAG: V_CVT_F32_UBYTE3_e32 v{{[0-9]+}}, v[[HILOAD]]
-; SI-DAG: V_CVT_F32_UBYTE2_e32 v{{[0-9]+}}, v[[HILOAD]]
-; SI-DAG: V_CVT_F32_UBYTE1_e32 v{{[0-9]+}}, v[[HILOAD]]
-; SI-DAG: V_CVT_F32_UBYTE0_e32 v{{[0-9]+}}, v[[HILOAD]]
-; SI-NOT: BFE
-; SI-NOT: LSHR
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
-; SI: BUFFER_STORE_DWORD
+; SI: buffer_load_dwordx2 v{{\[}}[[LOLOAD:[0-9]+]]:[[HILOAD:[0-9]+]]{{\]}},
+; SI-NOT: bfe
+; SI-NOT: lshr
+; SI-DAG: v_cvt_f32_ubyte3_e32 v{{[0-9]+}}, v[[LOLOAD]]
+; SI-DAG: v_cvt_f32_ubyte2_e32 v{{[0-9]+}}, v[[LOLOAD]]
+; SI-DAG: v_cvt_f32_ubyte1_e32 v{{[0-9]+}}, v[[LOLOAD]]
+; SI-DAG: v_cvt_f32_ubyte0_e32 v{{[0-9]+}}, v[[LOLOAD]]
+; SI-DAG: v_cvt_f32_ubyte3_e32 v{{[0-9]+}}, v[[HILOAD]]
+; SI-DAG: v_cvt_f32_ubyte2_e32 v{{[0-9]+}}, v[[HILOAD]]
+; SI-DAG: v_cvt_f32_ubyte1_e32 v{{[0-9]+}}, v[[HILOAD]]
+; SI-DAG: v_cvt_f32_ubyte0_e32 v{{[0-9]+}}, v[[HILOAD]]
+; SI-NOT: bfe
+; SI-NOT: lshr
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
+; SI: buffer_store_dword
 define void @load_v8i8_to_v8f32(<8 x float> addrspace(1)* noalias %out, <8 x i8> addrspace(1)* noalias %in) nounwind {
   %load = load <8 x i8> addrspace(1)* %in, align 1
   %cvt = uitofp <8 x i8> %load to <8 x float>
@@ -132,10 +132,10 @@ define void @load_v8i8_to_v8f32(<8 x float> addrspace(1)* noalias %out, <8 x i8>
 }
 
 ; SI-LABEL: {{^}}i8_zext_inreg_i32_to_f32:
-; SI: BUFFER_LOAD_DWORD [[LOADREG:v[0-9]+]],
-; SI: V_ADD_I32_e32 [[ADD:v[0-9]+]], 2, [[LOADREG]]
-; SI-NEXT: V_CVT_F32_UBYTE0_e32 [[CONV:v[0-9]+]], [[ADD]]
-; SI: BUFFER_STORE_DWORD [[CONV]],
+; SI: buffer_load_dword [[LOADREG:v[0-9]+]],
+; SI: v_add_i32_e32 [[ADD:v[0-9]+]], 2, [[LOADREG]]
+; SI-NEXT: v_cvt_f32_ubyte0_e32 [[CONV:v[0-9]+]], [[ADD]]
+; SI: buffer_store_dword [[CONV]],
 define void @i8_zext_inreg_i32_to_f32(float addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in) nounwind {
   %load = load i32 addrspace(1)* %in, align 4
   %add = add i32 %load, 2

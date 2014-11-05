@@ -4,7 +4,7 @@
 declare i32 @llvm.AMDGPU.bfi(i32, i32, i32) nounwind readnone
 
 ; FUNC-LABEL: {{^}}bfi_arg_arg_arg:
-; SI: V_BFI_B32
+; SI: v_bfi_b32
 ; EG: BFI_INT
 define void @bfi_arg_arg_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src1, i32 %src2) nounwind {
   %bfi = call i32 @llvm.AMDGPU.bfi(i32 %src0, i32 %src1, i32 %src1) nounwind readnone
@@ -13,7 +13,7 @@ define void @bfi_arg_arg_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src1, i32 %
 }
 
 ; FUNC-LABEL: {{^}}bfi_arg_arg_imm:
-; SI: V_BFI_B32
+; SI: v_bfi_b32
 ; EG: BFI_INT
 define void @bfi_arg_arg_imm(i32 addrspace(1)* %out, i32 %src0, i32 %src1) nounwind {
   %bfi = call i32 @llvm.AMDGPU.bfi(i32 %src0, i32 %src1, i32 123) nounwind readnone
@@ -22,7 +22,7 @@ define void @bfi_arg_arg_imm(i32 addrspace(1)* %out, i32 %src0, i32 %src1) nounw
 }
 
 ; FUNC-LABEL: {{^}}bfi_arg_imm_arg:
-; SI: V_BFI_B32
+; SI: v_bfi_b32
 ; EG: BFI_INT
 define void @bfi_arg_imm_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src2) nounwind {
   %bfi = call i32 @llvm.AMDGPU.bfi(i32 %src0, i32 123, i32 %src2) nounwind readnone
@@ -31,7 +31,7 @@ define void @bfi_arg_imm_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src2) nounw
 }
 
 ; FUNC-LABEL: {{^}}bfi_imm_arg_arg:
-; SI: V_BFI_B32
+; SI: v_bfi_b32
 ; EG: BFI_INT
 define void @bfi_imm_arg_arg(i32 addrspace(1)* %out, i32 %src1, i32 %src2) nounwind {
   %bfi = call i32 @llvm.AMDGPU.bfi(i32 123, i32 %src1, i32 %src2) nounwind readnone

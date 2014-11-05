@@ -2,13 +2,13 @@
 
 
 ; FUNC-LABEL: {{^}}scalar_to_vector_v2i32:
-; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
-; SI: V_LSHRREV_B32_e32 [[RESULT:v[0-9]+]], 16, [[VAL]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: S_ENDPGM
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI: v_lshrrev_b32_e32 [[RESULT:v[0-9]+]], 16, [[VAL]]
+; SI: buffer_store_short [[RESULT]]
+; SI: buffer_store_short [[RESULT]]
+; SI: buffer_store_short [[RESULT]]
+; SI: buffer_store_short [[RESULT]]
+; SI: s_endpgm
 define void @scalar_to_vector_v2i32(<4 x i16> addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
   %tmp1 = load i32 addrspace(1)* %in, align 4
   %bc = bitcast i32 %tmp1 to <2 x i16>
@@ -18,13 +18,13 @@ define void @scalar_to_vector_v2i32(<4 x i16> addrspace(1)* %out, i32 addrspace(
 }
 
 ; FUNC-LABEL: {{^}}scalar_to_vector_v2f32:
-; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
-; SI: V_LSHRREV_B32_e32 [[RESULT:v[0-9]+]], 16, [[VAL]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: BUFFER_STORE_SHORT [[RESULT]]
-; SI: S_ENDPGM
+; SI: buffer_load_dword [[VAL:v[0-9]+]],
+; SI: v_lshrrev_b32_e32 [[RESULT:v[0-9]+]], 16, [[VAL]]
+; SI: buffer_store_short [[RESULT]]
+; SI: buffer_store_short [[RESULT]]
+; SI: buffer_store_short [[RESULT]]
+; SI: buffer_store_short [[RESULT]]
+; SI: s_endpgm
 define void @scalar_to_vector_v2f32(<4 x i16> addrspace(1)* %out, float addrspace(1)* %in) nounwind {
   %tmp1 = load float addrspace(1)* %in, align 4
   %bc = bitcast float %tmp1 to <2 x i16>

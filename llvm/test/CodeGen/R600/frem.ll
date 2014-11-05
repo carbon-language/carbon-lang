@@ -1,16 +1,16 @@
 ; RUN: llc -march=r600 -mcpu=SI -enable-misched < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}frem_f32:
-; SI-DAG: BUFFER_LOAD_DWORD [[X:v[0-9]+]], {{.*$}}
-; SI-DAG: BUFFER_LOAD_DWORD [[Y:v[0-9]+]], {{.*}} offset:0x10
-; SI-DAG: V_CMP
-; SI-DAG: V_MUL_F32
-; SI: V_RCP_F32_e32
-; SI: V_MUL_F32_e32
-; SI: V_MUL_F32_e32
-; SI: V_TRUNC_F32_e32
-; SI: V_MAD_F32
-; SI: S_ENDPGM
+; SI-DAG: buffer_load_dword [[X:v[0-9]+]], {{.*$}}
+; SI-DAG: buffer_load_dword [[Y:v[0-9]+]], {{.*}} offset:0x10
+; SI-DAG: v_cmp
+; SI-DAG: v_mul_f32
+; SI: v_rcp_f32_e32
+; SI: v_mul_f32_e32
+; SI: v_mul_f32_e32
+; SI: v_trunc_f32_e32
+; SI: v_mad_f32
+; SI: s_endpgm
 define void @frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
                       float addrspace(1)* %in2) #0 {
    %gep2 = getelementptr float addrspace(1)* %in2, i32 4
@@ -22,14 +22,14 @@ define void @frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
 }
 
 ; FUNC-LABEL: {{^}}unsafe_frem_f32:
-; SI: BUFFER_LOAD_DWORD [[Y:v[0-9]+]], {{.*}} offset:0x10
-; SI: BUFFER_LOAD_DWORD [[X:v[0-9]+]], {{.*}}
-; SI: V_RCP_F32_e32 [[INVY:v[0-9]+]], [[Y]]
-; SI: V_MUL_F32_e32 [[DIV:v[0-9]+]], [[INVY]], [[X]]
-; SI: V_TRUNC_F32_e32 [[TRUNC:v[0-9]+]], [[DIV]]
-; SI: V_MAD_F32 [[RESULT:v[0-9]+]], -[[TRUNC]], [[Y]], [[X]]
-; SI: BUFFER_STORE_DWORD [[RESULT]]
-; SI: S_ENDPGM
+; SI: buffer_load_dword [[Y:v[0-9]+]], {{.*}} offset:0x10
+; SI: buffer_load_dword [[X:v[0-9]+]], {{.*}}
+; SI: v_rcp_f32_e32 [[INVY:v[0-9]+]], [[Y]]
+; SI: v_mul_f32_e32 [[DIV:v[0-9]+]], [[INVY]], [[X]]
+; SI: v_trunc_f32_e32 [[TRUNC:v[0-9]+]], [[DIV]]
+; SI: v_mad_f32 [[RESULT:v[0-9]+]], -[[TRUNC]], [[Y]], [[X]]
+; SI: buffer_store_dword [[RESULT]]
+; SI: s_endpgm
 define void @unsafe_frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
                              float addrspace(1)* %in2) #1 {
    %gep2 = getelementptr float addrspace(1)* %in2, i32 4
@@ -44,7 +44,7 @@ define void @unsafe_frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
 ; correctly
 
 ; FUNC-LABEL: {{^}}frem_f64:
-; SI: S_ENDPGM
+; SI: s_endpgm
 define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                       double addrspace(1)* %in2) #0 {
    %r0 = load double addrspace(1)* %in1, align 8
@@ -55,11 +55,11 @@ define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; FUNC-LABEL: {{^}}unsafe_frem_f64:
-; SI: V_RCP_F64_e32
-; SI: V_MUL_F64
-; SI: V_BFE_U32
-; SI: V_FMA_F64
-; SI: S_ENDPGM
+; SI: v_rcp_f64_e32
+; SI: v_mul_f64
+; SI: v_bfe_u32
+; SI: v_fma_f64
+; SI: s_endpgm
 define void @unsafe_frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                              double addrspace(1)* %in2) #1 {
    %r0 = load double addrspace(1)* %in1, align 8

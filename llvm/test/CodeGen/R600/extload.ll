@@ -54,9 +54,9 @@ define void @anyext_load_lds_i16(i16 addrspace(3)* nocapture noalias %out, i16 a
 }
 
 ; FUNC-LABEL: {{^}}sextload_global_i8_to_i64:
-; SI: BUFFER_LOAD_SBYTE [[LOAD:v[0-9]+]],
-; SI: V_ASHRREV_I32_e32 v{{[0-9]+}}, 31, [[LOAD]]
-; SI: BUFFER_STORE_DWORDX2
+; SI: buffer_load_sbyte [[LOAD:v[0-9]+]],
+; SI: v_ashrrev_i32_e32 v{{[0-9]+}}, 31, [[LOAD]]
+; SI: buffer_store_dwordx2
 define void @sextload_global_i8_to_i64(i64 addrspace(1)* %out, i8 addrspace(1)* %in) nounwind {
   %a = load i8 addrspace(1)* %in, align 8
   %ext = sext i8 %a to i64
@@ -65,9 +65,9 @@ define void @sextload_global_i8_to_i64(i64 addrspace(1)* %out, i8 addrspace(1)* 
 }
 
 ; FUNC-LABEL: {{^}}sextload_global_i16_to_i64:
-; SI: BUFFER_LOAD_SSHORT [[LOAD:v[0-9]+]],
-; SI: V_ASHRREV_I32_e32 v{{[0-9]+}}, 31, [[LOAD]]
-; SI: BUFFER_STORE_DWORDX2
+; SI: buffer_load_sshort [[LOAD:v[0-9]+]],
+; SI: v_ashrrev_i32_e32 v{{[0-9]+}}, 31, [[LOAD]]
+; SI: buffer_store_dwordx2
 define void @sextload_global_i16_to_i64(i64 addrspace(1)* %out, i16 addrspace(1)* %in) nounwind {
   %a = load i16 addrspace(1)* %in, align 8
   %ext = sext i16 %a to i64
@@ -76,9 +76,9 @@ define void @sextload_global_i16_to_i64(i64 addrspace(1)* %out, i16 addrspace(1)
 }
 
 ; FUNC-LABEL: {{^}}sextload_global_i32_to_i64:
-; SI: BUFFER_LOAD_DWORD [[LOAD:v[0-9]+]],
-; SI: V_ASHRREV_I32_e32 v{{[0-9]+}}, 31, [[LOAD]]
-; SI: BUFFER_STORE_DWORDX2
+; SI: buffer_load_dword [[LOAD:v[0-9]+]],
+; SI: v_ashrrev_i32_e32 v{{[0-9]+}}, 31, [[LOAD]]
+; SI: buffer_store_dwordx2
 define void @sextload_global_i32_to_i64(i64 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
   %a = load i32 addrspace(1)* %in, align 8
   %ext = sext i32 %a to i64
@@ -87,10 +87,10 @@ define void @sextload_global_i32_to_i64(i64 addrspace(1)* %out, i32 addrspace(1)
 }
 
 ; FUNC-LABEL: {{^}}zextload_global_i8_to_i64:
-; SI-DAG: S_MOV_B32 [[ZERO:s[0-9]+]], 0{{$}}
-; SI-DAG: BUFFER_LOAD_UBYTE [[LOAD:v[0-9]+]],
-; SI: V_MOV_B32_e32 {{v[0-9]+}}, [[ZERO]]
-; SI: BUFFER_STORE_DWORDX2
+; SI-DAG: s_mov_b32 [[ZERO:s[0-9]+]], 0{{$}}
+; SI-DAG: buffer_load_ubyte [[LOAD:v[0-9]+]],
+; SI: v_mov_b32_e32 {{v[0-9]+}}, [[ZERO]]
+; SI: buffer_store_dwordx2
 define void @zextload_global_i8_to_i64(i64 addrspace(1)* %out, i8 addrspace(1)* %in) nounwind {
   %a = load i8 addrspace(1)* %in, align 8
   %ext = zext i8 %a to i64
@@ -99,10 +99,10 @@ define void @zextload_global_i8_to_i64(i64 addrspace(1)* %out, i8 addrspace(1)* 
 }
 
 ; FUNC-LABEL: {{^}}zextload_global_i16_to_i64:
-; SI-DAG: S_MOV_B32 [[ZERO:s[0-9]+]], 0{{$}}
-; SI-DAG: BUFFER_LOAD_USHORT [[LOAD:v[0-9]+]],
-; SI: V_MOV_B32_e32 {{v[0-9]+}}, [[ZERO]]
-; SI: BUFFER_STORE_DWORDX2
+; SI-DAG: s_mov_b32 [[ZERO:s[0-9]+]], 0{{$}}
+; SI-DAG: buffer_load_ushort [[LOAD:v[0-9]+]],
+; SI: v_mov_b32_e32 {{v[0-9]+}}, [[ZERO]]
+; SI: buffer_store_dwordx2
 define void @zextload_global_i16_to_i64(i64 addrspace(1)* %out, i16 addrspace(1)* %in) nounwind {
   %a = load i16 addrspace(1)* %in, align 8
   %ext = zext i16 %a to i64
@@ -111,10 +111,10 @@ define void @zextload_global_i16_to_i64(i64 addrspace(1)* %out, i16 addrspace(1)
 }
 
 ; FUNC-LABEL: {{^}}zextload_global_i32_to_i64:
-; SI-DAG: S_MOV_B32 [[ZERO:s[0-9]+]], 0{{$}}
-; SI-DAG: BUFFER_LOAD_DWORD [[LOAD:v[0-9]+]],
-; SI: V_MOV_B32_e32 {{v[0-9]+}}, [[ZERO]]
-; SI: BUFFER_STORE_DWORDX2
+; SI-DAG: s_mov_b32 [[ZERO:s[0-9]+]], 0{{$}}
+; SI-DAG: buffer_load_dword [[LOAD:v[0-9]+]],
+; SI: v_mov_b32_e32 {{v[0-9]+}}, [[ZERO]]
+; SI: buffer_store_dwordx2
 define void @zextload_global_i32_to_i64(i64 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
   %a = load i32 addrspace(1)* %in, align 8
   %ext = zext i32 %a to i64

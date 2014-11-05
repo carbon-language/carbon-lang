@@ -7,7 +7,7 @@
 ; R600-CHECK: {{^}}bfi_def:
 ; R600-CHECK: BFI_INT
 ; SI-CHECK:   @bfi_def
-; SI-CHECK:   V_BFI_B32
+; SI-CHECK:   v_bfi_b32
 define void @bfi_def(i32 addrspace(1)* %out, i32 %x, i32 %y, i32 %z) {
 entry:
   %0 = xor i32 %x, -1
@@ -23,7 +23,7 @@ entry:
 ; R600-CHECK: {{^}}bfi_sha256_ch:
 ; R600-CHECK: BFI_INT
 ; SI-CHECK:   @bfi_sha256_ch
-; SI-CHECK:   V_BFI_B32
+; SI-CHECK:   v_bfi_b32
 define void @bfi_sha256_ch(i32 addrspace(1)* %out, i32 %x, i32 %y, i32 %z) {
 entry:
   %0 = xor i32 %y, %z
@@ -38,8 +38,8 @@ entry:
 ; R600-CHECK: {{^}}bfi_sha256_ma:
 ; R600-CHECK: XOR_INT * [[DST:T[0-9]+\.[XYZW]]], KC0[2].Z, KC0[2].W
 ; R600-CHECK: BFI_INT * {{T[0-9]+\.[XYZW]}}, {{[[DST]]|PV\.[XYZW]}}, KC0[3].X, KC0[2].W
-; SI-CHECK: V_XOR_B32_e32 [[DST:v[0-9]+]], {{s[0-9]+, v[0-9]+}}
-; SI-CHECK: V_BFI_B32 {{v[0-9]+}}, [[DST]], {{s[0-9]+, v[0-9]+}}
+; SI-CHECK: v_xor_b32_e32 [[DST:v[0-9]+]], {{s[0-9]+, v[0-9]+}}
+; SI-CHECK: v_bfi_b32 {{v[0-9]+}}, [[DST]], {{s[0-9]+, v[0-9]+}}
 
 define void @bfi_sha256_ma(i32 addrspace(1)* %out, i32 %x, i32 %y, i32 %z) {
 entry:

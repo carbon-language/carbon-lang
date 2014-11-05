@@ -16,7 +16,7 @@ define void @usubo_i64_zext(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}s_usubo_i32:
-; SI: S_SUB_I32
+; SI: s_sub_i32
 define void @s_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32 %a, i32 %b) nounwind {
   %usub = call { i32, i1 } @llvm.usub.with.overflow.i32(i32 %a, i32 %b) nounwind
   %val = extractvalue { i32, i1 } %usub, 0
@@ -27,7 +27,7 @@ define void @s_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
 }
 
 ; FUNC-LABEL: {{^}}v_usubo_i32:
-; SI: V_SUBREV_I32_e32
+; SI: v_subrev_i32_e32
 define void @v_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %a = load i32 addrspace(1)* %aptr, align 4
   %b = load i32 addrspace(1)* %bptr, align 4
@@ -40,8 +40,8 @@ define void @v_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
 }
 
 ; FUNC-LABEL: {{^}}s_usubo_i64:
-; SI: S_SUB_U32
-; SI: S_SUBB_U32
+; SI: s_sub_u32
+; SI: s_subb_u32
 define void @s_usubo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 %a, i64 %b) nounwind {
   %usub = call { i64, i1 } @llvm.usub.with.overflow.i64(i64 %a, i64 %b) nounwind
   %val = extractvalue { i64, i1 } %usub, 0
@@ -52,8 +52,8 @@ define void @s_usubo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64
 }
 
 ; FUNC-LABEL: {{^}}v_usubo_i64:
-; SI: V_SUB_I32
-; SI: V_SUBB_U32
+; SI: v_sub_i32
+; SI: v_subb_u32
 define void @v_usubo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
   %a = load i64 addrspace(1)* %aptr, align 4
   %b = load i64 addrspace(1)* %bptr, align 4

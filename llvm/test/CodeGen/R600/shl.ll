@@ -6,8 +6,8 @@
 ;EG-CHECK: LSHL {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: {{^}}shl_v2i32:
-;SI-CHECK: V_LSHL_B32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: V_LSHL_B32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: v_lshl_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: v_lshl_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @shl_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
@@ -25,10 +25,10 @@ define void @shl_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in
 ;EG-CHECK: LSHL {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: {{^}}shl_v4i32:
-;SI-CHECK: V_LSHL_B32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: V_LSHL_B32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: V_LSHL_B32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: V_LSHL_B32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: v_lshl_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: v_lshl_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: v_lshl_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+;SI-CHECK: v_lshl_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @shl_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
@@ -52,7 +52,7 @@ define void @shl_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in
 ;EG-CHECK-DAG: CNDE_INT {{\*? *}}[[RESHI:T[0-9]+\.[XYZW]]], {{T[0-9]+\.[XYZW], .*}}, 0.0
 
 ;SI-CHECK: {{^}}shl_i64:
-;SI-CHECK: V_LSHL_B64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+;SI-CHECK: v_lshl_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 
 define void @shl_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %b_ptr = getelementptr i64 addrspace(1)* %in, i64 1
@@ -86,8 +86,8 @@ define void @shl_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 ;EG-CHECK-DAG: CNDE_INT
 
 ;SI-CHECK: {{^}}shl_v2i64:
-;SI-CHECK: V_LSHL_B64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
-;SI-CHECK: V_LSHL_B64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+;SI-CHECK: v_lshl_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+;SI-CHECK: v_lshl_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 
 define void @shl_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %in) {
   %b_ptr = getelementptr <2 x i64> addrspace(1)* %in, i64 1
@@ -141,10 +141,10 @@ define void @shl_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %in
 ;EG-CHECK-DAG: CNDE_INT
 
 ;SI-CHECK: {{^}}shl_v4i64:
-;SI-CHECK: V_LSHL_B64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
-;SI-CHECK: V_LSHL_B64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
-;SI-CHECK: V_LSHL_B64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
-;SI-CHECK: V_LSHL_B64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+;SI-CHECK: v_lshl_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+;SI-CHECK: v_lshl_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+;SI-CHECK: v_lshl_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+;SI-CHECK: v_lshl_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 
 define void @shl_v4i64(<4 x i64> addrspace(1)* %out, <4 x i64> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x i64> addrspace(1)* %in, i64 1

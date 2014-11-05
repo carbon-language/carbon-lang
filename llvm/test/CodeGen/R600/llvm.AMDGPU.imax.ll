@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: {{^}}vector_imax:
-; SI: V_MAX_I32_e32
+; SI: v_max_i32_e32
 define void @vector_imax(i32 %p0, i32 %p1, i32 addrspace(1)* %in) #0 {
 main_body:
   %load = load i32 addrspace(1)* %in, align 4
@@ -12,7 +12,7 @@ main_body:
 }
 
 ; SI-LABEL: {{^}}scalar_imax:
-; SI: S_MAX_I32
+; SI: s_max_i32
 define void @scalar_imax(i32 %p0, i32 %p1) #0 {
 entry:
   %max = call i32 @llvm.AMDGPU.imax(i32 %p0, i32 %p1)

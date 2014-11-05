@@ -6,9 +6,9 @@
 ; R600-NEXT: 32
 ; R600: BIT_ALIGN_INT {{T[0-9]+\.[XYZW]}}, KC0[2].Z, KC0[2].Z, PV.{{[XYZW]}}
 
-; SI: S_SUB_I32 [[SDST:s[0-9]+]], 32, {{[s][0-9]+}}
-; SI: V_MOV_B32_e32 [[VDST:v[0-9]+]], [[SDST]]
-; SI: V_ALIGNBIT_B32 {{v[0-9]+, [s][0-9]+, s[0-9]+}}, [[VDST]]
+; SI: s_sub_i32 [[SDST:s[0-9]+]], 32, {{[s][0-9]+}}
+; SI: v_mov_b32_e32 [[VDST:v[0-9]+]], [[SDST]]
+; SI: v_alignbit_b32 {{v[0-9]+, [s][0-9]+, s[0-9]+}}, [[VDST]]
 define void @rotl_i32(i32 addrspace(1)* %in, i32 %x, i32 %y) {
 entry:
   %0 = shl i32 %x, %y
@@ -20,11 +20,11 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}rotl_v2i32:
-; SI-DAG: S_SUB_I32
-; SI-DAG: S_SUB_I32
-; SI-DAG: V_ALIGNBIT_B32
-; SI-DAG: V_ALIGNBIT_B32
-; SI: S_ENDPGM
+; SI-DAG: s_sub_i32
+; SI-DAG: s_sub_i32
+; SI-DAG: v_alignbit_b32
+; SI-DAG: v_alignbit_b32
+; SI: s_endpgm
 define void @rotl_v2i32(<2 x i32> addrspace(1)* %in, <2 x i32> %x, <2 x i32> %y) {
 entry:
   %0 = shl <2 x i32> %x, %y
@@ -36,15 +36,15 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}rotl_v4i32:
-; SI-DAG: S_SUB_I32
-; SI-DAG: V_ALIGNBIT_B32
-; SI-DAG: S_SUB_I32
-; SI-DAG: V_ALIGNBIT_B32
-; SI-DAG: S_SUB_I32
-; SI-DAG: V_ALIGNBIT_B32
-; SI-DAG: S_SUB_I32
-; SI-DAG: V_ALIGNBIT_B32
-; SI: S_ENDPGM
+; SI-DAG: s_sub_i32
+; SI-DAG: v_alignbit_b32
+; SI-DAG: s_sub_i32
+; SI-DAG: v_alignbit_b32
+; SI-DAG: s_sub_i32
+; SI-DAG: v_alignbit_b32
+; SI-DAG: s_sub_i32
+; SI-DAG: v_alignbit_b32
+; SI: s_endpgm
 define void @rotl_v4i32(<4 x i32> addrspace(1)* %in, <4 x i32> %x, <4 x i32> %y) {
 entry:
   %0 = shl <4 x i32> %x, %y

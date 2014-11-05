@@ -8,7 +8,7 @@
 ;EG-CHECK: {{^}}test2:
 ;EG-CHECK: CF_END
 ;SI-CHECK: {{^}}test2:
-;SI-CHECK: S_ENDPGM
+;SI-CHECK: s_endpgm
 
 define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
@@ -22,7 +22,7 @@ define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
 ;EG-CHECK: {{^}}test4:
 ;EG-CHECK: CF_END
 ;SI-CHECK: {{^}}test4:
-;SI-CHECK: S_ENDPGM
+;SI-CHECK: s_endpgm
 
 define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1

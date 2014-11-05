@@ -7,9 +7,9 @@ declare i32 @llvm.AMDGPU.abs(i32) nounwind readnone
 declare i32 @llvm.AMDIL.abs.i32(i32) nounwind readnone
 
 ; FUNC-LABEL: {{^}}s_abs_i32:
-; SI: S_SUB_I32
-; SI: S_MAX_I32
-; SI: S_ENDPGM
+; SI: s_sub_i32
+; SI: s_max_i32
+; SI: s_endpgm
 
 ; EG: SUB_INT
 ; EG: MAX_INT
@@ -20,9 +20,9 @@ define void @s_abs_i32(i32 addrspace(1)* %out, i32 %src) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}v_abs_i32:
-; SI: V_SUB_I32_e32
-; SI: V_MAX_I32_e32
-; SI: S_ENDPGM
+; SI: v_sub_i32_e32
+; SI: v_max_i32_e32
+; SI: s_endpgm
 
 ; EG: SUB_INT
 ; EG: MAX_INT
@@ -34,9 +34,9 @@ define void @v_abs_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %src) nounwind 
 }
 
 ; FUNC-LABEL: {{^}}abs_i32_legacy_amdil:
-; SI: V_SUB_I32_e32
-; SI: V_MAX_I32_e32
-; SI: S_ENDPGM
+; SI: v_sub_i32_e32
+; SI: v_max_i32_e32
+; SI: s_endpgm
 
 ; EG: SUB_INT
 ; EG: MAX_INT

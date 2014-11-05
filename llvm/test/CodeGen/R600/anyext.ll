@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ; CHECK-LABEL: {{^}}anyext_i1_i32:
-; CHECK: V_CNDMASK_B32_e64
+; CHECK: v_cndmask_b32_e64
 define void @anyext_i1_i32(i32 addrspace(1)* %out, i32 %cond) {
 entry:
   %0 = icmp eq i32 %cond, 0
