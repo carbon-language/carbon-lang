@@ -22,9 +22,9 @@ define void @varargs_func(i32 %arg1, ...) {
 ; Reserve space for the varargs save area.  This currently reserves
 ; more than enough (16 bytes rather than the 12 bytes needed).
 ; CHECK: sub sp, sp, #16
-; CHECK: push {lr}
+; CHECK: push {r11, lr}
 ; Align the stack pointer to a multiple of 16.
-; CHECK: sub sp, sp, #12
+; CHECK: sub sp, sp, #8
 ; Calculate the address of the varargs save area and save varargs
 ; arguments into it.
 ; CHECK-NEXT: add r0, sp, #20
