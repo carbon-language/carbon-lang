@@ -92,7 +92,7 @@ public:
   const ELFFile<ELFT> &file() const override { return _owningFile; }
 
   Scope scope() const override {
-    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
+    if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     if (_symbol->getBinding() == llvm::ELF::STB_LOCAL)
       return scopeTranslationUnit;
@@ -181,7 +181,7 @@ public:
   }
 
   Scope scope() const override {
-    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
+    if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
       return scopeGlobal;
@@ -533,7 +533,7 @@ public:
   uint64_t size() const override { return _symbol->st_size; }
 
   Scope scope() const override {
-    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
+    if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
       return scopeGlobal;
@@ -608,7 +608,7 @@ public:
   StringRef name() const override { return _symbolName; }
 
   virtual Scope scope() const {
-    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
+    if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
       return scopeGlobal;
