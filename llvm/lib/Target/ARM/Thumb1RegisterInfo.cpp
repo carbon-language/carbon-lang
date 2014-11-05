@@ -206,7 +206,6 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     // r8 = sub sp, c
     if (DestReg != BaseReg)
       DstNotEqBase = true;
-    NumBits = 8;
     if (DestReg == ARM::SP) {
       Opc = isSub ? ARM::tSUBspi : ARM::tADDspi;
       assert(isMul4 && "Thumb sp inc / dec size must be multiple of 4!");
