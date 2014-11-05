@@ -117,6 +117,19 @@ const volatile char foo2::*k;
 int (foo2::*l)(int);
 // CHECK-DAG: @"\01?l@@3P8foo@@AEHH@ZQ1@"
 
+// Ensure typedef CV qualifiers are mangled correctly
+typedef const int cInt;
+typedef volatile int vInt;
+typedef const volatile int cvInt;
+
+extern cInt g_cInt = 1;
+vInt g_vInt = 2;
+cvInt g_cvInt = 3;
+
+// CHECK-DAG: @"\01?g_cInt@@3HB"
+// CHECK-DAG: @"\01?g_vInt@@3HC"
+// CHECK-DAG: @"\01?g_cvInt@@3HD"
+
 // Static functions are mangled, too.
 // Also make sure calling conventions, arglists, and throw specs work.
 static void __stdcall alpha(float a, double b) throw() {}
