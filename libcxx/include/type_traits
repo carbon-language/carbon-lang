@@ -3644,25 +3644,25 @@ struct underlying_type
 template <class _Tp>
 struct __has_operator_addressof_member_imp
 {
-    template <class>
-        static auto __test(__any) -> false_type;
     template <class _Up>
-        static auto __test(_Up* __u)
-            -> typename __select_2nd<decltype(__u->operator&()), true_type>::type;
+        static auto __test(int)
+            -> typename __select_2nd<decltype(_VSTD::declval<_Up>().operator&()), true_type>::type;
+    template <class>
+        static auto __test(long) -> false_type;
 
-    static const bool value = decltype(__test<_Tp>(nullptr))::value;
+    static const bool value = decltype(__test<_Tp>(0))::value;
 };
 
 template <class _Tp>
 struct __has_operator_addressof_free_imp
 {
-    template <class>
-        static auto __test(__any) -> false_type;
     template <class _Up>
-        static auto __test(_Up* __u)
-            -> typename __select_2nd<decltype(operator&(*__u)), true_type>::type;
+        static auto __test(int)
+            -> typename __select_2nd<decltype(operator&(_VSTD::declval<_Up>())), true_type>::type;
+    template <class>
+        static auto __test(long) -> false_type;
 
-    static const bool value = decltype(__test<_Tp>(nullptr))::value;
+    static const bool value = decltype(__test<_Tp>(0))::value;
 };
 
 template <class _Tp>

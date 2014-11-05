@@ -41,8 +41,18 @@ struct E
 };
 
 struct F {};
-
 constexpr F* operator&(F const &) { return nullptr; }
+
+struct G {};
+constexpr G* operator&(G &&) { return nullptr; }
+
+struct H {};
+constexpr H* operator&(H const &&) { return nullptr; }
+
+struct J
+{
+    constexpr J* operator&() &&;
+};
 
 #endif  // _LIBCPP_HAS_NO_CONSTEXPR
 
@@ -54,5 +64,8 @@ int main()
     static_assert(std::__has_operator_addressof<B>::value == true, "");
     static_assert(std::__has_operator_addressof<E>::value == true, "");
     static_assert(std::__has_operator_addressof<F>::value == true, "");
+    static_assert(std::__has_operator_addressof<G>::value == true, "");
+    static_assert(std::__has_operator_addressof<H>::value == true, "");
+    static_assert(std::__has_operator_addressof<J>::value == true, "");
 #endif  // _LIBCPP_HAS_NO_CONSTEXPR
 }
