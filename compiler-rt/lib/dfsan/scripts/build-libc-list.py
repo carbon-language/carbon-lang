@@ -26,6 +26,7 @@ def defined_function_list(object):
     raise subprocess.CalledProcessError(readelf_proc.returncode, 'readelf')
   for line in readelf:
     if (line[31:35] == 'FUNC' or line[31:36] == 'IFUNC') and \
+       line[39:44] != 'LOCAL' and \
        line[55:58] != 'UND':
       function_name = line[59:].split('@')[0]
       functions.append(function_name)
