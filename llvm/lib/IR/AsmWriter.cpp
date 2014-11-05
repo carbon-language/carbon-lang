@@ -545,7 +545,7 @@ public:
   /// plane.  If something is not in the SlotTracker, return -1.
   int getLocalSlot(const Value *V);
   int getGlobalSlot(const GlobalValue *V);
-  int getMetadataSlot(const MDNode *N);
+  int getMetadataSlot(const Value *MD);
   int getAttributeGroupSlot(AttributeSet AS);
 
   /// If you'd like to deal with a function instead of just a module, use
@@ -585,7 +585,7 @@ private:
   void CreateModuleSlot(const GlobalValue *V);
 
   /// CreateMetadataSlot - Insert the specified MDNode* into the slot table.
-  void CreateMetadataSlot(const MDNode *N);
+  void CreateMetadataSlot(const Value *MD);
 
   /// CreateFunctionSlot - Insert the specified Value* into the slot table.
   void CreateFunctionSlot(const Value *V);
@@ -786,13 +786,13 @@ int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   return MI == mMap.end() ? -1 : (int)MI->second;
 }
 
-/// getMetadataSlot - Get the slot number of a MDNode.
-int SlotTracker::getMetadataSlot(const MDNode *N) {
+/// getMetadataSlot - Get the slot number of a metadata node.
+int SlotTracker::getMetadataSlot(const Value *MD) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
   // Find the MDNode in the module map
-  mdn_iterator MI = mdnMap.find(N);
+  mdn_iterator MI = mdnMap.find(cast<MDNode>(MD));
   return MI == mdnMap.end() ? -1 : (int)MI->second;
 }
 
@@ -846,9 +846,10 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
            DestSlot << " [o]\n");
 }
 
-/// CreateModuleSlot - Insert the specified MDNode* into the slot table.
-void SlotTracker::CreateMetadataSlot(const MDNode *N) {
-  assert(N && "Can't insert a null Value into SlotTracker!");
+/// CreateModuleSlot - Insert the specified metadata into the slot table.
+void SlotTracker::CreateMetadataSlot(const Value *MD) {
+  assert(MD && "Can't insert a null Value into SlotTracker!");
+  const MDNode *N = cast<MDNode>(MD);
 
   // Don't insert if N is a function-local metadata, these are always printed
   // inline.
