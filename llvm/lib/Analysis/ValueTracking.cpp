@@ -1005,7 +1005,6 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
       KnownZero <<= ShiftAmt;
       KnownOne  <<= ShiftAmt;
       KnownZero |= APInt::getLowBitsSet(BitWidth, ShiftAmt); // low bits known 0
-      break;
     }
     break;
   case Instruction::LShr:
@@ -1015,12 +1014,11 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
       uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
 
       // Unsigned shift right.
-      computeKnownBits(I->getOperand(0), KnownZero,KnownOne, TD, Depth+1, Q);
+      computeKnownBits(I->getOperand(0), KnownZero, KnownOne, TD, Depth+1, Q);
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
       // high bits known zero.
       KnownZero |= APInt::getHighBitsSet(BitWidth, ShiftAmt);
-      break;
     }
     break;
   case Instruction::AShr:
@@ -1039,7 +1037,6 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
         KnownZero |= HighBits;
       else if (KnownOne[BitWidth-ShiftAmt-1])  // New bits are known one.
         KnownOne |= HighBits;
-      break;
     }
     break;
   case Instruction::Sub: {
