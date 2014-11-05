@@ -12,22 +12,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common.h"
+#include "sanitizer_placement_new.h"
 #include "sanitizer_stacktrace.h"
+#include "sanitizer_stacktrace_printer.h"
 #include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
-
-static void PrintStackFramePrefix(InternalScopedString *buffer, uptr frame_num,
-                                  uptr pc) {
-  buffer->append("    #%zu 0x%zx", frame_num, pc);
-}
 
 void StackTrace::Print() const {
   if (trace == nullptr || size == 0) {
     Printf("    <empty stack>\n\n");
     return;
   }
-  InternalScopedBuffer<AddressInfo> addr_frames(64);
+  const int kMaxAddrFrames = 64;
+  InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
+  for (uptr i = 0; i < kMaxAddrFrames; i++)
+    new(&addr_frames[i]) AddressInfo();
   InternalScopedString frame_desc(GetPageSizeCached() * 2);
   uptr frame_num = 0;
   for (uptr i = 0; i < size && trace[i]; i++) {
@@ -35,31 +35,16 @@ void StackTrace::Print() const {
     // addresses of the next instructions after the call.
     uptr pc = GetPreviousInstructionPc(trace[i]);
     uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
-        pc, addr_frames.data(), addr_frames.size());
+        pc, addr_frames.data(), kMaxAddrFrames);
     if (addr_frames_num == 0) {
-      frame_desc.clear();
-      PrintStackFramePrefix(&frame_desc, frame_num++, pc);
-      frame_desc.append(" (<unknown module>)");
-      Printf("%s\n", frame_desc.data());
-      continue;
+      addr_frames[0].address = pc;
+      addr_frames_num = 1;
     }
     for (uptr j = 0; j < addr_frames_num; j++) {
       AddressInfo &info = addr_frames[j];
       frame_desc.clear();
-      PrintStackFramePrefix(&frame_desc, frame_num++, pc);
-      if (info.function) {
-        frame_desc.append(" in %s", info.function);
-        // Print offset in function if we don't know the source file.
-        if (!info.file && info.function_offset != AddressInfo::kUnknown)
-          frame_desc.append("+0x%zx", info.function_offset);
-      }
-      if (info.file) {
-        frame_desc.append(" ");
-        PrintSourceLocation(&frame_desc, info.file, info.line, info.column);
-      } else if (info.module) {
-        frame_desc.append(" ");
-        PrintModuleAndOffset(&frame_desc, info.module, info.module_offset);
-      }
+      RenderFrame(&frame_desc, "DEFAULT", frame_num++, info,
+                  common_flags()->strip_path_prefix);
       Printf("%s\n", frame_desc.data());
       info.Clear();
     }

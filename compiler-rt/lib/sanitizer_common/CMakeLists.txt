@@ -22,6 +22,7 @@ set(SANITIZER_SOURCES
   sanitizer_procmaps_mac.cc
   sanitizer_stackdepot.cc
   sanitizer_stacktrace.cc
+  sanitizer_stacktrace_printer.cc
   sanitizer_suppressions.cc
   sanitizer_symbolizer.cc
   sanitizer_symbolizer_libbacktrace.cc
@@ -82,6 +83,7 @@ set(SANITIZER_HEADERS
   sanitizer_stackdepot.h
   sanitizer_stackdepotbase.h
   sanitizer_stacktrace.h
+  sanitizer_stacktrace_printer.h
   sanitizer_stoptheworld.h
   sanitizer_suppressions.h
   sanitizer_symbolizer.h

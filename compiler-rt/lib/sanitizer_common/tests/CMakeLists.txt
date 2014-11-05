@@ -21,6 +21,7 @@ set(SANITIZER_UNITTESTS
   sanitizer_printf_test.cc
   sanitizer_procmaps_test.cc
   sanitizer_stackdepot_test.cc
+  sanitizer_stacktrace_printer_test.cc
   sanitizer_stacktrace_test.cc
   sanitizer_stoptheworld_test.cc
   sanitizer_suppressions_test.cc

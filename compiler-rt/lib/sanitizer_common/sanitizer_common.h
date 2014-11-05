@@ -174,10 +174,6 @@ const char *StripPathPrefix(const char *filepath,
                             const char *strip_file_prefix);
 // Strip the directories from the module name.
 const char *StripModuleName(const char *module);
-void PrintSourceLocation(InternalScopedString *buffer, const char *file,
-                         int line, int column);
-void PrintModuleAndOffset(InternalScopedString *buffer,
-                          const char *module, uptr offset);
 
 // OS
 void DisableCoreDumperIfNecessary();

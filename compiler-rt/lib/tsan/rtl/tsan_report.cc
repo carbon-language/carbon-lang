@@ -15,6 +15,7 @@
 #include "tsan_rtl.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
+#include "sanitizer_common/sanitizer_stacktrace_printer.h"
 
 namespace __tsan {
 
@@ -112,34 +113,16 @@ static const char *ReportTypeString(ReportType typ) {
   return "";
 }
 
-static const char *StripFunctionName(const char *function, const char *prefix) {
-  if (function == 0) return 0;
-  if (prefix == 0) return function;
-  uptr prefix_len = internal_strlen(prefix);
-  if (0 == internal_strncmp(function, prefix, prefix_len))
-    return function + prefix_len;
-  return function;
-}
-
 void PrintStack(const ReportStack *ent) {
   if (ent == 0) {
     Printf("    [failed to restore the stack]\n\n");
     return;
   }
   for (int i = 0; ent; ent = ent->next, i++) {
-    const AddressInfo &info = ent->info;
-    Printf("    #%d %s %s:%d", i,
-           StripFunctionName(info.function, "__interceptor_"),
-           StripPathPrefix(info.file, common_flags()->strip_path_prefix),
-           info.line);
-    if (info.column)
-      Printf(":%d", info.column);
-    if (info.module && info.module_offset) {
-      Printf(" (%s+%p)\n", StripModuleName(info.module),
-             (void *)info.module_offset);
-    } else {
-      Printf(" (%p)\n", (void *)info.address);
-    }
+    InternalScopedString res(2 * GetPageSizeCached());
+    RenderFrame(&res, "    #%n %f %S %M", i, ent->info,
+                common_flags()->strip_path_prefix, "__interceptor_");
+    Printf("%s\n", res.data());
   }
   Printf("\n");
 }
