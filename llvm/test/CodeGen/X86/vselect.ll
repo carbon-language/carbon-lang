@@ -107,8 +107,7 @@ define <8 x i16> @test11(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-NEXT:    movaps {{.*#+}} xmm2 = <0,65535,65535,0,u,65535,65535,u>
 ; CHECK-NEXT:    andps %xmm2, %xmm0
 ; CHECK-NEXT:    andnps %xmm1, %xmm2
-; CHECK-NEXT:    orps %xmm0, %xmm2
-; CHECK-NEXT:    movaps %xmm2, %xmm0
+; CHECK-NEXT:    orps %xmm2, %xmm0
 ; CHECK-NEXT:    retq
   %1 = select <8 x i1> <i1 false, i1 true, i1 true, i1 false, i1 undef, i1 true, i1 true, i1 undef>, <8 x i16> %a, <8 x i16> %b
   ret <8 x i16> %1

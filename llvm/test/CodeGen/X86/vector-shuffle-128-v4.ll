@@ -462,8 +462,7 @@ define <4 x float> @shuffle_v4f32_4zzz(<4 x float> %a) {
 ; SSE41-LABEL: shuffle_v4f32_4zzz:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    xorps %xmm1, %xmm1
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v4f32_4zzz:
@@ -611,8 +610,7 @@ define <4 x float> @shuffle_v4f32_zzz7(<4 x float> %a) {
 ; SSE41-LABEL: shuffle_v4f32_zzz7:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    xorps %xmm1, %xmm1
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0,1,2],xmm0[3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v4f32_zzz7:
@@ -684,8 +682,7 @@ define <4 x i32> @shuffle_v4i32_4zzz(<4 x i32> %a) {
 ; SSE41-LABEL: shuffle_v4i32_4zzz:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    xorps %xmm1, %xmm1
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v4i32_4zzz:
@@ -1160,8 +1157,7 @@ define <4 x float> @insert_reg_and_zero_v4f32(float %a) {
 ; SSE41-LABEL: insert_reg_and_zero_v4f32:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    xorps %xmm1, %xmm1
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: insert_reg_and_zero_v4f32:
@@ -1212,8 +1208,7 @@ define <4 x i32> @insert_reg_lo_v4i32(i64 %a, <4 x i32> %b) {
 ; SSE41-LABEL: insert_reg_lo_v4i32:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movd %rdi, %xmm1
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1,2,3],xmm0[4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: insert_reg_lo_v4i32:
@@ -1252,8 +1247,7 @@ define <4 x i32> @insert_mem_lo_v4i32(<2 x i32>* %ptr, <4 x i32> %b) {
 ; SSE41-LABEL: insert_mem_lo_v4i32:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movq (%rdi), %xmm1
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1,2,3],xmm0[4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: insert_mem_lo_v4i32:

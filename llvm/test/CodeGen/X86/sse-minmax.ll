@@ -138,8 +138,7 @@ define double @ole_inverse(double %x, double %y) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      ogt_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ogt_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
@@ -157,8 +156,7 @@ define double @ogt_x(double %x) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      olt_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
-; UNSAFE-NEXT: minsd %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: minsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      olt_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
@@ -177,8 +175,7 @@ define double @olt_x(double %x) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      ogt_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
-; UNSAFE-NEXT: minsd  %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: minsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ogt_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
@@ -198,8 +195,7 @@ define double @ogt_inverse_x(double %x) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      olt_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd  %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      olt_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
@@ -217,8 +213,7 @@ define double @olt_inverse_x(double %x) nounwind {
 ; CHECK-NEXT: andpd
 ; UNSAFE-LABEL:      oge_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      oge_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
@@ -235,8 +230,7 @@ define double @oge_x(double %x) nounwind {
 ; CHECK-NEXT: andpd
 ; UNSAFE-LABEL:      ole_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
-; UNSAFE-NEXT: minsd %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: minsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ole_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
@@ -253,8 +247,7 @@ define double @ole_x(double %x) nounwind {
 ; CHECK-NEXT: andnpd
 ; UNSAFE-LABEL:      oge_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
-; UNSAFE-NEXT: minsd   %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
+; UNSAFE-NEXT: minsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      oge_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
@@ -271,8 +264,7 @@ define double @oge_inverse_x(double %x) nounwind {
 ; CHECK:      cmplesd %xmm
 ; UNSAFE-LABEL:      ole_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ole_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
@@ -412,8 +404,7 @@ define double @ule_inverse(double %x, double %y) nounwind {
 ; CHECK-NEXT: andpd
 ; UNSAFE-LABEL:      ugt_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ugt_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
@@ -430,8 +421,7 @@ define double @ugt_x(double %x) nounwind {
 ; CHECK-NEXT: andpd
 ; UNSAFE-LABEL:      ult_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
-; UNSAFE-NEXT: minsd   %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: minsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ult_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
@@ -448,8 +438,7 @@ define double @ult_x(double %x) nounwind {
 ; CHECK-NEXT: andnpd
 ; UNSAFE-LABEL:      ugt_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
-; UNSAFE-NEXT: minsd   %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
+; UNSAFE-NEXT: minsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ugt_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
@@ -467,8 +456,7 @@ define double @ugt_inverse_x(double %x) nounwind {
 ; CHECK-NEXT: andnpd
 ; UNSAFE-LABEL:      ult_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ult_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
@@ -488,8 +476,7 @@ define double @ult_inverse_x(double %x) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      uge_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd  %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      uge_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
@@ -508,8 +495,7 @@ define double @uge_x(double %x) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      ule_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
-; UNSAFE-NEXT: minsd  %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: minsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ule_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
@@ -527,8 +513,7 @@ define double @ule_x(double %x) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      uge_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
-; UNSAFE-NEXT: minsd %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: minsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      uge_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
@@ -547,8 +532,7 @@ define double @uge_inverse_x(double %x) nounwind {
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL:      ule_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
-; UNSAFE-NEXT: maxsd %xmm0, %xmm1
-; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
+; UNSAFE-NEXT: maxsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
 ; FINITE-LABEL:      ule_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1

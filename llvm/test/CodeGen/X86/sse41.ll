@@ -524,17 +524,15 @@ define <4 x float> @shuf_X00A(<4 x float> %x, <4 x float> %a) {
 ; X32-LABEL: shuf_X00A:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm2, %xmm2
-; X32-NEXT:    blendps {{.*#+}} xmm2 = xmm0[0],xmm2[1,2,3]
-; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0],zero,zero,xmm1[0]
-; X32-NEXT:    movaps %xmm2, %xmm0
+; X32-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,zero,xmm1[0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: shuf_X00A:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm2, %xmm2
-; X64-NEXT:    blendps {{.*#+}} xmm2 = xmm0[0],xmm2[1,2,3]
-; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0],zero,zero,xmm1[0]
-; X64-NEXT:    movaps %xmm2, %xmm0
+; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,zero,xmm1[0]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x float> %x, i32 0
   %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
@@ -694,17 +692,15 @@ define <4 x i32> @i32_shuf_X00A(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_X00A:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm2, %xmm2
-; X32-NEXT:    blendps {{.*#+}} xmm2 = xmm0[0],xmm2[1,2,3]
-; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[0]
-; X32-NEXT:    movaps %xmm2, %xmm0
+; X32-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_X00A:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm2, %xmm2
-; X64-NEXT:    blendps {{.*#+}} xmm2 = xmm0[0],xmm2[1,2,3]
-; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[0]
-; X64-NEXT:    movaps %xmm2, %xmm0
+; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[0]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x i32> %x, i32 0
   %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
