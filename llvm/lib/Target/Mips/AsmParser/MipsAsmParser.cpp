@@ -1198,6 +1198,16 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
         if (Imm < 0 || Imm > 255)
           return Error(IDLoc, "immediate operand value out of range");
         break;
+      case Mips::ANDI16_MM:
+        Opnd = Inst.getOperand(2);
+        if (!Opnd.isImm())
+          return Error(IDLoc, "expected immediate operand kind");
+        Imm = Opnd.getImm();
+        if (!(Imm == 128 || (Imm >= 1 && Imm <= 4) || Imm == 7 || Imm == 8 ||
+              Imm == 15 || Imm == 16 || Imm == 31 || Imm == 32 || Imm == 63 ||
+              Imm == 64 || Imm == 255 || Imm == 32768 || Imm == 65535))
+          return Error(IDLoc, "immediate operand value out of range");
+        break;
     }
   }
 

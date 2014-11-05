@@ -8,6 +8,8 @@
   addiusp 1032   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
   addu16  $6, $14, $4 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   subu16  $5, $16, $9 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  andi16  $16, $10, 0x1f # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  andi16  $16, $2, 17 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
   and16   $16, $8   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   not16   $18, $9   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   or16    $16, $10  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction

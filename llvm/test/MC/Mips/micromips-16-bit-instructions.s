@@ -11,6 +11,7 @@
 #------------------------------------------------------------------------------
 # CHECK-EL: addu16  $6, $17, $4     # encoding: [0x42,0x07]
 # CHECK-EL: subu16  $5, $16, $3     # encoding: [0xb1,0x06]
+# CHECK-EL: andi16  $16, $2, 31     # encoding: [0x29,0x2c]
 # CHECK-EL: and16   $16, $2         # encoding: [0x82,0x44]
 # CHECK-EL: not16   $17, $3         # encoding: [0x0b,0x44]
 # CHECK-EL: or16    $16, $4         # encoding: [0xc4,0x44]
@@ -40,6 +41,7 @@
 #------------------------------------------------------------------------------
 # CHECK-EB: addu16  $6, $17, $4     # encoding: [0x07,0x42]
 # CHECK-EB: subu16  $5, $16, $3     # encoding: [0x06,0xb1]
+# CHECK-EB: andi16  $16, $2, 31     # encoding: [0x2c,0x29]
 # CHECK-EB: and16   $16, $2         # encoding: [0x44,0x82]
 # CHECK-EB: not16   $17, $3         # encoding: [0x44,0x0b]
 # CHECK-EB: or16    $16, $4         # encoding: [0x44,0xc4]
@@ -67,6 +69,7 @@
 
     addu16  $6, $17, $4
     subu16  $5, $16, $3
+    andi16  $16, $2, 31
     and16   $16, $2
     not16   $17, $3
     or16    $16, $4

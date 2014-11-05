@@ -55,6 +55,19 @@ class ARITH_FM_MM16<bit funct> {
   let Inst{0}     = funct;
 }
 
+class ANDI_FM_MM16<bits<6> funct> {
+  bits<3> rd;
+  bits<3> rs;
+  bits<4> imm;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = funct;
+  let Inst{9-7}   = rd;
+  let Inst{6-4}   = rs;
+  let Inst{3-0}   = imm;
+}
+
 class LOGIC_FM_MM16<bits<4> funct> {
   bits<3> rt;
   bits<3> rs;
