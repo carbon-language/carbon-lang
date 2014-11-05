@@ -480,24 +480,26 @@ endif()
 set(CLANG_ORDER_FILE "" CACHE FILEPATH
   "Order file to use when compiling clang in order to improve startup time.")
 
-# Generate a list of CMake library targets so that other CMake projects can
-# link against them. LLVM calls its version of this file LLVMExports.cmake, but
-# the usual CMake convention seems to be ${Project}Targets.cmake.
-set(CLANG_INSTALL_PACKAGE_DIR share/clang/cmake)
-set(clang_cmake_builddir "${CMAKE_BINARY_DIR}/${CLANG_INSTALL_PACKAGE_DIR}")
-get_property(CLANG_EXPORTS GLOBAL PROPERTY CLANG_EXPORTS)
-export(TARGETS ${CLANG_EXPORTS} FILE ${clang_cmake_builddir}/ClangTargets.cmake)
+if (CLANG_BUILT_STANDALONE)
+  # Generate a list of CMake library targets so that other CMake projects can
+  # link against them. LLVM calls its version of this file LLVMExports.cmake, but
+  # the usual CMake convention seems to be ${Project}Targets.cmake.
+  set(CLANG_INSTALL_PACKAGE_DIR share/clang/cmake)
+  set(clang_cmake_builddir "${CMAKE_BINARY_DIR}/${CLANG_INSTALL_PACKAGE_DIR}")
+  get_property(CLANG_EXPORTS GLOBAL PROPERTY CLANG_EXPORTS)
+  export(TARGETS ${CLANG_EXPORTS} FILE ${clang_cmake_builddir}/ClangTargets.cmake)
 
-# Install a <prefix>/share/clang/cmake/ClangConfig.cmake file so that
-# find_package(Clang) works. Install the target list with it.
-install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/ClangConfig.cmake
-  ${CLANG_BINARY_DIR}/share/clang/cmake/ClangTargets.cmake
-  DESTINATION share/clang/cmake)
+  # Install a <prefix>/share/clang/cmake/ClangConfig.cmake file so that
+  # find_package(Clang) works. Install the target list with it.
+  install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/ClangConfig.cmake
+    ${CLANG_BINARY_DIR}/share/clang/cmake/ClangTargets.cmake
+    DESTINATION share/clang/cmake)
 
-# Also copy ClangConfig.cmake to the build directory so that dependent projects
-# can build against a build directory of Clang more easily.
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/ClangConfig.cmake
-  ${CLANG_BINARY_DIR}/share/clang/cmake/ClangConfig.cmake
-  COPYONLY)
+  # Also copy ClangConfig.cmake to the build directory so that dependent projects
+  # can build against a build directory of Clang more easily.
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/ClangConfig.cmake
+    ${CLANG_BINARY_DIR}/share/clang/cmake/ClangConfig.cmake
+    COPYONLY)
+endif ()
