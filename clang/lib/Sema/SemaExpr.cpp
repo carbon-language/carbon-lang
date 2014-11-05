@@ -13343,6 +13343,39 @@ ExprResult RebuildUnknownAnyExpr::resolveDecl(Expr *E, ValueDecl *VD) {
         << VD << E->getSourceRange();
       return ExprError();
     }
+    if (const FunctionProtoType *FT = Type->getAs<FunctionProtoType>()) {
+      // We must match the FunctionDecl's type to the hack introduced in
+      // RebuildUnknownAnyExpr::VisitCallExpr to vararg functions of unknown
+      // type. See the lengthy commentary in that routine.
+      QualType FDT = FD->getType();
+      const FunctionType *FnType = FDT->castAs<FunctionType>();
+      const FunctionProtoType *Proto = dyn_cast_or_null<FunctionProtoType>(FnType);
+      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
+      if (DRE && Proto && Proto->getParamTypes().empty() && Proto->isVariadic()) {
+        SourceLocation Loc = FD->getLocation();
+        FunctionDecl *NewFD = FunctionDecl::Create(FD->getASTContext(),
+                                      FD->getDeclContext(),
+                                      Loc, Loc, FD->getNameInfo().getName(),
+                                      DestType, FD->getTypeSourceInfo(),
+                                      SC_None, false/*isInlineSpecified*/,
+                                      FD->hasPrototype(),
+                                      false/*isConstexprSpecified*/);
+          
+        if (FD->getQualifier())
+          NewFD->setQualifierInfo(FD->getQualifierLoc());
+
+        SmallVector<ParmVarDecl*, 16> Params;
+        for (const auto &AI : FT->param_types()) {
+          ParmVarDecl *Param =
+            S.BuildParmVarDeclForTypedef(FD, Loc, AI);
+          Param->setScopeInfo(0, Params.size());
+          Params.push_back(Param);
+        }
+        NewFD->setParams(Params);
+        DRE->setDecl(NewFD);
+        VD = DRE->getDecl();
+      }
+    }
 
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
       if (MD->isInstance()) {

@@ -115,3 +115,9 @@ extern "C" __unknown_anytype test10_any(...);
 void test10() {
   (void) test10_any(), (void) test10_any();
 }
+
+extern "C" __unknown_anytype malloc(...);
+void test11() {
+  void *s = (void*)malloc(12);
+  void *d = (void*)malloc(435);
+}
