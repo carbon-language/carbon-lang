@@ -863,11 +863,15 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             }
         } while (has_env_var);
 
-        // Close STDIN, STDOUT and STDERR. We might need to redirect them
-        // to "/dev/null" if we run into any problems.
+        // Close STDIN, STDOUT and STDERR.
         launch_info.AppendCloseFileAction (STDIN_FILENO);
         launch_info.AppendCloseFileAction (STDOUT_FILENO);
         launch_info.AppendCloseFileAction (STDERR_FILENO);
+
+        // Redirect STDIN, STDOUT and STDERR to "/dev/null".
+        launch_info.AppendSuppressFileAction (STDIN_FILENO, true, false);
+        launch_info.AppendSuppressFileAction (STDOUT_FILENO, false, true);
+        launch_info.AppendSuppressFileAction (STDERR_FILENO, false, true);
         
         error = Host::LaunchProcess(launch_info);
         
