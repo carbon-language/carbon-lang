@@ -43,6 +43,10 @@ void call1(size_t* ntraced, bool do_throw) {
 }
 
 int main() {
+// FIXME: _Unwind_Backtrace is not clearly defined in EHABI and needs more
+// testing. A bug was created with some initial investigation done
+// http://llvm.org/PR21444. This test fails with both libunwind and libgcc_s.
+#ifndef __arm__
   size_t throw_ntraced = 0;
   size_t nothrow_ntraced = 0;
 
@@ -58,5 +62,6 @@ int main() {
   // of times, so we can't make any better assumptions than this.
   assert(nothrow_ntraced > 1);
   assert(throw_ntraced == nothrow_ntraced); // Make sure we unwind through catch
+#endif
   return 0;
 }
