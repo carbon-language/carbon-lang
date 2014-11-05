@@ -1403,19 +1403,17 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK,
 
   SourceLocation Loc = Exp->getExprLoc();
 
-  if (Analyzer->Handler.issueBetaWarnings()) {
-    // Local variables of reference type cannot be re-assigned;
-    // map them to their initializer.
-    while (const auto *DRE = dyn_cast<DeclRefExpr>(Exp)) {
-      const auto *VD = dyn_cast<VarDecl>(DRE->getDecl()->getCanonicalDecl());
-      if (VD && VD->isLocalVarDecl() && VD->getType()->isReferenceType()) {
-        if (const auto *E = VD->getInit()) {
-          Exp = E;
-          continue;
-        }
+  // Local variables of reference type cannot be re-assigned;
+  // map them to their initializer.
+  while (const auto *DRE = dyn_cast<DeclRefExpr>(Exp)) {
+    const auto *VD = dyn_cast<VarDecl>(DRE->getDecl()->getCanonicalDecl());
+    if (VD && VD->isLocalVarDecl() && VD->getType()->isReferenceType()) {
+      if (const auto *E = VD->getInit()) {
+        Exp = E;
+        continue;
       }
-      break;
     }
+    break;
   }
 
   if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Exp)) {
