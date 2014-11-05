@@ -2979,11 +2979,9 @@ static DecodeStatus DecodeVLD4DupInstruction(MCInst &Inst, unsigned Insn,
   if (size == 0x3) {
     if (align == 0)
       return MCDisassembler::Fail;
-    size = 4;
     align = 16;
   } else {
     if (size == 2) {
-      size = 1 << size;
       align *= 8;
     } else {
       size = 1 << size;
