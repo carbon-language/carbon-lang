@@ -271,6 +271,7 @@ ReverseFindMatchingChars (const llvm::StringRef &s,
     return false;
 }
 
+
 void
 CPPLanguageRuntime::MethodName::Parse()
 {
@@ -295,6 +296,7 @@ CPPLanguageRuntime::MethodName::Parse()
             if (arg_start > 0)
             {
                 size_t basename_end = arg_start;
+                size_t context_start = 0;
                 size_t context_end = llvm::StringRef::npos;
                 if (basename_end > 0 && full[basename_end-1] == '>')
                 {
@@ -303,16 +305,35 @@ CPPLanguageRuntime::MethodName::Parse()
                     size_t template_start, template_end;
                     llvm::StringRef lt_gt("<>", 2);
                     if (ReverseFindMatchingChars (full, lt_gt, template_start, template_end, basename_end))
+                    {
                         context_end = full.rfind(':', template_start);
+                        if (context_end == llvm::StringRef::npos)
+                        {
+                            // Check for templated functions that include return type like:
+                            // 'void foo<Int>()'
+                            context_end = full.rfind(' ', template_start);
+                            if (context_end != llvm::StringRef::npos)
+                            {
+                                context_start = context_end;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        context_end = full.rfind(':', basename_end);
+                    }
                 }
-                if (context_end == llvm::StringRef::npos)
+                else if (context_end == llvm::StringRef::npos)
+                {
                     context_end = full.rfind(':', basename_end);
+                }
 
                 if (context_end == llvm::StringRef::npos)
                     m_basename = full.substr(0, basename_end);
                 else
                 {
-                    m_context = full.substr(0, context_end - 1);
+                    if (context_start < context_end)
+                        m_context = full.substr(context_start, context_end - 1);
                     const size_t basename_begin = context_end + 1;
                     m_basename = full.substr(basename_begin, basename_end - basename_begin);
                 }
@@ -332,6 +353,30 @@ CPPLanguageRuntime::MethodName::Parse()
 //                printf (" arguments = '%s'\n", m_arguments.str().c_str());
 //            if (!m_qualifiers.empty())
 //                printf ("qualifiers = '%s'\n", m_qualifiers.str().c_str());
+
+            // Make sure we have a valid C++ basename with optional template args
+            static RegularExpression g_identifier_regex("^~?([A-Za-z_][A-Za-z_0-9]*)(<.*>)?$");
+            std::string basename_str(m_basename.str());
+            bool basename_is_valid = g_identifier_regex.Execute (basename_str.c_str(), NULL);
+            if (!basename_is_valid)
+            {
+                // Check for C++ operators
+                if (m_basename.startswith("operator"))
+                {
+                    static RegularExpression g_operator_regex("^(operator)( ?)([A-Za-z_][A-Za-z_0-9]*|\\(\\)|\\[\\]|[\\^<>=!\\/*+-]+)(<.*>)?(\\[\\])?$");
+                    basename_is_valid = g_operator_regex.Execute(basename_str.c_str(), NULL);
+                }
+            }
+            if (!basename_is_valid)
+            {
+                // The C++ basename doesn't match our regular expressions so this can't
+                // be a valid C++ method, clear everything out and indicate an error
+                m_context = llvm::StringRef();
+                m_basename = llvm::StringRef();
+                m_arguments = llvm::StringRef();
+                m_qualifiers = llvm::StringRef();
+                m_parse_error = true;
+            }
         }
         else
         {

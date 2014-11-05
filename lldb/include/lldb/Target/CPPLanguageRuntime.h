@@ -65,8 +65,10 @@ public:
         Clear();
         
         bool
-        IsValid () const
+        IsValid ()
         {
+            if (!m_parsed)
+                Parse();
             if (m_parse_error)
                 return false;
             if (m_type == eTypeInvalid)
