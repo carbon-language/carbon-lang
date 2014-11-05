@@ -9,9 +9,9 @@
 
 #include "DebugDriverThread.h"
 #include "DebugOneProcessThread.h"
-#include "DebugMonitorMessages.h"
-#include "DebugMonitorMessageResults.h"
-#include "SlaveMessages.h"
+#include "DriverMessages.h"
+#include "DriverMessageResults.h"
+#include "ProcessMessages.h"
 
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
@@ -31,7 +31,7 @@ namespace
 struct DebugLaunchContext
 {
     DebugOneProcessThread *instance;
-    const LaunchProcessMessage *launch;
+    const DriverLaunchProcessMessage *launch;
 };
 }
 
@@ -45,11 +45,11 @@ DebugOneProcessThread::~DebugOneProcessThread()
 {
 }
 
-const LaunchProcessMessageResult *
-DebugOneProcessThread::DebugLaunch(const LaunchProcessMessage *message)
+const DriverLaunchProcessMessageResult *
+DebugOneProcessThread::DebugLaunch(const DriverLaunchProcessMessage *message)
 {
     Error error;
-    const LaunchProcessMessageResult *result = nullptr;
+    const DriverLaunchProcessMessageResult *result = nullptr;
     DebugLaunchContext context;
     context.instance = this;
     context.launch = message;
@@ -70,7 +70,7 @@ DebugOneProcessThread::DebugLaunchThread(void *data)
 }
 
 lldb::thread_result_t
-DebugOneProcessThread::DebugLaunchThread(const LaunchProcessMessage *message)
+DebugOneProcessThread::DebugLaunchThread(const DriverLaunchProcessMessage *message)
 {
     // Grab a shared_ptr reference to this so that we know it won't get deleted until after the
     // thread routine has exited.
@@ -89,14 +89,14 @@ DebugOneProcessThread::DebugLaunchThread(const LaunchProcessMessage *message)
     name_stream.flush();
     ThisThread::SetName(thread_name.c_str());
 
-    LaunchProcessMessageResult *result = LaunchProcessMessageResult::Create(message);
+    DriverLaunchProcessMessageResult *result = DriverLaunchProcessMessageResult::Create(message);
     result->SetError(error);
     result->SetProcess(m_process);
     m_launch_predicate.SetValue(result, eBroadcastAlways);
 
     DebugLoop();
     if (log)
-        log->Printf("Debug monitor thread '%s' exiting.", thread_name.c_str());
+        log->Printf("Debug slave thread '%s' exiting.", thread_name.c_str());
 
     return 0;
 }
@@ -175,7 +175,7 @@ DWORD
 DebugOneProcessThread::HandleExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO &info, DWORD thread_id)
 {
     HANDLE driver = m_driver_thread.GetNativeThread().GetSystemHandle();
-    SlaveMessageProcessExited *message = new SlaveMessageProcessExited(m_process, info.dwExitCode);
+    ProcessMessageExitProcess *message = new ProcessMessageExitProcess(m_process, info.dwExitCode);
 
     QueueUserAPC(NotifySlaveProcessExited, driver, reinterpret_cast<ULONG_PTR>(message));
     return DBG_CONTINUE;
@@ -204,7 +204,7 @@ DebugOneProcessThread::HandleRipEvent(const RIP_INFO &info, DWORD thread_id)
 {
     HANDLE driver = m_driver_thread.GetNativeThread().GetSystemHandle();
     Error error(info.dwError, eErrorTypeWin32);
-    SlaveMessageRipEvent *message = new SlaveMessageRipEvent(m_process, error, info.dwType);
+    ProcessMessageDebuggerError *message = new ProcessMessageDebuggerError(m_process, error, info.dwType);
 
     QueueUserAPC(NotifySlaveRipEvent, driver, reinterpret_cast<ULONG_PTR>(message));
     return DBG_CONTINUE;
@@ -213,15 +213,15 @@ DebugOneProcessThread::HandleRipEvent(const RIP_INFO &info, DWORD thread_id)
 void
 DebugOneProcessThread::NotifySlaveProcessExited(ULONG_PTR message)
 {
-    SlaveMessageProcessExited *slave_message = reinterpret_cast<SlaveMessageProcessExited *>(message);
-    DebugDriverThread::GetInstance().HandleSlaveEvent(*slave_message);
+    ProcessMessageExitProcess *slave_message = reinterpret_cast<ProcessMessageExitProcess *>(message);
+    DebugDriverThread::GetInstance().OnExitProcess(*slave_message);
     delete slave_message;
 }
 
 void
 DebugOneProcessThread::NotifySlaveRipEvent(ULONG_PTR message)
 {
-    SlaveMessageRipEvent *slave_message = reinterpret_cast<SlaveMessageRipEvent *>(message);
-    DebugDriverThread::GetInstance().HandleSlaveEvent(*slave_message);
+    ProcessMessageDebuggerError *slave_message = reinterpret_cast<ProcessMessageDebuggerError *>(message);
+    DebugDriverThread::GetInstance().OnDebuggerError(*slave_message);
     delete slave_message;
 }

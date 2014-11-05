@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "DebugDriverThread.h"
-#include "DebugMonitorMessages.h"
-#include "DebugMonitorMessageResults.h"
+#include "DriverMessages.h"
+#include "DriverMessageResults.h"
 #include "DebugOneProcessThread.h"
-#include "SlaveMessages.h"
+#include "ProcessMessages.h"
 
 #include "lldb/Core/Log.h"
 #include "lldb/Host/ThreadLauncher.h"
@@ -26,10 +26,10 @@ DebugDriverThread *DebugDriverThread::m_instance = NULL;
 
 DebugDriverThread::DebugDriverThread()
 {
-    m_monitor_thread = ThreadLauncher::LaunchThread("lldb.plugin.process-windows.monitor-thread", MonitorThread, this, nullptr);
+    m_driver_thread = ThreadLauncher::LaunchThread("lldb.plugin.process-windows.driver-thread", DriverThread, this, nullptr);
     m_shutdown_event = ::CreateEvent(NULL, TRUE, FALSE, NULL);
-    m_monitor_event = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-    ::CreatePipe(&m_monitor_pipe_read, &m_monitor_pipe_write, NULL, 1024);
+    m_driver_message_event = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    ::CreatePipe(&m_driver_pipe_read, &m_driver_pipe_write, NULL, 1024);
 }
 
 DebugDriverThread::~DebugDriverThread()
@@ -65,17 +65,17 @@ DebugDriverThread::Shutdown()
     if (!m_shutdown_event)
         return;
     ::SetEvent(m_shutdown_event);
-    m_monitor_thread.Join(nullptr);
+    m_driver_thread.Join(nullptr);
 
     ::CloseHandle(m_shutdown_event);
-    ::CloseHandle(m_monitor_event);
-    ::CloseHandle(m_monitor_pipe_read);
-    ::CloseHandle(m_monitor_pipe_write);
+    ::CloseHandle(m_driver_message_event);
+    ::CloseHandle(m_driver_pipe_read);
+    ::CloseHandle(m_driver_pipe_write);
 
     m_shutdown_event = nullptr;
-    m_monitor_event = nullptr;
-    m_monitor_pipe_read = nullptr;
-    m_monitor_pipe_write = nullptr;
+    m_driver_message_event = nullptr;
+    m_driver_pipe_read = nullptr;
+    m_driver_pipe_write = nullptr;
 }
 
 DebugDriverThread &
@@ -85,29 +85,29 @@ DebugDriverThread::GetInstance()
 }
 
 void
-DebugDriverThread::PostDebugMessage(const DebugMonitorMessage *message)
+DebugDriverThread::PostDebugMessage(const DriverMessage *message)
 {
     message->Retain();
-    if (!::WriteFile(m_monitor_pipe_write, &message, sizeof(message), NULL, NULL))
+    if (!::WriteFile(m_driver_pipe_write, &message, sizeof(message), NULL, NULL))
     {
         message->Release();
         return;
     }
 
-    ::SetEvent(m_monitor_event);
+    ::SetEvent(m_driver_message_event);
 }
 
-const DebugMonitorMessageResult *
-DebugDriverThread::HandleMonitorMessage(const DebugMonitorMessage *message)
+const DriverMessageResult *
+DebugDriverThread::HandleDriverMessage(const DriverMessage *message)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     switch (message->GetMessageType())
     {
-        case MonitorMessageType::eLaunchProcess:
+        case DriverMessageType::eLaunchProcess:
         {
-            const auto *launch_message = static_cast<const LaunchProcessMessage *>(message);
-            return HandleMonitorMessage(launch_message);
+            const auto *launch_message = static_cast<const DriverLaunchProcessMessage *>(message);
+            return HandleDriverMessage(launch_message);
         }
         default:
             if (log)
@@ -116,8 +116,8 @@ DebugDriverThread::HandleMonitorMessage(const DebugMonitorMessage *message)
     }
 }
 
-const LaunchProcessMessageResult *
-DebugDriverThread::HandleMonitorMessage(const LaunchProcessMessage *launch_message)
+const DriverLaunchProcessMessageResult *
+DebugDriverThread::HandleDriverMessage(const DriverLaunchProcessMessage *launch_message)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     const char *exe = launch_message->GetLaunchInfo().GetExecutableFile().GetPath().c_str();
@@ -127,8 +127,8 @@ DebugDriverThread::HandleMonitorMessage(const LaunchProcessMessage *launch_messa
     // Create a DebugOneProcessThread which will do the actual creation and enter a debug loop on
     // a background thread, only returning after the process has been created on the background
     // thread.
-    std::shared_ptr<DebugOneProcessThread> slave(new DebugOneProcessThread(m_monitor_thread));
-    const LaunchProcessMessageResult *result = slave->DebugLaunch(launch_message);
+    std::shared_ptr<DebugOneProcessThread> slave(new DebugOneProcessThread(m_driver_thread));
+    const DriverLaunchProcessMessageResult *result = slave->DebugLaunch(launch_message);
     if (result && result->GetError().Success())
     {
         if (log)
@@ -144,7 +144,12 @@ DebugDriverThread::HandleMonitorMessage(const LaunchProcessMessage *launch_messa
 }
 
 void
-DebugDriverThread::HandleSlaveEvent(const SlaveMessageProcessExited &message)
+DebugDriverThread::OnProcessLaunched(const ProcessMessageCreateProcess &message)
+{
+}
+
+void
+DebugDriverThread::OnExitProcess(const ProcessMessageExitProcess &message)
 {
     lldb::pid_t pid = message.GetProcess().GetProcessId();
 
@@ -154,7 +159,42 @@ DebugDriverThread::HandleSlaveEvent(const SlaveMessageProcessExited &message)
 }
 
 void
-DebugDriverThread::HandleSlaveEvent(const SlaveMessageRipEvent &message)
+DebugDriverThread::OnDebuggerConnected(const ProcessMessageDebuggerConnected &message)
+{
+}
+
+void
+DebugDriverThread::OnDebugException(const ProcessMessageException &message)
+{
+}
+
+void
+DebugDriverThread::OnCreateThread(const ProcessMessageCreateThread &message)
+{
+}
+
+void
+DebugDriverThread::OnExitThread(const ProcessMessageExitThread &message)
+{
+}
+
+void
+DebugDriverThread::OnLoadDll(const ProcessMessageLoadDll &message)
+{
+}
+
+void
+DebugDriverThread::OnUnloadDll(const ProcessMessageUnloadDll &message)
+{
+}
+
+void
+DebugDriverThread::OnDebugString(const ProcessMessageDebugString &message)
+{
+}
+
+void
+DebugDriverThread::OnDebuggerError(const ProcessMessageDebuggerError &message)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
 
@@ -169,10 +209,10 @@ DebugDriverThread::HandleSlaveEvent(const SlaveMessageRipEvent &message)
 }
 
 bool
-DebugDriverThread::ProcessMonitorMessages()
+DebugDriverThread::ProcessDriverMessages()
 {
     DWORD bytes_available = 0;
-    if (!PeekNamedPipe(m_monitor_pipe_read, NULL, 0, NULL, &bytes_available, NULL))
+    if (!PeekNamedPipe(m_driver_pipe_read, NULL, 0, NULL, &bytes_available, NULL))
     {
         // There's some kind of error with the named pipe.  Fail out and stop monitoring.
         return false;
@@ -184,14 +224,14 @@ DebugDriverThread::ProcessMonitorMessages()
         return true;
     }
 
-    int count = bytes_available / sizeof(DebugMonitorMessage *);
-    std::vector<DebugMonitorMessage *> messages(count);
-    if (!::ReadFile(m_monitor_pipe_read, &messages[0], bytes_available, NULL, NULL))
+    int count = bytes_available / sizeof(DriverMessage *);
+    std::vector<DriverMessage *> messages(count);
+    if (!::ReadFile(m_driver_pipe_read, &messages[0], bytes_available, NULL, NULL))
         return false;
 
-    for (DebugMonitorMessage *message : messages)
+    for (DriverMessage *message : messages)
     {
-        const DebugMonitorMessageResult *result = HandleMonitorMessage(message);
+        const DriverMessageResult *result = HandleDriverMessage(message);
         message->CompleteMessage(result);
         message->Release();
     }
@@ -199,20 +239,20 @@ DebugDriverThread::ProcessMonitorMessages()
 }
 
 lldb::thread_result_t
-DebugDriverThread::MonitorThread(void *data)
+DebugDriverThread::DriverThread(void *data)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     if (log)
         log->Printf("ProcessWindows DebugDriverThread starting up.");
 
-    DebugDriverThread *monitor_thread = static_cast<DebugDriverThread *>(data);
-    const int kMonitorEventIndex = 0;
+    DebugDriverThread *driver_thread = static_cast<DebugDriverThread *>(data);
+    const int kDriverMessageEventIndex = 0;
     const int kShutdownEventIndex = 1;
 
     Error error;
     HANDLE events[kShutdownEventIndex + 1];
-    events[kMonitorEventIndex] = monitor_thread->m_monitor_event;
-    events[kShutdownEventIndex] = monitor_thread->m_shutdown_event;
+    events[kDriverMessageEventIndex] = driver_thread->m_driver_message_event;
+    events[kShutdownEventIndex] = driver_thread->m_shutdown_event;
 
     while (true)
     {
@@ -221,9 +261,9 @@ DebugDriverThread::MonitorThread(void *data)
         DWORD result = WaitForMultipleObjectsEx(llvm::array_lengthof(events), events, FALSE, 1000, TRUE);
         switch (result)
         {
-            case WAIT_OBJECT_0 + kMonitorEventIndex:
+            case WAIT_OBJECT_0 + kDriverMessageEventIndex:
                 // LLDB is telling us to do something.  Process pending messages in our queue.
-                monitor_thread->ProcessMonitorMessages();
+                driver_thread->ProcessDriverMessages();
                 break;
             case WAIT_OBJECT_0 + kShutdownEventIndex:
                 error.SetErrorString("Shutdown event received.");
@@ -242,6 +282,6 @@ DebugDriverThread::MonitorThread(void *data)
     }
 
     if (log)
-        log->Printf("ProcessWindows Debug monitor thread exiting.  %s", error.AsCString());
+        log->Printf("ProcessWindows Debug driver thread exiting.  %s", error.AsCString());
     return 0;
 }

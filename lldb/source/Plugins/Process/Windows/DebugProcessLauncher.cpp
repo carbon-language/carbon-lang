@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DebugDriverThread.h"
-#include "DebugMonitorMessages.h"
-#include "DebugMonitorMessageResults.h"
+#include "DriverMessages.h"
+#include "DriverMessageResults.h"
 #include "DebugProcessLauncher.h"
 
 #include "lldb/Core/Error.h"
@@ -27,9 +27,9 @@ DebugProcessLauncher::DebugProcessLauncher(lldb::ProcessSP process_plugin)
 HostProcess
 DebugProcessLauncher::LaunchProcess(const ProcessLaunchInfo &launch_info, Error &error)
 {
-    LaunchProcessMessage *message = LaunchProcessMessage::Create(launch_info, m_process_plugin);
+    DriverLaunchProcessMessage *message = DriverLaunchProcessMessage::Create(launch_info, m_process_plugin);
     DebugDriverThread::GetInstance().PostDebugMessage(message);
-    const LaunchProcessMessageResult *result = static_cast<const LaunchProcessMessageResult *>(message->WaitForCompletion());
+    const DriverLaunchProcessMessageResult *result = static_cast<const DriverLaunchProcessMessageResult *>(message->WaitForCompletion());
     error = result->GetError();
     HostProcess process = result->GetProcess();
 

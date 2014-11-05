@@ -1,4 +1,4 @@
-//===-- DebugMonitorMessages.h ----------------------------------*- C++ -*-===//
+//===-- DriverMessages.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_Plugins_Process_Windows_DebugMonitorMessages_H_
-#define liblldb_Plugins_Process_Windows_DebugMonitorMessages_H_
+#ifndef liblldb_Plugins_Process_Windows_DriverMessages_H_
+#define liblldb_Plugins_Process_Windows_DriverMessages_H_
 
 #include "lldb/Host/Predicate.h"
 #include "lldb/Host/HostThread.h"
@@ -24,11 +24,11 @@ class ProcessWindows;
 
 namespace lldb_private
 {
-class DebugMonitorMessage;
-class DebugMonitorMessageResult;
+class DriverMessage;
+class DriverMessageResult;
 class ProcessLaunchInfo;
 
-enum class MonitorMessageType
+enum class DriverMessageType
 {
     eLaunchProcess,  // Launch a process under the control of the debugger.
     eAttachProcess,  // Attach to an existing process, and give control to the debugger.
@@ -37,32 +37,33 @@ enum class MonitorMessageType
     eResumeProcess,  // Resume a suspended process.
 };
 
-class DebugMonitorMessage : public llvm::ThreadSafeRefCountedBase<DebugMonitorMessage>
+class DriverMessage : public llvm::ThreadSafeRefCountedBase<DriverMessage>
 {
   public:
-    virtual ~DebugMonitorMessage();
+    virtual ~DriverMessage();
 
-    const DebugMonitorMessageResult *WaitForCompletion();
-    void CompleteMessage(const DebugMonitorMessageResult *result);
+    const DriverMessageResult *WaitForCompletion();
+    void CompleteMessage(const DriverMessageResult *result);
 
-    MonitorMessageType
+    DriverMessageType
     GetMessageType() const
     {
         return m_message_type;
     }
 
   protected:
-    explicit DebugMonitorMessage(MonitorMessageType message_type);
+    explicit DriverMessage(DriverMessageType message_type);
 
   private:
-    Predicate<const DebugMonitorMessageResult *> m_completion_predicate;
-    MonitorMessageType m_message_type;
+    Predicate<const DriverMessageResult *> m_completion_predicate;
+    DriverMessageType m_message_type;
 };
 
-class LaunchProcessMessage : public DebugMonitorMessage
+class DriverLaunchProcessMessage : public DriverMessage
 {
   public:
-    static LaunchProcessMessage *Create(const ProcessLaunchInfo &launch_info, lldb::ProcessSP m_process_plugin);
+    static DriverLaunchProcessMessage *Create(const ProcessLaunchInfo &launch_info, lldb::ProcessSP m_process_plugin);
+
     const ProcessLaunchInfo &
     GetLaunchInfo() const
     {
@@ -76,7 +77,7 @@ class LaunchProcessMessage : public DebugMonitorMessage
     }
 
   private:
-    LaunchProcessMessage(const ProcessLaunchInfo &launch_info, lldb::ProcessSP m_process_plugin);
+    DriverLaunchProcessMessage(const ProcessLaunchInfo &launch_info, lldb::ProcessSP m_process_plugin);
 
     const ProcessLaunchInfo &m_launch_info;
     lldb::ProcessSP m_process_plugin;

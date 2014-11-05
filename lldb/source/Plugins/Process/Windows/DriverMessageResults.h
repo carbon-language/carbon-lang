@@ -1,4 +1,4 @@
-//===-- DebugMonitorMessages.h ----------------------------------*- C++ -*-===//
+//===-- DriverMessageResults.h ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_Plugins_Process_Windows_DebugMonitorMessageResults_H_
-#define liblldb_Plugins_Process_Windows_DebugMonitorMessageResults_H_
+#ifndef liblldb_Plugins_Process_Windows_DriverMessageResults_H_
+#define liblldb_Plugins_Process_Windows_DriverMessageResults_H_
 
 #include "lldb/Core/Error.h"
 #include "lldb/Host/HostProcess.h"
@@ -18,21 +18,21 @@
 namespace lldb_private
 {
 
-class DebugMonitorMessage;
-class DebugMonitorMessageResult;
-class LaunchProcessMessage;
+class DriverMessage;
+class DriverMessageResult;
+class DriverLaunchProcessMessage;
 
-class DebugMonitorMessageResult : public llvm::ThreadSafeRefCountedBase<DebugMonitorMessageResult>
+class DriverMessageResult : public llvm::ThreadSafeRefCountedBase<DriverMessageResult>
 {
   public:
-    virtual ~DebugMonitorMessageResult();
+    virtual ~DriverMessageResult();
 
     const Error &
     GetError() const
     {
         return m_error;
     }
-    const DebugMonitorMessage *
+    const DriverMessage *
     GetOriginalMessage() const
     {
         return m_message;
@@ -41,17 +41,17 @@ class DebugMonitorMessageResult : public llvm::ThreadSafeRefCountedBase<DebugMon
     void SetError(const Error &error);
 
   protected:
-    explicit DebugMonitorMessageResult(const DebugMonitorMessage *message);
+    explicit DriverMessageResult(const DriverMessage *message);
 
   private:
     Error m_error;
-    const DebugMonitorMessage *m_message;
+    const DriverMessage *m_message;
 };
 
-class LaunchProcessMessageResult : public DebugMonitorMessageResult
+class DriverLaunchProcessMessageResult : public DriverMessageResult
 {
   public:
-    static LaunchProcessMessageResult *Create(const LaunchProcessMessage *message);
+    static DriverLaunchProcessMessageResult *Create(const DriverLaunchProcessMessage *message);
 
     void SetProcess(const HostProcess &process);
     const HostProcess &
@@ -61,7 +61,7 @@ class LaunchProcessMessageResult : public DebugMonitorMessageResult
     }
 
   private:
-    LaunchProcessMessageResult(const LaunchProcessMessage *message);
+    DriverLaunchProcessMessageResult(const DriverLaunchProcessMessage *message);
 
     HostProcess m_process;
 };

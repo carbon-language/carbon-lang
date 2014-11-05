@@ -1,4 +1,4 @@
-//===-- SlaveMessages.h -----------------------------------------*- C++ -*-===//
+//===-- ProcessMessages.h -----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_Plugins_Process_Windows_SlaveMessages_H_
-#define liblldb_Plugins_Process_Windows_SlaveMessages_H_
+#ifndef liblldb_Plugins_Process_Windows_ProcessMessages_H_
+#define liblldb_Plugins_Process_Windows_ProcessMessages_H_
 
 #include "lldb/Core/Error.h"
 #include "lldb/Host/HostProcess.h"
@@ -17,21 +17,20 @@ namespace lldb_private
 {
 
 //----------------------------------------------------------------------
-// SlaveMessageBase
+// ProcessMessageBase
 //
-// SlaveMessageBase serves as a base class for all messages which debug slaves
-// can send up to the driver thread to notify it of events related to processes
-// which are being debugged.
+// ProcessMessageBase serves as a base class for all messages which represent
+// events that happen in the context of debugging a single process.
 //----------------------------------------------------------------------
-class SlaveMessageBase
+class ProcessMessageBase
 {
   public:
-    SlaveMessageBase(const HostProcess &process)
+    ProcessMessageBase(const HostProcess &process)
         : m_process(process)
     {
     }
 
-    virtual ~SlaveMessageBase() {}
+    virtual ~ProcessMessageBase() {}
 
     const HostProcess &
     GetProcess() const
@@ -43,11 +42,11 @@ class SlaveMessageBase
     HostProcess m_process;
 };
 
-class SlaveMessageProcessExited : public SlaveMessageBase
+class ProcessMessageExitProcess : public ProcessMessageBase
 {
   public:
-    SlaveMessageProcessExited(const HostProcess &process, DWORD exit_code)
-        : SlaveMessageBase(process)
+    ProcessMessageExitProcess(const HostProcess &process, DWORD exit_code)
+        : ProcessMessageBase(process)
         , m_exit_code(exit_code)
     {
     }
@@ -59,11 +58,11 @@ class SlaveMessageProcessExited : public SlaveMessageBase
     DWORD m_exit_code;
 };
 
-class SlaveMessageRipEvent : public SlaveMessageBase
+class ProcessMessageDebuggerError : public ProcessMessageBase
 {
   public:
-    SlaveMessageRipEvent(const HostProcess &process, const Error &error, DWORD type)
-        : SlaveMessageBase(process)
+    ProcessMessageDebuggerError(const HostProcess &process, const Error &error, DWORD type)
+        : ProcessMessageBase(process)
         , m_error(error)
         , m_type(type)
     {
@@ -74,6 +73,7 @@ class SlaveMessageRipEvent : public SlaveMessageBase
     {
         return m_error;
     }
+
     DWORD
     GetType() const { return m_type; }
 

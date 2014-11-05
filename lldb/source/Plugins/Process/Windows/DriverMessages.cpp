@@ -1,4 +1,4 @@
-//===-- DebugMonitorMessages.cpp --------------------------------*- C++ -*-===//
+//===-- DriverMessages.cpp --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DebugMonitorMessages.h"
-#include "DebugMonitorMessageResults.h"
+#include "DriverMessages.h"
+#include "DriverMessageResults.h"
 
 #include "lldb/Core/Error.h"
 #include "lldb/Host/HostProcess.h"
@@ -17,46 +17,46 @@
 using namespace lldb;
 using namespace lldb_private;
 
-DebugMonitorMessage::DebugMonitorMessage(MonitorMessageType message_type)
+DriverMessage::DriverMessage(DriverMessageType message_type)
     : m_message_type(message_type)
 {
     Retain();
     m_completion_predicate.SetValue(nullptr, eBroadcastNever);
 }
 
-DebugMonitorMessage::~DebugMonitorMessage()
+DriverMessage::~DriverMessage()
 {
-    const DebugMonitorMessageResult *result = m_completion_predicate.GetValue();
+    const DriverMessageResult *result = m_completion_predicate.GetValue();
     if (result)
         result->Release();
     m_completion_predicate.SetValue(nullptr, eBroadcastNever);
 }
 
-const DebugMonitorMessageResult *
-DebugMonitorMessage::WaitForCompletion()
+const DriverMessageResult *
+DriverMessage::WaitForCompletion()
 {
-    const DebugMonitorMessageResult *result = nullptr;
+    const DriverMessageResult *result = nullptr;
     m_completion_predicate.WaitForValueNotEqualTo(nullptr, result);
     return result;
 }
 
 void
-DebugMonitorMessage::CompleteMessage(const DebugMonitorMessageResult *result)
+DriverMessage::CompleteMessage(const DriverMessageResult *result)
 {
     if (result)
         result->Retain();
     m_completion_predicate.SetValue(result, eBroadcastAlways);
 }
 
-LaunchProcessMessage::LaunchProcessMessage(const ProcessLaunchInfo &launch_info, lldb::ProcessSP process_plugin)
-    : DebugMonitorMessage(MonitorMessageType::eLaunchProcess)
+DriverLaunchProcessMessage::DriverLaunchProcessMessage(const ProcessLaunchInfo &launch_info, lldb::ProcessSP process_plugin)
+    : DriverMessage(DriverMessageType::eLaunchProcess)
     , m_launch_info(launch_info)
     , m_process_plugin(process_plugin)
 {
 }
 
-LaunchProcessMessage *
-LaunchProcessMessage::Create(const ProcessLaunchInfo &launch_info, lldb::ProcessSP process_plugin)
+DriverLaunchProcessMessage *
+DriverLaunchProcessMessage::Create(const ProcessLaunchInfo &launch_info, lldb::ProcessSP process_plugin)
 {
-    return new LaunchProcessMessage(launch_info, process_plugin);
+    return new DriverLaunchProcessMessage(launch_info, process_plugin);
 }

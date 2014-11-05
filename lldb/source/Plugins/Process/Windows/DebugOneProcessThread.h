@@ -17,8 +17,8 @@
 
 namespace lldb_private
 {
-class LaunchProcessMessage;
-class LaunchProcessMessageResult;
+class DriverLaunchProcessMessage;
+class DriverLaunchProcessMessageResult;
 
 //----------------------------------------------------------------------
 // DebugOneProcessThread
@@ -32,7 +32,7 @@ class DebugOneProcessThread : public std::enable_shared_from_this<DebugOneProces
     DebugOneProcessThread(HostThread driver_thread);
     virtual ~DebugOneProcessThread();
 
-    const LaunchProcessMessageResult *DebugLaunch(const LaunchProcessMessage *message);
+    const DriverLaunchProcessMessageResult *DebugLaunch(const DriverLaunchProcessMessage *message);
 
   private:
     void DebugLoop();
@@ -51,12 +51,12 @@ class DebugOneProcessThread : public std::enable_shared_from_this<DebugOneProces
 
     // The main debug driver thread which is controlling this slave.
     lldb_private::HostThread m_driver_thread;
-    Predicate<const LaunchProcessMessageResult *> m_launch_predicate;
+    Predicate<const DriverLaunchProcessMessageResult *> m_launch_predicate;
     lldb::ProcessSP m_process_plugin;
     HostProcess m_process;
 
     static lldb::thread_result_t DebugLaunchThread(void *data);
-    lldb::thread_result_t DebugLaunchThread(const LaunchProcessMessage *message);
+    lldb::thread_result_t DebugLaunchThread(const DriverLaunchProcessMessage *message);
 };
 }
 
