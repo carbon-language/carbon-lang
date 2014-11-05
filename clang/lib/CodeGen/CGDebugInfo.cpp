@@ -2527,7 +2527,10 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
       getOrCreateFunctionType(D, FnType, Unit), Fn->hasInternalLinkage(),
       true /*definition*/, ScopeLine, Flags, CGM.getLangOpts().Optimize, Fn,
       TParamsArray, getFunctionDeclaration(D));
-  if (HasDecl)
+  // We might get here with a VarDecl in the case we're generating
+  // code for the initialization of globals. Do not record these decls
+  // as they will overwrite the actual VarDecl Decl in the cache.
+  if (HasDecl && isa<FunctionDecl>(D))
     DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(SP)));
 
   // Push the function onto the lexical block stack.

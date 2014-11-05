@@ -5,8 +5,8 @@
 namespace A {
 #line 1 "foo.cpp"
 namespace B {
-int i;
-void f1() { }
+extern int i;
+int f1() { return 0; }
 void f1(int) { }
 struct foo;
 struct bar { };
@@ -19,7 +19,7 @@ using namespace B;
 
 using namespace A;
 namespace E = A;
-
+int B::i = f1();
 int func(bool b) {
   if (b) {
     using namespace A::B;
@@ -51,8 +51,8 @@ using B::i;
 // CHECK: [[FILE]] {{.*}}debug-info-namespace.cpp"
 // CHECK: [[BAR:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [decl] [from ]
 // CHECK: [[F1:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
-// CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
 // CHECK: [[FILE2]]} ; [ DW_TAG_file_type ] [{{.*}}foo.cpp]
+// CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
 // CHECK: [[I:![0-9]*]] = metadata !{metadata !"0x34\00i\00{{.*}}", metadata [[NS]], {{.*}} ; [ DW_TAG_variable ] [i]
 // CHECK: [[MODULES]] = metadata !{metadata [[M1:![0-9]*]], metadata [[M2:![0-9]*]], metadata [[M3:![0-9]*]], metadata [[M4:![0-9]*]], metadata [[M5:![0-9]*]], metadata [[M6:![0-9]*]], metadata [[M7:![0-9]*]], metadata [[M8:![0-9]*]], metadata [[M9:![0-9]*]], metadata [[M10:![0-9]*]], metadata [[M11:![0-9]*]], metadata [[M12:![0-9]*]], metadata [[M13:![0-9]*]]}
 // CHECK: [[M1]] = metadata !{metadata !"0x3a\0011\00", metadata [[CTXT]], metadata [[NS]]} ; [ DW_TAG_imported_module ]
