@@ -204,6 +204,25 @@ PE32-NEXT:     ReservedRVA: 0x0
 PE32-NEXT:     ReservedSize: 0x0
 PE32-NEXT:   }
 PE32-NEXT: }
+PE32-NEXT: DOSHeader {
+PE32-NEXT:   Magic: MZ
+PE32-NEXT:   UsedBytesInTheLastPage: 144
+PE32-NEXT:   FileSizeInPages: 3
+PE32-NEXT:   NumberOfRelocationItems: 0
+PE32-NEXT:   HeaderSizeInParagraphs: 4
+PE32-NEXT:   MinimumExtraParagraphs: 0
+PE32-NEXT:   MaximumExtraParagraphs: 65535
+PE32-NEXT:   InitialRelativeSS: 0
+PE32-NEXT:   InitialSP: 184
+PE32-NEXT:   Checksum: 0
+PE32-NEXT:   InitialIP: 0
+PE32-NEXT:   InitialRelativeCS: 0
+PE32-NEXT:   AddressOfRelocationTable: 64
+PE32-NEXT:   OverlayNumber: 0
+PE32-NEXT:   OEMid: 0
+PE32-NEXT:   OEMinfo: 0
+PE32-NEXT:   AddressOfNewExeHeader: 176
+PE32-NEXT: }
 
 COFF-UNKNOWN:      Format: COFF-<unknown arch>
 COFF-UNKNOWN-NEXT: Arch: unknown

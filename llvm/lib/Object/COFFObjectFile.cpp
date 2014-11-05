@@ -572,20 +572,20 @@ COFFObjectFile::COFFObjectFile(MemoryBufferRef Object, std::error_code &EC)
   bool HasPEHeader = false;
 
   // Check if this is a PE/COFF file.
-  if (base()[0] == 0x4d && base()[1] == 0x5a) {
+  if (checkSize(Data, EC, sizeof(dos_header) + sizeof(COFF::PEMagic))) {
     // PE/COFF, seek through MS-DOS compatibility stub and 4-byte
     // PE signature to find 'normal' COFF header.
-    if (!checkSize(Data, EC, 0x3c + 8))
-      return;
-    CurPtr = *reinterpret_cast<const ulittle16_t *>(base() + 0x3c);
-    // Check the PE magic bytes. ("PE\0\0")
-    if (std::memcmp(base() + CurPtr, COFF::PEMagic, sizeof(COFF::PEMagic)) !=
-        0) {
-      EC = object_error::parse_failed;
-      return;
+    const auto *DH = reinterpret_cast<const dos_header *>(base());
+    if (DH->Magic[0] == 'M' && DH->Magic[1] == 'Z') {
+      CurPtr = DH->AddressOfNewExeHeader;
+      // Check the PE magic bytes. ("PE\0\0")
+      if (memcmp(base() + CurPtr, COFF::PEMagic, sizeof(COFF::PEMagic)) != 0) {
+        EC = object_error::parse_failed;
+        return;
+      }
+      CurPtr += sizeof(COFF::PEMagic); // Skip the PE magic bytes.
+      HasPEHeader = true;
     }
-    CurPtr += sizeof(COFF::PEMagic); // Skip the PE magic bytes.
-    HasPEHeader = true;
   }
 
   if ((EC = getObject(COFFHeader, Data, base() + CurPtr)))
@@ -627,11 +627,11 @@ COFFObjectFile::COFFObjectFile(MemoryBufferRef Object, std::error_code &EC)
 
     const uint8_t *DataDirAddr;
     uint64_t DataDirSize;
-    if (Header->Magic == 0x10b) {
+    if (Header->Magic == COFF::PE32Header::PE32) {
       PE32Header = Header;
       DataDirAddr = base() + CurPtr + sizeof(pe32_header);
       DataDirSize = sizeof(data_directory) * PE32Header->NumberOfRvaAndSize;
-    } else if (Header->Magic == 0x20b) {
+    } else if (Header->Magic == COFF::PE32Header::PE32_PLUS) {
       PE32PlusHeader = reinterpret_cast<const pe32plus_header *>(Header);
       DataDirAddr = base() + CurPtr + sizeof(pe32plus_header);
       DataDirSize = sizeof(data_directory) * PE32PlusHeader->NumberOfRvaAndSize;

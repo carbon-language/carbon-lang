@@ -36,7 +36,7 @@ typedef content_iterator<ImportedSymbolRef> imported_symbol_iterator;
 
 /// The DOS compatible header at the front of all PE/COFF executables.
 struct dos_header {
-  support::ulittle16_t Magic;
+  char                 Magic[2];
   support::ulittle16_t UsedBytesInTheLastPage;
   support::ulittle16_t FileSizeInPages;
   support::ulittle16_t NumberOfRelocationItems;
@@ -621,6 +621,11 @@ public:
       delay_import_directories() const;
   iterator_range<export_directory_iterator> export_directories() const;
 
+  const dos_header *getDOSHeader() const {
+    if (!PE32Header && !PE32PlusHeader)
+      return nullptr;
+    return reinterpret_cast<const dos_header *>(base());
+  }
   std::error_code getPE32Header(const pe32_header *&Res) const;
   std::error_code getPE32PlusHeader(const pe32plus_header *&Res) const;
   std::error_code getDataDirectory(uint32_t index,
