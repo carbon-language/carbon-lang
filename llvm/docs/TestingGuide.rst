@@ -240,6 +240,58 @@ The recommended way to examine output to figure out if the test passes is using
 the :doc:`FileCheck tool <CommandGuide/FileCheck>`. *[The usage of grep in RUN
 lines is deprecated - please do not send or commit patches that use it.]*
 
+Extra files
+-----------
+
+If your test requires extra files besides the file containing the ``RUN:``
+lines, the idiomatic place to put them is in a subdirectory ``Inputs``.
+You can then refer to the extra files as ``%S/Inputs/foo.bar``.
+
+For example, consider ``test/Linker/ident.ll``. The directory structure is
+as follows::
+
+  test/
+    Linker/
+      ident.ll
+      Inputs/
+        ident.a.ll
+        ident.b.ll
+
+For convenience, these are the contents:
+
+.. code-block:: llvm
+
+  ;;;;; ident.ll:
+
+  ; RUN: llvm-link %S/Inputs/ident.a.ll %S/Inputs/ident.b.ll -S | FileCheck %s
+
+  ; Verify that multiple input llvm.ident metadata are linked together.
+
+  ; CHECK-DAG: !llvm.ident = !{!0, !1, !2}
+  ; CHECK-DAG: "Compiler V1"
+  ; CHECK-DAG: "Compiler V2"
+  ; CHECK-DAG: "Compiler V3"
+
+  ;;;;; Inputs/ident.a.ll:
+
+  !llvm.ident = !{!0, !1}
+  !0 = metadata !{metadata !"Compiler V1"}
+  !1 = metadata !{metadata !"Compiler V2"}
+
+  ;;;;; Inputs/ident.b.ll:
+
+  !llvm.ident = !{!0}
+  !0 = metadata !{metadata !"Compiler V3"}
+
+For symmetry reasons, ``ident.ll`` is just a dummy file that doesn't
+actually participate in the test besides holding the ``RUN:`` lines.
+
+.. note::
+
+  Some existing tests use ``RUN: true`` in extra files instead of just
+  putting the extra files in an ``Inputs/`` directory. This pattern is
+  deprecated.
+
 Fragile tests
 -------------
 
