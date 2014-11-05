@@ -3642,7 +3642,7 @@ struct underlying_type
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Tp>
-struct __has_operator_addressof_imp
+struct __has_operator_addressof_member_imp
 {
     template <class>
         static auto __test(__any) -> false_type;
@@ -3654,8 +3654,21 @@ struct __has_operator_addressof_imp
 };
 
 template <class _Tp>
+struct __has_operator_addressof_free_imp
+{
+    template <class>
+        static auto __test(__any) -> false_type;
+    template <class _Up>
+        static auto __test(_Up* __u)
+            -> typename __select_2nd<decltype(operator&(*__u)), true_type>::type;
+
+    static const bool value = decltype(__test<_Tp>(nullptr))::value;
+};
+
+template <class _Tp>
 struct __has_operator_addressof
-    : public integral_constant<bool, __has_operator_addressof_imp<_Tp>::value>
+    : public integral_constant<bool, __has_operator_addressof_member_imp<_Tp>::value
+                                  || __has_operator_addressof_free_imp<_Tp>::value>
 {};
 
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE

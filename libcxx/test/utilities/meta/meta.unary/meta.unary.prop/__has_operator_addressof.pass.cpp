@@ -40,6 +40,10 @@ struct E
     constexpr C operator&() const;
 };
 
+struct F {};
+
+constexpr F* operator&(F const &) { return nullptr; }
+
 #endif  // _LIBCPP_HAS_NO_CONSTEXPR
 
 int main()
@@ -49,5 +53,6 @@ int main()
     static_assert(std::__has_operator_addressof<A>::value == false, "");
     static_assert(std::__has_operator_addressof<B>::value == true, "");
     static_assert(std::__has_operator_addressof<E>::value == true, "");
+    static_assert(std::__has_operator_addressof<F>::value == true, "");
 #endif  // _LIBCPP_HAS_NO_CONSTEXPR
 }
