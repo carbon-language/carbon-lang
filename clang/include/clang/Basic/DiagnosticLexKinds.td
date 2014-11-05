@@ -615,9 +615,6 @@ def warn_auto_module_import : Warning<
 def warn_uncovered_module_header : Warning<
   "umbrella header for module '%0' does not include header '%1'">, 
   InGroup<IncompleteUmbrella>;
-def warn_forgotten_module_header : Warning<
-  "header '%0' is included in module '%1' but not listed in module map">,
-  InGroup<IncompleteModule>, DefaultIgnore;
 def err_expected_id_building_module : Error<
   "expected a module name in '__building_module' expression">;
 def error_use_of_private_header_outside_module : Error<

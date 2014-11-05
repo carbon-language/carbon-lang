@@ -2,4 +2,8 @@
 
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules-cache-path=%t -Wincomplete-module -fmodules -I %S/Inputs %s 2>&1 | FileCheck %s
-// CHECK: {{warning: header '.*incomplete_mod_missing.h' is included in module 'incomplete_mod' but not listed in module map}}
+// CHECK: warning: include of non-modular header inside module 'incomplete_mod'
+
+// RUN: rm -rf %t
+// RUN: not %clang_cc1 -fmodules-cache-path=%t -fmodules-strict-decluse -fmodules -I %S/Inputs %s 2>&1 | FileCheck %s -check-prefix=DECLUSE
+// DECLUSE: error: module incomplete_mod does not depend on a module exporting {{'.*incomplete_mod_missing.h'}}
