@@ -65,6 +65,10 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
       if (Typedef->getDecl()->getQualifiedNameAsString() == "testing::Unused")
         continue;
 
+    // Skip std::nullptr_t.
+    if (Parm->getType().getCanonicalType()->isNullPtrType())
+      continue;
+
     // Look for comments. We explicitly want to allow idioms like
     // void foo(int /*unused*/)
     const char *Begin = SM.getCharacterData(Parm->getLocStart());

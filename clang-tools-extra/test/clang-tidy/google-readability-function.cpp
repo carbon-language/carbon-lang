@@ -122,3 +122,9 @@ void MockFunction(Unused, int q, Unused) {
   ++q;
   ++q;
 }
+
+namespace std {
+typedef decltype(nullptr) nullptr_t;
+}
+
+void f(std::nullptr_t) {}
