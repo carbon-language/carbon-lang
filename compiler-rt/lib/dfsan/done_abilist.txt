@@ -237,3 +237,24 @@ fun:pthread_setspecific=discard
 
 # Functions that take a callback (wrap the callback manually).
 fun:pthread_create=custom
+
+###############################################################################
+# libffi/libgo
+###############################################################################
+# Functions that are written in asm or are called from asm.
+fun:ffi_call_unix64=uninstrumented
+fun:ffi_call_unix64=discard
+fun:ffi_closure_unix64_inner=uninstrumented
+fun:ffi_closure_unix64_inner=discard
+fun:ffi_closure_unix64=uninstrumented
+fun:ffi_closure_unix64=discard
+fun:__go_get_closure=uninstrumented
+fun:__go_get_closure=discard
+fun:__go_makefunc_can_recover=uninstrumented
+fun:__go_makefunc_can_recover=discard
+fun:__go_makefunc_returning=uninstrumented
+fun:__go_makefunc_returning=discard
+fun:reflect.MakeFuncStubGo=uninstrumented
+fun:reflect.MakeFuncStubGo=discard
+fun:reflect.makeFuncStub=uninstrumented
+fun:reflect.makeFuncStub=discard
