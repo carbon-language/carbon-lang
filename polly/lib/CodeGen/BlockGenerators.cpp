@@ -72,8 +72,9 @@ BlockGenerator::BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P,
     : Builder(B), Statement(Stmt), P(P), LI(LI), SE(SE), Build(Build),
       ExprBuilder(ExprBuilder) {}
 
-Value *BlockGenerator::lookupAvailableValue(const Value *Old, ValueMapT &BBMap,
-                                            ValueMapT &GlobalMap) const {
+Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
+                                   ValueMapT &GlobalMap, LoopToScevMapT &LTS,
+                                   Loop *L) const {
   // We assume constants never change.
   // This avoids map lookups for many calls to this function.
   if (isa<Constant>(Old))
@@ -97,15 +98,6 @@ Value *BlockGenerator::lookupAvailableValue(const Value *Old, ValueMapT &BBMap,
       return const_cast<Value *>(Old);
 
   if (Value *New = BBMap.lookup(Old))
-    return New;
-
-  return nullptr;
-}
-
-Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
-                                   ValueMapT &GlobalMap, LoopToScevMapT &LTS,
-                                   Loop *L) {
-  if (Value *New = lookupAvailableValue(Old, BBMap, GlobalMap))
     return New;
 
   if (SCEVCodegen && SE.isSCEVable(Old->getType()))

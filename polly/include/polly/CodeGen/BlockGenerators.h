@@ -100,7 +100,13 @@ protected:
                  ScalarEvolution &SE, __isl_keep isl_ast_build *Build,
                  IslExprBuilder *ExprBuilder);
 
-  /// @brief Get the new version of a Value.
+  /// @brief Get the new version of a value.
+  ///
+  /// Given an old value, we first check if a new version of this value is
+  /// available in the BBMap or GlobalMap. If the value is scop constant, we
+  /// assume it is a parameter and return the old value. In case it is not and
+  /// the value can be recomputed using SCEV, we do so. If the value can still
+  /// not be derived, this function will assert.
   ///
   /// @param Old       The old Value.
   /// @param BBMap     A mapping from old values to their new values
@@ -120,20 +126,7 @@ protected:
   ///           o The new value, if available.
   ///           o NULL, if no value is found.
   Value *getNewValue(const Value *Old, ValueMapT &BBMap, ValueMapT &GlobalMap,
-                     LoopToScevMapT &LTS, Loop *L);
-
-  /// @brief Get the new version of a Value if it is available.
-  ///
-  /// @param Old       The old Value.
-  /// @param BBMap     A mapping from old values to their new values
-  ///                  (for values recalculated within this basic block).
-  /// @param GlobalMap A mapping from old values to their new values
-  ///                  (for values recalculated in the new ScoP, but not
-  ///                   within this basic block).
-  ///
-  /// @returns  The new value, if available.
-  Value *lookupAvailableValue(const Value *Old, ValueMapT &BBMap,
-                              ValueMapT &GlobalMap) const;
+                     LoopToScevMapT &LTS, Loop *L) const;
 
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
                       ValueMapT &GlobalMap, LoopToScevMapT &LTS);
