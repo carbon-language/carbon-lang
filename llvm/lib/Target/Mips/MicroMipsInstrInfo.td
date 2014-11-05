@@ -27,6 +27,10 @@ def simm3_lsa2 : Operand<i32> {
   let EncoderMethod = "getSImm3Lsa2Value";
 }
 
+def uimm4_andi : Operand<i32> {
+  let EncoderMethod = "getUImm4AndValue";
+}
+
 def immZExt2Shift : ImmLeaf<i32, [{return Imm >= 1 && Imm <= 8;}]>;
 
 def immLi16 : ImmLeaf<i32, [{return Imm >= -1 && Imm <= 126;}]>;
@@ -115,6 +119,11 @@ class ArithRMM16<string opstr, RegisterOperand RO, bit isComm = 0,
                   [(set RO:$rd, (OpNode RO:$rs, RO:$rt))], Itin, FrmR> {
   let isCommutable = isComm;
 }
+
+class AndImmMM16<string opstr, RegisterOperand RO,
+                 InstrItinClass Itin = NoItinerary> :
+  MicroMipsInst16<(outs RO:$rd), (ins RO:$rs, uimm4_andi:$imm),
+                  !strconcat(opstr, "\t$rd, $rs, $imm"), [], Itin, FrmI>;
 
 class LogicRMM16<string opstr, RegisterOperand RO,
                  InstrItinClass Itin = NoItinerary,
@@ -253,6 +262,7 @@ def ADDU16_MM : ArithRMM16<"addu16", GPRMM16Opnd, 1, II_ADDU, add>,
                 ARITH_FM_MM16<0>;
 def SUBU16_MM : ArithRMM16<"subu16", GPRMM16Opnd, 0, II_SUBU, sub>,
                 ARITH_FM_MM16<1>;
+def ANDI16_MM : AndImmMM16<"andi16", GPRMM16Opnd, II_AND>, ANDI_FM_MM16<0x0b>;
 def AND16_MM : LogicRMM16<"and16", GPRMM16Opnd, II_AND, and>,
                LOGIC_FM_MM16<0x2>;
 def OR16_MM  : LogicRMM16<"or16", GPRMM16Opnd, II_OR, or>,
