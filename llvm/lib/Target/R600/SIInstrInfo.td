@@ -897,7 +897,7 @@ multiclass VOP3b_Helper <vop op, RegisterClass vrc, RegisterClass arc,
       (ins InputModsNoDefault:$src0_modifiers, arc:$src0,
            InputModsNoDefault:$src1_modifiers, arc:$src1,
            InputModsNoDefault:$src2_modifiers, arc:$src2,
-           ClampMod:$clamp, i32imm:$omod),
+           ClampMod:$clamp, omod:$omod),
   opName#" $vdst, $sdst, $src0_modifiers, $src1_modifiers, $src2_modifiers"#"$clamp"#"$omod", pattern,
   opName, opName, 1, 1
 >;
