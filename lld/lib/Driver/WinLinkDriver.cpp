@@ -885,14 +885,14 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   } else {
     // If /machine option is missing, we need to take a look at
     // the magic byte of the first object file to infer machine type.
-    std::vector<StringRef> files;
+    std::vector<StringRef> filePaths;
     for (auto arg : *parsedArgs)
       if (arg->getOption().getID() == OPT_INPUT)
-        files.push_back(arg->getValue());
+        filePaths.push_back(arg->getValue());
     if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_DASH_DASH))
-      files.insert(files.end(), arg->getValues().begin(),
+      filePaths.insert(filePaths.end(), arg->getValues().begin(),
                    arg->getValues().end());
-    for (StringRef path : files) {
+    for (StringRef path : filePaths) {
       llvm::COFF::MachineTypes type;
       if (!getMachineType(path, type))
         continue;
