@@ -416,7 +416,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
     GoogleStyle.ColumnLimit = 100;
     GoogleStyle.SpaceAfterCStyleCast = true;
   } else if (Language == FormatStyle::LK_JavaScript) {
-    GoogleStyle.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
+    GoogleStyle.BreakBeforeTernaryOperators = false;
     GoogleStyle.MaxEmptyLinesToKeep = 3;
     GoogleStyle.SpacesInContainerLiterals = false;
     GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;

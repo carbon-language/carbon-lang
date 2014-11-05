@@ -55,27 +55,29 @@ TEST_F(FormatTestJS, UnderstandsJavaScriptOperators) {
   verifyFormat("a != = b;");
 
   verifyFormat("a === b;");
-  verifyFormat("aaaaaaa\n    === b;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("aaaaaaa ===\n    b;", getGoogleJSStyleWithColumns(10));
   verifyFormat("a !== b;");
-  verifyFormat("aaaaaaa\n    !== b;", getGoogleJSStyleWithColumns(10));
-  verifyFormat("if (a + b + c + d\n"
-               "    !== e + f + g)\n"
+  verifyFormat("aaaaaaa !==\n    b;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("if (a + b + c +\n"
+               "        d !==\n"
+               "    e + f + g)\n"
                "  q();",
                getGoogleJSStyleWithColumns(20));
 
   verifyFormat("a >> >= b;");
 
   verifyFormat("a >>> b;");
-  verifyFormat("aaaaaaa\n    >>> b;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("aaaaaaa >>>\n    b;", getGoogleJSStyleWithColumns(10));
   verifyFormat("a >>>= b;");
-  verifyFormat("aaaaaaa\n    >>>= b;", getGoogleJSStyleWithColumns(10));
-  verifyFormat("if (a + b + c + d\n"
-               "    >>> e + f + g)\n"
+  verifyFormat("aaaaaaa >>>=\n    b;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("if (a + b + c +\n"
+               "        d >>>\n"
+               "    e + f + g)\n"
                "  q();",
                getGoogleJSStyleWithColumns(20));
-  verifyFormat("var x = aaaaaaaaaa\n"
-               "            ? bbbbbb\n"
-               "            : ccc;",
+  verifyFormat("var x = aaaaaaaaaa ?\n"
+               "            bbbbbb :\n"
+               "            ccc;",
                getGoogleJSStyleWithColumns(20));
 
   verifyFormat("var b = a.map((x) => x + 1);");
@@ -181,10 +183,11 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "  }\n"
                "};");
   // FIXME: The formatting here probably isn't ideal.
-  EXPECT_EQ("abc = xyz ? function() {\n"
-            "              return 1;\n"
-            "            }\n"
-            "          : function() {\n"
+  EXPECT_EQ("abc = xyz ?\n"
+            "          function() {\n"
+            "            return 1;\n"
+            "          } :\n"
+            "          function() {\n"
             "  return -1;\n"
             "};",
             format("abc=xyz?function(){return 1;}:function(){return -1;};"));
