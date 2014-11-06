@@ -57,14 +57,12 @@ INITIALIZE_PASS(NVPTXLowerStructArgs, "nvptx-lower-struct-args",
 void NVPTXLowerStructArgs::handleParam(Argument *Arg) {
   Function *Func = Arg->getParent();
   Instruction *FirstInst = &(Func->getEntryBlock().front());
-  const PointerType *PType = dyn_cast<PointerType>(Arg->getType());
+  PointerType *PType = dyn_cast<PointerType>(Arg->getType());
 
   assert(PType && "Expecting pointer type in handleParam");
 
-  const Type *StructType = PType->getElementType();
-
-  AllocaInst *AllocA =
-    new AllocaInst(const_cast<Type *>(StructType), Arg->getName(), FirstInst);
+  Type *StructType = PType->getElementType();
+  AllocaInst *AllocA = new AllocaInst(StructType, Arg->getName(), FirstInst);
 
   /* Set the alignment to alignment of the byval parameter. This is because,
    * later load/stores assume that alignment, and we are going to replace
@@ -75,74 +73,59 @@ void NVPTXLowerStructArgs::handleParam(Argument *Arg) {
   Arg->replaceAllUsesWith(AllocA);
 
   // Get the cvt.gen.to.param intrinsic
-  const Type *CvtTypes[2] = {
-    Type::getInt8PtrTy(Func->getParent()->getContext(), ADDRESS_SPACE_PARAM),
-    Type::getInt8PtrTy(Func->getParent()->getContext(), ADDRESS_SPACE_GENERIC)
-  };
+  Type *CvtTypes[] = {
+      Type::getInt8PtrTy(Func->getParent()->getContext(), ADDRESS_SPACE_PARAM),
+      Type::getInt8PtrTy(Func->getParent()->getContext(),
+                         ADDRESS_SPACE_GENERIC)};
   Function *CvtFunc = Intrinsic::getDeclaration(
-      Func->getParent(), Intrinsic::nvvm_ptr_gen_to_param,
-      ArrayRef<Type *>(const_cast<Type **>(CvtTypes), 2));
-  std::vector<Value *> BC1;
-  BC1.push_back(
+      Func->getParent(), Intrinsic::nvvm_ptr_gen_to_param, CvtTypes);
+
+  Value *BitcastArgs[] = {
       new BitCastInst(Arg, Type::getInt8PtrTy(Func->getParent()->getContext(),
                                               ADDRESS_SPACE_GENERIC),
-                      Arg->getName(), FirstInst));
-  CallInst *CallCVT = CallInst::Create(CvtFunc, ArrayRef<Value *>(BC1),
-                                       "cvt_to_param", FirstInst);
+                      Arg->getName(), FirstInst)};
+  CallInst *CallCVT =
+      CallInst::Create(CvtFunc, BitcastArgs, "cvt_to_param", FirstInst);
 
-  BitCastInst *BitCast =
-      new BitCastInst(CallCVT, PointerType::get(const_cast<Type *>(StructType),
-                                                ADDRESS_SPACE_PARAM),
-                      Arg->getName(), FirstInst);
+  BitCastInst *BitCast = new BitCastInst(
+      CallCVT, PointerType::get(StructType, ADDRESS_SPACE_PARAM),
+      Arg->getName(), FirstInst);
   LoadInst *LI = new LoadInst(BitCast, Arg->getName(), FirstInst);
   new StoreInst(LI, AllocA, FirstInst);
 }
 
-/// =============================================================================
-/// If the function had a struct ptr arg, say foo(%struct.x *byval %d), then
-/// add the following instructions to the first basic block :
-///
-/// %temp = alloca %struct.x, align 8
-/// %tt1 = bitcast %struct.x * %d to i8 *
-/// %tt2 = llvm.nvvm.cvt.gen.to.param %tt2
-/// %tempd = bitcast i8 addrspace(101) * to %struct.x addrspace(101) *
-/// %tv = load %struct.x addrspace(101) * %tempd
-/// store %struct.x %tv, %struct.x * %temp, align 8
-///
-/// The above code allocates some space in the stack and copies the incoming
-/// struct from param space to local space.
-/// Then replace all occurences of %d by %temp.
-/// =============================================================================
+// =============================================================================
+// If the function had a struct ptr arg, say foo(%struct.x *byval %d), then
+// add the following instructions to the first basic block :
+//
+// %temp = alloca %struct.x, align 8
+// %tt1 = bitcast %struct.x * %d to i8 *
+// %tt2 = llvm.nvvm.cvt.gen.to.param %tt2
+// %tempd = bitcast i8 addrspace(101) * to %struct.x addrspace(101) *
+// %tv = load %struct.x addrspace(101) * %tempd
+// store %struct.x %tv, %struct.x * %temp, align 8
+//
+// The above code allocates some space in the stack and copies the incoming
+// struct from param space to local space.
+// Then replace all occurences of %d by %temp.
+// =============================================================================
 void NVPTXLowerStructArgs::handleStructPtrArgs(Function &F) {
-  const AttributeSet &PAL = F.getAttributes();
-
-  unsigned Idx = 1;
-
   for (Argument &Arg : F.args()) {
-    const Type *Ty = Arg.getType();
-
-    const PointerType *PTy = dyn_cast<PointerType>(Ty);
-
-    if (PTy) {
-      if (PAL.hasAttribute(Idx, Attribute::ByVal)) {
-        //  cout << "Has struct ptr args" << std::endl;
-        handleParam(&Arg);
-      }
+    if (Arg.getType()->isPointerTy() && Arg.hasByValAttr()) {
+      handleParam(&Arg);
     }
-    Idx++;
   }
 }
 
-/// =============================================================================
-/// Main function for this pass.
-/// =============================================================================
+// =============================================================================
+// Main function for this pass.
+// =============================================================================
 bool NVPTXLowerStructArgs::runOnFunction(Function &F) {
   // Skip non-kernels. See the comments at the top of this file.
   if (!isKernelFunction(F))
     return false;
 
   handleStructPtrArgs(F);
-
   return true;
 }
 
