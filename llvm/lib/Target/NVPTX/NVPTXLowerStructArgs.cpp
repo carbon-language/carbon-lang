@@ -64,7 +64,7 @@ void NVPTXLowerStructArgs::handleParam(Argument *Arg) {
   const Type *StructType = PType->getElementType();
 
   AllocaInst *AllocA =
-    new AllocaInst((Type *)StructType, Arg->getName(), FirstInst);
+    new AllocaInst(const_cast<Type *>(StructType), Arg->getName(), FirstInst);
 
   /* Set the alignment to alignment of the byval parameter. This is because,
    * later load/stores assume that alignment, and we are going to replace
@@ -79,9 +79,9 @@ void NVPTXLowerStructArgs::handleParam(Argument *Arg) {
     Type::getInt8PtrTy(Func->getParent()->getContext(), ADDRESS_SPACE_PARAM),
     Type::getInt8PtrTy(Func->getParent()->getContext(), ADDRESS_SPACE_GENERIC)
   };
-  Function *CvtFunc = (Function *)Intrinsic::getDeclaration(
+  Function *CvtFunc = Intrinsic::getDeclaration(
       Func->getParent(), Intrinsic::nvvm_ptr_gen_to_param,
-      ArrayRef<Type *>((Type **)CvtTypes, 2));
+      ArrayRef<Type *>(const_cast<Type **>(CvtTypes), 2));
   std::vector<Value *> BC1;
   BC1.push_back(
       new BitCastInst(Arg, Type::getInt8PtrTy(Func->getParent()->getContext(),
@@ -90,9 +90,10 @@ void NVPTXLowerStructArgs::handleParam(Argument *Arg) {
   CallInst *CallCVT = CallInst::Create(CvtFunc, ArrayRef<Value *>(BC1),
                                        "cvt_to_param", FirstInst);
 
-  BitCastInst *BitCast = new BitCastInst(
-      CallCVT, PointerType::get((Type *)StructType, ADDRESS_SPACE_PARAM),
-      Arg->getName(), FirstInst);
+  BitCastInst *BitCast =
+      new BitCastInst(CallCVT, PointerType::get(const_cast<Type *>(StructType),
+                                                ADDRESS_SPACE_PARAM),
+                      Arg->getName(), FirstInst);
   LoadInst *LI = new LoadInst(BitCast, Arg->getName(), FirstInst);
   new StoreInst(LI, AllocA, FirstInst);
 }
