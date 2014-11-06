@@ -3030,9 +3030,12 @@ bool MipsAsmParser::eatComma(StringRef ErrorStr) {
 
 bool MipsAsmParser::parseDirectiveCpLoad(SMLoc Loc) {
   if (AssemblerOptions.back()->isReorder())
-    Warning(Loc, ".cpload in reorder section");
+    Warning(Loc, ".cpload should be inside a noreorder section");
 
-  // FIXME: Warn if cpload is used in Mips16 mode.
+  if (inMips16Mode()) {
+    reportParseError(".cpload is not supported in Mips16 mode");
+    return false;
+  }
 
   SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> Reg;
   OperandMatchResultTy ResTy = parseAnyRegister(Reg);
@@ -3044,6 +3047,12 @@ bool MipsAsmParser::parseDirectiveCpLoad(SMLoc Loc) {
   MipsOperand &RegOpnd = static_cast<MipsOperand &>(*Reg[0]);
   if (!RegOpnd.isGPRAsmReg()) {
     reportParseError(RegOpnd.getStartLoc(), "invalid register");
+    return false;
+  }
+
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
 
