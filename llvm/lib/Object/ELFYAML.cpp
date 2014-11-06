@@ -395,6 +395,25 @@ void ScalarEnumerationTraits<ELFYAML::ELF_STV>::enumeration(
 #undef ECase
 }
 
+void ScalarBitSetTraits<ELFYAML::ELF_STO>::bitset(IO &IO,
+                                                  ELFYAML::ELF_STO &Value) {
+  const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
+  assert(Object && "The IO context is not initialized");
+#define BCase(X) IO.bitSetCase(Value, #X, ELF::X);
+  switch (Object->Header.Machine) {
+  case ELF::EM_MIPS:
+    BCase(STO_MIPS_OPTIONAL)
+    BCase(STO_MIPS_PLT)
+    BCase(STO_MIPS_PIC)
+    BCase(STO_MIPS_MICROMIPS)
+    break;
+  default:
+    break; // Nothing to do
+  }
+#undef BCase
+#undef BCaseMask
+}
+
 void ScalarEnumerationTraits<ELFYAML::ELF_REL>::enumeration(
     IO &IO, ELFYAML::ELF_REL &Value) {
   const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
@@ -670,13 +689,30 @@ void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
   IO.mapOptional("Entry", FileHdr.Entry, Hex64(0));
 }
 
+namespace {
+struct NormalizedOther {
+  NormalizedOther(IO &)
+      : Visibility(ELFYAML::ELF_STV(0)), Other(ELFYAML::ELF_STO(0)) {}
+  NormalizedOther(IO &, uint8_t Original)
+      : Visibility(Original & 0x3), Other(Original & ~0x3) {}
+
+  uint8_t denormalize(IO &) { return Visibility | Other; }
+
+  ELFYAML::ELF_STV Visibility;
+  ELFYAML::ELF_STO Other;
+};
+}
+
 void MappingTraits<ELFYAML::Symbol>::mapping(IO &IO, ELFYAML::Symbol &Symbol) {
   IO.mapOptional("Name", Symbol.Name, StringRef());
   IO.mapOptional("Type", Symbol.Type, ELFYAML::ELF_STT(0));
   IO.mapOptional("Section", Symbol.Section, StringRef());
   IO.mapOptional("Value", Symbol.Value, Hex64(0));
   IO.mapOptional("Size", Symbol.Size, Hex64(0));
-  IO.mapOptional("Visibility", Symbol.Visibility, ELFYAML::ELF_STV(0));
+
+  MappingNormalization<NormalizedOther, uint8_t> Keys(IO, Symbol.Other);
+  IO.mapOptional("Visibility", Keys->Visibility, ELFYAML::ELF_STV(0));
+  IO.mapOptional("Other", Keys->Other, ELFYAML::ELF_STO(0));
 }
 
 void MappingTraits<ELFYAML::LocalGlobalWeakSymbols>::mapping(

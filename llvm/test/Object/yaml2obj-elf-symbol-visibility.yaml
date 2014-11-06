@@ -44,7 +44,7 @@
 # OBJ-NEXT:   Size: 4
 # OBJ-NEXT:   Binding: Global (0x1)
 # OBJ-NEXT:   Type: Object (0x1)
-# OBJ-NEXT:   Other: 3
+# OBJ-NEXT:   Other: 163
 # OBJ-NEXT:   Section: .data (0x1)
 # OBJ-NEXT: }
 
@@ -77,6 +77,7 @@
 # YAML-NEXT:       Value:           0x0000000000000010
 # YAML-NEXT:       Size:            0x0000000000000004
 # YAML-NEXT:       Visibility:      STV_PROTECTED
+# YAML-NEXT:       Other:           [ STO_MIPS_PIC, STO_MIPS_MICROMIPS ]
 
 ---
 FileHeader:
@@ -121,6 +122,7 @@ Symbols:
     - Name:            protected
       Type:            STT_OBJECT
       Visibility:      STV_PROTECTED
+      Other:           [ STO_MIPS_MICROMIPS, STO_MIPS_PIC ]
       Section:         .data
       Value:           0x10
       Size:            0x04
