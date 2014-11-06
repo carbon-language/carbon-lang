@@ -971,16 +971,6 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   // For now, just ignore this Global if the alignment is large.
   if (G->getAlignment() > MinRedzoneSizeForGlobal()) return false;
 
-  // Ignore all the globals with the names starting with "\01L_OBJC_".
-  // Many of those are put into the .cstring section. The linker compresses
-  // that section by removing the spare \0s after the string terminator, so
-  // our redzones get broken.
-  if ((G->getName().find("\01L_OBJC_") == 0) ||
-      (G->getName().find("\01l_OBJC_") == 0)) {
-    DEBUG(dbgs() << "Ignoring \\01L_OBJC_* global: " << *G << "\n");
-    return false;
-  }
-
   if (G->hasSection()) {
     StringRef Section(G->getSection());
     // Ignore the globals from the __OBJC section. The ObjC runtime assumes
@@ -1009,6 +999,11 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
       DEBUG(dbgs() << "Ignoring a cstring literal: " << *G << "\n");
       return false;
     }
+    if (Section.startswith("__TEXT,__objc_methname,cstring_literals")) {
+      DEBUG(dbgs() << "Ignoring objc_methname cstring global: " << *G << "\n");
+      return false;
+    }
+
 
     // Callbacks put into the CRT initializer/terminator sections
     // should not be instrumented.
