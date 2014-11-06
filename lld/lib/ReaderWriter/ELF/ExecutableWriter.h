@@ -130,12 +130,8 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   auto endAtomIter = this->_layout.findAbsoluteAtom("end");
 
   auto startEnd = [&](StringRef sym, StringRef sec) -> void {
-    // TODO: This looks like a good place to use Twine...
-    std::string start("__"), end("__");
-    start += sym;
-    start += "_start";
-    end += sym;
-    end += "_end";
+    std::string start = (llvm::Twine("__", sym) + "_start").str();
+    std::string end = (llvm::Twine("__", sym) + "_end").str();
     auto s = this->_layout.findAbsoluteAtom(start);
     auto e = this->_layout.findAbsoluteAtom(end);
     auto section = this->_layout.findOutputSection(sec);
