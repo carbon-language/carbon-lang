@@ -1,7 +1,7 @@
 ; RUN: opt %loadPolly -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
-; CHECK-NOT:#pragma omp parallel for reduction
-; CHECK:    #pragma omp parallel for
+; CHECK-NOT:#pragma known-parallel reduction
+; CHECK:    #pragma known-parallel
 ; CHECK:    for (int c1 = 0; c1 <= 2047; c1 += 1)
 ; CHECK:      for (int c3 = 0; c3 <= 1023; c3 += 1)
 ; CHECK:        #pragma simd reduction

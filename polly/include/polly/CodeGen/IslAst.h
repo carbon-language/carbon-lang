@@ -126,6 +126,9 @@ public:
   /// @brief Is this loop a reduction parallel loop?
   static bool isReductionParallel(__isl_keep isl_ast_node *Node);
 
+  /// @brief Will the loop be run as thread parallel?
+  static bool isExecutedInParallel(__isl_keep isl_ast_node *Node);
+
   /// @brief Get the nodes schedule or a nullptr if not available.
   static __isl_give isl_union_map *getSchedule(__isl_keep isl_ast_node *Node);
 

@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-import-jscop-dir=%S -polly-import-jscop -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
-; CHECK:    #pragma omp parallel for reduction
+; CHECK:    #pragma known-parallel reduction
 ; CHECK:    for (int c0 = 0; c0 <= 2; c0 += 1) {
 ; CHECK:      if (c0 == 2) {
 ; CHECK:        #pragma simd reduction

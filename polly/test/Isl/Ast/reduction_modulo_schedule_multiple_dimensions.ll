@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-import-jscop-dir=%S -polly-import-jscop -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
-; CHECK:    #pragma omp parallel for
+; CHECK:    #pragma known-parallel
 ; CHECK:    for (int c0 = 0; c0 <= 1; c0 += 1) {
 ; CHECK:      if (c0 == 1) {
 ; CHECK:        for (int c1 = 1; c1 < 2 * n; c1 += 2)

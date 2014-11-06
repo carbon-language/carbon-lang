@@ -2,7 +2,7 @@
 ;
 ; Verify that only the outer dimension needs privatization
 ;
-; CHECK:    #pragma omp parallel for reduction
+; CHECK:    #pragma known-parallel reduction
 ; CHECK:    for (int c1 = 0; c1 <= 1023; c1 += 1) {
 ; CHECK:      if (c1 % 2 == 0) {
 ; CHECK-NOT:    #pragma simd reduction

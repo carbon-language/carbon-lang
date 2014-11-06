@@ -54,7 +54,7 @@ for.end30:                                        ; preds = %for.inc28
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 
-; CHECK: #pragma omp parallel for
+; CHECK: #pragma known-parallel
 ; CHECK: for (int c1 = 0; c1 <= 1535; c1 += 32)
 ; CHECK:   for (int c2 = 0; c2 <= 1535; c2 += 32)
 ; CHECK:     for (int c3 = c1; c3 <= c1 + 31; c3 += 1)
@@ -62,7 +62,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 ; CHECK:         #pragma simd
 ; CHECK:         for (int c5 = c4; c5 <= c4 + 3; c5 += 1)
 ; CHECK:           Stmt_for_body3(c3, c5);
-; CHECK: #pragma omp parallel for
+; CHECK: #pragma known-parallel
 ; CHECK: for (int c1 = 0; c1 <= 1535; c1 += 32)
 ; CHECK:   for (int c2 = 0; c2 <= 1535; c2 += 32)
 ; CHECK:     for (int c3 = 0; c3 <= 1535; c3 += 32)

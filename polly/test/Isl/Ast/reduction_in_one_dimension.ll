@@ -2,7 +2,7 @@
 ;
 ; Verify that we won't privatize anything in the outer dimension
 ;
-; CHECK:    #pragma omp parallel for
+; CHECK:    #pragma known-parallel
 ; CHECK:    for (int c1 = 0; c1 < 2 * n; c1 += 1)
 ; CHECK:      #pragma simd reduction
 ; CHECK:      for (int c3 = 0; c3 <= 1023; c3 += 1)

@@ -2,8 +2,8 @@
 ;
 ; Verify that the outer dimension doesnt't carry reduction dependences
 ;
-; CHECK-NOT:#pragma omp parallel for reduction
-; CHECK:    #pragma omp parallel for
+; CHECK-NOT:#pragma known-parallel reduction
+; CHECK:    #pragma known-parallel
 ; CHECK:    for (int c1 = 0; c1 < 2 * n; c1 += 1)
 ; CHECK:      #pragma simd reduction
 ; CHECK:      for (int c3 = 0; c3 <= 1023; c3 += 1) {

@@ -32,7 +32,7 @@ for.end:                                          ; preds = %for.cond
 ; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
 ; CHECK:     Stmt_for_body(c1);
 
-; CHECK-VECTOR: #pragma omp parallel for
+; CHECK-VECTOR: #pragma known-parallel
 ; CHECK-VECTOR: for (int c0 = 0; c0 <= 1023; c0 += 4)
 ; CHECK-VECTOR:     #pragma simd
 ; CHECK-VECTOR:     for (int c1 = c0; c1 <= c0 + 3; c1 += 1)

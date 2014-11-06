@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-delinearize -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
-; CHECK: #pragma omp parallel for reduction (^ : sum)
+; CHECK: #pragma known-parallel reduction (^ : sum)
 ;        void f(int N, int M, int P, int sum[P][M]) {
 ;          for (int i = 0; i < N; i++)
 ;            for (int j = 0; j < P; j++)
