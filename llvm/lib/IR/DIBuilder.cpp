@@ -194,7 +194,7 @@ DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
                                                       unsigned Line, StringRef Name) {
   // Make sure to use the unique identifier based metadata reference for
   // types that have one.
-  Value *V = Decl.isType() ? DIType(Decl).getRef() : Decl;
+  Value *V = Decl.isType() ? static_cast<Value*>(DIType(Decl).getRef()) : Decl;
   return ::createImportedModule(VMContext, dwarf::DW_TAG_imported_declaration,
                                 Context, V, Line, Name,
                                 AllImportedModules);
