@@ -48,6 +48,11 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
   if (newFlags & llvm::ELF::EF_MIPS_ARCH_ASE_M16)
     return make_dynamic_error_code(Twine("Unsupported extension: MIPS16"));
 
+  // PIC code is inherently CPIC and may not set CPIC flag explicitly.
+  // Ensure that this flag will exist in the linked file.
+  if (newFlags & llvm::ELF::EF_MIPS_PIC)
+    newFlags |= llvm::ELF::EF_MIPS_CPIC;
+
   std::lock_guard<std::mutex> lock(_mutex);
 
   // If the old set of flags is empty, use the new one as a result.
@@ -64,10 +69,10 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
   if ((newPic != 0) != (oldPic != 0))
     llvm::errs() << "lld warning: linking abicalls and non-abicalls files\n";
 
-  if (newPic != 0)
-    _flags |= llvm::ELF::EF_MIPS_CPIC;
   if (!(newPic & llvm::ELF::EF_MIPS_PIC))
     _flags &= ~llvm::ELF::EF_MIPS_PIC;
+  if (newPic)
+    _flags |= llvm::ELF::EF_MIPS_CPIC;
 
   // Check mixing -mnan=2008 / -mnan=legacy modules.
   if ((newFlags & llvm::ELF::EF_MIPS_NAN2008) !=
