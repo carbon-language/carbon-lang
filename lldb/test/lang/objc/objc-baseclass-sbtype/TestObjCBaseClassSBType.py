@@ -57,16 +57,16 @@ class ObjCDynamicValueTestCase(TestBase):
         self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
-        button = self.frame().FindVariable("button")
-        button_ptr_type = button.GetType()
-        button_pte_type = button_ptr_type.GetPointeeType()
-        self.assertTrue(button_ptr_type.GetNumberOfDirectBaseClasses() == 1, "NSButton * has one base class")
-        self.assertTrue(button_pte_type.GetNumberOfDirectBaseClasses() == 1, "NSButton has one base class")
+        var = self.frame().FindVariable("foo")
+        var_ptr_type = var.GetType()
+        var_pte_type = var_ptr_type.GetPointeeType()
+        self.assertTrue(var_ptr_type.GetNumberOfDirectBaseClasses() == 1, "Foo * has one base class")
+        self.assertTrue(var_pte_type.GetNumberOfDirectBaseClasses() == 1, "Foo has one base class")
 
-        self.assertTrue(button_ptr_type.GetDirectBaseClassAtIndex(0).IsValid(), "NSButton * has a valid base class")
-        self.assertTrue(button_pte_type.GetDirectBaseClassAtIndex(0).IsValid(), "NSButton * has a valid base class")
+        self.assertTrue(var_ptr_type.GetDirectBaseClassAtIndex(0).IsValid(), "Foo * has a valid base class")
+        self.assertTrue(var_pte_type.GetDirectBaseClassAtIndex(0).IsValid(), "Foo * has a valid base class")
 
-        self.assertTrue(button_ptr_type.GetDirectBaseClassAtIndex(0).GetName() == button_pte_type.GetDirectBaseClassAtIndex(0).GetName(), "NSButton and its pointer type don't agree on their base class")
+        self.assertTrue(var_ptr_type.GetDirectBaseClassAtIndex(0).GetName() == var_pte_type.GetDirectBaseClassAtIndex(0).GetName(), "Foo and its pointer type don't agree on their base class")
 
 if __name__ == '__main__':
     import atexit

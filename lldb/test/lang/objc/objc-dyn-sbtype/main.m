@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import <Cocoa/Cocoa.h>
 
 @interface MyBaseClass : NSObject
 {}
@@ -45,14 +44,9 @@
 
 int main (int argc, char const *argv[])
 {
-    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-
-	NSSize size = {10,10};
-	NSImage *image = [[NSImage alloc] initWithSize:size];
-	
+    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];	
 	NSObject* object = [[MyDerivedClass alloc] init];
 	MyBaseClass* base = [[MyDerivedClass alloc] init];
-	
     [pool release]; // Set breakpoint here.
     return 0;
 }

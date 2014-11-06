@@ -1,6 +1,6 @@
 LEVEL = ../../../make
 
 OBJC_SOURCES := main.m
-LDFLAGS = $(CFLAGS) -lobjc -framework AppKit
+LD_EXTRAS = -lobjc -framework Foundation
 
 include $(LEVEL)/Makefile.rules

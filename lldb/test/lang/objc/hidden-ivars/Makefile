@@ -4,6 +4,6 @@ DYLIB_NAME := InternalDefiner
 DYLIB_OBJC_SOURCES := InternalDefiner.m
 OBJC_SOURCES := main.m
 
-LDFLAGS = -framework Foundation
+LD_EXTRAS = -framework Foundation
 
 include $(LEVEL)/Makefile.rules
