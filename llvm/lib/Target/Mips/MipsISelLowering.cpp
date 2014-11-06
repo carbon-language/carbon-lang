@@ -1693,8 +1693,6 @@ SDValue MipsTargetLowering::lowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
                                                SelectionDAG &DAG) const {
-  // FIXME there isn't actually debug info here
-  SDLoc DL(Op);
   EVT Ty = Op.getValueType();
   GlobalAddressSDNode *N = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *GV = N->getGlobal();
@@ -1704,15 +1702,9 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
     const MipsTargetObjectFile &TLOF =
       (const MipsTargetObjectFile&)getObjFileLowering();
 
-    // %gp_rel relocation
-    if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine())) {
-      SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32, 0,
-                                              MipsII::MO_GPREL);
-      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, DL,
-                                      DAG.getVTList(MVT::i32), GA);
-      SDValue GPReg = DAG.getRegister(Mips::GP, MVT::i32);
-      return DAG.getNode(ISD::ADD, DL, MVT::i32, GPReg, GPRelNode);
-    }
+    if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine()))
+      // %gp_rel relocation
+      return getAddrGPRel(N, Ty, DAG);
 
     // %hi/%lo relocation
     return getAddrNonPIC(N, Ty, DAG);
@@ -1843,21 +1835,20 @@ lowerJumpTable(SDValue Op, SelectionDAG &DAG) const
 SDValue MipsTargetLowering::
 lowerConstantPool(SDValue Op, SelectionDAG &DAG) const
 {
-  // gp_rel relocation
-  // FIXME: we should reference the constant pool using small data sections,
-  // but the asm printer currently doesn't support this feature without
-  // hacking it. This feature should come soon so we can uncomment the
-  // stuff below.
-  //if (IsInSmallSection(C->getType())) {
-  //  SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
-  //  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
-  //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode);
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
   EVT Ty = Op.getValueType();
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ &&
-      !Subtarget.isABI_N64())
+      !Subtarget.isABI_N64()) {
+    const MipsTargetObjectFile &TLOF =
+      (const MipsTargetObjectFile&)getObjFileLowering();
+
+    if (TLOF.IsConstantInSmallSection(N->getConstVal(), getTargetMachine()))
+      // %gp_rel relocation
+      return getAddrGPRel(N, Ty, DAG);
+
     return getAddrNonPIC(N, Ty, DAG);
+  }
 
   return getAddrLocal(N, Ty, DAG,
                       Subtarget.isABI_N32() || Subtarget.isABI_N64());

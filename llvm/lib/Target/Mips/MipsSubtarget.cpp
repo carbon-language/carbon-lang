@@ -58,6 +58,10 @@ Mips16ConstantIslands(
   cl::desc("MIPS: mips16 constant islands enable."),
   cl::init(true));
 
+static cl::opt<bool>
+GPOpt("mgpopt", cl::Hidden,
+      cl::desc("MIPS: Enable gp-relative addressing of small data items"));
+
 /// Select the Mips CPU for the given triple and cpu name.
 /// FIXME: Merge with the copy in MipsMCTargetDesc.cpp
 static StringRef selectMipsCPU(Triple TT, StringRef CPU) {
@@ -171,10 +175,16 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   if (TT.find("linux") == std::string::npos)
     IsLinux = false;
 
+  if (NoABICalls && TM->getRelocationModel() == Reloc::PIC_)
+    report_fatal_error("position-independent code requires '-mabicalls'");
+
   // Set UseSmallSection.
-  // TODO: Investigate the IsLinux check. I suspect it's really checking for
-  //       bare-metal.
-  UseSmallSection = !IsLinux && (TM->getRelocationModel() == Reloc::Static);
+  UseSmallSection = GPOpt;
+  if (!NoABICalls && GPOpt) {
+    errs() << "warning: cannot use small-data accesses for '-mabicalls'"
+           << "\n";
+    UseSmallSection = false;
+  }
 }
 
 /// This overrides the PostRAScheduler bit in the SchedModel for any CPU.
