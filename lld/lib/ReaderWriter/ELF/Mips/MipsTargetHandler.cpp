@@ -27,11 +27,12 @@ MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &ctx)
 std::unique_ptr<Writer> MipsTargetHandler::getWriter() {
   switch (_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return std::unique_ptr<Writer>(
-        new MipsExecutableWriter<Mips32ElELFType>(_ctx, *_targetLayout));
+    return std::unique_ptr<Writer>(new MipsExecutableWriter<Mips32ElELFType>(
+        _ctx, *_targetLayout, _elfFlagsMerger));
   case llvm::ELF::ET_DYN:
     return std::unique_ptr<Writer>(
-        new MipsDynamicLibraryWriter<Mips32ElELFType>(_ctx, *_targetLayout));
+        new MipsDynamicLibraryWriter<Mips32ElELFType>(_ctx, *_targetLayout,
+                                                      _elfFlagsMerger));
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

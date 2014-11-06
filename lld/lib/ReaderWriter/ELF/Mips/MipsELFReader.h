@@ -11,6 +11,7 @@
 
 #include "ELFReader.h"
 #include "MipsELFFile.h"
+#include "MipsELFFlagsMerger.h"
 
 namespace lld {
 namespace elf {
@@ -39,18 +40,48 @@ struct MipsDynamicFileCreateELFTraits {
 
 class MipsELFObjectReader
     : public ELFObjectReader<Mips32ElELFType, MipsELFFileCreateTraits> {
+  typedef ELFObjectReader<Mips32ElELFType, MipsELFFileCreateTraits>
+      BaseReaderType;
+
 public:
-  MipsELFObjectReader(bool atomizeStrings)
-      : ELFObjectReader<Mips32ElELFType, MipsELFFileCreateTraits>(
-            atomizeStrings, llvm::ELF::EM_MIPS) {}
+  MipsELFObjectReader(MipsELFFlagsMerger &flagMerger, bool atomizeStrings)
+      : BaseReaderType(atomizeStrings, llvm::ELF::EM_MIPS),
+        _flagMerger(flagMerger) {}
+
+  std::error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
+            std::vector<std::unique_ptr<File>> &result) const override {
+    auto &hdr = *elfHeader(*mb);
+    if (std::error_code ec = _flagMerger.merge(hdr.getFileClass(), hdr.e_flags))
+      return ec;
+    return BaseReaderType::parseFile(mb, registry, result);
+  }
+
+private:
+  MipsELFFlagsMerger &_flagMerger;
 };
 
 class MipsELFDSOReader
     : public ELFDSOReader<Mips32ElELFType, MipsDynamicFileCreateELFTraits> {
+  typedef ELFDSOReader<Mips32ElELFType, MipsDynamicFileCreateELFTraits>
+      BaseReaderType;
+
 public:
-  MipsELFDSOReader(bool useUndefines)
-      : ELFDSOReader<Mips32ElELFType, MipsDynamicFileCreateELFTraits>(
-            useUndefines, llvm::ELF::EM_MIPS) {}
+  MipsELFDSOReader(MipsELFFlagsMerger &flagMerger, bool useUndefines)
+      : BaseReaderType(useUndefines, llvm::ELF::EM_MIPS),
+        _flagMerger(flagMerger) {}
+
+  std::error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
+            std::vector<std::unique_ptr<File>> &result) const override {
+    auto &hdr = *elfHeader(*mb);
+    if (std::error_code ec = _flagMerger.merge(hdr.getFileClass(), hdr.e_flags))
+      return ec;
+    return BaseReaderType::parseFile(mb, registry, result);
+  }
+
+private:
+  MipsELFFlagsMerger &_flagMerger;
 };
 
 } // namespace elf

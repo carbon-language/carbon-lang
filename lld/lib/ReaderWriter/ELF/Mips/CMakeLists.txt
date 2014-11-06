@@ -1,5 +1,6 @@
 add_lld_library(lldMipsELFTarget
   MipsCtorsOrderPass.cpp
+  MipsELFFlagsMerger.cpp
   MipsLinkingContext.cpp
   MipsRelocationHandler.cpp
   MipsRelocationPass.cpp
