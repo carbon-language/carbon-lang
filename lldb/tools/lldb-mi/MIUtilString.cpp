@@ -174,16 +174,16 @@ CMIUtilString CMIUtilString::FormatPriv( const CMIUtilString & vrFormat, va_list
 // Details:	Perform a snprintf format style on a string data. A new string object is 
 //			created and returned.
 // Type:	Static method.
-// Args:	vrFormat		- (R) Format string data instruction.
-//			...				- (R) Var list args of any type.
+// Args:	vFormat		- (R) Format string data instruction.
+//			...			- (R) Var list args of any type.
 // Return:	CMIUtilString - Number of splits found in the string data.
 // Throws:	None.
 //--
-CMIUtilString CMIUtilString::Format( const CMIUtilString & vrFormating, ... )
+CMIUtilString CMIUtilString::Format( const CMIUtilString vFormating, ... )
 {
 	va_list args;
-	va_start( args, vrFormating );
-	CMIUtilString strResult = CMIUtilString::FormatPriv( vrFormating, args );
+	va_start( args, vFormating );
+	CMIUtilString strResult = CMIUtilString::FormatPriv( vFormating, args );
 	va_end( args );
 
 	return strResult;
@@ -481,7 +481,7 @@ bool CMIUtilString::ExtractNumberFromHexadecimal( MIint64 & vwrNumber ) const
 		return false;
 
 	const MIint64 nNum = ::strtoul( this->c_str(), nullptr, 16 );
-	if( nNum != ULONG_MAX )
+	if( nNum != LONG_MAX )
 	{
 		vwrNumber = nNum;
 		return true;

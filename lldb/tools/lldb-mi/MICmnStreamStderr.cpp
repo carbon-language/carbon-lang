@@ -167,7 +167,7 @@ bool CMICmnStreamStderr::WritePriv( const CMIUtilString & vText, const CMIUtilSt
 		CMIUtilThreadLock _lock( m_mutex );
 
 		// Send this text to stderr
-		const MIuint status = ::fputs( vText.c_str(), stderr );
+		const MIint status = ::fputs( vText.c_str(), stderr );
 		if( status == EOF )
 		{
 			const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_STDERR_ERR_NOT_ALL_DATA_WRITTEN ), vText.c_str() ) );

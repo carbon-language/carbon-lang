@@ -43,7 +43,7 @@ public:
 
 // Static method:
 public:
-	static CMIUtilString	Format( const CMIUtilString & vrFormating, ... );
+	static CMIUtilString	Format( const CMIUtilString vFormating, ... );
 	static CMIUtilString	FormatBinary( const MIuint64 vnDecimal );
 	static CMIUtilString	FormatValist( const CMIUtilString & vrFormating, va_list vArgs );
 	static bool				IsAllValidAlphaAndNumeric( const MIchar & vrText );

@@ -43,7 +43,7 @@ public:
 	bool					HaveErrorDescription( void ) const;
 	const CMIUtilString &	GetErrorDescription( void ) const;
 	void					SetErrorDescription( const CMIUtilString & vrTxt ) const;
-	void					SetErrorDescriptionn( const CMIUtilString & vrFormat, ... ) const;
+	void					SetErrorDescriptionn( const CMIUtilString vFormat, ... ) const;
 	void					SetErrorDescriptionNoLog( const CMIUtilString & vrTxt ) const;
 	void					ClrErrorDescription( void ) const;
 

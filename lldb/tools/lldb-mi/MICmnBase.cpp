@@ -128,16 +128,16 @@ void CMICmnBase::ClrErrorDescription( void ) const
 //			seen by users. Message is available to the client using the server and sent
 //			to the Logger.
 // Type:	Method.
-// Args:	vrFormat	- (R) Format string.
-//			...			- (R) Variable number of CMIUtilString type objects.
+// Args:	vFormat	- (R) Format string.
+//			...		- (R) Variable number of CMIUtilString type objects.
 // Return:	None.
 // Throws:	None.
 //--
-void CMICmnBase::SetErrorDescriptionn( const CMIUtilString & vrFormat, ... ) const
+void CMICmnBase::SetErrorDescriptionn( const CMIUtilString vFormat, ... ) const
 {
 	va_list args;
-	va_start( args, vrFormat );
-	CMIUtilString strResult = CMIUtilString::FormatValist( vrFormat, args );
+	va_start( args, vFormat );
+	CMIUtilString strResult = CMIUtilString::FormatValist( vFormat, args );
 	va_end( args );
 
 	SetErrorDescription( strResult );

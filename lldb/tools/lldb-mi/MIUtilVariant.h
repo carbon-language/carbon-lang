@@ -114,10 +114,13 @@ private:
 		virtual CDataObjectBase *	CreateCopyOfSelf( void );
 		virtual bool				GetIsDerivedClass( void ) const;
 
+	// Overrideable:
+	private:
+		virtual void Duplicate( const CDataObject & vrOther );
+
 	// Overridden:
 	private:
 		// From CDataObjectBase
-		virtual void Copy( const CDataObject & vrOther );
 		virtual void Destroy( void );
 
 	// Attributes:
@@ -222,14 +225,14 @@ bool CMIUtilVariant::CDataObject< T >::GetIsDerivedClass( void ) const
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Perform a bitwise copy of *this object.
-// Type:	Overridden.
+// Type:	Overrideable.
 // Args:	T		- The object's type.
 //			vrOther	- (R) The other object.
 // Return:	None.
 // Throws:	None.
 //--
 template< typename T >
-void CMIUtilVariant::CDataObject< T >::Copy( const CDataObject & vrOther )
+void CMIUtilVariant::CDataObject< T >::Duplicate( const CDataObject & vrOther )
 {
 	CDataObjectBase::Copy( vrOther );
 	m_dataObj = vrOther.m_dataObj;
