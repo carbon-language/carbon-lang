@@ -20710,6 +20710,10 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::VFNMSUBPSr213r:
   case X86::VFNMSUBSDr213r:
   case X86::VFNMSUBSSr213r:
+  case X86::VFMADDSUBPDr213r:
+  case X86::VFMADDSUBPSr213r:
+  case X86::VFMSUBADDPDr213r:
+  case X86::VFMSUBADDPSr213r:
   case X86::VFMADDPDr213rY:
   case X86::VFMADDPSr213rY:
   case X86::VFMSUBPDr213rY:
@@ -20718,6 +20722,10 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::VFNMADDPSr213rY:
   case X86::VFNMSUBPDr213rY:
   case X86::VFNMSUBPSr213rY:
+  case X86::VFMADDSUBPDr213rY:
+  case X86::VFMADDSUBPSr213rY:
+  case X86::VFMSUBADDPDr213rY:
+  case X86::VFMSUBADDPSr213rY:
     return emitFMA3Instr(MI, BB);
   }
 }
