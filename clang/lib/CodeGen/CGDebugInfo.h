@@ -363,9 +363,9 @@ private:
   llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
                                 StringRef Name, uint64_t *Offset);
 
-  /// \brief Retrieve the DIScope, if any, for the canonical form of this
+  /// \brief Retrieve the DIDescriptor, if any, for the canonical form of this
   /// declaration.
-  llvm::DIScope getDeclarationOrDefinition(const Decl *D);
+  llvm::DIDescriptor getDeclarationOrDefinition(const Decl *D);
 
   /// getFunctionDeclaration - Return debug info descriptor to describe method
   /// declaration for the given method definition.

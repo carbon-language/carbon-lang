@@ -2307,7 +2307,7 @@ llvm::DIType CGDebugInfo::CreateMemberType(llvm::DIFile Unit, QualType FType,
   return Ty;
 }
 
-llvm::DIScope CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
+llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   // We only need a declaration (not a definition) of the type - so use whatever
   // we would otherwise do to get a type for a pointee. (forward declarations in
   // limited debug info, full definitions (if the type definition is available)
@@ -2327,7 +2327,7 @@ llvm::DIScope CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   if (I == DeclCache.end())
     return llvm::DIScope();
   llvm::Value *V = I->second;
-  return llvm::DIScope(dyn_cast_or_null<llvm::MDNode>(V));
+  return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(V));
 }
 
 /// getFunctionDeclaration - Return debug info descriptor to describe method
@@ -3239,7 +3239,7 @@ void CGDebugInfo::EmitUsingDecl(const UsingDecl &UD) {
   // Emitting one decl is sufficient - debuggers can detect that this is an
   // overloaded name & provide lookup for all the overloads.
   const UsingShadowDecl &USD = **UD.shadow_begin();
-  if (llvm::DIScope Target =
+  if (llvm::DIDescriptor Target =
           getDeclarationOrDefinition(USD.getUnderlyingDecl()))
     DBuilder.createImportedDeclaration(
         getCurrentContextDescriptor(cast<Decl>(USD.getDeclContext())), Target,
