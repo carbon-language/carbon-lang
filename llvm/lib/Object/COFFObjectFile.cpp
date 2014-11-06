@@ -240,16 +240,6 @@ std::error_code COFFObjectFile::getSymbolSize(DataRefImpl Ref,
     Result = Symb.getValue();
     return object_error::success;
   }
-  if (Symb.isFunctionDefinition()) {
-    ArrayRef<uint8_t> AuxData = getSymbolAuxData(Symb);
-    if (!AuxData.empty()) {
-      const auto *CAFD =
-          reinterpret_cast<const coff_aux_function_definition *>(
-              AuxData.data());
-      Result = CAFD->TotalSize;
-      return object_error::success;
-    }
-  }
 
   // Let's attempt to get the size of the symbol by looking at the address of
   // the symbol after the symbol in question.
