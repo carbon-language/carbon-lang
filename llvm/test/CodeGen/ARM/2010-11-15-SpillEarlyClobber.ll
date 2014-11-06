@@ -1,5 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs -spiller=trivial
-; RUN: llc < %s -verify-machineinstrs -spiller=inline
+; RUN: llc < %s -verify-machineinstrs
 ; PR8612
 ;
 ; This test has an inline asm with early-clobber arguments.
