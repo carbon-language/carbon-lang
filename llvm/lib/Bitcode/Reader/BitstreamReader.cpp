@@ -62,20 +62,22 @@ void BitstreamCursor::readAbbreviatedField(const BitCodeAbbrevOp &Op,
   assert(!Op.isLiteral() && "Use ReadAbbreviatedLiteral for literals!");
 
   // Decode the value as we are commanded.
+  uint64_t Val;
   switch (Op.getEncoding()) {
   case BitCodeAbbrevOp::Array:
   case BitCodeAbbrevOp::Blob:
     llvm_unreachable("Should not reach here");
   case BitCodeAbbrevOp::Fixed:
-    Vals.push_back(Read((unsigned)Op.getEncodingData()));
+    Val = Read((unsigned)Op.getEncodingData());
     break;
   case BitCodeAbbrevOp::VBR:
-    Vals.push_back(ReadVBR64((unsigned)Op.getEncodingData()));
+    Val = ReadVBR64((unsigned)Op.getEncodingData());
     break;
   case BitCodeAbbrevOp::Char6:
-    Vals.push_back(BitCodeAbbrevOp::DecodeChar6(Read(6)));
+    Val = BitCodeAbbrevOp::DecodeChar6(Read(6));
     break;
   }
+  Vals.push_back(Val);
 }
 
 void BitstreamCursor::skipAbbreviatedField(const BitCodeAbbrevOp &Op) {
