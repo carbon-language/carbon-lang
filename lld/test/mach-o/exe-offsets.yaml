@@ -39,7 +39,7 @@ defined-atoms:
 # CHECK:     Offset: 4096
 
 # CHECK-LABEL: Section {
-# CHECK:     Name: ___bss
+# CHECK:     Name: __bss
 # CHECK:     Segment: __DATA
 # CHECK:     Size: 0x0
 # CHECK:     Offset: 4101

@@ -86,12 +86,12 @@ defined-atoms:
 # CHECK-NEXT: 0000: 08
 # CHECK-NEXT: )
 
-#  For __DATA, ___bss (with typeZeroFill)
+#  For __DATA, __bss (with typeZeroFill)
 # FIXME: Attributes & tags of __bss are mostly broken. Should be at end of
 #        __DATA, should have size, should have S_ZEROFILL flag.
   - type:            zero-fill
     size:            8
-# CHECK: Name: ___bss
+# CHECK: Name: __bss
 # CHECK: Segment: __DATA
 
 #  For __DATA, __const, (with typeConstData)
@@ -112,10 +112,10 @@ defined-atoms:
 # CHECK-NEXT: 0000: 0A00
 # CHECK-NEXT: )
 
-#  For __DATA, ___got (with typeGOT)
+#  For __DATA, __got (with typeGOT)
   - type:            got
     content:         [ 0B, 00, 00, 00, 00, 00, 00, 00 ]
-# CHECK: Name: ___got
+# CHECK: Name: __got
 # CHECK: Segment: __DATA
 # CHECK: SectionData (
 # CHECK-NEXT: 0000: 0B000000 00000000
