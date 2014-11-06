@@ -15,6 +15,7 @@
 #include "HexagonMCAsmInfo.h"
 #include "InstPrinter/HexagonInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -46,6 +47,15 @@ static MCRegisterInfo *createHexagonMCRegisterInfo(StringRef TT) {
   return X;
 }
 
+static MCStreamer *
+createHexagonELFStreamer(MCContext &Context, MCAsmBackend &MAB,
+                         raw_ostream &OS, MCCodeEmitter *CE,
+                         bool RelaxAll) {
+  MCELFStreamer *ES = new MCELFStreamer(Context, MAB, OS, CE);
+  return ES;
+}
+
+
 static MCSubtargetInfo *
 createHexagonMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
@@ -64,6 +74,16 @@ static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
 
   return MAI;
 }
+
+static MCStreamer *createMCStreamer(Target const &T, StringRef TT,
+                                    MCContext &Context, MCAsmBackend &MAB,
+                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+                                    MCSubtargetInfo const &STI, bool RelaxAll) {
+  MCStreamer *ES = createHexagonELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
+  new MCTargetStreamer(*ES);
+  return ES;
+}
+
 
 static MCCodeGenInfo *createHexagonMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                                  CodeModel::Model CM,
@@ -111,4 +131,11 @@ extern "C" void LLVMInitializeHexagonTargetMC() {
   // Register the MC Inst Printer
   TargetRegistry::RegisterMCInstPrinter(TheHexagonTarget,
                                         createHexagonMCInstPrinter);
+
+  // Register the asm backend
+  TargetRegistry::RegisterMCAsmBackend(TheHexagonTarget,
+                                       createHexagonAsmBackend);
+
+  // Register the obj streamer
+  TargetRegistry::RegisterMCObjectStreamer(TheHexagonTarget, createMCStreamer);
 }
