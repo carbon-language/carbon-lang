@@ -38,14 +38,36 @@ class CppVirtualMadness(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break for main.cpp.
-        self.line = line_number('main.cpp', '// Set first breakpoint here.')
+        self.source = 'main.cpp'
+        self.line = line_number(self.source, '// Set first breakpoint here.')
 
     def virtual_madness_test(self):
         """Test that variable expressions with basic types are evaluated correctly."""
 
-        # First, capture the golden output emitted by the oracle, i.e., the
+        # Bring the program to the point where we can issue a series of
+        # 'expression' command to compare against the golden output.
+        self.dbg.SetAsync(False)
+        
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget("a.out")
+        self.assertTrue(target, VALID_TARGET)
+
+        # Create the breakpoint inside function 'main'.
+        breakpoint = target.BreakpointCreateByLocation(self.source, self.line)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
+        self.assertTrue(process, PROCESS_IS_VALID)
+        
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
+
+        # First, capture the golden output from the program itself from the
         # series of printf statements.
-        go = system([["./a.out"]], sender=self)[0]
+        stdout = process.GetSTDOUT(1024)
+        
         # This golden list contains a list of "my_expr = 'value' pairs extracted
         # from the golden output.
         gl = []
@@ -54,31 +76,16 @@ class CppVirtualMadness(TestBase):
         #
         #     my_expr = 'value'
         #
-        for line in go.split(os.linesep):
+        for line in stdout.split(os.linesep):
             match = self.pattern.search(line)
             if match:
                 my_expr, val = match.group(1), match.group(2)
                 gl.append((my_expr, val))
         #print "golden list:", gl
 
-        # Bring the program to the point where we can issue a series of
-        # 'expression' command to compare against the golden output.
-        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=False)
-        self.runCmd("run", RUN_SUCCEEDED)
-
         # Now iterate through the golden list, comparing against the output from
         # 'expression var'.
         for my_expr, val in gl:
-            # Don't overwhelm the expression mechanism.
-            # This slows down the test suite quite a bit, to enable it, define
-            # the environment variable LLDB_TYPES_EXPR_TIME_WAIT.  For example:
-            #
-            #     export LLDB_TYPES_EXPR_TIME_WAIT=0.5
-            #
-            # causes a 0.5 second delay between 'expression' commands.
-            if "LLDB_TYPES_EXPR_TIME_WAIT" in os.environ:
-                time.sleep(float(os.environ["LLDB_TYPES_EXPR_TIME_WAIT"]))
 
             self.runCmd("expression %s" % my_expr)
             output = self.res.GetOutput()
