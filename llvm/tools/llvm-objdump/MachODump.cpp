@@ -124,49 +124,80 @@ typedef std::pair<uint64_t, DiceRef> DiceTableEntry;
 typedef std::vector<DiceTableEntry> DiceTable;
 typedef DiceTable::iterator dice_table_iterator;
 
+// This is used to search for a data in code table entry for the PC being
+// disassembled.  The j parameter has the PC in j.first.  A single data in code
+// table entry can cover many bytes for each of its Kind's.  So if the offset,
+// aka the i.first value, of the data in code table entry plus its Length
+// covers the PC being searched for this will return true.  If not it will
+// return false.
 static bool compareDiceTableEntries(const DiceTableEntry &i,
                                     const DiceTableEntry &j) {
-  return i.first == j.first;
+  uint16_t Length;
+  i.second.getLength(Length);
+
+  return j.first >= i.first && j.first < i.first + Length;
 }
 
-static void DumpDataInCode(const char *bytes, uint64_t Size,
-                           unsigned short Kind) {
-  uint64_t Value;
+static uint64_t DumpDataInCode(const char *bytes, uint64_t Length,
+                               unsigned short Kind) {
+  uint32_t Value, Size = 1;
 
   switch (Kind) {
+  default:
   case MachO::DICE_KIND_DATA:
-    switch (Size) {
-    case 4:
+    if (Length >= 4) {
+      if (!NoShowRawInsn)
+        DumpBytes(StringRef(bytes, 4));
       Value = bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
       outs() << "\t.long " << Value;
-      break;
-    case 2:
+      Size = 4;
+    } else if (Length >= 2) {
+      if (!NoShowRawInsn)
+        DumpBytes(StringRef(bytes, 2));
       Value = bytes[1] << 8 | bytes[0];
       outs() << "\t.short " << Value;
-      break;
-    case 1:
+      Size = 2;
+    } else {
+      if (!NoShowRawInsn)
+        DumpBytes(StringRef(bytes, 2));
       Value = bytes[0];
       outs() << "\t.byte " << Value;
-      break;
+      Size = 1;
     }
-    outs() << "\t@ KIND_DATA\n";
+    if (Kind == MachO::DICE_KIND_DATA)
+      outs() << "\t@ KIND_DATA\n";
+    else
+      outs() << "\t@ data in code kind = " << Kind << "\n";
     break;
   case MachO::DICE_KIND_JUMP_TABLE8:
+    if (!NoShowRawInsn)
+      DumpBytes(StringRef(bytes, 1));
     Value = bytes[0];
-    outs() << "\t.byte " << Value << "\t@ KIND_JUMP_TABLE8";
+    outs() << "\t.byte " << format("%3u", Value) << "\t@ KIND_JUMP_TABLE8\n";
+    Size = 1;
     break;
   case MachO::DICE_KIND_JUMP_TABLE16:
+    if (!NoShowRawInsn)
+      DumpBytes(StringRef(bytes, 2));
     Value = bytes[1] << 8 | bytes[0];
-    outs() << "\t.short " << Value << "\t@ KIND_JUMP_TABLE16";
+    outs() << "\t.short " << format("%5u", Value & 0xffff)
+           << "\t@ KIND_JUMP_TABLE16\n";
+    Size = 2;
     break;
   case MachO::DICE_KIND_JUMP_TABLE32:
+  case MachO::DICE_KIND_ABS_JUMP_TABLE32:
+    if (!NoShowRawInsn)
+      DumpBytes(StringRef(bytes, 4));
     Value = bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
-    outs() << "\t.long " << Value << "\t@ KIND_JUMP_TABLE32";
-    break;
-  default:
-    outs() << "\t@ data in code kind = " << Kind << "\n";
+    outs() << "\t.long " << Value;
+    if (Kind == MachO::DICE_KIND_JUMP_TABLE32)
+      outs() << "\t@ KIND_JUMP_TABLE32\n";
+    else
+      outs() << "\t@ KIND_ABS_JUMP_TABLE32\n";
+    Size = 4;
     break;
   }
+  return Size;
 }
 
 static void getSectionsAndSymbols(const MachO::mach_header Header,
@@ -326,7 +357,7 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
             MachO::any_relocation_info RENext;
             RENext = info->O->getRelocation(RelNext);
             if (info->O->isRelocationScattered(RENext))
-              pair_r_value = info->O->getPlainRelocationSymbolNum(RENext);
+              pair_r_value = info->O->getScatteredRelocationValue(RENext);
             else
               return 0;
           }
@@ -441,7 +472,157 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
     // uint64_t seg_offset = (Pc + Offset);
     return 0;
   } else if (Arch == Triple::arm) {
-    return 0;
+    if (Offset != 0 || (Size != 4 && Size != 2))
+      return 0;
+    // First search the section's relocation entries (if any) for an entry
+    // for this section offset.
+    uint32_t sect_addr = info->S.getAddress();
+    uint32_t sect_offset = (Pc + Offset) - sect_addr;
+    bool reloc_found = false;
+    DataRefImpl Rel;
+    MachO::any_relocation_info RE;
+    bool isExtern = false;
+    SymbolRef Symbol;
+    bool r_scattered = false;
+    uint32_t r_value, pair_r_value, r_type, r_length, other_half;
+    for (const RelocationRef &Reloc : info->S.relocations()) {
+      uint64_t RelocOffset;
+      Reloc.getOffset(RelocOffset);
+      if (RelocOffset == sect_offset) {
+        Rel = Reloc.getRawDataRefImpl();
+        RE = info->O->getRelocation(Rel);
+        r_length = info->O->getAnyRelocationLength(RE);
+        r_scattered = info->O->isRelocationScattered(RE);
+        if (r_scattered) {
+          r_value = info->O->getScatteredRelocationValue(RE);
+          r_type = info->O->getScatteredRelocationType(RE);
+        } else {
+          r_type = info->O->getAnyRelocationType(RE);
+          isExtern = info->O->getPlainRelocationExternal(RE);
+          if (isExtern) {
+            symbol_iterator RelocSym = Reloc.getSymbol();
+            Symbol = *RelocSym;
+          }
+        }
+        if (r_type == MachO::ARM_RELOC_HALF ||
+            r_type == MachO::ARM_RELOC_SECTDIFF ||
+            r_type == MachO::ARM_RELOC_LOCAL_SECTDIFF ||
+            r_type == MachO::ARM_RELOC_HALF_SECTDIFF) {
+          DataRefImpl RelNext = Rel;
+          info->O->moveRelocationNext(RelNext);
+          MachO::any_relocation_info RENext;
+          RENext = info->O->getRelocation(RelNext);
+          other_half = info->O->getAnyRelocationAddress(RENext) & 0xffff;
+          if (info->O->isRelocationScattered(RENext))
+            pair_r_value = info->O->getScatteredRelocationValue(RENext);
+        }
+        reloc_found = true;
+        break;
+      }
+    }
+    if (reloc_found && isExtern) {
+      StringRef SymName;
+      Symbol.getName(SymName);
+      const char *name = SymName.data();
+      op_info->AddSymbol.Present = 1;
+      op_info->AddSymbol.Name = name;
+      if (value != 0) {
+        switch (r_type) {
+        case MachO::ARM_RELOC_HALF:
+          if ((r_length & 0x1) == 1) {
+            op_info->Value = value << 16 | other_half;
+            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_HI16;
+          } else {
+            op_info->Value = other_half << 16 | value;
+            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_LO16;
+          }
+          break;
+        default:
+          break;
+        }
+      } else {
+        switch (r_type) {
+        case MachO::ARM_RELOC_HALF:
+          if ((r_length & 0x1) == 1) {
+            op_info->Value = value << 16 | other_half;
+            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_HI16;
+          } else {
+            op_info->Value = other_half << 16 | value;
+            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_LO16;
+          }
+          break;
+        default:
+          break;
+        }
+      }
+      return 1;
+    }
+    // If we have a branch that is not an external relocation entry then
+    // return 0 so the code in tryAddingSymbolicOperand() can use the
+    // SymbolLookUp call back with the branch target address to look up the
+    // symbol and possiblity add an annotation for a symbol stub.
+    if (reloc_found && isExtern == 0 && (r_type == MachO::ARM_RELOC_BR24 ||
+                                         r_type == MachO::ARM_THUMB_RELOC_BR22))
+      return 0;
+
+    uint32_t offset = 0;
+    if (reloc_found) {
+      if (r_type == MachO::ARM_RELOC_HALF ||
+          r_type == MachO::ARM_RELOC_HALF_SECTDIFF) {
+        if ((r_length & 0x1) == 1)
+          value = value << 16 | other_half;
+        else
+          value = other_half << 16 | value;
+      }
+      if (r_scattered && (r_type != MachO::ARM_RELOC_HALF &&
+                          r_type != MachO::ARM_RELOC_HALF_SECTDIFF)) {
+        offset = value - r_value;
+        value = r_value;
+      }
+    }
+
+    if (reloc_found && r_type == MachO::ARM_RELOC_HALF_SECTDIFF) {
+      if ((r_length & 0x1) == 1)
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_HI16;
+      else
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_LO16;
+      const char *add = GuessSymbolName(r_value, info);
+      const char *sub = GuessSymbolName(pair_r_value, info);
+      int32_t offset = value - (r_value - pair_r_value);
+      op_info->AddSymbol.Present = 1;
+      if (add != nullptr)
+        op_info->AddSymbol.Name = add;
+      else
+        op_info->AddSymbol.Value = r_value;
+      op_info->SubtractSymbol.Present = 1;
+      if (sub != nullptr)
+        op_info->SubtractSymbol.Name = sub;
+      else
+        op_info->SubtractSymbol.Value = pair_r_value;
+      op_info->Value = offset;
+      return 1;
+    }
+
+    if (reloc_found == false)
+      return 0;
+
+    op_info->AddSymbol.Present = 1;
+    op_info->Value = offset;
+    if (reloc_found) {
+      if (r_type == MachO::ARM_RELOC_HALF) {
+        if ((r_length & 0x1) == 1)
+          op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_HI16;
+        else
+          op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_LO16;
+      }
+    }
+    const char *add = GuessSymbolName(value, info);
+    if (add != nullptr) {
+      op_info->AddSymbol.Name = add;
+      return 1;
+    }
+    op_info->AddSymbol.Value = value;
+    return 1;
   } else if (Arch == Triple::aarch64) {
     return 0;
   } else {
@@ -1342,9 +1523,12 @@ static void DisassembleInputMachO2(StringRef Filename,
   std::unique_ptr<const MCRegisterInfo> ThumbMRI;
   std::unique_ptr<const MCAsmInfo> ThumbAsmInfo;
   std::unique_ptr<const MCSubtargetInfo> ThumbSTI;
-  std::unique_ptr<const MCDisassembler> ThumbDisAsm;
+  std::unique_ptr<MCDisassembler> ThumbDisAsm;
   std::unique_ptr<MCInstPrinter> ThumbIP;
   std::unique_ptr<MCContext> ThumbCtx;
+  std::unique_ptr<MCSymbolizer> ThumbSymbolizer;
+  struct DisassembleInfo ThumbSymbolizerInfo;
+  std::unique_ptr<MCRelocationInfo> ThumbRelInfo;
   if (ThumbTarget) {
     ThumbMRI.reset(ThumbTarget->createMCRegInfo(ThumbTripleName));
     ThumbAsmInfo.reset(
@@ -1353,7 +1537,15 @@ static void DisassembleInputMachO2(StringRef Filename,
         ThumbTarget->createMCSubtargetInfo(ThumbTripleName, MCPU, FeaturesStr));
     ThumbCtx.reset(new MCContext(ThumbAsmInfo.get(), ThumbMRI.get(), nullptr));
     ThumbDisAsm.reset(ThumbTarget->createMCDisassembler(*ThumbSTI, *ThumbCtx));
-    // TODO: add MCSymbolizer here for the ThumbTarget like above for TheTarget.
+    MCContext *PtrThumbCtx = ThumbCtx.get();
+    ThumbRelInfo.reset(
+        ThumbTarget->createMCRelocationInfo(ThumbTripleName, *PtrThumbCtx));
+    if (ThumbRelInfo) {
+      ThumbSymbolizer.reset(ThumbTarget->createMCSymbolizer(
+          ThumbTripleName, SymbolizerGetOpInfo, SymbolizerSymbolLookUp,
+          &ThumbSymbolizerInfo, PtrThumbCtx, ThumbRelInfo.release()));
+      ThumbDisAsm->setSymbolizer(std::move(ThumbSymbolizer));
+    }
     int ThumbAsmPrinterVariant = ThumbAsmInfo->getAssemblerDialect();
     ThumbIP.reset(ThumbTarget->createMCInstPrinter(
         ThumbAsmPrinterVariant, *ThumbAsmInfo, *ThumbInstrInfo, *ThumbMRI,
@@ -1495,6 +1687,17 @@ static void DisassembleInputMachO2(StringRef Filename,
     SymbolizerInfo.method = nullptr;
     SymbolizerInfo.demangled_name = nullptr;
     SymbolizerInfo.bindtable = nullptr;
+    // Same for the ThumbSymbolizer
+    ThumbSymbolizerInfo.verbose = true;
+    ThumbSymbolizerInfo.O = MachOOF;
+    ThumbSymbolizerInfo.S = Sections[SectIdx];
+    ThumbSymbolizerInfo.AddrMap = &AddrMap;
+    ThumbSymbolizerInfo.Sections = &Sections;
+    ThumbSymbolizerInfo.class_name = nullptr;
+    ThumbSymbolizerInfo.selector_name = nullptr;
+    ThumbSymbolizerInfo.method = nullptr;
+    ThumbSymbolizerInfo.demangled_name = nullptr;
+    ThumbSymbolizerInfo.bindtable = nullptr;
 
     // Disassemble symbol by symbol.
     for (unsigned SymIdx = 0; SymIdx != Symbols.size(); SymIdx++) {
@@ -1575,10 +1778,12 @@ static void DisassembleInputMachO2(StringRef Filename,
         if (DTI != Dices.end()) {
           uint16_t Length;
           DTI->second.getLength(Length);
-          DumpBytes(StringRef(Bytes.data() + Index, Length));
           uint16_t Kind;
           DTI->second.getKind(Kind);
-          DumpDataInCode(Bytes.data() + Index, Length, Kind);
+          Size = DumpDataInCode(Bytes.data() + Index, Length, Kind);
+          if ((Kind == MachO::DICE_KIND_JUMP_TABLE8) &&
+              (PC == (DTI->first + Length - 1)) && (Length & 1))
+            Size++;
           continue;
         }
 
@@ -1674,6 +1879,12 @@ static void DisassembleInputMachO2(StringRef Filename,
       free(SymbolizerInfo.demangled_name);
     if (SymbolizerInfo.bindtable != nullptr)
       delete SymbolizerInfo.bindtable;
+    if (ThumbSymbolizerInfo.method != nullptr)
+      free(ThumbSymbolizerInfo.method);
+    if (ThumbSymbolizerInfo.demangled_name != nullptr)
+      free(ThumbSymbolizerInfo.demangled_name);
+    if (ThumbSymbolizerInfo.bindtable != nullptr)
+      delete ThumbSymbolizerInfo.bindtable;
   }
 }
 
