@@ -1247,8 +1247,9 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
       break;
     }
     Value = MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
-    const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(UID), OutContext);
-    Value = MCBinaryExpr::CreateSub(Value, JTI, OutContext);
+    const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
+    const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(MF, UID, OutContext);
+    Value = MCBinaryExpr::CreateSub(Value, Base, OutContext);
     break;
   }
   }
