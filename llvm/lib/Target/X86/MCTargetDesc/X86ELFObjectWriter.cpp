@@ -77,7 +77,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
           break;
         case MCSymbolRefExpr::VK_GOTTPOFF:
           Type = ELF::R_X86_64_GOTTPOFF;
-        break;
+          break;
         case MCSymbolRefExpr::VK_TLSGD:
           Type = ELF::R_X86_64_TLSGD;
           break;
