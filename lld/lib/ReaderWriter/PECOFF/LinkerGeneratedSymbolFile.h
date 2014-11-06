@@ -326,8 +326,7 @@ private:
     return _undefinedAtoms;
   }
 
-  // Returns the entry point function name. It also sets the inferred
-  // subsystem if it's unknown.
+  // Returns the entry point function name.
   std::string getEntry() const {
     StringRef opt = _ctx->getEntrySymbolName();
     if (!opt.empty()) {
@@ -344,11 +343,8 @@ private:
     const std::string WinMainCRTStartup = "WinMainCRTStartup";
     const std::string wmainCRTStartup = "wmainCRTStartup";
     const std::string mainCRTStartup = "mainCRTStartup";
-    auto windows = WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI;
-    auto console = WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI;
 
     if (_ctx->isDll()) {
-      _ctx->setSubsystem(windows);
       if (_ctx->getMachineType() == llvm::COFF::IMAGE_FILE_MACHINE_I386)
         return "_DllMainCRTStartup@12";
       return "_DllMainCRTStartup";
@@ -365,21 +361,14 @@ private:
 
     switch (_ctx->getSubsystem()) {
     case WindowsSubsystem::IMAGE_SUBSYSTEM_UNKNOWN: {
-      if (defined("wWinMain")) {
-        _ctx->setSubsystem(windows);
+      if (defined("wWinMain"))
         return wWinMainCRTStartup;
-      }
-      if (defined("WinMain")) {
-        _ctx->setSubsystem(windows);
+      if (defined("WinMain"))
         return WinMainCRTStartup;
-      }
-      if (defined("wmain")) {
-        _ctx->setSubsystem(console);
+      if (defined("wmain"))
         return wmainCRTStartup;
-      }
       if (!defined("main"))
         llvm::errs() << "Cannot infer subsystem; assuming /subsystem:console\n";
-      _ctx->setSubsystem(console);
       return mainCRTStartup;
     }
     case WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI:

@@ -2,17 +2,19 @@
 # RUN: yaml2obj %p/Inputs/alternatename2.obj.yaml > %t2.obj
 # RUN: yaml2obj %p/Inputs/alternatename3.obj.yaml > %t3.obj
 #
-# RUN: lld -flavor link /force /out:%t1.exe /alternatename:_main=_foo -- %t1.obj
+# RUN: lld -flavor link /force /out:%t1.exe /alternatename:_main=_foo \
+# RUN:   /subsystem:console -- %t1.obj
 # RUN: llvm-objdump -d %t1.exe | FileCheck -check-prefix=CHECK1 %s
 #
-# RUN: lld -flavor link /force /out:%t2.exe /alternatename:_main=_foo  -- %t1.obj %t2.obj
+# RUN: lld -flavor link /force /out:%t2.exe /alternatename:_main=_foo \
+# RUN:   /subsystem:console -- %t1.obj %t2.obj
 # RUN: llvm-objdump -d %t2.exe | FileCheck -check-prefix=CHECK2 %s
 #
-# RUN: lld -flavor link /force /out:%t3.exe -- %t3.obj
+# RUN: lld -flavor link /force /out:%t3.exe /subsystem:console -- %t3.obj
 # RUN: llvm-objdump -d %t3.exe | FileCheck -check-prefix=CHECK3 %s
 #
 # RUN: lld -flavor link /force /out:%t4.exe /alternatename:_main=_foo \
-# RUN:   /alternatename:_xyz=_foo -- %t1.obj
+# RUN:   /alternatename:_xyz=_foo /subsystem:console -- %t1.obj
 # RUN: llvm-objdump -d %t4.exe | FileCheck -check-prefix=CHECK4 %s
 
 CHECK1:      nop

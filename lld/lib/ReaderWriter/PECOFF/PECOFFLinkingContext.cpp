@@ -11,6 +11,7 @@
 #include "EdataPass.h"
 #include "GroupedSectionsPass.h"
 #include "IdataPass.h"
+#include "InferSubsystemPass.h"
 #include "LinkerGeneratedSymbolFile.h"
 #include "LoadConfigPass.h"
 #include "lld/Core/PassManager.h"
@@ -287,6 +288,7 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
   pm.add(std::unique_ptr<Pass>(new pecoff::LoadConfigPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
+  pm.add(std::unique_ptr<Pass>(new pecoff::InferSubsystemPass(*this)));
 }
 
 } // end namespace lld
