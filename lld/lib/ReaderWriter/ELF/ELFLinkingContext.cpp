@@ -66,11 +66,6 @@ ELFLinkingContext::ELFLinkingContext(
 
 bool ELFLinkingContext::is64Bits() const { return getTriple().isArch64Bit(); }
 
-bool ELFLinkingContext::isLittleEndian() const {
-  // TODO: Do this properly. It is not defined purely by arch.
-  return true;
-}
-
 void ELFLinkingContext::addPasses(PassManager &pm) {
   if (_runLayoutPass)
     pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));

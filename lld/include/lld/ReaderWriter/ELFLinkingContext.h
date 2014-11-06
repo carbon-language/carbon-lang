@@ -59,7 +59,7 @@ public:
 
   llvm::Triple getTriple() const { return _triple; }
   virtual bool is64Bits() const;
-  virtual bool isLittleEndian() const;
+  virtual bool isLittleEndian() const = 0;
   virtual uint64_t getPageSize() const { return 0x1000; }
   OutputMagic getOutputMagic() const { return _outputMagic; }
   uint16_t getOutputELFType() const { return _outputELFType; }
