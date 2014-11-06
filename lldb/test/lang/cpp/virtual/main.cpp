@@ -84,7 +84,18 @@ int main (int argc, char const *argv[], char const *envp[])
     C *c_as_C = new C();
     A *c_as_A = c_as_C;
 
-    // Set first breakpoint here.
+    printf ("a_as_A->a() = '%s'\n", a_as_A->a());
+    printf ("a_as_A->b() = '%s'\n", a_as_A->b());
+    printf ("a_as_A->c() = '%s'\n", a_as_A->c());
+    printf ("b_as_A->a() = '%s'\n", b_as_A->a());
+    printf ("b_as_A->b() = '%s'\n", b_as_A->b());
+    printf ("b_as_A->c() = '%s'\n", b_as_A->c());
+    printf ("b_as_B->aa() = '%s'\n", b_as_B->aa());
+    printf ("c_as_A->a() = '%s'\n", c_as_A->a());
+    printf ("c_as_A->b() = '%s'\n", c_as_A->b());
+    printf ("c_as_A->c() = '%s'\n", c_as_A->c());
+    printf ("c_as_C->aa() = '%s'\n", c_as_C->aa());
+    puts("");// Set first breakpoint here.
     // then evaluate:
     // expression a_as_A->a()
     // expression a_as_A->b()
@@ -97,16 +108,6 @@ int main (int argc, char const *argv[], char const *envp[])
     // expression c_as_A->b()
     // expression c_as_A->c()
     // expression c_as_C->aa()
-    printf ("a_as_A->a() = '%s'\n", a_as_A->a());
-    printf ("a_as_A->b() = '%s'\n", a_as_A->b());
-    printf ("a_as_A->c() = '%s'\n", a_as_A->c());
-    printf ("b_as_A->a() = '%s'\n", b_as_A->a());
-    printf ("b_as_A->b() = '%s'\n", b_as_A->b());
-    printf ("b_as_A->c() = '%s'\n", b_as_A->c());
-    printf ("b_as_B->aa() = '%s'\n", b_as_B->aa());
-    printf ("c_as_A->a() = '%s'\n", c_as_A->a());
-    printf ("c_as_A->b() = '%s'\n", c_as_A->b());
-    printf ("c_as_A->c() = '%s'\n", c_as_A->c());
-    printf ("c_as_C->aa() = '%s'\n", c_as_C->aa());
+    
     return 0;
 }
