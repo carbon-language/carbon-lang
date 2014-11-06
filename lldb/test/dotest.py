@@ -574,7 +574,7 @@ def parseOptionsAndInitTestdirs():
         archs = args.archs
         for arch in archs:
             if arch.startswith('arm') and platform_system == 'Darwin':
-                os.environ['SDKROOT'] = commands.getoutput('xcodebuild -version -sdk iphoneos.internal Path')
+                os.environ['SDKROOT'] = commands.getoutput('xcrun --sdk iphoneos.internal --show-sdk-path 2> /dev/null')
     else:
         archs = [platform_machine]
 
