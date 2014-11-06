@@ -584,6 +584,21 @@ bool TargetLoweringObjectFileMachO::isSectionAtomizableBySymbols(
     if (SMO.getKind().isMergeable1ByteCString())
       return false;
 
+    if (SMO.getSegmentName() == "__TEXT" &&
+        SMO.getSectionName() == "__objc_classname" &&
+        SMO.getType() == MachO::S_CSTRING_LITERALS)
+      return false;
+
+    if (SMO.getSegmentName() == "__TEXT" &&
+        SMO.getSectionName() == "__objc_methname" &&
+        SMO.getType() == MachO::S_CSTRING_LITERALS)
+      return false;
+
+    if (SMO.getSegmentName() == "__TEXT" &&
+        SMO.getSectionName() == "__objc_methtype" &&
+        SMO.getType() == MachO::S_CSTRING_LITERALS)
+      return false;
+
     if (SMO.getSegmentName() == "__DATA" &&
         SMO.getSectionName() == "__cfstring")
       return false;

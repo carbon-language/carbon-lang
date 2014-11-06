@@ -74,3 +74,15 @@
 ; CHECK: .section	__DATA,__objc_classlist,regular,no_dead_strip
 ; CHECK-NEXT: .align	2
 ; CHECK-NEXT: L_private13:
+
+@private14 = private global [4 x i8] c"zed\00", section "__TEXT,__objc_classname,cstring_literals"
+; CHECK: .section	__TEXT,__objc_classname,cstring_literals
+; CHECK-NEXT: L_private14:
+
+@private15 = private global [4 x i8] c"zed\00", section "__TEXT,__objc_methname,cstring_literals"
+; CHECK: .section	__TEXT,__objc_methname,cstring_literals
+; CHECK-NEXT: L_private15:
+
+@private16 = private global [4 x i8] c"zed\00", section "__TEXT,__objc_methtype,cstring_literals"
+; CHECK: .section	__TEXT,__objc_methtype,cstring_literals
+; CHECK-NEXT: L_private16:
