@@ -10,7 +10,9 @@ target triple = "x86_64-unknown-unknown"
 ; being tested - the load-execute version of the instruction from the tables would be matched instead.
 
 define void @stack_fold_vmulpd(<64 x double>* %a, <64 x double>* %b, <64 x double>* %c) {
+  ;CHECK-LABEL: stack_fold_vmulpd
   ;CHECK:       vmulpd {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+
   %1 = load <64 x double>* %a
   %2 = load <64 x double>* %b
   %3 = fadd <64 x double> %1, %2
@@ -21,7 +23,9 @@ define void @stack_fold_vmulpd(<64 x double>* %a, <64 x double>* %b, <64 x doubl
 }
 
 define void @stack_fold_cvtdq2ps(<128 x i32>* %a, <128 x i32>* %b, <128 x float>* %c) {
+  ;CHECK-LABEL: stack_fold_cvtdq2ps
   ;CHECK:   vcvtdq2ps {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+
   %1 = load <128 x i32>* %a
   %2 = load <128 x i32>* %b
   %3 = and <128 x i32> %1, %2
@@ -30,5 +34,35 @@ define void @stack_fold_cvtdq2ps(<128 x i32>* %a, <128 x i32>* %b, <128 x float>
   %6 = sitofp <128 x i32> %4 to <128 x float>
   %7 = fadd <128 x float> %5, %6
   store <128 x float> %7, <128 x float>* %c
+  ret void
+}
+
+define void @stack_fold_cvttpd2dq(<64 x double>* %a, <64 x double>* %b, <64 x i32>* %c) #0 {
+  ;CHECK-LABEL: stack_fold_cvttpd2dq
+  ;CHECK:  vcvttpd2dqy {{[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+
+  %1 = load <64 x double>* %a
+  %2 = load <64 x double>* %b
+  %3 = fadd <64 x double> %1, %2
+  %4 = fsub <64 x double> %1, %2
+  %5 = fptosi <64 x double> %3 to <64 x i32>
+  %6 = fptosi <64 x double> %4 to <64 x i32>
+  %7 = or <64 x i32> %5, %6
+  store <64 x i32> %7, <64 x i32>* %c
+  ret void
+}
+
+define void @stack_fold_cvttps2dq(<128 x float>* %a, <128 x float>* %b, <128 x i32>* %c) #0 {
+  ;CHECK-LABEL: stack_fold_cvttps2dq
+  ;CHECK:   vcvttps2dq {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+
+  %1 = load <128 x float>* %a
+  %2 = load <128 x float>* %b
+  %3 = fadd <128 x float> %1, %2
+  %4 = fsub <128 x float> %1, %2
+  %5 = fptosi <128 x float> %3 to <128 x i32>
+  %6 = fptosi <128 x float> %4 to <128 x i32>
+  %7 = or <128 x i32> %5, %6
+  store <128 x i32> %7, <128 x i32>* %c
   ret void
 }
