@@ -184,11 +184,16 @@ private:
 }
 
 namespace llvm {
+
+Spiller::~Spiller() { }
+void Spiller::anchor() { }
+
 Spiller *createInlineSpiller(MachineFunctionPass &pass,
                              MachineFunction &mf,
                              VirtRegMap &vrm) {
   return new InlineSpiller(pass, mf, vrm);
 }
+
 }
 
 //===----------------------------------------------------------------------===//

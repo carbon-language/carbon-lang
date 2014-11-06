@@ -97,7 +97,6 @@ add_llvm_library(LLVMCodeGen
   SjLjEHPrepare.cpp
   SlotIndexes.cpp
   SpillPlacement.cpp
-  Spiller.cpp
   SplitKit.cpp
   StackColoring.cpp
   StackProtector.cpp
