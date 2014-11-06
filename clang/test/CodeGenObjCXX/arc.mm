@@ -203,7 +203,7 @@ template void test37<Test37>(Test37 *a);
 // CHECK-NEXT: [[COLL:%.*]] = bitcast i8* [[T2]] to [[NSARRAY]]*
 
 // Make sure it's not immediately released before starting the iteration.
-// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES_
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
 // CHECK-NEXT: @objc_msgSend
 

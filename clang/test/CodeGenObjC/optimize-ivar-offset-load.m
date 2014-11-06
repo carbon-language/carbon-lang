@@ -44,7 +44,7 @@ extern void foo(int);
     }
 }
 @end
-// CHECK: [[ZERO:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !invariant.load
+// CHECK: [[ZERO:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_, align 8, !invariant.load
 // CHECK: [[IVAR:%.*]] = load i64* @"OBJC_IVAR_$_SampleClass._value", align 8, !invariant.load
 
 @interface Sample : SampleClass @end
@@ -59,6 +59,6 @@ extern void foo(int);
     }
 }
 @end
-// CHECK: [[ZERO:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !invariant.load 
+// CHECK: [[ZERO:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_, align 8, !invariant.load 
 // CHECK: [[IVAR:%.*]] = load i64* @"OBJC_IVAR_$_SampleClass._value", align 8, !invariant.load
 

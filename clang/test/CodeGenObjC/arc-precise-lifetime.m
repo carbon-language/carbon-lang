@@ -41,7 +41,7 @@ void test1a(void) {
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
   // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutorelease(i8* [[T1]])
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST1]]*
-  // CHECK-NEXT: [[T4:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T4:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_
   // CHECK-NEXT: [[T5:%.*]] = bitcast [[TEST1]]* [[T3]] to i8*
   // CHECK-NEXT: [[T6:%.*]] = call i8* bitcast
   // CHECK-NEXT: store i8* [[T6]], i8**
@@ -61,7 +61,7 @@ void test1b(void) {
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST1]]*
   // CHECK-NEXT: store [[TEST1]]* [[T3]]
   // CHECK-NEXT: [[T0:%.*]] = load [[TEST1]]**
-  // CHECK-NEXT: [[T1:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T1:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_
   // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
   // CHECK-NEXT: [[T3:%.*]] = call i8* bitcast
   // CHECK-NEXT: store i8* [[T3]], i8**
@@ -84,7 +84,7 @@ void test1c(void) {
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
   // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutorelease(i8* [[T1]])
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST1]]*
-  // CHECK-NEXT: [[T4:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T4:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_
   // CHECK-NEXT: [[T5:%.*]] = bitcast [[TEST1]]* [[T3]] to i8*
   // CHECK-NEXT: [[T6:%.*]] = call i8* bitcast
   // CHECK-NEXT: store i8* [[T6]], i8**
@@ -106,7 +106,7 @@ void test1d(void) {
   // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
   // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_retainAutorelease
   // CHECK-NEXT: [[SIX:%.*]] = bitcast i8* [[T3]] to [[TEST1]]*
-  // CHECK-NEXT: [[SEVEN:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[SEVEN:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_
   // CHECK-NEXT: [[EIGHT:%.*]] = bitcast [[TEST1]]* [[SIX]] to i8*
   // CHECK-NEXT: [[CALL1:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* [[EIGHT]], i8* [[SEVEN]])
   // CHECK-NEXT: store i8* [[CALL1]], i8**

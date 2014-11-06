@@ -46,7 +46,7 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: [[SAVED_ARRAY:%.*]] = bitcast i8* [[T2]] to [[ARRAY_T]]*
 
 // Call the enumeration method.
-// CHECK-LP64-NEXT: [[T0:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-LP64-NEXT: [[T0:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_
 // CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[SAVED_ARRAY]] to i8*
 // CHECK-LP64-NEXT: [[SIZE:%.*]] = call i64 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i64 (i8*, i8*, [[STATE_T]]*, [16 x i8*]*, i64)*)(i8* [[T1]], i8* [[T0]], [[STATE_T]]* [[STATE]], [16 x i8*]* [[BUFFER]], i64 16)
 
@@ -69,7 +69,7 @@ void test0(NSArray *array) {
 // CHECK-LP64: call void @use_block(
 // CHECK-LP64-NEXT: call void @objc_storeStrong(i8** [[D0]], i8* null)
 
-// CHECK-LP64:      [[T0:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-LP64:      [[T0:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_
 // CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[SAVED_ARRAY]] to i8*
 // CHECK-LP64-NEXT: [[SIZE:%.*]] = call i64 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i64 (i8*, i8*, [[STATE_T]]*, [16 x i8*]*, i64)*)(i8* [[T1]], i8* [[T0]], [[STATE_T]]* [[STATE]], [16 x i8*]* [[BUFFER]], i64 16)
 
@@ -135,7 +135,7 @@ void test2(Test2 *a) {
 // CHECK-LP64-NEXT: [[COLL:%.*]] = bitcast i8* [[T2]] to [[ARRAY_T]]*
 
 // Make sure it's not immediately released before starting the iteration.
-// CHECK-LP64-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-LP64-NEXT: load i8** @OBJC_SELECTOR_REFERENCES_
 // CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[ARRAY_T]]* [[COLL]] to i8*
 // CHECK-LP64-NEXT: @objc_msgSend
 

@@ -50,8 +50,8 @@ void test_array(id a, id b) {
   // CHECK-NEXT: [[V1:%.*]] = load i8** [[B]],
   // CHECK-NEXT: store i8* [[V1]], i8** [[T0]]
 
-  // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T:%.*]]** @"\01L_OBJC_CLASSLIST
-  // CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+  // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T:%.*]]** @"OBJC_CLASSLIST
+  // CHECK-NEXT: [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[CLASS_T]]* [[T0]] to i8*
   // CHECK-NEXT: [[T2:%.*]] = bitcast [2 x i8*]* [[OBJECTS]] to i8**
   // CHECK-NEXT: [[T3:%.*]] = call i8* bitcast ({{.*@objc_msgSend.*}})(i8* [[T1]], i8* [[SEL]], i8** [[T2]], i64 2)
@@ -93,8 +93,8 @@ void test_dictionary(id k1, id o1, id k2, id o2) {
   // CHECK-NEXT: store i8* [[V3]], i8** [[T0]]
 
   // Constructing the dictionary
-  // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T:%.*]]** @"\01L_OBJC_CLASSLIST
-  // CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+  // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T:%.*]]** @"OBJC_CLASSLIST
+  // CHECK-NEXT: [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[CLASS_T]]* [[T0]] to i8*
   // CHECK-NEXT: [[T2:%.*]] = bitcast [2 x i8*]* [[OBJECTS]] to i8**
   // CHECK-NEXT: [[T3:%.*]] = bitcast [2 x i8*]* [[KEYS]] to i8**
@@ -127,7 +127,7 @@ void test_property(B *b) {
   // CHECK:      [[T0:%.*]] = getelementptr inbounds [1 x i8*]* [[OBJECTS:%.*]], i32 0, i32 0
 
   // Invoke 'prop'
-  // CHECK:      [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+  // CHECK:      [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
   // CHECK-NEXT: [[T1:%.*]] = bitcast
   // CHECK-NEXT: [[T2:%.*]] = call [[B:%.*]]* bitcast ({{.*}} @objc_msgSend to {{.*}})(i8* [[T1]], i8* [[SEL]])
   // CHECK-NEXT: [[T3:%.*]] = bitcast [[B]]* [[T2]] to i8*
@@ -139,8 +139,8 @@ void test_property(B *b) {
   // CHECK-NEXT: store i8* [[V1]], i8** [[T0]]
 
   // Invoke arrayWithObjects:count:
-  // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T]]** @"\01L_OBJC_CLASSLIST
-  // CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+  // CHECK-NEXT: [[T0:%.*]] = load [[CLASS_T]]** @"OBJC_CLASSLIST
+  // CHECK-NEXT: [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[CLASS_T]]* [[T0]] to i8*
   // CHECK-NEXT: [[T2:%.*]] = bitcast [1 x i8*]* [[OBJECTS]] to i8**
   // CHECK-NEXT: [[T3:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}}(i8* [[T1]], i8* [[SEL]], i8** [[T2]], i64 1)

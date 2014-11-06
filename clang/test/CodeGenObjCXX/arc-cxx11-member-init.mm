@@ -23,8 +23,8 @@ class XClipboardDataSet
 @end
 
 // CHECK: [[mClipData:%.*]] = getelementptr inbounds %class.XClipboardDataSet* 
-// CHECK: [[ZERO:%.*]] = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_"
-// CHECK: [[ONE:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_"
+// CHECK: [[ZERO:%.*]] = load %struct._class_t** @"OBJC_CLASSLIST_REFERENCES_$_"
+// CHECK: [[ONE:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_
 // CHECK: [[TWO:%.*]] = bitcast %struct._class_t* [[ZERO]] to i8*
 // CHECK: [[CALL:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* [[TWO]], i8* [[ONE]])
 // CHECK: [[THREE:%.*]] = bitcast i8* [[CALL]] to [[T:%.*]]*

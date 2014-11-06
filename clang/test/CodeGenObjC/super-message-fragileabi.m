@@ -24,7 +24,7 @@
  {
 	;
  }
-// CHECK: load %struct._objc_class** getelementptr inbounds (%struct._objc_class* @"\01L_OBJC_CLASS_BetterTable", i32 0, i32 1)
+// CHECK: load %struct._objc_class** getelementptr inbounds (%struct._objc_class* @OBJC_CLASS_BetterTable, i32 0, i32 1)
 
  return self;
 }

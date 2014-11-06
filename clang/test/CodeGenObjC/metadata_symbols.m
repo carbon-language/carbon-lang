@@ -10,11 +10,11 @@
 
 // CHECK-X86_64: @"OBJC_CLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 8
 // CHECK-X86_64: @"OBJC_METACLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 8
-// CHECK-X86_64: @"\01L_OBJC_CLASS_NAME_" = {{.*}}, section "__TEXT,__objc_classname,cstring_literals", align 1
+// CHECK-X86_64: @OBJC_CLASS_NAME_ = {{.*}}, section "__TEXT,__objc_classname,cstring_literals", align 1
 // CHECK-X86_64: @"OBJC_EHTYPE_$_EH1" = weak global {{.*}}, section "__DATA,__datacoal_nt,coalesced", align 8
 // CHECK-X86_64: @"OBJC_EHTYPE_$_EH2" = external global
 // CHECK-X86_64: @"OBJC_EHTYPE_$_EH3" = global {{.*}}, section "__DATA,__objc_const", align 8
-// CHECK-X86_64: @"\01L_OBJC_LABEL_CLASS_$" = private global {{.*}}, section "__DATA, __objc_classlist, regular, no_dead_strip", align 8
+// CHECK-X86_64: @"OBJC_LABEL_CLASS_$" = private global {{.*}}, section "__DATA, __objc_classlist, regular, no_dead_strip", align 8
 // CHECK-X86_64: define internal void @"\01-[A im0]"
 // CHECK-X86_64: define internal void @"\01-[A(Cat) im1]"
 
@@ -34,11 +34,11 @@
 
 // CHECK-ARMV6: @"OBJC_CLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 4
 // CHECK-ARMV6: @"OBJC_METACLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 4
-// CHECK-ARMV6: @"\01L_OBJC_CLASS_NAME_" = {{.*}}, section "__TEXT,__objc_classname,cstring_literals", align 1
+// CHECK-ARMV6: @OBJC_CLASS_NAME_ = {{.*}}, section "__TEXT,__objc_classname,cstring_literals", align 1
 // CHECK-ARMV6: @"OBJC_EHTYPE_$_EH1" = weak global {{.*}}, section "__DATA,__datacoal_nt,coalesced", align 4
 // CHECK-ARMV6: @"OBJC_EHTYPE_$_EH2" = external global
 // CHECK-ARMV6: @"OBJC_EHTYPE_$_EH3" = global {{.*}}, section "__DATA,__objc_const", align 4
-// CHECK-ARMV6: @"\01L_OBJC_LABEL_CLASS_$" = private global {{.*}}, section "__DATA, __objc_classlist, regular, no_dead_strip", align 4
+// CHECK-ARMV6: @"OBJC_LABEL_CLASS_$" = private global {{.*}}, section "__DATA, __objc_classlist, regular, no_dead_strip", align 4
 // CHECK-ARMV6: define internal void @"\01-[A im0]"
 // CHECK-ARMV6: define internal void @"\01-[A(Cat) im1]"
 

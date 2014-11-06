@@ -101,13 +101,13 @@ void test3(Test3 *t) {
 // CHECK-NEXT: [[X:%.*]] = alloca i8*,
 //   Property access.
 // CHECK:      [[T0:%.*]] = load [[TEST3]]** [[T]],
-// CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST3]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}})(i8* [[T1]], i8* [[SEL]])
 // CHECK-NEXT: store i8* [[T2]], i8** [[X]],
 //   Message send.
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST3]]** [[T]],
-// CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST3]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}})(i8* [[T1]], i8* [[SEL]])
 // CHECK-NEXT: [[T3:%.*]] = load i8** [[X]],

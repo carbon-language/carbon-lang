@@ -136,33 +136,33 @@ void test7(Test7 *t) {
 // CHECK:      [[T:%.*]] = alloca [[TEST7]]*,
 // CHECK-NEXT: store
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST7]]** [[T]], align
-// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST7]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call zeroext i8 bitcast
 // CHECK-NEXT: [[T3:%.*]] = zext i8 [[T2]] to i32
 // CHECK-NEXT: [[T4:%.*]] = and i32 [[T3]], 2
 // CHECK-NEXT: [[T5:%.*]] = trunc i32 [[T4]] to i8
-// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T6:%.*]] = bitcast [[TEST7]]* [[T0]] to i8*
 // CHECK-NEXT: call void bitcast
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST7]]** [[T]], align
-// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST7]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call zeroext i8 bitcast
 // CHECK-NEXT: [[T3:%.*]] = zext i8 [[T2]] to i32
 // CHECK-NEXT: [[T4:%.*]] = or i32 [[T3]], 5
 // CHECK-NEXT: [[T5:%.*]] = trunc i32 [[T4]] to i8
-// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T6:%.*]] = bitcast [[TEST7]]* [[T0]] to i8*
 // CHECK-NEXT: call void bitcast
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST7]]** [[T]], align
-// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST7]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call zeroext i8 bitcast
 // CHECK-NEXT: [[T3:%.*]] = zext i8 [[T2]] to i32
 // CHECK-NEXT: [[T4:%.*]] = xor i32 [[T3]], 8
 // CHECK-NEXT: [[T5:%.*]] = trunc i32 [[T4]] to i8
-// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T6:%.*]] = bitcast [[TEST7]]* [[T0]] to i8*
 // CHECK-NEXT: call void bitcast
 // CHECK-NEXT: ret void
