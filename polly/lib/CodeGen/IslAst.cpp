@@ -44,8 +44,8 @@ using IslAstUserPayload = IslAstInfo::IslAstUserPayload;
 
 static cl::opt<bool>
     PollyParallel("polly-parallel",
-               cl::desc("Generate thread parallel code (isl codegen only)"),
-               cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+                  cl::desc("Generate thread parallel code (isl codegen only)"),
+                  cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> UseContext("polly-ast-use-context",
                                 cl::desc("Use context"), cl::Hidden,
@@ -454,7 +454,8 @@ bool IslAstInfo::isReductionParallel(__isl_keep isl_ast_node *Node) {
 }
 
 bool IslAstInfo::isExecutedInParallel(__isl_keep isl_ast_node *Node) {
-  return PollyParallel && isOutermostParallel(Node) && !isReductionParallel(Node);
+  return PollyParallel && isOutermostParallel(Node) &&
+         !isReductionParallel(Node);
 }
 
 isl_union_map *IslAstInfo::getSchedule(__isl_keep isl_ast_node *Node) {
