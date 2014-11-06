@@ -736,7 +736,7 @@ the if/then/else and for expressions.. To build this example, use:
 .. code-block:: bash
 
     # Compile
-    clang++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3 -o toy
+    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core jit native` -O3 -o toy
     # Run
     ./toy
 

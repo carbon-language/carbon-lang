@@ -581,7 +581,7 @@ our makefile/command line about which options to use:
 .. code-block:: bash
 
     # Compile
-    clang++ -g -O3 toy.cpp `llvm-config --cppflags --ldflags --libs core` -o toy
+    clang++ -g -O3 toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core` -o toy
     # Run
     ./toy
 
