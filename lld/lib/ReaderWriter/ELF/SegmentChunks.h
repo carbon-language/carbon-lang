@@ -519,18 +519,17 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       if (((newAddr - curAddr) > this->_context.getPageSize()) &&
           (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
            _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {
-        slice = nullptr;
-        // TODO: use std::find here
-        for (auto s : slices()) {
-          if (s->startSection() == startSection) {
-            slice = s;
-            break;
-          }
-        }
-        if (!slice) {
+        auto sliceIter =
+            std::find_if(_segmentSlices.begin(), _segmentSlices.end(),
+                         [startSection](SegmentSlice<ELFT> *s) -> bool {
+              return s->startSection() == startSection;
+            });
+        if (sliceIter == _segmentSlices.end()) {
           slice = new (_segmentAllocate.Allocate<SegmentSlice<ELFT>>())
             SegmentSlice<ELFT>();
           _segmentSlices.push_back(slice);
+        } else {
+          slice = (*sliceIter);
         }
         slice->setStart(startSection);
         slice->setSections(make_range(startSectionIter, si));
@@ -573,18 +572,16 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
     }
     currSection++;
   }
-  slice = nullptr;
-  for (auto s : slices()) {
-    // TODO: add std::find
-    if (s->startSection() == startSection) {
-      slice = s;
-      break;
-    }
-  }
-  if (!slice) {
+  auto sliceIter = std::find_if(_segmentSlices.begin(), _segmentSlices.end(),
+                                [startSection](SegmentSlice<ELFT> *s) -> bool {
+    return s->startSection() == startSection;
+  });
+  if (sliceIter == _segmentSlices.end()) {
     slice = new (_segmentAllocate.Allocate<SegmentSlice<ELFT>>())
       SegmentSlice<ELFT>();
     _segmentSlices.push_back(slice);
+  } else {
+    slice = (*sliceIter);
   }
   slice->setStart(startSection);
   slice->setVirtualAddr(curSliceAddress);
