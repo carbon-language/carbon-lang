@@ -585,28 +585,20 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr,
     // This stub has to be able to access the full address space,
     // since symbol lookup won't necessarily find a handy, in-range,
     // PLT stub for functions which could be anywhere.
-    uint32_t *StubAddr = (uint32_t *)Addr;
-
     // Stub can use ip0 (== x16) to calculate address
-    *StubAddr = 0xd2e00010; // movz ip0, #:abs_g3:<addr>
-    StubAddr++;
-    *StubAddr = 0xf2c00010; // movk ip0, #:abs_g2_nc:<addr>
-    StubAddr++;
-    *StubAddr = 0xf2a00010; // movk ip0, #:abs_g1_nc:<addr>
-    StubAddr++;
-    *StubAddr = 0xf2800010; // movk ip0, #:abs_g0_nc:<addr>
-    StubAddr++;
-    *StubAddr = 0xd61f0200; // br ip0
+    writeBytesUnaligned(0xd2e00010, Addr,    4); // movz ip0, #:abs_g3:<addr>
+    writeBytesUnaligned(0xf2c00010, Addr+4,  4); // movk ip0, #:abs_g2_nc:<addr>
+    writeBytesUnaligned(0xf2a00010, Addr+8,  4); // movk ip0, #:abs_g1_nc:<addr>
+    writeBytesUnaligned(0xf2800010, Addr+12, 4); // movk ip0, #:abs_g0_nc:<addr>
+    writeBytesUnaligned(0xd61f0200, Addr+16, 4); // br ip0
 
     return Addr;
   } else if (Arch == Triple::arm || Arch == Triple::armeb) {
     // TODO: There is only ARM far stub now. We should add the Thumb stub,
     // and stubs for branches Thumb - ARM and ARM - Thumb.
-    uint32_t *StubAddr = (uint32_t *)Addr;
-    *StubAddr = 0xe51ff004; // ldr pc,<label>
-    return (uint8_t *)++StubAddr;
+    writeBytesUnaligned(0xe51ff004, Addr, 4); // ldr pc,<label>
+    return Addr + 4;
   } else if (Arch == Triple::mipsel || Arch == Triple::mips) {
-    uint32_t *StubAddr = (uint32_t *)Addr;
     // 0:   3c190000        lui     t9,%hi(addr).
     // 4:   27390000        addiu   t9,t9,%lo(addr).
     // 8:   03200008        jr      t9.
@@ -614,13 +606,10 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr,
     const unsigned LuiT9Instr = 0x3c190000, AdduiT9Instr = 0x27390000;
     const unsigned JrT9Instr = 0x03200008, NopInstr = 0x0;
 
-    *StubAddr = LuiT9Instr;
-    StubAddr++;
-    *StubAddr = AdduiT9Instr;
-    StubAddr++;
-    *StubAddr = JrT9Instr;
-    StubAddr++;
-    *StubAddr = NopInstr;
+    writeBytesUnaligned(LuiT9Instr, Addr, 4);
+    writeBytesUnaligned(AdduiT9Instr, Addr+4, 4);
+    writeBytesUnaligned(JrT9Instr, Addr+8, 4);
+    writeBytesUnaligned(NopInstr, Addr+12, 4);
     return Addr;
   } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
     // Depending on which version of the ELF ABI is in use, we need to

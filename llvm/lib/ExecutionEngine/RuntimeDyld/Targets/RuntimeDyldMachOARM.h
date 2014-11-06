@@ -39,8 +39,7 @@ public:
       default:
         return memcpyAddend(RE);
       case MachO::ARM_RELOC_BR24: {
-        uint32_t Temp;
-        memcpy(&Temp, LocalAddress, 4);
+        uint32_t Temp = readBytesUnaligned(LocalAddress, 4);
         Temp &= 0x00ffffff; // Mask out the opcode.
         // Now we've got the shifted immediate, shift by 2, sign extend and ret.
         return SignExtend32<26>(Temp << 2);
@@ -112,7 +111,6 @@ public:
     case MachO::ARM_RELOC_BR24: {
       // Mask the value into the target address. We know instructions are
       // 32-bit aligned, so we can do it all at once.
-      uint32_t *p = (uint32_t *)LocalAddress;
       Value += RE.Addend;
       // The low two bits of the value are not encoded.
       Value >>= 2;
@@ -123,7 +121,9 @@ public:
       // instruction instead.
 
       // Insert the value into the instruction.
-      *p = (*p & ~0xffffff) | FinalValue;
+      uint32_t Temp = readBytesUnaligned(LocalAddress, 4);
+      writeBytesUnaligned((Temp & ~0xffffff) | FinalValue, LocalAddress, 4);
+
       break;
     }
     case MachO::ARM_RELOC_HALF_SECTDIFF: {
@@ -136,10 +136,9 @@ public:
         Value = (Value >> 16);
       Value &= 0xffff;
 
-      uint32_t Insn;
-      memcpy(&Insn, LocalAddress, 4);
+      uint32_t Insn = readBytesUnaligned(LocalAddress, 4);
       Insn = (Insn & 0xfff0f000) | ((Value & 0xf000) << 4) | (Value & 0x0fff);
-      memcpy(LocalAddress, &Insn, 4);
+      writeBytesUnaligned(Insn, LocalAddress, 4);
       break;
     }
 
@@ -222,8 +221,7 @@ private:
     uint64_t Offset;
     RelI->getOffset(Offset);
     uint8_t *LocalAddress = Section.Address + Offset;
-    int64_t Immediate = 0;
-    memcpy(&Immediate, LocalAddress, 4); // Copy the whole instruction out.
+    int64_t Immediate = readBytesUnaligned(LocalAddress, 4); // Copy the whole instruction out.
     Immediate = ((Immediate >> 4) & 0xf000) | (Immediate & 0xfff);
 
     ++RelI;
