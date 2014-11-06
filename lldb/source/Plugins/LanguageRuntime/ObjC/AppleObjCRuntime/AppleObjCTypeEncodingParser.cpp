@@ -175,8 +175,18 @@ AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_
     if (type.NextIf('"'))
         name = ReadQuotedString(type);
     
-    if (for_expression && !name.empty() && name[0] != '<')
+    if (for_expression && !name.empty())
     {
+        size_t less_than_pos = name.find_first_of('<');
+        
+        if (less_than_pos != std::string::npos)
+        {
+            if (less_than_pos == 0)
+                return ast_ctx.getObjCIdType();
+            else
+                name.erase(less_than_pos);
+        }
+        
         TypeVendor *type_vendor = m_runtime.GetTypeVendor();
         
         assert (type_vendor); // how are we parsing type encodings for expressions if a type vendor isn't in play?
