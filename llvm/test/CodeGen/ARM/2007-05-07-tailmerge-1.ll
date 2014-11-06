@@ -1,11 +1,14 @@
-; RUN: llc < %s -march=arm -enable-tail-merge | grep bl.*baz | count 1
-; RUN: llc < %s -march=arm -enable-tail-merge | grep bl.*quux | count 1
+; RUN: llc < %s -enable-tail-merge | FileCheck %s
 ; Check that calls to baz and quux are tail-merged.
 ; PR1628
 
+; CHECK: bl _baz
+; CHECK-NOT: bl _baz
+; CHECK: bl _quux
+; CHECK-NOT: bl _quux
+
 ; ModuleID = 'tail.c'
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"
-target triple = "i686-apple-darwin8"
+target triple = "arm-apple-darwin8"
 
 define i32 @f(i32 %i, i32 %q) {
 entry:
