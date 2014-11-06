@@ -99,6 +99,7 @@ void InitializeFlags(Flags *f, const char *env) {
   cf->allow_addr2line = true;
   cf->detect_deadlocks = true;
   cf->print_suppressions = false;
+  cf->stack_trace_format = "    #%n %f %S %M";
 
   // Let a frontend override.
   ParseFlags(f, __tsan_default_options());

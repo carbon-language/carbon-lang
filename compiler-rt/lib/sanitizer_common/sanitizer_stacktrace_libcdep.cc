@@ -43,8 +43,8 @@ void StackTrace::Print() const {
     for (uptr j = 0; j < addr_frames_num; j++) {
       AddressInfo &info = addr_frames[j];
       frame_desc.clear();
-      RenderFrame(&frame_desc, "DEFAULT", frame_num++, info,
-                  common_flags()->strip_path_prefix);
+      RenderFrame(&frame_desc, common_flags()->stack_trace_format, frame_num++,
+                  info, common_flags()->strip_path_prefix);
       Printf("%s\n", frame_desc.data());
       info.Clear();
     }

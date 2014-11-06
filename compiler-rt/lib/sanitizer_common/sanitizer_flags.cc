@@ -68,6 +68,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->print_suppressions = true;
   f->disable_coredump = (SANITIZER_WORDSIZE == 64);
   f->symbolize_inline_frames = true;
+  f->stack_trace_format = "DEFAULT";
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -161,6 +162,10 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
       "default and for sanitizers that don't reserve lots of virtual memory.");
   ParseFlag(str, &f->symbolize_inline_frames, "symbolize_inline_frames",
             "Print inlined frames in stacktraces. Defaults to true.");
+  ParseFlag(str, &f->stack_trace_format, "stack_trace_format",
+            "Format string used to render stack frames. "
+            "See sanitizer_stacktrace_printer.h for the format description. "
+            "Use DEFAULT to get default format.");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)

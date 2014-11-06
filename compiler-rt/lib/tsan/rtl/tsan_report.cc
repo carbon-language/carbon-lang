@@ -118,9 +118,9 @@ void PrintStack(const ReportStack *ent) {
     Printf("    [failed to restore the stack]\n\n");
     return;
   }
-  for (int i = 0; ent; ent = ent->next, i++) {
+  for (int i = 0; ent && ent->info.address; ent = ent->next, i++) {
     InternalScopedString res(2 * GetPageSizeCached());
-    RenderFrame(&res, "    #%n %f %S %M", i, ent->info,
+    RenderFrame(&res, common_flags()->stack_trace_format, i, ent->info,
                 common_flags()->strip_path_prefix, "__interceptor_");
     Printf("%s\n", res.data());
   }

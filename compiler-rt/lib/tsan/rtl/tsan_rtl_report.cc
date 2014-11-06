@@ -41,7 +41,7 @@ void TsanCheckFailed(const char *file, int line, const char *cond,
   Printf("FATAL: ThreadSanitizer CHECK failed: "
          "%s:%d \"%s\" (0x%zx, 0x%zx)\n",
          file, line, cond, (uptr)v1, (uptr)v2);
-  PrintCurrentStackSlow();
+  PrintCurrentStackSlow(StackTrace::GetCurrentPc());
   Die();
 }
 
@@ -668,12 +668,12 @@ void PrintCurrentStack(ThreadState *thr, uptr pc) {
   PrintStack(SymbolizeStack(trace));
 }
 
-void PrintCurrentStackSlow() {
+void PrintCurrentStackSlow(uptr pc) {
 #ifndef TSAN_GO
   BufferedStackTrace *ptrace =
       new(internal_alloc(MBlockStackTrace, sizeof(BufferedStackTrace)))
           BufferedStackTrace();
-  ptrace->Unwind(kStackTraceMax, StackTrace::GetCurrentPc(), 0, 0, 0, 0, false);
+  ptrace->Unwind(kStackTraceMax, pc, 0, 0, 0, 0, false);
   for (uptr i = 0; i < ptrace->size / 2; i++) {
     uptr tmp = ptrace->trace_buffer[i];
     ptrace->trace_buffer[i] = ptrace->trace_buffer[ptrace->size - i - 1];
@@ -684,3 +684,12 @@ void PrintCurrentStackSlow() {
 }
 
 }  // namespace __tsan
+
+using namespace __tsan;
+
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_print_stack_trace() {
+  PrintCurrentStackSlow(StackTrace::GetCurrentPc());
+}
+}  // extern "C"

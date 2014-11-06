@@ -586,7 +586,7 @@ ReportStack *SkipTsanInternalFrames(ReportStack *ent);
 u32 CurrentStackId(ThreadState *thr, uptr pc);
 ReportStack *SymbolizeStackId(u32 stack_id);
 void PrintCurrentStack(ThreadState *thr, uptr pc);
-void PrintCurrentStackSlow();  // uses libunwind
+void PrintCurrentStackSlow(uptr pc);  // uses libunwind
 
 void Initialize(ThreadState *thr);
 int Finalize(ThreadState *thr);
