@@ -1,6 +1,6 @@
-RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-nm -a - \
+RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-nm -a -S - \
 RUN:         | FileCheck %s -check-prefix COFF
-RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm -a - \
+RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm -a -S - \
 RUN:         | FileCheck %s -check-prefix COFF
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
@@ -49,11 +49,11 @@ RUN: llvm-nm | FileCheck %s -check-prefix A-OUT
 REQUIRES: shell
 
 
-COFF: 00000000 d .data
-COFF: 00000000 t .text
-COFF: 00000000 d L{{_?}}.str
+COFF: 00000000 {{.*}} d .data
+COFF: 00000000 {{.*}} t .text
+COFF: 00000000 0000000d d L{{_?}}.str
 COFF:          U {{_?}}SomeOtherFunction
-COFF: 00000000 T {{_?}}main
+COFF: 00000000 {{.*}} T {{_?}}main
 COFF:          U {{_?}}puts
 
 COFF-COMMON: 00000000 00000000 b .bss
