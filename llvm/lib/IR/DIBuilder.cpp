@@ -190,10 +190,13 @@ DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
 }
 
 DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
-                                                      DIScope Decl,
+                                                      DIDescriptor Decl,
                                                       unsigned Line, StringRef Name) {
+  // Make sure to use the unique identifier based metadata reference for
+  // types that have one.
+  Value *V = Decl.isType() ? DIType(Decl).getRef() : Decl;
   return ::createImportedModule(VMContext, dwarf::DW_TAG_imported_declaration,
-                                Context, Decl.getRef(), Line, Name,
+                                Context, V, Line, Name,
                                 AllImportedModules);
 }
 

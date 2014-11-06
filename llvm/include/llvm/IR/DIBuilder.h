@@ -651,7 +651,7 @@ namespace llvm {
     /// @param Decl The declaration (or definition) of a function, type, or
     ///             variable
     /// @param Line Line number
-    DIImportedEntity createImportedDeclaration(DIScope Context, DIScope Decl,
+    DIImportedEntity createImportedDeclaration(DIScope Context, DIDescriptor Decl,
                                                unsigned Line,
                                                StringRef Name = StringRef());
     DIImportedEntity createImportedDeclaration(DIScope Context,
