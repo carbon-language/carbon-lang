@@ -95,7 +95,8 @@ m_format()
 
 bool
 StringSummaryFormat::FormatObject (ValueObject *valobj,
-                                   std::string& retval)
+                                   std::string& retval,
+                                   const TypeSummaryOptions& options)
 {
     if (!valobj)
     {
@@ -159,11 +160,12 @@ m_description(description ? description : "")
 
 bool
 CXXFunctionSummaryFormat::FormatObject (ValueObject *valobj,
-                                        std::string& dest)
+                                        std::string& dest,
+                                        const TypeSummaryOptions& options)
 {
     dest.clear();
     StreamString stream;
-    if (!m_impl || m_impl(*valobj,stream) == false)
+    if (!m_impl || m_impl(*valobj,stream,options) == false)
         return false;
     dest.assign(stream.GetData());
     return true;
@@ -204,7 +206,8 @@ m_script_function_sp()
 
 bool
 ScriptSummaryFormat::FormatObject (ValueObject *valobj,
-                                   std::string& retval)
+                                   std::string& retval,
+                                   const TypeSummaryOptions& options)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
     

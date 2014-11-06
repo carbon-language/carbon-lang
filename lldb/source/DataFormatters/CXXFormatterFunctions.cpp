@@ -191,7 +191,7 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
 }
 
 bool
-lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -218,7 +218,7 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
 }
 
 bool
-lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -245,7 +245,7 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
 }
 
 bool
-lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -291,7 +291,7 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
 }
 
 bool
-lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
 {
     DataExtractor data;
     Error error;
@@ -316,7 +316,7 @@ lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& st
 }
 
 bool
-lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
 {
     DataExtractor data;
     Error error;
@@ -341,7 +341,7 @@ lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& st
 }
 
 bool
-lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
 {
     DataExtractor data;
     Error error;
@@ -443,7 +443,7 @@ ExtractLibcxxStringInfo (ValueObject& valobj,
 }
 
 bool
-lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     uint64_t size = 0;
     ValueObjectSP location_sp((ValueObject*)nullptr);
@@ -456,11 +456,11 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
     }   
     if (!location_sp)
         return false;
-    return WCharStringSummaryProvider(*location_sp.get(), stream);
+    return WCharStringSummaryProvider(*location_sp.get(), stream, options);
 }
 
 bool
-lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
 {
     uint64_t size = 0;
     ValueObjectSP location_sp((ValueObject*)nullptr);
@@ -493,7 +493,7 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
 }
 
 bool
-lldb_private::formatters::ObjCClassSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::ObjCClassSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -570,7 +570,7 @@ lldb_private::formatters::ObjCClassSyntheticFrontEndCreator (CXXSyntheticChildre
 
 template<bool needs_at>
 bool
-lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -742,7 +742,7 @@ GetNSPathStore2Type (Target &target)
 }
 
 bool
-lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -940,7 +940,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
 }
 
 bool
-lldb_private::formatters::NSAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     TargetSP target_sp(valobj.GetTargetSP());
     if (!target_sp)
@@ -963,25 +963,25 @@ lldb_private::formatters::NSAttributedStringSummaryProvider (ValueObject& valobj
     ValueObjectSP child_sp(child_ptr_sp->CreateValueObjectFromData("string_data", data, exe_ctx, type));
     child_sp->GetValueAsUnsigned(0);
     if (child_sp)
-        return NSStringSummaryProvider(*child_sp, stream);
+        return NSStringSummaryProvider(*child_sp, stream, options);
     return false;
 }
 
 bool
-lldb_private::formatters::NSMutableAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSMutableAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
-    return NSAttributedStringSummaryProvider(valobj, stream);
+    return NSAttributedStringSummaryProvider(valobj, stream, options);
 }
 
 bool
-lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     stream.Printf("%s",valobj.GetObjectDescription());
     return true;
 }
 
 bool
-lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     const uint32_t type_info = valobj.GetClangType().GetTypeInfo();
     
@@ -1012,7 +1012,7 @@ lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& 
 
 template <bool is_sel_ptr>
 bool
-lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     lldb::ValueObjectSP valobj_sp;
 
@@ -1159,13 +1159,13 @@ lldb_private::formatters::VectorIteratorSyntheticFrontEnd::~VectorIteratorSynthe
 }
 
 template bool
-lldb_private::formatters::NSDataSummaryProvider<true> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSDataSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
 
 template bool
-lldb_private::formatters::NSDataSummaryProvider<false> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSDataSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
 
 template bool
-lldb_private::formatters::ObjCSELSummaryProvider<true> (ValueObject&, Stream&) ;
+lldb_private::formatters::ObjCSELSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
 
 template bool
-lldb_private::formatters::ObjCSELSummaryProvider<false> (ValueObject&, Stream&) ;
+lldb_private::formatters::ObjCSELSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&) ;

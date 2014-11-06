@@ -228,7 +228,7 @@ namespace  lldb_private {
 }
 
 bool
-lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)

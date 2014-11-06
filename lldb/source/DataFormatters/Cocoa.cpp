@@ -26,7 +26,7 @@ using namespace lldb_private;
 using namespace lldb_private::formatters;
 
 bool
-lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -60,7 +60,7 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID), true));
 
         StreamString summary_stream;
-        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream);
+        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream, options);
         if (was_nsstring_ok && summary_stream.GetSize() > 0)
         {
             stream.Printf("%s",summary_stream.GetData());
@@ -73,7 +73,7 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
 }
 
 bool
-lldb_private::formatters::NSTimeZoneSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSTimeZoneSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -106,7 +106,7 @@ lldb_private::formatters::NSTimeZoneSummaryProvider (ValueObject& valobj, Stream
         uint64_t offset = ptr_size;
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetClangType(), true));
         StreamString summary_stream;
-        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream);
+        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream, options);
         if (was_nsstring_ok && summary_stream.GetSize() > 0)
         {
             stream.Printf("%s",summary_stream.GetData());
@@ -117,7 +117,7 @@ lldb_private::formatters::NSTimeZoneSummaryProvider (ValueObject& valobj, Stream
 }
 
 bool
-lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -150,7 +150,7 @@ lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, St
         uint64_t offset = ptr_size;
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetClangType(), true));
         StreamString summary_stream;
-        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream);
+        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream, options);
         if (was_nsstring_ok && summary_stream.GetSize() > 0)
         {
             stream.Printf("%s",summary_stream.GetData());
@@ -163,7 +163,7 @@ lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, St
 }
 
 bool
-lldb_private::formatters::NSMachPortSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSMachPortSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -212,7 +212,7 @@ lldb_private::formatters::NSMachPortSummaryProvider (ValueObject& valobj, Stream
 }
 
 bool
-lldb_private::formatters::NSIndexSetSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSIndexSetSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -290,7 +290,7 @@ lldb_private::formatters::NSIndexSetSummaryProvider (ValueObject& valobj, Stream
 }
 
 bool
-lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -413,7 +413,7 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
 }
 
 bool
-lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -453,7 +453,7 @@ lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& str
         if (text->GetValueAsUnsigned(0) == 0)
             return false;
         StreamString summary;
-        if (!NSStringSummaryProvider(*text, summary))
+        if (!NSStringSummaryProvider(*text, summary, options))
             return false;
         if (base && base->GetValueAsUnsigned(0))
         {
@@ -461,7 +461,7 @@ lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& str
                 summary.GetString().resize(summary.GetSize()-1);
             summary.Printf(" -- ");
             StreamString base_summary;
-            if (NSURLSummaryProvider(*base, base_summary) && base_summary.GetSize() > 0)
+            if (NSURLSummaryProvider(*base, base_summary, options) && base_summary.GetSize() > 0)
                 summary.Printf("%s",base_summary.GetSize() > 2 ? base_summary.GetData() + 2 : base_summary.GetData());
         }
         if (summary.GetSize())
@@ -478,7 +478,7 @@ lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& str
 }
 
 bool
-lldb_private::formatters::NSDateSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSDateSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)

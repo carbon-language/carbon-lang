@@ -2490,7 +2490,7 @@ FormatPromptRecurse
                                                                                               .SetHideItemNames(false)
                                                                                               .SetShowMembersOneLiner(true),
                                                                                               "");
-                                                            format.FormatObject(var_value_sp.get(), buffer);
+                                                            format.FormatObject(var_value_sp.get(), buffer, TypeSummaryOptions());
                                                             var_representation = buffer.c_str();
                                                         }
                                                         else

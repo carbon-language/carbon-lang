@@ -27,7 +27,7 @@ using namespace lldb_private;
 using namespace lldb_private::formatters;
 
 bool
-lldb_private::formatters::LibcxxSmartPointerSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::LibcxxSmartPointerSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ValueObjectSP valobj_sp(valobj.GetNonSyntheticValue());
     if (!valobj_sp)
@@ -451,7 +451,7 @@ lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator (CXXSyntheticC
 }
 
 bool
-lldb_private::formatters::LibcxxContainerSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::LibcxxContainerSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     if (valobj.IsPointerType())
     {

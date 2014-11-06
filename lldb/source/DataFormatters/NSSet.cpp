@@ -183,7 +183,7 @@ namespace lldb_private {
 
 template<bool cf_style>
 bool
-lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -713,7 +713,7 @@ lldb_private::formatters::NSOrderedSetSyntheticFrontEnd::~NSOrderedSetSyntheticF
 }
 
 template bool
-lldb_private::formatters::NSSetSummaryProvider<true> (ValueObject& valobj, Stream& stream);
+lldb_private::formatters::NSSetSummaryProvider<true> (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
 
 template bool
-lldb_private::formatters::NSSetSummaryProvider<false> (ValueObject& valobj, Stream& stream);
+lldb_private::formatters::NSSetSummaryProvider<false> (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);

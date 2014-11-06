@@ -339,7 +339,8 @@ namespace lldb_private {
         // for us to generate its summary
         virtual bool
         FormatObject (ValueObject *valobj,
-                      std::string& dest) = 0;
+                      std::string& dest,
+                      const TypeSummaryOptions& options) = 0;
         
         virtual std::string
         GetDescription () = 0;
@@ -398,7 +399,8 @@ namespace lldb_private {
         
         virtual bool
         FormatObject(ValueObject *valobj,
-                     std::string& dest);
+                     std::string& dest,
+                     const TypeSummaryOptions& options);
         
         virtual std::string
         GetDescription();
@@ -423,10 +425,11 @@ namespace lldb_private {
     // summaries implemented via a C++ function
     struct CXXFunctionSummaryFormat : public TypeSummaryImpl
     {
-        
         // we should convert these to SBValue and SBStream if we ever cross
         // the boundary towards the external world
-        typedef bool (*Callback)(ValueObject& valobj, Stream& dest);
+        typedef bool (*Callback)(ValueObject&,
+                                 Stream&,
+                                 const TypeSummaryOptions&);
         
         Callback m_impl;
         std::string m_description;
@@ -469,7 +472,8 @@ namespace lldb_private {
         
         virtual bool
         FormatObject (ValueObject *valobj,
-                      std::string& dest);
+                      std::string& dest,
+                      const TypeSummaryOptions& options);
         
         virtual std::string
         GetDescription ();
@@ -543,7 +547,8 @@ namespace lldb_private {
         
         virtual bool
         FormatObject (ValueObject *valobj,
-                      std::string& dest);
+                      std::string& dest,
+                      const TypeSummaryOptions& options);
         
         virtual std::string
         GetDescription ();

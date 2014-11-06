@@ -61,127 +61,127 @@ namespace lldb_private {
         GetOSXEpoch ();
         
         bool
-        Char16StringSummaryProvider (ValueObject& valobj, Stream& stream); // char16_t* and unichar*
+        Char16StringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // char16_t* and unichar*
         
         bool
-        Char32StringSummaryProvider (ValueObject& valobj, Stream& stream); // char32_t*
+        Char32StringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // char32_t*
         
         bool
-        WCharStringSummaryProvider (ValueObject& valobj, Stream& stream); // wchar_t*
+        WCharStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // wchar_t*
         
         bool
-        Char16SummaryProvider (ValueObject& valobj, Stream& stream); // char16_t and unichar
+        Char16SummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // char16_t and unichar
         
         bool
-        Char32SummaryProvider (ValueObject& valobj, Stream& stream); // char32_t
+        Char32SummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // char32_t
         
         bool
-        WCharSummaryProvider (ValueObject& valobj, Stream& stream); // wchar_t
+        WCharSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // wchar_t
         
         bool
-        LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::string
+        LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // libc++ std::string
 
         bool
-        LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::wstring
+        LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // libc++ std::wstring
 
         bool
-        LibcxxSmartPointerSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::shared_ptr<> and std::weak_ptr<>
+        LibcxxSmartPointerSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // libc++ std::shared_ptr<> and std::weak_ptr<>
         
         bool
-        ObjCClassSummaryProvider (ValueObject& valobj, Stream& stream);
+        ObjCClassSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         SyntheticChildrenFrontEnd* ObjCClassSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
         template<bool name_entries>
         bool
-        NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream);
+        NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSIndexSetSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSIndexSetSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSArraySummaryProvider (ValueObject& valobj, Stream& stream);
+        NSArraySummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         template<bool cf_style>
         bool
-        NSSetSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSSetSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         template<bool needs_at>
         bool
-        NSDataSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSDataSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSNumberSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSNumberSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
 
         bool
-        NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSTimeZoneSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSTimeZoneSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSMachPortSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSMachPortSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        CFBagSummaryProvider (ValueObject& valobj, Stream& stream);
+        CFBagSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        CFBinaryHeapSummaryProvider (ValueObject& valobj, Stream& stream);
+        CFBinaryHeapSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        CFBitVectorSummaryProvider (ValueObject& valobj, Stream& stream);
+        CFBitVectorSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSDateSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSDateSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        CFAbsoluteTimeSummaryProvider (ValueObject& valobj, Stream& stream);
+        CFAbsoluteTimeSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSBundleSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSBundleSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSStringSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
         NSTaggedString_SummaryProvider (ObjCLanguageRuntime::ClassDescriptorSP descriptor, Stream& stream);
         
         bool
-        NSAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSMutableAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSMutableAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSURLSummaryProvider (ValueObject& valobj, Stream& stream);
+        NSURLSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream);
+        ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         template <bool is_sel_ptr>
         bool
-        ObjCSELSummaryProvider (ValueObject& valobj, Stream& stream);
+        ObjCSELSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream);
+        RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         extern template bool
-        NSDictionarySummaryProvider<true> (ValueObject&, Stream&) ;
+        NSDictionarySummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
         
         extern template bool
-        NSDictionarySummaryProvider<false> (ValueObject&, Stream&) ;
+        NSDictionarySummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
         
         extern template bool
-        NSDataSummaryProvider<true> (ValueObject&, Stream&) ;
+        NSDataSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
         
         extern template bool
-        NSDataSummaryProvider<false> (ValueObject&, Stream&) ;
+        NSDataSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
         
         extern template bool
-        ObjCSELSummaryProvider<true> (ValueObject&, Stream&);
+        ObjCSELSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&);
 
         extern template bool
-        ObjCSELSummaryProvider<false> (ValueObject&, Stream&);
+        ObjCSELSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&);
         
         SyntheticChildrenFrontEnd* NSArraySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
@@ -224,7 +224,7 @@ namespace lldb_private {
         SyntheticChildrenFrontEnd* LibcxxVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
         bool
-        LibcxxContainerSummaryProvider (ValueObject& valobj, Stream& stream);
+        LibcxxContainerSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         class LibstdcppVectorBoolSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {

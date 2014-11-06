@@ -872,7 +872,7 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
         {
             if (HasSyntheticValue())
                 m_synthetic_value->UpdateValueIfNeeded(); // the summary might depend on the synthetic children being up-to-date (e.g. ${svar%#})
-            summary_ptr->FormatObject(this, destination);
+            summary_ptr->FormatObject(this, destination, options);
         }
         else
         {

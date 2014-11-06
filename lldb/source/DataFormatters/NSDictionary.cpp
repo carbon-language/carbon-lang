@@ -196,7 +196,7 @@ namespace lldb_private {
 
 template<bool name_entries>
 bool
-lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream)
+lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -692,7 +692,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetChildAtIndex (size_
 }
 
 template bool
-lldb_private::formatters::NSDictionarySummaryProvider<true> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSDictionarySummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
 
 template bool
-lldb_private::formatters::NSDictionarySummaryProvider<false> (ValueObject&, Stream&) ;
+lldb_private::formatters::NSDictionarySummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
