@@ -30,8 +30,6 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Format.h"
 #include <map>
-#include <memory>
-#include <tuple>
 #include <unordered_map>
 
 namespace lld {
