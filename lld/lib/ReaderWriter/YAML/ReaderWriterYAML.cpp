@@ -437,6 +437,8 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
                                           DefinedAtom::typeObjC2CategoryList);
     io.enumCase(value, "objc-class1",     DefinedAtom::typeObjC1Class);
     io.enumCase(value, "dtraceDOF",       DefinedAtom::typeDTraceDOF);
+    io.enumCase(value, "interposing-tuples",
+                                          DefinedAtom::typeInterposingTuples);
     io.enumCase(value, "lto-temp",        DefinedAtom::typeTempLTO);
     io.enumCase(value, "compact-unwind",  DefinedAtom::typeCompactUnwindInfo);
     io.enumCase(value, "unwind-info",     DefinedAtom::typeProcessedUnwindInfo);

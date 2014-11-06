@@ -231,6 +231,7 @@ const MachOFinalSectionFromAtomType sectsToAtomType[] = {
   ENTRY("__DATA", "___got",           S_NON_LAZY_SYMBOL_POINTERS,
                                                           typeGOT),
   ENTRY("__DATA", "___bss",           S_ZEROFILL,         typeZeroFill),
+  ENTRY("__DATA", "__interposing",    S_INTERPOSING,      typeInterposingTuples),
 };
 #undef ENTRY
 

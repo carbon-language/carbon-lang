@@ -77,6 +77,8 @@ const MachORelocatableSectionToAtomType sectsToAtomType[] = {
   ENTRY("__DATA", "___bss",           S_ZEROFILL,         typeZeroFill),
   ENTRY("",       "",                 S_NON_LAZY_SYMBOL_POINTERS,
                                                           typeGOT),
+  ENTRY("__DATA", "__interposing",    S_INTERPOSING,      typeInterposingTuples),
+  ENTRY("",       "",                 S_INTERPOSING,      typeInterposingTuples),
   ENTRY("__LD",   "__compact_unwind", S_REGULAR,
                                                          typeCompactUnwindInfo),
   ENTRY("",       "",                 S_REGULAR,          typeUnknown)

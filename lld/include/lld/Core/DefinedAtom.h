@@ -135,6 +135,7 @@ public:
     typeObjCClassPtr,       // pointer to ObjC class [Darwin]
     typeObjC2CategoryList,  // pointers to ObjC category [Darwin]
     typeDTraceDOF,          // runtime data for Dtrace [Darwin]
+    typeInterposingTuples,  // tuples of interposing info for dyld [Darwin]
     typeTempLTO,            // temporary atom for bitcode reader
     typeCompactUnwindInfo,  // runtime data for unwinder [Darwin]
     typeProcessedUnwindInfo,// compressed compact unwind info [Darwin]

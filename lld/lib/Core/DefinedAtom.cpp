@@ -64,6 +64,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeCStringPtr:
   case typeObjCClassPtr:
   case typeObjC2CategoryList:
+  case typeInterposingTuples:
   case typeTLVInitialData:
   case typeTLVInitialZeroFill:
   case typeTLVInitializerPtr:
