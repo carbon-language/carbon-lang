@@ -107,6 +107,10 @@ def Z : Flag<["-"], "Z">,
 def all_load : Flag<["-"], "all_load">,
      HelpText<"Forces all members of all static libraries to be loaded">,
      Group<grp_libs>;
+def force_load : Separate<["-"], "force_load">,
+     MetaVarName<"<library-path>">,
+     HelpText<"Forces all members of specified static libraries to be loaded">,
+     Group<grp_libs>;
 def syslibroot : Separate<["-"], "syslibroot">, MetaVarName<"<dir>">,
      HelpText<"Add path to SDK to all absolute library search paths">,
      Group<grp_libs>;

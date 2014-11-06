@@ -658,6 +658,9 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     case OPT_upward_library:
       addFile(arg->getValue(), inputGraph, ctx, false, true);
       break;
+    case OPT_force_load:
+      addFile(arg->getValue(), inputGraph, ctx, true, false);
+      break;
     case OPT_l:
     case OPT_upward_l:
       upward = (arg->getOption().getID() == OPT_upward_l);
