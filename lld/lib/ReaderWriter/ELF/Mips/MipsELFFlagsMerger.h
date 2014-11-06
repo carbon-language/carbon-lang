@@ -10,6 +10,7 @@
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_ELF_FLAGS_MERGER_H
 
 #include <mutex>
+#include <system_error>
 
 namespace lld {
 namespace elf {
