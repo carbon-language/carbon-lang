@@ -57,6 +57,11 @@ public:
     blackList   // -unexported_symbol[s_list], no listed symbol exported.
   };
 
+  enum class DebugInfoMode {
+    addDebugMap,    // Default
+    noDebugMap      // -S option
+  };
+
   /// Initializes the context to sane default values given the specified output
   /// file type, arch, os, and minimum os version.  This should be called before
   /// other setXXX() methods.
@@ -92,6 +97,11 @@ public:
   void addExportSymbol(StringRef sym);
   bool exportRestrictMode() const { return _exportMode != ExportMode::globals; }
   bool exportSymbolNamed(StringRef sym) const;
+
+  DebugInfoMode debugInfoMode() const { return _debugInfoMode; }
+  void setDebugInfoMode(DebugInfoMode mode) {
+    _debugInfoMode = mode;
+  }
 
   bool keepPrivateExterns() const { return _keepPrivateExterns; }
   void setKeepPrivateExterns(bool v) { _keepPrivateExterns = v; }
@@ -322,6 +332,7 @@ private:
   mutable std::vector<std::unique_ptr<class MachOFileNode>> _indirectDylibs;
   ExportMode _exportMode;
   llvm::StringSet<> _exportedSymbols;
+  DebugInfoMode _debugInfoMode;
   std::unique_ptr<llvm::raw_fd_ostream> _dependencyInfo;
 };
 

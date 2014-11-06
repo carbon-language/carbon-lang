@@ -160,6 +160,8 @@ def demangle : Flag<["-"], "demangle">,
 def dependency_info : Separate<["-"], "dependency_info">,
      MetaVarName<"<file>">,
      HelpText<"Write binary list of files used during link">;
+def S : Flag<["-"], "S">,
+     HelpText<"Remove debug information (STABS or DWARF) from the output file">;
 
 def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">;

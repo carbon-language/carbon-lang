@@ -640,6 +640,11 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
+  // Handle debug info handling options: -S
+  if (parsedArgs->hasArg(OPT_S)) {
+    ctx.setDebugInfoMode(MachOLinkingContext::DebugInfoMode::noDebugMap);
+  }
+
   // Handle input files
   for (auto &arg : *parsedArgs) {
     bool upward;

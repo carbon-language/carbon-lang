@@ -145,7 +145,8 @@ MachOLinkingContext::MachOLinkingContext()
       _compatibilityVersion(0), _currentVersion(0), _deadStrippableDylib(false),
       _printAtoms(false), _testingFileUsage(false), _keepPrivateExterns(false),
       _demangle(false), _archHandler(nullptr),
-      _exportMode(ExportMode::globals) {}
+      _exportMode(ExportMode::globals),
+      _debugInfoMode(DebugInfoMode::addDebugMap) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
