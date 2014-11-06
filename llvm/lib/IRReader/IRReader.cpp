@@ -34,7 +34,6 @@ getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer, SMDiagnostic &Err,
                 LLVMContext &Context) {
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
-    std::string ErrMsg;
     ErrorOr<Module *> ModuleOrErr =
         getLazyBitcodeModule(std::move(Buffer), Context);
     if (std::error_code EC = ModuleOrErr.getError()) {
