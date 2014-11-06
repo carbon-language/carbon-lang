@@ -3658,6 +3658,11 @@ def err_invalid_var_template_spec_type : Error<"type %2 "
   "of %select{explicit instantiation|explicit specialization|"
   "partial specialization|redeclaration}0 of %1 does not match"
   " expected type %3">;
+def err_mismatched_exception_spec_explicit_instantiation : Error<
+  "exception specification in explicit instantiation does not match instantiated one">;
+def ext_mismatched_exception_spec_explicit_instantiation : ExtWarn<
+  "exception specification in explicit instantiation does not match instantiated one">,
+  InGroup<Microsoft>;
   
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;

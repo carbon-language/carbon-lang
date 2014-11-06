@@ -7627,6 +7627,29 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   // Ignore access control bits, we don't need them for redeclaration checking.
   FunctionDecl *Specialization = cast<FunctionDecl>(*Result);
 
+  // C++11 [except.spec]p4
+  // In an explicit instantiation an exception-specification may be specified,
+  // but is not required.
+  // If an exception-specification is specified in an explicit instantiation
+  // directive, it shall be compatible with the exception-specifications of
+  // other declarations of that function.
+  if (auto *FPT = R->getAs<FunctionProtoType>())
+    if (FPT->hasExceptionSpec()) {
+      unsigned DiagID =
+          diag::err_mismatched_exception_spec_explicit_instantiation;
+      if (getLangOpts().MicrosoftExt)
+        DiagID = diag::ext_mismatched_exception_spec_explicit_instantiation;
+      bool Result = CheckEquivalentExceptionSpec(
+          PDiag(DiagID) << Specialization->getType(),
+          PDiag(diag::note_explicit_instantiation_here),
+          Specialization->getType()->getAs<FunctionProtoType>(),
+          Specialization->getLocation(), FPT, D.getLocStart());
+      // In Microsoft mode, mismatching exception specifications just cause a
+      // warning.
+      if (!getLangOpts().MicrosoftExt && Result)
+        return true;
+    }
+
   if (Specialization->getTemplateSpecializationKind() == TSK_Undeclared) {
     Diag(D.getIdentifierLoc(),
          diag::err_explicit_instantiation_member_function_not_instantiated)

@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions -fcxx-exceptions -std=c++11 %s
 
 template void *; // expected-error{{expected unqualified-id}}
 
@@ -13,8 +14,8 @@ struct X0 {
   
   T f0(T x) {
     return x + 1;  // expected-error{{invalid operands}}
-  } 
-  T* f0(T*, T*) { return T(); } // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
+  }
+  T *f0(T *, T *) { return T(); } // expected-warning 0-1 {{expression which evaluates to zero treated as a null pointer constant of type 'int *'}} expected-error 0-1 {{cannot initialize return object of type 'int *' with an rvalue of type 'int'}}
 
   template <typename U> T f0(T, U) { return T(); } // expected-note-re {{candidate template ignored: could not match 'int (int, U){{( __attribute__\(\(thiscall\)\))?}}' against 'int (int){{( __attribute__\(\(thiscall\)\))?}} const'}} \
                                                    // expected-note {{candidate template ignored: could not match 'int' against 'int *'}}
@@ -25,7 +26,7 @@ T X0<T>::value; // expected-error{{no matching constructor}}
 
 template int X0<int>::value;
 
-struct NotDefaultConstructible { // expected-note{{candidate constructor (the implicit copy constructor)}}
+struct NotDefaultConstructible { // expected-note{{candidate constructor (the implicit copy constructor)}} expected-note 0-1 {{candidate constructor (the implicit move constructor)}}
   NotDefaultConstructible(int); // expected-note{{candidate constructor}}
 };
 
@@ -149,3 +150,17 @@ namespace undefined_static_data_member {
   template int C<int>::b<int>;
   template int D::c<int>;
 }
+
+// expected-note@+1 3-4 {{explicit instantiation refers here}}
+template <class T> void Foo(T i) throw(T) { throw i; }
+// expected-error@+1 {{exception specification in explicit instantiation does not match instantiated one}}
+template void Foo(int a) throw(char);
+// expected-error@+1 {{exception specification in explicit instantiation does not match instantiated one}}
+template void Foo(double a) throw();
+// expected-error@+1 1 {{exception specification in explicit instantiation does not match instantiated one}}
+template void Foo(long a) throw(long, char);
+template void Foo(float a);
+#if __cplusplus >= 201103L
+// expected-error@+1 0-1 {{exception specification in explicit instantiation does not match instantiated one}}
+template void Foo(double a) noexcept;
+#endif
