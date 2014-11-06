@@ -1511,3 +1511,14 @@ define i1 @icmp_sle_zero_add_nsw(i32 %a) {
  %cmp = icmp sle i32 %add, 0
  ret i1 %cmp
 }
+
+; CHECK-LABEL: @icmp_cmpxchg_strong
+; CHECK-NEXT: %[[xchg:.*]] = cmpxchg i32* %sc, i32 %old_val, i32 %new_val seq_cst seq_cst
+; CHECK-NEXT: %[[icmp:.*]] = extractvalue { i32, i1 } %[[xchg]], 1
+; CHECK-NEXT: ret i1 %[[icmp]]
+define zeroext i1 @icmp_cmpxchg_strong(i32* %sc, i32 %old_val, i32 %new_val) {
+  %xchg = cmpxchg i32* %sc, i32 %old_val, i32 %new_val seq_cst seq_cst
+  %xtrc = extractvalue { i32, i1 } %xchg, 0
+  %icmp = icmp eq i32 %xtrc, %old_val
+  ret i1 %icmp
+}
