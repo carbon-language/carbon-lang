@@ -69,3 +69,8 @@
 ; CHECK: .section	__DATA,__foobar,interposing
 ; CHECK-NEXT: .align	3
 ; CHECK-NEXT: L_private12:
+
+@private13 = private global i32 42, section "__DATA, __objc_classlist, regular, no_dead_strip"
+; CHECK: .section	__DATA,__objc_classlist,regular,no_dead_strip
+; CHECK-NEXT: .align	2
+; CHECK-NEXT: L_private13:
