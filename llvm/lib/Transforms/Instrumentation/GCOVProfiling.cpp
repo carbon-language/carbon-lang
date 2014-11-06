@@ -485,6 +485,7 @@ void GCOVProfiler::emitProfileNotes() {
     std::string EdgeDestinations;
 
     DIArray SPs = CU.getSubprograms();
+    unsigned FunctionIdent = 0;
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
       DISubprogram SP(SPs.getElement(i));
       assert((!SP || SP.isSubprogram()) &&
@@ -504,8 +505,8 @@ void GCOVProfiler::emitProfileNotes() {
         ++It;
       EntryBlock.splitBasicBlock(It);
 
-      Funcs.push_back(
-          make_unique<GCOVFunction>(SP, &out, i, Options.UseCfgChecksum));
+      Funcs.push_back(make_unique<GCOVFunction>(SP, &out, FunctionIdent++,
+                                                Options.UseCfgChecksum));
       GCOVFunction &Func = *Funcs.back();
 
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
