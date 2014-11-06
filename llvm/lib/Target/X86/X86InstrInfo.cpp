@@ -2449,7 +2449,8 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     case X86::VPBLENDDYrri:  Mask = 0xFF; break;
     case X86::VPBLENDWYrri:  Mask = 0xFF; break;
     }
-    unsigned Imm = MI->getOperand(3).getImm();
+    // Only the least significant bits of Imm are used.
+    unsigned Imm = MI->getOperand(3).getImm() & Mask;
     if (NewMI) {
       MachineFunction &MF = *MI->getParent()->getParent();
       MI = MF.CloneMachineInstr(MI);
