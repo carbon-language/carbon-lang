@@ -359,3 +359,8 @@ ValueObjectConstResult::GetDynamicValue (lldb::DynamicValueType use_dynamic)
     return ValueObjectSP();
 }
 
+lldb::LanguageType
+ValueObjectConstResult::GetPreferredDisplayLanguage ()
+{
+    return lldb::eLanguageTypeUnknown;
+}

@@ -20,6 +20,103 @@ using namespace lldb_private;
 
 #ifndef LLDB_DISABLE_PYTHON
 
+SBTypeSummaryOptions::SBTypeSummaryOptions()
+{
+    m_opaque_ap.reset(new TypeSummaryOptions());
+}
+
+SBTypeSummaryOptions::SBTypeSummaryOptions (const lldb::SBTypeSummaryOptions &rhs)
+{
+    if (rhs.m_opaque_ap)
+        m_opaque_ap.reset(new TypeSummaryOptions(*rhs.m_opaque_ap.get()));
+    else
+        m_opaque_ap.reset(new TypeSummaryOptions());
+}
+
+SBTypeSummaryOptions::~SBTypeSummaryOptions ()
+{
+}
+
+bool
+SBTypeSummaryOptions::IsValid()
+{
+    return m_opaque_ap.get();
+}
+
+lldb::LanguageType
+SBTypeSummaryOptions::GetLanguage ()
+{
+    if (IsValid())
+        return m_opaque_ap->GetLanguage();
+    return lldb::eLanguageTypeUnknown;
+}
+
+lldb::TypeSummaryCapping
+SBTypeSummaryOptions::GetCapping ()
+{
+    if (IsValid())
+        return m_opaque_ap->GetCapping();
+    return eTypeSummaryCapped;
+}
+
+void
+SBTypeSummaryOptions::SetLanguage (lldb::LanguageType l)
+{
+    if (IsValid())
+        m_opaque_ap->SetLanguage(l);
+}
+
+void
+SBTypeSummaryOptions::SetCapping (lldb::TypeSummaryCapping c)
+{
+    if (IsValid())
+        m_opaque_ap->SetCapping(c);
+}
+
+lldb_private::TypeSummaryOptions *
+SBTypeSummaryOptions::operator->()
+{
+    return m_opaque_ap.get();
+}
+
+const lldb_private::TypeSummaryOptions *
+SBTypeSummaryOptions::operator->() const
+{
+    return m_opaque_ap.get();
+}
+
+lldb_private::TypeSummaryOptions *
+SBTypeSummaryOptions::get ()
+{
+    return m_opaque_ap.get();
+}
+
+lldb_private::TypeSummaryOptions &
+SBTypeSummaryOptions::ref()
+{
+    return *m_opaque_ap.get();
+}
+
+const lldb_private::TypeSummaryOptions &
+SBTypeSummaryOptions::ref() const
+{
+    return *m_opaque_ap.get();
+}
+
+SBTypeSummaryOptions::SBTypeSummaryOptions (const lldb_private::TypeSummaryOptions *lldb_object_ptr)
+{
+    SetOptions(lldb_object_ptr);
+}
+
+void
+SBTypeSummaryOptions::SetOptions (const lldb_private::TypeSummaryOptions *lldb_object_ptr)
+{
+    if (lldb_object_ptr)
+        m_opaque_ap.reset(new TypeSummaryOptions(*lldb_object_ptr));
+    else
+        m_opaque_ap.reset(new TypeSummaryOptions());
+}
+
 SBTypeSummary::SBTypeSummary() :
 m_opaque_sp()
 {

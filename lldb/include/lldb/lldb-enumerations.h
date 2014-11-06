@@ -907,6 +907,14 @@ namespace lldb {
         eTypeIsComplex          = (1u << 20),
         eTypeIsSigned           = (1u << 21)
     } TypeFlags;
+    
+    //----------------------------------------------------------------------
+    // Whether a summary should cap how much data it returns to users or not
+    //----------------------------------------------------------------------
+    typedef enum TypeSummaryCapping {
+        eTypeSummaryCapped = true,
+        eTypeSummaryUncapped = false
+    } TypeSummaryCapping;
 
 } // namespace lldb
 

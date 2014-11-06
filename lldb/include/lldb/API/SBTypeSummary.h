@@ -15,6 +15,56 @@
 #ifndef LLDB_DISABLE_PYTHON
 
 namespace lldb {
+    class SBTypeSummaryOptions
+    {
+    public:
+        SBTypeSummaryOptions();
+
+        SBTypeSummaryOptions (const lldb::SBTypeSummaryOptions &rhs);
+        
+        ~SBTypeSummaryOptions ();
+        
+        bool
+        IsValid ();
+        
+        lldb::LanguageType
+        GetLanguage ();
+        
+        lldb::TypeSummaryCapping
+        GetCapping ();
+        
+        void
+        SetLanguage (lldb::LanguageType);
+        
+        void
+        SetCapping (lldb::TypeSummaryCapping);
+        
+    protected:
+        friend class SBValue;
+        
+        lldb_private::TypeSummaryOptions *
+        operator->();
+        
+        const lldb_private::TypeSummaryOptions *
+        operator->() const;
+        
+        lldb_private::TypeSummaryOptions *
+        get ();
+        
+        lldb_private::TypeSummaryOptions &
+        ref();
+        
+        const lldb_private::TypeSummaryOptions &
+        ref() const;
+        
+        SBTypeSummaryOptions (const lldb_private::TypeSummaryOptions *lldb_object_ptr);
+        
+        void
+        SetOptions (const lldb_private::TypeSummaryOptions *lldb_object_ptr);
+        
+    private:
+        std::unique_ptr<lldb_private::TypeSummaryOptions> m_opaque_ap;
+    };
     
     class SBTypeSummary
     {

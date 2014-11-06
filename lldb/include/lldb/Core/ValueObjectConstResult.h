@@ -126,6 +126,9 @@ public:
     
     virtual lldb::ValueObjectSP
     GetDynamicValue (lldb::DynamicValueType valueType);
+    
+    virtual lldb::LanguageType
+    GetPreferredDisplayLanguage ();
 
 protected:
     virtual bool

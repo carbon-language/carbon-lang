@@ -28,6 +28,32 @@
 #include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
+    class TypeSummaryOptions
+    {
+    public:
+        TypeSummaryOptions ();
+        TypeSummaryOptions (const TypeSummaryOptions& rhs);
+        
+        TypeSummaryOptions&
+        operator = (const TypeSummaryOptions& rhs);
+        
+        lldb::LanguageType
+        GetLanguage () const;
+        
+        lldb::TypeSummaryCapping
+        GetCapping () const;
+        
+        TypeSummaryOptions&
+        SetLanguage (lldb::LanguageType);
+        
+        TypeSummaryOptions&
+        SetCapping (lldb::TypeSummaryCapping);
+        
+        ~TypeSummaryOptions() = default;
+    private:
+        lldb::LanguageType m_lang;
+        lldb::TypeSummaryCapping m_capping;
+    };
     
     class TypeSummaryImpl
     {

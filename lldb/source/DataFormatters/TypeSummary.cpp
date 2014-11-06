@@ -34,6 +34,50 @@
 using namespace lldb;
 using namespace lldb_private;
 
+TypeSummaryOptions::TypeSummaryOptions () :
+    m_lang(eLanguageTypeUnknown),
+    m_capping(eTypeSummaryCapped)
+{}
+
+TypeSummaryOptions::TypeSummaryOptions (const TypeSummaryOptions& rhs) :
+    m_lang(rhs.m_lang),
+    m_capping(rhs.m_capping)
+{}
+
+TypeSummaryOptions&
+TypeSummaryOptions::operator = (const TypeSummaryOptions& rhs)
+{
+    m_lang = rhs.m_lang;
+    m_capping = rhs.m_capping;
+    return *this;
+}
+
+lldb::LanguageType
+TypeSummaryOptions::GetLanguage () const
+{
+    return m_lang;
+}
+
+lldb::TypeSummaryCapping
+TypeSummaryOptions::GetCapping () const
+{
+    return m_capping;
+}
+
+TypeSummaryOptions&
+TypeSummaryOptions::SetLanguage (lldb::LanguageType lang)
+{
+    m_lang = lang;
+    return *this;
+}
+
+TypeSummaryOptions&
+TypeSummaryOptions::SetCapping (lldb::TypeSummaryCapping cap)
+{
+    m_capping = cap;
+    return *this;
+}
+
 TypeSummaryImpl::TypeSummaryImpl (const TypeSummaryImpl::Flags& flags) :
 m_flags(flags)
 {

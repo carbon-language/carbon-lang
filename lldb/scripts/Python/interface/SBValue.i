@@ -122,6 +122,9 @@ public:
     GetSummary ();
     
     const char *
+    GetSummary (lldb::SBTypeSummaryOptions& options);
+    
+    const char *
     GetObjectDescription ();
     
     const char *

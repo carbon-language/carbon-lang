@@ -44,6 +44,7 @@
 
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Type.h"
 
 #include "lldb/Target/ExecutionContext.h"
@@ -841,6 +842,14 @@ bool
 ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
                                   std::string& destination)
 {
+    return GetSummaryAsCString(summary_ptr, destination, TypeSummaryOptions());
+}
+
+bool
+ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
+                                  std::string& destination,
+                                  const TypeSummaryOptions& options)
+{
     destination.clear();
 
     // ideally we would like to bail out if passing NULL, but if we do so
@@ -925,10 +934,17 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
 const char *
 ValueObject::GetSummaryAsCString ()
 {
+    return GetSummaryAsCString(TypeSummaryOptions());
+}
+
+const char *
+ValueObject::GetSummaryAsCString (const TypeSummaryOptions& options)
+{
     if (UpdateValueIfNeeded(true) && m_summary_str.empty())
     {
         GetSummaryAsCString(GetSummaryFormat().get(),
-                            m_summary_str);
+                            m_summary_str,
+                            options);
     }
     if (m_summary_str.empty())
         return NULL;
@@ -4131,6 +4147,29 @@ ValueObject::GetFormat () const
         with_fmt_info = with_fmt_info->m_parent;
     }
     return m_format;
+}
+
+lldb::LanguageType
+ValueObject::GetPreferredDisplayLanguage ()
+{
+    lldb::LanguageType type = lldb::eLanguageTypeUnknown;
+    if (GetRoot())
+    {
+        if (GetRoot() == this)
+        {
+            if (StackFrameSP frame_sp = GetFrameSP())
+            {
+                const SymbolContext& sc(frame_sp->GetSymbolContext(eSymbolContextCompUnit));
+                if (CompileUnit* cu = sc.comp_unit)
+                    type = cu->GetLanguage();
+            }
+        }
+        else
+        {
+            type = GetRoot()->GetPreferredDisplayLanguage();
+        }
+    }
+    return type;
 }
 
 bool

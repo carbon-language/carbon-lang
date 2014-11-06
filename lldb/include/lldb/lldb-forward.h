@@ -207,6 +207,7 @@ class   StreamString;
 class   StringList;
 struct  StringSummaryFormat;
 class   TypeSummaryImpl;
+class   TypeSummaryOptions;
 class   Symbol;
 class   SymbolContext;
 class   SymbolContextList;

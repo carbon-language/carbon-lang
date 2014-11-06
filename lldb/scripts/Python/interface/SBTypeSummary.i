@@ -8,7 +8,31 @@
 //===----------------------------------------------------------------------===//
 
 namespace lldb {
-    
+    class SBTypeSummaryOptions
+    {
+    public:
+        SBTypeSummaryOptions();
+        
+        SBTypeSummaryOptions (const lldb::SBTypeSummaryOptions &rhs);
+        
+        ~SBTypeSummaryOptions ();
+        
+        bool
+        IsValid ();
+        
+        lldb::LanguageType
+        GetLanguage ();
+        
+        lldb::TypeSummaryCapping
+        GetCapping ();
+        
+        void
+        SetLanguage (lldb::LanguageType);
+        
+        void
+        SetCapping (lldb::TypeSummaryCapping);
+    };
+
     %feature("docstring",
     "Represents a summary that can be associated to one or more types.
     ") SBTypeSummary;
