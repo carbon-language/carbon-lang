@@ -1019,10 +1019,9 @@ class Base(unittest2.TestCase):
             except (ValueError, pexpect.ExceptionPexpect):
                 # child is already terminated
                 pass
-	    finally:
-		# Give it one final blow to make sure the child is terminated.
-		self.child.close()
-
+            finally:
+                # Give it one final blow to make sure the child is terminated.
+                self.child.close()
 
     def tearDown(self):
         """Fixture for unittest test case teardown."""
