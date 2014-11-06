@@ -538,6 +538,8 @@ static int getSectionIndex(uint64_t targetAddr,
 
 static uint32_t getSectionStartAddr(uint64_t targetAddr,
                                     const std::vector<uint64_t> &sectionRva) {
+  // Scan the list of section start addresses to find the section start address
+  // for the given RVA.
   for (int i = 0, e = sectionRva.size(); i < e; ++i)
     if (i == e - 1 || (sectionRva[i] <= targetAddr && targetAddr < sectionRva[i + 1]))
       return sectionRva[i];
