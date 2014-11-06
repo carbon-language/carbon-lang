@@ -99,12 +99,12 @@ class SetValuesTestCase(TestBase):
         # main.c:78
         # Check that 'frame variable --show-types' displays the correct data type and value.
         self.expect("frame variable --show-types", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(double) i = 3.14159")
+            startstr = "(double) i = 2.25")
 
         # Now set variable 'i' and check that it is correctly displayed.
-        self.runCmd("expression i = 3.14")
+        self.runCmd("expression i = 1.5")
         self.expect("frame variable --show-types", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(double) i = 3.14")
+            startstr = "(double) i = 1.5")
 
         self.runCmd("continue")
 
@@ -113,12 +113,12 @@ class SetValuesTestCase(TestBase):
         # rdar://problem/8422727
         # set_values test directory: 'frame variable' shows only (long double) i =
         self.expect("frame variable --show-types", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(long double) i = 3.14159")
+            startstr = "(long double) i = 2.25")
 
         # Now set variable 'i' and check that it is correctly displayed.
-        self.runCmd("expression i = 3.1")
+        self.runCmd("expression i = 1.5")
         self.expect("frame variable --show-types", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(long double) i = 3.1")
+            startstr = "(long double) i = 1.5")
 
 
 if __name__ == '__main__':

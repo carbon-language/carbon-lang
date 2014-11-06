@@ -66,21 +66,21 @@ void set_ulong(void)
 
 void set_float(void)
 {
-    float i = 3.1415927;
+    float i = 2.25;
     printf("before (float) i = %g\n", i);
     printf("after  (float) i = %g\n", i);   //// break $source:$line
 }
 
 void set_double(void)
 {
-    double i = 3.1415927;
+    double i = 2.25;
     printf("before (double) i = %g\n", i);
     printf("after  (double) i = %g\n", i);  // Set break point #4. //// break $source:$line
 }
 
 void set_long_double(void)
 {
-    long double i = 3.1415927;
+    long double i = 2.25;
     printf("before (long double) i = %Lg\n", i);
     printf("after  (long double) i = %Lg\n", i);    // Set break point #5. //// break $source:$line
 }
