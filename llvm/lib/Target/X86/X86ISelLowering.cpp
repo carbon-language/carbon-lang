@@ -19025,6 +19025,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::ANDNP:              return "X86ISD::ANDNP";
   case X86ISD::PSIGN:              return "X86ISD::PSIGN";
   case X86ISD::BLENDI:             return "X86ISD::BLENDI";
+  case X86ISD::SHRUNKBLEND:        return "X86ISD::SHRUNKBLEND";
   case X86ISD::SUBUS:              return "X86ISD::SUBUS";
   case X86ISD::HADD:               return "X86ISD::HADD";
   case X86ISD::HSUB:               return "X86ISD::HSUB";
@@ -22618,21 +22619,16 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       // build_vector of constants. This will be taken care in a later
       // condition.
       (TLI.isOperationLegalOrCustom(ISD::VSELECT, VT) && VT != MVT::v16i16 &&
-       VT != MVT::v8i16)) {
+       VT != MVT::v8i16) &&
+      // Don't optimize vector of constants. Those are handled by
+      // the generic code and all the bits must be properly set for
+      // the generic optimizer.
+      !ISD::isBuildVectorOfConstantSDNodes(Cond.getNode())) {
     unsigned BitWidth = Cond.getValueType().getScalarType().getSizeInBits();
 
     // Don't optimize vector selects that map to mask-registers.
     if (BitWidth == 1)
       return SDValue();
-
-    // Check all uses of that condition operand to check whether it will be
-    // consumed by non-BLEND instructions, which may depend on all bits are set
-    // properly.
-    for (SDNode::use_iterator I = Cond->use_begin(),
-                              E = Cond->use_end(); I != E; ++I)
-      if (I->getOpcode() != ISD::VSELECT)
-        // TODO: Add other opcodes eventually lowered into BLEND.
-        return SDValue();
 
     assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
     APInt DemandedMask = APInt::getHighBitsSet(BitWidth, 1);
@@ -22641,13 +22637,45 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     TargetLowering::TargetLoweringOpt TLO(DAG, DCI.isBeforeLegalize(),
                                           DCI.isBeforeLegalizeOps());
     if (TLO.ShrinkDemandedConstant(Cond, DemandedMask) ||
-        (TLI.SimplifyDemandedBits(Cond, DemandedMask, KnownZero, KnownOne,
-                                  TLO) &&
-         // Don't optimize vector of constants. Those are handled by
-         // the generic code and all the bits must be properly set for
-         // the generic optimizer.
-         !ISD::isBuildVectorOfConstantSDNodes(TLO.New.getNode())))
-      DCI.CommitTargetLoweringOpt(TLO);
+        TLI.SimplifyDemandedBits(Cond, DemandedMask, KnownZero, KnownOne,
+                                 TLO)) {
+      // If we changed the computation somewhere in the DAG, this change
+      // will affect all users of Cond.
+      // Make sure it is fine and update all the nodes so that we do not
+      // use the generic VSELECT anymore. Otherwise, we may perform
+      // wrong optimizations as we messed up with the actual expectation
+      // for the vector boolean values.
+      if (Cond != TLO.Old) {
+        // Check all uses of that condition operand to check whether it will be
+        // consumed by non-BLEND instructions, which may depend on all bits are
+        // set properly.
+        for (SDNode::use_iterator I = Cond->use_begin(), E = Cond->use_end();
+             I != E; ++I)
+          if (I->getOpcode() != ISD::VSELECT)
+            // TODO: Add other opcodes eventually lowered into BLEND.
+            return SDValue();
+
+        // Update all the users of the condition, before committing the change,
+        // so that the VSELECT optimizations that expect the correct vector
+        // boolean value will not be triggered.
+        for (SDNode::use_iterator I = Cond->use_begin(), E = Cond->use_end();
+             I != E; ++I)
+          DAG.ReplaceAllUsesOfValueWith(
+              SDValue(*I, 0),
+              DAG.getNode(X86ISD::SHRUNKBLEND, SDLoc(*I), I->getValueType(0),
+                          Cond, I->getOperand(1), I->getOperand(2)));
+        DCI.CommitTargetLoweringOpt(TLO);
+        return SDValue();
+      }
+      // At this point, only Cond is changed. Change the condition
+      // just for N to keep the opportunity to optimize all other
+      // users their own way.
+      DAG.ReplaceAllUsesOfValueWith(
+          SDValue(N, 0),
+          DAG.getNode(X86ISD::SHRUNKBLEND, SDLoc(N), N->getValueType(0),
+                      TLO.New, N->getOperand(1), N->getOperand(2)));
+      return SDValue();
+    }
   }
 
   // We should generate an X86ISD::BLENDI from a vselect if its argument
@@ -22661,7 +22689,9 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // Iff we find this pattern and the build_vectors are built from
   // constants, we translate the vselect into a shuffle_vector that we
   // know will be matched by LowerVECTOR_SHUFFLEtoBlend.
-  if (N->getOpcode() == ISD::VSELECT && !DCI.isBeforeLegalize()) {
+  if ((N->getOpcode() == ISD::VSELECT ||
+       N->getOpcode() == X86ISD::SHRUNKBLEND) &&
+      !DCI.isBeforeLegalize()) {
     SDValue Shuffle = TransformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
     if (Shuffle.getNode())
       return Shuffle;
@@ -24854,7 +24884,9 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::EXTRACT_VECTOR_ELT:
     return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, DCI);
   case ISD::VSELECT:
-  case ISD::SELECT:         return PerformSELECTCombine(N, DAG, DCI, Subtarget);
+  case ISD::SELECT:
+  case X86ISD::SHRUNKBLEND:
+    return PerformSELECTCombine(N, DAG, DCI, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI, Subtarget);
   case ISD::ADD:            return PerformAddCombine(N, DAG, Subtarget);
   case ISD::SUB:            return PerformSubCombine(N, DAG, Subtarget);
