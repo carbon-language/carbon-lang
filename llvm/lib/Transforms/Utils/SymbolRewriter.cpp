@@ -156,52 +156,51 @@ performOnModule(Module &M) {
 /// Represents a rewrite for an explicitly named (function) symbol.  Both the
 /// source function name and target function name of the transformation are
 /// explicitly spelt out.
-using ExplicitRewriteFunctionDescriptor =
-    ExplicitRewriteDescriptor<RewriteDescriptor::Type::Function, llvm::Function,
-                              &llvm::Module::getFunction>;
+typedef ExplicitRewriteDescriptor<RewriteDescriptor::Type::Function,
+                                  llvm::Function, &llvm::Module::getFunction>
+    ExplicitRewriteFunctionDescriptor;
 
 /// Represents a rewrite for an explicitly named (global variable) symbol.  Both
 /// the source variable name and target variable name are spelt out.  This
 /// applies only to module level variables.
-using ExplicitRewriteGlobalVariableDescriptor =
-    ExplicitRewriteDescriptor<RewriteDescriptor::Type::GlobalVariable,
-                              llvm::GlobalVariable,
-                              &llvm::Module::getGlobalVariable>;
+typedef ExplicitRewriteDescriptor<RewriteDescriptor::Type::GlobalVariable,
+                                  llvm::GlobalVariable,
+                                  &llvm::Module::getGlobalVariable>
+    ExplicitRewriteGlobalVariableDescriptor;
 
 /// Represents a rewrite for an explicitly named global alias.  Both the source
 /// and target name are explicitly spelt out.
-using ExplicitRewriteNamedAliasDescriptor =
-    ExplicitRewriteDescriptor<RewriteDescriptor::Type::NamedAlias,
-                              llvm::GlobalAlias, &llvm::Module::getNamedAlias>;
+typedef ExplicitRewriteDescriptor<RewriteDescriptor::Type::NamedAlias,
+                                  llvm::GlobalAlias,
+                                  &llvm::Module::getNamedAlias>
+    ExplicitRewriteNamedAliasDescriptor;
 
 /// Represents a rewrite for a regular expression based pattern for functions.
 /// A pattern for the function name is provided and a transformation for that
 /// pattern to determine the target function name create the rewrite rule.
-using PatternRewriteFunctionDescriptor =
-    PatternRewriteDescriptor<RewriteDescriptor::Type::Function, llvm::Function,
-                             &llvm::Module::getFunction,
-                             &llvm::Module::functions>;
-
+typedef PatternRewriteDescriptor<RewriteDescriptor::Type::Function,
+                                 llvm::Function, &llvm::Module::getFunction,
+                                 &llvm::Module::functions>
+    PatternRewriteFunctionDescriptor;
 
 /// Represents a rewrite for a global variable based upon a matching pattern.
 /// Each global variable matching the provided pattern will be transformed as
 /// described in the transformation pattern for the target.  Applies only to
 /// module level variables.
-using PatternRewriteGlobalVariableDescriptor =
-    PatternRewriteDescriptor<RewriteDescriptor::Type::GlobalVariable,
-                             llvm::GlobalVariable,
-                             &llvm::Module::getGlobalVariable,
-                             &llvm::Module::globals>;
+typedef PatternRewriteDescriptor<RewriteDescriptor::Type::GlobalVariable,
+                                 llvm::GlobalVariable,
+                                 &llvm::Module::getGlobalVariable,
+                                 &llvm::Module::globals>
+    PatternRewriteGlobalVariableDescriptor;
 
 /// PatternRewriteNamedAliasDescriptor - represents a rewrite for global
 /// aliases which match a given pattern.  The provided transformation will be
 /// applied to each of the matching names.
-using PatternRewriteNamedAliasDescriptor =
-    PatternRewriteDescriptor<RewriteDescriptor::Type::NamedAlias,
-                             llvm::GlobalAlias,
-                             &llvm::Module::getNamedAlias,
-                             &llvm::Module::aliases>;
-
+typedef PatternRewriteDescriptor<RewriteDescriptor::Type::NamedAlias,
+                                 llvm::GlobalAlias,
+                                 &llvm::Module::getNamedAlias,
+                                 &llvm::Module::aliases>
+    PatternRewriteNamedAliasDescriptor;
 
 bool RewriteMapParser::parse(const std::string &MapFile,
                              RewriteDescriptorList *DL) {
