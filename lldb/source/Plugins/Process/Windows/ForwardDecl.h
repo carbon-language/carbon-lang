@@ -16,15 +16,9 @@ class ProcessWindows;
 
 namespace lldb_private
 {
-// Driver message forward declarations
-class DriverMessage;
-class DriverLaunchProcessMessage;
-
-// Driver message result forward declarations
-class DriverMessageResult;
-class DriverLaunchProcessMessageResult;
-
 class IDebugDelegate;
+
+class DebuggerThread;
 
 // Process message forward declarations.
 class ProcessMessageBase;
@@ -40,6 +34,7 @@ class ProcessMessageDebugString;
 class ProcessMessageDebuggerError;
 
 typedef std::shared_ptr<IDebugDelegate> DebugDelegateSP;
+typedef std::unique_ptr<DebuggerThread> DebuggerThreadUP;
 }
 
 #endif

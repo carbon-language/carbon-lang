@@ -122,6 +122,9 @@ public:
     virtual void OnUnloadDll(const lldb_private::ProcessMessageUnloadDll &message) override;
     virtual void OnDebugString(const lldb_private::ProcessMessageDebugString &message) override;
     virtual void OnDebuggerError(const lldb_private::ProcessMessageDebuggerError &message) override;
+
+  private:
+    lldb_private::DebuggerThreadUP m_debugger;
 };
 
 #endif  // liblldb_Plugins_Process_Windows_ProcessWindows_H_

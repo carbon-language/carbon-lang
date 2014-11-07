@@ -27,8 +27,7 @@
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Target.h"
 
-#include "DebugDriverThread.h"
-#include "DebugProcessLauncher.h"
+#include "DebuggerThread.h"
 #include "LocalDebugDelegate.h"
 #include "ProcessMessages.h"
 #include "ProcessWindows.h"
@@ -56,7 +55,6 @@ ProcessWindows::Initialize()
         PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                       GetPluginDescriptionStatic(),
                                       CreateInstance);
-        DebugDriverThread::Initialize();
     }
 }
 
@@ -75,7 +73,6 @@ ProcessWindows::~ProcessWindows()
 void
 ProcessWindows::Terminate()
 {
-    DebugDriverThread::Teardown();
 }
 
 lldb_private::ConstString
@@ -108,12 +105,9 @@ ProcessWindows::DoLaunch(Module *exe_module,
     SetPrivateState(eStateLaunching);
     if (launch_info.GetFlags().Test(eLaunchFlagDebug))
     {
-        // If we're trying to debug this process, we need to use a
-        // DebugProcessLauncher so that we can enter a WaitForDebugEvent loop
-        // on the same thread that does the CreateProcess.
         DebugDelegateSP delegate(new LocalDebugDelegate(shared_from_this()));
-        DebugProcessLauncher launcher(delegate);
-        process = launcher.LaunchProcess(launch_info, result);
+        m_debugger.reset(new DebuggerThread(delegate));
+        process = m_debugger->DebugLaunch(launch_info);
     }
     else
         return Host::LaunchProcess(launch_info);
