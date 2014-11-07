@@ -856,14 +856,11 @@ MachOLinkingContext::findOrderOrdinal(const std::vector<OrderFileNode> &nodes,
     if (info.fileFilter.empty()) {
       // Have unprefixed symbol name in order file that matches this atom.
       ordinal = info.order;
-      llvm::errs() << "ordered " << atom->name() << "\n";
       return true;
     }
     if (info.fileFilter.equals(objName)) {
       // Have prefixed symbol name in order file that matches atom's path.
       ordinal = info.order;
-      llvm::errs() << "ordered " << atom->name() << " with prefix '"
-                   << info.fileFilter << "'\n";
       return true;
     }
   }
