@@ -22,33 +22,15 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
-typedef std::vector<std::pair<unsigned char, const char*> > ByteArrayTy;
-
-namespace {
-class VectorMemoryObject : public MemoryObject {
-private:
-  const ByteArrayTy &Bytes;
-public:
-  VectorMemoryObject(const ByteArrayTy &bytes) : Bytes(bytes) {}
-
-  uint64_t getBase() const override { return 0; }
-  uint64_t getExtent() const override { return Bytes.size(); }
-
-  int readByte(uint64_t Addr, uint8_t *Byte) const override {
-    if (Addr >= getExtent())
-      return -1;
-    *Byte = Bytes[Addr].first;
-    return 0;
-  }
-};
-}
+typedef std::pair<std::vector<unsigned char>, std::vector<const char *>>
+    ByteArrayTy;
 
 static bool PrintInsts(const MCDisassembler &DisAsm,
                        const ByteArrayTy &Bytes,
@@ -56,13 +38,14 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
                        MCStreamer &Streamer, bool InAtomicBlock,
                        const MCSubtargetInfo &STI) {
   // Wrap the vector in a MemoryObject.
-  VectorMemoryObject memoryObject(Bytes);
+  StringRef Data((const char*)Bytes.first.data(), Bytes.first.size());
+  StringRefMemoryObject memoryObject(Data);
 
   // Disassemble it to strings.
   uint64_t Size;
   uint64_t Index;
 
-  for (Index = 0; Index < Bytes.size(); Index += Size) {
+  for (Index = 0; Index < Bytes.first.size(); Index += Size) {
     MCInst Inst;
 
     MCDisassembler::DecodeStatus S;
@@ -70,7 +53,7 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
                               /*REMOVE*/ nulls(), nulls());
     switch (S) {
     case MCDisassembler::Fail:
-      SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
+      SM.PrintMessage(SMLoc::getFromPointer(Bytes.second[Index]),
                       SourceMgr::DK_Warning,
                       "invalid instruction encoding");
       // Don't try to resynchronise the stream in a block
@@ -83,7 +66,7 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
       break;
 
     case MCDisassembler::SoftFail:
-      SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
+      SM.PrintMessage(SMLoc::getFromPointer(Bytes.second[Index]),
                       SourceMgr::DK_Warning,
                       "potentially undefined instruction encoding");
       // Fall through
@@ -143,11 +126,13 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
       SM.PrintMessage(SMLoc::getFromPointer(Value.data()), SourceMgr::DK_Error,
                       "invalid input token");
       Str = Str.substr(Str.find('\n'));
-      ByteArray.clear();
+      ByteArray.first.clear();
+      ByteArray.second.clear();
       continue;
     }
 
-    ByteArray.push_back(std::make_pair((unsigned char)ByteVal, Value.data()));
+    ByteArray.first.push_back(ByteVal);
+    ByteArray.second.push_back(Value.data());
     Str = Str.substr(Next);
   }
 
@@ -195,7 +180,8 @@ int Disassembler::disassemble(const Target &T,
   bool InAtomicBlock = false;
 
   while (SkipToToken(Str)) {
-    ByteArray.clear();
+    ByteArray.first.clear();
+    ByteArray.second.clear();
 
     if (Str[0] == '[') {
       if (InAtomicBlock) {
@@ -220,7 +206,7 @@ int Disassembler::disassemble(const Target &T,
     // It's a real token, get the bytes and emit them
     ErrorOccurred |= ByteArrayFromString(ByteArray, Str, SM);
 
-    if (!ByteArray.empty())
+    if (!ByteArray.first.empty())
       ErrorOccurred |= PrintInsts(*DisAsm, ByteArray, SM, Out, Streamer,
                                   InAtomicBlock, STI);
   }
