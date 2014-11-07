@@ -211,7 +211,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::HasLoop(size_t count)
     // don't bother checking for a loop if we won't actually need to jump nodes
     if (m_count < 2)
         return false;
-    auto steps_left = std::min(m_count,m_count);
+    auto steps_left = std::min(count,m_count);
     auto steps_left_save = steps_left;
     ListEntry slow(m_head);
     ListEntry fast(m_head);
