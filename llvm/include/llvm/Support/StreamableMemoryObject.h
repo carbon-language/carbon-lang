@@ -37,44 +37,6 @@ class StreamableMemoryObject : public MemoryObject {
   /// Destructor      - Override as necessary.
   virtual ~StreamableMemoryObject();
 
-  /// getBase         - Returns the lowest valid address in the region.
-  ///
-  /// @result         - The lowest valid address.
-  uint64_t getBase() const override = 0;
-
-  /// getExtent       - Returns the size of the region in bytes.  (The region is
-  ///                   contiguous, so the highest valid address of the region
-  ///                   is getBase() + getExtent() - 1).
-  ///                   May block until all bytes in the stream have been read
-  ///
-  /// @result         - The size of the region.
-  uint64_t getExtent() const override = 0;
-
-  /// readByte        - Tries to read a single byte from the region.
-  ///                   May block until (address - base) bytes have been read
-  /// @param address  - The address of the byte, in the same space as getBase().
-  /// @param ptr      - A pointer to a byte to be filled in.  Must be non-NULL.
-  /// @result         - 0 if successful; -1 if not.  Failure may be due to a
-  ///                   bounds violation or an implementation-specific error.
-  int readByte(uint64_t address, uint8_t *ptr) const override = 0;
-
-  /// readBytes       - Tries to read a contiguous range of bytes from the
-  ///                   region, up to the end of the region.
-  ///                   May block until (address - base + size) bytes have
-  ///                   been read. Additionally, StreamableMemoryObjects will
-  ///                   not do partial reads - if size bytes cannot be read,
-  ///                   readBytes will fail.
-  ///
-  /// @param address  - The address of the first byte, in the same space as
-  ///                   getBase().
-  /// @param size     - The number of bytes to copy.
-  /// @param buf      - A pointer to a buffer to be filled in.  Must be non-NULL
-  ///                   and large enough to hold size bytes.
-  /// @result         - 0 if successful; -1 if not.  Failure may be due to a
-  ///                   bounds violation or an implementation-specific error.
-  int readBytes(uint64_t address, uint64_t size,
-                uint8_t *buf) const override = 0;
-
   /// getPointer  - Ensures that the requested data is in memory, and returns
   ///               A pointer to it. More efficient than using readBytes if the
   ///               data is already in memory.
