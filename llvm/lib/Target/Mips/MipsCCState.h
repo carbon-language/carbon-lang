@@ -52,6 +52,9 @@ private:
   /// Records whether the value has been lowered from an f128.
   SmallVector<bool, 4> OriginalArgWasF128;
 
+  /// Records whether the value has been lowered from float.
+  SmallVector<bool, 4> OriginalArgWasFloat;
+
   /// Records whether the value was a fixed argument.
   /// See ISD::OutputArg::IsFixed,
   SmallVector<bool, 4> CallOperandIsFixed;
@@ -74,6 +77,7 @@ public:
     PreAnalyzeCallOperands(Outs, FuncArgs, CallNode);
     CCState::AnalyzeCallOperands(Outs, Fn);
     OriginalArgWasF128.clear();
+    OriginalArgWasFloat.clear();
     CallOperandIsFixed.clear();
   }
 
@@ -90,6 +94,7 @@ public:
                               CCAssignFn Fn) {
     PreAnalyzeFormalArgumentsForF128(Ins);
     CCState::AnalyzeFormalArguments(Ins, Fn);
+    OriginalArgWasFloat.clear();
     OriginalArgWasF128.clear();
   }
 
@@ -98,6 +103,7 @@ public:
                          const TargetLowering::CallLoweringInfo &CLI) {
     PreAnalyzeCallResultForF128(Ins, CLI);
     CCState::AnalyzeCallResult(Ins, Fn);
+    OriginalArgWasFloat.clear();
     OriginalArgWasF128.clear();
   }
 
@@ -105,6 +111,7 @@ public:
                      CCAssignFn Fn) {
     PreAnalyzeReturnForF128(Outs);
     CCState::AnalyzeReturn(Outs, Fn);
+    OriginalArgWasFloat.clear();
     OriginalArgWasF128.clear();
   }
 
@@ -112,11 +119,15 @@ public:
                    CCAssignFn Fn) {
     PreAnalyzeReturnForF128(ArgsFlags);
     bool Return = CCState::CheckReturn(ArgsFlags, Fn);
+    OriginalArgWasFloat.clear();
     OriginalArgWasF128.clear();
     return Return;
   }
 
   bool WasOriginalArgF128(unsigned ValNo) { return OriginalArgWasF128[ValNo]; }
+  bool WasOriginalArgFloat(unsigned ValNo) {
+      return OriginalArgWasFloat[ValNo];
+  }
   bool IsCallOperandFixed(unsigned ValNo) { return CallOperandIsFixed[ValNo]; }
   SpecialCallingConvType getSpecialCallingConv() { return SpecialCallingConv; }
 };

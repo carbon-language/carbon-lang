@@ -18,14 +18,16 @@ entry:
 ; MIPS32-DAG: jr      $ra
 ; MIPS32-DAG: subu    $3, $[[R4]], $[[R8]]
 
-; MIPS64-DAG: addiu   $[[R0:[0-9]+]], $4, -1
-; MIPS64-DAG: not     $[[R1:[0-9]+]], $4
+; MIPS64-DAG: sll     $[[A0:[0-9]+]], $4, 0
+; MIPS64-DAG: addiu   $[[R0:[0-9]+]], $[[A0]], -1
+; MIPS64-DAG: not     $[[R1:[0-9]+]], $[[A0]]
 ; MIPS64-DAG: and     $[[R2:[0-9]+]], $[[R1]], $[[R0]]
 ; MIPS64-DAG: clz     $[[R3:[0-9]+]], $[[R2]]
 ; MIPS64-DAG: addiu   $[[R4:[0-9]+]], $zero, 32
 ; MIPS64-DAG: subu    $2, $[[R4]], $[[R3]]
-; MIPS64-DAG: addiu   $[[R5:[0-9]+]], $5, -1
-; MIPS64-DAG: not     $[[R6:[0-9]+]], $5
+; MIPS64-DAG: sll     $[[A1:[0-9]+]], $5, 0
+; MIPS64-DAG: addiu   $[[R5:[0-9]+]], $[[A1]], -1
+; MIPS64-DAG: not     $[[R6:[0-9]+]], $[[A1]]
 ; MIPS64-DAG: and     $[[R7:[0-9]+]], $[[R6]], $[[R5]]
 ; MIPS64-DAG: clz     $[[R8:[0-9]+]], $[[R7]]
 ; MIPS64-DAG: jr      $ra
