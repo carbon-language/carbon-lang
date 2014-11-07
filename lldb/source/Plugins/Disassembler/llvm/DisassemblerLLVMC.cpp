@@ -21,7 +21,7 @@
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/ADT/SmallString.h"
@@ -489,35 +489,14 @@ DisassemblerLLVMC::LLVMCDisassembler::~LLVMCDisassembler()
 {
 }
 
-namespace {
-    // This is the memory object we use in GetInstruction.
-    class LLDBDisasmMemoryObject : public llvm::MemoryObject {
-      const uint8_t *m_bytes;
-      uint64_t m_size;
-      uint64_t m_base_PC;
-    public:
-      LLDBDisasmMemoryObject(const uint8_t *bytes, uint64_t size, uint64_t basePC) :
-                         m_bytes(bytes), m_size(size), m_base_PC(basePC) {}
-
-      uint64_t getBase() const { return m_base_PC; }
-      uint64_t getExtent() const { return m_size; }
-
-      int readByte(uint64_t addr, uint8_t *byte) const {
-        if (addr - m_base_PC >= m_size)
-          return -1;
-        *byte = m_bytes[addr - m_base_PC];
-        return 0;
-      }
-    };
-} // End Anonymous Namespace
-
 uint64_t
 DisassemblerLLVMC::LLVMCDisassembler::GetMCInst (const uint8_t *opcode_data,
                                                  size_t opcode_data_len,
                                                  lldb::addr_t pc,
                                                  llvm::MCInst &mc_inst)
 {
-    LLDBDisasmMemoryObject memory_object (opcode_data, opcode_data_len, pc);
+    llvm::StringRef data((const char*)opcode_data, opcode_data_len);
+    llvm::StringRefMemoryObject memory_object(data, pc);
     llvm::MCDisassembler::DecodeStatus status;
 
     uint64_t new_inst_size;
