@@ -32,8 +32,8 @@ struct V4 : Z, V1, V2 {
 void use_somewhere_else(void*);
 
 namespace simple {
-// In case of a single-layer virtual inheritance, the "this" adjustment is done
-// staically:
+// In case of a single-layer virtual inheritance, the "this" adjustment for a
+// virtual method is done staically:
 //   struct A {
 //     virtual void f();  // Expects "(A*)this" in ECX
 //   };
@@ -48,9 +48,9 @@ namespace simple {
 // current class layout and the most derived class layout are different.
 // This is done using vtordisp thunks.
 //
-// A simple vtordisp{A,B} thunk for Method@Class is something like:
-//   sub  ecx, [ecx+A]  // apply the vtordisp adjustment
-//   sub  ecx, B        // apply the subobject adjustment, if needed.
+// A simple vtordisp{x,y} thunk for Method@Class is something like:
+//   sub  ecx, [ecx+x]  // apply the vtordisp adjustment
+//   sub  ecx, y        // apply the subobject adjustment, if needed.
 //   jmp Method@Class
 
 struct A : virtual V1 {
@@ -227,12 +227,12 @@ namespace extended {
 // In this case, we should use the extended form of vtordisp thunks, called
 // vtordispex thunks.
 //
-// vtordispex{A,B,C,D} thunk for Method@Class is something like:
-//   sub  ecx, [ecx+C]  // apply the vtordisp adjustment
-//   sub  ecx, A        // jump to the vbtable of the most derived class
+// vtordispex{x,y,z,w} thunk for Method@Class is something like:
+//   sub  ecx, [ecx+z]  // apply the vtordisp adjustment
+//   sub  ecx, x        // jump to the vbptr of the most derived class
 //   mov  eax, [ecx]    // load the vbtable address
-//   add  ecx, [eax+B]  // lookup the final overrider's vbase offset
-//   add  ecx, D        // apphy the subobject offset if needed
+//   add  ecx, [eax+y]  // lookup the final overrider's vbase offset
+//   add  ecx, w        // apphy the subobject offset if needed
 //   jmp Method@Class
 
 struct A : virtual simple::A {
