@@ -180,9 +180,10 @@ private:
           rit->getType(isMips64EL()), rit->getSymbol(isMips64EL())));
 
       auto addend = readAddend(*rit, secContent);
-      if (needsMatchingRelocation(*rit)) {
+      auto pairRelType = getPairRelocation(*rit);
+      if (pairRelType != llvm::ELF::R_MIPS_NONE) {
         addend <<= 16;
-        auto mit = findMatchingRelocation(rit, eit);
+        auto mit = findMatchingRelocation(pairRelType, rit, eit);
         if (mit != eit)
           addend += int16_t(readAddend(*mit, secContent));
         else
@@ -219,21 +220,24 @@ private:
     }
   }
 
-  bool needsMatchingRelocation(const Elf_Rel &rel) {
-    auto rType = rel.getType(isMips64EL());
-    if (rType == llvm::ELF::R_MIPS_HI16)
-      return true;
-    if (rType == llvm::ELF::R_MIPS_GOT16) {
+  uint32_t getPairRelocation(const Elf_Rel &rel) {
+    switch (rel.getType(isMips64EL())) {
+    case llvm::ELF::R_MIPS_HI16:
+      return llvm::ELF::R_MIPS_LO16;
+    case llvm::ELF::R_MIPS_GOT16: {
       const Elf_Sym *symbol =
           this->_objFile->getSymbol(rel.getSymbol(isMips64EL()));
-      return symbol->getBinding() == llvm::ELF::STB_LOCAL;
+      if (symbol->getBinding() == llvm::ELF::STB_LOCAL)
+        return llvm::ELF::R_MIPS_LO16;
     }
-    return false;
+    }
+    return llvm::ELF::R_MIPS_NONE;
   }
 
-  Elf_Rel_Iter findMatchingRelocation(Elf_Rel_Iter rit, Elf_Rel_Iter eit) {
+  Elf_Rel_Iter findMatchingRelocation(uint32_t pairRelType, Elf_Rel_Iter rit,
+                                      Elf_Rel_Iter eit) {
     return std::find_if(rit, eit, [&](const Elf_Rel &rel) {
-      return rel.getType(isMips64EL()) == llvm::ELF::R_MIPS_LO16 &&
+      return rel.getType(isMips64EL()) == pairRelType &&
              rel.getSymbol(isMips64EL()) == rit->getSymbol(isMips64EL());
     });
   }
