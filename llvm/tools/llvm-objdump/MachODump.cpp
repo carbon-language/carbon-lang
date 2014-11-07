@@ -1391,35 +1391,6 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
   return SymbolName;
 }
 
-//
-// This is the memory object used by DisAsm->getInstruction() which has its
-// BasePC.  This then allows the 'address' parameter to getInstruction() to
-// be the actual PC of the instruction.  Then when a branch dispacement is
-// added to the PC of an instruction, the 'ReferenceValue' passed to the
-// SymbolizerSymbolLookUp() routine is the correct target addresses.  As in
-// the case of a fully linked Mach-O file where a section being disassembled
-// generally not linked at address zero.
-//
-class DisasmMemoryObject : public MemoryObject {
-  const uint8_t *Bytes;
-  uint64_t Size;
-  uint64_t BasePC;
-
-public:
-  DisasmMemoryObject(const uint8_t *bytes, uint64_t size, uint64_t basePC)
-      : Bytes(bytes), Size(size), BasePC(basePC) {}
-
-  uint64_t getBase() const override { return BasePC; }
-  uint64_t getExtent() const override { return Size; }
-
-  int readByte(uint64_t Addr, uint8_t *Byte) const override {
-    if (Addr - BasePC >= Size)
-      return -1;
-    *Byte = Bytes[Addr - BasePC];
-    return 0;
-  }
-};
-
 /// \brief Emits the comments that are stored in the CommentStream.
 /// Each comment in the CommentStream must end with a newline.
 static void emitComments(raw_svector_ostream &CommentStream,
@@ -1643,8 +1614,8 @@ static void DisassembleInputMachO2(StringRef Filename,
     StringRef Bytes;
     Sections[SectIdx].getContents(Bytes);
     uint64_t SectAddress = Sections[SectIdx].getAddress();
-    DisasmMemoryObject MemoryObject((const uint8_t *)Bytes.data(), Bytes.size(),
-                                    SectAddress);
+
+    StringRefMemoryObject MemoryObject(Bytes, SectAddress);
     bool symbolTableWorked = false;
 
     // Parse relocations.
@@ -1743,9 +1714,9 @@ static void DisassembleInputMachO2(StringRef Filename,
       uint64_t Size;
 
       symbolTableWorked = true;
-      DisasmMemoryObject SectionMemoryObject((const uint8_t *)Bytes.data() +
-                                                 Start,
-                                             End - Start, SectAddress + Start);
+
+      StringRef Data(Bytes.data() + Start, End - Start);
+      StringRefMemoryObject SectionMemoryObject(Data, SectAddress + Start);
 
       DataRefImpl Symb = Symbols[SymIdx].getRawDataRefImpl();
       bool isThumb =
