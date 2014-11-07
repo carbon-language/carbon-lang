@@ -5,7 +5,7 @@
   int X __attribute__((deprecated)); // expected-note 2 {{'X' has been explicitly marked deprecated here}}
 }
 + (void)F __attribute__((deprecated)); // expected-note 2 {{'F' has been explicitly marked deprecated here}}
-- (void)f __attribute__((deprecated)); // expected-note 4 {{'f' has been explicitly marked deprecated here}}
+- (void)f __attribute__((deprecated)); // expected-note 5 {{'f' has been explicitly marked deprecated here}}
 @end
 
 @implementation A
@@ -54,7 +54,7 @@ void t1(A *a)
 
 void t2(id a)
 {
-  [a f];
+  [a f]; // expected-warning {{'f' is deprecated}}
 }
 
 void t3(A<P>* a)
@@ -227,4 +227,14 @@ expected-note {{property declared here}}
 }
 
 @end
+
+// rdar://18848183
+@interface NSString
+- (const char *)cString __attribute__((availability(macosx,introduced=10.0 ,deprecated=10.4,message="" ))); // expected-note {{'cString' has been explicitly marked deprecated here}}
+@end
+
+id PID = 0;
+const char * func() {
+  return [PID cString]; // expected-warning {{'cString' is deprecated: first deprecated in OS X 10.4}}
+}
 
