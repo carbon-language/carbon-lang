@@ -371,8 +371,11 @@ public:
   /// does not exist, return null. If AllowInternal is set to true, this
   /// function will return types that have InternalLinkage. By default, these
   /// types are not returned.
-  const GlobalVariable *getGlobalVariable(StringRef Name,
-                                          bool AllowInternal = false) const {
+  GlobalVariable *getGlobalVariable(StringRef Name) const {
+    return getGlobalVariable(Name, false);
+  }
+
+  GlobalVariable *getGlobalVariable(StringRef Name, bool AllowInternal) const {
     return const_cast<Module *>(this)->getGlobalVariable(Name, AllowInternal);
   }
 
@@ -563,6 +566,13 @@ public:
   const_reverse_iterator  rend() const  { return FunctionList.rend(); }
   size_t                  size() const  { return FunctionList.size(); }
   bool                    empty() const { return FunctionList.empty(); }
+
+  iterator_range<iterator> functions() {
+    return iterator_range<iterator>(begin(), end());
+  }
+  iterator_range<const_iterator> functions() const {
+    return iterator_range<const_iterator>(begin(), end());
+  }
 
 /// @}
 /// @name Alias Iteration
