@@ -62,10 +62,6 @@ public:
     }
   }
 
-  bool isLittleEndian() const override {
-    return HexagonELFType::TargetEndianness == llvm::support::little;
-  }
-
   /// \brief Create Internal files for Init/Fini
   void createInternalFiles(
       std::vector<std::unique_ptr<File>> &result) const override;

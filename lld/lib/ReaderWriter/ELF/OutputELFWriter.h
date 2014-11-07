@@ -405,11 +405,6 @@ std::error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
 }
 
 template <class ELFT> std::error_code OutputELFWriter<ELFT>::setELFHeader() {
-  _elfHeader->e_ident(ELF::EI_CLASS,
-                      _context.is64Bits() ? ELF::ELFCLASS64 : ELF::ELFCLASS32);
-  _elfHeader->e_ident(ELF::EI_DATA, _context.isLittleEndian()
-                                        ? ELF::ELFDATA2LSB
-                                        : ELF::ELFDATA2MSB);
   _elfHeader->e_type(_context.getOutputELFType());
   _elfHeader->e_machine(_context.getOutputMachine());
   _elfHeader->e_ident(ELF::EI_VERSION, 1);
@@ -450,6 +445,11 @@ std::error_code OutputELFWriter<ELFT>::writeOutput(const File &file,
   // HACK: We have to write out the header and program header here even though
   // they are a member of a segment because only sections are written in the
   // following loop.
+
+  // Finalize ELF Header / Program Headers.
+  _elfHeader->finalize();
+  _programHeader->finalize();
+
   _elfHeader->write(this, _layout, *buffer);
   _programHeader->write(this, _layout, *buffer);
 

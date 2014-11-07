@@ -23,10 +23,6 @@ public:
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                       new X86TargetHandler(*this))) {}
 
-  bool isLittleEndian() const override {
-    return X86ELFType::TargetEndianness == llvm::support::little;
-  }
-
   /// \brief X86 has only two relative relocation
   /// a) for supporting IFUNC relocs - R_386_IRELATIVE
   /// b) for supporting relative relocs - R_386_RELATIVE

@@ -24,8 +24,6 @@ public:
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                       new PPCTargetHandler(*this))) {}
 
-  bool isLittleEndian() const override { return false; }
-
   /// \brief PPC has no relative relocations defined
   bool isRelativeReloc(const Reference &) const override { return false; }
 };

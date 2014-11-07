@@ -20,10 +20,6 @@ MipsLinkingContext::MipsLinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                     new MipsTargetHandler(*this))) {}
 
-bool MipsLinkingContext::isLittleEndian() const {
-  return Mips32ElELFType::TargetEndianness == llvm::support::little;
-}
-
 uint64_t MipsLinkingContext::getBaseAddress() const {
   if (_baseAddress == 0 && getOutputELFType() == llvm::ELF::ET_EXEC)
     return 0x400000;

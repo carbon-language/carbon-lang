@@ -56,7 +56,16 @@ public:
 
   virtual void doPreFlight() {}
 
-  void finalize() {}
+  void finalize() {
+    _eh.e_ident[llvm::ELF::EI_CLASS] =
+        (ELFT::Is64Bits) ? llvm::ELF::ELFCLASS64 : llvm::ELF::ELFCLASS32;
+    _eh.e_ident[llvm::ELF::EI_DATA] =
+        (ELFT::TargetEndianness == llvm::support::little)
+            ? llvm::ELF::ELFDATA2LSB
+            : llvm::ELF::ELFDATA2MSB;
+    _eh.e_type = this->_context.getOutputELFType();
+    _eh.e_machine = this->_context.getOutputMachine();
+  }
 
 private:
   Elf_Ehdr _eh;

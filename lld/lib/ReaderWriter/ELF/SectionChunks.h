@@ -903,10 +903,7 @@ public:
     this->setOrder(order);
     this->_flags = SHF_ALLOC;
     // Set the alignment properly depending on the target architecture
-    if (context.is64Bits())
-      this->_align2 = 8;
-    else
-      this->_align2 = 4;
+    this->_align2 = ELFT::Is64Bits ? 8 : 4;
     if (context.isRelaOutputFormat()) {
       this->_entSize = sizeof(Elf_Rela);
       this->_type = SHT_RELA;
@@ -1232,11 +1229,7 @@ public:
     this->_entSize = 4;
     this->_type = SHT_HASH;
     this->_flags = SHF_ALLOC;
-    // Set the alignment properly depending on the target architecture
-    if (context.is64Bits())
-      this->_align2 = 8;
-    else
-      this->_align2 = 4;
+    this->_align2 = ELFT::Is64Bits ? 8 : 4;
     this->_fsize = 0;
     this->_msize = 0;
   }
@@ -1340,11 +1333,7 @@ public:
     this->_entSize = 0;
     this->_type = SHT_PROGBITS;
     this->_flags = SHF_ALLOC;
-    // Set the alignment properly depending on the target architecture
-    if (context.is64Bits())
-      this->_align2 = 8;
-    else
-      this->_align2 = 4;
+    this->_align2 = ELFT::Is64Bits ? 8 : 4;
     // Minimum size for empty .eh_frame_hdr.
     this->_fsize = 1 + 1 + 1 + 1 + 4;
     this->_msize = this->_fsize;

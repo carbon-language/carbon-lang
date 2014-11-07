@@ -56,10 +56,6 @@ public:
     }
   }
 
-  bool isLittleEndian() const override {
-    return X86_64ELFType::TargetEndianness == llvm::support::little;
-  }
-
   bool isCopyRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;

@@ -39,7 +39,6 @@ public:
   MipsLinkingContext(llvm::Triple triple);
 
   // ELFLinkingContext
-  bool isLittleEndian() const override;
   uint64_t getBaseAddress() const override;
   StringRef entrySymbolName() const override;
   StringRef getDefaultInterpreter() const override;
