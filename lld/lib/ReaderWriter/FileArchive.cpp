@@ -133,18 +133,27 @@ private:
     if (std::error_code ec = mbOrErr.getError())
       return ec;
     llvm::MemoryBufferRef mb = mbOrErr.get();
-    if (_logLoading)
-      llvm::outs() << _archive->getFileName() << "(" << mb.getBufferIdentifier()
-                   << ")"
-                   << "\n";
+    std::string memberPath = (_archive->getFileName() + "("
+                           + mb.getBufferIdentifier() + ")").str();
 
-    std::unique_ptr<MemoryBuffer> buf(MemoryBuffer::getMemBuffer(
-        mb.getBuffer(), mb.getBufferIdentifier(), false));
+    if (_logLoading)
+      llvm::errs() << memberPath << "\n";
+
+    std::unique_ptr<MemoryBuffer> memberMB(MemoryBuffer::getMemBuffer(
+        mb.getBuffer(), memberPath, false));
 
     std::vector<std::unique_ptr<File>> files;
-    _registry.parseFile(buf, files);
+    _registry.parseFile(memberMB, files);
     assert(files.size() == 1);
     result = std::move(files[0]);
+
+    // Note: The object file parsers use getBufferIdentifier() from memberMB
+    // for the file path. And MemoryBuffer makes its own copy of the path.
+    // That means when if memberMB is destroyed, the lld:File objects will
+    // have a dangling reference for their path.  To fix that, all the
+    // MemoryBuffers for the archive members are owned by _memberBuffers.
+    _memberBuffers.push_back(std::move(memberMB));
+
     return std::error_code();
   }
 
@@ -205,6 +214,7 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   bool _isWholeArchive;
   bool _logLoading;
+  mutable std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
 };
 
 class ArchiveReader : public Reader {
