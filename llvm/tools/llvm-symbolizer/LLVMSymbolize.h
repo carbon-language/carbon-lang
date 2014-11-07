@@ -17,6 +17,7 @@
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <map>
 #include <memory>
@@ -115,7 +116,11 @@ private:
   bool getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
                               std::string &Name, uint64_t &Addr,
                               uint64_t &Size) const;
-  void addSymbol(const SymbolRef &Symbol);
+  // For big-endian PowerPC64 ELF, OpdAddress is the address of the .opd
+  // (function descriptor) section and OpdExtractor refers to its contents.
+  void addSymbol(const SymbolRef &Symbol,
+                 DataExtractor *OpdExtractor = nullptr,
+                 uint64_t OpdAddress = 0);
   ObjectFile *Module;
   std::unique_ptr<DIContext> DebugInfoContext;
 

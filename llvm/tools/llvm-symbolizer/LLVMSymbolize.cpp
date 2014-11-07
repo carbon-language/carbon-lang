@@ -45,8 +45,26 @@ getDILineInfoSpecifier(const LLVMSymbolizer::Options &Opts) {
 
 ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
     : Module(Obj), DebugInfoContext(DICtx) {
+  std::unique_ptr<DataExtractor> OpdExtractor;
+  uint64_t OpdAddress = 0;
+  // Find the .opd (function descriptor) section if any, for big-endian
+  // PowerPC64 ELF.
+  if (Module->getArch() == Triple::ppc64) {
+    for (section_iterator Section : Module->sections()) {
+      StringRef Name;
+      if (!error(Section->getName(Name)) && Name == ".opd") {
+        StringRef Data;
+        if (!error(Section->getContents(Data))) {
+          OpdExtractor.reset(new DataExtractor(Data, Module->isLittleEndian(),
+                                               Module->getBytesInAddress()));
+          OpdAddress = Section->getAddress();
+        }
+        break;
+      }
+    }
+  }
   for (const SymbolRef &Symbol : Module->symbols()) {
-    addSymbol(Symbol);
+    addSymbol(Symbol, OpdExtractor.get(), OpdAddress);
   }
   bool NoSymbolTable = (Module->symbol_begin() == Module->symbol_end());
   if (NoSymbolTable && Module->isELF()) {
@@ -54,12 +72,13 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
     std::pair<symbol_iterator, symbol_iterator> IDyn =
         getELFDynamicSymbolIterators(Module);
     for (symbol_iterator si = IDyn.first, se = IDyn.second; si != se; ++si) {
-      addSymbol(*si);
+      addSymbol(*si, OpdExtractor.get(), OpdAddress);
     }
   }
 }
 
-void ModuleInfo::addSymbol(const SymbolRef &Symbol) {
+void ModuleInfo::addSymbol(const SymbolRef &Symbol, DataExtractor *OpdExtractor,
+                           uint64_t OpdAddress) {
   SymbolRef::Type SymbolType;
   if (error(Symbol.getType(SymbolType)))
     return;
@@ -69,6 +88,18 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol) {
   if (error(Symbol.getAddress(SymbolAddress)) ||
       SymbolAddress == UnknownAddressOrSize)
     return;
+  if (OpdExtractor) {
+    // For big-endian PowerPC64 ELF, symbols in the .opd section refer to
+    // function descriptors. The first word of the descriptor is a pointer to
+    // the function's code.
+    // For the purposes of symbolization, pretend the symbol's address is that
+    // of the function's code, not the descriptor.
+    uint64_t OpdOffset = SymbolAddress - OpdAddress;
+    uint32_t OpdOffset32 = OpdOffset;
+    if (OpdOffset == OpdOffset32 && 
+        OpdExtractor->isValidOffsetForAddress(OpdOffset32))
+      SymbolAddress = OpdExtractor->getAddress(&OpdOffset32);
+  }
   uint64_t SymbolSize;
   // Getting symbol size is linear for Mach-O files, so assume that symbol
   // occupies the memory range up to the following symbol.
