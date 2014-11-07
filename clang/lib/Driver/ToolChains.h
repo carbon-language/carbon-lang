@@ -709,7 +709,8 @@ public:
 
   StringRef GetGCCLibAndIncVersion() const { return GCCLibAndIncVersion.Text; }
 
-  static std::string GetGnuDir(const std::string &InstalledDir);
+  static std::string GetGnuDir(const std::string &InstalledDir,
+                               const llvm::opt::ArgList &Args);
 
   static StringRef GetTargetCPU(const llvm::opt::ArgList &Args);
 };

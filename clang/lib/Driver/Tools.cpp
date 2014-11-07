@@ -5249,8 +5249,8 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const std::string MarchSuffix = "/" + MarchString;
   const std::string G0Suffix = "/G0";
   const std::string MarchG0Suffix = MarchSuffix + G0Suffix;
-  const std::string RootDir = toolchains::Hexagon_TC::GetGnuDir(D.InstalledDir)
-                              + "/";
+  const std::string RootDir =
+      toolchains::Hexagon_TC::GetGnuDir(D.InstalledDir, Args) + "/";
   const std::string StartFilesDir = RootDir
                                     + "hexagon/lib"
                                     + (buildingLib
