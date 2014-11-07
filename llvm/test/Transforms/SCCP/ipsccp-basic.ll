@@ -227,3 +227,23 @@ entry:
 ; CHECK-LABEL: define internal i32 @test10b(
 ; CHECK: ret i32 undef
 }
+
+;;======================== test11
+
+define i64 @test11a() {
+  %xor = xor i64 undef, undef
+  ret i64 %xor
+; CHECK-LABEL: define i64 @test11a
+; CHECK: ret i64 0
+}
+
+define void @test11b() {
+  %call1 = call i64 @test11a()
+  %call2 = call i64 @llvm.ctpop.i64(i64 %call1)
+  ret void
+; CHECK-LABEL: define void @test11b
+; CHECK: %[[call1:.*]] = call i64 @test11a()
+; CHECK: %[[call2:.*]] = call i64 @llvm.ctpop.i64(i64 0)
+}
+
+declare i64 @llvm.ctpop.i64(i64)

@@ -1107,6 +1107,9 @@ CallOverdefined:
         Operands.push_back(State.getConstant());
       }
 
+      if (getValueState(I).isOverdefined())
+        return;
+
       // If we can constant fold this, mark the result of the call as a
       // constant.
       if (Constant *C = ConstantFoldCall(F, Operands, TLI))
