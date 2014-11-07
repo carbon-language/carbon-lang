@@ -390,7 +390,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreVFPv3EPy)
 #if defined(__ARM_FP)
-#if __ARM_ARCH < 7
+#ifndef __ARM_NEON
   ldcl p11, cr0, [r0], {0x20}  @ vldm r0, {d16-d31}
 #else
   vldmia r0, {d16-d31}

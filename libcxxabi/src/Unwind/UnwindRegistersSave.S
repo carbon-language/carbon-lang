@@ -369,7 +369,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveVFPv3EPy)
   @ these registers implies they are, actually, available on the target, so
   @ it's ok to execute.
   @ So, generate the instructions using the corresponding coprocessor mnemonic.
-#if __ARM_ARCH < 7
+#ifndef __ARM_NEON
   stcl p11, cr0, [r0], {0x20}  @ vstm r0, {d16-d31}
 #else
   vstmia r0, {d16-d31}
