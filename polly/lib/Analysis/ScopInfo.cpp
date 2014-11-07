@@ -728,8 +728,10 @@ void ScopStmt::buildAccesses(TempScop &tempScop) {
     const IRAccess &Access = AccessPair.first;
     Instruction *AccessInst = AccessPair.second;
 
-    const ScopArrayInfo *SAI =
-        getParent()->getOrCreateScopArrayInfo(Access, AccessInst);
+    Type *AccessType = getAccessInstType(AccessInst)->getPointerTo();
+    const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
+        Access.getBase(), AccessType, Access.Sizes);
+
     MemAccs.push_back(new MemoryAccess(Access, AccessInst, this, SAI));
 
     // We do not track locations for scalar memory accesses at the moment.
@@ -1482,14 +1484,12 @@ Scop::~Scop() {
   }
 }
 
-const ScopArrayInfo *Scop::getOrCreateScopArrayInfo(const IRAccess &Access,
-                                                    Instruction *AccessInst) {
-  Value *BasePtr = Access.getBase();
+const ScopArrayInfo *
+Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
+                               const SmallVector<const SCEV *, 4> &Sizes) {
   const ScopArrayInfo *&SAI = ScopArrayInfoMap[BasePtr];
-  if (!SAI) {
-    Type *AccessType = getPointerOperand(*AccessInst)->getType();
-    SAI = new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Access.Sizes);
-  }
+  if (!SAI)
+    SAI = new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes);
   return SAI;
 }
 

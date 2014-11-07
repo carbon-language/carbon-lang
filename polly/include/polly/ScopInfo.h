@@ -828,8 +828,9 @@ public:
   //@}
 
   /// @brief Return the (possibly new) ScopArrayInfo object for @p Access.
-  const ScopArrayInfo *getOrCreateScopArrayInfo(const IRAccess &Access,
-                                                Instruction *AccessInst);
+  const ScopArrayInfo *
+  getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
+                           const SmallVector<const SCEV *, 4> &Sizes);
 
   /// @brief Return the cached ScopArrayInfo object for @p BasePtr.
   const ScopArrayInfo *getScopArrayInfo(Value *BasePtr);
