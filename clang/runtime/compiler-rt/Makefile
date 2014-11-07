@@ -221,8 +221,6 @@ $(ResourceLibDir)/$1/libclang_rt.%.dylib: \
 		$(ResourceLibDir)/$1/.dir
 	$(Echo) Copying runtime library $1/$$* to build dir
 	$(Verb) cp $(PROJ_OBJ_DIR)/clang_$1/$$*/libcompiler_rt.dylib $$@
-	$(Echo) Fixing LC_ID_DYLIB of $$@
-	$(Verb) install_name_tool $$@ -id $$@
 RuntimeLibrary.$1: \
 		$(RuntimeLibrary.$1.Configs:%=$(ResourceLibDir)/$1/libclang_rt.%)
 .PHONY: RuntimeLibrary.$1
