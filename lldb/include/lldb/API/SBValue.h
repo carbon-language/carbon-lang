@@ -158,6 +158,7 @@ public:
     lldb::SBValue
     CreateChildAtOffset (const char *name, uint32_t offset, lldb::SBType type);
     
+    // Deprecated - use the expression evaluator to perform type casting
     lldb::SBValue
     Cast (lldb::SBType type);
     
