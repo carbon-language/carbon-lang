@@ -7,8 +7,8 @@
 
 typedef void void_f();
 int main() {
-  void_f *func = (void_f *)0x7;
+  void_f *func = (void_f *)0x4;
   func();
-  // CHECK: {{AddressSanitizer: SEGV.*(pc.*0007)}}
+  // CHECK: {{AddressSanitizer: SEGV.*(pc.*0004)}}
   return 0;
 }
