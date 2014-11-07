@@ -42,3 +42,8 @@ add_llvm_unittest(SupportTests
   formatted_raw_ostream_test.cpp
   raw_ostream_test.cpp
   )
+
+# ManagedStatic.cpp uses <pthread>.
+if(LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD)
+  target_link_libraries(SupportTests pthread)
+endif()
