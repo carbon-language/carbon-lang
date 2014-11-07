@@ -21,7 +21,7 @@
 #include "llvm/MC/MCSymbolizer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -121,30 +121,6 @@ void LLVMDisasmDispose(LLVMDisasmContextRef DCR){
   LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
   delete DC;
 }
-
-namespace {
-//
-// The memory object created by LLVMDisasmInstruction().
-//
-class DisasmMemoryObject : public MemoryObject {
-  uint8_t *Bytes;
-  uint64_t Size;
-  uint64_t BasePC;
-public:
-  DisasmMemoryObject(uint8_t *bytes, uint64_t size, uint64_t basePC) :
-                     Bytes(bytes), Size(size), BasePC(basePC) {}
-
-  uint64_t getBase() const override { return BasePC; }
-  uint64_t getExtent() const override { return Size; }
-
-  int readByte(uint64_t Addr, uint8_t *Byte) const override {
-    if (Addr - BasePC >= Size)
-      return -1;
-    *Byte = Bytes[Addr - BasePC];
-    return 0;
-  }
-};
-} // end anonymous namespace
 
 /// \brief Emits the comments that are stored in \p DC comment stream.
 /// Each comment in the comment stream must end with a newline.
@@ -269,7 +245,8 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
                              size_t OutStringSize){
   LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
   // Wrap the pointer to the Bytes, BytesSize and PC in a MemoryObject.
-  DisasmMemoryObject MemoryObject(Bytes, BytesSize, PC);
+  StringRef Data((const char*) Bytes, BytesSize);
+  StringRefMemoryObject MemoryObject(Data, PC);
 
   uint64_t Size;
   MCInst Inst;
