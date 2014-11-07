@@ -261,8 +261,9 @@ void AArch64InstrInfo::instantiateCondBranch(
     BuildMI(&MBB, DL, get(AArch64::Bcc)).addImm(Cond[0].getImm()).addMBB(TBB);
   } else {
     // Folded compare-and-branch
+    // Note that we use addOperand instead of addReg to keep the flags.
     const MachineInstrBuilder MIB =
-        BuildMI(&MBB, DL, get(Cond[1].getImm())).addReg(Cond[2].getReg());
+        BuildMI(&MBB, DL, get(Cond[1].getImm())).addOperand(Cond[2]);
     if (Cond.size() > 3)
       MIB.addImm(Cond[3].getImm());
     MIB.addMBB(TBB);
