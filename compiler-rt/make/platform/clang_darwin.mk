@@ -203,13 +203,13 @@ CFLAGS.profile_ios.arm64  := $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 
 # Configure the asan_osx_dynamic library to be built shared.
 SHARED_LIBRARY.asan_osx_dynamic := 1
-LDFLAGS.asan_osx_dynamic := -lstdc++ -undefined dynamic_lookup
+LDFLAGS.asan_osx_dynamic := -lstdc++ -undefined dynamic_lookup -install_name @rpath/libclang_rt.asan_osx_dynamic.dylib
 
 # Configure the asan_iossim_dynamic library to be built shared.
 SHARED_LIBRARY.asan_iossim_dynamic := 1
 # configure+make uses Clang, so we're using isysroot instead of --sysroot
 # or -Wl,-syslibroot.
-LDFLAGS.asan_iossim_dynamic := -undefined dynamic_lookup \
+LDFLAGS.asan_iossim_dynamic := -undefined dynamic_lookup -install_name @rpath/libclang_rt.asan_iossim_dynamic.dylib \
   -Wl,-ios_simulator_version_min,7.0.0 \
   -mios-simulator-version-min=7.0 -isysroot $(IOSSIM_SDK_PATH)
 
