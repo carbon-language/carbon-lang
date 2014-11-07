@@ -161,11 +161,10 @@ bool BugDriver::runPasses(Module *Program,
 
   std::string tool = OptCmd;
   if (OptCmd.empty()) {
-    auto Path = sys::findProgramByName("opt");
-    if (!Path)
-      errs() << Path.getError().message() << "\n";
-    else
+    if (ErrorOr<std::string> Path = sys::findProgramByName("opt"))
       tool = *Path;
+    else
+      errs() << Path.getError().message() << "\n";
   }
   if (tool.empty()) {
     errs() << "Cannot find `opt' in PATH!\n";
@@ -174,11 +173,10 @@ bool BugDriver::runPasses(Module *Program,
 
   std::string Prog;
   if (UseValgrind) {
-    auto Path = sys::findProgramByName("valgrind");
-    if (!Path)
-      errs() << Path.getError().message() << "\n";
-    else
+    if (ErrorOr<std::string> Path = sys::findProgramByName("valgrind"))
       Prog = *Path;
+    else
+      errs() << Path.getError().message() << "\n";
   } else
     Prog = tool;
   if (Prog.empty()) {
