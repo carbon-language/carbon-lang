@@ -210,6 +210,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   class MipsFunctionInfo;
   class MipsSubtarget;
+  class MipsCCState;
 
   class MipsTargetLowering : public TargetLowering  {
     bool isMicroMips;
@@ -363,10 +364,6 @@ namespace llvm {
       MipsCC(CallingConv::ID CallConv, const MipsSubtarget &Subtarget,
              CCState &Info);
 
-      /// reservedArgArea - The size of the area the caller reserves for
-      /// register arguments. This is 16-byte if ABI is O32.
-      unsigned reservedArgArea() const;
-
     private:
       CallingConv::ID CallConv;
       const MipsSubtarget &Subtarget;
@@ -446,7 +443,7 @@ namespace llvm {
                        SmallVectorImpl<SDValue> &InVals,
                        const Argument *FuncArg, const MipsCC &CC,
                        unsigned FirstReg, unsigned LastReg,
-                       const CCValAssign &VA) const;
+                       const CCValAssign &VA, MipsCCState &State) const;
 
     /// passByValArg - Pass a byval argument in registers or on stack.
     void passByValArg(SDValue Chain, SDLoc DL,
