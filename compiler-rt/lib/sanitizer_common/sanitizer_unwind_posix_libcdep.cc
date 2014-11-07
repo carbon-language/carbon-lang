@@ -116,7 +116,7 @@ void BufferedStackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   // We need to pop a few frames so that pc is on top.
   uptr to_pop = LocatePcInTrace(pc);
   // trace_buffer[0] belongs to the current function so we always pop it.
-  if (to_pop == 0)
+  if (to_pop == 0 && size > 1)
     to_pop = 1;
   PopStackFrames(to_pop);
   trace_buffer[0] = pc;
