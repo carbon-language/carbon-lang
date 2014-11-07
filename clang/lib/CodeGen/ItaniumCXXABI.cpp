@@ -2190,6 +2190,11 @@ ItaniumRTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
                                   /*Constant=*/true,
                                   llvm::GlobalValue::ExternalLinkage, nullptr,
                                   Name);
+    if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
+      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
+      if (RD->hasAttr<DLLImportAttr>())
+        GV->setDLLStorageClass(llvm::GlobalVariable::DLLImportStorageClass);
+    }
   }
 
   return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
@@ -2312,7 +2317,11 @@ static bool ShouldUseExternalRTTIDescriptor(CodeGenModule &CGM,
 
     // FIXME: this may need to be reconsidered if the key function
     // changes.
-    return CGM.getVTables().isVTableExternal(RD);
+    if (CGM.getVTables().isVTableExternal(RD))
+      return true;
+
+    if (RD->hasAttr<DLLImportAttr>())
+      return true;
   }
 
   return false;
