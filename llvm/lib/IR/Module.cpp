@@ -459,3 +459,16 @@ Comdat *Module::getOrInsertComdat(StringRef Name) {
   Entry.second.Name = &Entry;
   return &Entry.second;
 }
+
+PICLevel::Level Module::getPICLevel() const {
+  Value *Val = getModuleFlag("PIC Level");
+
+  if (Val == NULL)
+    return PICLevel::Default;
+
+  return static_cast<PICLevel::Level>(cast<ConstantInt>(Val)->getZExtValue());
+}
+
+void Module::setPICLevel(PICLevel::Level PL) {
+  addModuleFlag(ModFlagBehavior::Error, "PIC Level", PL);
+}

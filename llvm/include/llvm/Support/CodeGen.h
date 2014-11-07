@@ -30,6 +30,10 @@ namespace llvm {
     enum Model { Default, JITDefault, Small, Kernel, Medium, Large };
   }
 
+  namespace PICLevel {
+    enum Level { Default=0, Small=1, Large=2 };
+  }
+
   // TLS models.
   namespace TLSModel {
     enum Model {

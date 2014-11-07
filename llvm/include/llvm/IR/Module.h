@@ -23,6 +23,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/CBindingWrapping.h"
+#include "llvm/Support/CodeGen.h"
 #include "llvm/Support/DataTypes.h"
 #include <system_error>
 
@@ -633,6 +634,15 @@ public:
   /// \brief Returns the Dwarf Version by checking module flags.
   unsigned getDwarfVersion() const;
 
+/// @}
+/// @name Utility functions for querying and setting PIC level
+/// @{
+
+  /// \brief Returns the PIC level (small or large model)
+  PICLevel::Level getPICLevel() const;
+
+  /// \brief Set the PIC level (small or large model)
+  void setPICLevel(PICLevel::Level PL);
 /// @}
 };
 
