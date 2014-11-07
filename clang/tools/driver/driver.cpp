@@ -353,12 +353,10 @@ static void SetInstallDir(SmallVectorImpl<const char *> &argv,
   SmallString<128> InstalledPath(argv[0]);
 
   // Do a PATH lookup, if there are no directory components.
-  if (llvm::sys::path::filename(InstalledPath) == InstalledPath) {
-    auto Tmp = llvm::sys::findProgramByName(
-      llvm::sys::path::filename(InstalledPath.str()));
-    if (Tmp)
+  if (llvm::sys::path::filename(InstalledPath) == InstalledPath)
+    if (llvm::ErrorOr<std::string> Tmp = llvm::sys::findProgramByName(
+            llvm::sys::path::filename(InstalledPath.str())))
       InstalledPath = *Tmp;
-  }
   llvm::sys::fs::make_absolute(InstalledPath);
   InstalledPath = llvm::sys::path::parent_path(InstalledPath);
   if (llvm::sys::fs::exists(InstalledPath.c_str()))
