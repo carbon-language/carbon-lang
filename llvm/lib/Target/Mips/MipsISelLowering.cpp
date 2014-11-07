@@ -3628,12 +3628,6 @@ unsigned MipsTargetLowering::MipsCC::reservedArgArea() const {
   return (Subtarget.isABI_O32() && (CallConv != CallingConv::Fast)) ? 16 : 0;
 }
 
-const ArrayRef<MCPhysReg> MipsTargetLowering::MipsCC::intArgRegs() const {
-  if (Subtarget.isABI_O32())
-    return makeArrayRef(O32IntRegs);
-  return makeArrayRef(Mips64IntRegs);
-}
-
 void MipsTargetLowering::copyByValRegs(
     SDValue Chain, SDLoc DL, std::vector<SDValue> &OutChains, SelectionDAG &DAG,
     const ISD::ArgFlagsTy &Flags, SmallVectorImpl<SDValue> &InVals,
@@ -3646,11 +3640,11 @@ void MipsTargetLowering::copyByValRegs(
   unsigned RegAreaSize = NumRegs * GPRSizeInBytes;
   unsigned FrameObjSize = std::max(Flags.getByValSize(), RegAreaSize);
   int FrameObjOffset;
+  ArrayRef<MCPhysReg> ByValArgRegs = Subtarget.getABI().GetByValArgRegs();
 
   if (RegAreaSize)
-    FrameObjOffset =
-        (int)CC.reservedArgArea() -
-        (int)((CC.intArgRegs().size() - FirstReg) * GPRSizeInBytes);
+    FrameObjOffset = (int)CC.reservedArgArea() -
+                     (int)((ByValArgRegs.size() - FirstReg) * GPRSizeInBytes);
   else
     FrameObjOffset = VA.getLocMemOffset();
 
@@ -3668,7 +3662,7 @@ void MipsTargetLowering::copyByValRegs(
   const TargetRegisterClass *RC = getRegClassFor(RegTy);
 
   for (unsigned I = 0; I < NumRegs; ++I) {
-    unsigned ArgReg = CC.intArgRegs()[FirstReg + I];
+    unsigned ArgReg = ByValArgRegs[FirstReg + I];
     unsigned VReg = addLiveIn(MF, ArgReg, RC);
     unsigned Offset = I * GPRSizeInBytes;
     SDValue StorePtr = DAG.getNode(ISD::ADD, DL, PtrTy, FIN,
@@ -3696,7 +3690,7 @@ void MipsTargetLowering::passByValArg(
   unsigned NumRegs = LastReg - FirstReg;
 
   if (NumRegs) {
-    const ArrayRef<MCPhysReg> ArgRegs = CC.intArgRegs();
+    const ArrayRef<MCPhysReg> ArgRegs = Subtarget.getABI().GetByValArgRegs();
     bool LeftoverBytes = (NumRegs * RegSizeInBytes > ByValSizeInBytes);
     unsigned I = 0;
 
@@ -3779,7 +3773,7 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
                                          const MipsCC &CC, SDValue Chain,
                                          SDLoc DL, SelectionDAG &DAG,
                                          CCState &State) const {
-  const ArrayRef<MCPhysReg> ArgRegs = CC.intArgRegs();
+  const ArrayRef<MCPhysReg> ArgRegs = Subtarget.getABI().GetVarArgRegs();
   unsigned Idx = State.getFirstUnallocated(ArgRegs.data(), ArgRegs.size());
   unsigned RegSizeInBytes = Subtarget.getGPRSizeInBytes();
   MVT RegTy = MVT::getIntegerVT(RegSizeInBytes * 8);
