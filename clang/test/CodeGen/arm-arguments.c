@@ -183,14 +183,9 @@ void f33(struct s33 s) { }
 struct s34 { char c; };
 void f34(struct s34 s);
 void g34(struct s34 *s) { f34(*s); }
-// APCS-GNU: @g34(%struct.s34* %s)
-// APCS-GNU: %[[a:.*]] = alloca { [1 x i32] }
-// APCS-GNU: %[[gep:.*]] = getelementptr { [1 x i32] }* %[[a]], i32 0, i32 0
-// APCS-GNU: load [1 x i32]* %[[gep]]
 // AAPCS: @g34(%struct.s34* %s)
-// AAPCS: %[[a:.*]] = alloca { [1 x i32] }
-// AAPCS: %[[gep:.*]] = getelementptr { [1 x i32] }* %[[a]], i32 0, i32 0
-// AAPCS: load [1 x i32]* %[[gep]]
+// AAPCS: %[[a:.*]] = alloca [1 x i32]
+// AAPCS: load [1 x i32]* %[[a]]
 
 // rdar://12596507
 struct s35

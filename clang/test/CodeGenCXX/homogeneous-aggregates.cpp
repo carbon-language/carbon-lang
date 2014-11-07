@@ -39,7 +39,7 @@ struct I3 : Base2 {};
 struct D5 : I1, I2, I3 {}; // homogeneous aggregate
 
 // PPC: define void @_Z7func_D12D1(%struct.D1* noalias sret %agg.result, [3 x i64] %x.coerce)
-// ARM32: define arm_aapcs_vfpcc void @_Z7func_D12D1(%struct.D1* noalias sret %agg.result, { [3 x i64] } %x.coerce)
+// ARM32: define arm_aapcs_vfpcc void @_Z7func_D12D1(%struct.D1* noalias sret %agg.result, [3 x i64] %x.coerce)
 // ARM64: define void @_Z7func_D12D1(%struct.D1* noalias sret %agg.result, %struct.D1* %x)
 // X64: define x86_vectorcallcc void @"\01_Z7func_D12D1@@24"(%struct.D1* noalias sret %agg.result, %struct.D1* %x)
 D1 CC func_D1(D1 x) { return x; }
@@ -51,7 +51,7 @@ D1 CC func_D1(D1 x) { return x; }
 D2 CC func_D2(D2 x) { return x; }
 
 // PPC: define void @_Z7func_D32D3(%struct.D3* noalias sret %agg.result, [4 x i64] %x.coerce)
-// ARM32: define arm_aapcs_vfpcc void @_Z7func_D32D3(%struct.D3* noalias sret %agg.result, { [4 x i64] } %x.coerce)
+// ARM32: define arm_aapcs_vfpcc void @_Z7func_D32D3(%struct.D3* noalias sret %agg.result, [4 x i64] %x.coerce)
 // ARM64: define void @_Z7func_D32D3(%struct.D3* noalias sret %agg.result, %struct.D3* %x)
 D3 CC func_D3(D3 x) { return x; }
 

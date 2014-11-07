@@ -22,7 +22,7 @@ extern union_with_first_floats returns_union_with_first_floats(void);
 void test_union_with_first_floats(void) {
   takes_union_with_first_floats(g_u_f);
 }
-// CHECK: declare arm_aapcs_vfpcc void @takes_union_with_first_floats({ [4 x i32] })
+// CHECK: declare arm_aapcs_vfpcc void @takes_union_with_first_floats([4 x i32])
 
 void test_return_union_with_first_floats(void) {
   g_u_f = returns_union_with_first_floats();
@@ -42,7 +42,7 @@ extern union_with_non_first_floats returns_union_with_non_first_floats(void);
 void test_union_with_non_first_floats(void) {
   takes_union_with_non_first_floats(g_u_nf_f);
 }
-// CHECK: declare arm_aapcs_vfpcc void @takes_union_with_non_first_floats({ [4 x i32] })
+// CHECK: declare arm_aapcs_vfpcc void @takes_union_with_non_first_floats([4 x i32])
 
 void test_return_union_with_non_first_floats(void) {
   g_u_nf_f = returns_union_with_non_first_floats();
@@ -62,7 +62,7 @@ extern struct_with_union_with_first_floats returns_struct_with_union_with_first_
 void test_struct_with_union_with_first_floats(void) {
   takes_struct_with_union_with_first_floats(g_s_f);
 }
-// CHECK: declare arm_aapcs_vfpcc void @takes_struct_with_union_with_first_floats({ [5 x i32] })
+// CHECK: declare arm_aapcs_vfpcc void @takes_struct_with_union_with_first_floats([5 x i32])
 
 void test_return_struct_with_union_with_first_floats(void) {
   g_s_f = returns_struct_with_union_with_first_floats();
@@ -82,7 +82,7 @@ extern struct_with_union_with_non_first_floats returns_struct_with_union_with_no
 void test_struct_with_union_with_non_first_floats(void) {
   takes_struct_with_union_with_non_first_floats(g_s_nf_f);
 }
-// CHECK: declare arm_aapcs_vfpcc void @takes_struct_with_union_with_non_first_floats({ [5 x i32] })
+// CHECK: declare arm_aapcs_vfpcc void @takes_struct_with_union_with_non_first_floats([5 x i32])
 
 void test_return_struct_with_union_with_non_first_floats(void) {
   g_s_nf_f = returns_struct_with_union_with_non_first_floats();
