@@ -17,6 +17,7 @@
 #ifndef LLD_DRIVER_DARWIN_INPUT_GRAPH_H
 #define LLD_DRIVER_DARWIN_INPUT_GRAPH_H
 
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/InputGraph.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 
@@ -67,6 +68,7 @@ private:
  void narrowFatBuffer(StringRef filePath);
 
   MachOLinkingContext &_context;
+  std::unique_ptr<const ArchiveLibraryFile> _archiveFile;
   bool _isWholeArchive;
   bool _upwardDylib;
 };

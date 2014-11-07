@@ -88,7 +88,10 @@ std::error_code MachOFileNode::parse(const LinkingContext &ctx,
     // If file is an archive and -all_load, then add all members.
     if (ArchiveLibraryFile *archive = dyn_cast<ArchiveLibraryFile>(pf.get())) {
       if (_isWholeArchive) {
-        // Note: the members are added to _files, but the archive is not.
+        // Have this node own the FileArchive object.
+        _archiveFile.reset(archive);
+        pf.release();
+        // Add all members to _files vector
         return archive->parseAllMembers(_files);
       }
     }
