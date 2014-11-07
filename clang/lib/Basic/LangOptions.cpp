@@ -14,10 +14,17 @@
 
 using namespace clang;
 
-SanitizerOptions::SanitizerOptions() {
-#define SANITIZER(NAME, ID) ID = 0;
-#include "clang/Basic/Sanitizers.def"
-  SanitizeAddressFieldPadding = 0;
+SanitizerOptions::SanitizerOptions()
+    : Kind(0), SanitizeAddressFieldPadding(0) {}
+
+bool SanitizerOptions::has(SanitizerKind K) const {
+  unsigned Bit = static_cast<unsigned>(K);
+  return Kind & (1 << Bit);
+}
+
+void SanitizerOptions::set(SanitizerKind K, bool Value) {
+  unsigned Bit = static_cast<unsigned>(K);
+  Kind = Value ? (Kind | (1 << Bit)) : (Kind & ~(1 << Bit));
 }
 
 void SanitizerOptions::clear() {

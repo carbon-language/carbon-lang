@@ -23,9 +23,23 @@
 
 namespace clang {
 
-struct SanitizerOptions {
-#define SANITIZER(NAME, ID) unsigned ID : 1;
+enum class SanitizerKind {
+#define SANITIZER(NAME, ID) ID,
 #include "clang/Basic/Sanitizers.def"
+  Unknown
+};
+
+class SanitizerOptions {
+  /// \brief Bitmask of enabled sanitizers.
+  unsigned Kind;
+public:
+  SanitizerOptions();
+
+  /// \brief Check if a certain sanitizer is enabled.
+  bool has(SanitizerKind K) const;
+  /// \brief Enable or disable a certain sanitizer.
+  void set(SanitizerKind K, bool Value);
+
   /// \brief Controls how agressive is asan field padding (0: none, 1: least
   /// aggressive, 2: more aggressive).
   unsigned SanitizeAddressFieldPadding : 2;
@@ -33,8 +47,6 @@ struct SanitizerOptions {
   /// \brief Path to blacklist file specifying which objects
   /// (files, functions, variables) should not be instrumented.
   std::string BlacklistFile;
-
-  SanitizerOptions();
 
   /// \brief Disable all sanitizers.
   void clear();

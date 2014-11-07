@@ -834,8 +834,8 @@ namespace {
   public:
     explicit CopyingValueRepresentation(CodeGenFunction &CGF)
         : CGF(CGF), OldSanOpts(CGF.SanOpts) {
-      CGF.SanOpts.Bool = false;
-      CGF.SanOpts.Enum = false;
+      CGF.SanOpts.set(SanitizerKind::Bool, false);
+      CGF.SanOpts.set(SanitizerKind::Enum, false);
     }
     ~CopyingValueRepresentation() {
       CGF.SanOpts = OldSanOpts;

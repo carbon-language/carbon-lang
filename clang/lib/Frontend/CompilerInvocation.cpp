@@ -1610,33 +1610,16 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   // Parse -fsanitize= arguments.
   std::vector<std::string> Sanitizers = Args.getAllArgValues(OPT_fsanitize_EQ);
-  for (unsigned I = 0, N = Sanitizers.size(); I != N; ++I) {
-    // Since the Opts.Sanitize* values are bitfields, it's a little tricky to
-    // efficiently map string values to them. Perform the mapping indirectly:
-    // convert strings to enumerated values, then switch over the enum to set
-    // the right bitfield value.
-    enum Sanitizer {
-#define SANITIZER(NAME, ID) \
-      ID,
+  for (const auto &Sanitizer : Sanitizers) {
+    SanitizerKind K = llvm::StringSwitch<SanitizerKind>(Sanitizer)
+#define SANITIZER(NAME, ID) .Case(NAME, SanitizerKind::ID)
 #include "clang/Basic/Sanitizers.def"
-      Unknown
-    };
-    switch (llvm::StringSwitch<unsigned>(Sanitizers[I])
-#define SANITIZER(NAME, ID) \
-              .Case(NAME, ID)
-#include "clang/Basic/Sanitizers.def"
-              .Default(Unknown)) {
-#define SANITIZER(NAME, ID) \
-    case ID: \
-      Opts.Sanitize.ID = true; \
-      break;
-#include "clang/Basic/Sanitizers.def"
-
-    case Unknown:
+        .Default(SanitizerKind::Unknown);
+    if (K == SanitizerKind::Unknown)
       Diags.Report(diag::err_drv_invalid_value)
-        << "-fsanitize=" << Sanitizers[I];
-      break;
-    }
+        << "-fsanitize=" << Sanitizer;
+    else
+      Opts.Sanitize.set(K, true);
   }
   // -fsanitize-address-field-padding=N has to be a LangOpt, parse it here.
   Opts.Sanitize.SanitizeAddressFieldPadding =

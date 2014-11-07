@@ -237,11 +237,11 @@ llvm::Function *CodeGenModule::CreateGlobalInitOrDestructFunction(
     Fn->setDoesNotThrow();
 
   if (!isInSanitizerBlacklist(Fn, Loc)) {
-    if (getLangOpts().Sanitize.Address)
+    if (getLangOpts().Sanitize.has(SanitizerKind::Address))
       Fn->addFnAttr(llvm::Attribute::SanitizeAddress);
-    if (getLangOpts().Sanitize.Thread)
+    if (getLangOpts().Sanitize.has(SanitizerKind::Thread))
       Fn->addFnAttr(llvm::Attribute::SanitizeThread);
-    if (getLangOpts().Sanitize.Memory)
+    if (getLangOpts().Sanitize.has(SanitizerKind::Memory))
       Fn->addFnAttr(llvm::Attribute::SanitizeMemory);
   }
 

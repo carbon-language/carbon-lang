@@ -1493,7 +1493,7 @@ llvm::Value *ItaniumCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
   llvm::Value *NumElementsPtr =
       CGF.Builder.CreateBitCast(CookiePtr, NumElementsTy);
   llvm::Instruction *SI = CGF.Builder.CreateStore(NumElements, NumElementsPtr);
-  if (CGM.getLangOpts().Sanitize.Address && AS == 0 &&
+  if (CGM.getLangOpts().Sanitize.has(SanitizerKind::Address) && AS == 0 &&
       expr->getOperatorNew()->isReplaceableGlobalAllocationFunction()) {
     // The store to the CookiePtr does not need to be instrumented.
     CGM.getSanitizerMetadata()->disableSanitizerForInstruction(SI);
@@ -1525,7 +1525,7 @@ llvm::Value *ItaniumCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
   unsigned AS = allocPtr->getType()->getPointerAddressSpace();
   numElementsPtr = 
     CGF.Builder.CreateBitCast(numElementsPtr, CGF.SizeTy->getPointerTo(AS));
-  if (!CGM.getLangOpts().Sanitize.Address || AS != 0)
+  if (!CGM.getLangOpts().Sanitize.has(SanitizerKind::Address) || AS != 0)
     return CGF.Builder.CreateLoad(numElementsPtr);
   // In asan mode emit a function call instead of a regular load and let the
   // run-time deal with it: if the shadow is properly poisoned return the

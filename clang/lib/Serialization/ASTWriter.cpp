@@ -1203,8 +1203,9 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   Record.push_back(LangOpts.Name);
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
   Record.push_back(static_cast<unsigned>(LangOpts.get##Name()));
-#include "clang/Basic/LangOptions.def"  
-#define SANITIZER(NAME, ID) Record.push_back(LangOpts.Sanitize.ID);
+#include "clang/Basic/LangOptions.def"
+#define SANITIZER(NAME, ID)                                                    \
+  Record.push_back(LangOpts.Sanitize.has(SanitizerKind::ID));
 #include "clang/Basic/Sanitizers.def"
 
   Record.push_back((unsigned) LangOpts.ObjCRuntime.getKind());
