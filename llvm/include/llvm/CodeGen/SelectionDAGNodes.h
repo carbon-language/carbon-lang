@@ -762,6 +762,10 @@ protected:
       ValueList(VTs.VTs), UseList(nullptr),
       NumOperands(Ops.size()), NumValues(VTs.NumVTs),
       debugLoc(dl), IROrder(Order) {
+    assert(NumOperands == Ops.size() &&
+           "NumOperands wasn't wide enough for its operands!");
+    assert(NumValues == VTs.NumVTs &&
+           "NumValues wasn't wide enough for its operands!");
     for (unsigned i = 0; i != Ops.size(); ++i) {
       OperandList[i].setUser(this);
       OperandList[i].setInitial(Ops[i]);
@@ -775,7 +779,10 @@ protected:
     : NodeType(Opc), OperandsNeedDelete(false), HasDebugValue(false),
       SubclassData(0), NodeId(-1), OperandList(nullptr), ValueList(VTs.VTs),
       UseList(nullptr), NumOperands(0), NumValues(VTs.NumVTs), debugLoc(dl),
-      IROrder(Order) {}
+      IROrder(Order) {
+    assert(NumValues == VTs.NumVTs &&
+           "NumValues wasn't wide enough for its operands!");
+  }
 
   /// InitOperands - Initialize the operands list of this with 1 operand.
   void InitOperands(SDUse *Ops, const SDValue &Op0) {
@@ -834,6 +841,8 @@ protected:
       Ops[i].setInitial(Vals[i]);
     }
     NumOperands = N;
+    assert(NumOperands == N &&
+           "NumOperands wasn't wide enough for its operands!");
     OperandList = Ops;
     checkForCycles(this);
   }
