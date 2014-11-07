@@ -146,7 +146,7 @@ MachOLinkingContext::MachOLinkingContext()
       _printAtoms(false), _testingFileUsage(false), _keepPrivateExterns(false),
       _demangle(false), _archHandler(nullptr),
       _exportMode(ExportMode::globals),
-      _debugInfoMode(DebugInfoMode::addDebugMap) {}
+      _debugInfoMode(DebugInfoMode::addDebugMap), _orderFileEntries(0) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -577,7 +577,12 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
 }
 
 void MachOLinkingContext::addPasses(PassManager &pm) {
-  pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
+  pm.add(std::unique_ptr<Pass>(new LayoutPass(
+      registry(), [&](const DefinedAtom * left, const DefinedAtom * right,
+                      bool & leftBeforeRight)
+                      ->bool {
+    return customAtomOrderer(left, right, leftBeforeRight);
+  })));
   if (needsStubsPass())
     mach_o::addStubsPass(pm, *this);
   if (needsCompactUnwindPass())
@@ -825,5 +830,84 @@ void MachOLinkingContext::addOutputFileDependency(StringRef path) const {
   *_dependencyInfo << '\0';
 }
 
+void MachOLinkingContext::appendOrderedSymbol(StringRef symbol,
+                                              StringRef filename) {
+  // To support sorting static functions which may have the same name in
+  // multiple .o files, _orderFiles maps the symbol name to a vector
+  // of OrderFileNode each of which can specify a file prefix.
+  OrderFileNode info;
+  if (!filename.empty())
+    info.fileFilter = copy(filename);
+  info.order = _orderFileEntries++;
+  _orderFiles[symbol].push_back(info);
+}
+
+bool
+MachOLinkingContext::findOrderOrdinal(const std::vector<OrderFileNode> &nodes,
+                                      const DefinedAtom *atom,
+                                      unsigned &ordinal) {
+  const File *objFile = &atom->file();
+  assert(objFile);
+  StringRef objName = objFile->path();
+  std::pair<StringRef, StringRef> dirAndLeaf = objName.rsplit('/');
+  if (!dirAndLeaf.second.empty())
+    objName = dirAndLeaf.second;
+  for (const OrderFileNode &info : nodes) {
+    if (info.fileFilter.empty()) {
+      // Have unprefixed symbol name in order file that matches this atom.
+      ordinal = info.order;
+      llvm::errs() << "ordered " << atom->name() << "\n";
+      return true;
+    }
+    if (info.fileFilter.equals(objName)) {
+      // Have prefixed symbol name in order file that matches atom's path.
+      ordinal = info.order;
+      llvm::errs() << "ordered " << atom->name() << " with prefix '"
+                   << info.fileFilter << "'\n";
+      return true;
+    }
+  }
+  return false;
+}
+
+bool MachOLinkingContext::customAtomOrderer(const DefinedAtom *left,
+                                            const DefinedAtom *right,
+                                            bool &leftBeforeRight) {
+  // No custom sorting if no order file entries.
+  if (!_orderFileEntries)
+    return false;
+
+  // Order files can only order named atoms.
+  StringRef leftName = left->name();
+  StringRef rightName = right->name();
+  if (leftName.empty() || rightName.empty())
+    return false;
+
+  // If neither is in order file list, no custom sorter.
+  auto leftPos = _orderFiles.find(leftName);
+  auto rightPos = _orderFiles.find(rightName);
+  bool leftIsOrdered = (leftPos != _orderFiles.end());
+  bool rightIsOrdered = (rightPos != _orderFiles.end());
+  if (!leftIsOrdered && !rightIsOrdered)
+    return false;
+
+  // There could be multiple symbols with same name but different file prefixes.
+  unsigned leftOrder;
+  unsigned rightOrder;
+  bool foundLeft =
+      leftIsOrdered && findOrderOrdinal(leftPos->getValue(), left, leftOrder);
+  bool foundRight = rightIsOrdered &&
+                    findOrderOrdinal(rightPos->getValue(), right, rightOrder);
+  if (!foundLeft && !foundRight)
+    return false;
+
+  // If only one is in order file list, ordered one goes first.
+  if (foundLeft != foundRight)
+    leftBeforeRight = foundLeft;
+  else
+    leftBeforeRight = (leftOrder < rightOrder);
+
+  return true;
+}
 
 } // end namespace lld

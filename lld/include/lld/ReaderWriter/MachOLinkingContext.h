@@ -103,6 +103,8 @@ public:
     _debugInfoMode = mode;
   }
 
+  void appendOrderedSymbol(StringRef symbol, StringRef filename);
+
   bool keepPrivateExterns() const { return _keepPrivateExterns; }
   void setKeepPrivateExterns(bool v) { _keepPrivateExterns = v; }
   bool demangleSymbols() const { return _demangle; }
@@ -282,8 +284,8 @@ private:
   mach_o::MachODylibFile* loadIndirectDylib(StringRef path);
   void checkExportWhiteList(const DefinedAtom *atom) const;
   void checkExportBlackList(const DefinedAtom *atom) const;
-
-
+  bool customAtomOrderer(const DefinedAtom *left, const DefinedAtom *right,
+                         bool &leftBeforeRight);
   struct ArchInfo {
     StringRef                 archName;
     MachOLinkingContext::Arch arch;
@@ -297,6 +299,14 @@ private:
     StringRef sectionName;
     uint8_t   align2;
   };
+
+  struct OrderFileNode {
+    StringRef fileFilter;
+    unsigned  order;
+  };
+
+  static bool findOrderOrdinal(const std::vector<OrderFileNode> &nodes,
+                             const DefinedAtom *atom, unsigned &ordinal);
 
   static ArchInfo _s_archInfos[];
 
@@ -334,6 +344,8 @@ private:
   llvm::StringSet<> _exportedSymbols;
   DebugInfoMode _debugInfoMode;
   std::unique_ptr<llvm::raw_fd_ostream> _dependencyInfo;
+  llvm::StringMap<std::vector<OrderFileNode>> _orderFiles;
+  unsigned _orderFileEntries;
 };
 
 } // end namespace lld

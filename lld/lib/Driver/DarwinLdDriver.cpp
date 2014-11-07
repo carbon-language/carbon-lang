@@ -120,6 +120,59 @@ static std::error_code parseExportsList(StringRef exportFilePath,
   return std::error_code();
 }
 
+
+
+/// Order files are one symbol per line. Blank lines are ignored.
+/// Trailing comments start with #. Symbol names can be prefixed with an
+/// architecture name and/or .o leaf name.  Examples:
+///     _foo
+///     bar.o:_bar
+///     libfrob.a(bar.o):_bar
+///     x86_64:_foo64
+static std::error_code parseOrderFile(StringRef orderFilePath,
+                                      MachOLinkingContext &ctx,
+                                      raw_ostream &diagnostics) {
+  // Map in order file.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+                                   MemoryBuffer::getFileOrSTDIN(orderFilePath);
+  if (std::error_code ec = mb.getError())
+    return ec;
+  ctx.addInputFileDependency(orderFilePath);
+  StringRef buffer = mb->get()->getBuffer();
+  while (!buffer.empty()) {
+    // Split off each line in the file.
+    std::pair<StringRef, StringRef> lineAndRest = buffer.split('\n');
+    StringRef line = lineAndRest.first;
+    buffer = lineAndRest.second;
+    // Ignore trailing # comments.
+    std::pair<StringRef, StringRef> symAndComment = line.split('#');
+    if (symAndComment.first.empty())
+      continue;
+    StringRef sym = symAndComment.first.trim();
+    if (sym.empty())
+      continue;
+    // Check for prefix.
+    StringRef prefix;
+    std::pair<StringRef, StringRef> prefixAndSym = sym.split(':');
+    if (!prefixAndSym.second.empty()) {
+      sym = prefixAndSym.second;
+      prefix = prefixAndSym.first;
+      if (!prefix.endswith(".o") && !prefix.endswith(".o)")) {
+        // If arch name prefix does not match arch being linked, ignore symbol.
+        if (!ctx.archName().equals(prefix))
+          continue;
+        prefix = "";
+      }
+    } else
+     sym = prefixAndSym.first;
+    if (!sym.empty()) {
+      ctx.appendOrderedSymbol(sym, prefix);
+      //llvm::errs() << sym << ", prefix=" << prefix << "\n";
+    }
+  }
+  return std::error_code();
+}
+
 //
 // There are two variants of the  -filelist option:
 //
@@ -643,6 +696,18 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Handle debug info handling options: -S
   if (parsedArgs->hasArg(OPT_S))
     ctx.setDebugInfoMode(MachOLinkingContext::DebugInfoMode::noDebugMap);
+
+  // Handle -order_file <file>
+  for (auto orderFile : parsedArgs->filtered(OPT_order_file)) {
+    if (std::error_code ec = parseOrderFile(orderFile->getValue(), ctx,
+                                              diagnostics)) {
+      diagnostics << "error: " << ec.message()
+                  << ", processing '-order_file "
+                  << orderFile->getValue()
+                  << "'\n";
+      return false;
+    }
+  }
 
   // Handle input files
   for (auto &arg : *parsedArgs) {

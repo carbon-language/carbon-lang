@@ -19,7 +19,8 @@ using namespace lld;
 #define DEBUG_TYPE "LayoutPass"
 
 static bool compareAtoms(const LayoutPass::SortKey &,
-                         const LayoutPass::SortKey &);
+                         const LayoutPass::SortKey &,
+                         LayoutPass::SortOverride customSorter=nullptr);
 
 #ifndef NDEBUG
 // Return "reason (leftval, rightval)"
@@ -161,10 +162,12 @@ void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
 /// b) Sorts atoms by their ordinal overrides (layout-after/ingroup)
 /// c) Sorts atoms by their permissions
 /// d) Sorts atoms by their content
-/// e) Sorts atoms on how they appear using File Ordinality
-/// f) Sorts atoms on how they appear within the File
+/// e) If custom sorter provided, let it sort
+/// f) Sorts atoms on how they appear using File Ordinality
+/// g) Sorts atoms on how they appear within the File
 static bool compareAtomsSub(const LayoutPass::SortKey &lc,
                             const LayoutPass::SortKey &rc,
+                            LayoutPass::SortOverride customSorter,
                             std::string &reason) {
   const DefinedAtom *left = lc._atom;
   const DefinedAtom *right = rc._atom;
@@ -216,6 +219,13 @@ static bool compareAtomsSub(const LayoutPass::SortKey &lc,
     return leftType < rightType;
   }
 
+  // Use custom sorter if supplied.
+  if (customSorter) {
+    bool leftBeforeRight;
+    if (customSorter(leftRoot, rightRoot, leftBeforeRight))
+      return leftBeforeRight;
+  }
+
   // Sort by .o order.
   const File *leftFile = &leftRoot->file();
   const File *rightFile = &rightRoot->file();
@@ -242,9 +252,10 @@ static bool compareAtomsSub(const LayoutPass::SortKey &lc,
 }
 
 static bool compareAtoms(const LayoutPass::SortKey &lc,
-                         const LayoutPass::SortKey &rc) {
+                         const LayoutPass::SortKey &rc,
+                         LayoutPass::SortOverride customSorter) {
   std::string reason;
-  bool result = compareAtomsSub(lc, rc, reason);
+  bool result = compareAtomsSub(lc, rc, customSorter, reason);
   DEBUG({
     StringRef comp = result ? "<" : ">=";
     llvm::dbgs() << "Layout: '" << lc._atom->name() << "' " << comp << " '"
@@ -253,7 +264,8 @@ static bool compareAtoms(const LayoutPass::SortKey &lc,
   return result;
 }
 
-LayoutPass::LayoutPass(const Registry &registry) : _registry(registry) {}
+LayoutPass::LayoutPass(const Registry &registry, SortOverride sorter)
+  : _registry(registry), _customSorter(sorter) {}
 
 // Returns the atom immediately followed by the given atom in the followon
 // chain.
@@ -522,7 +534,10 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   });
 
   std::vector<LayoutPass::SortKey> vec = decorate(atomRange);
-  std::sort(vec.begin(), vec.end(), compareAtoms);
+  std::sort(vec.begin(), vec.end(),
+      [&](const LayoutPass::SortKey &l, const LayoutPass::SortKey &r) -> bool {
+        return compareAtoms(l, r, _customSorter);
+      });
   DEBUG(checkTransitivity(vec));
   undecorate(atomRange, vec);
 
