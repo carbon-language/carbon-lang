@@ -133,6 +133,9 @@ TOK(numeric_constant)    // 0x123
 TOK(char_constant)       // 'a'
 TOK(wide_char_constant)  // L'b'
 
+// C++1z Character Constants
+TOK(utf8_char_constant)  // u8'a'
+
 // C++11 Character Constants
 TOK(utf16_char_constant) // u'a'
 TOK(utf32_char_constant) // U'a'

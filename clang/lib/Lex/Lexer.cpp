@@ -1889,17 +1889,20 @@ bool Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
 
 
 /// LexCharConstant - Lex the remainder of a character constant, after having
-/// lexed either ' or L' or u' or U'.
+/// lexed either ' or L' or u8' or u' or U'.
 bool Lexer::LexCharConstant(Token &Result, const char *CurPtr,
                             tok::TokenKind Kind) {
   // Does this character contain the \0 character?
   const char *NulCharacter = nullptr;
 
-  if (!isLexingRawMode() &&
-      (Kind == tok::utf16_char_constant || Kind == tok::utf32_char_constant))
-    Diag(BufferPtr, getLangOpts().CPlusPlus
-           ? diag::warn_cxx98_compat_unicode_literal
-           : diag::warn_c99_compat_unicode_literal);
+  if (!isLexingRawMode()) {
+    if (Kind == tok::utf16_char_constant || Kind == tok::utf32_char_constant)
+      Diag(BufferPtr, getLangOpts().CPlusPlus
+                          ? diag::warn_cxx98_compat_unicode_literal
+                          : diag::warn_c99_compat_unicode_literal);
+    else if (Kind == tok::utf8_char_constant)
+      Diag(BufferPtr, diag::warn_cxx14_compat_u8_character_literal);
+  }
 
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
@@ -3068,6 +3071,11 @@ LexNextToken:
                                ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                                            SizeTmp2, Result),
                                tok::utf8_string_literal);
+        if (Char2 == '\'' && LangOpts.CPlusPlus1z)
+          return LexCharConstant(
+              Result, ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                                  SizeTmp2, Result),
+              tok::utf8_char_constant);
 
         if (Char2 == 'R' && LangOpts.CPlusPlus11) {
           unsigned SizeTmp3;
