@@ -86,6 +86,117 @@ public:
 
 private:
 
+    //--------------------------------------------------------------------
+    /// A convenience class for RegisterContextLLDB which can convert between
+    /// different register kinds.
+    ///
+    /// This ends up being a common operation in RegisterContextLLDB as we try
+    /// to bridge between the different register numbering systems -- having a
+    /// simple object to enclose all of that conversion, and cache results so
+    /// we don't re-fetch, simplifies the code significantly.
+    //--------------------------------------------------------------------
+    class RegisterNumber {
+    public:
+        RegisterNumber (lldb_private::Thread &thread, lldb::RegisterKind kind, uint32_t num) :
+            m_reg_ctx_sp (thread.GetRegisterContext()),
+            m_regnum (num),
+            m_kind (kind),
+            m_kind_regnum_map (),
+            m_name ("")
+        {
+            if (m_reg_ctx_sp.get())
+            {
+                const lldb_private::RegisterInfo *reginfo = m_reg_ctx_sp->GetRegisterInfoAtIndex (GetAsKind (lldb::eRegisterKindLLDB));
+                if (reginfo && reginfo->name)
+                {
+                    m_name = reginfo->name;
+                }
+            }
+        }
+
+        RegisterNumber () :
+            m_reg_ctx_sp(),
+            m_regnum (LLDB_INVALID_REGNUM),
+            m_kind (lldb::kNumRegisterKinds),
+            m_kind_regnum_map (),
+            m_name (nullptr)
+        {
+        }
+
+        void
+        init (lldb_private::Thread &thread, lldb::RegisterKind kind, uint32_t num)
+        {
+            m_reg_ctx_sp = thread.GetRegisterContext();
+            m_regnum = num;
+            m_kind = kind;
+            if (m_reg_ctx_sp.get())
+            {
+                const lldb_private::RegisterInfo *reginfo = m_reg_ctx_sp->GetRegisterInfoAtIndex (GetAsKind (lldb::eRegisterKindLLDB));
+                if (reginfo && reginfo->name)
+                {
+                    m_name = reginfo->name;
+                }
+            }
+        }
+
+        const RegisterNumber &
+        operator = (const RegisterNumber &rhs)
+        {
+            m_reg_ctx_sp = rhs.m_reg_ctx_sp;
+            m_regnum = rhs.m_regnum;
+            m_kind = rhs.m_kind;
+            for (auto it : rhs.m_kind_regnum_map)
+                m_kind_regnum_map[it.first] = it.second;
+            m_name = rhs.m_name;
+            return *this;
+        }
+
+        bool
+        IsValid ()
+        {
+            return m_regnum != LLDB_INVALID_REGNUM;
+        }
+
+        uint32_t
+        GetAsKind (lldb::RegisterKind kind)
+        {
+            if (m_regnum == LLDB_INVALID_REGNUM)
+                return LLDB_INVALID_REGNUM;
+
+            if (kind == m_kind)
+                return m_regnum;
+
+            Collection::iterator iter = m_kind_regnum_map.find (kind);
+            if (iter != m_kind_regnum_map.end())
+            {
+                return iter->second;
+            }
+            uint32_t output_regnum = LLDB_INVALID_REGNUM;
+            if (m_reg_ctx_sp 
+                && m_reg_ctx_sp->ConvertBetweenRegisterKinds (m_kind, m_regnum, kind, output_regnum)
+                && output_regnum != LLDB_INVALID_REGNUM)
+            {
+                m_kind_regnum_map[kind] = output_regnum;
+            }
+            return output_regnum;
+        }
+
+        const char *
+        GetName ()
+        {
+            return m_name;
+        }
+
+    private:
+        typedef std::map<lldb::RegisterKind, uint32_t> Collection; 
+
+        lldb::RegisterContextSP m_reg_ctx_sp;
+        uint32_t                m_regnum;
+        lldb::RegisterKind      m_kind;
+        Collection              m_kind_regnum_map;
+        const char              *m_name;
+    };
+
     enum FrameType
     {
         eNormalFrame,
