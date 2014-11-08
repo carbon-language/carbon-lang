@@ -399,14 +399,12 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
   uint64_t fileOffset = startOffset;
   uint64_t curSliceFileOffset = fileOffset;
   bool isDataPageAlignedForNMagic = false;
+  bool alignSegments = this->_context.alignSegments();
+  uint64_t p_align = this->_context.getPageSize();
 
   this->setFileOffset(startOffset);
   for (auto &slice : slices()) {
-    // Align to the slice alignment
-    fileOffset = llvm::RoundUpToAlignment(fileOffset, slice->align2());
-
     bool isFirstSection = true;
-
     for (auto section : slice->sections()) {
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
       // to a page boundary
@@ -415,16 +413,25 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
           _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC) {
         // Align to a page only if the output is not
         // OutputMagic::NMAGIC/OutputMagic::OMAGIC
-        fileOffset =
-            llvm::RoundUpToAlignment(fileOffset, this->_context.getPageSize());
-      }
-      if (!isDataPageAlignedForNMagic && needAlign(section)) {
+        if (alignSegments)
+          fileOffset = llvm::RoundUpToAlignment(fileOffset, p_align);
+        else {
+          // Align according to ELF spec.
+          // in p75, http://www.sco.com/developers/devspecs/gabi41.pdf
+          uint64_t padding = 0;
+          uint64_t virtualAddress = slice->virtualAddr();
+          Section<ELFT> *sect = dyn_cast<Section<ELFT>>(section);
+          if (sect && sect->isLoadableSection() &&
+              ((virtualAddress & (p_align - 1)) !=
+               (fileOffset & (p_align - 1))))
+            fileOffset = llvm::RoundUpToAlignment(fileOffset, p_align);
+        }
+      } else if (!isDataPageAlignedForNMagic && needAlign(section)) {
         fileOffset =
             llvm::RoundUpToAlignment(fileOffset, this->_context.getPageSize());
         isDataPageAlignedForNMagic = true;
-      }
-      // Align the section address
-      fileOffset = llvm::RoundUpToAlignment(fileOffset, section->align2());
+      } else
+        fileOffset = llvm::RoundUpToAlignment(fileOffset, section->align2());
 
       if (isFirstSection) {
         slice->setFileOffset(fileOffset);
@@ -460,6 +467,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
   uint64_t startAddr = addr;
   SegmentSlice<ELFT> *slice = nullptr;
   uint64_t tlsStartAddr = 0;
+  bool alignSegments = this->_context.alignSegments();
 
   for (auto si = _sections.begin(); si != _sections.end(); ++si) {
     // If this is first section in the segment, page align the section start
@@ -467,7 +475,8 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
     // only if NMAGIC is set.
     if (isFirstSection) {
       isFirstSection = false;
-      if (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+      if (alignSegments &&
+          _outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
           _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
         // Align to a page only if the output is not
         // OutputMagic::NMAGIC/OutputMagic::OMAGIC

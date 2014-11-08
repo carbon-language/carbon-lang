@@ -555,6 +555,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setCreateSeparateROSegment();
       break;
 
+    case OPT_no_align_segments:
+      ctx->setAlignSegments(false);
+      break;
+
     default:
       break;
     } // end switch on option ID

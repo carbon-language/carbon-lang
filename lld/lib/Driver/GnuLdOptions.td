@@ -221,6 +221,9 @@ def rosegment: Flag<["--"], "rosegment">,
 def z : Separate<["-"], "z">,
      HelpText<"Linker Option extensions">,
      Group<grp_customopts>;
+def no_align_segments: Flag<["--"], "no-align-segments">,
+     HelpText<"Don't align ELF segments(virtualaddress/fileoffset) to page boundaries">,
+     Group<grp_customopts>;
 
 //===----------------------------------------------------------------------===//
 /// Symbol options

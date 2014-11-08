@@ -278,6 +278,10 @@ public:
   bool demangleSymbols() const { return _demangle; }
   void setDemangleSymbols(bool d) { _demangle = d; }
 
+  /// \brief Align segments.
+  bool alignSegments() const { return _alignSegments; }
+  void setAlignSegments(bool align) { _alignSegments = align; }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -303,6 +307,7 @@ protected:
   bool _noAllowDynamicLibraries;
   bool _mergeRODataToTextSegment;
   bool _demangle;
+  bool _alignSegments;
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;
