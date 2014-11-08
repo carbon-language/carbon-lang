@@ -41,12 +41,12 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   GetPcSpBp(context, &pc, &sp, &bp);
 
   // Access at a reasonable offset above SP, or slightly below it (to account
-  // for x86_64 redzone, ARM push of multiple registers, etc) is probably a
-  // stack overflow.
+  // for x86_64 or PowerPC redzone, ARM push of multiple registers, etc) is
+  // probably a stack overflow.
   // We also check si_code to filter out SEGV caused by something else other
   // then hitting the guard page or unmapped memory, like, for example,
   // unaligned memory access.
-  if (addr + 128 > sp && addr < sp + 0xFFFF &&
+  if (addr + 512 > sp && addr < sp + 0xFFFF &&
       (code == si_SEGV_MAPERR || code == si_SEGV_ACCERR))
     ReportStackOverflow(pc, sp, bp, context, addr);
   else
