@@ -172,6 +172,21 @@ RegisterContextLLDB::InitializeZerothFrame()
         m_sym_ctx_valid = true;
     }
 
+    if (m_sym_ctx.symbol)
+    {
+        UnwindLogMsg ("with pc value of 0x%" PRIx64 ", symbol name is '%s'",
+                      current_pc, m_sym_ctx.symbol == NULL ? "" : m_sym_ctx.symbol->GetName().AsCString());
+    }
+    else if (m_sym_ctx.function)
+    {
+        UnwindLogMsg ("with pc value of 0x%" PRIx64 ", function name is '%s'",
+                      current_pc, m_sym_ctx.symbol == NULL ? "" : m_sym_ctx.function->GetName().AsCString());
+    }
+    else
+    {
+        UnwindLogMsg ("with pc value of 0x%" PRIx64 ", no symbol/function name is known.", current_pc);
+    }
+
     AddressRange addr_range;
     m_sym_ctx.GetAddressRange (resolve_scope, 0, false, addr_range);
 
@@ -294,12 +309,12 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     if (log)
     {
-        UnwindLogMsg ("pc = 0x%16.16" PRIx64, pc);
+        UnwindLogMsg ("pc = 0x%" PRIx64, pc);
         addr_t reg_val;
         if (ReadGPRValue (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP, reg_val))
-            UnwindLogMsg ("fp = 0x%16.16" PRIx64, reg_val);
+            UnwindLogMsg ("fp = 0x%" PRIx64, reg_val);
         if (ReadGPRValue (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, reg_val))
-            UnwindLogMsg ("sp = 0x%16.16" PRIx64, reg_val);
+            UnwindLogMsg ("sp = 0x%" PRIx64, reg_val);
     }
 
     // A pc of 0x0 means it's the end of the stack crawl
@@ -442,6 +457,21 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_sym_ctx_valid = true;
     }
 
+    if (m_sym_ctx.symbol)
+    {
+        UnwindLogMsg ("with pc value of 0x%" PRIx64 ", symbol name is '%s'",
+                      pc, m_sym_ctx.symbol == NULL ? "" : m_sym_ctx.symbol->GetName().AsCString());
+    }
+    else if (m_sym_ctx.function)
+    {
+        UnwindLogMsg ("with pc value of 0x%" PRIx64 ", function name is '%s'",
+                      pc, m_sym_ctx.symbol == NULL ? "" : m_sym_ctx.function->GetName().AsCString());
+    }
+    else
+    {
+        UnwindLogMsg ("with pc value of 0x%" PRIx64 ", no symbol/function name is known.", pc);
+    }
+
     AddressRange addr_range;
     if (!m_sym_ctx.GetAddressRange (resolve_scope, 0, false, addr_range))
     {
@@ -472,17 +502,21 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     // to the ABI plugin and consult that.
     if (decr_pc_and_recompute_addr_range)
     {
-        Address temporary_pc(m_current_pc);
-        temporary_pc.SetOffset(m_current_pc.GetOffset() - 1);
-        m_sym_ctx.Clear(false);
+        UnwindLogMsg ("Backing up the pc value of 0x%" PRIx64 " by 1 and re-doing symbol lookup; old symbol was %s",
+                      pc, m_sym_ctx.symbol == NULL ? "" : m_sym_ctx.symbol->GetName().AsCString());
+        Address temporary_pc;
+        temporary_pc.SetLoadAddress (pc - 1, &process->GetTarget());
+        m_sym_ctx.Clear (false);
         m_sym_ctx_valid = false;
         uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol;
         
-        if (pc_module_sp->ResolveSymbolContextForAddress (temporary_pc, resolve_scope, m_sym_ctx) & resolve_scope)
+        ModuleSP temporary_module_sp = temporary_pc.GetModule();
+        if (temporary_module_sp->ResolveSymbolContextForAddress (temporary_pc, resolve_scope, m_sym_ctx) & resolve_scope)
         {
             if (m_sym_ctx.GetAddressRange (resolve_scope, 0, false,  addr_range))
                 m_sym_ctx_valid = true;
         }
+        UnwindLogMsg ("Symbol is now %s", m_sym_ctx.symbol == NULL ? "" : m_sym_ctx.symbol->GetName().AsCString());
     }
 
     // If we were able to find a symbol/function, set addr_range_ptr to the bounds of that symbol/function.
@@ -490,13 +524,15 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (addr_range.GetBaseAddress().IsValid())
     {
         m_start_pc = addr_range.GetBaseAddress();
-        m_current_offset = m_current_pc.GetOffset() - m_start_pc.GetOffset();
+        m_current_offset = pc - m_start_pc.GetLoadAddress (&process->GetTarget());
         m_current_offset_backed_up_one = m_current_offset;
         if (decr_pc_and_recompute_addr_range && m_current_offset_backed_up_one > 0)
         {
             m_current_offset_backed_up_one--;
             if (m_sym_ctx_valid)
-                m_current_pc.SetOffset(m_current_pc.GetOffset() - 1);
+            {
+                m_current_pc.SetLoadAddress (pc - 1, &process->GetTarget());
+            }
         }
     }
     else

@@ -384,7 +384,31 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
         {
             addr_t offset = lookup_addr.GetOffset();
             if (offset > 0)
+            {
                 lookup_addr.SetOffset(offset - 1);
+
+            }
+            else
+            {
+                // lookup_addr is the start of a section.  We need
+                // do the math on the actual load address and re-compute
+                // the section.  We're working with a 'noreturn' function
+                // at the end of a section.
+                ThreadSP thread_sp (GetThread());
+                if (thread_sp)
+                {
+                    TargetSP target_sp (thread_sp->CalculateTarget());
+                    if (target_sp)
+                    {
+                        addr_t addr_minus_one = lookup_addr.GetLoadAddress(target_sp.get()) - 1;
+                        lookup_addr.SetLoadAddress (addr_minus_one, target_sp.get());
+                    }
+                    else
+                    {
+                    lookup_addr.SetOffset(offset - 1);
+                    }
+                }
+            }
         }
 
 
