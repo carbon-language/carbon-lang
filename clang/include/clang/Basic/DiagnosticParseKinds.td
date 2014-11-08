@@ -561,6 +561,9 @@ def warn_cxx98_compat_noexcept_expr : Warning<
 def warn_cxx98_compat_nullptr : Warning<
   "'nullptr' is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 
+def warn_cxx14_compat_attribute : Warning<
+  "attribute on %0 declarations are incompatible with C++ standards before "
+  "C++1z">, InGroup<CXXPre1zCompat>, DefaultIgnore;
 def warn_cxx98_compat_alignas : Warning<"'alignas' is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def warn_cxx98_compat_attribute : Warning<

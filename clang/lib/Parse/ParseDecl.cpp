@@ -3812,8 +3812,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 ///         enumerator
 ///         enumerator-list ',' enumerator
 ///       enumerator:
-///         enumeration-constant
-///         enumeration-constant '=' constant-expression
+///         enumeration-constant attributes[opt]
+///         enumeration-constant attributes[opt] '=' constant-expression
 ///       enumeration-constant:
 ///         identifier
 ///
@@ -3850,8 +3850,13 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     // If attributes exist after the enumerator, parse them.
     ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseGNUAttributes(attrs);
-    MaybeParseCXX11Attributes(attrs);
-    ProhibitAttributes(attrs);
+    ProhibitAttributes(attrs); // GNU-style attributes are prohibited.
+    if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
+      if (!getLangOpts().CPlusPlus1z)
+        Diag(Tok.getLocation(), diag::warn_cxx14_compat_attribute)
+            << "enumerator";
+      ParseCXX11Attributes(attrs);
+    }
 
     SourceLocation EqualLoc;
     ExprResult AssignedVal;

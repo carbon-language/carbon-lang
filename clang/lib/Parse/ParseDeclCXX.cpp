@@ -73,7 +73,14 @@ Decl *Parser::ParseNamespace(unsigned Context,
   std::vector<IdentifierInfo*> ExtraIdent;
   std::vector<SourceLocation> ExtraNamespaceLoc;
 
-  Token attrTok;
+  ParsedAttributesWithRange attrs(AttrFactory);
+  SourceLocation attrLoc;
+  if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
+    if (!getLangOpts().CPlusPlus1z)
+      Diag(Tok.getLocation(), diag::warn_cxx14_compat_attribute) << "namespace";
+    attrLoc = Tok.getLocation();
+    ParseCXX11Attributes(attrs);
+  }
 
   if (Tok.is(tok::identifier)) {
     Ident = Tok.getIdentifierInfo();
@@ -86,9 +93,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
   }
 
   // Read label attributes, if present.
-  ParsedAttributes attrs(AttrFactory);
   if (Tok.is(tok::kw___attribute)) {
-    attrTok = Tok;
+    attrLoc = Tok.getLocation();
     ParseGNUAttributes(attrs);
   }
 
@@ -99,8 +105,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
       SkipUntil(tok::semi);
       return nullptr;
     }
-    if (!attrs.empty())
-      Diag(attrTok, diag::err_unexpected_namespace_attributes_alias);
+    if (attrLoc.isValid())
+      Diag(attrLoc, diag::err_unexpected_namespace_attributes_alias);
     if (InlineLoc.isValid())
       Diag(InlineLoc, diag::err_inline_namespace_alias)
           << FixItHint::CreateRemoval(InlineLoc);
