@@ -2784,6 +2784,27 @@ public:
     return getSema().CheckPackExpansion(Pattern, EllipsisLoc, NumExpansions);
   }
 
+  /// \brief Build a new C++1z fold-expression.
+  ///
+  /// By default, performs semantic analysis in order to build a new fold
+  /// expression.
+  ExprResult RebuildCXXFoldExpr(SourceLocation LParenLoc, Expr *LHS,
+                                BinaryOperatorKind Operator,
+                                SourceLocation EllipsisLoc, Expr *RHS,
+                                SourceLocation RParenLoc) {
+    return getSema().BuildCXXFoldExpr(LParenLoc, LHS, Operator, EllipsisLoc,
+                                      RHS, RParenLoc);
+  }
+
+  /// \brief Build an empty C++1z fold-expression with the given operator.
+  ///
+  /// By default, produces the fallback value for the fold-expression, or
+  /// produce an error if there is no fallback value.
+  ExprResult RebuildEmptyCXXFoldExpr(SourceLocation EllipsisLoc,
+                                     BinaryOperatorKind Operator) {
+    return getSema().BuildEmptyCXXFoldExpr(EllipsisLoc, Operator);
+  }
+
   /// \brief Build a new atomic operation expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -9562,6 +9583,128 @@ ExprResult
 TreeTransform<Derived>::TransformMaterializeTemporaryExpr(
                                                   MaterializeTemporaryExpr *E) {
   return getDerived().TransformExpr(E->GetTemporaryExpr());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformCXXFoldExpr(CXXFoldExpr *E) {
+  Expr *Pattern = E->getPattern();
+
+  SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  getSema().collectUnexpandedParameterPacks(Pattern, Unexpanded);
+  assert(!Unexpanded.empty() && "Pack expansion without parameter packs?");
+
+  // Determine whether the set of unexpanded parameter packs can and should
+  // be expanded.
+  bool Expand = true;
+  bool RetainExpansion = false;
+  Optional<unsigned> NumExpansions;
+  if (getDerived().TryExpandParameterPacks(E->getEllipsisLoc(),
+                                           Pattern->getSourceRange(),
+                                           Unexpanded,
+                                           Expand, RetainExpansion,
+                                           NumExpansions))
+    return true;
+
+  if (!Expand) {
+    // Do not expand any packs here, just transform and rebuild a fold
+    // expression.
+    Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+
+    ExprResult LHS =
+        E->getLHS() ? getDerived().TransformExpr(E->getLHS()) : ExprResult();
+    if (LHS.isInvalid())
+      return true;
+
+    ExprResult RHS =
+        E->getRHS() ? getDerived().TransformExpr(E->getRHS()) : ExprResult();
+    if (RHS.isInvalid())
+      return true;
+
+    if (!getDerived().AlwaysRebuild() &&
+        LHS.get() == E->getLHS() && RHS.get() == E->getRHS())
+      return E;
+
+    return getDerived().RebuildCXXFoldExpr(
+        E->getLocStart(), LHS.get(), E->getOperator(), E->getEllipsisLoc(),
+        RHS.get(), E->getLocEnd());
+  }
+
+  // The transform has determined that we should perform an elementwise
+  // expansion of the pattern. Do so.
+  ExprResult Result = getDerived().TransformExpr(E->getInit());
+  if (Result.isInvalid())
+    return true;
+  bool LeftFold = E->isLeftFold();
+
+  // If we're retaining an expansion for a right fold, it is the innermost
+  // component and takes the init (if any).
+  if (!LeftFold && RetainExpansion) {
+    ForgetPartiallySubstitutedPackRAII Forget(getDerived());
+
+    ExprResult Out = getDerived().TransformExpr(Pattern);
+    if (Out.isInvalid())
+      return true;
+
+    Result = getDerived().RebuildCXXFoldExpr(
+        E->getLocStart(), Out.get(), E->getOperator(), E->getEllipsisLoc(),
+        Result.get(), E->getLocEnd());
+    if (Result.isInvalid())
+      return true;
+  }
+
+  for (unsigned I = 0; I != *NumExpansions; ++I) {
+    Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(
+        getSema(), LeftFold ? I : *NumExpansions - I - 1);
+    ExprResult Out = getDerived().TransformExpr(Pattern);
+    if (Out.isInvalid())
+      return true;
+
+    if (Out.get()->containsUnexpandedParameterPack()) {
+      // We still have a pack; retain a pack expansion for this slice.
+      Result = getDerived().RebuildCXXFoldExpr(
+          E->getLocStart(),
+          LeftFold ? Result.get() : Out.get(),
+          E->getOperator(), E->getEllipsisLoc(),
+          LeftFold ? Out.get() : Result.get(),
+          E->getLocEnd());
+    } else if (Result.isUsable()) {
+      // We've got down to a single element; build a binary operator.
+      Result = getDerived().RebuildBinaryOperator(
+          E->getEllipsisLoc(), E->getOperator(),
+          LeftFold ? Result.get() : Out.get(),
+          LeftFold ? Out.get() : Result.get());
+    } else
+      Result = Out;
+
+    if (Result.isInvalid())
+      return true;
+  }
+
+  // If we're retaining an expansion for a left fold, it is the outermost
+  // component and takes the complete expansion so far as its init (if any).
+  if (LeftFold && RetainExpansion) {
+    ForgetPartiallySubstitutedPackRAII Forget(getDerived());
+
+    ExprResult Out = getDerived().TransformExpr(Pattern);
+    if (Out.isInvalid())
+      return true;
+
+    Result = getDerived().RebuildCXXFoldExpr(
+        E->getLocStart(), Result.get(),
+        E->getOperator(), E->getEllipsisLoc(),
+        Out.get(), E->getLocEnd());
+    if (Result.isInvalid())
+      return true;
+  }
+
+  // If we had no init and an empty pack, and we're not retaining an expansion,
+  // then produce a fallback value or error.
+  if (Result.isUnset())
+    return getDerived().RebuildEmptyCXXFoldExpr(E->getEllipsisLoc(),
+                                                E->getOperator());
+
+  return Result;
 }
 
 template<typename Derived>

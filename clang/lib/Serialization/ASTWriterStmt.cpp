@@ -1579,6 +1579,17 @@ void ASTStmtWriter::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
   Code = serialization::EXPR_MATERIALIZE_TEMPORARY;
 }
 
+void ASTStmtWriter::VisitCXXFoldExpr(CXXFoldExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->LParenLoc, Record);
+  Writer.AddSourceLocation(E->EllipsisLoc, Record);
+  Writer.AddSourceLocation(E->RParenLoc, Record);
+  Writer.AddStmt(E->SubExprs[0]);
+  Writer.AddStmt(E->SubExprs[1]);
+  Record.push_back(E->Opcode);
+  Code = serialization::EXPR_CXX_FOLD;
+}
+
 void ASTStmtWriter::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSourceExpr());

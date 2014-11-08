@@ -182,6 +182,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::AsTypeExprClass:
   case Expr::ObjCIndirectCopyRestoreExprClass:
   case Expr::AtomicExprClass:
+  case Expr::CXXFoldExprClass:
     return Cl::CL_PRValue;
 
     // Next come the complicated cases.

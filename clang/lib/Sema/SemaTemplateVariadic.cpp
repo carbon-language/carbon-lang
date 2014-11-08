@@ -935,3 +935,108 @@ Sema::getTemplateArgumentPackExpansionPattern(
 
   llvm_unreachable("Invalid TemplateArgument Kind!");
 }
+
+static void CheckFoldOperand(Sema &S, Expr *E) {
+  if (!E)
+    return;
+
+  E = E->IgnoreImpCasts();
+  if (isa<BinaryOperator>(E) || isa<AbstractConditionalOperator>(E)) {
+    S.Diag(E->getExprLoc(), diag::err_fold_expression_bad_operand)
+        << E->getSourceRange()
+        << FixItHint::CreateInsertion(E->getLocStart(), "(")
+        << FixItHint::CreateInsertion(E->getLocEnd(), ")");
+  }
+}
+
+ExprResult Sema::ActOnCXXFoldExpr(SourceLocation LParenLoc, Expr *LHS,
+                                  tok::TokenKind Operator,
+                                  SourceLocation EllipsisLoc, Expr *RHS,
+                                  SourceLocation RParenLoc) {
+  // LHS and RHS must be cast-expressions. We allow an arbitrary expression
+  // in the parser and reduce down to just cast-expressions here.
+  CheckFoldOperand(*this, LHS);
+  CheckFoldOperand(*this, RHS);
+
+  // [expr.prim.fold]p3:
+  //   In a binary fold, op1 and op2 shall be the same fold-operator, and
+  //   either e1 shall contain an unexpanded parameter pack or e2 shall contain
+  //   an unexpanded parameter pack, but not both.
+  if (LHS && RHS &&
+      LHS->containsUnexpandedParameterPack() ==
+          RHS->containsUnexpandedParameterPack()) {
+    return Diag(EllipsisLoc,
+                LHS->containsUnexpandedParameterPack()
+                    ? diag::err_fold_expression_packs_both_sides
+                    : diag::err_pack_expansion_without_parameter_packs)
+        << LHS->getSourceRange() << RHS->getSourceRange();
+  }
+
+  // [expr.prim.fold]p2:
+  //   In a unary fold, the cast-expression shall contain an unexpanded
+  //   parameter pack.
+  if (!LHS || !RHS) {
+    Expr *Pack = LHS ? LHS : RHS;
+    assert(Pack && "fold expression with neither LHS nor RHS");
+    if (!Pack->containsUnexpandedParameterPack())
+      return Diag(EllipsisLoc, diag::err_pack_expansion_without_parameter_packs)
+             << Pack->getSourceRange();
+  }
+
+  BinaryOperatorKind Opc = ConvertTokenKindToBinaryOpcode(Operator);
+  return BuildCXXFoldExpr(LParenLoc, LHS, Opc, EllipsisLoc, RHS, RParenLoc);
+}
+
+ExprResult Sema::BuildCXXFoldExpr(SourceLocation LParenLoc, Expr *LHS,
+                                  BinaryOperatorKind Operator,
+                                  SourceLocation EllipsisLoc, Expr *RHS,
+                                  SourceLocation RParenLoc) {
+  return new (Context) CXXFoldExpr(Context.DependentTy, LParenLoc, LHS,
+                                   Operator, EllipsisLoc, RHS, RParenLoc);
+}
+
+ExprResult Sema::BuildEmptyCXXFoldExpr(SourceLocation EllipsisLoc,
+                                       BinaryOperatorKind Operator) {
+  // [temp.variadic]p9:
+  //   If N is zero for a unary fold-expression, the value of the expression is
+  //       *   ->  1
+  //       +   ->  int()
+  //       &   ->  -1
+  //       |   ->  int()
+  //       &&  ->  true
+  //       ||  ->  false
+  //       ,   ->  void()
+  //   if the operator is not listed [above], the instantiation is ill-formed.
+  //
+  // Note that we need to use something like int() here, not merely 0, to
+  // prevent the result from being a null pointer constant.
+  QualType ScalarType;
+  switch (Operator) {
+  case BO_Add:
+    ScalarType = Context.IntTy;
+    break;
+  case BO_Mul:
+    return ActOnIntegerConstant(EllipsisLoc, 1);
+  case BO_Or:
+    ScalarType = Context.IntTy;
+    break;
+  case BO_And:
+    return CreateBuiltinUnaryOp(EllipsisLoc, UO_Minus,
+                                ActOnIntegerConstant(EllipsisLoc, 1).get());
+  case BO_LOr:
+    return ActOnCXXBoolLiteral(EllipsisLoc, tok::kw_false);
+  case BO_LAnd:
+    return ActOnCXXBoolLiteral(EllipsisLoc, tok::kw_true);
+  case BO_Comma:
+    ScalarType = Context.VoidTy;
+    break;
+
+  default:
+    return Diag(EllipsisLoc, diag::err_fold_expression_empty)
+        << BinaryOperator::getOpcodeStr(Operator);
+  }
+
+  return new (Context) CXXScalarValueInitExpr(
+      ScalarType, Context.getTrivialTypeSourceInfo(ScalarType, EllipsisLoc),
+      EllipsisLoc);
+}

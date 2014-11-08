@@ -3818,6 +3818,69 @@ public:
   }
 };
 
+/// \brief Represents a folding of a pack over an operator.
+///
+/// This expression is always dependent and represents a pack expansion of the
+/// forms:
+///
+///    ( expr op ... )
+///    ( ... op expr )
+///    ( expr op ... op expr )
+class CXXFoldExpr : public Expr {
+  SourceLocation LParenLoc;
+  SourceLocation EllipsisLoc;
+  SourceLocation RParenLoc;
+  Stmt *SubExprs[2];
+  BinaryOperatorKind Opcode;
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+public:
+  CXXFoldExpr(QualType T, SourceLocation LParenLoc, Expr *LHS,
+              BinaryOperatorKind Opcode, SourceLocation EllipsisLoc, Expr *RHS,
+              SourceLocation RParenLoc)
+      : Expr(CXXFoldExprClass, T, VK_RValue, OK_Ordinary,
+             /*Dependent*/ true, true, true,
+             /*ContainsUnexpandedParameterPack*/ false),
+        LParenLoc(LParenLoc), EllipsisLoc(EllipsisLoc), RParenLoc(RParenLoc),
+        Opcode(Opcode) {
+    SubExprs[0] = LHS;
+    SubExprs[1] = RHS;
+  }
+  CXXFoldExpr(EmptyShell Empty) : Expr(CXXFoldExprClass, Empty) {}
+
+  Expr *getLHS() const { return static_cast<Expr*>(SubExprs[0]); }
+  Expr *getRHS() const { return static_cast<Expr*>(SubExprs[1]); }
+
+  /// Does this produce a right-associated sequence of operators?
+  bool isRightFold() const {
+    return getLHS() && getLHS()->containsUnexpandedParameterPack();
+  }
+  /// Does this produce a left-associated sequence of operators?
+  bool isLeftFold() const { return !isRightFold(); }
+  /// Get the pattern, that is, the operand that contains an unexpanded pack.
+  Expr *getPattern() const { return isLeftFold() ? getRHS() : getLHS(); }
+  /// Get the operand that doesn't contain a pack, for a binary fold.
+  Expr *getInit() const { return isLeftFold() ? getLHS() : getRHS(); }
+
+  SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
+  BinaryOperatorKind getOperator() const { return Opcode; }
+
+  SourceLocation getLocStart() const LLVM_READONLY {
+    return LParenLoc;
+  }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return RParenLoc;
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXFoldExprClass;
+  }
+
+  // Iterators
+  child_range children() { return child_range(SubExprs, SubExprs + 2); }
+};
+
 }  // end namespace clang
 
 #endif

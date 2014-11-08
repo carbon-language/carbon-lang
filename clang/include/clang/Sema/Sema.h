@@ -3714,6 +3714,10 @@ public:
                                         bool GNUSyntax,
                                         ExprResult Init);
 
+private:
+  static BinaryOperatorKind ConvertTokenKindToBinaryOpcode(tok::TokenKind Kind);
+
+public:
   ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                         tok::TokenKind Kind, Expr *LHSExpr, Expr *RHSExpr);
   ExprResult BuildBinOp(Scope *S, SourceLocation OpLoc,
@@ -4287,6 +4291,17 @@ public:
                             void *TyOrExpr,
                             SourceLocation RParenLoc);
 
+  /// \brief Handle a C++1z fold-expression: ( expr op ... op expr ).
+  ExprResult ActOnCXXFoldExpr(SourceLocation LParenLoc, Expr *LHS,
+                              tok::TokenKind Operator,
+                              SourceLocation EllipsisLoc, Expr *RHS,
+                              SourceLocation RParenLoc);
+  ExprResult BuildCXXFoldExpr(SourceLocation LParenLoc, Expr *LHS,
+                              BinaryOperatorKind Operator,
+                              SourceLocation EllipsisLoc, Expr *RHS,
+                              SourceLocation RParenLoc);
+  ExprResult BuildEmptyCXXFoldExpr(SourceLocation EllipsisLoc,
+                                   BinaryOperatorKind Operator);
 
   //// ActOnCXXThis -  Parse 'this' pointer.
   ExprResult ActOnCXXThis(SourceLocation loc);

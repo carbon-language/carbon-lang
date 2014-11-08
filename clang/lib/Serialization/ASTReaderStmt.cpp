@@ -1580,6 +1580,16 @@ void ASTStmtReader::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
   E->setExtendingDecl(VD, ManglingNumber);
 }
 
+void ASTStmtReader::VisitCXXFoldExpr(CXXFoldExpr *E) {
+  VisitExpr(E);
+  E->LParenLoc = ReadSourceLocation(Record, Idx);
+  E->EllipsisLoc = ReadSourceLocation(Record, Idx);
+  E->RParenLoc = ReadSourceLocation(Record, Idx);
+  E->SubExprs[0] = Reader.ReadSubExpr();
+  E->SubExprs[1] = Reader.ReadSubExpr();
+  E->Opcode = (BinaryOperatorKind)Record[Idx++];
+}
+
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
   E->SourceExpr = Reader.ReadSubExpr();
@@ -2908,7 +2918,11 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case EXPR_MATERIALIZE_TEMPORARY:
       S = new (Context) MaterializeTemporaryExpr(Empty);
       break;
-        
+
+    case EXPR_CXX_FOLD:
+      S = new (Context) CXXFoldExpr(Empty);
+      break;
+
     case EXPR_OPAQUE_VALUE:
       S = new (Context) OpaqueValueExpr(Empty);
       break;

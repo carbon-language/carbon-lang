@@ -3209,12 +3209,35 @@ recurse:
       mangleFunctionParam(cast<ParmVarDecl>(Pack));
     break;
   }
-      
+
   case Expr::MaterializeTemporaryExprClass: {
     mangleExpression(cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr());
     break;
   }
-      
+
+  case Expr::CXXFoldExprClass: {
+    auto *FE = cast<CXXFoldExpr>(E);
+    if (!FE->getLHS())
+      Out << "fl";
+    else if (!FE->getRHS())
+      Out << "fr";
+    else
+      Out << "fx";
+
+    if (FE->getOperator() == BO_PtrMemD)
+      Out << "ds";
+    else
+      mangleOperatorName(
+          BinaryOperator::getOverloadedOperator(FE->getOperator()),
+          /*Arity=*/2);
+
+    if (FE->getLHS())
+      mangleExpression(FE->getLHS());
+    if (FE->getRHS())
+      mangleExpression(FE->getRHS());
+    break;
+  }
+
   case Expr::CXXThisExprClass:
     Out << "fpT";
     break;

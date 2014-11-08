@@ -3784,6 +3784,14 @@ def err_ellipsis_in_declarator_not_parameter : Error<
 def err_sizeof_pack_no_pack_name : Error<
   "%0 does not refer to the name of a parameter pack">;
 
+def err_fold_expression_packs_both_sides : Error<
+  "binary fold expression has unexpanded parameter packs in both operands">;
+def err_fold_expression_empty : Error<
+  "unary fold expression has empty expansion for operator '%0' "
+  "with no fallback value">;
+def err_fold_expression_bad_operand : Error<
+  "expression not permitted as operand of fold expression">;
+
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
 def err_unexpected_namespace : Error<

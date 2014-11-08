@@ -1238,6 +1238,11 @@ void StmtProfiler::VisitMaterializeTemporaryExpr(
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitCXXFoldExpr(const CXXFoldExpr *S) {
+  VisitExpr(S);
+  ID.AddInteger(S->getOperator());
+}
+
 void StmtProfiler::VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
   VisitExpr(E);  
 }
