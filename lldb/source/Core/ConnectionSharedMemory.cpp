@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#ifndef __ANDROID_NDK__
 
 #include "lldb/Core/ConnectionSharedMemory.h"
 
@@ -156,3 +157,4 @@ ConnectionSharedMemory::Open (bool create, const char *name, size_t size, Error 
     return eConnectionStatusError;
 }
 
+#endif // __ANDROID_NDK__

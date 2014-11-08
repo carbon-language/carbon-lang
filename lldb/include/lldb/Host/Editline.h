@@ -14,10 +14,12 @@
 #include "lldb/lldb-private.h"
 
 #include <stdio.h>
-#ifdef _WIN32
+#if defined(_WIN32)
 #include "lldb/Host/windows/editlinewin.h"
 #else
+#if !defined(__ANDROID_NDK__)
 #include <histedit.h>
+#endif
 #endif
 
 #include <string>

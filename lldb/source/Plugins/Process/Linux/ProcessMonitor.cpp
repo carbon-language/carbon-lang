@@ -16,7 +16,13 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <elf.h>
+#if defined(__ANDROID_NDK__) && defined (__arm__)
+#include <linux/personality.h>
+#include <linux/user.h>
+#else
 #include <sys/personality.h>
+#include <sys/user.h>
+#endif
 #ifndef __ANDROID__
 #include <sys/procfs.h>
 #endif
@@ -25,7 +31,6 @@
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
-#include <sys/user.h>
 #include <sys/wait.h>
 
 // C++ Includes

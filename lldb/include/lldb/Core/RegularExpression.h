@@ -39,6 +39,9 @@ inline void regfree(llvm_regex_t * a)
 }
 
 #else
+#if __ANDROID_NDK__
+#include <regex>
+#endif
 #include <regex.h>
 #endif
 #include <stdint.h>

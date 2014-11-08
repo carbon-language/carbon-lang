@@ -26,6 +26,9 @@
 #include "lldb/Target/Process.h"
 
 #include "lldb/Host/Host.h"
+#ifdef __ANDROID_NDK__
+#include "lldb/Host/android/Android.h"
+#endif
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 
