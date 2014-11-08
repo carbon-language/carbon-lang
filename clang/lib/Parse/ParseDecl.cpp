@@ -3854,7 +3854,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
       if (!getLangOpts().CPlusPlus1z)
         Diag(Tok.getLocation(), diag::warn_cxx14_compat_attribute)
-            << "enumerator";
+            << 1 /*enumerator*/;
       ParseCXX11Attributes(attrs);
     }
 

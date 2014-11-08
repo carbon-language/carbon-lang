@@ -77,7 +77,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
   SourceLocation attrLoc;
   if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
     if (!getLangOpts().CPlusPlus1z)
-      Diag(Tok.getLocation(), diag::warn_cxx14_compat_attribute) << "namespace";
+      Diag(Tok.getLocation(), diag::warn_cxx14_compat_attribute)
+          << 0 /*namespace*/;
     attrLoc = Tok.getLocation();
     ParseCXX11Attributes(attrs);
   }
@@ -91,6 +92,10 @@ Decl *Parser::ParseNamespace(unsigned Context,
       ExtraIdentLoc.push_back(ConsumeToken());
     }
   }
+
+  // A nested namespace definition cannot have attributes.
+  if (!ExtraNamespaceLoc.empty() && attrLoc.isValid())
+    Diag(attrLoc, diag::err_unexpected_nested_namespace_attribute);
 
   // Read label attributes, if present.
   if (Tok.is(tok::kw___attribute)) {
