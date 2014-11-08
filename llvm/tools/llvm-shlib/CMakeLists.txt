@@ -12,6 +12,7 @@ if(NOT DEFINED LLVM_DYLIB_COMPONENTS)
     ${LLVM_TARGETS_TO_BUILD}
     Analysis
     AsmPrinter
+    BitReader
     BitWriter
     CodeGen
     Core
@@ -24,6 +25,7 @@ if(NOT DEFINED LLVM_DYLIB_COMPONENTS)
     Interpreter
     Linker
     MC
+    MCDisassembler
     MCJIT
     ObjCARCOpts
     Object
