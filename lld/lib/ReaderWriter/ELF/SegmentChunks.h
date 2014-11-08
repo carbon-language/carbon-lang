@@ -418,7 +418,6 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
         else {
           // Align according to ELF spec.
           // in p75, http://www.sco.com/developers/devspecs/gabi41.pdf
-          uint64_t padding = 0;
           uint64_t virtualAddress = slice->virtualAddr();
           Section<ELFT> *sect = dyn_cast<Section<ELFT>>(section);
           if (sect && sect->isLoadableSection() &&
