@@ -182,9 +182,15 @@ namespace dr308 { // dr308: yes
 
 namespace dr311 { // dr311: yes
   namespace X { namespace Y {} }
-  namespace X::Y {} // expected-error {{must define each namespace separately}}
+  namespace X::Y {}
+#if __cplusplus <= 201402L
+  // expected-error@-2 {{define each namespace separately}}
+#endif
   namespace X {
-    namespace X::Y {} // expected-error {{must define each namespace separately}}
+    namespace X::Y {}
+#if __cplusplus <= 201402L
+  // expected-error@-2 {{define each namespace separately}}
+#endif
   }
   // FIXME: The diagnostics here are not very good.
   namespace ::dr311::X {} // expected-error 2+{{}} // expected-warning {{extra qual}}
