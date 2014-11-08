@@ -4,6 +4,8 @@ namespace [[]] foo {}
 namespace [[]] {}
 namespace [[]] bad = foo; // expected-error {{attributes cannot be specified on namespace alias}}
 
+namespace [[]] A::B {} // expected-error {{attributes cannot be specified on a nested namespace definition}}
+
 enum test {
   bing [[]],
   bar [[]] = 1,
