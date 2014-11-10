@@ -27,10 +27,6 @@ ResourceIncludeDir := $(ResourceDir)/include
 PROJ_resources_lib := $(PROJ_resources)/lib
 PROJ_resources_include := $(PROJ_resources)/include
 
-# Initialize a variable to use for extra flags to pass to the
-# compiler-rt make process.
-COMPILERRT_MAKE_FLAGS :=
-
 # Expect compiler-rt to be in llvm/projects/compiler-rt
 COMPILERRT_SRC_ROOT := $(LLVM_SRC_ROOT)/projects/compiler-rt
 
@@ -106,17 +102,6 @@ ifneq (,$(findstring ARM,$(TARGETS_TO_BUILD)))
 RuntimeLibrary.macho_embedded.Configs += \
 	soft_static.a soft_pic.a
 endif
-
-# Support building compiler-rt with relocatable SDKs.
-#
-# This will cause make to put SDKROOT in the environment, and since we
-# are using the built Clang to build compiler-rt, it to pick up that
-# location as the default value for the include system root.
-ACTIVE_SDK_PATH := $(shell xcrun --show-sdk-path 2> /dev/null)
-ifneq ($(ACTIVE_SDK_PATH),)
-COMPILERRT_MAKE_FLAGS := SDKROOT=$(ACTIVE_SDK_PATH)
-endif
-
 endif
 
 # On Linux, include a library which has all the runtime functions.
@@ -182,7 +167,6 @@ BuildRuntimeLibraries:
 	  CC="$(ToolDir)/clang" \
 	  VERBOSE=$(VERBOSE) \
 	  LLVM_ANDROID_TOOLCHAIN_DIR="$(LLVM_ANDROID_TOOLCHAIN_DIR)" \
-	  $(COMPILERRT_MAKE_FLAGS) \
 	  $(RuntimeDirs:%=clang_%)
 .PHONY: BuildRuntimeLibraries
 CleanRuntimeLibraries:
@@ -190,7 +174,6 @@ CleanRuntimeLibraries:
 	  ProjSrcRoot=$(COMPILERRT_SRC_ROOT) \
 	  ProjObjRoot=$(PROJ_OBJ_DIR) \
 	  VERBOSE=$(VERBOSE) \
-	  $(COMPILERRT_MAKE_FLAGS) \
 	  clean
 .PHONY: CleanRuntimeLibraries
 RuntimeHeader: $(ResourceIncludeDir)/sanitizer
