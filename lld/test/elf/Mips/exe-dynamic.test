@@ -13,15 +13,13 @@
 # CHECK: Arch: mipsel
 # CHECK: AddressSize: 32bit
 # CHECK: LoadName:
-# CHECK: DynamicSection [ (20 entries)
+# CHECK: DynamicSection [ (18 entries)
 # CHECK:   Tag        Type                 Name/Value
 # CHECK-NEXT:   0x00000004 HASH                 0x400110
 # CHECK-NEXT:   0x00000005 STRTAB               0x400144
 # CHECK-NEXT:   0x00000006 SYMTAB               0x400124
 # CHECK-NEXT:   0x0000000A STRSZ                28 (bytes)
 # CHECK-NEXT:   0x0000000B SYMENT               16 (bytes)
-# CHECK-NEXT:   0x0000001A FINI_ARRAY           0x0
-# CHECK-NEXT:   0x0000001C FINI_ARRAYSZ         0 (bytes)
 # CHECK-NEXT:   0x00000002 PLTRELSZ             8 (bytes)
 # CHECK-NEXT:   0x70000032 MIPS_PLTGOT          0x402000
 # CHECK-NEXT:   0x00000014 PLTREL               REL

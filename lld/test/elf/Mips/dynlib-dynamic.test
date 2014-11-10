@@ -9,15 +9,13 @@
 # CHECK: Arch: mipsel
 # CHECK: AddressSize: 32bit
 # CHECK: LoadName:
-# CHECK: DynamicSection [ (15 entries)
+# CHECK: DynamicSection [ (13 entries)
 # CHECK:   Tag        Type                 Name/Value
 # CHECK-NEXT:  0x00000004 HASH                 0x{{[0-9A-F]+}}
 # CHECK-NEXT:  0x00000005 STRTAB               0x{{[0-9A-F]+}}
 # CHECK-NEXT:  0x00000006 SYMTAB               0x{{[0-9A-F]+}}
 # CHECK-NEXT:  0x0000000A STRSZ                17 (bytes)
 # CHECK-NEXT:  0x0000000B SYMENT               16 (bytes)
-# CHECK-NEXT:  0x0000001A FINI_ARRAY           0x0
-# CHECK-NEXT:  0x0000001C FINI_ARRAYSZ         0 (bytes)
 # CHECK-NEXT:  0x70000001 MIPS_RLD_VERSION     1
 # CHECK-NEXT:  0x70000005 MIPS_FLAGS           NOTPOT
 # CHECK-NEXT:  0x70000006 MIPS_BASE_ADDRESS    0x0
@@ -28,14 +26,14 @@
 # CHECK-NEXT:  0x00000000 NULL                 0x0
 # CHECK-NEXT: ]
 
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   Type:            ET_REL
   Machine:         EM_MIPS
   Flags:           [ EF_MIPS_PIC, EF_MIPS_CPIC,
                      EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -46,7 +44,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x04
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x00
         Symbol:          '$.str1'
         Type:            R_MIPS_GOT16
@@ -84,8 +82,8 @@ Sections:
     AddressAlign:    0x01
     Size:            0x05
 
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            '$.str1'
       Section:         .rodata.str1
     - Name:            '$.str2'
@@ -105,7 +103,7 @@ Symbols:
     - Name:            .rodata.str2
       Type:            STT_SECTION
       Section:         .rodata.str2
-  Global:          
+  Global:
     - Name:            glob
       Section:         .text
     - Name:            ext1

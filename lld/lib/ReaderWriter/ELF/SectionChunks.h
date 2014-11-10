@@ -1068,10 +1068,6 @@ public:
     _dt_strsz = addEntry(dyn);
     dyn.d_tag = DT_SYMENT;
     _dt_syment = addEntry(dyn);
-    dyn.d_tag = DT_FINI_ARRAY;
-    _dt_fini_array = addEntry(dyn);
-    dyn.d_tag = DT_FINI_ARRAYSZ;
-    _dt_fini_arraysz = addEntry(dyn);
     if (_layout.hasDynamicRelocationTable()) {
       dyn.d_tag = isRela ? DT_RELA : DT_REL;
       _dt_rela = addEntry(dyn);
@@ -1096,6 +1092,25 @@ public:
       dyn.d_un.d_val = 0;
       dyn.d_tag = DT_JMPREL;
       _dt_jmprel = addEntry(dyn);
+    }
+  }
+
+  virtual void doPreFlight() {
+    Elf_Dyn dyn;
+    dyn.d_un.d_val = 0;
+    auto initArray = _layout.findOutputSection(".init_array");
+    auto finiArray = _layout.findOutputSection(".fini_array");
+    if (initArray) {
+      dyn.d_tag = DT_INIT_ARRAY;
+      _dt_init_array = addEntry(dyn);
+      dyn.d_tag = DT_INIT_ARRAYSZ;
+      _dt_init_arraysz = addEntry(dyn);
+    }
+    if (finiArray) {
+      dyn.d_tag = DT_FINI_ARRAY;
+      _dt_fini_array = addEntry(dyn);
+      dyn.d_tag = DT_FINI_ARRAYSZ;
+      _dt_fini_arraysz = addEntry(dyn);
     }
   }
 
@@ -1132,6 +1147,11 @@ public:
     _entries[_dt_symtab].d_un.d_val = _dynamicSymbolTable->virtualAddr();
     _entries[_dt_strsz].d_un.d_val = dynamicStringTable->memSize();
     _entries[_dt_syment].d_un.d_val = _dynamicSymbolTable->getEntSize();
+    auto initArray = _layout.findOutputSection(".init_array");
+    if (initArray) {
+      _entries[_dt_init_array].d_un.d_val = initArray->virtualAddr();
+      _entries[_dt_init_arraysz].d_un.d_val = initArray->memSize();
+    }
     auto finiArray = _layout.findOutputSection(".fini_array");
     if (finiArray) {
       _entries[_dt_fini_array].d_un.d_val = finiArray->virtualAddr();
@@ -1168,6 +1188,8 @@ private:
   std::size_t _dt_pltgot;
   std::size_t _dt_pltrel;
   std::size_t _dt_jmprel;
+  std::size_t _dt_init_array;
+  std::size_t _dt_init_arraysz;
   std::size_t _dt_fini_array;
   std::size_t _dt_fini_arraysz;
   std::size_t _dt_textrel;
