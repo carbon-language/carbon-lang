@@ -28,11 +28,10 @@ public:
     : MCDisassembler(STI, Ctx) {}
   virtual ~SystemZDisassembler() {}
 
-  // Override MCDisassembler.
-  DecodeStatus getInstruction(MCInst &instr, uint64_t &size,
-                              const MemoryObject &region, uint64_t address,
-                              raw_ostream &vStream,
-                              raw_ostream &cStream) const override;
+  DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
+                              const MemoryObject &Region, uint64_t Address,
+                              raw_ostream &VStream,
+                              raw_ostream &CStream) const override;
 };
 } // end anonymous namespace
 
@@ -290,8 +289,8 @@ static DecodeStatus decodeBDLAddr64Disp12Len8Operand(MCInst &Inst,
 DecodeStatus SystemZDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                                  const MemoryObject &Region,
                                                  uint64_t Address,
-                                                 raw_ostream &os,
-                                                 raw_ostream &cs) const {
+                                                 raw_ostream &OS,
+                                                 raw_ostream &CS) const {
   // Get the first two bytes of the instruction.
   uint8_t Bytes[6];
   Size = 0;

@@ -42,9 +42,10 @@ public:
   HexagonDisassembler(MCSubtargetInfo const &STI, MCContext &Ctx)
       : MCDisassembler(STI, Ctx) {}
 
-  DecodeStatus getInstruction(MCInst &instr, uint64_t &size,
-                              MemoryObject const &region, uint64_t address,
-                              raw_ostream &vStream, raw_ostream &cStream) const override;
+  DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
+                              MemoryObject const &Region, uint64_t Address,
+                              raw_ostream &VStream,
+                              raw_ostream &CStream) const override;
 };
 }
 
@@ -68,9 +69,9 @@ DecodeStatus HexagonDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                                  raw_ostream &cs) const {
   std::array<uint8_t, 4> Bytes;
   Size = 4;
-  if (Region.readBytes(Address, Bytes.size(), Bytes.data()) == -1) {
+  if (Region.readBytes(Address, Bytes.size(), Bytes.data()) == -1)
     return MCDisassembler::Fail;
-  }
+
   uint32_t insn =
       llvm::support::endian::read<uint32_t, llvm::support::little,
                                   llvm::support::unaligned>(Bytes.data());

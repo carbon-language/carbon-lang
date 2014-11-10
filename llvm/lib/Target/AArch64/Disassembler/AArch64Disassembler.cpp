@@ -200,26 +200,26 @@ static MCDisassembler *createAArch64Disassembler(const Target &T,
 }
 
 DecodeStatus AArch64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
-                                               const MemoryObject &Region,
-                                               uint64_t Address,
-                                               raw_ostream &os,
-                                               raw_ostream &cs) const {
-  CommentStream = &cs;
+                                                 const MemoryObject &Region,
+                                                 uint64_t Address,
+                                                 raw_ostream &OS,
+                                                 raw_ostream &CS) const {
+  CommentStream = &CS;
 
-  uint8_t bytes[4];
+  uint8_t Bytes[4];
 
   Size = 0;
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, (uint8_t *)bytes) == -1)
+  if (Region.readBytes(Address, 4, Bytes) == -1)
     return Fail;
   Size = 4;
 
   // Encoded as a small-endian 32-bit word in the stream.
-  uint32_t insn =
-      (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | (bytes[0] << 0);
+  uint32_t Insn =
+      (Bytes[3] << 24) | (Bytes[2] << 16) | (Bytes[1] << 8) | (Bytes[0] << 0);
 
   // Calling the auto-generated decoder function.
-  return decodeInstruction(DecoderTable32, MI, insn, Address, this, STI);
+  return decodeInstruction(DecoderTable32, MI, Insn, Address, this, STI);
 }
 
 static MCSymbolizer *
