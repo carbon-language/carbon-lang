@@ -207,14 +207,16 @@ private:
     case llvm::ELF::R_MIPS_HI16:
     case llvm::ELF::R_MIPS_LO16:
     case llvm::ELF::R_MIPS_GOT16:
-    case llvm::ELF::R_MIPS_TLS_GD:
-    case llvm::ELF::R_MIPS_TLS_LDM:
-    case llvm::ELF::R_MIPS_TLS_GOTTPREL:
     case llvm::ELF::R_MIPS_TLS_DTPREL_HI16:
     case llvm::ELF::R_MIPS_TLS_DTPREL_LO16:
     case llvm::ELF::R_MIPS_TLS_TPREL_HI16:
     case llvm::ELF::R_MIPS_TLS_TPREL_LO16:
       return *(int16_t *)ap;
+    case llvm::ELF::R_MIPS_CALL16:
+    case llvm::ELF::R_MIPS_TLS_GD:
+    case llvm::ELF::R_MIPS_TLS_LDM:
+    case llvm::ELF::R_MIPS_TLS_GOTTPREL:
+      return 0;
     default:
       return 0;
     }

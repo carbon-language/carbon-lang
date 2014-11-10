@@ -85,8 +85,7 @@ static void relocLo16(uint8_t *location, uint64_t P, uint64_t S, int64_t AHL,
 
 /// \brief R_MIPS_GOT16, R_MIPS_CALL16
 /// rel16 G (verify)
-static void relocGOT(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
-                     uint64_t GP) {
+static void relocGOT(uint8_t *location, uint64_t S, uint64_t GP) {
   int32_t G = (int32_t)(S - GP);
   applyReloc(location, G, 0xffff);
 }
@@ -152,17 +151,13 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
     relocLo16(location, relocVAddress, targetVAddress, ref.addend(), isGpDisp);
     break;
   case R_MIPS_GOT16:
-    relocGOT(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
-    break;
   case R_MIPS_CALL16:
-    relocGOT(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
+    relocGOT(location, targetVAddress, gpAddr);
     break;
   case R_MIPS_TLS_GD:
-    relocGOT(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
-    break;
   case R_MIPS_TLS_LDM:
   case R_MIPS_TLS_GOTTPREL:
-    relocGOT(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
+    relocGOT(location, targetVAddress, gpAddr);
     break;
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_TPREL_HI16:
