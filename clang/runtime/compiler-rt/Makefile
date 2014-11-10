@@ -80,10 +80,25 @@ RuntimeDirs :=
 ifeq ($(OS),Darwin)
 RuntimeDirs += darwin macho_embedded
 RuntimeLibrary.darwin.Configs := \
-	eprintf.a 10.4.a osx.a ios.a cc_kext.a cc_kext_ios5.a \
+	eprintf.a 10.4.a osx.a cc_kext.a \
 	asan_osx_dynamic.dylib \
-	profile_osx.a profile_ios.a \
+	profile_osx.a \
 	ubsan_osx.a
+
+IOS_SDK := $(shell xcrun --show-sdk-path -sdk iphoneos 2> /dev/null)
+IOSSIM_SDK := $(shell xcrun --show-sdk-path -sdk iphonesimulator 2> /dev/null)
+
+ifneq ($(IOS_SDK)$(IOSSIM_SDK),)
+RuntimeLibrary.darwin.Configs += ios.a profile_ios.a
+endif
+
+ifneq ($(IOS_SDK),)
+RuntimeLibrary.darwin.Configs += cc_kext_ios5.a
+endif
+
+ifneq ($(IOSSIM_SDK),)
+RuntimeLibrary.darwin.Configs += asan_iossim_dynamic.dylib
+endif
 
 RuntimeLibrary.macho_embedded.Configs := \
 	hard_static.a hard_pic.a
@@ -100,10 +115,6 @@ endif
 ACTIVE_SDK_PATH := $(shell xcrun --show-sdk-path 2> /dev/null)
 ifneq ($(ACTIVE_SDK_PATH),)
 COMPILERRT_MAKE_FLAGS := SDKROOT=$(ACTIVE_SDK_PATH)
-endif
-IOSSIM_SDK_PATH := $(shell xcrun --show-sdk-path -sdk iphonesimulator 2> /dev/null)
-ifneq ($(IOSSIM_SDK_PATH),)
-RuntimeLibrary.darwin.Configs += asan_iossim_dynamic.dylib
 endif
 
 endif
