@@ -96,7 +96,7 @@ SECTIONS:   }
 SECTIONS:   Section {
 SECTIONS:     Index: 11
 SECTIONS:     Name: .dynamic
-SECTIONS:     Type: SHT_PROGBITS (0x1)
+SECTIONS:     Type: SHT_DYNAMIC (0x6)
 SECTIONS:     Flags [ (0x3)
 SECTIONS:       SHF_ALLOC (0x2)
 SECTIONS:       SHF_WRITE (0x1)

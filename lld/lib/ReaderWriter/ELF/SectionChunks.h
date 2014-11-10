@@ -429,6 +429,10 @@ public:
 
   void setInfo(uint64_t info) { _shInfo = info; }
 
+  void setFlag(uint64_t flags) { _flags = flags; }
+
+  void setType(int16_t type) { _type = type; }
+
   inline range<ChunkIter> sections() { return _sections; }
 
   // The below functions returns the properties of the MergeSection
@@ -1104,6 +1108,7 @@ public:
         _dynamicSymbolTable->getStringTable();
     this->_link = dynamicStringTable->ordinal();
     if (this->_parent) {
+      this->_parent->setType(this->_type);
       this->_parent->setInfo(this->_info);
       this->_parent->setLink(this->_link);
     }
