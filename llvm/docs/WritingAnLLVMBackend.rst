@@ -161,7 +161,7 @@ To get LLVM to actually build and link your target, you need to add it to the
 know about your target when parsing the ``--enable-targets`` option.  Search
 the configure script for ``TARGETS_TO_BUILD``, add your target to the lists
 there (some creativity required), and then reconfigure.  Alternatively, you can
-change ``autotools/configure.ac`` and regenerate configure by running
+change ``autoconf/configure.ac`` and regenerate configure by running
 ``./autoconf/AutoRegen.sh``.
 
 Target Machine
