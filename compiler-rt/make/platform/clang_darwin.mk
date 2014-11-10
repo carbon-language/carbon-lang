@@ -16,26 +16,26 @@ CheckArches = \
   $(shell \
     result=""; \
     if [ "X$(3)" != X ]; then \
-     for arch in $(1); do \
-      if $(CC) -arch $$arch -c \
-          -integrated-as \
-          $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
-          -isysroot $(3) \
-          -o /dev/null > /dev/null 2> /dev/null; then \
-        if $(LD) -v 2>&1 | grep "configured to support" \
-           | tr ' ' '\n' | grep "^$$arch$$" >/dev/null 2>/dev/null; then \
-          result="$$result$$arch "; \
+      for arch in $(1); do \
+        if $(CC) -arch $$arch -c \
+            -integrated-as \
+            $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
+            -isysroot $(3) \
+            -o /dev/null > /dev/null 2> /dev/null; then \
+          if $(LD) -v 2>&1 | grep "configured to support" \
+             | tr ' ' '\n' | grep "^$$arch$$" >/dev/null 2>/dev/null; then \
+            result="$$result$$arch "; \
+          else \
+            printf 1>&2 \
+            "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'";\
+            printf 1>&2 " (ld does not support it)\n"; \
+          fi; \
         else \
           printf 1>&2 \
-            "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'"; \
-          printf 1>&2 " (ld does not support it)\n"; \
+           "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'"; \
+          printf 1>&2 " (clang does not support it)\n"; \
         fi; \
-      else \
-        printf 1>&2 \
-          "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'"; \
-        printf 1>&2 " (clang does not support it)\n"; \
-      fi; \
-     done; \
+      done; \
     fi; \
     echo $$result)
 
