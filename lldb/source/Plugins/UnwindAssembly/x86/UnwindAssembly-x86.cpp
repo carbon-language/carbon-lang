@@ -840,8 +840,8 @@ loopnext:
             {
                 ret_insn_offset = m_func_bounds.GetByteSize() - 6;
             }
-            else if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3 
-                     && bytebuf[2] == 0x0f && bytebuf[3] == 0x1f & bytebuf[4] == 0x44) // mov & ret & nop
+            else if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3
+                     && bytebuf[2] == 0x0f && bytebuf[3] == 0x1f && bytebuf[4] == 0x44) // mov & ret & nop
             {
                 ret_insn_offset = m_func_bounds.GetByteSize() - 6;
             }

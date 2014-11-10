@@ -173,11 +173,10 @@ public:
     {
         switch (flag)
         {
-            case eLazyBoolCalculate:
-            case eLazyBoolYes:
-                return true;
             case eLazyBoolNo:
                 return false;
+            default:
+                return true;
         }
     }
 
@@ -188,8 +187,7 @@ public:
         {
             case eLazyBoolYes:
                 return true;
-            case eLazyBoolCalculate:
-            case eLazyBoolNo:
+            default:
                 return false;
         }
     }
