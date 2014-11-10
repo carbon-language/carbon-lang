@@ -76,7 +76,7 @@ static cl::opt<std::string>
 AssumeFilename("assume-filename",
                cl::desc("When reading from stdin, clang-format assumes this\n"
                         "filename to look for a style config file (with\n"
-                        "-style=file)."),
+                        "-style=file) and to determine the language."),
                cl::cat(ClangFormatCategory));
 
 static cl::opt<bool> Inplace("i",
