@@ -49,6 +49,9 @@ public:
     return true;
   }
 
+  /// \brief Register NVPTX analysis passes with a pass manager.
+  void addAnalysisPasses(PassManagerBase &PM) override;
+
 }; // NVPTXTargetMachine.
 
 class NVPTXTargetMachine32 : public NVPTXTargetMachine {

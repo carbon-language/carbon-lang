@@ -121,6 +121,14 @@ TargetPassConfig *NVPTXTargetMachine::createPassConfig(PassManagerBase &PM) {
   return PassConfig;
 }
 
+void NVPTXTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
+  // Add first the target-independent BasicTTI pass, then our NVPTX pass. This
+  // allows the NVPTX pass to delegate to the target independent layer when
+  // appropriate.
+  PM.add(createBasicTargetTransformInfoPass(this));
+  PM.add(createNVPTXTargetTransformInfoPass(this));
+}
+
 void NVPTXPassConfig::addIRPasses() {
   // The following passes are known to not play well with virtual regs hanging
   // around after register allocation (which in our case, is *all* registers).
