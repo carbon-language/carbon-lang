@@ -274,6 +274,21 @@ def alias_output_filetype: Joined<["--"], "output-filetype=">,
       Alias<output_filetype>;
 
 //===----------------------------------------------------------------------===//
+/// Ignored options
+//===----------------------------------------------------------------------===//
+def grp_ignored: OptionGroup<"ignored">,
+     HelpText<"GNU Options ignored for Compatibility ">;
+def dashg : Flag<["-"], "g">,
+     HelpText<"Ignored.">,
+     Group<grp_ignored>;
+def Qy : Flag<["-"], "Qy">,
+     HelpText<"Ignored for SVR4 Compatibility">,
+     Group<grp_ignored>;
+def qmagic : Flag<["-"], "qmagic">,
+     HelpText<"Ignored for Linux Compatibility">,
+     Group<grp_ignored>;
+
+//===----------------------------------------------------------------------===//
 /// Help
 //===----------------------------------------------------------------------===//
 def help : Flag<["--"], "help">,
