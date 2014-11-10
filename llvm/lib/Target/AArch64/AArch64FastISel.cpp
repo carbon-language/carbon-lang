@@ -4197,6 +4197,14 @@ bool AArch64FastISel::selectIntExt(const Instruction *I) {
             .addImm(AArch64::sub_32);
         SrcReg = ResultReg;
       }
+      // Conservatively clear all kill flags from all uses, because we are
+      // replacing a sign-/zero-extend instruction at IR level with a nop at MI
+      // level. The result of the instruction at IR level might have been
+      // trivially dead, which is now not longer true.
+      unsigned UseReg = lookUpRegForValue(I);
+      if (UseReg)
+        MRI.clearKillFlags(UseReg);
+
       updateValueMap(I, SrcReg);
       return true;
     }
