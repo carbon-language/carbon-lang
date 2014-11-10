@@ -2302,9 +2302,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
       // All user input files reside at the index range [0, NumUserInputs), and
       // system input files reside at [NumUserInputs, NumInputs).
-      if (!DisableValidation &&
-          (ValidateSystemInputs || !HSOpts.ModulesValidateOncePerBuildSession ||
-           F.InputFilesValidationTimestamp <= HSOpts.BuildSessionTimestamp)) {
+      if (!DisableValidation) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
 
         // If we are reading a module, we will create a verification timestamp,
@@ -2314,6 +2312,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         unsigned N = NumUserInputs;
         if (ValidateSystemInputs ||
             (HSOpts.ModulesValidateOncePerBuildSession &&
+             F.InputFilesValidationTimestamp <= HSOpts.BuildSessionTimestamp &&
              F.Kind == MK_ImplicitModule))
           N = NumInputs;
 
