@@ -345,8 +345,6 @@ def err_invalid_vector_decl_spec_combination : Error<
 def err_invalid_pixel_decl_spec_combination : Error<
   "'__pixel' must be preceded by '__vector'.  "
   "'%0' declaration specifier not allowed here">;
-def err_invalid_vector_decl_spec : Error<
-  "cannot use '%0' with '__vector'">;
 def err_invalid_vector_bool_decl_spec : Error<
   "cannot use '%0' with '__vector bool'">;
 def err_invalid_vector_double_decl_spec : Error <
