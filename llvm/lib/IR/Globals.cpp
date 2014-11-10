@@ -246,6 +246,7 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
   GlobalObject::copyAttributesFrom(Src);
   const GlobalVariable *SrcVar = cast<GlobalVariable>(Src);
   setThreadLocalMode(SrcVar->getThreadLocalMode());
+  setExternallyInitialized(SrcVar->isExternallyInitialized());
 }
 
 
