@@ -594,6 +594,19 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setAlignSegments(false);
       break;
 
+    case OPT_image_base: {
+      ErrorOr<uint64_t> baseAddress =
+          lld::parseNum(inputArg->getValue(), false);
+      if (baseAddress && baseAddress.get())
+        ctx->setBaseAddress(baseAddress.get());
+      else {
+        diagnostics << "invalid value for image base " << inputArg->getValue()
+                    << "\n";
+        return false;
+      }
+      break;
+    }
+
     default:
       break;
     } // end switch on option ID

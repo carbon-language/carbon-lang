@@ -106,6 +106,9 @@ def no_whole_archive: Flag<["--"], "no-whole-archive">,
 def nostdlib : Flag<["-"], "nostdlib">,
      HelpText<"Disable default search path for libraries">,
      Group<grp_main>;
+def image_base : Separate<["--"], "image-base">,
+     HelpText<"Set the base address">,
+     Group<grp_main>;
 
 //===----------------------------------------------------------------------===//
 /// Static Executable Options

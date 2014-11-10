@@ -76,6 +76,7 @@ public:
   uint16_t getOutputMachine() const;
   bool mergeCommonStrings() const { return _mergeCommonStrings; }
   virtual uint64_t getBaseAddress() const { return _baseAddress; }
+  virtual void setBaseAddress(uint64_t address) { _baseAddress = address; }
 
   void notifySymbolTableCoalesce(const Atom *existingAtom, const Atom *newAtom,
                                  bool &useNew) override;
