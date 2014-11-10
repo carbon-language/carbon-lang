@@ -71,7 +71,7 @@ UniversalArchs.10.4 := $(call CheckArches,i386 x86_64,10.4)
 # Configuration for targeting iOS for a couple of functions that didn't
 # make it into libSystem.
 Configs += ios
-UniversalArchs.ios := $(call CheckArches,i386 x86_64 x86_64h armv7 arm64,ios)
+UniversalArchs.ios := $(call CheckArches,i386 x86_64 armv7 arm64,ios)
 
 # Configuration for targeting OSX. These functions may not be in libSystem
 # so we should provide our own.
@@ -85,13 +85,13 @@ UniversalArchs.cc_kext := $(call CheckArches,armv7 arm64 i386 x86_64 x86_64h,cc_
 # Configuration for use with kernel/kexts for iOS 5.0 and earlier (which used 
 # a different code generation strategy).
 Configs += cc_kext_ios5
-UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64 x86_64h armv7,cc_kext_ios5)
+UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64 armv7,cc_kext_ios5)
 
 # Configurations which define the profiling support functions.
 Configs += profile_osx
 UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64 x86_64h,profile_osx)
 Configs += profile_ios
-UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 x86_64h armv7 arm64,profile_ios)
+UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv7 arm64,profile_ios)
 
 # Configurations which define the ASAN support functions.
 Configs += asan_osx_dynamic
@@ -100,7 +100,7 @@ UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64 x86_64h,asan_o
 IOSSIM_SDK_PATH := $(call XCRunSdkPath,iphonesimulator)
 ifneq ($(IOSSIM_SDK_PATH),)
 Configs += asan_iossim_dynamic
-UniversalArchs.asan_iossim_dynamic := $(call CheckArches,i386 x86_64 x86_64h,asan_iossim_dynamic)
+UniversalArchs.asan_iossim_dynamic := $(call CheckArches,i386 x86_64,asan_iossim_dynamic)
 endif
 
 Configs += ubsan_osx
@@ -172,7 +172,6 @@ CFLAGS.ubsan_osx := $(CFLAGS) -mmacosx-version-min=10.6 -fno-builtin
 
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
-CFLAGS.ios.x86_64h	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7k	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7s	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
@@ -195,7 +194,6 @@ CFLAGS.profile_osx.x86_64  := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.x86_64h := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.i386    := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.x86_64  := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
-CFLAGS.profile_ios.x86_64h := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
@@ -221,7 +219,6 @@ FUNCTIONS.ios	    := divmodsi4 udivmodsi4 mulosi4 mulodi4 muloti4
 FUNCTIONS.ios.i386    := $(FUNCTIONS.ios) \
                          divsi3 udivsi3
 FUNCTIONS.ios.x86_64  := $(FUNCTIONS.ios.i386)
-FUNCTIONS.ios.x86_64h := $(FUNCTIONS.ios.x86_64)
 FUNCTIONS.ios.arm64   := mulsc3 muldc3 divsc3 divdc3
 
 FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
