@@ -1794,6 +1794,9 @@ static void getAArch64TargetFeatures(const Driver &D, const ArgList &Args,
     success = getAArch64ArchFeaturesFromMarch(D, A->getValue(), Args, Features);
   else if ((A = Args.getLastArg(options::OPT_mcpu_EQ)))
     success = getAArch64ArchFeaturesFromMcpu(D, A->getValue(), Args, Features);
+  else if (Args.hasArg(options::OPT_arch))
+    success = getAArch64ArchFeaturesFromMcpu(D, getAArch64TargetCPU(Args), Args,
+                                             Features);
 
   if (success && (A = Args.getLastArg(options::OPT_mtune_EQ)))
     success =
@@ -1801,6 +1804,9 @@ static void getAArch64TargetFeatures(const Driver &D, const ArgList &Args,
   else if (success && (A = Args.getLastArg(options::OPT_mcpu_EQ)))
     success =
         getAArch64MicroArchFeaturesFromMcpu(D, A->getValue(), Args, Features);
+  else if (Args.hasArg(options::OPT_arch))
+    success = getAArch64MicroArchFeaturesFromMcpu(D, getAArch64TargetCPU(Args),
+                                                  Args, Features);
 
   if (!success)
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
