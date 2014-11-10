@@ -497,24 +497,32 @@ getUnderlyingObjects(const MachineInstr &MI,
 /// We assume there is only one delay slot per delayed instruction.
 bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
+  bool InMicroMipsMode = TM.getSubtarget<MipsSubtarget>().inMicroMipsMode();
 
   for (Iter I = MBB.begin(); I != MBB.end(); ++I) {
     if (!hasUnoccupiedSlot(&*I))
       continue;
 
-    ++FilledSlots;
-    Changed = true;
+    // For microMIPS, at the moment, do not fill delay slots of call
+    // instructions.
+    //
+    // TODO: Support for replacing regular call instructions with corresponding
+    // short delay slot instructions should be implemented.
+    if (!InMicroMipsMode || !I->isCall()) {
+      ++FilledSlots;
+      Changed = true;
 
-    // Delay slot filling is disabled at -O0.
-    if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None)) {
-      if (searchBackward(MBB, I))
-        continue;
-
-      if (I->isTerminator()) {
-        if (searchSuccBBs(MBB, I))
+      // Delay slot filling is disabled at -O0.
+      if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None)) {
+        if (searchBackward(MBB, I))
           continue;
-      } else if (searchForward(MBB, I)) {
-        continue;
+
+        if (I->isTerminator()) {
+          if (searchSuccBBs(MBB, I))
+            continue;
+        } else if (searchForward(MBB, I)) {
+          continue;
+        }
       }
     }
 
