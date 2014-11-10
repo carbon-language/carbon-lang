@@ -164,10 +164,10 @@ public:
     // creation code in the class MipsRelocationPass. Let's update atomLayout
     // fields for such symbols.
     for (auto &ste : this->_symbolTable) {
-      if (!ste._atom || ste._atomLayout)
+      if (!ste._atom)
         continue;
-      auto *layout = pltSection.findPLTLayout(ste._atom);
-      if (layout) {
+      if (auto *layout = pltSection.findPLTLayout(ste._atom)) {
+        assert(!ste._atomLayout);
         ste._symbol.st_value = layout->_virtualAddr;
         ste._symbol.st_other |= ELF::STO_MIPS_PLT;
       }
