@@ -121,6 +121,8 @@ def ext_c11_alignment : Extension<
 
 def ext_c11_noreturn : Extension<
   "_Noreturn functions are a C11-specific feature">, InGroup<C11>;
+def err_c11_noreturn_misplaced : Error<
+  "'_Noreturn' keyword must precede function declarator">;
 
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNULabelsAsValue>;

@@ -4,7 +4,7 @@
 _Noreturn int f();
 int _Noreturn f(); // expected-note {{previous}}
 int f _Noreturn(); // expected-error {{expected ';'}} expected-error 2{{}}
-int f() _Noreturn; // expected-error {{expected ';'}} expected-warning {{does not declare anything}} expected-error {{'_Noreturn' can only appear on functions}}
+int f() _Noreturn; // expected-error {{'_Noreturn' keyword must precede function declarator}}
 
 _Noreturn char c1; // expected-error {{'_Noreturn' can only appear on functions}}
 char _Noreturn c2; // expected-error {{'_Noreturn' can only appear on functions}}
