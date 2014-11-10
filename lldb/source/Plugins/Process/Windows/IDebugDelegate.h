@@ -10,19 +10,10 @@
 #ifndef liblldb_Plugins_Process_Windows_IDebugDelegate_H_
 #define liblldb_Plugins_Process_Windows_IDebugDelegate_H_
 
+#include "ForwardDecl.h"
+
 namespace lldb_private
 {
-
-class ProcessMessageCreateProcess;
-class ProcessMessageExitProcess;
-class ProcessMessageDebuggerConnected;
-class ProcessMessageException;
-class ProcessMessageCreateThread;
-class ProcessMessageExitThread;
-class ProcessMessageLoadDll;
-class ProcessMessageUnloadDll;
-class ProcessMessageDebugString;
-class ProcessMessageDebuggerError;
 
 //----------------------------------------------------------------------
 // IDebugDelegate
@@ -35,7 +26,6 @@ class IDebugDelegate
   public:
     virtual ~IDebugDelegate() {}
 
-    virtual void OnProcessLaunched(const ProcessMessageCreateProcess &message) = 0;
     virtual void OnExitProcess(const ProcessMessageExitProcess &message) = 0;
     virtual void OnDebuggerConnected(const ProcessMessageDebuggerConnected &message) = 0;
     virtual void OnDebugException(const ProcessMessageException &message) = 0;

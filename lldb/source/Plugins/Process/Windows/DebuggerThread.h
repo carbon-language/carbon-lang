@@ -32,7 +32,18 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
     DebuggerThread(DebugDelegateSP debug_delegate);
     virtual ~DebuggerThread();
 
-    HostProcess DebugLaunch(const ProcessLaunchInfo &launch_info);
+    Error DebugLaunch(const ProcessLaunchInfo &launch_info);
+
+    HostProcess
+    GetProcess() const
+    {
+        return m_process;
+    }
+    HostThread
+    GetMainThread() const
+    {
+        return m_main_thread;
+    }
 
   private:
     void DebugLoop();
@@ -47,9 +58,6 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
     DWORD HandleRipEvent(const RIP_INFO &info, DWORD thread_id);
 
     DebugDelegateSP m_debug_delegate;
-
-    HANDLE m_launched_event; // Signalled when the process is finished launching, either
-                             // successfully or with an error.
 
     HostProcess m_process;    // The process being debugged.
     HostThread m_main_thread; // The main thread of the inferior.

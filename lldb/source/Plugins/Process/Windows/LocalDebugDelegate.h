@@ -42,16 +42,15 @@ class LocalDebugDelegate : public IDebugDelegate
   public:
     explicit LocalDebugDelegate::LocalDebugDelegate(lldb::ProcessSP process);
 
-    void OnProcessLaunched(const ProcessMessageCreateProcess &message);
-    void OnExitProcess(const ProcessMessageExitProcess &message);
-    void OnDebuggerConnected(const ProcessMessageDebuggerConnected &message);
-    void OnDebugException(const ProcessMessageException &message);
-    void OnCreateThread(const ProcessMessageCreateThread &message);
-    void OnExitThread(const ProcessMessageExitThread &message);
-    void OnLoadDll(const ProcessMessageLoadDll &message);
-    void OnUnloadDll(const ProcessMessageUnloadDll &message);
-    void OnDebugString(const ProcessMessageDebugString &message);
-    void OnDebuggerError(const ProcessMessageDebuggerError &message);
+    void OnExitProcess(const ProcessMessageExitProcess &message) override;
+    void OnDebuggerConnected(const ProcessMessageDebuggerConnected &message) override;
+    void OnDebugException(const ProcessMessageException &message) override;
+    void OnCreateThread(const ProcessMessageCreateThread &message) override;
+    void OnExitThread(const ProcessMessageExitThread &message) override;
+    void OnLoadDll(const ProcessMessageLoadDll &message) override;
+    void OnUnloadDll(const ProcessMessageUnloadDll &message) override;
+    void OnDebugString(const ProcessMessageDebugString &message) override;
+    void OnDebuggerError(const ProcessMessageDebuggerError &message) override;
 
   private:
     lldb::ProcessSP m_process;

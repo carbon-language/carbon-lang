@@ -35,6 +35,24 @@
 using namespace lldb;
 using namespace lldb_private;
 
+namespace lldb_private
+{
+// We store a pointer to this class in the ProcessWindows, so that we don't expose Windows
+// OS specific types and implementation details from a public header file.
+class ProcessWindowsData
+{
+  public:
+    ProcessWindowsData()
+        : m_launched_event(nullptr)
+    {
+        m_launched_event = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
+    }
+
+    ~ProcessWindowsData() { ::CloseHandle(m_launched_event); }
+
+    HANDLE m_launched_event;
+};
+}
 //------------------------------------------------------------------------------
 // Static functions.
 
@@ -61,8 +79,9 @@ ProcessWindows::Initialize()
 //------------------------------------------------------------------------------
 // Constructors and destructors.
 
-ProcessWindows::ProcessWindows(Target& target, Listener &listener)
+ProcessWindows::ProcessWindows(Target &target, Listener &listener)
     : lldb_private::Process(target, listener)
+    , m_data_up(new ProcessWindowsData())
 {
 }
 
@@ -107,7 +126,15 @@ ProcessWindows::DoLaunch(Module *exe_module,
     {
         DebugDelegateSP delegate(new LocalDebugDelegate(shared_from_this()));
         m_debugger.reset(new DebuggerThread(delegate));
-        process = m_debugger->DebugLaunch(launch_info);
+        // Kick off the DebugLaunch asynchronously and wait for it to complete.
+        result = m_debugger->DebugLaunch(launch_info);
+        if (result.Success())
+        {
+            if (::WaitForSingleObject(m_data_up->m_launched_event, INFINITE) == WAIT_OBJECT_0)
+                process = m_debugger->GetProcess();
+            else
+                result.SetError(::GetLastError(), eErrorTypeWin32);
+        }
     }
     else
         return Host::LaunchProcess(launch_info);
@@ -210,11 +237,6 @@ ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
 }
 
 void
-ProcessWindows::OnProcessLaunched(const ProcessMessageCreateProcess &message)
-{
-}
-
-void
 ProcessWindows::OnExitProcess(const ProcessMessageExitProcess &message)
 {
     SetProcessExitStatus(nullptr, GetID(), true, 0, message.GetExitCode());
@@ -223,6 +245,7 @@ ProcessWindows::OnExitProcess(const ProcessMessageExitProcess &message)
 void
 ProcessWindows::OnDebuggerConnected(const ProcessMessageDebuggerConnected &message)
 {
+    ::SetEvent(m_data_up->m_launched_event);
 }
 
 void
@@ -258,4 +281,16 @@ ProcessWindows::OnDebugString(const ProcessMessageDebugString &message)
 void
 ProcessWindows::OnDebuggerError(const ProcessMessageDebuggerError &message)
 {
+    DWORD result = ::WaitForSingleObject(m_data_up->m_launched_event, 0);
+    if (result == WAIT_TIMEOUT)
+    {
+        // If we haven't actually launched the process yet, this was an error
+        // launching the process.  Set the internal error and signal.
+        m_launch_error = message.GetError();
+        ::SetEvent(m_data_up->m_launched_event);
+        return;
+    }
+
+    // This happened while debugging.
+    // TODO: Implement this.
 }

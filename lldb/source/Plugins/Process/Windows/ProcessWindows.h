@@ -14,11 +14,13 @@
 
 // C++ Includes
 #include <map>
+#include <memory>
 #include <queue>
 
 // Other libraries and framework includes
 #include "ForwardDecl.h"
 #include "IDebugDelegate.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Target/Process.h"
 
@@ -27,6 +29,7 @@ class ProcessMonitor;
 namespace lldb_private
 {
 class HostProcess;
+class ProcessWindowsData;
 }
 
 class ProcessWindows : public lldb_private::Process, public lldb_private::IDebugDelegate
@@ -112,7 +115,6 @@ public:
     virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error);
 
     // IDebugDelegate overrides.
-    virtual void OnProcessLaunched(const lldb_private::ProcessMessageCreateProcess &message) override;
     virtual void OnExitProcess(const lldb_private::ProcessMessageExitProcess &message) override;
     virtual void OnDebuggerConnected(const lldb_private::ProcessMessageDebuggerConnected &message) override;
     virtual void OnDebugException(const lldb_private::ProcessMessageException &message) override;
@@ -124,7 +126,9 @@ public:
     virtual void OnDebuggerError(const lldb_private::ProcessMessageDebuggerError &message) override;
 
   private:
-    lldb_private::DebuggerThreadUP m_debugger;
+    std::unique_ptr<lldb_private::ProcessWindowsData> m_data_up;
+    lldb_private::Error m_launch_error;
+    lldb_private::DebuggerThreadSP m_debugger;
 };
 
 #endif  // liblldb_Plugins_Process_Windows_ProcessWindows_H_

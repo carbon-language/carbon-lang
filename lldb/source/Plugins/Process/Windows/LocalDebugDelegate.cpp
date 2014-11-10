@@ -19,12 +19,6 @@ LocalDebugDelegate::LocalDebugDelegate(ProcessSP process)
 }
 
 void
-LocalDebugDelegate::OnProcessLaunched(const ProcessMessageCreateProcess &message)
-{
-    ((ProcessWindows &)*m_process).OnProcessLaunched(message);
-}
-
-void
 LocalDebugDelegate::OnExitProcess(const ProcessMessageExitProcess &message)
 {
     ((ProcessWindows &)*m_process).OnExitProcess(message);

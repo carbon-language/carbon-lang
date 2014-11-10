@@ -22,7 +22,6 @@ class DebuggerThread;
 
 // Process message forward declarations.
 class ProcessMessageBase;
-class ProcessMessageCreateProcess;
 class ProcessMessageExitProcess;
 class ProcessMessageDebuggerConnected;
 class ProcessMessageException;
@@ -34,7 +33,7 @@ class ProcessMessageDebugString;
 class ProcessMessageDebuggerError;
 
 typedef std::shared_ptr<IDebugDelegate> DebugDelegateSP;
-typedef std::unique_ptr<DebuggerThread> DebuggerThreadUP;
+typedef std::shared_ptr<DebuggerThread> DebuggerThreadSP;
 }
 
 #endif

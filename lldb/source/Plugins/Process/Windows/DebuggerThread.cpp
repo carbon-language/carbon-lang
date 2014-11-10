@@ -43,28 +43,22 @@ struct DebugLaunchContext
 DebuggerThread::DebuggerThread(DebugDelegateSP debug_delegate)
     : m_debug_delegate(debug_delegate)
     , m_image_file(nullptr)
-    , m_launched_event(nullptr)
 {
-    m_launched_event = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
 }
 
 DebuggerThread::~DebuggerThread()
 {
-    if (m_launched_event != nullptr)
-        ::CloseHandle(m_launched_event);
 }
 
-HostProcess
+Error
 DebuggerThread::DebugLaunch(const ProcessLaunchInfo &launch_info)
 {
     Error error;
 
     DebugLaunchContext *context = new DebugLaunchContext(this, launch_info);
     HostThread slave_thread(ThreadLauncher::LaunchThread("lldb.plugin.process-windows.slave[?]", DebuggerThreadRoutine, context, &error));
-    if (error.Success())
-        ::WaitForSingleObject(m_launched_event, INFINITE);
 
-    return m_process;
+    return error;
 }
 
 lldb::thread_result_t
@@ -95,7 +89,10 @@ DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
     if (error.Success())
         DebugLoop();
     else
-        SetEvent(m_launched_event);
+    {
+        ProcessMessageDebuggerError message(m_process, error, 0);
+        m_debug_delegate->OnDebuggerError(message);
+    }
 
     return 0;
 }
@@ -175,7 +172,8 @@ DebuggerThread::HandleCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO &info, 
     ((HostThreadWindows &)m_main_thread.GetNativeThread()).SetOwnsHandle(false);
     m_image_file = info.hFile;
 
-    SetEvent(m_launched_event);
+    ProcessMessageDebuggerConnected message(m_process);
+    m_debug_delegate->OnDebuggerConnected(message);
 
     return DBG_CONTINUE;
 }

@@ -42,6 +42,15 @@ class ProcessMessageBase
     HostProcess m_process;
 };
 
+class ProcessMessageDebuggerConnected : public ProcessMessageBase
+{
+  public:
+    ProcessMessageDebuggerConnected(const HostProcess &process)
+        : ProcessMessageBase(process)
+    {
+    }
+};
+
 class ProcessMessageExitProcess : public ProcessMessageBase
 {
   public:
