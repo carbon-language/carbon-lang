@@ -27,6 +27,7 @@ public:
     
     StringLexer (const StringLexer& rhs);
     
+    // These APIs are not bounds-checked.  Use HasAtLeast() if you're not sure.
     Character
     Peek ();
     
@@ -42,8 +43,9 @@ public:
     bool
     HasAny (Character c);
     
+    // This will assert if there are less than s characters preceding the cursor.
     void
-    PutBack (Character c);
+    PutBack (Size s);
     
     StringLexer&
     operator = (const StringLexer& rhs);
@@ -51,7 +53,6 @@ public:
 private:
     std::string m_data;
     Position m_position;
-    std::list<Character> m_putback_data;
     
     void
     Consume();
