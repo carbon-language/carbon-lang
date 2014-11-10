@@ -299,6 +299,7 @@ struct FormatToken {
   bool isNot(T Kind) const {
     return Tok.isNot(Kind);
   }
+  bool isNot(IdentifierInfo *II) const { return II != Tok.getIdentifierInfo(); }
 
   bool isStringLiteral() const { return tok::isStringLiteral(Tok.getKind()); }
 
@@ -544,6 +545,7 @@ struct AdditionalKeywords {
 
     kw_extends = &IdentTable.get("extends");
     kw_implements = &IdentTable.get("implements");
+    kw_interface = &IdentTable.get("interface");
     kw_synchronized = &IdentTable.get("synchronized");
     kw_throws = &IdentTable.get("throws");
 
@@ -566,6 +568,7 @@ struct AdditionalKeywords {
   // Java keywords.
   IdentifierInfo *kw_extends;
   IdentifierInfo *kw_implements;
+  IdentifierInfo *kw_interface;
   IdentifierInfo *kw_synchronized;
   IdentifierInfo *kw_throws;
 

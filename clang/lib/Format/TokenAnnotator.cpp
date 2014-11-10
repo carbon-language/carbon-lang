@@ -842,7 +842,8 @@ private:
         // function declaration have been found.
         Current.Type = TT_TrailingAnnotation;
       } else if (Style.Language == FormatStyle::LK_Java && Current.Previous &&
-                 Current.Previous->is(tok::at)) {
+                 Current.Previous->is(tok::at) &&
+                 Current.isNot(Keywords.kw_interface)) {
         const FormatToken& AtToken = *Current.Previous;
         if (!AtToken.Previous ||
             AtToken.Previous->Type == TT_LeadingJavaAnnotation)

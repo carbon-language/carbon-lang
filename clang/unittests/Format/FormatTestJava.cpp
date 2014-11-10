@@ -87,6 +87,22 @@ TEST_F(FormatTestJava, ClassDeclarations) {
                "    implements cccccccccccc {\n"
                "}",
                getStyleWithColumns(76));
+  verifyFormat("interface SomeInterface<A> extends Foo, Bar {\n"
+               "  void doStuff(int theStuff);\n"
+               "  void doMoreStuff(int moreStuff);\n"
+               "}");
+  verifyFormat("public interface SomeInterface {\n"
+               "  void doStuff(int theStuff);\n"
+               "  void doMoreStuff(int moreStuff);\n"
+               "}");
+  verifyFormat("@interface SomeInterface {\n"
+               "  void doStuff(int theStuff);\n"
+               "  void doMoreStuff(int moreStuff);\n"
+               "}");
+  verifyFormat("public @interface SomeInterface {\n"
+               "  void doStuff(int theStuff);\n"
+               "  void doMoreStuff(int moreStuff);\n"
+               "}");
 }
 
 TEST_F(FormatTestJava, EnumDeclarations) {
