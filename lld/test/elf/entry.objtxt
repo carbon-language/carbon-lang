@@ -12,7 +12,7 @@
 # RUN: llvm-nm -n %t1 | FileCheck %s
 #
 # CHECK:  004001e0 T main
-# CHECK:  00401080 D _DYNAMIC
+# CHECK:  00401000 D _DYNAMIC
 # CHECK:  00401080 A _end
 # CHECK:  00401080 A end
 # CHECK:           U _entrypoint
