@@ -3217,12 +3217,10 @@ recurse:
 
   case Expr::CXXFoldExprClass: {
     auto *FE = cast<CXXFoldExpr>(E);
-    if (!FE->getLHS())
-      Out << "fl";
-    else if (!FE->getRHS())
-      Out << "fr";
+    if (FE->isLeftFold())
+      Out << (FE->getInit() ? "fL" : "fl");
     else
-      Out << "fx";
+      Out << (FE->getInit() ? "fR" : "fr");
 
     if (FE->getOperator() == BO_PtrMemD)
       Out << "ds";

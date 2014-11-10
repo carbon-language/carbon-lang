@@ -12,8 +12,8 @@ void use() {
   foldl1<1, 2, 3>({});
   // CHECK-DAG: @_Z5foldrIJLi1ELi2ELi3EEEv1AIXfrplT_EE(
   // CHECK-DAG: @_Z5foldlIJLi1ELi2ELi3EEEv1AIXflplT_EE(
-  // CHECK-DAG: @_Z6foldr1IJLi1ELi2ELi3EEEv1AIXfxplT_Li1EEE(
-  // CHECK-DAG: @_Z6foldl1IJLi1ELi2ELi3EEEv1AIXfxplLi1ET_EE(
+  // CHECK-DAG: @_Z6foldr1IJLi1ELi2ELi3EEEv1AIXfRplT_Li1EEE(
+  // CHECK-DAG: @_Z6foldl1IJLi1ELi2ELi3EEEv1AIXfLplLi1ET_EE(
 }
 
 template<int ...N> using Foldr = A<(N + ...)>;
@@ -23,7 +23,7 @@ template<int ...N> using Foldl1 = A<(1 + ... + N)>;
 
 template<int ...A> struct Partial {
   template<int ...B> void foldr(Foldr<A..., B..., A..., B...>);
-  template<int ...B> void foldl(Foldr<A..., B..., A..., B...>);
+  template<int ...B> void foldl(Foldl<A..., B..., A..., B...>);
   template<int ...B> void foldr1(Foldr1<A..., B..., A..., B...>);
   template<int ...B> void foldl1(Foldl1<A..., B..., A..., B...>);
 };
@@ -32,10 +32,10 @@ void use(Partial<1, 2> p) {
   p.foldl<3, 4>({});
   p.foldr1<3, 4>({});
   p.foldl1<3, 4>({});
-  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE5foldrIJLi3ELi4EEEEv1AIXplLi1EplLi2EfxplT_plLi1EplLi2EfrplT_EE(
-  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE5foldlIJLi3ELi4EEEEv1AIXplLi1EplLi2EfxplT_plLi1EplLi2EfrplT_EE(
-  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE6foldr1IJLi3ELi4EEEEv1AIXplLi1EplLi2EfxplT_plLi1EplLi2EfxplT_Li1EEE(
-  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE6foldl1IJLi3ELi4EEEEv1AIXfxplplplfxplplplLi1ELi1ELi2ET_Li1ELi2ET_EE(
+  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE5foldrIJLi3ELi4EEEEv1AIXplLi1EplLi2EfRplT_plLi1EplLi2EfrplT_EE(
+  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE5foldlIJLi3ELi4EEEEv1AIXfLplplplfLplplLi1ELi2ET_Li1ELi2ET_EE
+  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE6foldr1IJLi3ELi4EEEEv1AIXplLi1EplLi2EfRplT_plLi1EplLi2EfRplT_Li1EEE(
+  // CHECK-DAG: @_ZN7PartialIJLi1ELi2EEE6foldl1IJLi3ELi4EEEEv1AIXfLplplplfLplplplLi1ELi1ELi2ET_Li1ELi2ET_EE(
 }
 
 extern int n;
