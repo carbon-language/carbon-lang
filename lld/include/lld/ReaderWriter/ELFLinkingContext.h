@@ -58,7 +58,19 @@ public:
   };
 
   llvm::Triple getTriple() const { return _triple; }
-  virtual uint64_t getPageSize() const { return 0x1000; }
+
+  // Page size.
+  virtual uint64_t getPageSize() const {
+    if (_maxPageSizeOptionSet)
+      return _maxPageSize;
+    return 0x1000;
+  }
+  virtual void setMaxPageSize(uint64_t pagesize) {
+    _maxPageSize = pagesize;
+    _maxPageSizeOptionSet = true;
+  }
+  virtual uint64_t maxPageSize() const { return _maxPageSize; }
+
   OutputMagic getOutputMagic() const { return _outputMagic; }
   uint16_t getOutputELFType() const { return _outputELFType; }
   uint16_t getOutputMachine() const;
@@ -308,6 +320,9 @@ protected:
   bool _mergeRODataToTextSegment;
   bool _demangle;
   bool _alignSegments;
+  bool _maxPageSizeOptionSet;
+  uint64_t _maxPageSize;
+
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;
