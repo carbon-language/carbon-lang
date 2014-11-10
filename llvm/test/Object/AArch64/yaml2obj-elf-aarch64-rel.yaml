@@ -1,0 +1,47 @@
+# RUN: yaml2obj -format=elf %s > %t
+# RUN: obj2yaml  %t | FileCheck %s
+
+# CHECK:      - Name:            .rela.text
+# CHECK-NEXT:   Type:            SHT_RELA
+# CHECK-NEXT:    Link:            .symtab
+# CHECK-NEXT:    AddressAlign:    0x0000000000000008
+# CHECK-NEXT:    Info:            .text
+# CHECK-NEXT:    Relocations:     
+# CHECK-NEXT:      - Offset:          0x0000000000000000
+# CHECK-NEXT:        Symbol:          main
+# CHECK-NEXT:        Type:            R_AARCH64_ABS64
+# CHECK-NEXT:        Addend:          0
+
+FileHeader:
+  Class:           ELFCLASS64
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AARCH64
+Sections:
+  - Type:            SHT_PROGBITS
+    Name:            .text
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Content:         0000000000000000
+  - Type:            SHT_RELA
+    Name:            .rela.text
+    Link:            .symtab
+    Info:            .text
+    AddressAlign:    0x08
+    Relocations:
+      - Offset:          0
+        Symbol:          main
+        Type:            R_AARCH64_ABS64
+        Addend:          0
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+
+  Global:
+    - Name:            main
+      Type:            STT_FUNC
+      Section:         .text
+      Size:            0x08
