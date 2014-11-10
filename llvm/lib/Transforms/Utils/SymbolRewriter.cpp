@@ -515,7 +515,7 @@ void RewriteSymbols::loadAndParseMapFiles() {
 }
 
 INITIALIZE_PASS(RewriteSymbols, "rewrite-symbols", "Rewrite Symbols", false,
-                false);
+                false)
 
 ModulePass *llvm::createRewriteSymbolsPass() { return new RewriteSymbols(); }
 
