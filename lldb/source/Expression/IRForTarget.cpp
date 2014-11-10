@@ -1036,7 +1036,7 @@ static bool IsObjCSelectorRef (Value *value)
 {
     GlobalVariable *global_variable = dyn_cast<GlobalVariable>(value);
 
-    if (!global_variable || !global_variable->hasName() || !global_variable->getName().startswith("\01L_OBJC_SELECTOR_REFERENCES_"))
+    if (!global_variable || !global_variable->hasName() || !global_variable->getName().startswith("OBJC_SELECTOR_REFERENCES_"))
         return false;
 
     return true;
