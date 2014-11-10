@@ -1191,6 +1191,7 @@ def def32 : PatLeaf<(i32 GR32:$src), [{
   return N->getOpcode() != ISD::TRUNCATE &&
          N->getOpcode() != TargetOpcode::EXTRACT_SUBREG &&
          N->getOpcode() != ISD::CopyFromReg &&
+         N->getOpcode() != ISD::AssertSext &&
          N->getOpcode() != X86ISD::CMOV;
 }]>;
 
