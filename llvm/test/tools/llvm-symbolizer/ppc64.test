@@ -1,3 +1,4 @@
+// REQUIRES: python27
 // ppc64 was compiled from this source on a big-endian 64-bit PowerPC box
 // with just "clang -nostdlib":
 int foo() { return 0; }
