@@ -900,8 +900,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     if (SanOpts.has(SanitizerKind::Return)) {
       SanitizerScope SanScope(this);
       EmitCheck(Builder.getFalse(), "missing_return",
-                EmitCheckSourceLocation(FD->getLocation()),
-                None, CRK_Unrecoverable);
+                EmitCheckSourceLocation(FD->getLocation()), None,
+                SanitizerKind::Return);
     } else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
       Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
     Builder.CreateUnreachable();
@@ -1562,7 +1562,7 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
             };
             EmitCheck(Builder.CreateICmpSGT(Size, Zero),
                       "vla_bound_not_positive", StaticArgs, Size,
-                      CRK_Recoverable);
+                      SanitizerKind::VLABound);
           }
 
           // Always zexting here would be wrong if it weren't

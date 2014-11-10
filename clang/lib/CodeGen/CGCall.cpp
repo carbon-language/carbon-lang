@@ -2300,7 +2300,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
             EmitCheckSourceLocation(EndLoc),
             EmitCheckSourceLocation(RetNNAttr->getLocation()),
         };
-        EmitCheck(Cond, "nonnull_return", StaticData, None, CRK_Recoverable);
+        EmitCheck(Cond, "nonnull_return", StaticData, None,
+                  SanitizerKind::ReturnsNonnullAttribute);
       }
     }
     Ret = Builder.CreateRet(RV);
@@ -2636,7 +2637,7 @@ static void emitNonNullArgCheck(CodeGenFunction &CGF, RValue RV,
       llvm::ConstantInt::get(CGF.Int32Ty, ArgNo + 1),
   };
   CGF.EmitCheck(Cond, "nonnull_arg", StaticData, None,
-                CodeGenFunction::CRK_Recoverable);
+                SanitizerKind::NonnullAttribute);
 }
 
 void CodeGenFunction::EmitCallArgs(CallArgList &Args,

@@ -85,7 +85,8 @@ public:
     return CGF.EmitCheckedLValue(E, TCK);
   }
 
-  void EmitBinOpCheck(Value *Check, const BinOpInfo &Info);
+  void EmitBinOpCheck(Value *Check, const BinOpInfo &Info,
+                      ArrayRef<SanitizerKind> Kinds);
 
   Value *EmitLoadOfLValue(LValue LV, SourceLocation Loc) {
     return CGF.EmitLoadOfLValue(LV, Loc).getScalarVal();
@@ -726,7 +727,7 @@ void ScalarExprEmitter::EmitFloatConversionCheck(Value *OrigSrc,
     CGF.EmitCheckTypeDescriptor(DstType)
   };
   CGF.EmitCheck(Check, "float_cast_overflow", StaticArgs, OrigSrc,
-                CodeGenFunction::CRK_Recoverable);
+                SanitizerKind::FloatCastOverflow);
 }
 
 /// EmitScalarConversion - Emit a conversion from the specified type to the
@@ -885,7 +886,8 @@ Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
 /// \brief Emit a sanitization check for the given "binary" operation (which
 /// might actually be a unary increment which has been lowered to a binary
 /// operation). The check passes if \p Check, which is an \c i1, is \c true.
-void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
+void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info,
+                                       ArrayRef<SanitizerKind> Kinds) {
   assert(CGF.IsSanitizerScope);
   StringRef CheckName;
   SmallVector<llvm::Constant *, 4> StaticData;
@@ -915,7 +917,7 @@ void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
       CheckName = "divrem_overflow";
       StaticData.push_back(CGF.EmitCheckTypeDescriptor(Info.Ty));
     } else {
-      // Signed arithmetic overflow (+, -, *).
+      // Arithmetic overflow (+, -, *).
       switch (Opcode) {
       case BO_Add: CheckName = "add_overflow"; break;
       case BO_Sub: CheckName = "sub_overflow"; break;
@@ -928,8 +930,7 @@ void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
     DynamicData.push_back(Info.RHS);
   }
 
-  CGF.EmitCheck(Check, CheckName, StaticData, DynamicData,
-                CodeGenFunction::CRK_Recoverable);
+  CGF.EmitCheck(Check, CheckName, StaticData, DynamicData, Kinds);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2179,9 +2180,12 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
     const BinOpInfo &Ops, llvm::Value *Zero, bool isDiv) {
   llvm::Value *Cond = nullptr;
+  SmallVector<SanitizerKind, 2> Kinds;
 
-  if (CGF.SanOpts.has(SanitizerKind::IntegerDivideByZero))
+  if (CGF.SanOpts.has(SanitizerKind::IntegerDivideByZero)) {
     Cond = Builder.CreateICmpNE(Ops.RHS, Zero);
+    Kinds.push_back(SanitizerKind::IntegerDivideByZero);
+  }
 
   if (CGF.SanOpts.has(SanitizerKind::SignedIntegerOverflow) &&
       Ops.Ty->hasSignedIntegerRepresentation()) {
@@ -2195,10 +2199,11 @@ void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
     llvm::Value *RHSCmp = Builder.CreateICmpNE(Ops.RHS, NegOne);
     llvm::Value *Overflow = Builder.CreateOr(LHSCmp, RHSCmp, "or");
     Cond = Cond ? Builder.CreateAnd(Cond, Overflow, "and") : Overflow;
+    Kinds.push_back(SanitizerKind::SignedIntegerOverflow);
   }
 
   if (Cond)
-    EmitBinOpCheck(Cond, Ops);
+    EmitBinOpCheck(Cond, Ops, Kinds);
 }
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
@@ -2212,7 +2217,8 @@ Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
     } else if (CGF.SanOpts.has(SanitizerKind::FloatDivideByZero) &&
                Ops.Ty->isRealFloatingType()) {
       llvm::Value *Zero = llvm::Constant::getNullValue(ConvertType(Ops.Ty));
-      EmitBinOpCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero), Ops);
+      EmitBinOpCheck(Builder.CreateFCmpUNE(Ops.RHS, Zero), Ops,
+                     SanitizerKind::FloatDivideByZero);
     }
   }
 
@@ -2297,7 +2303,9 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
     // runtime. Otherwise, this is a -ftrapv check, so just emit a trap.
     if (!isSigned || CGF.SanOpts.has(SanitizerKind::SignedIntegerOverflow)) {
       CodeGenFunction::SanitizerScope SanScope(&CGF);
-      EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
+      EmitBinOpCheck(Builder.CreateNot(overflow), Ops,
+                     isSigned ? SanitizerKind::SignedIntegerOverflow
+                              : SanitizerKind::UnsignedIntegerOverflow);
     } else
       CGF.EmitTrapCheck(Builder.CreateNot(overflow));
     return result;
@@ -2687,7 +2695,7 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
       Valid = P;
     }
 
-    EmitBinOpCheck(Valid, Ops);
+    EmitBinOpCheck(Valid, Ops, SanitizerKind::Shift);
   }
   // OpenCL 6.3j: shift values are effectively % word size of LHS.
   if (CGF.getLangOpts().OpenCL)
@@ -2706,7 +2714,9 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
   if (CGF.SanOpts.has(SanitizerKind::Shift) && !CGF.getLangOpts().OpenCL &&
       isa<llvm::IntegerType>(Ops.LHS->getType())) {
     CodeGenFunction::SanitizerScope SanScope(&CGF);
-    EmitBinOpCheck(Builder.CreateICmpULE(RHS, GetWidthMinusOneValue(Ops.LHS, RHS)), Ops);
+    EmitBinOpCheck(
+        Builder.CreateICmpULE(RHS, GetWidthMinusOneValue(Ops.LHS, RHS)), Ops,
+        SanitizerKind::Shift);
   }
 
   // OpenCL 6.3j: shift values are effectively % word size of LHS.

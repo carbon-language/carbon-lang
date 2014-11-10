@@ -476,8 +476,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     if (SanOpts.has(SanitizerKind::Unreachable)) {
       SanitizerScope SanScope(this);
       EmitCheck(Builder.getFalse(), "builtin_unreachable",
-                EmitCheckSourceLocation(E->getExprLoc()),
-                None, CRK_Unrecoverable);
+                EmitCheckSourceLocation(E->getExprLoc()), None,
+                SanitizerKind::Unreachable);
     } else
       Builder.CreateUnreachable();
 
