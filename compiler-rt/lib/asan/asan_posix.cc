@@ -33,6 +33,7 @@
 namespace __asan {
 
 void AsanOnSIGSEGV(int, void *siginfo, void *context) {
+  ScopedDeadlySignal signal_scope(GetCurrentThread());
   uptr addr = (uptr)((siginfo_t*)siginfo)->si_addr;
   int code = (int)((siginfo_t*)siginfo)->si_code;
   // Write the first message using the bullet-proof write.

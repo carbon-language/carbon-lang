@@ -29,6 +29,15 @@ static const uptr kStackTraceMax = 256;
 # define SANITIZER_CAN_FAST_UNWIND 1
 #endif
 
+// Fast unwind is the only option on Mac for now; we will need to
+// revisit this macro when slow unwind works on Mac, see
+// https://code.google.com/p/address-sanitizer/issues/detail?id=137
+#if SANITIZER_MAC
+# define SANITIZER_CAN_SLOW_UNWIND 0
+#else
+# define SANITIZER_CAN_SLOW_UNWIND 1
+#endif
+
 struct StackTrace {
   const uptr *trace;
   uptr size;
@@ -40,13 +49,9 @@ struct StackTrace {
   void Print() const;
 
   static bool WillUseFastUnwind(bool request_fast_unwind) {
-    // Check if fast unwind is available. Fast unwind is the only option on Mac.
-    // It is also the only option on FreeBSD as the slow unwinding that
-    // leverages _Unwind_Backtrace() yields the call stack of the signal's
-    // handler and not of the code that raised the signal (as it does on Linux).
     if (!SANITIZER_CAN_FAST_UNWIND)
       return false;
-    else if (SANITIZER_MAC != 0 || SANITIZER_FREEBSD != 0)
+    else if (!SANITIZER_CAN_SLOW_UNWIND)
       return true;
     return request_fast_unwind;
   }
