@@ -22,8 +22,8 @@ class MemoryObject;
 class raw_ostream;
 class MCContext;
 
-/// MCDisassembler - Superclass for all disassemblers.  Consumes a memory region
-///   and provides an array of assembly instructions.
+/// Superclass for all disassemblers. Consumes a memory region and provides an
+/// array of assembly instructions.
 class MCDisassembler {
 public:
   /// Ternary decode status. Most backends will just use Fail and
@@ -54,34 +54,32 @@ public:
     Success = 3
   };
 
-  /// Constructor     - Performs initial setup for the disassembler.
   MCDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
     : Ctx(Ctx), STI(STI), Symbolizer(), CommentStream(nullptr) {}
 
   virtual ~MCDisassembler();
 
-  /// getInstruction  - Returns the disassembly of a single instruction.
+  /// Returns the disassembly of a single instruction.
   ///
-  /// @param instr    - An MCInst to populate with the contents of the
+  /// @param Instr    - An MCInst to populate with the contents of the
   ///                   instruction.
-  /// @param size     - A value to populate with the size of the instruction, or
+  /// @param Size     - A value to populate with the size of the instruction, or
   ///                   the number of bytes consumed while attempting to decode
   ///                   an invalid instruction.
-  /// @param region   - The memory object to use as a source for machine code.
-  /// @param address  - The address, in the memory space of region, of the first
+  /// @param Region   - The memory object to use as a source for machine code.
+  /// @param Address  - The address, in the memory space of region, of the first
   ///                   byte of the instruction.
-  /// @param vStream  - The stream to print warnings and diagnostic messages on.
-  /// @param cStream  - The stream to print comments and annotations on.
+  /// @param VStream  - The stream to print warnings and diagnostic messages on.
+  /// @param CStream  - The stream to print comments and annotations on.
   /// @return         - MCDisassembler::Success if the instruction is valid,
   ///                   MCDisassembler::SoftFail if the instruction was
   ///                                            disassemblable but invalid,
   ///                   MCDisassembler::Fail if the instruction was invalid.
-  virtual DecodeStatus  getInstruction(MCInst& instr,
-                                       uint64_t& size,
-                                       const MemoryObject &region,
-                                       uint64_t address,
-                                       raw_ostream &vStream,
-                                       raw_ostream &cStream) const = 0;
+  virtual DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
+                                      const MemoryObject &Region,
+                                      uint64_t Address, raw_ostream &VStream,
+                                      raw_ostream &CStream) const = 0;
+
 private:
   MCContext &Ctx;
 
