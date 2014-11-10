@@ -1039,7 +1039,7 @@ class Base(unittest2.TestCase):
                 print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
             import inspect
             hook_argc = len(inspect.getargspec(hook).args)
-            if hook_argc == 0:
+            if hook_argc == 0 or hook.im_self:
                 hook()
             elif hook_argc == 1:
                 hook(self)
