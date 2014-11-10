@@ -4984,6 +4984,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat(
       "const char* const p = reinterpret_cast<const char* const>(q);");
   verifyGoogleFormat("void f(int i = 0, SomeType** temps = NULL);");
+  verifyGoogleFormat("void f(Bar* a = nullptr, Bar* b);");
+  verifyGoogleFormat("template <typename T>\n"
+                     "void f(int i = 0, SomeType** temps = NULL);");
 
   FormatStyle Left = getLLVMStyle();
   Left.PointerAlignment = FormatStyle::PAS_Left;
