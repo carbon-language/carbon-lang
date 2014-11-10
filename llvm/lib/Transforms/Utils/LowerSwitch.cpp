@@ -131,17 +131,24 @@ static raw_ostream& operator<<(raw_ostream &O,
   return O << "]";
 }
 
-static void fixPhis(BasicBlock *Succ,
-                    BasicBlock *OrigBlock,
-                    BasicBlock *NewNode) {
-  for (BasicBlock::iterator I = Succ->begin(),
-                            E = Succ->getFirstNonPHI();
+/// \brief Update the first occurrence of the "switch statement" BB in the PHI
+/// node with the "new" BB. The other occurrences will be updated by subsequent
+/// calls to this function.
+///
+/// Switch statements may have more than one incoming edge into the same BB if
+/// they all have the same value. When the switch statement is converted these
+/// incoming edges are now coming from multiple BBs.
+static void fixPhis(BasicBlock *SuccBB, BasicBlock *OrigBB, BasicBlock *NewBB) {
+  for (BasicBlock::iterator I = SuccBB->begin(), E = SuccBB->getFirstNonPHI();
        I != E; ++I) {
     PHINode *PN = cast<PHINode>(I);
 
-    for (unsigned I = 0, E = PN->getNumIncomingValues(); I != E; ++I) {
-      if (PN->getIncomingBlock(I) == OrigBlock)
-        PN->setIncomingBlock(I, NewNode);
+    // Only update the first occurence.
+    for (unsigned Idx = 0, E = PN->getNumIncomingValues(); Idx != E; ++Idx) {
+      if (PN->getIncomingBlock(Idx) == OrigBB) {
+        PN->setIncomingBlock(Idx, NewBB);
+        break;
+      }
     }
   }
 }
