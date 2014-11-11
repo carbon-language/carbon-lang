@@ -27,6 +27,10 @@ int main()
         v.resize(200);
         assert(v.size() == 200);
         assert(v.capacity() >= 200);
+        v.reserve(400);
+        v.resize(300);  // check the case when resizing and we already have room
+        assert(v.size() == 300);
+        assert(v.capacity() >= 400);
     }
 #if __cplusplus >= 201103L
     {
@@ -37,6 +41,10 @@ int main()
         v.resize(200);
         assert(v.size() == 200);
         assert(v.capacity() >= 200);
+        v.reserve(400);
+        v.resize(300);  // check the case when resizing and we already have room
+        assert(v.size() == 300);
+        assert(v.capacity() >= 400);
     }
 #endif
 }
