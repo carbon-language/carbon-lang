@@ -694,7 +694,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     // Offset of the symbol in the section
     int64_t a = Layout.getSymbolOffset(&B_SD);
 
-    // Ofeset of the relocation in the section
+    // Offset of the relocation in the section
     int64_t b = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 
     FixedValue = b - a;
