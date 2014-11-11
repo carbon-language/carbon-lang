@@ -11,7 +11,6 @@ if(NOT DEFINED LLVM_DYLIB_COMPONENTS)
   set(LLVM_DYLIB_COMPONENTS
     ${LLVM_TARGETS_TO_BUILD}
     Analysis
-    AsmPrinter
     BitReader
     BitWriter
     CodeGen
@@ -24,13 +23,11 @@ if(NOT DEFINED LLVM_DYLIB_COMPONENTS)
     Instrumentation
     Interpreter
     Linker
-    MC
     MCDisassembler
     MCJIT
     ObjCARCOpts
     Object
     ScalarOpts
-    SelectionDAG
     Support
     Target
     TransformUtils
