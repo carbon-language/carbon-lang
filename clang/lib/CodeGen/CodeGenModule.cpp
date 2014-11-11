@@ -3459,7 +3459,7 @@ void CodeGenModule::EmitCoverageFile() {
       llvm::MDString *CoverageFile =
           llvm::MDString::get(Ctx, getCodeGenOpts().CoverageFile);
       for (int i = 0, e = CUNode->getNumOperands(); i != e; ++i) {
-        llvm::Value *CU = CUNode->getOperand(i);
+        llvm::MDNode *CU = CUNode->getOperand(i);
         llvm::Value *node[] = { CoverageFile, CU };
         llvm::MDNode *N = llvm::MDNode::get(Ctx, node);
         GCov->addOperand(N);
