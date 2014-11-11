@@ -36,5 +36,4 @@ int between(char *x) {
 int undef(void) {} // expected-warning{{control reaches end of non-void function}}
 void useUndef(void) { 0 || undef(); }
 
-void testPointer(void) { (void) (1 && testPointer && 0); } // expected-warning {{address of function 'testPointer' will always evaluate to 'true'}} \
-							   // expected-note {{prefix with the address-of operator to silence this warning}}
+void testPointer(void) { (void) (1 && testPointer && 0); }

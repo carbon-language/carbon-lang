@@ -8413,10 +8413,7 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
     if (!LHS.get()->getType()->isScalarType() ||
         !RHS.get()->getType()->isScalarType())
       return InvalidOperands(Loc, LHS, RHS);
-    
-    CheckAlwaysNonNullPointer(LHS.get());
-    CheckAlwaysNonNullPointer(RHS.get());
-    
+
     return Context.IntTy;
   }
 
@@ -12974,7 +12971,6 @@ ExprResult Sema::CheckBooleanCondition(Expr *E, SourceLocation Loc) {
         << T << E->getSourceRange();
       return ExprError();
     }
-    CheckAlwaysNonNullPointer(E);
   }
 
   return E;

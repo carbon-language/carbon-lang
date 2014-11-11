@@ -8033,7 +8033,6 @@ public:
   void DiagnoseAlwaysNonNullPointer(Expr *E,
                                     Expr::NullPointerConstantKind NullType,
                                     bool IsEqual, SourceRange Range);
-  void CheckAlwaysNonNullPointer(Expr *OrigExp);
 
   /// type checking for vector binary operators.
   QualType CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
