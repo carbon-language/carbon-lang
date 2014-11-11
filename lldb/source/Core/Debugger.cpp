@@ -125,7 +125,7 @@ g_language_enumerators[] =
     FILE_AND_LINE\
     "\\n"
 
-#define DEFAULT_DISASSEMBLY_FORMAT "${addr-file-or-load}{ <${function.name-without-args}${function.concrete-only-addr-offset-no-padding}>}: "
+#define DEFAULT_DISASSEMBLY_FORMAT "${current-pc-arrow} ${addr-file-or-load}{ <${function.name-without-args}${function.concrete-only-addr-offset-no-padding}>}: "
 
 static PropertyDefinition
 g_properties[] =
