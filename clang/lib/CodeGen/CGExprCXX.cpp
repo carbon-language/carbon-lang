@@ -318,7 +318,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   llvm::Value *This = LV.getAddress();
 
   if ((MD->isCopyAssignmentOperator() || MD->isMoveAssignmentOperator()) &&
-      MD->isTrivial()) {
+      MD->isTrivial() && !MD->getParent()->mayInsertExtraPadding()) {
     llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
     QualType Ty = E->getType();
     EmitAggregateAssign(This, Src, Ty);

@@ -217,3 +217,20 @@ void Create_InheritsFrom_WithVirtualDtor() {
 // WITH_CTOR_ALIASES-NOT: call void @_ZN15WithVirtualDtorD2Ev
 // WITH_CTOR_ALIASES: call void @_ZN28InheritsFrom_WithVirtualDtorD2Ev
 // WITH_CTOR_ALIASES: ret void
+
+// Make sure we don't emit memcpy for operator= if paddings are inserted.
+struct ClassWithTrivialCopy {
+  ClassWithTrivialCopy();
+  ~ClassWithTrivialCopy();
+  void *a;
+ private:
+  void *c;
+};
+
+void MakeTrivialCopy(ClassWithTrivialCopy *s1, ClassWithTrivialCopy *s2) {
+  *s1 = *s2;
+}
+
+// CHECK-LABEL: define void @_Z15MakeTrivialCopyP20ClassWithTrivialCopyS0_
+// CHECK-NOT: memcpy
+// CHECK: ret void
