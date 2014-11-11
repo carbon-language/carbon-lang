@@ -1149,8 +1149,7 @@ public:
           Current->OperatorIndex = OperatorIndex;
           ++OperatorIndex;
         }
-
-        next(/*SkipPastLeadingComments=*/false);
+        next(/*SkipPastLeadingComments=*/Precedence > 0);
       }
     }
   }

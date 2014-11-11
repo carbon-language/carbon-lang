@@ -3118,6 +3118,9 @@ TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
   verifyFormat("if ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
                "     bbbbbbbbbbbbbbbbbb) && // aaaaaaaaaaaaaaaa\n"
                "    cccccc) {\n}");
+  verifyFormat("b = a &&\n"
+               "    // Comment\n"
+               "    b.c && d;");
 
   // If the LHS of a comparison is not a binary expression itself, the
   // additional linebreak confuses many people.
