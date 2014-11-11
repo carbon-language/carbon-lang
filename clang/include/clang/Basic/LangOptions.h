@@ -18,16 +18,11 @@
 #include "clang/Basic/CommentOptions.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/ObjCRuntime.h"
+#include "clang/Basic/Sanitizers.h"
 #include "clang/Basic/Visibility.h"
 #include <string>
 
 namespace clang {
-
-enum class SanitizerKind {
-#define SANITIZER(NAME, ID) ID,
-#include "clang/Basic/Sanitizers.def"
-  Unknown
-};
 
 class SanitizerOptions {
   /// \brief Bitmask of enabled sanitizers.
