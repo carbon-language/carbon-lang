@@ -313,6 +313,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
     uint64_t SectionAddr = Section.getAddress();
     uint64_t SectSize = Section.getSize();
+    if (!SectSize)
+      continue;
 
     // Make a list of all the symbols in this section.
     std::vector<std::pair<uint64_t, StringRef>> Symbols;
@@ -514,11 +516,12 @@ static void PrintSectionContents(const ObjectFile *Obj) {
     if (error(Section.getName(Name)))
       continue;
     uint64_t BaseAddr = Section.getAddress();
-    bool BSS = Section.isBSS();
+    uint64_t Size = Section.getSize();
+    if (!Size)
+      continue;
 
     outs() << "Contents of section " << Name << ":\n";
-    if (BSS) {
-      uint64_t Size = Section.getSize();
+    if (Section.isBSS()) {
       outs() << format("<skipping contents of bss section at [%04" PRIx64
                        ", %04" PRIx64 ")>\n",
                        BaseAddr, BaseAddr + Size);
