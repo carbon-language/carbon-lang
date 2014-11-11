@@ -1450,7 +1450,7 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
     template <class _Tp, class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         static void construct(allocator_type& __a, _Tp* __p, _Args&&... __args)
-            {__construct(__has_construct<allocator_type, pointer, _Args...>(),
+            {__construct(__has_construct<allocator_type, _Tp*, _Args...>(),
                          __a, __p, _VSTD::forward<_Args>(__args)...);}
 #else  // _LIBCPP_HAS_NO_VARIADICS
     template <class _Tp>
