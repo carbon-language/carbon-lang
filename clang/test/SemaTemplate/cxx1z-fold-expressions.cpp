@@ -55,10 +55,9 @@ template<int ...N> void empty_with_base() {
   extern int k;
   (k = ... = N); // expected-warning{{unused}}
 
-  // FIXME: We misparse these. The first one looks a lot loke a declaration;
-  // it's not clear what's happening in the second one.
   void (k = ... = N); // expected-error {{expected ')'}} expected-note {{to match}}
-  (void) (k = ... = N); // expected-error {{expected ')'}} expected-note {{to match}}
+  void ((k = ... = N));
+  (void) (k = ... = N);
 }
 template void empty_with_base<>(); // expected-note {{in instantiation of}}
 template void empty_with_base<1>();
