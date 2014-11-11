@@ -15,7 +15,6 @@
 
 #include "lld/Driver/Driver.h"
 #include "lld/Driver/GnuLdInputGraph.h"
-#include "lld/Support/NumParse.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
@@ -158,12 +157,8 @@ static bool parseZOption(StringRef opt, uint64_t &val) {
   if (equalPos == 0 || equalPos == StringRef::npos)
     return false;
   StringRef value = opt.substr(equalPos + 1);
-  ErrorOr<uint64_t> parsedVal = lld::parseNum(value, false /*No Extensions*/);
-  if (!parsedVal)
-    return false;
-  // Dont allow a value of 0 for max-page-size.
-  val = parsedVal.get();
-  if (!val)
+  val = 0;
+  if (value.getAsInteger(0, val) || !val)
     return false;
   return true;
 }
@@ -595,15 +590,14 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_image_base: {
-      ErrorOr<uint64_t> baseAddress =
-          lld::parseNum(inputArg->getValue(), false);
-      if (baseAddress && baseAddress.get())
-        ctx->setBaseAddress(baseAddress.get());
-      else {
-        diagnostics << "invalid value for image base " << inputArg->getValue()
+      uint64_t baseAddress = 0;
+      StringRef inputValue = inputArg->getValue();
+      if ((inputValue.getAsInteger(0, baseAddress)) || !baseAddress) {
+        diagnostics << "invalid value for image base " << inputValue
                     << "\n";
         return false;
       }
+      ctx->setBaseAddress(baseAddress);
       break;
     }
 
