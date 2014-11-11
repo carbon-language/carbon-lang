@@ -28,13 +28,11 @@ void test ( const CharT *s, size_t len ) {
         sv1.remove_prefix ( 1 );
         assert ( sv1.size() == (len - 1));
         assert ( sv1.data() == (s + 1));
+        sv1.remove_prefix ( len - 1 );
     }
     
-    sv1.remove_prefix ( len - 1 );
     assert ( sv1.size() == 0 );
-
-    SV sv2 ( s );
-    sv2.remove_prefix ( len << 1 );
+    sv1.remove_prefix ( 0 );
     assert ( sv1.size() == 0 ); 
     }
 }
@@ -72,7 +70,6 @@ int main () {
     static_assert ( test_ce ( 5, 0 ) == 5, "" );
     static_assert ( test_ce ( 5, 1 ) == 4, "" );
     static_assert ( test_ce ( 5, 5 ) == 0, "" );
-    static_assert ( test_ce ( 5, 9 ) == 0, "" );
     static_assert ( test_ce ( 9, 3 ) == 6, "" );
     }
 #endif
