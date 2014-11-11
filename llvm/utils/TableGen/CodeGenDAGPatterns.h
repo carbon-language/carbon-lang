@@ -597,7 +597,7 @@ public:
 
   /// error - If this is the first error in the current resolution step,
   /// print it and set the error flag.  Otherwise, continue silently.
-  void error(const std::string &Msg);
+  void error(const Twine &Msg);
   bool hasError() const {
     return HasError;
   }

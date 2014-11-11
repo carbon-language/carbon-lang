@@ -1908,7 +1908,7 @@ TreePattern::TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
   Trees.push_back(Pat);
 }
 
-void TreePattern::error(const std::string &Msg) {
+void TreePattern::error(const Twine &Msg) {
   if (HasError)
     return;
   dump();
