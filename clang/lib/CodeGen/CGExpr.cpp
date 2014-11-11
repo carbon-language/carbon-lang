@@ -476,10 +476,9 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   if (Address->getType()->getPointerAddressSpace())
     return;
 
-  SmallVector<SanitizerKind, 3> Kinds;
   SanitizerScope SanScope(this);
 
-  llvm::Value *Cond = nullptr;
+  SmallVector<std::pair<llvm::Value *, SanitizerKind>, 3> Checks;
   llvm::BasicBlock *Done = nullptr;
 
   bool AllowNullPointers = TCK == TCK_DowncastPointer || TCK == TCK_Upcast ||
@@ -487,7 +486,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   if ((SanOpts.has(SanitizerKind::Null) || AllowNullPointers) &&
       !SkipNullCheck) {
     // The glvalue must not be an empty glvalue.
-    Cond = Builder.CreateICmpNE(
+    llvm::Value *IsNonNull = Builder.CreateICmpNE(
         Address, llvm::Constant::getNullValue(Address->getType()));
 
     if (AllowNullPointers) {
@@ -495,11 +494,10 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
       // Skip the remaining checks in that case.
       Done = createBasicBlock("null");
       llvm::BasicBlock *Rest = createBasicBlock("not.null");
-      Builder.CreateCondBr(Cond, Rest, Done);
+      Builder.CreateCondBr(IsNonNull, Rest, Done);
       EmitBlock(Rest);
-      Cond = nullptr;
     } else {
-      Kinds.push_back(SanitizerKind::Null);
+      Checks.push_back(std::make_pair(IsNonNull, SanitizerKind::Null));
     }
   }
 
@@ -517,8 +515,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     llvm::Value *LargeEnough =
         Builder.CreateICmpUGE(Builder.CreateCall2(F, CastAddr, Min),
                               llvm::ConstantInt::get(IntPtrTy, Size));
-    Cond = Cond ? Builder.CreateAnd(Cond, LargeEnough) : LargeEnough;
-    Kinds.push_back(SanitizerKind::ObjectSize);
+    Checks.push_back(std::make_pair(LargeEnough, SanitizerKind::ObjectSize));
   }
 
   uint64_t AlignVal = 0;
@@ -535,19 +532,18 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
                             llvm::ConstantInt::get(IntPtrTy, AlignVal - 1));
       llvm::Value *Aligned =
         Builder.CreateICmpEQ(Align, llvm::ConstantInt::get(IntPtrTy, 0));
-      Cond = Cond ? Builder.CreateAnd(Cond, Aligned) : Aligned;
-      Kinds.push_back(SanitizerKind::Alignment);
+      Checks.push_back(std::make_pair(Aligned, SanitizerKind::Alignment));
     }
   }
 
-  if (Cond) {
+  if (Checks.size() > 0) {
     llvm::Constant *StaticData[] = {
       EmitCheckSourceLocation(Loc),
       EmitCheckTypeDescriptor(Ty),
       llvm::ConstantInt::get(SizeTy, AlignVal),
       llvm::ConstantInt::get(Int8Ty, TCK)
     };
-    EmitCheck(Cond, "type_mismatch", StaticData, Address, Kinds);
+    EmitCheck(Checks, "type_mismatch", StaticData, Address);
   }
 
   // If possible, check that the vptr indicates that there is a subobject of
@@ -605,6 +601,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
       // hard work of checking whether the vptr is for an object of the right
       // type. This will either fill in the cache and return, or produce a
       // diagnostic.
+      llvm::Value *EqualHash = Builder.CreateICmpEQ(CacheVal, Hash);
       llvm::Constant *StaticData[] = {
         EmitCheckSourceLocation(Loc),
         EmitCheckTypeDescriptor(Ty),
@@ -612,8 +609,8 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
         llvm::ConstantInt::get(Int8Ty, TCK)
       };
       llvm::Value *DynamicData[] = { Address, Hash };
-      EmitCheck(Builder.CreateICmpEQ(CacheVal, Hash), "dynamic_type_cache_miss",
-                StaticData, DynamicData, SanitizerKind::Vptr);
+      EmitCheck(std::make_pair(EqualHash, SanitizerKind::Vptr),
+                "dynamic_type_cache_miss", StaticData, DynamicData);
     }
   }
 
@@ -701,8 +698,8 @@ void CodeGenFunction::EmitBoundsCheck(const Expr *E, const Expr *Base,
   };
   llvm::Value *Check = Accessed ? Builder.CreateICmpULT(IndexVal, BoundVal)
                                 : Builder.CreateICmpULE(IndexVal, BoundVal);
-  EmitCheck(Check, "out_of_bounds", StaticData, Index,
-            SanitizerKind::ArrayBounds);
+  EmitCheck(std::make_pair(Check, SanitizerKind::ArrayBounds), "out_of_bounds",
+            StaticData, Index);
 }
 
 
@@ -1181,8 +1178,9 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
         EmitCheckSourceLocation(Loc),
         EmitCheckTypeDescriptor(Ty)
       };
-      EmitCheck(Check, "load_invalid_value", StaticArgs, EmitCheckValue(Load),
-                NeedsEnumCheck ? SanitizerKind::Enum : SanitizerKind::Bool);
+      SanitizerKind Kind = NeedsEnumCheck ? SanitizerKind::Enum : SanitizerKind::Bool;
+      EmitCheck(std::make_pair(Check, Kind), "load_invalid_value", StaticArgs,
+                EmitCheckValue(Load));
     }
   } else if (CGM.getCodeGenOpts().OptimizationLevel > 0)
     if (llvm::MDNode *RangeInfo = getRangeForLoadFromType(Ty))
@@ -2221,32 +2219,33 @@ static CheckRecoverableKind getRecoverableKind(SanitizerKind Kind) {
   }
 }
 
-void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
-                                ArrayRef<llvm::Constant *> StaticArgs,
-                                ArrayRef<llvm::Value *> DynamicArgs,
-                                ArrayRef<SanitizerKind> Kinds) {
+void CodeGenFunction::EmitCheck(
+    ArrayRef<std::pair<llvm::Value *, SanitizerKind>> Checked,
+    StringRef CheckName, ArrayRef<llvm::Constant *> StaticArgs,
+    ArrayRef<llvm::Value *> DynamicArgs) {
   assert(IsSanitizerScope);
-  assert(Kinds.size() > 0);
-  CheckRecoverableKind RecoverKind = getRecoverableKind(Kinds[0]);
-  for (int i = 1, n = Kinds.size(); i < n; ++i)
-    assert(RecoverKind == getRecoverableKind(Kinds[i]) &&
+  assert(Checked.size() > 0);
+  llvm::Value *Cond = Checked[0].first;
+  CheckRecoverableKind RecoverKind = getRecoverableKind(Checked[0].second);
+  assert(SanOpts.has(Checked[0].second));
+  for (int i = 1, n = Checked.size(); i < n; ++i) {
+    Cond = Builder.CreateAnd(Cond, Checked[i].first);
+    assert(RecoverKind == getRecoverableKind(Checked[i].second) &&
            "All recoverable kinds in a single check must be same!");
-#ifndef NDEBUG
-  for (auto Kind : Kinds)
-    assert(SanOpts.has(Kind));
-#endif
+    assert(SanOpts.has(Checked[i].second));
+  }
 
   if (CGM.getCodeGenOpts().SanitizeUndefinedTrapOnError) {
     assert (RecoverKind != CheckRecoverableKind::AlwaysRecoverable &&
             "Runtime call required for AlwaysRecoverable kind!");
-    return EmitTrapCheck(Checked);
+    return EmitTrapCheck(Cond);
   }
 
   llvm::BasicBlock *Cont = createBasicBlock("cont");
 
   llvm::BasicBlock *Handler = createBasicBlock("handler." + CheckName);
 
-  llvm::Instruction *Branch = Builder.CreateCondBr(Checked, Cont, Handler);
+  llvm::Instruction *Branch = Builder.CreateCondBr(Cond, Cont, Handler);
 
   // Give hint that we very much don't expect to execute the handler
   // Value chosen to match UR_NONTAKEN_WEIGHT, see BranchProbabilityInfo.cpp
@@ -3321,8 +3320,8 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
         EmitCheckSourceLocation(E->getLocStart()),
         EmitCheckTypeDescriptor(CalleeType)
       };
-      EmitCheck(CalleeRTTIMatch, "function_type_mismatch", StaticData, Callee,
-                SanitizerKind::Function);
+      EmitCheck(std::make_pair(CalleeRTTIMatch, SanitizerKind::Function),
+                "function_type_mismatch", StaticData, Callee);
 
       Builder.CreateBr(Cont);
       EmitBlock(Cont);

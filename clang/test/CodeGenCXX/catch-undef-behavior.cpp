@@ -221,11 +221,14 @@ void bad_downcast_pointer(S *p) {
 void bad_downcast_reference(S &p) {
   // CHECK: %[[E1:.*]] = icmp ne {{.*}}, null
   // CHECK-NOT: br i1
+
   // CHECK: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64.p0i8(
   // CHECK: %[[E2:.*]] = icmp uge i64 %[[SIZE]], 24
-  // CHECK: %[[E12:.*]] = and i1 %[[E1]], %[[E2]]
+
   // CHECK: %[[MISALIGN:.*]] = and i64 %{{.*}}, 7
   // CHECK: %[[E3:.*]] = icmp eq i64 %[[MISALIGN]], 0
+
+  // CHECK: %[[E12:.*]] = and i1 %[[E1]], %[[E2]]
   // CHECK: %[[E123:.*]] = and i1 %[[E12]], %[[E3]]
   // CHECK: br i1 %[[E123]],
 
@@ -382,7 +385,7 @@ void downcast_reference(B &b) {
   // CHECK-NEXT: [[MASKED:%[0-9]*]] = and i64 [[C_INT]], 15
   // CHECK-NEXT: [[TEST:%[0-9]*]] = icmp eq i64 [[MASKED]], 0
   // AND the alignment test with the objectsize test.
-  // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
+  // CHECK:      [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
   // CHECK-NEXT: br i1 [[AND]]
 }
 
