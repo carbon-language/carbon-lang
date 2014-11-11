@@ -244,6 +244,10 @@ void test22() {
   if ("help")
     (void) 0;
 
-  if (test22)
+  if (test22) // expected-warning {{address of function 'test22' will always evaluate to 'true'}} \
+	      // expected-note {{prefix with the address-of operator to silence this warning}}
+    (void) 0;
+
+  if (&test22)
     (void) 0;
 }

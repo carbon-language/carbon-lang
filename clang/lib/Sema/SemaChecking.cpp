@@ -6748,6 +6748,17 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
       << FixItHint::CreateInsertion(getLocForEndOfToken(E->getLocEnd()), "()");
 }
 
+void Sema::CheckAlwaysNonNullPointer(Expr *OrigExpr) {
+  if (const UnaryOperator *U = dyn_cast<UnaryOperator>(OrigExpr))
+    if (U->getOpcode() == UO_LNot)
+      return CheckAlwaysNonNullPointer(U->getSubExpr());
+    
+  Expr *E = OrigExpr->IgnoreParenImpCasts();
+  QualType Source = E->getType();
+  if (Source->isPointerType() || Source->canDecayToPointerType())
+    DiagnoseAlwaysNonNullPointer(E, Expr::NPCK_NotNull, /*IsEqual*/ false,
+                                 SourceRange());
+}
 
 /// Diagnoses "dangerous" implicit conversions within the given
 /// expression (which is a full expression).  Implements -Wconversion
