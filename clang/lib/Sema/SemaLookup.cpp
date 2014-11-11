@@ -285,7 +285,7 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
 }
 
 void LookupResult::configure() {
-  IDNS = getIDNS(LookupKind, SemaRef.getLangOpts().CPlusPlus,
+  IDNS = getIDNS(LookupKind, getSema().getLangOpts().CPlusPlus,
                  isForRedeclaration());
 
   // If we're looking for one of the allocation or deallocation
@@ -296,7 +296,7 @@ void LookupResult::configure() {
   case OO_Delete:
   case OO_Array_New:
   case OO_Array_Delete:
-    SemaRef.DeclareGlobalNewDelete();
+    getSema().DeclareGlobalNewDelete();
     break;
 
   default:
@@ -307,7 +307,7 @@ void LookupResult::configure() {
   // up being declared.
   if (IdentifierInfo *Id = NameInfo.getName().getAsIdentifierInfo()) {
     if (unsigned BuiltinID = Id->getBuiltinID()) {
-      if (!SemaRef.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
+      if (!getSema().Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
         AllowHidden = true;
     }
   }
@@ -400,8 +400,8 @@ void LookupResult::resolveKind() {
     // canonical type.
     if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
       if (!TD->getDeclContext()->isRecord()) {
-        QualType T = SemaRef.Context.getTypeDeclType(TD);
-        if (!UniqueTypes.insert(SemaRef.Context.getCanonicalType(T))) {
+        QualType T = getSema().Context.getTypeDeclType(TD);
+        if (!UniqueTypes.insert(getSema().Context.getCanonicalType(T))) {
           // The type is not unique; pull something off the back and continue
           // at this index.
           Decls[I] = Decls[--N];
@@ -1265,7 +1265,7 @@ static NamedDecl *findAcceptableDecl(Sema &SemaRef, NamedDecl *D) {
 }
 
 NamedDecl *LookupResult::getAcceptableDeclSlow(NamedDecl *D) const {
-  return findAcceptableDecl(SemaRef, D);
+  return findAcceptableDecl(getSema(), D);
 }
 
 /// @brief Perform unqualified name lookup starting from a given

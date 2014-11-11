@@ -132,7 +132,7 @@ public:
     : ResultKind(NotFound),
       Paths(nullptr),
       NamingClass(nullptr),
-      SemaRef(SemaRef),
+      SemaPtr(&SemaRef),
       NameInfo(NameInfo),
       LookupKind(LookupKind),
       IDNS(0),
@@ -154,7 +154,7 @@ public:
     : ResultKind(NotFound),
       Paths(nullptr),
       NamingClass(nullptr),
-      SemaRef(SemaRef),
+      SemaPtr(&SemaRef),
       NameInfo(Name, NameLoc),
       LookupKind(LookupKind),
       IDNS(0),
@@ -174,7 +174,7 @@ public:
     : ResultKind(NotFound),
       Paths(nullptr),
       NamingClass(nullptr),
-      SemaRef(Other.SemaRef),
+      SemaPtr(Other.SemaPtr),
       NameInfo(Other.NameInfo),
       LookupKind(Other.LookupKind),
       IDNS(Other.IDNS),
@@ -305,7 +305,7 @@ public:
     if (!D->isInIdentifierNamespace(IDNS))
       return nullptr;
 
-    if (isHiddenDeclarationVisible() || isVisible(SemaRef, D))
+    if (isHiddenDeclarationVisible() || isVisible(getSema(), D))
       return D;
 
     return getAcceptableDeclSlow(D);
@@ -551,7 +551,7 @@ public:
 
   /// \brief Get the Sema object that this lookup result is searching
   /// with.
-  Sema &getSema() const { return SemaRef; }
+  Sema &getSema() const { return *SemaPtr; }
 
   /// A class for iterating through a result set and possibly
   /// filtering out results.  The results returned are possibly
@@ -630,9 +630,9 @@ public:
 private:
   void diagnose() {
     if (isAmbiguous())
-      SemaRef.DiagnoseAmbiguousLookup(*this);
-    else if (isClassLookup() && SemaRef.getLangOpts().AccessControl)
-      SemaRef.CheckLookupAccess(*this);
+      getSema().DiagnoseAmbiguousLookup(*this);
+    else if (isClassLookup() && getSema().getLangOpts().AccessControl)
+      getSema().CheckLookupAccess(*this);
   }
 
   void setAmbiguous(AmbiguityKind AK) {
@@ -664,7 +664,7 @@ private:
   QualType BaseObjectType;
 
   // Parameters.
-  Sema &SemaRef;
+  Sema *SemaPtr;
   DeclarationNameInfo NameInfo;
   SourceRange NameContextRange;
   Sema::LookupNameKind LookupKind;

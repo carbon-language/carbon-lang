@@ -98,7 +98,7 @@ class UnresolvedSetImpl {
 private:
   template <unsigned N> friend class UnresolvedSet;
   UnresolvedSetImpl() {}
-  UnresolvedSetImpl(const UnresolvedSetImpl &) LLVM_DELETED_FUNCTION;
+  UnresolvedSetImpl(const UnresolvedSetImpl &) {};
 
 public:
   // We don't currently support assignment through this iterator, so we might
