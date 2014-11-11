@@ -1,6 +1,6 @@
 ; Test that coverage instrumentation does not lose debug location.
 
-; RUN: opt < %s -asan -asan-module -asan-coverage=1 -S | FileCheck %s
+; RUN: opt < %s -sancov -sanitizer-coverage-level=1 -S | FileCheck %s
 
 ; C++ source:
 ; 1: struct A {

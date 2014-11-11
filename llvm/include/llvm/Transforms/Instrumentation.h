@@ -78,6 +78,9 @@ ModulePass *createDataFlowSanitizerPass(StringRef ABIListFile = StringRef(),
                                         void *(*getArgTLS)() = nullptr,
                                         void *(*getRetValTLS)() = nullptr);
 
+// Insert SanitizerCoverage instrumentation.
+ModulePass *createSanitizerCoverageModulePass(int CoverageLevel);
+
 #if defined(__GNUC__) && defined(__linux__) && !defined(ANDROID)
 inline ModulePass *createDataFlowSanitizerPassForJIT(StringRef ABIListFile =
                                                          StringRef()) {
