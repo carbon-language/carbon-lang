@@ -216,7 +216,7 @@ namespace X86II {
     MO_SECREL
   };
 
-  enum {
+  enum : uint64_t {
     //===------------------------------------------------------------------===//
     // Instruction encodings.  These are the standard/most common forms for X86
     // instructions.
@@ -328,8 +328,8 @@ namespace X86II {
     OpSizeShift = 7,
     OpSizeMask = 0x3 << OpSizeShift,
 
-    OpSize16 = 1,
-    OpSize32 = 2,
+    OpSize16 = 1 << OpSizeShift,
+    OpSize32 = 2 << OpSizeShift,
 
     // AsSize - Set if this instruction requires an operand size prefix (0x67),
     // which most often indicates that the instruction address 16 bit address
@@ -455,51 +455,53 @@ namespace X86II {
     EncodingMask = 0x3 << EncodingShift,
 
     // VEX - encoding using 0xC4/0xC5
-    VEX = 1,
+    VEX = 1 << EncodingShift,
 
     /// XOP - Opcode prefix used by XOP instructions.
-    XOP = 2,
+    XOP = 2 << EncodingShift,
 
     // VEX_EVEX - Specifies that this instruction use EVEX form which provides
     // syntax support up to 32 512-bit register operands and up to 7 16-bit
     // mask operands as well as source operand data swizzling/memory operand
     // conversion, eviction hint, and rounding mode.
-    EVEX = 3,
+    EVEX = 3 << EncodingShift,
 
     // Opcode
     OpcodeShift   = EncodingShift + 2,
 
-    //===------------------------------------------------------------------===//
-    /// VEX - The opcode prefix used by AVX instructions
-    VEXShift = OpcodeShift + 8,
-
     /// VEX_W - Has a opcode specific functionality, but is used in the same
     /// way as REX_W is for regular SSE instructions.
-    VEX_W       = 1U << 0,
+    VEX_WShift  = OpcodeShift + 8,
+    VEX_W       = 1ULL << VEX_WShift,
 
     /// VEX_4V - Used to specify an additional AVX/SSE register. Several 2
     /// address instructions in SSE are represented as 3 address ones in AVX
     /// and the additional register is encoded in VEX_VVVV prefix.
-    VEX_4V      = 1U << 1,
+    VEX_4VShift = VEX_WShift + 1,
+    VEX_4V      = 1ULL << VEX_4VShift,
 
     /// VEX_4VOp3 - Similar to VEX_4V, but used on instructions that encode
     /// operand 3 with VEX.vvvv.
-    VEX_4VOp3   = 1U << 2,
+    VEX_4VOp3Shift = VEX_4VShift + 1,
+    VEX_4VOp3   = 1ULL << VEX_4VOp3Shift,
 
     /// VEX_I8IMM - Specifies that the last register used in a AVX instruction,
     /// must be encoded in the i8 immediate field. This usually happens in
     /// instructions with 4 operands.
-    VEX_I8IMM   = 1U << 3,
+    VEX_I8IMMShift = VEX_4VOp3Shift + 1,
+    VEX_I8IMM   = 1ULL << VEX_I8IMMShift,
 
     /// VEX_L - Stands for a bit in the VEX opcode prefix meaning the current
     /// instruction uses 256-bit wide registers. This is usually auto detected
     /// if a VR256 register is used, but some AVX instructions also have this
     /// field marked when using a f256 memory references.
-    VEX_L       = 1U << 4,
+    VEX_LShift = VEX_I8IMMShift + 1,
+    VEX_L       = 1ULL << VEX_LShift,
 
     // VEX_LIG - Specifies that this instruction ignores the L-bit in the VEX
     // prefix. Usually used for scalar instructions. Needed by disassembler.
-    VEX_LIG     = 1U << 5,
+    VEX_LIGShift = VEX_LShift + 1,
+    VEX_LIG     = 1ULL << VEX_LIGShift,
 
     // TODO: we should combine VEX_L and VEX_LIG together to form a 2-bit field
     // with following encoding:
@@ -510,20 +512,24 @@ namespace X86II {
     // this will save 1 tsflag bit
 
     // EVEX_K - Set if this instruction requires masking
-    EVEX_K      = 1U << 6,
+    EVEX_KShift = VEX_LIGShift + 1,
+    EVEX_K      = 1ULL << EVEX_KShift,
 
     // EVEX_Z - Set if this instruction has EVEX.Z field set.
-    EVEX_Z      = 1U << 7,
+    EVEX_ZShift = EVEX_KShift + 1,
+    EVEX_Z      = 1ULL << EVEX_ZShift,
 
     // EVEX_L2 - Set if this instruction has EVEX.L' field set.
-    EVEX_L2     = 1U << 8,
+    EVEX_L2Shift = EVEX_ZShift + 1,
+    EVEX_L2     = 1ULL << EVEX_L2Shift,
 
     // EVEX_B - Set if this instruction has EVEX.B field set.
-    EVEX_B      = 1U << 9,
+    EVEX_BShift = EVEX_L2Shift + 1,
+    EVEX_B      = 1ULL << EVEX_BShift,
 
     // The scaling factor for the AVX512's 8-bit compressed displacement.
-    CD8_Scale_Shift = VEXShift + 10,
-    CD8_Scale_Mask = 127,
+    CD8_Scale_Shift = EVEX_BShift + 1,
+    CD8_Scale_Mask = 127ULL << CD8_Scale_Shift,
 
     /// Has3DNow0F0FOpcode - This flag indicates that the instruction uses the
     /// wacky 0x0F 0x0F prefix for 3DNow! instructions.  The manual documents
@@ -532,16 +538,16 @@ namespace X86II {
     /// we handle this by storeing the classifier in the opcode field and using
     /// this flag to indicate that the encoder should do the wacky 3DNow! thing.
     Has3DNow0F0FOpcodeShift = CD8_Scale_Shift + 7,
-    Has3DNow0F0FOpcode = 1U << (Has3DNow0F0FOpcodeShift - VEXShift),
+    Has3DNow0F0FOpcode = 1ULL << Has3DNow0F0FOpcodeShift,
 
     /// MemOp4 - Used to indicate swapping of operand 3 and 4 to be encoded in
     /// ModRM or I8IMM. This is used for FMA4 and XOP instructions.
     MemOp4Shift = Has3DNow0F0FOpcodeShift + 1,
-    MemOp4 = 1U << (MemOp4Shift - VEXShift),
+    MemOp4 = 1ULL << MemOp4Shift,
 
     /// Explicitly specified rounding control
     EVEX_RCShift = MemOp4Shift + 1,
-    EVEX_RC = 1U << (EVEX_RCShift - VEXShift)
+    EVEX_RC = 1ULL << EVEX_RCShift
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
@@ -643,10 +649,10 @@ namespace X86II {
   /// counted as one operand.
   ///
   inline int getMemoryOperandNo(uint64_t TSFlags, unsigned Opcode) {
-    bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
-    bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
-    bool HasEVEX_K = ((TSFlags >> X86II::VEXShift) & X86II::EVEX_K);
-    
+    bool HasVEX_4V = TSFlags & X86II::VEX_4V;
+    bool HasMemOp4 = TSFlags & X86II::MemOp4;
+    bool HasEVEX_K = TSFlags & X86II::EVEX_K;
+
     switch (TSFlags & X86II::FormMask) {
     default: llvm_unreachable("Unknown FormMask value in getMemoryOperandNo!");
     case X86II::Pseudo:
@@ -687,7 +693,7 @@ namespace X86II {
     case X86II::MRM2m: case X86II::MRM3m:
     case X86II::MRM4m: case X86II::MRM5m:
     case X86II::MRM6m: case X86II::MRM7m: {
-      bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
+      bool HasVEX_4V = TSFlags & X86II::VEX_4V;
       unsigned FirstMemOp = 0;
       if (HasVEX_4V)
         ++FirstMemOp;// Skip the register dest (which is encoded in VEX_VVVV).
