@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -std=c++14 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm-only -std=c++14 -emit-llvm -g %s -o - | FileCheck %s
 
 // CHECK: [[EMPTY:![0-9]*]] = metadata !{}
 // CHECK: \00foo\00{{.*}}, metadata [[EMPTY]], {{.*}}} ; [ DW_TAG_structure_type ]
