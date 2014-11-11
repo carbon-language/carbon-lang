@@ -46,6 +46,8 @@ private:
     const GlobalValue *symbol;
   };
 
+  std::unique_ptr<LLVMContext> OwnedContext;
+
   std::unique_ptr<object::IRObjectFile> IRFile;
   std::unique_ptr<TargetMachine> _target;
   StringSet                               _linkeropt_strings;
@@ -59,8 +61,12 @@ private:
   std::vector<const char*>                _asm_undefines;
 
   LTOModule(std::unique_ptr<object::IRObjectFile> Obj, TargetMachine *TM);
+  LTOModule(std::unique_ptr<object::IRObjectFile> Obj, TargetMachine *TM,
+            std::unique_ptr<LLVMContext> Context);
 
 public:
+  ~LTOModule();
+
   /// Returns 'true' if the file or memory contents is LLVM bitcode.
   static bool isBitcodeFile(const void *mem, size_t length);
   static bool isBitcodeFile(const char *path);
@@ -94,6 +100,13 @@ public:
   static LTOModule *createFromBuffer(const void *mem, size_t length,
                                      TargetOptions options, std::string &errMsg,
                                      StringRef path = "");
+
+  static LTOModule *createInLocalContext(const void *mem, size_t length,
+                                         TargetOptions options,
+                                         std::string &errMsg, StringRef path);
+  static LTOModule *createInContext(const void *mem, size_t length,
+                                    TargetOptions options, std::string &errMsg,
+                                    StringRef path, LLVMContext *Context);
 
   const Module &getModule() const {
     return const_cast<LTOModule*>(this)->getModule();
@@ -204,7 +217,7 @@ private:
 
   /// Create an LTOModule (private version).
   static LTOModule *makeLTOModule(MemoryBufferRef Buffer, TargetOptions options,
-                                  std::string &errMsg);
+                                  std::string &errMsg, LLVMContext *Context);
 };
 }
 #endif

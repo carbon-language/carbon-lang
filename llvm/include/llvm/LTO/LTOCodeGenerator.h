@@ -119,6 +119,8 @@ struct LTOCodeGenerator {
 
   void setDiagnosticHandler(lto_diagnostic_handler_t, void *);
 
+  LLVMContext &getContext() { return Context; }
+
 private:
   void initializeLTOPasses();
 

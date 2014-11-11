@@ -52,6 +52,13 @@ LTOModule::LTOModule(std::unique_ptr<object::IRObjectFile> Obj,
                      llvm::TargetMachine *TM)
     : IRFile(std::move(Obj)), _target(TM) {}
 
+LTOModule::LTOModule(std::unique_ptr<object::IRObjectFile> Obj,
+                     llvm::TargetMachine *TM,
+                     std::unique_ptr<LLVMContext> Context)
+    : OwnedContext(std::move(Context)), IRFile(std::move(Obj)), _target(TM) {}
+
+LTOModule::~LTOModule() {}
+
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.
 bool LTOModule::isBitcodeFile(const void *Mem, size_t Length) {
@@ -77,7 +84,8 @@ bool LTOModule::isBitcodeForTarget(MemoryBuffer *Buffer,
       IRObjectFile::findBitcodeInMemBuffer(Buffer->getMemBufferRef());
   if (!BCOrErr)
     return false;
-  std::string Triple = getBitcodeTargetTriple(*BCOrErr, getGlobalContext());
+  LLVMContext Context;
+  std::string Triple = getBitcodeTargetTriple(*BCOrErr, Context);
   return StringRef(Triple).startswith(TriplePrefix);
 }
 
@@ -90,7 +98,8 @@ LTOModule *LTOModule::createFromFile(const char *path, TargetOptions options,
     return nullptr;
   }
   std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
-  return makeLTOModule(Buffer->getMemBufferRef(), options, errMsg);
+  return makeLTOModule(Buffer->getMemBufferRef(), options, errMsg,
+                       &getGlobalContext());
 }
 
 LTOModule *LTOModule::createFromOpenFile(int fd, const char *path, size_t size,
@@ -110,27 +119,49 @@ LTOModule *LTOModule::createFromOpenFileSlice(int fd, const char *path,
     return nullptr;
   }
   std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
-  return makeLTOModule(Buffer->getMemBufferRef(), options, errMsg);
+  return makeLTOModule(Buffer->getMemBufferRef(), options, errMsg,
+                       &getGlobalContext());
 }
 
 LTOModule *LTOModule::createFromBuffer(const void *mem, size_t length,
                                        TargetOptions options,
                                        std::string &errMsg, StringRef path) {
+  return createInContext(mem, length, options, errMsg, path,
+                         &getGlobalContext());
+}
+
+LTOModule *LTOModule::createInLocalContext(const void *mem, size_t length,
+                                           TargetOptions options,
+                                           std::string &errMsg,
+                                           StringRef path) {
+  return createInContext(mem, length, options, errMsg, path, nullptr);
+}
+
+LTOModule *LTOModule::createInContext(const void *mem, size_t length,
+                                      TargetOptions options,
+                                      std::string &errMsg, StringRef path,
+                                      LLVMContext *Context) {
   StringRef Data((const char *)mem, length);
   MemoryBufferRef Buffer(Data, path);
-  return makeLTOModule(Buffer, options, errMsg);
+  return makeLTOModule(Buffer, options, errMsg, Context);
 }
 
 LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
-                                    TargetOptions options,
-                                    std::string &errMsg) {
+                                    TargetOptions options, std::string &errMsg,
+                                    LLVMContext *Context) {
+  std::unique_ptr<LLVMContext> OwnedContext;
+  if (!Context) {
+    OwnedContext = llvm::make_unique<LLVMContext>();
+    Context = OwnedContext.get();
+  }
+
   ErrorOr<MemoryBufferRef> MBOrErr =
       IRObjectFile::findBitcodeInMemBuffer(Buffer);
   if (std::error_code EC = MBOrErr.getError()) {
     errMsg = EC.message();
     return nullptr;
   }
-  ErrorOr<Module *> MOrErr = parseBitcodeFile(*MBOrErr, getGlobalContext());
+  ErrorOr<Module *> MOrErr = parseBitcodeFile(*MBOrErr, *Context);
   if (std::error_code EC = MOrErr.getError()) {
     errMsg = EC.message();
     return nullptr;
@@ -169,7 +200,11 @@ LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
   std::unique_ptr<object::IRObjectFile> IRObj(
       new object::IRObjectFile(Buffer, std::move(M)));
 
-  LTOModule *Ret = new LTOModule(std::move(IRObj), target);
+  LTOModule *Ret;
+  if (OwnedContext)
+    Ret = new LTOModule(std::move(IRObj), target, std::move(OwnedContext));
+  else
+    Ret = new LTOModule(std::move(IRObj), target);
 
   if (Ret->parseSymbols(errMsg)) {
     delete Ret;
