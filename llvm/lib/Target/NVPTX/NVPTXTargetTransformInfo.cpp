@@ -36,22 +36,12 @@ void initializeNVPTXTTIPass(PassRegistry &);
 namespace {
 
 class NVPTXTTI final : public ImmutablePass, public TargetTransformInfo {
-  const NVPTXTargetMachine *TM;
-  const NVPTXSubtarget *ST;
-  const NVPTXTargetLowering *TLI;
-
-  /// Estimate the overhead of scalarizing an instruction. Insert and Extract
-  /// are set if the result needs to be inserted and/or extracted from vectors.
-  unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
-
 public:
-  NVPTXTTI() : ImmutablePass(ID), TM(nullptr), ST(nullptr), TLI(nullptr) {
+  NVPTXTTI() : ImmutablePass(ID) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 
-  NVPTXTTI(const NVPTXTargetMachine *TM)
-      : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
-        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
+  NVPTXTTI(const NVPTXTargetMachine *TM) : ImmutablePass(ID) {
     initializeNVPTXTTIPass(*PassRegistry::getPassRegistry());
   }
 
