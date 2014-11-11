@@ -1,8 +1,8 @@
 // Check that unloading a module doesn't break coverage dumping for remaining
 // modules.
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSHARED %s -shared -o %T/libcoverage_module_unloaded_test_1.so -fPIC
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSHARED %s -shared -o %T/libcoverage_module_unloaded_test_2.so -fPIC
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSO_DIR=\"%T\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_module_unloaded_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_module_unloaded_test_2.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%T\" %s -o %t
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
 // RUN: mkdir -p %T/coverage-module-unloaded && cd %T/coverage-module-unloaded
 // RUN: %run %t 2>&1         | FileCheck %s

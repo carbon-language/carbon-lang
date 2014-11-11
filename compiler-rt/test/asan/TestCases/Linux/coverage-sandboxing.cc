@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -mllvm -asan-coverage=2 -DSHARED %s -shared -o %T/libcoverage_sandboxing_test.so -fPIC
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 %s   -o %t -Wl,-R,\$ORIGIN -L%T -lcoverage_sandboxing_test
+// RUN: %clangxx_asan -fsanitize-coverage=2 -DSHARED %s -shared -o %T/libcoverage_sandboxing_test.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 %s   -o %t -Wl,-R,\$ORIGIN -L%T -lcoverage_sandboxing_test
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
 // RUN: rm -rf %T/coverage_sandboxing_test
 // RUN: mkdir %T/coverage_sandboxing_test && cd %T/coverage_sandboxing_test

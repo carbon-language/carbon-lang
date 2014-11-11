@@ -1,7 +1,7 @@
 // Test for direct coverage writing with lots of data.
 // Current implementation maps output file in chunks of 64K. This test overflows
 // 1 chunk.
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -O0 %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=1 -O0 %s -o %t
 
 // RUN: rm -rf %T/coverage-direct-large
 
