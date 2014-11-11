@@ -150,6 +150,24 @@ lto_module_t lto_module_create_from_memory_with_path(const void* mem,
       LTOModule::createFromBuffer(mem, length, Options, sLastErrorString, path));
 }
 
+lto_module_t lto_module_create_in_local_context(const void *mem, size_t length,
+                                                const char *path) {
+  lto_initialize();
+  llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  return wrap(LTOModule::createInLocalContext(mem, length, Options,
+                                              sLastErrorString, path));
+}
+
+lto_module_t lto_module_create_in_codegen_context(const void *mem,
+                                                  size_t length,
+                                                  const char *path,
+                                                  lto_code_gen_t cg) {
+  lto_initialize();
+  llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  return wrap(LTOModule::createInContext(mem, length, Options, sLastErrorString,
+                                         path, &unwrap(cg)->getContext()));
+}
+
 void lto_module_dispose(lto_module_t mod) { delete unwrap(mod); }
 
 const char* lto_module_get_target_triple(lto_module_t mod) {
