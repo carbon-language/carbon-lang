@@ -1175,6 +1175,10 @@ void CGDebugInfo::CollectCXXMemberFunctions(
     // referenced)
     if (!Method || Method->isImplicit())
       continue;
+
+    if (Method->getType()->getAs<FunctionProtoType>()->getContainedAutoType())
+      continue;
+
     // Reuse the existing member function declaration if it exists.
     // It may be associated with the declaration of the type & should be
     // reused as we're building the definition.
@@ -2013,8 +2017,7 @@ static QualType UnwrapTypeForDebugInfo(QualType T, const ASTContext &C) {
       break;
     case Type::Auto:
       QualType DT = cast<AutoType>(T)->getDeducedType();
-      if (DT.isNull())
-        return T;
+      assert(!DT.isNull() && "Undeduced types shouldn't reach here.");
       T = DT;
       break;
     }
@@ -2106,8 +2109,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   if (Ty.hasLocalQualifiers())
     return CreateQualifiedType(Ty, Unit);
 
-  const char *Diag = nullptr;
-
   // Work out details of type.
   switch (Ty->getTypeClass()) {
 #define TYPE(Class, Base)
@@ -2167,6 +2168,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   case Type::TemplateSpecialization:
     return CreateType(cast<TemplateSpecializationType>(Ty), Unit);
 
+  case Type::Auto:
   case Type::Attributed:
   case Type::Elaborated:
   case Type::Paren:
@@ -2176,18 +2178,10 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   case Type::Decltype:
   case Type::UnaryTransform:
   case Type::PackExpansion:
-    llvm_unreachable("type should have been unwrapped!");
-  case Type::Auto:
-    Diag = "auto";
     break;
   }
 
-  assert(Diag && "Fall through without a diagnostic?");
-  unsigned DiagID = CGM.getDiags().getCustomDiagID(
-      DiagnosticsEngine::Error,
-      "debug information for %0 is not yet supported");
-  CGM.getDiags().Report(DiagID) << Diag;
-  return llvm::DIType();
+  llvm_unreachable("type should have been unwrapped!");
 }
 
 /// getOrCreateLimitedType - Get the type from the cache or create a new
