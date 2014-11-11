@@ -36,6 +36,7 @@
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Symbol/VariableList.h"
+#include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -543,6 +544,7 @@ ClangExpressionDeclMap::GetFunctionAddress
     FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, sc_list);
 
     uint32_t sc_list_size = sc_list.GetSize();
+    
     if (sc_list_size == 0)
     {
         // We occasionally get debug information in which a const function is reported
@@ -559,6 +561,25 @@ ClangExpressionDeclMap::GetFunctionAddress
                 log->Printf("Failed to find symbols given non-const name %s; trying %s", name.GetCString(), fixed_name.GetCString());
 
             FindCodeSymbolInContext(fixed_name, m_parser_vars->m_sym_ctx, sc_list);
+            sc_list_size = sc_list.GetSize();
+        }
+    }
+    
+    if (sc_list_size == 0)
+    {
+        // Sometimes we get a mangled name for a global function that actually should be "extern C."
+        // This is a hack to compensate.
+        
+        const bool is_mangled = true;
+        Mangled mangled(name, is_mangled);
+                
+        CPPLanguageRuntime::MethodName method_name(mangled.GetDemangledName());
+        
+        llvm::StringRef basename = method_name.GetBasename();
+        
+        if (!basename.empty())
+        {
+            FindCodeSymbolInContext(ConstString(basename), m_parser_vars->m_sym_ctx, sc_list);
             sc_list_size = sc_list.GetSize();
         }
     }
