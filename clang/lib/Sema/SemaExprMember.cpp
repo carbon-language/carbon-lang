@@ -585,7 +585,7 @@ static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                                      const RecordType *RTy,
                                      SourceLocation OpLoc, bool IsArrow,
                                      CXXScopeSpec &SS, bool HasTemplateArgs,
-                                     TypoExpr **TE = nullptr) {
+                                     TypoExpr *&TE) {
   SourceRange BaseRange = BaseExpr ? BaseExpr->getSourceRange() : SourceRange();
   RecordDecl *RDecl = RTy->getDecl();
   if (!SemaRef.isThisOutsideMemberFunctionBody(QualType(RTy, 0)) &&
@@ -630,74 +630,37 @@ static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   if (!R.empty())
     return false;
 
-  if (TE && SemaRef.getLangOpts().CPlusPlus) {
-    DeclarationName Typo = R.getLookupName();
-    SourceLocation TypoLoc = R.getNameLoc();
-    // TODO: C cannot handle TypoExpr nodes because the C code paths do not know
-    // what to do with dependent types e.g. on the LHS of an assigment.
-    *TE = SemaRef.CorrectTypoDelayed(
-        R.getLookupNameInfo(), R.getLookupKind(), nullptr, &SS,
-        llvm::make_unique<RecordMemberExprValidatorCCC>(RTy),
-        [=, &SemaRef](const TypoCorrection &TC) {
-          if (TC) {
-            assert(!TC.isKeyword() &&
-                   "Got a keyword as a correction for a member!");
-            bool DroppedSpecifier =
-                TC.WillReplaceSpecifier() &&
-                Typo.getAsString() == TC.getAsString(SemaRef.getLangOpts());
-            SemaRef.diagnoseTypo(TC, SemaRef.PDiag(diag::err_no_member_suggest)
-                                         << Typo << DC << DroppedSpecifier
-                                         << SS.getRange());
-          } else {
-            SemaRef.Diag(TypoLoc, diag::err_no_member) << Typo << DC
-                                                       << BaseRange;
-          }
-        },
-        [=](Sema &SemaRef, TypoExpr *TE, TypoCorrection TC) mutable {
-          R.clear();  // Ensure there's no decls lingering in the shared state.
-          R.suppressDiagnostics();
-          R.setLookupName(TC.getCorrection());
-          for (NamedDecl *ND : TC)
-            R.addDecl(ND);
-          R.resolveKind();
-          return SemaRef.BuildMemberReferenceExpr(
-              BaseExpr, BaseExpr->getType(), OpLoc, IsArrow, SS,
-              SourceLocation(), nullptr, R, nullptr);
-        },
-        Sema::CTK_ErrorRecovery, DC);
-    R.clear();
-    return false;
-  }
-
-  // We didn't find anything with the given name, so try to correct
-  // for typos.
-  DeclarationName Name = R.getLookupName();
-  TypoCorrection Corrected = SemaRef.CorrectTypo(
+  DeclarationName Typo = R.getLookupName();
+  SourceLocation TypoLoc = R.getNameLoc();
+  TE = SemaRef.CorrectTypoDelayed(
       R.getLookupNameInfo(), R.getLookupKind(), nullptr, &SS,
       llvm::make_unique<RecordMemberExprValidatorCCC>(RTy),
+      [=, &SemaRef](const TypoCorrection &TC) {
+        if (TC) {
+          assert(!TC.isKeyword() &&
+                 "Got a keyword as a correction for a member!");
+          bool DroppedSpecifier =
+              TC.WillReplaceSpecifier() &&
+              Typo.getAsString() == TC.getAsString(SemaRef.getLangOpts());
+          SemaRef.diagnoseTypo(TC, SemaRef.PDiag(diag::err_no_member_suggest)
+                                       << Typo << DC << DroppedSpecifier
+                                       << SS.getRange());
+        } else {
+          SemaRef.Diag(TypoLoc, diag::err_no_member) << Typo << DC << BaseRange;
+        }
+      },
+      [=](Sema &SemaRef, TypoExpr *TE, TypoCorrection TC) mutable {
+        R.clear(); // Ensure there's no decls lingering in the shared state.
+        R.suppressDiagnostics();
+        R.setLookupName(TC.getCorrection());
+        for (NamedDecl *ND : TC)
+          R.addDecl(ND);
+        R.resolveKind();
+        return SemaRef.BuildMemberReferenceExpr(
+            BaseExpr, BaseExpr->getType(), OpLoc, IsArrow, SS, SourceLocation(),
+            nullptr, R, nullptr);
+      },
       Sema::CTK_ErrorRecovery, DC);
-  R.clear();
-  if (Corrected.isResolved() && !Corrected.isKeyword()) {
-    R.setLookupName(Corrected.getCorrection());
-    for (TypoCorrection::decl_iterator DI = Corrected.begin(),
-                                       DIEnd = Corrected.end();
-         DI != DIEnd; ++DI) {
-      R.addDecl(*DI);
-    }
-    R.resolveKind();
-
-    // If we're typo-correcting to an overloaded name, we don't yet have enough
-    // information to do overload resolution, so we don't know which previous
-    // declaration to point to.
-    if (Corrected.isOverloaded())
-      Corrected.setCorrectionDecl(nullptr);
-    bool DroppedSpecifier =
-        Corrected.WillReplaceSpecifier() &&
-        Name.getAsString() == Corrected.getAsString(SemaRef.getLangOpts());
-    SemaRef.diagnoseTypo(Corrected, SemaRef.PDiag(diag::err_no_member_suggest)
-                                        << Name << DC << DroppedSpecifier
-                                        << SS.getRange());
-  }
 
   return false;
 }
@@ -727,12 +690,15 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
 
   // Implicit member accesses.
   if (!Base) {
+    TypoExpr *TE = nullptr;
     QualType RecordTy = BaseType;
     if (IsArrow) RecordTy = RecordTy->getAs<PointerType>()->getPointeeType();
     if (LookupMemberExprInRecord(*this, R, nullptr,
                                  RecordTy->getAs<RecordType>(), OpLoc, IsArrow,
-                                 SS, TemplateArgs != nullptr))
+                                 SS, TemplateArgs != nullptr, TE))
       return ExprError();
+    if (TE)
+      return TE;
 
   // Explicit member accesses.
   } else {
@@ -1262,7 +1228,7 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
     TypoExpr *TE = nullptr;
     if (LookupMemberExprInRecord(S, R, BaseExpr.get(), RTy,
-                                 OpLoc, IsArrow, SS, HasTemplateArgs, &TE))
+                                 OpLoc, IsArrow, SS, HasTemplateArgs, TE))
       return ExprError();
 
     // Returning valid-but-null is how we indicate to the caller that
