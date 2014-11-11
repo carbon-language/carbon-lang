@@ -539,7 +539,15 @@ namespace {
 class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
 public:
   explicit RecordMemberExprValidatorCCC(const RecordType *RTy)
-      : Record(RTy->getDecl()) {}
+      : Record(RTy->getDecl()) {
+    // Don't add bare keywords to the consumer since they will always fail
+    // validation by virtue of not being associated with any decls.
+    WantTypeSpecifiers = false;
+    WantExpressionKeywords = false;
+    WantCXXNamedCasts = false;
+    WantFunctionLikeCasts = false;
+    WantRemainingKeywords = false;
+  }
 
   bool ValidateCandidate(const TypoCorrection &candidate) override {
     NamedDecl *ND = candidate.getCorrectionDecl();
@@ -1214,21 +1222,12 @@ public:
         OpLoc(OpLoc), IsArrow(IsArrow) {}
 
   ExprResult operator()(Sema &SemaRef, TypoExpr *TE, TypoCorrection TC) {
-    if (TC.isKeyword())
-      return ExprError();
-
     LookupResult R(SemaRef, TC.getCorrection(),
                    TC.getCorrectionRange().getBegin(),
                    SemaRef.getTypoExprState(TE)
                        .Consumer->getLookupResult()
                        .getLookupKind());
     R.suppressDiagnostics();
-
-    QualType BaseType;
-    if (auto *DRE = dyn_cast<DeclRefExpr>(BaseExpr))
-      BaseType = DRE->getDecl()->getType();
-    else if (auto *CE = dyn_cast<CallExpr>(BaseExpr))
-      BaseType = CE->getCallReturnType();
 
     for (NamedDecl *ND : TC)
       R.addDecl(ND);
