@@ -919,6 +919,21 @@ AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
         category_sp->GetTypeSummariesContainer()->Add(type_name, summary_sp);
 }
 
+static void
+AddOneLineSummary (TypeCategoryImpl::SharedPointer category_sp,
+                   ConstString type_name,
+                   TypeSummaryImpl::Flags flags,
+                   bool regex = false)
+{
+    flags.SetShowMembersOneLiner(true);
+    lldb::TypeSummaryImplSP summary_sp(new StringSummaryFormat(flags, ""));
+    
+    if (regex)
+        category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
+    else
+        category_sp->GetTypeSummariesContainer()->Add(type_name, summary_sp);
+}
+
 #ifndef LLDB_DISABLE_PYTHON
 static void
 AddCXXSummary (TypeCategoryImpl::SharedPointer category_sp,
@@ -1261,39 +1276,33 @@ FormatManager::LoadObjCFormatters()
                      objc_flags);
 
     AddStringSummary(appkit_category_sp,
-                     "(x=${var.x}, y=${var.y})",
-                     ConstString("NSPoint"),
-                     objc_flags);
-    AddStringSummary(appkit_category_sp,
                      "location=${var.location}, length=${var.length}",
                      ConstString("NSRange"),
-                     objc_flags);
-    AddStringSummary(appkit_category_sp,
-                     "${var.origin}, ${var.size}",
-                     ConstString("NSRect"),
                      objc_flags);
     AddStringSummary(appkit_category_sp,
                      "(${var.origin}, ${var.size}), ...",
                      ConstString("NSRectArray"),
                      objc_flags);
-    AddStringSummary(appkit_category_sp,
-                     "(width=${var.width}, height=${var.height})",
-                     ConstString("NSSize"),
-                     objc_flags);
     
+    AddOneLineSummary (appkit_category_sp,
+                       ConstString("NSPoint"),
+                       objc_flags);
+    AddOneLineSummary (appkit_category_sp,
+                       ConstString("NSSize"),
+                       objc_flags);
+    AddOneLineSummary (appkit_category_sp,
+                       ConstString("NSRect"),
+                       objc_flags);
     
-    AddStringSummary(coregraphics_category_sp,
-                     "(width=${var.width}, height=${var.height})",
-                     ConstString("CGSize"),
-                     objc_flags);
-    AddStringSummary(coregraphics_category_sp,
-                     "(x=${var.x}, y=${var.y})",
-                     ConstString("CGPoint"),
-                     objc_flags);
-    AddStringSummary(coregraphics_category_sp,
-                     "origin=${var.origin} size=${var.size}",
-                     ConstString("CGRect"),
-                     objc_flags);
+    AddOneLineSummary (coregraphics_category_sp,
+                       ConstString("CGSize"),
+                       objc_flags);
+    AddOneLineSummary (coregraphics_category_sp,
+                       ConstString("CGPoint"),
+                       objc_flags);
+    AddOneLineSummary (coregraphics_category_sp,
+                       ConstString("CGRect"),
+                       objc_flags);
     
     AddStringSummary(coreservices_category_sp,
                      "red=${var.red} green=${var.green} blue=${var.blue}",
