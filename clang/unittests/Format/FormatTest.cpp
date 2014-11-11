@@ -5645,9 +5645,9 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   // FIXME: The alignment of these trailing comments might be bad. Then again,
   // this might be utterly useless in real code.
   verifyFormat("Constructor::Constructor()\n"
-               "    : some_value{        //\n"
-               "                 aaaaaaa //\n"
-               "      } {}");
+               "    : some_value{         //\n"
+               "                 aaaaaaa, //\n"
+               "                 bbbbbbb} {}");
 
   // In braced lists, the first comment is always assumed to belong to the
   // first element. Thus, it can be moved to the next or previous line as
@@ -5671,6 +5671,13 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                    "                           // Second element:\n"
                    "                           2};",
                    getLLVMStyleWithColumns(30)));
+  // A trailing comma should still lead to an enforced line break.
+  EXPECT_EQ("vector<int> SomeVector = {\n"
+            "    // aaa\n"
+            "    1, 2,\n"
+            "};",
+            format("vector<int> SomeVector = { // aaa\n"
+                   "    1, 2, };"));
 
   FormatStyle ExtraSpaces = getLLVMStyle();
   ExtraSpaces.Cpp11BracedListStyle = false;
