@@ -98,6 +98,14 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
     if (!type.NextIf(opener))
         return clang::QualType();
     std::string name(ReadStructName(type));
+    
+    // We do not handle templated classes/structs at the moment.
+    // If the name has a < in it, we are going to abandon this.
+    // We're still obliged to parse it, so we just set a flag that
+    // means "Don't actually build anything."
+    
+    const bool is_templated = name.find('<') != std::string::npos;
+    
     if (!type.NextIf('='))
         return clang::QualType();
     bool in_union = true;
@@ -120,6 +128,10 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
     }
     if (in_union)
         return clang::QualType();
+    
+    if (is_templated)
+        return clang::QualType(); // This is where we bail out.  Sorry!
+    
     ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
     if (!lldb_ctx)
         return clang::QualType();
