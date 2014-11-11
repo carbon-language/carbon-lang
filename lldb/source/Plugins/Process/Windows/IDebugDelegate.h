@@ -28,7 +28,7 @@ class IDebugDelegate
 
     virtual void OnExitProcess(const ProcessMessageExitProcess &message) = 0;
     virtual void OnDebuggerConnected(const ProcessMessageDebuggerConnected &message) = 0;
-    virtual void OnDebugException(const ProcessMessageException &message) = 0;
+    virtual ExceptionResult OnDebugException(const ProcessMessageException &message) = 0;
     virtual void OnCreateThread(const ProcessMessageCreateThread &message) = 0;
     virtual void OnExitThread(const ProcessMessageExitThread &message) = 0;
     virtual void OnLoadDll(const ProcessMessageLoadDll &message) = 0;

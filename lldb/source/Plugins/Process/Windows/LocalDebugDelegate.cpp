@@ -30,10 +30,10 @@ LocalDebugDelegate::OnDebuggerConnected(const ProcessMessageDebuggerConnected &m
     ((ProcessWindows &)*m_process).OnDebuggerConnected(message);
 }
 
-void
+ExceptionResult
 LocalDebugDelegate::OnDebugException(const ProcessMessageException &message)
 {
-    ((ProcessWindows &)*m_process).OnDebugException(message);
+    return ((ProcessWindows &)*m_process).OnDebugException(message);
 }
 
 void

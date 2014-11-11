@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DebuggerThread.h"
+#include "ExceptionRecord.h"
 #include "IDebugDelegate.h"
 #include "ProcessMessages.h"
 
@@ -98,6 +99,12 @@ DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
 }
 
 void
+DebuggerThread::ContinueAsyncException(ExceptionResult result)
+{
+    m_exception.SetValue(result, eBroadcastAlways);
+}
+
+void
 DebuggerThread::DebugLoop()
 {
     DEBUG_EVENT dbe = {0};
@@ -108,8 +115,17 @@ DebuggerThread::DebugLoop()
         switch (dbe.dwDebugEventCode)
         {
             case EXCEPTION_DEBUG_EVENT:
-                continue_status = HandleExceptionEvent(dbe.u.Exception, dbe.dwThreadId);
+            {
+                ExceptionResult status = HandleExceptionEvent(dbe.u.Exception, dbe.dwThreadId);
+                m_exception.SetValue(status, eBroadcastNever);
+                m_exception.WaitForValueNotEqualTo(ExceptionResult::WillHandle, status);
+
+                if (status == ExceptionResult::Handled)
+                    continue_status = DBG_CONTINUE;
+                else if (status == ExceptionResult::NotHandled)
+                    continue_status = DBG_EXCEPTION_NOT_HANDLED;
                 break;
+            }
             case CREATE_THREAD_DEBUG_EVENT:
                 continue_status = HandleCreateThreadEvent(dbe.u.CreateThread, dbe.dwThreadId);
                 break;
@@ -143,10 +159,12 @@ DebuggerThread::DebugLoop()
     }
 }
 
-DWORD
+ExceptionResult
 DebuggerThread::HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thread_id)
 {
-    return DBG_CONTINUE;
+    bool first_chance = (info.dwFirstChance != 0);
+    ProcessMessageException message(m_process, ExceptionRecord(info.ExceptionRecord), first_chance);
+    return m_debug_delegate->OnDebugException(message);
 }
 
 DWORD

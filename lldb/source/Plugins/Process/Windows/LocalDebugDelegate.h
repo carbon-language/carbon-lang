@@ -44,7 +44,7 @@ class LocalDebugDelegate : public IDebugDelegate
 
     void OnExitProcess(const ProcessMessageExitProcess &message) override;
     void OnDebuggerConnected(const ProcessMessageDebuggerConnected &message) override;
-    void OnDebugException(const ProcessMessageException &message) override;
+    ExceptionResult OnDebugException(const ProcessMessageException &message) override;
     void OnCreateThread(const ProcessMessageCreateThread &message) override;
     void OnExitThread(const ProcessMessageExitThread &message) override;
     void OnLoadDll(const ProcessMessageLoadDll &message) override;

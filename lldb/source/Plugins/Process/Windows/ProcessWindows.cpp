@@ -28,6 +28,7 @@
 #include "lldb/Target/Target.h"
 
 #include "DebuggerThread.h"
+#include "ExceptionRecord.h"
 #include "LocalDebugDelegate.h"
 #include "ProcessMessages.h"
 #include "ProcessWindows.h"
@@ -144,6 +145,7 @@ ProcessWindows::DoLaunch(Module *exe_module,
 
     launch_info.SetProcessID(process.GetProcessId());
     SetID(process.GetProcessId());
+
     return result;
 }
 
@@ -151,6 +153,11 @@ Error
 ProcessWindows::DoResume()
 {
     Error error;
+    if (!m_active_exception)
+        return error;
+
+    m_debugger->ContinueAsyncException(ExceptionResult::Handled);
+    SetPrivateState(eStateRunning);
     return error;
 }
 
@@ -240,6 +247,7 @@ void
 ProcessWindows::OnExitProcess(const ProcessMessageExitProcess &message)
 {
     SetProcessExitStatus(nullptr, GetID(), true, 0, message.GetExitCode());
+    SetPrivateState(eStateExited);
 }
 
 void
@@ -248,9 +256,20 @@ ProcessWindows::OnDebuggerConnected(const ProcessMessageDebuggerConnected &messa
     ::SetEvent(m_data_up->m_launched_event);
 }
 
-void
+ExceptionResult
 ProcessWindows::OnDebugException(const ProcessMessageException &message)
 {
+    ExceptionResult result = ExceptionResult::Handled;
+    const ExceptionRecord &record = message.GetExceptionRecord();
+    m_active_exception.reset(new ExceptionRecord(record));
+    switch (record.GetExceptionCode())
+    {
+        case EXCEPTION_BREAKPOINT:
+            SetPrivateState(eStateStopped);
+            result = ExceptionResult::WillHandle;
+            break;
+    }
+    return result;
 }
 
 void

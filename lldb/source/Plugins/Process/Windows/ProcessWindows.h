@@ -117,7 +117,7 @@ public:
     // IDebugDelegate overrides.
     virtual void OnExitProcess(const lldb_private::ProcessMessageExitProcess &message) override;
     virtual void OnDebuggerConnected(const lldb_private::ProcessMessageDebuggerConnected &message) override;
-    virtual void OnDebugException(const lldb_private::ProcessMessageException &message) override;
+    virtual ExceptionResult OnDebugException(const lldb_private::ProcessMessageException &message) override;
     virtual void OnCreateThread(const lldb_private::ProcessMessageCreateThread &message) override;
     virtual void OnExitThread(const lldb_private::ProcessMessageExitThread &message) override;
     virtual void OnLoadDll(const lldb_private::ProcessMessageLoadDll &message) override;
@@ -126,6 +126,7 @@ public:
     virtual void OnDebuggerError(const lldb_private::ProcessMessageDebuggerError &message) override;
 
   private:
+    std::shared_ptr<lldb_private::ExceptionRecord> m_active_exception;
     std::unique_ptr<lldb_private::ProcessWindowsData> m_data_up;
     lldb_private::Error m_launch_error;
     lldb_private::DebuggerThreadSP m_debugger;
