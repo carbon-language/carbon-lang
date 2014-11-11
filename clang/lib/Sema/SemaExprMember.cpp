@@ -537,7 +537,7 @@ namespace {
 // FunctionTemplateDecl and are declared in the current record or, for a C++
 // classes, one of its base classes.
 class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
- public:
+public:
   explicit RecordMemberExprValidatorCCC(const RecordType *RTy)
       : Record(RTy->getDecl()) {}
 
@@ -555,8 +555,8 @@ class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Record)) {
       // Accept candidates that occur in any of the current class' base classes.
       for (const auto &BS : RD->bases()) {
-        if (const RecordType *BSTy = dyn_cast_or_null<RecordType>(
-                BS.getType().getTypePtrOrNull())) {
+        if (const RecordType *BSTy =
+                dyn_cast_or_null<RecordType>(BS.getType().getTypePtrOrNull())) {
           if (BSTy->getDecl()->containsDecl(ND))
             return true;
         }
@@ -566,7 +566,7 @@ class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
     return false;
   }
 
- private:
+private:
   const RecordDecl *const Record;
 };
 
@@ -585,8 +585,9 @@ public:
                   SourceLocation TypoLoc, SourceRange BaseRange,
                   CXXScopeSpec &SS, unsigned DiagnosticID,
                   unsigned NoSuggestDiagnosticID)
-      : SemaRef(SemaRef), Ctx(Ctx), Typo(Typo), TypoLoc(TypoLoc), BaseRange(BaseRange),
-        ScopeSpecLoc(SS.getRange()), DiagnosticID(DiagnosticID),
+      : SemaRef(SemaRef), Ctx(Ctx), Typo(Typo), TypoLoc(TypoLoc),
+        BaseRange(BaseRange), ScopeSpecLoc(SS.getRange()),
+        DiagnosticID(DiagnosticID),
         NoSuggestDiagnosticID(NoSuggestDiagnosticID) {}
 
   void operator()(const TypoCorrection &TC) {
@@ -603,14 +604,15 @@ public:
     }
   }
 };
-
 }
 
-static bool LookupMemberExprInRecord(
-    Sema &SemaRef, LookupResult &R, SourceRange BaseRange,
-    const RecordType *RTy, SourceLocation OpLoc, CXXScopeSpec &SS,
-    bool HasTemplateArgs, TypoExpr **TE = nullptr,
-    Sema::TypoRecoveryCallback TRC = nullptr) {
+static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
+                                     SourceRange BaseRange,
+                                     const RecordType *RTy,
+                                     SourceLocation OpLoc, CXXScopeSpec &SS,
+                                     bool HasTemplateArgs,
+                                     TypoExpr **TE = nullptr,
+                                     Sema::TypoRecoveryCallback TRC = nullptr) {
   RecordDecl *RDecl = RTy->getDecl();
   if (!SemaRef.isThisOutsideMemberFunctionBody(QualType(RTy, 0)) &&
       SemaRef.RequireCompleteType(OpLoc, QualType(RTy, 0),
@@ -635,7 +637,7 @@ static bool LookupMemberExprInRecord(
 
     if (SemaRef.RequireCompleteDeclContext(SS, DC)) {
       SemaRef.Diag(SS.getRange().getEnd(), diag::err_typecheck_incomplete_tag)
-        << SS.getRange() << DC;
+          << SS.getRange() << DC;
       return true;
     }
 
@@ -643,7 +645,7 @@ static bool LookupMemberExprInRecord(
 
     if (!isa<TypeDecl>(DC)) {
       SemaRef.Diag(R.getNameLoc(), diag::err_qualified_member_nonclass)
-        << DC << SS.getRange();
+          << DC << SS.getRange();
       return true;
     }
   }
@@ -671,10 +673,10 @@ static bool LookupMemberExprInRecord(
   // We didn't find anything with the given name, so try to correct
   // for typos.
   DeclarationName Name = R.getLookupName();
-  TypoCorrection Corrected =
-      SemaRef.CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(), nullptr, &SS,
-                          llvm::make_unique<RecordMemberExprValidatorCCC>(RTy),
-                          Sema::CTK_ErrorRecovery, DC);
+  TypoCorrection Corrected = SemaRef.CorrectTypo(
+      R.getLookupNameInfo(), R.getLookupKind(), nullptr, &SS,
+      llvm::make_unique<RecordMemberExprValidatorCCC>(RTy),
+      Sema::CTK_ErrorRecovery, DC);
   R.clear();
   if (Corrected.isResolved() && !Corrected.isKeyword()) {
     R.setLookupName(Corrected.getCorrection());
@@ -693,9 +695,9 @@ static bool LookupMemberExprInRecord(
     bool DroppedSpecifier =
         Corrected.WillReplaceSpecifier() &&
         Name.getAsString() == Corrected.getAsString(SemaRef.getLangOpts());
-    SemaRef.diagnoseTypo(Corrected,
-                         SemaRef.PDiag(diag::err_no_member_suggest)
-                           << Name << DC << DroppedSpecifier << SS.getRange());
+    SemaRef.diagnoseTypo(Corrected, SemaRef.PDiag(diag::err_no_member_suggest)
+                                        << Name << DC << DroppedSpecifier
+                                        << SS.getRange());
   }
 
   return false;
