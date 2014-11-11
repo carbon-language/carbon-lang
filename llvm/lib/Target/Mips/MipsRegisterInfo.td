@@ -212,8 +212,13 @@ let Namespace = "Mips" in {
   // PC register
   def PC : Register<"pc">;
 
-  // Hardware register $29
-  foreach I = 0-31 in
+  // Hardware registers
+  def HWR0 : MipsReg<0, "hwr_cpunum">;
+  def HWR1 : MipsReg<1, "hwr_synci_step">;
+  def HWR2 : MipsReg<2, "hwr_cc">;
+  def HWR3 : MipsReg<3, "hwr_ccres">;
+
+  foreach I = 4-31 in
   def HWR#I : MipsReg<#I, ""#I>;
 
   // Accum registers
