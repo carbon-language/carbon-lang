@@ -222,3 +222,20 @@ entry:
   %add = add i32 %conv, %c
   ret i32 %add
 }
+
+; Do not fold the xor into the select
+define i32 @t15(i32 %p1, i32 %p2, i32 %p3) {
+entry:
+; ARM: cmp            r0, #8
+; ARM: mov{{(le|gt)}} [[REG:r[0-9]+]], {{r[0-9]+}}
+; ARM: eor            r0, [[REG]], #1
+
+; T2: cmp       r0, #8
+; T2: it        [[CC:(le|gt)]]
+; T2: mov[[CC]] [[REG:r[0-9]+]], {{r[0-9]+}}
+; T2: eor       r0, [[REG:r[0-9]+]], #1
+  %cmp = icmp sgt i32 %p1, 8
+  %a = select i1 %cmp, i32 %p2, i32 %p3
+  %xor = xor i32 %a, 1
+  ret i32 %xor
+}
