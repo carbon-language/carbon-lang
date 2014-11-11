@@ -555,7 +555,7 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
 
 void Verifier::visitNamedMDNode(const NamedMDNode &NMD) {
   for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i) {
-    MDNode *MD = NMD.getOperandAsMDNode(i);
+    MDNode *MD = NMD.getOperand(i);
     if (!MD)
       continue;
 
@@ -624,7 +624,7 @@ void Verifier::visitModuleIdents(const Module &M) {
   // llvm.ident takes a list of metadata entry. Each entry has only one string.
   // Scan each llvm.ident entry and make sure that this requirement is met.
   for (unsigned i = 0, e = Idents->getNumOperands(); i != e; ++i) {
-    const MDNode *N = Idents->getOperandAsMDNode(i);
+    const MDNode *N = Idents->getOperand(i);
     Assert1(N->getNumOperands() == 1,
             "incorrect number of operands in llvm.ident metadata", N);
     Assert1(isa<MDString>(N->getOperand(0)),
@@ -642,7 +642,7 @@ void Verifier::visitModuleFlags(const Module &M) {
   DenseMap<const MDString*, const MDNode*> SeenIDs;
   SmallVector<const MDNode*, 16> Requirements;
   for (unsigned I = 0, E = Flags->getNumOperands(); I != E; ++I) {
-    visitModuleFlag(Flags->getOperandAsMDNode(I), SeenIDs, Requirements);
+    visitModuleFlag(Flags->getOperand(I), SeenIDs, Requirements);
   }
 
   // Validate that the requirements in the module are valid.
@@ -2267,7 +2267,7 @@ void Verifier::visitInstruction(Instruction &I) {
     }
   }
 
-  if (MDNode *MD = I.getMDNode(LLVMContext::MD_fpmath)) {
+  if (MDNode *MD = I.getMetadata(LLVMContext::MD_fpmath)) {
     Assert1(I.getType()->isFPOrFPVectorTy(),
             "fpmath requires a floating point result!", &I);
     Assert1(MD->getNumOperands() == 1, "fpmath takes one operand!", &I);
@@ -2281,7 +2281,7 @@ void Verifier::visitInstruction(Instruction &I) {
     }
   }
 
-  if (MDNode *Range = I.getMDNode(LLVMContext::MD_range)) {
+  if (MDNode *Range = I.getMetadata(LLVMContext::MD_range)) {
     Assert1(isa<LoadInst>(I) || isa<CallInst>(I) || isa<InvokeInst>(I),
             "Ranges are only for loads, calls and invokes!", &I);
     visitRangeMetadata(I, Range, I.getType());
@@ -2587,7 +2587,7 @@ void DebugInfoVerifier::verifyDebugInfo() {
 void DebugInfoVerifier::processInstructions(DebugInfoFinder &Finder) {
   for (const Function &F : *M)
     for (auto I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
-      if (MDNode *MD = I->getMDNode(LLVMContext::MD_dbg))
+      if (MDNode *MD = I->getMetadata(LLVMContext::MD_dbg))
         Finder.processLocation(*M, DILocation(MD));
       if (const CallInst *CI = dyn_cast<CallInst>(&*I))
         processCallInst(Finder, *CI);

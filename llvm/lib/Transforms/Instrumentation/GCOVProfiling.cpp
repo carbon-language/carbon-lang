@@ -417,7 +417,7 @@ namespace {
 std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
   if (NamedMDNode *GCov = M->getNamedMetadata("llvm.gcov")) {
     for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
-      MDNode *N = GCov->getOperandAsMDNode(i);
+      MDNode *N = GCov->getOperand(i);
       if (N->getNumOperands() != 2) continue;
       MDString *GCovFile = dyn_cast<MDString>(N->getOperand(0));
       MDNode *CompileUnit = dyn_cast<MDNode>(N->getOperand(1));
@@ -479,7 +479,7 @@ void GCOVProfiler::emitProfileNotes() {
     // this pass over the original .o's as they're produced, or run it after
     // LTO, we'll generate the same .gcno files.
 
-    DICompileUnit CU(CU_Nodes->getOperandAsMDNode(i));
+    DICompileUnit CU(CU_Nodes->getOperand(i));
     std::error_code EC;
     raw_fd_ostream out(mangleName(CU, "gcno"), EC, sys::fs::F_None);
     std::string EdgeDestinations;
@@ -566,7 +566,7 @@ bool GCOVProfiler::emitProfileArcs() {
   bool Result = false;
   bool InsertIndCounterIncrCode = false;
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-    DICompileUnit CU(CU_Nodes->getOperandAsMDNode(i));
+    DICompileUnit CU(CU_Nodes->getOperand(i));
     DIArray SPs = CU.getSubprograms();
     SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> CountersBySP;
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
@@ -847,7 +847,7 @@ Function *GCOVProfiler::insertCounterWriteout(
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (CU_Nodes) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      DICompileUnit CU(CU_Nodes->getOperandAsMDNode(i));
+      DICompileUnit CU(CU_Nodes->getOperand(i));
       std::string FilenameGcda = mangleName(CU, "gcda");
       uint32_t CfgChecksum = FileChecksums.empty() ? 0 : FileChecksums[i];
       Builder.CreateCall3(StartFile,

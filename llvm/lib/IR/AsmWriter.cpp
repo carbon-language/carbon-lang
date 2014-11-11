@@ -545,7 +545,7 @@ public:
   /// plane.  If something is not in the SlotTracker, return -1.
   int getLocalSlot(const Value *V);
   int getGlobalSlot(const GlobalValue *V);
-  int getMetadataSlot(const Value *MD);
+  int getMetadataSlot(const MDNode *N);
   int getAttributeGroupSlot(AttributeSet AS);
 
   /// If you'd like to deal with a function instead of just a module, use
@@ -585,7 +585,7 @@ private:
   void CreateModuleSlot(const GlobalValue *V);
 
   /// CreateMetadataSlot - Insert the specified MDNode* into the slot table.
-  void CreateMetadataSlot(const Value *MD);
+  void CreateMetadataSlot(const MDNode *N);
 
   /// CreateFunctionSlot - Insert the specified Value* into the slot table.
   void CreateFunctionSlot(const Value *V);
@@ -718,7 +718,7 @@ void SlotTracker::processFunction() {
 
   ST_DEBUG("Inserting Instructions:\n");
 
-  SmallVector<std::pair<unsigned, Value *>, 4> MDForInst;
+  SmallVector<std::pair<unsigned, MDNode *>, 4> MDForInst;
 
   // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
@@ -755,7 +755,7 @@ void SlotTracker::processFunction() {
       // Process metadata attached with this instruction.
       I->getAllMetadata(MDForInst);
       for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
-        CreateMetadataSlot(cast<MDNode>(MDForInst[i].second));
+        CreateMetadataSlot(MDForInst[i].second);
       MDForInst.clear();
     }
   }
@@ -786,13 +786,13 @@ int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   return MI == mMap.end() ? -1 : (int)MI->second;
 }
 
-/// getMetadataSlot - Get the slot number of a metadata node.
-int SlotTracker::getMetadataSlot(const Value *MD) {
+/// getMetadataSlot - Get the slot number of a MDNode.
+int SlotTracker::getMetadataSlot(const MDNode *N) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
   // Find the MDNode in the module map
-  mdn_iterator MI = mdnMap.find(cast<MDNode>(MD));
+  mdn_iterator MI = mdnMap.find(N);
   return MI == mdnMap.end() ? -1 : (int)MI->second;
 }
 
@@ -846,10 +846,9 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
            DestSlot << " [o]\n");
 }
 
-/// CreateModuleSlot - Insert the specified metadata into the slot table.
-void SlotTracker::CreateMetadataSlot(const Value *MD) {
-  assert(MD && "Can't insert a null Value into SlotTracker!");
-  const MDNode *N = cast<MDNode>(MD);
+/// CreateModuleSlot - Insert the specified MDNode* into the slot table.
+void SlotTracker::CreateMetadataSlot(const MDNode *N) {
+  assert(N && "Can't insert a null Value into SlotTracker!");
 
   // Don't insert if N is a function-local metadata, these are always printed
   // inline.
@@ -2316,7 +2315,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   }
 
   // Print Metadata info.
-  SmallVector<std::pair<unsigned, Value *>, 4> InstMD;
+  SmallVector<std::pair<unsigned, MDNode *>, 4> InstMD;
   I.getAllMetadata(InstMD);
   if (!InstMD.empty()) {
     SmallVector<StringRef, 8> MDNames;
@@ -2329,8 +2328,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
          Out << ", !<unknown kind #" << Kind << ">";
        }
       Out << ' ';
-      WriteAsOperandInternal(Out, cast<MDNode>(InstMD[i].second), &TypePrinter,
-                             &Machine, TheModule);
+      WriteAsOperandInternal(Out, InstMD[i].second, &TypePrinter, &Machine,
+                             TheModule);
     }
   }
   printInfoComment(I);

@@ -949,7 +949,7 @@ DITypeIdentifierMap
 llvm::generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes) {
   DITypeIdentifierMap Map;
   for (unsigned CUi = 0, CUe = CU_Nodes->getNumOperands(); CUi != CUe; ++CUi) {
-    DICompileUnit CU(CU_Nodes->getOperandAsMDNode(CUi));
+    DICompileUnit CU(CU_Nodes->getOperand(CUi));
     DIArray Retain = CU.getRetainedTypes();
     for (unsigned Ti = 0, Te = Retain.getNumElements(); Ti != Te; ++Ti) {
       if (!Retain.getElement(Ti).isCompositeType())
@@ -997,7 +997,7 @@ void DebugInfoFinder::processModule(const Module &M) {
   InitializeTypeMap(M);
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      DICompileUnit CU(CU_Nodes->getOperandAsMDNode(i));
+      DICompileUnit CU(CU_Nodes->getOperand(i));
       addCompileUnit(CU);
       DIArray GVs = CU.getGlobalVariables();
       for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
@@ -1542,8 +1542,8 @@ llvm::makeSubprogramMap(const Module &M) {
   if (!CU_Nodes)
     return R;
 
-  for (Value *N : CU_Nodes->operands()) {
-    DICompileUnit CUNode(cast<MDNode>(N));
+  for (MDNode *N : CU_Nodes->operands()) {
+    DICompileUnit CUNode(N);
     DIArray SPs = CUNode.getSubprograms();
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
       DISubprogram SP(SPs.getElement(i));

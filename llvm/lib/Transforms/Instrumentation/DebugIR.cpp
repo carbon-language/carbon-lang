@@ -474,7 +474,7 @@ bool getSourceInfoFromDI(const Module &M, std::string &Directory,
   if (!CUNode || CUNode->getNumOperands() == 0)
     return false;
 
-  DICompileUnit CU(cast<MDNode>(CUNode->getOperand(0)));
+  DICompileUnit CU(CUNode->getOperand(0));
   if (!CU.Verify())
     return false;
 

@@ -305,7 +305,7 @@ bool ObjCARCContract::doInitialization(Module &M) {
   if (NamedMDNode *NMD =
         M.getNamedMetadata("clang.arc.retainAutoreleasedReturnValueMarker"))
     if (NMD->getNumOperands() == 1) {
-      const MDNode *N = NMD->getOperandAsMDNode(0);
+      const MDNode *N = NMD->getOperand(0);
       if (N->getNumOperands() == 1)
         if (const MDString *S = dyn_cast<MDString>(N->getOperand(0)))
           RetainRVMarker = S;

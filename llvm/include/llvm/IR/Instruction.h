@@ -141,41 +141,23 @@ public:
 
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
-  Value *getMetadata(unsigned KindID) const {
+  MDNode *getMetadata(unsigned KindID) const {
     if (!hasMetadata()) return nullptr;
     return getMetadataImpl(KindID);
   }
 
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
-  Value *getMetadata(StringRef Kind) const {
+  MDNode *getMetadata(StringRef Kind) const {
     if (!hasMetadata()) return nullptr;
     return getMetadataImpl(Kind);
-  }
-
-  /// Get the the metadata as an MDNode.
-  ///
-  /// \pre Any KindID metadata is implemented using \a MDNode.
-  MDNode *getMDNode(unsigned KindID) const {
-    if (!hasMetadata())
-      return nullptr;
-    return getMDNodeImpl(KindID);
-  }
-
-  /// Get the the metadata as an MDNode.
-  ///
-  /// \pre Any KindID metadata is implemented using \a MDNode.
-  MDNode *getMDNode(StringRef Kind) const {
-    if (!hasMetadata())
-      return nullptr;
-    return getMDNodeImpl(Kind);
   }
 
   /// getAllMetadata - Get all metadata attached to this Instruction.  The first
   /// element of each pair returned is the KindID, the second element is the
   /// metadata value.  This list is returned sorted by the KindID.
   void
-  getAllMetadata(SmallVectorImpl<std::pair<unsigned, Value *>> &MDs) const {
+  getAllMetadata(SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) const {
     if (hasMetadata())
       getAllMetadataImpl(MDs);
   }
@@ -183,7 +165,7 @@ public:
   /// getAllMetadataOtherThanDebugLoc - This does the same thing as
   /// getAllMetadata, except that it filters out the debug location.
   void getAllMetadataOtherThanDebugLoc(
-      SmallVectorImpl<std::pair<unsigned, Value *>> &MDs) const {
+      SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) const {
     if (hasMetadataOtherThanDebugLoc())
       getAllMetadataOtherThanDebugLocImpl(MDs);
   }
@@ -195,9 +177,9 @@ public:
 
   /// setMetadata - Set the metadata of the specified kind to the specified
   /// node.  This updates/replaces metadata if already present, or removes it if
-  /// MD is null.
-  void setMetadata(unsigned KindID, Value *MD);
-  void setMetadata(StringRef Kind, Value *MD);
+  /// Node is null.
+  void setMetadata(unsigned KindID, MDNode *Node);
+  void setMetadata(StringRef Kind, MDNode *Node);
 
   /// \brief Drop unknown metadata.
   /// Passes are required to drop metadata they don't understand. This is a
@@ -290,14 +272,12 @@ private:
   }
 
   // These are all implemented in Metadata.cpp.
-  Value *getMetadataImpl(unsigned KindID) const;
-  Value *getMetadataImpl(StringRef Kind) const;
-  MDNode *getMDNodeImpl(unsigned KindID) const;
-  MDNode *getMDNodeImpl(StringRef Kind) const;
+  MDNode *getMetadataImpl(unsigned KindID) const;
+  MDNode *getMetadataImpl(StringRef Kind) const;
   void
-  getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned, Value *>> &) const;
+  getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned, MDNode *>> &) const;
   void getAllMetadataOtherThanDebugLocImpl(
-      SmallVectorImpl<std::pair<unsigned, Value *>> &) const;
+      SmallVectorImpl<std::pair<unsigned, MDNode *>> &) const;
   void clearMetadataHashEntries();
 public:
   //===--------------------------------------------------------------------===//

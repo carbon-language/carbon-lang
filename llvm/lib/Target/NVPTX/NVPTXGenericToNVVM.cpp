@@ -371,7 +371,7 @@ void GenericToNVVM::remapNamedMDNode(Module *M, NamedMDNode *N) {
   // Check if any operand is or contains a global variable in  GVMap, and thus
   // converted to another value.
   for (unsigned i = 0; i < NumOperands; ++i) {
-    MDNode *Operand = cast<MDNode>(N->getOperand(i));
+    MDNode *Operand = N->getOperand(i);
     MDNode *NewOperand = remapMDNode(M, Operand);
     OperandChanged |= Operand != NewOperand;
     NewOperands.push_back(NewOperand);

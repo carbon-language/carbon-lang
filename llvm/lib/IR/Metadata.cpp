@@ -555,13 +555,13 @@ MDNode *MDNode::getMostGenericRange(MDNode *A, MDNode *B) {
 // NamedMDNode implementation.
 //
 
-static SmallVector<TrackingVH<Value>, 4> &getNMDOps(void *Operands) {
-  return *(SmallVector<TrackingVH<Value>, 4> *)Operands;
+static SmallVector<TrackingVH<MDNode>, 4> &getNMDOps(void *Operands) {
+  return *(SmallVector<TrackingVH<MDNode>, 4> *)Operands;
 }
 
 NamedMDNode::NamedMDNode(const Twine &N)
     : Name(N.str()), Parent(nullptr),
-      Operands(new SmallVector<TrackingVH<Value>, 4>()) {}
+      Operands(new SmallVector<TrackingVH<MDNode>, 4>()) {}
 
 NamedMDNode::~NamedMDNode() {
   dropAllReferences();
@@ -572,16 +572,15 @@ unsigned NamedMDNode::getNumOperands() const {
   return (unsigned)getNMDOps(Operands).size();
 }
 
-Value *NamedMDNode::getOperand(unsigned i) const {
+MDNode *NamedMDNode::getOperand(unsigned i) const {
   assert(i < getNumOperands() && "Invalid Operand number!");
   return &*getNMDOps(Operands)[i];
 }
 
-void NamedMDNode::addOperand(Value *V) {
-  auto *M = cast<MDNode>(V);
+void NamedMDNode::addOperand(MDNode *M) {
   assert(!M->isFunctionLocal() &&
          "NamedMDNode operands must not be function-local!");
-  getNMDOps(Operands).push_back(TrackingVH<Value>(M));
+  getNMDOps(Operands).push_back(TrackingVH<MDNode>(M));
 }
 
 void NamedMDNode::eraseFromParent() {
@@ -600,21 +599,14 @@ StringRef NamedMDNode::getName() const {
 // Instruction Metadata method implementations.
 //
 
-void Instruction::setMetadata(StringRef Kind, Value *MD) {
-  if (!MD && !hasMetadata()) return;
-  setMetadata(getContext().getMDKindID(Kind), MD);
+void Instruction::setMetadata(StringRef Kind, MDNode *Node) {
+  if (!Node && !hasMetadata())
+    return;
+  setMetadata(getContext().getMDKindID(Kind), Node);
 }
 
-Value *Instruction::getMetadataImpl(StringRef Kind) const {
+MDNode *Instruction::getMetadataImpl(StringRef Kind) const {
   return getMetadataImpl(getContext().getMDKindID(Kind));
-}
-
-MDNode *Instruction::getMDNodeImpl(unsigned KindID) const {
-  return cast_or_null<MDNode>(getMetadataImpl(KindID));
-}
-
-MDNode *Instruction::getMDNodeImpl(StringRef Kind) const {
-  return cast_or_null<MDNode>(getMetadataImpl(Kind));
 }
 
 void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
@@ -663,12 +655,10 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
 
 /// setMetadata - Set the metadata of of the specified kind to the specified
 /// node.  This updates/replaces metadata if already present, or removes it if
-/// MD is null.
-void Instruction::setMetadata(unsigned KindID, Value *MD) {
-  if (!MD && !hasMetadata()) return;
-
-  // For now, we only expect MDNodes here.
-  MDNode *Node = cast_or_null<MDNode>(MD);
+/// Node is null.
+void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
+  if (!Node && !hasMetadata())
+    return;
 
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg) {
@@ -729,7 +719,7 @@ void Instruction::setAAMetadata(const AAMDNodes &N) {
   setMetadata(LLVMContext::MD_noalias, N.NoAlias);
 }
 
-Value *Instruction::getMetadataImpl(unsigned KindID) const {
+MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg)
     return DbgLoc.getAsMDNode(getContext());
@@ -746,7 +736,7 @@ Value *Instruction::getMetadataImpl(unsigned KindID) const {
 }
 
 void Instruction::getAllMetadataImpl(
-    SmallVectorImpl<std::pair<unsigned, Value *>> &Result) const {
+    SmallVectorImpl<std::pair<unsigned, MDNode *>> &Result) const {
   Result.clear();
   
   // Handle 'dbg' as a special case since it is not stored in the hash table.
@@ -771,7 +761,7 @@ void Instruction::getAllMetadataImpl(
 }
 
 void Instruction::getAllMetadataOtherThanDebugLocImpl(
-    SmallVectorImpl<std::pair<unsigned, Value *>> &Result) const {
+    SmallVectorImpl<std::pair<unsigned, MDNode *>> &Result) const {
   Result.clear();
   assert(hasMetadataHashEntry() &&
          getContext().pImpl->MetadataStore.count(this) &&

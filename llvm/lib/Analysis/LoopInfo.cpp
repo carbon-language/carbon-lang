@@ -235,7 +235,7 @@ bool Loop::isSafeToClone() const {
 MDNode *Loop::getLoopID() const {
   MDNode *LoopID = nullptr;
   if (isLoopSimplifyForm()) {
-    LoopID = getLoopLatch()->getTerminator()->getMDNode(LoopMDName);
+    LoopID = getLoopLatch()->getTerminator()->getMetadata(LoopMDName);
   } else {
     // Go through each predecessor of the loop header and check the
     // terminator for the metadata.
@@ -247,7 +247,7 @@ MDNode *Loop::getLoopID() const {
       // Check if this terminator branches to the loop header.
       for (unsigned i = 0, ie = TI->getNumSuccessors(); i != ie; ++i) {
         if (TI->getSuccessor(i) == H) {
-          MD = TI->getMDNode(LoopMDName);
+          MD = TI->getMetadata(LoopMDName);
           break;
         }
       }
@@ -309,7 +309,7 @@ bool Loop::isAnnotatedParallel() const {
       // nested parallel loops). The loop identifier metadata refers to
       // itself so we can check both cases with the same routine.
       MDNode *loopIdMD =
-          II->getMDNode(LLVMContext::MD_mem_parallel_loop_access);
+          II->getMetadata(LLVMContext::MD_mem_parallel_loop_access);
 
       if (!loopIdMD)
         return false;
