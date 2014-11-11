@@ -43,7 +43,8 @@ AppleObjCTypeEncodingParser::ReadQuotedString(lldb_utility::StringLexer& type)
     StreamString buffer;
     while (type.HasAtLeast(1) && type.Peek() != '"')
         buffer.Printf("%c",type.Next());
-    assert(type.Next() == '"');
+    StringLexer::Character next = type.Next();
+    assert (next == '"');
     return buffer.GetString();
 }
 
@@ -198,7 +199,7 @@ AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_
             {
             default:
                 // roll back
-                type.PutBack(name.length() + 1);
+                type.PutBack(name.length() + 2); // undo our consumption of the string and of the quotes
                 name.clear();
                 break;
             case '}':
@@ -258,85 +259,78 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     if (!type.HasAtLeast(1))
         return clang::QualType();
     
-    if (type.NextIf('c'))
+    switch (type.Peek())
+    {
+    default:
+        break;
+    case '{':
+        return BuildStruct(ast_ctx, type, for_expression);
+    case '[':
+        return BuildArray(ast_ctx, type, for_expression);
+    case '(':
+        return BuildUnion(ast_ctx, type, for_expression);
+    case '@':
+        return BuildObjCObjectPointerType(ast_ctx, type, for_expression);
+    }
+    
+    switch (type.Next())
+    {
+    default:
+        type.PutBack(1);
+        return clang::QualType();
+    case 'c':
         return ast_ctx.CharTy;
-    if (type.NextIf('i'))
+    case 'i':
         return ast_ctx.IntTy;
-    if (type.NextIf('s'))
+    case 's':
         return ast_ctx.ShortTy;
-    if (type.NextIf('l'))
-    {
-        ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
-        if (!lldb_ctx)
-            return clang::QualType();
-        return lldb_ctx->GetIntTypeFromBitSize(32, true).GetQualType();
-    }
-    if (type.NextIf('q'))
+    case 'l':
+        return ast_ctx.getIntTypeForBitwidth(32, true);
+        // this used to be done like this:
+        //   ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
+        //   if (!lldb_ctx)
+        //      return clang::QualType();
+        //   return lldb_ctx->GetIntTypeFromBitSize(32, true).GetQualType();
+        // which uses one of the constants if one is available, but we don't think all this work is necessary.
+    case 'q':
         return ast_ctx.LongLongTy;
-    if (type.NextIf('C'))
+    case 'C':
         return ast_ctx.UnsignedCharTy;
-    if (type.NextIf('I'))
+    case 'I':
         return ast_ctx.UnsignedIntTy;
-    if (type.NextIf('S'))
+    case 'S':
         return ast_ctx.UnsignedShortTy;
-    if (type.NextIf('L'))
-    {
-        ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
-        if (!lldb_ctx)
-            return clang::QualType();
-        return lldb_ctx->GetIntTypeFromBitSize(32, false).GetQualType();
-    }
-    if (type.NextIf('Q'))
+    case 'L':
+        return ast_ctx.getIntTypeForBitwidth(32, false);
+        // see note for 'l'
+    case 'Q':
         return ast_ctx.UnsignedLongLongTy;
-    if (type.NextIf('f'))
+    case 'f':
         return ast_ctx.FloatTy;
-    if (type.NextIf('d'))
+    case 'd':
         return ast_ctx.DoubleTy;
-    if (type.NextIf('B'))
+    case 'B':
         return ast_ctx.BoolTy;
-    if (type.NextIf('v'))
+    case 'v':
         return ast_ctx.VoidTy;
-    if (type.NextIf('*'))
+    case '*':
         return ast_ctx.getPointerType(ast_ctx.CharTy);
-    if (type.NextIf('#'))
+    case '#':
         return ast_ctx.getObjCClassType();
-    if (type.NextIf(':'))
+    case ':':
         return ast_ctx.getObjCSelType();
-    
-    if (type.NextIf('b'))
-    {
-        uint32_t size = ReadNumber(type);
-        if (bitfield_bit_size)
+    case 'b':
         {
-            *bitfield_bit_size = size;
-            return ast_ctx.UnsignedIntTy; // FIXME: the spec is fairly vague here.
+            uint32_t size = ReadNumber(type);
+            if (bitfield_bit_size)
+            {
+                *bitfield_bit_size = size;
+                return ast_ctx.UnsignedIntTy; // FIXME: the spec is fairly vague here.
+            }
+            else
+                return clang::QualType();
         }
-        else
-            return clang::QualType();
-    }
-    
-    if (type.NextIf('r'))
-    {
-        clang::QualType target_type = BuildType(ast_ctx, type, for_expression);
-        if (target_type.isNull())
-            return clang::QualType();
-        else if (target_type == ast_ctx.UnknownAnyTy)
-            return ast_ctx.UnknownAnyTy;
-        else
-            return ast_ctx.getConstType(target_type);
-    }
-    
-    if (type.NextIf('^'))
-    {
-        if (!for_expression && type.NextIf('?'))
-        {
-            // if we are not supporting the concept of unknownAny, but what is being created here is an unknownAny*, then
-            // we can just get away with a void*
-            // this is theoretically wrong (in the same sense as 'theoretically nothing exists') but is way better than outright failure
-            // in many practical cases
-            return ast_ctx.VoidPtrTy;
-        }
-        else
+    case 'r':
         {
             clang::QualType target_type = BuildType(ast_ctx, type, for_expression);
             if (target_type.isNull())
@@ -344,26 +338,32 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
             else if (target_type == ast_ctx.UnknownAnyTy)
                 return ast_ctx.UnknownAnyTy;
             else
-                return ast_ctx.getPointerType(target_type);
+                return ast_ctx.getConstType(target_type);
         }
-    }
-    
-    if (type.NextIf('?'))
+    case '^':
+        {
+            if (!for_expression && type.NextIf('?'))
+            {
+                // if we are not supporting the concept of unknownAny, but what is being created here is an unknownAny*, then
+                // we can just get away with a void*
+                // this is theoretically wrong (in the same sense as 'theoretically nothing exists') but is way better than outright failure
+                // in many practical cases
+                return ast_ctx.VoidPtrTy;
+            }
+            else
+            {
+                clang::QualType target_type = BuildType(ast_ctx, type, for_expression);
+                if (target_type.isNull())
+                    return clang::QualType();
+                else if (target_type == ast_ctx.UnknownAnyTy)
+                    return ast_ctx.UnknownAnyTy;
+                else
+                    return ast_ctx.getPointerType(target_type);
+            }
+        }
+    case '?':
         return for_expression ? ast_ctx.UnknownAnyTy : clang::QualType();
-    
-    if (type.Peek() == '{')
-        return BuildStruct(ast_ctx, type, for_expression);
-    
-    if (type.Peek() == '[')
-        return BuildArray(ast_ctx, type, for_expression);
-    
-    if (type.Peek() == '(')
-        return BuildUnion(ast_ctx, type, for_expression);
-    
-    if (type.Peek() == '@')
-        return BuildObjCObjectPointerType(ast_ctx, type, for_expression);
-    
-    return clang::QualType();
+    }
 }
 
 ClangASTType
