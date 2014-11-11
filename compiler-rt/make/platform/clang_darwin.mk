@@ -134,7 +134,7 @@ endif
 ifneq ($(RC_SUPPORTED_ARCHS),)
 $(foreach config,$(Configs),\
   $(call Set,UniversalArchs.$(config),\
-	$(filter $(RC_SUPPORTED_ARCHS),$(UniversalArchs.$(config))))
+	$(filter $(RC_SUPPORTED_ARCHS),$(UniversalArchs.$(config)))))
 endif
 
 # Remove empty configs if we end up dropping all the requested
