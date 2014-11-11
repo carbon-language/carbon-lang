@@ -45,6 +45,21 @@ int main()
         for (++j; j < v.size(); ++j)
             assert(v[j] == 0);
     }
+    {
+        std::vector<bool> v(100);
+        while(v.size() < v.capacity()) v.push_back(false);
+        v.pop_back(); v.pop_back();
+        size_t sz = v.size();
+        std::vector<bool>::iterator i = v.insert(v.cbegin() + 10, 1);
+        assert(v.size() == sz + 1);
+        assert(i == v.begin() + 10);
+        int j;
+        for (j = 0; j < 10; ++j)
+            assert(v[j] == 0);
+        assert(v[j] == 1);
+        for (++j; j < v.size(); ++j)
+            assert(v[j] == 0);
+    }
 #if __cplusplus >= 201103L
     {
         std::vector<bool, min_allocator<bool>> v(100);

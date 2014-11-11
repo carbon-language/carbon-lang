@@ -38,6 +38,38 @@ int main()
             assert(v[j] == 0);
     }
     {
+        std::vector<int> v(100);
+        while(v.size() < v.capacity()) v.push_back(0); // force reallocation
+        size_t sz = v.size();
+        std::vector<int>::iterator i = v.insert(v.cbegin() + 10, 5, 1);
+        assert(v.size() == sz + 5);
+        assert(is_contiguous_container_asan_correct(v)); 
+        assert(i == v.begin() + 10);
+        int j;
+        for (j = 0; j < 10; ++j)
+            assert(v[j] == 0);
+        for (; j < 15; ++j)
+            assert(v[j] == 1);
+        for (++j; j < v.size(); ++j)
+            assert(v[j] == 0);
+    }
+    {
+        std::vector<int> v(100);
+        v.reserve(128); // force no reallocation
+        size_t sz = v.size();
+        std::vector<int>::iterator i = v.insert(v.cbegin() + 10, 5, 1);
+        assert(v.size() == sz + 5);
+        assert(is_contiguous_container_asan_correct(v)); 
+        assert(i == v.begin() + 10);
+        int j;
+        for (j = 0; j < 10; ++j)
+            assert(v[j] == 0);
+        for (; j < 15; ++j)
+            assert(v[j] == 1);
+        for (++j; j < v.size(); ++j)
+            assert(v[j] == 0);
+    }
+    {
         std::vector<int, stack_allocator<int, 300> > v(100);
         std::vector<int, stack_allocator<int, 300> >::iterator i = v.insert(v.cbegin() + 10, 5, 1);
         assert(v.size() == 105);
