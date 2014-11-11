@@ -109,7 +109,7 @@ static std::string computeDataLayout(const MipsSubtarget &ST) {
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
                              const MipsTargetMachine *_TM)
-    : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(Mips32),
+    : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(MipsDefault),
       ABI(MipsABIInfo::Unknown()), IsLittle(little), IsSingleFloat(false),
       IsFPXX(false), NoABICalls(false), IsFP64bit(false), UseOddSPReg(true),
       IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false), HasCnMips(false),
@@ -126,13 +126,14 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
 
   PreviousInMips16Mode = InMips16Mode;
 
-  // Don't even attempt to generate code for MIPS-I, MIPS-II, MIPS-III, and
-  // MIPS-V. They have not been tested and currently exist for the integrated
+  if (MipsArchVersion == MipsDefault)
+    MipsArchVersion = Mips32;
+
+  // Don't even attempt to generate code for MIPS-I, MIPS-III and MIPS-V.
+  // They have not been tested and currently exist for the integrated
   // assembler only.
   if (MipsArchVersion == Mips1)
     report_fatal_error("Code generation for MIPS-I is not implemented", false);
-  if (MipsArchVersion == Mips2)
-    report_fatal_error("Code generation for MIPS-II is not implemented", false);
   if (MipsArchVersion == Mips3)
     report_fatal_error("Code generation for MIPS-III is not implemented",
                        false);

@@ -1653,6 +1653,12 @@ let AdditionalPredicates = [NotDSP] in {
                 (ADDiu GPR32:$src, imm:$imm)>;
 }
 
+// Support multiplication for pre-Mips32 targets that don't have
+// the MUL instruction.
+def : MipsPat<(mul GPR32:$lhs, GPR32:$rhs),
+              (PseudoMFLO (PseudoMULT GPR32:$lhs, GPR32:$rhs))>,
+      ISA_MIPS1_NOT_32R6_64R6;
+
 // SYNC
 def : MipsPat<(MipsSync (i32 immz)),
               (SYNC 0)>, ISA_MIPS2;

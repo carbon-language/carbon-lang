@@ -37,6 +37,7 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   virtual void anchor();
 
   enum MipsArchEnum {
+    MipsDefault,
     Mips1, Mips2, Mips32, Mips32r2, Mips32r6, Mips3, Mips4, Mips5, Mips64,
     Mips64r2, Mips64r6
   };
