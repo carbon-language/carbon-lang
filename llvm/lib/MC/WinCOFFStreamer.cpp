@@ -133,7 +133,7 @@ void MCWinCOFFStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {
   if (!CurSymbol)
     FatalError("storage class specified outside of symbol definition");
 
-  if (StorageClass & ~0xff)
+  if (StorageClass & ~COFF::SSC_Invalid)
     FatalError(Twine("storage class value '") + itostr(StorageClass) +
                "' out of range");
 

@@ -299,7 +299,9 @@ public:
 
   uint8_t getBaseType() const { return getType() & 0x0F; }
 
-  uint8_t getComplexType() const { return (getType() & 0xF0) >> 4; }
+  uint8_t getComplexType() const {
+    return (getType() & 0xF0) >> COFF::SCT_COMPLEX_TYPE_SHIFT;
+  }
 
   bool isExternal() const {
     return getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL;

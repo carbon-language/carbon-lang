@@ -1,5 +1,6 @@
-// The purpose of this test is to verify that we do not produce unneeded
-// relocations when symbols are in the same section and we know their offset.
+// The purpose of this test is to verify that we produce relocations for
+// references to functions.  Failing to do so might cause pointer-to-function
+// equality to fail if /INCREMENTAL links are used.
 
 // RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s | llvm-readobj -s | FileCheck %s
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | llvm-readobj -s | FileCheck %s
@@ -46,4 +47,4 @@ Ltmp0:
 	ret
 
 // CHECK:     Sections [
-// CHECK-NOT: RelocationCount: {{[^0]}}
+// CHECK: RelocationCount: 1
