@@ -346,10 +346,10 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
       if (RelocOffset == sect_offset) {
         Rel = Reloc.getRawDataRefImpl();
         RE = info->O->getRelocation(Rel);
+        r_type = info->O->getAnyRelocationType(RE);
         r_scattered = info->O->isRelocationScattered(RE);
         if (r_scattered) {
           r_value = info->O->getScatteredRelocationValue(RE);
-          r_type = info->O->getScatteredRelocationType(RE);
           if (r_type == MachO::GENERIC_RELOC_SECTDIFF ||
               r_type == MachO::GENERIC_RELOC_LOCAL_SECTDIFF) {
             DataRefImpl RelNext = Rel;
