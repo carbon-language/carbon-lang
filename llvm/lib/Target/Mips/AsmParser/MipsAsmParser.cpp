@@ -1821,6 +1821,7 @@ int MipsAsmParser::matchHWRegsRegisterName(StringRef Name) {
             .Case("hwr_synci_step", 1)
             .Case("hwr_cc", 2)
             .Case("hwr_ccres", 3)
+            .Case("hwr_ulr", 29)
             .Default(-1);
 
   return CC;

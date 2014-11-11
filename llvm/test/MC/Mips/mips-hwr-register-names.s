@@ -175,11 +175,18 @@
         # CHECK-NEXT: rdhwr   $4, $28
         # CHECK-NEXT: .set    pop             # encoding: [0x7c,0x04,0xe0,0x3b]
         rdhwr     $a0,$28
+
         # CHECK:      .set    push
         # CHECK-NEXT: .set    mips32r2
         # CHECK-NEXT: rdhwr   $4, $29
         # CHECK-NEXT: .set    pop             # encoding: [0x7c,0x04,0xe8,0x3b]
         rdhwr     $a0,$29
+        # CHECK:      .set    push
+        # CHECK-NEXT: .set    mips32r2
+        # CHECK-NEXT: rdhwr   $4, $29
+        # CHECK-NEXT: .set    pop             # encoding: [0x7c,0x04,0xe8,0x3b]
+        rdhwr     $a0,$hwr_ulr
+
         # CHECK:      .set    push
         # CHECK-NEXT: .set    mips32r2
         # CHECK-NEXT: rdhwr   $4, $30
