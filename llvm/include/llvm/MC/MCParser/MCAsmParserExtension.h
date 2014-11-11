@@ -52,8 +52,17 @@ public:
   /// @{
 
   MCContext &getContext() { return getParser().getContext(); }
+
   MCAsmLexer &getLexer() { return getParser().getLexer(); }
+  const MCAsmLexer &getLexer() const {
+    return const_cast<MCAsmParserExtension *>(this)->getLexer();
+  }
+
   MCAsmParser &getParser() { return *Parser; }
+  const MCAsmParser &getParser() const {
+    return const_cast<MCAsmParserExtension*>(this)->getParser();
+  }
+
   SourceMgr &getSourceManager() { return getParser().getSourceManager(); }
   MCStreamer &getStreamer() { return getParser().getStreamer(); }
   bool Warning(SMLoc L, const Twine &Msg) {

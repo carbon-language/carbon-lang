@@ -87,6 +87,9 @@ public:
   virtual SourceMgr &getSourceManager() = 0;
 
   virtual MCAsmLexer &getLexer() = 0;
+  const MCAsmLexer &getLexer() const {
+    return const_cast<MCAsmParser*>(this)->getLexer();
+  }
 
   virtual MCContext &getContext() = 0;
 
@@ -138,7 +141,7 @@ public:
   virtual const AsmToken &Lex() = 0;
 
   /// Get the current AsmToken from the stream.
-  const AsmToken &getTok();
+  const AsmToken &getTok() const;
 
   /// \brief Report an error at the current lexer location.
   bool TokError(const Twine &Msg, ArrayRef<SMRange> Ranges = None);

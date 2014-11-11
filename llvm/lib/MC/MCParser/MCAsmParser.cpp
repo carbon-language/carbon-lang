@@ -29,7 +29,7 @@ void MCAsmParser::setTargetParser(MCTargetAsmParser &P) {
   TargetParser->Initialize(*this);
 }
 
-const AsmToken &MCAsmParser::getTok() {
+const AsmToken &MCAsmParser::getTok() const {
   return getLexer().getTok();
 }
 
