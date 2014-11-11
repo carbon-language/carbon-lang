@@ -114,6 +114,10 @@ private:
             }
         }
 
+        // This constructor plus the init() method below allow for the placeholder
+        // creation of an invalid object initially, possibly to be filled in.  It
+        // would be more consistent to have three Set* methods to set the three
+        // data that the object needs.
         RegisterNumber () :
             m_reg_ctx_sp(),
             m_regnum (LLDB_INVALID_REGNUM),
@@ -152,7 +156,39 @@ private:
         }
 
         bool
-        IsValid ()
+        operator == (RegisterNumber &rhs)
+        {
+            if (IsValid() != rhs.IsValid())
+                return false;
+
+            if (m_kind == rhs.m_kind)
+            {
+                if (m_regnum == rhs.m_regnum)
+                    return true;
+                else
+                    return false;
+            }
+
+            uint32_t rhs_regnum = rhs.GetAsKind (m_kind);
+            if (rhs_regnum != LLDB_INVALID_REGNUM)
+            {
+                if (m_regnum == rhs_regnum)
+                    return true;
+                else
+                    return false;
+            }
+            uint32_t lhs_regnum = GetAsKind (rhs.m_kind);
+            {
+                if (lhs_regnum == rhs.m_regnum)
+                    return true;
+                else 
+                    return false;
+            }
+            return false;
+        }
+
+        bool
+        IsValid () const
         {
             return m_regnum != LLDB_INVALID_REGNUM;
         }

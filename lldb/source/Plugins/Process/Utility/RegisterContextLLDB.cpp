@@ -1196,8 +1196,8 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
 
             // If we're fetching the saved pc and this UnwindPlan defines a ReturnAddress register (e.g. lr on arm),
             // look for the return address register number in the UnwindPlan's row.
-            if (pc_regnum.GetAsKind (eRegisterKindLLDB) != LLDB_INVALID_REGNUM
-                && pc_regnum.GetAsKind (eRegisterKindLLDB) == regnum.GetAsKind (eRegisterKindLLDB)
+            if (pc_regnum.IsValid()
+                && pc_regnum == regnum
                 && m_full_unwind_plan_sp->GetReturnAddressRegister() != LLDB_INVALID_REGNUM)
             {
                 
@@ -1211,12 +1211,13 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                 {
                     if (unwindplan_registerkind == eRegisterKindGeneric)
                     {
-                        UnwindLogMsg ("could not convert lldb regnum %s (%d) into eRegisterKindGeneric reg numbering scheme", regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB));
+                        UnwindLogMsg ("could not convert lldb regnum %s (%d) into eRegisterKindGeneric reg numbering scheme", 
+                                      regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB));
                     }
                     else
                     {
                         UnwindLogMsg ("could not convert lldb regnum %s (%d) into %d RegisterKind reg numbering scheme",
-                                regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB), (int) unwindplan_registerkind);
+                                    regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB), (int) unwindplan_registerkind);
                     }
                     return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
                 }
@@ -1268,8 +1269,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             RegisterNumber arch_default_ra_regnum (m_thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA);
 
             if (arch_default_ra_regnum.GetAsKind (unwindplan_registerkind) != LLDB_INVALID_REGNUM
-                && pc_regnum.GetAsKind (eRegisterKindLLDB) != LLDB_INVALID_REGNUM
-                && pc_regnum.GetAsKind (eRegisterKindLLDB) == regnum.GetAsKind (eRegisterKindLLDB)
+                && pc_regnum == regnum
                 && unwindplan_regloc.IsInOtherRegister()
                 && unwindplan_regloc.GetRegisterNumber() == arch_default_ra_regnum.GetAsKind (unwindplan_registerkind)
                 && m_full_unwind_plan_sp->GetSourcedFromCompiler() != eLazyBoolYes
