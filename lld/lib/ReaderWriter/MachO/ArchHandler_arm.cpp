@@ -998,8 +998,10 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *loc,
       *loc32 = targetAddress - fixupAddress + ref.addend();
     break;
   case lazyPointer:
-  case lazyImmediateLocation:
     // do nothing
+    break;
+  case lazyImmediateLocation:
+    *loc32 = ref.addend();
     break;
   case invalid:
     llvm_unreachable("invalid ARM Reference Kind");

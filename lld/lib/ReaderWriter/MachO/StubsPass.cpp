@@ -24,6 +24,7 @@
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 
 
 namespace lld {
@@ -107,7 +108,7 @@ private:
 class StubAtom : public SimpleDefinedAtom {
 public:
   StubAtom(const File &file, const ArchHandler::StubInfo &stubInfo)
-      : SimpleDefinedAtom(file), _stubInfo(stubInfo) { }
+      : SimpleDefinedAtom(file), _stubInfo(stubInfo){ }
 
   ContentType contentType() const override {
     return DefinedAtom::typeStub;
@@ -205,14 +206,8 @@ private:
 class StubsPass : public Pass {
 public:
   StubsPass(const MachOLinkingContext &context)
-    : _context(context)
-    , _archHandler(_context.archHandler())
-    , _stubInfo(_archHandler.stubInfo())
-    , _file("<mach-o Stubs pass>")
-    , _helperCommonAtom(nullptr)
-    , _helperCacheNLPAtom(nullptr)
-    , _helperBinderNLPAtom(nullptr) {
-  }
+    : _context(context), _archHandler(_context.archHandler()),
+    _stubInfo(_archHandler.stubInfo()), _file("<mach-o Stubs pass>") { }
 
 
   void perform(std::unique_ptr<MutableFile> &mergedFile) override {
@@ -230,7 +225,7 @@ public:
         assert(target != nullptr);
         if (isa<SharedLibraryAtom>(target)) {
           // Calls to shared libraries go through stubs.
-          replaceCalleeWithStub(target, ref);
+          _targetToUses[target].push_back(ref);
           continue;
         }
         const DefinedAtom *defTarget = dyn_cast<DefinedAtom>(target);
@@ -238,46 +233,92 @@ public:
           // Calls to interposable functions in same linkage unit must also go
           // through a stub.
           assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
-          replaceCalleeWithStub(target, ref);
+          _targetToUses[target].push_back(ref);
         }
       }
     }
+
     // Exit early if no stubs needed.
-    if (_targetToStub.empty())
+    if (_targetToUses.empty())
       return;
-    
+
+    // First add help-common and GOT slots used by lazy binding.
+    SimpleDefinedAtom *helperCommonAtom =
+        new (_file.allocator()) StubHelperCommonAtom(_file, _stubInfo);
+    SimpleDefinedAtom *helperCacheNLPAtom =
+        new (_file.allocator()) NonLazyPointerAtom(_file, _context.is64Bit());
+    SimpleDefinedAtom *helperBinderNLPAtom =
+        new (_file.allocator()) NonLazyPointerAtom(_file, _context.is64Bit());
+    addReference(helperCommonAtom, _stubInfo.stubHelperCommonReferenceToCache,
+                 helperCacheNLPAtom);
+    addOptReference(
+        helperCommonAtom, _stubInfo.stubHelperCommonReferenceToCache,
+        _stubInfo.optStubHelperCommonReferenceToCache, helperCacheNLPAtom);
+    addReference(helperCommonAtom, _stubInfo.stubHelperCommonReferenceToBinder,
+                 helperBinderNLPAtom);
+    addOptReference(
+        helperCommonAtom, _stubInfo.stubHelperCommonReferenceToBinder,
+        _stubInfo.optStubHelperCommonReferenceToBinder, helperBinderNLPAtom);
+    mergedFile->addAtom(*helperCommonAtom);
+    mergedFile->addAtom(*helperBinderNLPAtom);
+    mergedFile->addAtom(*helperCacheNLPAtom);
+
     // Add reference to dyld_stub_binder in libSystem.dylib
-    if (_helperBinderNLPAtom) {
-      bool found = false;
-      for (const SharedLibraryAtom *atom : mergedFile->sharedLibrary()) {
-        if (atom->name().equals(_stubInfo.binderSymbolName)) {
-          addReference(_helperBinderNLPAtom,  
-                       _stubInfo.nonLazyPointerReferenceToBinder, atom);
-          found = true;
-          break;
-        }
+    bool binderFound = false;
+    for (const SharedLibraryAtom *atom : mergedFile->sharedLibrary()) {
+      if (atom->name().equals(_stubInfo.binderSymbolName)) {
+        addReference(helperBinderNLPAtom,
+                     _stubInfo.nonLazyPointerReferenceToBinder, atom);
+        binderFound = true;
+        break;
       }
-      assert(found && "dyld_stub_binder not found");
     }
-    
-    // Add all stubs to master file.
-    for (auto it : _targetToStub) {
-      mergedFile->addAtom(*it.second);
-    }
-    // Add helper code atoms.
-    mergedFile->addAtom(*_helperCommonAtom);
-    for (const DefinedAtom *lp : _stubHelperAtoms) {
+    assert(binderFound && "dyld_stub_binder not found");
+
+    // Sort targets by name, so stubs and lazy pointers are consistent
+    std::vector<const Atom *> targetsNeedingStubs;
+    for (auto it : _targetToUses)
+      targetsNeedingStubs.push_back(it.first);
+    std::sort(targetsNeedingStubs.begin(), targetsNeedingStubs.end(),
+              [](const Atom * left, const Atom * right) {
+      return (left->name().compare(right->name()) < 0);
+    });
+
+    // Make and append stubs, lazy pointers, and helpers in alphabetical order.
+    unsigned lazyOffset = 0;
+    for (const Atom *target : targetsNeedingStubs) {
+      StubAtom *stub = new (_file.allocator()) StubAtom(_file, _stubInfo);
+      LazyPointerAtom *lp =
+          new (_file.allocator()) LazyPointerAtom(_file, _context.is64Bit());
+      StubHelperAtom *helper =
+          new (_file.allocator()) StubHelperAtom(_file, _stubInfo);
+
+      addReference(stub, _stubInfo.stubReferenceToLP, lp);
+      addOptReference(stub, _stubInfo.stubReferenceToLP,
+                      _stubInfo.optStubReferenceToLP, lp);
+      addReference(lp, _stubInfo.lazyPointerReferenceToHelper, helper);
+      addReference(lp, _stubInfo.lazyPointerReferenceToFinal, target);
+      addReference(helper, _stubInfo.stubHelperReferenceToImm, helper);
+      addReferenceAddend(helper, _stubInfo.stubHelperReferenceToImm, helper,
+                         lazyOffset);
+      addReference(helper, _stubInfo.stubHelperReferenceToHelperCommon,
+                   helperCommonAtom);
+
+      mergedFile->addAtom(*stub);
       mergedFile->addAtom(*lp);
-    }
-    // Add GOT slots used for lazy binding.
-    mergedFile->addAtom(*_helperBinderNLPAtom);
-    mergedFile->addAtom(*_helperCacheNLPAtom);
-    // Add all lazy pointers to master file.
-    for (const DefinedAtom *lp : _lazyPointers) {
-      mergedFile->addAtom(*lp);
+      mergedFile->addAtom(*helper);
+
+      // Update each reference to use stub.
+      for (const Reference *ref : _targetToUses[target]) {
+        assert(ref->target() == target);
+        // Switch call site to reference stub atom instead.
+        const_cast<Reference *>(ref)->setTarget(stub);
+      }
+
+      // Calculate new offset
+      lazyOffset += target->name().size() + 12;
     }
   }
-
 
 private:
 
@@ -288,51 +329,6 @@ private:
   bool isCallSite(const Reference &ref) {
     return _archHandler.isCallSite(ref);
   }
-
-  void replaceCalleeWithStub(const Atom *target, const Reference *ref) {
-    // Make file-format specific stub and other support atoms.
-    const DefinedAtom *stub = this->getStub(*target);
-    assert(stub != nullptr);
-    // Switch call site to reference stub atom instead.
-    const_cast<Reference *>(ref)->setTarget(stub);
-  }
-
-  const DefinedAtom* getStub(const Atom& target) {
-    auto pos = _targetToStub.find(&target);
-    if ( pos != _targetToStub.end() ) {
-      // Reuse an existing stub.
-      assert(pos->second != nullptr);
-      return pos->second;
-    }
-    else {
-      // There is no existing stub, so create a new one.
-      return this->makeStub(target);
-    }
-  }
-
-  const DefinedAtom* makeStub(const Atom &target) {
-    SimpleDefinedAtom* stub   = new (_file.allocator()) 
-                                                    StubAtom(_file, _stubInfo);
-    SimpleDefinedAtom* lp     = new (_file.allocator()) 
-                                    LazyPointerAtom(_file, _context.is64Bit());
-    SimpleDefinedAtom* helper = new (_file.allocator()) 
-                                              StubHelperAtom(_file, _stubInfo);
-   
-    addReference(stub, _stubInfo.stubReferenceToLP, lp);
-    addOptReference(stub, _stubInfo.stubReferenceToLP,
-                    _stubInfo.optStubReferenceToLP, lp);
-    addReference(lp, _stubInfo.lazyPointerReferenceToHelper, helper);
-    addReference(lp, _stubInfo.lazyPointerReferenceToFinal, &target);
-    addReference(helper, _stubInfo.stubHelperReferenceToImm, helper);
-    addReference(helper, _stubInfo.stubHelperReferenceToHelperCommon, 
-                 helperCommon());
-    
-    _stubHelperAtoms.push_back(helper);
-    _targetToStub[&target] = stub;
-    _lazyPointers.push_back(lp);
-    
-    return stub;
-  }
  
   void addReference(SimpleDefinedAtom* atom,
                     const ArchHandler::ReferenceInfo &refInfo,
@@ -340,6 +336,13 @@ private:
     atom->addReference(Reference::KindNamespace::mach_o,
                       refInfo.arch, refInfo.kind, refInfo.offset,
                       target, refInfo.addend);
+  }
+
+  void addReferenceAddend(SimpleDefinedAtom *atom,
+                          const ArchHandler::ReferenceInfo &refInfo,
+                          const lld::Atom *target, uint64_t addend) {
+    atom->addReference(Reference::KindNamespace::mach_o, refInfo.arch,
+                       refInfo.kind, refInfo.offset, target, addend);
   }
 
    void addOptReference(SimpleDefinedAtom* atom,
@@ -353,44 +356,14 @@ private:
                       target, optRef.addend);
   }
 
-  const DefinedAtom* helperCommon() {
-    if ( !_helperCommonAtom ) {
-      // Lazily create common helper code and data.
-      _helperCommonAtom    = new (_file.allocator()) 
-                                         StubHelperCommonAtom(_file, _stubInfo);
-      _helperCacheNLPAtom  = new (_file.allocator()) 
-                                  NonLazyPointerAtom(_file, _context.is64Bit());
-      _helperBinderNLPAtom = new (_file.allocator()) 
-                                  NonLazyPointerAtom(_file, _context.is64Bit());
-      addReference(_helperCommonAtom, 
-                   _stubInfo.stubHelperCommonReferenceToCache,
-                   _helperCacheNLPAtom);
-      addOptReference(_helperCommonAtom,
-                      _stubInfo.stubHelperCommonReferenceToCache,
-                      _stubInfo.optStubHelperCommonReferenceToCache,
-                      _helperCacheNLPAtom);
-      addReference(_helperCommonAtom,
-                   _stubInfo.stubHelperCommonReferenceToBinder,
-                   _helperBinderNLPAtom);
-      addOptReference(_helperCommonAtom,
-                      _stubInfo.stubHelperCommonReferenceToBinder,
-                      _stubInfo.optStubHelperCommonReferenceToBinder,
-                      _helperBinderNLPAtom);
-    }
-    return _helperCommonAtom;
-  }
-
+  typedef llvm::DenseMap<const Atom*,
+                         llvm::SmallVector<const Reference *, 8>> TargetToUses;
 
   const MachOLinkingContext                      &_context;
   mach_o::ArchHandler                            &_archHandler;
   const ArchHandler::StubInfo                    &_stubInfo;
   MachOFile                                       _file;
-  llvm::DenseMap<const Atom*, const DefinedAtom*> _targetToStub;
-  std::vector<const DefinedAtom*>                 _lazyPointers;
-  std::vector<const DefinedAtom*>                 _stubHelperAtoms;
-  SimpleDefinedAtom                              *_helperCommonAtom;
-  SimpleDefinedAtom                              *_helperCacheNLPAtom;
-  SimpleDefinedAtom                              *_helperBinderNLPAtom;
+  TargetToUses                                    _targetToUses;
 };
 
 

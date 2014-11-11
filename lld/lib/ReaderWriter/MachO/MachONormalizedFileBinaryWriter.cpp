@@ -125,6 +125,12 @@ private:
     void append_uleb128(uint64_t value) {
       llvm::encodeULEB128(value, _ostream);
     }
+    void append_uleb128Fixed(uint64_t value, unsigned byteCount) {
+      unsigned min = llvm::getULEB128Size(value);
+      assert(min <= byteCount);
+      unsigned pad = byteCount - min;
+      llvm::encodeULEB128(value, _ostream, pad);
+    }
     void append_sleb128(int64_t value) {
       llvm::encodeSLEB128(value, _ostream);
     }
@@ -999,6 +1005,7 @@ void MachOFileLayout::buildRebaseInfo() {
 
 void MachOFileLayout::buildBindInfo() {
   // TODO: compress bind info.
+  uint64_t lastAddend = 0;
   for (const BindLocation& entry : _file.bindingInfo) {
     _bindingInfo.append_byte(BIND_OPCODE_SET_TYPE_IMM | entry.kind);
     _bindingInfo.append_byte(BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
@@ -1007,9 +1014,10 @@ void MachOFileLayout::buildBindInfo() {
     _bindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM | entry.ordinal);
     _bindingInfo.append_byte(BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM);
     _bindingInfo.append_string(entry.symbolName);
-    if (entry.addend != 0) {
+    if (entry.addend != lastAddend) {
       _bindingInfo.append_byte(BIND_OPCODE_SET_ADDEND_SLEB);
       _bindingInfo.append_sleb128(entry.addend);
+      lastAddend = entry.addend;
     }
     _bindingInfo.append_byte(BIND_OPCODE_DO_BIND);
   }
@@ -1022,11 +1030,12 @@ void MachOFileLayout::buildLazyBindInfo() {
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_TYPE_IMM | entry.kind);
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
                             | entry.segIndex);
-    _lazyBindingInfo.append_uleb128(entry.segOffset);
+    _lazyBindingInfo.append_uleb128Fixed(entry.segOffset, 5);
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM | entry.ordinal);
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM);
     _lazyBindingInfo.append_string(entry.symbolName);
     _lazyBindingInfo.append_byte(BIND_OPCODE_DO_BIND);
+    _lazyBindingInfo.append_byte(BIND_OPCODE_DONE);
   }
   _lazyBindingInfo.append_byte(BIND_OPCODE_DONE);
   _lazyBindingInfo.align(_is64 ? 8 : 4);

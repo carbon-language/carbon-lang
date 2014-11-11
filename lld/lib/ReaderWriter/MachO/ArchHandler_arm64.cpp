@@ -573,8 +573,10 @@ void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *loc,
     *loc32 = (targetAddress - fixupAddress) + ref.addend();
     return;
   case lazyPointer:
-  case lazyImmediateLocation:
     // Do nothing
+    return;
+  case lazyImmediateLocation:
+    *loc32 = ref.addend();
     return;
   case invalid:
     // Fall into llvm_unreachable().

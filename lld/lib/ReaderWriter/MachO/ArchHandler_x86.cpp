@@ -461,8 +461,10 @@ void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *loc,
   case modeCode:
   case modeData:
   case lazyPointer:
-  case lazyImmediateLocation:
     // do nothing
+    break;
+  case lazyImmediateLocation:
+    *loc32 = ref.addend();
     break;
   default:
     llvm_unreachable("invalid x86 Reference Kind");

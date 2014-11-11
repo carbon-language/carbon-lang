@@ -244,6 +244,7 @@ SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
     switch (atomType) {
     case DefinedAtom::typeCode:
     case DefinedAtom::typeStub:
+    case DefinedAtom::typeStubHelper:
       sectionAttrs = S_ATTR_PURE_INSTRUCTIONS;
       break;
     default:

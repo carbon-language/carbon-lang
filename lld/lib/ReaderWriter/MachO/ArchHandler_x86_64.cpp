@@ -521,8 +521,10 @@ void ArchHandler_x86_64::applyFixupFinal(
     *loc32 = fixupAddress - targetAddress + ref.addend();
     return;
   case lazyPointer:
+    // Do nothing
+    return;
   case lazyImmediateLocation:
-    // do nothing
+    *loc32 = ref.addend();
     return;
   case imageOffset:
   case imageOffsetGot:
