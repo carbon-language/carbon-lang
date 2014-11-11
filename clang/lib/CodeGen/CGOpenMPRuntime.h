@@ -194,7 +194,7 @@ private:
   /// \brief If the specified mangled name is not in the module, create and
   /// return threadprivate cache object. This object is a pointer's worth of
   /// storage that's reserved for use by the OpenMP runtime.
-  /// \param D Threadprivate variable.
+  /// \param VD Threadprivate variable.
   /// \return Cache variable for the specified threadprivate.
   llvm::Constant *getOrCreateThreadPrivateCache(const VarDecl *VD);
 
@@ -308,7 +308,7 @@ public:
 
   /// \brief Returns address of the threadprivate variable for the current
   /// thread.
-  /// \param D Threadprivate variable.
+  /// \param VD Threadprivate variable.
   /// \param VDAddr Address of the global variable \a VD.
   /// \param Loc Location of the reference to threadprivate var.
   /// \return Address of the threadprivate variable for the current thread.
