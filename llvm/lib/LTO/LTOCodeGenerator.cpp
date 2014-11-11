@@ -128,6 +128,9 @@ void LTOCodeGenerator::initializeLTOPasses() {
 }
 
 bool LTOCodeGenerator::addModule(LTOModule *mod) {
+  assert(&mod->getModule().getContext() == &Context &&
+         "Expected module in same context");
+
   bool ret = IRLinker.linkInModule(&mod->getModule());
 
   const std::vector<const char*> &undefs = mod->getAsmUndefinedRefs();
