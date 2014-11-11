@@ -1,11 +1,11 @@
-; RUN: llc -filetype=obj < %s | llvm-objdump -d - | FileCheck %s
+; RUN: llc -show-mc-encoding < %s | FileCheck %s
 
 ; Test that the direct object emission selects the and variant with 8 bit
 ; immediate.
 ; We used to get this wrong when using direct object emission, but not when
 ; reading assembly.
 
-; CHECK: 48 83 e4 e0                    andq      $-32, %rsp
+; CHECK: andq    $-32, %rsp              # encoding: [0x48,0x83,0xe4,0xe0]
 
 target triple = "x86_64-pc-linux"
 
