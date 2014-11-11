@@ -43,6 +43,7 @@ AppleObjCTypeEncodingParser::ReadQuotedString(lldb_utility::StringLexer& type)
     StreamString buffer;
     while (type.HasAtLeast(1) && type.Peek() != '"')
         buffer.Printf("%c",type.Next());
+    assert(type.Next() == '"');
     return buffer.GetString();
 }
 
@@ -173,7 +174,46 @@ AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_
     std::string name;
     
     if (type.NextIf('"'))
+    {
+        // We have to be careful here.  We're used to seeing
+        //   @"NSString"
+        // but in records it is possible that the string following an @ is the name of the next field and @ means "id".
+        // This is the case if anything unquoted except for "}", the end of the type, or another name follows the quoted string.
+        //
+        // E.g.
+        // - @"NSString"@ means "id, followed by a field named NSString of type id"
+        // - @"NSString"} means "a pointer to NSString and the end of the struct"
+        // - @"NSString""nextField" means "a pointer to NSString and a field named nextField"
+        // - @"NSString" followed by the end of the string means "a pointer to NSString"
+        //
+        // As a result, the rule is: If we see @ followed by a quoted string, we peek.
+        // - If we see }, ), ], the end of the string, or a quote ("), the quoted string is a class name.
+        // - If we see anything else, the quoted string is a field name and we push it back onto type.
+
         name = ReadQuotedString(type);
+        
+        if (type.HasAtLeast(1))
+        {
+            switch (type.Peek())
+            {
+            default:
+                // roll back
+                type.PutBack(name.length() + 1);
+                name.clear();
+                break;
+            case '}':
+            case ')':
+            case ']':
+            case '"':
+                // the quoted string is a class name – see the rule
+                break;
+            }
+        }
+        else
+        {
+            // the quoted string is a class name – see the rule
+        }
+    }
     
     if (for_expression && !name.empty())
     {
