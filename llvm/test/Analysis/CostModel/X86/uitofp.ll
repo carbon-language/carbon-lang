@@ -235,7 +235,7 @@ define <2 x float> @uitofpv2i8v2float(<2 x i8> %a) {
 
 define <4 x float> @uitofpv4i8v4float(<4 x i8> %a) {
   ; SSE2: uitofpv4i8v4float
-  ; SSE2: cost of 15 {{.*}} uitofp
+  ; SSE2: cost of 8 {{.*}} uitofp
   %1 = uitofp <4 x i8> %a to <4 x float>
   ret <4 x float> %1
 }
@@ -270,7 +270,7 @@ define <2 x float> @uitofpv2i16v2float(<2 x i16> %a) {
 
 define <4 x float> @uitofpv4i16v4float(<4 x i16> %a) {
   ; SSE2: uitofpv4i16v4float
-  ; SSE2: cost of 15 {{.*}} uitofp
+  ; SSE2: cost of 8 {{.*}} uitofp
   %1 = uitofp <4 x i16> %a to <4 x float>
   ret <4 x float> %1
 }
@@ -305,28 +305,28 @@ define <2 x float> @uitofpv2i32v2float(<2 x i32> %a) {
 
 define <4 x float> @uitofpv4i32v4float(<4 x i32> %a) {
   ; SSE2: uitofpv4i32v4float
-  ; SSE2: cost of 15 {{.*}} uitofp
+  ; SSE2: cost of 8 {{.*}} uitofp
   %1 = uitofp <4 x i32> %a to <4 x float>
   ret <4 x float> %1
 }
 
 define <8 x float> @uitofpv8i32v8float(<8 x i32> %a) {
   ; SSE2: uitofpv8i32v8float
-  ; SSE2: cost of 30 {{.*}} uitofp
+  ; SSE2: cost of 16 {{.*}} uitofp
   %1 = uitofp <8 x i32> %a to <8 x float>
   ret <8 x float> %1
 }
 
 define <16 x float> @uitofpv16i32v16float(<16 x i32> %a) {
   ; SSE2: uitofpv16i32v16float
-  ; SSE2: cost of 60 {{.*}} uitofp
+  ; SSE2: cost of 32 {{.*}} uitofp
   %1 = uitofp <16 x i32> %a to <16 x float>
   ret <16 x float> %1
 }
 
 define <32 x float> @uitofpv32i32v32float(<32 x i32> %a) {
   ; SSE2: uitofpv32i32v32float
-  ; SSE2: cost of 120 {{.*}} uitofp
+  ; SSE2: cost of 64 {{.*}} uitofp
   %1 = uitofp <32 x i32> %a to <32 x float>
   ret <32 x float> %1
 }

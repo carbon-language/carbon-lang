@@ -225,7 +225,9 @@ define void @uitofp8(<8 x i1> %a, <8 x i8> %b, <8 x i16> %c, <8 x i32> %d) {
   ; CHECK: cost of 5 {{.*}} uitofp
   %C1 = uitofp <8 x i16> %c to <8 x float>
 
-  ; CHECK: cost of 9 {{.*}} uitofp
+  ; CHECK-AVX2: cost of 8 {{.*}} uitofp
+  ; CHECK-AVX512: cost of 8 {{.*}} uitofp
+  ; CHECK-AVX: cost of 9 {{.*}} uitofp
   %D1 = uitofp <8 x i32> %d to <8 x float>
   ret void
 }

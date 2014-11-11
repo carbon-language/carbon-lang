@@ -956,6 +956,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
     setOperationAction(ISD::SELECT,             MVT::v4f32, Custom);
+    setOperationAction(ISD::UINT_TO_FP,         MVT::v4i32, Custom);
   }
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasSSE2()) {
@@ -1293,6 +1294,10 @@ void X86TargetLowering::resetOperationActions() {
 
       setOperationAction(ISD::VSELECT,         MVT::v16i16, Custom);
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
+
+      // The custom lowering for UINT_TO_FP for v8i32 becomes interesting
+      // when we have a 256bit-wide blend with immediate.
+      setOperationAction(ISD::UINT_TO_FP, MVT::v8i32, Custom);
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
       setOperationAction(ISD::ADD,             MVT::v8i32, Custom);
@@ -13307,19 +13312,130 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
   return Sub;
 }
 
+static SDValue lowerUINT_TO_FP_vXi32(SDValue Op, SelectionDAG &DAG,
+                                     const X86Subtarget &Subtarget) {
+  // The algorithm is the following:
+  // #ifdef __SSE4_1__
+  //     uint4 lo = _mm_blend_epi16( v, (uint4) 0x4b000000, 0xaa);
+  //     uint4 hi = _mm_blend_epi16( _mm_srli_epi32(v,16),
+  //                                 (uint4) 0x53000000, 0xaa);
+  // #else
+  //     uint4 lo = (v & (uint4) 0xffff) | (uint4) 0x4b000000;
+  //     uint4 hi = (v >> 16) | (uint4) 0x53000000;
+  // #endif
+  //     float4 fhi = (float4) hi - (0x1.0p39f + 0x1.0p23f);
+  //     return (float4) lo + fhi;
+
+  SDLoc DL(Op);
+  SDValue V = Op->getOperand(0);
+  EVT VecIntVT = V.getValueType();
+  bool Is128 = VecIntVT == MVT::v4i32;
+  EVT VecFloatVT = Is128 ? MVT::v4f32 : MVT::v8f32;
+  unsigned NumElts = VecIntVT.getVectorNumElements();
+  assert((VecIntVT == MVT::v4i32 || VecIntVT == MVT::v8i32) &&
+         "Unsupported custom type");
+  assert(NumElts <= 8 && "The size of the constant array must be fixed");
+
+  // In the #idef/#else code, we have in common:
+  // - The vector of constants:
+  // -- 0x4b000000
+  // -- 0x53000000
+  // - A shift:
+  // -- v >> 16
+
+  // Create the splat vector for 0x4b000000.
+  SDValue CstLow = DAG.getConstant(0x4b000000, MVT::i32);
+  SDValue CstLowArray[] = {CstLow, CstLow, CstLow, CstLow,
+                           CstLow, CstLow, CstLow, CstLow};
+  SDValue VecCstLow = DAG.getNode(ISD::BUILD_VECTOR, DL, VecIntVT,
+                                  makeArrayRef(&CstLowArray[0], NumElts));
+  // Create the splat vector for 0x53000000.
+  SDValue CstHigh = DAG.getConstant(0x53000000, MVT::i32);
+  SDValue CstHighArray[] = {CstHigh, CstHigh, CstHigh, CstHigh,
+                            CstHigh, CstHigh, CstHigh, CstHigh};
+  SDValue VecCstHigh = DAG.getNode(ISD::BUILD_VECTOR, DL, VecIntVT,
+                                   makeArrayRef(&CstHighArray[0], NumElts));
+
+  // Create the right shift.
+  SDValue CstShift = DAG.getConstant(16, MVT::i32);
+  SDValue CstShiftArray[] = {CstShift, CstShift, CstShift, CstShift,
+                             CstShift, CstShift, CstShift, CstShift};
+  SDValue VecCstShift = DAG.getNode(ISD::BUILD_VECTOR, DL, VecIntVT,
+                                    makeArrayRef(&CstShiftArray[0], NumElts));
+  SDValue HighShift = DAG.getNode(ISD::SRL, DL, VecIntVT, V, VecCstShift);
+
+  SDValue Low, High;
+  if (Subtarget.hasSSE41()) {
+    EVT VecI16VT = Is128 ? MVT::v8i16 : MVT::v16i16;
+    //     uint4 lo = _mm_blend_epi16( v, (uint4) 0x4b000000, 0xaa);
+    SDValue VecCstLowBitcast =
+        DAG.getNode(ISD::BITCAST, DL, VecI16VT, VecCstLow);
+    SDValue VecBitcast = DAG.getNode(ISD::BITCAST, DL, VecI16VT, V);
+    // Low will be bitcasted right away, so do not bother bitcasting back to its
+    // original type.
+    Low = DAG.getNode(X86ISD::BLENDI, DL, VecI16VT, VecBitcast,
+                      VecCstLowBitcast, DAG.getConstant(0xaa, MVT::i32));
+    //     uint4 hi = _mm_blend_epi16( _mm_srli_epi32(v,16),
+    //                                 (uint4) 0x53000000, 0xaa);
+    SDValue VecCstHighBitcast =
+        DAG.getNode(ISD::BITCAST, DL, VecI16VT, VecCstHigh);
+    SDValue VecShiftBitcast =
+        DAG.getNode(ISD::BITCAST, DL, VecI16VT, HighShift);
+    // High will be bitcasted right away, so do not bother bitcasting back to
+    // its original type.
+    High = DAG.getNode(X86ISD::BLENDI, DL, VecI16VT, VecShiftBitcast,
+                       VecCstHighBitcast, DAG.getConstant(0xaa, MVT::i32));
+  } else {
+    SDValue CstMask = DAG.getConstant(0xffff, MVT::i32);
+    SDValue VecCstMask = DAG.getNode(ISD::BUILD_VECTOR, DL, VecIntVT, CstMask,
+                                     CstMask, CstMask, CstMask);
+    //     uint4 lo = (v & (uint4) 0xffff) | (uint4) 0x4b000000;
+    SDValue LowAnd = DAG.getNode(ISD::AND, DL, VecIntVT, V, VecCstMask);
+    Low = DAG.getNode(ISD::OR, DL, VecIntVT, LowAnd, VecCstLow);
+
+    //     uint4 hi = (v >> 16) | (uint4) 0x53000000;
+    High = DAG.getNode(ISD::OR, DL, VecIntVT, HighShift, VecCstHigh);
+  }
+
+  // Create the vector constant for -(0x1.0p39f + 0x1.0p23f).
+  SDValue CstFAdd = DAG.getConstantFP(
+      APFloat(APFloat::IEEEsingle, APInt(32, 0xD3000080)), MVT::f32);
+  SDValue CstFAddArray[] = {CstFAdd, CstFAdd, CstFAdd, CstFAdd,
+                            CstFAdd, CstFAdd, CstFAdd, CstFAdd};
+  SDValue VecCstFAdd = DAG.getNode(ISD::BUILD_VECTOR, DL, VecFloatVT,
+                                   makeArrayRef(&CstFAddArray[0], NumElts));
+
+  //     float4 fhi = (float4) hi - (0x1.0p39f + 0x1.0p23f);
+  SDValue HighBitcast = DAG.getNode(ISD::BITCAST, DL, VecFloatVT, High);
+  SDValue FHigh =
+      DAG.getNode(ISD::FADD, DL, VecFloatVT, HighBitcast, VecCstFAdd);
+  //     return (float4) lo + fhi;
+  SDValue LowBitcast = DAG.getNode(ISD::BITCAST, DL, VecFloatVT, Low);
+  return DAG.getNode(ISD::FADD, DL, VecFloatVT, LowBitcast, FHigh);
+}
+
 SDValue X86TargetLowering::lowerUINT_TO_FP_vec(SDValue Op,
                                                SelectionDAG &DAG) const {
   SDValue N0 = Op.getOperand(0);
   MVT SVT = N0.getSimpleValueType();
   SDLoc dl(Op);
 
-  assert((SVT == MVT::v4i8 || SVT == MVT::v4i16 ||
-          SVT == MVT::v8i8 || SVT == MVT::v8i16) &&
-         "Custom UINT_TO_FP is not supported!");
-
-  MVT NVT = MVT::getVectorVT(MVT::i32, SVT.getVectorNumElements());
-  return DAG.getNode(ISD::SINT_TO_FP, dl, Op.getValueType(),
-                     DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, N0));
+  switch (SVT.SimpleTy) {
+  default:
+    llvm_unreachable("Custom UINT_TO_FP is not supported!");
+  case MVT::v4i8:
+  case MVT::v4i16:
+  case MVT::v8i8:
+  case MVT::v8i16: {
+    MVT NVT = MVT::getVectorVT(MVT::i32, SVT.getVectorNumElements());
+    return DAG.getNode(ISD::SINT_TO_FP, dl, Op.getValueType(),
+                       DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, N0));
+  }
+  case MVT::v4i32:
+  case MVT::v8i32:
+    return lowerUINT_TO_FP_vXi32(Op, DAG, *Subtarget);
+  }
+  llvm_unreachable(nullptr);
 }
 
 SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
