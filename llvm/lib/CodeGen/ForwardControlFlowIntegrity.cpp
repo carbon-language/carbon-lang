@@ -81,7 +81,6 @@ static bool isIndirectCall(CallSite &CS) {
 }
 
 static const char cfi_failure_func_name[] = "__llvm_cfi_pointer_warning";
-static const char cfi_func_name_prefix[] = "__llvm_cfi_function_";
 
 ForwardControlFlowIntegrity::ForwardControlFlowIntegrity()
     : ModulePass(ID), IndirectCalls(), JTType(JumpTable::Single),
