@@ -1428,11 +1428,18 @@ NativeProcessLinux::AttachToInferior (lldb::pid_t pid, lldb_private::Error &erro
         if (log)
             log->Printf ("NativeProcessLinux::%s (pid = %" PRIi64 "): no default platform set", __FUNCTION__, pid);
         error.SetErrorString ("no default platform available");
+        return;
     }
 
     // Gather info about the process.
     ProcessInstanceInfo process_info;
-    platform_sp->GetProcessInfo (pid, process_info);
+    if (!platform_sp->GetProcessInfo (pid, process_info))
+    {
+        if (log)
+            log->Printf ("NativeProcessLinux::%s (pid = %" PRIi64 "): failed to get process info", __FUNCTION__, pid);
+        error.SetErrorString ("failed to get process info");
+        return;
+    }
 
     // Resolve the executable module
     ModuleSP exe_module_sp;
