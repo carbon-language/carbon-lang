@@ -81,29 +81,23 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
 }
 
 static bool SkipToToken(StringRef &Str) {
-  while (!Str.empty() && Str.find_first_not_of(" \t\r\n#,") != 0) {
-    // Strip horizontal whitespace and commas.
-    if (size_t Pos = Str.find_first_not_of(" \t\r,")) {
-      Str = Str.substr(Pos);
-    }
+  for (;;) {
+    if (Str.empty())
+      return false;
 
-    // If this is the end of a line or start of a comment, remove the rest of
-    // the line.
-    if (Str[0] == '\n' || Str[0] == '#') {
-      // Strip to the end of line if we already processed any bytes on this
-      // line.  This strips the comment and/or the \n.
-      if (Str[0] == '\n') {
-        Str = Str.substr(1);
-      } else {
-        Str = Str.substr(Str.find_first_of('\n'));
-        if (!Str.empty())
-          Str = Str.substr(1);
-      }
+    // Strip horizontal whitespace and commas.
+    if (size_t Pos = Str.find_first_not_of(" \t\r\n,")) {
+      Str = Str.substr(Pos);
       continue;
     }
-  }
 
-  return !Str.empty();
+    // If this is the start of a comment, remove the rest of the line.
+    if (Str[0] == '#') {
+        Str = Str.substr(Str.find_first_of('\n'));
+      continue;
+    }
+    return true;
+  }
 }
 
 
