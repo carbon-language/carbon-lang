@@ -3628,7 +3628,7 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
 bool RecordDecl::mayInsertExtraPadding(bool EmitRemark) const {
   ASTContext &Context = getASTContext();
   if (!Context.getLangOpts().Sanitize.has(SanitizerKind::Address) ||
-      !Context.getLangOpts().Sanitize.SanitizeAddressFieldPadding)
+      !Context.getLangOpts().SanitizeAddressFieldPadding)
     return false;
   const auto &Blacklist = Context.getSanitizerBlacklist();
   const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(this);

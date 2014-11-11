@@ -23,6 +23,22 @@ enum class SanitizerKind {
   Unknown
 };
 
+class SanitizerSet {
+  /// \brief Bitmask of enabled sanitizers.
+  unsigned Kinds;
+public:
+  SanitizerSet();
+
+  /// \brief Check if a certain sanitizer is enabled.
+  bool has(SanitizerKind K) const;
+
+  /// \brief Enable or disable a certain sanitizer.
+  void set(SanitizerKind K, bool Value);
+
+  /// \brief Disable all sanitizers.
+  void clear();
+};
+
 }  // end namespace clang
 
 #endif

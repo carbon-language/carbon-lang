@@ -248,8 +248,8 @@ public:
   /// potentially higher performance penalties.
   unsigned char BoundsChecking;
 
-  /// \brief Sanitizer options to use for this function.
-  SanitizerOptions SanOpts;
+  /// \brief Sanitizers enabled for this function.
+  SanitizerSet SanOpts;
 
   /// \brief True if CodeGen currently emits code implementing sanitizer checks.
   bool IsSanitizerScope;

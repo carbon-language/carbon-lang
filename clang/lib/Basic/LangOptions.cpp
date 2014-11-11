@@ -14,24 +14,6 @@
 
 using namespace clang;
 
-SanitizerOptions::SanitizerOptions()
-    : Kind(0), SanitizeAddressFieldPadding(0) {}
-
-bool SanitizerOptions::has(SanitizerKind K) const {
-  unsigned Bit = static_cast<unsigned>(K);
-  return Kind & (1 << Bit);
-}
-
-void SanitizerOptions::set(SanitizerKind K, bool Value) {
-  unsigned Bit = static_cast<unsigned>(K);
-  Kind = Value ? (Kind | (1 << Bit)) : (Kind & ~(1 << Bit));
-}
-
-void SanitizerOptions::clear() {
-  SanitizerOptions Default;
-  *this = std::move(Default);
-}
-
 LangOptions::LangOptions() {
 #define LANGOPT(Name, Bits, Default, Description) Name = Default;
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) set##Name(Default);
@@ -48,6 +30,7 @@ void LangOptions::resetNonModularOptions() {
   // FIXME: This should not be reset; modules can be different with different
   // sanitizer options (this affects __has_feature(address_sanitizer) etc).
   Sanitize.clear();
+  SanitizerBlacklistFile.clear();
 
   CurrentModule.clear();
   ImplementationOfModule.clear();

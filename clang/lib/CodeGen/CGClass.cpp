@@ -842,7 +842,7 @@ namespace {
     }
   private:
     CodeGenFunction &CGF;
-    SanitizerOptions OldSanOpts;
+    SanitizerSet OldSanOpts;
   };
 }
 
@@ -858,7 +858,7 @@ namespace {
 
     bool isMemcpyableField(FieldDecl *F) const {
       // Never memcpy fields when we are adding poisoned paddings.
-      if (CGF.getContext().getLangOpts().Sanitize.SanitizeAddressFieldPadding)
+      if (CGF.getContext().getLangOpts().SanitizeAddressFieldPadding)
         return false;
       Qualifiers Qual = F->getType().getQualifiers();
       if (Qual.hasVolatile() || Qual.hasObjCLifetime())

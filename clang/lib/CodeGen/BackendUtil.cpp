@@ -215,7 +215,7 @@ static void addDataFlowSanitizerPass(const PassManagerBuilder &Builder,
   const PassManagerBuilderWrapper &BuilderWrapper =
       static_cast<const PassManagerBuilderWrapper&>(Builder);
   const LangOptions &LangOpts = BuilderWrapper.getLangOpts();
-  PM.add(createDataFlowSanitizerPass(LangOpts.Sanitize.BlacklistFile));
+  PM.add(createDataFlowSanitizerPass(LangOpts.SanitizerBlacklistFile));
 }
 
 static TargetLibraryInfo *createTLI(llvm::Triple &TargetTriple,

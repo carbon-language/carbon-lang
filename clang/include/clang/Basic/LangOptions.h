@@ -24,29 +24,6 @@
 
 namespace clang {
 
-class SanitizerOptions {
-  /// \brief Bitmask of enabled sanitizers.
-  unsigned Kind;
-public:
-  SanitizerOptions();
-
-  /// \brief Check if a certain sanitizer is enabled.
-  bool has(SanitizerKind K) const;
-  /// \brief Enable or disable a certain sanitizer.
-  void set(SanitizerKind K, bool Value);
-
-  /// \brief Controls how agressive is asan field padding (0: none, 1: least
-  /// aggressive, 2: more aggressive).
-  unsigned SanitizeAddressFieldPadding : 2;
-
-  /// \brief Path to blacklist file specifying which objects
-  /// (files, functions, variables) should not be instrumented.
-  std::string BlacklistFile;
-
-  /// \brief Disable all sanitizers.
-  void clear();
-};
-
 /// Bitfields of LangOptions, split out from LangOptions in order to ensure that
 /// this large collection of bitfields is a trivial class type.
 class LangOptionsBase {
@@ -56,7 +33,6 @@ public:
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
 
-  SanitizerOptions Sanitize;
 protected:
   // Define language options of enumeration type. These are private, and will
   // have accessors (below).
@@ -91,6 +67,13 @@ public:
   enum AddrSpaceMapMangling { ASMM_Target, ASMM_On, ASMM_Off };
 
 public:
+  /// \brief Set of enabled sanitizers.
+  SanitizerSet Sanitize;
+
+  /// \brief Path to blacklist file specifying which objects
+  /// (files, functions, variables) should not be instrumented.
+  std::string SanitizerBlacklistFile;
+
   clang::ObjCRuntime ObjCRuntime;
 
   std::string ObjCConstantStringClass;
