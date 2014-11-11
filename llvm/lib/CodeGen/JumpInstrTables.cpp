@@ -163,7 +163,7 @@ void JumpInstrTables::getAnalysisUsage(AnalysisUsage &AU) const {
 
 Function *JumpInstrTables::insertEntry(Module &M, Function *Target) {
   FunctionType *OrigFunTy = Target->getFunctionType();
-  FunctionType *FunTy = transformType(OrigFunTy);
+  FunctionType *FunTy = transformType(JTType, OrigFunTy);
 
   JumpMap::iterator it = Metadata.find(FunTy);
   if (Metadata.end() == it) {
@@ -191,11 +191,12 @@ Function *JumpInstrTables::insertEntry(Module &M, Function *Target) {
 }
 
 bool JumpInstrTables::hasTable(FunctionType *FunTy) {
-  FunctionType *TransTy = transformType(FunTy);
+  FunctionType *TransTy = transformType(JTType, FunTy);
   return Metadata.end() != Metadata.find(TransTy);
 }
 
-FunctionType *JumpInstrTables::transformType(FunctionType *FunTy) {
+FunctionType *JumpInstrTables::transformType(JumpTable::JumpTableType JTT,
+                                             FunctionType *FunTy) {
   // Returning nullptr forces all types into the same table, since all types map
   // to the same type
   Type *VoidPtrTy = Type::getInt8PtrTy(FunTy->getContext());
@@ -211,7 +212,7 @@ FunctionType *JumpInstrTables::transformType(FunctionType *FunTy) {
   Type *Int32Ty = Type::getInt32Ty(FunTy->getContext());
   FunctionType *VoidFnTy = FunctionType::get(
       Type::getVoidTy(FunTy->getContext()), EmptyParams, false);
-  switch (JTType) {
+  switch (JTT) {
   case JumpTable::Single:
 
     return FunctionType::get(RetTy, EmptyParams, false);
@@ -253,10 +254,10 @@ FunctionType *JumpInstrTables::transformType(FunctionType *FunTy) {
 bool JumpInstrTables::runOnModule(Module &M) {
   JITI = &getAnalysis<JumpInstrTableInfo>();
 
-  // Get the set of jumptable-annotated functions.
+  // Get the set of jumptable-annotated functions that have their address taken.
   DenseMap<Function *, Function *> Functions;
   for (Function &F : M) {
-    if (F.hasFnAttribute(Attribute::JumpTable)) {
+    if (F.hasFnAttribute(Attribute::JumpTable) && F.hasAddressTaken()) {
       assert(F.hasUnnamedAddr() &&
              "Attribute 'jumptable' requires 'unnamed_addr'");
       Functions[&F] = nullptr;

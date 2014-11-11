@@ -602,6 +602,10 @@ namespace llvm {
 
   /// createJumpInstrTables - This pass creates jump-instruction tables.
   ModulePass *createJumpInstrTablesPass();
+
+  /// createForwardControlFlowIntegrityPass - This pass adds control-flow
+  /// integrity.
+  ModulePass *createForwardControlFlowIntegrityPass();
 } // End llvm namespace
 
 /// This initializer registers TargetMachine constructor, so the pass being

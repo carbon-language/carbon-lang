@@ -413,6 +413,8 @@ public:
 
   void getTrap(MCInst &MI) const override;
 
+  unsigned getJumpInstrTableEntryBound() const override;
+
   bool isHighLatencyDef(int opc) const override;
 
   bool hasHighOperandLatency(const InstrItineraryData *ItinData,

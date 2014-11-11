@@ -37,7 +37,9 @@ class JumpInstrTableInfo : public ImmutablePass {
 public:
   static char ID;
 
-  JumpInstrTableInfo();
+  /// The default byte alignment for jump tables is 16, which is large but
+  /// usually safe.
+  JumpInstrTableInfo(uint64_t ByteAlign = 16);
   virtual ~JumpInstrTableInfo();
   const char *getPassName() const override {
     return "Jump-Instruction Table Info";
@@ -52,9 +54,19 @@ public:
   /// Gets the tables.
   const JumpTables &getTables() const { return Tables; }
 
+  /// Gets the alignment in bytes of a jumptable entry.
+  uint64_t entryByteAlignment() const { return ByteAlignment; }
 private:
   JumpTables Tables;
+
+  /// A power-of-two alignment of a jumptable entry.
+  uint64_t ByteAlignment;
 };
+
+/// Creates a JumpInstrTableInfo pass with the given bound on entry size. This
+/// bound specifies the maximum number of bytes needed to represent an
+/// unconditional jump or a trap instruction in the back end currently in use.
+ModulePass *createJumpInstrTableInfoPass(unsigned Bound);
 }
 
 #endif /* LLVM_ANALYSIS_JUMPINSTRTABLEINFO_H */

@@ -879,16 +879,17 @@ bool AsmPrinter::doFinalization(Module &M) {
     bool IsThumb = (Arch == Triple::thumb || Arch == Triple::thumbeb);
     MCInst TrapInst;
     TM.getSubtargetImpl()->getInstrInfo()->getTrap(TrapInst);
+    unsigned LogAlignment = llvm::Log2_64(JITI->entryByteAlignment());
+
+    // Emit the right section for these functions.
+    OutStreamer.SwitchSection(OutContext.getObjectFileInfo()->getTextSection());
     for (const auto &KV : JITI->getTables()) {
       uint64_t Count = 0;
       for (const auto &FunPair : KV.second) {
         // Emit the function labels to make this be a function entry point.
         MCSymbol *FunSym =
           OutContext.GetOrCreateSymbol(FunPair.second->getName());
-        OutStreamer.EmitSymbolAttribute(FunSym, MCSA_Global);
-        // FIXME: JumpTableInstrInfo should store information about the required
-        // alignment of table entries and the size of the padding instruction.
-        EmitAlignment(3);
+        EmitAlignment(LogAlignment);
         if (IsThumb)
           OutStreamer.EmitThumbFunc(FunSym);
         if (MAI->hasDotTypeDotSizeDirective())
@@ -910,10 +911,9 @@ bool AsmPrinter::doFinalization(Module &M) {
       }
 
       // Emit enough padding instructions to fill up to the next power of two.
-      // This assumes that the trap instruction takes 8 bytes or fewer.
       uint64_t Remaining = NextPowerOf2(Count) - Count;
       for (uint64_t C = 0; C < Remaining; ++C) {
-        EmitAlignment(3);
+        EmitAlignment(LogAlignment);
         OutStreamer.EmitInstruction(TrapInst, getSubtargetInfo());
       }
 

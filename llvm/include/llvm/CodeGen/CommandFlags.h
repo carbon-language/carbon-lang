@@ -222,6 +222,44 @@ JTableType("jump-table-type",
                          "Create one table per unique function type."),
               clEnumValEnd));
 
+cl::opt<bool>
+FCFI("fcfi",
+     cl::desc("Apply forward-edge control-flow integrity"),
+     cl::init(false));
+
+cl::opt<llvm::CFIntegrity>
+CFIType("cfi-type",
+        cl::desc("Choose the type of Control-Flow Integrity check to add"),
+        cl::init(CFIntegrity::Sub),
+        cl::values(
+            clEnumValN(CFIntegrity::Sub, "sub",
+                       "Subtract the pointer from the table base, then mask."),
+            clEnumValN(CFIntegrity::Ror, "ror",
+                       "Use rotate to check the offset from a table base."),
+            clEnumValN(CFIntegrity::Add, "add",
+                       "Mask out the high bits and add to an aligned base."),
+            clEnumValEnd));
+
+cl::opt<bool>
+CFIEnforcing("cfi-enforcing",
+             cl::desc("Enforce CFI or pass the violation to a function."),
+             cl::init(false));
+
+// Note that this option is linked to the cfi-enforcing option above: if
+// cfi-enforcing is set, then the cfi-func-name option is entirely ignored. If
+// cfi-enforcing is false and no cfi-func-name is set, then a default function
+// will be generated that ignores all CFI violations. The expected signature for
+// functions called with CFI violations is
+//
+// void (i8*, i8*)
+//
+// The first pointer is a C string containing the name of the function in which
+// the violation occurs, and the second pointer is the pointer that violated
+// CFI.
+cl::opt<std::string>
+CFIFuncName("cfi-func-name", cl::desc("The name of the CFI function to call"),
+            cl::init(""));
+
 // Common utility function tightly tied to the options listed here. Initializes
 // a TargetOptions object with CodeGen flags and returns it.
 static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
@@ -249,6 +287,10 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;
+  Options.FCFI = FCFI;
+  Options.CFIType = CFIType;
+  Options.CFIEnforcing = CFIEnforcing;
+  Options.CFIFuncName = CFIFuncName;
 
   Options.ThreadModel = TMModel;
 

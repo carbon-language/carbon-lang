@@ -2,8 +2,8 @@
 ; RUN: llvm-lto -o %t2 %t1 -jump-table-type=arity
 ; RUN: llvm-nm %t2 | FileCheck %s
 
-; CHECK: T __llvm_jump_instr_table_0_1
-; CHECK: T __llvm_jump_instr_table_1_1
+; CHECK: t __llvm_jump_instr_table_0_1
+; CHECK: t __llvm_jump_instr_table_1_1
 
 target triple = "x86_64-unknown-linux-gnu"
 

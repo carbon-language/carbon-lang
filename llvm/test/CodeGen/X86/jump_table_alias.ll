@@ -25,7 +25,6 @@ define i32 @main(i32 %argc, i8** %argv) {
 ; There should only be one table, even though there are two GlobalAliases,
 ; because they both alias the same value.
 
-; CHECK:         .globl  __llvm_jump_instr_table_0_1
 ; CHECK:         .align  8, 0x90
 ; CHECK:         .type   __llvm_jump_instr_table_0_1,@function
 ; CHECK: __llvm_jump_instr_table_0_1:

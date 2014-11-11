@@ -91,6 +91,7 @@ void initializeCFGOnlyViewerPass(PassRegistry&);
 void initializeCFGPrinterPass(PassRegistry&);
 void initializeCFGSimplifyPassPass(PassRegistry&);
 void initializeCFLAliasAnalysisPass(PassRegistry&);
+void initializeForwardControlFlowIntegrityPass(PassRegistry&);
 void initializeFlattenCFGPassPass(PassRegistry&);
 void initializeStructurizeCFGPass(PassRegistry&);
 void initializeCFGViewerPass(PassRegistry&);

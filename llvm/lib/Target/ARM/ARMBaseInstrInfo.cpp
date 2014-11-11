@@ -4489,29 +4489,6 @@ breakPartialRegDependency(MachineBasicBlock::iterator MI,
   MI->addRegisterKilled(DReg, TRI, true);
 }
 
-void ARMBaseInstrInfo::getUnconditionalBranch(
-    MCInst &Branch, const MCSymbolRefExpr *BranchTarget) const {
-  if (Subtarget.isThumb())
-    Branch.setOpcode(ARM::tB);
-  else if (Subtarget.isThumb2())
-    Branch.setOpcode(ARM::t2B);
-  else
-    Branch.setOpcode(ARM::Bcc);
-
-  Branch.addOperand(MCOperand::CreateExpr(BranchTarget));
-  Branch.addOperand(MCOperand::CreateImm(ARMCC::AL));
-  Branch.addOperand(MCOperand::CreateReg(0));
-}
-
-void ARMBaseInstrInfo::getTrap(MCInst &MI) const {
-  if (Subtarget.isThumb())
-    MI.setOpcode(ARM::tTRAP);
-  else if (Subtarget.useNaClTrap())
-    MI.setOpcode(ARM::TRAPNaCl);
-  else
-    MI.setOpcode(ARM::TRAP);
-}
-
 bool ARMBaseInstrInfo::hasNOP() const {
   return (Subtarget.getFeatureBits() & ARM::HasV6T2Ops) != 0;
 }
