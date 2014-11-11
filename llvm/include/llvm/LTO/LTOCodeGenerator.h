@@ -61,6 +61,7 @@ struct LTOCodeGenerator {
   static const char *getVersionString();
 
   LTOCodeGenerator();
+  LTOCodeGenerator(std::unique_ptr<LLVMContext> Context);
   ~LTOCodeGenerator();
 
   // Merge given module, return true on success.
@@ -137,6 +138,8 @@ private:
 
   typedef StringMap<uint8_t> StringSet;
 
+  void initialize();
+  std::unique_ptr<LLVMContext> OwnedContext;
   LLVMContext &Context;
   Linker IRLinker;
   TargetMachine *TargetMach;
