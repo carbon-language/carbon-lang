@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_CODEGENOPTIONS_H
 #define LLVM_CLANG_FRONTEND_CODEGENOPTIONS_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include "llvm/Support/Regex.h"
@@ -183,15 +184,7 @@ public:
   void set##Name(Type Value) { Name = static_cast<unsigned>(Value); }
 #include "clang/Frontend/CodeGenOptions.def"
 
-  CodeGenOptions() {
-#define CODEGENOPT(Name, Bits, Default) Name = Default;
-#define ENUM_CODEGENOPT(Name, Type, Bits, Default) \
-  set##Name(Default);
-#include "clang/Frontend/CodeGenOptions.def"
-
-    RelocationModel = "pic";
-    memcpy(CoverageVersion, "402*", 4);
-  }
+  CodeGenOptions();
 };
 
 }  // end namespace clang
