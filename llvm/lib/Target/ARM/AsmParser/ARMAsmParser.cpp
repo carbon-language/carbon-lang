@@ -129,7 +129,6 @@ public:
 
 class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
-  MCAsmParser &Parser;
   const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
   UnwindContext UC;
@@ -175,20 +174,16 @@ class ARMAsmParser : public MCTargetAsmParser {
       ITState.CurPosition = ~0U; // Done with the IT block after this.
   }
 
-
-  MCAsmParser &getParser() const { return Parser; }
-  MCAsmLexer &getLexer() const { return Parser.getLexer(); }
-
   void Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges = None) {
-    return Parser.Note(L, Msg, Ranges);
+    return getParser().Note(L, Msg, Ranges);
   }
   bool Warning(SMLoc L, const Twine &Msg,
                ArrayRef<SMRange> Ranges = None) {
-    return Parser.Warning(L, Msg, Ranges);
+    return getParser().Warning(L, Msg, Ranges);
   }
   bool Error(SMLoc L, const Twine &Msg,
              ArrayRef<SMRange> Ranges = None) {
-    return Parser.Error(L, Msg, Ranges);
+    return getParser().Error(L, Msg, Ranges);
   }
 
   int tryParseRegister();
@@ -338,10 +333,9 @@ public:
 
   };
 
-  ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &MII,
-               const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(MII), UC(_Parser) {
+  ARMAsmParser(MCSubtargetInfo & _STI, MCAsmParser & _Parser,
+               const MCInstrInfo &MII, const MCTargetOptions &Options)
+      : MCTargetAsmParser(), STI(_STI), MII(MII), UC(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
 
     // Cache the MCRegisterInfo.
@@ -2938,8 +2932,9 @@ static unsigned MatchRegisterName(StringRef Name);
 
 bool ARMAsmParser::ParseRegister(unsigned &RegNo,
                                  SMLoc &StartLoc, SMLoc &EndLoc) {
-  StartLoc = Parser.getTok().getLoc();
-  EndLoc = Parser.getTok().getEndLoc();
+  const AsmToken &Tok = getParser().getTok();
+  StartLoc = Tok.getLoc();
+  EndLoc = Tok.getEndLoc();
   RegNo = tryParseRegister();
 
   return (RegNo == (unsigned)-1);
@@ -2950,6 +2945,7 @@ bool ARMAsmParser::ParseRegister(unsigned &RegNo,
 /// returned.  Otherwise return -1.
 ///
 int ARMAsmParser::tryParseRegister() {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier)) return -1;
 
@@ -3006,6 +3002,7 @@ int ARMAsmParser::tryParseRegister() {
 // consumed in the process of trying to parse the shifter (i.e., when it is
 // indeed a shifter operand, but malformed).
 int ARMAsmParser::tryParseShiftRegister(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
@@ -3108,6 +3105,7 @@ int ARMAsmParser::tryParseShiftRegister(OperandVector &Operands) {
 /// TODO this is likely to change to allow different register types and or to
 /// parse for a specific register type.
 bool ARMAsmParser::tryParseRegisterWithWriteBack(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &RegTok = Parser.getTok();
   int RegNo = tryParseRegister();
   if (RegNo == -1)
@@ -3204,6 +3202,7 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
 /// parseITCondCode - Try to parse a condition code for an IT instruction.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseITCondCode(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (!Tok.is(AsmToken::Identifier))
@@ -3241,6 +3240,7 @@ ARMAsmParser::parseITCondCode(OperandVector &Operands) {
 /// number, the token is eaten and the operand is added to the operand list.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseCoprocNumOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
@@ -3263,6 +3263,7 @@ ARMAsmParser::parseCoprocNumOperand(OperandVector &Operands) {
 /// number, the token is eaten and the operand is added to the operand list.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseCoprocRegOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
@@ -3281,6 +3282,7 @@ ARMAsmParser::parseCoprocRegOperand(OperandVector &Operands) {
 /// coproc_option : '{' imm0_255 '}'
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseCoprocOptionOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
 
   // If this isn't a '{', this isn't a coprocessor immediate operand.
@@ -3358,6 +3360,7 @@ static unsigned getDRegFromQReg(unsigned QReg) {
 
 /// Parse a register list.
 bool ARMAsmParser::parseRegisterList(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   assert(Parser.getTok().is(AsmToken::LCurly) &&
          "Token is not a Left Curly Brace");
   SMLoc S = Parser.getTok().getLoc();
@@ -3489,6 +3492,7 @@ bool ARMAsmParser::parseRegisterList(OperandVector &Operands) {
 // Helper function to parse the lane index for vector lists.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index, SMLoc &EndLoc) {
+  MCAsmParser &Parser = getParser();
   Index = 0; // Always return a defined index value.
   if (Parser.getTok().is(AsmToken::LBrac)) {
     Parser.Lex(); // Eat the '['.
@@ -3540,6 +3544,7 @@ parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index, SMLoc &EndLoc) {
 // parse a vector register list
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseVectorList(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   VectorLaneTy LaneKind;
   unsigned LaneIndex;
   SMLoc S = Parser.getTok().getLoc();
@@ -3791,6 +3796,7 @@ ARMAsmParser::parseVectorList(OperandVector &Operands) {
 /// parseMemBarrierOptOperand - Try to parse DSB/DMB data barrier options.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseMemBarrierOptOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   unsigned Opt;
@@ -3862,6 +3868,7 @@ ARMAsmParser::parseMemBarrierOptOperand(OperandVector &Operands) {
 /// parseInstSyncBarrierOptOperand - Try to parse ISB inst sync barrier options.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseInstSyncBarrierOptOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   unsigned Opt;
@@ -3913,6 +3920,7 @@ ARMAsmParser::parseInstSyncBarrierOptOperand(OperandVector &Operands) {
 /// parseProcIFlagsOperand - Try to parse iflags from CPS instruction.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseProcIFlagsOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (!Tok.is(AsmToken::Identifier)) 
@@ -3947,6 +3955,7 @@ ARMAsmParser::parseProcIFlagsOperand(OperandVector &Operands) {
 /// parseMSRMaskOperand - Try to parse mask flags from MSR instruction.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseMSRMaskOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (!Tok.is(AsmToken::Identifier))
@@ -4079,6 +4088,7 @@ ARMAsmParser::parseMSRMaskOperand(OperandVector &Operands) {
 /// use in the MRS/MSR instructions added to support virtualization.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseBankedRegOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (!Tok.is(AsmToken::Identifier))
@@ -4134,6 +4144,7 @@ ARMAsmParser::parseBankedRegOperand(OperandVector &Operands) {
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parsePKHImm(OperandVector &Operands, StringRef Op, int Low,
                           int High) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier)) {
     Error(Parser.getTok().getLoc(), Op + " operand expected.");
@@ -4181,6 +4192,7 @@ ARMAsmParser::parsePKHImm(OperandVector &Operands, StringRef Op, int Low,
 
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseSetEndImm(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc S = Tok.getLoc();
   if (Tok.isNot(AsmToken::Identifier)) {
@@ -4210,6 +4222,7 @@ ARMAsmParser::parseSetEndImm(OperandVector &Operands) {
 ///             n == 32 encoded as n == 0.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseShifterImm(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc S = Tok.getLoc();
   if (Tok.isNot(AsmToken::Identifier)) {
@@ -4280,6 +4293,7 @@ ARMAsmParser::parseShifterImm(OperandVector &Operands) {
 ///     ror #n  'n' in {0, 8, 16, 24}
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseRotImm(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc S = Tok.getLoc();
   if (Tok.isNot(AsmToken::Identifier))
@@ -4326,6 +4340,7 @@ ARMAsmParser::parseRotImm(OperandVector &Operands) {
 
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseBitfield(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   // The bitfield descriptor is really two operands, the LSB and the width.
   if (Parser.getTok().isNot(AsmToken::Hash) &&
@@ -4402,6 +4417,7 @@ ARMAsmParser::parsePostIdxReg(OperandVector &Operands) {
   // This method must return MatchOperand_NoMatch without consuming any tokens
   // in the case where there is no match, as other alternatives take other
   // parse methods.
+  MCAsmParser &Parser = getParser();
   AsmToken Tok = Parser.getTok();
   SMLoc S = Tok.getLoc();
   bool haveEaten = false;
@@ -4454,6 +4470,7 @@ ARMAsmParser::parseAM3Offset(OperandVector &Operands) {
   // This method must return MatchOperand_NoMatch without consuming any tokens
   // in the case where there is no match, as other alternatives take other
   // parse methods.
+  MCAsmParser &Parser = getParser();
   AsmToken Tok = Parser.getTok();
   SMLoc S = Tok.getLoc();
 
@@ -4591,6 +4608,7 @@ void ARMAsmParser::cvtThumbBranches(MCInst &Inst,
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
 bool ARMAsmParser::parseMemory(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S, E;
   assert(Parser.getTok().is(AsmToken::LBrac) &&
          "Token is not a Left Bracket");
@@ -4782,6 +4800,7 @@ bool ARMAsmParser::parseMemory(OperandVector &Operands) {
 /// return true if it parses a shift otherwise it returns false.
 bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
                                           unsigned &Amount) {
+  MCAsmParser &Parser = getParser();
   SMLoc Loc = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
@@ -4842,6 +4861,7 @@ bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
 /// parseFPImm - A floating point immediate expression operand.
 ARMAsmParser::OperandMatchResultTy
 ARMAsmParser::parseFPImm(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   // Anything that can accept a floating point constant as an operand
   // needs to go through here, as the regular parseExpression is
   // integer only.
@@ -4922,6 +4942,7 @@ ARMAsmParser::parseFPImm(OperandVector &Operands) {
 /// Parse a arm instruction operand.  For now this parses the operand regardless
 /// of the mnemonic.
 bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
+  MCAsmParser &Parser = getParser();
   SMLoc S, E;
 
   // Check if the current operand has a custom associated parser, if so, try to
@@ -5054,6 +5075,7 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
 // parsePrefix - Parse ARM 16-bit relocations expression prefix, i.e.
 //  :lower16: and :upper16:.
 bool ARMAsmParser::parsePrefix(ARMMCExpr::VariantKind &RefKind) {
+  MCAsmParser &Parser = getParser();
   RefKind = ARMMCExpr::VK_ARM_None;
 
   // consume an optional '#' (GNU compatibility)
@@ -5429,6 +5451,7 @@ static bool RequiresVFPRegListValidation(StringRef Inst,
 /// Parse an arm instruction mnemonic followed by its operands.
 bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc, OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   // FIXME: Can this be done via tablegen in some fashion?
   bool RequireVFPRegisterListCheck;
   bool AcceptSinglePrecisionOnly;
@@ -8497,6 +8520,7 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
 ///  ::= .short expression [, expression]*
 ///  ::= .word expression [, expression]*
 bool ARMAsmParser::parseLiteralValues(unsigned Size, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
@@ -8526,6 +8550,7 @@ bool ARMAsmParser::parseLiteralValues(unsigned Size, SMLoc L) {
 /// parseDirectiveThumb
 ///  ::= .thumb
 bool ARMAsmParser::parseDirectiveThumb(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Error(L, "unexpected token in directive");
     return false;
@@ -8547,6 +8572,7 @@ bool ARMAsmParser::parseDirectiveThumb(SMLoc L) {
 /// parseDirectiveARM
 ///  ::= .arm
 bool ARMAsmParser::parseDirectiveARM(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Error(L, "unexpected token in directive");
     return false;
@@ -8575,6 +8601,7 @@ void ARMAsmParser::onLabelParsed(MCSymbol *Symbol) {
 /// parseDirectiveThumbFunc
 ///  ::= .thumbfunc symbol_name
 bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   const auto Format = getContext().getObjectFileInfo()->getObjectFileType();
   bool IsMachO = Format == MCObjectFileInfo::IsMachO;
 
@@ -8609,6 +8636,7 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
 /// parseDirectiveSyntax
 ///  ::= .syntax unified | divided
 bool ARMAsmParser::parseDirectiveSyntax(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier)) {
     Error(L, "unexpected token in .syntax directive");
@@ -8640,6 +8668,7 @@ bool ARMAsmParser::parseDirectiveSyntax(SMLoc L) {
 /// parseDirectiveCode
 ///  ::= .code 16 | 32
 bool ARMAsmParser::parseDirectiveCode(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Integer)) {
     Error(L, "unexpected token in .code directive");
@@ -8684,6 +8713,7 @@ bool ARMAsmParser::parseDirectiveCode(SMLoc L) {
 /// parseDirectiveReq
 ///  ::= name .req registername
 bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   Parser.Lex(); // Eat the '.req' token.
   unsigned Reg;
   SMLoc SRegLoc, ERegLoc;
@@ -8713,6 +8743,7 @@ bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
 /// parseDirectiveUneq
 ///  ::= .unreq registername
 bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (Parser.getTok().isNot(AsmToken::Identifier)) {
     Parser.eatToEndOfStatement();
     Error(L, "unexpected input in .unreq directive.");
@@ -8749,6 +8780,7 @@ bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
 ///  ::= .eabi_attribute int, int [, "str"]
 ///  ::= .eabi_attribute Tag_name, int [, "str"]
 bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   int64_t Tag;
   SMLoc TagLoc;
   TagLoc = Parser.getTok().getLoc();
@@ -8978,6 +9010,7 @@ bool ARMAsmParser::parseDirectiveCantUnwind(SMLoc L) {
 /// parseDirectivePersonality
 ///  ::= .personality name
 bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   bool HasExistingPersonality = UC.hasPersonality();
 
   UC.recordPersonality(L);
@@ -9041,6 +9074,7 @@ bool ARMAsmParser::parseDirectiveHandlerData(SMLoc L) {
 /// parseDirectiveSetFP
 ///  ::= .setfp fpreg, spreg [, offset]
 bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   // Check the ordering of unwind directives
   if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .setfp directive");
@@ -9118,6 +9152,7 @@ bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
 /// parseDirective
 ///  ::= .pad offset
 bool ARMAsmParser::parseDirectivePad(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   // Check the ordering of unwind directives
   if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .pad directive");
@@ -9192,6 +9227,7 @@ bool ARMAsmParser::parseDirectiveRegSave(SMLoc L, bool IsVector) {
 ///  ::= .inst.n opcode [, ...]
 ///  ::= .inst.w opcode [, ...]
 bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
+  MCAsmParser &Parser = getParser();
   int Width;
 
   if (isThumb()) {
@@ -9304,6 +9340,7 @@ bool ARMAsmParser::parseDirectiveEven(SMLoc L) {
 /// parseDirectivePersonalityIndex
 ///   ::= .personalityindex index
 bool ARMAsmParser::parseDirectivePersonalityIndex(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   bool HasExistingPersonality = UC.hasPersonality();
 
   UC.recordPersonalityIndex(L);
@@ -9359,6 +9396,7 @@ bool ARMAsmParser::parseDirectivePersonalityIndex(SMLoc L) {
 /// parseDirectiveUnwindRaw
 ///   ::= .unwind_raw offset, opcode [, opcode...]
 bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (!UC.hasFnStart()) {
     Parser.eatToEndOfStatement();
     Error(L, ".fnstart must precede .unwind_raw directives");
@@ -9440,6 +9478,8 @@ bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
 /// parseDirectiveTLSDescSeq
 ///   ::= .tlsdescseq tls-variable
 bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
+  MCAsmParser &Parser = getParser();
+
   if (getLexer().isNot(AsmToken::Identifier)) {
     TokError("expected variable after '.tlsdescseq' directive");
     Parser.eatToEndOfStatement();
@@ -9464,6 +9504,7 @@ bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
 /// parseDirectiveMovSP
 ///  ::= .movsp reg [, #offset]
 bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (!UC.hasFnStart()) {
     Parser.eatToEndOfStatement();
     Error(L, ".fnstart must precede .movsp directives");
@@ -9527,6 +9568,7 @@ bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
 /// parseDirectiveObjectArch
 ///   ::= .object_arch name
 bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::Identifier)) {
     Error(getLexer().getLoc(), "unexpected token");
     Parser.eatToEndOfStatement();
@@ -9583,6 +9625,8 @@ bool ARMAsmParser::parseDirectiveAlign(SMLoc L) {
 /// parseDirectiveThumbSet
 ///  ::= .thumb_set name, value
 bool ARMAsmParser::parseDirectiveThumbSet(SMLoc L) {
+  MCAsmParser &Parser = getParser();
+
   StringRef Name;
   if (Parser.parseIdentifier(Name)) {
     TokError("expected identifier after '.thumb_set'");
@@ -9661,6 +9705,8 @@ static const struct {
 /// parseDirectiveArchExtension
 ///   ::= .arch_extension [no]feature
 bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
+  MCAsmParser &Parser = getParser();
+
   if (getLexer().isNot(AsmToken::Identifier)) {
     Error(getLexer().getLoc(), "unexpected token");
     Parser.eatToEndOfStatement();

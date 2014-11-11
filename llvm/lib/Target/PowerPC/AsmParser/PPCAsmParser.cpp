@@ -214,16 +214,12 @@ struct PPCOperand;
 
 class PPCAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
-  MCAsmParser &Parser;
   const MCInstrInfo &MII;
   bool IsPPC64;
   bool IsDarwin;
 
-  MCAsmParser &getParser() const { return Parser; }
-  MCAsmLexer &getLexer() const { return Parser.getLexer(); }
-
-  void Warning(SMLoc L, const Twine &Msg) { Parser.Warning(L, Msg); }
-  bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
+  void Warning(SMLoc L, const Twine &Msg) { getParser().Warning(L, Msg); }
+  bool Error(SMLoc L, const Twine &Msg) { return getParser().Error(L, Msg); }
 
   bool isPPC64() const { return IsPPC64; }
   bool isDarwin() const { return IsDarwin; }
@@ -266,9 +262,8 @@ class PPCAsmParser : public MCTargetAsmParser {
 
 public:
   PPCAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &_MII,
-               const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(_MII) {
+               const MCInstrInfo &_MII, const MCTargetOptions &Options)
+      : MCTargetAsmParser(), STI(_STI), MII(_MII) {
     // Check for 64-bit vs. 32-bit pointer mode.
     Triple TheTriple(STI.getTargetTriple());
     IsPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
@@ -1127,6 +1122,7 @@ MatchRegisterName(const AsmToken &Tok, unsigned &RegNo, int64_t &IntVal) {
 
 bool PPCAsmParser::
 ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   StartLoc = Tok.getLoc();
   EndLoc = Tok.getEndLoc();
@@ -1308,6 +1304,7 @@ ParseExpression(const MCExpr *&EVal) {
 /// for this to be done at a higher level.
 bool PPCAsmParser::
 ParseDarwinExpression(const MCExpr *&EVal) {
+  MCAsmParser &Parser = getParser();
   PPCMCExpr::VariantKind Variant = PPCMCExpr::VK_PPC_None;
   switch (getLexer().getKind()) {
   default:
@@ -1350,6 +1347,7 @@ ParseDarwinExpression(const MCExpr *&EVal) {
 /// This handles registers in the form 'NN', '%rNN' for ELF platforms and
 /// rNN for MachO.
 bool PPCAsmParser::ParseOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
   const MCExpr *EVal;
@@ -1558,6 +1556,7 @@ bool PPCAsmParser::ParseDirective(AsmToken DirectiveID) {
 /// ParseDirectiveWord
 ///  ::= .word [ expression (, expression)* ]
 bool PPCAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
@@ -1582,6 +1581,7 @@ bool PPCAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 /// ParseDirectiveTC
 ///  ::= .tc [ symbol (, expression)* ]
 bool PPCAsmParser::ParseDirectiveTC(unsigned Size, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   // Skip TC symbol, which is only used with XCOFF.
   while (getLexer().isNot(AsmToken::EndOfStatement)
          && getLexer().isNot(AsmToken::Comma))
@@ -1602,6 +1602,7 @@ bool PPCAsmParser::ParseDirectiveTC(unsigned Size, SMLoc L) {
 /// ParseDirectiveMachine (ELF platforms)
 ///  ::= .machine [ cpu | "push" | "pop" ]
 bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::Identifier) &&
       getLexer().isNot(AsmToken::String)) {
     Error(L, "unexpected token in directive");
@@ -1636,6 +1637,7 @@ bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
 /// ParseDarwinDirectiveMachine (Mach-o platforms)
 ///  ::= .machine cpu-identifier
 bool PPCAsmParser::ParseDarwinDirectiveMachine(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::Identifier) &&
       getLexer().isNot(AsmToken::String)) {
     Error(L, "unexpected token in directive");

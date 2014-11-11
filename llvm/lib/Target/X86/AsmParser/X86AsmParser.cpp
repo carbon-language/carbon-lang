@@ -56,12 +56,12 @@ static const char OpPrecedence[] = {
 
 class X86AsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
-  MCAsmParser &Parser;
   const MCInstrInfo &MII;
   ParseInstructionInfo *InstInfo;
   std::unique_ptr<X86AsmInstrumentation> Instrumentation;
 private:
   SMLoc consumeToken() {
+    MCAsmParser &Parser = getParser();
     SMLoc Result = Parser.getTok().getLoc();
     Parser.Lex();
     return Result;
@@ -631,13 +631,10 @@ private:
     }
   };
 
-  MCAsmParser &getParser() const { return Parser; }
-
-  MCAsmLexer &getLexer() const { return Parser.getLexer(); }
-
   bool Error(SMLoc L, const Twine &Msg,
              ArrayRef<SMRange> Ranges = None,
              bool MatchingInlineAsm = false) {
+    MCAsmParser &Parser = getParser();
     if (MatchingInlineAsm) return true;
     return Parser.Error(L, Msg, Ranges);
   }
@@ -645,8 +642,9 @@ private:
   bool ErrorAndEatStatement(SMLoc L, const Twine &Msg,
           ArrayRef<SMRange> Ranges = None,
           bool MatchingInlineAsm = false) {
-      Parser.eatToEndOfStatement();
-      return Error(L, Msg, Ranges, MatchingInlineAsm);
+    MCAsmParser &Parser = getParser();
+    Parser.eatToEndOfStatement();
+    return Error(L, Msg, Ranges, MatchingInlineAsm);
   }
 
   std::nullptr_t ErrorOperand(SMLoc Loc, StringRef Msg) {
@@ -774,11 +772,9 @@ private:
   /// }
 
 public:
-  X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
-               const MCInstrInfo &mii,
-               const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(sti), Parser(parser), MII(mii),
-        InstInfo(nullptr) {
+  X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &Parser,
+               const MCInstrInfo &mii, const MCTargetOptions &Options)
+      : MCTargetAsmParser(), STI(sti), MII(mii), InstInfo(nullptr) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -865,6 +861,7 @@ bool X86AsmParser::doSrcDstMatch(X86Operand &Op1, X86Operand &Op2)
 
 bool X86AsmParser::ParseRegister(unsigned &RegNo,
                                  SMLoc &StartLoc, SMLoc &EndLoc) {
+  MCAsmParser &Parser = getParser();
   RegNo = 0;
   const AsmToken &PercentTok = Parser.getTok();
   StartLoc = PercentTok.getLoc();
@@ -1120,6 +1117,7 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
 }
 
 bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
 
   bool Done = false;
@@ -1241,6 +1239,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
 std::unique_ptr<X86Operand>
 X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
                                        int64_t ImmDisp, unsigned Size) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc BracLoc = Tok.getLoc(), End = Tok.getEndLoc();
   if (getLexer().isNot(AsmToken::LBrac))
@@ -1316,6 +1315,7 @@ bool X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
                                         StringRef &Identifier,
                                         InlineAsmIdentifierInfo &Info,
                                         bool IsUnevaluatedOperand, SMLoc &End) {
+  MCAsmParser &Parser = getParser();
   assert (isParsingInlineAsm() && "Expected to be parsing inline assembly.");
   Val = nullptr;
 
@@ -1362,6 +1362,7 @@ bool X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
 std::unique_ptr<X86Operand>
 X86AsmParser::ParseIntelSegmentOverride(unsigned SegReg, SMLoc Start,
                                         unsigned Size) {
+  MCAsmParser &Parser = getParser();
   assert(SegReg != 0 && "Tried to parse a segment override without a segment!");
   const AsmToken &Tok = Parser.getTok(); // Eat colon.
   if (Tok.isNot(AsmToken::Colon))
@@ -1413,6 +1414,7 @@ X86AsmParser::ParseIntelSegmentOverride(unsigned SegReg, SMLoc Start,
 std::unique_ptr<X86Operand> X86AsmParser::ParseIntelMemOperand(int64_t ImmDisp,
                                                                SMLoc Start,
                                                                unsigned Size) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc End;
 
@@ -1472,6 +1474,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelMemOperand(int64_t ImmDisp,
 /// Parse the '.' operator.
 bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
                                                 const MCExpr *&NewDisp) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   int64_t OrigDispVal, DotDispVal;
 
@@ -1516,6 +1519,7 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
 /// Parse the 'offset' operator.  This operator is used to specify the
 /// location rather then the content of a variable.
 std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOffsetOfOperator() {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc OffsetOfLoc = Tok.getLoc();
   Parser.Lex(); // Eat offset.
@@ -1553,6 +1557,7 @@ enum IntelOperatorKind {
 /// TYPE operator returns the size of a C or C++ type or variable. If the
 /// variable is an array, TYPE returns the size of a single element.
 std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperator(unsigned OpKind) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc TypeLoc = Tok.getLoc();
   Parser.Lex(); // Eat operator.
@@ -1586,6 +1591,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperator(unsigned OpKind) {
 }
 
 std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   SMLoc Start, End;
 
@@ -1668,6 +1674,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
 }
 
 std::unique_ptr<X86Operand> X86AsmParser::ParseATTOperand() {
+  MCAsmParser &Parser = getParser();
   switch (getLexer().getKind()) {
   default:
     // Parse a memory operand with no segment register.
@@ -1708,6 +1715,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseATTOperand() {
 
 bool X86AsmParser::HandleAVX512Operand(OperandVector &Operands,
                                        const MCParsedAsmOperand &Op) {
+  MCAsmParser &Parser = getParser();
   if(STI.getFeatureBits() & X86::FeatureAVX512) {
     if (getLexer().is(AsmToken::LCurly)) {
       // Eat "{" and mark the current place.
@@ -1779,6 +1787,7 @@ bool X86AsmParser::HandleAVX512Operand(OperandVector &Operands,
 std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
                                                           SMLoc MemStart) {
 
+  MCAsmParser &Parser = getParser();
   // We have to disambiguate a parenthesized expression "(4+5)" from the start
   // of a memory operand with a missing displacement "(%ebx)" or "(,%eax)".  The
   // only way to do this without lookahead is to eat the '(' and see what is
@@ -1944,6 +1953,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
 
 bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc, OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   InstInfo = &Info;
   StringRef PatchedName = Name;
 
@@ -2715,6 +2725,7 @@ bool X86AsmParser::OmitRegisterFromClobberLists(unsigned RegNo) {
 }
 
 bool X86AsmParser::ParseDirective(AsmToken DirectiveID) {
+  MCAsmParser &Parser = getParser();
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
     return ParseDirectiveWord(2, DirectiveID.getLoc());
@@ -2749,6 +2760,7 @@ bool X86AsmParser::ParseDirective(AsmToken DirectiveID) {
 /// ParseDirectiveWord
 ///  ::= .word [ expression (, expression)* ]
 bool X86AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
@@ -2776,6 +2788,7 @@ bool X86AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 /// ParseDirectiveCode
 ///  ::= .code16 | .code32 | .code64
 bool X86AsmParser::ParseDirectiveCode(StringRef IDVal, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (IDVal == ".code16") {
     Parser.Lex();
     if (!is16BitMode()) {
