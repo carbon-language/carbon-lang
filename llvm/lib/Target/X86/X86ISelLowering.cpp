@@ -19482,7 +19482,8 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isUNPCKHMask(M, SVT, Subtarget->hasInt256()) ||
           isUNPCKL_v_undef_Mask(M, SVT, Subtarget->hasInt256()) ||
           isUNPCKH_v_undef_Mask(M, SVT, Subtarget->hasInt256()) ||
-          isBlendMask(M, SVT, Subtarget->hasSSE41(), Subtarget->hasInt256()));
+          isBlendMask(M, SVT, Subtarget->hasSSE41(), Subtarget->hasInt256()) ||
+          (Subtarget->hasSSE41() && isINSERTPSMask(M, SVT)));
 }
 
 bool
