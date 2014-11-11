@@ -2211,8 +2211,10 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
   for (int i = 1, n = Kinds.size(); i < n; ++i)
     assert(RecoverKind == getRecoverableKind(Kinds[i]) &&
            "All recoverable kinds in a single check must be same!");
+#ifndef NDEBUG
   for (auto Kind : Kinds)
     assert(SanOpts.has(Kind));
+#endif
 
   if (CGM.getCodeGenOpts().SanitizeUndefinedTrapOnError) {
     assert (RecoverKind != CheckRecoverableKind::AlwaysRecoverable &&
