@@ -51,8 +51,10 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${ASAN_UNITTEST_COMMON_CFLAGS}
   -fsanitize=address
   "-fsanitize-blacklist=${ASAN_BLACKLIST_FILE}"
-  -mllvm -asan-instrument-assembly
 )
+if(CAN_TARGET_x86_64 OR CAN_TARGET_i386)
+  list(APPEND ASAN_UNITTEST_INSTRUMENTED_CFLAGS -mllvm -asan-instrument-assembly)
+endif()
 
 if(NOT MSVC)
   list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS --driver-mode=g++)
