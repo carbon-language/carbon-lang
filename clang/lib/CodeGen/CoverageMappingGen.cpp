@@ -638,22 +638,6 @@ struct CounterCoverageMappingBuilder
     }
   }
 
-  /// \brief If the given statement is a compound statement,
-  /// map '}' with the same count as '{'.
-  void VisitSubStmtRBraceState(const Stmt *S) {
-    if (!isa<CompoundStmt>(S))
-      return Visit(S);
-    const auto *CS = cast<CompoundStmt>(S);
-    auto State = getCurrentState();
-    mapSourceCodeRange(CS->getLBracLoc());
-    for (Stmt::const_child_range I = S->children(); I; ++I) {
-      if (*I)
-        this->Visit(*I);
-    }
-    CoverageMappingBuilder::mapSourceCodeRange(State, CS->getRBracLoc(),
-                                               CS->getRBracLoc());
-  }
-
   void VisitDecl(const Decl *D) {
     if (!D->hasBody())
       return;
@@ -661,7 +645,7 @@ struct CounterCoverageMappingBuilder
     auto Body = D->getBody();
     RegionMapper Cnt(this, Body);
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(Body);
+    Visit(Body);
   }
 
   void VisitDeclStmt(const DeclStmt *S) {
@@ -674,12 +658,14 @@ struct CounterCoverageMappingBuilder
   }
 
   void VisitCompoundStmt(const CompoundStmt *S) {
+    SourceMappingState State = getCurrentState();
     mapSourceCodeRange(S->getLBracLoc());
     for (Stmt::const_child_range I = S->children(); I; ++I) {
       if (*I)
         this->Visit(*I);
     }
-    mapSourceCodeRange(S->getRBracLoc(), S->getRBracLoc());
+    CoverageMappingBuilder::mapSourceCodeRange(State, S->getRBracLoc(),
+                                               S->getRBracLoc());
   }
 
   void VisitReturnStmt(const ReturnStmt *S) {
@@ -728,7 +714,7 @@ struct CounterCoverageMappingBuilder
     // Visit the body region first so the break/continue adjustments can be
     // included when visiting the condition.
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
 
     // ...then go back and propagate counts through the condition. The count
@@ -752,7 +738,7 @@ struct CounterCoverageMappingBuilder
     RegionMapper Cnt(this, S);
     BreakContinueStack.push_back(BreakContinue());
     Cnt.beginRegion(/*AddIncomingFallThrough=*/true);
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
 
     BreakContinue BC = BreakContinueStack.pop_back_val();
@@ -780,7 +766,7 @@ struct CounterCoverageMappingBuilder
     // Visit the body region first. (This is basically the same as a while
     // loop; see further comments in VisitWhileStmt.)
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
 
     // The increment is essentially part of the body but it needs to include
@@ -819,7 +805,7 @@ struct CounterCoverageMappingBuilder
     // Visit the body region first. (This is basically the same as a while
     // loop; see further comments in VisitWhileStmt.)
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
     BreakContinue BC = BreakContinueStack.pop_back_val();
     Cnt.applyAdjustmentsToRegion(addCounters(BC.BreakCount, BC.ContinueCount));
@@ -832,7 +818,7 @@ struct CounterCoverageMappingBuilder
     RegionMapper Cnt(this, S);
     BreakContinueStack.push_back(BreakContinue());
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     BreakContinue BC = BreakContinueStack.pop_back_val();
     Cnt.adjustForControlFlow();
     Cnt.applyAdjustmentsToRegion(addCounters(BC.BreakCount, BC.ContinueCount));
@@ -899,12 +885,12 @@ struct CounterCoverageMappingBuilder
     // the "else" part, if it exists, will be calculated from this counter.
     RegionMapper Cnt(this, S);
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getThen());
+    Visit(S->getThen());
     Cnt.adjustForControlFlow();
 
     if (S->getElse()) {
       Cnt.beginElseRegion();
-      VisitSubStmtRBraceState(S->getElse());
+      Visit(S->getElse());
       Cnt.adjustForControlFlow();
     }
     Cnt.applyAdjustmentsToRegion();
@@ -925,7 +911,7 @@ struct CounterCoverageMappingBuilder
     // Counter tracks the catch statement's handler block.
     RegionMapper Cnt(this, S);
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getHandlerBlock());
+    Visit(S->getHandlerBlock());
   }
 
   void VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
