@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/LinkerScript.h"
-#include "lld/Support/NumParse.h"
 
 namespace lld {
 namespace script {
@@ -90,7 +89,56 @@ void Token::dump(raw_ostream &os) const {
   os << _range << "\n";
 }
 
-bool parseHexToByteStream(StringRef str, std::string &buf) {
+static llvm::ErrorOr<uint64_t> parseDecimal(StringRef str) {
+  uint64_t res = 0;
+  for (auto &c : str) {
+    res *= 10;
+    if (c < '0' || c > '9')
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+    res += c - '0';
+  }
+  return res;
+}
+
+static llvm::ErrorOr<uint64_t> parseOctal(StringRef str) {
+  uint64_t res = 0;
+  for (auto &c : str) {
+    res <<= 3;
+    if (c < '0' || c > '7')
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+    res += c - '0';
+  }
+  return res;
+}
+
+static llvm::ErrorOr<uint64_t> parseBinary(StringRef str) {
+  uint64_t res = 0;
+  for (auto &c : str) {
+    res <<= 1;
+    if (c != '0' && c != '1')
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+    res += c - '0';
+  }
+  return res;
+}
+
+static llvm::ErrorOr<uint64_t> parseHex(StringRef str) {
+  uint64_t res = 0;
+  for (auto &c : str) {
+    res <<= 4;
+    if (c >= '0' && c <= '9')
+      res += c - '0';
+    else if (c >= 'a' && c <= 'f')
+      res += c - 'a' + 10;
+    else if (c >= 'A' && c <= 'F')
+      res += c - 'A' + 10;
+    else
+      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+  }
+  return res;
+}
+
+static bool parseHexToByteStream(StringRef str, std::string &buf) {
   unsigned char byte = 0;
   bool dumpByte = str.size() % 2;
   for (auto &c : str) {
@@ -128,6 +176,63 @@ static void dumpByteStream(raw_ostream &os, StringRef stream) {
     else
       os << (char) ('0' + secondNibble);
   }
+}
+
+static llvm::ErrorOr<uint64_t> parseNum(StringRef str) {
+  unsigned multiplier = 1;
+  enum NumKind { decimal, hex, octal, binary };
+  NumKind kind = llvm::StringSwitch<NumKind>(str)
+                     .StartsWith("0x", hex)
+                     .StartsWith("0X", hex)
+                     .StartsWith("0", octal)
+                     .Default(decimal);
+
+  // Parse scale
+  if (str.endswith("K")) {
+    multiplier = 1 << 10;
+    str = str.drop_back();
+  } else if (str.endswith("M")) {
+    multiplier = 1 << 20;
+    str = str.drop_back();
+  }
+
+  // Parse type
+  if (str.endswith_lower("o")) {
+    kind = octal;
+    str = str.drop_back();
+  } else if (str.endswith_lower("h")) {
+    kind = hex;
+    str = str.drop_back();
+  } else if (str.endswith_lower("d")) {
+    kind = decimal;
+    str = str.drop_back();
+  } else if (str.endswith_lower("b")) {
+    kind = binary;
+    str = str.drop_back();
+  }
+
+  llvm::ErrorOr<uint64_t> res(0);
+  switch (kind) {
+  case hex:
+    if (str.startswith_lower("0x"))
+      str = str.drop_front(2);
+    res = parseHex(str);
+    break;
+  case octal:
+    res = parseOctal(str);
+    break;
+  case decimal:
+    res = parseDecimal(str);
+    break;
+  case binary:
+    res = parseBinary(str);
+    break;
+  }
+  if (res.getError())
+    return res;
+
+  *res = *res * multiplier;
+  return res;
 }
 
 bool Lexer::canStartNumber(char c) const {

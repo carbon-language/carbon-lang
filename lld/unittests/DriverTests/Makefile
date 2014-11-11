@@ -15,7 +15,5 @@ USEDLIBS = lldDriver.a lldConfig.a \
            lldHexagonELFTarget.a lldPPCELFTarget.a lldMipsELFTarget.a \
            lldX86ELFTarget.a lldX86_64ELFTarget.a lldYAML.a \
            LLVMObject.a LLVMMCParser.a LLVMMC.a LLVMBitReader.a \
-           LLVMCore.a LLVMOption.a LLVMSupport.a lldAArch64ELFTarget.a \
-	   lldSupport.a
-
+           LLVMCore.a LLVMOption.a LLVMSupport.a lldAArch64ELFTarget.a
 include $(LLD_LEVEL)/unittests/Makefile
