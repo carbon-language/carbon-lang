@@ -578,49 +578,15 @@ private:
   const RecordDecl *const Record;
 };
 
-class MemberTypoDiags {
-  Sema &SemaRef;
-  DeclContext *Ctx;
-  DeclarationName Typo;
-  SourceLocation TypoLoc;
-  SourceRange BaseRange;
-  SourceRange ScopeSpecLoc;
-  unsigned DiagnosticID;
-  unsigned NoSuggestDiagnosticID;
-
-public:
-  MemberTypoDiags(Sema &SemaRef, DeclContext *Ctx, DeclarationName Typo,
-                  SourceLocation TypoLoc, SourceRange BaseRange,
-                  CXXScopeSpec &SS, unsigned DiagnosticID,
-                  unsigned NoSuggestDiagnosticID)
-      : SemaRef(SemaRef), Ctx(Ctx), Typo(Typo), TypoLoc(TypoLoc),
-        BaseRange(BaseRange), ScopeSpecLoc(SS.getRange()),
-        DiagnosticID(DiagnosticID),
-        NoSuggestDiagnosticID(NoSuggestDiagnosticID) {}
-
-  void operator()(const TypoCorrection &TC) {
-    if (TC) {
-      assert(!TC.isKeyword() && "Got a keyword as a correction for a member!");
-      bool DroppedSpecifier =
-          TC.WillReplaceSpecifier() &&
-          Typo.getAsString() == TC.getAsString(SemaRef.getLangOpts());
-      SemaRef.diagnoseTypo(TC, SemaRef.PDiag(DiagnosticID) << Typo << Ctx
-                                                           << DroppedSpecifier
-                                                           << ScopeSpecLoc);
-    } else {
-      SemaRef.Diag(TypoLoc, NoSuggestDiagnosticID) << Typo << Ctx << BaseRange;
-    }
-  }
-};
 }
 
 static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
-                                     SourceRange BaseRange,
+                                     Expr *BaseExpr,
                                      const RecordType *RTy,
-                                     SourceLocation OpLoc, CXXScopeSpec &SS,
-                                     bool HasTemplateArgs,
-                                     TypoExpr **TE = nullptr,
-                                     Sema::TypoRecoveryCallback TRC = nullptr) {
+                                     SourceLocation OpLoc, bool IsArrow,
+                                     CXXScopeSpec &SS, bool HasTemplateArgs,
+                                     TypoExpr **TE = nullptr) {
+  SourceRange BaseRange = BaseExpr ? BaseExpr->getSourceRange() : SourceRange();
   RecordDecl *RDecl = RTy->getDecl();
   if (!SemaRef.isThisOutsideMemberFunctionBody(QualType(RTy, 0)) &&
       SemaRef.RequireCompleteType(OpLoc, QualType(RTy, 0),
@@ -665,15 +631,40 @@ static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
     return false;
 
   if (TE && SemaRef.getLangOpts().CPlusPlus) {
+    DeclarationName Typo = R.getLookupName();
+    SourceLocation TypoLoc = R.getNameLoc();
     // TODO: C cannot handle TypoExpr nodes because the C code paths do not know
     // what to do with dependent types e.g. on the LHS of an assigment.
     *TE = SemaRef.CorrectTypoDelayed(
         R.getLookupNameInfo(), R.getLookupKind(), nullptr, &SS,
         llvm::make_unique<RecordMemberExprValidatorCCC>(RTy),
-        MemberTypoDiags(SemaRef, DC, R.getLookupName(), R.getNameLoc(),
-                        BaseRange, SS, diag::err_no_member_suggest,
-                        diag::err_no_member),
-        TRC, Sema::CTK_ErrorRecovery, DC);
+        [=, &SemaRef](const TypoCorrection &TC) {
+          if (TC) {
+            assert(!TC.isKeyword() &&
+                   "Got a keyword as a correction for a member!");
+            bool DroppedSpecifier =
+                TC.WillReplaceSpecifier() &&
+                Typo.getAsString() == TC.getAsString(SemaRef.getLangOpts());
+            SemaRef.diagnoseTypo(TC, SemaRef.PDiag(diag::err_no_member_suggest)
+                                         << Typo << DC << DroppedSpecifier
+                                         << SS.getRange());
+          } else {
+            SemaRef.Diag(TypoLoc, diag::err_no_member) << Typo << DC
+                                                       << BaseRange;
+          }
+        },
+        [=](Sema &SemaRef, TypoExpr *TE, TypoCorrection TC) mutable {
+          R.clear();  // Ensure there's no decls lingering in the shared state.
+          R.suppressDiagnostics();
+          R.setLookupName(TC.getCorrection());
+          for (NamedDecl *ND : TC)
+            R.addDecl(ND);
+          R.resolveKind();
+          return SemaRef.BuildMemberReferenceExpr(
+              BaseExpr, BaseExpr->getType(), OpLoc, IsArrow, SS,
+              SourceLocation(), nullptr, R, nullptr);
+        },
+        Sema::CTK_ErrorRecovery, DC);
     R.clear();
     return false;
   }
@@ -738,9 +729,9 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
   if (!Base) {
     QualType RecordTy = BaseType;
     if (IsArrow) RecordTy = RecordTy->getAs<PointerType>()->getPointeeType();
-    if (LookupMemberExprInRecord(*this, R, SourceRange(),
-                                 RecordTy->getAs<RecordType>(),
-                                 OpLoc, SS, TemplateArgs != nullptr))
+    if (LookupMemberExprInRecord(*this, R, nullptr,
+                                 RecordTy->getAs<RecordType>(), OpLoc, IsArrow,
+                                 SS, TemplateArgs != nullptr))
       return ExprError();
 
   // Explicit member accesses.
@@ -1207,39 +1198,6 @@ Sema::PerformMemberExprBaseConversion(Expr *Base, bool IsArrow) {
   return CheckPlaceholderExpr(Base);
 }
 
-namespace {
-
-class MemberExprTypoRecovery {
-  Expr *BaseExpr;
-  CXXScopeSpec SS;
-  SourceLocation OpLoc;
-  bool IsArrow;
-
-public:
-  MemberExprTypoRecovery(Expr *BE, CXXScopeSpec &SS, SourceLocation OpLoc,
-                         bool IsArrow)
-      : BaseExpr(BE), SS(SS),
-        OpLoc(OpLoc), IsArrow(IsArrow) {}
-
-  ExprResult operator()(Sema &SemaRef, TypoExpr *TE, TypoCorrection TC) {
-    LookupResult R(SemaRef, TC.getCorrection(),
-                   TC.getCorrectionRange().getBegin(),
-                   SemaRef.getTypoExprState(TE)
-                       .Consumer->getLookupResult()
-                       .getLookupKind());
-    R.suppressDiagnostics();
-
-    for (NamedDecl *ND : TC)
-      R.addDecl(ND);
-    R.resolveKind();
-    return SemaRef.BuildMemberReferenceExpr(
-        BaseExpr, BaseExpr->getType(), OpLoc, IsArrow, SS, SourceLocation(),
-        nullptr, R, nullptr);
-  }
-};
-
-}
-
 /// Look up the given member of the given non-type-dependent
 /// expression.  This can return in one of two ways:
 ///  * If it returns a sentinel null-but-valid result, the caller will
@@ -1303,10 +1261,8 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
   // Handle field access to simple records.
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
     TypoExpr *TE = nullptr;
-    if (LookupMemberExprInRecord(
-            S, R, BaseExpr.get()->getSourceRange(), RTy, OpLoc, SS,
-            HasTemplateArgs, &TE,
-            MemberExprTypoRecovery(BaseExpr.get(), SS, OpLoc, IsArrow)))
+    if (LookupMemberExprInRecord(S, R, BaseExpr.get(), RTy,
+                                 OpLoc, IsArrow, SS, HasTemplateArgs, &TE))
       return ExprError();
 
     // Returning valid-but-null is how we indicate to the caller that
