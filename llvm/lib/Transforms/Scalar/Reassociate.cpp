@@ -1955,7 +1955,8 @@ Instruction *Reassociate::canonicalizeNegConstExpr(Instruction *I) {
 
   // Must be a mul instruction.
   unsigned Opcode = I->getOpcode();
-  if (Opcode != Instruction::Mul && Opcode != Instruction::FMul)
+  if (Opcode != Instruction::Mul && Opcode != Instruction::FMul &&
+      Opcode != Instruction::FDiv)
     return nullptr;
 
   // Must have at least one constant operand.

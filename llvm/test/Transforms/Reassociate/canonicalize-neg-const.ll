@@ -108,3 +108,51 @@ define double @test8(double %x, double %y) {
   %add = fadd double %mul, %x
   ret double %add
 }
+
+; Canonicalize (x - -0.1234 / y)
+define double @test9(double %x, double %y) {
+; CHECK-LABEL: @test9
+; CHECK-NEXT: fdiv double 1.234000e-01, %y
+; CHECK-NEXT: fadd double %x, %div
+; CHECK-NEXT: ret double
+
+  %div = fdiv double -1.234000e-01, %y
+  %sub = fsub double %x, %div
+  ret double %sub
+}
+
+; Don't modify (-0.1234 / y - x)
+define double @test10(double %x, double %y) {
+; CHECK-LABEL: @test10
+; CHECK-NEXT: fdiv double -1.234000e-01, %y
+; CHECK-NEXT: fsub double %div, %x
+; CHECK-NEXT: ret double %sub
+
+  %div = fdiv double -1.234000e-01, %y
+  %sub = fsub double %div, %x
+  ret double %sub
+}
+
+; Canonicalize (-0.1234 / y + x) -> (x - 0.1234 / y)
+define double @test11(double %x, double %y) {
+; CHECK-LABEL: @test11
+; CHECK-NEXT: fdiv double 1.234000e-01, %y
+; CHECK-NEXT: fsub double %x, %div
+; CHECK-NEXT: ret double %add
+
+  %div = fdiv double -1.234000e-01, %y
+  %add = fadd double %div, %x
+  ret double %add
+}
+
+; Canonicalize (y / -0.1234 + x) -> (x - y / 0.1234)
+define double @test12(double %x, double %y) {
+; CHECK-LABEL: @test12
+; CHECK-NEXT: fdiv double %y, 1.234000e-01
+; CHECK-NEXT: fsub double %x, %div
+; CHECK-NEXT: ret double %add
+
+  %div = fdiv double %y, -1.234000e-01
+  %add = fadd double %div, %x
+  ret double %add
+}
