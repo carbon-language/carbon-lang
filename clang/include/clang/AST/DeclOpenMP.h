@@ -19,6 +19,7 @@
 #include "llvm/ADT/ArrayRef.h"
 
 namespace clang {
+class Expr;
 
 /// \brief This represents '#pragma omp threadprivate ...' directive.
 /// For example, in the following, both 'a' and 'A::b' are threadprivate:

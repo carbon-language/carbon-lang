@@ -1087,6 +1087,11 @@ public:
   void setAliasAttributes(const Decl *D, llvm::GlobalValue *GV);
 
   void addReplacement(StringRef Name, llvm::Constant *C);
+
+  /// \brief Emit a code for threadprivate directive.
+  /// \param D Threadprivate declaration.
+  void EmitOMPThreadPrivateDecl(const OMPThreadPrivateDecl *D);
+
 private:
   llvm::Constant *
   GetOrCreateLLVMFunction(StringRef MangledName, llvm::Type *Ty, GlobalDecl D,

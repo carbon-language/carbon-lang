@@ -16,6 +16,7 @@
 #include "CGCall.h"
 #include "CGDebugInfo.h"
 #include "CGObjCRuntime.h"
+#include "CGOpenMPRuntime.h"
 #include "CGRecordLayout.h"
 #include "CodeGenModule.h"
 #include "TargetInfo.h"
@@ -1802,6 +1803,14 @@ EmitBitCastOfLValueToProperType(CodeGenFunction &CGF,
   return CGF.Builder.CreateBitCast(V, IRType->getPointerTo(AS), Name);
 }
 
+static LValue EmitThreadPrivateVarDeclLValue(
+    CodeGenFunction &CGF, const VarDecl *VD, QualType T, llvm::Value *V,
+    llvm::Type *RealVarTy, CharUnits Alignment, SourceLocation Loc) {
+  V = CGF.CGM.getOpenMPRuntime().getOMPAddrOfThreadPrivate(CGF, VD, V, Loc);
+  V = EmitBitCastOfLValueToProperType(CGF, V, RealVarTy);
+  return CGF.MakeAddrLValue(V, T, Alignment);
+}
+
 static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
                                       const Expr *E, const VarDecl *VD) {
   QualType T = E->getType();
@@ -1816,6 +1825,11 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   V = EmitBitCastOfLValueToProperType(CGF, V, RealVarTy);
   CharUnits Alignment = CGF.getContext().getDeclAlign(VD);
   LValue LV;
+  // Emit reference to the private copy of the variable if it is an OpenMP
+  // threadprivate variable.
+  if (CGF.getLangOpts().OpenMP && VD->hasAttr<OMPThreadPrivateDeclAttr>())
+    return EmitThreadPrivateVarDeclLValue(CGF, VD, T, V, RealVarTy, Alignment,
+                                          E->getExprLoc());
   if (VD->getType()->isReferenceType()) {
     llvm::LoadInst *LI = CGF.Builder.CreateLoad(V);
     LI->setAlignment(Alignment.getQuantity());
@@ -1928,6 +1942,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (!V && VD->isStaticLocal())
       V = CGM.getOrCreateStaticVarDecl(
           *VD, CGM.getLLVMLinkageVarDefinition(VD, /*isConstant=*/false));
+
+    // Check if variable is threadprivate.
+    if (V && getLangOpts().OpenMP && VD->hasAttr<OMPThreadPrivateDeclAttr>())
+      return EmitThreadPrivateVarDeclLValue(
+          *this, VD, T, V, getTypes().ConvertTypeForMem(VD->getType()),
+          Alignment, E->getExprLoc());
 
     // Use special handling for lambdas.
     if (!V) {

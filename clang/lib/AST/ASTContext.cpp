@@ -7904,7 +7904,9 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
     // We never need to emit an uninstantiated function template.
     if (FD->getTemplatedKind() == FunctionDecl::TK_FunctionTemplate)
       return false;
-  } else
+  } else if (isa<OMPThreadPrivateDecl>(D))
+    return true;
+  else
     return false;
 
   // If this is a member of a class template, we do not need to emit it.

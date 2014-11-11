@@ -798,6 +798,7 @@ public:
                                     const ObjCPropertyDecl *OrigProp,
                                     const ObjCCategoryDecl *ClassExt) override;
   void DeclarationMarkedUsed(const Decl *D) override;
+  void DeclarationMarkedOpenMPThreadPrivate(const Decl *D) override;
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

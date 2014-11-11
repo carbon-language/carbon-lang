@@ -102,6 +102,12 @@ public:
   /// \param D the declaration marked used
   virtual void DeclarationMarkedUsed(const Decl *D) {}
 
+  /// \brief A declaration is marked as OpenMP threadprivate which was not
+  /// previously marked as threadprivate.
+  ///
+  /// \param D the declaration marked OpenMP threadprivate.
+  virtual void DeclarationMarkedOpenMPThreadPrivate(const Decl *D) {}
+
   // NOTE: If new methods are added they should also be added to
   // MultiplexASTMutationListener.
 };

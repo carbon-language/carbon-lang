@@ -4788,6 +4788,10 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
       case UPD_STATIC_LOCAL_NUMBER:
         Record.push_back(Update.getNumber());
         break;
+      case UPD_DECL_MARKED_OPENMP_THREADPRIVATE:
+        AddSourceRange(D->getAttr<OMPThreadPrivateDeclAttr>()->getRange(),
+                       Record);
+        break;
       }
     }
 
@@ -5880,4 +5884,12 @@ void ASTWriter::DeclarationMarkedUsed(const Decl *D) {
     return;
 
   DeclUpdates[D].push_back(DeclUpdate(UPD_DECL_MARKED_USED));
+}
+
+void ASTWriter::DeclarationMarkedOpenMPThreadPrivate(const Decl *D) {
+  assert(!WritingAST && "Already writing the AST!");
+  if (!D->isFromASTFile())
+    return;
+
+  DeclUpdates[D].push_back(DeclUpdate(UPD_DECL_MARKED_OPENMP_THREADPRIVATE));
 }

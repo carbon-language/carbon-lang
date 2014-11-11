@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclOpenMP.h"
@@ -847,6 +848,10 @@ Sema::CheckOMPThreadPrivateDecl(SourceLocation Loc, ArrayRef<Expr *> VarList) {
 
     Vars.push_back(RefExpr);
     DSAStack->addDSA(VD, DE, OMPC_threadprivate);
+    VD->addAttr(OMPThreadPrivateDeclAttr::CreateImplicit(
+        Context, SourceRange(Loc, Loc)));
+    if (auto *ML = Context.getASTMutationListener())
+      ML->DeclarationMarkedOpenMPThreadPrivate(VD);
   }
   OMPThreadPrivateDecl *D = nullptr;
   if (!Vars.empty()) {

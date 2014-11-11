@@ -634,8 +634,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     HandlePragmaOpenCLExtension();
     return DeclGroupPtrTy();
   case tok::annot_pragma_openmp:
-    ParseOpenMPDeclarativeDirective();
-    return DeclGroupPtrTy();
+    return ParseOpenMPDeclarativeDirective();
   case tok::annot_pragma_ms_pointers_to_members:
     HandlePragmaMSPointersToMembers();
     return DeclGroupPtrTy();

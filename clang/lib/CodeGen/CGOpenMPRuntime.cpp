@@ -271,6 +271,17 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_global_thread_num");
     break;
   }
+  case OMPRTL__kmpc_threadprivate_cached: {
+    // Build void *__kmpc_threadprivate_cached(ident_t *loc,
+    // kmp_int32 global_tid, void *data, size_t size, void ***cache);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty,
+                                CGM.VoidPtrTy, CGM.SizeTy,
+                                CGM.VoidPtrTy->getPointerTo()->getPointerTo()};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidPtrTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_threadprivate_cached");
+    break;
+  }
   case OMPRTL__kmpc_critical: {
     // Build void __kmpc_critical(ident_t *loc, kmp_int32 global_tid,
     // kmp_critical_name *crit);
@@ -280,6 +291,29 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_critical");
+    break;
+  }
+  case OMPRTL__kmpc_threadprivate_register: {
+    // Build void __kmpc_threadprivate_register(ident_t *, void *data,
+    // kmpc_ctor ctor, kmpc_cctor cctor, kmpc_dtor dtor);
+    // typedef void *(*kmpc_ctor)(void *);
+    auto KmpcCtorTy =
+        llvm::FunctionType::get(CGM.VoidPtrTy, CGM.VoidPtrTy,
+                                /*isVarArg*/ false)->getPointerTo();
+    // typedef void *(*kmpc_cctor)(void *, void *);
+    llvm::Type *KmpcCopyCtorTyArgs[] = {CGM.VoidPtrTy, CGM.VoidPtrTy};
+    auto KmpcCopyCtorTy =
+        llvm::FunctionType::get(CGM.VoidPtrTy, KmpcCopyCtorTyArgs,
+                                /*isVarArg*/ false)->getPointerTo();
+    // typedef void (*kmpc_dtor)(void *);
+    auto KmpcDtorTy =
+        llvm::FunctionType::get(CGM.VoidTy, CGM.VoidPtrTy, /*isVarArg*/ false)
+            ->getPointerTo();
+    llvm::Type *FnTyArgs[] = {getIdentTyPointerTy(), CGM.VoidPtrTy, KmpcCtorTy,
+                              KmpcCopyCtorTy, KmpcDtorTy};
+    auto FnTy = llvm::FunctionType::get(CGM.VoidTy, FnTyArgs,
+                                        /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_threadprivate_register");
     break;
   }
   case OMPRTL__kmpc_end_critical: {
@@ -331,6 +365,157 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
   }
   }
   return RTLFn;
+}
+
+llvm::Constant *
+CGOpenMPRuntime::getOrCreateThreadPrivateCache(const VarDecl *VD) {
+  // Lookup the entry, lazily creating it if necessary.
+  return GetOrCreateInternalVariable(CGM.Int8PtrPtrTy,
+                                     Twine(CGM.getMangledName(VD)) + ".cache.");
+}
+
+llvm::Value *CGOpenMPRuntime::getOMPAddrOfThreadPrivate(CodeGenFunction &CGF,
+                                                        const VarDecl *VD,
+                                                        llvm::Value *VDAddr,
+                                                        SourceLocation Loc) {
+  auto VarTy = VDAddr->getType()->getPointerElementType();
+  llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
+                         GetOpenMPThreadID(CGF, Loc),
+                         CGF.Builder.CreatePointerCast(VDAddr, CGM.Int8PtrTy),
+                         CGM.getSize(CGM.GetTargetTypeStoreSize(VarTy)),
+                         getOrCreateThreadPrivateCache(VD)};
+  return CGF.EmitRuntimeCall(
+      CreateRuntimeFunction(OMPRTL__kmpc_threadprivate_cached), Args);
+}
+
+void CGOpenMPRuntime::EmitOMPThreadPrivateVarInit(
+    CodeGenFunction &CGF, llvm::Value *VDAddr, llvm::Value *Ctor,
+    llvm::Value *CopyCtor, llvm::Value *Dtor, SourceLocation Loc) {
+  // Call kmp_int32 __kmpc_global_thread_num(&loc) to init OpenMP runtime
+  // library.
+  auto OMPLoc = EmitOpenMPUpdateLocation(CGF, Loc);
+  CGF.EmitRuntimeCall(CreateRuntimeFunction(OMPRTL__kmpc_global_thread_num),
+                      OMPLoc);
+  // Call __kmpc_threadprivate_register(&loc, &var, ctor, cctor/*NULL*/, dtor)
+  // to register constructor/destructor for variable.
+  llvm::Value *Args[] = {OMPLoc,
+                         CGF.Builder.CreatePointerCast(VDAddr, CGM.VoidPtrTy),
+                         Ctor, CopyCtor, Dtor};
+  CGF.EmitRuntimeCall(CreateRuntimeFunction(
+                          CGOpenMPRuntime::OMPRTL__kmpc_threadprivate_register),
+                      Args);
+}
+
+llvm::Function *CGOpenMPRuntime::EmitOMPThreadPrivateVarDefinition(
+    const VarDecl *VD, llvm::Value *VDAddr, SourceLocation Loc,
+    bool PerformInit, CodeGenFunction *CGF) {
+  VD = VD->getDefinition(CGM.getContext());
+  if (VD && ThreadPrivateWithDefinition.count(VD) == 0) {
+    ThreadPrivateWithDefinition.insert(VD);
+    QualType ASTTy = VD->getType();
+
+    llvm::Value *Ctor = nullptr, *CopyCtor = nullptr, *Dtor = nullptr;
+    auto Init = VD->getAnyInitializer();
+    if (CGM.getLangOpts().CPlusPlus && PerformInit) {
+      // Generate function that re-emits the declaration's initializer into the
+      // threadprivate copy of the variable VD
+      CodeGenFunction CtorCGF(CGM);
+      FunctionArgList Args;
+      ImplicitParamDecl Dst(CGM.getContext(), /*DC=*/nullptr, SourceLocation(),
+                            /*Id=*/nullptr, CGM.getContext().VoidPtrTy);
+      Args.push_back(&Dst);
+
+      auto &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(
+          CGM.getContext().VoidPtrTy, Args, FunctionType::ExtInfo(),
+          /*isVariadic=*/false);
+      auto FTy = CGM.getTypes().GetFunctionType(FI);
+      auto Fn = CGM.CreateGlobalInitOrDestructFunction(
+          FTy, ".__kmpc_global_ctor_.", Loc);
+      CtorCGF.StartFunction(GlobalDecl(), CGM.getContext().VoidPtrTy, Fn, FI,
+                            Args, SourceLocation());
+      auto ArgVal = CtorCGF.EmitLoadOfScalar(
+          CtorCGF.GetAddrOfLocalVar(&Dst),
+          /*Volatile=*/false, CGM.PointerAlignInBytes,
+          CGM.getContext().VoidPtrTy, Dst.getLocation());
+      auto Arg = CtorCGF.Builder.CreatePointerCast(
+          ArgVal,
+          CtorCGF.ConvertTypeForMem(CGM.getContext().getPointerType(ASTTy)));
+      CtorCGF.EmitAnyExprToMem(Init, Arg, Init->getType().getQualifiers(),
+                               /*IsInitializer=*/true);
+      ArgVal = CtorCGF.EmitLoadOfScalar(
+          CtorCGF.GetAddrOfLocalVar(&Dst),
+          /*Volatile=*/false, CGM.PointerAlignInBytes,
+          CGM.getContext().VoidPtrTy, Dst.getLocation());
+      CtorCGF.Builder.CreateStore(ArgVal, CtorCGF.ReturnValue);
+      CtorCGF.FinishFunction();
+      Ctor = Fn;
+    }
+    if (VD->getType().isDestructedType() != QualType::DK_none) {
+      // Generate function that emits destructor call for the threadprivate copy
+      // of the variable VD
+      CodeGenFunction DtorCGF(CGM);
+      FunctionArgList Args;
+      ImplicitParamDecl Dst(CGM.getContext(), /*DC=*/nullptr, SourceLocation(),
+                            /*Id=*/nullptr, CGM.getContext().VoidPtrTy);
+      Args.push_back(&Dst);
+
+      auto &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(
+          CGM.getContext().VoidTy, Args, FunctionType::ExtInfo(),
+          /*isVariadic=*/false);
+      auto FTy = CGM.getTypes().GetFunctionType(FI);
+      auto Fn = CGM.CreateGlobalInitOrDestructFunction(
+          FTy, ".__kmpc_global_dtor_.", Loc);
+      DtorCGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, Fn, FI, Args,
+                            SourceLocation());
+      auto ArgVal = DtorCGF.EmitLoadOfScalar(
+          DtorCGF.GetAddrOfLocalVar(&Dst),
+          /*Volatile=*/false, CGM.PointerAlignInBytes,
+          CGM.getContext().VoidPtrTy, Dst.getLocation());
+      DtorCGF.emitDestroy(ArgVal, ASTTy,
+                          DtorCGF.getDestroyer(ASTTy.isDestructedType()),
+                          DtorCGF.needsEHCleanup(ASTTy.isDestructedType()));
+      DtorCGF.FinishFunction();
+      Dtor = Fn;
+    }
+    // Do not emit init function if it is not required.
+    if (!Ctor && !Dtor)
+      return nullptr;
+
+    llvm::Type *CopyCtorTyArgs[] = {CGM.VoidPtrTy, CGM.VoidPtrTy};
+    auto CopyCtorTy =
+        llvm::FunctionType::get(CGM.VoidPtrTy, CopyCtorTyArgs,
+                                /*isVarArg=*/false)->getPointerTo();
+    // Copying constructor for the threadprivate variable.
+    // Must be NULL - reserved by runtime, but currently it requires that this
+    // parameter is always NULL. Otherwise it fires assertion.
+    CopyCtor = llvm::Constant::getNullValue(CopyCtorTy);
+    if (Ctor == nullptr) {
+      auto CtorTy = llvm::FunctionType::get(CGM.VoidPtrTy, CGM.VoidPtrTy,
+                                            /*isVarArg=*/false)->getPointerTo();
+      Ctor = llvm::Constant::getNullValue(CtorTy);
+    }
+    if (Dtor == nullptr) {
+      auto DtorTy = llvm::FunctionType::get(CGM.VoidTy, CGM.VoidPtrTy,
+                                            /*isVarArg=*/false)->getPointerTo();
+      Dtor = llvm::Constant::getNullValue(DtorTy);
+    }
+    if (!CGF) {
+      auto InitFunctionTy =
+          llvm::FunctionType::get(CGM.VoidTy, /*isVarArg*/ false);
+      auto InitFunction = CGM.CreateGlobalInitOrDestructFunction(
+          InitFunctionTy, ".__omp_threadprivate_init_.");
+      CodeGenFunction InitCGF(CGM);
+      FunctionArgList ArgList;
+      InitCGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, InitFunction,
+                            CGM.getTypes().arrangeNullaryFunction(), ArgList,
+                            Loc);
+      EmitOMPThreadPrivateVarInit(InitCGF, VDAddr, Ctor, CopyCtor, Dtor, Loc);
+      InitCGF.FinishFunction();
+      return InitFunction;
+    }
+    EmitOMPThreadPrivateVarInit(*CGF, VDAddr, Ctor, CopyCtor, Dtor, Loc);
+  }
+  return nullptr;
 }
 
 void CGOpenMPRuntime::EmitOMPParallelCall(CodeGenFunction &CGF,
@@ -398,21 +583,31 @@ llvm::Value *CGOpenMPRuntime::EmitThreadIDAddress(CodeGenFunction &CGF,
   return ThreadIDTemp;
 }
 
-llvm::Value *CGOpenMPRuntime::GetCriticalRegionLock(StringRef CriticalName) {
+llvm::Constant *
+CGOpenMPRuntime::GetOrCreateInternalVariable(llvm::Type *Ty,
+                                             const llvm::Twine &Name) {
   SmallString<256> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
-  Out << ".gomp_critical_user_" << CriticalName << ".var";
-  auto RuntimeCriticalName = Out.str();
-  auto &Elem = CriticalRegionVarNames.GetOrCreateValue(RuntimeCriticalName);
-  if (Elem.getValue() != nullptr)
-    return Elem.getValue();
+  Out << Name;
+  auto RuntimeName = Out.str();
+  auto &Elem = InternalVars.GetOrCreateValue(RuntimeName);
+  if (Elem.getValue()) {
+    assert(Elem.getValue()->getType()->getPointerElementType() == Ty &&
+           "OMP internal variable has different type than requested");
+    return &*Elem.getValue();
+  }
 
-  auto Lock = new llvm::GlobalVariable(
-      CGM.getModule(), KmpCriticalNameTy, /*IsConstant*/ false,
+  auto Item = new llvm::GlobalVariable(
+      CGM.getModule(), Ty, /*IsConstant*/ false,
       llvm::GlobalValue::CommonLinkage,
-      llvm::Constant::getNullValue(KmpCriticalNameTy), Elem.getKey());
-  Elem.setValue(Lock);
-  return Lock;
+      llvm::Constant::getNullValue(Ty), Elem.getKey());
+  Elem.setValue(Item);
+  return Item;
+}
+
+llvm::Value *CGOpenMPRuntime::GetCriticalRegionLock(StringRef CriticalName) {
+  llvm::Twine Name(".gomp_critical_user_", CriticalName);
+  return GetOrCreateInternalVariable(KmpCriticalNameTy, Name.concat(".var"));
 }
 
 void CGOpenMPRuntime::EmitOMPCriticalRegionStart(CodeGenFunction &CGF,

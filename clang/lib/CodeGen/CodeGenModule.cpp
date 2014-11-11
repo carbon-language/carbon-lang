@@ -3230,6 +3230,10 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
   }
 
+  case Decl::OMPThreadPrivate:
+    EmitOMPThreadPrivateDecl(cast<OMPThreadPrivateDecl>(D));
+    break;
+
   case Decl::ClassTemplateSpecialization: {
     const auto *Spec = cast<ClassTemplateSpecializationDecl>(D);
     if (DebugInfo &&
@@ -3504,5 +3508,20 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
     return ObjCRuntime->GetEHType(Ty);
 
   return getCXXABI().getAddrOfRTTIDescriptor(Ty);
+}
+
+void CodeGenModule::EmitOMPThreadPrivateDecl(const OMPThreadPrivateDecl *D) {
+  for (auto RefExpr : D->varlists()) {
+    auto *VD = cast<VarDecl>(cast<DeclRefExpr>(RefExpr)->getDecl());
+    bool PerformInit =
+        VD->getAnyInitializer() &&
+        !VD->getAnyInitializer()->isConstantInitializer(getContext(),
+                                                        /*ForRef=*/false);
+    if (auto InitFunction =
+            getOpenMPRuntime().EmitOMPThreadPrivateVarDefinition(
+                VD, GetAddrOfGlobalVar(VD), RefExpr->getLocStart(),
+                PerformInit))
+      CXXGlobalInits.push_back(InitFunction);
+  }
 }
 
