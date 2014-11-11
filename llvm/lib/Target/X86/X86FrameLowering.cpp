@@ -82,6 +82,17 @@ static unsigned getADDriOpcode(unsigned IsLP64, int64_t Imm) {
   }
 }
 
+static unsigned getANDriOpcode(bool IsLP64, int64_t Imm) {
+  if (IsLP64) {
+    if (isInt<8>(Imm))
+      return X86::AND64ri8;
+    return X86::AND64ri32;
+  }
+  if (isInt<8>(Imm))
+    return X86::AND32ri8;
+  return X86::AND32ri;
+}
+
 static unsigned getLEArOpcode(unsigned IsLP64) {
   return IsLP64 ? X86::LEA64r : X86::LEA32r;
 }
@@ -657,11 +668,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // able to calculate their offsets from the frame pointer).
   if (RegInfo->needsStackRealignment(MF)) {
     assert(HasFP && "There should be a frame pointer if stack is realigned.");
+    uint64_t Val = -MaxAlign;
     MachineInstr *MI =
       BuildMI(MBB, MBBI, DL,
-              TII.get(Uses64BitFramePtr ? X86::AND64ri32 : X86::AND32ri), StackPtr)
+              TII.get(getANDriOpcode(Uses64BitFramePtr, Val)), StackPtr)
       .addReg(StackPtr)
-      .addImm(-MaxAlign)
+      .addImm(Val)
       .setMIFlag(MachineInstr::FrameSetup);
 
     // The EFLAGS implicit def is dead.
