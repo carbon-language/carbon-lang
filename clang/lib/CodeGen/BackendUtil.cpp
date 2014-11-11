@@ -179,6 +179,14 @@ static void addBoundsCheckingPass(const PassManagerBuilder &Builder,
   PM.add(createBoundsCheckingPass());
 }
 
+static void addSanitizerCoveragePass(const PassManagerBuilder &Builder,
+                                     PassManagerBase &PM) {
+  const PassManagerBuilderWrapper &BuilderWrapper =
+      static_cast<const PassManagerBuilderWrapper&>(Builder);
+  const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
+  PM.add(createSanitizerCoverageModulePass(CGOpts.SanitizeCoverage));
+}
+
 static void addAddressSanitizerPasses(const PassManagerBuilder &Builder,
                                       PassManagerBase &PM) {
   PM.add(createAddressSanitizerFunctionPass());
@@ -272,6 +280,13 @@ void EmitAssemblyHelper::CreatePasses() {
                            addBoundsCheckingPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addBoundsCheckingPass);
+  }
+
+  if (CodeGenOpts.SanitizeCoverage) {
+    PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
+                           addSanitizerCoveragePass);
+    PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
+                           addSanitizerCoveragePass);
   }
 
   if (LangOpts.Sanitize.has(SanitizerKind::Address)) {

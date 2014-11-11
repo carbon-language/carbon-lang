@@ -488,6 +488,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.CompressDebugSections = Args.hasArg(OPT_compress_debug_sections);
   Opts.DebugCompilationDir = Args.getLastArgValue(OPT_fdebug_compilation_dir);
   Opts.LinkBitcodeFile = Args.getLastArgValue(OPT_mlink_bitcode_file);
+  Opts.SanitizeCoverage =
+      getLastArgIntValue(Args, OPT_fsanitize_coverage, 0, Diags);
   Opts.SanitizeMemoryTrackOrigins =
       getLastArgIntValue(Args, OPT_fsanitize_memory_track_origins_EQ, 0, Diags);
   Opts.SanitizeUndefinedTrapOnError =

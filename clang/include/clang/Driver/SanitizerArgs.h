@@ -48,6 +48,7 @@ class SanitizerArgs {
   unsigned Kind;
 
   std::string BlacklistFile;
+  int SanitizeCoverage;
   int MsanTrackOrigins;
   int AsanFieldPadding;
   bool AsanZeroBaseShadow;

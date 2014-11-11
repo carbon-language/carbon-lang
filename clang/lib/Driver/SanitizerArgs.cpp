@@ -24,6 +24,7 @@ using namespace llvm::opt;
 void SanitizerArgs::clear() {
   Kind = 0;
   BlacklistFile = "";
+  SanitizeCoverage = 0;
   MsanTrackOrigins = 0;
   AsanFieldPadding = 0;
   AsanZeroBaseShadow = false;
@@ -159,6 +160,17 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     }
   }
 
+  // Parse -fsanitize-coverage=N
+  if (NeedsAsan) {  // Currently asan is required.
+    if (Arg *A = Args.getLastArg(options::OPT_fsanitize_coverage)) {
+      StringRef S = A->getValue();
+      // Legal values are 0..4.
+      if (S.getAsInteger(0, SanitizeCoverage) || SanitizeCoverage < 0 ||
+          SanitizeCoverage > 4)
+        D.Diag(diag::err_drv_invalid_value) << A->getAsString(Args) << S;
+    }
+  }
+
   if (NeedsAsan) {
     AsanSharedRuntime =
         Args.hasArg(options::OPT_shared_libasan) ||
@@ -219,6 +231,9 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (AsanFieldPadding)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-address-field-padding=" +
                                          llvm::utostr(AsanFieldPadding)));
+  if (SanitizeCoverage)
+    CmdArgs.push_back(Args.MakeArgString("-fsanitize-coverage=" +
+                                         llvm::utostr(SanitizeCoverage)));
   // Workaround for PR16386.
   if (needsMsanRt())
     CmdArgs.push_back(Args.MakeArgString("-fno-assume-sane-operator-new"));
