@@ -3299,6 +3299,32 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     updateValueMap(II, CLI.ResultReg);
     return true;
   }
+  case Intrinsic::fabs: {
+    MVT VT;
+    if (!isTypeLegal(II->getType(), VT))
+      return false;
+
+    unsigned Opc;
+    switch (VT.SimpleTy) {
+    default:
+      return false;
+    case MVT::f32:
+      Opc = AArch64::FABSSr;
+      break;
+    case MVT::f64:
+      Opc = AArch64::FABSDr;
+      break;
+    }
+    unsigned SrcReg = getRegForValue(II->getOperand(0));
+    if (!SrcReg)
+      return false;
+    bool SrcRegIsKill = hasTrivialKill(II->getOperand(0));
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
+      .addReg(SrcReg, getKillRegState(SrcRegIsKill));
+    updateValueMap(II, ResultReg);
+    return true;
+  }
   case Intrinsic::trap: {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::BRK))
         .addImm(1);
