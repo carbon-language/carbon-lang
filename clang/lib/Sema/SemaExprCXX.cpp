@@ -5919,6 +5919,7 @@ namespace {
 class TransformTypos : public TreeTransform<TransformTypos> {
   typedef TreeTransform<TransformTypos> BaseTransform;
 
+  llvm::function_ref<ExprResult(Expr *)> ExprFilter;
   llvm::SmallSetVector<TypoExpr *, 2> TypoExprs;
   llvm::SmallDenseMap<TypoExpr *, ExprResult, 2> TransformCache;
   llvm::SmallDenseMap<OverloadExpr *, Expr *, 4> OverloadResolution;
@@ -5987,7 +5988,8 @@ class TransformTypos : public TreeTransform<TransformTypos> {
   }
 
 public:
-  TransformTypos(Sema &SemaRef) : BaseTransform(SemaRef) {}
+  TransformTypos(Sema &SemaRef, llvm::function_ref<ExprResult(Expr *)> &&Filter)
+      : BaseTransform(SemaRef), ExprFilter(std::move(Filter)) {}
 
   ExprResult RebuildCallExpr(Expr *Callee, SourceLocation LParenLoc,
                                    MultiExprArg Args,
@@ -6011,6 +6013,9 @@ public:
       Sema::SFINAETrap Trap(SemaRef);
       res = TransformExpr(E);
       error = Trap.hasErrorOccurred();
+
+      if (!(error || res.isInvalid()))
+        res = ExprFilter(res.get());
 
       // Exit if either the transform was valid or if there were no TypoExprs
       // to transform that still have any untried correction candidates..
@@ -6060,6 +6065,25 @@ public:
 };
 }
 
+ExprResult Sema::CorrectDelayedTyposInExpr(
+    Expr *E, llvm::function_ref<ExprResult(Expr *)> Filter) {
+  // If the current evaluation context indicates there are uncorrected typos
+  // and the current expression isn't guaranteed to not have typos, try to
+  // resolve any TypoExpr nodes that might be in the expression.
+  if (!ExprEvalContexts.empty() && ExprEvalContexts.back().NumTypos &&
+      (E->isTypeDependent() || E->isValueDependent() ||
+       E->isInstantiationDependent())) {
+    auto TyposResolved = DelayedTypos.size();
+    auto Result = TransformTypos(*this, std::move(Filter)).Transform(E);
+    TyposResolved -= DelayedTypos.size();
+    if (TyposResolved) {
+      ExprEvalContexts.back().NumTypos -= TyposResolved;
+      return Result;
+    }
+  }
+  return E;
+}
+
 ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
                                      bool DiscardedValue,
                                      bool IsConstexpr, 
@@ -6106,21 +6130,9 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
       return ExprError();
   }
 
-  // If the current evaluation context indicates there are uncorrected typos
-  // and the current expression isn't guaranteed to not have typos, try to
-  // resolve any TypoExpr nodes that might be in the expression.
-  if (ExprEvalContexts.back().NumTypos &&
-      (FullExpr.get()->isTypeDependent() ||
-       FullExpr.get()->isValueDependent() ||
-       FullExpr.get()->isInstantiationDependent())) {
-    auto TyposResolved = DelayedTypos.size();
-    FullExpr = TransformTypos(*this).Transform(FullExpr.get());
-    TyposResolved -= DelayedTypos.size();
-    if (TyposResolved)
-      ExprEvalContexts.back().NumTypos -= TyposResolved;
-    if (FullExpr.isInvalid())
-      return ExprError();
-  }
+  FullExpr = CorrectDelayedTyposInExpr(FullExpr.get());
+  if (FullExpr.isInvalid())
+    return ExprError();
 
   CheckCompletedExpr(FullExpr.get(), CC, IsConstexpr);
 
