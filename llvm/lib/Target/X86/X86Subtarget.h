@@ -197,6 +197,11 @@ protected:
   /// substantially higher than normal FP ops like FADD and FMUL.
   bool UseSqrtEst;
 
+  /// Use the RCP* instructions to optimize FP division calculations.
+  /// For this to be profitable, the cost of FDIV must be
+  /// substantially higher than normal FP ops like FADD and FMUL.
+  bool UseReciprocalEst;
+  
   /// Processor has AVX-512 PreFetch Instructions
   bool HasPFI;
 
@@ -375,6 +380,7 @@ public:
   bool slowLEA() const { return SlowLEA; }
   bool slowIncDec() const { return SlowIncDec; }
   bool useSqrtEst() const { return UseSqrtEst; }
+  bool useReciprocalEst() const { return UseReciprocalEst; }
   bool hasCDI() const { return HasCDI; }
   bool hasPFI() const { return HasPFI; }
   bool hasERI() const { return HasERI; }

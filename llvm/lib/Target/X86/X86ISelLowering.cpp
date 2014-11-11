@@ -14514,6 +14514,37 @@ SDValue X86TargetLowering::getRsqrtEstimate(SDValue Op,
   return SDValue();
 }
 
+/// The minimum architected relative accuracy is 2^-12. We need one
+/// Newton-Raphson step to have a good float result (24 bits of precision).
+SDValue X86TargetLowering::getRecipEstimate(SDValue Op,
+                                            DAGCombinerInfo &DCI,
+                                            unsigned &RefinementSteps) const {
+  // FIXME: We should use instruction latency models to calculate the cost of
+  // each potential sequence, but this is very hard to do reliably because
+  // at least Intel's Core* chips have variable timing based on the number of
+  // significant digits in the divisor.
+  if (!Subtarget->useReciprocalEst())
+    return SDValue();
+  
+  EVT VT = Op.getValueType();
+  
+  // SSE1 has rcpss and rcpps. AVX adds a 256-bit variant for rcpps.
+  // TODO: Add support for AVX512 (v16f32).
+  // It is likely not profitable to do this for f64 because a double-precision
+  // reciprocal estimate with refinement on x86 prior to FMA requires
+  // 15 instructions: convert to single, rcpss, convert back to double, refine
+  // (3 steps = 12 insts). If an 'rcpsd' variant was added to the ISA
+  // along with FMA, this could be a throughput win.
+  if ((Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)) ||
+      (Subtarget->hasAVX() && VT == MVT::v8f32)) {
+    // TODO: Expose this as a user-configurable parameter to allow for
+    // speed vs. accuracy flexibility.
+    RefinementSteps = 1;
+    return DCI.DAG.getNode(X86ISD::FRCP, SDLoc(Op), VT, Op);
+  }
+  return SDValue();
+}
+
 static bool isAllOnes(SDValue V) {
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
   return C && C->isAllOnesValue();
