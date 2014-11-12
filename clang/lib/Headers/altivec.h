@@ -8875,6 +8875,91 @@ vec_vupklsh(vector pixel __a)
 #endif
 }
 
+/* vec_vsx_ld */
+
+#ifdef __VSX__
+
+static vector signed int __ATTRS_o_ai
+vec_vsx_ld(int __a, const vector signed int *__b)
+{
+  return (vector signed int)__builtin_vsx_lxvw4x(__a, __b);
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_vsx_ld(int __a, const vector unsigned int *__b)
+{
+  return (vector unsigned int)__builtin_vsx_lxvw4x(__a, __b);
+}
+
+static vector float __ATTRS_o_ai
+vec_vsx_ld(int __a, const vector float *__b)
+{
+  return (vector float)__builtin_vsx_lxvw4x(__a, __b);
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vsx_ld(int __a, const vector signed long long *__b)
+{
+  return (vector signed long long)__builtin_vsx_lxvd2x(__a, __b);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vsx_ld(int __a, const vector unsigned long long *__b)
+{
+  return (vector unsigned long long)__builtin_vsx_lxvd2x(__a, __b);
+}
+
+static vector double __ATTRS_o_ai
+vec_vsx_ld(int __a, const vector double *__b)
+{
+  return (vector double)__builtin_vsx_lxvd2x(__a, __b);
+}
+
+#endif
+
+/* vec_vsx_st */
+
+#ifdef __VSX__
+
+static void __ATTRS_o_ai
+vec_vsx_st(vector signed int __a, int __b, vector signed int *__c)
+{
+  __builtin_vsx_stxvw4x((vector int)__a, __b, __c);
+}
+
+static void __ATTRS_o_ai
+vec_vsx_st(vector unsigned int __a, int __b, vector unsigned int *__c)
+{
+  __builtin_vsx_stxvw4x((vector int)__a, __b, __c);
+}
+
+static void __ATTRS_o_ai
+vec_vsx_st(vector float __a, int __b, vector float *__c)
+{
+  __builtin_vsx_stxvw4x((vector int)__a, __b, __c);
+}
+
+static void __ATTRS_o_ai
+vec_vsx_st(vector signed long long __a, int __b, vector signed long long *__c)
+{
+  __builtin_vsx_stxvd2x((vector double)__a, __b, __c);
+}
+
+static void __ATTRS_o_ai
+vec_vsx_st(vector unsigned long long __a, int __b,
+           vector unsigned long long *__c)
+{
+  __builtin_vsx_stxvd2x((vector double)__a, __b, __c);
+}
+
+static void __ATTRS_o_ai
+vec_vsx_st(vector double __a, int __b, vector double *__c)
+{
+  __builtin_vsx_stxvd2x((vector double)__a, __b, __c);
+}
+
+#endif
+
 /* vec_xor */
 
 #define __builtin_altivec_vxor vec_xor

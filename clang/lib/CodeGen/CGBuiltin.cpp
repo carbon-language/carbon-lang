@@ -6035,6 +6035,8 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   case PPC::BI__builtin_altivec_lvewx:
   case PPC::BI__builtin_altivec_lvsl:
   case PPC::BI__builtin_altivec_lvsr:
+  case PPC::BI__builtin_vsx_lxvd2x:
+  case PPC::BI__builtin_vsx_lxvw4x:
   {
     Ops[1] = Builder.CreateBitCast(Ops[1], Int8PtrTy);
 
@@ -6064,6 +6066,12 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     case PPC::BI__builtin_altivec_lvsr:
       ID = Intrinsic::ppc_altivec_lvsr;
       break;
+    case PPC::BI__builtin_vsx_lxvd2x:
+      ID = Intrinsic::ppc_vsx_lxvd2x;
+      break;
+    case PPC::BI__builtin_vsx_lxvw4x:
+      ID = Intrinsic::ppc_vsx_lxvw4x;
+      break;
     }
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, Ops, "");
@@ -6075,6 +6083,8 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   case PPC::BI__builtin_altivec_stvebx:
   case PPC::BI__builtin_altivec_stvehx:
   case PPC::BI__builtin_altivec_stvewx:
+  case PPC::BI__builtin_vsx_stxvd2x:
+  case PPC::BI__builtin_vsx_stxvw4x:
   {
     Ops[2] = Builder.CreateBitCast(Ops[2], Int8PtrTy);
     Ops[1] = Builder.CreateGEP(Ops[2], Ops[1]);
@@ -6096,6 +6106,12 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
       break;
     case PPC::BI__builtin_altivec_stvewx:
       ID = Intrinsic::ppc_altivec_stvewx;
+      break;
+    case PPC::BI__builtin_vsx_stxvd2x:
+      ID = Intrinsic::ppc_vsx_stxvd2x;
+      break;
+    case PPC::BI__builtin_vsx_stxvw4x:
+      ID = Intrinsic::ppc_vsx_stxvw4x;
       break;
     }
     llvm::Function *F = CGM.getIntrinsic(ID);
