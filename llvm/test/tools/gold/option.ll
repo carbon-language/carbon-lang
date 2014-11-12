@@ -6,16 +6,24 @@
 ; RUN:    -shared %t.o -o %t2.o
 ; RUN: llvm-nm %t2.o | FileCheck %s
 
-; CHECK: T __llvm_jump_instr_table_0_1
-; CHECK: T __llvm_jump_instr_table_1_1
+; CHECK: t __llvm_jump_instr_table_0_1
+; CHECK: t __llvm_jump_instr_table_1_1
 
 target triple = "x86_64-unknown-linux-gnu"
 define i32 @g(i32 %a) unnamed_addr jumptable {
   ret i32 %a
 }
 
+define i32 (i32)* @get_g() {
+  ret i32 (i32)* @g
+}
+
 define i32 @f() unnamed_addr jumptable {
   ret i32 0
+}
+
+define i32 ()* @get_f() {
+  ret i32 ()* @f
 }
 
 define <2 x i64> @test_aes(<2 x i64> %a0, <2 x i64> %a1) {
