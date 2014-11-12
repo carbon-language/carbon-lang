@@ -73,6 +73,11 @@ namespace llvm {
       dunder_isoc99_sscanf,
       /// void *__memcpy_chk(void *s1, const void *s2, size_t n, size_t s1size);
       memcpy_chk,
+      /// void *__memmove_chk(void *s1, const void *s2, size_t n,
+      ///                     size_t s1size);
+      memmove_chk,
+      /// void *__memset_chk(void *s, char v, size_t n, size_t s1size);
+      memset_chk,
       /// double __sincospi_stret(double x);
       sincospi_stret,
       /// float __sincospif_stret(float x);
@@ -87,8 +92,18 @@ namespace llvm {
       sqrtf_finite,
       /// long double __sqrt_finite(long double x);
       sqrtl_finite,
+      /// char *__stpcpy_chk(char *s1, const char *s2, size_t s1size);
+      stpcpy_chk,
+      /// char *__stpncpy_chk(char *s1, const char *s2, size_t n,
+      ///                     size_t s1size);
+      stpncpy_chk,
+      /// char *__strcpy_chk(char *s1, const char *s2, size_t s1size);
+      strcpy_chk,
       /// char * __strdup(const char *s);
       dunder_strdup,
+      /// char *__strncpy_chk(char *s1, const char *s2, size_t n,
+      ///                     size_t s1size);
+      strncpy_chk,
       /// char *__strndup(const char *s, size_t n);
       dunder_strndup,
       /// char * __strtok_r(char *s, const char *delim, char **save_ptr);

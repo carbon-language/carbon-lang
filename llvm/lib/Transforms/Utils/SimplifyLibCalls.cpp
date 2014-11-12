@@ -2184,28 +2184,20 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
       return nullptr;
     case LibFunc::memcpy_chk:
       return optimizeMemCpyChk(CI, Builder);
+    case LibFunc::memmove_chk:
+      return optimizeMemMoveChk(CI, Builder);
+    case LibFunc::memset_chk:
+      return optimizeMemSetChk(CI, Builder);
+    case LibFunc::strcpy_chk:
+      return optimizeStrCpyChk(CI, Builder);
+    case LibFunc::stpcpy_chk:
+      return optimizeStpCpyChk(CI, Builder);
+    case LibFunc::stpncpy_chk:
+    case LibFunc::strncpy_chk:
+      return optimizeStrNCpyChk(CI, Builder);
     default:
       return nullptr;
     }
-  }
-
-  if (!isCallingConvC)
-    return nullptr;
-
-  // Finally check for fortified library calls.
-  if (FuncName.endswith("_chk")) {
-    if (FuncName == "__memmove_chk")
-      return optimizeMemMoveChk(CI, Builder);
-    else if (FuncName == "__memset_chk")
-      return optimizeMemSetChk(CI, Builder);
-    else if (FuncName == "__strcpy_chk")
-      return optimizeStrCpyChk(CI, Builder);
-    else if (FuncName == "__stpcpy_chk")
-      return optimizeStpCpyChk(CI, Builder);
-    else if (FuncName == "__strncpy_chk")
-      return optimizeStrNCpyChk(CI, Builder);
-    else if (FuncName == "__stpncpy_chk")
-      return optimizeStrNCpyChk(CI, Builder);
   }
 
   return nullptr;
