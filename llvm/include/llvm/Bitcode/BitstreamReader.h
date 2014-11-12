@@ -230,12 +230,6 @@ public:
         static_cast<uint64_t>(pos - 1));
   }
 
-  uint32_t getWord(size_t pos) {
-    uint8_t buf[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
-    BitStream->getBitcodeBytes().readBytes(pos, sizeof(buf), buf);
-    return *reinterpret_cast<support::ulittle32_t *>(buf);
-  }
-
   bool AtEndOfStream() {
     return BitsInCurWord == 0 && isEndPos(NextChar);
   }
