@@ -11,8 +11,8 @@
 #define LLVM_LINKER_LINKER_H
 
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/STLExtras.h"
 
+#include <functional>
 
 namespace llvm {
 class DiagnosticInfo;
@@ -25,7 +25,7 @@ class StructType;
 /// something with it after the linking.
 class Linker {
   public:
-    typedef function_ref<void(const DiagnosticInfo &)>
+    typedef std::function<void(const DiagnosticInfo &)>
         DiagnosticHandlerFunction;
 
     Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
