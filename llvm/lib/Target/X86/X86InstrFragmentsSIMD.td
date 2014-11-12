@@ -203,6 +203,8 @@ def SDTBlend : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
 
 def SDTFma : SDTypeProfile<1, 3, [SDTCisSameAs<0,1>,
                            SDTCisSameAs<1,2>, SDTCisSameAs<1,3>]>;
+def STDFp1SrcRm : SDTypeProfile<1, 2, [SDTCisSameAs<0,1>,
+                           SDTCisVec<0>, SDTCisInt<2>]>;
 
 def X86PAlignr : SDNode<"X86ISD::PALIGNR", SDTShuff3OpI>;
 def X86VAlign  : SDNode<"X86ISD::VALIGN", SDTShuff3OpI>;
@@ -260,6 +262,10 @@ def X86Fmsub     : SDNode<"X86ISD::FMSUB",     SDTFma>;
 def X86Fnmsub    : SDNode<"X86ISD::FNMSUB",    SDTFma>;
 def X86Fmaddsub  : SDNode<"X86ISD::FMADDSUB",  SDTFma>;
 def X86Fmsubadd  : SDNode<"X86ISD::FMSUBADD",  SDTFma>;
+
+def X86rsqrt28   : SDNode<"X86ISD::RSQRT28",  STDFp1SrcRm>;
+def X86rcp28     : SDNode<"X86ISD::RCP28",    STDFp1SrcRm>;
+def X86exp2      : SDNode<"X86ISD::EXP2",  STDFp1SrcRm>;
 
 def SDT_PCMPISTRI : SDTypeProfile<2, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
                                          SDTCisVT<2, v16i8>, SDTCisVT<3, v16i8>,

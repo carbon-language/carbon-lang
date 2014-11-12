@@ -3050,6 +3050,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx512_rcp28_pd : GCCBuiltin<"__builtin_ia32_rcp28pd_mask">,
             Intrinsic<[llvm_v8f64_ty], [llvm_v8f64_ty, llvm_v8f64_ty,
                                         llvm_i8_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_exp2_ps : GCCBuiltin<"__builtin_ia32_exp2ps_mask">,
+            Intrinsic<[llvm_v16f32_ty], [llvm_v16f32_ty, llvm_v16f32_ty,
+                                         llvm_i16_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_exp2_pd : GCCBuiltin<"__builtin_ia32_exp2pd_mask">,
+            Intrinsic<[llvm_v8f64_ty], [llvm_v8f64_ty, llvm_v8f64_ty,
+                                        llvm_i8_ty, llvm_i32_ty], [IntrNoMem]>;
+
   def int_x86_avx512_rcp28_ss : GCCBuiltin<"__builtin_ia32_rcp28ss_mask">,
             Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty,
                                         llvm_v4f32_ty, llvm_i8_ty, llvm_i32_ty],

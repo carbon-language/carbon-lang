@@ -419,6 +419,9 @@ namespace llvm {
       // Test if in transactional execution.
       XTEST,
 
+      // ERI instructions
+      RSQRT28, RCP28, EXP2,
+
       // Compare and swap.
       LCMPXCHG_DAG = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LCMPXCHG8_DAG,

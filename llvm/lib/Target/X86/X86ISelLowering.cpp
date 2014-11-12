@@ -16310,7 +16310,9 @@ static SDValue getTargetVShiftNode(unsigned Opc, SDLoc dl, MVT VT,
 /// (vselect \p Mask, \p Op, \p PreservedSrc) for others along with the
 /// necessary casting for \p Mask when lowering masking intrinsics.
 static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
-                                    SDValue PreservedSrc, SelectionDAG &DAG) {
+                                    SDValue PreservedSrc,
+                                    const X86Subtarget *Subtarget,
+                                    SelectionDAG &DAG) {
     EVT VT = Op.getValueType();
     EVT MaskVT = EVT::getVectorVT(*DAG.getContext(),
                                   MVT::i1, VT.getVectorNumElements());
@@ -16337,7 +16339,8 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
       case X86ISD::CMPMU:
         return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
     }
-
+    if (PreservedSrc.getOpcode() == ISD::UNDEF)
+      PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
     return DAG.getNode(ISD::VSELECT, dl, VT, VMask, Op, PreservedSrc);
 }
 
@@ -16389,10 +16392,11 @@ static unsigned getOpcodeForFMAIntrinsic(unsigned IntNo) {
     }
 }
 
-static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
   SDLoc dl(Op);
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-
+  EVT VT = Op.getValueType();
   const IntrinsicData* IntrData = getIntrinsicWithoutChain(IntNo);
   if (IntrData) {
     switch(IntrData->Type) {
@@ -16404,6 +16408,16 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case INTR_TYPE_3OP:
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
         Op.getOperand(2), Op.getOperand(3));
+    case INTR_TYPE_1OP_MASK_RM: {
+      SDValue Src = Op.getOperand(1);
+      SDValue Src0 = Op.getOperand(2);
+      SDValue Mask = Op.getOperand(3);
+      SDValue RoundingMode = Op.getOperand(4);
+      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src,
+                                              RoundingMode),
+                                  Mask, Src0, Subtarget, DAG);
+    }
+                                              
     case CMP_MASK:
     case CMP_MASK_CC: {
       // Comparison intrinsics with masks.
@@ -16431,7 +16445,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
                     Op.getOperand(2));
       }
       SDValue CmpMask = getVectorMaskingNode(Cmp, Mask,
-                                        DAG.getTargetConstant(0, MaskVT), DAG);
+                                             DAG.getTargetConstant(0, MaskVT),
+                                             Subtarget, DAG);
       SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, BitcastVT,
                                 DAG.getUNDEF(BitcastVT), CmpMask,
                                 DAG.getIntPtrConstant(0));
@@ -16598,7 +16613,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
                                             Op.getValueType(), Op.getOperand(2),
                                             Op.getOperand(1),
                                             Op.getOperand(3)),
-                                Op.getOperand(5), Op.getOperand(4), DAG);
+                                Op.getOperand(5), Op.getOperand(4),
+                                Subtarget, DAG);
 
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest
@@ -16772,7 +16788,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
                                               Op.getOperand(1),
                                               Op.getOperand(2),
                                               Op.getOperand(3)),
-                                  Op.getOperand(4), Op.getOperand(1), DAG);
+                                  Op.getOperand(4), Op.getOperand(1),
+                                  Subtarget, DAG);
     else
       return SDValue();
   }
@@ -18887,7 +18904,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::VACOPY:             return LowerVACOPY(Op, Subtarget, DAG);
-  case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, Subtarget, DAG);
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN:  return LowerINTRINSIC_W_CHAIN(Op, Subtarget, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
