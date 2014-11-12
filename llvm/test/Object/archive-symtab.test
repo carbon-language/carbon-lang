@@ -61,6 +61,7 @@ RUN: llvm-ranlib %t.a
 RUN: llvm-nm -M %t.a | FileCheck %s
 
 RUN: llvm-nm -M %p/Inputs/macho-archive-x86_64.a | FileCheck %s --check-prefix=BSD-MachO
+RUN: llvm-nm -M %p/Inputs/macho-archive-unsorted-x86_64.a | FileCheck %s --check-prefix=BSD-MachO
 
 BSD-MachO: Archive map
 BSD-MachO: _bar in bar.o

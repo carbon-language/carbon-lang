@@ -240,7 +240,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
     if (ec)
       return;
     Name = NameOrErr.get();
-    if (Name == "__.SYMDEF SORTED") {
+    if (Name == "__.SYMDEF SORTED" || Name == "__.SYMDEF") {
       SymbolTable = i;
       ++i;
     }
