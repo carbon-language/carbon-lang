@@ -832,7 +832,7 @@ NOINLINE static int LargeFunction(bool do_bad_access) {
   x[18]++;
   x[19]++;
 
-  delete x;
+  delete[] x;
   return res;
 }
 

@@ -570,7 +570,7 @@ TEST(MemorySanitizer, fread) {
   EXPECT_NOT_POISONED(x[16]);
   EXPECT_NOT_POISONED(x[31]);
   fclose(f);
-  delete x;
+  delete[] x;
 }
 
 TEST(MemorySanitizer, read) {
@@ -583,7 +583,7 @@ TEST(MemorySanitizer, read) {
   EXPECT_NOT_POISONED(x[16]);
   EXPECT_NOT_POISONED(x[31]);
   close(fd);
-  delete x;
+  delete[] x;
 }
 
 TEST(MemorySanitizer, pread) {
@@ -596,7 +596,7 @@ TEST(MemorySanitizer, pread) {
   EXPECT_NOT_POISONED(x[16]);
   EXPECT_NOT_POISONED(x[31]);
   close(fd);
-  delete x;
+  delete[] x;
 }
 
 TEST(MemorySanitizer, readv) {
@@ -2807,7 +2807,7 @@ TEST(MemorySanitizer, scanf) {
   EXPECT_NOT_POISONED(s[4]);
   EXPECT_NOT_POISONED(s[5]);
   EXPECT_POISONED(s[6]);
-  delete s;
+  delete[] s;
   delete d;
 }
 
