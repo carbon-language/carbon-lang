@@ -2024,8 +2024,8 @@ AddressingModeMatcher::IsPromotionProfitable(unsigned MatchedSize,
   if (!ISDOpcode)
     return true;
   // Otherwise, check if the promoted instruction is legal or not.
-  return TLI.isOperationLegalOrCustom(ISDOpcode,
-                                      EVT::getEVT(PromotedInst->getType()));
+  return TLI.isOperationLegalOrCustom(
+      ISDOpcode, TLI.getValueType(PromotedInst->getType()));
 }
 
 /// MatchOperationAddr - Given an instruction or constant expr, see if we can
@@ -3272,7 +3272,7 @@ class VectorPromoteHelper {
     unsigned Align = ST->getAlignment();
     // Check if this store is supported.
     if (!TLI.allowsMisalignedMemoryAccesses(
-            EVT::getEVT(ST->getValueOperand()->getType()), AS, Align)) {
+            TLI.getValueType(ST->getValueOperand()->getType()), AS, Align)) {
       // If this is not supported, there is no way we can combine
       // the extract with the store.
       return false;
@@ -3404,8 +3404,8 @@ public:
     if (!ISDOpcode)
       return false;
     return StressStoreExtract ||
-           TLI.isOperationLegalOrCustom(ISDOpcode,
-                                        EVT::getEVT(getTransitionType(), true));
+           TLI.isOperationLegalOrCustom(
+               ISDOpcode, TLI.getValueType(getTransitionType(), true));
   }
 
   /// \brief Check whether or not \p Use can be combined
