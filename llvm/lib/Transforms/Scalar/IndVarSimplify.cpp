@@ -31,6 +31,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
@@ -69,11 +70,12 @@ static cl::opt<bool> ReduceLiveIVs("liv-reduce", cl::Hidden,
 
 namespace {
   class IndVarSimplify : public LoopPass {
-    LoopInfo        *LI;
-    ScalarEvolution *SE;
-    DominatorTree   *DT;
-    const DataLayout *DL;
-    TargetLibraryInfo *TLI;
+    LoopInfo                  *LI;
+    ScalarEvolution           *SE;
+    DominatorTree             *DT;
+    const DataLayout          *DL;
+    TargetLibraryInfo         *TLI;
+    const TargetTransformInfo *TTI;
 
     SmallVector<WeakVH, 16> DeadInsts;
     bool Changed;
@@ -661,7 +663,7 @@ namespace {
 /// extended by this sign or zero extend operation. This is used to determine
 /// the final width of the IV before actually widening it.
 static void visitIVCast(CastInst *Cast, WideIVInfo &WI, ScalarEvolution *SE,
-                        const DataLayout *DL) {
+                        const DataLayout *DL, const TargetTransformInfo *TTI) {
   bool IsSigned = Cast->getOpcode() == Instruction::SExt;
   if (!IsSigned && Cast->getOpcode() != Instruction::ZExt)
     return;
@@ -670,6 +672,19 @@ static void visitIVCast(CastInst *Cast, WideIVInfo &WI, ScalarEvolution *SE,
   uint64_t Width = SE->getTypeSizeInBits(Ty);
   if (DL && !DL->isLegalInteger(Width))
     return;
+
+  // Cast is either an sext or zext up to this point.
+  // We should not widen an indvar if arithmetics on the wider indvar are more
+  // expensive than those on the narrower indvar. We check only the cost of ADD
+  // because at least an ADD is required to increment the induction variable. We
+  // could compute more comprehensively the cost of all instructions on the
+  // induction variable when necessary.
+  if (TTI &&
+      TTI->getArithmeticInstrCost(Instruction::Add, Ty) >
+          TTI->getArithmeticInstrCost(Instruction::Add,
+                                      Cast->getOperand(0)->getType())) {
+    return;
+  }
 
   if (!WI.WidestNativeType) {
     WI.WidestNativeType = SE->getEffectiveSCEVType(Ty);
@@ -1187,14 +1202,16 @@ namespace {
   class IndVarSimplifyVisitor : public IVVisitor {
     ScalarEvolution *SE;
     const DataLayout *DL;
+    const TargetTransformInfo *TTI;
     PHINode *IVPhi;
 
   public:
     WideIVInfo WI;
 
     IndVarSimplifyVisitor(PHINode *IV, ScalarEvolution *SCEV,
-                          const DataLayout *DL, const DominatorTree *DTree):
-      SE(SCEV), DL(DL), IVPhi(IV) {
+                          const DataLayout *DL, const TargetTransformInfo *TTI,
+                          const DominatorTree *DTree)
+        : SE(SCEV), DL(DL), TTI(TTI), IVPhi(IV) {
       DT = DTree;
       WI.NarrowIV = IVPhi;
       if (ReduceLiveIVs)
@@ -1202,7 +1219,9 @@ namespace {
     }
 
     // Implement the interface used by simplifyUsersOfIV.
-    void visitCast(CastInst *Cast) override { visitIVCast(Cast, WI, SE, DL); }
+    void visitCast(CastInst *Cast) override {
+      visitIVCast(Cast, WI, SE, DL, TTI);
+    }
   };
 }
 
@@ -1236,7 +1255,7 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
       PHINode *CurrIV = LoopPhis.pop_back_val();
 
       // Information about sign/zero extensions of CurrIV.
-      IndVarSimplifyVisitor Visitor(CurrIV, SE, DL, DT);
+      IndVarSimplifyVisitor Visitor(CurrIV, SE, DL, TTI, DT);
 
       Changed |= simplifyUsersOfIV(CurrIV, SE, &LPM, DeadInsts, &Visitor);
 
@@ -1895,6 +1914,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+  TTI = getAnalysisIfAvailable<TargetTransformInfo>();
 
   DeadInsts.clear();
   Changed = false;
