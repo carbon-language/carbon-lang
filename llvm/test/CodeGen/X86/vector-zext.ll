@@ -141,13 +141,13 @@ define <8 x i32> @zext_8i8_to_8i32(<8 x i8> %z) {
 ; AVX1-NEXT:    vpmovzxwd %xmm0, %xmm1
 ; AVX1-NEXT:    vpunpckhwd {{.*#+}} xmm0 = xmm0[4,4,5,5,6,6,7,7]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; AVX1-NEXT:    vandps {{.*}}, %ymm0, %ymm0
+; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: zext_8i8_to_8i32:
 ; AVX2:       # BB#0: # %entry
 ; AVX2-NEXT:    vpmovzxwd %xmm0, %ymm0
-; AVX2-NEXT:    vpbroadcastd {{.*}}, %ymm1
+; AVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm1
 ; AVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
 entry:

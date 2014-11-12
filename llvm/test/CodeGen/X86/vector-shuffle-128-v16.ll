@@ -538,7 +538,7 @@ define <16 x i8> @shuffle_v16i8_zz_zz_zz_zz_zz_16_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz(
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movzbl %dil, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    pslldq $5, %xmm0
+; SSE2-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10]
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v16i8_zz_zz_zz_zz_zz_16_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz:
@@ -577,7 +577,7 @@ define <16 x i8> @shuffle_v16i8_zz_uu_uu_zz_uu_uu_zz_zz_zz_zz_zz_zz_zz_zz_zz_16(
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movzbl %dil, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    pslldq $15, %xmm0
+; SSE2-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0]
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v16i8_zz_uu_uu_zz_uu_uu_zz_zz_zz_zz_zz_zz_zz_zz_zz_16:
@@ -616,7 +616,7 @@ define <16 x i8> @shuffle_v16i8_zz_zz_19_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz(
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movzbl %dil, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
-; SSE2-NEXT:    pslldq $2, %xmm0
+; SSE2-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10,11,12,13]
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v16i8_zz_zz_19_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz:
