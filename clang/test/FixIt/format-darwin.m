@@ -83,12 +83,12 @@ void testParens(Foo *obj, struct Bar *record) {
   printf("%s", [obj getInteger]);  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
   printf("%s", obj.value);  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
   printf("%s", record->value);  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
-  printf("%s", (i ? i : i));  // expected-warning{{format specifies type 'char *' but the argument has type 'long'}}
+  printf("%s", (i ? i : i));  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
   printf("%s", *arr);  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
 
   // CHECK-NOT: fix-it:{{.*}}:")"
 
-  printf("%s", i ? i : i); // expected-warning{{format specifies type 'char *' but the argument has type 'long'}}
+  printf("%s", i ? i : i); // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
 
   // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:11-[[@LINE-2]]:13}:"%ld"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:16-[[@LINE-3]]:16}:"(long)("
