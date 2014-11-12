@@ -66,7 +66,6 @@ public:
   /// @param Size     - A value to populate with the size of the instruction, or
   ///                   the number of bytes consumed while attempting to decode
   ///                   an invalid instruction.
-  /// @param Region   - The memory object to use as a source for machine code.
   /// @param Address  - The address, in the memory space of region, of the first
   ///                   byte of the instruction.
   /// @param VStream  - The stream to print warnings and diagnostic messages on.
