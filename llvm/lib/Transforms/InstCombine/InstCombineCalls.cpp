@@ -613,6 +613,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return new LoadInst(Ptr);
     }
     break;
+  case Intrinsic::ppc_vsx_lxvw4x:
+  case Intrinsic::ppc_vsx_lxvd2x: {
+    // Turn PPC VSX loads into normal loads.
+    Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0),
+                                        PointerType::getUnqual(II->getType()));
+    return new LoadInst(Ptr, Twine(""), false, 1);
+  }
   case Intrinsic::ppc_altivec_stvx:
   case Intrinsic::ppc_altivec_stvxl:
     // Turn stvx -> store if the pointer is known aligned.
@@ -624,6 +631,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return new StoreInst(II->getArgOperand(0), Ptr);
     }
     break;
+  case Intrinsic::ppc_vsx_stxvw4x:
+  case Intrinsic::ppc_vsx_stxvd2x: {
+    // Turn PPC VSX stores into normal stores.
+    Type *OpPtrTy = PointerType::getUnqual(II->getArgOperand(0)->getType());
+    Value *Ptr = Builder->CreateBitCast(II->getArgOperand(1), OpPtrTy);
+    return new StoreInst(II->getArgOperand(0), Ptr, false, 1);
+  }
   case Intrinsic::x86_sse_storeu_ps:
   case Intrinsic::x86_sse2_storeu_pd:
   case Intrinsic::x86_sse2_storeu_dq:

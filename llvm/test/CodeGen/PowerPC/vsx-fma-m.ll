@@ -177,21 +177,27 @@ entry:
   store <2 x double> %1, <2 x double>* %arrayidx3, align 8
   ret void
 
+; Note: There is some unavoidable changeability in this variant.  If the
+; FMAs are reordered differently, the algorithm can pick a different
+; multiplicand to destroy, changing the register assignment.  There isn't
+; a good way to express this possibility, so hopefully this doesn't change
+; too often.
+
 ; CHECK-LABEL: @testv3
 ; CHECK-DAG: xxlor [[V1:[0-9]+]], 34, 34
-; CHECK-DAG: xvmaddmdp 37, 35, 34
 ; CHECK-DAG: li [[C1:[0-9]+]], 48
 ; CHECK-DAG: li [[C2:[0-9]+]], 32
-; CHECK-DAG: xvmaddadp 34, 35, 38
+; CHECK-DAG: xvmaddmdp 37, 35, 34
 ; CHECK-DAG: li [[C3:[0-9]+]], 16
 
 ; Note: We could convert this next FMA to M-type as well, but it would require
 ; re-ordering the instructions.
 ; CHECK-DAG: xvmaddadp [[V1]], 35, 36
 
-; CHECK-DAG: xvmaddmdp 35, 36, 37
+; CHECK-DAG: xvmaddmdp 36, 35, 37
+; CHECK-DAG: xvmaddadp 34, 35, 38
 ; CHECK-DAG: stxvd2x 32, 0, 3
-; CHECK-DAG: stxvd2x 35, 3, [[C1]]
+; CHECK-DAG: stxvd2x 36, 3, [[C1]]
 ; CHECK-DAG: stxvd2x 34, 3, [[C2]]
 ; CHECK-DAG: stxvd2x 37, 3, [[C3]]
 ; CHECK: blr

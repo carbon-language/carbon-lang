@@ -7583,7 +7583,11 @@ static bool isConsecutiveLS(SDNode *N, LSBaseSDNode *Base,
     default: return false;
     case Intrinsic::ppc_altivec_lvx:
     case Intrinsic::ppc_altivec_lvxl:
+    case Intrinsic::ppc_vsx_lxvw4x:
       VT = MVT::v4i32;
+      break;
+    case Intrinsic::ppc_vsx_lxvd2x:
+      VT = MVT::v2f64;
       break;
     case Intrinsic::ppc_altivec_lvebx:
       VT = MVT::i8;
@@ -7605,7 +7609,11 @@ static bool isConsecutiveLS(SDNode *N, LSBaseSDNode *Base,
     default: return false;
     case Intrinsic::ppc_altivec_stvx:
     case Intrinsic::ppc_altivec_stvxl:
+    case Intrinsic::ppc_vsx_stxvw4x:
       VT = MVT::v4i32;
+      break;
+    case Intrinsic::ppc_vsx_stxvd2x:
+      VT = MVT::v2f64;
       break;
     case Intrinsic::ppc_altivec_stvebx:
       VT = MVT::i8;
@@ -9094,7 +9102,9 @@ bool PPCTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::ppc_altivec_lvxl:
   case Intrinsic::ppc_altivec_lvebx:
   case Intrinsic::ppc_altivec_lvehx:
-  case Intrinsic::ppc_altivec_lvewx: {
+  case Intrinsic::ppc_altivec_lvewx:
+  case Intrinsic::ppc_vsx_lxvd2x:
+  case Intrinsic::ppc_vsx_lxvw4x: {
     EVT VT;
     switch (Intrinsic) {
     case Intrinsic::ppc_altivec_lvebx:
@@ -9105,6 +9115,9 @@ bool PPCTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
       break;
     case Intrinsic::ppc_altivec_lvewx:
       VT = MVT::i32;
+      break;
+    case Intrinsic::ppc_vsx_lxvd2x:
+      VT = MVT::v2f64;
       break;
     default:
       VT = MVT::v4i32;
@@ -9126,7 +9139,9 @@ bool PPCTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::ppc_altivec_stvxl:
   case Intrinsic::ppc_altivec_stvebx:
   case Intrinsic::ppc_altivec_stvehx:
-  case Intrinsic::ppc_altivec_stvewx: {
+  case Intrinsic::ppc_altivec_stvewx:
+  case Intrinsic::ppc_vsx_stxvd2x:
+  case Intrinsic::ppc_vsx_stxvw4x: {
     EVT VT;
     switch (Intrinsic) {
     case Intrinsic::ppc_altivec_stvebx:
@@ -9137,6 +9152,9 @@ bool PPCTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
       break;
     case Intrinsic::ppc_altivec_stvewx:
       VT = MVT::i32;
+      break;
+    case Intrinsic::ppc_vsx_stxvd2x:
+      VT = MVT::v2f64;
       break;
     default:
       VT = MVT::v4i32;

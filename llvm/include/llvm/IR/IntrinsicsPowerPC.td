@@ -516,6 +516,18 @@ def int_ppc_altivec_vrsqrtefp : PowerPC_Vec_FF_Intrinsic<"vrsqrtefp">;
 
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
 
+// Vector load.
+def int_ppc_vsx_lxvw4x :
+      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
+def int_ppc_vsx_lxvd2x :
+      Intrinsic<[llvm_v2f64_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
+
+// Vector store.
+def int_ppc_vsx_stxvw4x :
+      Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty], [IntrReadWriteArgMem]>;
+def int_ppc_vsx_stxvd2x :
+      Intrinsic<[], [llvm_v2f64_ty, llvm_ptr_ty], [IntrReadWriteArgMem]>;
+
 // Vector maximum.
 def int_ppc_vsx_xvmaxdp : PowerPC_VSX_Vec_DDD_Intrinsic<"xvmaxdp">;
 def int_ppc_vsx_xvmaxsp : PowerPC_VSX_Vec_FFF_Intrinsic<"xvmaxsp">;

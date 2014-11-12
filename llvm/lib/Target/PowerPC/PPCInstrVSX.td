@@ -55,7 +55,7 @@ let Uses = [RM] in {
     def LXVD2X : XX1Form<31, 844,
                          (outs vsrc:$XT), (ins memrr:$src),
                          "lxvd2x $XT, $src", IIC_LdStLFD,
-                         [(set v2f64:$XT, (load xoaddr:$src))]>;
+                         [(set v2f64:$XT, (int_ppc_vsx_lxvd2x xoaddr:$src))]>;
 
     def LXVDSX : XX1Form<31, 332,
                          (outs vsrc:$XT), (ins memrr:$src),
@@ -64,7 +64,7 @@ let Uses = [RM] in {
     def LXVW4X : XX1Form<31, 780,
                          (outs vsrc:$XT), (ins memrr:$src),
                          "lxvw4x $XT, $src", IIC_LdStLFD,
-                         [(set v4i32:$XT, (load xoaddr:$src))]>;
+                         [(set v4i32:$XT, (int_ppc_vsx_lxvw4x xoaddr:$src))]>;
   }
 
   // Store indexed instructions
@@ -77,12 +77,12 @@ let Uses = [RM] in {
     def STXVD2X : XX1Form<31, 972,
                          (outs), (ins vsrc:$XT, memrr:$dst),
                          "stxvd2x $XT, $dst", IIC_LdStSTFD,
-                         [(store v2f64:$XT, xoaddr:$dst)]>;
+                         [(int_ppc_vsx_stxvd2x v2f64:$XT, xoaddr:$dst)]>;
 
     def STXVW4X : XX1Form<31, 908,
                          (outs), (ins vsrc:$XT, memrr:$dst),
                          "stxvw4x $XT, $dst", IIC_LdStSTFD,
-                         [(store v4i32:$XT, xoaddr:$dst)]>;
+                         [(int_ppc_vsx_stxvw4x v4i32:$XT, xoaddr:$dst)]>;
   }
 
   // Add/Mul Instructions
@@ -851,11 +851,14 @@ def : Pat<(v2f64 (sint_to_fp (sext_inreg v2i64:$C, v2i32))),
           (XVCVSXWDP (XXSLDWI $C, $C, 1))>;
 
 // Loads.
+def : Pat<(v2f64 (load xoaddr:$src)), (LXVD2X xoaddr:$src)>;
+def : Pat<(v2i64 (load xoaddr:$src)), (LXVD2X xoaddr:$src)>;
 def : Pat<(v4i32 (load xoaddr:$src)), (LXVW4X xoaddr:$src)>;
 
 // Stores.
-def : Pat<(store v4i32:$rS, xoaddr:$dst),
-          (STXVW4X $rS, xoaddr:$dst)>;
+def : Pat<(store v2f64:$rS, xoaddr:$dst), (STXVD2X $rS, xoaddr:$dst)>;
+def : Pat<(store v2i64:$rS, xoaddr:$dst), (STXVD2X $rS, xoaddr:$dst)>;
+def : Pat<(store v4i32:$rS, xoaddr:$dst), (STXVW4X $rS, xoaddr:$dst)>;
 
 // Selects.
 def : Pat<(v2f64 (selectcc i1:$lhs, i1:$rhs, v2f64:$tval, v2f64:$fval, SETLT)),
