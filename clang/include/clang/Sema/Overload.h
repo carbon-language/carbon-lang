@@ -86,21 +86,6 @@ namespace clang {
     ICK_Num_Conversion_Kinds   ///< The number of conversion kinds
   };
 
-  /// ImplicitConversionCategory - The category of an implicit
-  /// conversion kind. The enumerator values match with Table 9 of
-  /// (C++ 13.3.3.1.1) and are listed such that better conversion
-  /// categories have smaller values.
-  enum ImplicitConversionCategory {
-    ICC_Identity = 0,              ///< Identity
-    ICC_Lvalue_Transformation,     ///< Lvalue transformation
-    ICC_Qualification_Adjustment,  ///< Qualification adjustment
-    ICC_Promotion,                 ///< Promotion
-    ICC_Conversion                 ///< Conversion
-  };
-
-  ImplicitConversionCategory
-  GetConversionCategory(ImplicitConversionKind Kind);
-
   /// ImplicitConversionRank - The rank of an implicit conversion
   /// kind. The enumerator values match with Table 9 of (C++
   /// 13.3.3.1.1) and are listed such that better conversion ranks
