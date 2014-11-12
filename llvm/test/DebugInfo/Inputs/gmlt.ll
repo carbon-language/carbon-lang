@@ -95,6 +95,8 @@
 ; CHECK: .debug_pubtypes contents:
 ; CHECK-NOT: Offset
 
+; CHECK: .apple{{.*}} contents:
+
 ; Function Attrs: nounwind uwtable
 define void @_Z2f1v() #0 {
 entry:

@@ -1,6 +1,7 @@
 add_llvm_library(LLVMDebugInfo
   DIContext.cpp
   DWARFAbbreviationDeclaration.cpp
+  DWARFAcceleratorTable.cpp
   DWARFCompileUnit.cpp
   DWARFContext.cpp
   DWARFDebugAbbrev.cpp
