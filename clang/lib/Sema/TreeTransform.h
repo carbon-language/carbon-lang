@@ -4579,12 +4579,12 @@ QualType
 TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    FunctionProtoTypeLoc TL) {
   SmallVector<QualType, 4> ExceptionStorage;
+  TreeTransform *This = this; // Work around gcc.gnu.org/PR56135.
   return getDerived().TransformFunctionProtoType(
       TLB, TL, nullptr, 0,
-      // The explicit 'this' capture is a workaround for gcc.gnu.org/PR56135.
-      [&, this](FunctionProtoType::ExceptionSpecInfo & ESI, bool &Changed) {
-        return TransformExceptionSpec(TL.getBeginLoc(), ESI, ExceptionStorage,
-                                      Changed);
+      [&](FunctionProtoType::ExceptionSpecInfo &ESI, bool &Changed) {
+        return This->TransformExceptionSpec(TL.getBeginLoc(), ESI,
+                                            ExceptionStorage, Changed);
       });
 }
 
@@ -9152,11 +9152,12 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
 
     TypeLocBuilder NewCallOpTLBuilder;
     SmallVector<QualType, 4> ExceptionStorage;
+    TreeTransform *This = this; // Work around gcc.gnu.org/PR56135.
     QualType NewCallOpType = TransformFunctionProtoType(
         NewCallOpTLBuilder, OldCallOpFPTL, nullptr, 0,
-        [&, this](FunctionProtoType::ExceptionSpecInfo &ESI, bool &Changed) {
-          return TransformExceptionSpec(OldCallOpFPTL.getBeginLoc(), ESI,
-                                        ExceptionStorage, Changed);
+        [&](FunctionProtoType::ExceptionSpecInfo &ESI, bool &Changed) {
+          return This->TransformExceptionSpec(OldCallOpFPTL.getBeginLoc(), ESI,
+                                              ExceptionStorage, Changed);
         });
     NewCallOpTSI = NewCallOpTLBuilder.getTypeSourceInfo(getSema().Context,
                                                         NewCallOpType);
