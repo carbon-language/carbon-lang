@@ -455,6 +455,33 @@ unsigned Function::lookupIntrinsicID() const {
   return 0;
 }
 
+/// Returns a stable mangling for the type specified for use in the name
+/// mangling scheme used by 'any' types in intrinsic signatures.
+static std::string getMangledTypeStr(Type* Ty) {
+  std::string Result;
+  if (PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
+    Result += "p" + llvm::utostr(PTyp->getAddressSpace()) +
+      getMangledTypeStr(PTyp->getElementType());
+  } else if (ArrayType* ATyp = dyn_cast<ArrayType>(Ty)) {
+    Result += "a" + llvm::utostr(ATyp->getNumElements()) +
+      getMangledTypeStr(ATyp->getElementType());
+  } else if (StructType* STyp = dyn_cast<StructType>(Ty)) {
+    if (!STyp->isLiteral())
+      Result += STyp->getName();
+    else
+      llvm_unreachable("TODO: implement literal types");
+  } else if (FunctionType* FT = dyn_cast<FunctionType>(Ty)) {
+    Result += "f_" + getMangledTypeStr(FT->getReturnType());
+    for (size_t i = 0; i < FT->getNumParams(); i++)
+      Result += getMangledTypeStr(FT->getParamType(i));
+    if (FT->isVarArg())
+      Result += "vararg";
+    Result += "f"; //ensure distinguishable
+  } else if (Ty)
+    Result += EVT::getEVT(Ty).getEVTString();
+  return Result;
+}
+
 std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
   assert(id < num_intrinsics && "Invalid intrinsic ID!");
   static const char * const Table[] = {
@@ -467,12 +494,7 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
     return Table[id];
   std::string Result(Table[id]);
   for (unsigned i = 0; i < Tys.size(); ++i) {
-    if (PointerType* PTyp = dyn_cast<PointerType>(Tys[i])) {
-      Result += ".p" + llvm::utostr(PTyp->getAddressSpace()) +
-                EVT::getEVT(PTyp->getElementType()).getEVTString();
-    }
-    else if (Tys[i])
-      Result += "." + EVT::getEVT(Tys[i]).getEVTString();
+    Result += "." + getMangledTypeStr(Tys[i]);
   }
   return Result;
 }
