@@ -213,5 +213,17 @@ void sneaky_memfun_h() {
   sneaky_memfun_g(sneaky_memfun());
 }
 
+void typedefs_in_constructors() {
+  struct A {};
+  struct B : public A {
+    // Neither of these two should warn:
+    typedef A INHERITED;
+    B() : INHERITED() {}
+
+    typedef B SELF;
+    B(int) : SELF() {}
+  };
+}
+
 // This should not disable any warnings:
 #pragma clang diagnostic ignored "-Wunused-local-typedef"

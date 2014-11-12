@@ -2914,6 +2914,7 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
 
     if (BaseType.isNull()) {
       BaseType = Context.getTypeDeclType(TyD);
+      MarkAnyDeclReferenced(TyD->getLocation(), TyD, /*OdrUse=*/false);
       if (SS.isSet())
         // FIXME: preserve source range information
         BaseType = Context.getElaboratedType(ETK_None, SS.getScopeRep(),
