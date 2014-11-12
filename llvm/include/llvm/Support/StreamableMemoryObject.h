@@ -69,7 +69,6 @@ class StreamingMemoryObject : public StreamableMemoryObject {
 public:
   StreamingMemoryObject(DataStreamer *streamer);
   uint64_t getExtent() const override;
-  int readByte(uint64_t address, uint8_t *ptr) const override;
   int readBytes(uint64_t address, uint64_t size,
                 uint8_t *buf) const override;
   const uint8_t *getPointer(uint64_t address, uint64_t size) const override {

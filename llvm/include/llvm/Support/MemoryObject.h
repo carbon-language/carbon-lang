@@ -31,14 +31,6 @@ public:
   /// @result         - The size of the region.
   virtual uint64_t getExtent() const = 0;
 
-  /// readByte        - Tries to read a single byte from the region.
-  ///
-  /// @param address  - The address of the byte, in the same space as getBase().
-  /// @param ptr      - A pointer to a byte to be filled in.  Must be non-NULL.
-  /// @result         - 0 if successful; -1 if not.  Failure may be due to a
-  ///                   bounds violation or an implementation-specific error.
-  virtual int readByte(uint64_t address, uint8_t *ptr) const = 0;
-
   /// readBytes       - Tries to read a contiguous range of bytes from the
   ///                   region, up to the end of the region.
   ///                   You should override this function if there is a quicker
