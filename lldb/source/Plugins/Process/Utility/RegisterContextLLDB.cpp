@@ -600,7 +600,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     cfa_offset = active_row->GetCFAOffset ();
 
-    UnwindLogMsg ("m_cfa = 0x%16.16" PRIx64 " (cfa_offset = %i)", m_cfa, cfa_offset);
+    UnwindLogMsg ("m_cfa = 0x%" PRIx64 " (cfa_offset = %i)", m_cfa, cfa_offset);
 
     // A couple of sanity checks..
     if (m_cfa == LLDB_INVALID_ADDRESS || m_cfa == (addr_t)cfa_offset || m_cfa == (addr_t)cfa_offset + 1)
@@ -1503,7 +1503,7 @@ RegisterContextLLDB::ReadCFAValueForRow (lldb::RegisterKind row_register_kind,
                                                       reg_info->byte_size,
                                                       reg_value);
             value = reg_value.GetAsUInt64();
-            UnwindLogMsg("dereferenced address: 0x%16.16" PRIx64 " yields: %lx", tmp, value);
+            UnwindLogMsg("dereferenced address: 0x%" PRIx64 " yields: %" PRIx64, tmp, value);
             return error.Success();
         }
         value = value + row->GetCFAOffset ();
