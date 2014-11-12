@@ -88,6 +88,8 @@ uptr GetMaxVirtualAddress() {
   return (1ULL << (MostSignificantSetBitIndex(GET_CURRENT_FRAME()) + 1)) - 1;
 # elif defined(__aarch64__)
   return (1ULL << 39) - 1;
+# elif defined(__mips64)
+  return (1ULL << 40) - 1;
 # else
   return (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
 # endif
