@@ -21,7 +21,6 @@
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/ADT/SmallString.h"
@@ -495,14 +494,13 @@ DisassemblerLLVMC::LLVMCDisassembler::GetMCInst (const uint8_t *opcode_data,
                                                  lldb::addr_t pc,
                                                  llvm::MCInst &mc_inst)
 {
-    llvm::StringRef data((const char*)opcode_data, opcode_data_len);
-    llvm::StringRefMemoryObject memory_object(data, pc);
+    llvm::ArrayRef<uint8_t> data(opcode_data, opcode_data_len);
     llvm::MCDisassembler::DecodeStatus status;
 
     uint64_t new_inst_size;
     status = m_disasm_ap->getInstruction(mc_inst,
                                          new_inst_size,
-                                         memory_object,
+                                         data,
                                          pc,
                                          llvm::nulls(),
                                          llvm::nulls());
