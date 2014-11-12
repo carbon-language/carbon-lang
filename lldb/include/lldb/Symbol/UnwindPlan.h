@@ -295,25 +295,24 @@ public:
             m_cfa_type = cfa_type;
         }
 
-        // This should be used when GetCFAType() returns CFAIsRegisterPlusOffset
+        // If GetCFAType() is CFAIsRegisterPlusOffset, add GetCFAOffset to the reg value to get CFA value
+        // If GetCFAType() is CFAIsRegisterDereferenced, dereference the addr in the reg to get CFA value
         uint32_t
         GetCFARegister () const
         {
             return m_cfa_reg_num;
         }
         
-        // This should be used when GetCFAType() is set to CFAIsRegisterPlusOffset
         void
         SetCFARegister (uint32_t reg_num);
 
-        // This should be used when GetCFAType() returns CFAIsRegisterPlusOffset
+        // This should not be used when GetCFAType() is CFAIsRegisterDereferenced; will return 0 in that case.
         int32_t
         GetCFAOffset () const
         {
             return m_cfa_offset;
         }
 
-        // This should be used when GetCFAType() is set to CFAIsRegisterPlusOffset
         void
         SetCFAOffset (int32_t offset)
         {
