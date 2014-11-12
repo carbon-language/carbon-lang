@@ -70,8 +70,6 @@ public:
       OperandValueKind Opd2Info = OK_AnyValue,
       OperandValueProperties Opd1PropInfo = OP_None,
       OperandValueProperties Opd2PropInfo = OP_None) const override;
-
-  /// @}
 };
 
 } // end anonymous namespace
