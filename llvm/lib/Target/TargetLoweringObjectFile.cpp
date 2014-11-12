@@ -275,25 +275,6 @@ bool TargetLoweringObjectFile::isSectionAtomizableBySymbols(
   return false;
 }
 
-// Lame default implementation. Calculate the section name for global.
-const MCSection *
-TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
-                                                 SectionKind Kind,
-                                                 Mangler &Mang,
-                                                 const TargetMachine &TM) const{
-  assert(!Kind.isThreadLocal() && "Doesn't support TLS");
-
-  if (Kind.isText())
-    return getTextSection();
-
-  if (Kind.isBSS() && BSSSection != nullptr)
-    return BSSSection;
-
-  if (Kind.isReadOnly() && ReadOnlySection != nullptr)
-    return ReadOnlySection;
-
-  return getDataSection();
-}
 
 /// getSectionForConstant - Given a mergable constant with the
 /// specified size and relocation information, return a section that it
