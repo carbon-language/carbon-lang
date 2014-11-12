@@ -103,7 +103,10 @@ class function_ref<Ret()> {
 
 public:
   template<typename Callable>
-  function_ref(Callable &&callable)
+  function_ref(Callable &&callable,
+               typename std::enable_if<
+                   !std::is_same<typename std::remove_reference<Callable>::type,
+                                 function_ref>::value>::type * = nullptr)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
         callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()() const { return callback(callable); }
@@ -122,7 +125,10 @@ class function_ref<Ret(Param1)> {
 
 public:
   template<typename Callable>
-  function_ref(Callable &&callable)
+  function_ref(Callable &&callable,
+               typename std::enable_if<
+                   !std::is_same<typename std::remove_reference<Callable>::type,
+                                 function_ref>::value>::type * = nullptr)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
         callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Param1 param1) {
@@ -144,7 +150,10 @@ class function_ref<Ret(Param1, Param2)> {
 
 public:
   template<typename Callable>
-  function_ref(Callable &&callable)
+  function_ref(Callable &&callable,
+               typename std::enable_if<
+                   !std::is_same<typename std::remove_reference<Callable>::type,
+                                 function_ref>::value>::type * = nullptr)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
         callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Param1 param1, Param2 param2) {
@@ -170,7 +179,10 @@ class function_ref<Ret(Param1, Param2, Param3)> {
 
 public:
   template<typename Callable>
-  function_ref(Callable &&callable)
+  function_ref(Callable &&callable,
+               typename std::enable_if<
+                   !std::is_same<typename std::remove_reference<Callable>::type,
+                                 function_ref>::value>::type * = nullptr)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
         callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Param1 param1, Param2 param2, Param3 param3) {
