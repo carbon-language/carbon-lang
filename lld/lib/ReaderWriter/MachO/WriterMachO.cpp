@@ -52,6 +52,9 @@ public:
     // If this can link with dylibs, need helper function (dyld_stub_binder).
     if (_context.needsStubsPass())
       r.emplace_back(new StubHelperFile(_context));
+    // Final linked images can access a symbol for their mach_header.
+    if (_context.outputMachOType() != llvm::MachO::MH_OBJECT)
+      r.emplace_back(new MachHeaderAliasFile(_context));
 
     return true;
   }

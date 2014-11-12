@@ -28,6 +28,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeBranchShim:
   case typeStub:
   case typeStubHelper:
+  case typeMachHeader:
     return permR_X;
 
   case typeConstant:

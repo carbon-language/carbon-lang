@@ -447,6 +447,7 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
     io.enumCase(value, "tlv-zero-fill",   DefinedAtom::typeTLVInitialZeroFill);
     io.enumCase(value, "tlv-initializer-ptr",
                                           DefinedAtom::typeTLVInitializerPtr);
+    io.enumCase(value, "mach_header",     DefinedAtom::typeMachHeader);
     io.enumCase(value, "thread-data",     DefinedAtom::typeThreadData);
     io.enumCase(value, "thread-zero-fill",DefinedAtom::typeThreadZeroFill);
     io.enumCase(value, "ro-note",         DefinedAtom::typeRONote);

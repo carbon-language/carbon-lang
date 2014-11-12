@@ -296,9 +296,6 @@ public:
       return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
-
-  // Do nothing here.
-  void resetNextIndex() override {}
 };
 } // namespace lld
 
