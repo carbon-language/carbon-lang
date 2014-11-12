@@ -96,6 +96,12 @@ else
 	ifeq "$(ARCH)" "i686"
 		override ARCH := $(subst i686,32,$(ARCH))
 	endif
+	ifeq "$(ARCH)" "powerpc"
+		override ARCH := $(subst powerpc,32,$(ARCH))
+	endif
+	ifeq "$(ARCH)" "powerpc64"
+		override ARCH := $(subst powerpc64,64,$(ARCH))
+	endif
 
 	ifeq "$(SPLIT_DEBUG_SYMBOLS)" "YES"
 		DSYM = $(EXE).debug
