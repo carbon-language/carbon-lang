@@ -119,5 +119,7 @@ void test10() {
 extern "C" __unknown_anytype malloc(...);
 void test11() {
   void *s = (void*)malloc(12);
+  // COMMON: call i8* (i32, ...)* @malloc(i32 12)
   void *d = (void*)malloc(435);
+  // COMMON: call i8* (i32, ...)* @malloc(i32 435)
 }
