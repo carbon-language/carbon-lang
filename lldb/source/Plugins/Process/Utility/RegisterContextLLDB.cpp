@@ -232,7 +232,6 @@ RegisterContextLLDB::InitializeZerothFrame()
     m_full_unwind_plan_sp = GetFullUnwindPlanForFrame ();
 
     UnwindPlan::RowSP active_row;
-    int cfa_offset = 0;
     lldb::RegisterKind row_register_kind = eRegisterKindGeneric;
     if (m_full_unwind_plan_sp && m_full_unwind_plan_sp->PlanValidAtAddress (m_current_pc))
     {
@@ -254,18 +253,13 @@ RegisterContextLLDB::InitializeZerothFrame()
     }
 
 
-    addr_t cfa_regval = LLDB_INVALID_ADDRESS;
-    if (!ReadGPRValue (row_register_kind, active_row->GetCFARegister(), cfa_regval))
+    if (!ReadCFAValueForRow (row_register_kind, active_row, m_cfa))
     {
         UnwindLogMsg ("could not read CFA register for this frame.");
         m_frame_type = eNotAValidFrame;
         return;
     }
 
-    cfa_offset = active_row->GetCFAOffset ();
-    m_cfa = cfa_regval + cfa_offset;
-
-    UnwindLogMsg ("cfa_regval = 0x%16.16" PRIx64 " (cfa_regval = 0x%16.16" PRIx64 ", cfa_offset = %i)", m_cfa, cfa_regval, cfa_offset);
     UnwindLogMsg ("initialized frame current pc is 0x%" PRIx64 " cfa is 0x%" PRIx64 " using %s UnwindPlan",
             (uint64_t) m_current_pc.GetLoadAddress (exe_ctx.GetTargetPtr()),
             (uint64_t) m_cfa,
@@ -378,14 +372,11 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             m_all_registers_available = false;
             m_current_offset = -1;
             m_current_offset_backed_up_one = -1;
-            addr_t cfa_regval = LLDB_INVALID_ADDRESS;
             RegisterKind row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
             UnwindPlan::RowSP row = m_full_unwind_plan_sp->GetRowForFunctionOffset(0);
             if (row.get())
             {
-                uint32_t cfa_regnum = row->GetCFARegister();
-                int cfa_offset = row->GetCFAOffset();
-                if (!ReadGPRValue (row_register_kind, cfa_regnum, cfa_regval))
+                if (!ReadCFAValueForRow (row_register_kind, row, m_cfa))
                 {
                     UnwindLogMsg ("failed to get cfa value");
                     if (m_frame_type != eSkipFrame)   // don't override eSkipFrame
@@ -394,19 +385,18 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                     }
                     return;
                 }
-                m_cfa = cfa_regval + cfa_offset;
 
                 // A couple of sanity checks..
-                if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
+                if (m_cfa == LLDB_INVALID_ADDRESS || m_cfa == 0 || m_cfa == 1)
                 {
                     UnwindLogMsg ("could not find a valid cfa address");
                     m_frame_type = eNotAValidFrame;
                     return;
                 }
 
-                // cfa_regval should point into the stack memory; if we can query memory region permissions,
+                // m_cfa should point into the stack memory; if we can query memory region permissions,
                 // see if the memory is allocated & readable.
-                if (process->GetLoadAddressPermissions(cfa_regval, permissions)
+                if (process->GetLoadAddressPermissions(m_cfa, permissions)
                     && (permissions & ePermissionsReadable) == 0)
                 {
                     m_frame_type = eNotAValidFrame;
@@ -600,8 +590,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         return;
     }
 
-    addr_t cfa_regval = LLDB_INVALID_ADDRESS;
-    if (!ReadGPRValue (row_register_kind, active_row->GetCFARegister(), cfa_regval))
+    if (!ReadCFAValueForRow (row_register_kind, active_row, m_cfa))
     {
         UnwindLogMsg ("failed to get cfa reg %d/%d", row_register_kind, active_row->GetCFARegister());
         m_frame_type = eNotAValidFrame;
@@ -609,12 +598,11 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     }
 
     cfa_offset = active_row->GetCFAOffset ();
-    m_cfa = cfa_regval + cfa_offset;
 
-    UnwindLogMsg ("cfa_regval = 0x%16.16" PRIx64 " (cfa_regval = 0x%16.16" PRIx64 ", cfa_offset = %i)", m_cfa, cfa_regval, cfa_offset);
+    UnwindLogMsg ("m_cfa = 0x%16.16" PRIx64 " (cfa_offset = %i)", m_cfa, cfa_offset);
 
     // A couple of sanity checks..
-    if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
+    if (m_cfa == LLDB_INVALID_ADDRESS || m_cfa == (addr_t)cfa_offset || m_cfa == (addr_t)cfa_offset + 1)
     {
         UnwindLogMsg ("could not find a valid cfa address");
         m_frame_type = eNotAValidFrame;
@@ -1478,11 +1466,8 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
     {
         m_registers.clear();
         m_full_unwind_plan_sp = m_fallback_unwind_plan_sp;
-        addr_t cfa_regval = LLDB_INVALID_ADDRESS;
-        if (ReadGPRValue (m_fallback_unwind_plan_sp->GetRegisterKind(), active_row->GetCFARegister(), cfa_regval))
-        {
-            m_cfa = cfa_regval + active_row->GetCFAOffset ();
-        }
+        m_cfa = LLDB_INVALID_ADDRESS;
+        ReadCFAValueForRow(m_fallback_unwind_plan_sp->GetRegisterKind(), active_row, m_cfa);
 
         UnwindLogMsg ("trying to unwind from this function with the UnwindPlan '%s' because UnwindPlan '%s' failed.", 
                       m_fallback_unwind_plan_sp->GetSourceName().GetCString(),
@@ -1491,6 +1476,38 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
     }
 
     return true;
+}
+
+bool
+RegisterContextLLDB::ReadCFAValueForRow (lldb::RegisterKind row_register_kind,
+                                         const UnwindPlan::RowSP &row,
+                                         addr_t &value)
+{
+    uint32_t cfa_regnum = row->GetCFARegister();
+    RegisterValue reg_value;
+    addr_t tmp;
+
+    value = LLDB_INVALID_ADDRESS;
+
+    if (ReadGPRValue (row_register_kind, cfa_regnum, value))
+    {
+        if (row->GetCFAType() == UnwindPlan::Row::CFAIsRegisterDereferenced)
+        {
+            const RegisterInfo *reg_info = GetRegisterInfoAtIndex(cfa_regnum);
+            RegisterValue reg_value;
+            tmp = value;
+            Error error = ReadRegisterValueFromMemory(reg_info,
+                                                      value,
+                                                      reg_info->byte_size,
+                                                      reg_value);
+            value = reg_value.GetAsUInt64();
+            UnwindLogMsg("dereferenced address: 0x%16.16" PRIx64 " yields: %lx", tmp, value);
+            return error.Success();
+        }
+        value = value + row->GetCFAOffset ();
+        return true;
+    }
+    return false;
 }
 
 // Retrieve a general purpose register value for THIS frame, as saved by the NEXT frame, i.e. the frame that

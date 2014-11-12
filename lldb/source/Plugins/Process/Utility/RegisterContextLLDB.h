@@ -333,6 +333,10 @@ private:
     bool
     ReadGPRValue (lldb::RegisterKind register_kind, uint32_t regnum, lldb::addr_t &value);
 
+    // Get the CFA register for a given frame.
+    bool
+    ReadCFAValueForRow (lldb::RegisterKind register_kind, const UnwindPlan::RowSP &row, lldb::addr_t &value);
+
     lldb::UnwindPlanSP
     GetFastUnwindPlanForFrame ();
 

@@ -58,13 +58,13 @@ public:
                     atDWARFExpression,  // reg = deref(eval(dwarf_expr))
                     isDWARFExpression   // reg = eval(dwarf_expr)
                 };
-    
+
             RegisterLocation() : 
                 m_type(unspecified), 
                 m_location() 
             {
             }
-    
+
             bool
             operator == (const RegisterLocation& rhs) const;
     
@@ -242,6 +242,7 @@ public:
     
         Row (const UnwindPlan::Row& rhs) : 
             m_offset             (rhs.m_offset),
+            m_cfa_type           (rhs.m_cfa_type),
             m_cfa_reg_num        (rhs.m_cfa_reg_num),
             m_cfa_offset         (rhs.m_cfa_offset),
             m_register_locations (rhs.m_register_locations)
@@ -275,12 +276,50 @@ public:
             m_offset += offset;
         }
 
+        // How we can reconstruct the CFA address for this stack frame, at this location
+        enum CFAType
+        {
+            CFAIsRegisterPlusOffset,   // the CFA value in a register plus (or minus) an offset
+            CFAIsRegisterDereferenced  // the address in a register is dereferenced to get CFA value
+        };
+
+        CFAType
+        GetCFAType () const
+        {
+            return m_cfa_type;
+        }
+
+        void
+        SetCFAType (CFAType cfa_type)
+        {
+            m_cfa_type = cfa_type;
+        }
+
+        // This should be used when GetCFAType() returns CFAIsRegisterPlusOffset
         uint32_t
         GetCFARegister () const
         {
             return m_cfa_reg_num;
         }
         
+        // This should be used when GetCFAType() is set to CFAIsRegisterPlusOffset
+        void
+        SetCFARegister (uint32_t reg_num);
+
+        // This should be used when GetCFAType() returns CFAIsRegisterPlusOffset
+        int32_t
+        GetCFAOffset () const
+        {
+            return m_cfa_offset;
+        }
+
+        // This should be used when GetCFAType() is set to CFAIsRegisterPlusOffset
+        void
+        SetCFAOffset (int32_t offset)
+        {
+            m_cfa_offset = offset;
+        }
+
         bool
         SetRegisterLocationToAtCFAPlusOffset (uint32_t reg_num, 
                                               int32_t offset, 
@@ -309,23 +348,6 @@ public:
         SetRegisterLocationToSame (uint32_t reg_num, 
                                    bool must_replace);
 
-
-
-        void
-        SetCFARegister (uint32_t reg_num);
-
-        int32_t
-        GetCFAOffset () const
-        {
-            return m_cfa_offset;
-        }
-
-        void
-        SetCFAOffset (int32_t offset)
-        {
-            m_cfa_offset = offset;
-        }
-
         void
         Clear ();
 
@@ -335,8 +357,13 @@ public:
     protected:
         typedef std::map<uint32_t, RegisterLocation> collection;
         lldb::addr_t m_offset;      // Offset into the function for this row
+
+        CFAType m_cfa_type;
+
+        // If m_cfa_type == CFAIsRegisterPlusOffset, the following ivars are used
         uint32_t m_cfa_reg_num;     // The Call Frame Address register number
         int32_t  m_cfa_offset;      // The offset from the CFA for this row
+
         collection m_register_locations;
     }; // class Row
 

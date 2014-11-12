@@ -153,6 +153,7 @@ UnwindPlan::Row::RegisterLocation::Dump (Stream &s, const UnwindPlan* unwind_pla
 void
 UnwindPlan::Row::Clear ()
 {
+    m_cfa_type = CFAIsRegisterPlusOffset;
     m_offset = 0;
     m_cfa_reg_num = LLDB_INVALID_REGNUM;
     m_cfa_offset = 0;
@@ -189,10 +190,11 @@ UnwindPlan::Row::Dump (Stream& s, const UnwindPlan* unwind_plan, Thread* thread,
 }
 
 UnwindPlan::Row::Row() :
-    m_offset(0),
-    m_cfa_reg_num(LLDB_INVALID_REGNUM),
-    m_cfa_offset(0),
-    m_register_locations()
+    m_offset (0),
+    m_cfa_type (CFAIsRegisterPlusOffset),
+    m_cfa_reg_num (LLDB_INVALID_REGNUM),
+    m_cfa_offset (0),
+    m_register_locations ()
 {
 }
 
@@ -301,6 +303,23 @@ UnwindPlan::Row::operator == (const UnwindPlan::Row& rhs) const
 {
     if (m_offset != rhs.m_offset || m_cfa_reg_num != rhs.m_cfa_reg_num || m_cfa_offset != rhs.m_cfa_offset)
         return false;
+
+    if (m_cfa_type != rhs.m_cfa_type)
+        return false;
+
+    if (m_cfa_type == CFAIsRegisterPlusOffset)
+    {
+        if (m_cfa_reg_num != rhs.m_cfa_reg_num)
+            return false;
+        if (m_cfa_offset != rhs.m_cfa_offset)
+            return false;
+    }
+    if (m_cfa_type == CFAIsRegisterDereferenced)
+    {
+        if (m_cfa_reg_num != rhs.m_cfa_reg_num)
+            return false;
+    }
+
     return m_register_locations == rhs.m_register_locations;
 }
 
