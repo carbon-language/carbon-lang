@@ -98,3 +98,12 @@ void t8() {
 
 const _Complex double test9const = 0;
 _Complex double test9func() { return test9const; }
+
+// D6217
+void t9() {
+  // Check for proper type promotion of conditional expression
+  char c[(int)(sizeof(typeof((0 ? 2.0f : (_Complex double) 2.0f))) - sizeof(_Complex double))];
+  // Check for proper codegen
+  (0 ? 2.0f : (_Complex double) 2.0f);
+}
+
