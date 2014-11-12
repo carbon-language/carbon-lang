@@ -243,7 +243,14 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
       
       assert(!CallSites.count(I->first) &&
              "Call site occurs in node multiple times");
-      CallSites.insert(std::make_pair(I->first, I->second));
+      
+      CallSite CS(I->first);
+      if (CS) {
+        Function *Callee = CS.getCalledFunction();
+        // Ignore intrinsics because they're not really function calls.
+        if (!Callee || !(Callee->isIntrinsic()))
+          CallSites.insert(std::make_pair(I->first, I->second));
+      }
       ++I;
     }
     
