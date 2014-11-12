@@ -312,9 +312,14 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
     if ((rc = PTRACE(PT_GETREGS, m_tid, (caddr_t)&regs, 0)) < 0) {
         m_result = false;
     } else {
-        if (m_size == sizeof(uintptr_t))
-            m_value = *(uintptr_t *)(((caddr_t)&regs) + m_offset);
-        else 
+        // 'struct reg' contains only 32- or 64-bit register values.  Punt on
+        // others.  Also, not all entries may be uintptr_t sized, such as 32-bit
+        // processes on powerpc64 (probably the same for i386 on amd64)
+        if (m_size == sizeof(uint32_t))
+            m_value = *(uint32_t *)(((caddr_t)&regs) + m_offset);
+        else if (m_size == sizeof(uint64_t))
+            m_value = *(uint64_t *)(((caddr_t)&regs) + m_offset);
+        else
             memcpy(&m_value, (((caddr_t)&regs) + m_offset), m_size);
         m_result = true;
     }

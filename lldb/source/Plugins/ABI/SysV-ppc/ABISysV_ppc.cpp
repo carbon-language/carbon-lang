@@ -1012,13 +1012,12 @@ ABISysV_ppc::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
-    const int32_t ptr_size = 8;
-    row->SetCFARegister (LLDB_REGNUM_GENERIC_SP);
-    row->SetCFAOffset (8);
-    row->SetOffset (0);
+    const int32_t ptr_size = 4;
+    row->SetCFARegister (sp_reg_num);
+    row->SetCFAType(lldb_private::UnwindPlan::Row::CFAIsRegisterDereferenced);
 
-    row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
-    row->SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size * -2, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * 1, true);
+    row->SetRegisterLocationToIsCFAPlusOffset(sp_reg_num, 0, true);
 
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("ppc default unwind plan");

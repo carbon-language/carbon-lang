@@ -123,8 +123,13 @@ RegisterContextPOSIXProcessMonitor_powerpc::WriteRegister(const unsigned reg,
     }
 
     ProcessMonitor &monitor = GetMonitor();
+    // Account for the fact that 32-bit targets on powerpc64 really use 64-bit
+    // registers in ptrace, but expose here 32-bit registers with a higher
+    // offset.
+    uint64_t offset = GetRegisterOffset(reg_to_write);
+    offset &= ~(sizeof(uintptr_t) - 1);
     return monitor.WriteRegisterValue(m_thread.GetID(),
-                                      GetRegisterOffset(reg_to_write),
+                                      offset,
                                       GetRegisterName(reg_to_write),
                                       value_to_write);
 }

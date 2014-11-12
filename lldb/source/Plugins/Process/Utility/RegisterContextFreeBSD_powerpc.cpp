@@ -153,7 +153,8 @@ RegisterContextFreeBSD_powerpc::~RegisterContextFreeBSD_powerpc()
 size_t
 RegisterContextFreeBSD_powerpc::GetGPRSize() const
 {
-    return sizeof(GPR64);
+    // This is an 'abstract' base, so no GPR struct.
+    return 0;
 }
 
 const RegisterInfo *
@@ -217,6 +218,8 @@ const RegisterInfo *
 RegisterContextFreeBSD_powerpc64::GetRegisterInfo() const
 {
     //assert (m_target_arch.GetCore() == ArchSpec::eCore_powerpc);
+    if (m_target_arch.GetMachine() == llvm::Triple::ppc)
+        return g_register_infos_powerpc64_32;
     return g_register_infos_powerpc64;
 }
 
