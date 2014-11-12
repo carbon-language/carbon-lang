@@ -25,9 +25,9 @@ LocalDebugDelegate::OnExitProcess(uint32_t exit_code)
 }
 
 void
-LocalDebugDelegate::OnDebuggerConnected()
+LocalDebugDelegate::OnDebuggerConnected(lldb::addr_t image_base)
 {
-    ((ProcessWindows &)*m_process).OnDebuggerConnected();
+    ((ProcessWindows &)*m_process).OnDebuggerConnected(image_base);
 }
 
 ExceptionResult
@@ -49,15 +49,15 @@ LocalDebugDelegate::OnExitThread(const HostThread &thread)
 }
 
 void
-LocalDebugDelegate::OnLoadDll()
+LocalDebugDelegate::OnLoadDll(const lldb_private::ModuleSpec &module_spec, lldb::addr_t module_addr)
 {
-    ((ProcessWindows &)*m_process).OnLoadDll();
+    ((ProcessWindows &)*m_process).OnLoadDll(module_spec, module_addr);
 }
 
 void
-LocalDebugDelegate::OnUnloadDll()
+LocalDebugDelegate::OnUnloadDll(lldb::addr_t module_addr)
 {
-    ((ProcessWindows &)*m_process).OnUnloadDll();
+    ((ProcessWindows &)*m_process).OnUnloadDll(module_addr);
 }
 
 void

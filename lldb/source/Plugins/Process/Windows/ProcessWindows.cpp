@@ -42,15 +42,22 @@ namespace lldb_private
 class ProcessWindowsData
 {
   public:
-    ProcessWindowsData()
-        : m_launched_event(nullptr)
+    ProcessWindowsData(const ProcessLaunchInfo &launch_info)
+        : m_initial_stop_event(nullptr)
+        , m_launch_info(launch_info)
+        , m_initial_stop_received(false)
     {
-        m_launched_event = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        m_initial_stop_event = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
     }
 
-    ~ProcessWindowsData() { ::CloseHandle(m_launched_event); }
+    ~ProcessWindowsData() { ::CloseHandle(m_initial_stop_event); }
 
-    HANDLE m_launched_event;
+    ProcessLaunchInfo m_launch_info;
+    std::shared_ptr<lldb_private::ExceptionRecord> m_active_exception;
+    lldb_private::Error m_launch_error;
+    lldb_private::DebuggerThreadSP m_debugger;
+    HANDLE m_initial_stop_event;
+    bool m_initial_stop_received;
 };
 }
 //------------------------------------------------------------------------------
@@ -81,7 +88,6 @@ ProcessWindows::Initialize()
 
 ProcessWindows::ProcessWindows(Target &target, Listener &listener)
     : lldb_private::Process(target, listener)
-    , m_data_up(new ProcessWindowsData())
 {
 }
 
@@ -120,28 +126,36 @@ ProcessWindows::DoLaunch(Module *exe_module,
                          ProcessLaunchInfo &launch_info)
 {
     Error result;
-    HostProcess process;
-    SetPrivateState(eStateLaunching);
-    if (launch_info.GetFlags().Test(eLaunchFlagDebug))
+    if (!launch_info.GetFlags().Test(eLaunchFlagDebug))
     {
-        DebugDelegateSP delegate(new LocalDebugDelegate(shared_from_this()));
-        m_debugger.reset(new DebuggerThread(delegate));
-        // Kick off the DebugLaunch asynchronously and wait for it to complete.
-        result = m_debugger->DebugLaunch(launch_info);
-        if (result.Success())
-        {
-            if (::WaitForSingleObject(m_data_up->m_launched_event, INFINITE) == WAIT_OBJECT_0)
-                process = m_debugger->GetProcess();
-            else
-                result.SetError(::GetLastError(), eErrorTypeWin32);
-        }
+        result.SetErrorString("ProcessWindows can only be used to launch processes for debugging.");
+        return result;
     }
-    else
-        return Host::LaunchProcess(launch_info);
+
+    m_session_data.reset(new ProcessWindowsData(launch_info));
+
+    SetPrivateState(eStateLaunching);
+    DebugDelegateSP delegate(new LocalDebugDelegate(shared_from_this()));
+    m_session_data->m_debugger.reset(new DebuggerThread(delegate));
+    DebuggerThreadSP debugger = m_session_data->m_debugger;
+
+    // Kick off the DebugLaunch asynchronously and wait for it to complete.
+    result = debugger->DebugLaunch(launch_info);
+
+    HostProcess process;
+    if (result.Success())
+    {
+        if (::WaitForSingleObject(m_session_data->m_initial_stop_event, INFINITE) == WAIT_OBJECT_0)
+            process = debugger->GetProcess();
+        else
+            result.SetError(::GetLastError(), eErrorTypeWin32);
+    }
 
     if (!result.Success())
         return result;
 
+    // We've hit the initial stop.  The private state should already be set to stopped as a result
+    // of encountering the breakpoint exception.
     launch_info.SetProcessID(process.GetProcessId());
     SetID(process.GetProcessId());
 
@@ -152,11 +166,17 @@ Error
 ProcessWindows::DoResume()
 {
     Error error;
-    if (!m_active_exception)
-        return error;
+    if (GetPrivateState() == eStateStopped)
+    {
+        if (m_session_data->m_active_exception)
+        {
+            // Resume the process and continue processing debug events.
+            m_session_data->m_active_exception.reset();
+            m_session_data->m_debugger->ContinueAsyncException(ExceptionResult::Handled);
+        }
 
-    m_debugger->ContinueAsyncException(ExceptionResult::Handled);
-    SetPrivateState(eStateRunning);
+        SetPrivateState(eStateRunning);
+    }
     return error;
 }
 
@@ -197,7 +217,6 @@ Error
 ProcessWindows::DoDetach(bool keep_stopped)
 {
     Error error;
-    error.SetErrorString("Detaching from processes is not currently supported on Windows.");
     return error;
 }
 
@@ -205,7 +224,11 @@ Error
 ProcessWindows::DoDestroy()
 {
     Error error;
-    error.SetErrorString("Destroying processes is not currently supported on Windows.");
+    if (GetPrivateState() != eStateExited && GetPrivateState() != eStateDetached)
+    {
+        DebugActiveProcessStop(m_session_data->m_debugger->GetProcess().GetProcessId());
+        SetPrivateState(eStateExited);
+    }
     return error;
 }
 
@@ -217,7 +240,18 @@ ProcessWindows::RefreshStateAfterStop()
 bool
 ProcessWindows::IsAlive()
 {
-    return false;
+    StateType state = GetPrivateState();
+    switch (state)
+    {
+        case eStateCrashed:
+        case eStateDetached:
+        case eStateUnloaded:
+        case eStateExited:
+        case eStateInvalid:
+            return false;
+        default:
+            return true;
+    }
 }
 
 size_t
@@ -250,23 +284,55 @@ ProcessWindows::OnExitProcess(uint32_t exit_code)
 }
 
 void
-ProcessWindows::OnDebuggerConnected()
+ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
 {
-    ::SetEvent(m_data_up->m_launched_event);
+    ModuleSP module = GetTarget().GetExecutableModule();
+    bool load_addr_changed;
+    module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
 }
 
 ExceptionResult
 ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &record)
 {
-    ExceptionResult result = ExceptionResult::Handled;
-    m_active_exception.reset(new ExceptionRecord(record));
+    ExceptionResult result = ExceptionResult::NotHandled;
+    m_session_data->m_active_exception.reset(new ExceptionRecord(record));
     switch (record.GetExceptionCode())
     {
         case EXCEPTION_BREAKPOINT:
-            SetPrivateState(eStateStopped);
+            // Handle breakpoints at the first chance.
             result = ExceptionResult::WillHandle;
+
+            if (!m_session_data->m_initial_stop_received)
+            {
+                m_session_data->m_initial_stop_received = true;
+                ::SetEvent(m_session_data->m_initial_stop_event);
+            }
             break;
+        default:
+            // For non-breakpoints, give the application a chance to handle the exception first.
+            if (first_chance)
+                result = ExceptionResult::NotHandled;
+            else
+                result = ExceptionResult::WillHandle;
     }
+
+    if (!first_chance)
+    {
+        // Any second chance exception is an application crash by definition.
+        SetPrivateState(eStateCrashed);
+    }
+    else if (result == ExceptionResult::WillHandle)
+    {
+        // For first chance exceptions that we can handle, the process is stopped so the user
+        // can inspect / manipulate the state of the process in the debugger.
+        SetPrivateState(eStateStopped);
+    }
+    else
+    {
+        // For first chance exceptions that we either eat or send back to the application, don't
+        // modify the state of the application.
+    }
+
     return result;
 }
 
@@ -281,13 +347,21 @@ ProcessWindows::OnExitThread(const HostThread &thread)
 }
 
 void
-ProcessWindows::OnLoadDll()
+ProcessWindows::OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_addr)
 {
+    // Confusingly, there is no Target::AddSharedModule.  Instead, calling GetSharedModule() with
+    // a new module will add it to the module list and return a corresponding ModuleSP.
+    Error error;
+    ModuleSP module = GetTarget().GetSharedModule(module_spec, &error);
+    bool load_addr_changed = false;
+    module->SetLoadAddress(GetTarget(), module_addr, false, load_addr_changed);
 }
 
 void
-ProcessWindows::OnUnloadDll()
+ProcessWindows::OnUnloadDll(lldb::addr_t module_addr)
 {
+    // TODO: Figure out how to get the ModuleSP loaded at the specified address and remove
+    // it from the target's module list.
 }
 
 void
@@ -298,16 +372,15 @@ ProcessWindows::OnDebugString(const std::string &string)
 void
 ProcessWindows::OnDebuggerError(const Error &error, uint32_t type)
 {
-    DWORD result = ::WaitForSingleObject(m_data_up->m_launched_event, 0);
-    if (result == WAIT_TIMEOUT)
+    if (!m_session_data->m_initial_stop_received)
     {
         // If we haven't actually launched the process yet, this was an error
         // launching the process.  Set the internal error and signal.
-        m_launch_error = error;
-        ::SetEvent(m_data_up->m_launched_event);
+        m_session_data->m_launch_error = error;
+        ::SetEvent(m_session_data->m_initial_stop_event);
         return;
     }
 
-    // This happened while debugging.
-    // TODO: Implement this.
+    // This happened while debugging.  Do we shutdown the debugging session, try to continue,
+    // or do something else?
 }

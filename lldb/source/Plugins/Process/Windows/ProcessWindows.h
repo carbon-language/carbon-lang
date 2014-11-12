@@ -20,6 +20,7 @@
 // Other libraries and framework includes
 #include "ForwardDecl.h"
 #include "IDebugDelegate.h"
+#include "lldb/lldb-forward.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Target/Process.h"
@@ -28,7 +29,6 @@ class ProcessMonitor;
 
 namespace lldb_private
 {
-class HostProcess;
 class ProcessWindowsData;
 }
 
@@ -116,20 +116,18 @@ public:
 
     // IDebugDelegate overrides.
     virtual void OnExitProcess(uint32_t exit_code) override;
-    virtual void OnDebuggerConnected() override;
+    virtual void OnDebuggerConnected(lldb::addr_t image_base) override;
     virtual ExceptionResult OnDebugException(bool first_chance, const lldb_private::ExceptionRecord &record) override;
     virtual void OnCreateThread(const lldb_private::HostThread &thread) override;
     virtual void OnExitThread(const lldb_private::HostThread &thread) override;
-    virtual void OnLoadDll() override;
-    virtual void OnUnloadDll() override;
+    virtual void OnLoadDll(const lldb_private::ModuleSpec &module_spec, lldb::addr_t module_addr) override;
+    virtual void OnUnloadDll(lldb::addr_t module_addr) override;
     virtual void OnDebugString(const std::string &string) override;
     virtual void OnDebuggerError(const lldb_private::Error &error, uint32_t type) override;
 
   private:
-    std::shared_ptr<lldb_private::ExceptionRecord> m_active_exception;
-    std::unique_ptr<lldb_private::ProcessWindowsData> m_data_up;
-    lldb_private::Error m_launch_error;
-    lldb_private::DebuggerThreadSP m_debugger;
+    // Data for the active debugging session.
+    std::unique_ptr<lldb_private::ProcessWindowsData> m_session_data;
 };
 
 #endif  // liblldb_Plugins_Process_Windows_ProcessWindows_H_
