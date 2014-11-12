@@ -12,7 +12,6 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/Path.h"
 #include "RuntimeDyldCheckerImpl.h"
 #include "RuntimeDyldImpl.h"

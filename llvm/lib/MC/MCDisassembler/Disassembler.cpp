@@ -21,7 +21,6 @@
 #include "llvm/MC/MCSymbolizer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;

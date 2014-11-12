@@ -13,7 +13,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/StringRefMemoryObject.h"
 
 namespace llvm {
 namespace object {
