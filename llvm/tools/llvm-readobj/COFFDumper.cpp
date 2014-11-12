@@ -669,12 +669,12 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
         return;
       Offset += 4;
       DE.getU8(&Offset, Unused, 3);
-      StringRef FunctionName = DE.getCStr(&Offset);
+      StringRef DisplayName = DE.getCStr(&Offset);
       if (!DE.isValidOffset(Offset)) {
         error(object_error::parse_failed);
         return;
       }
-      W.printString("FunctionName", FunctionName);
+      W.printString("DisplayName", DisplayName);
       W.printString("Section", SectionName);
       W.printHex("CodeSize", CodeSize);
 

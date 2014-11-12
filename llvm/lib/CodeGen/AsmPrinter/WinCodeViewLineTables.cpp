@@ -215,7 +215,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
     Asm->OutStreamer.EmitCOFFSecRel32(Fn);
     Asm->OutStreamer.EmitCOFFSectionIndex(Fn);
     Asm->EmitInt8(0);
-    // Emit the function name as a null-terminated string.
+    // Emit the function display name as a null-terminated string.
     Asm->OutStreamer.EmitBytes(FuncName);
     Asm->EmitInt8(0);
     Asm->OutStreamer.EmitLabel(ProcSegmentEnd);

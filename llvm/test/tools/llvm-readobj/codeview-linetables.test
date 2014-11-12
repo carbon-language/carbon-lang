@@ -41,7 +41,7 @@ MFUN32-NEXT:   Subsection [
 MFUN32-NEXT:     Type: 0xF1
 MFUN32-NEXT:     PayloadSize: 0x4B
 MFUN32:          ProcStart {
-MFUN32-NEXT:       FunctionName: x
+MFUN32-NEXT:       DisplayName: x
 MFUN32-NEXT:       Section: _x
 MFUN32-NEXT:       CodeSize: 0xA
 MFUN32-NEXT:     }
@@ -60,7 +60,7 @@ MFUN32-NEXT:   Subsection [
 MFUN32-NEXT:     Type: 0xF1
 MFUN32-NEXT:     PayloadSize: 0x4B
 MFUN32:          ProcStart {
-MFUN32-NEXT:       FunctionName: y
+MFUN32-NEXT:       DisplayName: y
 MFUN32-NEXT:       Section: _y
 MFUN32-NEXT:       CodeSize: 0xA
 MFUN32-NEXT:     }
@@ -79,7 +79,7 @@ MFUN32-NEXT:   Subsection [
 MFUN32-NEXT:     Type: 0xF1
 MFUN32-NEXT:     PayloadSize: 0x4B
 MFUN32:          ProcStart {
-MFUN32-NEXT:       FunctionName: f
+MFUN32-NEXT:       DisplayName: f
 MFUN32-NEXT:       Section: _f
 MFUN32-NEXT:       CodeSize: 0x14
 MFUN32-NEXT:     }
@@ -146,7 +146,7 @@ MFUN64-NEXT:   Subsection [
 MFUN64-NEXT:     Type: 0xF1
 MFUN64-NEXT:     PayloadSize: 0x4B
 MFUN64:          ProcStart {
-MFUN64-NEXT:       FunctionName: x
+MFUN64-NEXT:       DisplayName: x
 MFUN64-NEXT:       Section: x
 MFUN64-NEXT:       CodeSize: 0xE
 MFUN64-NEXT:     }
@@ -161,7 +161,7 @@ MFUN64-NEXT:   Subsection [
 MFUN64-NEXT:     Type: 0xF1
 MFUN64-NEXT:     PayloadSize: 0x4B
 MFUN64:          ProcStart {
-MFUN64-NEXT:       FunctionName: y
+MFUN64-NEXT:       DisplayName: y
 MFUN64-NEXT:       Section: y
 MFUN64-NEXT:       CodeSize: 0xE
 MFUN64-NEXT:     }
@@ -176,7 +176,7 @@ MFUN64-NEXT:   Subsection [
 MFUN64-NEXT:     Type: 0xF1
 MFUN64-NEXT:     PayloadSize: 0x4B
 MFUN64:          ProcStart {
-MFUN64-NEXT:       FunctionName: f
+MFUN64-NEXT:       DisplayName: f
 MFUN64-NEXT:       Section: f
 MFUN64-NEXT:       CodeSize: 0x18
 MFUN64-NEXT:     }
@@ -271,7 +271,7 @@ MFILE32-NEXT:   Subsection [
 MFILE32-NEXT:     Type: 0xF1
 MFILE32-NEXT:     PayloadSize: 0x4B
 MFILE32:          ProcStart {
-MFILE32-NEXT:       FunctionName: f
+MFILE32-NEXT:       DisplayName: f
 MFILE32-NEXT:       Section: _f
 MFILE32-NEXT:       CodeSize: 0x14
 MFILE32-NEXT:     }
@@ -327,7 +327,7 @@ MFILE64-NEXT:   Subsection [
 MFILE64-NEXT:     Type: 0xF1
 MFILE64-NEXT:     PayloadSize: 0x4B
 MFILE64:          ProcStart {
-MFILE64-NEXT:       FunctionName: f
+MFILE64-NEXT:       DisplayName: f
 MFILE64-NEXT:       Section: f
 MFILE64-NEXT:       CodeSize: 0x18
 MFILE64-NEXT:     }
@@ -393,7 +393,7 @@ RUN: llvm-readobj -s -codeview-linetables %p/Inputs/comdat-function-linetables.o
 RUN:   | FileCheck %s -check-prefix MCOMDAT
 
 MCOMDAT:      ProcStart {
-MCOMDAT-NEXT:   FunctionName: f
+MCOMDAT-NEXT:   DisplayName: f
 MCOMDAT-NEXT:   Section: ?f@@YAHXZ
 MCOMDAT-NEXT:   CodeSize: 0x7
 MCOMDAT-NEXT: }
@@ -408,7 +408,7 @@ MCOMDAT-NEXT:     +0x5: 4
 MCOMDAT-NEXT:   ]
 MCOMDAT-NEXT: ]
 MCOMDAT:      ProcStart {
-MCOMDAT-NEXT:   FunctionName: g
+MCOMDAT-NEXT:   DisplayName: g
 MCOMDAT-NEXT:   Section: ?g@@YAHXZ
 MCOMDAT-NEXT:   CodeSize: 0x7
 MCOMDAT-NEXT: }
