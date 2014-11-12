@@ -1555,10 +1555,11 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
       }
     }
 
-    // Value-initialize the first named member of the union.
+    // Value-initialize the first member of the union that isn't an unnamed
+    // bitfield.
     for (RecordDecl::field_iterator FieldEnd = RD->field_end();
          Field != FieldEnd; ++Field) {
-      if (Field->getDeclName()) {
+      if (!Field->isUnnamedBitfield()) {
         if (VerifyOnly)
           CheckEmptyInitializable(
               InitializedEntity::InitializeMember(*Field, &Entity),

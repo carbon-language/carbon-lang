@@ -36,6 +36,17 @@ B y {};
 B z { 1 };
 // CHECK: @z = global {{.*}} { i32 1 }
 
+// Brace initialization should initialize the first field even though it is
+// unnamed.
+union C {
+  struct {
+    int C::*memptr;
+  };
+};
+
+C n{};
+// CHECK: @n = global %union.C { %struct.anon { i64 -1 } }, align 8
+
 // Initialization of 'a':
 
 // CHECK: store i32 0, i32* getelementptr inbounds ({{.*}} @a, i32 0, i32 0)
