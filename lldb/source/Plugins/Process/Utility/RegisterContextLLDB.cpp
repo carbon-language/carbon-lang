@@ -501,7 +501,8 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol;
         
         ModuleSP temporary_module_sp = temporary_pc.GetModule();
-        if (temporary_module_sp->ResolveSymbolContextForAddress (temporary_pc, resolve_scope, m_sym_ctx) & resolve_scope)
+        if (temporary_module_sp &&
+            temporary_module_sp->ResolveSymbolContextForAddress (temporary_pc, resolve_scope, m_sym_ctx) & resolve_scope)
         {
             if (m_sym_ctx.GetAddressRange (resolve_scope, 0, false,  addr_range))
                 m_sym_ctx_valid = true;
