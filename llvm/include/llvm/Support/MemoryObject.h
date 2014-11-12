@@ -14,29 +14,25 @@
 
 namespace llvm {
 
-/// MemoryObject - Abstract base class for contiguous addressable memory.
-///   Necessary for cases in which the memory is in another process, in a
-///   file, or on a remote machine.
-///   All size and offset parameters are uint64_ts, to allow 32-bit processes
-///   access to 64-bit address spaces.
+/// Abstract base class for contiguous addressable memory. Necessary for cases
+/// in which the memory is in another process, in a file, or on a remote
+/// machine. All size and offset parameters are uint64_ts, to allow 32-bit
+/// processes access to 64-bit address spaces.
 class MemoryObject {
 public:
-  /// Destructor      - Override as necessary.
   virtual ~MemoryObject();
 
-  /// getExtent       - Returns the size of the region in bytes.  (The region is
-  ///                   contiguous, so the highest valid address of the region
-  ///                   is getBase() + getExtent() - 1).
+  /// Returns the size of the region in bytes.  (The region is contiguous, so
+  /// the highest valid address of the region is getExtent() - 1).
   ///
   /// @result         - The size of the region.
   virtual uint64_t getExtent() const = 0;
 
-  /// readBytes       - Tries to read a contiguous range of bytes from the
-  ///                   region, up to the end of the region.
-  ///                   You should override this function if there is a quicker
-  ///                   way than going back and forth with individual bytes.
+  /// Tries to read a contiguous range of bytes from the region, up to the end
+  /// of the region. You should override this function if there is a quicker way
+  /// than going back and forth with individual bytes.
   ///
-  /// @param address  - The address of the first byte, in the same space as 
+  /// @param address  - The address of the first byte, in the same space as
   ///                   getBase().
   /// @param size     - The number of bytes to copy.
   /// @param buf      - A pointer to a buffer to be filled in.  Must be non-NULL
