@@ -194,8 +194,9 @@ namespace PR19372 {
 
   namespace BetterReduction {
     template<typename ...> struct S;
-    template<typename ...A> using X = S<A...>;
+    template<typename ...A> using X = S<A...>; // expected-note {{parameter}}
     template<typename ...A> using Y = X<A..., A...>;
+    template<typename ...A> using Z = X<A..., 1, 2, 3>; // expected-error {{must be a type}}
 
     using T = Y<int>;
     using T = S<int, int>;
