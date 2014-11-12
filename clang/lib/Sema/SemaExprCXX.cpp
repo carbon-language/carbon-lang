@@ -5989,8 +5989,8 @@ class TransformTypos : public TreeTransform<TransformTypos> {
   }
 
 public:
-  TransformTypos(Sema &SemaRef, llvm::function_ref<ExprResult(Expr *)> &&Filter)
-      : BaseTransform(SemaRef), ExprFilter(std::move(Filter)) {}
+  TransformTypos(Sema &SemaRef, llvm::function_ref<ExprResult(Expr *)> Filter)
+      : BaseTransform(SemaRef), ExprFilter(Filter) {}
 
   ExprResult RebuildCallExpr(Expr *Callee, SourceLocation LParenLoc,
                                    MultiExprArg Args,
@@ -6075,7 +6075,7 @@ ExprResult Sema::CorrectDelayedTyposInExpr(
       (E->isTypeDependent() || E->isValueDependent() ||
        E->isInstantiationDependent())) {
     auto TyposResolved = DelayedTypos.size();
-    auto Result = TransformTypos(*this, std::move(Filter)).Transform(E);
+    auto Result = TransformTypos(*this, Filter).Transform(E);
     TyposResolved -= DelayedTypos.size();
     if (TyposResolved) {
       ExprEvalContexts.back().NumTypos -= TyposResolved;
