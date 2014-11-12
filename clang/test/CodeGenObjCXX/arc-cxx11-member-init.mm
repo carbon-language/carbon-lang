@@ -30,3 +30,16 @@ class XClipboardDataSet
 // CHECK: [[THREE:%.*]] = bitcast i8* [[CALL]] to [[T:%.*]]*
 // CHECK: store [[T]]* [[THREE]], [[T]]** [[mClipData]], align 8
 
+// rdar://18950072
+struct Butt { };
+
+__attribute__((objc_root_class))
+@interface Foo {
+  Butt x;
+  Butt y;
+  Butt z;
+}
+@end
+@implementation Foo
+@end
+// CHECK-NOTE: define internal i8* @"\01-[Foo .cxx_construct
