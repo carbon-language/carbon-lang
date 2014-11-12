@@ -21,7 +21,7 @@
 COMPILER_RT_ABI si_int
 __addvsi3(si_int a, si_int b)
 {
-    si_int s = a + b;
+    si_int s = (su_int) a + (su_int) b;
     if (b >= 0)
     {
         if (s < a)
