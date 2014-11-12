@@ -87,6 +87,9 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
       case MCSymbolRefExpr::VK_PLT:
         Type = ELF::R_PPC_PLTREL24;
         break;
+      case MCSymbolRefExpr::VK_PPC_LOCAL:
+        Type = ELF::R_PPC_LOCAL24PC;
+        break;
       }
       break;
     case PPC::fixup_ppc_brcond14:

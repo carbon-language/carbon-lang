@@ -1031,6 +1031,9 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(outs), (ins), "#MovePCtoLR", []>,
                    PPC970_Unit_BRU;
+let Defs = [LR] in
+  def MoveGOTtoLR : Pseudo<(outs), (ins), "#MoveGOTtoLR", []>,
+                    PPC970_Unit_BRU;
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   let isBarrier = 1 in {
@@ -2502,15 +2505,13 @@ def ADDISdtprelHA32 : Pseudo<(outs gprc:$rD), (ins gprc_nor0:$reg, s16imm:$disp)
                                                 tglobaltlsaddr:$disp))]>;
 
 // Support for Position-independent code
-def LWZtoc: Pseudo<(outs gprc:$rD), (ins tocentry32:$disp, gprc:$reg),
-                  "#LWZtoc",
-                  [(set i32:$rD,
-                     (PPCtoc_entry tglobaladdr:$disp, i32:$reg))]>;
+def LWZtoc : Pseudo<(outs gprc:$rD), (ins tocentry32:$disp, gprc:$reg),
+                   "#LWZtoc",
+                   [(set i32:$rD,
+                      (PPCtoc_entry tglobaladdr:$disp, i32:$reg))]>;
 // Get Global (GOT) Base Register offset, from the word immediately preceding
 // the function label.
-def GetGBRO:	Pseudo<(outs gprc:$rT), (ins gprc:$rI), "#GetGBRO", []>;
-// Update the Global(GOT) Base Register with the above offset.
-def UpdateGBR:	Pseudo<(outs gprc:$rT), (ins gprc:$rI), "#UpdateGBR", []>;
+def UpdateGBR : Pseudo<(outs gprc:$rD, gprc:$rT), (ins gprc:$rI), "#UpdateGBR", []>;
 
 
 // Standard shifts.  These are represented separately from the real shifts above
