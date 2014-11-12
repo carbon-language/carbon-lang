@@ -71,6 +71,12 @@ static cl::opt<bool> ExperimentalVectorShuffleLowering(
     cl::desc("Enable an experimental vector shuffle lowering code path."),
     cl::Hidden);
 
+static cl::opt<int> ReciprocalEstimateRefinementSteps(
+    "x86-recip-refinement-steps", cl::init(1),
+    cl::desc("Specify the number of Newton-Raphson iterations applied to the "
+             "result of the hardware reciprocal estimate instruction."),
+    cl::NotHidden);
+
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
@@ -14543,9 +14549,7 @@ SDValue X86TargetLowering::getRecipEstimate(SDValue Op,
   // along with FMA, this could be a throughput win.
   if ((Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)) ||
       (Subtarget->hasAVX() && VT == MVT::v8f32)) {
-    // TODO: Expose this as a user-configurable parameter to allow for
-    // speed vs. accuracy flexibility.
-    RefinementSteps = 1;
+    RefinementSteps = ReciprocalEstimateRefinementSteps;
     return DCI.DAG.getNode(X86ISD::FRCP, SDLoc(Op), VT, Op);
   }
   return SDValue();
