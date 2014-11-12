@@ -3,6 +3,8 @@
 // RUN: %clangxx_asan  %s -o %t
 // RUN: env ASAN_OPTIONS=dump_instruction_bytes=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-DUMP
 // RUN: not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-NODUMP
+//
+// REQUIRES: x86_64-supported-target,i386-supported-target
 
 int main() {
 #if defined(__x86_64__)
@@ -16,5 +18,3 @@ int main() {
   // CHECK-NODUMP-NOT: First 16 instruction bytes
   return 0;
 }
-
-// XFAIL: arm
