@@ -360,8 +360,6 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
 
 void
 DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
-  DataExtractor debug_str_data(cu->getStringSection(), true, 0);
-  DataExtractor debug_str_offset_data(cu->getStringOffsetSection(), true, 0);
   uint64_t uvalue = Value.uval;
   bool cu_relative_offset = false;
 
