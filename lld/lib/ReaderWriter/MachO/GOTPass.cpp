@@ -52,8 +52,8 @@ namespace mach_o {
 //
 class GOTEntryAtom : public SimpleDefinedAtom {
 public:
-  GOTEntryAtom(const File &file, bool is64) 
-    : SimpleDefinedAtom(file), _is64(is64) { }
+  GOTEntryAtom(const File &file, bool is64, StringRef name)
+    : SimpleDefinedAtom(file), _is64(is64), _name(name) { }
 
   ContentType contentType() const override {
     return DefinedAtom::typeGOT;
@@ -77,8 +77,13 @@ public:
     return llvm::makeArrayRef(zeros, size());
   }
 
+  StringRef slotName() const {
+    return _name;
+  }
+
 private:
   const bool _is64;
+  StringRef _name;
 };
 
 
@@ -116,9 +121,17 @@ private:
       }
     }
 
-    // add all created GOT Atoms to master file
+    // Sort and add all created GOT Atoms to master file
+    std::vector<const GOTEntryAtom *> entries;
+    entries.reserve(_targetToGOT.size());
     for (auto &it : _targetToGOT)
-      mergedFile->addAtom(*it.second);
+      entries.push_back(it.second);
+    std::sort(entries.begin(), entries.end(),
+              [](const GOTEntryAtom *left, const GOTEntryAtom *right) {
+      return (left->slotName().compare(right->slotName()) < 0);
+    });
+    for (const GOTEntryAtom *slot : entries)
+      mergedFile->addAtom(*slot);
   }
 
   bool shouldReplaceTargetWithGOTAtom(const Atom *target, bool canBypassGOT) {
@@ -142,7 +155,7 @@ private:
     auto pos = _targetToGOT.find(target);
     if (pos == _targetToGOT.end()) {
       GOTEntryAtom *gotEntry = new (_file.allocator()) 
-                                        GOTEntryAtom(_file, _context.is64Bit());
+          GOTEntryAtom(_file, _context.is64Bit(), target->name());
       _targetToGOT[target] = gotEntry;
       const ArchHandler::ReferenceInfo &nlInfo = _archHandler.stubInfo().
                                                 nonLazyPointerReferenceToBinder;
