@@ -510,6 +510,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def TLBWR_MM : MMRel, TLB<"tlbwr">, COP0_TLB_FM_MM<0xcd>;
 }
 
+let Predicates = [InMicroMips] in {
+
 //===----------------------------------------------------------------------===//
 // MicroMips arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
@@ -533,6 +535,5 @@ def : MipsPat<(srl GPR32:$src, immZExt5:$imm),
 // MicroMips instruction aliases
 //===----------------------------------------------------------------------===//
 
-let Predicates = [InMicroMips] in {
   def : MipsInstAlias<"wait", (WAIT_MM 0x0), 1>;
 }
