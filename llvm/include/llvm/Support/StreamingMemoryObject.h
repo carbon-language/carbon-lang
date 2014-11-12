@@ -38,7 +38,6 @@ public:
     return nullptr;
   }
   bool isValidAddress(uint64_t address) const override;
-  bool isObjectEnd(uint64_t address) const override;
 
   /// Drop s bytes from the front of the stream, pushing the positions of the
   /// remaining bytes down by s. This is used to skip past the bitcode header,

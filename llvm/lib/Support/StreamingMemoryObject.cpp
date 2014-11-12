@@ -34,9 +34,6 @@ public:
   bool isValidAddress(uint64_t address) const override {
     return validAddress(address);
   }
-  bool isObjectEnd(uint64_t address) const override {
-    return objectEnd(address);
-  }
 
 private:
   const uint8_t* const FirstChar;
@@ -46,9 +43,6 @@ private:
   // calls per public function
   bool validAddress(uint64_t address) const {
     return static_cast<std::ptrdiff_t>(address) < LastChar - FirstChar;
-  }
-  bool objectEnd(uint64_t address) const {
-    return static_cast<std::ptrdiff_t>(address) == LastChar - FirstChar;
   }
 
   RawMemoryObject(const RawMemoryObject&) LLVM_DELETED_FUNCTION;
@@ -83,12 +77,6 @@ namespace llvm {
 bool StreamingMemoryObject::isValidAddress(uint64_t address) const {
   if (ObjectSize && address < ObjectSize) return true;
     return fetchToPos(address);
-}
-
-bool StreamingMemoryObject::isObjectEnd(uint64_t address) const {
-  if (ObjectSize) return address == ObjectSize;
-  fetchToPos(address);
-  return address == ObjectSize && address != 0;
 }
 
 uint64_t StreamingMemoryObject::getExtent() const {

@@ -22,9 +22,9 @@ namespace llvm {
 /// to return the right result, getExtent must also wait for all the data to
 /// arrive; therefore it should not be called on objects which are actually
 /// streamed (this would defeat the purpose of streaming). Instead,
-/// isValidAddress and isObjectEnd can be used to test addresses without knowing
-/// the exact size of the stream. Finally, getPointer can be used instead of
-/// readBytes to avoid extra copying.
+/// isValidAddress can be used to test addresses without knowing the exact size
+/// of the stream. Finally, getPointer can be used instead of readBytes to avoid
+/// extra copying.
 class MemoryObject {
 public:
   virtual ~MemoryObject();
@@ -61,13 +61,6 @@ public:
   /// @param address - address of the byte, in the same space as getBase()
   /// @result        - true if the address may be read with readByte()
   virtual bool isValidAddress(uint64_t address) const = 0;
-
-  /// Returns true if the address is one past the end of the object (i.e. if it
-  /// is equal to base + extent). May block until (address - base) bytes have
-  /// been read
-  /// @param address - address of the byte, in the same space as getBase()
-  /// @result        - true if the address is equal to base + extent
-  virtual bool isObjectEnd(uint64_t address) const = 0;
 };
 
 }
