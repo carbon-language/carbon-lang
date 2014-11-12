@@ -3417,7 +3417,7 @@ std::error_code BitcodeReader::InitStreamFromBuffer() {
       return Error(BitcodeError::InvalidBitcodeWrapperHeader);
 
   StreamFile.reset(new BitstreamReader(BufPtr, BufEnd));
-  Stream.init(*StreamFile);
+  Stream.init(&*StreamFile);
 
   return std::error_code();
 }
@@ -3427,7 +3427,7 @@ std::error_code BitcodeReader::InitLazyStream() {
   // see it.
   StreamingMemoryObject *Bytes = new StreamingMemoryObject(LazyStreamer);
   StreamFile.reset(new BitstreamReader(Bytes));
-  Stream.init(*StreamFile);
+  Stream.init(&*StreamFile);
 
   unsigned char buf[16];
   if (Bytes->readBytes(0, 16, buf) == -1)

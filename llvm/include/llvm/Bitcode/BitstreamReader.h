@@ -199,19 +199,14 @@ class BitstreamCursor {
 
 
 public:
-  BitstreamCursor() : BitStream(nullptr), NextChar(0) {}
+  BitstreamCursor() { init(nullptr); }
 
-  explicit BitstreamCursor(BitstreamReader &R) : BitStream(&R) {
-    NextChar = 0;
-    CurWord = 0;
-    BitsInCurWord = 0;
-    CurCodeSize = 2;
-  }
+  explicit BitstreamCursor(BitstreamReader &R) { init(&R); }
 
-  void init(BitstreamReader &R) {
+  void init(BitstreamReader *R) {
     freeState();
 
-    BitStream = &R;
+    BitStream = R;
     NextChar = 0;
     CurWord = 0;
     BitsInCurWord = 0;
