@@ -682,8 +682,8 @@ SinkShiftAndTruncate(BinaryOperator *ShiftI, Instruction *User, ConstantInt *CI,
     // FIXME: always querying the result type is just an
     // approximation; some nodes' legality is determined by the
     // operand or other means. There's no good way to find out though.
-    if (TLI.isOperationLegalOrCustom(ISDOpcode,
-                                     EVT::getEVT(TruncUser->getType(), true)))
+    if (TLI.isOperationLegalOrCustom(
+            ISDOpcode, TLI.getValueType(TruncUser->getType(), true)))
       continue;
 
     // Don't bother for PHI nodes.
