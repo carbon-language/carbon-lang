@@ -1190,6 +1190,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             {
                 
                 return_address_reg.init (m_thread, m_full_unwind_plan_sp->GetRegisterKind(), m_full_unwind_plan_sp->GetReturnAddressRegister());
+                regnum = return_address_reg;
                 UnwindLogMsg ("requested caller's saved PC but this UnwindPlan uses a RA reg; getting %s (%d) instead",
                               return_address_reg.GetName(), return_address_reg.GetAsKind (eRegisterKindLLDB));
             }
