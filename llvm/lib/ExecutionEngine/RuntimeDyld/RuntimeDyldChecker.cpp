@@ -667,8 +667,9 @@ private:
   bool decodeInst(StringRef Symbol, MCInst &Inst, uint64_t &Size) const {
     MCDisassembler *Dis = Checker.Disassembler;
     StringRef SectionMem = Checker.getSubsectionStartingAt(Symbol);
-    ArrayRef<uint8_t> SectionBytes((uint8_t *)SectionMem.begin(),
-                                   SectionMem.size());
+    ArrayRef<uint8_t> SectionBytes(
+        reinterpret_cast<const uint8_t *>(SectionMem.begin()),
+        SectionMem.size());
 
     MCDisassembler::DecodeStatus S =
         Dis->getInstruction(Inst, Size, SectionBytes, 0, nulls(), nulls());
