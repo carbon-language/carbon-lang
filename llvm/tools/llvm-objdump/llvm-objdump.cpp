@@ -377,7 +377,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     StringRef BytesStr;
     if (error(Section.getContents(BytesStr)))
       break;
-    ArrayRef<uint8_t> Bytes((uint8_t *)BytesStr.data(), BytesStr.size());
+    ArrayRef<uint8_t> Bytes(reinterpret_cast<const uint8_t *>(BytesStr.data()),
+                            BytesStr.size());
 
     uint64_t Size;
     uint64_t Index;
@@ -411,7 +412,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           outs() << format("%8" PRIx64 ":", SectionAddr + Index);
           if (!NoShowRawInsn) {
             outs() << "\t";
-            DumpBytes(StringRef((char *)Bytes.data() + Index, Size));
+            DumpBytes(StringRef(
+                reinterpret_cast<const char *>(Bytes.data()) + Index, Size));
           }
           IP->printInst(&Inst, outs(), "");
           outs() << CommentStream.str();

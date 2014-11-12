@@ -1613,7 +1613,8 @@ static void DisassembleInputMachO2(StringRef Filename,
 
     StringRef BytesStr;
     Sections[SectIdx].getContents(BytesStr);
-    ArrayRef<uint8_t> Bytes((uint8_t *)BytesStr.data(), BytesStr.size());
+    ArrayRef<uint8_t> Bytes(reinterpret_cast<const uint8_t *>(BytesStr.data()),
+                            BytesStr.size());
     uint64_t SectAddress = Sections[SectIdx].getAddress();
 
     bool symbolTableWorked = false;
@@ -1748,7 +1749,9 @@ static void DisassembleInputMachO2(StringRef Filename,
           DTI->second.getLength(Length);
           uint16_t Kind;
           DTI->second.getKind(Kind);
-          Size = DumpDataInCode((char *)Bytes.data() + Index, Length, Kind);
+          Size = DumpDataInCode(reinterpret_cast<const char *>(Bytes.data()) +
+                                    Index,
+                                Length, Kind);
           if ((Kind == MachO::DICE_KIND_JUMP_TABLE8) &&
               (PC == (DTI->first + Length - 1)) && (Length & 1))
             Size++;
@@ -1767,7 +1770,8 @@ static void DisassembleInputMachO2(StringRef Filename,
                                            DebugOut, Annotations);
         if (gotInst) {
           if (!NoShowRawInsn) {
-            DumpBytes(StringRef((char *)Bytes.data() + Index, Size));
+            DumpBytes(StringRef(
+                reinterpret_cast<const char *>(Bytes.data()) + Index, Size));
           }
           formatted_raw_ostream FormattedOS(outs());
           Annotations.flush();
@@ -1823,7 +1827,9 @@ static void DisassembleInputMachO2(StringRef Filename,
           }
           if (!NoShowRawInsn) {
             outs() << "\t";
-            DumpBytes(StringRef((char *)Bytes.data() + Index, InstSize));
+            DumpBytes(
+                StringRef(reinterpret_cast<const char *>(Bytes.data()) + Index,
+                          InstSize));
           }
           IP->printInst(&Inst, outs(), "");
           outs() << "\n";
