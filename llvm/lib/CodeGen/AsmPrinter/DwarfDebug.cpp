@@ -1478,7 +1478,7 @@ void DwarfDebug::emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  Accel.Emit(Asm, SectionBegin, &InfoHolder, DwarfStrSectionSym);
+  Accel.Emit(Asm, SectionBegin, this, DwarfStrSectionSym);
 }
 
 // Emit visible names into a hashed accelerator table section.

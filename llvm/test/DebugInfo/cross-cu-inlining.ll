@@ -1,6 +1,7 @@
 ; REQUIRES: object-emission
 
 ; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck -implicit-check-not=DW_TAG %s
+; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump - | FileCheck --check-prefix=CHECK-ACCEL --check-prefix=CHECK %s
 
 ; Build from source:
 ; $ clang++ a.cpp b.cpp -g -c -emit-llvm
@@ -24,7 +25,7 @@
 ; CHECK:   DW_AT_name {{.*}} "a.cpp"
 ; CHECK:   DW_TAG_subprogram
 ; CHECK:     DW_AT_type [DW_FORM_ref_addr] (0x00000000[[INT:.*]])
-; CHECK:     DW_TAG_inlined_subroutine
+; CHECK:     0x[[INLINED:[0-9a-f]*]]:{{.*}}DW_TAG_inlined_subroutine
 ; CHECK:       DW_AT_abstract_origin {{.*}}[[ABS_FUNC:........]] "_Z4funci"
 ; CHECK:       DW_TAG_formal_parameter
 ; CHECK:         DW_AT_abstract_origin {{.*}}[[ABS_VAR:........]] "x"
@@ -45,13 +46,24 @@
 
 ; Check the concrete out of line definition references the abstract and
 ; provides the address range and variable location
-; CHECK: DW_TAG_subprogram
+; CHECK: 0x[[FUNC:[0-9a-f]*]]{{.*}}DW_TAG_subprogram
 ; CHECK:   DW_AT_low_pc
 ; CHECK:   DW_AT_abstract_origin {{.*}} {0x[[ABS_FUNC]]} "_Z4funci"
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK:     DW_AT_location
 ; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]} "x"
 
+; CHECK-ACCEL: .apple_names contents:
+; CHECK-ACCEL: Name{{.*}}"func"
+; CHECK-ACCEL-NOT: Name
+; CHECK-ACCEL: Atom[0]{{.*}}[[INLINED]]
+; CHECK-ACCEL-NOT: Name
+; CHECK-ACCEL: Atom[0]{{.*}}[[FUNC]]
+
+; CHECK-ACCEL: .apple_types contents:
+; CHECK-ACCEL: Name{{.*}}"int"
+; CHECK-ACCEL-NOT: Name
+; CHECK-ACCEL: Atom[0]{{.*}}[[INT]]
 
 @i = external global i32
 
