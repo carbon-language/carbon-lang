@@ -225,5 +225,18 @@ void typedefs_in_constructors() {
   };
 }
 
+void *operator new(__SIZE_TYPE__, void *p) throw() { return p; }
+void placement_new_and_delete() {
+  struct MyStruct { };
+  char memory[sizeof(MyStruct)];
+  void *p = memory;
+
+  typedef MyStruct A_t1;
+  MyStruct *a = new (p) A_t1();
+
+  typedef MyStruct A_t2;
+  a->~A_t2();
+}
+
 // This should not disable any warnings:
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
