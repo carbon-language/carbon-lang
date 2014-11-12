@@ -27,8 +27,8 @@ class StreamingMemoryObject : public MemoryObject {
 public:
   StreamingMemoryObject(DataStreamer *streamer);
   uint64_t getExtent() const override;
-  int readBytes(uint64_t address, uint64_t size,
-                uint8_t *buf) const override;
+  uint64_t readBytes(uint8_t *Buf, uint64_t Size,
+                     uint64_t Address) const override;
   const uint8_t *getPointer(uint64_t address, uint64_t size) const override {
     // This could be fixed by ensuring the bytes are fetched and making a copy,
     // requiring that the bitcode size be known, or otherwise ensuring that

@@ -341,7 +341,7 @@ public:
     // Read the next word from the stream.
     uint8_t Array[sizeof(word_t)] = {0};
 
-    BitStream->getBitcodeBytes().readBytes(NextChar, sizeof(Array), Array);
+    BitStream->getBitcodeBytes().readBytes(Array, sizeof(Array), NextChar);
 
     // Handle big-endian byte-swapping if necessary.
     support::detail::packed_endian_specific_integral

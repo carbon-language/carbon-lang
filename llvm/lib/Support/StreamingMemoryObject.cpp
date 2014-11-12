@@ -28,8 +28,8 @@ public:
   uint64_t getExtent() const override {
     return LastChar - FirstChar;
   }
-  int readBytes(uint64_t address, uint64_t size,
-                uint8_t *buf) const override;
+  uint64_t readBytes(uint8_t *Buf, uint64_t Size,
+                     uint64_t Address) const override;
   const uint8_t *getPointer(uint64_t address, uint64_t size) const override;
   bool isValidAddress(uint64_t address) const override {
     return validAddress(address);
@@ -55,12 +55,20 @@ private:
   void operator=(const RawMemoryObject&) LLVM_DELETED_FUNCTION;
 };
 
-int RawMemoryObject::readBytes(uint64_t address,
-                               uint64_t size,
-                               uint8_t *buf) const {
-  if (!validAddress(address) || !validAddress(address + size - 1)) return -1;
-  memcpy(buf, (uint8_t *)(uintptr_t)(address + FirstChar), size);
-  return size;
+uint64_t RawMemoryObject::readBytes(uint8_t *Buf, uint64_t Size,
+                                    uint64_t Address) const {
+  uint64_t BufferSize = LastChar - FirstChar;
+  if (Address >= BufferSize)
+    return 0;
+
+  uint64_t End = Address + Size;
+  if (End > BufferSize)
+    End = BufferSize;
+
+  Size = End - Address;
+  assert(Size >= 0);
+  memcpy(Buf, (uint8_t *)(Address + FirstChar), Size);
+  return Size;
 }
 
 const uint8_t *RawMemoryObject::getPointer(uint64_t address,
@@ -91,12 +99,20 @@ uint64_t StreamingMemoryObject::getExtent() const {
   return ObjectSize;
 }
 
-int StreamingMemoryObject::readBytes(uint64_t address,
-                                     uint64_t size,
-                                     uint8_t *buf) const {
-  if (!fetchToPos(address + size - 1)) return -1;
-  memcpy(buf, &Bytes[address + BytesSkipped], size);
-  return 0;
+uint64_t StreamingMemoryObject::readBytes(uint8_t *Buf, uint64_t Size,
+                                          uint64_t Address) const {
+  fetchToPos(Address + Size - 1);
+  uint64_t BufferSize = Bytes.size() - BytesSkipped;
+  if (Address >= BufferSize)
+    return 0;
+
+  uint64_t End = Address + Size;
+  if (End > BufferSize)
+    End = BufferSize;
+  Size = End - Address;
+  assert(Size >= 0);
+  memcpy(Buf, &Bytes[Address + BytesSkipped], Size);
+  return Size;
 }
 
 bool StreamingMemoryObject::dropLeadingBytes(size_t s) {

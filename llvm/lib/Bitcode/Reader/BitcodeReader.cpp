@@ -3430,7 +3430,7 @@ std::error_code BitcodeReader::InitLazyStream() {
   Stream.init(&*StreamFile);
 
   unsigned char buf[16];
-  if (Bytes->readBytes(0, 16, buf) == -1)
+  if (Bytes->readBytes(buf, 16, 0) != 16)
     return Error(BitcodeError::InvalidBitcodeSignature);
 
   if (!isBitcode(buf, buf + 16))
