@@ -13,6 +13,7 @@ set(ADTSources
   DenseMapTest.cpp
   DenseSetTest.cpp
   FoldingSet.cpp
+  FunctionRefTest.cpp
   HashingTest.cpp
   ilistTest.cpp
   ImmutableMapTest.cpp

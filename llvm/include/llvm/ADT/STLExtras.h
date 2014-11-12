@@ -77,8 +77,11 @@ class function_ref<Ret(Params...)> {
   }
 
 public:
-  template<typename Callable>
-  function_ref(Callable &&callable)
+  template <typename Callable>
+  function_ref(Callable &&callable,
+               typename std::enable_if<
+                   !std::is_same<typename std::remove_reference<Callable>::type,
+                                 function_ref>::value>::type * = nullptr)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
         callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Params ...params) const {
