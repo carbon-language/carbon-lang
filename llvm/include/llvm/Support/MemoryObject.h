@@ -51,7 +51,8 @@ public:
   ///                   and large enough to hold size bytes.
   /// @result         - 0 if successful; -1 if not.  Failure may be due to a
   ///                   bounds violation or an implementation-specific error.
-  virtual int readBytes(uint64_t address, uint64_t size, uint8_t *buf) const;
+  virtual int readBytes(uint64_t address, uint64_t size,
+                        uint8_t *buf) const = 0;
 };
 
 }
