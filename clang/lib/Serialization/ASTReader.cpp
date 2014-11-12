@@ -4124,10 +4124,9 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
 
   // Initialize the stream
   llvm::BitstreamReader StreamFile;
-  BitstreamCursor Stream;
   StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
                   (const unsigned char *)(*Buffer)->getBufferEnd());
-  Stream.init(StreamFile);
+  BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'C' ||
@@ -4211,10 +4210,9 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
 
   // Initialize the stream
   llvm::BitstreamReader StreamFile;
-  BitstreamCursor Stream;
   StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
                   (const unsigned char *)(*Buffer)->getBufferEnd());
-  Stream.init(StreamFile);
+  BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'C' ||

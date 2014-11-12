@@ -501,10 +501,9 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
 
   // Initialize the input stream
   llvm::BitstreamReader InStreamFile;
-  llvm::BitstreamCursor InStream;
   InStreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
                     (const unsigned char *)(*Buffer)->getBufferEnd());
-  InStream.init(InStreamFile);
+  llvm::BitstreamCursor InStream(InStreamFile);
 
   // Sniff for the signature.
   if (InStream.Read(8) != 'C' ||

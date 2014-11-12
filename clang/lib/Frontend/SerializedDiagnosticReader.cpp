@@ -29,8 +29,7 @@ std::error_code SerializedDiagnosticReader::readDiagnostics(StringRef File) {
   StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
                   (const unsigned char *)(*Buffer)->getBufferEnd());
 
-  llvm::BitstreamCursor Stream;
-  Stream.init(StreamFile);
+  llvm::BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'D' ||
