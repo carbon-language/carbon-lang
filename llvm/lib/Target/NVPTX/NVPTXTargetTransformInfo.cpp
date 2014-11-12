@@ -36,12 +36,14 @@ void initializeNVPTXTTIPass(PassRegistry &);
 namespace {
 
 class NVPTXTTI final : public ImmutablePass, public TargetTransformInfo {
+  const NVPTXTargetLowering *TLI;
 public:
-  NVPTXTTI() : ImmutablePass(ID) {
+  NVPTXTTI() : ImmutablePass(ID), TLI(nullptr) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 
-  NVPTXTTI(const NVPTXTargetMachine *TM) : ImmutablePass(ID) {
+  NVPTXTTI(const NVPTXTargetMachine *TM)
+      : ImmutablePass(ID), TLI(TM->getSubtargetImpl()->getTargetLowering()) {
     initializeNVPTXTTIPass(*PassRegistry::getPassRegistry());
   }
 
@@ -63,6 +65,12 @@ public:
 
   bool hasBranchDivergence() const override;
 
+  unsigned getArithmeticInstrCost(
+      unsigned Opcode, Type *Ty, OperandValueKind Opd1Info = OK_AnyValue,
+      OperandValueKind Opd2Info = OK_AnyValue,
+      OperandValueProperties Opd1PropInfo = OP_None,
+      OperandValueProperties Opd2PropInfo = OP_None) const override;
+
   /// @}
 };
 
@@ -78,3 +86,32 @@ llvm::createNVPTXTargetTransformInfoPass(const NVPTXTargetMachine *TM) {
 }
 
 bool NVPTXTTI::hasBranchDivergence() const { return true; }
+
+unsigned NVPTXTTI::getArithmeticInstrCost(
+    unsigned Opcode, Type *Ty, OperandValueKind Opd1Info,
+    OperandValueKind Opd2Info, OperandValueProperties Opd1PropInfo,
+    OperandValueProperties Opd2PropInfo) const {
+  // Legalize the type.
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Ty);
+
+  int ISD = TLI->InstructionOpcodeToISD(Opcode);
+
+  switch (ISD) {
+  default:
+    return TargetTransformInfo::getArithmeticInstrCost(
+        Opcode, Ty, Opd1Info, Opd2Info, Opd1PropInfo, Opd2PropInfo);
+  case ISD::ADD:
+  case ISD::MUL:
+  case ISD::XOR:
+  case ISD::OR:
+  case ISD::AND:
+    // The machine code (SASS) simulates an i64 with two i32. Therefore, we
+    // estimate that arithmetic operations on i64 are twice as expensive as
+    // those on types that can fit into one machine register.
+    if (LT.second.SimpleTy == MVT::i64)
+      return 2 * LT.first;
+    // Delegate other cases to the basic TTI.
+    return TargetTransformInfo::getArithmeticInstrCost(
+        Opcode, Ty, Opd1Info, Opd2Info, Opd1PropInfo, Opd2PropInfo);
+  }
+}
