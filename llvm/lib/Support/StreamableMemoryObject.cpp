@@ -25,7 +25,6 @@ public:
     assert(LastChar >= FirstChar && "Invalid start/end range");
   }
 
-  uint64_t getBase() const override { return 0; }
   uint64_t getExtent() const override {
     return LastChar - FirstChar;
   }

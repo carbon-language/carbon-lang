@@ -24,11 +24,6 @@ public:
   /// Destructor      - Override as necessary.
   virtual ~MemoryObject();
 
-  /// getBase         - Returns the lowest valid address in the region.
-  ///
-  /// @result         - The lowest valid address.
-  virtual uint64_t getBase() const = 0;
-
   /// getExtent       - Returns the size of the region in bytes.  (The region is
   ///                   contiguous, so the highest valid address of the region
   ///                   is getBase() + getExtent() - 1).
