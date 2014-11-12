@@ -668,7 +668,7 @@ private:
     MCDisassembler *Dis = Checker.Disassembler;
     StringRef SectionMem = Checker.getSubsectionStartingAt(Symbol);
     ArrayRef<uint8_t> SectionBytes(
-        reinterpret_cast<const uint8_t *>(SectionMem.begin()),
+        reinterpret_cast<const uint8_t *>(SectionMem.data()),
         SectionMem.size());
 
     MCDisassembler::DecodeStatus S =
