@@ -1,4 +1,4 @@
-//===- StreamableMemoryObject.cpp - Streamable data interface -------------===//
+//===- StreamingMemoryObject.cpp - Streamable data interface -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/StreamableMemoryObject.h"
+#include "llvm/Support/StreamingMemoryObject.h"
 #include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
@@ -18,7 +18,7 @@ using namespace llvm;
 
 namespace {
 
-class RawMemoryObject : public StreamableMemoryObject {
+class RawMemoryObject : public MemoryObject {
 public:
   RawMemoryObject(const unsigned char *Start, const unsigned char *End) :
     FirstChar(Start), LastChar(End) {
@@ -111,12 +111,10 @@ void StreamingMemoryObject::setKnownObjectSize(size_t size) {
   Bytes.reserve(size);
 }
 
-StreamableMemoryObject *getNonStreamedMemoryObject(
-    const unsigned char *Start, const unsigned char *End) {
+MemoryObject *getNonStreamedMemoryObject(const unsigned char *Start,
+                                         const unsigned char *End) {
   return new RawMemoryObject(Start, End);
 }
-
-StreamableMemoryObject::~StreamableMemoryObject() { }
 
 StreamingMemoryObject::StreamingMemoryObject(DataStreamer *streamer) :
   Bytes(kChunkSize), Streamer(streamer), BytesRead(0), BytesSkipped(0),

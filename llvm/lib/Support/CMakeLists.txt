@@ -80,7 +80,7 @@ add_llvm_library(LLVMSupport
   SourceMgr.cpp
   SpecialCaseList.cpp
   Statistic.cpp
-  StreamableMemoryObject.cpp
+  StreamingMemoryObject.cpp
   StringExtras.cpp
   StringMap.cpp
   StringPool.cpp

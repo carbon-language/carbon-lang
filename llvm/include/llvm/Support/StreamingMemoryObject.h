@@ -1,4 +1,4 @@
-//===- StreamableMemoryObject.h - Streamable data interface -----*- C++ -*-===//
+//===- StreamingMemoryObject.h - Streamable data interface -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#ifndef LLVM_SUPPORT_STREAMABLEMEMORYOBJECT_H
-#define LLVM_SUPPORT_STREAMABLEMEMORYOBJECT_H
+#ifndef LLVM_SUPPORT_STREAMINGMEMORYOBJECT_H
+#define LLVM_SUPPORT_STREAMINGMEMORYOBJECT_H
 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataStream.h"
@@ -21,48 +20,10 @@
 
 namespace llvm {
 
-/// Interface to data which might be streamed. Streamability has 2 important
-/// implications/restrictions. First, the data might not yet exist in memory
-/// when the request is made. This just means that readByte/readBytes might have
-/// to block or do some work to get it. More significantly, the exact size of
-/// the object might not be known until it has all been fetched. This means that
-/// to return the right result, getExtent must also wait for all the data to
-/// arrive; therefore it should not be called on objects which are actually
-/// streamed (this would defeat the purpose of streaming). Instead,
-/// isValidAddress and isObjectEnd can be used to test addresses without knowing
-/// the exact size of the stream. Finally, getPointer can be used instead of
-/// readBytes to avoid extra copying.
-class StreamableMemoryObject : public MemoryObject {
- public:
-  virtual ~StreamableMemoryObject();
-
-  /// Ensures that the requested data is in memory, and returns a pointer to it.
-  /// More efficient than using readBytes if the data is already in memory. May
-  /// block until (address - base + size) bytes have been read
-  /// @param address - address of the byte, in the same space as getBase()
-  /// @param size    - amount of data that must be available on return
-  /// @result        - valid pointer to the requested data
-  virtual const uint8_t *getPointer(uint64_t address, uint64_t size) const = 0;
-
-  /// Returns true if the address is within the object (i.e. between base and
-  /// base + extent - 1 inclusive). May block until (address - base) bytes have
-  /// been read
-  /// @param address - address of the byte, in the same space as getBase()
-  /// @result        - true if the address may be read with readByte()
-  virtual bool isValidAddress(uint64_t address) const = 0;
-
-  /// Returns true if the address is one past the end of the object (i.e. if it
-  /// is equal to base + extent). May block until (address - base) bytes have
-  /// been read
-  /// @param address - address of the byte, in the same space as getBase()
-  /// @result        - true if the address is equal to base + extent
-  virtual bool isObjectEnd(uint64_t address) const = 0;
-};
-
 /// Interface to data which is actually streamed from a DataStreamer. In
 /// addition to inherited members, it has the dropLeadingBytes and
 /// setKnownObjectSize methods which are not applicable to non-streamed objects.
-class StreamingMemoryObject : public StreamableMemoryObject {
+class StreamingMemoryObject : public MemoryObject {
 public:
   StreamingMemoryObject(DataStreamer *streamer);
   uint64_t getExtent() const override;
@@ -128,8 +89,8 @@ private:
   void operator=(const StreamingMemoryObject&) LLVM_DELETED_FUNCTION;
 };
 
-StreamableMemoryObject *getNonStreamedMemoryObject(
+MemoryObject *getNonStreamedMemoryObject(
     const unsigned char *Start, const unsigned char *End);
 
 }
-#endif  // STREAMABLEMEMORYOBJECT_H_
+#endif  // STREAMINGMEMORYOBJECT_H_
