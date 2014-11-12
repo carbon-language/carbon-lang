@@ -11,9 +11,12 @@
 #define liblldb_Plugins_Process_Windows_IDebugDelegate_H_
 
 #include "ForwardDecl.h"
+#include <string>
 
 namespace lldb_private
 {
+class Error;
+class HostThread;
 
 //----------------------------------------------------------------------
 // IDebugDelegate
@@ -26,15 +29,15 @@ class IDebugDelegate
   public:
     virtual ~IDebugDelegate() {}
 
-    virtual void OnExitProcess(const ProcessMessageExitProcess &message) = 0;
-    virtual void OnDebuggerConnected(const ProcessMessageDebuggerConnected &message) = 0;
-    virtual ExceptionResult OnDebugException(const ProcessMessageException &message) = 0;
-    virtual void OnCreateThread(const ProcessMessageCreateThread &message) = 0;
-    virtual void OnExitThread(const ProcessMessageExitThread &message) = 0;
-    virtual void OnLoadDll(const ProcessMessageLoadDll &message) = 0;
-    virtual void OnUnloadDll(const ProcessMessageUnloadDll &message) = 0;
-    virtual void OnDebugString(const ProcessMessageDebugString &message) = 0;
-    virtual void OnDebuggerError(const ProcessMessageDebuggerError &message) = 0;
+    virtual void OnExitProcess(uint32_t exit_code) = 0;
+    virtual void OnDebuggerConnected() = 0;
+    virtual ExceptionResult OnDebugException(bool first_chance, const ExceptionRecord &record) = 0;
+    virtual void OnCreateThread(const HostThread &thread) = 0;
+    virtual void OnExitThread(const HostThread &thread) = 0;
+    virtual void OnLoadDll() = 0;
+    virtual void OnUnloadDll() = 0;
+    virtual void OnDebugString(const std::string &string) = 0;
+    virtual void OnDebuggerError(const Error &error, uint32_t type) = 0;
 };
 }
 

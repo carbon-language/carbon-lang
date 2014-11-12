@@ -10,7 +10,6 @@
 #include "DebuggerThread.h"
 #include "ExceptionRecord.h"
 #include "IDebugDelegate.h"
-#include "ProcessMessages.h"
 
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
@@ -90,10 +89,7 @@ DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
     if (error.Success())
         DebugLoop();
     else
-    {
-        ProcessMessageDebuggerError message(m_process, error, 0);
-        m_debug_delegate->OnDebuggerError(message);
-    }
+        m_debug_delegate->OnDebuggerError(error, 0);
 
     return 0;
 }
@@ -163,8 +159,7 @@ ExceptionResult
 DebuggerThread::HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thread_id)
 {
     bool first_chance = (info.dwFirstChance != 0);
-    ProcessMessageException message(m_process, ExceptionRecord(info.ExceptionRecord), first_chance);
-    return m_debug_delegate->OnDebugException(message);
+    return m_debug_delegate->OnDebugException(first_chance, ExceptionRecord(info.ExceptionRecord));
 }
 
 DWORD
@@ -190,8 +185,7 @@ DebuggerThread::HandleCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO &info, 
     ((HostThreadWindows &)m_main_thread.GetNativeThread()).SetOwnsHandle(false);
     m_image_file = info.hFile;
 
-    ProcessMessageDebuggerConnected message(m_process);
-    m_debug_delegate->OnDebuggerConnected(message);
+    m_debug_delegate->OnDebuggerConnected();
 
     return DBG_CONTINUE;
 }
@@ -205,8 +199,7 @@ DebuggerThread::HandleExitThreadEvent(const EXIT_THREAD_DEBUG_INFO &info, DWORD 
 DWORD
 DebuggerThread::HandleExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO &info, DWORD thread_id)
 {
-    ProcessMessageExitProcess message(m_process, info.dwExitCode);
-    m_debug_delegate->OnExitProcess(message);
+    m_debug_delegate->OnExitProcess(info.dwExitCode);
 
     m_process = HostProcess();
     m_main_thread = HostThread();
@@ -239,8 +232,7 @@ DWORD
 DebuggerThread::HandleRipEvent(const RIP_INFO &info, DWORD thread_id)
 {
     Error error(info.dwError, eErrorTypeWin32);
-    ProcessMessageDebuggerError message(m_process, error, info.dwType);
-    m_debug_delegate->OnDebuggerError(message);
+    m_debug_delegate->OnDebuggerError(error, info.dwType);
 
     return DBG_CONTINUE;
 }

@@ -30,20 +30,7 @@ namespace lldb_private
 
 class IDebugDelegate;
 class DebuggerThread;
-
 class ExceptionRecord;
-
-// Process message forward declarations.
-class ProcessMessageBase;
-class ProcessMessageExitProcess;
-class ProcessMessageDebuggerConnected;
-class ProcessMessageException;
-class ProcessMessageCreateThread;
-class ProcessMessageExitThread;
-class ProcessMessageLoadDll;
-class ProcessMessageUnloadDll;
-class ProcessMessageDebugString;
-class ProcessMessageDebuggerError;
 
 typedef std::shared_ptr<IDebugDelegate> DebugDelegateSP;
 typedef std::shared_ptr<DebuggerThread> DebuggerThreadSP;

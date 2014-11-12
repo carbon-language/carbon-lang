@@ -30,7 +30,6 @@
 #include "DebuggerThread.h"
 #include "ExceptionRecord.h"
 #include "LocalDebugDelegate.h"
-#include "ProcessMessages.h"
 #include "ProcessWindows.h"
 
 using namespace lldb;
@@ -244,23 +243,22 @@ ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
 }
 
 void
-ProcessWindows::OnExitProcess(const ProcessMessageExitProcess &message)
+ProcessWindows::OnExitProcess(uint32_t exit_code)
 {
-    SetProcessExitStatus(nullptr, GetID(), true, 0, message.GetExitCode());
+    SetProcessExitStatus(nullptr, GetID(), true, 0, exit_code);
     SetPrivateState(eStateExited);
 }
 
 void
-ProcessWindows::OnDebuggerConnected(const ProcessMessageDebuggerConnected &message)
+ProcessWindows::OnDebuggerConnected()
 {
     ::SetEvent(m_data_up->m_launched_event);
 }
 
 ExceptionResult
-ProcessWindows::OnDebugException(const ProcessMessageException &message)
+ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &record)
 {
     ExceptionResult result = ExceptionResult::Handled;
-    const ExceptionRecord &record = message.GetExceptionRecord();
     m_active_exception.reset(new ExceptionRecord(record));
     switch (record.GetExceptionCode())
     {
@@ -273,39 +271,39 @@ ProcessWindows::OnDebugException(const ProcessMessageException &message)
 }
 
 void
-ProcessWindows::OnCreateThread(const ProcessMessageCreateThread &message)
+ProcessWindows::OnCreateThread(const HostThread &thread)
 {
 }
 
 void
-ProcessWindows::OnExitThread(const ProcessMessageExitThread &message)
+ProcessWindows::OnExitThread(const HostThread &thread)
 {
 }
 
 void
-ProcessWindows::OnLoadDll(const ProcessMessageLoadDll &message)
+ProcessWindows::OnLoadDll()
 {
 }
 
 void
-ProcessWindows::OnUnloadDll(const ProcessMessageUnloadDll &message)
+ProcessWindows::OnUnloadDll()
 {
 }
 
 void
-ProcessWindows::OnDebugString(const ProcessMessageDebugString &message)
+ProcessWindows::OnDebugString(const std::string &string)
 {
 }
 
 void
-ProcessWindows::OnDebuggerError(const ProcessMessageDebuggerError &message)
+ProcessWindows::OnDebuggerError(const Error &error, uint32_t type)
 {
     DWORD result = ::WaitForSingleObject(m_data_up->m_launched_event, 0);
     if (result == WAIT_TIMEOUT)
     {
         // If we haven't actually launched the process yet, this was an error
         // launching the process.  Set the internal error and signal.
-        m_launch_error = message.GetError();
+        m_launch_error = error;
         ::SetEvent(m_data_up->m_launched_event);
         return;
     }

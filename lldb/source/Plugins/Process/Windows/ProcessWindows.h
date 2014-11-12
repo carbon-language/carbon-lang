@@ -115,15 +115,15 @@ public:
     virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error);
 
     // IDebugDelegate overrides.
-    virtual void OnExitProcess(const lldb_private::ProcessMessageExitProcess &message) override;
-    virtual void OnDebuggerConnected(const lldb_private::ProcessMessageDebuggerConnected &message) override;
-    virtual ExceptionResult OnDebugException(const lldb_private::ProcessMessageException &message) override;
-    virtual void OnCreateThread(const lldb_private::ProcessMessageCreateThread &message) override;
-    virtual void OnExitThread(const lldb_private::ProcessMessageExitThread &message) override;
-    virtual void OnLoadDll(const lldb_private::ProcessMessageLoadDll &message) override;
-    virtual void OnUnloadDll(const lldb_private::ProcessMessageUnloadDll &message) override;
-    virtual void OnDebugString(const lldb_private::ProcessMessageDebugString &message) override;
-    virtual void OnDebuggerError(const lldb_private::ProcessMessageDebuggerError &message) override;
+    virtual void OnExitProcess(uint32_t exit_code) override;
+    virtual void OnDebuggerConnected() override;
+    virtual ExceptionResult OnDebugException(bool first_chance, const lldb_private::ExceptionRecord &record) override;
+    virtual void OnCreateThread(const lldb_private::HostThread &thread) override;
+    virtual void OnExitThread(const lldb_private::HostThread &thread) override;
+    virtual void OnLoadDll() override;
+    virtual void OnUnloadDll() override;
+    virtual void OnDebugString(const std::string &string) override;
+    virtual void OnDebuggerError(const lldb_private::Error &error, uint32_t type) override;
 
   private:
     std::shared_ptr<lldb_private::ExceptionRecord> m_active_exception;
