@@ -583,9 +583,16 @@ Clang version they became available:</p>
     <th>Available in Clang?</th>
  </tr>
     <tr>
-      <td>SD-6: SG10 feature test recommendations</td>
-      <td><a href="http://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations">SD-6</a></td>
-      <td class="full" align="center">Clang 3.4 (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3745">N3745</a>)</td>
+      <td rowspan="2">SD-6: SG10 feature test recommendations</td>
+      <td rowspan="2"><a href="http://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations">SD-6</a></td>
+      <td class="full" align="center">
+        Clang 3.4 (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3745">N3745</a>)</br>
+      </td>
+    </tr>
+    <tr>
+      <td class="partial" align="center">
+        SVN (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4200">N4200</a>): Partial <a href="#n4200">(1)</a>
+      </td>
     </tr>
     <tr>
       <td>[DRAFT TS] Array extensions (arrays of runtime bound)</td>
@@ -603,6 +610,10 @@ Clang version they became available:</p>
       <td class="none" align="center">No</td>
     </tr>
 </table>
+
+<p>
+<span id="n4200">(1): <code>__has_cpp_attribute</code> is not yet supported.</span>
+</p>
 
 </div>
 </body>

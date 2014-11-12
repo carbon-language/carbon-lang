@@ -16,12 +16,20 @@
 #error "wrong value for __cpp_binary_literals"
 #endif
 
+#if check(digit_separators, 0, 0, 201309)
+#error "wrong value for __cpp_digit_separators"
+#endif
+
 #if check(init_captures, 0, 0, 201304)
 #error "wrong value for __cpp_init_captures"
 #endif
 
 #if check(generic_lambdas, 0, 0, 201304)
 #error "wrong value for __cpp_generic_lambdas"
+#endif
+
+#if check(sized_deallocation, 0, 0, 201309)
+#error "wrong value for __cpp_sized_deallocation"
 #endif
 
 #if check(constexpr, 0, 200704, 201304)
@@ -68,6 +76,10 @@
 #error "wrong value for __cpp_lambdas"
 #endif
 
+#if check(range_based_for, 0, 200907, 200907)
+#error "wrong value for __cpp_range_based_for"
+#endif
+
 #if check(static_assert, 0, 200410, 200410)
 #error "wrong value for __cpp_static_assert"
 #endif
@@ -86,4 +98,28 @@
 
 #if check(variadic_templates, 0, 200704, 200704)
 #error "wrong value for __cpp_variadic_templates"
+#endif
+
+#if check(initializer_lists, 0, 200806, 200806)
+#error "wrong value for __cpp_initializer_lists"
+#endif
+
+#if check(delegating_constructors, 0, 200604, 200604)
+#error "wrong value for __cpp_delegating_constructors"
+#endif
+
+#if check(nsdmi, 0, 200809, 200809)
+#error "wrong value for __cpp_nsdmi"
+#endif
+
+#if check(inheriting_constructors, 0, 200802, 200802)
+#error "wrong value for __cpp_inheriting_constructors"
+#endif
+
+#if check(ref_qualifiers, 0, 200710, 200710)
+#error "wrong value for __cpp_ref_qualifiers"
+#endif
+
+#if check(alias_templates, 0, 200704, 200704)
+#error "wrong value for __cpp_alias_templates"
 #endif

@@ -458,6 +458,13 @@ features are enabled.  The ``__has_extension`` macro can be used to query if
 language features are available as an extension when compiling for a standard
 which does not provide them.  The features which can be tested are listed here.
 
+Since Clang 3.4, the C++ SD-6 feature test macros are also supported.
+These are macros with names of the form ``__cpp_<feature_name>``, and are
+intended to be a portable way to query the supported features of the compiler.
+See `the C++ status page <http://clang.llvm.org/cxx_status.html#ts>`_ for
+information on the version of SD-6 supported by each Clang release, and the
+macros provided by that revision of the recommendations.
+
 C++98
 -----
 
@@ -750,6 +757,13 @@ C++1y default initializers for aggregates
 Use ``__has_feature(cxx_aggregate_nsdmi)`` or
 ``__has_extension(cxx_aggregate_nsdmi)`` to determine if support
 for default initializers in aggregate members is enabled.
+
+C++1y digit separators
+^^^^^^^^^^^^^^^^^^^^^^
+
+Use ``__cpp_digit_separators`` to determine if support for digit separators
+using single quotes (for instance, ``10'000``) is enabled. At this time, there
+is no corresponding ``__has_feature`` name
 
 C++1y generalized lambda capture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

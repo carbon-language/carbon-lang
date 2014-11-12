@@ -409,6 +409,12 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
 /// ISO/IEC JTC1/SC22/WG21 (C++) SD-6: "SG10 Feature Test Recommendations".
 static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
                                                  MacroBuilder &Builder) {
+  // C++98 features.
+  if (LangOpts.RTTI)
+    Builder.defineMacro("__cpp_rtti", "199711");
+  if (LangOpts.CXXExceptions)
+    Builder.defineMacro("__cpp_exceptions", "199711");
+
   // C++11 features.
   if (LangOpts.CPlusPlus11) {
     Builder.defineMacro("__cpp_unicode_characters", "200704");
@@ -418,16 +424,24 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
     Builder.defineMacro("__cpp_lambdas", "200907");
     Builder.defineMacro("__cpp_constexpr",
                         LangOpts.CPlusPlus14 ? "201304" : "200704");
+    Builder.defineMacro("__cpp_range_based_for", "200907");
     Builder.defineMacro("__cpp_static_assert", "200410");
     Builder.defineMacro("__cpp_decltype", "200707");
     Builder.defineMacro("__cpp_attributes", "200809");
     Builder.defineMacro("__cpp_rvalue_references", "200610");
     Builder.defineMacro("__cpp_variadic_templates", "200704");
+    Builder.defineMacro("__cpp_initializer_lists", "200806");
+    Builder.defineMacro("__cpp_delegating_constructors", "200604");
+    Builder.defineMacro("__cpp_nsdmi", "200809");
+    Builder.defineMacro("__cpp_inheriting_constructors", "200802");
+    Builder.defineMacro("__cpp_ref_qualifiers", "200710");
+    Builder.defineMacro("__cpp_alias_templates", "200704");
   }
 
   // C++14 features.
   if (LangOpts.CPlusPlus14) {
     Builder.defineMacro("__cpp_binary_literals", "201304");
+    Builder.defineMacro("__cpp_digit_separators", "201309");
     Builder.defineMacro("__cpp_init_captures", "201304");
     Builder.defineMacro("__cpp_generic_lambdas", "201304");
     Builder.defineMacro("__cpp_decltype_auto", "201304");
@@ -435,6 +449,8 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
     Builder.defineMacro("__cpp_aggregate_nsdmi", "201304");
     Builder.defineMacro("__cpp_variable_templates", "201304");
   }
+  if (LangOpts.SizedDeallocation)
+    Builder.defineMacro("__cpp_sized_deallocation", "201309");
 }
 
 static void InitializePredefinedMacros(const TargetInfo &TI,
