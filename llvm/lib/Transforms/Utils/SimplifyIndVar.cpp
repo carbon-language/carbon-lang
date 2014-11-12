@@ -40,7 +40,7 @@ STATISTIC(NumElimRem     , "Number of IV remainder operations eliminated");
 STATISTIC(NumElimCmp     , "Number of IV comparisons eliminated");
 
 namespace {
-  /// SimplifyIndvar - This is a utility for simplifying induction variables
+  /// This is a utility for simplifying induction variables
   /// based on ScalarEvolution. It is the primary instrument of the
   /// IndvarSimplify pass, but it may also be directly invoked to cleanup after
   /// other loop passes that preserve SCEV.
@@ -86,7 +86,7 @@ namespace {
   };
 }
 
-/// foldIVUser - Fold an IV operand into its use.  This removes increments of an
+/// Fold an IV operand into its use.  This removes increments of an
 /// aligned IV when used by a instruction that ignores the low bits.
 ///
 /// IVOperand is guaranteed SCEVable, but UseInst may not be.
@@ -152,7 +152,7 @@ Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) 
   return IVSrc;
 }
 
-/// eliminateIVComparison - SimplifyIVUsers helper for eliminating useless
+/// SimplifyIVUsers helper for eliminating useless
 /// comparisons against an induction variable.
 void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
   unsigned IVOperIdx = 0;
@@ -188,7 +188,7 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
   DeadInsts.push_back(ICmp);
 }
 
-/// eliminateIVRemainder - SimplifyIVUsers helper for eliminating useless
+/// SimplifyIVUsers helper for eliminating useless
 /// remainder operations operating on an induction variable.
 void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
                                       Value *IVOperand,
@@ -239,7 +239,7 @@ void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
   DeadInsts.push_back(Rem);
 }
 
-/// eliminateIVUser - Eliminate an operation that consumes a simple IV and has
+/// Eliminate an operation that consumes a simple IV and has
 /// no observable side-effect given the range of IV values.
 /// IVOperand is guaranteed SCEVable, but UseInst may not be.
 bool SimplifyIndvar::eliminateIVUser(Instruction *UseInst,
@@ -334,8 +334,7 @@ Instruction *SimplifyIndvar::splitOverflowIntrinsic(Instruction *IVUser,
   return AddInst;
 }
 
-/// pushIVUsers - Add all uses of Def to the current IV's worklist.
-///
+/// Add all uses of Def to the current IV's worklist.
 static void pushIVUsers(
   Instruction *Def,
   SmallPtrSet<Instruction*,16> &Simplified,
@@ -353,7 +352,7 @@ static void pushIVUsers(
   }
 }
 
-/// isSimpleIVUser - Return true if this instruction generates a simple SCEV
+/// Return true if this instruction generates a simple SCEV
 /// expression in terms of that IV.
 ///
 /// This is similar to IVUsers' isInteresting() but processes each instruction
@@ -374,7 +373,7 @@ static bool isSimpleIVUser(Instruction *I, const Loop *L, ScalarEvolution *SE) {
   return false;
 }
 
-/// simplifyUsers - Iteratively perform simplification on a worklist of users
+/// Iteratively perform simplification on a worklist of users
 /// of the specified induction variable. Each successive simplification may push
 /// more users which may themselves be candidates for simplification.
 ///
@@ -446,7 +445,7 @@ namespace llvm {
 
 void IVVisitor::anchor() { }
 
-/// simplifyUsersOfIV - Simplify instructions that use this induction variable
+/// Simplify instructions that use this induction variable
 /// by using ScalarEvolution to analyze the IV's recurrence.
 bool simplifyUsersOfIV(PHINode *CurrIV, ScalarEvolution *SE, LPPassManager *LPM,
                        SmallVectorImpl<WeakVH> &Dead, IVVisitor *V)
@@ -457,7 +456,7 @@ bool simplifyUsersOfIV(PHINode *CurrIV, ScalarEvolution *SE, LPPassManager *LPM,
   return SIV.hasChanged();
 }
 
-/// simplifyLoopIVs - Simplify users of induction variables within this
+/// Simplify users of induction variables within this
 /// loop. This does not actually change or add IVs.
 bool simplifyLoopIVs(Loop *L, ScalarEvolution *SE, LPPassManager *LPM,
                      SmallVectorImpl<WeakVH> &Dead) {
