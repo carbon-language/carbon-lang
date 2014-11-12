@@ -191,4 +191,13 @@ namespace PR19372 {
 
   using U = BindBack<Z, int, int>::apply<char>;
   using U = Z<char, int, int>;
+
+  namespace BetterReduction {
+    template<typename ...> struct S;
+    template<typename ...A> using X = S<A...>;
+    template<typename ...A> using Y = X<A..., A...>;
+
+    using T = Y<int>;
+    using T = S<int, int>;
+  }
 }
