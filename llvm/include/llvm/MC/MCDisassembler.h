@@ -10,6 +10,7 @@
 #define LLVM_MC_MCDISASSEMBLER_H
 
 #include "llvm-c/Disassembler.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSymbolizer.h"
 #include "llvm/Support/DataTypes.h"
@@ -18,7 +19,6 @@ namespace llvm {
 
 class MCInst;
 class MCSubtargetInfo;
-class MemoryObject;
 class raw_ostream;
 class MCContext;
 
@@ -76,8 +76,8 @@ public:
   ///                                            disassemblable but invalid,
   ///                   MCDisassembler::Fail if the instruction was invalid.
   virtual DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                                      const MemoryObject &Region,
-                                      uint64_t Address, raw_ostream &VStream,
+                                      ArrayRef<uint8_t> Bytes, uint64_t Address,
+                                      raw_ostream &VStream,
                                       raw_ostream &CStream) const = 0;
 
 private:

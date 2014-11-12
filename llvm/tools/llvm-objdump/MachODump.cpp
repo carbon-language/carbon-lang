@@ -1611,11 +1611,11 @@ static void DisassembleInputMachO2(StringRef Filename,
     if (SegmentName != "__TEXT")
       continue;
 
-    StringRef Bytes;
-    Sections[SectIdx].getContents(Bytes);
+    StringRef BytesStr;
+    Sections[SectIdx].getContents(BytesStr);
+    ArrayRef<uint8_t> Bytes((uint8_t *)BytesStr.data(), BytesStr.size());
     uint64_t SectAddress = Sections[SectIdx].getAddress();
 
-    StringRefMemoryObject MemoryObject(Bytes, SectAddress);
     bool symbolTableWorked = false;
 
     // Parse relocations.
@@ -1715,9 +1715,6 @@ static void DisassembleInputMachO2(StringRef Filename,
 
       symbolTableWorked = true;
 
-      StringRef Data(Bytes.data() + Start, End - Start);
-      StringRefMemoryObject SectionMemoryObject(Data, SectAddress + Start);
-
       DataRefImpl Symb = Symbols[SymIdx].getRawDataRefImpl();
       bool isThumb =
           (MachOOF->getSymbolFlags(Symb) & SymbolRef::SF_Thumb) && ThumbTarget;
@@ -1751,7 +1748,7 @@ static void DisassembleInputMachO2(StringRef Filename,
           DTI->second.getLength(Length);
           uint16_t Kind;
           DTI->second.getKind(Kind);
-          Size = DumpDataInCode(Bytes.data() + Index, Length, Kind);
+          Size = DumpDataInCode((char *)Bytes.data() + Index, Length, Kind);
           if ((Kind == MachO::DICE_KIND_JUMP_TABLE8) &&
               (PC == (DTI->first + Length - 1)) && (Length & 1))
             Size++;
@@ -1763,14 +1760,14 @@ static void DisassembleInputMachO2(StringRef Filename,
 
         bool gotInst;
         if (isThumb)
-          gotInst = ThumbDisAsm->getInstruction(Inst, Size, SectionMemoryObject,
+          gotInst = ThumbDisAsm->getInstruction(Inst, Size, Bytes.slice(Index),
                                                 PC, DebugOut, Annotations);
         else
-          gotInst = DisAsm->getInstruction(Inst, Size, SectionMemoryObject, PC,
+          gotInst = DisAsm->getInstruction(Inst, Size, Bytes.slice(Index), PC,
                                            DebugOut, Annotations);
         if (gotInst) {
           if (!NoShowRawInsn) {
-            DumpBytes(StringRef(Bytes.data() + Index, Size));
+            DumpBytes(StringRef((char *)Bytes.data() + Index, Size));
           }
           formatted_raw_ostream FormattedOS(outs());
           Annotations.flush();
@@ -1814,8 +1811,8 @@ static void DisassembleInputMachO2(StringRef Filename,
         MCInst Inst;
 
         uint64_t PC = SectAddress + Index;
-        if (DisAsm->getInstruction(Inst, InstSize, MemoryObject, PC, DebugOut,
-                                   nulls())) {
+        if (DisAsm->getInstruction(Inst, InstSize, Bytes.slice(Index), PC,
+                                   DebugOut, nulls())) {
           if (FullLeadingAddr) {
             if (MachOOF->is64Bit())
               outs() << format("%016" PRIx64, PC);
@@ -1826,7 +1823,7 @@ static void DisassembleInputMachO2(StringRef Filename,
           }
           if (!NoShowRawInsn) {
             outs() << "\t";
-            DumpBytes(StringRef(Bytes.data() + Index, InstSize));
+            DumpBytes(StringRef((char *)Bytes.data() + Index, InstSize));
           }
           IP->printInst(&Inst, outs(), "");
           outs() << "\n";

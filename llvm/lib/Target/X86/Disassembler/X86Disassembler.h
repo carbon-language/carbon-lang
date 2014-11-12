@@ -97,7 +97,7 @@ public:
                          std::unique_ptr<const MCInstrInfo> MII);
 public:
   DecodeStatus getInstruction(MCInst &instr, uint64_t &size,
-                              const MemoryObject &region, uint64_t address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &vStream,
                               raw_ostream &cStream) const override;
 

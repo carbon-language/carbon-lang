@@ -23,7 +23,6 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -97,15 +96,26 @@ X86GenericDisassembler::X86GenericDisassembler(
   }
 }
 
-/// A callback function that wraps the readByte method from MemoryObject.
+struct Region {
+  ArrayRef<uint8_t> Bytes;
+  uint64_t Base;
+  Region(ArrayRef<uint8_t> Bytes, uint64_t Base) : Bytes(Bytes), Base(Base) {}
+};
+
+/// A callback function that wraps the readByte method from Region.
 ///
 /// @param Arg      - The generic callback parameter.  In this case, this should
-///                   be a pointer to a MemoryObject.
+///                   be a pointer to a Region.
 /// @param Byte     - A pointer to the byte to be read.
 /// @param Address  - The address to be read.
 static int regionReader(const void *Arg, uint8_t *Byte, uint64_t Address) {
-  const MemoryObject *Region = static_cast<const MemoryObject *>(Arg);
-  return Region->readByte(Address, Byte);
+  auto *R = static_cast<const Region *>(Arg);
+  ArrayRef<uint8_t> Bytes = R->Bytes;
+  unsigned Index = Address - R->Base;
+  if (Bytes.size() <= Index)
+    return -1;
+  *Byte = Bytes[Index];
+  return 0;
 }
 
 /// logger - a callback function that wraps the operator<< method from
@@ -127,7 +137,7 @@ static void logger(void* arg, const char* log) {
 //
 
 MCDisassembler::DecodeStatus X86GenericDisassembler::getInstruction(
-    MCInst &Instr, uint64_t &Size, const MemoryObject &Region, uint64_t Address,
+    MCInst &Instr, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address,
     raw_ostream &VStream, raw_ostream &CStream) const {
   CommentStream = &CStream;
 
@@ -137,8 +147,10 @@ MCDisassembler::DecodeStatus X86GenericDisassembler::getInstruction(
   if (&VStream == &nulls())
     LoggerFn = nullptr; // Disable logging completely if it's going to nulls().
 
-  int Ret = decodeInstruction(&InternalInstr, regionReader,
-                              (const void *)&Region, LoggerFn, (void *)&VStream,
+  Region R(Bytes, Address);
+
+  int Ret = decodeInstruction(&InternalInstr, regionReader, (const void *)&R,
+                              LoggerFn, (void *)&VStream,
                               (const void *)MII.get(), Address, fMode);
 
   if (Ret) {

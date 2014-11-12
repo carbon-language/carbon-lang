@@ -19,7 +19,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -200,17 +199,15 @@ static MCDisassembler *createAArch64Disassembler(const Target &T,
 }
 
 DecodeStatus AArch64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
-                                                 const MemoryObject &Region,
+                                                 ArrayRef<uint8_t> Bytes,
                                                  uint64_t Address,
                                                  raw_ostream &OS,
                                                  raw_ostream &CS) const {
   CommentStream = &CS;
 
-  uint8_t Bytes[4];
-
   Size = 0;
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, Bytes) == -1)
+  if (Bytes.size() < 4)
     return Fail;
   Size = 4;
 

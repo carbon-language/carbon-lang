@@ -20,7 +20,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/Endian.h"
@@ -43,7 +42,7 @@ public:
       : MCDisassembler(STI, Ctx) {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                              MemoryObject const &Region, uint64_t Address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
@@ -63,13 +62,12 @@ extern "C" void LLVMInitializeHexagonDisassembler() {
 }
 
 DecodeStatus HexagonDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
-                                                 MemoryObject const &Region,
+                                                 ArrayRef<uint8_t> Bytes,
                                                  uint64_t Address,
                                                  raw_ostream &os,
                                                  raw_ostream &cs) const {
-  std::array<uint8_t, 4> Bytes;
   Size = 4;
-  if (Region.readBytes(Address, Bytes.size(), Bytes.data()) == -1)
+  if (Bytes.size() < 4)
     return MCDisassembler::Fail;
 
   uint32_t insn =

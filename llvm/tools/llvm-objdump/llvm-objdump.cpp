@@ -374,10 +374,11 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     SmallString<40> Comments;
     raw_svector_ostream CommentStream(Comments);
 
-    StringRef Bytes;
-    if (error(Section.getContents(Bytes)))
+    StringRef BytesStr;
+    if (error(Section.getContents(BytesStr)))
       break;
-    StringRefMemoryObject memoryObject(Bytes, SectionAddr);
+    ArrayRef<uint8_t> Bytes((uint8_t *)BytesStr.data(), BytesStr.size());
+
     uint64_t Size;
     uint64_t Index;
 
@@ -404,13 +405,13 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       for (Index = Start; Index < End; Index += Size) {
         MCInst Inst;
 
-        if (DisAsm->getInstruction(Inst, Size, memoryObject,
-                                   SectionAddr + Index,
-                                   DebugOut, CommentStream)) {
+        if (DisAsm->getInstruction(Inst, Size, Bytes.slice(Index),
+                                   SectionAddr + Index, DebugOut,
+                                   CommentStream)) {
           outs() << format("%8" PRIx64 ":", SectionAddr + Index);
           if (!NoShowRawInsn) {
             outs() << "\t";
-            DumpBytes(StringRef(Bytes.data() + Index, Size));
+            DumpBytes(StringRef((char *)Bytes.data() + Index, Size));
           }
           IP->printInst(&Inst, outs(), "");
           outs() << CommentStream.str();

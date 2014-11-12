@@ -20,7 +20,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -73,7 +72,7 @@ public:
   }
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                              const MemoryObject &Region, uint64_t Address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
@@ -86,7 +85,7 @@ public:
     MipsDisassemblerBase(STI, Ctx, bigEndian) {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                              const MemoryObject &Region, uint64_t Address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
@@ -697,16 +696,13 @@ static DecodeStatus DecodeBlezGroupBranch(MCInst &MI, InsnType insn,
   return MCDisassembler::Success;
 }
 
-/// Read four bytes from the MemoryObject and return 32 bit word sorted
+/// Read four bytes from the ArrayRef and return 32 bit word sorted
 /// according to the given endianess
-static DecodeStatus readInstruction32(const MemoryObject &Region,
-                                      uint64_t Address, uint64_t &Size,
-                                      uint32_t &Insn, bool IsBigEndian,
-                                      bool IsMicroMips) {
-  uint8_t Bytes[4];
-
+static DecodeStatus readInstruction32(ArrayRef<uint8_t> Bytes, uint64_t Address,
+                                      uint64_t &Size, uint32_t &Insn,
+                                      bool IsBigEndian, bool IsMicroMips) {
   // We want to read exactly 4 Bytes of data.
-  if (Region.readBytes(Address, 4, Bytes) == -1) {
+  if (Bytes.size() < 4) {
     Size = 0;
     return MCDisassembler::Fail;
   }
@@ -733,14 +729,14 @@ static DecodeStatus readInstruction32(const MemoryObject &Region,
 }
 
 DecodeStatus MipsDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
-                                              const MemoryObject &Region,
+                                              ArrayRef<uint8_t> Bytes,
                                               uint64_t Address,
                                               raw_ostream &VStream,
                                               raw_ostream &CStream) const {
   uint32_t Insn;
 
   DecodeStatus Result =
-      readInstruction32(Region, Address, Size, Insn, IsBigEndian, IsMicroMips);
+      readInstruction32(Bytes, Address, Size, Insn, IsBigEndian, IsMicroMips);
   if (Result == MCDisassembler::Fail)
     return MCDisassembler::Fail;
 
@@ -799,14 +795,14 @@ DecodeStatus MipsDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
 }
 
 DecodeStatus Mips64Disassembler::getInstruction(MCInst &Instr, uint64_t &Size,
-                                                const MemoryObject &Region,
+                                                ArrayRef<uint8_t> Bytes,
                                                 uint64_t Address,
                                                 raw_ostream &VStream,
                                                 raw_ostream &CStream) const {
   uint32_t Insn;
 
   DecodeStatus Result =
-      readInstruction32(Region, Address, Size, Insn, IsBigEndian, false);
+      readInstruction32(Bytes, Address, Size, Insn, IsBigEndian, false);
   if (Result == MCDisassembler::Fail)
     return MCDisassembler::Fail;
 

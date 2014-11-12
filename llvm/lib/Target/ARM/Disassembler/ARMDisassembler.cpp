@@ -20,7 +20,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
@@ -95,7 +94,7 @@ public:
   ~ARMDisassembler() {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                              const MemoryObject &Region, uint64_t Address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
@@ -110,7 +109,7 @@ public:
   ~ThumbDisassembler() {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                              const MemoryObject &Region, uint64_t Address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 
@@ -407,19 +406,17 @@ static MCDisassembler *createThumbDisassembler(const Target &T,
 }
 
 DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
-                                             const MemoryObject &Region,
+                                             ArrayRef<uint8_t> Bytes,
                                              uint64_t Address, raw_ostream &OS,
                                              raw_ostream &CS) const {
   CommentStream = &CS;
-
-  uint8_t Bytes[4];
 
   assert(!(STI.getFeatureBits() & ARM::ModeThumb) &&
          "Asked to disassemble an ARM instruction but Subtarget is in Thumb "
          "mode!");
 
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, Bytes) == -1) {
+  if (Bytes.size() < 4) {
     Size = 0;
     return MCDisassembler::Fail;
   }
@@ -673,19 +670,17 @@ void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
 }
 
 DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
-                                               const MemoryObject &Region,
+                                               ArrayRef<uint8_t> Bytes,
                                                uint64_t Address,
                                                raw_ostream &OS,
                                                raw_ostream &CS) const {
   CommentStream = &CS;
 
-  uint8_t Bytes[4];
-
   assert((STI.getFeatureBits() & ARM::ModeThumb) &&
          "Asked to disassemble in Thumb mode but Subtarget is in ARM mode!");
 
   // We want to read exactly 2 bytes of data.
-  if (Region.readBytes(Address, 2, Bytes) == -1) {
+  if (Bytes.size() < 2) {
     Size = 0;
     return MCDisassembler::Fail;
   }
@@ -737,7 +732,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, Bytes) == -1) {
+  if (Bytes.size() < 4) {
     Size = 0;
     return MCDisassembler::Fail;
   }

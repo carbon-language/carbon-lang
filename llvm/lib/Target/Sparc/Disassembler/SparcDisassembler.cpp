@@ -16,7 +16,6 @@
 #include "SparcSubtarget.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCFixedLenDisassembler.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -35,7 +34,7 @@ public:
   virtual ~SparcDisassembler() {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                              const MemoryObject &Region, uint64_t Address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
@@ -207,14 +206,11 @@ static DecodeStatus DecodeSWAP(MCInst &Inst, unsigned insn, uint64_t Address,
 
 #include "SparcGenDisassemblerTables.inc"
 
-/// Read four bytes from the MemoryObject and return 32 bit word.
-static DecodeStatus readInstruction32(const MemoryObject &Region,
-                                      uint64_t Address, uint64_t &Size,
-                                      uint32_t &Insn) {
-  uint8_t Bytes[4];
-
+/// Read four bytes from the ArrayRef and return 32 bit word.
+static DecodeStatus readInstruction32(ArrayRef<uint8_t> Bytes, uint64_t Address,
+                                      uint64_t &Size, uint32_t &Insn) {
   // We want to read exactly 4 Bytes of data.
-  if (Region.readBytes(Address, 4, Bytes) == -1) {
+  if (Bytes.size() < 4) {
     Size = 0;
     return MCDisassembler::Fail;
   }
@@ -227,13 +223,13 @@ static DecodeStatus readInstruction32(const MemoryObject &Region,
 }
 
 DecodeStatus SparcDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
-                                               const MemoryObject &Region,
+                                               ArrayRef<uint8_t> Bytes,
                                                uint64_t Address,
                                                raw_ostream &VStream,
                                                raw_ostream &CStream) const {
   uint32_t Insn;
 
-  DecodeStatus Result = readInstruction32(Region, Address, Size, Insn);
+  DecodeStatus Result = readInstruction32(Bytes, Address, Size, Insn);
   if (Result == MCDisassembler::Fail)
     return MCDisassembler::Fail;
 

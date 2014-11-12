@@ -19,7 +19,6 @@
 #include "llvm/MC/MCFixedLenDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -37,18 +36,16 @@ public:
     MCDisassembler(STI, Ctx) {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
-                              const MemoryObject &Region, uint64_t Address,
+                              ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
 }
 
-static bool readInstruction16(const MemoryObject &Region, uint64_t Address,
+static bool readInstruction16(ArrayRef<uint8_t> Bytes, uint64_t Address,
                               uint64_t &Size, uint16_t &Insn) {
-  uint8_t Bytes[4];
-
   // We want to read exactly 2 Bytes of data.
-  if (Region.readBytes(Address, 2, Bytes) == -1) {
+  if (Bytes.size() < 2) {
     Size = 0;
     return false;
   }
@@ -57,12 +54,10 @@ static bool readInstruction16(const MemoryObject &Region, uint64_t Address,
   return true;
 }
 
-static bool readInstruction32(const MemoryObject &Region, uint64_t Address,
+static bool readInstruction32(ArrayRef<uint8_t> Bytes, uint64_t Address,
                               uint64_t &Size, uint32_t &Insn) {
-  uint8_t Bytes[4];
-
   // We want to read exactly 4 Bytes of data.
-  if (Region.readBytes(Address, 4, Bytes) == -1) {
+  if (Bytes.size() < 4) {
     Size = 0;
     return false;
   }
@@ -741,11 +736,11 @@ DecodeL4RSrcDstSrcDstInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
 }
 
 MCDisassembler::DecodeStatus XCoreDisassembler::getInstruction(
-    MCInst &instr, uint64_t &Size, const MemoryObject &Region, uint64_t Address,
+    MCInst &instr, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address,
     raw_ostream &vStream, raw_ostream &cStream) const {
   uint16_t insn16;
 
-  if (!readInstruction16(Region, Address, Size, insn16)) {
+  if (!readInstruction16(Bytes, Address, Size, insn16)) {
     return Fail;
   }
 
@@ -759,7 +754,7 @@ MCDisassembler::DecodeStatus XCoreDisassembler::getInstruction(
 
   uint32_t insn32;
 
-  if (!readInstruction32(Region, Address, Size, insn32)) {
+  if (!readInstruction32(Bytes, Address, Size, insn32)) {
     return Fail;
   }
 
