@@ -17,7 +17,7 @@ uint64_t __llvm_profile_get_size_for_buffer(void);
 int __llvm_profile_write_buffer(char *);
 int write_buffer(uint64_t, const char *);
 int main(int argc, const char *argv[]) {
-  // CHECK-LABEL: define i32 @main(
+  // CHECK-LABEL: define {{.*}} @main(
   // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !1
   if (argc < 2)
     return 1;

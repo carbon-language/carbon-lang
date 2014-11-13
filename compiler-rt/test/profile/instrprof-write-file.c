@@ -9,7 +9,7 @@ int __llvm_profile_write_file(void);
 void __llvm_profile_set_filename(const char *);
 int foo(int);
 int main(int argc, const char *argv[]) {
-  // CHECK-LABEL: define i32 @main
+  // CHECK-LABEL: define {{.*}} @main(
   // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !1
   if (argc < 2)
     return 1;
@@ -25,7 +25,7 @@ int main(int argc, const char *argv[]) {
   return Ret;
 }
 int foo(int X) {
-  // CHECK-LABEL: define i32 @foo
+  // CHECK-LABEL: define {{.*}} @foo(
   // CHECK1: br i1 %{{.*}}, label %{{.*}}, label %{{[^,]+$}}
   // CHECK2: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !2
   return X <= 0 ? -X : X;
