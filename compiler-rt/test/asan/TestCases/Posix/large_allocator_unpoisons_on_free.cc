@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #ifdef __ANDROID__
 #include <malloc.h>
@@ -23,7 +24,7 @@ void *my_memalign(size_t boundary, size_t size) {
 #endif
 
 int main() {
-  const int kPageSize = 4096;
+  const long kPageSize = sysconf(_SC_PAGESIZE);
   void *p = my_memalign(kPageSize, 1024 * 1024);
   free(p);
 
