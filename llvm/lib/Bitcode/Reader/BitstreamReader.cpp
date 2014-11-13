@@ -66,6 +66,7 @@ static uint64_t readAbbreviatedField(BitstreamCursor &Cursor,
   case BitCodeAbbrevOp::Char6:
     return BitCodeAbbrevOp::DecodeChar6(Cursor.Read(6));
   }
+  llvm_unreachable("invalid abbreviation encoding");
 }
 
 static void skipAbbreviatedField(BitstreamCursor &Cursor,
