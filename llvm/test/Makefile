@@ -129,7 +129,7 @@ lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@EXEEXT@=$(EXEEXT)=g >> lit.tmp
 	@$(ECHOPATH) s=@PYTHON_EXECUTABLE@=$(PYTHON)=g >> lit.tmp
 	@$(ECHOPATH) s=@OCAMLFIND@=$(OCAMLFIND)=g >> lit.tmp
-	@$(ECHOPATH) s=@OCAMLFLAGS@=$(addprefix -cclib ,$(LDFLAGS))=g >> lit.tmp
+	@$(ECHOPATH) s!@OCAMLFLAGS@!$(addprefix -cclib ,$(LDFLAGS))!g >> lit.tmp
 	@$(ECHOPATH) s=@HAVE_OCAMLOPT@=$(HAVE_OCAMLOPT)=g >> lit.tmp
 	@$(ECHOPATH) s=@HAVE_OCAML_OUNIT@=$(HAVE_OCAML_OUNIT)=g >> lit.tmp
 	@$(ECHOPATH) s=@GO_EXECUTABLE@=$(GO)=g >> lit.tmp
