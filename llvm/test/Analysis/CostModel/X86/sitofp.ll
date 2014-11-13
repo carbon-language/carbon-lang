@@ -1,4 +1,5 @@
 ; RUN: opt -mtriple=x86_64-apple-darwin -mcpu=core2 -cost-model -analyze < %s | FileCheck --check-prefix=SSE2 %s
+; RUN: opt -mtriple=x86_64-apple-darwin -mcpu=knl -cost-model -analyze < %s | FileCheck --check-prefix=AVX512F %s
 
 define <2 x double> @sitofpv2i8v2double(<2 x i8> %a) {
   ; SSE2: sitofpv2i8v2double
@@ -278,4 +279,48 @@ define <32 x float> @sitofpv32i64v32float(<32 x i64> %a) {
   ; SSE2: cost of 240 {{.*}} sitofp
   %1 = sitofp <32 x i64> %a to <32 x float>
   ret <32 x float> %1
+}
+
+; AVX512F-LABEL: sitofp_16i8_float
+; AVX512F: cost of 2 {{.*}} sitofp
+define <16 x float> @sitofp_16i8_float(<16 x i8> %a) {
+  %1 = sitofp <16 x i8> %a to <16 x float>
+  ret <16 x float> %1
+}
+
+define <16 x float> @sitofp_16i16_float(<16 x i16> %a) {
+  ; AVX512F-LABEL: sitofp_16i16_float
+  ; AVX512F: cost of 2 {{.*}} sitofp
+  %1 = sitofp <16 x i16> %a to <16 x float>
+  ret <16 x float> %1
+}
+
+; AVX512F-LABEL: sitofp_8i8_double
+; AVX512F: cost of 2 {{.*}} sitofp
+define <8 x double> @sitofp_8i8_double(<8 x i8> %a) {
+  %1 = sitofp <8 x i8> %a to <8 x double>
+  ret <8 x double> %1
+}
+
+; AVX512F-LABEL: sitofp_8i16_double
+; AVX512F: cost of 2 {{.*}} sitofp
+define <8 x double> @sitofp_8i16_double(<8 x i16> %a) {
+  %1 = sitofp <8 x i16> %a to <8 x double>
+  ret <8 x double> %1
+}
+
+; AVX512F-LABEL: sitofp_8i1_double
+; AVX512F: cost of 4 {{.*}} sitofp
+define <8 x double> @sitofp_8i1_double(<8 x double> %a) {
+  %cmpres = fcmp ogt <8 x double> %a, zeroinitializer
+  %1 = sitofp <8 x i1> %cmpres to <8 x double>
+  ret <8 x double> %1
+}
+
+; AVX512F-LABEL: sitofp_16i1_float
+; AVX512F: cost of 3 {{.*}} sitofp
+define <16 x float> @sitofp_16i1_float(<16 x float> %a) {
+  %cmpres = fcmp ogt <16 x float> %a, zeroinitializer
+  %1 = sitofp <16 x i1> %cmpres to <16 x float>
+  ret <16 x float> %1
 }

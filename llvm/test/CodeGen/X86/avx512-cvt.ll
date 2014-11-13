@@ -255,3 +255,56 @@ define double @uitofp03(i32 %a) nounwind {
   %b = uitofp i32 %a to double
   ret double %b
 }
+
+; CHECK-LABEL: @sitofp_16i1_float
+; CHECK: vpbroadcastd
+; CHECK: vcvtdq2ps
+define <16 x float> @sitofp_16i1_float(<16 x i32> %a) {
+  %mask = icmp slt <16 x i32> %a, zeroinitializer
+  %1 = sitofp <16 x i1> %mask to <16 x float>
+  ret <16 x float> %1
+}
+
+; CHECK-LABEL: @sitofp_16i8_float
+; CHECK: vpmovsxbd
+; CHECK: vcvtdq2ps
+define <16 x float> @sitofp_16i8_float(<16 x i8> %a) {
+  %1 = sitofp <16 x i8> %a to <16 x float>
+  ret <16 x float> %1
+}
+
+; CHECK-LABEL: @sitofp_16i16_float
+; CHECK: vpmovsxwd
+; CHECK: vcvtdq2ps
+define <16 x float> @sitofp_16i16_float(<16 x i16> %a) {
+  %1 = sitofp <16 x i16> %a to <16 x float>
+  ret <16 x float> %1
+}
+
+; CHECK-LABEL: @sitofp_8i16_double
+; CHECK: vpmovsxwd
+; CHECK: vcvtdq2pd
+define <8 x double> @sitofp_8i16_double(<8 x i16> %a) {
+  %1 = sitofp <8 x i16> %a to <8 x double>
+  ret <8 x double> %1
+}
+
+; CHECK-LABEL: sitofp_8i8_double
+; CHECK: vpmovzxwd
+; CHECK: vpslld
+; CHECK: vpsrad
+; CHECK: vcvtdq2pd
+define <8 x double> @sitofp_8i8_double(<8 x i8> %a) {
+  %1 = sitofp <8 x i8> %a to <8 x double>
+  ret <8 x double> %1
+}
+
+
+; CHECK-LABEL: @sitofp_8i1_double
+; CHECK: vpbroadcastq
+; CHECK: vcvtdq2pd
+define <8 x double> @sitofp_8i1_double(<8 x double> %a) {
+  %cmpres = fcmp ogt <8 x double> %a, zeroinitializer
+  %1 = sitofp <8 x i1> %cmpres to <8 x double>
+  ret <8 x double> %1
+}

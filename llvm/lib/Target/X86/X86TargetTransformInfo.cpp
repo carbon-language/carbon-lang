@@ -618,6 +618,13 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
     { ISD::SIGN_EXTEND, MVT::v8i64,  MVT::v16i32, 3 },
     { ISD::ZERO_EXTEND, MVT::v8i64,  MVT::v16i32, 3 },
 
+    { ISD::SINT_TO_FP,  MVT::v16f32, MVT::v16i1,  3 },
+    { ISD::SINT_TO_FP,  MVT::v16f32, MVT::v16i8,  2 },
+    { ISD::SINT_TO_FP,  MVT::v16f32, MVT::v16i16, 2 },
+    { ISD::SINT_TO_FP,  MVT::v16f32, MVT::v16i32, 1 },
+    { ISD::SINT_TO_FP,  MVT::v8f64,  MVT::v8i1,   4 },
+    { ISD::SINT_TO_FP,  MVT::v8f64,  MVT::v8i16,  2 },
+    { ISD::SINT_TO_FP,  MVT::v8f64,  MVT::v8i32,  1 },
   };
 
   if (ST->hasAVX512()) {

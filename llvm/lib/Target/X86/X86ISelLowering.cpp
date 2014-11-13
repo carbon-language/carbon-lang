@@ -1410,6 +1410,10 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::FP_TO_UINT,         MVT::v8i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v4i32, Legal);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v16i32, Legal);
+    setOperationAction(ISD::SINT_TO_FP,         MVT::v8i1,   Custom);
+    setOperationAction(ISD::SINT_TO_FP,         MVT::v16i1,  Custom);
+    setOperationAction(ISD::SINT_TO_FP,         MVT::v16i8,  Promote);
+    setOperationAction(ISD::SINT_TO_FP,         MVT::v16i16, Promote);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v16i32, Legal);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i32, Legal);
@@ -13209,10 +13213,18 @@ static SDValue LowerShiftParts(SDValue Op, SelectionDAG &DAG) {
 SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
                                            SelectionDAG &DAG) const {
   MVT SrcVT = Op.getOperand(0).getSimpleValueType();
+  SDLoc dl(Op);
 
-  if (SrcVT.isVector())
+  if (SrcVT.isVector()) {
+    if (SrcVT.getVectorElementType() == MVT::i1) {
+      MVT IntegerVT = MVT::getVectorVT(MVT::i32, SrcVT.getVectorNumElements());
+      return DAG.getNode(ISD::SINT_TO_FP, dl, Op.getValueType(),
+                         DAG.getNode(ISD::SIGN_EXTEND, dl, IntegerVT,
+                                     Op.getOperand(0)));
+    }
     return SDValue();
-
+  }
+  
   assert(SrcVT <= MVT::i64 && SrcVT >= MVT::i16 &&
          "Unknown SINT_TO_FP to lower!");
 
@@ -13225,7 +13237,6 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
     return Op;
   }
 
-  SDLoc dl(Op);
   unsigned Size = SrcVT.getSizeInBits()/8;
   MachineFunction &MF = DAG.getMachineFunction();
   int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size, false);
@@ -15455,8 +15466,11 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op, const X86Subtarget *Subtarget
   if (NumElts != 8 && NumElts != 16)
     return SDValue();
 
-  if (VT.is512BitVector() && InVT.getVectorElementType() != MVT::i1)
+  if (VT.is512BitVector() && InVT.getVectorElementType() != MVT::i1) {
+    if (In.getOpcode() == X86ISD::VSEXT || In.getOpcode() == X86ISD::VZEXT)
+      return DAG.getNode(In.getOpcode(), dl, VT, In.getOperand(0));
     return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
+  }
 
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   assert (InVT.getVectorElementType() == MVT::i1 && "Unexpected vector type");
