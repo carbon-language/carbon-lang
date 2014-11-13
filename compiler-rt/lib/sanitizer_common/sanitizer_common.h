@@ -176,6 +176,9 @@ const char *StripPathPrefix(const char *filepath,
 const char *StripModuleName(const char *module);
 
 // OS
+uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
+const char *GetBinaryName();
+void CacheBinaryName();
 void DisableCoreDumperIfNecessary();
 void DumpProcessMap();
 bool FileExists(const char *filename);

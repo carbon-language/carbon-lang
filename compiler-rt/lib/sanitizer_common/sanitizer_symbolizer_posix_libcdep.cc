@@ -643,11 +643,8 @@ class POSIXSymbolizer : public Symbolizer {
   }
 
   void PrepareForSandboxing() {
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
     BlockingMutexLock l(&mu_);
-    // Cache /proc/self/exe on Linux.
     CacheBinaryName();
-#endif
   }
 
  private:

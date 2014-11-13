@@ -98,8 +98,8 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->malloc_context_size, "malloc_context_size",
       "Max number of stack frames kept for each allocation/deallocation.");
   ParseFlag(str, &f->log_path, "log_path",
-      "Write logs to \"log_path.pid\". The special values are \"stdout\" and "
-      "\"stderr\". The default is \"stderr\".");
+      "Write logs to \"log_path.pname.pid\". The special values are \"stdout\" "
+      "and \"stderr\". The default is \"stderr\".");
   ParseFlag(str, &f->verbosity, "verbosity",
       "Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).");
   ParseFlag(str, &f->detect_leaks, "detect_leaks",

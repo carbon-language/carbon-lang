@@ -10,7 +10,7 @@
 // Good log_path.
 // RUN: rm -f %t.log.*
 // RUN: env ASAN_OPTIONS=log_path=%t.log not %run %t 2> %t.out
-// RUN: FileCheck %s --check-prefix=CHECK-ERROR < %t.log.*
+// RUN: FileCheck %s --check-prefix=CHECK-ERROR < %t.log.log-path_test.cc*
 
 // Invalid log_path.
 // RUN: env ASAN_OPTIONS=log_path=/INVALID not %run %t 2> %t.out
@@ -24,7 +24,7 @@
 // Run w/o errors should not produce any log.
 // RUN: rm -f %t.log.*
 // RUN: env ASAN_OPTIONS=log_path=%t.log  %run %t ARG ARG ARG
-// RUN: not cat %t.log.*
+// RUN: not cat %t.log.log-path_test.cc*
 
 // FIXME: log_path is not supported on Windows yet.
 // XFAIL: win32

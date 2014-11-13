@@ -53,7 +53,7 @@ void AppendToErrorMessageBuffer(const char *buffer) {
                      buffer, remaining);
     error_message_buffer[error_message_buffer_size - 1] = '\0';
     // FIXME: reallocate the buffer instead of truncating the message.
-    error_message_buffer_pos += remaining > length ? length : remaining;
+    error_message_buffer_pos += Min(remaining, length);
   }
 }
 
