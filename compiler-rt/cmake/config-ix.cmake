@@ -32,10 +32,10 @@ check_cxx_compiler_flag(-Wall COMPILER_RT_HAS_WALL_FLAG)
 check_cxx_compiler_flag(-Werror COMPILER_RT_HAS_WERROR_FLAG)
 check_cxx_compiler_flag("-Werror -Wframe-larger-than=512" COMPILER_RT_HAS_WFRAME_LARGER_THAN_FLAG)
 check_cxx_compiler_flag("-Werror -Wglobal-constructors"   COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG)
-check_cxx_compiler_flag("-Werror -Wno-c99-extensions"     COMPILER_RT_HAS_WNO_C99_EXTENSIONS_FLAG)
-check_cxx_compiler_flag("-Werror -Wno-gnu"                COMPILER_RT_HAS_WNO_GNU_FLAG)
-check_cxx_compiler_flag("-Werror -Wno-non-virtual-dtor"   COMPILER_RT_HAS_WNO_NON_VIRTUAL_DTOR_FLAG)
-check_cxx_compiler_flag("-Werror -Wno-variadic-macros"    COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG)
+check_cxx_compiler_flag("-Werror -Wc99-extensions"     COMPILER_RT_HAS_WC99_EXTENSIONS_FLAG)
+check_cxx_compiler_flag("-Werror -Wgnu"                COMPILER_RT_HAS_WGNU_FLAG)
+check_cxx_compiler_flag("-Werror -Wnon-virtual-dtor"   COMPILER_RT_HAS_WNON_VIRTUAL_DTOR_FLAG)
+check_cxx_compiler_flag("-Werror -Wvariadic-macros"    COMPILER_RT_HAS_WVARIADIC_MACROS_FLAG)
 
 check_cxx_compiler_flag(/W3 COMPILER_RT_HAS_W3_FLAG)
 check_cxx_compiler_flag(/WX COMPILER_RT_HAS_WX_FLAG)
@@ -154,7 +154,7 @@ else()
   set(COMPILER_RT_OS_SUFFIX "")
 endif()
 
-message("Compiler-RT supported architectures: ${COMPILER_RT_SUPPORTED_ARCH}")
+message(STATUS "Compiler-RT supported architectures: ${COMPILER_RT_SUPPORTED_ARCH}")
 
 # Takes ${ARGN} and puts only supported architectures in @out_var list.
 function(filter_available_targets out_var)
