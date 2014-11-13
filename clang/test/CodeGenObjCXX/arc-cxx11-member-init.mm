@@ -42,4 +42,4 @@ __attribute__((objc_root_class))
 @end
 @implementation Foo
 @end
-// CHECK-NOTE: define internal i8* @"\01-[Foo .cxx_construct
+// CHECK-NOT: define internal i8* @"\01-[Foo .cxx_construct
