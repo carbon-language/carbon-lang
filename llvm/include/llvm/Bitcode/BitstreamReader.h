@@ -227,7 +227,7 @@ public:
   bool AtEndOfStream() {
     if (BitsInCurWord != 0)
       return false;
-    if (Size == NextChar)
+    if (Size != 0 && Size == NextChar)
       return true;
     fillCurWord();
     return BitsInCurWord == 0;
