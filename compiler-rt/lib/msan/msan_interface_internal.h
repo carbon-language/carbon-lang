@@ -88,9 +88,9 @@ void __msan_check_mem_is_initialized(const void *x, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_origin(const void *a, uptr size, u32 origin);
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_alloca_origin(void *a, uptr size, const char *descr);
+void __msan_set_alloca_origin(void *a, uptr size, char *descr);
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc);
+void __msan_set_alloca_origin4(void *a, uptr size, char *descr, uptr pc);
 SANITIZER_INTERFACE_ATTRIBUTE
 u32 __msan_chain_origin(u32 id);
 SANITIZER_INTERFACE_ATTRIBUTE

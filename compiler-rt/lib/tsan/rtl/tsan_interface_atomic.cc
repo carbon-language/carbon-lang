@@ -200,20 +200,20 @@ static int SizeLog() {
 
 #ifndef TSAN_GO
 static atomic_uint8_t *to_atomic(const volatile a8 *a) {
-  return (atomic_uint8_t*)a;
+  return reinterpret_cast<atomic_uint8_t *>(const_cast<a8 *>(a));
 }
 
 static atomic_uint16_t *to_atomic(const volatile a16 *a) {
-  return (atomic_uint16_t*)a;
+  return reinterpret_cast<atomic_uint16_t *>(const_cast<a16 *>(a));
 }
 #endif
 
 static atomic_uint32_t *to_atomic(const volatile a32 *a) {
-  return (atomic_uint32_t*)a;
+  return reinterpret_cast<atomic_uint32_t *>(const_cast<a32 *>(a));
 }
 
 static atomic_uint64_t *to_atomic(const volatile a64 *a) {
-  return (atomic_uint64_t*)a;
+  return reinterpret_cast<atomic_uint64_t *>(const_cast<a64 *>(a));
 }
 
 static memory_order to_mo(morder mo) {

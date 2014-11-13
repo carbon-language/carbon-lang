@@ -69,7 +69,8 @@ real_sigaction(int signum, const void *act, void *oldact);
 int internal_sigaction(int signum, const void *act, void *oldact) {
   if (real_sigaction)
     return real_sigaction(signum, act, oldact);
-  return sigaction(signum, (struct sigaction *)act, (struct sigaction *)oldact);
+  return sigaction(signum, (const struct sigaction *)act,
+                   (struct sigaction *)oldact);
 }
 
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,

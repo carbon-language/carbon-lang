@@ -215,8 +215,9 @@ __dfsw_strlen(const char *s, dfsan_label s_label, dfsan_label *ret_label) {
 
 
 static void *dfsan_memcpy(void *dest, const void *src, size_t n) {
-  dfsan_label *sdest = shadow_for(dest), *ssrc = shadow_for((void *)src);
-  internal_memcpy((void *)sdest, (void *)ssrc, n * sizeof(dfsan_label));
+  dfsan_label *sdest = shadow_for(dest);
+  const dfsan_label *ssrc = shadow_for(src);
+  internal_memcpy((void *)sdest, (const void *)ssrc, n * sizeof(dfsan_label));
   return internal_memcpy(dest, src, n);
 }
 
@@ -365,9 +366,11 @@ struct dl_iterate_phdr_info {
 int dl_iterate_phdr_cb(struct dl_phdr_info *info, size_t size, void *data) {
   dl_iterate_phdr_info *dipi = (dl_iterate_phdr_info *)data;
   dfsan_set_label(0, *info);
-  dfsan_set_label(0, (void *)info->dlpi_name, strlen(info->dlpi_name) + 1);
-  dfsan_set_label(0, (void *)info->dlpi_phdr,
-                  sizeof(*info->dlpi_phdr) * info->dlpi_phnum);
+  dfsan_set_label(0, const_cast<char *>(info->dlpi_name),
+                  strlen(info->dlpi_name) + 1);
+  dfsan_set_label(
+      0, const_cast<char *>(reinterpret_cast<const char *>(info->dlpi_phdr)),
+      sizeof(*info->dlpi_phdr) * info->dlpi_phnum);
   dfsan_label ret_label;
   return dipi->callback_trampoline(dipi->callback, info, size, dipi->data, 0, 0,
                                    0, &ret_label);
@@ -1064,25 +1067,26 @@ static int format_buffer(char *str, bool has_size, size_t size,
   // string was only partially printed ({v,}snprintf case).
   for (size_t i = 0; i < chunks.size(); ++i) {
     const Chunk& chunk = chunks[i];
+    void *chunk_ptr = const_cast<char *>(chunk.ptr);
 
     switch (chunk.label_type) {
       case Chunk::NONE:
-        dfsan_set_label(0, (void*) chunk.ptr, chunk.size);
+        dfsan_set_label(0, chunk_ptr, chunk.size);
         break;
       case Chunk::IGNORED:
         va_labels++;
-        dfsan_set_label(0, (void*) chunk.ptr, chunk.size);
+        dfsan_set_label(0, chunk_ptr, chunk.size);
         break;
       case Chunk::NUMERIC: {
         dfsan_label label = *va_labels++;
-        dfsan_set_label(label, (void*) chunk.ptr, chunk.size);
+        dfsan_set_label(label, chunk_ptr, chunk.size);
         break;
       }
       case Chunk::STRING: {
         // Consume the label of the pointer to the string
         va_labels++;
-        internal_memcpy(shadow_for((void *) chunk.ptr),
-                        shadow_for((void *) chunk.arg),
+        internal_memcpy(shadow_for(chunk_ptr),
+                        shadow_for(chunk.arg),
                         sizeof(dfsan_label) * (strlen(chunk.arg)));
         break;
       }

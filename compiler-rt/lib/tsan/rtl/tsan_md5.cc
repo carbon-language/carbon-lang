@@ -25,7 +25,7 @@ namespace __tsan {
   (a) += (b);
 
 #define SET(n) \
-  (*(MD5_u32plus *)&ptr[(n) * 4])
+  (*(const MD5_u32plus *)&ptr[(n) * 4])
 #define GET(n) \
   SET(n)
 
@@ -39,12 +39,10 @@ typedef struct {
   MD5_u32plus block[16];
 } MD5_CTX;
 
-static void *body(MD5_CTX *ctx, void *data, ulong_t size) {
-  unsigned char *ptr;
+static const void *body(MD5_CTX *ctx, const void *data, ulong_t size) {
+  const unsigned char *ptr = (const unsigned char *)data;
   MD5_u32plus a, b, c, d;
   MD5_u32plus saved_a, saved_b, saved_c, saved_d;
-
-  ptr = (unsigned char*)data;
 
   a = ctx->a;
   b = ctx->b;
@@ -151,7 +149,7 @@ void MD5_Init(MD5_CTX *ctx) {
   ctx->hi = 0;
 }
 
-void MD5_Update(MD5_CTX *ctx, void *data, ulong_t size) {
+void MD5_Update(MD5_CTX *ctx, const void *data, ulong_t size) {
   MD5_u32plus saved_lo;
   ulong_t used, free;
 
@@ -171,7 +169,7 @@ void MD5_Update(MD5_CTX *ctx, void *data, ulong_t size) {
     }
 
     internal_memcpy(&ctx->buffer[used], data, free);
-    data = (unsigned char *)data + free;
+    data = (const unsigned char *)data + free;
     size -= free;
     body(ctx, ctx->buffer, 64);
   }
@@ -238,7 +236,7 @@ MD5Hash md5_hash(const void *data, uptr size) {
   MD5Hash res;
   MD5_CTX ctx;
   MD5_Init(&ctx);
-  MD5_Update(&ctx, (void*)data, size);
+  MD5_Update(&ctx, data, size);
   MD5_Final((unsigned char*)&res.hash[0], &ctx);
   return res;
 }

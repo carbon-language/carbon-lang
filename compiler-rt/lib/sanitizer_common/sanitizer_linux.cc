@@ -537,7 +537,7 @@ int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
   __sanitizer_kernel_sigaction_t k_act, k_oldact;
   internal_memset(&k_act, 0, sizeof(__sanitizer_kernel_sigaction_t));
   internal_memset(&k_oldact, 0, sizeof(__sanitizer_kernel_sigaction_t));
-  const __sanitizer_sigaction *u_act = (__sanitizer_sigaction *)act;
+  const __sanitizer_sigaction *u_act = (const __sanitizer_sigaction *)act;
   __sanitizer_sigaction *u_oldact = (__sanitizer_sigaction *)oldact;
   if (u_act) {
     k_act.handler = u_act->handler;

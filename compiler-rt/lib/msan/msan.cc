@@ -485,7 +485,7 @@ void __msan_check_mem_is_initialized(const void *x, uptr size) {
   (void)sp;
   ReportUMRInsideAddressRange(__func__, x, size, offset);
   __msan::PrintWarningWithOrigin(pc, bp,
-                                 __msan_get_origin(((char *)x) + offset));
+                                 __msan_get_origin(((const char *)x) + offset));
   if (__msan::flags()->halt_on_error) {
     Printf("Exiting\n");
     Die();
@@ -565,11 +565,11 @@ void __msan_set_origin(const void *a, uptr size, u32 origin) {
 // 'descr' is created at compile time and contains '----' in the beginning.
 // When we see descr for the first time we replace '----' with a uniq id
 // and set the origin to (id | (31-th bit)).
-void __msan_set_alloca_origin(void *a, uptr size, const char *descr) {
+void __msan_set_alloca_origin(void *a, uptr size, char *descr) {
   __msan_set_alloca_origin4(a, size, descr, 0);
 }
 
-void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc) {
+void __msan_set_alloca_origin4(void *a, uptr size, char *descr, uptr pc) {
   static const u32 dash = '-';
   static const u32 first_timer =
       dash + (dash << 8) + (dash << 16) + (dash << 24);

@@ -55,7 +55,7 @@ static void setlim(int res, rlim_t lim) {
   volatile struct rlimit rlim;
   rlim.rlim_cur = lim;
   rlim.rlim_max = lim;
-  if (setrlimit(res, (struct rlimit*)&rlim)) {
+  if (setrlimit(res, const_cast<struct rlimit *>(&rlim))) {
     Report("ERROR: %s setrlimit() failed %d\n", SanitizerToolName, errno);
     Die();
   }

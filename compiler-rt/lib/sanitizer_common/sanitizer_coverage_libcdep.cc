@@ -277,7 +277,7 @@ static void CovWritePacked(int pid, const char *module, const void *blob,
     internal_memcpy(block_pos, module, module_name_length);
     block_pos += module_name_length;
     char *block_data_begin = block_pos;
-    char *blob_pos = (char *)blob;
+    const char *blob_pos = (const char *)blob;
     while (blob_size > 0) {
       unsigned int payload_size = Min(blob_size, max_payload_size);
       blob_size -= payload_size;

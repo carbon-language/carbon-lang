@@ -648,7 +648,8 @@ TSAN_INTERCEPTOR(int, memcmp, const void *s1, const void *s2, uptr n) {
   int res = 0;
   uptr len = 0;
   for (; len < n; len++) {
-    if ((res = ((unsigned char*)s1)[len] - ((unsigned char*)s2)[len]))
+    if ((res = ((const unsigned char *)s1)[len] -
+               ((const unsigned char *)s2)[len]))
       break;
   }
   MemoryAccessRange(thr, pc, (uptr)s1, len < n ? len + 1 : n, false);

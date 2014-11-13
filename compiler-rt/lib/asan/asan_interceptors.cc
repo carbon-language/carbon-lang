@@ -222,8 +222,8 @@ INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
 
 namespace __sanitizer {
 int real_sigaction(int signum, const void *act, void *oldact) {
-  return REAL(sigaction)(signum,
-                         (struct sigaction *)act, (struct sigaction *)oldact);
+  return REAL(sigaction)(signum, (const struct sigaction *)act,
+                         (struct sigaction *)oldact);
 }
 }  // namespace __sanitizer
 
@@ -578,7 +578,7 @@ static inline void FixRealStrtolEndptr(const char *nptr, char **endptr) {
     // We get this symbol by skipping leading blanks and optional +/- sign.
     while (IsSpace(*nptr)) nptr++;
     if (*nptr == '+' || *nptr == '-') nptr++;
-    *endptr = (char*)nptr;
+    *endptr = const_cast<char *>(nptr);
   }
   CHECK(*endptr >= nptr);
 }
