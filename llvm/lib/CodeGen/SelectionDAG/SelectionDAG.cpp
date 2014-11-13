@@ -6152,9 +6152,11 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
 /// AddDbgValue - Add a dbg_value SDNode. If SD is non-null that means the
 /// value is produced by SD.
 void SelectionDAG::AddDbgValue(SDDbgValue *DB, SDNode *SD, bool isParameter) {
-  DbgInfo->add(DB, SD, isParameter);
-  if (SD)
+  if (SD) {
+    assert(DbgInfo->getSDDbgValues(SD).empty() || SD->getHasDebugValue());
     SD->setHasDebugValue(true);
+  }
+  DbgInfo->add(DB, SD, isParameter);
 }
 
 /// TransferDbgValues - Transfer SDDbgValues.
