@@ -8971,7 +8971,11 @@ static bool EvaluateCPlusPlus11IntegralConstantExpr(const ASTContext &Ctx,
   if (!E->isCXX11ConstantExpr(Ctx, &Result, Loc))
     return false;
 
-  assert(Result.isInt() && "pointer cast to int is not an ICE");
+  if (!Result.isInt()) {
+    if (Loc) *Loc = E->getExprLoc();
+    return false;
+  }
+
   if (Value) *Value = Result.getInt();
   return true;
 }

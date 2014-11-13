@@ -95,11 +95,13 @@ namespace TemplateArgumentConversion {
 }
 
 namespace CaseStatements {
+  int x;
   void f(int n) {
     switch (n) {
     case MemberZero().zero: // expected-error {{did you mean to call it with no arguments?}} expected-note {{previous}}
     case id(0): // expected-error {{duplicate case value '0'}}
       return;
+    case __builtin_constant_p(true) ? (__SIZE_TYPE__)&x : 0:; // expected-error {{constant}}
     }
   }
 }
