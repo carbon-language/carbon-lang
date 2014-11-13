@@ -304,7 +304,7 @@ namespace lldb_private
         void
         SetState (lldb::StateType state, bool notify_delegates = true);
 
-        // Derived classes need not impelment this.  It can be used as a
+        // Derived classes need not implement this.  It can be used as a
         // hook to clear internal caches that should be invalidated when
         // stop ids change.
         //
