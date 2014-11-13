@@ -1374,11 +1374,11 @@ defm V_SUBREV_F32 : VOP2Inst <vop2<0x5>, "v_subrev_f32",
 >;
 } // End isCommutable = 1
 
+let isCommutable = 1 in {
+
 defm V_MAC_LEGACY_F32 : VOP2Inst <vop2<0x6>, "v_mac_legacy_f32",
   VOP_F32_F32_F32
 >;
-
-let isCommutable = 1 in {
 
 defm V_MUL_LEGACY_F32 : VOP2Inst <vop2<0x7>, "v_mul_legacy_f32",
   VOP_F32_F32_F32, int_AMDGPU_mul
@@ -1387,7 +1387,6 @@ defm V_MUL_LEGACY_F32 : VOP2Inst <vop2<0x7>, "v_mul_legacy_f32",
 defm V_MUL_F32 : VOP2Inst <vop2<0x8>, "v_mul_f32",
   VOP_F32_F32_F32, fmul
 >;
-
 
 defm V_MUL_I32_I24 : VOP2Inst <vop2<0x9>, "v_mul_i32_i24",
   VOP_I32_I32_I32, AMDGPUmul_i24
@@ -1449,11 +1448,21 @@ defm V_XOR_B32 : VOP2Inst <vop2<0x1d>, "v_xor_b32",
 
 defm V_BFM_B32 : VOP2Inst <vop2<0x1e>, "v_bfm_b32",
   VOP_I32_I32_I32, AMDGPUbfm>;
+
+let isCommutable = 1 in {
 defm V_MAC_F32 : VOP2Inst <vop2<0x1f>, "v_mac_f32", VOP_F32_F32_F32>;
+} // End isCommutable = 1
+
 defm V_MADMK_F32 : VOP2Inst <vop2<0x20>, "v_madmk_f32", VOP_F32_F32_F32>;
+
+let isCommutable = 1 in {
 defm V_MADAK_F32 : VOP2Inst <vop2<0x21>, "v_madak_f32", VOP_F32_F32_F32>;
+} // End isCommutable = 1
+
+
 defm V_BCNT_U32_B32 : VOP2Inst <vop2<0x22>, "v_bcnt_u32_b32", VOP_I32_I32_I32>;
 defm V_MBCNT_LO_U32_B32 : VOP2Inst <vop2<0x23>, "v_mbcnt_lo_u32_b32",
+
   VOP_I32_I32_I32
 >;
 defm V_MBCNT_HI_U32_B32 : VOP2Inst <vop2<0x24>, "v_mbcnt_hi_u32_b32",
@@ -1503,18 +1512,22 @@ defm V_CVT_PKRTZ_F16_F32 : VOP2Inst <vop2<0x2f>, "v_cvt_pkrtz_f16_f32",
 // VOP3 Instructions
 //===----------------------------------------------------------------------===//
 
+let isCommutable = 1 in {
 defm V_MAD_LEGACY_F32 : VOP3Inst <vop3<0x140>, "v_mad_legacy_f32",
   VOP_F32_F32_F32_F32
 >;
+
 defm V_MAD_F32 : VOP3Inst <vop3<0x141>, "v_mad_f32",
   VOP_F32_F32_F32_F32, fmad
 >;
+
 defm V_MAD_I32_I24 : VOP3Inst <vop3<0x142>, "v_mad_i32_i24",
   VOP_I32_I32_I32_I32, AMDGPUmad_i24
 >;
 defm V_MAD_U32_U24 : VOP3Inst <vop3<0x143>, "v_mad_u32_u24",
   VOP_I32_I32_I32_I32, AMDGPUmad_u24
 >;
+} // End isCommutable = 1
 
 defm V_CUBEID_F32 : VOP3Inst <vop3<0x144>, "v_cubeid_f32",
   VOP_F32_F32_F32_F32
@@ -1537,12 +1550,16 @@ defm V_BFE_I32 : VOP3Inst <vop3<0x149>, "v_bfe_i32",
 defm V_BFI_B32 : VOP3Inst <vop3<0x14a>, "v_bfi_b32",
   VOP_I32_I32_I32_I32, AMDGPUbfi
 >;
+
+let isCommutable = 1 in {
 defm V_FMA_F32 : VOP3Inst <vop3<0x14b>, "v_fma_f32",
   VOP_F32_F32_F32_F32, fma
 >;
 defm V_FMA_F64 : VOP3Inst <vop3<0x14c>, "v_fma_f64",
   VOP_F64_F64_F64_F64, fma
 >;
+} // End isCommutable = 1
+
 //def V_LERP_U8 : VOP3_U8 <0x0000014d, "v_lerp_u8", []>;
 defm V_ALIGNBIT_B32 : VOP3Inst <vop3<0x14e>, "v_alignbit_b32",
   VOP_I32_I32_I32_I32
@@ -1629,15 +1646,19 @@ defm V_DIV_SCALE_F32 : VOP3b_32 <vop3<0x16d>, "v_div_scale_f32", []>;
 // Double precision division pre-scale.
 defm V_DIV_SCALE_F64 : VOP3b_64 <vop3<0x16e>, "v_div_scale_f64", []>;
 
+let isCommutable = 1 in {
 defm V_DIV_FMAS_F32 : VOP3Inst <vop3<0x16f>, "v_div_fmas_f32",
   VOP_F32_F32_F32_F32, AMDGPUdiv_fmas
 >;
 defm V_DIV_FMAS_F64 : VOP3Inst <vop3<0x170>, "v_div_fmas_f64",
   VOP_F64_F64_F64_F64, AMDGPUdiv_fmas
 >;
+} // End isCommutable = 1
+
 //def V_MSAD_U8 : VOP3_U8 <0x00000171, "v_msad_u8", []>;
 //def V_QSAD_U8 : VOP3_U8 <0x00000172, "v_qsad_u8", []>;
 //def V_MQSAD_U8 : VOP3_U8 <0x00000173, "v_mqsad_u8", []>;
+
 defm V_TRIG_PREOP_F64 : VOP3Inst <
   vop3<0x174>, "v_trig_preop_f64", VOP_F64_F64_I32, AMDGPUtrig_preop
 >;
@@ -2840,6 +2861,8 @@ defm V_MQSAD_U16_U8 : VOP3Inst <vop3<0x172>, "v_mqsad_u16_u8",
 defm V_MQSAD_U32_U8 : VOP3Inst <vop3<0x175>, "v_mqsad_u32_u8",
   VOP_I32_I32_I32
 >;
+
+let isCommutable = 1 in {
 defm V_MAD_U64_U32 : VOP3Inst <vop3<0x176>, "v_mad_u64_u32",
   VOP_I64_I32_I32_I64
 >;
@@ -2848,6 +2871,7 @@ defm V_MAD_U64_U32 : VOP3Inst <vop3<0x176>, "v_mad_u64_u32",
 defm V_MAD_I64_I32 : VOP3Inst <vop3<0x177>, "v_mad_i64_i32",
   VOP_I64_I32_I32_I64
 >;
+} // End isCommutable = 1
 
 // Remaining instructions:
 // FLAT_*

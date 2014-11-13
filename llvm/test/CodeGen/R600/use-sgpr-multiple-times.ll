@@ -73,7 +73,7 @@ define void @test_sgpr_use_twice_ternary_op_a_a_imm(float addrspace(1)* %out, fl
 
 ; SI-LABEL: {{^}}test_sgpr_use_twice_ternary_op_a_imm_a:
 ; SI: s_load_dword [[SGPR:s[0-9]+]]
-; SI: v_fma_f32 [[RESULT:v[0-9]+]], [[SGPR]], 2.0, [[SGPR]]
+; SI: v_fma_f32 [[RESULT:v[0-9]+]], 2.0, [[SGPR]], [[SGPR]]
 ; SI: buffer_store_dword [[RESULT]]
 define void @test_sgpr_use_twice_ternary_op_a_imm_a(float addrspace(1)* %out, float %a) #0 {
   %fma = call float @llvm.fma.f32(float %a, float 2.0, float %a) #1
