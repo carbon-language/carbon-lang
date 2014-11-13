@@ -2531,6 +2531,7 @@ bool AArch64FastISel::selectSelect(const Instruction *I) {
   const SelectInst *SI = cast<SelectInst>(I);
   const Value *Cond = SI->getCondition();
   AArch64CC::CondCode CC = AArch64CC::NE;
+  AArch64CC::CondCode ExtraCC = AArch64CC::AL;
 
   // Try to pickup the flags, so we don't have to emit another compare.
   if (foldXALUIntrinsic(CC, I, Cond)) {
@@ -2538,6 +2539,54 @@ bool AArch64FastISel::selectSelect(const Instruction *I) {
     unsigned CondReg = getRegForValue(Cond);
     if (!CondReg)
       return false;
+  } else if (isa<CmpInst>(Cond) && cast<CmpInst>(Cond)->hasOneUse() &&
+             isValueAvailable(Cond)) {
+    const auto *Cmp = cast<CmpInst>(Cond);
+    // Try to optimize or fold the cmp.
+    CmpInst::Predicate Predicate = optimizeCmpPredicate(Cmp);
+    const Value *FoldSelect = nullptr;
+    switch (Predicate) {
+    default:
+      break;
+    case CmpInst::FCMP_FALSE:
+      FoldSelect = SI->getFalseValue();
+      break;
+    case CmpInst::FCMP_TRUE:
+      FoldSelect = SI->getTrueValue();
+      break;
+    }
+
+    if (FoldSelect) {
+      unsigned SrcReg = getRegForValue(FoldSelect);
+      if (!SrcReg)
+        return false;
+      unsigned UseReg = lookUpRegForValue(SI);
+      if (UseReg)
+        MRI.clearKillFlags(UseReg);
+
+      updateValueMap(I, SrcReg);
+      return true;
+    }
+
+    // Emit the cmp.
+    if (!emitCmp(Cmp->getOperand(0), Cmp->getOperand(1), Cmp->isUnsigned()))
+      return false;
+
+    // FCMP_UEQ and FCMP_ONE cannot be checked with a single select instruction.
+    CC = getCompareCC(Predicate);
+    switch (Predicate) {
+    default:
+      break;
+    case CmpInst::FCMP_UEQ:
+      ExtraCC = AArch64CC::EQ;
+      CC = AArch64CC::VS;
+      break;
+    case CmpInst::FCMP_ONE:
+      ExtraCC = AArch64CC::MI;
+      CC = AArch64CC::GT;
+      break;
+    }
+    assert((CC != AArch64CC::AL) && "Unexpected condition code.");
   } else {
     unsigned CondReg = getRegForValue(Cond);
     if (!CondReg)
@@ -2560,6 +2609,11 @@ bool AArch64FastISel::selectSelect(const Instruction *I) {
   if (!Src1Reg || !Src2Reg)
     return false;
 
+  if (ExtraCC != AArch64CC::AL) {
+    Src2Reg = fastEmitInst_rri(Opc, RC, Src1Reg, Src1IsKill, Src2Reg,
+                               Src2IsKill, ExtraCC);
+    Src2IsKill = true;
+  }
   unsigned ResultReg = fastEmitInst_rri(Opc, RC, Src1Reg, Src1IsKill, Src2Reg,
                                         Src2IsKill, CC);
   updateValueMap(I, ResultReg);
