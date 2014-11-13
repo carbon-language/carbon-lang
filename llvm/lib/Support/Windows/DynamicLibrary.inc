@@ -94,10 +94,24 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
   extern "C" { extern void *SYM; }
 #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO) EXPLICIT_SYMBOL(SYMTO)
 
+#ifdef _M_IX86
+// Win32 on x86 implements certain single-precision math functions as macros.
+// These functions are not exported by the DLL, but will still be needed
+// for symbol-resolution by the JIT loader. Therefore, this Support libray
+// provides helper functions with the same implementation.
+
+#define INLINE_DEF_SYMBOL1(TYP, SYM)                                           \
+  extern "C" TYP inline_##SYM(TYP _X) { return SYM(_X); }
+#define INLINE_DEF_SYMBOL2(TYP, SYM)                                           \
+  extern "C" TYP inline_##SYM(TYP _X, TYP _Y) { return SYM(_X, _Y); }
+#endif
+
 #include "explicit_symbols.inc"
 
 #undef EXPLICIT_SYMBOL
 #undef EXPLICIT_SYMBOL2
+#undef INLINE_DEF_SYMBOL1
+#undef INLINE_DEF_SYMBOL2
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   SmartScopedLock<true> Lock(*SymbolsMutex);
@@ -121,21 +135,31 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     }
   }
 
-  #define EXPLICIT_SYMBOL(SYM)                    \
-    if (!strcmp(symbolName, #SYM)) return (void*)&SYM;
-  #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)        \
-    if (!strcmp(symbolName, #SYMFROM)) return (void*)&SYMTO;
+#define EXPLICIT_SYMBOL(SYM)                                                   \
+  if (!strcmp(symbolName, #SYM))                                               \
+    return (void *)&SYM;
+#define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)                                       \
+  if (!strcmp(symbolName, #SYMFROM))                                           \
+    return (void *)&SYMTO;
+
+#ifdef _M_IX86
+#define INLINE_DEF_SYMBOL1(TYP, SYM)                                           \
+  if (!strcmp(symbolName, #SYM))                                               \
+    return (void *)&inline_##SYM;
+#define INLINE_DEF_SYMBOL2(TYP, SYM) INLINE_DEF_SYMBOL1(TYP, SYM)
+#endif
 
   {
-    #include "explicit_symbols.inc"
+#include "explicit_symbols.inc"
   }
 
-  #undef EXPLICIT_SYMBOL
-  #undef EXPLICIT_SYMBOL2
+#undef EXPLICIT_SYMBOL
+#undef EXPLICIT_SYMBOL2
+#undef INLINE_DEF_SYMBOL1
+#undef INLINE_DEF_SYMBOL2
 
   return 0;
 }
-
 
 void *DynamicLibrary::getAddressOfSymbol(const char *symbolName) {
   if (!isValid())
@@ -144,6 +168,5 @@ void *DynamicLibrary::getAddressOfSymbol(const char *symbolName) {
     return SearchForAddressOfSymbol(symbolName);
   return (void *)(intptr_t)GetProcAddress((HMODULE)Data, symbolName);
 }
-
 
 }
