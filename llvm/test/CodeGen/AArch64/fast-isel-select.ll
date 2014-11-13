@@ -284,3 +284,33 @@ define float @select_icmp_sle(i32 %x, i32 %y, float %a, float %b) {
   %2 = select i1 %1, float %a, float %b
   ret float %2
 }
+
+; Test peephole optimizations for select.
+define zeroext i1 @select_opt1(i1 zeroext %c, i1 zeroext %a) {
+; CHECK-LABEL: select_opt1
+; CHECK:       orr {{w[0-9]+}}, w0, w1
+  %1 = select i1 %c, i1 true, i1 %a
+  ret i1 %1
+}
+
+define zeroext i1 @select_opt2(i1 zeroext %c, i1 zeroext %a) {
+; CHECK-LABEL: select_opt2
+; CHECK:       eor [[REG:w[0-9]+]], w0, #0x1
+; CHECK:       orr {{w[0-9]+}}, [[REG]], w1
+  %1 = select i1 %c, i1 %a, i1 true
+  ret i1 %1
+}
+
+define zeroext i1 @select_opt3(i1 zeroext %c, i1 zeroext %a) {
+; CHECK-LABEL: select_opt3
+; CHECK:       bic {{w[0-9]+}}, w1, w0
+  %1 = select i1 %c, i1 false, i1 %a
+  ret i1 %1
+}
+
+define zeroext i1 @select_opt4(i1 zeroext %c, i1 zeroext %a) {
+; CHECK-LABEL: select_opt4
+; CHECK:       and {{w[0-9]+}}, w0, w1
+  %1 = select i1 %c, i1 %a, i1 false
+  ret i1 %1
+}

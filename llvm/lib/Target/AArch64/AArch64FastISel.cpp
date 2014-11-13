@@ -150,6 +150,7 @@ private:
   bool foldXALUIntrinsic(AArch64CC::CondCode &CC, const Instruction *I,
                          const Value *Cond);
   bool optimizeIntExtLoad(const Instruction *I, MVT RetVT, MVT SrcVT);
+  bool optimizeSelect(const SelectInst *SI);
 
   // Emit helper routines.
   unsigned emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
@@ -2496,6 +2497,63 @@ bool AArch64FastISel::selectCmp(const Instruction *I) {
   return true;
 }
 
+/// \brief Optimize selects of i1 if one of the operands has a 'true' or 'false'
+/// value.
+bool AArch64FastISel::optimizeSelect(const SelectInst *SI) {
+  if (!SI->getType()->isIntegerTy(1))
+    return false;
+
+  const Value *Src1Val, *Src2Val;
+  unsigned Opc = 0;
+  bool NeedExtraOp = false;
+  if (auto *CI = dyn_cast<ConstantInt>(SI->getTrueValue())) {
+    if (CI->isOne()) {
+      Src1Val = SI->getCondition();
+      Src2Val = SI->getFalseValue();
+      Opc = AArch64::ORRWrr;
+    } else {
+      assert(CI->isZero());
+      Src1Val = SI->getFalseValue();
+      Src2Val = SI->getCondition();
+      Opc = AArch64::BICWrr;
+    }
+  } else if (auto *CI = dyn_cast<ConstantInt>(SI->getFalseValue())) {
+    if (CI->isOne()) {
+      Src1Val = SI->getCondition();
+      Src2Val = SI->getTrueValue();
+      Opc = AArch64::ORRWrr;
+      NeedExtraOp = true;
+    } else {
+      assert(CI->isZero());
+      Src1Val = SI->getCondition();
+      Src2Val = SI->getTrueValue();
+      Opc = AArch64::ANDWrr;
+    }
+  }
+
+  if (!Opc)
+    return false;
+
+  unsigned Src1Reg = getRegForValue(Src1Val);
+  if (!Src1Reg)
+    return false;
+  bool Src1IsKill = hasTrivialKill(Src1Val);
+
+  unsigned Src2Reg = getRegForValue(Src2Val);
+  if (!Src2Reg)
+    return false;
+  bool Src2IsKill = hasTrivialKill(Src2Val);
+
+  if (NeedExtraOp) {
+    Src1Reg = emitLogicalOp_ri(ISD::XOR, MVT::i32, Src1Reg, Src1IsKill, 1);
+    Src1IsKill = true;
+  }
+  unsigned ResultReg = fastEmitInst_rr(Opc, &AArch64::GPR32spRegClass, Src1Reg,
+                                       Src1IsKill, Src2Reg, Src2IsKill);
+  updateValueMap(SI, ResultReg);
+  return true;
+}
+
 bool AArch64FastISel::selectSelect(const Instruction *I) {
   assert(isa<SelectInst>(I) && "Expected a select instruction.");
   MVT VT;
@@ -2532,6 +2590,9 @@ bool AArch64FastISel::selectSelect(const Instruction *I) {
   const Value *Cond = SI->getCondition();
   AArch64CC::CondCode CC = AArch64CC::NE;
   AArch64CC::CondCode ExtraCC = AArch64CC::AL;
+
+  if (optimizeSelect(SI))
+    return true;
 
   // Try to pickup the flags, so we don't have to emit another compare.
   if (foldXALUIntrinsic(CC, I, Cond)) {
