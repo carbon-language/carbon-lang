@@ -907,9 +907,9 @@ std::error_code COFFObjectFile::getSectionName(const coff_section *Sec,
     Name = StringRef(Sec->Name, COFF::NameSize);
 
   // Check for string table entry. First byte is '/'.
-  if (Name[0] == '/') {
+  if (Name.startswith("/")) {
     uint32_t Offset;
-    if (Name[1] == '/') {
+    if (Name.startswith("//")) {
       if (decodeBase64StringEntry(Name.substr(2), Offset))
         return object_error::parse_failed;
     } else {
