@@ -43,11 +43,12 @@ static bool checkSize(MemoryBufferRef M, std::error_code &EC, uint64_t Size) {
 // Returns unexpected_eof if error.
 template <typename T>
 static std::error_code getObject(const T *&Obj, MemoryBufferRef M,
-                                 const uint8_t *Ptr,
+                                 const void *Ptr,
                                  const size_t Size = sizeof(T)) {
   uintptr_t Addr = uintptr_t(Ptr);
   if (Addr + Size < Addr || Addr + Size < Size ||
-      Addr + Size > uintptr_t(M.getBufferEnd())) {
+      Addr + Size > uintptr_t(M.getBufferEnd()) ||
+      Addr < uintptr_t(M.getBufferStart())) {
     return object_error::unexpected_eof;
   }
   Obj = reinterpret_cast<const T *>(Addr);
@@ -424,6 +425,11 @@ relocation_iterator COFFObjectFile::section_rel_end(DataRefImpl Ref) const {
   } else {
     auto begin = reinterpret_cast<const coff_relocation*>(
         base() + Sec->PointerToRelocations);
+    if (Sec->hasExtendedRelocations()) {
+      // Skip the first relocation entry repurposed to store the number of
+      // relocations.
+      begin++;
+    }
     uint32_t NumReloc = getNumberOfRelocations(Sec, base());
     Ret.p = reinterpret_cast<uintptr_t>(begin + NumReloc);
   }
@@ -973,7 +979,12 @@ std::error_code COFFObjectFile::getRelocationAddress(DataRefImpl Rel,
 
 std::error_code COFFObjectFile::getRelocationOffset(DataRefImpl Rel,
                                                     uint64_t &Res) const {
-  Res = toRel(Rel)->VirtualAddress;
+  const coff_relocation *R = toRel(Rel);
+  const support::ulittle32_t *VirtualAddressPtr;
+  if (std::error_code EC =
+          getObject(VirtualAddressPtr, Data, &R->VirtualAddress))
+    return EC;
+  Res = *VirtualAddressPtr;
   return object_error::success;
 }
 
