@@ -22,13 +22,20 @@ class LangOptions;
 /// diagnostics should be included in counts.
 class ChainedDiagnosticConsumer : public DiagnosticConsumer {
   virtual void anchor();
-  std::unique_ptr<DiagnosticConsumer> Primary;
+  std::unique_ptr<DiagnosticConsumer> OwningPrimary;
+  DiagnosticConsumer *Primary;
   std::unique_ptr<DiagnosticConsumer> Secondary;
 
 public:
   ChainedDiagnosticConsumer(std::unique_ptr<DiagnosticConsumer> Primary,
                             std::unique_ptr<DiagnosticConsumer> Secondary)
-      : Primary(std::move(Primary)), Secondary(std::move(Secondary)) {}
+      : OwningPrimary(std::move(Primary)), Primary(OwningPrimary.get()),
+        Secondary(std::move(Secondary)) {}
+
+  /// \brief Construct without taking ownership of \c Primary.
+  ChainedDiagnosticConsumer(DiagnosticConsumer *Primary,
+                            std::unique_ptr<DiagnosticConsumer> Secondary)
+      : Primary(Primary), Secondary(std::move(Secondary)) {}
 
   void BeginSourceFile(const LangOptions &LO,
                        const Preprocessor *PP) override {

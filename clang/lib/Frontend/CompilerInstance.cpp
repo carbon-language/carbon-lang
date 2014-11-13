@@ -170,10 +170,14 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
   auto SerializedConsumer =
       clang::serialized_diags::create(OutputFile, DiagOpts);
 
-  assert(Diags.ownsClient());
-  Diags.setClient(new ChainedDiagnosticConsumer(
-      std::unique_ptr<DiagnosticConsumer>(Diags.takeClient()),
-      std::move(SerializedConsumer)));
+  if (Diags.ownsClient()) {
+    Diags.setClient(new ChainedDiagnosticConsumer(
+        std::unique_ptr<DiagnosticConsumer>(Diags.takeClient()),
+        std::move(SerializedConsumer)));
+  } else {
+    Diags.setClient(new ChainedDiagnosticConsumer(
+        Diags.takeClient(), std::move(SerializedConsumer)));
+  }
 }
 
 void CompilerInstance::createDiagnostics(DiagnosticConsumer *Client,
