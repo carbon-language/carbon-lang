@@ -398,8 +398,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   if (sentinelExpr->isValueDependent()) return;
   if (Context.isSentinelNullExpr(sentinelExpr)) return;
 
-  // Pick a reasonable string to insert.  Optimistically use 'nil' or
-  // 'NULL' if those are actually defined in the context.  Only use
+  // Pick a reasonable string to insert.  Optimistically use 'nil', 'nullptr',
+  // or 'NULL' if those are actually defined in the context.  Only use
   // 'nil' for ObjC methods, where it's much more likely that the
   // variadic arguments form a list of object pointers.
   SourceLocation MissingNilLoc
@@ -408,6 +408,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   if (calleeType == CT_Method &&
       PP.getIdentifierInfo("nil")->hasMacroDefinition())
     NullValue = "nil";
+  else if (getLangOpts().CPlusPlus11)
+    NullValue = "nullptr";
   else if (PP.getIdentifierInfo("NULL")->hasMacroDefinition())
     NullValue = "NULL";
   else
