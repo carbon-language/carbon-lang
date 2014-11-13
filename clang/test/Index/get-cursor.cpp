@@ -138,7 +138,9 @@ struct TestColl {
 };
 
 void test(TestColl coll) {
-  for (auto lv : coll) {}
+  for (auto lv : coll) {
+    (void)lv;
+  }
 }
 
 // RUN: c-index-test -cursor-at=%s:6:4 %s | FileCheck -check-prefix=CHECK-COMPLETION-1 %s
@@ -253,6 +255,7 @@ void test(TestColl coll) {
 // CHECK-SPELLING: 130:6 CXXMethod=operator():130:6 (const) Extent=[130:3 - 130:37] Spelling=operator() ([130:6 - 130:16])
 // CHECK-SPELLING: 132:12 CXXConversion=operator bool:132:12 (const) Extent=[132:3 - 132:33] Spelling=operator bool ([132:12 - 132:25])
 
-// RUN: c-index-test -cursor-at=%s:141:13 -cursor-at=%s:141:18 -std=c++11 %s | FileCheck -check-prefix=CHECK-FORRANGE %s
+// RUN: c-index-test -cursor-at=%s:141:13 -cursor-at=%s:141:18 -cursor-at=%s:142:11 -std=c++11 %s | FileCheck -check-prefix=CHECK-FORRANGE %s
 // CHECK-FORRANGE: 141:13 VarDecl=lv:141:13 (Definition) Extent=[141:8 - 141:17] Spelling=lv ([141:13 - 141:15])
 // CHECK-FORRANGE: 141:18 DeclRefExpr=coll:140:20 Extent=[141:18 - 141:22] Spelling=coll ([141:18 - 141:22])
+// CHECK-FORRANGE: 142:11 DeclRefExpr=lv:141:13 Extent=[142:11 - 142:13] Spelling=lv ([142:11 - 142:13])

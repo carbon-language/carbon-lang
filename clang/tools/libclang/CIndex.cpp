@@ -2156,8 +2156,9 @@ void EnqueueVisitor::VisitCXXCatchStmt(const CXXCatchStmt *S) {
 }
 
 void EnqueueVisitor::VisitCXXForRangeStmt(const CXXForRangeStmt *S) {
-  AddDecl(S->getLoopVariable());
+  AddStmt(S->getBody());
   AddStmt(S->getRangeInit());
+  AddDecl(S->getLoopVariable());
 }
 
 void EnqueueVisitor::VisitDeclRefExpr(const DeclRefExpr *DR) {
