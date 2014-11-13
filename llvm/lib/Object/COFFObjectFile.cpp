@@ -39,6 +39,16 @@ static bool checkSize(MemoryBufferRef M, std::error_code &EC, uint64_t Size) {
   return true;
 }
 
+static std::error_code checkOffset(MemoryBufferRef M, uintptr_t Addr,
+                                   const size_t Size) {
+  if (Addr + Size < Addr || Addr + Size < Size ||
+      Addr + Size > uintptr_t(M.getBufferEnd()) ||
+      Addr < uintptr_t(M.getBufferStart())) {
+    return object_error::unexpected_eof;
+  }
+  return object_error::success;
+}
+
 // Sets Obj unless any bytes in [addr, addr + size) fall outsize of m.
 // Returns unexpected_eof if error.
 template <typename T>
@@ -46,11 +56,8 @@ static std::error_code getObject(const T *&Obj, MemoryBufferRef M,
                                  const void *Ptr,
                                  const size_t Size = sizeof(T)) {
   uintptr_t Addr = uintptr_t(Ptr);
-  if (Addr + Size < Addr || Addr + Size < Size ||
-      Addr + Size > uintptr_t(M.getBufferEnd()) ||
-      Addr < uintptr_t(M.getBufferStart())) {
-    return object_error::unexpected_eof;
-  }
+  if (std::error_code EC = checkOffset(M, Addr, Size))
+    return EC;
   Obj = reinterpret_cast<const T *>(Addr);
   return object_error::success;
 }
@@ -385,10 +392,26 @@ bool COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
   return SecNumber == Symb.getSectionNumber();
 }
 
+static uint32_t getNumberOfRelocations(const coff_section *Sec,
+                                       MemoryBufferRef M, const uint8_t *base) {
+  // The field for the number of relocations in COFF section table is only
+  // 16-bit wide. If a section has more than 65535 relocations, 0xFFFF is set to
+  // NumberOfRelocations field, and the actual relocation count is stored in the
+  // VirtualAddress field in the first relocation entry.
+  if (Sec->hasExtendedRelocations()) {
+    const coff_relocation *FirstReloc;
+    if (getObject(FirstReloc, M, reinterpret_cast<const coff_relocation*>(
+        base + Sec->PointerToRelocations)))
+      return 0;
+    return FirstReloc->VirtualAddress;
+  }
+  return Sec->NumberOfRelocations;
+}
+
 relocation_iterator COFFObjectFile::section_rel_begin(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
   DataRefImpl Ret;
-  if (Sec->NumberOfRelocations == 0) {
+  if (getNumberOfRelocations(Sec, Data, base()) == 0) {
     Ret.p = 0;
   } else {
     auto begin = reinterpret_cast<const coff_relocation*>(
@@ -403,24 +426,10 @@ relocation_iterator COFFObjectFile::section_rel_begin(DataRefImpl Ref) const {
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
-static uint32_t getNumberOfRelocations(const coff_section *Sec,
-                                       const uint8_t *base) {
-  // The field for the number of relocations in COFF section table is only
-  // 16-bit wide. If a section has more than 65535 relocations, 0xFFFF is set to
-  // NumberOfRelocations field, and the actual relocation count is stored in the
-  // VirtualAddress field in the first relocation entry.
-  if (Sec->hasExtendedRelocations()) {
-    auto *FirstReloc = reinterpret_cast<const coff_relocation*>(
-        base + Sec->PointerToRelocations);
-    return FirstReloc->VirtualAddress;
-  }
-  return Sec->NumberOfRelocations;
-}
-
 relocation_iterator COFFObjectFile::section_rel_end(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
   DataRefImpl Ret;
-  if (Sec->NumberOfRelocations == 0) {
+  if (getNumberOfRelocations(Sec, Data, base()) == 0) {
     Ret.p = 0;
   } else {
     auto begin = reinterpret_cast<const coff_relocation*>(
@@ -430,7 +439,7 @@ relocation_iterator COFFObjectFile::section_rel_end(DataRefImpl Ref) const {
       // relocations.
       begin++;
     }
-    uint32_t NumReloc = getNumberOfRelocations(Sec, base());
+    uint32_t NumReloc = getNumberOfRelocations(Sec, Data, base());
     Ret.p = reinterpret_cast<uintptr_t>(begin + NumReloc);
   }
   return relocation_iterator(RelocationRef(Ret, this));
@@ -956,8 +965,7 @@ COFFObjectFile::getSectionContents(const coff_section *Sec,
   // data, as there's nothing that says that is not allowed.
   uintptr_t ConStart = uintptr_t(base()) + Sec->PointerToRawData;
   uint32_t SectionSize = getSectionSize(Sec);
-  uintptr_t ConEnd = ConStart + SectionSize;
-  if (ConEnd > uintptr_t(Data.getBufferEnd()))
+  if (checkOffset(Data, ConStart, SectionSize))
     return object_error::parse_failed;
   Res = makeArrayRef(reinterpret_cast<const uint8_t *>(ConStart), SectionSize);
   return object_error::success;
