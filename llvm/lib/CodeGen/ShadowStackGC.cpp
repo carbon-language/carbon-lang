@@ -144,7 +144,7 @@ namespace {
         LLVMContext &C = F.getContext();
         BasicBlock *CleanupBB = BasicBlock::Create(C, CleanupBBName, &F);
         Type *ExnTy = StructType::get(Type::getInt8PtrTy(C),
-                                      Type::getInt32Ty(C), NULL);
+                                      Type::getInt32Ty(C), nullptr);
         Constant *PersFn =
           F.getParent()->
           getOrInsertFunction("__gcc_personality_v0",

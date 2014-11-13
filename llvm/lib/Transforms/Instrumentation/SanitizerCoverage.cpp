@@ -134,11 +134,11 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   appendToGlobalCtors(M, CtorFunc, kSanCtorAndDtorPriority);
 
   SanCovFunction =
-      checkInterfaceFunction(M.getOrInsertFunction(kSanCovName, VoidTy, NULL));
+      checkInterfaceFunction(M.getOrInsertFunction(kSanCovName, VoidTy, nullptr));
   SanCovIndirCallFunction = checkInterfaceFunction(M.getOrInsertFunction(
-      kSanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, NULL));
+      kSanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, nullptr));
   SanCovModuleInit = checkInterfaceFunction(M.getOrInsertFunction(
-      kSanCovModuleInitName, Type::getVoidTy(*C), IntptrTy, NULL));
+      kSanCovModuleInitName, Type::getVoidTy(*C), IntptrTy, nullptr));
   SanCovModuleInit->setLinkage(Function::ExternalLinkage);
 
   for (auto &F : M)

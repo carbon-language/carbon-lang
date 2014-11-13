@@ -759,8 +759,8 @@ Value *LibCallSimplifier::optimizeStrPBrk(CallInst *CI, IRBuilder<> &B) {
   bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
   bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
 
-  // strpbrk(s, "") -> NULL
-  // strpbrk("", s) -> NULL
+  // strpbrk(s, "") -> nullptr
+  // strpbrk("", s) -> nullptr
   if ((HasS1 && S1.empty()) || (HasS2 && S2.empty()))
     return Constant::getNullValue(CI->getType());
 
@@ -1238,7 +1238,7 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
       Module *M = Caller->getParent();
       Value *Callee =
           M->getOrInsertFunction(TLI->getName(LdExp), Op->getType(),
-                                 Op->getType(), B.getInt32Ty(), NULL);
+                                 Op->getType(), B.getInt32Ty(), nullptr);
       CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
       if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
         CI->setCallingConv(F->getCallingConv());
@@ -1463,15 +1463,15 @@ void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
     // xmm0 and xmm1, which isn't what a real struct would do.
     ResTy = T.getArch() == Triple::x86_64
                 ? static_cast<Type *>(VectorType::get(ArgTy, 2))
-                : static_cast<Type *>(StructType::get(ArgTy, ArgTy, NULL));
+                : static_cast<Type *>(StructType::get(ArgTy, ArgTy, nullptr));
   } else {
     Name = "__sincospi_stret";
-    ResTy = StructType::get(ArgTy, ArgTy, NULL);
+    ResTy = StructType::get(ArgTy, ArgTy, nullptr);
   }
 
   Module *M = OrigCallee->getParent();
   Value *Callee = M->getOrInsertFunction(Name, OrigCallee->getAttributes(),
-                                         ResTy, ArgTy, NULL);
+                                         ResTy, ArgTy, nullptr);
 
   if (Instruction *ArgInst = dyn_cast<Instruction>(Arg)) {
     // If the argument is an instruction, it must dominate all uses so put our

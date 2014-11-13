@@ -654,7 +654,7 @@ void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
 }
 
 // If I is an interesting memory access, return the PointerOperand
-// and set IsWrite/Alignment. Otherwise return NULL.
+// and set IsWrite/Alignment. Otherwise return nullptr.
 static Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
                                         unsigned *Alignment) {
   // Skip memory accesses inserted by another instrumentation.
@@ -1001,19 +1001,19 @@ void AddressSanitizerModule::initializeCallbacks(Module &M) {
   IRBuilder<> IRB(*C);
   // Declare our poisoning and unpoisoning functions.
   AsanPoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanPoisonGlobalsName, IRB.getVoidTy(), IntptrTy, NULL));
+      kAsanPoisonGlobalsName, IRB.getVoidTy(), IntptrTy, nullptr));
   AsanPoisonGlobals->setLinkage(Function::ExternalLinkage);
   AsanUnpoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanUnpoisonGlobalsName, IRB.getVoidTy(), NULL));
+      kAsanUnpoisonGlobalsName, IRB.getVoidTy(), nullptr));
   AsanUnpoisonGlobals->setLinkage(Function::ExternalLinkage);
   // Declare functions that register/unregister globals.
   AsanRegisterGlobals = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanRegisterGlobalsName, IRB.getVoidTy(),
-      IntptrTy, IntptrTy, NULL));
+      IntptrTy, IntptrTy, nullptr));
   AsanRegisterGlobals->setLinkage(Function::ExternalLinkage);
   AsanUnregisterGlobals = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanUnregisterGlobalsName,
-      IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+      IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   AsanUnregisterGlobals->setLinkage(Function::ExternalLinkage);
 }
 
@@ -1044,7 +1044,7 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
   // We initialize an array of such structures and pass it to a run-time call.
   StructType *GlobalStructTy =
       StructType::get(IntptrTy, IntptrTy, IntptrTy, IntptrTy, IntptrTy,
-                      IntptrTy, IntptrTy, NULL);
+                      IntptrTy, IntptrTy, nullptr);
   SmallVector<Constant *, 16> Initializers(n);
 
   bool HasDynamicallyInitializedGlobals = false;
@@ -1081,10 +1081,10 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
     assert(((RightRedzoneSize + SizeInBytes) % MinRZ) == 0);
     Type *RightRedZoneTy = ArrayType::get(IRB.getInt8Ty(), RightRedzoneSize);
 
-    StructType *NewTy = StructType::get(Ty, RightRedZoneTy, NULL);
+    StructType *NewTy = StructType::get(Ty, RightRedZoneTy, nullptr);
     Constant *NewInitializer = ConstantStruct::get(
         NewTy, G->getInitializer(),
-        Constant::getNullValue(RightRedZoneTy), NULL);
+        Constant::getNullValue(RightRedZoneTy), nullptr);
 
     // Create a new global variable with enough space for a redzone.
     GlobalValue::LinkageTypes Linkage = G->getLinkage();
@@ -1119,7 +1119,7 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
         ConstantInt::get(IntptrTy, SizeInBytes + RightRedzoneSize),
         ConstantExpr::getPointerCast(Name, IntptrTy),
         ConstantExpr::getPointerCast(ModuleName, IntptrTy),
-        ConstantInt::get(IntptrTy, MD.IsDynInit), SourceLoc, NULL);
+        ConstantInt::get(IntptrTy, MD.IsDynInit), SourceLoc, nullptr);
 
     if (ClInitializers && MD.IsDynInit)
       HasDynamicallyInitializedGlobals = true;
@@ -1190,42 +1190,42 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
       AsanErrorCallback[AccessIsWrite][AccessSizeIndex] =
           checkInterfaceFunction(
               M.getOrInsertFunction(kAsanReportErrorTemplate + Suffix,
-                                    IRB.getVoidTy(), IntptrTy, NULL));
+                                    IRB.getVoidTy(), IntptrTy, nullptr));
       AsanMemoryAccessCallback[AccessIsWrite][AccessSizeIndex] =
           checkInterfaceFunction(
               M.getOrInsertFunction(ClMemoryAccessCallbackPrefix + Suffix,
-                                    IRB.getVoidTy(), IntptrTy, NULL));
+                                    IRB.getVoidTy(), IntptrTy, nullptr));
     }
   }
   AsanErrorCallbackSized[0] = checkInterfaceFunction(M.getOrInsertFunction(
-              kAsanReportLoadN, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+              kAsanReportLoadN, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   AsanErrorCallbackSized[1] = checkInterfaceFunction(M.getOrInsertFunction(
-              kAsanReportStoreN, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+              kAsanReportStoreN, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
 
   AsanMemoryAccessCallbackSized[0] = checkInterfaceFunction(
       M.getOrInsertFunction(ClMemoryAccessCallbackPrefix + "loadN",
-                            IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+                            IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   AsanMemoryAccessCallbackSized[1] = checkInterfaceFunction(
       M.getOrInsertFunction(ClMemoryAccessCallbackPrefix + "storeN",
-                            IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+                            IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
 
   AsanMemmove = checkInterfaceFunction(M.getOrInsertFunction(
       ClMemoryAccessCallbackPrefix + "memmove", IRB.getInt8PtrTy(),
-      IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy, NULL));
+      IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy, nullptr));
   AsanMemcpy = checkInterfaceFunction(M.getOrInsertFunction(
       ClMemoryAccessCallbackPrefix + "memcpy", IRB.getInt8PtrTy(),
-      IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy, NULL));
+      IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy, nullptr));
   AsanMemset = checkInterfaceFunction(M.getOrInsertFunction(
       ClMemoryAccessCallbackPrefix + "memset", IRB.getInt8PtrTy(),
-      IRB.getInt8PtrTy(), IRB.getInt32Ty(), IntptrTy, NULL));
+      IRB.getInt8PtrTy(), IRB.getInt32Ty(), IntptrTy, nullptr));
 
   AsanHandleNoReturnFunc = checkInterfaceFunction(
-      M.getOrInsertFunction(kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
+      M.getOrInsertFunction(kAsanHandleNoReturnName, IRB.getVoidTy(), nullptr));
 
   AsanPtrCmpFunction = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanPtrCmp, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+      kAsanPtrCmp, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   AsanPtrSubFunction = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanPtrSub, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+      kAsanPtrSub, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   // We insert an empty inline asm after __asan_report* to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
                             StringRef(""), StringRef(""),
@@ -1253,7 +1253,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
   // call __asan_init in the module ctor.
   IRBuilder<> IRB(ReturnInst::Create(*C, AsanCtorBB));
   AsanInitFunction = checkInterfaceFunction(
-      M.getOrInsertFunction(kAsanInitName, IRB.getVoidTy(), NULL));
+      M.getOrInsertFunction(kAsanInitName, IRB.getVoidTy(), nullptr));
   AsanInitFunction->setLinkage(Function::ExternalLinkage);
   IRB.CreateCall(AsanInitFunction);
 
@@ -1426,15 +1426,15 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
     std::string Suffix = itostr(i);
     AsanStackMallocFunc[i] = checkInterfaceFunction(
         M.getOrInsertFunction(kAsanStackMallocNameTemplate + Suffix, IntptrTy,
-                              IntptrTy, IntptrTy, NULL));
+                              IntptrTy, IntptrTy, nullptr));
     AsanStackFreeFunc[i] = checkInterfaceFunction(M.getOrInsertFunction(
         kAsanStackFreeNameTemplate + Suffix, IRB.getVoidTy(), IntptrTy,
-        IntptrTy, IntptrTy, NULL));
+        IntptrTy, IntptrTy, nullptr));
   }
   AsanPoisonStackMemoryFunc = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanPoisonStackMemoryName, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+      kAsanPoisonStackMemoryName, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
   AsanUnpoisonStackMemoryFunc = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanUnpoisonStackMemoryName, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+      kAsanUnpoisonStackMemoryName, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
 }
 
 void

@@ -332,7 +332,7 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
   // which is not yet implemented.
   StringRef WarningFnName = ClKeepGoing ? "__msan_warning"
                                         : "__msan_warning_noreturn";
-  WarningFn = M.getOrInsertFunction(WarningFnName, IRB.getVoidTy(), NULL);
+  WarningFn = M.getOrInsertFunction(WarningFnName, IRB.getVoidTy(), nullptr);
 
   for (size_t AccessSizeIndex = 0; AccessSizeIndex < kNumberOfAccessSizes;
        AccessSizeIndex++) {
@@ -340,30 +340,30 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
     std::string FunctionName = "__msan_maybe_warning_" + itostr(AccessSize);
     MaybeWarningFn[AccessSizeIndex] = M.getOrInsertFunction(
         FunctionName, IRB.getVoidTy(), IRB.getIntNTy(AccessSize * 8),
-        IRB.getInt32Ty(), NULL);
+        IRB.getInt32Ty(), nullptr);
 
     FunctionName = "__msan_maybe_store_origin_" + itostr(AccessSize);
     MaybeStoreOriginFn[AccessSizeIndex] = M.getOrInsertFunction(
         FunctionName, IRB.getVoidTy(), IRB.getIntNTy(AccessSize * 8),
-        IRB.getInt8PtrTy(), IRB.getInt32Ty(), NULL);
+        IRB.getInt8PtrTy(), IRB.getInt32Ty(), nullptr);
   }
 
   MsanSetAllocaOrigin4Fn = M.getOrInsertFunction(
     "__msan_set_alloca_origin4", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy,
-    IRB.getInt8PtrTy(), IntptrTy, NULL);
+    IRB.getInt8PtrTy(), IntptrTy, nullptr);
   MsanPoisonStackFn = M.getOrInsertFunction(
-    "__msan_poison_stack", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy, NULL);
+    "__msan_poison_stack", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy, nullptr);
   MsanChainOriginFn = M.getOrInsertFunction(
-    "__msan_chain_origin", IRB.getInt32Ty(), IRB.getInt32Ty(), NULL);
+    "__msan_chain_origin", IRB.getInt32Ty(), IRB.getInt32Ty(), nullptr);
   MemmoveFn = M.getOrInsertFunction(
     "__msan_memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
-    IRB.getInt8PtrTy(), IntptrTy, NULL);
+    IRB.getInt8PtrTy(), IntptrTy, nullptr);
   MemcpyFn = M.getOrInsertFunction(
     "__msan_memcpy", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
-    IntptrTy, NULL);
+    IntptrTy, nullptr);
   MemsetFn = M.getOrInsertFunction(
     "__msan_memset", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt32Ty(),
-    IntptrTy, NULL);
+    IntptrTy, nullptr);
 
   // Create globals.
   RetvalTLS = new GlobalVariable(
@@ -404,7 +404,7 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
     AnyFunctionPtrTy =
         PointerType::getUnqual(FunctionType::get(IRB.getVoidTy(), false));
     IndirectCallWrapperFn = M.getOrInsertFunction(
-        ClWrapIndirectCalls, AnyFunctionPtrTy, AnyFunctionPtrTy, NULL);
+        ClWrapIndirectCalls, AnyFunctionPtrTy, AnyFunctionPtrTy, nullptr);
   }
 
   if (WrapIndirectCalls && ClWrapIndirectCallsFast) {
@@ -453,7 +453,7 @@ bool MemorySanitizer::doInitialization(Module &M) {
 
   // Insert a call to __msan_init/__msan_track_origins into the module's CTORs.
   appendToGlobalCtors(M, cast<Function>(M.getOrInsertFunction(
-                      "__msan_init", IRB.getVoidTy(), NULL)), 0);
+                      "__msan_init", IRB.getVoidTy(), nullptr)), 0);
 
   if (TrackOrigins)
     new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,

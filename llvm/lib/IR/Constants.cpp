@@ -1919,7 +1919,7 @@ Constant *ConstantExpr::getAlignOf(Type* Ty) {
   // alignof is implemented as: (i64) gep ({i1,Ty}*)null, 0, 1
   // Note that a non-inbounds gep is used, as null isn't within any object.
   Type *AligningTy = 
-    StructType::get(Type::getInt1Ty(Ty->getContext()), Ty, NULL);
+    StructType::get(Type::getInt1Ty(Ty->getContext()), Ty, nullptr);
   Constant *NullPtr = Constant::getNullValue(AligningTy->getPointerTo(0));
   Constant *Zero = ConstantInt::get(Type::getInt64Ty(Ty->getContext()), 0);
   Constant *One = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 1);
@@ -2712,7 +2712,7 @@ bool ConstantDataSequential::isCString() const {
 }
 
 /// getSplatValue - If this is a splat constant, meaning that all of the
-/// elements have the same value, return that value. Otherwise return NULL.
+/// elements have the same value, return that value. Otherwise return nullptr.
 Constant *ConstantDataVector::getSplatValue() const {
   const char *Base = getRawDataValues().data();
 
