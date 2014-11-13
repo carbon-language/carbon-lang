@@ -71,14 +71,10 @@ private:
       size_t bytes = Streamer->GetBytes(&Bytes[BytesRead + BytesSkipped],
                                         kChunkSize);
       BytesRead += bytes;
-      if (bytes < kChunkSize) {
-        assert((!ObjectSize || BytesRead >= Pos) &&
-               "Unexpected short read fetching bitcode");
-        if (BytesRead <= Pos) { // reached EOF/ran out of bytes
-          ObjectSize = BytesRead;
-          EOFReached = true;
-          return false;
-        }
+      if (BytesRead <= Pos) { // reached EOF/ran out of bytes
+        ObjectSize = BytesRead;
+        EOFReached = true;
+        return false;
       }
     }
     return true;

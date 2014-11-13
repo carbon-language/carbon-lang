@@ -177,11 +177,11 @@ class BitstreamCursor {
   /// follow the word size of the host machine for efficiency. We use word_t in
   /// places that are aware of this to make it perfectly explicit what is going
   /// on.
-  typedef uint32_t word_t;
+  typedef size_t word_t;
   word_t CurWord;
 
   /// This is the number of bits in CurWord that are valid. This is always from
-  /// [0...31/63] inclusive (depending on word size).
+  /// [0...bits_of(size_t)-1] inclusive.
   unsigned BitsInCurWord;
 
   // This is the declared size of code values used for the current block, in
@@ -333,7 +333,6 @@ public:
       Size = NextChar;
       return;
     }
-    assert(BytesRead == sizeof(Array));
 
     // Handle big-endian byte-swapping if necessary.
     support::detail::packed_endian_specific_integral<
@@ -341,20 +340,22 @@ public:
     memcpy(&EndianValue, Array, sizeof(Array));
 
     CurWord = EndianValue;
-    NextChar += sizeof(word_t);
-    BitsInCurWord = sizeof(word_t) * 8;
+    NextChar += BytesRead;
+    BitsInCurWord = BytesRead * 8;
   }
 
   uint32_t Read(unsigned NumBits) {
     assert(NumBits && NumBits <= 32 &&
            "Cannot return zero or more than 32 bits!");
 
+    static const unsigned Mask = sizeof(word_t) > 4 ? 0x3f : 0x1f;
+
     // If the field is fully contained by CurWord, return it quickly.
     if (BitsInCurWord >= NumBits) {
       uint32_t R = uint32_t(CurWord) & (~0U >> (32-NumBits));
 
       // Use a mask to avoid undefined behavior.
-      CurWord >>= (NumBits & 0x1f);
+      CurWord >>= (NumBits & Mask);
 
       BitsInCurWord -= NumBits;
       return R;
@@ -369,10 +370,11 @@ public:
     if (BitsLeft > BitsInCurWord)
       return 0;
 
-    uint32_t R2 = uint32_t(CurWord) & (~0U >> (sizeof(word_t) * 8 - BitsLeft));
+    uint32_t R2 =
+        uint32_t(CurWord) & (~word_t(0) >> (sizeof(word_t) * 8 - BitsLeft));
 
     // Use a mask to avoid undefined behavior.
-    CurWord >>= (BitsLeft & 0x1f);
+    CurWord >>= (BitsLeft & Mask);
 
     BitsInCurWord -= BitsLeft;
 

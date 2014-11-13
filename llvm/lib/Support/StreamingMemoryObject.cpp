@@ -90,13 +90,12 @@ uint64_t StreamingMemoryObject::getExtent() const {
 uint64_t StreamingMemoryObject::readBytes(uint8_t *Buf, uint64_t Size,
                                           uint64_t Address) const {
   fetchToPos(Address + Size - 1);
-  uint64_t BufferSize = Bytes.size() - BytesSkipped;
-  if (Address >= BufferSize)
+  if (Address >= BytesRead)
     return 0;
 
   uint64_t End = Address + Size;
-  if (End > BufferSize)
-    End = BufferSize;
+  if (End > BytesRead)
+    End = BytesRead;
   Size = End - Address;
   assert(Size >= 0);
   memcpy(Buf, &Bytes[Address + BytesSkipped], Size);
