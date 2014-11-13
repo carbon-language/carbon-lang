@@ -1953,7 +1953,7 @@ Instruction *Reassociate::canonicalizeNegConstExpr(Instruction *I) {
   if (!I->hasOneUse() || I->getType()->isVectorTy())
     return nullptr;
 
-  // Must be a mul instruction.
+  // Must be a mul, fmul, or fdiv instruction.
   unsigned Opcode = I->getOpcode();
   if (Opcode != Instruction::Mul && Opcode != Instruction::FMul &&
       Opcode != Instruction::FDiv)
