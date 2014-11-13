@@ -17,9 +17,18 @@ X86-NEXT:   ImportAddressTable: 0x1004
 X86-NEXT:   ImportNameTable: 0x2000
 X86-NEXT:   BoundDelayImportTable: 0x0
 X86-NEXT:   UnloadDelayImportTable: 0x0
-X86-NEXT:   Symbol: _name_with_underscore (0)
-X86-NEXT:   Symbol: fn (1)
-X86-NEXT:   Symbol:  (1)
+X86-NEXT:   Import {
+X86-NEXT:     Symbol: _name_with_underscore (0)
+X86-NEXT:     Address: 0x501F
+X86-NEXT:   }
+X86-NEXT:   Import {
+X86-NEXT:     Symbol: fn (1)
+X86-NEXT:     Address: 0x5034
+X86-NEXT:   }
+X86-NEXT:   Import {
+X86-NEXT:     Symbol:  (1)
+X86-NEXT:     Address: 0x5049
+X86-NEXT:   }
 X86-NEXT: }
 
 X64:      DelayImport {
@@ -30,7 +39,16 @@ X64-NEXT:   ImportAddressTable: 0x1008
 X64-NEXT:   ImportNameTable: 0x2000
 X64-NEXT:   BoundDelayImportTable: 0x0
 X64-NEXT:   UnloadDelayImportTable: 0x0
-X64-NEXT:   Symbol: _name_with_underscore (0)
-X64-NEXT:   Symbol: fn (1)
-X64-NEXT:   Symbol:  (1)
+X64-NEXT:   Import {
+X64-NEXT:     Symbol: _name_with_underscore (0)
+X64-NEXT:     Address: 0x14000501F
+X64-NEXT:   }
+X64-NEXT:   Import {
+X64-NEXT:     Symbol: fn (1)
+X64-NEXT:     Address: 0x140005076
+X64-NEXT:   }
+X64-NEXT:   Import {
+X64-NEXT:     Symbol:  (1)
+X64-NEXT:     Address: 0x1400050CD
+X64-NEXT:   }
 X64-NEXT: }
