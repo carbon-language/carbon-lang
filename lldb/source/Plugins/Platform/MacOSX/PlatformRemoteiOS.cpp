@@ -582,7 +582,7 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
         {
             ::snprintf (resolved_path, 
                         sizeof(resolved_path), 
-                        "%s/%s", 
+                        "%s%s",
                         sdkroot_path,
                         platform_file_path);
             
@@ -593,7 +593,7 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
             
         ::snprintf (resolved_path,
                     sizeof(resolved_path), 
-                    "%s/Symbols.Internal/%s", 
+                    "%s/Symbols.Internal%s",
                     sdkroot_path,
                     platform_file_path);
         
@@ -602,7 +602,7 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
             return true;
         ::snprintf (resolved_path,
                     sizeof(resolved_path), 
-                    "%s/Symbols/%s", 
+                    "%s/Symbols%s", 
                     sdkroot_path, 
                     platform_file_path);
         
@@ -694,6 +694,8 @@ PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
     if (platform_file.GetPath(platform_file_path, sizeof(platform_file_path)))
     {
         FileSpec local_file;
+        UpdateSDKDirectoryInfosInNeeded();
+
         const uint32_t num_sdk_infos = m_sdk_directory_infos.size();
         // Try the last SDK index if it is set as most files from an SDK
         // will tend to be valid in that same SDK.
