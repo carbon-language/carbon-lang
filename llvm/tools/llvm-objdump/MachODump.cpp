@@ -2826,7 +2826,7 @@ static void PrintSection(const char *sectname, const char *segname,
     outs() << "\n";
 }
 
-static void PrintSymtabLoadCommand(MachO::symtab_command st, uint32_t cputype,
+static void PrintSymtabLoadCommand(MachO::symtab_command st, bool Is64Bit,
                                    uint32_t object_size) {
   outs() << "     cmd LC_SYMTAB\n";
   outs() << " cmdsize " << st.cmdsize;
@@ -2841,7 +2841,7 @@ static void PrintSymtabLoadCommand(MachO::symtab_command st, uint32_t cputype,
     outs() << "\n";
   outs() << "   nsyms " << st.nsyms;
   uint64_t big_size;
-  if (cputype & MachO::CPU_ARCH_ABI64) {
+  if (Is64Bit) {
     big_size = st.nsyms;
     big_size *= sizeof(struct MachO::nlist_64);
     big_size += st.symoff;
@@ -2874,7 +2874,7 @@ static void PrintSymtabLoadCommand(MachO::symtab_command st, uint32_t cputype,
 
 static void PrintDysymtabLoadCommand(MachO::dysymtab_command dyst,
                                      uint32_t nsyms, uint32_t object_size,
-                                     uint32_t cputype) {
+                                     bool Is64Bit) {
   outs() << "            cmd LC_DYSYMTAB\n";
   outs() << "        cmdsize " << dyst.cmdsize;
   if (dyst.cmdsize != sizeof(struct MachO::dysymtab_command))
@@ -2938,7 +2938,7 @@ static void PrintDysymtabLoadCommand(MachO::dysymtab_command dyst,
     outs() << "\n";
   outs() << "        nmodtab " << dyst.nmodtab;
   uint64_t modtabend;
-  if (cputype & MachO::CPU_ARCH_ABI64) {
+  if (Is64Bit) {
     modtabend = dyst.nmodtab;
     modtabend *= sizeof(struct MachO::dylib_module_64);
     modtabend += dyst.modtaboff;
@@ -3310,11 +3310,12 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
       }
     } else if (Command.C.cmd == MachO::LC_SYMTAB) {
       MachO::symtab_command Symtab = Obj->getSymtabLoadCommand();
-      PrintSymtabLoadCommand(Symtab, cputype, Buf.size());
+      PrintSymtabLoadCommand(Symtab, Obj->is64Bit(), Buf.size());
     } else if (Command.C.cmd == MachO::LC_DYSYMTAB) {
       MachO::dysymtab_command Dysymtab = Obj->getDysymtabLoadCommand();
       MachO::symtab_command Symtab = Obj->getSymtabLoadCommand();
-      PrintDysymtabLoadCommand(Dysymtab, Symtab.nsyms, Buf.size(), cputype);
+      PrintDysymtabLoadCommand(Dysymtab, Symtab.nsyms, Buf.size(),
+                               Obj->is64Bit());
     } else if (Command.C.cmd == MachO::LC_DYLD_INFO ||
                Command.C.cmd == MachO::LC_DYLD_INFO_ONLY) {
       MachO::dyld_info_command DyldInfo = Obj->getDyldInfoLoadCommand(Command);

@@ -242,20 +242,40 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   MachOObjectFile::LoadCommandInfo Load = getFirstLoadCommandInfo();
   for (unsigned I = 0; ; ++I) {
     if (Load.C.cmd == MachO::LC_SYMTAB) {
-      assert(!SymtabLoadCmd && "Multiple symbol tables");
+      // Multiple symbol tables
+      if (SymtabLoadCmd) {
+        EC = object_error::parse_failed;
+        return;
+      }
       SymtabLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == MachO::LC_DYSYMTAB) {
-      assert(!DysymtabLoadCmd && "Multiple dynamic symbol tables");
+      // Multiple dynamic symbol tables
+      if (DysymtabLoadCmd) {
+        EC = object_error::parse_failed;
+        return;
+      }
       DysymtabLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == MachO::LC_DATA_IN_CODE) {
-      assert(!DataInCodeLoadCmd && "Multiple data in code tables");
+      // Multiple data in code tables
+      if (DataInCodeLoadCmd) {
+        EC = object_error::parse_failed;
+        return;
+      }
       DataInCodeLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == MachO::LC_DYLD_INFO || 
                Load.C.cmd == MachO::LC_DYLD_INFO_ONLY) {
-      assert(!DyldInfoLoadCmd && "Multiple dyldinfo load commands");
+      // Multiple dyldinfo load commands
+      if (DyldInfoLoadCmd) {
+        EC = object_error::parse_failed;
+        return;
+      }
       DyldInfoLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == MachO::LC_UUID) {
-      assert(!UuidLoadCmd && "Multiple UUID load commands");
+      // Multiple UUID load commands
+      if (UuidLoadCmd) {
+        EC = object_error::parse_failed;
+        return;
+      }
       UuidLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == SegmentLoadType) {
       uint32_t NumSections = getSegmentLoadCommandNumSections(this, Load);
@@ -1227,16 +1247,9 @@ StringRef MachOObjectFile::getFileFormatName() const {
     case llvm::MachO::CPU_TYPE_POWERPC:
       return "Mach-O 32-bit ppc";
     default:
-      assert((CPUType & llvm::MachO::CPU_ARCH_ABI64) == 0 &&
-             "64-bit object file when we're not 64-bit?");
       return "Mach-O 32-bit unknown";
     }
   }
-
-  // Make sure the cpu type has the correct mask.
-  assert((CPUType & llvm::MachO::CPU_ARCH_ABI64)
-         == llvm::MachO::CPU_ARCH_ABI64 &&
-         "32-bit object file when we're 64-bit?");
 
   switch (CPUType) {
   case llvm::MachO::CPU_TYPE_X86_64:
