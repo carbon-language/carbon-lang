@@ -67,13 +67,11 @@ define <8 x float> @foo2_8(<8 x i8> %src) {
 ; CHECK-WIDE-NEXT:    vpshufb %xmm3, %xmm2, %xmm4
 ; CHECK-WIDE-NEXT:    vmovdqa {{.*#+}} xmm5 = <2,6,10,14,u,u,u,u,u,u,u,u,u,u,u,u>
 ; CHECK-WIDE-NEXT:    vpshufb %xmm5, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    vpshufb {{.*#+}} xmm6 = xmm0[4,5,6,7,u,u,u,u,u,u,u,u,u,u,u,u]
+; CHECK-WIDE-NEXT:    vpshufd {{.*#+}} xmm6 = xmm0[1,1,2,3]
 ; CHECK-WIDE-NEXT:    vpunpcklbw {{.*#+}} xmm2 = xmm6[0],xmm2[0],xmm6[1],xmm2[1],xmm6[2],xmm2[2],xmm6[3],xmm2[3],xmm6[4],xmm2[4],xmm6[5],xmm2[5],xmm6[6],xmm2[6],xmm6[7],xmm2[7]
 ; CHECK-WIDE-NEXT:    vpunpcklbw {{.*#+}} xmm2 = xmm2[0],xmm4[0],xmm2[1],xmm4[1],xmm2[2],xmm4[2],xmm2[3],xmm4[3],xmm2[4],xmm4[4],xmm2[5],xmm4[5],xmm2[6],xmm4[6],xmm2[7],xmm4[7]
 ; CHECK-WIDE-NEXT:    vpshufb %xmm3, %xmm1, %xmm3
 ; CHECK-WIDE-NEXT:    vpshufb %xmm5, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    vpmovzxbd %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
 ; CHECK-WIDE-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
 ; CHECK-WIDE-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3],xmm0[4],xmm3[4],xmm0[5],xmm3[5],xmm0[6],xmm3[6],xmm0[7],xmm3[7]
 ; CHECK-WIDE-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0

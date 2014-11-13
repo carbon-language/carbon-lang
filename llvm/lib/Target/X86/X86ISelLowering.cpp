@@ -9614,14 +9614,23 @@ static SDValue splitAndLowerVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
 
   // Now create two 4-way blends of these half-width vectors.
   auto HalfBlend = [&](ArrayRef<int> HalfMask) {
+    bool UseLoV1 = false, UseHiV1 = false, UseLoV2 = false, UseHiV2 = false;
     SmallVector<int, 32> V1BlendMask, V2BlendMask, BlendMask;
     for (int i = 0; i < SplitNumElements; ++i) {
       int M = HalfMask[i];
       if (M >= NumElements) {
+        if (M >= NumElements + SplitNumElements)
+          UseHiV2 = true;
+        else
+          UseLoV2 = true;
         V2BlendMask.push_back(M - NumElements);
         V1BlendMask.push_back(-1);
         BlendMask.push_back(SplitNumElements + i);
       } else if (M >= 0) {
+        if (M >= SplitNumElements)
+          UseHiV1 = true;
+        else
+          UseLoV1 = true;
         V2BlendMask.push_back(-1);
         V1BlendMask.push_back(M);
         BlendMask.push_back(i);
@@ -9631,10 +9640,40 @@ static SDValue splitAndLowerVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
         BlendMask.push_back(-1);
       }
     }
-    SDValue V1Blend =
+
+    // Because the lowering happens after all combining takes place, we need to
+    // manually combine these blend masks as much as possible so that we create
+    // a minimal number of high-level vector shuffle nodes.
+
+    // First try just blending the halves of V1 or V2.
+    if (!UseLoV1 && !UseHiV1 && !UseLoV2 && !UseHiV2)
+      return DAG.getUNDEF(SplitVT);
+    if (!UseLoV2 && !UseHiV2)
+      return DAG.getVectorShuffle(SplitVT, DL, LoV1, HiV1, V1BlendMask);
+    if (!UseLoV1 && !UseHiV1)
+      return DAG.getVectorShuffle(SplitVT, DL, LoV2, HiV2, V2BlendMask);
+
+    SDValue V1Blend, V2Blend;
+    if (UseLoV1 && UseHiV1) {
+      V1Blend =
         DAG.getVectorShuffle(SplitVT, DL, LoV1, HiV1, V1BlendMask);
-    SDValue V2Blend =
+    } else {
+      // We only use half of V1 so map the usage down into the final blend mask.
+      V1Blend = UseLoV1 ? LoV1 : HiV1;
+      for (int i = 0; i < SplitNumElements; ++i)
+        if (BlendMask[i] >= 0 && BlendMask[i] < SplitNumElements)
+          BlendMask[i] = V1BlendMask[i] - (UseLoV1 ? 0 : SplitNumElements);
+    }
+    if (UseLoV2 && UseHiV2) {
+      V2Blend =
         DAG.getVectorShuffle(SplitVT, DL, LoV2, HiV2, V2BlendMask);
+    } else {
+      // We only use half of V2 so map the usage down into the final blend mask.
+      V2Blend = UseLoV2 ? LoV2 : HiV2;
+      for (int i = 0; i < SplitNumElements; ++i)
+        if (BlendMask[i] >= SplitNumElements)
+          BlendMask[i] = V2BlendMask[i] + (UseLoV2 ? SplitNumElements : 0);
+    }
     return DAG.getVectorShuffle(SplitVT, DL, V1Blend, V2Blend, BlendMask);
   };
   SDValue Lo = HalfBlend(LoMask);
