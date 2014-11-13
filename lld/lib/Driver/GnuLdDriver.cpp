@@ -495,7 +495,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         // modulo of the default page size.
         if ((!parseZOption(extOpt, maxPageSize)) ||
             (maxPageSize < ctx->getPageSize()) ||
-            (!maxPageSize % ctx->getPageSize())) {
+            (maxPageSize % ctx->getPageSize())) {
           diagnostics << "invalid option: " << extOpt << "\n";
           return false;
         }
