@@ -59,9 +59,9 @@ uint64_t RawMemoryObject::readBytes(uint8_t *Buf, uint64_t Size,
   if (End > BufferSize)
     End = BufferSize;
 
+  assert(static_cast<int64_t>(End - Address) >= 0);
   Size = End - Address;
-  assert(Size >= 0);
-  memcpy(Buf, (uint8_t *)(Address + FirstChar), Size);
+  memcpy(Buf, Address + FirstChar, Size);
   return Size;
 }
 
@@ -96,8 +96,8 @@ uint64_t StreamingMemoryObject::readBytes(uint8_t *Buf, uint64_t Size,
   uint64_t End = Address + Size;
   if (End > BytesRead)
     End = BytesRead;
+  assert(static_cast<int64_t>(End - Address) >= 0);
   Size = End - Address;
-  assert(Size >= 0);
   memcpy(Buf, &Bytes[Address + BytesSkipped], Size);
   return Size;
 }
