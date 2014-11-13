@@ -1298,22 +1298,19 @@ NativeProcessLinux::AttachToProcess (
     if (!error.Success ())
         return error;
 
-    native_process_sp.reset (new NativeProcessLinux ());
+    std::shared_ptr<NativeProcessLinux> native_process_linux_sp (new NativeProcessLinux ());
 
-    if (!native_process_sp->RegisterNativeDelegate (native_delegate))
+    if (!native_process_linux_sp->RegisterNativeDelegate (native_delegate))
     {
-        native_process_sp.reset (new NativeProcessLinux ());
         error.SetErrorStringWithFormat ("failed to register the native delegate");
         return error;
     }
 
-    reinterpret_cast<NativeProcessLinux*> (native_process_sp.get ())->AttachToInferior (pid, error);
+    native_process_linux_sp->AttachToInferior (pid, error);
     if (!error.Success ())
-    {
-        native_process_sp.reset ();
         return error;
-    }
 
+    native_process_sp = native_process_linux_sp;
     return error;
 }
 
