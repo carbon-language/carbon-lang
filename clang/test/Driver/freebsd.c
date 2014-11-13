@@ -1,4 +1,12 @@
 // RUN: %clang -no-canonical-prefixes \
+// RUN:   -target aarch64-pc-freebsd11 %s                              \
+// RUN:   --sysroot=%S/Inputs/basic_freebsd64_tree -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-ARM64 %s
+// CHECK-ARM64: "-cc1" "-triple" "aarch64-pc-freebsd11"
+// CHECK-ARM64: ld{{.*}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ARM64: "--eh-frame-hdr" "-dynamic-linker" "{{.*}}ld-elf{{.*}}" "-o" "a.out" "{{.*}}crt1.o" "{{.*}}crti.o" "{{.*}}crtbegin.o" "-L[[SYSROOT]]/usr/lib" "{{.*}}.o" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "-lc" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "{{.*}}crtend.o" "{{.*}}crtn.o"
+//
+// RUN: %clang -no-canonical-prefixes \
 // RUN:   -target powerpc-pc-freebsd8 %s    \
 // RUN:   --sysroot=%S/Inputs/basic_freebsd_tree -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PPC %s
