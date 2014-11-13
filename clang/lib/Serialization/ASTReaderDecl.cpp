@@ -2782,10 +2782,8 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
   if (FPT && PrevFPT &&
       isUnresolvedExceptionSpec(FPT->getExceptionSpecType()) &&
       !isUnresolvedExceptionSpec(PrevFPT->getExceptionSpecType())) {
-    FunctionProtoType::ExtProtoInfo EPI = PrevFPT->getExtProtoInfo();
-    FD->setType(Reader.Context.getFunctionType(
-        FPT->getReturnType(), FPT->getParamTypes(),
-        FPT->getExtProtoInfo().withExceptionSpec(EPI.ExceptionSpec)));
+    Reader.Context.adjustExceptionSpec(
+        FD, PrevFPT->getExtProtoInfo().ExceptionSpec);
   }
 }
 }

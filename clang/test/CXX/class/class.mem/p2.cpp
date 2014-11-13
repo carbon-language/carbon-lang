@@ -56,3 +56,33 @@ namespace test3 {
 
   template struct A2<int>;
 }
+
+namespace PR12629 {
+  struct S {
+    static int (f)() throw();
+    static int ((((((g))))() throw(U)));
+    int (*h)() noexcept(false);
+    static int (&i)() noexcept(true);
+    static int (*j)() throw(U); // expected-error {{unknown type name 'U'}}
+    static int (k)() throw(U);
+
+    struct U {};
+  };
+  static_assert(noexcept(S::f()), "");
+  static_assert(!noexcept(S::g()), "");
+  static_assert(!noexcept(S().h()), "");
+  static_assert(noexcept(S::i()), "");
+}
+
+namespace PR12688 {
+  struct S {
+    // FIXME: Producing one error saying this can't have the same name
+    //        as the class because it's not a constructor, then producing
+    //        another error saying this can't have a return type because
+    //        it is a constructor, is redundant and inconsistent.
+    nonsense S() throw (more_nonsense); // \
+    // expected-error {{'nonsense'}} \
+    // expected-error {{has the same name as its class}} \
+    // expected-error {{constructor cannot have a return type}}
+  };
+}

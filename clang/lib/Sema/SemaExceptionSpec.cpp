@@ -112,6 +112,11 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
 
 const FunctionProtoType *
 Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
+  if (FPT->getExceptionSpecType() == EST_Unparsed) {
+    Diag(Loc, diag::err_exception_spec_not_parsed);
+    return nullptr;
+  }
+
   if (!isUnresolvedExceptionSpec(FPT->getExceptionSpecType()))
     return FPT;
 
@@ -135,16 +140,8 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
 void
 Sema::UpdateExceptionSpec(FunctionDecl *FD,
                           const FunctionProtoType::ExceptionSpecInfo &ESI) {
-  for (auto *Redecl : FD->redecls()) {
-    auto *RedeclFD = dyn_cast<FunctionDecl>(Redecl);
-    const FunctionProtoType *Proto =
-        RedeclFD->getType()->castAs<FunctionProtoType>();
-
-    // Overwrite the exception spec and rebuild the function type.
-    RedeclFD->setType(Context.getFunctionType(
-        Proto->getReturnType(), Proto->getParamTypes(),
-        Proto->getExtProtoInfo().withExceptionSpec(ESI)));
-  }
+  for (auto *Redecl : FD->redecls())
+    Context.adjustExceptionSpec(cast<FunctionDecl>(Redecl), ESI);
 
   // If we've fully resolved the exception specification, notify listeners.
   if (!isUnresolvedExceptionSpec(ESI.Type))
@@ -790,6 +787,11 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
       return false;
     }
   }
+  // If the exception specification hasn't been parsed yet, skip the check.
+  // We'll get called again once it's been parsed.
+  if (New->getType()->castAs<FunctionProtoType>()->getExceptionSpecType() ==
+      EST_Unparsed)
+    return false;
   unsigned DiagID = diag::err_override_exception_spec;
   if (getLangOpts().MicrosoftExt)
     DiagID = diag::ext_override_exception_spec;

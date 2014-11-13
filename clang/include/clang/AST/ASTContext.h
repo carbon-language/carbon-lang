@@ -930,6 +930,12 @@ public:
   /// \brief Change the result type of a function type once it is deduced.
   void adjustDeducedFunctionResultType(FunctionDecl *FD, QualType ResultType);
 
+  /// \brief Change the exception specification on a function once it is
+  /// delay-parsed, instantiated, or computed.
+  void adjustExceptionSpec(FunctionDecl *FD,
+                           const FunctionProtoType::ExceptionSpecInfo &ESI,
+                           bool AsWritten = false);
+
   /// \brief Return the uniqued reference to the type for a complex
   /// number with the specified element type.
   QualType getComplexType(QualType T) const;

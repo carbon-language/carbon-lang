@@ -1593,7 +1593,7 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
 FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
                                      QualType canonical,
                                      const ExtProtoInfo &epi)
-    : FunctionType(FunctionProto, result, epi.TypeQuals, canonical,
+    : FunctionType(FunctionProto, result, canonical,
                    result->isDependentType(),
                    result->isInstantiationDependentType(),
                    result->isVariablyModifiedType(),
@@ -1602,9 +1602,11 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
       NumExceptions(epi.ExceptionSpec.Exceptions.size()),
       ExceptionSpecType(epi.ExceptionSpec.Type),
       HasAnyConsumedParams(epi.ConsumedParameters != nullptr),
-      Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn),
-      RefQualifier(epi.RefQualifier) {
+      Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn) {
   assert(NumParams == params.size() && "function has too many parameters");
+
+  FunctionTypeBits.TypeQuals = epi.TypeQuals;
+  FunctionTypeBits.RefQualifier = epi.RefQualifier;
 
   // Fill in the trailing argument array.
   QualType *argSlot = reinterpret_cast<QualType*>(this+1);
@@ -1772,7 +1774,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
   assert(!(unsigned(epi.Variadic) & ~1) &&
          !(unsigned(epi.TypeQuals) & ~255) &&
          !(unsigned(epi.RefQualifier) & ~3) &&
-         !(unsigned(epi.ExceptionSpec.Type) & ~7) &&
+         !(unsigned(epi.ExceptionSpec.Type) & ~15) &&
          "Values larger than expected.");
   ID.AddInteger(unsigned(epi.Variadic) +
                 (epi.TypeQuals << 1) +

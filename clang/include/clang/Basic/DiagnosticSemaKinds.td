@@ -1117,6 +1117,8 @@ def warn_missing_exception_specification : Warning<
   "%0 is missing exception specification '%1'">;
 def err_noexcept_needs_constant_expression : Error<
   "argument to noexcept specifier must be a constant expression">;
+def err_exception_spec_not_parsed : Error<
+  "exception specification is not available until end of class definition">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<

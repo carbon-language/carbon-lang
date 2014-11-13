@@ -5286,6 +5286,12 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 /// C++11 [dcl.fct.def.default]p2.
 void Sema::CheckExplicitlyDefaultedMemberExceptionSpec(
     CXXMethodDecl *MD, const FunctionProtoType *SpecifiedType) {
+  // If the exception specification was explicitly specified but hadn't been
+  // parsed when the method was defaulted, grab it now.
+  if (SpecifiedType->getExceptionSpecType() == EST_Unparsed)
+    SpecifiedType =
+        MD->getTypeSourceInfo()->getType()->castAs<FunctionProtoType>();
+
   // Compute the implicit exception specification.
   CallingConv CC = Context.getDefaultCallingConvention(/*IsVariadic=*/false,
                                                        /*IsCXXMethod=*/true);
@@ -13245,6 +13251,7 @@ bool Sema::checkThisInStaticMemberFunctionExceptionSpec(CXXMethodDecl *Method) {
   FindCXXThisExpr Finder(*this);
 
   switch (Proto->getExceptionSpecType()) {
+  case EST_Unparsed:
   case EST_Uninstantiated:
   case EST_Unevaluated:
   case EST_BasicNoexcept:
@@ -13369,6 +13376,45 @@ void Sema::checkExceptionSpecification(
       ESI.NoexceptExpr = NoexceptExpr;
     }
     return;
+  }
+}
+
+void Sema::actOnDelayedExceptionSpecification(Decl *MethodD,
+             ExceptionSpecificationType EST,
+             SourceRange SpecificationRange,
+             ArrayRef<ParsedType> DynamicExceptions,
+             ArrayRef<SourceRange> DynamicExceptionRanges,
+             Expr *NoexceptExpr) {
+  if (!MethodD)
+    return;
+
+  // Dig out the method we're referring to.
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(MethodD))
+    MethodD = FunTmpl->getTemplatedDecl();
+
+  CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(MethodD);
+  if (!Method)
+    return;
+
+  // Check the exception specification.
+  llvm::SmallVector<QualType, 4> Exceptions;
+  FunctionProtoType::ExceptionSpecInfo ESI;
+  checkExceptionSpecification(/*IsTopLevel*/true, EST, DynamicExceptions,
+                              DynamicExceptionRanges, NoexceptExpr, Exceptions,
+                              ESI);
+
+  // Update the exception specification on the function type.
+  Context.adjustExceptionSpec(Method, ESI, /*AsWritten*/true);
+
+  if (Method->isStatic())
+    checkThisInStaticMemberFunctionExceptionSpec(Method);
+
+  if (Method->isVirtual()) {
+    // Check overrides, which we previously had to delay.
+    for (CXXMethodDecl::method_iterator O = Method->begin_overridden_methods(),
+                                     OEnd = Method->end_overridden_methods();
+         O != OEnd; ++O)
+      CheckOverridingFunctionExceptionSpec(Method, *O);
   }
 }
 

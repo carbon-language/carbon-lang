@@ -502,15 +502,15 @@ namespace dr436 { // dr436: yes
   void f(); // expected-error {{redefinition}}
 }
 
-namespace dr437 { // dr437: no
+namespace dr437 { // dr437: sup 1308
   // This is superseded by 1308, which is in turn superseded by 1330,
   // which restores this rule.
-  template<typename U> struct T : U {}; // expected-error {{incomplete}}
-  struct S { // expected-note {{not complete}}
+  template<typename U> struct T : U {};
+  struct S {
     void f() throw(S);
-    void g() throw(T<S>); // expected-note {{in instantiation of}}
-    struct U; // expected-note {{forward}}
-    void h() throw(U); // expected-error {{incomplete}}
+    void g() throw(T<S>);
+    struct U;
+    void h() throw(U);
     struct U {};
   };
 }
