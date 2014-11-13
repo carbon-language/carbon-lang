@@ -160,8 +160,6 @@ const char *StripModuleName(const char *module) {
     return 0;
   if (const char *slash_pos = internal_strrchr(module, '/'))
     return slash_pos + 1;
-  else if (const char *backslash_pos = internal_strrchr(module, '\\'))
-    return backslash_pos + 1;
   return module;
 }
 
@@ -225,24 +223,6 @@ void IncreaseTotalMmap(uptr size) {
 void DecreaseTotalMmap(uptr size) {
   if (!common_flags()->mmap_limit_mb) return;
   atomic_fetch_sub(&g_total_mmaped, size, memory_order_relaxed);
-}
-
-static BlockingMutex binary_name_cache_lock(LINKER_INITIALIZED);
-static char binary_name_cache_str[kMaxPathLength];
-static bool binary_name_cache_initialized = false;
-
-const char *GetBinaryName() {
-  BlockingMutexLock l(&binary_name_cache_lock);
-  if (!binary_name_cache_initialized) {
-    ReadBinaryName(binary_name_cache_str, sizeof(binary_name_cache_str));
-    binary_name_cache_initialized = true;
-  }
-  return binary_name_cache_str;
-}
-
-void CacheBinaryName() {
-  // Call once to make sure that binary_name_cache_str is initialized
-  GetBinaryName();
 }
 
 }  // namespace __sanitizer

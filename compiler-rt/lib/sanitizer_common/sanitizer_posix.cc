@@ -289,14 +289,13 @@ char *FindPathToBinary(const char *name) {
 void MaybeOpenReportFile() {
   if (!log_to_file) return;
   uptr pid = internal_getpid();
-  const char *pname = StripModuleName(GetBinaryName());
   // If in tracer, use the parent's file.
   if (pid == stoptheworld_tracer_pid)
     pid = stoptheworld_tracer_ppid;
   if (report_fd_pid == pid) return;
   InternalScopedBuffer<char> report_path_full(4096);
   internal_snprintf(report_path_full.data(), report_path_full.size(),
-                    "%s.%s.%zu", report_path_prefix, pname, pid);
+                    "%s.%zu", report_path_prefix, pid);
   uptr openrv = OpenFile(report_path_full.data(), true);
   if (internal_iserror(openrv)) {
     report_fd = kStderrFd;

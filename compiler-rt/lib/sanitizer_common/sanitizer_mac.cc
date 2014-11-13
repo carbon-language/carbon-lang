@@ -317,13 +317,6 @@ MacosVersion GetMacosVersion() {
   return result;
 }
 
-uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
-  // FIXME: Actually implement this function.
-  CHECK_GT(buf_len, 0);
-  buf[0] = 0;
-  return 0;
-}
-
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_MAC

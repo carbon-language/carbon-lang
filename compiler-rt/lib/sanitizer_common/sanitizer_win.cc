@@ -527,13 +527,6 @@ bool IsAccessibleMemoryRange(uptr beg, uptr size) {
   return true;
 }
 
-uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
-  // FIXME: Actually implement this function.
-  CHECK_GT(buf_len, 0);
-  buf[0] = 0;
-  return 0;
-}
-
 }  // namespace __sanitizer
 
 #endif  // _WIN32
