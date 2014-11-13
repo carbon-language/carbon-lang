@@ -985,10 +985,10 @@ public:
         if _newclass: triple = property(GetTriple, None, doc='''A read only property that returns the target triple (arch-vendor-os) for this target as a string.''')
 
         __swig_getmethods__["data_byte_size"] = GetDataByteSize
-        if _newclass: addr_size = property(GetDataByteSize, None, doc='''A read only property that returns the size in host bytes of a byte in the data address space for this target.''')
+        if _newclass: data_byte_size = property(GetDataByteSize, None, doc='''A read only property that returns the size in host bytes of a byte in the data address space for this target.''')
 
         __swig_getmethods__["code_byte_size"] = GetCodeByteSize
-        if _newclass: addr_size = property(GetCodeByteSize, None, doc='''A read only property that returns the size in host bytes of a byte in the code address space for this target.''')
+        if _newclass: code_byte_size = property(GetCodeByteSize, None, doc='''A read only property that returns the size in host bytes of a byte in the code address space for this target.''')
 
         __swig_getmethods__["platform"] = GetPlatform
         if _newclass: platform = property(GetPlatform, None, doc='''A read only property that returns the platform associated with with this target.''')
