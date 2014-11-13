@@ -39,3 +39,11 @@ define i32* @test_array4(i32* %a) {
   ret i32* %1
 }
 
+define i32* @test_array5(i32* %a, i32 %i) {
+; CHECK-LABEL: test_array5
+; CHECK:       sxtw [[REG1:x[0-9]+]], w1
+; CHECK-NEXT:  orr  [[REG2:x[0-9]+]], xzr, #0x4
+; CHECK-NEXT:  madd  {{x[0-9]+}}, [[REG1]], [[REG2]], x0
+  %1 = getelementptr inbounds i32* %a, i32 %i
+  ret i32* %1
+}

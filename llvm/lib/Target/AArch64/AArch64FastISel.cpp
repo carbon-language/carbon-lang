@@ -151,6 +151,7 @@ private:
                          const Value *Cond);
   bool optimizeIntExtLoad(const Instruction *I, MVT RetVT, MVT SrcVT);
   bool optimizeSelect(const SelectInst *SI);
+  std::pair<unsigned, bool> getRegForGEPIndex(const Value *Idx);
 
   // Emit helper routines.
   unsigned emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
@@ -4723,6 +4724,28 @@ bool AArch64FastISel::selectSDiv(const Instruction *I) {
 
   updateValueMap(I, ResultReg);
   return true;
+}
+
+/// This is mostly a copy of the existing FastISel getRegForGEPIndex code. We
+/// have to duplicate it for AArch64, because otherwise we would fail during the
+/// sign-extend emission.
+std::pair<unsigned, bool> AArch64FastISel::getRegForGEPIndex(const Value *Idx) {
+  unsigned IdxN = getRegForValue(Idx);
+  if (IdxN == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
+    return std::pair<unsigned, bool>(0, false);
+
+  bool IdxNIsKill = hasTrivialKill(Idx);
+
+  // If the index is smaller or larger than intptr_t, truncate or extend it.
+  MVT PtrVT = TLI.getPointerTy();
+  EVT IdxVT = EVT::getEVT(Idx->getType(), /*HandleUnknown=*/false);
+  if (IdxVT.bitsLT(PtrVT)) {
+    IdxN = emitIntExt(IdxVT.getSimpleVT(), IdxN, PtrVT, /*IsZExt=*/false);
+    IdxNIsKill = true;
+  } else if (IdxVT.bitsGT(PtrVT))
+    llvm_unreachable("AArch64 FastISel doesn't support types larger than i64");
+  return std::pair<unsigned, bool>(IdxN, IdxNIsKill);
 }
 
 /// This is mostly a copy of the existing FastISel GEP code, but we have to
