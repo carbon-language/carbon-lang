@@ -202,7 +202,7 @@ static SDValue Concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
 // FIXME: This should stop caching the target machine as soon as
 // we can remove resetOperationActions et al.
 X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM)
-    : TargetLowering(TM, TM.getObjFileLowering()) {
+    : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();

@@ -58,7 +58,7 @@ HWMultMode("msp430-hwmult-mode", cl::Hidden,
              clEnumValEnd));
 
 MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM)
-    : TargetLowering(TM, TM.getObjFileLowering()) {
+    : TargetLowering(TM) {
 
   // Set up the register classes.
   addRegisterClass(MVT::i8,  &MSP430::GR8RegClass);

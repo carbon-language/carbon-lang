@@ -157,7 +157,7 @@ void ARMTargetLowering::addQRTypeForNEON(MVT VT) {
 }
 
 ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
-    : TargetLowering(TM, TM.getObjFileLowering()) {
+    : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
   RegInfo = TM.getSubtargetImpl()->getRegisterInfo();
   Itins = TM.getSubtargetImpl()->getInstrItineraryData();

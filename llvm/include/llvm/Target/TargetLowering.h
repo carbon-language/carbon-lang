@@ -138,8 +138,7 @@ public:
   }
 
   /// NOTE: The TargetMachine owns TLOF.
-  explicit TargetLoweringBase(const TargetMachine &TM,
-                              const TargetLoweringObjectFile *TLOF);
+  explicit TargetLoweringBase(const TargetMachine &TM);
   virtual ~TargetLoweringBase() {}
 
 protected:
@@ -149,7 +148,9 @@ protected:
 public:
   const TargetMachine &getTargetMachine() const { return TM; }
   const DataLayout *getDataLayout() const { return DL; }
-  const TargetLoweringObjectFile &getObjFileLowering() const { return TLOF; }
+  const TargetLoweringObjectFile &getObjFileLowering() const {
+    return *TM.getObjFileLowering();
+  }
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
@@ -1554,7 +1555,6 @@ public:
 private:
   const TargetMachine &TM;
   const DataLayout *DL;
-  const TargetLoweringObjectFile &TLOF;
 
   /// True if this is a little endian target.
   bool IsLittleEndian;
@@ -1964,9 +1964,8 @@ class TargetLowering : public TargetLoweringBase {
   void operator=(const TargetLowering&) LLVM_DELETED_FUNCTION;
 
 public:
-  /// NOTE: The constructor takes ownership of TLOF.
-  explicit TargetLowering(const TargetMachine &TM,
-                          const TargetLoweringObjectFile *TLOF);
+  /// NOTE: The TargetMachine owns TLOF.
+  explicit TargetLowering(const TargetMachine &TM);
 
   /// Returns true by value, base pointer and offset pointer and addressing mode
   /// by reference if the node's address can be legally represented as

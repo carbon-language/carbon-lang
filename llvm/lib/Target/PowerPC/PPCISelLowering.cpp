@@ -56,7 +56,7 @@ cl::desc("disable unaligned load/store generation on PPC"), cl::Hidden);
 extern cl::opt<bool> ANDIGlueBug;
 
 PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
-    : TargetLowering(TM, TM.getObjFileLowering()),
+    : TargetLowering(TM),
       Subtarget(*TM.getSubtargetImpl()) {
   setPow2SDivIsCheap();
 

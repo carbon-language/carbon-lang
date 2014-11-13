@@ -35,10 +35,9 @@
 #include <cctype>
 using namespace llvm;
 
-/// NOTE: The constructor takes ownership of TLOF.
-TargetLowering::TargetLowering(const TargetMachine &tm,
-                               const TargetLoweringObjectFile *tlof)
-  : TargetLoweringBase(tm, tlof) {}
+/// NOTE: The TargetMachine owns TLOF.
+TargetLowering::TargetLowering(const TargetMachine &tm)
+  : TargetLoweringBase(tm) {}
 
 const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return nullptr;

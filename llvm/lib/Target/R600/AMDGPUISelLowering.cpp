@@ -103,7 +103,7 @@ EVT AMDGPUTargetLowering::getEquivalentLoadRegType(LLVMContext &Ctx, EVT VT) {
 }
 
 AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
-  TargetLowering(TM, TM.getObjFileLowering()) {
+  TargetLowering(TM) {
 
   Subtarget = &TM.getSubtarget<AMDGPUSubtarget>();
 

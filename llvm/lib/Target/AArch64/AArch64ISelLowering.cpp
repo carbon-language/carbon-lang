@@ -68,7 +68,7 @@ EnableAArch64SlrGeneration("aarch64-shift-insert-generation", cl::Hidden,
 
 
 AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM)
-    : TargetLowering(TM, TM.getObjFileLowering()) {
+    : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<AArch64Subtarget>();
 
   // AArch64 doesn't have comparisons which set GPRs or setcc instructions, so
