@@ -423,7 +423,8 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
           if (sect && sect->isLoadableSection() &&
               ((virtualAddress & (p_align - 1)) !=
                (fileOffset & (p_align - 1))))
-            fileOffset = llvm::RoundUpToAlignment(fileOffset, p_align);
+            fileOffset = llvm::RoundUpToAlignment(fileOffset, p_align) +
+                         (virtualAddress % p_align);
         }
       } else if (!isDataPageAlignedForNMagic && needAlign(section)) {
         fileOffset =
