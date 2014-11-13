@@ -786,7 +786,8 @@ public:
     return PatternFragments.find(R)->second.get();
   }
 
-  typedef decltype(PatternFragments)::const_iterator pf_iterator;
+  typedef std::map<Record *, std::unique_ptr<TreePattern>,
+                   LessRecordByID>::const_iterator pf_iterator;
   pf_iterator pf_begin() const { return PatternFragments.begin(); }
   pf_iterator pf_end() const { return PatternFragments.end(); }
 
