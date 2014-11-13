@@ -2963,6 +2963,9 @@ public:
   bool CollectMultipleMethodsInGlobalPool(Selector Sel,
                                           SmallVectorImpl<ObjCMethodDecl*>& Methods,
                                           bool instance);
+    
+  bool AreMultipleMethodsInGlobalPool(Selector Sel,
+                                      bool instance);
 
 private:
   /// \brief - Returns a selector which best matches given argument list or

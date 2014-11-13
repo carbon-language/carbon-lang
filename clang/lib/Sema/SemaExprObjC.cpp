@@ -2452,8 +2452,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         if (ObjCMethodDecl *BestMethod =
               SelectBestMethod(Sel, ArgsIn, Method->isInstanceMethod()))
           Method = BestMethod;
-          SmallVector<ObjCMethodDecl*, 4> Methods;
-          if (!CollectMultipleMethodsInGlobalPool(Sel, Methods, Method->isInstanceMethod()))
+          if (!AreMultipleMethodsInGlobalPool(Sel, Method->isInstanceMethod()))
             DiagnoseUseOfDecl(Method, SelLoc);
       }
     } else if (ReceiverType->isObjCClassType() ||

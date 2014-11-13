@@ -238,3 +238,23 @@ const char * func() {
   return [PID cString]; // expected-warning {{'cString' is deprecated: first deprecated in OS X 10.4}}
 }
 
+// rdar://18960378
+@interface NSObject
++ (instancetype)alloc;
+- (instancetype)init;
+@end
+
+@interface NSLocale
+- (instancetype)init __attribute__((unavailable));
+@end
+
+@interface PLBatteryProperties : NSObject
++ (id)properties;
+@end
+
+@implementation PLBatteryProperties
++ (id)properties {
+    return [[self alloc] init];
+}
+@end
+

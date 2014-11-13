@@ -2229,6 +2229,7 @@ void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
   if (List->Method == nullptr) {
     List->Method = Method;
     List->setNext(nullptr);
+      List->Count = Method->isDefined() ? 0 : 1;
     return;
   }
   
@@ -2242,12 +2243,14 @@ void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
 
     if (!MatchTwoMethodDeclarations(Method, List->Method))
       continue;
-    
+      
     ObjCMethodDecl *PrevObjCMethod = List->Method;
 
     // Propagate the 'defined' bit.
     if (Method->isDefined())
       PrevObjCMethod->setDefined(true);
+    else
+      ++List->Count;
     
     // If a method is deprecated, push it in the global pool.
     // This is used for better diagnostics.
@@ -2268,7 +2271,7 @@ void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
   // We have a new signature for an existing method - add it.
   // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
   ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
-  Previous->setNext(new (Mem) ObjCMethodList(Method, nullptr));
+  Previous->setNext(new (Mem) ObjCMethodList(Method, 0, nullptr));
 }
 
 /// \brief Read the contents of the method pool for a given selector from
@@ -2332,6 +2335,16 @@ bool Sema::CollectMultipleMethodsInGlobalPool(Selector Sel,
     if (M->Method && !M->Method->isHidden())
       Methods.push_back(M->Method);
   return (Methods.size() > 1);
+}
+
+bool Sema::AreMultipleMethodsInGlobalPool(Selector Sel,
+                                          bool instance) {
+  GlobalMethodPool::iterator Pos = MethodPool.find(Sel);
+  // Test for no method in the pool which should not trigger any warning by caller.
+  if (Pos == MethodPool.end())
+    return true;
+  ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
+  return MethList.Count > 1;
 }
 
 ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
