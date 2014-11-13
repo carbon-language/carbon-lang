@@ -715,16 +715,13 @@ SBDebugger::CreateTarget (const char *filename)
     TargetSP target_sp;
     if (m_opaque_sp)
     {
-        ArchSpec arch = Target::GetDefaultArchitecture ();
         Error error;
         const bool add_dependent_modules = true;
-
-        PlatformSP platform_sp(m_opaque_sp->GetPlatformList().GetSelectedPlatform());
-        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
+        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp,
                                                            filename, 
-                                                           arch, 
+                                                           NULL,
                                                            add_dependent_modules, 
-                                                           platform_sp,
+                                                           NULL,
                                                            target_sp);
 
         if (error.Success())
