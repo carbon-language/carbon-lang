@@ -1283,9 +1283,9 @@ getImportAddress(int AddrIndex, uint64_t &Result) const {
   if (std::error_code EC = OwningObject->getRvaPtr(RVA, IntPtr))
     return EC;
   if (OwningObject->is64())
-    Result = *reinterpret_cast<const uint64_t *>(IntPtr);
+    Result = *reinterpret_cast<const ulittle64_t *>(IntPtr);
   else
-    Result = *reinterpret_cast<const uint32_t *>(IntPtr);
+    Result = *reinterpret_cast<const ulittle32_t *>(IntPtr);
   return object_error::success;
 }
 
