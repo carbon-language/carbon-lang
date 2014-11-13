@@ -334,12 +334,9 @@ public:
       return;
     }
 
-    // Handle big-endian byte-swapping if necessary.
-    support::detail::packed_endian_specific_integral<
-        word_t, support::little, support::unaligned> EndianValue;
-    memcpy(&EndianValue, Array, sizeof(Array));
-
-    CurWord = EndianValue;
+    CurWord =
+        support::endian::read<word_t, support::little, support::unaligned>(
+            Array);
     NextChar += BytesRead;
     BitsInCurWord = BytesRead * 8;
   }
