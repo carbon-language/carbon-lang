@@ -490,13 +490,6 @@ private:
   // Record Processing
   //===--------------------------------------------------------------------===//
 
-private:
-  void readAbbreviatedLiteral(const BitCodeAbbrevOp &Op,
-                              SmallVectorImpl<uint64_t> &Vals);
-  void readAbbreviatedField(const BitCodeAbbrevOp &Op,
-                            SmallVectorImpl<uint64_t> &Vals);
-  void skipAbbreviatedField(const BitCodeAbbrevOp &Op);
-
 public:
 
   /// Return the abbreviation for the specified AbbrevId.

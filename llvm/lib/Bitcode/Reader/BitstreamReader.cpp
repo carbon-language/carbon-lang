@@ -50,15 +50,16 @@ bool BitstreamCursor::EnterSubBlock(unsigned BlockID, unsigned *NumWordsP) {
   return false;
 }
 
-void BitstreamCursor::readAbbreviatedLiteral(const BitCodeAbbrevOp &Op,
-                                             SmallVectorImpl<uint64_t> &Vals) {
+static void readAbbreviatedLiteral(const BitCodeAbbrevOp &Op,
+                                   SmallVectorImpl<uint64_t> &Vals) {
   assert(Op.isLiteral() && "Not a literal");
   // If the abbrev specifies the literal value to use, use it.
   Vals.push_back(Op.getLiteralValue());
 }
 
-void BitstreamCursor::readAbbreviatedField(const BitCodeAbbrevOp &Op,
-                                           SmallVectorImpl<uint64_t> &Vals) {
+static void readAbbreviatedField(BitstreamCursor &Cursor,
+                                 const BitCodeAbbrevOp &Op,
+                                 SmallVectorImpl<uint64_t> &Vals) {
   assert(!Op.isLiteral() && "Use ReadAbbreviatedLiteral for literals!");
 
   // Decode the value as we are commanded.
@@ -68,19 +69,20 @@ void BitstreamCursor::readAbbreviatedField(const BitCodeAbbrevOp &Op,
   case BitCodeAbbrevOp::Blob:
     llvm_unreachable("Should not reach here");
   case BitCodeAbbrevOp::Fixed:
-    Val = Read((unsigned)Op.getEncodingData());
+    Val = Cursor.Read((unsigned)Op.getEncodingData());
     break;
   case BitCodeAbbrevOp::VBR:
-    Val = ReadVBR64((unsigned)Op.getEncodingData());
+    Val = Cursor.ReadVBR64((unsigned)Op.getEncodingData());
     break;
   case BitCodeAbbrevOp::Char6:
-    Val = BitCodeAbbrevOp::DecodeChar6(Read(6));
+    Val = BitCodeAbbrevOp::DecodeChar6(Cursor.Read(6));
     break;
   }
   Vals.push_back(Val);
 }
 
-void BitstreamCursor::skipAbbreviatedField(const BitCodeAbbrevOp &Op) {
+static void skipAbbreviatedField(BitstreamCursor &Cursor,
+                                 const BitCodeAbbrevOp &Op) {
   assert(!Op.isLiteral() && "Use ReadAbbreviatedLiteral for literals!");
 
   // Decode the value as we are commanded.
@@ -89,13 +91,13 @@ void BitstreamCursor::skipAbbreviatedField(const BitCodeAbbrevOp &Op) {
   case BitCodeAbbrevOp::Blob:
     llvm_unreachable("Should not reach here");
   case BitCodeAbbrevOp::Fixed:
-    (void)Read((unsigned)Op.getEncodingData());
+    Cursor.Read((unsigned)Op.getEncodingData());
     break;
   case BitCodeAbbrevOp::VBR:
-    (void)ReadVBR64((unsigned)Op.getEncodingData());
+    Cursor.ReadVBR64((unsigned)Op.getEncodingData());
     break;
   case BitCodeAbbrevOp::Char6:
-    (void)Read(6);
+    Cursor.Read(6);
     break;
   }
 }
@@ -123,7 +125,7 @@ void BitstreamCursor::skipRecord(unsigned AbbrevID) {
 
     if (Op.getEncoding() != BitCodeAbbrevOp::Array &&
         Op.getEncoding() != BitCodeAbbrevOp::Blob) {
-      skipAbbreviatedField(Op);
+      skipAbbreviatedField(*this, Op);
       continue;
     }
 
@@ -137,7 +139,7 @@ void BitstreamCursor::skipRecord(unsigned AbbrevID) {
 
       // Read all the elements.
       for (; NumElts; --NumElts)
-        skipAbbreviatedField(EltEnc);
+        skipAbbreviatedField(*this, EltEnc);
       continue;
     }
 
@@ -180,7 +182,7 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
   if (CodeOp.isLiteral())
     readAbbreviatedLiteral(CodeOp, Vals);
   else
-    readAbbreviatedField(CodeOp, Vals);
+    readAbbreviatedField(*this, CodeOp, Vals);
   unsigned Code = (unsigned)Vals.pop_back_val();
 
   for (unsigned i = 1, e = Abbv->getNumOperandInfos(); i != e; ++i) {
@@ -192,7 +194,7 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
 
     if (Op.getEncoding() != BitCodeAbbrevOp::Array &&
         Op.getEncoding() != BitCodeAbbrevOp::Blob) {
-      readAbbreviatedField(Op, Vals);
+      readAbbreviatedField(*this, Op, Vals);
       continue;
     }
 
@@ -206,7 +208,7 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
 
       // Read all the elements.
       for (; NumElts; --NumElts)
-        readAbbreviatedField(EltEnc, Vals);
+        readAbbreviatedField(*this, EltEnc, Vals);
       continue;
     }
 
