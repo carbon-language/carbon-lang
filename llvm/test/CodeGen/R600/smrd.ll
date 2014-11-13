@@ -24,7 +24,7 @@ entry:
 
 ; SMRD load with an offset greater than the largest possible immediate.
 ; CHECK-LABEL: {{^}}smrd2:
-; CHECK: s_mov_b32 s[[OFFSET:[0-9]]], 0x400
+; CHECK: s_movk_i32 s[[OFFSET:[0-9]]], 0x400
 ; CHECK: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
 ; CHECK: s_endpgm
 define void @smrd2(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
@@ -81,7 +81,7 @@ main_body:
 ; largets possible immediate.
 ; immediate offset.
 ; CHECK-LABEL: {{^}}smrd_load_const2:
-; CHECK: s_mov_b32 s[[OFFSET:[0-9]]], 0x400
+; CHECK: s_movk_i32 s[[OFFSET:[0-9]]], 0x400
 ; CHECK: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
 define void @smrd_load_const2(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:

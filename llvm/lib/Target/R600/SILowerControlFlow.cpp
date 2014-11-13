@@ -586,6 +586,8 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
     MachineBasicBlock::iterator Start = MBB.getFirstNonPHI();
     const MCInstrDesc &SMovK = TII->get(AMDGPU::S_MOVK_I32);
 
+    assert(isInt<16>(StackOffset) && isInt<16>(StackSizeBytes));
+
     BuildMI(MBB, Start, NoDL, SMovK, AMDGPU::FLAT_SCR_LO)
       .addImm(StackOffset);
 

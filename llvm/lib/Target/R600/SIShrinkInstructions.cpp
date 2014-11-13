@@ -189,6 +189,19 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
       Next = std::next(I);
       MachineInstr &MI = *I;
 
+      // Try to use S_MOVK_I32, which will save 4 bytes for small immediates.
+      if (MI.getOpcode() == AMDGPU::S_MOV_B32) {
+        const MachineOperand &Src = MI.getOperand(1);
+
+        // TODO: Handle FPImm?
+        if (Src.isImm()) {
+          if (isInt<16>(Src.getImm()) && !TII->isInlineConstant(Src)) {
+            MI.setDesc(TII->get(AMDGPU::S_MOVK_I32));
+            continue;
+          }
+        }
+      }
+
       if (!TII->hasVALU32BitEncoding(MI.getOpcode()))
         continue;
 

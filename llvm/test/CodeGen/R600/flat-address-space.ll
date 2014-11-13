@@ -156,8 +156,8 @@ define void @zextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)*
 ; Check for prologue initializing special SGPRs pointing to scratch.
 ; CHECK-LABEL: {{^}}store_flat_scratch:
 ; CHECK: s_movk_i32 flat_scratch_lo, 0
-; CHECK-NO-PROMOTE: s_movk_i32 flat_scratch_hi, 40
-; CHECK-PROMOTE: s_movk_i32 flat_scratch_hi, 0
+; CHECK-NO-PROMOTE: s_movk_i32 flat_scratch_hi, 0x28{{$}}
+; CHECK-PROMOTE: s_movk_i32 flat_scratch_hi, 0x0{{$}}
 ; CHECK: flat_store_dword
 ; CHECK: s_barrier
 ; CHECK: flat_load_dword

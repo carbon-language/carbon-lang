@@ -368,12 +368,12 @@ class SOPC_64<bits<7> op, string opName, PatLeaf cond = COND_NULL>
   : SOPC_Helper<op, SSrc_64, i64, opName, cond>;
 
 class SOPK_32 <bits<5> op, string opName, list<dag> pattern> : SOPK <
-  op, (outs SReg_32:$dst), (ins i16imm:$src0),
+  op, (outs SReg_32:$dst), (ins u16imm:$src0),
   opName#" $dst, $src0", pattern
 >;
 
 class SOPK_64 <bits<5> op, string opName, list<dag> pattern> : SOPK <
-  op, (outs SReg_64:$dst), (ins i16imm:$src0),
+  op, (outs SReg_64:$dst), (ins u16imm:$src0),
   opName#" $dst, $src0", pattern
 >;
 
