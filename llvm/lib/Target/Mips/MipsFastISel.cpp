@@ -8,6 +8,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLibraryInfo.h"
+#include "MipsCCState.h"
 #include "MipsRegisterInfo.h"
 #include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
@@ -68,6 +69,8 @@ class MipsFastISel final : public FastISel {
   // Convenience variables to avoid some queries.
   LLVMContext *Context;
 
+  bool fastLowerCall(CallLoweringInfo &CLI) override;
+
   bool TargetSupported;
   bool UnsupportedFPMode; // To allow fast-isel to proceed and just not handle
   // floating point but not reject doing fast-isel in other
@@ -87,17 +90,20 @@ private:
   bool selectIntExt(const Instruction *I);
 
   // Utility helper routines.
-
   bool isTypeLegal(Type *Ty, MVT &VT);
   bool isLoadTypeLegal(Type *Ty, MVT &VT);
   bool computeAddress(const Value *Obj, Address &Addr);
+  bool computeCallAddress(const Value *V, Address &Addr);
 
   // Emit helper routines.
   bool emitCmp(unsigned DestReg, const CmpInst *CI);
   bool emitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
                 unsigned Alignment = 0);
+  bool emitStore(MVT VT, unsigned SrcReg, Address Addr,
+                 MachineMemOperand *MMO = nullptr);
   bool emitStore(MVT VT, unsigned SrcReg, Address &Addr,
                  unsigned Alignment = 0);
+  unsigned emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
   bool emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, unsigned DestReg,
 
                   bool IsZExt);
@@ -140,9 +146,15 @@ private:
     return 0;
   }
 
+  // Call handling routines.
+private:
+  CCAssignFn *CCAssignFnForCall(CallingConv::ID CC) const;
+  bool processCallArgs(CallLoweringInfo &CLI, SmallVectorImpl<MVT> &ArgVTs,
+                       unsigned &NumBytes);
+  bool finishCall(CallLoweringInfo &CLI, MVT RetVT, unsigned NumBytes);
+
 public:
   // Backend specific FastISel code.
-
   explicit MipsFastISel(FunctionLoweringInfo &funcInfo,
                         const TargetLibraryInfo *libInfo)
       : FastISel(funcInfo, libInfo),
@@ -165,6 +177,28 @@ public:
 #include "MipsGenFastISel.inc"
 };
 } // end anonymous namespace.
+
+static bool CC_Mips(unsigned ValNo, MVT ValVT, MVT LocVT,
+                    CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
+                    CCState &State) __attribute__((unused));
+
+static bool CC_MipsO32_FP32(unsigned ValNo, MVT ValVT, MVT LocVT,
+                            CCValAssign::LocInfo LocInfo,
+                            ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  llvm_unreachable("should not be called");
+}
+
+bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT, MVT LocVT,
+                     CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
+                     CCState &State) {
+  llvm_unreachable("should not be called");
+}
+
+#include "MipsGenCallingConv.inc"
+
+CCAssignFn *MipsFastISel::CCAssignFnForCall(CallingConv::ID CC) const {
+  return CC_MipsO32;
+}
 
 unsigned MipsFastISel::materializeInt(const Constant *C, MVT VT) {
   if (VT != MVT::i32 && VT != MVT::i16 && VT != MVT::i8 && VT != MVT::i1)
@@ -282,6 +316,19 @@ bool MipsFastISel::computeAddress(const Value *Obj, Address &Addr) {
     return false;
   Addr.setReg(getRegForValue(Obj));
   return Addr.getReg() != 0;
+}
+
+bool MipsFastISel::computeCallAddress(const Value *V, Address &Addr) {
+  const GlobalValue *GV = dyn_cast<GlobalValue>(V);
+  if (GV && isa<Function>(GV) && dyn_cast<Function>(GV)->isIntrinsic())
+    return false;
+  if (!GV)
+    return false;
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    Addr.setGlobalValue(GV);
+    return true;
+  }
+  return false;
 }
 
 bool MipsFastISel::isTypeLegal(Type *Ty, MVT &VT) {
@@ -694,6 +741,250 @@ bool MipsFastISel::selectFPToInt(const Instruction *I, bool IsSigned) {
   return true;
 }
 //
+bool MipsFastISel::processCallArgs(CallLoweringInfo &CLI,
+                                   SmallVectorImpl<MVT> &OutVTs,
+                                   unsigned &NumBytes) {
+  CallingConv::ID CC = CLI.CallConv;
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, false, *FuncInfo.MF, ArgLocs, *Context);
+  CCInfo.AnalyzeCallOperands(OutVTs, CLI.OutFlags, CCAssignFnForCall(CC));
+  // Get a count of how many bytes are to be pushed on the stack.
+  NumBytes = CCInfo.getNextStackOffset();
+  // This is the minimum argument area used for A0-A3.
+  if (NumBytes < 16)
+    NumBytes = 16;
+
+  emitInst(Mips::ADJCALLSTACKDOWN).addImm(16);
+  // Process the args.
+  MVT firstMVT;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    const Value *ArgVal = CLI.OutVals[VA.getValNo()];
+    MVT ArgVT = OutVTs[VA.getValNo()];
+
+    if (i == 0) {
+      firstMVT = ArgVT;
+      if (ArgVT == MVT::f32) {
+        VA.convertToReg(Mips::F12);
+      } else if (ArgVT == MVT::f64) {
+        VA.convertToReg(Mips::D6);
+      }
+    } else if (i == 1) {
+      if ((firstMVT == MVT::f32) || (firstMVT == MVT::f64)) {
+        if (ArgVT == MVT::f32) {
+          VA.convertToReg(Mips::F14);
+        } else if (ArgVT == MVT::f64) {
+          VA.convertToReg(Mips::D7);
+        }
+      }
+    }
+    if (((ArgVT == MVT::i32) || (ArgVT == MVT::f32)) && VA.isMemLoc()) {
+      switch (VA.getLocMemOffset()) {
+      case 0:
+        VA.convertToReg(Mips::A0);
+        break;
+      case 4:
+        VA.convertToReg(Mips::A1);
+        break;
+      case 8:
+        VA.convertToReg(Mips::A2);
+        break;
+      case 12:
+        VA.convertToReg(Mips::A3);
+        break;
+      default:
+        break;
+      }
+    }
+    unsigned ArgReg = getRegForValue(ArgVal);
+    if (!ArgReg)
+      return false;
+
+    // Handle arg promotion: SExt, ZExt, AExt.
+    switch (VA.getLocInfo()) {
+    case CCValAssign::Full:
+      break;
+    case CCValAssign::AExt:
+    case CCValAssign::SExt: {
+      MVT DestVT = VA.getLocVT();
+      MVT SrcVT = ArgVT;
+      ArgReg = emitIntExt(SrcVT, ArgReg, DestVT, /*isZExt=*/false);
+      if (!ArgReg)
+        return false;
+      break;
+    }
+    case CCValAssign::ZExt: {
+      MVT DestVT = VA.getLocVT();
+      MVT SrcVT = ArgVT;
+      ArgReg = emitIntExt(SrcVT, ArgReg, DestVT, /*isZExt=*/true);
+      if (!ArgReg)
+        return false;
+      break;
+    }
+    default:
+      llvm_unreachable("Unknown arg promotion!");
+    }
+
+    // Now copy/store arg to correct locations.
+    if (VA.isRegLoc() && !VA.needsCustom()) {
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(TargetOpcode::COPY), VA.getLocReg()).addReg(ArgReg);
+      CLI.OutRegs.push_back(VA.getLocReg());
+    } else if (VA.needsCustom()) {
+      llvm_unreachable("Mips does not use custom args.");
+      return false;
+    } else {
+      //
+      // FIXME: This path will currently return false. It was copied
+      // from the AArch64 port and should be essentially fine for Mips too.
+      // The work to finish up this path will be done in a follow-on patch.
+      //
+      assert(VA.isMemLoc() && "Assuming store on stack.");
+      // Don't emit stores for undef values.
+      if (isa<UndefValue>(ArgVal))
+        continue;
+
+      // Need to store on the stack.
+      // FIXME: This alignment is incorrect but this path is disabled
+      // for now (will return false). We need to determine the right alignment
+      // based on the normal alignment for the underlying machine type.
+      //
+      unsigned ArgSize = RoundUpToAlignment(ArgVT.getSizeInBits(), 4);
+
+      unsigned BEAlign = 0;
+      if (ArgSize < 8 && !Subtarget->isLittle())
+        BEAlign = 8 - ArgSize;
+
+      Address Addr;
+      Addr.setKind(Address::RegBase);
+      Addr.setReg(Mips::SP);
+      Addr.setOffset(VA.getLocMemOffset() + BEAlign);
+
+      unsigned Alignment = DL.getABITypeAlignment(ArgVal->getType());
+      MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
+          MachinePointerInfo::getStack(Addr.getOffset()),
+          MachineMemOperand::MOStore, ArgVT.getStoreSize(), Alignment);
+      (void)(MMO);
+      // if (!emitStore(ArgVT, ArgReg, Addr, MMO))
+      return false; // can't store on the stack yet.
+    }
+  }
+
+  return true;
+}
+
+bool MipsFastISel::finishCall(CallLoweringInfo &CLI, MVT RetVT,
+                              unsigned NumBytes) {
+  CallingConv::ID CC = CLI.CallConv;
+  emitInst(Mips::ADJCALLSTACKUP).addImm(16);
+  if (RetVT != MVT::isVoid) {
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, false, *FuncInfo.MF, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, RetCC_Mips);
+
+    // Only handle a single return value.
+    if (RVLocs.size() != 1)
+      return false;
+    // Copy all of the result registers out of their specified physreg.
+    MVT CopyVT = RVLocs[0].getValVT();
+    // Special handling for extended integers.
+    if (RetVT == MVT::i1 || RetVT == MVT::i8 || RetVT == MVT::i16)
+      CopyVT = MVT::i32;
+
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(CopyVT));
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(RVLocs[0].getLocReg());
+    CLI.InRegs.push_back(RVLocs[0].getLocReg());
+
+    CLI.ResultReg = ResultReg;
+    CLI.NumResultRegs = 1;
+  }
+  return true;
+}
+
+bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
+  CallingConv::ID CC = CLI.CallConv;
+  bool IsTailCall = CLI.IsTailCall;
+  bool IsVarArg = CLI.IsVarArg;
+  const Value *Callee = CLI.Callee;
+  // const char *SymName = CLI.SymName;
+
+  // Allow SelectionDAG isel to handle tail calls.
+  if (IsTailCall)
+    return false;
+
+  // Let SDISel handle vararg functions.
+  if (IsVarArg)
+    return false;
+
+  // FIXME: Only handle *simple* calls for now.
+  MVT RetVT;
+  if (CLI.RetTy->isVoidTy())
+    RetVT = MVT::isVoid;
+  else if (!isTypeLegal(CLI.RetTy, RetVT))
+    return false;
+
+  for (auto Flag : CLI.OutFlags)
+    if (Flag.isInReg() || Flag.isSRet() || Flag.isNest() || Flag.isByVal())
+      return false;
+
+  // Set up the argument vectors.
+  SmallVector<MVT, 16> OutVTs;
+  OutVTs.reserve(CLI.OutVals.size());
+
+  for (auto *Val : CLI.OutVals) {
+    MVT VT;
+    if (!isTypeLegal(Val->getType(), VT) &&
+        !(VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16))
+      return false;
+
+    // We don't handle vector parameters yet.
+    if (VT.isVector() || VT.getSizeInBits() > 64)
+      return false;
+
+    OutVTs.push_back(VT);
+  }
+
+  Address Addr;
+  if (!computeCallAddress(Callee, Addr))
+    return false;
+
+  // Handle the arguments now that we've gotten them.
+  unsigned NumBytes;
+  if (!processCallArgs(CLI, OutVTs, NumBytes))
+    return false;
+
+  // Issue the call.
+  unsigned DestAddress = materializeGV(Addr.getGlobalValue(), MVT::i32);
+  emitInst(TargetOpcode::COPY, Mips::T9).addReg(DestAddress);
+  MachineInstrBuilder MIB =
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::JALR),
+              Mips::RA).addReg(Mips::T9);
+
+  // Add implicit physical register uses to the call.
+  for (auto Reg : CLI.OutRegs)
+    MIB.addReg(Reg, RegState::Implicit);
+
+  // Add a register mask with the call-preserved registers.
+  // Proper defs for return values will be added by setPhysRegsDeadExcept().
+  MIB.addRegMask(TRI.getCallPreservedMask(CC));
+
+  CLI.Call = MIB;
+
+  // Add implicit physical register uses to the call.
+  for (auto Reg : CLI.OutRegs)
+    MIB.addReg(Reg, RegState::Implicit);
+
+  // Add a register mask with the call-preserved registers.  Proper
+  // defs for return values will be added by setPhysRegsDeadExcept().
+  MIB.addRegMask(TRI.getCallPreservedMask(CC));
+
+  CLI.Call = MIB;
+  // Finish off the call including any return values.
+  return finishCall(CLI, RetVT, NumBytes);
+}
+
 bool MipsFastISel::selectRet(const Instruction *I) {
   const ReturnInst *Ret = cast<ReturnInst>(I);
 
@@ -812,6 +1103,7 @@ bool MipsFastISel::emitIntZExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
     break;
   case MVT::i16:
     emitInst(Mips::ANDi, DestReg).addReg(SrcReg).addImm(0xffff);
+    break;
   }
   return true;
 }
@@ -822,6 +1114,13 @@ bool MipsFastISel::emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
     return emitIntZExt(SrcVT, SrcReg, DestVT, DestReg);
   return emitIntSExt(SrcVT, SrcReg, DestVT, DestReg);
 }
+
+unsigned MipsFastISel::emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
+                                  bool isZExt) {
+  unsigned DestReg = createResultReg(&Mips::GPR32RegClass);
+  return emitIntExt(SrcVT, SrcReg, DestVT, DestReg, isZExt);
+}
+
 bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
   if (!TargetSupported)
     return false;
