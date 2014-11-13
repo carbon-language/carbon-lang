@@ -9,6 +9,7 @@
 
 // REQUIRES: locale.ru_RU.UTF-8
 // REQUIRES: locale.zh_CN.UTF-8
+// UNSUPPORTED: msan, asan
 
 // <locale>
 
