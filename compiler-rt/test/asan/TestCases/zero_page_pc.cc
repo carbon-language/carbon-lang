@@ -8,6 +8,8 @@ typedef void void_f();
 int main() {
   void_f *func = (void_f *)0x4;
   func();
-  // CHECK: {{AddressSanitizer: SEGV.*(pc.*0004)}}
+  // x86 reports the SEGV with both address=4 and pc=4.
+  // PowerPC64 reports it with address=4 but pc still in main().
+  // CHECK: {{AddressSanitizer: SEGV.*(address|pc) 0x0*4}}
   return 0;
 }
