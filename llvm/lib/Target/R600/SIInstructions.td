@@ -214,9 +214,8 @@ def S_MAX_U32 : SOP2_32 <0x00000009, "s_max_u32",
   [(set i32:$dst, (AMDGPUumax i32:$src0, i32:$src1))]
 >;
 
-def S_CSELECT_B32 : SOP2 <
-  0x0000000a, (outs SReg_32:$dst),
-  (ins SReg_32:$src0, SReg_32:$src1, SCCReg:$scc), "s_cselect_b32",
+def S_CSELECT_B32 : SOP2_SELECT_32 <
+  0x0000000a, "s_cselect_b32",
   []
 >;
 
