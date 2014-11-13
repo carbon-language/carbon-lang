@@ -109,8 +109,8 @@ void MDNode::replaceOperandWith(unsigned i, Value *Val) {
   replaceOperand(Op, Val);
 }
 
-MDNode::MDNode(LLVMContext &C, ArrayRef<Value*> Vals, bool isFunctionLocal)
-: Value(Type::getMetadataTy(C), Value::MDNodeVal) {
+MDNode::MDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
+    : Metadata(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = Vals.size();
 
   if (isFunctionLocal)
