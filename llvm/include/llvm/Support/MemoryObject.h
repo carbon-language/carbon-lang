@@ -38,11 +38,11 @@ public:
   /// Tries to read a contiguous range of bytes from the region, up to the end
   /// of the region.
   ///
-  /// @param address  - The address of the first byte, in the same space as
-  ///                   getBase().
-  /// @param size     - The number of bytes to copy.
-  /// @param buf      - A pointer to a buffer to be filled in.  Must be non-NULL
+  /// @param Buf      - A pointer to a buffer to be filled in.  Must be non-NULL
   ///                   and large enough to hold size bytes.
+  /// @param Size     - The number of bytes to copy.
+  /// @param Address  - The address of the first byte, in the same space as
+  ///                   getBase().
   /// @result         - The number of bytes read.
   virtual uint64_t readBytes(uint8_t *Buf, uint64_t Size,
                              uint64_t Address) const = 0;
