@@ -2387,18 +2387,10 @@ def : BitConvert <v16f32, v16i32, VReg_512>;
 /********** Src & Dst modifiers **********/
 /********** =================== **********/
 
-def FCLAMP_SI : AMDGPUShaderInst <
-  (outs VReg_32:$dst),
-  (ins VSrc_32:$src0),
-  "fclamp_si $dst, $src0",
-  []
-> {
-  let usesCustomInserter = 1;
-}
-
 def : Pat <
-  (AMDGPUclamp f32:$src, (f32 FP_ZERO), (f32 FP_ONE)),
-  (FCLAMP_SI f32:$src)
+  (AMDGPUclamp (VOP3Mods0Clamp f32:$src0, i32:$src0_modifiers, i32:$omod),
+               (f32 FP_ZERO), (f32 FP_ONE)),
+  (V_ADD_F32_e64 $src0_modifiers, $src0, 0, 0, 1, $omod)
 >;
 
 /********** ================================ **********/

@@ -635,20 +635,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
   }
-  case AMDGPU::FCLAMP_SI: {
-    const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
-        getTargetMachine().getSubtargetImpl()->getInstrInfo());
-    DebugLoc DL = MI->getDebugLoc();
-    unsigned DestReg = MI->getOperand(0).getReg();
-    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_ADD_F32_e64), DestReg)
-      .addImm(0) // SRC0 modifiers
-      .addOperand(MI->getOperand(1))
-      .addImm(0) // SRC1 modifiers
-      .addImm(0) // SRC1
-      .addImm(1) // CLAMP
-      .addImm(0); // OMOD
-    MI->eraseFromParent();
-  }
   }
   return BB;
 }
