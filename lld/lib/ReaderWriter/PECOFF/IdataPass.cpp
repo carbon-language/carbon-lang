@@ -185,7 +185,10 @@ void DelayImportDirectoryAtom::addRelocations(
   for (int i = 0, e = sharedAtoms.size(); i < e; ++i) {
     const DefinedAtom *loader = new (_alloc) DelayLoaderAtom(
         context, addrTable[i], this, delayLoadHelper);
-    addDir64Reloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
+    if (context.ctx.is64Bit())
+      addDir64Reloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
+    else
+      addDir32NBReloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
   }
 }
 

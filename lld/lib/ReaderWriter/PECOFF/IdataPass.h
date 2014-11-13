@@ -162,15 +162,18 @@ private:
 class DelayImportAddressAtom : public IdataAtom {
 public:
   explicit DelayImportAddressAtom(IdataContext &context)
-      : IdataAtom(context, createContent(context.ctx)) {}
+      : IdataAtom(context, createContent(context.ctx)),
+        _align(Alignment(context.ctx.is64Bit() ? 3 : 2)) {}
   StringRef customSectionName() const override { return ".data"; }
   ContentPermissions permissions() const override { return permRW_; }
-  Alignment alignment() const override { return Alignment(3); }
+  Alignment alignment() const override { return _align; }
 
 private:
   std::vector<uint8_t> createContent(const PECOFFLinkingContext &ctx) const {
     return std::vector<uint8_t>(ctx.is64Bit() ? 8 : 4, 0);
   }
+
+  Alignment _align;
 };
 
 // DelayLoaderAtom contains a wrapper function for __delayLoadHelper2.
