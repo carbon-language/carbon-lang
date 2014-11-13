@@ -17,7 +17,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         # us in a stopped state.
         self.test_sequence.add_log_lines([
             # Start the inferior...
-            "read packet: $c#00",
+            "read packet: $c#63",
             # ... match output....
             { "type":"output_match", "regex":r"^message:main entered\r\n$" },
             ], True)

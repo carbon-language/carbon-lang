@@ -19,7 +19,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Assumes test_sequence has anything added needed to setup the initial state.
         # (Like optionally enabling QThreadsInStopReply.)
         self.test_sequence.add_log_lines([
-            "read packet: $c#00"
+            "read packet: $c#63"
             ], True)
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)

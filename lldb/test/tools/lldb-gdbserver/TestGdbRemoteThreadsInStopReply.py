@@ -6,7 +6,7 @@ from lldbtest import *
 class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     ENABLE_THREADS_IN_STOP_REPLY_ENTRIES = [
-        "read packet: $QListThreadsInStopReply#00",
+        "read packet: $QListThreadsInStopReply#21",
         "send packet: $OK#00",
     ]
 
@@ -23,7 +23,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         if post_startup_log_lines:
             self.test_sequence.add_log_lines(post_startup_log_lines, True)
         self.test_sequence.add_log_lines([
-            "read packet: $c#00"
+            "read packet: $c#63"
             ], True)
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
@@ -46,7 +46,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Run, then stop the process, grab the stop reply content.
         self.reset_test_sequence()
         self.test_sequence.add_log_lines([
-            "read packet: $c#00",
+            "read packet: $c#63",
             "read packet: {}".format(chr(03)),
             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result", 2:"key_vals_text"} },
             ], True)

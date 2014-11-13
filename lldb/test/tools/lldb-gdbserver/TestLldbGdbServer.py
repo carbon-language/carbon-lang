@@ -189,7 +189,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.add_no_ack_remote_stream()
         self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
-            ["read packet: $c#00",
+            ["read packet: $c#63",
              "send packet: $W00#00"],
             True)
 
@@ -755,7 +755,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Launch/attach.  (In our case, this should only ever be launched since we need inferior stdout/stderr).
         procs = self.prep_debug_monitor_and_inferior(inferior_args=inferior_args)
-        self.test_sequence.add_log_lines(["read packet: $c#00"], True)
+        self.test_sequence.add_log_lines(["read packet: $c#63"], True)
         context = self.expect_gdbremote_sequence()
 
         # Let the inferior process have a few moments to start up the thread when launched.
@@ -805,7 +805,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
                  # Need to rectify behavior here.  The linux behavior is more intuitive to me since we're essentially swapping out
                  # an about-to-be-delivered signal (for which we already sent a stop packet) to a different signal.
                  # {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
-                 #  "read packet: $c#00",
+                 #  "read packet: $c#63",
                  { "type":"output_match", "regex":r"^received SIGUSR1 on thread id: ([0-9a-fA-F]+)\r\nthread ([0-9a-fA-F]+): past SIGSEGV\r\n", "capture":{ 1:"print_thread_id", 2:"post_handle_thread_id" } },
                 ],
                 True)
@@ -869,7 +869,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.test_sequence.add_log_lines(
             [
              # Start running after initial stop.
-             "read packet: $c#00",
+             "read packet: $c#63",
              # Match output line that prints the memory address of the message buffer within the inferior. 
              # Note we require launch-only testing so we can get inferior otuput.
              { "type":"output_match", "regex":r"^data address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"message_address"} },
@@ -955,7 +955,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.test_sequence.add_log_lines(
             [
              # Start running after initial stop.
-             "read packet: $c#00",
+             "read packet: $c#63",
              # Match output line that prints the memory address of the message buffer within the inferior. 
              # Note we require launch-only testing so we can get inferior otuput.
              { "type":"output_match", "regex":r"^code address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"code_address"} },
@@ -1018,7 +1018,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.test_sequence.add_log_lines(
             [
              # Start running after initial stop.
-             "read packet: $c#00",
+             "read packet: $c#63",
              # Match output line that prints the memory address of the message buffer within the inferior. 
              # Note we require launch-only testing so we can get inferior otuput.
              { "type":"output_match", "regex":r"^stack address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"stack_address"} },
@@ -1081,7 +1081,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.test_sequence.add_log_lines(
             [
              # Start running after initial stop.
-             "read packet: $c#00",
+             "read packet: $c#63",
              # Match output line that prints the memory address of the message buffer within the inferior. 
              # Note we require launch-only testing so we can get inferior otuput.
              { "type":"output_match", "regex":r"^heap address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"heap_address"} },
@@ -1146,7 +1146,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.add_process_info_collection_packets()
         self.test_sequence.add_log_lines(
             [# Start running after initial stop.
-             "read packet: $c#00",
+             "read packet: $c#63",
              # Match output line that prints the memory address of the function call entry point.
              # Note we require launch-only testing so we can get inferior otuput.
              { "type":"output_match", "regex":r"^code address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"function_address"} },
@@ -1226,7 +1226,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             # Verify the stub could unset it.
             "send packet: $OK#00",
             # Continue running.
-            "read packet: $c#00",
+            "read packet: $c#63",
             # We should now receive the output from the call.
             { "type":"output_match", "regex":r"^hello, world\r\n$" },
             # And wait for program completion.
@@ -1290,7 +1290,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.test_sequence.add_log_lines(
             [
              # Start running after initial stop.
-             "read packet: $c#00",
+             "read packet: $c#63",
              # Match output line that prints the memory address of the message buffer within the inferior. 
              # Note we require launch-only testing so we can get inferior otuput.
              { "type":"output_match", "regex":r"^data address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"message_address"} },
@@ -1314,7 +1314,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.test_sequence.add_log_lines(
             ["read packet: $M{0:x},{1:x}:{2}#00".format(message_address, len(hex_encoded_message)/2, hex_encoded_message),
              "send packet: $OK#00",
-             "read packet: $c#00",
+             "read packet: $c#63",
              { "type":"output_match", "regex":r"^message: (.+)\r\n$", "capture":{ 1:"printed_message"} },
              "send packet: $W00#00",
             ], True)

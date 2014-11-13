@@ -10,7 +10,7 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
         procs = self.prep_debug_monitor_and_inferior(inferior_args=["sleep:2"])
         self.test_sequence.add_log_lines([
             # Start up the inferior.
-            "read packet: $c#00",
+            "read packet: $c#63",
             # Immediately tell it to stop.  We want to see what it reports.
             "read packet: {}".format(chr(03)),
             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result", 2:"key_vals_text"} },

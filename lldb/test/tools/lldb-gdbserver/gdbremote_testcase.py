@@ -408,13 +408,13 @@ class GdbRemoteTestCaseBase(TestBase):
 
     def add_thread_suffix_request_packets(self):
         self.test_sequence.add_log_lines(
-            ["read packet: $QThreadSuffixSupported#00",
+            ["read packet: $QThreadSuffixSupported#e4",
              "send packet: $OK#00",
             ], True)
 
     def add_process_info_collection_packets(self):
         self.test_sequence.add_log_lines(
-            ["read packet: $qProcessInfo#00",
+            ["read packet: $qProcessInfo#dc",
               { "direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"process_info_raw"} }],
             True)
 
@@ -626,7 +626,7 @@ class GdbRemoteTestCaseBase(TestBase):
         if (do_continue):
             self.test_sequence.add_log_lines(
                 [# Continue the inferior.
-                 "read packet: $c#00",
+                 "read packet: $c#63",
                  # Expect a breakpoint stop report.
                  {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
                  ], True)        
@@ -1035,7 +1035,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
     def add_vCont_query_packets(self):
         self.test_sequence.add_log_lines([
-            "read packet: $vCont?#00",
+            "read packet: $vCont?#49",
             {"direction":"send", "regex":r"^\$(vCont)?(.*)#[0-9a-fA-F]{2}$", "capture":{2:"vCont_query_response" } },
             ], True)
 
@@ -1124,7 +1124,7 @@ class GdbRemoteTestCaseBase(TestBase):
         # Run the process
         self.test_sequence.add_log_lines(
             [# Start running after initial stop.
-             "read packet: $c#00",
+             "read packet: $c#63",
              # Match output line that prints the memory address of the function call entry point.
              # Note we require launch-only testing so we can get inferior otuput.
              { "type":"output_match", "regex":r"^code address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\n$", 
