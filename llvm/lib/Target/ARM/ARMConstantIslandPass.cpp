@@ -1207,7 +1207,8 @@ bool ARMConstantIslands::findAvailableWater(CPUser &U, unsigned UserOffset,
     unsigned Growth;
     if (isWaterInRange(UserOffset, WaterBB, U, Growth) &&
         (WaterBB->getNumber() < U.HighWaterMark->getNumber() ||
-         NewWaterList.count(WaterBB)) && Growth < BestGrowth) {
+         NewWaterList.count(WaterBB) || WaterBB == U.MI->getParent()) &&
+        Growth < BestGrowth) {
       // This is the least amount of required padding seen so far.
       BestGrowth = Growth;
       WaterIter = IP;
@@ -1361,6 +1362,11 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
     if (CC != ARMCC::AL)
       MI = LastIT;
   }
+
+  // We really must not split an IT block.
+  DEBUG(unsigned PredReg;
+        assert(!isThumb || getITInstrPredicate(MI, PredReg) == ARMCC::AL));
+
   NewMBB = splitBlockBeforeInstr(MI);
 }
 
