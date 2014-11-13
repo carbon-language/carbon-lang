@@ -425,7 +425,7 @@ TEST_F(FileSystemTest, CreateDir) {
   size_t TmpLen = TestDirectory.size();
   const char *OneDir = "\\123456789";
   size_t OneDirLen = strlen(OneDir);
-  ASSERT_LT(OneDirLen, 12);
+  ASSERT_LT(OneDirLen, 12U);
   size_t NLevels = ((248 - TmpLen) / OneDirLen) + 1;
   SmallString<260> LongDir(TestDirectory);
   for (size_t I = 0; I < NLevels; ++I)
@@ -445,8 +445,8 @@ TEST_F(FileSystemTest, CreateDir) {
   // TestDirectory so that the one we create ends up in the right place.
   char PreviousDir[260];
   size_t PreviousDirLen = ::GetCurrentDirectoryA(260, PreviousDir);
-  ASSERT_GT(PreviousDirLen, 0);
-  ASSERT_LT(PreviousDirLen, 260);
+  ASSERT_GT(PreviousDirLen, 0U);
+  ASSERT_LT(PreviousDirLen, 260U);
   ASSERT_NE(::SetCurrentDirectoryA(TestDirectory.c_str()), 0);
   LongDir.clear();
   // Generate a relative directory name with absolute length > 248.
