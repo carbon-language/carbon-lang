@@ -2263,13 +2263,6 @@ CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) :
   VerifyInstructionFlags();
 }
 
-CodeGenDAGPatterns::~CodeGenDAGPatterns() {
-  for (pf_iterator I = PatternFragments.begin(),
-       E = PatternFragments.end(); I != E; ++I)
-    delete I->second;
-}
-
-
 Record *CodeGenDAGPatterns::getSDNodeNamed(const std::string &Name) const {
   Record *N = Records.getDef(Name);
   if (!N || !N->isSubClassOf("SDNode")) {
@@ -2331,9 +2324,9 @@ void CodeGenDAGPatterns::ParsePatternFragments(bool OutFrags) {
 
     DagInit *Tree = Fragments[i]->getValueAsDag("Fragment");
     TreePattern *P =
-      new TreePattern(Fragments[i], Tree,
-                      !Fragments[i]->isSubClassOf("OutPatFrag"), *this);
-    PatternFragments[Fragments[i]] = P;
+        (PatternFragments[Fragments[i]] = llvm::make_unique<TreePattern>(
+             Fragments[i], Tree, !Fragments[i]->isSubClassOf("OutPatFrag"),
+             *this)).get();
 
     // Validate the argument list, converting it to set, to discard duplicates.
     std::vector<std::string> &Args = P->getArgList();
@@ -2391,16 +2384,16 @@ void CodeGenDAGPatterns::ParsePatternFragments(bool OutFrags) {
     if (OutFrags != Fragments[i]->isSubClassOf("OutPatFrag"))
       continue;
 
-    TreePattern *ThePat = PatternFragments[Fragments[i]];
-    ThePat->InlinePatternFragments();
+    TreePattern &ThePat = *PatternFragments[Fragments[i]];
+    ThePat.InlinePatternFragments();
 
     // Infer as many types as possible.  Don't worry about it if we don't infer
     // all of them, some may depend on the inputs of the pattern.
-    ThePat->InferAllTypes();
-    ThePat->resetError();
+    ThePat.InferAllTypes();
+    ThePat.resetError();
 
     // If debugging, print out the pattern fragment result.
-    DEBUG(ThePat->dump());
+    DEBUG(ThePat.dump());
   }
 }
 

@@ -702,7 +702,8 @@ class CodeGenDAGPatterns {
   std::map<Record*, SDNodeInfo, LessRecordByID> SDNodes;
   std::map<Record*, std::pair<Record*, std::string>, LessRecordByID> SDNodeXForms;
   std::map<Record*, ComplexPattern, LessRecordByID> ComplexPatterns;
-  std::map<Record*, TreePattern*, LessRecordByID> PatternFragments;
+  std::map<Record *, std::unique_ptr<TreePattern>, LessRecordByID>
+      PatternFragments;
   std::map<Record*, DAGDefaultOperand, LessRecordByID> DefaultOperands;
   std::map<Record*, DAGInstruction, LessRecordByID> Instructions;
 
@@ -716,7 +717,6 @@ class CodeGenDAGPatterns {
   std::vector<PatternToMatch> PatternsToMatch;
 public:
   CodeGenDAGPatterns(RecordKeeper &R);
-  ~CodeGenDAGPatterns();
 
   CodeGenTarget &getTargetInfo() { return Target; }
   const CodeGenTarget &getTargetInfo() const { return Target; }
@@ -778,15 +778,15 @@ public:
   // Pattern Fragment information.
   TreePattern *getPatternFragment(Record *R) const {
     assert(PatternFragments.count(R) && "Invalid pattern fragment request!");
-    return PatternFragments.find(R)->second;
+    return PatternFragments.find(R)->second.get();
   }
   TreePattern *getPatternFragmentIfRead(Record *R) const {
-    if (!PatternFragments.count(R)) return nullptr;
-    return PatternFragments.find(R)->second;
+    if (!PatternFragments.count(R))
+      return nullptr;
+    return PatternFragments.find(R)->second.get();
   }
 
-  typedef std::map<Record*, TreePattern*, LessRecordByID>::const_iterator
-          pf_iterator;
+  typedef decltype(PatternFragments)::const_iterator pf_iterator;
   pf_iterator pf_begin() const { return PatternFragments.begin(); }
   pf_iterator pf_end() const { return PatternFragments.end(); }
 
