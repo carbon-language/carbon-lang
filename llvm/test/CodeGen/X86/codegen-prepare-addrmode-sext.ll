@@ -1,7 +1,7 @@
 ; RUN: opt -S -codegenprepare %s -o - | FileCheck %s
 ; RUN: opt -S -codegenprepare -addr-sink-using-gep=1 %s -o - | FileCheck -check-prefix=CHECK-GEP %s
 ; This file tests the different cases what are involved when codegen prepare
-; tries to get sign extension out of the way of addressing mode.
+; tries to get sign/zero extension out of the way of addressing mode.
 ; This tests require an actual target as addressing mode decisions depends
 ; on the target.
 
@@ -420,4 +420,115 @@ if.then.i:                                        ; preds = %fn1.exit.i
 fn2.exit:                                         ; preds = %if.then.i, %fn1.exit.i
   %retval.0.i = phi i16 [ %conv8.i, %if.then.i ], [ undef, %fn1.exit.i ]
   ret i16 %retval.0.i
+}
+
+; Check that we do not promote an extension if the non-wrapping flag does not
+; match the kind of the extension.
+; CHECK-LABEL: @noPromotionFlag
+; CHECK: [[ADD:%[a-zA-Z_0-9-]+]] = add nsw i32 %arg1, %arg2
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = zext i32 [[ADD]] to i64
+; CHECK: inttoptr i64 [[PROMOTED]] to i8*
+; CHECK: ret
+define i8 @noPromotionFlag(i32 %arg1, i32 %arg2) {
+  %add = add nsw i32 %arg1, %arg2 
+  %zextadd = zext i32 %add to i64
+  %base = inttoptr i64 %zextadd to i8*
+  %res = load i8* %base
+  ret i8 %res
+}
+
+; Check that we correctly promote both operands of the promotable add with zext.
+; CHECK-LABEL: @twoArgsPromotionZExt
+; CHECK: [[ARG1ZEXT:%[a-zA-Z_0-9-]+]] = zext i32 %arg1 to i64
+; CHECK: [[ARG2ZEXT:%[a-zA-Z_0-9-]+]] = zext i32 %arg2 to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nuw i64 [[ARG1ZEXT]], [[ARG2ZEXT]]
+; CHECK: inttoptr i64 [[PROMOTED]] to i8*
+; CHECK: ret
+define i8 @twoArgsPromotionZExt(i32 %arg1, i32 %arg2) {
+  %add = add nuw i32 %arg1, %arg2 
+  %zextadd = zext i32 %add to i64
+  %base = inttoptr i64 %zextadd to i8*
+  %res = load i8* %base
+  ret i8 %res
+}
+
+; Check that we correctly promote constant arguments.
+; CHECK-LABEL: @oneArgPromotionNegativeCstZExt
+; CHECK: [[ARG1ZEXT:%[a-zA-Z_0-9-]+]] = zext i8 %arg1 to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nuw i64 [[ARG1ZEXT]], 255
+; CHECK: getelementptr inbounds i8* %base, i64 [[PROMOTED]]
+; CHECK: ret
+define i8 @oneArgPromotionNegativeCstZExt(i8 %arg1, i8* %base) {
+  %add = add nuw i8 %arg1, -1 
+  %zextadd = zext i8 %add to i64
+  %arrayidx = getelementptr inbounds i8* %base, i64 %zextadd
+  %res = load i8* %arrayidx
+  ret i8 %res
+}
+
+; Check that we are able to merge two zero extensions.
+; CHECK-LABEL: @oneArgPromotionZExtZExt
+; CHECK: [[ARG1ZEXT:%[a-zA-Z_0-9-]+]] = zext i8 %arg1 to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nuw i64 [[ARG1ZEXT]], 1
+; CHECK: getelementptr inbounds i8* %base, i64 [[PROMOTED]]
+; CHECK: ret
+define i8 @oneArgPromotionZExtZExt(i8 %arg1, i8* %base) {
+  %zext = zext i8 %arg1 to i32
+  %add = add nuw i32 %zext, 1 
+  %zextadd = zext i32 %add to i64
+  %arrayidx = getelementptr inbounds i8* %base, i64 %zextadd
+  %res = load i8* %arrayidx
+  ret i8 %res
+}
+
+; Check that we do not promote truncate when the dropped bits
+; are of a different kind.
+; CHECK-LABEL: @oneArgPromotionBlockTruncZExt
+; CHECK: [[ARG1SEXT:%[a-zA-Z_0-9-]+]] = sext i1 %arg1 to i32
+; CHECK: [[ARG1TRUNC:%[a-zA-Z_0-9-]+]] = trunc i32 [[ARG1SEXT]] to i8
+; CHECK: [[ARG1ZEXT:%[a-zA-Z_0-9-]+]] = zext i8 [[ARG1TRUNC]] to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nuw i64 [[ARG1ZEXT]], 1
+; CHECK: getelementptr inbounds i8* %base, i64 [[PROMOTED]]
+; CHECK: ret
+define i8 @oneArgPromotionBlockTruncZExt(i1 %arg1, i8* %base) {
+  %sextarg1 = sext i1 %arg1 to i32
+  %trunc = trunc i32 %sextarg1 to i8
+  %add = add nuw i8 %trunc, 1 
+  %zextadd = zext i8 %add to i64
+  %arrayidx = getelementptr inbounds i8* %base, i64 %zextadd
+  %res = load i8* %arrayidx
+  ret i8 %res
+}
+
+; Check that we are able to promote truncate when we know all the bits
+; that are dropped.
+; CHECK-LABEL: @oneArgPromotionPassTruncZExt
+; CHECK: [[ARG1ZEXT:%[a-zA-Z_0-9-]+]] = zext i1 %arg1 to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nuw i64 [[ARG1ZEXT]], 1
+; CHECK: getelementptr inbounds i8* %base, i64 [[PROMOTED]]
+; CHECK: ret
+define i8 @oneArgPromotionPassTruncZExt(i1 %arg1, i8* %base) {
+  %sextarg1 = zext i1 %arg1 to i32
+  %trunc = trunc i32 %sextarg1 to i8
+  %add = add nuw i8 %trunc, 1 
+  %zextadd = zext i8 %add to i64
+  %arrayidx = getelementptr inbounds i8* %base, i64 %zextadd
+  %res = load i8* %arrayidx
+  ret i8 %res
+}
+
+; Check that we do not promote sext with zext.
+; CHECK-LABEL: @oneArgPromotionBlockSExtZExt
+; CHECK: [[ARG1SEXT:%[a-zA-Z_0-9-]+]] = sext i1 %arg1 to i8
+; CHECK: [[ARG1ZEXT:%[a-zA-Z_0-9-]+]] = zext i8 [[ARG1SEXT]] to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nuw i64 [[ARG1ZEXT]], 1
+; CHECK: getelementptr inbounds i8* %base, i64 [[PROMOTED]]
+; CHECK: ret
+define i8 @oneArgPromotionBlockSExtZExt(i1 %arg1, i8* %base) {
+  %sextarg1 = sext i1 %arg1 to i8
+  %add = add nuw i8 %sextarg1, 1 
+  %zextadd = zext i8 %add to i64
+  %arrayidx = getelementptr inbounds i8* %base, i64 %zextadd
+  %res = load i8* %arrayidx
+  ret i8 %res
 }

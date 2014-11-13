@@ -92,7 +92,12 @@ static cl::opt<bool> StressStoreExtract(
 
 namespace {
 typedef SmallPtrSet<Instruction *, 16> SetOfInstrs;
-typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
+struct TypeIsSExt {
+  Type *Ty;
+  bool IsSExt;
+  TypeIsSExt(Type *Ty, bool IsSExt) : Ty(Ty), IsSExt(IsSExt) {}
+};
+typedef DenseMap<Instruction *, TypeIsSExt> InstrToOrigTy;
 
   class CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
@@ -1715,58 +1720,75 @@ static bool MightBeFoldableInst(Instruction *I) {
 
 /// \brief Hepler class to perform type promotion.
 class TypePromotionHelper {
-  /// \brief Utility function to check whether or not a sign extension of
-  /// \p Inst with \p ConsideredSExtType can be moved through \p Inst by either
-  /// using the operands of \p Inst or promoting \p Inst.
+  /// \brief Utility function to check whether or not a sign or zero extension
+  /// of \p Inst with \p ConsideredExtType can be moved through \p Inst by
+  /// either using the operands of \p Inst or promoting \p Inst.
+  /// The type of the extension is defined by \p IsSExt.
   /// In other words, check if:
-  /// sext (Ty Inst opnd1 opnd2 ... opndN) to ConsideredSExtType.
+  /// ext (Ty Inst opnd1 opnd2 ... opndN) to ConsideredExtType.
   /// #1 Promotion applies:
-  /// ConsideredSExtType Inst (sext opnd1 to ConsideredSExtType, ...).
+  /// ConsideredExtType Inst (ext opnd1 to ConsideredExtType, ...).
   /// #2 Operand reuses:
-  /// sext opnd1 to ConsideredSExtType.
+  /// ext opnd1 to ConsideredExtType.
   /// \p PromotedInsts maps the instructions to their type before promotion.
-  static bool canGetThrough(const Instruction *Inst, Type *ConsideredSExtType,
-                            const InstrToOrigTy &PromotedInsts);
+  static bool canGetThrough(const Instruction *Inst, Type *ConsideredExtType,
+                            const InstrToOrigTy &PromotedInsts, bool IsSExt);
 
   /// \brief Utility function to determine if \p OpIdx should be promoted when
   /// promoting \p Inst.
-  static bool shouldSExtOperand(const Instruction *Inst, int OpIdx) {
+  static bool shouldExtOperand(const Instruction *Inst, int OpIdx) {
     if (isa<SelectInst>(Inst) && OpIdx == 0)
       return false;
     return true;
   }
 
-  /// \brief Utility function to promote the operand of \p SExt when this
+  /// \brief Utility function to promote the operand of \p Ext when this
   /// operand is a promotable trunc or sext or zext.
   /// \p PromotedInsts maps the instructions to their type before promotion.
   /// \p CreatedInsts[out] contains how many non-free instructions have been
-  /// created to promote the operand of SExt.
+  /// created to promote the operand of Ext.
   /// Should never be called directly.
-  /// \return The promoted value which is used instead of SExt.
-  static Value *promoteOperandForTruncAndAnyExt(Instruction *SExt,
+  /// \return The promoted value which is used instead of Ext.
+  static Value *promoteOperandForTruncAndAnyExt(Instruction *Ext,
                                                 TypePromotionTransaction &TPT,
                                                 InstrToOrigTy &PromotedInsts,
                                                 unsigned &CreatedInsts);
 
-  /// \brief Utility function to promote the operand of \p SExt when this
+  /// \brief Utility function to promote the operand of \p Ext when this
   /// operand is promotable and is not a supported trunc or sext.
   /// \p PromotedInsts maps the instructions to their type before promotion.
   /// \p CreatedInsts[out] contains how many non-free instructions have been
-  /// created to promote the operand of SExt.
+  /// created to promote the operand of Ext.
   /// Should never be called directly.
-  /// \return The promoted value which is used instead of SExt.
-  static Value *promoteOperandForOther(Instruction *SExt,
+  /// \return The promoted value which is used instead of Ext.
+  static Value *promoteOperandForOther(Instruction *Ext,
                                        TypePromotionTransaction &TPT,
                                        InstrToOrigTy &PromotedInsts,
-                                       unsigned &CreatedInsts);
+                                       unsigned &CreatedInsts, bool IsSExt);
+
+  /// \see promoteOperandForOther.
+  static Value *signExtendOperandForOther(Instruction *Ext,
+                                          TypePromotionTransaction &TPT,
+                                          InstrToOrigTy &PromotedInsts,
+                                          unsigned &CreatedInsts) {
+    return promoteOperandForOther(Ext, TPT, PromotedInsts, CreatedInsts, true);
+  }
+
+  /// \see promoteOperandForOther.
+  static Value *zeroExtendOperandForOther(Instruction *Ext,
+                                          TypePromotionTransaction &TPT,
+                                          InstrToOrigTy &PromotedInsts,
+                                          unsigned &CreatedInsts) {
+    return promoteOperandForOther(Ext, TPT, PromotedInsts, CreatedInsts, false);
+  }
 
 public:
-  /// Type for the utility function that promotes the operand of SExt.
-  typedef Value *(*Action)(Instruction *SExt, TypePromotionTransaction &TPT,
+  /// Type for the utility function that promotes the operand of Ext.
+  typedef Value *(*Action)(Instruction *Ext, TypePromotionTransaction &TPT,
                            InstrToOrigTy &PromotedInsts,
                            unsigned &CreatedInsts);
-  /// \brief Given a sign extend instruction \p SExt, return the approriate
-  /// action to promote the operand of \p SExt instead of using SExt.
+  /// \brief Given a sign/zero extend instruction \p Ext, return the approriate
+  /// action to promote the operand of \p Ext instead of using Ext.
   /// \return NULL if no promotable action is possible with the current
   /// sign extension.
   /// \p InsertedTruncs keeps track of all the truncate instructions inserted by
@@ -1774,36 +1796,42 @@ public:
   /// because we do not want to promote these instructions as CodeGenPrepare
   /// will reinsert them later. Thus creating an infinite loop: create/remove.
   /// \p PromotedInsts maps the instructions to their type before promotion.
-  static Action getAction(Instruction *SExt, const SetOfInstrs &InsertedTruncs,
+  static Action getAction(Instruction *Ext, const SetOfInstrs &InsertedTruncs,
                           const TargetLowering &TLI,
                           const InstrToOrigTy &PromotedInsts);
 };
 
 bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
-                                        Type *ConsideredSExtType,
-                                        const InstrToOrigTy &PromotedInsts) {
-  // We can always get through sext or zext.
-  if (isa<SExtInst>(Inst) || isa<ZExtInst>(Inst))
+                                        Type *ConsideredExtType,
+                                        const InstrToOrigTy &PromotedInsts,
+                                        bool IsSExt) {
+  // We can always get through zext.
+  if (isa<ZExtInst>(Inst))
+    return true;
+
+  // sext(sext) is ok too.
+  if (IsSExt && isa<SExtInst>(Inst))
     return true;
 
   // We can get through binary operator, if it is legal. In other words, the
   // binary operator must have a nuw or nsw flag.
   const BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Inst);
   if (BinOp && isa<OverflowingBinaryOperator>(BinOp) &&
-      (BinOp->hasNoUnsignedWrap() || BinOp->hasNoSignedWrap()))
+      ((!IsSExt && BinOp->hasNoUnsignedWrap()) ||
+       (IsSExt && BinOp->hasNoSignedWrap())))
     return true;
 
   // Check if we can do the following simplification.
-  // sext(trunc(sext)) --> sext
+  // ext(trunc(opnd)) --> ext(opnd)
   if (!isa<TruncInst>(Inst))
     return false;
 
   Value *OpndVal = Inst->getOperand(0);
-  // Check if we can use this operand in the sext.
-  // If the type is larger than the result type of the sign extension,
+  // Check if we can use this operand in the extension.
+  // If the type is larger than the result type of the extension,
   // we cannot.
   if (OpndVal->getType()->getIntegerBitWidth() >
-      ConsideredSExtType->getIntegerBitWidth())
+      ConsideredExtType->getIntegerBitWidth())
     return false;
 
   // If the operand of the truncate is not an instruction, we will not have
@@ -1814,18 +1842,19 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
     return false;
 
   // Check if the source of the type is narrow enough.
-  // I.e., check that trunc just drops sign extended bits.
-  // #1 get the type of the operand.
+  // I.e., check that trunc just drops extended bits of the same kind of
+  // the extension.
+  // #1 get the type of the operand and check the kind of the extended bits.
   const Type *OpndType;
   InstrToOrigTy::const_iterator It = PromotedInsts.find(Opnd);
-  if (It != PromotedInsts.end())
-    OpndType = It->second;
-  else if (isa<SExtInst>(Opnd))
-    OpndType = cast<Instruction>(Opnd)->getOperand(0)->getType();
+  if (It != PromotedInsts.end() && It->second.IsSExt == IsSExt)
+    OpndType = It->second.Ty;
+  else if ((IsSExt && isa<SExtInst>(Opnd)) || (!IsSExt && isa<ZExtInst>(Opnd)))
+    OpndType = Opnd->getOperand(0)->getType();
   else
     return false;
 
-  // #2 check that the truncate just drop sign extended bits.
+  // #2 check that the truncate just drop extended bits.
   if (Inst->getType()->getIntegerBitWidth() >= OpndType->getIntegerBitWidth())
     return true;
 
@@ -1833,34 +1862,36 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
 }
 
 TypePromotionHelper::Action TypePromotionHelper::getAction(
-    Instruction *SExt, const SetOfInstrs &InsertedTruncs,
+    Instruction *Ext, const SetOfInstrs &InsertedTruncs,
     const TargetLowering &TLI, const InstrToOrigTy &PromotedInsts) {
-  Instruction *SExtOpnd = dyn_cast<Instruction>(SExt->getOperand(0));
-  Type *SExtTy = SExt->getType();
-  // If the operand of the sign extension is not an instruction, we cannot
+  assert((isa<SExtInst>(Ext) || isa<ZExtInst>(Ext)) &&
+         "Unexpected instruction type");
+  Instruction *ExtOpnd = dyn_cast<Instruction>(Ext->getOperand(0));
+  Type *ExtTy = Ext->getType();
+  bool IsSExt = isa<SExtInst>(Ext);
+  // If the operand of the extension is not an instruction, we cannot
   // get through.
   // If it, check we can get through.
-  if (!SExtOpnd || !canGetThrough(SExtOpnd, SExtTy, PromotedInsts))
+  if (!ExtOpnd || !canGetThrough(ExtOpnd, ExtTy, PromotedInsts, IsSExt))
     return nullptr;
 
   // Do not promote if the operand has been added by codegenprepare.
   // Otherwise, it means we are undoing an optimization that is likely to be
   // redone, thus causing potential infinite loop.
-  if (isa<TruncInst>(SExtOpnd) && InsertedTruncs.count(SExtOpnd))
+  if (isa<TruncInst>(ExtOpnd) && InsertedTruncs.count(ExtOpnd))
     return nullptr;
 
   // SExt or Trunc instructions.
   // Return the related handler.
-  if (isa<SExtInst>(SExtOpnd) || isa<TruncInst>(SExtOpnd) ||
-      isa<ZExtInst>(SExtOpnd))
+  if (isa<SExtInst>(ExtOpnd) || isa<TruncInst>(ExtOpnd) ||
+      isa<ZExtInst>(ExtOpnd))
     return promoteOperandForTruncAndAnyExt;
 
   // Regular instruction.
   // Abort early if we will have to insert non-free instructions.
-  if (!SExtOpnd->hasOneUse() &&
-      !TLI.isTruncateFree(SExtTy, SExtOpnd->getType()))
+  if (!ExtOpnd->hasOneUse() && !TLI.isTruncateFree(ExtTy, ExtOpnd->getType()))
     return nullptr;
-  return promoteOperandForOther;
+  return IsSExt ? signExtendOperandForOther : zeroExtendOperandForOther;
 }
 
 Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
@@ -1871,7 +1902,7 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
   Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
   Value *ExtVal = SExt;
   if (isa<ZExtInst>(SExtOpnd)) {
-    // Replace sext(zext(opnd))
+    // Replace s|zext(zext(opnd))
     // => zext(opnd).
     Value *ZExt =
         TPT.createZExt(SExt, SExtOpnd->getOperand(0), SExt->getType());
@@ -1879,8 +1910,8 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
     TPT.eraseInstruction(SExt);
     ExtVal = ZExt;
   } else {
-    // Replace sext(trunc(opnd)) or sext(sext(opnd))
-    // => sext(opnd).
+    // Replace z|sext(trunc(opnd)) or sext(sext(opnd))
+    // => z|sext(opnd).
     TPT.setOperand(SExt, 0, SExtOpnd->getOperand(0));
   }
   CreatedInsts = 0;
@@ -1901,97 +1932,97 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
   return NextVal;
 }
 
-Value *
-TypePromotionHelper::promoteOperandForOther(Instruction *SExt,
-                                            TypePromotionTransaction &TPT,
-                                            InstrToOrigTy &PromotedInsts,
-                                            unsigned &CreatedInsts) {
-  // By construction, the operand of SExt is an instruction. Otherwise we cannot
+Value *TypePromotionHelper::promoteOperandForOther(
+    Instruction *Ext, TypePromotionTransaction &TPT,
+    InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts, bool IsSExt) {
+  // By construction, the operand of Ext is an instruction. Otherwise we cannot
   // get through it and this method should not be called.
-  Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
+  Instruction *ExtOpnd = cast<Instruction>(Ext->getOperand(0));
   CreatedInsts = 0;
-  if (!SExtOpnd->hasOneUse()) {
-    // SExtOpnd will be promoted.
-    // All its uses, but SExt, will need to use a truncated value of the
+  if (!ExtOpnd->hasOneUse()) {
+    // ExtOpnd will be promoted.
+    // All its uses, but Ext, will need to use a truncated value of the
     // promoted version.
     // Create the truncate now.
-    Value *Trunc = TPT.createTrunc(SExt, SExtOpnd->getType());
+    Value *Trunc = TPT.createTrunc(Ext, ExtOpnd->getType());
     if (Instruction *ITrunc = dyn_cast<Instruction>(Trunc)) {
       ITrunc->removeFromParent();
       // Insert it just after the definition.
-      ITrunc->insertAfter(SExtOpnd);
+      ITrunc->insertAfter(ExtOpnd);
     }
 
-    TPT.replaceAllUsesWith(SExtOpnd, Trunc);
-    // Restore the operand of SExt (which has been replace by the previous call
+    TPT.replaceAllUsesWith(ExtOpnd, Trunc);
+    // Restore the operand of Ext (which has been replace by the previous call
     // to replaceAllUsesWith) to avoid creating a cycle trunc <-> sext.
-    TPT.setOperand(SExt, 0, SExtOpnd);
+    TPT.setOperand(Ext, 0, ExtOpnd);
   }
 
   // Get through the Instruction:
   // 1. Update its type.
-  // 2. Replace the uses of SExt by Inst.
-  // 3. Sign extend each operand that needs to be sign extended.
+  // 2. Replace the uses of Ext by Inst.
+  // 3. Extend each operand that needs to be extended.
 
   // Remember the original type of the instruction before promotion.
   // This is useful to know that the high bits are sign extended bits.
-  PromotedInsts.insert(
-      std::pair<Instruction *, Type *>(SExtOpnd, SExtOpnd->getType()));
+  PromotedInsts.insert(std::pair<Instruction *, TypeIsSExt>(
+      ExtOpnd, TypeIsSExt(ExtOpnd->getType(), IsSExt)));
   // Step #1.
-  TPT.mutateType(SExtOpnd, SExt->getType());
+  TPT.mutateType(ExtOpnd, Ext->getType());
   // Step #2.
-  TPT.replaceAllUsesWith(SExt, SExtOpnd);
+  TPT.replaceAllUsesWith(Ext, ExtOpnd);
   // Step #3.
-  Instruction *SExtForOpnd = SExt;
+  Instruction *ExtForOpnd = Ext;
 
-  DEBUG(dbgs() << "Propagate SExt to operands\n");
-  for (int OpIdx = 0, EndOpIdx = SExtOpnd->getNumOperands(); OpIdx != EndOpIdx;
+  DEBUG(dbgs() << "Propagate Ext to operands\n");
+  for (int OpIdx = 0, EndOpIdx = ExtOpnd->getNumOperands(); OpIdx != EndOpIdx;
        ++OpIdx) {
-    DEBUG(dbgs() << "Operand:\n" << *(SExtOpnd->getOperand(OpIdx)) << '\n');
-    if (SExtOpnd->getOperand(OpIdx)->getType() == SExt->getType() ||
-        !shouldSExtOperand(SExtOpnd, OpIdx)) {
+    DEBUG(dbgs() << "Operand:\n" << *(ExtOpnd->getOperand(OpIdx)) << '\n');
+    if (ExtOpnd->getOperand(OpIdx)->getType() == Ext->getType() ||
+        !shouldExtOperand(ExtOpnd, OpIdx)) {
       DEBUG(dbgs() << "No need to propagate\n");
       continue;
     }
-    // Check if we can statically sign extend the operand.
-    Value *Opnd = SExtOpnd->getOperand(OpIdx);
+    // Check if we can statically extend the operand.
+    Value *Opnd = ExtOpnd->getOperand(OpIdx);
     if (const ConstantInt *Cst = dyn_cast<ConstantInt>(Opnd)) {
-      DEBUG(dbgs() << "Statically sign extend\n");
-      TPT.setOperand(
-          SExtOpnd, OpIdx,
-          ConstantInt::getSigned(SExt->getType(), Cst->getSExtValue()));
+      DEBUG(dbgs() << "Statically extend\n");
+      unsigned BitWidth = Ext->getType()->getIntegerBitWidth();
+      APInt CstVal = IsSExt ? Cst->getValue().sext(BitWidth)
+                            : Cst->getValue().zext(BitWidth);
+      TPT.setOperand(ExtOpnd, OpIdx, ConstantInt::get(Ext->getType(), CstVal));
       continue;
     }
     // UndefValue are typed, so we have to statically sign extend them.
     if (isa<UndefValue>(Opnd)) {
-      DEBUG(dbgs() << "Statically sign extend\n");
-      TPT.setOperand(SExtOpnd, OpIdx, UndefValue::get(SExt->getType()));
+      DEBUG(dbgs() << "Statically extend\n");
+      TPT.setOperand(ExtOpnd, OpIdx, UndefValue::get(Ext->getType()));
       continue;
     }
 
     // Otherwise we have to explicity sign extend the operand.
-    // Check if SExt was reused to sign extend an operand.
-    if (!SExtForOpnd) {
+    // Check if Ext was reused to extend an operand.
+    if (!ExtForOpnd) {
       // If yes, create a new one.
-      DEBUG(dbgs() << "More operands to sext\n");
-      SExtForOpnd =
-        cast<Instruction>(TPT.createSExt(SExt, Opnd, SExt->getType()));
+      DEBUG(dbgs() << "More operands to ext\n");
+      ExtForOpnd =
+          cast<Instruction>(IsSExt ? TPT.createSExt(Ext, Opnd, Ext->getType())
+                                   : TPT.createZExt(Ext, Opnd, Ext->getType()));
       ++CreatedInsts;
     }
 
-    TPT.setOperand(SExtForOpnd, 0, Opnd);
+    TPT.setOperand(ExtForOpnd, 0, Opnd);
 
     // Move the sign extension before the insertion point.
-    TPT.moveBefore(SExtForOpnd, SExtOpnd);
-    TPT.setOperand(SExtOpnd, OpIdx, SExtForOpnd);
+    TPT.moveBefore(ExtForOpnd, ExtOpnd);
+    TPT.setOperand(ExtOpnd, OpIdx, ExtForOpnd);
     // If more sext are required, new instructions will have to be created.
-    SExtForOpnd = nullptr;
+    ExtForOpnd = nullptr;
   }
-  if (SExtForOpnd == SExt) {
-    DEBUG(dbgs() << "Sign extension is useless now\n");
-    TPT.eraseInstruction(SExt);
+  if (ExtForOpnd == Ext) {
+    DEBUG(dbgs() << "Extension is useless now\n");
+    TPT.eraseInstruction(Ext);
   }
-  return SExtOpnd;
+  return ExtOpnd;
 }
 
 /// IsPromotionProfitable - Check whether or not promoting an instruction
@@ -2203,31 +2234,32 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
 
     return true;
   }
-  case Instruction::SExt: {
-    Instruction *SExt = dyn_cast<Instruction>(AddrInst);
-    if (!SExt)
+  case Instruction::SExt:
+  case Instruction::ZExt: {
+    Instruction *Ext = dyn_cast<Instruction>(AddrInst);
+    if (!Ext)
       return false;
 
-    // Try to move this sext out of the way of the addressing mode.
+    // Try to move this ext out of the way of the addressing mode.
     // Ask for a method for doing so.
-    TypePromotionHelper::Action TPH = TypePromotionHelper::getAction(
-        SExt, InsertedTruncs, TLI, PromotedInsts);
+    TypePromotionHelper::Action TPH =
+        TypePromotionHelper::getAction(Ext, InsertedTruncs, TLI, PromotedInsts);
     if (!TPH)
       return false;
 
     TypePromotionTransaction::ConstRestorationPt LastKnownGood =
         TPT.getRestorationPoint();
     unsigned CreatedInsts = 0;
-    Value *PromotedOperand = TPH(SExt, TPT, PromotedInsts, CreatedInsts);
+    Value *PromotedOperand = TPH(Ext, TPT, PromotedInsts, CreatedInsts);
     // SExt has been moved away.
     // Thus either it will be rematched later in the recursive calls or it is
     // gone. Anyway, we must not fold it into the addressing mode at this point.
     // E.g.,
     // op = add opnd, 1
-    // idx = sext op
+    // idx = ext op
     // addr = gep base, idx
     // is now:
-    // promotedOpnd = sext opnd           <- no match here
+    // promotedOpnd = ext opnd            <- no match here
     // op = promoted_add promotedOpnd, 1  <- match (later in recursive calls)
     // addr = gep base, op                <- match
     if (MovedAway)
