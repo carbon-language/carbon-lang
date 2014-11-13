@@ -187,7 +187,7 @@ TEST_F(FormatTest, RemovesEmptyLines) {
                    "\n"
                    "};"));
 
-  // Don't remove empty lines at the start of namespaces.
+  // Don't remove empty lines at the start of namespaces or extern "C" blocks.
   EXPECT_EQ("namespace N {\n"
             "\n"
             "int i;\n"
@@ -195,6 +195,29 @@ TEST_F(FormatTest, RemovesEmptyLines) {
             format("namespace N {\n"
                    "\n"
                    "int    i;\n"
+                   "}",
+                   getGoogleStyle()));
+  EXPECT_EQ("extern /**/ \"C\" /**/ {\n"
+            "\n"
+            "int i;\n"
+            "}",
+            format("extern /**/ \"C\" /**/ {\n"
+                   "\n"
+                   "int    i;\n"
+                   "}",
+                   getGoogleStyle()));
+
+  // ...but do keep inlining and removing empty lines for non-block extern "C"
+  // functions.
+  verifyFormat("extern \"C\" int f() { return 42; }", getGoogleStyle());
+  EXPECT_EQ("extern \"C\" int f() {\n"
+            "  int i = 42;\n"
+            "  return i;\n"
+            "}",
+            format("extern \"C\" int f() {\n"
+                   "\n"
+                   "  int i = 42;\n"
+                   "  return i;\n"
                    "}",
                    getGoogleStyle()));
 

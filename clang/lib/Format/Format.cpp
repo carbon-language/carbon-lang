@@ -574,6 +574,13 @@ std::string configurationAsText(const FormatStyle &Style) {
 
 namespace {
 
+bool startsExternCBlock(const AnnotatedLine &Line) {
+  const FormatToken *Next = Line.First->getNextNonComment();
+  const FormatToken *NextNext = Next ? Next->getNextNonComment() : nullptr;
+  return Line.First->is(tok::kw_extern) && Next && Next->isStringLiteral() &&
+         NextNext && NextNext->is(tok::l_brace);
+}
+
 class NoColumnLimitFormatter {
 public:
   NoColumnLimitFormatter(ContinuationIndenter *Indenter) : Indenter(Indenter) {}
@@ -785,7 +792,8 @@ private:
       Tok->SpacesRequiredBefore = 0;
       Tok->CanBreakBefore = true;
       return 1;
-    } else if (Limit != 0 && Line.First->isNot(tok::kw_namespace)) {
+    } else if (Limit != 0 && Line.First->isNot(tok::kw_namespace) &&
+               !startsExternCBlock(Line)) {
       // We don't merge short records.
       if (Line.First->isOneOf(tok::kw_class, tok::kw_union, tok::kw_struct))
         return 0;
@@ -1069,7 +1077,8 @@ private:
     // Remove empty lines after "{".
     if (!Style.KeepEmptyLinesAtTheStartOfBlocks && PreviousLine &&
         PreviousLine->Last->is(tok::l_brace) &&
-        PreviousLine->First->isNot(tok::kw_namespace))
+        PreviousLine->First->isNot(tok::kw_namespace) &&
+        !startsExternCBlock(*PreviousLine))
       Newlines = 1;
 
     // Insert extra new line before access specifiers.
