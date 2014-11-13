@@ -97,6 +97,7 @@ private:
   void parseNamespace();
   void parseAccessSpecifier();
   void parseEnum();
+  void parseJavaEnumBody();
   void parseRecord();
   void parseObjCProtocolList();
   void parseObjCUntilAtEnd();

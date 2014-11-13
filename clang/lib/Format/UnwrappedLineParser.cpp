@@ -311,7 +311,6 @@ void UnwrappedLineParser::calculateBraceTypes() {
   // parse macros, so this will magically work inside macro
   // definitions, too.
   unsigned StoredPosition = Tokens->getPosition();
-  unsigned Position = StoredPosition;
   FormatToken *Tok = FormatTok;
   // Keep a stack of positions of lbrace tokens. We will
   // update information about whether an lbrace starts a
@@ -382,7 +381,6 @@ void UnwrappedLineParser::calculateBraceTypes() {
       break;
     }
     Tok = NextTok;
-    Position += ReadTokens;
   } while (Tok->Tok.isNot(tok::eof) && !LBraceStack.empty());
   // Assume other blocks for all unclosed opening braces.
   for (unsigned i = 0, e = LBraceStack.size(); i != e; ++i) {
@@ -1331,10 +1329,10 @@ void UnwrappedLineParser::parseAccessSpecifier() {
 }
 
 void UnwrappedLineParser::parseEnum() {
-  if (FormatTok->Tok.is(tok::kw_enum)) {
-    // Won't be 'enum' for NS_ENUMs.
-    nextToken();
-  }
+  // Won't be 'enum' for NS_ENUMs.
+  if (FormatTok->Tok.is(tok::kw_enum))
+    nextToken(); 
+
   // Eat up enum class ...
   if (FormatTok->Tok.is(tok::kw_class) || FormatTok->Tok.is(tok::kw_struct))
     nextToken();
@@ -1342,27 +1340,96 @@ void UnwrappedLineParser::parseEnum() {
          FormatTok->isOneOf(tok::colon, tok::coloncolon)) {
     nextToken();
     // We can have macros or attributes in between 'enum' and the enum name.
-    if (FormatTok->Tok.is(tok::l_paren)) {
+    if (FormatTok->Tok.is(tok::l_paren))
       parseParens();
-    }
     if (FormatTok->Tok.is(tok::identifier))
       nextToken();
   }
-  if (FormatTok->Tok.is(tok::l_brace)) {
-    FormatTok->BlockKind = BK_Block;
-    bool HasError = !parseBracedList(/*ContinueOnSemicolons=*/true);
-    if (HasError) {
-      if (FormatTok->is(tok::semi))
-        nextToken();
-      addUnwrappedLine();
-    }
+
+  // Just a declaration or something is wrong.
+  if (!FormatTok->is(tok::l_brace))
+    return;
+  FormatTok->BlockKind = BK_Block;
+
+  if (Style.Language == FormatStyle::LK_Java) {
+    // Java enums are different.
+    parseJavaEnumBody();
+    return;
   }
+
+  // Parse enum body.
+  bool HasError = !parseBracedList(/*ContinueOnSemicolons=*/true);
+  if (HasError) {
+    if (FormatTok->is(tok::semi))
+      nextToken();
+    addUnwrappedLine();
+  }
+
   // We fall through to parsing a structural element afterwards, so that in
   // enum A {} n, m;
   // "} n, m;" will end up in one unwrapped line.
-  // This does not apply for Java.
-  if (Style.Language == FormatStyle::LK_Java)
+}
+
+void UnwrappedLineParser::parseJavaEnumBody() {
+  // Determine whether the enum is simple, i.e. does not have a semicolon or
+  // constants with class bodies. Simple enums can be formatted like braced
+  // lists, contracted to a single line, etc.
+  unsigned StoredPosition = Tokens->getPosition();
+  bool IsSimple = true;
+  FormatToken *Tok = Tokens->getNextToken();
+  while (Tok) {
+    if (Tok->is(tok::r_brace))
+      break;
+    if (Tok->isOneOf(tok::l_brace, tok::semi)) {
+      IsSimple = false;
+      break;
+    }
+    // FIXME: This will also mark enums with braces in the arguments to enum
+    // constants as "not simple". This is probably fine in practice, though.
+    Tok = Tokens->getNextToken();
+  }
+  FormatTok = Tokens->setPosition(StoredPosition);
+
+  if (IsSimple) {
+    parseBracedList();
     addUnwrappedLine();
+    return;
+  }
+
+  // Parse the body of a more complex enum.
+  // First add a line for everything up to the "{".
+  nextToken();
+  addUnwrappedLine();
+  ++Line->Level;
+
+  // Parse the enum constants.
+  while (FormatTok) {
+    if (FormatTok->is(tok::l_brace)) {
+      // Parse the constant's class body.
+      parseBlock(/*MustBeDeclaration=*/true, /*AddLevel=*/true,
+                 /*MunchSemi=*/false);
+    } else if (FormatTok->is(tok::l_paren)) {
+      parseParens();
+    } else if (FormatTok->is(tok::comma)) {
+      nextToken();
+      addUnwrappedLine();
+    } else if (FormatTok->is(tok::semi)) {
+      nextToken();
+      addUnwrappedLine();
+      break;
+    } else if (FormatTok->is(tok::r_brace)) {
+      addUnwrappedLine();
+      break;
+    } else {
+      nextToken();
+    }
+  }
+
+  // Parse the class body after the enum's ";" if any.
+  parseLevel(/*HasOpeningBrace=*/true);
+  nextToken();
+  --Line->Level;
+  addUnwrappedLine();
 }
 
 void UnwrappedLineParser::parseRecord() {
