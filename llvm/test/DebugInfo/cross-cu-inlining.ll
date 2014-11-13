@@ -1,7 +1,6 @@
 ; REQUIRES: object-emission
 
 ; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck -implicit-check-not=DW_TAG %s
-; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump - | FileCheck --check-prefix=CHECK-ACCEL --check-prefix=CHECK %s
 
 ; Build from source:
 ; $ clang++ a.cpp b.cpp -g -c -emit-llvm
@@ -52,18 +51,6 @@
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK:     DW_AT_location
 ; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]} "x"
-
-; CHECK-ACCEL: .apple_names contents:
-; CHECK-ACCEL: Name{{.*}}"func"
-; CHECK-ACCEL-NOT: Name
-; CHECK-ACCEL: Atom[0]{{.*}}[[INLINED]]
-; CHECK-ACCEL-NOT: Name
-; CHECK-ACCEL: Atom[0]{{.*}}[[FUNC]]
-
-; CHECK-ACCEL: .apple_types contents:
-; CHECK-ACCEL: Name{{.*}}"int"
-; CHECK-ACCEL-NOT: Name
-; CHECK-ACCEL: Atom[0]{{.*}}[[INT]]
 
 @i = external global i32
 
