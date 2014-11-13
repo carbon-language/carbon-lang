@@ -1258,6 +1258,20 @@ getDelayImportTable(const delay_import_directory_table_entry *&Result) const {
   return object_error::success;
 }
 
+std::error_code DelayImportDirectoryEntryRef::
+getImportAddress(int AddrIndex, uint64_t &Result) const {
+  uint32_t RVA = Table[Index].DelayImportAddressTable +
+      AddrIndex * (OwningObject->is64() ? 8 : 4);
+  uintptr_t IntPtr = 0;
+  if (std::error_code EC = OwningObject->getRvaPtr(RVA, IntPtr))
+    return EC;
+  if (OwningObject->is64())
+    Result = *reinterpret_cast<const uint64_t *>(IntPtr);
+  else
+    Result = *reinterpret_cast<const uint32_t *>(IntPtr);
+  return object_error::success;
+}
+
 bool ExportDirectoryEntryRef::
 operator==(const ExportDirectoryEntryRef &Other) const {
   return ExportTable == Other.ExportTable && Index == Other.Index;

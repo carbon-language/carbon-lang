@@ -81,6 +81,9 @@ private:
   std::error_code resolveSymbolName(const coff_section *Section,
                                     uint64_t Offset, StringRef &Name);
   void printImportedSymbols(iterator_range<imported_symbol_iterator> Range);
+  void printDelayImportedSymbols(
+      const DelayImportDirectoryEntryRef &I,
+      iterator_range<imported_symbol_iterator> Range);
 
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
@@ -1002,6 +1005,23 @@ void COFFDumper::printImportedSymbols(
   }
 }
 
+void COFFDumper::printDelayImportedSymbols(
+    const DelayImportDirectoryEntryRef &I,
+    iterator_range<imported_symbol_iterator> Range) {
+  int Index = 0;
+  for (const ImportedSymbolRef &S : Range) {
+    DictScope Import(W, "Import");
+    StringRef Sym;
+    if (error(S.getSymbolName(Sym))) return;
+    uint16_t Ordinal;
+    if (error(S.getOrdinal(Ordinal))) return;
+    W.printNumber("Symbol", Sym, Ordinal);
+    uint64_t Addr;
+    if (error(I.getImportAddress(Index++, Addr))) return;
+    W.printHex("Address", Addr);
+  }
+}
+
 void COFFDumper::printCOFFImports() {
   // Regular imports
   for (const ImportDirectoryEntryRef &I : Obj->import_directories()) {
@@ -1031,7 +1051,7 @@ void COFFDumper::printCOFFImports() {
     W.printHex("ImportNameTable", Table->DelayImportNameTable);
     W.printHex("BoundDelayImportTable", Table->BoundDelayImportTable);
     W.printHex("UnloadDelayImportTable", Table->UnloadDelayImportTable);
-    printImportedSymbols(I.imported_symbols());
+    printDelayImportedSymbols(I, I.imported_symbols());
   }
 }
 
