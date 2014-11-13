@@ -40,7 +40,7 @@ static bool checkSize(MemoryBufferRef M, std::error_code &EC, uint64_t Size) {
 }
 
 static std::error_code checkOffset(MemoryBufferRef M, uintptr_t Addr,
-                                   const size_t Size) {
+                                   const uint64_t Size) {
   if (Addr + Size < Addr || Addr + Size < Size ||
       Addr + Size > uintptr_t(M.getBufferEnd()) ||
       Addr < uintptr_t(M.getBufferStart())) {
@@ -408,40 +408,38 @@ static uint32_t getNumberOfRelocations(const coff_section *Sec,
   return Sec->NumberOfRelocations;
 }
 
+static const coff_relocation *
+getFirstReloc(const coff_section *Sec, MemoryBufferRef M, const uint8_t *Base) {
+  uint64_t NumRelocs = getNumberOfRelocations(Sec, M, Base);
+  if (!NumRelocs)
+    return nullptr;
+  auto begin = reinterpret_cast<const coff_relocation *>(
+      Base + Sec->PointerToRelocations);
+  if (Sec->hasExtendedRelocations()) {
+    // Skip the first relocation entry repurposed to store the number of
+    // relocations.
+    begin++;
+  }
+  if (checkOffset(M, uintptr_t(begin), sizeof(coff_relocation) * NumRelocs))
+    return nullptr;
+  return begin;
+}
+
 relocation_iterator COFFObjectFile::section_rel_begin(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
+  const coff_relocation *begin = getFirstReloc(Sec, Data, base());
   DataRefImpl Ret;
-  if (getNumberOfRelocations(Sec, Data, base()) == 0) {
-    Ret.p = 0;
-  } else {
-    auto begin = reinterpret_cast<const coff_relocation*>(
-        base() + Sec->PointerToRelocations);
-    if (Sec->hasExtendedRelocations()) {
-      // Skip the first relocation entry repurposed to store the number of
-      // relocations.
-      begin++;
-    }
-    Ret.p = reinterpret_cast<uintptr_t>(begin);
-  }
+  Ret.p = reinterpret_cast<uintptr_t>(begin);
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
 relocation_iterator COFFObjectFile::section_rel_end(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
+  const coff_relocation *I = getFirstReloc(Sec, Data, base());
+  if (I)
+    I += getNumberOfRelocations(Sec, Data, base());
   DataRefImpl Ret;
-  if (getNumberOfRelocations(Sec, Data, base()) == 0) {
-    Ret.p = 0;
-  } else {
-    auto begin = reinterpret_cast<const coff_relocation*>(
-        base() + Sec->PointerToRelocations);
-    if (Sec->hasExtendedRelocations()) {
-      // Skip the first relocation entry repurposed to store the number of
-      // relocations.
-      begin++;
-    }
-    uint32_t NumReloc = getNumberOfRelocations(Sec, Data, base());
-    Ret.p = reinterpret_cast<uintptr_t>(begin + NumReloc);
-  }
+  Ret.p = reinterpret_cast<uintptr_t>(I);
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
