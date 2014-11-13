@@ -359,7 +359,9 @@ public:
 
         CFAType m_cfa_type;
 
-        // If m_cfa_type == CFAIsRegisterPlusOffset, the following ivars are used
+        // If m_cfa_type == CFAIsRegisterPlusOffset, the CFA address is computed as m_cfa_reg_num + m_cfa_offset
+        // If m_cfa_type == CFAIsRegisterDereferenced, the CFA address is computed as *(m_cfa_reg_num) - i.e. the
+        // address in m_cfa_reg_num is dereferenced and the pointer value read is the CFA addr.
         uint32_t m_cfa_reg_num;     // The Call Frame Address register number
         int32_t  m_cfa_offset;      // The offset from the CFA for this row
 

@@ -172,8 +172,9 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
 
     if (!reg_ctx_sp->IsValid())
     {
-        // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
-        // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
+        // We failed to get a valid RegisterContext.
+        // See if the regctx below this on the stack has a fallback unwind plan it can use.
+        // Subsequent calls to TryFallbackUnwindPlan() will return false.
         if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
         {
             return AddOneMoreFrame (abi);
