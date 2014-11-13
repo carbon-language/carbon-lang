@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=FUNC -check-prefix=SI %s
 
-@ptr_load = addrspace(3) global i32 addrspace(2)* null, align 8
+@ptr_load = addrspace(3) global i32 addrspace(2)* undef, align 8
 
 ; Make sure when the load from %ptr2 is folded the chain isn't lost,
 ; resulting in losing the store to gptr

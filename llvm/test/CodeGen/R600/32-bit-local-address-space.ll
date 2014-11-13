@@ -77,7 +77,7 @@ define void @mul_32bit_ptr(float addrspace(1)* %out, [3 x float] addrspace(3)* %
   ret void
 }
 
-@g_lds = addrspace(3) global float zeroinitializer, align 4
+@g_lds = addrspace(3) global float undef, align 4
 
 ; FUNC-LABEL: {{^}}infer_ptr_alignment_global_offset:
 ; SI: v_mov_b32_e32 [[REG:v[0-9]+]], 0
@@ -89,8 +89,8 @@ define void @infer_ptr_alignment_global_offset(float addrspace(1)* %out, i32 %ti
 }
 
 
-@ptr = addrspace(3) global i32 addrspace(3)* null
-@dst = addrspace(3) global [16384 x i32] zeroinitializer
+@ptr = addrspace(3) global i32 addrspace(3)* undef
+@dst = addrspace(3) global [16384 x i32] undef
 
 ; FUNC-LABEL: {{^}}global_ptr:
 ; SI: ds_write_b32

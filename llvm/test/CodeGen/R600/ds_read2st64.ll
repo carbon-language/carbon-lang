@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=SI %s
 
-@lds = addrspace(3) global [512 x float] zeroinitializer, align 4
-@lds.f64 = addrspace(3) global [512 x double] zeroinitializer, align 8
+@lds = addrspace(3) global [512 x float] undef, align 4
+@lds.f64 = addrspace(3) global [512 x double] undef, align 8
 
 
 ; SI-LABEL: @simple_read2st64_f32_0_1

@@ -2,7 +2,7 @@
 ; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
 
-@local_memory.local_mem = internal unnamed_addr addrspace(3) global [128 x i32] zeroinitializer, align 4
+@local_memory.local_mem = internal unnamed_addr addrspace(3) global [128 x i32] undef, align 4
 
 ; FUNC-LABEL: {{^}}local_memory:
 

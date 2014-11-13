@@ -691,6 +691,17 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
   llvm_unreachable("Unhandled constant initializer");
 }
 
+static bool hasDefinedInitializer(const GlobalValue *GV) {
+  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+  if (!GVar || !GVar->hasInitializer())
+    return false;
+
+  if (isa<UndefValue>(GVar->getInitializer()))
+    return false;
+
+  return true;
+}
+
 SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
                                                  SDValue Op,
                                                  SelectionDAG &DAG) const {
@@ -700,12 +711,14 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
   const GlobalValue *GV = G->getGlobal();
 
   switch (G->getAddressSpace()) {
-  default: llvm_unreachable("Global Address lowering not implemented for this "
-                            "address space");
   case AMDGPUAS::LOCAL_ADDRESS: {
     // XXX: What does the value of G->getOffset() mean?
     assert(G->getOffset() == 0 &&
          "Do not know what to do with an non-zero offset");
+
+    // TODO: We could emit code to handle the initialization somewhere.
+    if (hasDefinedInitializer(GV))
+      break;
 
     unsigned Offset;
     if (MFI->LocalMemoryObjects.count(GV) == 0) {
@@ -760,6 +773,12 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
     return DAG.getZExtOrTrunc(InitPtr, SDLoc(Op), ConstPtrVT);
   }
   }
+
+  const Function &Fn = *DAG.getMachineFunction().getFunction();
+  DiagnosticInfoUnsupported BadInit(Fn,
+                                    "initializer for address space");
+  DAG.getContext()->diagnose(BadInit);
+  return SDValue();
 }
 
 SDValue AMDGPUTargetLowering::LowerCONCAT_VECTORS(SDValue Op,

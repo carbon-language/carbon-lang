@@ -3,8 +3,8 @@
 ; FIXME: We don't get cases where the address was an SGPR because we
 ; get a copy to the address register for each one.
 
-@lds = addrspace(3) global [512 x float] zeroinitializer, align 4
- @lds.f64 = addrspace(3) global [512 x double] zeroinitializer, align 8
+@lds = addrspace(3) global [512 x float] undef, align 4
+ @lds.f64 = addrspace(3) global [512 x double] undef, align 8
 
 ; SI-LABEL: @simple_read2_f32
 ; SI: ds_read2_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset0:0 offset1:8
@@ -382,7 +382,7 @@ define void @misaligned_read2_f64(double addrspace(1)* %out, double addrspace(3)
   ret void
 }
 
-@foo = addrspace(3) global [4 x i32] zeroinitializer, align 4
+@foo = addrspace(3) global [4 x i32] undef, align 4
 
 ; SI-LABEL: @load_constant_adjacent_offsets
 ; SI: v_mov_b32_e32 [[ZERO:v[0-9]+]], 0{{$}}
@@ -406,7 +406,7 @@ define void @load_constant_disjoint_offsets(i32 addrspace(1)* %out) {
   ret void
 }
 
-@bar = addrspace(3) global [4 x i64] zeroinitializer, align 4
+@bar = addrspace(3) global [4 x i64] undef, align 4
 
 ; SI-LABEL: @load_misaligned64_constant_offsets
 ; SI: v_mov_b32_e32 [[ZERO:v[0-9]+]], 0{{$}}
@@ -420,7 +420,7 @@ define void @load_misaligned64_constant_offsets(i64 addrspace(1)* %out) {
   ret void
 }
 
-@bar.large = addrspace(3) global [4096 x i64] zeroinitializer, align 4
+@bar.large = addrspace(3) global [4096 x i64] undef, align 4
 
 ; SI-LABEL: @load_misaligned64_constant_large_offsets
 ; SI-DAG: v_mov_b32_e32 [[BASE0:v[0-9]+]], 0x7ff8{{$}}
@@ -436,8 +436,8 @@ define void @load_misaligned64_constant_large_offsets(i64 addrspace(1)* %out) {
   ret void
 }
 
-@sgemm.lA = internal unnamed_addr addrspace(3) global [264 x float] zeroinitializer, align 4
-@sgemm.lB = internal unnamed_addr addrspace(3) global [776 x float] zeroinitializer, align 4
+@sgemm.lA = internal unnamed_addr addrspace(3) global [264 x float] undef, align 4
+@sgemm.lB = internal unnamed_addr addrspace(3) global [776 x float] undef, align 4
 
 define void @sgemm_inner_loop_read2_sequence(float addrspace(1)* %C, i32 %lda, i32 %ldb) #0 {
   %x.i = tail call i32 @llvm.r600.read.tgid.x() #1
