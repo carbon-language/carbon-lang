@@ -107,7 +107,7 @@ static void ComputePTXValueVTs(const TargetLowering &TLI, Type *Ty,
 
 // NVPTXTargetLowering Constructor.
 NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM)
-    : TargetLowering(TM, new NVPTXTargetObjectFile()), nvTM(&TM),
+    : TargetLowering(TM, TM.getObjFileLowering()), nvTM(&TM),
       nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
 
   // always lower memset, memcpy, and memmove intrinsics to load/store

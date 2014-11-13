@@ -137,10 +137,10 @@ public:
     llvm_unreachable("Invalid content kind");
   }
 
-  /// NOTE: The constructor takes ownership of TLOF.
+  /// NOTE: The TargetMachine owns TLOF.
   explicit TargetLoweringBase(const TargetMachine &TM,
                               const TargetLoweringObjectFile *TLOF);
-  virtual ~TargetLoweringBase();
+  virtual ~TargetLoweringBase() {}
 
 protected:
   /// \brief Initialize all of the actions to default values.

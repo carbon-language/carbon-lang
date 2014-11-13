@@ -737,10 +737,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   InitLibcallCallingConvs(LibcallCallingConvs);
 }
 
-TargetLoweringBase::~TargetLoweringBase() {
-  delete &TLOF;
-}
-
 void TargetLoweringBase::initActions() {
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));

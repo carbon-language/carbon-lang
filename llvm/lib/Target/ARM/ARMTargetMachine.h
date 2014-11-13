@@ -23,6 +23,7 @@ namespace llvm {
 
 class ARMBaseTargetMachine : public LLVMTargetMachine {
 protected:
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   ARMSubtarget        Subtarget;
   bool isLittle;
   mutable StringMap<std::unique_ptr<ARMSubtarget>> SubtargetMap;
@@ -43,6 +44,10 @@ public:
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 };
 
 /// ARMTargetMachine - ARM target machine.

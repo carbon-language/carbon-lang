@@ -1366,7 +1366,7 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
 }
 
 SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
-  : TargetLowering(TM, new SparcELFTargetObjectFile()) {
+  : TargetLowering(TM, TM.getObjFileLowering()) {
   Subtarget = &TM.getSubtarget<SparcSubtarget>();
 
   // Set up the register classes.

@@ -1043,7 +1043,7 @@ HexagonTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
 //===----------------------------------------------------------------------===//
 
 HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &targetmachine)
-    : TargetLowering(targetmachine, new HexagonTargetObjectFile()),
+    : TargetLowering(targetmachine, targetmachine.getObjFileLowering()),
       TM(targetmachine) {
 
   const HexagonSubtarget &Subtarget = TM.getSubtarget<HexagonSubtarget>();

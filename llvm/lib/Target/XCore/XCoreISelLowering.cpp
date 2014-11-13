@@ -69,7 +69,7 @@ getTargetNodeName(unsigned Opcode) const
 }
 
 XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM)
-    : TargetLowering(TM, new XCoreTargetObjectFile()), TM(TM),
+    : TargetLowering(TM, TM.getObjFileLowering()), TM(TM),
       Subtarget(TM.getSubtarget<XCoreSubtarget>()) {
 
   // Set up the register classes.

@@ -25,6 +25,7 @@ namespace llvm {
 /// NVPTXTargetMachine
 ///
 class NVPTXTargetMachine : public LLVMTargetMachine {
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   NVPTXSubtarget Subtarget;
 
   // Hold Strings that can be free'd all together with NVPTXTargetMachine
@@ -47,6 +48,9 @@ public:
   bool addPassesToEmitMC(PassManagerBase &, MCContext *&, raw_ostream &,
                          bool = true) override {
     return true;
+  }
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
   }
 
   /// \brief Register NVPTX analysis passes with a pass manager.

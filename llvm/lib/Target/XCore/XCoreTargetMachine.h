@@ -20,6 +20,7 @@
 namespace llvm {
 
 class XCoreTargetMachine : public LLVMTargetMachine {
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   XCoreSubtarget Subtarget;
 public:
   XCoreTargetMachine(const Target &T, StringRef TT,
@@ -33,6 +34,9 @@ public:
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   void addAnalysisPasses(PassManagerBase &PM) override;
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 };
 
 } // end namespace llvm

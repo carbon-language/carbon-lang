@@ -26,6 +26,7 @@
 #include "MipsSEISelDAGToDAG.h"
 #include "MipsSEISelLowering.h"
 #include "MipsSEInstrInfo.h"
+#include "MipsTargetObjectFile.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
@@ -56,7 +57,9 @@ MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
                                      Reloc::Model RM, CodeModel::Model CM,
                                      CodeGenOpt::Level OL, bool isLittle)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      isLittle(isLittle), Subtarget(nullptr),
+      isLittle(isLittle),
+      TLOF(make_unique<MipsTargetObjectFile>()),
+      Subtarget(nullptr),
       DefaultSubtarget(TT, CPU, FS, isLittle, this),
       NoMips16Subtarget(TT, CPU, FS.empty() ? "-mips16" : FS.str() + ",-mips16",
                         isLittle, this),

@@ -26,6 +26,7 @@ class MipsRegisterInfo;
 
 class MipsTargetMachine : public LLVMTargetMachine {
   bool isLittle;
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   MipsSubtarget *Subtarget;
   MipsSubtarget DefaultSubtarget;
   MipsSubtarget NoMips16Subtarget;
@@ -37,8 +38,6 @@ public:
   MipsTargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
                     const TargetOptions &Options, Reloc::Model RM,
                     CodeModel::Model CM, CodeGenOpt::Level OL, bool isLittle);
-
-  virtual ~MipsTargetMachine() {}
 
   void addAnalysisPasses(PassManagerBase &PM) override;
 
@@ -55,6 +54,10 @@ public:
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 };
 
 /// MipsebTargetMachine - Mips32/64 big endian target machine.

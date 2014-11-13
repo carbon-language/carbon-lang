@@ -23,6 +23,7 @@ namespace llvm {
 class TargetFrameLowering;
 
 class SystemZTargetMachine : public LLVMTargetMachine {
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   SystemZSubtarget        Subtarget;
 
 public:
@@ -37,6 +38,9 @@ public:
   }
   // Override LLVMTargetMachine
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 };
 
 } // end namespace llvm

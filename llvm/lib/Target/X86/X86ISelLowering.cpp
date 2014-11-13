@@ -199,28 +199,10 @@ static SDValue Concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
   return Insert256BitVector(V, V2, NumElems/2, DAG, dl);
 }
 
-static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
-  if (TT.isOSBinFormatMachO()) {
-    if (TT.getArch() == Triple::x86_64)
-      return new X86_64MachoTargetObjectFile();
-    return new TargetLoweringObjectFileMachO();
-  }
-
-  if (TT.isOSLinux())
-    return new X86LinuxTargetObjectFile();
-  if (TT.isOSBinFormatELF())
-    return new TargetLoweringObjectFileELF();
-  if (TT.isKnownWindowsMSVCEnvironment())
-    return new X86WindowsTargetObjectFile();
-  if (TT.isOSBinFormatCOFF())
-    return new TargetLoweringObjectFileCOFF();
-  llvm_unreachable("unknown subtarget type");
-}
-
 // FIXME: This should stop caching the target machine as soon as
 // we can remove resetOperationActions et al.
 X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM)
-    : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))) {
+    : TargetLowering(TM, TM.getObjFileLowering()) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();

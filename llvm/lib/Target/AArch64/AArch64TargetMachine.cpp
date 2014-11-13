@@ -12,6 +12,7 @@
 
 #include "AArch64.h"
 #include "AArch64TargetMachine.h"
+#include "AArch64TargetObjectFile.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/IR/Function.h"
@@ -87,6 +88,16 @@ extern "C" void LLVMInitializeAArch64Target() {
   RegisterTargetMachine<AArch64leTargetMachine> Z(TheARM64Target);
 }
 
+//===----------------------------------------------------------------------===//
+// AArch64 Lowering public interface.
+//===----------------------------------------------------------------------===//
+static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
+  if (TT.isOSBinFormatMachO())
+    return make_unique<AArch64_MachoTargetObjectFile>();
+
+  return make_unique<AArch64_ELFTargetObjectFile>();
+}
+
 /// TargetMachine ctor - Create an AArch64 architecture model.
 ///
 AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
@@ -96,6 +107,7 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
                                            CodeGenOpt::Level OL,
                                            bool LittleEndian)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      TLOF(createTLOF(Triple(getTargetTriple()))),
       Subtarget(TT, CPU, FS, *this, LittleEndian), isLittle(LittleEndian) {
   initAsmInfo();
 }

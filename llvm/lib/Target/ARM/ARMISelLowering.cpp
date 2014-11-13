@@ -156,16 +156,8 @@ void ARMTargetLowering::addQRTypeForNEON(MVT VT) {
   addTypeForNEON(VT, MVT::v2f64, MVT::v4i32);
 }
 
-static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
-  if (TT.isOSBinFormatMachO())
-    return new TargetLoweringObjectFileMachO();
-  if (TT.isOSWindows())
-    return new TargetLoweringObjectFileCOFF();
-  return new ARMElfTargetObjectFile();
-}
-
 ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
-    : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))) {
+    : TargetLowering(TM, TM.getObjFileLowering()) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
   RegInfo = TM.getSubtargetImpl()->getRegisterInfo();
   Itins = TM.getSubtargetImpl()->getInstrItineraryData();

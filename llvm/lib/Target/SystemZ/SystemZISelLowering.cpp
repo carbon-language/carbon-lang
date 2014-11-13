@@ -81,7 +81,7 @@ static MachineOperand earlyUseOperand(MachineOperand Op) {
 }
 
 SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm)
-    : TargetLowering(tm, new TargetLoweringObjectFileELF()),
+    : TargetLowering(tm, tm.getObjFileLowering()),
       Subtarget(tm.getSubtarget<SystemZSubtarget>()) {
   MVT PtrVT = getPointerTy();
 

@@ -13,6 +13,7 @@
 #include "ARM.h"
 #include "ARMTargetMachine.h"
 #include "ARMFrameLowering.h"
+#include "ARMTargetObjectFile.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -43,6 +44,14 @@ extern "C" void LLVMInitializeARMTarget() {
   RegisterTargetMachine<ThumbBETargetMachine> B(TheThumbBETarget);
 }
 
+static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
+  if (TT.isOSBinFormatMachO())
+    return make_unique<TargetLoweringObjectFileMachO>();
+  if (TT.isOSWindows())
+    return make_unique<TargetLoweringObjectFileCOFF>();
+  return make_unique<ARMElfTargetObjectFile>();
+}
+
 /// TargetMachine ctor - Create an ARM architecture model.
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
@@ -51,6 +60,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL, bool isLittle)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      TLOF(createTLOF(Triple(getTargetTriple()))),
       Subtarget(TT, CPU, FS, *this, isLittle), isLittle(isLittle) {
 
   // Default to triple-appropriate float ABI

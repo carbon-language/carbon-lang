@@ -70,6 +70,7 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      TLOF(make_unique<HexagonTargetObjectFile>()),
       Subtarget(TT, CPU, FS, *this) {
     initAsmInfo();
 }

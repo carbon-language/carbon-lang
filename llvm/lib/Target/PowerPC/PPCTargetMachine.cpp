@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCTargetMachine.h"
+#include "PPCTargetObjectFile.h"
 #include "PPC.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
@@ -60,6 +61,15 @@ static std::string computeFSAdditions(StringRef FS, CodeGenOpt::Level OL, String
   return FullFS;
 }
 
+static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
+  // If it isn't a Mach-O file then it's going to be a linux ELF
+  // object file.
+  if (TT.isOSDarwin())
+    return make_unique<TargetLoweringObjectFileMachO>();
+
+  return make_unique<PPC64LinuxTargetObjectFile>();
+}
+
 // The FeatureString here is a little subtle. We are modifying the feature string
 // with what are (currently) non-function specific overrides as it goes into the
 // LLVMTargetMachine constructor and then using the stored value in the
@@ -70,6 +80,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, computeFSAdditions(FS, OL, TT), Options, RM,
                         CM, OL),
+      TLOF(createTLOF(Triple(getTargetTriple()))),
       Subtarget(TT, CPU, TargetFS, *this) {
   initAsmInfo();
 }

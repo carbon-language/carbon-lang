@@ -66,18 +66,9 @@ EnableAArch64SlrGeneration("aarch64-shift-insert-generation", cl::Hidden,
                          cl::desc("Allow AArch64 SLI/SRI formation"),
                          cl::init(false));
 
-//===----------------------------------------------------------------------===//
-// AArch64 Lowering public interface.
-//===----------------------------------------------------------------------===//
-static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
-  if (TT.isOSBinFormatMachO())
-    return new AArch64_MachoTargetObjectFile();
-
-  return new AArch64_ELFTargetObjectFile();
-}
 
 AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM)
-    : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))) {
+    : TargetLowering(TM, TM.getObjFileLowering()) {
   Subtarget = &TM.getSubtarget<AArch64Subtarget>();
 
   // AArch64 doesn't have comparisons which set GPRs or setcc instructions, so

@@ -24,6 +24,7 @@ class StringRef;
 
 class X86TargetMachine final : public LLVMTargetMachine {
   virtual void anchor();
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   X86Subtarget       Subtarget;
 
   mutable StringMap<std::unique_ptr<X86Subtarget>> SubtargetMap;
@@ -41,6 +42,9 @@ public:
 
   // Set up the pass pipeline.
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 };
 
 } // End llvm namespace

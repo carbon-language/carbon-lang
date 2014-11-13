@@ -44,6 +44,7 @@ class ScalarTargetTransformInfo;
 class VectorTargetTransformInfo;
 class formatted_raw_ostream;
 class raw_ostream;
+class TargetLoweringObjectFile;
 
 // The old pass manager infrastructure is hidden in a legacy namespace now.
 namespace legacy {
@@ -101,6 +102,9 @@ public:
   }
   virtual const TargetSubtargetInfo *getSubtargetImpl(const Function &) const {
     return getSubtargetImpl();
+  }
+  virtual TargetLoweringObjectFile *getObjFileLowering() const {
+    return nullptr;
   }
 
   /// getSubtarget - This method returns a pointer to the specified type of

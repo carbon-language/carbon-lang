@@ -11,6 +11,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 using namespace llvm;
 
@@ -25,6 +26,7 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      TLOF(make_unique<TargetLoweringObjectFileELF>()),
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }

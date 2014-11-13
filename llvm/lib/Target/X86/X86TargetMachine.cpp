@@ -13,6 +13,7 @@
 
 #include "X86TargetMachine.h"
 #include "X86.h"
+#include "X86TargetObjectFile.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/PassManager.h"
@@ -30,6 +31,24 @@ extern "C" void LLVMInitializeX86Target() {
 
 void X86TargetMachine::anchor() { }
 
+static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
+  if (TT.isOSBinFormatMachO()) {
+    if (TT.getArch() == Triple::x86_64)
+      return make_unique<X86_64MachoTargetObjectFile>();
+    return make_unique<TargetLoweringObjectFileMachO>();
+  }
+
+  if (TT.isOSLinux())
+    return make_unique<X86LinuxTargetObjectFile>();
+  if (TT.isOSBinFormatELF())
+    return make_unique<TargetLoweringObjectFileELF>();
+  if (TT.isKnownWindowsMSVCEnvironment())
+    return make_unique<X86WindowsTargetObjectFile>();
+  if (TT.isOSBinFormatCOFF())
+    return make_unique<TargetLoweringObjectFileCOFF>();
+  llvm_unreachable("unknown subtarget type");
+}
+
 /// X86TargetMachine ctor - Create an X86 target.
 ///
 X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
@@ -37,6 +56,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      TLOF(createTLOF(Triple(getTargetTriple()))),
       Subtarget(TT, CPU, FS, *this, Options.StackAlignmentOverride) {
   // default to hard float ABI
   if (Options.FloatABIType == FloatABI::Default)

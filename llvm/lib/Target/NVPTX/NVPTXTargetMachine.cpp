@@ -16,6 +16,7 @@
 #include "NVPTX.h"
 #include "NVPTXAllocaHoisting.h"
 #include "NVPTXLowerAggrCopies.h"
+#include "NVPTXTargetObjectFile.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
@@ -74,6 +75,7 @@ NVPTXTargetMachine::NVPTXTargetMachine(const Target &T, StringRef TT,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL, bool is64bit)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      TLOF(make_unique<NVPTXTargetObjectFile>()),
       Subtarget(TT, CPU, FS, *this, is64bit) {
   initAsmInfo();
 }

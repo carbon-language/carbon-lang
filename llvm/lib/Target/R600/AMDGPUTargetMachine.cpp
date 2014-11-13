@@ -22,6 +22,7 @@
 #include "SIInstrInfo.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Verifier.h"
@@ -54,12 +55,14 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
                                          CodeModel::Model CM,
                                          CodeGenOpt::Level OptLevel)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OptLevel),
+      TLOF(new TargetLoweringObjectFileELF()),
       Subtarget(TT, CPU, FS, *this), IntrinsicInfo() {
   setRequiresStructuredCFG(true);
   initAsmInfo();
 }
 
 AMDGPUTargetMachine::~AMDGPUTargetMachine() {
+  delete TLOF;
 }
 
 namespace {

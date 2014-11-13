@@ -24,6 +24,7 @@ namespace llvm {
 /// MSP430TargetMachine
 ///
 class MSP430TargetMachine : public LLVMTargetMachine {
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   MSP430Subtarget        Subtarget;
 
 public:
@@ -36,6 +37,10 @@ public:
     return &Subtarget;
   }
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 }; // MSP430TargetMachine.
 
 } // end namespace llvm
