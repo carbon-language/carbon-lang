@@ -1159,7 +1159,7 @@ private:
       return false;
 
     for (auto H : HintTypes)
-      if (Name->getName().endswith(H.Name))
+      if (Name->getString().endswith(H.Name))
         return true;
     return false;
   }

@@ -61,6 +61,11 @@ class MDString : public Value {
   MDString(const MDString &) LLVM_DELETED_FUNCTION;
 
   explicit MDString(LLVMContext &C);
+
+private:
+  /// \brief Shadow Value::getName() to prevent its use.
+  StringRef getName() const { return Value::getName(); }
+
 public:
   static MDString *get(LLVMContext &Context, StringRef Str);
   static MDString *get(LLVMContext &Context, const char *Str) {
