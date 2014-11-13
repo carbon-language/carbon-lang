@@ -397,7 +397,7 @@ TEST_F(FileSystemTest, TempFiles) {
     "abcdefghijklmnopqrstuvwxyz5abcdefghijklmnopqrstuvwxyz4"
     "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
     "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
-  EXPECT_EQ(fs::createUniqueFile(Twine(Path270), FileDescriptor, TempPath),
+  EXPECT_EQ(fs::createUniqueFile(Path270, FileDescriptor, TempPath),
             errc::invalid_argument);
   // Relative path < 247 chars, no problem.
   const char *Path216 =
@@ -405,7 +405,7 @@ TEST_F(FileSystemTest, TempFiles) {
     "abcdefghijklmnopqrstuvwxyz5abcdefghijklmnopqrstuvwxyz4"
     "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
     "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
-  ASSERT_NO_ERROR(fs::createTemporaryFile(Twine(Path216), "", TempPath));
+  ASSERT_NO_ERROR(fs::createTemporaryFile(Path216, "", TempPath));
   ASSERT_NO_ERROR(fs::remove(Twine(TempPath)));
 #endif
 }
@@ -456,10 +456,10 @@ TEST_F(FileSystemTest, CreateDir) {
   // While we're here, prove that .. and . handling works in these long paths.
   const char *DotDotDirs = "\\..\\.\\b";
   LongDir.append(DotDotDirs);
-  ASSERT_NO_ERROR(fs::create_directory(Twine("b")));
+  ASSERT_NO_ERROR(fs::create_directory("b"));
   ASSERT_EQ(fs::create_directory(Twine(LongDir), false), errc::file_exists);
   // And clean up.
-  ASSERT_NO_ERROR(fs::remove(Twine("b")));
+  ASSERT_NO_ERROR(fs::remove("b"));
   ASSERT_NO_ERROR(fs::remove(
     Twine(LongDir.substr(0, LongDir.size() - strlen(DotDotDirs)))));
   ASSERT_NE(::SetCurrentDirectoryA(PreviousDir), 0);
