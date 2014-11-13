@@ -39,13 +39,13 @@ ErrorOr<std::string> sys::findProgramByName(StringRef Name,
   if (Name.find_first_of("/\\") != StringRef::npos)
     return std::string(Name);
 
-  const char16_t *Path = nullptr;
-  std::u16string PathStorage;
+  const wchar_t *Path = nullptr;
+  std::wstring PathStorage;
   if (!Paths.empty()) {
     PathStorage.reserve(Paths.size() * MAX_PATH);
     for (unsigned i = 0; i < Paths.size(); ++i) {
       if (i)
-        PathStorage.push_back(';');
+        PathStorage.push_back(L';');
       StringRef P = Paths[i];
       SmallVector<wchar_t, MAX_PATH> TmpPath;
       if (std::error_code EC = windows::UTF8ToUTF16(P, TmpPath))
@@ -73,7 +73,7 @@ ErrorOr<std::string> sys::findProgramByName(StringRef Name,
 
     do {
       U16Result.reserve(Len);
-      Len = ::SearchPathW((const wchar_t *)Path, c_str(U16Name),
+      Len = ::SearchPathW(Path, c_str(U16Name),
                           U16Ext.empty() ? nullptr : c_str(U16Ext),
                           U16Result.capacity(), U16Result.data(), nullptr);
     } while (Len > U16Result.capacity());
