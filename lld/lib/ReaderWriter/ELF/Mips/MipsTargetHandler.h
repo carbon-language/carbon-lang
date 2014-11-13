@@ -135,6 +135,48 @@ private:
   std::unique_ptr<MipsTargetRelocationHandler> _relocationHandler;
 };
 
+template <class ELFT> class MipsSymbolTable : public SymbolTable<ELFT> {
+public:
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+
+  MipsSymbolTable(const MipsLinkingContext &ctx)
+      : SymbolTable<ELFT>(ctx, ".symtab",
+                          DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
+
+  void addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
+                      int64_t addr) override {
+    SymbolTable<ELFT>::addDefinedAtom(sym, da, addr);
+
+    switch (da->codeModel()) {
+    case DefinedAtom::codeMipsMicro:
+      sym.st_other |= llvm::ELF::STO_MIPS_MICROMIPS;
+      break;
+    case DefinedAtom::codeMipsMicroPIC:
+      sym.st_other |= llvm::ELF::STO_MIPS_MICROMIPS | llvm::ELF::STO_MIPS_PIC;
+      break;
+    default:
+      break;
+    }
+  }
+
+  void finalize(bool sort = true) override {
+    SymbolTable<ELFT>::finalize(sort);
+
+    for (auto &ste : this->_symbolTable) {
+      if (!ste._atom)
+        continue;
+      if (const auto *da = dyn_cast<DefinedAtom>(ste._atom)) {
+        if (da->codeModel() == DefinedAtom::codeMipsMicro ||
+            da->codeModel() == DefinedAtom::codeMipsMicroPIC) {
+          // Adjust dynamic microMIPS symbol value. That allows a dynamic
+          // linker to recognize and handle this symbol correctly.
+          ste._symbol.st_value = ste._symbol.st_value | 1;
+        }
+      }
+    }
+  }
+};
+
 template <class ELFT>
 class MipsDynamicSymbolTable : public DynamicSymbolTable<ELFT> {
 public:
@@ -157,23 +199,30 @@ public:
   }
 
   void finalize() override {
+    DynamicSymbolTable<ELFT>::finalize();
+
     const auto &pltSection = _targetLayout.getPLTSection();
 
-    // Under some conditions a dynamic symbol table record should hold a symbol
-    // value of the corresponding PLT entry. For details look at the PLT entry
-    // creation code in the class MipsRelocationPass. Let's update atomLayout
-    // fields for such symbols.
     for (auto &ste : this->_symbolTable) {
       if (!ste._atom)
         continue;
       if (auto *layout = pltSection.findPLTLayout(ste._atom)) {
+        // Under some conditions a dynamic symbol table record should hold
+        // a symbol value of the corresponding PLT entry. For details look
+        // at the PLT entry creation code in the class MipsRelocationPass.
+        // Let's update atomLayout fields for such symbols.
         assert(!ste._atomLayout);
         ste._symbol.st_value = layout->_virtualAddr;
         ste._symbol.st_other |= ELF::STO_MIPS_PLT;
+      } else if (const auto *da = dyn_cast<DefinedAtom>(ste._atom)) {
+        if (da->codeModel() == DefinedAtom::codeMipsMicro ||
+            da->codeModel() == DefinedAtom::codeMipsMicroPIC) {
+          // Adjust dynamic microMIPS symbol value. That allows a dynamic
+          // linker to recognize and handle this symbol correctly.
+          ste._symbol.st_value = ste._symbol.st_value | 1;
+        }
       }
     }
-
-    DynamicSymbolTable<Mips32ElELFType>::finalize();
   }
 
 private:

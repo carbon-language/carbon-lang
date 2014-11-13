@@ -386,6 +386,16 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::DynamicExport> {
   }
 };
 
+template <> struct ScalarEnumerationTraits<lld::DefinedAtom::CodeModel> {
+  static void enumeration(IO &io, lld::DefinedAtom::CodeModel &value) {
+    io.enumCase(value, "none", lld::DefinedAtom::codeNA);
+    io.enumCase(value, "mips-pic", lld::DefinedAtom::codeMipsPIC);
+    io.enumCase(value, "mips-micro", lld::DefinedAtom::codeMipsMicro);
+    io.enumCase(value, "mips-micro-pic", lld::DefinedAtom::codeMipsMicroPIC);
+    io.enumCase(value, "mips-16", lld::DefinedAtom::codeMips16);
+  }
+};
+
 template <>
 struct ScalarEnumerationTraits<lld::DefinedAtom::ContentPermissions> {
   static void enumeration(IO &io, lld::DefinedAtom::ContentPermissions &value) {
@@ -809,6 +819,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
           _alignment(atom->alignment()), _sectionChoice(atom->sectionChoice()),
           _sectionPosition(atom->sectionPosition()),
           _deadStrip(atom->deadStrip()), _dynamicExport(atom->dynamicExport()),
+          _codeModel(atom->codeModel()),
           _permissions(atom->permissions()), _size(atom->size()),
           _sectionName(atom->customSectionName()) {
       for (const lld::Reference *r : *atom)
@@ -859,6 +870,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     SectionPosition sectionPosition() const override { return _sectionPosition; }
     DeadStripKind deadStrip() const override { return _deadStrip; }
     DynamicExport dynamicExport() const override { return _dynamicExport; }
+    CodeModel codeModel() const override { return _codeModel; }
     ContentPermissions permissions() const override { return _permissions; }
     void setGroupChild(bool val) { _isGroupChild = val; }
     bool isGroupChild() const { return _isGroupChild; }
@@ -904,6 +916,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     SectionPosition                     _sectionPosition;
     DeadStripKind                       _deadStrip;
     DynamicExport                       _dynamicExport;
+    CodeModel                           _codeModel;
     ContentPermissions                  _permissions;
     uint32_t                            _ordinal;
     std::vector<ImplicitHex8>           _content;
@@ -951,6 +964,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
                                          DefinedAtom::deadStripNormal);
     io.mapOptional("dynamic-export",   keys->_dynamicExport,
                                          DefinedAtom::dynamicExportNormal);
+    io.mapOptional("code-model",       keys->_codeModel, DefinedAtom::codeNA);
     // default permissions based on content type
     io.mapOptional("permissions",      keys->_permissions,
                                          DefinedAtom::permissions(

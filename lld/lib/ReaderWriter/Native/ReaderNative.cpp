@@ -90,6 +90,10 @@ public:
     return (DynamicExport)attributes().dynamicExport;
   }
 
+  DefinedAtom::CodeModel codeModel() const override {
+    return DefinedAtom::CodeModel(attributes().codeModel);
+  }
+
   DefinedAtom::ContentPermissions permissions() const override {
      return (DefinedAtom::ContentPermissions)(attributes().permissions);
   }

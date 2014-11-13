@@ -100,6 +100,9 @@ protected:
   // This is a hook for creating default dynamic entries
   virtual void createDefaultDynamicEntries() {}
 
+  /// \brief Create symbol table.
+  virtual LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) createSymbolTable();
+
   /// \brief create dynamic table.
   virtual LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable();
 
@@ -284,8 +287,7 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   _layout.setHeader(_elfHeader.get());
   _layout.setProgramHeader(_programHeader.get());
 
-  _symtab.reset(new (_alloc) SymbolTable<ELFT>(
-      _context, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE));
+  _symtab = std::move(this->createSymbolTable());
   _strtab.reset(new (_alloc) StringTable<ELFT>(
       _context, ".strtab", DefaultLayout<ELFT>::ORDER_STRING_TABLE));
   _shstrtab.reset(new (_alloc) StringTable<ELFT>(
@@ -334,6 +336,13 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
       _layout.getPLTRelocationTable()->setSymbolTable(
           _dynamicSymbolTable.get());
   }
+}
+
+template <class ELFT>
+LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)
+    OutputELFWriter<ELFT>::createSymbolTable() {
+  return LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)(new (_alloc) SymbolTable<ELFT>(
+      this->_context, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE));
 }
 
 /// \brief create dynamic table

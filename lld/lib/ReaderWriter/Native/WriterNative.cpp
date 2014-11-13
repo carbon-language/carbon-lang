@@ -426,6 +426,7 @@ private:
                           = atom.sectionChoice() << 4 | atom.sectionPosition();
     attrs.deadStrip         = atom.deadStrip();
     attrs.dynamicExport     = atom.dynamicExport();
+    attrs.codeModel         = atom.codeModel();
     attrs.permissions       = atom.permissions();
     return attrs;
   }

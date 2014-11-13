@@ -39,6 +39,7 @@ protected:
     return std::error_code();
   }
 
+  LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) createSymbolTable() override;
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable() override;
 
   LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
@@ -111,6 +112,13 @@ void MipsExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
   _writeHelper.finalizeMipsRuntimeAtomValues();
+}
+
+template <class ELFT>
+LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)
+    MipsExecutableWriter<ELFT>::createSymbolTable() {
+  return LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)(new (
+      this->_alloc) MipsSymbolTable<ELFT>(_mipsContext));
 }
 
 /// \brief create dynamic table

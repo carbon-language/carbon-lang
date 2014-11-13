@@ -155,6 +155,7 @@ struct NativeAtomAttributesV1 {
   uint8_t   dynamicExport;
   uint8_t   permissions;
   uint8_t   alias;
+  uint8_t   codeModel;
 };
 
 

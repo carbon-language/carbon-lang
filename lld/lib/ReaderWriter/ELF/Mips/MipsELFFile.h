@@ -60,6 +60,21 @@ public:
   const MipsELFFile<ELFT>& file() const override {
     return static_cast<const MipsELFFile<ELFT> &>(this->_owningFile);
   }
+
+  DefinedAtom::CodeModel codeModel() const override {
+    switch (this->_symbol->st_other & llvm::ELF::STO_MIPS_MIPS16) {
+    case llvm::ELF::STO_MIPS_MIPS16:
+      return DefinedAtom::codeMips16;
+    case llvm::ELF::STO_MIPS_PIC:
+      return DefinedAtom::codeMipsPIC;
+    case llvm::ELF::STO_MIPS_MICROMIPS:
+      return DefinedAtom::codeMipsMicro;
+    case llvm::ELF::STO_MIPS_MICROMIPS | llvm::ELF::STO_MIPS_PIC:
+      return DefinedAtom::codeMipsMicroPIC;
+    default:
+      return DefinedAtom::codeNA;
+    }
+  }
 };
 
 template <class ELFT> class MipsELFFile : public ELFFile<ELFT> {

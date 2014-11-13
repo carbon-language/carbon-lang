@@ -194,6 +194,15 @@ public:
     dynamicExportAlways,
   };
 
+  // Attributes describe a code model used by the atom.
+  enum CodeModel {
+    codeNA,           // no specific code model
+    codeMipsPIC,      // PIC function in a PIC / non-PIC mixed file
+    codeMipsMicro,    // microMIPS instruction encoding
+    codeMipsMicroPIC, // microMIPS instruction encoding + PIC
+    codeMips16,       // MIPS-16 instruction encoding
+  };
+
   struct Alignment {
     Alignment(int p2, int m = 0)
       : powerOf2(p2)
@@ -265,6 +274,9 @@ public:
   virtual DynamicExport dynamicExport() const {
     return dynamicExportNormal;
   }
+
+  /// \brief Code model used by the atom.
+  virtual CodeModel codeModel() const { return codeNA; }
 
   /// \brief Returns the OS memory protections required for this atom's content
   /// at runtime.
