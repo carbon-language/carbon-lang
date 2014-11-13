@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"
 
 #ifdef LLVM_ON_WIN32
+#include <Windows.h>
 #include <winerror.h>
 #endif
 
@@ -261,7 +262,7 @@ TEST(Support, HomeDirectory) {
 class FileSystemTest : public testing::Test {
 protected:
   /// Unique temporary directory in which all created filesystem entities must
-  /// be placed. It is recursively removed at the end of each test.
+  /// be placed. It is removed at the end of each test (must be empty).
   SmallString<128> TestDirectory;
 
   virtual void SetUp() {
@@ -397,7 +398,15 @@ TEST_F(FileSystemTest, TempFiles) {
     "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
     "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
   EXPECT_EQ(fs::createUniqueFile(Twine(Path270), FileDescriptor, TempPath),
-            errc::no_such_file_or_directory);
+            errc::invalid_argument);
+  // Relative path < 247 chars, no problem.
+  const char *Path216 =
+    "abcdefghijklmnopqrstuvwxyz7abcdefghijklmnopqrstuvwxyz6"
+    "abcdefghijklmnopqrstuvwxyz5abcdefghijklmnopqrstuvwxyz4"
+    "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
+    "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
+  ASSERT_NO_ERROR(fs::createTemporaryFile(Twine(Path216), "", TempPath));
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath)));
 #endif
 }
 
@@ -407,6 +416,54 @@ TEST_F(FileSystemTest, CreateDir) {
   ASSERT_EQ(fs::create_directory(Twine(TestDirectory) + "foo", false),
             errc::file_exists);
   ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "foo"));
+
+#ifdef LLVM_ON_WIN32
+  // Prove that create_directories() can handle a pathname > 248 characters,
+  // which is the documented limit for CreateDirectory().
+  // (248 is MAX_PATH subtracting room for an 8.3 filename.)
+  // Generate a directory path guaranteed to fall into that range.
+  size_t TmpLen = TestDirectory.size();
+  const char *OneDir = "\\123456789";
+  size_t OneDirLen = strlen(OneDir);
+  ASSERT_LT(OneDirLen, 12);
+  size_t NLevels = ((248 - TmpLen) / OneDirLen) + 1;
+  SmallString<260> LongDir(TestDirectory);
+  for (size_t I = 0; I < NLevels; ++I)
+    LongDir.append(OneDir);
+  ASSERT_NO_ERROR(fs::create_directories(Twine(LongDir)));
+  ASSERT_NO_ERROR(fs::create_directories(Twine(LongDir)));
+  ASSERT_EQ(fs::create_directories(Twine(LongDir), false),
+            errc::file_exists);
+  // Tidy up, "recursively" removing the directories.
+  StringRef ThisDir(LongDir);
+  for (size_t J = 0; J < NLevels; ++J) {
+    ASSERT_NO_ERROR(fs::remove(ThisDir));
+    ThisDir = path::parent_path(ThisDir);
+  }
+
+  // Similarly for a relative pathname.  Need to set the current directory to
+  // TestDirectory so that the one we create ends up in the right place.
+  char PreviousDir[260];
+  size_t PreviousDirLen = ::GetCurrentDirectoryA(260, PreviousDir);
+  ASSERT_GT(PreviousDirLen, 0);
+  ASSERT_LT(PreviousDirLen, 260);
+  ASSERT_NE(::SetCurrentDirectoryA(TestDirectory.c_str()), 0);
+  LongDir.clear();
+  // Generate a relative directory name with absolute length > 248.
+  size_t LongDirLen = 249 - TestDirectory.size();
+  LongDir.assign(LongDirLen, 'a');
+  ASSERT_NO_ERROR(fs::create_directory(Twine(LongDir)));
+  // While we're here, prove that .. and . handling works in these long paths.
+  const char *DotDotDirs = "\\..\\.\\b";
+  LongDir.append(DotDotDirs);
+  ASSERT_NO_ERROR(fs::create_directory(Twine("b")));
+  ASSERT_EQ(fs::create_directory(Twine(LongDir), false), errc::file_exists);
+  // And clean up.
+  ASSERT_NO_ERROR(fs::remove(Twine("b")));
+  ASSERT_NO_ERROR(fs::remove(
+    Twine(LongDir.substr(0, LongDir.size() - strlen(DotDotDirs)))));
+  ASSERT_NE(::SetCurrentDirectoryA(PreviousDir), 0);
+#endif
 }
 
 TEST_F(FileSystemTest, DirectoryIteration) {

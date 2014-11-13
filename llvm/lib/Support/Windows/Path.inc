@@ -59,6 +59,59 @@ static bool is_separator(const wchar_t value) {
   }
 }
 
+// Convert a UTF-8 path to UTF-16.  Also, if the absolute equivalent of the
+// path is longer than CreateDirectory can tolerate, make it absolute and
+// prefixed by '\\?\'.
+static std::error_code widenPath(const Twine &Path8,
+                                 SmallVectorImpl<wchar_t> &Path16) {
+  const size_t MaxDirLen = MAX_PATH - 12; // Must leave room for 8.3 filename.
+
+  // Several operations would convert Path8 to SmallString; more efficient to
+  // do it once up front.
+  SmallString<128> Path8Str;
+  Path8.toVector(Path8Str);
+
+  // If we made this path absolute, how much longer would it get?
+  size_t CurPathLen;
+  if (llvm::sys::path::is_absolute(Twine(Path8Str)))
+    CurPathLen = 0; // No contribution from current_path needed.
+  else {
+    CurPathLen = ::GetCurrentDirectoryW(0, NULL);
+    if (CurPathLen == 0)
+      return windows_error(::GetLastError());
+  }
+
+  // Would the absolute path be longer than our limit?
+  if ((Path8Str.size() + CurPathLen) >= MaxDirLen &&
+      !Path8Str.startswith("\\\\?\\")) {
+    SmallString<2*MAX_PATH> FullPath("\\\\?\\");
+    if (CurPathLen) {
+      SmallString<80> CurPath;
+      if (std::error_code EC = llvm::sys::fs::current_path(CurPath))
+        return EC;
+      FullPath.append(CurPath);
+    }
+    // Traverse the requested path, canonicalizing . and .. as we go (because
+    // the \\?\ prefix is documented to treat them as real components).
+    // The iterators don't report separators and append() always attaches
+    // preferred_separator so we don't need to call native() on the result.
+    for (llvm::sys::path::const_iterator I = llvm::sys::path::begin(Path8Str),
+                                         E = llvm::sys::path::end(Path8Str);
+                                         I != E; ++I) {
+      if (I->size() == 1 && *I == ".")
+        continue;
+      if (I->size() == 2 && *I == "..")
+        llvm::sys::path::remove_filename(FullPath);
+      else
+        llvm::sys::path::append(FullPath, *I);
+    }
+    return UTF8ToUTF16(FullPath, Path16);
+  }
+
+  // Just use the caller's original path.
+  return UTF8ToUTF16(Path8Str, Path16);
+}
+
 namespace llvm {
 namespace sys  {
 namespace fs {
@@ -130,11 +183,9 @@ std::error_code current_path(SmallVectorImpl<char> &result) {
 }
 
 std::error_code create_directory(const Twine &path, bool IgnoreExisting) {
-  SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
-  if (std::error_code ec =
-          UTF8ToUTF16(path.toStringRef(path_storage), path_utf16))
+  if (std::error_code ec = widenPath(path, path_utf16))
     return ec;
 
   if (!::CreateDirectoryW(path_utf16.begin(), NULL)) {
@@ -148,18 +199,12 @@ std::error_code create_directory(const Twine &path, bool IgnoreExisting) {
 
 // We can't use symbolic links for windows.
 std::error_code create_link(const Twine &to, const Twine &from) {
-  // Get arguments.
-  SmallString<128> from_storage;
-  SmallString<128> to_storage;
-  StringRef f = from.toStringRef(from_storage);
-  StringRef t = to.toStringRef(to_storage);
-
   // Convert to utf-16.
   SmallVector<wchar_t, 128> wide_from;
   SmallVector<wchar_t, 128> wide_to;
-  if (std::error_code ec = UTF8ToUTF16(f, wide_from))
+  if (std::error_code ec = widenPath(from, wide_from))
     return ec;
-  if (std::error_code ec = UTF8ToUTF16(t, wide_to))
+  if (std::error_code ec = widenPath(to, wide_to))
     return ec;
 
   if (!::CreateHardLinkW(wide_from.begin(), wide_to.begin(), NULL))
@@ -169,7 +214,6 @@ std::error_code create_link(const Twine &to, const Twine &from) {
 }
 
 std::error_code remove(const Twine &path, bool IgnoreNonExisting) {
-  SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
   file_status ST;
@@ -179,8 +223,7 @@ std::error_code remove(const Twine &path, bool IgnoreNonExisting) {
     return std::error_code();
   }
 
-  if (std::error_code ec =
-          UTF8ToUTF16(path.toStringRef(path_storage), path_utf16))
+  if (std::error_code ec = widenPath(path, path_utf16))
     return ec;
 
   if (ST.type() == file_type::directory_file) {
@@ -200,18 +243,12 @@ std::error_code remove(const Twine &path, bool IgnoreNonExisting) {
 }
 
 std::error_code rename(const Twine &from, const Twine &to) {
-  // Get arguments.
-  SmallString<128> from_storage;
-  SmallString<128> to_storage;
-  StringRef f = from.toStringRef(from_storage);
-  StringRef t = to.toStringRef(to_storage);
-
   // Convert to utf-16.
   SmallVector<wchar_t, 128> wide_from;
   SmallVector<wchar_t, 128> wide_to;
-  if (std::error_code ec = UTF8ToUTF16(f, wide_from))
+  if (std::error_code ec = widenPath(from, wide_from))
     return ec;
-  if (std::error_code ec = UTF8ToUTF16(t, wide_to))
+  if (std::error_code ec = widenPath(to, wide_to))
     return ec;
 
   std::error_code ec = std::error_code();
@@ -232,11 +269,9 @@ std::error_code rename(const Twine &from, const Twine &to) {
 }
 
 std::error_code resize_file(const Twine &path, uint64_t size) {
-  SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
-  if (std::error_code ec =
-          UTF8ToUTF16(path.toStringRef(path_storage), path_utf16))
+  if (std::error_code ec = widenPath(path, path_utf16))
     return ec;
 
   int fd = ::_wopen(path_utf16.begin(), O_BINARY | _O_RDWR, S_IWRITE);
@@ -252,11 +287,9 @@ std::error_code resize_file(const Twine &path, uint64_t size) {
 }
 
 std::error_code access(const Twine &Path, AccessMode Mode) {
-  SmallString<128> PathStorage;
   SmallVector<wchar_t, 128> PathUtf16;
 
-  if (std::error_code EC =
-          UTF8ToUTF16(Path.toStringRef(PathStorage), PathUtf16))
+  if (std::error_code EC = widenPath(Path, PathUtf16))
     return EC;
 
   DWORD Attributes = ::GetFileAttributesW(PathUtf16.begin());
@@ -382,7 +415,7 @@ std::error_code status(const Twine &path, file_status &result) {
     return std::error_code();
   }
 
-  if (std::error_code ec = UTF8ToUTF16(path8, path_utf16))
+  if (std::error_code ec = widenPath(path8, path_utf16))
     return ec;
 
   DWORD attr = ::GetFileAttributesW(path_utf16.begin());
@@ -525,11 +558,10 @@ mapped_file_region::mapped_file_region(const Twine &path,
   , FileDescriptor()
   , FileHandle(INVALID_HANDLE_VALUE)
   , FileMappingHandle() {
-  SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
   // Convert path to UTF-16.
-  if ((ec = UTF8ToUTF16(path.toStringRef(path_storage), path_utf16)))
+  if (ec = widenPath(path, path_utf16))
     return;
 
   // Get file handle for creating a file mapping.
@@ -635,7 +667,7 @@ std::error_code detail::directory_iterator_construct(detail::DirIterState &it,
                                                 StringRef path){
   SmallVector<wchar_t, 128> path_utf16;
 
-  if (std::error_code ec = UTF8ToUTF16(path, path_utf16))
+  if (std::error_code ec = widenPath(path, path_utf16))
     return ec;
 
   // Convert path to the format that Windows is happy with.
@@ -718,11 +750,9 @@ std::error_code detail::directory_iterator_increment(detail::DirIterState &it) {
 }
 
 std::error_code openFileForRead(const Twine &Name, int &ResultFD) {
-  SmallString<128> PathStorage;
   SmallVector<wchar_t, 128> PathUTF16;
 
-  if (std::error_code EC =
-          UTF8ToUTF16(Name.toStringRef(PathStorage), PathUTF16))
+  if (std::error_code EC = widenPath(Name, PathUTF16))
     return EC;
 
   HANDLE H = ::CreateFileW(PathUTF16.begin(), GENERIC_READ,
@@ -757,11 +787,9 @@ std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
   assert((!(Flags & sys::fs::F_Excl) || !(Flags & sys::fs::F_Append)) &&
          "Cannot specify both 'excl' and 'append' file creation flags!");
 
-  SmallString<128> PathStorage;
   SmallVector<wchar_t, 128> PathUTF16;
 
-  if (std::error_code EC =
-          UTF8ToUTF16(Name.toStringRef(PathStorage), PathUTF16))
+  if (std::error_code EC = widenPath(Name, PathUTF16))
     return EC;
 
   DWORD CreationDisposition;
