@@ -169,10 +169,10 @@ int dotest()
     actions.push_back(std::make_pair(num_crash_threads, crash_func));
 
     action_counts delay_actions;
-    actions.push_back(std::make_pair(num_delay_breakpoint_threads, breakpoint_func));
-    actions.push_back(std::make_pair(num_delay_watchpoint_threads, watchpoint_func));
-    actions.push_back(std::make_pair(num_delay_signal_threads, signal_func));
-    actions.push_back(std::make_pair(num_delay_crash_threads, crash_func));
+    delay_actions.push_back(std::make_pair(num_delay_breakpoint_threads, breakpoint_func));
+    delay_actions.push_back(std::make_pair(num_delay_watchpoint_threads, watchpoint_func));
+    delay_actions.push_back(std::make_pair(num_delay_signal_threads, signal_func));
+    delay_actions.push_back(std::make_pair(num_delay_crash_threads, crash_func));
 
     // Create threads that handle instant actions
     thread_vector threads;
