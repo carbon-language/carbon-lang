@@ -800,7 +800,7 @@ void COFFDumper::printRelocation(const SectionRef &Section,
   if (error(Reloc.getTypeName(RelocName)))
     return;
   symbol_iterator Symbol = Reloc.getSymbol();
-  if (error(Symbol->getName(SymbolName)))
+  if (Symbol != Obj->symbol_end() && error(Symbol->getName(SymbolName)))
     return;
   if (error(Section.getContents(Contents)))
     return;
@@ -809,12 +809,12 @@ void COFFDumper::printRelocation(const SectionRef &Section,
     DictScope Group(W, "Relocation");
     W.printHex("Offset", Offset);
     W.printNumber("Type", RelocName, RelocType);
-    W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
+    W.printString("Symbol", SymbolName.empty() ? "-" : SymbolName);
   } else {
     raw_ostream& OS = W.startLine();
     OS << W.hex(Offset)
        << " " << RelocName
-       << " " << (SymbolName.size() > 0 ? SymbolName : "-")
+       << " " << (SymbolName.empty() ? "-" : SymbolName)
        << "\n";
   }
 }
