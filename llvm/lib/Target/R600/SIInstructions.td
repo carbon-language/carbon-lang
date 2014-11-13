@@ -1398,11 +1398,11 @@ defm V_MUL_U32_U24 : VOP2Inst <vop2<0xb>, "v_mul_u32_u24",
 
 
 defm V_MIN_LEGACY_F32 : VOP2Inst <vop2<0xd>, "v_min_legacy_f32",
-  VOP_F32_F32_F32, AMDGPUfmin
+  VOP_F32_F32_F32, AMDGPUfmin_legacy
 >;
 
 defm V_MAX_LEGACY_F32 : VOP2Inst <vop2<0xe>, "v_max_legacy_f32",
-  VOP_F32_F32_F32, AMDGPUfmax
+  VOP_F32_F32_F32, AMDGPUfmax_legacy
 >;
 
 defm V_MIN_F32 : VOP2Inst <vop2<0xf>, "v_min_f32", VOP_F32_F32_F32, fminnum>;

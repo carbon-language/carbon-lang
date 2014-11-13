@@ -140,7 +140,14 @@ public:
 
   SDValue LowerIntrinsicIABS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerIntrinsicLRP(SDValue Op, SelectionDAG &DAG) const;
-  SDValue CombineMinMax(SDNode *N, SelectionDAG &DAG) const;
+  SDValue CombineMinMax(SDLoc DL,
+                        EVT VT,
+                        SDValue LHS,
+                        SDValue RHS,
+                        SDValue True,
+                        SDValue False,
+                        SDValue CC,
+                        SelectionDAG &DAG) const;
   const char* getTargetNodeName(unsigned Opcode) const override;
 
   virtual SDNode *PostISelFolding(MachineSDNode *N,
@@ -188,10 +195,10 @@ enum {
   // Denormals handled on some parts.
   COS_HW,
   SIN_HW,
-  FMAX,
+  FMAX_LEGACY,
   SMAX,
   UMAX,
-  FMIN,
+  FMIN_LEGACY,
   SMIN,
   UMIN,
   URECIP,

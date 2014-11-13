@@ -58,9 +58,12 @@ def AMDGPUrsq_clamped : SDNode<"AMDGPUISD::RSQ_CLAMPED", SDTFPUnaryOp>;
 
 def AMDGPUldexp : SDNode<"AMDGPUISD::LDEXP", AMDGPULdExpOp>;
 
-// out = max(a, b) a and b are floats
-def AMDGPUfmax : SDNode<"AMDGPUISD::FMAX", SDTFPBinOp,
-  [SDNPCommutative, SDNPAssociative]
+// out = max(a, b) a and b are floats, where a nan comparison fails.
+// This is not commutative because this gives the second operand:
+//   x < nan ? x : nan -> nan
+//   nan < x ? nan : x -> x
+def AMDGPUfmax_legacy : SDNode<"AMDGPUISD::FMAX_LEGACY", SDTFPBinOp,
+  [SDNPAssociative]
 >;
 
 def AMDGPUclamp : SDNode<"AMDGPUISD::CLAMP", SDTFPTernaryOp, []>;
@@ -76,9 +79,9 @@ def AMDGPUumax : SDNode<"AMDGPUISD::UMAX", SDTIntBinOp,
   [SDNPCommutative, SDNPAssociative]
 >;
 
-// out = min(a, b) a and b are floats
-def AMDGPUfmin : SDNode<"AMDGPUISD::FMIN", SDTFPBinOp,
-  [SDNPCommutative, SDNPAssociative]
+// out = min(a, b) a and b are floats, where a nan comparison fails.
+def AMDGPUfmin_legacy : SDNode<"AMDGPUISD::FMIN_LEGACY", SDTFPBinOp,
+  [SDNPAssociative]
 >;
 
 // out = min(a, b) a snd b are signed ints
@@ -137,7 +140,7 @@ def AMDGPUregister_store : SDNode<"AMDGPUISD::REGISTER_STORE",
 // MSKOR(dst, mask, src) MEM[dst] = ((MEM[dst] & ~mask) | src)
 //
 // src0: vec4(src, 0, 0, mask)
-// src1: dst - rat offset (aka pointer) in dwords  
+// src1: dst - rat offset (aka pointer) in dwords
 def AMDGPUstore_mskor : SDNode<"AMDGPUISD::STORE_MSKOR",
                         SDTypeProfile<0, 2, []>,
                         [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;

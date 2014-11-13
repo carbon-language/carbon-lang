@@ -378,6 +378,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FNEARBYINT, MVT::f64, Custom);
 
   setTargetDAGCombine(ISD::MUL);
+  setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::STORE);
 
@@ -999,21 +1000,21 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
 }
 
 /// \brief Generate Min/Max node
-SDValue AMDGPUTargetLowering::CombineMinMax(SDNode *N,
+SDValue AMDGPUTargetLowering::CombineMinMax(SDLoc DL,
+                                            EVT VT,
+                                            SDValue LHS,
+                                            SDValue RHS,
+                                            SDValue True,
+                                            SDValue False,
+                                            SDValue CC,
                                             SelectionDAG &DAG) const {
-  SDLoc DL(N);
-  EVT VT = N->getValueType(0);
-
-  SDValue LHS = N->getOperand(0);
-  SDValue RHS = N->getOperand(1);
-  SDValue True = N->getOperand(2);
-  SDValue False = N->getOperand(3);
-  SDValue CC = N->getOperand(4);
-
-  if (VT != MVT::f32 ||
-      !((LHS == True && RHS == False) || (LHS == False && RHS == True))) {
+  if (VT != MVT::f32 &&
+      (VT != MVT::f64 ||
+       Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS))
     return SDValue();
-  }
+
+  if (!(LHS == True && RHS == False) && !(LHS == False && RHS == True))
+    return SDValue();
 
   ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
   switch (CCOpcode) {
@@ -1029,14 +1030,15 @@ SDValue AMDGPUTargetLowering::CombineMinMax(SDNode *N,
   case ISD::SETTRUE2:
   case ISD::SETUO:
   case ISD::SETO:
-    llvm_unreachable("Operation should already be optimised!");
+    break;
   case ISD::SETULE:
   case ISD::SETULT:
   case ISD::SETOLE:
   case ISD::SETOLT:
   case ISD::SETLE:
   case ISD::SETLT: {
-    unsigned Opc = (LHS == True) ? AMDGPUISD::FMIN : AMDGPUISD::FMAX;
+    unsigned Opc
+      = (LHS == True) ? AMDGPUISD::FMIN_LEGACY : AMDGPUISD::FMAX_LEGACY;
     return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   case ISD::SETGT:
@@ -1045,7 +1047,8 @@ SDValue AMDGPUTargetLowering::CombineMinMax(SDNode *N,
   case ISD::SETOGE:
   case ISD::SETUGT:
   case ISD::SETOGT: {
-    unsigned Opc = (LHS == True) ? AMDGPUISD::FMAX : AMDGPUISD::FMIN;
+    unsigned Opc
+      = (LHS == True) ? AMDGPUISD::FMAX_LEGACY : AMDGPUISD::FMIN_LEGACY;
     return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   case ISD::SETCC_INVALID:
@@ -2110,9 +2113,37 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       simplifyI24(N1, DCI);
       return SDValue();
     }
-    case ISD::SELECT_CC: {
-      return CombineMinMax(N, DAG);
+  case ISD::SELECT_CC: {
+    SDLoc DL(N);
+    EVT VT = N->getValueType(0);
+
+    SDValue LHS = N->getOperand(0);
+    SDValue RHS = N->getOperand(1);
+    SDValue True = N->getOperand(2);
+    SDValue False = N->getOperand(3);
+    SDValue CC = N->getOperand(4);
+
+    return CombineMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
+  }
+  case ISD::SELECT: {
+    SDValue Cond = N->getOperand(0);
+    if (Cond.getOpcode() == ISD::SETCC) {
+      SDLoc DL(N);
+      EVT VT = N->getValueType(0);
+
+      SDValue LHS = Cond.getOperand(0);
+      SDValue RHS = Cond.getOperand(1);
+      SDValue CC = Cond.getOperand(2);
+
+      SDValue True = N->getOperand(1);
+      SDValue False = N->getOperand(2);
+
+
+      return CombineMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
     }
+
+    break;
+  }
   case AMDGPUISD::BFE_I32:
   case AMDGPUISD::BFE_U32: {
     assert(!N->getValueType(0).isVector() &&
@@ -2289,10 +2320,10 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(FRACT)
   NODE_NAME_CASE(CLAMP)
   NODE_NAME_CASE(MAD)
-  NODE_NAME_CASE(FMAX)
+  NODE_NAME_CASE(FMAX_LEGACY)
   NODE_NAME_CASE(SMAX)
   NODE_NAME_CASE(UMAX)
-  NODE_NAME_CASE(FMIN)
+  NODE_NAME_CASE(FMIN_LEGACY)
   NODE_NAME_CASE(SMIN)
   NODE_NAME_CASE(UMIN)
   NODE_NAME_CASE(URECIP)
