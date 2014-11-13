@@ -1592,6 +1592,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitJumpTable(MI);
     return;
   }
+  case ARM::SPACE:
+    OutStreamer.EmitZeros(MI->getOperand(1).getImm());
+    return;
   case ARM::TRAP: {
     // Non-Darwin binutils don't yet support the "trap" mnemonic.
     // FIXME: Remove this special case when they do.

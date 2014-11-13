@@ -674,6 +674,8 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       ++NumEntries;
     return NumEntries * EntrySize + InstSize;
   }
+  case ARM::SPACE:
+    return MI->getOperand(1).getImm();
   }
 }
 

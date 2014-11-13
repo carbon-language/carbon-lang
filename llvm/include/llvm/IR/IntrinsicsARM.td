@@ -20,6 +20,11 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
 def int_arm_thread_pointer : GCCBuiltin<"__builtin_thread_pointer">,
             Intrinsic<[llvm_ptr_ty], [], [IntrNoMem]>;
 
+// A space-consuming intrinsic primarily for testing ARMConstantIslands. The
+// first argument is the number of bytes this "instruction" takes up, the second
+// and return value are essentially chains, used to force ordering during ISel.
+def int_arm_space : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
+
 //===----------------------------------------------------------------------===//
 // Saturating Arithmetic
 

@@ -5621,3 +5621,8 @@ def : InstAlias<"umull${s}${p} $RdLo, $RdHi, $Rn, $Rm",
 // is discarded.
 def ITasm : ARMAsmPseudo<"it$mask $cc", (ins it_pred:$cc, it_mask:$mask)>,
          ComplexDeprecationPredicate<"IT">;
+
+let mayLoad = 1, mayStore =1, hasSideEffects = 1 in
+def SPACE : PseudoInst<(outs GPR:$Rd), (ins i32imm:$size, GPR:$Rn),
+                       NoItinerary,
+                       [(set GPR:$Rd, (int_arm_space imm:$size, GPR:$Rn))]>;
