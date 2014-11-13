@@ -718,11 +718,6 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
       return nullptr;
     }
 
-    // TODO: Is there any reason to commute with src2 modifiers?
-    // TODO: Should be able to commute with output modifiers just fine.
-    if (hasModifiersSet(*MI, AMDGPU::OpName::src2_modifiers))
-      return nullptr;
-
     // Be sure to copy the source modifiers to the right place.
     if (MachineOperand *Src0Mods
           = getNamedOperand(*MI, AMDGPU::OpName::src0_modifiers)) {

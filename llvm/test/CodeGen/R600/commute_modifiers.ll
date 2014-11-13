@@ -2,6 +2,7 @@
 
 declare i32 @llvm.r600.read.tidig.x() #1
 declare float @llvm.fabs.f32(float) #1
+declare float @llvm.fma.f32(float, float, float) nounwind readnone
 
 ; FUNC-LABEL: @commute_add_imm_fabs_f32
 ; SI: buffer_load_dword [[X:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
@@ -149,6 +150,30 @@ define void @commute_mul_fabs_x_fneg_fabs_y_f32(float addrspace(1)* %out, float 
   %y.fabs.fneg = fsub float -0.000000e+00, %y.fabs
   %z = fmul float %x.fabs, %y.fabs.fneg
   store float %z, float addrspace(1)* %out
+  ret void
+}
+
+; Make sure we commute the multiply part for the constant in src0 even
+; though we have negate modifier on src2.
+
+; SI-LABEL: {{^}}fma_a_2.0_neg_b_f32
+; SI-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
+; SI-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI: v_fma_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], |[[R2]]|
+; SI: buffer_store_dword [[RESULT]]
+define void @fma_a_2.0_neg_b_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
+  %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %gep.0 = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
+  %gep.out = getelementptr float addrspace(1)* %out, i32 %tid
+
+  %r1 = load float addrspace(1)* %gep.0
+  %r2 = load float addrspace(1)* %gep.1
+
+  %r2.fabs = call float @llvm.fabs.f32(float %r2)
+
+  %r3 = tail call float @llvm.fma.f32(float %r1, float 2.0, float %r2.fabs)
+  store float %r3, float addrspace(1)* %gep.out
   ret void
 }
 
