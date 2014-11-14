@@ -292,7 +292,7 @@ namespace {
     void MaybeAddResult(Result R, DeclContext *CurContext = nullptr);
 
     /// \brief Add a new result to this result set, where we already know
-    /// the hiding declation (if any).
+    /// the hiding declaration (if any).
     ///
     /// \param R the result to add (if it is unique).
     ///
