@@ -144,10 +144,11 @@ struct COFFParser {
 static bool layoutOptionalHeader(COFFParser &CP) {
   if (!CP.isPE())
     return true;
+  unsigned PEHeaderSize = CP.is64Bit() ? sizeof(object::pe32plus_header)
+                                       : sizeof(object::pe32_header);
   CP.Obj.Header.SizeOfOptionalHeader =
-      (CP.is64Bit() ? sizeof(object::pe32plus_header)
-                    : sizeof(object::pe32_header)) +
-      (sizeof(object::data_directory) * (COFF::NUM_DATA_DIRECTORIES + 1));
+      PEHeaderSize +
+      sizeof(object::data_directory) * (COFF::NUM_DATA_DIRECTORIES + 1);
   return true;
 }
 
@@ -281,15 +282,18 @@ num_zeros_impl num_zeros(size_t N) {
 }
 
 template <typename T>
-static void initializeOptionalHeader(COFFParser &CP, uint16_t Magic, T Header) {
+static uint32_t initializeOptionalHeader(COFFParser &CP, uint16_t Magic, T Header) {
   memset(Header, 0, sizeof(*Header));
   Header->Magic = Magic;
   Header->SectionAlignment = CP.Obj.OptionalHeader->Header.SectionAlignment;
+  Header->FileAlignment = CP.Obj.OptionalHeader->Header.FileAlignment;
   uint32_t SizeOfCode = 0, SizeOfInitializedData = 0,
            SizeOfUninitializedData = 0;
   uint32_t SizeOfHeaders = RoundUpToAlignment(
-      CP.SectionTableStart + CP.SectionTableSize, Header->SectionAlignment);
-  uint32_t SizeOfImage = SizeOfHeaders;
+      CP.SectionTableStart + CP.SectionTableSize, Header->FileAlignment);
+  uint32_t SizeOfImage =
+      RoundUpToAlignment(SizeOfHeaders, Header->SectionAlignment);
+  uint32_t BaseOfData = 0;
   for (const COFFYAML::Section &S : CP.Obj.Sections) {
     if (S.Header.Characteristics & COFF::IMAGE_SCN_CNT_CODE)
       SizeOfCode += S.Header.SizeOfRawData;
@@ -298,7 +302,9 @@ static void initializeOptionalHeader(COFFParser &CP, uint16_t Magic, T Header) {
     if (S.Header.Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
       SizeOfUninitializedData += S.Header.SizeOfRawData;
     if (S.Name.equals(".text"))
-      Header->BaseOfCode = S.Header.VirtualAddress;          // RVA
+      Header->BaseOfCode = S.Header.VirtualAddress; // RVA
+    else if (S.Name.equals(".data"))
+      BaseOfData = S.Header.VirtualAddress; // RVA
     if (S.Header.VirtualAddress)
       SizeOfImage +=
           RoundUpToAlignment(S.Header.VirtualSize, Header->SectionAlignment);
@@ -309,7 +315,6 @@ static void initializeOptionalHeader(COFFParser &CP, uint16_t Magic, T Header) {
   Header->AddressOfEntryPoint =
       CP.Obj.OptionalHeader->Header.AddressOfEntryPoint; // RVA
   Header->ImageBase = CP.Obj.OptionalHeader->Header.ImageBase;
-  Header->FileAlignment = CP.Obj.OptionalHeader->Header.FileAlignment;
   Header->MajorOperatingSystemVersion =
       CP.Obj.OptionalHeader->Header.MajorOperatingSystemVersion;
   Header->MinorOperatingSystemVersion =
@@ -331,6 +336,7 @@ static void initializeOptionalHeader(COFFParser &CP, uint16_t Magic, T Header) {
   Header->SizeOfHeapReserve = CP.Obj.OptionalHeader->Header.SizeOfHeapReserve;
   Header->SizeOfHeapCommit = CP.Obj.OptionalHeader->Header.SizeOfHeapCommit;
   Header->NumberOfRvaAndSize = COFF::NUM_DATA_DIRECTORIES + 1;
+  return BaseOfData;
 }
 
 static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
@@ -387,7 +393,8 @@ static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
       OS.write(reinterpret_cast<char *>(&PEH), sizeof(PEH));
     } else {
       object::pe32_header PEH;
-      initializeOptionalHeader(CP, COFF::PE32Header::PE32, &PEH);
+      uint32_t BaseOfData = initializeOptionalHeader(CP, COFF::PE32Header::PE32, &PEH);
+      PEH.BaseOfData = BaseOfData;
       OS.write(reinterpret_cast<char *>(&PEH), sizeof(PEH));
     }
     for (const Optional<COFF::DataDirectory> &DD :
