@@ -282,9 +282,15 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Prolog/epilog inserter assumes we correctly align DPRs on the stack, so our
   // .cfi_offset operations will reflect that.
+  unsigned adjustedGPRCS1Size = GPRCS1Size;
   if (DPRGapSize) {
     assert(DPRGapSize == 4 && "unexpected alignment requirements for DPRs");
-    if (!tryFoldSPUpdateIntoPushPop(STI, MF, LastPush, DPRGapSize))
+    if (tryFoldSPUpdateIntoPushPop(STI, MF, LastPush, DPRGapSize)) {
+      if (LastPush == GPRCS1Push) {
+        FramePtrOffsetInPush += DPRGapSize;
+        adjustedGPRCS1Size += DPRGapSize;
+      }
+    } else
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, -DPRGapSize,
                    MachineInstr::FrameSetup);
   }
@@ -354,7 +360,6 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     NumBytes = 0;
   }
 
-  unsigned adjustedGPRCS1Size = GPRCS1Size;
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
     if (tryFoldSPUpdateIntoPushPop(STI, MF, LastPush, NumBytes)) {
