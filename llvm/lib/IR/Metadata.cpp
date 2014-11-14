@@ -28,6 +28,9 @@
 
 using namespace llvm;
 
+Metadata::Metadata(LLVMContext &Context, unsigned ID)
+    : Value(Type::getMetadataTy(Context), ID) {}
+
 //===----------------------------------------------------------------------===//
 // MDString implementation.
 //
@@ -119,7 +122,7 @@ void MDNode::replaceOperandWith(unsigned i, Value *Val) {
 }
 
 MDNode::MDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
-    : Metadata(Type::getMetadataTy(C), Value::MDNodeVal) {
+    : Metadata(C, Value::MDNodeVal) {
   NumOperands = Vals.size();
 
   if (isFunctionLocal)

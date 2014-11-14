@@ -41,7 +41,7 @@ enum LLVMConstants : uint32_t {
 /// TODO: Detach from the Value hierarchy.
 class Metadata : public Value {
 protected:
-  Metadata(Type *Type, unsigned ID) : Value(Type, ID) {}
+  Metadata(LLVMContext &Context, unsigned ID);
 
 public:
   static bool classof(const Value *V) {
