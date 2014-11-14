@@ -1,4 +1,6 @@
 
+#include "DWARFRelocMap.h"
+
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DWARFFormValue.h"
 
@@ -27,9 +29,11 @@ class DWARFAcceleratorTable {
   struct HeaderData HdrData;
   DataExtractor AccelSection;
   DataExtractor StringSection;
+  const RelocAddrMap& Relocs;
 public:
-  DWARFAcceleratorTable(DataExtractor AccelSection, DataExtractor StringSection)
-    : AccelSection(AccelSection), StringSection(StringSection) {}
+  DWARFAcceleratorTable(DataExtractor AccelSection, DataExtractor StringSection,
+                        const RelocAddrMap &Relocs)
+    : AccelSection(AccelSection), StringSection(StringSection), Relocs(Relocs) {}
 
   bool extract();
   void dump(raw_ostream &OS);

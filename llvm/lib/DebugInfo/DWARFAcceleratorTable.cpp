@@ -92,7 +92,13 @@ void DWARFAcceleratorTable::dump(raw_ostream &OS) {
         OS << "    Invalid section offset\n";
         continue;
       }
-      while (unsigned StringOffset = AccelSection.getU32(&DataOffset)) {
+      while (AccelSection.isValidOffsetForDataOfSize(DataOffset, 4)) {
+        unsigned StringOffset = AccelSection.getU32(&DataOffset);
+        RelocAddrMap::const_iterator Reloc = Relocs.find(DataOffset-4);
+        if (Reloc != Relocs.end())
+          StringOffset += Reloc->second.second;
+        if (!StringOffset)
+          break;
         OS << format("    Name: %08x \"%s\"\n", StringOffset,
                      StringSection.getCStr(&StringOffset));
         unsigned NumData = AccelSection.getU32(&DataOffset);

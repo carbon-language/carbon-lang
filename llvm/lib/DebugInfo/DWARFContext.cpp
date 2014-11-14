@@ -60,12 +60,13 @@ static void dumpPubSection(raw_ostream &OS, StringRef Name, StringRef Data,
   }
 }
 
-static void dumpAccelSection(raw_ostream &OS, StringRef Name, StringRef Data,
-                             StringRef StringSection, bool LittleEndian) {
-  DataExtractor AccelSection(Data, LittleEndian, 0);
+static void dumpAccelSection(raw_ostream &OS, StringRef Name,
+                             const DWARFSection& Section, StringRef StringSection,
+                             bool LittleEndian) {
+  DataExtractor AccelSection(Section.Data, LittleEndian, 0);
   DataExtractor StrData(StringSection, LittleEndian, 0);
   OS << "\n." << Name << " contents:\n";
-  DWARFAcceleratorTable Accel(AccelSection, StrData);
+  DWARFAcceleratorTable Accel(AccelSection, StrData, Section.Relocs);
   if (!Accel.extract())
     return;
   Accel.dump(OS);
@@ -593,11 +594,11 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj)
             .Case("debug_str.dwo", &StringDWOSection)
             .Case("debug_str_offsets.dwo", &StringOffsetDWOSection)
             .Case("debug_addr", &AddrSection)
-            .Case("apple_names", &AppleNamesSection)
-            .Case("apple_types", &AppleTypesSection)
-            .Case("apple_namespaces", &AppleNamespacesSection)
-            .Case("apple_namespac", &AppleNamespacesSection)
-            .Case("apple_objc", &AppleObjCSection)
+            .Case("apple_names", &AppleNamesSection.Data)
+            .Case("apple_types", &AppleTypesSection.Data)
+            .Case("apple_namespaces", &AppleNamespacesSection.Data)
+            .Case("apple_namespac", &AppleNamespacesSection.Data)
+            .Case("apple_objc", &AppleObjCSection.Data)
             // Any more debug info sections go here.
             .Default(nullptr);
     if (SectionData) {
@@ -630,6 +631,11 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj)
         .Case("debug_loc", &LocSection.Relocs)
         .Case("debug_info.dwo", &InfoDWOSection.Relocs)
         .Case("debug_line", &LineSection.Relocs)
+        .Case("apple_names", &AppleNamesSection.Relocs)
+        .Case("apple_types", &AppleTypesSection.Relocs)
+        .Case("apple_namespaces", &AppleNamespacesSection.Relocs)
+        .Case("apple_namespac", &AppleNamespacesSection.Relocs)
+        .Case("apple_objc", &AppleObjCSection.Relocs)
         .Default(nullptr);
     if (!Map) {
       // Find debug_types relocs by section rather than name as there are
