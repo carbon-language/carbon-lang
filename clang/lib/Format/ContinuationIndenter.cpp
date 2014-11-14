@@ -594,7 +594,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
   if (NextNonComment->Type == TT_CtorInitializerComma)
     return State.Stack.back().Indent;
   if (Previous.is(tok::r_paren) && !Current.isBinaryOperator() &&
-      Current.isNot(tok::colon))
+      !Current.isOneOf(tok::colon, tok::comment))
     return ContinuationIndent;
   if (State.Stack.back().Indent == State.FirstIndent && PreviousNonComment &&
       PreviousNonComment->isNot(tok::r_brace))

@@ -1186,9 +1186,12 @@ private:
     if (Precedence > prec::Unknown)
       Start->StartsBinaryExpression = true;
     if (Current) {
-      ++Current->Previous->FakeRParens;
+      FormatToken *Previous = Current->Previous;
+      if (Previous->is(tok::comment) && Previous->Previous)
+        Previous = Previous->Previous;
+      ++Previous->FakeRParens;
       if (Precedence > prec::Unknown)
-        Current->Previous->EndsBinaryExpression = true;
+        Previous->EndsBinaryExpression = true;
     }
   }
 
