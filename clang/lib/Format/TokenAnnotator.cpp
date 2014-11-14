@@ -1439,6 +1439,18 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Left.is(tok::semi))
     return 0;
+
+  if (Style.Language == FormatStyle::LK_Java) {
+    if (Left.Type == TT_LeadingJavaAnnotation)
+      return 1;
+    if (Right.is(Keywords.kw_extends))
+      return 1;
+    if (Right.is(Keywords.kw_implements))
+      return 2;
+    if (Left.is(tok::comma) && Left.NestingLevel == 0)
+      return 3;
+  }
+
   if (Left.is(tok::comma) || (Right.is(tok::identifier) && Right.Next &&
                               Right.Next->Type == TT_DictLiteral))
     return 1;
@@ -1448,6 +1460,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     if (Right.Type != TT_ObjCMethodExpr && Right.Type != TT_LambdaLSquare)
       return 500;
   }
+
   if (Right.Type == TT_StartOfName ||
       Right.Type == TT_FunctionDeclarationName || Right.is(tok::kw_operator)) {
     if (Line.First->is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
@@ -1470,12 +1483,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Left.Type == TT_RangeBasedForLoopColon ||
       Left.Type == TT_InheritanceColon)
-    return 2;
-
-  if (Left.Type == TT_LeadingJavaAnnotation)
-    return 1;
-  if (Style.Language == FormatStyle::LK_Java &&
-      Right.is(Keywords.kw_implements))
     return 2;
 
   if (Right.isMemberAccess()) {
