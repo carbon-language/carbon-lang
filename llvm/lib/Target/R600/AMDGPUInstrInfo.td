@@ -84,7 +84,7 @@ def AMDGPUfmin_legacy : SDNode<"AMDGPUISD::FMIN_LEGACY", SDTFPBinOp,
   [SDNPAssociative]
 >;
 
-// out = min(a, b) a snd b are signed ints
+// out = min(a, b) a and b are signed ints
 def AMDGPUsmin : SDNode<"AMDGPUISD::SMIN", SDTIntBinOp,
   [SDNPCommutative, SDNPAssociative]
 >;
@@ -94,6 +94,37 @@ def AMDGPUumin : SDNode<"AMDGPUISD::UMIN", SDTIntBinOp,
   [SDNPCommutative, SDNPAssociative]
 >;
 
+// FIXME: TableGen doesn't like commutative instructions with more
+// than 2 operands.
+// out = max(a, b, c) a, b and c are floats
+def AMDGPUfmax3 : SDNode<"AMDGPUISD::FMAX3", SDTFPTernaryOp,
+  [/*SDNPCommutative, SDNPAssociative*/]
+>;
+
+// out = max(a, b, c) a, b, and c are signed ints
+def AMDGPUsmax3 : SDNode<"AMDGPUISD::SMAX3", AMDGPUDTIntTernaryOp,
+  [/*SDNPCommutative, SDNPAssociative*/]
+>;
+
+// out = max(a, b, c) a, b and c are unsigned ints
+def AMDGPUumax3 : SDNode<"AMDGPUISD::UMAX3", AMDGPUDTIntTernaryOp,
+  [/*SDNPCommutative, SDNPAssociative*/]
+>;
+
+// out = min(a, b, c) a, b and c are floats
+def AMDGPUfmin3 : SDNode<"AMDGPUISD::FMIN3", SDTFPTernaryOp,
+  [/*SDNPCommutative, SDNPAssociative*/]
+>;
+
+// out = min(a, b, c) a, b and c are signed ints
+def AMDGPUsmin3 : SDNode<"AMDGPUISD::SMIN3", AMDGPUDTIntTernaryOp,
+  [/*SDNPCommutative, SDNPAssociative*/]
+>;
+
+// out = min(a, b) a and b are unsigned ints
+def AMDGPUumin3 : SDNode<"AMDGPUISD::UMIN3", AMDGPUDTIntTernaryOp,
+  [/*SDNPCommutative, SDNPAssociative*/]
+>;
 
 def AMDGPUcvt_f32_ubyte0 : SDNode<"AMDGPUISD::CVT_F32_UBYTE0",
   SDTIntToFPOp, []>;

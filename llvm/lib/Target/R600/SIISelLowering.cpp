@@ -231,6 +231,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setTargetDAGCombine(ISD::FADD);
   setTargetDAGCombine(ISD::FSUB);
+  setTargetDAGCombine(ISD::FMINNUM);
+  setTargetDAGCombine(ISD::FMAXNUM);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
 
@@ -1314,6 +1316,61 @@ SDValue SITargetLowering::performSHLPtrCombine(SDNode *N,
   return DAG.getNode(ISD::ADD, SL, VT, ShlX, COffset);
 }
 
+static unsigned minMaxOpcToMin3Max3Opc(unsigned Opc) {
+  switch (Opc) {
+  case ISD::FMAXNUM:
+    return AMDGPUISD::FMAX3;
+  case AMDGPUISD::SMAX:
+    return AMDGPUISD::SMAX3;
+  case AMDGPUISD::UMAX:
+    return AMDGPUISD::UMAX3;
+  case ISD::FMINNUM:
+    return AMDGPUISD::FMIN3;
+  case AMDGPUISD::SMIN:
+    return AMDGPUISD::SMIN3;
+  case AMDGPUISD::UMIN:
+    return AMDGPUISD::UMIN3;
+  default:
+    llvm_unreachable("Not a min/max opcode");
+  }
+}
+
+SDValue SITargetLowering::performMin3Max3Combine(SDNode *N,
+                                                 DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+
+  unsigned Opc = N->getOpcode();
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+
+  // Only do this if the inner op has one use since this will just increases
+  // register pressure for no benefit.
+
+  // max(max(a, b), c)
+  if (Op0.getOpcode() == Opc && Op0.hasOneUse()) {
+    SDLoc DL(N);
+    return DAG.getNode(minMaxOpcToMin3Max3Opc(Opc),
+                       DL,
+                       N->getValueType(0),
+                       Op0.getOperand(0),
+                       Op0.getOperand(1),
+                       Op1);
+  }
+
+  // max(a, max(b, c))
+  if (Op1.getOpcode() == Opc && Op1.hasOneUse()) {
+    SDLoc DL(N);
+    return DAG.getNode(minMaxOpcToMin3Max3Opc(Opc),
+                       DL,
+                       N->getValueType(0),
+                       Op0,
+                       Op1.getOperand(0),
+                       Op1.getOperand(1));
+  }
+
+  return SDValue();
+}
+
 SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
                                             DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -1341,6 +1398,17 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       }
       break;
     }
+  case ISD::FMAXNUM: // TODO: What about fmax_legacy?
+  case ISD::FMINNUM:
+  case AMDGPUISD::SMAX:
+  case AMDGPUISD::SMIN:
+  case AMDGPUISD::UMAX:
+  case AMDGPUISD::UMIN: {
+    if (DCI.getDAGCombineLevel() >= AfterLegalizeDAG &&
+        getTargetMachine().getOptLevel() > CodeGenOpt::None)
+      return performMin3Max3Combine(N, DCI);
+    break;
+  }
 
   case AMDGPUISD::CVT_F32_UBYTE0:
   case AMDGPUISD::CVT_F32_UBYTE1:

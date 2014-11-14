@@ -1573,15 +1573,27 @@ defm V_ALIGNBYTE_B32 : VOP3Inst <vop3<0x14f>, "v_alignbyte_b32",
 >;
 defm V_MULLIT_F32 : VOP3Inst <vop3<0x150>, "v_mullit_f32",
   VOP_F32_F32_F32_F32>;
-////def V_MIN3_F32 : VOP3_MIN3 <0x00000151, "v_min3_f32", []>;
-////def V_MIN3_I32 : VOP3_MIN3 <0x00000152, "v_min3_i32", []>;
-////def V_MIN3_U32 : VOP3_MIN3 <0x00000153, "v_min3_u32", []>;
-////def V_MAX3_F32 : VOP3_MAX3 <0x00000154, "v_max3_f32", []>;
-////def V_MAX3_I32 : VOP3_MAX3 <0x00000155, "v_max3_i32", []>;
-////def V_MAX3_U32 : VOP3_MAX3 <0x00000156, "v_max3_u32", []>;
-////def V_MED3_F32 : VOP3_MED3 <0x00000157, "v_med3_f32", []>;
-////def V_MED3_I32 : VOP3_MED3 <0x00000158, "v_med3_i32", []>;
-////def V_MED3_U32 : VOP3_MED3 <0x00000159, "v_med3_u32", []>;
+defm V_MIN3_F32 : VOP3Inst <vop3<0x151>, "v_min3_f32",
+  VOP_F32_F32_F32_F32, AMDGPUfmin3>;
+
+defm V_MIN3_I32 : VOP3Inst <vop3<0x152>, "v_min3_i32",
+  VOP_I32_I32_I32_I32, AMDGPUsmin3
+>;
+defm V_MIN3_U32 : VOP3Inst <vop3<0x153>, "v_min3_u32",
+  VOP_I32_I32_I32_I32, AMDGPUumin3
+>;
+defm V_MAX3_F32 : VOP3Inst <vop3<0x154>, "v_max3_f32",
+  VOP_F32_F32_F32_F32, AMDGPUfmax3
+>;
+defm V_MAX3_I32 : VOP3Inst <vop3<0x155>, "v_max3_i32",
+  VOP_I32_I32_I32_I32, AMDGPUsmax3
+>;
+defm V_MAX3_U32 : VOP3Inst <vop3<0x156>, "v_max3_u32",
+  VOP_I32_I32_I32_I32, AMDGPUumax3
+>;
+//def V_MED3_F32 : VOP3_MED3 <0x00000157, "v_med3_f32", []>;
+//def V_MED3_I32 : VOP3_MED3 <0x00000158, "v_med3_i32", []>;
+//def V_MED3_U32 : VOP3_MED3 <0x00000159, "v_med3_u32", []>;
 //def V_SAD_U8 : VOP3_U8 <0x0000015a, "v_sad_u8", []>;
 //def V_SAD_HI_U8 : VOP3_U8 <0x0000015b, "v_sad_hi_u8", []>;
 //def V_SAD_U16 : VOP3_U16 <0x0000015c, "v_sad_u16", []>;
