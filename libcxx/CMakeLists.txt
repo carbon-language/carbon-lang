@@ -202,8 +202,13 @@ if (LIBCXX_BUILT_STANDALONE)
   # NOTE: LLVM_USE_SANITIZER checks for a UNIX like system instead of MSVC.
   # But we don't have LLVM_ON_UNIX so checking for MSVC is the best we can do.
   if (LLVM_USE_SANITIZER AND NOT MSVC)
-    append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_NO_OMIT_FRAME_POINTER_FLAG
-            "-fno-omit-frame-pointer")
+    append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_FNO_OMIT_FRAME_POINTER_FLAG
+              "-fno-omit-frame-pointer")
+    if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" AND
+        NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
+      append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_GLINE_TABLES_ONLY_FLAG
+                "-gline-tables-only")
+    endif()
     if (LLVM_USE_SANITIZER STREQUAL "Address")
       list(APPEND LIBCXX_CXX_FEATURE_FLAGS "-fsanitize=address")
     elseif (LLVM_USE_SANITIZER MATCHES "Memory(WithOrigins)?")
