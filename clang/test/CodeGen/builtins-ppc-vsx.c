@@ -1,6 +1,8 @@
 // REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -faltivec -target-feature +vsx -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
+vector unsigned char vuc = { 8,  9, 10, 11, 12, 13, 14, 15,
+                             0,  1,  2,  3,  4,  5,  6,  7};
 vector float vf = { -1.5, 2.5, -3.5, 4.5 };
 vector double vd = { 3.5, -7.5 };
 vector signed int vsi = { -1, 2, -3, 4 };
@@ -52,6 +54,25 @@ void test1() {
 
   res_d = __builtin_vsx_xsmindp(d, d);
 // CHECK: @llvm.ppc.vsx.xsmindp
+
+  /* vec_perm */
+  res_vsll = vec_perm(vsll, vsll, vuc);
+// CHECK: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_perm(vull, vull, vuc);
+// CHECK: @llvm.ppc.altivec.vperm
+
+  res_vd = vec_perm(vd, vd, vuc);
+// CHECK: @llvm.ppc.altivec.vperm
+
+  res_vsll = vec_vperm(vsll, vsll, vuc);
+// CHECK: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_vperm(vull, vull, vuc);
+// CHECK: @llvm.ppc.altivec.vperm
+
+  res_vd = vec_vperm(vd, vd, vuc);
+// CHECK: @llvm.ppc.altivec.vperm
 
   /* vec_vsx_ld */
 

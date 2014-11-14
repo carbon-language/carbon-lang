@@ -4902,6 +4902,52 @@ vec_perm(vector float __a, vector float __b, vector unsigned char __c)
 #endif
 }
 
+#ifdef __VSX__
+vector long long __ATTRS_o_ai
+vec_perm(vector long long __a, vector long long __b, vector unsigned char __c)
+{
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector long long)__builtin_altivec_vperm_4si(__b, __a, __d);
+#else
+  return (vector long long)__builtin_altivec_vperm_4si(__a, __b, __c);
+#endif
+}
+
+vector unsigned long long __ATTRS_o_ai
+vec_perm(vector unsigned long long __a, vector unsigned long long __b,
+         vector unsigned char __c)
+{
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector unsigned long long)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
+  return (vector unsigned long long)
+           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
+}
+
+vector double __ATTRS_o_ai
+vec_perm(vector double __a, vector double __b, vector unsigned char __c)
+{
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector double)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
+  return (vector double)
+           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
+}
+#endif
+
 /* vec_vperm */
 
 static vector signed char __ATTRS_o_ai
@@ -4973,6 +5019,27 @@ vec_vperm(vector float __a, vector float __b, vector unsigned char __c)
 {
   return vec_perm(__a, __b, __c);
 }
+
+#ifdef __VSX__
+static vector long long __ATTRS_o_ai
+vec_vperm(vector long long __a, vector long long __b, vector unsigned char __c)
+{
+  return vec_perm(__a, __b, __c);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vperm(vector unsigned long long __a, vector unsigned long long __b,
+          vector unsigned char __c)
+{
+  return vec_perm(__a, __b, __c);
+}
+
+static vector double __ATTRS_o_ai
+vec_vperm(vector double __a, vector double __b, vector unsigned char __c)
+{
+  return vec_perm(__a, __b, __c);
+}
+#endif
 
 /* vec_re */
 
