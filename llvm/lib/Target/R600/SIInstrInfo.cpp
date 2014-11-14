@@ -2184,6 +2184,8 @@ void SIInstrInfo::splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
   uint32_t Offset = Imm & 0x3f; // Extract bits [5:0].
   uint32_t BitWidth = (Imm & 0x7f0000) >> 16; // Extract bits [22:16].
 
+  (void) Offset;
+
   // Only sext_inreg cases handled.
   assert(Inst->getOpcode() == AMDGPU::S_BFE_I64 &&
          BitWidth <= 32 &&
