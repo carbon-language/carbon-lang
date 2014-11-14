@@ -21,8 +21,7 @@ e my_enum; // expected-warning {{'e' is deprecated}}
 template <typename T> class X {};
 template <> class [[deprecated]] X<int> {}; // expected-note {{'X<int>' has been explicitly marked deprecated here}}
 X<char> x1;
-// FIXME: The diagnostic here could be much better by mentioning X<int>.
-X<int> x2; // expected-warning {{'X' is deprecated}}
+X<int> x2; // expected-warning {{'X<int>' is deprecated}}
 
 template <typename T> class [[deprecated]] X2 {};
 template <> class X2<int> {};

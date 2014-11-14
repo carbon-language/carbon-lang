@@ -3820,6 +3820,9 @@ def warn_property_method_deprecated :
     InGroup<DeprecatedDeclarations>;
 def warn_deprecated_message : Warning<"%0 is deprecated: %1">,
     InGroup<DeprecatedDeclarations>;
+def warn_deprecated_anonymous_namespace : Warning<
+  "'deprecated' attribute on anonymous namespace ignored">,
+  InGroup<IgnoredAttributes>;
 def warn_deprecated_fwdclass_message : Warning<
     "%0 may be deprecated because the receiver type is unknown">,
     InGroup<DeprecatedDeclarations>;
