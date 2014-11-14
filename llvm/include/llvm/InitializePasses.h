@@ -211,6 +211,7 @@ void initializeObjCARCAPElimPass(PassRegistry&);
 void initializeObjCARCExpandPass(PassRegistry&);
 void initializeObjCARCContractPass(PassRegistry&);
 void initializeObjCARCOptPass(PassRegistry&);
+void initializePAEvalPass(PassRegistry &);
 void initializeOptimizePHIsPass(PassRegistry&);
 void initializePartiallyInlineLibCallsPass(PassRegistry&);
 void initializePEIPass(PassRegistry&);
