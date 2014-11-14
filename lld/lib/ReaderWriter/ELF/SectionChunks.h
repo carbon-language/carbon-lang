@@ -46,10 +46,10 @@ public:
 
   /// \brief Modify the section contents before assigning virtual addresses
   //  or assigning file offsets
-  virtual void doPreFlight() {}
+  virtual void doPreFlight() override {}
 
   /// \brief Finalize the section contents before writing
-  virtual void finalize() {}
+  virtual void finalize() override {}
 
   /// \brief Does this section have an output segment.
   virtual bool hasOutputSegment() {
@@ -73,7 +73,7 @@ public:
   Layout::SegmentType getSegmentType() const { return _segmentType; }
 
   /// \brief Return the type of content that the section contains
-  virtual int getContentType() const {
+  virtual int getContentType() const override {
     if (_flags & llvm::ELF::SHF_EXECINSTR)
       return Chunk<ELFT>::ContentType::Code;
     else if (_flags & llvm::ELF::SHF_WRITE)
