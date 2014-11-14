@@ -572,8 +572,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__GXX_RTTI");
   if (LangOpts.SjLjExceptions)
     Builder.defineMacro("__USING_SJLJ_EXCEPTIONS__");
-  if (LangOpts.SEHExceptions)
-    Builder.defineMacro("__SEH__");
 
   if (LangOpts.Deprecated)
     Builder.defineMacro("__DEPRECATED");
