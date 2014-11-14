@@ -5008,6 +5008,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("int i{a * b};");
   verifyIndependentOfContext("aaa && aaa->f();");
   verifyIndependentOfContext("int x = ~*p;");
+  verifyFormat("Constructor() : a(a), area(width * height) {}");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 
