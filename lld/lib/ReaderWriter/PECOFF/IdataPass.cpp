@@ -314,7 +314,8 @@ std::map<StringRef, std::vector<COFFSharedLibraryAtom *> >
 IdataPass::groupByLoadName(MutableFile &file) {
   std::map<StringRef, COFFSharedLibraryAtom *> uniqueAtoms;
   for (const SharedLibraryAtom *atom : file.sharedLibrary())
-    uniqueAtoms[atom->name()] = (COFFSharedLibraryAtom *)atom;
+    uniqueAtoms[atom->name()] =
+        (COFFSharedLibraryAtom *)const_cast<SharedLibraryAtom *>(atom);
 
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *> > ret;
   for (auto i : uniqueAtoms) {
@@ -332,7 +333,7 @@ void IdataPass::replaceSharedLibraryAtoms(MutableFile &file) {
       auto *sharedAtom = dyn_cast<SharedLibraryAtom>(target);
       if (!sharedAtom)
         continue;
-      auto *coffSharedAtom = (COFFSharedLibraryAtom *)sharedAtom;
+      const auto *coffSharedAtom = (const COFFSharedLibraryAtom *)sharedAtom;
       const DefinedAtom *entry = coffSharedAtom->getImportTableEntry();
       const_cast<Reference *>(ref)->setTarget(entry);
     }

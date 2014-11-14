@@ -262,18 +262,20 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind = branch32;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = fixupAddress + 4 + (int32_t)*(little32_t *)fixupContent;
+    *addend = fixupAddress + 4 + (int32_t)*(const little32_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rPcRel | rLength4:
     // ex: call _foo (and _foo defined)
     *kind = branch32;
-    targetAddress = fixupAddress + 4 + (int32_t)*(little32_t *)fixupContent;
+    targetAddress =
+        fixupAddress + 4 + (int32_t) * (const little32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength4:
     // ex: call _foo+n (and _foo defined)
     *kind = branch32;
-    targetAddress = fixupAddress + 4 + (int32_t)*(little32_t *)fixupContent;
+    targetAddress =
+        fixupAddress + 4 + (int32_t) * (const little32_t *)fixupContent;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
     *addend = targetAddress - reloc.value;
@@ -283,18 +285,20 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind = branch16;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = fixupAddress + 2 + (int16_t)*(little16_t *)fixupContent;
+    *addend = fixupAddress + 2 + (int16_t)*(const little16_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rPcRel | rLength2:
     // ex: callw _foo (and _foo defined)
     *kind = branch16;
-    targetAddress = fixupAddress + 2 + (int16_t)*(little16_t *)fixupContent;
+    targetAddress =
+        fixupAddress + 2 + (int16_t) * (const little16_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength2:
     // ex: callw _foo+n (and _foo defined)
     *kind = branch16;
-    targetAddress = fixupAddress + 2 + (int16_t)*(little16_t *)fixupContent;
+    targetAddress =
+        fixupAddress + 2 + (int16_t) * (const little16_t *)fixupContent;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
     *addend = targetAddress - reloc.value;
@@ -308,7 +312,7 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
                                                                  : pointer32;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = *(ulittle32_t *)fixupContent;
+    *addend = *(const ulittle32_t *)fixupContent;
     break;
   case GENERIC_RELOC_VANILLA | rLength4:
     // ex: movl	_foo, %eax   (and _foo defined)
@@ -317,7 +321,7 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind =
         ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X) ? abs32
                                                                  : pointer32;
-    targetAddress = *(ulittle32_t *)fixupContent;
+    targetAddress = *(const ulittle32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
   case GENERIC_RELOC_VANILLA | rScattered | rLength4:
@@ -328,7 +332,7 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
                                                                  : pointer32;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
-    *addend = *(ulittle32_t *)fixupContent - reloc.value;
+    *addend = *(const ulittle32_t *)fixupContent - reloc.value;
     break;
   default:
     return make_dynamic_error_code(Twine("unsupported i386 relocation type"));
@@ -364,7 +368,7 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
          GENERIC_RELOC_PAIR | rScattered | rLength4):
     toAddress = reloc1.value;
     fromAddress = reloc2.value;
-    value = *(little32_t *)fixupContent;
+    value = *(const little32_t *)fixupContent;
     ec = atomFromAddr(0, toAddress, target, &offsetInTo);
     if (ec)
       return ec;

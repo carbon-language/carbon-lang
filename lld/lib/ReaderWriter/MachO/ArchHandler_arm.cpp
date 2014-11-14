@@ -521,7 +521,7 @@ std::error_code ArchHandler_arm::getReferenceInfo(
   typedef std::error_code E;
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   uint64_t targetAddress;
-  uint32_t instruction = *(ulittle32_t *)fixupContent;
+  uint32_t instruction = *(const ulittle32_t *)fixupContent;
   int32_t displacement;
   switch (relocPattern(reloc)) {
   case ARM_THUMB_RELOC_BR22 | rPcRel | rExtern | rLength4:
@@ -781,7 +781,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
   }
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   std::error_code ec;
-  uint32_t instruction = *(ulittle32_t *)fixupContent;
+  uint32_t instruction = *(const ulittle32_t *)fixupContent;
   uint32_t value;
   uint32_t fromAddress;
   uint32_t toAddress;

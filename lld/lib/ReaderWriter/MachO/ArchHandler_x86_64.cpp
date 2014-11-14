@@ -340,39 +340,39 @@ ArchHandler_x86_64::getReferenceInfo(const Relocation &reloc,
   case ripRel32:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = *(little32_t *)fixupContent;
+    *addend = *(const little32_t *)fixupContent;
     return std::error_code();
   case ripRel32Minus1:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = (int32_t)*(little32_t *)fixupContent + 1;
+    *addend = (int32_t)*(const little32_t *)fixupContent + 1;
     return std::error_code();
   case ripRel32Minus2:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = (int32_t)*(little32_t *)fixupContent + 2;
+    *addend = (int32_t)*(const little32_t *)fixupContent + 2;
     return std::error_code();
   case ripRel32Minus4:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = (int32_t)*(little32_t *)fixupContent + 4;
+    *addend = (int32_t)*(const little32_t *)fixupContent + 4;
     return std::error_code();
   case ripRel32Anon:
-    targetAddress = fixupAddress + 4 + *(little32_t *)fixupContent;
+    targetAddress = fixupAddress + 4 + *(const little32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   case ripRel32GotLoad:
   case ripRel32Got:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = *(little32_t *)fixupContent;
+    *addend = *(const little32_t *)fixupContent;
     return std::error_code();
   case pointer64:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = *(little64_t *)fixupContent;
+    *addend = *(const little64_t *)fixupContent;
     return std::error_code();
   case pointer64Anon:
-    targetAddress = *(little64_t *)fixupContent;
+    targetAddress = *(const little64_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   default:
     llvm_unreachable("bad reloc kind");
@@ -427,18 +427,18 @@ ArchHandler_x86_64::getPairReferenceInfo(const normalized::Relocation &reloc1,
   case delta64:
     if (E ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = (int64_t)*(little64_t *)fixupContent + offsetInAtom;
+    *addend = (int64_t)*(const little64_t *)fixupContent + offsetInAtom;
     return std::error_code();
   case delta32:
     if (E ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = (int32_t)*(little32_t *)fixupContent + offsetInAtom;
+    *addend = (int32_t)*(const little32_t *)fixupContent + offsetInAtom;
     return std::error_code();
   case delta64Anon:
-    targetAddress = offsetInAtom + (int64_t)*(little64_t *)fixupContent;
+    targetAddress = offsetInAtom + (int64_t)*(const little64_t *)fixupContent;
     return atomFromAddress(reloc2.symbol, targetAddress, target, addend);
   case delta32Anon:
-    targetAddress = offsetInAtom + (int32_t)*(little32_t *)fixupContent;
+    targetAddress = offsetInAtom + (int32_t)*(const little32_t *)fixupContent;
     return atomFromAddress(reloc2.symbol, targetAddress, target, addend);
   default:
     llvm_unreachable("bad reloc pair kind");

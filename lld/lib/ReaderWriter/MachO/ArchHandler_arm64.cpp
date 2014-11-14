@@ -360,7 +360,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
     return std::error_code();
   case ARM64_RELOC_PAGEOFF12                   | rExtern | rLength4:
     // ex: ldr x0, [x1, _foo@PAGEOFF]
-    *kind = offset12KindFromInstruction(*(little32_t *)fixupContent);
+    *kind = offset12KindFromInstruction(*(const little32_t *)fixupContent);
     if (auto ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
     *addend = 0;
@@ -398,7 +398,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
     *kind = pointer64;
     if (auto ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = *(little64_t *)fixupContent;
+    *addend = *(const little64_t *)fixupContent;
     return std::error_code();
   case ARM64_RELOC_POINTER_TO_GOT              | rExtern | rLength8:
     // ex: .quad _foo@GOT
@@ -458,7 +458,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
     *kind = delta64;
     if (auto ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = (int64_t)*(little64_t *)fixupContent + offsetInAtom;
+    *addend = (int64_t)*(const little64_t *)fixupContent + offsetInAtom;
     return std::error_code();
   case ((ARM64_RELOC_SUBTRACTOR                  | rExtern | rLength4) << 16 |
          ARM64_RELOC_UNSIGNED                    | rExtern | rLength4):
@@ -466,7 +466,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
     *kind = delta32;
     if (auto ec = atomFromSymbolIndex(reloc2.symbol, target))
       return ec;
-    *addend = (int32_t)*(little32_t *)fixupContent + offsetInAtom;
+    *addend = (int32_t)*(const little32_t *)fixupContent + offsetInAtom;
     return std::error_code();
   default:
     return make_dynamic_error_code(Twine("unsupported arm64 relocation pair"));

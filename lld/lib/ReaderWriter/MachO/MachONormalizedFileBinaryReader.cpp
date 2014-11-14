@@ -300,7 +300,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           section.alignment   = read32(&sect->align, isBig);
           section.address     = read64(&sect->addr, isBig);
           const uint8_t *content =
-            (uint8_t *)start + read32(&sect->offset, isBig);
+            (const uint8_t *)start + read32(&sect->offset, isBig);
           size_t contentSize = read64(&sect->size, isBig);
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
@@ -340,11 +340,11 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           section.type = (SectionType)(read32(&sect->flags, isBig) &
                                        SECTION_TYPE);
           section.attributes =
-              read32((uint8_t *)&sect->flags, isBig) & SECTION_ATTRIBUTES;
+              read32((const uint8_t *)&sect->flags, isBig) & SECTION_ATTRIBUTES;
           section.alignment   = read32(&sect->align, isBig);
           section.address     = read32(&sect->addr, isBig);
           const uint8_t *content =
-            (uint8_t *)start + read32(&sect->offset, isBig);
+            (const uint8_t *)start + read32(&sect->offset, isBig);
           size_t contentSize = read32(&sect->size, isBig);
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
@@ -367,8 +367,8 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       const char *strings = start + read32(&st->stroff, isBig);
       const uint32_t strSize = read32(&st->strsize, isBig);
       // Validate string pool and symbol table all in buffer.
-      if (read32((uint8_t *)&st->stroff, isBig) +
-              read32((uint8_t *)&st->strsize, isBig) >
+      if (read32((const uint8_t *)&st->stroff, isBig) +
+              read32((const uint8_t *)&st->strsize, isBig) >
           objSize)
         return true;
       if (is64) {
@@ -475,7 +475,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       entry.offset = read32(&dataInCode[i].offset, isBig);
       entry.length = read16(&dataInCode[i].length, isBig);
       entry.kind =
-          (DataRegionType)read16((uint8_t *)&dataInCode[i].kind, isBig);
+          (DataRegionType)read16((const uint8_t *)&dataInCode[i].kind, isBig);
       f->dataInCode.push_back(entry);
     }
   }

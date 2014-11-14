@@ -664,8 +664,9 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
         }
       }
 
-      ArrayRef<uint8_t> symbolData(
-          (uint8_t *)sectionContents->data() + symbol->st_value, contentSize);
+      ArrayRef<uint8_t> symbolData((const uint8_t *)sectionContents->data() +
+                                       symbol->st_value,
+                                   contentSize);
 
       // If the linker finds that a section has global atoms that are in a
       // mergeable section, treat them as defined atoms as they shouldn't be

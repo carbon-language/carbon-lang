@@ -216,9 +216,9 @@ private:
     case llvm::ELF::R_MIPS_32:
     case llvm::ELF::R_MIPS_GPREL32:
     case llvm::ELF::R_MIPS_PC32:
-      return *(int32_t *)ap;
+      return *(const int32_t *)ap;
     case llvm::ELF::R_MIPS_26:
-      return *(int32_t *)ap & 0x3ffffff;
+      return *(const int32_t *)ap & 0x3ffffff;
     case llvm::ELF::R_MIPS_HI16:
     case llvm::ELF::R_MIPS_LO16:
     case llvm::ELF::R_MIPS_GOT16:
@@ -226,7 +226,7 @@ private:
     case llvm::ELF::R_MIPS_TLS_DTPREL_LO16:
     case llvm::ELF::R_MIPS_TLS_TPREL_HI16:
     case llvm::ELF::R_MIPS_TLS_TPREL_LO16:
-      return *(int16_t *)ap;
+      return *(const int16_t *)ap;
     case llvm::ELF::R_MIPS_CALL16:
     case llvm::ELF::R_MIPS_TLS_GD:
     case llvm::ELF::R_MIPS_TLS_LDM:

@@ -187,9 +187,10 @@ bool SymbolTable::addByName(const Atom &newAtom) {
   case NCR_Second:
     useNew = true;
     break;
-  case NCR_DupDef:
-    switch (mergeSelect(cast<DefinedAtom>(existing)->merge(),
-                        cast<DefinedAtom>(&newAtom)->merge())) {
+  case NCR_DupDef: {
+    const auto *existingDef = cast<DefinedAtom>(existing);
+    const auto *newDef = cast<DefinedAtom>(&newAtom);
+    switch (mergeSelect(existingDef->merge(), newDef->merge())) {
     case MCR_First:
       useNew = false;
       break;
@@ -197,14 +198,14 @@ bool SymbolTable::addByName(const Atom &newAtom) {
       useNew = true;
       break;
     case MCR_Largest: {
-      uint64_t existingSize = sectionSize((DefinedAtom*)existing);
-      uint64_t newSize = sectionSize((DefinedAtom*)&newAtom);
+      uint64_t existingSize = sectionSize(existingDef);
+      uint64_t newSize = sectionSize(newDef);
       useNew = (newSize >= existingSize);
       break;
     }
     case MCR_SameSize: {
-      uint64_t existingSize = sectionSize((DefinedAtom*)existing);
-      uint64_t newSize = sectionSize((DefinedAtom*)&newAtom);
+      uint64_t existingSize = sectionSize(existingDef);
+      uint64_t newSize = sectionSize(newDef);
       if (existingSize == newSize) {
         useNew = true;
         break;
@@ -231,6 +232,7 @@ bool SymbolTable::addByName(const Atom &newAtom) {
       break;
     }
     break;
+  }
   case NCR_DupUndef: {
     const UndefinedAtom* existingUndef = cast<UndefinedAtom>(existing);
     const UndefinedAtom* newUndef = cast<UndefinedAtom>(&newAtom);

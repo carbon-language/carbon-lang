@@ -89,7 +89,7 @@ public:
           DEBUG_WITH_TYPE("WriterYAML",
                           llvm::dbgs() << "unnamed atom: creating ref-name: '"
                                        << newName << "' ("
-                                       << (void *)newName.data() << ", "
+                                       << (const void *)newName.data() << ", "
                                        << newName.size() << ")\n");
         }
       }
@@ -118,7 +118,8 @@ public:
       _refNames[&atom] = newName;
       DEBUG_WITH_TYPE("WriterYAML",
                       llvm::dbgs() << "name collsion: creating ref-name: '"
-                                   << newName << "' (" << (void *)newName.data()
+                                   << newName << "' ("
+                                   << (const void *)newName.data()
                                    << ", " << newName.size() << ")\n");
       const lld::Atom *prevAtom = pos->second;
       AtomToRefName::iterator pos2 = _refNames.find(prevAtom);
@@ -132,7 +133,7 @@ public:
         DEBUG_WITH_TYPE("WriterYAML",
                         llvm::dbgs() << "name collsion: creating ref-name: '"
                                      << newName2 << "' ("
-                                     << (void *)newName2.data() << ", "
+                                     << (const void *)newName2.data() << ", "
                                      << newName2.size() << ")\n");
       }
     } else {
@@ -141,8 +142,8 @@ public:
       DEBUG_WITH_TYPE("WriterYAML", llvm::dbgs()
                                         << "atom name seen for first time: '"
                                         << atom.name() << "' ("
-                                        << (void *)atom.name().data() << ", "
-                                        << atom.name().size() << ")\n");
+                                        << (const void *)atom.name().data()
+                                        << ", " << atom.name().size() << ")\n");
     }
   }
 
@@ -767,8 +768,8 @@ template <> struct MappingTraits<const lld::Reference *> {
       DEBUG_WITH_TYPE("WriterYAML", llvm::dbgs()
                                         << "created Reference to name: '"
                                         << _targetName << "' ("
-                                        << (void *)_targetName.data() << ", "
-                                        << _targetName.size() << ")\n");
+                                        << (const void *)_targetName.data()
+                                        << ", " << _targetName.size() << ")\n");
       setKindNamespace(_mappedKind.ns);
       setKindArch(_mappedKind.arch);
       setKindValue(_mappedKind.value);
@@ -844,8 +845,8 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
         _sectionName = f->copyString(_sectionName);
       DEBUG_WITH_TYPE("WriterYAML",
                       llvm::dbgs() << "created DefinedAtom named: '" << _name
-                                   << "' (" << (void *)_name.data() << ", "
-                                   << _name.size() << ")\n");
+                                   << "' (" << (const void *)_name.data()
+                                   << ", " << _name.size() << ")\n");
       return this;
     }
     void bind(const RefNameResolver &);
@@ -996,7 +997,7 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
 
       DEBUG_WITH_TYPE("WriterYAML",
                       llvm::dbgs() << "created UndefinedAtom named: '" << _name
-                      << "' (" << (void *)_name.data() << ", "
+                      << "' (" << (const void *)_name.data() << ", "
                       << _name.size() << ")\n");
       return this;
     }
@@ -1057,7 +1058,8 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
 
       DEBUG_WITH_TYPE("WriterYAML",
                       llvm::dbgs() << "created SharedLibraryAtom named: '"
-                                   << _name << "' (" << (void *)_name.data()
+                                   << _name << "' ("
+                                   << (const void *)_name.data()
                                    << ", " << _name.size() << ")\n");
       return this;
     }
@@ -1118,8 +1120,8 @@ template <> struct MappingTraits<const lld::AbsoluteAtom *> {
 
       DEBUG_WITH_TYPE("WriterYAML",
                       llvm::dbgs() << "created AbsoluteAtom named: '" << _name
-                                   << "' (" << (void *)_name.data() << ", "
-                                   << _name.size() << ")\n");
+                                   << "' (" << (const void *)_name.data()
+                                   << ", " << _name.size() << ")\n");
       return this;
     }
     // Extract current File object from YAML I/O parsing context
@@ -1172,7 +1174,7 @@ RefNameResolver::RefNameResolver(const lld::File *file, IO &io) : _io(io) {
   typedef MappingTraits<const lld::DefinedAtom *>::NormalizedAtom
   NormalizedAtom;
   for (const lld::DefinedAtom *a : file->defined()) {
-    NormalizedAtom *na = (NormalizedAtom *)a;
+    const auto *na = (const NormalizedAtom *)a;
     if (!na->_refName.empty())
       add(na->_refName, a);
     else if (!na->_name.empty())
@@ -1187,7 +1189,7 @@ RefNameResolver::RefNameResolver(const lld::File *file, IO &io) : _io(io) {
 
   typedef MappingTraits<const lld::AbsoluteAtom *>::NormalizedAtom NormAbsAtom;
   for (const lld::AbsoluteAtom *a : file->absolute()) {
-    NormAbsAtom *na = (NormAbsAtom *)a;
+    const auto *na = (const NormAbsAtom *)a;
     if (na->_refName.empty())
       add(na->_name, a);
     else
@@ -1203,16 +1205,16 @@ MappingTraits<const lld::File *>::NormalizedFile::denormalize(IO &io) {
   RefNameResolver nameResolver(this, io);
   // Now that all atoms are parsed, references can be bound.
   for (const lld::DefinedAtom *a : this->defined()) {
-    NormalizedAtom *normAtom = (NormalizedAtom *)a;
+    auto *normAtom = (NormalizedAtom *)const_cast<DefinedAtom *>(a);
     normAtom->bind(nameResolver);
   }
 
-  _definedAtoms._atoms.erase(std::remove_if(_definedAtoms._atoms.begin(),
-                                            _definedAtoms._atoms.end(),
-                                            [](const DefinedAtom *a) {
-                               return ((NormalizedAtom *)a)->isGroupChild();
-                             }),
-                             _definedAtoms._atoms.end());
+  _definedAtoms._atoms.erase(
+      std::remove_if(_definedAtoms._atoms.begin(), _definedAtoms._atoms.end(),
+                     [](const DefinedAtom *a) {
+        return ((const NormalizedAtom *)a)->isGroupChild();
+      }),
+      _definedAtoms._atoms.end());
 
   return this;
 }
@@ -1222,7 +1224,7 @@ inline void MappingTraits<const lld::DefinedAtom *>::NormalizedAtom::bind(
   typedef MappingTraits<const lld::Reference *>::NormalizedReference
   NormalizedReference;
   for (const lld::Reference *ref : _references) {
-    NormalizedReference *normRef = (NormalizedReference *)ref;
+    auto *normRef = (NormalizedReference *)const_cast<Reference *>(ref);
     normRef->bind(resolver);
   }
 }
@@ -1235,7 +1237,7 @@ inline void MappingTraits<const lld::Reference *>::NormalizedReference::bind(
 
   if (_mappedKind.ns == lld::Reference::KindNamespace::all &&
       _mappedKind.value == lld::Reference::kindGroupChild) {
-    ((NormalizedAtom *)_target)->setGroupChild(true);
+    ((NormalizedAtom *)const_cast<Atom *>(_target))->setGroupChild(true);
   }
 }
 

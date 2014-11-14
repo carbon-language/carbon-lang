@@ -39,7 +39,7 @@ public:
   ContentPermissions permissions() const override { return permR__; }
 
   template <typename T> T *getContents() const {
-    return (T *)rawContent().data();
+    return (T *)const_cast<uint8_t *>(rawContent().data());
   }
 };
 
