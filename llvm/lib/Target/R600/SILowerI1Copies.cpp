@@ -109,6 +109,14 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
         continue;
       }
 
+      if (MI.getOpcode() == AMDGPU::IMPLICIT_DEF) {
+        unsigned Reg = MI.getOperand(0).getReg();
+        const TargetRegisterClass *RC = MRI.getRegClass(Reg);
+        if (RC == &AMDGPU::VReg_1RegClass)
+          MRI.setRegClass(Reg, &AMDGPU::SReg_64RegClass);
+        continue;
+      }
+
       if (MI.getOpcode() != AMDGPU::COPY ||
           !TargetRegisterInfo::isVirtualRegister(MI.getOperand(0).getReg()) ||
           !TargetRegisterInfo::isVirtualRegister(MI.getOperand(1).getReg()))
