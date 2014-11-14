@@ -37,6 +37,9 @@ public:
 
   /// \brief Disable all sanitizers.
   void clear();
+
+  /// \brief Returns true if at least one sanitizer is enabled.
+  bool empty() const;
 };
 
 }  // end namespace clang

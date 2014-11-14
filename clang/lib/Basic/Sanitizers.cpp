@@ -29,3 +29,7 @@ void SanitizerSet::set(SanitizerKind K, bool Value) {
 void SanitizerSet::clear() {
   Kinds = 0;
 }
+
+bool SanitizerSet::empty() const {
+  return Kinds == 0;
+}
