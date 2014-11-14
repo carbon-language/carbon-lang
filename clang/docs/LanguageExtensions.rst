@@ -110,7 +110,7 @@ the same name.  For instance, ``__cxx_rvalue_references__`` can be used instead
 of ``cxx_rvalue_references``.
 
 ``__has_cpp_attribute``
--------------------
+-----------------------
 
 This function-like macro takes a single argument that is the name of a
 C++11-style attribute. The argument can either be a single identifier, or a
