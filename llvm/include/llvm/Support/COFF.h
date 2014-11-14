@@ -551,7 +551,7 @@ namespace COFF {
     NUM_DATA_DIRECTORIES
   };
 
-  enum WindowsSubsystem : uint16_t {
+  enum WindowsSubsystem {
     IMAGE_SUBSYSTEM_UNKNOWN = 0, ///< An unknown subsystem.
     IMAGE_SUBSYSTEM_NATIVE = 1, ///< Device drivers and native Windows processes
     IMAGE_SUBSYSTEM_WINDOWS_GUI = 2, ///< The Windows GUI subsystem.
@@ -570,7 +570,7 @@ namespace COFF {
     IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16 ///< A BCD application.
   };
 
-  enum DLLCharacteristics : uint16_t {
+  enum DLLCharacteristics {
     /// ASLR with 64 bit address space.
     IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020,
     /// DLL can be relocated at load time.
