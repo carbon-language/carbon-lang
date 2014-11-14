@@ -42,6 +42,42 @@ StringLexer::NextIf (Character c)
     return false;
 }
 
+std::pair<bool, StringLexer::Character>
+StringLexer::NextIf (std::initializer_list<Character> cs)
+{
+    auto val = Peek();
+    for (auto c : cs)
+    {
+        if (val == c)
+        {
+            Next();
+            return {true,c};
+        }
+    }
+    return {false,0};
+}
+
+bool
+StringLexer::AdvanceIf (const std::string& token)
+{
+    auto pos = m_position;
+    bool matches = true;
+    for (auto c : token)
+    {
+        if (!NextIf(c))
+        {
+            matches = false;
+            break;
+        }
+    }
+    if (!matches)
+    {
+        m_position = pos;
+        return false;
+    }
+    return true;
+}
+
 StringLexer::Character
 StringLexer::Next ()
 {
@@ -67,6 +103,12 @@ bool
 StringLexer::HasAny (Character c)
 {
     return m_data.find(c, m_position) != std::string::npos;
+}
+
+std::string
+StringLexer::GetUnlexed ()
+{
+    return std::string(m_data, m_position);
 }
 
 void

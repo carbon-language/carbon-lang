@@ -10,8 +10,9 @@
 #ifndef utility_StringLexer_h_
 #define utility_StringLexer_h_
 
-#include <string>
+#include <initializer_list>
 #include <list>
+#include <string>
 
 namespace lldb_utility {
     
@@ -34,6 +35,12 @@ public:
     bool
     NextIf (Character c);
     
+    std::pair<bool, Character>
+    NextIf (std::initializer_list<Character> cs);
+    
+    bool
+    AdvanceIf (const std::string& token);
+    
     Character
     Next ();
     
@@ -42,6 +49,9 @@ public:
     
     bool
     HasAny (Character c);
+    
+    std::string
+    GetUnlexed ();
     
     // This will assert if there are less than s characters preceding the cursor.
     void
