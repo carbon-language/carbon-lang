@@ -1880,8 +1880,13 @@ static void GenerateHasAttrSpellingStringSwitch(
       // present in the caller.
       Test = "LangOpts.CPlusPlus11";
 
+    // FIXME: When MinGW support is dropped, or they gain support for
+    // std::to_string, this hack can be dropped as well.
+    std::stringstream ss;
+    ss << Version;
+
     std::string TestStr =
-        !Test.empty() ? Test + " ? " + std::to_string(Version) + " : 0" : "1";
+        !Test.empty() ? Test + " ? " + ss.str() + " : 0" : "1";
     std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(*Attr);
     for (const auto &S : Spellings)
       if (Variety.empty() || (Variety == S.variety() &&
