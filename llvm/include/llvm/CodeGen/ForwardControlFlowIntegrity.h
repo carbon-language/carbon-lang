@@ -42,7 +42,7 @@ public:
   ForwardControlFlowIntegrity(JumpTable::JumpTableType JTT,
                               CFIntegrity CFIType,
                               bool CFIEnforcing, std::string CFIFuncName);
-  virtual ~ForwardControlFlowIntegrity() override;
+  ~ForwardControlFlowIntegrity() override;
 
   /// Runs the CFI pass on a given module. This works best if the module in
   /// question is the result of link-time optimization (see lib/LTO).

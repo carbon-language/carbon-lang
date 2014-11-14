@@ -475,7 +475,7 @@ public:
   RewriteSymbols();
   RewriteSymbols(SymbolRewriter::RewriteDescriptorList &DL);
 
-  virtual bool runOnModule(Module &M) override;
+  bool runOnModule(Module &M) override;
 
 private:
   void loadAndParseMapFiles();

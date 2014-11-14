@@ -157,8 +157,8 @@ struct FunctionHandle : public CallbackVH {
 
   virtual ~FunctionHandle() {}
 
-  virtual void deleted() override { removeSelfFromCache(); }
-  virtual void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
+  void deleted() override { removeSelfFromCache(); }
+  void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
 
 private:
   CFLAliasAnalysis *CFLAA;
