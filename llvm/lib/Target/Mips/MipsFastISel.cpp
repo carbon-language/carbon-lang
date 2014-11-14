@@ -180,7 +180,7 @@ public:
 
 static bool CC_Mips(unsigned ValNo, MVT ValVT, MVT LocVT,
                     CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
-                    CCState &State) __attribute__((unused));
+                    CCState &State) LLVM_ATTRIBUTE_UNUSED;
 
 static bool CC_MipsO32_FP32(unsigned ValNo, MVT ValVT, MVT LocVT,
                             CCValAssign::LocInfo LocInfo,
