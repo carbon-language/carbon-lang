@@ -486,11 +486,15 @@ public:
   /// Insert a range of instructions into the instruction list before I.
   template<typename IT>
   void insert(iterator I, IT S, IT E) {
+    assert((I == end() || I->getParent() == this) &&
+           "iterator points outside of basic block");
     Insts.insert(I.getInstrIterator(), S, E);
   }
 
   /// Insert MI into the instruction list before I.
   iterator insert(iterator I, MachineInstr *MI) {
+    assert((I == end() || I->getParent() == this) &&
+           "iterator points outside of basic block");
     assert(!MI->isBundledWithPred() && !MI->isBundledWithSucc() &&
            "Cannot insert instruction with bundle flags");
     return Insts.insert(I.getInstrIterator(), MI);
@@ -498,6 +502,8 @@ public:
 
   /// Insert MI into the instruction list after I.
   iterator insertAfter(iterator I, MachineInstr *MI) {
+    assert((I == end() || I->getParent() == this) &&
+           "iterator points outside of basic block");
     assert(!MI->isBundledWithPred() && !MI->isBundledWithSucc() &&
            "Cannot insert instruction with bundle flags");
     return Insts.insertAfter(I.getInstrIterator(), MI);
