@@ -127,7 +127,7 @@ class MachineModuleInfo : public ImmutablePass {
   unsigned CurCallSite;
 
   /// TypeInfos - List of C++ TypeInfo used in the current function.
-  std::vector<const GlobalVariable *> TypeInfos;
+  std::vector<const GlobalValue *> TypeInfos;
 
   /// FilterIds - List of typeids encoding filters used in the current function.
   std::vector<unsigned> FilterIds;
@@ -301,12 +301,12 @@ public:
   /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
   ///
   void addCatchTypeInfo(MachineBasicBlock *LandingPad,
-                        ArrayRef<const GlobalVariable *> TyInfo);
+                        ArrayRef<const GlobalValue *> TyInfo);
 
   /// addFilterTypeInfo - Provide the filter typeinfo for a landing pad.
   ///
   void addFilterTypeInfo(MachineBasicBlock *LandingPad,
-                         ArrayRef<const GlobalVariable *> TyInfo);
+                         ArrayRef<const GlobalValue *> TyInfo);
 
   /// addCleanup - Add a cleanup action for a landing pad.
   ///
@@ -314,7 +314,7 @@ public:
 
   /// getTypeIDFor - Return the type id for the specified typeinfo.  This is
   /// function wide.
-  unsigned getTypeIDFor(const GlobalVariable *TI);
+  unsigned getTypeIDFor(const GlobalValue *TI);
 
   /// getFilterIDFor - Return the id of the filter encoded by TyIds.  This is
   /// function wide.
@@ -375,7 +375,7 @@ public:
 
   /// getTypeInfos - Return a reference to the C++ typeinfo for the current
   /// function.
-  const std::vector<const GlobalVariable *> &getTypeInfos() const {
+  const std::vector<const GlobalValue *> &getTypeInfos() const {
     return TypeInfos;
   }
 

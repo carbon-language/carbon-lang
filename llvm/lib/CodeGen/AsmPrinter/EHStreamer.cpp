@@ -314,7 +314,7 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 ///  3. Type ID table contains references to all the C++ typeinfo for all
 ///     catches in the function.  This tables is reverse indexed base 1.
 void EHStreamer::emitExceptionTable() {
-  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<const GlobalValue *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
 
@@ -649,7 +649,7 @@ void EHStreamer::emitExceptionTable() {
 }
 
 void EHStreamer::emitTypeInfos(unsigned TTypeEncoding) {
-  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<const GlobalValue *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 
   bool VerboseAsm = Asm->OutStreamer.isVerboseAsm();
@@ -662,9 +662,9 @@ void EHStreamer::emitTypeInfos(unsigned TTypeEncoding) {
     Entry = TypeInfos.size();
   }
 
-  for (std::vector<const GlobalVariable *>::const_reverse_iterator
+  for (std::vector<const GlobalValue *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
-    const GlobalVariable *GV = *I;
+    const GlobalValue *GV = *I;
     if (VerboseAsm)
       Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
     Asm->EmitTTypeReference(GV, TTypeEncoding);

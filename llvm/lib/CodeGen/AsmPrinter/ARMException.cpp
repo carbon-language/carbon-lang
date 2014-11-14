@@ -108,7 +108,7 @@ void ARMException::endFunction(const MachineFunction *) {
 }
 
 void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
-  const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<const GlobalValue *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 
   bool VerboseAsm = Asm->OutStreamer.isVerboseAsm();
@@ -121,9 +121,9 @@ void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
     Entry = TypeInfos.size();
   }
 
-  for (std::vector<const GlobalVariable *>::const_reverse_iterator
+  for (std::vector<const GlobalValue *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
-    const GlobalVariable *GV = *I;
+    const GlobalValue *GV = *I;
     if (VerboseAsm)
       Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
     Asm->EmitTTypeReference(GV, TTypeEncoding);

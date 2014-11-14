@@ -109,15 +109,16 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, Type *Ty,
 }
 
 /// ExtractTypeInfo - Returns the type info, possibly bitcast, encoded in V.
-GlobalVariable *llvm::ExtractTypeInfo(Value *V) {
+GlobalValue *llvm::ExtractTypeInfo(Value *V) {
   V = V->stripPointerCasts();
-  GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
+  GlobalValue *GV = dyn_cast<GlobalValue>(V);
+  GlobalVariable *Var = dyn_cast<GlobalVariable>(V);
 
-  if (GV && GV->getName() == "llvm.eh.catch.all.value") {
-    assert(GV->hasInitializer() &&
+  if (Var && Var->getName() == "llvm.eh.catch.all.value") {
+    assert(Var->hasInitializer() &&
            "The EH catch-all value must have an initializer");
-    Value *Init = GV->getInitializer();
-    GV = dyn_cast<GlobalVariable>(Init);
+    Value *Init = Var->getInitializer();
+    GV = dyn_cast<GlobalValue>(Init);
     if (!GV) V = cast<ConstantPointerNull>(Init);
   }
 

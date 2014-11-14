@@ -483,7 +483,7 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
 
   // Gather all the type infos for this landing pad and pass them along to
   // MachineModuleInfo.
-  std::vector<const GlobalVariable *> TyInfo;
+  std::vector<const GlobalValue *> TyInfo;
   unsigned N = I.getNumArgOperands();
 
   for (unsigned i = N - 1; i > 1; --i) {
@@ -541,14 +541,14 @@ void llvm::AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
     Value *Val = I.getClause(i - 1);
     if (I.isCatch(i - 1)) {
       MMI.addCatchTypeInfo(MBB,
-                           dyn_cast<GlobalVariable>(Val->stripPointerCasts()));
+                           dyn_cast<GlobalValue>(Val->stripPointerCasts()));
     } else {
       // Add filters in a list.
       Constant *CVal = cast<Constant>(Val);
-      SmallVector<const GlobalVariable*, 4> FilterList;
+      SmallVector<const GlobalValue*, 4> FilterList;
       for (User::op_iterator
              II = CVal->op_begin(), IE = CVal->op_end(); II != IE; ++II)
-        FilterList.push_back(cast<GlobalVariable>((*II)->stripPointerCasts()));
+        FilterList.push_back(cast<GlobalValue>((*II)->stripPointerCasts()));
 
       MMI.addFilterTypeInfo(MBB, FilterList);
     }

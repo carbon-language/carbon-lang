@@ -22,7 +22,7 @@
 #include "llvm/IR/Instructions.h"
 
 namespace llvm {
-class GlobalVariable;
+class GlobalValue;
 class TargetLoweringBase;
 class TargetLowering;
 class TargetMachine;
@@ -59,7 +59,7 @@ void ComputeValueVTs(const TargetLowering &TLI, Type *Ty,
                      uint64_t StartingOffset = 0);
 
 /// ExtractTypeInfo - Returns the type info, possibly bitcast, encoded in V.
-GlobalVariable *ExtractTypeInfo(Value *V);
+GlobalValue *ExtractTypeInfo(Value *V);
 
 /// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
 /// processed uses a memory 'm' constraint.
