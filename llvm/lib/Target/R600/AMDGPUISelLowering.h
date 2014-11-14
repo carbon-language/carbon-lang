@@ -140,14 +140,23 @@ public:
 
   SDValue LowerIntrinsicIABS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerIntrinsicLRP(SDValue Op, SelectionDAG &DAG) const;
-  SDValue CombineMinMax(SDLoc DL,
-                        EVT VT,
-                        SDValue LHS,
-                        SDValue RHS,
-                        SDValue True,
-                        SDValue False,
-                        SDValue CC,
-                        SelectionDAG &DAG) const;
+  SDValue CombineFMinMax(SDLoc DL,
+                         EVT VT,
+                         SDValue LHS,
+                         SDValue RHS,
+                         SDValue True,
+                         SDValue False,
+                         SDValue CC,
+                         SelectionDAG &DAG) const;
+  SDValue CombineIMinMax(SDLoc DL,
+                         EVT VT,
+                         SDValue LHS,
+                         SDValue RHS,
+                         SDValue True,
+                         SDValue False,
+                         SDValue CC,
+                         SelectionDAG &DAG) const;
+
   const char* getTargetNodeName(unsigned Opcode) const override;
 
   virtual SDNode *PostISelFolding(MachineSDNode *N,

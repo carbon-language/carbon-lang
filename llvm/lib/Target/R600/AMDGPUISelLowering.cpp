@@ -1000,19 +1000,14 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
 }
 
 /// \brief Generate Min/Max node
-SDValue AMDGPUTargetLowering::CombineMinMax(SDLoc DL,
-                                            EVT VT,
-                                            SDValue LHS,
-                                            SDValue RHS,
-                                            SDValue True,
-                                            SDValue False,
-                                            SDValue CC,
-                                            SelectionDAG &DAG) const {
-  if (VT != MVT::f32 &&
-      (VT != MVT::f64 ||
-       Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS))
-    return SDValue();
-
+SDValue AMDGPUTargetLowering::CombineFMinMax(SDLoc DL,
+                                             EVT VT,
+                                             SDValue LHS,
+                                             SDValue RHS,
+                                             SDValue True,
+                                             SDValue False,
+                                             SDValue CC,
+                                             SelectionDAG &DAG) const {
   if (!(LHS == True && RHS == False) && !(LHS == False && RHS == True))
     return SDValue();
 
@@ -1055,6 +1050,45 @@ SDValue AMDGPUTargetLowering::CombineMinMax(SDLoc DL,
     llvm_unreachable("Invalid setcc condcode!");
   }
   return SDValue();
+}
+
+/// \brief Generate Min/Max node
+SDValue AMDGPUTargetLowering::CombineIMinMax(SDLoc DL,
+                                             EVT VT,
+                                             SDValue LHS,
+                                             SDValue RHS,
+                                             SDValue True,
+                                             SDValue False,
+                                             SDValue CC,
+                                             SelectionDAG &DAG) const {
+  if (!(LHS == True && RHS == False) && !(LHS == False && RHS == True))
+    return SDValue();
+
+  ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
+  switch (CCOpcode) {
+  case ISD::SETULE:
+  case ISD::SETULT: {
+    unsigned Opc = (LHS == True) ? AMDGPUISD::UMIN : AMDGPUISD::UMAX;
+    return DAG.getNode(Opc, DL, VT, LHS, RHS);
+  }
+  case ISD::SETLE:
+  case ISD::SETLT: {
+    unsigned Opc = (LHS == True) ? AMDGPUISD::SMIN : AMDGPUISD::SMAX;
+    return DAG.getNode(Opc, DL, VT, LHS, RHS);
+  }
+  case ISD::SETGT:
+  case ISD::SETGE: {
+    unsigned Opc = (LHS == True) ? AMDGPUISD::SMAX : AMDGPUISD::SMIN;
+    return DAG.getNode(Opc, DL, VT, LHS, RHS);
+  }
+  case ISD::SETUGE:
+  case ISD::SETUGT: {
+    unsigned Opc = (LHS == True) ? AMDGPUISD::UMAX : AMDGPUISD::UMIN;
+    return DAG.getNode(Opc, DL, VT, LHS, RHS);
+  }
+  default:
+    return SDValue();
+  }
 }
 
 SDValue AMDGPUTargetLowering::ScalarizeVectorLoad(const SDValue Op,
@@ -2117,20 +2151,25 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
     SDLoc DL(N);
     EVT VT = N->getValueType(0);
 
-    SDValue LHS = N->getOperand(0);
-    SDValue RHS = N->getOperand(1);
-    SDValue True = N->getOperand(2);
-    SDValue False = N->getOperand(3);
-    SDValue CC = N->getOperand(4);
+    if (VT == MVT::f32 ||
+        (VT == MVT::f64 &&
+         Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS)) {
+      SDValue LHS = N->getOperand(0);
+      SDValue RHS = N->getOperand(1);
+      SDValue True = N->getOperand(2);
+      SDValue False = N->getOperand(3);
+      SDValue CC = N->getOperand(4);
 
-    return CombineMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
+      return CombineFMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
+    }
+
+    break;
   }
   case ISD::SELECT: {
     SDValue Cond = N->getOperand(0);
     if (Cond.getOpcode() == ISD::SETCC) {
       SDLoc DL(N);
       EVT VT = N->getValueType(0);
-
       SDValue LHS = Cond.getOperand(0);
       SDValue RHS = Cond.getOperand(1);
       SDValue CC = Cond.getOperand(2);
@@ -2138,8 +2177,17 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue True = N->getOperand(1);
       SDValue False = N->getOperand(2);
 
+      if (VT == MVT::f32 ||
+          (VT == MVT::f64 &&
+           Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS)) {
+        return CombineFMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
+      }
 
-      return CombineMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
+      // TODO: Implement min / max Evergreen instructions.
+      if (VT == MVT::i32 &&
+          Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+        return CombineIMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
+      }
     }
 
     break;
