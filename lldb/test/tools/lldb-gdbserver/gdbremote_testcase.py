@@ -734,7 +734,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
         registers = {}
         for (key, val) in kv_dict.items():
-            if re.match(r"^[0-9a-fA-F]+", key):
+            if re.match(r"^[0-9a-fA-F]+$", key):
                 registers[int(key, 16)] = val
         return registers
 
