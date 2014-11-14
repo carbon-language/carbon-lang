@@ -2390,6 +2390,7 @@ namespace {
 //     first vfptr whose table provides a compatible overridden method.  In many
 //     cases, this permits the original vf-table entry to directly call
 //     the method instead of passing through a thunk.
+//     See example before VFTableBuilder::ComputeThisOffset below.
 //
 //     A compatible overridden method is one which does not have a non-trivial
 //     covariant-return adjustment.
@@ -2412,6 +2413,9 @@ namespace {
 //      a) a user-defined ctor/dtor
 //     and
 //      b) a method overriding a method in a virtual base.
+//
+//  To get a better understanding of this code,
+//  you might want to see examples in test/CodeGenCXX/microsoft-abi-vtables-*.cpp
 
 class VFTableBuilder {
 public:
@@ -2642,6 +2646,60 @@ static bool BaseInSet(const CXXBaseSpecifier *Specifier,
   return Bases->count(Specifier->getType()->getAsCXXRecordDecl());
 }
 
+// Let's study one class hierarchy as an example:
+//   struct A {
+//     virtual void f();
+//     int x;
+//   };
+//
+//   struct B : virtual A {
+//     virtual void f();
+//   };
+//
+// Record layouts:
+//   struct A:
+//   0 |   (A vftable pointer)
+//   4 |   int x
+//
+//   struct B:
+//   0 |   (B vbtable pointer)
+//   4 |   struct A (virtual base)
+//   4 |     (A vftable pointer)
+//   8 |     int x
+//
+// Let's assume we have a pointer to the A part of an object of dynamic type B:
+//   B b;
+//   A *a = (A*)&b;
+//   a->f();
+//
+// In this hierarchy, f() belongs to the vftable of A, so B::f() expects
+// "this" parameter to point at the A subobject, which is B+4.
+// In the B::f() prologue, it adjusts "this" back to B by subtracting 4,
+// peformed as a *static* adjustment.
+//
+// Interesting thing happens when we alter the relative placement of A and B
+// subobjects in a class:
+//   struct C : virtual B { };
+//
+//   C c;
+//   A *a = (A*)&c;
+//   a->f();
+//
+// Respective record layout is:
+//   0 |   (C vbtable pointer)
+//   4 |   struct A (virtual base)
+//   4 |     (A vftable pointer)
+//   8 |     int x
+//  12 |   struct B (virtual base)
+//  12 |     (B vbtable pointer)
+//
+// The final overrider of f() in class C is still B::f(), so B+4 should be
+// passed as "this" to that code.  However, "a" points at B-8, so the respective
+// vftable entry should hold a thunk that adds 12 to the "this" argument before
+// performing a tail call to B::f().
+//
+// With this example in mind, we can now calculate the 'this' argument offset
+// for the given method, relative to the beginning of the MostDerivedClass.
 CharUnits
 VFTableBuilder::ComputeThisOffset(FinalOverriders::OverriderInfo Overrider) {
   InitialOverriddenDefinitionCollector Collector;
