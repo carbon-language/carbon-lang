@@ -135,7 +135,7 @@ LLVMContextImpl::~LLVMContextImpl() {
          "Destroying all MDNodes didn't empty the Context's sets.");
 
   // Destroy MDStrings.
-  DeleteContainerSeconds(MDStringCache);
+  MDStringCache.clear();
 }
 
 // ConstantsContext anchors

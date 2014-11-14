@@ -57,14 +57,15 @@ public:
 ///
 /// TODO: Inherit from Metadata.
 class MDString : public Value {
+  friend class StringMapEntry<MDString>;
+
   virtual void anchor();
   MDString(const MDString &) LLVM_DELETED_FUNCTION;
 
   explicit MDString(LLVMContext &C);
 
-private:
   /// \brief Shadow Value::getName() to prevent its use.
-  StringRef getName() const { return Value::getName(); }
+  StringRef getName() const LLVM_DELETED_FUNCTION;
 
 public:
   static MDString *get(LLVMContext &Context, StringRef Str);
@@ -72,17 +73,17 @@ public:
     return get(Context, Str ? StringRef(Str) : StringRef());
   }
 
-  StringRef getString() const { return getName(); }
+  StringRef getString() const;
 
-  unsigned getLength() const { return (unsigned)getName().size(); }
+  unsigned getLength() const { return (unsigned)getString().size(); }
 
   typedef StringRef::iterator iterator;
 
   /// \brief Pointer to the first byte of the string.
-  iterator begin() const { return getName().begin(); }
+  iterator begin() const { return getString().begin(); }
 
   /// \brief Pointer to one byte past the end of the string.
-  iterator end() const { return getName().end(); }
+  iterator end() const { return getString().end(); }
 
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast.
   static bool classof(const Value *V) {

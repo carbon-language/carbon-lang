@@ -261,7 +261,7 @@ public:
   FoldingSet<AttributeSetImpl> AttrsLists;
   FoldingSet<AttributeSetNode> AttrsSetNodes;
 
-  StringMap<Value*> MDStringCache;
+  StringMap<MDString> MDStringCache;
 
   FoldingSet<MDNode> MDNodeSet;
 
