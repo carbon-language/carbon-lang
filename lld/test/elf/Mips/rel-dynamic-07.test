@@ -42,7 +42,7 @@
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name: T0@ (1)
-# CHECK-NEXT:     Value: 0x224
+# CHECK-NEXT:     Value: 0x214
 # CHECK-NEXT:     Size: 8
 # CHECK-NEXT:     Binding: Global (0x1)
 # CHECK-NEXT:     Type: Function (0x2)

@@ -24,8 +24,8 @@
 # PLT-NEXT:    Flags [ (0x2)
 # PLT-NEXT:      SHF_ALLOC (0x2)
 # PLT-NEXT:    ]
-# PLT-NEXT:    Address: 0x40019C
-# PLT-NEXT:    Offset: 0x19C
+# PLT-NEXT:    Address: 0x400190
+# PLT-NEXT:    Offset: 0x190
 # PLT-NEXT:    Size: 24
 # PLT-NEXT:    Link: 3
 # PLT-NEXT:    Info: 0
@@ -40,8 +40,8 @@
 # PLT-NEXT:      SHF_ALLOC (0x2)
 # PLT-NEXT:      SHF_EXECINSTR (0x4)
 # PLT-NEXT:    ]
-# PLT-NEXT:    Address: 0x4001C0
-# PLT-NEXT:    Offset: 0x1C0
+# PLT-NEXT:    Address: 0x4001B0
+# PLT-NEXT:    Offset: 0x1B0
 # PLT-NEXT:    Size: 80
 # PLT-NEXT:    Link: 0
 # PLT-NEXT:    Info: 0
@@ -69,7 +69,7 @@
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
 # PLT-NEXT:     Name: T3@ (1)
-# PLT-NEXT:     Value: 0x400200
+# PLT-NEXT:     Value: 0x4001F0
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
 # PLT-NEXT:     Type: Function (0x2)
@@ -78,7 +78,7 @@
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
 # PLT-NEXT:     Name: T1@ (4)
-# PLT-NEXT:     Value: 0x4001E0
+# PLT-NEXT:     Value: 0x4001D0
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
 # PLT-NEXT:     Type: Function (0x2)
@@ -87,7 +87,7 @@
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
 # PLT-NEXT:     Name: T2@ (7)
-# PLT-NEXT:     Value: 0x4001F0
+# PLT-NEXT:     Value: 0x4001E0
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
 # PLT-NEXT:     Type: Function (0x2)

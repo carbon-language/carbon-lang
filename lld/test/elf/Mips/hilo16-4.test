@@ -7,20 +7,20 @@
 
 # CHECK: Disassembly of section .text:
 # CHECK: glob1:
-# CHECK-NEXT:  400140:  40 00 04 3c  lui  $4, 64
-# CHECK-NEXT:  400144:  ff 9f a6 8c  lw   $6, -24577($5)
+# CHECK-NEXT:  400130:  40 00 04 3c  lui  $4, 64
+# CHECK-NEXT:  400134:  ff 9f a6 8c  lw   $6, -24577($5)
 
 # CHECK: glob2:
-# CHECK-NEXT:  400148:  00 20 c7 80  lb   $7, 8192($6)
-# CHECK-NEXT:  40014c:  04 20 c8 80  lb   $8, 8196($6)
+# CHECK-NEXT:  400138:  00 20 c7 80  lb   $7, 8192($6)
+# CHECK-NEXT:  40013c:  04 20 c8 80  lb   $8, 8196($6)
 
 # CHECK: glob3:
-# CHECK-NEXT:  400150:  40 80 05 3c  lui  $5, 32832
+# CHECK-NEXT:  400140:  40 80 05 3c  lui  $5, 32832
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400140 g     F .text  00000008 glob1
-# CHECK: 00400148 g     F .text  00000008 glob2
-# CHECK: 00400150 g     F .text  00000004 glob3
+# CHECK: 00400130 g     F .text  00000008 glob1
+# CHECK: 00400138 g     F .text  00000008 glob2
+# CHECK: 00400140 g     F .text  00000004 glob3
 # CHECK: 00402000 g       .data  0000000c X
 
 !ELF

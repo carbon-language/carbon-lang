@@ -7,25 +7,25 @@
 
 # CHECK: Disassembly of section .text:
 # CHECK-NEXT: __start:
-# CHECK-NEXT:   400120:  00 00 00 00  nop
-# CHECK-NEXT:   400124:  48 70 10 0c  jal  4309280
-#   0x107048 << 2 = 0x41C120 = _start  + (0x7000 << 2)
-# CHECK-NEXT:   400128:  00 00 00 00  nop
+# CHECK-NEXT:   400110:  00 00 00 00   nop
+# CHECK-NEXT:   400114:  44 70 10 0c  jal  4309264
+#   0x107044 << 2 = 0x41C110 = _start  + (0x7000 << 2)
+# CHECK-NEXT:   400118:  00 00 00 00  nop
 #
 # CHECK: loc:
-# CHECK-NEXT:   40012c:  4b 70 10 0c  jal  4309292
-#   0x10704B << 2 = 0x41C12C = loc  + (0x7000 << 2)
+# CHECK-NEXT:   40011c:  47 70 10 0c  jal  4309276
+#   0x107047 << 2 = 0x41C11C = loc  + (0x7000 << 2)
+# CHECK-NEXT:   400120:  00 00 00 00  nop
+# CHECK-NEXT:   400124:  43 00 10 0c  jal  4194572
+#   0x100043 << 2 = 0x40010C = _start - 4
+# CHECK-NEXT:   400128:  00 00 00 00  nop
+# CHECK-NEXT:   40012c:  46 00 10 0c  jal  4194584
+#   0x100046 << 2 = 0x400118 = loc - 4
 # CHECK-NEXT:   400130:  00 00 00 00  nop
-# CHECK-NEXT:   400134:  47 00 10 0c  jal  4194588
-#   0x100047 << 2 = 0x40011C = _start - 4
-# CHECK-NEXT:   400138:  00 00 00 00  nop
-# CHECK-NEXT:   40013c:  4a 00 10 0c  jal  4194600
-#   0x10004A << 2 = 0x400128 = loc - 4
-# CHECK-NEXT:   400140:  00 00 00 00  nop
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 0040012c l  F .text  00000018 loc
-# CHECK: 00400120 g  F .text  0000000c __start
+# CHECK: 0040011c l  F .text  00000018 loc
+# CHECK: 00400110 g  F .text  0000000c __start
 
 !ELF
 FileHeader: !FileHeader

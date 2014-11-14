@@ -13,15 +13,15 @@
 # CHECK: Disassembly of section .text:
 # CHECK: glob1:
 # CHECK-NEXT: {{[0-9a-f]+}}: 01 00 08 3c  lui     $8, 1
-# CHECK-NEXT: {{[0-9a-f]+}}: f1 8e 08 85  lh      $8, -28943($8)
+# CHECK-NEXT: {{[0-9a-f]+}}: 01 8f 08 85  lh      $8, -28927($8)
 # CHECK-NEXT: {{[0-9a-f]+}}: 01 00 08 3c  lui     $8, 1
-# CHECK-NEXT: {{[0-9a-f]+}}: e7 8e 08 85  lh      $8, -28953($8)
+# CHECK-NEXT: {{[0-9a-f]+}}: f7 8e 08 85  lh      $8, -28937($8)
 # CHECK-NEXT: {{[0-9a-f]+}}: 01 00 08 3c  lui     $8, 1
-# CHECK-NEXT: {{[0-9a-f]+}}: df 90 08 85  lh      $8, -28449($8)
+# CHECK-NEXT: {{[0-9a-f]+}}: ef 90 08 85  lh      $8, -28433($8)
 # CHECK-NEXT: {{[0-9a-f]+}}: 01 00 08 3c  lui     $8, 1
-# CHECK-NEXT: {{[0-9a-f]+}}: d9 8c 08 85  lh      $8, -29479($8)
+# CHECK-NEXT: {{[0-9a-f]+}}: e9 8c 08 85  lh      $8, -29463($8)
 # CHECK-NEXT: {{[0-9a-f]+}}: 03 00 08 3c  lui     $8, 3
-# CHECK-NEXT: {{[0-9a-f]+}}: cf 8e 08 85  lh      $8, -28977($8)
+# CHECK-NEXT: {{[0-9a-f]+}}: df 8e 08 85  lh      $8, -28961($8)
 
 # CHECK: SYMBOL TABLE:
 # CHECK: {{[0-9a-f]+}}  g F  .text  00000028 glob1

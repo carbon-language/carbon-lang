@@ -41,7 +41,8 @@ public:
   Section(const ELFLinkingContext &context, StringRef name,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
       : Chunk<ELFT>(name, k, context), _parent(nullptr), _flags(0), _entSize(0),
-        _type(0), _link(0), _info(0), _segmentType(SHT_NULL) {}
+        _type(0), _link(0), _info(0), _isFirstSectionInMerge(false),
+        _segmentType(SHT_NULL) {}
 
   /// \brief Modify the section contents before assigning virtual addresses
   //  or assigning file offsets
@@ -94,11 +95,18 @@ public:
 
   virtual bool findAtomAddrByName(StringRef, uint64_t &) { return false; }
 
-  void setMergedSection(MergedSections<ELFT> *ms) { _parent = ms; }
+  void setMergedSection(MergedSections<ELFT> *ms, bool isFirst = false) {
+    _parent = ms;
+    _isFirstSectionInMerge = isFirst;
+  }
 
   static bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Chunk<ELFT>::Kind::ELFSection ||
            c->kind() == Chunk<ELFT>::Kind::AtomSection;
+  }
+
+  uint64_t align2() const override {
+    return _isFirstSectionInMerge ? _parent->align2() : this->_align2;
   }
 
 protected:
@@ -114,6 +122,8 @@ protected:
   uint32_t _link;
   /// \brief the sh_info field.
   uint32_t _info;
+  /// \brief Is this the first section in the merged section list.
+  bool _isFirstSectionInMerge;
   /// \brief the output ELF segment type of this section.
   Layout::SegmentType _segmentType;
 };
@@ -503,7 +513,7 @@ MergedSections<ELFT>::appendSection(Chunk<ELFT> *c) {
     _type = section->getType();
     if (_flags < section->getFlags())
       _flags = section->getFlags();
-    section->setMergedSection(this);
+    section->setMergedSection(this, (_sections.size() == 0));
   }
   _kind = c->kind();
   _sections.push_back(c);
@@ -1022,7 +1032,7 @@ public:
       : Section<ELFT>(context, str), _layout(layout) {
     this->setOrder(order);
     this->_entSize = sizeof(Elf_Dyn);
-    this->_align2 = llvm::alignOf<Elf_Dyn>();
+    this->_align2 = ELFT::Is64Bits ? 8 : 4;
     // Reserve space for the DT_NULL entry.
     this->_fsize = sizeof(Elf_Dyn);
     this->_msize = sizeof(Elf_Dyn);

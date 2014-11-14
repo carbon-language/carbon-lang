@@ -5,7 +5,7 @@
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # CHECK: Contents of section .text:
-# CHECK:  400160 00000000 01000000 03800000 04800000  ................
+# CHECK:  400150 00000000 01000000 03800000 04800000  ................
 
 !ELF
 FileHeader:

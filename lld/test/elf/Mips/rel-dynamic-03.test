@@ -20,19 +20,19 @@
 
 # PLT: Disassembly of section .plt:
 # PLT-NEXT: .plt:
-# PLT-NEXT:   400170:  40 00 1c 3c  lui     $gp, 64
-# PLT-NEXT:   400174:  00 20 99 8f  lw      $25, 8192($gp)
-# PLT-NEXT:   400178:  00 20 9c 27  addiu   $gp, $gp, 8192
-# PLT-NEXT:   40017c:  23 c0 1c 03  subu    $24, $24, $gp
-# PLT-NEXT:   400180:  21 78 e0 03  move    $15, $ra
-# PLT-NEXT:   400184:  82 c0 18 00  srl     $24, $24, 2
-# PLT-NEXT:   400188:  09 f8 20 03  jalr    $25
-# PLT-NEXT:   40018c:  fe ff 18 27  addiu   $24, $24, -2
+# PLT-NEXT:   400160:  40 00 1c 3c  lui     $gp, 64
+# PLT-NEXT:   400164:  00 20 99 8f  lw      $25, 8192($gp)
+# PLT-NEXT:   400168:  00 20 9c 27  addiu   $gp, $gp, 8192
+# PLT-NEXT:   40016c:  23 c0 1c 03  subu    $24, $24, $gp
+# PLT-NEXT:   400170:  21 78 e0 03  move    $15, $ra
+# PLT-NEXT:   400174:  82 c0 18 00  srl     $24, $24, 2
+# PLT-NEXT:   400178:  09 f8 20 03  jalr    $25
+# PLT-NEXT:   40017c:  fe ff 18 27  addiu   $24, $24, -2
 #
-# PLT-NEXT:   400190:  40 00 0f 3c  lui     $15, 64
-# PLT-NEXT:   400194:  08 20 f9 8d  lw      $25, 8200($15)
-# PLT-NEXT:   400198:  08 00 20 03  jr      $25
-# PLT-NEXT:   40019c:  08 20 f8 25  addiu   $24, $15, 8200
+# PLT-NEXT:   400180:  40 00 0f 3c  lui     $15, 64
+# PLT-NEXT:   400184:  08 20 f9 8d  lw      $25, 8200($15)
+# PLT-NEXT:   400188:  08 00 20 03  jr      $25
+# PLT-NEXT:   40018c:  08 20 f8 25  addiu   $24, $15, 8200
 #
 # PLT-SYM:      Relocations [
 # PLT-SYM-NEXT:   Section (5) .rel.plt {
@@ -41,7 +41,7 @@
 # PLT-SYM-NEXT: ]
 
 # PLT-SYM:      Name: T1@ (1)
-# PLT-SYM-NEXT: Value: 0x400190
+# PLT-SYM-NEXT: Value: 0x400180
 # PLT-SYM-NEXT: Size: 0
 # PLT-SYM-NEXT: Binding: Global (0x1)
 # PLT-SYM-NEXT: Type: Function (0x2)

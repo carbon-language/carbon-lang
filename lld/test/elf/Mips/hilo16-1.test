@@ -16,7 +16,7 @@
 # CHECK-NEXT: {{[0-9a-f]+}}: 3e 00 08 3c  lui     $8, 62
 # CHECK-NEXT: {{[0-9a-f]+}}: 40 02 08 3c  lui     $8, 576
 # CHECK-NEXT: {{[0-9a-f]+}}: 40 fe 08 3c  lui     $8, 65088
-# CHECK-NEXT: {{[0-9a-f]+}}: 65 01 08 85  lh      $8, 357($8)
+# CHECK-NEXT: {{[0-9a-f]+}}: 55 01 08 85  lh      $8, 341($8)
 
 # CHECK: SYMBOL TABLE:
 # CHECK: {{[0-9a-f]+}} g F .text  00000024 glob1

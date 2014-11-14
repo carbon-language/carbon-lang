@@ -12,22 +12,22 @@
 
 # CHECK: Disassembly of section .text:
 # CHECK: glob1:
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  81 01 08 85  lh   $8, 385($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  7f 01 08 85  lh   $8, 383($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  7f 03 08 85  lh   $8, 895($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  81 ff 08 85  lh   $8, -127($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  42 00 08 3c  lui  $8, 66
-# CHECK-NEXT: {{[0-9a-f]+}}:  7f 01 08 85  lh   $8, 383($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  3e 00 08 3c  lui  $8, 62
-# CHECK-NEXT: {{[0-9a-f]+}}:  81 01 08 85  lh   $8, 385($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 02 08 3c  lui  $8, 576
-# CHECK-NEXT: {{[0-9a-f]+}}:  7f 01 08 85  lh   $8, 383($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 fe 08 3c  lui  $8, 65088
-# CHECK-NEXT: {{[0-9a-f]+}}:  81 01 08 85  lh   $8, 385($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:  71 01 08 85  lh	$8, 369($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:  6f 01 08 85  lh	$8, 367($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:  6f 03 08 85  lh	$8, 879($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:  71 ff 08 85  lh	$8, -143($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  42 00 08 3c  lui	$8, 66
+# CHECK-NEXT: {{[0-9a-f]+}}:  6f 01 08 85  lh	$8, 367($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  3e 00 08 3c  lui	$8, 62
+# CHECK-NEXT: {{[0-9a-f]+}}:  71 01 08 85  lh	$8, 369($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  40 02 08 3c  lui	$8, 576
+# CHECK-NEXT: {{[0-9a-f]+}}:  6f 01 08 85  lh	$8, 367($8)
+# CHECK-NEXT: {{[0-9a-f]+}}:  40 fe 08 3c  lui	$8, 65088
+# CHECK-NEXT: {{[0-9a-f]+}}:  71 01 08 85  lh	$8, 369($8)
 
 # CHECK: SYMBOL TABLE:
 # CHECK: {{[0-9a-f]+}}  g F .text  00000040 glob1
