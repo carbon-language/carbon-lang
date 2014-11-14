@@ -10,8 +10,8 @@ Clang Thread Safety Analysis is a C++ language extension which warns about
 potential race conditions in code.  The analysis is completely static (i.e.
 compile-time); there is no run-time overhead.  The analysis is still
 under active development, but it is mature enough to be deployed in an
-industrial setting.  It being developed by Google, and is used extensively
-on their internal code base.
+industrial setting.  It is being developed by Google, in collaboration with
+CERT/SEI, and is used extensively in Google's internal code base.
 
 Thread safety analysis works very much like a type system for multi-threaded
 programs.  In addition to declaring the *type* of data (e.g. ``int``, ``float``,
@@ -327,7 +327,7 @@ thread-safe, but too complicated for the analysis to understand.  Reasons for
 
 Unlike the other attributes, NO_THREAD_SAFETY_ANALYSIS is not part of the
 interface of a function, and should thus be placed on the function definition
-(in the ``.cc`` or ``.cpp`` file) rather than on the function delaration
+(in the ``.cc`` or ``.cpp`` file) rather than on the function declaration
 (in the header).
 
 
@@ -503,7 +503,7 @@ As a result, EXCLUDES can easily produce false negatives:
 
 Negative requirements are an alternative EXCLUDES that provide
 a stronger safety guarantee.  A negative requirement uses the  REQUIRES
-attribute, in conjection with the ``!`` operator, to indicate that a capability
+attribute, in conjunction with the ``!`` operator, to indicate that a capability
 should *not* be held.
 
 For example, using ``REQUIRES(!mu)`` instead of ``EXCLUDES(mu)`` will produce
@@ -598,7 +598,7 @@ Thread safety attributes follow normal C++ access restrictions, so if ``mu``
 is a private member of ``c``, then it is an error to write ``c.mu`` in an
 attribute.
 
-One workround is to (ab)use the ``RETURN_CAPABILITY`` attribute to provide a
+One workaround is to (ab)use the ``RETURN_CAPABILITY`` attribute to provide a
 public *name* for a private mutex, without actually exposing the underlying
 mutex.  For example:
 
