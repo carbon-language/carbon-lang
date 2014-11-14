@@ -34,7 +34,7 @@ class SocketAddress;
 class ConnectionFileDescriptor : public Connection
 {
   public:
-    ConnectionFileDescriptor();
+    ConnectionFileDescriptor(bool child_processes_inherit = false);
 
     ConnectionFileDescriptor(int fd, bool owns_fd);
 
@@ -67,6 +67,9 @@ class ConnectionFileDescriptor : public Connection
 
     uint16_t GetListeningPort(uint32_t timeout_sec);
 
+    bool GetChildProcessesInherit() const;
+    void SetChildProcessesInherit(bool child_processes_inherit);
+
   protected:
     void OpenCommandPipe();
 
@@ -94,6 +97,7 @@ class ConnectionFileDescriptor : public Connection
     std::atomic<bool> m_shutting_down; // This marks that we are shutting down so if we get woken up from
                                        // BytesAvailable to disconnect, we won't try to read again.
     bool m_waiting_for_accept;
+    bool m_child_processes_inherit;
 
   private:
     DISALLOW_COPY_AND_ASSIGN(ConnectionFileDescriptor);

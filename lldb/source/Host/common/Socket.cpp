@@ -55,6 +55,33 @@ const NativeSocket Socket::kInvalidSocketValue = -1;
 #endif
 #endif // #ifdef __ANDROID__
 
+namespace {
+
+NativeSocket CreateSocket(const int domain, const int type, const int protocol, bool child_processes_inherit)
+{
+    auto socketType = type;
+#ifdef SOCK_CLOEXEC
+    if (!child_processes_inherit) {
+        socketType |= SOCK_CLOEXEC;
+    }
+#endif
+    return ::socket (domain, socketType, protocol);
+}
+
+NativeSocket Accept(NativeSocket sockfd, struct sockaddr *addr, socklen_t *addrlen, bool child_processes_inherit)
+{
+#ifdef SOCK_CLOEXEC
+    int flags = 0;
+    if (!child_processes_inherit) {
+        flags |= SOCK_CLOEXEC;
+    }
+    return ::accept4 (sockfd, addr, addrlen, flags);
+#else
+    return ::accept (sockfd, addr, addrlen);
+#endif
+}
+}
+
 Socket::Socket(NativeSocket socket, SocketProtocol protocol, bool should_close)
     : IOObject(eFDTypeSocket, should_close)
     , m_protocol(protocol)
@@ -68,7 +95,7 @@ Socket::~Socket()
     Close();
 }
 
-Error Socket::TcpConnect(llvm::StringRef host_and_port, Socket *&socket)
+Error Socket::TcpConnect(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket)
 {
     // Store the result in a unique_ptr in case we error out, the memory will get correctly freed.
     std::unique_ptr<Socket> final_socket;
@@ -86,7 +113,7 @@ Error Socket::TcpConnect(llvm::StringRef host_and_port, Socket *&socket)
         return error;
 
     // Create the socket
-    sock = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sock = CreateSocket (AF_INET, SOCK_STREAM, IPPROTO_TCP, child_processes_inherit);
     if (sock == kInvalidSocketValue)
     {
         // TODO: On Windows, use WSAGetLastError().
@@ -140,7 +167,7 @@ Error Socket::TcpConnect(llvm::StringRef host_and_port, Socket *&socket)
     return error;
 }
 
-Error Socket::TcpListen(llvm::StringRef host_and_port, Socket *&socket, Predicate<uint16_t>* predicate)
+Error Socket::TcpListen(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket, Predicate<uint16_t>* predicate)
 {
     std::unique_ptr<Socket> listen_socket;
     NativeSocket listen_sock = kInvalidSocketValue;
@@ -149,7 +176,7 @@ Error Socket::TcpListen(llvm::StringRef host_and_port, Socket *&socket, Predicat
     const sa_family_t family = AF_INET;
     const int socktype = SOCK_STREAM;
     const int protocol = IPPROTO_TCP;
-    listen_sock = ::socket (family, socktype, protocol);
+    listen_sock = ::CreateSocket (family, socktype, protocol, child_processes_inherit);
     if (listen_sock == kInvalidSocketValue)
     {
         error.SetErrorToErrno();
@@ -211,7 +238,7 @@ Error Socket::TcpListen(llvm::StringRef host_and_port, Socket *&socket, Predicat
     return error;
 }
 
-Error Socket::BlockingAccept(llvm::StringRef host_and_port, Socket *&socket)
+Error Socket::BlockingAccept(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket)
 {
     Error error;
     std::string host_str;
@@ -250,7 +277,10 @@ Error Socket::BlockingAccept(llvm::StringRef host_and_port, Socket *&socket)
 #endif
         socklen_t accept_addr_len = sizeof accept_addr;
 
-        int sock = ::accept (this->GetNativeSocket(), (struct sockaddr *)&accept_addr, &accept_addr_len);
+        int sock = Accept (this->GetNativeSocket(),
+                           (struct sockaddr *)&accept_addr,
+                           &accept_addr_len,
+                           child_processes_inherit);
             
         if (sock == kInvalidSocketValue)
         {
@@ -295,7 +325,7 @@ Error Socket::BlockingAccept(llvm::StringRef host_and_port, Socket *&socket)
 
 }
 
-Error Socket::UdpConnect(llvm::StringRef host_and_port, Socket *&send_socket, Socket *&recv_socket)
+Error Socket::UdpConnect(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&send_socket, Socket *&recv_socket)
 {
     std::unique_ptr<Socket> final_send_socket;
     std::unique_ptr<Socket> final_recv_socket;
@@ -315,7 +345,7 @@ Error Socket::UdpConnect(llvm::StringRef host_and_port, Socket *&send_socket, So
 
     // Setup the receiving end of the UDP connection on this localhost
     // on port zero. After we bind to port zero we can read the port.
-    final_recv_fd = ::socket (AF_INET, SOCK_DGRAM, 0);
+    final_recv_fd = ::CreateSocket (AF_INET, SOCK_DGRAM, 0, child_processes_inherit);
     if (final_recv_fd == kInvalidSocketValue)
     {
         // Socket creation failed...
@@ -366,9 +396,10 @@ Error Socket::UdpConnect(llvm::StringRef host_and_port, Socket *&send_socket, So
          service_info_ptr != NULL; 
          service_info_ptr = service_info_ptr->ai_next) 
     {
-        final_send_fd = ::socket (service_info_ptr->ai_family, 
-                                  service_info_ptr->ai_socktype,
-                                  service_info_ptr->ai_protocol);
+        final_send_fd = ::CreateSocket (service_info_ptr->ai_family,
+                                        service_info_ptr->ai_socktype,
+                                        service_info_ptr->ai_protocol,
+                                        child_processes_inherit);
 
         if (final_send_fd != kInvalidSocketValue)
         {
@@ -395,7 +426,7 @@ Error Socket::UdpConnect(llvm::StringRef host_and_port, Socket *&send_socket, So
     return error;
 }
 
-Error Socket::UnixDomainConnect(llvm::StringRef name, Socket *&socket)
+Error Socket::UnixDomainConnect(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
 {
     Error error;
 #ifndef LLDB_DISABLE_POSIX
@@ -403,7 +434,7 @@ Error Socket::UnixDomainConnect(llvm::StringRef name, Socket *&socket)
 
     // Open the socket that was passed in as an option
     struct sockaddr_un saddr_un;
-    int fd = ::socket (AF_UNIX, SOCK_STREAM, 0);
+    int fd = ::CreateSocket (AF_UNIX, SOCK_STREAM, 0, child_processes_inherit);
     if (fd == kInvalidSocketValue)
     {
         error.SetErrorToErrno();
@@ -432,7 +463,7 @@ Error Socket::UnixDomainConnect(llvm::StringRef name, Socket *&socket)
     return error;
 }
 
-Error Socket::UnixDomainAccept(llvm::StringRef name, Socket *&socket)
+Error Socket::UnixDomainAccept(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
 {
     Error error;
 #ifndef LLDB_DISABLE_POSIX
@@ -442,7 +473,7 @@ Error Socket::UnixDomainAccept(llvm::StringRef name, Socket *&socket)
     NativeSocket listen_fd = kInvalidSocketValue;
     NativeSocket socket_fd = kInvalidSocketValue;
     
-    listen_fd = ::socket (AF_UNIX, SOCK_STREAM, 0);
+    listen_fd = ::CreateSocket (AF_UNIX, SOCK_STREAM, 0, child_processes_inherit);
     if (listen_fd == kInvalidSocketValue)
     {
         error.SetErrorToErrno();
@@ -464,7 +495,7 @@ Error Socket::UnixDomainAccept(llvm::StringRef name, Socket *&socket)
     {
         if (::listen (listen_fd, 5) == 0) 
         {
-            socket_fd = ::accept (listen_fd, NULL, 0);
+            socket_fd = Accept (listen_fd, NULL, 0, child_processes_inherit);
             if (socket_fd > 0)
             {
                 final_socket.reset(new Socket(socket_fd, ProtocolUnixDomain, true));

@@ -49,12 +49,13 @@
 using namespace lldb;
 using namespace lldb_private;
 
-ConnectionFileDescriptor::ConnectionFileDescriptor()
+ConnectionFileDescriptor::ConnectionFileDescriptor(bool child_processes_inherit)
     : Connection()
     , m_pipe()
     , m_mutex(Mutex::eMutexTypeRecursive)
     , m_shutting_down(false)
     , m_waiting_for_accept(false)
+    , m_child_processes_inherit(child_processes_inherit)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_CONNECTION | LIBLLDB_LOG_OBJECT));
     if (log)
@@ -67,6 +68,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor(int fd, bool owns_fd)
     , m_mutex(Mutex::eMutexTypeRecursive)
     , m_shutting_down(false)
     , m_waiting_for_accept(false)
+    , m_child_processes_inherit(false)
 {
     m_write_sp.reset(new File(fd, owns_fd));
     m_read_sp.reset(new File(fd, false));
@@ -690,7 +692,7 @@ ConnectionStatus
 ConnectionFileDescriptor::NamedSocketAccept(const char *socket_name, Error *error_ptr)
 {
     Socket *socket = nullptr;
-    Error error = Socket::UnixDomainAccept(socket_name, socket);
+    Error error = Socket::UnixDomainAccept(socket_name, m_child_processes_inherit, socket);
     if (error_ptr)
         *error_ptr = error;
     m_write_sp.reset(socket);
@@ -702,7 +704,7 @@ ConnectionStatus
 ConnectionFileDescriptor::NamedSocketConnect(const char *socket_name, Error *error_ptr)
 {
     Socket *socket = nullptr;
-    Error error = Socket::UnixDomainConnect(socket_name, socket);
+    Error error = Socket::UnixDomainConnect(socket_name, m_child_processes_inherit, socket);
     if (error_ptr)
         *error_ptr = error;
     m_write_sp.reset(socket);
@@ -717,7 +719,7 @@ ConnectionFileDescriptor::SocketListen(const char *s, Error *error_ptr)
 
     Socket *socket = nullptr;
     m_waiting_for_accept = true;
-    Error error = Socket::TcpListen(s, socket, &m_port_predicate);
+    Error error = Socket::TcpListen(s, m_child_processes_inherit, socket, &m_port_predicate);
     if (error_ptr)
         *error_ptr = error;
     if (error.Fail())
@@ -727,7 +729,7 @@ ConnectionFileDescriptor::SocketListen(const char *s, Error *error_ptr)
 
     listening_socket_up.reset(socket);
     socket = nullptr;
-    error = listening_socket_up->BlockingAccept(s, socket);
+    error = listening_socket_up->BlockingAccept(s, m_child_processes_inherit, socket);
     listening_socket_up.reset();
     if (error_ptr)
         *error_ptr = error;
@@ -743,7 +745,7 @@ ConnectionStatus
 ConnectionFileDescriptor::ConnectTCP(const char *s, Error *error_ptr)
 {
     Socket *socket = nullptr;
-    Error error = Socket::TcpConnect(s, socket);
+    Error error = Socket::TcpConnect(s, m_child_processes_inherit, socket);
     if (error_ptr)
         *error_ptr = error;
     m_write_sp.reset(socket);
@@ -756,7 +758,7 @@ ConnectionFileDescriptor::ConnectUDP(const char *s, Error *error_ptr)
 {
     Socket *send_socket = nullptr;
     Socket *recv_socket = nullptr;
-    Error error = Socket::UdpConnect(s, send_socket, recv_socket);
+    Error error = Socket::UdpConnect(s, m_child_processes_inherit, send_socket, recv_socket);
     if (error_ptr)
         *error_ptr = error;
     m_write_sp.reset(send_socket);
@@ -777,4 +779,16 @@ ConnectionFileDescriptor::GetListeningPort(uint32_t timeout_sec)
         m_port_predicate.WaitForValueNotEqualTo(0, bound_port, &timeout);
     }
     return bound_port;
+}
+
+bool
+ConnectionFileDescriptor::GetChildProcessesInherit() const
+{
+    return m_child_processes_inherit;
+}
+
+void
+ConnectionFileDescriptor::SetChildProcessesInherit(bool child_processes_inherit)
+{
+    m_child_processes_inherit = child_processes_inherit;
 }
