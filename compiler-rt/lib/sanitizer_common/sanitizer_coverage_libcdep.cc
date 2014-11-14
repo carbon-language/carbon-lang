@@ -41,7 +41,9 @@
 #include "sanitizer_symbolizer.h"
 #include "sanitizer_flags.h"
 
-atomic_uint32_t dump_once_guard;  // Ensure that CovDump runs only once.
+static atomic_uint32_t dump_once_guard;  // Ensure that CovDump runs only once.
+
+static atomic_uintptr_t coverage_counter;
 
 // pc_array is the array containing the covered PCs.
 // To make the pc_array thread- and async-signal-safe it has to be large enough.
@@ -201,6 +203,7 @@ void CoverageData::Add(uptr pc) {
   CHECK_LT(idx * sizeof(uptr),
            atomic_load(&pc_array_size, memory_order_acquire));
   pc_array[idx] = pc;
+  atomic_fetch_add(&coverage_counter, 1, memory_order_relaxed);
 }
 
 // Registers a pair caller=>callee.
@@ -228,8 +231,10 @@ void CoverageData::IndirCall(uptr caller, uptr callee, uptr callee_cache[],
   for (uptr i = 2; i < cache_size; i++) {
     uptr was = 0;
     if (atomic_compare_exchange_strong(&atomic_callee_cache[i], &was, callee,
-                                       memory_order_seq_cst))
+                                       memory_order_seq_cst)) {
+      atomic_fetch_add(&coverage_counter, 1, memory_order_relaxed);
       return;
+    }
     if (was == callee)  // Already have this callee.
       return;
   }
@@ -468,5 +473,9 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(uptr npcs) {
 SANITIZER_INTERFACE_ATTRIBUTE
 sptr __sanitizer_maybe_open_cov_file(const char *name) {
   return MaybeOpenCovFile(name);
+}
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_total_unique_coverage() {
+  return atomic_load(&coverage_counter, memory_order_relaxed);
 }
 }  // extern "C"
