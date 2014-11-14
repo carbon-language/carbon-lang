@@ -50,6 +50,10 @@ protected:
   }
 };
 
+TEST_F(FormatTestJava, NoAlternativeOperatorNames) {
+  verifyFormat("someObject.and();");
+}
+
 TEST_F(FormatTestJava, ClassDeclarations) {
   verifyFormat("public class SomeClass {\n"
                "  private int a;\n"
