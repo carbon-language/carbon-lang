@@ -11,13 +11,6 @@
 
 // size_type max_size() const;
 
-// NOTE: asan and msan will fail for one of two reasons
-// 1. If allocator_may_return_null=0 then they will fail because the allocation
-//    returns null.
-// 2. If allocator_may_return_null=1 then they will fail because the allocation
-//    is too large to succeed.
-// UNSUPPORTED: asan, msan
-
 #include <string>
 #include <cassert>
 
@@ -25,33 +18,14 @@
 
 template <class S>
 void
-test1(const S& s)
-{
-    S s2(s);
-    const size_t sz = s2.max_size() - 1;
-    try { s2.resize(sz, 'x'); }
-    catch ( const std::bad_alloc & ) { return ; }
-    assert ( s2.size() ==  sz );
-}
-
-template <class S>
-void
-test2(const S& s)
-{
-    S s2(s);
-    const size_t sz = s2.max_size();
-    try { s2.resize(sz, 'x'); }
-    catch ( const std::bad_alloc & ) { return ; }
-    assert ( s.size() ==  sz );
-}
-
-template <class S>
-void
 test(const S& s)
 {
     assert(s.max_size() >= s.size());
-    test1(s);
-    test2(s);
+    S s2(s);
+    const size_t sz = s2.max_size() + 1;
+    try { s2.resize(sz, 'x'); }
+    catch ( const std::length_error & ) { return ; }
+    assert ( false );
 }
 
 int main()
