@@ -10,7 +10,9 @@ declare void @bar()
 define void @test_dpr_align(i8 %l, i8 %r) {
 ; CHECK-LABEL: test_dpr_align:
 ; CHECK: push.w {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; CHECK: .cfi_def_cfa_offset 36
 ; CHECK: sub sp, #4
+; CHECK: .cfi_def_cfa_offset 40
 ; CHECK: vpush {d8}
 ; CHECK: .cfi_offset d8, -48
 ; CHECK-NOT: sub sp
@@ -70,7 +72,10 @@ define void @test_nodpr_noalign(i8 %l, i8 %r) {
 define void @test_frame_pointer_offset() minsize "no-frame-pointer-elim"="true" {
 ; CHECK-LABEL: test_frame_pointer_offset:
 ; CHECK: push.w {r3, r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; CHECK: .cfi_def_cfa_offset 40
 ; CHECK: add r7, sp, #16
+; CHECK: .cfi_def_cfa r7, 24
+; CHECK-NOT: .cfi_def_cfa_offset
   call void asm sideeffect "", "~{r4},~{r5},~{r6},~{r7},~{r8},~{r9},~{r10},~{r11},~{d8}"()
   call void @bar()
   ret void
