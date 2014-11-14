@@ -226,7 +226,7 @@ public:
   LLVMContext &getContext() const;
 
   // \brief All values can potentially be named.
-  bool hasName() const { return Name != nullptr && SubclassID != MDStringVal; }
+  bool hasName() const { return Name != nullptr; }
   ValueName *getValueName() const { return Name; }
   void setValueName(ValueName *VN) { Name = VN; }
 
