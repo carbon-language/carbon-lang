@@ -63,7 +63,7 @@ inline
 V
 as_integer_helper(const string& func, const S& str, size_t* idx, int base, F f)
 {
-    typename S::value_type* ptr;
+    typename S::value_type* ptr = nullptr;
     const typename S::value_type* const p = str.c_str();
     typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
@@ -180,7 +180,7 @@ inline
 V
 as_float_helper(const string& func, const S& str, size_t* idx, F f )
 {
-    typename S::value_type* ptr;
+    typename S::value_type* ptr = nullptr;
     const typename S::value_type* const p = str.c_str();
     typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
