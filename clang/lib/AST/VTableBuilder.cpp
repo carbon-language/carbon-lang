@@ -2658,13 +2658,13 @@ static bool BaseInSet(const CXXBaseSpecifier *Specifier,
 //
 // Record layouts:
 //   struct A:
-//   0 |   (A vftable pointer)
+//   0 |   (A vftable pointer)
 //   4 |   int x
 //
 //   struct B:
-//   0 |   (B vbtable pointer)
-//   4 |   struct A (virtual base)
-//   4 |     (A vftable pointer)
+//   0 |   (B vbtable pointer)
+//   4 |   struct A (virtual base)
+//   4 |     (A vftable pointer)
 //   8 |     int x
 //
 // Let's assume we have a pointer to the A part of an object of dynamic type B:
