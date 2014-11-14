@@ -249,8 +249,7 @@ public:
     FormattersContainer(std::string name,
                     IFormatChangeListener* lst) :
     m_format_map(lst),
-    m_name(name),
-    m_id_cs(ConstString("id"))
+    m_name(name)
     {
     }
     
@@ -327,15 +326,11 @@ public:
     }
     
 protected:
-        
     BackEndType m_format_map;
-    
     std::string m_name;
     
     DISALLOW_COPY_AND_ASSIGN(FormattersContainer);
     
-    ConstString m_id_cs;
-                           
     void
     Add_Impl (const MapKeyType &type, const MapValueType& entry, lldb::RegularExpressionSP *dummy)
     {
