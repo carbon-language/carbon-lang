@@ -37,9 +37,6 @@ Metadata::Metadata(LLVMContext &Context, unsigned ID)
 
 void MDString::anchor() { }
 
-MDString::MDString(LLVMContext &C)
-  : Value(Type::getMetadataTy(C), Value::MDStringVal) {}
-
 MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   auto &Store = Context.pImpl->MDStringCache;
   auto I = Store.find(Str);
