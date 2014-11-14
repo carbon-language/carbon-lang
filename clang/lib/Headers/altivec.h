@@ -1623,6 +1623,21 @@ vec_vctuxs(vector float __a, int __b)
   return __builtin_altivec_vctuxs(__a, __b);
 }
 
+/* vec_div */
+#ifdef __VSX__
+static vector float __ATTRS_o_ai
+vec_div(vector float __a, vector float __b)
+{
+  return __builtin_vsx_xvdivsp(__a, __b);
+}
+
+static vector double __ATTRS_o_ai
+vec_div(vector double __a, vector double __b)
+{
+  return __builtin_vsx_xvdivdp(__a, __b);
+}
+#endif
+
 /* vec_dss */
 
 static void __attribute__((__always_inline__))

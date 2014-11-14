@@ -14,5 +14,5 @@ int main()
 }
 // FIXME: As noted in ms-intrin.cpp, it would be nice if we didn't have to
 // hard-code the line number from altivec.h here.
-// expected-note@altivec.h:2374 {{deprecated here}}
-// expected-note@altivec.h:2509 {{deprecated here}}
+// expected-note@altivec.h:2389 {{deprecated here}}
+// expected-note@altivec.h:2524 {{deprecated here}}

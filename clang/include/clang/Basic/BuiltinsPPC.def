@@ -220,6 +220,9 @@ BUILTIN(__builtin_vsx_xvmindp, "V2dV2dV2d", "")
 BUILTIN(__builtin_vsx_xvminsp, "V4fV4fV4f", "")
 BUILTIN(__builtin_vsx_xsmindp, "ddd", "")
 
+BUILTIN(__builtin_vsx_xvdivdp, "V2dV2dV2d", "")
+BUILTIN(__builtin_vsx_xvdivsp, "V4fV4fV4f", "")
+
 // FIXME: Obviously incomplete.
 
 #undef BUILTIN

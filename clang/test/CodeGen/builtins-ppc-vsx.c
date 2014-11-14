@@ -20,6 +20,13 @@ double res_d;
 void test1() {
 // CHECK-LABEL: define void @test1
 
+  /* vec_div */
+  res_vf = vec_div(vf, vf);
+// CHECK: @llvm.ppc.vsx.xvdivsp
+
+  res_vd = vec_div(vd, vd);
+// CHECK: @llvm.ppc.vsx.xvdivdp
+
   /* vec_max */
   res_vf = vec_max(vf, vf);
 // CHECK: @llvm.ppc.vsx.xvmaxsp
