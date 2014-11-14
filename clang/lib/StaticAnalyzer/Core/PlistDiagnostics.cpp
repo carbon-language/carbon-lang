@@ -42,7 +42,7 @@ namespace {
     void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
                               FilesMade *filesMade) override;
 
-    virtual StringRef getName() const override {
+    StringRef getName() const override {
       return "PlistDiagnostics";
     }
 
