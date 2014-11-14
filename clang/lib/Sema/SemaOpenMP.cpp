@@ -2519,7 +2519,18 @@ static bool CheckOpenMPIterationSpace(
     // Make the loop iteration variable private (for worksharing constructs),
     // linear (for simd directives with the only one associated loop) or
     // lastprivate (for simd directives with several collapsed loops).
-    DSA.addDSA(Var, LoopVarRefExpr, PredeterminedCKind);
+    // FIXME: the next check and error message must be removed once the
+    // capturing of global variables in loops is fixed.
+    if (DVar.CKind == OMPC_unknown)
+      DVar = DSA.hasDSA(Var, isOpenMPPrivate, MatchesAlways(),
+                        /*FromParent=*/false);
+    if (!Var->hasLocalStorage() && DVar.CKind == OMPC_unknown) {
+      SemaRef.Diag(Init->getLocStart(), diag::err_omp_global_loop_var_dsa)
+          << getOpenMPClauseName(PredeterminedCKind)
+          << getOpenMPDirectiveName(DKind);
+      HasErrors = true;
+    } else
+      DSA.addDSA(Var, LoopVarRefExpr, PredeterminedCKind);
   }
 
   assert(isOpenMPLoopDirective(DKind) && "DSA for non-loop vars");

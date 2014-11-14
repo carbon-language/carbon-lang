@@ -11,6 +11,7 @@ public:
 
 static int sii;
 #pragma omp threadprivate(sii) // expected-note {{defined as threadprivate or thread local}}
+static int globalii;
 
 int test_iteration_spaces() {
   const int N = 100;
@@ -309,6 +310,23 @@ int test_iteration_spaces() {
 #pragma omp for simd
     for (sii = 0; sii < 10; sii += 1)
       c[sii] = a[sii];
+  }
+
+#pragma omp parallel
+  {
+// expected-error@+2 {{loop iteration variable in the associated loop of 'omp for simd' directive may not be a variable with global storage without being explicitly marked as linear}}
+#pragma omp for simd
+    for (globalii = 0; globalii < 10; globalii += 1)
+      c[globalii] = a[globalii];
+  }
+
+#pragma omp parallel
+  {
+// expected-error@+3 {{loop iteration variable in the associated loop of 'omp for simd' directive may not be a variable with global storage without being explicitly marked as lastprivate}}
+#pragma omp for simd collapse(2)
+    for (ii = 0; ii < 10; ii += 1)
+    for (globalii = 0; globalii < 10; globalii += 1)
+      c[globalii] += a[globalii] + ii;
   }
 
 #pragma omp parallel
