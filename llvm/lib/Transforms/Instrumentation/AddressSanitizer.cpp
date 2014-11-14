@@ -1431,10 +1431,12 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
         kAsanStackFreeNameTemplate + Suffix, IRB.getVoidTy(), IntptrTy,
         IntptrTy, IntptrTy, nullptr));
   }
-  AsanPoisonStackMemoryFunc = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanPoisonStackMemoryName, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
-  AsanUnpoisonStackMemoryFunc = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanUnpoisonStackMemoryName, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
+  AsanPoisonStackMemoryFunc = checkInterfaceFunction(
+      M.getOrInsertFunction(kAsanPoisonStackMemoryName, IRB.getVoidTy(),
+                            IntptrTy, IntptrTy, nullptr));
+  AsanUnpoisonStackMemoryFunc = checkInterfaceFunction(
+      M.getOrInsertFunction(kAsanUnpoisonStackMemoryName, IRB.getVoidTy(),
+                            IntptrTy, IntptrTy, nullptr));
 }
 
 void
