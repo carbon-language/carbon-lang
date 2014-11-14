@@ -1120,7 +1120,9 @@ public:
       // At the end of the line or when an operator with higher precedence is
       // found, insert fake parenthesis and return.
       if (!Current || (Current->closesScope() && Current->MatchingParen) ||
-          (CurrentPrecedence != -1 && CurrentPrecedence < Precedence)) {
+          (CurrentPrecedence != -1 && CurrentPrecedence < Precedence) ||
+          (CurrentPrecedence == prec::Conditional &&
+           Precedence == prec::Assignment && Current->is(tok::colon))) {
         if (LatestOperator) {
           LatestOperator->LastOperator = true;
           if (Precedence == PrecedenceArrowAndPeriod) {
@@ -1220,11 +1222,11 @@ private:
     if (!Current || !Current->is(tok::question))
       return;
     next();
-    parseConditionalExpr();
+    parse(prec::Assignment);
     if (!Current || Current->Type != TT_ConditionalExpr)
       return;
     next();
-    parseConditionalExpr();
+    parse(prec::Assignment);
     addFakeParenthesis(Start, prec::Conditional);
   }
 

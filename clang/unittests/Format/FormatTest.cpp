@@ -4132,6 +4132,26 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
                "             ccccccccccccccccccccccccccccccccccccccc\n"
                "                 ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "                 : bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb);");
+
+  // Assignments in conditional expressions. Apparently not uncommon :-(.
+  verifyFormat("return a != b\n"
+               "           // comment\n"
+               "           ? a = b\n"
+               "           : a = b;");
+  verifyFormat("return a != b\n"
+               "           // comment\n"
+               "           ? a = a != b\n"
+               "                     // comment\n"
+               "                     ? a = b\n"
+               "                     : a\n"
+               "           : a;\n");
+  verifyFormat("return a != b\n"
+               "           // comment\n"
+               "           ? a\n"
+               "           : a = a != b\n"
+               "                     // comment\n"
+               "                     ? a = b\n"
+               "                     : a;");
 }
 
 TEST_F(FormatTest, BreaksConditionalExpressionsAfterOperator) {
