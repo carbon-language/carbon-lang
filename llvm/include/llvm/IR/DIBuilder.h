@@ -52,7 +52,6 @@ namespace llvm {
   class DIObjCProperty;
 
   class DIBuilder {
-    private:
     Module &M;
     LLVMContext &VMContext;
 
@@ -86,7 +85,7 @@ namespace llvm {
     DIBuilder(const DIBuilder &) LLVM_DELETED_FUNCTION;
     void operator=(const DIBuilder &) LLVM_DELETED_FUNCTION;
 
-    public:
+  public:
     explicit DIBuilder(Module &M);
     enum DebugEmissionKind { FullDebug=1, LineTablesOnly };
 
