@@ -63,11 +63,13 @@ private:
         next();
         return true;
       }
-      if (CurrentToken->isOneOf(tok::r_paren, tok::r_square, tok::r_brace,
-                                tok::colon))
-        return false;
       if (CurrentToken->is(tok::question) &&
-          Style.Language != FormatStyle::LK_Java)
+          Style.Language == FormatStyle::LK_Java) {
+        next();
+        continue;
+      }
+      if (CurrentToken->isOneOf(tok::r_paren, tok::r_square, tok::r_brace,
+                                tok::colon, tok::question))
         return false;
       // If a && or || is found and interpreted as a binary operator, this set
       // of angles is likely part of something like "a < b && c > d". If the
@@ -367,10 +369,6 @@ private:
   }
 
   bool parseConditional() {
-    if (Style.Language == FormatStyle::LK_Java &&
-        CurrentToken->isOneOf(tok::comma, tok::greater))
-      return true;  // This is a generic "?".
-
     while (CurrentToken) {
       if (CurrentToken->is(tok::colon)) {
         CurrentToken->Type = TT_ConditionalExpr;
