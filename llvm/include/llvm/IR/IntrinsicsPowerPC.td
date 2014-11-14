@@ -528,14 +528,17 @@ def int_ppc_vsx_stxvw4x :
 def int_ppc_vsx_stxvd2x :
       Intrinsic<[], [llvm_v2f64_ty, llvm_ptr_ty], [IntrReadWriteArgMem]>;
 
-// Vector maximum.
+// Vector and scalar maximum.
 def int_ppc_vsx_xvmaxdp : PowerPC_VSX_Vec_DDD_Intrinsic<"xvmaxdp">;
 def int_ppc_vsx_xvmaxsp : PowerPC_VSX_Vec_FFF_Intrinsic<"xvmaxsp">;
 def int_ppc_vsx_xsmaxdp : PowerPC_VSX_Sca_DDD_Intrinsic<"xsmaxdp">;
 
-// Vector minimum.
+// Vector and scalar minimum.
 def int_ppc_vsx_xvmindp : PowerPC_VSX_Vec_DDD_Intrinsic<"xvmindp">;
 def int_ppc_vsx_xvminsp : PowerPC_VSX_Vec_FFF_Intrinsic<"xvminsp">;
 def int_ppc_vsx_xsmindp : PowerPC_VSX_Sca_DDD_Intrinsic<"xsmindp">;
 
+// Vector divide.
+def int_ppc_vsx_xvdivdp : PowerPC_VSX_Vec_DDD_Intrinsic<"xvdivdp">;
+def int_ppc_vsx_xvdivsp : PowerPC_VSX_Vec_FFF_Intrinsic<"xvdivsp">;
 }

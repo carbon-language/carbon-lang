@@ -887,6 +887,12 @@ def : Pat<(f64 (selectcc i1:$lhs, i1:$rhs, f64:$tval, f64:$fval, SETGT)),
 def : Pat<(f64 (selectcc i1:$lhs, i1:$rhs, f64:$tval, f64:$fval, SETNE)),
           (SELECT_VSFRC (CRXOR $lhs, $rhs), $tval, $fval)>;
 
+// Divides.
+def : Pat<(int_ppc_vsx_xvdivsp v4f32:$A, v4f32:$B),
+          (XVDIVSP $A, $B)>;
+def : Pat<(int_ppc_vsx_xvdivdp v2f64:$A, v2f64:$B),
+          (XVDIVDP $A, $B)>;
+
 } // AddedComplexity
 } // HasVSX
 
