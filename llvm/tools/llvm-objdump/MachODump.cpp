@@ -23,7 +23,6 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -276,6 +275,8 @@ struct DisassembleInfo {
   const char *selector_name;
   char *method;
   char *demangled_name;
+  uint64_t adrp_addr;
+  uint32_t adrp_inst;
   BindTable *bindtable;
 };
 
@@ -313,7 +314,7 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
                         uint64_t Size, int TagType, void *TagBuf) {
   struct DisassembleInfo *info = (struct DisassembleInfo *)DisInfo;
   struct LLVMOpInfo1 *op_info = (struct LLVMOpInfo1 *)TagBuf;
-  unsigned int value = op_info->Value;
+  uint64_t value = op_info->Value;
 
   // Make sure all fields returned are zero if we don't set them.
   memset((void *)op_info, '\0', sizeof(struct LLVMOpInfo1));
@@ -624,6 +625,83 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
     op_info->AddSymbol.Value = value;
     return 1;
   } else if (Arch == Triple::aarch64) {
+    if (Offset != 0 || Size != 4)
+      return 0;
+    // First search the section's relocation entries (if any) for an entry
+    // for this section offset.
+    uint64_t sect_addr = info->S.getAddress();
+    uint64_t sect_offset = (Pc + Offset) - sect_addr;
+    bool reloc_found = false;
+    DataRefImpl Rel;
+    MachO::any_relocation_info RE;
+    bool isExtern = false;
+    SymbolRef Symbol;
+    uint32_t r_type = 0;
+    for (const RelocationRef &Reloc : info->S.relocations()) {
+      uint64_t RelocOffset;
+      Reloc.getOffset(RelocOffset);
+      if (RelocOffset == sect_offset) {
+        Rel = Reloc.getRawDataRefImpl();
+        RE = info->O->getRelocation(Rel);
+        r_type = info->O->getAnyRelocationType(RE);
+        if (r_type == MachO::ARM64_RELOC_ADDEND) {
+          DataRefImpl RelNext = Rel;
+          info->O->moveRelocationNext(RelNext);
+          MachO::any_relocation_info RENext = info->O->getRelocation(RelNext);
+          if (value == 0) {
+            value = info->O->getPlainRelocationSymbolNum(RENext);
+            op_info->Value = value;
+          }
+        }
+        // NOTE: Scattered relocations don't exist on arm64.
+        isExtern = info->O->getPlainRelocationExternal(RE);
+        if (isExtern) {
+          symbol_iterator RelocSym = Reloc.getSymbol();
+          Symbol = *RelocSym;
+        }
+        reloc_found = true;
+        break;
+      }
+    }
+    if (reloc_found && isExtern) {
+      StringRef SymName;
+      Symbol.getName(SymName);
+      const char *name = SymName.data();
+      op_info->AddSymbol.Present = 1;
+      op_info->AddSymbol.Name = name;
+
+      switch (r_type) {
+      case MachO::ARM64_RELOC_PAGE21:
+        /* @page */
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM64_PAGE;
+        break;
+      case MachO::ARM64_RELOC_PAGEOFF12:
+        /* @pageoff */
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM64_PAGEOFF;
+        break;
+      case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
+        /* @gotpage */
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM64_GOTPAGE;
+        break;
+      case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
+        /* @gotpageoff */
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM64_GOTPAGEOFF;
+        break;
+      case MachO::ARM64_RELOC_TLVP_LOAD_PAGE21:
+        /* @tvlppage is not implemented in llvm-mc */
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM64_TLVP;
+        break;
+      case MachO::ARM64_RELOC_TLVP_LOAD_PAGEOFF12:
+        /* @tvlppageoff is not implemented in llvm-mc */
+        op_info->VariantKind = LLVMDisassembler_VariantKind_ARM64_TLVOFF;
+        break;
+      default:
+      case MachO::ARM64_RELOC_BRANCH26:
+        op_info->VariantKind = LLVMDisassembler_VariantKind_None;
+        break;
+      }
+      return 1;
+    }
     return 0;
   } else {
     return 0;
@@ -789,9 +867,10 @@ static const char *GuessIndirectSymbol(uint64_t ReferenceValue,
 static void method_reference(struct DisassembleInfo *info,
                              uint64_t *ReferenceType,
                              const char **ReferenceName) {
+  unsigned int Arch = info->O->getArch();
   if (*ReferenceName != nullptr) {
     if (strcmp(*ReferenceName, "_objc_msgSend") == 0) {
-      if (info->selector_name != NULL) {
+      if (info->selector_name != nullptr) {
         if (info->method != nullptr)
           free(info->method);
         if (info->class_name != nullptr) {
@@ -809,7 +888,12 @@ static void method_reference(struct DisassembleInfo *info,
         } else {
           info->method = (char *)malloc(9 + strlen(info->selector_name));
           if (info->method != nullptr) {
-            strcpy(info->method, "-[%rdi ");
+            if (Arch == Triple::x86_64)
+              strcpy(info->method, "-[%rdi ");
+            else if (Arch == Triple::aarch64)
+              strcpy(info->method, "-[x0 ");
+            else
+              strcpy(info->method, "-[r? ");
             strcat(info->method, info->selector_name);
             strcat(info->method, "]");
             *ReferenceName = info->method;
@@ -819,12 +903,17 @@ static void method_reference(struct DisassembleInfo *info,
         info->class_name = nullptr;
       }
     } else if (strcmp(*ReferenceName, "_objc_msgSendSuper2") == 0) {
-      if (info->selector_name != NULL) {
+      if (info->selector_name != nullptr) {
         if (info->method != nullptr)
           free(info->method);
         info->method = (char *)malloc(17 + strlen(info->selector_name));
         if (info->method != nullptr) {
-          strcpy(info->method, "-[[%rdi super] ");
+          if (Arch == Triple::x86_64)
+            strcpy(info->method, "-[[%rdi super] ");
+          else if (Arch == Triple::aarch64)
+            strcpy(info->method, "-[[x0 super] ");
+          else
+            strcpy(info->method, "-[[r? super] ");
           strcat(info->method, info->selector_name);
           strcat(info->method, "]");
           *ReferenceName = info->method;
@@ -1187,12 +1276,6 @@ uint64_t get_objc2_64bit_selref(uint64_t ReferenceValue,
 const char *GuessLiteralPointer(uint64_t ReferenceValue, uint64_t ReferencePC,
                                 uint64_t *ReferenceType,
                                 struct DisassembleInfo *info) {
-  // TODO: This rouine's code and the routines it calls are only work with
-  // x86_64 Mach-O files for now.
-  unsigned int Arch = info->O->getArch();
-  if (Arch != Triple::x86_64)
-    return nullptr;
-
   // First see if there is an external relocation entry at the ReferencePC.
   uint64_t sect_addr = info->S.getAddress();
   uint64_t sect_offset = ReferencePC - sect_addr;
@@ -1369,6 +1452,86 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
       method_reference(info, ReferenceType, ReferenceName);
     else
       *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+    // If this is arm64 and the reference is an adrp instruction save the
+    // instruction, passed in ReferenceValue and the address of the instruction
+    // for use later if we see and add immediate instruction.
+  } else if (info->O->getArch() == Triple::aarch64 &&
+             *ReferenceType == LLVMDisassembler_ReferenceType_In_ARM64_ADRP) {
+    info->adrp_inst = ReferenceValue;
+    info->adrp_addr = ReferencePC;
+    SymbolName = nullptr;
+    *ReferenceName = nullptr;
+    *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+    // If this is arm64 and reference is an add immediate instruction and we
+    // have
+    // seen an adrp instruction just before it and the adrp's Xd register
+    // matches
+    // this add's Xn register reconstruct the value being referenced and look to
+    // see if it is a literal pointer.  Note the add immediate instruction is
+    // passed in ReferenceValue.
+  } else if (info->O->getArch() == Triple::aarch64 &&
+             *ReferenceType == LLVMDisassembler_ReferenceType_In_ARM64_ADDXri &&
+             ReferencePC - 4 == info->adrp_addr &&
+             (info->adrp_inst & 0x9f000000) == 0x90000000 &&
+             (info->adrp_inst & 0x1f) == ((ReferenceValue >> 5) & 0x1f)) {
+    uint32_t addxri_inst;
+    uint64_t adrp_imm, addxri_imm;
+
+    adrp_imm =
+        ((info->adrp_inst & 0x00ffffe0) >> 3) | ((info->adrp_inst >> 29) & 0x3);
+    if (info->adrp_inst & 0x0200000)
+      adrp_imm |= 0xfffffffffc000000LL;
+
+    addxri_inst = ReferenceValue;
+    addxri_imm = (addxri_inst >> 10) & 0xfff;
+    if (((addxri_inst >> 22) & 0x3) == 1)
+      addxri_imm <<= 12;
+
+    ReferenceValue = (info->adrp_addr & 0xfffffffffffff000LL) +
+                     (adrp_imm << 12) + addxri_imm;
+
+    *ReferenceName =
+        GuessLiteralPointer(ReferenceValue, ReferencePC, ReferenceType, info);
+    if (*ReferenceName == nullptr)
+      *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+    // If this is arm64 and the reference is a load register instruction and we
+    // have seen an adrp instruction just before it and the adrp's Xd register
+    // matches this add's Xn register reconstruct the value being referenced and
+    // look to see if it is a literal pointer.  Note the load register
+    // instruction is passed in ReferenceValue.
+  } else if (info->O->getArch() == Triple::aarch64 &&
+             *ReferenceType == LLVMDisassembler_ReferenceType_In_ARM64_LDRXui &&
+             ReferencePC - 4 == info->adrp_addr &&
+             (info->adrp_inst & 0x9f000000) == 0x90000000 &&
+             (info->adrp_inst & 0x1f) == ((ReferenceValue >> 5) & 0x1f)) {
+    uint32_t ldrxui_inst;
+    uint64_t adrp_imm, ldrxui_imm;
+
+    adrp_imm =
+        ((info->adrp_inst & 0x00ffffe0) >> 3) | ((info->adrp_inst >> 29) & 0x3);
+    if (info->adrp_inst & 0x0200000)
+      adrp_imm |= 0xfffffffffc000000LL;
+
+    ldrxui_inst = ReferenceValue;
+    ldrxui_imm = (ldrxui_inst >> 10) & 0xfff;
+
+    ReferenceValue = (info->adrp_addr & 0xfffffffffffff000LL) +
+                     (adrp_imm << 12) + (ldrxui_imm << 3);
+
+    *ReferenceName =
+        GuessLiteralPointer(ReferenceValue, ReferencePC, ReferenceType, info);
+    if (*ReferenceName == nullptr)
+      *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+  }
+  // If this arm64 and is an load register (PC-relative) instruction the
+  // ReferenceValue is the PC plus the immediate value.
+  else if (info->O->getArch() == Triple::aarch64 &&
+           (*ReferenceType == LLVMDisassembler_ReferenceType_In_ARM64_LDRXl ||
+            *ReferenceType == LLVMDisassembler_ReferenceType_In_ARM64_ADR)) {
+    *ReferenceName =
+        GuessLiteralPointer(ReferenceValue, ReferencePC, ReferenceType, info);
+    if (*ReferenceName == nullptr)
+      *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
   }
 #if HAVE_CXXABI_H
   else if (SymbolName != nullptr && strncmp(SymbolName, "__Z", 3) == 0) {
@@ -1435,15 +1598,9 @@ static void DisassembleInputMachO2(StringRef Filename,
     MCPU = McpuDefault;
 
   std::unique_ptr<const MCInstrInfo> InstrInfo(TheTarget->createMCInstrInfo());
-  std::unique_ptr<MCInstrAnalysis> InstrAnalysis(
-      TheTarget->createMCInstrAnalysis(InstrInfo.get()));
   std::unique_ptr<const MCInstrInfo> ThumbInstrInfo;
-  std::unique_ptr<MCInstrAnalysis> ThumbInstrAnalysis;
-  if (ThumbTarget) {
+  if (ThumbTarget)
     ThumbInstrInfo.reset(ThumbTarget->createMCInstrInfo());
-    ThumbInstrAnalysis.reset(
-        ThumbTarget->createMCInstrAnalysis(ThumbInstrInfo.get()));
-  }
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
@@ -1482,9 +1639,8 @@ static void DisassembleInputMachO2(StringRef Filename,
   // Comment stream and backing vector.
   SmallString<128> CommentsToEmit;
   raw_svector_ostream CommentStream(CommentsToEmit);
-  IP->setCommentStream(CommentStream);
 
-  if (!InstrAnalysis || !AsmInfo || !STI || !DisAsm || !IP) {
+  if (!AsmInfo || !STI || !DisAsm || !IP) {
     errs() << "error: couldn't initialize disassembler for target "
            << TripleName << '\n';
     return;
@@ -1525,8 +1681,7 @@ static void DisassembleInputMachO2(StringRef Filename,
     ThumbIP->setPrintImmHex(PrintImmHex);
   }
 
-  if (ThumbTarget && (!ThumbInstrAnalysis || !ThumbAsmInfo || !ThumbSTI ||
-                      !ThumbDisAsm || !ThumbIP)) {
+  if (ThumbTarget && (!ThumbAsmInfo || !ThumbSTI || !ThumbDisAsm || !ThumbIP)) {
     errs() << "error: couldn't initialize disassembler for target "
            << ThumbTripleName << '\n';
     return;
@@ -1798,6 +1953,13 @@ static void DisassembleInputMachO2(StringRef Filename,
             outs() << format("\t.byte 0x%02x #bad opcode\n",
                              *(Bytes.data() + Index) & 0xff);
             Size = 1; // skip exactly one illegible byte and move on.
+          } else if (Arch == Triple::aarch64) {
+            uint32_t opcode = (*(Bytes.data() + Index) & 0xff) |
+                              (*(Bytes.data() + Index + 1) & 0xff) << 8 |
+                              (*(Bytes.data() + Index + 2) & 0xff) << 16 |
+                              (*(Bytes.data() + Index + 3) & 0xff) << 24;
+            outs() << format("\t.long\t0x%08x\n", opcode);
+            Size = 4;
           } else {
             errs() << "llvm-objdump: warning: invalid instruction encoding\n";
             if (Size == 0)
