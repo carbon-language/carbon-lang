@@ -460,9 +460,9 @@ std::error_code COFFObjectFile::initSymbolTablePtr() {
   // Find string table. The first four byte of the string table contains the
   // total size of the string table, including the size field itself. If the
   // string table is empty, the value of the first four byte would be 4.
-  const uint8_t *StringTableAddr =
-      base() + getPointerToSymbolTable() +
-      getNumberOfSymbols() * getSymbolTableEntrySize();
+  uint32_t StringTableOffset = getPointerToSymbolTable() +
+                               getNumberOfSymbols() * getSymbolTableEntrySize();
+  const uint8_t *StringTableAddr = base() + StringTableOffset;
   const ulittle32_t *StringTableSizePtr;
   if (std::error_code EC = getObject(StringTableSizePtr, Data, StringTableAddr))
     return EC;
@@ -826,13 +826,17 @@ std::error_code
 COFFObjectFile::getDataDirectory(uint32_t Index,
                                  const data_directory *&Res) const {
   // Error if if there's no data directory or the index is out of range.
-  if (!DataDirectory)
+  if (!DataDirectory) {
+    Res = nullptr;
     return object_error::parse_failed;
+  }
   assert(PE32Header || PE32PlusHeader);
   uint32_t NumEnt = PE32Header ? PE32Header->NumberOfRvaAndSize
                                : PE32PlusHeader->NumberOfRvaAndSize;
-  if (Index > NumEnt)
+  if (Index >= NumEnt) {
+    Res = nullptr;
     return object_error::parse_failed;
+  }
   Res = &DataDirectory[Index];
   return object_error::success;
 }

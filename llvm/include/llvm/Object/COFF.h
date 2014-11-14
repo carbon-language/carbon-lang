@@ -110,12 +110,14 @@ struct pe32_header {
   support::ulittle32_t SizeOfHeaders;
   support::ulittle32_t CheckSum;
   support::ulittle16_t Subsystem;
+  // FIXME: This should be DllCharacteristics.
   support::ulittle16_t DLLCharacteristics;
   support::ulittle32_t SizeOfStackReserve;
   support::ulittle32_t SizeOfStackCommit;
   support::ulittle32_t SizeOfHeapReserve;
   support::ulittle32_t SizeOfHeapCommit;
   support::ulittle32_t LoaderFlags;
+  // FIXME: This should be NumberOfRvaAndSizes.
   support::ulittle32_t NumberOfRvaAndSize;
 };
 

@@ -168,6 +168,24 @@ void ScalarEnumerationTraits<COFF::RelocationTypeAMD64>::enumeration(
   ECase(IMAGE_REL_AMD64_PAIR);
   ECase(IMAGE_REL_AMD64_SSPAN32);
 }
+
+void ScalarEnumerationTraits<COFF::WindowsSubsystem>::enumeration(
+    IO &IO, COFF::WindowsSubsystem &Value) {
+    ECase(IMAGE_SUBSYSTEM_UNKNOWN);
+    ECase(IMAGE_SUBSYSTEM_NATIVE);
+    ECase(IMAGE_SUBSYSTEM_WINDOWS_GUI);
+    ECase(IMAGE_SUBSYSTEM_WINDOWS_CUI);
+    ECase(IMAGE_SUBSYSTEM_OS2_CUI);
+    ECase(IMAGE_SUBSYSTEM_POSIX_CUI);
+    ECase(IMAGE_SUBSYSTEM_NATIVE_WINDOWS);
+    ECase(IMAGE_SUBSYSTEM_WINDOWS_CE_GUI);
+    ECase(IMAGE_SUBSYSTEM_EFI_APPLICATION);
+    ECase(IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER);
+    ECase(IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER);
+    ECase(IMAGE_SUBSYSTEM_EFI_ROM);
+    ECase(IMAGE_SUBSYSTEM_XBOX);
+    ECase(IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION);
+}
 #undef ECase
 
 #define BCase(X) IO.bitSetCase(Value, #X, COFF::X);
@@ -213,6 +231,21 @@ void ScalarBitSetTraits<COFF::SectionCharacteristics>::bitset(
   BCase(IMAGE_SCN_MEM_EXECUTE);
   BCase(IMAGE_SCN_MEM_READ);
   BCase(IMAGE_SCN_MEM_WRITE);
+}
+
+void ScalarBitSetTraits<COFF::DLLCharacteristics>::bitset(
+    IO &IO, COFF::DLLCharacteristics &Value) {
+  BCase(IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA);
+  BCase(IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE);
+  BCase(IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY);
+  BCase(IMAGE_DLL_CHARACTERISTICS_NX_COMPAT);
+  BCase(IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION);
+  BCase(IMAGE_DLL_CHARACTERISTICS_NO_SEH);
+  BCase(IMAGE_DLL_CHARACTERISTICS_NO_BIND);
+  BCase(IMAGE_DLL_CHARACTERISTICS_APPCONTAINER);
+  BCase(IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER);
+  BCase(IMAGE_DLL_CHARACTERISTICS_GUARD_CF);
+  BCase(IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE);
 }
 #undef BCase
 
@@ -285,6 +318,23 @@ struct NType {
   RelocType Type;
 };
 
+struct NWindowsSubsystem {
+  NWindowsSubsystem(IO &) : Subsystem(COFF::WindowsSubsystem(0)) {}
+  NWindowsSubsystem(IO &, uint16_t C) : Subsystem(COFF::WindowsSubsystem(C)) {}
+  uint16_t denormalize(IO &) { return Subsystem; }
+
+  COFF::WindowsSubsystem Subsystem;
+};
+
+struct NDLLCharacteristics {
+  NDLLCharacteristics(IO &) : Characteristics(COFF::DLLCharacteristics(0)) {}
+  NDLLCharacteristics(IO &, uint16_t C)
+      : Characteristics(COFF::DLLCharacteristics(C)) {}
+  uint16_t denormalize(IO &) { return Characteristics; }
+
+  COFF::DLLCharacteristics Characteristics;
+};
+
 }
 
 void MappingTraits<COFFYAML::Relocation>::mapping(IO &IO,
@@ -304,6 +354,59 @@ void MappingTraits<COFFYAML::Relocation>::mapping(IO &IO,
   } else {
     IO.mapRequired("Type", Rel.Type);
   }
+}
+
+void MappingTraits<COFF::DataDirectory>::mapping(IO &IO,
+                                                 COFF::DataDirectory &DD) {
+  IO.mapRequired("RelativeVirtualAddress", DD.RelativeVirtualAddress);
+  IO.mapRequired("Size", DD.Size);
+}
+
+void MappingTraits<COFFYAML::PEHeader>::mapping(IO &IO,
+                                                COFFYAML::PEHeader &PH) {
+  MappingNormalization<NWindowsSubsystem, uint16_t> NWS(IO,
+                                                        PH.Header.Subsystem);
+  MappingNormalization<NDLLCharacteristics, uint16_t> NDC(
+      IO, PH.Header.DLLCharacteristics);
+
+  IO.mapRequired("AddressOfEntryPoint", PH.Header.AddressOfEntryPoint);
+  IO.mapRequired("ImageBase", PH.Header.ImageBase);
+  IO.mapRequired("SectionAlignment", PH.Header.SectionAlignment);
+  IO.mapRequired("FileAlignment", PH.Header.FileAlignment);
+  IO.mapRequired("MajorOperatingSystemVersion",
+                 PH.Header.MajorOperatingSystemVersion);
+  IO.mapRequired("MinorOperatingSystemVersion",
+                 PH.Header.MinorOperatingSystemVersion);
+  IO.mapRequired("MajorImageVersion", PH.Header.MajorImageVersion);
+  IO.mapRequired("MinorImageVersion", PH.Header.MinorImageVersion);
+  IO.mapRequired("MajorSubsystemVersion", PH.Header.MajorSubsystemVersion);
+  IO.mapRequired("MinorSubsystemVersion", PH.Header.MinorSubsystemVersion);
+  IO.mapRequired("Subsystem", NWS->Subsystem);
+  IO.mapRequired("DLLCharacteristics", NDC->Characteristics);
+  IO.mapRequired("SizeOfStackReserve", PH.Header.SizeOfStackReserve);
+  IO.mapRequired("SizeOfStackCommit", PH.Header.SizeOfStackCommit);
+  IO.mapRequired("SizeOfHeapReserve", PH.Header.SizeOfHeapReserve);
+  IO.mapRequired("SizeOfHeapCommit", PH.Header.SizeOfHeapCommit);
+
+  IO.mapOptional("ExportTable", PH.DataDirectories[COFF::EXPORT_TABLE]);
+  IO.mapOptional("ImportTable", PH.DataDirectories[COFF::IMPORT_TABLE]);
+  IO.mapOptional("ResourceTable", PH.DataDirectories[COFF::RESOURCE_TABLE]);
+  IO.mapOptional("ExceptionTable", PH.DataDirectories[COFF::EXCEPTION_TABLE]);
+  IO.mapOptional("CertificateTable", PH.DataDirectories[COFF::CERTIFICATE_TABLE]);
+  IO.mapOptional("BaseRelocationTable",
+                 PH.DataDirectories[COFF::BASE_RELOCATION_TABLE]);
+  IO.mapOptional("Debug", PH.DataDirectories[COFF::DEBUG]);
+  IO.mapOptional("Architecture", PH.DataDirectories[COFF::ARCHITECTURE]);
+  IO.mapOptional("GlobalPtr", PH.DataDirectories[COFF::GLOBAL_PTR]);
+  IO.mapOptional("TlsTable", PH.DataDirectories[COFF::TLS_TABLE]);
+  IO.mapOptional("LoadConfigTable",
+                 PH.DataDirectories[COFF::LOAD_CONFIG_TABLE]);
+  IO.mapOptional("BoundImport", PH.DataDirectories[COFF::BOUND_IMPORT]);
+  IO.mapOptional("IAT", PH.DataDirectories[COFF::IAT]);
+  IO.mapOptional("DelayImportDescriptor",
+                 PH.DataDirectories[COFF::DELAY_IMPORT_DESCRIPTOR]);
+  IO.mapOptional("ClrRuntimeHeader",
+                 PH.DataDirectories[COFF::CLR_RUNTIME_HEADER]);
 }
 
 void MappingTraits<COFF::header>::mapping(IO &IO, COFF::header &H) {
@@ -380,12 +483,15 @@ void MappingTraits<COFFYAML::Section>::mapping(IO &IO, COFFYAML::Section &Sec) {
       IO, Sec.Header.Characteristics);
   IO.mapRequired("Name", Sec.Name);
   IO.mapRequired("Characteristics", NC->Characteristics);
+  IO.mapOptional("VirtualAddress", Sec.Header.VirtualAddress, 0U);
+  IO.mapOptional("VirtualSize", Sec.Header.VirtualSize, 0U);
   IO.mapOptional("Alignment", Sec.Alignment);
   IO.mapRequired("SectionData", Sec.SectionData);
   IO.mapOptional("Relocations", Sec.Relocations);
 }
 
 void MappingTraits<COFFYAML::Object>::mapping(IO &IO, COFFYAML::Object &Obj) {
+  IO.mapOptional("OptionalHeader", Obj.OptionalHeader);
   IO.mapRequired("header", Obj.Header);
   IO.mapRequired("sections", Obj.Sections);
   IO.mapRequired("symbols", Obj.Symbols);

@@ -20,6 +20,8 @@ namespace {
 class COFFDumper {
   const object::COFFObjectFile &Obj;
   COFFYAML::Object YAMLObj;
+  template <typename T>
+  void dumpOptionalHeader(T OptionalHeader);
   void dumpHeader();
   void dumpSections(unsigned numSections);
   void dumpSymbols(unsigned numSymbols);
@@ -32,9 +34,64 @@ public:
 }
 
 COFFDumper::COFFDumper(const object::COFFObjectFile &Obj) : Obj(Obj) {
+  const object::pe32_header *PE32Header = nullptr;
+  Obj.getPE32Header(PE32Header);
+  if (PE32Header) {
+    dumpOptionalHeader(PE32Header);
+  } else {
+    const object::pe32plus_header *PE32PlusHeader = nullptr;
+    Obj.getPE32PlusHeader(PE32PlusHeader);
+    if (PE32PlusHeader) {
+      dumpOptionalHeader(PE32PlusHeader);
+    }
+  }
   dumpHeader();
   dumpSections(Obj.getNumberOfSections());
   dumpSymbols(Obj.getNumberOfSymbols());
+}
+
+template <typename T> void COFFDumper::dumpOptionalHeader(T OptionalHeader) {
+  YAMLObj.OptionalHeader = COFFYAML::PEHeader();
+  YAMLObj.OptionalHeader->Header.AddressOfEntryPoint =
+      OptionalHeader->AddressOfEntryPoint;
+  YAMLObj.OptionalHeader->Header.AddressOfEntryPoint =
+      OptionalHeader->AddressOfEntryPoint;
+  YAMLObj.OptionalHeader->Header.ImageBase = OptionalHeader->ImageBase;
+  YAMLObj.OptionalHeader->Header.SectionAlignment =
+      OptionalHeader->SectionAlignment;
+  YAMLObj.OptionalHeader->Header.FileAlignment = OptionalHeader->FileAlignment;
+  YAMLObj.OptionalHeader->Header.MajorOperatingSystemVersion =
+      OptionalHeader->MajorOperatingSystemVersion;
+  YAMLObj.OptionalHeader->Header.MinorOperatingSystemVersion =
+      OptionalHeader->MinorOperatingSystemVersion;
+  YAMLObj.OptionalHeader->Header.MajorImageVersion =
+      OptionalHeader->MajorImageVersion;
+  YAMLObj.OptionalHeader->Header.MinorImageVersion =
+      OptionalHeader->MinorImageVersion;
+  YAMLObj.OptionalHeader->Header.MajorSubsystemVersion =
+      OptionalHeader->MajorSubsystemVersion;
+  YAMLObj.OptionalHeader->Header.MinorSubsystemVersion =
+      OptionalHeader->MinorSubsystemVersion;
+  YAMLObj.OptionalHeader->Header.Subsystem = OptionalHeader->Subsystem;
+  YAMLObj.OptionalHeader->Header.DLLCharacteristics =
+      OptionalHeader->DLLCharacteristics;
+  YAMLObj.OptionalHeader->Header.SizeOfStackReserve =
+      OptionalHeader->SizeOfStackReserve;
+  YAMLObj.OptionalHeader->Header.SizeOfStackCommit =
+      OptionalHeader->SizeOfStackCommit;
+  YAMLObj.OptionalHeader->Header.SizeOfHeapReserve =
+      OptionalHeader->SizeOfHeapReserve;
+  YAMLObj.OptionalHeader->Header.SizeOfHeapCommit =
+      OptionalHeader->SizeOfHeapCommit;
+  unsigned I = 0;
+  for (auto &DestDD : YAMLObj.OptionalHeader->DataDirectories) {
+    const object::data_directory *DD;
+    if (Obj.getDataDirectory(I++, DD))
+      continue;
+    DestDD = COFF::DataDirectory();
+    DestDD->RelativeVirtualAddress = DD->RelativeVirtualAddress;
+    DestDD->Size = DD->Size;
+  }
 }
 
 void COFFDumper::dumpHeader() {
@@ -43,21 +100,23 @@ void COFFDumper::dumpHeader() {
 }
 
 void COFFDumper::dumpSections(unsigned NumSections) {
-  std::vector<COFFYAML::Section> &Sections = YAMLObj.Sections;
-  for (const auto &Section : Obj.sections()) {
-    const object::coff_section *Sect = Obj.getCOFFSection(Section);
-    COFFYAML::Section Sec;
-    Section.getName(Sec.Name);
-    Sec.Header.Characteristics = Sect->Characteristics;
-    Sec.Alignment = Section.getAlignment();
+  std::vector<COFFYAML::Section> &YAMLSections = YAMLObj.Sections;
+  for (const auto &ObjSection : Obj.sections()) {
+    const object::coff_section *COFFSection = Obj.getCOFFSection(ObjSection);
+    COFFYAML::Section NewYAMLSection;
+    ObjSection.getName(NewYAMLSection.Name);
+    NewYAMLSection.Header.Characteristics = COFFSection->Characteristics;
+    NewYAMLSection.Header.VirtualAddress = ObjSection.getAddress();
+    NewYAMLSection.Header.VirtualSize = COFFSection->VirtualSize;
+    NewYAMLSection.Alignment = ObjSection.getAlignment();
 
     ArrayRef<uint8_t> sectionData;
-    if (!Section.isBSS())
-      Obj.getSectionContents(Sect, sectionData);
-    Sec.SectionData = yaml::BinaryRef(sectionData);
+    if (!ObjSection.isBSS())
+      Obj.getSectionContents(COFFSection, sectionData);
+    NewYAMLSection.SectionData = yaml::BinaryRef(sectionData);
 
     std::vector<COFFYAML::Relocation> Relocations;
-    for (const auto &Reloc : Section.relocations()) {
+    for (const auto &Reloc : ObjSection.relocations()) {
       const object::coff_relocation *reloc = Obj.getCOFFRelocation(Reloc);
       COFFYAML::Relocation Rel;
       object::symbol_iterator Sym = Reloc.getSymbol();
@@ -66,8 +125,8 @@ void COFFDumper::dumpSections(unsigned NumSections) {
       Rel.Type = reloc->Type;
       Relocations.push_back(Rel);
     }
-    Sec.Relocations = Relocations;
-    Sections.push_back(Sec);
+    NewYAMLSection.Relocations = Relocations;
+    YAMLSections.push_back(NewYAMLSection);
   }
 }
 

@@ -31,6 +31,12 @@ inline SectionCharacteristics operator|(SectionCharacteristics a,
   uint32_t Ret = static_cast<uint32_t>(a) | static_cast<uint32_t>(b);
   return static_cast<SectionCharacteristics>(Ret);
 }
+
+inline DLLCharacteristics operator|(DLLCharacteristics a,
+                                    DLLCharacteristics b) {
+  uint16_t Ret = static_cast<uint16_t>(a) | static_cast<uint16_t>(b);
+  return static_cast<DLLCharacteristics>(Ret);
+}
 }
 
 // The structure of the yaml files is not an exact 1:1 match to COFF. In order
@@ -69,7 +75,13 @@ namespace COFFYAML {
     Symbol();
   };
 
+  struct PEHeader {
+    COFF::PE32Header Header;
+    Optional<COFF::DataDirectory> DataDirectories[COFF::NUM_DATA_DIRECTORIES];
+  };
+
   struct Object {
+    Optional<PEHeader> OptionalHeader;
     COFF::header Header;
     std::vector<Section> Sections;
     std::vector<Symbol> Symbols;
@@ -131,6 +143,11 @@ struct ScalarEnumerationTraits<COFF::RelocationTypeAMD64> {
 };
 
 template <>
+struct ScalarEnumerationTraits<COFF::WindowsSubsystem> {
+  static void enumeration(IO &IO, COFF::WindowsSubsystem &Value);
+};
+
+template <>
 struct ScalarBitSetTraits<COFF::Characteristics> {
   static void bitset(IO &IO, COFF::Characteristics &Value);
 };
@@ -141,8 +158,23 @@ struct ScalarBitSetTraits<COFF::SectionCharacteristics> {
 };
 
 template <>
+struct ScalarBitSetTraits<COFF::DLLCharacteristics> {
+  static void bitset(IO &IO, COFF::DLLCharacteristics &Value);
+};
+
+template <>
 struct MappingTraits<COFFYAML::Relocation> {
   static void mapping(IO &IO, COFFYAML::Relocation &Rel);
+};
+
+template <>
+struct MappingTraits<COFFYAML::PEHeader> {
+  static void mapping(IO &IO, COFFYAML::PEHeader &PH);
+};
+
+template <>
+struct MappingTraits<COFF::DataDirectory> {
+  static void mapping(IO &IO, COFF::DataDirectory &DD);
 };
 
 template <>
