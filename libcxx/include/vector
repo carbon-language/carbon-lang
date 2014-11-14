@@ -1861,7 +1861,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, size_type __n, const_
             }
             if (__n > 0)
             {
-                __RAII_IncreaseAnnotator __annotator(*this);
+                __RAII_IncreaseAnnotator __annotator(*this, __n);
                 __move_range(__p, __old_last, __p + __old_n);
                 __annotator.__done();
                 const_pointer __xr = pointer_traits<const_pointer>::pointer_to(__x);
