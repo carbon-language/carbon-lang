@@ -170,9 +170,9 @@ public:
 
   /// Create - Create a StringMapEntry with normal malloc/free.
   template<typename InitType>
-  static StringMapEntry *Create(StringRef Key, InitType InitVal) {
+  static StringMapEntry *Create(StringRef Key, InitType &&InitVal) {
     MallocAllocator A;
-    return Create(Key, A, std::move(InitVal));
+    return Create(Key, A, std::forward<InitType>(InitVal));
   }
 
   static StringMapEntry *Create(StringRef Key) {
@@ -367,8 +367,9 @@ public:
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
   template <typename InitTy>
-  MapEntryTy &GetOrCreateValue(StringRef Key, InitTy Val) {
-    return *insert(std::make_pair(Key, std::move(Val))).first;
+  MapEntryTy &GetOrCreateValue(StringRef Key, InitTy &&Val) {
+    return *insert(std::pair<StringRef, ValueTy>(
+                       Key, std::forward<InitTy>(Val))).first;
   }
 
   MapEntryTy &GetOrCreateValue(StringRef Key) {

@@ -256,9 +256,15 @@ TEST_F(StringMapTest, NonDefaultConstructable) {
   ASSERT_EQ(iter->second.i, 123);
 }
 
+struct Immovable {
+  Immovable() {}
+  Immovable(Immovable&&) LLVM_DELETED_FUNCTION; // will disable the other special members
+};
+
 struct MoveOnly {
   int i;
   MoveOnly(int i) : i(i) {}
+  MoveOnly(const Immovable&) : i(0) {}
   MoveOnly(MoveOnly &&RHS) : i(RHS.i) {}
   MoveOnly &operator=(MoveOnly &&RHS) {
     i = RHS.i;
@@ -270,11 +276,19 @@ private:
   MoveOnly &operator=(const MoveOnly &) LLVM_DELETED_FUNCTION;
 };
 
-TEST_F(StringMapTest, MoveOnlyKey) {
+TEST_F(StringMapTest, MoveOnly) {
   StringMap<MoveOnly> t;
   t.GetOrCreateValue("Test", MoveOnly(42));
   StringRef Key = "Test";
   StringMapEntry<MoveOnly>::Create(Key, MoveOnly(42))
+      ->Destroy();
+}
+
+TEST_F(StringMapTest, CtorArg) {
+  StringMap<MoveOnly> t;
+  t.GetOrCreateValue("Test", Immovable());
+  StringRef Key = "Test";
+  StringMapEntry<MoveOnly>::Create(Key, Immovable())
       ->Destroy();
 }
 
