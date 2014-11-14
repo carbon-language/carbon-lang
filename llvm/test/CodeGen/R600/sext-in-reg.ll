@@ -2,6 +2,7 @@
 ; RUN: llc -march=r600 -mcpu=cypress -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 declare i32 @llvm.AMDGPU.imax(i32, i32) nounwind readnone
+declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i1_i32:
@@ -75,12 +76,13 @@ define void @sext_in_reg_i8_to_v1i32(<1 x i32> addrspace(1)* %out, <1 x i32> %a,
 }
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i1_to_i64:
-; SI: s_mov_b32 {{s[0-9]+}}, -1
-; SI: s_add_i32 [[VAL:s[0-9]+]],
-; SI: s_bfe_i32 s{{[0-9]+}}, s{{[0-9]+}}, 0x10000
-; SI: buffer_store_dwordx2
+; SI: s_lshl_b64 [[VAL:s\[[0-9]+:[0-9]+\]]]
+; SI-DAG: s_bfe_i64 s{{\[}}[[SLO:[0-9]+]]:[[SHI:[0-9]+]]{{\]}}, [[VAL]], 0x10000
+; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
+; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
+; SI: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 define void @sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
-  %c = add i64 %a, %b
+  %c = shl i64 %a, %b
   %shl = shl i64 %c, 63
   %ashr = ashr i64 %shl, 63
   store i64 %ashr, i64 addrspace(1)* %out, align 8
@@ -88,15 +90,16 @@ define void @sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 }
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i8_to_i64:
-; SI: s_mov_b32 {{s[0-9]+}}, -1
-; SI: s_add_i32 [[VAL:s[0-9]+]],
-; SI: s_sext_i32_i8 [[EXTRACT:s[0-9]+]], [[VAL]]
-; SI: buffer_store_dwordx2
+; SI: s_lshl_b64 [[VAL:s\[[0-9]+:[0-9]+\]]]
+; SI-DAG: s_bfe_i64 s{{\[}}[[SLO:[0-9]+]]:[[SHI:[0-9]+]]{{\]}}, [[VAL]], 0x80000
+; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
+; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
+; SI: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
-; EG: ADD_INT
-; EG-NEXT: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
+; EG: LSHL
+; EG: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
 ; EG: ASHR [[RES_HI]]
 ; EG-NOT: BFE_INT
 ; EG: LSHR
@@ -104,7 +107,7 @@ define void @sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 ;; TODO Check address computation, using | with variables in {{}} does not work,
 ;; also the _LO/_HI order might be different
 define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
-  %c = add i64 %a, %b
+  %c = shl i64 %a, %b
   %shl = shl i64 %c, 56
   %ashr = ashr i64 %shl, 56
   store i64 %ashr, i64 addrspace(1)* %out, align 8
@@ -112,15 +115,16 @@ define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 }
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i16_to_i64:
-; SI: s_mov_b32 {{s[0-9]+}}, -1
-; SI: s_add_i32 [[VAL:s[0-9]+]],
-; SI: s_sext_i32_i16 [[EXTRACT:s[0-9]+]], [[VAL]]
-; SI: buffer_store_dwordx2
+; SI: s_lshl_b64 [[VAL:s\[[0-9]+:[0-9]+\]]]
+; SI-DAG: s_bfe_i64 s{{\[}}[[SLO:[0-9]+]]:[[SHI:[0-9]+]]{{\]}}, [[VAL]], 0x100000
+; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
+; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
+; SI: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
-; EG: ADD_INT
-; EG-NEXT: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
+; EG: LSHL
+; EG: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
 ; EG: ASHR [[RES_HI]]
 ; EG-NOT: BFE_INT
 ; EG: LSHR
@@ -128,7 +132,7 @@ define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 ;; TODO Check address computation, using | with variables in {{}} does not work,
 ;; also the _LO/_HI order might be different
 define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
-  %c = add i64 %a, %b
+  %c = shl i64 %a, %b
   %shl = shl i64 %c, 48
   %ashr = ashr i64 %shl, 48
   store i64 %ashr, i64 addrspace(1)* %out, align 8
@@ -136,24 +140,24 @@ define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 }
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i32_to_i64:
-; SI: s_load_dword
-; SI: s_load_dword
-; SI: s_add_i32 [[ADD:s[0-9]+]],
-; SI: s_ashr_i32 s{{[0-9]+}}, [[ADD]], 31
-; SI: buffer_store_dwordx2
+; SI: s_lshl_b64 [[VAL:s\[[0-9]+:[0-9]+\]]]
+; SI-DAG: s_bfe_i64 s{{\[}}[[SLO:[0-9]+]]:[[SHI:[0-9]+]]{{\]}}, [[VAL]], 0x200000
+; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
+; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
+; SI: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
 ; EG-NOT: BFE_INT
-; EG: ADD_INT {{\*?}} [[RES_LO]]
+
 ; EG: ASHR [[RES_HI]]
-; EG: ADD_INT
+
 ; EG: LSHR
 ; EG: LSHR
 ;; TODO Check address computation, using | with variables in {{}} does not work,
 ;; also the _LO/_HI order might be different
 define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
-  %c = add i64 %a, %b
+  %c = shl i64 %a, %b
   %shl = shl i64 %c, 32
   %ashr = ashr i64 %shl, 32
   store i64 %ashr, i64 addrspace(1)* %out, align 8
@@ -174,6 +178,89 @@ define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 ;   store <1 x i64> %ashr, <1 x i64> addrspace(1)* %out, align 8
 ;   ret void
 ; }
+
+; FUNC-LABEL: {{^}}v_sext_in_reg_i1_to_i64:
+; SI: buffer_load_dwordx2
+; SI: v_lshl_b64 v{{\[}}[[VAL_LO:[0-9]+]]:[[VAL_HI:[0-9]+]]{{\]}}
+; SI: v_bfe_i32 v[[LO:[0-9]+]], v[[VAL_LO]], 0, 1
+; SI: v_ashrrev_i32_e32 v[[HI:[0-9]+]], 31, v[[LO]]
+; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
+define void @v_sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
+  %tid = call i32 @llvm.r600.read.tidig.x()
+  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a = load i64 addrspace(1)* %a.gep, align 8
+  %b = load i64 addrspace(1)* %b.gep, align 8
+
+  %c = shl i64 %a, %b
+  %shl = shl i64 %c, 63
+  %ashr = ashr i64 %shl, 63
+  store i64 %ashr, i64 addrspace(1)* %out.gep, align 8
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_sext_in_reg_i8_to_i64:
+; SI: buffer_load_dwordx2
+; SI: v_lshl_b64 v{{\[}}[[VAL_LO:[0-9]+]]:[[VAL_HI:[0-9]+]]{{\]}}
+; SI: v_bfe_i32 v[[LO:[0-9]+]], v[[VAL_LO]], 0, 8
+; SI: v_ashrrev_i32_e32 v[[HI:[0-9]+]], 31, v[[LO]]
+; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
+define void @v_sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
+  %tid = call i32 @llvm.r600.read.tidig.x()
+  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a = load i64 addrspace(1)* %a.gep, align 8
+  %b = load i64 addrspace(1)* %b.gep, align 8
+
+  %c = shl i64 %a, %b
+  %shl = shl i64 %c, 56
+  %ashr = ashr i64 %shl, 56
+  store i64 %ashr, i64 addrspace(1)* %out.gep, align 8
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_sext_in_reg_i16_to_i64:
+; SI: buffer_load_dwordx2
+; SI: v_lshl_b64 v{{\[}}[[VAL_LO:[0-9]+]]:[[VAL_HI:[0-9]+]]{{\]}}
+; SI: v_bfe_i32 v[[LO:[0-9]+]], v[[VAL_LO]], 0, 16
+; SI: v_ashrrev_i32_e32 v[[HI:[0-9]+]], 31, v[[LO]]
+; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
+define void @v_sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
+  %tid = call i32 @llvm.r600.read.tidig.x()
+  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a = load i64 addrspace(1)* %a.gep, align 8
+  %b = load i64 addrspace(1)* %b.gep, align 8
+
+  %c = shl i64 %a, %b
+  %shl = shl i64 %c, 48
+  %ashr = ashr i64 %shl, 48
+  store i64 %ashr, i64 addrspace(1)* %out.gep, align 8
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_sext_in_reg_i32_to_i64:
+; SI: buffer_load_dwordx2
+; SI: v_lshl_b64 v{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]{{\]}},
+; SI: v_ashrrev_i32_e32 v[[SHR:[0-9]+]], 31, v[[LO]]
+; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[SHR]]{{\]}}
+define void @v_sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
+  %tid = call i32 @llvm.r600.read.tidig.x()
+  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a = load i64 addrspace(1)* %a.gep, align 8
+  %b = load i64 addrspace(1)* %b.gep, align 8
+
+  %c = shl i64 %a, %b
+  %shl = shl i64 %c, 32
+  %ashr = ashr i64 %shl, 32
+  store i64 %ashr, i64 addrspace(1)* %out.gep, align 8
+  ret void
+}
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i1_in_i32_other_amount:
 ; SI-NOT: {{[^@]}}bfe

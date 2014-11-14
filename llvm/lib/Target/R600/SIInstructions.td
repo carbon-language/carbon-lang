@@ -297,7 +297,7 @@ def S_MUL_I32 : SOP2_32 <0x00000026, "s_mul_i32",
 def S_BFE_U32 : SOP2_32 <0x00000027, "s_bfe_u32", []>;
 def S_BFE_I32 : SOP2_32 <0x00000028, "s_bfe_i32", []>;
 def S_BFE_U64 : SOP2_64 <0x00000029, "s_bfe_u64", []>;
-def S_BFE_I64 : SOP2_64 <0x0000002a, "s_bfe_i64", []>;
+def S_BFE_I64 : SOP2_64_32 <0x0000002a, "s_bfe_i64", []>;
 //def S_CBRANCH_G_FORK : SOP2_ <0x0000002b, "s_cbranch_g_fork", []>;
 def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "s_absdiff_i32", []>;
 
@@ -2972,30 +2972,25 @@ defm : SI_INDIRECT_Pattern <v16i32, i32, SI_INDIRECT_DST_V16>;
 def : Pat<(i32 (sext_inreg i32:$src, i1)),
   (S_BFE_I32 i32:$src, 65536)>; // 0 | 1 << 16
 
-// TODO: Match 64-bit BFE. SI has a 64-bit BFE, but it's scalar only so it
-// might not be worth the effort, and will need to expand to shifts when
-// fixing SGPR copies.
-
 // Handle sext_inreg in i64
 def : Pat <
   (i64 (sext_inreg i64:$src, i1)),
-  (REG_SEQUENCE SReg_64,
-    (S_BFE_I32 (EXTRACT_SUBREG i64:$src, sub0), 65536), sub0, // 0 | 1 << 16
-    (S_MOV_B32 -1), sub1)
+  (S_BFE_I64 i64:$src, 0x10000) // 0 | 1 << 16
 >;
 
 def : Pat <
   (i64 (sext_inreg i64:$src, i8)),
-  (REG_SEQUENCE SReg_64,
-    (S_SEXT_I32_I8 (EXTRACT_SUBREG i64:$src, sub0)), sub0,
-    (S_MOV_B32 -1), sub1)
+  (S_BFE_I64 i64:$src, 0x80000) // 0 | 8 << 16
 >;
 
 def : Pat <
   (i64 (sext_inreg i64:$src, i16)),
-  (REG_SEQUENCE SReg_64,
-    (S_SEXT_I32_I16 (EXTRACT_SUBREG i64:$src, sub0)), sub0,
-    (S_MOV_B32 -1), sub1)
+  (S_BFE_I64 i64:$src, 0x100000) // 0 | 16 << 16
+>;
+
+def : Pat <
+  (i64 (sext_inreg i64:$src, i32)),
+  (S_BFE_I64 i64:$src, 0x200000) // 0 | 32 << 16
 >;
 
 class ZExt_i64_i32_Pat <SDNode ext> : Pat <
