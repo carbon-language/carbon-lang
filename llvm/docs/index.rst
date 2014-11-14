@@ -235,6 +235,7 @@ For API clients and LLVM developers.
    WritingAnLLVMPass
    HowToUseAttributes
    NVPTXUsage
+   R600Usage
    StackMaps
    InAlloca
    BigEndianNEON
@@ -316,6 +317,9 @@ For API clients and LLVM developers.
 
 :doc:`NVPTXUsage`
    This document describes using the NVPTX back-end to compile GPU kernels.
+
+:doc:`R600Usage`
+   This document describes how to use the R600 back-end.
 
 :doc:`StackMaps`
   LLVM support for mapping instruction addresses to the location of

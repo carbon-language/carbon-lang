@@ -153,9 +153,16 @@ def AMDGPUInstrInfo : InstrInfo {
   let guessInstructionProperties = 1;
 }
 
+def AMDGPUAsmParser : AsmParser {
+  // Some of the R600 registers have the same name, so this crashes.
+  // For example T0_XYZW and T0_XY both have the asm name T0.
+  let ShouldEmitMatchRegisterName = 0;
+}
+
 def AMDGPU : Target {
   // Pull in Instruction Info:
   let InstructionSet = AMDGPUInstrInfo;
+  let AssemblyParsers = [AMDGPUAsmParser];
 }
 
 // Dummy Instruction itineraries for pseudo instructions

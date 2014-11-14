@@ -204,12 +204,13 @@ class SOPK <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let UseNamedOperandTable = 1;
 }
 
-class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern> :
+class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern = []> :
 		InstSI <(outs), ins, asm, pattern >, SOPPe <op> {
 
   let mayLoad = 0;
   let mayStore = 0;
   let hasSideEffects = 0;
+  let isCodeGenOnly = 0;
   let SALU = 1;
 
   let UseNamedOperandTable = 1;

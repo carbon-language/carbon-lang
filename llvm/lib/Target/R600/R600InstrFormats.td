@@ -38,6 +38,9 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   let Pattern = pattern;
   let Itinerary = itin;
 
+  // No AsmMatcher support.
+  let isCodeGenOnly = 1;
+
   let TSFlags{4} = Trig;
   let TSFlags{5} = Op3;
 

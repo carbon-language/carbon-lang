@@ -33,7 +33,15 @@ def isCI : Predicate<"Subtarget.getGeneration() "
                       ">= AMDGPUSubtarget::SEA_ISLANDS">;
 def HasFlatAddressSpace : Predicate<"Subtarget.hasFlatAddressSpace()">;
 
-def WAIT_FLAG : InstFlag<"printWaitFlag">;
+def SWaitMatchClass : AsmOperandClass {
+  let Name = "SWaitCnt";
+  let RenderMethod = "addImmOperands";
+  let ParserMethod = "parseSWaitCntOps";
+}
+
+def WAIT_FLAG : InstFlag<"printWaitFlag"> {
+  let ParserMatchClass = SWaitMatchClass;
+}
 
 let SubtargetPredicate = isSI in {
 
@@ -371,7 +379,7 @@ def S_GETREG_REGRD_B32 : SOPK_32 <0x00000014, "s_getreg_regrd_b32", []>;
 // SOPP Instructions
 //===----------------------------------------------------------------------===//
 
-def S_NOP : SOPP <0x00000000, (ins i16imm:$simm16), "s_nop $simm16", []>;
+def S_NOP : SOPP <0x00000000, (ins i16imm:$simm16), "s_nop $simm16">;
 
 let isTerminator = 1 in {
 
@@ -392,36 +400,31 @@ def S_BRANCH : SOPP <
 let DisableEncoding = "$scc" in {
 def S_CBRANCH_SCC0 : SOPP <
   0x00000004, (ins sopp_brtarget:$simm16, SCCReg:$scc),
-  "s_cbranch_scc0 $simm16", []
+  "s_cbranch_scc0 $simm16"
 >;
 def S_CBRANCH_SCC1 : SOPP <
   0x00000005, (ins sopp_brtarget:$simm16, SCCReg:$scc),
-  "s_cbranch_scc1 $simm16",
-  []
+  "s_cbranch_scc1 $simm16"
 >;
 } // End DisableEncoding = "$scc"
 
 def S_CBRANCH_VCCZ : SOPP <
   0x00000006, (ins sopp_brtarget:$simm16, VCCReg:$vcc),
-  "s_cbranch_vccz $simm16",
-  []
+  "s_cbranch_vccz $simm16"
 >;
 def S_CBRANCH_VCCNZ : SOPP <
   0x00000007, (ins sopp_brtarget:$simm16, VCCReg:$vcc),
-  "s_cbranch_vccnz $simm16",
-  []
+  "s_cbranch_vccnz $simm16"
 >;
 
 let DisableEncoding = "$exec" in {
 def S_CBRANCH_EXECZ : SOPP <
   0x00000008, (ins sopp_brtarget:$simm16, EXECReg:$exec),
-  "s_cbranch_execz $simm16",
-  []
+  "s_cbranch_execz $simm16"
 >;
 def S_CBRANCH_EXECNZ : SOPP <
   0x00000009, (ins sopp_brtarget:$simm16, EXECReg:$exec),
-  "s_cbranch_execnz $simm16",
-  []
+  "s_cbranch_execnz $simm16"
 >;
 } // End DisableEncoding = "$exec"
 
@@ -440,12 +443,10 @@ def S_BARRIER : SOPP <0x0000000a, (ins), "s_barrier",
   let mayStore = 1;
 }
 
-def S_WAITCNT : SOPP <0x0000000c, (ins WAIT_FLAG:$simm16), "s_waitcnt $simm16",
-  []
->;
-//def S_SETHALT : SOPP_ <0x0000000d, "s_sethalt", []>;
-//def S_SLEEP : SOPP_ <0x0000000e, "s_sleep", []>;
-//def S_SETPRIO : SOPP_ <0x0000000f, "s_setprio", []>;
+def S_WAITCNT : SOPP <0x0000000c, (ins WAIT_FLAG:$simm16), "s_waitcnt $simm16">;
+def S_SETHALT : SOPP <0x0000000d, (ins i16imm:$simm16), "s_sethalt $simm16">;
+def S_SLEEP : SOPP <0x0000000e, (ins i16imm:$simm16), "s_sleep $simm16">;
+def S_SETPRIO : SOPP <0x0000000f, (ins i16imm:$sim16), "s_setprio $sim16">;
 
 let Uses = [EXEC] in {
   def S_SENDMSG : SOPP <0x00000010, (ins SendMsgImm:$simm16, M0Reg:$m0), "s_sendmsg $simm16",
@@ -455,12 +456,16 @@ let Uses = [EXEC] in {
   }
 } // End Uses = [EXEC]
 
-//def S_SENDMSGHALT : SOPP_ <0x00000011, "s_sendmsghalt", []>;
-//def S_TRAP : SOPP_ <0x00000012, "s_trap", []>;
-//def S_ICACHE_INV : SOPP_ <0x00000013, "s_icache_inv", []>;
-//def S_INCPERFLEVEL : SOPP_ <0x00000014, "s_incperflevel", []>;
-//def S_DECPERFLEVEL : SOPP_ <0x00000015, "s_decperflevel", []>;
-//def S_TTRACEDATA : SOPP_ <0x00000016, "s_ttracedata", []>;
+def S_SENDMSGHALT : SOPP <0x00000011, (ins i16imm:$simm16), "s_sendmsghalt $simm16">;
+def S_TRAP : SOPP <0x00000012, (ins i16imm:$simm16), "s_trap $simm16">;
+def S_ICACHE_INV : SOPP <0x00000013, (ins), "s_icache_inv"> {
+	let simm16 = 0;
+}
+def S_INCPERFLEVEL : SOPP <0x00000014, (ins i16imm:$simm16), "s_incperflevel $simm16">;
+def S_DECPERFLEVEL : SOPP <0x00000015, (ins i16imm:$simm16), "s_decperflevel $simm16">;
+def S_TTRACEDATA : SOPP <0x00000016, (ins), "s_ttracedata"> {
+  let simm16 = 0;
+}
 } // End hasSideEffects
 
 //===----------------------------------------------------------------------===//
