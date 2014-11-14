@@ -2771,6 +2771,8 @@ public:
                                       const AttributeList *AttrList);
 
   void checkUnusedDeclAttributes(Declarator &D);
+    
+  void CheckBoolLikeConversion(Expr *E, SourceLocation CC);
 
   /// Determine if type T is a valid subject for a nonnull and similar
   /// attributes. By default, we look through references (the behavior used by

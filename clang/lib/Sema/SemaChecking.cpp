@@ -6559,6 +6559,13 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
       continue;
     AnalyzeImplicitConversions(S, ChildExpr, CC);
   }
+  if (BO && BO->isLogicalOp()) {
+    S.CheckBoolLikeConversion(BO->getLHS(), BO->getLHS()->getExprLoc());
+    S.CheckBoolLikeConversion(BO->getRHS(), BO->getRHS()->getExprLoc());
+  }
+  if (const UnaryOperator *U = dyn_cast<UnaryOperator>(E))
+    if (U->getOpcode() == UO_LNot)
+      S.CheckBoolLikeConversion(U->getSubExpr(), CC);
 }
 
 } // end anonymous namespace
@@ -6615,6 +6622,18 @@ static bool IsInAnyMacroBody(const SourceManager &SM, SourceLocation Loc) {
   }
 
   return false;
+}
+
+/// CheckBoolLikeConversion - Check conversion of given expression to boolean.
+/// Input argument E is a logical expression.
+static void CheckBoolLikeConversion(Sema &S, Expr *E, SourceLocation CC) {
+  if (S.getLangOpts().Bool)
+    return;
+  CheckImplicitConversion(S, E->IgnoreParenImpCasts(), S.Context.BoolTy, CC);
+}
+
+void Sema::CheckBoolLikeConversion(Expr *E, SourceLocation CC) {
+  ::CheckBoolLikeConversion(*this, E, CC);
 }
 
 /// \brief Diagnose pointers that are always non-null.

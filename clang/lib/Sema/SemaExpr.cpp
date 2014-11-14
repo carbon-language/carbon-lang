@@ -12984,6 +12984,7 @@ ExprResult Sema::CheckBooleanCondition(Expr *E, SourceLocation Loc) {
         << T << E->getSourceRange();
       return ExprError();
     }
+    CheckBoolLikeConversion(E, Loc);
   }
 
   return E;
