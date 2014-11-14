@@ -327,7 +327,9 @@ def S_CMP_LE_U32 : SOPC_32 <0x0000000b, "s_cmp_le_u32">;
 // SOPK Instructions
 //===----------------------------------------------------------------------===//
 
+let isReMaterializable = 1 in {
 def S_MOVK_I32 : SOPK_32 <0x00000000, "s_movk_i32", []>;
+} // End isReMaterializable = 1
 def S_CMOVK_I32 : SOPK_32 <0x00000002, "s_cmovk_i32", []>;
 
 /*
