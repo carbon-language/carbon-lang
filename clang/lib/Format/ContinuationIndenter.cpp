@@ -464,7 +464,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   if (PreviousNonComment &&
       !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
-      PreviousNonComment->Type != TT_TemplateCloser &&
+      (PreviousNonComment->Type != TT_TemplateCloser ||
+       Current.NestingLevel != 0) &&
       PreviousNonComment->Type != TT_BinaryOperator &&
       PreviousNonComment->Type != TT_JavaAnnotation &&
       PreviousNonComment->Type != TT_LeadingJavaAnnotation &&
