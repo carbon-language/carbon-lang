@@ -178,7 +178,7 @@ private:
     }
   }
 
-  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) override {
+  void Endif(SourceLocation Loc, SourceLocation IfLoc) override {
     Guard->Count++;
 
     // If it's the #endif corresponding to the top-most #ifndef
@@ -220,7 +220,7 @@ private:
                      const MacroDirective *) override {
     Guard->Count++;
   }
-  virtual void Else(SourceLocation, SourceLocation) override {
+  void Else(SourceLocation, SourceLocation) override {
     Guard->Count++;
   }
 
