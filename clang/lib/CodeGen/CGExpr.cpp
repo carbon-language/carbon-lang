@@ -2081,7 +2081,10 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   StringRef NameItems[] = {
       PredefinedExpr::getIdentTypeName(E->getIdentType()), FnName};
   std::string GVName = llvm::join(NameItems, NameItems + 2, ".");
-
+  if (CurCodeDecl && isa<BlockDecl>(CurCodeDecl)) {
+    auto C = CGM.GetAddrOfConstantCString(FnName, GVName.c_str(), 1);
+    return MakeAddrLValue(C, E->getType());
+  }
   auto C = CGM.GetAddrOfConstantStringFromLiteral(SL, GVName);
   return MakeAddrLValue(C, E->getType());
 }
