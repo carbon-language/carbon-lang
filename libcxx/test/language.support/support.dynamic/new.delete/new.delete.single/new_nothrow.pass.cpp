@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
- // test operator new (nothrow)
+// test operator new (nothrow)
+
+// asan and msan will not call the new handler.
+// UNSUPPORTED: asan, msan
 
 #include <new>
 #include <cstddef>
