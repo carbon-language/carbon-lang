@@ -120,9 +120,23 @@ LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
 LDFLAGS += $(LD_EXTRAS)
 ifneq "$(OS)" "Windows_NT"
-	ifeq "$(ENABLE_THREADS)" "YES"
-		LDFLAGS += -lpthread
-	endif
+    ifeq "$(ENABLE_THREADS)" "YES"
+        LDFLAGS += -lpthread
+    else 
+        ifeq "$(ENABLE_STD_THREADS)" "YES"
+            # with the specific combination of Linux, g++, std=c++11, adding the 
+            # linker flag -lpthread, will cause a program to hang when a std::conditional_variable
+            # is used in a program that links lldb (see bugzilla 21553)
+            ifeq "$(OS)" "Linux"
+                ifeq (,$(findstring gcc,$(CC))) 
+                    # Linux, but not gcc
+                    LDFLAGS += -lpthread
+                endif
+            else
+                LDFLAGS += -lpthread
+            endif
+        endif
+    endif
 endif
 OBJECTS =
 EXE ?= a.out
