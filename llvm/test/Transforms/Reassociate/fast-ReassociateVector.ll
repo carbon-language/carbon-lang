@@ -1,10 +1,10 @@
 ; RUN: opt < %s -reassociate -S | FileCheck %s
 
-; Don't handle floating point vector operations.
+; Canonicalize operands, but don't optimize floating point vector operations.
 define <4 x float> @test1() {
 ; CHECK-LABEL: test1
 ; CHECK-NEXT: %tmp1 = fsub fast <4 x float> zeroinitializer, zeroinitializer
-; CHECK-NEXT: %tmp2 = fmul fast <4 x float> zeroinitializer, %tmp1
+; CHECK-NEXT: %tmp2 = fmul fast <4 x float> %tmp1, zeroinitializer
 
   %tmp1 = fsub fast <4 x float> zeroinitializer, zeroinitializer
   %tmp2 = fmul fast <4 x float> zeroinitializer, %tmp1

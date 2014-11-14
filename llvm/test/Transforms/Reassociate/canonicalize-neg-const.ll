@@ -3,7 +3,7 @@
 ; (x + 0.1234 * y) * (x + -0.1234 * y) -> (x + 0.1234 * y) * (x - 0.1234 * y)
 define double @test1(double %x, double %y) {
 ; CHECK-LABEL: @test1
-; CHECK-NEXT: fmul double 1.234000e-01, %y
+; CHECK-NEXT: fmul double %y, 1.234000e-01
 ; CHECK-NEXT: fadd double %x, %mul
 ; CHECK-NEXT: fsub double %x, %mul
 ; CHECK-NEXT: fmul double %add{{.*}}, %add{{.*}}
@@ -64,7 +64,7 @@ define i64 @test4(i64 %x, i64 %y) {
 ; Canonicalize (x - -0.1234 * y)
 define double @test5(double %x, double %y) {
 ; CHECK-LABEL: @test5
-; CHECK-NEXT: fmul double 1.234000e-01, %y
+; CHECK-NEXT: fmul double %y, 1.234000e-01
 ; CHECK-NEXT: fadd double %x, %mul
 ; CHECK-NEXT: ret double
 
@@ -76,7 +76,7 @@ define double @test5(double %x, double %y) {
 ; Don't modify (-0.1234 * y - x)
 define double @test6(double %x, double %y) {
 ; CHECK-LABEL: @test6
-; CHECK-NEXT: fmul double -1.234000e-01, %y
+; CHECK-NEXT: fmul double %y, -1.234000e-01
 ; CHECK-NEXT: fsub double %mul, %x
 ; CHECK-NEXT: ret double %sub
 
@@ -88,7 +88,7 @@ define double @test6(double %x, double %y) {
 ; Canonicalize (-0.1234 * y + x) -> (x - 0.1234 * y)
 define double @test7(double %x, double %y) {
 ; CHECK-LABEL: @test7
-; CHECK-NEXT: fmul double 1.234000e-01, %y
+; CHECK-NEXT: fmul double %y, 1.234000e-01
 ; CHECK-NEXT: fsub double %x, %mul
 ; CHECK-NEXT: ret double %add
 
