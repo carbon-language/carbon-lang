@@ -1400,7 +1400,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
           LexUnexpandedToken(Tok);
           // The first thing we read was not the feature, it was the scope.
           ScopeII = FeatureII;
-          if (FeatureII = Tok.getIdentifierInfo())
+          if ((FeatureII = Tok.getIdentifierInfo()))
             LexUnexpandedToken(Tok);
           else
             IsScopeValid = false;          
