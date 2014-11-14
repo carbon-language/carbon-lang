@@ -2078,19 +2078,19 @@ void Reassociate::OptimizeInst(Instruction *I) {
   if (Instruction *Res = canonicalizeNegConstExpr(I))
     I = Res;
 
-  // Commute floating point binary operators, to canonicalize the order of their
-  // operands.  This can potentially expose more CSE opportunities, and makes
-  // writing other transformations simpler.
-  if (I->getType()->isFloatingPointTy() || I->getType()->isVectorTy()) {
+  // Commute binary operators, to canonicalize the order of their operands.
+  // This can potentially expose more CSE opportunities, and makes writing other
+  // transformations simpler.
+  if (I->isCommutative())
+    canonicalizeOperands(I);
 
-    if (I->isCommutative())
-      canonicalizeOperands(I);
+  // Don't optimize vector instructions.
+  if (I->getType()->isVectorTy())
+    return;
 
-    // Don't try to optimize vector instructions or anything that doesn't have
-    // unsafe algebra.
-    if (I->getType()->isVectorTy() || !I->hasUnsafeAlgebra())
-      return;
-  }
+  // Don't optimize floating point instructions that don't have unsafe algebra.
+  if (I->getType()->isFloatingPointTy() && !I->hasUnsafeAlgebra())
+    return;
 
   // Do not reassociate boolean (i1) expressions.  We want to preserve the
   // original order of evaluation for short-circuited comparisons that
