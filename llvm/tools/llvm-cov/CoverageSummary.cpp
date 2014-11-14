@@ -28,44 +28,16 @@ unsigned CoverageSummary::getFileID(StringRef Filename) {
 }
 
 void
-CoverageSummary::createSummaries(ArrayRef<coverage::FunctionRecord> Functions) {
-  std::vector<std::pair<unsigned, size_t>> FunctionFileIDs;
-
-  FunctionFileIDs.resize(Functions.size());
-  for (size_t I = 0, E = Functions.size(); I < E; ++I) {
-    StringRef Filename = Functions[I].Filenames[0];
-    FunctionFileIDs[I] = std::make_pair(getFileID(Filename), I);
-  }
-
-  // Sort the function records by file ids
-  std::sort(FunctionFileIDs.begin(), FunctionFileIDs.end(),
-            [](const std::pair<unsigned, size_t> &lhs,
-               const std::pair<unsigned, size_t> &rhs) {
-    return lhs.first < rhs.first;
-  });
-
-  // Create function summaries in a sorted order (by file ids)
-  FunctionSummaries.reserve(Functions.size());
-  for (size_t I = 0, E = Functions.size(); I < E; ++I)
-    FunctionSummaries.push_back(
-        FunctionCoverageSummary::get(Functions[FunctionFileIDs[I].second]));
-
-  // Create file summaries
-  size_t CurrentSummary = 0;
-  for (unsigned FileID = 0; FileID < Filenames.size(); ++FileID) {
-    // Gather the relevant functions summaries
-    auto PrevSummary = CurrentSummary;
-    while (CurrentSummary < FunctionSummaries.size() &&
-           FunctionFileIDs[CurrentSummary].first == FileID)
-      ++CurrentSummary;
-    ArrayRef<FunctionCoverageSummary> LocalSummaries(
-        FunctionSummaries.data() + PrevSummary,
-        FunctionSummaries.data() + CurrentSummary);
-    if (LocalSummaries.empty())
+CoverageSummary::createSummaries(const coverage::CoverageMapping &Coverage) {
+  for (StringRef Filename : Coverage.getUniqueSourceFiles()) {
+    size_t PrevSize = FunctionSummaries.size();
+    for (const auto &F : Coverage.getCoveredFunctions(Filename))
+      FunctionSummaries.push_back(FunctionCoverageSummary::get(F));
+    size_t Count = FunctionSummaries.size() - PrevSize;
+    if (Count == 0)
       continue;
-
-    FileSummaries.push_back(
-        FileCoverageSummary::get(Filenames[FileID], LocalSummaries));
+    FileSummaries.push_back(FileCoverageSummary::get(
+        Filename, makeArrayRef(FunctionSummaries.data() + PrevSize, Count)));
   }
 }
 

@@ -462,7 +462,7 @@ int CodeCoverageTool::report(int argc, const char **argv,
     return 1;
 
   CoverageSummary Summarizer;
-  Summarizer.createSummaries(Coverage->getCoveredFunctions());
+  Summarizer.createSummaries(*Coverage);
   CoverageReport Report(ViewOpts, Summarizer);
   if (SourceFiles.empty() && Filters.empty()) {
     Report.renderFileReports(llvm::outs());

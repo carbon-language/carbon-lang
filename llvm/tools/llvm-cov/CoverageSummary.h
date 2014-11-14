@@ -30,7 +30,7 @@ class CoverageSummary {
   unsigned getFileID(StringRef Filename);
 
 public:
-  void createSummaries(ArrayRef<coverage::FunctionRecord> Functions);
+  void createSummaries(const coverage::CoverageMapping &Coverage);
 
   ArrayRef<FileCoverageSummary> getFileSummaries() { return FileSummaries; }
 

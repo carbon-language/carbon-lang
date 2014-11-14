@@ -170,6 +170,14 @@ ErrorOr<int64_t> CounterMappingContext::evaluate(const Counter &C) const {
   llvm_unreachable("Unhandled CounterKind");
 }
 
+void FunctionRecordIterator::skipOtherFiles() {
+  while (Current != Records.end() && !Filename.empty() &&
+         Filename != Current->Filenames[0])
+    ++Current;
+  if (Current == Records.end())
+    *this = FunctionRecordIterator();
+}
+
 ErrorOr<std::unique_ptr<CoverageMapping>>
 CoverageMapping::load(ObjectFileCoverageMappingReader &CoverageReader,
                       IndexedInstrProfReader &ProfileReader) {
@@ -320,7 +328,7 @@ public:
 };
 }
 
-std::vector<StringRef> CoverageMapping::getUniqueSourceFiles() {
+std::vector<StringRef> CoverageMapping::getUniqueSourceFiles() const {
   std::vector<StringRef> Filenames;
   for (const auto &Function : getCoveredFunctions())
     for (const auto &Filename : Function.Filenames)
