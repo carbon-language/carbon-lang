@@ -86,6 +86,8 @@ class SanitizerArgs {
  private:
   void clear();
 
+  bool getDefaultBlacklist(const Driver &D, std::string &BLPath);
+
   /// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
   /// Returns OR of members of the \c SanitizeKind enumeration, or \c 0
   /// if \p Value is not known.
@@ -118,9 +120,6 @@ class SanitizerArgs {
   static std::string describeSanitizeArg(const llvm::opt::ArgList &Args,
                                          const llvm::opt::Arg *A,
                                          unsigned Mask);
-
-  static bool getDefaultBlacklistForKind(const Driver &D, unsigned Kind,
-                                         std::string &BLPath);
 
   /// Return the smallest superset of sanitizer set \p Kinds such that each
   /// member of each group whose flag is set in \p Kinds has its flag set in the

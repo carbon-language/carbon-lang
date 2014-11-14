@@ -36,8 +36,6 @@ void SanitizerArgs::clear() {
 SanitizerArgs::SanitizerArgs(const ToolChain &TC,
                              const llvm::opt::ArgList &Args) {
   clear();
-  unsigned AllAdd = 0;  // All kinds of sanitizers that were turned on
-                        // at least once (possibly, disabled further).
   unsigned AllRemove = 0;  // During the loop below, the accumulated set of
                            // sanitizers disabled by the current sanitizer
                            // argument or any argument after it.
@@ -51,7 +49,6 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       continue;
     (*I)->claim();
 
-    AllAdd |= expandGroups(Add);
     AllRemove |= expandGroups(Remove);
 
     // Avoid diagnosing any sanitizer which is disabled later.
@@ -134,8 +131,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     // If no -fsanitize-blacklist option is specified, try to look up for
     // blacklist in the resource directory.
     std::string BLPath;
-    if (getDefaultBlacklistForKind(D, Kind, BLPath) &&
-        llvm::sys::fs::exists(BLPath))
+    if (getDefaultBlacklist(D, BLPath) && llvm::sys::fs::exists(BLPath))
       BlacklistFile = BLPath;
   }
 
@@ -364,8 +360,7 @@ std::string SanitizerArgs::describeSanitizeArg(const llvm::opt::ArgList &Args,
   return "-fsanitize=" + Sanitizers;
 }
 
-bool SanitizerArgs::getDefaultBlacklistForKind(const Driver &D, unsigned Kind,
-                                               std::string &BLPath) {
+bool SanitizerArgs::getDefaultBlacklist(const Driver &D, std::string &BLPath) {
   const char *BlacklistFile = nullptr;
   if (Kind & NeedsAsanRt)
     BlacklistFile = "asan_blacklist.txt";
