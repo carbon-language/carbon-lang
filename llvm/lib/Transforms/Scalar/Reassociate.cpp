@@ -2083,13 +2083,8 @@ void Reassociate::OptimizeInst(Instruction *I) {
   // writing other transformations simpler.
   if (I->getType()->isFloatingPointTy() || I->getType()->isVectorTy()) {
 
-    // FAdd and FMul can be commuted.
-    unsigned Opcode = I->getOpcode();
-    if (Opcode == Instruction::FMul || Opcode == Instruction::FAdd)
+    if (I->isCommutative())
       canonicalizeOperands(I);
-
-    // FIXME: We should commute vector instructions as well.  However, this 
-    // requires further analysis to determine the effect on later passes.
 
     // Don't try to optimize vector instructions or anything that doesn't have
     // unsafe algebra.
