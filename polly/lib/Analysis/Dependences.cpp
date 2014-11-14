@@ -452,7 +452,7 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   isl_space *Space = S.getParamSpace();
   isl_union_map *Scattering = isl_union_map_empty(Space);
 
-  isl_space *ScatteringSpace = 0;
+  isl_space *ScatteringSpace = nullptr;
 
   for (ScopStmt *Stmt : S) {
     isl_map *StmtScat;

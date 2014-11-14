@@ -396,7 +396,7 @@ __isl_give isl_ast_expr *IslAst::getRunCondition() {
 void IslAstInfo::releaseMemory() {
   if (Ast) {
     delete Ast;
-    Ast = 0;
+    Ast = nullptr;
   }
 }
 

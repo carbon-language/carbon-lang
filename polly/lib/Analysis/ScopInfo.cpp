@@ -1800,7 +1800,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   // This region is no Scop.
   if (!tempScop) {
-    scop = 0;
+    scop = nullptr;
     return false;
   }
 

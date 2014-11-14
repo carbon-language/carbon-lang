@@ -762,7 +762,7 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
   BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();
   Builder.SetInsertPoint(LoopBody);
 
-  BasicBlock *AfterBB = 0;
+  BasicBlock *AfterBB = nullptr;
   if (NonPLoopDepth) {
     Value *LowerBound, *UpperBound, *IV, *Stride;
     Type *IntPtrTy = getIntPtrTy();
