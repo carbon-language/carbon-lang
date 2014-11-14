@@ -186,10 +186,11 @@ class Spelling<string name, string variety> {
 
 class GNU<string name> : Spelling<name, "GNU">;
 class Declspec<string name> : Spelling<name, "Declspec">;
-class CXX11<string namespace, string name> : Spelling<name, "CXX11"> {
+class CXX11<string namespace, string name, int version = 1>
+    : Spelling<name, "CXX11"> {
   string Namespace = namespace;
-}
-class Keyword<string name> : Spelling<name, "Keyword">;
+  int Version = version;
+} class Keyword<string name> : Spelling<name, "Keyword">;
 class Pragma<string namespace, string name> : Spelling<name, "Pragma"> {
   string Namespace = namespace;
 }
@@ -452,7 +453,8 @@ def Bounded : IgnoredAttr {
 }
 
 def CarriesDependency : InheritableParamAttr {
-  let Spellings = [GNU<"carries_dependency">, CXX11<"","carries_dependency">];
+  let Spellings = [GNU<"carries_dependency">,
+                   CXX11<"","carries_dependency", 200809>];
   let Subjects = SubjectList<[ParmVar, ObjCMethod, Function], ErrorDiag>;
   let Documentation = [CarriesDependencyDocs];
 }
@@ -593,7 +595,7 @@ def C11NoReturn : InheritableAttr {
 }
 
 def CXX11NoReturn : InheritableAttr {
-  let Spellings = [CXX11<"","noreturn">];
+  let Spellings = [CXX11<"","noreturn", 200809>];
   let Subjects = SubjectList<[Function], ErrorDiag>;
   let Documentation = [CXX11NoReturnDocs];
 }
@@ -642,7 +644,7 @@ def OpenCLConstantAddressSpace : TypeAttr {
 
 def Deprecated : InheritableAttr {
   let Spellings = [GCC<"deprecated">, Declspec<"deprecated">,
-                   CXX11<"","deprecated">];
+                   CXX11<"","deprecated", 201309>];
   let Args = [StringArgument<"Message", 1>];
   let Documentation = [Undocumented];
 }

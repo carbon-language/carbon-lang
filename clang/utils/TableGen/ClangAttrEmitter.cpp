@@ -1820,6 +1820,27 @@ static void GenerateHasAttrSpellingStringSwitch(
     const std::vector<Record *> &Attrs, raw_ostream &OS,
     const std::string &Variety = "", const std::string &Scope = "") {
   for (const auto *Attr : Attrs) {
+    // C++11-style attributes have specific version information associated with
+    // them. If the attribute has no scope, the version information must not
+    // have the default value (1), as that's incorrect. Instead, the unscoped
+    // attribute version information should be taken from the SD-6 standing
+    // document, which can be found at: 
+    // https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations
+    int Version = 1;
+
+    if (Variety == "CXX11") {
+        std::vector<Record *> Spellings = Attr->getValueAsListOfDefs("Spellings");
+        for (const auto &Spelling : Spellings) {
+          if (Spelling->getValueAsString("Variety") == "CXX11") {
+            Version = static_cast<int>(Spelling->getValueAsInt("Version"));
+            if (Scope.empty() && Version == 1)
+              PrintError(Spelling->getLoc(), "C++ standard attributes must "
+              "have valid version information.");
+            break;
+          }
+      }
+    }
+
     // It is assumed that there will be an llvm::Triple object named T within
     // scope that can be used to determine whether the attribute exists in
     // a given target.
@@ -1858,16 +1879,16 @@ static void GenerateHasAttrSpellingStringSwitch(
       // C++11 mode should be checked against LangOpts, which is presumed to be
       // present in the caller.
       Test = "LangOpts.CPlusPlus11";
-    else
-      Test = "true";
 
+    std::string TestStr =
+        !Test.empty() ? Test + " ? " + std::to_string(Version) + " : 0" : "1";
     std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(*Attr);
     for (const auto &S : Spellings)
       if (Variety.empty() || (Variety == S.variety() &&
                               (Scope.empty() || Scope == S.nameSpace())))
-        OS << "    .Case(\"" << S.name() << "\", " << Test << ")\n";
+        OS << "    .Case(\"" << S.name() << "\", " << TestStr << ")\n";
   }
-  OS << "    .Default(false);\n";
+  OS << "    .Default(0);\n";
 }
 
 // Emits the list of spellings for attributes.
@@ -1899,16 +1920,16 @@ void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
 
   OS << "switch (Syntax) {\n";
   OS << "case AttrSyntax::Generic:\n";
-  OS << "  return llvm::StringSwitch<bool>(Name)\n";
+  OS << "  return llvm::StringSwitch<int>(Name)\n";
   GenerateHasAttrSpellingStringSwitch(Attrs, OS);
   OS << "case AttrSyntax::GNU:\n";
-  OS << "  return llvm::StringSwitch<bool>(Name)\n";
+  OS << "  return llvm::StringSwitch<int>(Name)\n";
   GenerateHasAttrSpellingStringSwitch(GNU, OS, "GNU");
   OS << "case AttrSyntax::Declspec:\n";
-  OS << "  return llvm::StringSwitch<bool>(Name)\n";
+  OS << "  return llvm::StringSwitch<int>(Name)\n";
   GenerateHasAttrSpellingStringSwitch(Declspec, OS, "Declspec");
   OS << "case AttrSyntax::Pragma:\n";
-  OS << "  return llvm::StringSwitch<bool>(Name)\n";
+  OS << "  return llvm::StringSwitch<int>(Name)\n";
   GenerateHasAttrSpellingStringSwitch(Pragma, OS, "Pragma");
   OS << "case AttrSyntax::CXX: {\n";
   // C++11-style attributes are further split out based on the Scope.
@@ -1921,7 +1942,7 @@ void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
       OS << "if (!Scope || Scope->getName() == \"\") {\n";
     else
       OS << "if (Scope->getName() == \"" << I->first << "\") {\n";
-    OS << "  return llvm::StringSwitch<bool>(Name)\n";
+    OS << "  return llvm::StringSwitch<int>(Name)\n";
     GenerateHasAttrSpellingStringSwitch(I->second, OS, "CXX11", I->first);
     OS << "}";
   }

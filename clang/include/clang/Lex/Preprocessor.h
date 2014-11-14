@@ -135,6 +135,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   IdentifierInfo *Ident__is_identifier;            // __is_identifier
   IdentifierInfo *Ident__building_module;          // __building_module
   IdentifierInfo *Ident__MODULE__;                 // __MODULE__
+  IdentifierInfo *Ident__has_cpp_attribute;        // __has_cpp_attribute
 
   SourceLocation DATELoc, TIMELoc;
   unsigned CounterValue;  // Next __COUNTER__ value.

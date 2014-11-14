@@ -96,6 +96,9 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__COUNTER__ = RegisterBuiltinMacro(*this, "__COUNTER__");
   Ident_Pragma  = RegisterBuiltinMacro(*this, "_Pragma");
 
+  // C++ Standing Document Extensions.
+  Ident__has_cpp_attribute = RegisterBuiltinMacro(*this, "__has_cpp_attribute");
+
   // GCC Extensions.
   Ident__BASE_FILE__     = RegisterBuiltinMacro(*this, "__BASE_FILE__");
   Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro(*this, "__INCLUDE_LEVEL__");
@@ -1374,12 +1377,14 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
              II == Ident__has_extension ||
              II == Ident__has_builtin   ||
              II == Ident__is_identifier ||
-             II == Ident__has_attribute) {
+             II == Ident__has_attribute ||
+             II == Ident__has_cpp_attribute) {
     // The argument to these builtins should be a parenthesized identifier.
     SourceLocation StartLoc = Tok.getLocation();
 
     bool IsValid = false;
     IdentifierInfo *FeatureII = nullptr;
+    IdentifierInfo *ScopeII = nullptr;
 
     // Read the '('.
     LexUnexpandedToken(Tok);
@@ -1387,14 +1392,26 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       // Read the identifier
       LexUnexpandedToken(Tok);
       if ((FeatureII = Tok.getIdentifierInfo())) {
-        // Read the ')'.
+        // If we're checking __has_cpp_attribute, it is possible to receive a
+        // scope token. Read the "::", if it's available.
         LexUnexpandedToken(Tok);
-        if (Tok.is(tok::r_paren))
+        bool IsScopeValid = true;
+        if (II == Ident__has_cpp_attribute && Tok.is(tok::coloncolon)) {
+          LexUnexpandedToken(Tok);
+          // The first thing we read was not the feature, it was the scope.
+          ScopeII = FeatureII;
+          if (FeatureII = Tok.getIdentifierInfo())
+            LexUnexpandedToken(Tok);
+          else
+            IsScopeValid = false;          
+        }
+        // Read the closing paren.
+        if (IsScopeValid && Tok.is(tok::r_paren))
           IsValid = true;
       }
     }
 
-    bool Value = false;
+    int Value = 0;
     if (!IsValid)
       Diag(StartLoc, diag::err_feature_check_malformed);
     else if (II == Ident__is_identifier)
@@ -1405,6 +1422,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     } else if (II == Ident__has_attribute)
       Value = hasAttribute(AttrSyntax::Generic, nullptr, FeatureII,
                            getTargetInfo().getTriple(), getLangOpts());
+    else if (II == Ident__has_cpp_attribute)
+      Value = hasAttribute(AttrSyntax::CXX, ScopeII, FeatureII,
+                           getTargetInfo().getTriple(), getLangOpts());
     else if (II == Ident__has_extension)
       Value = HasExtension(*this, FeatureII);
     else {
@@ -1412,7 +1432,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Value = HasFeature(*this, FeatureII);
     }
 
-    OS << (int)Value;
+    OS << Value;
     if (IsValid)
       Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__has_include ||

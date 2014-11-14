@@ -109,6 +109,36 @@ following ``__`` (double underscore) to avoid interference from a macro with
 the same name.  For instance, ``__cxx_rvalue_references__`` can be used instead
 of ``cxx_rvalue_references``.
 
+``__has_cpp_attribute``
+-------------------
+
+This function-like macro takes a single argument that is the name of a
+C++11-style attribute. The argument can either be a single identifier, or a
+scoped identifier. If the attribute is supported, a nonzero value is returned.
+If the attribute is a standards-based attribute, this macro returns a nonzero
+value based on the year and month in which the attribute was voted into the
+working draft. If the attribute is not supported by the current compliation
+target, this macro evaluates to 0.  It can be used like this:
+
+.. code-block:: c++
+
+  #ifndef __has_cpp_attribute         // Optional of course.
+    #define __has_cpp_attribute(x) 0  // Compatibility with non-clang compilers.
+  #endif
+
+  ...
+  #if __has_cpp_attribute(clang::fallthrough)
+  #define FALLTHROUGH [[clang::fallthrough]]
+  #else
+  #define FALLTHROUGH
+  #endif
+  ...
+
+The attribute identifier (but not scope) can also be specified with a preceding
+and following ``__`` (double underscore) to avoid interference from a macro with
+the same name.  For instance, ``gnu::__const__`` can be used instead of
+``gnu::const``.
+
 ``__has_attribute``
 -------------------
 

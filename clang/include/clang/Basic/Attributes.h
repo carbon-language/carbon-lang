@@ -30,11 +30,11 @@ enum class AttrSyntax {
   Pragma
 };
 
-/// \brief Return true if we recognize and implement the attribute specified by
-/// the given information.
-bool hasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
-                  const IdentifierInfo *Attr, const llvm::Triple &T,
-                  const LangOptions &LangOpts);
+/// \brief Return the version number associated with the attribute if we
+/// recognize and implement the attribute specified by the given information.
+int hasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
+                 const IdentifierInfo *Attr, const llvm::Triple &T,
+                 const LangOptions &LangOpts);
 
 } // end namespace clang
 

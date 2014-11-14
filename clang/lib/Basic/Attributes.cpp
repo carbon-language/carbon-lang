@@ -3,7 +3,7 @@
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
-bool clang::hasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
+int clang::hasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
                          const IdentifierInfo *Attr, const llvm::Triple &T,
                          const LangOptions &LangOpts) {
   StringRef Name = Attr->getName();
@@ -13,5 +13,5 @@ bool clang::hasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
 
 #include "clang/Basic/AttrHasAttributeImpl.inc"
 
-  return false;
+  return 0;
 }
