@@ -205,7 +205,7 @@ inferior_namespace_mach_port_num (task_t task, thread_t examine_threads_port, th
 uint64_t
 get_current_pc (thread_t thread, int *wordsize)
 {
-  kern_return_t kr;
+  kern_return_t kr ;
 
 #if defined (__x86_64__) || defined (__i386__)
   x86_thread_state_t gp_regs;
@@ -240,8 +240,22 @@ get_current_pc (thread_t thread, int *wordsize)
       printf ("Error - unable to get registers for a thread\n");
       exit (1);
     }
-  return gp_regs.__pc;
   *wordsize = 4;
+  return gp_regs.__pc;
+#endif
+
+#if defined (__arm64__)
+  arm_thread_state64_t gp_regs;
+  mach_msg_type_number_t gp_count = ARM_THREAD_STATE64_COUNT;
+  kr = thread_get_state (thread, ARM_THREAD_STATE64,
+                         (thread_state_t) &gp_regs, &gp_count);
+  if (kr != KERN_SUCCESS)
+    {
+      printf ("Error - unable to get registers for a thread\n");
+      exit (1);
+    }
+  *wordsize = 8;
+  return gp_regs.__pc;
 #endif
 
 }
@@ -269,7 +283,6 @@ main (int argc, char **argv)
 {
   kern_return_t kr;
   task_t task;
-  thread_t thread;
   pid_t pid = 0;
   char *procname = NULL;
   int arg_is_procname = 0;
