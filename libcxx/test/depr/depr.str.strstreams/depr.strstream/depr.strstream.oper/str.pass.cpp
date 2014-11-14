@@ -22,5 +22,6 @@ int main()
         std::strstream out;
         out << 123 << ' ' << 4.5 << ' ' << "dog" << std::ends;
         assert(out.str() == std::string("123 4.5 dog"));
+        out.freeze(false);
     }
 }

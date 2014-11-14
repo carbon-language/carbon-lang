@@ -31,4 +31,5 @@ int main()
     assert(i == 123);
     assert(d == 4.5);
     assert(strcmp(s.c_str(), "dog") == 0);
+    inout.freeze(false);
 }

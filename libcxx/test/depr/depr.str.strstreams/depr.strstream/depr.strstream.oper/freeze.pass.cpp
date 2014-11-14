@@ -29,5 +29,6 @@ int main()
         out << 'a';
         out << char(0);
         assert(out.str() == std::string("a"));
+        out.freeze(false);
     }
 }

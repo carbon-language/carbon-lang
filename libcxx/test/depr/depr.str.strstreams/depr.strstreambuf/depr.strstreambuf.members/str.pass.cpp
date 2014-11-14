@@ -23,5 +23,6 @@ int main()
         assert(sb.sputc('a') == 'a');
         assert(sb.sputc(0) == 0);
         assert(sb.str() == std::string("a"));
+        sb.freeze(false);
     }
 }

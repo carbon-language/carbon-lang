@@ -27,5 +27,6 @@ int main()
         assert(sb.pcount() == 2);
         assert(sb.str() == std::string("a"));
         assert(sb.pcount() == 2);
+        sb.freeze(false);
     }
 }

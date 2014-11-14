@@ -24,4 +24,5 @@ int main()
     std::string s("dog");
     out << i << ' ' << d << ' ' << s << std::ends;
     assert(out.str() == std::string("123 4.5 dog"));
+    out.freeze(false);
 }
