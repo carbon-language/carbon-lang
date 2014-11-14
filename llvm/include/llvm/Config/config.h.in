@@ -453,6 +453,9 @@
 /* Have host's ___chkstk */
 #undef HAVE____CHKSTK
 
+/* Linker version detected at compile time. */
+#undef HOST_LINK_VERSION
+
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
 
