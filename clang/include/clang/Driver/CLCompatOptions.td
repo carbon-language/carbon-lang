@@ -197,6 +197,7 @@ def _SLASH_TP : CLCompileFlag<"TP">, HelpText<"Treat all source files as C++">;
 // Ignored:
 
 def _SLASH_analyze_ : CLIgnoredFlag<"analyze-">;
+def _SLASH_d2Zi_PLUS : CLIgnoredFlag<"d2Zi+">;
 def _SLASH_errorReport : CLIgnoredJoined<"errorReport">;
 def _SLASH_FS : CLIgnoredFlag<"FS">, HelpText<"Force synchronous PDB writes">;
 def _SLASH_GF : CLIgnoredFlag<"GF">;
@@ -214,6 +215,8 @@ def _SLASH_Zc_inline : CLIgnoredFlag<"Zc:inline">;
 def _SLASH_Zc_rvalueCast : CLIgnoredFlag<"Zc:rvalueCast">;
 def _SLASH_Zc_wchar_t : CLIgnoredFlag<"Zc:wchar_t">;
 def _SLASH_Zm : CLIgnoredJoined<"Zm">;
+def _SLASH_Zo : CLIgnoredFlag<"Zo">;
+def _SLASH_Zo_ : CLIgnoredFlag<"Zo-">;
 
 
 // Unsupported:
@@ -221,7 +224,6 @@ def _SLASH_Zm : CLIgnoredJoined<"Zm">;
 def _SLASH_AI : CLJoined<"AI">;
 def _SLASH_bigobj : CLFlag<"bigobj">;
 def _SLASH_clr : CLJoined<"clr">;
-def _SLASH_d2Zi_PLUS : CLFlag<"d2Zi+">;
 def _SLASH_doc : CLJoined<"doc">;
 def _SLASH_FA_joined : CLJoined<"FA">;
 def _SLASH_favor : CLJoined<"favor">;
