@@ -27,8 +27,8 @@ def VCC : RegisterWithSubRegs<"VCC", [VCC_LO, VCC_HI]> {
   let HWEncoding = 106;
 }
 
-def EXEC_LO : SIReg<"EXEC", 126>;
-def EXEC_HI : SIReg<"EXEC", 127>;
+def EXEC_LO : SIReg<"exec_lo", 126>;
+def EXEC_HI : SIReg<"exec_hi", 127>;
 
 def EXEC : RegisterWithSubRegs<"EXEC", [EXEC_LO, EXEC_HI]> {
   let Namespace = "AMDGPU";
