@@ -399,10 +399,6 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   _peHeader.Magic = ctx.is64Bit() ? llvm::COFF::PE32Header::PE32_PLUS
                                   : llvm::COFF::PE32Header::PE32;
 
-  // The address of entry point relative to ImageBase. Windows executable
-  // usually starts at address 0x401000.
-  _peHeader.AddressOfEntryPoint = 0x1000;
-
   // The address of the executable when loaded into memory. The default for
   // DLLs is 0x10000000. The default for executables is 0x400000.
   _peHeader.ImageBase = ctx.getBaseAddress();
