@@ -117,7 +117,6 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
 #else
   HKEY hRootKey = HKEY_LOCAL_MACHINE;
   HKEY hKey = NULL;
-  DWORD valueSize = 0;
   long lResult;
   bool returnValue = false;
 
