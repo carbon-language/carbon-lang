@@ -482,9 +482,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
   const bool Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
   bool IsWin64 = STI.isTargetWin64();
-  bool IsWinEH =
-      MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
-      ExceptionHandling::WinEH; // Not necessarily synonymous with IsWin64.
+  // Not necessarily synonymous with IsWin64.
+  bool IsWinEH = MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
+                 ExceptionHandling::ItaniumWinEH;
   bool NeedsWinEH = IsWinEH && Fn->needsUnwindTableEntry();
   bool NeedsDwarfCFI =
       !IsWinEH && (MMI.hasDebugInfo() || Fn->needsUnwindTableEntry());
@@ -883,9 +883,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
              getX86SubSuperRegister(FramePtr, MVT::i64, false) : FramePtr;
   unsigned StackPtr = RegInfo->getStackRegister();
 
-  bool IsWinEH =
-      MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
-      ExceptionHandling::WinEH;
+  bool IsWinEH = MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
+                 ExceptionHandling::ItaniumWinEH;
   bool NeedsWinEH = IsWinEH && MF.getFunction()->needsUnwindTableEntry();
 
   switch (RetOpcode) {

@@ -42,11 +42,11 @@ enum class EncodingType {
 }
 
 enum class ExceptionHandling {
-  None,     /// No exception support
-  DwarfCFI, /// DWARF-like instruction based exceptions
-  SjLj,     /// setjmp/longjmp based exceptions
-  ARM,      /// ARM EHABI
-  WinEH,    /// Windows Exception Handling
+  None,         /// No exception support
+  DwarfCFI,     /// DWARF-like instruction based exceptions
+  SjLj,         /// setjmp/longjmp based exceptions
+  ARM,          /// ARM EHABI
+  ItaniumWinEH, /// Itanium EH built on Windows unwind info (.pdata and .xdata)
 };
 
 namespace LCOMM {
@@ -472,12 +472,16 @@ public:
   }
   ExceptionHandling getExceptionHandlingType() const { return ExceptionsType; }
   WinEH::EncodingType getWinEHEncodingType() const { return WinEHEncodingType; }
-  bool isExceptionHandlingDwarf() const {
+
+  /// Return true if the exception handling type uses the language-specific data
+  /// area (LSDA) format specified by the Itanium C++ ABI.
+  bool usesItaniumLSDAForExceptions() const {
     return (ExceptionsType == ExceptionHandling::DwarfCFI ||
             ExceptionsType == ExceptionHandling::ARM ||
-            // Windows handler data still uses DWARF LSDA encoding.
-            ExceptionsType == ExceptionHandling::WinEH);
+            // This Windows EH type uses the Itanium LSDA encoding.
+            ExceptionsType == ExceptionHandling::ItaniumWinEH);
   }
+
   bool doesDwarfUseRelocationsAcrossSections() const {
     return DwarfUsesRelocationsAcrossSections;
   }

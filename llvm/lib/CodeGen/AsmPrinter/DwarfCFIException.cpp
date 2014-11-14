@@ -51,7 +51,7 @@ void DwarfCFIException::endModule() {
   if (moveTypeModule == AsmPrinter::CFI_M_Debug)
     Asm->OutStreamer.EmitCFISections(false, true);
 
-  if (!Asm->MAI->isExceptionHandlingDwarf())
+  if (!Asm->MAI->usesItaniumLSDAForExceptions())
     return;
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();

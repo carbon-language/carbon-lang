@@ -241,7 +241,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   case ExceptionHandling::ARM:
     ES = new ARMException(this);
     break;
-  case ExceptionHandling::WinEH:
+  case ExceptionHandling::ItaniumWinEH:
     switch (MAI->getWinEHEncodingType()) {
     default: llvm_unreachable("unsupported unwinding information encoding");
     case WinEH::EncodingType::Itanium:
@@ -701,8 +701,8 @@ AsmPrinter::CFIMoveType AsmPrinter::needsCFIMoves() {
 }
 
 bool AsmPrinter::needsSEHMoves() {
-  return MAI->getExceptionHandlingType() == ExceptionHandling::WinEH &&
-    MF->getFunction()->needsUnwindTableEntry();
+  return MAI->getExceptionHandlingType() == ExceptionHandling::ItaniumWinEH &&
+         MF->getFunction()->needsUnwindTableEntry();
 }
 
 void AsmPrinter::emitCFIInstruction(const MachineInstr &MI) {
