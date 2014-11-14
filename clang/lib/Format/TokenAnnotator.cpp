@@ -1684,7 +1684,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(Keywords.kw_synchronized) && Right.is(tok::l_paren))
       return Style.SpaceBeforeParens != FormatStyle::SBPO_Never;
-    if (Left.is(tok::kw_static) && Right.Type == TT_TemplateOpener)
+    if (Left.isOneOf(tok::kw_static, tok::kw_public) &&
+        Right.Type == TT_TemplateOpener)
       return true;
   }
   if (Right.Tok.getIdentifierInfo() && Left.Tok.getIdentifierInfo())
