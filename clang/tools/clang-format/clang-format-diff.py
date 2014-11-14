@@ -52,6 +52,8 @@ def main():
                       r'|protodevel)',
                       help='custom pattern selecting file paths to reformat '
                       '(case insensitive, overridden by -regex)')
+  parser.add_argument('-v', '--verbose', action='store_true',
+                      help='be more verbose, ineffective without -i')
   parser.add_argument(
       '-style',
       help=
@@ -89,6 +91,8 @@ def main():
 
   # Reformat files containing changes in place.
   for filename, lines in lines_by_file.iteritems():
+    if args.i and args.verbose:
+      print 'Formatting', filename
     command = [binary, filename]
     if args.i:
       command.append('-i')
