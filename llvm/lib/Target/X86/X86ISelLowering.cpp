@@ -5062,32 +5062,32 @@ static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
   SDValue Vec;
   if (VT.is128BitVector()) {  // SSE
     if (Subtarget->hasSSE2()) {  // SSE2
-      SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
+      SDValue Cst = DAG.getConstant(0, MVT::i32);
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
     } else { // SSE1
-      SDValue Cst = DAG.getTargetConstantFP(+0.0, MVT::f32);
+      SDValue Cst = DAG.getConstantFP(+0.0, MVT::f32);
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f32, Cst, Cst, Cst, Cst);
     }
   } else if (VT.is256BitVector()) { // AVX
     if (Subtarget->hasInt256()) { // AVX2
-      SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
+      SDValue Cst = DAG.getConstant(0, MVT::i32);
       SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32, Ops);
     } else {
       // 256-bit logic and arithmetic instructions in AVX are all
       // floating-point, no support for integer ops. Emit fp zeroed vectors.
-      SDValue Cst = DAG.getTargetConstantFP(+0.0, MVT::f32);
+      SDValue Cst = DAG.getConstantFP(+0.0, MVT::f32);
       SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8f32, Ops);
     }
   } else if (VT.is512BitVector()) { // AVX-512
-      SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
+      SDValue Cst = DAG.getConstant(0, MVT::i32);
       SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst,
                         Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i32, Ops);
   } else if (VT.getScalarType() == MVT::i1) {
     assert(VT.getVectorNumElements() <= 16 && "Unexpected vector type");
-    SDValue Cst = DAG.getTargetConstant(0, MVT::i1);
+    SDValue Cst = DAG.getConstant(0, MVT::i1);
     SmallVector<SDValue, 16> Ops(VT.getVectorNumElements(), Cst);
     return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);
   } else
@@ -5104,7 +5104,7 @@ static SDValue getOnesVector(MVT VT, bool HasInt256, SelectionDAG &DAG,
                              SDLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
 
-  SDValue Cst = DAG.getTargetConstant(~0U, MVT::i32);
+  SDValue Cst = DAG.getConstant(~0U, MVT::i32);
   SDValue Vec;
   if (VT.is256BitVector()) {
     if (HasInt256) { // AVX2
