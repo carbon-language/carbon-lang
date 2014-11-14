@@ -35,6 +35,9 @@ class LogDiagnosticPrinter : public DiagnosticConsumer {
   
     /// The ID of the diagnostic.
     unsigned DiagnosticID;
+
+    /// The Option Flag for the diagnostic
+    std::string WarningOption;
   
     /// The level of the diagnostic.
     DiagnosticsEngine::Level DiagnosticLevel;

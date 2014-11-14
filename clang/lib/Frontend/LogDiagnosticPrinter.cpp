@@ -63,6 +63,14 @@ LogDiagnosticPrinter::EmitDiagEntry(llvm::raw_ostream &OS,
        << "      ";
     EmitString(OS, DE.Message) << '\n';
   }
+  OS << "      <key>ID</key>\n"
+     << "      ";
+  EmitInteger(OS, DE.DiagnosticID) << '\n';
+  if (!DE.WarningOption.empty()) {
+    OS << "      <key>WarningOption</key>\n"
+       << "      ";
+    EmitString(OS, DE.WarningOption) << '\n';
+  }
   OS << "    </dict>\n";
 }
 
@@ -121,6 +129,8 @@ void LogDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   DiagEntry DE;
   DE.DiagnosticID = Info.getID();
   DE.DiagnosticLevel = Level;
+
+  DE.WarningOption = DiagnosticIDs::getWarningOptionForDiag(DE.DiagnosticID);
 
   // Format the message.
   SmallString<100> MessageStr;
