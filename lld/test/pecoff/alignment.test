@@ -12,3 +12,11 @@ CHECK-NEXT: VirtualSize: 0x6
 
 CHECK:      Name: .text (2E 74 65 78 74 00 00 00)
 CHECK-NEXT: VirtualSize: 0x1001
+
+CHECK:      Name: .yyy
+CHECK-NEXT: VirtualSize: 0x2
+CHECK-NEXT: VirtualAddress: 0x5000
+
+CHECK:      Name: .zzz
+CHECK-NEXT: VirtualSize: 0x2
+CHECK-NEXT: VirtualAddress: 0x8000

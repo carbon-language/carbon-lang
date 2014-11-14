@@ -219,6 +219,7 @@ public:
   uint64_t align() const override { return SECTOR_SIZE; }
   uint32_t getCharacteristics() const { return _characteristics; }
   StringRef getSectionName() const { return _sectionName; }
+  virtual uint64_t memAlign() const { return _memAlign; }
 
   static bool classof(const Chunk *c) {
     Kind kind = c->getKind();
@@ -232,16 +233,18 @@ public:
   void setStringTableOffset(uint32_t offset) { _stringTableOffset = offset; }
 
 protected:
-  SectionChunk(Kind kind, StringRef sectionName, uint32_t characteristics)
+  SectionChunk(Kind kind, StringRef sectionName, uint32_t characteristics,
+               const PECOFFLinkingContext &ctx)
       : Chunk(kind), _sectionName(sectionName),
         _characteristics(characteristics), _virtualAddress(0),
-        _stringTableOffset(0) {}
+        _stringTableOffset(0), _memAlign(ctx.getPageSize()) {}
 
 private:
   StringRef _sectionName;
   const uint32_t _characteristics;
   uint64_t _virtualAddress;
   uint32_t _stringTableOffset;
+  uint64_t _memAlign;
 };
 
 /// An AtomChunk represents a section containing atoms.
@@ -252,6 +255,7 @@ public:
 
   void write(uint8_t *buffer) override;
 
+  uint64_t memAlign() const override;
   void appendAtom(const DefinedAtom *atom);
   void buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const;
 
@@ -293,6 +297,7 @@ private:
 
   mutable llvm::BumpPtrAllocator _alloc;
   llvm::COFF::MachineTypes _machineType;
+  const PECOFFLinkingContext &_ctx;
 };
 
 /// A DataDirectoryChunk represents data directory entries that follows the PE
@@ -334,7 +339,7 @@ class BaseRelocChunk : public SectionChunk {
 
 public:
   BaseRelocChunk(ChunkVectorT &chunks, const PECOFFLinkingContext &ctx)
-      : SectionChunk(kindSection, ".reloc", characteristics),
+      : SectionChunk(kindSection, ".reloc", characteristics, ctx),
         _ctx(ctx), _contents(createContents(chunks)) {}
 
   void write(uint8_t *buffer) override {
@@ -485,8 +490,8 @@ void PEHeaderChunk<PEHeader>::write(uint8_t *buffer) {
 AtomChunk::AtomChunk(const PECOFFLinkingContext &ctx, StringRef sectionName,
                      const std::vector<const DefinedAtom *> &atoms)
     : SectionChunk(kindAtomChunk, sectionName,
-                   computeCharacteristics(ctx, sectionName, atoms)),
-      _virtualAddress(0), _machineType(ctx.getMachineType()) {
+                   computeCharacteristics(ctx, sectionName, atoms), ctx),
+      _virtualAddress(0), _machineType(ctx.getMachineType()), _ctx(ctx) {
   for (auto *a : atoms)
     appendAtom(a);
 }
@@ -725,6 +730,19 @@ void DataDirectoryChunk::setField(DataDirectoryIndex index, uint32_t addr,
 
 void DataDirectoryChunk::write(uint8_t *buffer) {
   std::memcpy(buffer, &_data[0], size());
+}
+
+uint64_t AtomChunk::memAlign() const {
+  // ReaderCOFF propagated the section alignment to the first atom in
+  // the section. We restore that here.
+  if (_atomLayouts.empty())
+    return _ctx.getPageSize();
+  int align = _ctx.getPageSize();
+  for (auto atomLayout : _atomLayouts) {
+    auto *atom = cast<const DefinedAtom>(atomLayout->_atom);
+    align = std::max(align, 1 << atom->alignment().powerOf2);
+  }
+  return align;
 }
 
 void AtomChunk::appendAtom(const DefinedAtom *atom) {
@@ -1230,23 +1248,24 @@ void PECOFFWriter::addChunk(Chunk *chunk) {
 void PECOFFWriter::addSectionChunk(std::unique_ptr<SectionChunk> chunk,
                                    SectionHeaderTableChunk *table,
                                    StringTableChunk *stringTable) {
-  SectionChunk &ref = *chunk;
-  _chunks.push_back(std::move(chunk));
-  table->addSection(&ref);
+  table->addSection(chunk.get());
   _numSections++;
 
-  StringRef sectionName = ref.getSectionName();
+  StringRef sectionName = chunk->getSectionName();
   if (sectionName.size() > llvm::COFF::NameSize) {
     uint32_t stringTableOffset = stringTable->addSectionName(sectionName);
-    ref.setStringTableOffset(stringTableOffset);
+    chunk->setStringTableOffset(stringTableOffset);
   }
 
   // Compute and set the starting address of sections when loaded in
   // memory. They are different from positions on disk because sections need
   // to be sector-aligned on disk but page-aligned in memory.
-  ref.setVirtualAddress(_imageSizeInMemory);
   _imageSizeInMemory = llvm::RoundUpToAlignment(
-      _imageSizeInMemory + ref.size(), _ctx.getPageSize());
+      _imageSizeInMemory, chunk->memAlign());
+  chunk->setVirtualAddress(_imageSizeInMemory);
+  _imageSizeInMemory = llvm::RoundUpToAlignment(
+      _imageSizeInMemory + chunk->size(), _ctx.getPageSize());
+  _chunks.push_back(std::move(chunk));
 }
 
 void PECOFFWriter::setImageSizeOnDisk() {
