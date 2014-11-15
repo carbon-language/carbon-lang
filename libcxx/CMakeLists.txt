@@ -94,6 +94,15 @@ include(HandleLibCXXABI)
 # Setup Compiler Flags
 #===============================================================================
 
+# Declare libc++ configuration variables.
+# They are intended for use as follows:
+# LIBCXX_CXX_FLAGS: General flags for both the compiler and linker.
+# LIBCXX_COMPILE_FLAGS: Compile only flags.
+# LIBCXX_LINK_FLAGS: Linker only flags.
+set(LIBCXX_CXX_FLAGS "")
+set(LIBCXX_COMPILE_FLAGS "")
+set(LIBCXX_LINK_FLAGS "")
+
 # Get required flags.
 # On all systems the system c++ standard library headers need to be excluded.
 if (MSVC)
@@ -102,8 +111,9 @@ if (MSVC)
   # headers.
 else()
   if (LIBCXX_HAS_NOSTDINCXX_FLAG)
-    list(APPEND LIBCXX_CXX_REQUIRED_FLAGS -nostdinc++)
+    list(APPEND LIBCXX_COMPILE_FLAGS -nostdinc++)
     string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE "-stdlib=libstdc++" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   endif()
   # If c++1y has been enabled then attempt to use it. Fail if it is no supported
   # by the compiler. Otherwise choose c++11 and ensure the compiler supports it.
@@ -121,7 +131,7 @@ else()
     endif()
   endif()
   # LIBCXX_STD_VERSION should always be set at this point.
-  list(APPEND LIBCXX_CXX_REQUIRED_FLAGS "-std=${LIBCXX_STD_VERSION}")
+  list(APPEND LIBCXX_CXX_FLAGS "-std=${LIBCXX_STD_VERSION}")
 endif()
 
 macro(append_if list condition var)
@@ -132,23 +142,23 @@ endmacro()
 
 # Get warning flags
 if (NOT MSVC)
-  append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WALL_FLAG -Wall)
-  list(APPEND LIBCXX_CXX_REQUIRED_FLAGS -Werror=return-type)
+  append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WALL_FLAG -Wall)
+  list(APPEND LIBCXX_COMPILE_FLAGS -Werror=return-type)
 endif()
 
-append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_W_FLAG -W)
-append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WNO_UNUSED_PARAMETER_FLAG -Wno-unused-parameter)
-append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WWRITE_STRINGS_FLAG -Wwrite-strings)
-append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WNO_LONG_LONG_FLAG -Wno-long-long)
+append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_W_FLAG -W)
+append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WNO_UNUSED_PARAMETER_FLAG -Wno-unused-parameter)
+append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WWRITE_STRINGS_FLAG -Wwrite-strings)
+append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WNO_LONG_LONG_FLAG -Wno-long-long)
 if (LIBCXX_ENABLE_WERROR)
-  append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WERROR_FLAG -Werror)
-  append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WX_FLAG -WX)
+  append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WERROR_FLAG -Werror)
+  append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WX_FLAG -WX)
 else()
-  append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WNO_ERROR_FLAG -Wno-error)
-  append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_NO_WX_FLAG -WX-)
+  append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WNO_ERROR_FLAG -Wno-error)
+  append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_NO_WX_FLAG -WX-)
 endif()
 if (LIBCXX_ENABLE_PEDANTIC)
-  append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_PEDANTIC_FLAG -pedantic)
+  append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_PEDANTIC_FLAG -pedantic)
 endif()
 
 # Get feature flags.
@@ -156,39 +166,39 @@ endif()
 if (LIBCXX_ENABLE_EXCEPTIONS)
   # Catches C++ exceptions only and tells the compiler to assume that extern C
   # functions never throw a C++ exception.
-  append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_EHSC_FLAG -EHsc)
+  append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_EHSC_FLAG -EHsc)
 else()
-  list(APPEND LIBCXX_CXX_FEATURE_FLAGS -D_LIBCPP_NO_EXCEPTIONS)
-  append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_NO_EHS_FLAG -EHs-)
-  append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_NO_EHA_FLAG -EHa-)
-  append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_FNO_EXCEPTIONS_FLAG -fno-exceptions)
+  list(APPEND LIBCXX_CXX_FLAGS -D_LIBCPP_NO_EXCEPTIONS)
+  append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_NO_EHS_FLAG -EHs-)
+  append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_NO_EHA_FLAG -EHa-)
+  append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_FNO_EXCEPTIONS_FLAG -fno-exceptions)
 endif()
 # RTTI
 if (NOT LIBCXX_ENABLE_RTTI)
-  list(APPEND LIBCXX_CXX_FEATURE_FLAGS -D_LIBCPP_NO_RTTI)
-  append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_NO_GR_FLAG -GR-)
-  append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_FNO_RTTI_FLAG -fno-rtti)
+  list(APPEND LIBCXX_CXX_FLAGS -D_LIBCPP_NO_RTTI)
+  append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_NO_GR_FLAG -GR-)
+  append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_FNO_RTTI_FLAG -fno-rtti)
 endif()
 # Assert
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
 if (LIBCXX_ENABLE_ASSERTIONS)
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
   if (NOT MSVC)
-    list(APPEND LIBCXX_CXX_FEATURE_FLAGS -D_DEBUG)
+    list(APPEND LIBCXX_COMPILE_FLAGS -D_DEBUG)
   endif()
   # On Release builds cmake automatically defines NDEBUG, so we
   # explicitly undefine it:
   if (uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-    list(APPEND LIBCXX_CXX_FEATURE_FLAGS -UNDEBUG)
+    list(APPEND LIBCXX_COMPILE_FLAGS -UNDEBUG)
   endif()
 else()
   if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-    list(APPEND LIBCXX_CXX_FEATURE_FLAGS -DNDEBUG)
+    list(APPEND LIBCXX_COMPILE_FLAGS -DNDEBUG)
   endif()
 endif()
 # Static library
 if (NOT LIBCXX_ENABLE_SHARED)
-  list(APPEND LIBCXX_CXX_FEATURE_FLAGS -D_LIBCPP_BUILD_STATIC)
+  list(APPEND LIBCXX_COMPILE_FLAGS -D_LIBCPP_BUILD_STATIC)
 endif()
 
 # This is the _ONLY_ place where add_definitions is called.
@@ -202,22 +212,22 @@ if (LIBCXX_BUILT_STANDALONE)
   # NOTE: LLVM_USE_SANITIZER checks for a UNIX like system instead of MSVC.
   # But we don't have LLVM_ON_UNIX so checking for MSVC is the best we can do.
   if (LLVM_USE_SANITIZER AND NOT MSVC)
-    append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_FNO_OMIT_FRAME_POINTER_FLAG
+    append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_FNO_OMIT_FRAME_POINTER_FLAG
               "-fno-omit-frame-pointer")
     if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" AND
         NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
-      append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_GLINE_TABLES_ONLY_FLAG
+      append_if(LIBCXX_CXX_FLAGS LIBCXX_HAS_GLINE_TABLES_ONLY_FLAG
                 "-gline-tables-only")
     endif()
     if (LLVM_USE_SANITIZER STREQUAL "Address")
-      list(APPEND LIBCXX_CXX_FEATURE_FLAGS "-fsanitize=address")
+      list(APPEND LIBCXX_CXX_FLAGS "-fsanitize=address")
     elseif (LLVM_USE_SANITIZER MATCHES "Memory(WithOrigins)?")
-      list(APPEND LIBCXX_CXX_FEATURE_FLAGS "-fsanitize=memory")
+      list(APPEND LIBCXX_CXX_FLAGS "-fsanitize=memory")
       if (LLVM_USE_SANITIZER STREQUAL "MemoryWithOrigins")
-        list(APPEND LIBCXX_CXX_FEATURE_FLAGS "-fsanitize-memory-track-origins")
+        list(APPEND LIBCXX_CXX_FLAGS "-fsanitize-memory-track-origins")
       endif()
     elseif (LLVM_USE_SANITIZER STREQUAL "Undefined")
-      list(APPEND LIBCXX_CXX_FEATURE_FLAGS
+      list(APPEND LIBCXX_CXX_FLAGS
           "-fsanitize=undefined -fno-sanitize=vptr,function -fno-sanitize-recover")
     else()
       message(WARNING "Unsupported value of LLVM_USE_SANITIZER: ${LLVM_USE_SANITIZER}")
@@ -227,14 +237,8 @@ if (LIBCXX_BUILT_STANDALONE)
   endif()
 endif()
 
-string(REPLACE ";" " " LIBCXX_CXX_REQUIRED_FLAGS "${LIBCXX_CXX_REQUIRED_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXX_CXX_REQUIRED_FLAGS}")
-
-string(REPLACE ";" " " LIBCXX_CXX_WARNING_FLAGS "${LIBCXX_CXX_WARNING_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXX_CXX_WARNING_FLAGS}")
-
-string(REPLACE ";" " " LIBCXX_CXX_FEATURE_FLAGS "${LIBCXX_CXX_FEATURE_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXX_CXX_FEATURE_FLAGS}")
+string(REPLACE ";" " " LIBCXX_CXX_FLAGS "${LIBCXX_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXX_CXX_FLAGS}")
 
 #===============================================================================
 # Setup Source Code
