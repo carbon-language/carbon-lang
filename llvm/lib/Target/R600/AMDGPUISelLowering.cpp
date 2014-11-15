@@ -1032,9 +1032,12 @@ SDValue AMDGPUTargetLowering::CombineFMinMax(SDLoc DL,
   case ISD::SETOLT:
   case ISD::SETLE:
   case ISD::SETLT: {
-    unsigned Opc
-      = (LHS == True) ? AMDGPUISD::FMIN_LEGACY : AMDGPUISD::FMAX_LEGACY;
-    return DAG.getNode(Opc, DL, VT, LHS, RHS);
+    // We need to permute the operands to get the correct NaN behavior. The
+    // selected operand is the second one based on the failing compare with NaN,
+    // so permute it based on the compare type the hardware uses.
+    if (LHS == True)
+      return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, RHS, LHS);
+    return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, LHS, RHS);
   }
   case ISD::SETGT:
   case ISD::SETGE:
@@ -1042,9 +1045,9 @@ SDValue AMDGPUTargetLowering::CombineFMinMax(SDLoc DL,
   case ISD::SETOGE:
   case ISD::SETUGT:
   case ISD::SETOGT: {
-    unsigned Opc
-      = (LHS == True) ? AMDGPUISD::FMAX_LEGACY : AMDGPUISD::FMIN_LEGACY;
-    return DAG.getNode(Opc, DL, VT, LHS, RHS);
+    if (LHS == True)
+      return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, RHS, LHS);
+    return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, LHS, RHS);
   }
   case ISD::SETCC_INVALID:
     llvm_unreachable("Invalid setcc condcode!");
