@@ -152,6 +152,10 @@ static bool layoutOptionalHeader(COFFParser &CP) {
   return true;
 }
 
+namespace {
+enum { DOSStubSize = 128 };
+}
+
 // Take a CP and assign addresses and sizes to everything. Returns false if the
 // layout is not valid to do.
 static bool layoutCOFF(COFFParser &CP) {
@@ -159,6 +163,8 @@ static bool layoutCOFF(COFFParser &CP) {
   // optional header.
   CP.SectionTableStart =
       CP.getHeaderSize() + CP.Obj.Header.SizeOfOptionalHeader;
+  if (CP.isPE())
+    CP.SectionTableStart += DOSStubSize + sizeof(COFF::PEMagic);
   CP.SectionTableSize = COFF::SectionSize * CP.Obj.Sections.size();
 
   uint32_t CurrentSectionDataOffset =
@@ -353,13 +359,13 @@ static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
     // 0x40.
     DH.AddressOfRelocationTable = sizeof(DH);
     // This is the address of the PE signature.
-    DH.AddressOfNewExeHeader = 128;
+    DH.AddressOfNewExeHeader = DOSStubSize;
 
     // Write out our DOS stub.
     OS.write(reinterpret_cast<char *>(&DH), sizeof(DH));
     // Write padding until we reach the position of where our PE signature
     // should live.
-    OS << num_zeros(DH.AddressOfNewExeHeader - sizeof(DH));
+    OS << num_zeros(DOSStubSize - sizeof(DH));
     // Write out the PE signature.
     OS.write(COFF::PEMagic, sizeof(COFF::PEMagic));
   }
@@ -411,6 +417,7 @@ static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
     OS << zeros(uint32_t(0));
   }
 
+  assert(OS.tell() == CP.SectionTableStart);
   // Output section table.
   for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
                                                 e = CP.Obj.Sections.end();
@@ -426,6 +433,7 @@ static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
        << binary_le(i->Header.NumberOfLineNumbers)
        << binary_le(i->Header.Characteristics);
   }
+  assert(OS.tell() == CP.SectionTableStart + CP.SectionTableSize);
 
   unsigned CurSymbol = 0;
   StringMap<unsigned> SymbolTableIndexMap;
@@ -440,8 +448,10 @@ static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   for (const COFFYAML::Section &S : CP.Obj.Sections) {
     if (!S.Header.SizeOfRawData)
       continue;
+    assert(S.Header.PointerToRawData >= OS.tell());
     OS << num_zeros(S.Header.PointerToRawData - OS.tell());
     S.SectionData.writeAsBinary(OS);
+    assert(S.Header.SizeOfRawData >= S.SectionData.binary_size());
     OS << num_zeros(S.Header.SizeOfRawData - S.SectionData.binary_size());
     for (const COFFYAML::Relocation &R : S.Relocations) {
       uint32_t SymbolTableIndex = SymbolTableIndexMap[R.SymbolName];
