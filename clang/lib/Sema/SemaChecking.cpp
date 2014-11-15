@@ -6526,6 +6526,14 @@ void CheckConditionalOperator(Sema &S, ConditionalOperator *E,
                             E->getType(), CC, &Suspicious);
 }
 
+/// CheckBoolLikeConversion - Check conversion of given expression to boolean.
+/// Input argument E is a logical expression.
+static void CheckBoolLikeConversion(Sema &S, Expr *E, SourceLocation CC) {
+  if (S.getLangOpts().Bool)
+    return;
+  CheckImplicitConversion(S, E->IgnoreParenImpCasts(), S.Context.BoolTy, CC);
+}
+
 /// AnalyzeImplicitConversions - Find and report any interesting
 /// implicit conversions in the given expression.  There are a couple
 /// of competing diagnostics here, -Wconversion and -Wsign-compare.
@@ -6606,12 +6614,12 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
     AnalyzeImplicitConversions(S, ChildExpr, CC);
   }
   if (BO && BO->isLogicalOp()) {
-    S.CheckBoolLikeConversion(BO->getLHS(), BO->getLHS()->getExprLoc());
-    S.CheckBoolLikeConversion(BO->getRHS(), BO->getRHS()->getExprLoc());
+    ::CheckBoolLikeConversion(S, BO->getLHS(), BO->getLHS()->getExprLoc());
+    ::CheckBoolLikeConversion(S, BO->getRHS(), BO->getRHS()->getExprLoc());
   }
   if (const UnaryOperator *U = dyn_cast<UnaryOperator>(E))
     if (U->getOpcode() == UO_LNot)
-      S.CheckBoolLikeConversion(U->getSubExpr(), CC);
+      ::CheckBoolLikeConversion(S, U->getSubExpr(), CC);
 }
 
 } // end anonymous namespace
@@ -6668,18 +6676,6 @@ static bool IsInAnyMacroBody(const SourceManager &SM, SourceLocation Loc) {
   }
 
   return false;
-}
-
-/// CheckBoolLikeConversion - Check conversion of given expression to boolean.
-/// Input argument E is a logical expression.
-static void CheckBoolLikeConversion(Sema &S, Expr *E, SourceLocation CC) {
-  if (S.getLangOpts().Bool)
-    return;
-  CheckImplicitConversion(S, E->IgnoreParenImpCasts(), S.Context.BoolTy, CC);
-}
-
-void Sema::CheckBoolLikeConversion(Expr *E, SourceLocation CC) {
-  ::CheckBoolLikeConversion(*this, E, CC);
 }
 
 /// \brief Diagnose pointers that are always non-null.
@@ -6837,6 +6833,12 @@ void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
 
   // This is not the right CC for (e.g.) a variable initialization.
   AnalyzeImplicitConversions(*this, E, CC);
+}
+
+/// CheckBoolLikeConversion - Check conversion of given expression to boolean.
+/// Input argument E is a logical expression.
+void Sema::CheckBoolLikeConversion(Expr *E, SourceLocation CC) {
+  ::CheckBoolLikeConversion(*this, E, CC);
 }
 
 /// Diagnose when expression is an integer constant expression and its evaluation
