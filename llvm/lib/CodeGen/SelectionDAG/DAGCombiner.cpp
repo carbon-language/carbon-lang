@@ -11239,6 +11239,26 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         return DAG.getVectorShuffle(VT, SDLoc(N), SV0, N1, &Mask[0]);
       return DAG.getVectorShuffle(VT, SDLoc(N), SV0, SV1, &Mask[0]);
     }
+
+    // Compute the commuted shuffle mask.
+    for (unsigned i = 0; i != NumElts; ++i) {
+      int idx = Mask[i];
+      if (idx < 0)
+        continue;
+      else if (idx < (int)NumElts)
+        Mask[i] = idx + NumElts;
+      else
+        Mask[i] = idx - NumElts;
+    }
+
+    if (TLI.isShuffleMaskLegal(Mask, VT)) {
+      if (IsSV1Undef)
+        //   shuffle(shuffle(A, Undef, M0), B, M1) -> shuffle(B, A, M2)
+        return DAG.getVectorShuffle(VT, SDLoc(N), N1, SV0, &Mask[0]);
+      //   shuffle(shuffle(A, B, M0), B, M1) -> shuffle(B, A, M2)
+      //   shuffle(shuffle(A, B, M0), A, M1) -> shuffle(B, A, M2)
+      return DAG.getVectorShuffle(VT, SDLoc(N), SV1, SV0, &Mask[0]);
+    }
   }
 
   return SDValue();
