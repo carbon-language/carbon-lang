@@ -3859,14 +3859,23 @@ static bool isSequentialOrUndefInRange(ArrayRef<int> Mask,
 }
 
 /// isPSHUFDMask - Return true if the node specifies a shuffle of elements that
-/// is suitable for input to PSHUFD or PSHUFW.  That is, it doesn't reference
-/// the second operand.
-static bool isPSHUFDMask(ArrayRef<int> Mask, MVT VT) {
-  if (VT == MVT::v4f32 || VT == MVT::v4i32 )
-    return (Mask[0] < 4 && Mask[1] < 4 && Mask[2] < 4 && Mask[3] < 4);
-  if (VT == MVT::v2f64 || VT == MVT::v2i64)
-    return (Mask[0] < 2 && Mask[1] < 2);
-  return false;
+/// is suitable for input to PSHUFD. That is, it doesn't reference the other
+/// operand - by default will match for first operand.
+static bool isPSHUFDMask(ArrayRef<int> Mask, MVT VT,
+                         bool TestSecondOperand = false) {
+  if (VT != MVT::v4f32 && VT != MVT::v4i32 &&
+      VT != MVT::v2f64 && VT != MVT::v2i64)
+    return false;
+
+  unsigned NumElems = VT.getVectorNumElements();
+  unsigned Lo = TestSecondOperand ? NumElems : 0;
+  unsigned Hi = Lo + NumElems;
+
+  for (unsigned i = 0; i < NumElems; ++i)
+    if (!isUndefOrInRange(Mask[i], (int)Lo, (int)Hi))
+      return false;
+
+  return true;
 }
 
 /// isPSHUFHWMask - Return true if the node specifies a shuffle of elements that
@@ -19638,7 +19647,9 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isMOVLMask(M, SVT) ||
           isMOVHLPSMask(M, SVT) ||
           isSHUFPMask(M, SVT) ||
+          isSHUFPMask(M, SVT, /* Commuted */ true) ||
           isPSHUFDMask(M, SVT) ||
+          isPSHUFDMask(M, SVT, /* SecondOperand */ true) ||
           isPSHUFHWMask(M, SVT, Subtarget->hasInt256()) ||
           isPSHUFLWMask(M, SVT, Subtarget->hasInt256()) ||
           isPALIGNRMask(M, SVT, Subtarget) ||

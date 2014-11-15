@@ -614,22 +614,15 @@ define <4 x i64> @stress_test1(<4 x i64> %a, <4 x i64> %b) {
 ; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm1[2,3,0,1]
 ; AVX1-NEXT:    vpermilpd {{.*#+}} ymm2 = ymm0[1,0,3,2]
 ; AVX1-NEXT:    vblendpd {{.*#+}} ymm1 = ymm2[0],ymm1[1],ymm2[2,3]
-; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; AVX1-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm1[1,0]
 ; AVX1-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[1,1,3,2]
-; AVX1-NEXT:    vunpckhpd {{.*#+}} xmm0 = xmm0[1],xmm1[1]
-; AVX1-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm1[1,0]
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    vunpckhpd {{.*#+}} ymm0 = ymm0[1],ymm1[1],ymm0[3],ymm1[3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: stress_test1:
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm1[3,1,1,0]
-; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[3,1,2,3]
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[3,3,1,3]
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm1 = ymm1[2,3,2,3,6,7,6,7]
-; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,1,1,0]
-; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3,4,5,6,7]
+; AVX2-NEXT:    vpunpckhqdq {{.*#+}} ymm0 = ymm1[1],ymm0[1],ymm1[3],ymm0[3]
 ; AVX2-NEXT:    retq
   %c = shufflevector <4 x i64> %b, <4 x i64> undef, <4 x i32> <i32 3, i32 1, i32 1, i32 0>
   %d = shufflevector <4 x i64> %c, <4 x i64> undef, <4 x i32> <i32 3, i32 undef, i32 2, i32 undef>
