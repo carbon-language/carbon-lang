@@ -448,15 +448,129 @@ FileSpec::Compare(const FileSpec& a, const FileSpec& b, bool full)
 }
 
 bool
-FileSpec::Equal (const FileSpec& a, const FileSpec& b, bool full)
+FileSpec::Equal (const FileSpec& a, const FileSpec& b, bool full, bool remove_backups)
 {
     if (!full && (a.GetDirectory().IsEmpty() || b.GetDirectory().IsEmpty()))
         return a.m_filename == b.m_filename;
-    else
+    else if (remove_backups == false)
         return a == b;
+    else
+    {
+        if (a.m_filename != b.m_filename)
+            return false;
+        if (a.m_directory == b.m_directory)
+            return true;
+        ConstString a_without_dots;
+        ConstString b_without_dots;
+
+        RemoveBackupDots (a.m_directory, a_without_dots);
+        RemoveBackupDots (b.m_directory, b_without_dots);
+        return a_without_dots == b_without_dots;
+    }
 }
 
+void
+FileSpec::RemoveBackupDots (const ConstString &input_const_str, ConstString &result_const_str)
+{
+    const char *input = input_const_str.GetCString();
+    result_const_str.Clear();
+    if (!input || input[0] == '\0')
+        return;
 
+    const char win_sep = '\\';
+    const char unix_sep = '/';
+    char found_sep;
+    const char *win_backup = "\\..";
+    const char *unix_backup = "/..";
+
+    bool is_win = false;
+
+    // Determine the platform for the path (win or unix):
+    
+    if (input[0] == win_sep)
+        is_win = true;
+    else if (input[0] == unix_sep)
+        is_win = false;
+    else if (input[1] == ':')
+        is_win = true;
+    else if (strchr(input, unix_sep) != nullptr)
+        is_win = false;
+    else if (strchr(input, win_sep) != nullptr)
+        is_win = true;
+    else
+    {
+        // No separators at all, no reason to do any work here.
+        result_const_str = input_const_str;
+        return;
+    }
+
+    llvm::StringRef backup_sep;
+    if (is_win)
+    {
+        found_sep = win_sep;
+        backup_sep = win_backup;
+    }
+    else
+    {
+        found_sep = unix_sep;
+        backup_sep = unix_backup;
+    }
+    
+    llvm::StringRef input_ref(input);
+    llvm::StringRef curpos(input);
+
+    bool had_dots = false;
+    std::string result;
+
+    while (1)
+    {
+        // Start of loop
+        llvm::StringRef before_sep;
+        std::pair<llvm::StringRef, llvm::StringRef> around_sep = curpos.split(backup_sep);
+        
+        before_sep = around_sep.first;
+        curpos     = around_sep.second;
+
+        if (curpos.empty())
+        {
+            if (had_dots)
+            {
+                if (!before_sep.empty())
+                {
+                    result.append(before_sep.data(), before_sep.size());
+                }
+            }
+            break;
+        }
+        had_dots = true;
+
+        unsigned num_backups = 1;
+        while (curpos.startswith(backup_sep))
+        {
+            num_backups++;
+            curpos = curpos.slice(backup_sep.size(), curpos.size());
+        }
+        
+        size_t end_pos = before_sep.size();
+        while (num_backups-- > 0)
+        {
+            end_pos = before_sep.rfind(found_sep, end_pos);
+            if (end_pos == llvm::StringRef::npos)
+            {
+                result_const_str = input_const_str;
+                return;
+            }
+        }
+        result.append(before_sep.data(), end_pos);
+    }
+
+    if (had_dots)
+        result_const_str.SetCString(result.c_str());
+    else
+        result_const_str = input_const_str;
+        
+    return;
+}
 
 //------------------------------------------------------------------
 // Dump the object to the supplied stream. If the object contains

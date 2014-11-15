@@ -246,7 +246,7 @@ public:
     Compare (const FileSpec& lhs, const FileSpec& rhs, bool full);
 
     static bool
-    Equal (const FileSpec& a, const FileSpec& b, bool full);
+    Equal (const FileSpec& a, const FileSpec& b, bool full, bool remove_backups = false);
 
     //------------------------------------------------------------------
     /// Dump this object to a Stream.
@@ -581,6 +581,20 @@ public:
 
     static void Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax = ePathSyntaxHostNative);
     static void DeNormalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax = ePathSyntaxHostNative);
+
+
+    //------------------------------------------------------------------
+    /// Run through the input string, replaying the effect of any ".." and produce
+    /// the resultant path.  The input path is not required to be in the host file system
+    /// format, but it is required to be normalized to that system.
+    ///
+    /// @param[in] input
+    ///     The input path to analyze.
+    ///
+    /// @param[out] result
+    ///     The backup-resolved path will be written here.
+    //------------------------------------------------------------------
+    static void RemoveBackupDots (const ConstString &input_const_str, ConstString &result_const_str);
 
     //------------------------------------------------------------------
     /// Change the file specified with a new path.

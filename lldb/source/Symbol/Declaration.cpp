@@ -110,7 +110,7 @@ lldb_private::operator == (const Declaration &lhs, const Declaration &rhs)
             return lhs.GetFile() == rhs.GetFile();
 #else
     if (lhs.GetLine () == rhs.GetLine ())
-        return lhs.GetFile() == rhs.GetFile();
+        return FileSpec::Equal(lhs.GetFile(),rhs.GetFile(), true, true);
 #endif
     return false;
 }
