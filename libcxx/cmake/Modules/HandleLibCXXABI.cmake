@@ -16,7 +16,7 @@
 #               in the libc++ build directory.
 #
 macro(setup_abi_lib abipathvar abidefines abilib abifiles abidirs)
-  list(APPEND LIBCXX_CXX_FEATURE_FLAGS ${abidefines})
+  list(APPEND LIBCXX_COMPILE_FLAGS ${abidefines})
   set(${abipathvar} "${${abipathvar}}"
     CACHE PATH
     "Paths to C++ ABI header directories separated by ';'." FORCE
