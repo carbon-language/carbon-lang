@@ -27,6 +27,7 @@ namespace llvm {
   class Function;
   class Module;
   class Value;
+  class Constant;
   class LLVMContext;
   class MDNode;
   class StringRef;
@@ -211,10 +212,10 @@ namespace llvm {
     /// @param Ty         Type of the static member.
     /// @param Flags      Flags to encode member attribute, e.g. private.
     /// @param Val        Const initializer of the member.
-    DIDerivedType
-    createStaticMemberType(DIDescriptor Scope, StringRef Name,
-                           DIFile File, unsigned LineNo, DIType Ty,
-                           unsigned Flags, llvm::Value *Val);
+    DIDerivedType createStaticMemberType(DIDescriptor Scope, StringRef Name,
+                                         DIFile File, unsigned LineNo,
+                                         DIType Ty, unsigned Flags,
+                                         llvm::Constant *Val);
 
     /// createObjCIVar - Create debugging information entry for Objective-C
     /// instance variable.
@@ -333,8 +334,8 @@ namespace llvm {
     /// @param LineNo       Line number.
     /// @param ColumnNo     Column Number.
     DITemplateValueParameter
-    createTemplateValueParameter(DIDescriptor Scope, StringRef Name,
-                                 DIType Ty, Value *Val, MDNode *File = nullptr,
+    createTemplateValueParameter(DIDescriptor Scope, StringRef Name, DIType Ty,
+                                 Constant *Val, MDNode *File = nullptr,
                                  unsigned LineNo = 0, unsigned ColumnNo = 0);
 
     /// \brief Create debugging information for a template template parameter.
@@ -458,21 +459,19 @@ namespace llvm {
     ///                      externally visible or not.
     /// @param Val         llvm::Value of the variable.
     /// @param Decl        Reference to the corresponding declaration.
-    DIGlobalVariable
-    createGlobalVariable(DIDescriptor Context, StringRef Name,
-                         StringRef LinkageName, DIFile File, unsigned LineNo,
-                         DITypeRef Ty, bool isLocalToUnit, llvm::Value *Val,
-                         MDNode *Decl = nullptr);
+    DIGlobalVariable createGlobalVariable(DIDescriptor Context, StringRef Name,
+                                          StringRef LinkageName, DIFile File,
+                                          unsigned LineNo, DITypeRef Ty,
+                                          bool isLocalToUnit,
+                                          llvm::Constant *Val,
+                                          MDNode *Decl = nullptr);
 
     /// createTempGlobalVariableFwdDecl - Identical to createGlobalVariable
     /// except that the resulting DbgNode is temporary and meant to be RAUWed.
-    DIGlobalVariable
-    createTempGlobalVariableFwdDecl(DIDescriptor Context, StringRef Name,
-                                    StringRef LinkageName, DIFile File,
-                                    unsigned LineNo, DITypeRef Ty,
-                                    bool isLocalToUnit, llvm::Value *Val,
-                                    MDNode *Decl = nullptr);
-
+    DIGlobalVariable createTempGlobalVariableFwdDecl(
+        DIDescriptor Context, StringRef Name, StringRef LinkageName,
+        DIFile File, unsigned LineNo, DITypeRef Ty, bool isLocalToUnit,
+        llvm::Constant *Val, MDNode *Decl = nullptr);
 
     /// createLocalVariable - Create a new descriptor for the specified
     /// local variable.

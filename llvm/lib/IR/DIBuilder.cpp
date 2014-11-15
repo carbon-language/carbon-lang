@@ -406,11 +406,11 @@ DIDerivedType DIBuilder::createMemberType(DIDescriptor Scope, StringRef Name,
   return DIDerivedType(MDNode::get(VMContext, Elts));
 }
 
-DIDerivedType
-DIBuilder::createStaticMemberType(DIDescriptor Scope, StringRef Name,
-                                  DIFile File, unsigned LineNumber,
-                                  DIType Ty, unsigned Flags,
-                                  llvm::Value *Val) {
+DIDerivedType DIBuilder::createStaticMemberType(DIDescriptor Scope,
+                                                StringRef Name, DIFile File,
+                                                unsigned LineNumber, DIType Ty,
+                                                unsigned Flags,
+                                                llvm::Constant *Val) {
   // TAG_member is encoded in DIDerivedType format.
   Flags |= DIDescriptor::FlagStaticMember;
   Value *Elts[] = {HeaderBuilder::get(dwarf::DW_TAG_member)
@@ -489,9 +489,8 @@ static DITemplateValueParameter createTemplateValueParameterHelper(
 
 DITemplateValueParameter
 DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
-                                        DIType Ty, Value *Val,
-                                        MDNode *File, unsigned LineNo,
-                                        unsigned ColumnNo) {
+                                        DIType Ty, Constant *Val, MDNode *File,
+                                        unsigned LineNo, unsigned ColumnNo) {
   return createTemplateValueParameterHelper(
       VMContext, dwarf::DW_TAG_template_value_parameter, Context, Name, Ty, Val,
       File, LineNo, ColumnNo);
@@ -832,12 +831,11 @@ DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
   return DISubrange(MDNode::get(VMContext, Elts));
 }
 
-static DIGlobalVariable
-createGlobalVariableHelper(LLVMContext &VMContext, DIDescriptor Context,
-                           StringRef Name, StringRef LinkageName, DIFile F,
-                           unsigned LineNumber, DITypeRef Ty, bool isLocalToUnit,
-                           Value *Val, MDNode *Decl, bool isDefinition,
-                           std::function<MDNode *(ArrayRef<Value *>)> CreateFunc) {
+static DIGlobalVariable createGlobalVariableHelper(
+    LLVMContext &VMContext, DIDescriptor Context, StringRef Name,
+    StringRef LinkageName, DIFile F, unsigned LineNumber, DITypeRef Ty,
+    bool isLocalToUnit, Constant *Val, MDNode *Decl, bool isDefinition,
+    std::function<MDNode *(ArrayRef<Value *>)> CreateFunc) {
   Value *Elts[] = {HeaderBuilder::get(dwarf::DW_TAG_variable)
                        .concat(Name)
                        .concat(Name)
@@ -852,13 +850,10 @@ createGlobalVariableHelper(LLVMContext &VMContext, DIDescriptor Context,
   return DIGlobalVariable(CreateFunc(Elts));
 }
 
-DIGlobalVariable DIBuilder::createGlobalVariable(DIDescriptor Context,
-                                                 StringRef Name,
-                                                 StringRef LinkageName,
-                                                 DIFile F, unsigned LineNumber,
-                                                 DITypeRef Ty,
-                                                 bool isLocalToUnit,
-                                                 Value *Val, MDNode *Decl) {
+DIGlobalVariable DIBuilder::createGlobalVariable(
+    DIDescriptor Context, StringRef Name, StringRef LinkageName, DIFile F,
+    unsigned LineNumber, DITypeRef Ty, bool isLocalToUnit, Constant *Val,
+    MDNode *Decl) {
   return createGlobalVariableHelper(VMContext, Context, Name, LinkageName, F,
                                     LineNumber, Ty, isLocalToUnit, Val, Decl, true,
                                     [&] (ArrayRef<Value *> Elts) -> MDNode * {
@@ -868,14 +863,10 @@ DIGlobalVariable DIBuilder::createGlobalVariable(DIDescriptor Context,
                                     });
 }
 
-DIGlobalVariable
-DIBuilder::createTempGlobalVariableFwdDecl(DIDescriptor Context,
-                                           StringRef Name,
-                                           StringRef LinkageName,
-                                           DIFile F, unsigned LineNumber,
-                                           DITypeRef Ty,
-                                           bool isLocalToUnit,
-                                           Value *Val, MDNode *Decl) {
+DIGlobalVariable DIBuilder::createTempGlobalVariableFwdDecl(
+    DIDescriptor Context, StringRef Name, StringRef LinkageName, DIFile F,
+    unsigned LineNumber, DITypeRef Ty, bool isLocalToUnit, Constant *Val,
+    MDNode *Decl) {
   return createGlobalVariableHelper(VMContext, Context, Name, LinkageName, F,
                                     LineNumber, Ty, isLocalToUnit, Val, Decl, false,
                                     [&] (ArrayRef<Value *> Elts) {
