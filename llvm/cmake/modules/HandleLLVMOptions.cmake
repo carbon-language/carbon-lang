@@ -2,6 +2,10 @@
 # options and executing the appropriate CMake commands to realize the users'
 # selections.
 
+# This is commonly needed so make sure it's defined before we include anything
+# else.
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+
 include(HandleLLVMStdlib)
 include(AddLLVMDefinitions)
 include(CheckCCompilerFlag)
