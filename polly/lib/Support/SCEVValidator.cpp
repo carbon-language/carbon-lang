@@ -461,6 +461,48 @@ private:
 };
 
 namespace polly {
+/// Find all loops referenced in SCEVAddRecExprs.
+class SCEVFindLoops {
+  SetVector<const Loop *> &Loops;
+
+public:
+  SCEVFindLoops(SetVector<const Loop *> &Loops) : Loops(Loops) {}
+
+  bool follow(const SCEV *S) {
+    if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S))
+      Loops.insert(AddRec->getLoop());
+    return true;
+  }
+  bool isDone() { return false; }
+};
+
+void findLoops(const SCEV *Expr, SetVector<const Loop *> &Loops) {
+  SCEVFindLoops FindLoops(Loops);
+  SCEVTraversal<SCEVFindLoops> ST(FindLoops);
+  ST.visitAll(Expr);
+}
+
+/// Find all values referenced in SCEVUnknowns.
+class SCEVFindValues {
+  SetVector<Value *> &Values;
+
+public:
+  SCEVFindValues(SetVector<Value *> &Values) : Values(Values) {}
+
+  bool follow(const SCEV *S) {
+    if (const SCEVUnknown *Unknown = dyn_cast<SCEVUnknown>(S))
+      Values.insert(Unknown->getValue());
+    return true;
+  }
+  bool isDone() { return false; }
+};
+
+void findValues(const SCEV *Expr, SetVector<Value *> &Values) {
+  SCEVFindValues FindValues(Values);
+  SCEVTraversal<SCEVFindValues> ST(FindValues);
+  ST.visitAll(Expr);
+}
+
 bool hasScalarDepsInsideRegion(const SCEV *Expr, const Region *R) {
   return SCEVInRegionDependences::hasDependences(Expr, R);
 }

@@ -14,9 +14,9 @@
 
 #include "polly/CodeGen/IRBuilder.h"
 
-#include "isl/ast.h"
+#include "llvm/ADT/MapVector.h"
 
-#include <map>
+#include "isl/ast.h"
 
 namespace llvm {
 class SCEVExpander;
@@ -81,7 +81,7 @@ namespace polly {
 class IslExprBuilder {
 public:
   /// @brief A map from isl_ids to llvm::Values.
-  typedef std::map<isl_id *, llvm::Value *> IDToValueTy;
+  typedef llvm::MapVector<isl_id *, llvm::Value *> IDToValueTy;
 
   /// @brief Construct an IslExprBuilder.
   ///
@@ -125,7 +125,7 @@ public:
 
 private:
   PollyIRBuilder &Builder;
-  std::map<isl_id *, llvm::Value *> &IDToValue;
+  IDToValueTy &IDToValue;
 
   /// @brief A SCEVExpander to translate dimension sizes to llvm values.
   llvm::SCEVExpander &Expander;
