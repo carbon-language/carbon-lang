@@ -59,4 +59,6 @@ TEST(Disassembler, Test1) {
                                    OutStringSize);
   EXPECT_EQ(InstSize, 2U);
   EXPECT_EQ(StringRef(OutString), "\tjmp\t0x1");
+
+  LLVMDisasmDispose(DCR);
 }
