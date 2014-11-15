@@ -1618,7 +1618,7 @@ void AMDGPUTargetLowering::LowerUDIVREM64(SDValue Op,
     SDValue REM = DAG.getNode(ISD::BUILD_PAIR, DL, VT, REM_Lo, REM_Hi);
 
     SDValue BIT = DAG.getConstant(1 << (halfBitWidth - i - 1), HalfVT);
-    SDValue realBIT = DAG.getSelectCC(DL, REM, RHS, BIT, zero, ISD::SETGE);
+    SDValue realBIT = DAG.getSelectCC(DL, REM, RHS, BIT, zero, ISD::SETUGE);
 
     DIV_Lo = DAG.getNode(ISD::OR, DL, HalfVT, DIV_Lo, realBIT);
 
@@ -1626,7 +1626,7 @@ void AMDGPUTargetLowering::LowerUDIVREM64(SDValue Op,
 
     SDValue REM_sub = DAG.getNode(ISD::SUB, DL, VT, REM, RHS);
 
-    REM = DAG.getSelectCC(DL, REM, RHS, REM_sub, REM, ISD::SETGE);
+    REM = DAG.getSelectCC(DL, REM, RHS, REM_sub, REM, ISD::SETUGE);
     REM_Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, REM, zero);
     REM_Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, REM, one);
   }
