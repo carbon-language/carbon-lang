@@ -476,12 +476,9 @@ DIBuilder::createTemplateTypeParameter(DIDescriptor Context, StringRef Name,
   return DITemplateTypeParameter(MDNode::get(VMContext, Elts));
 }
 
-DITemplateValueParameter
-DIBuilder::createTemplateValueParameter(unsigned Tag, DIDescriptor Context,
-                                        StringRef Name, DIType Ty,
-                                        Value *Val, MDNode *File,
-                                        unsigned LineNo,
-                                        unsigned ColumnNo) {
+static DITemplateValueParameter createTemplateValueParameterHelper(
+    LLVMContext &VMContext, unsigned Tag, DIDescriptor Context, StringRef Name,
+    DIType Ty, Value *Val, MDNode *File, unsigned LineNo, unsigned ColumnNo) {
   Value *Elts[] = {
       HeaderBuilder::get(Tag).concat(Name).concat(LineNo).concat(ColumnNo).get(
           VMContext),
@@ -495,9 +492,9 @@ DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
                                         DIType Ty, Value *Val,
                                         MDNode *File, unsigned LineNo,
                                         unsigned ColumnNo) {
-  return createTemplateValueParameter(dwarf::DW_TAG_template_value_parameter,
-                                      Context, Name, Ty, Val, File, LineNo,
-                                      ColumnNo);
+  return createTemplateValueParameterHelper(
+      VMContext, dwarf::DW_TAG_template_value_parameter, Context, Name, Ty, Val,
+      File, LineNo, ColumnNo);
 }
 
 DITemplateValueParameter
@@ -505,8 +502,8 @@ DIBuilder::createTemplateTemplateParameter(DIDescriptor Context, StringRef Name,
                                            DIType Ty, StringRef Val,
                                            MDNode *File, unsigned LineNo,
                                            unsigned ColumnNo) {
-  return createTemplateValueParameter(
-      dwarf::DW_TAG_GNU_template_template_param, Context, Name, Ty,
+  return createTemplateValueParameterHelper(
+      VMContext, dwarf::DW_TAG_GNU_template_template_param, Context, Name, Ty,
       MDString::get(VMContext, Val), File, LineNo, ColumnNo);
 }
 
@@ -515,9 +512,9 @@ DIBuilder::createTemplateParameterPack(DIDescriptor Context, StringRef Name,
                                        DIType Ty, DIArray Val,
                                        MDNode *File, unsigned LineNo,
                                        unsigned ColumnNo) {
-  return createTemplateValueParameter(dwarf::DW_TAG_GNU_template_parameter_pack,
-                                      Context, Name, Ty, Val, File, LineNo,
-                                      ColumnNo);
+  return createTemplateValueParameterHelper(
+      VMContext, dwarf::DW_TAG_GNU_template_parameter_pack, Context, Name, Ty,
+      Val, File, LineNo, ColumnNo);
 }
 
 DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,

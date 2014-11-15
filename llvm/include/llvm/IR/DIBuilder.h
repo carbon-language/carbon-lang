@@ -75,13 +75,6 @@ namespace llvm {
     /// Each subprogram's preserved local variables.
     DenseMap<MDNode *, std::vector<TrackingVH<MDNode>>> PreservedVariables;
 
-    // Private use for multiple types of template parameters.
-    DITemplateValueParameter
-    createTemplateValueParameter(unsigned Tag, DIDescriptor Scope,
-                                 StringRef Name, DIType Ty, Value *Val,
-                                 MDNode *File = nullptr, unsigned LineNo = 0,
-                                 unsigned ColumnNo = 0);
-
     DIBuilder(const DIBuilder &) LLVM_DELETED_FUNCTION;
     void operator=(const DIBuilder &) LLVM_DELETED_FUNCTION;
 
