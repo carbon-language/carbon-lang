@@ -87,6 +87,8 @@ protected:
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDIVREM24(SDValue Op, SelectionDAG &DAG, bool sign) const;
+  void LowerUDIVREM64(SDValue Op, SelectionDAG &DAG,
+                                    SmallVectorImpl<SDValue> &Results) const;
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
 
