@@ -1287,8 +1287,9 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
         V = CGM.getCXXABI().EmitMemberDataPointer(MPT, chars);
       }
       llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(TheCU, Name, TTy,
-                                                V->stripPointerCasts());
+          DBuilder.createTemplateValueParameter(
+              TheCU, Name, TTy,
+              cast_or_null<llvm::Constant>(V->stripPointerCasts()));
       TemplateParams.push_back(TVP);
     } break;
     case TemplateArgument::NullPtr: {
@@ -1309,7 +1310,8 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
       if (!V)
         V = llvm::ConstantInt::get(CGM.Int8Ty, 0);
       llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(TheCU, Name, TTy, V);
+          DBuilder.createTemplateValueParameter(TheCU, Name, TTy,
+                                                cast<llvm::Constant>(V));
       TemplateParams.push_back(TVP);
     } break;
     case TemplateArgument::Template: {
@@ -1334,8 +1336,8 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
       assert(V && "Expression in template argument isn't constant");
       llvm::DIType TTy = getOrCreateType(T, Unit);
       llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(TheCU, Name, TTy,
-                                                V->stripPointerCasts());
+          DBuilder.createTemplateValueParameter(
+              TheCU, Name, TTy, cast<llvm::Constant>(V->stripPointerCasts()));
       TemplateParams.push_back(TVP);
     } break;
     // And the following should never occur:
