@@ -46,7 +46,7 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   // probably a stack overflow.
   bool IsStackAccess = addr + 512 > sp && addr < sp + 0xFFFF;
 
-#if __powerpc64__
+#if __powerpc__
   // Large stack frames can be allocated with e.g.
   //   lis r0,-10000
   //   stdux r1,r1,r0 # store sp to [sp-10000] and update sp by -10000
@@ -69,7 +69,7 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
          (opcd == 31 && (xo == 247 || xo == 439 || xo == 183 || xo == 181))))
       IsStackAccess = true;
   }
-#endif // __powerpc64__
+#endif // __powerpc__
 
   // We also check si_code to filter out SEGV caused by something else other
   // then hitting the guard page or unmapped memory, like, for example,
