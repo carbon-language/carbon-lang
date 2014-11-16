@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s -check-prefix=CHECK-SCEV
+; RUN: opt %loadPolly -polly-detect -polly-codegen-scev=false -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect -polly-codegen-scev=true -analyze < %s | FileCheck %s -check-prefix=CHECK-SCEV
 
 ; void f(long A[], long N) {
 ;   long i;
