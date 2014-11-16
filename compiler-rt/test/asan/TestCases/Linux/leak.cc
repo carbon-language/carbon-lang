@@ -1,5 +1,5 @@
 // Minimal test for LeakSanitizer+AddressSanitizer.
-// REQUIRES: leak-detection
+// REQUIRES: asan-64-bits
 //
 // RUN: %clangxx_asan  %s -o %t
 // RUN: ASAN_OPTIONS=detect_leaks=1 not %run %t  2>&1 | FileCheck %s
