@@ -24,6 +24,7 @@ for.inc:                                          ; preds = %for.body
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
+  fence seq_cst
   br label %for.cond4
 
 for.cond4:                                        ; preds = %for.inc11, %for.end

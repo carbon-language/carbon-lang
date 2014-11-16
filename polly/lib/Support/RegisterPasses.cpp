@@ -67,7 +67,7 @@ static cl::opt<OptimizerChoice> Optimizer(
     cl::cat(PollyCategory));
 
 #ifdef CLOOG_FOUND
-enum CodeGenChoice DefaultCodeGen = CODEGEN_CLOOG;
+enum CodeGenChoice DefaultCodeGen = CODEGEN_ISL;
 #else
 enum CodeGenChoice DefaultCodeGen = CODEGEN_ISL;
 #endif
