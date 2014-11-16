@@ -624,7 +624,7 @@ namespace llvm {
     }
   };
 
-  /// Use SCEVTraversal to visit all nodes in the givien expression tree.
+  /// Use SCEVTraversal to visit all nodes in the given expression tree.
   template<typename SV>
   void visitAll(const SCEV *Root, SV& Visitor) {
     SCEVTraversal<SV> T(Visitor);
