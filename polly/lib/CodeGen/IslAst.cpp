@@ -47,6 +47,11 @@ static cl::opt<bool>
                   cl::desc("Generate thread parallel code (isl codegen only)"),
                   cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+static cl::opt<bool> PollyParallelForce(
+    "polly-parallel-force",
+    cl::desc("Force generation of thread parallel code ignoring any cost model"),
+    cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 static cl::opt<bool> UseContext("polly-ast-use-context",
                                 cl::desc("Use context"), cl::Hidden,
                                 cl::init(false), cl::ZeroOrMore,
@@ -454,8 +459,23 @@ bool IslAstInfo::isReductionParallel(__isl_keep isl_ast_node *Node) {
 }
 
 bool IslAstInfo::isExecutedInParallel(__isl_keep isl_ast_node *Node) {
-  return PollyParallel && isOutermostParallel(Node) &&
-         !isReductionParallel(Node);
+
+  if (!PollyParallel)
+    return false;
+
+  // Do not parallelize innermost loops.
+  //
+  // Parallelizing innermost loops is often not profitable, especially if
+  // they have a low number of iterations.
+  //
+  // TODO: Decide this based on the number of loop iterations that will be
+  //       executed. This can possibly require run-time checks, which again
+  //       raises the question of both run-time check overhead and code size
+  //       costs.
+  if (!PollyParallelForce && isInnermost(Node))
+    return false;
+
+  return isOutermostParallel(Node) && !isReductionParallel(Node);
 }
 
 isl_union_map *IslAstInfo::getSchedule(__isl_keep isl_ast_node *Node) {

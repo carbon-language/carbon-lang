@@ -1,6 +1,6 @@
-; RUN: opt %loadPolly -polly-parallel -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
-; RUN: opt %loadPolly -polly-parallel -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
-; RUN: opt %loadPolly -polly-parallel -polly-codegen-isl -S -polly-codegen-scev -verify-dom-info < %s | FileCheck %s -check-prefix=IR-SCEV
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -polly-codegen-scev -verify-dom-info < %s | FileCheck %s -check-prefix=IR-SCEV
 
 ; AST: #pragma simd
 ; AST: #pragma omp parallel for
