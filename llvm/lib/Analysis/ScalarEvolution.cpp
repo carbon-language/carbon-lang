@@ -675,6 +675,34 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
   }
 }
 
+static const APInt srem(const SCEVConstant *C1, const SCEVConstant *C2) {
+  APInt A = C1->getValue()->getValue();
+  APInt B = C2->getValue()->getValue();
+  uint32_t ABW = A.getBitWidth();
+  uint32_t BBW = B.getBitWidth();
+
+  if (ABW > BBW)
+    B = B.sext(ABW);
+  else if (ABW < BBW)
+    A = A.sext(BBW);
+
+  return APIntOps::srem(A, B);
+}
+
+static const APInt sdiv(const SCEVConstant *C1, const SCEVConstant *C2) {
+  APInt A = C1->getValue()->getValue();
+  APInt B = C2->getValue()->getValue();
+  uint32_t ABW = A.getBitWidth();
+  uint32_t BBW = B.getBitWidth();
+
+  if (ABW > BBW)
+    B = B.sext(ABW);
+  else if (ABW < BBW)
+    A = A.sext(BBW);
+
+  return APIntOps::sdiv(A, B);
+}
+
 static const APInt urem(const SCEVConstant *C1, const SCEVConstant *C2) {
   APInt A = C1->getValue()->getValue();
   APInt B = C2->getValue()->getValue();
@@ -729,7 +757,8 @@ static inline int sizeOfSCEV(const SCEV *S) {
 
 namespace {
 
-struct SCEVDivision : public SCEVVisitor<SCEVDivision, void> {
+template <typename Derived>
+struct SCEVDivision : public SCEVVisitor<Derived, void> {
 public:
   // Computes the Quotient and Remainder of the division of Numerator by
   // Denominator.
@@ -738,7 +767,7 @@ public:
                      const SCEV **Remainder) {
     assert(Numerator && Denominator && "Uninitialized SCEV");
 
-    SCEVDivision D(SE, Numerator, Denominator);
+    SCEVDivision<Derived> D(SE, Numerator, Denominator);
 
     // Check for the trivial case here to avoid having to check for it in the
     // rest of the code.
@@ -800,14 +829,6 @@ public:
   void visitUMaxExpr(const SCEVUMaxExpr *Numerator) {}
   void visitUnknown(const SCEVUnknown *Numerator) {}
   void visitCouldNotCompute(const SCEVCouldNotCompute *Numerator) {}
-
-  void visitConstant(const SCEVConstant *Numerator) {
-    if (const SCEVConstant *D = dyn_cast<SCEVConstant>(Denominator)) {
-      Quotient = SE.getConstant(udiv(Numerator, D));
-      Remainder = SE.getConstant(urem(Numerator, D));
-      return;
-    }
-  }
 
   void visitAddRecExpr(const SCEVAddRecExpr *Numerator) {
     const SCEV *StartQ, *StartR, *StepQ, *StepR;
@@ -934,10 +955,32 @@ public:
 private:
   ScalarEvolution &SE;
   const SCEV *Denominator, *Quotient, *Remainder, *Zero, *One;
+
+  friend struct SCEVSDivision;
+  friend struct SCEVUDivision;
 };
+
+struct SCEVSDivision : public SCEVDivision<SCEVSDivision> {
+  void visitConstant(const SCEVConstant *Numerator) {
+    if (const SCEVConstant *D = dyn_cast<SCEVConstant>(Denominator)) {
+      Quotient = SE.getConstant(sdiv(Numerator, D));
+      Remainder = SE.getConstant(srem(Numerator, D));
+      return;
+    }
+  }
+};
+
+struct SCEVUDivision : public SCEVDivision<SCEVUDivision> {
+  void visitConstant(const SCEVConstant *Numerator) {
+    if (const SCEVConstant *D = dyn_cast<SCEVConstant>(Denominator)) {
+      Quotient = SE.getConstant(udiv(Numerator, D));
+      Remainder = SE.getConstant(urem(Numerator, D));
+      return;
+    }
+  }
+};
+
 }
-
-
 
 //===----------------------------------------------------------------------===//
 //                      Simple SCEV method implementations
@@ -6086,7 +6129,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool ControlsExit) {
   // backedge count.
   const SCEV *Q, *R;
   ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
-  SCEVDivision::divide(SE, Distance, Step, &Q, &R);
+  SCEVUDivision::divide(SE, Distance, Step, &Q, &R);
   if (R->isZero()) {
     const SCEV *Exact =
         getUDivExactExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
@@ -7401,7 +7444,7 @@ static bool findArrayDimensionsRec(ScalarEvolution &SE,
   for (const SCEV *&Term : Terms) {
     // Normalize the terms before the next call to findArrayDimensionsRec.
     const SCEV *Q, *R;
-    SCEVDivision::divide(SE, Term, Step, &Q, &R);
+    SCEVSDivision::divide(SE, Term, Step, &Q, &R);
 
     // Bail out when GCD does not evenly divide one of the terms.
     if (!R->isZero())
@@ -7538,7 +7581,7 @@ void ScalarEvolution::findArrayDimensions(SmallVectorImpl<const SCEV *> &Terms,
   // Divide all terms by the element size.
   for (const SCEV *&Term : Terms) {
     const SCEV *Q, *R;
-    SCEVDivision::divide(SE, Term, ElementSize, &Q, &R);
+    SCEVSDivision::divide(SE, Term, ElementSize, &Q, &R);
     Term = Q;
   }
 
@@ -7585,7 +7628,7 @@ void SCEVAddRecExpr::computeAccessFunctions(
   int Last = Sizes.size() - 1;
   for (int i = Last; i >= 0; i--) {
     const SCEV *Q, *R;
-    SCEVDivision::divide(SE, Res, Sizes[i], &Q, &R);
+    SCEVSDivision::divide(SE, Res, Sizes[i], &Q, &R);
 
     DEBUG({
         dbgs() << "Res: " << *Res << "\n";
