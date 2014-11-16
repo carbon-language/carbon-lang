@@ -2422,27 +2422,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  // If a bit is known to be zero for A and known to be one for B,
-  // then A and B cannot be equal.
-  if (ICmpInst::isEquality(Pred)) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
-      uint32_t BitWidth = CI->getBitWidth();
-      APInt LHSKnownZero(BitWidth, 0);
-      APInt LHSKnownOne(BitWidth, 0);
-      computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, Q.DL,
-                       0, Q.AT, Q.CxtI, Q.DT);
-      APInt RHSKnownZero(BitWidth, 0);
-      APInt RHSKnownOne(BitWidth, 0);
-      computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, Q.DL,
-                       0, Q.AT, Q.CxtI, Q.DT);
-      if (((LHSKnownOne & RHSKnownZero) != 0) ||
-          ((LHSKnownZero & RHSKnownOne) != 0))
-        return (Pred == ICmpInst::ICMP_EQ)
-                   ? ConstantInt::getFalse(CI->getContext())
-                   : ConstantInt::getTrue(CI->getContext());
-    }
-  }
-
   // Special logic for binary operators.
   BinaryOperator *LBO = dyn_cast<BinaryOperator>(LHS);
   BinaryOperator *RBO = dyn_cast<BinaryOperator>(RHS);
@@ -2878,6 +2857,23 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         Constant *NewRHS = ConstantExpr::getGetElementPtr(Null, IndicesRHS);
         return ConstantExpr::getICmp(Pred, NewLHS, NewRHS);
       }
+    }
+  }
+
+  // If a bit is known to be zero for A and known to be one for B,
+  // then A and B cannot be equal.
+  if (ICmpInst::isEquality(Pred)) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
+      uint32_t BitWidth = CI->getBitWidth();
+      APInt LHSKnownZero(BitWidth, 0);
+      APInt LHSKnownOne(BitWidth, 0);
+      computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, Q.DL, /*Depth=*/0, Q.AT,
+                       Q.CxtI, Q.DT);
+      const APInt &RHSVal = CI->getValue();
+      if (((LHSKnownZero & RHSVal) != 0) || ((LHSKnownOne & ~RHSVal) != 0))
+        return Pred == ICmpInst::ICMP_EQ
+                   ? ConstantInt::getFalse(CI->getContext())
+                   : ConstantInt::getTrue(CI->getContext());
     }
   }
 
