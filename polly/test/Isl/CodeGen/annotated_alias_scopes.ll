@@ -1,13 +1,16 @@
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -S < %s | FileCheck %s --check-prefix=SCOPES
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -polly-annotate-alias-scopes=false -S < %s | FileCheck %s --check-prefix=NOSCOPES
+; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -polly-codegen-scev=false -S < %s | FileCheck %s --check-prefix=SCOPES
+; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -polly-codegen-scev=true -S < %s | FileCheck %s --check-prefix=SCOPES
+; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -polly-codegen-scev=false -polly-annotate-alias-scopes=false -S < %s | FileCheck %s --check-prefix=NOSCOPES
+; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -polly-codegen-scev=true -polly-annotate-alias-scopes=false -S < %s | FileCheck %s --check-prefix=NOSCOPES
 ;
 ; Check that we create alias scopes that indicate the accesses to A, B and C cannot alias in any way.
 ;
-; SCOPES:      %[[BIdx:[._a-zA-Z0-9]*]] = getelementptr inbounds i32* %B, i64 %polly.indvar
+; SCOPES-LABEL: polly.stmt.for.body:
+; SCOPES:      %[[BIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %B, i64 %polly.indvar
 ; SCOPES:      load i32* %[[BIdx]], align 4, !alias.scope ![[AliasScopeB:[0-9]*]], !noalias ![[NoAliasB:[0-9]*]]
-; SCOPES:      %[[CIdx:[._a-zA-Z0-9]*]] = getelementptr inbounds float* %C, i64 %polly.indvar
+; SCOPES:      %[[CIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} float* %C, i64 %polly.indvar
 ; SCOPES:      load float* %[[CIdx]], align 4, !alias.scope ![[AliasScopeC:[0-9]*]], !noalias ![[NoAliasC:[0-9]*]]
-; SCOPES:      %[[AIdx:[._a-zA-Z0-9]*]] = getelementptr inbounds i32* %A, i64 %polly.indvar
+; SCOPES:      %[[AIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %A, i64 %polly.indvar
 ; SCOPES:      store i32 %{{[._a-zA-Z0-9]*}}, i32* %[[AIdx]], align 4, !alias.scope ![[AliasScopeA:[0-9]*]], !noalias ![[NoAliasA:[0-9]*]]
 ;
 ; SCOPES:      ![[AliasScopeB]] = metadata !{metadata ![[AliasScopeB]], metadata !{{[0-9]*}}, metadata !"polly.alias.scope.B"}
@@ -26,15 +29,15 @@
 ; SCOPES-DAG:     metadata ![[AliasScopeC]]
 ; SCOPES:       }
 ;
-; NOSCOPES:    %[[BIdx:[._a-zA-Z0-9]*]] = getelementptr inbounds i32* %B, i64 %polly.indvar
+; NOSCOPES:    %[[BIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %B, i64 %polly.indvar
 ; NOSCOPES:    load i32* %[[BIdx]]
 ; NOSCOPES-NOT: alias.scope
 ; NOSCOPES-NOT: noalias
-; NOSCOPES:    %[[CIdx:[._a-zA-Z0-9]*]] = getelementptr inbounds float* %C, i64 %polly.indvar
+; NOSCOPES:    %[[CIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} float* %C, i64 %polly.indvar
 ; NOSCOPES:    load float* %[[CIdx]]
 ; NOSCOPES-NOT: alias.scope
 ; NOSCOPES-NOT: noalias
-; NOSCOPES:    %[[AIdx:[._a-zA-Z0-9]*]] = getelementptr inbounds i32* %A, i64 %polly.indvar
+; NOSCOPES:    %[[AIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %A, i64 %polly.indvar
 ; NOSCOPES:    store i32 %{{[._a-zA-Z0-9]*}}, i32* %[[AIdx]]
 ; NOSCOPES-NOT: alias.scope
 ; NOSCOPES-NOT: noalias

@@ -1,9 +1,9 @@
-; RUN: opt %loadPolly -S -polly-code-generator=isl -polly-codegen-isl < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-code-generator=isl -polly-codegen-isl -polly-codegen-scev=false < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-code-generator=isl -polly-codegen-isl -polly-codegen-scev=true < %s | FileCheck %s
 ;
 ; We have to cast %B to "short *" before we create RTCs.
 ;
-; CHECK:      entry:
-; CHECK-NEXT:   %polly.access.cast.B = bitcast i32* %B to i16*
+; CHECK:   %polly.access.cast.B = bitcast i32* %B to i16*
 ; CHECK-NEXT:   %polly.access.B = getelementptr i16* %polly.access.cast.B, i64 1024
 ;
 ; We should never access %B as an i32 pointer:

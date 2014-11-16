@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -tbaa -polly-codegen -polly-vectorizer=polly -S < %s | FileCheck %s
+; RUN: opt %loadPolly -tbaa -polly-codegen -polly-vectorizer=polly -polly-codegen-scev=false -S < %s | FileCheck %s
 
 target datalayout = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128"
 target triple = "i386-apple-macosx10.8.0"

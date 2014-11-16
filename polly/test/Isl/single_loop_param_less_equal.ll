@@ -1,5 +1,6 @@
 ; RUN: opt %loadPolly -polly-ast -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=CODEGEN
+; RUN: opt %loadPolly -polly-codegen-isl -polly-codegen-scev=false -S < %s | FileCheck %s -check-prefix=CODEGEN
+; RUN: opt %loadPolly -polly-codegen-isl -polly-codegen-scev=true -S < %s | FileCheck %s -check-prefix=CODEGEN
 ; RUN: opt %loadPolly -polly-codegen-isl -loops -analyze < %s | FileCheck %s -check-prefix=LOOPS
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-pc-linux-gnu"
@@ -49,8 +50,8 @@ ret:
 ; CODEGEN:   br label %polly.stmt.loop.body
 
 ; CODEGEN: polly.stmt.loop.body:
-; CODEGEN:   %p_scevgep.moved.to.loop.body = getelementptr [1024 x i32]* @A, i64 0, i64 %polly.indvar
-; CODEGEN:   store i32 1, i32* %p_scevgep.moved.to.loop.body
+; CODEGEN:   [[PTR:%[a-zA-Z0-9_\.]+]] = getelementptr [1024 x i32]* @A, i64 0, i64 %polly.indvar
+; CODEGEN:   store i32 1, i32* [[PTR]]
 ; CODEGEN:   %polly.indvar_next = add nsw i64 %polly.indvar, 1
 ; CODEGEN:   %polly.adjust_ub = sub i64 %n, 1
 ; CODEGEN:   %polly.loop_cond = icmp sle i64 %polly.indvar, %polly.adjust_ub
