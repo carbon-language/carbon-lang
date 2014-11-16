@@ -18,7 +18,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include <cassert>
@@ -101,9 +101,9 @@ public:
 
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
   ///
-  bool hasType(EVT vt) const {
+  bool hasType(MVT vt) const {
     for(int i = 0; VTs[i] != MVT::Other; ++i)
-      if (EVT(VTs[i]) == vt)
+      if (MVT(VTs[i]) == vt)
         return true;
     return false;
   }
@@ -306,7 +306,7 @@ public:
   /// register of the given type, picking the most sub register class of
   /// the right type that contains this physreg.
   const TargetRegisterClass *
-    getMinimalPhysRegClass(unsigned Reg, EVT VT = MVT::Other) const;
+    getMinimalPhysRegClass(unsigned Reg, MVT VT = MVT::Other) const;
 
   /// getAllocatableClass - Return the maximal subclass of the given register
   /// class that is alloctable, or NULL.

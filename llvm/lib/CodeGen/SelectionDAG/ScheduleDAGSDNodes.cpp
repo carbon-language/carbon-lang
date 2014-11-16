@@ -131,7 +131,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
 
   if (PhysReg != 0) {
     const TargetRegisterClass *RC =
-        TRI->getMinimalPhysRegClass(Reg, Def->getValueType(ResNo));
+        TRI->getMinimalPhysRegClass(Reg, Def->getSimpleValueType(ResNo));
     Cost = RC->getCopyCost();
   }
 }

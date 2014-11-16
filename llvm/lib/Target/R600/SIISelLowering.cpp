@@ -529,7 +529,7 @@ SDValue SITargetLowering::LowerFormalArguments(
     }
 
     CCValAssign &VA = ArgLocs[ArgIdx++];
-    EVT VT = VA.getLocVT();
+    MVT VT = VA.getLocVT();
 
     if (VA.isMemLoc()) {
       VT = Ins[i].VT;
