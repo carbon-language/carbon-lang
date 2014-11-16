@@ -675,32 +675,32 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
   }
 }
 
-static const APInt srem(const SCEVConstant *C1, const SCEVConstant *C2) {
+static const APInt urem(const SCEVConstant *C1, const SCEVConstant *C2) {
   APInt A = C1->getValue()->getValue();
   APInt B = C2->getValue()->getValue();
   uint32_t ABW = A.getBitWidth();
   uint32_t BBW = B.getBitWidth();
 
   if (ABW > BBW)
-    B = B.sext(ABW);
+    B = B.zext(ABW);
   else if (ABW < BBW)
-    A = A.sext(BBW);
+    A = A.zext(BBW);
 
-  return APIntOps::srem(A, B);
+  return APIntOps::urem(A, B);
 }
 
-static const APInt sdiv(const SCEVConstant *C1, const SCEVConstant *C2) {
+static const APInt udiv(const SCEVConstant *C1, const SCEVConstant *C2) {
   APInt A = C1->getValue()->getValue();
   APInt B = C2->getValue()->getValue();
   uint32_t ABW = A.getBitWidth();
   uint32_t BBW = B.getBitWidth();
 
   if (ABW > BBW)
-    B = B.sext(ABW);
+    B = B.zext(ABW);
   else if (ABW < BBW)
-    A = A.sext(BBW);
+    A = A.zext(BBW);
 
-  return APIntOps::sdiv(A, B);
+  return APIntOps::udiv(A, B);
 }
 
 namespace {
@@ -803,8 +803,8 @@ public:
 
   void visitConstant(const SCEVConstant *Numerator) {
     if (const SCEVConstant *D = dyn_cast<SCEVConstant>(Denominator)) {
-      Quotient = SE.getConstant(sdiv(Numerator, D));
-      Remainder = SE.getConstant(srem(Numerator, D));
+      Quotient = SE.getConstant(udiv(Numerator, D));
+      Remainder = SE.getConstant(urem(Numerator, D));
       return;
     }
   }
