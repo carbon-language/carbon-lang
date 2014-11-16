@@ -42,7 +42,7 @@ static cl::opt<bool> Aligned("enable-polly-aligned",
 static cl::opt<bool, true>
     SCEVCodegenF("polly-codegen-scev",
                  cl::desc("Use SCEV based code generation."), cl::Hidden,
-                 cl::location(SCEVCodegen), cl::init(false), cl::ZeroOrMore,
+                 cl::location(SCEVCodegen), cl::init(true), cl::ZeroOrMore,
                  cl::cat(PollyCategory));
 
 bool polly::SCEVCodegen;
