@@ -22,6 +22,8 @@ class ToolChain;
 
 class SanitizerArgs {
   SanitizerSet Sanitizers;
+  bool SanitizeRecover;
+
   std::string BlacklistFile;
   int SanitizeCoverage;
   int MsanTrackOrigins;

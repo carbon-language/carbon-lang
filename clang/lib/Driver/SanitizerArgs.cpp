@@ -109,17 +109,32 @@ static std::string lastArgumentForKind(const Driver &D,
 /// "-fsanitize=alignment".
 static std::string describeSanitizeArg(const llvm::opt::Arg *A, unsigned Mask);
 
+/// Produce a string containing comma-separated names of sanitizers in \p
+/// Sanitizers set.
+static std::string toString(const clang::SanitizerSet &Sanitizers);
+
 /// For each sanitizer group bit set in \p Kinds, set the bits for sanitizers
 /// this group enables.
 static unsigned expandGroups(unsigned Kinds);
 
-/// Return the subset of \p Kinds supported by toolchain \p TC.  If
-/// \p DiagnoseErrors is true, produce an error diagnostic for each sanitizer
-/// removed from \p Kinds.
-static unsigned filterUnsupportedKinds(const ToolChain &TC, unsigned Kinds,
-                                       const llvm::opt::Arg *A,
-                                       bool DiagnoseErrors,
-                                       unsigned &DiagnosedKinds);
+static unsigned getToolchainUnsupportedKinds(const ToolChain &TC) {
+  bool IsFreeBSD = TC.getTriple().getOS() == llvm::Triple::FreeBSD;
+  bool IsLinux = TC.getTriple().getOS() == llvm::Triple::Linux;
+  bool IsX86 = TC.getTriple().getArch() == llvm::Triple::x86;
+  bool IsX86_64 = TC.getTriple().getArch() == llvm::Triple::x86_64;
+
+  unsigned Unsupported = 0;
+  if (!(IsLinux && IsX86_64)) {
+    Unsupported |= Memory | DataFlow;
+  }
+  if (!((IsLinux || IsFreeBSD) && IsX86_64)) {
+    Unsupported |= Thread;
+  }
+  if (!(IsLinux && (IsX86 || IsX86_64))) {
+    Unsupported |= Function;
+  }
+  return Unsupported;
+}
 
 bool SanitizerArgs::needsUbsanRt() const {
   return !UbsanTrapOnError && hasOneOf(Sanitizers, NeedsUbsanRt);
@@ -135,6 +150,7 @@ bool SanitizerArgs::needsUnwindTables() const {
 
 void SanitizerArgs::clear() {
   Sanitizers.clear();
+  SanitizeRecover = false;
   BlacklistFile = "";
   SanitizeCoverage = 0;
   MsanTrackOrigins = 0;
@@ -153,6 +169,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
                            // argument or any argument after it.
   unsigned DiagnosedKinds = 0;  // All Kinds we have diagnosed up to now.
                                 // Used to deduplicate diagnostics.
+  unsigned Kinds = 0;
+  unsigned NotSupported = getToolchainUnsupportedKinds(TC);
   const Driver &D = TC.getDriver();
   for (ArgList::const_reverse_iterator I = Args.rbegin(), E = Args.rend();
        I != E; ++I) {
@@ -165,20 +183,31 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
 
     // Avoid diagnosing any sanitizer which is disabled later.
     Add &= ~AllRemove;
+
     // At this point we have not expanded groups, so any unsupported sanitizers
     // in Add are those which have been explicitly enabled. Diagnose them.
-    Add = filterUnsupportedKinds(TC, Add, *I, /*DiagnoseErrors=*/true,
-                                 DiagnosedKinds);
+    if (unsigned KindsToDiagnose = Add & NotSupported & ~DiagnosedKinds) {
+      // Only diagnose the new kinds.
+      std::string Desc = describeSanitizeArg(*I, KindsToDiagnose);
+      D.Diag(diag::err_drv_unsupported_opt_for_target) << Desc
+                                                       << TC.getTriple().str();
+      DiagnosedKinds |= KindsToDiagnose;
+    }
+    Add &= ~NotSupported;
+
     Add = expandGroups(Add);
     // Group expansion may have enabled a sanitizer which is disabled later.
     Add &= ~AllRemove;
     // Silently discard any unsupported sanitizers implicitly enabled through
     // group expansion.
-    Add = filterUnsupportedKinds(TC, Add, *I, /*DiagnoseErrors=*/false,
-                                 DiagnosedKinds);
+    Add &= ~NotSupported;
 
-    addAllOf(Sanitizers, Add);
+    Kinds |= Add;
   }
+  addAllOf(Sanitizers, Kinds);
+
+  SanitizeRecover = Args.hasFlag(options::OPT_fsanitize_recover,
+                                 options::OPT_fno_sanitize_recover, true);
 
   UbsanTrapOnError =
     Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
@@ -316,17 +345,30 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       Args.hasArg(options::OPT_fsanitize_link_cxx_runtime) || D.CCCIsCXX();
 }
 
+static std::string toString(const clang::SanitizerSet &Sanitizers) {
+  std::string Res;
+#define SANITIZER(NAME, ID)                                                    \
+  if (Sanitizers.has(clang::SanitizerKind::ID)) {                              \
+    if (!Res.empty())                                                          \
+      Res += ",";                                                              \
+    Res += NAME;                                                               \
+  }
+#include "clang/Basic/Sanitizers.def"
+  return Res;
+}
+
 void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
                             llvm::opt::ArgStringList &CmdArgs) const {
   if (Sanitizers.empty())
     return;
-  SmallString<256> SanitizeOpt("-fsanitize=");
-#define SANITIZER(NAME, ID) \
-  if (Sanitizers.has(SanitizerKind::ID)) \
-    SanitizeOpt += NAME ",";
-#include "clang/Basic/Sanitizers.def"
-  SanitizeOpt.pop_back();
-  CmdArgs.push_back(Args.MakeArgString(SanitizeOpt));
+  CmdArgs.push_back(Args.MakeArgString("-fsanitize=" + toString(Sanitizers)));
+
+  if (!SanitizeRecover)
+    CmdArgs.push_back("-fno-sanitize-recover");
+
+  if (UbsanTrapOnError)
+    CmdArgs.push_back("-fsanitize-undefined-trap-on-error");
+
   if (!BlacklistFile.empty()) {
     SmallString<64> BlacklistOpt("-fsanitize-blacklist=");
     BlacklistOpt += BlacklistFile;
@@ -381,39 +423,6 @@ unsigned expandGroups(unsigned Kinds) {
 #define SANITIZER_GROUP(NAME, ID, ALIAS) if (Kinds & ID##Group) Kinds |= ID;
 #include "clang/Basic/Sanitizers.def"
   return Kinds;
-}
-
-unsigned filterUnsupportedKinds(const ToolChain &TC, unsigned Kinds,
-                                const llvm::opt::Arg *A, bool DiagnoseErrors,
-                                unsigned &DiagnosedKinds) {
-  bool IsFreeBSD = TC.getTriple().getOS() == llvm::Triple::FreeBSD;
-  bool IsLinux = TC.getTriple().getOS() == llvm::Triple::Linux;
-  bool IsX86 = TC.getTriple().getArch() == llvm::Triple::x86;
-  bool IsX86_64 = TC.getTriple().getArch() == llvm::Triple::x86_64;
-
-  unsigned KindsToFilterOut = 0;
-  if (!(IsLinux && IsX86_64)) {
-    KindsToFilterOut |= Memory | DataFlow;
-  }
-  if (!((IsLinux || IsFreeBSD) && IsX86_64)) {
-    KindsToFilterOut |= Thread;
-  }
-  if (!(IsLinux && (IsX86 || IsX86_64))) {
-    KindsToFilterOut |= Function;
-  }
-  KindsToFilterOut &= Kinds;
-
-  // Do we have new kinds to diagnose?
-  unsigned KindsToDiagnose = KindsToFilterOut & ~DiagnosedKinds;
-  if (DiagnoseErrors && KindsToDiagnose) {
-    // Only diagnose the new kinds.
-    std::string Desc = describeSanitizeArg(A, KindsToDiagnose);
-    TC.getDriver().Diag(clang::diag::err_drv_unsupported_opt_for_target)
-        << Desc << TC.getTriple().str();
-    DiagnosedKinds |= KindsToFilterOut;
-  }
-
-  return Kinds & ~KindsToFilterOut;
 }
 
 unsigned parseArgValues(const Driver &D, const llvm::opt::Arg *A,
