@@ -781,6 +781,25 @@ void DependenceAnalysis::collectCommonLoops(const SCEV *Expression,
   }
 }
 
+void DependenceAnalysis::unifySubscriptType(Subscript *Pair) {
+  const SCEV *Src = Pair->Src;
+  const SCEV *Dst = Pair->Dst;
+  IntegerType *SrcTy = dyn_cast<IntegerType>(Src->getType());
+  IntegerType *DstTy = dyn_cast<IntegerType>(Dst->getType());
+  if (SrcTy == nullptr || DstTy == nullptr) {
+    assert(SrcTy == DstTy && "This function only unify integer types and "
+                             "expect Src and Dst share the same type "
+                             "otherwise.");
+    return;
+  }
+  if (SrcTy->getBitWidth() > DstTy->getBitWidth()) {
+    // Sign-extend Dst to typeof(Src) if typeof(Src) is wider than typeof(Dst).
+    Pair->Dst = SE->getSignExtendExpr(Dst, SrcTy);
+  } else if (SrcTy->getBitWidth() < DstTy->getBitWidth()) {
+    // Sign-extend Src to typeof(Dst) if typeof(Dst) is wider than typeof(Src).
+    Pair->Src = SE->getSignExtendExpr(Src, DstTy);
+  }
+}
 
 // removeMatchingExtensions - Examines a subscript pair.
 // If the source and destination are identically sign (or zero)
@@ -793,9 +812,11 @@ void DependenceAnalysis::removeMatchingExtensions(Subscript *Pair) {
       (isa<SCEVSignExtendExpr>(Src) && isa<SCEVSignExtendExpr>(Dst))) {
     const SCEVCastExpr *SrcCast = cast<SCEVCastExpr>(Src);
     const SCEVCastExpr *DstCast = cast<SCEVCastExpr>(Dst);
-    if (SrcCast->getType() == DstCast->getType()) {
-      Pair->Src = SrcCast->getOperand();
-      Pair->Dst = DstCast->getOperand();
+    const SCEV *SrcCastOp = SrcCast->getOperand();
+    const SCEV *DstCastOp = DstCast->getOperand();
+    if (SrcCastOp->getType() == DstCastOp->getType()) {
+      Pair->Src = SrcCastOp;
+      Pair->Dst = DstCastOp;
     }
   }
 }
@@ -3178,7 +3199,7 @@ void DependenceAnalysis::updateDirection(Dependence::DVEntry &Level,
 bool DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV,
                                         const SCEV *DstSCEV,
                                         SmallVectorImpl<Subscript> &Pair,
-                                        const SCEV *ElementSize) const {
+                                        const SCEV *ElementSize) {
   const SCEVUnknown *SrcBase =
       dyn_cast<SCEVUnknown>(SE->getPointerBase(SrcSCEV));
   const SCEVUnknown *DstBase =
@@ -3233,6 +3254,7 @@ bool DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV,
   for (int i = 0; i < size; ++i) {
     Pair[i].Src = SrcSubscripts[i];
     Pair[i].Dst = DstSubscripts[i];
+    unifySubscriptType(&Pair[i]);
 
     // FIXME: we should record the bounds SrcSizes[i] and DstSizes[i] that the
     // delinearization has found, and add these constraints to the dependence
@@ -3341,6 +3363,7 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
          ++SrcIdx, ++DstIdx, ++P) {
       Pair[P].Src = SE->getSCEV(*SrcIdx);
       Pair[P].Dst = SE->getSCEV(*DstIdx);
+      unifySubscriptType(&Pair[P]);
     }
   }
   else {

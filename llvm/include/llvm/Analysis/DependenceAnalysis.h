@@ -523,6 +523,12 @@ namespace llvm {
     /// in LoopNest.
     bool isLoopInvariant(const SCEV *Expression, const Loop *LoopNest) const;
 
+    /// Makes sure both subscripts (i.e. Pair->Src and Pair->Dst) share the same
+    /// integer type by sign-extending one of them when necessary.
+    /// Sign-extending a subscript is safe because getelementptr assumes the
+    /// array subscripts are signed.
+    void unifySubscriptType(Subscript *Pair);
+
     /// removeMatchingExtensions - Examines a subscript pair.
     /// If the source and destination are identically sign (or zero)
     /// extended, it strips off the extension in an effort to
@@ -911,7 +917,7 @@ namespace llvm {
 
     bool tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
                         SmallVectorImpl<Subscript> &Pair,
-                        const SCEV *ElementSize) const;
+                        const SCEV *ElementSize);
 
   public:
     static char ID; // Class identification, replacement for typeinfo
