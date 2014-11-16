@@ -49,7 +49,8 @@ static cl::opt<bool>
 
 static cl::opt<bool> PollyParallelForce(
     "polly-parallel-force",
-    cl::desc("Force generation of thread parallel code ignoring any cost model"),
+    cl::desc(
+        "Force generation of thread parallel code ignoring any cost model"),
     cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> UseContext("polly-ast-use-context",
