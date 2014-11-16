@@ -66,12 +66,6 @@ static cl::opt<OptimizerChoice> Optimizer(
     cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore,
     cl::cat(PollyCategory));
 
-#ifdef CLOOG_FOUND
-enum CodeGenChoice DefaultCodeGen = CODEGEN_ISL;
-#else
-enum CodeGenChoice DefaultCodeGen = CODEGEN_ISL;
-#endif
-
 CodeGenChoice polly::PollyCodeGenChoice;
 static cl::opt<CodeGenChoice, true> XCodeGenerator(
     "polly-code-generator", cl::desc("Select the code generator"),
@@ -81,7 +75,7 @@ static cl::opt<CodeGenChoice, true> XCodeGenerator(
 #endif
         clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
         clEnumValN(CODEGEN_NONE, "none", "no code generation"), clEnumValEnd),
-    cl::Hidden, cl::location(PollyCodeGenChoice), cl::init(DefaultCodeGen),
+    cl::Hidden, cl::location(PollyCodeGenChoice), cl::init(CODEGEN_ISL),
     cl::ZeroOrMore, cl::cat(PollyCategory));
 
 VectorizerChoice polly::PollyVectorizerChoice;
