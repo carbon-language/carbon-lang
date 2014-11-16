@@ -425,6 +425,7 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
     U->replaceUsesOfWith(Inst, L);
   }
 
+  SE->forgetValue(Inst);
   return true;
 }
 
