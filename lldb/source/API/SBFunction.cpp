@@ -227,5 +227,15 @@ SBFunction::GetBlock ()
     return sb_block;
 }
 
+lldb::LanguageType
+SBFunction::GetLanguage ()
+{
+    if (m_opaque_ptr)
+    {
+        if (m_opaque_ptr->GetCompileUnit())
+            return m_opaque_ptr->GetCompileUnit()->GetLanguage();
+    }
+    return lldb::eLanguageTypeUnknown;
+}
 
 

@@ -82,6 +82,9 @@ public:
 
     lldb::SBBlock
     GetBlock ();
+    
+    lldb::LanguageType
+    GetLanguage ();
 
     bool
     GetDescription (lldb::SBStream &description);

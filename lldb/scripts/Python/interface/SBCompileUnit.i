@@ -106,6 +106,9 @@ public:
     lldb::SBTypeList
     GetTypes (uint32_t type_mask = lldb::eTypeClassAny);
     
+     lldb::LanguageType
+     GetLanguage ();
+             
     bool
     GetDescription (lldb::SBStream &description);
     

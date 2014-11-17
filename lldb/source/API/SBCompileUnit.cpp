@@ -228,6 +228,14 @@ SBCompileUnit::FindSupportFileIndex (uint32_t start_idx, const SBFileSpec &sb_fi
     return 0;
 }
 
+lldb::LanguageType
+SBCompileUnit::GetLanguage ()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetLanguage();
+    return lldb::eLanguageTypeUnknown;
+}
+
 bool
 SBCompileUnit::IsValid () const
 {

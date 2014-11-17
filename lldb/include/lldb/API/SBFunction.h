@@ -58,6 +58,9 @@ public:
 
     lldb::SBBlock
     GetBlock ();
+    
+    lldb::LanguageType
+    GetLanguage ();
 
     bool
     operator == (const lldb::SBFunction &rhs) const;

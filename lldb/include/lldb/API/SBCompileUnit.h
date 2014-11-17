@@ -78,6 +78,9 @@ public:
     lldb::SBTypeList
     GetTypes (uint32_t type_mask = lldb::eTypeClassAny);
 
+    lldb::LanguageType
+    GetLanguage ();
+    
     bool
     operator == (const lldb::SBCompileUnit &rhs) const;
 
