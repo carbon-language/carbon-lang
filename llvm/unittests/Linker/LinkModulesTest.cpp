@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -155,6 +157,24 @@ TEST_F(LinkModuleTest, EmptyModule2) {
   std::unique_ptr<Module> InternalM(getInternal(Ctx));
   std::unique_ptr<Module> EmptyM(new Module("EmptyModule1", Ctx));
   Linker::LinkModules(InternalM.get(), EmptyM.get());
+}
+
+TEST_F(LinkModuleTest, TypeMerge) {
+  LLVMContext C;
+  SMDiagnostic Err;
+
+  const char *M1Str = "%t = type {i32}\n"
+                      "@t1 = weak global %t zeroinitializer\n";
+  std::unique_ptr<Module> M1 = parseAssemblyString(M1Str, Err, C);
+
+  const char *M2Str = "%t = type {i32}\n"
+                      "@t2 = weak global %t zeroinitializer\n";
+  std::unique_ptr<Module> M2 = parseAssemblyString(M2Str, Err, C);
+
+  Linker::LinkModules(M1.get(), M2.get(), [](const llvm::DiagnosticInfo &){});
+
+  EXPECT_EQ(M1->getNamedGlobal("t1")->getType(),
+            M1->getNamedGlobal("t2")->getType());
 }
 
 } // end anonymous namespace

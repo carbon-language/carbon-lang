@@ -1594,16 +1594,23 @@ bool ModuleLinker::run() {
   return false;
 }
 
-Linker::Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler)
-    : Composite(M), DiagnosticHandler(DiagnosticHandler) {}
+void Linker::init(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
+  this->Composite = M;
+  this->DiagnosticHandler = DiagnosticHandler;
 
-Linker::Linker(Module *M)
-    : Composite(M), DiagnosticHandler([this](const DiagnosticInfo &DI) {
-                      Composite->getContext().diagnose(DI);
-                    }) {
   TypeFinder StructTypes;
   StructTypes.run(*M, true);
   IdentifiedStructTypes.insert(StructTypes.begin(), StructTypes.end());
+}
+
+Linker::Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
+  init(M, DiagnosticHandler);
+}
+
+Linker::Linker(Module *M) {
+  init(M, [this](const DiagnosticInfo &DI) {
+    Composite->getContext().diagnose(DI);
+  });
 }
 
 Linker::~Linker() {

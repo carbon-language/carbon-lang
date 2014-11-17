@@ -45,6 +45,7 @@ class Linker {
     static bool LinkModules(Module *Dest, Module *Src);
 
   private:
+    void init(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
     Module *Composite;
     SmallPtrSet<StructType*, 32> IdentifiedStructTypes;
     DiagnosticHandlerFunction DiagnosticHandler;
