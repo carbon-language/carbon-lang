@@ -16,6 +16,12 @@ else()
   endif()
 endif()
 
+if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
+  set(cmake_3_2_USES_TERMINAL)
+else()
+  set(cmake_3_2_USES_TERMINAL USES_TERMINAL)
+endif()
+
 project(LLVM)
 
 # Add path for custom modules

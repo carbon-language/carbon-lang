@@ -679,6 +679,7 @@ function(add_lit_target target comment)
     add_custom_target(${target}
       COMMAND ${LIT_COMMAND} ${ARG_DEFAULT_ARGS}
       COMMENT "${comment}"
+      ${cmake_3_2_USES_TERMINAL}
       )
     add_dependencies(${target} ${ARG_DEPENDS})
   else()
