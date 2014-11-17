@@ -117,10 +117,18 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
       NeedLineBreak = false;
   }
 
-  diag(ND->getLocation(), "namespace not terminated with a closing comment")
+  std::string NamespaceName =
+      ND->isAnonymousNamespace()
+          ? "anonymous namespace"
+          : ("namespace '" + ND->getNameAsString() + "'");
+
+  diag(AfterRBrace, "%0 not terminated with a closing comment")
+      << NamespaceName
       << FixItHint::CreateInsertion(AfterRBrace,
                                     std::string(SpacesBeforeComments, ' ') +
                                         getNamespaceComment(ND, NeedLineBreak));
+  diag(ND->getLocation(), "%0 starts here", DiagnosticIDs::Note)
+      << NamespaceName;
 }
 
 } // namespace readability
