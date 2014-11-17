@@ -823,10 +823,10 @@ PlatformLinux::LaunchNativeProcess (
 
     // Retrieve the exe module.
     lldb::ModuleSP exe_module_sp;
+    ModuleSpec exe_module_spec(launch_info.GetExecutableFile(), launch_info.GetArchitecture());
 
     Error error = ResolveExecutable (
-        launch_info.GetExecutableFile (),
-        launch_info.GetArchitecture (),
+        exe_module_spec,
         exe_module_sp,
         NULL);
 

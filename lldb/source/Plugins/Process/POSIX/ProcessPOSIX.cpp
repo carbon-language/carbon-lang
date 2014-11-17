@@ -16,6 +16,7 @@
 // Other libraries and framework includes
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/FileSpec.h"
@@ -140,8 +141,8 @@ ProcessPOSIX::DoAttachToProcessWithID(lldb::pid_t pid)
     // Resolve the executable module
     ModuleSP exe_module_sp;
     FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
-    error = platform_sp->ResolveExecutable(process_info.GetExecutableFile(),
-                                           m_target.GetArchitecture(),
+    ModuleSpec exe_module_spec(process_info.GetExecutableFile(), m_target.GetArchitecture());
+    error = platform_sp->ResolveExecutable(exe_module_spec,
                                            exe_module_sp,
                                            executable_search_paths.GetSize() ? &executable_search_paths : NULL);
     if (!error.Success())
@@ -365,11 +366,11 @@ ProcessPOSIX::DoDidExec()
             ProcessInstanceInfo process_info;
             platform_sp->GetProcessInfo(GetID(), process_info);
             ModuleSP exe_module_sp;
+            ModuleSpec exe_module_spec(process_info.GetExecutableFile(), target->GetArchitecture());
             FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
-            Error error = platform_sp->ResolveExecutable(process_info.GetExecutableFile(),
-                                                   target->GetArchitecture(),
-                                                   exe_module_sp,
-                                                   executable_search_paths.GetSize() ? &executable_search_paths : NULL);
+            Error error = platform_sp->ResolveExecutable(exe_module_spec,
+                                                         exe_module_sp,
+                                                         executable_search_paths.GetSize() ? &executable_search_paths : NULL);
             if (!error.Success())
                 return;
             target->SetExecutableModule(exe_module_sp, true);
