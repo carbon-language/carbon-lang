@@ -66,6 +66,10 @@ Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                       int Val,
                                       ARMCC::CondCodes Pred, unsigned PredReg,
                                       unsigned MIFlags) const {
+  assert((isARMLowRegister(DestReg) ||
+          isVirtualRegister(DestReg)) &&
+             "Thumb1 does not have ldr to high register");
+
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
@@ -106,15 +110,15 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
       NumBytes = -NumBytes;
     }
     unsigned LdReg = DestReg;
-    if (DestReg == ARM::SP) {
+    if (DestReg == ARM::SP)
       assert(BaseReg == ARM::SP && "Unexpected!");
+    if (!isARMLowRegister(DestReg) && !MRI.isVirtualRegister(DestReg))
       LdReg = MF.getRegInfo().createVirtualRegister(&ARM::tGPRRegClass);
-    }
 
-    if (NumBytes <= 255 && NumBytes >= 0)
+    if (NumBytes <= 255 && NumBytes >= 0 && CanChangeCC) {
       AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
         .addImm(NumBytes).setMIFlags(MIFlags);
-    else if (NumBytes < 0 && NumBytes >= -255) {
+    } else if (NumBytes < 0 && NumBytes >= -255 && CanChangeCC) {
       AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
         .addImm(NumBytes).setMIFlags(MIFlags);
       AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tRSB), LdReg))
@@ -124,7 +128,8 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
                             ARMCC::AL, 0, MIFlags);
 
     // Emit add / sub.
-    int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
+    int Opc = (isSub) ? ARM::tSUBrr : ((isHigh || !CanChangeCC) ? ARM::tADDhirr
+                                                                : ARM::tADDrr);
     MachineInstrBuilder MIB =
       BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
     if (Opc != ARM::tADDhirr)
@@ -136,32 +141,10 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     AddDefaultPred(MIB);
 }
 
-/// calcNumMI - Returns the number of instructions required to materialize
-/// the specific add / sub r, c instruction.
-static unsigned calcNumMI(int Opc, int ExtraOpc, unsigned Bytes,
-                          unsigned NumBits, unsigned Scale) {
-  unsigned NumMIs = 0;
-  unsigned Chunk = ((1 << NumBits) - 1) * Scale;
-
-  if (Opc == ARM::tADDrSPi) {
-    unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
-    Bytes -= ThisVal;
-    NumMIs++;
-    NumBits = 8;
-    Scale = 1;  // Followed by a number of tADDi8.
-    Chunk = ((1 << NumBits) - 1) * Scale;
-  }
-
-  NumMIs += Bytes / Chunk;
-  if ((Bytes % Chunk) != 0)
-    NumMIs++;
-  if (ExtraOpc)
-    NumMIs++;
-  return NumMIs;
-}
-
 /// emitThumbRegPlusImmediate - Emits a series of instructions to materialize
-/// a destreg = basereg + immediate in Thumb code.
+/// a destreg = basereg + immediate in Thumb code. Tries a series of ADDs or
+/// SUBs first, and uses a constant pool value if the instruction sequence would
+/// be too long. This is allowed to modify the condition flags.
 void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator &MBBI,
                                      DebugLoc dl,
@@ -172,131 +155,146 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   bool isSub = NumBytes < 0;
   unsigned Bytes = (unsigned)NumBytes;
   if (isSub) Bytes = -NumBytes;
-  bool isMul4 = (Bytes & 3) == 0;
-  bool isTwoAddr = false;
-  bool DstNotEqBase = false;
-  unsigned NumBits = 1;
-  unsigned Scale = 1;
-  int Opc = 0;
-  int ExtraOpc = 0;
-  bool NeedCC = false;
 
-  if (DestReg == BaseReg && BaseReg == ARM::SP) {
-    assert(isMul4 && "Thumb sp inc / dec size must be multiple of 4!");
-    NumBits = 7;
-    Scale = 4;
-    Opc = isSub ? ARM::tSUBspi : ARM::tADDspi;
-    isTwoAddr = true;
-  } else if (!isSub && BaseReg == ARM::SP) {
-    // r1 = add sp, 403
-    // =>
-    // r1 = add sp, 100 * 4
-    // r1 = add r1, 3
-    if (!isMul4) {
-      Bytes &= ~3;
-      ExtraOpc = ARM::tADDi3;
-    }
-    DstNotEqBase = true;
-    NumBits = 8;
-    Scale = 4;
-    Opc = ARM::tADDrSPi;
-  } else {
-    // sp = sub sp, c
-    // r1 = sub sp, c
-    // r8 = sub sp, c
-    if (DestReg != BaseReg)
-      DstNotEqBase = true;
-    if (DestReg == ARM::SP) {
-      Opc = isSub ? ARM::tSUBspi : ARM::tADDspi;
-      assert(isMul4 && "Thumb sp inc / dec size must be multiple of 4!");
-      NumBits = 7;
-      Scale = 4;
+  int CopyOpc = 0;
+  unsigned CopyBits = 0;
+  unsigned CopyScale = 1;
+  bool CopyNeedsCC = false;
+  int ExtraOpc = 0;
+  unsigned ExtraBits = 0;
+  unsigned ExtraScale = 1;
+  bool ExtraNeedsCC = false;
+
+  // Strategy:
+  // We need to select two types of instruction, maximizing the available
+  // immediate range of each. The instructions we use will depend on whether
+  // DestReg and BaseReg are low, high or the stack pointer.
+  // * CopyOpc  - DestReg = BaseReg + imm
+  //              This will be emitted once if DestReg != BaseReg, and never if
+  //              DestReg == BaseReg.
+  // * ExtraOpc - DestReg = DestReg + imm
+  //              This will be emitted as many times as necessary to add the
+  //              full immediate.
+  // If the immediate ranges of these instructions are not large enough to cover
+  // NumBytes with a reasonable number of instructions, we fall back to using a
+  // value loaded from a constant pool.
+  if (DestReg == ARM::SP) {
+    if (BaseReg == ARM::SP) {
+      // sp -> sp
+      // Already in right reg, no copy needed
     } else {
-      Opc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
-      NumBits = 8;
-      NeedCC = true;
+      // low -> sp or high -> sp
+      CopyOpc = ARM::tMOVr;
+      CopyBits = 0;
     }
-    isTwoAddr = true;
+    ExtraOpc = isSub ? ARM::tSUBspi : ARM::tADDspi;
+    ExtraBits = 7;
+    ExtraScale = 4;
+  } else if (isARMLowRegister(DestReg)) {
+    if (BaseReg == ARM::SP) {
+      // sp -> low
+      assert(!isSub && "Thumb1 does not have tSUBrSPi");
+      CopyOpc = ARM::tADDrSPi;
+      CopyBits = 8;
+      CopyScale = 4;
+    } else if (DestReg == BaseReg) {
+      // low -> same low
+      // Already in right reg, no copy needed
+    } else if (isARMLowRegister(BaseReg)) {
+      // low -> different low
+      CopyOpc = isSub ? ARM::tSUBi3 : ARM::tADDi3;
+      CopyBits = 3;
+      CopyNeedsCC = true;
+    } else {
+      // high -> low
+      CopyOpc = ARM::tMOVr;
+      CopyBits = 0;
+    }
+    ExtraOpc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
+    ExtraBits = 8;
+    ExtraNeedsCC = true;
+  } else /* DestReg is high */ {
+    if (DestReg == BaseReg) {
+      // high -> same high
+      // Already in right reg, no copy needed
+    } else {
+      // {low,high,sp} -> high
+      CopyOpc = ARM::tMOVr;
+      CopyBits = 0;
+    }
+    ExtraOpc = 0;
   }
 
-  unsigned NumMIs = calcNumMI(Opc, ExtraOpc, Bytes, NumBits, Scale);
+  // We could handle an unaligned immediate with an unaligned copy instruction
+  // and an aligned extra instruction, but this case is not currently needed.
+  assert(((Bytes & 3) == 0 || ExtraScale == 1) &&
+         "Unaligned offset, but all instructions require alignment");
+
+  unsigned CopyRange = ((1 << CopyBits) - 1) * CopyScale;
+  // If we would emit the copy with an immediate of 0, just use tMOVr.
+  if (CopyOpc && Bytes < CopyScale) {
+    CopyOpc = ARM::tMOVr;
+    CopyBits = 0;
+    CopyScale = 1;
+    CopyNeedsCC = false;
+    CopyRange = 0;
+  }
+  unsigned ExtraRange = ((1 << ExtraBits) - 1) * ExtraScale; // per instruction
+  unsigned RequiredCopyInstrs = CopyOpc ? 1 : 0;
+  unsigned RangeAfterCopy = (CopyRange > Bytes) ? 0 : (Bytes - CopyRange);
+
+  // We could handle this case when the copy instruction does not require an
+  // aligned immediate, but we do not currently do this.
+  assert(RangeAfterCopy % ExtraScale == 0 &&
+         "Extra instruction requires immediate to be aligned");
+
+  unsigned RequiredExtraInstrs;
+  if (ExtraRange)
+    RequiredExtraInstrs = RoundUpToAlignment(RangeAfterCopy, ExtraRange) / ExtraRange;
+  else if (RangeAfterCopy > 0)
+    // We need an extra instruction but none is available
+    RequiredExtraInstrs = 1000000;
+  else
+    RequiredExtraInstrs = 0;
+  unsigned RequiredInstrs = RequiredCopyInstrs + RequiredExtraInstrs;
   unsigned Threshold = (DestReg == ARM::SP) ? 3 : 2;
-  if (NumMIs > Threshold) {
-    // This will expand into too many instructions. Load the immediate from a
-    // constpool entry.
+
+  // Use a constant pool, if the sequence of ADDs/SUBs is too expensive.
+  if (RequiredInstrs > Threshold) {
     emitThumbRegPlusImmInReg(MBB, MBBI, dl,
                              DestReg, BaseReg, NumBytes, true,
                              TII, MRI, MIFlags);
     return;
   }
 
-  if (DstNotEqBase) {
-    if (isARMLowRegister(DestReg) && isARMLowRegister(BaseReg)) {
-      // If both are low registers, emit DestReg = add BaseReg, max(Imm, 7)
-      unsigned Chunk = (1 << 3) - 1;
-      unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
-      Bytes -= ThisVal;
-      const MCInstrDesc &MCID = TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3);
-      const MachineInstrBuilder MIB =
-        AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg)
-                         .setMIFlags(MIFlags));
-      AddDefaultPred(MIB.addReg(BaseReg, RegState::Kill).addImm(ThisVal));
-    } else if (isARMLowRegister(DestReg) && BaseReg == ARM::SP && Bytes > 0) {
-      unsigned ThisVal = std::min(1020U, Bytes / 4 * 4);
-      Bytes -= ThisVal;
-      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), DestReg)
-                     .addReg(BaseReg, RegState::Kill).addImm(ThisVal / 4))
-        .setMIFlags(MIFlags);
-    } else {
-      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), DestReg)
-        .addReg(BaseReg, RegState::Kill))
-        .setMIFlags(MIFlags);
+  // Emit zero or one copy instructions
+  if (CopyOpc) {
+    unsigned CopyImm = std::min(Bytes, CopyRange) / CopyScale;
+    Bytes -= CopyImm * CopyScale;
+
+    MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(CopyOpc), DestReg);
+    if (CopyNeedsCC)
+      MIB = AddDefaultT1CC(MIB);
+    MIB.addReg(BaseReg, RegState::Kill);
+    if (CopyOpc != ARM::tMOVr) {
+      MIB.addImm(CopyImm);
     }
+    AddDefaultPred(MIB.setMIFlags(MIFlags));
+
     BaseReg = DestReg;
   }
 
-  unsigned Chunk = ((1 << NumBits) - 1) * Scale;
+  // Emit zero or more in-place add/sub instructions
   while (Bytes) {
-    unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
-    Bytes -= ThisVal;
-    ThisVal /= Scale;
-    // Build the new tADD / tSUB.
-    if (isTwoAddr) {
-      MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
-      if (NeedCC)
-        MIB = AddDefaultT1CC(MIB);
-      MIB.addReg(DestReg).addImm(ThisVal);
-      MIB = AddDefaultPred(MIB);
-      MIB.setMIFlags(MIFlags);
-    } else {
-      bool isKill = BaseReg != ARM::SP;
-      MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
-      if (NeedCC)
-        MIB = AddDefaultT1CC(MIB);
-      MIB.addReg(BaseReg, getKillRegState(isKill)).addImm(ThisVal);
-      MIB = AddDefaultPred(MIB);
-      MIB.setMIFlags(MIFlags);
+    unsigned ExtraImm = std::min(Bytes, ExtraRange) / ExtraScale;
+    Bytes -= ExtraImm * ExtraScale;
 
-      BaseReg = DestReg;
-      if (Opc == ARM::tADDrSPi) {
-        // r4 = add sp, imm
-        // r4 = add r4, imm
-        // ...
-        NumBits = 8;
-        Scale = 1;
-        Chunk = ((1 << NumBits) - 1) * Scale;
-        Opc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
-        NeedCC = isTwoAddr = true;
-      }
-    }
-  }
-
-  if (ExtraOpc) {
-    const MCInstrDesc &MCID = TII.get(ExtraOpc);
-    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg))
-                   .addReg(DestReg, RegState::Kill)
-                   .addImm(((unsigned)NumBytes) & 3)
-                   .setMIFlags(MIFlags));
+    MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(ExtraOpc), DestReg);
+    if (ExtraNeedsCC)
+      MIB = AddDefaultT1CC(MIB);
+    MIB.addReg(BaseReg).addImm(ExtraImm);
+    MIB = AddDefaultPred(MIB);
+    MIB.setMIFlags(MIFlags);
   }
 }
 

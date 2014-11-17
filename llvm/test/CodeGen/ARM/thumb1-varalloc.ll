@@ -1,5 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv6-apple-darwin | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv6-apple-darwin -regalloc=basic | FileCheck %s
+; RUN: llc < %s -o %t -filetype=obj -mtriple=thumbv6-apple-darwin
+; RUN: llvm-objdump -triple=thumbv6-apple-darwin -d %t | FileCheck %s
 
 @__bar = external hidden global i8*
 @__baz = external hidden global i8*
@@ -49,13 +51,13 @@ define void @test_local_var_addr() {
   %addr2 = alloca i8
 
 ; CHECK: mov r0, sp
-; CHECK: adds r0, r0, #{{[0-9]+}}
-; CHECK: blx _take_ptr
+; CHECK: adds r0, #{{[0-9]+}}
+; CHECK: blx
   call void @take_ptr(i8* %addr1)
 
 ; CHECK: mov r0, sp
-; CHECK: adds r0, r0, #{{[0-9]+}}
-; CHECK: blx _take_ptr
+; CHECK: adds r0, #{{[0-9]+}}
+; CHECK: blx
   call void @take_ptr(i8* %addr2)
 
   ret void
@@ -70,7 +72,7 @@ define void @test_simple_var() {
 
 ; CHECK: mov r0, sp
 ; CHECK-NOT: adds r0
-; CHECK: blx _take_ptr
+; CHECK: blx
   call void @take_ptr(i8* %addr8)
   ret void
 }
@@ -85,12 +87,12 @@ define void @test_local_var_addr_aligned() {
   %addr2 = bitcast i32* %addr2.32 to i8*
 
 ; CHECK: add r0, sp, #{{[0-9]+}}
-; CHECK: blx _take_ptr
+; CHECK: blx
   call void @take_ptr(i8* %addr1)
 
 ; CHECK: mov r0, sp
 ; CHECK-NOT: add r0
-; CHECK: blx _take_ptr
+; CHECK: blx
   call void @take_ptr(i8* %addr2)
 
   ret void
@@ -104,8 +106,35 @@ define void @test_local_var_big_offset() {
   %addr2.32 = alloca i32, i32 257
 
 ; CHECK: add [[RTMP:r[0-9]+]], sp, #1020
-; CHECL: add r0, [[RTMP]], #8
-; CHECK: blx _take_ptr
+; CHECK: adds [[RTMP]], #8
+; CHECK: blx
+  call void @take_ptr(i8* %addr1)
+
+  ret void
+}
+
+; Max range addressable with tADDrSPi
+define void @test_local_var_offset_1020() {
+; CHECK-LABEL: test_local_var_offset_1020
+  %addr1 = alloca i8, i32 4
+  %addr2 = alloca i8, i32 1020
+
+; CHECK: add r0, sp, #1020
+; CHECK-NEXT: blx
+  call void @take_ptr(i8* %addr1)
+
+  ret void
+}
+
+; Max range addressable with tADDrSPi + tADDi8
+define void @test_local_var_offset_1275() {
+; CHECK-LABEL: test_local_var_offset_1275
+  %addr1 = alloca i8, i32 1
+  %addr2 = alloca i8, i32 1275
+
+; CHECK: add r0, sp, #1020
+; CHECK: adds r0, #255
+; CHECK-NEXT: blx
   call void @take_ptr(i8* %addr1)
 
   ret void
