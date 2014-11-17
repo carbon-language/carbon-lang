@@ -197,7 +197,9 @@ namespace std
     template <class F, class... ArgTypes>
       using result_of_t       = typename result_of<F(ArgTypes...)>::type;  // C++14
 
-}  // std
+    template <class...>
+      using void_t = void;
+}  // C++17
 
 */
 #include <__config>
@@ -208,6 +210,11 @@ namespace std
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+template <class...> 
+struct __void_t { typedef void type; };
+#endif
 
 template <bool _Bp, class _If, class _Then>
     struct _LIBCPP_TYPE_VIS_ONLY conditional {typedef _If type;};
@@ -3672,6 +3679,10 @@ struct __has_operator_addressof
 {};
 
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+#if _LIBCPP_STD_VER > 14
+template <class...> using void_t = void;
+#endif
 
 _LIBCPP_END_NAMESPACE_STD
 
