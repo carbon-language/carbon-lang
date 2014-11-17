@@ -224,18 +224,108 @@ entry:
 }
 
 ; Do not fold the xor into the select
-define i32 @t15(i32 %p1, i32 %p2, i32 %p3) {
+define i32 @t15(i32 %p) {
 entry:
-; ARM: cmp            r0, #8
-; ARM: mov{{(le|gt)}} [[REG:r[0-9]+]], {{r[0-9]+}}
-; ARM: eor            r0, [[REG]], #1
+; ARM-LABEL: t15:
+; ARM: mov     [[REG:r[0-9]+]], #2
+; ARM: cmp     r0, #8
+; ARM: movwgt  [[REG:r[0-9]+]], #1
+; ARM: eor     r0, [[REG:r[0-9]+]], #1
 
-; T2: cmp       r0, #8
-; T2: it        [[CC:(le|gt)]]
-; T2: mov[[CC]] [[REG:r[0-9]+]], {{r[0-9]+}}
-; T2: eor       r0, [[REG:r[0-9]+]], #1
-  %cmp = icmp sgt i32 %p1, 8
-  %a = select i1 %cmp, i32 %p2, i32 %p3
+; T2-LABEL: t15:
+; T2: movs    [[REG:r[0-9]+]], #2
+; T2: cmp     [[REG:r[0-9]+]], #8
+; T2: it      gt
+; T2: movgt   [[REG:r[0-9]+]], #1
+; T2: eor     r0, [[REG:r[0-9]+]], #1
+  %cmp = icmp sgt i32 %p, 8
+  %a = select i1 %cmp, i32 1, i32 2
   %xor = xor i32 %a, 1
   ret i32 %xor
+}
+
+define i32 @t16(i32 %x, i32 %y) {
+entry:
+; ARM-LABEL: t16:
+; ARM: and r0, {{r[0-9]+}}, {{r[0-9]+}}
+
+; T2-LABEL: t16:
+; T2: ands r0, {{r[0-9]+}}
+  %cmp = icmp eq i32 %x, 0
+  %cond = select i1 %cmp, i32 5, i32 2
+  %cmp1 = icmp eq i32 %y, 0
+  %cond2 = select i1 %cmp1, i32 3, i32 4
+  %and = and i32 %cond2, %cond
+  ret i32 %and
+}
+
+define i32 @t17(i32 %x, i32 %y) #0 {
+entry:
+; ARM-LABEL: t17:
+; ARM: and r0, {{r[0-9]+}}, {{r[0-9]+}}
+
+; T2-LABEL: t17:
+; T2: ands r0, {{r[0-9]+}}
+  %cmp = icmp eq i32 %x, -1
+  %cond = select i1 %cmp, i32 5, i32 2
+  %cmp1 = icmp eq i32 %y, -1
+  %cond2 = select i1 %cmp1, i32 3, i32 4
+  %and = and i32 %cond2, %cond
+  ret i32 %and
+}
+
+define i32 @t18(i32 %x, i32 %y) #0 {
+entry:
+; ARM-LABEL: t18:
+; ARM: and r0, {{r[0-9]+}}, {{r[0-9]+}}
+
+; T2-LABEL: t18:
+; T2: and.w r0, {{r[0-9]+}}
+  %cmp = icmp ne i32 %x, 0
+  %cond = select i1 %cmp, i32 5, i32 2
+  %cmp1 = icmp ne i32 %x, -1
+  %cond2 = select i1 %cmp1, i32 3, i32 4
+  %and = and i32 %cond2, %cond
+  ret i32 %and
+}
+
+define i32 @t19(i32 %x, i32 %y) #0 {
+entry:
+; ARM-LABEL: t19:
+; ARM: orr r0, {{r[0-9]+}}, {{r[0-9]+}}
+
+; T2-LABEL: t19:
+; T2: orrs r0, {{r[0-9]+}}
+  %cmp = icmp ne i32 %x, 0
+  %cond = select i1 %cmp, i32 5, i32 2
+  %cmp1 = icmp ne i32 %y, 0
+  %cond2 = select i1 %cmp1, i32 3, i32 4
+  %or = or i32 %cond2, %cond
+  ret i32 %or
+}
+
+define i32 @t20(i32 %x, i32 %y) #0 {
+entry:
+; ARM-LABEL: t20:
+; ARM: orr r0, {{r[0-9]+}}, {{r[0-9]+}}
+
+; T2-LABEL: t20:
+; T2: orrs r0, {{r[0-9]+}}
+  %cmp = icmp ne i32 %x, -1
+  %cond = select i1 %cmp, i32 5, i32 2
+  %cmp1 = icmp ne i32 %y, -1
+  %cond2 = select i1 %cmp1, i32 3, i32 4
+  %or = or i32 %cond2, %cond
+  ret i32 %or
+}
+
+define  <2 x i32> @t21(<2 x i32> %lhs, <2 x i32> %rhs) {
+; CHECK-LABEL: t21:
+; CHECK-NOT: eor
+; CHECK: mvn
+; CHECK-NOT: eor
+  %tst = icmp eq <2 x i32> %lhs, %rhs
+  %ntst = xor <2 x i1> %tst, <i1 1 , i1 undef>
+  %btst = sext <2 x i1> %ntst to <2 x i32>
+  ret <2 x i32> %btst
 }
