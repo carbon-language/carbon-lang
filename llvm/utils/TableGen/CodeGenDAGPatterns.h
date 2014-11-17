@@ -294,7 +294,7 @@ private:
   std::string getPredCode() const;
   std::string getImmCode() const;
 };
-  
+
 
 /// FIXME: TreePatternNode's can be shared in some cases (due to dag-shaped
 /// patterns), and as such should be ref counted.  We currently just leak all
@@ -508,7 +508,7 @@ class TreePattern {
   /// Trees - The list of pattern trees which corresponds to this pattern.
   /// Note that PatFrag's only have a single tree.
   ///
-  std::vector<TreePatternNode*> Trees;
+  std::vector<std::unique_ptr<TreePatternNode>> Trees;
 
   /// NamedNodes - This is all of the nodes that have names in the trees in this
   /// pattern.
@@ -548,15 +548,17 @@ public:
               CodeGenDAGPatterns &ise);
   TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
               CodeGenDAGPatterns &ise);
-  TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
-              CodeGenDAGPatterns &ise);
+  TreePattern(Record *TheRec, std::unique_ptr<TreePatternNode> Pat,
+              bool isInput, CodeGenDAGPatterns &ise);
 
   /// getTrees - Return the tree patterns which corresponds to this pattern.
   ///
-  const std::vector<TreePatternNode*> &getTrees() const { return Trees; }
+  const std::vector<std::unique_ptr<TreePatternNode>> &getTrees() const {
+    return Trees;
+  }
   unsigned getNumTrees() const { return Trees.size(); }
-  TreePatternNode *getTree(unsigned i) const { return Trees[i]; }
-  TreePatternNode *getOnlyTree() const {
+  TreePatternNode *getTree(unsigned i) const { return Trees[i].get(); }
+  std::unique_ptr<TreePatternNode> &getOnlyTree() {
     assert(Trees.size() == 1 && "Doesn't have exactly one pattern!");
     return Trees[0];
   }
@@ -586,7 +588,8 @@ public:
   /// PatFrag references.
   void InlinePatternFragments() {
     for (unsigned i = 0, e = Trees.size(); i != e; ++i)
-      Trees[i] = Trees[i]->InlinePatternFragments(*this);
+      // Can leak, if InlinePatternFragments doesn't return 'this'
+      Trees[i].reset(Trees[i].release()->InlinePatternFragments(*this));
   }
 
   /// InferAllTypes - Infer/propagate as many types throughout the expression
@@ -609,7 +612,7 @@ public:
   void dump() const;
 
 private:
-  TreePatternNode *ParseTreePattern(Init *DI, StringRef OpName);
+  std::unique_ptr<TreePatternNode> ParseTreePattern(Init *DI, StringRef OpName);
   void ComputeNamedNodes();
   void ComputeNamedNodes(TreePatternNode *N);
 };
@@ -625,14 +628,15 @@ class DAGInstruction {
   std::vector<Record*> Results;
   std::vector<Record*> Operands;
   std::vector<Record*> ImpResults;
-  TreePatternNode *ResultPattern;
+  std::unique_ptr<TreePatternNode> ResultPattern;
+
 public:
   DAGInstruction(TreePattern *TP,
                  const std::vector<Record*> &results,
                  const std::vector<Record*> &operands,
                  const std::vector<Record*> &impresults)
     : Pattern(TP), Results(results), Operands(operands),
-      ImpResults(impresults), ResultPattern(nullptr) {}
+      ImpResults(impresults)  {}
 
   TreePattern *getPattern() const { return Pattern; }
   unsigned getNumResults() const { return Results.size(); }
@@ -640,7 +644,9 @@ public:
   unsigned getNumImpResults() const { return ImpResults.size(); }
   const std::vector<Record*>& getImpResults() const { return ImpResults; }
 
-  void setResultPattern(TreePatternNode *R) { ResultPattern = R; }
+  void setResultPattern(std::unique_ptr<TreePatternNode> R) {
+    ResultPattern = std::move(R);
+  }
 
   Record *getResult(unsigned RN) const {
     assert(RN < Results.size());
@@ -657,7 +663,7 @@ public:
     return ImpResults[RN];
   }
 
-  TreePatternNode *getResultPattern() const { return ResultPattern; }
+  TreePatternNode *getResultPattern() const { return ResultPattern.get(); }
 };
 
 /// PatternToMatch - Used by CodeGenDAGPatterns to keep tab of patterns

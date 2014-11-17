@@ -1902,10 +1902,10 @@ TreePattern::TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
   Trees.push_back(ParseTreePattern(Pat, ""));
 }
 
-TreePattern::TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
+TreePattern::TreePattern(Record *TheRec, std::unique_ptr<TreePatternNode> Pat, bool isInput,
                          CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp),
                          isInputPattern(isInput), HasError(false) {
-  Trees.push_back(Pat);
+  Trees.push_back(std::move(Pat));
 }
 
 void TreePattern::error(const Twine &Msg) {
@@ -1918,7 +1918,7 @@ void TreePattern::error(const Twine &Msg) {
 
 void TreePattern::ComputeNamedNodes() {
   for (unsigned i = 0, e = Trees.size(); i != e; ++i)
-    ComputeNamedNodes(Trees[i]);
+    ComputeNamedNodes(Trees[i].get());
 }
 
 void TreePattern::ComputeNamedNodes(TreePatternNode *N) {
@@ -1929,8 +1929,8 @@ void TreePattern::ComputeNamedNodes(TreePatternNode *N) {
     ComputeNamedNodes(N->getChild(i));
 }
 
-
-TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
+std::unique_ptr<TreePatternNode>
+TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName) {
   if (DefInit *DI = dyn_cast<DefInit>(TheInit)) {
     Record *R = DI->getDef();
 
@@ -1944,7 +1944,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
         OpName);
 
     // Input argument?
-    TreePatternNode *Res = new TreePatternNode(DI, 1);
+    auto Res = llvm::make_unique<TreePatternNode>(DI, 1);
     if (R->getName() == "node" && !OpName.empty()) {
       if (OpName.empty())
         error("'node' argument requires a name to match with operand list");
@@ -1959,7 +1959,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
   if (TheInit == UnsetInit::get()) {
     if (OpName.empty())
       error("'?' argument requires a name to match with operand list");
-    TreePatternNode *Res = new TreePatternNode(TheInit, 1);
+    auto Res = llvm::make_unique<TreePatternNode>(TheInit, 1);
     Args.push_back(OpName);
     Res->setName(OpName);
     return Res;
@@ -1968,7 +1968,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
   if (IntInit *II = dyn_cast<IntInit>(TheInit)) {
     if (!OpName.empty())
       error("Constant int argument should not have a name!");
-    return new TreePatternNode(II, 1);
+    return llvm::make_unique<TreePatternNode>(II, 1);
   }
 
   if (BitsInit *BI = dyn_cast<BitsInit>(TheInit)) {
@@ -1994,7 +1994,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     if (Dag->getNumArgs() != 1)
       error("Type cast only takes one operand!");
 
-    TreePatternNode *New = ParseTreePattern(Dag->getArg(0), Dag->getArgName(0));
+    auto New = ParseTreePattern(Dag->getArg(0), Dag->getArgName(0));
 
     // Apply the type cast.
     assert(New->getNumTypes() == 1 && "FIXME: Unhandled");
@@ -2044,7 +2044,8 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
 
   // Parse all the operands.
   for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i)
-    Children.push_back(ParseTreePattern(Dag->getArg(i), Dag->getArgName(i)));
+    Children.push_back(
+        ParseTreePattern(Dag->getArg(i), Dag->getArgName(i)).release());
 
   // If the operator is an intrinsic, then this is just syntactic sugar for for
   // (intrinsic_* <number>, ..children..).  Pick the right intrinsic node, and
@@ -2089,7 +2090,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
   }
 
   unsigned NumResults = GetNumNodeResults(Operator, CDP);
-  TreePatternNode *Result = new TreePatternNode(Operator, Children, NumResults);
+  auto Result = llvm::make_unique<TreePatternNode>(Operator, Children, NumResults);
   Result->setName(OpName);
 
   if (!Dag->getName().empty()) {
@@ -2105,7 +2106,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
 /// more type generic things and have useless type casts fold away.
 ///
 /// This returns true if any change is made.
-static bool SimplifyTree(TreePatternNode *&N) {
+static bool SimplifyTree(std::unique_ptr<TreePatternNode> &N) {
   if (N->isLeaf())
     return false;
 
@@ -2115,7 +2116,7 @@ static bool SimplifyTree(TreePatternNode *&N) {
       N->getExtType(0).isConcrete() &&
       N->getExtType(0) == N->getChild(0)->getExtType(0) &&
       N->getName().empty()) {
-    N = N->getChild(0);
+    N.reset(N->getChild(0));
     SimplifyTree(N);
     return true;
   }
@@ -2123,9 +2124,9 @@ static bool SimplifyTree(TreePatternNode *&N) {
   // Walk all children.
   bool MadeChange = false;
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-    TreePatternNode *Child = N->getChild(i);
+    std::unique_ptr<TreePatternNode> Child(N->getChild(i));
     MadeChange |= SimplifyTree(Child);
-    N->setChild(i, Child);
+    N->setChild(i, Child.release());
   }
   return MadeChange;
 }
@@ -2172,7 +2173,7 @@ InferAllTypes(const StringMap<SmallVector<TreePatternNode*,1> > *InNamedTypes) {
           // changing the type of the input register in this case.  This allows
           // us to match things like:
           //  def : Pat<(v1i64 (bitconvert(v2i32 DPR:$src))), (v1i64 DPR:$src)>;
-          if (Nodes[i] == Trees[0] && Nodes[i]->isLeaf()) {
+          if (Nodes[i] == Trees[0].get() && Nodes[i]->isLeaf()) {
             DefInit *DI = dyn_cast<DefInit>(Nodes[i]->getLeafValue());
             if (DI && (DI->getDef()->isSubClassOf("RegisterClass") ||
                        DI->getDef()->isSubClassOf("RegisterOperand")))
@@ -2924,26 +2925,27 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
       I->error("Input operand $" + InstInputsCheck.begin()->first +
                " occurs in pattern but not in operands list!");
 
-    TreePatternNode *ResultPattern =
-      new TreePatternNode(I->getRecord(), ResultNodeOperands,
-                          GetNumNodeResults(I->getRecord(), *this));
+    auto ResultPattern = llvm::make_unique<TreePatternNode>(
+        I->getRecord(), ResultNodeOperands,
+        GetNumNodeResults(I->getRecord(), *this));
+
     // Copy fully inferred output node type to instruction result pattern.
     for (unsigned i = 0; i != NumResults; ++i)
       ResultPattern->setType(i, Res0Node->getExtType(i));
 
     // Create and insert the instruction.
     // FIXME: InstImpResults should not be part of DAGInstruction.
-    DAGInstruction TheInst(I, Results, Operands, InstImpResults);
-    DAGInsts.insert(std::make_pair(I->getRecord(), TheInst));
+    DAGInsts.insert(std::make_pair(
+        I->getRecord(), DAGInstruction(I, Results, Operands, InstImpResults)));
 
     // Use a temporary tree pattern to infer all types and make sure that the
     // constructed result is correct.  This depends on the instruction already
     // being inserted into the DAGInsts map.
-    TreePattern Temp(I->getRecord(), ResultPattern, false, *this);
+    TreePattern Temp(I->getRecord(), std::move(ResultPattern), false, *this);
     Temp.InferAllTypes(&I->getNamedNodesMap());
 
     DAGInstruction &TheInsertedInst = DAGInsts.find(I->getRecord())->second;
-    TheInsertedInst.setResultPattern(Temp.getOnlyTree());
+    TheInsertedInst.setResultPattern(std::move(Temp.getOnlyTree()));
 
     return TheInsertedInst;
   }
@@ -3375,7 +3377,7 @@ void CodeGenDAGPatterns::ParsePatterns() {
                                   InstImpResults);
 
     // Promote the xform function to be an explicit node if set.
-    TreePatternNode *DstPattern = Result.getOnlyTree();
+    auto DstPattern = std::move(Result.getOnlyTree());
     std::vector<TreePatternNode*> ResultNodeOperands;
     for (unsigned ii = 0, ee = DstPattern->getNumChildren(); ii != ee; ++ii) {
       TreePatternNode *OpNode = DstPattern->getChild(ii);
@@ -3387,16 +3389,16 @@ void CodeGenDAGPatterns::ParsePatterns() {
       }
       ResultNodeOperands.push_back(OpNode);
     }
-    DstPattern = Result.getOnlyTree();
-    if (!DstPattern->isLeaf())
-      DstPattern = new TreePatternNode(DstPattern->getOperator(),
-                                       ResultNodeOperands,
-                                       DstPattern->getNumTypes());
+    if (!DstPattern->isLeaf()) {
+      auto NewPattern = llvm::make_unique<TreePatternNode>(
+          DstPattern->getOperator(), ResultNodeOperands,
+          DstPattern->getNumTypes());
+      for (unsigned i = 0, e = DstPattern->getNumTypes(); i != e; ++i)
+        NewPattern->setType(i, DstPattern->getExtType(i));
+      DstPattern = std::move(NewPattern);
+    }
 
-    for (unsigned i = 0, e = Result.getOnlyTree()->getNumTypes(); i != e; ++i)
-      DstPattern->setType(i, Result.getOnlyTree()->getExtType(i));
-
-    TreePattern Temp(Result.getRecord(), DstPattern, false, *this);
+    TreePattern Temp(Result.getRecord(), std::move(DstPattern), false, *this);
     Temp.InferAllTypes();
 
 
@@ -3404,7 +3406,7 @@ void CodeGenDAGPatterns::ParsePatterns() {
                     PatternToMatch(CurPattern,
                                    CurPattern->getValueAsListInit("Predicates"),
                                    Pattern->getTree(0),
-                                   Temp.getOnlyTree(), InstImpResults,
+                                   Temp.getOnlyTree().release(), InstImpResults,
                                    CurPattern->getValueAsInt("AddedComplexity"),
                                    CurPattern->getID()));
   }
