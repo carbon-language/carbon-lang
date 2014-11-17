@@ -345,7 +345,7 @@ public:
 
     // If the field is fully contained by CurWord, return it quickly.
     if (BitsInCurWord >= NumBits) {
-      word_t R = CurWord & ((word_t(1) << NumBits) - 1);
+      word_t R = CurWord & ((word_t(1) << (NumBits & Mask)) - 1);
 
       // Use a mask to avoid undefined behavior.
       CurWord >>= (NumBits & Mask);
@@ -363,7 +363,7 @@ public:
     if (BitsLeft > BitsInCurWord)
       return 0;
 
-    word_t R2 = CurWord & ((word_t(1) << BitsLeft) - 1);
+    word_t R2 = CurWord & ((word_t(1) << (BitsLeft & Mask)) - 1);
 
     // Use a mask to avoid undefined behavior.
     CurWord >>= (BitsLeft & Mask);
