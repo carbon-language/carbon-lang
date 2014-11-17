@@ -180,8 +180,7 @@ PlatformFreeBSD::RunShellCommand (const char *command,
 
 
 Error
-PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
-                                    const ArchSpec &exe_arch,
+PlatformFreeBSD::ResolveExecutable (const ModuleSpec &module_spec,
                                     lldb::ModuleSP &exe_module_sp,
                                     const FileSpecList *module_search_paths_ptr)
 {
@@ -189,35 +188,33 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
     // Nothing special to do here, just use the actual file and architecture
 
     char exe_path[PATH_MAX];
-    FileSpec resolved_exe_file (exe_file);
+    ModuleSpec resolved_module_spec(module_spec);
 
     if (IsHost())
     {
-        // If we have "ls" as the exe_file, resolve the executable location based on
+        // If we have "ls" as the module_spec's file, resolve the executable location based on
         // the current path variables
-        if (!resolved_exe_file.Exists())
+        if (!resolved_module_spec.GetFileSpec().Exists())
         {
-            exe_file.GetPath(exe_path, sizeof(exe_path));
-            resolved_exe_file.SetFile(exe_path, true);
+            module_spec.GetFileSpec().GetPath(exe_path, sizeof(exe_path));
+            resolved_module_spec.GetFileSpec().SetFile(exe_path, true);
         }
 
-        if (!resolved_exe_file.Exists())
-            resolved_exe_file.ResolveExecutableLocation ();
+        if (!resolved_module_spec.GetFileSpec().Exists())
+            resolved_module_spec.GetFileSpec().ResolveExecutableLocation ();
 
-        if (resolved_exe_file.Exists())
+        if (resolved_module_spec.GetFileSpec().Exists())
             error.Clear();
         else
         {
-            exe_file.GetPath(exe_path, sizeof(exe_path));
-            error.SetErrorStringWithFormat("unable to find executable for '%s'", exe_path);
+            error.SetErrorStringWithFormat("unable to find executable for '%s'", resolved_module_spec.GetFileSpec().GetPath().c_str());
         }
     }
     else
     {
         if (m_remote_platform_sp)
         {
-            error = m_remote_platform_sp->ResolveExecutable (exe_file,
-                                                             exe_arch,
+            error = m_remote_platform_sp->ResolveExecutable (module_spec,
                                                              exe_module_sp,
                                                              module_search_paths_ptr);
         }
@@ -226,25 +223,24 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             // We may connect to a process and use the provided executable (Don't use local $PATH).
 
             // Resolve any executable within a bundle on MacOSX
-            Host::ResolveExecutableInBundle (resolved_exe_file);
+            Host::ResolveExecutableInBundle (resolved_module_spec.GetFileSpec());
 
-            if (resolved_exe_file.Exists()) {
+            if (resolved_module_spec.GetFileSpec().Exists())
+            {
                 error.Clear();
             }
             else
             {
-                exe_file.GetPath(exe_path, sizeof(exe_path));
-                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.", exe_path);
+                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.", resolved_module_spec.GetFileSpec().GetPath().c_str());
             }
         }
     }
 
     if (error.Success())
     {
-        ModuleSpec module_spec (resolved_exe_file, exe_arch);
-        if (module_spec.GetArchitecture().IsValid())
+        if (resolved_module_spec.GetArchitecture().IsValid())
         {
-            error = ModuleList::GetSharedModule (module_spec,
+            error = ModuleList::GetSharedModule (resolved_module_spec,
                                                  exe_module_sp,
                                                  module_search_paths_ptr,
                                                  NULL,
@@ -254,8 +250,8 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             {
                 exe_module_sp.reset();
                 error.SetErrorStringWithFormat ("'%s' doesn't contain the architecture %s",
-                                                exe_file.GetPath().c_str(),
-                                                exe_arch.GetArchitectureName());
+                                                resolved_module_spec.GetFileSpec().GetPath().c_str(),
+                                                resolved_module_spec.GetArchitecture().GetArchitectureName());
             }
         }
         else
@@ -264,10 +260,9 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             // the architectures that we should be using (in the correct order)
             // and see if we can find a match that way
             StreamString arch_names;
-            ArchSpec platform_arch;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
+            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, resolved_module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (module_spec,
+                error = ModuleList::GetSharedModule (resolved_module_spec,
                                                      exe_module_sp,
                                                      module_search_paths_ptr,
                                                      NULL,
@@ -283,21 +278,21 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
 
                 if (idx > 0)
                     arch_names.PutCString (", ");
-                arch_names.PutCString (platform_arch.GetArchitectureName());
+                arch_names.PutCString (resolved_module_spec.GetArchitecture().GetArchitectureName());
             }
 
             if (error.Fail() || !exe_module_sp)
             {
-                if (exe_file.Readable())
+                if (resolved_module_spec.GetFileSpec().Readable())
                 {
                     error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
-                                                    exe_file.GetPath().c_str(),
+                                                    resolved_module_spec.GetFileSpec().GetPath().c_str(),
                                                     GetPluginName().GetCString(),
                                                     arch_names.GetString().c_str());
                 }
                 else
                 {
-                    error.SetErrorStringWithFormat("'%s' is not readable", exe_file.GetPath().c_str());
+                    error.SetErrorStringWithFormat("'%s' is not readable", resolved_module_spec.GetFileSpec().GetPath().c_str());
                 }
             }
         }
@@ -514,7 +509,6 @@ lldb::ProcessSP
 PlatformFreeBSD::Attach(ProcessAttachInfo &attach_info,
                         Debugger &debugger,
                         Target *target,
-                        Listener &listener,
                         Error &error)
 {
     lldb::ProcessSP process_sp;
@@ -542,7 +536,7 @@ PlatformFreeBSD::Attach(ProcessAttachInfo &attach_info,
             // The freebsd always currently uses the GDB remote debugger plug-in
             // so even when debugging locally we are debugging remotely!
             // Just like the darwin plugin.
-            process_sp = target->CreateProcess (listener, "gdb-remote", NULL);
+            process_sp = target->CreateProcess (attach_info.GetListenerForProcess(debugger), "gdb-remote", NULL);
 
             if (process_sp)
                 error = process_sp->Attach (attach_info);
@@ -551,7 +545,7 @@ PlatformFreeBSD::Attach(ProcessAttachInfo &attach_info,
     else
     {
         if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, listener, error);
+            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, error);
         else
             error.SetErrorString ("the platform is not currently connected");
     }

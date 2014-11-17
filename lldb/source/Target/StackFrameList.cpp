@@ -288,8 +288,8 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
         do
         {
             uint32_t idx = m_concrete_frames_fetched++;
-            lldb::addr_t pc;
-            lldb::addr_t cfa;
+            lldb::addr_t pc = LLDB_INVALID_ADDRESS;
+            lldb::addr_t cfa = LLDB_INVALID_ADDRESS;
             if (idx == 0)
             {
                 // We might have already created frame zero, only create it
@@ -625,11 +625,14 @@ StackFrameList::GetFrameWithStackID (const StackID &stack_id)
         if (begin != end)
         {
             collection::const_iterator pos = std::lower_bound (begin, end, stack_id, CompareStackID);
-            if (pos != end && (*pos)->GetStackID() == stack_id)
-                return *pos;
+            if (pos != end)
+            {
+                if ((*pos)->GetStackID() == stack_id)
+                    return *pos;
+            }
             
-            if (m_frames.back()->GetStackID() < stack_id)
-                frame_idx = m_frames.size();
+//            if (m_frames.back()->GetStackID() < stack_id)
+//                frame_idx = m_frames.size();
         }
         do
         {

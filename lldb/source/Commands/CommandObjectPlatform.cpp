@@ -1347,7 +1347,6 @@ protected:
                 ProcessSP process_sp (platform_sp->DebugProcess (m_options.launch_info, 
                                                                  debugger,
                                                                  target,
-                                                                 debugger.GetListener(),
                                                                  error));
                 if (process_sp && process_sp->IsAlive())
                 {
@@ -1933,7 +1932,7 @@ public:
         {
             Error err;
             ProcessSP remote_process_sp =
-            platform_sp->Attach(m_options.attach_info, m_interpreter.GetDebugger(), NULL, m_interpreter.GetDebugger().GetListener(), err);
+            platform_sp->Attach(m_options.attach_info, m_interpreter.GetDebugger(), NULL, err);
             if (err.Fail())
             {
                 result.AppendError(err.AsCString());

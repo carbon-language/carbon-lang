@@ -97,27 +97,25 @@ PlatformKalimba::Terminate ()
 }
 
 Error
-PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
-                                  const ArchSpec &exe_arch,
-                                  lldb::ModuleSP &exe_module_sp,
-                                  const FileSpecList *module_search_paths_ptr)
+PlatformKalimba::ResolveExecutable (const ModuleSpec &ms,
+                                    lldb::ModuleSP &exe_module_sp,
+                                    const FileSpecList *module_search_paths_ptr)
 {
     Error error;
     char exe_path[PATH_MAX];
-    FileSpec resolved_exe_file (exe_file);
+    ModuleSpec resolved_module_spec(ms);
 
-    if (!resolved_exe_file.Exists())
+    if (!resolved_module_spec.GetFileSpec().Exists())
     {
-        exe_file.GetPath(exe_path, sizeof(exe_path));
+        resolved_module_spec.GetFileSpec().GetPath(exe_path, sizeof(exe_path));
         error.SetErrorStringWithFormat("unable to find executable for '%s'", exe_path);
     }
 
     if (error.Success())
     {
-        ModuleSpec module_spec (resolved_exe_file, exe_arch);
-        if (exe_arch.IsValid())
+        if (resolved_module_spec.GetArchitecture().IsValid())
         {
-            error = ModuleList::GetSharedModule (module_spec, 
+            error = ModuleList::GetSharedModule (resolved_module_spec,
                                                  exe_module_sp, 
                                                  NULL, 
                                                  NULL,
@@ -126,7 +124,7 @@ PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
             {
                 // If we failed, it may be because the vendor and os aren't known. If that is the
                 // case, try setting them to the host architecture and give it another try.
-                llvm::Triple &module_triple = module_spec.GetArchitecture().GetTriple(); 
+                llvm::Triple &module_triple = resolved_module_spec.GetArchitecture().GetTriple();
                 bool is_vendor_specified = (module_triple.getVendor() != llvm::Triple::UnknownVendor);
                 bool is_os_specified = (module_triple.getOS() != llvm::Triple::UnknownOS);
                 if (!is_vendor_specified || !is_os_specified)
@@ -138,7 +136,7 @@ PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
                     if (!is_os_specified)
                         module_triple.setOSName (host_triple.getOSName());
 
-                    error = ModuleList::GetSharedModule (module_spec, 
+                    error = ModuleList::GetSharedModule (resolved_module_spec,
                                                          exe_module_sp, 
                                                          NULL, 
                                                          NULL,
@@ -151,8 +149,8 @@ PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
             {
                 exe_module_sp.reset();
                 error.SetErrorStringWithFormat ("'%s' doesn't contain the architecture %s",
-                                                exe_file.GetPath().c_str(),
-                                                exe_arch.GetArchitectureName());
+                                                resolved_module_spec.GetFileSpec().GetPath().c_str(),
+                                                resolved_module_spec.GetArchitecture().GetArchitectureName());
             }
         }
         else
@@ -161,9 +159,9 @@ PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
             // the architectures that we should be using (in the correct order)
             // and see if we can find a match that way
             StreamString arch_names;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
+            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, resolved_module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (module_spec, 
+                error = ModuleList::GetSharedModule (resolved_module_spec,
                                                      exe_module_sp, 
                                                      NULL, 
                                                      NULL,
@@ -179,21 +177,21 @@ PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
                 
                 if (idx > 0)
                     arch_names.PutCString (", ");
-                arch_names.PutCString (module_spec.GetArchitecture().GetArchitectureName());
+                arch_names.PutCString (resolved_module_spec.GetArchitecture().GetArchitectureName());
             }
             
             if (error.Fail() || !exe_module_sp)
             {
-                if (exe_file.Readable())
+                if (resolved_module_spec.GetFileSpec().Readable())
                 {
                     error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
-                                                    exe_file.GetPath().c_str(),
+                                                    resolved_module_spec.GetFileSpec().GetPath().c_str(),
                                                     GetPluginName().GetCString(),
                                                     arch_names.GetString().c_str());
                 }
                 else
                 {
-                    error.SetErrorStringWithFormat("'%s' is not readable", exe_file.GetPath().c_str());
+                    error.SetErrorStringWithFormat("'%s' is not readable", resolved_module_spec.GetFileSpec().GetPath().c_str());
                 }
             }
         }
@@ -298,10 +296,9 @@ PlatformKalimba::LaunchProcess (ProcessLaunchInfo &launch_info)
 
 lldb::ProcessSP
 PlatformKalimba::Attach(ProcessAttachInfo &attach_info,
-                      Debugger &debugger,
-                      Target *target,
-                      Listener &listener,
-                      Error &error)
+                        Debugger &debugger,
+                        Target *target,
+                        Error &error)
 {
     lldb::ProcessSP process_sp;
     if (IsHost())
@@ -311,7 +308,7 @@ PlatformKalimba::Attach(ProcessAttachInfo &attach_info,
     else
     {
         if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, listener, error);
+            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, error);
         else
             error.SetErrorString ("the platform is not currently connected");
     }

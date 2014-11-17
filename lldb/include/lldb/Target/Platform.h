@@ -141,8 +141,7 @@ namespace lldb_private {
         ///     a suitable executable, \b false otherwise.
         //------------------------------------------------------------------
         virtual Error
-        ResolveExecutable (const FileSpec &exe_file,
-                           const ArchSpec &arch,
+        ResolveExecutable (const ModuleSpec &module_spec,
                            lldb::ModuleSP &module_sp,
                            const FileSpecList *module_search_paths_ptr);
 
@@ -413,7 +412,6 @@ namespace lldb_private {
         DebugProcess (ProcessLaunchInfo &launch_info,
                       Debugger &debugger,
                       Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-                      Listener &listener,
                       Error &error);
 
         //------------------------------------------------------------------
@@ -438,7 +436,6 @@ namespace lldb_private {
         Attach (ProcessAttachInfo &attach_info,
                 Debugger &debugger,
                 Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-                Listener &listener,
                 Error &error) = 0;
 
         //------------------------------------------------------------------

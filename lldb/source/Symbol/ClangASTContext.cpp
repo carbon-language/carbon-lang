@@ -889,6 +889,13 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
                 break;
                 
             case DW_ATE_float:
+                if (streq(type_name, "float") && QualTypeMatchesBitSize (bit_size, ast, ast->FloatTy))
+                    return ClangASTType (ast, ast->FloatTy.getAsOpaquePtr());
+                if (streq(type_name, "double") && QualTypeMatchesBitSize (bit_size, ast, ast->DoubleTy))
+                    return ClangASTType (ast, ast->DoubleTy.getAsOpaquePtr());
+                if (streq(type_name, "long double") && QualTypeMatchesBitSize (bit_size, ast, ast->LongDoubleTy))
+                    return ClangASTType (ast, ast->LongDoubleTy.getAsOpaquePtr());
+                // Fall back to not requring a name match
                 if (QualTypeMatchesBitSize (bit_size, ast, ast->FloatTy))
                     return ClangASTType (ast, ast->FloatTy.getAsOpaquePtr());
                 if (QualTypeMatchesBitSize (bit_size, ast, ast->DoubleTy))

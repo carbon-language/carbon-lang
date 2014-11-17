@@ -607,8 +607,7 @@ public:
     Destroy();
     
     Error
-    Launch (Listener &listener,
-            ProcessLaunchInfo &launch_info,
+    Launch (ProcessLaunchInfo &launch_info,
             Stream *stream); // Optional stream to receive first stop info
 
     //------------------------------------------------------------------
@@ -1146,6 +1145,12 @@ public:
     SetSectionLoadAddress (const lldb::SectionSP &section,
                            lldb::addr_t load_addr,
                            bool warn_multiple = false);
+
+    size_t
+    UnloadModuleSections (const lldb::ModuleSP &module_sp);
+
+    size_t
+    UnloadModuleSections (const ModuleList &module_list);
 
     bool
     SetSectionUnloaded (const lldb::SectionSP &section_sp);

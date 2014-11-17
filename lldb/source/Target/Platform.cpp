@@ -882,15 +882,13 @@ Platform::SetOSVersion (uint32_t major,
 
 
 Error
-Platform::ResolveExecutable (const FileSpec &exe_file,
-                             const ArchSpec &exe_arch,
+Platform::ResolveExecutable (const ModuleSpec &module_spec,
                              lldb::ModuleSP &exe_module_sp,
                              const FileSpecList *module_search_paths_ptr)
 {
     Error error;
-    if (exe_file.Exists())
+    if (module_spec.GetFileSpec().Exists())
     {
-        ModuleSpec module_spec (exe_file, exe_arch);
         if (module_spec.GetArchitecture().IsValid())
         {
             error = ModuleList::GetSharedModule (module_spec, 
@@ -904,9 +902,10 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
             // No valid architecture was specified, ask the platform for
             // the architectures that we should be using (in the correct order)
             // and see if we can find a match that way
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
+            ModuleSpec arch_module_spec(module_spec);
+            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, arch_module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (module_spec, 
+                error = ModuleList::GetSharedModule (arch_module_spec,
                                                      exe_module_sp, 
                                                      module_search_paths_ptr,
                                                      NULL, 
@@ -920,7 +919,7 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
     else
     {
         error.SetErrorStringWithFormat ("'%s' does not exist",
-                                        exe_file.GetPath().c_str());
+                                        module_spec.GetFileSpec().GetPath().c_str());
     }
     return error;
 }
@@ -1094,7 +1093,6 @@ lldb::ProcessSP
 Platform::DebugProcess (ProcessLaunchInfo &launch_info, 
                         Debugger &debugger,
                         Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-                        Listener &listener,
                         Error &error)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
@@ -1117,7 +1115,7 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
         if (launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
         {
             ProcessAttachInfo attach_info (launch_info);
-            process_sp = Attach (attach_info, debugger, target, listener, error);
+            process_sp = Attach (attach_info, debugger, target, error);
             if (process_sp)
             {
                 if (log)

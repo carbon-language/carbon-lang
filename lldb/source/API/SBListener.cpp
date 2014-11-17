@@ -69,6 +69,12 @@ SBListener::SBListener (Listener &listener) :
 {
 }
 
+SBListener::SBListener (const lldb::ListenerSP &listener_sp) :
+    m_opaque_sp (listener_sp),
+    m_opaque_ptr (listener_sp.get())
+{
+}
+
 SBListener::~SBListener ()
 {
 }

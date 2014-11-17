@@ -9,6 +9,7 @@
 
 #include "lldb/Host/Config.h"
 
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/FileAction.h"
@@ -32,6 +33,7 @@ ProcessLaunchInfo::ProcessLaunchInfo () :
     m_monitor_callback (NULL),
     m_monitor_callback_baton (NULL),
     m_monitor_signals (false),
+    m_listener_sp (),
     m_hijack_listener_sp ()
 {
 }
@@ -48,6 +50,7 @@ ProcessLaunchInfo::ProcessLaunchInfo(const char *stdin_path, const char *stdout_
     m_monitor_callback(NULL),
     m_monitor_callback_baton(NULL),
     m_monitor_signals(false),
+    m_listener_sp (),
     m_hijack_listener_sp()
 {
     if (stdin_path)
@@ -218,6 +221,7 @@ ProcessLaunchInfo::Clear ()
     m_flags.Clear();
     m_file_actions.clear();
     m_resume_count = 0;
+    m_listener_sp.reset();
     m_hijack_listener_sp.reset();
 }
 
@@ -484,4 +488,13 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
         error.SetErrorString ("not launching in shell");
     }
     return false;
+}
+
+Listener &
+ProcessLaunchInfo::GetListenerForProcess (Debugger &debugger)
+{
+    if (m_listener_sp)
+        return *m_listener_sp;
+    else
+        return debugger.GetListener();
 }

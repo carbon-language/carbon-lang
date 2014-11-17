@@ -67,8 +67,7 @@ public:
     // lldb_private::Platform functions
     //------------------------------------------------------------
     virtual lldb_private::Error
-    ResolveExecutable (const lldb_private::FileSpec &exe_file,
-                       const lldb_private::ArchSpec &arch,
+    ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
                        lldb::ModuleSP &module_sp,
                        const lldb_private::FileSpecList *module_search_paths_ptr);
 
@@ -114,6 +113,7 @@ protected:
     std::string m_device_support_directory_for_os_version;
     std::string m_build_update;
     uint32_t m_last_module_sdk_idx;
+    uint32_t m_connected_module_sdk_idx;
 
     bool
     UpdateSDKDirectoryInfosInNeeded();
@@ -153,6 +153,9 @@ protected:
     uint32_t
     FindFileInAllSDKs (const lldb_private::FileSpec &platform_file,
                        lldb_private::FileSpecList &file_list);
+
+    uint32_t
+    GetConnectedSDKIndex ();
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformRemoteiOS);

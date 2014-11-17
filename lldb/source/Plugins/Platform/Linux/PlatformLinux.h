@@ -61,8 +61,7 @@ namespace lldb_private {
         // lldb_private::Platform functions
         //------------------------------------------------------------
         Error
-        ResolveExecutable (const FileSpec &exe_file,
-                           const ArchSpec &arch,
+        ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
                            lldb::ModuleSP &module_sp,
                            const FileSpecList *module_search_paths_ptr) override;
 
@@ -99,7 +98,6 @@ namespace lldb_private {
         DebugProcess (ProcessLaunchInfo &launch_info,
                       Debugger &debugger,
                       Target *target,
-                      Listener &listener,
                       Error &error) override;
 
         void

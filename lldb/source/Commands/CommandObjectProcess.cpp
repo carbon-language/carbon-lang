@@ -260,7 +260,7 @@ protected:
         }
 
         StreamString stream;
-        Error error = target->Launch(debugger.GetListener(), m_options.launch_info, &stream);
+        Error error = target->Launch(m_options.launch_info, &stream);
         
         if (error.Success())
         {

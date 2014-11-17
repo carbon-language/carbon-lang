@@ -157,8 +157,7 @@ PlatformDarwin::LocateExecutableScriptingResources (Target *target,
 }
 
 Error
-PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
-                                   const ArchSpec &exe_arch,
+PlatformDarwin::ResolveExecutable (const ModuleSpec &module_spec,
                                    lldb::ModuleSP &exe_module_sp,
                                    const FileSpecList *module_search_paths_ptr)
 {
@@ -166,45 +165,40 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
     // Nothing special to do here, just use the actual file and architecture
 
     char exe_path[PATH_MAX];
-    FileSpec resolved_exe_file (exe_file);
-    
+    ModuleSpec resolved_module_spec(module_spec);
+
     if (IsHost())
     {
         // If we have "ls" as the exe_file, resolve the executable loation based on
         // the current path variables
-        if (resolved_exe_file.Exists())
+        if (!resolved_module_spec.GetFileSpec().Exists())
         {
-            
-        }
-        else
-        {
-            exe_file.GetPath (exe_path, sizeof(exe_path));
-            resolved_exe_file.SetFile(exe_path, true);
+            module_spec.GetFileSpec().GetPath (exe_path, sizeof(exe_path));
+            resolved_module_spec.GetFileSpec().SetFile(exe_path, true);
         }
 
-        if (!resolved_exe_file.Exists())
-            resolved_exe_file.ResolveExecutableLocation ();
+        if (!resolved_module_spec.GetFileSpec().Exists())
+            resolved_module_spec.GetFileSpec().ResolveExecutableLocation ();
 
         // Resolve any executable within a bundle on MacOSX
-        Host::ResolveExecutableInBundle (resolved_exe_file);
+        Host::ResolveExecutableInBundle (resolved_module_spec.GetFileSpec());
         
-        if (resolved_exe_file.Exists())
+        if (resolved_module_spec.GetFileSpec().Exists())
             error.Clear();
         else
         {
-            const uint32_t permissions = resolved_exe_file.GetPermissions();
+            const uint32_t permissions = resolved_module_spec.GetFileSpec().GetPermissions();
             if (permissions && (permissions & eFilePermissionsEveryoneR) == 0)
-                error.SetErrorStringWithFormat ("executable '%s' is not readable", resolved_exe_file.GetPath().c_str());
+                error.SetErrorStringWithFormat ("executable '%s' is not readable", resolved_module_spec.GetFileSpec().GetPath().c_str());
             else
-                error.SetErrorStringWithFormat ("unable to find executable for '%s'", resolved_exe_file.GetPath().c_str());
+                error.SetErrorStringWithFormat ("unable to find executable for '%s'", resolved_module_spec.GetFileSpec().GetPath().c_str());
         }
     }
     else
     {
         if (m_remote_platform_sp)
         {
-            error = m_remote_platform_sp->ResolveExecutable (exe_file, 
-                                                             exe_arch,
+            error = m_remote_platform_sp->ResolveExecutable (module_spec,
                                                              exe_module_sp,
                                                              module_search_paths_ptr);
         }
@@ -213,22 +207,21 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             // We may connect to a process and use the provided executable (Don't use local $PATH).
 
             // Resolve any executable within a bundle on MacOSX
-            Host::ResolveExecutableInBundle (resolved_exe_file);
+            Host::ResolveExecutableInBundle (resolved_module_spec.GetFileSpec());
 
-            if (resolved_exe_file.Exists())
+            if (resolved_module_spec.GetFileSpec().Exists())
                 error.Clear();
             else
-                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.", resolved_exe_file.GetFilename().AsCString(""));
+                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.", resolved_module_spec.GetFileSpec().GetFilename().AsCString(""));
         }
     }
     
 
     if (error.Success())
     {
-        ModuleSpec module_spec (resolved_exe_file, exe_arch);
-        if (module_spec.GetArchitecture().IsValid())
+        if (resolved_module_spec.GetArchitecture().IsValid())
         {
-            error = ModuleList::GetSharedModule (module_spec, 
+            error = ModuleList::GetSharedModule (resolved_module_spec,
                                                  exe_module_sp, 
                                                  module_search_paths_ptr,
                                                  NULL, 
@@ -238,8 +231,8 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             {
                 exe_module_sp.reset();
                 error.SetErrorStringWithFormat ("'%s' doesn't contain the architecture %s",
-                                                exe_file.GetPath().c_str(),
-                                                exe_arch.GetArchitectureName());
+                                                resolved_module_spec.GetFileSpec().GetPath().c_str(),
+                                                resolved_module_spec.GetArchitecture().GetArchitectureName());
             }
         }
         else
@@ -248,9 +241,9 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             // the architectures that we should be using (in the correct order)
             // and see if we can find a match that way
             StreamString arch_names;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
+            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, resolved_module_spec.GetArchitecture()); ++idx)
             {
-                error = GetSharedModule (module_spec, 
+                error = GetSharedModule (resolved_module_spec,
                                          exe_module_sp, 
                                          module_search_paths_ptr,
                                          NULL, 
@@ -266,21 +259,21 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
                 
                 if (idx > 0)
                     arch_names.PutCString (", ");
-                arch_names.PutCString (module_spec.GetArchitecture().GetArchitectureName());
+                arch_names.PutCString (resolved_module_spec.GetArchitecture().GetArchitectureName());
             }
             
             if (error.Fail() || !exe_module_sp)
             {
-                if (exe_file.Readable())
+                if (resolved_module_spec.GetFileSpec().Readable())
                 {
                     error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
-                                                    exe_file.GetPath().c_str(),
+                                                    resolved_module_spec.GetFileSpec().GetPath().c_str(),
                                                     GetPluginName().GetCString(),
                                                     arch_names.GetString().c_str());
                 }
                 else
                 {
-                    error.SetErrorStringWithFormat("'%s' is not readable", exe_file.GetPath().c_str());
+                    error.SetErrorStringWithFormat("'%s' is not readable", resolved_module_spec.GetFileSpec().GetPath().c_str());
                 }
             }
         }

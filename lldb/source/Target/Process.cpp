@@ -3252,6 +3252,15 @@ Process::AttachCompletionHandler::GetExitString ()
     return m_exit_string.c_str();
 }
 
+Listener &
+ProcessAttachInfo::GetListenerForProcess (Debugger &debugger)
+{
+    if (m_listener_sp)
+        return *m_listener_sp;
+    else
+        return debugger.GetListener();
+}
+
 Error
 Process::Attach (ProcessAttachInfo &attach_info)
 {

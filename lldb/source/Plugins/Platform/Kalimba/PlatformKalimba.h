@@ -58,8 +58,7 @@ namespace lldb_private {
         // lldb_private::Platform functions
         //------------------------------------------------------------
         virtual Error
-        ResolveExecutable (const FileSpec &exe_file,
-                           const ArchSpec &arch,
+        ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
                            lldb::ModuleSP &module_sp,
                            const FileSpecList *module_search_paths_ptr) override;
 
@@ -91,7 +90,7 @@ namespace lldb_private {
 
         virtual lldb::ProcessSP
         Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
-               Target *target, Listener &listener, Error &error) override;
+               Target *target, Error &error) override;
 
         // Kalimba processes can not be launched by spawning and attaching.
         virtual bool

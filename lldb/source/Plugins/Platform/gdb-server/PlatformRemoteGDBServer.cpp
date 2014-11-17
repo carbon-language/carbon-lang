@@ -21,6 +21,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
@@ -100,14 +101,13 @@ PlatformRemoteGDBServer::GetDescription ()
 }
 
 Error
-PlatformRemoteGDBServer::ResolveExecutable (const FileSpec &exe_file,
-                                            const ArchSpec &exe_arch,
+PlatformRemoteGDBServer::ResolveExecutable (const ModuleSpec &module_spec,
                                             lldb::ModuleSP &exe_module_sp,
                                             const FileSpecList *module_search_paths_ptr)
 {
     Error error;
     //error.SetErrorString ("PlatformRemoteGDBServer::ResolveExecutable() is unimplemented");
-    if (m_gdb_client.GetFileExists(exe_file))
+    if (m_gdb_client.GetFileExists(module_spec.GetFileSpec()))
         return error;
     // TODO: get the remote end to somehow resolve this file
     error.SetErrorString("file not found on remote end");
@@ -421,7 +421,6 @@ lldb::ProcessSP
 PlatformRemoteGDBServer::DebugProcess (lldb_private::ProcessLaunchInfo &launch_info,
                                        lldb_private::Debugger &debugger,
                                        lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-                                       lldb_private::Listener &listener,
                                        lldb_private::Error &error)
 {
     lldb::ProcessSP process_sp;
@@ -473,7 +472,7 @@ PlatformRemoteGDBServer::DebugProcess (lldb_private::ProcessLaunchInfo &launch_i
                     
                     // The darwin always currently uses the GDB remote debugger plug-in
                     // so even when debugging locally we are debugging remotely!
-                    process_sp = target->CreateProcess (listener, "gdb-remote", NULL);
+                    process_sp = target->CreateProcess (launch_info.GetListenerForProcess(debugger), "gdb-remote", NULL);
                     
                     if (process_sp)
                     {
@@ -515,7 +514,6 @@ lldb::ProcessSP
 PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
                                  Debugger &debugger,
                                  Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-                                 Listener &listener, 
                                  Error &error)
 {
     lldb::ProcessSP process_sp;
@@ -567,7 +565,7 @@ PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
                     
                     // The darwin always currently uses the GDB remote debugger plug-in
                     // so even when debugging locally we are debugging remotely!
-                    process_sp = target->CreateProcess (listener, "gdb-remote", NULL);
+                    process_sp = target->CreateProcess (attach_info.GetListenerForProcess(debugger), "gdb-remote", NULL);
                     
                     if (process_sp)
                     {

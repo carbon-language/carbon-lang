@@ -38,6 +38,12 @@ public:
     void
     SetExecutableFile (lldb::SBFileSpec exe_file, bool add_as_first_arg);
 
+    lldb::SBListener
+    GetListener ();
+
+    void
+    SetListener (lldb::SBListener &listener);
+
     uint32_t
     GetNumArguments ();
     
@@ -205,6 +211,12 @@ public:
     
     bool
     ParentProcessIDIsValid();
+
+    lldb::SBListener
+    GetListener ();
+
+    void
+    SetListener (lldb::SBListener &listener);
 };
     
     

@@ -363,8 +363,8 @@ TargetList::CreateTarget (Debugger &debugger,
         if (platform_sp)
         {
             FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
-            error = platform_sp->ResolveExecutable (file,
-                                                    arch,
+            ModuleSpec module_spec(file, arch);
+            error = platform_sp->ResolveExecutable (module_spec,
                                                     exe_module_sp, 
                                                     executable_search_paths.GetSize() ? &executable_search_paths : NULL);
         }

@@ -794,7 +794,6 @@ lldb::ProcessSP
 PlatformPOSIX::Attach (ProcessAttachInfo &attach_info,
                        Debugger &debugger,
                        Target *target,
-                       Listener &listener,
                        Error &error)
 {
     lldb::ProcessSP process_sp;
@@ -835,7 +834,7 @@ PlatformPOSIX::Attach (ProcessAttachInfo &attach_info,
             }
 
 
-            process_sp = target->CreateProcess (listener, attach_info.GetProcessPluginName(), NULL);
+            process_sp = target->CreateProcess (attach_info.GetListenerForProcess(debugger), attach_info.GetProcessPluginName(), NULL);
 
             if (process_sp)
             {
@@ -852,7 +851,7 @@ PlatformPOSIX::Attach (ProcessAttachInfo &attach_info,
     else
     {
         if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, listener, error);
+            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, error);
         else
             error.SetErrorString ("the platform is not currently connected");
     }
@@ -863,7 +862,6 @@ lldb::ProcessSP
 PlatformPOSIX::DebugProcess (ProcessLaunchInfo &launch_info,
                               Debugger &debugger,
                               Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-                              Listener &listener,
                               Error &error)
 {
     ProcessSP process_sp;
@@ -874,12 +872,12 @@ PlatformPOSIX::DebugProcess (ProcessLaunchInfo &launch_info,
         // We still need to reap it from lldb but if we let the monitor thread also set the exit status, we set up a
         // race between debugserver & us for who will find out about the debugged process's death.
         launch_info.GetFlags().Set(eLaunchFlagDontSetExitStatus);
-        process_sp = Platform::DebugProcess (launch_info, debugger, target, listener, error);
+        process_sp = Platform::DebugProcess (launch_info, debugger, target, error);
     }
     else
     {
         if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->DebugProcess (launch_info, debugger, target, listener, error);
+            process_sp = m_remote_platform_sp->DebugProcess (launch_info, debugger, target, error);
         else
             error.SetErrorString ("the platform is not currently connected");
     }

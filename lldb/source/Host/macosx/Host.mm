@@ -42,6 +42,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
@@ -1306,17 +1307,14 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     Error error;
     char exe_path[PATH_MAX];
     PlatformSP host_platform_sp (Platform::GetHostPlatform ());
-    
-    const ArchSpec &arch_spec = launch_info.GetArchitecture();
-    
-    FileSpec exe_spec(launch_info.GetExecutableFile());
-    
-    FileSpec::FileType file_type = exe_spec.GetFileType();
+
+    ModuleSpec exe_module_spec(launch_info.GetExecutableFile(), launch_info.GetArchitecture());
+
+    FileSpec::FileType file_type = exe_module_spec.GetFileSpec().GetFileType();
     if (file_type != FileSpec::eFileTypeRegular)
     {
         lldb::ModuleSP exe_module_sp;
-        error = host_platform_sp->ResolveExecutable (exe_spec,
-                                                     arch_spec,
+        error = host_platform_sp->ResolveExecutable (exe_module_spec,
                                                      exe_module_sp,
                                                      NULL);
         
@@ -1324,12 +1322,12 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
             return error;
         
         if (exe_module_sp)
-            exe_spec = exe_module_sp->GetFileSpec();
+            exe_module_spec.GetFileSpec() = exe_module_sp->GetFileSpec();
     }
     
-    if (exe_spec.Exists())
+    if (exe_module_spec.GetFileSpec().Exists())
     {
-        exe_spec.GetPath (exe_path, sizeof(exe_path));
+        exe_module_spec.GetFileSpec().GetPath (exe_path, sizeof(exe_path));
     }
     else
     {

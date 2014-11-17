@@ -99,12 +99,22 @@ public:
     HandleBroadcastEvent (const lldb::SBEvent &event);
 
 protected:
+    friend class SBAttachInfo;
     friend class SBBroadcaster;
     friend class SBCommandInterpreter;
     friend class SBDebugger;
+    friend class SBLaunchInfo;
     friend class SBTarget;
 
     SBListener (lldb_private::Listener &listener);
+
+    SBListener (const lldb::ListenerSP &listener_sp);
+
+    lldb::ListenerSP
+    GetSP ()
+    {
+        return m_opaque_sp;
+    }
 
 private:
 

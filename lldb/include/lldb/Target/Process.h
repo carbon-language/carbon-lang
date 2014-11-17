@@ -228,6 +228,8 @@ class ProcessAttachInfo : public ProcessInstanceInfo
 public:
     ProcessAttachInfo() :
         ProcessInstanceInfo(),
+        m_listener_sp(),
+        m_hijack_listener_sp(),
         m_plugin_name (),
         m_resume_count (0),
         m_wait_for_launch (false),
@@ -239,6 +241,8 @@ public:
 
     ProcessAttachInfo (const ProcessLaunchInfo &launch_info) :
         ProcessInstanceInfo(),
+        m_listener_sp(),
+        m_hijack_listener_sp(),
         m_plugin_name (),
         m_resume_count (0),
         m_wait_for_launch (false),
@@ -249,6 +253,7 @@ public:
         ProcessInfo::operator= (launch_info);
         SetProcessPluginName (launch_info.GetProcessPluginName());
         SetResumeCount (launch_info.GetResumeCount());
+        SetListener(launch_info.GetListener());
         SetHijackListener(launch_info.GetHijackListener());
         m_detach_on_error = launch_info.GetDetachOnError();
     }
@@ -364,8 +369,26 @@ public:
     {
         m_detach_on_error = enable;
     }
-    
+
+    // Get and set the actual listener that will be used for the process events
+    lldb::ListenerSP
+    GetListener () const
+    {
+        return m_listener_sp;
+    }
+
+    void
+    SetListener (const lldb::ListenerSP &listener_sp)
+    {
+        m_listener_sp = listener_sp;
+    }
+
+
+    Listener &
+    GetListenerForProcess (Debugger &debugger);
+
 protected:
+    lldb::ListenerSP m_listener_sp;
     lldb::ListenerSP m_hijack_listener_sp;
     std::string m_plugin_name;
     uint32_t m_resume_count; // How many times do we resume after launching

@@ -80,8 +80,7 @@ public:
                      uint32_t timeout_sec);
 
     virtual lldb_private::Error
-    ResolveExecutable (const lldb_private::FileSpec &exe_file,
-                       const lldb_private::ArchSpec &arch,
+    ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
                        lldb::ModuleSP &module_sp,
                        const lldb_private::FileSpecList *module_search_paths_ptr);
 
@@ -135,7 +134,6 @@ public:
     Attach(lldb_private::ProcessAttachInfo &attach_info,
            lldb_private::Debugger &debugger,
            lldb_private::Target *target,
-           lldb_private::Listener &listener,
            lldb_private::Error &error);
 
     // FreeBSD processes can not be launched by spawning and attaching.
