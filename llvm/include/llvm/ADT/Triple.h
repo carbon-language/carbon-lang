@@ -371,6 +371,7 @@ public:
   bool isWindowsMSVCEnvironment() const {
     return getOS() == Triple::Win32 &&
            (getEnvironment() == Triple::UnknownEnvironment ||
+            getEnvironment() == Triple::Itanium ||
             getEnvironment() == Triple::MSVC);
   }
 

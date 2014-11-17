@@ -221,7 +221,7 @@ static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
     MAI = new ARMMCAsmInfoDarwin(TT);
   else if (TheTriple.isWindowsItaniumEnvironment())
     MAI = new ARMCOFFMCAsmInfoGNU();
-  else if (TheTriple.isWindowsMSVCEnvironment())
+  else if (TheTriple.isKnownWindowsMSVCEnvironment())
     MAI = new ARMCOFFMCAsmInfoMicrosoft();
   else
     MAI = new ARMELFMCAsmInfo(TT);
