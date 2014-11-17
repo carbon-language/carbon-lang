@@ -27,57 +27,58 @@ public:
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
-    virtual lldb_private::Error
+    lldb_private::Error
     ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
                        lldb::ModuleSP &module_sp,
                        const lldb_private::FileSpecList *module_search_paths_ptr) override;
 
-    virtual lldb_private::Error
+    lldb_private::Error
     ResolveSymbolFile (lldb_private::Target &target,
                        const lldb_private::ModuleSpec &sym_spec,
-                       lldb_private::FileSpec &sym_file);
+                       lldb_private::FileSpec &sym_file) override;
 
     lldb_private::FileSpecList
     LocateExecutableScriptingResources (lldb_private::Target *target,
                                         lldb_private::Module &module,
-                                        lldb_private::Stream* feedback_stream);
+                                        lldb_private::Stream* feedback_stream) override;
     
-    virtual lldb_private::Error
+    lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,
                      lldb::ModuleSP &module_sp,
                      const lldb_private::FileSpecList *module_search_paths_ptr,
                      lldb::ModuleSP *old_module_sp_ptr,
-                     bool *did_create_ptr);
+                     bool *did_create_ptr) override;
 
-    virtual size_t
+    size_t
     GetSoftwareBreakpointTrapOpcode (lldb_private::Target &target, 
-                                     lldb_private::BreakpointSite *bp_site);
+                                     lldb_private::BreakpointSite *bp_site) override;
 
-    virtual bool
+    bool
     GetProcessInfo (lldb::pid_t pid, 
-                    lldb_private::ProcessInstanceInfo &proc_info);
+                    lldb_private::ProcessInstanceInfo &proc_info) override;
     
-    virtual lldb::BreakpointSP
-    SetThreadCreationBreakpoint (lldb_private::Target &target);
+    lldb::BreakpointSP
+    SetThreadCreationBreakpoint (lldb_private::Target &target) override;
 
-    virtual uint32_t
+    uint32_t
     FindProcesses (const lldb_private::ProcessInstanceInfoMatch &match_info,
-                   lldb_private::ProcessInstanceInfoList &process_infos);
-    
-    virtual bool
-    ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp);
-    
+                   lldb_private::ProcessInstanceInfoList &process_infos) override;
+
+    bool
+    ModuleIsExcludedForNonModuleSpecificSearches(lldb_private::Target &target,
+						 const lldb::ModuleSP &module_sp) override;
+
     bool
     ARMGetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
     
     bool 
     x86GetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
     
-    virtual int32_t
-    GetResumeCountForLaunchInfo (lldb_private::ProcessLaunchInfo &launch_info);
+    int32_t
+    GetResumeCountForLaunchInfo (lldb_private::ProcessLaunchInfo &launch_info) override;
 
-    virtual void
-    CalculateTrapHandlerSymbolNames ();
+    void
+    CalculateTrapHandlerSymbolNames () override;
 
 protected:
 
