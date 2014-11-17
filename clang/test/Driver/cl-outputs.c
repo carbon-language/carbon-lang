@@ -35,44 +35,44 @@
 // CHECK-MULTIPLESOURCEOK: "-o" "mydir{{[/\\]+}}cl-outputs.obj"
 
 
-// RUN: %clang_cl /c /oa -### -- %s 2>&1 | FileCheck -check-prefix=FooNAME1 %s
-// FooNAME1:  "-o" "a.obj"
+// RUN: %clang_cl /c /oa -### -- %s 2>&1 | FileCheck -check-prefix=oNAME1 %s
+// oNAME1:  "-o" "a.obj"
 
-// RUN: %clang_cl /c /o a -### -- %s 2>&1 | FileCheck -check-prefix=FooNAME2 %s
-// FooNAME2:  "-o" "a.obj"
+// RUN: %clang_cl /c /o a -### -- %s 2>&1 | FileCheck -check-prefix=oNAME2 %s
+// oNAME2:  "-o" "a.obj"
 
-// RUN: %clang_cl /c /oa.ext /ob.ext -### -- %s 2>&1 | FileCheck -check-prefix=FooNAMEEXT1 %s
-// FooNAMEEXT1:  "-o" "b.ext"
+// RUN: %clang_cl /c /oa.ext /ob.ext -### -- %s 2>&1 | FileCheck -check-prefix=oNAMEEXT1 %s
+// oNAMEEXT1:  "-o" "b.ext"
 
-// RUN: %clang_cl /c /o a.ext /ob.ext -### -- %s 2>&1 | FileCheck -check-prefix=FooNAMEEXT2 %s
-// FooNAMEEXT2:  "-o" "b.ext"
+// RUN: %clang_cl /c /o a.ext /ob.ext -### -- %s 2>&1 | FileCheck -check-prefix=oNAMEEXT2 %s
+// oNAMEEXT2:  "-o" "b.ext"
 
-// RUN: %clang_cl /c /ofoo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=FooDIR1 %s
-// FooDIR1:  "-o" "foo.dir{{[/\\]+}}cl-outputs.obj"
+// RUN: %clang_cl /c /ofoo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=oDIR1 %s
+// oDIR1:  "-o" "foo.dir{{[/\\]+}}cl-outputs.obj"
 
-// RUN: %clang_cl /c /o foo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=FooDIR2 %s
-// FooDIR2:  "-o" "foo.dir{{[/\\]+}}cl-outputs.obj"
+// RUN: %clang_cl /c /o foo.dir/ -### -- %s 2>&1 | FileCheck -check-prefix=oDIR2 %s
+// oDIR2:  "-o" "foo.dir{{[/\\]+}}cl-outputs.obj"
 
-// RUN: %clang_cl /c /ofoo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=FooDIRNAME1 %s
-// FooDIRNAME1:  "-o" "foo.dir{{[/\\]+}}a.obj"
+// RUN: %clang_cl /c /ofoo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=oDIRNAME1 %s
+// oDIRNAME1:  "-o" "foo.dir{{[/\\]+}}a.obj"
 
-// RUN: %clang_cl /c /o foo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=FooDIRNAME2 %s
-// FooDIRNAME2:  "-o" "foo.dir{{[/\\]+}}a.obj"
+// RUN: %clang_cl /c /o foo.dir/a -### -- %s 2>&1 | FileCheck -check-prefix=oDIRNAME2 %s
+// oDIRNAME2:  "-o" "foo.dir{{[/\\]+}}a.obj"
 
-// RUN: %clang_cl /c /ofoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FooDIRNAMEEXT1 %s
-// FooDIRNAMEEXT1:  "-o" "foo.dir{{[/\\]+}}a.ext"
+// RUN: %clang_cl /c /ofoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=oDIRNAMEEXT1 %s
+// oDIRNAMEEXT1:  "-o" "foo.dir{{[/\\]+}}a.ext"
 
-// RUN: %clang_cl /c /o foo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FooDIRNAMEEXT2 %s
-// FooDIRNAMEEXT2:  "-o" "foo.dir{{[/\\]+}}a.ext"
+// RUN: %clang_cl /c /o foo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=oDIRNAMEEXT2 %s
+// oDIRNAMEEXT2:  "-o" "foo.dir{{[/\\]+}}a.ext"
 
-// RUN: %clang_cl /c /o.. -### -- %s 2>&1 | FileCheck -check-prefix=FooCRAZY1 %s
-// FooCRAZY1:  "-o" "..obj"
+// RUN: %clang_cl /c /o.. -### -- %s 2>&1 | FileCheck -check-prefix=oCRAZY1 %s
+// oCRAZY1:  "-o" "..obj"
 
-// RUN: %clang_cl /c /o .. -### -- %s 2>&1 | FileCheck -check-prefix=FooCRAZY2 %s
-// FooCRAZY2:  "-o" "..obj"
+// RUN: %clang_cl /c /o .. -### -- %s 2>&1 | FileCheck -check-prefix=oCRAZY2 %s
+// oCRAZY2:  "-o" "..obj"
 
-// RUN: %clang_cl /c %s -### /o 2>&1 | FileCheck -check-prefix=FooMISSINGARG %s
-// FooMISSINGARG: error: argument to '/o' is missing (expected 1 value)
+// RUN: %clang_cl /c %s -### /o 2>&1 | FileCheck -check-prefix=oMISSINGARG %s
+// oMISSINGARG: error: argument to '/o' is missing (expected 1 value)
 
 // RUN: %clang_cl /c /omydir/ -### -- %s %s 2>&1 | FileCheck -check-prefix=CHECK-oMULTIPLESOURCEOK1 %s
 // CHECK-oMULTIPLESOURCEOK1: "-o" "mydir{{[/\\]+}}cl-outputs.obj"
