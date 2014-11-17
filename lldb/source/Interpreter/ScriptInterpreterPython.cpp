@@ -728,7 +728,7 @@ public:
     
     IOHandlerPythonInterpreter (Debugger &debugger,
                                 ScriptInterpreterPython *python) :
-        IOHandler (debugger),
+        IOHandler (debugger, IOHandler::Type::PythonInterpreter),
         m_python(python)
     {
         

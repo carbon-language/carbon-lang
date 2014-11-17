@@ -425,11 +425,15 @@ CommandObjectExpression::GetMultilineExpression ()
     m_expr_line_count = 0;
     
     Debugger &debugger = GetCommandInterpreter().GetDebugger();
+    bool color_prompt = debugger.GetUseColor();
     const bool multiple_lines = true; // Get multiple lines
     IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
+                                                      IOHandler::Type::Expression,
                                                       "lldb-expr",      // Name of input reader for history
                                                       NULL,             // No prompt
+                                                      NULL,             // Continuation prompt
                                                       multiple_lines,
+                                                      color_prompt,
                                                       1,                // Show line numbers starting at 1
                                                       *this));
     

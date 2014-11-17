@@ -4893,7 +4893,7 @@ class IOHandlerProcessSTDIO :
 public:
     IOHandlerProcessSTDIO (Process *process,
                            int write_fd) :
-        IOHandler(process->GetTarget().GetDebugger()),
+    IOHandler(process->GetTarget().GetDebugger(), IOHandler::Type::ProcessIO),
         m_process (process),
         m_read_file (),
         m_write_file (write_fd, false),

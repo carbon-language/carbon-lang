@@ -627,6 +627,9 @@ public:
         return m_quit_requested;
     }
 
+    lldb::IOHandlerSP
+    GetIOHandler(bool force_create = false, CommandInterpreterRunOptions *options = NULL);
+
     bool
     GetStoppedForCrash () const
     {

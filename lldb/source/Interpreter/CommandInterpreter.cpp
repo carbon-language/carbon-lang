@@ -2737,13 +2737,16 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
             lldb::StreamFileSP empty_stream_sp;
             m_command_source_flags.push_back(flags);
             IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
+                                                              IOHandler::Type::CommandInterpreter,
                                                               input_file_sp,
                                                               empty_stream_sp, // Pass in an empty stream so we inherit the top input reader output stream
                                                               empty_stream_sp, // Pass in an empty stream so we inherit the top input reader error stream
                                                               flags,
                                                               nullptr, // Pass in NULL for "editline_name" so no history is saved, or written
                                                               debugger.GetPrompt(),
+                                                              NULL,
                                                               false, // Not multi-line
+                                                              debugger.GetUseColor(),
                                                               0,
                                                               *this));
             const bool old_async_execution = debugger.GetAsyncExecution();
@@ -3181,9 +3184,12 @@ CommandInterpreter::GetLLDBCommandsFromIOHandler (const char *prompt,
 {
     Debugger &debugger = GetDebugger();
     IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
+                                                      IOHandler::Type::CommandList,
                                                       "lldb",       // Name of input reader for history
                                                       prompt,       // Prompt
+                                                      NULL,         // Continuation prompt
                                                       true,         // Get multiple lines
+                                                      debugger.GetUseColor(),
                                                       0,            // Don't show line numbers
                                                       delegate));   // IOHandlerDelegate
     
@@ -3207,9 +3213,12 @@ CommandInterpreter::GetPythonCommandsFromIOHandler (const char *prompt,
 {
     Debugger &debugger = GetDebugger();
     IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
+                                                      IOHandler::Type::PythonCode,
                                                       "lldb-python",    // Name of input reader for history
                                                       prompt,           // Prompt
+                                                      NULL,             // Continuation prompt
                                                       true,             // Get multiple lines
+                                                      debugger.GetUseColor(),
                                                       0,                // Don't show line numbers
                                                       delegate));       // IOHandlerDelegate
     
@@ -3230,46 +3239,64 @@ CommandInterpreter::IsActive ()
     return m_debugger.IsTopIOHandler (m_command_io_handler_sp);
 }
 
+lldb::IOHandlerSP
+CommandInterpreter::GetIOHandler(bool force_create, CommandInterpreterRunOptions *options)
+{
+    // Always re-create the IOHandlerEditline in case the input
+    // changed. The old instance might have had a non-interactive
+    // input and now it does or vice versa.
+    if (force_create || !m_command_io_handler_sp)
+    {
+        // Always re-create the IOHandlerEditline in case the input
+        // changed. The old instance might have had a non-interactive
+        // input and now it does or vice versa.
+        uint32_t flags = 0;
+        
+        if (options)
+        {
+            if (options->m_stop_on_continue == eLazyBoolYes)
+                flags |= eHandleCommandFlagStopOnContinue;
+            if (options->m_stop_on_error == eLazyBoolYes)
+                flags |= eHandleCommandFlagStopOnError;
+            if (options->m_stop_on_crash == eLazyBoolYes)
+                flags |= eHandleCommandFlagStopOnCrash;
+            if (options->m_echo_commands != eLazyBoolNo)
+                flags |= eHandleCommandFlagEchoCommand;
+            if (options->m_print_results != eLazyBoolNo)
+                flags |= eHandleCommandFlagPrintResult;
+        }
+        else
+        {
+            flags = eHandleCommandFlagEchoCommand | eHandleCommandFlagPrintResult;
+        }
+        
+        m_command_io_handler_sp.reset(new IOHandlerEditline (m_debugger,
+                                                             IOHandler::Type::CommandInterpreter,
+                                                             m_debugger.GetInputFile(),
+                                                             m_debugger.GetOutputFile(),
+                                                             m_debugger.GetErrorFile(),
+                                                             flags,
+                                                             "lldb",
+                                                             m_debugger.GetPrompt(),
+                                                             NULL,                      // Continuation prompt
+                                                             false,                     // Don't enable multiple line input, just single line commands
+                                                             m_debugger.GetUseColor(),
+                                                             0,            // Don't show line numbers
+                                                             *this));
+    }
+    return m_command_io_handler_sp;
+}
+
 void
 CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
                                           bool spawn_thread,
                                           CommandInterpreterRunOptions &options)
 {
-    // Only get one line at a time
-    const bool multiple_lines = false;
-    m_num_errors = 0;
-    m_quit_requested = false;
+    // Always re-create the command intepreter when we run it in case
+    // any file handles have changed.
+    bool force_create = true;
+    m_debugger.PushIOHandler(GetIOHandler(force_create, &options));
     m_stopped_for_crash = false;
-    
-    // Always re-create the IOHandlerEditline in case the input
-    // changed. The old instance might have had a non-interactive
-    // input and now it does or vice versa.
-    uint32_t flags= 0;
-
-    if (options.m_stop_on_continue == eLazyBoolYes)
-        flags |= eHandleCommandFlagStopOnContinue;
-    if (options.m_stop_on_error == eLazyBoolYes)
-        flags |= eHandleCommandFlagStopOnError;
-    if (options.m_stop_on_crash == eLazyBoolYes)
-        flags |= eHandleCommandFlagStopOnCrash;
-    if (options.m_echo_commands != eLazyBoolNo)
-      flags |= eHandleCommandFlagEchoCommand;
-    if (options.m_print_results != eLazyBoolNo)
-        flags |= eHandleCommandFlagPrintResult;
-
-
-    m_command_io_handler_sp.reset(new IOHandlerEditline (m_debugger,
-                                                         m_debugger.GetInputFile(),
-                                                         m_debugger.GetOutputFile(),
-                                                         m_debugger.GetErrorFile(),
-                                                         flags,
-                                                         "lldb",
-                                                         m_debugger.GetPrompt(),
-                                                         multiple_lines,
-                                                         0,            // Don't show line numbers
-                                                         *this));
-
-    m_debugger.PushIOHandler(m_command_io_handler_sp);
     
     if (auto_handle_events)
         m_debugger.StartEventHandlerThread();
@@ -3281,10 +3308,10 @@ CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
     else
     {
         m_debugger.ExecuteIOHanders();
-    
+        
         if (auto_handle_events)
             m_debugger.StopEventHandlerThread();
     }
-
+    
 }
 

@@ -1030,11 +1030,15 @@ protected:
             if (argc == 1)
             {
                 Debugger &debugger = m_interpreter.GetDebugger();
+                bool color_prompt = debugger.GetUseColor();
                 const bool multiple_lines = true; // Get multiple lines
                 IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
+                                                                  IOHandler::Type::Other,
                                                                   "lldb-regex", // Name of input reader for history
                                                                   "\033[K> ",   // Prompt and clear line
+                                                                  NULL,         // Continuation prompt
                                                                   multiple_lines,
+                                                                  color_prompt,
                                                                   0,            // Don't show line numbers
                                                                   *this));
                 
