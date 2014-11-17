@@ -42,6 +42,7 @@ class ChangeValueAPITestCase(TestBase):
         self.end_line = line_number ('main.c', '// Set a breakpoint here at the end')
 
     @skipIfGcc # llvm.org/pr15039: If GCC is the test compiler, stdout is not available via lldb.SBProcess.GetSTDOUT()
+    @expectedFailureFreeBSD("llvm.org/pr15039 test fails intermittently on FreeBSD")
     def change_value_api(self, exe_name):
         """Exercise some SBValue APIs."""
         exe = os.path.join(os.getcwd(), exe_name)
