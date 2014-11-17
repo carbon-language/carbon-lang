@@ -58,7 +58,7 @@ VariantMatcher::MatcherOps::canConstructFrom(const DynTypedMatcher &Matcher,
 
 llvm::Optional<DynTypedMatcher>
 VariantMatcher::MatcherOps::constructVariadicOperator(
-    ast_matchers::internal::VariadicOperatorFunction Func,
+    DynTypedMatcher::VariadicOperatorFunction Func,
     ArrayRef<VariantMatcher> InnerMatchers) const {
   std::vector<DynTypedMatcher> DynMatchers;
   for (const auto &InnerMatcher : InnerMatchers) {
@@ -176,7 +176,7 @@ public:
 
 class VariantMatcher::VariadicOpPayload : public VariantMatcher::Payload {
 public:
-  VariadicOpPayload(ast_matchers::internal::VariadicOperatorFunction Func,
+  VariadicOpPayload(DynTypedMatcher::VariadicOperatorFunction Func,
                     std::vector<VariantMatcher> Args)
       : Func(Func), Args(std::move(Args)) {}
 
@@ -209,7 +209,7 @@ public:
   }
 
 private:
-  const ast_matchers::internal::VariadicOperatorFunction Func;
+  const DynTypedMatcher::VariadicOperatorFunction Func;
   const std::vector<VariantMatcher> Args;
 };
 
@@ -225,7 +225,7 @@ VariantMatcher::PolymorphicMatcher(std::vector<DynTypedMatcher> Matchers) {
 }
 
 VariantMatcher VariantMatcher::VariadicOperatorMatcher(
-    ast_matchers::internal::VariadicOperatorFunction Func,
+    DynTypedMatcher::VariadicOperatorFunction Func,
     std::vector<VariantMatcher> Args) {
   return VariantMatcher(new VariadicOpPayload(Func, std::move(Args)));
 }

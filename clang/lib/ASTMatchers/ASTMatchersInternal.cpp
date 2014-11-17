@@ -32,7 +32,7 @@ namespace {
 
 class VariadicMatcher : public DynMatcherInterface {
  public:
-  VariadicMatcher(VariadicOperatorFunction Func,
+  VariadicMatcher(DynTypedMatcher::VariadicOperatorFunction Func,
                   std::vector<DynTypedMatcher> InnerMatchers)
       : Func(Func), InnerMatchers(std::move(InnerMatchers)) {}
 
@@ -43,7 +43,7 @@ class VariadicMatcher : public DynMatcherInterface {
   }
 
  private:
-  VariadicOperatorFunction Func;
+  DynTypedMatcher::VariadicOperatorFunction Func;
   std::vector<DynTypedMatcher> InnerMatchers;
 };
 
@@ -86,7 +86,8 @@ static llvm::ManagedStatic<TrueMatcherImpl> TrueMatcherInstance;
 }  // namespace
 
 DynTypedMatcher DynTypedMatcher::constructVariadic(
-    VariadicOperatorFunction Func, std::vector<DynTypedMatcher> InnerMatchers) {
+    DynTypedMatcher::VariadicOperatorFunction Func,
+    std::vector<DynTypedMatcher> InnerMatchers) {
   assert(InnerMatchers.size() > 0 && "Array must not be empty.");
   assert(std::all_of(InnerMatchers.begin(), InnerMatchers.end(),
                      [&InnerMatchers](const DynTypedMatcher &M) {

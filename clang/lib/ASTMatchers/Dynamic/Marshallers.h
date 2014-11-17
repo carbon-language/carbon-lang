@@ -556,7 +556,7 @@ private:
 /// \brief Variadic operator marshaller function.
 class VariadicOperatorMatcherDescriptor : public MatcherDescriptor {
 public:
-  typedef ast_matchers::internal::VariadicOperatorFunction VarFunc;
+  typedef DynTypedMatcher::VariadicOperatorFunction VarFunc;
   VariadicOperatorMatcherDescriptor(unsigned MinCount, unsigned MaxCount,
                                     VarFunc Func, StringRef MatcherName)
       : MinCount(MinCount), MaxCount(MaxCount), Func(Func),
