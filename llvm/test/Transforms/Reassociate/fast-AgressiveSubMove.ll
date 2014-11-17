@@ -2,8 +2,8 @@
 
 define float @test1(float %A) {
 ; CHECK-LABEL: test1
-; CHECK-NEXT: %X = fadd float 1.000000e+00, %A
-; CHECK-NEXT: %Y = fadd float 1.000000e+00, %A
+; CHECK-NEXT: %X = fadd float %A, 1.000000e+00
+; CHECK-NEXT: %Y = fadd float %A, 1.000000e+00
 ; CHECK-NEXT: %r = fsub float %X, %Y
 ; CHECK-NEXT: ret float %r
 

@@ -332,6 +332,7 @@ unsigned Reassociate::getRank(Value *V) {
   return ValueRankMap[I] = Rank;
 }
 
+// Canonicalize constants to RHS.  Otherwise, sort the operands by rank.
 void Reassociate::canonicalizeOperands(Instruction *I) {
   assert(isa<BinaryOperator>(I) && "Expected binary operator.");
   assert(I->isCommutative() && "Expected commutative operator.");
@@ -341,7 +342,9 @@ void Reassociate::canonicalizeOperands(Instruction *I) {
   unsigned LHSRank = getRank(LHS);
   unsigned RHSRank = getRank(RHS);
 
-  // Canonicalize constants to RHS.  Otherwise, sort the operands by rank.
+  if (isa<Constant>(RHS))
+    return;
+
   if (isa<Constant>(LHS) || RHSRank < LHSRank)
     cast<BinaryOperator>(I)->swapOperands();
 }
