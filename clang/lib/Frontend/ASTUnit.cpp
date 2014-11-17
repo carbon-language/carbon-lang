@@ -589,6 +589,7 @@ class CaptureDroppedDiagnostics {
   DiagnosticsEngine &Diags;
   StoredDiagnosticConsumer Client;
   DiagnosticConsumer *PreviousClient;
+  std::unique_ptr<DiagnosticConsumer> OwningPreviousClient;
 
 public:
   CaptureDroppedDiagnostics(bool RequestCapture, DiagnosticsEngine &Diags,
@@ -596,16 +597,15 @@ public:
     : Diags(Diags), Client(StoredDiags), PreviousClient(nullptr)
   {
     if (RequestCapture || Diags.getClient() == nullptr) {
-      PreviousClient = Diags.takeClient();
-      Diags.setClient(&Client);
+      OwningPreviousClient = Diags.takeClient();
+      PreviousClient = Diags.getClient();
+      Diags.setClient(&Client, false);
     }
   }
 
   ~CaptureDroppedDiagnostics() {
-    if (Diags.getClient() == &Client) {
-      Diags.takeClient();
-      Diags.setClient(PreviousClient);
-    }
+    if (Diags.getClient() == &Client)
+      Diags.setClient(PreviousClient, !!OwningPreviousClient.release());
   }
 };
 

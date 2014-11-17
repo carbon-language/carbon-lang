@@ -212,7 +212,7 @@ public:
 private:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
-  bool OwnsPrimaryClient;
+  std::unique_ptr<DiagnosticConsumer> PrimaryClientOwner;
   std::unique_ptr<TextDiagnosticBuffer> Buffer;
   const Preprocessor *CurrentPreprocessor;
   const LangOptions *LangOpts;

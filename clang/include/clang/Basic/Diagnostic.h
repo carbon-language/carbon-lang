@@ -187,7 +187,7 @@ private:
   IntrusiveRefCntPtr<DiagnosticIDs> Diags;
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
   DiagnosticConsumer *Client;
-  bool OwnsDiagClient;
+  std::unique_ptr<DiagnosticConsumer> Owner;
   SourceManager *SourceMgr;
 
   /// \brief Mapping information for diagnostics.
@@ -347,7 +347,6 @@ public:
                       DiagnosticOptions *DiagOpts,
                       DiagnosticConsumer *client = nullptr,
                       bool ShouldOwnClient = true);
-  ~DiagnosticsEngine();
 
   const IntrusiveRefCntPtr<DiagnosticIDs> &getDiagnosticIDs() const {
     return Diags;
@@ -368,14 +367,11 @@ public:
   const DiagnosticConsumer *getClient() const { return Client; }
 
   /// \brief Determine whether this \c DiagnosticsEngine object own its client.
-  bool ownsClient() const { return OwnsDiagClient; }
-  
+  bool ownsClient() const { return Owner != nullptr; }
+
   /// \brief Return the current diagnostic client along with ownership of that
   /// client.
-  DiagnosticConsumer *takeClient() {
-    OwnsDiagClient = false;
-    return Client;
-  }
+  std::unique_ptr<DiagnosticConsumer> takeClient() { return std::move(Owner); }
 
   bool hasSourceManager() const { return SourceMgr != nullptr; }
   SourceManager &getSourceManager() const {

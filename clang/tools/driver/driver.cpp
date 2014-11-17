@@ -451,8 +451,7 @@ int main(int argc_, const char **argv_) {
         clang::serialized_diags::create(DiagOpts->DiagnosticSerializationFile,
                                         &*DiagOpts, /*MergeChildRecords=*/true);
     Diags.setClient(new ChainedDiagnosticConsumer(
-        std::unique_ptr<DiagnosticConsumer>(Diags.takeClient()),
-        std::move(SerializedConsumer)));
+        Diags.takeClient(), std::move(SerializedConsumer)));
   }
 
   ProcessWarningOptions(Diags, *DiagOpts, /*ReportDiags=*/false);

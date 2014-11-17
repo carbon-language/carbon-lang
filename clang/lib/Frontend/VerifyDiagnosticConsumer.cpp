@@ -29,12 +29,11 @@ typedef VerifyDiagnosticConsumer::ExpectedData ExpectedData;
 
 VerifyDiagnosticConsumer::VerifyDiagnosticConsumer(DiagnosticsEngine &Diags_)
   : Diags(Diags_),
-    PrimaryClient(Diags.getClient()), OwnsPrimaryClient(Diags.ownsClient()),
+    PrimaryClient(Diags.getClient()), PrimaryClientOwner(Diags.takeClient()),
     Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(nullptr),
     LangOpts(nullptr), SrcManager(nullptr), ActiveSourceFiles(0),
     Status(HasNoDirectives)
 {
-  Diags.takeClient();
   if (Diags.hasSourceManager())
     setSourceManager(Diags.getSourceManager());
 }
@@ -43,10 +42,8 @@ VerifyDiagnosticConsumer::~VerifyDiagnosticConsumer() {
   assert(!ActiveSourceFiles && "Incomplete parsing of source files!");
   assert(!CurrentPreprocessor && "CurrentPreprocessor should be invalid!");
   SrcManager = nullptr;
-  CheckDiagnostics();  
-  Diags.takeClient();
-  if (OwnsPrimaryClient)
-    delete PrimaryClient;
+  CheckDiagnostics();
+  Diags.takeClient().release();
 }
 
 #ifndef NDEBUG
@@ -802,8 +799,8 @@ void VerifyDiagnosticConsumer::UpdateParsedFileStatus(SourceManager &SM,
 
 void VerifyDiagnosticConsumer::CheckDiagnostics() {
   // Ensure any diagnostics go to the primary client.
-  bool OwnsCurClient = Diags.ownsClient();
-  DiagnosticConsumer *CurClient = Diags.takeClient();
+  DiagnosticConsumer *CurClient = Diags.getClient();
+  std::unique_ptr<DiagnosticConsumer> Owner = Diags.takeClient();
   Diags.setClient(PrimaryClient, false);
 
 #ifndef NDEBUG
@@ -865,8 +862,7 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
                                   Buffer->note_end(), "note"));
   }
 
-  Diags.takeClient();
-  Diags.setClient(CurClient, OwnsCurClient);
+  Diags.setClient(CurClient, Owner.release() != nullptr);
 
   // Reset the buffer, we have processed all the diagnostics in it.
   Buffer.reset(new TextDiagnosticBuffer());

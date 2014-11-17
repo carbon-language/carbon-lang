@@ -154,7 +154,7 @@ protected:
     DiagnosticsEngine &Diagnostics = CI.getDiagnostics();
     DiagnosticConsumer *Client = Diagnostics.getClient();
     if (Diagnostics.ownsClient())
-      OwnedClient.reset(Diagnostics.takeClient());
+      OwnedClient = Diagnostics.takeClient();
     for (size_t I = 0, E = Watchers.size(); I < E; ++I)
       Client = Watchers[I]->Chain(Client);
     Diagnostics.setClient(Client, false);

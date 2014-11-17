@@ -66,7 +66,7 @@ class FixItRewriter : public DiagnosticConsumer {
   /// \brief The diagnostic client that performs the actual formatting
   /// of error messages.
   DiagnosticConsumer *Client;
-  bool OwnsClient;
+  std::unique_ptr<DiagnosticConsumer> Owner;
 
   /// \brief Turn an input path into an output path. NULL implies overwriting
   /// the original.
