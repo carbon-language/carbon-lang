@@ -28,39 +28,26 @@ int main()
     int ia[] = {0, 1, 2, 2, 0, 1, 2, 3};
     const unsigned sa = sizeof(ia)/sizeof(ia[0]);
     int ib[] = {0, 1, 2, 3, 0, 1, 2, 3};
-    assert(std::mismatch(input_iterator<const int*>(ia),
-                         input_iterator<const int*>(ia + sa),
-                         input_iterator<const int*>(ib)) ==
-                         (std::pair<input_iterator<const int*>,
-                                    input_iterator<const int*> >(
-                            input_iterator<const int*>(ia+3),
-                            input_iterator<const int*>(ib+3))));
+    const unsigned sb = sizeof(ib)/sizeof(ib[0]);
 
-    assert(std::mismatch(comma_iterator<const int*>(ia),
-                         comma_iterator<const int*>(ia + sa),
-                         comma_iterator<const int*>(ib)) ==
-                         (std::pair<comma_iterator<const int*>,
-                                    comma_iterator<const int*> >(
-                            comma_iterator<const int*>(ia+3),
-                            comma_iterator<const int*>(ib+3))));
+	typedef input_iterator<const int*> II;
+	typedef random_access_iterator<const int*>  RAI;
+
+    assert(std::mismatch(II(ia), II(ia + sa), II(ib))
+    		== (std::pair<II, II>(II(ia+3), II(ib+3))));
+
+    assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib))
+    		== (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
 
 #ifdef HAS_FOUR_ITERATOR_VERSION
-    assert(std::mismatch(input_iterator<const int*>(ia),
-                         input_iterator<const int*>(ia + sa),
-                         input_iterator<const int*>(ib),
-                         input_iterator<const int*>(ib + sa)) ==
-                         (std::pair<input_iterator<const int*>,
-                                    input_iterator<const int*> >(
-                            input_iterator<const int*>(ia+3),
-                            input_iterator<const int*>(ib+3))));
+    assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib+sb))
+    		== (std::pair<II, II>(II(ia+3), II(ib+3))));
 
-    assert(std::mismatch(input_iterator<const int*>(ia),
-                         input_iterator<const int*>(ia + sa),
-                         input_iterator<const int*>(ib),
-                         input_iterator<const int*>(ib + 2)) ==
-                         (std::pair<input_iterator<const int*>,
-                                    input_iterator<const int*> >(
-                            input_iterator<const int*>(ia+2),
-                            input_iterator<const int*>(ib+2))));
+    assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), II(ib+sb))
+    		== (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3)))));
+
+
+    assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib+2))
+    		== (std::pair<II, II>(II(ia+2), II(ib+2))));
 #endif
 }

@@ -20,6 +20,7 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "counting_predicates.hpp"
 
 #if _LIBCPP_STD_VER > 11
 #define HAS_FOUR_ITERATOR_VERSION
@@ -31,40 +32,41 @@ int main()
     int ia[] = {0, 1, 2, 2, 0, 1, 2, 3};
     const unsigned sa = sizeof(ia)/sizeof(ia[0]);
     int ib[] = {0, 1, 2, 3, 0, 1, 2, 3};
-    assert(std::mismatch(input_iterator<const int*>(ia),
-                         input_iterator<const int*>(ia + sa),
-                         input_iterator<const int*>(ib),
-                         std::equal_to<int>()) ==
-                         (std::pair<input_iterator<const int*>,
-                                    input_iterator<const int*> >(
-                            input_iterator<const int*>(ia+3),
-                            input_iterator<const int*>(ib+3))));
-    assert(std::mismatch(comma_iterator<const int*>(ia),
-                         comma_iterator<const int*>(ia + sa),
-                         comma_iterator<const int*>(ib),
-                         std::equal_to<int>()) ==
-                         (std::pair<comma_iterator<const int*>,
-                                    comma_iterator<const int*> >(
-                            comma_iterator<const int*>(ia+3),
-                            comma_iterator<const int*>(ib+3))));
+    const unsigned sb = sizeof(ib)/sizeof(ib[0]);
+    
+	typedef input_iterator<const int*> II;
+	typedef random_access_iterator<const int*>  RAI;
+	typedef std::equal_to<int> EQ;
+
+    assert(std::mismatch(II(ia), II(ia + sa), II(ib), EQ())
+            == (std::pair<II, II>(II(ia+3), II(ib+3))));
+    assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), EQ())
+            == (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
+
+    binary_counting_predicate<EQ, int> bcp((EQ()));
+    assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), std::ref(bcp))
+            == (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
+	assert(bcp.count() > 0 && bcp.count() < sa);
+	bcp.reset();
+		
 #ifdef HAS_FOUR_ITERATOR_VERSION
-    assert(std::mismatch(input_iterator<const int*>(ia),
-                         input_iterator<const int*>(ia + sa),
-                         input_iterator<const int*>(ib),
-                         input_iterator<const int*>(ib + sa),
-                         std::equal_to<int>()) ==
-                         (std::pair<input_iterator<const int*>,
-                                    input_iterator<const int*> >(
-                            input_iterator<const int*>(ia+3),
-                            input_iterator<const int*>(ib+3))));
+    assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib + sb), EQ())
+            == (std::pair<II, II>(II(ia+3), II(ib+3))));
+    assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), RAI(ib + sb), EQ())
+            == (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
+
+    assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib + sa), bcp)
+            == (std::pair<II, II>(II(ia+3), II(ib+3))));
+	assert(bcp.count() > 0 && bcp.count() < std::min(sa, sb));
 #endif
 
-    assert(std::mismatch(ia, ia + sa, ib, std::equal_to<int>()) ==
+    assert(std::mismatch(ia, ia + sa, ib, EQ()) ==
            (std::pair<int*,int*>(ia+3,ib+3)));
+
 #ifdef HAS_FOUR_ITERATOR_VERSION
-    assert(std::mismatch(ia, ia + sa, ib, ib + sa, std::equal_to<int>()) ==
+    assert(std::mismatch(ia, ia + sa, ib, ib + sb, EQ()) ==
            (std::pair<int*,int*>(ia+3,ib+3)));
-    assert(std::mismatch(ia, ia + sa, ib, ib + 2, std::equal_to<int>()) ==
+    assert(std::mismatch(ia, ia + sa, ib, ib + 2, EQ()) ==
            (std::pair<int*,int*>(ia+2,ib+2)));
 #endif
 }
