@@ -26,7 +26,6 @@
 #define HAS_FOUR_ITERATOR_VERSION
 #endif
 
-
 int main()
 {
     int ia[] = {0, 1, 2, 2, 0, 1, 2, 3};
@@ -55,7 +54,7 @@ int main()
     assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), RAI(ib + sb), EQ())
             == (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
 
-    assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib + sa), bcp)
+    assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib + sb), std::ref(bcp))
             == (std::pair<II, II>(II(ia+3), II(ib+3))));
 	assert(bcp.count() > 0 && bcp.count() < std::min(sa, sb));
 #endif

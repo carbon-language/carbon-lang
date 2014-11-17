@@ -43,8 +43,8 @@ int main()
     assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib+sb))
     		== (std::pair<II, II>(II(ia+3), II(ib+3))));
 
-    assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), II(ib+sb))
-    		== (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3)))));
+    assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), RAI(ib+sb))
+    		== (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
 
 
     assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib+2))
