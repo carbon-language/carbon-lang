@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = Linker
-LINK_COMPONENTS := core linker
+LINK_COMPONENTS := core linker asmparser
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
