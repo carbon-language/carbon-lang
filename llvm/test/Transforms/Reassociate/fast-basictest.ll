@@ -26,7 +26,7 @@ define float @test2(float %reg109, float %reg1111) {
 
 define float @test3(float %reg109, float %reg1111) {
 ; CHECK-LABEL: @test3
-; CHECK-NEXT: %reg117 = fadd fast float %reg109, %reg1111
+; CHECK-NEXT: %reg117 = fadd fast float %reg1111, %reg109
 ; CHECK-NEXT:  ret float %reg117
 
   %reg115 = fadd fast float %reg109, -3.000000e+01
@@ -106,7 +106,7 @@ define void @test6() {
 
 define float @test7(float %A, float %B, float %C) {
 ; CHECK-LABEL: @test7
-; CHECK-NEXT: fadd fast float %C, %B
+; CHECK-NEXT: fadd fast float %B, %C
 ; CHECK-NEXT: fmul fast float %A, %A
 ; CHECK-NEXT: fmul fast float %1, %tmp2
 ; CHECK-NEXT: ret float
@@ -121,7 +121,7 @@ define float @test7(float %A, float %B, float %C) {
 
 define float @test8(float %X, float %Y, float %Z) {
 ; CHECK-LABEL: @test8
-; CHECK-NEXT: fmul fast float %Y, %X
+; CHECK-NEXT: fmul fast float %X, %Y
 ; CHECK-NEXT: fsub fast float %Z
 ; CHECK-NEXT: ret float
 
@@ -269,8 +269,8 @@ define float @test19(float %A, float %B) {
 ; With sub reassociation, constant folding can eliminate the uses of %a.
 define float @test20(float %a, float %b, float %c) nounwind  {
 ; CHECK-LABEL: @test20
-; CHECK-NEXT: fsub fast float -0.000000e+00, %b
-; CHECK-NEXT: fsub fast float %b.neg, %c
+; CHECK-NEXT: fsub fast float -0.000000e+00, %c
+; CHECK-NEXT: fsub fast float %c.neg, %b
 ; CHECK-NEXT: ret float
 
 ; FIXME: Should be able to generate the below, which may expose more

@@ -3,7 +3,7 @@
 
 define i32 @test1(i32 %X, i32 %Y) {
 ; CHECK-LABEL: test1
-; CHECK-NEXT: %tmp = add i32 %Y, %X
+; CHECK-NEXT: %tmp = add i32 %X, %Y
 ; CHECK-NEXT: %tmp1 = shl i32 %tmp, 1
 ; CHECK-NEXT: ret i32 %tmp1
 

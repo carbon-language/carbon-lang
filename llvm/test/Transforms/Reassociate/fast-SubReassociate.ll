@@ -49,8 +49,8 @@ define float @test3(float %A, float %B, float %C, float %D) {
 ; With sub reassociation, constant folding can eliminate the two 12 constants.
 define float @test4(float %A, float %B, float %C, float %D) {
 ; CHECK-LABEL: test4
-; CHECK-NEXT: %B.neg = fsub fast float -0.000000e+00, %B
-; CHECK-NEXT: %O.neg = fsub fast float %B.neg, %A
+; CHECK-NEXT: %A.neg = fsub fast float -0.000000e+00, %A
+; CHECK-NEXT: %O.neg = fsub fast float %A.neg, %B
 ; CHECK-NEXT: %P = fsub fast float %O.neg, %C
 ; CHECK-NEXT: %Q = fadd fast float %P, %D
 ; CHECK-NEXT: ret float %Q

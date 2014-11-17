@@ -791,14 +791,11 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
       Value *OldLHS = Op->getOperand(0);
       Value *OldRHS = Op->getOperand(1);
 
-      if (NewLHS == OldLHS && NewRHS == OldRHS)
-        // Nothing changed, leave it alone.
-        break;
-
-      if (NewLHS == OldRHS && NewRHS == OldLHS) {
-        // The order of the operands was reversed.  Swap them.
+      // The new operation differs trivially from the original.
+      if ((NewLHS == OldLHS && NewRHS == OldRHS) ||
+          (NewLHS == OldRHS && NewRHS == OldLHS)) {
         DEBUG(dbgs() << "RA: " << *Op << '\n');
-        Op->swapOperands();
+        canonicalizeOperands(Op);
         DEBUG(dbgs() << "TO: " << *Op << '\n');
         MadeChange = true;
         ++NumChanged;
@@ -820,6 +817,8 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
           NodesToRewrite.push_back(BO);
         Op->setOperand(1, NewRHS);
       }
+      // Put the operands in canonical form.
+      canonicalizeOperands(Op);
       DEBUG(dbgs() << "TO: " << *Op << '\n');
 
       ExpressionChanged = Op;
@@ -856,6 +855,7 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
     // into it.
     BinaryOperator *BO = isReassociableOp(Op->getOperand(0), Opcode);
     if (BO && !NotRewritable.count(BO)) {
+      canonicalizeOperands(Op);
       Op = BO;
       continue;
     }
@@ -880,6 +880,7 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
 
     DEBUG(dbgs() << "RA: " << *Op << '\n');
     Op->setOperand(0, NewOp);
+    canonicalizeOperands(Op);
     DEBUG(dbgs() << "TO: " << *Op << '\n');
     ExpressionChanged = Op;
     MadeChange = true;

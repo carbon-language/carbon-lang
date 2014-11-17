@@ -16,7 +16,7 @@ define i32 @test1(i32 %A, i32 %B) {
 ; With sub reassociation, constant folding can eliminate the two 12 constants.
 define i32 @test2(i32 %A, i32 %B, i32 %C, i32 %D) {
 ; CHECK-LABEL: test2
-; CHECK-NEXT: %sum = add i32 %B, %A
+; CHECK-NEXT: %sum = add i32 %A, %B
 ; CHECK-NEXT: %sum1 = add i32 %sum, %C
 ; CHECK-NEXT: %Q = sub i32 %D, %sum1
 ; CHECK-NEXT: ret i32 %Q

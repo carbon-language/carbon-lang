@@ -3,9 +3,9 @@
 define float @fmultistep1(float %a, float %b, float %c) {
 ; Check that a*a*b+a*a*c is turned into a*(a*(b+c)).
 ; CHECK-LABEL: @fmultistep1
-; CHECK-NEXT: fadd fast float %c, %b
+; CHECK-NEXT: fadd fast float %b, %c
 ; CHECK-NEXT: fmul fast float %a, %tmp2
-; CHECK-NEXT: fmul fast float %tmp3, %a
+; CHECK-NEXT: fmul fast float %a, %tmp3
 ; CHECK-NEXT: ret float
 
   %t0 = fmul fast float %a, %b
@@ -19,9 +19,9 @@ define float @fmultistep1(float %a, float %b, float %c) {
 define float @fmultistep2(float %a, float %b, float %c, float %d) {
 ; Check that a*b+a*c+d is turned into a*(b+c)+d.
 ; CHECK-LABEL: @fmultistep2
-; CHECK-NEXT: fadd fast float %c, %b
-; CHECK-NEXT: fmul fast float %tmp, %a
-; CHECK-NEXT: fadd fast float %tmp1, %d
+; CHECK-NEXT: fadd fast float %b, %c
+; CHECK-NEXT: fmul fast float %a, %tmp
+; CHECK-NEXT: fadd fast float %d, %tmp1
 ; CHECK-NEXT: ret float
 
   %t0 = fmul fast float %a, %b
