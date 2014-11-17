@@ -94,7 +94,7 @@ int test_ldrex(char *addr, long long *addr64, float *addrfloat) {
 // CHECK: [[RESHI64:%.*]] = zext i32 [[RESHI]] to i64
 // CHECK: [[RESLO64:%.*]] = zext i32 [[RESLO]] to i64
 // CHECK: [[RESHIHI:%.*]] = shl nuw i64 [[RESHI64]], 32
-// CHECK: [[INTRES:%.*]] = or i64 [[RESHIHI]], [[RESLO64]]
+// CHECK: [[INTRES:%.*]] = or i64 [[RESLO64]], [[RESHIHI]]
 // CHECK: bitcast i64 [[INTRES]] to double
 
 // CHECK-ARM64: [[INTRES:%.*]] = tail call i64 @llvm.aarch64.ldxr.p0i64(i64* [[ADDR64]])
@@ -178,7 +178,7 @@ int test_ldaex(char *addr, long long *addr64, float *addrfloat) {
 // CHECK: [[RESHI64:%.*]] = zext i32 [[RESHI]] to i64
 // CHECK: [[RESLO64:%.*]] = zext i32 [[RESLO]] to i64
 // CHECK: [[RESHIHI:%.*]] = shl nuw i64 [[RESHI64]], 32
-// CHECK: [[INTRES:%.*]] = or i64 [[RESHIHI]], [[RESLO64]]
+// CHECK: [[INTRES:%.*]] = or i64 [[RESLO64]], [[RESHIHI]]
 // CHECK: bitcast i64 [[INTRES]] to double
 
 // CHECK-ARM64: [[INTRES:%.*]] = tail call i64 @llvm.aarch64.ldaxr.p0i64(i64* [[ADDR64]])
@@ -323,7 +323,7 @@ __int128 test_ldrex_128(__int128 *addr) {
 // CHECK-ARM64: [[RESHI64:%.*]] = zext i64 [[RESHI]] to i128
 // CHECK-ARM64: [[RESLO64:%.*]] = zext i64 [[RESLO]] to i128
 // CHECK-ARM64: [[RESHIHI:%.*]] = shl nuw i128 [[RESHI64]], 64
-// CHECK-ARM64: [[INTRES:%.*]] = or i128 [[RESHIHI]], [[RESLO64]]
+// CHECK-ARM64: [[INTRES:%.*]] = or i128 [[RESLO64]], [[RESHIHI]]
 // CHECK-ARM64: ret i128 [[INTRES]]
 }
 
@@ -349,7 +349,7 @@ __int128 test_ldaex_128(__int128 *addr) {
 // CHECK-ARM64: [[RESHI64:%.*]] = zext i64 [[RESHI]] to i128
 // CHECK-ARM64: [[RESLO64:%.*]] = zext i64 [[RESLO]] to i128
 // CHECK-ARM64: [[RESHIHI:%.*]] = shl nuw i128 [[RESHI64]], 64
-// CHECK-ARM64: [[INTRES:%.*]] = or i128 [[RESHIHI]], [[RESLO64]]
+// CHECK-ARM64: [[INTRES:%.*]] = or i128 [[RESLO64]], [[RESHIHI]]
 // CHECK-ARM64: ret i128 [[INTRES]]
 }
 
