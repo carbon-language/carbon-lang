@@ -176,7 +176,7 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
         std::move(SerializedConsumer)));
   } else {
     Diags.setClient(new ChainedDiagnosticConsumer(
-        Diags.takeClient(), std::move(SerializedConsumer)));
+        Diags.getClient(), std::move(SerializedConsumer)));
   }
 }
 
