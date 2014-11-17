@@ -307,8 +307,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   }
 
   for (const SectionRef &Section : Obj->sections()) {
-    bool Text = Section.isText();
-    if (!Text)
+    if (!Section.isText() || Section.isVirtual())
       continue;
 
     uint64_t SectionAddr = Section.getAddress();

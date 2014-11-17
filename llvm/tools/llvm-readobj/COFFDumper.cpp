@@ -825,22 +825,22 @@ void COFFDumper::printSymbols() {
 
 void COFFDumper::printDynamicSymbols() { ListScope Group(W, "DynamicSymbols"); }
 
-static StringRef getSectionName(const llvm::object::COFFObjectFile *Obj,
-                                COFFSymbolRef Symbol,
-                                const coff_section *Section) {
+static ErrorOr<StringRef>
+getSectionName(const llvm::object::COFFObjectFile *Obj, int32_t SectionNumber,
+               const coff_section *Section) {
   if (Section) {
     StringRef SectionName;
-    Obj->getSectionName(Section, SectionName);
+    if (std::error_code EC = Obj->getSectionName(Section, SectionName))
+      return EC;
     return SectionName;
   }
-  int32_t SectionNumber = Symbol.getSectionNumber();
   if (SectionNumber == llvm::COFF::IMAGE_SYM_DEBUG)
-    return "IMAGE_SYM_DEBUG";
+    return StringRef("IMAGE_SYM_DEBUG");
   if (SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE)
-    return "IMAGE_SYM_ABSOLUTE";
+    return StringRef("IMAGE_SYM_ABSOLUTE");
   if (SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
-    return "IMAGE_SYM_UNDEFINED";
-  return "";
+    return StringRef("IMAGE_SYM_UNDEFINED");
+  return StringRef("");
 }
 
 void COFFDumper::printSymbol(const SymbolRef &Sym) {
@@ -858,7 +858,11 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
   if (Obj->getSymbolName(Symbol, SymbolName))
     SymbolName = "";
 
-  StringRef SectionName = getSectionName(Obj, Symbol, Section);
+  StringRef SectionName = "";
+  ErrorOr<StringRef> Res =
+      getSectionName(Obj, Symbol.getSectionNumber(), Section);
+  if (Res)
+    SectionName = *Res;
 
   W.printString("Name", SymbolName);
   W.printNumber("Value", Symbol.getValue());
@@ -929,10 +933,14 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       if (Section && Section->Characteristics & COFF::IMAGE_SCN_LNK_COMDAT
           && Aux->Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
         const coff_section *Assoc;
-        StringRef AssocName;
-        std::error_code EC;
-        if ((EC = Obj->getSection(AuxNumber, Assoc)) ||
-            (EC = Obj->getSectionName(Assoc, AssocName))) {
+        StringRef AssocName = "";
+        std::error_code EC = Obj->getSection(AuxNumber, Assoc);
+        ErrorOr<StringRef> Res = getSectionName(Obj, AuxNumber, Assoc);
+        if (Res)
+          AssocName = *Res;
+        if (!EC)
+          EC = Res.getError();
+        if (EC) {
           AssocName = "";
           error(EC);
         }

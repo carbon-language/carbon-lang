@@ -508,7 +508,8 @@ public:
   }
   uint16_t getSizeOfOptionalHeader() const {
     if (COFFHeader)
-      return COFFHeader->SizeOfOptionalHeader;
+      return COFFHeader->isImportLibrary() ? 0
+                                           : COFFHeader->SizeOfOptionalHeader;
     // bigobj doesn't have this field.
     if (COFFBigObjHeader)
       return 0;
@@ -516,7 +517,7 @@ public:
   }
   uint16_t getCharacteristics() const {
     if (COFFHeader)
-      return COFFHeader->Characteristics;
+      return COFFHeader->isImportLibrary() ? 0 : COFFHeader->Characteristics;
     // bigobj doesn't have characteristics to speak of,
     // editbin will silently lie to you if you attempt to set any.
     if (COFFBigObjHeader)
@@ -532,21 +533,22 @@ public:
   }
   uint32_t getNumberOfSections() const {
     if (COFFHeader)
-      return COFFHeader->NumberOfSections;
+      return COFFHeader->isImportLibrary() ? 0 : COFFHeader->NumberOfSections;
     if (COFFBigObjHeader)
       return COFFBigObjHeader->NumberOfSections;
     llvm_unreachable("no COFF header!");
   }
   uint32_t getPointerToSymbolTable() const {
     if (COFFHeader)
-      return COFFHeader->PointerToSymbolTable;
+      return COFFHeader->isImportLibrary() ? 0
+                                           : COFFHeader->PointerToSymbolTable;
     if (COFFBigObjHeader)
       return COFFBigObjHeader->PointerToSymbolTable;
     llvm_unreachable("no COFF header!");
   }
   uint32_t getNumberOfSymbols() const {
     if (COFFHeader)
-      return COFFHeader->NumberOfSymbols;
+      return COFFHeader->isImportLibrary() ? 0 : COFFHeader->NumberOfSymbols;
     if (COFFBigObjHeader)
       return COFFBigObjHeader->NumberOfSymbols;
     llvm_unreachable("no COFF header!");
@@ -657,7 +659,7 @@ public:
         return EC;
       return COFFSymbolRef(Symb);
     }
-    llvm_unreachable("no symbol table pointer!");
+    return object_error::parse_failed;
   }
   template <typename T>
   std::error_code getAuxSymbol(uint32_t index, const T *&Res) const {
