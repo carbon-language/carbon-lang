@@ -28,9 +28,10 @@ import sys      # Provide system information
 #--
 class EnumOsType( object ):
     values = [  "Unknown",
-                "Windows", 
+                "Darwin",
+                "FreeBSD",
                 "Linux", 
-                "Darwin" ]; # OSX
+                "Windows" ]
     class __metaclass__( type ):
 #++---------------------------------------------------------------------------
 # Details:  Fn acts as an enumeration.
@@ -64,11 +65,13 @@ def determine_os_type():
     eOSType = EnumOsType.Unknown;
 
     strOS = sys.platform
-    if strOS == "win32":
-        eOSType = EnumOsType.Windows;
-    elif (strOS == "linux") or (strOS == "linux2"):
-        eOSType = EnumOsType.Linux;
-    elif strOS == "darwin":
-        eOSType == EnumOsType.Darwin;
+    if strOS == "darwin":
+        eOSType = EnumOsType.Darwin
+    elif (strOS.startswith("freebsd")):
+        eOSType = EnumOsType.FreeBSD
+    elif (strOS.startswith("linux")):
+        eOSType = EnumOsType.Linux
+    elif strOS == "win32":
+        eOSType = EnumOsType.Windows
 
     return eOSType;
