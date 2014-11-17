@@ -325,5 +325,6 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
       }
     }
   }
-  return false;
+
+  return true;
 }
