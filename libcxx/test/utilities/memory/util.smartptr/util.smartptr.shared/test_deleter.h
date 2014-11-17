@@ -19,6 +19,12 @@
 #include <type_traits>
 #include <cassert>
 
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#define DELETE_FUNCTION = delete
+#else
+#define DELETE_FUNCTION { assert(false); }
+#endif
+
 struct test_deleter_base
 {
     static int count;
@@ -46,6 +52,8 @@ public:
     void set_state(int i) {state_ = i;}
 
     void operator()(T* p) {assert(state_ >= 0); ++dealloc_count; delete p;}
+   
+    test_deleter* operator&() const DELETE_FUNCTION;
 };
 
 template <class T>
