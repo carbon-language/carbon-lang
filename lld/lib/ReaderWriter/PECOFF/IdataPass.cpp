@@ -188,7 +188,7 @@ void DelayImportDirectoryAtom::addRelocations(
     if (context.ctx.is64Bit())
       addDir64Reloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
     else
-      addDir32NBReloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
+      addDir32Reloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
   }
 }
 

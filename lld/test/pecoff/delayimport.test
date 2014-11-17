@@ -19,15 +19,15 @@ X86-NEXT:   BoundDelayImportTable: 0x0
 X86-NEXT:   UnloadDelayImportTable: 0x0
 X86-NEXT:   Import {
 X86-NEXT:     Symbol: _name_with_underscore (0)
-X86-NEXT:     Address: 0x501F
+X86-NEXT:     Address: 0x40501F
 X86-NEXT:   }
 X86-NEXT:   Import {
 X86-NEXT:     Symbol: fn (1)
-X86-NEXT:     Address: 0x5034
+X86-NEXT:     Address: 0x405034
 X86-NEXT:   }
 X86-NEXT:   Import {
 X86-NEXT:     Symbol:  (1)
-X86-NEXT:     Address: 0x5049
+X86-NEXT:     Address: 0x405049
 X86-NEXT:   }
 X86-NEXT: }
 
