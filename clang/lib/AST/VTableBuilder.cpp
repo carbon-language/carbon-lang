@@ -2831,6 +2831,7 @@ VFTableBuilder::ComputeThisOffset(FinalOverriders::OverriderInfo Overrider) {
 //   vtordisp
 //   FIXME: if a structor knows it belongs to MDC, why doesn't it use a vftable
 //   without vtordisp thunks?
+//   FIXME: how are vtordisp handled in the presence of nooverride/final?
 //
 // When foo() is called, an object with a layout of class C has a vftable
 // referencing B::f() that assumes a B layout, so the "this" adjustments are
@@ -2893,9 +2894,9 @@ void VFTableBuilder::CalculateVtordispAdjustment(
 
   // OK, now we know we need to use a vtordisp thunk.
   // The implicit vtordisp field is located right before the vbase.
-  CharUnits VFPtrVBaseOffset = VBaseMapEntry->second.VBaseOffset;
+  CharUnits OffsetOfVBaseWithVFPtr = VBaseMapEntry->second.VBaseOffset;
   TA.Virtual.Microsoft.VtordispOffset =
-      (VFPtrVBaseOffset - WhichVFPtr.FullOffsetInMDC).getQuantity() - 4;
+      (OffsetOfVBaseWithVFPtr - WhichVFPtr.FullOffsetInMDC).getQuantity() - 4;
 
   // A simple vtordisp thunk will suffice if the final overrider is defined
   // in either the most derived class or its non-virtual base.
@@ -2906,7 +2907,7 @@ void VFTableBuilder::CalculateVtordispAdjustment(
   // Otherwise, we need to do use the dynamic offset of the final overrider
   // in order to get "this" adjustment right.
   TA.Virtual.Microsoft.VBPtrOffset =
-      (VFPtrVBaseOffset + WhichVFPtr.NonVirtualOffset -
+      (OffsetOfVBaseWithVFPtr + WhichVFPtr.NonVirtualOffset -
        MostDerivedClassLayout.getVBPtrOffset()).getQuantity();
   TA.Virtual.Microsoft.VBOffsetOffset =
       Context.getTypeSizeInChars(Context.IntTy).getQuantity() *
@@ -3001,20 +3002,21 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
   for (unsigned I = 0, E = VirtualMethods.size(); I != E; ++I) {
     const CXXMethodDecl *MD = VirtualMethods[I];
 
-    FinalOverriders::OverriderInfo Overrider =
+    FinalOverriders::OverriderInfo FinalOverrider =
         Overriders.getOverrider(MD, Base.getBaseOffset());
-    const CXXMethodDecl *OverriderMD = Overrider.Method;
+    const CXXMethodDecl *FinalOverriderMD = FinalOverrider.Method;
     const CXXMethodDecl *OverriddenMD =
         FindNearestOverriddenMethod(MD, VisitedBases);
 
     ThisAdjustment ThisAdjustmentOffset;
     bool ReturnAdjustingThunk = false, ForceReturnAdjustmentMangling = false;
-    CharUnits ThisOffset = ComputeThisOffset(Overrider);
+    CharUnits ThisOffset = ComputeThisOffset(FinalOverrider);
     ThisAdjustmentOffset.NonVirtual =
         (ThisOffset - WhichVFPtr.FullOffsetInMDC).getQuantity();
-    if ((OverriddenMD || OverriderMD != MD) &&
+    if ((OverriddenMD || FinalOverriderMD != MD) &&
         WhichVFPtr.getVBaseWithVPtr())
-      CalculateVtordispAdjustment(Overrider, ThisOffset, ThisAdjustmentOffset);
+      CalculateVtordispAdjustment(FinalOverrider, ThisOffset,
+                                  ThisAdjustmentOffset);
 
     if (OverriddenMD) {
       // If MD overrides anything in this vftable, we need to update the entries.
@@ -3056,7 +3058,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
       // Force a special name mangling for a return-adjusting thunk
       // unless the method is the final overrider without this adjustment.
       ForceReturnAdjustmentMangling =
-          !(MD == OverriderMD && ThisAdjustmentOffset.isEmpty());
+          !(MD == FinalOverriderMD && ThisAdjustmentOffset.isEmpty());
     } else if (Base.getBaseOffset() != WhichVFPtr.FullOffsetInMDC ||
                MD->size_overridden_methods()) {
       // Skip methods that don't belong to the vftable of the current class,
@@ -3081,9 +3083,9 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
     // We don't want to do this for pure virtual member functions.
     BaseOffset ReturnAdjustmentOffset;
     ReturnAdjustment ReturnAdjustment;
-    if (!OverriderMD->isPure()) {
+    if (!FinalOverriderMD->isPure()) {
       ReturnAdjustmentOffset =
-          ComputeReturnAdjustmentBaseOffset(Context, OverriderMD, MD);
+          ComputeReturnAdjustmentBaseOffset(Context, FinalOverriderMD, MD);
     }
     if (!ReturnAdjustmentOffset.isEmpty()) {
       ForceReturnAdjustmentMangling = true;
@@ -3100,7 +3102,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
       }
     }
 
-    AddMethod(OverriderMD,
+    AddMethod(FinalOverriderMD,
               ThunkInfo(ThisAdjustmentOffset, ReturnAdjustment,
                         ForceReturnAdjustmentMangling ? MD : nullptr));
   }
