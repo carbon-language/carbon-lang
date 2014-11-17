@@ -20,6 +20,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostProcess.h"
 #include "lldb/Host/HostNativeProcessBase.h"
+#include "lldb/Host/HostNativeThreadBase.h"
 #include "lldb/Host/MonitoringProcessLauncher.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/windows/ProcessLauncherWindows.h"
@@ -32,6 +33,7 @@
 #include "ExceptionRecord.h"
 #include "LocalDebugDelegate.h"
 #include "ProcessWindows.h"
+#include "TargetThreadWindows.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -197,23 +199,6 @@ ProcessWindows::GetPluginVersion()
     return 1;
 }
 
-void
-ProcessWindows::GetPluginCommandHelp(const char *command, Stream *strm)
-{
-}
-
-Error
-ProcessWindows::ExecutePluginCommand(Args &command, Stream *strm)
-{
-    return Error(1, eErrorTypeGeneric);
-}
-
-Log *
-ProcessWindows::EnablePluginLogging(Stream *strm, Args &command)
-{
-    return NULL;
-}
-
 Error
 ProcessWindows::DoDetach(bool keep_stopped)
 {
@@ -255,6 +240,22 @@ ProcessWindows::IsAlive()
     }
 }
 
+Error
+ProcessWindows::DoHalt(bool &caused_stop)
+{
+    Error error;
+    StateType state = GetPrivateState();
+    if (state == eStateStopped)
+        caused_stop = false;
+    else
+    {
+        caused_stop = ::DebugBreakProcess(m_session_data->m_debugger->GetProcess().GetNativeProcess().GetSystemHandle());
+        if (!caused_stop)
+            error.SetError(GetLastError(), eErrorTypeWin32);
+    }
+    return error;
+}
+
 size_t
 ProcessWindows::DoReadMemory(lldb::addr_t vm_addr,
                              void *buf,
@@ -289,6 +290,18 @@ ProcessWindows::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size
     return bytes_written;
 }
 
+lldb::addr_t
+ProcessWindows::GetImageInfoAddress()
+{
+    Target &target = GetTarget();
+    ObjectFile *obj_file = target.GetExecutableModule()->GetObjectFile();
+    Address addr = obj_file->GetImageInfoAddress(&target);
+    if (addr.IsValid())
+        return addr.GetLoadAddress(&target);
+    else
+        return LLDB_INVALID_ADDRESS;
+}
+
 bool
 ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
 {
@@ -315,6 +328,10 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
     ModuleSP module = GetTarget().GetExecutableModule();
     bool load_addr_changed;
     module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
+
+    DebuggerThreadSP debugger = m_session_data->m_debugger;
+    ThreadSP main_thread(new TargetThreadWindows(*this, debugger->GetMainThread()));
+    m_thread_list.AddThread(main_thread);
 }
 
 ExceptionResult
@@ -365,6 +382,7 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
 void
 ProcessWindows::OnCreateThread(const HostThread &thread)
 {
+    SuspendThread(thread.GetNativeThread().GetSystemHandle());
 }
 
 void

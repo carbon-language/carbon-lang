@@ -63,54 +63,44 @@ public:
 
     ~ProcessWindows();
 
-    virtual lldb_private::Error
-    DoDetach(bool keep_stopped);
+    virtual lldb_private::Error DoDetach(bool keep_stopped) override;
 
     virtual bool
-    DetachRequiresHalt() { return true; }
+    DetachRequiresHalt() override
+    {
+        return true;
+    }
 
-    virtual bool
-    UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list);
+    virtual bool UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list) override;
 
-    virtual lldb_private::Error
-    DoLaunch (lldb_private::Module *exe_module,
-              lldb_private::ProcessLaunchInfo &launch_info);
+    virtual lldb_private::Error DoLaunch(lldb_private::Module *exe_module, lldb_private::ProcessLaunchInfo &launch_info) override;
 
-    virtual lldb_private::Error
-    DoResume ();
+    virtual lldb_private::Error DoResume() override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    virtual lldb_private::ConstString GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    virtual uint32_t GetPluginVersion() override;
 
-    virtual void
-    GetPluginCommandHelp(const char *command, lldb_private::Stream *strm);
+    virtual bool CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
 
-    virtual lldb_private::Error
-    ExecutePluginCommand(lldb_private::Args &command,
-                         lldb_private::Stream *strm);
-
-    virtual lldb_private::Log *
-    EnablePluginLogging(lldb_private::Stream *strm,
-                        lldb_private::Args &command);
-
+    virtual lldb_private::Error DoDestroy() override;
 
     virtual bool
-    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name);
+    DestroyRequiresHalt() override
+    {
+        return false;
+    }
 
-    virtual lldb_private::Error
-    DoDestroy ();
+    virtual void RefreshStateAfterStop() override;
 
-    virtual void
-    RefreshStateAfterStop ();
+    virtual bool IsAlive() override;
 
-    virtual bool
-    IsAlive ();
+    virtual lldb_private::Error DoHalt(bool &caused_stop) override;
+
+    virtual lldb::addr_t GetImageInfoAddress() override;
 
     virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error) override;
     virtual size_t DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, lldb_private::Error &error) override;

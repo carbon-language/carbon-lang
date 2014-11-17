@@ -370,6 +370,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::SearchFilter> SearchFilterSP;
     typedef std::shared_ptr<lldb_private::Settings> SettingsSP;
     typedef std::shared_ptr<lldb_private::StackFrame> StackFrameSP;
+    typedef std::unique_ptr<lldb_private::StackFrame> StackFrameUP;
     typedef std::weak_ptr<lldb_private::StackFrame> StackFrameWP;
     typedef std::shared_ptr<lldb_private::StackFrameList> StackFrameListSP;
     typedef std::shared_ptr<lldb_private::StopInfo> StopInfoSP;
