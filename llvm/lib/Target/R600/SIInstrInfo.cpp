@@ -1281,13 +1281,15 @@ unsigned SIInstrInfo::buildExtractSubReg(MachineBasicBlock::iterator MI,
   // value so we don't need to worry about merging its subreg index with the
   // SubIdx passed to this function. The register coalescer should be able to
   // eliminate this extra copy.
-  BuildMI(*MI->getParent(), MI, MI->getDebugLoc(), get(TargetOpcode::COPY),
-          NewSuperReg)
-          .addOperand(SuperReg);
+  MachineBasicBlock *MBB = MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
 
-  BuildMI(*MI->getParent(), MI, MI->getDebugLoc(), get(TargetOpcode::COPY),
-          SubReg)
-          .addReg(NewSuperReg, 0, SubIdx);
+  BuildMI(*MBB, MI, DL, get(TargetOpcode::COPY), NewSuperReg)
+    .addReg(SuperReg.getReg(), 0, SuperReg.getSubReg());
+
+  BuildMI(*MBB, MI, DL, get(TargetOpcode::COPY), SubReg)
+    .addReg(NewSuperReg, 0, SubIdx);
+
   return SubReg;
 }
 
