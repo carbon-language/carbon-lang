@@ -415,7 +415,7 @@ def setupCrashInfoHook():
             return
         dylib_src = os.path.join(test_dir,"crashinfo.c")
         dylib_dst = os.path.join(test_dir,"crashinfo.so")
-        cmd = "xcrun clang %s -o %s -framework Python -Xlinker -dylib -iframework /System/Library/Frameworks/ -Xlinker -F /System/Library/Frameworks/" % (dylib_src,dylib_dst)
+        cmd = "SDKROOT= xcrun clang %s -o %s -framework Python -Xlinker -dylib -iframework /System/Library/Frameworks/ -Xlinker -F /System/Library/Frameworks/" % (dylib_src,dylib_dst)
         if subprocess.call(cmd,shell=True) == 0 and os.path.exists(dylib_dst):
             setCrashInfoHook = setCrashInfoHook_Mac
     else:
@@ -471,6 +471,9 @@ def parseOptionsAndInitTestdirs():
 
     do_help = False
 
+    platform_system = platform.system()
+    platform_machine = platform.machine()
+
     parser = argparse.ArgumentParser(description='description', prefix_chars='+-', add_help=False)
     group = None
 
@@ -484,6 +487,8 @@ def parseOptionsAndInitTestdirs():
     group = parser.add_argument_group('Toolchain options')
     group.add_argument('-A', '--arch', metavar='arch', action='append', dest='archs', help=textwrap.dedent('''Specify the architecture(s) to test. This option can be specified more than once'''))
     group.add_argument('-C', '--compiler', metavar='compiler', dest='compilers', action='append', help=textwrap.dedent('''Specify the compiler(s) used to build the inferior executables. The compiler path can be an executable basename or a full path to a compiler executable. This option can be specified multiple times.'''))
+    if platform_system == 'Darwin':
+        group.add_argument('--apple-sdk', metavar='apple_sdk', dest='apple_sdk', help=textwrap.dedent('''Specify the name of the Apple SDK (macosx, macosx.internal, iphoneos, iphoneos.internal, or path to SDK) and use the appropriate tools from that SDK's toolchain.'''))
     # FIXME? This won't work for different extra flags according to each arch.
     group.add_argument('-E', metavar='extra-flags', help=textwrap.dedent('''Specify the extra flags to be passed to the toolchain when building the inferior programs to be debugged
                                                            suggestions: do not lump the "-A arch1 -A arch2" together such that the -E option applies to only one of the architectures'''))
@@ -547,8 +552,6 @@ def parseOptionsAndInitTestdirs():
     group.add_argument('args', metavar='test-dir', nargs='*', help='Specify a list of directory names to search for test modules named after Test*.py (test discovery). If empty, search from the current working directory instead.')
 
     args = parse_args(parser)
-    platform_system = platform.system()
-    platform_machine = platform.machine()
     
     if args.unset_env_varnames:
         for env_var in args.unset_env_varnames:
@@ -568,13 +571,23 @@ def parseOptionsAndInitTestdirs():
     if args.compilers:
         compilers = args.compilers
     else:
-        compilers = ['clang']
+        # Use a compiler appropriate appropriate for the Apple SDK if one was specified
+        if platform_system == 'Darwin' and args.apple_sdk:
+            compilers = [commands.getoutput('xcrun -sdk "%s" -find clang 2> /dev/null' % (args.apple_sdk))]
+        else:
+            compilers = ['clang']
+
+    # Set SDKROOT if we are using an Apple SDK
+    if platform_system == 'Darwin' and args.apple_sdk:
+        os.environ['SDKROOT'] = commands.getoutput('xcrun --sdk "%s" --show-sdk-path 2> /dev/null' % (args.apple_sdk))
 
     if args.archs:
         archs = args.archs
         for arch in archs:
-            if arch.startswith('arm') and platform_system == 'Darwin':
+            if arch.startswith('arm') and platform_system == 'Darwin' and not args.apple_sdk:
                 os.environ['SDKROOT'] = commands.getoutput('xcrun --sdk iphoneos.internal --show-sdk-path 2> /dev/null')
+                if not os.path.exists(os.environ['SDKROOT']):
+                    os.environ['SDKROOT'] = commands.getoutput('xcrun --sdk iphoneos --show-sdk-path 2> /dev/null')
     else:
         archs = [platform_machine]
 
