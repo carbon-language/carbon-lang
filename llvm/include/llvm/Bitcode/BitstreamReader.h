@@ -338,14 +338,16 @@ public:
   }
 
   word_t Read(unsigned NumBits) {
-    assert(NumBits && NumBits <= sizeof(word_t) * 8 &&
+    static const unsigned BitsInWord = sizeof(word_t) * 8;
+
+    assert(NumBits && NumBits <= BitsInWord &&
            "Cannot return zero or more than BitsInWord bits!");
 
     static const unsigned Mask = sizeof(word_t) > 4 ? 0x3f : 0x1f;
 
     // If the field is fully contained by CurWord, return it quickly.
     if (BitsInCurWord >= NumBits) {
-      word_t R = CurWord & ((word_t(1) << (NumBits & Mask)) - 1);
+      word_t R = CurWord & (~word_t(0) >> (BitsInWord - NumBits));
 
       // Use a mask to avoid undefined behavior.
       CurWord >>= (NumBits & Mask);
@@ -363,7 +365,7 @@ public:
     if (BitsLeft > BitsInCurWord)
       return 0;
 
-    word_t R2 = CurWord & ((word_t(1) << (BitsLeft & Mask)) - 1);
+    word_t R2 = CurWord & (~word_t(0) >> (BitsInWord - BitsLeft));
 
     // Use a mask to avoid undefined behavior.
     CurWord >>= (BitsLeft & Mask);
