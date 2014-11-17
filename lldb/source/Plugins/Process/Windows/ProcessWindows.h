@@ -112,7 +112,8 @@ public:
     virtual bool
     IsAlive ();
 
-    virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error);
+    virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error) override;
+    virtual size_t DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, lldb_private::Error &error) override;
 
     // IDebugDelegate overrides.
     virtual void OnExitProcess(uint32_t exit_code) override;

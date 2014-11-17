@@ -19,6 +19,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostProcess.h"
+#include "lldb/Host/HostNativeProcessBase.h"
 #include "lldb/Host/MonitoringProcessLauncher.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/windows/ProcessLauncherWindows.h"
@@ -224,7 +225,7 @@ Error
 ProcessWindows::DoDestroy()
 {
     Error error;
-    if (GetPrivateState() != eStateExited && GetPrivateState() != eStateDetached)
+    if (GetPrivateState() != eStateExited && GetPrivateState() != eStateDetached && m_session_data)
     {
         DebugActiveProcessStop(m_session_data->m_debugger->GetProcess().GetProcessId());
         SetPrivateState(eStateExited);
@@ -260,7 +261,32 @@ ProcessWindows::DoReadMemory(lldb::addr_t vm_addr,
                              size_t size,
                              Error &error)
 {
-    return 0;
+    if (!m_session_data)
+        return 0;
+
+    HostProcess process = m_session_data->m_debugger->GetProcess();
+    void *addr = reinterpret_cast<void *>(vm_addr);
+    SIZE_T bytes_read = 0;
+    if (!ReadProcessMemory(process.GetNativeProcess().GetSystemHandle(), addr, buf, size, &bytes_read))
+        error.SetError(GetLastError(), eErrorTypeWin32);
+    return bytes_read;
+}
+
+size_t
+ProcessWindows::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
+{
+    if (!m_session_data)
+        return 0;
+
+    HostProcess process = m_session_data->m_debugger->GetProcess();
+    void *addr = reinterpret_cast<void *>(vm_addr);
+    SIZE_T bytes_written = 0;
+    lldb::process_t handle = process.GetNativeProcess().GetSystemHandle();
+    if (WriteProcessMemory(handle, addr, buf, size, &bytes_written))
+        FlushInstructionCache(handle, addr, bytes_written);
+    else
+        error.SetError(GetLastError(), eErrorTypeWin32);
+    return bytes_written;
 }
 
 bool

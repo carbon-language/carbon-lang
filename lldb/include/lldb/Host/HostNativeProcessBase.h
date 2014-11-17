@@ -40,6 +40,12 @@ class HostNativeProcessBase
     virtual lldb::pid_t GetProcessId() const = 0;
     virtual bool IsRunning() const = 0;
 
+    lldb::process_t
+    GetSystemHandle() const
+    {
+        return m_process;
+    }
+
     virtual HostThread StartMonitoring(HostProcess::MonitorCallback callback, void *callback_baton, bool monitor_signals) = 0;
 
   protected:
