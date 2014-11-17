@@ -161,7 +161,7 @@ static const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Vector splat",
     "Complex-real conversion",
     "Block Pointer conversion",
-    "Transparent Union Conversion"
+    "Transparent Union Conversion",
     "Writeback conversion"
   };
   return Name[Kind];
