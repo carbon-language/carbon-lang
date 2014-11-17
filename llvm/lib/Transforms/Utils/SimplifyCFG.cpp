@@ -70,6 +70,7 @@ static cl::opt<bool> HoistCondStores(
     cl::desc("Hoist conditional stores if an unconditional store precedes"));
 
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
+STATISTIC(NumLinearMaps, "Number of switch instructions turned into linear mapping");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
 STATISTIC(NumLookupTablesHoles, "Number of switch instructions turned into lookup tables (holes checked)");
 STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end block");
@@ -3656,6 +3657,11 @@ namespace {
       // store that single value and return it for each lookup.
       SingleValueKind,
 
+      // For tables where there is a linear relationship between table index
+      // and values. We calculate the result with a simple multiplication
+      // and addition instead of a table lookup.
+      LinearMapKind,
+
       // For small tables with integer elements, we can pack them into a bitmap
       // that fits into a target-legal register. Values are retrieved by
       // shift and mask operations.
@@ -3673,6 +3679,10 @@ namespace {
     ConstantInt *BitMap;
     IntegerType *BitMapElementTy;
 
+    // For LinearMapKind, these are the constants used to derive the value.
+    ConstantInt *LinearOffset;
+    ConstantInt *LinearMultiplier;
+
     // For ArrayKind, this is the array.
     GlobalVariable *Array;
   };
@@ -3685,7 +3695,7 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
                                      Constant *DefaultValue,
                                      const DataLayout *DL)
     : SingleValue(nullptr), BitMap(nullptr), BitMapElementTy(nullptr),
-      Array(nullptr) {
+      LinearOffset(nullptr), LinearMultiplier(nullptr), Array(nullptr) {
   assert(Values.size() && "Can't build lookup table without values!");
   assert(TableSize >= Values.size() && "Can't fit values in table!");
 
@@ -3730,6 +3740,43 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
     return;
   }
 
+  // Check if we can derive the value with a linear transformation from the
+  // table index.
+  if (isa<IntegerType>(ValueType)) {
+    bool LinearMappingPossible = true;
+    APInt PrevVal;
+    APInt DistToPrev;
+    assert(TableSize >= 2 && "Should be a SingleValue table.");
+    // Check if there is the same distance between two consecutive values.
+    for (uint64_t I = 0; I < TableSize; ++I) {
+      ConstantInt *ConstVal = dyn_cast<ConstantInt>(TableContents[I]);
+      if (!ConstVal) {
+        // This is an undef. We could deal with it, but undefs in lookup tables
+        // are very seldom. It's probably not worth the additional complexity.
+        LinearMappingPossible = false;
+        break;
+      }
+      APInt Val = ConstVal->getValue();
+      if (I != 0) {
+        APInt Dist = Val - PrevVal;
+        if (I == 1) {
+          DistToPrev = Dist;
+        } else if (Dist != DistToPrev) {
+          LinearMappingPossible = false;
+          break;
+        }
+      }
+      PrevVal = Val;
+    }
+    if (LinearMappingPossible) {
+      LinearOffset = cast<ConstantInt>(TableContents[0]);
+      LinearMultiplier = ConstantInt::get(M.getContext(), DistToPrev);
+      Kind = LinearMapKind;
+      ++NumLinearMaps;
+      return;
+    }
+  }
+
   // If the type is integer and the table fits in a register, build a bitmap.
   if (WouldFitInRegister(DL, TableSize, ValueType)) {
     IntegerType *IT = cast<IntegerType>(ValueType);
@@ -3765,6 +3812,16 @@ Value *SwitchLookupTable::BuildLookup(Value *Index, IRBuilder<> &Builder) {
   switch (Kind) {
     case SingleValueKind:
       return SingleValue;
+    case LinearMapKind: {
+      // Derive the result value from the input value.
+      Value *Result = Builder.CreateIntCast(Index, LinearMultiplier->getType(),
+                                            false, "switch.idx.cast");
+      if (!LinearMultiplier->isOne())
+        Result = Builder.CreateMul(Result, LinearMultiplier, "switch.idx.mult");
+      if (!LinearOffset->isZero())
+        Result = Builder.CreateAdd(Result, LinearOffset, "switch.offset");
+      return Result;
+    }
     case BitMapKind: {
       // Type of the bitmap (e.g. i59).
       IntegerType *MapTy = BitMap->getType();

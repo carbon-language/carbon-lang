@@ -895,7 +895,7 @@ sw.bb1: br label %return
 sw.bb2: br label %return
 sw.default: br label %return
 return:
-  %x = phi i32 [ 3, %sw.default ], [ 5, %sw.bb2 ], [ 7, %sw.bb1 ], [ 9, %entry ]
+  %x = phi i32 [ 3, %sw.default ], [ 5, %sw.bb2 ], [ 7, %sw.bb1 ], [ 10, %entry ]
   ret i32 %x
 ; CHECK-LABEL: @threecases(
 ; CHECK-NOT: switch i32
@@ -977,3 +977,104 @@ return:
 ; CHECK: switch i32
 ; CHECK-NOT: @switch.table
 }
+
+; We can use linear mapping.
+define i8 @linearmap1(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 10, label %return
+    i32 11, label %sw.bb1
+    i32 12, label %sw.bb2
+    i32 13, label %sw.bb3
+  ]
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.default: br label %return
+return:
+  %x = phi i8 [ 3, %sw.default ], [ 3, %sw.bb3 ], [ 8, %sw.bb2 ], [ 13, %sw.bb1 ], [ 18, %entry ]
+  ret i8 %x
+; CHECK-LABEL: @linearmap1(
+; CHECK: entry:
+; CHECK-NEXT: %switch.tableidx = sub i32 %c, 10
+; CHECK: switch.lookup:
+; CHECK-NEXT: %switch.idx.cast = trunc i32 %switch.tableidx to i8
+; CHECK-NEXT: %switch.idx.mult = mul i8 %switch.idx.cast, -5
+; CHECK-NEXT: %switch.offset = add i8 %switch.idx.mult, 18
+; CHECK-NEXT: ret i8 %switch.offset
+}
+
+; Linear mapping in a different configuration.
+define i32 @linearmap2(i8 %c) {
+entry:
+  switch i8 %c, label %sw.default [
+    i8 -10, label %return
+    i8 -11, label %sw.bb1
+    i8 -12, label %sw.bb2
+    i8 -13, label %sw.bb3
+  ]
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.default: br label %return
+return:
+  %x = phi i32 [ 3, %sw.default ], [ 18, %sw.bb3 ], [ 19, %sw.bb2 ], [ 20, %sw.bb1 ], [ 21, %entry ]
+  ret i32 %x
+; CHECK-LABEL: @linearmap2(
+; CHECK: entry:
+; CHECK-NEXT: %switch.tableidx = sub i8 %c, -13
+; CHECK: switch.lookup:
+; CHECK-NEXT: %switch.idx.cast = zext i8 %switch.tableidx to i32
+; CHECK-NEXT: %switch.offset = add i32 %switch.idx.cast, 18
+; CHECK-NEXT: ret i32 %switch.offset
+}
+
+; Linear mapping with overflows.
+define i8 @linearmap3(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 10, label %return
+    i32 11, label %sw.bb1
+    i32 12, label %sw.bb2
+    i32 13, label %sw.bb3
+  ]
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.default: br label %return
+return:
+  %x = phi i8 [ 3, %sw.default ], [ 44, %sw.bb3 ], [ -56, %sw.bb2 ], [ 100, %sw.bb1 ], [ 0, %entry ]
+  ret i8 %x
+; CHECK-LABEL: @linearmap3(
+; CHECK: entry:
+; CHECK-NEXT: %switch.tableidx = sub i32 %c, 10
+; CHECK: switch.lookup:
+; CHECK-NEXT: %switch.idx.cast = trunc i32 %switch.tableidx to i8
+; CHECK-NEXT: %switch.idx.mult = mul i8 %switch.idx.cast, 100
+; CHECK-NEXT: ret i8 %switch.idx.mult
+}
+
+; Linear mapping with with multiplier 1 and offset 0.
+define i8 @linearmap4(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 -2, label %return
+    i32 -1, label %sw.bb1
+    i32 0, label %sw.bb2
+    i32 1, label %sw.bb3
+  ]
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.default: br label %return
+return:
+  %x = phi i8 [ 3, %sw.default ], [ 3, %sw.bb3 ], [ 2, %sw.bb2 ], [ 1, %sw.bb1 ], [ 0, %entry ]
+  ret i8 %x
+; CHECK-LABEL: @linearmap4(
+; CHECK: entry:
+; CHECK-NEXT: %switch.tableidx = sub i32 %c, -2
+; CHECK: switch.lookup:
+; CHECK-NEXT: %switch.idx.cast = trunc i32 %switch.tableidx to i8
+; CHECK-NEXT: ret i8 %switch.idx.cast
+}
+
