@@ -7,6 +7,9 @@
 // RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=DEFAULT %s
 // DEFAULT: "-o" "cl-outputs.obj"
 
+// RUN: %clang_cl /Fo -### -- %s 2>&1 | FileCheck -check-prefix=FoEMPTY %s
+// FoEMPTY:  "-o" "cl-outputs.obj"
+
 // RUN: %clang_cl /Foa -### -- %s 2>&1 | FileCheck -check-prefix=FoNAME %s
 // FoNAME:  "-o" "a.obj"
 
@@ -25,15 +28,15 @@
 // RUN: %clang_cl /Fo.. -### -- %s 2>&1 | FileCheck -check-prefix=FoCRAZY %s
 // FoCRAZY:  "-o" "..obj"
 
-// RUN: %clang_cl /Fo -### 2>&1 | FileCheck -check-prefix=FoMISSINGARG %s
-// FoMISSINGARG: error: argument to '/Fo' is missing (expected 1 value)
-
 // RUN: %clang_cl /Foa.obj -### -- %s %s 2>&1 | FileCheck -check-prefix=CHECK-MULTIPLESOURCEERROR %s
 // CHECK-MULTIPLESOURCEERROR: error: cannot specify '/Foa.obj' when compiling multiple source files
 
 // RUN: %clang_cl /Fomydir/ -### -- %s %s 2>&1 | FileCheck -check-prefix=CHECK-MULTIPLESOURCEOK %s
 // CHECK-MULTIPLESOURCEOK: "-o" "mydir{{[/\\]+}}cl-outputs.obj"
 
+// RUN: %clang_cl /Fo -### -- %s %s 2>&1 | FileCheck -check-prefix=CHECK-MULTIPLESOURCEOK2 %s
+// CHECK-MULTIPLESOURCEOK2: "-o" "cl-outputs.obj"
+// CHECK-MULTIPLESOURCEOK2: "-o" "cl-outputs.obj"
 
 // RUN: %clang_cl /c /oa -### -- %s 2>&1 | FileCheck -check-prefix=oNAME1 %s
 // oNAME1:  "-o" "a.obj"
@@ -99,6 +102,10 @@
 // RUN: %clang_cl /Fefoo -### -- %s 2>&1 | FileCheck -check-prefix=FeNOEXT %s
 // FeNOEXT: "-out:foo.exe"
 
+// RUN: %clang_cl /Fe -### -- %s 2>&1 | FileCheck -check-prefix=FeEMPTY %s
+// FeEMPTY-NOT: argument to '/Fe' is missing
+// FeEMPTY: "-out:cl-outputs.exe"
+
 // RUN: %clang_cl /Fefoo /LD -### -- %s 2>&1 | FileCheck -check-prefix=FeNOEXTDLL %s
 // RUN: %clang_cl /Fefoo /LDd -### -- %s 2>&1 | FileCheck -check-prefix=FeNOEXTDLL %s
 // FeNOEXTDLL: "-out:foo.dll"
@@ -135,9 +142,6 @@
 // RUN: %clang_cl /LDd /Fefoo.dir/a.ext -### -- %s 2>&1 | FileCheck -check-prefix=FeDIRNAMEEXTDLL %s
 // FeDIRNAMEEXTDLL: "-out:foo.dir{{[/\\]+}}a.ext"
 // FeDIRNAMEEXTDLL: "-implib:foo.dir{{[/\\]+}}a.lib"
-
-// RUN: %clang_cl /Fe -### 2>&1 | FileCheck -check-prefix=FeMISSINGARG %s
-// FeMISSINGARG: error: argument to '/Fe' is missing (expected 1 value)
 
 // RUN: %clang_cl /Fefoo /Febar -### -- %s 2>&1 | FileCheck -check-prefix=FeOVERRIDE %s
 // FeOVERRIDE: "-out:bar.exe"
@@ -214,6 +218,8 @@
 
 // RUN: %clang_cl /FA -### -- %s 2>&1 | FileCheck -check-prefix=FA %s
 // FA: "-o" "cl-outputs.asm"
+// RUN: %clang_cl /FA /Fa -### -- %s 2>&1 | FileCheck -check-prefix=FaEMPTY %s
+// FaEMPTY: "-o" "cl-outputs.asm"
 // RUN: %clang_cl /FA /Fafoo -### -- %s 2>&1 | FileCheck -check-prefix=FaNAME %s
 // RUN: %clang_cl /Fafoo -### -- %s 2>&1 | FileCheck -check-prefix=FaNAME %s
 // FaNAME:  "-o" "foo.asm"
@@ -227,6 +233,9 @@
 // FaDIRNAMEEXT:  "-o" "foo.dir{{[/\\]+}}a.ext"
 // RUN: %clang_cl /Faa.asm -### -- %s %s 2>&1 | FileCheck -check-prefix=FaMULTIPLESOURCE %s
 // FaMULTIPLESOURCE: error: cannot specify '/Faa.asm' when compiling multiple source files
+// RUN: %clang_cl /Fa -### -- %s %s 2>&1 | FileCheck -check-prefix=FaMULTIPLESOURCEOK %s
+// FaMULTIPLESOURCEOK: "-o" "cl-outputs.asm"
+// FaMULTIPLESOURCEOK: "-o" "cl-outputs.asm"
 
 // RUN: %clang_cl /P -### -- %s 2>&1 | FileCheck -check-prefix=P %s
 // P: "-E"
