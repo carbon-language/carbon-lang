@@ -39,6 +39,9 @@ public:
   void printUnwindInfo() override;
 
 private:
+  template<class MachHeader>
+  void printFileHeaders(const MachHeader &Header);
+
   void printSymbol(const SymbolRef &Symbol);
 
   void printRelocation(const RelocationRef &Reloc);
@@ -68,6 +71,137 @@ std::error_code createMachODumper(const object::ObjectFile *Obj,
 
 } // namespace llvm
 
+static const EnumEntry<uint32_t> MachOMagics[] = {
+  { "Magic",      MachO::MH_MAGIC    },
+  { "Cigam",      MachO::MH_CIGAM    },
+  { "Magic64",    MachO::MH_MAGIC_64 },
+  { "Cigam64",    MachO::MH_CIGAM_64 },
+  { "FatMagic",   MachO::FAT_MAGIC   },
+  { "FatCigam",   MachO::FAT_CIGAM   },
+};
+
+static const EnumEntry<uint32_t> MachOHeaderFileTypes[] = {
+  { "Relocatable",          MachO::MH_OBJECT      },
+  { "Executable",           MachO::MH_EXECUTE     },
+  { "FixedVMLibrary",       MachO::MH_FVMLIB      },
+  { "Core",                 MachO::MH_CORE        },
+  { "PreloadedExecutable",  MachO::MH_PRELOAD     },
+  { "DynamicLibrary",       MachO::MH_DYLIB       },
+  { "DynamicLinker",        MachO::MH_DYLINKER    },
+  { "Bundle",               MachO::MH_BUNDLE      },
+  { "DynamicLibraryStub",   MachO::MH_DYLIB_STUB  },
+  { "DWARFSymbol",          MachO::MH_DSYM        },
+  { "KextBundle",           MachO::MH_KEXT_BUNDLE },
+};
+
+static const EnumEntry<uint32_t> MachOHeaderCpuTypes[] = {
+  { "Any"       , static_cast<uint32_t>(MachO::CPU_TYPE_ANY) },
+  { "X86"       , MachO::CPU_TYPE_X86       },
+  { "X86-64"    , MachO::CPU_TYPE_X86_64    },
+  { "Mc98000"   , MachO::CPU_TYPE_MC98000   },
+  { "Arm"       , MachO::CPU_TYPE_ARM       },
+  { "Arm64"     , MachO::CPU_TYPE_ARM64     },
+  { "Sparc"     , MachO::CPU_TYPE_SPARC     },
+  { "PowerPC"   , MachO::CPU_TYPE_POWERPC   },
+  { "PowerPC64" , MachO::CPU_TYPE_POWERPC64 },
+};
+
+static const EnumEntry<uint32_t> MachOHeaderCpuSubtypesX86[] = {
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_I386_ALL),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_386),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_486),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_486SX),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_586),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTPRO),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTII_M3),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTII_M5),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_CELERON),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_CELERON_MOBILE),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTIUM_3),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTIUM_3_M),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTIUM_3_XEON),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTIUM_M),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTIUM_4),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_PENTIUM_4_M),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ITANIUM),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ITANIUM_2),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_XEON),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_XEON_MP),
+};
+
+static const EnumEntry<uint32_t> MachOHeaderCpuSubtypesX64[] = {
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_X86_64_ALL),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_X86_ARCH1),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_X86_64_H),
+};
+
+static const EnumEntry<uint32_t> MachOHeaderCpuSubtypesARM[] = {
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_ALL),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V4T),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V6),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V5),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V5TEJ),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_XSCALE),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V7),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V7S),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V7K),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V6M),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V7M),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM_V7EM),
+};
+
+static const EnumEntry<uint32_t> MachOHeaderCpuSubtypesARM64[] = {
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_ARM64_ALL),
+};
+
+static const EnumEntry<uint32_t> MachOHeaderCpuSubtypesSPARC[] = {
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_SPARC_ALL),
+};
+
+static const EnumEntry<uint32_t> MachOHeaderCpuSubtypesPPC[] = {
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_ALL),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_601),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_602),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_603),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_603e),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_603ev),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_604),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_604e),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_620),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_750),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_7400),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_7450),
+  LLVM_READOBJ_ENUM_ENT(MachO, CPU_SUBTYPE_POWERPC_970),
+};
+
+static const EnumEntry<uint32_t> MachOHeaderFlags[] = {
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_NOUNDEFS),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_INCRLINK),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_DYLDLINK),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_BINDATLOAD),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_PREBOUND),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_SPLIT_SEGS),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_LAZY_INIT),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_TWOLEVEL),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_FORCE_FLAT),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_NOMULTIDEFS),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_NOFIXPREBINDING),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_PREBINDABLE),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_ALLMODSBOUND),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_SUBSECTIONS_VIA_SYMBOLS),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_CANONICAL),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_WEAK_DEFINES),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_BINDS_TO_WEAK),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_ALLOW_STACK_EXECUTION),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_ROOT_SAFE),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_SETUID_SAFE),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_NO_REEXPORTED_DYLIBS),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_PIE),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_DEAD_STRIPPABLE_DYLIB),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_HAS_TLV_DESCRIPTORS),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_NO_HEAP_EXECUTION),
+  LLVM_READOBJ_ENUM_ENT(MachO, MH_APP_EXTENSION_SAFE),
+};
 
 static const EnumEntry<unsigned> MachOSectionTypes[] = {
   { "Regular"                        , 0x00 },
@@ -205,7 +339,47 @@ static void getSymbol(const MachOObjectFile *Obj,
 }
 
 void MachODumper::printFileHeaders() {
-  W.startLine() << "FileHeaders not implemented.\n";
+  DictScope H(W, "MachHeader");
+  if (!Obj->is64Bit()) {
+    printFileHeaders(Obj->getHeader());
+  } else {
+    printFileHeaders(Obj->getHeader64());
+    W.printHex("Reserved", Obj->getHeader64().reserved);
+  }
+}
+
+template<class MachHeader>
+void MachODumper::printFileHeaders(const MachHeader &Header) {
+  W.printEnum("Magic", Header.magic, makeArrayRef(MachOMagics));
+  W.printEnum("CpuType", Header.cputype, makeArrayRef(MachOHeaderCpuTypes));
+  uint32_t subtype = Header.cpusubtype & ~MachO::CPU_SUBTYPE_MASK;
+  switch (Header.cputype) {
+  case MachO::CPU_TYPE_X86:
+    W.printEnum("CpuSubType", subtype, makeArrayRef(MachOHeaderCpuSubtypesX86));
+    break;
+  case MachO::CPU_TYPE_X86_64:
+    W.printEnum("CpuSubType", subtype, makeArrayRef(MachOHeaderCpuSubtypesX64));
+    break;
+  case MachO::CPU_TYPE_ARM:
+    W.printEnum("CpuSubType", subtype, makeArrayRef(MachOHeaderCpuSubtypesARM));
+    break;
+  case MachO::CPU_TYPE_POWERPC:
+    W.printEnum("CpuSubType", subtype, makeArrayRef(MachOHeaderCpuSubtypesPPC));
+    break;
+  case MachO::CPU_TYPE_SPARC:
+    W.printEnum("CpuSubType", subtype, makeArrayRef(MachOHeaderCpuSubtypesSPARC));
+    break;
+  case MachO::CPU_TYPE_ARM64:
+    W.printEnum("CpuSubType", subtype, makeArrayRef(MachOHeaderCpuSubtypesARM64));
+    break;
+  case MachO::CPU_TYPE_POWERPC64:
+  default:
+    W.printHex("CpuSubtype", subtype);
+  }
+  W.printEnum("FileType", Header.filetype, makeArrayRef(MachOHeaderFileTypes));
+  W.printNumber("NumOfLoadCommands", Header.ncmds);
+  W.printNumber("SizeOfLoadCommands", Header.sizeofcmds);
+  W.printFlags("Flags", Header.flags, makeArrayRef(MachOHeaderFlags));
 }
 
 void MachODumper::printSections() {
