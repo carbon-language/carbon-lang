@@ -767,7 +767,7 @@ public:
                      const SCEV **Remainder) {
     assert(Numerator && Denominator && "Uninitialized SCEV");
 
-    SCEVDivision<Derived> D(SE, Numerator, Denominator);
+    Derived D(SE, Numerator, Denominator);
 
     // Check for the trivial case here to avoid having to check for it in the
     // rest of the code.
@@ -806,17 +806,6 @@ public:
     D.visit(Numerator);
     *Quotient = D.Quotient;
     *Remainder = D.Remainder;
-  }
-
-  SCEVDivision(ScalarEvolution &S, const SCEV *Numerator, const SCEV *Denominator)
-      : SE(S), Denominator(Denominator) {
-    Zero = SE.getConstant(Denominator->getType(), 0);
-    One = SE.getConstant(Denominator->getType(), 1);
-
-    // By default, we don't know how to divide Expr by Denominator.
-    // Providing the default here simplifies the rest of the code.
-    Quotient = Zero;
-    Remainder = Numerator;
   }
 
   // Except in the trivial case described above, we do not know how to divide
@@ -953,6 +942,18 @@ public:
   }
 
 private:
+  SCEVDivision(ScalarEvolution &S, const SCEV *Numerator,
+               const SCEV *Denominator)
+      : SE(S), Denominator(Denominator) {
+    Zero = SE.getConstant(Denominator->getType(), 0);
+    One = SE.getConstant(Denominator->getType(), 1);
+
+    // By default, we don't know how to divide Expr by Denominator.
+    // Providing the default here simplifies the rest of the code.
+    Quotient = Zero;
+    Remainder = Numerator;
+  }
+
   ScalarEvolution &SE;
   const SCEV *Denominator, *Quotient, *Remainder, *Zero, *One;
 
@@ -961,6 +962,10 @@ private:
 };
 
 struct SCEVSDivision : public SCEVDivision<SCEVSDivision> {
+  SCEVSDivision(ScalarEvolution &S, const SCEV *Numerator,
+                const SCEV *Denominator)
+      : SCEVDivision(S, Numerator, Denominator) {}
+
   void visitConstant(const SCEVConstant *Numerator) {
     if (const SCEVConstant *D = dyn_cast<SCEVConstant>(Denominator)) {
       Quotient = SE.getConstant(sdiv(Numerator, D));
@@ -971,6 +976,10 @@ struct SCEVSDivision : public SCEVDivision<SCEVSDivision> {
 };
 
 struct SCEVUDivision : public SCEVDivision<SCEVUDivision> {
+  SCEVUDivision(ScalarEvolution &S, const SCEV *Numerator,
+                const SCEV *Denominator)
+      : SCEVDivision(S, Numerator, Denominator) {}
+
   void visitConstant(const SCEVConstant *Numerator) {
     if (const SCEVConstant *D = dyn_cast<SCEVConstant>(Denominator)) {
       Quotient = SE.getConstant(udiv(Numerator, D));
