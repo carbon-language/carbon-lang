@@ -425,7 +425,7 @@ llvm::Value *CodeGenFunction::getSelectorFromSlot() {
 
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
                                        bool KeepInsertionPoint) {
-  if (CGM.getTarget().getTriple().isWindowsMSVCEnvironment()) {
+  if (CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment()) {
     ErrorUnsupported(E, "throw expression");
     return;
   }
@@ -597,7 +597,7 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
-  if (CGM.getTarget().getTriple().isWindowsMSVCEnvironment()) {
+  if (CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment()) {
     ErrorUnsupported(&S, "try statement");
     return;
   }
