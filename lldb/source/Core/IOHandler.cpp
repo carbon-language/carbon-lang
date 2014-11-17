@@ -387,12 +387,7 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
 #ifndef LLDB_DISABLE_LIBEDIT
     bool use_editline = false;
     
-#ifndef _MSC_VER
     use_editline = m_input_sp->GetFile().GetIsRealTerminal();
-#else
-    // Editline is causing issues on Windows, so use the fallback.
-    use_editline = false;
-#endif
 
     if (use_editline)
     {
@@ -620,9 +615,11 @@ IOHandlerEditline::SetContinuationPrompt (const char *p)
         m_continuation_prompt = p;
     else
         m_continuation_prompt.clear();
-    
+
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         m_editline_ap->SetContinuationPrompt (m_continuation_prompt.empty() ? NULL : m_continuation_prompt.c_str());
+#endif
 }
 
 
@@ -635,7 +632,7 @@ IOHandlerEditline::SetBaseLineNumber (uint32_t line)
 uint32_t
 IOHandlerEditline::GetCurrentLineIndex () const
 {
-#ifdef LLDB_DISABLE_LIBEDIT
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         return m_editline_ap->GetCurrentLine();
 #endif

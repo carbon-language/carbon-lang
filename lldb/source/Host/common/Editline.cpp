@@ -136,6 +136,10 @@ GetIndentation (const EditLineStringType & line)
 bool
 IsInputPending (FILE * file)
 {
+    // FIXME: This will be broken on Windows if we ever re-enable Editline.  You can't use select
+    // on something that isn't a socket.  This will have to be re-written to not use a FILE*, but
+    // instead use some kind of yet-to-be-created abstraction that select-like functionality on
+    // non-socket objects.
     const int fd = fileno (file);
     fd_set fds;
     FD_ZERO (&fds);
