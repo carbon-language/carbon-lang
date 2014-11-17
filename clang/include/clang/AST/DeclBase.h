@@ -48,6 +48,7 @@ class ObjCInterfaceDecl;
 class ObjCMethodDecl;
 class ObjCProtocolDecl;
 struct PrintingPolicy;
+class RecordDecl;
 class Stmt;
 class StoredDeclsMap;
 class TranslationUnitDecl;
@@ -1236,6 +1237,12 @@ public:
   DeclContext *getEnclosingNamespaceContext();
   const DeclContext *getEnclosingNamespaceContext() const {
     return const_cast<DeclContext *>(this)->getEnclosingNamespaceContext();
+  }
+
+  /// \brief Retrieve the outermost lexically enclosing record context.
+  RecordDecl *getOuterLexicalRecordContext();
+  const RecordDecl *getOuterLexicalRecordContext() const {
+    return const_cast<DeclContext *>(this)->getOuterLexicalRecordContext();
   }
 
   /// \brief Test if this context is part of the enclosing namespace set of

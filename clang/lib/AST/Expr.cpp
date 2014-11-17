@@ -2985,11 +2985,13 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->HasSideEffects(Ctx);
 
-  case CXXDefaultInitExprClass:
-    if (const Expr *E = cast<CXXDefaultInitExpr>(this)->getExpr())
+  case CXXDefaultInitExprClass: {
+    const FieldDecl *FD = cast<CXXDefaultInitExpr>(this)->getField();
+    if (const Expr *E = FD->getInClassInitializer())
       return E->HasSideEffects(Ctx);
     // If we've not yet parsed the initializer, assume it has side-effects.
     return true;
+  }
 
   case CXXDynamicCastExprClass: {
     // A dynamic_cast expression has side-effects if it can throw.

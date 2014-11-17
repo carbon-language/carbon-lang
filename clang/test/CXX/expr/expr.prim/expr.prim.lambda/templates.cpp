@@ -140,11 +140,11 @@ namespace NonLocalLambdaInstantation {
   }
 
   template<typename T>
-  struct X2 {
+  struct X2 { // expected-note{{in instantiation of default member initializer 'NonLocalLambdaInstantation::X2<int *>::x' requested here}}
     int x = []{ return T(); }(); // expected-error{{cannot initialize a member subobject of type 'int' with an rvalue of type 'int *'}}
   };
 
   X2<int> x2i;
   X2<float> x2f;
-  X2<int*> x2ip; // expected-note{{in instantiation of template class 'NonLocalLambdaInstantation::X2<int *>' requested here}}
+  X2<int*> x2ip; // expected-note{{implicit default constructor for 'NonLocalLambdaInstantation::X2<int *>' first required here}}
 }

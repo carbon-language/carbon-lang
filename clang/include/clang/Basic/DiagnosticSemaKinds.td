@@ -3536,6 +3536,8 @@ def note_template_variable_def_here : Note<
   "in instantiation of variable template specialization %q0 requested here">;
 def note_template_enum_def_here : Note<
   "in instantiation of enumeration %q0 requested here">;
+def note_template_nsdmi_here : Note<
+  "in instantiation of default member initializer %q0 requested here">;
 def note_template_type_alias_instantiation_here : Note<
   "in instantiation of template type alias %0 requested here">;
 def note_template_exception_spec_instantiation_here : Note<
@@ -6213,9 +6215,12 @@ def err_in_class_initializer_literal_type : Error<
   "'constexpr' specifier">;
 def err_in_class_initializer_non_constant : Error<
   "in-class initializer for static data member is not a constant expression">;
-def err_in_class_initializer_references_def_ctor : Error<
-  "defaulted default constructor of %0 cannot be used by non-static data "
-  "member initializer which appears before end of class definition">;
+def err_in_class_initializer_not_yet_parsed
+    : Error<"cannot use defaulted default constructor of %0 within the class "
+            "outside of member functions because %1 has an initializer">;
+def err_in_class_initializer_not_yet_parsed_outer_class
+    : Error<"cannot use defaulted default constructor of %0 within "
+            "%1 outside of member functions because %2 has an initializer">;
 
 def ext_in_class_initializer_non_constant : Extension<
   "in-class initializer for static data member is not a constant expression; "

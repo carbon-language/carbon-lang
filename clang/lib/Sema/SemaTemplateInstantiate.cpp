@@ -448,6 +448,10 @@ void Sema::PrintInstantiationStack() {
                      diag::note_template_enum_def_here)
           << ED
           << Active->InstantiationRange;
+      } else if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
+        Diags.Report(Active->PointOfInstantiation,
+                     diag::note_template_nsdmi_here)
+            << FD << Active->InstantiationRange;
       } else {
         Diags.Report(Active->PointOfInstantiation,
                      diag::note_template_type_alias_instantiation_here)
@@ -1997,8 +2001,6 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   TemplateDeclInstantiator Instantiator(*this, Instantiation, TemplateArgs);
   SmallVector<Decl*, 4> Fields;
-  SmallVector<std::pair<FieldDecl*, FieldDecl*>, 4>
-    FieldsWithMemberInitializers;
   // Delay instantiation of late parsed attributes.
   LateInstantiatedAttrVec LateAttrs;
   Instantiator.enableLateAttributeInstantiation(&LateAttrs);
@@ -2025,10 +2027,6 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     if (NewMember) {
       if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember)) {
         Fields.push_back(Field);
-        FieldDecl *OldField = cast<FieldDecl>(Member);
-        if (OldField->getInClassInitializer())
-          FieldsWithMemberInitializers.push_back(std::make_pair(OldField,
-                                                                Field));
       } else if (EnumDecl *Enum = dyn_cast<EnumDecl>(NewMember)) {
         // C++11 [temp.inst]p1: The implicit instantiation of a class template
         // specialization causes the implicit instantiation of the definitions
@@ -2065,31 +2063,6 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
               SourceLocation(), SourceLocation(), nullptr);
   CheckCompletedCXXClass(Instantiation);
 
-  // Attach any in-class member initializers now the class is complete.
-  // FIXME: We are supposed to defer instantiating these until they are needed.
-  if (!FieldsWithMemberInitializers.empty()) {
-    // C++11 [expr.prim.general]p4:
-    //   Otherwise, if a member-declarator declares a non-static data member 
-    //  (9.2) of a class X, the expression this is a prvalue of type "pointer
-    //  to X" within the optional brace-or-equal-initializer. It shall not 
-    //  appear elsewhere in the member-declarator.
-    CXXThisScopeRAII ThisScope(*this, Instantiation, (unsigned)0);
-    
-    for (unsigned I = 0, N = FieldsWithMemberInitializers.size(); I != N; ++I) {
-      FieldDecl *OldField = FieldsWithMemberInitializers[I].first;
-      FieldDecl *NewField = FieldsWithMemberInitializers[I].second;
-      Expr *OldInit = OldField->getInClassInitializer();
-
-      ActOnStartCXXInClassMemberInitializer();
-      ExprResult NewInit = SubstInitializer(OldInit, TemplateArgs,
-                                            /*CXXDirectInit=*/false);
-      Expr *Init = NewInit.get();
-      assert((!Init || !isa<ParenListExpr>(Init)) &&
-             "call-style init in class");
-      ActOnFinishCXXInClassMemberInitializer(NewField,
-        Init ? Init->getLocStart() : SourceLocation(), Init);
-    }
-  }
   // Instantiate late parsed attributes, and attach them to their decls.
   // See Sema::InstantiateAttrs
   for (LateInstantiatedAttrVec::iterator I = LateAttrs.begin(),
@@ -2228,6 +2201,80 @@ bool Sema::InstantiateEnum(SourceLocation PointOfInstantiation,
   SavedContext.pop();
 
   return Instantiation->isInvalidDecl();
+}
+
+
+/// \brief Instantiate the definition of a field from the given pattern.
+///
+/// \param PointOfInstantiation The point of instantiation within the
+///        source code.
+/// \param Instantiation is the declaration whose definition is being
+///        instantiated. This will be a class of a class temploid
+///        specialization, or a local enumeration within a function temploid
+///        specialization.
+/// \param Pattern The templated declaration from which the instantiation
+///        occurs.
+/// \param TemplateArgs The template arguments to be substituted into
+///        the pattern.
+///
+/// \return \c true if an error occurred, \c false otherwise.
+bool Sema::InstantiateInClassInitializer(
+    SourceLocation PointOfInstantiation, FieldDecl *Instantiation,
+    FieldDecl *Pattern, const MultiLevelTemplateArgumentList &TemplateArgs) {
+  // If there is no initializer, we don't need to do anything.
+  if (!Pattern->hasInClassInitializer())
+    return false;
+
+  assert(Instantiation->getInClassInitStyle() ==
+             Pattern->getInClassInitStyle() &&
+         "pattern and instantiation disagree about init style");
+
+  // Error out if we haven't parsed the initializer of the pattern yet because
+  // we are waiting for the closing brace of the outer class.
+  Expr *OldInit = Pattern->getInClassInitializer();
+  if (!OldInit) {
+    RecordDecl *PatternRD = Pattern->getParent();
+    RecordDecl *OutermostClass = PatternRD->getOuterLexicalRecordContext();
+    if (OutermostClass == PatternRD) {
+      Diag(Pattern->getLocEnd(), diag::err_in_class_initializer_not_yet_parsed)
+          << PatternRD << Pattern;
+    } else {
+      Diag(Pattern->getLocEnd(),
+           diag::err_in_class_initializer_not_yet_parsed_outer_class)
+          << PatternRD << OutermostClass << Pattern;
+    }
+    Instantiation->setInvalidDecl();
+    return true;
+  }
+
+  InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
+  if (Inst.isInvalid())
+    return true;
+
+  // Enter the scope of this instantiation. We don't use PushDeclContext because
+  // we don't have a scope.
+  ContextRAII SavedContext(*this, Instantiation->getParent());
+  EnterExpressionEvaluationContext EvalContext(*this,
+                                               Sema::PotentiallyEvaluated);
+
+  LocalInstantiationScope Scope(*this);
+
+  // Instantiate the initializer.
+  ActOnStartCXXInClassMemberInitializer();
+  CXXThisScopeRAII ThisScope(*this, Instantiation->getParent(), /*TypeQuals=*/0);
+
+  ExprResult NewInit = SubstInitializer(OldInit, TemplateArgs,
+                                        /*CXXDirectInit=*/false);
+  Expr *Init = NewInit.get();
+  assert((!Init || !isa<ParenListExpr>(Init)) && "call-style init in class");
+  ActOnFinishCXXInClassMemberInitializer(
+      Instantiation, Init ? Init->getLocStart() : SourceLocation(), Init);
+
+  // Exit the scope of this instantiation.
+  SavedContext.pop();
+
+  // Return true if the in-class initializer is still missing.
+  return !Instantiation->getInClassInitializer();
 }
 
 namespace {
@@ -2590,6 +2637,19 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       } else {
         MSInfo->setTemplateSpecializationKind(TSK);
         MSInfo->setPointOfInstantiation(PointOfInstantiation);
+      }
+    } else if (auto *Field = dyn_cast<FieldDecl>(D)) {
+      // No need to instantiate in-class initializers during explicit
+      // instantiation.
+      if (Field->hasInClassInitializer() && TSK == TSK_ImplicitInstantiation) {
+        CXXRecordDecl *ClassPattern =
+            Instantiation->getTemplateInstantiationPattern();
+        DeclContext::lookup_result Lookup =
+            ClassPattern->lookup(Field->getDeclName());
+        assert(Lookup.size() == 1);
+        FieldDecl *Pattern = cast<FieldDecl>(Lookup[0]);
+        InstantiateInClassInitializer(PointOfInstantiation, Field, Pattern,
+                                      TemplateArgs);
       }
     }
   }

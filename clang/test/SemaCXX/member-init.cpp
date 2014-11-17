@@ -14,7 +14,10 @@ public:
 bool b();
 int k;
 struct Recurse {
-  int &n = b() ? Recurse().n : k; // expected-error {{defaulted default constructor of 'Recurse' cannot be used by non-static data member initializer which appears before end of class definition}}
+  int &n = // expected-error {{cannot use defaulted default constructor of 'Recurse' within the class outside of member functions because 'n' has an initializer}}
+      b() ?
+      Recurse().n : // expected-note {{implicit default constructor for 'Recurse' first required here}}
+      k;
 };
 
 struct UnknownBound {
@@ -109,4 +112,76 @@ namespace PR18560 {
   int f();
 
   struct Y { int b = f(); };
+}
+
+namespace template_valid {
+// Valid, we shouldn't build a CXXDefaultInitExpr until A's ctor definition.
+struct A {
+  A();
+  template <typename T>
+  struct B { int m1 = sizeof(A) + sizeof(T); };
+  B<int> m2;
+};
+A::A() {}
+}
+
+namespace template_default_ctor {
+struct A {
+  template <typename T>
+  struct B {
+    int m1 = 0; // expected-error {{cannot use defaulted default constructor of 'B' within 'A' outside of member functions because 'm1' has an initializer}}
+  };
+  // expected-note@+1 {{implicit default constructor for 'template_default_ctor::A::B<int>' first required here}}
+  enum { NOE = noexcept(B<int>()) };
+};
+}
+
+namespace default_ctor {
+struct A {
+  struct B {
+    int m1 = 0; // expected-error {{cannot use defaulted default constructor of 'B' within 'A' outside of member functions because 'm1' has an initializer}}
+  };
+  // expected-note@+1 {{implicit default constructor for 'default_ctor::A::B' first required here}}
+  enum { NOE = noexcept(B()) };
+};
+}
+
+namespace member_template {
+struct A {
+  template <typename T>
+  struct B {
+    struct C {
+      int m1 = 0; // expected-error {{cannot use defaulted default constructor of 'C' within 'A' outside of member functions because 'm1' has an initializer}}
+    };
+    template <typename U>
+    struct D {
+      int m1 = 0; // expected-error {{cannot use defaulted default constructor of 'D' within 'A' outside of member functions because 'm1' has an initializer}}
+    };
+  };
+  enum {
+    // expected-note@+1 {{implicit default constructor for 'member_template::A::B<int>::C' first required here}}
+    NOE1 = noexcept(B<int>::C()),
+    // expected-note@+1 {{implicit default constructor for 'member_template::A::B<int>::D<int>' first required here}}
+    NOE2 = noexcept(B<int>::D<int>())
+  };
+};
+}
+
+namespace explicit_instantiation {
+template<typename T> struct X {
+  X(); // expected-note {{in instantiation of default member initializer 'explicit_instantiation::X<float>::n' requested here}}
+  int n = T::error; // expected-error {{type 'float' cannot be used prior to '::' because it has no members}}
+};
+template struct X<int>; // ok
+template<typename T> X<T>::X() {}
+template struct X<float>; // expected-note {{in instantiation of member function 'explicit_instantiation::X<float>::X' requested here}}
+}
+
+namespace local_class {
+template<typename T> void f() {
+  struct X { // expected-note {{in instantiation of default member initializer 'local_class::f()::X::n' requested here}}
+    int n = T::error; // expected-error {{type 'int' cannot be used prior to '::' because it has no members}}
+  };
+}
+void g() { f<int>(); } // expected-note {{in instantiation of function template specialization 'local_class::f<int>' requested here}}
 }

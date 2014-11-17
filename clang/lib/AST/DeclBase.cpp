@@ -1441,6 +1441,17 @@ DeclContext *DeclContext::getEnclosingNamespaceContext() {
   return Ctx->getPrimaryContext();
 }
 
+RecordDecl *DeclContext::getOuterLexicalRecordContext() {
+  // Loop until we find a non-record context.
+  RecordDecl *OutermostRD = nullptr;
+  DeclContext *DC = this;
+  while (DC->isRecord()) {
+    OutermostRD = cast<RecordDecl>(DC);
+    DC = DC->getLexicalParent();
+  }
+  return OutermostRD;
+}
+
 bool DeclContext::InEnclosingNamespaceSetOf(const DeclContext *O) const {
   // For non-file contexts, this is equivalent to Equals.
   if (!isFileContext())
