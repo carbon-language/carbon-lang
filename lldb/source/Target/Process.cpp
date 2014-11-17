@@ -6196,7 +6196,8 @@ Process::RunPreResumeActions ()
         struct PreResumeCallbackAndBaton action = m_pre_resume_actions.back();
         m_pre_resume_actions.pop_back();
         bool this_result = action.callback (action.baton);
-        if (result == true) result = this_result;
+        if (result == true) 
+            result = this_result;
     }
     return result;
 }

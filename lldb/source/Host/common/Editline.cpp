@@ -74,7 +74,8 @@ IsOnlySpaces (const EditLineStringType & content)
 {
     for (wchar_t ch : content)
     {
-        if (ch != EditLineCharType(' ')) return false;
+        if (ch != EditLineCharType(' ')) 
+            return false;
     }
     return true;
 }
@@ -95,7 +96,8 @@ SplitLines (const EditLineStringType & input)
 {
     std::vector<EditLineStringType> result;
     size_t start = 0;
-    while (start < input.length()) {
+    while (start < input.length()) 
+    {
         size_t end = input.find ('\n', start);
         if (end == std::string::npos)
         {
@@ -111,8 +113,10 @@ SplitLines (const EditLineStringType & input)
 EditLineStringType
 FixIndentation (const EditLineStringType & line, int indent_correction)
 {
-    if (indent_correction == 0) return line;
-    if (indent_correction < 0) return line.substr (-indent_correction);
+    if (indent_correction == 0) 
+        return line;
+    if (indent_correction < 0) 
+        return line.substr (-indent_correction);
     return EditLineStringType (indent_correction, EditLineCharType(' ')) + line;
 }
 
@@ -122,7 +126,8 @@ GetIndentation (const EditLineStringType & line)
     int space_count = 0;
     for (EditLineCharType ch : line)
     {
-        if (ch != EditLineCharType(' ')) break;
+        if (ch != EditLineCharType(' ')) 
+            break;
         ++space_count;
     }
     return space_count;
@@ -352,7 +357,8 @@ Editline::IsOnlySpaces()
     const LineInfoW * info = el_wline (m_editline);
     for (const EditLineCharType * character = info->buffer; character < info->lastchar; character++)
     {
-        if (*character != ' ') return false;
+        if (*character != ' ') 
+            return false;
     }
     return true;
 }
@@ -427,7 +433,8 @@ Editline::DisplayInput (int firstIndex)
                 PromptForIndex (index).c_str(),
                 unfaint,
                 m_input_lines[index].c_str());
-        if (index < line_count - 1) fprintf (m_output_file, "\n");
+        if (index < line_count - 1) 
+            fprintf (m_output_file, "\n");
     }
 }
 
@@ -453,7 +460,8 @@ Editline::GetInputAsStringList(int line_count)
     StringList lines;
     for (EditLineStringType line : m_input_lines)
     {
-        if (line_count == 0) break;
+        if (line_count == 0) 
+            break;
 #if LLDB_EDITLINE_USE_WCHAR
         lines.AppendString (m_utf8conv.to_bytes (line));
 #else
@@ -467,7 +475,8 @@ Editline::GetInputAsStringList(int line_count)
 unsigned char
 Editline::RecallHistory (bool earlier)
 {
-    if (!m_history_sp || !m_history_sp->IsValid()) return CC_ERROR;
+    if (!m_history_sp || !m_history_sp->IsValid()) 
+        return CC_ERROR;
     
     HistoryW * pHistory = m_history_sp->GetHistoryPtr();
     HistEventW history_event;
@@ -476,8 +485,10 @@ Editline::RecallHistory (bool earlier)
     // Treat moving from the "live" entry differently
     if (!m_in_history)
     {
-        if (earlier == false) return CC_ERROR; // Can't go newer than the "live" entry
-        if (history_w (pHistory, &history_event, H_FIRST) == -1) return CC_ERROR;
+        if (earlier == false) 
+            return CC_ERROR; // Can't go newer than the "live" entry
+        if (history_w (pHistory, &history_event, H_FIRST) == -1) 
+            return CC_ERROR;
 
         // Save any edits to the "live" entry in case we return by moving forward in history
         // (it would be more bash-like to save over any current entry, but libedit doesn't
@@ -491,7 +502,8 @@ Editline::RecallHistory (bool earlier)
         if (history_w (pHistory, &history_event, earlier ? H_NEXT : H_PREV) == -1)
         {
             // Can't move earlier than the earliest entry
-            if (earlier) return CC_ERROR;
+            if (earlier) 
+                return CC_ERROR;
 
             // ... but moving to newer than the newest yields the "live" entry
             new_input_lines = m_live_history_lines;
@@ -500,7 +512,8 @@ Editline::RecallHistory (bool earlier)
     }
     
     // If we're pulling the lines from history, split them apart
-    if (m_in_history) new_input_lines = SplitLines (history_event.str);
+    if (m_in_history) 
+        new_input_lines = SplitLines (history_event.str);
 
     // Erase the current edit session and replace it with a new one
     MoveCursor (CursorLocation::EditingCursor, CursorLocation::BlockStart);
@@ -559,10 +572,12 @@ Editline::GetCharacter (EditLineCharType * c)
             // After the initial interruptible read, this is guaranteed not to block
             ungetc (ch, m_input_file);
             *c = fgetwc (m_input_file);
-            if (*c != WEOF) return 1;
+            if (*c != WEOF) 
+                return 1;
 #else
             *c = ch;
-            if(*c != EOF) return 1;
+            if(*c != EOF) 
+                return 1;
 #endif
         }
         else
@@ -592,7 +607,8 @@ Editline::GetCharacter (EditLineCharType * c)
 const char *
 Editline::Prompt()
 {
-    if (m_color_prompts) m_needs_prompt_repaint = true;
+    if (m_color_prompts) 
+        m_needs_prompt_repaint = true;
     return m_current_prompt.c_str();
 }
 
@@ -606,7 +622,8 @@ Editline::BreakLineCommand (int ch)
     m_input_lines[m_current_line_index] = current_line;
     
     // Ignore whitespace-only extra fragments when breaking a line
-    if (::IsOnlySpaces (new_line_fragment)) new_line_fragment = EditLineConstString("");
+    if (::IsOnlySpaces (new_line_fragment)) 
+        new_line_fragment = EditLineConstString("");
 
     // Establish the new cursor position at the start of a line when inserting a line break
     m_revert_cursor_index = 0;
@@ -618,7 +635,8 @@ Editline::BreakLineCommand (int ch)
         if (m_current_line_index == m_input_lines.size() - 1 && new_line_fragment.length() == 0)
         {
             bool end_of_input = true;
-            if (m_is_input_complete_callback) {
+            if (m_is_input_complete_callback) 
+            {
                 SaveEditedLine();
                 auto lines = GetInputAsStringList();
                 end_of_input = m_is_input_complete_callback (this, lines, m_is_input_complete_callback_baton);
@@ -646,7 +664,8 @@ Editline::BreakLineCommand (int ch)
         }
         
         // Apply smart indentation
-        if (m_fix_indentation_callback) {
+        if (m_fix_indentation_callback) 
+        {
             StringList lines = GetInputAsStringList (m_current_line_index + 1);
 #if LLDB_EDITLINE_USE_WCHAR
             lines.AppendString (m_utf8conv.to_bytes (new_line_fragment));
@@ -677,7 +696,8 @@ Editline::DeleteNextCharCommand (int ch)
     LineInfoW * info = (LineInfoW *)el_wline (m_editline);
     
     // Just delete the next character normally if possible
-    if (info->cursor < info->lastchar) {
+    if (info->cursor < info->lastchar) 
+    {
         info->cursor++;
         el_deletestr (m_editline, 1);
         return CC_REFRESH;
@@ -720,13 +740,15 @@ Editline::DeletePreviousCharCommand (int ch)
     LineInfoW * info = (LineInfoW *)el_wline (m_editline);
     
     // Just delete the previous character normally when not at the start of a line
-    if (info->cursor > info->buffer) {
+    if (info->cursor > info->buffer) 
+    {
         el_deletestr (m_editline, 1);
         return CC_REFRESH;
     }
     
     // No prior line and no prior character?  Let the user know
-    if (m_current_line_index == 0) return CC_ERROR;
+    if (m_current_line_index == 0) 
+        return CC_ERROR;
     
     // No prior character, but prior line?  Combine with the line above
     SaveEditedLine();
@@ -759,7 +781,8 @@ Editline::PreviousLineCommand (int ch)
     MoveCursor (CursorLocation::EditingCursor, CursorLocation::EditingPrompt);
     
     // Treat moving up from a blank last line as a deletion of that line
-    if (m_current_line_index == m_input_lines.size() - 1 && IsOnlySpaces()) {
+    if (m_current_line_index == m_input_lines.size() - 1 && IsOnlySpaces()) 
+    {
         m_input_lines.erase (m_input_lines.begin() + m_current_line_index);
         fprintf (m_output_file, ANSI_CLEAR_BELOW);
     }
@@ -776,9 +799,11 @@ Editline::NextLineCommand (int ch)
     SaveEditedLine();
 
     // Handle attempts to move down from the last line
-    if (m_current_line_index == m_input_lines.size() - 1) {
+    if (m_current_line_index == m_input_lines.size() - 1) 
+    {
         // Don't add an extra line if the existing last line is blank, move through history instead
-        if (IsOnlySpaces()) {
+        if (IsOnlySpaces()) 
+        {
             return RecallHistory (false);
         }
         
@@ -798,7 +823,8 @@ Editline::NextLineCommand (int ch)
     const LineInfoW * info = el_wline (m_editline);
     int cursor_position = (int)((info->cursor - info->buffer) + GetPromptWidth());
     int cursor_row = cursor_position / m_terminal_width;
-    for (int line_count = 0; line_count < m_current_line_rows - cursor_row; line_count++) {
+    for (int line_count = 0; line_count < m_current_line_rows - cursor_row; line_count++) 
+    {
         fprintf (m_output_file, "\n");
     }
     return CC_NEWLINE;
@@ -807,7 +833,8 @@ Editline::NextLineCommand (int ch)
 unsigned char
 Editline::FixIndentationCommand (int ch)
 {
-    if (!m_fix_indentation_callback) return CC_NORM;
+    if (!m_fix_indentation_callback) 
+        return CC_NORM;
     
     // Insert the character by hand prior to correction
     EditLineCharType inserted[] = { (EditLineCharType)ch, 0 };
@@ -876,7 +903,8 @@ Editline::BufferEndCommand (int ch)
 unsigned char
 Editline::TabCommand (int ch)
 {
-    if (m_completion_callback == nullptr) return CC_ERROR;
+    if (m_completion_callback == nullptr) 
+        return CC_ERROR;
     
     const LineInfo *line_info  = el_line (m_editline);
     StringList completions;
@@ -890,7 +918,8 @@ Editline::TabCommand (int ch)
                                                        completions,
                                                        m_completion_callback_baton);
     
-    if (num_completions == 0) return CC_ERROR;
+    if (num_completions == 0) 
+        return CC_ERROR;
     //    if (num_completions == -1)
     //    {
     //        el_insertstr (m_editline, m_completion_key);
@@ -966,10 +995,12 @@ Editline::TabCommand (int ch)
 void
 Editline::ConfigureEditor (bool multiline)
 {
-    if (m_editline && m_multiline_enabled == multiline) return;
+    if (m_editline && m_multiline_enabled == multiline) 
+        return;
     m_multiline_enabled = multiline;
     
-    if (m_editline) {
+    if (m_editline) 
+    {
         // Disable edit mode to stop the terminal from flushing all input
         // during the call to el_end() since we expect to have multiple editline
         // instances in this program.
@@ -1136,7 +1167,8 @@ Editline::Editline (const char * editline_name, FILE * input_file, FILE * output
 
 Editline::~Editline()
 {
-    if (m_editline) {
+    if (m_editline) 
+    {
         // Disable edit mode to stop the terminal from flushing all input
         // during the call to el_end() since we expect to have multiple editline
         // instances in this program.
@@ -1167,19 +1199,23 @@ Editline::SetContinuationPrompt (const char * continuation_prompt)
 void
 Editline::TerminalSizeChanged()
 {
-    if (m_editline != nullptr) {
+    if (m_editline != nullptr) 
+    {
         el_resize (m_editline);
         int columns;
         // Despite the man page claiming non-zero indicates success, it's actually zero
-        if (el_get (m_editline, EL_GETTC, "co", &columns) == 0) {
+        if (el_get (m_editline, EL_GETTC, "co", &columns) == 0) 
+        {
             m_terminal_width = columns;
-            if (m_current_line_rows != -1) {
+            if (m_current_line_rows != -1) 
+            {
                 const LineInfoW * info = el_wline (m_editline);
                 int lineLength = (int)((info->lastchar - info->buffer) + GetPromptWidth());
                 m_current_line_rows = (lineLength / columns) + 1;
             }
         }
-        else {
+        else 
+        {
             m_terminal_width = INT_MAX;
             m_current_line_rows = 1;
         }
