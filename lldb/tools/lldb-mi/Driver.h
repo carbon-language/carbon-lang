@@ -36,86 +36,75 @@ class IOChannel;
 
 class Driver : public lldb::SBBroadcaster, public CMIDriverBase, public CMIDriverMgr::IDriver
 {
-// MI required code:
-// Static:
-public:
-	static Driver *	CreateSelf( void );
+    // MI required code:
+    // Static:
+  public:
+    static Driver *CreateSelf(void);
 
-// Methods:
-public:
-	bool	MISetup( CMIUtilString & vwErrMsg );
+    // Methods:
+  public:
+    bool MISetup(CMIUtilString &vwErrMsg);
 
-// Overridden:
-public:
-	// From CMIDriverMgr::IDriver
-	virtual bool					DoInitialize( void );
-	virtual bool					DoShutdown( void );
-	virtual bool					DoMainLoop( void );
-	virtual void					DoResizeWindow( const uint32_t vWindowSizeWsCol );
-	virtual lldb::SBError			DoParseArgs( const int argc, const char * argv[], FILE * vpStdOut, bool & vwbExiting );
-	virtual CMIUtilString 			GetError( void ) const;
-	virtual const CMIUtilString & 	GetName( void ) const;
-	virtual lldb::SBDebugger &		GetTheDebugger( void );	
-	virtual bool					GetDriverIsGDBMICompatibleDriver( void ) const;
-	virtual bool					SetId( const CMIUtilString & vID );
-	virtual const CMIUtilString &	GetId( void ) const;
-	// From CMIDriverBase
-	virtual bool					DoFallThruToAnotherDriver( const CMIUtilString & vCmd, CMIUtilString & vwErrMsg );
-	virtual bool					SetDriverParent( const CMIDriverBase & vrOtherDriver );
-	virtual const CMIUtilString &	GetDriverName( void ) const;
-	virtual const CMIUtilString &	GetDriverId( void ) const;
+    // Overridden:
+  public:
+    // From CMIDriverMgr::IDriver
+    virtual bool DoInitialize(void);
+    virtual bool DoShutdown(void);
+    virtual bool DoMainLoop(void);
+    virtual void DoResizeWindow(const uint32_t vWindowSizeWsCol);
+    virtual lldb::SBError DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting);
+    virtual CMIUtilString GetError(void) const;
+    virtual const CMIUtilString &GetName(void) const;
+    virtual lldb::SBDebugger &GetTheDebugger(void);
+    virtual bool GetDriverIsGDBMICompatibleDriver(void) const;
+    virtual bool SetId(const CMIUtilString &vID);
+    virtual const CMIUtilString &GetId(void) const;
+    // From CMIDriverBase
+    virtual bool DoFallThruToAnotherDriver(const CMIUtilString &vCmd, CMIUtilString &vwErrMsg);
+    virtual bool SetDriverParent(const CMIDriverBase &vrOtherDriver);
+    virtual const CMIUtilString &GetDriverName(void) const;
+    virtual const CMIUtilString &GetDriverId(void) const;
 
-// Original code:
-public:
-    Driver ();
+    // Original code:
+  public:
+    Driver();
 
-    virtual
-    ~Driver ();
+    virtual ~Driver();
 
-    void
-    MainLoop ();
+    void MainLoop();
 
-    lldb::SBError
-    ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &do_exit);
+    lldb::SBError ParseArgs(int argc, const char *argv[], FILE *out_fh, bool &do_exit);
 
-    const char *
-    GetFilename() const;
+    const char *GetFilename() const;
 
-    const char *
-    GetCrashLogFilename() const;
+    const char *GetCrashLogFilename() const;
 
-    const char *
-    GetArchName() const;
+    const char *GetArchName() const;
 
-    lldb::ScriptLanguage
-    GetScriptLanguage() const;
+    lldb::ScriptLanguage GetScriptLanguage() const;
 
-    void
-    ExecuteInitialCommands (bool before_file);
-    
-    bool
-    GetDebugMode() const;
+    void ExecuteInitialCommands(bool before_file);
+
+    bool GetDebugMode() const;
 
     class OptionData
     {
-    public:
-        OptionData ();
-       ~OptionData ();
+      public:
+        OptionData();
+        ~OptionData();
 
-        void
-        Clear();
+        void Clear();
 
-        void
-        AddInitialCommand (const char *command, bool before_file, bool is_file, lldb::SBError &error);
-    
-        //static OptionDefinition m_cmd_option_table[];
+        void AddInitialCommand(const char *command, bool before_file, bool is_file, lldb::SBError &error);
+
+        // static OptionDefinition m_cmd_option_table[];
 
         std::vector<std::string> m_args;
         lldb::ScriptLanguage m_script_lang;
         std::string m_core_file;
         std::string m_crash_log;
-        std::vector<std::pair<bool,std::string> > m_initial_commands;
-        std::vector<std::pair<bool,std::string> > m_after_file_commands;
+        std::vector<std::pair<bool, std::string>> m_initial_commands;
+        std::vector<std::pair<bool, std::string>> m_after_file_commands;
         bool m_debug_mode;
         bool m_source_quietly;
         bool m_print_version;
@@ -124,39 +113,31 @@ public:
         bool m_wait_for;
         std::string m_process_name;
         lldb::pid_t m_process_pid;
-        bool m_use_external_editor;  // FIXME: When we have set/show variables we can remove this from here.
+        bool m_use_external_editor; // FIXME: When we have set/show variables we can remove this from here.
         typedef std::set<char> OptionSet;
         OptionSet m_seen_options;
     };
 
-
-    static lldb::SBError
-    SetOptionValue (int option_idx,
-                    const char *option_arg,
-                    Driver::OptionData &data);
-
+    static lldb::SBError SetOptionValue(int option_idx, const char *option_arg, Driver::OptionData &data);
 
     lldb::SBDebugger &
     GetDebugger()
     {
         return m_debugger;
     }
-    
-    void
-    ResizeWindow (unsigned short col);
 
-private:
+    void ResizeWindow(unsigned short col);
+
+  private:
     lldb::SBDebugger m_debugger;
     OptionData m_option_data;
 
-    void
-    ResetOptionValues ();
+    void ResetOptionValues();
 
-    void
-    ReadyForCommand ();
+    void ReadyForCommand();
 };
 
-extern Driver * g_driver;
+extern Driver *g_driver;
 
 #endif // lldb_Driver_h_
 

@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MIUtilDebug.h
+// File:        MIUtilDebug.h
 //
-// Overview:	CMIUtilDebug interface.
+// Overview:    CMIUtilDebug interface.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 #pragma once
@@ -30,67 +30,67 @@
 class CMICmnLog;
 
 //++ ============================================================================
-// Details:	MI debugging aid utility class.
-// Gotchas:	None.
-// Authors:	
-// Changes:	None.
+// Details: MI debugging aid utility class.
+// Gotchas: None.
+// Authors:
+// Changes: None.
 //--
-class CMIUtilDebug 
+class CMIUtilDebug
 {
-// Statics:
-public:
-	static void	ShowDlgWaitForDbgAttach( void );
-	static void	WaitForDbgAttachInfinteLoop( void );
-	
-// Methods:
-public:
-	/* ctor */	CMIUtilDebug( void );
+    // Statics:
+  public:
+    static void ShowDlgWaitForDbgAttach(void);
+    static void WaitForDbgAttachInfinteLoop(void);
 
-// Overrideable:
-public:
-	// From CMICmnBase
-	/* dtor */ virtual ~CMIUtilDebug( void );
+    // Methods:
+  public:
+    /* ctor */ CMIUtilDebug(void);
+
+    // Overrideable:
+  public:
+    // From CMICmnBase
+    /* dtor */ virtual ~CMIUtilDebug(void);
 };
 
 //++ ============================================================================
-// Details:	MI debug utility class. Used to indicate the current function
-//			depth in the call stack. It uses the CMIlCmnLog logger to output
-//			the current fn trace information.
-//			Use macro MI_TRACEFN( "Some fn name" ) and implement the scope of
-//			the functions you wish to build up a trace off.
-//			Use preprocessor definition MI_USE_DEBUG_TRACE_FN to turn off or on
-//			tracing code.
-// Gotchas:	None.
-// Authors:	Illya Rudkin 07/03/2014.
-// Changes:	None.
+// Details: MI debug utility class. Used to indicate the current function
+//          depth in the call stack. It uses the CMIlCmnLog logger to output
+//          the current fn trace information.
+//          Use macro MI_TRACEFN( "Some fn name" ) and implement the scope of
+//          the functions you wish to build up a trace off.
+//          Use preprocessor definition MI_USE_DEBUG_TRACE_FN to turn off or on
+//          tracing code.
+// Gotchas: None.
+// Authors: Illya Rudkin 07/03/2014.
+// Changes: None.
 //--
 class CMIUtilDebugFnTrace
 {
-// Methods:
-public:
-	/* ctor */	CMIUtilDebugFnTrace( const CMIUtilString & vFnName );
+    // Methods:
+  public:
+    /* ctor */ CMIUtilDebugFnTrace(const CMIUtilString &vFnName);
 
-// Overrideable:
-public:
-	// From CMICmnBase
-	/* dtor */ virtual ~CMIUtilDebugFnTrace( void );
+    // Overrideable:
+  public:
+    // From CMICmnBase
+    /* dtor */ virtual ~CMIUtilDebugFnTrace(void);
 
-// Attributes:
-private:
-	const CMIUtilString m_strFnName;
-	
-	static CMICmnLog &	ms_rLog;
-	static MIuint		ms_fnDepthCnt;	// Increment count as fn depth increases, decrement count as fn stack pops off
+    // Attributes:
+  private:
+    const CMIUtilString m_strFnName;
+
+    static CMICmnLog &ms_rLog;
+    static MIuint ms_fnDepthCnt; // Increment count as fn depth increases, decrement count as fn stack pops off
 };
 
 //++ ============================================================================
-// Details:	Take the given text and send it to the server's Logger to output to the
-//			trace file.
-// Type:	Compile preprocess.
-// Args:	x	- (R) Message (may be seen by user).
+// Details: Take the given text and send it to the server's Logger to output to the
+//          trace file.
+// Type:    Compile preprocess.
+// Args:    x   - (R) Message (may be seen by user).
 //--
 #ifdef MI_USE_DEBUG_TRACE_FN
-#define MI_TRACEFN( x ) CMIUtilDebugFnTrace __MITrace( x )
+#define MI_TRACEFN(x) CMIUtilDebugFnTrace __MITrace(x)
 #else
-#define	MI_TRACEFN( x )
+#define MI_TRACEFN(x)
 #endif // MI_USE_DEBUG_TRACE_FN

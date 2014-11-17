@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmnMIValue.h
+// File:        MICmnMIValue.h
 //
-// Overview:	CMICmnMIValue implementation.
+// Overview:    CMICmnMIValue implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
@@ -24,41 +24,41 @@
 #include "MICmnResources.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmnMIValue constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmnMIValue constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmnMIValue::CMICmnMIValue( void )
-:	m_strValue( MIRSRC( IDS_WORD_INVALIDBRKTS ) )
-,	m_bJustConstructed( true )
+CMICmnMIValue::CMICmnMIValue(void)
+    : m_strValue(MIRSRC(IDS_WORD_INVALIDBRKTS))
+    , m_bJustConstructed(true)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmnMIValue destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmnMIValue destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmnMIValue::~CMICmnMIValue( void )
+CMICmnMIValue::~CMICmnMIValue(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Return the MI value as a string. The string is a direct result of
-//			work done on *this value so if not enough data is added then it is
-//			possible to return a malformed value. If nothing has been set or 
-//			added to *this MI value object then text "<Invalid>" will be returned.
-// Type:	Method.
-// Args:	None.
-// Return:	CMIUtilString &	- MI output text.
-// Throws:	None.
+// Details: Return the MI value as a string. The string is a direct result of
+//          work done on *this value so if not enough data is added then it is
+//          possible to return a malformed value. If nothing has been set or
+//          added to *this MI value object then text "<Invalid>" will be returned.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString & - MI output text.
+// Throws:  None.
 //--
-const CMIUtilString & CMICmnMIValue::GetString( void ) const
+const CMIUtilString &
+CMICmnMIValue::GetString(void) const
 {
-	return m_strValue;
+    return m_strValue;
 }
-

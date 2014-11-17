@@ -8,22 +8,22 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmnConfig.h
+// File:        MICmnConfig.h
 //
-// Overview:	Common defines to guide feature inclusion at compile time.
+// Overview:    Common defines to guide feature inclusion at compile time.
 //
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 #pragma once
 
 // 1 = Yes compile MI Driver version, 0 = compile original LLDB driver code only.
 // 0 was mainly just for testing purposes and so may be removed at a later time.
-#define MICONFIG_COMPILE_MIDRIVER_VERSION 1	
+#define MICONFIG_COMPILE_MIDRIVER_VERSION 1
 
 // 1 = Show debug process attach modal dialog, 0 = do not show
 // For windows only ATM, other OS's code is an infinite loop which a debugger must change a value to continue

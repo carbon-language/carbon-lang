@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdArgValThreadGrp.cpp
+// File:        MICmdArgValThreadGrp.cpp
 //
-// Overview:	CMICmdArgValThreadGrp implementation.
+// Overview:    CMICmdArgValThreadGrp implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
@@ -24,150 +24,153 @@
 #include "MICmdArgContext.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdArgValThreadGrp constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdArgValThreadGrp constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdArgValThreadGrp::CMICmdArgValThreadGrp( void )
-:	m_nThreadGrp( 0 )
+CMICmdArgValThreadGrp::CMICmdArgValThreadGrp(void)
+    : m_nThreadGrp(0)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdArgValThreadGrp constructor.
-// Type:	Method.
-// Args:	vrArgName		- (R) Argument's name to search by.
-//			vbMandatory		- (R) True = Yes must be present, false = optional argument.
-//			vbHandleByCmd	- (R) True = Command processes *this option, false = not handled.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdArgValThreadGrp constructor.
+// Type:    Method.
+// Args:    vrArgName       - (R) Argument's name to search by.
+//          vbMandatory     - (R) True = Yes must be present, false = optional argument.
+//          vbHandleByCmd   - (R) True = Command processes *this option, false = not handled.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdArgValThreadGrp::CMICmdArgValThreadGrp( const CMIUtilString & vrArgName, const bool vbMandatory, const bool vbHandleByCmd )
-:	CMICmdArgValBaseTemplate( vrArgName, vbMandatory, vbHandleByCmd )
-,	m_nThreadGrp( 0 )
+CMICmdArgValThreadGrp::CMICmdArgValThreadGrp(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd)
+    : CMICmdArgValBaseTemplate(vrArgName, vbMandatory, vbHandleByCmd)
+    , m_nThreadGrp(0)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdArgValThreadGrp destructor.
-// Type:	Overridden.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdArgValThreadGrp destructor.
+// Type:    Overridden.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdArgValThreadGrp::~CMICmdArgValThreadGrp( void )
+CMICmdArgValThreadGrp::~CMICmdArgValThreadGrp(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Parse the command's argument options string and try to extract the value *this
-//			argument is looking for.
-// Type:	Overridden.
-// Args:	vwArgContext	- (RW) The command's argument options string.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Parse the command's argument options string and try to extract the value *this
+//          argument is looking for.
+// Type:    Overridden.
+// Args:    vwArgContext    - (RW) The command's argument options string.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdArgValThreadGrp::Validate( CMICmdArgContext & vwArgContext )
+bool
+CMICmdArgValThreadGrp::Validate(CMICmdArgContext &vwArgContext)
 {
-	if( vwArgContext.IsEmpty() )
-		return MIstatus::success;
+    if (vwArgContext.IsEmpty())
+        return MIstatus::success;
 
-	if( vwArgContext.GetNumberArgsPresent() == 1 )
-	{
-		const CMIUtilString & rArg( vwArgContext.GetArgsLeftToParse() ); 
-		if( IsArgThreadGrp( rArg ) && ExtractNumber( rArg ) )
-		{
-			m_bFound = true;
-			m_bValid = true;
-			m_argValue = GetNumber();
-			vwArgContext.RemoveArg( rArg );
-			return MIstatus::success;
-		}
-		else
-			return MIstatus::failure;
-	}
-	
-	// More than one option...
-	const CMIUtilString::VecString_t vecOptions( vwArgContext.GetArgs() );
-	CMIUtilString::VecString_t::const_iterator it = vecOptions.begin();
-	while( it != vecOptions.end() )
-	{
-		const CMIUtilString & rArg( *it ); 
-		if( IsArgThreadGrp( rArg ) && ExtractNumber( rArg ) )
-		{
-			m_bFound = true;
-				
-			if( vwArgContext.RemoveArg( rArg ) )
-			{
-				m_bValid = true;
-				m_argValue = GetNumber();
-				return MIstatus::success;
-			}
-			else
-				return MIstatus::failure;
-		}
-		
-		// Next
-		++it;
-	}
+    if (vwArgContext.GetNumberArgsPresent() == 1)
+    {
+        const CMIUtilString &rArg(vwArgContext.GetArgsLeftToParse());
+        if (IsArgThreadGrp(rArg) && ExtractNumber(rArg))
+        {
+            m_bFound = true;
+            m_bValid = true;
+            m_argValue = GetNumber();
+            vwArgContext.RemoveArg(rArg);
+            return MIstatus::success;
+        }
+        else
+            return MIstatus::failure;
+    }
 
-	return MIstatus::failure;
+    // More than one option...
+    const CMIUtilString::VecString_t vecOptions(vwArgContext.GetArgs());
+    CMIUtilString::VecString_t::const_iterator it = vecOptions.begin();
+    while (it != vecOptions.end())
+    {
+        const CMIUtilString &rArg(*it);
+        if (IsArgThreadGrp(rArg) && ExtractNumber(rArg))
+        {
+            m_bFound = true;
+
+            if (vwArgContext.RemoveArg(rArg))
+            {
+                m_bValid = true;
+                m_argValue = GetNumber();
+                return MIstatus::success;
+            }
+            else
+                return MIstatus::failure;
+        }
+
+        // Next
+        ++it;
+    }
+
+    return MIstatus::failure;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Examine the string and determine if it is a valid string type argument.
-// Type:	Method.
-// Args:	vrTxt	- (R) Some text.
-// Return:	bool -	True = yes valid arg, false = no.
-// Throws:	None.
+// Details: Examine the string and determine if it is a valid string type argument.
+// Type:    Method.
+// Args:    vrTxt   - (R) Some text.
+// Return:  bool    - True = yes valid arg, false = no.
+// Throws:  None.
 //--
-bool CMICmdArgValThreadGrp::IsArgThreadGrp( const CMIUtilString & vrTxt ) const
+bool
+CMICmdArgValThreadGrp::IsArgThreadGrp(const CMIUtilString &vrTxt) const
 {
-	// Look for i1 i2 i3....
-	const MIint nPos = vrTxt.find_first_of( "i" );
-	if( nPos != 0 )
-		return false;
-	
-	const CMIUtilString strNum = vrTxt.substr( 1 ).c_str();
-	if( !strNum.IsNumber() )
-		return false;
+    // Look for i1 i2 i3....
+    const MIint nPos = vrTxt.find_first_of("i");
+    if (nPos != 0)
+        return false;
 
-	return true;
+    const CMIUtilString strNum = vrTxt.substr(1).c_str();
+    if (!strNum.IsNumber())
+        return false;
+
+    return true;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Extract the thread group number from the thread group argument.
-// Type:	Method.
-// Args:	vrTxt	- (R) Some text.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Extract the thread group number from the thread group argument.
+// Type:    Method.
+// Args:    vrTxt   - (R) Some text.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdArgValThreadGrp::ExtractNumber( const CMIUtilString & vrTxt ) 
+bool
+CMICmdArgValThreadGrp::ExtractNumber(const CMIUtilString &vrTxt)
 {
-	const CMIUtilString strNum = vrTxt.substr( 1 ).c_str();
-	MIint64 nNumber = 0;
-	bool bOk = strNum.ExtractNumber( nNumber );
-	if( bOk )
-	{
-		m_nThreadGrp = static_cast< MIuint >( nNumber );
-	}
-	
-	return bOk;
+    const CMIUtilString strNum = vrTxt.substr(1).c_str();
+    MIint64 nNumber = 0;
+    bool bOk = strNum.ExtractNumber(nNumber);
+    if (bOk)
+    {
+        m_nThreadGrp = static_cast<MIuint>(nNumber);
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve the thread group ID found in the argument.
-// Type:	Method.
-// Args:	None.
-// Return:	MIuint - Thread group ID.
-// Throws:	None.
+// Details: Retrieve the thread group ID found in the argument.
+// Type:    Method.
+// Args:    None.
+// Return:  MIuint - Thread group ID.
+// Throws:  None.
 //--
-MIuint CMICmdArgValThreadGrp::GetNumber( void ) const
+MIuint
+CMICmdArgValThreadGrp::GetNumber(void) const
 {
-	return m_nThreadGrp;
+    return m_nThreadGrp;
 }
-

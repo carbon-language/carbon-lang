@@ -8,22 +8,22 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdCommands.cpp
+// File:        MICmdCommands.cpp
 //
-// Overview:	MI command are registered with the MI command factory.
+// Overview:    MI command are registered with the MI command factory.
 //
-//				To implement new MI commands derive a new command class from the command base 
-//				class. To enable the new command for interpretation add the new command class
-//				to the command factory. The files of relevance are:
-//					MICmdCommands.cpp
-//					MICmdBase.h / .cpp
-//					MICmdCmd.h / .cpp
+//              To implement new MI commands derive a new command class from the command base
+//              class. To enable the new command for interpretation add the new command class
+//              to the command factory. The files of relevance are:
+//                  MICmdCommands.cpp
+//                  MICmdBase.h / .cpp
+//                  MICmdCmd.h / .cpp
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
@@ -49,87 +49,88 @@
 
 namespace MICmnCommands
 {
-	template< typename T >
-	static bool Register( void );
+template <typename T> static bool Register(void);
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Command to command factory registration function. 
-// Type:	Template function.
-// Args:	typename T	- A command type class.
-// Return:	bool  - True = yes command is registered, false = command failed to register.
-// Throws:	None.
+// Details: Command to command factory registration function.
+// Type:    Template function.
+// Args:    typename T  - A command type class.
+// Return:  bool  - True = yes command is registered, false = command failed to register.
+// Throws:  None.
 //--
-template< typename T >											
-static bool MICmnCommands::Register( void  )								
-{																	
-	static CMICmdFactory & rCmdFactory = CMICmdFactory::Instance();
-	const CMIUtilString strMiCmd = T().GetMiCmd();				
-	CMICmdFactory::CmdCreatorFnPtr fn = T().GetCmdCreatorFn();	
-	return rCmdFactory.CmdRegister( strMiCmd, fn );				
-}																	
+template <typename T>
+static bool
+MICmnCommands::Register(void)
+{
+    static CMICmdFactory &rCmdFactory = CMICmdFactory::Instance();
+    const CMIUtilString strMiCmd = T().GetMiCmd();
+    CMICmdFactory::CmdCreatorFnPtr fn = T().GetCmdCreatorFn();
+    return rCmdFactory.CmdRegister(strMiCmd, fn);
+}
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Register commands with MI command factory
-// Type:	Function.
-// Args:	None.
-// Return:	bool  - True = yes all commands are registered, 
-//					false = one or more commands failed to register.
-// Throws:	None.
+// Details: Register commands with MI command factory
+// Type:    Function.
+// Args:    None.
+// Return:  bool  - True = yes all commands are registered,
+//                  false = one or more commands failed to register.
+// Throws:  None.
 //--
-bool MICmnCommands::RegisterAll( void )
+bool
+MICmnCommands::RegisterAll(void)
 {
-	bool bOk = MIstatus::success;
+    bool bOk = MIstatus::success;
 
-	bOk &= Register< CMICmdCmdSupportInfoMiCmdQuery >();
-	bOk &= Register< CMICmdCmdBreakAfter >();
-	bOk &= Register< CMICmdCmdBreakCondition >();
-	bOk &= Register< CMICmdCmdBreakDelete >();
-	bOk &= Register< CMICmdCmdBreakDisable >();
-	bOk &= Register< CMICmdCmdBreakEnable >();
-	bOk &= Register< CMICmdCmdBreakInsert >();
-	bOk &= Register< CMICmdCmdDataDisassemble >();
-	bOk &= Register< CMICmdCmdDataEvaluateExpression >();
-	bOk &= Register< CMICmdCmdDataReadMemoryBytes >();
-	bOk &= Register< CMICmdCmdDataReadMemory >();
-	bOk &= Register< CMICmdCmdDataListRegisterNames >();
-	bOk &= Register< CMICmdCmdDataListRegisterValues >();
-	bOk &= Register< CMICmdCmdDataWriteMemory >();
-	bOk &= Register< CMICmdCmdEnablePrettyPrinting >();
-	bOk &= Register< CMICmdCmdEnvironmentCd >();
-	bOk &= Register< CMICmdCmdExecContinue >();
-	bOk &= Register< CMICmdCmdExecInterrupt >();
-	bOk &= Register< CMICmdCmdExecFinish >();
-	bOk &= Register< CMICmdCmdExecNext >();
-	bOk &= Register< CMICmdCmdExecNextInstruction >();
-	bOk &= Register< CMICmdCmdExecRun >();
-	bOk &= Register< CMICmdCmdExecStep >();
-	bOk &= Register< CMICmdCmdExecStepInstruction >();
-	bOk &= Register< CMICmdCmdFileExecAndSymbols >();
-	bOk &= Register< CMICmdCmdGdbExit >();
-	bOk &= Register< CMICmdCmdGdbInfo >();
-	bOk &= Register< CMICmdCmdGdbSet >();
-	bOk &= Register< CMICmdCmdGdbThread >();
-	bOk &= Register< CMICmdCmdInferiorTtySet >();
-	bOk &= Register< CMICmdCmdInterpreterExec >();
-	bOk &= Register< CMICmdCmdListThreadGroups >();
-	bOk &= Register< CMICmdCmdSource >();
-	bOk &= Register< CMICmdCmdStackInfoDepth >();
-	bOk &= Register< CMICmdCmdStackListFrames >();
-	bOk &= Register< CMICmdCmdStackListArguments >();
-	bOk &= Register< CMICmdCmdStackListLocals >();
-	bOk &= Register< CMICmdCmdSupportListFeatures >();
-	bOk &= Register< CMICmdCmdTargetSelect >();
-	bOk &= Register< CMICmdCmdThreadInfo >();
-	bOk &= Register< CMICmdCmdVarAssign >();
-	bOk &= Register< CMICmdCmdVarCreate >();
-	bOk &= Register< CMICmdCmdVarDelete >();
-	bOk &= Register< CMICmdCmdVarEvaluateExpression >();
-	bOk &= Register< CMICmdCmdVarInfoPathExpression >();
-	bOk &= Register< CMICmdCmdVarListChildren >();
-	bOk &= Register< CMICmdCmdVarSetFormat >();
-	bOk &= Register< CMICmdCmdVarShowAttributes >();
-	bOk &= Register< CMICmdCmdVarUpdate >();
+    bOk &= Register<CMICmdCmdSupportInfoMiCmdQuery>();
+    bOk &= Register<CMICmdCmdBreakAfter>();
+    bOk &= Register<CMICmdCmdBreakCondition>();
+    bOk &= Register<CMICmdCmdBreakDelete>();
+    bOk &= Register<CMICmdCmdBreakDisable>();
+    bOk &= Register<CMICmdCmdBreakEnable>();
+    bOk &= Register<CMICmdCmdBreakInsert>();
+    bOk &= Register<CMICmdCmdDataDisassemble>();
+    bOk &= Register<CMICmdCmdDataEvaluateExpression>();
+    bOk &= Register<CMICmdCmdDataReadMemoryBytes>();
+    bOk &= Register<CMICmdCmdDataReadMemory>();
+    bOk &= Register<CMICmdCmdDataListRegisterNames>();
+    bOk &= Register<CMICmdCmdDataListRegisterValues>();
+    bOk &= Register<CMICmdCmdDataWriteMemory>();
+    bOk &= Register<CMICmdCmdEnablePrettyPrinting>();
+    bOk &= Register<CMICmdCmdEnvironmentCd>();
+    bOk &= Register<CMICmdCmdExecContinue>();
+    bOk &= Register<CMICmdCmdExecInterrupt>();
+    bOk &= Register<CMICmdCmdExecFinish>();
+    bOk &= Register<CMICmdCmdExecNext>();
+    bOk &= Register<CMICmdCmdExecNextInstruction>();
+    bOk &= Register<CMICmdCmdExecRun>();
+    bOk &= Register<CMICmdCmdExecStep>();
+    bOk &= Register<CMICmdCmdExecStepInstruction>();
+    bOk &= Register<CMICmdCmdFileExecAndSymbols>();
+    bOk &= Register<CMICmdCmdGdbExit>();
+    bOk &= Register<CMICmdCmdGdbInfo>();
+    bOk &= Register<CMICmdCmdGdbSet>();
+    bOk &= Register<CMICmdCmdGdbThread>();
+    bOk &= Register<CMICmdCmdInferiorTtySet>();
+    bOk &= Register<CMICmdCmdInterpreterExec>();
+    bOk &= Register<CMICmdCmdListThreadGroups>();
+    bOk &= Register<CMICmdCmdSource>();
+    bOk &= Register<CMICmdCmdStackInfoDepth>();
+    bOk &= Register<CMICmdCmdStackListFrames>();
+    bOk &= Register<CMICmdCmdStackListArguments>();
+    bOk &= Register<CMICmdCmdStackListLocals>();
+    bOk &= Register<CMICmdCmdSupportListFeatures>();
+    bOk &= Register<CMICmdCmdTargetSelect>();
+    bOk &= Register<CMICmdCmdThreadInfo>();
+    bOk &= Register<CMICmdCmdVarAssign>();
+    bOk &= Register<CMICmdCmdVarCreate>();
+    bOk &= Register<CMICmdCmdVarDelete>();
+    bOk &= Register<CMICmdCmdVarEvaluateExpression>();
+    bOk &= Register<CMICmdCmdVarInfoPathExpression>();
+    bOk &= Register<CMICmdCmdVarListChildren>();
+    bOk &= Register<CMICmdCmdVarSetFormat>();
+    bOk &= Register<CMICmdCmdVarShowAttributes>();
+    bOk &= Register<CMICmdCmdVarUpdate>();
 
-	return bOk;
+    return bOk;
 }

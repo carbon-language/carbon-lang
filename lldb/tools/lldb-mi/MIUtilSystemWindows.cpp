@@ -8,144 +8,146 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MIUtilSystemWindows.cpp
+// File:        MIUtilSystemWindows.cpp
 //
-// Overview:	CMIUtilSystemWindows implementation.
+// Overview:    CMIUtilSystemWindows implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
-#if defined( _MSC_VER )
+#if defined(_MSC_VER)
 
 // Third party headers
-#include <memory>		// std::unique_ptr
+#include <memory> // std::unique_ptr
 #include <Windows.h>
-#include <WinBase.h>	// ::FormatMessage()
+#include <WinBase.h> // ::FormatMessage()
 
 // In-house headers:
 #include "MIUtilSystemWindows.h"
 #include "MICmnResources.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMIUtilSystemWindows constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMIUtilSystemWindows constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMIUtilSystemWindows::CMIUtilSystemWindows( void )
+CMIUtilSystemWindows::CMIUtilSystemWindows(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMIUtilSystemWindows destructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMIUtilSystemWindows destructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMIUtilSystemWindows::~CMIUtilSystemWindows( void )
+CMIUtilSystemWindows::~CMIUtilSystemWindows(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve the OS system error message for the given system error code. 
-// Type:	Method.
-// Args:	vError		- (R) OS error code value.
-//			vrwErrorMsg	- (W) The error message.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Retrieve the OS system error message for the given system error code.
+// Type:    Method.
+// Args:    vError      - (R) OS error code value.
+//          vrwErrorMsg - (W) The error message.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIUtilSystemWindows::GetOSErrorMsg( const MIint vError, CMIUtilString & vrwErrorMsg  ) const
+bool
+CMIUtilSystemWindows::GetOSErrorMsg(const MIint vError, CMIUtilString &vrwErrorMsg) const
 {
-	// Reset
-	vrwErrorMsg.clear();
+    // Reset
+    vrwErrorMsg.clear();
 
-	const MIuint nBufLen = 1024;
-	std::unique_ptr< char[] > pBuffer;
-	pBuffer.reset( new char[ nBufLen ] ); 
-		
-	// CMIUtilString Format is not used as cannot replicate the behavior of ::FormatMessage which
-	// can take into account locality while retrieving the error message from the system.
-	const int nLength = ::FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-										nullptr, (DWORD) vError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), 
-										reinterpret_cast< LPTSTR >( &pBuffer[ 0 ] ),
-										nBufLen, nullptr );
-	bool bOk = MIstatus::success;
-	if( nLength != 0 )
-		vrwErrorMsg = &pBuffer[ 0 ];
-	else
-		bOk = MIstatus::failure;
+    const MIuint nBufLen = 1024;
+    std::unique_ptr<char[]> pBuffer;
+    pBuffer.reset(new char[nBufLen]);
 
-	return bOk;
+    // CMIUtilString Format is not used as cannot replicate the behavior of ::FormatMessage which
+    // can take into account locality while retrieving the error message from the system.
+    const int nLength = ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, (DWORD)vError,
+                                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&pBuffer[0]), nBufLen, nullptr);
+    bool bOk = MIstatus::success;
+    if (nLength != 0)
+        vrwErrorMsg = &pBuffer[0];
+    else
+        bOk = MIstatus::failure;
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve if possible the OS last error description.
-// Type:	Method.
-// Args:	None.
-// Return:	CMIUtilString - Error description.
-// Throws:	None.
+// Details: Retrieve if possible the OS last error description.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - Error description.
+// Throws:  None.
 //--
-CMIUtilString CMIUtilSystemWindows::GetOSLastError( void ) const
+CMIUtilString
+CMIUtilSystemWindows::GetOSLastError(void) const
 {
-	CMIUtilString errorMsg;
-	const DWORD dwLastError = ::GetLastError();
-	if( dwLastError != 0 )
-	{
-		if( !GetOSErrorMsg( dwLastError, errorMsg ) )
-			errorMsg = MIRSRC( IDE_OS_ERR_RETRIEVING );
-	}
-	else
-		errorMsg = MIRSRC( IDE_OS_ERR_UNKNOWN );
-	
-	return errorMsg;
+    CMIUtilString errorMsg;
+    const DWORD dwLastError = ::GetLastError();
+    if (dwLastError != 0)
+    {
+        if (!GetOSErrorMsg(dwLastError, errorMsg))
+            errorMsg = MIRSRC(IDE_OS_ERR_RETRIEVING);
+    }
+    else
+        errorMsg = MIRSRC(IDE_OS_ERR_UNKNOWN);
+
+    return errorMsg;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieves the fully qualified path for the this application. If the function
-//			fails the string is filled with the error message.
-// Type:	Method.
-// Args:	vrwFileNamePath	- (W) The excutable's name and path or last error description.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Retrieves the fully qualified path for the this application. If the function
+//          fails the string is filled with the error message.
+// Type:    Method.
+// Args:    vrwFileNamePath   - (W) The excutable's name and path or last error description.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIUtilSystemWindows::GetExecutablesPath( CMIUtilString & vrwFileNamePath ) const
+bool
+CMIUtilSystemWindows::GetExecutablesPath(CMIUtilString &vrwFileNamePath) const
 {
-	bool bOk = MIstatus::success;
-	HMODULE hModule = ::GetModuleHandle( nullptr );
-	char pPath[ MAX_PATH ];
-	const DWORD nLen = ::GetModuleFileName( hModule, &pPath[ 0 ], MAX_PATH );
-	const CMIUtilString strLastErr( GetOSLastError() );
-	if( (nLen != 0) && (strLastErr == "Unknown OS error") )
-		vrwFileNamePath = &pPath[ 0 ];
-	else
-	{
-		bOk = MIstatus::failure;
-		vrwFileNamePath = strLastErr;
-	}
+    bool bOk = MIstatus::success;
+    HMODULE hModule = ::GetModuleHandle(nullptr);
+    char pPath[MAX_PATH];
+    const DWORD nLen = ::GetModuleFileName(hModule, &pPath[0], MAX_PATH);
+    const CMIUtilString strLastErr(GetOSLastError());
+    if ((nLen != 0) && (strLastErr == "Unknown OS error"))
+        vrwFileNamePath = &pPath[0];
+    else
+    {
+        bOk = MIstatus::failure;
+        vrwFileNamePath = strLastErr;
+    }
 
-	return bOk;
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieves the fully qualified path for the Log file for this application. 
-//			If the function fails the string is filled with the error message.
-// Type:	Method.
-// Args:	vrwFileNamePath	- (W) The Log file's name and path or last error description.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Retrieves the fully qualified path for the Log file for this application.
+//          If the function fails the string is filled with the error message.
+// Type:    Method.
+// Args:    vrwFileNamePath   - (W) The Log file's name and path or last error description.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIUtilSystemWindows::GetLogFilesPath( CMIUtilString & vrwFileNamePath ) const
+bool
+CMIUtilSystemWindows::GetLogFilesPath(CMIUtilString &vrwFileNamePath) const
 {
-	return GetExecutablesPath( vrwFileNamePath );
+    return GetExecutablesPath(vrwFileNamePath);
 }
 
 #endif // #if defined( _MSC_VER )

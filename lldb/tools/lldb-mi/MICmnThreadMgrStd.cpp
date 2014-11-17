@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmnThreadMgr.cpp
+// File:        MICmnThreadMgr.cpp
 //
-// Overview:	CMICmnThreadMgr implementation.
+// Overview:    CMICmnThreadMgr implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
@@ -26,142 +26,146 @@
 #include "MIUtilSingletonHelper.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmnThreadMgr constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmnThreadMgr constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmnThreadMgrStd::CMICmnThreadMgrStd( void )
+CMICmnThreadMgrStd::CMICmnThreadMgrStd(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmnThreadMgr destructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmnThreadMgr destructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmnThreadMgrStd::~CMICmnThreadMgrStd( void )
+CMICmnThreadMgrStd::~CMICmnThreadMgrStd(void)
 {
-	Shutdown();
+    Shutdown();
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Initialise resources for *this thread manager.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Initialise resources for *this thread manager.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmnThreadMgrStd::Initialize( void )
+bool
+CMICmnThreadMgrStd::Initialize(void)
 {
-	m_clientUsageRefCnt++;
+    m_clientUsageRefCnt++;
 
-	if( m_bInitialized )
-		return MIstatus::success;
+    if (m_bInitialized)
+        return MIstatus::success;
 
-	bool bOk = MIstatus::success;
-	
-	ClrErrorDescription();
-	CMIUtilString errMsg;
+    bool bOk = MIstatus::success;
 
-	// Note initialisation order is important here as some resources depend on previous
-	MI::ModuleInit< CMICmnLog >      ( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
-	MI::ModuleInit< CMICmnResources >( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
+    ClrErrorDescription();
+    CMIUtilString errMsg;
 
-	m_bInitialized = bOk;
-	
-	if( !bOk )
-	{
-		CMIUtilString strInitError( CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_THREADMGR ), errMsg.c_str() ) );
-		SetErrorDescription( strInitError );
-		return MIstatus::failure;
-	}
+    // Note initialisation order is important here as some resources depend on previous
+    MI::ModuleInit<CMICmnLog>(IDS_MI_INIT_ERR_LOG, bOk, errMsg);
+    MI::ModuleInit<CMICmnResources>(IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg);
 
-	return bOk;
+    m_bInitialized = bOk;
+
+    if (!bOk)
+    {
+        CMIUtilString strInitError(CMIUtilString::Format(MIRSRC(IDS_MI_INIT_ERR_THREADMGR), errMsg.c_str()));
+        SetErrorDescription(strInitError);
+        return MIstatus::failure;
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Release resources for *this thread manager.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Release resources for *this thread manager.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmnThreadMgrStd::Shutdown( void )
+bool
+CMICmnThreadMgrStd::Shutdown(void)
 {
-	if( --m_clientUsageRefCnt > 0 )
-		return MIstatus::success;
-	
-	if( !m_bInitialized )
-		return MIstatus::success;
+    if (--m_clientUsageRefCnt > 0)
+        return MIstatus::success;
 
-	m_bInitialized = false;
+    if (!m_bInitialized)
+        return MIstatus::success;
 
-	ClrErrorDescription();
+    m_bInitialized = false;
 
-	bool bOk = MIstatus::success;
-	CMIUtilString errMsg;
+    ClrErrorDescription();
 
-	// Tidy up
-	ThreadAllTerminate();
-	
-	// Note shutdown order is important here
-	MI::ModuleShutdown< CMICmnResources >( IDE_MI_SHTDWN_ERR_RESOURCES, bOk, errMsg );
-	MI::ModuleShutdown< CMICmnLog >      ( IDS_MI_SHTDWN_ERR_LOG      , bOk, errMsg );
+    bool bOk = MIstatus::success;
+    CMIUtilString errMsg;
 
-	if( !bOk )
-	{
-		SetErrorDescriptionn( MIRSRC( IDS_MI_SHUTDOWN_ERR ), errMsg.c_str() );
-	}
+    // Tidy up
+    ThreadAllTerminate();
 
-	return bOk;
+    // Note shutdown order is important here
+    MI::ModuleShutdown<CMICmnResources>(IDE_MI_SHTDWN_ERR_RESOURCES, bOk, errMsg);
+    MI::ModuleShutdown<CMICmnLog>(IDS_MI_SHTDWN_ERR_LOG, bOk, errMsg);
+
+    if (!bOk)
+    {
+        SetErrorDescriptionn(MIRSRC(IDS_MI_SHUTDOWN_ERR), errMsg.c_str());
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Ask the thread manager to kill all threads and wait until they have died
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Ask the thread manager to kill all threads and wait until they have died
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmnThreadMgrStd::ThreadAllTerminate( void )
+bool
+CMICmnThreadMgrStd::ThreadAllTerminate(void)
 {
-	ThreadList_t::const_iterator it = m_threadList.begin();
-	for( ; it != m_threadList.end(); ++it )
-	{
-		// If the thread is still running
-		CMIUtilThreadActiveObjBase * pThread = *it;
-		if( pThread->ThreadIsActive() )
-		{
-			// Ask this thread to kill itself
-			pThread->ThreadKill();
-			
-			// Wait for this thread to die
-			pThread->ThreadJoin();
-		}
-	}
+    ThreadList_t::const_iterator it = m_threadList.begin();
+    for (; it != m_threadList.end(); ++it)
+    {
+        // If the thread is still running
+        CMIUtilThreadActiveObjBase *pThread = *it;
+        if (pThread->ThreadIsActive())
+        {
+            // Ask this thread to kill itself
+            pThread->ThreadKill();
 
-	return MIstatus::success;
+            // Wait for this thread to die
+            pThread->ThreadJoin();
+        }
+    }
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Add a thread object to *this manager's list of thread objects. The list to 
-//			used to manage thread objects centrally. 
-// Type:	Method.
-// Args:	vrObj	- (R) A thread object.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Add a thread object to *this manager's list of thread objects. The list to
+//          used to manage thread objects centrally.
+// Type:    Method.
+// Args:    vrObj   - (R) A thread object.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmnThreadMgrStd::AddThread( const CMIUtilThreadActiveObjBase & vrObj )
+bool
+CMICmnThreadMgrStd::AddThread(const CMIUtilThreadActiveObjBase &vrObj)
 {
-	m_threadList.push_back( const_cast< CMIUtilThreadActiveObjBase * >( &vrObj ) );
+    m_threadList.push_back(const_cast<CMIUtilThreadActiveObjBase *>(&vrObj));
 
-	return MIstatus::success;
+    return MIstatus::success;
 }

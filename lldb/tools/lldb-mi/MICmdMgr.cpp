@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdMgr.cpp
+// File:        MICmdMgr.cpp
 //
-// Overview:	CMICmdMgr implementation.
+// Overview:    CMICmdMgr implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
@@ -31,227 +31,237 @@
 #include "MIUtilSingletonHelper.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdMgr constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdMgr constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdMgr::CMICmdMgr( void )
-:	m_interpretor( CMICmdInterpreter::Instance() )
-,	m_factory( CMICmdFactory::Instance() )
-,	m_invoker( CMICmdInvoker::Instance() )
+CMICmdMgr::CMICmdMgr(void)
+    : m_interpretor(CMICmdInterpreter::Instance())
+    , m_factory(CMICmdFactory::Instance())
+    , m_invoker(CMICmdInvoker::Instance())
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdMgr destructor.
-// Type:	Overridable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdMgr destructor.
+// Type:    Overridable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdMgr::~CMICmdMgr( void )
+CMICmdMgr::~CMICmdMgr(void)
 {
-	Shutdown();
+    Shutdown();
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Initialize resources for *this Command Manager.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functionality succeeded.
-//			MIstatus::failure - Functionality failed.
-// Throws:	None.
+// Details: Initialize resources for *this Command Manager.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functionality succeeded.
+//          MIstatus::failure - Functionality failed.
+// Throws:  None.
 //--
-bool CMICmdMgr::Initialize( void )
+bool
+CMICmdMgr::Initialize(void)
 {
-	m_clientUsageRefCnt++;
+    m_clientUsageRefCnt++;
 
-	if( m_bInitialized )
-		return MIstatus::success;
+    if (m_bInitialized)
+        return MIstatus::success;
 
-	bool bOk = MIstatus::success;
-	CMIUtilString errMsg;
- 
-	// Note initialization order is important here as some resources depend on previous
-	MI::ModuleInit< CMICmnLog >      ( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
-	MI::ModuleInit< CMICmnResources >( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
-	if( bOk && !m_interpretor.Initialize() )
-	{
-		bOk = false;
-		errMsg = CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_CMDINTERPRETER ), m_interpretor.GetErrorDescription().c_str() );
-	}
-	if( bOk && !m_factory.Initialize() )
-	{
-		bOk = false;
-		errMsg = CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_CMDFACTORY ), m_factory.GetErrorDescription().c_str() );
-	}
-	if( bOk && !m_invoker.Initialize() )
-	{
-		bOk = false;
-		errMsg = CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_CMDINVOKER ), m_invoker.GetErrorDescription().c_str() );
-	}
-	m_bInitialized = bOk;
+    bool bOk = MIstatus::success;
+    CMIUtilString errMsg;
 
-	if( !bOk )
-	{
-		CMIUtilString strInitError( CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_CMDMGR ), errMsg.c_str() ) );
-		SetErrorDescription( strInitError );
-		return MIstatus::failure;
-	}
+    // Note initialization order is important here as some resources depend on previous
+    MI::ModuleInit<CMICmnLog>(IDS_MI_INIT_ERR_LOG, bOk, errMsg);
+    MI::ModuleInit<CMICmnResources>(IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg);
+    if (bOk && !m_interpretor.Initialize())
+    {
+        bOk = false;
+        errMsg = CMIUtilString::Format(MIRSRC(IDS_MI_INIT_ERR_CMDINTERPRETER), m_interpretor.GetErrorDescription().c_str());
+    }
+    if (bOk && !m_factory.Initialize())
+    {
+        bOk = false;
+        errMsg = CMIUtilString::Format(MIRSRC(IDS_MI_INIT_ERR_CMDFACTORY), m_factory.GetErrorDescription().c_str());
+    }
+    if (bOk && !m_invoker.Initialize())
+    {
+        bOk = false;
+        errMsg = CMIUtilString::Format(MIRSRC(IDS_MI_INIT_ERR_CMDINVOKER), m_invoker.GetErrorDescription().c_str());
+    }
+    m_bInitialized = bOk;
 
-	return  MIstatus::success;
+    if (!bOk)
+    {
+        CMIUtilString strInitError(CMIUtilString::Format(MIRSRC(IDS_MI_INIT_ERR_CMDMGR), errMsg.c_str()));
+        SetErrorDescription(strInitError);
+        return MIstatus::failure;
+    }
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Release resources for *this Command Manager.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functionality succeeded.
-//			MIstatus::failure - Functionality failed.
-// Throws:	None.
+// Details: Release resources for *this Command Manager.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functionality succeeded.
+//          MIstatus::failure - Functionality failed.
+// Throws:  None.
 //--
-bool CMICmdMgr::Shutdown( void )
+bool
+CMICmdMgr::Shutdown(void)
 {
-	if( --m_clientUsageRefCnt > 0 )
-		return MIstatus::success;
-	
-	if( !m_bInitialized )
-		return MIstatus::success;
+    if (--m_clientUsageRefCnt > 0)
+        return MIstatus::success;
 
-	m_bInitialized = false;
+    if (!m_bInitialized)
+        return MIstatus::success;
 
-	ClrErrorDescription();
+    m_bInitialized = false;
 
-	bool bOk = MIstatus::success;
-	CMIUtilString errMsg;
+    ClrErrorDescription();
 
-	// Tidy up
-	m_setCmdDeleteCallback.clear();
+    bool bOk = MIstatus::success;
+    CMIUtilString errMsg;
 
-	// Note shutdown order is important here 
-	if( !m_invoker.Shutdown() )
-	{
-		bOk = false;
-		errMsg += CMIUtilString::Format( MIRSRC( IDS_MI_SHTDWN_ERR_CMDINVOKER ), m_invoker.GetErrorDescription().c_str() );
-	}
-	if( !m_factory.Shutdown() )
-	{
-		bOk = false;
-		if( !errMsg.empty() ) errMsg += ", ";
-		errMsg += CMIUtilString::Format( MIRSRC( IDS_MI_SHTDWN_ERR_CMDFACTORY ), m_factory.GetErrorDescription().c_str() );
-	}
-	if( !m_interpretor.Shutdown() )
-	{
-		bOk = false;
-		if( !errMsg.empty() ) errMsg += ", ";
-		errMsg += CMIUtilString::Format( MIRSRC( IDS_MI_SHTDWN_ERR_CMDINTERPRETER ), m_interpretor.GetErrorDescription().c_str() );
-	}
-	MI::ModuleShutdown< CMICmnResources >( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
-	MI::ModuleShutdown< CMICmnLog >( IDS_MI_INIT_ERR_LOG            , bOk, errMsg );
+    // Tidy up
+    m_setCmdDeleteCallback.clear();
 
-	if( !bOk )
-	{
-		SetErrorDescriptionn( MIRSRC( IDS_MI_SHUTDOWN_ERR ), errMsg.c_str() );
-	}
+    // Note shutdown order is important here
+    if (!m_invoker.Shutdown())
+    {
+        bOk = false;
+        errMsg += CMIUtilString::Format(MIRSRC(IDS_MI_SHTDWN_ERR_CMDINVOKER), m_invoker.GetErrorDescription().c_str());
+    }
+    if (!m_factory.Shutdown())
+    {
+        bOk = false;
+        if (!errMsg.empty())
+            errMsg += ", ";
+        errMsg += CMIUtilString::Format(MIRSRC(IDS_MI_SHTDWN_ERR_CMDFACTORY), m_factory.GetErrorDescription().c_str());
+    }
+    if (!m_interpretor.Shutdown())
+    {
+        bOk = false;
+        if (!errMsg.empty())
+            errMsg += ", ";
+        errMsg += CMIUtilString::Format(MIRSRC(IDS_MI_SHTDWN_ERR_CMDINTERPRETER), m_interpretor.GetErrorDescription().c_str());
+    }
+    MI::ModuleShutdown<CMICmnResources>(IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg);
+    MI::ModuleShutdown<CMICmnLog>(IDS_MI_INIT_ERR_LOG, bOk, errMsg);
 
-	return MIstatus::success;
-}	
+    if (!bOk)
+    {
+        SetErrorDescriptionn(MIRSRC(IDS_MI_SHUTDOWN_ERR), errMsg.c_str());
+    }
 
-//++ ------------------------------------------------------------------------------------
-// Details:	Establish whether the text data is an MI format type command.
-// Type:	Method.
-// Args:	vTextLine				- (R) Text data to interpret.
-//			vwbYesValid				- (W) True = MI type command, false = not recognised.
-//			vwbCmdNotInCmdFactor	- (W) True = MI command not found in the command factor, false = recognised.
-// Return:	MIstatus::success - Functionality succeeded.
-//			MIstatus::failure - Functionality failed.
-// Throws:	None.
-//--
-bool CMICmdMgr::CmdInterpret( const CMIUtilString & vTextLine, bool & vwbYesValid, bool & vwbCmdNotInCmdFactor, SMICmdData & rwCmdData )
-{
-	return m_interpretor.ValidateIsMi( vTextLine, vwbYesValid, vwbCmdNotInCmdFactor, rwCmdData );
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Having previously had the potential command validated and found valid now
-//			get the command executed.
-//			If the Functionalityity returns MIstatus::failure call GetErrorDescription().
-//			This function is used by the application's main thread.
-// Type:	Method.
-// Args:	vCmdData	- (RW) Command meta data.
-// Return:	MIstatus::success - Functionality succeeded.
-//			MIstatus::failure - Functionality failed.
-// Throws:	None.
+// Details: Establish whether the text data is an MI format type command.
+// Type:    Method.
+// Args:    vTextLine               - (R) Text data to interpret.
+//          vwbYesValid             - (W) True = MI type command, false = not recognised.
+//          vwbCmdNotInCmdFactor    - (W) True = MI command not found in the command factor, false = recognised.
+// Return:  MIstatus::success - Functionality succeeded.
+//          MIstatus::failure - Functionality failed.
+// Throws:  None.
 //--
-bool CMICmdMgr::CmdExecute( const SMICmdData & vCmdData )
+bool
+CMICmdMgr::CmdInterpret(const CMIUtilString &vTextLine, bool &vwbYesValid, bool &vwbCmdNotInCmdFactor, SMICmdData &rwCmdData)
 {
-	bool bOk = MIstatus::success;
-	
-	// Pass the command's meta data structure to the command 
-	// so it can update it if required. (Need to copy it out of the
-	// command before the command is deleted)
-	CMICmdBase * pCmd = nullptr;
-	bOk = m_factory.CmdCreate( vCmdData.strMiCmd, vCmdData, pCmd );
-	if( !bOk )
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_CMDMGR_ERR_CMD_FAILED_CREATE ), m_factory.GetErrorDescription().c_str() ) );
-		SetErrorDescription( errMsg );
-		return MIstatus::failure;
-	}
-
-	bOk = m_invoker.CmdExecute( *pCmd );
-	if( !bOk )
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_CMDMGR_ERR_CMD_INVOKER ), m_invoker.GetErrorDescription().c_str() ) );
-		SetErrorDescription( errMsg );
-		return MIstatus::failure;
-	}
-			
-	return bOk;
+    return m_interpretor.ValidateIsMi(vTextLine, vwbYesValid, vwbCmdNotInCmdFactor, rwCmdData);
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Iterate all interested clients and tell them a command is being deleted.
-// Type:	Method.
-// Args:	vCmdData	- (RW) The command to be deleted. 
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Having previously had the potential command validated and found valid now
+//          get the command executed.
+//          If the Functionalityity returns MIstatus::failure call GetErrorDescription().
+//          This function is used by the application's main thread.
+// Type:    Method.
+// Args:    vCmdData    - (RW) Command meta data.
+// Return:  MIstatus::success - Functionality succeeded.
+//          MIstatus::failure - Functionality failed.
+// Throws:  None.
 //--
-bool CMICmdMgr::CmdDelete( SMICmdData vCmdData )
+bool
+CMICmdMgr::CmdExecute(const SMICmdData &vCmdData)
 {
-	// Note vCmdData is a copy! The command holding its copy will be deleted soon
-	// we still need to iterate callback clients after a command object is deleted
+    bool bOk = MIstatus::success;
 
-	m_setCmdDeleteCallback.Delete( vCmdData );
+    // Pass the command's meta data structure to the command
+    // so it can update it if required. (Need to copy it out of the
+    // command before the command is deleted)
+    CMICmdBase *pCmd = nullptr;
+    bOk = m_factory.CmdCreate(vCmdData.strMiCmd, vCmdData, pCmd);
+    if (!bOk)
+    {
+        const CMIUtilString errMsg(
+            CMIUtilString::Format(MIRSRC(IDS_CMDMGR_ERR_CMD_FAILED_CREATE), m_factory.GetErrorDescription().c_str()));
+        SetErrorDescription(errMsg);
+        return MIstatus::failure;
+    }
 
-	return MIstatus::success;
+    bOk = m_invoker.CmdExecute(*pCmd);
+    if (!bOk)
+    {
+        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_CMDMGR_ERR_CMD_INVOKER), m_invoker.GetErrorDescription().c_str()));
+        SetErrorDescription(errMsg);
+        return MIstatus::failure;
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Register an object to be called when a command object is deleted.
-// Type:	Method.
-// Args:	vObject	- (R) A new interested client.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Iterate all interested clients and tell them a command is being deleted.
+// Type:    Method.
+// Args:    vCmdData    - (RW) The command to be deleted.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdMgr::CmdRegisterForDeleteNotification( CMICmdMgrSetCmdDeleteCallback::ICallback & vObject )
+bool
+CMICmdMgr::CmdDelete(SMICmdData vCmdData)
 {
-	return m_setCmdDeleteCallback.Register( vObject );
+    // Note vCmdData is a copy! The command holding its copy will be deleted soon
+    // we still need to iterate callback clients after a command object is deleted
+
+    m_setCmdDeleteCallback.Delete(vCmdData);
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Unregister an object from being called when a command object is deleted.
-// Type:	Method.
-// Args:	vObject	- (R) The was interested client.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Register an object to be called when a command object is deleted.
+// Type:    Method.
+// Args:    vObject - (R) A new interested client.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdMgr::CmdUnregisterForDeleteNotification( CMICmdMgrSetCmdDeleteCallback::ICallback & vObject )
+bool
+CMICmdMgr::CmdRegisterForDeleteNotification(CMICmdMgrSetCmdDeleteCallback::ICallback &vObject)
 {
-	return m_setCmdDeleteCallback.Unregister( vObject );
+    return m_setCmdDeleteCallback.Register(vObject);
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Unregister an object from being called when a command object is deleted.
+// Type:    Method.
+// Args:    vObject - (R) The was interested client.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdMgr::CmdUnregisterForDeleteNotification(CMICmdMgrSetCmdDeleteCallback::ICallback &vObject)
+{
+    return m_setCmdDeleteCallback.Unregister(vObject);
 }

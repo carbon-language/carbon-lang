@@ -8,17 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdData.cpp
+// File:        MICmdData.cpp
 //
-// Overview:	SMICmdData implementation.
+// Overview:    SMICmdData implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
 #include "MICmdData.h"
-

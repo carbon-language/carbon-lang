@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MIDriverMgr.cpp
+// File:        MIDriverMgr.cpp
 //
-// Overview:	CMIDriverMgr implementation.
+// Overview:    CMIDriverMgr implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // Third Party Headers:
@@ -33,730 +33,752 @@
 #include "MIUtilSingletonHelper.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMIDriverMgr constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMIDriverMgr constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMIDriverMgr::CMIDriverMgr( void )
-:	m_pDriverCurrent( nullptr )
-,	m_bInMi2Mode( false )
+CMIDriverMgr::CMIDriverMgr(void)
+    : m_pDriverCurrent(nullptr)
+    , m_bInMi2Mode(false)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMIDriverMgr destructor.
-// Type:	Overridden.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMIDriverMgr destructor.
+// Type:    Overridden.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMIDriverMgr::~CMIDriverMgr( void )
+CMIDriverMgr::~CMIDriverMgr(void)
 {
-	Shutdown();
+    Shutdown();
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Initialize *this manager.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Initialize *this manager.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIDriverMgr::Initialize( void )
+bool
+CMIDriverMgr::Initialize(void)
 {
-	m_clientUsageRefCnt++;
+    m_clientUsageRefCnt++;
 
-	ClrErrorDescription();
+    ClrErrorDescription();
 
-	if( m_bInitialized )
-		return MIstatus::success;
+    if (m_bInitialized)
+        return MIstatus::success;
 
-	bool bOk = MIstatus::success;
-	CMIUtilString errMsg;
- 
-	// Note initialisation order is important here as some resources depend on previous
-	MI::ModuleInit< CMICmnLog >      ( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
-	MI::ModuleInit< CMICmnResources >( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
+    bool bOk = MIstatus::success;
+    CMIUtilString errMsg;
 
-	if( bOk )
-	{
-		MIUtilTermios::StdinTermiosSet();
-	}
-	
-	m_bInitialized = bOk;
-	
-	if( !bOk )
-	{
-		CMIUtilString strInitError( CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_DRIVERMGR ), errMsg.c_str() ) );
-		SetErrorDescription( strInitError );
-		return MIstatus::failure;
-	}
+    // Note initialisation order is important here as some resources depend on previous
+    MI::ModuleInit<CMICmnLog>(IDS_MI_INIT_ERR_LOG, bOk, errMsg);
+    MI::ModuleInit<CMICmnResources>(IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg);
 
-	return bOk;
+    if (bOk)
+    {
+        MIUtilTermios::StdinTermiosSet();
+    }
+
+    m_bInitialized = bOk;
+
+    if (!bOk)
+    {
+        CMIUtilString strInitError(CMIUtilString::Format(MIRSRC(IDS_MI_INIT_ERR_DRIVERMGR), errMsg.c_str()));
+        SetErrorDescription(strInitError);
+        return MIstatus::failure;
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Unbind detach or release resources used by this server in general common 
-//			functionality shared between versions of any server interfaces implemented.
-// Type:	Method.
-// Args:	vbAppExitOk	- (R) True = No problems, false = App exiting with problems (investigate!).	
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Unbind detach or release resources used by this server in general common
+//          functionality shared between versions of any server interfaces implemented.
+// Type:    Method.
+// Args:    vbAppExitOk - (R) True = No problems, false = App exiting with problems (investigate!).
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIDriverMgr::Shutdown( void )
+bool
+CMIDriverMgr::Shutdown(void)
 {
-	// Do not want a ref counter because this function needs to be called how ever this 
-	// application stops running
-	//if( --m_clientUsageRefCnt > 0 )
-	//	return MIstatus::success;
-	
-	bool vbAppExitOk = true;
+    // Do not want a ref counter because this function needs to be called how ever this
+    // application stops running
+    // if( --m_clientUsageRefCnt > 0 )
+    //  return MIstatus::success;
 
-	ClrErrorDescription();
+    bool vbAppExitOk = true;
 
-	if( !m_bInitialized )
-		return MIstatus::success;
+    ClrErrorDescription();
 
-	if( vbAppExitOk )	
-	{
-		// The MI Driver's log updating may have been switched off switch back on to say all is ok. 
-		CMICmnLog::Instance().SetEnabled( true );
+    if (!m_bInitialized)
+        return MIstatus::success;
+
+    if (vbAppExitOk)
+    {
+        // The MI Driver's log updating may have been switched off switch back on to say all is ok.
+        CMICmnLog::Instance().SetEnabled(true);
 #if _DEBUG
-		CMICmnStreamStdout::Instance().Write( MIRSRC( IDE_MI_APP_EXIT_OK ) ); // Both stdout and Log
+        CMICmnStreamStdout::Instance().Write(MIRSRC(IDE_MI_APP_EXIT_OK)); // Both stdout and Log
 #else
-		CMICmnLog::WriteLog( MIRSRC( IDE_MI_APP_EXIT_OK ) ); // Just to the Log
+        CMICmnLog::WriteLog(MIRSRC(IDE_MI_APP_EXIT_OK)); // Just to the Log
 #endif // _DEBUG
-	}
-	else
-	{
-		CMICmnLog & rAppLog = CMICmnLog::Instance();
-		if( rAppLog.GetEnabled()  )
-		{
-			const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDE_MI_APP_EXIT_WITH_PROBLEM ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ) );
-			CMICmnStreamStdout::Instance().Write( msg );
-		}
-		else
-		{
-			// The MI Driver's log updating may have been switched off switch back on to say there has been problem. 
-			rAppLog.SetEnabled( true );
-			const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDE_MI_APP_EXIT_WITH_PROBLEM_NO_LOG ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ) );
-			CMICmnStreamStdout::Instance().Write( msg );
-		}
-	}
-	
-	m_bInitialized = false;
+    }
+    else
+    {
+        CMICmnLog &rAppLog = CMICmnLog::Instance();
+        if (rAppLog.GetEnabled())
+        {
+            const CMIUtilString msg(
+                CMIUtilString::Format(MIRSRC(IDE_MI_APP_EXIT_WITH_PROBLEM), CMICmnLogMediumFile::Instance().GetFileName().c_str()));
+            CMICmnStreamStdout::Instance().Write(msg);
+        }
+        else
+        {
+            // The MI Driver's log updating may have been switched off switch back on to say there has been problem.
+            rAppLog.SetEnabled(true);
+            const CMIUtilString msg(
+                CMIUtilString::Format(MIRSRC(IDE_MI_APP_EXIT_WITH_PROBLEM_NO_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()));
+            CMICmnStreamStdout::Instance().Write(msg);
+        }
+    }
 
-	bool bOk = MIstatus::success;
-	CMIUtilString errMsg;
+    m_bInitialized = false;
 
-	// Tidy up
-	UnregisterDriverAll();
-	MIUtilTermios::StdinTermiosReset();
- 
-	// Note shutdown order is important here 
-	MI::ModuleShutdown< CMICmnResources >( IDE_MI_SHTDWN_ERR_RESOURCES, bOk, errMsg );
-	MI::ModuleShutdown< CMICmnLog >      ( IDS_MI_SHTDWN_ERR_LOG      , bOk, errMsg );
+    bool bOk = MIstatus::success;
+    CMIUtilString errMsg;
 
-	if( !bOk )
-	{
-		SetErrorDescriptionn( MIRSRC( IDS_MI_SHTDWN_ERR_DRIVERMGR ), errMsg.c_str() );
-	}
+    // Tidy up
+    UnregisterDriverAll();
+    MIUtilTermios::StdinTermiosReset();
 
-	return bOk;
+    // Note shutdown order is important here
+    MI::ModuleShutdown<CMICmnResources>(IDE_MI_SHTDWN_ERR_RESOURCES, bOk, errMsg);
+    MI::ModuleShutdown<CMICmnLog>(IDS_MI_SHTDWN_ERR_LOG, bOk, errMsg);
+
+    if (!bOk)
+    {
+        SetErrorDescriptionn(MIRSRC(IDS_MI_SHTDWN_ERR_DRIVERMGR), errMsg.c_str());
+    }
+
+    return bOk;
 }
 //++ ------------------------------------------------------------------------------------
-// Details:	Unregister all the Driver registered with *this manager. The manager also
-//			deletes
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Unregister all the Driver registered with *this manager. The manager also
+//          deletes
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIDriverMgr::UnregisterDriverAll( void )
+bool
+CMIDriverMgr::UnregisterDriverAll(void)
 {
-	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
-	while( it != m_mapDriverIdToDriver.end() )
-	{
-		IDriver * pDriver = (*it).second;
-		pDriver->DoShutdown();
-		
-		// Next
-		++it;
-	}
+    MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
+    while (it != m_mapDriverIdToDriver.end())
+    {
+        IDriver *pDriver = (*it).second;
+        pDriver->DoShutdown();
 
-	m_mapDriverIdToDriver.clear();
-	m_pDriverCurrent = NULL;
+        // Next
+        ++it;
+    }
 
-	return MIstatus::success;
-}
+    m_mapDriverIdToDriver.clear();
+    m_pDriverCurrent = NULL;
 
-//++ ------------------------------------------------------------------------------------
-// Details:	Register a driver with *this Driver Manager. Call SetUseThisDriverToDoWork()
-//			inform the manager which driver is the one to the work. The manager calls
-//			the driver's init function which must be successful in order to complete the
-//			registration.
-// Type:	Method.
-// Args:	vrDriver	- (R) The driver to register.
-//			vrDriverID	- (R) The driver's ID to lookup by.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMIDriverMgr::RegisterDriver( const IDriver & vrDriver, const CMIUtilString & vrDriverID )
-{
-	if( HaveDriverAlready( vrDriver ) )
-		return MIstatus::success;
-
-	IDriver * pDriver = const_cast< IDriver * >( &vrDriver );
-	if( !pDriver->SetId( vrDriverID ) )
-		return MIstatus::failure;
-	if( !pDriver->DoInitialize() )
-	{
-		SetErrorDescriptionn( MIRSRC( IDS_DRIVERMGR_DRIVER_ERR_INIT ), pDriver->GetName().c_str(), vrDriverID.c_str(), pDriver->GetError().c_str() );
-		return MIstatus::failure;
-	}
-
-	MapPairDriverIdToDriver_t pr( vrDriverID, pDriver );
-	m_mapDriverIdToDriver.insert( pr );
-
-	return MIstatus::success;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Query the Driver Manager to see if *this manager has the driver already 
-//			registered.
-// Type:	Method.
-// Args:	vrDriver	- (R) The driver to query.
-// Return:	True - registered.
-//			False - not registered.
-// Throws:	None.
+// Details: Register a driver with *this Driver Manager. Call SetUseThisDriverToDoWork()
+//          inform the manager which driver is the one to the work. The manager calls
+//          the driver's init function which must be successful in order to complete the
+//          registration.
+// Type:    Method.
+// Args:    vrDriver    - (R) The driver to register.
+//          vrDriverID  - (R) The driver's ID to lookup by.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIDriverMgr::HaveDriverAlready( const IDriver & vrDriver ) const
+bool
+CMIDriverMgr::RegisterDriver(const IDriver &vrDriver, const CMIUtilString &vrDriverID)
 {
-	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
-	while( it != m_mapDriverIdToDriver.end() )
-	{
-		const IDriver * pDrvr = (*it).second;
-		if( pDrvr == &vrDriver )
-			return true;
+    if (HaveDriverAlready(vrDriver))
+        return MIstatus::success;
 
-		// Next
-		++it;
-	}
+    IDriver *pDriver = const_cast<IDriver *>(&vrDriver);
+    if (!pDriver->SetId(vrDriverID))
+        return MIstatus::failure;
+    if (!pDriver->DoInitialize())
+    {
+        SetErrorDescriptionn(MIRSRC(IDS_DRIVERMGR_DRIVER_ERR_INIT), pDriver->GetName().c_str(), vrDriverID.c_str(),
+                             pDriver->GetError().c_str());
+        return MIstatus::failure;
+    }
 
-	return false;
+    MapPairDriverIdToDriver_t pr(vrDriverID, pDriver);
+    m_mapDriverIdToDriver.insert(pr);
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Unregister a driver from the Driver Manager. Call the SetUseThisDriverToDoWork()
-//			function to define another driver to do work if the one being unregistered did
-//			the work previously.
-// Type:	Method.
-// Args:	vrDriver	- (R) The driver to unregister.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Query the Driver Manager to see if *this manager has the driver already
+//          registered.
+// Type:    Method.
+// Args:    vrDriver    - (R) The driver to query.
+// Return:  True - registered.
+//          False - not registered.
+// Throws:  None.
 //--
-bool CMIDriverMgr::UnregisterDriver( const IDriver & vrDriver )
+bool
+CMIDriverMgr::HaveDriverAlready(const IDriver &vrDriver) const
 {
-	const IDriver * pDrvr = nullptr;
-	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
-	while( it != m_mapDriverIdToDriver.end() )
-	{
-		pDrvr = (*it).second;
-		if( pDrvr == &vrDriver )
-			break;
+    MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
+    while (it != m_mapDriverIdToDriver.end())
+    {
+        const IDriver *pDrvr = (*it).second;
+        if (pDrvr == &vrDriver)
+            return true;
 
-		// Next
-		++it;
-	}
-	m_mapDriverIdToDriver.erase( it );
+        // Next
+        ++it;
+    }
 
-	if( m_pDriverCurrent == pDrvr )
-		m_pDriverCurrent = nullptr;
-
-	return MIstatus::success;
+    return false;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Specify the driver to do work. The Driver Manager drives this driver. Any
-//			previous driver doing work is not called anymore (so be sure the previous
-//			driver is in a tidy state before stopping it working).
-// Type:	Method.
-// Args:	vrADriver	- (R) A lldb::SBBroadcaster/IDriver derived object.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Unregister a driver from the Driver Manager. Call the SetUseThisDriverToDoWork()
+//          function to define another driver to do work if the one being unregistered did
+//          the work previously.
+// Type:    Method.
+// Args:    vrDriver    - (R) The driver to unregister.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIDriverMgr::SetUseThisDriverToDoWork( const IDriver & vrADriver )
+bool
+CMIDriverMgr::UnregisterDriver(const IDriver &vrDriver)
 {
-	m_pDriverCurrent = const_cast< IDriver * >( &vrADriver );
+    const IDriver *pDrvr = nullptr;
+    MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
+    while (it != m_mapDriverIdToDriver.end())
+    {
+        pDrvr = (*it).second;
+        if (pDrvr == &vrDriver)
+            break;
 
-	const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_SAY_DRIVER_USING ), m_pDriverCurrent->GetName().c_str() ) );
-	m_pLog->Write( msg, CMICmnLog::eLogVerbosity_Log );
+        // Next
+        ++it;
+    }
+    m_mapDriverIdToDriver.erase(it);
 
-	m_bInMi2Mode = m_pDriverCurrent->GetDriverIsGDBMICompatibleDriver();
+    if (m_pDriverCurrent == pDrvr)
+        m_pDriverCurrent = nullptr;
 
-	return MIstatus::success;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Ask *this manager which driver is currently doing the work. 
-// Type:	Method.
-// Args:	None.
-// Return:	IDriver * - Pointer to a driver, NULL if there is no current working driver.
-// Throws:	None.
+// Details: Specify the driver to do work. The Driver Manager drives this driver. Any
+//          previous driver doing work is not called anymore (so be sure the previous
+//          driver is in a tidy state before stopping it working).
+// Type:    Method.
+// Args:    vrADriver   - (R) A lldb::SBBroadcaster/IDriver derived object.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-CMIDriverMgr::IDriver * CMIDriverMgr::GetUseThisDriverToDoWork( void ) const
+bool
+CMIDriverMgr::SetUseThisDriverToDoWork(const IDriver &vrADriver)
 {
-	return m_pDriverCurrent;
+    m_pDriverCurrent = const_cast<IDriver *>(&vrADriver);
+
+    const CMIUtilString msg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_SAY_DRIVER_USING), m_pDriverCurrent->GetName().c_str()));
+    m_pLog->Write(msg, CMICmnLog::eLogVerbosity_Log);
+
+    m_bInMi2Mode = m_pDriverCurrent->GetDriverIsGDBMICompatibleDriver();
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Call this function puts *this driver to work.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Ask *this manager which driver is currently doing the work.
+// Type:    Method.
+// Args:    None.
+// Return:  IDriver * - Pointer to a driver, NULL if there is no current working driver.
+// Throws:  None.
 //--
-bool CMIDriverMgr::DriverMainLoop( void )
+CMIDriverMgr::IDriver *
+CMIDriverMgr::GetUseThisDriverToDoWork(void) const
 {
-	if( m_pDriverCurrent != nullptr )
-	{
-		if( !m_pDriverCurrent->DoMainLoop() )
-		{
-			const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_MAINLOOP ), m_pDriverCurrent->GetError().c_str() ) );
-			CMICmnStreamStdout::Instance().Write( errMsg, true );
-			return MIstatus::failure;
-		}
-	}
-	else
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
-		CMICmnStreamStdout::Instance().Write( errMsg, true );
-		return MIstatus::failure;
-	}
-
-	return MIstatus::success;
+    return m_pDriverCurrent;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Call *this driver to resize the console window.
-// Type:	Method.
-// Args:	vWindowSizeWsCol	- (R) New window column size.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Call this function puts *this driver to work.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-void CMIDriverMgr::DriverResizeWindow( const uint32_t vWindowSizeWsCol )
+bool
+CMIDriverMgr::DriverMainLoop(void)
 {
-	if( m_pDriverCurrent != nullptr )
-		return m_pDriverCurrent->DoResizeWindow( vWindowSizeWsCol );
-	else
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
-		CMICmnStreamStdout::Instance().Write( errMsg, true );
-	}
+    if (m_pDriverCurrent != nullptr)
+    {
+        if (!m_pDriverCurrent->DoMainLoop())
+        {
+            const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_MAINLOOP), m_pDriverCurrent->GetError().c_str()));
+            CMICmnStreamStdout::Instance().Write(errMsg, true);
+            return MIstatus::failure;
+        }
+    }
+    else
+    {
+        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        CMICmnStreamStdout::Instance().Write(errMsg, true);
+        return MIstatus::failure;
+    }
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Get the current driver to validate executable command line arguments.
-// Type:	Method.
-// Args:	argc		- (R)	An integer that contains the count of arguments that follow in 
-//								argv. The argc parameter is always greater than or equal to 1.
-//			argv		- (R)	An array of null-terminated strings representing command-line 
-//								arguments entered by the user of the program. By convention, 
-//								argv[0] is the command with which the program is invoked.
-//			vpStdOut	- (R)	Point to a standard output stream. 
-//			vwbExiting	- (W)	True = *this want to exit, false = continue to work. 
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: Call *this driver to resize the console window.
+// Type:    Method.
+// Args:    vWindowSizeWsCol  - (R) New window column size.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMIDriverMgr::DriverParseArgs( const int argc, const char * argv[], FILE * vpStdOut, bool & vwbExiting )
+void
+CMIDriverMgr::DriverResizeWindow(const uint32_t vWindowSizeWsCol)
 {
-	if( m_pDriverCurrent == nullptr )
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
-		CMICmnStreamStdout::Instance().Write( errMsg, true );
-		return MIstatus::failure;
-	}
-
-	const lldb::SBError error( m_pDriverCurrent->DoParseArgs( argc, argv, vpStdOut, vwbExiting ) );
-	bool bOk = !error.Fail();
-	if( !bOk )
-	{
-		CMIUtilString errMsg;
-		const MIchar * pErrorCstr = error.GetCString();
-		if( pErrorCstr != nullptr )
-			errMsg = CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_PARSE_ARGS ), m_pDriverCurrent->GetName().c_str(), pErrorCstr );
-		else
-			errMsg = CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_PARSE_ARGS_UNKNOWN ), m_pDriverCurrent->GetName().c_str() );
-
-		bOk = CMICmnStreamStdout::Instance().Write( errMsg, true );
-	}
-
-	return bOk;
+    if (m_pDriverCurrent != nullptr)
+        return m_pDriverCurrent->DoResizeWindow(vWindowSizeWsCol);
+    else
+    {
+        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        CMICmnStreamStdout::Instance().Write(errMsg, true);
+    }
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve the current driver's last error condition.
-// Type:	Method.
-// Args:	None.
-// Return:	CMIUtilString - Text description.
-// Throws:	None.
+// Details: Get the current driver to validate executable command line arguments.
+// Type:    Method.
+// Args:    argc        - (R)   An integer that contains the count of arguments that follow in
+//                              argv. The argc parameter is always greater than or equal to 1.
+//          argv        - (R)   An array of null-terminated strings representing command-line
+//                              arguments entered by the user of the program. By convention,
+//                              argv[0] is the command with which the program is invoked.
+//          vpStdOut    - (R)   Point to a standard output stream.
+//          vwbExiting  - (W)   True = *this want to exit, false = continue to work.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-CMIUtilString CMIDriverMgr::DriverGetError( void ) const
+bool
+CMIDriverMgr::DriverParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting)
 {
-	if( m_pDriverCurrent != nullptr )
-		return m_pDriverCurrent->GetError();
-	else
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
-		CMICmnStreamStdout::Instance().Write( errMsg, true );
-	}
+    if (m_pDriverCurrent == nullptr)
+    {
+        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        CMICmnStreamStdout::Instance().Write(errMsg, true);
+        return MIstatus::failure;
+    }
 
-	return CMIUtilString();
+    const lldb::SBError error(m_pDriverCurrent->DoParseArgs(argc, argv, vpStdOut, vwbExiting));
+    bool bOk = !error.Fail();
+    if (!bOk)
+    {
+        CMIUtilString errMsg;
+        const MIchar *pErrorCstr = error.GetCString();
+        if (pErrorCstr != nullptr)
+            errMsg = CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_PARSE_ARGS), m_pDriverCurrent->GetName().c_str(), pErrorCstr);
+        else
+            errMsg = CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_PARSE_ARGS_UNKNOWN), m_pDriverCurrent->GetName().c_str());
+
+        bOk = CMICmnStreamStdout::Instance().Write(errMsg, true);
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve the current driver's name.
-// Type:	Method.
-// Args:	None.
-// Return:	CMIUtilString - Driver name.
-//							 Empty string = no current working driver specified.
-// Throws:	None.
+// Details: Retrieve the current driver's last error condition.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - Text description.
+// Throws:  None.
 //--
-CMIUtilString CMIDriverMgr::DriverGetName( void ) const
+CMIUtilString
+CMIDriverMgr::DriverGetError(void) const
 {
-	if( m_pDriverCurrent != nullptr )
-		return m_pDriverCurrent->GetName();
-	else
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
-		CMICmnStreamStdout::Instance().Write( errMsg, true );
-	}
+    if (m_pDriverCurrent != nullptr)
+        return m_pDriverCurrent->GetError();
+    else
+    {
+        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        CMICmnStreamStdout::Instance().Write(errMsg, true);
+    }
 
-	return CMIUtilString();
+    return CMIUtilString();
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve the current driver's debugger object.
-// Type:	Method.
-// Args:	None.
-// Return:	lldb::SBDebugger * - Ptr to driver's debugger object. 
-//							   - NULL = no current working driver specified.
-// Throws:	None.
+// Details: Retrieve the current driver's name.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - Driver name.
+//                          Empty string = no current working driver specified.
+// Throws:  None.
 //--
-lldb::SBDebugger * CMIDriverMgr::DriverGetTheDebugger( void )
+CMIUtilString
+CMIDriverMgr::DriverGetName(void) const
 {
-	lldb::SBDebugger * pDebugger = nullptr;
-	if( m_pDriverCurrent != nullptr )
-		pDebugger = &m_pDriverCurrent->GetTheDebugger();
-	else
-	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
-		CMICmnStreamStdout::Instance().Write( errMsg, true );
-	}
+    if (m_pDriverCurrent != nullptr)
+        return m_pDriverCurrent->GetName();
+    else
+    {
+        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        CMICmnStreamStdout::Instance().Write(errMsg, true);
+    }
 
-	return pDebugger;
+    return CMIUtilString();
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Check the arguments given on the command line. The main purpose of this
-//			function is to check for the presence of the --interpreter option. Having 
-//			this option present tells *this manager to set the CMIDriver to do work. If 
-//			not use the LLDB driver. The following are options that are only handled by
-//			the CMIDriverMgr are: 
-//				--help or -h
-//				--interpreter
-//				--version
-//				--versionLong
-//				--noLog
-//				--executable 
-//			The above arguments are not handled by any driver object except for --executable.
-//			The options --interpreter and --executable in code act very similar. The
-//			--executable is necessary to differentiate whither the MI Driver is being using
-//			by a client i.e. Eclipse or from the command line. Eclipse issues the option
-//			--interpreter and also passes additional arguments which can be interpreted as an
-//			executable if called from the command line. Using --executable tells the MI 
-//			Driver is being called the command line and that the executable argument is indeed
-//			a specified executable an so actions commands to set up the executable for a 
-//			debug session. Using --interpreter on the commnd line does not action additional
-//			commands to initialise a debug session and so be able to launch the process.
-// Type:	Method.
-// Args:	argc		- (R)	An integer that contains the count of arguments that follow in 
-//								argv. The argc parameter is always greater than or equal to 1.
-//			argv		- (R)	An array of null-terminated strings representing command-line 
-//								arguments entered by the user of the program. By convention, 
-//								argv[0] is the command with which the program is invoked.
-//			vwbExiting	- (W)	True = *this want to exit, Reasons: help, invalid arg(s),
-//								version information only.
-//								False = Continue to work, start debugger i.e. Command 
-//								interpreter. 
-// Return:	lldb::SBError - LLDB current error status.
-// Throws:	None.
+// Details: Retrieve the current driver's debugger object.
+// Type:    Method.
+// Args:    None.
+// Return:  lldb::SBDebugger * - Ptr to driver's debugger object.
+//                             - NULL = no current working driver specified.
+// Throws:  None.
 //--
-bool CMIDriverMgr::ParseArgs( const int argc, const char * argv[], bool & vwbExiting )
+lldb::SBDebugger *
+CMIDriverMgr::DriverGetTheDebugger(void)
 {
-	bool bOk = MIstatus::success;
+    lldb::SBDebugger *pDebugger = nullptr;
+    if (m_pDriverCurrent != nullptr)
+        pDebugger = &m_pDriverCurrent->GetTheDebugger();
+    else
+    {
+        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        CMICmnStreamStdout::Instance().Write(errMsg, true);
+    }
 
-	vwbExiting = false;
+    return pDebugger;
+}
 
-	// Print MI application path to the Log file
-	const CMIUtilString appPath( CMIUtilString::Format( MIRSRC( IDS_MI_APP_FILEPATHNAME ), argv[ 0 ] ) );
-	bOk = m_pLog->Write( appPath, CMICmnLog::eLogVerbosity_Log );
-		
-	// Print application arguments to the Log file
-	const bool bHaveArgs( argc >= 2 );
-	CMIUtilString strArgs( MIRSRC( IDS_MI_APP_ARGS ) );
-	if( !bHaveArgs )
-	{
-		strArgs += MIRSRC( IDS_WORD_NONE );
-		bOk = bOk && m_pLog->Write( strArgs, CMICmnLog::eLogVerbosity_Log );
-	}
-	else
-	{
-		for( MIint i = 1; i < argc; i++ ) 
-		{ 
-			strArgs += CMIUtilString::Format( "%d:'%s' ", i, argv[ i ] );
-		}
-		bOk = bOk && m_pLog->Write( strArgs, CMICmnLog::eLogVerbosity_Log );
-	}
-	
-	// Look for the command line options		
-	bool bHaveArgInterpret = false;
-	bool bHaveArgVersion = false;
-	bool bHaveArgVersionLong = false;
-	bool bHaveArgNoLog = false;
-	bool bHaveArgHelp = false;
+//++ ------------------------------------------------------------------------------------
+// Details: Check the arguments given on the command line. The main purpose of this
+//          function is to check for the presence of the --interpreter option. Having
+//          this option present tells *this manager to set the CMIDriver to do work. If
+//          not use the LLDB driver. The following are options that are only handled by
+//          the CMIDriverMgr are:
+//              --help or -h
+//              --interpreter
+//              --version
+//              --versionLong
+//              --noLog
+//              --executable
+//          The above arguments are not handled by any driver object except for --executable.
+//          The options --interpreter and --executable in code act very similar. The
+//          --executable is necessary to differentiate whither the MI Driver is being using
+//          by a client i.e. Eclipse or from the command line. Eclipse issues the option
+//          --interpreter and also passes additional arguments which can be interpreted as an
+//          executable if called from the command line. Using --executable tells the MI
+//          Driver is being called the command line and that the executable argument is indeed
+//          a specified executable an so actions commands to set up the executable for a
+//          debug session. Using --interpreter on the commnd line does not action additional
+//          commands to initialise a debug session and so be able to launch the process.
+// Type:    Method.
+// Args:    argc        - (R)   An integer that contains the count of arguments that follow in
+//                              argv. The argc parameter is always greater than or equal to 1.
+//          argv        - (R)   An array of null-terminated strings representing command-line
+//                              arguments entered by the user of the program. By convention,
+//                              argv[0] is the command with which the program is invoked.
+//          vwbExiting  - (W)   True = *this want to exit, Reasons: help, invalid arg(s),
+//                              version information only.
+//                              False = Continue to work, start debugger i.e. Command
+//                              interpreter.
+// Return:  lldb::SBError - LLDB current error status.
+// Throws:  None.
+//--
+bool
+CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
+{
+    bool bOk = MIstatus::success;
 
-	// Hardcode the use of the MI driver
+    vwbExiting = false;
+
+    // Print MI application path to the Log file
+    const CMIUtilString appPath(CMIUtilString::Format(MIRSRC(IDS_MI_APP_FILEPATHNAME), argv[0]));
+    bOk = m_pLog->Write(appPath, CMICmnLog::eLogVerbosity_Log);
+
+    // Print application arguments to the Log file
+    const bool bHaveArgs(argc >= 2);
+    CMIUtilString strArgs(MIRSRC(IDS_MI_APP_ARGS));
+    if (!bHaveArgs)
+    {
+        strArgs += MIRSRC(IDS_WORD_NONE);
+        bOk = bOk && m_pLog->Write(strArgs, CMICmnLog::eLogVerbosity_Log);
+    }
+    else
+    {
+        for (MIint i = 1; i < argc; i++)
+        {
+            strArgs += CMIUtilString::Format("%d:'%s' ", i, argv[i]);
+        }
+        bOk = bOk && m_pLog->Write(strArgs, CMICmnLog::eLogVerbosity_Log);
+    }
+
+    // Look for the command line options
+    bool bHaveArgInterpret = false;
+    bool bHaveArgVersion = false;
+    bool bHaveArgVersionLong = false;
+    bool bHaveArgNoLog = false;
+    bool bHaveArgHelp = false;
+
+// Hardcode the use of the MI driver
 #if MICONFIG_DEFAULT_TO_MI_DRIVER
-	bHaveArgInterpret = true;
+    bHaveArgInterpret = true;
 #endif // MICONFIG_DEFAULT_TO_MI_DRIVER
 
-	if( bHaveArgs )
-	{
-		// CODETAG_MIDRIVE_CMD_LINE_ARG_HANDLING
-		for( MIint i = 1; i < argc; i++ ) 
-		{ 
-			// *** Add args to help in GetHelpOnCmdLineArgOptions() ***
-			const CMIUtilString strArg( argv[ i ] );
+    if (bHaveArgs)
+    {
+        // CODETAG_MIDRIVE_CMD_LINE_ARG_HANDLING
+        for (MIint i = 1; i < argc; i++)
+        {
+            // *** Add args to help in GetHelpOnCmdLineArgOptions() ***
+            const CMIUtilString strArg(argv[i]);
 
-			// Argument "--executable" is also check for in CMIDriver::ParseArgs()
-			if( (0 == strArg.compare( "--interpreter" )) ||	// Given by the client such as Eclipse
-				(0 == strArg.compare( "--executable" )) )	// Used to specify that there is executable argument also on the command line 
-			{												// See fn description.
-				   bHaveArgInterpret = true;
-			}
-			if( 0 == strArg.compare( "--version" ) ) 
-			{
-				   bHaveArgVersion = true;
-			}
-			if( 0 == strArg.compare( "--versionLong" ) ) 
-			{
-				   bHaveArgVersionLong = true;
-			}
-			if( 0 == strArg.compare( "--noLog" ) ) 
-			{
-				   bHaveArgNoLog = true;
-			}
-			if( (0 == strArg.compare( "--help" )) || (0 == strArg.compare( "-h" )) )
-			{
-				bHaveArgHelp = true;
-			}
-		}
-	}
+            // Argument "--executable" is also check for in CMIDriver::ParseArgs()
+            if ((0 == strArg.compare("--interpreter")) || // Given by the client such as Eclipse
+                (0 == strArg.compare("--executable")))    // Used to specify that there is executable argument also on the command line
+            {                                             // See fn description.
+                bHaveArgInterpret = true;
+            }
+            if (0 == strArg.compare("--version"))
+            {
+                bHaveArgVersion = true;
+            }
+            if (0 == strArg.compare("--versionLong"))
+            {
+                bHaveArgVersionLong = true;
+            }
+            if (0 == strArg.compare("--noLog"))
+            {
+                bHaveArgNoLog = true;
+            }
+            if ((0 == strArg.compare("--help")) || (0 == strArg.compare("-h")))
+            {
+                bHaveArgHelp = true;
+            }
+        }
+    }
 
-	if( bHaveArgNoLog )
-	{
-		CMICmnLog::Instance().SetEnabled( false );
-	}
-	
-	// Todo: Remove this output when MI is finished. It is temporary to persuade Ecllipse plugin to work.
-	//		 Eclipse reads this literally and will not work unless it gets this exact version text.
-	// Handle --version option (ignore the --interpreter option if present)
-	if( bHaveArgVersion )
-	{
-		vwbExiting = true;
-		bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse( MIRSRC( IDE_MI_VERSION_GDB ) );
-		return bOk;
-	}
+    if (bHaveArgNoLog)
+    {
+        CMICmnLog::Instance().SetEnabled(false);
+    }
 
-	// Todo: Make this the --version when the the above --version version is removed
-	// Handle --versionlong option (ignore the --interpreter option if present)
-	if( bHaveArgVersionLong )
-	{
-		vwbExiting = true;
-		bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse( GetAppVersion() );
-		return bOk;
-	}
+    // Todo: Remove this output when MI is finished. It is temporary to persuade Ecllipse plugin to work.
+    //       Eclipse reads this literally and will not work unless it gets this exact version text.
+    // Handle --version option (ignore the --interpreter option if present)
+    if (bHaveArgVersion)
+    {
+        vwbExiting = true;
+        bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse(MIRSRC(IDE_MI_VERSION_GDB));
+        return bOk;
+    }
 
-	// Both '--help' and '--intepreter' means give help for MI only. Without 
-	// '--interpreter' help the LLDB driver is working and so help is for that.
-	if( bHaveArgHelp && bHaveArgInterpret )
-	{
-		vwbExiting = true;
-		bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse( GetHelpOnCmdLineArgOptions() );
-		return bOk;
-	}
- 
-	// This makes the assumption that there is at least one MI compatible
-	// driver registered and one LLDB driver registerd and the CMIDriver 
-	// is the first one found.
-	// ToDo: Implement a better solution that handle any order, any number
-	// of drivers. Or this 'feature' may be removed if deemed not required.
-	IDriver * pLldbDriver = GetFirstNonMIDriver();
-	IDriver * pMi2Driver = GetFirstMIDriver();
-	if( bHaveArgInterpret && (pMi2Driver != nullptr) )
-		bOk = bOk && SetUseThisDriverToDoWork( *pMi2Driver );
-	else if( pLldbDriver != nullptr )
-		bOk = bOk && SetUseThisDriverToDoWork( *pLldbDriver );
-	else
-	{
-		if( bOk )
-		{
-			vwbExiting = true;
-			const CMIUtilString msg( MIRSRC( IDS_DRIVER_ERR_NON_REGISTERED ) );
-			bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse( msg );
-		}
-	}
-					
-	return bOk;
-}
-	
-//++ ------------------------------------------------------------------------------------
-// Details:	Return formatted application version and name information.
-// Type:	Method.
-// Args:	None. 
-// Return:	CMIUtilString - Text data.
-// Throws:	None.
-//--
-CMIUtilString CMIDriverMgr::GetAppVersion( void ) const
-{
-	const CMIUtilString strProj( MIRSRC( IDS_PROJNAME ) );
-	const CMIUtilString strVsn( CMIDriver::Instance().GetVersionDescription() );
-	const CMIUtilString strGdb( MIRSRC( IDE_MI_VERSION_GDB ) );
-	const CMIUtilString strVrsnInfo( CMIUtilString::Format( "%s\n%s\n%s", strProj.c_str(), strVsn.c_str(), strGdb.c_str() ) );
+    // Todo: Make this the --version when the the above --version version is removed
+    // Handle --versionlong option (ignore the --interpreter option if present)
+    if (bHaveArgVersionLong)
+    {
+        vwbExiting = true;
+        bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse(GetAppVersion());
+        return bOk;
+    }
 
-	return strVrsnInfo;
+    // Both '--help' and '--intepreter' means give help for MI only. Without
+    // '--interpreter' help the LLDB driver is working and so help is for that.
+    if (bHaveArgHelp && bHaveArgInterpret)
+    {
+        vwbExiting = true;
+        bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse(GetHelpOnCmdLineArgOptions());
+        return bOk;
+    }
+
+    // This makes the assumption that there is at least one MI compatible
+    // driver registered and one LLDB driver registerd and the CMIDriver
+    // is the first one found.
+    // ToDo: Implement a better solution that handle any order, any number
+    // of drivers. Or this 'feature' may be removed if deemed not required.
+    IDriver *pLldbDriver = GetFirstNonMIDriver();
+    IDriver *pMi2Driver = GetFirstMIDriver();
+    if (bHaveArgInterpret && (pMi2Driver != nullptr))
+        bOk = bOk && SetUseThisDriverToDoWork(*pMi2Driver);
+    else if (pLldbDriver != nullptr)
+        bOk = bOk && SetUseThisDriverToDoWork(*pLldbDriver);
+    else
+    {
+        if (bOk)
+        {
+            vwbExiting = true;
+            const CMIUtilString msg(MIRSRC(IDS_DRIVER_ERR_NON_REGISTERED));
+            bOk = bOk && CMICmnStreamStdout::Instance().WriteMIResponse(msg);
+        }
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Return formatted help information on all the MI command line options.
-// Type:	Method.
-// Args:	None. 
-// Return:	CMIUtilString - Text data.
-// Throws:	None.
+// Details: Return formatted application version and name information.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - Text data.
+// Throws:  None.
 //--
-CMIUtilString CMIDriverMgr::GetHelpOnCmdLineArgOptions( void ) const
+CMIUtilString
+CMIDriverMgr::GetAppVersion(void) const
 {
-	const CMIUtilString pHelp[] = 
-	{
-		MIRSRC( IDE_MI_APP_DESCRIPTION ),
-		MIRSRC( IDE_MI_APP_INFORMATION ),
-		MIRSRC( IDE_MI_APP_ARG_USAGE ),
-		MIRSRC( IDE_MI_APP_ARG_HELP ),
-		MIRSRC( IDE_MI_APP_ARG_VERSION ),
-		MIRSRC( IDE_MI_APP_ARG_VERSION_LONG ),
-		MIRSRC( IDE_MI_APP_ARG_INTERPRETER ),
-		MIRSRC( IDE_MI_APP_ARG_EXECUTEABLE ),
-		CMIUtilString::Format( MIRSRC( IDE_MI_APP_ARG_NO_APP_LOG ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ),
-		MIRSRC( IDE_MI_APP_ARG_EXECUTABLE ),
-		MIRSRC( IDS_CMD_QUIT_HELP ),
-		MIRSRC( IDE_MI_APP_ARG_EXAMPLE )
-	};
-	const MIuint nHelpItems = sizeof pHelp / sizeof pHelp[ 0 ];
-	CMIUtilString strHelp;
-	for( MIuint i = 0; i < nHelpItems; i++ )
-	{
-		strHelp += pHelp[ i ];
-		strHelp += "\n\n";
-	}
+    const CMIUtilString strProj(MIRSRC(IDS_PROJNAME));
+    const CMIUtilString strVsn(CMIDriver::Instance().GetVersionDescription());
+    const CMIUtilString strGdb(MIRSRC(IDE_MI_VERSION_GDB));
+    const CMIUtilString strVrsnInfo(CMIUtilString::Format("%s\n%s\n%s", strProj.c_str(), strVsn.c_str(), strGdb.c_str()));
 
-	return strHelp;
+    return strVrsnInfo;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Search the registered drivers and return the first driver which says it is
-//			GDB/MI compatible i.e. the CMIDriver class.
-// Type:	Method.
-// Args:	None. 
-// Return:	IDriver * - Ptr to driver, NULL = no driver found.
-// Throws:	None.
+// Details: Return formatted help information on all the MI command line options.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - Text data.
+// Throws:  None.
 //--
-CMIDriverMgr::IDriver * CMIDriverMgr::GetFirstMIDriver( void ) const
+CMIUtilString
+CMIDriverMgr::GetHelpOnCmdLineArgOptions(void) const
 {
-	IDriver * pDriver = nullptr;
-	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
-	while( it != m_mapDriverIdToDriver.end() )
-	{
-		const CMIUtilString & rDrvId = (*it).first; MIunused( rDrvId );
-		IDriver * pDvr = (*it).second;
-		if( pDvr->GetDriverIsGDBMICompatibleDriver() )
-		{
-			pDriver = pDvr;
-			break;
-		}
+    const CMIUtilString pHelp[] = {
+        MIRSRC(IDE_MI_APP_DESCRIPTION),
+        MIRSRC(IDE_MI_APP_INFORMATION),
+        MIRSRC(IDE_MI_APP_ARG_USAGE),
+        MIRSRC(IDE_MI_APP_ARG_HELP),
+        MIRSRC(IDE_MI_APP_ARG_VERSION),
+        MIRSRC(IDE_MI_APP_ARG_VERSION_LONG),
+        MIRSRC(IDE_MI_APP_ARG_INTERPRETER),
+        MIRSRC(IDE_MI_APP_ARG_EXECUTEABLE),
+        CMIUtilString::Format(MIRSRC(IDE_MI_APP_ARG_NO_APP_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()),
+        MIRSRC(IDE_MI_APP_ARG_EXECUTABLE),
+        MIRSRC(IDS_CMD_QUIT_HELP),
+        MIRSRC(IDE_MI_APP_ARG_EXAMPLE)};
+    const MIuint nHelpItems = sizeof pHelp / sizeof pHelp[0];
+    CMIUtilString strHelp;
+    for (MIuint i = 0; i < nHelpItems; i++)
+    {
+        strHelp += pHelp[i];
+        strHelp += "\n\n";
+    }
 
-		// Next
-		++it;
-	}
-
-	return pDriver;
+    return strHelp;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Search the registered drivers and return the first driver which says it is
-//			not GDB/MI compatible i.e. the LLDB Driver class.
-// Type:	Method.
-// Args:	None. 
-// Return:	IDriver * - Ptr to driver, NULL = no driver found.
-// Throws:	None.
+// Details: Search the registered drivers and return the first driver which says it is
+//          GDB/MI compatible i.e. the CMIDriver class.
+// Type:    Method.
+// Args:    None.
+// Return:  IDriver * - Ptr to driver, NULL = no driver found.
+// Throws:  None.
 //--
-CMIDriverMgr::IDriver * CMIDriverMgr::GetFirstNonMIDriver( void ) const
+CMIDriverMgr::IDriver *
+CMIDriverMgr::GetFirstMIDriver(void) const
 {
-	IDriver * pDriver = nullptr;
-	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
-	while( it != m_mapDriverIdToDriver.end() )
-	{
-		const CMIUtilString & rDrvId = (*it).first; MIunused( rDrvId );
-		IDriver * pDvr = (*it).second;
-		if( !pDvr->GetDriverIsGDBMICompatibleDriver() )
-		{
-			pDriver = pDvr;
-			break;
-		}
+    IDriver *pDriver = nullptr;
+    MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
+    while (it != m_mapDriverIdToDriver.end())
+    {
+        const CMIUtilString &rDrvId = (*it).first;
+        MIunused(rDrvId);
+        IDriver *pDvr = (*it).second;
+        if (pDvr->GetDriverIsGDBMICompatibleDriver())
+        {
+            pDriver = pDvr;
+            break;
+        }
 
-		// Next
-		++it;
-	}
+        // Next
+        ++it;
+    }
 
-	return pDriver;
+    return pDriver;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Search the registered drivers and return driver with the specified ID.
-// Type:	Method.
-// Args:	vrDriverId	- (R) ID of a driver. 
-// Return:	IDriver * - Ptr to driver, NULL = no driver found.
-// Throws:	None.
+// Details: Search the registered drivers and return the first driver which says it is
+//          not GDB/MI compatible i.e. the LLDB Driver class.
+// Type:    Method.
+// Args:    None.
+// Return:  IDriver * - Ptr to driver, NULL = no driver found.
+// Throws:  None.
 //--
-CMIDriverMgr::IDriver * CMIDriverMgr::GetDriver( const CMIUtilString & vrDriverId ) const
+CMIDriverMgr::IDriver *
+CMIDriverMgr::GetFirstNonMIDriver(void) const
 {
-	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.find( vrDriverId );
-	if( it == m_mapDriverIdToDriver.end() )
-		return nullptr;
+    IDriver *pDriver = nullptr;
+    MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
+    while (it != m_mapDriverIdToDriver.end())
+    {
+        const CMIUtilString &rDrvId = (*it).first;
+        MIunused(rDrvId);
+        IDriver *pDvr = (*it).second;
+        if (!pDvr->GetDriverIsGDBMICompatibleDriver())
+        {
+            pDriver = pDvr;
+            break;
+        }
 
-	IDriver * pDriver = (*it).second;
-	
-	return pDriver;
+        // Next
+        ++it;
+    }
+
+    return pDriver;
 }
-	
+
+//++ ------------------------------------------------------------------------------------
+// Details: Search the registered drivers and return driver with the specified ID.
+// Type:    Method.
+// Args:    vrDriverId  - (R) ID of a driver.
+// Return:  IDriver * - Ptr to driver, NULL = no driver found.
+// Throws:  None.
+//--
+CMIDriverMgr::IDriver *
+CMIDriverMgr::GetDriver(const CMIUtilString &vrDriverId) const
+{
+    MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.find(vrDriverId);
+    if (it == m_mapDriverIdToDriver.end())
+        return nullptr;
+
+    IDriver *pDriver = (*it).second;
+
+    return pDriver;
+}

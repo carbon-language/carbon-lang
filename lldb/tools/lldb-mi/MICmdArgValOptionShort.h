@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdArgValOptionShort.h
+// File:        MICmdArgValOptionShort.h
 //
-// Overview:	CMICmdArgValOptionShort interface.
+// Overview:    CMICmdArgValOptionShort interface.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 #pragma once
@@ -29,37 +29,38 @@ class CMICmdArgContext;
 class CMIUtilString;
 
 //++ ============================================================================
-// Details:	MI common code class. Command argument class. Arguments object
-//			needing specialization derived from the CMICmdArgValOptionLong class. 
-//			An argument knows what type of argument it is and how it is to 
-//			interpret the options (context) string to find and validate a matching 
-//			argument and so extract a value from it.
-//			If *this argument has expected options following it the option objects
-//			created to hold each of those option's values belong to *this argument
-//			object and so are deleted when *this object goes out of scope.
-//			Based on the Interpreter pattern.
-// Gotchas:	None.
-// Authors:	Illya Rudkin 16/04/2014.
-// Changes:	None.
+// Details: MI common code class. Command argument class. Arguments object
+//          needing specialization derived from the CMICmdArgValOptionLong class.
+//          An argument knows what type of argument it is and how it is to
+//          interpret the options (context) string to find and validate a matching
+//          argument and so extract a value from it.
+//          If *this argument has expected options following it the option objects
+//          created to hold each of those option's values belong to *this argument
+//          object and so are deleted when *this object goes out of scope.
+//          Based on the Interpreter pattern.
+// Gotchas: None.
+// Authors: Illya Rudkin 16/04/2014.
+// Changes: None.
 //--
 class CMICmdArgValOptionShort : public CMICmdArgValOptionLong
 {
-// Methods:
-public:
-	/* ctor */	CMICmdArgValOptionShort( void );
-	/* ctor */	CMICmdArgValOptionShort( const CMIUtilString & vrArgName, const bool vbMandatory, const bool vbHandleByCmd );
-	/* ctor */	CMICmdArgValOptionShort( const CMIUtilString & vrArgName, const bool vbMandatory, const bool vbHandleByCmd, const ArgValType_e veType, const MIuint vnExpectingNOptions );
-	//
-	bool	IsArgShortOption( const CMIUtilString & vrTxt ) const;
-	
-// Overridden:
-public:
-	// From CMICmdArgValBase
-	/* dtor */ virtual ~CMICmdArgValOptionShort( void );
+    // Methods:
+  public:
+    /* ctor */ CMICmdArgValOptionShort(void);
+    /* ctor */ CMICmdArgValOptionShort(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
+    /* ctor */ CMICmdArgValOptionShort(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd,
+                                       const ArgValType_e veType, const MIuint vnExpectingNOptions);
+    //
+    bool IsArgShortOption(const CMIUtilString &vrTxt) const;
 
-// Overridden:
-private:
-	// From CMICmdArgValOptionLong
-	virtual bool IsArgOptionCorrect( const CMIUtilString & vrTxt ) const;
-	virtual bool ArgNameMatch( const CMIUtilString & vrTxt ) const;
+    // Overridden:
+  public:
+    // From CMICmdArgValBase
+    /* dtor */ virtual ~CMICmdArgValOptionShort(void);
+
+    // Overridden:
+  private:
+    // From CMICmdArgValOptionLong
+    virtual bool IsArgOptionCorrect(const CMIUtilString &vrTxt) const;
+    virtual bool ArgNameMatch(const CMIUtilString &vrTxt) const;
 };

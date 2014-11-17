@@ -8,30 +8,30 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdCmd.h
+// File:        MICmdCmd.h
 //
-// Overview:	CMICmdCmdEnablePrettyPrinting	interface.
-//				CMICmdCmdSource					interface.
+// Overview:    CMICmdCmdEnablePrettyPrinting   interface.
+//              CMICmdCmdSource                 interface.
 //
-//				To implement new MI commands derive a new command class from the command base 
-//				class. To enable the new command for interpretation add the new command class
-//				to the command factory. The files of relevance are:
-//					MICmdCommands.cpp
-//					MICmdBase.h / .cpp
-//					MICmdCmd.h / .cpp
-//				For an introduction to adding a new command see CMICmdCmdSupportInfoMiCmdQuery
-//				command class as an example.
+//              To implement new MI commands derive a new command class from the command base
+//              class. To enable the new command for interpretation add the new command class
+//              to the command factory. The files of relevance are:
+//                  MICmdCommands.cpp
+//                  MICmdBase.h / .cpp
+//                  MICmdCmd.h / .cpp
+//              For an introduction to adding a new command see CMICmdCmdSupportInfoMiCmdQuery
+//              command class as an example.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
-/* 
+/*
 MI commands implemented are:
-	See MICmdCommands.cpp
+        See MICmdCommands.cpp
 */
 
 #pragma once
@@ -47,58 +47,57 @@ MI commands implemented are:
 #include "MICmnMIValueList.h"
 
 //++ ============================================================================
-// Details:	MI command class. MI commands derived from the command base class.
-//			*this class implements MI command "enable-pretty-printing".
-//			Enables Python base pretty printing.
-// Ref:		http://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI-Variable-Objects.html
-// Gotchas:	None.
-// Authors:	Illya Rudkin 03/03/2014.
-// Changes:	None.
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "enable-pretty-printing".
+//          Enables Python base pretty printing.
+// Ref:     http://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI-Variable-Objects.html
+// Gotchas: None.
+// Authors: Illya Rudkin 03/03/2014.
+// Changes: None.
 //--
 class CMICmdCmdEnablePrettyPrinting : public CMICmdBase
 {
-// Statics:
-public:
-	// Required by the CMICmdFactory when registering *this command
-	static CMICmdBase *	CreateSelf( void );
+    // Statics:
+  public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
 
-// Methods:
-public:
-	/* ctor */	CMICmdCmdEnablePrettyPrinting( void );
+    // Methods:
+  public:
+    /* ctor */ CMICmdCmdEnablePrettyPrinting(void);
 
-// Overridden:
-public:
-	// From CMICmdInvoker::ICmd
-	virtual bool	Execute( void );
-	virtual bool	Acknowledge( void );
-	// From CMICmnBase
-	/* dtor */ virtual ~CMICmdCmdEnablePrettyPrinting( void );
+    // Overridden:
+  public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdEnablePrettyPrinting(void);
 };
 
 //++ ============================================================================
-// Details:	MI command class. MI commands derived from the command base class.
-//			*this class implements MI command "source".
-// Gotchas:	None.
-// Authors:	Illya Rudkin 05/03/2014.
-// Changes:	None.
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "source".
+// Gotchas: None.
+// Authors: Illya Rudkin 05/03/2014.
+// Changes: None.
 //--
-class CMICmdCmdSource
-	: public CMICmdBase
+class CMICmdCmdSource : public CMICmdBase
 {
-// Statics:
-public:
-	// Required by the CMICmdFactory when registering *this command
-	static CMICmdBase *	CreateSelf( void );
+    // Statics:
+  public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
 
-// Methods:
-public:
-	/* ctor */	CMICmdCmdSource( void );
+    // Methods:
+  public:
+    /* ctor */ CMICmdCmdSource(void);
 
-// Overridden:
-public:
-	// From CMICmdInvoker::ICmd
-	virtual bool	Execute( void );
-	virtual bool	Acknowledge( void );
-	// From CMICmnBase
-	/* dtor */ virtual ~CMICmdCmdSource( void );
+    // Overridden:
+  public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdSource(void);
 };

@@ -8,20 +8,20 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdCmdBreak.cpp
+// File:        MICmdCmdBreak.cpp
 //
-// Overview:	CMICmdCmdBreakInsert			implementation.
-//				CMICmdCmdBreakDelete			implementation.
-//				CMICmdCmdBreakDisable			implementation.
-//				CMICmdCmdBreakEnable			implementation.
-//				CMICmdCmdBreakAfter				implementation.
-//				CMICmdCmdBreakCondition			implementation.
+// Overview:    CMICmdCmdBreakInsert            implementation.
+//              CMICmdCmdBreakDelete            implementation.
+//              CMICmdCmdBreakDisable           implementation.
+//              CMICmdCmdBreakEnable            implementation.
+//              CMICmdCmdBreakAfter             implementation.
+//              CMICmdCmdBreakCondition         implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // Third Party Headers:
@@ -44,420 +44,325 @@
 #include "MICmnStreamStdout.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakInsert constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakInsert constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakInsert::CMICmdCmdBreakInsert( void )
-:	m_bBrkPtIsTemp( false )
-,	m_bBrkPtIsPending( false )
-,	m_nBrkPtIgnoreCount( 0 )
-,	m_bBrkPtEnabled( false )
-,	m_bBrkPtCondition( false )
-,	m_bBrkPtThreadId( false )
-,	m_nBrkPtThreadId( 0 )
-,	m_constStrArgNamedTempBrkPt( "t" )
-,	m_constStrArgNamedHWBrkPt( "h" )
-,	m_constStrArgNamedPendinfBrkPt( "f" )
-,	m_constStrArgNamedDisableBrkPt( "d" )
-,	m_constStrArgNamedTracePt( "a" )
-,	m_constStrArgNamedConditionalBrkPt( "c" )
-,	m_constStrArgNamedInoreCnt( "i" )
-,	m_constStrArgNamedRestrictBrkPtToThreadId( "p" )
-,	m_constStrArgNamedLocation( "location" )
-,	m_constStrArgNamedThreadGroup( "thread-group" )
+CMICmdCmdBreakInsert::CMICmdCmdBreakInsert(void)
+    : m_bBrkPtIsTemp(false)
+    , m_bBrkPtIsPending(false)
+    , m_nBrkPtIgnoreCount(0)
+    , m_bBrkPtEnabled(false)
+    , m_bBrkPtCondition(false)
+    , m_bBrkPtThreadId(false)
+    , m_nBrkPtThreadId(0)
+    , m_constStrArgNamedTempBrkPt("t")
+    , m_constStrArgNamedHWBrkPt("h")
+    , m_constStrArgNamedPendinfBrkPt("f")
+    , m_constStrArgNamedDisableBrkPt("d")
+    , m_constStrArgNamedTracePt("a")
+    , m_constStrArgNamedConditionalBrkPt("c")
+    , m_constStrArgNamedInoreCnt("i")
+    , m_constStrArgNamedRestrictBrkPtToThreadId("p")
+    , m_constStrArgNamedLocation("location")
+    , m_constStrArgNamedThreadGroup("thread-group")
 {
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "break-insert";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdBreakInsert::CreateSelf;
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "break-insert";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdBreakInsert::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakInsert destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakInsert destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakInsert::~CMICmdCmdBreakInsert( void )
-{
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The parses the command line options 
-//			arguments to extract values for each of those arguments.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdBreakInsert::ParseArgs( void )
-{
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedTempBrkPt, false, true )) );
-	//Not implemented bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedHWBrkPt, false, false ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedPendinfBrkPt, false, true, CMICmdArgValListBase::eArgValType_StringQuotedNumberPath, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedDisableBrkPt, false, false ) ) );
-	//Not implemented bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedTracePt, false, false ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedConditionalBrkPt, false, true, CMICmdArgValListBase::eArgValType_StringQuoted, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedInoreCnt, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedRestrictBrkPtToThreadId, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedLocation, false, true ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedThreadGroup, false, true, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) ); 
-	return (bOk && ParseValidateCmdOptions() );
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdBreakInsert::Execute( void )
-{
-	CMICMDBASE_GETOPTION( pArgTempBrkPt, OptionShort, m_constStrArgNamedTempBrkPt );
-	CMICMDBASE_GETOPTION( pArgThreadGroup, OptionLong, m_constStrArgNamedThreadGroup );
-	CMICMDBASE_GETOPTION( pArgLocation, String, m_constStrArgNamedLocation );
-	CMICMDBASE_GETOPTION( pArgIgnoreCnt, OptionShort, m_constStrArgNamedInoreCnt );
-	CMICMDBASE_GETOPTION( pArgPendingBrkPt, OptionShort, m_constStrArgNamedPendinfBrkPt );
-	CMICMDBASE_GETOPTION( pArgDisableBrkPt, OptionShort, m_constStrArgNamedDisableBrkPt );
-	CMICMDBASE_GETOPTION( pArgConditionalBrkPt, OptionShort, m_constStrArgNamedConditionalBrkPt );
-	CMICMDBASE_GETOPTION( pArgRestrictBrkPtToThreadId, OptionShort, m_constStrArgNamedRestrictBrkPtToThreadId );
-	
-	m_bBrkPtEnabled = !pArgDisableBrkPt->GetFound();
-	m_bBrkPtIsTemp = pArgTempBrkPt->GetFound();
-	m_bHaveArgOptionThreadGrp = pArgThreadGroup->GetFound();
-	if( m_bHaveArgOptionThreadGrp )
-	{
-		MIuint nThreadGrp = 0;
-		pArgThreadGroup->GetExpectedOption< CMICmdArgValThreadGrp, MIuint >( nThreadGrp ); 
-		m_strArgOptionThreadGrp = CMIUtilString::Format( "i%d", nThreadGrp );
-	}
-	m_bBrkPtIsPending = pArgPendingBrkPt->GetFound();
-	if( pArgLocation->GetFound() )
-		m_brkName = pArgLocation->GetValue();
-	else if( m_bBrkPtIsPending )
-	{
-		pArgPendingBrkPt->GetExpectedOption< CMICmdArgValString, CMIUtilString >( m_brkName );
-	}
-	if( pArgIgnoreCnt->GetFound() )
-	{
-		pArgIgnoreCnt->GetExpectedOption< CMICmdArgValNumber, MIuint >( m_nBrkPtIgnoreCount );
-	}
-	m_bBrkPtCondition = pArgConditionalBrkPt->GetFound();
-	if( m_bBrkPtCondition )
-	{
-		pArgConditionalBrkPt->GetExpectedOption< CMICmdArgValString, CMIUtilString >( m_brkPtCondition );
-	}
-	m_bBrkPtThreadId = pArgRestrictBrkPtToThreadId->GetFound();
-	if( m_bBrkPtCondition )
-	{
-		pArgRestrictBrkPtToThreadId->GetExpectedOption< CMICmdArgValNumber, MIuint >( m_nBrkPtThreadId );
-	}
-	
-	// Determine if break on a file line or at a function
-	BreakPoint_e eBrkPtType = eBreakPoint_NotDefineYet;
-	const CMIUtilString cColon = ":";
-	CMIUtilString fileName;
-	MIuint nFileLine = 0;
-	CMIUtilString strFileFn;
-	const MIint nPosColon = m_brkName.find( cColon );
-	if( nPosColon != (MIint) std::string::npos )
-	{
-		CMIUtilString::VecString_t vecFileAndLocation;
-		const MIuint nSplits = m_brkName.Split( cColon, vecFileAndLocation ); MIunused( nSplits );
-		if( vecFileAndLocation.size() != 2 )
-		{
-			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_LOCATION_FORMAT ), m_cmdData.strMiCmd.c_str(), m_brkName.c_str() ) );
-			return MIstatus::failure;
-		}
-		fileName = vecFileAndLocation.at( 0 );
-		const CMIUtilString & rStrLineOrFn( vecFileAndLocation.at( 1 ) );
-		if( rStrLineOrFn.empty() )
-			eBrkPtType = eBreakPoint_ByName;
-		else
-		{
-			MIint64 nValue = 0;
-			if( rStrLineOrFn.ExtractNumber( nValue ) )
-			{
-				nFileLine = static_cast< MIuint >( nValue );
-				eBrkPtType = eBreakPoint_ByFileLine;
-			}
-			else
-			{
-				strFileFn = rStrLineOrFn;
-				eBrkPtType = eBreakPoint_ByFileFn;
-			}
-		}
-	}
-
-	// Determine if break defined as an address
-	lldb::addr_t nAddress = 0;
-	if( eBrkPtType == eBreakPoint_NotDefineYet ) 
-	{
-		MIint64 nValue = 0;
-		if( m_brkName.ExtractNumber( nValue ) )
-		{
-			nAddress = static_cast< lldb::addr_t >( nValue );
-			eBrkPtType = eBreakPoint_ByAddress;
-		}
-	}
-	
-	// Break defined as an function
-	if( eBrkPtType == eBreakPoint_NotDefineYet ) 
-	{
-		eBrkPtType = eBreakPoint_ByName;
-	}
-
-	// Ask LLDB to create a breakpoint
-	bool bOk = MIstatus::success;
-	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	lldb::SBTarget & rTarget = rSessionInfo.m_lldbTarget;
-	switch( eBrkPtType ) 
-	{
-	case eBreakPoint_ByAddress:
-		m_brkPt = rTarget.BreakpointCreateByAddress( nAddress );
-		break;
-	case eBreakPoint_ByFileFn:
-		m_brkPt = rTarget.BreakpointCreateByName( strFileFn.c_str(), fileName.c_str() );
-		break;
-	case eBreakPoint_ByFileLine:
-		m_brkPt = rTarget.BreakpointCreateByLocation( fileName.c_str(), nFileLine );
-		break;
-	case eBreakPoint_ByName:
-		m_brkPt = rTarget.BreakpointCreateByName( m_brkName.c_str(), rTarget.GetExecutable().GetFilename() );
-		break;
-	case eBreakPoint_count:
-	case eBreakPoint_NotDefineYet:
-	case eBreakPoint_Invalid:
-		bOk = MIstatus::failure;
-		break;
-	}
-	
-	if( bOk )
-	{
-		m_brkPt.SetEnabled( m_bBrkPtEnabled );
-		m_brkPt.SetIgnoreCount( m_nBrkPtIgnoreCount );
-		if( m_bBrkPtCondition )
-			m_brkPt.SetCondition( m_brkPtCondition.c_str() );
-		if( m_bBrkPtThreadId )
-			m_brkPt.SetThreadID( m_nBrkPtThreadId );
-		if( !m_brkPt.IsValid() )
-			m_bBrkPtIsPending = pArgPendingBrkPt->GetFound();
-	}
-
-	// CODETAG_LLDB_BREAKPOINT_CREATION
-	// This is in the main thread
-	// Record break point information to be by LLDB event handler function
-	CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
-	sBrkPtInfo.m_id = m_brkPt.GetID();
-	sBrkPtInfo.m_bDisp = m_bBrkPtIsTemp;		
-	sBrkPtInfo.m_bEnabled = m_bBrkPtEnabled;
-	sBrkPtInfo.m_bHaveArgOptionThreadGrp = m_bHaveArgOptionThreadGrp; 
-	sBrkPtInfo.m_strOptThrdGrp = m_strArgOptionThreadGrp;	
-	sBrkPtInfo.m_strOrigLoc = m_brkName;					
-	sBrkPtInfo.m_nIgnore = m_nBrkPtIgnoreCount;
-	sBrkPtInfo.m_bPending = m_bBrkPtIsPending;
-	sBrkPtInfo.m_bCondition = m_bBrkPtCondition;
-	sBrkPtInfo.m_strCondition = m_brkPtCondition;
-	sBrkPtInfo.m_bBrkPtThreadId = m_bBrkPtThreadId;
-	sBrkPtInfo.m_nBrkPtThreadId = m_nBrkPtThreadId;
-	bOk = bOk && rSessionInfo.RecordBrkPtInfo( m_brkPt.GetID(), sBrkPtInfo );
-	
-	if( !bOk )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), m_cmdData.strMiCmd.c_str(), m_brkName.c_str() ) );
-		return MIstatus::failure;
-	}
-
-	// CODETAG_LLDB_BRKPT_ID_MAX
-	if( m_brkPt.GetID() > (lldb::break_id_t) rSessionInfo.m_nBrkPointCntMax )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_CNT_EXCEEDED ), m_cmdData.strMiCmd.c_str(), rSessionInfo.m_nBrkPointCntMax, m_brkName.c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdBreakInsert::Acknowledge( void )
-{
-	// Get breakpoint information
-	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
-	if( !rSessionInfo.GetBrkPtInfo( m_brkPt, sBrkPtInfo ) )
-	{
-		return MIstatus::failure;
-	}
-
-	// CODETAG_LLDB_BREAKPOINT_CREATION
-	// Add more breakpoint information or overwrite existing information
-	sBrkPtInfo.m_bDisp = m_bBrkPtIsTemp;					
-	sBrkPtInfo.m_bEnabled = m_bBrkPtEnabled;			
-	sBrkPtInfo.m_bHaveArgOptionThreadGrp = m_bHaveArgOptionThreadGrp; 
-	sBrkPtInfo.m_strOptThrdGrp = m_strArgOptionThreadGrp;	
-	sBrkPtInfo.m_nTimes = m_brkPt.GetNumLocations();		
-	sBrkPtInfo.m_strOrigLoc = m_brkName;					
-	sBrkPtInfo.m_nIgnore = m_nBrkPtIgnoreCount;
-	sBrkPtInfo.m_bPending = m_bBrkPtIsPending;
-	sBrkPtInfo.m_bCondition = m_bBrkPtCondition;
-	sBrkPtInfo.m_strCondition = m_brkPtCondition;
-	sBrkPtInfo.m_bBrkPtThreadId = m_bBrkPtThreadId;
-	sBrkPtInfo.m_nBrkPtThreadId = m_nBrkPtThreadId;
-	
-	// MI print "^done,bkpt={number=\"%d\",type=\"breakpoint\",disp=\"%s\",enabled=\"%c\",addr=\"0x%08x\",func=\"%s\",file=\"%s\",fullname=\"%s/%s\",line=\"%d\",thread-groups=[\"%s\"],times=\"%d\",original-location=\"%s\"}"
-	CMICmnMIValueTuple miValueTuple;
-	if( !rSessionInfo.MIResponseFormBrkPtInfo( sBrkPtInfo, miValueTuple ) )				
-	{
-		return MIstatus::failure;
-	}
-
-	const CMICmnMIValueResult miValueResultD( "bkpt", miValueTuple );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResultD );
-	m_miResultRecord = miRecordResult;
-
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
-//--
-CMICmdBase * CMICmdCmdBreakInsert::CreateSelf( void )
-{
-	return new CMICmdCmdBreakInsert();
-}
-
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-
-//++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakDelete constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdBreakDelete::CMICmdCmdBreakDelete( void )
-:	m_constStrArgNamedBrkPt( "breakpoint" )
-,	m_constStrArgNamedThreadGrp( "thread-group" )
-{
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "break-delete";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdBreakDelete::CreateSelf;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakDelete destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdBreakDelete::~CMICmdCmdBreakDelete( void )
+CMICmdCmdBreakInsert::~CMICmdCmdBreakInsert(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The parses the command line options 
-//			arguments to extract values for each of those arguments.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakDelete::ParseArgs( void )
+bool
+CMICmdCmdBreakInsert::ParseArgs(void)
 {
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number ) ) );
-	return (bOk && ParseValidateCmdOptions() );
+    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedTempBrkPt, false, true)));
+    // Not implemented bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedHWBrkPt, false, false ) ) );
+    bOk = bOk &&
+          m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedPendinfBrkPt, false, true,
+                                                         CMICmdArgValListBase::eArgValType_StringQuotedNumberPath, 1)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedDisableBrkPt, false, false)));
+    // Not implemented bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgNamedTracePt, false, false ) ) );
+    bOk = bOk &&
+          m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedConditionalBrkPt, false, true,
+                                                         CMICmdArgValListBase::eArgValType_StringQuoted, 1)));
+    bOk = bOk &&
+          m_setCmdArgs.Add(
+              *(new CMICmdArgValOptionShort(m_constStrArgNamedInoreCnt, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
+    bOk = bOk &&
+          m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedRestrictBrkPtToThreadId, false, true,
+                                                         CMICmdArgValListBase::eArgValType_Number, 1)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedLocation, false, true)));
+    bOk = bOk &&
+          m_setCmdArgs.Add(
+              *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGroup, false, true, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
+    return (bOk && ParseValidateCmdOptions());
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakDelete::Execute( void )
+bool
+CMICmdCmdBreakInsert::Execute(void)
 {
-	CMICMDBASE_GETOPTION( pArgBrkPt, ListOfN, m_constStrArgNamedBrkPt );
+    CMICMDBASE_GETOPTION(pArgTempBrkPt, OptionShort, m_constStrArgNamedTempBrkPt);
+    CMICMDBASE_GETOPTION(pArgThreadGroup, OptionLong, m_constStrArgNamedThreadGroup);
+    CMICMDBASE_GETOPTION(pArgLocation, String, m_constStrArgNamedLocation);
+    CMICMDBASE_GETOPTION(pArgIgnoreCnt, OptionShort, m_constStrArgNamedInoreCnt);
+    CMICMDBASE_GETOPTION(pArgPendingBrkPt, OptionShort, m_constStrArgNamedPendinfBrkPt);
+    CMICMDBASE_GETOPTION(pArgDisableBrkPt, OptionShort, m_constStrArgNamedDisableBrkPt);
+    CMICMDBASE_GETOPTION(pArgConditionalBrkPt, OptionShort, m_constStrArgNamedConditionalBrkPt);
+    CMICMDBASE_GETOPTION(pArgRestrictBrkPtToThreadId, OptionShort, m_constStrArgNamedRestrictBrkPtToThreadId);
 
-	// ATM we only handle one break point ID
-	MIuint64 nBrk = UINT64_MAX;
-	if( !pArgBrkPt->GetExpectedOption< CMICmdArgValNumber, MIuint64 >( nBrk ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), m_cmdData.strMiCmd.c_str(), m_constStrArgNamedBrkPt.c_str() ) );
-		return MIstatus::failure;
-	}
+    m_bBrkPtEnabled = !pArgDisableBrkPt->GetFound();
+    m_bBrkPtIsTemp = pArgTempBrkPt->GetFound();
+    m_bHaveArgOptionThreadGrp = pArgThreadGroup->GetFound();
+    if (m_bHaveArgOptionThreadGrp)
+    {
+        MIuint nThreadGrp = 0;
+        pArgThreadGroup->GetExpectedOption<CMICmdArgValThreadGrp, MIuint>(nThreadGrp);
+        m_strArgOptionThreadGrp = CMIUtilString::Format("i%d", nThreadGrp);
+    }
+    m_bBrkPtIsPending = pArgPendingBrkPt->GetFound();
+    if (pArgLocation->GetFound())
+        m_brkName = pArgLocation->GetValue();
+    else if (m_bBrkPtIsPending)
+    {
+        pArgPendingBrkPt->GetExpectedOption<CMICmdArgValString, CMIUtilString>(m_brkName);
+    }
+    if (pArgIgnoreCnt->GetFound())
+    {
+        pArgIgnoreCnt->GetExpectedOption<CMICmdArgValNumber, MIuint>(m_nBrkPtIgnoreCount);
+    }
+    m_bBrkPtCondition = pArgConditionalBrkPt->GetFound();
+    if (m_bBrkPtCondition)
+    {
+        pArgConditionalBrkPt->GetExpectedOption<CMICmdArgValString, CMIUtilString>(m_brkPtCondition);
+    }
+    m_bBrkPtThreadId = pArgRestrictBrkPtToThreadId->GetFound();
+    if (m_bBrkPtCondition)
+    {
+        pArgRestrictBrkPtToThreadId->GetExpectedOption<CMICmdArgValNumber, MIuint>(m_nBrkPtThreadId);
+    }
 
-	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	const bool bBrkPt = rSessionInfo.m_lldbTarget.BreakpointDelete( static_cast< lldb::break_id_t >( nBrk ) );
-	if( !bBrkPt )
-	{
-		const CMIUtilString strBrkNum( CMIUtilString::Format( "%d", nBrk ) );
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), m_cmdData.strMiCmd.c_str(), strBrkNum.c_str() ) );
-		return MIstatus::failure;
-	}
+    // Determine if break on a file line or at a function
+    BreakPoint_e eBrkPtType = eBreakPoint_NotDefineYet;
+    const CMIUtilString cColon = ":";
+    CMIUtilString fileName;
+    MIuint nFileLine = 0;
+    CMIUtilString strFileFn;
+    const MIint nPosColon = m_brkName.find(cColon);
+    if (nPosColon != (MIint)std::string::npos)
+    {
+        CMIUtilString::VecString_t vecFileAndLocation;
+        const MIuint nSplits = m_brkName.Split(cColon, vecFileAndLocation);
+        MIunused(nSplits);
+        if (vecFileAndLocation.size() != 2)
+        {
+            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_LOCATION_FORMAT), m_cmdData.strMiCmd.c_str(), m_brkName.c_str()));
+            return MIstatus::failure;
+        }
+        fileName = vecFileAndLocation.at(0);
+        const CMIUtilString &rStrLineOrFn(vecFileAndLocation.at(1));
+        if (rStrLineOrFn.empty())
+            eBrkPtType = eBreakPoint_ByName;
+        else
+        {
+            MIint64 nValue = 0;
+            if (rStrLineOrFn.ExtractNumber(nValue))
+            {
+                nFileLine = static_cast<MIuint>(nValue);
+                eBrkPtType = eBreakPoint_ByFileLine;
+            }
+            else
+            {
+                strFileFn = rStrLineOrFn;
+                eBrkPtType = eBreakPoint_ByFileFn;
+            }
+        }
+    }
 
-	return MIstatus::success;
+    // Determine if break defined as an address
+    lldb::addr_t nAddress = 0;
+    if (eBrkPtType == eBreakPoint_NotDefineYet)
+    {
+        MIint64 nValue = 0;
+        if (m_brkName.ExtractNumber(nValue))
+        {
+            nAddress = static_cast<lldb::addr_t>(nValue);
+            eBrkPtType = eBreakPoint_ByAddress;
+        }
+    }
+
+    // Break defined as an function
+    if (eBrkPtType == eBreakPoint_NotDefineYet)
+    {
+        eBrkPtType = eBreakPoint_ByName;
+    }
+
+    // Ask LLDB to create a breakpoint
+    bool bOk = MIstatus::success;
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBTarget &rTarget = rSessionInfo.m_lldbTarget;
+    switch (eBrkPtType)
+    {
+        case eBreakPoint_ByAddress:
+            m_brkPt = rTarget.BreakpointCreateByAddress(nAddress);
+            break;
+        case eBreakPoint_ByFileFn:
+            m_brkPt = rTarget.BreakpointCreateByName(strFileFn.c_str(), fileName.c_str());
+            break;
+        case eBreakPoint_ByFileLine:
+            m_brkPt = rTarget.BreakpointCreateByLocation(fileName.c_str(), nFileLine);
+            break;
+        case eBreakPoint_ByName:
+            m_brkPt = rTarget.BreakpointCreateByName(m_brkName.c_str(), rTarget.GetExecutable().GetFilename());
+            break;
+        case eBreakPoint_count:
+        case eBreakPoint_NotDefineYet:
+        case eBreakPoint_Invalid:
+            bOk = MIstatus::failure;
+            break;
+    }
+
+    if (bOk)
+    {
+        m_brkPt.SetEnabled(m_bBrkPtEnabled);
+        m_brkPt.SetIgnoreCount(m_nBrkPtIgnoreCount);
+        if (m_bBrkPtCondition)
+            m_brkPt.SetCondition(m_brkPtCondition.c_str());
+        if (m_bBrkPtThreadId)
+            m_brkPt.SetThreadID(m_nBrkPtThreadId);
+        if (!m_brkPt.IsValid())
+            m_bBrkPtIsPending = pArgPendingBrkPt->GetFound();
+    }
+
+    // CODETAG_LLDB_BREAKPOINT_CREATION
+    // This is in the main thread
+    // Record break point information to be by LLDB event handler function
+    CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
+    sBrkPtInfo.m_id = m_brkPt.GetID();
+    sBrkPtInfo.m_bDisp = m_bBrkPtIsTemp;
+    sBrkPtInfo.m_bEnabled = m_bBrkPtEnabled;
+    sBrkPtInfo.m_bHaveArgOptionThreadGrp = m_bHaveArgOptionThreadGrp;
+    sBrkPtInfo.m_strOptThrdGrp = m_strArgOptionThreadGrp;
+    sBrkPtInfo.m_strOrigLoc = m_brkName;
+    sBrkPtInfo.m_nIgnore = m_nBrkPtIgnoreCount;
+    sBrkPtInfo.m_bPending = m_bBrkPtIsPending;
+    sBrkPtInfo.m_bCondition = m_bBrkPtCondition;
+    sBrkPtInfo.m_strCondition = m_brkPtCondition;
+    sBrkPtInfo.m_bBrkPtThreadId = m_bBrkPtThreadId;
+    sBrkPtInfo.m_nBrkPtThreadId = m_nBrkPtThreadId;
+    bOk = bOk && rSessionInfo.RecordBrkPtInfo(m_brkPt.GetID(), sBrkPtInfo);
+
+    if (!bOk)
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), m_cmdData.strMiCmd.c_str(), m_brkName.c_str()));
+        return MIstatus::failure;
+    }
+
+    // CODETAG_LLDB_BRKPT_ID_MAX
+    if (m_brkPt.GetID() > (lldb::break_id_t)rSessionInfo.m_nBrkPointCntMax)
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_CNT_EXCEEDED), m_cmdData.strMiCmd.c_str(), rSessionInfo.m_nBrkPointCntMax,
+                                       m_brkName.c_str()));
+        return MIstatus::failure;
+    }
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakDelete::Acknowledge( void )
+bool
+CMICmdCmdBreakInsert::Acknowledge(void)
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
-	m_miResultRecord = miRecordResult;
+    // Get breakpoint information
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
+    if (!rSessionInfo.GetBrkPtInfo(m_brkPt, sBrkPtInfo))
+    {
+        return MIstatus::failure;
+    }
 
-	return MIstatus::success;
+    // CODETAG_LLDB_BREAKPOINT_CREATION
+    // Add more breakpoint information or overwrite existing information
+    sBrkPtInfo.m_bDisp = m_bBrkPtIsTemp;
+    sBrkPtInfo.m_bEnabled = m_bBrkPtEnabled;
+    sBrkPtInfo.m_bHaveArgOptionThreadGrp = m_bHaveArgOptionThreadGrp;
+    sBrkPtInfo.m_strOptThrdGrp = m_strArgOptionThreadGrp;
+    sBrkPtInfo.m_nTimes = m_brkPt.GetNumLocations();
+    sBrkPtInfo.m_strOrigLoc = m_brkName;
+    sBrkPtInfo.m_nIgnore = m_nBrkPtIgnoreCount;
+    sBrkPtInfo.m_bPending = m_bBrkPtIsPending;
+    sBrkPtInfo.m_bCondition = m_bBrkPtCondition;
+    sBrkPtInfo.m_strCondition = m_brkPtCondition;
+    sBrkPtInfo.m_bBrkPtThreadId = m_bBrkPtThreadId;
+    sBrkPtInfo.m_nBrkPtThreadId = m_nBrkPtThreadId;
+
+    // MI print
+    // "^done,bkpt={number=\"%d\",type=\"breakpoint\",disp=\"%s\",enabled=\"%c\",addr=\"0x%08x\",func=\"%s\",file=\"%s\",fullname=\"%s/%s\",line=\"%d\",thread-groups=[\"%s\"],times=\"%d\",original-location=\"%s\"}"
+    CMICmnMIValueTuple miValueTuple;
+    if (!rSessionInfo.MIResponseFormBrkPtInfo(sBrkPtInfo, miValueTuple))
+    {
+        return MIstatus::failure;
+    }
+
+    const CMICmnMIValueResult miValueResultD("bkpt", miValueTuple);
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResultD);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
 //--
-CMICmdBase * CMICmdCmdBreakDelete::CreateSelf( void )
+CMICmdBase *
+CMICmdCmdBreakInsert::CreateSelf(void)
 {
-	return new CMICmdCmdBreakDelete();
+    return new CMICmdCmdBreakInsert();
 }
 
 //---------------------------------------------------------------------------------------
@@ -465,133 +370,117 @@ CMICmdBase * CMICmdCmdBreakDelete::CreateSelf( void )
 //---------------------------------------------------------------------------------------
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakDisable constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakDelete constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakDisable::CMICmdCmdBreakDisable( void )
-:	m_constStrArgNamedThreadGrp( "thread-group" )
-,	m_constStrArgNamedBrkPt( "breakpoint" )
-,	m_bBrkPtDisabledOk( false )
-,	m_nBrkPtId( 0 )
+CMICmdCmdBreakDelete::CMICmdCmdBreakDelete(void)
+    : m_constStrArgNamedBrkPt("breakpoint")
+    , m_constStrArgNamedThreadGrp("thread-group")
 {
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "break-disable";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdBreakDisable::CreateSelf;
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "break-delete";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdBreakDelete::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakDisable destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakDelete destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakDisable::~CMICmdCmdBreakDisable( void )
+CMICmdCmdBreakDelete::~CMICmdCmdBreakDelete(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The parses the command line options 
-//			arguments to extract values for each of those arguments.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakDisable::ParseArgs( void )
+bool
+CMICmdCmdBreakDelete::ParseArgs(void)
 {
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number ) ) );
-	return (bOk && ParseValidateCmdOptions() );
+    bool bOk = m_setCmdArgs.Add(
+        *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
+    bOk =
+        bOk && m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number)));
+    return (bOk && ParseValidateCmdOptions());
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakDisable::Execute( void )
+bool
+CMICmdCmdBreakDelete::Execute(void)
 {
-	CMICMDBASE_GETOPTION( pArgBrkPt, ListOfN, m_constStrArgNamedBrkPt );
+    CMICMDBASE_GETOPTION(pArgBrkPt, ListOfN, m_constStrArgNamedBrkPt);
 
-	// ATM we only handle one break point ID
-	MIuint64 nBrk = UINT64_MAX;
-	if( !pArgBrkPt->GetExpectedOption< CMICmdArgValNumber, MIuint64 >( nBrk ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), m_cmdData.strMiCmd.c_str(), m_constStrArgNamedBrkPt.c_str() ) );
-		return MIstatus::failure;
-	}
+    // ATM we only handle one break point ID
+    MIuint64 nBrk = UINT64_MAX;
+    if (!pArgBrkPt->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nBrk))
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), m_cmdData.strMiCmd.c_str(), m_constStrArgNamedBrkPt.c_str()));
+        return MIstatus::failure;
+    }
 
-	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID( static_cast< lldb::break_id_t >( nBrk ) );
-	if( brkPt.IsValid() )
-	{
-		m_bBrkPtDisabledOk = true;
-		brkPt.SetEnabled( false );
-		m_nBrkPtId = nBrk;
-	}
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    const bool bBrkPt = rSessionInfo.m_lldbTarget.BreakpointDelete(static_cast<lldb::break_id_t>(nBrk));
+    if (!bBrkPt)
+    {
+        const CMIUtilString strBrkNum(CMIUtilString::Format("%d", nBrk));
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), m_cmdData.strMiCmd.c_str(), strBrkNum.c_str()));
+        return MIstatus::failure;
+    }
 
-	return MIstatus::success;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakDisable::Acknowledge( void )
+bool
+CMICmdCmdBreakDelete::Acknowledge(void)
 {
-	if( m_bBrkPtDisabledOk )
-	{
-		const CMICmnMIValueConst miValueConst( CMIUtilString::Format( "%d", m_nBrkPtId ) );
-		const CMICmnMIValueResult miValueResult( "number", miValueConst );
-		CMICmnMIValueTuple miValueTuple( miValueResult );
-		const CMICmnMIValueConst miValueConst2( "n" );
-		const CMICmnMIValueResult miValueResult2( "enabled", miValueConst2 );
-		bool bOk = miValueTuple.Add( miValueResult2 );
-		const CMICmnMIValueResult miValueResult3( "bkpt", miValueTuple );
-		const CMICmnMIOutOfBandRecord miOutOfBandRecord( CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, miValueResult3 );
-		bOk = bOk && CMICmnStreamStdout::TextToStdout( miOutOfBandRecord.GetString() );
-		
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
-		m_miResultRecord = miRecordResult;
-		return bOk;
-	}
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    m_miResultRecord = miRecordResult;
 
-	const CMIUtilString strBrkPtId( CMIUtilString::Format( "%d", m_nBrkPtId ) );
-	const CMICmnMIValueConst miValueConst( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), strBrkPtId.c_str() ) );
-	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
-	m_miResultRecord = miRecordResult;
-
-	return MIstatus::success;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
 //--
-CMICmdBase * CMICmdCmdBreakDisable::CreateSelf( void )
+CMICmdBase *
+CMICmdCmdBreakDelete::CreateSelf(void)
 {
-	return new CMICmdCmdBreakDisable();
+    return new CMICmdCmdBreakDelete();
 }
 
 //---------------------------------------------------------------------------------------
@@ -599,258 +488,139 @@ CMICmdBase * CMICmdCmdBreakDisable::CreateSelf( void )
 //---------------------------------------------------------------------------------------
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakEnable constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakDisable constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakEnable::CMICmdCmdBreakEnable( void )
-:	m_constStrArgNamedThreadGrp( "thread-group" )
-,	m_constStrArgNamedBrkPt( "breakpoint" )
-,	m_bBrkPtEnabledOk( false )
-,	m_nBrkPtId( 0 )
+CMICmdCmdBreakDisable::CMICmdCmdBreakDisable(void)
+    : m_constStrArgNamedThreadGrp("thread-group")
+    , m_constStrArgNamedBrkPt("breakpoint")
+    , m_bBrkPtDisabledOk(false)
+    , m_nBrkPtId(0)
 {
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "break-enable";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdBreakEnable::CreateSelf;
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "break-disable";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdBreakDisable::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakEnable destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakDisable destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakEnable::~CMICmdCmdBreakEnable( void )
-{
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The parses the command line options 
-//			arguments to extract values for each of those arguments.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdBreakEnable::ParseArgs( void )
-{
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number ) ) );
-	return (bOk && ParseValidateCmdOptions() );
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdBreakEnable::Execute( void )
-{
-	CMICMDBASE_GETOPTION( pArgBrkPt, ListOfN, m_constStrArgNamedBrkPt );
-
-	// ATM we only handle one break point ID
-	MIuint64 nBrk = UINT64_MAX;
-	if( !pArgBrkPt->GetExpectedOption< CMICmdArgValNumber, MIuint64 >( nBrk ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), m_cmdData.strMiCmd.c_str(), m_constStrArgNamedBrkPt.c_str() ) );
-		return MIstatus::failure;
-	}
-
-	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID( static_cast< lldb::break_id_t >( nBrk ) );
-	if( brkPt.IsValid() )
-	{
-		m_bBrkPtEnabledOk = true;
-		brkPt.SetEnabled( false );
-		m_nBrkPtId = nBrk;
-	}
-
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdBreakEnable::Acknowledge( void )
-{
-	if( m_bBrkPtEnabledOk )
-	{
-		const CMICmnMIValueConst miValueConst( CMIUtilString::Format( "%d", m_nBrkPtId ) );
-		const CMICmnMIValueResult miValueResult( "number", miValueConst );
-		CMICmnMIValueTuple miValueTuple( miValueResult );
-		const CMICmnMIValueConst miValueConst2( "y" );
-		const CMICmnMIValueResult miValueResult2( "enabled", miValueConst2 );
-		bool bOk = miValueTuple.Add( miValueResult2 );
-		const CMICmnMIValueResult miValueResult3( "bkpt", miValueTuple );
-		const CMICmnMIOutOfBandRecord miOutOfBandRecord( CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, miValueResult3 );
-		bOk = bOk && CMICmnStreamStdout::TextToStdout( miOutOfBandRecord.GetString() );
-		
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
-		m_miResultRecord = miRecordResult;
-		return bOk;
-	}
-
-	const CMIUtilString strBrkPtId( CMIUtilString::Format( "%d", m_nBrkPtId ) );
-	const CMICmnMIValueConst miValueConst( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), strBrkPtId.c_str() ) );
-	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
-	m_miResultRecord = miRecordResult;
-
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
-//--
-CMICmdBase * CMICmdCmdBreakEnable::CreateSelf( void )
-{
-	return new CMICmdCmdBreakEnable();
-}
-
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-
-//++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakAfter constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdBreakAfter::CMICmdCmdBreakAfter( void )
-:	m_constStrArgNamedThreadGrp( "thread-group" )
-,	m_constStrArgNamedNumber( "number" )
-,	m_constStrArgNamedCount( "count" )
-,	m_nBrkPtId( 0 )
-,	m_nBrkPtCount( 0 )
-{
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "break-after";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdBreakAfter::CreateSelf;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakAfter destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdBreakAfter::~CMICmdCmdBreakAfter( void )
+CMICmdCmdBreakDisable::~CMICmdCmdBreakDisable(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The parses the command line options 
-//			arguments to extract values for each of those arguments.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakAfter::ParseArgs( void )
+bool
+CMICmdCmdBreakDisable::ParseArgs(void)
 {
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNamedNumber, true, true ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNamedCount, true, true ) ) );
-	return (bOk && ParseValidateCmdOptions() );
+    bool bOk = m_setCmdArgs.Add(
+        *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
+    bOk =
+        bOk && m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number)));
+    return (bOk && ParseValidateCmdOptions());
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakAfter::Execute( void )
+bool
+CMICmdCmdBreakDisable::Execute(void)
 {
-	CMICMDBASE_GETOPTION( pArgNumber, Number, m_constStrArgNamedNumber );
-	CMICMDBASE_GETOPTION( pArgCount, Number, m_constStrArgNamedCount );
+    CMICMDBASE_GETOPTION(pArgBrkPt, ListOfN, m_constStrArgNamedBrkPt);
 
-	m_nBrkPtId = pArgNumber->GetValue();
-	m_nBrkPtCount = pArgCount->GetValue();
+    // ATM we only handle one break point ID
+    MIuint64 nBrk = UINT64_MAX;
+    if (!pArgBrkPt->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nBrk))
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), m_cmdData.strMiCmd.c_str(), m_constStrArgNamedBrkPt.c_str()));
+        return MIstatus::failure;
+    }
 
-	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID( static_cast< lldb::break_id_t >( m_nBrkPtId ) );
-	if( brkPt.IsValid() )
-	{
-		brkPt.SetIgnoreCount( m_nBrkPtCount );
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID(static_cast<lldb::break_id_t>(nBrk));
+    if (brkPt.IsValid())
+    {
+        m_bBrkPtDisabledOk = true;
+        brkPt.SetEnabled(false);
+        m_nBrkPtId = nBrk;
+    }
 
-		CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
-		if( !rSessionInfo.RecordBrkPtInfoGet( m_nBrkPtId, sBrkPtInfo ) )
-		{
-			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INFO_OBJ_NOT_FOUND ), m_cmdData.strMiCmd.c_str(), m_nBrkPtId ) );
-			return MIstatus::failure;
-		}
-		sBrkPtInfo.m_nIgnore = m_nBrkPtCount;
-		rSessionInfo.RecordBrkPtInfo( m_nBrkPtId, sBrkPtInfo );
-	}
-	else
-	{
-		const CMIUtilString strBrkPtId( CMIUtilString::Format( "%d", m_nBrkPtId ) );
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), m_cmdData.strMiCmd.c_str(), strBrkPtId.c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return MIstatus::success;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakAfter::Acknowledge( void )
+bool
+CMICmdCmdBreakDisable::Acknowledge(void)
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
-	m_miResultRecord = miRecordResult;
+    if (m_bBrkPtDisabledOk)
+    {
+        const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%d", m_nBrkPtId));
+        const CMICmnMIValueResult miValueResult("number", miValueConst);
+        CMICmnMIValueTuple miValueTuple(miValueResult);
+        const CMICmnMIValueConst miValueConst2("n");
+        const CMICmnMIValueResult miValueResult2("enabled", miValueConst2);
+        bool bOk = miValueTuple.Add(miValueResult2);
+        const CMICmnMIValueResult miValueResult3("bkpt", miValueTuple);
+        const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, miValueResult3);
+        bOk = bOk && CMICmnStreamStdout::TextToStdout(miOutOfBandRecord.GetString());
 
-	return MIstatus::success;
+        const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+        m_miResultRecord = miRecordResult;
+        return bOk;
+    }
+
+    const CMIUtilString strBrkPtId(CMIUtilString::Format("%d", m_nBrkPtId));
+    const CMICmnMIValueConst miValueConst(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), strBrkPtId.c_str()));
+    const CMICmnMIValueResult miValueResult("msg", miValueConst);
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
 //--
-CMICmdBase * CMICmdCmdBreakAfter::CreateSelf( void )
+CMICmdBase *
+CMICmdCmdBreakDisable::CreateSelf(void)
 {
-	return new CMICmdCmdBreakAfter();
+    return new CMICmdCmdBreakDisable();
 }
 
 //---------------------------------------------------------------------------------------
@@ -858,169 +628,448 @@ CMICmdBase * CMICmdCmdBreakAfter::CreateSelf( void )
 //---------------------------------------------------------------------------------------
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakCondition constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakEnable constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakCondition::CMICmdCmdBreakCondition( void )
-:	m_constStrArgNamedThreadGrp( "thread-group" )
-,	m_constStrArgNamedNumber( "number" )
-,	m_constStrArgNamedExpr( "expr" )
-,	m_constStrArgNamedExprNoQuotes( "expression not surround by quotes" ) // Not specified in MI spec, we need to handle expressions not surrounded by quotes
-,	m_nBrkPtId( 0 )
+CMICmdCmdBreakEnable::CMICmdCmdBreakEnable(void)
+    : m_constStrArgNamedThreadGrp("thread-group")
+    , m_constStrArgNamedBrkPt("breakpoint")
+    , m_bBrkPtEnabledOk(false)
+    , m_nBrkPtId(0)
 {
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "break-condition";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdBreakCondition::CreateSelf;
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "break-enable";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdBreakEnable::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdBreakCondition destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdBreakEnable destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdBreakCondition::~CMICmdCmdBreakCondition( void )
+CMICmdCmdBreakEnable::~CMICmdCmdBreakEnable(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The parses the command line options 
-//			arguments to extract values for each of those arguments.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakCondition::ParseArgs( void )
+bool
+CMICmdCmdBreakEnable::ParseArgs(void)
 {
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNamedNumber, true, true ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedExpr, true, true, true, true ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedExprNoQuotes, true, false, CMICmdArgValListBase::eArgValType_StringQuotedNumber ) ) );
-	return (bOk && ParseValidateCmdOptions() );
+    bool bOk = m_setCmdArgs.Add(
+        *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
+    bOk =
+        bOk && m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number)));
+    return (bOk && ParseValidateCmdOptions());
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakCondition::Execute( void )
+bool
+CMICmdCmdBreakEnable::Execute(void)
 {
-	CMICMDBASE_GETOPTION( pArgNumber, Number, m_constStrArgNamedNumber );
-	CMICMDBASE_GETOPTION( pArgExpr, String, m_constStrArgNamedExpr );					
+    CMICMDBASE_GETOPTION(pArgBrkPt, ListOfN, m_constStrArgNamedBrkPt);
 
-	m_nBrkPtId = pArgNumber->GetValue();
-	m_strBrkPtExpr = pArgExpr->GetValue();
-	m_strBrkPtExpr += GetRestOfExpressionNotSurroundedInQuotes();
+    // ATM we only handle one break point ID
+    MIuint64 nBrk = UINT64_MAX;
+    if (!pArgBrkPt->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nBrk))
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), m_cmdData.strMiCmd.c_str(), m_constStrArgNamedBrkPt.c_str()));
+        return MIstatus::failure;
+    }
 
-	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID( static_cast< lldb::break_id_t >( m_nBrkPtId ) );
-	if( brkPt.IsValid() )
-	{
-		brkPt.SetCondition( m_strBrkPtExpr.c_str() );
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID(static_cast<lldb::break_id_t>(nBrk));
+    if (brkPt.IsValid())
+    {
+        m_bBrkPtEnabledOk = true;
+        brkPt.SetEnabled(false);
+        m_nBrkPtId = nBrk;
+    }
 
-		CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
-		if( !rSessionInfo.RecordBrkPtInfoGet( m_nBrkPtId, sBrkPtInfo ) )
-		{
-			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INFO_OBJ_NOT_FOUND ), m_cmdData.strMiCmd.c_str(), m_nBrkPtId ) );
-			return MIstatus::failure;
-		}
-		sBrkPtInfo.m_strCondition = m_strBrkPtExpr;
-		rSessionInfo.RecordBrkPtInfo( m_nBrkPtId, sBrkPtInfo );
-	}
-	else
-	{
-		const CMIUtilString strBrkPtId( CMIUtilString::Format( "%d", m_nBrkPtId ) );
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_BRKPT_INVALID ), m_cmdData.strMiCmd.c_str(), strBrkPtId.c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return MIstatus::success;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdBreakCondition::Acknowledge( void )
+bool
+CMICmdCmdBreakEnable::Acknowledge(void)
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
-	m_miResultRecord = miRecordResult;
+    if (m_bBrkPtEnabledOk)
+    {
+        const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%d", m_nBrkPtId));
+        const CMICmnMIValueResult miValueResult("number", miValueConst);
+        CMICmnMIValueTuple miValueTuple(miValueResult);
+        const CMICmnMIValueConst miValueConst2("y");
+        const CMICmnMIValueResult miValueResult2("enabled", miValueConst2);
+        bool bOk = miValueTuple.Add(miValueResult2);
+        const CMICmnMIValueResult miValueResult3("bkpt", miValueTuple);
+        const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, miValueResult3);
+        bOk = bOk && CMICmnStreamStdout::TextToStdout(miOutOfBandRecord.GetString());
 
-	return MIstatus::success;
+        const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+        m_miResultRecord = miRecordResult;
+        return bOk;
+    }
+
+    const CMIUtilString strBrkPtId(CMIUtilString::Format("%d", m_nBrkPtId));
+    const CMICmnMIValueConst miValueConst(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), strBrkPtId.c_str()));
+    const CMICmnMIValueResult miValueResult("msg", miValueConst);
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
 //--
-CMICmdBase * CMICmdCmdBreakCondition::CreateSelf( void )
+CMICmdBase *
+CMICmdCmdBreakEnable::CreateSelf(void)
 {
-	return new CMICmdCmdBreakCondition();
+    return new CMICmdCmdBreakEnable();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdBreakAfter constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdBreakAfter::CMICmdCmdBreakAfter(void)
+    : m_constStrArgNamedThreadGrp("thread-group")
+    , m_constStrArgNamedNumber("number")
+    , m_constStrArgNamedCount("count")
+    , m_nBrkPtId(0)
+    , m_nBrkPtCount(0)
+{
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "break-after";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdBreakAfter::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	A breakpoint expression can be passed to *this command as:
-//				a single string i.e. '2' -> ok.
-//				a quoted string i.e. "a > 100" -> ok
-//				a non quoted string i.e. 'a > 100' -> not ok 
-//			CMICmdArgValString only extracts the first space seperated string, the "a".
-//			This function using the optional argument type CMICmdArgValListOfN collects 
-//			the rest of the expression so that is may be added to the 'a' part to form a
-//			complete expression string i.e. "a > 100".
-//			If the expression value was guaranteed to be surrounded by quotes them this 
-//			function would not be necessary.
-// Type:	Method.
-// Args:	None.
-// Return:	CMIUtilString - Rest of the breakpoint expression.
-// Throws:	None.
+// Details: CMICmdCmdBreakAfter destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMIUtilString CMICmdCmdBreakCondition::GetRestOfExpressionNotSurroundedInQuotes( void )
+CMICmdCmdBreakAfter::~CMICmdCmdBreakAfter(void)
 {
-	CMIUtilString strExpression;
-		
-	CMICmdArgValListOfN * pArgExprNoQuotes = CMICmdBase::GetOption< CMICmdArgValListOfN >( m_constStrArgNamedExprNoQuotes );
-	if( pArgExprNoQuotes != nullptr )
-	{
-		CMIUtilString strExpression;
-		const CMICmdArgValListBase::VecArgObjPtr_t & rVecExprParts( pArgExprNoQuotes->GetExpectedOptions() );
-		if( !rVecExprParts.empty() )
-		{
-			CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecExprParts.begin();
-			while( it != rVecExprParts.end() )
-			{
-				const CMICmdArgValString * pPartExpr = static_cast< CMICmdArgValString * >( *it );
-				const CMIUtilString & rPartExpr = pPartExpr->GetValue();
-				strExpression += " ";
-				strExpression += rPartExpr;
+}
 
-				// Next
-				++it;
-			}
-			strExpression = strExpression.Trim();
-		}
-	}
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdBreakAfter::ParseArgs(void)
+{
+    bool bOk = m_setCmdArgs.Add(
+        *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNamedNumber, true, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNamedCount, true, true)));
+    return (bOk && ParseValidateCmdOptions());
+}
 
-	return strExpression;
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdBreakAfter::Execute(void)
+{
+    CMICMDBASE_GETOPTION(pArgNumber, Number, m_constStrArgNamedNumber);
+    CMICMDBASE_GETOPTION(pArgCount, Number, m_constStrArgNamedCount);
+
+    m_nBrkPtId = pArgNumber->GetValue();
+    m_nBrkPtCount = pArgCount->GetValue();
+
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID(static_cast<lldb::break_id_t>(m_nBrkPtId));
+    if (brkPt.IsValid())
+    {
+        brkPt.SetIgnoreCount(m_nBrkPtCount);
+
+        CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
+        if (!rSessionInfo.RecordBrkPtInfoGet(m_nBrkPtId, sBrkPtInfo))
+        {
+            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INFO_OBJ_NOT_FOUND), m_cmdData.strMiCmd.c_str(), m_nBrkPtId));
+            return MIstatus::failure;
+        }
+        sBrkPtInfo.m_nIgnore = m_nBrkPtCount;
+        rSessionInfo.RecordBrkPtInfo(m_nBrkPtId, sBrkPtInfo);
+    }
+    else
+    {
+        const CMIUtilString strBrkPtId(CMIUtilString::Format("%d", m_nBrkPtId));
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), m_cmdData.strMiCmd.c_str(), strBrkPtId.c_str()));
+        return MIstatus::failure;
+    }
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdBreakAfter::Acknowledge(void)
+{
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
+//--
+CMICmdBase *
+CMICmdCmdBreakAfter::CreateSelf(void)
+{
+    return new CMICmdCmdBreakAfter();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdBreakCondition constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdBreakCondition::CMICmdCmdBreakCondition(void)
+    : m_constStrArgNamedThreadGrp("thread-group")
+    , m_constStrArgNamedNumber("number")
+    , m_constStrArgNamedExpr("expr")
+    , m_constStrArgNamedExprNoQuotes(
+          "expression not surround by quotes") // Not specified in MI spec, we need to handle expressions not surrounded by quotes
+    , m_nBrkPtId(0)
+{
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "break-condition";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdBreakCondition::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdBreakCondition destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdBreakCondition::~CMICmdCmdBreakCondition(void)
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdBreakCondition::ParseArgs(void)
+{
+    bool bOk = m_setCmdArgs.Add(
+        *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNamedNumber, true, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedExpr, true, true, true, true)));
+    bOk = bOk &&
+          m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedExprNoQuotes, true, false,
+                                                     CMICmdArgValListBase::eArgValType_StringQuotedNumber)));
+    return (bOk && ParseValidateCmdOptions());
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdBreakCondition::Execute(void)
+{
+    CMICMDBASE_GETOPTION(pArgNumber, Number, m_constStrArgNamedNumber);
+    CMICMDBASE_GETOPTION(pArgExpr, String, m_constStrArgNamedExpr);
+
+    m_nBrkPtId = pArgNumber->GetValue();
+    m_strBrkPtExpr = pArgExpr->GetValue();
+    m_strBrkPtExpr += GetRestOfExpressionNotSurroundedInQuotes();
+
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBBreakpoint brkPt = rSessionInfo.m_lldbTarget.FindBreakpointByID(static_cast<lldb::break_id_t>(m_nBrkPtId));
+    if (brkPt.IsValid())
+    {
+        brkPt.SetCondition(m_strBrkPtExpr.c_str());
+
+        CMICmnLLDBDebugSessionInfo::SBrkPtInfo sBrkPtInfo;
+        if (!rSessionInfo.RecordBrkPtInfoGet(m_nBrkPtId, sBrkPtInfo))
+        {
+            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INFO_OBJ_NOT_FOUND), m_cmdData.strMiCmd.c_str(), m_nBrkPtId));
+            return MIstatus::failure;
+        }
+        sBrkPtInfo.m_strCondition = m_strBrkPtExpr;
+        rSessionInfo.RecordBrkPtInfo(m_nBrkPtId, sBrkPtInfo);
+    }
+    else
+    {
+        const CMIUtilString strBrkPtId(CMIUtilString::Format("%d", m_nBrkPtId));
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_INVALID), m_cmdData.strMiCmd.c_str(), strBrkPtId.c_str()));
+        return MIstatus::failure;
+    }
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdBreakCondition::Acknowledge(void)
+{
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
+//--
+CMICmdBase *
+CMICmdCmdBreakCondition::CreateSelf(void)
+{
+    return new CMICmdCmdBreakCondition();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: A breakpoint expression can be passed to *this command as:
+//              a single string i.e. '2' -> ok.
+//              a quoted string i.e. "a > 100" -> ok
+//              a non quoted string i.e. 'a > 100' -> not ok
+//          CMICmdArgValString only extracts the first space seperated string, the "a".
+//          This function using the optional argument type CMICmdArgValListOfN collects
+//          the rest of the expression so that is may be added to the 'a' part to form a
+//          complete expression string i.e. "a > 100".
+//          If the expression value was guaranteed to be surrounded by quotes them this
+//          function would not be necessary.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - Rest of the breakpoint expression.
+// Throws:  None.
+//--
+CMIUtilString
+CMICmdCmdBreakCondition::GetRestOfExpressionNotSurroundedInQuotes(void)
+{
+    CMIUtilString strExpression;
+
+    CMICmdArgValListOfN *pArgExprNoQuotes = CMICmdBase::GetOption<CMICmdArgValListOfN>(m_constStrArgNamedExprNoQuotes);
+    if (pArgExprNoQuotes != nullptr)
+    {
+        CMIUtilString strExpression;
+        const CMICmdArgValListBase::VecArgObjPtr_t &rVecExprParts(pArgExprNoQuotes->GetExpectedOptions());
+        if (!rVecExprParts.empty())
+        {
+            CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecExprParts.begin();
+            while (it != rVecExprParts.end())
+            {
+                const CMICmdArgValString *pPartExpr = static_cast<CMICmdArgValString *>(*it);
+                const CMIUtilString &rPartExpr = pPartExpr->GetValue();
+                strExpression += " ";
+                strExpression += rPartExpr;
+
+                // Next
+                ++it;
+            }
+            strExpression = strExpression.Trim();
+        }
+    }
+
+    return strExpression;
 }

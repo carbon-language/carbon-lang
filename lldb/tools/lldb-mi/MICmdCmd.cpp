@@ -8,93 +8,96 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdCmd.cpp
+// File:        MICmdCmd.cpp
 //
-// Overview:	CMICmdCmdEnablePrettyPrinting	implementation.
-//				CMICmdCmdSource					implementation.
+// Overview:    CMICmdCmdEnablePrettyPrinting   implementation.
+//              CMICmdCmdSource                 implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
 #include "MICmdCmd.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdEnablePrettyPrinting constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdEnablePrettyPrinting constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdEnablePrettyPrinting::CMICmdCmdEnablePrettyPrinting( void )
+CMICmdCmdEnablePrettyPrinting::CMICmdCmdEnablePrettyPrinting(void)
 {
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "enable-pretty-printing";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdEnablePrettyPrinting::CreateSelf;
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "enable-pretty-printing";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdEnablePrettyPrinting::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdEnablePrettyPrinting destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdEnablePrettyPrinting destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdEnablePrettyPrinting::~CMICmdCmdEnablePrettyPrinting( void )
+CMICmdCmdEnablePrettyPrinting::~CMICmdCmdEnablePrettyPrinting(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdEnablePrettyPrinting::Execute( void )
+bool
+CMICmdCmdEnablePrettyPrinting::Execute(void)
 {
-	// Do nothing
-	return MIstatus::success;
+    // Do nothing
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdEnablePrettyPrinting::Acknowledge( void )
+bool
+CMICmdCmdEnablePrettyPrinting::Acknowledge(void)
 {
-	const CMICmnMIValueConst miValueConst( "0" );
-	const CMICmnMIValueResult miValueResult( "supported", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
-	m_miResultRecord = miRecordResult;
-	
-	return MIstatus::success;
+    const CMICmnMIValueConst miValueConst("0");
+    const CMICmnMIValueResult miValueResult("supported", miValueConst);
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
 //--
-CMICmdBase * CMICmdCmdEnablePrettyPrinting::CreateSelf( void )
+CMICmdBase *
+CMICmdCmdEnablePrettyPrinting::CreateSelf(void)
 {
-	return new CMICmdCmdEnablePrettyPrinting();
+    return new CMICmdCmdEnablePrettyPrinting();
 }
 
 //---------------------------------------------------------------------------------------
@@ -102,73 +105,76 @@ CMICmdBase * CMICmdCmdEnablePrettyPrinting::CreateSelf( void )
 //---------------------------------------------------------------------------------------
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdSource constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdSource constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdSource::CMICmdCmdSource( void )
+CMICmdCmdSource::CMICmdCmdSource(void)
 {
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "source";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdSource::CreateSelf;
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "source";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdSource::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdSource destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdSource destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdSource::~CMICmdCmdSource( void )
+CMICmdCmdSource::~CMICmdCmdSource(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdSource::Execute( void )
+bool
+CMICmdCmdSource::Execute(void)
 {
-	// Do nothing
-	return MIstatus::success;
+    // Do nothing
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdSource::Acknowledge( void )
+bool
+CMICmdCmdSource::Acknowledge(void)
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
-	m_miResultRecord = miRecordResult;
-	
-	return MIstatus::success;
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
 //--
-CMICmdBase * CMICmdCmdSource::CreateSelf( void )
+CMICmdBase *
+CMICmdCmdSource::CreateSelf(void)
 {
-	return new CMICmdCmdSource();
+    return new CMICmdCmdSource();
 }

@@ -8,82 +8,83 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmnLLDBBroadcaster.cpp
+// File:        MICmnLLDBBroadcaster.cpp
 //
-// Overview:	CMICmnLLDBBroadcaster implementation.
+// Overview:    CMICmnLLDBBroadcaster implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
 #include "MICmnLLDBBroadcaster.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmnLLDBBroadcaster constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmnLLDBBroadcaster constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmnLLDBBroadcaster::CMICmnLLDBBroadcaster( void )
-:	lldb::SBBroadcaster( "MI driver" )
+CMICmnLLDBBroadcaster::CMICmnLLDBBroadcaster(void)
+    : lldb::SBBroadcaster("MI driver")
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmnLLDBBroadcaster destructor.
-// Type:	Overridable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmnLLDBBroadcaster destructor.
+// Type:    Overridable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmnLLDBBroadcaster::~CMICmnLLDBBroadcaster( void )
+CMICmnLLDBBroadcaster::~CMICmnLLDBBroadcaster(void)
 {
-	Shutdown();
+    Shutdown();
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Initialize resources for *this broardcaster object.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functionality succeeded.
-//			MIstatus::failure - Functionality failed.
-// Throws:	None.
+// Details: Initialize resources for *this broardcaster object.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functionality succeeded.
+//          MIstatus::failure - Functionality failed.
+// Throws:  None.
 //--
-bool CMICmnLLDBBroadcaster::Initialize( void )
+bool
+CMICmnLLDBBroadcaster::Initialize(void)
 {
-	m_clientUsageRefCnt++;
+    m_clientUsageRefCnt++;
 
-	if( m_bInitialized )
-		return MIstatus::success;
+    if (m_bInitialized)
+        return MIstatus::success;
 
-	m_bInitialized = MIstatus::success;
-	
-	return m_bInitialized;
+    m_bInitialized = MIstatus::success;
+
+    return m_bInitialized;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Release resources for *this broardcaster object.
-// Type:	Method.
-// Args:	None.
-// Return:	MIstatus::success - Functionality succeeded.
-//			MIstatus::failure - Functionality failed.
-// Throws:	None.
+// Details: Release resources for *this broardcaster object.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functionality succeeded.
+//          MIstatus::failure - Functionality failed.
+// Throws:  None.
 //--
-bool CMICmnLLDBBroadcaster::Shutdown( void )
+bool
+CMICmnLLDBBroadcaster::Shutdown(void)
 {
-	if( --m_clientUsageRefCnt > 0 )
-		return MIstatus::success;
-	
-	if( !m_bInitialized )
-		return MIstatus::success;
+    if (--m_clientUsageRefCnt > 0)
+        return MIstatus::success;
 
-	m_bInitialized = false;
+    if (!m_bInitialized)
+        return MIstatus::success;
 
-	return MIstatus::success;
-}	
+    m_bInitialized = false;
 
+    return MIstatus::success;
+}

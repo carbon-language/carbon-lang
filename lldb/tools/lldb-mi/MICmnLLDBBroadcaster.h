@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmnLLDBBroadcaster.h
+// File:        MICmnLLDBBroadcaster.h
 //
-// Overview:	CMICmnLLDBBroadcaster interface.
+// Overview:    CMICmnLLDBBroadcaster interface.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 #pragma once
@@ -27,35 +27,32 @@
 #include "MIUtilSingletonBase.h"
 
 //++ ============================================================================
-// Details:	MI derived class from LLDB SBBroardcaster API.
+// Details: MI derived class from LLDB SBBroardcaster API.
 //
-//			*** This class (files) is a place holder until we know we need it or
-//			*** not
+//          *** This class (files) is a place holder until we know we need it or
+//          *** not
 //
-//			A singleton class.
-// Gotchas:	None.
-// Authors:	Illya Rudkin 28/02/2014.
-// Changes:	None.
+//          A singleton class.
+// Gotchas: None.
+// Authors: Illya Rudkin 28/02/2014.
+// Changes: None.
 //--
-class CMICmnLLDBBroadcaster
-:	public CMICmnBase
-,	public lldb::SBBroadcaster
-,	public MI::ISingleton< CMICmnLLDBBroadcaster >
+class CMICmnLLDBBroadcaster : public CMICmnBase, public lldb::SBBroadcaster, public MI::ISingleton<CMICmnLLDBBroadcaster>
 {
-	friend MI::ISingleton< CMICmnLLDBBroadcaster >;
+    friend MI::ISingleton<CMICmnLLDBBroadcaster>;
 
-// Methods:
-public:
-	bool	Initialize( void );
-	bool	Shutdown( void );
-// Methods:
-private:
-	/* ctor */	CMICmnLLDBBroadcaster( void );
-	/* ctor */	CMICmnLLDBBroadcaster( const CMICmnLLDBBroadcaster & );
-	void		operator=( const CMICmnLLDBBroadcaster & );
+    // Methods:
+  public:
+    bool Initialize(void);
+    bool Shutdown(void);
+    // Methods:
+  private:
+    /* ctor */ CMICmnLLDBBroadcaster(void);
+    /* ctor */ CMICmnLLDBBroadcaster(const CMICmnLLDBBroadcaster &);
+    void operator=(const CMICmnLLDBBroadcaster &);
 
-// Overridden:
-private:
-	// From CMICmnBase
-	/* dtor */ virtual ~CMICmnLLDBBroadcaster( void );
+    // Overridden:
+  private:
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmnLLDBBroadcaster(void);
 };

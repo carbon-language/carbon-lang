@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 //++
-// File:		MICmdCmdGdbThread.cpp
+// File:        MICmdCmdGdbThread.cpp
 //
-// Overview:	CMICmdCmdGdbThread		implementation.
+// Overview:    CMICmdCmdGdbThread      implementation.
 //
-// Environment:	Compilers:	Visual C++ 12.
-//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//				Libraries:	See MIReadmetxt. 
+// Environment: Compilers:  Visual C++ 12.
+//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//              Libraries:  See MIReadmetxt.
 //
-// Copyright:	None.
+// Copyright:   None.
 //--
 
 // In-house headers:
@@ -25,76 +25,79 @@
 #include "MICmnMIValueConst.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdGdbThread constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdGdbThread constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdGdbThread::CMICmdCmdGdbThread( void )
+CMICmdCmdGdbThread::CMICmdCmdGdbThread(void)
 {
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "thread";
-	
-	// Required by the CMICmdFactory when registering *this command
-	m_pSelfCreatorFn = &CMICmdCmdGdbThread::CreateSelf;
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "thread";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdGdbThread::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdThread destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
+// Details: CMICmdCmdThread destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
 //--
-CMICmdCmdGdbThread::~CMICmdCmdGdbThread( void )
+CMICmdCmdGdbThread::~CMICmdCmdGdbThread(void)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdGdbThread::Execute( void )
+bool
+CMICmdCmdGdbThread::Execute(void)
 {
-	// Do nothing
-	
-	return MIstatus::success;
+    // Do nothing
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
 //--
-bool CMICmdCmdGdbThread::Acknowledge( void )
+bool
+CMICmdCmdGdbThread::Acknowledge(void)
 {
-	const CMICmnMIValueConst miValueConst( MIRSRC( IDS_WORD_NOT_IMPLEMENTED ) );
-	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
-	m_miResultRecord = miRecordResult;
+    const CMICmnMIValueConst miValueConst(MIRSRC(IDS_WORD_NOT_IMPLEMENTED));
+    const CMICmnMIValueResult miValueResult("msg", miValueConst);
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
+    m_miResultRecord = miRecordResult;
 
-	return MIstatus::success;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this command. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
 //--
-CMICmdBase * CMICmdCmdGdbThread::CreateSelf( void )
+CMICmdBase *
+CMICmdCmdGdbThread::CreateSelf(void)
 {
-	return new CMICmdCmdGdbThread();
+    return new CMICmdCmdGdbThread();
 }
