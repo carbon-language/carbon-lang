@@ -280,7 +280,7 @@ def : ProcessorModel<"core-avx2", HaswellModel,
                       FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
                       FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
                       FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM,
-                      FeatureHLE]>;
+                      FeatureHLE, FeatureSlowIncDec]>;
 
 // Broadwell
 def : ProcessorModel<"broadwell", HaswellModel,
@@ -288,7 +288,8 @@ def : ProcessorModel<"broadwell", HaswellModel,
                       FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
                       FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
                       FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM,
-                      FeatureHLE, FeatureADX, FeatureRDSEED, FeatureSMAP]>;
+                      FeatureHLE, FeatureADX, FeatureRDSEED, FeatureSMAP,
+                      FeatureSlowIncDec]>;
 // KNL
 // FIXME: define KNL model
 def : ProcessorModel<"knl", HaswellModel,

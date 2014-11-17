@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx10.10.0"
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmaddsub231pd        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <4 x double> @fmaddsubpd_loop(i32 %iter, <4 x double> %a, <4 x double> %b, <4 x double> %c) {
@@ -35,7 +35,7 @@ for.end:
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmsubadd231pd        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <4 x double> @fmsubaddpd_loop(i32 %iter, <4 x double> %a, <4 x double> %b, <4 x double> %c) {
@@ -64,7 +64,7 @@ for.end:
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmadd231pd        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <4 x double> @fmaddpd_loop(i32 %iter, <4 x double> %a, <4 x double> %b, <4 x double> %c) {
@@ -93,7 +93,7 @@ for.end:
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmsub231pd        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <4 x double> @fmsubpd_loop(i32 %iter, <4 x double> %a, <4 x double> %b, <4 x double> %c) {
@@ -128,7 +128,7 @@ declare <4 x double> @llvm.x86.fma.vfmsub.pd.256(<4 x double>, <4 x double>, <4 
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmaddsub231ps        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <8 x float> @fmaddsubps_loop(i32 %iter, <8 x float> %a, <8 x float> %b, <8 x float> %c) {
@@ -157,7 +157,7 @@ for.end:
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmsubadd231ps        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <8 x float> @fmsubaddps_loop(i32 %iter, <8 x float> %a, <8 x float> %b, <8 x float> %c) {
@@ -186,7 +186,7 @@ for.end:
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmadd231ps        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <8 x float> @fmaddps_loop(i32 %iter, <8 x float> %a, <8 x float> %b, <8 x float> %c) {
@@ -215,7 +215,7 @@ for.end:
 ; CHECK: [[BODYLBL:LBB.+]]:
 ; CHECK:   vfmsub231ps        %ymm{{[0-9]+}}, %ymm{{[0-9]+}}, %ymm{{[0-9]+}}
 ; CHECK: [[INCLBL:LBB.+]]:
-; CHECK:   incl  [[INDREG:%[a-z0-9]+]]
+; CHECK:   addl  $1, [[INDREG:%[a-z0-9]+]]
 ; CHECK:   cmpl  {{%.+}}, [[INDREG]]
 ; CHECK:   jl    [[BODYLBL]]
 define <8 x float> @fmsubps_loop(i32 %iter, <8 x float> %a, <8 x float> %b, <8 x float> %c) {
