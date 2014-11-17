@@ -329,8 +329,8 @@ def check_lldb_swig_executable_file_exists_Unknown( vDictArgs ):
 #			Str		- Error message.
 # Throws:	None.
 #--
-def check_lldb_swig_executable_file_exists_windows( vDictArgs ):
-	dbg = utilsDebug.CDebugFnVerbose( "check_lldb_swig_executable_file_exists_windows()" );
+def check_lldb_swig_executable_file_exists_Windows( vDictArgs ):
+	dbg = utilsDebug.CDebugFnVerbose( "check_lldb_swig_executable_file_exists_Windows()" );
 	
 	# Will always be true as it assumed the path to SWIG executable will be 
 	# in the OS system environmental variable %PATH%. Easier this way as the 
@@ -391,7 +391,26 @@ def check_lldb_swig_executable_file_exists_Darwin( vDictArgs ):
 	strStatusMsg = "Sorry function 'check_lldb_swig_executable_file_exists_Darwin()' is not implemented";	
 	
 	return (bExeFileFound, strStatusMsg);
+
+#++---------------------------------------------------------------------------
+# Details:	Locate the SWIG executable file in a OSX system. Several hard 
+#			coded predetermined possible file path locations are searched. 
+#			(This is good candidate for a derived class object)
+# Args:		vDictArgs	- (W) Program input parameters.
+# Returns:	Bool	- True = Success.
+#					- False = Failure file not found.
+#			Str		- Error message.
+# Throws:	None.
+#--
+def check_lldb_swig_executable_file_exists_FreeBSD( vDictArgs ):
+	dbg = utilsDebug.CDebugFnVerbose( "check_lldb_swig_executable_file_exists_FreeBSD()" );
+	bExeFileFound = False;
+	# ToDo: Find the SWIG executable and add the path to the args dictionary
+	#vDictArgs.[ "--swigExePath" ] = "/usr/bin/swig";
+	strStatusMsg = "Sorry function 'check_lldb_swig_executable_file_exists_FreeBSD()' is not implemented";	
 	
+	return (bExeFileFound, strStatusMsg);
+
 #++---------------------------------------------------------------------------
 # Details:	Locate the SWIG executable file. Several hard coded predetermined
 #			possible file path locations are searched. 
@@ -406,11 +425,13 @@ def check_lldb_swig_executable_file_exists( vDictArgs, veOSType ):
 	dbg = utilsDebug.CDebugFnVerbose( "check_lldb_swig_executable_file_exists()" );
 	bExeFileFound = False;
 	strStatusMsg = "";
-	
-	switch = { 0 : check_lldb_swig_executable_file_exists_Unknown,
-			   1 : check_lldb_swig_executable_file_exists_windows,
-			   2 : check_lldb_swig_executable_file_exists_Linux,
-			   3 : check_lldb_swig_executable_file_exists_Darwin }
+	from utilsOsType import EnumOsType;
+
+	switch = { EnumOsType.Unknown : check_lldb_swig_executable_file_exists_Unknown,
+			   EnumOsType.Darwin : check_lldb_swig_executable_file_exists_Darwin,
+			   EnumOsType.FreeBSD : check_lldb_swig_executable_file_exists_FreeBSD,
+			   EnumOsType.Linux : check_lldb_swig_executable_file_exists_Linux,
+               EnumOsType.Windows : check_lldb_swig_executable_file_exists_Windows }
 	bExeFileFound, strStatusMsg = switch[ veOSType ]( vDictArgs );
 	
 	return (bExeFileFound, strStatusMsg);
