@@ -1106,8 +1106,8 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     }
   } else {
     DEBUG({
-      dbgs() << "\tConsidering merging to " << CP.getNewRC()->getName()
-             << " with ";
+      dbgs() << "\tConsidering merging to "
+             << TRI->getRegClassName(CP.getNewRC()) << " with ";
       if (CP.getDstIdx() && CP.getSrcIdx())
         dbgs() << PrintReg(CP.getDstReg()) << " in "
                << TRI->getSubRegIndexName(CP.getDstIdx()) << " and "
@@ -2264,7 +2264,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
       continue;
     if (MRI->recomputeRegClass(Reg, *TM)) {
       DEBUG(dbgs() << PrintReg(Reg) << " inflated to "
-                   << MRI->getRegClass(Reg)->getName() << '\n');
+                   << TRI->getRegClassName(MRI->getRegClass(Reg)) << '\n');
       ++NumInflated;
     }
   }

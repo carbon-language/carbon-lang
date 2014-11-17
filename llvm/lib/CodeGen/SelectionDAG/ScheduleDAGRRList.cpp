@@ -1935,8 +1935,8 @@ void RegReductionPQBase::dumpRegPressure() const {
     unsigned Id = RC->getID();
     unsigned RP = RegPressure[Id];
     if (!RP) continue;
-    DEBUG(dbgs() << RC->getName() << ": " << RP << " / " << RegLimit[Id]
-          << '\n');
+    DEBUG(dbgs() << TRI->getRegClassName(RC) << ": " << RP << " / "
+          << RegLimit[Id] << '\n');
   }
 #endif
 }

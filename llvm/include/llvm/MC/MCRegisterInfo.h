@@ -32,9 +32,9 @@ public:
   typedef const MCPhysReg* iterator;
   typedef const MCPhysReg* const_iterator;
 
-  const char *Name;
   const iterator RegsBegin;
   const uint8_t *const RegSet;
+  const uint32_t NameIdx;
   const uint16_t RegsSize;
   const uint16_t RegSetSize;
   const uint16_t ID;
@@ -45,10 +45,6 @@ public:
   /// getID() - Return the register class ID number.
   ///
   unsigned getID() const { return ID; }
-
-  /// getName() - Return the register class name for debugging.
-  ///
-  const char *getName() const { return Name; }
 
   /// begin/end - Return all of the registers in this class.
   ///
@@ -162,6 +158,7 @@ private:
   const MCPhysReg (*RegUnitRoots)[2];         // Pointer to regunit root table.
   const MCPhysReg *DiffLists;                 // Pointer to the difflists array
   const char *RegStrings;                     // Pointer to the string table.
+  const char *RegClassStrings;                // Pointer to the class strings.
   const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
                                               // array.
   const SubRegCoveredBits *SubRegIdxRanges;   // Pointer to the subreg covered
@@ -243,6 +240,7 @@ public:
                           unsigned NRU,
                           const MCPhysReg *DL,
                           const char *Strings,
+                          const char *ClassStrings,
                           const uint16_t *SubIndices,
                           unsigned NumIndices,
                           const SubRegCoveredBits *SubIdxRanges,
@@ -254,6 +252,7 @@ public:
     Classes = C;
     DiffLists = DL;
     RegStrings = Strings;
+    RegClassStrings = ClassStrings;
     NumClasses = NC;
     RegUnitRoots = RURoots;
     NumRegUnits = NRU;
@@ -399,6 +398,10 @@ public:
   const MCRegisterClass& getRegClass(unsigned i) const {
     assert(i < getNumRegClasses() && "Register Class ID out of range");
     return Classes[i];
+  }
+
+  const char *getRegClassName(const MCRegisterClass *Class) const {
+    return RegClassStrings + Class->NameIdx;
   }
 
    /// \brief Returns the encoding for RegNo

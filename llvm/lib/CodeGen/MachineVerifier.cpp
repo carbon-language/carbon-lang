@@ -907,7 +907,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           if (!DRC->contains(Reg)) {
             report("Illegal physical register for instruction", MO, MONum);
             *OS << TRI->getName(Reg) << " is not a "
-                << DRC->getName() << " register.\n";
+                << TRI->getRegClassName(DRC) << " register.\n";
           }
         }
       } else {
@@ -918,13 +918,13 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
             TRI->getSubClassWithSubReg(RC, SubIdx);
           if (!SRC) {
             report("Invalid subregister index for virtual register", MO, MONum);
-            *OS << "Register class " << RC->getName()
+            *OS << "Register class " << TRI->getRegClassName(RC)
                 << " does not support subreg index " << SubIdx << "\n";
             return;
           }
           if (RC != SRC) {
             report("Invalid register class for subregister index", MO, MONum);
-            *OS << "Register class " << RC->getName()
+            *OS << "Register class " << TRI->getRegClassName(RC)
                 << " does not fully support subreg index " << SubIdx << "\n";
             return;
           }
@@ -946,8 +946,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           }
           if (!RC->hasSuperClassEq(DRC)) {
             report("Illegal virtual register for instruction", MO, MONum);
-            *OS << "Expected a " << DRC->getName() << " register, but got a "
-                << RC->getName() << " register\n";
+            *OS << "Expected a " << TRI->getRegClassName(DRC)
+                << " register, but got a " << TRI->getRegClassName(RC)
+                << " register\n";
           }
         }
       }

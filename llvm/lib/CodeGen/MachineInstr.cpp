@@ -1607,18 +1607,17 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
     // call instructions much less noisy on targets where calls clobber lots
     // of registers. Don't rely on MO.isDead() because we may be called before
     // LiveVariables is run, or we may be looking at a non-allocatable reg.
-    if (MF && isCall() &&
+    if (MRI && isCall() &&
         MO.isReg() && MO.isImplicit() && MO.isDef()) {
       unsigned Reg = MO.getReg();
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        const MachineRegisterInfo &MRI = MF->getRegInfo();
-        if (MRI.use_empty(Reg)) {
+        if (MRI->use_empty(Reg)) {
           bool HasAliasLive = false;
           for (MCRegAliasIterator AI(
                    Reg, TM->getSubtargetImpl()->getRegisterInfo(), true);
                AI.isValid(); ++AI) {
             unsigned AliasReg = *AI;
-            if (!MRI.use_empty(AliasReg)) {
+            if (!MRI->use_empty(AliasReg)) {
               HasAliasLive = true;
               break;
             }
@@ -1669,13 +1668,12 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
 
       unsigned RCID = 0;
       if (InlineAsm::hasRegClassConstraint(Flag, RCID)) {
-        if (TM)
+        if (TM) {
+          const TargetRegisterInfo *TRI =
+            TM->getSubtargetImpl()->getRegisterInfo();
           OS << ':'
-             << TM->getSubtargetImpl()
-                    ->getRegisterInfo()
-                    ->getRegClass(RCID)
-                    ->getName();
-        else
+             << TRI->getRegClassName(TRI->getRegClass(RCID));
+        } else
           OS << ":RC" << RCID;
       }
 
@@ -1724,7 +1722,8 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
     if (!HaveSemi) OS << ";"; HaveSemi = true;
     for (unsigned i = 0; i != VirtRegs.size(); ++i) {
       const TargetRegisterClass *RC = MRI->getRegClass(VirtRegs[i]);
-      OS << " " << RC->getName() << ':' << PrintReg(VirtRegs[i]);
+      OS << " " << MRI->getTargetRegisterInfo()->getRegClassName(RC)
+         << ':' << PrintReg(VirtRegs[i]);
       for (unsigned j = i+1; j != VirtRegs.size();) {
         if (MRI->getRegClass(VirtRegs[j]) != RC) {
           ++j;

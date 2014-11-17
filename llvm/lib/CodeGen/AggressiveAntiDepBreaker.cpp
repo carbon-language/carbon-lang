@@ -518,7 +518,7 @@ BitVector AggressiveAntiDepBreaker::GetRenameRegisters(unsigned Reg) {
       BV &= RCBV;
     }
 
-    DEBUG(dbgs() << " " << RC->getName());
+    DEBUG(dbgs() << " " << TRI->getRegClassName(RC));
   }
 
   return BV;

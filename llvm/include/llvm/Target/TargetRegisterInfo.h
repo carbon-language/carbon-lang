@@ -52,10 +52,6 @@ public:
   ///
   unsigned getID() const { return MC->getID(); }
 
-  /// getName() - Return the register class name for debugging.
-  ///
-  const char *getName() const { return MC->getName(); }
-
   /// begin/end - Return all of the registers in this class.
   ///
   iterator       begin() const { return MC->begin(); }
@@ -559,6 +555,11 @@ public:
   const TargetRegisterClass *getRegClass(unsigned i) const {
     assert(i < getNumRegClasses() && "Register Class ID out of range");
     return RegClassBegin[i];
+  }
+
+  /// getRegClassName - Returns the name of the register class.
+  const char *getRegClassName(const TargetRegisterClass *Class) const {
+    return MCRegisterInfo::getRegClassName(Class->MC);
   }
 
   /// getCommonSubClass - find the largest common subclass of A and B. Return

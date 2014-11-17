@@ -817,7 +817,7 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
     const TargetRegisterClass *RC = MRI->getRegClass(VirtReg.reg);
     unsigned MinCost = RegClassInfo.getMinCost(RC);
     if (MinCost >= CostPerUseLimit) {
-      DEBUG(dbgs() << RC->getName() << " minimum cost = " << MinCost
+      DEBUG(dbgs() << TRI->getRegClassName(RC) << " minimum cost = " << MinCost
                    << ", no cheaper registers to be found.\n");
       return 0;
     }
