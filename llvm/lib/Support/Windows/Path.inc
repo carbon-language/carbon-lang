@@ -561,7 +561,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
   SmallVector<wchar_t, 128> path_utf16;
 
   // Convert path to UTF-16.
-  if (ec = widenPath(path, path_utf16))
+  if ((ec = widenPath(path, path_utf16)))
     return;
 
   // Get file handle for creating a file mapping.
