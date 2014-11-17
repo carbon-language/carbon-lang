@@ -51,7 +51,7 @@ constexpr H* operator&(H const &&) { return nullptr; }
 
 struct J
 {
-    constexpr J* operator&() &&;
+    constexpr J* operator&() const &&;
 };
 
 #endif  // _LIBCPP_HAS_NO_CONSTEXPR
