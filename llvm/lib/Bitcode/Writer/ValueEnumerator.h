@@ -96,7 +96,7 @@ private:
   ValueEnumerator(const ValueEnumerator &) LLVM_DELETED_FUNCTION;
   void operator=(const ValueEnumerator &) LLVM_DELETED_FUNCTION;
 public:
-  ValueEnumerator(const Module *M);
+  ValueEnumerator(const Module &M);
 
   void dump() const;
   void print(raw_ostream &OS, const ValueMapType &Map, const char *Name) const;
@@ -176,7 +176,7 @@ private:
   void EnumerateAttributes(AttributeSet PAL);
 
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);
-  void EnumerateNamedMetadata(const Module *M);
+  void EnumerateNamedMetadata(const Module &M);
 };
 
 } // End llvm namespace

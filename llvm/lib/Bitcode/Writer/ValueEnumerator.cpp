@@ -68,7 +68,7 @@ static void orderValue(const Value *V, OrderMap &OM) {
   OM.index(V);
 }
 
-static OrderMap orderModule(const Module *M) {
+static OrderMap orderModule(const Module &M) {
   // This needs to match the order used by ValueEnumerator::ValueEnumerator()
   // and ValueEnumerator::incorporateFunction().
   OrderMap OM;
@@ -78,14 +78,14 @@ static OrderMap orderModule(const Module *M) {
   // directly in predictValueUseListOrderImpl(), just assign IDs to
   // initializers of GlobalValues before GlobalValues themselves to model this
   // implicitly.
-  for (const GlobalVariable &G : M->globals())
+  for (const GlobalVariable &G : M.globals())
     if (G.hasInitializer())
       if (!isa<GlobalValue>(G.getInitializer()))
         orderValue(G.getInitializer(), OM);
-  for (const GlobalAlias &A : M->aliases())
+  for (const GlobalAlias &A : M.aliases())
     if (!isa<GlobalValue>(A.getAliasee()))
       orderValue(A.getAliasee(), OM);
-  for (const Function &F : *M)
+  for (const Function &F : M)
     if (F.hasPrefixData())
       if (!isa<GlobalValue>(F.getPrefixData()))
         orderValue(F.getPrefixData(), OM);
@@ -99,15 +99,15 @@ static OrderMap orderModule(const Module *M) {
   // Since GlobalValues never reference each other directly (just through
   // initializers), their relative IDs only matter for determining order of
   // uses in their initializers.
-  for (const Function &F : *M)
+  for (const Function &F : M)
     orderValue(&F, OM);
-  for (const GlobalAlias &A : M->aliases())
+  for (const GlobalAlias &A : M.aliases())
     orderValue(&A, OM);
-  for (const GlobalVariable &G : M->globals())
+  for (const GlobalVariable &G : M.globals())
     orderValue(&G, OM);
   OM.LastGlobalValueID = OM.size();
 
-  for (const Function &F : *M) {
+  for (const Function &F : M) {
     if (F.isDeclaration())
       continue;
     // Here we need to match the union of ValueEnumerator::incorporateFunction()
@@ -220,7 +220,7 @@ static void predictValueUseListOrder(const Value *V, const Function *F,
           predictValueUseListOrder(Op, F, OM, Stack);
 }
 
-static UseListOrderStack predictUseListOrder(const Module *M) {
+static UseListOrderStack predictUseListOrder(const Module &M) {
   OrderMap OM = orderModule(M);
 
   // Use-list orders need to be serialized after all the users have been added
@@ -233,7 +233,7 @@ static UseListOrderStack predictUseListOrder(const Module *M) {
   // We want to visit the functions backward now so we can list function-local
   // constants in the last Function they're used in.  Module-level constants
   // have already been visited above.
-  for (auto I = M->rbegin(), E = M->rend(); I != E; ++I) {
+  for (auto I = M.rbegin(), E = M.rend(); I != E; ++I) {
     const Function &F = *I;
     if (F.isDeclaration())
       continue;
@@ -253,18 +253,18 @@ static UseListOrderStack predictUseListOrder(const Module *M) {
 
   // Visit globals last, since the module-level use-list block will be seen
   // before the function bodies are processed.
-  for (const GlobalVariable &G : M->globals())
+  for (const GlobalVariable &G : M.globals())
     predictValueUseListOrder(&G, nullptr, OM, Stack);
-  for (const Function &F : *M)
+  for (const Function &F : M)
     predictValueUseListOrder(&F, nullptr, OM, Stack);
-  for (const GlobalAlias &A : M->aliases())
+  for (const GlobalAlias &A : M.aliases())
     predictValueUseListOrder(&A, nullptr, OM, Stack);
-  for (const GlobalVariable &G : M->globals())
+  for (const GlobalVariable &G : M.globals())
     if (G.hasInitializer())
       predictValueUseListOrder(G.getInitializer(), nullptr, OM, Stack);
-  for (const GlobalAlias &A : M->aliases())
+  for (const GlobalAlias &A : M.aliases())
     predictValueUseListOrder(A.getAliasee(), nullptr, OM, Stack);
-  for (const Function &F : *M)
+  for (const Function &F : M)
     if (F.hasPrefixData())
       predictValueUseListOrder(F.getPrefixData(), nullptr, OM, Stack);
 
@@ -275,25 +275,23 @@ static bool isIntOrIntVectorValue(const std::pair<const Value*, unsigned> &V) {
   return V.first->getType()->isIntOrIntVectorTy();
 }
 
-/// ValueEnumerator - Enumerate module-level information.
-ValueEnumerator::ValueEnumerator(const Module *M) {
+ValueEnumerator::ValueEnumerator(const Module &M) {
   if (shouldPreserveBitcodeUseListOrder())
     UseListOrders = predictUseListOrder(M);
 
   // Enumerate the global variables.
-  for (Module::const_global_iterator I = M->global_begin(),
-
-         E = M->global_end(); I != E; ++I)
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
     EnumerateValue(I);
 
   // Enumerate the functions.
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
     EnumerateValue(I);
     EnumerateAttributes(cast<Function>(I)->getAttributes());
   }
 
   // Enumerate the aliases.
-  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+  for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I)
     EnumerateValue(I);
 
@@ -301,30 +299,30 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   unsigned FirstConstant = Values.size();
 
   // Enumerate the global variable initializers.
-  for (Module::const_global_iterator I = M->global_begin(),
-         E = M->global_end(); I != E; ++I)
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
     if (I->hasInitializer())
       EnumerateValue(I->getInitializer());
 
   // Enumerate the aliasees.
-  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+  for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I)
     EnumerateValue(I->getAliasee());
 
   // Enumerate the prefix data constants.
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (I->hasPrefixData())
       EnumerateValue(I->getPrefixData());
 
   // Insert constants and metadata that are named at module level into the slot
   // pool so that the module symbol table can refer to them...
-  EnumerateValueSymbolTable(M->getValueSymbolTable());
+  EnumerateValueSymbolTable(M.getValueSymbolTable());
   EnumerateNamedMetadata(M);
 
   SmallVector<std::pair<unsigned, MDNode *>, 8> MDs;
 
   // Enumerate types used by function bodies and argument lists.
-  for (const Function &F : *M) {
+  for (const Function &F : M) {
     for (const Argument &A : F.args())
       EnumerateType(A.getType());
 
@@ -465,11 +463,12 @@ void ValueEnumerator::EnumerateValueSymbolTable(const ValueSymbolTable &VST) {
     EnumerateValue(VI->getValue());
 }
 
-/// EnumerateNamedMetadata - Insert all of the values referenced by
-/// named metadata in the specified module.
-void ValueEnumerator::EnumerateNamedMetadata(const Module *M) {
-  for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
-       E = M->named_metadata_end(); I != E; ++I)
+/// Insert all of the values referenced by named metadata in the specified
+/// module.
+void ValueEnumerator::EnumerateNamedMetadata(const Module &M) {
+  for (Module::const_named_metadata_iterator I = M.named_metadata_begin(),
+                                             E = M.named_metadata_end();
+       I != E; ++I)
     EnumerateNamedMDNode(I);
 }
 
