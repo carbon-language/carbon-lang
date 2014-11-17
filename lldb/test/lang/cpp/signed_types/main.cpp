@@ -6,6 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#include <stdio.h>
+
 int main (int argc, char const *argv[])
 {
     char the_char = 'c';
@@ -19,8 +21,8 @@ int main (int argc, char const *argv[])
     signed short the_signed_short = 'c';
     signed int the_signed_int = 'c';
     signed long the_signed_long = 'c';
-    signed long long the_signed_long_long = 'c';    // Set break point at this line.
-
+    signed long long the_signed_long_long = 'c';
+    puts("");    // Set break point at this line.
     return  the_char        - the_signed_char +
             the_short       - the_signed_short +
             the_int         - the_signed_int +

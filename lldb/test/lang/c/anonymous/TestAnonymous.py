@@ -80,18 +80,27 @@ class AnonymousTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line numbers to break in main.c.
-        self.line0 = line_number('main.c', '// Set breakpoint 0 here.')
-        self.line1 = line_number('main.c', '// Set breakpoint 1 here.')
-        self.line2 = line_number('main.c', '// Set breakpoint 2 here.')
+        self.source = 'main.c'
+        self.line0 = line_number(self.source, '// Set breakpoint 0 here.')
+        self.line1 = line_number(self.source, '// Set breakpoint 1 here.')
+        self.line2 = line_number(self.source, '// Set breakpoint 2 here.')
 
     def common_setup(self, line):
+        
+        # Set debugger into synchronous mode
+        self.dbg.SetAsync(False)
+
+        # Create a target
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
 
         # Set breakpoints inside and outside methods that take pointers to the containing struct.
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
+        lldbutil.run_break_set_by_file_and_line (self, self.source, line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -153,11 +162,16 @@ class AnonymousTestCase(TestBase):
         self.expect("expression *(type_z *)pz", error = True)
 
     def child_by_name(self):
+        
+        # Set debugger into synchronous mode
+        self.dbg.SetAsync(False)
+
+        # Create a target
         exe = os.path.join (os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        break_in_main = target.BreakpointCreateBySourceRegex ('// Set breakpoint 2 here.', lldb.SBFileSpec("main.c"))
+        break_in_main = target.BreakpointCreateBySourceRegex ('// Set breakpoint 2 here.', lldb.SBFileSpec(self.source))
         self.assertTrue(break_in_main, VALID_BREAKPOINT)
 
         process = target.LaunchSimple (None, None, self.get_process_working_directory())

@@ -1,6 +1,6 @@
 LEVEL = ../../../make
 
-DYLIB_NAME := libContainer
+DYLIB_NAME := Container
 DYLIB_OBJC_SOURCES := Container.m
 OBJC_SOURCES := main.m
 

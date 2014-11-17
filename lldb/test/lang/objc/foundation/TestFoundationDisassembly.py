@@ -19,17 +19,21 @@ class FoundationDisassembleTestCase(TestBase):
     def test_foundation_disasm(self):
         """Do 'disassemble -n func' on each and every 'Code' symbol entry from the Foundation.framework."""
         self.buildDefault()
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
-        self.runCmd("run", RUN_SUCCEEDED)
+        
+        # Enable synchronous mode
+        self.dbg.SetAsync(False)
+        
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget("a.out")
+        self.assertTrue(target, VALID_TARGET)
 
-        self.runCmd("image list")
-        raw_output = self.res.GetOutput()
-        # Grok the full path to the foundation framework.
-        for line in raw_output.split(os.linesep):
-            match = re.search(" (/.*/Foundation.framework/.*)$", line)
-            if match:
-                foundation_framework = match.group(1)
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple (None, environment, self.get_process_working_directory())
+        self.assertTrue(process, PROCESS_IS_VALID)
+
+        for module in target.modules:
+            if module.file.basename == "Foundation":
+                foundation_framework = module.file.fullpath
                 break
 
         self.assertTrue(match, "Foundation.framework path located")
@@ -69,12 +73,19 @@ class FoundationDisassembleTestCase(TestBase):
 
     def do_simple_disasm(self):
         """Do a bunch of simple disassemble commands."""
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget("a.out")
+        self.assertTrue(target, VALID_TARGET)
+
+        print target
+        for module in target.modules:
+            print module
 
         # Stop at +[NSString stringWithFormat:].
         symbol_name = "+[NSString stringWithFormat:]"
         break_results = lldbutil.run_break_set_command (self, "_regexp-break %s"%(symbol_name))
+        
         lldbutil.check_breakpoint_result (self, break_results, symbol_name=symbol_name, num_locations=1)
 
         # Stop at -[MyString initWithNSString:].

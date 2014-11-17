@@ -32,8 +32,8 @@ class Char1632TestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number to break for main.cpp.
         self.source = 'main.cpp'
-        self.line = line_number(self.source, '// Set break point at this line.')
-
+        self.lines = [ line_number(self.source, '// breakpoint1'), 
+                       line_number(self.source, '// breakpoint2') ]
     def char1632(self):
         """Test that the C++11 support for char16_t and char32_t works correctly."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -42,10 +42,11 @@ class Char1632TestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        # Break on the struct declration statement in main.cpp.
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line)
+        # Set breakpoints
+        for line in self.lines:
+            lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line)
 
-        # Now launch the process, and do not stop at entry point.
+        # Now launch the process, and do not stop at entry point and stop at breakpoint1
         process = target.LaunchSimple (None, None, self.get_process_working_directory())
 
         if not process:
@@ -68,8 +69,8 @@ class Char1632TestCase(TestBase):
         self.expect("frame variable s32",
             substrs = ['(char32_t *) s32 = 0x00000000'])
 
-        self.runCmd("next")
-        self.runCmd("next")
+        # continue and hit breakpoint2
+        self.runCmd("continue")
 
         # check that the new strings show
         self.expect("frame variable s16 s32",

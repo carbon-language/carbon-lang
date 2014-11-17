@@ -48,9 +48,29 @@ class HiddenIvarsTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
-        self.line = line_number('main.m', '// Set breakpoint 0 here.')
-
+        self.source = 'main.m'
+        self.line = line_number(self.source, '// breakpoint1')
+        # The makefile names of the shared libraries as they appear in DYLIB_NAME.
+        # The names should have no loading "lib" or extension as they will be localized
+        self.shlib_names = ["InternalDefiner"]
+        
     def common_setup(self):
+        
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget("a.out")
+        self.assertTrue(target, VALID_TARGET)
+
+        # Create the breakpoint inside function 'main'.
+        breakpoint = target.BreakpointCreateByLocation(self.source, self.line)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+        
+        # Register our shared libraries for remote targets so they get automatically uploaded
+        environment = self.registerSharedLibrariesWithTarget(target, self.shlib_names)
+
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple (None, environment, self.get_process_working_directory())
+        self.assertTrue(process, PROCESS_IS_VALID)
+        
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

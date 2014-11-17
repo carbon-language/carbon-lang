@@ -30,17 +30,22 @@ class UnsignedTypesTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
-        self.line = line_number('main.cpp', '// Set break point at this line.')
+        self.source = 'main.cpp'
+        self.line = line_number(self.source, '// Set break point at this line.')
 
     def signed_types(self):
-        """Test that variables with signed types display correctly."""
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        # Run in synchronous mode
+        self.dbg.SetAsync(False)
 
-        # Break on line 22 in main() aftre the variables are assigned values.
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget("a.out")
+        self.assertTrue(target, VALID_TARGET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        lldbutil.run_break_set_by_file_and_line (self, self.source, self.line, num_expected_locations=1, loc_exact=True)
+
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

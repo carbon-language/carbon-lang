@@ -26,16 +26,25 @@ class ForwardDeclTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
-        self.line = line_number('main.m', '// Set breakpoint 0 here.')
+        self.source = 'main.m'
+        self.line = line_number(self.source, '// Set breakpoint 0 here.')
+        self.shlib_names = ["Container"]
 
     def common_setup(self):
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget("a.out")
+        self.assertTrue(target, VALID_TARGET)
 
-        # Break inside the foo function which takes a bar_ptr argument.
-        lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)
+        # Create the breakpoint inside function 'main'.
+        breakpoint = target.BreakpointCreateByLocation(self.source, self.line)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+        
+        # Register our shared libraries for remote targets so they get automatically uploaded
+        environment = self.registerSharedLibrariesWithTarget(target, self.shlib_names)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple (None, environment, self.get_process_working_directory())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
