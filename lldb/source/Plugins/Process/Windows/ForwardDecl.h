@@ -18,11 +18,11 @@ class ProcessWindows;
 // the exception.
 enum class ExceptionResult
 {
-    Handled,    // The delegate handled the exception.  Continue.
-    NotHandled, // The delegate did not handle the exception.  Keep
-                // searching.
-    WillHandle  // The delegate will handle the exception.  Do not
-                // process further debug events until it finishes.
+    BreakInDebugger,  // Break in the debugger and give the user a chance to interact with
+                      // the program before continuing.
+    MaskException,    // Eat the exception and don't let the application know it occurred.
+    SendToApplication // Send the exception to the application to be handled as if there were
+                      // no debugger attached.
 };
 
 namespace lldb_private

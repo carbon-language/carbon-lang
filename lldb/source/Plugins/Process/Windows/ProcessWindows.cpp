@@ -11,6 +11,7 @@
 #include "lldb/Host/windows/windows.h"
 
 // C++ Includes
+#include <list>
 #include <vector>
 
 // Other libraries and framework includes
@@ -23,6 +24,7 @@
 #include "lldb/Host/HostNativeThreadBase.h"
 #include "lldb/Host/MonitoringProcessLauncher.h"
 #include "lldb/Host/ThreadLauncher.h"
+#include "lldb/Host/windows/HostThreadWindows.h"
 #include "lldb/Host/windows/ProcessLauncherWindows.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -40,6 +42,7 @@ using namespace lldb_private;
 
 namespace lldb_private
 {
+
 // We store a pointer to this class in the ProcessWindows, so that we don't expose Windows
 // OS specific types and implementation details from a public header file.
 class ProcessWindowsData
@@ -61,6 +64,8 @@ class ProcessWindowsData
     lldb_private::DebuggerThreadSP m_debugger;
     HANDLE m_initial_stop_event;
     bool m_initial_stop_received;
+    std::map<lldb::tid_t, HostThread> m_new_threads;
+    std::map<lldb::tid_t, HostThread> m_exited_threads;
 };
 }
 //------------------------------------------------------------------------------
@@ -120,8 +125,33 @@ ProcessWindows::GetPluginDescriptionStatic()
 bool
 ProcessWindows::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
-    new_thread_list = old_thread_list;
-    return new_thread_list.GetSize(false) > 0;
+    // Add all the threads that were previously running and for which we did not detect a thread
+    // exited event.
+    int new_size = 0;
+    for (ThreadSP old_thread : old_thread_list.Threads())
+    {
+        lldb::tid_t old_thread_id = old_thread->GetID();
+        auto exited_thread_iter = m_session_data->m_exited_threads.find(old_thread_id);
+        if (exited_thread_iter == m_session_data->m_exited_threads.end())
+        {
+            new_thread_list.AddThread(old_thread);
+            ++new_size;
+        }
+    }
+
+    // Also add all the threads that are new since the last time we broke into the debugger.
+    for (auto iter = m_session_data->m_new_threads.begin(); iter != m_session_data->m_new_threads.end(); ++iter)
+    {
+        ThreadSP thread(new TargetThreadWindows(*this, iter->second));
+        thread->SetID(iter->first);
+        new_thread_list.AddThread(thread);
+        ++new_size;
+    }
+
+    m_session_data->m_new_threads.clear();
+    m_session_data->m_exited_threads.clear();
+
+    return new_size > 0;
 }
 
 Error
@@ -148,6 +178,7 @@ ProcessWindows::DoLaunch(Module *exe_module,
     HostProcess process;
     if (result.Success())
     {
+        // Block this function until we receive the initial stop from the process.
         if (::WaitForSingleObject(m_session_data->m_initial_stop_event, INFINITE) == WAIT_OBJECT_0)
             process = debugger->GetProcess();
         else
@@ -158,7 +189,7 @@ ProcessWindows::DoLaunch(Module *exe_module,
         return result;
 
     // We've hit the initial stop.  The private state should already be set to stopped as a result
-    // of encountering the breakpoint exception.
+    // of encountering the breakpoint exception in ProcessWindows::OnDebugException.
     launch_info.SetProcessID(process.GetProcessId());
     SetID(process.GetProcessId());
 
@@ -173,9 +204,10 @@ ProcessWindows::DoResume()
     {
         if (m_session_data->m_active_exception)
         {
-            // Resume the process and continue processing debug events.
+            // Resume the process and continue processing debug events.  Mask the exception so that
+            // from the process's view, there is no indication that anything happened.
             m_session_data->m_active_exception.reset();
-            m_session_data->m_debugger->ContinueAsyncException(ExceptionResult::Handled);
+            m_session_data->m_debugger->ContinueAsyncException(ExceptionResult::MaskException);
         }
 
         SetPrivateState(eStateRunning);
@@ -212,6 +244,7 @@ ProcessWindows::DoDestroy()
     Error error;
     if (GetPrivateState() != eStateExited && GetPrivateState() != eStateDetached && m_session_data)
     {
+        // Ends the debugging session and terminates the inferior process.
         DebugActiveProcessStop(m_session_data->m_debugger->GetProcess().GetProcessId());
         SetPrivateState(eStateExited);
     }
@@ -325,25 +358,27 @@ ProcessWindows::OnExitProcess(uint32_t exit_code)
 void
 ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
 {
+    // Either we successfully attached to an existing process, or we successfully launched a new
+    // process under the debugger.
     ModuleSP module = GetTarget().GetExecutableModule();
     bool load_addr_changed;
     module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
 
     DebuggerThreadSP debugger = m_session_data->m_debugger;
-    ThreadSP main_thread(new TargetThreadWindows(*this, debugger->GetMainThread()));
-    m_thread_list.AddThread(main_thread);
+    const HostThreadWindows &wmain_thread = static_cast<const HostThreadWindows &>(debugger->GetMainThread().GetNativeThread());
+    m_session_data->m_new_threads[wmain_thread.GetThreadId()] = debugger->GetMainThread();
 }
 
 ExceptionResult
 ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &record)
 {
-    ExceptionResult result = ExceptionResult::NotHandled;
+    ExceptionResult result = ExceptionResult::SendToApplication;
     m_session_data->m_active_exception.reset(new ExceptionRecord(record));
     switch (record.GetExceptionCode())
     {
         case EXCEPTION_BREAKPOINT:
             // Handle breakpoints at the first chance.
-            result = ExceptionResult::WillHandle;
+            result = ExceptionResult::BreakInDebugger;
 
             if (!m_session_data->m_initial_stop_received)
             {
@@ -354,9 +389,9 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
         default:
             // For non-breakpoints, give the application a chance to handle the exception first.
             if (first_chance)
-                result = ExceptionResult::NotHandled;
+                result = ExceptionResult::SendToApplication;
             else
-                result = ExceptionResult::WillHandle;
+                result = ExceptionResult::BreakInDebugger;
     }
 
     if (!first_chance)
@@ -364,10 +399,10 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
         // Any second chance exception is an application crash by definition.
         SetPrivateState(eStateCrashed);
     }
-    else if (result == ExceptionResult::WillHandle)
+    else if (result == ExceptionResult::BreakInDebugger)
     {
         // For first chance exceptions that we can handle, the process is stopped so the user
-        // can inspect / manipulate the state of the process in the debugger.
+        // can interact with the debugger.
         SetPrivateState(eStateStopped);
     }
     else
@@ -380,14 +415,23 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
 }
 
 void
-ProcessWindows::OnCreateThread(const HostThread &thread)
+ProcessWindows::OnCreateThread(const HostThread &new_thread)
 {
-    SuspendThread(thread.GetNativeThread().GetSystemHandle());
+    const HostThreadWindows &wnew_thread = static_cast<const HostThreadWindows &>(new_thread.GetNativeThread());
+    m_session_data->m_new_threads[wnew_thread.GetThreadId()] = new_thread;
 }
 
 void
-ProcessWindows::OnExitThread(const HostThread &thread)
+ProcessWindows::OnExitThread(const HostThread &exited_thread)
 {
+    // A thread may have started and exited before the debugger stopped allowing a refresh.
+    // Just remove it from the new threads list in that case.
+    const HostThreadWindows &wexited_thread = static_cast<const HostThreadWindows &>(exited_thread.GetNativeThread());
+    auto iter = m_session_data->m_new_threads.find(wexited_thread.GetThreadId());
+    if (iter != m_session_data->m_new_threads.end())
+        m_session_data->m_new_threads.erase(iter);
+    else
+        m_session_data->m_exited_threads[wexited_thread.GetThreadId()] = exited_thread;
 }
 
 void
@@ -418,8 +462,9 @@ ProcessWindows::OnDebuggerError(const Error &error, uint32_t type)
 {
     if (!m_session_data->m_initial_stop_received)
     {
-        // If we haven't actually launched the process yet, this was an error
-        // launching the process.  Set the internal error and signal.
+        // If we haven't actually launched the process yet, this was an error launching the
+        // process.  Set the internal error and signal the initial stop event so that the DoLaunch
+        // method wakes up and returns a failure.
         m_session_data->m_launch_error = error;
         ::SetEvent(m_session_data->m_initial_stop_event);
         return;

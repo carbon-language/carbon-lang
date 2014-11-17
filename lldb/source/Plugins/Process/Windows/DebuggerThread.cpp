@@ -117,11 +117,11 @@ DebuggerThread::DebugLoop()
             {
                 ExceptionResult status = HandleExceptionEvent(dbe.u.Exception, dbe.dwThreadId);
                 m_exception.SetValue(status, eBroadcastNever);
-                m_exception.WaitForValueNotEqualTo(ExceptionResult::WillHandle, status);
+                m_exception.WaitForValueNotEqualTo(ExceptionResult::BreakInDebugger, status);
 
-                if (status == ExceptionResult::Handled)
+                if (status == ExceptionResult::MaskException)
                     continue_status = DBG_CONTINUE;
-                else if (status == ExceptionResult::NotHandled)
+                else if (status == ExceptionResult::SendToApplication)
                     continue_status = DBG_EXCEPTION_NOT_HANDLED;
                 break;
             }
