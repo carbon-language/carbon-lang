@@ -10,6 +10,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/HostProcess.h"
 #include "lldb/Host/MonitoringProcessLauncher.h"
 #include "lldb/Target/Platform.h"
@@ -41,8 +42,9 @@ MonitoringProcessLauncher::LaunchProcess(const ProcessLaunchInfo &launch_info, E
     FileSpec::FileType file_type = exe_spec.GetFileType();
     if (file_type != FileSpec::eFileTypeRegular)
     {
+        ModuleSpec module_spec(exe_spec, arch_spec);
         lldb::ModuleSP exe_module_sp;
-        error = host_platform_sp->ResolveExecutable(exe_spec, arch_spec, exe_module_sp, NULL);
+        error = host_platform_sp->ResolveExecutable(module_spec, exe_module_sp, NULL);
 
         if (error.Fail())
             return HostProcess();
