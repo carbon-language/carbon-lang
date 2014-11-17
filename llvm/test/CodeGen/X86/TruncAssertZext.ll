@@ -3,7 +3,7 @@
 ; the source of the zext is an AssertSext node
 ; PR20494
 
-define i64 @main(i64 %a) { 
+define i64 @main(i64 %a) {
 ; CHECK-LABEL: main
 ; CHECK: movl %e{{..}}, %eax
 ; CHECK: ret
