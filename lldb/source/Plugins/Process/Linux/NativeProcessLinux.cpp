@@ -162,7 +162,7 @@ namespace
         ModuleSpec exe_module_spec(process_info.GetExecutableFile(), platform.GetSystemArchitecture ());
         FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths ());
         Error error = platform.ResolveExecutable(
-            process_info.GetExecutableFile (),
+            exe_module_spec,
             exe_module_sp,
             executable_search_paths.GetSize () ? &executable_search_paths : NULL);
 
