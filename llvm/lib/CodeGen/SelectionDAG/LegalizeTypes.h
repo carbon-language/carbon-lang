@@ -122,8 +122,8 @@ public:
   explicit DAGTypeLegalizer(SelectionDAG &dag)
     : TLI(dag.getTargetLoweringInfo()), DAG(dag),
     ValueTypeActions(TLI.getValueTypeActions()) {
-    assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE &&
-           "Too many value types for ValueTypeActions to hold!");
+    static_assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE,
+                  "Too many value types for ValueTypeActions to hold!");
   }
 
   /// run - This is the main entry point for the type legalizer.  This does a
