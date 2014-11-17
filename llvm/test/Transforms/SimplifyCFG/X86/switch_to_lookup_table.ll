@@ -856,10 +856,10 @@ return:
 ; CHECK: entry:
 ; CHECK: br i1 %{{.*}}, label %switch.hole_check, label %sw.default
 ; CHECK: switch.hole_check:
-; CHECK-NEXT: %switch.maskindex = trunc i32 %switch.tableidx to i6
-; CHECK-NEXT: %switch.shifted = lshr i6 -17, %switch.maskindex
+; CHECK-NEXT: %switch.maskindex = trunc i32 %switch.tableidx to i8
+; CHECK-NEXT: %switch.shifted = lshr i8 47, %switch.maskindex
 ; The mask is binary 101111.
-; CHECK-NEXT: %switch.lobit = trunc i6 %switch.shifted to i1
+; CHECK-NEXT: %switch.lobit = trunc i8 %switch.shifted to i1
 ; CHECK-NEXT: br i1 %switch.lobit, label %switch.lookup, label %sw.default
 ; CHECK-NOT: switch i32
 }
