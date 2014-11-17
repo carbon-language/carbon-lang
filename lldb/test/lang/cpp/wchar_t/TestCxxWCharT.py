@@ -73,6 +73,8 @@ class CxxWCharTTestCase(TestBase):
         self.expect("frame variable mazeltov",
             substrs = ['(const wchar_t *) mazeltov = ','L"מזל טוב"'])
 
+        self.expect("frame variable ws_NULL",substrs = ['(wchar_t *) ws_NULL = 0x0'])
+        self.expect("frame variable ws_empty",substrs = [' L""'])
 
 if __name__ == '__main__':
     import atexit

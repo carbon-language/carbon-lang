@@ -566,7 +566,7 @@ ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
     else
         data_read = process_sp->ReadMemoryFromInferior(options.GetLocation(), (char*)buffer_sp->GetBytes(), bufferSPSize, error);
 
-    if (error.Fail() || data_read == 0)
+    if (error.Fail())
     {
         options.GetStream()->Printf("unable to read data");
         return true;
