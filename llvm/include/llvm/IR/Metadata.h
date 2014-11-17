@@ -138,12 +138,11 @@ class MDNodeOperand;
 
 //===----------------------------------------------------------------------===//
 /// \brief Generic tuple of metadata.
-class MDNode : public Metadata, public FoldingSetNode {
+class MDNode : public Metadata {
   MDNode(const MDNode &) LLVM_DELETED_FUNCTION;
   void operator=(const MDNode &) LLVM_DELETED_FUNCTION;
   friend class MDNodeOperand;
   friend class LLVMContextImpl;
-  friend struct FoldingSetTrait<MDNode>;
 
   /// \brief If the MDNode is uniqued cache the hash to speed up lookup.
   unsigned Hash;
@@ -224,8 +223,8 @@ public:
   /// code because it recursively visits all the MDNode's operands.
   const Function *getFunction() const;
 
-  /// \brief Calculate a unique identifier for this MDNode.
-  void Profile(FoldingSetNodeID &ID) const;
+  /// \brief Get the hash, if any.
+  unsigned getHash() const { return Hash; }
 
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {

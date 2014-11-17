@@ -119,7 +119,7 @@ void MDNode::replaceOperandWith(unsigned i, Value *Val) {
 }
 
 MDNode::MDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
-    : Metadata(C, Value::MDNodeVal) {
+    : Metadata(C, Value::MDNodeVal), Hash(0) {
   NumOperands = Vals.size();
 
   if (isFunctionLocal)
@@ -145,7 +145,7 @@ MDNode::~MDNode() {
   if (isNotUniqued()) {
     pImpl->NonUniquedMDNodes.erase(this);
   } else {
-    pImpl->MDNodeSet.RemoveNode(this);
+    pImpl->MDNodeSet.erase(this);
   }
 
   // Destroy the operands.
@@ -224,21 +224,14 @@ static bool isFunctionLocalValue(Value *V) {
 
 MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
                           FunctionLocalness FL, bool Insert) {
-  LLVMContextImpl *pImpl = Context.pImpl;
+  auto &Store = Context.pImpl->MDNodeSet;
 
-  // Add all the operand pointers. Note that we don't have to add the
-  // isFunctionLocal bit because that's implied by the operands.
-  // Note that if the operands are later nulled out, the node will be
-  // removed from the uniquing map.
-  FoldingSetNodeID ID;
-  for (Value *V : Vals)
-    ID.AddPointer(V);
-
-  void *InsertPoint;
-  MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-
-  if (N || !Insert)
-    return N;
+  GenericMDNodeInfo::KeyTy Key(Vals);
+  auto I = Store.find_as(Key);
+  if (I != Store.end())
+    return *I;
+  if (!Insert)
+    return nullptr;
 
   bool isFunctionLocal = false;
   switch (FL) {
@@ -261,14 +254,10 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
 
   // Coallocate space for the node and Operands together, then placement new.
   void *Ptr = malloc(sizeof(MDNode) + Vals.size() * sizeof(MDNodeOperand));
-  N = new (Ptr) MDNode(Context, Vals, isFunctionLocal);
+  MDNode *N = new (Ptr) MDNode(Context, Vals, isFunctionLocal);
 
-  // Cache the operand hash.
-  N->Hash = ID.ComputeHash();
-
-  // InsertPoint will have been set by the FindNodeOrInsertPos call.
-  pImpl->MDNodeSet.InsertNode(N, InsertPoint);
-
+  N->Hash = Key.Hash;
+  Store.insert(N);
   return N;
 }
 
@@ -298,7 +287,7 @@ MDNode *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals) {
 
 void MDNode::deleteTemporary(MDNode *N) {
   assert(N->use_empty() && "Temporary MDNode has uses!");
-  assert(!N->getContext().pImpl->MDNodeSet.RemoveNode(N) &&
+  assert(!N->getContext().pImpl->MDNodeSet.erase(N) &&
          "Deleting a non-temporary uniqued node!");
   assert(!N->getContext().pImpl->NonUniquedMDNodes.erase(N) &&
          "Deleting a non-temporary non-uniqued node!");
@@ -316,18 +305,10 @@ Value *MDNode::getOperand(unsigned i) const {
   return *getOperandPtr(const_cast<MDNode*>(this), i);
 }
 
-void MDNode::Profile(FoldingSetNodeID &ID) const {
-  // Add all the operand pointers. Note that we don't have to add the
-  // isFunctionLocal bit because that's implied by the operands.
-  // Note that if the operands are later nulled out, the node will be
-  // removed from the uniquing map.
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    ID.AddPointer(getOperand(i));
-}
-
 void MDNode::setIsNotUniqued() {
   setValueSubclassData(getSubclassDataFromValue() | NotUniquedBit);
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+  Hash = 0;
   pImpl->NonUniquedMDNodes.insert(this);
 }
 
@@ -356,44 +337,44 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   if (From == To)
     return;
 
-  // Update the operand.
-  Op->set(To);
-
   // If this node is already not being uniqued (because one of the operands
   // already went to null), then there is nothing else to do here.
-  if (isNotUniqued()) return;
+  if (isNotUniqued()) {
+    Op->set(To);
+    return;
+  }
 
-  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+  auto &Store = getContext().pImpl->MDNodeSet;
 
-  // Remove "this" from the context map.  FoldingSet doesn't have to reprofile
-  // this node to remove it, so we don't care what state the operands are in.
-  pImpl->MDNodeSet.RemoveNode(this);
+  // Remove "this" from the context map.
+  Store.erase(this);
+
+  // Update the operand.
+  Op->set(To);
 
   // If we are dropping an argument to null, we choose to not unique the MDNode
   // anymore.  This commonly occurs during destruction, and uniquing these
   // brings little reuse.  Also, this means we don't need to include
-  // isFunctionLocal bits in FoldingSetNodeIDs for MDNodes.
+  // isFunctionLocal bits in the hash for MDNodes.
   if (!To) {
     setIsNotUniqued();
     return;
   }
 
-  // Now that the node is out of the folding set, get ready to reinsert it.
-  // First, check to see if another node with the same operands already exists
-  // in the set.  If so, then this node is redundant.
-  FoldingSetNodeID ID;
-  Profile(ID);
-  void *InsertPoint;
-  if (MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint)) {
-    replaceAllUsesWith(N);
+  // Now that the node is out of the table, get ready to reinsert it.  First,
+  // check to see if another node with the same operands already exists in the
+  // set.  If so, then this node is redundant.
+  SmallVector<Value *, 8> Vals;
+  GenericMDNodeInfo::KeyTy Key(this, Vals);
+  auto I = Store.find_as(Key);
+  if (I != Store.end()) {
+    replaceAllUsesWith(*I);
     destroy();
     return;
   }
 
-  // Cache the operand hash.
-  Hash = ID.ComputeHash();
-  // InsertPoint will have been set by the FindNodeOrInsertPos call.
-  pImpl->MDNodeSet.InsertNode(this, InsertPoint);
+  this->Hash = Key.Hash;
+  Store.insert(this);
 
   // If this MDValue was previously function-local but no longer is, clear
   // its function-local flag.

@@ -124,9 +124,7 @@ LLVMContextImpl::~LLVMContextImpl() {
   // and the NonUniquedMDNodes sets, so copy the values out first.
   SmallVector<MDNode*, 8> MDNodes;
   MDNodes.reserve(MDNodeSet.size() + NonUniquedMDNodes.size());
-  for (FoldingSetIterator<MDNode> I = MDNodeSet.begin(), E = MDNodeSet.end();
-       I != E; ++I)
-    MDNodes.push_back(&*I);
+  MDNodes.append(MDNodeSet.begin(), MDNodeSet.end());
   MDNodes.append(NonUniquedMDNodes.begin(), NonUniquedMDNodes.end());
   for (SmallVectorImpl<MDNode *>::iterator I = MDNodes.begin(),
          E = MDNodes.end(); I != E; ++I)
