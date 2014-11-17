@@ -764,7 +764,7 @@ private:
            Previous = Previous->Previous)
         Previous->Type = TT_PointerOrReference;
       if (Line.MustBeDeclaration)
-        Contexts.back().IsExpression = Contexts.back().InCtorInitializer;
+        Contexts.back().IsExpression = Contexts.front().InCtorInitializer;
     } else if (Current.Previous &&
                Current.Previous->Type == TT_CtorInitializerColon) {
       Contexts.back().IsExpression = true;
