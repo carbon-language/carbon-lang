@@ -11,6 +11,7 @@
 #define lldb_Host_HostThread_h_
 
 #include "lldb/Core/Error.h"
+#include "lldb/Host/HostNativeThreadForward.h"
 #include "lldb/lldb-types.h"
 
 #include <memory>
@@ -41,8 +42,8 @@ class HostThread
     lldb::thread_t Release();
 
     bool IsJoinable() const;
-    HostNativeThreadBase &GetNativeThread();
-    const HostNativeThreadBase &GetNativeThread() const;
+    HostNativeThread &GetNativeThread();
+    const HostNativeThread &GetNativeThread() const;
     lldb::thread_result_t GetResult() const;
 
     bool EqualsThread(lldb::thread_t thread) const;

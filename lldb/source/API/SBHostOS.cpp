@@ -13,12 +13,9 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/HostNativeThread.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/ThreadLauncher.h"
-
-#if !defined(_WIN32)
-#include "lldb/Host/HostNativeThread.h"
-#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -105,7 +102,7 @@ SBHostOS::ThreadDetach (lldb::thread_t thread, SBError *error_ptr)
         error_ptr->SetErrorString("ThreadDetach is not supported on this platform");
 #else
     HostThread host_thread(thread);
-    error = ((HostThreadPosix &)host_thread.GetNativeThread()).Detach();
+    error = host_thread.GetNativeThread().Detach();
     if (error_ptr)
         error_ptr->SetError(error);
     host_thread.Release();

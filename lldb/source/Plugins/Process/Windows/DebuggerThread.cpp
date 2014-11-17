@@ -185,7 +185,7 @@ DebuggerThread::HandleCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO &info, 
     m_process = HostProcess(info.hProcess);
     ((HostProcessWindows &)m_process.GetNativeProcess()).SetOwnsHandle(false);
     m_main_thread = HostThread(info.hThread);
-    ((HostThreadWindows &)m_main_thread.GetNativeThread()).SetOwnsHandle(false);
+    m_main_thread.GetNativeThread().SetOwnsHandle(false);
     m_image_file = info.hFile;
 
     lldb::addr_t load_addr = reinterpret_cast<lldb::addr_t>(info.lpBaseOfImage);

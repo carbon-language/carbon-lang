@@ -53,16 +53,16 @@ HostThread::IsJoinable() const
     return m_native_thread->IsJoinable();
 }
 
-HostNativeThreadBase &
+HostNativeThread &
 HostThread::GetNativeThread()
 {
-    return *m_native_thread;
+    return static_cast<HostNativeThread &>(*m_native_thread);
 }
 
-const HostNativeThreadBase &
+const HostNativeThread &
 HostThread::GetNativeThread() const
 {
-    return *m_native_thread;
+    return static_cast<const HostNativeThread &>(*m_native_thread);
 }
 
 lldb::thread_result_t

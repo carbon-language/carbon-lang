@@ -17,7 +17,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 TargetThreadWindows::TargetThreadWindows(ProcessWindows &process, const HostThread &thread)
-    : Thread(process, ((HostThreadWindows &)thread.GetNativeThread()).GetThreadId())
+    : Thread(process, thread.GetNativeThread().GetThreadId())
     , m_host_thread(thread)
 {
 }

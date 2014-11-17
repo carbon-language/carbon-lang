@@ -365,7 +365,7 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
     module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
 
     DebuggerThreadSP debugger = m_session_data->m_debugger;
-    const HostThreadWindows &wmain_thread = static_cast<const HostThreadWindows &>(debugger->GetMainThread().GetNativeThread());
+    const HostThreadWindows &wmain_thread = debugger->GetMainThread().GetNativeThread();
     m_session_data->m_new_threads[wmain_thread.GetThreadId()] = debugger->GetMainThread();
 }
 
@@ -417,7 +417,7 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
 void
 ProcessWindows::OnCreateThread(const HostThread &new_thread)
 {
-    const HostThreadWindows &wnew_thread = static_cast<const HostThreadWindows &>(new_thread.GetNativeThread());
+    const HostThreadWindows &wnew_thread = new_thread.GetNativeThread();
     m_session_data->m_new_threads[wnew_thread.GetThreadId()] = new_thread;
 }
 
@@ -426,7 +426,7 @@ ProcessWindows::OnExitThread(const HostThread &exited_thread)
 {
     // A thread may have started and exited before the debugger stopped allowing a refresh.
     // Just remove it from the new threads list in that case.
-    const HostThreadWindows &wexited_thread = static_cast<const HostThreadWindows &>(exited_thread.GetNativeThread());
+    const HostThreadWindows &wexited_thread = exited_thread.GetNativeThread();
     auto iter = m_session_data->m_new_threads.find(wexited_thread.GetThreadId());
     if (iter != m_session_data->m_new_threads.end())
         m_session_data->m_new_threads.erase(iter);
