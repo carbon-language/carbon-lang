@@ -35,14 +35,11 @@ template <typename Ty> void canSpecializeGraphTraitsIterators(Ty *G) {
 
   auto S = GraphTraits<NodeTy *>::child_begin(N);
   auto F = GraphTraits<NodeTy *>::child_end(N);
-  auto Y = ++S;
 
   // Should be able to iterate over immediate successors of a node.
   static_assert(std::is_same<decltype(*S), NodeTy *>::value,
                 "Node type does not match");
   static_assert(std::is_same<decltype(*F), NodeTy *>::value,
-                "Node type does not match");
-  static_assert(std::is_same<decltype(*Y), NodeTy *>::value,
                 "Node type does not match");
 }
 
