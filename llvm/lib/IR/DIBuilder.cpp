@@ -844,7 +844,7 @@ static DIGlobalVariable createGlobalVariableHelper(
                        .concat(isLocalToUnit)
                        .concat(isDefinition)
                        .get(VMContext),
-                   getNonCompileUnitScope(Context), F, Ty, Val,
+                   DIScope(getNonCompileUnitScope(Context)).getRef(), F, Ty, Val,
                    DIDescriptor(Decl)};
 
   return DIGlobalVariable(CreateFunc(Elts));
