@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
 ; SILowerI1Copies was not handling IMPLICIT_DEF
-; SI-LABEL: @br_implicit_def
+; SI-LABEL: {{^}}br_implicit_def:
 ; SI: BB#0:
 ; SI-NEXT: s_and_saveexec_b64
 ; SI-NEXT: s_xor_b64

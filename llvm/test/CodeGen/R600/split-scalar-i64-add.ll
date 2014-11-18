@@ -1,4 +1,3 @@
-; XFAIL:*
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 declare i32 @llvm.r600.read.tidig.x() readnone
@@ -9,6 +8,8 @@ declare i32 @llvm.r600.read.tidig.x() readnone
 ; scc instead.
 
 ; FUNC-LABEL: {{^}}imp_def_vcc_split_i64_add_0:
+; SI: v_add_i32
+; SI: v_addc_u32
 define void @imp_def_vcc_split_i64_add_0(i64 addrspace(1)* %out, i32 %val) {
   %vec.0 = insertelement <2 x i32> undef, i32 %val, i32 0
   %vec.1 = insertelement <2 x i32> %vec.0, i32 999999, i32 1
@@ -19,6 +20,8 @@ define void @imp_def_vcc_split_i64_add_0(i64 addrspace(1)* %out, i32 %val) {
 }
 
 ; FUNC-LABEL: {{^}}imp_def_vcc_split_i64_add_1:
+; SI: v_add_i32
+; SI: v_addc_u32
 define void @imp_def_vcc_split_i64_add_1(i64 addrspace(1)* %out, i32 %val0, i64 %val1) {
   %vec.0 = insertelement <2 x i32> undef, i32 %val0, i32 0
   %vec.1 = insertelement <2 x i32> %vec.0, i32 99999, i32 1
@@ -30,6 +33,8 @@ define void @imp_def_vcc_split_i64_add_1(i64 addrspace(1)* %out, i32 %val0, i64 
 
 ; Doesn't use constants
 ; FUNC-LABEL @imp_def_vcc_split_i64_add_2
+; SI: v_add_i32
+; SI: v_addc_u32
 define void @imp_def_vcc_split_i64_add_2(i64 addrspace(1)* %out, i32 addrspace(1)* %in, i32 %val0, i64 %val1) {
   %tid = call i32 @llvm.r600.read.tidig.x() readnone
   %gep = getelementptr i32 addrspace(1)* %in, i32 %tid

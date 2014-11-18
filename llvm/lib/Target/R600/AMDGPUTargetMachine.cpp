@@ -150,8 +150,15 @@ AMDGPUPassConfig::addPreISel() {
 }
 
 bool AMDGPUPassConfig::addInstSelector() {
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
+
   addPass(createAMDGPUISelDag(getAMDGPUTargetMachine()));
-  addPass(createSILowerI1CopiesPass());
+
+  if (ST.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+    addPass(createSILowerI1CopiesPass());
+    addPass(createSIFixSGPRCopiesPass(*TM));
+  }
+
   return false;
 }
 
@@ -161,12 +168,7 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createR600VectorRegMerger(*TM));
   } else {
-    addPass(createSIFixSGPRCopiesPass(*TM));
-    // SIFixSGPRCopies can generate a lot of duplicate instructions,
-    // so we need to run MachineCSE afterwards.
-    addPass(&MachineCSEID);
-
-    if (getOptLevel() > CodeGenOpt::None && ST.loadStoreOptEnabled()) {
+     if (getOptLevel() > CodeGenOpt::None && ST.loadStoreOptEnabled()) {
       // Don't do this with no optimizations since it throws away debug info by
       // merging nonadjacent loads.
 
