@@ -162,6 +162,7 @@ multiclass T_ALU32_3op_A2<string mnemonic, bits<3> MajOp, bits<3> MinOp,
 
 let isCodeGenOnly = 0 in
 defm add : T_ALU32_3op_A2<"add", 0b011, 0b000, 0, 1>;
+defm sub : T_ALU32_3op_A2<"sub", 0b011, 0b001, 1, 0>;
 
 // Pats for instruction selection.
 class BinOp32_pat<SDNode Op, InstHexagon MI, ValueType ResT>
@@ -169,6 +170,7 @@ class BinOp32_pat<SDNode Op, InstHexagon MI, ValueType ResT>
         (ResT (MI IntRegs:$Rs, IntRegs:$Rt))>;
 
 def: BinOp32_pat<add, A2_add, i32>;
+def: BinOp32_pat<sub, A2_sub, i32>;
 
 multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                        bit isPredNew> {
