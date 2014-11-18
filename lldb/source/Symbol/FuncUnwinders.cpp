@@ -211,16 +211,16 @@ FuncUnwinders::GetUnwindAssemblyProfiler ()
 }
 
 Address
-FuncUnwinders::GetLSDAAddress () const
+FuncUnwinders::GetLSDAAddress ()
 {
     Address lsda_addr;
-    if (m_unwind_plan_non_call_site_sp->GetLSDAAddress().IsValid())
+    Mutex::Locker locker (m_mutex);
+
+    GetUnwindPlanAtCallSite (-1);
+
+    if (m_unwind_plan_call_site_sp && m_unwind_plan_call_site_sp->GetLSDAAddress().IsValid())
     {
-        lsda_addr = m_unwind_plan_non_call_site_sp->GetLSDAAddress().IsValid();
-    }
-    else if (m_unwind_plan_call_site_sp->GetLSDAAddress().IsValid())
-    {
-        lsda_addr = m_unwind_plan_non_call_site_sp->GetLSDAAddress().IsValid();
+        lsda_addr = m_unwind_plan_call_site_sp->GetLSDAAddress().IsValid();
     }
 
     return lsda_addr;
@@ -228,16 +228,16 @@ FuncUnwinders::GetLSDAAddress () const
 
 
 Address
-FuncUnwinders::GetPersonalityRoutinePtrAddress () const
+FuncUnwinders::GetPersonalityRoutinePtrAddress ()
 {
     Address personality_addr;
-    if (m_unwind_plan_non_call_site_sp->GetPersonalityFunctionPtr().IsValid())
+    Mutex::Locker locker (m_mutex);
+
+    GetUnwindPlanAtCallSite (-1);
+
+    if (m_unwind_plan_call_site_sp && m_unwind_plan_call_site_sp->GetPersonalityFunctionPtr().IsValid())
     {
-        personality_addr = m_unwind_plan_non_call_site_sp->GetPersonalityFunctionPtr().IsValid();
-    }
-    else if (m_unwind_plan_call_site_sp->GetPersonalityFunctionPtr().IsValid())
-    {
-        personality_addr = m_unwind_plan_non_call_site_sp->GetPersonalityFunctionPtr().IsValid();
+        personality_addr = m_unwind_plan_call_site_sp->GetPersonalityFunctionPtr().IsValid();
     }
 
     return personality_addr;

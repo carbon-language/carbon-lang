@@ -73,14 +73,14 @@ public:
     // If any of the UnwindPlans have the address of the LSDA region for this function,
     // this will return it.  
     Address
-    GetLSDAAddress () const;
+    GetLSDAAddress ();
 
     // A function may have a Personality Routine associated with it -- used in the
     // processing of throwing an exception.  If any of the UnwindPlans have the
     // address of the personality routine, this will return it.  Read the target-pointer
     // at this address to get the personality function address.
     Address
-    GetPersonalityRoutinePtrAddress () const;
+    GetPersonalityRoutinePtrAddress ();
 
 private:
 
