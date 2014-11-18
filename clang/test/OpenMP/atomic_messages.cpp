@@ -21,31 +21,78 @@ L1:
   return 0;
 }
 
+struct S {
+  int a;
+  S &operator=(int v) {
+    a = v;
+    return *this;
+  }
+  S &operator+=(const S &s) {
+    a += s.a;
+    return *this;
+  }
+};
+
 template <class T>
 T read() {
-  T a, b = 0;
+  T a = T(), b = T();
 // Test for atomic read
 #pragma omp atomic read
-  // expected-error@+1 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both l-value expressions with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
-// expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'read' clause}}
+#pragma omp atomic read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  foo();
+#pragma omp atomic read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  a += b;
+#pragma omp atomic read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected lvalue expression}}
+  a = 0;
+#pragma omp atomic read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  a = b;
+  // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'read' clause}}
 #pragma omp atomic read read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
   a = b;
 
-  return T();
+  return a;
 }
 
 int read() {
-  int a, b = 0;
+  int a = 0, b = 0;
 // Test for atomic read
 #pragma omp atomic read
-  // expected-error@+1 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both l-value expressions with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
-// expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'read' clause}}
+#pragma omp atomic read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  foo();
+#pragma omp atomic read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  a += b;
+#pragma omp atomic read
+  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 {{expected lvalue expression}}
+  a = 0;
+#pragma omp atomic read
+  a = b;
+  // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'read' clause}}
 #pragma omp atomic read read
   a = b;
 
-  return read<int>();
+  // expected-note@+1 {{in instantiation of function template specialization 'read<S>' requested here}}
+  return read<int>() + read<S>().a;
 }
 
 template <class T>

@@ -7322,7 +7322,9 @@ def err_omp_parallel_reduction_in_task_firstprivate : Error<
   "argument of a reduction clause of a %0 construct must not appear in a firstprivate clause on a task construct">;
 def err_omp_atomic_read_not_expression_statement : Error<
   "the statement for 'atomic read' must be an expression statement of form 'v = x;',"
-  " where v and x are both l-value expressions with scalar type">;
+  " where v and x are both lvalue expressions with scalar type">;
+def note_omp_atomic_read: Note<
+  "%select{expected an expression statement|expected built-in assignment operator|expected expression of scalar type|expected lvalue expression}0">;
 def err_omp_atomic_write_not_expression_statement : Error<
   "the statement for 'atomic write' must be an expression statement of form 'x = expr;',"
   " where x is an l-value expression with scalar type">;

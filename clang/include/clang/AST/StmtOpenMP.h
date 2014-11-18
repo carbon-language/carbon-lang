@@ -1439,7 +1439,7 @@ class OMPAtomicDirective : public OMPExecutableDirective {
   OMPAtomicDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                      unsigned NumClauses)
       : OMPExecutableDirective(this, OMPAtomicDirectiveClass, OMPD_atomic,
-                               StartLoc, EndLoc, NumClauses, 1) {}
+                               StartLoc, EndLoc, NumClauses, 4) {}
 
   /// \brief Build an empty directive.
   ///
@@ -1448,20 +1448,33 @@ class OMPAtomicDirective : public OMPExecutableDirective {
   explicit OMPAtomicDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPAtomicDirectiveClass, OMPD_atomic,
                                SourceLocation(), SourceLocation(), NumClauses,
-                               1) {}
+                               4) {}
+
+  /// \brief Set 'x' part of the associated expression/statement.
+  void setX(Expr *X) { *std::next(child_begin()) = X; }
+  /// \brief Set 'v' part of the associated expression/statement.
+  void setV(Expr *V) { *std::next(child_begin(), 2) = V; }
+  /// \brief Set 'expr' part of the associated expression/statement.
+  void setExpr(Expr *E) { *std::next(child_begin(), 3) = E; }
 
 public:
-  /// \brief Creates directive with a list of \a Clauses.
+  /// \brief Creates directive with a list of \a Clauses and 'x', 'v' and 'expr'
+  /// parts of the atomic construct (see Section 2.12.6, atomic Construct, for
+  /// detailed description of 'x', 'v' and 'expr').
   ///
   /// \param C AST context.
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param X 'x' part of the associated expression/statement.
+  /// \param V 'v' part of the associated expression/statement.
+  /// \param Expr 'expr' part of the associated expression/statement.
   ///
   static OMPAtomicDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, Expr *X, Expr *V,
+         Expr *E);
 
   /// \brief Creates an empty directive with the place for \a NumClauses
   /// clauses.
@@ -1471,6 +1484,22 @@ public:
   ///
   static OMPAtomicDirective *CreateEmpty(const ASTContext &C,
                                          unsigned NumClauses, EmptyShell);
+
+  /// \brief Get 'x' part of the associated expression/statement.
+  Expr *getX() { return cast_or_null<Expr>(*std::next(child_begin())); }
+  const Expr *getX() const {
+    return cast_or_null<Expr>(*std::next(child_begin()));
+  }
+  /// \brief Get 'v' part of the associated expression/statement.
+  Expr *getV() { return cast_or_null<Expr>(*std::next(child_begin(), 2)); }
+  const Expr *getV() const {
+    return cast_or_null<Expr>(*std::next(child_begin(), 2));
+  }
+  /// \brief Get 'expr' part of the associated expression/statement.
+  Expr *getExpr() { return cast_or_null<Expr>(*std::next(child_begin(), 3)); }
+  const Expr *getExpr() const {
+    return cast_or_null<Expr>(*std::next(child_begin(), 3));
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPAtomicDirectiveClass;

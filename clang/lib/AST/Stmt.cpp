@@ -1924,19 +1924,21 @@ OMPOrderedDirective *OMPOrderedDirective::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPOrderedDirective();
 }
 
-OMPAtomicDirective *OMPAtomicDirective::Create(const ASTContext &C,
-                                               SourceLocation StartLoc,
-                                               SourceLocation EndLoc,
-                                               ArrayRef<OMPClause *> Clauses,
-                                               Stmt *AssociatedStmt) {
+OMPAtomicDirective *
+OMPAtomicDirective::Create(const ASTContext &C, SourceLocation StartLoc,
+                           SourceLocation EndLoc, ArrayRef<OMPClause *> Clauses,
+                           Stmt *AssociatedStmt, Expr *X, Expr *V, Expr *E) {
   unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPAtomicDirective),
                                            llvm::alignOf<OMPClause *>());
-  void *Mem =
-      C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() + sizeof(Stmt *));
+  void *Mem = C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() +
+                         4 * sizeof(Stmt *));
   OMPAtomicDirective *Dir =
       new (Mem) OMPAtomicDirective(StartLoc, EndLoc, Clauses.size());
   Dir->setClauses(Clauses);
   Dir->setAssociatedStmt(AssociatedStmt);
+  Dir->setX(X);
+  Dir->setV(V);
+  Dir->setExpr(E);
   return Dir;
 }
 
@@ -1946,7 +1948,7 @@ OMPAtomicDirective *OMPAtomicDirective::CreateEmpty(const ASTContext &C,
   unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPAtomicDirective),
                                            llvm::alignOf<OMPClause *>());
   void *Mem =
-      C.Allocate(Size + sizeof(OMPClause *) * NumClauses + sizeof(Stmt *));
+      C.Allocate(Size + sizeof(OMPClause *) * NumClauses + 4 * sizeof(Stmt *));
   return new (Mem) OMPAtomicDirective(NumClauses);
 }
 
