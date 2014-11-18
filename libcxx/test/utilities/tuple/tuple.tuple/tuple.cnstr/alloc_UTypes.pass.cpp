@@ -24,6 +24,69 @@
 
 struct NoDefault { NoDefault() = delete; };
 
+// Make sure the _Up... constructor SFINAEs out when the types that
+// are not explicitly initialized are not all default constructible.
+// Otherwise, std::is_constructible would return true but instantiating
+// the constructor would fail.
+void test_default_constructible_extension_sfinae()
+{
+    {
+        typedef std::tuple<MoveOnly, NoDefault> Tuple;
+
+        static_assert(!std::is_constructible<
+            Tuple,
+            std::allocator_arg_t, A1<int>, MoveOnly
+        >::value, "");
+
+        static_assert(std::is_constructible<
+            Tuple,
+            std::allocator_arg_t, A1<int>, MoveOnly, NoDefault
+        >::value, "");
+    }
+    {
+        typedef std::tuple<MoveOnly, MoveOnly, NoDefault> Tuple;
+
+        static_assert(!std::is_constructible<
+            std::tuple<MoveOnly, MoveOnly, NoDefault>,
+            std::allocator_arg_t, A1<int>, MoveOnly, MoveOnly
+        >::value, "");
+
+        static_assert(std::is_constructible<
+            std::tuple<MoveOnly, MoveOnly, NoDefault>,
+            std::allocator_arg_t, A1<int>, MoveOnly, MoveOnly, NoDefault
+        >::value, "");
+    }
+    {
+        // Same idea as above but with a nested tuple
+        typedef std::tuple<MoveOnly, NoDefault> Tuple;
+        typedef std::tuple<MoveOnly, Tuple, MoveOnly, MoveOnly> NestedTuple;
+
+        static_assert(!std::is_constructible<
+            NestedTuple,
+            std::allocator_arg_t, A1<int>, MoveOnly, MoveOnly, MoveOnly, MoveOnly
+        >::value, "");
+
+        static_assert(std::is_constructible<
+            NestedTuple,
+            std::allocator_arg_t, A1<int>, MoveOnly, Tuple, MoveOnly, MoveOnly
+        >::value, "");
+    }
+    {
+        typedef std::tuple<MoveOnly, int> Tuple;
+        typedef std::tuple<MoveOnly, Tuple, MoveOnly, MoveOnly> NestedTuple;
+
+        static_assert(std::is_constructible<
+            NestedTuple,
+            std::allocator_arg_t, A1<int>, MoveOnly, MoveOnly, MoveOnly, MoveOnly
+        >::value, "");
+
+        static_assert(std::is_constructible<
+            NestedTuple,
+            std::allocator_arg_t, A1<int>, MoveOnly, Tuple, MoveOnly, MoveOnly
+        >::value, "");
+    }
+}
+
 int main()
 {
     {
@@ -70,19 +133,7 @@ int main()
         assert(std::get<1>(t) == MoveOnly());
         assert(std::get<2>(t) == MoveOnly());
     }
-    {
-        // Make sure the _Up... constructor SFINAEs out when the types that
-        // are not explicitly initialized are not all default constructible.
-        // Otherwise, std::is_constructible would return true but instantiating
-        // the constructor would fail.
-        static_assert(!std::is_constructible<
-            std::tuple<MoveOnly, NoDefault>,
-            std::allocator_arg_t, A1<int>, MoveOnly
-        >::value, "");
-
-        static_assert(!std::is_constructible<
-            std::tuple<MoveOnly, MoveOnly, NoDefault>,
-            std::allocator_arg_t, A1<int>, MoveOnly, MoveOnly
-        >::value, "");
-    }
+    // Check that SFINAE is properly applied with the default reduced arity
+    // constructor extensions.
+    test_default_constructible_extension_sfinae();
 }
