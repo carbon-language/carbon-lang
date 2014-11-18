@@ -176,7 +176,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
                   TII.get(Hexagon::CONST32_Int_Real), dstReg).addImm(Offset);
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::ADD_rr),
+                  TII.get(Hexagon::A2_add),
                   dstReg).addReg(FrameReg).addReg(dstReg);
         } else {
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
@@ -205,7 +205,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
                   TII.get(Hexagon::CONST32_Int_Real), resReg).addImm(Offset);
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::ADD_rr),
+                  TII.get(Hexagon::A2_add),
                   resReg).addReg(FrameReg).addReg(resReg);
         } else {
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
@@ -237,7 +237,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
             BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
                     TII.get(Hexagon::CONST32_Int_Real), ResReg).addImm(Offset);
             BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                    TII.get(Hexagon::ADD_rr), ResReg).addReg(FrameReg).
+                    TII.get(Hexagon::A2_add), ResReg).addReg(FrameReg).
               addReg(ResReg);
             MI.getOperand(FIOperandNum).ChangeToRegister(ResReg, false, false,
                                                          true);
@@ -256,7 +256,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
                 TII.get(Hexagon::CONST32_Int_Real), dstReg).addImm(Offset);
         BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                TII.get(Hexagon::ADD_rr),
+                TII.get(Hexagon::A2_add),
                 dstReg).addReg(FrameReg).addReg(dstReg);
         // Can we delete MI??? r2 = add (r2, #0).
         MI.getOperand(FIOperandNum).ChangeToRegister(dstReg, false, false,true);

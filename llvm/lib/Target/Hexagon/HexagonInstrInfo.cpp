@@ -1295,10 +1295,12 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
   switch (MI->getOpcode())
   {
     default: return false;
+    case Hexagon::A2_paddf:
+    case Hexagon::A2_paddfnew:
+    case Hexagon::A2_paddt:
+    case Hexagon::A2_paddtnew:
     case Hexagon::ADD_ri_cPt:
     case Hexagon::ADD_ri_cNotPt:
-    case Hexagon::ADD_rr_cPt:
-    case Hexagon::ADD_rr_cNotPt:
     case Hexagon::XOR_rr_cPt:
     case Hexagon::XOR_rr_cNotPt:
     case Hexagon::AND_rr_cPt:
