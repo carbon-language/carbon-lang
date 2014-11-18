@@ -58,31 +58,31 @@ endif()
 target_link_libraries(cxxabi ${libraries})
 
 # Setup flags.
-append_if(compile_flags LIBCXXABI_HAS_FPIC_FLAG -fPIC)
-append_if(link_flags LIBCXXABI_HAS_NODEFAULTLIBS_FLAG -nodefaultlibs)
+append_if(LIBCXXABI_COMPILE_FLAGS LIBCXXABI_HAS_FPIC_FLAG -fPIC)
+append_if(LIBCXXABI_LINK_FLAGS LIBCXXABI_HAS_NODEFAULTLIBS_FLAG -nodefaultlibs)
 
 if ( APPLE )
   if ( CMAKE_OSX_DEPLOYMENT_TARGET STREQUAL "10.6" )
-    list(APPEND compile_flags "-U__STRICT_ANSI__")
-    list(APPEND link_flags
+    list(APPEND LIBCXXABI_COMPILE_FLAGS "-U__STRICT_ANSI__")
+    list(APPEND LIBCXXABI_LINK_FLAGS
       "-compatibility_version 1"
       "-current_version 1"
       "-install_name /usr/lib/libc++abi.1.dylib"
       "/usr/lib/libSystem.B.dylib")
   else()
-    list(APPEND link_flags
+    list(APPEND LIBCXXABI_LINK_FLAGS
       "-compatibility_version 1"
       "-install_name /usr/lib/libc++abi.1.dylib")
   endif()
 endif()
 
-string(REPLACE ";" " " compile_flags "${compile_flags}")
-string(REPLACE ";" " " link_flags "${link_flags}")
+string(REPLACE ";" " " LIBCXXABI_COMPILE_FLAGS "${LIBCXXABI_COMPILE_FLAGS}")
+string(REPLACE ";" " " LIBCXXABI_LINK_FLAGS "${LIBCXXABI_LINK_FLAGS}")
 
 set_target_properties(cxxabi
   PROPERTIES
-    COMPILE_FLAGS "${compile_flags}"
-    LINK_FLAGS    "${link_flags}"
+    COMPILE_FLAGS "${LIBCXXABI_COMPILE_FLAGS}"
+    LINK_FLAGS    "${LIBCXXABI_LINK_FLAGS}"
     OUTPUT_NAME   "c++abi"
     VERSION       "1.0"
     SOVERSION     "1"
