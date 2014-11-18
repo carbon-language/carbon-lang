@@ -145,9 +145,11 @@ namespace {
       //   } A;
       DeferredInlineMethodDefinitions.push_back(D);
 
-      // Always provide some coverage mapping
-      // even for the methods that aren't emitted.
-      Builder->AddDeferredUnusedCoverageMapping(D);
+      // Provide some coverage mapping even for methods that aren't emitted.
+      // Don't do this for templated classes though, as they may not be
+      // instantiable.
+      if (!D->getParent()->getDescribedClassTemplate())
+        Builder->AddDeferredUnusedCoverageMapping(D);
     }
 
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
