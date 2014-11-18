@@ -87,6 +87,10 @@ class CGDebugInfo {
   /// compilation.
   std::vector<std::pair<const TagType *, llvm::WeakVH>> ReplaceMap;
 
+  /// \brief Cache of replaceable forward declarartions (functions and
+  /// variables) to RAUW at the end of compilation.
+  std::vector<std::pair<const DeclaratorDecl *, llvm::WeakVH>> FwdDeclReplaceMap;
+
   // LexicalBlockStack - Keep track of our current nested lexical block.
   std::vector<llvm::TrackingVH<llvm::MDNode> > LexicalBlockStack;
   llvm::DenseMap<const Decl *, llvm::WeakVH> RegionMap;
@@ -375,6 +379,14 @@ private:
   /// declaration for the given out-of-class definition.
   llvm::DIDerivedType
   getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
+
+  /// \brief Create a DISubprogram describing the forward
+  /// decalration represented in the given FunctionDecl.
+  llvm::DISubprogram getFunctionForwardDeclaration(const FunctionDecl *FD);
+
+  /// \brief Create a DIGlobalVariable describing the forward
+  /// decalration represented in the given VarDecl.
+  llvm::DIGlobalVariable getGlobalVariableForwardDeclaration(const VarDecl *VD);
 
   /// Return a global variable that represents one of the collection of
   /// global variables created for an anonmyous union.

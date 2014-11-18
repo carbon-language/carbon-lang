@@ -11,6 +11,10 @@ void f1(int) { }
 struct foo;
 struct bar { };
 typedef bar baz;
+extern int var_decl;
+void func_decl(void);
+extern int var_fwd;
+void func_fwd(void);
 }
 }
 namespace A {
@@ -33,12 +37,20 @@ int func(bool b) {
   using B::baz;
   namespace X = A;
   namespace Y = X;
+  using B::var_decl;
+  using B::func_decl;
+  using B::var_fwd;
+  using B::func_fwd;
   return i + X::B::i + Y::B::i;
 }
 
 namespace A {
 using B::i;
+namespace B {
+int var_fwd = i;
 }
+}
+void B::func_fwd() {}
 
 // This should work even if 'i' and 'func' were declarations & not definitions,
 // but it doesn't yet.
@@ -53,16 +65,19 @@ using B::i;
 // CHECK: [[F1:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
 // CHECK: [[FILE2]]} ; [ DW_TAG_file_type ] [{{.*}}foo.cpp]
 // CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
+// CHECK: [[FUNC_FWD:![0-9]*]] {{.*}} [ DW_TAG_subprogram ] [line 47] [def] [func_fwd]
 // CHECK: [[I:![0-9]*]] = metadata !{metadata !"0x34\00i\00{{.*}}", metadata [[NS]], {{.*}} ; [ DW_TAG_variable ] [i]
-// CHECK: [[MODULES]] = metadata !{metadata [[M1:![0-9]*]], metadata [[M2:![0-9]*]], metadata [[M3:![0-9]*]], metadata [[M4:![0-9]*]], metadata [[M5:![0-9]*]], metadata [[M6:![0-9]*]], metadata [[M7:![0-9]*]], metadata [[M8:![0-9]*]], metadata [[M9:![0-9]*]], metadata [[M10:![0-9]*]], metadata [[M11:![0-9]*]], metadata [[M12:![0-9]*]], metadata [[M13:![0-9]*]]}
-// CHECK: [[M1]] = metadata !{metadata !"0x3a\0011\00", metadata [[CTXT]], metadata [[NS]]} ; [ DW_TAG_imported_module ]
+// CHECK: [[VAR_FWD:![0-9]*]] = metadata !{metadata !"0x34\00var_fwd\00{{.*}}", metadata [[NS]], {{.*}}} ; [ DW_TAG_variable ] [var_fwd] [line 44] [def]
+
+// CHECK: [[MODULES]] = metadata !{metadata [[M1:![0-9]*]], metadata [[M2:![0-9]*]], metadata [[M3:![0-9]*]], metadata [[M4:![0-9]*]], metadata [[M5:![0-9]*]], metadata [[M6:![0-9]*]], metadata [[M7:![0-9]*]], metadata [[M8:![0-9]*]], metadata [[M9:![0-9]*]], metadata [[M10:![0-9]*]], metadata [[M11:![0-9]*]], metadata [[M12:![0-9]*]], metadata [[M13:![0-9]*]], metadata [[M14:![0-9]*]], metadata [[M15:![0-9]*]], metadata [[M16:![0-9]*]], metadata [[M17:![0-9]*]]}
+// CHECK: [[M1]] = metadata !{metadata !"0x3a\0015\00", metadata [[CTXT]], metadata [[NS]]} ; [ DW_TAG_imported_module ]
 // CHECK: [[M2]] = metadata !{metadata !"0x3a\00{{[0-9]+}}\00", metadata [[CU]], metadata [[CTXT]]} ; [ DW_TAG_imported_module ]
-// CHECK: [[M3]] = metadata !{metadata !"0x8\0015\00E", metadata [[CU]], metadata [[CTXT]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M4]] = metadata !{metadata !"0x3a\0019\00", metadata [[LEX2:![0-9]*]], metadata [[NS]]} ; [ DW_TAG_imported_module ]
+// CHECK: [[M3]] = metadata !{metadata !"0x8\0019\00E", metadata [[CU]], metadata [[CTXT]]} ; [ DW_TAG_imported_declaration ]
+// CHECK: [[M4]] = metadata !{metadata !"0x3a\0023\00", metadata [[LEX2:![0-9]*]], metadata [[NS]]} ; [ DW_TAG_imported_module ]
 // CHECK: [[LEX2]] = metadata !{metadata !"0xb\00{{[0-9]*}}\000\00{{.*}}", metadata [[FILE2]], metadata [[LEX1:![0-9]+]]} ; [ DW_TAG_lexical_block ]
 // CHECK: [[LEX1]] = metadata !{metadata !"0xb\00{{[0-9]*}}\000\00{{.*}}", metadata [[FILE2]], metadata [[FUNC]]} ; [ DW_TAG_lexical_block ]
 // CHECK: [[M5]] = metadata !{metadata !"0x3a\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[CTXT]]} ; [ DW_TAG_imported_module ]
-// CHECK: [[M6]] = metadata !{metadata !"0x8\0023\00", metadata [[FUNC]], metadata [[FOO:!"_ZTSN1A1B3fooE"]]} ; [ DW_TAG_imported_declaration ]
+// CHECK: [[M6]] = metadata !{metadata !"0x8\0027\00", metadata [[FUNC]], metadata [[FOO:!"_ZTSN1A1B3fooE"]]} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M7]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[BAR:!"_ZTSN1A1B3barE"]]} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M8]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[F1]]} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M9]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[I]]} ; [ DW_TAG_imported_declaration ]
@@ -70,8 +85,13 @@ using B::i;
 // CHECK: [[BAZ]] = metadata !{metadata !"0x16\00baz\00{{.*}}", metadata [[FOOCPP]], metadata [[NS]], metadata !"_ZTSN1A1B3barE"} ; [ DW_TAG_typedef ] [baz] {{.*}} [from _ZTSN1A1B3barE]
 // CHECK: [[M11]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00X", metadata [[FUNC]], metadata [[CTXT]]} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M12]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00Y", metadata [[FUNC]], metadata [[M11]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M13]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[CTXT]], metadata [[I]]} ; [ DW_TAG_imported_declaration ]
-
+// CHECK: [[M13]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[VAR_DECL:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
+// CHECK [[VAR_DECL]] = metadata !{metadata !"0x34\00var_decl\00{{.*}}", metadata [[NS]], {{.*}}} ; [ DW_TAG_variable ] [var_decl] [line 8]
+// CHECK: [[M14]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[FUNC_DECL:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
+// CHECK: [[FUNC_DECL]] = metadata !{metadata !"0x2e\00func_decl\00{{.*}}", metadata [[FOOCPP]], metadata [[NS]], {{.*}}} ; [ DW_TAG_subprogram ] [line 9] [scope 0] [func_decl]
+// CHECK: [[M15]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[VAR_FWD:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
+// CHECK: [[M16]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[FUNC]], metadata [[FUNC_FWD:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
+// CHECK: [[M17]] = metadata !{metadata !"0x8\00{{[0-9]+}}\00", metadata [[CTXT]], metadata [[I]]} ; [ DW_TAG_imported_declaration ]
 // CHECK-GMLT: [[CU:![0-9]*]] = metadata !{metadata !"0x11\00{{.*}}\002"{{.*}}, metadata [[MODULES:![0-9]*]]} ; [ DW_TAG_compile_unit ]
 // CHECK-GMLT: [[MODULES]] = metadata !{}
 

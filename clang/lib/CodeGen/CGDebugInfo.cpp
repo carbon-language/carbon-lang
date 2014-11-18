@@ -2374,6 +2374,58 @@ void CGDebugInfo::collectVarDeclProps(const VarDecl *VD, llvm::DIFile &Unit,
                                               : VD->getDeclContext()));
 }
 
+llvm::DISubprogram
+CGDebugInfo::getFunctionForwardDeclaration(const FunctionDecl *FD) {
+  llvm::DIArray TParamsArray;
+  StringRef Name, LinkageName;
+  unsigned Flags = 0;
+  SourceLocation Loc = FD->getLocation();
+  llvm::DIFile Unit = getOrCreateFile(Loc);
+  llvm::DIDescriptor DContext(Unit);
+  unsigned Line = getLineNumber(Loc);
+
+  collectFunctionDeclProps(FD, Unit, Name, LinkageName, DContext,
+                           TParamsArray, Flags);
+  // Build function type.
+  SmallVector<QualType, 16> ArgTypes;
+  for (const ParmVarDecl *Parm: FD->parameters())
+    ArgTypes.push_back(Parm->getType());
+  QualType FnType =
+    CGM.getContext().getFunctionType(FD->getReturnType(), ArgTypes,
+                                     FunctionProtoType::ExtProtoInfo());
+  llvm::DISubprogram SP =
+    DBuilder.createTempFunctionFwdDecl(DContext, Name, LinkageName, Unit, Line,
+                                       getOrCreateFunctionType(FD, FnType, Unit),
+                                       !FD->isExternallyVisible(),
+                                       false /*declaration*/, 0, Flags,
+                                       CGM.getLangOpts().Optimize, nullptr,
+                                       TParamsArray, getFunctionDeclaration(FD));
+  const FunctionDecl *CanonDecl = cast<FunctionDecl>(FD->getCanonicalDecl());
+  FwdDeclReplaceMap.push_back(std::make_pair(CanonDecl,
+                                             static_cast<llvm::Value *>(SP)));
+  return SP;
+}
+
+llvm::DIGlobalVariable
+CGDebugInfo::getGlobalVariableForwardDeclaration(const VarDecl *VD) {
+  QualType T;
+  StringRef Name, LinkageName;
+  SourceLocation Loc = VD->getLocation();
+  llvm::DIFile Unit = getOrCreateFile(Loc);
+  llvm::DIDescriptor DContext(Unit);
+  unsigned Line = getLineNumber(Loc);
+
+  collectVarDeclProps(VD, Unit, Line, T, Name, LinkageName, DContext);
+  llvm::DIGlobalVariable GV =
+    DBuilder.createTempGlobalVariableFwdDecl(DContext, Name, LinkageName, Unit,
+                                             Line, getOrCreateType(T, Unit),
+                                             !VD->isExternallyVisible(),
+                                             nullptr, nullptr);
+  FwdDeclReplaceMap.push_back(std::make_pair(cast<VarDecl>(VD->getCanonicalDecl()),
+                                             static_cast<llvm::Value *>(GV)));
+  return GV;
+}
+
 llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   // We only need a declaration (not a definition) of the type - so use whatever
   // we would otherwise do to get a type for a pointee. (forward declarations in
@@ -2382,19 +2434,22 @@ llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   if (const TypeDecl *TD = dyn_cast<TypeDecl>(D))
     return getOrCreateType(CGM.getContext().getTypeDeclType(TD),
                            getOrCreateFile(TD->getLocation()));
-  // Otherwise fall back to a fairly rudimentary cache of existing declarations.
-  // This doesn't handle providing declarations (for functions or variables) for
-  // entities without definitions in this TU, nor when the definition proceeds
-  // the call to this function.
-  // FIXME: This should be split out into more specific maps with support for
-  // emitting forward declarations and merging definitions with declarations,
-  // the same way as we do for types.
   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator I =
       DeclCache.find(D->getCanonicalDecl());
-  if (I == DeclCache.end())
-    return llvm::DIScope();
-  llvm::Value *V = I->second;
-  return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(V));
+
+  if (I != DeclCache.end()) {
+    llvm::Value *V = I->second;
+    return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(V));
+  }
+
+  // No definition for now. Emit a forward definition that might be
+  // merged with a potential upcoming definition.
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+    return getFunctionForwardDeclaration(FD);
+  else if (const auto *VD = dyn_cast<VarDecl>(D))
+    return getGlobalVariableForwardDeclaration(VD);
+
+  return llvm::DIDescriptor();
 }
 
 /// getFunctionDeclaration - Return debug info descriptor to describe method
@@ -3328,6 +3383,23 @@ void CGDebugInfo::finalize() {
 
     llvm::DIType RepTy(cast<llvm::MDNode>(it->second));
     Ty.replaceAllUsesWith(CGM.getLLVMContext(), RepTy);
+  }
+
+  for (const auto &p : FwdDeclReplaceMap) {
+    assert(p.second);
+    llvm::DIDescriptor FwdDecl(cast<llvm::MDNode>(p.second));
+    llvm::WeakVH VH;
+
+    auto it = DeclCache.find(p.first);
+    // If there has been no definition for the declaration, call RAUV
+    // with ourselves, that will destroy the temporary MDNode and
+    // replace it with a standard one, avoiding leaking memory.
+    if (it == DeclCache.end())
+      VH = p.second;
+    else
+      VH = it->second;
+    FwdDecl.replaceAllUsesWith(CGM.getLLVMContext(),
+                               llvm::DIDescriptor(cast<llvm::MDNode>(VH)));
   }
 
   // We keep our own list of retained types, because we need to look
