@@ -963,7 +963,7 @@ protected:
     }
 
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc == 0)
@@ -1222,8 +1222,8 @@ private:
          std::string m_syntax;
      };
           
-     virtual Options *
-     GetOptions ()
+     Options *
+     GetOptions () override
      {
          return &m_options;
      }
