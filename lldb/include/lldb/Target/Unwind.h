@@ -27,7 +27,7 @@ protected:
     //------------------------------------------------------------------
     Unwind(Thread &thread) :
         m_thread (thread),
-        m_unwind_mutex()
+        m_unwind_mutex(Mutex::eMutexTypeRecursive)
     {
     }
 
