@@ -1269,17 +1269,14 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         // type of OpI doesn't enter into things at all.  We simply evaluate
         // in whichever source type is larger, then convert to the
         // destination type.
-        Value *NewLHS = LHSOrig, *NewRHS = RHSOrig;
         if (LHSWidth < SrcWidth)
-          NewLHS = Builder->CreateFPExt(NewLHS, RHSOrig->getType());
+          LHSOrig = Builder->CreateFPExt(LHSOrig, RHSOrig->getType());
         else if (RHSWidth <= SrcWidth)
-          NewRHS = Builder->CreateFPExt(NewRHS, LHSOrig->getType());
-        if (NewLHS != LHSOrig || NewRHS != RHSOrig) {
-          Value *ExactResult = Builder->CreateFRem(NewLHS, NewRHS);
-          if (Instruction *RI = dyn_cast<Instruction>(ExactResult))
-            RI->copyFastMathFlags(OpI);
-          return CastInst::CreateFPCast(ExactResult, CI.getType());
-        }
+          RHSOrig = Builder->CreateFPExt(RHSOrig, LHSOrig->getType());
+        Value *ExactResult = Builder->CreateFRem(LHSOrig, RHSOrig);
+        if (Instruction *RI = dyn_cast<Instruction>(ExactResult))
+          RI->copyFastMathFlags(OpI);
+        return CastInst::CreateFPCast(ExactResult, CI.getType());
     }
 
     // (fptrunc (fneg x)) -> (fneg (fptrunc x))

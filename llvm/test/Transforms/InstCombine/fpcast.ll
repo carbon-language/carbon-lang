@@ -53,13 +53,3 @@ define half @test5(float %a, float %b, float %c) {
 }
 
 declare float @llvm.fabs.f32(float) nounwind readonly
-
-define <1 x float> @test6(<1 x double> %V) {
-  %frem = frem <1 x double> %V, %V
-  %trunc = fptrunc <1 x double> %frem to <1 x float>
-  ret <1 x float> %trunc
-; CHECK-LABEL: @test6
-; CHECK-NEXT: %[[frem:.*]]  = frem <1 x double> %V, %V
-; CHECK-NEXT: %[[trunc:.*]] = fptrunc <1 x double> %[[frem]] to <1 x float>
-; CHECK-NEXT: ret <1 x float> %trunc
-}
