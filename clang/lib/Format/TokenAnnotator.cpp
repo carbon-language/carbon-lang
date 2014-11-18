@@ -1677,6 +1677,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       Left.MatchingParen->Previous->is(tok::period))
     // A.<B>DoSomething();
     return false;
+  if (Left.Type == TT_TemplateCloser && Right.is(tok::l_square))
+    return false;
   return true;
 }
 

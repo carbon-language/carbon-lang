@@ -217,6 +217,9 @@ TEST_F(FormatTestJava, Generics) {
   verifyFormat("public static <R> ArrayList<R> get() {\n}");
   verifyFormat("<T extends B> T getInstance(Class<T> type);");
   verifyFormat("Function<F, ? extends T> function;");
+
+  verifyFormat("private Foo<X, Y>[] foos;");
+  verifyFormat("Foo<X, Y>[] foos = this.foos;");
 }
 
 TEST_F(FormatTestJava, StringConcatenation) {
