@@ -226,6 +226,7 @@ struct file_magic {
     unknown = 0,              ///< Unrecognized file
     bitcode,                  ///< Bitcode file
     archive,                  ///< ar style archive file
+    elf,                      ///< ELF Unknown type
     elf_relocatable,          ///< ELF Relocatable object file
     elf_executable,           ///< ELF Executable image
     elf_shared_object,        ///< ELF dynamically linked shared lib

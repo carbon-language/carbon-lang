@@ -60,6 +60,7 @@ ObjectFile::createObjectFile(MemoryBufferRef Object, sys::fs::file_magic Type) {
   case sys::fs::file_magic::macho_universal_binary:
   case sys::fs::file_magic::windows_resource:
     return object_error::invalid_file_type;
+  case sys::fs::file_magic::elf:
   case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::elf_executable:
   case sys::fs::file_magic::elf_shared_object:

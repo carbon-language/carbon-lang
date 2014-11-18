@@ -958,6 +958,9 @@ file_magic identify_magic(StringRef Magic) {
             case 3: return file_magic::elf_shared_object;
             case 4: return file_magic::elf_core;
           }
+        else
+          // It's still some type of ELF file.
+          return file_magic::elf;
       }
       break;
 
