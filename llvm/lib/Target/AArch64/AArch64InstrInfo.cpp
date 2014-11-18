@@ -741,32 +741,52 @@ static bool UpdateOperandRegClass(MachineInstr *Instr) {
   return true;
 }
 
-/// convertFlagSettingOpcode - return opcode that does not
-/// set flags when possible. The caller is responsible to do
-/// the actual substitution and legality checking.
-static unsigned convertFlagSettingOpcode(MachineInstr *MI) {
-    unsigned NewOpc;
-    switch (MI->getOpcode()) {
-    default:
-      return false;
-    case AArch64::ADDSWrr:      NewOpc = AArch64::ADDWrr; break;
-    case AArch64::ADDSWri:      NewOpc = AArch64::ADDWri; break;
-    case AArch64::ADDSWrs:      NewOpc = AArch64::ADDWrs; break;
-    case AArch64::ADDSWrx:      NewOpc = AArch64::ADDWrx; break;
-    case AArch64::ADDSXrr:      NewOpc = AArch64::ADDXrr; break;
-    case AArch64::ADDSXri:      NewOpc = AArch64::ADDXri; break;
-    case AArch64::ADDSXrs:      NewOpc = AArch64::ADDXrs; break;
-    case AArch64::ADDSXrx:      NewOpc = AArch64::ADDXrx; break;
-    case AArch64::SUBSWrr:      NewOpc = AArch64::SUBWrr; break;
-    case AArch64::SUBSWri:      NewOpc = AArch64::SUBWri; break;
-    case AArch64::SUBSWrs:      NewOpc = AArch64::SUBWrs; break;
-    case AArch64::SUBSWrx:      NewOpc = AArch64::SUBWrx; break;
-    case AArch64::SUBSXrr:      NewOpc = AArch64::SUBXrr; break;
-    case AArch64::SUBSXri:      NewOpc = AArch64::SUBXri; break;
-    case AArch64::SUBSXrs:      NewOpc = AArch64::SUBXrs; break;
-    case AArch64::SUBSXrx:      NewOpc = AArch64::SUBXrx; break;
-    }
-    return NewOpc;
+/// \brief Return the opcode that does not set flags when possible - otherwise
+/// return the original opcode. The caller is responsible to do the actual
+/// substitution and legality checking.
+static unsigned convertFlagSettingOpcode(const MachineInstr *MI) {
+  // Don't convert all compare instructions, because for some the zero register
+  // encoding becomes the sp register.
+  bool MIDefinesZeroReg = false;
+  if (MI->definesRegister(AArch64::WZR) || MI->definesRegister(AArch64::XZR))
+    MIDefinesZeroReg = true;
+
+  switch (MI->getOpcode()) {
+  default:
+    return MI->getOpcode();
+  case AArch64::ADDSWrr:
+    return AArch64::ADDWrr;
+  case AArch64::ADDSWri:
+    return MIDefinesZeroReg ? AArch64::ADDSWri : AArch64::ADDWri;
+  case AArch64::ADDSWrs:
+    return MIDefinesZeroReg ? AArch64::ADDSWrs : AArch64::ADDWrs;
+  case AArch64::ADDSWrx:
+    return AArch64::ADDWrx;
+  case AArch64::ADDSXrr:
+    return AArch64::ADDXrr;
+  case AArch64::ADDSXri:
+    return MIDefinesZeroReg ? AArch64::ADDSXri : AArch64::ADDXri;
+  case AArch64::ADDSXrs:
+    return MIDefinesZeroReg ? AArch64::ADDSXrs : AArch64::ADDXrs;
+  case AArch64::ADDSXrx:
+    return AArch64::ADDXrx;
+  case AArch64::SUBSWrr:
+    return AArch64::SUBWrr;
+  case AArch64::SUBSWri:
+    return MIDefinesZeroReg ? AArch64::SUBSWri : AArch64::SUBWri;
+  case AArch64::SUBSWrs:
+    return MIDefinesZeroReg ? AArch64::SUBSWrs : AArch64::SUBWrs;
+  case AArch64::SUBSWrx:
+    return AArch64::SUBWrx;
+  case AArch64::SUBSXrr:
+    return AArch64::SUBXrr;
+  case AArch64::SUBSXri:
+    return MIDefinesZeroReg ? AArch64::SUBSXri : AArch64::SUBXri;
+  case AArch64::SUBSXrs:
+    return MIDefinesZeroReg ? AArch64::SUBSXrs : AArch64::SUBXrs;
+  case AArch64::SUBSXrx:
+    return AArch64::SUBXrx;
+  }
 }
 
 /// True when condition code could be modified on the instruction
@@ -811,6 +831,11 @@ bool AArch64InstrInfo::optimizeCompareInstr(
   // Replace SUBSWrr with SUBWrr if NZCV is not used.
   int Cmp_NZCV = CmpInstr->findRegisterDefOperandIdx(AArch64::NZCV, true);
   if (Cmp_NZCV != -1) {
+    if (CmpInstr->definesRegister(AArch64::WZR) ||
+        CmpInstr->definesRegister(AArch64::XZR)) {
+      CmpInstr->eraseFromParent();
+      return true;
+    }
     unsigned Opc = CmpInstr->getOpcode();
     unsigned NewOpc = convertFlagSettingOpcode(CmpInstr);
     if (NewOpc == Opc)
