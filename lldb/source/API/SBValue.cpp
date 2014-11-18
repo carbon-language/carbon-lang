@@ -642,16 +642,19 @@ SBValue::GetSummary ()
 }
 
 const char *
-SBValue::GetSummary (lldb::SBTypeSummaryOptions& options)
+SBValue::GetSummary (lldb::SBStream& stream,
+                     lldb::SBTypeSummaryOptions& options)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    const char *cstr = NULL;
     ValueLocker locker;
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
     {
-        cstr = value_sp->GetSummaryAsCString(options.ref());
+        std::string buffer;
+        if (value_sp->GetSummaryAsCString(buffer,options.ref()) && !buffer.empty())
+            stream.Printf("%s",buffer.c_str());
     }
+    const char* cstr = stream.GetData();
     if (log)
     {
         if (cstr)

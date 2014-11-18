@@ -934,21 +934,24 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
 const char *
 ValueObject::GetSummaryAsCString ()
 {
-    return GetSummaryAsCString(TypeSummaryOptions());
-}
-
-const char *
-ValueObject::GetSummaryAsCString (const TypeSummaryOptions& options)
-{
     if (UpdateValueIfNeeded(true) && m_summary_str.empty())
     {
         GetSummaryAsCString(GetSummaryFormat().get(),
                             m_summary_str,
-                            options);
+                            TypeSummaryOptions());
     }
     if (m_summary_str.empty())
         return NULL;
     return m_summary_str.c_str();
+}
+
+bool
+ValueObject::GetSummaryAsCString (std::string& destination,
+                                  const TypeSummaryOptions& options)
+{
+    return GetSummaryAsCString(GetSummaryFormat().get(),
+                        destination,
+                        options);
 }
 
 bool
