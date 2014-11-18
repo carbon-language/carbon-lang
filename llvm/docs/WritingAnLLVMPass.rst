@@ -434,9 +434,8 @@ The ``doFinalization(CallGraph &)`` method
   virtual bool doFinalization(CallGraph &CG);
 
 The ``doFinalization`` method is an infrequently used method that is called
-when the pass framework has finished calling :ref:`runOnFunction
-<writing-an-llvm-pass-runOnFunction>` for every function in the program being
-compiled.
+when the pass framework has finished calling :ref:`runOnSCC
+<writing-an-llvm-pass-runOnSCC>` for every SCC in the program being compiled.
 
 .. _writing-an-llvm-pass-FunctionPass:
 
@@ -456,7 +455,7 @@ To be explicit, ``FunctionPass`` subclasses are not allowed to:
 #. Inspect or modify a ``Function`` other than the one currently being processed.
 #. Add or remove ``Function``\ s from the current ``Module``.
 #. Add or remove global variables from the current ``Module``.
-#. Maintain state across invocations of:ref:`runOnFunction
+#. Maintain state across invocations of :ref:`runOnFunction
    <writing-an-llvm-pass-runOnFunction>` (including global data).
 
 Implementing a ``FunctionPass`` is usually straightforward (See the :ref:`Hello
