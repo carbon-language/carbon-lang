@@ -437,7 +437,7 @@ void COFFDumper::printPEHeader(const PEHeader *Hdr) {
   W.printNumber("SizeOfImage", Hdr->SizeOfImage);
   W.printNumber("SizeOfHeaders", Hdr->SizeOfHeaders);
   W.printEnum  ("Subsystem", Hdr->Subsystem, makeArrayRef(PEWindowsSubsystem));
-  W.printFlags ("Subsystem", Hdr->DLLCharacteristics,
+  W.printFlags ("Characteristics", Hdr->DLLCharacteristics,
                 makeArrayRef(PEDLLCharacteristics));
   W.printNumber("SizeOfStackReserve", Hdr->SizeOfStackReserve);
   W.printNumber("SizeOfStackCommit", Hdr->SizeOfStackCommit);
