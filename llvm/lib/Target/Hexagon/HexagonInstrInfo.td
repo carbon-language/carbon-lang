@@ -162,6 +162,7 @@ multiclass T_ALU32_3op_A2<string mnemonic, bits<3> MajOp, bits<3> MinOp,
 
 let isCodeGenOnly = 0 in
 defm add : T_ALU32_3op_A2<"add", 0b011, 0b000, 0, 1>;
+defm and : T_ALU32_3op_A2<"and", 0b001, 0b000, 0, 1>;
 defm sub : T_ALU32_3op_A2<"sub", 0b011, 0b001, 1, 0>;
 
 // Pats for instruction selection.
@@ -170,6 +171,7 @@ class BinOp32_pat<SDNode Op, InstHexagon MI, ValueType ResT>
         (ResT (MI IntRegs:$Rs, IntRegs:$Rt))>;
 
 def: BinOp32_pat<add, A2_add, i32>;
+def: BinOp32_pat<and, A2_and, i32>;
 def: BinOp32_pat<sub, A2_sub, i32>;
 
 multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
@@ -208,7 +210,6 @@ multiclass ALU32_base<string mnemonic, string CextOp, SDNode OpNode> {
 }
 
 let isCommutable = 1 in {
-  defm AND_rr : ALU32_base<"and", "AND", and>, ImmRegRel, PredNewRel;
   defm XOR_rr : ALU32_base<"xor", "XOR", xor>, ImmRegRel, PredNewRel;
   defm OR_rr  : ALU32_base<"or", "OR", or>, ImmRegRel, PredNewRel;
 }
@@ -2291,7 +2292,7 @@ def : Pat <(i64 (zextloadi1 (HexagonCONST32 tglobaladdr:$global))),
 // Map from i1 loads to 32 bits. This assumes that the i1* is byte aligned.
 let AddedComplexity = 10 in
 def : Pat <(i32 (zextloadi1 ADDRriS11_0:$addr)),
-      (i32 (AND_rr (i32 (LDrib ADDRriS11_0:$addr)), (TFRI 0x1)))>;
+      (i32 (A2_and (i32 (LDrib ADDRriS11_0:$addr)), (TFRI 0x1)))>;
 
 // Map from Rdd = sign_extend_inreg(Rss, i32) -> Rdd = SXTW(Rss.lo).
 def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i32)),
