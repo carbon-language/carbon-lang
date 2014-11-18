@@ -3893,9 +3893,8 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
 
   bool AllTablesFitInRegister = true;
   bool HasIllegalType = false;
-  for (SmallDenseMap<PHINode*, Type*>::const_iterator I = ResultTypes.begin(),
-       E = ResultTypes.end(); I != E; ++I) {
-    Type *Ty = I->second;
+  for (const auto &I : ResultTypes) {
+    Type *Ty = I.second;
 
     // Saturate this flag to true.
     HasIllegalType = HasIllegalType || !TTI.isTypeLegal(Ty);
@@ -3979,16 +3978,17 @@ static bool SwitchToLookupTable(SwitchInst *SI,
       return false;
 
     // Append the result from this case to the list for each phi.
-    for (ResultsTy::iterator I = Results.begin(), E = Results.end(); I!=E; ++I) {
-      if (!ResultLists.count(I->first))
-        PHIs.push_back(I->first);
-      ResultLists[I->first].push_back(std::make_pair(CaseVal, I->second));
+    for (const auto &I : Results) {
+      PHINode *PHI = I.first;
+      Constant *Value = I.second;
+      if (!ResultLists.count(PHI))
+        PHIs.push_back(PHI);
+      ResultLists[PHI].push_back(std::make_pair(CaseVal, Value));
     }
   }
 
   // Keep track of the result types.
-  for (size_t I = 0, E = PHIs.size(); I != E; ++I) {
-    PHINode *PHI = PHIs[I];
+  for (PHINode *PHI : PHIs) {
     ResultTypes[PHI] = ResultLists[PHI][0].second->getType();
   }
 
@@ -4005,6 +4005,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
     HasDefaultResults = GetCaseResults(SI, nullptr, SI->getDefaultDest(),
                                        &CommonDest, DefaultResultsList, DL);
   }
+
   bool NeedMask = (TableHasHoles && !HasDefaultResults);
   if (NeedMask) {
     // As an extra penalty for the validity test we require more cases.
@@ -4014,9 +4015,9 @@ static bool SwitchToLookupTable(SwitchInst *SI,
       return false;
   }
 
-  for (size_t I = 0, E = DefaultResultsList.size(); I != E; ++I) {
-    PHINode *PHI = DefaultResultsList[I].first;
-    Constant *Result = DefaultResultsList[I].second;
+  for (const auto &I : DefaultResultsList) {
+    PHINode *PHI = I.first;
+    Constant *Result = I.second;
     DefaultResults[PHI] = Result;
   }
 
