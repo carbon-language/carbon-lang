@@ -11,4 +11,3 @@ For instructions to build LLDB on Linux, or more details about supported
 compiler versions, other dependencies, and build flags, see:
 
     http://lldb.llvm.org/build.html
-
