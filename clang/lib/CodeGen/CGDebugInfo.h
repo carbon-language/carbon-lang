@@ -411,6 +411,21 @@ private:
   /// \param Force  Assume DebugColumnInfo option is true.
   unsigned getColumnNumber(SourceLocation Loc, bool Force=false);
 
+  /// \brief Collect various properties of a FunctionDecl.
+  /// \param GD  A GlobalDecl whose getDecl() must return a FunctionDecl.
+  void collectFunctionDeclProps(GlobalDecl GD,
+                                llvm::DIFile Unit,
+                                StringRef &Name, StringRef &LinkageName,
+                                llvm::DIDescriptor &FDContext,
+                                llvm::DIArray &TParamsArray,
+                                unsigned &Flags);
+
+  /// \brief Collect various properties of a VarDecl.
+  void collectVarDeclProps(const VarDecl *VD, llvm::DIFile &Unit,
+                           unsigned &LineNo, QualType &T,
+                           StringRef &Name, StringRef &LinkageName,
+                           llvm::DIDescriptor &VDContext);
+
   /// internString - Allocate a copy of \p A using the DebugInfoNames allocator
   /// and return a reference to it. If multiple arguments are given the strings
   /// are concatenated.

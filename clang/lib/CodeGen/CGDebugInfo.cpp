@@ -2303,6 +2303,77 @@ llvm::DIType CGDebugInfo::CreateMemberType(llvm::DIFile Unit, QualType FType,
   return Ty;
 }
 
+void CGDebugInfo::collectFunctionDeclProps(GlobalDecl GD,
+                                           llvm::DIFile Unit,
+                                           StringRef &Name, StringRef &LinkageName,
+                                           llvm::DIDescriptor &FDContext,
+                                           llvm::DIArray &TParamsArray,
+                                           unsigned &Flags) {
+  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+  Name = getFunctionName(FD);
+  // Use mangled name as linkage name for C/C++ functions.
+  if (FD->hasPrototype()) {
+    LinkageName = CGM.getMangledName(GD);
+    Flags |= llvm::DIDescriptor::FlagPrototyped;
+  }
+  // No need to replicate the linkage name if it isn't different from the
+  // subprogram name, no need to have it at all unless coverage is enabled or
+  // debug is set to more than just line tables.
+  if (LinkageName == Name ||
+      (!CGM.getCodeGenOpts().EmitGcovArcs &&
+       !CGM.getCodeGenOpts().EmitGcovNotes &&
+       DebugKind <= CodeGenOptions::DebugLineTablesOnly))
+    LinkageName = StringRef();
+
+  if (DebugKind >= CodeGenOptions::LimitedDebugInfo) {
+    if (const NamespaceDecl *NSDecl =
+        dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
+      FDContext = getOrCreateNameSpace(NSDecl);
+    else if (const RecordDecl *RDecl =
+             dyn_cast_or_null<RecordDecl>(FD->getDeclContext()))
+      FDContext = getContextDescriptor(cast<Decl>(RDecl));
+    // Collect template parameters.
+    TParamsArray = CollectFunctionTemplateParams(FD, Unit);
+  }
+}
+
+void CGDebugInfo::collectVarDeclProps(const VarDecl *VD, llvm::DIFile &Unit,
+                                      unsigned &LineNo, QualType &T,
+                                      StringRef &Name, StringRef &LinkageName,
+                                      llvm::DIDescriptor &VDContext) {
+  Unit = getOrCreateFile(VD->getLocation());
+  LineNo = getLineNumber(VD->getLocation());
+
+  setLocation(VD->getLocation());
+
+  T = VD->getType();
+  if (T->isIncompleteArrayType()) {
+    // CodeGen turns int[] into int[1] so we'll do the same here.
+    llvm::APInt ConstVal(32, 1);
+    QualType ET = CGM.getContext().getAsArrayType(T)->getElementType();
+
+    T = CGM.getContext().getConstantArrayType(ET, ConstVal,
+                                              ArrayType::Normal, 0);
+  }
+
+  Name = VD->getName();
+  if (VD->getDeclContext() && !isa<FunctionDecl>(VD->getDeclContext()) &&
+      !isa<ObjCMethodDecl>(VD->getDeclContext()))
+    LinkageName = CGM.getMangledName(VD);
+  if (LinkageName == Name)
+    LinkageName = StringRef();
+
+  // Since we emit declarations (DW_AT_members) for static members, place the
+  // definition of those static members in the namespace they were declared in
+  // in the source code (the lexical decl context).
+  // FIXME: Generalize this for even non-member global variables where the
+  // declaration and definition may have different lexical decl contexts, once
+  // we have support for emitting declarations of (non-member) global variables.
+  VDContext = getContextDescriptor(
+      dyn_cast<Decl>(VD->isStaticDataMember() ? VD->getLexicalDeclContext()
+                                              : VD->getDeclContext()));
+}
+
 llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   // We only need a declaration (not a definition) of the type - so use whatever
   // we would otherwise do to get a type for a pointee. (forward declarations in
@@ -2467,32 +2538,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
         return;
       }
     }
-    Name = getFunctionName(FD);
-    // Use mangled name as linkage name for C/C++ functions.
-    if (FD->hasPrototype()) {
-      LinkageName = CGM.getMangledName(GD);
-      Flags |= llvm::DIDescriptor::FlagPrototyped;
-    }
-    // No need to replicate the linkage name if it isn't different from the
-    // subprogram name, no need to have it at all unless coverage is enabled or
-    // debug is set to more than just line tables.
-    if (LinkageName == Name ||
-        (!CGM.getCodeGenOpts().EmitGcovArcs &&
-         !CGM.getCodeGenOpts().EmitGcovNotes &&
-         DebugKind <= CodeGenOptions::DebugLineTablesOnly))
-      LinkageName = StringRef();
-
-    if (DebugKind >= CodeGenOptions::LimitedDebugInfo) {
-      if (const NamespaceDecl *NSDecl =
-              dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
-        FDContext = getOrCreateNameSpace(NSDecl);
-      else if (const RecordDecl *RDecl =
-                   dyn_cast_or_null<RecordDecl>(FD->getDeclContext()))
-        FDContext = getContextDescriptor(cast<Decl>(RDecl));
-
-      // Collect template parameters.
-      TParamsArray = CollectFunctionTemplateParams(FD, Unit);
-    }
+    collectFunctionDeclProps(GD, Unit, Name, LinkageName, FDContext,
+                             TParamsArray, Flags);
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
     Name = getObjCMethodName(OMD);
     Flags |= llvm::DIDescriptor::FlagPrototyped;
@@ -3125,39 +3172,12 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      const VarDecl *D) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
   // Create global variable debug descriptor.
-  llvm::DIFile Unit = getOrCreateFile(D->getLocation());
-  unsigned LineNo = getLineNumber(D->getLocation());
-
-  setLocation(D->getLocation());
-
-  QualType T = D->getType();
-  if (T->isIncompleteArrayType()) {
-
-    // CodeGen turns int[] into int[1] so we'll do the same here.
-    llvm::APInt ConstVal(32, 1);
-    QualType ET = CGM.getContext().getAsArrayType(T)->getElementType();
-
-    T = CGM.getContext().getConstantArrayType(ET, ConstVal, ArrayType::Normal,
-                                              0);
-  }
-
-  StringRef DeclName = D->getName();
-  StringRef LinkageName;
-  if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext()) &&
-      !isa<ObjCMethodDecl>(D->getDeclContext()))
-    LinkageName = Var->getName();
-  if (LinkageName == DeclName)
-    LinkageName = StringRef();
-
-  // Since we emit declarations (DW_AT_members) for static members, place the
-  // definition of those static members in the namespace they were declared in
-  // in the source code (the lexical decl context).
-  // FIXME: Generalize this for even non-member global variables where the
-  // declaration and definition may have different lexical decl contexts, once
-  // we have support for emitting declarations of (non-member) global variables.
-  llvm::DIDescriptor DContext = getContextDescriptor(
-      dyn_cast<Decl>(D->isStaticDataMember() ? D->getLexicalDeclContext()
-                                             : D->getDeclContext()));
+  llvm::DIFile Unit;
+  llvm::DIDescriptor DContext;
+  unsigned LineNo;
+  StringRef DeclName, LinkageName;
+  QualType T;
+  collectVarDeclProps(D, Unit, LineNo, T, DeclName, LinkageName, DContext);
 
   // Attempt to store one global variable for the declaration - even if we
   // emit a lot of fields.
