@@ -868,16 +868,41 @@ public:
               
     lldb::SBValue
     CreateValueFromAddress (const char *name, lldb::SBAddress addr, lldb::SBType type);
-    
+
+    %feature("docstring", "
+    Disassemble a specified number of instructions starting at an address.
+    Parameters:
+       base_addr       -- the address to start disassembly from
+       count           -- the number of instructions to disassemble
+       flavor_string   -- may be 'intel' or 'att' on x86 targets to specify that style of disassembly
+    Returns an SBInstructionList.") 
+    ReadInstructions;
     lldb::SBInstructionList
     ReadInstructions (lldb::SBAddress base_addr, uint32_t count);    
 
     lldb::SBInstructionList
     ReadInstructions (lldb::SBAddress base_addr, uint32_t count, const char *flavor_string);
 
+    %feature("docstring", "
+    Disassemble the bytes in a buffer and return them in an SBInstructionList.
+    Parameters:
+       base_addr -- used for symbolicating the offsets in the byte stream when disassembling
+       buf       -- bytes to be disassembled
+       size      -- (C++) size of the buffer
+    Returns an SBInstructionList.") 
+    GetInstructions;
     lldb::SBInstructionList
     GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size);
-    
+
+    %feature("docstring", "
+    Disassemble the bytes in a buffer and return them in an SBInstructionList, with a supplied flavor.
+    Parameters:
+       base_addr -- used for symbolicating the offsets in the byte stream when disassembling
+       flavor    -- may be 'intel' or 'att' on x86 targets to specify that style of disassembly
+       buf       -- bytes to be disassembled
+       size      -- (C++) size of the buffer
+    Returns an SBInstructionList.") 
+    GetInstructionsWithFlavor;
     lldb::SBInstructionList
     GetInstructionsWithFlavor (lldb::SBAddress base_addr, const char *flavor_string, const void *buf, size_t size);
     
