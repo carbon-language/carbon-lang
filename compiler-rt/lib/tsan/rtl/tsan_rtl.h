@@ -666,6 +666,12 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr);
 void MutexRepair(ThreadState *thr, uptr pc, uptr addr);  // call on EOWNERDEAD
 
 void Acquire(ThreadState *thr, uptr pc, uptr addr);
+// AcquireGlobal synchronizes the current thread with all other threads.
+// In terms of happens-before relation, it draws a HB edge from all threads
+// (where they happen to execute right now) to the current thread. We use it to
+// handle Go finalizers. Namely, finalizer goroutine executes AcquireGlobal
+// right before executing finalizers. This provides a coarse, but simple
+// approximation of the actual required synchronization.
 void AcquireGlobal(ThreadState *thr, uptr pc);
 void Release(ThreadState *thr, uptr pc, uptr addr);
 void ReleaseStore(ThreadState *thr, uptr pc, uptr addr);
