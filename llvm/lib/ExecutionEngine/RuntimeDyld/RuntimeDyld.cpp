@@ -804,6 +804,7 @@ RuntimeDyld::loadObject(std::unique_ptr<ObjectBuffer> InputBuffer) {
   auto *InputBufferPtr = InputBuffer.get();
 
   switch (Type) {
+  case sys::fs::file_magic::elf:
   case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::elf_executable:
   case sys::fs::file_magic::elf_shared_object:
