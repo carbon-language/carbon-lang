@@ -284,15 +284,21 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
       _endOfLoadCommands += sizeof(linkedit_data_command);
       _countOfLoadCommands++;
     }
-    // Accumulate size of each section.
+    // Assign file offsets to each section.
     _startOfSectionsContent = _endOfLoadCommands;
-    _endOfSectionsContent = _startOfSectionsContent;
     unsigned relocCount = 0;
+    uint64_t offset = _startOfSectionsContent;
     for (const Section &sect : file.sections) {
-      _sectInfo[&sect].fileOffset = _endOfSectionsContent;
-      _endOfSectionsContent += sect.content.size();
+      if (sect.type != llvm::MachO::S_ZEROFILL) {
+        offset = llvm::RoundUpToAlignment(offset, 1 << sect.alignment);
+        _sectInfo[&sect].fileOffset = offset;
+        offset += sect.content.size();
+      } else {
+        _sectInfo[&sect].fileOffset = 0;
+      }
       relocCount += sect.relocations.size();
     }
+    _endOfSectionsContent = offset;
 
     computeSymbolTableSizes();
     computeDataInCodeSize();
@@ -580,7 +586,8 @@ std::error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
   uint8_t *next = lc + seg->cmdsize;
   memset(seg->segname, 0, 16);
   seg->vmaddr = 0;
-  seg->vmsize = _endOfSectionsContent - _endOfLoadCommands;
+  seg->vmsize = _file.sections.back().address
+              + _file.sections.back().content.size();
   seg->fileoff = _endOfLoadCommands;
   seg->filesize = seg->vmsize;
   seg->maxprot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
@@ -592,14 +599,13 @@ std::error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
   typename T::section *sout = reinterpret_cast<typename T::section*>
                                               (lc+sizeof(typename T::command));
   uint32_t relOffset = _startOfRelocations;
-  uint32_t contentOffset = _startOfSectionsContent;
   uint32_t indirectSymRunningIndex = 0;
   for (const Section &sin : _file.sections) {
     setString16(sin.sectionName, sout->sectname);
     setString16(sin.segmentName, sout->segname);
     sout->addr = sin.address;
     sout->size = sin.content.size();
-    sout->offset = contentOffset;
+    sout->offset = _sectInfo[&sin].fileOffset;
     sout->align = sin.alignment;
     sout->reloff = sin.relocations.empty() ? 0 : relOffset;
     sout->nreloc = sin.relocations.size();
@@ -607,7 +613,6 @@ std::error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
     sout->reserved1 = indirectSymbolIndex(sin, indirectSymRunningIndex);
     sout->reserved2 = indirectSymbolElementSize(sin);
     relOffset += sin.relocations.size() * sizeof(any_relocation_info);
-    contentOffset += sin.content.size();
     if (_swap)
       swapStruct(*sout);
     ++sout;
@@ -645,7 +650,10 @@ std::error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
       setString16(section->segmentName, sect->segname);
       sect->addr      = section->address;
       sect->size      = section->content.size();
-      sect->offset    = section->address - seg.address + segInfo.fileOffset;
+      if (section->type == llvm::MachO::S_ZEROFILL)
+        sect->offset  = 0;
+      else
+        sect->offset  = section->address - seg.address + segInfo.fileOffset;
       sect->align     = section->alignment;
       sect->reloff    = 0;
       sect->nreloc    = 0;

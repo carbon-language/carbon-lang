@@ -573,11 +573,14 @@ void Util::copySectionContent(NormalizedFile &file) {
   };
 
   for (SectionInfo *si : _sectionInfos) {
-    if (si->type == llvm::MachO::S_ZEROFILL)
+    Section *normSect = &file.sections[si->normalizedSectionIndex];
+    if (si->type == llvm::MachO::S_ZEROFILL) {
+      const uint8_t *empty = nullptr;
+      normSect->content = llvm::makeArrayRef(empty, si->size);
       continue;
+    }
     // Copy content from atoms to content buffer for section.
     uint8_t *sectionContent = file.ownedAllocations.Allocate<uint8_t>(si->size);
-    Section *normSect = &file.sections[si->normalizedSectionIndex];
     normSect->content = llvm::makeArrayRef(sectionContent, si->size);
     for (AtomInfo &ai : si->atomsAndOffsets) {
       uint8_t *atomContent = reinterpret_cast<uint8_t*>
