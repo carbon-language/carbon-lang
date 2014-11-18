@@ -37,7 +37,8 @@ namespace lldb_private {
             m_quote('"'),
             m_source_size(0),
             m_needs_zero_termination(true),
-            m_escape_non_printables(true)
+            m_escape_non_printables(true),
+            m_ignore_max_length(false)
             {
             }
             
@@ -147,6 +148,19 @@ namespace lldb_private {
                 return m_escape_non_printables;
             }
             
+            ReadStringAndDumpToStreamOptions&
+            SetIgnoreMaxLength (bool e)
+            {
+                m_ignore_max_length = e;
+                return *this;
+            }
+            
+            bool
+            GetIgnoreMaxLength () const
+            {
+                return m_ignore_max_length;
+            }
+            
         private:
             uint64_t m_location;
             lldb::ProcessSP m_process_sp;
@@ -156,6 +170,7 @@ namespace lldb_private {
             uint32_t m_source_size;
             bool m_needs_zero_termination;
             bool m_escape_non_printables;
+            bool m_ignore_max_length;
         };
         
         class ReadBufferAndDumpToStreamOptions

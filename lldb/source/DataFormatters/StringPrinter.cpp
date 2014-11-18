@@ -454,8 +454,10 @@ ReadStringAndDumpToStream<StringElementType::ASCII> (ReadStringAndDumpToStreamOp
 
     if (options.GetSourceSize() == 0)
         size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
-    else
+    else if (!options.GetIgnoreMaxLength())
         size = std::min(options.GetSourceSize(),process_sp->GetTarget().GetMaximumSizeOfStringSummary());
+    else
+        size = options.GetSourceSize();
 
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(size,0));
 

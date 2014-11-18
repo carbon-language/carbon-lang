@@ -67,6 +67,12 @@ class LibcxxStringDataFormatterTestCase(TestBase):
 
         self.runCmd("n")
 
+        TheVeryLongOne = self.frame().FindVariable("TheVeryLongOne");
+        summaryOptions = lldb.SBTypeSummaryOptions()
+        summaryOptions.SetCapping(lldb.eTypeSummaryUncapped)
+        uncappedSummary = TheVeryLongOne.GetSummary(summaryOptions)
+        self.assertTrue(uncappedSummary.find("someText") > 0, "uncappedSummary does not include the full string")
+
         self.expect("frame variable",
                     substrs = ['(std::__1::wstring) s = L"hello world! מזל טוב!"',
                     '(std::__1::wstring) S = L"!!!!!"',

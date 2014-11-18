@@ -11,6 +11,7 @@
 
 #include "lldb/DataFormatters/CXXFormatterFunctions.h"
 #include "lldb/DataFormatters/StringPrinter.h"
+#include "lldb/DataFormatters/TypeSummary.h"
 
 #include "llvm/Support/ConvertUTF.h"
 
@@ -463,7 +464,7 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
 }
 
 bool
-lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions&)
+lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& summary_options)
 {
     uint64_t size = 0;
     ValueObjectSP location_sp((ValueObject*)nullptr);
@@ -481,7 +482,8 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
         return false;
     
     DataExtractor extractor;
-    size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
+    if (summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryCapped)
+        size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
     location_sp->GetPointeeData(extractor, 0, size);
     
     ReadBufferAndDumpToStreamOptions options(valobj);
@@ -745,7 +747,7 @@ GetNSPathStore2Type (Target &target)
 }
 
 bool
-lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
+lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& summary_options)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
@@ -846,6 +848,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             options.SetQuote('"');
             options.SetSourceSize(explicit_length);
             options.SetNeedsZeroTermination(false);
+            options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
             return ReadStringAndDumpToStream<StringElementType::UTF16>(options);
         }
         else
@@ -857,7 +860,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             options.SetPrefixToken('@');
             options.SetSourceSize(explicit_length);
             options.SetNeedsZeroTermination(false);
-            
+            options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
             return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
         }
     }
@@ -893,6 +896,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
+        options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
         return ReadStringAndDumpToStream<StringElementType::UTF16> (options);
     }
     else if (is_special)
@@ -909,6 +913,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
+        options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
         return ReadStringAndDumpToStream<StringElementType::UTF16> (options);
     }
     else if (is_inline)
@@ -922,6 +927,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetStream(&stream);
         options.SetPrefixToken('@');
         options.SetSourceSize(explicit_length);
+        options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
         return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
     }
     else
@@ -938,6 +944,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetPrefixToken('@');
         options.SetStream(&stream);
         options.SetSourceSize(explicit_length);
+        options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
         return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
     }
 }
