@@ -154,4 +154,42 @@ define i32 @test8(i32 *%P) {
   ; CHECK: ret i32 0
 }
 
+;; Trivial DSE can't be performed across a readonly call.  The call
+;; can observe the earlier write.
+; CHECK-LABEL: @test9(
+define i32 @test9(i32 *%P) {
+  store i32 4, i32* %P
+  %V1 = call i32 @func(i32* %P) readonly
+  store i32 5, i32* %P        
+  ret i32 %V1
+  ; CHECK: store i32 4, i32* %P        
+  ; CHECK-NEXT: %V1 = call i32 @func(i32* %P)
+  ; CHECK-NEXT: store i32 5, i32* %P        
+  ; CHECK-NEXT: ret i32 %V1
+}
+
+;; Trivial DSE can be performed across a readnone call.
+; CHECK-LABEL: @test10
+define i32 @test10(i32 *%P) {
+  store i32 4, i32* %P
+  %V1 = call i32 @func(i32* %P) readnone
+  store i32 5, i32* %P        
+  ret i32 %V1
+  ; CHECK-NEXT: %V1 = call i32 @func(i32* %P)
+  ; CHECK-NEXT: store i32 5, i32* %P        
+  ; CHECK-NEXT: ret i32 %V1
+}
+
+;; Trivial dead store elimination - should work for an entire series of dead stores too.
+; CHECK-LABEL: @test11(
+define void @test11(i32 *%P) {
+  store i32 42, i32* %P
+  store i32 43, i32* %P
+  store i32 44, i32* %P
+  store i32 45, i32* %P
+  ret void
+  ; CHECK-NEXT: store i32 45
+  ; CHECK-NEXT: ret void
+}
+
 

@@ -546,7 +546,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
           Changed = true;
           ++NumDSE;
           LastStore = nullptr;
-          continue;
+          // fallthrough - we can exploit information about this store
         }
 
         // Okay, we just invalidated anything we knew about loaded values.  Try
