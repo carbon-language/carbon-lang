@@ -9121,6 +9121,24 @@ QualType Sema::CheckAddressOfOperand(ExprResult &OrigOp, SourceLocation OpLoc) {
   return Context.getPointerType(op->getType());
 }
 
+static void RecordModifiableNonNullParam(Sema &S, const Expr *Exp) {
+  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp);
+  if (!DRE)
+    return;
+  const Decl *D = DRE->getDecl();
+  if (!D)
+    return;
+  const ParmVarDecl *Param = dyn_cast<ParmVarDecl>(D);
+  if (!Param)
+    return;
+  if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(Param->getDeclContext()))
+    if (!FD->hasAttr<NonNullAttr>())
+      return;
+  if (FunctionScopeInfo *FD = S.getCurFunction())
+    if (!FD->ModifiedNonNullParams.count(Param))
+      FD->ModifiedNonNullParams.insert(Param);
+}
+
 /// CheckIndirectionOperand - Type check unary indirection (prefix '*').
 static QualType CheckIndirectionOperand(Sema &S, Expr *Op, ExprValueKind &VK,
                                         SourceLocation OpLoc) {
@@ -9360,6 +9378,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     }
     if (!ResultTy.isNull())
       DiagnoseSelfAssignment(*this, LHS.get(), RHS.get(), OpLoc);
+    RecordModifiableNonNullParam(*this, LHS.get());
     break;
   case BO_PtrMemD:
   case BO_PtrMemI:
@@ -9833,6 +9852,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     break;
   case UO_AddrOf:
     resultType = CheckAddressOfOperand(Input, OpLoc);
+    RecordModifiableNonNullParam(*this, InputExpr);
     break;
   case UO_Deref: {
     Input = DefaultFunctionArrayLvalueConversion(Input.get());

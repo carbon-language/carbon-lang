@@ -144,6 +144,10 @@ public:
   /// current function scope.  These diagnostics are vetted for reachability
   /// prior to being emitted.
   SmallVector<PossiblyUnreachableDiag, 4> PossiblyUnreachableDiags;
+  
+  /// \brief A list of parameters which have the nonnull attribute and are
+  /// modified in the function.
+  llvm::SmallPtrSet<const ParmVarDecl*, 8>  ModifiedNonNullParams;
 
 public:
   /// Represents a simple identification of a weak object.

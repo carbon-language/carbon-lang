@@ -39,6 +39,7 @@ void FunctionScopeInfo::Clear() {
   ErrorTrap.reset();
   PossiblyUnreachableDiags.clear();
   WeakObjectUses.clear();
+  ModifiedNonNullParams.clear();
 }
 
 static const NamedDecl *getBestPropertyDecl(const ObjCPropertyRefExpr *PropE) {
