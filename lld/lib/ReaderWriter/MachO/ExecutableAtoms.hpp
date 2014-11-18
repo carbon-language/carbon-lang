@@ -100,7 +100,7 @@ public:
       _definedAtoms._atoms.push_back(new (_alloc) MachODefinedAtom(
           *this, sym, DefinedAtom::scopeLinkageUnit,
           DefinedAtom::typeMachHeader, DefinedAtom::mergeNo, false, false,
-          ArrayRef<uint8_t>()));
+          ArrayRef<uint8_t>(), DefinedAtom::Alignment(12,0)));
       return this;
     }
     return nullptr;

@@ -18,16 +18,16 @@ class MachODefinedAtom : public SimpleDefinedAtom {
 public:
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
                    ContentType type, Merge merge, bool thumb, bool noDeadStrip,
-                   const ArrayRef<uint8_t> content)
+                   const ArrayRef<uint8_t> content, Alignment align)
       : SimpleDefinedAtom(f), _name(name), _content(content),
-        _contentType(type), _scope(scope), _merge(merge), _thumb(thumb),
-        _noDeadStrip(noDeadStrip) {}
+        _align(align), _contentType(type), _scope(scope), _merge(merge),
+        _thumb(thumb), _noDeadStrip(noDeadStrip) {}
 
   // Constructor for zero-fill content
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
-                   uint64_t size, bool noDeadStrip)
+                   uint64_t size, bool noDeadStrip, Alignment align)
       : SimpleDefinedAtom(f), _name(name),
-        _content(ArrayRef<uint8_t>(nullptr, size)),
+        _content(ArrayRef<uint8_t>(nullptr, size)), _align(align),
         _contentType(DefinedAtom::typeZeroFill),
         _scope(scope), _merge(mergeNo), _thumb(false),
         _noDeadStrip(noDeadStrip) {}
@@ -35,6 +35,8 @@ public:
   uint64_t size() const override { return _content.size(); }
 
   ContentType contentType() const override { return _contentType; }
+
+  Alignment alignment() const override { return _align; }
 
   StringRef name() const override { return _name; }
 
@@ -71,6 +73,7 @@ public:
 private:
   const StringRef _name;
   const ArrayRef<uint8_t> _content;
+  const DefinedAtom::Alignment _align;
   const ContentType _contentType;
   const Scope _scope;
   const Merge _merge;
@@ -84,9 +87,9 @@ public:
                                 Scope scope, ContentType type, Merge merge,
                                 bool thumb, bool noDeadStrip,
                                 const ArrayRef<uint8_t> content,
-                                StringRef sectionName)
+                                StringRef sectionName, Alignment align)
       : MachODefinedAtom(f, name, scope, type, merge, thumb, noDeadStrip,
-                         content),
+                         content, align),
         _sectionName(sectionName) {}
 
   SectionChoice sectionChoice() const override {
