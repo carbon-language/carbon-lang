@@ -5,10 +5,10 @@
 
 void __llvm_profile_set_filename(const char *);
 int main(int argc, const char *argv[]) {
-  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !1
+  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof ![[PD1:[0-9]+]]
   if (argc < 2)
     return 1;
   __llvm_profile_set_filename(argv[1]);
   return 0;
 }
-// CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 2}
+// CHECK: ![[PD1]] = metadata !{metadata !"branch_weights", i32 1, i32 2}

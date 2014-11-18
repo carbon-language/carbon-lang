@@ -18,7 +18,7 @@ int __llvm_profile_write_buffer(char *);
 int write_buffer(uint64_t, const char *);
 int main(int argc, const char *argv[]) {
   // CHECK-LABEL: define {{.*}} @main(
-  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !1
+  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof ![[PD1:[0-9]+]]
   if (argc < 2)
     return 1;
 
@@ -46,7 +46,7 @@ int main(int argc, const char *argv[]) {
   return fclose(File);
 #endif
 }
-// CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 2}
+// CHECK: ![[PD1]] = metadata !{metadata !"branch_weights", i32 1, i32 2}
 
 // CHECK-SYMBOLS-NOT: ___cxx_global_var_init
 // CHECK-SYMBOLS-NOT: ___llvm_profile_register_write_file_atexit
