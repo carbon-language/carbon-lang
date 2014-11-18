@@ -150,3 +150,23 @@ define i1 @nomask_rhs(i32 %in) {
   %val = or i1 %tst1, %tst2
   ret i1 %val
 }
+
+define i1 @fold_mask_cmps_to_false(i32 %x) {
+; CHECK-LABEL: @fold_mask_cmps_to_false
+; CHECK: ret i1 false
+  %1 = and i32 %x, 2147483647
+  %2 = icmp eq i32 %1, 0
+  %3 = icmp eq i32 %x, 2147483647
+  %4 = and i1 %3, %2
+  ret i1 %4
+}
+
+define i1 @fold_mask_cmps_to_true(i32 %x) {
+; CHECK-LABEL: @fold_mask_cmps_to_true
+; CHECK: ret i1 true
+  %1 = and i32 %x, 2147483647
+  %2 = icmp ne i32 %1, 0
+  %3 = icmp ne i32 %x, 2147483647
+  %4 = or i1 %3, %2
+  ret i1 %4
+}

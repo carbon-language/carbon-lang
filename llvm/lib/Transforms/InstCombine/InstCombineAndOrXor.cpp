@@ -776,7 +776,7 @@ static Value *foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS, bool IsAnd,
     // whole construct
     if (((BCst->getValue() & DCst->getValue()) &
          (CCst->getValue() ^ ECst->getValue())) != 0)
-      return nullptr;
+      return ConstantInt::get(LHS->getType(), !IsAnd);
     Value *newOr1 = Builder->CreateOr(B, D);
     Value *newOr2 = ConstantExpr::getOr(CCst, ECst);
     Value *newAnd = Builder->CreateAnd(A, newOr1);
