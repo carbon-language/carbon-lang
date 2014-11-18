@@ -229,6 +229,8 @@ if (LIBCXX_BUILT_STANDALONE)
     elseif (LLVM_USE_SANITIZER STREQUAL "Undefined")
       list(APPEND LIBCXX_CXX_FLAGS
           "-fsanitize=undefined -fno-sanitize=vptr,function -fno-sanitize-recover")
+    elseif (LLVM_USE_SANITIZER STREQUAL "Thread")
+      list(APPEND LIBCXX_CXX_FLAGS "-fsanitize=thread")
     else()
       message(WARNING "Unsupported value of LLVM_USE_SANITIZER: ${LLVM_USE_SANITIZER}")
     endif()
