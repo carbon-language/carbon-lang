@@ -67,7 +67,7 @@ def parse( vArgv, vstrListArgs, vListLongArgs, vDictArgReq, vstrHelpInfo ):
 			
 	# Validate parameters above and error on not recognised
 	try:
-		dictOptsNeeded, dictArgsLeftOver = getopt.getopt( vArgv, 
+		dictOptsNeeded, dictArgsLeftOver = getopt.getopt( vArgv,
 														  vstrListArgs, 
 														  vListLongArgs );
 	except getopt.GetoptError:
@@ -143,4 +143,3 @@ def parse( vArgv, vstrListArgs, vListLongArgs, vDictArgReq, vstrHelpInfo ):
 		return (-2, dictDummy, strMsg);
 
 	return (0, dictArgs, strDummy);
-	
