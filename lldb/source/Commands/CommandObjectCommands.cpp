@@ -366,7 +366,7 @@ protected:
         // Instance variables to hold the values for command options.
 
         OptionValueBoolean m_stop_on_error;
-	    OptionValueBoolean m_silent_run;
+        OptionValueBoolean m_silent_run;
         OptionValueBoolean m_stop_on_continue;
     };
     
@@ -390,8 +390,8 @@ protected:
                 CommandInterpreterRunOptions options;
                 options.SetStopOnContinue(m_options.m_stop_on_continue.GetCurrentValue());
                 options.SetStopOnError (m_options.m_stop_on_error.GetCurrentValue());
-                options.SetEchoCommands (m_options.m_silent_run.GetCurrentValue());
-                options.SetPrintResults (m_options.m_silent_run.GetCurrentValue());
+                options.SetEchoCommands (!m_options.m_silent_run.GetCurrentValue());
+                options.SetPrintResults (!m_options.m_silent_run.GetCurrentValue());
 
                 m_interpreter.HandleCommandsFromFile (cmd_file,
                                                       exe_ctx,
