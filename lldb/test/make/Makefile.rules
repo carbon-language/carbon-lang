@@ -317,7 +317,7 @@ ifneq "$(DYLIB_ONLY)" "YES"
 $(DSYM) : $(EXE)
 ifeq "$(OS)" "Darwin"
 ifneq "$(MAKE_DSYM)" "NO"
-	$(DS) $(DSFLAGS) -o "$(DSYM)" "$(EXE)"
+	"$(DS)" $(DSFLAGS) -o "$(DSYM)" "$(EXE)"
 endif
 else
 ifeq "$(SPLIT_DEBUG_SYMBOLS)" "YES"
