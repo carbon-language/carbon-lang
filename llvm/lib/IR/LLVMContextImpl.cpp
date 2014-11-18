@@ -126,8 +126,10 @@ LLVMContextImpl::~LLVMContextImpl() {
   MDNodes.reserve(MDNodeSet.size() + NonUniquedMDNodes.size());
   MDNodes.append(MDNodeSet.begin(), MDNodeSet.end());
   MDNodes.append(NonUniquedMDNodes.begin(), NonUniquedMDNodes.end());
-  for (auto &I : MDNodes)
-    I->destroy();
+  for (GenericMDNode *I : MDNodes)
+    I->dropAllReferences();
+  for (GenericMDNode *I : MDNodes)
+    delete I;
   assert(MDNodeSet.empty() && NonUniquedMDNodes.empty() &&
          "Destroying all MDNodes didn't empty the Context's sets.");
 

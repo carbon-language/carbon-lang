@@ -22,6 +22,7 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 class LLVMContext;
@@ -145,8 +146,24 @@ class MDNode : public Metadata {
   void operator=(const MDNode &) LLVM_DELETED_FUNCTION;
   friend class MDNodeOperand;
   friend class LLVMContextImpl;
+  void *operator new(size_t) LLVM_DELETED_FUNCTION;
 
 protected:
+  void *operator new(size_t Size, unsigned NumOps);
+
+  /// \brief Required by std, but never called.
+  void operator delete(void *Mem);
+
+  /// \brief Required by std, but never called.
+  void operator delete(void *, unsigned) {
+    llvm_unreachable("Constructor throws?");
+  }
+
+  /// \brief Required by std, but never called.
+  void operator delete(void *, unsigned, bool) {
+    llvm_unreachable("Constructor throws?");
+  }
+
   // TODO: Sink this into GenericMDNode.  Can't do this until operands are
   // allocated at the front (currently they're at the back).
   unsigned Hash;
@@ -160,11 +177,7 @@ protected:
 
     /// NotUniquedBit - This is set on MDNodes that are not uniqued because they
     /// have a null operand.
-    NotUniquedBit    = 1 << 1,
-
-    /// DestroyFlag - This bit is set by destroy() so the destructor can assert
-    /// that the node isn't being destroyed with a plain 'delete'.
-    DestroyFlag      = 1 << 2
+    NotUniquedBit    = 1 << 1
   };
 
   /// \brief FunctionLocal enums.
@@ -176,10 +189,10 @@ protected:
 
   /// \brief Replace each instance of the given operand with a new value.
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
-  ~MDNode();
 
   MDNode(LLVMContext &C, unsigned ID, ArrayRef<Value *> Vals,
          bool isFunctionLocal);
+  ~MDNode() {}
 
   static MDNode *getMDNode(LLVMContext &C, ArrayRef<Value*> Vals,
                            FunctionLocalness FL, bool Insert = true);
@@ -270,10 +283,13 @@ protected:
 /// TODO: Drop support for RAUW.
 class GenericMDNode : public MDNode {
   friend class MDNode;
+  friend class LLVMContextImpl;
 
   GenericMDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
       : MDNode(C, GenericMDNodeVal, Vals, isFunctionLocal) {}
   ~GenericMDNode();
+
+  void dropAllReferences();
 
 public:
   /// \brief Get the hash, if any.
@@ -282,12 +298,6 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == GenericMDNodeVal;
   }
-
-private:
-  /// \brief Delete this node.  Only when there are no uses.
-  void destroy();
-  friend class MDNode;
-  friend class LLVMContextImpl;
 };
 
 /// \brief Forward declaration of metadata.
@@ -306,11 +316,6 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == MDNodeFwdDeclVal;
   }
-
-private:
-  /// \brief Delete this node.  Only when there are no uses.
-  void destroy();
-  friend class MDNode;
 };
 
 //===----------------------------------------------------------------------===//

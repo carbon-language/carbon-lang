@@ -66,25 +66,25 @@ class MDNodeOperand : public CallbackVH {
     MDNodeOperand *Cur = this;
 
     while (Cur->getValPtrInt() != 1)
-      --Cur;
+      ++Cur;
 
     assert(Cur->getValPtrInt() == 1 &&
-           "Couldn't find the beginning of the operand list!");
-    return reinterpret_cast<MDNode*>(Cur) - 1;
+           "Couldn't find the end of the operand list!");
+    return reinterpret_cast<MDNode *>(Cur + 1);
   }
 
 public:
-  MDNodeOperand(Value *V) : CallbackVH(V) {}
+  MDNodeOperand() {}
   virtual ~MDNodeOperand();
 
   void set(Value *V) {
-    unsigned IsFirst = this->getValPtrInt();
+    unsigned IsLast = this->getValPtrInt();
     this->setValPtr(V);
-    this->setAsFirstOperand(IsFirst);
+    this->setAsLastOperand(IsLast);
   }
 
   /// \brief Accessor method to mark the operand as the first in the list.
-  void setAsFirstOperand(unsigned V) { this->setValPtrInt(V); }
+  void setAsLastOperand(unsigned I) { this->setValPtrInt(I); }
 
   void deleted() override;
   void allUsesReplacedWith(Value *NV) override;
@@ -108,19 +108,34 @@ void MDNodeOperand::allUsesReplacedWith(Value *NV) {
 
 /// \brief Get the MDNodeOperand's coallocated on the end of the MDNode.
 static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
-  static_assert(sizeof(GenericMDNode) == sizeof(MDNode),
-                "Expected subclasses to have no size overhead");
-  static_assert(sizeof(MDNodeFwdDecl) == sizeof(MDNode),
-                "Expected subclasses to have no size overhead");
-
   // Use <= instead of < to permit a one-past-the-end address.
   assert(Op <= N->getNumOperands() && "Invalid operand number");
-  return reinterpret_cast<MDNodeOperand*>(N + 1) + Op;
+  return reinterpret_cast<MDNodeOperand *>(N) - N->getNumOperands() + Op;
 }
 
 void MDNode::replaceOperandWith(unsigned i, Value *Val) {
   MDNodeOperand *Op = getOperandPtr(this, i);
   replaceOperand(Op, Val);
+}
+
+void *MDNode::operator new(size_t Size, unsigned NumOps) {
+  void *Ptr = ::operator new(Size + NumOps * sizeof(MDNodeOperand));
+  MDNodeOperand *Op = static_cast<MDNodeOperand *>(Ptr);
+  if (NumOps) {
+    MDNodeOperand *Last = Op + NumOps;
+    for (; Op != Last; ++Op)
+      new (Op) MDNodeOperand();
+    (Op - 1)->setAsLastOperand(1);
+  }
+  return Op;
+}
+
+void MDNode::operator delete(void *Mem) {
+  MDNode *N = static_cast<MDNode *>(Mem);
+  MDNodeOperand *Op = static_cast<MDNodeOperand *>(Mem);
+  for (unsigned I = 0, E = N->NumOperands; I != E; ++I)
+    (--Op)->~MDNodeOperand();
+  ::operator delete(Op);
 }
 
 MDNode::MDNode(LLVMContext &C, unsigned ID, ArrayRef<Value *> Vals,
@@ -131,16 +146,11 @@ MDNode::MDNode(LLVMContext &C, unsigned ID, ArrayRef<Value *> Vals,
   if (isFunctionLocal)
     setValueSubclassData(getSubclassDataFromValue() | FunctionLocalBit);
 
-  // Initialize the operand list, which is co-allocated on the end of the node.
+  // Initialize the operand list.
   unsigned i = 0;
-  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
-       Op != E; ++Op, ++i) {
-    new (Op) MDNodeOperand(Vals[i]);
-
-    // Mark the first MDNodeOperand as being the first in the list of operands.
-    if (i == 0)
-      Op->setAsFirstOperand(1);
-  }
+  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op + NumOperands;
+       Op != E; ++Op, ++i)
+    Op->set(Vals[i]);
 }
 
 GenericMDNode::~GenericMDNode() {
@@ -152,14 +162,10 @@ GenericMDNode::~GenericMDNode() {
   }
 }
 
-MDNode::~MDNode() {
-  assert((getSubclassDataFromValue() & DestroyFlag) != 0 &&
-         "Not being destroyed through destroy()?");
-
-  // Destroy the operands.
-  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
+void GenericMDNode::dropAllReferences() {
+  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op + NumOperands;
        Op != E; ++Op)
-    Op->~MDNodeOperand();
+    Op->set(nullptr);
 }
 
 static const Function *getFunctionForValue(Value *V) {
@@ -216,21 +222,6 @@ const Function *MDNode::getFunction() const {
 #endif
 }
 
-// destroy - Delete this node.  Only when there are no uses.
-void GenericMDNode::destroy() {
-  setValueSubclassData(getSubclassDataFromValue() | DestroyFlag);
-  // Placement delete, then free the memory.
-  this->~GenericMDNode();
-  free(this);
-}
-
-void MDNodeFwdDecl::destroy() {
-  setValueSubclassData(getSubclassDataFromValue() | DestroyFlag);
-  // Placement delete, then free the memory.
-  this->~MDNodeFwdDecl();
-  free(this);
-}
-
 /// \brief Check if the Value  would require a function-local MDNode.
 static bool isFunctionLocalValue(Value *V) {
   return isa<Instruction>(V) || isa<Argument>(V) || isa<BasicBlock>(V) ||
@@ -268,9 +259,8 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
   }
 
   // Coallocate space for the node and Operands together, then placement new.
-  void *Ptr =
-      malloc(sizeof(GenericMDNode) + Vals.size() * sizeof(MDNodeOperand));
-  GenericMDNode *N = new (Ptr) GenericMDNode(Context, Vals, isFunctionLocal);
+  GenericMDNode *N =
+      new (Vals.size()) GenericMDNode(Context, Vals, isFunctionLocal);
 
   N->Hash = Key.Hash;
   Store.insert(N);
@@ -292,11 +282,8 @@ MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Value*> Vals) {
 }
 
 MDNode *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals) {
-  MDNode *N = (MDNode *)malloc(sizeof(MDNodeFwdDecl) +
-                               Vals.size() * sizeof(MDNodeOperand));
-  N = new (N) MDNodeFwdDecl(Context, Vals, FL_No);
-  N->setValueSubclassData(N->getSubclassDataFromValue() |
-                          NotUniquedBit);
+  MDNode *N = new (Vals.size()) MDNodeFwdDecl(Context, Vals, FL_No);
+  N->setValueSubclassData(N->getSubclassDataFromValue() | NotUniquedBit);
   LeakDetector::addGarbageObject(N);
   return N;
 }
@@ -306,10 +293,8 @@ void MDNode::deleteTemporary(MDNode *N) {
   assert(isa<MDNodeFwdDecl>(N) && "Expected forward declaration");
   assert((N->getSubclassDataFromValue() & NotUniquedBit) &&
          "Temporary MDNode does not have NotUniquedBit set!");
-  assert((N->getSubclassDataFromValue() & DestroyFlag) == 0 &&
-         "Temporary MDNode has DestroyFlag set!");
   LeakDetector::removeGarbageObject(N);
-  cast<MDNodeFwdDecl>(N)->destroy();
+  delete cast<MDNodeFwdDecl>(N);
 }
 
 /// \brief Return specified operand.
@@ -384,7 +369,7 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   auto I = Store.find_as(Key);
   if (I != Store.end()) {
     N->replaceAllUsesWith(*I);
-    N->destroy();
+    delete N;
     return;
   }
 
