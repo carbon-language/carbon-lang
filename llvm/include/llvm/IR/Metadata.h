@@ -164,10 +164,6 @@ protected:
     llvm_unreachable("Constructor throws?");
   }
 
-  // TODO: Sink this into GenericMDNode.  Can't do this until operands are
-  // allocated at the front (currently they're at the back).
-  unsigned Hash;
-
   /// \brief Subclass data enums.
   enum {
     /// FunctionLocalBit - This bit is set if this MDNode is function local.
@@ -285,8 +281,10 @@ class GenericMDNode : public MDNode {
   friend class MDNode;
   friend class LLVMContextImpl;
 
+  unsigned Hash;
+
   GenericMDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
-      : MDNode(C, GenericMDNodeVal, Vals, isFunctionLocal) {}
+      : MDNode(C, GenericMDNodeVal, Vals, isFunctionLocal), Hash(0) {}
   ~GenericMDNode();
 
   void dropAllReferences();

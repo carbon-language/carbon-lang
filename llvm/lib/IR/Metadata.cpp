@@ -140,7 +140,7 @@ void MDNode::operator delete(void *Mem) {
 
 MDNode::MDNode(LLVMContext &C, unsigned ID, ArrayRef<Value *> Vals,
                bool isFunctionLocal)
-    : Metadata(C, ID), Hash(0) {
+    : Metadata(C, ID) {
   NumOperands = Vals.size();
 
   if (isFunctionLocal)
