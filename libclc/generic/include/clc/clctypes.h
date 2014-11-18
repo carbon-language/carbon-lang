@@ -1,11 +1,12 @@
 /* 6.1.1 Built-in Scalar Data Types */
 
-#include <stddef.h>
-
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
+
+typedef __SIZE_TYPE__ size_t;
+typedef __PTRDIFF_TYPE__ ptrdiff_t;
 
 #define __stdint_join3(a,b,c) a ## b ## c
 
@@ -84,3 +85,5 @@ typedef __attribute__((ext_vector_type(4))) double double4;
 typedef __attribute__((ext_vector_type(8))) double double8;
 typedef __attribute__((ext_vector_type(16))) double double16;
 #endif
+
+#define NULL ((void *)0)
