@@ -15,8 +15,14 @@
 #error va_arg not defined
 #endif
 
-#ifndef va_copy
-#error va_copy not defined
+#if __cplusplus >= 201103L
+#  ifndef va_copy
+#    error va_copy not defined when c++ >= 11
+#  endif
+#else
+#  ifdef va_copy
+#    error va_copy not defined when c++ < 11
+#  endif
 #endif
 
 #ifndef va_end
