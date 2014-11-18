@@ -468,6 +468,44 @@ UnwindPlan::Dump (Stream& s, Thread *thread, lldb::addr_t base_addr) const
     {
         s.Printf ("This UnwindPlan originally sourced from %s\n", m_source_name.GetCString());
     }
+    if (m_lsda_address.IsValid() && m_personality_func_addr.IsValid())
+    {
+        TargetSP target_sp(thread->CalculateTarget());
+        addr_t lsda_load_addr = m_lsda_address.GetLoadAddress (target_sp.get());
+        addr_t personality_func_load_addr = m_personality_func_addr.GetLoadAddress (target_sp.get());
+        
+        if (lsda_load_addr != LLDB_INVALID_ADDRESS && personality_func_load_addr != LLDB_INVALID_ADDRESS)
+        {
+            s.Printf("LSDA address 0x%" PRIx64 ", personality routine is at address 0x%" PRIx64 "\n",
+                     lsda_load_addr, personality_func_load_addr);
+        }
+    }
+    s.Printf ("This UnwindPlan is sourced from the compiler: ");
+    switch (m_plan_is_sourced_from_compiler)
+    {
+        case eLazyBoolYes:
+            s.Printf ("yes.\n");
+            break;
+        case eLazyBoolNo:
+            s.Printf ("no.\n");
+            break;
+        case eLazyBoolCalculate:
+            s.Printf ("not specified.\n");
+            break;
+    }
+    s.Printf ("This UnwindPlan is valid at all instruction locations: ");
+    switch (m_plan_is_valid_at_all_instruction_locations)
+    {
+        case eLazyBoolYes:
+            s.Printf ("yes.\n");
+            break;
+        case eLazyBoolNo:
+            s.Printf ("no.\n");
+            break;
+        case eLazyBoolCalculate:
+            s.Printf ("not specified.\n");
+            break;
+    }
     if (m_plan_valid_address_range.GetBaseAddress().IsValid() && m_plan_valid_address_range.GetByteSize() > 0)
     {
         s.PutCString ("Address range of this UnwindPlan: ");

@@ -379,7 +379,9 @@ public:
         m_return_addr_register (LLDB_INVALID_REGNUM),
         m_source_name (),
         m_plan_is_sourced_from_compiler (eLazyBoolCalculate),
-        m_plan_is_valid_at_all_instruction_locations (eLazyBoolCalculate)
+        m_plan_is_valid_at_all_instruction_locations (eLazyBoolCalculate),
+        m_lsda_address (),
+        m_personality_func_addr ()
     {
     }
 
@@ -505,10 +507,38 @@ public:
         m_plan_valid_address_range.Clear();
         m_register_kind = lldb::eRegisterKindDWARF;
         m_source_name.Clear();
+        m_plan_is_sourced_from_compiler = eLazyBoolCalculate;
+        m_plan_is_valid_at_all_instruction_locations = eLazyBoolCalculate;
+        m_lsda_address.Clear();
+        m_personality_func_addr.Clear();
     }
 
     const RegisterInfo *
     GetRegisterInfo (Thread* thread, uint32_t reg_num) const;
+
+    Address
+    GetLSDAAddress () const
+    {
+        return m_lsda_address;
+    }
+
+    void
+    SetLSDAAddress (Address lsda_addr)
+    {
+        m_lsda_address = lsda_addr;
+    }
+
+    Address
+    GetPersonalityFunctionPtr () const
+    {
+        return m_personality_func_addr;
+    }
+
+    void
+    SetPersonalityFunctionPtr (Address presonality_func_ptr)
+    {
+        m_personality_func_addr = presonality_func_ptr;
+    }
 
 private:
 
@@ -523,6 +553,11 @@ private:
     lldb_private::ConstString m_source_name;  // for logging, where this UnwindPlan originated from
     lldb_private::LazyBool m_plan_is_sourced_from_compiler;
     lldb_private::LazyBool m_plan_is_valid_at_all_instruction_locations;
+
+    Address m_lsda_address;                 // Where the language specific data area exists in the module - used 
+                                            // in exception handling.
+    Address m_personality_func_addr;        // The address of a pointer to the personality function - used in
+                                            // exception handling.
 }; // class UnwindPlan
 
 } // namespace lldb_private
