@@ -1074,6 +1074,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref, uint8_t *loc,
   int32_t displacement;
   uint16_t value16;
   uint32_t value32;
+  bool targetIsUndef = isa<UndefinedAtom>(ref.target());
   switch (ref.kindValue()) {
   case modeThumbCode:
     thumbMode = true;
@@ -1091,7 +1092,8 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref, uint8_t *loc,
     else
       displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
     value32 = setDisplacementInThumbBranch(*loc32, fixupAddress,
-                                           displacement, targetIsThumb);
+                                           displacement,
+                                           targetIsUndef || targetIsThumb);
     *loc32 = value32;
     break;
   case thumb_movw:
