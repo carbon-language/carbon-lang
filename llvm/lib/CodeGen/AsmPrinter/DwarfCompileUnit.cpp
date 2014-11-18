@@ -646,6 +646,8 @@ DwarfCompileUnit::constructImportedEntityDIE(const DIImportedEntity &Module) {
     EntityDie = getOrCreateSubprogramDIE(DISubprogram(Entity));
   else if (Entity.isType())
     EntityDie = getOrCreateTypeDIE(DIType(Entity));
+  else if (Entity.isGlobalVariable())
+    EntityDie = getOrCreateGlobalVariableDIE(DIGlobalVariable(Entity));
   else
     EntityDie = getDIE(Entity);
   assert(EntityDie);
