@@ -391,6 +391,18 @@ void CodeGenModule::Release() {
     getModule().addModuleFlag(llvm::Module::Error, "min_enum_size", EnumWidth);
   }
 
+  if (uint32_t PLevel = Context.getLangOpts().PICLevel) {
+    llvm::PICLevel::Level PL = llvm::PICLevel::Default;
+    switch (PLevel) {
+    case 0: break;
+    case 1: PL = llvm::PICLevel::Small; break;
+    case 2: PL = llvm::PICLevel::Large; break;
+    default: llvm_unreachable("Invalid PIC Level");
+    }
+
+    getModule().setPICLevel(PL);
+  }
+
   SimplifyPersonality();
 
   if (getCodeGenOpts().EmitDeclMetadata)
