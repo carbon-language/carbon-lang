@@ -325,3 +325,54 @@ ENDIF69:
 
 attributes #0 = { "ShaderType"="0" }
 
+; This test checks that image_sample resource descriptors aren't loaded into
+; vgprs.  The verifier will fail if this happens.
+; CHECK-LABEL:{{^}}sample_rsrc:
+; CHECK: image_sample
+; CHECK: image_sample
+; CHECK: s_endpgm
+define void @sample_rsrc([6 x <16 x i8>] addrspace(2)* byval %arg, [17 x <16 x i8>] addrspace(2)* byval %arg1, [16 x <4 x i32>] addrspace(2)* byval %arg2, [32 x <8 x i32>] addrspace(2)* byval %arg3, float inreg %arg4, i32 inreg %arg5, <2 x i32> %arg6, <2 x i32> %arg7, <2 x i32> %arg8, <3 x i32> %arg9, <2 x i32> %arg10, <2 x i32> %arg11, <2 x i32> %arg12, float %arg13, float %arg14, float %arg15, float %arg16, float %arg17, float %arg18, i32 %arg19, float %arg20, float %arg21) #0 {
+bb:
+  %tmp = getelementptr [17 x <16 x i8>] addrspace(2)* %arg1, i32 0, i32 0
+  %tmp22 = load <16 x i8> addrspace(2)* %tmp, !tbaa !0
+  %tmp23 = call float @llvm.SI.load.const(<16 x i8> %tmp22, i32 16)
+  %tmp25 = getelementptr [32 x <8 x i32>] addrspace(2)* %arg3, i32 0, i32 0
+  %tmp26 = load <8 x i32> addrspace(2)* %tmp25, !tbaa !0
+  %tmp27 = getelementptr [16 x <4 x i32>] addrspace(2)* %arg2, i32 0, i32 0
+  %tmp28 = load <4 x i32> addrspace(2)* %tmp27, !tbaa !0
+  %tmp29 = call float @llvm.SI.fs.interp(i32 0, i32 0, i32 %arg5, <2 x i32> %arg7)
+  %tmp30 = call float @llvm.SI.fs.interp(i32 1, i32 0, i32 %arg5, <2 x i32> %arg7)
+  %tmp31 = bitcast float %tmp23 to i32
+  %tmp36 = icmp ne i32 %tmp31, 0
+  br i1 %tmp36, label %bb38, label %bb80
+
+bb38:                                             ; preds = %bb
+  %tmp52 = bitcast float %tmp29 to i32
+  %tmp53 = bitcast float %tmp30 to i32
+  %tmp54 = insertelement <2 x i32> undef, i32 %tmp52, i32 0
+  %tmp55 = insertelement <2 x i32> %tmp54, i32 %tmp53, i32 1
+  %tmp56 = bitcast <8 x i32> %tmp26 to <32 x i8>
+  %tmp57 = bitcast <4 x i32> %tmp28 to <16 x i8>
+  %tmp58 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %tmp55, <32 x i8> %tmp56, <16 x i8> %tmp57, i32 2)
+  br label %bb71
+
+bb80:                                             ; preds = %bb
+  %tmp81 = bitcast float %tmp29 to i32
+  %tmp82 = bitcast float %tmp30 to i32
+  %tmp82.2 = add i32 %tmp82, 1
+  %tmp83 = insertelement <2 x i32> undef, i32 %tmp81, i32 0
+  %tmp84 = insertelement <2 x i32> %tmp83, i32 %tmp82.2, i32 1
+  %tmp85 = bitcast <8 x i32> %tmp26 to <32 x i8>
+  %tmp86 = bitcast <4 x i32> %tmp28 to <16 x i8>
+  %tmp87 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> %tmp84, <32 x i8> %tmp85, <16 x i8> %tmp86, i32 2)
+  br label %bb71
+
+bb71:                                             ; preds = %bb80, %bb38
+  %tmp72 = phi <4 x float> [ %tmp58, %bb38 ], [ %tmp87, %bb80 ]
+  %tmp88 = extractelement <4 x float> %tmp72, i32 0
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %tmp88, float %tmp88, float %tmp88, float %tmp88)
+  ret void
+}
+
+attributes #0 = { "ShaderType"="0" "unsafe-fp-math"="true" }
+attributes #1 = { nounwind readnone }

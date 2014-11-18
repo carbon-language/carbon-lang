@@ -53,10 +53,10 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::v4i32, &AMDGPU::SReg_128RegClass);
   addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
 
-  addRegisterClass(MVT::v8i32, &AMDGPU::VReg_256RegClass);
+  addRegisterClass(MVT::v8i32, &AMDGPU::SReg_256RegClass);
   addRegisterClass(MVT::v8f32, &AMDGPU::VReg_256RegClass);
 
-  addRegisterClass(MVT::v16i32, &AMDGPU::VReg_512RegClass);
+  addRegisterClass(MVT::v16i32, &AMDGPU::SReg_512RegClass);
   addRegisterClass(MVT::v16f32, &AMDGPU::VReg_512RegClass);
 
   computeRegisterProperties();
