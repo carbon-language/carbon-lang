@@ -17,6 +17,7 @@ class GlobalVariablesTestCase(TestBase):
         self.buildDsym()
         self.global_variables()
 
+    @expectedFailureFreeBSD("llvm.org/21599 fails after editline rework")
     @dwarf_test
     def test_with_dwarf(self):
         """Test 'frame variable --scope --no-args' which omits args and shows scopes."""
