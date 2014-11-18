@@ -873,7 +873,7 @@ protected:
 
 class CommandObjectCommandsAddRegex :
     public CommandObjectParsed,
-    public IOHandlerDelegate
+    public IOHandlerDelegateMultiline
 {
 public:
     CommandObjectCommandsAddRegex (CommandInterpreter &interpreter) :
@@ -881,7 +881,7 @@ public:
                        "command regex",
                        "Allow the user to create a regular expression command.",
                        "command regex <cmd-name> [s/<regex>/<subst>/ ...]"),
-        IOHandlerDelegate(IOHandlerDelegate::Completion::LLDBCommand),
+        IOHandlerDelegateMultiline ("", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
     {
         SetHelpLong(
@@ -918,8 +918,8 @@ public:
     
 protected:
     
-    virtual void
-    IOHandlerActivated (IOHandler &io_handler)
+    void
+    IOHandlerActivated (IOHandler &io_handler) override
     {
         StreamFileSP output_sp(io_handler.GetOutputStreamFile());
         if (output_sp)
@@ -929,8 +929,8 @@ protected:
         }
     }
 
-    virtual void
-    IOHandlerInputComplete (IOHandler &io_handler, std::string &data)
+    void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &data) override
     {
         io_handler.SetIsDone(true);
         if (m_regex_cmd_ap.get())
@@ -942,7 +942,6 @@ protected:
                 bool check_only = false;
                 for (size_t i=0; i<num_lines; ++i)
                 {
-                    printf ("regex[%zu] = %s\n", i, lines[i].c_str());
                     llvm::StringRef bytes_strref (lines[i]);
                     Error error = AppendRegexSubstitution (bytes_strref, check_only);
                     if (error.Fail())
@@ -959,51 +958,6 @@ protected:
             {
                 CommandObjectSP cmd_sp (m_regex_cmd_ap.release());
                 m_interpreter.AddCommand(cmd_sp->GetCommandName(), cmd_sp, true);
-            }
-        }
-    }
-    
-    virtual LineStatus
-    IOHandlerLinesUpdated (IOHandler &io_handler,
-                           StringList &lines,
-                           uint32_t line_idx,
-                           Error &error)
-    {
-        if (line_idx == UINT32_MAX)
-        {
-            // Return true to indicate we are done getting lines (this
-            // is a "fake" line - the real terminating blank line was
-            // removed during a previous call with the code below)
-            error.Clear();
-            return LineStatus::Done;
-        }
-        else
-        {
-            const size_t num_lines = lines.GetSize();
-            if (line_idx + 1 == num_lines)
-            {
-                // The last line was edited, if this line is empty, then we are done
-                // getting our multiple lines.
-                if (lines[line_idx].empty())
-                {
-                    // Remove the last empty line from "lines" so it doesn't appear
-                    // in our final expression and return true to indicate we are done
-                    // getting lines
-                    lines.PopBack();
-                    return LineStatus::Done;
-                }
-            }
-            // Check the current line to make sure it is formatted correctly
-            bool check_only = true;
-            llvm::StringRef regex_sed(lines[line_idx]);
-            error = AppendRegexSubstitution (regex_sed, check_only);
-            if (error.Fail())
-            {
-                return LineStatus::Error;
-            }
-            else
-            {
-                return LineStatus::Success;
             }
         }
     }
@@ -1035,7 +989,7 @@ protected:
                 IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
                                                                   IOHandler::Type::Other,
                                                                   "lldb-regex", // Name of input reader for history
-                                                                  "\033[K> ",   // Prompt and clear line
+                                                                  "> ",         // Prompt
                                                                   NULL,         // Continuation prompt
                                                                   multiple_lines,
                                                                   color_prompt,
@@ -1112,21 +1066,25 @@ protected:
         
         if (second_separator_char_pos == std::string::npos)
         {
-            error.SetErrorStringWithFormat("missing second '%c' separator char after '%.*s'", 
+            error.SetErrorStringWithFormat("missing second '%c' separator char after '%.*s' in '%.*s'",
                                            separator_char, 
                                            (int)(regex_sed.size() - first_separator_char_pos - 1),
-                                           regex_sed.data() + (first_separator_char_pos + 1));
-            return error;            
+                                           regex_sed.data() + (first_separator_char_pos + 1),
+                                           (int)regex_sed.size(),
+                                           regex_sed.data());
+            return error;
         }
 
         const size_t third_separator_char_pos = regex_sed.find (separator_char, second_separator_char_pos + 1);
         
         if (third_separator_char_pos == std::string::npos)
         {
-            error.SetErrorStringWithFormat("missing third '%c' separator char after '%.*s'", 
+            error.SetErrorStringWithFormat("missing third '%c' separator char after '%.*s' in '%.*s'",
                                            separator_char, 
                                            (int)(regex_sed.size() - second_separator_char_pos - 1),
-                                           regex_sed.data() + (second_separator_char_pos + 1));
+                                           regex_sed.data() + (second_separator_char_pos + 1),
+                                           (int)regex_sed.size(),
+                                           regex_sed.data());
             return error;            
         }
 
