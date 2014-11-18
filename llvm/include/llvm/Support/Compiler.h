@@ -75,8 +75,7 @@
 /// \brief Does the compiler support r-value reference *this?
 ///
 /// Sadly, this is separate from just r-value reference support because GCC
-/// implemented everything but this thus far. No release of GCC yet has support
-/// for this feature so it is enabled with Clang only.
+/// implemented this later than everything else.
 #if __has_feature(cxx_rvalue_references) || LLVM_GNUC_PREREQ(4, 8, 1)
 #define LLVM_HAS_RVALUE_REFERENCE_THIS 1
 #else
