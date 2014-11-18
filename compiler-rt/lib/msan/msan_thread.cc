@@ -73,7 +73,7 @@ thread_return_t MsanThread::ThreadStart() {
     return 0;
   }
 
-  thread_return_t res = IndirectExternCall(start_routine_)(arg_);
+  thread_return_t res = start_routine_(arg_);
 
   return res;
 }

@@ -21,7 +21,7 @@
 // simplifies the build procedure.
 #ifdef ASAN_DLL_THUNK
 #include "asan_init_version.h"
-#include "sanitizer_common/sanitizer_interception.h"
+#include "interception/interception.h"
 
 // ---------- Function interception helper functions and macros ----------- {{{1
 extern "C" {

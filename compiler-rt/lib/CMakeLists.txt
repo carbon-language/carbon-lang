@@ -25,7 +25,6 @@ endif()
 
 if(COMPILER_RT_HAS_MSAN)
   add_subdirectory(msan)
-  add_subdirectory(msandr)
 endif()
 
 if(COMPILER_RT_HAS_PROFILE)

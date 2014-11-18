@@ -523,23 +523,6 @@ const uptr kPthreadDestructorIterations = 0;
 // Callback type for iterating over a set of memory ranges.
 typedef void (*RangeIteratorCallback)(uptr begin, uptr end, void *arg);
 
-#if (SANITIZER_FREEBSD || SANITIZER_LINUX) && !defined(SANITIZER_GO)
-extern uptr indirect_call_wrapper;
-void SetIndirectCallWrapper(uptr wrapper);
-
-template <typename F>
-F IndirectExternCall(F f) {
-  typedef F (*WrapF)(F);
-  return indirect_call_wrapper ? ((WrapF)indirect_call_wrapper)(f) : f;
-}
-#else
-INLINE void SetIndirectCallWrapper(uptr wrapper) {}
-template <typename F>
-F IndirectExternCall(F f) {
-  return f;
-}
-#endif
-
 #if SANITIZER_ANDROID
 // Initialize Android logging. Any writes before this are silently lost.
 void AndroidLogInit();

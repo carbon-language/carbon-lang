@@ -122,16 +122,6 @@ void __msan_dump_shadow(const void *x, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 int  __msan_has_dynamic_component();
 
-// Returns x such that %fs:x is the first byte of __msan_retval_tls.
-SANITIZER_INTERFACE_ATTRIBUTE
-int __msan_get_retval_tls_offset();
-SANITIZER_INTERFACE_ATTRIBUTE
-int __msan_get_param_tls_offset();
-
-// For intercepting mmap from ld.so in msandr.
-SANITIZER_INTERFACE_ATTRIBUTE
-bool __msan_is_in_loader();
-
 // For testing.
 SANITIZER_INTERFACE_ATTRIBUTE
 u32 __msan_get_umr_origin();
@@ -160,15 +150,6 @@ void __sanitizer_unaligned_store32(uu32 *p, u32 x);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_unaligned_store64(uu64 *p, u64 x);
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_dr_is_initialized();
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void *__msan_wrap_indirect_call(void *target);
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_indirect_call_wrapper(uptr wrapper);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_death_callback(void (*callback)(void));

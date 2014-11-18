@@ -15,7 +15,7 @@
 #define ASAN_INTERCEPTORS_H
 
 #include "asan_internal.h"
-#include "sanitizer_common/sanitizer_interception.h"
+#include "interception/interception.h"
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 
 // Use macro to describe if specific function should be

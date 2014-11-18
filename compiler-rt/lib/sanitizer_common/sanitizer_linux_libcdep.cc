@@ -128,7 +128,7 @@ bool SetEnv(const char *name, const char *value) {
   setenv_ft setenv_f;
   CHECK_EQ(sizeof(setenv_f), sizeof(f));
   internal_memcpy(&setenv_f, &f, sizeof(f));
-  return IndirectExternCall(setenv_f)(name, value, 1) == 0;
+  return setenv_f(name, value, 1) == 0;
 }
 
 bool SanitizerSetThreadName(const char *name) {
@@ -173,7 +173,7 @@ void InitTlsSize() {
   CHECK_NE(get_tls, 0);
   size_t tls_size = 0;
   size_t tls_align = 0;
-  IndirectExternCall(get_tls)(&tls_size, &tls_align);
+  get_tls(&tls_size, &tls_align);
   g_tls_size = tls_size;
 #endif  // !SANITIZER_FREEBSD && !SANITIZER_ANDROID
 }
@@ -407,14 +407,6 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
   return data.current_n;
 }
 #endif  // SANITIZER_ANDROID
-
-uptr indirect_call_wrapper;
-
-void SetIndirectCallWrapper(uptr wrapper) {
-  CHECK(!indirect_call_wrapper);
-  CHECK(wrapper);
-  indirect_call_wrapper = wrapper;
-}
 
 void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   // Some kinds of sandboxes may forbid filesystem access, so we won't be able

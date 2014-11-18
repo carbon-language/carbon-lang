@@ -1442,30 +1442,30 @@ static THREADLOCAL __sanitizer_glob_t *pglob_copy;
 
 static void wrapped_gl_closedir(void *dir) {
   COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
-  IndirectExternCall(pglob_copy->gl_closedir)(dir);
+  pglob_copy->gl_closedir(dir);
 }
 
 static void *wrapped_gl_readdir(void *dir) {
   COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
-  return IndirectExternCall(pglob_copy->gl_readdir)(dir);
+  return pglob_copy->gl_readdir(dir);
 }
 
 static void *wrapped_gl_opendir(const char *s) {
   COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(s, REAL(strlen)(s) + 1);
-  return IndirectExternCall(pglob_copy->gl_opendir)(s);
+  return pglob_copy->gl_opendir(s);
 }
 
 static int wrapped_gl_lstat(const char *s, void *st) {
   COMMON_INTERCEPTOR_UNPOISON_PARAM(2);
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(s, REAL(strlen)(s) + 1);
-  return IndirectExternCall(pglob_copy->gl_lstat)(s, st);
+  return pglob_copy->gl_lstat(s, st);
 }
 
 static int wrapped_gl_stat(const char *s, void *st) {
   COMMON_INTERCEPTOR_UNPOISON_PARAM(2);
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(s, REAL(strlen)(s) + 1);
-  return IndirectExternCall(pglob_copy->gl_stat)(s, st);
+  return pglob_copy->gl_stat(s, st);
 }
 
 INTERCEPTOR(int, glob, const char *pattern, int flags,
@@ -2633,7 +2633,7 @@ static THREADLOCAL scandir_compar_f scandir_compar;
 static int wrapped_scandir_filter(const struct __sanitizer_dirent *dir) {
   COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(dir, dir->d_reclen);
-  return IndirectExternCall(scandir_filter)(dir);
+  return scandir_filter(dir);
 }
 
 static int wrapped_scandir_compar(const struct __sanitizer_dirent **a,
@@ -2643,7 +2643,7 @@ static int wrapped_scandir_compar(const struct __sanitizer_dirent **a,
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(*a, (*a)->d_reclen);
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(b, sizeof(*b));
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(*b, (*b)->d_reclen);
-  return IndirectExternCall(scandir_compar)(a, b);
+  return scandir_compar(a, b);
 }
 
 INTERCEPTOR(int, scandir, char *dirp, __sanitizer_dirent ***namelist,
@@ -2685,7 +2685,7 @@ static THREADLOCAL scandir64_compar_f scandir64_compar;
 static int wrapped_scandir64_filter(const struct __sanitizer_dirent64 *dir) {
   COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(dir, dir->d_reclen);
-  return IndirectExternCall(scandir64_filter)(dir);
+  return scandir64_filter(dir);
 }
 
 static int wrapped_scandir64_compar(const struct __sanitizer_dirent64 **a,
@@ -2695,7 +2695,7 @@ static int wrapped_scandir64_compar(const struct __sanitizer_dirent64 **a,
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(*a, (*a)->d_reclen);
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(b, sizeof(*b));
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(*b, (*b)->d_reclen);
-  return IndirectExternCall(scandir64_compar)(a, b);
+  return scandir64_compar(a, b);
 }
 
 INTERCEPTOR(int, scandir64, char *dirp, __sanitizer_dirent64 ***namelist,

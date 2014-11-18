@@ -15,6 +15,7 @@
 // sanitizer_common/sanitizer_common_interceptors.h
 //===----------------------------------------------------------------------===//
 
+#include "interception/interception.h"
 #include "msan.h"
 #include "msan_chained_origin_depot.h"
 #include "msan_origin.h"
@@ -25,7 +26,6 @@
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_interception.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_linux.h"
@@ -315,11 +315,8 @@ INTERCEPTOR(char *, __strndup, char *src, SIZE_T n) {
 INTERCEPTOR(char *, gcvt, double number, SIZE_T ndigit, char *buf) {
   ENSURE_MSAN_INITED();
   char *res = REAL(gcvt)(number, ndigit, buf);
-  // DynamoRio tool will take care of unpoisoning gcvt result for us.
-  if (!__msan_has_dynamic_component()) {
-    SIZE_T n = REAL(strlen)(buf);
-    __msan_unpoison(buf, n + 1);
-  }
+  SIZE_T n = REAL(strlen)(buf);
+  __msan_unpoison(buf, n + 1);
   return res;
 }
 
@@ -349,9 +346,7 @@ INTERCEPTOR(char *, strncat, char *dest, const char *src, SIZE_T n) {  // NOLINT
 #define INTERCEPTOR_STRTO_BODY(ret_type, func, ...) \
   ENSURE_MSAN_INITED();                             \
   ret_type res = REAL(func)(__VA_ARGS__);           \
-  if (!__msan_has_dynamic_component()) {            \
-    __msan_unpoison(endptr, sizeof(*endptr));       \
-  }                                                 \
+  __msan_unpoison(endptr, sizeof(*endptr));         \
   return res;
 
 #define INTERCEPTOR_STRTO(ret_type, func)                        \
@@ -408,7 +403,7 @@ INTERCEPTOR_STRTO_BASE_LOC(unsigned long long, __strtoull_internal)  // NOLINT
 INTERCEPTOR(int, vswprintf, void *str, uptr size, void *format, va_list ap) {
   ENSURE_MSAN_INITED();
   int res = REAL(vswprintf)(str, size, format, ap);
-  if (res >= 0 && !__msan_has_dynamic_component()) {
+  if (res >= 0) {
     __msan_unpoison(str, 4 * (res + 1));
   }
   return res;
@@ -575,21 +570,16 @@ INTERCEPTOR(int, gettimeofday, void *tv, void *tz) {
 INTERCEPTOR(char *, fcvt, double x, int a, int *b, int *c) {
   ENSURE_MSAN_INITED();
   char *res = REAL(fcvt)(x, a, b, c);
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(b, sizeof(*b));
-    __msan_unpoison(c, sizeof(*c));
-    if (res) __msan_unpoison(res, REAL(strlen)(res) + 1);
-  }
+  __msan_unpoison(b, sizeof(*b));
+  __msan_unpoison(c, sizeof(*c));
+  if (res) __msan_unpoison(res, REAL(strlen)(res) + 1);
   return res;
 }
 
 INTERCEPTOR(char *, getenv, char *name) {
   ENSURE_MSAN_INITED();
   char *res = REAL(getenv)(name);
-  if (!__msan_has_dynamic_component()) {
-    if (res)
-      __msan_unpoison(res, REAL(strlen)(res) + 1);
-  }
+  if (res) __msan_unpoison(res, REAL(strlen)(res) + 1);
   return res;
 }
 
@@ -927,17 +917,15 @@ static int msan_dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
   }
   dl_iterate_phdr_data *cbdata = (dl_iterate_phdr_data *)data;
   UnpoisonParam(3);
-  return IndirectExternCall(cbdata->callback)(info, size, cbdata->data);
+  return cbdata->callback(info, size, cbdata->data);
 }
 
 INTERCEPTOR(int, dl_iterate_phdr, dl_iterate_phdr_cb callback, void *data) {
   ENSURE_MSAN_INITED();
-  EnterLoader();
   dl_iterate_phdr_data cbdata;
   cbdata.callback = callback;
   cbdata.data = data;
   int res = REAL(dl_iterate_phdr)(msan_dl_iterate_phdr_cb, (void *)&cbdata);
-  ExitLoader();
   return res;
 }
 
@@ -977,7 +965,7 @@ static void SignalHandler(int signo) {
   typedef void (*signal_cb)(int x);
   signal_cb cb =
       (signal_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
-  IndirectExternCall(cb)(signo);
+  cb(signo);
 }
 
 static void SignalAction(int signo, void *si, void *uc) {
@@ -990,7 +978,7 @@ static void SignalAction(int signo, void *si, void *uc) {
   typedef void (*sigaction_cb)(int, void *, void *);
   sigaction_cb cb =
       (sigaction_cb)atomic_load(&sigactions[signo], memory_order_relaxed);
-  IndirectExternCall(cb)(signo, si, uc);
+  cb(signo, si, uc);
 }
 
 INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
@@ -1118,7 +1106,7 @@ struct MSanAtExitRecord {
 void MSanAtExitWrapper(void *arg) {
   UnpoisonParam(1);
   MSanAtExitRecord *r = (MSanAtExitRecord *)arg;
-  IndirectExternCall(r->func)(r->arg);
+  r->func(r->arg);
   InternalFree(r);
 }
 
@@ -1228,12 +1216,8 @@ int OnExit() {
   } while (false)  // FIXME
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
-#define COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, map)                       \
-  if (!__msan_has_dynamic_component() && map) {                                \
-    /* If msandr didn't clear the shadow before the initializers ran, we do */ \
-    /* it ourselves afterwards. */                                             \
-    ForEachMappedRegion((link_map *)map, __msan_unpoison);                     \
-  }
+#define COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, map) \
+  if (map) ForEachMappedRegion((link_map *)map, __msan_unpoison);
 
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 

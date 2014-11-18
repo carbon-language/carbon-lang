@@ -34,8 +34,6 @@ using namespace __sanitizer;
 static THREADLOCAL int msan_expect_umr = 0;
 static THREADLOCAL int msan_expected_umr_found = 0;
 
-static bool msan_running_under_dr;
-
 // Function argument shadow. Each argument starts at the next available 8-byte
 // aligned address.
 SANITIZER_INTERFACE_ATTRIBUTE
@@ -63,7 +61,6 @@ SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL u32 __msan_origin_tls;
 
 static THREADLOCAL int is_in_symbolizer;
-static THREADLOCAL int is_in_loader;
 
 extern "C" SANITIZER_WEAK_ATTRIBUTE const int __msan_track_origins;
 
@@ -78,14 +75,6 @@ namespace __msan {
 void EnterSymbolizer() { ++is_in_symbolizer; }
 void ExitSymbolizer()  { --is_in_symbolizer; }
 bool IsInSymbolizer() { return is_in_symbolizer; }
-
-void EnterLoader() { ++is_in_loader; }
-void ExitLoader()  { --is_in_loader; }
-
-extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE
-bool __msan_is_in_loader() { return is_in_loader; }
-}
 
 static Flags msan_flags;
 
@@ -394,7 +383,7 @@ void __msan_init() {
   __msan_clear_on_return();
   if (__msan_get_track_origins())
     VPrintf(1, "msan_track_origins\n");
-  if (!InitShadow(/* prot1 */ !msan_running_under_dr, /* prot2 */ true,
+  if (!InitShadow(/* prot1 */ true, /* prot2 */ true,
                   /* map_shadow */ true, __msan_get_track_origins())) {
     Printf("FATAL: MemorySanitizer can not mmap the shadow memory.\n");
     Printf("FATAL: Make sure to compile with -fPIE and to link with -pie.\n");
@@ -498,38 +487,11 @@ int __msan_set_poison_in_malloc(int do_poison) {
   return old;
 }
 
-int  __msan_has_dynamic_component() {
-  return msan_running_under_dr;
-}
+int __msan_has_dynamic_component() { return false; }
 
 NOINLINE
 void __msan_clear_on_return() {
   __msan_param_tls[0] = 0;
-}
-
-static void* get_tls_base() {
-  u64 p;
-  asm("mov %%fs:0, %0"
-      : "=r"(p) ::);
-  return (void*)p;
-}
-
-int __msan_get_retval_tls_offset() {
-  // volatile here is needed to avoid UB, because the compiler thinks that we
-  // are doing address arithmetics on unrelated pointers, and takes some
-  // shortcuts
-  volatile sptr retval_tls_p = (sptr)&__msan_retval_tls;
-  volatile sptr tls_base_p = (sptr)get_tls_base();
-  return retval_tls_p - tls_base_p;
-}
-
-int __msan_get_param_tls_offset() {
-  // volatile here is needed to avoid UB, because the compiler thinks that we
-  // are doing address arithmetics on unrelated pointers, and takes some
-  // shortcuts
-  volatile sptr param_tls_p = (sptr)&__msan_param_tls;
-  volatile sptr tls_base_p = (sptr)get_tls_base();
-  return param_tls_p - tls_base_p;
 }
 
 void __msan_partial_poison(const void* data, void* shadow, uptr size) {
@@ -655,18 +617,6 @@ void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
 
 void __msan_set_death_callback(void (*callback)(void)) {
   death_callback = callback;
-}
-
-void *__msan_wrap_indirect_call(void *target) {
-  return IndirectExternCall(target);
-}
-
-void __msan_dr_is_initialized() {
-  msan_running_under_dr = true;
-}
-
-void __msan_set_indirect_call_wrapper(uptr wrapper) {
-  SetIndirectCallWrapper(wrapper);
 }
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS

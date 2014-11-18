@@ -251,7 +251,6 @@ TEST(MemorySanitizer, ArgTest) {
 
 
 TEST(MemorySanitizer, CallAndRet) {
-  if (!__msan_has_dynamic_component()) return;
   ReturnPoisoned<S1>();
   ReturnPoisoned<S2>();
   ReturnPoisoned<S4>();
@@ -494,14 +493,12 @@ TEST(MemorySanitizer, DynMem) {
 static char *DynRetTestStr;
 
 TEST(MemorySanitizer, DynRet) {
-  if (!__msan_has_dynamic_component()) return;
   ReturnPoisoned<S8>();
   EXPECT_NOT_POISONED(clearenv());
 }
 
 
 TEST(MemorySanitizer, DynRet1) {
-  if (!__msan_has_dynamic_component()) return;
   ReturnPoisoned<S8>();
 }
 
@@ -1452,13 +1449,8 @@ void TestOverlapMemmove() {
   x[2] = 0;
   memmove(x, x + 1, (size - 1) * sizeof(T));
   EXPECT_NOT_POISONED(x[1]);
-  if (!__msan_has_dynamic_component()) {
-    // FIXME: under DR we will lose this information
-    // because accesses in memmove will unpoisin the shadow.
-    // We need to use our own memove implementation instead of libc's.
-    EXPECT_POISONED(x[0]);
-    EXPECT_POISONED(x[2]);
-  }
+  EXPECT_POISONED(x[0]);
+  EXPECT_POISONED(x[2]);
   delete [] x;
 }
 
@@ -3731,56 +3723,6 @@ TEST(VectorMaddTest, mmx_pmadd_wd) {
   EXPECT_EQ((unsigned)(2 * 102 + 3 * 103), c[1]);
 }
 #endif  // defined(__clang__)
-
-TEST(MemorySanitizerDr, StoreInDSOTest) {
-  if (!__msan_has_dynamic_component()) return;
-  char* s = new char[10];
-  dso_memfill(s, 9);
-  EXPECT_NOT_POISONED(s[5]);
-  EXPECT_POISONED(s[9]);
-}
-
-int return_poisoned_int() {
-  return ReturnPoisoned<U8>();
-}
-
-TEST(MemorySanitizerDr, ReturnFromDSOTest) {
-  if (!__msan_has_dynamic_component()) return;
-  EXPECT_NOT_POISONED(dso_callfn(return_poisoned_int));
-}
-
-NOINLINE int TrashParamTLS(long long x, long long y, long long z) {  //NOLINT
-  EXPECT_POISONED(x);
-  EXPECT_POISONED(y);
-  EXPECT_POISONED(z);
-  return 0;
-}
-
-static int CheckParamTLS(long long x, long long y, long long z) {  //NOLINT
-  EXPECT_NOT_POISONED(x);
-  EXPECT_NOT_POISONED(y);
-  EXPECT_NOT_POISONED(z);
-  return 0;
-}
-
-TEST(MemorySanitizerDr, CallFromDSOTest) {
-  if (!__msan_has_dynamic_component()) return;
-  S8* x = GetPoisoned<S8>();
-  S8* y = GetPoisoned<S8>();
-  S8* z = GetPoisoned<S8>();
-  EXPECT_NOT_POISONED(TrashParamTLS(*x, *y, *z));
-  EXPECT_NOT_POISONED(dso_callfn1(CheckParamTLS));
-}
-
-static void StackStoreInDSOFn(int* x, int* y) {
-  EXPECT_NOT_POISONED(*x);
-  EXPECT_NOT_POISONED(*y);
-}
-
-TEST(MemorySanitizerDr, StackStoreInDSOTest) {
-  if (!__msan_has_dynamic_component()) return;
-  dso_stack_store(StackStoreInDSOFn, 1);
-}
 
 TEST(MemorySanitizerOrigins, SetGet) {
   EXPECT_EQ(TrackingOrigins(), __msan_get_track_origins());

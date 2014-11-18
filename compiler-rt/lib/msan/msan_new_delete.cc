@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "msan.h"
-#include "sanitizer_common/sanitizer_interception.h"
+#include "interception/interception.h"
 
 #if MSAN_REPLACE_OPERATORS_NEW_AND_DELETE
 
