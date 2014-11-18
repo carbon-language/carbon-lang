@@ -1,5 +1,48 @@
 ; RUN: llc -fast-isel -fast-isel-abort -mtriple=aarch64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
 
+; CHECK-LABEL: lsr_zext_i1_i16
+; CHECK:       uxth {{w[0-9]*}}, wzr
+define zeroext i16 @lsr_zext_i1_i16(i1 %b) {
+  %1 = zext i1 %b to i16
+  %2 = lshr i16 %1, 1
+  ret i16 %2
+}
+
+; CHECK-LABEL: lsr_sext_i1_i16
+; CHECK:       sbfx [[REG1:w[0-9]+]], {{w[0-9]*}}, #0, #1
+; CHECK-NEXT:  ubfx [[REG2:w[0-9]+]], [[REG1]], #1, #15
+; CHECK-NEXT:  sxth {{w[0-9]*}}, [[REG2]]
+define signext i16 @lsr_sext_i1_i16(i1 %b) {
+  %1 = sext i1 %b to i16
+  %2 = lshr i16 %1, 1
+  ret i16 %2
+}
+
+; CHECK-LABEL: lsr_zext_i1_i32
+; CHECK:       mov {{w[0-9]*}}, wzr
+define i32 @lsr_zext_i1_i32(i1 %b) {
+  %1 = zext i1 %b to i32
+  %2 = lshr i32 %1, 1
+  ret i32 %2
+}
+
+; CHECK-LABEL: lsr_sext_i1_i32
+; CHECK:       sbfx [[REG1:w[0-9]+]], {{w[0-9]*}}, #0, #1
+; CHECK-NEXT:  lsr {{w[0-9]*}}, [[REG1:w[0-9]+]], #1
+define i32 @lsr_sext_i1_i32(i1 %b) {
+  %1 = sext i1 %b to i32
+  %2 = lshr i32 %1, 1
+  ret i32 %2
+}
+
+; CHECK-LABEL: lsr_zext_i1_i64
+; CHECK:       mov {{x[0-9]*}}, xzr
+define i64 @lsr_zext_i1_i64(i1 %b) {
+  %1 = zext i1 %b to i64
+  %2 = lshr i64 %1, 1
+  ret i64 %2
+}
+
 ; CHECK-LABEL: lsl_zext_i1_i16
 ; CHECK:       ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #1
 define zeroext i16 @lsl_zext_i1_i16(i1 %b) {
