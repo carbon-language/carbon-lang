@@ -100,3 +100,48 @@ namespace test5 {
       });
   }
 }
+
+
+// rdar://16356628
+//
+// Ensure that we can end function bodies while parsing an
+// expression that requires an explicitly-tracked cleanup object
+// (i.e. a block literal).
+
+// The nested function body in this test case is a template
+// instantiation.  The template function has to be constexpr because
+// we'll otherwise delay its instantiation to the end of the
+// translation unit.
+namespace test6a {
+  template <class T> constexpr int func() { return 0; }
+  void run(void (^)(), int);
+
+  void test() {
+    int aCapturedVar = 0;
+    run(^{ (void) aCapturedVar; }, func<int>());
+  }
+}
+
+// The nested function body in this test case is a method of a local
+// class.
+namespace test6b {
+  void run(void (^)(), void (^)());
+  void test() {
+    int aCapturedVar = 0;
+    run(^{ (void) aCapturedVar; },
+        ^{ struct A { static void foo() {} };
+            A::foo(); });
+  }
+}
+
+// The nested function body in this test case is a lambda invocation
+// function.
+namespace test6c {
+  void run(void (^)(), void (^)());
+  void test() {
+    int aCapturedVar = 0;
+    run(^{ (void) aCapturedVar; },
+        ^{ struct A { static void foo() {} };
+            A::foo(); });
+  }
+}
