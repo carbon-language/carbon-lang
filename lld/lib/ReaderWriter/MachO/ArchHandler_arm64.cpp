@@ -226,7 +226,6 @@ const Registry::KindStrings ArchHandler_arm64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(addOffset12),
   LLD_KIND_STRING_ENTRY(lazyPointer),
   LLD_KIND_STRING_ENTRY(lazyImmediateLocation),
-  LLD_KIND_STRING_ENTRY(pointer64),
 
   LLD_KIND_STRING_END
 };
@@ -393,7 +392,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
       return ec;
     *addend = 0;
     return std::error_code();
-  case X86_64_RELOC_UNSIGNED                   | rExtern | rLength8:
+  case ARM64_RELOC_UNSIGNED                    | rExtern | rLength8:
     // ex: .quad _foo + N
     *kind = pointer64;
     if (auto ec = atomFromSymbolIndex(reloc.symbol, target))
@@ -415,7 +414,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
     *addend = 0;
     return std::error_code();
   default:
-    return make_dynamic_error_code(Twine("unsupported arm relocation type"));
+    return make_dynamic_error_code(Twine("unsupported arm64 relocation type"));
   }
 }
 
@@ -709,7 +708,7 @@ void ArchHandler_arm64::appendSectionRelocations(
     return;
   case pointer64:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
-                  X86_64_RELOC_UNSIGNED | rExtern | rLength8);
+                  ARM64_RELOC_UNSIGNED | rExtern | rLength8);
     return;
   case delta64:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(atom), 0,
