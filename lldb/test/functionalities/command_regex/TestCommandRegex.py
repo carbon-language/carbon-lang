@@ -32,6 +32,7 @@ class CommandRegexTestCase(TestBase):
         child.sendline('s/^$/help/')
         child.expect_exact(regex_prompt1)
         child.sendline('')
+        child.expect_exact(prompt)
         # Help!
         child.sendline('Help__')
         # If we see the familiar 'help' output, the test is done.
