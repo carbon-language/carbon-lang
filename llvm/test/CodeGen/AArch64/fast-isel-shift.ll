@@ -1,4 +1,4 @@
-; RUN: llc -fast-isel -fast-isel-abort -mtriple=arm64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -fast-isel -fast-isel-abort -mtriple=aarch64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
 
 ; CHECK-LABEL: lsl_zext_i1_i16
 ; CHECK:       ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #1
@@ -402,5 +402,28 @@ define i32 @shift_test1(i8 %a) {
   %2 = ashr i8 %1, 4
   %3 = sext i8 %2 to i32
   ret i32 %3
+}
+
+; Test zero shifts
+
+; CHECK-LABEL: shl_zero
+; CHECK-NOT:   lsl
+define i32 @shl_zero(i32 %a) {
+  %1 = shl i32 %a, 0
+  ret i32 %1
+}
+
+; CHECK-LABEL: lshr_zero
+; CHECK-NOT:   lsr
+define i32 @lshr_zero(i32 %a) {
+  %1 = lshr i32 %a, 0
+  ret i32 %1
+}
+
+; CHECK-LABEL: ashr_zero
+; CHECK-NOT:   asr
+define i32 @ashr_zero(i32 %a) {
+  %1 = ashr i32 %a, 0
+  ret i32 %1
 }
 

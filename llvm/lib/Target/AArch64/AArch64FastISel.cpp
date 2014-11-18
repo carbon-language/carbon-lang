@@ -3899,6 +3899,17 @@ unsigned AArch64FastISel::emitLSL_ri(MVT RetVT, MVT SrcVT, unsigned Op0,
   unsigned RegSize = Is64Bit ? 64 : 32;
   unsigned DstBits = RetVT.getSizeInBits();
   unsigned SrcBits = SrcVT.getSizeInBits();
+  const TargetRegisterClass *RC =
+      Is64Bit ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+
+  // Just emit a copy for "zero" shifts.
+  if (Shift == 0) {
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(Op0, getKillRegState(Op0IsKill));
+    return ResultReg;
+  }
 
   // Don't deal with undefined shifts.
   if (Shift >= DstBits)
@@ -3937,8 +3948,6 @@ unsigned AArch64FastISel::emitLSL_ri(MVT RetVT, MVT SrcVT, unsigned Op0,
     {AArch64::UBFMWri, AArch64::UBFMXri}
   };
   unsigned Opc = OpcTable[IsZext][Is64Bit];
-  const TargetRegisterClass *RC =
-      Is64Bit ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
   if (SrcVT.SimpleTy <= MVT::i32 && RetVT == MVT::i64) {
     unsigned TmpReg = MRI.createVirtualRegister(RC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -3993,6 +4002,17 @@ unsigned AArch64FastISel::emitLSR_ri(MVT RetVT, MVT SrcVT, unsigned Op0,
   unsigned RegSize = Is64Bit ? 64 : 32;
   unsigned DstBits = RetVT.getSizeInBits();
   unsigned SrcBits = SrcVT.getSizeInBits();
+  const TargetRegisterClass *RC =
+      Is64Bit ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+
+  // Just emit a copy for "zero" shifts.
+  if (Shift == 0) {
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(Op0, getKillRegState(Op0IsKill));
+    return ResultReg;
+  }
 
   // Don't deal with undefined shifts.
   if (Shift >= DstBits)
@@ -4045,8 +4065,6 @@ unsigned AArch64FastISel::emitLSR_ri(MVT RetVT, MVT SrcVT, unsigned Op0,
     {AArch64::UBFMWri, AArch64::UBFMXri}
   };
   unsigned Opc = OpcTable[IsZExt][Is64Bit];
-  const TargetRegisterClass *RC =
-      Is64Bit ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
   if (SrcVT.SimpleTy <= MVT::i32 && RetVT == MVT::i64) {
     unsigned TmpReg = MRI.createVirtualRegister(RC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -4101,6 +4119,17 @@ unsigned AArch64FastISel::emitASR_ri(MVT RetVT, MVT SrcVT, unsigned Op0,
   unsigned RegSize = Is64Bit ? 64 : 32;
   unsigned DstBits = RetVT.getSizeInBits();
   unsigned SrcBits = SrcVT.getSizeInBits();
+  const TargetRegisterClass *RC =
+      Is64Bit ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+
+  // Just emit a copy for "zero" shifts.
+  if (Shift == 0) {
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(Op0, getKillRegState(Op0IsKill));
+    return ResultReg;
+  }
 
   // Don't deal with undefined shifts.
   if (Shift >= DstBits)
@@ -4141,8 +4170,6 @@ unsigned AArch64FastISel::emitASR_ri(MVT RetVT, MVT SrcVT, unsigned Op0,
     {AArch64::UBFMWri, AArch64::UBFMXri}
   };
   unsigned Opc = OpcTable[IsZExt][Is64Bit];
-  const TargetRegisterClass *RC =
-      Is64Bit ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
   if (SrcVT.SimpleTy <= MVT::i32 && RetVT == MVT::i64) {
     unsigned TmpReg = MRI.createVirtualRegister(RC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
