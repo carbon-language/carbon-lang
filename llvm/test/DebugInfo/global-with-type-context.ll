@@ -20,9 +20,6 @@
 ; CHECK-NEXT: DW_AT_specification {{.*}} "i"
 ; CHECK-NEXT: DW_AT_const_value [DW_FORM_sdata] (2)
 
-target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-apple-darwin14.0.0"
-
 ; Function Attrs: nounwind
 define void @_Z2f1v() #0 {
 entry:
