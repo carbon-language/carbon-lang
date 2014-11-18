@@ -8142,6 +8142,14 @@ void ASTReader::ReadComments() {
   }
 }
 
+void ASTReader::getInputFiles(ModuleFile &F,
+                             SmallVectorImpl<serialization::InputFile> &Files) {
+  for (unsigned I = 0, E = F.InputFilesLoaded.size(); I != E; ++I) {
+    unsigned ID = I+1;
+    Files.push_back(getInputFile(F, ID));
+  }
+}
+
 std::string ASTReader::getOwningModuleNameForDiagnostic(const Decl *D) {
   // If we know the owning module, use it.
   if (Module *M = D->getOwningModule())

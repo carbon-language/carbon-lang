@@ -2147,6 +2147,10 @@ public:
 
   //RIDErief Loads comments ranges.
   void ReadComments() override;
+
+  /// Return all input files for the given module file.
+  void getInputFiles(ModuleFile &F,
+                     SmallVectorImpl<serialization::InputFile> &Files);
 };
 
 /// \brief Helper class that saves the current stream position and
