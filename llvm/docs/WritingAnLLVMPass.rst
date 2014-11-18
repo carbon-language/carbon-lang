@@ -146,7 +146,7 @@ to avoid using expensive C++ runtime information.
 
 .. code-block:: c++
 
-      virtual bool runOnFunction(Function &F) {
+      bool runOnFunction(Function &F) override {
         errs() << "Hello: ";
         errs().write_escaped(F.getName()) << "\n";
         return false;
@@ -194,7 +194,7 @@ As a whole, the ``.cpp`` file looks like:
         static char ID;
         Hello() : FunctionPass(ID) {}
 
-        virtual bool runOnFunction(Function &F) {
+        bool runOnFunction(Function &F) override {
           errs() << "Hello: ";
           errs().write_escaped(F.getName()) << '\n';
           return false;
@@ -1162,7 +1162,7 @@ all!  To fix this, we need to add the following :ref:`getAnalysisUsage
 .. code-block:: c++
 
   // We don't modify the program, so we preserve all analyses
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 
