@@ -223,6 +223,7 @@ class SMRD <dag outs, dag ins, string asm, list<dag> pattern> :
   let SMRD = 1;
   let mayStore = 0;
   let mayLoad = 1;
+  let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
 }
 
@@ -527,10 +528,9 @@ class VOPC <bits<8> op, dag ins, string asm, list<dag> pattern> :
 
 class VINTRP <bits <2> op, dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern>, VINTRPe<op> {
-
-  let neverHasSideEffects = 1;
   let mayLoad = 1;
   let mayStore = 0;
+  let hasSideEffects = 0;
 }
 
 } // End Uses = [EXEC]
@@ -555,7 +555,7 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let EXP_CNT = 1;
   let MUBUF = 1;
 
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
 }
 
@@ -591,6 +591,8 @@ class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let VM_CNT = 1;
   let EXP_CNT = 1;
   let MIMG = 1;
+
+  let hasSideEffects = 0; // XXX ????
 }
 
 

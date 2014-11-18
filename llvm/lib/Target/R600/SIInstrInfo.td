@@ -941,6 +941,8 @@ class DS_1A <bits<8> op, dag outs, dag ins, string asm, list<dag> pat> :
   // Single load interpret the 2 i8imm operands as a single i16 offset.
   let offset0 = offset{7-0};
   let offset1 = offset{15-8};
+
+  let hasSideEffects = 0;
 }
 
 class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
@@ -965,6 +967,7 @@ class DS_Load2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   let data1 = 0;
   let mayLoad = 1;
   let mayStore = 0;
+  let hasSideEffects = 0;
 }
 
 class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
@@ -988,6 +991,7 @@ class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   []> {
   let mayStore = 1;
   let mayLoad = 0;
+  let hasSideEffects = 0;
   let vdst = 0;
 }
 
@@ -1016,7 +1020,6 @@ class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""
   AtomicNoRet<noRetOp, 1> {
   let mayStore = 1;
   let mayLoad = 1;
-
   let hasPostISelHook = 1; // Adjusted to no return version.
 }
 
