@@ -300,7 +300,8 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
       State.Stack.back().ColonPos = State.Column + Spaces + Current.ColumnWidth;
   }
 
-  if (Previous.opensScope() && Previous.Type != TT_ObjCMethodExpr &&
+  if (Style.AlignAfterOpenBracket &&
+      Previous.opensScope() && Previous.Type != TT_ObjCMethodExpr &&
       (Current.Type != TT_LineComment || Previous.BlockKind == BK_BracedInit))
     State.Stack.back().Indent = State.Column + Spaces;
   if (State.Stack.back().AvoidBinPacking && startsNextParameter(Current, Style))
@@ -735,11 +736,13 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     ParenState NewParenState = State.Stack.back();
     NewParenState.ContainsLineBreak = false;
 
-    // Indent from 'LastSpace' unless this the fake parentheses encapsulating a
-    // builder type call after 'return'. If such a call is line-wrapped, we
-    // commonly just want to indent from the start of the line.
+    // Indent from 'LastSpace' unless these are fake parentheses encapsulating
+    // a builder type call after 'return' or, if the alignment after opening
+    // brackets is disabled.
     if (!Current.isTrailingComment() &&
-        (!Previous || Previous->isNot(tok::kw_return) || *I > 0))
+        (!Previous || Previous->isNot(tok::kw_return) || *I > 0) &&
+        (Style.AlignAfterOpenBracket || *I != prec::Comma ||
+         Current.NestingLevel == 0))
       NewParenState.Indent =
           std::max(std::max(State.Column, NewParenState.Indent),
                    State.Stack.back().LastSpace);

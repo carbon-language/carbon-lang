@@ -264,5 +264,16 @@ TEST_F(FormatTestJava, ImportDeclarations) {
                getStyleWithColumns(50));
 }
 
+TEST_F(FormatTestJava, MethodDeclarations) {
+  verifyFormat("void methodName(Object arg1,\n"
+               "    Object arg2, Object arg3) {\n"
+               "}",
+               getStyleWithColumns(40));
+  verifyFormat("void methodName(\n"
+               "    Object arg1, Object arg2) {\n"
+               "}",
+               getStyleWithColumns(40));
+}
+
 } // end namespace tooling
 } // end namespace clang

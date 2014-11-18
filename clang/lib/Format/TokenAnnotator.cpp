@@ -1525,7 +1525,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
     return Line.MightBeFunctionDecl ? 50 : 500;
 
-  if (Left.is(tok::l_paren) && InFunctionDecl)
+  if (Left.is(tok::l_paren) && InFunctionDecl && Style.AlignAfterOpenBracket)
     return 100;
   if (Left.is(tok::equal) && InFunctionDecl)
     return 110;
@@ -1533,9 +1533,12 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 1;
   if (Left.Type == TT_TemplateOpener)
     return 100;
-  if (Left.opensScope())
+  if (Left.opensScope()) {
+    if (!Style.AlignAfterOpenBracket)
+      return 0;
     return Left.ParameterCount > 1 ? Style.PenaltyBreakBeforeFirstCallParameter
                                    : 19;
+  }
 
   if (Right.is(tok::lessless)) {
     if (Left.is(tok::string_literal)) {

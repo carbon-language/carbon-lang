@@ -4026,6 +4026,44 @@ TEST_F(FormatTest, AlignsAfterReturn) {
                "    code == a || code == b;");
 }
 
+TEST_F(FormatTest, AlignsAfterOpenBracket) {
+  verifyFormat(
+      "void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaa aaaaaaaa,\n"
+      "                                                aaaaaaaaa aaaaaaa) {}");
+  verifyFormat(
+      "SomeLongVariableName->someVeryLongFunctionName(aaaaaaaaaaa aaaaaaaaa,\n"
+      "                                               aaaaaaaaaaa aaaaaaaaa);");
+  verifyFormat(
+      "SomeLongVariableName->someFunction(foooooooo(aaaaaaaaaaaaaaa,\n"
+      "                                             aaaaaaaaaaaaaaaaaaaaa));");
+  FormatStyle Style = getLLVMStyle();
+  Style.AlignAfterOpenBracket = false;
+  verifyFormat(
+      "void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaa aaaaaaaa, aaaaaaaaa aaaaaaa) {}",
+      Style);
+  verifyFormat(
+      "SomeLongVariableName->someVeryLongFunctionName(\n"
+      "    aaaaaaaaaaa aaaaaaaaa, aaaaaaaaaaa aaaaaaaaa);",
+      Style);
+  verifyFormat(
+      "SomeLongVariableName->someFunction(\n"
+      "    foooooooo(aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa));",
+      Style);
+  verifyFormat(
+      "void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaa aaaaaaaa,\n"
+      "    aaaaaaaaa aaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}",
+      Style);
+  verifyFormat(
+      "SomeLongVariableName->someVeryLongFunctionName(aaaaaaaaaaa aaaaaaaaa,\n"
+      "    aaaaaaaaaaa aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
+      Style);
+  verifyFormat(
+      "SomeLongVariableName->someFunction(foooooooo(aaaaaaaaaaaaaaa,\n"
+      "    aaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa));",
+      Style);
+}
+
 TEST_F(FormatTest, BreaksConditionalExpressions) {
   verifyFormat(
       "aaaa(aaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaa\n"
@@ -9088,7 +9126,7 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
   verifyFormat("Constructor()\n"
                "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
                "    , aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaa, // break\n"
-               "                               aaaaaaaaaaaaaa)\n"
+               "          aaaaaaaaaaaaaa)\n"
                "    , aaaaaaaaaaaaaaaaaaaaaaa()\n"
                "{\n"
                "}",
