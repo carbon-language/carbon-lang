@@ -717,7 +717,11 @@ void ArchHandler_arm64::appendSectionRelocations(
                   ARM64_RELOC_TLVP_LOAD_PAGEOFF12 | rExtern | rLength4);
     return;
   case pointer64:
-    appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
+    if (ref.target()->name().empty())
+      appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                  ARM64_RELOC_UNSIGNED           | rLength8);
+    else
+      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                   ARM64_RELOC_UNSIGNED | rExtern | rLength8);
     return;
   case delta64:
