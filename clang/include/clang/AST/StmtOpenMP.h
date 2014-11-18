@@ -1469,7 +1469,7 @@ public:
   /// \param AssociatedStmt Statement, associated with the directive.
   /// \param X 'x' part of the associated expression/statement.
   /// \param V 'v' part of the associated expression/statement.
-  /// \param Expr 'expr' part of the associated expression/statement.
+  /// \param E 'expr' part of the associated expression/statement.
   ///
   static OMPAtomicDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
