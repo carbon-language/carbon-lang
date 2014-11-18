@@ -108,6 +108,11 @@ void MDNodeOperand::allUsesReplacedWith(Value *NV) {
 
 /// \brief Get the MDNodeOperand's coallocated on the end of the MDNode.
 static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
+  static_assert(sizeof(GenericMDNode) == sizeof(MDNode),
+                "Expected subclasses to have no size overhead");
+  static_assert(sizeof(MDNodeFwdDecl) == sizeof(MDNode),
+                "Expected subclasses to have no size overhead");
+
   // Use <= instead of < to permit a one-past-the-end address.
   assert(Op <= N->getNumOperands() && "Invalid operand number");
   return reinterpret_cast<MDNodeOperand*>(N + 1) + Op;
@@ -118,8 +123,9 @@ void MDNode::replaceOperandWith(unsigned i, Value *Val) {
   replaceOperand(Op, Val);
 }
 
-MDNode::MDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
-    : Metadata(C, Value::MDNodeVal), Hash(0) {
+MDNode::MDNode(LLVMContext &C, unsigned ID, ArrayRef<Value *> Vals,
+               bool isFunctionLocal)
+    : Metadata(C, ID), Hash(0) {
   NumOperands = Vals.size();
 
   if (isFunctionLocal)
@@ -137,16 +143,18 @@ MDNode::MDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
   }
 }
 
-/// ~MDNode - Destroy MDNode.
-MDNode::~MDNode() {
-  assert((getSubclassDataFromValue() & DestroyFlag) != 0 &&
-         "Not being destroyed through destroy()?");
+GenericMDNode::~GenericMDNode() {
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
   if (isNotUniqued()) {
     pImpl->NonUniquedMDNodes.erase(this);
   } else {
     pImpl->MDNodeSet.erase(this);
   }
+}
+
+MDNode::~MDNode() {
+  assert((getSubclassDataFromValue() & DestroyFlag) != 0 &&
+         "Not being destroyed through destroy()?");
 
   // Destroy the operands.
   for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
@@ -209,10 +217,17 @@ const Function *MDNode::getFunction() const {
 }
 
 // destroy - Delete this node.  Only when there are no uses.
-void MDNode::destroy() {
+void GenericMDNode::destroy() {
   setValueSubclassData(getSubclassDataFromValue() | DestroyFlag);
   // Placement delete, then free the memory.
-  this->~MDNode();
+  this->~GenericMDNode();
+  free(this);
+}
+
+void MDNodeFwdDecl::destroy() {
+  setValueSubclassData(getSubclassDataFromValue() | DestroyFlag);
+  // Placement delete, then free the memory.
+  this->~MDNodeFwdDecl();
   free(this);
 }
 
@@ -253,8 +268,9 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
   }
 
   // Coallocate space for the node and Operands together, then placement new.
-  void *Ptr = malloc(sizeof(MDNode) + Vals.size() * sizeof(MDNodeOperand));
-  MDNode *N = new (Ptr) MDNode(Context, Vals, isFunctionLocal);
+  void *Ptr =
+      malloc(sizeof(GenericMDNode) + Vals.size() * sizeof(MDNodeOperand));
+  GenericMDNode *N = new (Ptr) GenericMDNode(Context, Vals, isFunctionLocal);
 
   N->Hash = Key.Hash;
   Store.insert(N);
@@ -276,9 +292,9 @@ MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Value*> Vals) {
 }
 
 MDNode *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals) {
-  MDNode *N =
-    (MDNode *)malloc(sizeof(MDNode) + Vals.size() * sizeof(MDNodeOperand));
-  N = new (N) MDNode(Context, Vals, FL_No);
+  MDNode *N = (MDNode *)malloc(sizeof(MDNodeFwdDecl) +
+                               Vals.size() * sizeof(MDNodeOperand));
+  N = new (N) MDNodeFwdDecl(Context, Vals, FL_No);
   N->setValueSubclassData(N->getSubclassDataFromValue() |
                           NotUniquedBit);
   LeakDetector::addGarbageObject(N);
@@ -287,16 +303,13 @@ MDNode *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals) {
 
 void MDNode::deleteTemporary(MDNode *N) {
   assert(N->use_empty() && "Temporary MDNode has uses!");
-  assert(!N->getContext().pImpl->MDNodeSet.erase(N) &&
-         "Deleting a non-temporary uniqued node!");
-  assert(!N->getContext().pImpl->NonUniquedMDNodes.erase(N) &&
-         "Deleting a non-temporary non-uniqued node!");
+  assert(isa<MDNodeFwdDecl>(N) && "Expected forward declaration");
   assert((N->getSubclassDataFromValue() & NotUniquedBit) &&
          "Temporary MDNode does not have NotUniquedBit set!");
   assert((N->getSubclassDataFromValue() & DestroyFlag) == 0 &&
          "Temporary MDNode has DestroyFlag set!");
   LeakDetector::removeGarbageObject(N);
-  N->destroy();
+  cast<MDNodeFwdDecl>(N)->destroy();
 }
 
 /// \brief Return specified operand.
@@ -308,8 +321,9 @@ Value *MDNode::getOperand(unsigned i) const {
 void MDNode::setIsNotUniqued() {
   setValueSubclassData(getSubclassDataFromValue() | NotUniquedBit);
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-  Hash = 0;
-  pImpl->NonUniquedMDNodes.insert(this);
+  auto *G = cast<GenericMDNode>(this);
+  G->Hash = 0;
+  pImpl->NonUniquedMDNodes.insert(G);
 }
 
 // Replace value from this node's operand list.
@@ -345,9 +359,10 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   }
 
   auto &Store = getContext().pImpl->MDNodeSet;
+  auto *N = cast<GenericMDNode>(this);
 
   // Remove "this" from the context map.
-  Store.erase(this);
+  Store.erase(N);
 
   // Update the operand.
   Op->set(To);
@@ -365,16 +380,16 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   // check to see if another node with the same operands already exists in the
   // set.  If so, then this node is redundant.
   SmallVector<Value *, 8> Vals;
-  GenericMDNodeInfo::KeyTy Key(this, Vals);
+  GenericMDNodeInfo::KeyTy Key(N, Vals);
   auto I = Store.find_as(Key);
   if (I != Store.end()) {
-    replaceAllUsesWith(*I);
-    destroy();
+    N->replaceAllUsesWith(*I);
+    N->destroy();
     return;
   }
 
-  this->Hash = Key.Hash;
-  Store.insert(this);
+  N->Hash = Key.Hash;
+  Store.insert(N);
 
   // If this MDValue was previously function-local but no longer is, clear
   // its function-local flag.

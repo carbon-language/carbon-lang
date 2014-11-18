@@ -191,7 +191,7 @@ struct FunctionTypeKeyInfo {
   }
 };
 
-/// \brief DenseMapInfo for MDNode.
+/// \brief DenseMapInfo for GenericMDNode.
 ///
 /// Note that we don't need the is-function-local bit, since that's implicit in
 /// the operands.
@@ -203,7 +203,7 @@ struct GenericMDNodeInfo {
     KeyTy(ArrayRef<Value *> Ops)
         : Ops(Ops), Hash(hash_combine_range(Ops.begin(), Ops.end())) {}
 
-    KeyTy(MDNode *N, SmallVectorImpl<Value *> &Storage) {
+    KeyTy(GenericMDNode *N, SmallVectorImpl<Value *> &Storage) {
       Storage.resize(N->getNumOperands());
       for (unsigned I = 0, E = N->getNumOperands(); I != E; ++I)
         Storage[I] = N->getOperand(I);
@@ -211,7 +211,7 @@ struct GenericMDNodeInfo {
       Hash = hash_combine_range(Ops.begin(), Ops.end());
     }
 
-    bool operator==(const MDNode *RHS) const {
+    bool operator==(const GenericMDNode *RHS) const {
       if (RHS == getEmptyKey() || RHS == getTombstoneKey())
         return false;
       if (Hash != RHS->getHash() || Ops.size() != RHS->getNumOperands())
@@ -222,20 +222,20 @@ struct GenericMDNodeInfo {
       return true;
     }
   };
-  static inline MDNode *getEmptyKey() {
-    return DenseMapInfo<MDNode *>::getEmptyKey();
+  static inline GenericMDNode *getEmptyKey() {
+    return DenseMapInfo<GenericMDNode *>::getEmptyKey();
   }
-  static inline MDNode *getTombstoneKey() {
-    return DenseMapInfo<MDNode *>::getTombstoneKey();
+  static inline GenericMDNode *getTombstoneKey() {
+    return DenseMapInfo<GenericMDNode *>::getTombstoneKey();
   }
   static unsigned getHashValue(const KeyTy &Key) { return Key.Hash; }
-  static unsigned getHashValue(const MDNode *U) {
+  static unsigned getHashValue(const GenericMDNode *U) {
     return U->getHash();
   }
-  static bool isEqual(const KeyTy &LHS, const MDNode *RHS) {
+  static bool isEqual(const KeyTy &LHS, const GenericMDNode *RHS) {
     return LHS == RHS;
   }
-  static bool isEqual(const MDNode *LHS, const MDNode *RHS) {
+  static bool isEqual(const GenericMDNode *LHS, const GenericMDNode *RHS) {
     return LHS == RHS;
   }
 };
@@ -293,14 +293,14 @@ public:
 
   StringMap<MDString> MDStringCache;
 
-  DenseSet<MDNode *, GenericMDNodeInfo> MDNodeSet;
+  DenseSet<GenericMDNode *, GenericMDNodeInfo> MDNodeSet;
 
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
   // aren't in the MDNodeSet, but they're still shared between objects, so no
   // one object can destroy them.  This set allows us to at least destroy them
   // on Context destruction.
-  SmallPtrSet<MDNode*, 1> NonUniquedMDNodes;
-  
+  SmallPtrSet<GenericMDNode *, 1> NonUniquedMDNodes;
+
   DenseMap<Type*, ConstantAggregateZero*> CAZConstants;
 
   typedef ConstantUniqueMap<ConstantArray> ArrayConstantsTy;

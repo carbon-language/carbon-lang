@@ -345,7 +345,8 @@ public:
     ConstantStructVal,        // This is an instance of ConstantStruct
     ConstantVectorVal,        // This is an instance of ConstantVector
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
-    MDNodeVal,                // This is an instance of MDNode
+    GenericMDNodeVal,         // This is an instance of GenericMDNode
+    MDNodeFwdDeclVal,         // This is an instance of MDNodeFwdDecl
     MDStringVal,              // This is an instance of MDString
     InlineAsmVal,             // This is an instance of InlineAsm
     InstructionVal,           // This is an instance of Instruction
@@ -681,7 +682,8 @@ template <> struct isa_impl<GlobalObject, Value> {
 
 template <> struct isa_impl<MDNode, Value> {
   static inline bool doit(const Value &Val) {
-    return Val.getValueID() == Value::MDNodeVal;
+    return Val.getValueID() == Value::GenericMDNodeVal ||
+           Val.getValueID() == Value::MDNodeFwdDeclVal;
   }
 };
 

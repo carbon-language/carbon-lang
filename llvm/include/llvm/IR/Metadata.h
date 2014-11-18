@@ -45,7 +45,9 @@ protected:
 
 public:
   static bool classof(const Value *V) {
-    return V->getValueID() == MDNodeVal || V->getValueID() == MDStringVal;
+    return V->getValueID() == GenericMDNodeVal ||
+           V->getValueID() == MDNodeFwdDeclVal ||
+           V->getValueID() == MDStringVal;
   }
 };
 
@@ -137,14 +139,16 @@ struct DenseMapInfo<AAMDNodes> {
 class MDNodeOperand;
 
 //===----------------------------------------------------------------------===//
-/// \brief Generic tuple of metadata.
+/// \brief Tuple of metadata.
 class MDNode : public Metadata {
   MDNode(const MDNode &) LLVM_DELETED_FUNCTION;
   void operator=(const MDNode &) LLVM_DELETED_FUNCTION;
   friend class MDNodeOperand;
   friend class LLVMContextImpl;
 
-  /// \brief If the MDNode is uniqued cache the hash to speed up lookup.
+protected:
+  // TODO: Sink this into GenericMDNode.  Can't do this until operands are
+  // allocated at the front (currently they're at the back).
   unsigned Hash;
 
   /// \brief Subclass data enums.
@@ -174,7 +178,8 @@ class MDNode : public Metadata {
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
 
-  MDNode(LLVMContext &C, ArrayRef<Value*> Vals, bool isFunctionLocal);
+  MDNode(LLVMContext &C, unsigned ID, ArrayRef<Value *> Vals,
+         bool isFunctionLocal);
 
   static MDNode *getMDNode(LLVMContext &C, ArrayRef<Value*> Vals,
                            FunctionLocalness FL, bool Insert = true);
@@ -223,12 +228,10 @@ public:
   /// code because it recursively visits all the MDNode's operands.
   const Function *getFunction() const;
 
-  /// \brief Get the hash, if any.
-  unsigned getHash() const { return Hash; }
-
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
-    return V->getValueID() == MDNodeVal;
+    return V->getValueID() == GenericMDNodeVal ||
+           V->getValueID() == MDNodeFwdDeclVal;
   }
 
   /// \brief Check whether MDNode is a vtable access.
@@ -241,10 +244,8 @@ public:
   static AAMDNodes getMostGenericAA(const AAMDNodes &A, const AAMDNodes &B);
   static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);
   static MDNode *getMostGenericRange(MDNode *A, MDNode *B);
-private:
-  /// \brief Delete this node.  Only when there are no uses.
-  void destroy();
 
+protected:
   bool isNotUniqued() const {
     return (getSubclassDataFromValue() & NotUniquedBit) != 0;
   }
@@ -255,6 +256,61 @@ private:
   void setValueSubclassData(unsigned short D) {
     Value::setValueSubclassData(D);
   }
+};
+
+/// \brief Generic metadata node.
+///
+/// Generic metadata nodes, with opt-out support for uniquing.
+///
+/// Although nodes are uniqued by default, \a GenericMDNode has no support for
+/// RAUW.  If an operand change (due to RAUW or otherwise) causes a uniquing
+/// collision, the uniquing bit is dropped.
+///
+/// TODO: Make uniquing opt-out (status: mandatory, sometimes dropped).
+/// TODO: Drop support for RAUW.
+class GenericMDNode : public MDNode {
+  friend class MDNode;
+
+  GenericMDNode(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
+      : MDNode(C, GenericMDNodeVal, Vals, isFunctionLocal) {}
+  ~GenericMDNode();
+
+public:
+  /// \brief Get the hash, if any.
+  unsigned getHash() const { return Hash; }
+
+  static bool classof(const Value *V) {
+    return V->getValueID() == GenericMDNodeVal;
+  }
+
+private:
+  /// \brief Delete this node.  Only when there are no uses.
+  void destroy();
+  friend class MDNode;
+  friend class LLVMContextImpl;
+};
+
+/// \brief Forward declaration of metadata.
+///
+/// Forward declaration of metadata, in the form of a metadata node.  Unlike \a
+/// GenericMDNode, this class has support for RAUW and is suitable for forward
+/// references.
+class MDNodeFwdDecl : public MDNode {
+  friend class MDNode;
+
+  MDNodeFwdDecl(LLVMContext &C, ArrayRef<Value *> Vals, bool isFunctionLocal)
+      : MDNode(C, MDNodeFwdDeclVal, Vals, isFunctionLocal) {}
+  ~MDNodeFwdDecl() {}
+
+public:
+  static bool classof(const Value *V) {
+    return V->getValueID() == MDNodeFwdDeclVal;
+  }
+
+private:
+  /// \brief Delete this node.  Only when there are no uses.
+  void destroy();
+  friend class MDNode;
 };
 
 //===----------------------------------------------------------------------===//
