@@ -2,7 +2,7 @@
 
 ; CHECK-LABEL: @foo(
 ; CHECK-NOT: %lftr.wideiv = trunc i32 %indvars.iv.next to i16
-; CHECK: %exitcond = icmp ne i32 %indvars.iv, 511
+; CHECK: %exitcond = icmp ne i32 %indvars.iv.next, 512
 define void @foo() #0 {
 entry:
   br label %for.body
