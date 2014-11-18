@@ -89,23 +89,23 @@ define <16 x float> @testf16_regs(<16 x float> %a, <16 x float> %b) nounwind {
 ; WIN64: vmovaps {{.*(%rbp).*}}, {{%ymm([6-9]|1[0-5])}}     # 32-byte Reload
 
 ; X64-LABEL: test_prolog_epilog
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
-; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Folded Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
+; X64: vmovups {{%ymm([8-9]|1[0-5])}}, {{.*}}(%rsp)  ## 32-byte Spill
 ; X64: call
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
-; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Folded Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
+; X64: vmovups {{.*}}(%rsp), {{%ymm([8-9]|1[0-5])}} ## 32-byte Reload
 define intel_ocl_bicc <16 x float> @test_prolog_epilog(<16 x float> %a, <16 x float> %b) nounwind {
    %c = call <16 x float> @func_float16(<16 x float> %a, <16 x float> %b)
    ret <16 x float> %c
