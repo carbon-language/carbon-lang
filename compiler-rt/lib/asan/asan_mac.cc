@@ -114,7 +114,7 @@ void MaybeReexec() {
       internal_strlen(dyld_insert_libraries) : 0;
   uptr fname_len = internal_strlen(info.dli_fname);
   if (!dyld_insert_libraries ||
-      !REAL(strstr)(dyld_insert_libraries, info.dli_fname)) {
+      !REAL(strstr)(dyld_insert_libraries, StripModuleName(info.dli_fname))) {
     // DYLD_INSERT_LIBRARIES is not set or does not contain the runtime
     // library.
     char program_name[1024];
