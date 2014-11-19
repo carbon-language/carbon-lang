@@ -990,7 +990,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
   for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
     DIVariable DV(Variables.getElement(i));
     assert(DV.isVariable());
-    if (!Processed.insert(DV))
+    if (!Processed.insert(DV).second)
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext())) {
       ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
@@ -1287,7 +1287,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
       DIVariable DV(Variables.getElement(i));
       assert(DV && DV.isVariable());
-      if (!ProcessedVars.insert(DV))
+      if (!ProcessedVars.insert(DV).second)
         continue;
       ensureAbstractVariableIsCreated(DV, DV.getContext());
       assert(LScopes.getAbstractScopesList().size() == NumAbstractScopes

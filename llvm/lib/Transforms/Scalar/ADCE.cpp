@@ -73,7 +73,7 @@ bool ADCE::runOnFunction(Function& F) {
     for (Instruction::op_iterator OI = curr->op_begin(), OE = curr->op_end();
          OI != OE; ++OI)
       if (Instruction* Inst = dyn_cast<Instruction>(OI))
-        if (alive.insert(Inst))
+        if (alive.insert(Inst).second)
           worklist.push_back(Inst);
   }
 

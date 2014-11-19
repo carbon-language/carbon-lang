@@ -185,7 +185,7 @@ bool GlobalDCE::runOnModule(Module &M) {
 /// recursively mark anything that it uses as also needed.
 void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
   // If the global is already in the set, no need to reprocess it.
-  if (!AliveGlobals.insert(G))
+  if (!AliveGlobals.insert(G).second)
     return;
 
   Module *M = G->getParent();
@@ -238,7 +238,7 @@ void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
   for (User::op_iterator I = C->op_begin(), E = C->op_end(); I != E; ++I) {
     // If we've already processed this constant there's no need to do it again.
     Constant *Op = dyn_cast<Constant>(*I);
-    if (Op && SeenConstants.insert(Op))
+    if (Op && SeenConstants.insert(Op).second)
       MarkUsedGlobalsAsNeeded(Op);
   }
 }

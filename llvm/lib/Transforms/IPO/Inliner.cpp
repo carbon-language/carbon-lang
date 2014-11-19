@@ -219,7 +219,7 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
       
       // If the inlined function already uses this alloca then we can't reuse
       // it.
-      if (!UsedAllocas.insert(AvailableAlloca))
+      if (!UsedAllocas.insert(AvailableAlloca).second)
         continue;
       
       // Otherwise, we *can* reuse it, RAUW AI into AvailableAlloca and declare

@@ -347,7 +347,7 @@ static void pushIVUsers(
     // Also ensure unique worklist users.
     // If Def is a LoopPhi, it may not be in the Simplified set, so check for
     // self edges first.
-    if (UI != Def && Simplified.insert(UI))
+    if (UI != Def && Simplified.insert(UI).second)
       SimpleIVUsers.push_back(std::make_pair(UI, Def));
   }
 }

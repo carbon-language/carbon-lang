@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_SMALLSET_H
 #define LLVM_ADT_SMALLSET_H
 
+#include "llvm/ADT/None.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <set>
@@ -60,16 +61,21 @@ public:
 
   /// insert - Insert an element into the set if it isn't already there.
   /// Returns true if the element is inserted (it was not in the set before).
-  bool insert(const T &V) {
+  /// The first value of the returned pair is unused and provided for
+  /// partial compatibility with the standard library self-associative container
+  /// concept.
+  // FIXME: Add iterators that abstract over the small and large form, and then
+  // return those here.
+  std::pair<NoneType, bool> insert(const T &V) {
     if (!isSmall())
-      return Set.insert(V).second;
+      return std::make_pair(None, Set.insert(V).second);
 
     VIterator I = vfind(V);
     if (I != Vector.end())    // Don't reinsert if it already exists.
-      return false;
+      return std::make_pair(None, false);
     if (Vector.size() < N) {
       Vector.push_back(V);
-      return true;
+      return std::make_pair(None, true);
     }
 
     // Otherwise, grow from vector to set.
@@ -78,7 +84,7 @@ public:
       Vector.pop_back();
     }
     Set.insert(V);
-    return true;
+    return std::make_pair(None, true);
   }
 
   template <typename IterT>

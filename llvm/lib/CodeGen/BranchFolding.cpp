@@ -916,7 +916,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
         continue;
 
       // Visit each predecessor only once.
-      if (!UniquePreds.insert(PBB))
+      if (!UniquePreds.insert(PBB).second)
         continue;
 
       // Skip blocks which may jump to a landing pad. Can't tail merge these.

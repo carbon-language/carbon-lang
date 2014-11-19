@@ -3395,7 +3395,8 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
   Visited.insert(PN);
   while (!Worklist.empty()) {
     Instruction *I = Worklist.pop_back_val();
-    if (!Visited.insert(I)) continue;
+    if (!Visited.insert(I).second)
+      continue;
 
     ValueExprMapType::iterator It =
       ValueExprMap.find_as(static_cast<Value *>(I));
@@ -4593,7 +4594,8 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
     SmallPtrSet<Instruction *, 8> Visited;
     while (!Worklist.empty()) {
       Instruction *I = Worklist.pop_back_val();
-      if (!Visited.insert(I)) continue;
+      if (!Visited.insert(I).second)
+        continue;
 
       ValueExprMapType::iterator It =
         ValueExprMap.find_as(static_cast<Value *>(I));
@@ -4645,7 +4647,8 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
   SmallPtrSet<Instruction *, 8> Visited;
   while (!Worklist.empty()) {
     Instruction *I = Worklist.pop_back_val();
-    if (!Visited.insert(I)) continue;
+    if (!Visited.insert(I).second)
+      continue;
 
     ValueExprMapType::iterator It =
       ValueExprMap.find_as(static_cast<Value *>(I));
@@ -4679,7 +4682,8 @@ void ScalarEvolution::forgetValue(Value *V) {
   SmallPtrSet<Instruction *, 8> Visited;
   while (!Worklist.empty()) {
     I = Worklist.pop_back_val();
-    if (!Visited.insert(I)) continue;
+    if (!Visited.insert(I).second)
+      continue;
 
     ValueExprMapType::iterator It =
       ValueExprMap.find_as(static_cast<Value *>(I));
@@ -7792,7 +7796,7 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *V) {
     // that until everything else is done.
     if (U == Old)
       continue;
-    if (!Visited.insert(U))
+    if (!Visited.insert(U).second)
       continue;
     if (PHINode *PN = dyn_cast<PHINode>(U))
       SE->ConstantEvolutionLoopExitValue.erase(PN);

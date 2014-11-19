@@ -614,7 +614,7 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
   Worklist.push_back(Loc.Ptr);
   do {
     const Value *V = GetUnderlyingObject(Worklist.pop_back_val(), DL);
-    if (!Visited.insert(V)) {
+    if (!Visited.insert(V).second) {
       Visited.clear();
       return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
     }
@@ -1235,7 +1235,7 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
       // sides are PHI nodes. In which case, this is O(m x n) time where 'm'
       // and 'n' are the number of PHI sources.
       return MayAlias;
-    if (UniqueSrc.insert(PV1))
+    if (UniqueSrc.insert(PV1).second)
       V1Srcs.push_back(PV1);
   }
 

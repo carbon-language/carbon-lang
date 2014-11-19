@@ -57,7 +57,7 @@ public:
   // Return true if edge destination should be visited.
   template<typename NodeType>
   bool insertEdge(NodeType *From, NodeType *To) {
-    return Visited.insert(To);
+    return Visited.insert(To).second;
   }
 
   // Called after all children of BB have been visited.

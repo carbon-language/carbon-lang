@@ -569,7 +569,7 @@ bool AArch64PromoteConstant::runOnFunction(Function &F) {
         // global. Do not promote constant expressions either, as they may
         // require some code expansion.
         if (Cst && !isa<GlobalValue>(Cst) && !isa<ConstantExpr>(Cst) &&
-            AlreadyChecked.insert(Cst))
+            AlreadyChecked.insert(Cst).second)
           LocalChange |= promoteConstant(Cst);
       }
     }

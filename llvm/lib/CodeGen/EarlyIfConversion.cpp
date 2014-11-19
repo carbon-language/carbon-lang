@@ -245,7 +245,7 @@ bool SSAIfConv::canSpeculateInstrs(MachineBasicBlock *MBB) {
       MachineInstr *DefMI = MRI->getVRegDef(Reg);
       if (!DefMI || DefMI->getParent() != Head)
         continue;
-      if (InsertAfter.insert(DefMI))
+      if (InsertAfter.insert(DefMI).second)
         DEBUG(dbgs() << "BB#" << MBB->getNumber() << " depends on " << *DefMI);
       if (DefMI->isTerminator()) {
         DEBUG(dbgs() << "Can't insert instructions below terminator.\n");

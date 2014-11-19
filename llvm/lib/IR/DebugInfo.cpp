@@ -1127,7 +1127,7 @@ void DebugInfoFinder::processDeclare(const Module &M,
   if (!DV.isVariable())
     return;
 
-  if (!NodesSeen.insert(DV))
+  if (!NodesSeen.insert(DV).second)
     return;
   processScope(DIVariable(N).getContext());
   processType(DIVariable(N).getType().resolve(TypeIdentifierMap));
@@ -1143,7 +1143,7 @@ void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
   if (!DV.isVariable())
     return;
 
-  if (!NodesSeen.insert(DV))
+  if (!NodesSeen.insert(DV).second)
     return;
   processScope(DIVariable(N).getContext());
   processType(DIVariable(N).getType().resolve(TypeIdentifierMap));
@@ -1153,7 +1153,7 @@ bool DebugInfoFinder::addType(DIType DT) {
   if (!DT)
     return false;
 
-  if (!NodesSeen.insert(DT))
+  if (!NodesSeen.insert(DT).second)
     return false;
 
   TYs.push_back(DT);
@@ -1163,7 +1163,7 @@ bool DebugInfoFinder::addType(DIType DT) {
 bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
   if (!CU)
     return false;
-  if (!NodesSeen.insert(CU))
+  if (!NodesSeen.insert(CU).second)
     return false;
 
   CUs.push_back(CU);
@@ -1174,7 +1174,7 @@ bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
   if (!DIG)
     return false;
 
-  if (!NodesSeen.insert(DIG))
+  if (!NodesSeen.insert(DIG).second)
     return false;
 
   GVs.push_back(DIG);
@@ -1185,7 +1185,7 @@ bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
   if (!SP)
     return false;
 
-  if (!NodesSeen.insert(SP))
+  if (!NodesSeen.insert(SP).second)
     return false;
 
   SPs.push_back(SP);
@@ -1199,7 +1199,7 @@ bool DebugInfoFinder::addScope(DIScope Scope) {
   // as null for now.
   if (Scope->getNumOperands() == 0)
     return false;
-  if (!NodesSeen.insert(Scope))
+  if (!NodesSeen.insert(Scope).second)
     return false;
   Scopes.push_back(Scope);
   return true;

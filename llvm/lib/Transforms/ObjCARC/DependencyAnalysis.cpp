@@ -229,7 +229,7 @@ llvm::objcarc::FindDependencies(DependenceKind Flavor,
           // Add the predecessors to the worklist.
           do {
             BasicBlock *PredBB = *PI;
-            if (Visited.insert(PredBB))
+            if (Visited.insert(PredBB).second)
               Worklist.push_back(std::make_pair(PredBB, PredBB->end()));
           } while (++PI != PE);
         break;

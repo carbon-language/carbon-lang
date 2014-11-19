@@ -818,7 +818,7 @@ void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
       if (!TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
 
-      bool isNew = RegSeen.insert(Reg);
+      bool isNew = RegSeen.insert(Reg).second;
       unsigned RCId, RCCost;
       getRegisterClassIDAndCost(MI, Reg, i, RCId, RCCost);
       if (MO.isDef())
@@ -850,7 +850,7 @@ void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
 
-    bool isNew = RegSeen.insert(Reg);
+    bool isNew = RegSeen.insert(Reg).second;
     if (MO.isDef())
       Defs.push_back(Reg);
     else if (!isNew && isOperandKill(MO, MRI)) {

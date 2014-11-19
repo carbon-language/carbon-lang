@@ -1049,7 +1049,7 @@ int FunctionComparator::compare() {
 
     assert(TermL->getNumSuccessors() == TermR->getNumSuccessors());
     for (unsigned i = 0, e = TermL->getNumSuccessors(); i != e; ++i) {
-      if (!VisitedBBs.insert(TermL->getSuccessor(i)))
+      if (!VisitedBBs.insert(TermL->getSuccessor(i)).second)
         continue;
 
       FnLBBs.push_back(TermL->getSuccessor(i));

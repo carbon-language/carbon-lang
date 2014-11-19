@@ -48,7 +48,7 @@ static void findCallees(
     }
 
     for (Value *Op : C->operand_values())
-      if (Visited.insert(cast<Constant>(Op)))
+      if (Visited.insert(cast<Constant>(Op)).second)
         Worklist.push_back(cast<Constant>(Op));
   }
 }
@@ -66,7 +66,7 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
     for (Instruction &I : BB)
       for (Value *Op : I.operand_values())
         if (Constant *C = dyn_cast<Constant>(Op))
-          if (Visited.insert(C))
+          if (Visited.insert(C).second)
             Worklist.push_back(C);
 
   // We've collected all the constant (and thus potentially function or
@@ -113,7 +113,7 @@ LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
   SmallPtrSet<Constant *, 16> Visited;
   for (GlobalVariable &GV : M.globals())
     if (GV.hasInitializer())
-      if (Visited.insert(GV.getInitializer()))
+      if (Visited.insert(GV.getInitializer()).second)
         Worklist.push_back(GV.getInitializer());
 
   DEBUG(dbgs() << "  Adding functions referenced by global initializers to the "
@@ -688,7 +688,7 @@ static void printNodes(raw_ostream &OS, LazyCallGraph::Node &N,
                        SmallPtrSetImpl<LazyCallGraph::Node *> &Printed) {
   // Recurse depth first through the nodes.
   for (LazyCallGraph::Node &ChildN : N)
-    if (Printed.insert(&ChildN))
+    if (Printed.insert(&ChildN).second)
       printNodes(OS, ChildN, Printed);
 
   OS << "  Call edges in function: " << N.getFunction().getName() << "\n";
@@ -717,7 +717,7 @@ PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M,
 
   SmallPtrSet<LazyCallGraph::Node *, 16> Printed;
   for (LazyCallGraph::Node &N : G)
-    if (Printed.insert(&N))
+    if (Printed.insert(&N).second)
       printNodes(OS, N, Printed);
 
   for (LazyCallGraph::SCC &SCC : G.postorder_sccs())

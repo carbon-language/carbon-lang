@@ -813,7 +813,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
                                    BE = L.block_end();
        BI != BE; ++BI) {
     BlockChain &Chain = *BlockToChain[*BI];
-    if (!UpdatedPreds.insert(&Chain))
+    if (!UpdatedPreds.insert(&Chain).second)
       continue;
 
     assert(Chain.LoopPredecessors == 0);
@@ -914,7 +914,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     MachineBasicBlock *BB = &*FI;
     BlockChain &Chain = *BlockToChain[BB];
-    if (!UpdatedPreds.insert(&Chain))
+    if (!UpdatedPreds.insert(&Chain).second)
       continue;
 
     assert(Chain.LoopPredecessors == 0);

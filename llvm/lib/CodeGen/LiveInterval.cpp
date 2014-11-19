@@ -206,7 +206,7 @@ void LiveRange::RenumberValues() {
   valnos.clear();
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
     VNInfo *VNI = I->valno;
-    if (!Seen.insert(VNI))
+    if (!Seen.insert(VNI).second)
       continue;
     assert(!VNI->isUnused() && "Unused valno used by live segment");
     VNI->id = (unsigned)valnos.size();

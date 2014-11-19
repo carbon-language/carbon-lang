@@ -455,7 +455,8 @@ bool MemDefsUses::hasHazard_(const MachineInstr &MI) {
 
 bool MemDefsUses::updateDefsUses(ValueType V, bool MayStore) {
   if (MayStore)
-    return !Defs.insert(V) || Uses.count(V) || SeenNoObjStore || SeenNoObjLoad;
+    return !Defs.insert(V).second || Uses.count(V) || SeenNoObjStore ||
+           SeenNoObjLoad;
 
   Uses.insert(V);
   return Defs.count(V) || SeenNoObjStore;

@@ -4801,7 +4801,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
 
     // If we did *not* see this pointer before, insert it to  the read-write
     // list. At this phase it is only a 'write' list.
-    if (Seen.insert(Ptr)) {
+    if (Seen.insert(Ptr).second) {
       ++NumReadWrites;
 
       AliasAnalysis::Location Loc = AA->getLocation(ST);
@@ -4834,7 +4834,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     // read a few words, modify, and write a few words, and some of the
     // words may be written to the same address.
     bool IsReadOnlyPtr = false;
-    if (Seen.insert(Ptr) || !isStridedPtr(SE, DL, Ptr, TheLoop, Strides)) {
+    if (Seen.insert(Ptr).second ||
+        !isStridedPtr(SE, DL, Ptr, TheLoop, Strides)) {
       ++NumReads;
       IsReadOnlyPtr = true;
     }
@@ -5097,7 +5098,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       // value must only be used once, except by phi nodes and min/max
       // reductions which are represented as a cmp followed by a select.
       ReductionInstDesc IgnoredVal(false, nullptr);
-      if (VisitedInsts.insert(UI)) {
+      if (VisitedInsts.insert(UI).second) {
         if (isa<PHINode>(UI))
           PHIs.push_back(UI);
         else

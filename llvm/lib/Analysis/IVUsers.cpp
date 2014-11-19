@@ -115,7 +115,7 @@ bool IVUsers::AddUsersImpl(Instruction *I,
                            SmallPtrSetImpl<Loop*> &SimpleLoopNests) {
   // Add this IV user to the Processed set before returning false to ensure that
   // all IV users are members of the set. See IVUsers::isIVUserOrOperand.
-  if (!Processed.insert(I))
+  if (!Processed.insert(I).second)
     return true;    // Instruction already handled.
 
   if (!SE->isSCEVable(I->getType()))
@@ -145,7 +145,7 @@ bool IVUsers::AddUsersImpl(Instruction *I,
   SmallPtrSet<Instruction *, 4> UniqueUsers;
   for (Use &U : I->uses()) {
     Instruction *User = cast<Instruction>(U.getUser());
-    if (!UniqueUsers.insert(User))
+    if (!UniqueUsers.insert(User).second)
       continue;
 
     // Do not infinitely recurse on PHI nodes.

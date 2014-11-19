@@ -120,7 +120,7 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
     numInstr++;
     if (mi->isIdentityCopy() || mi->isImplicitDef() || mi->isDebugValue())
       continue;
-    if (!visited.insert(mi))
+    if (!visited.insert(mi).second)
       continue;
 
     float weight = 1.0f;

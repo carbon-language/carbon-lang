@@ -776,7 +776,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     DirtyBlocks.pop_back();
 
     // Already processed this block?
-    if (!Visited.insert(DirtyBB))
+    if (!Visited.insert(DirtyBB).second)
       continue;
 
     // Do a binary search to see if we already have an entry for this block in

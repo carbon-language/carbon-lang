@@ -932,7 +932,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     BasicBlock *PredBB = *PI;
 
     // If we already scanned this predecessor, skip it.
-    if (!PredsScanned.insert(PredBB))
+    if (!PredsScanned.insert(PredBB).second)
       continue;
 
     // Scan the predecessor to see if the value is available in the pred.
@@ -1151,7 +1151,7 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
 
   for (unsigned i = 0, e = PredValues.size(); i != e; ++i) {
     BasicBlock *Pred = PredValues[i].second;
-    if (!SeenPreds.insert(Pred))
+    if (!SeenPreds.insert(Pred).second)
       continue;  // Duplicate predecessor entry.
 
     // If the predecessor ends with an indirect goto, we can't change its

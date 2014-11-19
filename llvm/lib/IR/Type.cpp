@@ -562,7 +562,7 @@ bool StructType::isSized(SmallPtrSetImpl<const Type*> *Visited) const {
   if (isOpaque())
     return false;
 
-  if (Visited && !Visited->insert(this))
+  if (Visited && !Visited->insert(this).second)
     return false;
 
   // Okay, our struct is sized if all of the elements are, but if one of the

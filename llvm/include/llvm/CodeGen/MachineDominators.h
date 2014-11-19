@@ -303,7 +303,7 @@ public:
   void recordSplitCriticalEdge(MachineBasicBlock *FromBB,
                               MachineBasicBlock *ToBB,
                               MachineBasicBlock *NewBB) {
-    bool Inserted = NewBBs.insert(NewBB);
+    bool Inserted = NewBBs.insert(NewBB).second;
     (void)Inserted;
     assert(Inserted &&
            "A basic block inserted via edge splitting cannot appear twice");

@@ -64,7 +64,7 @@ void DIBuilder::finalize() {
   // TrackingVHs back into Values.
   SmallPtrSet<Value *, 16> RetainSet;
   for (unsigned I = 0, E = AllRetainTypes.size(); I < E; I++)
-    if (RetainSet.insert(AllRetainTypes[I]))
+    if (RetainSet.insert(AllRetainTypes[I]).second)
       RetainValues.push_back(AllRetainTypes[I]);
   DIArray RetainTypes = getOrCreateArray(RetainValues);
   DIType(TempRetainTypes).replaceAllUsesWith(RetainTypes);

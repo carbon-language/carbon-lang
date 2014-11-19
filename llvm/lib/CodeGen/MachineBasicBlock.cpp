@@ -1066,7 +1066,7 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   MachineBasicBlock::succ_iterator SI = succ_begin();
   while (SI != succ_end()) {
     const MachineBasicBlock *MBB = *SI;
-    if (!SeenMBBs.insert(MBB) ||
+    if (!SeenMBBs.insert(MBB).second ||
         (MBB != DestA && MBB != DestB && !MBB->isLandingPad())) {
       // This is a superfluous edge, remove it.
       SI = removeSuccessor(SI);

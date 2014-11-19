@@ -449,7 +449,7 @@ public:
     }
     // To is a new block. Mark the block as visited in case the CFG has cycles
     // that MachineLoopInfo didn't recognize as a natural loop.
-    return LB.Visited.insert(To);
+    return LB.Visited.insert(To).second;
   }
 };
 }

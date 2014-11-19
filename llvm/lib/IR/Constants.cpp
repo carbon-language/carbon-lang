@@ -316,7 +316,7 @@ static bool canTrapImpl(const Constant *C,
   // ConstantExpr traps if any operands can trap.
   for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
     if (ConstantExpr *Op = dyn_cast<ConstantExpr>(CE->getOperand(i))) {
-      if (NonTrappingOps.insert(Op) && canTrapImpl(Op, NonTrappingOps))
+      if (NonTrappingOps.insert(Op).second && canTrapImpl(Op, NonTrappingOps))
         return true;
     }
   }
@@ -363,7 +363,7 @@ ConstHasGlobalValuePredicate(const Constant *C,
       const Constant *ConstOp = dyn_cast<Constant>(Op);
       if (!ConstOp)
         continue;
-      if (Visited.insert(ConstOp))
+      if (Visited.insert(ConstOp).second)
         WorkList.push_back(ConstOp);
     }
   }

@@ -4343,7 +4343,7 @@ void SelectionDAG::Legalize() {
         continue;
       }
 
-      if (LegalizedNodes.insert(N)) {
+      if (LegalizedNodes.insert(N).second) {
         AnyLegalized = true;
         Legalizer.LegalizeOp(N);
 

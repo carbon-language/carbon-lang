@@ -330,7 +330,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   // Process any unreachable blocks in arbitrary order now.
   if (MF.size() != Processed.size())
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
-      if (Processed.insert(BB))
+      if (Processed.insert(BB).second)
         Changed |= processBasicBlock(MF, *BB);
 
   LiveBundles.clear();

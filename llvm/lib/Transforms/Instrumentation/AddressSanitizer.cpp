@@ -1317,7 +1317,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
       if (Value *Addr =
               isInterestingMemoryAccess(&Inst, &IsWrite, &Alignment)) {
         if (ClOpt && ClOptSameTemp) {
-          if (!TempsToInstrument.insert(Addr))
+          if (!TempsToInstrument.insert(Addr).second)
             continue;  // We've seen this temp in the current BB.
         }
       } else if (ClInvalidPointerPairs &&

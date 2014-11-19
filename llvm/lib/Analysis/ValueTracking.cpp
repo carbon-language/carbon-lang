@@ -331,7 +331,7 @@ static bool isEphemeralValueOf(Instruction *I, const Value *E) {
 
   while (!WorkSet.empty()) {
     const Value *V = WorkSet.pop_back_val();
-    if (!Visited.insert(V))
+    if (!Visited.insert(V).second)
       continue;
 
     // If all uses of this value are ephemeral, then so is this value.
@@ -2405,7 +2405,7 @@ static uint64_t GetStringLengthH(Value *V, SmallPtrSetImpl<PHINode*> &PHIs) {
   // If this is a PHI node, there are two cases: either we have already seen it
   // or we haven't.
   if (PHINode *PN = dyn_cast<PHINode>(V)) {
-    if (!PHIs.insert(PN))
+    if (!PHIs.insert(PN).second)
       return ~0ULL;  // already in the set.
 
     // If it was new, see if all the input strings are the same length.
@@ -2499,7 +2499,7 @@ llvm::GetUnderlyingObjects(Value *V,
     Value *P = Worklist.pop_back_val();
     P = GetUnderlyingObject(P, TD, MaxLookup);
 
-    if (!Visited.insert(P))
+    if (!Visited.insert(P).second)
       continue;
 
     if (SelectInst *SI = dyn_cast<SelectInst>(P)) {

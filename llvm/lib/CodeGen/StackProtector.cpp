@@ -169,7 +169,7 @@ bool StackProtector::HasAddressTaken(const Instruction *AI) {
     } else if (const PHINode *PN = dyn_cast<PHINode>(U)) {
       // Keep track of what PHI nodes we have already visited to ensure
       // they are only visited once.
-      if (VisitedPHIs.insert(PN))
+      if (VisitedPHIs.insert(PN).second)
         if (HasAddressTaken(PN))
           return true;
     } else if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {

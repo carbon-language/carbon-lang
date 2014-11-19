@@ -214,7 +214,8 @@ public:
   ///
   /// This returns true if the block was not considered live before.
   bool MarkBlockExecutable(BasicBlock *BB) {
-    if (!BBExecutable.insert(BB)) return false;
+    if (!BBExecutable.insert(BB).second)
+      return false;
     DEBUG(dbgs() << "Marking Block Executable: " << BB->getName() << '\n');
     BBWorkList.push_back(BB);  // Add the block to the work list!
     return true;

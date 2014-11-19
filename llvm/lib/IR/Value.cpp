@@ -292,7 +292,7 @@ void Value::takeName(Value *V) {
 #ifndef NDEBUG
 static bool contains(SmallPtrSetImpl<ConstantExpr *> &Cache, ConstantExpr *Expr,
                      Constant *C) {
-  if (!Cache.insert(Expr))
+  if (!Cache.insert(Expr).second)
     return false;
 
   for (auto &O : Expr->operands()) {
@@ -401,7 +401,7 @@ static Value *stripPointerCastsAndOffsets(Value *V) {
       return V;
     }
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
-  } while (Visited.insert(V));
+  } while (Visited.insert(V).second);
 
   return V;
 }
@@ -451,7 +451,7 @@ Value *Value::stripAndAccumulateInBoundsConstantOffsets(const DataLayout &DL,
       return V;
     }
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
-  } while (Visited.insert(V));
+  } while (Visited.insert(V).second);
 
   return V;
 }
@@ -522,7 +522,7 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
   // For GEPs, determine if the indexing lands within the allocated object.
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
     // Conservatively require that the base pointer be fully dereferenceable.
-    if (!Visited.insert(GEP->getOperand(0)))
+    if (!Visited.insert(GEP->getOperand(0)).second)
       return false;
     if (!isDereferenceablePointer(GEP->getOperand(0), DL, Visited))
       return false;

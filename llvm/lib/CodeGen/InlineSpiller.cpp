@@ -823,7 +823,7 @@ void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
   WorkList.push_back(std::make_pair(LI, VNI));
   do {
     std::tie(LI, VNI) = WorkList.pop_back_val();
-    if (!UsedValues.insert(VNI))
+    if (!UsedValues.insert(VNI).second)
       continue;
 
     if (VNI->isPHIDef()) {

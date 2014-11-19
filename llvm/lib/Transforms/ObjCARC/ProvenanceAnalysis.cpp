@@ -62,7 +62,7 @@ bool ProvenanceAnalysis::relatedPHI(const PHINode *A,
   SmallPtrSet<const Value *, 4> UniqueSrc;
   for (unsigned i = 0, e = A->getNumIncomingValues(); i != e; ++i) {
     const Value *PV1 = A->getIncomingValue(i);
-    if (UniqueSrc.insert(PV1) && related(PV1, B))
+    if (UniqueSrc.insert(PV1).second && related(PV1, B))
       return true;
   }
 
@@ -94,7 +94,7 @@ static bool IsStoredObjCPointer(const Value *P) {
       if (isa<PtrToIntInst>(P))
         // Assume the worst.
         return true;
-      if (Visited.insert(Ur))
+      if (Visited.insert(Ur).second)
         Worklist.push_back(Ur);
     }
   } while (!Worklist.empty());

@@ -1223,7 +1223,7 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
     if (LiveRegDefs[*AliasI] == SU) continue;
 
     // Add Reg to the set of interfering live regs.
-    if (RegAdded.insert(*AliasI)) {
+    if (RegAdded.insert(*AliasI).second) {
       LRegs.push_back(*AliasI);
     }
   }
@@ -1240,7 +1240,7 @@ static void CheckForLiveRegDefMasked(SUnit *SU, const uint32_t *RegMask,
     if (!LiveRegDefs[i]) continue;
     if (LiveRegDefs[i] == SU) continue;
     if (!MachineOperand::clobbersPhysReg(RegMask, i)) continue;
-    if (RegAdded.insert(i))
+    if (RegAdded.insert(i).second)
       LRegs.push_back(i);
   }
 }
@@ -1315,7 +1315,8 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVectorImpl<unsigned> &LRegs) {
         SDNode *Gen = LiveRegGens[CallResource]->getNode();
         while (SDNode *Glued = Gen->getGluedNode())
           Gen = Glued;
-        if (!IsChainDependent(Gen, Node, 0, TII) && RegAdded.insert(CallResource))
+        if (!IsChainDependent(Gen, Node, 0, TII) &&
+            RegAdded.insert(CallResource).second)
           LRegs.push_back(CallResource);
       }
     }

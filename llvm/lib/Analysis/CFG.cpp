@@ -45,7 +45,7 @@ void llvm::FindFunctionBackedges(const Function &F,
     bool FoundNew = false;
     while (I != succ_end(ParentBB)) {
       BB = *I++;
-      if (Visited.insert(BB)) {
+      if (Visited.insert(BB).second) {
         FoundNew = true;
         break;
       }
@@ -141,7 +141,7 @@ static bool isPotentiallyReachableInner(SmallVectorImpl<BasicBlock *> &Worklist,
   SmallSet<const BasicBlock*, 64> Visited;
   do {
     BasicBlock *BB = Worklist.pop_back_val();
-    if (!Visited.insert(BB))
+    if (!Visited.insert(BB).second)
       continue;
     if (BB == StopBB)
       return true;

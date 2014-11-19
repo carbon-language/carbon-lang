@@ -981,7 +981,7 @@ ConstantFoldConstantExpressionImpl(const ConstantExpr *CE, const DataLayout *TD,
     // Recursively fold the ConstantExpr's operands. If we have already folded
     // a ConstantExpr, we don't have to process it again.
     if (ConstantExpr *NewCE = dyn_cast<ConstantExpr>(NewC)) {
-      if (FoldedOps.insert(NewCE))
+      if (FoldedOps.insert(NewCE).second)
         NewC = ConstantFoldConstantExpressionImpl(NewCE, TD, TLI, FoldedOps);
     }
     Ops.push_back(NewC);

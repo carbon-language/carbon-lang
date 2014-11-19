@@ -1493,7 +1493,7 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
 
       default:
         // Only add if it isn't already in the list.
-        if (SeenOps.insert(Op.getNode()))
+        if (SeenOps.insert(Op.getNode()).second)
           Ops.push_back(Op);
         else
           Changed = true;
@@ -12267,7 +12267,7 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
     }
 
     // Don't bother if we've been before.
-    if (!Visited.insert(Chain.getNode()))
+    if (!Visited.insert(Chain.getNode()).second)
       continue;
 
     switch (Chain.getOpcode()) {
@@ -12355,7 +12355,8 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
 
     for (SDNode::use_iterator UI = M->use_begin(),
          UIE = M->use_end(); UI != UIE; ++UI)
-      if (UI.getUse().getValueType() == MVT::Other && Visited.insert(*UI)) {
+      if (UI.getUse().getValueType() == MVT::Other &&
+          Visited.insert(*UI).second) {
         if (isa<MemIntrinsicSDNode>(*UI) || isa<MemSDNode>(*UI)) {
           // We've not visited this use, and we care about it (it could have an
           // ordering dependency with the original node).

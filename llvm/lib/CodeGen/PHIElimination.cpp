@@ -367,7 +367,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
     // Check to make sure we haven't already emitted the copy for this block.
     // This can happen because PHI nodes may have multiple entries for the same
     // basic block.
-    if (!MBBsInsertedInto.insert(&opBlock))
+    if (!MBBsInsertedInto.insert(&opBlock).second)
       continue;  // If the copy has already been emitted, we're done.
 
     // Find a safe location to insert the copy, this may be the first terminator

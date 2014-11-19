@@ -819,7 +819,7 @@ void PromoteMem2Reg::ComputeLiveInBlocks(
 
     // The block really is live in here, insert it into the set.  If already in
     // the set, then it has already been processed.
-    if (!LiveInBlocks.insert(BB))
+    if (!LiveInBlocks.insert(BB).second)
       continue;
 
     // Since the value is live into BB, it is either defined in a predecessor or
@@ -899,7 +899,7 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
         if (SuccLevel > RootLevel)
           continue;
 
-        if (!Visited.insert(SuccNode))
+        if (!Visited.insert(SuccNode).second)
           continue;
 
         BasicBlock *SuccBB = SuccNode->getBlock();
@@ -1004,7 +1004,7 @@ NextIteration:
   }
 
   // Don't revisit blocks.
-  if (!Visited.insert(BB))
+  if (!Visited.insert(BB).second)
     return;
 
   for (BasicBlock::iterator II = BB->begin(); !isa<TerminatorInst>(II);) {
@@ -1061,7 +1061,7 @@ NextIteration:
   ++I;
 
   for (; I != E; ++I)
-    if (VisitedSuccs.insert(*I))
+    if (VisitedSuccs.insert(*I).second)
       Worklist.push_back(RenamePassData(*I, Pred, IncomingVals));
 
   goto NextIteration;

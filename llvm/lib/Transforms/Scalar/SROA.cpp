@@ -349,7 +349,7 @@ public:
 
 private:
   void markAsDead(Instruction &I) {
-    if (VisitedDeadInsts.insert(&I))
+    if (VisitedDeadInsts.insert(&I).second)
       AS.DeadUsers.push_back(&I);
   }
 
@@ -639,7 +639,7 @@ private:
       }
 
       for (User *U : I->users())
-        if (Visited.insert(cast<Instruction>(U)))
+        if (Visited.insert(cast<Instruction>(U)).second)
           Uses.push_back(std::make_pair(I, cast<Instruction>(U)));
     } while (!Uses.empty());
 
@@ -848,7 +848,7 @@ public:
       else
         return false;
 
-    } while (Visited.insert(Ptr));
+    } while (Visited.insert(Ptr).second);
 
     return false;
   }
@@ -1461,7 +1461,7 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
         break;
       Offset += GEPOffset;
       Ptr = GEP->getPointerOperand();
-      if (!Visited.insert(Ptr))
+      if (!Visited.insert(Ptr).second)
         break;
     }
 
@@ -1498,7 +1498,7 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
       break;
     }
     assert(Ptr->getType()->isPointerTy() && "Unexpected operand type!");
-  } while (Visited.insert(Ptr));
+  } while (Visited.insert(Ptr).second);
 
   if (!OffsetPtr) {
     if (!Int8Ptr) {
@@ -2861,7 +2861,7 @@ private:
   /// This uses a set to de-duplicate users.
   void enqueueUsers(Instruction &I) {
     for (Use &U : I.uses())
-      if (Visited.insert(U.getUser()))
+      if (Visited.insert(U.getUser()).second)
         Queue.push_back(&U);
   }
 
@@ -3588,7 +3588,7 @@ static void enqueueUsersInWorklist(Instruction &I,
                                    SmallVectorImpl<Instruction *> &Worklist,
                                    SmallPtrSetImpl<Instruction *> &Visited) {
   for (User *U : I.users())
-    if (Visited.insert(cast<Instruction>(U)))
+    if (Visited.insert(cast<Instruction>(U)).second)
       Worklist.push_back(cast<Instruction>(U));
 }
 

@@ -256,7 +256,7 @@ static void AntiDepEdges(const SUnit *SU, std::vector<const SDep*>& Edges) {
   for (SUnit::const_pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
        P != PE; ++P) {
     if ((P->getKind() == SDep::Anti) || (P->getKind() == SDep::Output)) {
-      if (RegSet.insert(P->getReg()))
+      if (RegSet.insert(P->getReg()).second)
         Edges.push_back(&*P);
     }
   }

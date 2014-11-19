@@ -577,7 +577,7 @@ namespace llvm {
     SmallPtrSet<const SCEV *, 8> Visited;
 
     void push(const SCEV *S) {
-      if (Visited.insert(S) && Visitor.follow(S))
+      if (Visited.insert(S).second && Visitor.follow(S))
         Worklist.push_back(S);
     }
   public:

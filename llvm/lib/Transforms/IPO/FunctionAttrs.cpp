@@ -446,7 +446,7 @@ determinePointerReadAttrs(Argument *A,
     case Instruction::AddrSpaceCast:
       // The original value is not read/written via this if the new value isn't.
       for (Use &UU : I->uses())
-        if (Visited.insert(&UU))
+        if (Visited.insert(&UU).second)
           Worklist.push_back(&UU);
       break;
 
@@ -460,7 +460,7 @@ determinePointerReadAttrs(Argument *A,
       auto AddUsersToWorklistIfCapturing = [&] {
         if (Captures)
           for (Use &UU : I->uses())
-            if (Visited.insert(&UU))
+            if (Visited.insert(&UU).second)
               Worklist.push_back(&UU);
       };
 

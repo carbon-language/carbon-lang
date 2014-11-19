@@ -340,7 +340,7 @@ bool MachineSinking::isWorthBreakingCriticalEdge(MachineInstr *MI,
   // If the pass has already considered breaking this edge (during this pass
   // through the function), then let's go ahead and break it. This means
   // sinking multiple "cheap" instructions into the same block.
-  if (!CEBCandidates.insert(std::make_pair(From, To)))
+  if (!CEBCandidates.insert(std::make_pair(From, To)).second)
     return true;
 
   if (!MI->isCopy() && !TII->isAsCheapAsAMove(MI))

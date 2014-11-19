@@ -1976,7 +1976,7 @@ bool FastISel::handlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
 
     // If this terminator has multiple identical successors (common for
     // switches), only handle each succ once.
-    if (!SuccsHandled.insert(SuccMBB))
+    if (!SuccsHandled.insert(SuccMBB).second)
       continue;
 
     MachineBasicBlock::iterator MBBI = SuccMBB->begin();

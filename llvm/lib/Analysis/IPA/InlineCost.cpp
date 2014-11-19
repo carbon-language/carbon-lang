@@ -977,7 +977,7 @@ ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
       break;
     }
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
-  } while (Visited.insert(V));
+  } while (Visited.insert(V).second);
 
   Type *IntPtrTy = DL->getIntPtrType(V->getContext());
   return cast<ConstantInt>(ConstantInt::get(IntPtrTy, Offset));

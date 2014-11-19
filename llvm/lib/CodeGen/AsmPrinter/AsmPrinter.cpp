@@ -1167,7 +1167,8 @@ void AsmPrinter::EmitJumpTableInfo() {
       const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(MF,JTI,OutContext);
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
         const MachineBasicBlock *MBB = JTBBs[ii];
-        if (!EmittedSets.insert(MBB)) continue;
+        if (!EmittedSets.insert(MBB).second)
+          continue;
 
         // .set LJTSet, LBB32-base
         const MCExpr *LHS =

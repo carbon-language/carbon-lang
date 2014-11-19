@@ -179,7 +179,7 @@ struct AllocaDerivedValueTracker {
 
     auto AddUsesToWorklist = [&](Value *V) {
       for (auto &U : V->uses()) {
-        if (!Visited.insert(&U))
+        if (!Visited.insert(&U).second)
           continue;
         Worklist.push_back(&U);
       }

@@ -1001,7 +1001,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(BasicBlock *BB) {
   } else {
     SmallPtrSet<BasicBlock*, 4> VisitedBBs;
     for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
-      if (!VisitedBBs.insert(*PI))
+      if (!VisitedBBs.insert(*PI).second)
         continue;
 
       BasicBlock::InstListType &InstList = (*PI)->getInstList();
@@ -2401,7 +2401,7 @@ static bool FindAllMemoryUses(Instruction *I,
                               SmallPtrSetImpl<Instruction*> &ConsideredInsts,
                               const TargetLowering &TLI) {
   // If we already considered this instruction, we're done.
-  if (!ConsideredInsts.insert(I))
+  if (!ConsideredInsts.insert(I).second)
     return false;
 
   // If this is an obviously unfoldable instruction, bail out.
@@ -2615,7 +2615,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     worklist.pop_back();
 
     // Break use-def graph loops.
-    if (!Visited.insert(V)) {
+    if (!Visited.insert(V).second) {
       Consensus = nullptr;
       break;
     }

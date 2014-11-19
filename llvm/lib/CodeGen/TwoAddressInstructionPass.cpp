@@ -678,7 +678,7 @@ TwoAddressInstructionPass::scanUses(unsigned DstReg) {
   unsigned Reg = DstReg;
   while (MachineInstr *UseMI = findOnlyInterestingUse(Reg, MBB, MRI, TII,IsCopy,
                                                       NewReg, IsDstPhys)) {
-    if (IsCopy && !Processed.insert(UseMI))
+    if (IsCopy && !Processed.insert(UseMI).second)
       break;
 
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);

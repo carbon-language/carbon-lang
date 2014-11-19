@@ -6943,7 +6943,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   for (std::vector<MachineBasicBlock*>::iterator
          I = LPadList.begin(), E = LPadList.end(); I != E; ++I) {
     MachineBasicBlock *CurMBB = *I;
-    if (SeenMBBs.insert(CurMBB))
+    if (SeenMBBs.insert(CurMBB).second)
       DispContBB->addSuccessor(CurMBB);
   }
 

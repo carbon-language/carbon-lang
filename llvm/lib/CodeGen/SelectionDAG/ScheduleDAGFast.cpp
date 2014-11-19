@@ -460,7 +460,7 @@ static bool CheckForLiveRegDef(SUnit *SU, unsigned Reg,
   bool Added = false;
   for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
     if (LiveRegDefs[*AI] && LiveRegDefs[*AI] != SU) {
-      if (RegAdded.insert(*AI)) {
+      if (RegAdded.insert(*AI).second) {
         LRegs.push_back(*AI);
         Added = true;
       }

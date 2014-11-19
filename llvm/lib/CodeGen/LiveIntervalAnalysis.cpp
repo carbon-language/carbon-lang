@@ -379,12 +379,13 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
       (void)ExtVNI;
       assert(ExtVNI == VNI && "Unexpected existing value number");
       // Is this a PHIDef we haven't seen before?
-      if (!VNI->isPHIDef() || VNI->def != BlockStart || !UsedPHIs.insert(VNI))
+      if (!VNI->isPHIDef() || VNI->def != BlockStart ||
+          !UsedPHIs.insert(VNI).second)
         continue;
       // The PHI is live, make sure the predecessors are live-out.
       for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
            PE = MBB->pred_end(); PI != PE; ++PI) {
-        if (!LiveOut.insert(*PI))
+        if (!LiveOut.insert(*PI).second)
           continue;
         SlotIndex Stop = getMBBEndIdx(*PI);
         // A predecessor is not required to have a live-out value for a PHI.
@@ -401,7 +402,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     // Make sure VNI is live-out from the predecessors.
     for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
          PE = MBB->pred_end(); PI != PE; ++PI) {
-      if (!LiveOut.insert(*PI))
+      if (!LiveOut.insert(*PI).second)
         continue;
       SlotIndex Stop = getMBBEndIdx(*PI);
       assert(li->getVNInfoBefore(Stop) == VNI &&
@@ -784,7 +785,7 @@ private:
   /// Update a single live range, assuming an instruction has been moved from
   /// OldIdx to NewIdx.
   void updateRange(LiveRange &LR, unsigned Reg) {
-    if (!Updated.insert(&LR))
+    if (!Updated.insert(&LR).second)
       return;
     DEBUG({
       dbgs() << "     ";

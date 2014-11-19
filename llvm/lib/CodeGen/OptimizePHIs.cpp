@@ -92,7 +92,7 @@ bool OptimizePHIs::IsSingleValuePHICycle(MachineInstr *MI,
   unsigned DstReg = MI->getOperand(0).getReg();
 
   // See if we already saw this register.
-  if (!PHIsInCycle.insert(MI))
+  if (!PHIsInCycle.insert(MI).second)
     return true;
 
   // Don't scan crazily complex things.
@@ -137,7 +137,7 @@ bool OptimizePHIs::IsDeadPHICycle(MachineInstr *MI, InstrSet &PHIsInCycle) {
          "PHI destination is not a virtual register");
 
   // See if we already saw this register.
-  if (!PHIsInCycle.insert(MI))
+  if (!PHIsInCycle.insert(MI).second)
     return true;
 
   // Don't scan crazily complex things.

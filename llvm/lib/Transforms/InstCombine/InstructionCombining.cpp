@@ -2341,7 +2341,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
 
       // If we already saw this clause, there is no point in having a second
       // copy of it.
-      if (AlreadyCaught.insert(TypeInfo)) {
+      if (AlreadyCaught.insert(TypeInfo).second) {
         // This catch clause was not already seen.
         NewClauses.push_back(CatchClause);
       } else {
@@ -2423,7 +2423,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
             continue;
           // There is no point in having multiple copies of the same typeinfo in
           // a filter, so only add it if we didn't already.
-          if (SeenInFilter.insert(TypeInfo))
+          if (SeenInFilter.insert(TypeInfo).second)
             NewFilterElts.push_back(cast<Constant>(Elt));
         }
         // A filter containing a catch-all cannot match anything by definition.
@@ -2675,7 +2675,8 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
     BB = Worklist.pop_back_val();
 
     // We have now visited this block!  If we've already been here, ignore it.
-    if (!Visited.insert(BB)) continue;
+    if (!Visited.insert(BB).second)
+      continue;
 
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
       Instruction *Inst = BBI++;

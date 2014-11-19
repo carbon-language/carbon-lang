@@ -7649,7 +7649,7 @@ static bool findConsecutiveLoad(LoadSDNode *LD, SelectionDAG &DAG) {
   // nodes just above the top-level loads and token factors.
   while (!Queue.empty()) {
     SDNode *ChainNext = Queue.pop_back_val();
-    if (!Visited.insert(ChainNext))
+    if (!Visited.insert(ChainNext).second)
       continue;
 
     if (MemSDNode *ChainLD = dyn_cast<MemSDNode>(ChainNext)) {
@@ -7680,7 +7680,7 @@ static bool findConsecutiveLoad(LoadSDNode *LD, SelectionDAG &DAG) {
        
     while (!Queue.empty()) {
       SDNode *LoadRoot = Queue.pop_back_val();
-      if (!Visited.insert(LoadRoot))
+      if (!Visited.insert(LoadRoot).second)
         continue;
 
       if (MemSDNode *ChainLD = dyn_cast<MemSDNode>(LoadRoot))
@@ -7810,7 +7810,7 @@ SDValue PPCTargetLowering::DAGCombineTruncBoolExt(SDNode *N,
     SDValue BinOp = BinOps.back();
     BinOps.pop_back();
 
-    if (!Visited.insert(BinOp.getNode()))
+    if (!Visited.insert(BinOp.getNode()).second)
       continue;
 
     PromOps.push_back(BinOp);
@@ -8024,7 +8024,7 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
     SDValue BinOp = BinOps.back();
     BinOps.pop_back();
 
-    if (!Visited.insert(BinOp.getNode()))
+    if (!Visited.insert(BinOp.getNode()).second)
       continue;
 
     PromOps.push_back(BinOp);

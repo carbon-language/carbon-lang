@@ -708,7 +708,7 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
       continue;
     if (MO.isEarlyClobber() || MI->isRegTiedToDefOperand(i) ||
         (MO.getSubReg() && MI->readsVirtualRegister(Reg))) {
-      if (ThroughRegs.insert(Reg))
+      if (ThroughRegs.insert(Reg).second)
         DEBUG(dbgs() << ' ' << PrintReg(Reg));
     }
   }

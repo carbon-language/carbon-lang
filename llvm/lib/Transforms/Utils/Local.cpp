@@ -392,7 +392,7 @@ bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN,
 
     // If we find an instruction more than once, we're on a cycle that
     // won't prove fruitful.
-    if (!Visited.insert(I)) {
+    if (!Visited.insert(I).second) {
       // Break the cycle and delete the instruction and its operands.
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
       (void)RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
@@ -1266,7 +1266,7 @@ static bool markAliveBlocks(BasicBlock *BB,
 
     Changed |= ConstantFoldTerminator(BB, true);
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-      if (Reachable.insert(*SI))
+      if (Reachable.insert(*SI).second)
         Worklist.push_back(*SI);
   } while (!Worklist.empty());
   return Changed;

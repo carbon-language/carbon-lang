@@ -152,7 +152,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE;
            ++SI) {
         BasicBlock *SuccBB = *SI;
-        if (!Visited.insert(SuccBB))
+        if (!Visited.insert(SuccBB).second)
           continue;
 
         const Loop *SuccLoop = LI->getLoopFor(SuccBB);
@@ -165,7 +165,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
           for (unsigned i = 0; i < SubLoopExitBlocks.size(); ++i) {
             BasicBlock *ExitBB = SubLoopExitBlocks[i];
-            if (LI->getLoopFor(ExitBB) == L && Visited.insert(ExitBB))
+            if (LI->getLoopFor(ExitBB) == L && Visited.insert(ExitBB).second)
               VisitStack.push_back(WorklistItem(ExitBB, false));
           }
 

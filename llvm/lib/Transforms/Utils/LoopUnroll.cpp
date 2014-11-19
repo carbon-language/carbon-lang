@@ -112,7 +112,7 @@ FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI, LPPassManager *LPM,
   if (LPM) {
     if (ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>()) {
       if (Loop *L = LI->getLoopFor(BB)) {
-        if (ForgottenLoops.insert(L))
+        if (ForgottenLoops.insert(L).second)
           SE->forgetLoop(L);
       }
     }

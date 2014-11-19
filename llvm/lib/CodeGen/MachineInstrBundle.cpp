@@ -141,7 +141,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
           // Internal def is now killed.
           KilledDefSet.insert(Reg);
       } else {
-        if (ExternUseSet.insert(Reg)) {
+        if (ExternUseSet.insert(Reg).second) {
           ExternUses.push_back(Reg);
           if (MO.isUndef())
             UndefUseSet.insert(Reg);
@@ -158,7 +158,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
       if (!Reg)
         continue;
 
-      if (LocalDefSet.insert(Reg)) {
+      if (LocalDefSet.insert(Reg).second) {
         LocalDefs.push_back(Reg);
         if (MO.isDead()) {
           DeadDefSet.insert(Reg);
@@ -174,7 +174,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
       if (!MO.isDead()) {
         for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
           unsigned SubReg = *SubRegs;
-          if (LocalDefSet.insert(SubReg))
+          if (LocalDefSet.insert(SubReg).second)
             LocalDefs.push_back(SubReg);
         }
       }
@@ -186,7 +186,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
   SmallSet<unsigned, 32> Added;
   for (unsigned i = 0, e = LocalDefs.size(); i != e; ++i) {
     unsigned Reg = LocalDefs[i];
-    if (Added.insert(Reg)) {
+    if (Added.insert(Reg).second) {
       // If it's not live beyond end of the bundle, mark it dead.
       bool isDead = DeadDefSet.count(Reg) || KilledDefSet.count(Reg);
       MIB.addReg(Reg, getDefRegState(true) | getDeadRegState(isDead) |

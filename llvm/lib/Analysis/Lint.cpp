@@ -631,7 +631,7 @@ Value *Lint::findValue(Value *V, bool OffsetOk) const {
 Value *Lint::findValueImpl(Value *V, bool OffsetOk,
                            SmallPtrSetImpl<Value *> &Visited) const {
   // Detect self-referential values.
-  if (!Visited.insert(V))
+  if (!Visited.insert(V).second)
     return UndefValue::get(V->getType());
 
   // TODO: Look through sext or zext cast, when the result is known to
@@ -645,7 +645,8 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
     BasicBlock *BB = L->getParent();
     SmallPtrSet<BasicBlock *, 4> VisitedBlocks;
     for (;;) {
-      if (!VisitedBlocks.insert(BB)) break;
+      if (!VisitedBlocks.insert(BB).second)
+        break;
       if (Value *U = FindAvailableLoadedValue(L->getPointerOperand(),
                                               BB, BBI, 6, AA))
         return findValueImpl(U, OffsetOk, Visited);

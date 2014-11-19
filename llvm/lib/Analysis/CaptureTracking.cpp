@@ -239,7 +239,7 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
         if (Count++ >= Threshold)
           return Tracker->tooManyUses();
 
-        if (Visited.insert(&UU))
+        if (Visited.insert(&UU).second)
           if (Tracker->shouldExplore(&UU))
             Worklist.push_back(&UU);
       }

@@ -140,7 +140,7 @@ void SjLjEHPrepare::insertCallSiteStore(Instruction *I, int Number) {
 /// we reach blocks we've already seen.
 static void MarkBlocksLiveIn(BasicBlock *BB,
                              SmallPtrSetImpl<BasicBlock *> &LiveBBs) {
-  if (!LiveBBs.insert(BB))
+  if (!LiveBBs.insert(BB).second)
     return; // already been here.
 
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)

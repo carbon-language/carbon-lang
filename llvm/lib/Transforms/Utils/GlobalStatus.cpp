@@ -133,7 +133,7 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
       } else if (const PHINode *PN = dyn_cast<PHINode>(I)) {
         // PHI nodes we can check just like select or GEP instructions, but we
         // have to be careful about infinite recursion.
-        if (PhiUsers.insert(PN)) // Not already visited.
+        if (PhiUsers.insert(PN).second) // Not already visited.
           if (analyzeGlobalAux(I, GS, PhiUsers))
             return true;
       } else if (isa<CmpInst>(I)) {

@@ -125,7 +125,7 @@ Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
     typename GraphT::NodeType* VAncestor = DT.Vertex[VInfo.Parent];
 
     // Process Ancestor first
-    if (Visited.insert(VAncestor) && VInfo.Parent >= LastLinked) {
+    if (Visited.insert(VAncestor).second && VInfo.Parent >= LastLinked) {
       Work.push_back(VAncestor);
       continue;
     } 

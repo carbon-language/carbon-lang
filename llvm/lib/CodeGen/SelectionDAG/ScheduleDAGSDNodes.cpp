@@ -230,7 +230,7 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
   for (SDNode::use_iterator I = Chain->use_begin(), E = Chain->use_end();
        I != E && UseCount < 100; ++I, ++UseCount) {
     SDNode *User = *I;
-    if (User == Node || !Visited.insert(User))
+    if (User == Node || !Visited.insert(User).second)
       continue;
     int64_t Offset1, Offset2;
     if (!TII->areLoadsFromSameBasePtr(Base, User, Offset1, Offset2) ||
@@ -343,7 +343,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
 
     // Add all operands to the worklist unless they've already been added.
     for (unsigned i = 0, e = NI->getNumOperands(); i != e; ++i)
-      if (Visited.insert(NI->getOperand(i).getNode()))
+      if (Visited.insert(NI->getOperand(i).getNode()).second)
         Worklist.push_back(NI->getOperand(i).getNode());
 
     if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
@@ -737,7 +737,7 @@ ProcessSourceNode(SDNode *N, SelectionDAG *DAG, InstrEmitter &Emitter,
                   SmallVectorImpl<std::pair<unsigned, MachineInstr*> > &Orders,
                   SmallSet<unsigned, 8> &Seen) {
   unsigned Order = N->getIROrder();
-  if (!Order || !Seen.insert(Order)) {
+  if (!Order || !Seen.insert(Order).second) {
     // Process any valid SDDbgValues even if node does not have any order
     // assigned.
     ProcessSDDbgValues(N, DAG, Emitter, Orders, VRBaseMap, 0);

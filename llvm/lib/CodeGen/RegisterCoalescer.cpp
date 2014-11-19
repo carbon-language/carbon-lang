@@ -965,7 +965,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
     // the UseMI operands removes them from the SrcReg use-def chain, but when
     // SrcReg is DstReg we could encounter UseMI twice if it has multiple
     // operands mentioning the virtual register.
-    if (SrcReg == DstReg && !Visited.insert(UseMI))
+    if (SrcReg == DstReg && !Visited.insert(UseMI).second)
       continue;
 
     SmallVector<unsigned,8> Ops;

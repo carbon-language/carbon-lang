@@ -363,7 +363,7 @@ template <typename T> class StratifiedSetsBuilder {
     SmallSet<StratifiedIndex, 16> Visited;
     for (unsigned I = 0, E = Links.size(); I < E; ++I) {
       auto CurrentIndex = getHighestParentAbove(I);
-      if (!Visited.insert(CurrentIndex)) {
+      if (!Visited.insert(CurrentIndex).second) {
         continue;
       }
 

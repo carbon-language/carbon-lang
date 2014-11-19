@@ -1455,7 +1455,7 @@ sortOpts(StringMap<Option*> &OptMap,
       continue;
 
     // If we've already seen this option, don't add it to the list again.
-    if (!OptionSet.insert(I->second))
+    if (!OptionSet.insert(I->second).second)
       continue;
 
     Opts.push_back(std::pair<const char *, Option*>(I->getKey().data(),

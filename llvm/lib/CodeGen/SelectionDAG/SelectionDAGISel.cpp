@@ -615,7 +615,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     SDNode *N = Worklist.pop_back_val();
 
     // If we've already seen this node, ignore it.
-    if (!VisitedNodes.insert(N))
+    if (!VisitedNodes.insert(N).second)
       continue;
 
     // Otherwise, add all chain operands to the worklist.
@@ -1741,7 +1741,7 @@ static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
 
   // Don't revisit nodes if we already scanned it and didn't fail, we know we
   // won't fail if we scan it again.
-  if (!Visited.insert(Use))
+  if (!Visited.insert(Use).second)
     return false;
 
   for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {

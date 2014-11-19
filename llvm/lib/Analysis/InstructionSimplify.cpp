@@ -631,7 +631,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *DL,
     }
     assert(V->getType()->getScalarType()->isPointerTy() &&
            "Unexpected operand type!");
-  } while (Visited.insert(V));
+  } while (Visited.insert(V).second);
 
   Constant *OffsetIntPtr = ConstantInt::get(IntPtrTy, Offset);
   if (V->getType()->isVectorTy())

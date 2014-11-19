@@ -2760,7 +2760,7 @@ void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
   SmallSet<BasicBlock*, 32> Done;
   for (unsigned i = 0, e = I.getNumSuccessors(); i != e; ++i) {
     BasicBlock *BB = I.getSuccessor(i);
-    bool Inserted = Done.insert(BB);
+    bool Inserted = Done.insert(BB).second;
     if (!Inserted)
         continue;
 
@@ -7697,7 +7697,8 @@ SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
 
     // If this terminator has multiple identical successors (common for
     // switches), only handle each succ once.
-    if (!SuccsHandled.insert(SuccMBB)) continue;
+    if (!SuccsHandled.insert(SuccMBB).second)
+      continue;
 
     MachineBasicBlock::iterator MBBI = SuccMBB->begin();
 

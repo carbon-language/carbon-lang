@@ -4202,7 +4202,7 @@ bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
   SmallPtrSet<Value *, 8> Succs;
   for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {
     BasicBlock *Dest = IBI->getDestination(i);
-    if (!Dest->hasAddressTaken() || !Succs.insert(Dest)) {
+    if (!Dest->hasAddressTaken() || !Succs.insert(Dest).second) {
       Dest->removePredecessor(BB);
       IBI->removeDestination(i);
       --i; --e;
