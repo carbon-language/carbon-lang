@@ -252,9 +252,6 @@ private:
   void createPLTHeader();
   bool mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                       const Reference &ref) const;
-
-  static void addSingleReference(SimpleELFDefinedAtom *src, const Atom *tgt,
-                                 uint16_t relocType);
 };
 
 template <typename ELFT>
@@ -483,13 +480,8 @@ bool RelocationPass<ELFT>::requireCopy(Reference &ref) {
 
 template <typename ELFT>
 void RelocationPass<ELFT>::configurePLTReference(Reference &ref) {
-  const Atom *atom = ref.target();
-
-  auto *plt = getPLTEntry(atom);
+  auto *plt = getPLTEntry(ref.target());
   ref.setTarget(plt);
-
-  if (_hasStaticRelocations.count(atom) && _requiresPtrEquality.count(atom))
-    addSingleReference(plt, atom, LLD_R_MIPS_STO_PLT);
 }
 
 template <typename ELFT>
@@ -702,17 +694,6 @@ template <typename ELFT> void RelocationPass<ELFT>::createPLTHeader() {
 }
 
 template <typename ELFT>
-void RelocationPass<ELFT>::addSingleReference(SimpleELFDefinedAtom *src,
-                                              const Atom *tgt,
-                                              uint16_t relocType) {
-  for (const auto &r : *src)
-    if (r->kindNamespace() == lld::Reference::KindNamespace::ELF &&
-        r->kindValue() == relocType && r->target() == tgt)
-      break;
-  src->addReferenceELF_Mips(relocType, 0, tgt, 0);
-}
-
-template <typename ELFT>
 PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   auto plt = _pltMap.find(a);
   if (plt != _pltMap.end())
@@ -737,6 +718,10 @@ PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   ga->addReferenceELF_Mips(R_MIPS_32, 0, _pltVector.front(), 0);
   // Create dynamic relocation to adjust the .got.plt entry at runtime.
   ga->addReferenceELF_Mips(R_MIPS_JUMP_SLOT, 0, a, 0);
+
+  // Check that 'a' dynamic symbol table record should point to the PLT.
+  if (_hasStaticRelocations.count(a) && _requiresPtrEquality.count(a))
+    pa->addReferenceELF_Mips(LLD_R_MIPS_STO_PLT, 0, a, 0);
 
   DEBUG_WITH_TYPE("MipsGOT", {
     pa->_name = "__plt_";
