@@ -277,6 +277,9 @@ void ClangTidyDiagnosticConsumer::finalizeLastError() {
 
 void ClangTidyDiagnosticConsumer::HandleDiagnostic(
     DiagnosticsEngine::Level DiagLevel, const Diagnostic &Info) {
+  // Count warnings/errors.
+  DiagnosticConsumer::HandleDiagnostic(DiagLevel, Info);
+
   if (DiagLevel == DiagnosticsEngine::Note) {
     assert(!Errors.empty() &&
            "A diagnostic note can only be appended to a message.");
