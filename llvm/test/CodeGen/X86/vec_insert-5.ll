@@ -63,10 +63,7 @@ define <4 x float> @t4(<4 x float>* %P) nounwind {
 define <16 x i8> @t5(<16 x i8> %x) nounwind {
 ; CHECK-LABEL: t5:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pxor %xmm1, %xmm1
-; CHECK-NEXT:    pshufb {{.*#+}} xmm1 = zero,xmm1[u,u,u,u,u,u,u,u,u,u,u,u,u,u,1]
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[1,u,u,u,u,u,u,u,u,u,u,u,u,u,u],zero
-; CHECK-NEXT:    por %xmm1, %xmm0
+; CHECK-NEXT:    psrldq {{.*#+}} xmm0 = xmm0[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],zero
 ; CHECK-NEXT:    retl
   %s = shufflevector <16 x i8> %x, <16 x i8> zeroinitializer, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 17>
   ret <16 x i8> %s
@@ -75,7 +72,7 @@ define <16 x i8> @t5(<16 x i8> %x) nounwind {
 define <16 x i8> @t6(<16 x i8> %x) nounwind {
 ; CHECK-LABEL: t6:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    palignr {{.*#+}} xmm0 = xmm0[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]
+; CHECK-NEXT:    psrldq {{.*#+}} xmm0 = xmm0[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],zero
 ; CHECK-NEXT:    retl
   %s = shufflevector <16 x i8> %x, <16 x i8> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i8> %s
@@ -84,7 +81,7 @@ define <16 x i8> @t6(<16 x i8> %x) nounwind {
 define <16 x i8> @t7(<16 x i8> %x) nounwind {
 ; CHECK-LABEL: t7:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    palignr {{.*#+}} xmm0 = xmm0[3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2]
+; CHECK-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2]
 ; CHECK-NEXT:    retl
   %s = shufflevector <16 x i8> %x, <16 x i8> undef, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 2>
   ret <16 x i8> %s

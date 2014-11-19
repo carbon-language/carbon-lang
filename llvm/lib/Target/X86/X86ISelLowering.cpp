@@ -7453,12 +7453,13 @@ static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(SDLoc DL, MVT VT,
 
 /// \brief Try to lower a vector shuffle as a byte rotation.
 ///
-/// We have a generic PALIGNR instruction in x86 that will do an arbitrary
-/// byte-rotation of the concatenation of two vectors. This routine will
-/// try to generically lower a vector shuffle through such an instruction. It
-/// does not check for the availability of PALIGNR-based lowerings, only the
-/// applicability of this strategy to the given mask. This matches shuffle
-/// vectors that look like:
+/// SSSE3 has a generic PALIGNR instruction in x86 that will do an arbitrary
+/// byte-rotation of the concatenation of two vectors; pre-SSSE3 can use
+/// a PSRLDQ/PSLLDQ/POR pattern to get a similar effect. This routine will
+/// try to generically lower a vector shuffle through such an pattern. It
+/// does not check for the profitability of lowering either as PALIGNR or
+/// PSRLDQ/PSLLDQ/POR, only whether the mask is valid to lower in that form.
+/// This matches shuffle vectors that look like:
 /// 
 ///   v8i16 [11, 12, 13, 14, 15, 0, 1, 2]
 /// 
@@ -7471,6 +7472,7 @@ static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(SDLoc DL, MVT VT,
 static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
                                               SDValue V2,
                                               ArrayRef<int> Mask,
+                                              const X86Subtarget *Subtarget,
                                               SelectionDAG &DAG) {
   assert(!isNoopShuffleMask(Mask) && "We shouldn't lower no-op shuffles!");
 
@@ -7531,21 +7533,40 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
   else if (!Hi)
     Hi = Lo;
 
-  // Cast the inputs to v16i8 to match PALIGNR.
-  Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Lo);
-  Hi = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Hi);
-
   assert(VT.getSizeInBits() == 128 &&
          "Rotate-based lowering only supports 128-bit lowering!");
   assert(Mask.size() <= 16 &&
          "Can shuffle at most 16 bytes in a 128-bit vector!");
+
   // The actual rotate instruction rotates bytes, so we need to scale the
   // rotation based on how many bytes are in the vector.
   int Scale = 16 / Mask.size();
 
+  // SSSE3 targets can use the palignr instruction
+  if (Subtarget->hasSSSE3()) {
+    // Cast the inputs to v16i8 to match PALIGNR.
+    Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Lo);
+    Hi = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Hi);
+
+    return DAG.getNode(ISD::BITCAST, DL, VT,
+                       DAG.getNode(X86ISD::PALIGNR, DL, MVT::v16i8, Hi, Lo,
+                                   DAG.getConstant(Rotation * Scale, MVT::i8)));
+  }
+
+  // Default SSE2 implementation
+  int LoByteShift = 16 - Rotation * Scale;
+  int HiByteShift = Rotation * Scale;
+
+  // Cast the inputs to v2i64 to match PSLLDQ/PSRLDQ.
+  Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Lo);
+  Hi = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Hi);
+
+  SDValue LoShift = DAG.getNode(X86ISD::VSHLDQ, DL, MVT::v2i64, Lo,
+                                DAG.getConstant(8 * LoByteShift, MVT::i8));
+  SDValue HiShift = DAG.getNode(X86ISD::VSRLDQ, DL, MVT::v2i64, Hi,
+                                DAG.getConstant(8 * HiByteShift, MVT::i8));
   return DAG.getNode(ISD::BITCAST, DL, VT,
-                     DAG.getNode(X86ISD::PALIGNR, DL, MVT::v16i8, Hi, Lo,
-                                 DAG.getConstant(Rotation * Scale, MVT::i8)));
+                     DAG.getNode(ISD::OR, DL, MVT::v2i64, LoShift, HiShift));
 }
 
 /// \brief Compute whether each element of a shuffle is zeroable.
@@ -7585,6 +7606,88 @@ static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
   }
 
   return Zeroable;
+}
+
+/// \brief Try to lower a vector shuffle as a byte shift (shifts in zeros).
+///
+/// Attempts to match a shuffle mask against the PSRLDQ and PSLLDQ SSE2
+/// byte-shift instructions. The mask must consist of a shifted sequential
+/// shuffle from one of the input vectors and zeroable elements for the
+/// remaining 'shifted in' elements.
+///
+/// Note that this only handles 128-bit vector widths currently.
+static SDValue lowerVectorShuffleAsByteShift(SDLoc DL, MVT VT, SDValue V1,
+                                             SDValue V2, ArrayRef<int> Mask,
+                                             SelectionDAG &DAG) {
+  assert(!isNoopShuffleMask(Mask) && "We shouldn't lower no-op shuffles!");
+
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+
+  int Size = Mask.size();
+  int Scale = 16 / Size;
+
+  auto isSequential = [](int Base, int StartIndex, int EndIndex, int MaskOffset,
+                         ArrayRef<int> Mask) {
+    for (int i = StartIndex; i < EndIndex; i++) {
+      if (Mask[i] < 0)
+        continue;
+      if (i + Base != Mask[i] - MaskOffset)
+        return false;
+    }
+    return true;
+  };
+
+  for (int Shift = 1; Shift < Size; Shift++) {
+    int ByteShift = Shift * Scale;
+
+    // PSRLDQ : (little-endian) right byte shift
+    // [ 5,  6,  7, zz, zz, zz, zz, zz]
+    // [ -1, 5,  6,  7, zz, zz, zz, zz]
+    // [  1, 2, -1, -1, -1, -1, zz, zz]
+    bool ZeroableRight = true;
+    for (int i = Size - Shift; i < Size; i++) {
+      ZeroableRight &= Zeroable[i];
+    }
+
+    if (ZeroableRight) {
+      bool ValidShiftRight1 = isSequential(Shift, 0, Size - Shift, 0, Mask);
+      bool ValidShiftRight2 = isSequential(Shift, 0, Size - Shift, Size, Mask);
+
+      if (ValidShiftRight1 || ValidShiftRight2) {
+        // Cast the inputs to v2i64 to match PSRLDQ.
+        SDValue &TargetV = ValidShiftRight1 ? V1 : V2;
+        SDValue V = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, TargetV);
+        SDValue Shifted = DAG.getNode(X86ISD::VSRLDQ, DL, MVT::v2i64, V,
+                                      DAG.getConstant(ByteShift * 8, MVT::i8));
+        return DAG.getNode(ISD::BITCAST, DL, VT, Shifted);
+      }
+    }
+
+    // PSLLDQ : (little-endian) left byte shift
+    // [ zz,  0,  1,  2,  3,  4,  5,  6]
+    // [ zz, zz, -1, -1,  2,  3,  4, -1]
+    // [ zz, zz, zz, zz, zz, zz, -1,  1]
+    bool ZeroableLeft = true;
+    for (int i = 0; i < Shift; i++) {
+      ZeroableLeft &= Zeroable[i];
+    }
+
+    if (ZeroableLeft) {
+      bool ValidShiftLeft1 = isSequential(-Shift, Shift, Size, 0, Mask);
+      bool ValidShiftLeft2 = isSequential(-Shift, Shift, Size, Size, Mask);
+
+      if (ValidShiftLeft1 || ValidShiftLeft2) {
+        // Cast the inputs to v2i64 to match PSLLDQ.
+        SDValue &TargetV = ValidShiftLeft1 ? V1 : V2;
+        SDValue V = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, TargetV);
+        SDValue Shifted = DAG.getNode(X86ISD::VSHLDQ, DL, MVT::v2i64, V,
+                                      DAG.getConstant(ByteShift * 8, MVT::i8));
+        return DAG.getNode(ISD::BITCAST, DL, VT, Shifted);
+      }
+    }
+  }
+
+  return SDValue();
 }
 
 /// \brief Lower a vector shuffle as a zero or any extension.
@@ -8090,10 +8193,16 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                                   Subtarget, DAG))
       return Blend;
 
-  // Try to use rotation instructions if available.
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v2i64, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte rotation instructions.
+  // Its more profitable for pre-SSSE3 to use shuffles/unpacks.
   if (Subtarget->hasSSSE3())
     if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-            DL, MVT::v2i64, V1, V2, Mask, DAG))
+            DL, MVT::v2i64, V1, V2, Mask, Subtarget, DAG))
       return Rotate;
 
   // We implement this with SHUFPD which is pretty lame because it will likely
@@ -8366,10 +8475,16 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                                   Subtarget, DAG))
       return Blend;
 
-  // Try to use rotation instructions if available.
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v4i32, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte rotation instructions.
+  // Its more profitable for pre-SSSE3 to use shuffles/unpacks.
   if (Subtarget->hasSSSE3())
     if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-            DL, MVT::v4i32, V1, V2, Mask, DAG))
+            DL, MVT::v4i32, V1, V2, Mask, Subtarget, DAG))
       return Rotate;
 
   // We implement this with SHUFPS because it can blend from two vectors.
@@ -8434,11 +8549,15 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   if (isShuffleEquivalent(Mask, 4, 4, 5, 5, 6, 6, 7, 7))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i16, V, V);
 
-  // Try to use rotation instructions if available.
-  if (Subtarget->hasSSSE3())
-    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-            DL, MVT::v8i16, V, V, Mask, DAG))
-      return Rotate;
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v8i16, V, V, Mask, DAG))
+    return Shift;
+
+  // Try to use byte rotation instructions.
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v8i16, V, V, Mask, Subtarget, DAG))
+    return Rotate;
 
   // Simplify the 1-into-3 and 3-into-1 cases with a single pshufd. For all
   // such inputs we can swap two of the dwords across the half mark and end up
@@ -9058,11 +9177,15 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                                   Subtarget, DAG))
       return Blend;
 
-  // Try to use rotation instructions if available.
-  if (Subtarget->hasSSSE3())
-    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-            DL, MVT::v8i16, V1, V2, Mask, DAG))
-      return Rotate;
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v8i16, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte rotation instructions.
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v8i16, V1, V2, Mask, Subtarget, DAG))
+    return Rotate;
 
   if (NumV1Inputs + NumV2Inputs <= 4)
     return lowerV8I16BasicBlendVectorShuffle(DL, V1, V2, Mask, Subtarget, DAG);
@@ -9193,11 +9316,15 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> OrigMask = SVOp->getMask();
   assert(OrigMask.size() == 16 && "Unexpected mask size for v16 shuffle!");
 
-  // Try to use rotation instructions if available.
-  if (Subtarget->hasSSSE3())
-    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-            DL, MVT::v16i8, V1, V2, OrigMask, DAG))
-      return Rotate;
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v16i8, V1, V2, OrigMask, DAG))
+    return Shift;
+
+  // Try to use byte rotation instructions.
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v16i8, V1, V2, OrigMask, Subtarget, DAG))
+    return Rotate;
 
   // Try to use a zext lowering.
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(

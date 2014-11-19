@@ -96,7 +96,7 @@ bool ConstantFPSDNode::isValueValidForType(EVT VT,
 /// BUILD_VECTOR where all of the elements are ~0 or undef.
 bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   // Look through a bit convert.
-  if (N->getOpcode() == ISD::BITCAST)
+  while (N->getOpcode() == ISD::BITCAST)
     N = N->getOperand(0).getNode();
 
   if (N->getOpcode() != ISD::BUILD_VECTOR) return false;
@@ -144,7 +144,7 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
 /// BUILD_VECTOR where all of the elements are 0 or undef.
 bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   // Look through a bit convert.
-  if (N->getOpcode() == ISD::BITCAST)
+  while (N->getOpcode() == ISD::BITCAST)
     N = N->getOperand(0).getNode();
 
   if (N->getOpcode() != ISD::BUILD_VECTOR) return false;

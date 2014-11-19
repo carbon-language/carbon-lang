@@ -8,18 +8,18 @@
 define void @t0(<8 x i16>* %dest, <8 x i16>* %old) nounwind {
 ; X64-LABEL: t0:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    pxor %xmm0, %xmm0
+; X64-NEXT:    movl $1, %eax
+; X64-NEXT:    movd %eax, %xmm0
 ; X64-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[1],mem[1],xmm0[2],mem[2],xmm0[3],mem[3]
 ; X64-NEXT:    movdqa %xmm0, (%rdi)
 ; X64-NEXT:    retq
 entry:
 	%tmp3 = load <8 x i16>* %old
 	%tmp6 = shufflevector <8 x i16> %tmp3,
-                <8 x i16> < i16 0, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef >,
+                <8 x i16> < i16 1, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef >,
                 <8 x i32> < i32 8, i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef  >
 	store <8 x i16> %tmp6, <8 x i16>* %dest
 	ret void
-
 }
 
 define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) nounwind {
