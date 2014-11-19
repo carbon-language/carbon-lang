@@ -474,6 +474,18 @@ TEST(APFloatTest, FMA) {
     f1.fusedMultiplyAdd(f2, f3, APFloat::rmNearestTiesToEven);
     EXPECT_EQ(12.0f, f1.convertToFloat());
   }
+
+  {
+    APFloat M1(APFloat::x87DoubleExtended, 1.0);
+    APFloat M2(APFloat::x87DoubleExtended, 1.0);
+    APFloat A(APFloat::x87DoubleExtended, 3.0);
+
+    bool losesInfo = false;
+    M1.fusedMultiplyAdd(M1, A, APFloat::rmNearestTiesToEven);
+    M1.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven, &losesInfo);
+    EXPECT_FALSE(losesInfo);
+    EXPECT_EQ(4.0f, M1.convertToFloat());
+  }
 }
 
 TEST(APFloatTest, MinNum) {

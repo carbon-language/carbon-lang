@@ -926,7 +926,10 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
   assert(semantics == rhs.semantics);
 
   precision = semantics->precision;
-  newPartsCount = partCountForBits(precision * 2);
+
+  // Allocate space for twice as many bits as the original significand, plus one
+  // extra bit for the addition to overflow into.
+  newPartsCount = partCountForBits(precision * 2 + 1);
 
   if (newPartsCount > 4)
     fullSignificand = new integerPart[newPartsCount];
@@ -948,11 +951,12 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
   //   *this = a23 . a22 ... a0 * 2^e1
   //     rhs = b23 . b22 ... b0 * 2^e2
   // the result of multiplication is:
-  //   *this = c47 c46 . c45 ... c0 * 2^(e1+e2)
-  // Note that there are two significant bits at the left-hand side of the 
-  // radix point. Move the radix point toward left by one bit, and adjust
-  // exponent accordingly.
-  exponent += 1;
+  //   *this = c48 c47 c46 . c45 ... c0 * 2^(e1+e2)
+  // Note that there are three significant bits at the left-hand side of the 
+  // radix point: two for the multiplication, and an overflow bit for the
+  // addition (that will always be zero at this point). Move the radix point
+  // toward left by two bits, and adjust exponent accordingly.
+  exponent += 2;
 
   if (addend && addend->isNonZero()) {
     // The intermediate result of the multiplication has "2 * precision" 
@@ -964,13 +968,13 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
     opStatus status;
     unsigned int extendedPrecision;
 
-    /* Normalize our MSB.  */
-    extendedPrecision = 2 * precision;
-    if (omsb != extendedPrecision) {
+    // Normalize our MSB to one below the top bit to allow for overflow.
+    extendedPrecision = 2 * precision + 1;
+    if (omsb != extendedPrecision - 1) {
       assert(extendedPrecision > omsb);
       APInt::tcShiftLeft(fullSignificand, newPartsCount,
-                         extendedPrecision - omsb);
-      exponent -= extendedPrecision - omsb;
+                         (extendedPrecision - 1) - omsb);
+      exponent -= (extendedPrecision - 1) - omsb;
     }
 
     /* Create new semantics.  */
@@ -987,6 +991,14 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
     status = extendedAddend.convert(extendedSemantics, rmTowardZero, &ignored);
     assert(status == opOK);
     (void)status;
+
+    // Shift the significand of the addend right by one bit. This guarantees
+    // that the high bit of the significand is zero (same as fullSignificand),
+    // so the addition will overflow (if it does overflow at all) into the top bit.
+    lost_fraction = extendedAddend.shiftSignificandRight(1);
+    assert(lost_fraction == lfExactlyZero &&
+           "Lost precision while shifting addend for fused-multiply-add.");
+
     lost_fraction = addOrSubtractSignificand(extendedAddend, false);
 
     /* Restore our state.  */
@@ -1002,7 +1014,7 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
   // having "precision" significant-bits. First, move the radix point from 
   // poision "2*precision - 1" to "precision - 1". The exponent need to be
   // adjusted by "2*precision - 1" - "precision - 1" = "precision".
-  exponent -= precision;
+  exponent -= precision + 1;
 
   // In case MSB resides at the left-hand side of radix point, shift the
   // mantissa right by some amount to make sure the MSB reside right before
