@@ -1491,7 +1491,7 @@ void BaseRelocRef::moveNext() {
   // Header->BlockSize is the size of the current block, including the
   // size of the header itself.
   uint32_t Size = sizeof(*Header) +
-      sizeof(coff_base_reloc_block_entry) * Index;
+      sizeof(coff_base_reloc_block_entry) * (Index + 1);
   if (Size == Header->BlockSize) {
     // .reloc contains a list of base relocation blocks. Each block
     // consists of the header followed by entries. The header contains

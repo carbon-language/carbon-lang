@@ -1086,7 +1086,7 @@ static StringRef getBaseRelocTypeName(uint8_t Type) {
   case COFF::IMAGE_REL_BASED_HIGHLOW: return "HIGHLOW";
   case COFF::IMAGE_REL_BASED_HIGHADJ: return "HIGHADJ";
   case COFF::IMAGE_REL_BASED_DIR64: return "DIR64";
-  default: return "unknown";
+  default: return "unknown (" + std::to_string(Type) + ")";
   }
 }
 
@@ -1098,9 +1098,6 @@ void COFFDumper::printCOFFBaseReloc() {
     if (error(I.getRVA(RVA)))
       continue;
     if (error(I.getType(Type)))
-      continue;
-    // IMAGE_REL_BASED_ABSOLUTE is a NOP entry.
-    if (Type == COFF::IMAGE_REL_BASED_ABSOLUTE)
       continue;
     DictScope Import(W, "Entry");
     W.printString("Type", getBaseRelocTypeName(Type));
