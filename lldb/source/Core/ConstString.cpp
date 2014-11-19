@@ -93,7 +93,7 @@ public:
         {
             Mutex::Locker locker (m_mutex);
             llvm::StringRef string_ref (cstr, cstr_len);
-            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (string_ref, (StringPoolValueType)NULL);
+            StringPoolEntryType& entry = *m_string_map.insert (std::make_pair (string_ref, (StringPoolValueType)NULL)).first;
             return entry.getKeyData();
         }
         return NULL;
@@ -105,7 +105,7 @@ public:
         if (string_ref.data())
         {
             Mutex::Locker locker (m_mutex);
-            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (string_ref, (StringPoolValueType)NULL);
+            StringPoolEntryType& entry = *m_string_map.insert (std::make_pair (string_ref, (StringPoolValueType)NULL)).first;
             return entry.getKeyData();
         }
         return NULL;
@@ -118,7 +118,7 @@ public:
         {
             Mutex::Locker locker (m_mutex);
             // Make string pool entry with the mangled counterpart already set
-            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (llvm::StringRef (demangled_cstr), mangled_ccstr);
+            StringPoolEntryType& entry = *m_string_map.insert (std::make_pair (llvm::StringRef (demangled_cstr), mangled_ccstr)).first;
 
             // Extract the const version of the demangled_cstr
             const char *demangled_ccstr = entry.getKeyData();
