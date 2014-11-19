@@ -53,6 +53,8 @@
 # CHECK-EL: ctc1    $6, $0              # encoding: [0xc0,0x54,0x3b,0x18]
 # CHECK-EL: mfc1    $6, $f8             # encoding: [0xc8,0x54,0x3b,0x20]
 # CHECK-EL: mtc1    $6, $f8             # encoding: [0xc8,0x54,0x3b,0x28]
+# CHECK-EL: mfhc1   $6, $f8             # encoding: [0xc8,0x54,0x3b,0x30]
+# CHECK-EL: mthc1   $6, $f8             # encoding: [0xc8,0x54,0x3b,0x38]
 # CHECK-EL: movz.s  $f4, $f6, $7        # encoding: [0xe6,0x54,0x78,0x20]
 # CHECK-EL: movz.d  $f4, $f6, $7        # encoding: [0xe6,0x54,0x78,0x21]
 # CHECK-EL: movn.s  $f4, $f6, $7        # encoding: [0xe6,0x54,0x38,0x20]
@@ -116,6 +118,8 @@
 # CHECK-EB: ctc1    $6, $0              # encoding: [0x54,0xc0,0x18,0x3b]
 # CHECK-EB: mfc1    $6, $f8             # encoding: [0x54,0xc8,0x20,0x3b]
 # CHECK-EB: mtc1    $6, $f8             # encoding: [0x54,0xc8,0x28,0x3b]
+# CHECK-EB: mfhc1   $6, $f8             # encoding: [0x54,0xc8,0x30,0x3b]
+# CHECK-EB: mthc1   $6, $f8             # encoding: [0x54,0xc8,0x38,0x3b]
 # CHECK-EB: movz.s  $f4, $f6, $7        # encoding: [0x54,0xe6,0x20,0x78]
 # CHECK-EB: movz.d  $f4, $f6, $7        # encoding: [0x54,0xe6,0x21,0x78]
 # CHECK-EB: movn.s  $f4, $f6, $7        # encoding: [0x54,0xe6,0x20,0x38]
@@ -175,6 +179,8 @@
     ctc1       $6, $0
     mfc1       $6, $f8
     mtc1       $6, $f8
+    mfhc1      $6, $f8
+    mthc1      $6, $f8
     movz.s     $f4, $f6, $7
     movz.d     $f4, $f6, $7
     movn.s     $f4, $f6, $7
