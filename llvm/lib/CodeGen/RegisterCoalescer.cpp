@@ -1105,6 +1105,11 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
       return false;
     }
   } else {
+    // When possible, let DstReg be the larger interval.
+    if (!CP.isPartial() && LIS->getInterval(CP.getSrcReg()).size() >
+                           LIS->getInterval(CP.getDstReg()).size())
+      CP.flip();
+
     DEBUG({
       dbgs() << "\tConsidering merging to "
              << TRI->getRegClassName(CP.getNewRC()) << " with ";
@@ -1117,11 +1122,6 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
         dbgs() << PrintReg(CP.getSrcReg(), TRI) << " in "
                << PrintReg(CP.getDstReg(), TRI, CP.getSrcIdx()) << '\n';
     });
-
-    // When possible, let DstReg be the larger interval.
-    if (!CP.isPartial() && LIS->getInterval(CP.getSrcReg()).size() >
-                           LIS->getInterval(CP.getDstReg()).size())
-      CP.flip();
   }
 
   // Okay, attempt to join these two intervals.  On failure, this returns false.
@@ -1186,7 +1186,9 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   TRI->UpdateRegAllocHint(CP.getSrcReg(), CP.getDstReg(), *MF);
 
   DEBUG({
-    dbgs() << "\tJoined. Result = ";
+    dbgs() << "\tSuccess: " << PrintReg(CP.getSrcReg(), TRI, CP.getSrcIdx())
+           << " -> " << PrintReg(CP.getDstReg(), TRI, CP.getDstIdx()) << '\n';
+    dbgs() << "\tResult = ";
     if (CP.isPhys())
       dbgs() << PrintReg(CP.getDstReg(), TRI);
     else
