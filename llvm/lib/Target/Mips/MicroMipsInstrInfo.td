@@ -31,6 +31,10 @@ def uimm4_andi : Operand<i32> {
   let EncoderMethod = "getUImm4AndValue";
 }
 
+def immSExtAddiur2 : ImmLeaf<i32, [{return Imm == 1 || Imm == -1 ||
+                                           ((Imm % 4 == 0) &&
+                                            Imm < 28 && Imm > 0);}]>;
+
 def immSExtAddius5 : ImmLeaf<i32, [{return Imm >= -8 && Imm <= 7;}]>;
 
 def immZExtAndi16 : ImmLeaf<i32,
@@ -528,6 +532,8 @@ let Predicates = [InMicroMips] in {
 // MicroMips arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
 
+def : MipsPat<(add GPRMM16:$src, immSExtAddiur2:$imm),
+              (ADDIUR2_MM GPRMM16:$src, immSExtAddiur2:$imm)>;
 def : MipsPat<(add GPR32:$src, immSExtAddius5:$imm),
               (ADDIUS5_MM GPR32:$src, immSExtAddius5:$imm)>;
 def : MipsPat<(add GPR32:$src, immSExt16:$imm),
