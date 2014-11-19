@@ -151,7 +151,7 @@ ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property)
 
 ObjCPropertyDecl *
 ObjCPropertyDecl::findPropertyDecl(const DeclContext *DC,
-                                   IdentifierInfo *propertyID) {
+                                   const IdentifierInfo *propertyID) {
   // If this context is a hidden protocol definition, don't find any
   // property.
   if (const ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(DC)) {
@@ -181,8 +181,8 @@ ObjCPropertyDecl::getDefaultSynthIvarName(ASTContext &Ctx) const {
 
 /// FindPropertyDeclaration - Finds declaration of the property given its name
 /// in 'PropertyId' and returns it. It returns 0, if not found.
-ObjCPropertyDecl *
-ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
+ObjCPropertyDecl *ObjCContainerDecl::FindPropertyDeclaration(
+    const IdentifierInfo *PropertyId) const {
   // Don't find properties within hidden protocol definitions.
   if (const ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(this)) {
     if (const ObjCProtocolDecl *Def = Proto->getDefinition())

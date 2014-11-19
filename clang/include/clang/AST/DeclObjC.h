@@ -591,7 +591,8 @@ public:
   bool HasUserDeclaredSetterMethod(const ObjCPropertyDecl *P) const;
   ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;
 
-  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
+  ObjCPropertyDecl *
+  FindPropertyDeclaration(const IdentifierInfo *PropertyId) const;
 
   typedef llvm::DenseMap<IdentifierInfo*, ObjCPropertyDecl*> PropertyMap;
   
@@ -2354,7 +2355,7 @@ public:
 
   /// Lookup a property by name in the specified DeclContext.
   static ObjCPropertyDecl *findPropertyDecl(const DeclContext *DC,
-                                            IdentifierInfo *propertyID);
+                                            const IdentifierInfo *propertyID);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == ObjCProperty; }
