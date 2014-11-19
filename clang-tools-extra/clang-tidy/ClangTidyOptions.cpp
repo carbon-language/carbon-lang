@@ -190,10 +190,10 @@ const ClangTidyOptions &FileOptionsProvider::getOptions(StringRef FileName) {
       while (Path != CurrentPath) {
         DEBUG(llvm::dbgs() << "Caching configuration for path " << Path
                            << ".\n");
-        CachedOptions.GetOrCreateValue(Path, *Result);
+        CachedOptions[Path] = *Result;
         Path = llvm::sys::path::parent_path(Path);
       }
-      return CachedOptions.GetOrCreateValue(Path, *Result).getValue();
+      return CachedOptions[Path] = *Result;
     }
   }
 }
