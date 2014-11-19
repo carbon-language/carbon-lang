@@ -789,3 +789,18 @@ class RDHWR_FM_MM : MMArch {
   let Inst{15-6}  = 0x1ac;
   let Inst{5-0}   = 0x3c;
 }
+
+class LWXS_FM_MM<bits<10> funct> {
+  bits<5> rd;
+  bits<5> base;
+  bits<5> index;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x0;
+  let Inst{25-21} = index;
+  let Inst{20-16} = base;
+  let Inst{15-11} = rd;
+  let Inst{10}    = 0;
+  let Inst{9-0}   = funct;
+}

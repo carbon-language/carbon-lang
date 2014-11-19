@@ -260,6 +260,12 @@ let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
            !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI, opstr>;
 }
 
+class LoadWordIndexedScaledMM<string opstr, RegisterOperand RO,
+                              InstrItinClass Itin = NoItinerary,
+                              SDPatternOperator OpNode = null_frag> :
+  InstSE<(outs RO:$rd), (ins PtrRC:$base, PtrRC:$index),
+         !strconcat(opstr, "\t$rd, ${index}(${base})"), [], Itin, FrmFI>;
+
 def ADDU16_MM : ArithRMM16<"addu16", GPRMM16Opnd, 1, II_ADDU, add>,
                 ARITH_FM_MM16<0>;
 def SUBU16_MM : ArithRMM16<"subu16", GPRMM16Opnd, 0, II_SUBU, sub>,
@@ -376,6 +382,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
     def SH_MM  : Store<"sh", GPR32Opnd>, MMRel, LW_FM_MM<0xe>;
     def SW_MM  : Store<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
   }
+
+  def LWXS_MM : LoadWordIndexedScaledMM<"lwxs", GPR32Opnd>, LWXS_FM_MM<0x118>;
 
   def LWU_MM : LoadMM<"lwu", GPR32Opnd, zextloadi32, II_LWU>, LL_FM_MM<0xe>;
 
