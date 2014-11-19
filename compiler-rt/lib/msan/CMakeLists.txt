@@ -22,8 +22,7 @@ set(MSAN_RUNTIME_LIBRARIES)
 
 # Static runtime library.
 add_custom_target(msan)
-set(arch "x86_64")
-if(CAN_TARGET_${arch})
+foreach(arch ${MSAN_SUPPORTED_ARCH})
   add_compiler_rt_runtime(clang_rt.msan-${arch} ${arch} STATIC
     SOURCES ${MSAN_RTL_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
@@ -36,7 +35,7 @@ if(CAN_TARGET_${arch})
     add_sanitizer_rt_symbols(clang_rt.msan-${arch} msan.syms.extra)
     add_dependencies(msan clang_rt.msan-${arch}-symbols)
   endif()
-endif()
+endforeach()
 
 add_compiler_rt_resource_file(msan_blacklist msan_blacklist.txt)
 add_dependencies(msan msan_blacklist)

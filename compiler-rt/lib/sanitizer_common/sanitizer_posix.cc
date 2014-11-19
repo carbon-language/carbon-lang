@@ -89,7 +89,7 @@ uptr GetMaxVirtualAddress() {
 # elif defined(__aarch64__)
   return (1ULL << 39) - 1;
 # elif defined(__mips64)
-  return (1ULL << 40) - 1;
+  return (1ULL << 40) - 1;  // 0x000000ffffffffffUL;
 # else
   return (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
 # endif

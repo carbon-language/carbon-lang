@@ -32,6 +32,14 @@ uptr StackTrace::GetPreviousInstructionPc(uptr pc) {
 #endif
 }
 
+uptr StackTrace::GetNextInstructionPc(uptr pc) {
+#if defined(__mips__)
+  return pc + 8;
+#else
+  return pc + 1;
+#endif
+}
+
 uptr StackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
 }

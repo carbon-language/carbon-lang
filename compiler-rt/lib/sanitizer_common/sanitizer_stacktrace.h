@@ -58,6 +58,7 @@ struct StackTrace {
 
   static uptr GetCurrentPc();
   static uptr GetPreviousInstructionPc(uptr pc);
+  static uptr GetNextInstructionPc(uptr pc);
   typedef bool (*SymbolizeCallback)(const void *pc, char *out_buffer,
                                     int out_size);
 };

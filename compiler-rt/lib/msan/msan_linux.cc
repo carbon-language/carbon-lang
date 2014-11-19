@@ -35,8 +35,14 @@
 
 namespace __msan {
 
+#if defined(__mips64)
+static const uptr kMemBeg     = 0xe000000000;
+static const uptr kMemEnd     = 0xffffffffff;
+#elif defined(__x86_64__)
 static const uptr kMemBeg     = 0x600000000000;
 static const uptr kMemEnd     = 0x7fffffffffff;
+#endif
+
 static const uptr kShadowBeg  = MEM_TO_SHADOW(kMemBeg);
 static const uptr kShadowEnd  = MEM_TO_SHADOW(kMemEnd);
 static const uptr kBad1Beg    = 0;

@@ -53,7 +53,7 @@ static void DescribeStackOrigin(const char *so, uptr pc) {
   if (pc) {
     // For some reason function address in LLVM IR is 1 less then the address
     // of the first instruction.
-    pc += 1;
+    pc = StackTrace::GetNextInstructionPc(pc);
     StackTrace(&pc, 1).Print();
   }
 }

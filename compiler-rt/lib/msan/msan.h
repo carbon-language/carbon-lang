@@ -25,12 +25,21 @@
 # define MSAN_REPLACE_OPERATORS_NEW_AND_DELETE 1
 #endif
 
+#if defined(__mips64)
+#define MEM_TO_SHADOW(mem)       (((uptr)mem) & ~0x4000000000ULL)
+#define SHADOW_TO_ORIGIN(shadow) (((uptr)shadow) + 0x2000000000ULL)
+#define MEM_TO_ORIGIN(mem)       (SHADOW_TO_ORIGIN(MEM_TO_SHADOW(mem)))
+#define MEM_IS_APP(mem)          ((uptr)mem >= 0xe000000000ULL)
+#define MEM_IS_SHADOW(mem) \
+  ((uptr)mem >= 0xa000000000ULL && (uptr)mem <= 0xc000000000ULL)
+#elif defined(__x86_64__)
 #define MEM_TO_SHADOW(mem)       (((uptr)mem) & ~0x400000000000ULL)
 #define SHADOW_TO_ORIGIN(shadow) (((uptr)shadow) + 0x200000000000ULL)
 #define MEM_TO_ORIGIN(mem)       (SHADOW_TO_ORIGIN(MEM_TO_SHADOW(mem)))
 #define MEM_IS_APP(mem)          ((uptr)mem >= 0x600000000000ULL)
 #define MEM_IS_SHADOW(mem) \
   ((uptr)mem >= 0x200000000000ULL && (uptr)mem <= 0x400000000000ULL)
+#endif
 
 // These constants must be kept in sync with the ones in MemorySanitizer.cc.
 const int kMsanParamTlsSize = 800;
