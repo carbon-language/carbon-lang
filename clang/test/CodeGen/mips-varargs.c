@@ -98,7 +98,7 @@ int test_i32_2args(char *fmt, ...) {
 // NEW:   [[ARG2:%.+]] = trunc i64 [[TMP4]] to i32
 //
 // ALL:   call void @llvm.va_end(i8* [[VA1]])
-// ALL:   [[ADD:%.+]] = add nsw i32 [[ARG1]], [[ARG2]]
+// ALL:   [[ADD:%.+]] = add nsw i32 [[ARG2]], [[ARG1]]
 // ALL:   ret i32 [[ADD]]
 // ALL: }
 

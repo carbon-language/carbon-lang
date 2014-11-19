@@ -20,7 +20,7 @@ unsigned short test__tzcnt_u16(unsigned short __X) {
 
 unsigned int test__andn_u32(unsigned int __X, unsigned int __Y) {
   // CHECK: [[DEST:%.*]] = xor i32 %{{.*}}, -1
-  // CHECK-NEXT: %{{.*}} = and i32 [[DEST]], %{{.*}}
+  // CHECK-NEXT: %{{.*}} = and i32 %{{.*}}, [[DEST]]
   return __andn_u32(__X, __Y);
 }
 
@@ -54,7 +54,7 @@ unsigned int test__tzcnt_u32(unsigned int __X) {
 
 unsigned long long test__andn_u64(unsigned long __X, unsigned long __Y) {
   // CHECK: [[DEST:%.*]] = xor i64 %{{.*}}, -1
-  // CHECK-NEXT: %{{.*}} = and i64 [[DEST]], %{{.*}}
+  // CHECK-NEXT: %{{.*}} = and i64 %{{.*}}, [[DEST]]
   return __andn_u64(__X, __Y);
 }
 
@@ -95,7 +95,7 @@ unsigned short test_tzcnt_u16(unsigned short __X) {
 
 unsigned int test_andn_u32(unsigned int __X, unsigned int __Y) {
   // CHECK: [[DEST:%.*]] = xor i32 %{{.*}}, -1
-  // CHECK-NEXT: %{{.*}} = and i32 [[DEST]], %{{.*}}
+  // CHECK-NEXT: %{{.*}} = and i32 %{{.*}}, [[DEST]]
   return _andn_u32(__X, __Y);
 }
 
@@ -130,7 +130,7 @@ unsigned int test_tzcnt_u32(unsigned int __X) {
 
 unsigned long long test_andn_u64(unsigned long __X, unsigned long __Y) {
   // CHECK: [[DEST:%.*]] = xor i64 %{{.*}}, -1
-  // CHECK-NEXT: %{{.*}} = and i64 [[DEST]], %{{.*}}
+  // CHECK-NEXT: %{{.*}} = and i64 %{{.*}}, [[DEST]]
   return _andn_u64(__X, __Y);
 }
 
