@@ -523,7 +523,7 @@ void ModuleMapChecker::findUnaccountedForHeaders() {
                                                 E = FileSystemHeaders.end();
        I != E; ++I) {
     // Look for header in module map.
-    if (ModuleMapHeadersSet.insert(*I)) {
+    if (ModuleMapHeadersSet.insert(*I).second) {
       UnaccountedForHeaders.push_back(*I);
       llvm::errs() << "warning: " << ModuleMapPath
                    << " does not account for file: " << *I << "\n";
