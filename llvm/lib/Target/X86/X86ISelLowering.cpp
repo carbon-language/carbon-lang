@@ -5740,76 +5740,109 @@ static SDValue LowerBuildVectorv8i16(SDValue Op, unsigned NonZeros,
 }
 
 /// LowerBuildVectorv4x32 - Custom lower build_vector of v4i32 or v4f32.
-static SDValue LowerBuildVectorv4x32(SDValue Op, unsigned NumElems,
-                                     unsigned NonZeros, unsigned NumNonZero,
-                                     unsigned NumZero, SelectionDAG &DAG,
+static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
                                      const X86Subtarget *Subtarget,
                                      const TargetLowering &TLI) {
-  // We know there's at least one non-zero element
-  unsigned FirstNonZeroIdx = 0;
-  SDValue FirstNonZero = Op->getOperand(FirstNonZeroIdx);
-  while (FirstNonZero.getOpcode() == ISD::UNDEF ||
-         X86::isZeroNode(FirstNonZero)) {
-    ++FirstNonZeroIdx;
-    FirstNonZero = Op->getOperand(FirstNonZeroIdx);
+  // Find all zeroable elements.
+  bool Zeroable[4];
+  for (int i=0; i < 4; ++i) {
+    SDValue Elt = Op->getOperand(i);
+    Zeroable[i] = (Elt.getOpcode() == ISD::UNDEF || X86::isZeroNode(Elt));
   }
+  assert(std::count_if(&Zeroable[0], &Zeroable[4],
+                       [](bool M) { return !M; }) > 1 &&
+         "We expect at least two non-zero elements!");
 
-  if (FirstNonZero.getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
-      !isa<ConstantSDNode>(FirstNonZero.getOperand(1)))
-    return SDValue();
-
-  SDValue V = FirstNonZero.getOperand(0);
-  MVT VVT = V.getSimpleValueType();
-  if (!Subtarget->hasSSE41() || (VVT != MVT::v4f32 && VVT != MVT::v4i32))
-    return SDValue();
-
-  unsigned FirstNonZeroDst =
-      cast<ConstantSDNode>(FirstNonZero.getOperand(1))->getZExtValue();
-  unsigned CorrectIdx = FirstNonZeroDst == FirstNonZeroIdx;
-  unsigned IncorrectIdx = CorrectIdx ? -1U : FirstNonZeroIdx;
-  unsigned IncorrectDst = CorrectIdx ? -1U : FirstNonZeroDst;
-
-  for (unsigned Idx = FirstNonZeroIdx + 1; Idx < NumElems; ++Idx) {
-    SDValue Elem = Op.getOperand(Idx);
-    if (Elem.getOpcode() == ISD::UNDEF || X86::isZeroNode(Elem))
+  // We only know how to deal with build_vector nodes where elements are either
+  // zeroable or extract_vector_elt with constant index.
+  SDValue FirstNonZero;
+  for (int i=0; i < 4; ++i) {
+    if (Zeroable[i])
       continue;
-
-    // TODO: What else can be here? Deal with it.
-    if (Elem.getOpcode() != ISD::EXTRACT_VECTOR_ELT)
+    SDValue Elt = Op->getOperand(i);
+    if (Elt.getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
+        !isa<ConstantSDNode>(Elt.getOperand(1)))
       return SDValue();
-
-    // TODO: Some optimizations are still possible here
-    // ex: Getting one element from a vector, and the rest from another.
-    if (Elem.getOperand(0) != V)
+    // Make sure that this node is extracting from a 128-bit vector.
+    MVT VT = Elt.getOperand(0).getSimpleValueType();
+    if (!VT.is128BitVector())
       return SDValue();
-
-    unsigned Dst = cast<ConstantSDNode>(Elem.getOperand(1))->getZExtValue();
-    if (Dst == Idx)
-      ++CorrectIdx;
-    else if (IncorrectIdx == -1U) {
-      IncorrectIdx = Idx;
-      IncorrectDst = Dst;
-    } else
-      // There was already one element with an incorrect index.
-      // We can't optimize this case to an insertps.
-      return SDValue();
+    if (!FirstNonZero.getNode())
+      FirstNonZero = Elt;
   }
 
-  if (NumNonZero == CorrectIdx || NumNonZero == CorrectIdx + 1) {
-    SDLoc dl(Op);
-    EVT VT = Op.getSimpleValueType();
-    unsigned ElementMoveMask = 0;
-    if (IncorrectIdx == -1U)
-      ElementMoveMask = FirstNonZeroIdx << 6 | FirstNonZeroIdx << 4;
-    else
-      ElementMoveMask = IncorrectDst << 6 | IncorrectIdx << 4;
+  assert(FirstNonZero.getNode() && "Unexpected build vector of all zeros!");
+  SDValue V1 = FirstNonZero.getOperand(0);
+  MVT VT = V1.getSimpleValueType();
 
-    SDValue InsertpsMask =
-        DAG.getIntPtrConstant(ElementMoveMask | (~NonZeros & 0xf));
-    return DAG.getNode(X86ISD::INSERTPS, dl, VT, V, V, InsertpsMask);
+  // See if this build_vector can be lowered as a blend with zero.
+  SDValue Elt;
+  unsigned EltMaskIdx, EltIdx;
+  int Mask[4];
+  for (EltIdx = 0; EltIdx < 4; ++EltIdx) {
+    if (Zeroable[EltIdx]) {
+      // The zero vector will be on the right hand side.
+      Mask[EltIdx] = EltIdx+4;
+      continue;
+    }
+
+    Elt = Op->getOperand(EltIdx);
+    // By construction, Elt is a EXTRACT_VECTOR_ELT with constant index.
+    EltMaskIdx = cast<ConstantSDNode>(Elt.getOperand(1))->getZExtValue();
+    if (Elt.getOperand(0) != V1 || EltMaskIdx != EltIdx)
+      break;
+    Mask[EltIdx] = EltIdx;
   }
 
-  return SDValue();
+  if (EltIdx == 4) {
+    // Let the shuffle legalizer deal with blend operations.
+    SDValue VZero = getZeroVector(VT, Subtarget, DAG, SDLoc(Op));
+    if (V1.getSimpleValueType() != VT)
+      V1 = DAG.getNode(ISD::BITCAST, SDLoc(V1), VT, V1);
+    return DAG.getVectorShuffle(VT, SDLoc(V1), V1, VZero, &Mask[0]);
+  }
+
+  // See if we can lower this build_vector to a INSERTPS.
+  if (!Subtarget->hasSSE41())
+    return SDValue();
+
+  SDValue V2 = Elt.getOperand(0);
+  if (Elt == FirstNonZero)
+    V1 = SDValue();
+
+  bool CanFold = true;
+  for (unsigned i = EltIdx + 1; i < 4 && CanFold; ++i) {
+    if (Zeroable[i])
+      continue;
+    
+    SDValue Current = Op->getOperand(i);
+    SDValue SrcVector = Current->getOperand(0);
+    if (!V1.getNode())
+      V1 = SrcVector;
+    CanFold = SrcVector == V1 &&
+      cast<ConstantSDNode>(Current.getOperand(1))->getZExtValue() == i;
+  }
+
+  if (!CanFold)
+    return SDValue();
+
+  assert(V1.getNode() && "Expected at least two non-zero elements!");
+  if (V1.getSimpleValueType() != MVT::v4f32)
+    V1 = DAG.getNode(ISD::BITCAST, SDLoc(V1), MVT::v4f32, V1);
+  if (V2.getSimpleValueType() != MVT::v4f32)
+    V2 = DAG.getNode(ISD::BITCAST, SDLoc(V2), MVT::v4f32, V2);
+
+  // Ok, we can emit an INSERTPS instruction.
+  unsigned ZMask = 0;
+  for (int i = 0; i < 4; ++i)
+    if (Zeroable[i])
+      ZMask |= 1 << i;
+
+  unsigned InsertPSMask = EltMaskIdx << 6 | EltIdx << 4 | ZMask;
+  assert((InsertPSMask & ~0xFFu) == 0 && "Invalid mask!");
+  SDValue Result = DAG.getNode(X86ISD::INSERTPS, SDLoc(Op), MVT::v4f32, V1, V2,
+                               DAG.getIntPtrConstant(InsertPSMask));
+  return DAG.getNode(ISD::BITCAST, SDLoc(Op), VT, Result);
 }
 
 /// getVShift - Return a vector logical shift node.
@@ -6997,8 +7030,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   // If element VT is == 32 bits and has 4 elems, try to generate an INSERTPS
   if (EVTBits == 32 && NumElems == 4) {
-    SDValue V = LowerBuildVectorv4x32(Op, NumElems, NonZeros, NumNonZero,
-                                      NumZero, DAG, Subtarget, *this);
+    SDValue V = LowerBuildVectorv4x32(Op, DAG, Subtarget, *this);
     if (V.getNode())
       return V;
   }

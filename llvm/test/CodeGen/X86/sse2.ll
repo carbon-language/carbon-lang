@@ -302,17 +302,8 @@ define <2 x i64> @test_insert_64_zext(<2 x i64> %i) {
 define <4 x i32> @PR19721(<4 x i32> %i) {
 ; CHECK-LABEL: PR19721:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; CHECK-NEXT:    movd %xmm1, %eax
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[3,1,2,3]
-; CHECK-NEXT:    movd %xmm1, %ecx
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; CHECK-NEXT:    pxor %xmm0, %xmm0
+; CHECK-NEXT:    xorps %xmm1, %xmm1
 ; CHECK-NEXT:    movss %xmm1, %xmm0
-; CHECK-NEXT:    movd %ecx, %xmm1
-; CHECK-NEXT:    movd %eax, %xmm2
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1]
-; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,0],xmm2[0,1]
 ; CHECK-NEXT:    retl
   %bc = bitcast <4 x i32> %i to i128
   %insert = and i128 %bc, -4294967296

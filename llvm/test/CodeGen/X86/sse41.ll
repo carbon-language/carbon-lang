@@ -423,16 +423,18 @@ define <4 x i32> @insertps_from_load_ins_elt_undef_i32(<4 x i32> %a, i32* %b) {
   ret <4 x i32> %result
 }
 
-;;;;;; Shuffles optimizable with a single insertps instruction
+;;;;;; Shuffles optimizable with a single insertps or blend instruction
 define <4 x float> @shuf_XYZ0(<4 x float> %x, <4 x float> %a) {
 ; X32-LABEL: shuf_XYZ0:
 ; X32:       ## BB#0:
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],zero
+; X32-NEXT:    xorps %xmm1, %xmm1
+; X32-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[3]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: shuf_XYZ0:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],zero
+; X64-NEXT:    xorps %xmm1, %xmm1
+; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[3]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x float> %x, i32 0
   %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
@@ -447,12 +449,12 @@ define <4 x float> @shuf_XYZ0(<4 x float> %x, <4 x float> %a) {
 define <4 x float> @shuf_XY00(<4 x float> %x, <4 x float> %a) {
 ; X32-LABEL: shuf_XY00:
 ; X32:       ## BB#0:
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],zero,zero
+; X32-NEXT:    movq %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: shuf_XY00:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],zero,zero
+; X64-NEXT:    movq %xmm0, %xmm0
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x float> %x, i32 0
   %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
@@ -595,12 +597,14 @@ define <4 x float> @shuf_X0YC(<4 x float> %x, <4 x float> %a) {
 define <4 x i32> @i32_shuf_XYZ0(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_XYZ0:
 ; X32:       ## BB#0:
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],zero
+; X32-NEXT:    pxor %xmm1, %xmm1
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm1[6,7]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_XYZ0:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],zero
+; X64-NEXT:    pxor %xmm1, %xmm1
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm1[6,7]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x i32> %x, i32 0
   %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
@@ -615,12 +619,12 @@ define <4 x i32> @i32_shuf_XYZ0(<4 x i32> %x, <4 x i32> %a) {
 define <4 x i32> @i32_shuf_XY00(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_XY00:
 ; X32:       ## BB#0:
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],zero,zero
+; X32-NEXT:    movq %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_XY00:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],zero,zero
+; X64-NEXT:    movq %xmm0, %xmm0
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x i32> %x, i32 0
   %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
@@ -764,15 +768,15 @@ define <4 x i32> @i32_shuf_X0YC(<4 x i32> %x, <4 x i32> %a) {
 define < 4 x float> @test_insertps_no_undef(<4 x float> %x) {
 ; X32-LABEL: test_insertps_no_undef:
 ; X32:       ## BB#0:
-; X32-NEXT:    movaps %xmm0, %xmm1
-; X32-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],zero
+; X32-NEXT:    xorps %xmm1, %xmm1
+; X32-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0,1,2],xmm1[3]
 ; X32-NEXT:    maxps %xmm1, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_insertps_no_undef:
 ; X64:       ## BB#0:
-; X64-NEXT:    movaps %xmm0, %xmm1
-; X64-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],zero
+; X64-NEXT:    xorps %xmm1, %xmm1
+; X64-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0,1,2],xmm1[3]
 ; X64-NEXT:    maxps %xmm1, %xmm0
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x float> %x, i32 0
@@ -1021,4 +1025,124 @@ define void @insertps_pr20411(i32* noalias nocapture %RET) #1 {
   %ptrcast = bitcast i32* %RET to <4 x i32>*
   store <4 x i32> %shuffle117, <4 x i32>* %ptrcast, align 4
   ret void
+}
+
+define <4 x float> @insertps_4(<4 x float> %A, <4 x float> %B) {
+; X32-LABEL: insertps_4:
+; X32:       ## BB#0:
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm1[2],zero
+; X32-NEXT:    retl
+;
+; X64-LABEL: insertps_4:
+; X64:       ## BB#0:
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm1[2],zero
+; X64-NEXT:    retq
+entry:
+  %vecext = extractelement <4 x float> %A, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecinit1 = insertelement <4 x float> %vecinit, float 0.000000e+00, i32 1
+  %vecext2 = extractelement <4 x float> %B, i32 2
+  %vecinit3 = insertelement <4 x float> %vecinit1, float %vecext2, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit3, float 0.000000e+00, i32 3
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @insertps_5(<4 x float> %A, <4 x float> %B) {
+; X32-LABEL: insertps_5:
+; X32:       ## BB#0:
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],xmm1[1],zero,zero
+; X32-NEXT:    retl
+;
+; X64-LABEL: insertps_5:
+; X64:       ## BB#0:
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],xmm1[1],zero,zero
+; X64-NEXT:    retq
+entry:
+  %vecext = extractelement <4 x float> %A, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecext1 = extractelement <4 x float> %B, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 1
+  %vecinit3 = insertelement <4 x float> %vecinit2, float 0.000000e+00, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit3, float 0.000000e+00, i32 3
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @insertps_6(<4 x float> %A, <4 x float> %B) {
+; X32-LABEL: insertps_6:
+; X32:       ## BB#0:
+; X32-NEXT:    insertps {{.*#+}} xmm0 = zero,xmm0[1],xmm1[2],zero
+; X32-NEXT:    retl
+;
+; X64-LABEL: insertps_6:
+; X64:       ## BB#0:
+; X64-NEXT:    insertps {{.*#+}} xmm0 = zero,xmm0[1],xmm1[2],zero
+; X64-NEXT:    retq
+entry:
+  %vecext = extractelement <4 x float> %A, i32 1
+  %vecinit = insertelement <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, float %vecext, i32 1
+  %vecext1 = extractelement <4 x float> %B, i32 2
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 2
+  %vecinit3 = insertelement <4 x float> %vecinit2, float 0.000000e+00, i32 3
+  ret <4 x float> %vecinit3
+}
+
+define <4 x float> @insertps_7(<4 x float> %A, <4 x float> %B) {
+; X32-LABEL: insertps_7:
+; X32:       ## BB#0:
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm1[1],zero
+; X32-NEXT:    retl
+;
+; X64-LABEL: insertps_7:
+; X64:       ## BB#0:
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm1[1],zero
+; X64-NEXT:    retq
+entry:
+  %vecext = extractelement <4 x float> %A, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecinit1 = insertelement <4 x float> %vecinit, float 0.000000e+00, i32 1
+  %vecext2 = extractelement <4 x float> %B, i32 1
+  %vecinit3 = insertelement <4 x float> %vecinit1, float %vecext2, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit3, float 0.000000e+00, i32 3
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @insertps_8(<4 x float> %A, <4 x float> %B) {
+; X32-LABEL: insertps_8:
+; X32:       ## BB#0:
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],xmm1[0],zero,zero
+; X32-NEXT:    retl
+;
+; X64-LABEL: insertps_8:
+; X64:       ## BB#0:
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],xmm1[0],zero,zero
+; X64-NEXT:    retq
+entry:
+  %vecext = extractelement <4 x float> %A, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecext1 = extractelement <4 x float> %B, i32 0
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 1
+  %vecinit3 = insertelement <4 x float> %vecinit2, float 0.000000e+00, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit3, float 0.000000e+00, i32 3
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @insertps_9(<4 x float> %A, <4 x float> %B) {
+; X32-LABEL: insertps_9:
+; X32:       ## BB#0:
+; X32-NEXT:    insertps {{.*#+}} xmm1 = zero,xmm0[0],xmm1[2],zero
+; X32-NEXT:    movaps %xmm1, %xmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: insertps_9:
+; X64:       ## BB#0:
+; X64-NEXT:    insertps {{.*#+}} xmm1 = zero,xmm0[0],xmm1[2],zero
+; X64-NEXT:    movaps %xmm1, %xmm0
+; X64-NEXT:    retq
+entry:
+  %vecext = extractelement <4 x float> %A, i32 0
+  %vecinit = insertelement <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, float %vecext, i32 1
+  %vecext1 = extractelement <4 x float> %B, i32 2
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 2
+  %vecinit3 = insertelement <4 x float> %vecinit2, float 0.000000e+00, i32 3
+  ret <4 x float> %vecinit3
 }
