@@ -46,6 +46,7 @@ public:
   // Only implemented for PE/COFF.
   virtual void printCOFFImports() { }
   virtual void printCOFFDirectives() { }
+  virtual void printCOFFBaseReloc() { }
 
 protected:
   StreamWriter& W;

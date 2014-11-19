@@ -598,6 +598,23 @@ std::error_code COFFObjectFile::initExportTablePtr() {
   return object_error::success;
 }
 
+std::error_code COFFObjectFile::initBaseRelocPtr() {
+  const data_directory *DataEntry;
+  if (getDataDirectory(COFF::BASE_RELOCATION_TABLE, DataEntry))
+    return object_error::success;
+  if (DataEntry->RelativeVirtualAddress == 0)
+    return object_error::success;
+
+  uintptr_t IntPtr = 0;
+  if (std::error_code EC = getRvaPtr(DataEntry->RelativeVirtualAddress, IntPtr))
+    return EC;
+  BaseRelocHeader = reinterpret_cast<const coff_base_reloc_block_header *>(
+      IntPtr);
+  BaseRelocEnd = reinterpret_cast<coff_base_reloc_block_header *>(
+      IntPtr + DataEntry->Size);
+  return object_error::success;
+}
+
 COFFObjectFile::COFFObjectFile(MemoryBufferRef Object, std::error_code &EC)
     : ObjectFile(Binary::ID_COFF, Object), COFFHeader(nullptr),
       COFFBigObjHeader(nullptr), PE32Header(nullptr), PE32PlusHeader(nullptr),
@@ -605,7 +622,8 @@ COFFObjectFile::COFFObjectFile(MemoryBufferRef Object, std::error_code &EC)
       SymbolTable32(nullptr), StringTable(nullptr), StringTableSize(0),
       ImportDirectory(nullptr), NumberOfImportDirectory(0),
       DelayImportDirectory(nullptr), NumberOfDelayImportDirectory(0),
-      ExportDirectory(nullptr) {
+      ExportDirectory(nullptr), BaseRelocHeader(nullptr),
+      BaseRelocEnd(nullptr) {
   // Check that we at least have enough room for a header.
   if (!checkSize(Data, EC, sizeof(coff_file_header)))
     return;
@@ -717,6 +735,10 @@ COFFObjectFile::COFFObjectFile(MemoryBufferRef Object, std::error_code &EC)
   if ((EC = initExportTablePtr()))
     return;
 
+  // Initialize the pointer to the base relocation table.
+  if ((EC = initBaseRelocPtr()))
+    return;
+
   EC = object_error::success;
 }
 
@@ -783,6 +805,14 @@ section_iterator COFFObjectFile::section_end() const {
   return section_iterator(SectionRef(Ret, this));
 }
 
+base_reloc_iterator COFFObjectFile::base_reloc_begin() const {
+  return base_reloc_iterator(BaseRelocRef(BaseRelocHeader, this));
+}
+
+base_reloc_iterator COFFObjectFile::base_reloc_end() const {
+  return base_reloc_iterator(BaseRelocRef(BaseRelocEnd, this));
+}
+
 uint8_t COFFObjectFile::getBytesInAddress() const {
   return getArch() == Triple::x86_64 ? 8 : 4;
 }
@@ -827,6 +857,10 @@ COFFObjectFile::delay_import_directories() const {
 iterator_range<export_directory_iterator>
 COFFObjectFile::export_directories() const {
   return make_range(export_directory_begin(), export_directory_end());
+}
+
+iterator_range<base_reloc_iterator> COFFObjectFile::base_relocs() const {
+  return make_range(base_reloc_begin(), base_reloc_end());
 }
 
 std::error_code COFFObjectFile::getPE32Header(const pe32_header *&Res) const {
@@ -1447,4 +1481,38 @@ ObjectFile::createCOFFObjectFile(MemoryBufferRef Object) {
   if (EC)
     return EC;
   return std::move(Ret);
+}
+
+bool BaseRelocRef::operator==(const BaseRelocRef &Other) const {
+  return Header == Other.Header && Index == Other.Index;
+}
+
+void BaseRelocRef::moveNext() {
+  // Header->BlockSize is the size of the current block, including the
+  // size of the header itself.
+  uint32_t Size = sizeof(*Header) +
+      sizeof(coff_base_reloc_block_entry) * Index;
+  if (Size == Header->BlockSize) {
+    // .reloc contains a list of base relocation blocks. Each block
+    // consists of the header followed by entries. The header contains
+    // how many entories will follow. When we reach the end of the
+    // current block, proceed to the next block.
+    Header = reinterpret_cast<const coff_base_reloc_block_header *>(
+        reinterpret_cast<const uint8_t *>(Header) + Size);
+    Index = 0;
+  } else {
+    ++Index;
+  }
+}
+
+std::error_code BaseRelocRef::getType(uint8_t &Type) const {
+  auto *Entry = reinterpret_cast<const coff_base_reloc_block_entry *>(Header + 1);
+  Type = Entry[Index].getType();
+  return object_error::success;
+}
+
+std::error_code BaseRelocRef::getRVA(uint32_t &Result) const {
+  auto *Entry = reinterpret_cast<const coff_base_reloc_block_entry *>(Header + 1);
+  Result = Header->PageRVA + Entry[Index].getOffset();
+  return object_error::success;
 }
