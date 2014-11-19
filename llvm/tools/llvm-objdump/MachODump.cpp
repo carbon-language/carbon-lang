@@ -1814,6 +1814,8 @@ static void DisassembleInputMachO2(StringRef Filename,
     SymbolizerInfo.method = nullptr;
     SymbolizerInfo.demangled_name = nullptr;
     SymbolizerInfo.bindtable = nullptr;
+    SymbolizerInfo.adrp_addr = 0;
+    SymbolizerInfo.adrp_inst = 0;
     // Same for the ThumbSymbolizer
     ThumbSymbolizerInfo.verbose = true;
     ThumbSymbolizerInfo.O = MachOOF;
@@ -1825,6 +1827,8 @@ static void DisassembleInputMachO2(StringRef Filename,
     ThumbSymbolizerInfo.method = nullptr;
     ThumbSymbolizerInfo.demangled_name = nullptr;
     ThumbSymbolizerInfo.bindtable = nullptr;
+    ThumbSymbolizerInfo.adrp_addr = 0;
+    ThumbSymbolizerInfo.adrp_inst = 0;
 
     // Disassemble symbol by symbol.
     for (unsigned SymIdx = 0; SymIdx != Symbols.size(); SymIdx++) {
