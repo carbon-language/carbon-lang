@@ -26,6 +26,7 @@ SRCS="
 	../../sanitizer_common/sanitizer_suppressions.cc
 	../../sanitizer_common/sanitizer_thread_registry.cc
 	../../sanitizer_common/sanitizer_stackdepot.cc
+	../../sanitizer_common/sanitizer_stacktrace.cc
 "
 
 if [ "`uname -a | grep Linux`" != "" ]; then
