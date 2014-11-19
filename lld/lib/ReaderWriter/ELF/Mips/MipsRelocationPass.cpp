@@ -522,7 +522,7 @@ template <typename ELFT> void RelocationPass<ELFT>::handle26(Reference &ref) {
     ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
 
     if (requireLA25Stub(ref.target()))
-      const_cast<Reference &>(ref).setTarget(getLA25Entry(ref.target()));
+      ref.setTarget(getLA25Entry(ref.target()));
   }
 
   const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target());
