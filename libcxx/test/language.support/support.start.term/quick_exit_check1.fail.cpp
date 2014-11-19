@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// XFAIL: apple-darwin
 
-// test quick_exit and at_quick_exit
+// test that referencing at_quick_exit when _LIBCPP_HAS_QUICK_EXIT is not defined
+// results in a compile error.
 
 #include <cstdlib>
 
@@ -17,8 +17,9 @@ void f() {}
 
 int main()
 {
-#ifdef _LIBCPP_HAS_QUICK_EXIT
+#ifndef _LIBCPP_HAS_QUICK_EXIT
     std::at_quick_exit(f);
-    std::quick_exit(0);
+#else
+#error
 #endif
 }
