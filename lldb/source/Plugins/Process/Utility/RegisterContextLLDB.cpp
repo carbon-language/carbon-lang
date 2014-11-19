@@ -1267,12 +1267,30 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                 // Throw away the full unwindplan; install the arch default unwindplan
                 if (ForceSwitchToFallbackUnwindPlan())
                 {
-                    // Now re-fetch the pc value we're searching for
-                    RegisterNumber arch_default_pc_reg (m_thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+                    // Update for the possibly new unwind plan
+                    unwindplan_registerkind = m_full_unwind_plan_sp->GetRegisterKind ();
                     UnwindPlan::RowSP active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
-                    if (arch_default_pc_reg.GetAsKind (unwindplan_registerkind) != LLDB_INVALID_REGNUM
-                        && active_row
-                        && active_row->GetRegisterInfo (arch_default_pc_reg.GetAsKind (unwindplan_registerkind), unwindplan_regloc))
+
+                    // Sanity check: Verify that we can fetch a pc value and CFA value with this unwind plan
+
+                    RegisterNumber arch_default_pc_reg (m_thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+                    bool can_fetch_pc_value = false;
+                    bool can_fetch_cfa = false;
+                    addr_t cfa_value;
+                    if (active_row)
+                    {
+                        if (arch_default_pc_reg.GetAsKind (unwindplan_registerkind) != LLDB_INVALID_REGNUM
+                            && active_row->GetRegisterInfo (arch_default_pc_reg.GetAsKind (unwindplan_registerkind), unwindplan_regloc))
+                        {
+                            can_fetch_pc_value = true;
+                        }
+                        if (ReadCFAValueForRow (unwindplan_registerkind, active_row, cfa_value))
+                        {
+                            can_fetch_cfa = true;
+                        }
+                    }
+
+                    if (can_fetch_pc_value && can_fetch_cfa)
                     {
                         have_unwindplan_regloc = true;
                     }
@@ -1280,6 +1298,11 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                     {
                         have_unwindplan_regloc = false;
                     }
+                }
+                else
+                {
+                    // We were unable to fall back to another unwind plan
+                    have_unwindplan_regloc = false;
                 }
             }
         }
