@@ -81,7 +81,7 @@ AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
     break;
 
   case ToolChain::CST_Libstdcxx:
-    addSystemInclude(DriverArgs, CC1Args, SysRoot + "/usr/incldue/c++");
+    addSystemInclude(DriverArgs, CC1Args, SysRoot + "/usr/include/c++");
     addSystemInclude(DriverArgs, CC1Args,
                      SysRoot + "/usr/include/c++/" + Triple.str());
     addSystemInclude(DriverArgs, CC1Args,
