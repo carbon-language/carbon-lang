@@ -406,6 +406,8 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
   for (auto &slice : slices()) {
     bool isFirstSection = true;
     for (auto section : slice->sections()) {
+      // Align fileoffset to the alignment of the section.
+      fileOffset = llvm::RoundUpToAlignment(fileOffset, section->align2());
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
       // to a page boundary
       if (isFirstSection &&
@@ -430,8 +432,7 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
         fileOffset =
             llvm::RoundUpToAlignment(fileOffset, this->_context.getPageSize());
         isDataPageAlignedForNMagic = true;
-      } else
-        fileOffset = llvm::RoundUpToAlignment(fileOffset, section->align2());
+      }
       if (isFirstSection) {
         slice->setFileOffset(fileOffset);
         isFirstSection = false;
@@ -467,6 +468,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
   SegmentSlice<ELFT> *slice = nullptr;
   uint64_t tlsStartAddr = 0;
   bool alignSegments = this->_context.alignSegments();
+  StringRef prevOutputSectionName;
 
   for (auto si = _sections.begin(); si != _sections.end(); ++si) {
     // If this is first section in the segment, page align the section start
@@ -522,9 +524,18 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         isDataPageAlignedForNMagic = true;
       }
       uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->align2());
+      Section<ELFT> *sec = dyn_cast<Section<ELFT>>(*si);
+      StringRef curOutputSectionName =
+          sec ? sec->outputSectionName() : (*si)->name();
+      bool autoCreateSlice = true;
+      if (curOutputSectionName == prevOutputSectionName)
+        autoCreateSlice = false;
       // If the newAddress computed is more than a page away, let's create
       // a separate segment, so that memory is not used up while running.
-      if (((newAddr - curAddr) > this->_context.getPageSize()) &&
+      // Dont create a slice, if the new section falls in the same output
+      // section as the previous section.
+      if (autoCreateSlice &&
+          ((newAddr - curAddr) > this->_context.getPageSize()) &&
           (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
            _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {
         auto sliceIter =
@@ -577,6 +588,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         else
           curSliceSize = newAddr - curSliceAddress;
       }
+      prevOutputSectionName = curOutputSectionName;
     }
     currSection++;
   }

@@ -7,7 +7,7 @@
 # RUN: --no-align-segments --rosegment --noinhibit-exec
 # RUN: llvm-readobj -program-headers %t.exe | FileCheck %s
 #
-#CHECK:    Offset: 0x115C
+#CHECK:    Offset: 0x15C
 #CHECK:    VirtualAddress: 0x40015C
 #CHECK:    PhysicalAddress: 0x40015C
 #

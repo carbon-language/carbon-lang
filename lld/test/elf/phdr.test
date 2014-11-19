@@ -59,7 +59,7 @@ I386-NEXT:     Alignment: 4096
 I386-NEXT:   }
 I386-NEXT:   ProgramHeader {
 I386-NEXT:     Type: PT_LOAD (0x1)
-I386-NEXT:     Offset: 0x2000
+I386-NEXT:     Offset: 0x4000
 I386-NEXT:     VirtualAddress: 0x4000
 I386-NEXT:     PhysicalAddress: 0x4000
 I386-NEXT:     FileSize: 4
