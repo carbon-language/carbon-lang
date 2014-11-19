@@ -502,6 +502,10 @@ public:
     return composeSubRegIndicesImpl(a, b);
   }
 
+  /// Debugging helper: dump register in human readable form to dbgs() stream.
+  static void dumpReg(unsigned Reg, unsigned SubRegIndex = 0,
+                      const TargetRegisterInfo* TRI = nullptr);
+
 protected:
   /// Overridden by TableGen in targets that have sub-registers.
   virtual unsigned composeSubRegIndicesImpl(unsigned, unsigned) const {

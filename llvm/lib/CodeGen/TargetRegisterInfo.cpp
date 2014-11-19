@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -293,3 +294,11 @@ TargetRegisterInfo::getRegAllocationHints(unsigned VirtReg,
   // All clear, tell the register allocator to prefer this register.
   Hints.push_back(Phys);
 }
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+void
+TargetRegisterInfo::dumpReg(unsigned Reg, unsigned SubRegIndex,
+                            const TargetRegisterInfo *TRI) {
+  dbgs() << PrintReg(Reg, TRI, SubRegIndex) << "\n";
+}
+#endif
