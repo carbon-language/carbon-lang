@@ -3275,15 +3275,29 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   if (isa<FunctionDecl>(VD->getDeclContext()))
     return;
   VD = cast<ValueDecl>(VD->getCanonicalDecl());
+  llvm::DIDescriptor DContext =
+      getContextDescriptor(dyn_cast<Decl>(VD->getDeclContext()));
+  auto *VarD = cast<VarDecl>(VD);
+
+  // If this is only a declaration, it might be the declaration of a static
+  // variable with an initializer - we still want to ensure that's emitted, but
+  // merely calling getContextDescriptor above has already ensured that. Since
+  // there's no definition to emit, there's no further work to do.
+  if (!VarD->hasDefinition()) {
+    // Ensure that the type is retained even though it's otherwise unreferenced.
+    RetainedTypes.push_back(
+        CGM.getContext()
+            .getRecordType(cast<RecordDecl>(VD->getDeclContext()))
+            .getAsOpaquePtr());
+    return;
+  }
+
   auto pair = DeclCache.insert(std::make_pair(VD, llvm::WeakVH()));
   if (!pair.second)
     return;
-  llvm::DIDescriptor DContext =
-      getContextDescriptor(dyn_cast<Decl>(VD->getDeclContext()));
   llvm::DIGlobalVariable GV = DBuilder.createGlobalVariable(
       DContext, Name, StringRef(), Unit, getLineNumber(VD->getLocation()), Ty,
-      true, Init,
-      getOrCreateStaticDataMemberDeclarationOrNull(cast<VarDecl>(VD)));
+      true, Init, getOrCreateStaticDataMemberDeclarationOrNull(VarD));
   pair.first->second = llvm::WeakVH(GV);
 }
 

@@ -118,9 +118,5 @@ int main(int argc, char **argv) {
 // CHECK: metadata !"_ZTS1D", {{.*}}, metadata [[D_FUNC_DECL:![0-9]*]], metadata {{![0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
 // CHECK: [[D_FUNC_DECL]] = metadata !{metadata !"0x2e\00func\00{{.*}}\000\00{{[0-9]+}}"{{.*}}, metadata !"_ZTS1D", {{.*}}, null} ; [ DW_TAG_subprogram ] {{.*}} [func]
 
-// CHECK: [[F_I_DEF:![0-9]*]] = {{.*}}, metadata !"_ZTS1F", metadata {{![0-9]*}}, metadata {{![0-9]*}}, i32 2, metadata [[F_I:![0-9]*]]} ; [ DW_TAG_variable ] [i]
-
-// CHECK: [[F_I]] = {{.*}}, metadata !"_ZTS1F", {{.*}} ; [ DW_TAG_member ] [i]
-
 // CHECK: ![[EXCEPTLOC]] = metadata !{i32 84,
 // CHECK: ![[RETLOC]] = metadata !{i32 83,

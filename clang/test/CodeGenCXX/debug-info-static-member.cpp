@@ -43,9 +43,27 @@ int main()
 // CHECK: metadata !"0xd\00const_c\00{{.*}}", {{.*}} [ DW_TAG_member ] [const_c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
 // CHECK: metadata !"0xd\00x_a\00{{.*}}", {{.*}} [ DW_TAG_member ] [x_a] {{.*}} [public] [static]
 // CHECK: [[NS_X:![0-9]+]] = {{.*}} ; [ DW_TAG_namespace ] [x]
+
+// Test this in an anonymous namespace to ensure the type is retained even when
+// it doesn't get automatically retained by the string type reference machinery.
+namespace {
+struct anon_static_decl_struct {
+  static const int anon_static_decl_var = 117;
+};
+}
+
+// CHECK: ; [ DW_TAG_structure_type ] [anon_static_decl_struct] {{.*}} [def]
+// CHECK: ; [ DW_TAG_member ] [anon_static_decl_var]
+
+int ref() {
+  return anon_static_decl_struct::anon_static_decl_var;
+}
+
 // CHECK: metadata !{metadata !"0x34\00a\00{{.*}}", null, {{.*}} @_ZN1C1aE, metadata ![[DECL_A]]} ; [ DW_TAG_variable ] [a] {{.*}} [def]
 // CHECK: metadata !{metadata !"0x34\00b\00{{.*}}", null, {{.*}} @_ZN1C1bE, metadata ![[DECL_B]]} ; [ DW_TAG_variable ] [b] {{.*}} [def]
 // CHECK: metadata !{metadata !"0x34\00c\00{{.*}}", null, {{.*}} @_ZN1C1cE, metadata ![[DECL_C]]} ; [ DW_TAG_variable ] [c] {{.*}} [def]
+
+// CHECK-NOT: ; [ DW_TAG_variable ] [anon_static_decl_var]
 
 // Verify that even when a static member declaration is created lazily when
 // creating the definition, the declaration line is that of the canonical
