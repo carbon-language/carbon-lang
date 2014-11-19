@@ -23,6 +23,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/MC/MCInstrDesc.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -830,6 +831,88 @@ SIInstrInfo::isTriviallyReMaterializable(const MachineInstr *MI,
   case AMDGPU::V_MOV_B32_e32:
     return MI->getOperand(1).isImm();
   }
+}
+
+static bool offsetsDoNotOverlap(int WidthA, int OffsetA,
+                                int WidthB, int OffsetB) {
+  int LowOffset = OffsetA < OffsetB ? OffsetA : OffsetB;
+  int HighOffset = OffsetA < OffsetB ? OffsetB : OffsetA;
+  int LowWidth = (LowOffset == OffsetA) ? WidthA : WidthB;
+  return LowOffset + LowWidth <= HighOffset;
+}
+
+bool SIInstrInfo::checkInstOffsetsDoNotOverlap(MachineInstr *MIa,
+                                               MachineInstr *MIb) const {
+  unsigned BaseReg0, Offset0;
+  unsigned BaseReg1, Offset1;
+
+  if (getLdStBaseRegImmOfs(MIa, BaseReg0, Offset0, &RI) &&
+      getLdStBaseRegImmOfs(MIb, BaseReg1, Offset1, &RI)) {
+    assert(MIa->hasOneMemOperand() && MIb->hasOneMemOperand() &&
+           "read2 / write2 not expected here yet");
+    unsigned Width0 = (*MIa->memoperands_begin())->getSize();
+    unsigned Width1 = (*MIb->memoperands_begin())->getSize();
+    if (BaseReg0 == BaseReg1 &&
+        offsetsDoNotOverlap(Width0, Offset0, Width1, Offset1)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool SIInstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
+                                                  MachineInstr *MIb,
+                                                  AliasAnalysis *AA) const {
+  unsigned Opc0 = MIa->getOpcode();
+  unsigned Opc1 = MIb->getOpcode();
+
+  assert(MIa && (MIa->mayLoad() || MIa->mayStore()) &&
+         "MIa must load from or modify a memory location");
+  assert(MIb && (MIb->mayLoad() || MIb->mayStore()) &&
+         "MIb must load from or modify a memory location");
+
+  if (MIa->hasUnmodeledSideEffects() || MIb->hasUnmodeledSideEffects())
+    return false;
+
+  // XXX - Can we relax this between address spaces?
+  if (MIa->hasOrderedMemoryRef() || MIb->hasOrderedMemoryRef())
+    return false;
+
+  // TODO: Should we check the address space from the MachineMemOperand? That
+  // would allow us to distinguish objects we know don't alias based on the
+  // underlying addres space, even if it was lowered to a different one,
+  // e.g. private accesses lowered to use MUBUF instructions on a scratch
+  // buffer.
+  if (isDS(Opc0)) {
+    if (isDS(Opc1))
+      return checkInstOffsetsDoNotOverlap(MIa, MIb);
+
+    return !isFLAT(Opc1);
+  }
+
+  if (isMUBUF(Opc0) || isMTBUF(Opc0)) {
+    if (isMUBUF(Opc1) || isMTBUF(Opc1))
+      return checkInstOffsetsDoNotOverlap(MIa, MIb);
+
+    return !isFLAT(Opc1) && !isSMRD(Opc1);
+  }
+
+  if (isSMRD(Opc0)) {
+    if (isSMRD(Opc1))
+      return checkInstOffsetsDoNotOverlap(MIa, MIb);
+
+    return !isFLAT(Opc1) && !isMUBUF(Opc0) && !isMTBUF(Opc0);
+  }
+
+  if (isFLAT(Opc0)) {
+    if (isFLAT(Opc1))
+      return checkInstOffsetsDoNotOverlap(MIa, MIb);
+
+    return false;
+  }
+
+  return false;
 }
 
 namespace llvm {

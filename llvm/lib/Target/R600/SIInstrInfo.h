@@ -57,6 +57,9 @@ private:
 
   void addDescImplicitUseDef(const MCInstrDesc &Desc, MachineInstr *MI) const;
 
+  bool checkInstOffsetsDoNotOverlap(MachineInstr *MIa,
+                                    MachineInstr *MIb) const;
+
   unsigned findUsedSGPR(const MachineInstr *MI, int OpIndices[3]) const;
 
 public:
@@ -115,6 +118,10 @@ public:
   bool isTriviallyReMaterializable(const MachineInstr *MI,
                                    AliasAnalysis *AA = nullptr) const;
 
+  bool areMemAccessesTriviallyDisjoint(
+    MachineInstr *MIa, MachineInstr *MIb,
+    AliasAnalysis *AA = nullptr) const override;
+
   MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
                               MachineBasicBlock::iterator I,
                               unsigned DstReg, unsigned SrcReg) const override;
@@ -131,6 +138,7 @@ public:
   bool isVOP2(uint16_t Opcode) const;
   bool isVOP3(uint16_t Opcode) const;
   bool isVOPC(uint16_t Opcode) const;
+
   bool isInlineConstant(const APInt &Imm) const;
   bool isInlineConstant(const MachineOperand &MO) const;
   bool isLiteralConstant(const MachineOperand &MO) const;
