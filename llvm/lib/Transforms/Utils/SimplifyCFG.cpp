@@ -377,8 +377,8 @@ static Value* GatherConstantComparesMatch(Instruction *I,
   // If this is an icmp against a constant, handle this as one of the cases.
   ICmpInst *ICI;
   ConstantInt *C;
-  if (not ((ICI = dyn_cast<ICmpInst>(I)) &&
-           (C = GetConstantInt(I->getOperand(1), DL)))) {
+  if (!((ICI = dyn_cast<ICmpInst>(I)) &&
+        (C = GetConstantInt(I->getOperand(1), DL)))) {
     return nullptr;
   }
 
@@ -472,7 +472,7 @@ GatherConstantCompares(Value *V, SmallVectorImpl<ConstantInt*> &Vals, Value *&Ex
   // Will hold the value used for the switch comparison
   Value *CurrValue = nullptr;
 
-  while(not DFT.empty()) {
+  while(!DFT.empty()) {
     V = DFT.pop_back_val();
 
     if (Instruction *I = dyn_cast<Instruction>(V)) {
