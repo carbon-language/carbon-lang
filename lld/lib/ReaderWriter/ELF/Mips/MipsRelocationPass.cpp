@@ -248,7 +248,6 @@ private:
   bool requireLA25Stub(const Atom *a) const;
   bool requirePLTEntry(Reference &ref);
   bool requireCopy(Reference &ref);
-  void configurePLTReference(Reference &ref);
   void createPLTHeader();
   bool mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                       const Reference &ref) const;
@@ -479,12 +478,6 @@ bool RelocationPass<ELFT>::requireCopy(Reference &ref) {
 }
 
 template <typename ELFT>
-void RelocationPass<ELFT>::configurePLTReference(Reference &ref) {
-  auto *plt = getPLTEntry(ref.target());
-  ref.setTarget(plt);
-}
-
-template <typename ELFT>
 bool RelocationPass<ELFT>::isDynamic(const Atom *atom) const {
   const auto *da = dyn_cast<const DefinedAtom>(atom);
   if (da && da->dynamicExport() == DefinedAtom::dynamicExportAlways)
@@ -512,7 +505,7 @@ void RelocationPass<ELFT>::handlePlain(Reference &ref) {
       return;
 
   if (requirePLTEntry(ref))
-    configurePLTReference(ref);
+    ref.setTarget(getPLTEntry(ref.target()));
   else if (requireCopy(ref))
     ref.setTarget(getObjectEntry(cast<SharedLibraryAtom>(ref.target())));
 }
@@ -527,7 +520,7 @@ template <typename ELFT> void RelocationPass<ELFT>::handle26(Reference &ref) {
 
   const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target());
   if (sla && sla->type() == SharedLibraryAtom::Type::Code)
-    configurePLTReference(ref);
+    ref.setTarget(getPLTEntry(ref.target()));
 }
 
 template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
