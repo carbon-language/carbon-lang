@@ -103,7 +103,12 @@ public:
 
 class PLT0Atom : public PLTAtom {
 public:
-  PLT0Atom(const File &f) : PLTAtom(f, ".plt") {}
+  PLT0Atom(const Atom *got, const File &f) : PLTAtom(f, ".plt") {
+    // Setup reference to fixup the PLT0 entry.
+    addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, got, 0);
+    addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, got, 0);
+    addReferenceELF_Mips(LLD_R_MIPS_LO16, 8, got, 0);
+  }
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsPlt0AtomContent);
@@ -112,7 +117,12 @@ public:
 
 class PLTAAtom : public PLTAtom {
 public:
-  PLTAAtom(const File &f) : PLTAtom(f, ".plt") {}
+  PLTAAtom(const Atom *got, const File &f) : PLTAtom(f, ".plt") {
+    // Setup reference to fixup the PLT entry.
+    addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, got, 0);
+    addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, got, 0);
+    addReferenceELF_Mips(LLD_R_MIPS_LO16, 12, got, 0);
+  }
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsPltAAtomContent);
@@ -134,7 +144,12 @@ public:
 /// \brief LA25 stub atom
 class LA25Atom : public PLTAtom {
 public:
-  LA25Atom(const File &f) : PLTAtom(f, ".text") {}
+  LA25Atom(const Atom *a, const File &f) : PLTAtom(f, ".text") {
+    // Setup reference to fixup the LA25 stub entry.
+    addReferenceELF_Mips(R_MIPS_HI16, 0, a, 0);
+    addReferenceELF_Mips(R_MIPS_26, 4, a, 0);
+    addReferenceELF_Mips(R_MIPS_LO16, 8, a, 0);
+  }
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsLA25AtomContent);
@@ -663,18 +678,13 @@ const GOTAtom *RelocationPass<ELFT>::getTLSLdmGOTEntry(const Atom *a) {
 template <typename ELFT> void RelocationPass<ELFT>::createPLTHeader() {
   assert(_pltVector.empty() && _gotpltVector.empty());
 
-  auto pa = new (_file._alloc) PLT0Atom(_file);
-  _pltVector.push_back(pa);
-
   auto ga0 = new (_file._alloc) GOTPLTAtom(_file);
   _gotpltVector.push_back(ga0);
   auto ga1 = new (_file._alloc) GOTPLTAtom(_file);
   _gotpltVector.push_back(ga1);
 
-  // Setup reference to fixup the PLT0 entry.
-  pa->addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, ga0, 0);
-  pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, ga0, 0);
-  pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 8, ga0, 0);
+  auto pa = new (_file._alloc) PLT0Atom(ga0, _file);
+  _pltVector.push_back(pa);
 
   DEBUG_WITH_TYPE("MipsGOT", {
     pa->_name = "__plt0";
@@ -695,17 +705,12 @@ const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   if (_pltVector.empty())
     createPLTHeader();
 
-  auto pa = new (_file._alloc) PLTAAtom(_file);
-  _pltMap[a] = pa;
-  _pltVector.push_back(pa);
-
   auto ga = new (_file._alloc) GOTPLTAtom(_file);
   _gotpltVector.push_back(ga);
 
-  // Setup reference to fixup the PLT entry.
-  pa->addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, ga, 0);
-  pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, ga, 0);
-  pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 12, ga, 0);
+  auto pa = new (_file._alloc) PLTAAtom(ga, _file);
+  _pltMap[a] = pa;
+  _pltVector.push_back(pa);
 
   // Setup reference to assign initial value to the .got.plt entry.
   ga->addReferenceELF_Mips(R_MIPS_32, 0, _pltVector.front(), 0);
@@ -734,14 +739,9 @@ const LA25Atom *RelocationPass<ELFT>::getLA25Entry(const Atom *a) {
   if (la25 != _la25Map.end())
     return la25->second;
 
-  auto sa = new (_file._alloc) LA25Atom(_file);
+  auto sa = new (_file._alloc) LA25Atom(a, _file);
   _la25Map[a] = sa;
   _la25Vector.push_back(sa);
-
-  // Setup reference to fixup the LA25 stub entry.
-  sa->addReferenceELF_Mips(R_MIPS_HI16, 0, a, 0);
-  sa->addReferenceELF_Mips(R_MIPS_26, 4, a, 0);
-  sa->addReferenceELF_Mips(R_MIPS_LO16, 8, a, 0);
 
   DEBUG_WITH_TYPE("MipsGOT", {
     sa->_name = ".pic.";
