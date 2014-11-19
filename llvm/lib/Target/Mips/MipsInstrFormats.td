@@ -440,7 +440,7 @@ class EXT_FM<bits<6> funct> : StdArch {
   let Inst{5-0}   = funct;
 }
 
-class RDHWR_FM {
+class RDHWR_FM : StdArch {
   bits<5> rt;
   bits<5> rd;
 

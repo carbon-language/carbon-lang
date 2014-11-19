@@ -508,6 +508,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def TLBR_MM : MMRel, TLB<"tlbr">, COP0_TLB_FM_MM<0x4d>;
   def TLBWI_MM : MMRel, TLB<"tlbwi">, COP0_TLB_FM_MM<0x8d>;
   def TLBWR_MM : MMRel, TLB<"tlbwr">, COP0_TLB_FM_MM<0xcd>;
+
+  def SDBBP_MM : MMRel, SYS_FT<"sdbbp">, SDBBP_FM_MM;
+  def RDHWR_MM : MMRel, ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM_MM;
 }
 
 let Predicates = [InMicroMips] in {

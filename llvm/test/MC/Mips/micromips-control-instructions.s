@@ -9,6 +9,12 @@
 #------------------------------------------------------------------------------
 # Little endian
 #------------------------------------------------------------------------------
+# CHECK-EL:    sdbbp                      # encoding: [0x00,0x00,0x7c,0xdb]
+# CHECK-EL:    sdbbp 34                   # encoding: [0x22,0x00,0x7c,0xdb]
+# CHECK-EL:    .set push
+# CHECK-EL:    .set mips32r2
+# CHECK-EL:    rdhwr $5, $29
+# CHECK-EL:    .set pop                   # encoding: [0xbd,0x00,0x3c,0x6b]
 # CHECK-EL:    break                      # encoding: [0x00,0x00,0x07,0x00]
 # CHECK-EL:    break 7                    # encoding: [0x07,0x00,0x07,0x00]
 # CHECK-EL:    break 7, 5                 # encoding: [0x07,0x00,0x47,0x01]
@@ -31,6 +37,12 @@
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
+# CHECK-EB:   sdbbp                       # encoding: [0x00,0x00,0xdb,0x7c]
+# CHECK-EB:   sdbbp 34                    # encoding: [0x00,0x22,0xdb,0x7c]
+# CHECK-EB:   .set push
+# CHECK-EB:   .set mips32r2
+# CHECK-EB:   rdhwr $5, $29
+# CHECK-EB:   .set pop                    # encoding: [0x00,0xbd,0x6b,0x3c]
 # CHECK-EB:   break                       # encoding: [0x00,0x00,0x00,0x07]
 # CHECK-EB:   break 7                     # encoding: [0x00,0x07,0x00,0x07]
 # CHECK-EB:   break 7, 5                  # encoding: [0x00,0x07,0x01,0x47]
@@ -51,6 +63,9 @@
 # CHECK-EB:   tlbwi                       # encoding: [0x00,0x00,0x23,0x7c]
 # CHECK-EB:   tlbwr                       # encoding: [0x00,0x00,0x33,0x7c]
 
+    sdbbp
+    sdbbp 34
+    rdhwr $5, $29
     break
     break 7
     break 7,5

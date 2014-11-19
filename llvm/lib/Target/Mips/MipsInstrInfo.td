@@ -970,7 +970,7 @@ class SubwordSwap<string opstr, RegisterOperand RO>:
 // Read Hardware
 class ReadHardware<RegisterOperand CPURegOperand, RegisterOperand RO> :
   InstSE<(outs CPURegOperand:$rt), (ins RO:$rd), "rdhwr\t$rt, $rd", [],
-         II_RDHWR, FrmR>;
+         II_RDHWR, FrmR, "rdhwr">;
 
 // Ext and Ins
 class ExtBase<string opstr, RegisterOperand RO, Operand PosOpnd,
@@ -1232,7 +1232,7 @@ def TNEI : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>,
 def BREAK : MMRel, BRK_FT<"break">, BRK_FM<0xd>;
 def SYSCALL : MMRel, SYS_FT<"syscall">, SYS_FM<0xc>;
 def TRAP : TrapBase<BREAK>;
-def SDBBP : SYS_FT<"sdbbp">, SDBBP_FM, ISA_MIPS32_NOT_32R6_64R6;
+def SDBBP : MMRel, SYS_FT<"sdbbp">, SDBBP_FM, ISA_MIPS32_NOT_32R6_64R6;
 
 def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>, INSN_MIPS3_32;
 def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>, ISA_MIPS32;
@@ -1427,7 +1427,7 @@ def PseudoSDIV : MultDivPseudo<SDIV, ACC64, GPR32Opnd, MipsDivRem, II_DIV,
 def PseudoUDIV : MultDivPseudo<UDIV, ACC64, GPR32Opnd, MipsDivRemU, II_DIVU,
                                0, 1, 1>, ISA_MIPS1_NOT_32R6_64R6;
 
-def RDHWR : ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM;
+def RDHWR : MMRel, ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM;
 
 def EXT : MMRel, ExtBase<"ext", GPR32Opnd, uimm5, MipsExt>, EXT_FM<0>;
 def INS : MMRel, InsBase<"ins", GPR32Opnd, uimm5, MipsIns>, EXT_FM<4>;
