@@ -1089,7 +1089,7 @@ void WidenIV::pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef) {
     Instruction *NarrowUser = cast<Instruction>(U);
 
     // Handle data flow merges and bizarre phi cycles.
-    if (!Widened.insert(NarrowUser))
+    if (!Widened.insert(NarrowUser).second)
       continue;
 
     NarrowIVUsers.push_back(NarrowIVDefUse(NarrowDef, NarrowUser, WideDef));
@@ -1237,7 +1237,7 @@ void PollyIndVarSimplify::SimplifyAndExtend(Loop *L, SCEVExpander &Rewriter,
 static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
                                 SmallPtrSet<const SCEV *, 8> &Processed,
                                 ScalarEvolution *SE) {
-  if (!Processed.insert(S))
+  if (!Processed.insert(S).second)
     return false;
 
   // If the backedge-taken count is a UDiv, it's very likely a UDiv that
