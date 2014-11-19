@@ -265,6 +265,18 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
   return SplitBlock(BB, BB->getTerminator(), P);
 }
 
+unsigned llvm::SplitAllCriticalEdges(Function &F, Pass *P) {
+  unsigned NumBroken = 0;
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    TerminatorInst *TI = I->getTerminator();
+    if (TI->getNumSuccessors() > 1 && !isa<IndirectBrInst>(TI))
+      for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+        if (SplitCriticalEdge(TI, i, P))
+          ++NumBroken;
+  }
+  return NumBroken;
+}
+
 /// SplitBlock - Split the specified block at the specified instruction - every
 /// thing before SplitPt stays in Old and everything starting with SplitPt moves
 /// to a new block.  The two blocks are joined by an unconditional branch and

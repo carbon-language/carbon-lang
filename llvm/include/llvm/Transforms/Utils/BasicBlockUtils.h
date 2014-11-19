@@ -133,6 +133,11 @@ inline BasicBlock *SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst,
   }
 }
 
+// SplitAllCriticalEdges - Loop over all of the edges in the CFG,
+// breaking critical edges as they are found. Pass P must not be NULL.
+// Returns the number of broken edges.
+unsigned SplitAllCriticalEdges(Function &F, Pass *P);
+
 /// SplitEdge -  Split the edge connecting specified block. Pass P must
 /// not be NULL.
 BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To, Pass *P);
