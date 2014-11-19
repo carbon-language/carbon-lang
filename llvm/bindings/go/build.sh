@@ -26,6 +26,3 @@ else
 fi
 
 $llvm_go print-config > $gollvmdir/llvm_config.go
-
-llvm_version="$($llvm_config --version)"
-printf "package llvm\n\nconst Version = \"%s\"\n" "$llvm_version" > $gollvmdir/version.go

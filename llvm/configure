@@ -1941,6 +1941,11 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+cat >>confdefs.h <<_ACEOF
+#define LLVM_VERSION_STRING "$PACKAGE_VERSION"
+_ACEOF
+
+
 
 
 
