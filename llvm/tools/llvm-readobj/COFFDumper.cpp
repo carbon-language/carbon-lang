@@ -20,6 +20,7 @@
 #include "Win64EHDumper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/COFF.h"
@@ -1086,7 +1087,7 @@ static StringRef getBaseRelocTypeName(uint8_t Type) {
   case COFF::IMAGE_REL_BASED_HIGHLOW: return "HIGHLOW";
   case COFF::IMAGE_REL_BASED_HIGHADJ: return "HIGHADJ";
   case COFF::IMAGE_REL_BASED_DIR64: return "DIR64";
-  default: return "unknown (" + std::to_string(Type) + ")";
+  default: return "unknown (" + llvm::utostr(Type) + ")";
   }
 }
 
