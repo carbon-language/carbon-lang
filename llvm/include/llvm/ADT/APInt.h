@@ -665,7 +665,9 @@ public:
       delete[] pVal;
     }
 
-    VAL = that.VAL;
+    // Use memcpy so that type based alias analysis sees both VAL and pVal
+    // as modified.
+    memcpy(&VAL, &that.VAL, sizeof(uint64_t));
 
     // If 'this == &that', avoid zeroing our own bitwidth by storing to 'that'
     // first.
