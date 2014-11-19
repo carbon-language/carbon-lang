@@ -165,6 +165,7 @@ defm add : T_ALU32_3op_A2<"add", 0b011, 0b000, 0, 1>;
 defm and : T_ALU32_3op_A2<"and", 0b001, 0b000, 0, 1>;
 defm or  : T_ALU32_3op_A2<"or",  0b001, 0b001, 0, 1>;
 defm sub : T_ALU32_3op_A2<"sub", 0b011, 0b001, 1, 0>;
+defm xor : T_ALU32_3op_A2<"xor", 0b001, 0b011, 0, 1>;
 
 // Pats for instruction selection.
 class BinOp32_pat<SDNode Op, InstHexagon MI, ValueType ResT>
@@ -175,6 +176,7 @@ def: BinOp32_pat<add, A2_add, i32>;
 def: BinOp32_pat<and, A2_and, i32>;
 def: BinOp32_pat<or,  A2_or,  i32>;
 def: BinOp32_pat<sub, A2_sub, i32>;
+def: BinOp32_pat<xor, A2_xor, i32>;
 
 multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                        bit isPredNew> {
@@ -209,10 +211,6 @@ multiclass ALU32_base<string mnemonic, string CextOp, SDNode OpNode> {
       defm NotPt : ALU32_Pred<mnemonic, IntRegs, 1>;
     }
   }
-}
-
-let isCommutable = 1 in {
-  defm XOR_rr : ALU32_base<"xor", "XOR", xor>, ImmRegRel, PredNewRel;
 }
 
 defm SUB_rr : ALU32_base<"sub", "SUB", sub>, ImmRegRel, PredNewRel;
