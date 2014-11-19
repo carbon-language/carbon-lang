@@ -107,7 +107,7 @@ void Sema::FilterAcceptableTemplateNames(LookupResult &R,
       //   template itself and not a specialization thereof, and is not
       //   ambiguous.
       if (ClassTemplateDecl *ClassTmpl = dyn_cast<ClassTemplateDecl>(Repl))
-        if (!ClassTemplates.insert(ClassTmpl)) {
+        if (!ClassTemplates.insert(ClassTmpl).second) {
           filter.erase();
           continue;
         }

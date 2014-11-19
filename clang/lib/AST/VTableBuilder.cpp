@@ -389,7 +389,7 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
 
     CharUnits BaseOffset;
     if (B.isVirtual()) {
-      if (!VisitedVirtualBases.insert(BaseDecl)) {
+      if (!VisitedVirtualBases.insert(BaseDecl).second) {
         // We've visited this base before.
         continue;
       }
@@ -748,7 +748,7 @@ VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
     const CXXRecordDecl *BaseDecl = B.getType()->getAsCXXRecordDecl();
 
     // Check if this is a virtual base that we haven't visited before.
-    if (B.isVirtual() && VisitedVirtualBases.insert(BaseDecl)) {
+    if (B.isVirtual() && VisitedVirtualBases.insert(BaseDecl).second) {
       CharUnits Offset = 
         LayoutClassLayout.getVBaseClassOffset(BaseDecl) - OffsetInLayoutClass;
 
@@ -1105,7 +1105,7 @@ namespace {
 
     bool visit(const CXXMethodDecl *MD) {
       // Don't recurse on this method if we've already collected it.
-      return Methods->insert(MD);
+      return Methods->insert(MD).second;
     }
   };
 }
@@ -1842,7 +1842,7 @@ void ItaniumVTableBuilder::DeterminePrimaryVirtualBases(
     CharUnits BaseOffsetInLayoutClass;
     
     if (B.isVirtual()) {
-      if (!VBases.insert(BaseDecl))
+      if (!VBases.insert(BaseDecl).second)
         continue;
       
       const ASTRecordLayout &LayoutClassLayout =
@@ -1870,8 +1870,9 @@ void ItaniumVTableBuilder::LayoutVTablesForVirtualBases(
 
     // Check if this base needs a vtable. (If it's virtual, not a primary base
     // of some other class, and we haven't visited it before).
-    if (B.isVirtual() && BaseDecl->isDynamicClass() && 
-        !PrimaryVirtualBases.count(BaseDecl) && VBases.insert(BaseDecl)) {
+    if (B.isVirtual() && BaseDecl->isDynamicClass() &&
+        !PrimaryVirtualBases.count(BaseDecl) &&
+        VBases.insert(BaseDecl).second) {
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       CharUnits BaseOffset = 
@@ -2636,7 +2637,7 @@ struct InitialOverriddenDefinitionCollector {
     if (OverriddenMD->size_overridden_methods() == 0)
       Bases.insert(OverriddenMD->getParent());
     // Don't recurse on this method if we've already collected it.
-    return VisitedOverriddenMethods.insert(OverriddenMD);
+    return VisitedOverriddenMethods.insert(OverriddenMD).second;
   }
 };
 
@@ -3459,7 +3460,7 @@ findPathForVPtr(ASTContext &Context, const ASTRecordLayout &MostDerivedLayout,
     if (!B.isVirtual())
       NewOffset = Offset + Layout.getBaseClassOffset(Base);
     else {
-      if (!VBasesSeen.insert(Base))
+      if (!VBasesSeen.insert(Base).second)
         return false;
       NewOffset = MostDerivedLayout.getVBaseClassOffset(Base);
     }

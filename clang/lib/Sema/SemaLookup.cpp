@@ -128,7 +128,7 @@ namespace {
     // that contexts be visited from the inside out in order to get
     // the effective DCs right.
     void visit(DeclContext *DC, DeclContext *EffectiveDC) {
-      if (!visited.insert(DC))
+      if (!visited.insert(DC).second)
         return;
 
       addUsingDirectives(DC, EffectiveDC);
@@ -139,7 +139,7 @@ namespace {
     // were declared in the effective DC.
     void visit(UsingDirectiveDecl *UD, DeclContext *EffectiveDC) {
       DeclContext *NS = UD->getNominatedNamespace();
-      if (!visited.insert(NS))
+      if (!visited.insert(NS).second)
         return;
 
       addUsingDirective(UD, EffectiveDC);
@@ -154,7 +154,7 @@ namespace {
       while (true) {
         for (auto UD : DC->using_directives()) {
           DeclContext *NS = UD->getNominatedNamespace();
-          if (visited.insert(NS)) {
+          if (visited.insert(NS).second) {
             addUsingDirective(UD, EffectiveDC);
             queue.push_back(NS);
           }
@@ -401,7 +401,7 @@ void LookupResult::resolveKind() {
     if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
       if (!TD->getDeclContext()->isRecord()) {
         QualType T = getSema().Context.getTypeDeclType(TD);
-        if (!UniqueTypes.insert(getSema().Context.getCanonicalType(T))) {
+        if (!UniqueTypes.insert(getSema().Context.getCanonicalType(T)).second) {
           // The type is not unique; pull something off the back and continue
           // at this index.
           Decls[I] = Decls[--N];
@@ -410,7 +410,7 @@ void LookupResult::resolveKind() {
       }
     }
 
-    if (!Unique.insert(D)) {
+    if (!Unique.insert(D).second) {
       // If it's not unique, pull something off the back (and
       // continue at this index).
       Decls[I] = Decls[--N];
@@ -1452,7 +1452,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema &S, LookupResult &R,
   // with its using-children.
   for (auto *I : UsingDirectives) {
     NamespaceDecl *ND = I->getNominatedNamespace()->getOriginalNamespace();
-    if (Visited.insert(ND))
+    if (Visited.insert(ND).second)
       Queue.push_back(ND);
   }
 
@@ -1500,7 +1500,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema &S, LookupResult &R,
 
     for (auto I : ND->using_directives()) {
       NamespaceDecl *Nom = I->getNominatedNamespace();
-      if (Visited.insert(Nom))
+      if (Visited.insert(Nom).second)
         Queue.push_back(Nom);
     }
   }
@@ -2039,7 +2039,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
   // FIXME: That's not correct, we may have added this class only because it
   // was the enclosing class of another class, and in that case we won't have
   // added its base classes yet.
-  if (!Result.Classes.insert(Class))
+  if (!Result.Classes.insert(Class).second)
     return;
 
   // -- If T is a template-id, its associated namespaces and classes are
@@ -2088,7 +2088,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
       if (!BaseType)
         continue;
       CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-      if (Result.Classes.insert(BaseDecl)) {
+      if (Result.Classes.insert(BaseDecl).second) {
         // Find the associated namespace for this base class.
         DeclContext *BaseCtx = BaseDecl->getDeclContext();
         CollectEnclosingNamespace(Result.Namespaces, BaseCtx);
@@ -2890,7 +2890,7 @@ public:
   /// \brief Determine whether we have already visited this context
   /// (and, if not, note that we are going to visit that context now).
   bool visitedContext(DeclContext *Ctx) {
-    return !VisitedContexts.insert(Ctx);
+    return !VisitedContexts.insert(Ctx).second;
   }
 
   bool alreadyVisitedContext(DeclContext *Ctx) {

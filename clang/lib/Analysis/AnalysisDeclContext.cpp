@@ -481,7 +481,7 @@ public:
     // Non-local variables are also directly modified.
     if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
       if (!VD->hasLocalStorage()) {
-        if (Visited.insert(VD))
+        if (Visited.insert(VD).second)
           BEVals.push_back(VD, BC);
       }
     }

@@ -2816,7 +2816,7 @@ static unsigned ComputeVMIClassTypeInfoFlags(const CXXBaseSpecifier *Base,
 
   if (Base->isVirtual()) {
     // Mark the virtual base as seen.
-    if (!Bases.VirtualBases.insert(BaseDecl)) {
+    if (!Bases.VirtualBases.insert(BaseDecl).second) {
       // If this virtual base has been seen before, then the class is diamond
       // shaped.
       Flags |= ItaniumRTTIBuilder::VMI_DiamondShaped;
@@ -2826,7 +2826,7 @@ static unsigned ComputeVMIClassTypeInfoFlags(const CXXBaseSpecifier *Base,
     }
   } else {
     // Mark the non-virtual base as seen.
-    if (!Bases.NonVirtualBases.insert(BaseDecl)) {
+    if (!Bases.NonVirtualBases.insert(BaseDecl).second) {
       // If this non-virtual base has been seen before, then the class has non-
       // diamond shaped repeated inheritance.
       Flags |= ItaniumRTTIBuilder::VMI_NonDiamondRepeat;

@@ -105,7 +105,7 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
     CharUnits BaseOffset;
     if (I.isVirtual()) {
       // Ignore virtual bases that we've already visited.
-      if (!VBases.insert(BaseDecl))
+      if (!VBases.insert(BaseDecl).second)
         continue;
       
       BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
@@ -157,7 +157,7 @@ void VTTBuilder::LayoutVirtualVTTs(const CXXRecordDecl *RD,
     // Check if this is a virtual base.
     if (I.isVirtual()) {
       // Check if we've seen this base before.
-      if (!VBases.insert(BaseDecl))
+      if (!VBases.insert(BaseDecl).second)
         continue;
     
       CharUnits BaseOffset = 

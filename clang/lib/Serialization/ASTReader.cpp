@@ -3525,7 +3525,7 @@ void ASTReader::makeModuleVisible(Module *Mod,
     for (SmallVectorImpl<Module *>::iterator
            I = Exports.begin(), E = Exports.end(); I != E; ++I) {
       Module *Exported = *I;
-      if (Visited.insert(Exported))
+      if (Visited.insert(Exported).second)
         Stack.push_back(Exported);
     }
 
@@ -8414,7 +8414,7 @@ void ASTReader::diagnoseOdrViolations() {
   for (auto &Merge : OdrMergeFailures) {
     // If we've already pointed out a specific problem with this class, don't
     // bother issuing a general "something's different" diagnostic.
-    if (!DiagnosedOdrMergeFailures.insert(Merge.first))
+    if (!DiagnosedOdrMergeFailures.insert(Merge.first).second)
       continue;
 
     bool Diagnosed = false;

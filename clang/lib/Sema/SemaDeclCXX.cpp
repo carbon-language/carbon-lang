@@ -213,7 +213,7 @@ Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
   ComputedEST = EST_Dynamic;
   // Record the exceptions in this function's exception specification.
   for (const auto &E : Proto->exceptions())
-    if (ExceptionsSeen.insert(Self->Context.getCanonicalType(E)))
+    if (ExceptionsSeen.insert(Self->Context.getCanonicalType(E)).second)
       Exceptions.push_back(E);
 }
 
@@ -4439,7 +4439,7 @@ void Sema::DiagnoseAbstractType(const CXXRecordDecl *RD) {
       if (!SO->second.front().Method->isPure())
         continue;
 
-      if (!SeenPureMethods.insert(SO->second.front().Method))
+      if (!SeenPureMethods.insert(SO->second.front().Method).second)
         continue;
 
       Diag(SO->second.front().Method->getLocation(), 
@@ -8668,7 +8668,7 @@ struct DeclaringSpecialMember {
 
   DeclaringSpecialMember(Sema &S, CXXRecordDecl *RD, Sema::CXXSpecialMember CSM)
     : S(S), D(RD, CSM) {
-    WasAlreadyBeingDeclared = !S.SpecialMembersBeingDeclared.insert(D);
+    WasAlreadyBeingDeclared = !S.SpecialMembersBeingDeclared.insert(D).second;
     if (WasAlreadyBeingDeclared)
       // This almost never happens, but if it does, ensure that our cache
       // doesn't contain a stale result.
@@ -13174,7 +13174,7 @@ void DelegatingCycleHelper(CXXConstructorDecl* Ctor,
                      // Avoid dereferencing a null pointer here.
                      *TCanonical = Target? Target->getCanonicalDecl() : nullptr;
 
-  if (!Current.insert(Canonical))
+  if (!Current.insert(Canonical).second)
     return;
 
   // We know that beyond here, we aren't chaining into a cycle.

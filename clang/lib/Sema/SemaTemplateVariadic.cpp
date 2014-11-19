@@ -244,7 +244,7 @@ Sema::DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
     else
       Name = Unexpanded[I].first.get<NamedDecl *>()->getIdentifier();
 
-    if (Name && NamesKnown.insert(Name))
+    if (Name && NamesKnown.insert(Name).second)
       Names.push_back(Name);
 
     if (Unexpanded[I].second.isValid())

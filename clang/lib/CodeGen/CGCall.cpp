@@ -469,7 +469,8 @@ CodeGenTypes::arrangeLLVMFunctionInfo(CanQualType resultType,
                               required);
   FunctionInfos.InsertNode(FI, insertPos);
 
-  bool inserted = FunctionsBeingProcessed.insert(FI); (void)inserted;
+  bool inserted = FunctionsBeingProcessed.insert(FI).second;
+  (void)inserted;
   assert(inserted && "Recursively being processed?");
   
   // Compute ABI information.
@@ -1202,7 +1203,8 @@ llvm::FunctionType *CodeGenTypes::GetFunctionType(GlobalDecl GD) {
 llvm::FunctionType *
 CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
 
-  bool Inserted = FunctionsBeingProcessed.insert(&FI); (void)Inserted;
+  bool Inserted = FunctionsBeingProcessed.insert(&FI).second;
+  (void)Inserted;
   assert(Inserted && "Recursively being processed?");
 
   llvm::Type *resultType = nullptr;

@@ -143,7 +143,7 @@ namespace clang {
 
       ~RedeclarableResult() {
         if (FirstID && Owning && isRedeclarableDeclKind(DeclKind) &&
-            Reader.PendingDeclChainsKnown.insert(FirstID))
+            Reader.PendingDeclChainsKnown.insert(FirstID).second)
           Reader.PendingDeclChains.push_back(FirstID);
       }
       

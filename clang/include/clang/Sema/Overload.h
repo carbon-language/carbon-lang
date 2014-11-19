@@ -722,8 +722,8 @@ namespace clang {
 
     /// \brief Determine when this overload candidate will be new to the
     /// overload set.
-    bool isNewCandidate(Decl *F) { 
-      return Functions.insert(F->getCanonicalDecl()); 
+    bool isNewCandidate(Decl *F) {
+      return Functions.insert(F->getCanonicalDecl()).second;
     }
 
     /// \brief Clear out all of the candidates.

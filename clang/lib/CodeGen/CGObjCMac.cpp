@@ -2758,7 +2758,7 @@ PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*,16> &PropertySet,
   for (const auto *P : Proto->protocols()) 
     PushProtocolProperties(PropertySet, Properties, Container, P, ObjCTypes);
   for (const auto *PD : Proto->properties()) {
-    if (!PropertySet.insert(PD->getIdentifier()))
+    if (!PropertySet.insert(PD->getIdentifier()).second)
       continue;
     llvm::Constant *Prop[] = {
       GetPropertyName(PD->getIdentifier()),

@@ -118,7 +118,7 @@ CheckPropertyAgainstProtocol(Sema &S, ObjCPropertyDecl *Prop,
                              ObjCProtocolDecl *Proto,
                              llvm::SmallPtrSetImpl<ObjCProtocolDecl *> &Known) {
   // Have we seen this protocol before?
-  if (!Known.insert(Proto))
+  if (!Known.insert(Proto).second)
     return;
 
   // Look for a property with the same name.

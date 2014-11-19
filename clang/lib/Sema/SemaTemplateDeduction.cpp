@@ -1493,7 +1493,7 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
             const RecordType *NextT = ToVisit.pop_back_val();
 
             // If we have already seen this type, skip it.
-            if (!Visited.insert(NextT))
+            if (!Visited.insert(NextT).second)
               continue;
 
             // If this is a base class, try to perform template argument

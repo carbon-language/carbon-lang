@@ -209,7 +209,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     // Now go through all virtual bases of this base and add them.
     for (const auto &VBase : BaseClassDecl->vbases()) {
       // Add this base if it's not already in the list.
-      if (SeenVBaseTypes.insert(C.getCanonicalType(VBase.getType()))) {
+      if (SeenVBaseTypes.insert(C.getCanonicalType(VBase.getType())).second) {
         VBases.push_back(&VBase);
 
         // C++11 [class.copy]p8:
@@ -225,7 +225,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
 
     if (Base->isVirtual()) {
       // Add this base if it's not already in the list.
-      if (SeenVBaseTypes.insert(C.getCanonicalType(BaseType)))
+      if (SeenVBaseTypes.insert(C.getCanonicalType(BaseType)).second)
         VBases.push_back(Base);
 
       // C++0x [meta.unary.prop] is_empty:

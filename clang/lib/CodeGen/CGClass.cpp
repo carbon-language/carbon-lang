@@ -2022,7 +2022,7 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
 
     if (I.isVirtual()) {
       // Check if we've visited this virtual base before.
-      if (!VBases.insert(BaseDecl))
+      if (!VBases.insert(BaseDecl).second)
         continue;
 
       const ASTRecordLayout &Layout = 

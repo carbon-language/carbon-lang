@@ -817,7 +817,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
       }
 
       // Check whether we already have a handler for this type.
-      if (catchTypes.insert(handler.Type))
+      if (catchTypes.insert(handler.Type).second)
         // If not, add it directly to the landingpad.
         LPadInst->addClause(handler.Type);
     }

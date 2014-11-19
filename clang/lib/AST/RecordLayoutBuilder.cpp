@@ -1093,7 +1093,7 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
         // Only lay out the virtual base if it's not an indirect primary base.
         if (!IndirectPrimaryBase) {
           // Only visit virtual bases once.
-          if (!VisitedVirtualBases.insert(BaseDecl))
+          if (!VisitedVirtualBases.insert(BaseDecl).second)
             continue;
 
           const BaseSubobjectInfo *BaseInfo = VirtualBaseInfo.lookup(BaseDecl);

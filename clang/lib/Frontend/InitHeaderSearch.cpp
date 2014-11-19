@@ -529,16 +529,16 @@ static unsigned RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
 
     if (CurEntry.isNormalDir()) {
       // If this isn't the first time we've seen this dir, remove it.
-      if (SeenDirs.insert(CurEntry.getDir()))
+      if (SeenDirs.insert(CurEntry.getDir()).second)
         continue;
     } else if (CurEntry.isFramework()) {
       // If this isn't the first time we've seen this framework dir, remove it.
-      if (SeenFrameworkDirs.insert(CurEntry.getFrameworkDir()))
+      if (SeenFrameworkDirs.insert(CurEntry.getFrameworkDir()).second)
         continue;
     } else {
       assert(CurEntry.isHeaderMap() && "Not a headermap or normal dir?");
       // If this isn't the first time we've seen this headermap, remove it.
-      if (SeenHeaderMaps.insert(CurEntry.getHeaderMap()))
+      if (SeenHeaderMaps.insert(CurEntry.getHeaderMap()).second)
         continue;
     }
 
