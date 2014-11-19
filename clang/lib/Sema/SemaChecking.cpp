@@ -6613,10 +6613,17 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
       continue;
     AnalyzeImplicitConversions(S, ChildExpr, CC);
   }
+
   if (BO && BO->isLogicalOp()) {
-    ::CheckBoolLikeConversion(S, BO->getLHS(), BO->getLHS()->getExprLoc());
-    ::CheckBoolLikeConversion(S, BO->getRHS(), BO->getRHS()->getExprLoc());
+    Expr *SubExpr = BO->getLHS()->IgnoreParenImpCasts();
+    if (!IsLogicalAndOperator || !isa<StringLiteral>(SubExpr))
+      ::CheckBoolLikeConversion(S, SubExpr, SubExpr->getExprLoc());
+
+    SubExpr = BO->getRHS()->IgnoreParenImpCasts();
+    if (!IsLogicalAndOperator || !isa<StringLiteral>(SubExpr))
+      ::CheckBoolLikeConversion(S, SubExpr, SubExpr->getExprLoc());
   }
+
   if (const UnaryOperator *U = dyn_cast<UnaryOperator>(E))
     if (U->getOpcode() == UO_LNot)
       ::CheckBoolLikeConversion(S, U->getSubExpr(), CC);
