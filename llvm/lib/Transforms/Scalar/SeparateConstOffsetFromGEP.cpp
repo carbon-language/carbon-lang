@@ -79,6 +79,81 @@
 // ld.global.f32   %f3, [%rl6+128]; // much better
 // ld.global.f32   %f4, [%rl6+132]; // much better
 //
+// Another improvement enabled by the LowerGEP flag is to lower a GEP with
+// multiple indices to either multiple GEPs with a single index or arithmetic
+// operations (depending on whether the target uses alias analysis in codegen).
+// Such transformation can have following benefits:
+// (1) It can always extract constants in the indices of structure type.
+// (2) After such Lowering, there are more optimization opportunities such as
+//     CSE, LICM and CGP.
+//
+// E.g. The following GEPs have multiple indices:
+//  BB1:
+//    %p = getelementptr [10 x %struct]* %ptr, i64 %i, i64 %j1, i32 3
+//    load %p
+//    ...
+//  BB2:
+//    %p2 = getelementptr [10 x %struct]* %ptr, i64 %i, i64 %j1, i32 2
+//    load %p2
+//    ...
+//
+// We can not do CSE for to the common part related to index "i64 %i". Lowering
+// GEPs can achieve such goals.
+// If the target does not use alias analysis in codegen, this pass will
+// lower a GEP with multiple indices into arithmetic operations:
+//  BB1:
+//    %1 = ptrtoint [10 x %struct]* %ptr to i64    ; CSE opportunity
+//    %2 = mul i64 %i, length_of_10xstruct         ; CSE opportunity
+//    %3 = add i64 %1, %2                          ; CSE opportunity
+//    %4 = mul i64 %j1, length_of_struct
+//    %5 = add i64 %3, %4
+//    %6 = add i64 %3, struct_field_3              ; Constant offset
+//    %p = inttoptr i64 %6 to i32*
+//    load %p
+//    ...
+//  BB2:
+//    %7 = ptrtoint [10 x %struct]* %ptr to i64    ; CSE opportunity
+//    %8 = mul i64 %i, length_of_10xstruct         ; CSE opportunity
+//    %9 = add i64 %7, %8                          ; CSE opportunity
+//    %10 = mul i64 %j2, length_of_struct
+//    %11 = add i64 %9, %10
+//    %12 = add i64 %11, struct_field_2            ; Constant offset
+//    %p = inttoptr i64 %12 to i32*
+//    load %p2
+//    ...
+//
+// If the target uses alias analysis in codegen, this pass will lower a GEP
+// with multiple indices into multiple GEPs with a single index:
+//  BB1:
+//    %1 = bitcast [10 x %struct]* %ptr to i8*     ; CSE opportunity
+//    %2 = mul i64 %i, length_of_10xstruct         ; CSE opportunity
+//    %3 = getelementptr i8* %1, i64 %2            ; CSE opportunity
+//    %4 = mul i64 %j1, length_of_struct
+//    %5 = getelementptr i8* %3, i64 %4
+//    %6 = getelementptr i8* %5, struct_field_3    ; Constant offset
+//    %p = bitcast i8* %6 to i32*
+//    load %p
+//    ...
+//  BB2:
+//    %7 = bitcast [10 x %struct]* %ptr to i8*     ; CSE opportunity
+//    %8 = mul i64 %i, length_of_10xstruct         ; CSE opportunity
+//    %9 = getelementptr i8* %7, i64 %8            ; CSE opportunity
+//    %10 = mul i64 %j2, length_of_struct
+//    %11 = getelementptr i8* %9, i64 %10
+//    %12 = getelementptr i8* %11, struct_field_2  ; Constant offset
+//    %p2 = bitcast i8* %12 to i32*
+//    load %p2
+//    ...
+//
+// Lowering GEPs can also benefit other passes such as LICM and CGP.
+// LICM (Loop Invariant Code Motion) can not hoist/sink a GEP of multiple
+// indices if one of the index is variant. If we lower such GEP into invariant
+// parts and variant parts, LICM can hoist/sink those invariant parts.
+// CGP (CodeGen Prepare) tries to sink address calculations that match the
+// target's addressing modes. A GEP with multiple indices may not match and will
+// not be sunk. If we lower such GEP into smaller parts, CGP may sink some of
+// them. So we end up with a better addressing mode.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -92,6 +167,9 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/IR/IRBuilder.h"
 
 using namespace llvm;
 
@@ -117,18 +195,17 @@ namespace {
 /// -instcombine probably already optimized (3 * (a + 5)) to (3 * a + 15).
 class ConstantOffsetExtractor {
  public:
-  /// Extracts a constant offset from the given GEP index. It outputs the
-  /// numeric value of the extracted constant offset (0 if failed), and a
+  /// Extracts a constant offset from the given GEP index. It returns the
   /// new index representing the remainder (equal to the original index minus
-  /// the constant offset).
+  /// the constant offset), or nullptr if we cannot extract a constant offset.
   /// \p Idx    The given GEP index
-  /// \p NewIdx The new index to replace (output)
   /// \p DL     The datalayout of the module
   /// \p GEP    The given GEP
-  static int64_t Extract(Value *Idx, Value *&NewIdx, const DataLayout *DL,
-                         GetElementPtrInst *GEP);
-  /// Looks for a constant offset without extracting it. The meaning of the
-  /// arguments and the return value are the same as Extract.
+  static Value *Extract(Value *Idx, const DataLayout *DL,
+                        GetElementPtrInst *GEP);
+  /// Looks for a constant offset from the given GEP index without extracting
+  /// it. It returns the numeric value of the extracted constant offset (0 if
+  /// failed). The meaning of the arguments are the same as Extract.
   static int64_t Find(Value *Idx, const DataLayout *DL, GetElementPtrInst *GEP);
 
  private:
@@ -228,7 +305,9 @@ class ConstantOffsetExtractor {
 class SeparateConstOffsetFromGEP : public FunctionPass {
  public:
   static char ID;
-  SeparateConstOffsetFromGEP() : FunctionPass(ID) {
+  SeparateConstOffsetFromGEP(const TargetMachine *TM = nullptr,
+                             bool LowerGEP = false)
+      : FunctionPass(ID), TM(TM), LowerGEP(LowerGEP) {
     initializeSeparateConstOffsetFromGEPPass(*PassRegistry::getPassRegistry());
   }
 
@@ -251,10 +330,29 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   /// Tries to split the given GEP into a variadic base and a constant offset,
   /// and returns true if the splitting succeeds.
   bool splitGEP(GetElementPtrInst *GEP);
-  /// Finds the constant offset within each index, and accumulates them. This
-  /// function only inspects the GEP without changing it. The output
-  /// NeedsExtraction indicates whether we can extract a non-zero constant
-  /// offset from any index.
+  /// Lower a GEP with multiple indices into multiple GEPs with a single index.
+  /// Function splitGEP already split the original GEP into a variadic part and
+  /// a constant offset (i.e., AccumulativeByteOffset). This function lowers the
+  /// variadic part into a set of GEPs with a single index and applies
+  /// AccumulativeByteOffset to it.
+  /// \p Variadic                  The variadic part of the original GEP.
+  /// \p AccumulativeByteOffset    The constant offset.
+  void lowerToSingleIndexGEPs(GetElementPtrInst *Variadic,
+                              int64_t AccumulativeByteOffset);
+  /// Lower a GEP with multiple indices into ptrtoint+arithmetics+inttoptr form.
+  /// Function splitGEP already split the original GEP into a variadic part and
+  /// a constant offset (i.e., AccumulativeByteOffset). This function lowers the
+  /// variadic part into a set of arithmetic operations and applies
+  /// AccumulativeByteOffset to it.
+  /// \p Variadic                  The variadic part of the original GEP.
+  /// \p AccumulativeByteOffset    The constant offset.
+  void lowerToArithmetics(GetElementPtrInst *Variadic,
+                          int64_t AccumulativeByteOffset);
+  /// Finds the constant offset within each index and accumulates them. If
+  /// LowerGEP is true, it finds in indices of both sequential and structure
+  /// types, otherwise it only finds in sequential indices. The output
+  /// NeedsExtraction indicates whether we successfully find a non-zero constant
+  /// offset.
   int64_t accumulateByteOffset(GetElementPtrInst *GEP, bool &NeedsExtraction);
   /// Canonicalize array indices to pointer-size integers. This helps to
   /// simplify the logic of splitting a GEP. For example, if a + b is a
@@ -274,6 +372,10 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   bool canonicalizeArrayIndicesToPointerSize(GetElementPtrInst *GEP);
 
   const DataLayout *DL;
+  const TargetMachine *TM;
+  /// Whether to lower a GEP with multiple indices into arithmetic operations or
+  /// multiple GEPs with a single index.
+  bool LowerGEP;
 };
 }  // anonymous namespace
 
@@ -289,8 +391,10 @@ INITIALIZE_PASS_END(
     "Split GEPs to a variadic base and a constant offset for better CSE", false,
     false)
 
-FunctionPass *llvm::createSeparateConstOffsetFromGEPPass() {
-  return new SeparateConstOffsetFromGEP();
+FunctionPass *
+llvm::createSeparateConstOffsetFromGEPPass(const TargetMachine *TM,
+                                           bool LowerGEP) {
+  return new SeparateConstOffsetFromGEP(TM, LowerGEP);
 }
 
 bool ConstantOffsetExtractor::CanTraceInto(bool SignExtended,
@@ -542,19 +646,17 @@ Value *ConstantOffsetExtractor::removeConstOffset(unsigned ChainIndex) {
   return BO;
 }
 
-int64_t ConstantOffsetExtractor::Extract(Value *Idx, Value *&NewIdx,
-                                         const DataLayout *DL,
-                                         GetElementPtrInst *GEP) {
+Value *ConstantOffsetExtractor::Extract(Value *Idx, const DataLayout *DL,
+                                        GetElementPtrInst *GEP) {
   ConstantOffsetExtractor Extractor(DL, GEP);
   // Find a non-zero constant offset first.
   APInt ConstantOffset =
       Extractor.find(Idx, /* SignExtended */ false, /* ZeroExtended */ false,
                      GEP->isInBounds());
-  if (ConstantOffset != 0) {
-    // Separates the constant offset from the GEP index.
-    NewIdx = Extractor.rebuildWithoutConstOffset();
-  }
-  return ConstantOffset.getSExtValue();
+  if (ConstantOffset == 0)
+    return nullptr;
+  // Separates the constant offset from the GEP index.
+  return Extractor.rebuildWithoutConstOffset();
 }
 
 int64_t ConstantOffsetExtractor::Find(Value *Idx, const DataLayout *DL,
@@ -620,9 +722,114 @@ SeparateConstOffsetFromGEP::accumulateByteOffset(GetElementPtrInst *GEP,
         AccumulativeByteOffset +=
             ConstantOffset * DL->getTypeAllocSize(GTI.getIndexedType());
       }
+    } else if (LowerGEP) {
+      StructType *StTy = cast<StructType>(*GTI);
+      uint64_t Field = cast<ConstantInt>(GEP->getOperand(I))->getZExtValue();
+      // Skip field 0 as the offset is always 0.
+      if (Field != 0) {
+        NeedsExtraction = true;
+        AccumulativeByteOffset +=
+            DL->getStructLayout(StTy)->getElementOffset(Field);
+      }
     }
   }
   return AccumulativeByteOffset;
+}
+
+void SeparateConstOffsetFromGEP::lowerToSingleIndexGEPs(
+    GetElementPtrInst *Variadic, int64_t AccumulativeByteOffset) {
+  IRBuilder<> Builder(Variadic);
+  Type *IntPtrTy = DL->getIntPtrType(Variadic->getType());
+
+  Type *I8PtrTy =
+      Builder.getInt8PtrTy(Variadic->getType()->getPointerAddressSpace());
+  Value *ResultPtr = Variadic->getOperand(0);
+  if (ResultPtr->getType() != I8PtrTy)
+    ResultPtr = Builder.CreateBitCast(ResultPtr, I8PtrTy);
+
+  gep_type_iterator GTI = gep_type_begin(*Variadic);
+  // Create an ugly GEP for each sequential index. We don't create GEPs for
+  // structure indices, as they are accumulated in the constant offset index.
+  for (unsigned I = 1, E = Variadic->getNumOperands(); I != E; ++I, ++GTI) {
+    if (isa<SequentialType>(*GTI)) {
+      Value *Idx = Variadic->getOperand(I);
+      // Skip zero indices.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx))
+        if (CI->isZero())
+          continue;
+
+      APInt ElementSize = APInt(IntPtrTy->getIntegerBitWidth(),
+                                DL->getTypeAllocSize(GTI.getIndexedType()));
+      // Scale the index by element size.
+      if (ElementSize != 1) {
+        if (ElementSize.isPowerOf2()) {
+          Idx = Builder.CreateShl(
+              Idx, ConstantInt::get(IntPtrTy, ElementSize.logBase2()));
+        } else {
+          Idx = Builder.CreateMul(Idx, ConstantInt::get(IntPtrTy, ElementSize));
+        }
+      }
+      // Create an ugly GEP with a single index for each index.
+      ResultPtr = Builder.CreateGEP(ResultPtr, Idx, "uglygep");
+    }
+  }
+
+  // Create a GEP with the constant offset index.
+  if (AccumulativeByteOffset != 0) {
+    Value *Offset = ConstantInt::get(IntPtrTy, AccumulativeByteOffset);
+    ResultPtr = Builder.CreateGEP(ResultPtr, Offset, "uglygep");
+  }
+  if (ResultPtr->getType() != Variadic->getType())
+    ResultPtr = Builder.CreateBitCast(ResultPtr, Variadic->getType());
+
+  Variadic->replaceAllUsesWith(ResultPtr);
+  Variadic->eraseFromParent();
+}
+
+void
+SeparateConstOffsetFromGEP::lowerToArithmetics(GetElementPtrInst *Variadic,
+                                               int64_t AccumulativeByteOffset) {
+  IRBuilder<> Builder(Variadic);
+  Type *IntPtrTy = DL->getIntPtrType(Variadic->getType());
+
+  Value *ResultPtr = Builder.CreatePtrToInt(Variadic->getOperand(0), IntPtrTy);
+  gep_type_iterator GTI = gep_type_begin(*Variadic);
+  // Create ADD/SHL/MUL arithmetic operations for each sequential indices. We
+  // don't create arithmetics for structure indices, as they are accumulated
+  // in the constant offset index.
+  for (unsigned I = 1, E = Variadic->getNumOperands(); I != E; ++I, ++GTI) {
+    if (isa<SequentialType>(*GTI)) {
+      Value *Idx = Variadic->getOperand(I);
+      // Skip zero indices.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx))
+        if (CI->isZero())
+          continue;
+
+      APInt ElementSize = APInt(IntPtrTy->getIntegerBitWidth(),
+                                DL->getTypeAllocSize(GTI.getIndexedType()));
+      // Scale the index by element size.
+      if (ElementSize != 1) {
+        if (ElementSize.isPowerOf2()) {
+          Idx = Builder.CreateShl(
+              Idx, ConstantInt::get(IntPtrTy, ElementSize.logBase2()));
+        } else {
+          Idx = Builder.CreateMul(Idx, ConstantInt::get(IntPtrTy, ElementSize));
+        }
+      }
+      // Create an ADD for each index.
+      ResultPtr = Builder.CreateAdd(ResultPtr, Idx);
+    }
+  }
+
+  // Create an ADD for the constant offset index.
+  if (AccumulativeByteOffset != 0) {
+    ResultPtr = Builder.CreateAdd(
+        ResultPtr, ConstantInt::get(IntPtrTy, AccumulativeByteOffset));
+  }
+
+  ResultPtr = Builder.CreateIntToPtr(ResultPtr, Variadic->getType());
+  Variadic->replaceAllUsesWith(ResultPtr);
+  Variadic->eraseFromParent();
 }
 
 bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
@@ -642,32 +849,42 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
 
   if (!NeedsExtraction)
     return Changed;
-  // Before really splitting the GEP, check whether the backend supports the
-  // addressing mode we are about to produce. If no, this splitting probably
-  // won't be beneficial.
-  TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
-  if (!TTI.isLegalAddressingMode(GEP->getType()->getElementType(),
-                                 /*BaseGV=*/nullptr, AccumulativeByteOffset,
-                                 /*HasBaseReg=*/true, /*Scale=*/0)) {
-    return Changed;
+  // If LowerGEP is disabled, before really splitting the GEP, check whether the
+  // backend supports the addressing mode we are about to produce. If no, this
+  // splitting probably won't be beneficial.
+  // If LowerGEP is enabled, even the extracted constant offset can not match
+  // the addressing mode, we can still do optimizations to other lowered parts
+  // of variable indices. Therefore, we don't check for addressing modes in that
+  // case.
+  if (!LowerGEP) {
+    TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
+    if (!TTI.isLegalAddressingMode(GEP->getType()->getElementType(),
+                                   /*BaseGV=*/nullptr, AccumulativeByteOffset,
+                                   /*HasBaseReg=*/true, /*Scale=*/0)) {
+      return Changed;
+    }
   }
 
-  // Remove the constant offset in each GEP index. The resultant GEP computes
-  // the variadic base.
+  // Remove the constant offset in each sequential index. The resultant GEP
+  // computes the variadic base.
+  // Notice that we don't remove struct field indices here. If LowerGEP is
+  // disabled, a structure index is not accumulated and we still use the old
+  // one. If LowerGEP is enabled, a structure index is accumulated in the
+  // constant offset. LowerToSingleIndexGEPs or lowerToArithmetics will later
+  // handle the constant offset and won't need a new structure index.
   gep_type_iterator GTI = gep_type_begin(*GEP);
   for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I, ++GTI) {
     if (isa<SequentialType>(*GTI)) {
-      Value *NewIdx = nullptr;
-      // Tries to extract a constant offset from this GEP index.
-      int64_t ConstantOffset =
-          ConstantOffsetExtractor::Extract(GEP->getOperand(I), NewIdx, DL, GEP);
-      if (ConstantOffset != 0) {
-        assert(NewIdx != nullptr &&
-               "ConstantOffset != 0 implies NewIdx is set");
+      // Splits this GEP index into a variadic part and a constant offset, and
+      // uses the variadic part as the new index.
+      Value *NewIdx =
+          ConstantOffsetExtractor::Extract(GEP->getOperand(I), DL, GEP);
+      if (NewIdx != nullptr) {
         GEP->setOperand(I, NewIdx);
       }
     }
   }
+
   // Clear the inbounds attribute because the new index may be off-bound.
   // e.g.,
   //
@@ -688,6 +905,21 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   // TODO(jingyue): do some range analysis to keep as many inbounds as
   // possible. GEPs with inbounds are more friendly to alias analysis.
   GEP->setIsInBounds(false);
+
+  // Lowers a GEP to either GEPs with a single index or arithmetic operations.
+  if (LowerGEP) {
+    // As currently BasicAA does not analyze ptrtoint/inttoptr, do not lower to
+    // arithmetic operations if the target uses alias analysis in codegen.
+    if (TM && TM->getSubtarget<TargetSubtargetInfo>().useAA())
+      lowerToSingleIndexGEPs(GEP, AccumulativeByteOffset);
+    else
+      lowerToArithmetics(GEP, AccumulativeByteOffset);
+    return true;
+  }
+
+  // No need to create another GEP if the accumulative byte offset is 0.
+  if (AccumulativeByteOffset == 0)
+    return true;
 
   // Offsets the base with the accumulative byte offset.
   //

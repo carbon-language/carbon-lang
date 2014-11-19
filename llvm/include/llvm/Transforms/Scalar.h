@@ -395,7 +395,9 @@ FunctionPass *createAddDiscriminatorsPass();
 //
 // SeparateConstOffsetFromGEP - Split GEPs for better CSE
 //
-FunctionPass *createSeparateConstOffsetFromGEPPass();
+FunctionPass *
+createSeparateConstOffsetFromGEPPass(const TargetMachine *TM = nullptr,
+                                     bool LowerGEP = false);
 
 //===----------------------------------------------------------------------===//
 //
