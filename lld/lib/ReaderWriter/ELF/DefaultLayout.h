@@ -438,6 +438,8 @@ DefaultLayout<ELFT>::getOutputSectionName(StringRef inputSectionName,
                                           StringRef /* path */) const {
   return llvm::StringSwitch<StringRef>(inputSectionName)
       .StartsWith(".text", ".text")
+      .StartsWith(".ctors", ".ctors")
+      .StartsWith(".dtors", ".dtors")
       .StartsWith(".rodata", ".rodata")
       .StartsWith(".gcc_except_table", ".gcc_except_table")
       .StartsWith(".data.rel.ro", ".data.rel.ro")
@@ -471,6 +473,8 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
   case ORDER_FINI:
   case ORDER_RODATA:
   case ORDER_EH_FRAME:
+  case ORDER_CTORS:
+  case ORDER_DTORS:
     return llvm::ELF::PT_LOAD;
 
   case ORDER_RO_NOTE:
@@ -479,10 +483,6 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
 
   case ORDER_DYNAMIC:
     return llvm::ELF::PT_DYNAMIC;
-
-  case ORDER_CTORS:
-  case ORDER_DTORS:
-    return llvm::ELF::PT_GNU_RELRO;
 
   case ORDER_EH_FRAMEHDR:
     return llvm::ELF::PT_GNU_EH_FRAME;
