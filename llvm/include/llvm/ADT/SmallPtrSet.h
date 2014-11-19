@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <cstring>
 #include <iterator>
+#include <utility>
 
 namespace llvm {
 
