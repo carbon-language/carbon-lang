@@ -275,5 +275,11 @@ TEST_F(FormatTestJava, MethodDeclarations) {
                getStyleWithColumns(40));
 }
 
+TEST_F(FormatTestJava, CppKeywords) {
+  verifyFormat("public void union(Type a, Type b);");
+  verifyFormat("public void struct(Object o);");
+  verifyFormat("public void delete(Object o);");
+}
+
 } // end namespace tooling
 } // end namespace clang
