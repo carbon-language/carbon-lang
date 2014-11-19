@@ -6,7 +6,7 @@ struct A {
   virtual void f() {}
   virtual void g() {}
 };
-// CHECK-NOT: warning:
+// CHECK-NOT: warning
 struct B : public A {
   void placeholder_for_f() {}
 // CHECK-SANITY: [[@LINE-1]]:8: warning: Annotate this
