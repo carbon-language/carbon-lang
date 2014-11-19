@@ -302,15 +302,11 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
   uint64_t ordinal = 0;
 
   for (auto &got : _localGotVector) {
-    DEBUG_WITH_TYPE("MipsGOT", llvm::dbgs() << "[ GOT ] Adding L "
-                                            << got->name() << "\n");
     got->setOrdinal(ordinal++);
     mf->addAtom(*got);
   }
 
   for (auto &got : _globalGotVector) {
-    DEBUG_WITH_TYPE("MipsGOT", llvm::dbgs() << "[ GOT ] Adding G "
-                                            << got->name() << "\n");
     got->setOrdinal(ordinal++);
     mf->addAtom(*got);
   }
@@ -321,15 +317,11 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
   }
 
   for (auto &plt : _pltVector) {
-    DEBUG_WITH_TYPE("MipsGOT", llvm::dbgs() << "[ PLT ] Adding " << plt->name()
-                                            << "\n");
     plt->setOrdinal(ordinal++);
     mf->addAtom(*plt);
   }
 
   for (auto &gotplt : _gotpltVector) {
-    DEBUG_WITH_TYPE("MipsGOT", llvm::dbgs() << "[ GOTPLT ] Adding "
-                                            << gotplt->name() << "\n");
     gotplt->setOrdinal(ordinal++);
     mf->addAtom(*gotplt);
   }
@@ -599,12 +591,6 @@ const GOTAtom *RelocationPass<ELFT>::getLocalGOTEntry(const Reference &ref) {
   else
     ga->addReferenceELF_Mips(R_MIPS_32, 0, a, 0);
 
-  DEBUG_WITH_TYPE("MipsGOT", {
-    ga->_name = "__got_";
-    ga->_name += a->name();
-    llvm::dbgs() << "[ GOT ] Create L " << a->name() << "\n";
-  });
-
   return ga;
 }
 
@@ -622,12 +608,6 @@ const GOTAtom *RelocationPass<ELFT>::getGlobalGOTEntry(const Atom *a) {
 
   if (const DefinedAtom *da = dyn_cast<DefinedAtom>(a))
     ga->addReferenceELF_Mips(R_MIPS_32, 0, da, 0);
-
-  DEBUG_WITH_TYPE("MipsGOT", {
-    ga->_name = "__got_";
-    ga->_name += a->name();
-    llvm::dbgs() << "[ GOT ] Create G " << a->name() << "\n";
-  });
 
   return ga;
 }
@@ -685,15 +665,6 @@ template <typename ELFT> void RelocationPass<ELFT>::createPLTHeader() {
 
   auto pa = new (_file._alloc) PLT0Atom(ga0, _file);
   _pltVector.push_back(pa);
-
-  DEBUG_WITH_TYPE("MipsGOT", {
-    pa->_name = "__plt0";
-    llvm::dbgs() << "[ PLT ] Create PLT0\n";
-    ga0->_name = "__gotplt0";
-    llvm::dbgs() << "[ GOTPLT ] Create GOTPLT0\n";
-    ga1->_name = "__gotplt1";
-    llvm::dbgs() << "[ GOTPLT ] Create GOTPLT1\n";
-  });
 }
 
 template <typename ELFT>
@@ -721,15 +692,6 @@ const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   if (_hasStaticRelocations.count(a) && _requiresPtrEquality.count(a))
     pa->addReferenceELF_Mips(LLD_R_MIPS_STO_PLT, 0, a, 0);
 
-  DEBUG_WITH_TYPE("MipsGOT", {
-    pa->_name = "__plt_";
-    pa->_name += a->name();
-    llvm::dbgs() << "[ PLT ] Create " << a->name() << "\n";
-    ga->_name = "__got_plt_";
-    ga->_name += a->name();
-    llvm::dbgs() << "[ GOTPLT ] Create " << a->name() << "\n";
-  });
-
   return pa;
 }
 
@@ -742,11 +704,6 @@ const LA25Atom *RelocationPass<ELFT>::getLA25Entry(const Atom *a) {
   auto sa = new (_file._alloc) LA25Atom(a, _file);
   _la25Map[a] = sa;
   _la25Vector.push_back(sa);
-
-  DEBUG_WITH_TYPE("MipsGOT", {
-    sa->_name = ".pic.";
-    sa->_name += a->name();
-  });
 
   return sa;
 }
