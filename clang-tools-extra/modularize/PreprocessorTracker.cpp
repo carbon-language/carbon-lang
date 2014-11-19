@@ -957,7 +957,7 @@ public:
       pushHeaderHandle(H);
     // Check for nested header.
     if (!InNestedHeader)
-      InNestedHeader = !HeadersInThisCompile.insert(H);
+      InNestedHeader = !HeadersInThisCompile.insert(H).second;
   }
   // Handle exiting a header source file.
   void handleHeaderExit(llvm::StringRef HeaderPath) {
