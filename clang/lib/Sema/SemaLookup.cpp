@@ -4405,7 +4405,8 @@ std::string TypoCorrection::getAsString(const LangOptions &LO) const {
   return CorrectionName.getAsString();
 }
 
-bool CorrectionCandidateCallback::ValidateCandidate(const TypoCorrection &candidate) {
+bool CorrectionCandidateCallback::ValidateCandidate(
+    const TypoCorrection &candidate) {
   if (!candidate.isResolved())
     return true;
 

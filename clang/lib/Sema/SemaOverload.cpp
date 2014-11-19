@@ -4817,9 +4817,8 @@ Sema::PerformObjectArgumentInitialization(Expr *From,
 
   // Note that we always use the true parent context when performing
   // the actual argument initialization.
-  ImplicitConversionSequence ICS
-    = TryObjectArgumentInitialization(*this, From->getType(), FromClassification,
-                                      Method, Method->getParent());
+  ImplicitConversionSequence ICS = TryObjectArgumentInitialization(
+      *this, From->getType(), FromClassification, Method, Method->getParent());
   if (ICS.isBad()) {
     if (ICS.Bad.Kind == BadConversionSequence::bad_qualifiers) {
       Qualifiers FromQs = FromRecordType.getQualifiers();
@@ -11698,7 +11697,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   if (checkArgPlaceholdersForOverload(*this, Args, UnbridgedCasts))
     return ExprError();
 
-  assert(Object.get()->getType()->isRecordType() && "Requires object type argument");
+  assert(Object.get()->getType()->isRecordType() &&
+         "Requires object type argument");
   const RecordType *Record = Object.get()->getType()->getAs<RecordType>();
 
   // C++ [over.call.object]p1:
