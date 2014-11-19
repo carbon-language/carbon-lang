@@ -62,6 +62,7 @@ entry:
 ; CHECK3: call void @__sanitizer_cov
 ; CHECK3: call void @__sanitizer_cov
 ; CHECK3: call void @__sanitizer_cov
+; CHECK3-NOT: ret void
 ; CHECK3: call void @__sanitizer_cov
 ; CHECK3-NOT: call void @__sanitizer_cov
 ; CHECK3: ret void

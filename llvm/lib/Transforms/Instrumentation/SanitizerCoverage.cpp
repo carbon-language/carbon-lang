@@ -56,6 +56,8 @@ using namespace llvm;
 static const char *const kSanCovModuleInitName = "__sanitizer_cov_module_init";
 static const char *const kSanCovName = "__sanitizer_cov";
 static const char *const kSanCovIndirCallName = "__sanitizer_cov_indir_call16";
+static const char *const kSanCovTraceEnter = "__sanitizer_cov_trace_func_enter";
+static const char *const kSanCovTraceBB = "__sanitizer_cov_trace_basic_block";
 static const char *const kSanCovModuleCtorName = "sancov.module_ctor";
 static const uint64_t    kSanCtorAndDtorPriority = 1;
 
@@ -71,15 +73,19 @@ static cl::opt<int> ClCoverageBlockThreshold(
              "are more than this number of blocks."),
     cl::Hidden, cl::init(1500));
 
+static cl::opt<bool>
+    ClExperimentalTracing("sanitizer-coverage-experimental-tracing",
+                          cl::desc("Experimental basic-block tracing: insert "
+                                   "callbacks at every basic block"),
+                          cl::Hidden, cl::init(false));
+
 namespace {
 
 class SanitizerCoverageModule : public ModulePass {
  public:
-  SanitizerCoverageModule(int CoverageLevel = 0)
+   SanitizerCoverageModule(int CoverageLevel = 0)
        : ModulePass(ID),
-         CoverageLevel(std::max(CoverageLevel, (int)ClCoverageLevel)) {
-    initializeBreakCriticalEdgesPass(*PassRegistry::getPassRegistry());
-  }
+         CoverageLevel(std::max(CoverageLevel, (int)ClCoverageLevel)) {}
   bool runOnModule(Module &M) override;
   bool runOnFunction(Function &F);
   static char ID;  // Pass identification, replacement for typeid
@@ -88,8 +94,6 @@ class SanitizerCoverageModule : public ModulePass {
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    if (CoverageLevel >= 3)
-      AU.addRequiredID(BreakCriticalEdgesID);
     AU.addRequired<DataLayoutPass>();
   }
 
@@ -98,10 +102,12 @@ class SanitizerCoverageModule : public ModulePass {
                                       ArrayRef<Instruction *> IndirCalls);
   bool InjectCoverage(Function &F, ArrayRef<BasicBlock *> AllBlocks,
                       ArrayRef<Instruction *> IndirCalls);
+  bool InjectTracing(Function &F, ArrayRef<BasicBlock *> AllBlocks);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB);
   Function *SanCovFunction;
   Function *SanCovIndirCallFunction;
   Function *SanCovModuleInit;
+  Function *SanCovTraceEnter, *SanCovTraceBB;
   Type *IntptrTy;
   LLVMContext *C;
 
@@ -141,6 +147,13 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
       kSanCovModuleInitName, Type::getVoidTy(*C), IntptrTy, nullptr));
   SanCovModuleInit->setLinkage(Function::ExternalLinkage);
 
+  if (ClExperimentalTracing) {
+    SanCovTraceEnter = checkInterfaceFunction(
+        M.getOrInsertFunction(kSanCovTraceEnter, VoidTy, IntptrTy, nullptr));
+    SanCovTraceBB = checkInterfaceFunction(
+        M.getOrInsertFunction(kSanCovTraceBB, VoidTy, IntptrTy, nullptr));
+  }
+
   for (auto &F : M)
     runOnFunction(F);
 
@@ -155,6 +168,8 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
   // For now instrument only functions that will also be asan-instrumented.
   if (!F.hasFnAttribute(Attribute::SanitizeAddress))
     return false;
+  if (CoverageLevel >= 3)
+    SplitAllCriticalEdges(F, this);
   SmallVector<Instruction*, 8> IndirCalls;
   SmallVector<BasicBlock*, 16> AllBlocks;
   for (auto &BB : F) {
@@ -167,6 +182,25 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
       }
   }
   InjectCoverage(F, AllBlocks, IndirCalls);
+  InjectTracing(F, AllBlocks);
+  return true;
+}
+
+// Experimental support for tracing.
+// Basicaly, insert a callback at the beginning of every basic block.
+// Every callback gets a pointer to a uniqie global for internal storage.
+bool SanitizerCoverageModule::InjectTracing(Function &F,
+                                            ArrayRef<BasicBlock *> AllBlocks) {
+  if (!ClExperimentalTracing) return false;
+  Type *Ty = ArrayType::get(IntptrTy, 1);  // May need to use more words later.
+  for (auto BB : AllBlocks) {
+    IRBuilder<> IRB(BB->getFirstInsertionPt());
+    GlobalVariable *TraceCache = new GlobalVariable(
+        *F.getParent(), Ty, false, GlobalValue::PrivateLinkage,
+        Constant::getNullValue(Ty), "__sancov_gen_trace_cache");
+    IRB.CreateCall(&F.getEntryBlock() == BB ? SanCovTraceEnter : SanCovTraceBB,
+                   IRB.CreatePointerCast(TraceCache, IntptrTy));
+  }
   return true;
 }
 
