@@ -39,8 +39,9 @@ public:
       name = name.copy(_allocator);
       content = content.copy(_allocator);
     }
-    DefinedAtom::Alignment align(inSection->alignment,
-                                 sectionOffset % (1 << inSection->alignment));
+    DefinedAtom::Alignment align(
+        inSection->alignment,
+        sectionOffset % ((uint64_t)1 << inSection->alignment));
     MachODefinedAtom *atom =
         new (_allocator) MachODefinedAtom(*this, name, scope, type, merge,
                                           thumb, noDeadStrip, content, align);
@@ -61,8 +62,9 @@ public:
       content = content.copy(_allocator);
       sectionName = sectionName.copy(_allocator);
     }
-    DefinedAtom::Alignment align(inSection->alignment,
-                                 sectionOffset % (1 << inSection->alignment));
+    DefinedAtom::Alignment align(
+        inSection->alignment,
+        sectionOffset % ((uint64_t)1 << inSection->alignment));
     MachODefinedCustomSectionAtom *atom =
         new (_allocator) MachODefinedCustomSectionAtom(*this, name, scope, type,
                                                         merge, thumb,
@@ -79,8 +81,9 @@ public:
       // Make a copy of the atom's name and content that is owned by this file.
       name = name.copy(_allocator);
     }
-    DefinedAtom::Alignment align(inSection->alignment,
-                                 sectionOffset % (1 << inSection->alignment));
+    DefinedAtom::Alignment align(
+        inSection->alignment,
+        sectionOffset % ((uint64_t)1 << inSection->alignment));
     MachODefinedAtom *atom =
        new (_allocator) MachODefinedAtom(*this, name, scope, size, noDeadStrip,
                                          align);
