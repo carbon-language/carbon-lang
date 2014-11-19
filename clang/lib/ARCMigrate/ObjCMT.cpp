@@ -102,7 +102,7 @@ public:
   llvm::SmallPtrSet<ObjCProtocolDecl *, 32> ObjCProtocolDecls;
   llvm::SmallVector<const Decl *, 8> CFFunctionIBCandidates;
   llvm::StringSet<> WhiteListFilenames;
-  
+
   ObjCMigrateASTConsumer(StringRef migrateDir,
                          unsigned astMigrateActions,
                          FileRemapper &remapper,

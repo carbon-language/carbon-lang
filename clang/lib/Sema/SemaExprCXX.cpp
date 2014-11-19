@@ -587,12 +587,12 @@ Sema::ActOnCXXThrow(Scope *S, SourceLocation OpLoc, Expr *Ex) {
     //   When certain criteria are met, an implementation is allowed to omit the
     //   copy/move construction of a class object [...]
     //
-    //     - in a throw-expression, when the operand is the name of a 
+    //     - in a throw-expression, when the operand is the name of a
     //       non-volatile automatic object (other than a function or catch-
     //       clause parameter) whose scope does not extend beyond the end of the
-    //       innermost enclosing try-block (if there is one), the copy/move 
-    //       operation from the operand to the exception object (15.1) can be 
-    //       omitted by constructing the automatic object directly into the 
+    //       innermost enclosing try-block (if there is one), the copy/move
+    //       operation from the operand to the exception object (15.1) can be
+    //       omitted by constructing the automatic object directly into the
     //       exception object
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Ex->IgnoreParens()))
       if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {

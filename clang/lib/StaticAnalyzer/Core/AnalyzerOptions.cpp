@@ -203,7 +203,7 @@ int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
   SmallString<10> StrBuf;
   llvm::raw_svector_ostream OS(StrBuf);
   OS << DefaultVal;
-  
+
   StringRef V = Config.insert(std::make_pair(Name, OS.str())).first->second;
   int Res = DefaultVal;
   bool b = V.getAsInteger(10, Res);

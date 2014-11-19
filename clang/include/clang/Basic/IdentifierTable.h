@@ -494,7 +494,7 @@ public:
     // Make sure getName() knows how to find the IdentifierInfo
     // contents.
     II->Entry = &Entry;
-    
+
     // If this is the 'import' contextual keyword, mark it as such.
     if (Name.equals("import"))
       II->setModulesImport(true);

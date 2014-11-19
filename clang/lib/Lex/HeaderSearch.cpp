@@ -790,7 +790,7 @@ const FileEntry *HeaderSearch::LookupFile(
         return MSFE;
       }
 
-      LookupFileCacheInfo &CacheLookup  = LookupFileCache[Filename];
+      LookupFileCacheInfo &CacheLookup = LookupFileCache[Filename];
       CacheLookup.HitIdx = LookupFileCache[ScratchFilename].HitIdx;
       // FIXME: SuggestedModule.
       return FE;

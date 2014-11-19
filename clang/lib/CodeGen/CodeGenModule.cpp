@@ -2606,7 +2606,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
   llvm::StringMapEntry<llvm::Constant*> &Entry =
     GetConstantStringEntry(CFConstantStringMap, Literal, StringLength);
-  
+
   if (auto *C = Entry.second)
     return C;
   
@@ -2680,8 +2680,8 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   
   // String pointer.
   llvm::Constant *C =
-    llvm::ConstantDataArray::getString(VMContext, Entry.first());
-  
+      llvm::ConstantDataArray::getString(VMContext, Entry.first());
+
   llvm::GlobalValue::LinkageTypes Linkage;
   bool isConstant;
   Linkage = llvm::GlobalValue::PrivateLinkage;
@@ -2713,7 +2713,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
                      ? NSStringNonFragileABISection
                      : NSStringSection);
   Entry.second = GV;
-  
+
   return GV;
 }
 

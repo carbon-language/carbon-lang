@@ -97,11 +97,10 @@ int ListWarnings::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
   double avgDiagsPerFlag = (double) Flagged.size() / flagHistogram.size();
   out << "  Average number of diagnostics per flag: "
       << llvm::format("%.4g", avgDiagsPerFlag) << '\n';
-    
+
   out << "  Number in -Wpedantic (not covered by other -W flags): "
-      << flagHistogram["pedantic"].size()
-      << '\n';
-  
+      << flagHistogram["pedantic"].size() << '\n';
+
   out << '\n';
   
   return 0;
