@@ -302,9 +302,7 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   _layout.addSection(_shdrtab.get());
 
   for (auto sec : _layout.sections()) {
-    // TODO: use findOutputSection
-    auto section = dyn_cast<Section<ELFT>>(sec);
-    if (!section || section->outputSectionName() != ".eh_frame")
+    if (sec->name() != ".eh_frame")
       continue;
     _ehFrameHeader.reset(new (_alloc) EHFrameHeader<ELFT>(
         _context, ".eh_frame_hdr", _layout,

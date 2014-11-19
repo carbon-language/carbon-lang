@@ -175,14 +175,8 @@ public:
   SectionOrder getSectionOrder(StringRef name, int32_t contentType,
                                int32_t contentPermissions) override;
 
-  /// \brief Return the name of the input section by decoding the input
-  /// sectionChoice.
-  virtual StringRef getInputSectionName(const DefinedAtom *da) const;
-
-  /// \brief Return the name of the output section from the input section and
-  /// path.
-  virtual StringRef getOutputSectionName(StringRef inputSectionName,
-                                         StringRef path) const;
+  /// \brief This maps the input sections to the output section names
+  virtual StringRef getSectionName(const DefinedAtom *da) const;
 
   /// \brief Gets or creates a section.
   AtomSection<ELFT> *
@@ -408,8 +402,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
 
 /// \brief This maps the input sections to the output section names
 template <class ELFT>
-StringRef
-DefaultLayout<ELFT>::getInputSectionName(const DefinedAtom *da) const {
+StringRef DefaultLayout<ELFT>::getSectionName(const DefinedAtom *da) const {
   if (da->sectionChoice() == DefinedAtom::sectionBasedOnContent) {
     switch (da->contentType()) {
     case DefinedAtom::typeCode:
@@ -428,15 +421,7 @@ DefaultLayout<ELFT>::getInputSectionName(const DefinedAtom *da) const {
       break;
     }
   }
-  return da->customSectionName();
-}
-
-/// \brief This maps the input sections to the output section names
-template <class ELFT>
-StringRef
-DefaultLayout<ELFT>::getOutputSectionName(StringRef inputSectionName,
-                                          StringRef /* path */) const {
-  return llvm::StringSwitch<StringRef>(inputSectionName)
+  return llvm::StringSwitch<StringRef>(da->customSectionName())
       .StartsWith(".text", ".text")
       .StartsWith(".ctors", ".ctors")
       .StartsWith(".dtors", ".dtors")
@@ -449,7 +434,7 @@ DefaultLayout<ELFT>::getOutputSectionName(StringRef inputSectionName,
       .StartsWith(".tbss", ".tbss")
       .StartsWith(".init_array", ".init_array")
       .StartsWith(".fini_array", ".fini_array")
-      .Default(inputSectionName);
+      .Default(da->customSectionName());
 }
 
 /// \brief Gets the segment for a output section
@@ -562,7 +547,6 @@ DefaultLayout<ELFT>::getSection(StringRef sectionName, int32_t contentType,
       getSectionOrder(sectionName, contentType, permissions);
   AtomSection<ELFT> *newSec =
       createSection(sectionName, contentType, permissions, sectionOrder);
-  newSec->setOutputSectionName(getOutputSectionName(sectionName, path));
   newSec->setOrder(sectionOrder);
   _sections.push_back(newSec);
   _sectionMap.insert(std::make_pair(sectionKey, newSec));
@@ -581,7 +565,7 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
         definedAtom->permissions();
     const DefinedAtom::ContentType contentType = definedAtom->contentType();
 
-    StringRef sectionName = getInputSectionName(definedAtom);
+    StringRef sectionName = getSectionName(definedAtom);
     AtomSection<ELFT> *section = getSection(
         sectionName, contentType, permissions, definedAtom->file().path());
 
@@ -628,18 +612,15 @@ template <class ELFT> void DefaultLayout<ELFT>::createOutputSections() {
   OutputSection<ELFT> *outputSection;
 
   for (auto &si : _sections) {
-    Section<ELFT> *section = dyn_cast<Section<ELFT>>(si);
-    if (!section)
-      continue;
     const std::pair<StringRef, OutputSection<ELFT> *> currentOutputSection(
-        section->outputSectionName(), nullptr);
+        si->name(), nullptr);
     std::pair<typename OutputSectionMapT::iterator, bool> outputSectionInsert(
         _outputSectionMap.insert(currentOutputSection));
     if (!outputSectionInsert.second) {
       outputSection = outputSectionInsert.first->second;
     } else {
       outputSection = new (_allocator.Allocate<OutputSection<ELFT>>())
-          OutputSection<ELFT>(section->outputSectionName());
+          OutputSection<ELFT>(si->name());
       _outputSections.push_back(outputSection);
       outputSectionInsert.first->second = outputSection;
     }
