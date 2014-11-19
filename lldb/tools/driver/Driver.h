@@ -28,6 +28,13 @@ class IOChannel;
 class Driver : public lldb::SBBroadcaster
 {
 public:
+    typedef enum CommandPlacement
+    {
+        eCommandPlacementBeforeFile,
+        eCommandPlacementAfterFile,
+        eCommandPlacementAfterCrash,
+    } CommandPlacement;
+
     Driver ();
 
     virtual
@@ -52,7 +59,7 @@ public:
     GetScriptLanguage() const;
 
     void
-    WriteInitialCommands (bool before_file, lldb::SBStream &strm);
+    WriteCommandsForSourcing (CommandPlacement placement, lldb::SBStream &strm);
     
     bool
     GetDebugMode() const;
@@ -68,7 +75,7 @@ public:
         Clear();
 
         void
-        AddInitialCommand (const char *command, bool before_file, bool is_file, lldb::SBError &error);
+        AddInitialCommand (const char *command, CommandPlacement placement, bool is_file, lldb::SBError &error);
     
         //static OptionDefinition m_cmd_option_table[];
 
@@ -78,6 +85,7 @@ public:
         std::string m_crash_log;
         std::vector<std::pair<bool,std::string> > m_initial_commands;
         std::vector<std::pair<bool,std::string> > m_after_file_commands;
+        std::vector<std::pair<bool,std::string> > m_after_crash_commands;
         bool m_debug_mode;
         bool m_source_quietly;
         bool m_print_version;
