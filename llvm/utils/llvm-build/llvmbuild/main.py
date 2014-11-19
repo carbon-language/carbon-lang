@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import filecmp
 import os
 import sys
 
@@ -382,7 +383,7 @@ subdirectories = %s
 
         # Write out the library table.
         make_install_dir(os.path.dirname(output_path))
-        f = open(output_path, 'w')
+        f = open(output_path+'.new', 'w')
         f.write("""\
 //===- llvm-build generated file --------------------------------*- C++ -*-===//
 //
@@ -419,6 +420,14 @@ subdirectories = %s
                           for dep in required_names)))
         f.write('};\n')
         f.close()
+
+        if not os.path.isfile(output_path):
+            os.rename(output_path+'.new', output_path)
+        elif filecmp.cmp(output_path, output_path+'.new'):
+            os.remove(output_path+'.new')
+        else:
+            os.remove(output_path)
+            os.rename(output_path+'.new', output_path)
 
     def get_required_libraries_for_component(self, ci, traverse_groups = False):
         """
