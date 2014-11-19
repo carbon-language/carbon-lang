@@ -154,13 +154,8 @@ __isl_give isl_pw_aff *SCEVAffinator::visitConstant(const SCEVConstant *Expr) {
   v = isl_valFromAPInt(Ctx, Value->getValue(), /* isSigned */ true);
 
   isl_space *Space = isl_space_set_alloc(Ctx, 0, NbLoopSpaces);
-  isl_local_space *ls = isl_local_space_from_space(isl_space_copy(Space));
-  isl_aff *Affine = isl_aff_zero_on_domain(ls);
-  isl_set *Domain = isl_set_universe(Space);
-
-  Affine = isl_aff_add_constant_val(Affine, v);
-
-  return isl_pw_aff_alloc(Domain, Affine);
+  isl_local_space *ls = isl_local_space_from_space(Space);
+  return isl_pw_aff_from_aff(isl_aff_val_on_domain(ls, v));
 }
 
 __isl_give isl_pw_aff *
