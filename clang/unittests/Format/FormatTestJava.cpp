@@ -164,6 +164,20 @@ TEST_F(FormatTestJava, EnumDeclarations) {
                "  public void f() {\n"
                "  }\n"
                "}");
+  verifyFormat("private enum SomeEnum implements Foo<?, B> {\n"
+               "  ABC {\n"
+               "    @Override\n"
+               "    public String toString() {\n"
+               "      return \"ABC\";\n"
+               "    }\n"
+               "  },\n"
+               "  CDE {\n"
+               "    @Override\n"
+               "    public String toString() {\n"
+               "      return \"CDE\";\n"
+               "    }\n"
+               "  };\n"
+               "}");
 }
 
 TEST_F(FormatTestJava, ThrowsDeclarations) {

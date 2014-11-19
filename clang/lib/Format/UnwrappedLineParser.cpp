@@ -1331,23 +1331,24 @@ void UnwrappedLineParser::parseAccessSpecifier() {
 void UnwrappedLineParser::parseEnum() {
   // Won't be 'enum' for NS_ENUMs.
   if (FormatTok->Tok.is(tok::kw_enum))
-    nextToken(); 
+    nextToken();
 
   // Eat up enum class ...
   if (FormatTok->Tok.is(tok::kw_class) || FormatTok->Tok.is(tok::kw_struct))
     nextToken();
   while (FormatTok->Tok.getIdentifierInfo() ||
-         FormatTok->isOneOf(tok::colon, tok::coloncolon)) {
+         FormatTok->isOneOf(tok::colon, tok::coloncolon, tok::less,
+                            tok::greater, tok::comma, tok::question)) {
     nextToken();
     // We can have macros or attributes in between 'enum' and the enum name.
-    if (FormatTok->Tok.is(tok::l_paren))
+    if (FormatTok->is(tok::l_paren))
       parseParens();
-    if (FormatTok->Tok.is(tok::identifier))
+    if (FormatTok->is(tok::identifier))
       nextToken();
   }
 
   // Just a declaration or something is wrong.
-  if (!FormatTok->is(tok::l_brace))
+  if (FormatTok->isNot(tok::l_brace))
     return;
   FormatTok->BlockKind = BK_Block;
 
