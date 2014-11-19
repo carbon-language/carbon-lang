@@ -15,7 +15,7 @@ define i32 @test1(i32 %A, i32 %B) {
 ; With sub reassociation, constant folding can eliminate the uses of %a.
 define i32 @test2(i32 %a, i32 %b, i32 %c) nounwind  {
 ; CHECK-LABEL: @test2
-; CHECK-NEXT: %sum = add i32 %b, %c
+; CHECK-NEXT: %sum = add i32 %c, %b
 ; CHECK-NEXT: %tmp7 = sub i32 0, %sum
 ; CHECK-NEXT: ret i32 %tmp7
 

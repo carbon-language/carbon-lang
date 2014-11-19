@@ -17,7 +17,7 @@ define i32 @test2(i32 %reg109, i32 %reg1111) {
   ret i32 %reg117
 
 ; CHECK-LABEL: @test2
-; CHECK-NEXT: %reg117 = add i32 %reg109, %reg1111
+; CHECK-NEXT: %reg117 = add i32 %reg1111, %reg109
 ; CHECK-NEXT: ret i32 %reg117
 }
 
@@ -121,7 +121,7 @@ define i32 @test7(i32 %A, i32 %B, i32 %C) {
   ret i32 %r
 
 ; CHECK-LABEL: @test7
-; CHECK-NEXT: add i32 %B, %C
+; CHECK-NEXT: add i32 %C, %B
 ; CHECK-NEXT: mul i32 
 ; CHECK-NEXT: mul i32 
 ; CHECK-NEXT: ret i32 
@@ -135,7 +135,7 @@ define i32 @test8(i32 %X, i32 %Y, i32 %Z) {
   ret i32 %C
 
 ; CHECK-LABEL: @test8
-; CHECK-NEXT: %A = mul i32 %X, %Y
+; CHECK-NEXT: %A = mul i32 %Y, %X
 ; CHECK-NEXT: %C = sub i32 %Z, %A
 ; CHECK-NEXT: ret i32 %C
 }

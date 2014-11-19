@@ -27,11 +27,11 @@ define void @test2(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; The initial add doesn't change so should not lose the nsw flag.
 ; CHECK-LABEL: @test2(
   %a0 = add nsw i32 %b, %a
-; CHECK-NEXT: %a0 = add nsw i32 %a, %b
+; CHECK-NEXT: %a0 = add nsw i32 %b, %a
   %a1 = add nsw i32 %a0, %d
 ; CHECK-NEXT: %a1 = add i32 %a0, %c
   %a2 = add nsw i32 %a1, %c
-; CHECK-NEXT: %a2 = add i32 %d, %a1
+; CHECK-NEXT: %a2 = add i32 %a1, %d
   call void @use(i32 %a2)
 ; CHECK-NEXT: call void @use
   ret void

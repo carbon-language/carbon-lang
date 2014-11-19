@@ -53,7 +53,7 @@ define double @test3(double %x, double %y) {
 define i64 @test4(i64 %x, i64 %y) {
 ; CHECK-LABEL: @test4
 ; CHECK-NEXT: mul i64 %y, 1234
-; CHECK-NEXT: add i64 %x, %mul
+; CHECK-NEXT: add i64 %mul, %x
 ; CHECK-NEXT: ret i64 %sub
 
   %mul = mul i64 %y, -1234

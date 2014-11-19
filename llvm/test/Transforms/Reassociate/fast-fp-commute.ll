@@ -4,8 +4,8 @@ declare void @use(float)
 
 define void @test1(float %x, float %y) {
 ; CHECK-LABEL: test1
-; CHECK: fmul fast float %x, %y
-; CHECK: fmul fast float %x, %y
+; CHECK: fmul fast float %y, %x
+; CHECK: fmul fast float %y, %x
 ; CHECK: fsub fast float %1, %2
 ; CHECK: call void @use(float %{{.*}})
 ; CHECK: call void @use(float %{{.*}})
@@ -20,8 +20,8 @@ define void @test1(float %x, float %y) {
 
 define float @test2(float %x, float %y) {
 ; CHECK-LABEL: test2
-; CHECK-NEXT: fmul fast float %x, %y
-; CHECK-NEXT: fmul fast float %x, %y
+; CHECK-NEXT: fmul fast float %y, %x
+; CHECK-NEXT: fmul fast float %y, %x
 ; CHECK-NEXT: fsub fast float %1, %2
 ; CHECK-NEXT: ret float %3
 
@@ -33,8 +33,8 @@ define float @test2(float %x, float %y) {
 
 define float @test3(float %x, float %y) {
 ; CHECK-LABEL: test3
-; CHECK-NEXT: %factor = fmul fast float %x, 2.000000e+00
-; CHECK-NEXT: %tmp1 = fmul fast float %factor, %y
+; CHECK-NEXT: %factor = fmul fast float %y, 2.000000e+00
+; CHECK-NEXT: %tmp1 = fmul fast float %factor, %x
 ; CHECK-NEXT: ret float %tmp1
 
   %1 = fmul fast float %x, %y

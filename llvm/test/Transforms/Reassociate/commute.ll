@@ -4,8 +4,8 @@ declare void @use(i32)
 
 define void @test1(i32 %x, i32 %y) {
 ; CHECK-LABEL: test1
-; CHECK: mul i32 %x, %y
-; CHECK: mul i32 %x, %y
+; CHECK: mul i32 %y, %x
+; CHECK: mul i32 %y, %x
 ; CHECK: sub i32 %1, %2
 ; CHECK: call void @use(i32 %{{.*}})
 ; CHECK: call void @use(i32 %{{.*}})

@@ -45,7 +45,7 @@ define i32 @xor3(i32 %x, i32 %y) {
 ;CHECK-LABEL: @xor3(
 ;CHECK: %and.ra = and i32 %x, -436
 ;CHECK: %xor = xor i32 %y, 123
-;CHECK: %xor1 = xor i32 %and.ra, %xor
+;CHECK: %xor1 = xor i32 %xor, %and.ra
 }
 
 ; Test rule: (x | c1) ^ c2 = (x & ~c1) ^ (c1 ^ c2)
@@ -57,7 +57,7 @@ define i32 @xor4(i32 %x, i32 %y) {
 ; CHECK-LABEL: @xor4(
 ; CHECK: %and = and i32 %x, -124
 ; CHECK: %xor = xor i32 %y, 435
-; CHECK: %xor1 = xor i32 %and, %xor
+; CHECK: %xor1 = xor i32 %xor, %and
 }
 
 ; ==========================================================================
@@ -89,7 +89,7 @@ define i32 @xor_special2(i32 %x, i32 %y) {
   ret i32 %xor1
 ; CHECK-LABEL: @xor_special2(
 ; CHECK: %xor = xor i32 %y, 123
-; CHECK: %xor1 = xor i32 %x, %xor
+; CHECK: %xor1 = xor i32 %xor, %x
 ; CHECK: ret i32 %xor1
 }
 
