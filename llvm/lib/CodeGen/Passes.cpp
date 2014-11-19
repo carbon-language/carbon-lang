@@ -732,6 +732,7 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
 
   addPass(&TwoAddressInstructionPassID);
   addPass(&RegisterCoalescerID);
+  printAndVerify("After Register Coalescing");
 
   // PreRA instruction scheduling.
   if (addPass(&MachineSchedulerID))
