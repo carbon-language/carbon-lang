@@ -81,6 +81,11 @@ EnableA53Fix835769("aarch64-fix-cortex-a53-835769", cl::Hidden,
                 cl::desc("Work around Cortex-A53 erratum 835769"),
                 cl::init(false));
 
+static cl::opt<bool>
+EnableGEPOpt("aarch64-gep-opt", cl::Hidden,
+             cl::desc("Enable optimizations on complex GEPs"),
+             cl::init(true));
+
 extern "C" void LLVMInitializeAArch64Target() {
   // Register the target.
   RegisterTargetMachine<AArch64leTargetMachine> X(TheAArch64leTarget);
@@ -205,6 +210,19 @@ void AArch64PassConfig::addIRPasses() {
     addPass(createCFGSimplificationPass());
 
   TargetPassConfig::addIRPasses();
+
+  if (TM->getOptLevel() == CodeGenOpt::Aggressive && EnableGEPOpt) {
+    // Call SeparateConstOffsetFromGEP pass to extract constants within indices
+    // and lower a GEP with multiple indices to either arithmetic operations or
+    // multiple GEPs with single index.
+    addPass(createSeparateConstOffsetFromGEPPass(TM, true));
+    // Call EarlyCSE pass to find and remove subexpressions in the lowered
+    // result.
+    addPass(createEarlyCSEPass());
+    // Do loop invariant code motion in case part of the lowered result is
+    // invariant.
+    addPass(createLICMPass());
+  }
 }
 
 // Pass Pipeline Configuration
