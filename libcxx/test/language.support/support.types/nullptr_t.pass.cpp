@@ -18,42 +18,62 @@ struct A
     A(std::nullptr_t) {}
 };
 
+template <class T>
+void test_conversions()
+{
+    {
+        T p = 0;
+        assert(p == nullptr);
+    }
+    {
+        T p = nullptr;
+        assert(p == nullptr);
+        assert(nullptr == p);
+        assert(!(p != nullptr));
+        assert(!(nullptr != p));
+    }
+}
+
+template <class T>
+void test_comparisons()
+{
+    T p = nullptr;
+    assert(p == nullptr);
+    assert(p <= nullptr);
+    assert(p >= nullptr);
+    assert(!(p != nullptr));
+    assert(!(p < nullptr));
+    assert(!(p > nullptr));
+    assert(nullptr == p);
+    assert(nullptr <= p);
+    assert(nullptr >= p);
+    assert(!(nullptr != p));
+    assert(!(nullptr < p));
+    assert(!(nullptr > p));
+}
+
+
 int main()
 {
     static_assert(sizeof(std::nullptr_t) == sizeof(void*),
                   "sizeof(std::nullptr_t) == sizeof(void*)");
-    A* p = 0;
-    assert(p == nullptr);
-    void (A::*pmf)() = 0;
-#ifdef __clang__
-    // GCC 4.2 can't handle this
-    assert(pmf == nullptr);
-#endif
-    int A::*pmd = 0;
-    assert(pmd == nullptr);
-    A a1(nullptr);
-    A a2(0);
-    bool b = nullptr;
-    assert(!b);
-    assert(nullptr == nullptr);
-    assert(nullptr <= nullptr);
-    assert(nullptr >= nullptr);
-    assert(!(nullptr != nullptr));
-    assert(!(nullptr < nullptr));
-    assert(!(nullptr > nullptr));
-    A* a = nullptr;
-    assert(a == nullptr);
-    assert(a <= nullptr);
-    assert(a >= nullptr);
-    assert(!(a != nullptr));
-    assert(!(a < nullptr));
-    assert(!(a > nullptr));
-    assert(nullptr == a);
-    assert(nullptr <= a);
-    assert(nullptr >= a);
-    assert(!(nullptr != a));
-    assert(!(nullptr < a));
-    assert(!(nullptr > a));
-    std::ptrdiff_t i = reinterpret_cast<std::ptrdiff_t>(nullptr);
-    assert(i == 0);
+
+    {
+        test_conversions<std::nullptr_t>();
+        test_conversions<void*>();
+        test_conversions<A*>();
+        test_conversions<void(*)()>();
+        test_conversions<void(A::*)()>();
+        test_conversions<int A::*>();
+    }
+    {
+        test_comparisons<std::nullptr_t>();
+        test_comparisons<void*>();
+        test_comparisons<A*>();
+        test_comparisons<void(*)()>();
+    }
+    {
+        bool b = nullptr;
+        assert(!b);
+    }
 }
