@@ -1303,12 +1303,14 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::A2_pandfnew:
     case Hexagon::A2_pandt:
     case Hexagon::A2_pandtnew:
+    case Hexagon::A2_porf:
+    case Hexagon::A2_porfnew:
+    case Hexagon::A2_port:
+    case Hexagon::A2_portnew:
     case Hexagon::ADD_ri_cPt:
     case Hexagon::ADD_ri_cNotPt:
     case Hexagon::XOR_rr_cPt:
     case Hexagon::XOR_rr_cNotPt:
-    case Hexagon::OR_rr_cPt:
-    case Hexagon::OR_rr_cNotPt:
     case Hexagon::SUB_rr_cPt:
     case Hexagon::SUB_rr_cNotPt:
     case Hexagon::COMBINE_rr_cPt:
