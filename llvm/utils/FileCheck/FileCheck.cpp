@@ -1219,7 +1219,7 @@ static bool ValidateCheckPrefixes() {
     if (Prefix == "")
       return false;
 
-    if (!PrefixSet.insert(Prefix))
+    if (!PrefixSet.insert(Prefix).second)
       return false;
 
     if (!ValidateCheckPrefix(Prefix))
