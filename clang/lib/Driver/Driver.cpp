@@ -884,7 +884,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
       }
 
       A->claim();
-      if (ArchNames.insert(A->getValue()))
+      if (ArchNames.insert(A->getValue()).second)
         Archs.push_back(A->getValue());
     }
   }

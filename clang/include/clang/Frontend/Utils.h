@@ -125,7 +125,7 @@ class ModuleDependencyCollector {
 
 public:
   StringRef getDest() { return DestDir; }
-  bool insertSeen(StringRef Filename) { return Seen.insert(Filename); }
+  bool insertSeen(StringRef Filename) { return Seen.insert(Filename).second; }
   void setHasErrors() { HasErrors = true; }
   void addFileMapping(StringRef VPath, StringRef RPath) {
     VFSWriter.addFileMapping(VPath, RPath);

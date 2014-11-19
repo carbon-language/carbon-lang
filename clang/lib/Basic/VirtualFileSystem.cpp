@@ -296,7 +296,7 @@ class OverlayFSDirIterImpl : public clang::vfs::detail::DirIterImpl {
       }
       CurrentEntry = *CurrentDirIter;
       StringRef Name = llvm::sys::path::filename(CurrentEntry.getName());
-      if (SeenNames.insert(Name))
+      if (SeenNames.insert(Name).second)
         return EC; // name not seen before
     }
     llvm_unreachable("returned above");

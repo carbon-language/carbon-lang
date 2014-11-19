@@ -1304,7 +1304,7 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
     for (size_t J = 0, F = VFPtrs.size(); J != F; ++J) {
       SmallString<256> Name;
       mangleVFTableName(getMangleContext(), RD, VFPtrs[J], Name);
-      if (!ObservedMangledNames.insert(Name.str()))
+      if (!ObservedMangledNames.insert(Name.str()).second)
         llvm_unreachable("Already saw this mangling before?");
     }
 #endif

@@ -109,7 +109,7 @@ struct DepCollectorASTListener : public ASTReaderListener {
 void DependencyCollector::maybeAddDependency(StringRef Filename, bool FromModule,
                                             bool IsSystem, bool IsModuleFile,
                                             bool IsMissing) {
-  if (Seen.insert(Filename) &&
+  if (Seen.insert(Filename).second &&
       sawDependency(Filename, FromModule, IsSystem, IsModuleFile, IsMissing))
     Dependencies.push_back(Filename);
 }
@@ -285,7 +285,7 @@ void DFGImpl::InclusionDirective(SourceLocation HashLoc,
 }
 
 void DFGImpl::AddFilename(StringRef Filename) {
-  if (FilesSet.insert(Filename))
+  if (FilesSet.insert(Filename).second)
     Files.push_back(Filename);
 }
 
