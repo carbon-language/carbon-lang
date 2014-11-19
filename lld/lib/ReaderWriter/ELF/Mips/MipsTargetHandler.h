@@ -45,11 +45,11 @@ public:
                                                  order);
   }
 
-  StringRef getSectionName(const DefinedAtom *da) const override {
+  StringRef getInputSectionName(const DefinedAtom *da) const override {
     return llvm::StringSwitch<StringRef>(da->customSectionName())
         .StartsWith(".ctors", ".ctors")
         .StartsWith(".dtors", ".dtors")
-        .Default(TargetLayout<ELFType>::getSectionName(da));
+        .Default(TargetLayout<ELFType>::getInputSectionName(da));
   }
 
   Layout::SegmentType getSegmentType(Section<ELFType> *section) const override {
