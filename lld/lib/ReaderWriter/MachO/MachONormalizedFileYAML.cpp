@@ -25,6 +25,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -529,8 +530,13 @@ struct ScalarEnumerationTraits<LoadCommandType> {
 template <>
 struct MappingTraits<DependentDylib> {
   static void mapping(IO &io, DependentDylib& dylib) {
-    io.mapRequired("path",    dylib.path);
-    io.mapOptional("kind",    dylib.kind,       llvm::MachO::LC_LOAD_DYLIB);
+    io.mapRequired("path",            dylib.path);
+    io.mapOptional("kind",            dylib.kind,
+                                      llvm::MachO::LC_LOAD_DYLIB);
+    io.mapOptional("compat-version",  dylib.compatVersion,
+                                      PackedVersion(0x10000));
+    io.mapOptional("current-version", dylib.currentVersion,
+                                      PackedVersion(0x10000));
   }
 };
 
@@ -650,6 +656,24 @@ struct MappingTraits<DataInCode> {
   }
 };
 
+template <>
+struct ScalarTraits<PackedVersion> {
+  static void output(const PackedVersion &value, void*, raw_ostream &out) {
+    out << llvm::format("%d.%d", (value >> 16), (value >> 8) & 0xFF);
+    if (value & 0xFF) {
+      out << llvm::format(".%d", (value & 0xFF));
+    }
+  }
+  static StringRef input(StringRef scalar, void*, PackedVersion &result) {
+    uint32_t value;
+    if (lld::MachOLinkingContext::parsePackedVersion(scalar, value))
+      return "malformed version number";
+    result = value;
+    // Return the empty string on success,
+    return StringRef();
+  }
+  static bool mustQuote(StringRef) { return false; }
+};
 
 template <>
 struct MappingTraits<NormalizedFile> {
@@ -659,13 +683,15 @@ struct MappingTraits<NormalizedFile> {
     io.mapOptional("flags",            file.flags);
     io.mapOptional("dependents",       file.dependentDylibs);
     io.mapOptional("install-name",     file.installName,    StringRef());
+    io.mapOptional("compat-version",   file.compatVersion,  PackedVersion(0x10000));
+    io.mapOptional("current-version",  file.currentVersion, PackedVersion(0x10000));
     io.mapOptional("has-UUID",         file.hasUUID,        true);
     io.mapOptional("rpaths",           file.rpaths);
     io.mapOptional("entry-point",      file.entryAddress,   Hex64(0));
     io.mapOptional("source-version",   file.sourceVersion,  Hex64(0));
     io.mapOptional("OS",               file.os);
-    io.mapOptional("min-os-version",   file.minOSverson,    Hex32(0));
-    io.mapOptional("sdk-version",      file.sdkVersion,     Hex32(0));
+    io.mapOptional("min-os-version",   file.minOSverson,    PackedVersion(0));
+    io.mapOptional("sdk-version",      file.sdkVersion,     PackedVersion(0));
     io.mapOptional("segments",         file.segments);
     io.mapOptional("sections",         file.sections);
     io.mapOptional("local-symbols",    file.localSymbols);

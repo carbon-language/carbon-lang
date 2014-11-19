@@ -254,6 +254,10 @@ public:
   /// search paths to allow indirect dylibs to be overridden.
   mach_o::MachODylibFile* findIndirectDylib(StringRef path);
 
+  uint32_t dylibCurrentVersion(StringRef installName) const;
+
+  uint32_t dylibCompatVersion(StringRef installName) const;
+
   /// Creates a copy (owned by this MachOLinkingContext) of a string.
   StringRef copy(StringRef str) { return str.copy(_allocator); }
 

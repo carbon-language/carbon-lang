@@ -198,8 +198,10 @@ private:
 
 class MachODylibFile : public SharedLibraryFile {
 public:
-  MachODylibFile(StringRef path, StringRef installName)
-      : SharedLibraryFile(path), _installName(installName) {
+  MachODylibFile(StringRef path, StringRef installName, uint32_t compatVersion,
+                 uint32_t currentVersion)
+      : SharedLibraryFile(path), _installName(installName),
+        _currentVersion(currentVersion), _compatVersion(compatVersion) {
   }
 
   const SharedLibraryAtom *exports(StringRef name,
@@ -242,6 +244,10 @@ public:
   }
 
   StringRef installName() { return _installName; }
+
+  uint32_t currentVersion() { return _currentVersion; }
+
+  uint32_t compatVersion() { return _compatVersion; }
 
   typedef std::function<MachODylibFile *(StringRef)> FindDylib;
 
@@ -292,7 +298,9 @@ private:
     bool                      weakDef;
   };
 
-  StringRef _installName;
+  StringRef                                  _installName;
+  uint32_t                                   _currentVersion;
+  uint32_t                                   _compatVersion;
   atom_collection_vector<DefinedAtom>        _definedAtoms;
   atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;

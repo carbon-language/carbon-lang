@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/MachO/NormalizedFile.h ----------------------===//
+//===- lib/ReaderWriter/MachO/MachONormalizedFile.h -----------------------===//
 //
 //                             The LLVM Linker
 //
@@ -145,6 +145,9 @@ struct Symbol {
 /// A typedef so that YAML I/O can (de/en)code the protection bits of a segment.
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, VMProtect)
 
+/// A typedef to hold verions X.Y.X packed into 32-bit xxxx.yy.zz
+LLVM_YAML_STRONG_TYPEDEF(uint32_t, PackedVersion)
+
 /// Segments are only used in normalized final linked images (not in relocatable
 /// object files). They specify how a range of the file is loaded.
 struct Segment {
@@ -159,6 +162,8 @@ struct Segment {
 struct DependentDylib {
   StringRef       path;
   LoadCommandType kind;
+  PackedVersion   compatVersion;
+  PackedVersion   currentVersion;
 };
 
 /// A normalized rebasing entry.  Only used in normalized final linked images.
@@ -203,7 +208,6 @@ struct DataInCode {
 /// A typedef so that YAML I/O can encode/decode mach_header.flags.
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, FileFlags)
 
-
 ///
 struct NormalizedFile {
   NormalizedFile() : arch(MachOLinkingContext::arch_unknown),
@@ -225,14 +229,16 @@ struct NormalizedFile {
 
   // Maps to load commands with no LINKEDIT content (final linked images only).
   std::vector<DependentDylib> dependentDylibs;
-  StringRef                   installName;
+  StringRef                   installName;      // dylibs only
+  PackedVersion               compatVersion;    // dylibs only
+  PackedVersion               currentVersion;   // dylibs only
   bool                        hasUUID;
   std::vector<StringRef>      rpaths;
   Hex64                       entryAddress;
   MachOLinkingContext::OS     os;
   Hex64                       sourceVersion;
-  Hex32                       minOSverson;
-  Hex32                       sdkVersion;
+  PackedVersion               minOSverson;
+  PackedVersion               sdkVersion;
 
   // Maps to load commands with LINKEDIT content (final linked images only).
   Hex32                       pageSize;

@@ -1,5 +1,6 @@
 # Check we accept -install_name correctly:
 # RUN: lld -flavor darwin -arch x86_64 -install_name libwibble.dylib -dylib \
+# RUN:     -compatibility_version 2.0 -current_version 5.3 \
 # RUN:     %p/Inputs/libSystem.yaml %s -o %t.dylib
 # RUN: macho-dump %t.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 
@@ -9,12 +10,14 @@
 
 # Check we default the install-name to the output file:
 # RUN: lld -flavor darwin -arch x86_64 -dylib %s -o libwibble.dylib \
+# RUN:     -compatibility_version 2.0 -current_version 5.3 \
 # RUN:     %p/Inputs/libSystem.yaml
 # RUN: macho-dump libwibble.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 # RUN: rm -f libwibble.dylib
 
 # Check -single_module does nothing
 # RUN: lld -flavor darwin -arch x86_64 -dylib %s -install_name libwibble.dylib \
+# RUN:     -compatibility_version 2.0 -current_version 5.3 \
 # RUN:     -single_module -o %t2.dylib %p/Inputs/libSystem.yaml
 # RUN: macho-dump %t2.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 
@@ -51,6 +54,9 @@ global-symbols:
 # CHECK-BINARY-WRITE: (('command', 13)
 # CHECK-BINARY-WRITE-NEXT:  ('size', 40)
 # CHECK-BINARY-WRITE-NEXT:  ('install_name', 'libwibble.dylib')
+# CHECK-BINARY-WRITE-NEXT:    ('timestamp,
+# CHECK-BINARY-WRITE-NEXT:    ('cur_version, 328448)
+# CHECK-BINARY-WRITE-NEXT:    ('compat_version, 131072)
 
 # CHECK-BINARY-READ: shared-library-atoms:
 # CHECK-BINARY-READ:     - name:          _myGlobal

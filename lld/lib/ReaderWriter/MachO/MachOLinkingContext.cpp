@@ -652,6 +652,22 @@ MachODylibFile* MachOLinkingContext::findIndirectDylib(StringRef path) {
   return nullptr;
 }
 
+uint32_t MachOLinkingContext::dylibCurrentVersion(StringRef installName) const {
+  auto pos = _pathToDylibMap.find(installName);
+  if (pos != _pathToDylibMap.end())
+    return pos->second->currentVersion();
+  else
+    return 0x1000; // 1.0
+}
+
+uint32_t MachOLinkingContext::dylibCompatVersion(StringRef installName) const {
+  auto pos = _pathToDylibMap.find(installName);
+  if (pos != _pathToDylibMap.end())
+    return pos->second->compatVersion();
+  else
+    return 0x1000; // 1.0
+}
+
 bool MachOLinkingContext::createImplicitFiles(
                             std::vector<std::unique_ptr<File> > &result) {
   // Add indirect dylibs by asking each linked dylib to add its indirects.

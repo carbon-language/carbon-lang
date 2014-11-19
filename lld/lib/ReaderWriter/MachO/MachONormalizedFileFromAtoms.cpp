@@ -941,6 +941,8 @@ void Util::addDependentDylibs(const lld::File &atomFile,NormalizedFile &nFile) {
       DependentDylib depInfo;
       depInfo.path = loadPath;
       depInfo.kind = llvm::MachO::LC_LOAD_DYLIB;
+      depInfo.currentVersion = _context.dylibCurrentVersion(loadPath);
+      depInfo.compatVersion = _context.dylibCompatVersion(loadPath);
       nFile.dependentDylibs.push_back(depInfo);
     } else {
       if ( slAtom->canBeNullAtRuntime() )
@@ -1188,6 +1190,8 @@ normalizedFromAtoms(const lld::File &atomFile,
   normFile.fileType = context.outputMachOType();
   normFile.flags = util.fileFlags();
   normFile.installName = context.installName();
+  normFile.currentVersion = context.currentVersion();
+  normFile.compatVersion = context.compatibilityVersion();
   normFile.pageSize = context.pageSize();
   util.addDependentDylibs(atomFile, normFile);
   util.copySegmentInfo(normFile);

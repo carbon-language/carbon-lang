@@ -734,9 +734,9 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       dc->cmd                         = LC_ID_DYLIB;
       dc->cmdsize                     = size;
       dc->dylib.name                  = sizeof(dylib_command); // offset
-      dc->dylib.timestamp             = 0; // FIXME
-      dc->dylib.current_version       = 0; // FIXME
-      dc->dylib.compatibility_version = 0; // FIXME
+      dc->dylib.timestamp             = 2;
+      dc->dylib.current_version       = _file.currentVersion;
+      dc->dylib.compatibility_version = _file.compatVersion;
       if (_swap)
         swapStruct(*dc);
       memcpy(lc + sizeof(dylib_command), path.begin(), path.size());
@@ -834,9 +834,9 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       dc->cmd                         = dep.kind;
       dc->cmdsize                     = size;
       dc->dylib.name                  = sizeof(dylib_command); // offset
-      dc->dylib.timestamp             = 0; // FIXME
-      dc->dylib.current_version       = 0; // FIXME
-      dc->dylib.compatibility_version = 0; // FIXME
+      dc->dylib.timestamp             = 2;
+      dc->dylib.current_version       = dep.currentVersion;
+      dc->dylib.compatibility_version = dep.compatVersion;
       if (_swap)
         swapStruct(*dc);
       memcpy(lc+sizeof(dylib_command), dep.path.begin(), dep.path.size());

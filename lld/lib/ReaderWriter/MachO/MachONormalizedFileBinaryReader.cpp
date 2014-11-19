@@ -455,8 +455,10 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       DependentDylib entry;
       entry.path = lc + read32(&dl->dylib.name, isBig);
       entry.kind = LoadCommandType(cmd);
+      entry.compatVersion = read32(&dl->dylib.compatibility_version, isBig);
+      entry.currentVersion = read32(&dl->dylib.current_version, isBig);
       f->dependentDylibs.push_back(entry);
-      }
+     }
       break;
     case LC_DYLD_INFO:
     case LC_DYLD_INFO_ONLY:

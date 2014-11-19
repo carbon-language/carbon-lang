@@ -820,7 +820,9 @@ normalizedDylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                        bool copyRefs) {
   // Instantiate SharedLibraryFile object.
   std::unique_ptr<MachODylibFile> file(
-                          new MachODylibFile(path, normalizedFile.installName));
+      new MachODylibFile(path, normalizedFile.installName,
+                         normalizedFile.compatVersion,
+                         normalizedFile.currentVersion));
   // Tell MachODylibFile object about all symbols it exports.
   if (!normalizedFile.exportInfo.empty()) {
     // If exports trie exists, use it instead of traditional symbol table.
