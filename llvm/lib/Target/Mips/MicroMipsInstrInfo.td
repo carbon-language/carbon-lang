@@ -31,6 +31,8 @@ def uimm4_andi : Operand<i32> {
   let EncoderMethod = "getUImm4AndValue";
 }
 
+def immSExtAddius5 : ImmLeaf<i32, [{return Imm >= -8 && Imm <= 7;}]>;
+
 def immZExtAndi16 : ImmLeaf<i32,
   [{return (Imm == 128 || (Imm >= 1 && Imm <= 4) || Imm == 7 || Imm == 8 ||
             Imm == 15 || Imm == 16 || Imm == 31 || Imm == 32 || Imm == 63 ||
@@ -161,7 +163,6 @@ class AddImmUS5<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$dst), (ins RO:$rd, simm4:$imm),
                   !strconcat(opstr, "\t$rd, $imm"), [], NoItinerary, FrmR> {
   let Constraints = "$rd = $dst";
-  let isCommutable = 1;
 }
 
 class AddImmUR1SP<string opstr, RegisterOperand RO> :
@@ -526,6 +527,11 @@ let Predicates = [InMicroMips] in {
 //===----------------------------------------------------------------------===//
 // MicroMips arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
+
+def : MipsPat<(add GPR32:$src, immSExtAddius5:$imm),
+              (ADDIUS5_MM GPR32:$src, immSExtAddius5:$imm)>;
+def : MipsPat<(add GPR32:$src, immSExt16:$imm),
+              (ADDiu_MM GPR32:$src, immSExt16:$imm)>;
 
 def : MipsPat<(and GPRMM16:$src, immZExtAndi16:$imm),
               (ANDI16_MM GPRMM16:$src, immZExtAndi16:$imm)>;
