@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %T/global_race_bin && %deflake %run %T/global_race_bin | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %T/global_race.cc.exe && %deflake %run %T/global_race.cc.exe | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -24,5 +24,5 @@ int main() {
 
 // CHECK: addr=[[ADDR:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK: Location is global 'GlobalData' of size 40 at [[ADDR]] (global_race_bin+0x{{[0-9,a-f]+}})
+// CHECK: Location is global 'GlobalData' of size 40 at [[ADDR]] (global_race.cc.exe+0x{{[0-9,a-f]+}})
 
