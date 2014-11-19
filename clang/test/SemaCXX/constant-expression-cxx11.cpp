@@ -1942,3 +1942,16 @@ namespace PR19010 {
 void PR21327(int a, int b) {
   static_assert(&a + 1 != &b, ""); // expected-error {{constant expression}}
 }
+
+namespace EmptyClass {
+  struct E1 {} e1;
+  union E2 {} e2; // expected-note {{here}}
+  struct E3 : E1 {} e3;
+
+  // The defaulted copy constructor for an empty class does not read any
+  // members. The defaulted copy constructor for an empty union reads the
+  // object representation.
+  constexpr E1 e1b(e1);
+  constexpr E2 e2b(e2); // expected-error {{constant expression}} expected-note{{read of non-const}} expected-note {{in call}}
+  constexpr E3 e3b(e3);
+}

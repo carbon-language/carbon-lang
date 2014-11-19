@@ -910,3 +910,31 @@ namespace PR17331 {
   constexpr int ARR[] = { 1, 2, 3, 4, 5 };
   static_assert(sum(ARR) == 15, "");
 }
+
+namespace EmptyClass {
+  struct E1 {} e1;
+  union E2 {} e2; // expected-note 4{{here}}
+  struct E3 : E1 {} e3;
+
+  template<typename E>
+  constexpr int f(E &a, int kind) {
+    switch (kind) {
+    case 0: { E e(a); return 0; } // expected-note {{read}} expected-note {{in call}}
+    case 1: { E e(static_cast<E&&>(a)); return 0; } // expected-note {{read}} expected-note {{in call}}
+    case 2: { E e; e = a; return 0; } // expected-note {{read}} expected-note {{in call}}
+    case 3: { E e; e = static_cast<E&&>(a); return 0; } // expected-note {{read}} expected-note {{in call}}
+    }
+  }
+  constexpr int test1 = f(e1, 0);
+  constexpr int test2 = f(e2, 0); // expected-error {{constant expression}} expected-note {{in call}}
+  constexpr int test3 = f(e3, 0);
+  constexpr int test4 = f(e1, 1);
+  constexpr int test5 = f(e2, 1); // expected-error {{constant expression}} expected-note {{in call}}
+  constexpr int test6 = f(e3, 1);
+  constexpr int test7 = f(e1, 2);
+  constexpr int test8 = f(e2, 2); // expected-error {{constant expression}} expected-note {{in call}}
+  constexpr int test9 = f(e3, 2);
+  constexpr int testa = f(e1, 3);
+  constexpr int testb = f(e2, 3); // expected-error {{constant expression}} expected-note {{in call}}
+  constexpr int testc = f(e3, 3);
+}
