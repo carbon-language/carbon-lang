@@ -215,9 +215,9 @@ namespace {
     void report(const char *msg, const MachineBasicBlock *MBB,
                 const LiveInterval &LI);
     void report(const char *msg, const MachineFunction *MF,
-                const LiveRange &LR);
+                const LiveRange &LR, unsigned Reg);
     void report(const char *msg, const MachineBasicBlock *MBB,
-                const LiveRange &LR);
+                const LiveRange &LR, unsigned Reg);
 
     void verifyInlineAsm(const MachineInstr *MI);
 
@@ -432,15 +432,17 @@ void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB,
 }
 
 void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB,
-                             const LiveRange &LR) {
+                             const LiveRange &LR, unsigned Reg) {
   report(msg, MBB);
-  *OS << "- liverange:    " << LR << "\n";
+  *OS << "- liverange:   " << LR << '\n';
+  *OS << "- register:    " << PrintReg(Reg, TRI) << '\n';
 }
 
 void MachineVerifier::report(const char *msg, const MachineFunction *MF,
-                             const LiveRange &LR) {
+                             const LiveRange &LR, unsigned Reg) {
   report(msg, MF);
-  *OS << "- liverange:    " << LR << "\n";
+  *OS << "- liverange:   " << LR << '\n';
+  *OS << "- register:    " << PrintReg(Reg, TRI) << '\n';
 }
 
 void MachineVerifier::markReachable(const MachineBasicBlock *MBB) {
@@ -1360,13 +1362,13 @@ void MachineVerifier::verifyLiveRangeValue(const LiveRange &LR,
   const VNInfo *DefVNI = LR.getVNInfoAt(VNI->def);
 
   if (!DefVNI) {
-    report("Valno not live at def and not marked unused", MF, LR);
+    report("Valno not live at def and not marked unused", MF, LR, Reg);
     *OS << "Valno #" << VNI->id << '\n';
     return;
   }
 
   if (DefVNI != VNI) {
-    report("Live segment at def has different valno", MF, LR);
+    report("Live segment at def has different valno", MF, LR, Reg);
     *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
         << " where valno #" << DefVNI->id << " is live\n";
     return;
@@ -1374,7 +1376,7 @@ void MachineVerifier::verifyLiveRangeValue(const LiveRange &LR,
 
   const MachineBasicBlock *MBB = LiveInts->getMBBFromIndex(VNI->def);
   if (!MBB) {
-    report("Invalid definition index", MF, LR);
+    report("Invalid definition index", MF, LR, Reg);
     *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
         << " in " << LR << '\n';
     return;
@@ -1382,7 +1384,7 @@ void MachineVerifier::verifyLiveRangeValue(const LiveRange &LR,
 
   if (VNI->isPHIDef()) {
     if (VNI->def != LiveInts->getMBBStartIdx(MBB)) {
-      report("PHIDef value is not defined at MBB start", MBB, LR);
+      report("PHIDef value is not defined at MBB start", MBB, LR, Reg);
       *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
           << ", not at the beginning of BB#" << MBB->getNumber() << '\n';
     }
@@ -1392,7 +1394,7 @@ void MachineVerifier::verifyLiveRangeValue(const LiveRange &LR,
   // Non-PHI def.
   const MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
   if (!MI) {
-    report("No instruction at def index", MBB, LR);
+    report("No instruction at def index", MBB, LR, Reg);
     *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
     return;
   }
@@ -1425,12 +1427,13 @@ void MachineVerifier::verifyLiveRangeValue(const LiveRange &LR,
     // DEF slots.
     if (isEarlyClobber) {
       if (!VNI->def.isEarlyClobber()) {
-        report("Early clobber def must be at an early-clobber slot", MBB, LR);
+        report("Early clobber def must be at an early-clobber slot", MBB, LR,
+               Reg);
         *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
       }
     } else if (!VNI->def.isRegister()) {
       report("Non-PHI, non-early clobber def must be at a register slot",
-             MBB, LR);
+             MBB, LR, Reg);
       *OS << "Valno #" << VNI->id << " is defined at " << VNI->def << '\n';
     }
   }
@@ -1444,31 +1447,31 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
   assert(VNI && "Live segment has no valno");
 
   if (VNI->id >= LR.getNumValNums() || VNI != LR.getValNumInfo(VNI->id)) {
-    report("Foreign valno in live segment", MF, LR);
+    report("Foreign valno in live segment", MF, LR, Reg);
     *OS << S << " has a bad valno\n";
   }
 
   if (VNI->isUnused()) {
-    report("Live segment valno is marked unused", MF, LR);
+    report("Live segment valno is marked unused", MF, LR, Reg);
     *OS << S << '\n';
   }
 
   const MachineBasicBlock *MBB = LiveInts->getMBBFromIndex(S.start);
   if (!MBB) {
-    report("Bad start of live segment, no basic block", MF, LR);
+    report("Bad start of live segment, no basic block", MF, LR, Reg);
     *OS << S << '\n';
     return;
   }
   SlotIndex MBBStartIdx = LiveInts->getMBBStartIdx(MBB);
   if (S.start != MBBStartIdx && S.start != VNI->def) {
-    report("Live segment must begin at MBB entry or valno def", MBB, LR);
+    report("Live segment must begin at MBB entry or valno def", MBB, LR, Reg);
     *OS << S << '\n';
   }
 
   const MachineBasicBlock *EndMBB =
     LiveInts->getMBBFromIndex(S.end.getPrevSlot());
   if (!EndMBB) {
-    report("Bad end of live segment, no basic block", MF, LR);
+    report("Bad end of live segment, no basic block", MF, LR, Reg);
     *OS << S << '\n';
     return;
   }
@@ -1486,14 +1489,14 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
   const MachineInstr *MI =
     LiveInts->getInstructionFromIndex(S.end.getPrevSlot());
   if (!MI) {
-    report("Live segment doesn't end at a valid instruction", EndMBB, LR);
+    report("Live segment doesn't end at a valid instruction", EndMBB, LR, Reg);
     *OS << S << '\n';
     return;
   }
 
   // The block slot must refer to a basic block boundary.
   if (S.end.isBlock()) {
-    report("Live segment ends at B slot of an instruction", EndMBB, LR);
+    report("Live segment ends at B slot of an instruction", EndMBB, LR, Reg);
     *OS << S << '\n';
   }
 
@@ -1501,7 +1504,8 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
     // Segment ends on the dead slot.
     // That means there must be a dead def.
     if (!SlotIndex::isSameInstr(S.start, S.end)) {
-      report("Live segment ending at dead slot spans instructions", EndMBB, LR);
+      report("Live segment ending at dead slot spans instructions", EndMBB, LR,
+             Reg);
       *OS << S << '\n';
     }
   }
@@ -1511,7 +1515,7 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
   if (S.end.isEarlyClobber()) {
     if (I+1 == LR.end() || (I+1)->start != S.end) {
       report("Live segment ending at early clobber slot must be "
-             "redefined by an EC def in the same instruction", EndMBB, LR);
+             "redefined by an EC def in the same instruction", EndMBB, LR, Reg);
       *OS << S << '\n';
     }
   }
@@ -1569,7 +1573,7 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
 
       // All predecessors must have a live-out value.
       if (!PVNI) {
-        report("Register not marked live out of predecessor", *PI, LR);
+        report("Register not marked live out of predecessor", *PI, LR, Reg);
         *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
             << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live before "
             << PEnd << '\n';
@@ -1578,7 +1582,7 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
 
       // Only PHI-defs can take different predecessor values.
       if (!IsPHI && PVNI != VNI) {
-        report("Different value live out of predecessor", *PI, LR);
+        report("Different value live out of predecessor", *PI, LR, Reg);
         *OS << "Valno #" << PVNI->id << " live out of BB#"
             << (*PI)->getNumber() << '@' << PEnd
             << "\nValno #" << VNI->id << " live into BB#" << MFI->getNumber()
