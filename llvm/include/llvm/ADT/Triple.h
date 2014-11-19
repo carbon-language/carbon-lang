@@ -397,7 +397,8 @@ public:
 
   /// \brief Is this a "Windows" OS targeting a "MSVCRT.dll" environment.
   bool isOSMSVCRT() const {
-    return isWindowsMSVCEnvironment() || isWindowsGNUEnvironment();
+    return isWindowsMSVCEnvironment() || isWindowsGNUEnvironment() ||
+           isWindowsItaniumEnvironment();
   }
 
   /// \brief Tests whether the OS is Windows.
