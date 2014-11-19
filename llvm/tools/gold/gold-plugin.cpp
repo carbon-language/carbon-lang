@@ -723,7 +723,7 @@ static void codegen(Module &M) {
     std::error_code EC =
         sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filename);
     if (EC)
-      message(LDPL_FATAL, "Could not create temorary file: %s",
+      message(LDPL_FATAL, "Could not create temporary file: %s",
               EC.message().c_str());
   } else {
     Filename = options::obj_path;
