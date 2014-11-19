@@ -238,7 +238,7 @@ private:
   const GOTAtom *getTLSGOTEntry(const Atom *a);
   const GOTAtom *getTLSGdGOTEntry(const Atom *a);
   const GOTAtom *getTLSLdmGOTEntry(const Atom *a);
-  PLTAtom *getPLTEntry(const Atom *a);
+  const PLTAtom *getPLTEntry(const Atom *a);
   const LA25Atom *getLA25Entry(const Atom *a);
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
 
@@ -694,7 +694,7 @@ template <typename ELFT> void RelocationPass<ELFT>::createPLTHeader() {
 }
 
 template <typename ELFT>
-PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
+const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   auto plt = _pltMap.find(a);
   if (plt != _pltMap.end())
     return plt->second;
