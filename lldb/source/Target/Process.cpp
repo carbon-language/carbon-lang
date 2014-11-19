@@ -3397,14 +3397,13 @@ Process::Attach (ProcessAttachInfo &attach_info)
             else
             {
                 if (GetID() != LLDB_INVALID_PROCESS_ID)
-                {
                     SetID (LLDB_INVALID_PROCESS_ID);
-                    const char *error_string = error.AsCString();
-                    if (error_string == NULL)
-                        error_string = "attach failed";
 
-                    SetExitStatus(-1, error_string);
-                }
+                const char *error_string = error.AsCString();
+                if (error_string == NULL)
+                    error_string = "attach failed";
+
+                SetExitStatus(-1, error_string);
             }
         }
     }

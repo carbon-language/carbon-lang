@@ -290,7 +290,7 @@ private:
     static void *
     AttachOpThread(void *args);
 
-    static bool
+    static void
     Attach(AttachArgs *args);
 
     static void

@@ -1115,14 +1115,13 @@ ProcessMonitor::AttachOpThread(void *arg)
 {
     AttachArgs *args = static_cast<AttachArgs*>(arg);
 
-    if (!Attach(args))
-        return NULL;
+    Attach(args);
 
     ServeOperation(args);
     return NULL;
 }
 
-bool
+void
 ProcessMonitor::Attach(AttachArgs *args)
 {
     lldb::pid_t pid = args->m_pid;
@@ -1134,27 +1133,24 @@ ProcessMonitor::Attach(AttachArgs *args)
     {
         args->m_error.SetErrorToGenericError();
         args->m_error.SetErrorString("Attaching to process 1 is not allowed.");
-        goto FINISH;
+        return;
     }
 
     // Attach to the requested process.
     if (PTRACE(PT_ATTACH, pid, NULL, 0) < 0)
     {
         args->m_error.SetErrorToErrno();
-        goto FINISH;
+        return;
     }
 
     int status;
     if ((status = waitpid(pid, NULL, 0)) < 0)
     {
         args->m_error.SetErrorToErrno();
-        goto FINISH;
+        return;
     }
 
     process.SendMessage(ProcessMessage::Attach(pid));
-
-FINISH:
-    return args->m_error.Success();
 }
 
 size_t

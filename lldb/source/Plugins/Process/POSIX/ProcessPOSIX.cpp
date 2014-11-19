@@ -341,6 +341,11 @@ ProcessPOSIX::DoDestroy()
     {
         assert(m_monitor);
         m_exit_now = true;
+        if (GetID() == LLDB_INVALID_PROCESS_ID)
+        {
+            error.SetErrorString("invalid process id");
+            return error;
+        }
         if (!m_monitor->Kill())
         {
             error.SetErrorToErrno();
