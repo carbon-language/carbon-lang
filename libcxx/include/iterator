@@ -324,6 +324,17 @@ template <class T, size_t N> reverse_iterator<T*> rend(T (&array)[N]);        //
 template <class C> auto crbegin(const C& c) -> decltype(std::rbegin(c));      // C++14
 template <class C> auto crend(const C& c) -> decltype(std::rend(c));          // C++14
 
+// 24.8, container access:
+template <class C> constexpr auto size(const C& c) -> decltype(c.size());         // C++17
+template <class T, size_t N> constexpr size_t size(const T (&array)[N]) noexcept; // C++17
+template <class C> constexpr auto empty(const C& c) -> decltype(c.empty());       // C++17
+template <class T, size_t N> constexpr bool empty(const T (&array)[N]) noexcept;  // C++17
+template <class E> constexpr bool empty(initializer_list<E> il) noexcept;         // C++17
+template <class C> constexpr auto data(C& c) -> decltype(c.data());               // C++17
+template <class C> constexpr auto data(const C& c) -> decltype(c.data());         // C++17
+template <class T, size_t N> constexpr T* data(T (&array)[N]) noexcept;           // C++17
+template <class E> constexpr const E* data(initializer_list<E> il) noexcept;      // C++17
+
 }  // std
 
 */
@@ -1567,6 +1578,36 @@ end(const _Cp& __c)
 }
 
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_TRAILING_RETURN)
+
+#if _LIBCPP_STD_VER > 14
+template <class _C>
+constexpr auto size(const _C& __c) -> decltype(__c.size()) { return __c.size(); }
+
+template <class _Tp, size_t _N>
+constexpr size_t size(const _Tp (&__array)[_N]) noexcept { return _N; }
+
+template <class _C>
+constexpr auto empty(const _C& __c) -> decltype(__c.empty()) { return __c.empty(); }
+
+template <class _Tp, size_t _N>
+constexpr bool empty(const _Tp (&__array)[_N]) noexcept { return false; }
+
+template <class _Ep>
+constexpr bool empty(initializer_list<_Ep> __il) noexcept { return __il.size() == 0; }
+
+template <class _C> constexpr
+auto data(_C& __c) -> decltype(__c.data()) { return __c.data(); }
+
+template <class _C> constexpr
+auto data(const _C& __c) -> decltype(__c.data()) { return __c.data(); }
+
+template <class _Tp, size_t _N>
+constexpr _Tp* data(_Tp (&__array)[_N]) noexcept { return __array; }
+
+template <class _Ep>
+constexpr const _Ep* data(initializer_list<_Ep> __il) noexcept { return __il.begin(); }
+#endif
+
 
 _LIBCPP_END_NAMESPACE_STD
 
