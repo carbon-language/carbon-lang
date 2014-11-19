@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=arm64 -aarch64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -march=aarch64 -mattr -neon -aarch64-neon-syntax=apple | FileCheck -check-prefix=CHECK-NONEON %s
 
 define i32 @cnt32_advsimd(i32 %x) nounwind readnone {
   %cnt = tail call i32 @llvm.ctpop.i32(i32 %x)
@@ -8,6 +9,13 @@ define i32 @cnt32_advsimd(i32 %x) nounwind readnone {
 ; CHECK: uaddlv.8b	h0, v0
 ; CHECK: fmov w0, s0
 ; CHECK: ret
+; CHECK-NONEON-LABEL: cnt32_advsimd
+; CHECK-NONEON-NOT: 8b
+; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0x55555555
+; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0x33333333
+; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0xf0f0f0f
+; CHECK-NONEON: mul
+
 }
 
 define i64 @cnt64_advsimd(i64 %x) nounwind readnone {
@@ -18,6 +26,12 @@ define i64 @cnt64_advsimd(i64 %x) nounwind readnone {
 ; CHECK: uaddlv.8b	h0, v0
 ; CHECK: fmov	w0, s0
 ; CHECK: ret
+; CHECK-NONEON-LABEL: cnt64_advsimd
+; CHECK-NONEON-NOT: 8b
+; CHECK-NONEON: and x{{[0-9]+}}, x{{[0-9]+}}, #0x5555555555555555
+; CHECK-NONEON: and x{{[0-9]+}}, x{{[0-9]+}}, #0x3333333333333333
+; CHECK-NONEON: and x{{[0-9]+}}, x{{[0-9]+}}, #0xf0f0f0f0f0f0f0f
+; CHECK-NONEON: mul
 }
 
 ; Do not use AdvSIMD when -mno-implicit-float is specified.

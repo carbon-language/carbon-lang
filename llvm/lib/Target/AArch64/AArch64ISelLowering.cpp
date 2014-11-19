@@ -3433,6 +3433,9 @@ SDValue AArch64TargetLowering::LowerCTPOP(SDValue Op, SelectionDAG &DAG) const {
           AttributeSet::FunctionIndex, Attribute::NoImplicitFloat))
     return SDValue();
 
+  if (!Subtarget->hasNEON())
+    return SDValue();
+
   // While there is no integer popcount instruction, it can
   // be more efficiently lowered to the following sequence that uses
   // AdvSIMD registers/instructions as long as the copies to/from
