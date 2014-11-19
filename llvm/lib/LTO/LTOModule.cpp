@@ -249,27 +249,24 @@ void LTOModule::addObjCClass(const GlobalVariable *clgv) {
   // second slot in __OBJC,__class is pointer to superclass name
   std::string superclassName;
   if (objcClassNameFromExpression(c->getOperand(1), superclassName)) {
-    NameAndAttributes info;
-    StringMap<NameAndAttributes>::value_type &entry =
-      _undefines.GetOrCreateValue(superclassName);
-    if (!entry.getValue().name) {
-      const char *symbolName = entry.getKey().data();
-      info.name = symbolName;
+    auto IterBool =
+        _undefines.insert(std::make_pair(superclassName, NameAndAttributes()));
+    if (IterBool.second) {
+      NameAndAttributes &info = IterBool.first->second;
+      info.name = IterBool.first->first().data();
       info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
       info.isFunction = false;
       info.symbol = clgv;
-      entry.setValue(info);
     }
   }
 
   // third slot in __OBJC,__class is pointer to class name
   std::string className;
   if (objcClassNameFromExpression(c->getOperand(2), className)) {
-    StringSet::value_type &entry = _defines.GetOrCreateValue(className);
-    entry.setValue(1);
+    auto Iter = _defines.insert(className).first;
 
     NameAndAttributes info;
-    info.name = entry.getKey().data();
+    info.name = Iter->first().data();
     info.attributes = LTO_SYMBOL_PERMISSIONS_DATA |
       LTO_SYMBOL_DEFINITION_REGULAR | LTO_SYMBOL_SCOPE_DEFAULT;
     info.isFunction = false;
@@ -288,19 +285,17 @@ void LTOModule::addObjCCategory(const GlobalVariable *clgv) {
   if (!objcClassNameFromExpression(c->getOperand(1), targetclassName))
     return;
 
-  NameAndAttributes info;
-  StringMap<NameAndAttributes>::value_type &entry =
-    _undefines.GetOrCreateValue(targetclassName);
+  auto IterBool =
+      _undefines.insert(std::make_pair(targetclassName, NameAndAttributes()));
 
-  if (entry.getValue().name)
+  if (!IterBool.second)
     return;
 
-  const char *symbolName = entry.getKey().data();
-  info.name = symbolName;
+  NameAndAttributes &info = IterBool.first->second;
+  info.name = IterBool.first->first().data();
   info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
   info.isFunction = false;
   info.symbol = clgv;
-  entry.setValue(info);
 }
 
 /// addObjCClassRef - Parse i386/ppc ObjC class list data structure.
@@ -309,18 +304,17 @@ void LTOModule::addObjCClassRef(const GlobalVariable *clgv) {
   if (!objcClassNameFromExpression(clgv->getInitializer(), targetclassName))
     return;
 
-  NameAndAttributes info;
-  StringMap<NameAndAttributes>::value_type &entry =
-    _undefines.GetOrCreateValue(targetclassName);
-  if (entry.getValue().name)
+  auto IterBool =
+      _undefines.insert(std::make_pair(targetclassName, NameAndAttributes()));
+
+  if (!IterBool.second)
     return;
 
-  const char *symbolName = entry.getKey().data();
-  info.name = symbolName;
+  NameAndAttributes &info = IterBool.first->second;
+  info.name = IterBool.first->first().data();
   info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
   info.isFunction = false;
   info.symbol = clgv;
-  entry.setValue(info);
 }
 
 void LTOModule::addDefinedDataSymbol(const object::BasicSymbolRef &Sym) {
@@ -439,12 +433,11 @@ void LTOModule::addDefinedSymbol(const char *Name, const GlobalValue *def,
   else
     attr |= LTO_SYMBOL_SCOPE_DEFAULT;
 
-  StringSet::value_type &entry = _defines.GetOrCreateValue(Name);
-  entry.setValue(1);
+  auto Iter = _defines.insert(Name).first;
 
   // fill information structure
   NameAndAttributes info;
-  StringRef NameRef = entry.getKey();
+  StringRef NameRef = Iter->first();
   info.name = NameRef.data();
   assert(info.name[NameRef.size()] == '\0');
   info.attributes = attr;
@@ -459,15 +452,13 @@ void LTOModule::addDefinedSymbol(const char *Name, const GlobalValue *def,
 /// defined list.
 void LTOModule::addAsmGlobalSymbol(const char *name,
                                    lto_symbol_attributes scope) {
-  StringSet::value_type &entry = _defines.GetOrCreateValue(name);
+  auto IterBool = _defines.insert(name);
 
   // only add new define if not already defined
-  if (entry.getValue())
+  if (!IterBool.second)
     return;
 
-  entry.setValue(1);
-
-  NameAndAttributes &info = _undefines[entry.getKey().data()];
+  NameAndAttributes &info = _undefines[IterBool.first->first().data()];
 
   if (info.symbol == nullptr) {
     // FIXME: This is trying to take care of module ASM like this:
@@ -479,7 +470,7 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
     // much.
 
     // fill information structure
-    info.name = entry.getKey().data();
+    info.name = IterBool.first->first().data();
     info.attributes =
       LTO_SYMBOL_PERMISSIONS_DATA | LTO_SYMBOL_DEFINITION_REGULAR | scope;
     info.isFunction = false;
@@ -502,24 +493,21 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
 /// addAsmGlobalSymbolUndef - Add a global symbol from module-level ASM to the
 /// undefined list.
 void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
-  StringMap<NameAndAttributes>::value_type &entry =
-    _undefines.GetOrCreateValue(name);
+  auto IterBool = _undefines.insert(std::make_pair(name, NameAndAttributes()));
 
-  _asm_undefines.push_back(entry.getKey().data());
+  _asm_undefines.push_back(IterBool.first->first().data());
 
   // we already have the symbol
-  if (entry.getValue().name)
+  if (!IterBool.second)
     return;
 
   uint32_t attr = LTO_SYMBOL_DEFINITION_UNDEFINED;
   attr |= LTO_SYMBOL_SCOPE_DEFAULT;
-  NameAndAttributes info;
-  info.name = entry.getKey().data();
+  NameAndAttributes &info = IterBool.first->second;
+  info.name = IterBool.first->first().data();
   info.attributes = attr;
   info.isFunction = false;
   info.symbol = nullptr;
-
-  entry.setValue(info);
 }
 
 /// Add a symbol which isn't defined just yet to a list to be resolved later.
@@ -531,16 +519,15 @@ void LTOModule::addPotentialUndefinedSymbol(const object::BasicSymbolRef &Sym,
     Sym.printName(OS);
   }
 
-  StringMap<NameAndAttributes>::value_type &entry =
-    _undefines.GetOrCreateValue(name);
+  auto IterBool = _undefines.insert(std::make_pair(name, NameAndAttributes()));
 
   // we already have the symbol
-  if (entry.getValue().name)
+  if (!IterBool.second)
     return;
 
-  NameAndAttributes info;
+  NameAndAttributes &info = IterBool.first->second;
 
-  info.name = entry.getKey().data();
+  info.name = IterBool.first->first().data();
 
   const GlobalValue *decl = IRFile->getSymbolGV(Sym.getRawDataRefImpl());
 
@@ -551,8 +538,6 @@ void LTOModule::addPotentialUndefinedSymbol(const object::BasicSymbolRef &Sym,
 
   info.isFunction = isFunc;
   info.symbol = decl;
-
-  entry.setValue(info);
 }
 
 /// parseSymbols - Parse the symbols from the module and model-level ASM and add
@@ -625,8 +610,11 @@ void LTOModule::parseMetadata() {
       MDNode *MDOptions = cast<MDNode>(LinkerOptions->getOperand(i));
       for (unsigned ii = 0, ie = MDOptions->getNumOperands(); ii != ie; ++ii) {
         MDString *MDOption = cast<MDString>(MDOptions->getOperand(ii));
-        StringRef Op = _linkeropt_strings.
-            GetOrCreateValue(MDOption->getString()).getKey();
+        // FIXME: Make StringSet::insert match Self-Associative Container
+        // requirements, returning <iter,bool> rather than bool, and use that
+        // here.
+        StringRef Op =
+            _linkeropt_strings.insert(MDOption->getString()).first->first();
         StringRef DepLibName = _target->getSubtargetImpl()
                                    ->getTargetLowering()
                                    ->getObjFileLowering()

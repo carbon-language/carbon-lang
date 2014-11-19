@@ -28,16 +28,16 @@ class StringToOffsetTable {
 
 public:
   unsigned GetOrAddStringOffset(StringRef Str, bool appendZero = true) {
-    StringMapEntry<unsigned> &Entry = StringOffset.GetOrCreateValue(Str, -1U);
-    if (Entry.getValue() == -1U) {
+    auto IterBool =
+        StringOffset.insert(std::make_pair(Str, AggregateString.size()));
+    if (IterBool.second) {
       // Add the string to the aggregate if this is the first time found.
-      Entry.setValue(AggregateString.size());
       AggregateString.append(Str.begin(), Str.end());
       if (appendZero)
         AggregateString += '\0';
     }
 
-    return Entry.getValue();
+    return IterBool.first->second;
   }
 
   void EmitString(raw_ostream &O) {

@@ -966,9 +966,12 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
 
   // Compute register name map.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    RegistersByName.GetOrCreateValue(
-                       Registers[i]->TheDef->getValueAsString("AsmName"),
-                       Registers[i]);
+    // FIXME: This could just be RegistersByName[name] = register, except that
+    // causes some failures in MIPS - perhaps they have duplicate register name
+    // entries? (or maybe there's a reason for it - I don't know much about this
+    // code, just drive-by refactoring)
+    RegistersByName.insert(std::make_pair(
+        Registers[i]->TheDef->getValueAsString("AsmName"), Registers[i]));
 
   // Precompute all sub-register maps.
   // This will create Composite entries for all inferred sub-register indices.

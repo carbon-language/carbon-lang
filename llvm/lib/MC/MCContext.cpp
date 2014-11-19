@@ -100,16 +100,11 @@ void MCContext::reset() {
 MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
   assert(!Name.empty() && "Normal symbols cannot be unnamed!");
 
-  // Do the lookup and get the entire StringMapEntry.  We want access to the
-  // key if we are creating the entry.
-  StringMapEntry<MCSymbol*> &Entry = Symbols.GetOrCreateValue(Name);
-  MCSymbol *Sym = Entry.getValue();
+  MCSymbol *&Sym = Symbols[Name];
 
-  if (Sym)
-    return Sym;
+  if (!Sym)
+    Sym = CreateSymbol(Name);
 
-  Sym = CreateSymbol(Name);
-  Entry.setValue(Sym);
   return Sym;
 }
 
@@ -120,19 +115,17 @@ MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
 
   StringRef Name = Section.getSectionName();
 
-  StringMapEntry<MCSymbol*> &Entry = Symbols.GetOrCreateValue(Name);
-  MCSymbol *OldSym = Entry.getValue();
+  MCSymbol *&OldSym = Symbols[Name];
   if (OldSym && OldSym->isUndefined()) {
     Sym = OldSym;
     return OldSym;
   }
 
-  StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
-  NameEntry->setValue(true);
-  Sym = new (*this) MCSymbol(NameEntry->getKey(), /*isTemporary*/ false);
+  auto NameIter = UsedNames.insert(std::make_pair(Name, true)).first;
+  Sym = new (*this) MCSymbol(NameIter->getKey(), /*isTemporary*/ false);
 
-  if (!Entry.getValue())
-    Entry.setValue(Sym);
+  if (!OldSym)
+    OldSym = Sym;
 
   return Sym;
 }
@@ -143,21 +136,21 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name) {
   if (AllowTemporaryLabels)
     isTemporary = Name.startswith(MAI->getPrivateGlobalPrefix());
 
-  StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
-  if (NameEntry->getValue()) {
+  auto NameEntry = UsedNames.insert(std::make_pair(Name, true));
+  if (!NameEntry.second) {
     assert(isTemporary && "Cannot rename non-temporary symbols");
     SmallString<128> NewName = Name;
     do {
       NewName.resize(Name.size());
       raw_svector_ostream(NewName) << NextUniqueID++;
-      NameEntry = &UsedNames.GetOrCreateValue(NewName);
-    } while (NameEntry->getValue());
+      NameEntry = UsedNames.insert(std::make_pair(NewName, true));
+    } while (!NameEntry.second);
   }
-  NameEntry->setValue(true);
 
   // Ok, the entry doesn't already exist.  Have the MCSymbol object itself refer
   // to the copy of the string that is embedded in the UsedNames entry.
-  MCSymbol *Result = new (*this) MCSymbol(NameEntry->getKey(), isTemporary);
+  MCSymbol *Result =
+      new (*this) MCSymbol(NameEntry.first->getKey(), isTemporary);
 
   return Result;
 }

@@ -4140,7 +4140,7 @@ bool AArch64AsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
   Parser.Lex(); // Consume the EndOfStatement
 
   auto pair = std::make_pair(IsVector, RegNum);
-  if (RegisterReqs.GetOrCreateValue(Name, pair).getValue() != pair)
+  if (!RegisterReqs.insert(std::make_pair(Name, pair)).second)
     Warning(L, "ignoring redefinition of register alias '" + Name + "'");
 
   return true;

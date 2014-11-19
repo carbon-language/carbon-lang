@@ -1463,7 +1463,7 @@ bool ModuleLinker::run() {
   computeTypeMapping();
 
   ComdatsChosen.clear();
-  for (const StringMapEntry<llvm::Comdat> &SMEC : SrcM->getComdatSymbolTable()) {
+  for (const auto &SMEC : SrcM->getComdatSymbolTable()) {
     const Comdat &C = SMEC.getValue();
     if (ComdatsChosen.count(&C))
       continue;

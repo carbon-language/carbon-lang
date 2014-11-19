@@ -2436,14 +2436,16 @@ Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
     return ConstantAggregateZero::get(Ty);
 
   // Do a lookup to see if we have already formed one of these.
-  StringMap<ConstantDataSequential*>::MapEntryTy &Slot =
-    Ty->getContext().pImpl->CDSConstants.GetOrCreateValue(Elements);
+  auto &Slot =
+      *Ty->getContext()
+           .pImpl->CDSConstants.insert(std::make_pair(Elements, nullptr))
+           .first;
 
   // The bucket can point to a linked list of different CDS's that have the same
   // body but different types.  For example, 0,0,0,1 could be a 4 element array
   // of i8, or a 1-element array of i32.  They'll both end up in the same
   /// StringMap bucket, linked up by their Next pointers.  Walk the list.
-  ConstantDataSequential **Entry = &Slot.getValue();
+  ConstantDataSequential **Entry = &Slot.second;
   for (ConstantDataSequential *Node = *Entry; Node;
        Entry = &Node->Next, Node = *Entry)
     if (Node->getType() == Ty)
@@ -2452,10 +2454,10 @@ Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
   // Okay, we didn't get a hit.  Create a node of the right class, link it in,
   // and return it.
   if (isa<ArrayType>(Ty))
-    return *Entry = new ConstantDataArray(Ty, Slot.getKeyData());
+    return *Entry = new ConstantDataArray(Ty, Slot.first().data());
 
   assert(isa<VectorType>(Ty));
-  return *Entry = new ConstantDataVector(Ty, Slot.getKeyData());
+  return *Entry = new ConstantDataVector(Ty, Slot.first().data());
 }
 
 void ConstantDataSequential::destroyConstant() {

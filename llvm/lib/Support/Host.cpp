@@ -759,13 +759,13 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
 #endif
 
     if (LLVMFeatureStr != "")
-      Features.GetOrCreateValue(LLVMFeatureStr).setValue(true);
+      Features[LLVMFeatureStr] = true;
   }
 
 #if defined(__aarch64__)
   // If we have all crypto bits we can add the feature
   if (crypto == (CAP_AES | CAP_PMULL | CAP_SHA1 | CAP_SHA2))
-    Features.GetOrCreateValue("crypto").setValue(true);
+    Features["crypto"] = true;
 #endif
 
   return true;

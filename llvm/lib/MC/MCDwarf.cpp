@@ -368,10 +368,10 @@ unsigned MCDwarfLineTableHeader::getFile(StringRef &Directory,
     FileNumber = SourceIdMap.size() + 1;
     assert((MCDwarfFiles.empty() || FileNumber == MCDwarfFiles.size()) &&
            "Don't mix autonumbered and explicit numbered line table usage");
-    StringMapEntry<unsigned> &Ent = SourceIdMap.GetOrCreateValue(
-        (Directory + Twine('\0') + FileName).str(), FileNumber);
-    if (Ent.getValue() != FileNumber)
-      return Ent.getValue();
+    auto IterBool = SourceIdMap.insert(
+        std::make_pair((Directory + Twine('\0') + FileName).str(), FileNumber));
+    if (!IterBool.second)
+      return IterBool.first->second;
   }
   // Make space for this FileNumber in the MCDwarfFiles vector if needed.
   MCDwarfFiles.resize(FileNumber + 1);

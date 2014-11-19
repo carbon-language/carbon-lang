@@ -62,11 +62,7 @@ class NameToIdxMap {
 public:
   /// \returns true if name is already present in the map.
   bool addName(StringRef Name, unsigned i) {
-    StringMapEntry<int> &Entry = Map.GetOrCreateValue(Name, -1);
-    if (Entry.getValue() != -1)
-      return true;
-    Entry.setValue((int)i);
-    return false;
+    return !Map.insert(std::make_pair(Name, (int)i)).second;
   }
   /// \returns true if name is not present in the map
   bool lookup(StringRef Name, unsigned &Idx) const {

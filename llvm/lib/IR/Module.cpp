@@ -452,9 +452,7 @@ unsigned Module::getDwarfVersion() const {
 }
 
 Comdat *Module::getOrInsertComdat(StringRef Name) {
-  Comdat C;
-  StringMapEntry<Comdat> &Entry =
-      ComdatSymTab.GetOrCreateValue(Name, std::move(C));
+  auto &Entry = *ComdatSymTab.insert(std::make_pair(Name, Comdat())).first;
   Entry.second.Name = &Entry;
   return &Entry.second;
 }

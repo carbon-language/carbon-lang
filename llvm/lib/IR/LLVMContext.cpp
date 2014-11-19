@@ -253,9 +253,10 @@ unsigned LLVMContext::getMDKindID(StringRef Name) const {
   assert(isValidName(Name) && "Invalid MDNode name");
 
   // If this is new, assign it its ID.
-  return
-    pImpl->CustomMDKindNames.GetOrCreateValue(
-      Name, pImpl->CustomMDKindNames.size()).second;
+  return pImpl->CustomMDKindNames.insert(std::make_pair(
+                                             Name,
+                                             pImpl->CustomMDKindNames.size()))
+      .first->second;
 }
 
 /// getHandlerNames - Populate client supplied smallvector using custome
