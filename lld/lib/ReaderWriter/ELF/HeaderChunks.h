@@ -266,7 +266,7 @@ public:
 
   SectionHeader(const ELFLinkingContext &, int32_t order);
 
-  void appendSection(OutputSection<ELFT> *section);
+  void appendSection(MergedSections<ELFT> *section);
 
   void updateSection(Section<ELFT> *section);
 
@@ -317,8 +317,9 @@ SectionHeader<ELFT>::SectionHeader(const ELFLinkingContext &context,
   this->_fsize += sizeof (Elf_Shdr);
 }
 
-template <class ELFT>
-void SectionHeader<ELFT>::appendSection(OutputSection<ELFT> *section) {
+template<class ELFT>
+void
+SectionHeader<ELFT>::appendSection(MergedSections<ELFT> *section) {
   Elf_Shdr *shdr = new (_sectionAllocate.Allocate<Elf_Shdr>()) Elf_Shdr;
   shdr->sh_name   = _stringSection->addString(section->name());
   shdr->sh_type   = section->type();

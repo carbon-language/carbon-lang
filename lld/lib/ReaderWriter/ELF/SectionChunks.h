@@ -31,7 +31,7 @@
 
 namespace lld {
 namespace elf {
-template <class> class OutputSection;
+template <class> class MergedSections;
 using namespace llvm::ELF;
 template <class ELFT> class Segment;
 
@@ -40,9 +40,9 @@ template <class ELFT> class Section : public Chunk<ELFT> {
 public:
   Section(const ELFLinkingContext &context, StringRef name,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
-      : Chunk<ELFT>(name, k, context), _outputSection(nullptr), _flags(0),
-        _entSize(0), _type(0), _link(0), _info(0),
-        _isFirstSectionInOutputSection(false), _segmentType(SHT_NULL) {}
+      : Chunk<ELFT>(name, k, context), _parent(nullptr), _flags(0), _entSize(0),
+        _type(0), _link(0), _info(0), _isFirstSectionInMerge(false),
+        _segmentType(SHT_NULL) {}
 
   /// \brief Modify the section contents before assigning virtual addresses
   //  or assigning file offsets
@@ -95,9 +95,9 @@ public:
 
   virtual bool findAtomAddrByName(StringRef, uint64_t &) { return false; }
 
-  void setOutputSection(OutputSection<ELFT> *os, bool isFirst = false) {
-    _outputSection = os;
-    _isFirstSectionInOutputSection = isFirst;
+  void setMergedSection(MergedSections<ELFT> *ms, bool isFirst = false) {
+    _parent = ms;
+    _isFirstSectionInMerge = isFirst;
   }
 
   static bool classof(const Chunk<ELFT> *c) {
@@ -106,13 +106,12 @@ public:
   }
 
   uint64_t align2() const override {
-    return _isFirstSectionInOutputSection ? _outputSection->align2()
-                                          : this->_align2;
+    return _isFirstSectionInMerge ? _parent->align2() : this->_align2;
   }
 
 protected:
-  /// \brief OutputSection this Section is a member of, or nullptr.
-  OutputSection<ELFT> *_outputSection;
+  /// \brief MergedSections this Section is a member of, or nullptr.
+  MergedSections<ELFT> *_parent;
   /// \brief ELF SHF_* flags.
   uint64_t _flags;
   /// \brief The size of each entity.
@@ -123,8 +122,8 @@ protected:
   uint32_t _link;
   /// \brief the sh_info field.
   uint32_t _info;
-  /// \brief Is this the first section in the output section.
-  bool _isFirstSectionInOutputSection;
+  /// \brief Is this the first section in the merged section list.
+  bool _isFirstSectionInMerge;
   /// \brief the output ELF segment type of this section.
   Layout::SegmentType _segmentType;
 };
@@ -384,21 +383,22 @@ void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
   });
 }
 
-/// \brief A OutputSection represents a set of sections grouped by the same
+/// \brief A MergedSections represents a set of sections grouped by the same
 /// name. The output file that gets written by the linker has sections grouped
 /// by similar names
-template <class ELFT> class OutputSection {
+template<class ELFT>
+class MergedSections {
 public:
   // Iterators
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
 
-  OutputSection(StringRef name);
+  MergedSections(StringRef name);
 
-  // Appends a section into the list of sections that are part of this Output
+  // Appends a section into the list of sections that are part of this Merged
   // Section
   void appendSection(Chunk<ELFT> *c);
 
-  // Set the OutputSection is associated with a segment
+  // Set the MergedSections is associated with a segment
   inline void setHasSegment() { _hasSegment = true; }
 
   /// Sets the ordinal
@@ -411,13 +411,13 @@ public:
     _memSize = memsz;
   }
 
-  /// Sets the size fo the output Section.
+  /// Sets the size fo the merged Section
   inline void setSize(uint64_t fsiz) {
     _size = fsiz;
   }
 
-  // The offset of the first section contained in the output section is
-  // contained here.
+  // The offset of the first section contained in the merged section is
+  // contained here
   inline void setFileOffset(uint64_t foffset) {
     _fileOffset = foffset;
   }
@@ -445,7 +445,7 @@ public:
 
   inline range<ChunkIter> sections() { return _sections; }
 
-  // The below functions returns the properties of the OutputSection.
+  // The below functions returns the properties of the MergeSection
   inline bool hasSegment() const { return _hasSegment; }
 
   inline StringRef name() const { return _name; }
@@ -493,14 +493,16 @@ private:
   std::vector<Chunk<ELFT> *> _sections;
 };
 
-/// OutputSection
+/// MergedSections
 template <class ELFT>
-OutputSection<ELFT>::OutputSection(StringRef name)
+MergedSections<ELFT>::MergedSections(StringRef name)
     : _name(name), _hasSegment(false), _ordinal(0), _flags(0), _size(0),
       _memSize(0), _fileOffset(0), _virtualAddr(0), _shInfo(0), _entSize(0),
       _link(0), _align2(0), _kind(0), _type(0), _isLoadableSection(false) {}
 
-template <class ELFT> void OutputSection<ELFT>::appendSection(Chunk<ELFT> *c) {
+template<class ELFT>
+void
+MergedSections<ELFT>::appendSection(Chunk<ELFT> *c) {
   if (c->align2() > _align2)
     _align2 = c->align2();
   if (const auto section = dyn_cast<Section<ELFT>>(c)) {
@@ -511,7 +513,7 @@ template <class ELFT> void OutputSection<ELFT>::appendSection(Chunk<ELFT> *c) {
     _type = section->getType();
     if (_flags < section->getFlags())
       _flags = section->getFlags();
-    section->setOutputSection(this, (_sections.size() == 0));
+    section->setMergedSection(this, (_sections.size() == 0));
   }
   _kind = c->kind();
   _sections.push_back(c);
@@ -839,9 +841,9 @@ template <class ELFT> void SymbolTable<ELFT>::finalize(bool sort) {
   }
   this->_info = shInfo;
   this->_link = _stringSection->ordinal();
-  if (this->_outputSection) {
-    this->_outputSection->setInfo(this->_info);
-    this->_outputSection->setLink(this->_link);
+  if (this->_parent) {
+    this->_parent->setInfo(this->_info);
+    this->_parent->setLink(this->_link);
   }
 }
 
@@ -963,8 +965,8 @@ public:
 
   virtual void finalize() {
     this->_link = _symbolTable ? _symbolTable->ordinal() : 0;
-    if (this->_outputSection)
-      this->_outputSection->setLink(this->_link);
+    if (this->_parent)
+      this->_parent->setLink(this->_link);
   }
 
   virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
@@ -1130,10 +1132,10 @@ public:
     StringTable<ELFT> *dynamicStringTable =
         _dynamicSymbolTable->getStringTable();
     this->_link = dynamicStringTable->ordinal();
-    if (this->_outputSection) {
-      this->_outputSection->setType(this->_type);
-      this->_outputSection->setInfo(this->_info);
-      this->_outputSection->setLink(this->_link);
+    if (this->_parent) {
+      this->_parent->setType(this->_type);
+      this->_parent->setInfo(this->_info);
+      this->_parent->setLink(this->_link);
     }
   }
 
@@ -1325,8 +1327,8 @@ public:
 
   virtual void finalize() {
     this->_link = _symbolTable ? _symbolTable->ordinal() : 0;
-    if (this->_outputSection)
-      this->_outputSection->setLink(this->_link);
+    if (this->_parent)
+      this->_parent->setLink(this->_link);
   }
 
   virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
@@ -1379,7 +1381,7 @@ public:
   }
 
   void finalize() override {
-    OutputSection<ELFT> *s = _layout.findOutputSection(".eh_frame");
+    MergedSections<ELFT> *s = _layout.findOutputSection(".eh_frame");
     _ehFrameAddr = s ? s->virtualAddr() : 0;
   }
 

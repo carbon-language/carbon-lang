@@ -249,24 +249,24 @@ void OutputELFWriter<ELFT>::buildAtomToAddressMap(const File &file) {
 template<class ELFT>
 void OutputELFWriter<ELFT>::buildSectionHeaderTable() {
   ScopedTask task(getDefaultDomain(), "buildSectionHeaderTable");
-  for (auto outputSection : _layout.outputSections()) {
-    if (outputSection->kind() != Chunk<ELFT>::Kind::ELFSection &&
-        outputSection->kind() != Chunk<ELFT>::Kind::AtomSection)
+  for (auto mergedSec : _layout.mergedSections()) {
+    if (mergedSec->kind() != Chunk<ELFT>::Kind::ELFSection &&
+        mergedSec->kind() != Chunk<ELFT>::Kind::AtomSection)
       continue;
-    if (outputSection->hasSegment())
-      _shdrtab->appendSection(outputSection);
+    if (mergedSec->hasSegment())
+      _shdrtab->appendSection(mergedSec);
   }
 }
 
 template<class ELFT>
 void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsWithNoSegments");
-  for (auto outputSection : _layout.outputSections()) {
-    if (outputSection->kind() != Chunk<ELFT>::Kind::ELFSection &&
-        outputSection->kind() != Chunk<ELFT>::Kind::AtomSection)
+  for (auto mergedSec : _layout.mergedSections()) {
+    if (mergedSec->kind() != Chunk<ELFT>::Kind::ELFSection &&
+        mergedSec->kind() != Chunk<ELFT>::Kind::AtomSection)
       continue;
-    if (!outputSection->hasSegment())
-      _shdrtab->appendSection(outputSection);
+    if (!mergedSec->hasSegment())
+      _shdrtab->appendSection(mergedSec);
   }
   _layout.assignFileOffsetsForMiscSections();
   for (auto sec : _layout.sections())
