@@ -804,3 +804,16 @@ class LWXS_FM_MM<bits<10> funct> {
   let Inst{10}    = 0;
   let Inst{9-0}   = funct;
 }
+
+class LWM_FM_MM<bits<4> funct> : MMArch {
+  bits<5> rt;
+  bits<21> addr;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x8;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = addr{20-16};
+  let Inst{15-12} = funct;
+  let Inst{11-0}  = addr{11-0};
+}

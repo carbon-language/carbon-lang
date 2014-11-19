@@ -225,6 +225,18 @@ printMemOperand(const MCInst *MI, int opNum, raw_ostream &O) {
   // Load/Store memory operands -- imm($reg)
   // If PIC target the target is loaded as the
   // pattern lw $25,%call16($28)
+
+  // opNum can be invalid if instruction had reglist as operand.
+  // MemOperand is always last operand of instruction (base + offset).
+  switch (MI->getOpcode()) {
+  default:
+    break;
+  case Mips::SWM32_MM:
+  case Mips::LWM32_MM:
+    opNum = MI->getNumOperands() - 2;
+    break;
+  }
+
   printOperand(MI, opNum+1, O);
   O << "(";
   printOperand(MI, opNum, O);
@@ -324,3 +336,13 @@ void MipsInstPrinter::printSaveRestore(const MCInst *MI, raw_ostream &O) {
   }
 }
 
+void MipsInstPrinter::
+printRegisterList(const MCInst *MI, int opNum, raw_ostream &O) {
+  // - 2 because register List is always first operand of instruction and it is
+  // always followed by memory operand (base + offset).
+  for (int i = opNum, e = MI->getNumOperands() - 2; i != e; ++i) {
+    if (i != opNum)
+      O << ", ";
+    printRegName(O, MI->getOperand(i).getReg());
+  }
+}

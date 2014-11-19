@@ -645,6 +645,18 @@ printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O) {
   // Load/Store memory operands -- imm($reg)
   // If PIC target the target is loaded as the
   // pattern lw $25,%call16($28)
+
+  // opNum can be invalid if instruction has reglist as operand.
+  // MemOperand is always last operand of instruction (base + offset).
+  switch (MI->getOpcode()) {
+  default:
+    break;
+  case Mips::SWM32_MM:
+  case Mips::LWM32_MM:
+    opNum = MI->getNumOperands() - 2;
+    break;
+  }
+
   printOperand(MI, opNum+1, O);
   O << "(";
   printOperand(MI, opNum, O);
@@ -666,6 +678,14 @@ printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                 const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(opNum);
   O << Mips::MipsFCCToString((Mips::CondCode)MO.getImm());
+}
+
+void MipsAsmPrinter::
+printRegisterList(const MachineInstr *MI, int opNum, raw_ostream &O) {
+  for (int i = opNum, e = MI->getNumOperands(); i != e; ++i) {
+    if (i != opNum) O << ", ";
+    printOperand(MI, i, O);
+  }
 }
 
 void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {

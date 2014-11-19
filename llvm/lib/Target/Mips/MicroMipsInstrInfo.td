@@ -271,6 +271,35 @@ class LoadWordIndexedScaledMM<string opstr, RegisterOperand RO,
   InstSE<(outs RO:$rd), (ins PtrRC:$base, PtrRC:$index),
          !strconcat(opstr, "\t$rd, ${index}(${base})"), [], Itin, FrmFI>;
 
+/// A list of registers used by load/store multiple instructions.
+def RegListAsmOperand : AsmOperandClass {
+  let Name = "RegList";
+  let ParserMethod = "parseRegisterList";
+}
+
+def reglist : Operand<i32> {
+  let EncoderMethod = "getRegisterListOpValue";
+  let ParserMatchClass = RegListAsmOperand;
+  let PrintMethod = "printRegisterList";
+  let DecoderMethod = "DecodeRegListOperand";
+}
+
+class StoreMultMM<string opstr,
+            InstrItinClass Itin = NoItinerary, ComplexPattern Addr = addr> :
+  InstSE<(outs), (ins reglist:$rt, mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI, opstr> {
+  let DecoderMethod = "DecodeMemMMImm12";
+  let mayStore = 1;
+}
+
+class LoadMultMM<string opstr,
+            InstrItinClass Itin = NoItinerary, ComplexPattern Addr = addr> :
+  InstSE<(outs reglist:$rt), (ins mem_mm_12:$addr),
+          !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI, opstr> {
+  let DecoderMethod = "DecodeMemMMImm12";
+  let mayLoad = 1;
+}
+
 def ADDU16_MM : ArithRMM16<"addu16", GPRMM16Opnd, 1, II_ADDU, add>,
                 ARITH_FM_MM16<0>;
 def SUBU16_MM : ArithRMM16<"subu16", GPRMM16Opnd, 0, II_SUBU, sub>,
@@ -401,6 +430,10 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                LWL_FM_MM<0x8>;
   def SWR_MM : StoreLeftRightMM<"swr", MipsSWR, GPR32Opnd, mem_mm_12>,
                LWL_FM_MM<0x9>;
+
+  /// Load and Store Instructions - multiple
+  def SWM32_MM  : StoreMultMM<"swm32">, LWM_FM_MM<0xd>;
+  def LWM32_MM  : LoadMultMM<"lwm32">, LWM_FM_MM<0x5>;
 
   /// Move Conditional
   def MOVZ_I_MM : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd,

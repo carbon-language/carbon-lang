@@ -341,6 +341,10 @@ static DecodeStatus
 DecodeBlezGroupBranch(MCInst &MI, InsnType insn, uint64_t Address,
                        const void *Decoder);
 
+static DecodeStatus DecodeRegListOperand(MCInst &Inst, unsigned Insn,
+                                         uint64_t Address,
+                                         const void *Decoder);
+
 namespace llvm {
 extern Target TheMipselTarget, TheMipsTarget, TheMips64Target,
               TheMips64elTarget;
@@ -1034,12 +1038,23 @@ static DecodeStatus DecodeMemMMImm12(MCInst &Inst,
   Reg = getReg(Decoder, Mips::GPR32RegClassID, Reg);
   Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
 
-  if (Inst.getOpcode() == Mips::SC_MM)
+  switch (Inst.getOpcode()) {
+  case Mips::SWM32_MM:
+  case Mips::LWM32_MM:
+    if (DecodeRegListOperand(Inst, Insn, Address, Decoder)
+        == MCDisassembler::Fail)
+      return MCDisassembler::Fail;
+    Inst.addOperand(MCOperand::CreateReg(Base));
+    Inst.addOperand(MCOperand::CreateImm(Offset));
+    break;
+  case Mips::SC_MM:
     Inst.addOperand(MCOperand::CreateReg(Reg));
-
-  Inst.addOperand(MCOperand::CreateReg(Reg));
-  Inst.addOperand(MCOperand::CreateReg(Base));
-  Inst.addOperand(MCOperand::CreateImm(Offset));
+    // fallthrough
+  default:
+    Inst.addOperand(MCOperand::CreateReg(Reg));
+    Inst.addOperand(MCOperand::CreateReg(Base));
+    Inst.addOperand(MCOperand::CreateImm(Offset));
+  }
 
   return MCDisassembler::Success;
 }
@@ -1373,5 +1388,28 @@ static DecodeStatus DecodeSimm19Lsl2(MCInst &Inst, unsigned Insn,
 static DecodeStatus DecodeSimm18Lsl3(MCInst &Inst, unsigned Insn,
                                      uint64_t Address, const void *Decoder) {
   Inst.addOperand(MCOperand::CreateImm(SignExtend32<18>(Insn) * 8));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeRegListOperand(MCInst &Inst,
+                                         unsigned Insn,
+                                         uint64_t Address,
+                                         const void *Decoder) {
+  unsigned Regs[] = {Mips::S0, Mips::S1, Mips::S2, Mips::S3, Mips::S4, Mips::S5,
+                     Mips::S6, Mips::FP};
+  unsigned RegNum;
+
+  unsigned RegLst = fieldFromInstruction(Insn, 21, 5);
+  // Empty register lists are not allowed.
+  if (RegLst == 0)
+    return MCDisassembler::Fail;
+
+  RegNum = RegLst & 0xf;
+  for (unsigned i = 0; i < RegNum; i++)
+    Inst.addOperand(MCOperand::CreateReg(Regs[i]));
+
+  if (RegLst & 0x10)
+    Inst.addOperand(MCOperand::CreateReg(Mips::RA));
+
   return MCDisassembler::Success;
 }

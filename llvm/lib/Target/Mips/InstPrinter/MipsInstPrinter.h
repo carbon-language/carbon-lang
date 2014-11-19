@@ -107,6 +107,7 @@ private:
                   unsigned OpNo1, raw_ostream &OS);
   bool printAlias(const MCInst &MI, raw_ostream &OS);
   void printSaveRestore(const MCInst *MI, raw_ostream &O);
+  void printRegisterList(const MCInst *MI, int opNum, raw_ostream &O);
 };
 } // end namespace llvm
 
