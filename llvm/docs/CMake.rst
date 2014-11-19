@@ -291,6 +291,12 @@ LLVM-specific variables
   are ``Address``, ``Memory``, ``MemoryWithOrigins`` and ``Undefined``.
   Defaults to empty string.
 
+**LLVM_PARALLEL_COMPILE_JOBS**:STRING
+  Define the maximum number of concurrent compilation jobs.
+
+**LLVM_PARALLEL_LINK_JOBS**:STRING
+  Define the maximum number of concurrent link jobs.
+
 **LLVM_BUILD_DOCS**:BOOL
   Enables all enabled documentation targets (i.e. Doxgyen and Sphinx targets) to
   be built as part of the normal build. If the ``install`` target is run then

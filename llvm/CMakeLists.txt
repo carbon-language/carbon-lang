@@ -24,6 +24,21 @@ endif()
 
 project(LLVM)
 
+# The following only works with the Ninja generator in CMake >= 3.0.
+set(LLVM_PARALLEL_COMPILE_JOBS "" CACHE STRING
+  "Define the maximum number of concurrent compilation jobs.")
+if(LLVM_PARALLEL_COMPILE_JOBS)
+  set_property(GLOBAL APPEND PROPERTY JOB_POOLS compile_job_pool=${LLVM_PARALLEL_COMPILE_JOBS})
+  set(CMAKE_JOB_POOL_COMPILE compile_job_pool)
+endif()
+
+set(LLVM_PARALLEL_LINK_JOBS "" CACHE STRING
+  "Define the maximum number of concurrent link jobs.")
+if(LLVM_PARALLEL_LINK_JOBS)
+  set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=${LLVM_PARALLEL_LINK_JOBS})
+  set(CMAKE_JOB_POOL_LINK link_job_pool)
+endif()
+
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
