@@ -590,19 +590,17 @@ CGOpenMPRuntime::GetOrCreateInternalVariable(llvm::Type *Ty,
   llvm::raw_svector_ostream Out(Buffer);
   Out << Name;
   auto RuntimeName = Out.str();
-  auto &Elem = InternalVars.GetOrCreateValue(RuntimeName);
-  if (Elem.getValue()) {
-    assert(Elem.getValue()->getType()->getPointerElementType() == Ty &&
+  auto &Elem = *InternalVars.insert(std::make_pair(RuntimeName, nullptr)).first;
+  if (Elem.second) {
+    assert(Elem.second->getType()->getPointerElementType() == Ty &&
            "OMP internal variable has different type than requested");
-    return &*Elem.getValue();
+    return &*Elem.second;
   }
 
-  auto Item = new llvm::GlobalVariable(
-      CGM.getModule(), Ty, /*IsConstant*/ false,
-      llvm::GlobalValue::CommonLinkage,
-      llvm::Constant::getNullValue(Ty), Elem.getKey());
-  Elem.setValue(Item);
-  return Item;
+  return Elem.second = new llvm::GlobalVariable(
+             CGM.getModule(), Ty, /*IsConstant*/ false,
+             llvm::GlobalValue::CommonLinkage, llvm::Constant::getNullValue(Ty),
+             Elem.first());
 }
 
 llvm::Value *CGOpenMPRuntime::GetCriticalRegionLock(StringRef CriticalName) {

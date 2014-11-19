@@ -411,7 +411,7 @@ public:
   /// \brief Look up the specified framework name in our framework cache.
   /// \returns The DirectoryEntry it is in if we know, null otherwise.
   FrameworkCacheEntry &LookupFrameworkCache(StringRef FWName) {
-    return FrameworkMap.GetOrCreateValue(FWName).getValue();
+    return FrameworkMap[FWName];
   }
 
   /// \brief Mark the specified file as a target of of a \#include,

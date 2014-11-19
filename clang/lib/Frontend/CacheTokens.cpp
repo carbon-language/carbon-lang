@@ -270,17 +270,17 @@ void PTHWriter::EmitToken(const Token& T) {
     StringRef s(T.getLiteralData(), T.getLength());
 
     // Get the string entry.
-    llvm::StringMapEntry<OffsetOpt> *E = &CachedStrs.GetOrCreateValue(s);
+    auto &E = *CachedStrs.insert(std::make_pair(s, OffsetOpt())).first;
 
     // If this is a new string entry, bump the PTH offset.
-    if (!E->getValue().hasOffset()) {
-      E->getValue().setOffset(CurStrOffset);
-      StrEntries.push_back(E);
+    if (!E.second.hasOffset()) {
+      E.second.setOffset(CurStrOffset);
+      StrEntries.push_back(&E);
       CurStrOffset += s.size() + 1;
     }
 
     // Emit the relative offset into the PTH file for the spelling string.
-    Emit32(E->getValue().getOffset());
+    Emit32(E.second.getOffset());
   }
 
   // Emit the offset into the original source file of this token so that we

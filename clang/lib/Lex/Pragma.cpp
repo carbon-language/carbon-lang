@@ -65,9 +65,7 @@ PragmaHandler *PragmaNamespace::FindHandler(StringRef Name,
 void PragmaNamespace::AddPragma(PragmaHandler *Handler) {
   assert(!Handlers.lookup(Handler->getName()) &&
          "A handler with this name is already registered in this namespace");
-  llvm::StringMapEntry<PragmaHandler *> &Entry =
-    Handlers.GetOrCreateValue(Handler->getName());
-  Entry.setValue(Handler);
+  Handlers[Handler->getName()] = Handler;
 }
 
 void PragmaNamespace::RemovePragmaHandler(PragmaHandler *Handler) {

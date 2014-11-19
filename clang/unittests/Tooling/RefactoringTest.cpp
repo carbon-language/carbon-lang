@@ -237,7 +237,8 @@ public:
     const FileEntry *File = Context.Files.getFile(Path);
     assert(File != nullptr);
 
-    StringRef Found = TemporaryFiles.GetOrCreateValue(Name, Path.str()).second;
+    StringRef Found =
+        TemporaryFiles.insert(std::make_pair(Name, Path.str())).first->second;
     assert(Found == Path);
     (void)Found;
     return Context.Sources.createFileID(File, SourceLocation(), SrcMgr::C_User);

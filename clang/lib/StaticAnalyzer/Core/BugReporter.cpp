@@ -3480,13 +3480,9 @@ BugType *BugReporter::getBugTypeForName(CheckName CheckName, StringRef name,
   SmallString<136> fullDesc;
   llvm::raw_svector_ostream(fullDesc) << CheckName.getName() << ":" << name
                                       << ":" << category;
-  llvm::StringMapEntry<BugType *> &
-      entry = StrBugTypes.GetOrCreateValue(fullDesc);
-  BugType *BT = entry.getValue();
-  if (!BT) {
+  BugType *&BT = StrBugTypes[fullDesc];
+  if (!BT)
     BT = new BugType(CheckName, name, category);
-    entry.setValue(BT);
-  }
   return BT;
 }
 

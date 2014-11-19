@@ -177,17 +177,11 @@ llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
 }
 
 unsigned LineTableInfo::getLineTableFilenameID(StringRef Name) {
-  // Look up the filename in the string table, returning the pre-existing value
-  // if it exists.
-  llvm::StringMapEntry<unsigned> &Entry =
-    FilenameIDs.GetOrCreateValue(Name, ~0U);
-  if (Entry.getValue() != ~0U)
-    return Entry.getValue();
-
-  // Otherwise, assign this the next available ID.
-  Entry.setValue(FilenamesByID.size());
-  FilenamesByID.push_back(&Entry);
-  return FilenamesByID.size()-1;
+  auto IterBool =
+      FilenameIDs.insert(std::make_pair(Name, FilenamesByID.size()));
+  if (IterBool.second)
+    FilenamesByID.push_back(&*IterBool.first);
+  return IterBool.first->second;
 }
 
 /// AddLineNote - Add a line note to the line table that indicates that there

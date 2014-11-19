@@ -36,7 +36,7 @@ DiagTool *DiagTools::getTool(llvm::StringRef toolCmd) {
 }
 
 void DiagTools::registerTool(DiagTool *tool) {
-  getTools(tools)->GetOrCreateValue(tool->getName(), tool);  
+  (*getTools(tools))[tool->getName()] = tool;
 }
 
 void DiagTools::printCommands(llvm::raw_ostream &out) {

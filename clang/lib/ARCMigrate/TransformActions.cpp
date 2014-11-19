@@ -581,8 +581,7 @@ void TransformActionsImpl::applyRewrites(
 /// "alive". Since the vast majority of text will be the same, we also unique
 /// the strings using a StringMap.
 StringRef TransformActionsImpl::getUniqueText(StringRef text) {
-  llvm::StringMapEntry<bool> &entry = UniqueText.GetOrCreateValue(text);
-  return entry.getKey();
+  return UniqueText.insert(std::make_pair(text, false)).first->first();
 }
 
 /// \brief Computes the source location just past the end of the token at

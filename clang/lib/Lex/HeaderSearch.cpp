@@ -690,8 +690,7 @@ const FileEntry *HeaderSearch::LookupFile(
   // multiply included, and the "pragma once" optimization prevents them from
   // being relex/pp'd, but they would still have to search through a
   // (potentially huge) series of SearchDirs to find it.
-  LookupFileCacheInfo &CacheLookup =
-    LookupFileCache.GetOrCreateValue(Filename).getValue();
+  LookupFileCacheInfo &CacheLookup = LookupFileCache[Filename];
 
   // If the entry has been previously looked up, the first value will be
   // non-zero.  If the value is equal to i (the start point of our search), then
@@ -791,10 +790,8 @@ const FileEntry *HeaderSearch::LookupFile(
         return MSFE;
       }
 
-      LookupFileCacheInfo &CacheLookup 
-        = LookupFileCache.GetOrCreateValue(Filename).getValue();
-      CacheLookup.HitIdx
-        = LookupFileCache.GetOrCreateValue(ScratchFilename).getValue().HitIdx;
+      LookupFileCacheInfo &CacheLookup  = LookupFileCache[Filename];
+      CacheLookup.HitIdx = LookupFileCache[ScratchFilename].HitIdx;
       // FIXME: SuggestedModule.
       return FE;
     }
@@ -847,18 +844,19 @@ LookupSubframeworkHeader(StringRef Filename,
   FrameworkName.append(Filename.begin(), Filename.begin()+SlashPos);
   FrameworkName += ".framework/";
 
-  llvm::StringMapEntry<FrameworkCacheEntry> &CacheLookup =
-    FrameworkMap.GetOrCreateValue(Filename.substr(0, SlashPos));
+  auto &CacheLookup =
+      *FrameworkMap.insert(std::make_pair(Filename.substr(0, SlashPos),
+                                          FrameworkCacheEntry())).first;
 
   // Some other location?
-  if (CacheLookup.getValue().Directory &&
-      CacheLookup.getKeyLength() == FrameworkName.size() &&
-      memcmp(CacheLookup.getKeyData(), &FrameworkName[0],
-             CacheLookup.getKeyLength()) != 0)
+  if (CacheLookup.second.Directory &&
+      CacheLookup.first().size() == FrameworkName.size() &&
+      memcmp(CacheLookup.first().data(), &FrameworkName[0],
+             CacheLookup.first().size()) != 0)
     return nullptr;
 
   // Cache subframework.
-  if (!CacheLookup.getValue().Directory) {
+  if (!CacheLookup.second.Directory) {
     ++NumSubFrameworkLookups;
 
     // If the framework dir doesn't exist, we fail.
@@ -867,7 +865,7 @@ LookupSubframeworkHeader(StringRef Filename,
 
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
-    CacheLookup.getValue().Directory = Dir;
+    CacheLookup.second.Directory = Dir;
   }
 
   const FileEntry *FE = nullptr;
@@ -1058,7 +1056,7 @@ size_t HeaderSearch::getTotalMemory() const {
 }
 
 StringRef HeaderSearch::getUniqueFrameworkName(StringRef Framework) {
-  return FrameworkNames.GetOrCreateValue(Framework).getKey();
+  return FrameworkNames.insert(Framework).first->first();
 }
 
 bool HeaderSearch::hasModuleMap(StringRef FileName, 
