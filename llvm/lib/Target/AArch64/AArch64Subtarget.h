@@ -115,7 +115,7 @@ public:
   bool isCortexA57() const { return CPUString == "cortex-a57"; }
   bool isCortexA53() const { return CPUString == "cortex-a53"; }
 
-  bool useAA() const override { return isCortexA53() || isCortexA57(); }
+  bool useAA() const override { return isCortexA53(); }
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
   /// that still makes it profitable to inline the call.
