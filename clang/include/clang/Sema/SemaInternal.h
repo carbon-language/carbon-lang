@@ -162,6 +162,17 @@ public:
                : ValidatedCorrections[0];  // The empty correction.
   }
 
+  /// \brief Return the next typo correction like getNextCorrection, but keep
+  /// the internal state pointed to the current correction (i.e. the next time
+  /// getNextCorrection is called, it will return the same correction returned
+  /// by peekNextcorrection).
+  const TypoCorrection &peekNextCorrection() {
+    auto Current = CurrentTCIndex;
+    const TypoCorrection &TC = getNextCorrection();
+    CurrentTCIndex = Current;
+    return TC;
+  }
+
   /// \brief Reset the consumer's position in the stream of viable corrections
   /// (i.e. getNextCorrection() will return each of the previously returned
   /// corrections in order before returning any new corrections).
@@ -178,6 +189,10 @@ public:
 
   ASTContext &getContext() const { return SemaRef.Context; }
   const LookupResult &getLookupResult() const { return Result; }
+
+  bool isAddressOfOperand() const { return CorrectionValidator->IsAddressOfOperand; }
+  const CXXScopeSpec *getSS() const { return SS.get(); }
+  Scope *getScope() const { return S; }
 
 private:
   class NamespaceSpecifierSet {
