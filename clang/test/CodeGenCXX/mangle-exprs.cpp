@@ -217,3 +217,79 @@ namespace test5 {
   template void a<int>(decltype(noexcept(int())));
   // CHECK: void @_ZN5test51aIiEEvDTnxcvT__EE(
 }
+
+namespace test6 {
+  struct X {
+    int i;
+  };
+
+  struct Y {
+    union {
+      int i;
+    };
+  };
+
+  struct Z {
+    union {
+      X ua;
+      Y ub;
+    };
+
+    struct {
+      X s;
+    };
+
+    union {
+      union {
+        struct {
+          struct {
+            X uuss;
+          };
+        };
+      };
+    };
+  };
+
+  Z z, *zp;
+
+  template<typename T>
+  void f1(decltype(T(z.ua.i))) {}
+  template void f1<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f1IiEEvDTcvT_dtdtL_ZNS_1zEE2ua1iE
+
+  template<typename T>
+  void f2(decltype(T(z.ub.i))) {}
+  template void f2<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f2IiEEvDTcvT_dtdtL_ZNS_1zEE2ub1iE
+
+  template<typename T>
+  void f3(decltype(T(z.s.i))) {}
+  template void f3<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f3IiEEvDTcvT_dtdtL_ZNS_1zEE1s1iE
+
+  template<typename T>
+  void f4(decltype(T(z.uuss.i))) {}
+  template void f4<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f4IiEEvDTcvT_dtdtL_ZNS_1zEE4uuss1iE
+
+  template<typename T>
+  void f5(decltype(T(zp->ua.i))) {}
+  template void f5<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f5IiEEvDTcvT_dtptL_ZNS_2zpEE2ua1iE
+
+  template<typename T>
+  void f6(decltype(T(zp->ub.i))) {}
+  template void f6<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f6IiEEvDTcvT_dtptL_ZNS_2zpEE2ub1iE
+
+  template<typename T>
+  void f7(decltype(T(zp->s.i))) {}
+  template void f7<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f7IiEEvDTcvT_dtptL_ZNS_2zpEE1s1iE
+
+  template<typename T>
+  void f8(decltype(T(zp->uuss.i))) {}
+  template void f8<int>(int);
+  // CHECK-LABEL: define weak_odr void @_ZN5test62f8IiEEvDTcvT_dtptL_ZNS_2zpEE4uuss1iE
+}
+

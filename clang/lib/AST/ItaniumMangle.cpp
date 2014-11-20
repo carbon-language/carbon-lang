@@ -2532,6 +2532,18 @@ void CXXNameMangler::mangleMemberExpr(const Expr *base,
   // <expression> ::= dt <expression> <unresolved-name>
   //              ::= pt <expression> <unresolved-name>
   if (base) {
+
+    // Ignore member expressions involving anonymous unions.
+    while (const auto *RT = base->getType()->getAs<RecordType>()) {
+      if (!RT->getDecl()->isAnonymousStructOrUnion())
+        break;
+      const auto *ME = dyn_cast<MemberExpr>(base);
+      if (!ME)
+        break;
+      base = ME->getBase();
+      isArrow = ME->isArrow();
+    }
+
     if (base->isImplicitCXXThis()) {
       // Note: GCC mangles member expressions to the implicit 'this' as
       // *this., whereas we represent them as this->. The Itanium C++ ABI
