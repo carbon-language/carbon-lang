@@ -3417,7 +3417,8 @@ void CGDebugInfo::finalize() {
     // to get RAUWed upon DIBuilder finalization. Do not leak these
     // nodes for the temporary functions we are about to delete.
     if (FwdDecl.isSubprogram())
-      llvm::MDNode::deleteTemporary(llvm::DISubprogram(FwdDecl).getVariablesNodes());
+      if (llvm::MDNode *Vars = llvm::DISubprogram(FwdDecl).getVariablesNodes())
+        llvm::MDNode::deleteTemporary(Vars);
 
     FwdDecl.replaceAllUsesWith(CGM.getLLVMContext(),
                                llvm::DIDescriptor(cast<llvm::MDNode>(VH)));
