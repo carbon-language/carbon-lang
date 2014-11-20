@@ -103,18 +103,6 @@ bool SpecialCaseList::parse(const MemoryBuffer *MB, std::string &Error) {
     std::string Regexp = SplitRegexp.first;
     StringRef Category = SplitRegexp.second;
 
-    // Backwards compatibility.
-    if (Prefix == "global-init") {
-      Prefix = "global";
-      Category = "init";
-    } else if (Prefix == "global-init-type") {
-      Prefix = "type";
-      Category = "init";
-    } else if (Prefix == "global-init-src") {
-      Prefix = "src";
-      Category = "init";
-    }
-
     // See if we can store Regexp in Strings.
     if (Regex::isLiteralERE(Regexp)) {
       Entries[Prefix][Category].Strings.insert(Regexp);

@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -fsanitize=address -emit-llvm -o - %s | FileCheck %s
 
 // Test blacklist functionality.
-// RUN: echo "global-init-src:%s" > %t-file.blacklist
-// RUN: echo "global-init-type:PODWithCtorAndDtor" > %t-type.blacklist
+// RUN: echo "src:%s=init" > %t-file.blacklist
+// RUN: echo "type:PODWithCtorAndDtor=init" > %t-type.blacklist
 // RUN: echo "type:NS::PODWithCtor=init" >> %t-type.blacklist
 // RUN: %clang_cc1 -fsanitize=address -fsanitize-blacklist=%t-file.blacklist -emit-llvm -o - %s | FileCheck %s --check-prefix=BLACKLIST
 // RUN: %clang_cc1 -fsanitize=address -fsanitize-blacklist=%t-type.blacklist -emit-llvm -o - %s | FileCheck %s --check-prefix=BLACKLIST
