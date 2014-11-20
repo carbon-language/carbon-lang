@@ -209,11 +209,12 @@ namespace PR13051 {
   };
 
   void foo(); // expected-note{{'foo' declared here}}
-  void g(void(*)());
-  void g(bool(S<int>::*)() const);
+  void g(void(*)()); // expected-note{{candidate function not viable}}
+  void g(bool(S<int>::*)() const); // expected-note{{candidate function not viable}}
 
   void test() {
-    g(&S<int>::tempalte f<int>); // expected-error{{did you mean 'template'?}}
+    g(&S<int>::tempalte f<int>); // expected-error{{did you mean 'template'?}} \
+                                 // expected-error{{no matching function for call to 'g'}}
     g(&S<int>::opeartor bool); // expected-error{{did you mean 'operator'?}}
     g(&S<int>::foo); // expected-error{{no member named 'foo' in 'PR13051::S<int>'; did you mean simply 'foo'?}}
   }

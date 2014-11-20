@@ -302,7 +302,8 @@ unsigned Parser::ParseAttributeArgsCommon(
         Unevaluated.reset(
             new EnterExpressionEvaluationContext(Actions, Sema::Unevaluated));
 
-      ExprResult ArgExpr(ParseAssignmentExpression());
+      ExprResult ArgExpr(
+          Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression()));
       if (ArgExpr.isInvalid()) {
         SkipUntil(tok::r_paren, StopAtSemi);
         return 0;
@@ -5566,6 +5567,7 @@ void Parser::ParseParameterDeclarationClause(
             DefArgResult = ParseBraceInitializer();
           } else
             DefArgResult = ParseAssignmentExpression();
+          DefArgResult = Actions.CorrectDelayedTyposInExpr(DefArgResult);
           if (DefArgResult.isInvalid()) {
             Actions.ActOnParamDefaultArgumentError(Param, EqualLoc);
             SkipUntil(tok::comma, tok::r_paren, StopAtSemi | StopBeforeMatch);

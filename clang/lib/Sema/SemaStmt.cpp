@@ -371,6 +371,23 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
     return StmtError();
   }
 
+  ExprResult LHS =
+      CorrectDelayedTyposInExpr(LHSVal, [this](class Expr *E) {
+        if (!getLangOpts().CPlusPlus11)
+          return VerifyIntegerConstantExpression(E);
+        if (Expr *CondExpr =
+                getCurFunction()->SwitchStack.back()->getCond()) {
+          QualType CondType = CondExpr->getType();
+          llvm::APSInt TempVal;
+          return CheckConvertedConstantExpression(E, CondType, TempVal,
+                                                        CCEK_CaseValue);
+        }
+        return ExprError();
+      });
+  if (LHS.isInvalid())
+    return StmtError();
+  LHSVal = LHS.get();
+
   if (!getLangOpts().CPlusPlus11) {
     // C99 6.8.4.2p3: The expression shall be an integer constant.
     // However, GCC allows any evaluatable integer expression.
@@ -388,7 +405,7 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
     }
   }
 
-  auto LHS = ActOnFinishFullExpr(LHSVal, LHSVal->getExprLoc(), false,
+  LHS = ActOnFinishFullExpr(LHSVal, LHSVal->getExprLoc(), false,
                                  getLangOpts().CPlusPlus11);
   if (LHS.isInvalid())
     return StmtError();

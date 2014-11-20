@@ -1,6 +1,6 @@
 // RUN: not %clang_cc1 -fsyntax-only %s 2> %t
 // RUN: FileCheck %s < %t
-// CHECK: 10 errors
+// CHECK: 9 errors
 template<typename _CharT>
 class collate : public locale::facet {
 

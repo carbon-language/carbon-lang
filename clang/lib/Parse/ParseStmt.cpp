@@ -642,6 +642,11 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
     ExprResult LHS;
     if (!MissingCase) {
       LHS = ParseConstantExpression();
+      if (!getLangOpts().CPlusPlus11) {
+        LHS = Actions.CorrectDelayedTyposInExpr(LHS, [this](class Expr *E) {
+          return Actions.VerifyIntegerConstantExpression(E);
+        });
+      }
       if (LHS.isInvalid()) {
         // If constant-expression is parsed unsuccessfully, recover by skipping
         // current case statement (moving to the colon that ends it).
@@ -1562,7 +1567,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
     }
   } else {
     ProhibitAttributes(attrs);
-    Value = ParseExpression();
+    Value = Actions.CorrectDelayedTyposInExpr(ParseExpression());
 
     ForEach = isTokIdentifier_in();
 

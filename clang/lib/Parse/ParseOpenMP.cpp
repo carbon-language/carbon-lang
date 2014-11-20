@@ -741,7 +741,8 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   if (MustHaveTail) {
     ColonLoc = Tok.getLocation();
     ConsumeToken();
-    ExprResult Tail = ParseAssignmentExpression();
+    ExprResult Tail =
+        Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression());
     if (Tail.isUsable())
       TailExpr = Tail.get();
     else

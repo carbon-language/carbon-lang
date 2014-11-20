@@ -334,6 +334,15 @@ private:
   /// For typos, give a fixit to '='
   bool isTokenEqualOrEqualTypo();
 
+  /// \brief Return the current token to the token stream and make the given
+  /// token the current token.
+  void UnconsumeToken(Token &Consumed) {
+      Token Next = Tok;
+      PP.EnterToken(Consumed);
+      ConsumeToken();
+      PP.EnterToken(Next);
+  }
+
   /// ConsumeAnyToken - Dispatch to the right Consume* method based on the
   /// current token type.  This should only be used in cases where the type of
   /// the token really isn't known, e.g. in error recovery.
@@ -1396,6 +1405,8 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ Expressions
+  ExprResult tryParseCXXIdExpression(CXXScopeSpec &SS, bool isAddressOfOperand,
+                                     Token &Replacement);
   ExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
 
   bool areTokensAdjacent(const Token &A, const Token &B);
