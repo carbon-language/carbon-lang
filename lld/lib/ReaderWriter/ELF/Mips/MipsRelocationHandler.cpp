@@ -59,14 +59,8 @@ static void reloc26ext(uint32_t &ins, uint64_t S, int32_t A) {
 /// _gp_disp      : hi16 (AHL + GP - P) - (short)(AHL + GP - P) (verify)
 static void relocHi16(uint32_t &ins, uint64_t P, uint64_t S, int64_t AHL,
                       bool isGPDisp) {
-  int32_t result = 0;
-
-  if (isGPDisp)
-    result = (AHL + S - P) - (int16_t)(AHL + S - P);
-  else
-    result = (AHL + S) - (int16_t)(AHL + S);
-
-  applyReloc(ins, result >> 16, 0xffff);
+  int32_t result = isGPDisp ? AHL + S - P : AHL + S;
+  applyReloc(ins, (result + 0x8000) >> 16, 0xffff);
 }
 
 /// \brief R_MIPS_LO16, R_MIPS_TLS_DTPREL_LO16, R_MIPS_TLS_TPREL_LO16,
@@ -75,13 +69,7 @@ static void relocHi16(uint32_t &ins, uint64_t P, uint64_t S, int64_t AHL,
 /// _gp_disp      : lo16 AHL + GP - P + 4 (verify)
 static void relocLo16(uint32_t &ins, uint64_t P, uint64_t S, int64_t AHL,
                       bool isGPDisp) {
-  int32_t result = 0;
-
-  if (isGPDisp)
-    result = AHL + S - P + 4;
-  else
-    result = AHL + S;
-
+  int32_t result = isGPDisp ? AHL + S - P + 4 : AHL + S;
   applyReloc(ins, result, 0xffff);
 }
 
