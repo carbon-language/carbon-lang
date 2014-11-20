@@ -2555,7 +2555,10 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       // Always skip the injected-class-name, along with any
       // redeclarations of nested classes, since both would cause us
       // to try to instantiate the members of a class twice.
-      if (Record->isInjectedClassName() || Record->getPreviousDecl())
+      // Skip closure types; they'll get instantiated when we instantiate
+      // the corresponding lambda-expression.
+      if (Record->isInjectedClassName() || Record->getPreviousDecl() ||
+          Record->isLambda())
         continue;
       
       MemberSpecializationInfo *MSInfo = Record->getMemberSpecializationInfo();
