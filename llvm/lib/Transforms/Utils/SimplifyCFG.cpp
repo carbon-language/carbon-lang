@@ -392,7 +392,7 @@ private:
   /// it wasn't set before or if the new value is the same as the old one
   bool setValueOnce(Value *NewVal) {
     if(CompValue && CompValue != NewVal) return false;
-    return CompValue = NewVal;
+    return CompValue == NewVal;
   }
 
   /// Try to match Instruction "I" as a comparison against a constant and
