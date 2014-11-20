@@ -141,6 +141,9 @@ LANGSTANDARD(opencl11, "CL1.1",
 LANGSTANDARD(opencl12, "CL1.2",
              "OpenCL 1.2",
              LineComment | C99 | Digraphs | HexFloat)
+LANGSTANDARD(opencl20, "CL2.0",
+             "OpenCL 2.0",
+             LineComment | C99 | Digraphs | HexFloat)
 
 // CUDA
 LANGSTANDARD(cuda, "cuda",
