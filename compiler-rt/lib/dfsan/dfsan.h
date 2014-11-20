@@ -61,6 +61,8 @@ struct Flags {
   // comparison might be data-dependent on the content of the strings). This
   // applies only to the custom functions defined in 'custom.c'.
   bool strict_data_dependencies;
+  // The path of the file where to dump the labels when the program terminates.
+  const char* dump_labels_at_exit;
 };
 
 extern Flags flags_data;

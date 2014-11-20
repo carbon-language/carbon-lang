@@ -85,6 +85,12 @@ size_t dfsan_get_label_count(void);
 /// callback executes.  Pass in NULL to remove any callback.
 void dfsan_set_write_callback(dfsan_write_callback_t labeled_write_callback);
 
+/// Writes the labels currently used by the program to the given file
+/// descriptor. The lines of the output have the following format:
+///
+/// <label> <parent label 1> <parent label 2> <label description if any>
+void dfsan_dump_labels(int fd);
+
 #ifdef __cplusplus
 }  // extern "C"
 
