@@ -72,7 +72,7 @@ public:
     Opts["google-readability-braces-around-statements.ShortStatementLines"] =
         "1";
     Opts["google-readability-function-size.StatementThreshold"] = "800";
-    Opts["google-readability-namespace-comments.ShortNamespaceLines"] = "1";
+    Opts["google-readability-namespace-comments.ShortNamespaceLines"] = "10";
     Opts["google-readability-namespace-comments.SpacesBeforeComments"] = "2";
     return Options;
   }
