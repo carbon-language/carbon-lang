@@ -42,3 +42,9 @@ public:
 void testMemberExpr(Foo *f) {
   f->TestIt();  // expected-error {{no member named 'TestIt' in 'Foo'; did you mean 'textIt'?}}
 }
+
+void callee(double, double);
+void testNoCandidates() {
+  callee(xxxxxx,   // expected-error-re {{use of undeclared identifier 'xxxxxx'{{$}}}}
+         zzzzzz);  // expected-error-re {{use of undeclared identifier 'zzzzzz'{{$}}}}
+}

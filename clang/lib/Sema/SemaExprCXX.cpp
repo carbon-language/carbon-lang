@@ -5976,6 +5976,18 @@ static ExprResult attemptRecovery(Sema &SemaRef,
 }
 
 namespace {
+class FindTypoExprs : public RecursiveASTVisitor<FindTypoExprs> {
+  llvm::SmallSetVector<TypoExpr *, 2> &TypoExprs;
+
+public:
+  explicit FindTypoExprs(llvm::SmallSetVector<TypoExpr *, 2> &TypoExprs)
+      : TypoExprs(TypoExprs) {}
+  bool VisitTypoExpr(TypoExpr *TE) {
+    TypoExprs.insert(TE);
+    return true;
+  }
+};
+
 class TransformTypos : public TreeTransform<TransformTypos> {
   typedef TreeTransform<TransformTypos> BaseTransform;
 
@@ -6083,6 +6095,10 @@ public:
           !CheckAndAdvanceTypoExprCorrectionStreams())
         break;
     }
+
+    // Ensure that all of the TypoExprs within the current Expr have been found.
+    if (!res.isUsable())
+      FindTypoExprs(TypoExprs).TraverseStmt(E);
 
     EmitAllDiagnostics();
 
