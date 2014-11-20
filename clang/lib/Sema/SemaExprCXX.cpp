@@ -5920,6 +5920,60 @@ static void CheckIfAnyEnclosingLambdasMustCaptureAnyPotentialCaptures(
   CurrentLSI->clearPotentialCaptures();
 }
 
+static ExprResult attemptRecovery(Sema &SemaRef,
+                                  const TypoCorrectionConsumer &Consumer,
+                                  TypoCorrection TC) {
+  LookupResult R(SemaRef, Consumer.getLookupResult().getLookupNameInfo(),
+                 Consumer.getLookupResult().getLookupKind());
+  const CXXScopeSpec *SS = Consumer.getSS();
+  CXXScopeSpec NewSS;
+
+  // Use an approprate CXXScopeSpec for building the expr.
+  if (auto *NNS = TC.getCorrectionSpecifier())
+    NewSS.MakeTrivial(SemaRef.Context, NNS, TC.getCorrectionRange());
+  else if (SS && !TC.WillReplaceSpecifier())
+    NewSS = *SS;
+
+  if (auto *ND = TC.getCorrectionDecl()) {
+    R.addDecl(ND);
+    if (ND->isCXXClassMember()) {
+      // Figure out the correct naming class to ad to the LookupResult.
+      CXXRecordDecl *Record = nullptr;
+      if (auto *NNS = TC.getCorrectionSpecifier())
+        Record = NNS->getAsType()->getAsCXXRecordDecl();
+      if (!Record)
+        Record = cast<CXXRecordDecl>(ND->getDeclContext()->getRedeclContext());
+      R.setNamingClass(Record);
+
+      // Detect and handle the case where the decl might be an implicit
+      // member.
+      bool MightBeImplicitMember;
+      if (!Consumer.isAddressOfOperand())
+        MightBeImplicitMember = true;
+      else if (!NewSS.isEmpty())
+        MightBeImplicitMember = false;
+      else if (R.isOverloadedResult())
+        MightBeImplicitMember = false;
+      else if (R.isUnresolvableResult())
+        MightBeImplicitMember = true;
+      else
+        MightBeImplicitMember = isa<FieldDecl>(ND) ||
+                                isa<IndirectFieldDecl>(ND) ||
+                                isa<MSPropertyDecl>(ND);
+
+      if (MightBeImplicitMember)
+        return SemaRef.BuildPossibleImplicitMemberExpr(
+            NewSS, /*TemplateKWLoc*/ SourceLocation(), R,
+            /*TemplateArgs*/ nullptr);
+    } else if (auto *Ivar = dyn_cast<ObjCIvarDecl>(ND)) {
+      return SemaRef.LookupInObjCMethod(R, Consumer.getScope(),
+                                        Ivar->getIdentifier());
+    }
+  }
+
+  return SemaRef.BuildDeclarationNameExpr(NewSS, R, false);
+}
+
 namespace {
 class TransformTypos : public TreeTransform<TransformTypos> {
   typedef TreeTransform<TransformTypos> BaseTransform;
@@ -6049,21 +6103,30 @@ public:
     // For the first TypoExpr and an uncached TypoExpr, find the next likely
     // typo correction and return it.
     while (TypoCorrection TC = State.Consumer->getNextCorrection()) {
-      ExprResult NE;
-      if (State.RecoveryHandler) {
-        NE = State.RecoveryHandler(SemaRef, E, TC);
-      } else {
-        LookupResult R(SemaRef,
-                       State.Consumer->getLookupResult().getLookupNameInfo(),
-                       State.Consumer->getLookupResult().getLookupKind());
-        if (!TC.isKeyword())
-          R.addDecl(TC.getCorrectionDecl());
-        NE = SemaRef.BuildDeclarationNameExpr(CXXScopeSpec(), R, false);
-      }
-      assert(!NE.isUnset() &&
-             "Typo was transformed into a valid-but-null ExprResult");
-      if (!NE.isInvalid())
+      ExprResult NE = State.RecoveryHandler ?
+          State.RecoveryHandler(SemaRef, E, TC) :
+          attemptRecovery(SemaRef, *State.Consumer, TC);
+      if (!NE.isInvalid()) {
+        // Check whether there is a second viable correction with the same edit
+        // distance--in which case do not suggest anything since both are
+        // equally good candidates for correcting the typo.
+        Sema::SFINAETrap LocalTrap(SemaRef);
+        TypoCorrection Next;
+        while ((Next = State.Consumer->peekNextCorrection()) &&
+               Next.getEditDistance(false) == TC.getEditDistance(false)) {
+          ExprResult Res =
+              State.RecoveryHandler
+                  ? State.RecoveryHandler(SemaRef, E, Next)
+                  : attemptRecovery(SemaRef, *State.Consumer, Next);
+          if (!Res.isInvalid()) {
+            NE = ExprError();
+            State.Consumer->getNextCorrection();
+          }
+        }
+        assert(!NE.isUnset() &&
+               "Typo was transformed into a valid-but-null ExprResult");
         return CacheEntry = NE;
+      }
     }
     return CacheEntry = ExprError();
   }
