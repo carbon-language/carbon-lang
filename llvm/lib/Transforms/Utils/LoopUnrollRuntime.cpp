@@ -295,6 +295,10 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   if (isa<SCEVCouldNotCompute>(BECount) || !BECount->getType()->isIntegerTy())
     return false;
 
+  // If BECount is INT_MAX, we can't compute trip-count without overflow.
+  if (BECount->isAllOnesValue())
+    return false;
+
   // Add 1 since the backedge count doesn't include the first loop iteration
   const SCEV *TripCountSC =
     SE->getAddExpr(BECount, SE->getConstant(BECount->getType(), 1));
@@ -357,11 +361,16 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   std::vector<BasicBlock *> NewBlocks;
   ValueToValueMapTy VMap;
 
+  // If unroll count is 2 and we can't overflow in tripcount computation (which
+  // is BECount + 1), then we don't need a loop for prologue, and we can unroll
+  // it. We can be sure that we don't overflow only if tripcount is a constant.
+  bool UnrollPrologue = (Count == 2 && isa<ConstantInt>(TripCount));
+
   // Clone all the basic blocks in the loop. If Count is 2, we don't clone
   // the loop, otherwise we create a cloned loop to execute the extra
   // iterations. This function adds the appropriate CFG connections.
-  CloneLoopBlocks(L, ModVal, Count == 2, PH, PEnd, NewBlocks, LoopBlocks, VMap,
-                  LI);
+  CloneLoopBlocks(L, ModVal, UnrollPrologue, PH, PEnd, NewBlocks, LoopBlocks,
+                  VMap, LI);
 
   // Insert the cloned blocks into function just before the original loop
   F->getBasicBlockList().splice(PEnd, F->getBasicBlockList(), NewBlocks[0],
