@@ -76,8 +76,9 @@ public:
   // Return true if edge destination should be visited, called with From = 0 for
   // the root node.
   // Graph edges can be pruned by specializing this function.
-  template<class NodeType>
-  bool insertEdge(NodeType *From, NodeType *To) { return Visited.insert(To); }
+  template <class NodeType> bool insertEdge(NodeType *From, NodeType *To) {
+    return Visited.insert(To).second;
+  }
 
   // Called after all children of BB have been visited.
   template<class NodeType>
