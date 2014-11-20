@@ -937,11 +937,10 @@ createFunctionHelper(LLVMContext &VMContext, DIDescriptor Context, StringRef Nam
                      StringRef LinkageName, DIFile File, unsigned LineNo,
                      DICompositeType Ty, bool isLocalToUnit, bool isDefinition,
                      unsigned ScopeLine, unsigned Flags, bool isOptimized,
-                     Function *Fn, MDNode *TParams, MDNode *Decl,
+                     Function *Fn, MDNode *TParams, MDNode *Decl, MDNode *Vars,
                      std::function<MDNode *(ArrayRef<Value *>)> CreateFunc) {
   assert(Ty.getTag() == dwarf::DW_TAG_subroutine_type &&
          "function types should be subroutines");
-  Value *TElts[] = {HeaderBuilder::get(DW_TAG_base_type).get(VMContext)};
   Value *Elts[] = {
       HeaderBuilder::get(dwarf::DW_TAG_subprogram)
           .concat(Name)
@@ -957,7 +956,7 @@ createFunctionHelper(LLVMContext &VMContext, DIDescriptor Context, StringRef Nam
           .concat(ScopeLine)
           .get(VMContext),
       File.getFileNode(), DIScope(getNonCompileUnitScope(Context)).getRef(), Ty,
-      nullptr, Fn, TParams, Decl, MDNode::getTemporary(VMContext, TElts)};
+      nullptr, Fn, TParams, Decl, Vars};
 
   DISubprogram S(CreateFunc(Elts));
   assert(S.isSubprogram() &&
@@ -976,6 +975,7 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context, StringRef Name,
   return createFunctionHelper(VMContext, Context, Name, LinkageName, File,
                               LineNo, Ty, isLocalToUnit, isDefinition, ScopeLine,
                               Flags, isOptimized, Fn, TParams, Decl,
+                              MDNode::getTemporary(VMContext, None),
                               [&] (ArrayRef<Value *> Elts) -> MDNode *{
                                 MDNode *Node = MDNode::get(VMContext, Elts);
                                 // Create a named metadata so that we
@@ -996,7 +996,7 @@ DIBuilder::createTempFunctionFwdDecl(DIDescriptor Context, StringRef Name,
                                      MDNode *TParams, MDNode *Decl) {
   return createFunctionHelper(VMContext, Context, Name, LinkageName, File,
                               LineNo, Ty, isLocalToUnit, isDefinition, ScopeLine,
-                              Flags, isOptimized, Fn, TParams, Decl,
+                              Flags, isOptimized, Fn, TParams, Decl, nullptr,
                               [&] (ArrayRef<Value *> Elts) {
                                 return MDNode::getTemporary(VMContext, Elts);
                               });
