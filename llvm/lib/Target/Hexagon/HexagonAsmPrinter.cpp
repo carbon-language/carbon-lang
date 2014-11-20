@@ -18,7 +18,7 @@
 #include "HexagonMachineFunctionInfo.h"
 #include "HexagonSubtarget.h"
 #include "HexagonTargetMachine.h"
-#include "InstPrinter/HexagonInstPrinter.h"
+#include "MCTargetDesc/HexagonInstPrinter.h"
 #include "MCTargetDesc/HexagonMCInst.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
