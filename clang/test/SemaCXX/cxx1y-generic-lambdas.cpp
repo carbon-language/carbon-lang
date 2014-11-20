@@ -918,10 +918,3 @@ int run2 = x2.fooG3();
 
 
 } //end ns inclass_lambdas_within_nested_classes
-
-namespace lambda_in_default_mem_init {
-  template<typename T> void f() {
-    struct S { int n = []{ return 0; }(); };
-  }
-  template void f<int>();
-}

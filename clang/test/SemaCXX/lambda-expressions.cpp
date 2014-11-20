@@ -413,3 +413,10 @@ template <typename T> void p(T t) {
 void q() { p(0); }
 // expected-note@-1 {{in instantiation of function template specialization 'PR20731::p<int>' requested here}}
 }
+
+namespace lambda_in_default_mem_init {
+  template<typename T> void f() {
+    struct S { int n = []{ return 0; }(); };
+  }
+  template void f<int>();
+}
