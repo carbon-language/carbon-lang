@@ -234,6 +234,13 @@ TEST_F(FormatTestJava, Generics) {
 
   verifyFormat("private Foo<X, Y>[] foos;");
   verifyFormat("Foo<X, Y>[] foos = this.foos;");
+
+  verifyFormat(
+      "SomeLoooooooooooooooooooooongType name =\n"
+      "    SomeType.foo(someArgument)\n"
+      "        .<X>method()\n"
+      "        .aaaaaaaaaaaaaaaaaaa()\n"
+      "        .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");
 }
 
 TEST_F(FormatTestJava, StringConcatenation) {

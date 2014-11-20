@@ -878,6 +878,7 @@ private:
     if (PreviousNotConst->Type == TT_TemplateCloser)
       return PreviousNotConst && PreviousNotConst->MatchingParen &&
              PreviousNotConst->MatchingParen->Previous &&
+             PreviousNotConst->MatchingParen->Previous->isNot(tok::period) &&
              PreviousNotConst->MatchingParen->Previous->isNot(tok::kw_template);
 
     if (PreviousNotConst->is(tok::r_paren) && PreviousNotConst->MatchingParen &&
