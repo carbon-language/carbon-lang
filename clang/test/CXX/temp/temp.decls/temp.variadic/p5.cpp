@@ -354,6 +354,7 @@ void test_unexpanded_exprs(Types ...values) {
   for (auto t : values) { } // expected-error{{expression contains unexpanded parameter pack 'values'}}
 
   switch (values) { } // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  switch (0) { case 0: case values: ; } // expected-error{{expression contains unexpanded parameter pack 'values'}}
 
   do { } while (values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
 

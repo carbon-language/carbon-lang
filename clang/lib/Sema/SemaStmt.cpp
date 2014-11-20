@@ -388,14 +388,19 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
     }
   }
 
-  LHSVal = ActOnFinishFullExpr(LHSVal, LHSVal->getExprLoc(), false,
-                               getLangOpts().CPlusPlus11).get();
-  if (RHSVal)
-    RHSVal = ActOnFinishFullExpr(RHSVal, RHSVal->getExprLoc(), false,
-                                 getLangOpts().CPlusPlus11).get();
+  auto LHS = ActOnFinishFullExpr(LHSVal, LHSVal->getExprLoc(), false,
+                                 getLangOpts().CPlusPlus11);
+  if (LHS.isInvalid())
+    return StmtError();
 
-  CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, CaseLoc, DotDotDotLoc,
-                                        ColonLoc);
+  auto RHS = RHSVal ? ActOnFinishFullExpr(RHSVal, RHSVal->getExprLoc(), false,
+                                          getLangOpts().CPlusPlus11)
+                    : ExprResult();
+  if (RHS.isInvalid())
+    return StmtError();
+
+  CaseStmt *CS = new (Context)
+      CaseStmt(LHS.get(), RHS.get(), CaseLoc, DotDotDotLoc, ColonLoc);
   getCurFunction()->SwitchStack.back()->addSwitchCase(CS);
   return CS;
 }
