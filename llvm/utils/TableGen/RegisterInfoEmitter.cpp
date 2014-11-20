@@ -946,7 +946,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << TargetName << "SubRegIdxLists, "
      << (SubRegIndices.size() + 1) << ",\n"
      << TargetName << "SubRegIdxRanges, "
-     << "  " << TargetName << "RegEncodingTable);\n\n";
+     << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, false);
 
