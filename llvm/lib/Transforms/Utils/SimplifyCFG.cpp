@@ -357,159 +357,177 @@ static ConstantInt *GetConstantInt(Value *V, const DataLayout *DL) {
   return nullptr;
 }
 
+namespace {
 
+/// Given a chain of or (||) or and (&&) comparison of a value against a
+/// constant, this will try to recover the information required for a switch
+/// structure.
+/// It will depth-first traverse the chain of comparison, seeking for patterns
+/// like %a == 12 or %a < 4 and combine them to produce a set of integer
+/// representing the different cases for the switch.
+/// Note that if the chain is composed of '||' it will build the set of elements
+/// that matches the comparisons (i.e. any of this value validate the chain)
+/// while for a chain of '&&' it will build the set elements that make the test
+/// fail.
+struct ConstantComparesGatherer {
 
-// Try to match Instruction I as a comparison against a constant and populates
-// Vals with the set of value that match (or does not depending on isEQ).
-// Return nullptr on failure, or return the Value the comparison matched against
-// on success
-// CurrValue, if supplied, is the value we want to match against. The function
-// is expected to fail if a match is found but the value compared to is not the
-// one expected. If CurrValue is supplied, the return value has to be either
-// nullptr or CurrValue
-static Value* GatherConstantComparesMatch(Instruction *I,
-                                          Value *CurrValue,
-                                          SmallVectorImpl<ConstantInt*> &Vals,
-                                          const DataLayout *DL,
-                                          unsigned &UsedICmps,
-                                          bool isEQ) {
+  Value *CompValue; /// Value found for the switch comparison
+  Value *Extra;     /// Extra clause to be checked before the switch
+  SmallVector<ConstantInt *, 8> Vals; /// Set of integers to match in switch
+  unsigned UsedICmps; /// Number of comparisons matched in the and/or chain
 
-  // If this is an icmp against a constant, handle this as one of the cases.
-  ICmpInst *ICI;
-  ConstantInt *C;
-  if (!((ICI = dyn_cast<ICmpInst>(I)) &&
-        (C = GetConstantInt(I->getOperand(1), DL)))) {
-    return nullptr;
+  /// Construct and compute the result for the comparison instruction Cond
+  ConstantComparesGatherer(Instruction *Cond, const DataLayout *DL)
+      : CompValue(nullptr), Extra(nullptr), UsedICmps(0) {
+    gather(Cond, DL);
   }
 
-  Value *RHSVal;
-  ConstantInt *RHSC;
+  /// Prevent copy
+  ConstantComparesGatherer(const ConstantComparesGatherer &)
+      LLVM_DELETED_FUNCTION;
+  ConstantComparesGatherer &
+  operator=(const ConstantComparesGatherer &) LLVM_DELETED_FUNCTION;
 
-  // Pattern match a special case
-  // (x & ~2^x) == y --> x == y || x == y|2^x
-  // This undoes a transformation done by instcombine to fuse 2 compares.
-  if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ:ICmpInst::ICMP_NE)) {
-    if (match(ICI->getOperand(0),
-              m_And(m_Value(RHSVal), m_ConstantInt(RHSC)))) {
-      APInt Not = ~RHSC->getValue();
-      if (Not.isPowerOf2()) {
-        // If we already have a value for the switch, it has to match!
-        if(CurrValue && CurrValue != RHSVal)
-          return nullptr;
+private:
 
-        Vals.push_back(C);
-        Vals.push_back(ConstantInt::get(C->getContext(),
-                                        C->getValue() | Not));
-        UsedICmps++;
-        return RHSVal;
+  /// Try to set the current value used for the comparison, it succeeds only if
+  /// it wasn't set before or if the new value is the same as the old one
+  bool setValueOnce(Value *NewVal) {
+    if(CompValue && CompValue != NewVal) return false;
+    CompValue = NewVal;
+    return (CompValue != nullptr);
+  }
+
+  /// Try to match Instruction "I" as a comparison against a constant and
+  /// populates the array Vals with the set of values that match (or do not
+  /// match depending on isEQ).
+  /// Return false on failure. On success, the Value the comparison matched
+  /// against is placed in CompValue.
+  /// If CompValue is already set, the function is expected to fail if a match
+  /// is found but the value compared to is different.
+  bool matchInstruction(Instruction *I, const DataLayout *DL, bool isEQ) {
+    // If this is an icmp against a constant, handle this as one of the cases.
+    ICmpInst *ICI;
+    ConstantInt *C;
+    if (!((ICI = dyn_cast<ICmpInst>(I)) &&
+             (C = GetConstantInt(I->getOperand(1), DL)))) {
+      return false;
+    }
+
+    Value *RHSVal;
+    ConstantInt *RHSC;
+
+    // Pattern match a special case
+    // (x & ~2^x) == y --> x == y || x == y|2^x
+    // This undoes a transformation done by instcombine to fuse 2 compares.
+    if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ:ICmpInst::ICMP_NE)) {
+      if (match(ICI->getOperand(0),
+                m_And(m_Value(RHSVal), m_ConstantInt(RHSC)))) {
+        APInt Not = ~RHSC->getValue();
+        if (Not.isPowerOf2()) {
+          // If we already have a value for the switch, it has to match!
+          if(!setValueOnce(RHSVal))
+            return false;
+
+          Vals.push_back(C);
+          Vals.push_back(ConstantInt::get(C->getContext(),
+                                          C->getValue() | Not));
+          UsedICmps++;
+          return true;
+        }
       }
+
+      // If we already have a value for the switch, it has to match!
+      if(!setValueOnce(ICI->getOperand(0)))
+        return false;
+
+      UsedICmps++;
+      Vals.push_back(C);
+      return ICI->getOperand(0);
+    }
+
+    // If we have "x ult 3", for example, then we can add 0,1,2 to the set.
+    ConstantRange Span = ConstantRange::makeICmpRegion(ICI->getPredicate(),
+                                                       C->getValue());
+
+    // Shift the range if the compare is fed by an add. This is the range
+    // compare idiom as emitted by instcombine.
+    Value *CandidateVal = I->getOperand(0);
+    if(match(I->getOperand(0), m_Add(m_Value(RHSVal), m_ConstantInt(RHSC)))) {
+      Span = Span.subtract(RHSC->getValue());
+      CandidateVal = RHSVal;
+    }
+
+    // If this is an and/!= check, then we are looking to build the set of
+    // value that *don't* pass the and chain. I.e. to turn "x ugt 2" into
+    // x != 0 && x != 1.
+    if (!isEQ)
+      Span = Span.inverse();
+
+    // If there are a ton of values, we don't want to make a ginormous switch.
+    if (Span.getSetSize().ugt(8) || Span.isEmptySet()) {
+      return false;
     }
 
     // If we already have a value for the switch, it has to match!
-    if(CurrValue && CurrValue != ICI->getOperand(0))
-      return nullptr;
+    if(!setValueOnce(CandidateVal))
+      return false;
+
+    // Add all values from the range to the set
+    for (APInt Tmp = Span.getLower(); Tmp != Span.getUpper(); ++Tmp)
+      Vals.push_back(ConstantInt::get(I->getContext(), Tmp));
 
     UsedICmps++;
-    Vals.push_back(C);
-    return ICI->getOperand(0);
+    return true;
+
   }
 
-  // If we have "x ult 3", for example, then we can add 0,1,2 to the set.
-  ConstantRange Span = ConstantRange::makeICmpRegion(ICI->getPredicate(),
-                                                     C->getValue());
+  /// gather - Given a potentially 'or'd or 'and'd together collection of icmp
+  /// eq/ne/lt/gt instructions that compare a value against a constant, extract
+  /// the value being compared, and stick the list constants into the Vals
+  /// vector.
+  /// One "Extra" case is allowed to differ from the other.
+  void gather(Value *V, const DataLayout *DL) {
+    Instruction *I = dyn_cast<Instruction>(V);
+    bool isEQ = (I->getOpcode() == Instruction::Or);
 
-  // Shift the range if the compare is fed by an add. This is the range
-  // compare idiom as emitted by instcombine.
-  Value *CandidateVal = I->getOperand(0);
-  if(match(I->getOperand(0), m_Add(m_Value(RHSVal), m_ConstantInt(RHSC)))) {
-    Span = Span.subtract(RHSC->getValue());
-    CandidateVal = RHSVal;
-  }
+    // Keep a stack (SmallVector for efficiency) for depth-first traversal
+    SmallVector<Value *, 8> DFT;
 
-  // If we already have a value for the switch, it has to match!
-  if(CurrValue && CurrValue != CandidateVal)
-    return nullptr;
+    // Initialize
+    DFT.push_back(V);
 
-  // If this is an and/!= check, then we are looking to build the set of
-  // value that *don't* pass the and chain. I.e. to turn "x ugt 2" into
-  // x != 0 && x != 1.
-  if (!isEQ)
-    Span = Span.inverse();
+    while(!DFT.empty()) {
+      V = DFT.pop_back_val();
 
-  // If there are a ton of values, we don't want to make a ginormous switch.
-  if (Span.getSetSize().ugt(8) || Span.isEmptySet()) {
-    return nullptr;
-  }
+      if (Instruction *I = dyn_cast<Instruction>(V)) {
+        // If it is a || (or && depending on isEQ), process the operands.
+        if (I->getOpcode() == (isEQ ? Instruction::Or : Instruction::And)) {
+          DFT.push_back(I->getOperand(1));
+          DFT.push_back(I->getOperand(0));
+          continue;
+        }
 
-  // Add all values from the range to the set
-  for (APInt Tmp = Span.getLower(); Tmp != Span.getUpper(); ++Tmp)
-    Vals.push_back(ConstantInt::get(I->getContext(), Tmp));
-
-  UsedICmps++;
-  return CandidateVal;
-
-}
-
-/// GatherConstantCompares - Given a potentially 'or'd or 'and'd together
-/// collection of icmp eq/ne instructions that compare a value against a
-/// constant, return the value being compared, and stick the constant into the
-/// Values vector.
-/// One "Extra" case is allowed to differ from the other.
-static Value *
-GatherConstantCompares(Value *V, SmallVectorImpl<ConstantInt*> &Vals, Value *&Extra,
-                       const DataLayout *DL, unsigned &UsedICmps) {
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return nullptr;
-
-  bool isEQ = (I->getOpcode() == Instruction::Or);
-
-  // Keep a stack (SmallVector for efficiency) for depth-first traversal
-  SmallVector<Value *, 8> DFT;
-
-  // Initialize
-  DFT.push_back(V);
-
-  // Will hold the value used for the switch comparison
-  Value *CurrValue = nullptr;
-
-  while(!DFT.empty()) {
-    V = DFT.pop_back_val();
-
-    if (Instruction *I = dyn_cast<Instruction>(V)) {
-
-      // If it is a || (or && depending on isEQ), process the operands.
-      if (I->getOpcode() == (isEQ ? Instruction::Or : Instruction::And)) {
-        DFT.push_back(I->getOperand(1));
-        DFT.push_back(I->getOperand(0));
-        continue;
+        // Try to match the current instruction
+        if (matchInstruction(I, DL, isEQ))
+          // Match succeed, continue the loop
+          continue;
       }
 
-      // Try to match the current instruction
-      if (Value *Matched = GatherConstantComparesMatch(I,
-                                                       CurrValue,
-                                                       Vals,
-                                                       DL,
-                                                       UsedICmps,
-                                                       isEQ)) {
-        // Match succeed, continue the loop
-        CurrValue = Matched;
+      // One element of the sequence of || (or &&) could not be match as a
+      // comparison against the same value as the others.
+      // We allow only one "Extra" case to be checked before the switch
+      if (!Extra) {
+        Extra = V;
         continue;
       }
+      // Failed to parse a proper sequence, abort now
+      CompValue = nullptr;
+      break;
     }
-
-    // One element of the sequence of || (or &&) could not be match as a
-    // comparison against the same value as the others.
-    // We allow only one "Extra" case to be checked before the switch
-    if (Extra == nullptr) {
-      Extra = V;
-      continue;
-    }
-    return nullptr;
-
   }
+};
 
-  // Return the value to be used for the switch comparison (if any)
-  return CurrValue;
 }
 
 static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
@@ -2810,18 +2828,17 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *DL,
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
   if (!Cond) return false;
 
-
   // Change br (X == 0 | X == 1), T, F into a switch instruction.
   // If this is a bunch of seteq's or'd together, or if it's a bunch of
   // 'setne's and'ed together, collect them.
-  Value *CompVal = nullptr;
-  SmallVector<ConstantInt*, 8> Values;
-  bool TrueWhenEqual = (Cond->getOpcode() == Instruction::Or);
-  Value *ExtraCase = nullptr;
-  unsigned UsedICmps = 0;
 
   // Try to gather values from a chain of and/or to be turned into a switch
-  CompVal = GatherConstantCompares(Cond, Values, ExtraCase, DL, UsedICmps);
+  ConstantComparesGatherer ConstantCompare(Cond, DL);
+  // Unpack the result
+  SmallVectorImpl<ConstantInt*> &Values = ConstantCompare.Vals;
+  Value *CompVal = ConstantCompare.CompValue;
+  unsigned UsedICmps = ConstantCompare.UsedICmps;
+  Value *ExtraCase = ConstantCompare.Extra;
 
   // If we didn't have a multiply compared value, fail.
   if (!CompVal) return false;
@@ -2829,6 +2846,8 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *DL,
   // Avoid turning single icmps into a switch.
   if (UsedICmps <= 1)
     return false;
+
+  bool TrueWhenEqual = (Cond->getOpcode() == Instruction::Or);
 
   // There might be duplicate constants in the list, which the switch
   // instruction can't handle, remove them now.
