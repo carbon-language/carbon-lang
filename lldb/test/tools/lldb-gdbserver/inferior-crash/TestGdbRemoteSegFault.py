@@ -20,7 +20,7 @@ class TestGdbRemoteSegFault(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(procs)
 
         self.test_sequence.add_log_lines([
-            "read packet: $vCont;c#00",
+            "read packet: $vCont;c#a8",
             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2}).*#[0-9a-fA-F]{2}$", "capture":{ 1:"hex_exit_code"} },
             ], True)
 

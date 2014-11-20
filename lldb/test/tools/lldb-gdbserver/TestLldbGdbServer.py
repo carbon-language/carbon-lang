@@ -127,7 +127,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.add_no_ack_remote_stream()
         self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
-            ["read packet: $vCont;c#00",
+            ["read packet: $vCont;c#a8",
              "send packet: $W00#00"],
             True)
 
@@ -159,7 +159,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.add_no_ack_remote_stream()
         self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
-            ["read packet: $vCont;c#00",
+            ["read packet: $vCont;c#a8",
              "send packet: $W{0:02x}#00".format(RETVAL)],
             True)
 
@@ -219,7 +219,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.add_no_ack_remote_stream()
         self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
-            ["read packet: $vCont;c#00",
+            ["read packet: $vCont;c#a8",
              {"type":"output_match", "regex":r"^hello, world\r\n$" },
              "send packet: $W00#00"],
             True)
@@ -275,7 +275,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
     def attach_commandline_continue_app_exits(self):
         procs = self.prep_debug_monitor_and_inferior()
         self.test_sequence.add_log_lines(
-            ["read packet: $vCont;c#00",
+            ["read packet: $vCont;c#a8",
              "send packet: $W00#00"],
             True)
         self.expect_gdbremote_sequence()

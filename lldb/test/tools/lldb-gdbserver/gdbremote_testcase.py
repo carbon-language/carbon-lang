@@ -689,7 +689,7 @@ class GdbRemoteTestCaseBase(TestBase):
     def run_process_then_stop(self, run_seconds=1):
         # Tell the stub to continue.
         self.test_sequence.add_log_lines(
-             ["read packet: $vCont;c#00"],
+             ["read packet: $vCont;c#a8"],
              True)
         context = self.expect_gdbremote_sequence()
 
