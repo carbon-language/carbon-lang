@@ -9090,37 +9090,34 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
-   
-  // Transform any init-capture expressions before entering the scope of the 
+  // Transform any init-capture expressions before entering the scope of the
   // lambda body, because they are not semantically within that scope.
   SmallVector<InitCaptureInfoTy, 8> InitCaptureExprsAndTypes;
   InitCaptureExprsAndTypes.resize(E->explicit_capture_end() -
       E->explicit_capture_begin());
-  
   for (LambdaExpr::capture_iterator C = E->capture_begin(),
-      CEnd = E->capture_end();
-      C != CEnd; ++C) {
+                                    CEnd = E->capture_end();
+       C != CEnd; ++C) {
     if (!C->isInitCapture())
       continue;
-    EnterExpressionEvaluationContext  EEEC(getSema(), 
-        Sema::PotentiallyEvaluated);    
+    EnterExpressionEvaluationContext EEEC(getSema(),
+                                          Sema::PotentiallyEvaluated);
     ExprResult NewExprInitResult = getDerived().TransformInitializer(
         C->getCapturedVar()->getInit(),
         C->getCapturedVar()->getInitStyle() == VarDecl::CallInit);
-    
+
     if (NewExprInitResult.isInvalid())
       return ExprError();
     Expr *NewExprInit = NewExprInitResult.get();
-      
+
     VarDecl *OldVD = C->getCapturedVar();
-    QualType NewInitCaptureType = 
-        getSema().performLambdaInitCaptureInitialization(C->getLocation(), 
-            OldVD->getType()->isReferenceType(), OldVD->getIdentifier(), 
+    QualType NewInitCaptureType =
+        getSema().performLambdaInitCaptureInitialization(C->getLocation(),
+            OldVD->getType()->isReferenceType(), OldVD->getIdentifier(),
             NewExprInit);
     NewExprInitResult = NewExprInit;
     InitCaptureExprsAndTypes[C - E->capture_begin()] =
         std::make_pair(NewExprInitResult, NewInitCaptureType);
-
   }
 
   LambdaScopeInfo *LSI = getSema().PushLambdaScope();
@@ -9129,26 +9126,15 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   LSI->GLTemplateParameterList = getDerived().TransformTemplateParameterList(
       E->getTemplateParameterList());
 
-  // Check to see if the TypeSourceInfo of the call operator needs to
-  // be transformed, and if so do the transformation in the 
-  // CurrentInstantiationScope.
-
-  TypeSourceInfo *OldCallOpTSI = E->getCallOperator()->getTypeSourceInfo();
-  FunctionProtoTypeLoc OldCallOpFPTL = 
-      OldCallOpTSI->getTypeLoc().getAs<FunctionProtoTypeLoc>();
+  // Transform the type of the original lambda's call operator.
+  // The transformation MUST be done in the CurrentInstantiationScope since
+  // it introduces a mapping of the original to the newly created
+  // transformed parameters.
   TypeSourceInfo *NewCallOpTSI = nullptr;
-
-  const bool CallOpWasAlreadyTransformed = 
-      getDerived().AlreadyTransformed(OldCallOpTSI->getType()); 
-  
-  // Use the Old Call Operator's TypeSourceInfo if it is already transformed.
-  if (CallOpWasAlreadyTransformed)  
-    NewCallOpTSI = OldCallOpTSI;  
-  else {
-    // Transform the TypeSourceInfo of the Original Lambda's Call Operator.
-    // The transformation MUST be done in the CurrentInstantiationScope since
-    // it introduces a mapping of the original to the newly created 
-    // transformed parameters.
+  {
+    TypeSourceInfo *OldCallOpTSI = E->getCallOperator()->getTypeSourceInfo();
+    FunctionProtoTypeLoc OldCallOpFPTL = 
+        OldCallOpTSI->getTypeLoc().getAs<FunctionProtoTypeLoc>();
 
     TypeLocBuilder NewCallOpTLBuilder;
     SmallVector<QualType, 4> ExceptionStorage;
@@ -9161,47 +9147,9 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
         });
     NewCallOpTSI = NewCallOpTLBuilder.getTypeSourceInfo(getSema().Context,
                                                         NewCallOpType);
+    if (!NewCallOpTSI)
+      return ExprError();
   }
-  // Extract the ParmVarDecls from the NewCallOpTSI and add them to
-  // the vector below - this will be used to synthesize the 
-  // NewCallOperator.  Additionally, add the parameters of the untransformed 
-  // lambda call operator to the CurrentInstantiationScope.
-  SmallVector<ParmVarDecl *, 4> Params;  
-  {
-    FunctionProtoTypeLoc NewCallOpFPTL = 
-        NewCallOpTSI->getTypeLoc().castAs<FunctionProtoTypeLoc>();
-    ParmVarDecl **NewParamDeclArray = NewCallOpFPTL.getParmArray();
-    const unsigned NewNumArgs = NewCallOpFPTL.getNumParams();
-
-    for (unsigned I = 0; I < NewNumArgs; ++I) {
-      // If this call operator's type does not require transformation, 
-      // the parameters do not get added to the current instantiation scope, 
-      // - so ADD them! This allows the following to compile when the enclosing
-      // template is specialized and the entire lambda expression has to be
-      // transformed. 
-      // template<class T> void foo(T t) {
-      //   auto L = [](auto a) {
-      //       auto M = [](char b) { <-- note: non-generic lambda
-      //         auto N = [](auto c) {
-      //            int x = sizeof(a);
-      //            x = sizeof(b); <-- specifically this line
-      //            x = sizeof(c);
-      //          };
-      //        };
-      //      };
-      //    }
-      // foo('a')
-      if (CallOpWasAlreadyTransformed)
-        getDerived().transformedLocalDecl(NewParamDeclArray[I],
-                                          NewParamDeclArray[I]);
-      // Add to Params array, so these parameters can be used to create
-      // the newly transformed call operator.
-      Params.push_back(NewParamDeclArray[I]);
-    }
-  }
-
-  if (!NewCallOpTSI)
-    return ExprError();
 
   // Create the local class that will describe the lambda.
   CXXRecordDecl *Class
@@ -9209,15 +9157,13 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
                                         NewCallOpTSI,
                                         /*KnownDependent=*/false,
                                         E->getCaptureDefault());
-
   getDerived().transformedLocalDecl(E->getLambdaClass(), Class);
 
   // Build the call operator.
-  CXXMethodDecl *NewCallOperator
-    = getSema().startLambdaDefinition(Class, E->getIntroducerRange(),
-                                      NewCallOpTSI,
-                                      E->getCallOperator()->getLocEnd(),
-                                      Params);
+  CXXMethodDecl *NewCallOperator = getSema().startLambdaDefinition(
+      Class, E->getIntroducerRange(), NewCallOpTSI,
+      E->getCallOperator()->getLocEnd(),
+      NewCallOpTSI->getTypeLoc().castAs<FunctionProtoTypeLoc>().getParams());
   LSI->CallOperator = NewCallOperator;
 
   getDerived().transformAttrs(E->getCallOperator(), NewCallOperator);

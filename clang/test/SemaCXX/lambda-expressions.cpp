@@ -419,4 +419,9 @@ namespace lambda_in_default_mem_init {
     struct S { int n = []{ return 0; }(); };
   }
   template void f<int>();
+
+  template<typename T> void g() {
+    struct S { int n = [](int n){ return n; }(0); };
+  }
+  template void g<int>();
 }
