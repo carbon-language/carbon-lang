@@ -2613,15 +2613,15 @@ static bool CheckDeclInExpr(Sema &S, SourceLocation Loc, NamedDecl *D) {
   return false;
 }
 
-ExprResult
-Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
-                               LookupResult &R,
-                               bool NeedsADL) {
+ExprResult Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
+                                          LookupResult &R, bool NeedsADL,
+                                          bool AcceptInvalidDecl) {
   // If this is a single, fully-resolved result and we don't need ADL,
   // just build an ordinary singleton decl ref.
   if (!NeedsADL && R.isSingleResult() && !R.getAsSingle<FunctionTemplateDecl>())
     return BuildDeclarationNameExpr(SS, R.getLookupNameInfo(), R.getFoundDecl(),
-                                    R.getRepresentativeDecl());
+                                    R.getRepresentativeDecl(), nullptr,
+                                    AcceptInvalidDecl);
 
   // We only need to check the declaration if there's exactly one
   // result, because in the overloaded case the results can only be
@@ -2648,7 +2648,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
 /// \brief Complete semantic analysis for a reference to the given declaration.
 ExprResult Sema::BuildDeclarationNameExpr(
     const CXXScopeSpec &SS, const DeclarationNameInfo &NameInfo, NamedDecl *D,
-    NamedDecl *FoundD, const TemplateArgumentListInfo *TemplateArgs) {
+    NamedDecl *FoundD, const TemplateArgumentListInfo *TemplateArgs,
+    bool AcceptInvalidDecl) {
   assert(D && "Cannot refer to a NULL declaration");
   assert(!isa<FunctionTemplateDecl>(D) &&
          "Cannot refer unambiguously to a function template");
@@ -2683,7 +2684,7 @@ ExprResult Sema::BuildDeclarationNameExpr(
     return ExprError();
 
   // Only create DeclRefExpr's for valid Decl's.
-  if (VD->isInvalidDecl())
+  if (VD->isInvalidDecl() && !AcceptInvalidDecl)
     return ExprError();
 
   // Handle members of anonymous structs and unions.  If we got here,

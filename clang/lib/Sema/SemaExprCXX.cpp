@@ -5971,7 +5971,8 @@ static ExprResult attemptRecovery(Sema &SemaRef,
     }
   }
 
-  return SemaRef.BuildDeclarationNameExpr(NewSS, R, false);
+  return SemaRef.BuildDeclarationNameExpr(NewSS, R, /*NeedsADL*/ false,
+                                          /*AcceptInvalidDecl*/ true);
 }
 
 namespace {

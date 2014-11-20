@@ -3529,11 +3529,13 @@ public:
 
   ExprResult BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                       LookupResult &R,
-                                      bool NeedsADL);
+                                      bool NeedsADL,
+                                      bool AcceptInvalidDecl = false);
   ExprResult BuildDeclarationNameExpr(
       const CXXScopeSpec &SS, const DeclarationNameInfo &NameInfo, NamedDecl *D,
       NamedDecl *FoundD = nullptr,
-      const TemplateArgumentListInfo *TemplateArgs = nullptr);
+      const TemplateArgumentListInfo *TemplateArgs = nullptr,
+      bool AcceptInvalidDecl = false);
 
   ExprResult BuildLiteralOperatorCall(LookupResult &R,
                       DeclarationNameInfo &SuffixInfo,
