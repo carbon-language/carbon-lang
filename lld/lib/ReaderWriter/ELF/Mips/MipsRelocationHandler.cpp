@@ -53,7 +53,8 @@ static void reloc26ext(uint32_t &ins, uint64_t S, int32_t A) {
   applyReloc(ins, result >> 2, 0x03ffffff);
 }
 
-/// \brief R_MIPS_HI16
+/// \brief R_MIPS_HI16, R_MIPS_TLS_DTPREL_HI16, R_MIPS_TLS_TPREL_HI16,
+/// LLD_R_MIPS_HI16
 /// local/external: hi16 (AHL + S) - (short)(AHL + S) (truncate)
 /// _gp_disp      : hi16 (AHL + GP - P) - (short)(AHL + GP - P) (verify)
 static void relocHi16(uint32_t &ins, uint64_t P, uint64_t S, int64_t AHL,
@@ -68,7 +69,8 @@ static void relocHi16(uint32_t &ins, uint64_t P, uint64_t S, int64_t AHL,
   applyReloc(ins, result >> 16, 0xffff);
 }
 
-/// \brief R_MIPS_LO16
+/// \brief R_MIPS_LO16, R_MIPS_TLS_DTPREL_LO16, R_MIPS_TLS_TPREL_LO16,
+/// LLD_R_MIPS_LO16
 /// local/external: lo16 AHL + S (truncate)
 /// _gp_disp      : lo16 AHL + GP - P + 4 (verify)
 static void relocLo16(uint32_t &ins, uint64_t P, uint64_t S, int64_t AHL,
@@ -88,20 +90,6 @@ static void relocLo16(uint32_t &ins, uint64_t P, uint64_t S, int64_t AHL,
 static void relocGOT(uint32_t &ins, uint64_t S, uint64_t GP) {
   int32_t G = (int32_t)(S - GP);
   applyReloc(ins, G, 0xffff);
-}
-
-/// \brief R_MIPS_TLS_DTPREL_HI16, R_MIPS_TLS_TPREL_HI16, LLD_R_MIPS_HI16
-/// (S + A) >> 16
-static void relocGeneralHi16(uint32_t &ins, uint64_t S, int64_t A) {
-  int32_t result = S + A + 0x8000;
-  applyReloc(ins, result >> 16, 0xffff);
-}
-
-/// \brief R_MIPS_TLS_DTPREL_LO16, R_MIPS_TLS_TPREL_LO16, LLD_R_MIPS_LO16
-/// S + A
-static void relocGeneralLo16(uint32_t &ins, uint64_t S, int64_t A) {
-  int32_t result = S + A;
-  applyReloc(ins, result, 0xffff);
 }
 
 /// \brief R_MIPS_GPREL32
@@ -162,11 +150,11 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_TPREL_HI16:
-    relocGeneralHi16(ins, targetVAddress, ref.addend());
+    relocHi16(ins, 0, targetVAddress, ref.addend(), false);
     break;
   case R_MIPS_TLS_DTPREL_LO16:
   case R_MIPS_TLS_TPREL_LO16:
-    relocGeneralLo16(ins, targetVAddress, ref.addend());
+    relocLo16(ins, 0, targetVAddress, ref.addend(), false);
     break;
   case R_MIPS_GPREL32:
     relocGPRel32(ins, relocVAddress, targetVAddress, ref.addend(), gpAddr);
@@ -195,10 +183,10 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
     reloc26ext(ins, targetVAddress, ref.addend());
     break;
   case LLD_R_MIPS_HI16:
-    relocGeneralHi16(ins, targetVAddress, 0);
+    relocHi16(ins, 0, targetVAddress, 0, false);
     break;
   case LLD_R_MIPS_LO16:
-    relocGeneralLo16(ins, targetVAddress, 0);
+    relocLo16(ins, 0, targetVAddress, 0, false);
     break;
   case LLD_R_MIPS_STO_PLT:
     // Do nothing.
