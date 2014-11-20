@@ -1177,8 +1177,9 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_debug:
       // LLD is not yet capable of creating a PDB file, so /debug does not have
-      // any effect, other than disabling dead stripping.
-      ctx.setDeadStripping(false);
+      // any effect.
+      // TODO: This should disable dead stripping. Currently we can't do that
+      // because removal of associative sections depends on dead stripping.
       break;
 
     case OPT_verbose:
