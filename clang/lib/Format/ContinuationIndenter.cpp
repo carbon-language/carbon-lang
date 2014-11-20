@@ -740,7 +740,8 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     // a builder type call after 'return' or, if the alignment after opening
     // brackets is disabled.
     if (!Current.isTrailingComment() &&
-        (!Previous || Previous->isNot(tok::kw_return) || *I > 0) &&
+        (!Previous || Previous->isNot(tok::kw_return) ||
+         (Style.Language != FormatStyle::LK_Java && *I > 0)) &&
         (Style.AlignAfterOpenBracket || *I != prec::Comma ||
          Current.NestingLevel == 0))
       NewParenState.Indent =

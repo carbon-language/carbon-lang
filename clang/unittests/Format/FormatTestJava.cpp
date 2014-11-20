@@ -302,5 +302,20 @@ TEST_F(FormatTestJava, CppKeywords) {
   verifyFormat("public void delete(Object o);");
 }
 
+TEST_F(FormatTestJava, NeverAlignAfterReturn) {
+  verifyFormat("return aaaaaaaaaaaaaaaaaaa\n"
+               "    && bbbbbbbbbbbbbbbbbbb\n"
+               "    && ccccccccccccccccccc;",
+               getStyleWithColumns(40));
+  verifyFormat("return (result == null)\n"
+               "    ? aaaaaaaaaaaaaaaaa\n"
+               "    : bbbbbbbbbbbbbbbbb;",
+               getStyleWithColumns(40));
+  verifyFormat("return aaaaaaaaaaaaaaaaaaa()\n"
+               "    .bbbbbbbbbbbbbbbbbbb()\n"
+               "    .ccccccccccccccccccc();",
+               getStyleWithColumns(40));
+}
+
 } // end namespace tooling
 } // end namespace clang
