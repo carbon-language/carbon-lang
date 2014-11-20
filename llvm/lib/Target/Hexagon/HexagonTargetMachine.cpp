@@ -75,6 +75,8 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     initAsmInfo();
 }
 
+HexagonTargetMachine::~HexagonTargetMachine() {}
+
 namespace {
 /// Hexagon Code Generator Pass Configuration Options.
 class HexagonPassConfig : public TargetPassConfig {

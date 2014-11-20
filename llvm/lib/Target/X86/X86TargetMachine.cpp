@@ -29,8 +29,6 @@ extern "C" void LLVMInitializeX86Target() {
   RegisterTargetMachine<X86TargetMachine> Y(TheX86_64Target);
 }
 
-void X86TargetMachine::anchor() { }
-
 static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
   if (TT.isOSBinFormatMachO()) {
     if (TT.getArch() == Triple::x86_64)
@@ -71,6 +69,8 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
 
   initAsmInfo();
 }
+
+X86TargetMachine::~X86TargetMachine() {}
 
 const X86Subtarget *
 X86TargetMachine::getSubtargetImpl(const Function &F) const {

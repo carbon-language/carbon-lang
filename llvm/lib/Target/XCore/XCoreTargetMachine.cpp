@@ -32,6 +32,8 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+XCoreTargetMachine::~XCoreTargetMachine() {}
+
 namespace {
 /// XCore Code Generator Pass Configuration Options.
 class XCorePassConfig : public TargetPassConfig {

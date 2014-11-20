@@ -28,6 +28,7 @@ public:
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL, bool is64bit);
+  ~SparcTargetMachine() override;
 
   const SparcSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 

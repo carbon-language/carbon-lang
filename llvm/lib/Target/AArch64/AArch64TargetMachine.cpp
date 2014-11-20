@@ -117,6 +117,8 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+AArch64TargetMachine::~AArch64TargetMachine() {}
+
 const AArch64Subtarget *
 AArch64TargetMachine::getSubtargetImpl(const Function &F) const {
   AttributeSet FnAttrs = F.getAttributes();

@@ -35,6 +35,8 @@ public:
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
 
+  ~PPCTargetMachine() override;
+
   const PPCSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const PPCSubtarget *getSubtargetImpl(const Function &F) const override;
 

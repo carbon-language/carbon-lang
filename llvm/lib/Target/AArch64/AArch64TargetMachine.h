@@ -33,6 +33,8 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL, bool IsLittleEndian);
 
+  ~AArch64TargetMachine() override;
+
   const AArch64Subtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

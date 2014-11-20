@@ -32,6 +32,7 @@ public:
                       StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
+  ~MSP430TargetMachine() override;
 
   const MSP430Subtarget *getSubtargetImpl() const override {
     return &Subtarget;

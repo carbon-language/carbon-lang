@@ -27,6 +27,7 @@ public:
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
+  ~XCoreTargetMachine() override;
 
   const XCoreSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 

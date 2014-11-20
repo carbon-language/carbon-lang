@@ -31,6 +31,8 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+SystemZTargetMachine::~SystemZTargetMachine() {}
+
 namespace {
 /// SystemZ Code Generator Pass Configuration Options.
 class SystemZPassConfig : public TargetPassConfig {

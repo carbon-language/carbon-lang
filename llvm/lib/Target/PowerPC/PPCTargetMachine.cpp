@@ -85,6 +85,8 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
   initAsmInfo();
 }
 
+PPCTargetMachine::~PPCTargetMachine() {}
+
 void PPC32TargetMachine::anchor() { }
 
 PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT,

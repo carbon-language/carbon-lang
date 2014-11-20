@@ -69,6 +69,8 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
         Subtarget.isTargetHardFloat() ? FloatABI::Hard : FloatABI::Soft;
 }
 
+ARMBaseTargetMachine::~ARMBaseTargetMachine() {}
+
 const ARMSubtarget *
 ARMBaseTargetMachine::getSubtargetImpl(const Function &F) const {
   AttributeSet FnAttrs = F.getAttributes();

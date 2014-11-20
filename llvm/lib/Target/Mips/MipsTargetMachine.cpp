@@ -69,6 +69,8 @@ MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+MipsTargetMachine::~MipsTargetMachine() {}
+
 void MipsebTargetMachine::anchor() { }
 
 MipsebTargetMachine::

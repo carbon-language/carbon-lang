@@ -38,6 +38,8 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+SparcTargetMachine::~SparcTargetMachine() {}
+
 namespace {
 /// Sparc Code Generator Pass Configuration Options.
 class SparcPassConfig : public TargetPassConfig {

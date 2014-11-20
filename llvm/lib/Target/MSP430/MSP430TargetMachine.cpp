@@ -36,6 +36,8 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+MSP430TargetMachine::~MSP430TargetMachine() {}
+
 namespace {
 /// MSP430 Code Generator Pass Configuration Options.
 class MSP430PassConfig : public TargetPassConfig {

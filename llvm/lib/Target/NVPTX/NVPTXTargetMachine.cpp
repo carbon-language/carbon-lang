@@ -80,6 +80,8 @@ NVPTXTargetMachine::NVPTXTargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+NVPTXTargetMachine::~NVPTXTargetMachine() {}
+
 void NVPTXTargetMachine32::anchor() {}
 
 NVPTXTargetMachine32::NVPTXTargetMachine32(

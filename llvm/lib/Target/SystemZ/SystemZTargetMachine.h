@@ -31,6 +31,7 @@ public:
                        StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
+  ~SystemZTargetMachine() override;
 
   // Override TargetMachine.
   const SystemZSubtarget *getSubtargetImpl() const override {

@@ -35,6 +35,7 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL,
                        bool isLittle);
+  ~ARMBaseTargetMachine() override;
 
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const ARMSubtarget *getSubtargetImpl(const Function &F) const override;
