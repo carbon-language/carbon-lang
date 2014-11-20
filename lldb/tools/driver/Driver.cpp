@@ -747,10 +747,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
                         m_option_data.m_source_quietly = true;
                         break;
 
-                    case 'k':
+                    case 'K':
                         m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, true, error);
                         break;
-                    case 'K':
+                    case 'k':
                         m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, false, error);
                         break;
 
