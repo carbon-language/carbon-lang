@@ -426,6 +426,10 @@ public:
     return TargetTriple.isWindowsGNUEnvironment();
   }
 
+  bool isTargetWindowsItanium() const {
+    return TargetTriple.isWindowsItaniumEnvironment();
+  }
+
   bool isTargetCygMing() const { return TargetTriple.isOSCygMing(); }
 
   bool isOSWindows() const { return TargetTriple.isOSWindows(); }

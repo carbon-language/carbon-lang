@@ -20609,8 +20609,10 @@ X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
         .addReg(X86::RAX);
     }
   } else {
-    const char *StackProbeSymbol =
-      Subtarget->isTargetKnownWindowsMSVC() ? "_chkstk" : "_alloca";
+    const char *StackProbeSymbol = (Subtarget->isTargetKnownWindowsMSVC() ||
+                                    Subtarget->isTargetWindowsItanium())
+                                       ? "_chkstk"
+                                       : "_alloca";
 
     BuildMI(*BB, MI, DL, TII->get(X86::CALLpcrel32))
       .addExternalSymbol(StackProbeSymbol)
