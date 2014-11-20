@@ -133,6 +133,13 @@ public:
 class GOTPLTAtom : public GOTAtom {
 public:
   GOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
+  GOTPLTAtom(const PLTAtom *plt0, const Atom *a, const File &f)
+      : GOTAtom(f, ".got.plt") {
+    // Setup reference to assign initial value to the .got.plt entry.
+    addReferenceELF_Mips(R_MIPS_32, 0, plt0, 0);
+    // Create dynamic relocation to adjust the .got.plt entry at runtime.
+    addReferenceELF_Mips(R_MIPS_JUMP_SLOT, 0, a, 0);
+  }
 
   Alignment alignment() const override { return Alignment(2); }
 
@@ -676,17 +683,12 @@ const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   if (_pltVector.empty())
     createPLTHeader();
 
-  auto ga = new (_file._alloc) GOTPLTAtom(_file);
+  auto ga = new (_file._alloc) GOTPLTAtom(_pltVector.front(), a, _file);
   _gotpltVector.push_back(ga);
 
   auto pa = new (_file._alloc) PLTAAtom(ga, _file);
   _pltMap[a] = pa;
   _pltVector.push_back(pa);
-
-  // Setup reference to assign initial value to the .got.plt entry.
-  ga->addReferenceELF_Mips(R_MIPS_32, 0, _pltVector.front(), 0);
-  // Create dynamic relocation to adjust the .got.plt entry at runtime.
-  ga->addReferenceELF_Mips(R_MIPS_JUMP_SLOT, 0, a, 0);
 
   // Check that 'a' dynamic symbol table record should point to the PLT.
   if (_hasStaticRelocations.count(a) && _requiresPtrEquality.count(a))
