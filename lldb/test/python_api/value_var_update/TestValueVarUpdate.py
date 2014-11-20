@@ -19,6 +19,7 @@ class HelloWorldTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.do_test()
 
+    @expectedFailureFreeBSD("llvm.org/pr21620 GetValueDidChange() wrong")
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_process_launch_api(self):
