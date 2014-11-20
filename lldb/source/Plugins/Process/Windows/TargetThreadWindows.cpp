@@ -7,11 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TargetThreadWindows.h"
-#include "ProcessWindows.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/HostNativeThreadBase.h"
 #include "lldb/Host/windows/HostThreadWindows.h"
 #include "lldb/Host/windows/windows.h"
+#include "lldb/Target/RegisterContext.h"
+
+#include "TargetThreadWindows.h"
+#include "ProcessWindows.h"
+#include "RegisterContextWindows_x86.h"
+#include "UnwindLLDB.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -30,6 +35,7 @@ TargetThreadWindows::~TargetThreadWindows()
 void
 TargetThreadWindows::RefreshStateAfterStop()
 {
+    GetRegisterContext()->InvalidateIfNeeded(false);
 }
 
 void
@@ -45,19 +51,51 @@ TargetThreadWindows::DidStop()
 RegisterContextSP
 TargetThreadWindows::GetRegisterContext()
 {
-    return RegisterContextSP();
+    if (!m_reg_context_sp)
+        m_reg_context_sp = CreateRegisterContextForFrameIndex(0);
+
+    return m_reg_context_sp;
 }
 
 RegisterContextSP
 TargetThreadWindows::CreateRegisterContextForFrame(StackFrame *frame)
 {
-    return RegisterContextSP();
+    return CreateRegisterContextForFrameIndex(frame->GetConcreteFrameIndex());
+}
+
+RegisterContextSP
+TargetThreadWindows::CreateRegisterContextForFrameIndex(uint32_t idx)
+{
+    if (!m_reg_context_sp)
+    {
+        ArchSpec arch = HostInfo::GetArchitecture();
+        switch (arch.GetMachine())
+        {
+            case llvm::Triple::x86:
+                m_reg_context_sp.reset(new RegisterContextWindows_x86(*this, idx));
+                break;
+            default:
+                // FIXME: Support x64 by creating a RegisterContextWindows_x86_64
+                break;
+        }
+    }
+    return m_reg_context_sp;
 }
 
 bool
 TargetThreadWindows::CalculateStopInfo()
 {
-    return false;
+    SetStopInfo(m_stop_info_sp);
+    return true;
+}
+
+Unwind *
+TargetThreadWindows::GetUnwinder()
+{
+    // FIXME: Implement an unwinder based on the Windows unwinder exposed through DIA SDK.
+    if (m_unwinder_ap.get() == NULL)
+        m_unwinder_ap.reset(new UnwindLLDB(*this));
+    return m_unwinder_ap.get();
 }
 
 bool

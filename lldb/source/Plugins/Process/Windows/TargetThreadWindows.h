@@ -28,16 +28,26 @@ class TargetThreadWindows : public lldb_private::Thread
     TargetThreadWindows(ProcessWindows &process, const HostThread &thread);
     virtual ~TargetThreadWindows();
 
-    virtual void RefreshStateAfterStop() override;
-    virtual void WillResume(lldb::StateType resume_state) override;
-    virtual void DidStop() override;
-    virtual lldb::RegisterContextSP GetRegisterContext() override;
-    virtual lldb::RegisterContextSP CreateRegisterContextForFrame(StackFrame *frame) override;
-    virtual bool CalculateStopInfo() override;
+    // lldb_private::Thread overrides
+    void RefreshStateAfterStop() override;
+    void WillResume(lldb::StateType resume_state) override;
+    void DidStop() override;
+    lldb::RegisterContextSP GetRegisterContext() override;
+    lldb::RegisterContextSP CreateRegisterContextForFrame(StackFrame *frame) override;
+    bool CalculateStopInfo() override;
+    Unwind *GetUnwinder() override;
 
     bool DoResume();
 
+    HostThread
+    GetHostThread() const
+    {
+        return m_host_thread;
+    }
+
   private:
+    lldb::RegisterContextSP CreateRegisterContextForFrameIndex(uint32_t idx);
+
     lldb::StackFrameUP m_stack_frame;
 
     HostThread m_host_thread;

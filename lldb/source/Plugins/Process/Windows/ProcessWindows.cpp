@@ -254,6 +254,7 @@ ProcessWindows::DoDestroy()
 void
 ProcessWindows::RefreshStateAfterStop()
 {
+    m_thread_list.RefreshStateAfterStop();
 }
 
 bool
