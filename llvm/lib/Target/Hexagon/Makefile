@@ -20,6 +20,6 @@ BUILT_SOURCES = HexagonGenRegisterInfo.inc \
                 HexagonGenMCCodeEmitter.inc \
                 HexagonGenDisassemblerTables.inc
 
-DIRS = InstPrinter TargetInfo MCTargetDesc Disassembler
+DIRS = TargetInfo MCTargetDesc Disassembler
 
 include $(LEVEL)/Makefile.common
