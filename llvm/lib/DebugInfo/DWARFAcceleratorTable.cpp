@@ -40,14 +40,14 @@ bool DWARFAcceleratorTable::extract() {
 
   for (unsigned i = 0; i < NumAtoms; ++i) {
     uint16_t AtomType = AccelSection.getU16(&Offset);
-    DWARFFormValue AtomForm(AccelSection.getU16(&Offset));
+    uint16_t AtomForm = AccelSection.getU16(&Offset);
     HdrData.Atoms.push_back(std::make_pair(AtomType, AtomForm));
   }
 
   return true;
 }
 
-void DWARFAcceleratorTable::dump(raw_ostream &OS) {
+void DWARFAcceleratorTable::dump(raw_ostream &OS) const {
   // Dump the header.
   OS << "Magic = " << format("0x%08x", Hdr.Magic) << '\n'
      << "Version = " << format("0x%04x", Hdr.Version) << '\n'
@@ -59,6 +59,7 @@ void DWARFAcceleratorTable::dump(raw_ostream &OS) {
      << "Number of atoms = " << HdrData.Atoms.size() << '\n';
 
   unsigned i = 0;
+  SmallVector<DWARFFormValue, 3> AtomForms;
   for (const auto &Atom: HdrData.Atoms) {
     OS << format("Atom[%d] Type: ", i++);
     if (const char *TypeString = dwarf::AtomTypeString(Atom.first))
@@ -66,11 +67,12 @@ void DWARFAcceleratorTable::dump(raw_ostream &OS) {
     else
       OS << format("DW_ATOM_Unknown_0x%x", Atom.first);
     OS << " Form: ";
-    if (const char *FormString = dwarf::FormEncodingString(Atom.second.getForm()))
+    if (const char *FormString = dwarf::FormEncodingString(Atom.second))
       OS << FormString;
     else
-      OS << format("DW_FORM_Unknown_0x%x", Atom.second.getForm());
+      OS << format("DW_FORM_Unknown_0x%x", Atom.second);
     OS << '\n';
+    AtomForms.push_back(DWARFFormValue(Atom.second));
   }
 
   // Now go through the actual tables and dump them.
@@ -114,10 +116,10 @@ void DWARFAcceleratorTable::dump(raw_ostream &OS) {
         for (unsigned Data = 0; Data < NumData; ++Data) {
           OS << format("    Data[%d] => ", Data);
           unsigned i = 0;
-          for (auto &Atom : HdrData.Atoms) {
+          for (auto &Atom : AtomForms) {
             OS << format("{Atom[%d]: ", i++);
-            if (Atom.second.extractValue(AccelSection, &DataOffset, nullptr))
-              Atom.second.dump(OS, nullptr);
+            if (Atom.extractValue(AccelSection, &DataOffset, nullptr))
+              Atom.dump(OS, nullptr);
             else
               OS << "Error extracting the value";
             OS << "} ";
