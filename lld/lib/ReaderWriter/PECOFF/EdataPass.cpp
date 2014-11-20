@@ -35,7 +35,7 @@ static void assignOrdinals(PECOFFLinkingContext &ctx) {
   std::sort(exports.begin(), exports.end(),
             [](const PECOFFLinkingContext::ExportDesc &a,
                const PECOFFLinkingContext::ExportDesc &b) {
-    return a.name.compare(b.name) < 0;
+    return a.getExternalName().compare(b.getExternalName()) < 0;
   });
 
   int nextOrdinal = (maxOrdinal == -1) ? 1 : (maxOrdinal + 1);
@@ -62,13 +62,14 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
     // One can export a symbol with a different name than the symbol
     // name used in DLL. If such name is specified, use it in the
     // .edata section.
-    ret.push_back(TableEntry(desc.getExternalName(), desc.ordinal, atom,
-                             desc.noname));
+    ret.push_back(TableEntry(ctx.undecorateSymbol(desc.getExternalName()),
+                             desc.ordinal, atom, desc.noname));
   }
   std::sort(ret.begin(), ret.end(),
             [](const TableEntry &a, const TableEntry &b) {
     return a.exportName.compare(b.exportName) < 0;
   });
+
   return true;
 }
 
@@ -107,7 +108,7 @@ EdataPass::createNamePointerTable(const PECOFFLinkingContext &ctx,
   size_t offset = 0;
   for (const TableEntry &e : entries) {
     auto *stringAtom = new (_alloc) COFFStringAtom(
-        _file, _stringOrdinal++, ".edata", ctx.undecorateSymbol(e.exportName));
+        _file, _stringOrdinal++, ".edata", e.exportName);
     file->addAtom(*stringAtom);
     addDir32NBReloc(table, stringAtom, _ctx.getMachineType(), offset);
     offset += sizeof(uint32_t);

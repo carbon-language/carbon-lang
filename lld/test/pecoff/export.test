@@ -82,5 +82,6 @@ DUP-NOT:  exportfn3@256
 EQUAL:      Export Table:
 EQUAL:      DLL name: export.test.tmp1.dll
 EQUAL:       Ordinal      RVA  Name
-EQUAL-NEXT:       1   0x2008  f1
-EQUAL-NEXT:       2   0x2010  f2
+EQUAL-NEXT:       1   0x2010  exportfn3@256
+EQUAL-NEXT:       2   0x2008  f1
+EQUAL-NEXT:       3   0x2010  f2
