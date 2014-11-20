@@ -1,5 +1,5 @@
 ; RUN: %lli -extra-module=%p/Inputs/multi-module-b.ll -extra-module=%p/Inputs/multi-module-c.ll -relocation-model=pic -code-model=small %s > /dev/null
-; XFAIL: mips, i686, i386, arm
+; XFAIL: mips, i686, i386
 
 declare i32 @FB()
 
