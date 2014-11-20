@@ -29,7 +29,7 @@ template <size_t BITS, class T> inline T signExtend(T val) {
 
 /// \brief R_MIPS_32
 /// local/external: word32 S + A (truncate)
-static void reloc32(uint32_t &ins, uint64_t P, uint64_t S, int64_t A) {
+static void reloc32(uint32_t &ins, uint64_t S, int64_t A) {
   applyReloc(ins, S + A, 0xffffffff);
 }
 
@@ -140,7 +140,7 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
   case R_MIPS_NONE:
     break;
   case R_MIPS_32:
-    reloc32(ins, relocVAddress, targetVAddress, ref.addend());
+    reloc32(ins, targetVAddress, ref.addend());
     break;
   case R_MIPS_26:
     reloc26loc(ins, relocVAddress, targetVAddress, ref.addend());
