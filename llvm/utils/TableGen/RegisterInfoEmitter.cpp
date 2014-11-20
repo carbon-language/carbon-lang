@@ -379,9 +379,9 @@ RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
       OS << "extern const unsigned " << Namespace
          << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i << "Dwarf2LSize";
       if (!isCtor)
-        OS << " = sizeof(" << Namespace
+        OS << " = array_lengthof(" << Namespace
            << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i
-           << "Dwarf2L)/sizeof(MCRegisterInfo::DwarfLLVMRegPair);\n\n";
+           << "Dwarf2L);\n\n";
       else
         OS << ";\n\n";
     }
@@ -427,9 +427,8 @@ RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
       OS << "extern const unsigned " << Namespace
          << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i << "L2DwarfSize";
       if (!isCtor)
-        OS << " = sizeof(" << Namespace
-           << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i
-           << "L2Dwarf)/sizeof(MCRegisterInfo::DwarfLLVMRegPair);\n\n";
+        OS << " = array_lengthof(" << Namespace
+           << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i << "L2Dwarf);\n\n";
       else
         OS << ";\n\n";
     }
