@@ -3414,6 +3414,7 @@ void TypoCorrectionConsumer::addName(StringRef Name, NamedDecl *ND,
 
   TypoCorrection TC(&SemaRef.Context.Idents.get(Name), ND, NNS, ED);
   if (isKeyword) TC.makeKeyword();
+  TC.setCorrectionRange(nullptr, Result.getLookupNameInfo());
   addCorrection(TC);
 }
 
@@ -3521,8 +3522,6 @@ bool TypoCorrectionConsumer::resolveCorrection(TypoCorrection &Candidate) {
   IdentifierInfo *Name = Candidate.getCorrectionAsIdentifierInfo();
   DeclContext *TempMemberContext = MemberContext;
   CXXScopeSpec *TempSS = SS.get();
-  if (Candidate.getCorrectionRange().isInvalid())
-    Candidate.setCorrectionRange(TempSS, Result.getLookupNameInfo());
 retry_lookup:
   LookupPotentialTypoResult(SemaRef, Result, Name, S, TempSS, TempMemberContext,
                             EnteringContext,
@@ -3563,6 +3562,7 @@ retry_lookup:
         QualifiedResults.push_back(Candidate);
       break;
     }
+    Candidate.setCorrectionRange(TempSS, Result.getLookupNameInfo());
     return true;
   }
   return false;
@@ -3628,8 +3628,10 @@ void TypoCorrectionConsumer::performQualifiedLookups() {
                                         TRD.getPair()) == Sema::AR_accessible)
             TC.addCorrectionDecl(*TRD);
         }
-        if (TC.isResolved())
+        if (TC.isResolved()) {
+          TC.setCorrectionRange(SS.get(), Result.getLookupNameInfo());
           addCorrection(TC);
+        }
         break;
       }
       case LookupResult::NotFound:

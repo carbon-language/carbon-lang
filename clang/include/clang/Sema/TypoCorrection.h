@@ -199,10 +199,9 @@ public:
 
   void setCorrectionRange(CXXScopeSpec *SS,
                           const DeclarationNameInfo &TypoName) {
-    CorrectionRange.setBegin(ForceSpecifierReplacement && SS && !SS->isEmpty()
-                                 ? SS->getBeginLoc()
-                                 : TypoName.getLoc());
-    CorrectionRange.setEnd(TypoName.getLoc());
+    CorrectionRange = TypoName.getSourceRange();
+    if (ForceSpecifierReplacement && SS && !SS->isEmpty())
+      CorrectionRange.setBegin(SS->getBeginLoc());
   }
 
   SourceRange getCorrectionRange() const {
