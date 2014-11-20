@@ -5,9 +5,9 @@
   int has_cxx11_carries_dep();
 #endif
 
-// CHECK: has_clang_fallthrough
+// CHECK: has_clang_fallthrough_1
 #if __has_cpp_attribute(clang::fallthrough)
-  int has_clang_fallthrough();
+  int has_clang_fallthrough_1();
 #endif
 
 // CHECK: does_not_have_selectany
