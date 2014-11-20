@@ -14,12 +14,16 @@ function(find_first_existing_file out_var)
   endforeach()
 endfunction()
 
-find_first_existing_file(llvm_vc
-  "${LLVM_MAIN_SRC_DIR}/.git/logs/HEAD"
-  "${LLVM_MAIN_SRC_DIR}/.svn/entries")
-find_first_existing_file(clang_vc
-  "${CLANG_SOURCE_DIR}/.git/logs/HEAD"
-  "${CLANG_SOURCE_DIR}/.svn/entries")
+macro(find_first_existing_vc_file out_var path)
+  find_first_existing_file(${out_var}
+    "${path}/.git/logs/HEAD" # Git
+    "${path}/.svn/wc.db"     # SVN 1.7
+    "${path}/.svn/entries"   # SVN 1.6
+    )
+endmacro()
+
+find_first_existing_vc_file(llvm_vc "${LLVM_MAIN_SRC_DIR}")
+find_first_existing_vc_file(clang_vc "${CLANG_SOURCE_DIR}")
 
 if(DEFINED llvm_vc AND DEFINED clang_vc)
   # Create custom target to generate the VC revision include.
