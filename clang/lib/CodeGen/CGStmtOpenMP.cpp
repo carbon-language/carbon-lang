@@ -543,8 +543,17 @@ void CodeGenFunction::EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &) {
   llvm_unreachable("CodeGen for 'omp taskwait' is not supported yet.");
 }
 
-void CodeGenFunction::EmitOMPFlushDirective(const OMPFlushDirective &) {
-  llvm_unreachable("CodeGen for 'omp flush' is not supported yet.");
+void CodeGenFunction::EmitOMPFlushDirective(const OMPFlushDirective &S) {
+  CGM.getOpenMPRuntime().EmitOMPFlush(
+      *this, [&]() -> ArrayRef<const Expr *> {
+               if (auto C = S.getSingleClause(/*K*/ OMPC_flush)) {
+                 auto FlushClause = cast<OMPFlushClause>(C);
+                 return llvm::makeArrayRef(FlushClause->varlist_begin(),
+                                           FlushClause->varlist_end());
+               }
+               return llvm::None;
+             }(),
+      S.getLocStart());
 }
 
 void CodeGenFunction::EmitOMPOrderedDirective(const OMPOrderedDirective &) {

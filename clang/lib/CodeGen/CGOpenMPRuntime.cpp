@@ -363,6 +363,14 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_end_serialized_parallel");
     break;
   }
+  case OMPRTL__kmpc_flush: {
+    // Build void __kmpc_flush(ident_t *loc, ...);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy()};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ true);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_flush");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -651,3 +659,14 @@ void CGOpenMPRuntime::EmitOMPNumThreadsClause(CodeGenFunction &CGF,
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
+void CGOpenMPRuntime::EmitOMPFlush(CodeGenFunction &CGF, ArrayRef<const Expr *>,
+                                   SourceLocation Loc) {
+  // Build call void __kmpc_flush(ident_t *loc, ...)
+  // FIXME: List of variables is ignored by libiomp5 runtime, no need to
+  // generate it, just request full memory fence.
+  llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
+                         llvm::ConstantInt::get(CGM.Int32Ty, 0)};
+  auto *RTLFn = CGF.CGM.getOpenMPRuntime().CreateRuntimeFunction(
+      CGOpenMPRuntime::OMPRTL__kmpc_flush);
+  CGF.EmitRuntimeCall(RTLFn, Args);
+}

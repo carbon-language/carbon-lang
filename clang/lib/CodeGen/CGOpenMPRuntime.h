@@ -32,8 +32,7 @@ class Value;
 } // namespace llvm
 
 namespace clang {
-class VarDecl;
-
+class Expr;
 class OMPExecutableDirective;
 class VarDecl;
 
@@ -93,7 +92,9 @@ public:
     OMPRTL__kmpc_end_serialized_parallel,
     // Call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32 global_tid,
     // kmp_int32 num_threads);
-    OMPRTL__kmpc_push_num_threads
+    OMPRTL__kmpc_push_num_threads,
+    // Call to void __kmpc_flush(ident_t *loc, ...);
+    OMPRTL__kmpc_flush
   };
 
 private:
@@ -329,6 +330,11 @@ public:
   EmitOMPThreadPrivateVarDefinition(const VarDecl *VD, llvm::Value *VDAddr,
                                     SourceLocation Loc, bool PerformInit,
                                     CodeGenFunction *CGF = nullptr);
+
+  /// \brief Emit flush of the variables specified in 'omp flush' directive.
+  /// \param Vars List of variables to flush.
+  virtual void EmitOMPFlush(CodeGenFunction &CGF, ArrayRef<const Expr *> Vars,
+                            SourceLocation Loc);
 };
 } // namespace CodeGen
 } // namespace clang
