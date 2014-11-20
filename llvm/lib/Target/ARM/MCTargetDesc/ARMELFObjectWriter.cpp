@@ -102,7 +102,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
     case ARM::fixup_arm_uncondbl:
       switch (Modifier) {
       case MCSymbolRefExpr::VK_PLT:
-        Type = ELF::R_ARM_PLT32;
+        Type = ELF::R_ARM_CALL;
         break;
       case MCSymbolRefExpr::VK_ARM_TLSCALL:
         Type = ELF::R_ARM_TLS_CALL;
