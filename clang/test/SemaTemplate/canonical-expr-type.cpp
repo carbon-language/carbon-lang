@@ -47,3 +47,11 @@ struct X2 {
   void f0(type2);
   void f0(type3); // expected-error{{redeclared}}
 };
+
+// Test canonicalization doesn't conflate different literal suffixes.
+template<typename T> void literal_suffix(int (&)[sizeof(T() + 0)]) {}
+template<typename T> void literal_suffix(int (&)[sizeof(T() + 0L)]) {}
+template<typename T> void literal_suffix(int (&)[sizeof(T() + 0LL)]) {}
+template<typename T> void literal_suffix(int (&)[sizeof(T() + 0.f)]) {}
+template<typename T> void literal_suffix(int (&)[sizeof(T() + 0.)]) {}
+template<typename T> void literal_suffix(int (&)[sizeof(T() + 0.l)]) {}

@@ -501,6 +501,7 @@ void StmtProfiler::VisitPredefinedExpr(const PredefinedExpr *S) {
 void StmtProfiler::VisitIntegerLiteral(const IntegerLiteral *S) {
   VisitExpr(S);
   S->getValue().Profile(ID);
+  ID.AddInteger(S->getType()->castAs<BuiltinType>()->getKind());
 }
 
 void StmtProfiler::VisitCharacterLiteral(const CharacterLiteral *S) {
@@ -513,6 +514,7 @@ void StmtProfiler::VisitFloatingLiteral(const FloatingLiteral *S) {
   VisitExpr(S);
   S->getValue().Profile(ID);
   ID.AddBoolean(S->isExact());
+  ID.AddInteger(S->getType()->castAs<BuiltinType>()->getKind());
 }
 
 void StmtProfiler::VisitImaginaryLiteral(const ImaginaryLiteral *S) {
