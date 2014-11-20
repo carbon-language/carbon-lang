@@ -59,13 +59,6 @@ public:
   JITEventListener() {}
   virtual ~JITEventListener();
 
-  /// NotifyFunctionEmitted - Called after a function has been successfully
-  /// emitted to memory.  The function still has its MachineFunction attached,
-  /// if you should happen to need that.
-  virtual void NotifyFunctionEmitted(const Function &,
-                                     void *, size_t,
-                                     const EmittedFunctionDetails &) {}
-
   /// NotifyFreeingMachineCode - Called from freeMachineCodeForFunction(), after
   /// the global mapping is removed, but before the machine code is returned to
   /// the allocator.
