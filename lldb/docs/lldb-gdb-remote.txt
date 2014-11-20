@@ -988,7 +988,7 @@ for this region.
 //  "O<ascii-hex-string>"
 //  "O" means STDOUT has data that was written to its console and is
 //  being delivered to the debugger. This packet happens asynchronously
-//  and the debugger is expected to continue to way for another stop reply
+//  and the debugger is expected to continue to wait for another stop reply
 //  packet.
 //
 // LLDB EXTENSIONS
