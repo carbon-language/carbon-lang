@@ -150,7 +150,16 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         
-        StackID cur_frame_zero_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+        StackFrameSP cur_frame_sp = m_thread.GetStackFrameAtIndex(0);
+        if (!cur_frame_sp)
+        {
+            if (log)
+                log->Printf ("ThreadPlanStepInstruction couldn't get the 0th frame, stopping.");
+            SetPlanComplete();
+            return true;
+        }
+
+        StackID cur_frame_zero_id = cur_frame_sp->GetStackID();
         
         if (cur_frame_zero_id == m_stack_id || m_stack_id < cur_frame_zero_id)
         {
@@ -180,6 +189,24 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
             {
                 if (return_frame->GetStackID() != m_parent_frame_id || m_start_has_symbol)
                 {
+                    // next-instruction shouldn't step out of inlined functions.  But we may have stepped into a
+                    // real function that starts with an inlined function, and we do want to step out of that...
+
+                    if (cur_frame_sp->IsInlined())
+                    {
+                        StackFrameSP parent_frame_sp = m_thread.GetFrameWithStackID(m_stack_id);
+
+                        if(parent_frame_sp && parent_frame_sp->GetConcreteFrameIndex() == cur_frame_sp->GetConcreteFrameIndex())
+                        {
+                            SetPlanComplete();
+                            if (log)
+                            {
+                                log->Printf("Frame we stepped into is inlined into the frame we were stepping from, stopping.");
+                            }
+                            return true;
+                        }
+                    }
+
                     if (log)
                     {
                         StreamString s;
