@@ -19,10 +19,6 @@
 #  ifndef va_copy
 #    error va_copy is not defined when c++ >= 11
 #  endif
-#else
-#  ifdef va_copy
-#    error va_copy is unexpectedly defined when c++ < 11
-#  endif
 #endif
 
 #ifndef va_end
