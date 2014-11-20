@@ -369,19 +369,22 @@ static ConstantInt *GetConstantInt(Value *V, const DataLayout *DL) {
 /// fail.
 struct ConstantComparesGatherer {
 
-  Value *CompValue = nullptr; /// Value found for the switch comparison
-  Value *Extra = nullptr;  /// Extra clause to be checked before the switch
-  SmallVector<ConstantInt*, 8> Vals; /// Set of integers to match in switch
-  unsigned UsedICmps = 0; /// Number of comparisons matched in the and/or chain
+  Value *CompValue; /// Value found for the switch comparison
+  Value *Extra;     /// Extra clause to be checked before the switch
+  SmallVector<ConstantInt *, 8> Vals; /// Set of integers to match in switch
+  unsigned UsedICmps; /// Number of comparisons matched in the and/or chain
 
   /// Construct and compute the result for the comparison instruction Cond
-  ConstantComparesGatherer(Instruction *Cond, const DataLayout *DL) {
+  ConstantComparesGatherer(Instruction *Cond, const DataLayout *DL)
+      : CompValue(nullptr), Extra(nullptr), UsedICmps(0) {
     gather(Cond, DL);
   }
 
   /// Prevent copy
-  ConstantComparesGatherer(const ConstantComparesGatherer&) = delete;
-  ConstantComparesGatherer &operator=(const ConstantComparesGatherer&) = delete;
+  ConstantComparesGatherer(const ConstantComparesGatherer &)
+      LLVM_DELETED_FUNCTION;
+  ConstantComparesGatherer &
+  operator=(const ConstantComparesGatherer &) LLVM_DELETED_FUNCTION;
 
 private:
 
@@ -2825,7 +2828,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *DL,
   // 'setne's and'ed together, collect them.
 
   // Try to gather values from a chain of and/or to be turned into a switch
-  ConstantComparesGatherer ConstantCompare{Cond, DL};
+  ConstantComparesGatherer ConstantCompare(Cond, DL);
   // Unpack the result
   SmallVectorImpl<ConstantInt*> &Values = ConstantCompare.Vals;
   Value *CompVal = ConstantCompare.CompValue;
