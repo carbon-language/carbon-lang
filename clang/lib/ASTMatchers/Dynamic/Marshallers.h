@@ -556,10 +556,10 @@ private:
 /// \brief Variadic operator marshaller function.
 class VariadicOperatorMatcherDescriptor : public MatcherDescriptor {
 public:
-  typedef DynTypedMatcher::VariadicOperatorFunction VarFunc;
+  typedef DynTypedMatcher::VariadicOperator VarOp;
   VariadicOperatorMatcherDescriptor(unsigned MinCount, unsigned MaxCount,
-                                    VarFunc Func, StringRef MatcherName)
-      : MinCount(MinCount), MaxCount(MaxCount), Func(Func),
+                                    VarOp Op, StringRef MatcherName)
+      : MinCount(MinCount), MaxCount(MaxCount), Op(Op),
         MatcherName(MatcherName) {}
 
   virtual VariantMatcher create(const SourceRange &NameRange,
@@ -584,7 +584,7 @@ public:
       }
       InnerArgs.push_back(Value.getMatcher());
     }
-    return VariantMatcher::VariadicOperatorMatcher(Func, std::move(InnerArgs));
+    return VariantMatcher::VariadicOperatorMatcher(Op, std::move(InnerArgs));
   }
 
   bool isVariadic() const override { return true; }
@@ -606,7 +606,7 @@ public:
 private:
   const unsigned MinCount;
   const unsigned MaxCount;
-  const VarFunc Func;
+  const VarOp Op;
   const StringRef MatcherName;
 };
 
@@ -699,7 +699,7 @@ MatcherDescriptor *
 makeMatcherAutoMarshall(ast_matchers::internal::VariadicOperatorMatcherFunc<
                             MinCount, MaxCount> Func,
                         StringRef MatcherName) {
-  return new VariadicOperatorMatcherDescriptor(MinCount, MaxCount, Func.Func,
+  return new VariadicOperatorMatcherDescriptor(MinCount, MaxCount, Func.Op,
                                                MatcherName);
 }
 

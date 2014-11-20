@@ -107,7 +107,7 @@ class VariantMatcher {
     /// Will try to convert each inner matcher to the destination type and
     /// return llvm::None if it fails to do so.
     llvm::Optional<DynTypedMatcher>
-    constructVariadicOperator(DynTypedMatcher::VariadicOperatorFunction Func,
+    constructVariadicOperator(DynTypedMatcher::VariadicOperator Op,
                               ArrayRef<VariantMatcher> InnerMatchers) const;
 
   protected:
@@ -148,7 +148,7 @@ public:
   ///
   /// It will bind to the appropriate type on getTypedMatcher<T>().
   static VariantMatcher
-  VariadicOperatorMatcher(DynTypedMatcher::VariadicOperatorFunction Func,
+  VariadicOperatorMatcher(DynTypedMatcher::VariadicOperator Op,
                           std::vector<VariantMatcher> Args);
 
   /// \brief Makes the matcher the "null" matcher.

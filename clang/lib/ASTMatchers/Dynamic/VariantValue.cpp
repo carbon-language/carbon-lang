@@ -58,7 +58,7 @@ VariantMatcher::MatcherOps::canConstructFrom(const DynTypedMatcher &Matcher,
 
 llvm::Optional<DynTypedMatcher>
 VariantMatcher::MatcherOps::constructVariadicOperator(
-    DynTypedMatcher::VariadicOperatorFunction Func,
+    DynTypedMatcher::VariadicOperator Op,
     ArrayRef<VariantMatcher> InnerMatchers) const {
   std::vector<DynTypedMatcher> DynMatchers;
   for (const auto &InnerMatcher : InnerMatchers) {
@@ -72,7 +72,7 @@ VariantMatcher::MatcherOps::constructVariadicOperator(
       return llvm::None;
     DynMatchers.push_back(*Inner);
   }
-  return DynTypedMatcher::constructVariadic(Func, DynMatchers);
+  return DynTypedMatcher::constructVariadic(Op, DynMatchers);
 }
 
 VariantMatcher::Payload::~Payload() {}
@@ -176,9 +176,9 @@ public:
 
 class VariantMatcher::VariadicOpPayload : public VariantMatcher::Payload {
 public:
-  VariadicOpPayload(DynTypedMatcher::VariadicOperatorFunction Func,
+  VariadicOpPayload(DynTypedMatcher::VariadicOperator Op,
                     std::vector<VariantMatcher> Args)
-      : Func(Func), Args(std::move(Args)) {}
+      : Op(Op), Args(std::move(Args)) {}
 
   llvm::Optional<DynTypedMatcher> getSingleMatcher() const override {
     return llvm::Optional<DynTypedMatcher>();
@@ -196,7 +196,7 @@ public:
 
   llvm::Optional<DynTypedMatcher>
   getTypedMatcher(const MatcherOps &Ops) const override {
-    return Ops.constructVariadicOperator(Func, Args);
+    return Ops.constructVariadicOperator(Op, Args);
   }
 
   bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind,
@@ -209,7 +209,7 @@ public:
   }
 
 private:
-  const DynTypedMatcher::VariadicOperatorFunction Func;
+  const DynTypedMatcher::VariadicOperator Op;
   const std::vector<VariantMatcher> Args;
 };
 
@@ -225,9 +225,9 @@ VariantMatcher::PolymorphicMatcher(std::vector<DynTypedMatcher> Matchers) {
 }
 
 VariantMatcher VariantMatcher::VariadicOperatorMatcher(
-    DynTypedMatcher::VariadicOperatorFunction Func,
+    DynTypedMatcher::VariadicOperator Op,
     std::vector<VariantMatcher> Args) {
-  return VariantMatcher(new VariadicOpPayload(Func, std::move(Args)));
+  return VariantMatcher(new VariadicOpPayload(Op, std::move(Args)));
 }
 
 llvm::Optional<DynTypedMatcher> VariantMatcher::getSingleMatcher() const {

@@ -20,6 +20,26 @@ namespace clang {
 namespace ast_matchers {
 namespace internal {
 
+bool NotUnaryOperator(const ast_type_traits::DynTypedNode DynNode,
+                      ASTMatchFinder *Finder, BoundNodesTreeBuilder *Builder,
+                      ArrayRef<DynTypedMatcher> InnerMatchers);
+
+bool AllOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
+                           ASTMatchFinder *Finder,
+                           BoundNodesTreeBuilder *Builder,
+                           ArrayRef<DynTypedMatcher> InnerMatchers);
+
+bool EachOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
+                            ASTMatchFinder *Finder,
+                            BoundNodesTreeBuilder *Builder,
+                            ArrayRef<DynTypedMatcher> InnerMatchers);
+
+bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
+                           ASTMatchFinder *Finder,
+                           BoundNodesTreeBuilder *Builder,
+                           ArrayRef<DynTypedMatcher> InnerMatchers);
+
+
 void BoundNodesTreeBuilder::visitMatches(Visitor *ResultVisitor) {
   if (Bindings.empty())
     Bindings.push_back(BoundNodesMap());
@@ -31,8 +51,12 @@ void BoundNodesTreeBuilder::visitMatches(Visitor *ResultVisitor) {
 namespace {
 
 class VariadicMatcher : public DynMatcherInterface {
- public:
-  VariadicMatcher(DynTypedMatcher::VariadicOperatorFunction Func,
+public:
+  typedef bool (*VariadicOperatorFunction)(
+      const ast_type_traits::DynTypedNode DynNode, ASTMatchFinder *Finder,
+      BoundNodesTreeBuilder *Builder, ArrayRef<DynTypedMatcher> InnerMatchers);
+
+  VariadicMatcher(VariadicOperatorFunction Func,
                   std::vector<DynTypedMatcher> InnerMatchers)
       : Func(Func), InnerMatchers(std::move(InnerMatchers)) {}
 
@@ -42,8 +66,8 @@ class VariadicMatcher : public DynMatcherInterface {
     return Func(DynNode, Finder, Builder, InnerMatchers);
   }
 
- private:
-  DynTypedMatcher::VariadicOperatorFunction Func;
+private:
+  VariadicOperatorFunction Func;
   std::vector<DynTypedMatcher> InnerMatchers;
 };
 
@@ -86,7 +110,7 @@ static llvm::ManagedStatic<TrueMatcherImpl> TrueMatcherInstance;
 }  // namespace
 
 DynTypedMatcher DynTypedMatcher::constructVariadic(
-    DynTypedMatcher::VariadicOperatorFunction Func,
+    DynTypedMatcher::VariadicOperator Op,
     std::vector<DynTypedMatcher> InnerMatchers) {
   assert(InnerMatchers.size() > 0 && "Array must not be empty.");
   assert(std::all_of(InnerMatchers.begin(), InnerMatchers.end(),
@@ -100,6 +124,22 @@ DynTypedMatcher DynTypedMatcher::constructVariadic(
   // Make it the same as SupportedKind, since that is the broadest type we are
   // allowed to accept.
   auto SupportedKind = InnerMatchers[0].SupportedKind;
+  VariadicMatcher::VariadicOperatorFunction Func;
+  switch (Op) {
+  case VO_AllOf:
+    Func = AllOfVariadicOperator;
+    break;
+  case VO_AnyOf:
+    Func = AnyOfVariadicOperator;
+    break;
+  case VO_EachOf:
+    Func = EachOfVariadicOperator;
+    break;
+  case VO_UnaryNot:
+    Func = NotUnaryOperator;
+    break;
+  }
+
   return DynTypedMatcher(SupportedKind, SupportedKind,
                          new VariadicMatcher(Func, std::move(InnerMatchers)));
 }
