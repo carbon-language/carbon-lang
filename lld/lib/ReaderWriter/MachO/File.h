@@ -118,13 +118,13 @@ public:
   MachODefinedAtom *findAtomCoveringAddress(const Section &section,
                                             uint64_t offsetInSect,
                                             uint32_t *foundOffsetAtom=nullptr) {
-    const auto& pos = _sectionAtoms.find(&section);
+    const auto &pos = _sectionAtoms.find(&section);
     if (pos == _sectionAtoms.end())
       return nullptr;
-    const auto& vec = pos->second;
+    const auto &vec = pos->second;
     assert(offsetInSect < section.content.size());
     // Vector of atoms for section are already sorted, so do binary search.
-    const auto& atomPos = std::lower_bound(vec.begin(), vec.end(), offsetInSect,
+    const auto &atomPos = std::lower_bound(vec.begin(), vec.end(), offsetInSect,
         [offsetInSect](const SectionOffsetAndAtom &ao, 
                        uint64_t targetAddr) -> bool {
           // Each atom has a start offset of its slice of the
