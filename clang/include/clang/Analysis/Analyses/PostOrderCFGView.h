@@ -47,17 +47,17 @@ public:
 
     /// \brief Set the bit associated with a particular CFGBlock.
     /// This is the important method for the SetType template parameter.
-    bool insert(const CFGBlock *Block) {
+    std::pair<llvm::NoneType, bool> insert(const CFGBlock *Block) {
       // Note that insert() is called by po_iterator, which doesn't check to
       // make sure that Block is non-null.  Moreover, the CFGBlock iterator will
       // occasionally hand out null pointers for pruned edges, so we catch those
       // here.
       if (!Block)
-        return false;  // if an edge is trivially false.
+        return std::make_pair(None, false); // if an edge is trivially false.
       if (VisitedBlockIDs.test(Block->getBlockID()))
-        return false;
+        return std::make_pair(None, false);
       VisitedBlockIDs.set(Block->getBlockID());
-      return true;
+      return std::make_pair(None, true);
     }
 
     /// \brief Check if the bit for a CFGBlock has been already set.
