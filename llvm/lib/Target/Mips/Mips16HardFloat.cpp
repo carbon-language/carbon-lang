@@ -403,7 +403,7 @@ static bool fixupFPReturnAndCall
                            Attribute::ReadNone);
         A = A.addAttribute(C, AttributeSet::FunctionIndex,
                            Attribute::NoInline);
-        Value *F = (M->getOrInsertFunction(Name, A, MyVoid, T, NULL));
+        Value *F = (M->getOrInsertFunction(Name, A, MyVoid, T, nullptr));
         CallInst::Create(F, Params, "", &Inst );
       } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {
           const Value* V = CI->getCalledValue();

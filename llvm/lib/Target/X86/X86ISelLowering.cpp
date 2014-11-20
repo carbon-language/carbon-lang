@@ -19116,7 +19116,7 @@ static SDValue LowerFSINCOS(SDValue Op, const X86Subtarget *Subtarget,
   SDValue Callee = DAG.getExternalSymbol(LibcallName, TLI.getPointerTy());
 
   Type *RetTy = isF64
-    ? (Type*)StructType::get(ArgTy, ArgTy, NULL)
+    ? (Type*)StructType::get(ArgTy, ArgTy, nullptr)
     : (Type*)VectorType::get(ArgTy, 4);
 
   TargetLowering::CallLoweringInfo CLI(DAG);

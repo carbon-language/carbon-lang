@@ -6289,7 +6289,7 @@ SDValue ARMTargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Pair of floats / doubles used to pass the result.
-  StructType *RetTy = StructType::get(ArgTy, ArgTy, NULL);
+  StructType *RetTy = StructType::get(ArgTy, ArgTy, nullptr);
 
   // Create stack object for sret.
   const uint64_t ByteSize = TLI.getDataLayout()->getTypeAllocSize(RetTy);
@@ -10786,7 +10786,7 @@ SDValue ARMTargetLowering::LowerDivRem(SDValue Op, SelectionDAG &DAG) const {
   SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC),
                                          getPointerTy());
 
-  Type *RetTy = (Type*)StructType::get(Ty, Ty, NULL);
+  Type *RetTy = (Type*)StructType::get(Ty, Ty, nullptr);
 
   SDLoc dl(Op);
   TargetLowering::CallLoweringInfo CLI(DAG);

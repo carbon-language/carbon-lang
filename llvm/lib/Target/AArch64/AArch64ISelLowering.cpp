@@ -1642,7 +1642,7 @@ SDValue AArch64TargetLowering::LowerFSINCOS(SDValue Op,
       (ArgVT == MVT::f64) ? "__sincos_stret" : "__sincosf_stret";
   SDValue Callee = DAG.getExternalSymbol(LibcallName, getPointerTy());
 
-  StructType *RetTy = StructType::get(ArgTy, ArgTy, NULL);
+  StructType *RetTy = StructType::get(ArgTy, ArgTy, nullptr);
   TargetLowering::CallLoweringInfo CLI(DAG);
   CLI.setDebugLoc(dl).setChain(DAG.getEntryNode())
     .setCallee(CallingConv::Fast, RetTy, Callee, std::move(Args), 0);
