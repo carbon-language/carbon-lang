@@ -51,14 +51,16 @@ DebugBufferSize("debug-buffer-size",
                 cl::Hidden,
                 cl::init(0));
 
-static ManagedStatic<std::string> CurrentDebugType;
+static ManagedStatic<std::vector<std::string> > CurrentDebugType;
 
 namespace {
 
 struct DebugOnlyOpt {
   void operator=(const std::string &Val) const {
-    DebugFlag |= !Val.empty();
-    *CurrentDebugType = Val;
+    if (Val.empty())
+      return;
+    DebugFlag = true;
+    CurrentDebugType->push_back(Val);
   }
 };
 
@@ -68,7 +70,7 @@ static DebugOnlyOpt DebugOnlyOptLoc;
 
 static cl::opt<DebugOnlyOpt, true, cl::parser<std::string> >
 DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
-          cl::Hidden, cl::value_desc("debug string"),
+          cl::Hidden, cl::ZeroOrMore, cl::value_desc("debug string"),
           cl::location(DebugOnlyOptLoc), cl::ValueRequired);
 
 // Signal handlers - dump debug output on termination.
@@ -87,7 +89,15 @@ static void debug_user_sig_handler(void *Cookie) {
 // with the -debug-only=X option.
 //
 bool llvm::isCurrentDebugType(const char *DebugType) {
-  return CurrentDebugType->empty() || DebugType == *CurrentDebugType;
+  if (CurrentDebugType->empty())
+    return true;
+  // see if DebugType is in list. Note: do not use find() as that forces us to
+  // unnecessarily create an std::string instance.
+  for (auto d : *CurrentDebugType) {
+    if (d == DebugType)
+      return true;
+  }
+  return false;
 }
 
 /// setCurrentDebugType - Set the current debug type, as if the -debug-only=X
@@ -95,7 +105,8 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 /// debug output to be produced.
 ///
 void llvm::setCurrentDebugType(const char *Type) {
-  *CurrentDebugType = Type;
+  CurrentDebugType->clear();
+  CurrentDebugType->push_back(Type);
 }
 
 /// dbgs - Return a circular-buffered debug stream.
