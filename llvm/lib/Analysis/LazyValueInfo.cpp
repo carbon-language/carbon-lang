@@ -1,4 +1,4 @@
-//===- LazyValueInfo.cpp - Value constraint analysis ----------------------===//
+//===- LazyValueInfo.cpp - Value constraint analysis ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -520,15 +520,15 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
   
   // OverDefinedCacheUpdater is a helper object that will update
   // the OverDefinedCache for us when this method exits.  Make sure to
-  // call markResult on it as we exist, passing a bool to indicate if the
-  // cache needs updating, i.e. if we have solve a new value or not.
+  // call markResult on it as we exit, passing a bool to indicate if the
+  // cache needs updating, i.e. if we have solved a new value or not.
   OverDefinedCacheUpdater ODCacheUpdater(Val, BB, BBLV, this);
 
   if (!BBLV.isUndefined()) {
     DEBUG(dbgs() << "  reuse BB '" << BB->getName() << "' val=" << BBLV <<'\n');
     
     // Since we're reusing a cached value here, we don't need to update the 
-    // OverDefinedCahce.  The cache will have been properly updated 
+    // OverDefinedCache.  The cache will have been properly updated
     // whenever the cached value was inserted.
     ODCacheUpdater.markResult(false);
     return true;
@@ -724,11 +724,12 @@ static bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
                                       LVILatticeVal &Result,
                                       bool isTrueDest = true);
 
-// If we can determine a constant range for the value Val at the context
+// If we can determine a constant range for the value Val in the context
 // provided by the instruction BBI, then merge it into BBLV. If we did find a
 // constant range, return true.
-void LazyValueInfoCache::mergeAssumeBlockValueConstantRange(
-  Value *Val, LVILatticeVal &BBLV, Instruction *BBI) {
+void LazyValueInfoCache::mergeAssumeBlockValueConstantRange(Value *Val,
+                                                            LVILatticeVal &BBLV,
+                                                            Instruction *BBI) {
   BBI = BBI ? BBI : dyn_cast<Instruction>(Val);
   if (!BBI)
     return;
@@ -944,7 +945,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
 
   if (getEdgeValueLocal(Val, BBFrom, BBTo, Result)) {
     if (!Result.isConstantRange() ||
-      Result.getConstantRange().getSingleElement())
+        Result.getConstantRange().getSingleElement())
       return true;
 
     // FIXME: this check should be moved to the beginning of the function when
@@ -975,7 +976,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
     return false;
   }
 
-  // if we couldn't compute the value on the edge, use the value from the BB
+  // If we couldn't compute the value on the edge, use the value from the BB.
   Result = getBlockValue(Val, BBFrom);
   mergeAssumeBlockValueConstantRange(Val, Result, BBFrom->getTerminator());
   // We can use the context instruction (generically the ultimate instruction
@@ -1041,7 +1042,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   // we clear their entries from the cache, and allow lazy updating to recompute
   // them when needed.
   
-  // The updating process is fairly simple: we need to dropped cached info
+  // The updating process is fairly simple: we need to drop cached info
   // for all values that were marked overdefined in OldSucc, and for those same
   // values in any successor of OldSucc (except NewSucc) in which they were
   // also marked overdefined.
@@ -1116,6 +1117,7 @@ bool LazyValueInfo::runOnFunction(Function &F) {
 
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
+
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   if (PImpl)
