@@ -470,7 +470,8 @@ emitModuleFlags(MCStreamer &Streamer,
       VersionVal = cast<ConstantInt>(Val)->getZExtValue();
     } else if (Key == "Objective-C Garbage Collection" ||
                Key == "Objective-C GC Only" ||
-               Key == "Objective-C Is Simulated") {
+               Key == "Objective-C Is Simulated" ||
+               Key == "Objective-C Image Swift Version") {
       ImageInfoFlags |= cast<ConstantInt>(Val)->getZExtValue();
     } else if (Key == "Objective-C Image Info Section") {
       SectionVal = cast<MDString>(Val)->getString();
