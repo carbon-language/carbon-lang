@@ -604,3 +604,22 @@ entry:
   ret <2 x float> %result
 ; CHECK-NEXT: ret <2 x float> %[[V4]]
 }
+
+define <4 x float> @test12() {
+; CHECK-LABEL: @test12(
+  %a = alloca <3 x i32>, align 16
+; CHECK-NOT: alloca
+
+  %cast1 = bitcast <3 x i32>* %a to <4 x i32>*
+  store <4 x i32> undef, <4 x i32>* %cast1, align 16
+; CHECK-NOT: store
+
+  %cast2 = bitcast <3 x i32>* %a to <3 x float>*
+  %cast3 = bitcast <3 x float>* %cast2 to <4 x float>*
+  %vec = load <4 x float>* %cast3
+; CHECK-NOT: load
+
+; CHECK:      %[[ret:.*]] = bitcast <4 x i32> undef to <4 x float>
+; CHECK-NEXT: ret <4 x float> %[[ret]]
+  ret <4 x float> %vec
+}

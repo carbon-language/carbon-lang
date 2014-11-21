@@ -394,6 +394,13 @@ static BinaryOperator *LowerNegateToMultiply(Instruction *Neg) {
   BinaryOperator *Res = CreateMul(Neg->getOperand(1), NegOne, "", Neg, Neg);
   Neg->setOperand(1, Constant::getNullValue(Ty)); // Drop use of op.
   Res->takeName(Neg);
+  if (Ty->isIntegerTy()) {
+    bool NSW = cast<BinaryOperator>(Neg)->hasNoSignedWrap();
+    bool NUW = cast<BinaryOperator>(Neg)->hasNoUnsignedWrap();
+    if (NSW || NUW)
+      Res->setHasNoSignedWrap(true);
+    Res->setHasNoUnsignedWrap(NUW);
+  }
   Neg->replaceAllUsesWith(Res);
   Res->setDebugLoc(Neg->getDebugLoc());
   return Res;

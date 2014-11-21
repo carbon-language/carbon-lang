@@ -1691,7 +1691,7 @@ isVectorPromotionViableForSlice(const DataLayout &DL, uint64_t SliceBeginOffset,
 /// don't want to do the rewrites unless we are confident that the result will
 /// be promotable, so we have an early test here.
 static VectorType *
-isVectorPromotionViable(const DataLayout &DL, Type *AllocaTy,
+isVectorPromotionViable(const DataLayout &DL,
                         uint64_t SliceBeginOffset, uint64_t SliceEndOffset,
                         AllocaSlices::const_range Slices,
                         ArrayRef<AllocaSlices::iterator> SplitUses) {
@@ -1709,7 +1709,6 @@ isVectorPromotionViable(const DataLayout &DL, Type *AllocaTy,
         HaveCommonEltTy = false;
     }
   };
-  CheckCandidateType(AllocaTy);
   // Consider any loads or stores that are the exact size of the slice.
   for (const auto &S : Slices)
     if (S.beginOffset() == SliceBeginOffset &&
@@ -3213,7 +3212,7 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
   VectorType *VecTy =
       IsIntegerPromotable
           ? nullptr
-          : isVectorPromotionViable(*DL, SliceTy, BeginOffset, EndOffset,
+          : isVectorPromotionViable(*DL, BeginOffset, EndOffset,
                                     AllocaSlices::const_range(B, E), SplitUses);
   if (VecTy)
     SliceTy = VecTy;
