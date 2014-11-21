@@ -123,6 +123,9 @@ public:
   typedef Type::subtype_iterator param_iterator;
   param_iterator param_begin() const { return ContainedTys + 1; }
   param_iterator param_end() const { return &ContainedTys[NumContainedTys]; }
+  ArrayRef<Type *> params() const {
+    return makeArrayRef(param_begin(), param_end());
+  }
 
   /// Parameter type accessors.
   Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
@@ -274,9 +277,8 @@ public:
   typedef Type::subtype_iterator element_iterator;
   element_iterator element_begin() const { return ContainedTys; }
   element_iterator element_end() const { return &ContainedTys[NumContainedTys];}
-
   ArrayRef<Type *> const elements() const {
-    return ArrayRef<Type*>(&*element_begin(), getNumElements());
+    return makeArrayRef(element_begin(), element_end());
   }
 
   /// isLayoutIdentical - Return true if this is layout identical to the
