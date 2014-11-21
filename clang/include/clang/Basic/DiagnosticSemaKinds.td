@@ -1496,6 +1496,9 @@ def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
 def warn_field_is_uninit : Warning<"field %0 is uninitialized when used here">,
   InGroup<Uninitialized>;
+def warn_base_class_is_uninit : Warning<
+  "base class %0 is uninitialized when used here to access %q1">,
+  InGroup<Uninitialized>;
 def warn_reference_field_is_uninit : Warning<
   "reference %0 is not yet bound to a value when used here">,
   InGroup<Uninitialized>;

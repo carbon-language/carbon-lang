@@ -2237,6 +2237,9 @@ namespace {
     // List of Decls to generate a warning on.  Also remove Decls that become
     // initialized.
     llvm::SmallPtrSetImpl<ValueDecl*> &Decls;
+    // List of base classes of the record.  Classes are removed after their
+    // initializers.
+    llvm::SmallPtrSetImpl<QualType> &BaseClasses;
     // Vector of decls to be removed from the Decl set prior to visiting the
     // nodes.  These Decls may have been initialized in the prior initializer.
     llvm::SmallVector<ValueDecl*, 4> DeclsToRemove;
@@ -2252,9 +2255,10 @@ namespace {
   public:
     typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
     UninitializedFieldVisitor(Sema &S,
-                              llvm::SmallPtrSetImpl<ValueDecl*> &Decls)
-      : Inherited(S.Context), S(S), Decls(Decls), Constructor(nullptr),
-        InitList(false), InitListFieldDecl(nullptr) {}
+                              llvm::SmallPtrSetImpl<ValueDecl*> &Decls,
+                              llvm::SmallPtrSetImpl<QualType> &BaseClasses)
+      : Inherited(S.Context), S(S), Decls(Decls), BaseClasses(BaseClasses),
+        Constructor(nullptr), InitList(false), InitListFieldDecl(nullptr) {}
 
     // Returns true if the use of ME is not an uninitialized use.
     bool IsInitListMemberExprInitialized(MemberExpr *ME,
@@ -2309,7 +2313,8 @@ namespace {
       bool AllPODFields = FieldME->getType().isPODType(S.Context);
 
       Expr *Base = ME;
-      while (MemberExpr *SubME = dyn_cast<MemberExpr>(Base)) {
+      while (MemberExpr *SubME =
+                 dyn_cast<MemberExpr>(Base->IgnoreParenImpCasts())) {
 
         if (isa<VarDecl>(SubME->getMemberDecl()))
           return;
@@ -2321,16 +2326,31 @@ namespace {
         if (!FieldME->getType().isPODType(S.Context))
           AllPODFields = false;
 
-        Base = SubME->getBase()->IgnoreParenImpCasts();
+        Base = SubME->getBase();
       }
 
-      if (!isa<CXXThisExpr>(Base))
+      if (!isa<CXXThisExpr>(Base->IgnoreParenImpCasts()))
         return;
 
       if (AddressOf && AllPODFields)
         return;
 
       ValueDecl* FoundVD = FieldME->getMemberDecl();
+
+      if (ImplicitCastExpr *BaseCast = dyn_cast<ImplicitCastExpr>(Base)) {
+        while (isa<ImplicitCastExpr>(BaseCast->getSubExpr())) {
+          BaseCast = cast<ImplicitCastExpr>(BaseCast->getSubExpr());
+        }
+
+        if (BaseCast->getCastKind() == CK_UncheckedDerivedToBase) {
+          QualType T = BaseCast->getType();
+          if (T->isPointerType() &&
+              BaseClasses.count(T->getPointeeType())) {
+            S.Diag(FieldME->getExprLoc(), diag::warn_base_class_is_uninit)
+                << T->getPointeeType() << FoundVD;
+          }
+        }
+      }
 
       if (!Decls.count(FoundVD))
         return;
@@ -2420,7 +2440,7 @@ namespace {
     }
 
     void CheckInitializer(Expr *E, const CXXConstructorDecl *FieldConstructor,
-                          FieldDecl *Field) {
+                          FieldDecl *Field, const Type *BaseClass) {
       // Remove Decls that may have been initialized in the previous
       // initializer.
       for (ValueDecl* VD : DeclsToRemove)
@@ -2442,6 +2462,8 @@ namespace {
 
       if (Field)
         Decls.erase(Field);
+      if (BaseClass)
+        BaseClasses.erase(BaseClass->getCanonicalTypeInternal());
     }
 
     void VisitMemberExpr(MemberExpr *ME) {
@@ -2578,14 +2600,19 @@ namespace {
       }
     }
 
-    if (UninitializedFields.empty())
+    llvm::SmallPtrSet<QualType, 4> UninitializedBaseClasses;
+    for (auto I : RD->bases())
+      UninitializedBaseClasses.insert(I.getType().getCanonicalType());
+
+    if (UninitializedFields.empty() && UninitializedBaseClasses.empty())
       return;
 
     UninitializedFieldVisitor UninitializedChecker(SemaRef,
-                                                   UninitializedFields);
+                                                   UninitializedFields,
+                                                   UninitializedBaseClasses);
 
     for (const auto *FieldInit : Constructor->inits()) {
-      if (UninitializedFields.empty())
+      if (UninitializedFields.empty() && UninitializedBaseClasses.empty())
         break;
 
       Expr *InitExpr = FieldInit->getInit();
@@ -2599,10 +2626,12 @@ namespace {
           continue;
         // In class initializers will point to the constructor.
         UninitializedChecker.CheckInitializer(InitExpr, Constructor,
-                                              FieldInit->getAnyMember());
+                                              FieldInit->getAnyMember(),
+                                              FieldInit->getBaseClass());
       } else {
         UninitializedChecker.CheckInitializer(InitExpr, nullptr,
-                                              FieldInit->getAnyMember());
+                                              FieldInit->getAnyMember(),
+                                              FieldInit->getBaseClass());
       }
     }
   }
