@@ -80,10 +80,6 @@ static inline std::string stringFromIslObjInternal(__isl_keep ISLTy *isl_obj,
   return string;
 }
 
-static inline isl_ctx *schedule_get_ctx(__isl_keep isl_schedule *schedule) {
-  return isl_union_map_get_ctx(isl_schedule_get_map(schedule));
-}
-
 std::string polly::stringFromIslObj(__isl_keep isl_map *map) {
   return stringFromIslObjInternal(map, isl_map_get_ctx, isl_printer_print_map);
 }
@@ -103,7 +99,7 @@ std::string polly::stringFromIslObj(__isl_keep isl_union_set *uset) {
 }
 
 std::string polly::stringFromIslObj(__isl_keep isl_schedule *schedule) {
-  return stringFromIslObjInternal(schedule, schedule_get_ctx,
+  return stringFromIslObjInternal(schedule, isl_schedule_get_ctx,
                                   isl_printer_print_schedule);
 }
 
