@@ -87,6 +87,8 @@ class Decorator: public __sanitizer::SanitizerCommonDecorator {
         return Cyan();
       case kAsanUserPoisonedMemoryMagic:
       case kAsanContiguousContainerOOBMagic:
+      case kAsanAllocaLeftMagic:
+      case kAsanAllocaRightMagic:
         return Blue();
       case kAsanStackUseAfterScopeMagic:
         return Magenta();
@@ -173,6 +175,8 @@ static void PrintLegend(InternalScopedString *str) {
   PrintShadowByte(str, "  Intra object redzone:    ",
                   kAsanIntraObjectRedzone);
   PrintShadowByte(str, "  ASan internal:           ", kAsanInternalHeapMagic);
+  PrintShadowByte(str, "  Left alloca redzone:     ", kAsanAllocaLeftMagic);
+  PrintShadowByte(str, "  Right alloca redzone:    ", kAsanAllocaRightMagic);
 }
 
 void MaybeDumpInstructionBytes(uptr pc) {
@@ -981,6 +985,10 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
         break;
       case kAsanIntraObjectRedzone:
         bug_descr = "intra-object-overflow";
+        break;
+      case kAsanAllocaLeftMagic:
+      case kAsanAllocaRightMagic:
+        bug_descr = "dynamic-stack-buffer-overflow";
         break;
     }
   }
