@@ -719,6 +719,8 @@ const wchar_t *LongWideString = L"012345678901234567890123456789ABCDEF";
 // CHECK: @"\01??_C@_1EK@KFPEBLPK@?$AA0?$AA1?$AA2?$AA3?$AA4?$AA5?$AA6?$AA7?$AA8?$AA9?$AA0?$AA1?$AA2?$AA3?$AA4?$AA5?$AA6?$AA7?$AA8?$AA9?$AA0?$AA1?$AA2?$AA3?$AA4?$AA5?$AA6?$AA7?$AA8?$AA9?$AAA?$AAB@"
 const wchar_t *UnicodeLiteral = L"\ud7ff";
 // CHECK: @"\01??_C@_13IIHIAFKH@?W?$PP?$AA?$AA@"
+const char *U8Literal = u8"hi";
+// CHECK: @"\01??_C@_02PCEFGMJL@hi?$AA@"
 const char16_t *U16Literal = u"hi";
 // CHECK: @"\01??_C@_05OMLEGLOC@h?$AAi?$AA?$AA?$AA@"
 const char32_t *U32Literal = U"hi";
