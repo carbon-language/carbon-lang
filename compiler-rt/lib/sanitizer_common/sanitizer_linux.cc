@@ -283,17 +283,15 @@ uptr internal_execve(const char *filename, char *const argv[],
 
 // ----------------- sanitizer_common.h
 bool FileExists(const char *filename) {
+  struct stat st;
 #if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
-  struct stat st;
   if (internal_syscall(SYSCALL(newfstatat), AT_FDCWD, filename, &st, 0))
-    return false;
 #else
-  struct stat st;
   if (internal_stat(filename, &st))
+#endif
     return false;
   // Sanity check: filename is a regular file.
   return S_ISREG(st.st_mode);
-#endif
 }
 
 uptr GetTid() {
