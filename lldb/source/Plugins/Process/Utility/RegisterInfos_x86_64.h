@@ -42,34 +42,34 @@
 // Note that the size and offset will be updated by platform-specific classes.
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)    \
     { #reg, alt, sizeof(((GPR*)NULL)->reg), GPR_OFFSET(reg), eEncodingUint, \
-      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg##_x86_64 }, NULL, NULL }
+      eFormatHex, { kind1, kind2, kind3, kind4, lldb_##reg##_x86_64 }, NULL, NULL }
 
 #define DEFINE_FPR(name, reg, kind1, kind2, kind3, kind4)    \
     { #name, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint,   \
-      eFormatHex, { kind1, kind2, kind3, kind4, fpu_##name##_x86_64 }, NULL, NULL }
+      eFormatHex, { kind1, kind2, kind3, kind4, lldb_##name##_x86_64 }, NULL, NULL }
 
 #define DEFINE_FP_ST(reg, i)                                       \
     { #reg#i, NULL, FP_SIZE, LLVM_EXTENSION FPR_OFFSET(stmm[i]),   \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_dwarf_st##i##_x86_64, gcc_dwarf_st##i##_x86_64, LLDB_INVALID_REGNUM, gdb_st##i##_x86_64, fpu_st##i##_x86_64 }, \
+      { gcc_dwarf_st##i##_x86_64, gcc_dwarf_st##i##_x86_64, LLDB_INVALID_REGNUM, gdb_st##i##_x86_64, lldb_st##i##_x86_64 }, \
       NULL, NULL }
 
 #define DEFINE_FP_MM(reg, i)                                                \
     { #reg#i, NULL, sizeof(uint64_t), LLVM_EXTENSION FPR_OFFSET(stmm[i]),   \
       eEncodingUint, eFormatHex,                                            \
-      { gcc_dwarf_mm##i##_x86_64, gcc_dwarf_mm##i##_x86_64, LLDB_INVALID_REGNUM, gdb_st##i##_x86_64, fpu_mm##i##_x86_64 }, \
+      { gcc_dwarf_mm##i##_x86_64, gcc_dwarf_mm##i##_x86_64, LLDB_INVALID_REGNUM, gdb_st##i##_x86_64, lldb_mm##i##_x86_64 }, \
       NULL, NULL }
 
 #define DEFINE_XMM(reg, i)                                         \
     { #reg#i, NULL, XMM_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),   \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_dwarf_##reg##i##_x86_64, gcc_dwarf_##reg##i##_x86_64, LLDB_INVALID_REGNUM, gdb_##reg##i##_x86_64, fpu_##reg##i##_x86_64}, \
+      { gcc_dwarf_##reg##i##_x86_64, gcc_dwarf_##reg##i##_x86_64, LLDB_INVALID_REGNUM, gdb_##reg##i##_x86_64, lldb_##reg##i##_x86_64}, \
       NULL, NULL }
 
 #define DEFINE_YMM(reg, i)                                                          \
     { #reg#i, NULL, YMM_SIZE, LLVM_EXTENSION YMM_OFFSET(reg[i]),                    \
       eEncodingVector, eFormatVectorOfUInt8,                                        \
-      { gcc_dwarf_##reg##i##h_x86_64, gcc_dwarf_##reg##i##h_x86_64, LLDB_INVALID_REGNUM, gdb_##reg##i##h_x86_64, fpu_##reg##i##_x86_64 }, \
+      { gcc_dwarf_##reg##i##h_x86_64, gcc_dwarf_##reg##i##h_x86_64, LLDB_INVALID_REGNUM, gdb_##reg##i##h_x86_64, lldb_##reg##i##_x86_64 }, \
       NULL, NULL }
 
 #define DEFINE_DR(reg, i)                                               \
@@ -79,16 +79,16 @@
 
 #define DEFINE_GPR_PSEUDO_32(reg32, reg64)          \
     { #reg32, NULL, 4, GPR_OFFSET(reg64), eEncodingUint,   \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg32##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg32##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 #define DEFINE_GPR_PSEUDO_16(reg16, reg64)          \
     { #reg16, NULL, 2, GPR_OFFSET(reg64), eEncodingUint,   \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg16##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg16##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 #define DEFINE_GPR_PSEUDO_8H(reg8, reg64)           \
     { #reg8, NULL, 1, GPR_OFFSET(reg64)+1, eEncodingUint,  \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg8##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 #define DEFINE_GPR_PSEUDO_8L(reg8, reg64)           \
     { #reg8, NULL, 1, GPR_OFFSET(reg64), eEncodingUint,    \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg8##_x86_64 }, RegisterContextPOSIX_x86::g_contained_##reg64, RegisterContextPOSIX_x86::g_invalidate_##reg64 }
 
 static RegisterInfo
 g_register_infos_x86_64[] =
@@ -273,37 +273,37 @@ static_assert((sizeof(g_register_infos_x86_64) / sizeof(g_register_infos_x86_64[
 
 #define UPDATE_GPR_INFO(reg, reg64)                                             \
 do {                                                                            \
-    g_register_infos[gpr_##reg##_i386].byte_offset = GPR_OFFSET(reg64);         \
+    g_register_infos[lldb_##reg##_i386].byte_offset = GPR_OFFSET(reg64);         \
 } while(false);
 
 #define UPDATE_GPR_INFO_8H(reg, reg64)                                          \
 do {                                                                            \
-    g_register_infos[gpr_##reg##_i386].byte_offset = GPR_OFFSET(reg64) + 1;     \
+    g_register_infos[lldb_##reg##_i386].byte_offset = GPR_OFFSET(reg64) + 1;     \
 } while(false);
 
 #define UPDATE_FPR_INFO(reg, reg64)                                             \
 do {                                                                            \
-    g_register_infos[fpu_##reg##_i386].byte_offset = FPR_OFFSET(reg64);         \
+    g_register_infos[lldb_##reg##_i386].byte_offset = FPR_OFFSET(reg64);         \
 } while(false);
 
 #define UPDATE_FP_INFO(reg, i)                                                  \
 do {                                                                            \
-    g_register_infos[fpu_##reg##i##_i386].byte_offset = FPR_OFFSET(stmm[i]);    \
+    g_register_infos[lldb_##reg##i##_i386].byte_offset = FPR_OFFSET(stmm[i]);    \
 } while(false);
 
 #define UPDATE_XMM_INFO(reg, i)                                                 \
 do {                                                                            \
-    g_register_infos[fpu_##reg##i##_i386].byte_offset = FPR_OFFSET(reg[i]);     \
+    g_register_infos[lldb_##reg##i##_i386].byte_offset = FPR_OFFSET(reg[i]);     \
 } while(false);
 
 #define UPDATE_YMM_INFO(reg, i)                                                 \
 do {                                                                            \
-    g_register_infos[fpu_##reg##i##_i386].byte_offset = YMM_OFFSET(reg[i]);     \
+    g_register_infos[lldb_##reg##i##_i386].byte_offset = YMM_OFFSET(reg[i]);     \
 } while(false);
 
 #define UPDATE_DR_INFO(reg_index)                                               \
 do {                                                                            \
-    g_register_infos[dr##reg_index##_i386].byte_offset = DR_OFFSET(reg_index);  \
+    g_register_infos[lldb_dr##reg_index##_i386].byte_offset = DR_OFFSET(reg_index);  \
 } while(false);
 
     // Update the register offsets

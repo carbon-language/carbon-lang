@@ -42,37 +42,37 @@
 // Note that the size and offset will be updated by platform-specific classes.
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)            \
     { #reg, alt, sizeof(((GPR*)NULL)->reg), GPR_OFFSET(reg), eEncodingUint,  \
-      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg##_i386 }, NULL, NULL }
+      eFormatHex, { kind1, kind2, kind3, kind4, lldb_##reg##_i386 }, NULL, NULL }
 
 #define DEFINE_FPR(name, reg, kind1, kind2, kind3, kind4)           \
     { #name, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint,   \
-      eFormatHex, { kind1, kind2, kind3, kind4, fpu_##name##_i386 }, NULL, NULL }
+      eFormatHex, { kind1, kind2, kind3, kind4, lldb_##name##_i386 }, NULL, NULL }
 
 // RegisterKind: GCC, DWARF, Generic, GDB, LLDB
 
 #define DEFINE_FP_ST(reg, i)                                       \
     { #reg#i, NULL, FP_SIZE, LLVM_EXTENSION FPR_OFFSET(stmm[i]),    \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_st##i##_i386, dwarf_st##i##_i386, LLDB_INVALID_REGNUM, gdb_st##i##_i386, fpu_st##i##_i386 }, \
+      { gcc_st##i##_i386, dwarf_st##i##_i386, LLDB_INVALID_REGNUM, gdb_st##i##_i386, lldb_st##i##_i386 }, \
       NULL, NULL }
 
 #define DEFINE_FP_MM(reg, i)                                                \
     { #reg#i, NULL, sizeof(uint64_t), LLVM_EXTENSION FPR_OFFSET(stmm[i]),   \
       eEncodingUint, eFormatHex,                                            \
-      { gcc_mm##i##_i386, dwarf_mm##i##_i386, LLDB_INVALID_REGNUM, gdb_mm##i##_i386, fpu_mm##i##_i386 }, \
+      { gcc_mm##i##_i386, dwarf_mm##i##_i386, LLDB_INVALID_REGNUM, gdb_mm##i##_i386, lldb_mm##i##_i386 }, \
       NULL, NULL }
 
 #define DEFINE_XMM(reg, i)                                         \
     { #reg#i, NULL, XMM_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),   \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_##reg##i##_i386, dwarf_##reg##i##_i386, LLDB_INVALID_REGNUM, gdb_##reg##i##_i386, fpu_##reg##i##_i386}, \
+      { gcc_##reg##i##_i386, dwarf_##reg##i##_i386, LLDB_INVALID_REGNUM, gdb_##reg##i##_i386, lldb_##reg##i##_i386}, \
       NULL, NULL }
 
 // I believe the YMM registers use dwarf_xmm_%_i386 register numbers and then differentiate based on register size.
 #define DEFINE_YMM(reg, i)                                         \
     { #reg#i, NULL, YMM_SIZE, LLVM_EXTENSION YMM_OFFSET(reg[i]),   \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { LLDB_INVALID_REGNUM, dwarf_xmm##i##_i386, LLDB_INVALID_REGNUM, gdb_##reg##i##h_i386, fpu_##reg##i##_i386 }, \
+      { LLDB_INVALID_REGNUM, dwarf_xmm##i##_i386, LLDB_INVALID_REGNUM, gdb_##reg##i##h_i386, lldb_##reg##i##_i386 }, \
       NULL, NULL }
 
 #define DEFINE_DR(reg, i)                                               \
@@ -82,13 +82,13 @@
 
 #define DEFINE_GPR_PSEUDO_16(reg16, reg32)                  \
     { #reg16, NULL, 2, GPR_OFFSET(reg32), eEncodingUint,    \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg16##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg16##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
 #define DEFINE_GPR_PSEUDO_8H(reg8, reg32)                   \
     { #reg8, NULL, 1, GPR_OFFSET(reg32)+1, eEncodingUint,   \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg8##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
 #define DEFINE_GPR_PSEUDO_8L(reg8, reg32)                   \
     { #reg8, NULL, 1, GPR_OFFSET(reg32), eEncodingUint,     \
-      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gpr_##reg8##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
+      eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg8##_i386 }, RegisterContextPOSIX_x86::g_contained_##reg32, RegisterContextPOSIX_x86::g_invalidate_##reg32 }
  
 static RegisterInfo
 g_register_infos_i386[] =

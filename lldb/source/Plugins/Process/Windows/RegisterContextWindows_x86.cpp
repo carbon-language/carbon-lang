@@ -27,10 +27,10 @@ using namespace lldb_private;
 #define DEFINE_GPR32(reg, offset, generic_reg)                                                                                             \
     {                                                                                                                                      \
         #reg, nullptr, 4, offset, eEncodingUint, eFormatHexUppercase,                                                                      \
-            {gcc_##reg##_i386, dwarf_##reg##_i386, generic_reg, gdb_##reg##_i386, gpr_##reg##_i386 }, nullptr, nullptr                     \
+            {gcc_##reg##_i386, dwarf_##reg##_i386, generic_reg, gdb_##reg##_i386, lldb_##reg##_i386 }, nullptr, nullptr                     \
     }
 
-#define GPR_REGNUM(reg) gpr_##reg##_i386
+#define GPR_REGNUM(reg) lldb_##reg##_i386
 
 // For now we're only supporting general purpose registers.  Unfortunately we have to maintain
 // parallel arrays since that's how the RegisterContext interface expects things to be returned.
@@ -111,34 +111,34 @@ RegisterContextWindows_x86::ReadRegister(const RegisterInfo *reg_info, RegisterV
     CONTEXT *context = GetSystemContext();
     switch (reg_info->kinds[eRegisterKindLLDB])
     {
-        case gpr_eax_i386:
+        case lldb_eax_i386:
             reg_value.SetUInt32(context->Eax);
             break;
-        case gpr_ebx_i386:
+        case lldb_ebx_i386:
             reg_value.SetUInt32(context->Ebx);
             break;
-        case gpr_ecx_i386:
+        case lldb_ecx_i386:
             reg_value.SetUInt32(context->Ecx);
             break;
-        case gpr_edx_i386:
+        case lldb_edx_i386:
             reg_value.SetUInt32(context->Edx);
             break;
-        case gpr_edi_i386:
+        case lldb_edi_i386:
             reg_value.SetUInt32(context->Edi);
             break;
-        case gpr_esi_i386:
+        case lldb_esi_i386:
             reg_value.SetUInt32(context->Esi);
             break;
-        case gpr_ebp_i386:
+        case lldb_ebp_i386:
             reg_value.SetUInt32(context->Ebp);
             break;
-        case gpr_esp_i386:
+        case lldb_esp_i386:
             reg_value.SetUInt32(context->Esp);
             break;
-        case gpr_eip_i386:
+        case lldb_eip_i386:
             reg_value.SetUInt32(context->Eip);
             break;
-        case gpr_eflags_i386:
+        case lldb_eflags_i386:
             reg_value.SetUInt32(context->EFlags);
             break;
     }
@@ -157,34 +157,34 @@ RegisterContextWindows_x86::WriteRegister(const RegisterInfo *reg_info, const Re
     CONTEXT *context = GetSystemContext();
     switch (reg_info->kinds[eRegisterKindLLDB])
     {
-        case gpr_eax_i386:
+        case lldb_eax_i386:
             context->Eax = reg_value.GetAsUInt32();
             break;
-        case gpr_ebx_i386:
+        case lldb_ebx_i386:
             context->Ebx = reg_value.GetAsUInt32();
             break;
-        case gpr_ecx_i386:
+        case lldb_ecx_i386:
             context->Ecx = reg_value.GetAsUInt32();
             break;
-        case gpr_edx_i386:
+        case lldb_edx_i386:
             context->Edx = reg_value.GetAsUInt32();
             break;
-        case gpr_edi_i386:
+        case lldb_edi_i386:
             context->Edi = reg_value.GetAsUInt32();
             break;
-        case gpr_esi_i386:
+        case lldb_esi_i386:
             context->Esi = reg_value.GetAsUInt32();
             break;
-        case gpr_ebp_i386:
+        case lldb_ebp_i386:
             context->Ebp = reg_value.GetAsUInt32();
             break;
-        case gpr_esp_i386:
+        case lldb_esp_i386:
             context->Esp = reg_value.GetAsUInt32();
             break;
-        case gpr_eip_i386:
+        case lldb_eip_i386:
             context->Eip = reg_value.GetAsUInt32();
             break;
-        case gpr_eflags_i386:
+        case lldb_eflags_i386:
             context->EFlags = reg_value.GetAsUInt32();
             break;
     }
