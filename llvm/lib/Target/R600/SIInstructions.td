@@ -96,8 +96,10 @@ defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
 //===----------------------------------------------------------------------===//
 
 let isMoveImm = 1 in {
+let isReMaterializable = 1 in {
 def S_MOV_B32 : SOP1_32 <0x00000003, "s_mov_b32", []>;
 def S_MOV_B64 : SOP1_64 <0x00000004, "s_mov_b64", []>;
+} // let isRematerializeable = 1
 def S_CMOV_B32 : SOP1_32 <0x00000005, "s_cmov_b32", []>;
 def S_CMOV_B64 : SOP1_64 <0x00000006, "s_cmov_b64", []>;
 } // End isMoveImm = 1
