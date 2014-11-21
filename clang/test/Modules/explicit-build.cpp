@@ -153,3 +153,23 @@
 // RUN:            %s 2>&1 | FileCheck --check-prefix=CHECK-BAD-FILE %s
 //
 // CHECK-BAD-FILE: fatal error: file '{{.*}}t.pcm' is not a precompiled module file
+
+// -------------------------------
+// Check that we don't get upset if B's timestamp is newer than C's.
+// RUN: touch %t/b.pcm
+//
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules -fmodules-cache-path=%t -Rmodule-build -fno-modules-error-recovery \
+// RUN:            -I%S/Inputs/explicit-build \
+// RUN:            -fmodule-file=%t/c.pcm \
+// RUN:            -verify %s -DHAVE_A -DHAVE_B -DHAVE_C
+//
+// ... but that we do get upset if our B is different from the B that C expects.
+//
+// RUN: cp %t/b-not-a.pcm %t/b.pcm
+//
+// RUN: not %clang_cc1 -x c++ -std=c++11 -fmodules -fmodules-cache-path=%t -Rmodule-build -fno-modules-error-recovery \
+// RUN:            -I%S/Inputs/explicit-build \
+// RUN:            -fmodule-file=%t/c.pcm \
+// RUN:            %s -DHAVE_A -DHAVE_B -DHAVE_C 2>&1 | FileCheck --check-prefix=CHECK-MISMATCHED-B %s
+//
+// CHECK-MISMATCHED-B: fatal error: malformed or corrupted AST file: {{.*}}b.pcm": module file out of date
