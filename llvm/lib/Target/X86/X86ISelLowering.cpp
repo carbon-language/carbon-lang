@@ -24376,11 +24376,12 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
   SDLoc dl(Ld);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
-  // On Sandybridge unaligned 256bit loads are inefficient.
+  // For chips with slow 32-byte unaligned loads, break the 32-byte operation
+  // into two 16-byte operations.
   ISD::LoadExtType Ext = Ld->getExtensionType();
   unsigned Alignment = Ld->getAlignment();
   bool IsAligned = Alignment == 0 || Alignment >= MemVT.getSizeInBits()/8;
-  if (RegVT.is256BitVector() && !Subtarget->hasInt256() &&
+  if (RegVT.is256BitVector() && Subtarget->isUnalignedMem32Slow() &&
       !DCI.isBeforeLegalizeOps() && !IsAligned && Ext == ISD::NON_EXTLOAD) {
     unsigned NumElems = RegVT.getVectorNumElements();
     if (NumElems < 2)
@@ -24423,13 +24424,11 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   SDValue StoredVal = St->getOperand(1);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
-  // If we are saving a concatenation of two XMM registers, perform two stores.
-  // On Sandy Bridge, 256-bit memory operations are executed by two
-  // 128-bit ports. However, on Haswell it is better to issue a single 256-bit
-  // memory  operation.
+  // If we are saving a concatenation of two XMM registers and 32-byte stores
+  // are slow, such as on Sandy Bridge, perform two 16-byte stores.
   unsigned Alignment = St->getAlignment();
   bool IsAligned = Alignment == 0 || Alignment >= VT.getSizeInBits()/8;
-  if (VT.is256BitVector() && !Subtarget->hasInt256() &&
+  if (VT.is256BitVector() && Subtarget->isUnalignedMem32Slow() &&
       StVT == VT && !IsAligned) {
     unsigned NumElems = VT.getVectorNumElements();
     if (NumElems < 2)

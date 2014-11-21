@@ -82,6 +82,9 @@ def FeatureSlowSHLD : SubtargetFeature<"slow-shld", "IsSHLDSlow", "true",
 def FeatureFastUAMem : SubtargetFeature<"fast-unaligned-mem",
                                         "IsUAMemFast", "true",
                                         "Fast unaligned memory access">;
+def FeatureSlowUAMem32 : SubtargetFeature<"slow-unaligned-mem-32",
+                            "IsUAMem32Slow", "true",
+                            "Slow unaligned 32-byte memory access">;
 def FeatureSSE4A   : SubtargetFeature<"sse4a", "HasSSE4A", "true",
                                       "Support SSE 4a instructions",
                                       [FeatureSSE3]>;
@@ -271,12 +274,14 @@ def : ProcessorModel<"westmere", SandyBridgeModel,
 // rather than a superset.
 def : ProcessorModel<"corei7-avx", SandyBridgeModel,
                      [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
-                      FeaturePOPCNT, FeatureAES, FeaturePCLMUL]>;
+                      FeatureSlowUAMem32, FeaturePOPCNT, FeatureAES,
+                      FeaturePCLMUL]>;
 // Ivy Bridge
 def : ProcessorModel<"core-avx-i", SandyBridgeModel,
                      [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
-                      FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
-                      FeatureF16C, FeatureFSGSBase]>;
+                      FeatureSlowUAMem32, FeaturePOPCNT, FeatureAES,
+                      FeaturePCLMUL, FeatureRDRAND, FeatureF16C,
+                      FeatureFSGSBase]>;
 
 // Haswell
 def : ProcessorModel<"core-avx2", HaswellModel,

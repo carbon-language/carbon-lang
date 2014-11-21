@@ -159,6 +159,9 @@ protected:
   /// IsUAMemFast - True if unaligned memory access is fast.
   bool IsUAMemFast;
 
+  /// True if unaligned 32-byte memory accesses are slow.
+  bool IsUAMem32Slow;
+  
   /// HasVectorUAMem - True if SIMD operations can have unaligned memory
   /// operands. This may require setting a feature bit in the processor.
   bool HasVectorUAMem;
@@ -374,6 +377,7 @@ public:
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isSHLDSlow() const { return IsSHLDSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
+  bool isUnalignedMem32Slow() const { return IsUAMem32Slow; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
   bool hasCmpxchg16b() const { return HasCmpxchg16b; }
   bool useLeaForSP() const { return UseLeaForSP; }
