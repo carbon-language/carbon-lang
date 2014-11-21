@@ -43,7 +43,6 @@ class StopHookMechanismTestCase(TestBase):
         add_prompt = "Enter your stop hook command(s).  Type 'DONE' to end."
         add_prompt1 = "> "
 
-        print 'lldbOption = "%s"' % self.lldbOption
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s %s %s' % (self.lldbHere, self.lldbOption, exe))
         child = self.child
