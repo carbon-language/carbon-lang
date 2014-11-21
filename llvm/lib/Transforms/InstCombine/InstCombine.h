@@ -14,6 +14,7 @@
 #include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -98,7 +99,7 @@ class LLVM_LIBRARY_VISIBILITY InstCombiner
   AssumptionTracker *AT;
   const DataLayout *DL;
   TargetLibraryInfo *TLI;
-  DominatorTree *DT; // not required
+  DominatorTree *DT;
   bool MadeIRChange;
   LibCallSimplifier *Simplifier;
   bool MinimizeSize;
@@ -113,7 +114,8 @@ public:
   BuilderTy *Builder;
 
   static char ID; // Pass identification, replacement for typeid
-  InstCombiner() : FunctionPass(ID), DL(nullptr), Builder(nullptr) {
+  InstCombiner()
+      : FunctionPass(ID), DL(nullptr), DT(nullptr), Builder(nullptr) {
     MinimizeSize = false;
     initializeInstCombinerPass(*PassRegistry::getPassRegistry());
   }
@@ -244,6 +246,16 @@ public:
 
   // visitInstruction - Specify what to return for unhandled instructions...
   Instruction *visitInstruction(Instruction &I) { return nullptr; }
+
+  // True when DB dominates all uses of DI execpt UI.
+  // UI must be in the same block as DI.
+  // The routine checks that the DI parent and DB are different.
+  bool dominatesAllUses(const Instruction *DI, const Instruction *UI,
+                        const BasicBlock *DB) const;
+
+  // Replace select with select operand SIOpd in SI-ICmp sequence when possible
+  bool replacedSelectWithOperand(SelectInst *SI, const ICmpInst *Icmp,
+                                 const unsigned SIOpd);
 
 private:
   bool ShouldChangeType(Type *From, Type *To) const;

@@ -258,6 +258,13 @@ public:
   /// guaranteed to be empty.
   void replaceAllUsesWith(Value *V);
 
+  /// replaceUsesOutsideBlock - Go through the uses list for this definition and
+  /// make each use point to "V" instead of "this" when the use is outside the
+  /// block. 'This's use list is expected to have at least one element.
+  /// Unlike replaceAllUsesWith this function does not support basic block
+  /// values or constant users.
+  void replaceUsesOutsideBlock(Value *V, BasicBlock *BB);
+
   //----------------------------------------------------------------------
   // Methods for handling the chain of uses of this Value.
   //
