@@ -48,6 +48,7 @@ enum TokenType {
   TT_InheritanceColon,
   TT_InlineASMColon,
   TT_JavaAnnotation,
+  TT_LambdaArrow,
   TT_LambdaLSquare,
   TT_LeadingJavaAnnotation,
   TT_LineComment,
@@ -270,6 +271,8 @@ struct FormatToken {
   bool IsForEachMacro;
 
   bool is(tok::TokenKind Kind) const { return Tok.is(Kind); }
+
+  bool is(TokenType TT) const { return Type == TT; }
 
   bool is(const IdentifierInfo *II) const {
     return II && II == Tok.getIdentifierInfo();

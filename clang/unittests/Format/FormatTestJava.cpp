@@ -317,5 +317,20 @@ TEST_F(FormatTestJava, NeverAlignAfterReturn) {
                getStyleWithColumns(40));
 }
 
+TEST_F(FormatTestJava, FormatsLambdas) {
+  verifyFormat("(aaaaaaaaaa, bbbbbbbbbb) -> aaaaaaaaaa + bbbbbbbbbb;");
+  verifyFormat("(aaaaaaaaaa, bbbbbbbbbb)\n"
+               "    -> aaaaaaaaaa + bbbbbbbbbb;",
+               getStyleWithColumns(40));
+  verifyFormat("Runnable someLambda = () -> DoSomething();");
+  verifyFormat("Runnable someLambda = () -> {\n"
+               "  DoSomething();\n"
+               "}");
+
+  verifyFormat("Runnable someLambda =\n"
+               "    (int aaaaa) -> DoSomething(aaaaa);",
+               getStyleWithColumns(40));
+}
+
 } // end namespace tooling
 } // end namespace clang
