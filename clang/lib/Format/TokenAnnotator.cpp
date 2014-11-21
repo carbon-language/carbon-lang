@@ -747,6 +747,8 @@ private:
       }
     } else if (Current.isOneOf(tok::kw_return, tok::kw_throw)) {
       Contexts.back().IsExpression = true;
+    } else if (Current.is(TT_TrailingReturnArrow)) {
+      Contexts.back().IsExpression = false;
     } else if (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
                !Line.InPPDirective &&
                (!Current.Previous ||
@@ -973,7 +975,8 @@ private:
       return TT_UnaryOperator;
 
     const FormatToken *NextToken = Tok.getNextNonComment();
-    if (!NextToken || NextToken->is(tok::l_brace))
+    if (!NextToken ||
+        (NextToken->is(tok::l_brace) && !NextToken->getNextNonComment()))
       return TT_Unknown;
 
     if (PrevToken->is(tok::coloncolon))

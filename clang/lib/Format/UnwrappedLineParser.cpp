@@ -867,6 +867,9 @@ bool UnwrappedLineParser::tryToParseLambda() {
     case tok::l_paren:
       parseParens();
       break;
+    case tok::amp:
+    case tok::star:
+    case tok::kw_const:
     case tok::less:
     case tok::greater:
     case tok::identifier:
