@@ -65,19 +65,20 @@ private:
   // Most of the requests will be small, but we fetch at kChunkSize bytes
   // at a time to avoid making too many potentially expensive GetBytes calls
   bool fetchToPos(size_t Pos) const {
-    if (EOFReached) return Pos < ObjectSize;
+    if (EOFReached)
+      return Pos < ObjectSize;
     while (Pos >= BytesRead) {
       Bytes.resize(BytesRead + BytesSkipped + kChunkSize);
       size_t bytes = Streamer->GetBytes(&Bytes[BytesRead + BytesSkipped],
                                         kChunkSize);
       BytesRead += bytes;
-      if (BytesRead <= Pos) { // reached EOF/ran out of bytes
+      if (bytes != kChunkSize) { // reached EOF/ran out of bytes
         ObjectSize = BytesRead;
         EOFReached = true;
-        return false;
+        break;
       }
     }
-    return true;
+    return Pos < BytesRead;
   }
 
   StreamingMemoryObject(const StreamingMemoryObject&) LLVM_DELETED_FUNCTION;
