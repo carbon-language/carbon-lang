@@ -1485,6 +1485,8 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T,
   case BuiltinType::Int128: Out << "_L"; break;
   case BuiltinType::UInt128: Out << "_M"; break;
   case BuiltinType::Bool: Out << "_N"; break;
+  case BuiltinType::Char16: Out << "_S"; break;
+  case BuiltinType::Char32: Out << "_U"; break;
   case BuiltinType::WChar_S:
   case BuiltinType::WChar_U: Out << "_W"; break;
 
@@ -1510,8 +1512,6 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T,
 
   case BuiltinType::NullPtr: Out << "$$T"; break;
 
-  case BuiltinType::Char16:
-  case BuiltinType::Char32:
   case BuiltinType::Half: {
     DiagnosticsEngine &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,

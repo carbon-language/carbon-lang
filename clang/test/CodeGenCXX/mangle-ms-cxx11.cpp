@@ -56,6 +56,12 @@ S<L> l;
 // CHECK: "\01?DeducedType@@3HA"
 auto DeducedType = 30;
 
+// CHECK-DAG: @"\01?Char16Var@@3_SA"
+char16_t Char16Var;
+
+// CHECK-DAG: @"\01?Char32Var@@3_UA"
+char32_t Char32Var;
+
 // CHECK: "\01?LRef@@YAXAAH@Z"
 void LRef(int& a) { }
 
