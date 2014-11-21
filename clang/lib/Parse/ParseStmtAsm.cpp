@@ -774,7 +774,7 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
     // Read the parenthesized expression.
     BalancedDelimiterTracker T(*this, tok::l_paren);
     T.consumeOpen();
-    ExprResult Res(ParseExpression());
+    ExprResult Res = Actions.CorrectDelayedTyposInExpr(ParseExpression());
     T.consumeClose();
     if (Res.isInvalid()) {
       SkipUntil(tok::r_paren, StopAtSemi);

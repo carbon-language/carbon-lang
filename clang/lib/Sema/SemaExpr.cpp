@@ -2122,9 +2122,9 @@ Sema::ActOnIdExpression(Scope *S, CXXScopeSpec &SS,
       if (SS.isValid())
         CCC->setTypoNNS(SS.getScopeRep());
     }
-    if (DiagnoseEmptyLookup(
-            S, SS, R, CCC ? std::move(CCC) : std::move(DefaultValidator),
-            nullptr, None, getLangOpts().CPlusPlus ? &TE : nullptr)) {
+    if (DiagnoseEmptyLookup(S, SS, R,
+                            CCC ? std::move(CCC) : std::move(DefaultValidator),
+                            nullptr, None, &TE)) {
       if (TE && KeywordReplacement) {
         auto &State = getTypoExprState(TE);
         auto BestTC = State.Consumer->getNextCorrection();
@@ -4541,6 +4541,8 @@ static bool checkArgsForPlaceholders(Sema &S, MultiExprArg args) {
       ExprResult result = S.CheckPlaceholderExpr(args[i]);
       if (result.isInvalid()) hasInvalid = true;
       else args[i] = result.get();
+    } else if (hasInvalid) {
+      (void)S.CorrectDelayedTyposInExpr(args[i]);
     }
   }
   return hasInvalid;
@@ -5762,6 +5764,15 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
                                         ExprResult &RHS, ExprValueKind &VK,
                                         ExprObjectKind &OK,
                                         SourceLocation QuestionLoc) {
+
+  if (!getLangOpts().CPlusPlus) {
+    // C cannot handle TypoExpr nodes on either side of a binop because it
+    // doesn't handle dependent types properly, so make sure any TypoExprs have
+    // been dealt with before checking the operands.
+    ExprResult CondResult = CorrectDelayedTyposInExpr(Cond);
+    if (!CondResult.isUsable()) return QualType();
+    Cond = CondResult;
+  }
 
   ExprResult LHSResult = CheckPlaceholderExpr(LHS.get());
   if (!LHSResult.isUsable()) return QualType();
@@ -8703,17 +8714,6 @@ QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
                                        QualType CompoundType) {
   assert(!LHSExpr->hasPlaceholderType(BuiltinType::PseudoObject));
 
-  if (!getLangOpts().CPlusPlus) {
-    // C cannot handle TypoExpr nodes on either side of n assignment because it
-    // doesn't handle dependent types properly, so make sure any TypoExprs have
-    // been dealt with before checking the operands.
-    ExprResult Res = CorrectDelayedTyposInExpr(LHSExpr);
-    Expr *NewLHS = Res.isInvalid() ? LHSExpr : Res.get();
-    Res = CorrectDelayedTyposInExpr(RHS);
-    if (!Res.isInvalid() && (Res.get() != RHS.get() || NewLHS != LHSExpr))
-      return CheckAssignmentOperands(NewLHS, Res, Loc, CompoundType);
-  }
-
   // Verify that LHS is a modifiable lvalue, and emit error if not.
   if (CheckForModifiableLvalue(LHSExpr, Loc, *this))
     return QualType();
@@ -9446,6 +9446,16 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   QualType CompResultTy; // Type of computation result
   ExprValueKind VK = VK_RValue;
   ExprObjectKind OK = OK_Ordinary;
+
+  if (!getLangOpts().CPlusPlus) {
+    // C cannot handle TypoExpr nodes on either side of a binop because it
+    // doesn't handle dependent types properly, so make sure any TypoExprs have
+    // been dealt with before checking the operands.
+    LHS = CorrectDelayedTyposInExpr(LHSExpr);
+    RHS = CorrectDelayedTyposInExpr(RHSExpr);
+    if (!LHS.isUsable() || !RHS.isUsable())
+      return ExprError();
+  }
 
   switch (Opc) {
   case BO_Assign:
@@ -13619,6 +13629,15 @@ static ExprResult diagnoseUnknownAnyExpr(Sema &S, Expr *E) {
 /// Check for operands with placeholder types and complain if found.
 /// Returns true if there was an error and no recovery was possible.
 ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
+  if (!getLangOpts().CPlusPlus) {
+    // C cannot handle TypoExpr nodes on either side of a binop because it
+    // doesn't handle dependent types properly, so make sure any TypoExprs have
+    // been dealt with before checking the operands.
+    ExprResult Result = CorrectDelayedTyposInExpr(E);
+    if (!Result.isUsable()) return ExprError();
+    E = Result.get();
+  }
+
   const BuiltinType *placeholderType = E->getType()->getAsPlaceholderType();
   if (!placeholderType) return E;
 

@@ -910,6 +910,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     auto Validator = llvm::make_unique<CastExpressionIdValidator>(
         isTypeCast != NotTypeCast, isTypeCast != IsTypeCast);
     Validator->IsAddressOfOperand = isAddressOfOperand;
+    Validator->WantRemainingKeywords = Tok.isNot(tok::r_paren);
     Name.setIdentifier(&II, ILoc);
     Res = Actions.ActOnIdExpression(
         getCurScope(), ScopeSpec, TemplateKWLoc, Name, Tok.is(tok::l_paren),
@@ -2513,10 +2514,19 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
     }
 
     if (Tok.isNot(tok::comma))
-      return SawError;
+      break;
     // Move to the next argument, remember where the comma was.
     CommaLocs.push_back(ConsumeToken());
   }
+  if (SawError) {
+    // Ensure typos get diagnosed when errors were encountered while parsing the
+    // expression list.
+    for (auto &E : Exprs) {
+      ExprResult Expr = Actions.CorrectDelayedTyposInExpr(E);
+      if (Expr.isUsable()) E = Expr.get();
+    }
+  }
+  return SawError;
 }
 
 /// ParseSimpleExpressionList - A simple comma-separated list of expressions,

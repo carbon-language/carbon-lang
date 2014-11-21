@@ -1676,11 +1676,16 @@ Sema::CheckObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
   if (!collection)
     return ExprError();
 
+  ExprResult result = CorrectDelayedTyposInExpr(collection);
+  if (!result.isUsable())
+    return ExprError();
+  collection = result.get();
+
   // Bail out early if we've got a type-dependent expression.
   if (collection->isTypeDependent()) return collection;
 
   // Perform normal l-value conversion.
-  ExprResult result = DefaultFunctionArrayLvalueConversion(collection);
+  result = DefaultFunctionArrayLvalueConversion(collection);
   if (result.isInvalid())
     return ExprError();
   collection = result.get();
