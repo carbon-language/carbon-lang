@@ -10557,26 +10557,37 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     return SDValue();
 
   SDValue VecIn1, VecIn2;
+  bool UsesZeroVector = false;
   for (unsigned i = 0; i != NumInScalars; ++i) {
+    SDValue Op = N->getOperand(i);
     // Ignore undef inputs.
-    if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+    if (Op.getOpcode() == ISD::UNDEF) continue;
+
+    // See if we can combine this build_vector into a blend with a zero vector.
+    if (!VecIn2.getNode() && ((Op.getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(Op.getNode())->isNullValue()) ||
+        (Op.getOpcode() == ISD::ConstantFP &&
+        cast<ConstantFPSDNode>(Op.getNode())->getValueAPF().isZero()))) {
+      UsesZeroVector = true;
+      continue;
+    }
 
     // If this input is something other than a EXTRACT_VECTOR_ELT with a
     // constant index, bail out.
-    if (N->getOperand(i).getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
-        !isa<ConstantSDNode>(N->getOperand(i).getOperand(1))) {
+    if (Op.getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
+        !isa<ConstantSDNode>(Op.getOperand(1))) {
       VecIn1 = VecIn2 = SDValue(nullptr, 0);
       break;
     }
 
     // We allow up to two distinct input vectors.
-    SDValue ExtractedFromVec = N->getOperand(i).getOperand(0);
+    SDValue ExtractedFromVec = Op.getOperand(0);
     if (ExtractedFromVec == VecIn1 || ExtractedFromVec == VecIn2)
       continue;
 
     if (!VecIn1.getNode()) {
       VecIn1 = ExtractedFromVec;
-    } else if (!VecIn2.getNode()) {
+    } else if (!VecIn2.getNode() && !UsesZeroVector) {
       VecIn2 = ExtractedFromVec;
     } else {
       // Too many inputs.
@@ -10589,16 +10600,26 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   if (VecIn1.getNode()) {
     SmallVector<int, 8> Mask;
     for (unsigned i = 0; i != NumInScalars; ++i) {
-      if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
+      unsigned Opcode = N->getOperand(i).getOpcode();
+      if (Opcode == ISD::UNDEF) {
         Mask.push_back(-1);
+        continue;
+      }
+
+      // Operands can also be zero.
+      if (Opcode != ISD::EXTRACT_VECTOR_ELT) {
+        assert(UsesZeroVector &&
+               (Opcode == ISD::Constant || Opcode == ISD::ConstantFP) &&
+               "Unexpected node found!");
+        Mask.push_back(NumInScalars+i);
         continue;
       }
 
       // If extracting from the first vector, just use the index directly.
       SDValue Extract = N->getOperand(i);
       SDValue ExtVal = Extract.getOperand(1);
+      unsigned ExtIndex = cast<ConstantSDNode>(ExtVal)->getZExtValue();
       if (Extract.getOperand(0) == VecIn1) {
-        unsigned ExtIndex = cast<ConstantSDNode>(ExtVal)->getZExtValue();
         if (ExtIndex > VT.getVectorNumElements())
           return SDValue();
 
@@ -10607,9 +10628,12 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       }
 
       // Otherwise, use InIdx + VecSize
-      unsigned Idx = cast<ConstantSDNode>(ExtVal)->getZExtValue();
-      Mask.push_back(Idx+NumInScalars);
+      Mask.push_back(NumInScalars+ExtIndex);
     }
+
+    // Avoid introducing illegal shuffles with zero.
+    if (UsesZeroVector && !TLI.isVectorClearMaskLegal(Mask, VT))
+      return SDValue();
 
     // We can't generate a shuffle node with mismatched input and output types.
     // Attempt to transform a single input vector to the correct type.
@@ -10634,8 +10658,12 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
                            VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
     }
 
-    // If VecIn2 is unused then change it to undef.
-    VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
+    if (UsesZeroVector)
+      VecIn2 = VT.isInteger() ? DAG.getConstant(0, VT) :
+                                DAG.getConstantFP(0.0, VT);
+    else
+      // If VecIn2 is unused then change it to undef.
+      VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
 
     // Check that we were able to transform all incoming values to the same
     // type.
