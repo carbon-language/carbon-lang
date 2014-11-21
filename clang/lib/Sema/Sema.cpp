@@ -245,6 +245,8 @@ Sema::~Sema() {
 
   // Destroys data sharing attributes stack for OpenMP
   DestroyDataSharingAttributesStack();
+
+  assert(DelayedTypos.empty() && "Uncorrected typos!");
 }
 
 /// makeUnavailableInSystemHeader - There is an error in the current
