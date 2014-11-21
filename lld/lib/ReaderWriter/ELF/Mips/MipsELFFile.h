@@ -11,6 +11,7 @@
 
 #include "ELFReader.h"
 #include "MipsLinkingContext.h"
+#include "llvm/Support/Endian.h"
 
 namespace llvm {
 namespace object {
@@ -211,14 +212,15 @@ private:
 
   Reference::Addend readAddend(const Elf_Rel &ri,
                                const ArrayRef<uint8_t> content) const {
+    using namespace llvm::support;
     const uint8_t *ap = content.data() + ri.r_offset;
     switch (ri.getType(isMips64EL())) {
     case llvm::ELF::R_MIPS_32:
     case llvm::ELF::R_MIPS_GPREL32:
     case llvm::ELF::R_MIPS_PC32:
-      return *(const int32_t *)ap;
+      return endian::read<int32_t, ELFT::TargetEndianness, 2>(ap);
     case llvm::ELF::R_MIPS_26:
-      return *(const int32_t *)ap & 0x3ffffff;
+      return endian::read<int32_t, ELFT::TargetEndianness, 2>(ap) & 0x3ffffff;
     case llvm::ELF::R_MIPS_HI16:
     case llvm::ELF::R_MIPS_LO16:
     case llvm::ELF::R_MIPS_GOT16:
@@ -226,7 +228,7 @@ private:
     case llvm::ELF::R_MIPS_TLS_DTPREL_LO16:
     case llvm::ELF::R_MIPS_TLS_TPREL_HI16:
     case llvm::ELF::R_MIPS_TLS_TPREL_LO16:
-      return *(const int16_t *)ap;
+      return endian::read<int16_t, ELFT::TargetEndianness, 2>(ap);
     case llvm::ELF::R_MIPS_CALL16:
     case llvm::ELF::R_MIPS_TLS_GD:
     case llvm::ELF::R_MIPS_TLS_LDM:
