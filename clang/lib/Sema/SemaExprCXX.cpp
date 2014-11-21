@@ -5992,7 +5992,7 @@ class TransformTypos : public TreeTransform<TransformTypos> {
   typedef TreeTransform<TransformTypos> BaseTransform;
 
   llvm::function_ref<ExprResult(Expr *)> ExprFilter;
-  llvm::SmallSetVector<TypoExpr *, 2> TypoExprs;
+  llvm::SmallSetVector<TypoExpr *, 2> TypoExprs, AmbiguousTypoExprs;
   llvm::SmallDenseMap<TypoExpr *, ExprResult, 2> TransformCache;
   llvm::SmallDenseMap<OverloadExpr *, Expr *, 4> OverloadResolution;
 
@@ -6059,6 +6059,15 @@ class TransformTypos : public TreeTransform<TransformTypos> {
     return nullptr;
   }
 
+  ExprResult TryTransform(Expr *E) {
+    Sema::SFINAETrap Trap(SemaRef);
+    ExprResult Res = TransformExpr(E);
+    if (Trap.hasErrorOccurred() || Res.isInvalid())
+      return ExprError();
+
+    return ExprFilter(Res.get());
+  }
+
 public:
   TransformTypos(Sema &SemaRef, llvm::function_ref<ExprResult(Expr *)> Filter)
       : BaseTransform(SemaRef), ExprFilter(Filter) {}
@@ -6079,30 +6088,42 @@ public:
   ExprResult TransformLambdaExpr(LambdaExpr *E) { return Owned(E); }
 
   ExprResult Transform(Expr *E) {
-    ExprResult res;
-    bool error = false;
+    ExprResult Res;
     while (true) {
-      Sema::SFINAETrap Trap(SemaRef);
-      res = TransformExpr(E);
-      error = Trap.hasErrorOccurred();
-
-      if (!(error || res.isInvalid()))
-        res = ExprFilter(res.get());
+      Res = TryTransform(E);
 
       // Exit if either the transform was valid or if there were no TypoExprs
       // to transform that still have any untried correction candidates..
-      if (!(error || res.isInvalid()) ||
+      if (!Res.isInvalid() ||
           !CheckAndAdvanceTypoExprCorrectionStreams())
         break;
     }
 
+    // Ensure none of the TypoExprs have multiple typo correction candidates
+    // with the same edit length that pass all the checks and filters.
+    // TODO: Properly handle various permutations of possible corrections when
+    // there is more than one potentially ambiguous typo correction.
+    while (!AmbiguousTypoExprs.empty()) {
+      auto TE  = AmbiguousTypoExprs.back();
+      auto Cached = TransformCache[TE];
+      AmbiguousTypoExprs.pop_back();
+      TransformCache.erase(TE);
+      if (!TryTransform(E).isInvalid()) {
+        SemaRef.getTypoExprState(TE).Consumer->resetCorrectionStream();
+        TransformCache.erase(TE);
+        Res = ExprError();
+        break;
+      } else
+        TransformCache[TE] = Cached;
+    }
+
     // Ensure that all of the TypoExprs within the current Expr have been found.
-    if (!res.isUsable())
+    if (!Res.isUsable())
       FindTypoExprs(TypoExprs).TraverseStmt(E);
 
     EmitAllDiagnostics();
 
-    return res;
+    return Res;
   }
 
   ExprResult TransformTypoExpr(TypoExpr *E) {
@@ -6124,21 +6145,15 @@ public:
           State.RecoveryHandler(SemaRef, E, TC) :
           attemptRecovery(SemaRef, *State.Consumer, TC);
       if (!NE.isInvalid()) {
-        // Check whether there is a second viable correction with the same edit
-        // distance--in which case do not suggest anything since both are
-        // equally good candidates for correcting the typo.
-        Sema::SFINAETrap LocalTrap(SemaRef);
+        // Check whether there may be a second viable correction with the same
+        // edit distance; if so, remember this TypoExpr may have an ambiguous
+        // correction so it can be more thoroughly vetted later.
         TypoCorrection Next;
-        while ((Next = State.Consumer->peekNextCorrection()) &&
-               Next.getEditDistance(false) == TC.getEditDistance(false)) {
-          ExprResult Res =
-              State.RecoveryHandler
-                  ? State.RecoveryHandler(SemaRef, E, Next)
-                  : attemptRecovery(SemaRef, *State.Consumer, Next);
-          if (!Res.isInvalid()) {
-            NE = ExprError();
-            State.Consumer->getNextCorrection();
-          }
+        if ((Next = State.Consumer->peekNextCorrection()) &&
+            Next.getEditDistance(false) == TC.getEditDistance(false)) {
+          AmbiguousTypoExprs.insert(E);
+        } else {
+          AmbiguousTypoExprs.remove(E);
         }
         assert(!NE.isUnset() &&
                "Typo was transformed into a valid-but-null ExprResult");

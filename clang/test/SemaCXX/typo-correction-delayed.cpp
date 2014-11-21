@@ -48,3 +48,14 @@ void testNoCandidates() {
   callee(xxxxxx,   // expected-error-re {{use of undeclared identifier 'xxxxxx'{{$}}}}
          zzzzzz);  // expected-error-re {{use of undeclared identifier 'zzzzzz'{{$}}}}
 }
+
+class string {};
+struct Item {
+  void Nest();
+  string text();
+  Item* next();  // expected-note {{'next' declared here}}
+};
+void testExprFilter(Item *i) {
+  Item *j;
+  j = i->Next();  // expected-error {{no member named 'Next' in 'Item'; did you mean 'next'?}}
+}
