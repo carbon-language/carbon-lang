@@ -152,7 +152,7 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS,
       OS << "}\n";
   }
 
-  OS << "} // End llvm namespace \n";
+  OS << "} // End llvm namespace\n";
   OS << "#endif // GET_REGINFO_ENUM\n\n";
 }
 
@@ -952,7 +952,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "}\n\n";
 
-  OS << "} // End llvm namespace \n";
+  OS << "} // End llvm namespace\n";
   OS << "#endif // GET_REGINFO_MC_DESC\n\n";
 }
 
@@ -1009,7 +1009,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
     }
     OS << "} // end of namespace " << TargetName << "\n\n";
   }
-  OS << "} // End llvm namespace \n";
+  OS << "} // End llvm namespace\n";
   OS << "#endif // GET_REGINFO_HEADER\n\n";
 }
 
@@ -1181,7 +1181,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     }
 
     // Now emit the actual value-initialized register class instances.
-    OS << "namespace " << RegisterClasses[0]->Namespace
+    OS << "\nnamespace " << RegisterClasses[0]->Namespace
        << " {   // Register class instances\n";
 
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
@@ -1345,7 +1345,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "\n\n";
 
-  OS << "} // End llvm namespace \n";
+  OS << "} // End llvm namespace\n";
   OS << "#endif // GET_REGINFO_TARGET_DESC\n\n";
 }
 
