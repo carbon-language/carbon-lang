@@ -104,9 +104,8 @@ struct AnonStructTypeKeyInfo {
     bool isPacked;
     KeyTy(const ArrayRef<Type*>& E, bool P) :
       ETypes(E), isPacked(P) {}
-    KeyTy(const StructType* ST) :
-      ETypes(ArrayRef<Type*>(ST->element_begin(), ST->element_end())),
-      isPacked(ST->isPacked()) {}
+    KeyTy(const StructType *ST)
+        : ETypes(ST->elements()), isPacked(ST->isPacked()) {}
     bool operator==(const KeyTy& that) const {
       if (isPacked != that.isPacked)
         return false;

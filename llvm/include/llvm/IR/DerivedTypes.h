@@ -275,6 +275,10 @@ public:
   element_iterator element_begin() const { return ContainedTys; }
   element_iterator element_end() const { return &ContainedTys[NumContainedTys];}
 
+  ArrayRef<Type *> const elements() const {
+    return ArrayRef<Type*>(&*element_begin(), getNumElements());
+  }
+
   /// isLayoutIdentical - Return true if this is layout identical to the
   /// specified struct.
   bool isLayoutIdentical(StructType *Other) const;  
