@@ -440,6 +440,7 @@ private:
 
   SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
                         std::vector<SDNode *> *Created) const override;
+  bool combineRepeatedFPDivisors(unsigned NumUsers) const override;
 
   ConstraintType
   getConstraintType(const std::string &Constraint) const override;

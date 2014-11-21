@@ -7104,6 +7104,44 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
     }
   }
 
+  // Combine multiple FDIVs with the same divisor into multiple FMULs by the
+  // reciprocal.
+  // E.g., (a / D; b / D;) -> (recip = 1.0 / D; a * recip; b * recip)
+  // Notice that this is not always beneficial. One reason is different target
+  // may have different costs for FDIV and FMUL, so sometimes the cost of two
+  // FDIVs may be lower than the cost of one FDIV and two FMULs. Another reason
+  // is the critical path is increased from "one FDIV" to "one FDIV + one FMUL".
+  if (Options.UnsafeFPMath) {
+    // Skip if current node is a reciprocal.
+    if (N0CFP && N0CFP->isExactlyValue(1.0))
+      return SDValue();
+
+    SmallVector<SDNode *, 4> Users;
+    // Find all FDIV users of the same divisor.
+    for (SDNode::use_iterator UI = N1.getNode()->use_begin(),
+                              UE = N1.getNode()->use_end();
+         UI != UE; ++UI) {
+      SDNode *User = UI.getUse().getUser();
+      if (User->getOpcode() == ISD::FDIV && User->getOperand(1) == N1)
+        Users.push_back(User);
+    }
+
+    if (TLI.combineRepeatedFPDivisors(Users.size())) {
+      SDValue FPOne = DAG.getConstantFP(1.0, VT); // floating point 1.0
+      SDValue Reciprocal = DAG.getNode(ISD::FDIV, SDLoc(N), VT, FPOne, N1);
+
+      // Dividend / Divisor -> Dividend * Reciprocal
+      for (auto I = Users.begin(), E = Users.end(); I != E; ++I) {
+        if ((*I)->getOperand(0) != FPOne) {
+          SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(*I), VT,
+                                        (*I)->getOperand(0), Reciprocal);
+          DAG.ReplaceAllUsesWith(*I, NewNode.getNode());
+        }
+      }
+      return SDValue();
+    }
+  }
+
   return SDValue();
 }
 

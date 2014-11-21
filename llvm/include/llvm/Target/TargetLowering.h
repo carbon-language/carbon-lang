@@ -2652,6 +2652,12 @@ public:
     return SDValue();
   }
 
+  /// Indicate whether this target prefers to combine the given number of FDIVs
+  /// with the same divisor.
+  virtual bool combineRepeatedFPDivisors(unsigned NumUsers) const {
+    return false;
+  }
+
   /// Hooks for building estimates in place of slower divisions and square
   /// roots.
   
