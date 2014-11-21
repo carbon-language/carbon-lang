@@ -535,6 +535,20 @@ INLINE void AndroidLogWrite(const char *buffer_unused) {}
 INLINE void GetExtraActivationFlags(char *buf, uptr size) { *buf = '\0'; }
 INLINE void SanitizerInitializeUnwinder() {}
 #endif
+
+// Make the compiler think that something is going on there.
+// Use this inside a loop that looks like memset/memcpy/etc to prevent the
+// compiler from recognising it and turning it into an actual call to
+// memset/memcpy/etc.
+static inline void SanitizerBreakOptimization(void *arg) {
+#if _MSC_VER
+  // FIXME: make sure this is actually enough.
+  __asm;
+#else
+  __asm__ __volatile__("" : : "r" (arg) : "memory");
+#endif
+}
+
 }  // namespace __sanitizer
 
 inline void *operator new(__sanitizer::operator_new_size_type size,

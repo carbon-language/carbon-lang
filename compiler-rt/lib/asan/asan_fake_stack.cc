@@ -27,8 +27,10 @@ ALWAYS_INLINE void SetShadow(uptr ptr, uptr size, uptr class_id, u64 magic) {
   CHECK_EQ(SHADOW_SCALE, 3);  // This code expects SHADOW_SCALE=3.
   u64 *shadow = reinterpret_cast<u64*>(MemToShadow(ptr));
   if (class_id <= 6) {
-    for (uptr i = 0; i < (1U << class_id); i++)
+    for (uptr i = 0; i < (1U << class_id); i++) {
       shadow[i] = magic;
+      SanitizerBreakOptimization(0);  // Make sure this does not become memset.
+    }
   } else {
     // The size class is too big, it's cheaper to poison only size bytes.
     PoisonShadow(ptr, size, static_cast<u8>(magic));
