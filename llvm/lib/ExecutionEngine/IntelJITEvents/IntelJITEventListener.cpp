@@ -57,8 +57,6 @@ public:
   ~IntelJITEventListener() {
   }
 
-  virtual void NotifyFreeingMachineCode(void *OldPtr);
-
   virtual void NotifyObjectEmitted(const ObjectImage &Obj);
 
   virtual void NotifyFreeingObject(const ObjectImage &Obj);
@@ -95,14 +93,6 @@ static iJIT_Method_Load FunctionDescToIntelJITFormat(
   Result.env = iJDE_JittingAPI;
 
   return Result;
-}
-
-void IntelJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
-  MethodIDMap::iterator I = MethodIDs.find(FnStart);
-  if (I != MethodIDs.end()) {
-    Wrapper->iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_UNLOAD_START, &I->second);
-    MethodIDs.erase(I);
-  }
 }
 
 void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {

@@ -49,8 +49,6 @@ public:
 
   ~OProfileJITEventListener();
 
-  virtual void NotifyFreeingMachineCode(void *OldPtr);
-
   virtual void NotifyObjectEmitted(const ObjectImage &Obj);
 
   virtual void NotifyFreeingObject(const ObjectImage &Obj);
@@ -74,16 +72,6 @@ OProfileJITEventListener::~OProfileJITEventListener() {
     } else {
       DEBUG(dbgs() << "Disconnected from OProfile agent.\n");
     }
-  }
-}
-
-// Removes the being-deleted function from the symbol table.
-void OProfileJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
-  assert(FnStart && "Invalid function pointer");
-  if (Wrapper.op_unload_native_code(reinterpret_cast<uint64_t>(FnStart)) == -1) {
-    DEBUG(dbgs()
-          << "Failed to tell OProfile about unload of native function at "
-          << FnStart << "\n");
   }
 }
 

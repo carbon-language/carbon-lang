@@ -59,16 +59,6 @@ public:
   JITEventListener() {}
   virtual ~JITEventListener();
 
-  /// NotifyFreeingMachineCode - Called from freeMachineCodeForFunction(), after
-  /// the global mapping is removed, but before the machine code is returned to
-  /// the allocator.
-  ///
-  /// OldPtr is the address of the machine code and will be the same as the Code
-  /// parameter to a previous NotifyFunctionEmitted call.  The Function passed
-  /// to NotifyFunctionEmitted may have been destroyed by the time of the
-  /// matching NotifyFreeingMachineCode call.
-  virtual void NotifyFreeingMachineCode(void *) {}
-
   /// NotifyObjectEmitted - Called after an object has been successfully
   /// emitted to memory.  NotifyFunctionEmitted will not be called for
   /// individual functions in the object.
