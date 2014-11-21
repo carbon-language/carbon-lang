@@ -39,6 +39,7 @@
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Interpreter/OptionGroupUInt64.h"
 #include "lldb/Interpreter/OptionGroupUUID.h"
+#include "lldb/Interpreter/OptionGroupString.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/FuncUnwinders.h"
@@ -2844,7 +2845,7 @@ public:
                                                       "Set the load addresses for one or more sections in a target module.",
                                                       "target modules load [--file <module> --uuid <uuid>] <sect-name> <address> [<sect-name> <address> ....]"),
         m_option_group (interpreter),
-        m_file_option (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypeFilename, "Fullpath or basename for module to load."),
+        m_file_option (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypeName, "Fullpath or basename for module to load.", ""),
         m_slide_option(LLDB_OPT_SET_1, false, "slide", 's', 0, eArgTypeOffset, "Set the load address for all sections to be the virtual address in the file plus the offset.", 0)
     {
         m_option_group.Append (&m_uuid_option_group, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
@@ -2884,7 +2885,26 @@ protected:
             if (m_file_option.GetOptionValue().OptionWasSet())
             {
                 search_using_module_spec = true;
-                module_spec.GetFileSpec() = m_file_option.GetOptionValue().GetCurrentValue();
+                const char *arg_cstr = m_file_option.GetOptionValue().GetCurrentValue();
+                const bool use_global_module_list = true;
+                ModuleList module_list;
+                const size_t num_matches = FindModulesByName (target, arg_cstr, module_list, use_global_module_list);
+                if (num_matches == 1)
+                {
+                    module_spec.GetFileSpec() = module_list.GetModuleAtIndex(0)->GetFileSpec();
+                }
+                else if (num_matches > 1 )
+                {
+                    search_using_module_spec = false;
+                    result.AppendErrorWithFormat ("more than 1 module matched by name '%s'\n", arg_cstr);
+                    result.SetStatus (eReturnStatusFailed);
+                }
+                else
+                {
+                    search_using_module_spec = false;
+                    result.AppendErrorWithFormat ("no object file for module '%s'\n", arg_cstr);
+                    result.SetStatus (eReturnStatusFailed);
+                }
             }
 
             if (m_uuid_option_group.GetOptionValue().OptionWasSet())
@@ -3070,7 +3090,7 @@ protected:
 
     OptionGroupOptions m_option_group;
     OptionGroupUUID m_uuid_option_group;
-    OptionGroupFile m_file_option;
+    OptionGroupString m_file_option;
     OptionGroupUInt64 m_slide_option;
 };
 
