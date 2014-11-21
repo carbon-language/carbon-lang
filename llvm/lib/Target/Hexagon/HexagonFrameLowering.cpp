@@ -127,7 +127,7 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
       // Subtract offset from frame pointer.
       BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::CONST32_Int_Real),
                                       HEXAGON_RESERVED_REG_1).addImm(NumBytes);
-      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::SUB_rr),
+      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::A2_sub),
                                       QRI->getStackRegister()).
                                       addReg(QRI->getStackRegister()).
                                       addReg(HEXAGON_RESERVED_REG_1);

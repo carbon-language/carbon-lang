@@ -781,7 +781,7 @@ CountValue *HexagonHardwareLoops::computeCount(MachineLoop *Loop,
     DistR = End->getReg();
     DistSR = End->getSubReg();
   } else {
-    const MCInstrDesc &SubD = RegToReg ? TII->get(Hexagon::SUB_rr) :
+    const MCInstrDesc &SubD = RegToReg ? TII->get(Hexagon::A2_sub) :
                               (RegToImm ? TII->get(Hexagon::SUB_ri) :
                                           TII->get(Hexagon::ADD_ri));
     unsigned SubR = MRI->createVirtualRegister(IntRC);

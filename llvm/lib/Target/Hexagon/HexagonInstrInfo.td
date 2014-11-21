@@ -196,25 +196,6 @@ multiclass ALU32_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let InputType = "reg" in
-multiclass ALU32_base<string mnemonic, string CextOp, SDNode OpNode> {
-  let CextOpcode = CextOp, BaseOpcode = CextOp#_rr in {
-    let isPredicable = 1 in
-    def NAME : ALU32_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = "#mnemonic#"($src1, $src2)",
-            [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
-                                              (i32 IntRegs:$src2)))]>;
-
-    let neverHasSideEffects = 1, isPredicated = 1 in {
-      defm Pt : ALU32_Pred<mnemonic, IntRegs, 0>;
-      defm NotPt : ALU32_Pred<mnemonic, IntRegs, 1>;
-    }
-  }
-}
-
-defm SUB_rr : ALU32_base<"sub", "SUB", sub>, ImmRegRel, PredNewRel;
-
 // Combines the two integer registers SRC1 and SRC2 into a double register.
 let isPredicable = 1 in
 class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
