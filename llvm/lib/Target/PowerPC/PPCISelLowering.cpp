@@ -6621,9 +6621,8 @@ PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
   MachineRegisterInfo &RegInfo = F->getRegInfo();
   unsigned TmpReg = (!BinOpcode) ? incr :
-    RegInfo.createVirtualRegister(
-       is64bit ? (const TargetRegisterClass *) &PPC::G8RCRegClass :
-                 (const TargetRegisterClass *) &PPC::GPRCRegClass);
+    RegInfo.createVirtualRegister( is64bit ? &PPC::G8RCRegClass
+                                           : &PPC::GPRCRegClass);
 
   //  thisMBB:
   //   ...
@@ -6689,9 +6688,8 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
   MachineRegisterInfo &RegInfo = F->getRegInfo();
-  const TargetRegisterClass *RC =
-    is64bit ? (const TargetRegisterClass *) &PPC::G8RCRegClass :
-              (const TargetRegisterClass *) &PPC::GPRCRegClass;
+  const TargetRegisterClass *RC = is64bit ? &PPC::G8RCRegClass
+                                          : &PPC::GPRCRegClass;
   unsigned PtrReg = RegInfo.createVirtualRegister(RC);
   unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
   unsigned ShiftReg = RegInfo.createVirtualRegister(RC);
@@ -7309,9 +7307,8 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
     MachineRegisterInfo &RegInfo = F->getRegInfo();
-    const TargetRegisterClass *RC =
-      is64bit ? (const TargetRegisterClass *) &PPC::G8RCRegClass :
-                (const TargetRegisterClass *) &PPC::GPRCRegClass;
+    const TargetRegisterClass *RC = is64bit ? &PPC::G8RCRegClass
+                                            : &PPC::GPRCRegClass;
     unsigned PtrReg = RegInfo.createVirtualRegister(RC);
     unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
     unsigned ShiftReg = RegInfo.createVirtualRegister(RC);

@@ -586,9 +586,8 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
 
   Reloc::Model RelocM = TM.getRelocationModel();
   bool IsIndirect = Subtarget->GVIsIndirectSymbol(GV, RelocM);
-  const TargetRegisterClass *RC = isThumb2 ?
-    (const TargetRegisterClass*)&ARM::rGPRRegClass :
-    (const TargetRegisterClass*)&ARM::GPRRegClass;
+  const TargetRegisterClass *RC = isThumb2 ? &ARM::rGPRRegClass
+                                           : &ARM::GPRRegClass;
   unsigned DestReg = createResultReg(RC);
 
   // FastISel TLS support on non-MachO is broken, punt to SelectionDAG.
@@ -893,9 +892,8 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, MVT VT, bool useAM3) {
   // put the alloca address into a register, set the base type back to
   // register and continue. This should almost never happen.
   if (needsLowering && Addr.BaseType == Address::FrameIndexBase) {
-    const TargetRegisterClass *RC = isThumb2 ?
-      (const TargetRegisterClass*)&ARM::tGPRRegClass :
-      (const TargetRegisterClass*)&ARM::GPRRegClass;
+    const TargetRegisterClass *RC = isThumb2 ? &ARM::tGPRRegClass
+                                             : &ARM::GPRRegClass;
     unsigned ResultReg = createResultReg(RC);
     unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -1094,9 +1092,8 @@ bool ARMFastISel::ARMEmitStore(MVT VT, unsigned SrcReg, Address &Addr,
     // This is mostly going to be Neon/vector support.
     default: return false;
     case MVT::i1: {
-      unsigned Res = createResultReg(isThumb2 ?
-        (const TargetRegisterClass*)&ARM::tGPRRegClass :
-        (const TargetRegisterClass*)&ARM::GPRRegClass);
+      unsigned Res = createResultReg(isThumb2 ? &ARM::tGPRRegClass
+                                              : &ARM::GPRRegClass);
       unsigned Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
       SrcReg = constrainOperandRegClass(TII.get(Opc), SrcReg, 1);
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -1500,9 +1497,8 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   // Now set a register based on the comparison. Explicitly set the predicates
   // here.
   unsigned MovCCOpc = isThumb2 ? ARM::t2MOVCCi : ARM::MOVCCi;
-  const TargetRegisterClass *RC = isThumb2 ?
-    (const TargetRegisterClass*)&ARM::rGPRRegClass :
-    (const TargetRegisterClass*)&ARM::GPRRegClass;
+  const TargetRegisterClass *RC = isThumb2 ? &ARM::rGPRRegClass
+                                           : &ARM::GPRRegClass;
   unsigned DestReg = createResultReg(RC);
   Constant *Zero = ConstantInt::get(Type::getInt32Ty(*Context), 0);
   unsigned ZeroReg = fastMaterializeConstant(Zero);
@@ -2490,15 +2486,9 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
     MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
     MFI->setFrameAddressIsTaken(true);
 
-    unsigned LdrOpc;
-    const TargetRegisterClass *RC;
-    if (isThumb2) {
-      LdrOpc =  ARM::t2LDRi12;
-      RC = (const TargetRegisterClass*)&ARM::tGPRRegClass;
-    } else {
-      LdrOpc =  ARM::LDRi12;
-      RC = (const TargetRegisterClass*)&ARM::GPRRegClass;
-    }
+    unsigned LdrOpc = isThumb2 ? ARM::t2LDRi12 : ARM::LDRi12;
+    const TargetRegisterClass *RC = isThumb2 ? &ARM::tGPRRegClass
+                                             : &ARM::GPRRegClass;
 
     const ARMBaseRegisterInfo *RegInfo =
         static_cast<const ARMBaseRegisterInfo *>(

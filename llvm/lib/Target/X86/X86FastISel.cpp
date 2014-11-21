@@ -2065,9 +2065,8 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
   if (!Subtarget->is64Bit()) {
     // If we're on x86-32; we can't extract an i8 from a general register.
     // First issue a copy to GR16_ABCD or GR32_ABCD.
-    const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16) ?
-      (const TargetRegisterClass*)&X86::GR16_ABCDRegClass :
-      (const TargetRegisterClass*)&X86::GR32_ABCDRegClass;
+    const TargetRegisterClass *CopyRC =
+      (SrcVT == MVT::i16) ? &X86::GR16_ABCDRegClass : &X86::GR32_ABCDRegClass;
     unsigned CopyReg = createResultReg(CopyRC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(TargetOpcode::COPY),
             CopyReg).addReg(InputReg);
