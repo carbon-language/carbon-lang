@@ -182,20 +182,11 @@ entry:
 ;;;; Cases we must not select vperm2f128
 
 define <8 x float> @G(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
-; AVX1-LABEL: G:
-; AVX1:       ## BB#0: ## %entry
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm1 = xmm1[0,0,2,3]
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: G:
-; AVX2:       ## BB#0: ## %entry
-; AVX2-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[0,1,0,1]
-; AVX2-NEXT:    vpermilps {{.*#+}} ymm1 = ymm1[0,0,2,3,4,4,6,7]
-; AVX2-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0],ymm0[1],ymm1[2,3]
-; AVX2-NEXT:    retq
+; ALL-LABEL: G:
+; ALL:       ## BB#0: ## %entry
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],ymm1[2,3]
+; ALL-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[0,0,2,3,4,4,6,7]
+; ALL-NEXT:    retq
 entry:
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 undef, i32 undef, i32 6, i32 7, i32 undef, i32 12, i32 undef, i32 15>
   ret <8 x float> %shuffle
