@@ -266,6 +266,7 @@ multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
 }
 
 defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
+defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
 
 // Combines the two integer registers SRC1 and SRC2 into a double register.
 let isPredicable = 1 in
@@ -597,7 +598,6 @@ multiclass ALU32_2op_base2<string mnemonic> {
 
 defm ASLH : ALU32_2op_base2<"aslh">, PredNewRel;
 defm ASRH : ALU32_2op_base2<"asrh">, PredNewRel;
-defm SXTH : ALU32_2op_base2<"sxth">,  PredNewRel;
 defm ZXTB : ALU32_2op_base2<"zxtb">, PredNewRel;
 defm ZXTH : ALU32_2op_base2<"zxth">,  PredNewRel;
 
@@ -611,7 +611,7 @@ def : Pat <(sext_inreg (i32 IntRegs:$src1), i8),
            (A2_sxtb IntRegs:$src1)>;
 
 def : Pat <(sext_inreg (i32 IntRegs:$src1), i16),
-           (SXTH IntRegs:$src1)>;
+           (A2_sxth IntRegs:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // ALU32/PERM -
@@ -2350,7 +2350,7 @@ def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i32)),
 
 // Map from Rdd = sign_extend_inreg(Rss, i16) -> Rdd = SXTW(SXTH(Rss.lo)).
 def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i16)),
-      (i64 (SXTW (i32 (SXTH (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
+      (i64 (SXTW (i32 (A2_sxth (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
                                                  subreg_loreg))))))>;
 
 // Map from Rdd = sign_extend_inreg(Rss, i8) -> Rdd = SXTW(SXTB(Rss.lo)).

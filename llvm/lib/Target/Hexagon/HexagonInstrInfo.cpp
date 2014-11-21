@@ -716,7 +716,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::ASLH:
   case Hexagon::ASRH:
   case Hexagon::A2_sxtb:
-  case Hexagon::SXTH:
+  case Hexagon::A2_sxth:
   case Hexagon::ZXTB:
   case Hexagon::ZXTH:
     return Subtarget.hasV4TOps();
@@ -1315,6 +1315,10 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::A2_pxorfnew:
     case Hexagon::A2_pxort:
     case Hexagon::A2_pxortnew:
+    case Hexagon::A4_psxthf:
+    case Hexagon::A4_psxthfnew:
+    case Hexagon::A4_psxtht:
+    case Hexagon::A4_psxthtnew:
     case Hexagon::A4_psxtbf:
     case Hexagon::A4_psxtbfnew:
     case Hexagon::A4_psxtbt:
@@ -1328,8 +1332,6 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::ASLH_cNotPt_V4:
     case Hexagon::ASRH_cPt_V4:
     case Hexagon::ASRH_cNotPt_V4:
-    case Hexagon::SXTH_cPt_V4:
-    case Hexagon::SXTH_cNotPt_V4:
     case Hexagon::ZXTB_cPt_V4:
     case Hexagon::ZXTB_cNotPt_V4:
     case Hexagon::ZXTH_cPt_V4:

@@ -934,7 +934,7 @@ SDNode *HexagonDAGToDAGISel::SelectSelect(SDNode *N) {
             if (N000 == N2 &&
                 N0.getNode()->getValueType(N0.getResNo()) == MVT::i1 &&
                 N00.getNode()->getValueType(N00.getResNo()) == MVT::i32) {
-              SDNode *SextNode = CurDAG->getMachineNode(Hexagon::SXTH, dl,
+              SDNode *SextNode = CurDAG->getMachineNode(Hexagon::A2_sxth, dl,
                                                         MVT::i32, N000);
               SDNode *Result = CurDAG->getMachineNode(Hexagon::MAXw_rr, dl,
                                                       MVT::i32,
@@ -958,7 +958,7 @@ SDNode *HexagonDAGToDAGISel::SelectSelect(SDNode *N) {
             if (N000 == N2 &&
                 N0.getNode()->getValueType(N0.getResNo()) == MVT::i1 &&
                 N00.getNode()->getValueType(N00.getResNo()) == MVT::i32) {
-              SDNode *SextNode = CurDAG->getMachineNode(Hexagon::SXTH, dl,
+              SDNode *SextNode = CurDAG->getMachineNode(Hexagon::A2_sxth, dl,
                                                         MVT::i32, N000);
               SDNode *Result = CurDAG->getMachineNode(Hexagon::MINw_rr, dl,
                                                       MVT::i32,
