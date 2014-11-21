@@ -196,6 +196,77 @@ multiclass ALU32_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// template class for non-predicated alu32_2op instructions
+// - aslh, asrh, sxtb, sxth, zxth
+//===----------------------------------------------------------------------===//
+let hasNewValue = 1, opNewValue = 0 in
+class T_ALU32_2op <string mnemonic, bits<3> minOp> :
+    ALU32Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rs),
+    "$Rd = "#mnemonic#"($Rs)", [] > {
+  bits<5> Rd;
+  bits<5> Rs;
+
+  let IClass = 0b0111;
+
+  let Inst{27-24} = 0b0000;
+  let Inst{23-21} = minOp;
+  let Inst{13} = 0b0;
+  let Inst{4-0} = Rd;
+  let Inst{20-16} = Rs;
+}
+  
+//===----------------------------------------------------------------------===//
+// template class for predicated alu32_2op instructions
+// - aslh, asrh, sxtb, sxth, zxtb, zxth
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, validSubTargets = HasV4SubT,
+    hasNewValue = 1, opNewValue = 0 in
+class T_ALU32_2op_Pred <string mnemonic, bits<3> minOp, bit isPredNot, 
+    bit isPredNew > :
+    ALU32Inst <(outs IntRegs:$Rd), (ins PredRegs:$Pu, IntRegs:$Rs),
+    !if(isPredNot, "if (!$Pu", "if ($Pu")
+    #!if(isPredNew, ".new) ",") ")#"$Rd = "#mnemonic#"($Rs)"> {
+  bits<5> Rd;
+  bits<2> Pu;
+  bits<5> Rs;
+
+  let IClass = 0b0111;
+
+  let Inst{27-24} = 0b0000;
+  let Inst{23-21} = minOp;
+  let Inst{13} = 0b1;
+  let Inst{11} = isPredNot;
+  let Inst{10} = isPredNew;
+  let Inst{4-0} = Rd;
+  let Inst{9-8} = Pu;
+  let Inst{20-16} = Rs;
+}
+
+multiclass ALU32_2op_Pred<string mnemonic, bits<3> minOp, bit PredNot> {
+  let isPredicatedFalse = PredNot in {
+    def NAME : T_ALU32_2op_Pred<mnemonic, minOp, PredNot, 0>;
+
+    // Predicate new
+    let isPredicatedNew = 1 in
+    def NAME#new : T_ALU32_2op_Pred<mnemonic, minOp, PredNot, 1>;
+  }
+}
+
+multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
+  let BaseOpcode = mnemonic in {
+    let isPredicable = 1, hasSideEffects = 0 in
+    def A2_#NAME : T_ALU32_2op<mnemonic, minOp>;
+
+    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
+      defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
+      defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
+    }
+  }
+}
+
+defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
+
 // Combines the two integer registers SRC1 and SRC2 into a double register.
 let isPredicable = 1 in
 class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
@@ -501,7 +572,7 @@ multiclass ALU32_2op_Pbase<string mnemonic, bit isNot, bit isPredNew> {
             Requires<[HasV4T]>;
 }
 
-multiclass ALU32_2op_Pred<string mnemonic, bit PredNot> {
+multiclass ALU32_2op_Pred2<string mnemonic, bit PredNot> {
   let isPredicatedFalse = PredNot in {
     defm _c#NAME : ALU32_2op_Pbase<mnemonic, PredNot, 0>;
     // Predicate new
@@ -509,7 +580,7 @@ multiclass ALU32_2op_Pred<string mnemonic, bit PredNot> {
   }
 }
 
-multiclass ALU32_2op_base<string mnemonic> {
+multiclass ALU32_2op_base2<string mnemonic> {
   let BaseOpcode = mnemonic in {
     let isPredicable = 1, neverHasSideEffects = 1 in
     def NAME : ALU32Inst<(outs IntRegs:$dst),
@@ -518,18 +589,17 @@ multiclass ALU32_2op_base<string mnemonic> {
 
     let Predicates = [HasV4T], validSubTargets = HasV4SubT, isPredicated = 1,
     neverHasSideEffects = 1 in {
-      defm Pt_V4    : ALU32_2op_Pred<mnemonic, 0>;
-      defm NotPt_V4 : ALU32_2op_Pred<mnemonic, 1>;
+      defm Pt_V4    : ALU32_2op_Pred2<mnemonic, 0>;
+      defm NotPt_V4 : ALU32_2op_Pred2<mnemonic, 1>;
     }
   }
 }
 
-defm ASLH : ALU32_2op_base<"aslh">, PredNewRel;
-defm ASRH : ALU32_2op_base<"asrh">, PredNewRel;
-defm SXTB : ALU32_2op_base<"sxtb">, PredNewRel;
-defm SXTH : ALU32_2op_base<"sxth">,  PredNewRel;
-defm ZXTB : ALU32_2op_base<"zxtb">, PredNewRel;
-defm ZXTH : ALU32_2op_base<"zxth">,  PredNewRel;
+defm ASLH : ALU32_2op_base2<"aslh">, PredNewRel;
+defm ASRH : ALU32_2op_base2<"asrh">, PredNewRel;
+defm SXTH : ALU32_2op_base2<"sxth">,  PredNewRel;
+defm ZXTB : ALU32_2op_base2<"zxtb">, PredNewRel;
+defm ZXTH : ALU32_2op_base2<"zxth">,  PredNewRel;
 
 def : Pat <(shl (i32 IntRegs:$src1), (i32 16)),
            (ASLH IntRegs:$src1)>;
@@ -538,7 +608,7 @@ def : Pat <(sra (i32 IntRegs:$src1), (i32 16)),
            (ASRH IntRegs:$src1)>;
 
 def : Pat <(sext_inreg (i32 IntRegs:$src1), i8),
-           (SXTB IntRegs:$src1)>;
+           (A2_sxtb IntRegs:$src1)>;
 
 def : Pat <(sext_inreg (i32 IntRegs:$src1), i16),
            (SXTH IntRegs:$src1)>;
@@ -2285,7 +2355,7 @@ def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i16)),
 
 // Map from Rdd = sign_extend_inreg(Rss, i8) -> Rdd = SXTW(SXTB(Rss.lo)).
 def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i8)),
-      (i64 (SXTW (i32 (SXTB (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
+      (i64 (SXTW (i32 (A2_sxtb (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
                                                  subreg_loreg))))))>;
 
 // We want to prevent emitting pnot's as much as possible.

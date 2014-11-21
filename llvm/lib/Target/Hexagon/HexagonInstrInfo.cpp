@@ -715,7 +715,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
 
   case Hexagon::ASLH:
   case Hexagon::ASRH:
-  case Hexagon::SXTB:
+  case Hexagon::A2_sxtb:
   case Hexagon::SXTH:
   case Hexagon::ZXTB:
   case Hexagon::ZXTH:
@@ -1315,6 +1315,10 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::A2_pxorfnew:
     case Hexagon::A2_pxort:
     case Hexagon::A2_pxortnew:
+    case Hexagon::A4_psxtbf:
+    case Hexagon::A4_psxtbfnew:
+    case Hexagon::A4_psxtbt:
+    case Hexagon::A4_psxtbtnew:
     case Hexagon::ADD_ri_cPt:
     case Hexagon::ADD_ri_cNotPt:
     case Hexagon::COMBINE_rr_cPt:
@@ -1324,8 +1328,6 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::ASLH_cNotPt_V4:
     case Hexagon::ASRH_cPt_V4:
     case Hexagon::ASRH_cNotPt_V4:
-    case Hexagon::SXTB_cPt_V4:
-    case Hexagon::SXTB_cNotPt_V4:
     case Hexagon::SXTH_cPt_V4:
     case Hexagon::SXTH_cNotPt_V4:
     case Hexagon::ZXTB_cPt_V4:
