@@ -13610,6 +13610,11 @@ static SDValue lowerUINT_TO_FP_vXi32(SDValue Op, SelectionDAG &DAG,
   EVT VecIntVT = V.getValueType();
   bool Is128 = VecIntVT == MVT::v4i32;
   EVT VecFloatVT = Is128 ? MVT::v4f32 : MVT::v8f32;
+  // If we convert to something else than the supported type, e.g., to v4f64,
+  // abort early.
+  if (VecFloatVT != Op->getValueType(0))
+    return SDValue();
+
   unsigned NumElts = VecIntVT.getVectorNumElements();
   assert((VecIntVT == MVT::v4i32 || VecIntVT == MVT::v8i32) &&
          "Unsupported custom type");

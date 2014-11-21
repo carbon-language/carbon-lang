@@ -154,3 +154,14 @@ define <8 x float> @test2(<8 x i32> %A) nounwind {
   %C = uitofp <8 x i32> %A to <8 x float>
   ret <8 x float> %C
 }
+
+define <4 x double> @test3(<4 x i32> %arg) {
+; CHECK-LABEL: test3:
+; This test used to crash because we were custom lowering it as if it was
+; a conversion between <4 x i32> and <4 x float>.
+; AVX: vcvtdq2pd
+; AVX2: vcvtdq2pd
+; CHECK: retq
+  %tmp = uitofp <4 x i32> %arg to <4 x double>
+  ret <4 x double> %tmp
+}
