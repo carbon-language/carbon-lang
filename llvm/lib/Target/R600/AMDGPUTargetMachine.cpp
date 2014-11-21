@@ -159,6 +159,8 @@ bool AMDGPUPassConfig::addInstSelector() {
     addPass(createSIFixSGPRCopiesPass(*TM));
   }
 
+  addPass(createSILowerI1CopiesPass());
+  addPass(createSIFoldOperandsPass());
   return false;
 }
 

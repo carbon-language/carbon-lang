@@ -69,8 +69,7 @@ define void @lds_atomic_add_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 ad
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_ret_i32:
 ; EG: LDS_ADD_RET *
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_inc_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]] [M0]
 ; SI: s_endpgm
 define void @lds_atomic_inc_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
@@ -81,8 +80,7 @@ define void @lds_atomic_inc_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %p
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_ret_i32_offset:
 ; EG: LDS_ADD_RET *
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_inc_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]] offset:16
 ; SI: s_endpgm
 define void @lds_atomic_inc_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
@@ -129,8 +127,7 @@ define void @lds_atomic_sub_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
 
 ; FUNC-LABEL: {{^}}lds_atomic_dec_ret_i32:
 ; EG: LDS_SUB_RET *
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_dec_rtn_u32  v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]] [M0]
 ; SI: s_endpgm
 define void @lds_atomic_dec_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
@@ -141,8 +138,7 @@ define void @lds_atomic_dec_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %p
 
 ; FUNC-LABEL: {{^}}lds_atomic_dec_ret_i32_offset:
 ; EG: LDS_SUB_RET *
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_dec_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]] offset:16
 ; SI: s_endpgm
 define void @lds_atomic_dec_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
@@ -361,8 +357,7 @@ define void @lds_atomic_add_noret_i32_bad_si_offset(i32 addrspace(3)* %ptr, i32 
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_noret_i32:
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_inc_u32 v{{[0-9]+}}, [[NEGONE]] [M0]
 ; SI: s_endpgm
 define void @lds_atomic_inc_noret_i32(i32 addrspace(3)* %ptr) nounwind {
@@ -371,8 +366,7 @@ define void @lds_atomic_inc_noret_i32(i32 addrspace(3)* %ptr) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_noret_i32_offset:
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_inc_u32 v{{[0-9]+}}, [[NEGONE]] offset:16
 ; SI: s_endpgm
 define void @lds_atomic_inc_noret_i32_offset(i32 addrspace(3)* %ptr) nounwind {
@@ -411,8 +405,7 @@ define void @lds_atomic_sub_noret_i32_offset(i32 addrspace(3)* %ptr) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_dec_noret_i32:
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_dec_u32  v{{[0-9]+}}, [[NEGONE]]
 ; SI: s_endpgm
 define void @lds_atomic_dec_noret_i32(i32 addrspace(3)* %ptr) nounwind {
@@ -421,8 +414,7 @@ define void @lds_atomic_dec_noret_i32(i32 addrspace(3)* %ptr) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_dec_noret_i32_offset:
-; SI: s_mov_b32 [[SNEGONE:s[0-9]+]], -1
-; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
 ; SI: ds_dec_u32 v{{[0-9]+}}, [[NEGONE]] offset:16
 ; SI: s_endpgm
 define void @lds_atomic_dec_noret_i32_offset(i32 addrspace(3)* %ptr) nounwind {
