@@ -1285,7 +1285,7 @@ private:
       int AdditionalIndent =
           State.FirstIndent - State.Line->Level * Style.IndentWidth;
       if (State.Stack.size() < 2 ||
-          !State.Stack[State.Stack.size() - 2].JSFunctionInlined) {
+          !State.Stack[State.Stack.size() - 2].NestedBlockInlined) {
         AdditionalIndent = State.Stack.back().Indent -
                            Previous.Children[0]->Level * Style.IndentWidth;
       }

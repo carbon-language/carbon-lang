@@ -319,6 +319,29 @@ TEST_F(FormatTestJava, NeverAlignAfterReturn) {
                getStyleWithColumns(40));
 }
 
+TEST_F(FormatTestJava, FormatsInnerBlocks) {
+  verifyFormat("someObject.someFunction(new Runnable() {\n"
+               "  @Override\n"
+               "  public void run() {\n"
+               "    System.out.println(42);\n"
+               "  }\n"
+               "}, someOtherParameter);");
+  verifyFormat("someObject.someFunction(\n"
+               "    new Runnable() {\n"
+               "      @Override\n"
+               "      public void run() {\n"
+               "        System.out.println(42);\n"
+               "      }\n"
+               "    },\n"
+               "    new Runnable() {\n"
+               "      @Override\n"
+               "      public void run() {\n"
+               "        System.out.println(43);\n"
+               "      }\n"
+               "    },\n"
+               "    someOtherParameter);");
+}
+
 TEST_F(FormatTestJava, FormatsLambdas) {
   verifyFormat("(aaaaaaaaaa, bbbbbbbbbb) -> aaaaaaaaaa + bbbbbbbbbb;");
   verifyFormat("(aaaaaaaaaa, bbbbbbbbbb)\n"

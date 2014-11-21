@@ -155,7 +155,7 @@ struct ParenState {
         NestedNameSpecifierContinuation(0), CallContinuation(0), VariablePos(0),
         ContainsLineBreak(false), ContainsUnwrappedBuilder(0),
         AlignColons(true), ObjCSelectorNameFound(false),
-        HasMultipleNestedBlocks(false), JSFunctionInlined(false) {}
+        HasMultipleNestedBlocks(false), NestedBlockInlined(false) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -256,9 +256,9 @@ struct ParenState {
   /// the same token.
   bool HasMultipleNestedBlocks;
 
-  // \brief The previous JavaScript 'function' keyword is not wrapped to a new
-  // line.
-  bool JSFunctionInlined;
+  // \brief The start of a nested block (e.g. lambda introducer in C++ or
+  // "function" in JavaScript) is not wrapped to a new line.
+  bool NestedBlockInlined;
 
   bool operator<(const ParenState &Other) const {
     if (Indent != Other.Indent)
@@ -293,8 +293,8 @@ struct ParenState {
       return ContainsLineBreak < Other.ContainsLineBreak;
     if (ContainsUnwrappedBuilder != Other.ContainsUnwrappedBuilder)
       return ContainsUnwrappedBuilder < Other.ContainsUnwrappedBuilder;
-    if (JSFunctionInlined != Other.JSFunctionInlined)
-      return JSFunctionInlined < Other.JSFunctionInlined;
+    if (NestedBlockInlined != Other.NestedBlockInlined)
+      return NestedBlockInlined < Other.NestedBlockInlined;
     return false;
   }
 };

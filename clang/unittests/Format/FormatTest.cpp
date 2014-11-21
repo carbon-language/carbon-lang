@@ -2900,11 +2900,19 @@ TEST_F(FormatTest, LayoutBlockInsideParens) {
             "});",
             format(" functionCall ( {int i;int j;} );"));
   EXPECT_EQ("functionCall({\n"
-            "               int i;\n"
-            "               int j;\n"
-            "             },\n"
-            "             aaaa, bbbb, cccc);",
+            "  int i;\n"
+            "  int j;\n"
+            "}, aaaa, bbbb, cccc);",
             format(" functionCall ( {int i;int j;},  aaaa,   bbbb, cccc);"));
+  EXPECT_EQ("functionCall(\n"
+            "    {\n"
+            "      int i;\n"
+            "      int j;\n"
+            "    },\n"
+            "    aaaa, bbbb, // comment\n"
+            "    cccc);",
+            format(" functionCall ( {int i;int j;},  aaaa,   bbbb, // comment\n"
+                   "cccc);"));
   EXPECT_EQ("functionCall(aaaa, bbbb, { int i; });",
             format(" functionCall (aaaa,   bbbb, {int i;});"));
   EXPECT_EQ("functionCall(aaaa, bbbb, {\n"
@@ -2915,7 +2923,8 @@ TEST_F(FormatTest, LayoutBlockInsideParens) {
   EXPECT_EQ("functionCall(aaaa, bbbb, { int i; });",
             format(" functionCall (aaaa,   bbbb, {int i;});"));
   verifyFormat(
-      "Aaa({\n"
+      "Aaa(\n"  // FIXME: There shouldn't be a linebreak here.
+      "    {\n"
       "      int i; // break\n"
       "    },\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
@@ -2997,10 +3006,9 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
   FormatStyle Style = getGoogleStyle();
   Style.ColumnLimit = 45;
   verifyFormat("Debug(aaaaa, {\n"
-               "               if (aaaaaaaaaaaaaaaaaaaaaaaa)\n"
-               "                 return;\n"
-               "             },\n"
-               "      a);", Style);
+               "  if (aaaaaaaaaaaaaaaaaaaaaaaa) return;\n"
+               "}, a);",
+               Style);
 }
 
 TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
@@ -7687,11 +7695,10 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                Tab);
   verifyFormat("{\n"
                "\tQ({\n"
-               "\t\t  int a;\n"
-               "\t\t  someFunction(aaaaaaaaaa,\n"
-               "\t\t               bbbbbbbbb);\n"
-               "\t  },\n"
-               "\t  p);\n"
+               "\t\tint a;\n"
+               "\t\tsomeFunction(aaaaaaaa,\n"
+               "\t\t             bbbbbbb);\n"
+               "\t}, p);\n"
                "}",
                Tab);
   EXPECT_EQ("{\n"
@@ -9278,14 +9285,15 @@ TEST_F(FormatTest, FormatsLambdas) {
                "};");
 
   // Multiple lambdas in the same parentheses change indentation rules.
-  verifyFormat("SomeFunction([]() {\n"
-               "               int i = 42;\n"
-               "               return i;\n"
-               "             },\n"
-               "             []() {\n"
-               "               int j = 43;\n"
-               "               return j;\n"
-               "             });");
+  verifyFormat("SomeFunction(\n"
+               "    []() {\n"
+               "      int i = 42;\n"
+               "      return i;\n"
+               "    },\n"
+               "    []() {\n"
+               "      int j = 43;\n"
+               "      return j;\n"
+               "    });");
 
   // More complex introducers.
   verifyFormat("return [i, args...] {};");

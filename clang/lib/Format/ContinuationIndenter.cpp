@@ -117,9 +117,8 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
 
   // Don't create a 'hanging' indent if there are multiple blocks in a single
   // statement.
-  if (Style.Language == FormatStyle::LK_JavaScript &&
-      Previous.is(tok::l_brace) && State.Stack.size() > 1 &&
-      State.Stack[State.Stack.size() - 2].JSFunctionInlined &&
+  if (Previous.is(tok::l_brace) && State.Stack.size() > 1 &&
+      State.Stack[State.Stack.size() - 2].NestedBlockInlined &&
       State.Stack[State.Stack.size() - 2].HasMultipleNestedBlocks)
     return false;
 
@@ -453,11 +452,10 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   // Any break on this level means that the parent level has been broken
   // and we need to avoid bin packing there.
-  bool JavaScriptFormat = Style.Language == FormatStyle::LK_JavaScript &&
-                          Current.is(tok::r_brace) &&
-                          State.Stack.size() > 1 &&
-                          State.Stack[State.Stack.size() - 2].JSFunctionInlined;
-  if (!JavaScriptFormat) {
+  bool NestedBlockSpecialCase =
+      Current.is(tok::r_brace) && State.Stack.size() > 1 &&
+      State.Stack[State.Stack.size() - 2].NestedBlockInlined;
+  if (!NestedBlockSpecialCase) {
     for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
       State.Stack[i].BreakBeforeParameter = true;
     }
@@ -520,7 +518,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
                                      : State.Stack.back().Indent;
   if (Current.isOneOf(tok::r_brace, tok::r_square)) {
     if (State.Stack.size() > 1 &&
-        State.Stack[State.Stack.size() - 2].JSFunctionInlined)
+        State.Stack[State.Stack.size() - 2].NestedBlockInlined)
       return State.FirstIndent;
     if (Current.closesBlockTypeList(Style) ||
         (Current.MatchingParen &&
@@ -666,22 +664,21 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   //     foo();
   //     bar();
   //   }, a, b, c);
-  if (Style.Language == FormatStyle::LK_JavaScript) {
-    if (Current.isNot(tok::comment) && Previous && Previous->is(tok::l_brace) &&
-        State.Stack.size() > 1) {
-      if (State.Stack[State.Stack.size() - 2].JSFunctionInlined && Newline) {
-        for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
-          State.Stack[i].NoLineBreak = true;
-        }
+  if (Current.isNot(tok::comment) && Previous && Previous->is(tok::l_brace) &&
+      State.Stack.size() > 1) {
+    if (State.Stack[State.Stack.size() - 2].NestedBlockInlined && Newline) {
+      for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
+        State.Stack[i].NoLineBreak = true;
       }
-      State.Stack[State.Stack.size() - 2].JSFunctionInlined = false;
     }
-    if (Current.is(Keywords.kw_function))
-      State.Stack.back().JSFunctionInlined =
-          !Newline && Previous && Previous->Type != TT_DictLiteral &&
-          // If the unnamed function is the only parameter to another function,
-          // we can likely inline it and come up with a good format.
-          (Previous->isNot(tok::l_paren) || Previous->ParameterCount > 1);
+    State.Stack[State.Stack.size() - 2].NestedBlockInlined = false;
+  }
+  if (Previous && (Previous->isOneOf(tok::l_paren, tok::comma, tok::colon) ||
+                   Previous->isOneOf(TT_BinaryOperator, TT_ConditionalExpr)) &&
+      !Previous->isOneOf(TT_DictLiteral, TT_ObjCMethodExpr)) {
+    State.Stack.back().NestedBlockInlined =
+        !Newline &&
+        (Previous->isNot(tok::l_paren) || Previous->ParameterCount > 1) && !Newline;
   }
 
   moveStatePastFakeLParens(State, Newline);
