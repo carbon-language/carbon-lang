@@ -90,20 +90,21 @@ Run lldb test suite using a separate process for each test file.
     parser.add_option('-t', '--threads',
                       type='int',
                       dest='num_threads',
-                      help="""The number of threads to use when running tests separately.""",
-                      default=multiprocessing.cpu_count())
+                      help="""The number of threads to use when running tests separately.""")
 
     opts, args = parser.parse_args()
     dotest_options = opts.dotest_options
-    num_threads = opts.num_threads
-    if num_threads < 1:
+
+    if opts.num_threads:
+        num_threads = opts.num_threads
+    else:
         num_threads_str = os.environ.get("LLDB_TEST_THREADS")
         if num_threads_str:
             num_threads = int(num_threads_str)
-            if num_threads < 1:
-                num_threads = 1
         else:
-            num_threads = 1
+            num_threads = multiprocessing.cpu_count()
+    if num_threads < 1:
+        num_threads = 1
 
     system_info = " ".join(platform.uname())
     (failed, passed) = walk_and_invoke(test_root, dotest_options, num_threads)
