@@ -280,7 +280,7 @@ namespace {
 
 
     /// Provide fast operand accessors
-    //DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+    DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   };
 }
 
@@ -289,6 +289,7 @@ template <>
 struct OperandTraits<ConstantPlaceHolder> :
   public FixedNumOperandTraits<ConstantPlaceHolder, 1> {
 };
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantPlaceHolder, Value)
 }
 
 
