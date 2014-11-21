@@ -42,6 +42,10 @@ int main()
 // CHECK: ![[DECL_C:[0-9]+]] = metadata !{metadata !"0xd\00c\00{{.*}}", {{.*}} [ DW_TAG_member ] [c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
 // CHECK: metadata !"0xd\00const_c\00{{.*}}", {{.*}} [ DW_TAG_member ] [const_c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
 // CHECK: metadata !"0xd\00x_a\00{{.*}}", {{.*}} [ DW_TAG_member ] [x_a] {{.*}} [public] [static]
+
+// CHECK: ; [ DW_TAG_structure_type ] [static_decl_templ<int>] {{.*}} [def]
+// CHECK: ; [ DW_TAG_member ] [static_decl_templ_var]
+
 // CHECK: [[NS_X:![0-9]+]] = {{.*}} ; [ DW_TAG_namespace ] [x]
 
 // Test this in an anonymous namespace to ensure the type is retained even when
@@ -52,11 +56,24 @@ struct anon_static_decl_struct {
 };
 }
 
+
 // CHECK: ; [ DW_TAG_structure_type ] [anon_static_decl_struct] {{.*}} [def]
 // CHECK: ; [ DW_TAG_member ] [anon_static_decl_var]
 
 int ref() {
   return anon_static_decl_struct::anon_static_decl_var;
+}
+
+template<typename T>
+struct static_decl_templ {
+  static const int static_decl_templ_var = 7;
+};
+
+template<typename T>
+const int static_decl_templ<T>::static_decl_templ_var;
+
+int static_decl_templ_ref() {
+  return static_decl_templ<int>::static_decl_templ_var;
 }
 
 // CHECK: metadata !{metadata !"0x34\00a\00{{.*}}", null, {{.*}} @_ZN1C1aE, metadata ![[DECL_A]]} ; [ DW_TAG_variable ] [a] {{.*}} [def]
