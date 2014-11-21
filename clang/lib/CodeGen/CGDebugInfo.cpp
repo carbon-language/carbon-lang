@@ -2940,7 +2940,7 @@ llvm::DIType CGDebugInfo::CreateSelfType(const QualType &QualTy,
 
 void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
     const VarDecl *VD, llvm::Value *Storage, CGBuilderTy &Builder,
-    const CGBlockInfo &blockInfo) {
+    const CGBlockInfo &blockInfo, llvm::Instruction *InsertPoint) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
@@ -2998,8 +2998,11 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
                                    VD->getName(), Unit, Line, Ty);
 
   // Insert an llvm.dbg.declare into the current block.
-  llvm::Instruction *Call = DBuilder.insertDeclare(
-      Storage, D, DBuilder.createExpression(addr), Builder.GetInsertPoint());
+  llvm::Instruction *Call = InsertPoint ?
+      DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(addr),
+                             InsertPoint)
+    : DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(addr),
+                             Builder.GetInsertBlock());
   Call->setDebugLoc(
       llvm::DebugLoc::get(Line, Column, LexicalBlockStack.back()));
 }

@@ -1243,7 +1243,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
         }
 
         DI->EmitDeclareOfBlockDeclRefVariable(variable, BlockPointerDbgLoc,
-                                              Builder, blockInfo);
+                                              Builder, blockInfo,
+                                              entry_ptr == entry->end()
+                                              ? nullptr : entry_ptr);
       }
     }
     // Recover location if it was changed in the above loop.

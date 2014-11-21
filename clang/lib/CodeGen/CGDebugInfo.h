@@ -263,7 +263,8 @@ public:
   void EmitDeclareOfBlockDeclRefVariable(const VarDecl *variable,
                                          llvm::Value *storage,
                                          CGBuilderTy &Builder,
-                                         const CGBlockInfo &blockInfo);
+                                         const CGBlockInfo &blockInfo,
+                                         llvm::Instruction *InsertPoint = 0);
 
   /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
   /// variable declaration.
