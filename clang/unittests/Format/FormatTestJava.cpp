@@ -229,6 +229,8 @@ TEST_F(FormatTestJava, Generics) {
   verifyFormat("protected <R> ArrayList<R> get() {\n}");
   verifyFormat("private <R> ArrayList<R> get() {\n}");
   verifyFormat("public static <R> ArrayList<R> get() {\n}");
+  verifyFormat("public final <X> Foo foo() {\n}");
+  verifyFormat("public abstract <X> Foo foo();");
   verifyFormat("<T extends B> T getInstance(Class<T> type);");
   verifyFormat("Function<F, ? extends T> function;");
 

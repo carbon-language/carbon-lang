@@ -1710,8 +1710,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       return true;
     if (Left.is(Keywords.kw_synchronized) && Right.is(tok::l_paren))
       return Style.SpaceBeforeParens != FormatStyle::SBPO_Never;
-    if (Left.isOneOf(tok::kw_static, tok::kw_public, tok::kw_private,
-                     tok::kw_protected) &&
+    if ((Left.isOneOf(tok::kw_static, tok::kw_public, tok::kw_private,
+                      tok::kw_protected) ||
+         Left.isOneOf(Keywords.kw_final, Keywords.kw_abstract)) &&
         Right.Type == TT_TemplateOpener)
       return true;
   }
