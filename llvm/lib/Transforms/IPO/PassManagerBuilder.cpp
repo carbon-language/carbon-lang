@@ -228,7 +228,8 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
     MPM.add(createTailCallEliminationPass()); // Eliminate tail calls
   MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
   MPM.add(createReassociatePass());           // Reassociate expressions
-  MPM.add(createLoopRotatePass());            // Rotate Loop
+  // Rotate Loop - disable header duplication at -Oz
+  MPM.add(createLoopRotatePass(SizeLevel == 2 ? 0 : -1));
   MPM.add(createLICMPass());                  // Hoist loop invariants
   MPM.add(createLoopUnswitchPass(SizeLevel || OptLevel < 3));
   MPM.add(createInstructionCombiningPass());
