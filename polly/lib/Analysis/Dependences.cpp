@@ -1,4 +1,4 @@
-//===- Dependency.cpp - Calculate dependency information for a Scop.  -----===//
+//===- Dependences.cpp - Calculate dependency information for a Scop. -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
