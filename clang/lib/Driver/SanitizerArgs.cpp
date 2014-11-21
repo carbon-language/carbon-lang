@@ -42,7 +42,7 @@ ID = ALIAS, ID##Group = 1 << SO_##ID##Group,
 #include "clang/Basic/Sanitizers.def"
   NeedsUbsanRt = Undefined | Integer,
   NotAllowedWithTrap = Vptr,
-  HasZeroBaseShadow = Thread | Memory | DataFlow,
+  RequiresPIE = Memory | DataFlow,
   NeedsUnwindTables = Address | Thread | Memory | DataFlow
 };
 }
@@ -140,8 +140,8 @@ bool SanitizerArgs::needsUbsanRt() const {
   return !UbsanTrapOnError && hasOneOf(Sanitizers, NeedsUbsanRt);
 }
 
-bool SanitizerArgs::hasZeroBaseShadow() const {
-  return AsanZeroBaseShadow || hasOneOf(Sanitizers, HasZeroBaseShadow);
+bool SanitizerArgs::requiresPIE() const {
+  return AsanZeroBaseShadow || hasOneOf(Sanitizers, RequiresPIE);
 }
 
 bool SanitizerArgs::needsUnwindTables() const {
