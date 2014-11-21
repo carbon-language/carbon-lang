@@ -209,6 +209,8 @@ static cl::opt<int> ClDebugMax("asan-debug-max", cl::desc("Debug man inst"),
 
 STATISTIC(NumInstrumentedReads, "Number of instrumented reads");
 STATISTIC(NumInstrumentedWrites, "Number of instrumented writes");
+STATISTIC(NumInstrumentedDynamicAllocas,
+          "Number of instrumented dynamic allocas");
 STATISTIC(NumOptimizedAccessesToGlobalArray,
           "Number of optimized accesses to global arrays");
 STATISTIC(NumOptimizedAccessesToGlobalVar,
@@ -1942,4 +1944,5 @@ void FunctionStackPoisoner::handleDynamicAllocaCall(
   // We are done. Erase old alloca and store left, partial and right redzones
   // shadow addresses for future unpoisoning.
   AI->eraseFromParent();
+  NumInstrumentedDynamicAllocas++;
 }
