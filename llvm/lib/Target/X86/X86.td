@@ -167,9 +167,12 @@ def FeatureSMAP    : SubtargetFeature<"smap", "HasSMAP", "true",
                                       "Support SMAP instructions">;
 def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
                                      "Use LEA for adjusting the stack pointer">;
-def FeatureSlowDivide : SubtargetFeature<"idiv-to-divb",
-                                     "HasSlowDivide", "true",
-                                     "Use small divide for positive values less than 256">;
+def FeatureSlowDivide32 : SubtargetFeature<"idivl-to-divb",
+                                     "HasSlowDivide32", "true",
+                                     "Use 8-bit divide for positive values less than 256">;
+def FeatureSlowDivide64 : SubtargetFeature<"idivq-to-divw",
+                                     "HasSlowDivide64", "true",
+                                     "Use 16-bit divide for positive values less than 65536">;
 def FeaturePadShortFunctions : SubtargetFeature<"pad-short-functions",
                                      "PadShortFunctions", "true",
                                      "Pad short functions">;
@@ -234,7 +237,7 @@ def : ProcessorModel<"penryn", SandyBridgeModel,
 def : ProcessorModel<"atom", AtomModel,
                      [ProcIntelAtom, FeatureSSSE3, FeatureCMPXCHG16B,
                       FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP,
-                      FeatureSlowDivide,
+                      FeatureSlowDivide32, FeatureSlowDivide64,
                       FeatureCallRegIndirect,
                       FeatureLEAUsesAG,
                       FeaturePadShortFunctions]>;
@@ -244,6 +247,7 @@ def : ProcessorModel<"slm",  SLMModel, [ProcIntelSLM,
                                FeatureSSE42, FeatureCMPXCHG16B,
                                FeatureMOVBE, FeaturePOPCNT,
                                FeaturePCLMUL, FeatureAES,
+                               FeatureSlowDivide64,
                                FeatureCallRegIndirect,
                                FeaturePRFCHW,
                                FeatureSlowLEA, FeatureSlowIncDec,

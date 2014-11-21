@@ -267,7 +267,8 @@ void X86Subtarget::initializeEnvironment() {
   HasVectorUAMem = false;
   HasCmpxchg16b = false;
   UseLeaForSP = false;
-  HasSlowDivide = false;
+  HasSlowDivide32 = false;
+  HasSlowDivide64 = false;
   PadShortFunctions = false;
   CallRegIndirect = false;
   LEAUsesAG = false;

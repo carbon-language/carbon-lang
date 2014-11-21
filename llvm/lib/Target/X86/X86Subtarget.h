@@ -171,9 +171,13 @@ protected:
   /// the stack pointer. This is an optimization for Intel Atom processors.
   bool UseLeaForSP;
 
-  /// HasSlowDivide - True if smaller divides are significantly faster than
-  /// full divides and should be used when possible.
-  bool HasSlowDivide;
+  /// HasSlowDivide32 - True if 8-bit divisions are significantly faster than
+  /// 32-bit divisions and should be used when possible.
+  bool HasSlowDivide32;
+
+  /// HasSlowDivide64 - True if 16-bit divides are significantly faster than
+  /// 64-bit divisions and should be used when possible.
+  bool HasSlowDivide64;
 
   /// PadShortFunctions - True if the short functions should be padded to prevent
   /// a stall when returning too early.
@@ -373,7 +377,8 @@ public:
   bool hasVectorUAMem() const { return HasVectorUAMem; }
   bool hasCmpxchg16b() const { return HasCmpxchg16b; }
   bool useLeaForSP() const { return UseLeaForSP; }
-  bool hasSlowDivide() const { return HasSlowDivide; }
+  bool hasSlowDivide32() const { return HasSlowDivide32; }
+  bool hasSlowDivide64() const { return HasSlowDivide64; }
   bool padShortFunctions() const { return PadShortFunctions; }
   bool callRegIndirect() const { return CallRegIndirect; }
   bool LEAusesAG() const { return LEAUsesAG; }
