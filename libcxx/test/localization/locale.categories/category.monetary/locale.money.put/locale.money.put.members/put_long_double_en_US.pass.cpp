@@ -14,6 +14,8 @@
 // iter_type put(iter_type s, bool intl, ios_base& f, char_type fill,
 //               long double units) const;
 
+// REQUIRES: locale.en_US.UTF-8
+
 #include <locale>
 #include <ios>
 #include <streambuf>

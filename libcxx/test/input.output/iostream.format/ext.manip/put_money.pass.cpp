@@ -11,6 +11,8 @@
 
 // template <class charT, class moneyT> T8 put_money(const moneyT& mon, bool intl = false);
 
+// REQUIRES: locale.en_US.UTF-8
+
 #include <iomanip>
 #include <cassert>
 
