@@ -237,11 +237,13 @@ void MipsLongBranch::replaceBranch(MachineBasicBlock &MBB, Iter Br,
 
   MIB.addMBB(MBBOpnd);
 
-  // Bundle the instruction in the delay slot to the newly created branch
-  // and erase the original branch.
-  assert(Br->isBundledWithSucc());
-  MachineBasicBlock::instr_iterator II(Br);
-  MIBundleBuilder(&*MIB).append((++II)->removeFromBundle());
+  if (Br->hasDelaySlot()) {
+    // Bundle the instruction in the delay slot to the newly created branch
+    // and erase the original branch.
+    assert(Br->isBundledWithSucc());
+    MachineBasicBlock::instr_iterator II(Br);
+    MIBundleBuilder(&*MIB).append((++II)->removeFromBundle());
+  }
   Br->eraseFromParent();
 }
 

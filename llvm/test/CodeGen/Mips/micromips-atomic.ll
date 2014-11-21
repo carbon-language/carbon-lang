@@ -14,5 +14,5 @@ entry:
 ; CHECK:   ll      $[[R1:[0-9]+]], 0($[[R0]])
 ; CHECK:   addu    $[[R2:[0-9]+]], $[[R1]], $4
 ; CHECK:   sc      $[[R2]], 0($[[R0]])
-; CHECK:   beqz    $[[R2]], $[[BB0]]
+; CHECK:   beqzc   $[[R2]], $[[BB0]]
 }
