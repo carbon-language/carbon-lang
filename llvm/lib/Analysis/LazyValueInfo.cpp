@@ -439,17 +439,11 @@ void LVIValueHandle::deleted() {
   typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
   
   SmallVector<OverDefinedPairTy, 4> ToErase;
-  for (DenseSet<OverDefinedPairTy>::iterator 
-       I = Parent->OverDefinedCache.begin(),
-       E = Parent->OverDefinedCache.end();
-       I != E; ++I) {
-    if (I->second == getValPtr())
-      ToErase.push_back(*I);
-  }
-
-  for (SmallVectorImpl<OverDefinedPairTy>::iterator I = ToErase.begin(),
-       E = ToErase.end(); I != E; ++I)
-    Parent->OverDefinedCache.erase(*I);
+  for (const OverDefinedPairTy &P : Parent->OverDefinedCache)
+    if (P.second == getValPtr())
+      ToErase.push_back(P);
+  for (const OverDefinedPairTy &P : ToErase)
+    Parent->OverDefinedCache.erase(P);
   
   // This erasure deallocates *this, so it MUST happen after we're done
   // using any and all members of *this.
@@ -464,15 +458,11 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
   SeenBlocks.erase(I);
 
   SmallVector<OverDefinedPairTy, 4> ToErase;
-  for (DenseSet<OverDefinedPairTy>::iterator  I = OverDefinedCache.begin(),
-       E = OverDefinedCache.end(); I != E; ++I) {
-    if (I->first == BB)
-      ToErase.push_back(*I);
-  }
-
-  for (SmallVectorImpl<OverDefinedPairTy>::iterator I = ToErase.begin(),
-       E = ToErase.end(); I != E; ++I)
-    OverDefinedCache.erase(*I);
+  for (const OverDefinedPairTy& P : OverDefinedCache)
+    if (P.first == BB)
+      ToErase.push_back(P);
+  for (const OverDefinedPairTy &P : ToErase)
+    OverDefinedCache.erase(P);
 
   for (std::map<LVIValueHandle, ValueCacheEntryTy>::iterator
        I = ValueCache.begin(), E = ValueCache.end(); I != E; ++I)
@@ -620,9 +610,8 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
       // If 'GetUnderlyingObject' didn't converge, skip it. It won't converge
       // inside InstructionDereferencesPointer either.
       if (UnderlyingVal == GetUnderlyingObject(UnderlyingVal, nullptr, 1)) {
-        for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
-             BI != BE; ++BI) {
-          if (InstructionDereferencesPointer(BI, UnderlyingVal)) {
+        for (Instruction &I : *BB) {
+          if (InstructionDereferencesPointer(&I, UnderlyingVal)) {
             NotNull = true;
             break;
           }
@@ -915,8 +904,7 @@ static bool getEdgeValueLocal(Value *Val, BasicBlock *BBFrom,
     unsigned BitWidth = Val->getType()->getIntegerBitWidth();
     ConstantRange EdgesVals(BitWidth, DefaultCase/*isFullSet*/);
 
-    for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
-         i != e; ++i) {
+    for (SwitchInst::CaseIt i : SI->cases()) {
       ConstantRange EdgeVal(i.getCaseValue()->getValue());
       if (DefaultCase) {
         // It is possible that the default destination is the destination of
@@ -1050,11 +1038,9 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   worklist.push_back(OldSucc);
   
   DenseSet<Value*> ClearSet;
-  for (DenseSet<OverDefinedPairTy>::iterator I = OverDefinedCache.begin(),
-       E = OverDefinedCache.end(); I != E; ++I) {
-    if (I->first == OldSucc)
-      ClearSet.insert(I->second);
-  }
+  for (OverDefinedPairTy &P : OverDefinedCache)
+    if (P.first == OldSucc)
+      ClearSet.insert(P.second);
   
   // Use a worklist to perform a depth-first search of OldSucc's successors.
   // NOTE: We do not need a visited list since any blocks we have already
@@ -1068,15 +1054,14 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
     if (ToUpdate == NewSucc) continue;
     
     bool changed = false;
-    for (DenseSet<Value*>::iterator I = ClearSet.begin(), E = ClearSet.end();
-         I != E; ++I) {
+    for (Value *V : ClearSet) {
       // If a value was marked overdefined in OldSucc, and is here too...
       DenseSet<OverDefinedPairTy>::iterator OI =
-        OverDefinedCache.find(std::make_pair(ToUpdate, *I));
+        OverDefinedCache.find(std::make_pair(ToUpdate, V));
       if (OI == OverDefinedCache.end()) continue;
 
       // Remove it from the caches.
-      ValueCacheEntryTy &Entry = ValueCache[LVIValueHandle(*I, this)];
+      ValueCacheEntryTy &Entry = ValueCache[LVIValueHandle(V, this)];
       ValueCacheEntryTy::iterator CI = Entry.find(ToUpdate);
 
       assert(CI != Entry.end() && "Couldn't find entry to update?");
