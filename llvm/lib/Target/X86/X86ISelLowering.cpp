@@ -9999,8 +9999,8 @@ static SDValue lowerV2X128VectorShuffle(SDLoc DL, MVT VT, SDValue V1,
 static SDValue lowerVectorShuffleByMerging128BitLanes(
     SDLoc DL, MVT VT, SDValue V1, SDValue V2, ArrayRef<int> Mask,
     const X86Subtarget *Subtarget, SelectionDAG &DAG) {
-  assert(is128BitLaneCrossingShuffleMask(VT, Mask) &&
-         "This is only useful when there are cross-128-bit-lane shuffles.");
+  assert(!isSingleInputShuffleMask(Mask) &&
+         "This is only useful with multiple inputs.");
 
   int Size = Mask.size();
   int LaneSize = 128 / VT.getScalarSizeInBits();
@@ -10170,8 +10170,7 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // shuffle. However, if we have AVX2 and either inputs are already in place,
   // we will be able to shuffle even across lanes the other input in a single
   // instruction so skip this pattern.
-  if (is128BitLaneCrossingShuffleMask(MVT::v4f64, Mask) &&
-      !(Subtarget->hasAVX2() && (isShuffleMaskInputInPlace(0, Mask) ||
+  if (!(Subtarget->hasAVX2() && (isShuffleMaskInputInPlace(0, Mask) ||
                                  isShuffleMaskInputInPlace(1, Mask))))
     if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
             DL, MVT::v4f64, V1, V2, Mask, Subtarget, DAG))
@@ -10251,8 +10250,7 @@ static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // shuffle. However, if we have AVX2 and either inputs are already in place,
   // we will be able to shuffle even across lanes the other input in a single
   // instruction so skip this pattern.
-  if (is128BitLaneCrossingShuffleMask(MVT::v4i64, Mask) &&
-      !(Subtarget->hasAVX2() && (isShuffleMaskInputInPlace(0, Mask) ||
+  if (!(Subtarget->hasAVX2() && (isShuffleMaskInputInPlace(0, Mask) ||
                                  isShuffleMaskInputInPlace(1, Mask))))
     if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
             DL, MVT::v4i64, V1, V2, Mask, Subtarget, DAG))
@@ -10337,10 +10335,9 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.
-  if (is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask))
-    if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
-            DL, MVT::v8f32, V1, V2, Mask, Subtarget, DAG))
-      return Result;
+  if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
+          DL, MVT::v8f32, V1, V2, Mask, Subtarget, DAG))
+    return Result;
 
   // If we have AVX2 then we always want to lower with a blend because at v8 we
   // can fully permute the elements.
@@ -10407,10 +10404,9 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.
-  if (is128BitLaneCrossingShuffleMask(MVT::v8i32, Mask))
-    if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
-            DL, MVT::v8i32, V1, V2, Mask, Subtarget, DAG))
-      return Result;
+  if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
+          DL, MVT::v8i32, V1, V2, Mask, Subtarget, DAG))
+    return Result;
 
   // Otherwise fall back on generic blend lowering.
   return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v8i32, V1, V2,
