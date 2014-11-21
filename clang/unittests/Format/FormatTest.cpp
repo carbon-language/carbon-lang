@@ -745,6 +745,11 @@ TEST_F(FormatTest, ShortCaseLabels) {
                "case 3:\n"
                "case 4:\n"
                "case 5: return;\n"
+               "case 6: // comment\n"
+               "  return;\n"
+               "case 7:\n"
+               "  // comment\n"
+               "  return;\n"
                "default: y = 1; break;\n"
                "}",
                Style);
