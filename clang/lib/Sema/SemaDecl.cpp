@@ -5613,22 +5613,20 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     NewVD->setLocalExternDecl();
 
   if (DeclSpec::TSCS TSCS = D.getDeclSpec().getThreadStorageClassSpec()) {
-    if (NewVD->hasLocalStorage()) {
-      // C++11 [dcl.stc]p4:
-      //   When thread_local is applied to a variable of block scope the
-      //   storage-class-specifier static is implied if it does not appear
-      //   explicitly.
-      // Core issue: 'static' is not implied if the variable is declared
-      //   'extern'.
-      if (SCSpec == DeclSpec::SCS_unspecified &&
-          TSCS == DeclSpec::TSCS_thread_local &&
-          DC->isFunctionOrMethod())
-        NewVD->setTSCSpec(TSCS);
-      else
-        Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
-             diag::err_thread_non_global)
-          << DeclSpec::getSpecifierName(TSCS);
-    } else if (!Context.getTargetInfo().isTLSSupported())
+    // C++11 [dcl.stc]p4:
+    //   When thread_local is applied to a variable of block scope the
+    //   storage-class-specifier static is implied if it does not appear
+    //   explicitly.
+    // Core issue: 'static' is not implied if the variable is declared
+    //   'extern'.
+    if (NewVD->hasLocalStorage() &&
+        (SCSpec != DeclSpec::SCS_unspecified ||
+         TSCS != DeclSpec::TSCS_thread_local ||
+         !DC->isFunctionOrMethod()))
+      Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
+           diag::err_thread_non_global)
+        << DeclSpec::getSpecifierName(TSCS);
+    else if (!Context.getTargetInfo().isTLSSupported())
       Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
            diag::err_thread_unsupported);
     else
