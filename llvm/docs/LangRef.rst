@@ -941,23 +941,26 @@ Currently, only the following parameter attributes are defined:
 .. _noalias:
 
 ``noalias``
-    This indicates that pointer values :ref:`based <pointeraliasing>` on
-    the argument or return value do not alias pointer values that are
-    not *based* on it, ignoring certain "irrelevant" dependencies. For a
-    call to the parent function, dependencies between memory references
-    from before or after the call and from those during the call are
-    "irrelevant" to the ``noalias`` keyword for the arguments and return
-    value used in that call. The caller shares the responsibility with
-    the callee for ensuring that these requirements are met. For further
-    details, please see the discussion of the NoAlias response in :ref:`alias
-    analysis <Must, May, or No>`.
+    This indicates that objects accessed via pointer values
+    :ref:`based <pointeraliasing>` on the argument or return value are not also
+    accessed, during the execution of the function, via pointer values not
+    *based* on the argument or return value. The attribute on a return value
+    also has additional semantics described below. The caller shares the
+    responsibility with the callee for ensuring that these requirements are met.
+    For further details, please see the discussion of the NoAlias response in
+    :ref:`alias analysis <Must, May, or No>`.
 
     Note that this definition of ``noalias`` is intentionally similar
-    to the definition of ``restrict`` in C99 for function arguments,
-    though it is slightly weaker.
+    to the definition of ``restrict`` in C99 for function arguments.
 
     For function return values, C99's ``restrict`` is not meaningful,
-    while LLVM's ``noalias`` is.
+    while LLVM's ``noalias`` is. Furthermore, the semantics of the ``noalias``
+    attribute on return values are stronger than the semantics of the attribute
+    when used on function arguments. On function return values, the ``noalias``
+    attribute indicates that the function acts like a system memory allocation
+    function, returning a pointer to allocated storage disjoint from the
+    storage for any other object accessible to the caller.
+
 ``nocapture``
     This indicates that the callee does not make any copies of the
     pointer that outlive the callee itself. This is not a valid
