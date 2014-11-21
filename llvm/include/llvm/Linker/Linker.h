@@ -24,31 +24,30 @@ class StructType;
 /// module since it is assumed that the user of this class will want to do
 /// something with it after the linking.
 class Linker {
-  public:
-    typedef std::function<void(const DiagnosticInfo &)>
-        DiagnosticHandlerFunction;
+public:
+  typedef std::function<void(const DiagnosticInfo &)> DiagnosticHandlerFunction;
 
-    Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
-    Linker(Module *M);
-    ~Linker();
+  Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
+  Linker(Module *M);
+  ~Linker();
 
-    Module *getModule() const { return Composite; }
-    void deleteModule();
+  Module *getModule() const { return Composite; }
+  void deleteModule();
 
-    /// \brief Link \p Src into the composite. The source is destroyed.
-    /// Returns true on error.
-    bool linkInModule(Module *Src);
+  /// \brief Link \p Src into the composite. The source is destroyed.
+  /// Returns true on error.
+  bool linkInModule(Module *Src);
 
-    static bool LinkModules(Module *Dest, Module *Src,
-                            DiagnosticHandlerFunction DiagnosticHandler);
+  static bool LinkModules(Module *Dest, Module *Src,
+                          DiagnosticHandlerFunction DiagnosticHandler);
 
-    static bool LinkModules(Module *Dest, Module *Src);
+  static bool LinkModules(Module *Dest, Module *Src);
 
-  private:
-    void init(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
-    Module *Composite;
-    SmallPtrSet<StructType*, 32> IdentifiedStructTypes;
-    DiagnosticHandlerFunction DiagnosticHandler;
+private:
+  void init(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
+  Module *Composite;
+  SmallPtrSet<StructType *, 32> IdentifiedStructTypes;
+  DiagnosticHandlerFunction DiagnosticHandler;
 };
 
 } // End llvm namespace
