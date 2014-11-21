@@ -8799,6 +8799,23 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
       Args = MultiExprArg(CXXDirectInit->getExprs(),
                           CXXDirectInit->getNumExprs());
 
+    // Try to correct any TypoExprs if there might be some in the initialization
+    // arguments (TypoExprs are marked as type-dependent).
+    // TODO: Handle typo correction when there's more than one argument?
+    if (Args.size() == 1 && Expr::hasAnyTypeDependentArguments(Args)) {
+      ExprResult Res =
+          CorrectDelayedTyposInExpr(Args[0], [this, Entity, Kind](Expr *E) {
+            InitializationSequence Init(*this, Entity, Kind, MultiExprArg(E));
+            return Init.Failed() ? ExprError() : E;
+          });
+      if (Res.isInvalid()) {
+        VDecl->setInvalidDecl();
+        return;
+      }
+      if (Res.get() != Args[0])
+        Args[0] = Res.get();
+    }
+
     InitializationSequence InitSeq(*this, Entity, Kind, Args);
     ExprResult Result = InitSeq.Perform(*this, Entity, Kind, Args, &DclT);
     if (Result.isInvalid()) {

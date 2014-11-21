@@ -59,3 +59,37 @@ void testExprFilter(Item *i) {
   Item *j;
   j = i->Next();  // expected-error {{no member named 'Next' in 'Item'; did you mean 'next'?}}
 }
+
+// Test that initializer expressions are handled correctly and that the type
+// being initialized is taken into account when choosing a correction.
+namespace initializerCorrections {
+struct Node {
+  string text() const;
+  // Node* Next() is not implemented yet
+};
+void f(Node *node) {
+  // text is only an edit distance of 1 from Next, but would trigger type
+  // conversion errors if used in this initialization expression.
+  Node *next = node->Next();  // expected-error-re {{no member named 'Next' in 'initializerCorrections::Node'{{$}}}}
+}
+
+struct LinkedNode {
+  LinkedNode* next();  // expected-note {{'next' declared here}}
+  string text() const;
+};
+void f(LinkedNode *node) {
+  // text and next are equidistant from Next, but only one results in a valid
+  // initialization expression.
+  LinkedNode *next = node->Next();  // expected-error {{no member named 'Next' in 'initializerCorrections::LinkedNode'; did you mean 'next'?}}
+}
+
+struct NestedNode {
+  NestedNode* Nest();
+  NestedNode* next();
+  string text() const;
+};
+void f(NestedNode *node) {
+  // There are two equidistant, usable corrections for Next: next and Nest
+  NestedNode *next = node->Next();  // expected-error-re {{no member named 'Next' in 'initializerCorrections::NestedNode'{{$}}}}
+}
+}
