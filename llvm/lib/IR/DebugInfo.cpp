@@ -567,8 +567,8 @@ bool DIGlobalVariable::Verify() const {
 
   if (getDisplayName().empty())
     return false;
-  // Make sure context @ field 1 is a ScopeRef.
-  if (!fieldIsScopeRef(DbgNode, 1))
+  // Make sure context @ field 1 is an MDNode.
+  if (!fieldIsMDNode(DbgNode, 1))
     return false;
   // Make sure that type @ field 3 is a DITypeRef.
   if (!fieldIsTypeRef(DbgNode, 3))
@@ -1005,7 +1005,7 @@ void DebugInfoFinder::processModule(const Module &M) {
       for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
         DIGlobalVariable DIG(GVs.getElement(i));
         if (addGlobalVariable(DIG)) {
-          processScope(DIG.getContext().resolve(TypeIdentifierMap));
+          processScope(DIG.getContext());
           processType(DIG.getType().resolve(TypeIdentifierMap));
         }
       }

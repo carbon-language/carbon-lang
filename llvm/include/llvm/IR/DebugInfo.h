@@ -763,7 +763,7 @@ public:
   unsigned isLocalToUnit() const { return getHeaderFieldAs<bool>(5); }
   unsigned isDefinition() const { return getHeaderFieldAs<bool>(6); }
 
-  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
+  DIScope getContext() const { return getFieldAs<DIScope>(1); }
   StringRef getFilename() const { return getFieldAs<DIFile>(2).getFilename(); }
   StringRef getDirectory() const {
     return getFieldAs<DIFile>(2).getDirectory();

@@ -103,7 +103,7 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
 
   assert(GV.isGlobalVariable());
 
-  DIScope GVContext = DD->resolve(GV.getContext());
+  DIScope GVContext = GV.getContext();
   DIType GTy = DD->resolve(GV.getType());
 
   // Construct the context before querying for the existence of the DIE in
@@ -122,7 +122,7 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
     DIE *VariableSpecDIE = getOrCreateStaticMemberDIE(SDMDecl);
     addDIEEntry(*VariableDIE, dwarf::DW_AT_specification, *VariableSpecDIE);
   } else {
-    DeclContext = resolve(GV.getContext());
+    DeclContext = GV.getContext();
     // Add name and type.
     addString(*VariableDIE, dwarf::DW_AT_name, GV.getDisplayName());
     addType(*VariableDIE, GTy);

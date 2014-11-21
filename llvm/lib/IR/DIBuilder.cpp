@@ -851,7 +851,7 @@ static DIGlobalVariable createGlobalVariableHelper(
                        .concat(isLocalToUnit)
                        .concat(isDefinition)
                        .get(VMContext),
-                   DIScope(TheCtx).getRef(), F, Ty, Val,
+                   TheCtx, F, Ty, Val,
                    DIDescriptor(Decl)};
 
   return DIGlobalVariable(CreateFunc(Elts));
