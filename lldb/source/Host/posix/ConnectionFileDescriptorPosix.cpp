@@ -96,7 +96,7 @@ ConnectionFileDescriptor::OpenCommandPipe()
 
     Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_CONNECTION));
     // Make the command file descriptor here:
-    if (!m_pipe.Open())
+    if (!m_pipe.Open(m_child_processes_inherit))
     {
         if (log)
             log->Printf("%p ConnectionFileDescriptor::OpenCommandPipe () - could not make pipe: %s", static_cast<void *>(this),

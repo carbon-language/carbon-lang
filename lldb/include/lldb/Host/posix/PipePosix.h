@@ -36,7 +36,7 @@ public:
     ~Pipe();
     
     bool
-    Open();
+    Open(bool child_processes_inherit = false);
 
     bool
     IsValid() const;

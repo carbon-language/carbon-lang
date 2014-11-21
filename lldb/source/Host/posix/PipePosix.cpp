@@ -10,12 +10,32 @@
 #include "lldb/Host/posix/PipePosix.h"
 
 #include <unistd.h>
+#include <fcntl.h>
 
 using namespace lldb_private;
 
 int Pipe::kInvalidDescriptor = -1;
 
 enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
+
+// pipe2 is supported by Linux, FreeBSD v10 and higher.
+// TODO: Add more platforms that support pipe2.
+#define PIPE2_SUPPORTED defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD__ >= 10)
+
+namespace
+{
+
+#if defined(FD_CLOEXEC) && !PIPE2_SUPPORTED
+bool SetCloexecFlag(int fd)
+{
+    int flags = ::fcntl(fd, F_GETFD);
+    if (flags == -1)
+        return false;
+    return (::fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == 0);
+}
+#endif
+
+}
 
 Pipe::Pipe()
 {
@@ -29,13 +49,30 @@ Pipe::~Pipe()
 }
 
 bool
-Pipe::Open()
+Pipe::Open(bool child_processes_inherit)
 {
     if (IsValid())
         return true;
 
-    if (::pipe(m_fds) == 0)
+#if PIPE2_SUPPORTED
+    if (::pipe2(m_fds, (child_processes_inherit) ? 0 : O_CLOEXEC) == 0)
         return true;
+#else
+    if (::pipe(m_fds) == 0)
+    {
+#ifdef FD_CLOEXEC
+        if (!child_processes_inherit)
+        {
+            if (!SetCloexecFlag(m_fds[0]) || !SetCloexecFlag(m_fds[1]))
+            {
+                Close();
+                return false;
+            }
+        }
+#endif
+        return true;
+    }
+#endif
 
     m_fds[READ] = Pipe::kInvalidDescriptor;
     m_fds[WRITE] = Pipe::kInvalidDescriptor;
