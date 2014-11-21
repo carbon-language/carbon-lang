@@ -546,6 +546,7 @@ class DS <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
   let LGKM_CNT = 1;
   let UseNamedOperandTable = 1;
+  let DisableEncoding = "$m0";
 }
 
 class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :

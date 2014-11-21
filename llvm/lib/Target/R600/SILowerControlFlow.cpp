@@ -88,7 +88,6 @@ private:
   void Kill(MachineInstr &MI);
   void Branch(MachineInstr &MI);
 
-  void InitM0ForLDS(MachineBasicBlock::iterator MI);
   void LoadM0(MachineInstr &MI, MachineInstr *MovRel);
   void IndirectSrc(MachineInstr &MI);
   void IndirectDst(MachineInstr &MI);
@@ -325,14 +324,6 @@ void SILowerControlFlowPass::Kill(MachineInstr &MI) {
   MI.eraseFromParent();
 }
 
-/// The m0 register stores the maximum allowable address for LDS reads and
-/// writes.  Its value must be at least the size in bytes of LDS allocated by
-/// the shader.  For simplicity, we set it to the maximum possible value.
-void SILowerControlFlowPass::InitM0ForLDS(MachineBasicBlock::iterator MI) {
-    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),  TII->get(AMDGPU::S_MOV_B32),
-            AMDGPU::M0).addImm(0xffffffff);
-}
-
 void SILowerControlFlowPass::LoadM0(MachineInstr &MI, MachineInstr *MovRel) {
 
   MachineBasicBlock &MBB = *MI.getParent();
@@ -391,12 +382,6 @@ void SILowerControlFlowPass::LoadM0(MachineInstr &MI, MachineInstr *MovRel) {
             .addReg(Save);
 
   }
-  // FIXME: Are there any values other than the LDS address clamp that need to
-  // be stored in the m0 register and may be live for more than a few
-  // instructions?  If so, we should save the m0 register at the beginning
-  // of this function and restore it here.
-  // FIXME: Add support for LDS direct loads.
-  InitM0ForLDS(&MI);
   MI.eraseFromParent();
 }
 
@@ -465,7 +450,6 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
 
       MachineInstr &MI = *I;
       if (TII->isDS(MI.getOpcode())) {
-        NeedM0 = true;
         NeedWQM = true;
       }
 
@@ -542,13 +526,6 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
           break;
       }
     }
-  }
-
-  if (NeedM0) {
-    MachineBasicBlock &MBB = MF.front();
-    // Initialize M0 to a value that won't cause LDS access to be discarded
-    // due to offset clamping
-    InitM0ForLDS(MBB.getFirstNonPHI());
   }
 
   if (NeedWQM && MFI->getShaderType() == ShaderType::PIXEL) {

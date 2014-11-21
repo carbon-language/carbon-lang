@@ -222,6 +222,7 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   // Be careful, since the addresses could be subregisters themselves in weird
   // cases, like vectors of pointers.
   const MachineOperand *AddrReg = TII->getNamedOperand(*I, AMDGPU::OpName::addr);
+  const MachineOperand *M0Reg = TII->getNamedOperand(*I, AMDGPU::OpName::m0);
 
   unsigned DestReg0 = TII->getNamedOperand(*I, AMDGPU::OpName::vdst)->getReg();
   unsigned DestReg1
@@ -262,6 +263,7 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
     .addOperand(*AddrReg) // addr
     .addImm(NewOffset0) // offset0
     .addImm(NewOffset1) // offset1
+    .addOperand(*M0Reg) // M0
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());
 
@@ -280,6 +282,9 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   LiveInterval &AddrRegLI = LIS->getInterval(AddrReg->getReg());
   LIS->shrinkToUses(&AddrRegLI);
 
+  LiveInterval &M0RegLI = LIS->getInterval(M0Reg->getReg());
+  LIS->shrinkToUses(&M0RegLI);
+
   LIS->getInterval(DestReg); // Create new LI
 
   DEBUG(dbgs() << "Inserted read2: " << *Read2 << '\n');
@@ -295,6 +300,7 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
   // Be sure to use .addOperand(), and not .addReg() with these. We want to be
   // sure we preserve the subregister index and any register flags set on them.
   const MachineOperand *Addr = TII->getNamedOperand(*I, AMDGPU::OpName::addr);
+  const MachineOperand *M0Reg = TII->getNamedOperand(*I, AMDGPU::OpName::m0);
   const MachineOperand *Data0 = TII->getNamedOperand(*I, AMDGPU::OpName::data0);
   const MachineOperand *Data1
     = TII->getNamedOperand(*Paired, AMDGPU::OpName::data0);
@@ -333,11 +339,13 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
     .addOperand(*Data1) // data1
     .addImm(NewOffset0) // offset0
     .addImm(NewOffset1) // offset1
+    .addOperand(*M0Reg)  // m0
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());
 
   // XXX - How do we express subregisters here?
-  unsigned OrigRegs[] = { Data0->getReg(), Data1->getReg(), Addr->getReg() };
+  unsigned OrigRegs[] = { Data0->getReg(), Data1->getReg(), Addr->getReg(),
+                          M0Reg->getReg()};
 
   LIS->RemoveMachineInstrFromMaps(I);
   LIS->RemoveMachineInstrFromMaps(Paired);

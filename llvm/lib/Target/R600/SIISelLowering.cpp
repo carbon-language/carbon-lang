@@ -1986,6 +1986,7 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
       getTargetMachine().getSubtargetImpl()->getInstrInfo());
 
+  MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   TII->legalizeOperands(MI);
 
   if (TII->isMIMG(MI->getOpcode())) {
@@ -2005,7 +2006,6 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
 
     unsigned NewOpcode = TII->getMaskedMIMGOp(MI->getOpcode(), BitsSet);
     MI->setDesc(TII->get(NewOpcode));
-    MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
     MRI.setRegClass(VReg, RC);
     return;
   }
