@@ -425,3 +425,17 @@ void doubleLevelAccessIvar(Test *a, Test *b) {
 }
 @end
 
+// rdar://19053620
+@interface NSNull
++ (NSNull *)null;
+@end
+
+@interface INTF @end
+
+@implementation INTF
+- (void) Meth : (id) data
+{
+  data = data ?: NSNull.null;
+}
+@end
+
