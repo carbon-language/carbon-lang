@@ -6574,9 +6574,14 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
         (Kind == DeclarationName::CXXOperatorName &&
          Name.getCXXOverloadedOperator() == OO_Equal)) {
       auto Merged = MergedLookups.find(DC);
-      if (Merged != MergedLookups.end())
-        for (auto *MergedDC : Merged->second)
-          LookUpInContexts(MergedDC);
+      if (Merged != MergedLookups.end()) {
+        for (unsigned I = 0; I != Merged->second.size(); ++I) {
+          LookUpInContexts(Merged->second[I]);
+          // We might have just added some more merged lookups. If so, our
+          // iterator is now invalid, so grab a fresh one before continuing.
+          Merged = MergedLookups.find(DC);
+        }
+      }
     }
   }
 
