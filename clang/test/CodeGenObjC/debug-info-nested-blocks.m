@@ -22,5 +22,5 @@ void bar(void) {
 // innermost block.
 //
 // CHECK: define {{.*}}void @__bar_block_invoke_3(i8* %.block_descriptor)
-// CHECK: %[[BLOCKADDR:.*]] = alloca <{{.*}}>*, align 8
+// CHECK: %[[BLOCKADDR:.*]] = alloca <{{.*}}>*, align
 // CHECK: call void @llvm.dbg.declare(metadata !{{.*}}%[[BLOCKADDR]]
