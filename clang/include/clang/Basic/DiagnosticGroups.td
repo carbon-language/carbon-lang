@@ -60,7 +60,7 @@ def ExternCCompat : DiagGroup<"extern-c-compat">;
 def KeywordCompat : DiagGroup<"keyword-compat">;
 def GNUCaseRange : DiagGroup<"gnu-case-range">;
 def CastAlign : DiagGroup<"cast-align">;
-def : DiagGroup<"cast-qual">;
+def CastQual : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;
 def GNUComplexInteger : DiagGroup<"gnu-complex-integer">;

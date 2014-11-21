@@ -6115,6 +6115,11 @@ def warn_zero_size_struct_union_compat : Warning<"%select{|empty }0"
 def warn_zero_size_struct_union_in_extern_c : Warning<"%select{|empty }0"
   "%select{struct|union}1 has size 0 in C, %select{size 1|non-zero size}2 in C++">,
   InGroup<ExternCCompat>;
+def warn_cast_qual : Warning<"cast from %0 to %1 drops %select{const and "
+  "volatile qualifiers|const qualifier|volatile qualifier}2">,
+  InGroup<CastQual>, DefaultIgnore;
+def warn_cast_qual2 : Warning<"cast from %0 to %1 must have all intermediate "
+  "pointers const qualified to be safe">, InGroup<CastQual>, DefaultIgnore;
 } // End of general sema category.
 
 // inline asm.
