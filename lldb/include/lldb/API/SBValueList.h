@@ -43,6 +43,9 @@ public:
 
     lldb::SBValue
     GetValueAtIndex (uint32_t idx) const;
+    
+    lldb::SBValue
+    GetValueByName (const char* name) const;
 
     lldb::SBValue
     FindValueObjectByUID (lldb::user_id_t uid);

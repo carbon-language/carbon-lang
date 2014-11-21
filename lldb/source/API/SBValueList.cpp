@@ -78,6 +78,21 @@ public:
         }
         return lldb::SBValue();
     }
+    
+    lldb::SBValue
+    GetValueByName (const char* name) const
+    {
+        if (name)
+        {
+            for (auto val : m_values)
+            {
+                if (val.IsValid() && val.GetName() &&
+                    strcmp(name,val.GetName()) == 0)
+                    return val;
+            }
+        }
+        return lldb::SBValue();
+    }
 
 private:
     std::vector<lldb::SBValue> m_values;
@@ -258,6 +273,15 @@ SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
     SBValue sb_value;
     if (m_opaque_ap.get())
         sb_value = m_opaque_ap->FindValueByUID(uid);
+    return sb_value;
+}
+
+SBValue
+SBValueList::GetValueByName (const char* name) const
+{
+    SBValue sb_value;
+    if (m_opaque_ap.get())
+        sb_value = m_opaque_ap->GetValueByName(name);
     return sb_value;
 }
 
