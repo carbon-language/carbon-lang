@@ -135,9 +135,10 @@ struct vDerived : virtual public vBase {};
 
 void test8 ()
 {
+    vDerived derived;
     try
     {
-        throw new vDerived;
+        throw &derived;
         assert(false);
     }
     catch (vBase *p) {

@@ -56,11 +56,11 @@ void f2() {
 }
 
 void f3() {
-  Child* child  = new Child;
-  child->b1 = 10;
-  child->b2 = 11;
-  child->c = 12;
-  throw static_cast<Base2*>(child);
+  static Child child;
+  child.b1 = 10;
+  child.b2 = 11;
+  child.c = 12;
+  throw static_cast<Base2*>(&child);
 }
 
 int main()
