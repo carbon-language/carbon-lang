@@ -1178,8 +1178,10 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
   }
 
   // Check that all instructions have their parent pointers set up correctly.
-  for (auto &I: BB)
+  for (auto &I : BB)
+  {
     Assert(I.getParent() == &BB, "Instruction has bogus parent pointer!");
+  }
 }
 
 void Verifier::visitTerminatorInst(TerminatorInst &I) {
