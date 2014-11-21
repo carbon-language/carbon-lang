@@ -16,16 +16,17 @@ using namespace lldb;
 using namespace std;
 
 // listener thread control
-extern atomic<bool> g_done; 
+extern atomic<bool> g_done;
+extern SBListener g_listener;
 
 multithreaded_queue<string> g_event_descriptions;
-
-extern SBListener g_listener;
+string g_error_desc;
 
 void listener_func() {
   while (!g_done) {
     SBEvent event;
     bool got_event = g_listener.WaitForEvent(1, event);
+
     if (got_event) {
       if (!event.IsValid())
         throw Exception("event is not valid in listener thread");
@@ -38,27 +39,59 @@ void listener_func() {
   }
 }
 
-void check_listener(SBDebugger &dbg) {
-  array<string, 2> expected_states = {"running", "stopped"};
-  for(string & state : expected_states) {
-    bool got_description = false;
-    string desc = g_event_descriptions.pop(5, got_description);
+bool check_state(string &state, string &desc, bool got_description)
+{
+    g_error_desc.clear();
 
-    if (!got_description)
-      throw Exception("Did not get expected event description");
-
+    if(!got_description)
+    {
+        g_error_desc.append("Did not get expected event description");
+        return false;
+    }
 
     if (desc.find("state-changed") == desc.npos)
-      throw Exception("Event description incorrect: missing 'state-changed'");
+        g_error_desc.append("Event description incorrect: missing 'state-changed' ");
+
+    if (desc.find("pid = ") == desc.npos)
+        g_error_desc.append("Event description incorrect: missing process pid ");
 
     string state_search_str = "state = " + state;
     if (desc.find(state_search_str) == desc.npos)
-      throw Exception("Event description incorrect: expected state "
+    {
+        string errString = ("Event description incorrect: expected state "
                       + state
                       + " but desc was "
                       + desc);
+        g_error_desc.append(errString);
+    }
 
-    if (desc.find("pid = ") == desc.npos)
-      throw Exception("Event description incorrect: missing process pid");
-  }
+    if (g_error_desc.length() > 0)
+        return false;
+
+    cout << "check_state: " << state << "  OK\n";
+    return true;
+}
+
+void check_listener(SBDebugger &dbg)
+{
+    bool got_description;
+    string state;
+
+    // check for "launching" state, this may or may not be present
+    string desc = g_event_descriptions.pop(5, got_description);
+    state = "launching";
+    if (check_state(state, desc, got_description))
+    {
+        // found a 'launching' state, pop next one from queue
+        desc = g_event_descriptions.pop(5, got_description);
+    }
+
+    state = "running";
+    if( !check_state(state, desc, got_description) )
+        throw Exception(g_error_desc);
+
+    desc = g_event_descriptions.pop(5, got_description);
+    state = "stopped";
+    if( !check_state(state, desc, got_description) )
+        throw Exception(g_error_desc);
 }
