@@ -245,13 +245,13 @@ ValueObjectPrinter::PrintTypeIfNeeded ()
     {
         // Some ValueObjects don't have types (like registers sets). Only print
         // the type if there is one to print
-        ConstString qualified_type_name;
-        if (options.m_be_raw)
-            qualified_type_name = m_valobj->GetQualifiedTypeName();
+        ConstString type_name;
+        if (options.m_use_type_display_name)
+            type_name = m_valobj->GetDisplayTypeName();
         else
-            qualified_type_name = m_valobj->GetDisplayTypeName();
-        if (qualified_type_name)
-            m_stream->Printf("(%s) ", qualified_type_name.GetCString());
+            type_name = m_valobj->GetQualifiedTypeName();
+        if (type_name)
+            m_stream->Printf("(%s) ", type_name.GetCString());
         else
             show_type = false;
     }
@@ -631,7 +631,7 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
     
     uint32_t curr_ptr_depth = m_ptr_depth;
     bool print_children = ShouldPrintChildren (is_failed_description,curr_ptr_depth);
-    bool print_oneline = (curr_ptr_depth > 0 || options.m_show_types || options.m_be_raw) ? false : DataVisualization::ShouldPrintAsOneLiner(*m_valobj);
+    bool print_oneline = (curr_ptr_depth > 0 || options.m_show_types || !options.m_allow_oneliner_mode) ? false : DataVisualization::ShouldPrintAsOneLiner(*m_valobj);
     
     if (print_children)
     {

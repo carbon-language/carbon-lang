@@ -185,7 +185,7 @@ OptionGroupValueObjectDisplay::GetAsDumpOptions (LanguageRuntimeDescriptionDispl
         .SetHideValue(use_objc);
     
     if (be_raw)
-        options.SetRawDisplay(true);
+        options.SetRawDisplay();
     
     options.SetRunValidator(run_validator);
 
