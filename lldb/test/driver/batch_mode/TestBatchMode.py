@@ -50,7 +50,7 @@ class DriverBatchModeTest (TestBase):
         prompt = "(lldb) "
 
         # First time through, pass CRASH so the process will crash and stop in batch mode.
-        run_commands = ' -b -o "break set -n main" -o "run" -o "continue" '
+        run_commands = ' -b -o "break set -n main" -o "run" -o "continue" -k "frame var touch_me_not"'
         self.child = pexpect.spawn('%s %s %s %s -- CRASH' % (self.lldbHere, self.lldbOption, run_commands, exe))
         child = self.child
         # Turn on logging for what the child sends back.
@@ -63,6 +63,8 @@ class DriverBatchModeTest (TestBase):
         self.expect_string ("continue")
         # The App should have crashed:
         self.expect_string("About to crash")
+        # The -k option should have printed the frame variable once:
+        self.expect_string ('(char *) touch_me_not')
         # Then we should have a live prompt:
         self.expect_string (prompt)
         self.child.sendline("frame variable touch_me_not")
