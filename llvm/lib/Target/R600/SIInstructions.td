@@ -2499,17 +2499,21 @@ def : Pat <
 /********** Interpolation Paterns **********/
 /********** ===================== **********/
 
+// The value of $params is constant through out the entire kernel.
+// We need to use S_MOV_B32 $params, because CSE ignores copies, so
+// without it we end up with a lot of redundant moves.
+
 def : Pat <
   (int_SI_fs_constant imm:$attr_chan, imm:$attr, i32:$params),
-  (V_INTERP_MOV_F32 INTERP.P0, imm:$attr_chan, imm:$attr, $params)
+  (V_INTERP_MOV_F32 INTERP.P0, imm:$attr_chan, imm:$attr, (S_MOV_B32 $params))
 >;
 
 def : Pat <
-  (int_SI_fs_interp imm:$attr_chan, imm:$attr, M0Reg:$params, v2i32:$ij),
+  (int_SI_fs_interp imm:$attr_chan, imm:$attr, i32:$params, v2i32:$ij),
   (V_INTERP_P2_F32 (V_INTERP_P1_F32 (EXTRACT_SUBREG v2i32:$ij, sub0),
-                                    imm:$attr_chan, imm:$attr, i32:$params),
+                                    imm:$attr_chan, imm:$attr, (S_MOV_B32 $params)),
                    (EXTRACT_SUBREG $ij, sub1),
-                   imm:$attr_chan, imm:$attr, $params)
+                   imm:$attr_chan, imm:$attr, (S_MOV_B32 $params))
 >;
 
 /********** ================== **********/
