@@ -11088,121 +11088,11 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       return V;
   }
 
-  // If this shuffle node is simply a swizzle of another shuffle node,
-  // then try to simplify it.
-  if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
-      N1.getOpcode() == ISD::UNDEF) {
-
-    ShuffleVectorSDNode *OtherSV = cast<ShuffleVectorSDNode>(N0);
-
-    // The incoming shuffle must be of the same type as the result of the
-    // current shuffle.
-    assert(OtherSV->getOperand(0).getValueType() == VT &&
-           "Shuffle types don't match");
-
-    SmallVector<int, 4> Mask;
-    // Compute the combined shuffle mask.
-    for (unsigned i = 0; i != NumElts; ++i) {
-      int Idx = SVN->getMaskElt(i);
-      assert(Idx < (int)NumElts && "Index references undef operand");
-      // Next, this index comes from the first value, which is the incoming
-      // shuffle. Adopt the incoming index.
-      if (Idx >= 0)
-        Idx = OtherSV->getMaskElt(Idx);
-      Mask.push_back(Idx);
-    }
-
-    // Check if all indices in Mask are Undef. In case, propagate Undef.
-    bool isUndefMask = true;
-    for (unsigned i = 0; i != NumElts && isUndefMask; ++i)
-      isUndefMask &= Mask[i] < 0;
-
-    if (isUndefMask)
-      return DAG.getUNDEF(VT);
-
-    bool CommuteOperands = false;
-    if (N0.getOperand(1).getOpcode() != ISD::UNDEF) {
-      // To be valid, the combine shuffle mask should only reference elements
-      // from one of the two vectors in input to the inner shufflevector.
-      bool IsValidMask = true;
-      for (unsigned i = 0; i != NumElts && IsValidMask; ++i)
-        // See if the combined mask only reference undefs or elements coming
-        // from the first shufflevector operand.
-        IsValidMask = Mask[i] < 0 || (unsigned)Mask[i] < NumElts;
-
-      if (!IsValidMask) {
-        IsValidMask = true;
-        for (unsigned i = 0; i != NumElts && IsValidMask; ++i)
-          // Check that all the elements come from the second shuffle operand.
-          IsValidMask = Mask[i] < 0 || (unsigned)Mask[i] >= NumElts;
-        CommuteOperands = IsValidMask;
-      }
-
-      // Early exit if the combined shuffle mask is not valid.
-      if (!IsValidMask)
-        return SDValue();
-    }
-
-    // See if this pair of shuffles can be safely folded according to either
-    // of the following rules:
-    //   shuffle(shuffle(x, y), undef) -> x
-    //   shuffle(shuffle(x, undef), undef) -> x
-    //   shuffle(shuffle(x, y), undef) -> y
-    bool IsIdentityMask = true;
-    unsigned BaseMaskIndex = CommuteOperands ? NumElts : 0;
-    for (unsigned i = 0; i != NumElts && IsIdentityMask; ++i) {
-      // Skip Undefs.
-      if (Mask[i] < 0)
-        continue;
-
-      // The combined shuffle must map each index to itself.
-      IsIdentityMask = (unsigned)Mask[i] == i + BaseMaskIndex;
-    }
-
-    if (IsIdentityMask) {
-      if (CommuteOperands)
-        // optimize shuffle(shuffle(x, y), undef) -> y.
-        return OtherSV->getOperand(1);
-
-      // optimize shuffle(shuffle(x, undef), undef) -> x
-      // optimize shuffle(shuffle(x, y), undef) -> x
-      return OtherSV->getOperand(0);
-    }
-
-    // It may still be beneficial to combine the two shuffles if the
-    // resulting shuffle is legal.
-    if (TLI.isTypeLegal(VT)) {
-      if (!CommuteOperands) {
-        if (TLI.isShuffleMaskLegal(Mask, VT))
-          // shuffle(shuffle(x, undef, M1), undef, M2) -> shuffle(x, undef, M3).
-          // shuffle(shuffle(x, y, M1), undef, M2) -> shuffle(x, undef, M3)
-          return DAG.getVectorShuffle(VT, SDLoc(N), N0->getOperand(0), N1,
-                                      &Mask[0]);
-      } else {
-        // Compute the commuted shuffle mask.
-        for (unsigned i = 0; i != NumElts; ++i) {
-          int idx = Mask[i];
-          if (idx < 0)
-            continue;
-          else if (idx < (int)NumElts)
-            Mask[i] = idx + NumElts;
-          else
-            Mask[i] = idx - NumElts;
-        }
-
-        if (TLI.isShuffleMaskLegal(Mask, VT))
-          //   shuffle(shuffle(x, y, M1), undef, M2) -> shuffle(y, undef, M3)
-          return DAG.getVectorShuffle(VT, SDLoc(N), N0->getOperand(1), N1,
-                                      &Mask[0]);
-      }
-    }
-  }
-
   // Canonicalize shuffles according to rules:
   //  shuffle(A, shuffle(A, B)) -> shuffle(shuffle(A,B), A)
   //  shuffle(B, shuffle(A, B)) -> shuffle(shuffle(A,B), B)
   //  shuffle(B, shuffle(A, Undef)) -> shuffle(shuffle(A, Undef), B)
-  if (N1.getOpcode() == ISD::VECTOR_SHUFFLE && N0.getOpcode() != ISD::UNDEF &&
+  if (N1.getOpcode() == ISD::VECTOR_SHUFFLE &&
       N0.getOpcode() != ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
       TLI.isTypeLegal(VT)) {
     // The incoming shuffle must be of the same type as the result of the
@@ -11221,13 +11111,12 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   }
 
   // Try to fold according to rules:
-  //   shuffle(shuffle(A, B, M0), B, M1) -> shuffle(A, B, M2)
-  //   shuffle(shuffle(A, B, M0), A, M1) -> shuffle(A, B, M2)
-  //   shuffle(shuffle(A, Undef, M0), B, M1) -> shuffle(A, B, M2)
-  //   shuffle(shuffle(A, Undef, M0), A, M1) -> shuffle(A, Undef, M2)
+  //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(A, B, M2)
+  //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(A, C, M2)
+  //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(B, C, M2)
   // Don't try to fold shuffles with illegal type.
   if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
-      N1.getOpcode() != ISD::UNDEF && TLI.isTypeLegal(VT)) {
+      TLI.isTypeLegal(VT)) {
     ShuffleVectorSDNode *OtherSV = cast<ShuffleVectorSDNode>(N0);
 
     // The incoming shuffle must be of the same type as the result of the
@@ -11235,14 +11124,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     assert(OtherSV->getOperand(0).getValueType() == VT &&
            "Shuffle types don't match");
 
-    SDValue SV0 = OtherSV->getOperand(0);
-    SDValue SV1 = OtherSV->getOperand(1);
-    bool HasSameOp0 = N1 == SV0;
-    bool IsSV1Undef = SV1.getOpcode() == ISD::UNDEF;
-    if (!HasSameOp0 && !IsSV1Undef && N1 != SV1)
-      // Early exit.
-      return SDValue();
-
+    SDValue SV0, SV1;
     SmallVector<int, 4> Mask;
     // Compute the combined shuffle mask for a shuffle with SV0 as the first
     // operand, and SV1 as the second operand.
@@ -11254,14 +11136,49 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         continue;
       }
 
+      SDValue CurrentVec;
       if (Idx < (int)NumElts) {
+        // This shuffle index refers to the inner shuffle N0. Lookup the inner
+        // shuffle mask to identify which vector is actually referenced.
         Idx = OtherSV->getMaskElt(Idx);
-        if (IsSV1Undef && Idx >= (int) NumElts)
-          Idx = -1;  // Propagate Undef.
-      } else
-        Idx = HasSameOp0 ? Idx - NumElts : Idx;
+        if (Idx < 0) {
+          // Propagate Undef.
+          Mask.push_back(Idx);
+          continue;
+        }
 
-      Mask.push_back(Idx);
+        CurrentVec = (Idx < (int) NumElts) ? OtherSV->getOperand(0)
+                                           : OtherSV->getOperand(1);
+      } else {
+        // This shuffle index references an element within N1.
+        CurrentVec = N1;
+      }
+
+      // Simple case where 'CurrentVec' is UNDEF.
+      if (CurrentVec.getOpcode() == ISD::UNDEF) {
+        Mask.push_back(-1);
+        continue;
+      }
+
+      // Canonicalize the shuffle index. We don't know yet if CurrentVec
+      // will be the first or second operand of the combined shuffle.
+      Idx = Idx % NumElts;
+      if (!SV0.getNode() || SV0 == CurrentVec) {
+        // Ok. CurrentVec is the left hand side.
+        // Update the mask accordingly.
+        SV0 = CurrentVec;
+        Mask.push_back(Idx);
+        continue;
+      }
+
+      // Bail out if we cannot convert the shuffle pair into a single shuffle.
+      if (SV1.getNode() && SV1 != CurrentVec)
+        return SDValue();
+
+      // Ok. CurrentVec is the right hand side.
+      // Update the mask accordingly.
+      SV1 = CurrentVec;
+      Mask.push_back(Idx + NumElts);
     }
 
     // Check if all indices in Mask are Undef. In case, propagate Undef.
@@ -11272,34 +11189,37 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     if (isUndefMask)
       return DAG.getUNDEF(VT);
 
+    if (!SV0.getNode())
+      SV0 = DAG.getUNDEF(VT);
+    if (!SV1.getNode())
+      SV1 = DAG.getUNDEF(VT);
+
     // Avoid introducing shuffles with illegal mask.
-    if (TLI.isShuffleMaskLegal(Mask, VT)) {
-      if (IsSV1Undef)
-        //   shuffle(shuffle(A, Undef, M0), B, M1) -> shuffle(A, B, M2)
-        //   shuffle(shuffle(A, Undef, M0), A, M1) -> shuffle(A, Undef, M2)
-        return DAG.getVectorShuffle(VT, SDLoc(N), SV0, N1, &Mask[0]);
-      return DAG.getVectorShuffle(VT, SDLoc(N), SV0, SV1, &Mask[0]);
+    if (!TLI.isShuffleMaskLegal(Mask, VT)) {
+      // Compute the commuted shuffle mask and test again.
+      for (unsigned i = 0; i != NumElts; ++i) {
+        int idx = Mask[i];
+        if (idx < 0)
+          continue;
+        else if (idx < (int)NumElts)
+          Mask[i] = idx + NumElts;
+        else
+          Mask[i] = idx - NumElts;
+      }
+
+      if (!TLI.isShuffleMaskLegal(Mask, VT))
+        return SDValue();
+ 
+      //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(B, A, M2)
+      //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(C, A, M2)
+      //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(C, B, M2)
+      std::swap(SV0, SV1);
     }
 
-    // Compute the commuted shuffle mask.
-    for (unsigned i = 0; i != NumElts; ++i) {
-      int idx = Mask[i];
-      if (idx < 0)
-        continue;
-      else if (idx < (int)NumElts)
-        Mask[i] = idx + NumElts;
-      else
-        Mask[i] = idx - NumElts;
-    }
-
-    if (TLI.isShuffleMaskLegal(Mask, VT)) {
-      if (IsSV1Undef)
-        //   shuffle(shuffle(A, Undef, M0), B, M1) -> shuffle(B, A, M2)
-        return DAG.getVectorShuffle(VT, SDLoc(N), N1, SV0, &Mask[0]);
-      //   shuffle(shuffle(A, B, M0), B, M1) -> shuffle(B, A, M2)
-      //   shuffle(shuffle(A, B, M0), A, M1) -> shuffle(B, A, M2)
-      return DAG.getVectorShuffle(VT, SDLoc(N), SV1, SV0, &Mask[0]);
-    }
+    //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(A, B, M2)
+    //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(A, C, M2)
+    //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(B, C, M2)
+    return DAG.getVectorShuffle(VT, SDLoc(N), SV0, SV1, &Mask[0]);
   }
 
   return SDValue();
