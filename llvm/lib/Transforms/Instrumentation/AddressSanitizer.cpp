@@ -162,19 +162,6 @@ static cl::opt<std::string> ClMemoryAccessCallbackPrefix(
 static cl::opt<bool> ClInstrumentAllocas("asan-instrument-allocas",
        cl::desc("instrument dynamic allocas"), cl::Hidden, cl::init(false));
 
-// This is an experimental feature that will allow to choose between
-// instrumented and non-instrumented code at link-time.
-// If this option is on, just before instrumenting a function we create its
-// clone; if the function is not changed by asan the clone is deleted.
-// If we end up with a clone, we put the instrumented function into a section
-// called "ASAN" and the uninstrumented function into a section called "NOASAN".
-//
-// This is still a prototype, we need to figure out a way to keep two copies of
-// a function so that the linker can easily choose one of them.
-static cl::opt<bool> ClKeepUninstrumented("asan-keep-uninstrumented-functions",
-       cl::desc("Keep uninstrumented copies of functions"),
-       cl::Hidden, cl::init(false));
-
 // These flags allow to change the shadow mapping.
 // The shadow mapping looks like
 //    Shadow = (Mem >> scale) + (1 << offset_log)
@@ -1425,17 +1412,6 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     }
   }
 
-  Function *UninstrumentedDuplicate = nullptr;
-  bool LikelyToInstrument =
-      !NoReturnCalls.empty() || !ToInstrument.empty() || (NumAllocas > 0);
-  if (ClKeepUninstrumented && LikelyToInstrument) {
-    ValueToValueMapTy VMap;
-    UninstrumentedDuplicate = CloneFunction(&F, VMap, false);
-    UninstrumentedDuplicate->removeFnAttr(Attribute::SanitizeAddress);
-    UninstrumentedDuplicate->setName("NOASAN_" + F.getName());
-    F.getParent()->getFunctionList().push_back(UninstrumentedDuplicate);
-  }
-
   bool UseCalls = false;
   if (ClInstrumentationWithCallsThreshold >= 0 &&
       ToInstrument.size() > (unsigned)ClInstrumentationWithCallsThreshold)
@@ -1472,20 +1448,6 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   bool res = NumInstrumented > 0 || ChangedStack || !NoReturnCalls.empty();
 
   DEBUG(dbgs() << "ASAN done instrumenting: " << res << " " << F << "\n");
-
-  if (ClKeepUninstrumented) {
-    if (!res) {
-      // No instrumentation is done, no need for the duplicate.
-      if (UninstrumentedDuplicate)
-        UninstrumentedDuplicate->eraseFromParent();
-    } else {
-      // The function was instrumented. We must have the duplicate.
-      assert(UninstrumentedDuplicate);
-      UninstrumentedDuplicate->setSection("NOASAN");
-      assert(!F.hasSection());
-      F.setSection("ASAN");
-    }
-  }
 
   return res;
 }
