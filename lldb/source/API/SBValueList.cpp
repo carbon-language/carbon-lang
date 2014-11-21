@@ -80,7 +80,7 @@ public:
     }
     
     lldb::SBValue
-    GetValueByName (const char* name) const
+    GetFirstValueByName (const char* name) const
     {
         if (name)
         {
@@ -277,11 +277,11 @@ SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
 }
 
 SBValue
-SBValueList::GetValueByName (const char* name) const
+SBValueList::GetFirstValueByName (const char* name) const
 {
     SBValue sb_value;
     if (m_opaque_ap.get())
-        sb_value = m_opaque_ap->GetValueByName(name);
+        sb_value = m_opaque_ap->GetFirstValueByName(name);
     return sb_value;
 }
 

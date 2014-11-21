@@ -98,7 +98,7 @@ public:
     FindValueObjectByUID (lldb::user_id_t uid);
     
     lldb::SBValue
-    GetValueByName (const char* name) const;
+    GetFirstValueByName (const char* name) const;
     
     %pythoncode %{
         def __len__(self):
