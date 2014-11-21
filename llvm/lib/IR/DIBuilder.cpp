@@ -836,6 +836,13 @@ static DIGlobalVariable createGlobalVariableHelper(
     StringRef LinkageName, DIFile F, unsigned LineNumber, DITypeRef Ty,
     bool isLocalToUnit, Constant *Val, MDNode *Decl, bool isDefinition,
     std::function<MDNode *(ArrayRef<Value *>)> CreateFunc) {
+
+  MDNode *TheCtx = getNonCompileUnitScope(Context);
+  if (DIScope(TheCtx).isCompositeType()) {
+    assert(!DICompositeType(TheCtx).getIdentifier() &&
+           "Context of a global variable should not be a type with identifier");
+  }
+
   Value *Elts[] = {HeaderBuilder::get(dwarf::DW_TAG_variable)
                        .concat(Name)
                        .concat(Name)
@@ -844,7 +851,7 @@ static DIGlobalVariable createGlobalVariableHelper(
                        .concat(isLocalToUnit)
                        .concat(isDefinition)
                        .get(VMContext),
-                   DIScope(getNonCompileUnitScope(Context)).getRef(), F, Ty, Val,
+                   DIScope(TheCtx).getRef(), F, Ty, Val,
                    DIDescriptor(Decl)};
 
   return DIGlobalVariable(CreateFunc(Elts));
