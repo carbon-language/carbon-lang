@@ -1636,3 +1636,21 @@ define <32 x i8> @shuffle_v32i8_00_00_00_00_00_00_00_00_08_08_08_08_08_08_08_08_
   %shuffle = shufflevector <32 x i8> %a, <32 x i8> %b, <32 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 48, i32 48, i32 48, i32 48, i32 48, i32 48, i32 48, i32 48, i32 56, i32 56, i32 56, i32 56, i32 56, i32 56, i32 56, i32 56>
   ret <32 x i8> %shuffle
 }
+
+define <32 x i8> @shuffle_v32i8_00_32_01_33_02_34_03_35_04_36_05_37_06_38_07_39_08_40_09_41_10_42_11_43_12_44_13_45_14_46_15_47(<32 x i8> %a, <32 x i8> %b) {
+; AVX1-LABEL: shuffle_v32i8_00_32_01_33_02_34_03_35_04_36_05_37_06_38_07_39_08_40_09_41_10_42_11_43_12_44_13_45_14_46_15_47:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15]
+; AVX1-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v32i8_00_32_01_33_02_34_03_35_04_36_05_37_06_38_07_39_08_40_09_41_10_42_11_43_12_44_13_45_14_46_15_47:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15]
+; AVX2-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; AVX2-NEXT:    vinserti128 $1, %xmm2, %ymm0, %ymm0
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <32 x i8> %a, <32 x i8> %b, <32 x i32> <i32 0, i32 32, i32 1, i32 33, i32 2, i32 34, i32 3, i32 35, i32 4, i32 36, i32 5, i32 37, i32 6, i32 38, i32 7, i32 39, i32 8, i32 40, i32 9, i32 41, i32 10, i32 42, i32 11, i32 43, i32 12, i32 44, i32 13, i32 45, i32 14, i32 46, i32 15, i32 47>
+  ret <32 x i8> %shuffle
+}
