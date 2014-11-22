@@ -314,3 +314,14 @@ define i32 @test35(i32 %A) {
 ; CHECK-NEXT: %[[udiv:.*]] = udiv exact i32 %[[and]], 2147483647
 ; CHECK-NEXT: ret i32 %[[udiv]]
 }
+
+define i32 @test36(i32 %A) {
+  %and = and i32 %A, 2147483647
+  %shl = shl nsw i32 1, %A
+  %mul = sdiv exact i32 %and, %shl
+  ret i32 %mul
+; CHECK-LABEL: @test36(
+; CHECK-NEXT: %[[and:.*]] = and i32 %A, 2147483647
+; CHECK-NEXT: %[[shr:.*]] = lshr exact i32 %[[and]], %A
+; CHECK-NEXT: ret i32 %[[shr]]
+}

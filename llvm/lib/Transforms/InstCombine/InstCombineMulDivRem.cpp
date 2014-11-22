@@ -1102,12 +1102,14 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
         return BO;
       }
 
-      if (match(Op1, m_Shl(m_Power2(), m_Value()))) {
+      if (isKnownToBeAPowerOfTwo(Op1, /*OrZero*/true, 0, AT, &I, DT)) {
         // X sdiv (1 << Y) -> X udiv (1 << Y) ( -> X u>> Y)
         // Safe because the only negative value (1 << Y) can take on is
         // INT_MIN, and X sdiv INT_MIN == X udiv INT_MIN == 0 if X doesn't have
         // the sign bit set.
-        return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+        auto *BO = BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+        BO->setIsExact(I.isExact());
+        return BO;
       }
     }
   }
