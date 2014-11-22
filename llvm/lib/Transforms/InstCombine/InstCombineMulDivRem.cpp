@@ -997,9 +997,14 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
         match(Op1, m_APInt(C2))) {
       bool Overflow;
       APInt C2ShlC1 = C2->ushl_ov(*C1, Overflow);
-      if (!Overflow)
-        return BinaryOperator::CreateUDiv(
+      if (!Overflow) {
+        bool IsExact = I.isExact() && match(Op0, m_Exact(m_Value()));
+        BinaryOperator *BO = BinaryOperator::CreateUDiv(
             X, ConstantInt::get(X->getType(), C2ShlC1));
+        if (IsExact)
+          BO->setIsExact();
+        return BO;
+      }
     }
   }
 

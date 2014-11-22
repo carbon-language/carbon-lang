@@ -286,3 +286,12 @@ define i32 @test32(i32 %a, i32 %b) {
 ; CHECK-NEXT: %[[div:.*]] = udiv i32 %a, %[[shr]]
 ; CHECK-NEXT: ret i32
 }
+
+define <2 x i64> @test33(<2 x i64> %x) nounwind {
+  %shr = lshr exact <2 x i64> %x, <i64 5, i64 5>
+  %div = udiv exact <2 x i64> %shr, <i64 6, i64 6>
+  ret <2 x i64> %div
+; CHECK-LABEL: @test33(
+; CHECK-NEXT: udiv exact <2 x i64> %x, <i64 192, i64 192>
+; CHECK-NEXT: ret <2 x i64>
+}
