@@ -110,8 +110,7 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
 
   // OpenBSD and Bitrig have buggy support for .quad in 32-bit mode, just split
   // into two .words.
-  if ((T.getOS() == Triple::OpenBSD || T.getOS() == Triple::Bitrig) &&
-       T.getArch() == Triple::x86)
+  if ((T.isOSOpenBSD() || T.isOSBitrig()) && T.getArch() == Triple::x86)
     Data64bitsDirective = nullptr;
 
   // Always enable the integrated assembler by default.

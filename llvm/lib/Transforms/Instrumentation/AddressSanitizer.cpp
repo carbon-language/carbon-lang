@@ -291,8 +291,8 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize) {
   llvm::Triple TargetTriple(M.getTargetTriple());
   bool IsAndroid = TargetTriple.getEnvironment() == llvm::Triple::Android;
   bool IsIOS = TargetTriple.isiOS();
-  bool IsFreeBSD = TargetTriple.getOS() == llvm::Triple::FreeBSD;
-  bool IsLinux = TargetTriple.getOS() == llvm::Triple::Linux;
+  bool IsFreeBSD = TargetTriple.isOSFreeBSD();
+  bool IsLinux = TargetTriple.isOSLinux();
   bool IsPPC64 = TargetTriple.getArch() == llvm::Triple::ppc64 ||
                  TargetTriple.getArch() == llvm::Triple::ppc64le;
   bool IsX86_64 = TargetTriple.getArch() == llvm::Triple::x86_64;

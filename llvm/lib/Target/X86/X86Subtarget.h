@@ -323,13 +323,13 @@ public:
   /// Is this x86_64 with the ILP32 programming model (x32 ABI)?
   bool isTarget64BitILP32() const {
     return In64BitMode && (TargetTriple.getEnvironment() == Triple::GNUX32 ||
-                           TargetTriple.getOS() == Triple::NaCl);
+                           TargetTriple.isOSNaCl());
   }
 
   /// Is this x86_64 with the LP64 programming model (standard AMD64, no x32)?
   bool isTarget64BitLP64() const {
     return In64BitMode && (TargetTriple.getEnvironment() != Triple::GNUX32 &&
-                           TargetTriple.getOS() != Triple::NaCl);
+                           !TargetTriple.isOSNaCl());
   }
 
   PICStyles::Style getPICStyle() const { return PICStyle; }
@@ -403,12 +403,8 @@ public:
   const Triple &getTargetTriple() const { return TargetTriple; }
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
-  bool isTargetFreeBSD() const {
-    return TargetTriple.getOS() == Triple::FreeBSD;
-  }
-  bool isTargetSolaris() const {
-    return TargetTriple.getOS() == Triple::Solaris;
-  }
+  bool isTargetFreeBSD() const { return TargetTriple.isOSFreeBSD(); }
+  bool isTargetSolaris() const { return TargetTriple.isOSSolaris(); }
 
   bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
   bool isTargetCOFF() const { return TargetTriple.isOSBinFormatCOFF(); }

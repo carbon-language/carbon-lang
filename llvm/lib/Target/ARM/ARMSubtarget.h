@@ -347,7 +347,7 @@ public:
   bool isTargetIOS() const { return TargetTriple.isiOS(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
-  bool isTargetNetBSD() const { return TargetTriple.getOS() == Triple::NetBSD; }
+  bool isTargetNetBSD() const { return TargetTriple.isOSNetBSD(); }
   bool isTargetWindows() const { return TargetTriple.isOSWindows(); }
 
   bool isTargetCOFF() const { return TargetTriple.isOSBinFormatCOFF(); }

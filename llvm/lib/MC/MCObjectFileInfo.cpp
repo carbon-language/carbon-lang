@@ -401,7 +401,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   // platform.
   EHSectionType = ELF::SHT_PROGBITS;
   EHSectionFlags = ELF::SHF_ALLOC;
-  if (T.getOS() == Triple::Solaris) {
+  if (T.isOSSolaris()) {
     if (T.getArch() == Triple::x86_64)
       EHSectionType = ELF::SHT_X86_64_UNWIND;
     else
