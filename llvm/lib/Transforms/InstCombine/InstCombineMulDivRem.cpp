@@ -237,9 +237,16 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     }
   }
 
-  if (Value *Op0v = dyn_castNegVal(Op0))     // -X * -Y = X*Y
-    if (Value *Op1v = dyn_castNegVal(Op1))
-      return BinaryOperator::CreateMul(Op0v, Op1v);
+  if (Value *Op0v = dyn_castNegVal(Op0)) {   // -X * -Y = X*Y
+    if (Value *Op1v = dyn_castNegVal(Op1)) {
+      BinaryOperator *BO = BinaryOperator::CreateMul(Op0v, Op1v);
+      if (I.hasNoSignedWrap() &&
+          match(Op0, m_NSWSub(m_Value(), m_Value())) &&
+          match(Op1, m_NSWSub(m_Value(), m_Value())))
+        BO->setHasNoSignedWrap();
+      return BO;
+    }
+  }
 
   // (X / Y) *  Y = X - (X % Y)
   // (X / Y) * -Y = (X % Y) - X
