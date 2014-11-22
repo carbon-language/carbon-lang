@@ -69,12 +69,17 @@ class RegisterContextWindows_x86 : public lldb_private::RegisterContext
     bool HardwareSingleStep(bool enable) override;
 
   private:
-    CONTEXT *GetSystemContext();
+    bool InitializeContextDataBuffer(lldb::DataBufferSP &buffer, CONTEXT **context_ptr);
 
     bool CacheAllRegisterValues();
 
+    // The system CONTEXT structure.  m_context_ptr is backed by m_cached_context, but
+    // m_context_ptr may not point to the beginning of the buffer allocated in m_cached_context,
+    // due to alignment requirements of CONTEXT structures.
     lldb::DataBufferSP m_cached_context;
-    bool m_context_valid;
+    CONTEXT *m_context_ptr;
+
+    bool m_context_stale;
 };
 }
 

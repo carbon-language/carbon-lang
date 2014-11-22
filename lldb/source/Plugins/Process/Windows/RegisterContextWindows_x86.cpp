@@ -24,45 +24,76 @@
 using namespace lldb;
 using namespace lldb_private;
 
-#define DEFINE_GPR32(reg, offset, generic_reg)                                                                                             \
-    {                                                                                                                                      \
-        #reg, nullptr, 4, offset, eEncodingUint, eFormatHexUppercase,                                                                      \
-            {gcc_##reg##_i386, dwarf_##reg##_i386, generic_reg, gdb_##reg##_i386, lldb_##reg##_i386 }, nullptr, nullptr                     \
-    }
+#define DEFINE_GPR(reg, alt) #reg, alt, 4, 0, eEncodingUint, eFormatHexUppercase
+#define DEFINE_GPR_BIN(reg, alt) #reg, alt, 4, 0, eEncodingUint, eFormatBinary
 
-#define GPR_REGNUM(reg) lldb_##reg##_i386
+namespace
+{
 
-// For now we're only supporting general purpose registers.  Unfortunately we have to maintain
-// parallel arrays since that's how the RegisterContext interface expects things to be returned.
-// We might be able to fix this by initializing these arrays at runtime during the construction of
-// the RegisterContext by using helper functions that can update multiple arrays, register sets,
-// etc all at once through a more easily understandable interface.
-
-RegisterInfo g_register_infos[] = {DEFINE_GPR32(eax, offsetof(CONTEXT, Eax), LLDB_INVALID_REGNUM),
-                                   DEFINE_GPR32(ebx, offsetof(CONTEXT, Ebx), LLDB_INVALID_REGNUM),
-                                   DEFINE_GPR32(ecx, offsetof(CONTEXT, Ecx), LLDB_INVALID_REGNUM),
-                                   DEFINE_GPR32(edx, offsetof(CONTEXT, Edx), LLDB_INVALID_REGNUM),
-                                   DEFINE_GPR32(edi, offsetof(CONTEXT, Edi), LLDB_INVALID_REGNUM),
-                                   DEFINE_GPR32(esi, offsetof(CONTEXT, Esi), LLDB_INVALID_REGNUM),
-                                   DEFINE_GPR32(ebp, offsetof(CONTEXT, Ebp), LLDB_REGNUM_GENERIC_FP),
-                                   DEFINE_GPR32(esp, offsetof(CONTEXT, Esp), LLDB_REGNUM_GENERIC_SP),
-                                   DEFINE_GPR32(eip, offsetof(CONTEXT, Eip), LLDB_REGNUM_GENERIC_PC),
-                                   DEFINE_GPR32(eflags, offsetof(CONTEXT, EFlags), LLDB_REGNUM_GENERIC_FLAGS)};
-
-uint32_t g_gpr_regnums[] = {
-    GPR_REGNUM(eax), GPR_REGNUM(ebx), GPR_REGNUM(ecx), GPR_REGNUM(edx), GPR_REGNUM(edi),
-    GPR_REGNUM(esi), GPR_REGNUM(ebp), GPR_REGNUM(esp), GPR_REGNUM(eip), GPR_REGNUM(eflags),
+// This enum defines the layout of the global RegisterInfo array.  This is necessary because
+// lldb register sets are defined in terms of indices into the register array.  As such, the
+// order of RegisterInfos defined in global registers array must match the order defined here.
+// When defining the register set layouts, these values can appear in an arbitrary order, and that
+// determines the order that register values are displayed in a dump.
+enum RegisterIndex
+{
+    eRegisterIndexEax,
+    eRegisterIndexEbx,
+    eRegisterIndexEcx,
+    eRegisterIndexEdx,
+    eRegisterIndexEdi,
+    eRegisterIndexEsi,
+    eRegisterIndexEbp,
+    eRegisterIndexEsp,
+    eRegisterIndexEip,
+    eRegisterIndexEflags
 };
 
-RegisterSet g_register_sets[] = {{"General Purpose Registers", "gpr", llvm::array_lengthof(g_register_infos), g_gpr_regnums}};
+const DWORD kWinContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+
+// Array of all register information supported by Windows x86
+RegisterInfo g_register_infos[] =
+{
+//  Macro auto defines most stuff   GCC                     DWARF                GENERIC                    GDB                   LLDB               VALUE REGS    INVALIDATE REGS
+//  ==============================  ======================= ===================  =========================  ===================   =================  ==========    ===============
+    { DEFINE_GPR(eax,    nullptr),  { gcc_eax_i386,         dwarf_eax_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_eax_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(ebx,    nullptr),  { gcc_ebx_i386,         dwarf_ebx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_ebx_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(ecx,    nullptr),  { gcc_ecx_i386,         dwarf_ecx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_ecx_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(edx,    nullptr),  { gcc_edx_i386,         dwarf_edx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_edx_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(edi,    nullptr),  { gcc_edi_i386,         dwarf_edi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_edi_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(esi,    nullptr),  { gcc_esi_i386,         dwarf_esi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_esi_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(ebp,    "fp"),     { gcc_ebp_i386,         dwarf_ebp_i386,      LLDB_REGNUM_GENERIC_FP,    LLDB_INVALID_REGNUM,  lldb_ebp_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(esp,    "sp"),     { gcc_esp_i386,         dwarf_esp_i386,      LLDB_REGNUM_GENERIC_SP,    LLDB_INVALID_REGNUM,  lldb_esp_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(eip,    "pc"),     { gcc_eip_i386,         dwarf_eip_i386,      LLDB_REGNUM_GENERIC_PC,    LLDB_INVALID_REGNUM,  lldb_eip_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR_BIN(eflags, "flags"), { gcc_eflags_i386,   dwarf_eflags_i386,   LLDB_REGNUM_GENERIC_FLAGS, LLDB_INVALID_REGNUM,  lldb_eflags_i386},  nullptr,      nullptr},
+};
+
+// Array of lldb register numbers used to define the set of all General Purpose Registers
+uint32_t g_gpr_reg_indices[] =
+{
+    eRegisterIndexEax,
+    eRegisterIndexEbx,
+    eRegisterIndexEcx,
+    eRegisterIndexEdx,
+    eRegisterIndexEdi,
+    eRegisterIndexEsi,
+    eRegisterIndexEbp,
+    eRegisterIndexEsp,
+    eRegisterIndexEip,
+    eRegisterIndexEflags
+};
+
+RegisterSet g_register_sets[] = {
+    {"General Purpose Registers", "gpr", llvm::array_lengthof(g_gpr_reg_indices), g_gpr_reg_indices},
+};
+}
 
 //------------------------------------------------------------------
 // Constructors and Destructors
 //------------------------------------------------------------------
 RegisterContextWindows_x86::RegisterContextWindows_x86(Thread &thread, uint32_t concrete_frame_idx)
     : RegisterContext(thread, concrete_frame_idx)
-    , m_context_valid(false)
-    , m_cached_context(new DataBufferHeap(sizeof(CONTEXT), 0))
+    , m_context_stale(true)
 {
 }
 
@@ -73,7 +104,7 @@ RegisterContextWindows_x86::~RegisterContextWindows_x86()
 void
 RegisterContextWindows_x86::InvalidateAllRegisters()
 {
-    m_context_valid = false;
+    m_context_stale = true;
 }
 
 size_t
@@ -103,43 +134,40 @@ RegisterContextWindows_x86::GetRegisterSet(size_t reg_set)
 bool
 RegisterContextWindows_x86::ReadRegister(const RegisterInfo *reg_info, RegisterValue &reg_value)
 {
-    // For now we're reading the value of every register, and then returning the one that was
-    // requested.  We should be smarter about this in the future.
     if (!CacheAllRegisterValues())
         return false;
 
-    CONTEXT *context = GetSystemContext();
     switch (reg_info->kinds[eRegisterKindLLDB])
     {
         case lldb_eax_i386:
-            reg_value.SetUInt32(context->Eax);
+            reg_value.SetUInt32(m_context_ptr->Eax);
             break;
         case lldb_ebx_i386:
-            reg_value.SetUInt32(context->Ebx);
+            reg_value.SetUInt32(m_context_ptr->Ebx);
             break;
         case lldb_ecx_i386:
-            reg_value.SetUInt32(context->Ecx);
+            reg_value.SetUInt32(m_context_ptr->Ecx);
             break;
         case lldb_edx_i386:
-            reg_value.SetUInt32(context->Edx);
+            reg_value.SetUInt32(m_context_ptr->Edx);
             break;
         case lldb_edi_i386:
-            reg_value.SetUInt32(context->Edi);
+            reg_value.SetUInt32(m_context_ptr->Edi);
             break;
         case lldb_esi_i386:
-            reg_value.SetUInt32(context->Esi);
+            reg_value.SetUInt32(m_context_ptr->Esi);
             break;
         case lldb_ebp_i386:
-            reg_value.SetUInt32(context->Ebp);
+            reg_value.SetUInt32(m_context_ptr->Ebp);
             break;
         case lldb_esp_i386:
-            reg_value.SetUInt32(context->Esp);
+            reg_value.SetUInt32(m_context_ptr->Esp);
             break;
         case lldb_eip_i386:
-            reg_value.SetUInt32(context->Eip);
+            reg_value.SetUInt32(m_context_ptr->Eip);
             break;
         case lldb_eflags_i386:
-            reg_value.SetUInt32(context->EFlags);
+            reg_value.SetUInt32(m_context_ptr->EFlags);
             break;
     }
     return true;
@@ -154,44 +182,43 @@ RegisterContextWindows_x86::WriteRegister(const RegisterInfo *reg_info, const Re
     if (!CacheAllRegisterValues())
         return false;
 
-    CONTEXT *context = GetSystemContext();
     switch (reg_info->kinds[eRegisterKindLLDB])
     {
         case lldb_eax_i386:
-            context->Eax = reg_value.GetAsUInt32();
+            m_context_ptr->Eax = reg_value.GetAsUInt32();
             break;
         case lldb_ebx_i386:
-            context->Ebx = reg_value.GetAsUInt32();
+            m_context_ptr->Ebx = reg_value.GetAsUInt32();
             break;
         case lldb_ecx_i386:
-            context->Ecx = reg_value.GetAsUInt32();
+            m_context_ptr->Ecx = reg_value.GetAsUInt32();
             break;
         case lldb_edx_i386:
-            context->Edx = reg_value.GetAsUInt32();
+            m_context_ptr->Edx = reg_value.GetAsUInt32();
             break;
         case lldb_edi_i386:
-            context->Edi = reg_value.GetAsUInt32();
+            m_context_ptr->Edi = reg_value.GetAsUInt32();
             break;
         case lldb_esi_i386:
-            context->Esi = reg_value.GetAsUInt32();
+            m_context_ptr->Esi = reg_value.GetAsUInt32();
             break;
         case lldb_ebp_i386:
-            context->Ebp = reg_value.GetAsUInt32();
+            m_context_ptr->Ebp = reg_value.GetAsUInt32();
             break;
         case lldb_esp_i386:
-            context->Esp = reg_value.GetAsUInt32();
+            m_context_ptr->Esp = reg_value.GetAsUInt32();
             break;
         case lldb_eip_i386:
-            context->Eip = reg_value.GetAsUInt32();
+            m_context_ptr->Eip = reg_value.GetAsUInt32();
             break;
         case lldb_eflags_i386:
-            context->EFlags = reg_value.GetAsUInt32();
+            m_context_ptr->EFlags = reg_value.GetAsUInt32();
             break;
     }
 
     // Physically update the registers in the target process.
     TargetThreadWindows &wthread = static_cast<TargetThreadWindows &>(m_thread);
-    return ::SetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), context);
+    return ::SetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), m_context_ptr);
 }
 
 bool
@@ -200,32 +227,33 @@ RegisterContextWindows_x86::ReadAllRegisterValues(lldb::DataBufferSP &data_sp)
     if (!CacheAllRegisterValues())
         return false;
 
-    if (data_sp->GetByteSize() != m_cached_context->GetByteSize())
+    CONTEXT *dest_context = nullptr;
+    if (!InitializeContextDataBuffer(data_sp, &dest_context))
         return false;
 
     // Write the OS's internal CONTEXT structure into the buffer.
-    memcpy(data_sp->GetBytes(), m_cached_context->GetBytes(), data_sp->GetByteSize());
+    if (!CopyContext(dest_context, kWinContextFlags, m_context_ptr))
+        return false;
     return true;
 }
 
 bool
 RegisterContextWindows_x86::WriteAllRegisterValues(const lldb::DataBufferSP &data_sp)
 {
-    // Since we're given every register value in the input buffer, we don't need to worry about
-    // making sure our cached copy is valid and then overwriting the modified values before we
-    // push the full update to the OS.  We do however need to update the cached copy with the value
-    // that we're pushing to the OS.
-    if (data_sp->GetByteSize() != m_cached_context->GetByteSize())
-        return false;
+    // data_sp could only ever have been generated by a call to ReadAllRegisterValues(), so
+    // m_cached_context should already have the correct size and alignment properties.
+    assert(m_cached_context->GetByteSize() == data_sp->GetByteSize());
 
-    CONTEXT *context = GetSystemContext();
-    TargetThreadWindows &wthread = static_cast<TargetThreadWindows &>(m_thread);
-
-    if (!::SetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), context))
-        return false;
-
-    // Since the thread context was set successfully, update our cached copy.
+    // As a result, we can simply memcpy the entire buffer and assume that the alignment remains
+    // the same.
     memcpy(m_cached_context->GetBytes(), data_sp->GetBytes(), data_sp->GetByteSize());
+
+    // m_context_ptr still points to the beginning of the CONTEXT structure, so use that for
+    // updating the thread state.
+    TargetThreadWindows &wthread = static_cast<TargetThreadWindows &>(m_thread);
+    if (!::SetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), m_context_ptr))
+        return false;
+
     return true;
 }
 
@@ -293,26 +321,33 @@ RegisterContextWindows_x86::HardwareSingleStep(bool enable)
     return false;
 }
 
-CONTEXT *
-RegisterContextWindows_x86::GetSystemContext()
+bool
+RegisterContextWindows_x86::InitializeContextDataBuffer(DataBufferSP &buffer, CONTEXT **context_ptr)
 {
-    return reinterpret_cast<CONTEXT *>(m_cached_context->GetBytes());
+    DWORD length = 0;
+    if (!::InitializeContext(nullptr, kWinContextFlags, nullptr, &length) && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return false;
+
+    buffer.reset(new DataBufferHeap(length, 0));
+    if (!::InitializeContext(buffer->GetBytes(), kWinContextFlags, context_ptr, &length))
+    {
+        buffer.reset();
+        return false;
+    }
+    return true;
 }
 
 bool
 RegisterContextWindows_x86::CacheAllRegisterValues()
 {
-    if (m_context_valid)
+    if (!m_context_stale)
         return true;
-
-    CONTEXT *context = GetSystemContext();
-    // Right now we just pull every single register, regardless of what register we're ultimately
-    // going to read.  We could be smarter about this, although it's not clear what the advantage
-    // would be.
-    context->ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
-    TargetThreadWindows &wthread = static_cast<TargetThreadWindows &>(m_thread);
-    if (!::GetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), context))
+    if (!m_cached_context && !InitializeContextDataBuffer(m_cached_context, &m_context_ptr))
         return false;
-    m_context_valid = true;
+
+    TargetThreadWindows &wthread = static_cast<TargetThreadWindows &>(m_thread);
+    if (!::GetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), m_context_ptr))
+        return false;
+    m_context_stale = true;
     return true;
 }
