@@ -148,3 +148,10 @@ define i1 @or_of_icmps5(i32 %b) {
   ret i1 %cmp
 ; CHECK: ret i1 true
 }
+
+define i32 @neg_nuw(i32 %x) {
+; CHECK-LABEL: @neg_nuw(
+  %neg = sub nuw i32 0, %x
+  ret i32 %neg
+; CHECK: ret i32 0
+}
