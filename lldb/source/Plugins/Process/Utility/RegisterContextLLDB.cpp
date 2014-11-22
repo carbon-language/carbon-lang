@@ -1528,7 +1528,17 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
     if (m_fallback_unwind_plan_sp.get() == nullptr)
         return true;
 
+
+    // Switch the full UnwindPlan to be the fallback UnwindPlan.  If we decide this isn't
+    // working, we need to restore.
+    // We'll also need to save & restore the value of the m_cfa ivar.  Save is down below a bit in 'old_cfa'.
     UnwindPlanSP original_full_unwind_plan_sp = m_full_unwind_plan_sp;
+    addr_t old_cfa = m_cfa;
+
+    m_registers.clear();
+
+    m_full_unwind_plan_sp = m_fallback_unwind_plan_sp;
+
     UnwindPlan::RowSP active_row = m_fallback_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
     
     if (active_row && active_row->GetCFARegister() != LLDB_INVALID_REGNUM)
@@ -1539,11 +1549,12 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
         {
             UnwindLogMsg ("failed to get cfa with fallback unwindplan");
             m_fallback_unwind_plan_sp.reset();
+            m_full_unwind_plan_sp = original_full_unwind_plan_sp;
+            m_cfa = old_cfa;
             return false;
         }
+        m_cfa = new_cfa;
 
-        m_full_unwind_plan_sp = m_fallback_unwind_plan_sp;
-        m_registers.clear();
         if (SavedLocationForRegister (pc_regnum.GetAsKind (eRegisterKindLLDB), regloc) == UnwindLLDB::RegisterSearchResult::eRegisterFound)
         {
             const RegisterInfo *reg_info = GetRegisterInfoAtIndex(pc_regnum.GetAsKind (eRegisterKindLLDB));
@@ -1557,12 +1568,13 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
             }
         }
 
-        m_full_unwind_plan_sp = original_full_unwind_plan_sp;
 
         if (new_caller_pc_value == LLDB_INVALID_ADDRESS)
         {
             UnwindLogMsg ("failed to get a pc value for the caller frame with the fallback unwind plan");
             m_fallback_unwind_plan_sp.reset();
+            m_full_unwind_plan_sp = original_full_unwind_plan_sp;
+            m_cfa = old_cfa;
             return false;
         }
 
@@ -1572,13 +1584,11 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
             {
                 UnwindLogMsg ("fallback unwind plan got the same values for this frame CFA and caller frame pc, not using");
                 m_fallback_unwind_plan_sp.reset();
+                m_full_unwind_plan_sp = original_full_unwind_plan_sp;
+                m_cfa = old_cfa;
                 return false;
             }
         }
-
-        m_registers.clear();
-        m_full_unwind_plan_sp = m_fallback_unwind_plan_sp;
-        m_cfa = new_cfa;
 
         UnwindLogMsg ("trying to unwind from this function with the UnwindPlan '%s' because UnwindPlan '%s' failed.", 
                       m_fallback_unwind_plan_sp->GetSourceName().GetCString(),

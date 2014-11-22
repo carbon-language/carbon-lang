@@ -208,18 +208,35 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         // these.
         if (reg_ctx_sp->IsTrapHandlerFrame() == false)
         {
-            // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
-            // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
-            if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+            // See if we can find a fallback unwind plan for THIS frame.  It may be
+            // that the UnwindPlan we're using for THIS frame was bad and gave us a
+            // bad CFA.  
+            // If that's not it, then see if we can change the UnwindPlan for the frame
+            // below us ("NEXT") -- see if using that other UnwindPlan gets us a better
+            // unwind state.
+            if (reg_ctx_sp->TryFallbackUnwindPlan() == false
+                || reg_ctx_sp->GetCFA (cursor_sp->cfa) == false
+                || abi->CallFrameAddressIsValid(cursor_sp->cfa) == false)
             {
-                return AddOneMoreFrame (abi);
+                if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+                {
+                    return AddOneMoreFrame (abi);
+                }
+                if (log)
+                {
+                    log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
+                                cur_idx < 100 ? cur_idx : 100, "", cur_idx);
+                }
+                goto unwind_done;
             }
-            if (log)
+            else
             {
-                log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
-                            cur_idx < 100 ? cur_idx : 100, "", cur_idx);
+                if (log)
+                {
+                    log->Printf("%*sFrame %d had a bad CFA value but we switched the UnwindPlan being used and got one that looks more realistic.",
+                                cur_idx < 100 ? cur_idx : 100, "", cur_idx);
+                }
             }
-            goto unwind_done;
         }
     }
     if (!reg_ctx_sp->ReadPC (cursor_sp->start_pc))
