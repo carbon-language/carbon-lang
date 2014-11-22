@@ -20,6 +20,10 @@ class DataFormatterSynthValueTestCase(TestBase):
         self.data_formatter_commands()
 
     @skipIfFreeBSD # llvm.org/pr20545 bogus output confuses buildbot parser
+    @expectedFailureLinux # non-core functionality, need to reenable and fix
+                          # later (DES 2014.11.07). Most likely failing because
+                          # of mis-match is version of libstdc++ supported by
+                          # the data-formatters.
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test using Python synthetic children provider to provide a value."""

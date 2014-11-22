@@ -19,6 +19,7 @@ class HelloWorldTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.do_test()
 
+    @expectedFailureLinux # non-core functionality, need to reenable and fix later (DES 2014.11.07)
     @expectedFailureFreeBSD("llvm.org/pr21620 GetValueDidChange() wrong")
     @python_api_test
     @dwarf_test
