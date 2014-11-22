@@ -5340,27 +5340,21 @@ void Sema::CheckExplicitlyDefaultedMemberExceptionSpec(
 }
 
 void Sema::CheckDelayedMemberExceptionSpecs() {
-  SmallVector<std::pair<const CXXDestructorDecl *, const CXXDestructorDecl *>,
-              2> Checks;
-  SmallVector<std::pair<CXXMethodDecl *, const FunctionProtoType *>, 2> Specs;
+  decltype(DelayedExceptionSpecChecks) Checks;
+  decltype(DelayedDefaultedMemberExceptionSpecs) Specs;
 
-  std::swap(Checks, DelayedDestructorExceptionSpecChecks);
+  std::swap(Checks, DelayedExceptionSpecChecks);
   std::swap(Specs, DelayedDefaultedMemberExceptionSpecs);
 
   // Perform any deferred checking of exception specifications for virtual
   // destructors.
-  for (unsigned i = 0, e = Checks.size(); i != e; ++i) {
-    const CXXDestructorDecl *Dtor = Checks[i].first;
-    assert(!Dtor->getParent()->isDependentType() &&
-           "Should not ever add destructors of templates into the list.");
-    CheckOverridingFunctionExceptionSpec(Dtor, Checks[i].second);
-  }
+  for (auto &Check : Checks)
+    CheckOverridingFunctionExceptionSpec(Check.first, Check.second);
 
   // Check that any explicitly-defaulted methods have exception specifications
   // compatible with their implicit exception specifications.
-  for (unsigned I = 0, N = Specs.size(); I != N; ++I)
-    CheckExplicitlyDefaultedMemberExceptionSpec(Specs[I].first,
-                                                Specs[I].second);
+  for (auto &Spec : Specs)
+    CheckExplicitlyDefaultedMemberExceptionSpec(Spec.first, Spec.second);
 }
 
 namespace {
@@ -9298,7 +9292,7 @@ void Sema::ActOnFinishCXXMemberDecls() {
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(CurContext)) {
     if (Record->isInvalidDecl()) {
       DelayedDefaultedMemberExceptionSpecs.clear();
-      DelayedDestructorExceptionSpecChecks.clear();
+      DelayedExceptionSpecChecks.clear();
       return;
     }
   }
