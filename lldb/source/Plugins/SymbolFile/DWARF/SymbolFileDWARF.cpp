@@ -1486,7 +1486,7 @@ SymbolFileDWARF::ParseTemplateDIE (DWARFCompileUnit* dwarf_cu,
                         case DW_AT_type:
                             if (attributes.ExtractFormValueAtIndex(this, i, form_value))
                             {
-                                const dw_offset_t type_die_offset = form_value.Reference(dwarf_cu);
+                                const dw_offset_t type_die_offset = form_value.Reference();
                                 lldb_type = ResolveTypeUID(type_die_offset);
                                 if (lldb_type)
                                     clang_type = lldb_type->GetClangForwardType();
@@ -1803,7 +1803,7 @@ SymbolFileDWARF::ParseChildMembers
                             case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                             case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                             case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
-                            case DW_AT_type:        encoding_uid = form_value.Reference(dwarf_cu); break;
+                            case DW_AT_type:        encoding_uid = form_value.Reference(); break;
                             case DW_AT_bit_offset:  bit_offset = form_value.Unsigned(); break;
                             case DW_AT_bit_size:    bit_size = form_value.Unsigned(); break;
                             case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
@@ -2201,7 +2201,7 @@ SymbolFileDWARF::ParseChildMembers
                             case DW_AT_decl_file:   decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); break;
                             case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                             case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
-                            case DW_AT_type:        encoding_uid = form_value.Reference(dwarf_cu); break;
+                            case DW_AT_type:        encoding_uid = form_value.Reference(); break;
                             case DW_AT_data_member_location:
                                 if (form_value.BlockData())
                                 {
@@ -4266,7 +4266,7 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                             case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                             case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                             case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
-                            case DW_AT_type:        param_type_die_offset = form_value.Reference(dwarf_cu); break;
+                            case DW_AT_type:        param_type_die_offset = form_value.Reference(); break;
                             case DW_AT_artificial:  is_artificial = form_value.Boolean(); break;
                             case DW_AT_location:
     //                          if (form_value.BlockData())
@@ -5828,7 +5828,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     break;
                                 case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
                                 case DW_AT_encoding:    encoding = form_value.Unsigned(); break;
-                                case DW_AT_type:        encoding_uid = form_value.Reference(dwarf_cu); break;
+                                case DW_AT_type:        encoding_uid = form_value.Reference(); break;
                                 default:
                                 case DW_AT_sibling:
                                     break;
@@ -6403,7 +6403,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     type_name_cstr = form_value.AsCString(&get_debug_str_data());
                                     type_name_const_str.SetCString(type_name_cstr);
                                     break;
-                                case DW_AT_type:            encoding_uid = form_value.Reference(dwarf_cu); break;
+                                case DW_AT_type:            encoding_uid = form_value.Reference(); break;
                                 case DW_AT_byte_size:       byte_size = form_value.Unsigned(); break;
                                 case DW_AT_accessibility:   break; //accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                 case DW_AT_declaration:     break; //is_forward_declaration = form_value.Boolean(); break;
@@ -6521,7 +6521,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                                 case DW_AT_linkage_name:
                                 case DW_AT_MIPS_linkage_name:   break; // mangled = form_value.AsCString(&get_debug_str_data()); break;
-                                case DW_AT_type:                type_die_offset = form_value.Reference(dwarf_cu); break;
+                                case DW_AT_type:                type_die_offset = form_value.Reference(); break;
                                 case DW_AT_accessibility:       accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                 case DW_AT_declaration:         break; // is_forward_declaration = form_value.Boolean(); break;
                                 case DW_AT_inline:              is_inline = form_value.Boolean(); break;
@@ -6541,15 +6541,15 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     break;
 
                                 case DW_AT_specification:
-                                    specification_die_offset = form_value.Reference(dwarf_cu);
+                                    specification_die_offset = form_value.Reference();
                                     break;
 
                                 case DW_AT_abstract_origin:
-                                    abstract_origin_die_offset = form_value.Reference(dwarf_cu);
+                                    abstract_origin_die_offset = form_value.Reference();
                                     break;
 
                                 case DW_AT_object_pointer:
-                                    object_pointer_die_offset = form_value.Reference(dwarf_cu);
+                                    object_pointer_die_offset = form_value.Reference();
                                     break;
 
                                 case DW_AT_allocated:
@@ -6985,7 +6985,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     type_name_const_str.SetCString(type_name_cstr);
                                     break;
 
-                                case DW_AT_type:            type_die_offset = form_value.Reference(dwarf_cu); break;
+                                case DW_AT_type:            type_die_offset = form_value.Reference(); break;
                                 case DW_AT_byte_size:       break; // byte_size = form_value.Unsigned(); break;
                                 case DW_AT_byte_stride:     byte_stride = form_value.Unsigned(); break;
                                 case DW_AT_bit_stride:      bit_stride = form_value.Unsigned(); break;
@@ -7065,9 +7065,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 switch (attr)
                                 {
                                     case DW_AT_type:
-                                        type_die_offset = form_value.Reference(dwarf_cu); break;
+                                        type_die_offset = form_value.Reference(); break;
                                     case DW_AT_containing_type:
-                                        containing_type_die_offset = form_value.Reference(dwarf_cu); break;
+                                        containing_type_die_offset = form_value.Reference(); break;
                                 }
                             }
                         }
@@ -7347,7 +7347,6 @@ SymbolFileDWARF::ParseVariableDIE
     const lldb::addr_t func_low_pc
 )
 {
-
     VariableSP var_sp (m_die_to_variable_sp[die]);
     if (var_sp)
         return var_sp;  // Already been parsed!
@@ -7380,6 +7379,7 @@ SymbolFileDWARF::ParseVariableDIE
             {
                 dw_attr_t attr = attributes.AttributeAtIndex(i);
                 DWARFFormValue form_value;
+                
                 if (attributes.ExtractFormValueAtIndex(this, i, form_value))
                 {
                     switch (attr)
@@ -7390,7 +7390,7 @@ SymbolFileDWARF::ParseVariableDIE
                     case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
                     case DW_AT_linkage_name:
                     case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(&get_debug_str_data()); break;
-                    case DW_AT_type:        type_uid = form_value.Reference(dwarf_cu); break;
+                    case DW_AT_type:        type_uid = form_value.Reference(); break;
                     case DW_AT_external:    is_external = form_value.Boolean(); break;
                     case DW_AT_const_value:
                         // If we have already found a DW_AT_location attribute, ignore this attribute.
@@ -7409,7 +7409,7 @@ SymbolFileDWARF::ParseVariableDIE
                             else if (DWARFFormValue::IsDataForm(form_value.Form()))
                             {
                                 // Retrieve the value as a data expression.
-                                const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(), dwarf_cu->IsDWARF64());
+                                const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (attributes.CompileUnitAtIndex(i)->GetAddressByteSize(), attributes.CompileUnitAtIndex(i)->IsDWARF64());
                                 uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
                                 uint32_t data_length = fixed_form_sizes[form_value.Form()];
                                 if (data_length == 0)
@@ -7433,7 +7433,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 // Retrieve the value as a string expression.
                                 if (form_value.Form() == DW_FORM_strp)
                                 {
-                                    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(), dwarf_cu->IsDWARF64());
+                                    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (attributes.CompileUnitAtIndex(i)->GetAddressByteSize(), attributes.CompileUnitAtIndex(i)->IsDWARF64());
                                     uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
                                     uint32_t data_length = fixed_form_sizes[form_value.Form()];
                                     location.CopyOpcodeData(module, debug_info_data, data_offset, data_length);
@@ -7470,7 +7470,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 {
                                     location.CopyOpcodeData(module, debug_loc_data, debug_loc_offset, loc_list_length);
                                     assert (func_low_pc != LLDB_INVALID_ADDRESS);
-                                    location.SetLocationListSlide (func_low_pc - dwarf_cu->GetBaseAddress());
+                                    location.SetLocationListSlide (func_low_pc - attributes.CompileUnitAtIndex(i)->GetBaseAddress());
                                 }
                             }
                         }

@@ -442,9 +442,9 @@ struct DWARFMappedHash
             
             for (size_t i=0; i<num_atoms; ++i)
             {
-                DWARFFormValue form_value (header_data.atoms[i].form);
+                DWARFFormValue form_value (NULL, header_data.atoms[i].form);
                 
-                if (!form_value.ExtractValue(data, offset_ptr, NULL))
+                if (!form_value.ExtractValue(data, offset_ptr))
                     return false;
                 
                 switch (header_data.atoms[i].type)
@@ -481,7 +481,7 @@ struct DWARFMappedHash
                 if (i > 0)
                     strm.PutCString (", ");
                 
-                DWARFFormValue form_value (header_data.atoms[i].form);
+                DWARFFormValue form_value (NULL, header_data.atoms[i].form);
                 switch (header_data.atoms[i].type)
                 {
                     case eAtomTypeDIEOffset:    // DIE offset, check form for encoding

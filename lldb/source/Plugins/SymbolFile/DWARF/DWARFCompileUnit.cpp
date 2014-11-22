@@ -772,7 +772,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     
                 case DW_AT_specification:
                     if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                        specification_die_offset = form_value.Reference(this);
+                        specification_die_offset = form_value.Reference();
                     break;
                 }
             }
