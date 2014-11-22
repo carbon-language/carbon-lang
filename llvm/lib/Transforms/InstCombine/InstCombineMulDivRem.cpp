@@ -136,8 +136,13 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (Value *V = SimplifyUsingDistributiveLaws(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (match(Op1, m_AllOnes()))  // X * -1 == 0 - X
-    return BinaryOperator::CreateNeg(Op0, I.getName());
+  // X * -1 == 0 - X
+  if (match(Op1, m_AllOnes())) {
+    BinaryOperator *BO = BinaryOperator::CreateNeg(Op0, I.getName());
+    if (I.hasNoSignedWrap())
+      BO->setHasNoSignedWrap();
+    return BO;
+  }
 
   // Also allow combining multiply instructions on vectors.
   {

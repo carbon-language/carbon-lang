@@ -197,3 +197,10 @@ define <2 x i1> @test21(<2 x i1> %A, <2 x i1> %B) {
         ret <2 x i1> %C
 ; CHECK: %C = and <2 x i1> %A, %B
 }
+
+define i32 @test22(i32 %A) {
+; CHECK-LABEL: @test22(
+        %B = mul nsw i32 %A, -1
+        ret i32 %B
+; CHECK: sub nsw i32 0, %A
+}
