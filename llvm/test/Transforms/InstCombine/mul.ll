@@ -204,3 +204,19 @@ define i32 @test22(i32 %A) {
         ret i32 %B
 ; CHECK: sub nsw i32 0, %A
 }
+
+define i32 @test23(i32 %A) {
+; CHECK-LABEL: @test23(
+        %B = shl nuw i32 %A, 1
+        %C = mul nuw i32 %B, 3
+        ret i32 %C
+; CHECK: mul nuw i32 %A, 6
+}
+
+define i32 @test24(i32 %A) {
+; CHECK-LABEL: @test24(
+        %B = shl nsw i32 %A, 1
+        %C = mul nsw i32 %B, 3
+        ret i32 %C
+; CHECK: mul nsw i32 %A, 6
+}

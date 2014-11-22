@@ -151,9 +151,18 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     const APInt *IVal;
     if (match(&I, m_Mul(m_Shl(m_Value(NewOp), m_Constant(C2)),
                         m_Constant(C1))) &&
-        match(C1, m_APInt(IVal)))
-      // ((X << C1)*C2) == (X * (C2 << C1))
-      return BinaryOperator::CreateMul(NewOp, ConstantExpr::getShl(C1, C2));
+        match(C1, m_APInt(IVal))) {
+      // ((X << C2)*C1) == (X * (C1 << C2))
+      Constant *Shl = ConstantExpr::getShl(C1, C2);
+      BinaryOperator *Mul = cast<BinaryOperator>(I.getOperand(0));
+      BinaryOperator *BO = BinaryOperator::CreateMul(NewOp, Shl);
+      if (I.hasNoUnsignedWrap() && Mul->hasNoUnsignedWrap())
+        BO->setHasNoUnsignedWrap();
+      if (I.hasNoSignedWrap() && Mul->hasNoSignedWrap() &&
+          Shl->isNotMinSignedValue())
+        BO->setHasNoSignedWrap();
+      return BO;
+    }
 
     if (match(&I, m_Mul(m_Value(NewOp), m_Constant(C1)))) {
       Constant *NewCst = nullptr;
