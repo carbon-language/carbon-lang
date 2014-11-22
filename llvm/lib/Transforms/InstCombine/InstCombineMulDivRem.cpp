@@ -295,10 +295,23 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // (1 << Y)*X --> X << Y
   {
     Value *Y;
-    if (match(Op0, m_Shl(m_One(), m_Value(Y))))
-      return BinaryOperator::CreateShl(Op1, Y);
-    if (match(Op1, m_Shl(m_One(), m_Value(Y))))
-      return BinaryOperator::CreateShl(Op0, Y);
+    BinaryOperator *BO = nullptr;
+    bool ShlNSW = false;
+    if (match(Op0, m_Shl(m_One(), m_Value(Y)))) {
+      BO = BinaryOperator::CreateShl(Op1, Y);
+      ShlNSW = cast<BinaryOperator>(Op0)->hasNoSignedWrap();
+    }
+    if (match(Op1, m_Shl(m_One(), m_Value(Y)))) {
+      BO = BinaryOperator::CreateShl(Op0, Y);
+      ShlNSW = cast<BinaryOperator>(Op1)->hasNoSignedWrap();
+    }
+    if (BO) {
+      if (I.hasNoUnsignedWrap())
+        BO->setHasNoUnsignedWrap();
+      if (I.hasNoSignedWrap() && ShlNSW)
+        BO->setHasNoSignedWrap();
+      return BO;
+    }
   }
 
   // If one of the operands of the multiply is a cast from a boolean value, then

@@ -229,3 +229,19 @@ define i32 @test25(i32 %A, i32 %B) {
         ret i32 %E
 ; CHECK: mul nsw i32 %A, %B
 }
+
+define i32 @test26(i32 %A, i32 %B) {
+; CHECK-LABEL: @test26(
+        %C = shl nsw i32 1, %B
+        %D = mul nsw i32 %A, %C
+        ret i32 %D
+; CHECK: shl nsw i32 %A, %B
+}
+
+define i32 @test27(i32 %A, i32 %B) {
+; CHECK-LABEL: @test27(
+        %C = shl i32 1, %B
+        %D = mul nuw i32 %A, %C
+        ret i32 %D
+; CHECK: shl nuw i32 %A, %B
+}
