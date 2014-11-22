@@ -402,6 +402,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::TypeFormatImpl> TypeFormatImplSP;
     typedef std::shared_ptr<lldb_private::TypeNameSpecifierImpl> TypeNameSpecifierImplSP;
     typedef std::shared_ptr<lldb_private::TypeSummaryImpl> TypeSummaryImplSP;
+    typedef std::shared_ptr<lldb_private::TypeSummaryOptions> TypeSummaryOptionsSP;
     typedef std::shared_ptr<lldb_private::TypeValidatorImpl> TypeValidatorImplSP;
 #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::ScriptedSyntheticChildren> ScriptedSyntheticChildrenSP;

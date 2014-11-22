@@ -190,6 +190,7 @@ public:
     GetScriptedSummary (const char *function_name,
                         lldb::ValueObjectSP valobj,
                         lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
+                        const TypeSummaryOptions& options,
                         std::string& retval);
     
     virtual void

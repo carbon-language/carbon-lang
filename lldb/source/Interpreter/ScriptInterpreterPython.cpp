@@ -1860,6 +1860,7 @@ bool
 ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
                                              lldb::ValueObjectSP valobj,
                                              lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
+                                             const TypeSummaryOptions& options,
                                              std::string& retval)
 {
     
@@ -1881,11 +1882,14 @@ ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
         {
             Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
             {
+                TypeSummaryOptionsSP options_sp(new TypeSummaryOptions(options));
+                
                 Timer scoped_timer ("g_swig_typescript_callback","g_swig_typescript_callback");
                 ret_val = g_swig_typescript_callback (python_function_name,
                                                       GetSessionDictionary().get(),
                                                       valobj,
                                                       &new_callee,
+                                                      options_sp,
                                                       retval);
             }
         }

@@ -342,10 +342,12 @@ LLDBSwigPythonCallTypeScript
     const void *session_dictionary,
     const lldb::ValueObjectSP& valobj_sp,
     void** pyfunct_wrapper,
+    const lldb::TypeSummaryOptionsSP& options_sp,
     std::string& retval
 )
 {
     lldb::SBValue sb_value (valobj_sp);
+    lldb::SBTypeSummaryOptions sb_options(options_sp.get());
 
     retval.clear();
 
@@ -384,7 +386,14 @@ LLDBSwigPythonCallTypeScript
         
         if (!pfunc)
             return false;
-        
+
+        // if the third argument is supported, or varargs are allowed
+        PyCallable::argc argc = pfunc.GetNumArguments();
+        if (argc.num_args == 3 || argc.varargs == true)
+            pvalue = pfunc(sb_value,session_dict,sb_options);
+        else
+            pvalue = pfunc(sb_value,session_dict);
+
         pvalue = pfunc(sb_value,session_dict);
 
         Py_INCREF (session_dict);

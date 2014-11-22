@@ -237,6 +237,7 @@ ScriptSummaryFormat::FormatObject (ValueObject *valobj,
     return script_interpreter->GetScriptedSummary(m_function_name.c_str(),
                                                   valobj->GetSP(),
                                                   m_script_function_sp,
+                                                  options,
                                                   retval);
     
 }

@@ -594,6 +594,7 @@ LLDBSwigPythonCallTypeScript (const char *python_function_name,
                               void *session_dictionary,
                               const lldb::ValueObjectSP& valobj_sp,
                               void** pyfunct_wrapper,
+                              const lldb::TypeSummaryOptionsSP& options_sp,
                               std::string& retval);
 
 extern "C" void*

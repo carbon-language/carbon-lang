@@ -98,6 +98,7 @@ public:
                                                           void *session_dictionary,
                                                           const lldb::ValueObjectSP& valobj_sp,
                                                           void** pyfunct_wrapper,
+                                                          const lldb::TypeSummaryOptionsSP& options,
                                                           std::string& retval);
     
     typedef void* (*SWIGPythonCreateSyntheticProvider) (const char *python_class_name,
@@ -462,6 +463,7 @@ public:
     GetScriptedSummary (const char *function_name,
                         lldb::ValueObjectSP valobj,
                         lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
+                        const TypeSummaryOptions& options,
                         std::string& retval)
     {
         return false;
