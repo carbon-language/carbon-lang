@@ -156,6 +156,19 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS,
   OS << "#endif // GET_REGINFO_ENUM\n\n";
 }
 
+static void printInt(raw_ostream &OS, int Val) {
+  OS << Val;
+}
+
+static const char *getMinimalTypeForRange(uint64_t Range) {
+  assert(Range < 0xFFFFFFFFULL && "Enum too large");
+  if (Range > 0xFFFF)
+    return "uint32_t";
+  if (Range > 0xFF)
+    return "uint16_t";
+  return "uint8_t";
+}
+
 void RegisterInfoEmitter::
 EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
                     const std::string &ClassName) {
@@ -179,7 +192,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
     }
     OS << "},  \t// " << RC.getName() << "\n";
   }
-  OS << "    {0, 0} };\n"
+  OS << "  };\n"
      << "  return RCWeightTable[RC->getID()];\n"
      << "}\n\n";
 
@@ -204,7 +217,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
       assert(RU.Weight < 256 && "RegUnit too heavy");
       OS << RU.Weight << ", ";
     }
-    OS << "0 };\n"
+    OS << "};\n"
        << "  return RUWeightTable[RegUnit];\n";
   }
   else {
@@ -222,8 +235,11 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "const char *" << ClassName << "::\n"
      << "getRegPressureSetName(unsigned Idx) const {\n"
      << "  static const char *PressureNameTable[] = {\n";
+  unsigned MaxRegUnitWeight = 0;
   for (unsigned i = 0; i < NumSets; ++i ) {
-    OS << "    \"" << RegBank.getRegSetAt(i).Name << "\",\n";
+    const RegUnitSet &RegUnits = RegBank.getRegSetAt(i);
+    MaxRegUnitWeight = std::max(MaxRegUnitWeight, RegUnits.Weight);
+    OS << "    \"" << RegUnits.Name << "\",\n";
   }
   OS << "    nullptr };\n"
      << "  return PressureNameTable[Idx];\n"
@@ -233,63 +249,54 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "// This limit must be adjusted dynamically for reserved registers.\n"
      << "unsigned " << ClassName << "::\n"
      << "getRegPressureSetLimit(unsigned Idx) const {\n"
-     << "  static const unsigned PressureLimitTable[] = {\n";
+     << "  static const " << getMinimalTypeForRange(MaxRegUnitWeight)
+     << " PressureLimitTable[] = {\n";
   for (unsigned i = 0; i < NumSets; ++i ) {
     const RegUnitSet &RegUnits = RegBank.getRegSetAt(i);
     OS << "    " << RegUnits.Weight << ",  \t// " << i << ": "
        << RegUnits.Name << "\n";
   }
-  OS << "    0 };\n"
+  OS << "  };\n"
      << "  return PressureLimitTable[Idx];\n"
      << "}\n\n";
+
+  SequenceToOffsetTable<std::vector<int>> PSetsSeqs;
 
   // This table may be larger than NumRCs if some register units needed a list
   // of unit sets that did not correspond to a register class.
   unsigned NumRCUnitSets = RegBank.getNumRegClassPressureSetLists();
-  OS << "/// Table of pressure sets per register class or unit.\n"
-     << "static const int RCSetsTable[] = {\n    ";
-  std::vector<unsigned> RCSetStarts(NumRCUnitSets);
-  for (unsigned i = 0, StartIdx = 0, e = NumRCUnitSets; i != e; ++i) {
-    RCSetStarts[i] = StartIdx;
+  std::vector<std::vector<int>> PSets(NumRCUnitSets);
+
+  for (unsigned i = 0, e = NumRCUnitSets; i != e; ++i) {
     ArrayRef<unsigned> PSetIDs = RegBank.getRCPressureSetIDs(i);
-    std::vector<unsigned> PSets;
-    PSets.reserve(PSetIDs.size());
+    PSets[i].reserve(PSetIDs.size());
     for (ArrayRef<unsigned>::iterator PSetI = PSetIDs.begin(),
            PSetE = PSetIDs.end(); PSetI != PSetE; ++PSetI) {
-      PSets.push_back(RegBank.getRegPressureSet(*PSetI).Order);
+      PSets[i].push_back(RegBank.getRegPressureSet(*PSetI).Order);
     }
-    std::sort(PSets.begin(), PSets.end());
-    for (unsigned j = 0, e = PSets.size(); j < e; ++j) {
-      OS << PSets[j] << ",  ";
-      ++StartIdx;
-    }
-    OS << "-1,  \t// #" << RCSetStarts[i] << " ";
-    if (i < NumRCs)
-      OS << RegBank.getRegClasses()[i]->getName();
-    else {
-      OS << "inferred";
-      for (ArrayRef<unsigned>::iterator PSetI = PSetIDs.begin(),
-             PSetE = PSetIDs.end(); PSetI != PSetE; ++PSetI) {
-        OS << "~" << RegBank.getRegSetAt(*PSetI).Name;
-      }
-    }
-    OS << "\n    ";
-    ++StartIdx;
+    std::sort(PSets[i].begin(), PSets[i].end());
+    PSetsSeqs.add(PSets[i]);
   }
-  OS << "-1 };\n\n";
+
+  PSetsSeqs.layout();
+
+  OS << "/// Table of pressure sets per register class or unit.\n"
+     << "static const int RCSetsTable[] = {\n";
+  PSetsSeqs.emit(OS, printInt, "-1");
+  OS << "};\n\n";
 
   OS << "/// Get the dimensions of register pressure impacted by this "
      << "register class.\n"
      << "/// Returns a -1 terminated array of pressure set IDs\n"
      << "const int* " << ClassName << "::\n"
      << "getRegClassPressureSets(const TargetRegisterClass *RC) const {\n";
-  OS << "  static const unsigned RCSetStartTable[] = {\n    ";
+  OS << "  static const " << getMinimalTypeForRange(PSetsSeqs.size()-1)
+     << " RCSetStartTable[] = {\n    ";
   for (unsigned i = 0, e = NumRCs; i != e; ++i) {
-    OS << RCSetStarts[i] << ",";
+    OS << PSetsSeqs.get(PSets[i]) << ",";
   }
-  OS << "0 };\n"
-     << "  unsigned SetListStart = RCSetStartTable[RC->getID()];\n"
-     << "  return &RCSetsTable[SetListStart];\n"
+  OS << "};\n"
+     << "  return &RCSetsTable[RCSetStartTable[RC->getID()]];\n"
      << "}\n\n";
 
   OS << "/// Get the dimensions of register pressure impacted by this "
@@ -299,14 +306,15 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "getRegUnitPressureSets(unsigned RegUnit) const {\n"
      << "  assert(RegUnit < " << RegBank.getNumNativeRegUnits()
      << " && \"invalid register unit\");\n";
-  OS << "  static const unsigned RUSetStartTable[] = {\n    ";
+  OS << "  static const " << getMinimalTypeForRange(PSetsSeqs.size()-1)
+     << " RUSetStartTable[] = {\n    ";
   for (unsigned UnitIdx = 0, UnitEnd = RegBank.getNumNativeRegUnits();
        UnitIdx < UnitEnd; ++UnitIdx) {
-    OS << RCSetStarts[RegBank.getRegUnit(UnitIdx).RegClassUnitSetsIdx] << ",";
+    OS << PSetsSeqs.get(PSets[RegBank.getRegUnit(UnitIdx).RegClassUnitSetsIdx])
+       << ",";
   }
-  OS << "0 };\n"
-     << "  unsigned SetListStart = RUSetStartTable[RegUnit];\n"
-     << "  return &RCSetsTable[SetListStart];\n"
+  OS << "};\n"
+     << "  return &RCSetsTable[RUSetStartTable[RegUnit]];\n"
      << "}\n\n";
 }
 
@@ -614,15 +622,6 @@ static bool combine(const CodeGenSubRegIndex *Idx,
        I = Map.begin(), E = Map.end(); I != E; ++I)
     Vec[I->first->EnumValue - 1] = I->second;
   return true;
-}
-
-static const char *getMinimalTypeForRange(uint64_t Range) {
-  assert(Range < 0xFFFFFFFFULL && "Enum too large");
-  if (Range > 0xFFFF)
-    return "uint32_t";
-  if (Range > 0xFF)
-    return "uint16_t";
-  return "uint8_t";
 }
 
 void

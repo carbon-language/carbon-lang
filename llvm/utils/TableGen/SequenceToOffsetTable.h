@@ -84,6 +84,11 @@ public:
 
   bool empty() const { return Seqs.empty(); }
 
+  unsigned size() const {
+    assert(Entries && "Call layout() before size()");
+    return Entries;
+  }
+
   /// layout - Computes the final table layout.
   void layout() {
     assert(Entries == 0 && "Can only call layout() once");
