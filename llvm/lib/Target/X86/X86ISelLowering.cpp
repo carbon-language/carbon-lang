@@ -10833,7 +10833,8 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
   // When the number of V1 and V2 elements are the same, try to minimize the
   // number of uses of V2 in the low half of the vector. When that is tied,
   // ensure that the sum of indices for V1 is equal to or lower than the sum
-  // indices for V2.
+  // indices for V2. When those are equal, try to ensure that the number of odd
+  // indices for V1 is lower than the number of odd indices for V2.
   if (NumV1Elements == NumV2Elements) {
     int LowV1Elements = 0, LowV2Elements = 0;
     for (int M : SVOp->getMask().slice(0, NumElements / 2))
@@ -10850,8 +10851,18 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
           SumV2Indices += i;
         else if (SVOp->getMask()[i] >= 0)
           SumV1Indices += i;
-      if (SumV2Indices < SumV1Indices)
+      if (SumV2Indices < SumV1Indices) {
         return DAG.getCommutedVectorShuffle(*SVOp);
+      } else if (SumV2Indices == SumV1Indices) {
+        int NumV1OddIndices = 0, NumV2OddIndices = 0;
+        for (int i = 0, Size = SVOp->getMask().size(); i < Size; ++i)
+          if (SVOp->getMask()[i] >= NumElements)
+            NumV2OddIndices += i % 2;
+          else if (SVOp->getMask()[i] >= 0)
+            NumV1OddIndices += i % 2;
+        if (NumV2OddIndices < NumV1OddIndices)
+          return DAG.getCommutedVectorShuffle(*SVOp);
+      }
     }
   }
 
