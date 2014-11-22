@@ -7,7 +7,6 @@
 
 // FIXME: Fix this test under GCC.
 // REQUIRES: Clang
-// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <stdio.h>
 #include <string.h>
