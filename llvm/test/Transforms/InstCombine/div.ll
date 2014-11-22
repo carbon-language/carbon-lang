@@ -304,3 +304,13 @@ define <2 x i64> @test34(<2 x i64> %x) nounwind {
 ; CHECK-NEXT: sdiv exact <2 x i64> %x, <i64 -3, i64 -4>
 ; CHECK-NEXT: ret <2 x i64>
 }
+
+define i32 @test35(i32 %A) {
+  %and = and i32 %A, 2147483647
+  %mul = sdiv exact i32 %and, 2147483647
+  ret i32 %mul
+; CHECK-LABEL: @test35(
+; CHECK-NEXT: %[[and:.*]]  = and i32 %A, 2147483647
+; CHECK-NEXT: %[[udiv:.*]] = udiv exact i32 %[[and]], 2147483647
+; CHECK-NEXT: ret i32 %[[udiv]]
+}

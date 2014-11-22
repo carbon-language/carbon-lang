@@ -1097,7 +1097,9 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     if (MaskedValueIsZero(Op0, Mask, 0, &I)) {
       if (MaskedValueIsZero(Op1, Mask, 0, &I)) {
         // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
-        return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+        auto *BO = BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+        BO->setIsExact(I.isExact());
+        return BO;
       }
 
       if (match(Op1, m_Shl(m_Power2(), m_Value()))) {
