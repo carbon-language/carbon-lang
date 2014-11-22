@@ -438,7 +438,8 @@ Driver::OptionData::Clear ()
     {
         char path[2048];
         local_lldbinit.GetPath(path, 2047);
-        m_after_file_commands.push_back (std::pair<bool, std::string> (true, path));
+        InitialCmdEntry entry(path, true, true);
+        m_after_file_commands.push_back (entry);
     }
     
     m_debug_mode = false;
@@ -456,9 +457,9 @@ Driver::OptionData::Clear ()
 }
 
 void
-Driver::OptionData::AddInitialCommand (const char *command, CommandPlacement placement, bool is_file, SBError &error)
+Driver::OptionData::AddInitialCommand (const char *command, CommandPlacement placement, bool is_file,  bool silent, SBError &error)
 {
-    std::vector<std::pair<bool, std::string> > *command_set;
+    std::vector<InitialCmdEntry> *command_set;
     switch (placement)
     {
     case eCommandPlacementBeforeFile:
@@ -476,19 +477,18 @@ Driver::OptionData::AddInitialCommand (const char *command, CommandPlacement pla
     {
         SBFileSpec file(command);
         if (file.Exists())
-            command_set->push_back (std::pair<bool, std::string> (true, optarg));
+            command_set->push_back (InitialCmdEntry(command, is_file, silent));
         else if (file.ResolveExecutableLocation())
         {
             char final_path[PATH_MAX];
             file.GetPath (final_path, sizeof(final_path));
-            std::string path_str (final_path);
-            command_set->push_back (std::pair<bool, std::string> (true, path_str));
+            command_set->push_back (InitialCmdEntry(final_path, is_file, silent));
         }
         else
             error.SetErrorStringWithFormat("file specified in --source (-s) option doesn't exist: '%s'", optarg);
     }
     else
-        command_set->push_back (std::pair<bool, std::string> (false, optarg));
+        command_set->push_back (InitialCmdEntry(command, is_file, silent));
 }
 
 void
@@ -522,7 +522,7 @@ Driver::GetScriptLanguage() const
 void
 Driver::WriteCommandsForSourcing (CommandPlacement placement, SBStream &strm)
 {
-    std::vector<std::pair<bool, std::string> > *command_set;
+    std::vector<OptionData::InitialCmdEntry> *command_set;
     switch (placement)
     {
     case eCommandPlacementBeforeFile:
@@ -536,11 +536,14 @@ Driver::WriteCommandsForSourcing (CommandPlacement placement, SBStream &strm)
         break;
     }
     
-    for (const auto &command_pair : *command_set)
+    for (const auto &command_entry : *command_set)
     {
-        const char *command = command_pair.second.c_str();
-        if (command_pair.first)
-            strm.Printf("command source -s %i '%s'\n", m_option_data.m_source_quietly, command);
+        const char *command = command_entry.contents.c_str();
+        if (command_entry.is_file)
+        {
+            bool source_quietly = m_option_data.m_source_quietly || command_entry.source_quietly;
+            strm.Printf("command source -s %i '%s'\n", source_quietly, command);
+        }
         else
             strm.Printf("%s\n", command);
     }
@@ -748,10 +751,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
                         break;
 
                     case 'K':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, true, true, error);
                         break;
                     case 'k':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, false, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, false, true, error);
                         break;
 
                     case 'n':
@@ -772,16 +775,16 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
                         }
                         break;
                     case 's':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, true, true, error);
                         break;
                     case 'o':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, false, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, false, true, error);
                         break;
                     case 'S':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, true, true, error);
                         break;
                     case 'O':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, false, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, false, true, error);
                         break;
                     default:
                         m_option_data.m_print_help = true;
