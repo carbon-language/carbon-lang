@@ -765,13 +765,15 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
                 E->getOp() == AtomicExpr::AO__atomic_load ||
                 E->getOp() == AtomicExpr::AO__atomic_load_n;
 
-  llvm::Type *IPtrTy =
-      llvm::IntegerType::get(getLLVMContext(), Size * 8)->getPointerTo();
+  llvm::Type *ITy =
+      llvm::IntegerType::get(getLLVMContext(), Size * 8);
   llvm::Value *OrigDest = Dest;
-  Ptr = Builder.CreateBitCast(Ptr, IPtrTy);
-  if (Val1) Val1 = Builder.CreateBitCast(Val1, IPtrTy);
-  if (Val2) Val2 = Builder.CreateBitCast(Val2, IPtrTy);
-  if (Dest && !E->isCmpXChg()) Dest = Builder.CreateBitCast(Dest, IPtrTy);
+  Ptr = Builder.CreateBitCast(
+      Ptr, ITy->getPointerTo(Ptr->getType()->getPointerAddressSpace()));
+  if (Val1) Val1 = Builder.CreateBitCast(Val1, ITy->getPointerTo());
+  if (Val2) Val2 = Builder.CreateBitCast(Val2, ITy->getPointerTo());
+  if (Dest && !E->isCmpXChg())
+    Dest = Builder.CreateBitCast(Dest, ITy->getPointerTo());
 
   if (isa<llvm::ConstantInt>(Order)) {
     int ord = cast<llvm::ConstantInt>(Order)->getZExtValue();

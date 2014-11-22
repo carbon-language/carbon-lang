@@ -543,4 +543,19 @@ void EMIT_ALL_THE_THINGS(int *ptr, int *ptr2, int new, _Bool weak, int success, 
   // CHECK: = cmpxchg weak {{.*}} seq_cst seq_cst
 }
 
+int PR21643() {
+  return __atomic_or_fetch((int __attribute__((address_space(257))) *)0x308, 1,
+                           __ATOMIC_RELAXED);
+  // CHECK: %[[atomictmp:.*]] = alloca i32, align 4
+  // CHECK: %[[atomicdst:.*]] = alloca i32, align 4
+  // CHECK: store i32 1, i32* %[[atomictmp]]
+  // CHECK: %[[one:.*]] = load i32* %[[atomictmp]], align 4
+  // CHECK: %[[old:.*]] = atomicrmw or i32 addrspace(257)* inttoptr (i32 776 to i32 addrspace(257)*), i32 %[[one]] monotonic
+  // CHECK: %[[new:.*]] = or i32 %[[old]], %[[one]]
+  // CHECK: store i32 %[[new]], i32* %[[atomicdst]], align 4
+  // CHECK: %[[ret:.*]] = load i32* %[[atomicdst]], align 4
+  // CHECK: ret i32 %[[ret]]
+
+}
+
 #endif
