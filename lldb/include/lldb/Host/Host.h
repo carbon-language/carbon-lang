@@ -267,9 +267,6 @@ public:
     static lldb::DataBufferSP
     GetAuxvData (lldb::pid_t pid);
 
-    static lldb::TargetSP
-    GetDummyTarget (Debugger &debugger);
-    
     static bool
     OpenFileInExternalEditor (const FileSpec &file_spec, 
                               uint32_t line_no);

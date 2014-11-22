@@ -554,11 +554,16 @@ private:
     //------------------------------------------------------------------
     Target (Debugger &debugger,
             const ArchSpec &target_arch,
-            const lldb::PlatformSP &platform_sp);
+            const lldb::PlatformSP &platform_sp,
+            bool is_dummy_target);
 
     // Helper function.
     bool
     ProcessIsValid ();
+
+    // Copy breakpoints, stop hooks and so forth from the dummy target:
+    void
+    PrimeFromDummyTarget(Target *dummy_target);
 
 public:
     ~Target();
@@ -1387,6 +1392,7 @@ protected:
     lldb::user_id_t         m_stop_hook_next_id;
     bool                    m_valid;
     bool                    m_suppress_stop_hooks;
+    bool                    m_is_dummy_target;
     
     static void
     ImageSearchPathsChanged (const PathMappingList &path_list,

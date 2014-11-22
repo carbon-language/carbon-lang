@@ -64,7 +64,7 @@ Target::GetStaticBroadcasterClass ()
 //----------------------------------------------------------------------
 // Target constructor
 //----------------------------------------------------------------------
-Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::PlatformSP &platform_sp) :
+Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::PlatformSP &platform_sp, bool is_dummy_target) :
     TargetProperties (this),
     Broadcaster (&debugger, Target::GetStaticBroadcasterClass().AsCString()),
     ExecutionContextScope (),
@@ -88,7 +88,9 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_stop_hooks (),
     m_stop_hook_next_id (0),
     m_valid (true),
-    m_suppress_stop_hooks (false)
+    m_suppress_stop_hooks (false),
+    m_is_dummy_target(is_dummy_target)
+
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
@@ -98,6 +100,9 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
 
     CheckInWithManager();
 
+    if (!m_is_dummy_target)
+        PrimeFromDummyTarget(m_debugger.GetDummyTarget());
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Target::Target()", static_cast<void*>(this));
@@ -105,6 +110,16 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     {
         LogIfAnyCategoriesSet(LIBLLDB_LOG_TARGET, "Target::Target created with architecture %s (%s)", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
     }
+}
+
+void
+Target::PrimeFromDummyTarget(Target *target)
+{
+    if (!target)
+        return;
+
+    m_stop_hooks = target->m_stop_hooks;
+
 }
 
 //----------------------------------------------------------------------

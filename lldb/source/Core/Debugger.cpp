@@ -3394,4 +3394,19 @@ Debugger::StopIOHandlerThread()
     }
 }
 
+Target *
+Debugger::GetDummyTarget()
+{
+    return m_target_list.GetDummyTarget (*this).get();
+}
+
+Target *
+Debugger::GetSelectedOrDummyTarget()
+{
+    Target *return_target = m_target_list.GetSelectedTarget().get();
+    if (return_target)
+        return return_target;
+
+    return GetDummyTarget();
+}
 

@@ -367,8 +367,8 @@ protected:
     DoExecute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        if (target == NULL)
+        Target *target = GetSelectedOrDummyTarget();
+        if (target == nullptr)
         {
             result.AppendError ("Invalid target.  Must set target before setting breakpoints (see 'target create' command).");
             result.SetStatus (eReturnStatusFailed);
@@ -925,7 +925,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
         {
             result.AppendError ("Invalid target.  No existing target or breakpoints.");
@@ -1055,7 +1055,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
         {
             result.AppendError ("Invalid target.  No existing target or breakpoints.");
@@ -1175,7 +1175,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
         {
             result.AppendError ("Invalid target.  No existing target or breakpoints.");
@@ -1356,7 +1356,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
         {
             result.AppendError ("Invalid target. No current target or breakpoints.");
@@ -1540,7 +1540,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
         {
             result.AppendError ("Invalid target. No existing target or breakpoints.");
@@ -1671,7 +1671,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
         {
             result.AppendError ("Invalid target. No existing target or breakpoints.");

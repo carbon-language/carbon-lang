@@ -221,16 +221,42 @@ public:
     lldb::TargetSP
     GetSelectedTarget ();
 
-
 protected:
     typedef std::vector<lldb::TargetSP> collection;
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
     collection m_target_list;
+    lldb::TargetSP m_dummy_target_sp;
     mutable Mutex m_target_list_mutex;
     uint32_t m_selected_target_idx;
 private:
+    lldb::TargetSP
+    GetDummyTarget (lldb_private::Debugger &debugger);
+
+    Error
+    CreateDummyTarget (Debugger &debugger,
+                       const char *specified_arch_name,
+                       lldb::TargetSP &target_sp);
+
+   Error
+   CreateTargetInternal (Debugger &debugger,
+                         const char *user_exe_path,
+                         const char *triple_cstr,
+                         bool get_dependent_files,
+                         const OptionGroupPlatform *platform_options,
+                         lldb::TargetSP &target_sp,
+                         bool is_dummy_target);
+
+   Error
+    CreateTargetInternal (Debugger &debugger,
+                          const char *user_exe_path,
+                          const ArchSpec& arch,
+                          bool get_dependent_modules,
+                          lldb::PlatformSP &platform_sp,
+                          lldb::TargetSP &target_sp,
+                          bool is_dummy_target);
+
     DISALLOW_COPY_AND_ASSIGN (TargetList);
 };
 

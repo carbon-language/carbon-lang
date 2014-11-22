@@ -479,28 +479,6 @@ Host::FindProcessThreads (const lldb::pid_t pid, TidMap &tids_to_attach)
 }
 #endif
 
-lldb::TargetSP
-Host::GetDummyTarget (lldb_private::Debugger &debugger)
-{
-    static TargetSP g_dummy_target_sp;
-
-    // FIXME: Maybe the dummy target should be per-Debugger
-    if (!g_dummy_target_sp || !g_dummy_target_sp->IsValid())
-    {
-        ArchSpec arch(Target::GetDefaultArchitecture());
-        if (!arch.IsValid())
-            arch = HostInfo::GetArchitecture();
-        Error err = debugger.GetTargetList().CreateTarget(debugger, 
-                                                          NULL,
-                                                          arch.GetTriple().getTriple().c_str(),
-                                                          false, 
-                                                          NULL, 
-                                                          g_dummy_target_sp);
-    }
-
-    return g_dummy_target_sp;
-}
-
 struct ShellInfo
 {
     ShellInfo () :

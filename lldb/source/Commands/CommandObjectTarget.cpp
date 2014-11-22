@@ -5019,7 +5019,7 @@ protected:
     {
         m_stop_hook_sp.reset();
 
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target)
         {
             Target::StopHookSP new_hook_sp = target->CreateStopHook();
@@ -5171,7 +5171,7 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target)
         {
             // FIXME: see if we can use the breakpoint id style parser?
@@ -5247,7 +5247,7 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (target)
         {
             // FIXME: see if we can use the breakpoint id style parser?
@@ -5317,7 +5317,7 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget();
         if (!target)
         {
             result.AppendError ("invalid target\n");

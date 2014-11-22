@@ -1018,6 +1018,18 @@ CommandObject::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType 
     return nullptr;
 }
 
+Target *
+CommandObject::GetDummyTarget()
+{
+    return m_interpreter.GetDebugger().GetDummyTarget();
+}
+
+Target *
+CommandObject::GetSelectedOrDummyTarget()
+{
+    return m_interpreter.GetDebugger().GetSelectedOrDummyTarget();
+}
+
 bool
 CommandObjectParsed::Execute (const char *args_string, CommandReturnObject &result)
 {

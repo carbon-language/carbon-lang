@@ -281,7 +281,7 @@ CommandObjectExpression::EvaluateExpression
     Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
-        target = Host::GetDummyTarget(m_interpreter.GetDebugger()).get();
+        target = GetDummyTarget();
     
     if (target)
     {

@@ -525,6 +525,11 @@ protected:
         return "invalid frame, no registers";
     }
 
+    // This is for use in the command interpreter, when you either want the selected target, or if no target
+    // is present you want to prime the dummy target with entities that will be copied over to new targets.
+    Target *GetSelectedOrDummyTarget();
+    Target *GetDummyTarget();
+
     //------------------------------------------------------------------
     /// Check the command to make sure anything required by this
     /// command is available.

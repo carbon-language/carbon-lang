@@ -1460,7 +1460,7 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                 // Get a dummy target to allow for calculator mode while processing backticks.
                 // This also helps break the infinite loop caused when target is null.
                 if (!target)
-                    target = Host::GetDummyTarget(GetDebugger()).get();
+                    target = m_debugger.GetDummyTarget();
                 if (target)
                 {
                     ValueObjectSP expr_result_valobj_sp;
