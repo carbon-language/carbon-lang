@@ -179,6 +179,8 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
         if (I.hasNoUnsignedWrap())
           Shl->setHasNoUnsignedWrap();
+        if (I.hasNoSignedWrap() && NewCst->isNotMinSignedValue())
+          Shl->setHasNoSignedWrap();
 
         return Shl;
       }
