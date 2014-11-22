@@ -903,6 +903,10 @@ def function (valobj,internal_dict):<br/>
             
             </p>
             
+            <p>Starting in SVN r222593, Python summary formatters can optionally define a third argument: <code>options</code><br/>
+              This is an object of type lldb.SBTypeSummaryOptions that can be passed into the formatter, allowing for a few customizations of the result.
+              The decision to adopt or not this third argument - and the meaning of options thereof - is within the individual formatters' writer.<br/>
+
             </div>
         </div>
 
