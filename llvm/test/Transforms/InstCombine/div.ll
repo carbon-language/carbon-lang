@@ -295,3 +295,12 @@ define <2 x i64> @test33(<2 x i64> %x) nounwind {
 ; CHECK-NEXT: udiv exact <2 x i64> %x, <i64 192, i64 192>
 ; CHECK-NEXT: ret <2 x i64>
 }
+
+define <2 x i64> @test34(<2 x i64> %x) nounwind {
+  %neg = sub nsw <2 x i64> zeroinitializer, %x
+  %div = sdiv exact <2 x i64> %neg, <i64 3, i64 4>
+  ret <2 x i64> %div
+; CHECK-LABEL: @test34(
+; CHECK-NEXT: sdiv exact <2 x i64> %x, <i64 -3, i64 -4>
+; CHECK-NEXT: ret <2 x i64>
+}

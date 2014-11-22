@@ -1082,10 +1082,12 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
       return new ZExtInst(Builder->CreateICmpEQ(Op0, Op1), I.getType());
 
     // -X/C  -->  X/-C  provided the negation doesn't overflow.
-    if (SubOperator *Sub = dyn_cast<SubOperator>(Op0))
-      if (match(Sub->getOperand(0), m_Zero()) && Sub->hasNoSignedWrap())
-        return BinaryOperator::CreateSDiv(Sub->getOperand(1),
-                                          ConstantExpr::getNeg(RHS));
+    Value *X;
+    if (match(Op0, m_NSWSub(m_Zero(), m_Value(X)))) {
+      auto *BO = BinaryOperator::CreateSDiv(X, ConstantExpr::getNeg(RHS));
+      BO->setIsExact(I.isExact());
+      return BO;
+    }
   }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
