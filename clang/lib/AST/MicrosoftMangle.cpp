@@ -338,8 +338,7 @@ bool MicrosoftMangleContextImpl::shouldMangleCXXName(const NamedDecl *D) {
 
 bool
 MicrosoftMangleContextImpl::shouldMangleStringLiteral(const StringLiteral *SL) {
-  return SL->isAscii() || SL->isWide() || SL->isUTF8() || SL->isUTF16() ||
-         SL->isUTF32();
+  return true;
 }
 
 void MicrosoftCXXNameMangler::mangle(const NamedDecl *D, StringRef Prefix) {
