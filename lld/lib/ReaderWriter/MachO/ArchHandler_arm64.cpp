@@ -402,7 +402,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
   case ARM64_RELOC_UNSIGNED                              | rLength8:
      // ex: .quad Lfoo + N
      *kind = pointer64;
-     return atomFromAddress(reloc.symbol, *(little64_t *)fixupContent,
+     return atomFromAddress(reloc.symbol, *(const little64_t *)fixupContent,
                             target, addend);
   case ARM64_RELOC_POINTER_TO_GOT              | rExtern | rLength8:
     // ex: .quad _foo@GOT
