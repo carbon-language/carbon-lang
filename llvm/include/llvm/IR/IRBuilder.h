@@ -429,11 +429,22 @@ public:
   /// If the pointer isn't i8* it will be converted.
   CallInst *CreateLifetimeEnd(Value *Ptr, ConstantInt *Size = nullptr);
 
+  /// \brief Create a call to Masked Load intrinsic
+  CallInst *CreateMaskedLoad(ArrayRef<Value *> Ops);
+
+  /// \brief Create a call to Masked Store intrinsic
+  CallInst *CreateMaskedStore(ArrayRef<Value *> Ops);
+
   /// \brief Create an assume intrinsic call that allows the optimizer to
   /// assume that the provided condition will be true.
   CallInst *CreateAssumption(Value *Cond);
 
 private:
+  /// \brief Create a call to a masked intrinsic with given Id.
+  /// Masked intrinsic has only one overloaded type - data type.
+  CallInst *CreateMaskedIntrinsic(unsigned Id, ArrayRef<Value *> Ops,
+                                  Type *DataTy);
+
   Value *getCastedInt8PtrValue(Value *Ptr);
 };
 
