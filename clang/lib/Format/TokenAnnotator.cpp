@@ -1712,6 +1712,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     if (Left.is(Keywords.kw_var))
       return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
+    if (Left.is(tok::r_square) && Right.is(tok::l_brace))
+      return true;
     if (Left.is(TT_LambdaArrow) || Right.is(TT_LambdaArrow))
       return true;
     if (Left.is(Keywords.kw_synchronized) && Right.is(tok::l_paren))

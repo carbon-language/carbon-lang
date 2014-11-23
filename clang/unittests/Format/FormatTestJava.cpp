@@ -144,8 +144,8 @@ TEST_F(FormatTestJava, EnumDeclarations) {
                "  }\n"
                "}");
   verifyFormat("enum SomeThing {\n"
-               "  ABC(new int[]{1, 2}),\n"
-               "  CDE(new int[]{2, 3});\n"
+               "  ABC(new int[] {1, 2}),\n"
+               "  CDE(new int[] {2, 3});\n"
                "  Something(int[] i) {\n"
                "  }\n"
                "}");
@@ -178,6 +178,13 @@ TEST_F(FormatTestJava, EnumDeclarations) {
                "    }\n"
                "  };\n"
                "}");
+}
+
+TEST_F(FormatTestJava, ArrayInitializers) {
+  verifyFormat("new int[] {1, 2, 3, 4};");
+  verifyFormat("new int[] {\n"
+               "    1, 2, 3, 4,\n"
+               "};");
 }
 
 TEST_F(FormatTestJava, ThrowsDeclarations) {
