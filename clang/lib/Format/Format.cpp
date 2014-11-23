@@ -742,10 +742,13 @@ private:
       return 0;
     unsigned NumStmts = 0;
     unsigned Length = 0;
+    bool InPPDirective = I[0]->InPPDirective;
     for (; NumStmts < 3; ++NumStmts) {
       if (I + 1 + NumStmts == E)
         break;
       const AnnotatedLine *Line = I[1 + NumStmts];
+      if (Line->InPPDirective != InPPDirective)
+        break;
       if (Line->First->isOneOf(tok::kw_case, tok::kw_default, tok::r_brace))
         break;
       if (Line->First->isOneOf(tok::kw_if, tok::kw_for, tok::kw_switch,

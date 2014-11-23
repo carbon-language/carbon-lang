@@ -754,6 +754,12 @@ TEST_F(FormatTest, ShortCaseLabels) {
                "}",
                Style);
   verifyFormat("switch (a) {\n"
+               "#if FOO\n"
+               "case 0: return 0;\n"
+               "#endif\n"
+               "}",
+               Style);
+  verifyFormat("switch (a) {\n"
                "case 1: {\n"
                "}\n"
                "case 2: {\n"
