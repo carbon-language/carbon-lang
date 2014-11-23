@@ -33,8 +33,8 @@ class AnnotatingParser {
 public:
   AnnotatingParser(const FormatStyle &Style, AnnotatedLine &Line,
                    const AdditionalKeywords &Keywords)
-      : Style(Style), Line(Line), CurrentToken(Line.First),
-        KeywordVirtualFound(false), AutoFound(false), Keywords(Keywords) {
+      : Style(Style), Line(Line), CurrentToken(Line.First), AutoFound(false),
+        Keywords(Keywords) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
     resetTokenMetadata(CurrentToken);
   }
@@ -536,14 +536,6 @@ private:
           CurrentToken->Type = TT_ImplicitStringLiteral;
         next();
       }
-    } else {
-      while (CurrentToken) {
-        if (CurrentToken->isNot(tok::comment))
-          // Mark these tokens as "implicit" string literals, so that
-          // they are not split or line-wrapped.
-          CurrentToken->Type = TT_ImplicitStringLiteral;
-        next();
-      }
     }
   }
 
@@ -570,23 +562,25 @@ private:
     }
   }
 
-  void parsePreprocessorDirective() {
+  LineType parsePreprocessorDirective() {
+    LineType Type = LT_PreprocessorDirective;
     next();
     if (!CurrentToken)
-      return;
+      return Type;
     if (CurrentToken->Tok.is(tok::numeric_constant)) {
       CurrentToken->SpacesRequiredBefore = 1;
-      return;
+      return Type;
     }
     // Hashes in the middle of a line can lead to any strange token
     // sequence.
     if (!CurrentToken->Tok.getIdentifierInfo())
-      return;
+      return Type;
     switch (CurrentToken->Tok.getIdentifierInfo()->getPPKeywordID()) {
     case tok::pp_include:
     case tok::pp_import:
       next();
       parseIncludeDirective();
+      Type = LT_ImportStatement;
       break;
     case tok::pp_error:
     case tok::pp_warning:
@@ -605,13 +599,13 @@ private:
     }
     while (CurrentToken)
       next();
+    return Type;
   }
 
 public:
   LineType parseLine() {
     if (CurrentToken->is(tok::hash)) {
-      parsePreprocessorDirective();
-      return LT_PreprocessorDirective;
+      return parsePreprocessorDirective();
     }
 
     // Directly allow to 'import <string-literal>' to support protocol buffer
@@ -622,24 +616,30 @@ public:
         CurrentToken->Next) {
       next();
       parseIncludeDirective();
-      return LT_Other;
+      return LT_ImportStatement;
     }
 
     // If this line starts and ends in '<' and '>', respectively, it is likely
     // part of "#define <a/b.h>".
     if (CurrentToken->is(tok::less) && Line.Last->is(tok::greater)) {
       parseIncludeDirective();
-      return LT_Other;
+      return LT_ImportStatement;
     }
 
+    bool KeywordVirtualFound = false;
+    bool ImportStatement = false;
     while (CurrentToken) {
       if (CurrentToken->is(tok::kw_virtual))
         KeywordVirtualFound = true;
+      if (IsImportStatement(*CurrentToken))
+        ImportStatement = true;
       if (!consumeToken())
         return LT_Invalid;
     }
     if (KeywordVirtualFound)
       return LT_VirtualFunctionDecl;
+    if (ImportStatement)
+      return LT_ImportStatement;
 
     if (Line.First->Type == TT_ObjCMethodSpecifier) {
       if (Contexts.back().FirstObjCSelectorName)
@@ -652,6 +652,16 @@ public:
   }
 
 private:
+  bool IsImportStatement(const FormatToken &Tok) {
+    // FIXME: Closure-library specific stuff should not be hard-coded but be
+    // configurable.
+    return Style.Language == FormatStyle::LK_JavaScript &&
+           Tok.TokenText == "goog" && Tok.Next && Tok.Next->is(tok::period) &&
+           Tok.Next->Next && (Tok.Next->Next->TokenText == "module" ||
+                              Tok.Next->Next->TokenText == "require" ||
+                              Tok.Next->Next->TokenText == "provide");
+  }
+
   void resetTokenMetadata(FormatToken *Token) {
     if (!Token)
       return;
@@ -1066,7 +1076,6 @@ private:
   const FormatStyle &Style;
   AnnotatedLine &Line;
   FormatToken *CurrentToken;
-  bool KeywordVirtualFound;
   bool AutoFound;
   const AdditionalKeywords &Keywords;
 };

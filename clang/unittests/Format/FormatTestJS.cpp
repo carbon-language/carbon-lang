@@ -158,6 +158,17 @@ TEST_F(FormatTestJS, GoogScopes) {
                "});  // goog.scope");
 }
 
+TEST_F(FormatTestJS, GoogModules) {
+  verifyFormat("goog.module('this.is.really.absurdly.long');",
+               getGoogleJSStyleWithColumns(40));
+  verifyFormat("goog.require('this.is.really.absurdly.long');",
+               getGoogleJSStyleWithColumns(40));
+  verifyFormat("goog.provide('this.is.really.absurdly.long');",
+               getGoogleJSStyleWithColumns(40));
+  verifyFormat("var long = goog.require('this.is.really.absurdly.long');",
+               getGoogleJSStyleWithColumns(40));
+}
+
 TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
   verifyFormat("function outer1(a, b) {\n"
                "  function inner1(a, b) { return a; }\n"

@@ -951,7 +951,8 @@ public:
             ColumnLimit = getColumnLimit(TheLine.InPPDirective);
         }
 
-        if (TheLine.Last->TotalLength + Indent <= ColumnLimit) {
+        if (TheLine.Last->TotalLength + Indent <= ColumnLimit ||
+            TheLine.Type == LT_ImportStatement) {
           LineState State = Indenter->getInitialState(Indent, &TheLine, DryRun);
           while (State.NextToken) {
             formatChildren(State, /*Newline=*/false, /*DryRun=*/false, Penalty);

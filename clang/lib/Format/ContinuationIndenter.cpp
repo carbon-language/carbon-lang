@@ -986,8 +986,9 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
   if (Current.Type != TT_BlockComment && Current.IsMultiline)
     return addMultilineToken(Current, State);
 
-  // Don't break implicit string literals.
-  if (Current.Type == TT_ImplicitStringLiteral)
+  // Don't break implicit string literals or import statements.
+  if (Current.Type == TT_ImplicitStringLiteral ||
+      State.Line->Type == LT_ImportStatement)
     return 0;
 
   if (!Current.isStringLiteral() && !Current.is(tok::comment))
