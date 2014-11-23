@@ -13,7 +13,8 @@ define void @global_copy_i1_to_i1(i1 addrspace(1)* %out, i1 addrspace(1)* %in) n
 }
 
 ; SI-LABEL: {{^}}global_sextload_i1_to_i32:
-; XSI: BUFFER_LOAD_BYTE
+; SI: buffer_load_ubyte
+; SI: v_bfe_i32
 ; SI: buffer_store_dword
 ; SI: s_endpgm
 define void @global_sextload_i1_to_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %in) nounwind {
@@ -35,7 +36,8 @@ define void @global_zextload_i1_to_i32(i32 addrspace(1)* %out, i1 addrspace(1)* 
 }
 
 ; SI-LABEL: {{^}}global_sextload_i1_to_i64:
-; XSI: BUFFER_LOAD_BYTE
+; SI: buffer_load_ubyte
+; SI: v_bfe_i32
 ; SI: buffer_store_dwordx2
 ; SI: s_endpgm
 define void @global_sextload_i1_to_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %in) nounwind {
@@ -47,6 +49,7 @@ define void @global_sextload_i1_to_i64(i64 addrspace(1)* %out, i1 addrspace(1)* 
 
 ; SI-LABEL: {{^}}global_zextload_i1_to_i64:
 ; SI: buffer_load_ubyte
+; SI: v_mov_b32_e32 {{v[0-9]+}}, 0
 ; SI: buffer_store_dwordx2
 ; SI: s_endpgm
 define void @global_zextload_i1_to_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %in) nounwind {
@@ -87,7 +90,7 @@ define void @i1_arg_zext_i64(i64 addrspace(1)* %out, i1 %x) nounwind {
 }
 
 ; SI-LABEL: {{^}}i1_arg_sext_i32:
-; XSI: BUFFER_LOAD_BYTE
+; SI: buffer_load_ubyte
 ; SI: buffer_store_dword
 ; SI: s_endpgm
 define void @i1_arg_sext_i32(i32 addrspace(1)* %out, i1 %x) nounwind {
@@ -97,7 +100,9 @@ define void @i1_arg_sext_i32(i32 addrspace(1)* %out, i1 %x) nounwind {
 }
 
 ; SI-LABEL: {{^}}i1_arg_sext_i64:
-; XSI: BUFFER_LOAD_BYTE
+; SI: buffer_load_ubyte
+; SI: v_bfe_i32
+; SI: v_ashrrev_i32
 ; SI: buffer_store_dwordx2
 ; SI: s_endpgm
 define void @i1_arg_sext_i64(i64 addrspace(1)* %out, i1 %x) nounwind {

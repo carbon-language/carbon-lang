@@ -1,14 +1,13 @@
-;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
+; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
-;EG-CHECK: {{^}}xor_v2i32:
-;EG-CHECK: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-;SI-CHECK: {{^}}xor_v2i32:
-;SI-CHECK: v_xor_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: v_xor_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; FUNC-LABEL: {{^}}xor_v2i32:
+; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
+; SI: v_xor_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_xor_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @xor_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in0, <2 x i32> addrspace(1)* %in1) {
   %a = load <2 x i32> addrspace(1) * %in0
@@ -18,17 +17,16 @@ define void @xor_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in
   ret void
 }
 
-;EG-CHECK: {{^}}xor_v4i32:
-;EG-CHECK: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; FUNC-LABEL: {{^}}xor_v4i32:
+; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-;SI-CHECK: {{^}}xor_v4i32:
-;SI-CHECK: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
-;SI-CHECK: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_xor_b32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @xor_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in0, <4 x i32> addrspace(1)* %in1) {
   %a = load <4 x i32> addrspace(1) * %in0
@@ -38,11 +36,10 @@ define void @xor_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in
   ret void
 }
 
-;EG-CHECK: {{^}}xor_i1:
-;EG-CHECK: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
+; FUNC-LABEL: {{^}}xor_i1:
+; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
 
-;SI-CHECK: {{^}}xor_i1:
-;SI-CHECK: v_xor_b32_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
+; SI: v_xor_b32_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 
 define void @xor_i1(float addrspace(1)* %out, float addrspace(1)* %in0, float addrspace(1)* %in1) {
   %a = load float addrspace(1) * %in0
@@ -55,8 +52,8 @@ define void @xor_i1(float addrspace(1)* %out, float addrspace(1)* %in0, float ad
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}vector_xor_i32:
-; SI-CHECK: v_xor_b32_e32
+; FUNC-LABEL: {{^}}vector_xor_i32:
+; SI: v_xor_b32_e32
 define void @vector_xor_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in0, i32 addrspace(1)* %in1) {
   %a = load i32 addrspace(1)* %in0
   %b = load i32 addrspace(1)* %in1
@@ -65,24 +62,24 @@ define void @vector_xor_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in0, i32 
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}scalar_xor_i32:
-; SI-CHECK: s_xor_b32
+; FUNC-LABEL: {{^}}scalar_xor_i32:
+; SI: s_xor_b32
 define void @scalar_xor_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
   %result = xor i32 %a, %b
   store i32 %result, i32 addrspace(1)* %out
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}scalar_not_i32:
-; SI-CHECK: s_not_b32
+; FUNC-LABEL: {{^}}scalar_not_i32:
+; SI: s_not_b32
 define void @scalar_not_i32(i32 addrspace(1)* %out, i32 %a) {
   %result = xor i32 %a, -1
   store i32 %result, i32 addrspace(1)* %out
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}vector_not_i32:
-; SI-CHECK: v_not_b32
+; FUNC-LABEL: {{^}}vector_not_i32:
+; SI: v_not_b32
 define void @vector_not_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in0, i32 addrspace(1)* %in1) {
   %a = load i32 addrspace(1)* %in0
   %b = load i32 addrspace(1)* %in1
@@ -91,10 +88,10 @@ define void @vector_not_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in0, i32 
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}vector_xor_i64:
-; SI-CHECK: v_xor_b32_e32
-; SI-CHECK: v_xor_b32_e32
-; SI-CHECK: s_endpgm
+; FUNC-LABEL: {{^}}vector_xor_i64:
+; SI: v_xor_b32_e32
+; SI: v_xor_b32_e32
+; SI: s_endpgm
 define void @vector_xor_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 addrspace(1)* %in1) {
   %a = load i64 addrspace(1)* %in0
   %b = load i64 addrspace(1)* %in1
@@ -103,26 +100,26 @@ define void @vector_xor_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}scalar_xor_i64:
-; SI-CHECK: s_xor_b64
-; SI-CHECK: s_endpgm
+; FUNC-LABEL: {{^}}scalar_xor_i64:
+; SI: s_xor_b64
+; SI: s_endpgm
 define void @scalar_xor_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
   %result = xor i64 %a, %b
   store i64 %result, i64 addrspace(1)* %out
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}scalar_not_i64:
-; SI-CHECK: s_not_b64
+; FUNC-LABEL: {{^}}scalar_not_i64:
+; SI: s_not_b64
 define void @scalar_not_i64(i64 addrspace(1)* %out, i64 %a) {
   %result = xor i64 %a, -1
   store i64 %result, i64 addrspace(1)* %out
   ret void
 }
 
-; SI-CHECK-LABEL: {{^}}vector_not_i64:
-; SI-CHECK: v_not_b32
-; SI-CHECK: v_not_b32
+; FUNC-LABEL: {{^}}vector_not_i64:
+; SI: v_not_b32
+; SI: v_not_b32
 define void @vector_not_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 addrspace(1)* %in1) {
   %a = load i64 addrspace(1)* %in0
   %b = load i64 addrspace(1)* %in1
@@ -135,8 +132,8 @@ define void @vector_not_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 
 ; Note that in the future the backend may be smart enough to
 ; use an SALU instruction for this.
 
-; SI-CHECK-LABEL: {{^}}xor_cf:
-; SI-CHECK: s_xor_b64
+; FUNC-LABEL: {{^}}xor_cf:
+; SI: s_xor_b64
 define void @xor_cf(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i64 %a, i64 %b) {
 entry:
   %0 = icmp eq i64 %a, 0
