@@ -1033,7 +1033,7 @@ private:
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
-    if (IsExpression)
+    if (IsExpression && !Contexts.back().CaretFound)
       return TT_BinaryOperator;
 
     return TT_PointerOrReference;
