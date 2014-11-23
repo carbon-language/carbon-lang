@@ -532,6 +532,7 @@ struct AdditionalKeywords {
     kw_extends = &IdentTable.get("extends");
     kw_final = &IdentTable.get("final");
     kw_implements = &IdentTable.get("implements");
+    kw_instanceof = &IdentTable.get("instanceof");
     kw_interface = &IdentTable.get("interface");
     kw_synchronized = &IdentTable.get("synchronized");
     kw_throws = &IdentTable.get("throws");
@@ -557,6 +558,7 @@ struct AdditionalKeywords {
   IdentifierInfo *kw_extends;
   IdentifierInfo *kw_final;
   IdentifierInfo *kw_implements;
+  IdentifierInfo *kw_instanceof;
   IdentifierInfo *kw_interface;
   IdentifierInfo *kw_synchronized;
   IdentifierInfo *kw_throws;
