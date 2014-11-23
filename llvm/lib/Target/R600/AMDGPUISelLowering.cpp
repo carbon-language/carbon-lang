@@ -2155,7 +2155,8 @@ SDValue AMDGPUTargetLowering::performStoreCombine(SDNode *N,
   SDValue Value = SN->getValue();
   EVT VT = Value.getValueType();
 
-  if (isTypeLegal(VT) || SN->isVolatile() || !ISD::isNormalLoad(Value.getNode()))
+  if (isTypeLegal(VT) || SN->isVolatile() ||
+      !ISD::isNormalLoad(Value.getNode()) || VT.getSizeInBits() < 8)
     return SDValue();
 
   LoadSDNode *LoadVal = cast<LoadSDNode>(Value);
