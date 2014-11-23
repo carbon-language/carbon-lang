@@ -1,6 +1,5 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
 
-
 ; SI-LABEL: {{^}}global_copy_i1_to_i1:
 ; SI: buffer_load_ubyte
 ; SI: v_and_b32_e32 v{{[0-9]+}}, 1
@@ -8,6 +7,28 @@
 ; SI: s_endpgm
 define void @global_copy_i1_to_i1(i1 addrspace(1)* %out, i1 addrspace(1)* %in) nounwind {
   %load = load i1 addrspace(1)* %in
+  store i1 %load, i1 addrspace(1)* %out, align 1
+  ret void
+}
+
+; SI-LABEL: {{^}}local_copy_i1_to_i1:
+; SI: ds_read_u8
+; SI: v_and_b32_e32 v{{[0-9]+}}, 1
+; SI: ds_write_b8
+; SI: s_endpgm
+define void @local_copy_i1_to_i1(i1 addrspace(3)* %out, i1 addrspace(3)* %in) nounwind {
+  %load = load i1 addrspace(3)* %in
+  store i1 %load, i1 addrspace(3)* %out, align 1
+  ret void
+}
+
+; SI-LABEL: {{^}}constant_copy_i1_to_i1:
+; SI: buffer_load_ubyte
+; SI: v_and_b32_e32 v{{[0-9]+}}, 1
+; SI: buffer_store_byte
+; SI: s_endpgm
+define void @constant_copy_i1_to_i1(i1 addrspace(1)* %out, i1 addrspace(2)* %in) nounwind {
+  %load = load i1 addrspace(2)* %in
   store i1 %load, i1 addrspace(1)* %out, align 1
   ret void
 }
