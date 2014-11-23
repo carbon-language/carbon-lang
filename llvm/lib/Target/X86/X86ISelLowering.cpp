@@ -5771,7 +5771,8 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
   // We only know how to deal with build_vector nodes where elements are either
   // zeroable or extract_vector_elt with constant index.
   SDValue FirstNonZero;
-  for (int i=0; i < 4; ++i) {
+  unsigned FirstNonZeroIdx;
+  for (unsigned i=0; i < 4; ++i) {
     if (Zeroable[i])
       continue;
     SDValue Elt = Op->getOperand(i);
@@ -5782,8 +5783,10 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
     MVT VT = Elt.getOperand(0).getSimpleValueType();
     if (!VT.is128BitVector())
       return SDValue();
-    if (!FirstNonZero.getNode())
+    if (!FirstNonZero.getNode()) {
       FirstNonZero = Elt;
+      FirstNonZeroIdx = i;
+    }
   }
 
   assert(FirstNonZero.getNode() && "Unexpected build vector of all zeros!");
@@ -5822,7 +5825,7 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
     return SDValue();
 
   SDValue V2 = Elt.getOperand(0);
-  if (Elt == FirstNonZero)
+  if (Elt == FirstNonZero && EltIdx == FirstNonZeroIdx)
     V1 = SDValue();
 
   bool CanFold = true;

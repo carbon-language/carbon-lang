@@ -1145,6 +1145,23 @@ entry:
   ret <4 x float> %vecinit3
 }
 
+define <4 x float> @insertps_10(<4 x float> %A)
+{
+; X32-LABEL: insertps_10:
+; X32:       ## BB#0:
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm0[0],zero
+; X32-NEXT:    retl
+;
+; X64-LABEL: insertps_10:
+; X64:       ## BB#0:
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm0[0],zero
+; X64-NEXT:    retq
+  %vecext = extractelement <4 x float> %A, i32 0
+  %vecbuild1 = insertelement <4 x float> <float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00>, float %vecext, i32 0
+  %vecbuild2 = insertelement <4 x float> %vecbuild1, float %vecext, i32 2
+  ret <4 x float> %vecbuild2
+}
+
 define <4 x float> @build_vector_to_shuffle_1(<4 x float> %A) {
 ; X32-LABEL: build_vector_to_shuffle_1:
 ; X32:       ## BB#0:
