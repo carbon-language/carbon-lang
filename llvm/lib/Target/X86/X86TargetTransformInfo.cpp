@@ -111,8 +111,8 @@ public:
                          Type *Ty) const override;
   unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
                          Type *Ty) const override;
-  bool isLegalPredicatedLoad (Type *DataType, int Consecutive) const;
-  bool isLegalPredicatedStore(Type *DataType, int Consecutive) const;
+  bool isLegalPredicatedLoad (Type *DataType, int Consecutive) const override;
+  bool isLegalPredicatedStore(Type *DataType, int Consecutive) const override;
 
   /// @}
 };
