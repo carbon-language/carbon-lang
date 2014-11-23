@@ -81,7 +81,7 @@ void WhitespaceManager::replaceWhitespaceInToken(
       // FIXME: We still need to take this change in account to properly
       // calculate the new length of the comment and to calculate the changes
       // for which to do the alignment when aligning comments.
-      Tok.Type == TT_LineComment && Newlines > 0 ? tok::comment : tok::unknown,
+      Tok.is(TT_LineComment) && Newlines > 0 ? tok::comment : tok::unknown,
       InPPDirective && !Tok.IsFirst));
 }
 
