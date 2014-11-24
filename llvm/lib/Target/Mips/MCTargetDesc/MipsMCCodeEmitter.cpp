@@ -635,6 +635,48 @@ MipsMCCodeEmitter::getMemEncoding(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned MipsMCCodeEmitter::
+getMemEncodingMMImm4(const MCInst &MI, unsigned OpNo,
+                     SmallVectorImpl<MCFixup> &Fixups,
+                     const MCSubtargetInfo &STI) const {
+  // Base register is encoded in bits 6-4, offset is encoded in bits 3-0.
+  assert(MI.getOperand(OpNo).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo),
+                                       Fixups, STI) << 4;
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1),
+                                       Fixups, STI);
+
+  return (OffBits & 0xF) | RegBits;
+}
+
+unsigned MipsMCCodeEmitter::
+getMemEncodingMMImm4Lsl1(const MCInst &MI, unsigned OpNo,
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) const {
+  // Base register is encoded in bits 6-4, offset is encoded in bits 3-0.
+  assert(MI.getOperand(OpNo).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo),
+                                       Fixups, STI) << 4;
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1),
+                                       Fixups, STI) >> 1;
+
+  return (OffBits & 0xF) | RegBits;
+}
+
+unsigned MipsMCCodeEmitter::
+getMemEncodingMMImm4Lsl2(const MCInst &MI, unsigned OpNo,
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) const {
+  // Base register is encoded in bits 6-4, offset is encoded in bits 3-0.
+  assert(MI.getOperand(OpNo).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo),
+                                       Fixups, STI) << 4;
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1),
+                                       Fixups, STI) >> 2;
+
+  return (OffBits & 0xF) | RegBits;
+}
+
+unsigned MipsMCCodeEmitter::
 getMemEncodingMMImm12(const MCInst &MI, unsigned OpNo,
                       SmallVectorImpl<MCFixup> &Fixups,
                       const MCSubtargetInfo &STI) const {

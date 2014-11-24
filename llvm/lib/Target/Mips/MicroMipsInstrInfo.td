@@ -46,6 +46,32 @@ def immZExt2Shift : ImmLeaf<i32, [{return Imm >= 1 && Imm <= 8;}]>;
 
 def immLi16 : ImmLeaf<i32, [{return Imm >= -1 && Imm <= 126;}]>;
 
+def MicroMipsMemGPRMM16AsmOperand : AsmOperandClass {
+  let Name = "MicroMipsMem";
+  let RenderMethod = "addMicroMipsMemOperands";
+  let ParserMethod = "parseMemOperand";
+  let PredicateMethod = "isMemWithGRPMM16Base";
+}
+
+class mem_mm_4_generic : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops ptr_rc, simm4);
+  let OperandType = "OPERAND_MEMORY";
+  let ParserMatchClass = MicroMipsMemGPRMM16AsmOperand;
+}
+
+def mem_mm_4 : mem_mm_4_generic {
+  let EncoderMethod = "getMemEncodingMMImm4";
+}
+
+def mem_mm_4_lsl1 : mem_mm_4_generic {
+  let EncoderMethod = "getMemEncodingMMImm4Lsl1";
+}
+
+def mem_mm_4_lsl2 : mem_mm_4_generic {
+  let EncoderMethod = "getMemEncodingMMImm4Lsl2";
+}
+
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops GPR32, simm12);
@@ -155,6 +181,22 @@ class ShiftIMM16<string opstr, Operand ImmOpnd, RegisterOperand RO,
                  InstrItinClass Itin = NoItinerary> :
   MicroMipsInst16<(outs RO:$rd), (ins RO:$rt, ImmOpnd:$shamt),
                   !strconcat(opstr, "\t$rd, $rt, $shamt"), [], Itin, FrmR>;
+
+class LoadMM16<string opstr, DAGOperand RO, SDPatternOperator OpNode,
+               InstrItinClass Itin, Operand MemOpnd> :
+  MicroMipsInst16<(outs RO:$rt), (ins MemOpnd:$addr),
+                  !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
+  let canFoldAsLoad = 1;
+  let mayLoad = 1;
+}
+
+class StoreMM16<string opstr, DAGOperand RTOpnd, DAGOperand RO,
+                SDPatternOperator OpNode, InstrItinClass Itin,
+                Operand MemOpnd> :
+  MicroMipsInst16<(outs), (ins RTOpnd:$rt, MemOpnd:$addr),
+                  !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
+  let mayStore = 1;
+}
 
 class AddImmUR2<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$rd), (ins RO:$rs, simm3_lsa2:$imm),
@@ -316,6 +358,19 @@ def SLL16_MM : ShiftIMM16<"sll16", uimm3_shift, GPRMM16Opnd, II_SLL>,
                SHIFT_FM_MM16<0>;
 def SRL16_MM : ShiftIMM16<"srl16", uimm3_shift, GPRMM16Opnd, II_SRL>,
                SHIFT_FM_MM16<1>;
+def LBU16_MM : LoadMM16<"lbu16", GPRMM16Opnd, zextloadi8, II_LBU,
+                        mem_mm_4>, LOAD_STORE_FM_MM16<0x02>;
+def LHU16_MM : LoadMM16<"lhu16", GPRMM16Opnd, zextloadi16, II_LHU,
+                        mem_mm_4_lsl1>, LOAD_STORE_FM_MM16<0x0a>;
+def LW16_MM : LoadMM16<"lw16", GPRMM16Opnd, load, II_LW, mem_mm_4_lsl2>,
+                      LOAD_STORE_FM_MM16<0x1a>;
+def SB16_MM : StoreMM16<"sb16", GPRMM16OpndZero, GPRMM16Opnd, truncstorei8,
+                        II_SB, mem_mm_4>, LOAD_STORE_FM_MM16<0x22>;
+def SH16_MM : StoreMM16<"sh16", GPRMM16OpndZero, GPRMM16Opnd, truncstorei16,
+                        II_SH, mem_mm_4_lsl1>,
+                        LOAD_STORE_FM_MM16<0x2a>;
+def SW16_MM : StoreMM16<"sw16", GPRMM16OpndZero, GPRMM16Opnd, store, II_SW,
+                        mem_mm_4_lsl2>, LOAD_STORE_FM_MM16<0x3a>;
 def ADDIUR1SP_MM : AddImmUR1SP<"addiur1sp", GPRMM16Opnd>, ADDIUR1SP_FM_MM16;
 def ADDIUR2_MM : AddImmUR2<"addiur2", GPRMM16Opnd>, ADDIUR2_FM_MM16;
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;

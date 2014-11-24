@@ -108,6 +108,18 @@ class ADDIUR2_FM_MM16 {
   let Inst{0}     = 0;
 }
 
+class LOAD_STORE_FM_MM16<bits<6> op> {
+  bits<3> rt;
+  bits<7> addr;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = op;
+  let Inst{9-7}   = rt;
+  let Inst{6-4}   = addr{6-4};
+  let Inst{3-0}   = addr{3-0};
+}
+
 class ADDIUS5_FM_MM16 {
   bits<5> rd;
   bits<4> imm;
