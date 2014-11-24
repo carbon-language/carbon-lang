@@ -22,7 +22,6 @@ void llvm::initializeIPA(PassRegistry &Registry) {
   initializeCallGraphWrapperPassPass(Registry);
   initializeCallGraphPrinterPass(Registry);
   initializeCallGraphViewerPass(Registry);
-  initializeFindUsedTypesPass(Registry);
   initializeGlobalsModRefPass(Registry);
 }
 
