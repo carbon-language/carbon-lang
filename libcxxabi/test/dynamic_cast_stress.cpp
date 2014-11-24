@@ -9,8 +9,7 @@
 
 #include <cassert>
 #include <tuple>
-#include <chrono>
-#include <iostream>
+#include "support/timer.hpp"
 
 template <std::size_t Indx, std::size_t Depth>
 struct C
@@ -50,17 +49,16 @@ struct A
 
 void test()
 {
-    typedef std::chrono::high_resolution_clock Clock;
-    typedef std::chrono::duration<double, std::micro> US;
     const std::size_t Width = 10;
     const std::size_t Depth = 5;
     A<Width, Depth> a;
     typedef B<Width/2, Depth> Destination;
 //    typedef A<Width, Depth> Destination;
-    auto t0 = Clock::now();
-    Destination* b = dynamic_cast<Destination*>((C<Width/2, 0>*)&a);
-    auto t1 = Clock::now();
-    std::cout << US(t1-t0).count() << " microseconds\n";
+    Destination *b = nullptr;
+    {
+        timer t;
+        b = dynamic_cast<Destination*>((C<Width/2, 0>*)&a);
+    }
     assert(b != 0);
 }
 

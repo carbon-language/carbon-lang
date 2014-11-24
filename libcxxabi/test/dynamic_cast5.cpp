@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cassert>
+#include "support/timer.hpp"
 
 namespace t1
 {
@@ -1298,15 +1299,10 @@ void test()
 
 }  // t9
 
-#include <chrono>
-#include <iostream>
 
 int main()
 {
-    typedef std::chrono::high_resolution_clock Clock;
-    typedef Clock::time_point time_point;
-    typedef std::chrono::duration<double, std::micro> NS;
-    time_point t0 = Clock::now();
+    timer t;
     t1::test();
     t2::test();
     t3::test();
@@ -1316,6 +1312,4 @@ int main()
     t7::test();
     t8::test();
     t9::test();
-    time_point t1 = Clock::now();
-    std::cout << NS(t1-t0).count() << " microseconds\n";
 }
