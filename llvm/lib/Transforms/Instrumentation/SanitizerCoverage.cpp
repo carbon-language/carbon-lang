@@ -13,9 +13,8 @@
 // We create a Guard boolean variable with the same linkage
 // as the function and inject this code into the entry block (CoverageLevel=1)
 // or all blocks (CoverageLevel>=2):
-// if (*Guard) {
-//    __sanitizer_cov();
-//    *Guard = 1;
+// if (Guard) {
+//    __sanitizer_cov(&Guard);
 // }
 // The accesses to Guard are atomic. The rest of the logic is
 // in __sanitizer_cov (it's fine to call it more than once).
@@ -132,6 +131,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   DataLayoutPass *DLP = &getAnalysis<DataLayoutPass>();
   IntptrTy = Type::getIntNTy(*C, DLP->getDataLayout().getPointerSizeInBits());
   Type *VoidTy = Type::getVoidTy(*C);
+  IRBuilder<> IRB(*C);
 
   Function *CtorFunc =
       Function::Create(FunctionType::get(VoidTy, false),
@@ -139,8 +139,8 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   ReturnInst::Create(*C, BasicBlock::Create(*C, "", CtorFunc));
   appendToGlobalCtors(M, CtorFunc, kSanCtorAndDtorPriority);
 
-  SanCovFunction =
-      checkInterfaceFunction(M.getOrInsertFunction(kSanCovName, VoidTy, nullptr));
+  SanCovFunction = checkInterfaceFunction(
+      M.getOrInsertFunction(kSanCovName, VoidTy, IRB.getInt8PtrTy(), nullptr));
   SanCovIndirCallFunction = checkInterfaceFunction(M.getOrInsertFunction(
       kSanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, nullptr));
   SanCovModuleInit = checkInterfaceFunction(M.getOrInsertFunction(
@@ -157,7 +157,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   for (auto &F : M)
     runOnFunction(F);
 
-  IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
+  IRB.SetInsertPoint(CtorFunc->getEntryBlock().getTerminator());
   IRB.CreateCall(SanCovModuleInit,
                  ConstantInt::get(IntptrTy, SanCovFunction->getNumUses()));
   return true;
@@ -279,10 +279,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F,
   IRB.SetInsertPoint(Ins);
   IRB.SetCurrentDebugLocation(EntryLoc);
   // __sanitizer_cov gets the PC of the instruction using GET_CALLER_PC.
-  IRB.CreateCall(SanCovFunction);
-  StoreInst *Store = IRB.CreateStore(ConstantInt::get(Int8Ty, 1), Guard);
-  Store->setAtomic(Monotonic);
-  Store->setAlignment(1);
+  IRB.CreateCall(SanCovFunction, Guard);
 }
 
 char SanitizerCoverageModule::ID = 0;
