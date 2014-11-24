@@ -4634,36 +4634,43 @@ TEST(Matcher, IsExpansionInMainFileMatcher) {
   EXPECT_TRUE(matches("class X {};",
                       recordDecl(hasName("X"), isExpansionInMainFile())));
   EXPECT_TRUE(notMatches("", recordDecl(isExpansionInMainFile())));
+  FileContentMappings M;
+  M.push_back(std::make_pair("/other", "class X {};"));
   EXPECT_TRUE(matchesConditionally("#include <other>\n",
                                    recordDecl(isExpansionInMainFile()), false,
-                                   "-isystem/", {{"/other", "class X {};"}}));
+                                   "-isystem/", M));
 }
 
 TEST(Matcher, IsExpansionInSystemHeader) {
+  FileContentMappings M;
+  M.push_back(std::make_pair("/other", "class X {};"));
   EXPECT_TRUE(matchesConditionally(
       "#include \"other\"\n", recordDecl(isExpansionInSystemHeader()), true,
-      "-isystem/", {{"/other", "class X {};"}}));
+      "-isystem/", M));
   EXPECT_TRUE(matchesConditionally("#include \"other\"\n",
                                    recordDecl(isExpansionInSystemHeader()),
-                                   false, "-I/", {{"/other", "class X {};"}}));
+                                   false, "-I/", M));
   EXPECT_TRUE(notMatches("class X {};",
                          recordDecl(isExpansionInSystemHeader())));
   EXPECT_TRUE(notMatches("", recordDecl(isExpansionInSystemHeader())));
 }
 
 TEST(Matcher, IsExpansionInFileMatching) {
+  FileContentMappings M;
+  M.push_back(std::make_pair("/foo", "class A {};"));
+  M.push_back(std::make_pair("/bar", "class B {};"));
   EXPECT_TRUE(matchesConditionally(
       "#include <foo>\n"
       "#include <bar>\n"
       "class X {};",
       recordDecl(isExpansionInFileMatching("b.*"), hasName("B")), true,
-      "-isystem/", {{"/foo", "class A {};"}, {"/bar", "class B {};"}}));
+      "-isystem/", M));
   EXPECT_TRUE(matchesConditionally(
       "#include <foo>\n"
       "#include <bar>\n"
       "class X {};",
       recordDecl(isExpansionInFileMatching("f.*"), hasName("X")), false,
-      "-isystem/", {{"/foo", "class A {};"}, {"/bar", "class B {};"}}));
+      "-isystem/", M));
 }
 
 } // end namespace ast_matchers
