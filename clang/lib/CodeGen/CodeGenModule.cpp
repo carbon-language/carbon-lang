@@ -715,10 +715,6 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     // Naked implies noinline: we should not be inlining such functions.
     B.addAttribute(llvm::Attribute::Naked);
     B.addAttribute(llvm::Attribute::NoInline);
-  } else if (D->hasAttr<OptimizeNoneAttr>()) {
-    // OptimizeNone implies noinline; we should not be inlining such functions.
-    B.addAttribute(llvm::Attribute::OptimizeNone);
-    B.addAttribute(llvm::Attribute::NoInline);
   } else if (D->hasAttr<NoDuplicateAttr>()) {
     B.addAttribute(llvm::Attribute::NoDuplicate);
   } else if (D->hasAttr<NoInlineAttr>()) {
@@ -737,12 +733,6 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   if (D->hasAttr<MinSizeAttr>())
     B.addAttribute(llvm::Attribute::MinSize);
-
-  if (D->hasAttr<OptimizeNoneAttr>()) {
-    // OptimizeNone wins over OptimizeForSize and MinSize.
-    B.removeAttribute(llvm::Attribute::OptimizeForSize);
-    B.removeAttribute(llvm::Attribute::MinSize);
-  }
 
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
     B.addAttribute(llvm::Attribute::StackProtect);
@@ -771,6 +761,21 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   F->addAttributes(llvm::AttributeSet::FunctionIndex,
                    llvm::AttributeSet::get(
                        F->getContext(), llvm::AttributeSet::FunctionIndex, B));
+
+  if (D->hasAttr<OptimizeNoneAttr>()) {
+    // OptimizeNone implies noinline; we should not be inlining such functions.
+    F->addFnAttr(llvm::Attribute::OptimizeNone);
+    F->addFnAttr(llvm::Attribute::NoInline);
+
+    // OptimizeNone wins over OptimizeForSize, MinSize, AlwaysInline.
+    F->removeFnAttr(llvm::Attribute::OptimizeForSize);
+    F->removeFnAttr(llvm::Attribute::MinSize);
+    F->removeFnAttr(llvm::Attribute::AlwaysInline);
+
+    // Attribute 'inlinehint' has no effect on 'optnone' functions.
+    // Explicitly remove it from the set of function attributes.
+    F->removeFnAttr(llvm::Attribute::InlineHint);
+  }
 
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
