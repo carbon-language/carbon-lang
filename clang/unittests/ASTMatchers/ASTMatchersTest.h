@@ -22,7 +22,6 @@ using clang::tooling::buildASTFromCodeWithArgs;
 using clang::tooling::newFrontendActionFactory;
 using clang::tooling::runToolOnCodeWithArgs;
 using clang::tooling::FrontendActionFactory;
-using clang::tooling::FileContentMappings;
 
 class BoundNodesCallback {
 public:
@@ -59,10 +58,10 @@ private:
 };
 
 template <typename T>
-testing::AssertionResult matchesConditionally(
-    const std::string &Code, const T &AMatcher, bool ExpectMatch,
-    llvm::StringRef CompileArg,
-    const FileContentMappings &VirtualMappedFiles = FileContentMappings()) {
+testing::AssertionResult matchesConditionally(const std::string &Code,
+                                              const T &AMatcher,
+                                              bool ExpectMatch,
+                                              llvm::StringRef CompileArg) {
   bool Found = false, DynamicFound = false;
   MatchFinder Finder;
   VerifyMatch VerifyFound(nullptr, &Found);
@@ -74,8 +73,7 @@ testing::AssertionResult matchesConditionally(
       newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
   std::vector<std::string> Args(1, CompileArg);
-  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, "input.cc",
-                             VirtualMappedFiles)) {
+  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
   }
   if (Found != DynamicFound) {

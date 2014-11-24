@@ -143,10 +143,6 @@ inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
 bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
                    const Twine &FileName = "input.cc");
 
-/// The first part of the pair is the filename, the second part the
-/// file-content.
-typedef std::vector<std::pair<std::string, std::string>> FileContentMappings;
-
 /// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag and
 ///        with additional other flags.
 ///
@@ -156,10 +152,9 @@ typedef std::vector<std::pair<std::string, std::string>> FileContentMappings;
 /// \param FileName The file name which 'Code' will be mapped as.
 ///
 /// \return - True if 'ToolAction' was successfully executed.
-bool runToolOnCodeWithArgs(
-    clang::FrontendAction *ToolAction, const Twine &Code,
-    const std::vector<std::string> &Args, const Twine &FileName = "input.cc",
-    const FileContentMappings &VirtualMappedFiles = FileContentMappings());
+bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
+                           const std::vector<std::string> &Args,
+                           const Twine &FileName = "input.cc");
 
 /// \brief Builds an AST for 'Code'.
 ///
