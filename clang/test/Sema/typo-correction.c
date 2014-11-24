@@ -4,3 +4,8 @@
 // than in C++ and may exhibit different behavior as a result.
 
 __typeof__(struct F*) var[invalid];  // expected-error-re {{use of undeclared identifier 'invalid'{{$}}}}
+
+void PR21656() {
+  float x;
+  x = (float)arst;  // expected-error-re {{use of undeclared identifier 'arst'{{$}}}}
+}
