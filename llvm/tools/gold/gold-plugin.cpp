@@ -78,9 +78,14 @@ static std::vector<std::string> Cleanup;
 static llvm::TargetOptions TargetOpts;
 
 namespace options {
-  enum generate_bc { BC_NO, BC_ONLY, BC_SAVE_TEMPS };
+  enum OutputType {
+    OT_NORMAL,
+    OT_DISABLE,
+    OT_BC_ONLY,
+    OT_SAVE_TEMPS
+  };
   static bool generate_api_file = false;
-  static generate_bc generate_bc_file = BC_NO;
+  static OutputType TheOutputType = OT_NORMAL;
   static std::string obj_path;
   static std::string extra_library_path;
   static std::string triple;
@@ -109,9 +114,11 @@ namespace options {
     } else if (opt.startswith("obj-path=")) {
       obj_path = opt.substr(strlen("obj-path="));
     } else if (opt == "emit-llvm") {
-      generate_bc_file = BC_ONLY;
+      TheOutputType = OT_BC_ONLY;
     } else if (opt == "save-temps") {
-      generate_bc_file = BC_SAVE_TEMPS;
+      TheOutputType = OT_SAVE_TEMPS;
+    } else if (opt == "disable-output") {
+      TheOutputType = OT_DISABLE;
     } else {
       // Save this option to pass to the code generator.
       // ParseCommandLineOptions() expects argv[0] to be program name. Lazily
@@ -711,7 +718,7 @@ static void codegen(Module &M) {
 
   runLTOPasses(M, *TM);
 
-  if (options::generate_bc_file == options::BC_SAVE_TEMPS)
+  if (options::TheOutputType == options::OT_SAVE_TEMPS)
     saveBCFile(output_name + ".opt.bc", M);
 
   PassManager CodeGenPasses;
@@ -795,14 +802,17 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
       internalize(*GV);
   }
 
-  if (options::generate_bc_file != options::BC_NO) {
+  if (options::TheOutputType == options::OT_DISABLE)
+    return LDPS_OK;
+
+  if (options::TheOutputType != options::OT_NORMAL) {
     std::string path;
-    if (options::generate_bc_file == options::BC_ONLY)
+    if (options::TheOutputType == options::OT_BC_ONLY)
       path = output_name;
     else
       path = output_name + ".bc";
     saveBCFile(path, *L.getModule());
-    if (options::generate_bc_file == options::BC_ONLY)
+    if (options::TheOutputType == options::OT_BC_ONLY)
       return LDPS_OK;
   }
 
@@ -828,7 +838,8 @@ static ld_plugin_status all_symbols_read_hook(void) {
     Ret = allSymbolsReadHook(&ApiFile);
   }
 
-  if (options::generate_bc_file == options::BC_ONLY)
+  if (options::TheOutputType == options::OT_BC_ONLY ||
+      options::TheOutputType == options::OT_DISABLE)
     exit(0);
 
   return Ret;

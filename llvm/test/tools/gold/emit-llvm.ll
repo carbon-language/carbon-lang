@@ -13,6 +13,12 @@
 ; RUN: llvm-dis %t3.o.bc -o - | FileCheck %s
 ; RUN: llvm-dis %t3.o.opt.bc -o - | FileCheck --check-prefix=OPT %s
 
+; RUN: rm -f %t4.o
+; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
+; RUN:     -m elf_x86_64 --plugin-opt=disable-output \
+; RUN:    -shared %t.o -o %t4.o
+; RUN: not test -a %t4.o
+
 target triple = "x86_64-unknown-linux-gnu"
 
 ; CHECK: define internal void @f1()
