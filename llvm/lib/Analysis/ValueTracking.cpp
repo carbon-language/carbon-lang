@@ -491,7 +491,17 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
     if (Q.ExclInvs.count(I))
       continue;
 
-    if (match(I, m_Intrinsic<Intrinsic::assume>(m_Specific(V))) &&
+    // Warning: This loop can end up being somewhat performance sensetive.
+    // We're running this loop for once for each value queried resulting in a
+    // runtime of ~O(#assumes * #values).
+
+    assert(isa<IntrinsicInst>(I) &&
+           dyn_cast<IntrinsicInst>(I)->getIntrinsicID() == Intrinsic::assume &&
+           "must be an assume intrinsic");
+    
+    Value *Arg = I->getArgOperand(0);
+
+    if (Arg == V &&
         isValidAssumeForContext(I, Q, DL)) {
       assert(BitWidth == 1 && "assume operand is not i1?");
       KnownZero.clearAllBits();
@@ -507,16 +517,15 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
     CmpInst::Predicate Pred;
     ConstantInt *C;
     // assume(v = a)
-    if (match(I, m_Intrinsic<Intrinsic::assume>(
-                   m_c_ICmp(Pred, m_V, m_Value(A)))) &&
+    if (match(Arg, m_c_ICmp(Pred, m_V, m_Value(A))) &&
         Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
       KnownZero |= RHSKnownZero;
       KnownOne  |= RHSKnownOne;
     // assume(v & b = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_c_And(m_V, m_Value(B)), m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_c_And(m_V, m_Value(B)),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -528,9 +537,8 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownZero & MaskKnownOne;
       KnownOne  |= RHSKnownOne  & MaskKnownOne;
     // assume(~(v & b) = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_Not(m_c_And(m_V, m_Value(B))),
-                                m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_c_And(m_V, m_Value(B))),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -542,8 +550,8 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownOne  & MaskKnownOne;
       KnownOne  |= RHSKnownZero & MaskKnownOne;
     // assume(v | b = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_c_Or(m_V, m_Value(B)), m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_c_Or(m_V, m_Value(B)),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -555,9 +563,8 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownZero & BKnownZero;
       KnownOne  |= RHSKnownOne  & BKnownZero;
     // assume(~(v | b) = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_Not(m_c_Or(m_V, m_Value(B))),
-                                m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_c_Or(m_V, m_Value(B))),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -569,8 +576,8 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownOne  & BKnownZero;
       KnownOne  |= RHSKnownZero & BKnownZero;
     // assume(v ^ b = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_c_Xor(m_V, m_Value(B)), m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_c_Xor(m_V, m_Value(B)),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -585,9 +592,8 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownOne  & BKnownOne;
       KnownOne  |= RHSKnownZero & BKnownOne;
     // assume(~(v ^ b) = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_Not(m_c_Xor(m_V, m_Value(B))),
-                                m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_c_Xor(m_V, m_Value(B))),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -602,9 +608,8 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownZero & BKnownOne;
       KnownOne  |= RHSKnownOne  & BKnownOne;
     // assume(v << c = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_Shl(m_V, m_ConstantInt(C)),
-                                      m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_Shl(m_V, m_ConstantInt(C)),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -613,9 +618,8 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownZero.lshr(C->getZExtValue());
       KnownOne  |= RHSKnownOne.lshr(C->getZExtValue());
     // assume(~(v << c) = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_Not(m_Shl(m_V, m_ConstantInt(C))),
-                                      m_Value(A)))) &&
+    } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_Shl(m_V, m_ConstantInt(C))),
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -624,11 +628,11 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownOne.lshr(C->getZExtValue());
       KnownOne  |= RHSKnownZero.lshr(C->getZExtValue());
     // assume(v >> c = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_CombineOr(m_LShr(m_V, m_ConstantInt(C)),
+    } else if (match(Arg,
+                     m_c_ICmp(Pred, m_CombineOr(m_LShr(m_V, m_ConstantInt(C)),
                                                   m_AShr(m_V,
                                                          m_ConstantInt(C))),
-                                     m_Value(A)))) &&
+                                     m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -637,11 +641,10 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownZero << C->getZExtValue();
       KnownOne  |= RHSKnownOne  << C->getZExtValue();
     // assume(~(v >> c) = a)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_c_ICmp(Pred, m_Not(m_CombineOr(
+    } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_CombineOr(
                                               m_LShr(m_V, m_ConstantInt(C)),
                                               m_AShr(m_V, m_ConstantInt(C)))),
-                                     m_Value(A)))) &&
+                                   m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
       computeKnownBits(A, RHSKnownZero, RHSKnownOne, DL, Depth+1, Query(Q, I));
@@ -650,8 +653,7 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |= RHSKnownOne  << C->getZExtValue();
       KnownOne  |= RHSKnownZero << C->getZExtValue();
     // assume(v >=_s c) where c is non-negative
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_ICmp(Pred, m_V, m_Value(A)))) &&
+    } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SGE &&
                isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
@@ -662,8 +664,7 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
         KnownZero |= APInt::getSignBit(BitWidth);
       }
     // assume(v >_s c) where c is at least -1.
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_ICmp(Pred, m_V, m_Value(A)))) &&
+    } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SGT &&
                isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
@@ -674,8 +675,7 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
         KnownZero |= APInt::getSignBit(BitWidth);
       }
     // assume(v <=_s c) where c is negative
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_ICmp(Pred, m_V, m_Value(A)))) &&
+    } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SLE &&
                isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
@@ -686,8 +686,7 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
         KnownOne |= APInt::getSignBit(BitWidth);
       }
     // assume(v <_s c) where c is non-positive
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_ICmp(Pred, m_V, m_Value(A)))) &&
+    } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SLT &&
                isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
@@ -698,8 +697,7 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
         KnownOne |= APInt::getSignBit(BitWidth);
       }
     // assume(v <=_u c)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_ICmp(Pred, m_V, m_Value(A)))) &&
+    } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_ULE &&
                isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
@@ -709,8 +707,7 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       KnownZero |=
         APInt::getHighBitsSet(BitWidth, RHSKnownZero.countLeadingOnes());
     // assume(v <_u c)
-    } else if (match(I, m_Intrinsic<Intrinsic::assume>(
-                       m_ICmp(Pred, m_V, m_Value(A)))) &&
+    } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_ULT &&
                isValidAssumeForContext(I, Q, DL)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
