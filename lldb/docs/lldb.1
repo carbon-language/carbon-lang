@@ -1,7 +1,7 @@
-.Dd 7 June, 2012     \" DATE
+.Dd June 7, 2012     \" DATE
 .Dt LLDB 1           \" Program name and manual section number
 .Os Darwin           \" Operating System
-.Sh NAME             \" Section Header - required - don't modify 
+.Sh NAME             \" Section Header - required - don't modify
 .Nm lldb
 .Nd The debugger
 .Sh SYNOPSIS         \" Section Header - required - don't modify
@@ -15,30 +15,30 @@
 .Ar [[--] <PROGRAM-ARG1> <PROGRAM-ARG2> ...]
 .Sh DESCRIPTION      \" Section Header - required - don't modify
 .Nm
-is the command line interface for the LLDB debugger library. 
+is the command line interface for the LLDB debugger library.
 .Nm
 can debug C, C++, Objective-C, and Objective-C++ programs.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl h, -help 
-Prints out the usage information for the 
+.It Fl h, -help
+Prints out the usage information for the
 .Nm
 debugger.  The \fB\-\-help\fR text may be more up-to-date and
 authoritative than the command line options described in this man
 page.
-.It Fl v, -version 
-Prints out the version number of the 
-.Nm 
+.It Fl v, -version
+Prints out the version number of the
+.Nm
 debugger.
 .It Fl a, -arch Ar arch
-Specifies which architecture 
+Specifies which architecture
 .Nm
 will use when launching the specified program (assuming the provided
 executable is built for multiple architectures.)
 .It Fl f, -file Ar filename
 Specifies the executable file that
-.nm
+.Nm
 will be launching / attaching to.
 .It Fl n, -attach-name Ar process-name
 Specifies the name of a currently-running process to attach to.
@@ -60,10 +60,10 @@ Currently only the Python extensions have been implemented.
 .It Fl d, -debug
 Tells the debugger to print out extra information for debugging itself.
 .It Fl s, -source Ar filename
-Tells 
+Tells
 .Nm
 to read in and execute the file "\fBfilename\fR", which
-should contain 
+should contain
 .Nm
 commands.
 .It Fl e, -editor
@@ -81,7 +81,7 @@ Remember to end the options with "--" if any of your arguments have a "-" in the
 In
 .Nm
 there is a \fBhelp\fR command which can be used to find descriptions and examples of
-all 
+all
 .Nm
 commands.  To get help on "\fBbreakpoint set\fR" you would type "\fBhelp breakpoint set\fR".
 .Pp
@@ -94,18 +94,18 @@ will read settings/aliases/commands from three files at startup, if they exist.
 .Pp
 First, it will read a \fB~/.lldbinit-\fIdebugger\fR command file.  If you are using the
 .Nm
-command line interface, this is \fB~/.lldbinit-lldb\fR.  If you are using 
+command line interface, this is \fB~/.lldbinit-lldb\fR.  If you are using
 .Nm
 inside a GUI debugger like
 .Nm Xcode
 this will be \fB~/.lldbinit-Xcode\fR.  This is a useful place to put settings that you
-want to apply only when a given 
+want to apply only when a given
 .Nm
 command interpreter is used.
 .Pp
 Second, \fB~/.lldbinit\fR is read.
 .Pp
-Third, an \fR.lldbinit\fR file in the current working directory (where 
+Third, an \fR.lldbinit\fR file in the current working directory (where
 .Nm
 is started) will be read.
 .Sh SEE ALSO
