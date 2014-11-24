@@ -268,6 +268,43 @@ multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
 defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
 defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
 
+// Rd=zxtb(Rs): assembler mapped to Rd=and(Rs,#255).
+// Compiler would want to generate 'zxtb' instead of 'and' becuase 'zxtb' has
+// predicated forms while 'and' doesn't. Since integrated assembler can't
+// handle 'mapped' instructions, we need to encode 'zxtb' same as 'and' where
+// immediate operand is set to '255'.
+
+let hasNewValue = 1, opNewValue = 0 in
+class T_ZXTB: ALU32Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rs),
+  "$Rd = zxtb($Rs)", [] > { // Rd = and(Rs,255)
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<10> s10 = 255;
+
+    let IClass = 0b0111;
+
+    let Inst{27-22} = 0b011000;
+    let Inst{4-0} = Rd;
+    let Inst{20-16} = Rs;
+    let Inst{21} = s10{9};
+    let Inst{13-5} = s10{8-0};
+}
+
+//Rd=zxtb(Rs): assembler mapped to "Rd=and(Rs,#255)
+multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
+  let BaseOpcode = mnemonic in {
+    let isPredicable = 1, hasSideEffects = 0 in
+    def A2_#NAME : T_ZXTB;
+
+    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
+      defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
+      defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
+    }
+  }
+}
+
+defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
+
 // Combines the two integer registers SRC1 and SRC2 into a double register.
 let isPredicable = 1 in
 class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
@@ -598,7 +635,6 @@ multiclass ALU32_2op_base2<string mnemonic> {
 
 defm ASLH : ALU32_2op_base2<"aslh">, PredNewRel;
 defm ASRH : ALU32_2op_base2<"asrh">, PredNewRel;
-defm ZXTB : ALU32_2op_base2<"zxtb">, PredNewRel;
 defm ZXTH : ALU32_2op_base2<"zxth">,  PredNewRel;
 
 def : Pat <(shl (i32 IntRegs:$src1), (i32 16)),
@@ -2288,7 +2324,7 @@ def : Pat <(and (i32 IntRegs:$src1), 65535),
 
 // Map from r0 = and(r1, 255) to r0 = zxtb(r1).
 def : Pat <(and (i32 IntRegs:$src1), 255),
-      (ZXTB (i32 IntRegs:$src1))>;
+      (A2_zxtb (i32 IntRegs:$src1))>;
 
 // Map Add(p1, true) to p1 = not(p1).
 //     Add(p1, false) should never be produced,
