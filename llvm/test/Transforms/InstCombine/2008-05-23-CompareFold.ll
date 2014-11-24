@@ -1,5 +1,8 @@
-; RUN: opt < %s -instcombine -S | grep "ret i1 false"
+; RUN: opt -instcombine -S < %s | FileCheck %s
 ; PR2359
+
+; CHECK-LABEL: @f(
+; CHECK: ret i1 false
 define i1 @f(i8* %x) {
 entry:
        %tmp462 = load i8* %x, align 1          ; <i8> [#uses=1]
