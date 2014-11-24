@@ -30,6 +30,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h" // Get build system configuration settings
 #include "llvm/Support/Compiler.h"
 #include <system_error>
@@ -162,6 +163,11 @@ c_str(SmallVectorImpl<T> &str) {
 }
 
 namespace sys {
+namespace path {
+std::error_code widenPath(const Twine &Path8,
+                          SmallVectorImpl<wchar_t> &Path16);
+} // end namespace path
+
 namespace windows {
 std::error_code UTF8ToUTF16(StringRef utf8, SmallVectorImpl<wchar_t> &utf16);
 std::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,

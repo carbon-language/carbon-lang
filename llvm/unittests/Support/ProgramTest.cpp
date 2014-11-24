@@ -70,6 +70,56 @@ static void CopyEnvironment(std::vector<const char *> &out) {
   }
 }
 
+#ifdef LLVM_ON_WIN32
+TEST(ProgramTest, CreateProcessLongPath) {
+  if (getenv("LLVM_PROGRAM_TEST_LONG_PATH"))
+    exit(0);
+
+  // getMainExecutable returns an absolute path; prepend the long-path prefix.
+  std::string MyAbsExe =
+      sys::fs::getMainExecutable(TestMainArgv0, &ProgramTestStringArg1);
+  std::string MyExe;
+  if (!StringRef(MyAbsExe).startswith("\\\\?\\"))
+    MyExe.append("\\\\?\\");
+  MyExe.append(MyAbsExe);
+
+  const char *ArgV[] = {
+    MyExe.c_str(),
+    "--gtest_filter=ProgramTest.CreateProcessLongPath",
+    nullptr
+  };
+
+  // Add LLVM_PROGRAM_TEST_LONG_PATH to the environment of the child.
+  std::vector<const char *> EnvP;
+  CopyEnvironment(EnvP);
+  EnvP.push_back("LLVM_PROGRAM_TEST_LONG_PATH=1");
+  EnvP.push_back(nullptr);
+
+  // Redirect stdout to a long path.
+  SmallString<128> TestDirectory;
+  ASSERT_NO_ERROR(
+    fs::createUniqueDirectory("program-redirect-test", TestDirectory));
+  SmallString<256> LongPath(TestDirectory);
+  LongPath.push_back('\\');
+  // MAX_PATH = 260
+  LongPath.append(260 - TestDirectory.size(), 'a');
+  StringRef LongPathRef(LongPath);
+
+  std::string Error;
+  bool ExecutionFailed;
+  const StringRef *Redirects[] = { nullptr, &LongPathRef, nullptr };
+  int RC = ExecuteAndWait(MyExe, ArgV, &EnvP[0], Redirects,
+    /*secondsToWait=*/ 10, /*memoryLimit=*/ 0, &Error,
+    &ExecutionFailed);
+  EXPECT_FALSE(ExecutionFailed) << Error;
+  EXPECT_EQ(0, RC);
+
+  // Remove the long stdout.
+  ASSERT_NO_ERROR(fs::remove(Twine(LongPath)));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory)));
+}
+#endif
+
 TEST(ProgramTest, CreateProcessTrailingSlash) {
   if (getenv("LLVM_PROGRAM_TEST_CHILD")) {
     if (ProgramTestStringArg1 == "has\\\\ trailing\\" &&

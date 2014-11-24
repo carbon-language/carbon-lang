@@ -44,6 +44,7 @@ using namespace llvm;
 
 using llvm::sys::windows::UTF8ToUTF16;
 using llvm::sys::windows::UTF16ToUTF8;
+using llvm::sys::path::widenPath;
 
 static std::error_code windows_error(DWORD E) {
   return mapWindowsError(E);
@@ -59,11 +60,15 @@ static bool is_separator(const wchar_t value) {
   }
 }
 
+namespace llvm {
+namespace sys  {
+namespace path {
+
 // Convert a UTF-8 path to UTF-16.  Also, if the absolute equivalent of the
 // path is longer than CreateDirectory can tolerate, make it absolute and
 // prefixed by '\\?\'.
-static std::error_code widenPath(const Twine &Path8,
-                                 SmallVectorImpl<wchar_t> &Path16) {
+std::error_code widenPath(const Twine &Path8,
+                          SmallVectorImpl<wchar_t> &Path16) {
   const size_t MaxDirLen = MAX_PATH - 12; // Must leave room for 8.3 filename.
 
   // Several operations would convert Path8 to SmallString; more efficient to
@@ -111,9 +116,8 @@ static std::error_code widenPath(const Twine &Path8,
   // Just use the caller's original path.
   return UTF8ToUTF16(Path8Str, Path16);
 }
+} // end namespace path
 
-namespace llvm {
-namespace sys  {
 namespace fs {
 
 std::string getMainExecutable(const char *argv0, void *MainExecAddr) {

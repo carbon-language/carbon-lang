@@ -117,14 +117,19 @@ static HANDLE RedirectIO(const StringRef *path, int fd, std::string* ErrMsg) {
   sa.bInheritHandle = TRUE;
 
   SmallVector<wchar_t, 128> fnameUnicode;
-  if (windows::UTF8ToUTF16(fname, fnameUnicode))
-    return INVALID_HANDLE_VALUE;
-
+  if (path->empty()) {
+    // Don't play long-path tricks on "NUL".
+    if (windows::UTF8ToUTF16(fname, fnameUnicode))
+      return INVALID_HANDLE_VALUE;
+  } else {
+    if (path::widenPath(fname, fnameUnicode))
+      return INVALID_HANDLE_VALUE;
+  }
   h = CreateFileW(fnameUnicode.data(), fd ? GENERIC_WRITE : GENERIC_READ,
                   FILE_SHARE_READ, &sa, fd == 0 ? OPEN_EXISTING : CREATE_ALWAYS,
                   FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
-    MakeErrMsg(ErrMsg, std::string(fname) + ": Can't open file for " +
+    MakeErrMsg(ErrMsg, fname + ": Can't open file for " +
         (fd ? "input: " : "output: "));
   }
 
@@ -322,7 +327,7 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
   fflush(stderr);
 
   SmallVector<wchar_t, MAX_PATH> ProgramUtf16;
-  if (std::error_code ec = windows::UTF8ToUTF16(Program, ProgramUtf16)) {
+  if (std::error_code ec = path::widenPath(Program, ProgramUtf16)) {
     SetLastError(ec.value());
     MakeErrMsg(ErrMsg,
                std::string("Unable to convert application name to UTF-16"));
