@@ -199,9 +199,9 @@ public:
   /// \brief For each \c Matcher<> a \c MatchCallback that will be called
   /// when it matches.
   struct MatchersByType {
-    std::vector<std::pair<DeclarationMatcher, MatchCallback *>> Decl;
+    std::vector<std::pair<internal::DynTypedMatcher, MatchCallback *>>
+        DeclOrStmt;
     std::vector<std::pair<TypeMatcher, MatchCallback *>> Type;
-    std::vector<std::pair<StatementMatcher, MatchCallback *>> Stmt;
     std::vector<std::pair<NestedNameSpecifierMatcher, MatchCallback *>>
         NestedNameSpecifier;
     std::vector<std::pair<NestedNameSpecifierLocMatcher, MatchCallback *>>

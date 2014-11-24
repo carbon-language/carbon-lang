@@ -23,6 +23,7 @@
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/LLVM.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/AlignOf.h"
 
 namespace llvm {
@@ -89,6 +90,21 @@ public:
   /// Return ASTNodeKind() if they are not related.
   static ASTNodeKind getMostDerivedCommonAncestor(ASTNodeKind Kind1,
                                                   ASTNodeKind Kind2);
+
+  /// \brief Hooks for using ASTNodeKind as a key in a DenseMap.
+  struct DenseMapInfo {
+    // ASTNodeKind() is a good empty key because it is represented as a 0.
+    static inline ASTNodeKind getEmptyKey() { return ASTNodeKind(); }
+    // NKI_NumberOfKinds is not a valid value, so it is good for a
+    // tombstone key.
+    static inline ASTNodeKind getTombstoneKey() {
+      return ASTNodeKind(NKI_NumberOfKinds);
+    }
+    static unsigned getHashValue(const ASTNodeKind &Val) { return Val.KindId; }
+    static bool isEqual(const ASTNodeKind &LHS, const ASTNodeKind &RHS) {
+      return LHS.KindId == RHS.KindId;
+    }
+  };
 
 private:
   /// \brief Kind ids.
@@ -374,5 +390,13 @@ template <typename T, typename EnablerT> struct DynTypedNode::BaseConverter {
 
 } // end namespace ast_type_traits
 } // end namespace clang
+
+namespace llvm {
+
+template <>
+struct DenseMapInfo<clang::ast_type_traits::ASTNodeKind>
+    : clang::ast_type_traits::ASTNodeKind::DenseMapInfo {};
+
+}  // end namespace llvm
 
 #endif

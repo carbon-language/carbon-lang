@@ -149,6 +149,11 @@ DynTypedMatcher DynTypedMatcher::trueMatcher(
   return DynTypedMatcher(NodeKind, NodeKind, &*TrueMatcherInstance);
 }
 
+bool DynTypedMatcher::canMatchNodesOfKind(
+    ast_type_traits::ASTNodeKind Kind) const {
+  return RestrictKind.isBaseOf(Kind);
+}
+
 DynTypedMatcher DynTypedMatcher::dynCastTo(
     const ast_type_traits::ASTNodeKind Kind) const {
   auto Copy = *this;
@@ -163,6 +168,20 @@ bool DynTypedMatcher::matches(const ast_type_traits::DynTypedNode &DynNode,
                               BoundNodesTreeBuilder *Builder) const {
   if (RestrictKind.isBaseOf(DynNode.getNodeKind()) &&
       Implementation->dynMatches(DynNode, Finder, Builder)) {
+    return true;
+  }
+  // Delete all bindings when a matcher does not match.
+  // This prevents unexpected exposure of bound nodes in unmatches
+  // branches of the match tree.
+  Builder->removeBindings([](const BoundNodesMap &) { return true; });
+  return false;
+}
+
+bool DynTypedMatcher::matchesNoKindCheck(
+    const ast_type_traits::DynTypedNode &DynNode, ASTMatchFinder *Finder,
+    BoundNodesTreeBuilder *Builder) const {
+  assert(RestrictKind.isBaseOf(DynNode.getNodeKind()));
+  if (Implementation->dynMatches(DynNode, Finder, Builder)) {
     return true;
   }
   // Delete all bindings when a matcher does not match.
