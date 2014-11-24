@@ -54,17 +54,6 @@ TEST_F(FormatTestJava, NoAlternativeOperatorNames) {
   verifyFormat("someObject.and();");
 }
 
-TEST_F(FormatTestJava, FormatsInstanceOfLikeOperators) {
-  FormatStyle Style = getStyleWithColumns(50);
-  verifyFormat("return aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-               "    instanceof bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;",
-               Style);
-  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_None;
-  verifyFormat("return aaaaaaaaaaaaaaaaaaaaaaaaaaaaa instanceof\n"
-               "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;",
-               Style);
-}
-
 TEST_F(FormatTestJava, ClassDeclarations) {
   verifyFormat("public class SomeClass {\n"
                "  private int a;\n"

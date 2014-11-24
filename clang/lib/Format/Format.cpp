@@ -618,7 +618,7 @@ public:
                            SmallVectorImpl<AnnotatedLine *>::const_iterator E) {
     // We can never merge stuff if there are trailing line comments.
     const AnnotatedLine *TheLine = *I;
-    if (TheLine->Last->is(TT_LineComment))
+    if (TheLine->Last->Type == TT_LineComment)
       return 0;
 
     if (Style.ColumnLimit > 0 && Indent > Style.ColumnLimit)
@@ -642,7 +642,7 @@ public:
         (Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_Inline &&
          TheLine->Level != 0);
 
-    if (TheLine->Last->is(TT_FunctionLBrace) &&
+    if (TheLine->Last->Type == TT_FunctionLBrace &&
         TheLine->First != TheLine->Last) {
       return MergeShortFunctions ? tryMergeSimpleBlock(I, E, Limit) : 0;
     }
@@ -651,7 +651,7 @@ public:
                  ? tryMergeSimpleBlock(I, E, Limit)
                  : 0;
     }
-    if (I[1]->First->is(TT_FunctionLBrace) &&
+    if (I[1]->First->Type == TT_FunctionLBrace &&
         Style.BreakBeforeBraces != FormatStyle::BS_Attach) {
       // Check for Limit <= 2 to account for the " {".
       if (Limit <= 2 || (Style.ColumnLimit == 0 && containsMustBreak(TheLine)))
@@ -725,7 +725,8 @@ private:
     if (1 + I[1]->Last->TotalLength > Limit)
       return 0;
     if (I[1]->First->isOneOf(tok::semi, tok::kw_if, tok::kw_for,
-                             tok::kw_while, TT_LineComment))
+                             tok::kw_while) ||
+        I[1]->First->Type == TT_LineComment)
       return 0;
     // Only inline simple if's (no nested if or else).
     if (I + 2 != E && Line.First->is(tok::kw_if) &&
@@ -815,7 +816,7 @@ private:
 
       // Second, check that the next line does not contain any braces - if it
       // does, readability declines when putting it into a single line.
-      if (I[1]->Last->is(TT_LineComment))
+      if (I[1]->Last->Type == TT_LineComment)
         return 0;
       do {
         if (Tok->is(tok::l_brace) && Tok->BlockKind != BK_BracedInit)
@@ -1657,7 +1658,7 @@ private:
         }
       }
 
-      if (FormatTok->is(TT_ImplicitStringLiteral))
+      if (FormatTok->Type == TT_ImplicitStringLiteral)
         break;
       WhitespaceLength += FormatTok->Tok.getLength();
 
@@ -2029,7 +2030,7 @@ private:
         continue;
       FormatToken *Tok = AnnotatedLines[i]->First->Next;
       while (Tok->Next) {
-        if (Tok->is(TT_PointerOrReference)) {
+        if (Tok->Type == TT_PointerOrReference) {
           bool SpacesBefore =
               Tok->WhitespaceRange.getBegin() != Tok->WhitespaceRange.getEnd();
           bool SpacesAfter = Tok->Next->WhitespaceRange.getBegin() !=
@@ -2041,10 +2042,11 @@ private:
         }
 
         if (Tok->WhitespaceRange.getBegin() == Tok->WhitespaceRange.getEnd()) {
-          if (Tok->is(tok::coloncolon) && Tok->Previous->is(TT_TemplateOpener))
+          if (Tok->is(tok::coloncolon) &&
+              Tok->Previous->Type == TT_TemplateOpener)
             HasCpp03IncompatibleFormat = true;
-          if (Tok->is(TT_TemplateCloser) &&
-              Tok->Previous->is(TT_TemplateCloser))
+          if (Tok->Type == TT_TemplateCloser &&
+              Tok->Previous->Type == TT_TemplateCloser)
             HasCpp03IncompatibleFormat = true;
         }
 
