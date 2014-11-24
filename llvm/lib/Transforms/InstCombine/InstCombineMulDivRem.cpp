@@ -300,8 +300,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     if (match(Op0, m_Shl(m_One(), m_Value(Y)))) {
       BO = BinaryOperator::CreateShl(Op1, Y);
       ShlNSW = cast<BinaryOperator>(Op0)->hasNoSignedWrap();
-    }
-    if (match(Op1, m_Shl(m_One(), m_Value(Y)))) {
+    } else if (match(Op1, m_Shl(m_One(), m_Value(Y)))) {
       BO = BinaryOperator::CreateShl(Op0, Y);
       ShlNSW = cast<BinaryOperator>(Op1)->hasNoSignedWrap();
     }

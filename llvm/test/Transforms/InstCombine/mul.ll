@@ -245,3 +245,13 @@ define i32 @test27(i32 %A, i32 %B) {
         ret i32 %D
 ; CHECK: shl nuw i32 %A, %B
 }
+
+define i32 @test28(i32 %A) {
+; CHECK-LABEL: @test28(
+        %B = shl i32 1, %A
+        %C = mul nsw i32 %B, %B
+        ret i32 %C
+; CHECK:      %[[shl1:.*]] = shl i32 1, %A
+; CHECK-NEXT: %[[shl2:.*]] = shl i32 %[[shl1]], %A
+; CHECK-NEXT: ret i32 %[[shl2]]
+}
