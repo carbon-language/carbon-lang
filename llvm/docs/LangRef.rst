@@ -5211,10 +5211,11 @@ as the ``MOVNT`` instruction on x86.
 The optional ``!invariant.load`` metadata must reference a single
 metadata name ``<index>`` corresponding to a metadata node with no
 entries. The existence of the ``!invariant.load`` metadata on the
-instruction tells the optimizer and code generator that this load
-address points to memory which does not change value during program
-execution. The optimizer may then move this load around, for example, by
-hoisting it out of loops using loop invariant code motion.
+instruction tells the optimizer and code generator that the address
+operand to this load points to memory which can be assumed unchanged.
+Being invariant does not imply that a location is dereferenceable, 
+but it does imply that once the location is known dereferenceable 
+its value is henceforth unchanging.  
 
 The optional ``!nonnull`` metadata must reference a single
 metadata name ``<index>`` corresponding to a metadata node with no
