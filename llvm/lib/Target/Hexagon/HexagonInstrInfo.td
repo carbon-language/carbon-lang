@@ -266,6 +266,7 @@ multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
 }
 
 defm aslh : ALU32_2op_base<"aslh", 0b000>, PredNewRel;
+defm asrh : ALU32_2op_base<"asrh", 0b001>, PredNewRel;
 defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
 defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
 defm zxth : ALU32_2op_base<"zxth", 0b110>, PredNewRel;
@@ -602,46 +603,11 @@ def MUX_ii : ALU32_ii<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Ext:$src2,
                                                     s8ExtPred:$src2,
                                                     s8ImmPred:$src3)))]>;
 
-// ALU32 - aslh, asrh, sxtb, sxth, zxtb, zxth
-multiclass ALU32_2op_Pbase<string mnemonic, bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : ALU32Inst<(outs IntRegs:$dst),
-                       (ins PredRegs:$src1, IntRegs:$src2),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
-            ") $dst = ")#mnemonic#"($src2)">,
-            Requires<[HasV4T]>;
-}
-
-multiclass ALU32_2op_Pred2<string mnemonic, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ALU32_2op_Pbase<mnemonic, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ALU32_2op_Pbase<mnemonic, PredNot, 1>;
-  }
-}
-
-multiclass ALU32_2op_base2<string mnemonic> {
-  let BaseOpcode = mnemonic in {
-    let isPredicable = 1, neverHasSideEffects = 1 in
-    def NAME : ALU32Inst<(outs IntRegs:$dst),
-                         (ins IntRegs:$src1),
-            "$dst = "#mnemonic#"($src1)">;
-
-    let Predicates = [HasV4T], validSubTargets = HasV4SubT, isPredicated = 1,
-    neverHasSideEffects = 1 in {
-      defm Pt_V4    : ALU32_2op_Pred2<mnemonic, 0>;
-      defm NotPt_V4 : ALU32_2op_Pred2<mnemonic, 1>;
-    }
-  }
-}
-
-defm ASRH : ALU32_2op_base2<"asrh">, PredNewRel;
-
 def : Pat <(shl (i32 IntRegs:$src1), (i32 16)),
            (A2_aslh IntRegs:$src1)>;
 
 def : Pat <(sra (i32 IntRegs:$src1), (i32 16)),
-           (ASRH IntRegs:$src1)>;
+           (A2_asrh IntRegs:$src1)>;
 
 def : Pat <(sext_inreg (i32 IntRegs:$src1), i8),
            (A2_sxtb IntRegs:$src1)>;
