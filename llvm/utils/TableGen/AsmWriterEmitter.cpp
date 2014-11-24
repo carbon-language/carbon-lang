@@ -474,7 +474,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
       O << "  switch ((Bits >> "
         << (64-BitsLeft) << ") & "
         << ((1 << NumBits)-1) << ") {\n"
-        << "  default:   // unreachable.\n";
+        << "  default: llvm_unreachable(\"Invalid command number.\");\n";
 
       // Print out all the cases.
       for (unsigned i = 0, e = Commands.size(); i != e; ++i) {
