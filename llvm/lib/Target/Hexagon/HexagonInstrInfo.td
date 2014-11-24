@@ -265,6 +265,7 @@ multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
   }
 }
 
+defm aslh : ALU32_2op_base<"aslh", 0b000>, PredNewRel;
 defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
 defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
 defm zxth : ALU32_2op_base<"zxth", 0b110>, PredNewRel;
@@ -634,11 +635,10 @@ multiclass ALU32_2op_base2<string mnemonic> {
   }
 }
 
-defm ASLH : ALU32_2op_base2<"aslh">, PredNewRel;
 defm ASRH : ALU32_2op_base2<"asrh">, PredNewRel;
 
 def : Pat <(shl (i32 IntRegs:$src1), (i32 16)),
-           (ASLH IntRegs:$src1)>;
+           (A2_aslh IntRegs:$src1)>;
 
 def : Pat <(sra (i32 IntRegs:$src1), (i32 16)),
            (ASRH IntRegs:$src1)>;

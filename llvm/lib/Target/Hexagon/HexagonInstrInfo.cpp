@@ -713,7 +713,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::ADD_ri:
     return isInt<8>(MI->getOperand(2).getImm());
 
-  case Hexagon::ASLH:
+  case Hexagon::A2_aslh:
   case Hexagon::ASRH:
   case Hexagon::A2_sxtb:
   case Hexagon::A2_sxth:
@@ -1303,6 +1303,10 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::A2_pandfnew:
     case Hexagon::A2_pandt:
     case Hexagon::A2_pandtnew:
+    case Hexagon::A4_paslhf:
+    case Hexagon::A4_paslhfnew:
+    case Hexagon::A4_paslht:
+    case Hexagon::A4_paslhtnew:
     case Hexagon::A2_porf:
     case Hexagon::A2_porfnew:
     case Hexagon::A2_port:
@@ -1336,8 +1340,6 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::COMBINE_rr_cPt:
     case Hexagon::COMBINE_rr_cNotPt:
       return true;
-    case Hexagon::ASLH_cPt_V4:
-    case Hexagon::ASLH_cNotPt_V4:
     case Hexagon::ASRH_cPt_V4:
     case Hexagon::ASRH_cNotPt_V4:
       return QRI.Subtarget.hasV4TOps();
