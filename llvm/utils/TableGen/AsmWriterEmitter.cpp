@@ -520,6 +520,15 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   O << "}\n";
 }
 
+static const char *getMinimalTypeForRange(uint64_t Range) {
+  assert(Range < 0xFFFFFFFFULL && "Enum too large");
+  if (Range > 0xFFFF)
+    return "uint32_t";
+  if (Range > 0xFF)
+    return "uint16_t";
+  return "uint8_t";
+}
+
 static void
 emitRegisterNameString(raw_ostream &O, StringRef AltName,
                        const std::vector<CodeGenRegister*> &Registers) {
@@ -564,7 +573,8 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
   StringTable.emit(O, printChar);
   O << "  };\n\n";
 
-  O << "  static const uint32_t RegAsmOffset" << AltName << "[] = {";
+  O << "  static const " << getMinimalTypeForRange(StringTable.size()-1)
+    << " RegAsmOffset" << AltName << "[] = {";
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     if ((i % 14) == 0)
       O << "\n    ";
@@ -602,26 +612,25 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
     emitRegisterNameString(O, "", Registers);
 
   if (hasAltNames) {
-    O << "  const uint32_t *RegAsmOffset;\n"
-      << "  const char *AsmStrs;\n"
-      << "  switch(AltIdx) {\n"
+    O << "  switch(AltIdx) {\n"
       << "  default: llvm_unreachable(\"Invalid register alt name index!\");\n";
     for (unsigned i = 0, e = AltNameIndices.size(); i < e; ++i) {
       std::string Namespace = AltNameIndices[1]->getValueAsString("Namespace");
       std::string AltName(AltNameIndices[i]->getName());
-      O << "  case " << Namespace << "::" << AltName
-        << ":\n"
-        << "    AsmStrs = AsmStrs" << AltName  << ";\n"
-        << "    RegAsmOffset = RegAsmOffset" << AltName << ";\n"
-        << "    break;\n";
+      O << "  case " << Namespace << "::" << AltName << ":\n"
+        << "    assert(*(AsmStrs" << AltName << "+RegAsmOffset"
+        << AltName << "[RegNo-1]) &&\n"
+        << "           \"Invalid alt name index for register!\");\n"
+        << "    return AsmStrs" << AltName << "+RegAsmOffset"
+        << AltName << "[RegNo-1];\n";
     }
-    O << "}\n";
+    O << "  }\n";
+  } else {
+    O << "  assert (*(AsmStrs+RegAsmOffset[RegNo-1]) &&\n"
+      << "          \"Invalid alt name index for register!\");\n"
+      << "  return AsmStrs+RegAsmOffset[RegNo-1];\n";
   }
-
-  O << "  assert (*(AsmStrs+RegAsmOffset[RegNo-1]) &&\n"
-    << "          \"Invalid alt name index for register!\");\n"
-    << "  return AsmStrs+RegAsmOffset[RegNo-1];\n"
-    << "}\n";
+  O << "}\n";
 }
 
 namespace {
