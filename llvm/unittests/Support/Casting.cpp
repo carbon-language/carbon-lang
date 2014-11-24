@@ -232,3 +232,99 @@ namespace TemporaryCast {
 struct pod {};
 IllegalCast *testIllegalCast() { return cast<foo>(pod()); }
 }
+
+namespace {
+namespace pointer_wrappers {
+
+struct Base {
+  bool IsDerived;
+  Base(bool IsDerived = false) : IsDerived(IsDerived) {}
+};
+
+struct Derived : Base {
+  Derived() : Base(true) {}
+  static bool classof(const Base *B) { return B->IsDerived; }
+};
+
+class PTy {
+  Base *B;
+public:
+  PTy(Base *B) : B(B) {}
+  LLVM_EXPLICIT operator bool() const { return get(); }
+  Base *get() const { return B; }
+};
+
+} // end namespace pointer_wrappers
+} // end namespace
+
+namespace llvm {
+
+template <> struct simplify_type<pointer_wrappers::PTy> {
+  typedef pointer_wrappers::Base *SimpleType;
+  static SimpleType getSimplifiedValue(pointer_wrappers::PTy &P) {
+    return P.get();
+  }
+};
+template <> struct simplify_type<const pointer_wrappers::PTy> {
+  typedef pointer_wrappers::Base *SimpleType;
+  static SimpleType getSimplifiedValue(const pointer_wrappers::PTy &P) {
+    return P.get();
+  }
+};
+
+} // end namespace llvm
+
+namespace {
+namespace pointer_wrappers {
+
+// Some objects.
+pointer_wrappers::Base B;
+pointer_wrappers::Derived D;
+
+// Mutable "smart" pointers.
+pointer_wrappers::PTy MN(nullptr);
+pointer_wrappers::PTy MB(&B);
+pointer_wrappers::PTy MD(&D);
+
+// Const "smart" pointers.
+const pointer_wrappers::PTy CN(nullptr);
+const pointer_wrappers::PTy CB(&B);
+const pointer_wrappers::PTy CD(&D);
+
+TEST(CastingTest, smart_isa) {
+  EXPECT_TRUE(!isa<pointer_wrappers::Derived>(MB));
+  EXPECT_TRUE(!isa<pointer_wrappers::Derived>(CB));
+  EXPECT_TRUE(isa<pointer_wrappers::Derived>(MD));
+  EXPECT_TRUE(isa<pointer_wrappers::Derived>(CD));
+}
+
+TEST(CastingTest, smart_cast) {
+  EXPECT_TRUE(cast<pointer_wrappers::Derived>(MD) == &D);
+  EXPECT_TRUE(cast<pointer_wrappers::Derived>(CD) == &D);
+}
+
+TEST(CastingTest, smart_cast_or_null) {
+  EXPECT_TRUE(cast_or_null<pointer_wrappers::Derived>(MN) == nullptr);
+  EXPECT_TRUE(cast_or_null<pointer_wrappers::Derived>(CN) == nullptr);
+  EXPECT_TRUE(cast_or_null<pointer_wrappers::Derived>(MD) == &D);
+  EXPECT_TRUE(cast_or_null<pointer_wrappers::Derived>(CD) == &D);
+}
+
+TEST(CastingTest, smart_dyn_cast) {
+  EXPECT_TRUE(dyn_cast<pointer_wrappers::Derived>(MB) == nullptr);
+  EXPECT_TRUE(dyn_cast<pointer_wrappers::Derived>(CB) == nullptr);
+  EXPECT_TRUE(dyn_cast<pointer_wrappers::Derived>(MD) == &D);
+  EXPECT_TRUE(dyn_cast<pointer_wrappers::Derived>(CD) == &D);
+}
+
+TEST(CastingTest, smart_dyn_cast_or_null) {
+  EXPECT_TRUE(dyn_cast_or_null<pointer_wrappers::Derived>(MN) == nullptr);
+  EXPECT_TRUE(dyn_cast_or_null<pointer_wrappers::Derived>(CN) == nullptr);
+  EXPECT_TRUE(dyn_cast_or_null<pointer_wrappers::Derived>(MB) == nullptr);
+  EXPECT_TRUE(dyn_cast_or_null<pointer_wrappers::Derived>(CB) == nullptr);
+  EXPECT_TRUE(dyn_cast_or_null<pointer_wrappers::Derived>(MD) == &D);
+  EXPECT_TRUE(dyn_cast_or_null<pointer_wrappers::Derived>(CD) == &D);
+}
+
+} // end namespace pointer_wrappers
+} // end namespace
