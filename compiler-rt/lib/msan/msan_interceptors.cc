@@ -531,7 +531,7 @@ INTERCEPTOR(wchar_t *, wmempcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
 INTERCEPTOR(wchar_t *, wmemset, wchar_t *s, wchar_t c, SIZE_T n) {
   CHECK(MEM_IS_APP(s));
   ENSURE_MSAN_INITED();
-  wchar_t *res = (wchar_t *)REAL(memset)(s, c, n * sizeof(wchar_t));
+  wchar_t *res = REAL(wmemset)(s, c, n);
   __msan_unpoison(s, n * sizeof(wchar_t));
   return res;
 }
