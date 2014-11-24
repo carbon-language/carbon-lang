@@ -267,6 +267,7 @@ multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
 
 defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
 defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
+defm zxth : ALU32_2op_base<"zxth", 0b110>, PredNewRel;
 
 // Rd=zxtb(Rs): assembler mapped to Rd=and(Rs,#255).
 // Compiler would want to generate 'zxtb' instead of 'and' becuase 'zxtb' has
@@ -635,7 +636,6 @@ multiclass ALU32_2op_base2<string mnemonic> {
 
 defm ASLH : ALU32_2op_base2<"aslh">, PredNewRel;
 defm ASRH : ALU32_2op_base2<"asrh">, PredNewRel;
-defm ZXTH : ALU32_2op_base2<"zxth">,  PredNewRel;
 
 def : Pat <(shl (i32 IntRegs:$src1), (i32 16)),
            (ASLH IntRegs:$src1)>;
@@ -2320,7 +2320,7 @@ def : Pat<(atomic_store_64 (add (i32 IntRegs:$src2), s11_3ImmPred:$offset),
 
 // Map from r0 = and(r1, 65535) to r0 = zxth(r1)
 def : Pat <(and (i32 IntRegs:$src1), 65535),
-      (ZXTH (i32 IntRegs:$src1))>;
+      (A2_zxth (i32 IntRegs:$src1))>;
 
 // Map from r0 = and(r1, 255) to r0 = zxtb(r1).
 def : Pat <(and (i32 IntRegs:$src1), 255),

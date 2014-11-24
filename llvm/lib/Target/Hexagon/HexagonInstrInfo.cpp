@@ -718,7 +718,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::A2_sxtb:
   case Hexagon::A2_sxth:
   case Hexagon::A2_zxtb:
-  case Hexagon::ZXTH:
+  case Hexagon::A2_zxth:
     return Subtarget.hasV4TOps();
   }
 
@@ -1327,6 +1327,10 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::A4_pzxtbfnew:
     case Hexagon::A4_pzxtbt:
     case Hexagon::A4_pzxtbtnew:
+    case Hexagon::A4_pzxthf:
+    case Hexagon::A4_pzxthfnew:
+    case Hexagon::A4_pzxtht:
+    case Hexagon::A4_pzxthtnew:
     case Hexagon::ADD_ri_cPt:
     case Hexagon::ADD_ri_cNotPt:
     case Hexagon::COMBINE_rr_cPt:
@@ -1336,8 +1340,6 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::ASLH_cNotPt_V4:
     case Hexagon::ASRH_cPt_V4:
     case Hexagon::ASRH_cNotPt_V4:
-    case Hexagon::ZXTH_cPt_V4:
-    case Hexagon::ZXTH_cNotPt_V4:
       return QRI.Subtarget.hasV4TOps();
   }
 }
