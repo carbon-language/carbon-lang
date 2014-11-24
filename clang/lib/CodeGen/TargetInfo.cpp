@@ -1307,6 +1307,7 @@ bool X86_32TargetCodeGenInfo::isStructReturnInRegABI(
     case llvm::Triple::UnknownEnvironment:
     case llvm::Triple::Cygnus:
     case llvm::Triple::GNU:
+    case llvm::Triple::Itanium:
     case llvm::Triple::MSVC:
       return true;
     default:
