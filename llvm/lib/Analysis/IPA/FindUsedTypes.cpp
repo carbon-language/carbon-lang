@@ -35,9 +35,8 @@ void FindUsedTypes::IncorporateType(Type *Ty) {
 
   // Make sure to add any types this type references now.
   //
-  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-       I != E; ++I)
-    IncorporateType(*I);
+  for (Type *SubTy : Ty->subtypes())
+    IncorporateType(SubTy);
 }
 
 void FindUsedTypes::IncorporateValue(const Value *V) {

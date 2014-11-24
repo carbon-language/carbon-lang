@@ -620,9 +620,8 @@ void ValueEnumerator::EnumerateType(Type *Ty) {
 
   // Enumerate all of the subtypes before we enumerate this type.  This ensures
   // that the type will be enumerated in an order that can be directly built.
-  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-       I != E; ++I)
-    EnumerateType(*I);
+  for (Type *SubTy : Ty->subtypes())
+    EnumerateType(SubTy);
 
   // Refresh the TypeID pointer in case the table rehashed.
   TypeID = &TypeMap[Ty];
