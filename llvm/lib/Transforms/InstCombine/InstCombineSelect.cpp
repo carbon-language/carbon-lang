@@ -928,8 +928,22 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
              !CFPf->getValueAPF().isZero()))
         return ReplaceInstUsesWith(SI, TrueVal);
       }
-      // NOTE: if we wanted to, this is where to detect MIN/MAX
 
+      // Canonicalize to use ordered comparisons by swapping the select
+      // operands.
+      //
+      // e.g.
+      // (X ugt Y) ? X : Y -> (X ole Y) ? Y : X
+      if (FCI->hasOneUse() && FCmpInst::isUnordered(FCI->getPredicate())) {
+        FCmpInst::Predicate InvPred = FCI->getInversePredicate();
+        Value *NewCond = Builder->CreateFCmp(InvPred, TrueVal, FalseVal,
+                                             FCI->getName() + ".inv");
+
+        return SelectInst::Create(NewCond, FalseVal, TrueVal,
+                                  SI.getName() + ".p");
+      }
+
+      // NOTE: if we wanted to, this is where to detect MIN/MAX
     } else if (FCI->getOperand(0) == FalseVal && FCI->getOperand(1) == TrueVal){
       // Transform (X == Y) ? Y : X  -> X
       if (FCI->getPredicate() == FCmpInst::FCMP_OEQ) {
@@ -955,6 +969,21 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
              !CFPf->getValueAPF().isZero()))
           return ReplaceInstUsesWith(SI, TrueVal);
       }
+
+      // Canonicalize to use ordered comparisons by swapping the select
+      // operands.
+      //
+      // e.g.
+      // (X ugt Y) ? X : Y -> (X ole Y) ? X : Y
+      if (FCI->hasOneUse() && FCmpInst::isUnordered(FCI->getPredicate())) {
+        FCmpInst::Predicate InvPred = FCI->getInversePredicate();
+        Value *NewCond = Builder->CreateFCmp(InvPred, FalseVal, TrueVal,
+                                             FCI->getName() + ".inv");
+
+        return SelectInst::Create(NewCond, FalseVal, TrueVal,
+                                  SI.getName() + ".p");
+      }
+
       // NOTE: if we wanted to, this is where to detect MIN/MAX
     }
     // NOTE: if we wanted to, this is where to detect ABS

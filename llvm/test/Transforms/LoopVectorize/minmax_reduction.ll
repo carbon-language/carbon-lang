@@ -516,7 +516,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_max_red_float(
-; CHECK: fcmp ugt <2 x float>
+; CHECK: fcmp ole <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp ogt <2 x float>
@@ -542,7 +542,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_max_red_float_ge(
-; CHECK: fcmp uge <2 x float>
+; CHECK: fcmp olt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp ogt <2 x float>
@@ -568,7 +568,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_max_red_float(
-; CHECK: fcmp ult <2 x float>
+; CHECK: fcmp oge <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp ogt <2 x float>
@@ -594,7 +594,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_max_red_float_le(
-; CHECK: fcmp ule <2 x float>
+; CHECK: fcmp ogt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp ogt <2 x float>
@@ -727,7 +727,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_min_red_float(
-; CHECK: fcmp ult <2 x float>
+; CHECK: fcmp oge <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp olt <2 x float>
@@ -753,7 +753,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_min_red_float_le(
-; CHECK: fcmp ule <2 x float>
+; CHECK: fcmp ogt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp olt <2 x float>
@@ -779,7 +779,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_min_red_float(
-; CHECK: fcmp ugt <2 x float>
+; CHECK: fcmp ole <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp olt <2 x float>
@@ -805,7 +805,7 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_min_red_float_ge(
-; CHECK: fcmp uge <2 x float>
+; CHECK: fcmp olt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
 ; CHECK: fcmp olt <2 x float>
