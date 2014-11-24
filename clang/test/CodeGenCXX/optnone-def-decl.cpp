@@ -13,7 +13,7 @@ int decl_only(int a) {
   return a + a + a + a;
 }
 
-// CHECK: define i32 @_Z9decl_onlyi(i32 %a) [[OPTNONE:#[0-9]+]]
+// CHECK: define i32 @_Z9decl_onlyi({{.*}}) [[OPTNONE:#[0-9]+]]
 
 // Test optnone on definition but not extern declaration.
 extern int def_only(int a);
@@ -29,7 +29,7 @@ int user_of_def_only() {
   return def_only(5);
 }
 
-// CHECK: define i32 @_Z8def_onlyi(i32 %a) [[OPTNONE]]
+// CHECK: define i32 @_Z8def_onlyi({{.*}}) [[OPTNONE]]
 // CHECK: define i32 @_Z16user_of_def_onlyv() [[NORMAL:#[0-9]+]]
 
 // Test optnone on both definition and declaration.
@@ -40,7 +40,7 @@ int def_and_decl(int a) {
   return a + a + a + a;
 }
 
-// CHECK: define i32 @_Z12def_and_decli(i32 %a) [[OPTNONE]]
+// CHECK: define i32 @_Z12def_and_decli({{.*}}) [[OPTNONE]]
 
 // Check that optnone wins over always_inline.
 
@@ -51,7 +51,7 @@ __attribute__((optnone))
 extern int always_inline_function(int a) {
   return a + a + a + a;
 }
-// CHECK: define i32 @_Z22always_inline_functioni(i32 %a) [[OPTNONE]]
+// CHECK: define i32 @_Z22always_inline_functioni({{.*}}) [[OPTNONE]]
 
 int user_of_always_inline_function() {
   return always_inline_function(4);
@@ -66,7 +66,7 @@ __attribute__((always_inline))
 int optnone_function(int a) {
   return a + a + a + a;
 }
-// CHECK: define i32 @_Z16optnone_functioni(i32 %a) [[OPTNONE]]
+// CHECK: define i32 @_Z16optnone_functioni({{.*}}) [[OPTNONE]]
 
 int user_of_optnone_function() {
   return optnone_function(4);
@@ -87,7 +87,7 @@ int user_of_forceinline_optnone_function() {
 }
 
 // CHECK: @_Z36user_of_forceinline_optnone_functionv() [[NORMAL]]
-// CHECK: @_Z28forceinline_optnone_functionii(i32 %a, i32 %b) [[OPTNONE]]
+// CHECK: @_Z28forceinline_optnone_functionii({{.*}}) [[OPTNONE]]
 
 // CHECK: attributes [[OPTNONE]] = { noinline nounwind optnone {{.*}} }
 // CHECK: attributes [[NORMAL]] = { nounwind {{.*}} }
