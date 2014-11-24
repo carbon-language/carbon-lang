@@ -1291,7 +1291,6 @@ isConditionalTransfer (const MachineInstr *MI) const {
 }
 
 bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
-  const HexagonRegisterInfo& QRI = getRegisterInfo();
   switch (MI->getOpcode())
   {
     default: return false;
