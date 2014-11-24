@@ -123,17 +123,25 @@ getSyntaxOnlyToolArgs(const std::vector<std::string> &ExtraArgs,
 
 bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
                            const std::vector<std::string> &Args,
-                           const Twine &FileName) {
+                           const Twine &FileName,
+                           const FileContentMappings &VirtualMappedFiles) {
+
   SmallString<16> FileNameStorage;
   StringRef FileNameRef = FileName.toNullTerminatedStringRef(FileNameStorage);
   llvm::IntrusiveRefCntPtr<FileManager> Files(
       new FileManager(FileSystemOptions()));
-  ToolInvocation Invocation(getSyntaxOnlyToolArgs(Args, FileNameRef), ToolAction,
-                            Files.get());
+  ToolInvocation Invocation(getSyntaxOnlyToolArgs(Args, FileNameRef),
+                            ToolAction, Files.get());
 
   SmallString<1024> CodeStorage;
   Invocation.mapVirtualFile(FileNameRef,
                             Code.toNullTerminatedStringRef(CodeStorage));
+
+  for (auto &FilenameWithContent : VirtualMappedFiles) {
+    Invocation.mapVirtualFile(FilenameWithContent.first,
+                              FilenameWithContent.second);
+  }
+
   return Invocation.run();
 }
 

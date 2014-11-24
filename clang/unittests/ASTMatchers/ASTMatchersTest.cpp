@@ -4625,5 +4625,46 @@ TEST(EqualsBoundNodeMatcher, UnlessDescendantsOfAncestorsMatch) {
           .bind("data")));
 }
 
+TEST(TypeDefDeclMatcher, Match) {
+  EXPECT_TRUE(matches("typedef int typedefDeclTest;",
+                      typedefDecl(hasName("typedefDeclTest"))));
+}
+
+TEST(Matcher, IsExpansionInMainFileMatcher) {
+  EXPECT_TRUE(matches("class X {};",
+                      recordDecl(hasName("X"), isExpansionInMainFile())));
+  EXPECT_TRUE(notMatches("", recordDecl(isExpansionInMainFile())));
+  EXPECT_TRUE(matchesConditionally("#include <other>\n",
+                                   recordDecl(isExpansionInMainFile()), false,
+                                   "-isystem/", {{"/other", "class X {};"}}));
+}
+
+TEST(Matcher, IsExpansionInSystemHeader) {
+  EXPECT_TRUE(matchesConditionally(
+      "#include \"other\"\n", recordDecl(isExpansionInSystemHeader()), true,
+      "-isystem/", {{"/other", "class X {};"}}));
+  EXPECT_TRUE(matchesConditionally("#include \"other\"\n",
+                                   recordDecl(isExpansionInSystemHeader()),
+                                   false, "-I/", {{"/other", "class X {};"}}));
+  EXPECT_TRUE(notMatches("class X {};",
+                         recordDecl(isExpansionInSystemHeader())));
+  EXPECT_TRUE(notMatches("", recordDecl(isExpansionInSystemHeader())));
+}
+
+TEST(Matcher, IsExpansionInFileMatching) {
+  EXPECT_TRUE(matchesConditionally(
+      "#include <foo>\n"
+      "#include <bar>\n"
+      "class X {};",
+      recordDecl(isExpansionInFileMatching("b.*"), hasName("B")), true,
+      "-isystem/", {{"/foo", "class A {};"}, {"/bar", "class B {};"}}));
+  EXPECT_TRUE(matchesConditionally(
+      "#include <foo>\n"
+      "#include <bar>\n"
+      "class X {};",
+      recordDecl(isExpansionInFileMatching("f.*"), hasName("X")), false,
+      "-isystem/", {{"/foo", "class A {};"}, {"/bar", "class B {};"}}));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
