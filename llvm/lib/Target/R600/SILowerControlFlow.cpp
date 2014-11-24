@@ -435,7 +435,6 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
 
   bool HaveKill = false;
-  bool NeedM0 = false;
   bool NeedWQM = false;
   bool NeedFlat = false;
   unsigned Depth = 0;
@@ -449,15 +448,12 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
       Next = std::next(I);
 
       MachineInstr &MI = *I;
-      if (TII->isDS(MI.getOpcode())) {
+      if (TII->isDS(MI.getOpcode()))
         NeedWQM = true;
-      }
 
       // Flat uses m0 in case it needs to access LDS.
-      if (TII->isFLAT(MI.getOpcode())) {
-        NeedM0 = true;
+      if (TII->isFLAT(MI.getOpcode()))
         NeedFlat = true;
-      }
 
       switch (MI.getOpcode()) {
         default: break;
