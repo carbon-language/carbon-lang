@@ -47,7 +47,9 @@ include_directories("${LIBCXXABI_LIBCXX_INCLUDES}")
 # Generate library list.
 set(libraries ${LIBCXXABI_CXX_ABI_LIBRARIES})
 append_if(libraries LIBCXXABI_HAS_C_LIB c)
-append_if(libraries LIBCXXABI_HAS_PTHREAD_LIB pthread)
+if (LIBCXXABI_ENABLE_THREADS)
+  append_if(libraries LIBCXXABI_HAS_PTHREAD_LIB pthread)
+endif()
 
 if (LIBCXXABI_USE_LLVM_UNWINDER)
   list(APPEND libraries unwind)

@@ -106,6 +106,7 @@ option(LIBCXXABI_ENABLE_ASSERTIONS "Enable assertions independent of build mode.
 option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
+option(LIBCXXABI_ENABLE_THREADS "Build with threads enabled" ON)
 
 # Default to building a shared library so that the default options still test
 # the libc++abi that is being built. There are two problems with testing a
@@ -224,6 +225,10 @@ endif()
 # Static library
 if (NOT LIBCXXABI_ENABLE_SHARED)
   list(APPEND LIBCXXABI_COMPILE_FLAGS -D_LIBCPP_BUILD_STATIC)
+endif()
+
+if (NOT LIBCXXABI_ENABLE_THREADS)
+  add_definitions(-DLIBCXXABI_HAS_NO_THREADS=1)
 endif()
 
 # This is the _ONLY_ place where add_definitions is called.

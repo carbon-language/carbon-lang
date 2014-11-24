@@ -7,10 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../src/config.h"
 #include "cxxabi.h"
 
 #include <cassert>
+
+#if !LIBCXXABI_HAS_NO_THREADS
 #include <thread>
+#endif
 
 // Ensure that we initialize each variable once and only once.
 namespace test1 {
@@ -72,6 +76,7 @@ namespace test3 {
     }
 }
 
+#if !LIBCXXABI_HAS_NO_THREADS
 // A simple thread test of two threads racing to initialize a variable. This
 // isn't guaranteed to catch any particular threading problems.
 namespace test4 {
@@ -123,12 +128,15 @@ namespace test5 {
         assert(run_count == 1);
     }
 }
+#endif /* LIBCXXABI_HAS_NO_THREADS */
 
 int main()
 {
     test1::test();
     test2::test();
     test3::test();
+#if !LIBCXXABI_HAS_NO_THREADS
     test4::test();
     test5::test();
+#endif
 }

@@ -56,7 +56,10 @@ int main ( int argc, char *argv [] ) {
 
 #if LIBCXXABI_HAS_NO_THREADS
     size_t thread_globals;
-    retVal = thread_code(&thread_globals) != 0;
+    // Check that __cxa_get_globals() is not NULL.
+    if (thread_code(&thread_globals) == 0) {
+        retVal = 1;
+    }
 #else
 //  Make the threads, let them run, and wait for them to finish
     for ( int i = 0; i < NUMTHREADS; ++i )
