@@ -172,8 +172,11 @@ public:
   size_t size() { return Operands.size(); }
 
   typedef SmallVectorImpl<MCOperand>::iterator iterator;
+  typedef SmallVectorImpl<MCOperand>::const_iterator const_iterator;
   iterator begin() { return Operands.begin(); }
-  iterator end()   { return Operands.end();   }
+  const_iterator begin() const { return Operands.begin(); }
+  iterator end()   { return Operands.end(); }
+  const_iterator end() const { return Operands.end(); }
   iterator insert(iterator I, const MCOperand &Op) {
     return Operands.insert(I, Op);
   }
