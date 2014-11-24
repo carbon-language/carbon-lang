@@ -19980,6 +19980,7 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
   return (SVT.getVectorNumElements() == 2 ||
           ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
           isMOVLMask(M, SVT) ||
+          isCommutedMOVLMask(M, SVT) ||
           isMOVHLPSMask(M, SVT) ||
           isSHUFPMask(M, SVT) ||
           isSHUFPMask(M, SVT, /* Commuted */ true) ||
@@ -22693,7 +22694,7 @@ matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS, SDValue RHS,
 }
 
 static SDValue
-TransformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
+transformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
                                       const X86Subtarget *Subtarget) {
   SDLoc dl(N);
   SDValue Cond = N->getOperand(0);
@@ -22705,18 +22706,6 @@ TransformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
     if (CondSrc->getOpcode() == ISD::SIGN_EXTEND_INREG)
       Cond = CondSrc->getOperand(0);
   }
-
-  MVT VT = N->getSimpleValueType(0);
-  MVT EltVT = VT.getVectorElementType();
-  unsigned NumElems = VT.getVectorNumElements();
-  // There is no blend with immediate in AVX-512.
-  if (VT.is512BitVector())
-    return SDValue();
-
-  if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
-    return SDValue();
-  if (!Subtarget->hasInt256() && VT == MVT::v16i16)
-    return SDValue();
 
   if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
     return SDValue();
@@ -22731,6 +22720,8 @@ TransformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
   if (!BUILD_VECTORtoBlendMask(cast<BuildVectorSDNode>(Cond), MaskValue))
     return SDValue();
 
+  MVT VT = N->getSimpleValueType(0);
+  unsigned NumElems = VT.getVectorNumElements();
   SmallVector<int, 8> ShuffleMask(NumElems, -1);
   for (unsigned i = 0; i < NumElems; ++i) {
     // Be sure we emit undef where we can.
@@ -22740,6 +22731,9 @@ TransformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
       ShuffleMask[i] = i + NumElems * ((MaskValue >> i) & 1);
   }
 
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!TLI.isShuffleMaskLegal(ShuffleMask, VT))
+    return SDValue();
   return DAG.getVectorShuffle(VT, dl, LHS, RHS, &ShuffleMask[0]);
 }
 
@@ -23179,81 +23173,6 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  // Try to fold this VSELECT into a MOVSS/MOVSD
-  if (N->getOpcode() == ISD::VSELECT &&
-      Cond.getOpcode() == ISD::BUILD_VECTOR && !DCI.isBeforeLegalize()) {
-    if (VT == MVT::v4i32 || VT == MVT::v4f32 ||
-        (Subtarget->hasSSE2() && (VT == MVT::v2i64 || VT == MVT::v2f64))) {
-      bool CanFold = false;
-      unsigned NumElems = Cond.getNumOperands();
-      SDValue A = LHS;
-      SDValue B = RHS;
-      
-      if (isZero(Cond.getOperand(0))) {
-        CanFold = true;
-
-        // fold (vselect <0,-1,-1,-1>, A, B) -> (movss A, B)
-        // fold (vselect <0,-1> -> (movsd A, B)
-        for (unsigned i = 1, e = NumElems; i != e && CanFold; ++i)
-          CanFold = isAllOnes(Cond.getOperand(i));
-      } else if (isAllOnes(Cond.getOperand(0))) {
-        CanFold = true;
-        std::swap(A, B);
-
-        // fold (vselect <-1,0,0,0>, A, B) -> (movss B, A)
-        // fold (vselect <-1,0> -> (movsd B, A)
-        for (unsigned i = 1, e = NumElems; i != e && CanFold; ++i)
-          CanFold = isZero(Cond.getOperand(i));
-      }
-
-      if (CanFold) {
-        if (VT == MVT::v4i32 || VT == MVT::v4f32)
-          return getTargetShuffleNode(X86ISD::MOVSS, DL, VT, A, B, DAG);
-        return getTargetShuffleNode(X86ISD::MOVSD, DL, VT, A, B, DAG);
-      }
-
-      if (Subtarget->hasSSE2() && (VT == MVT::v4i32 || VT == MVT::v4f32)) {
-        // fold (v4i32: vselect <0,0,-1,-1>, A, B) ->
-        //      (v4i32 (bitcast (movsd (v2i64 (bitcast A)),
-        //                             (v2i64 (bitcast B)))))
-        //
-        // fold (v4f32: vselect <0,0,-1,-1>, A, B) ->
-        //      (v4f32 (bitcast (movsd (v2f64 (bitcast A)),
-        //                             (v2f64 (bitcast B)))))
-        //
-        // fold (v4i32: vselect <-1,-1,0,0>, A, B) ->
-        //      (v4i32 (bitcast (movsd (v2i64 (bitcast B)),
-        //                             (v2i64 (bitcast A)))))
-        //
-        // fold (v4f32: vselect <-1,-1,0,0>, A, B) ->
-        //      (v4f32 (bitcast (movsd (v2f64 (bitcast B)),
-        //                             (v2f64 (bitcast A)))))
-
-        CanFold = (isZero(Cond.getOperand(0)) &&
-                   isZero(Cond.getOperand(1)) &&
-                   isAllOnes(Cond.getOperand(2)) &&
-                   isAllOnes(Cond.getOperand(3)));
-
-        if (!CanFold && isAllOnes(Cond.getOperand(0)) &&
-            isAllOnes(Cond.getOperand(1)) &&
-            isZero(Cond.getOperand(2)) &&
-            isZero(Cond.getOperand(3))) {
-          CanFold = true;
-          std::swap(LHS, RHS);
-        }
-
-        if (CanFold) {
-          EVT NVT = (VT == MVT::v4i32) ? MVT::v2i64 : MVT::v2f64;
-          SDValue NewA = DAG.getNode(ISD::BITCAST, DL, NVT, LHS);
-          SDValue NewB = DAG.getNode(ISD::BITCAST, DL, NVT, RHS);
-          SDValue Select = getTargetShuffleNode(X86ISD::MOVSD, DL, NVT, NewA,
-                                                NewB, DAG);
-          return DAG.getNode(ISD::BITCAST, DL, VT, Select);
-        }
-      }
-    }
-  }
-
   // If we know that this node is legal then we know that it is going to be
   // matched by one of the SSE/AVX BLEND instructions. These instructions only
   // depend on the highest bit in each word. Try to use SimplifyDemandedBits
@@ -23338,7 +23257,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   if ((N->getOpcode() == ISD::VSELECT ||
        N->getOpcode() == X86ISD::SHRUNKBLEND) &&
       !DCI.isBeforeLegalize()) {
-    SDValue Shuffle = TransformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
+    SDValue Shuffle = transformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
     if (Shuffle.getNode())
       return Shuffle;
   }

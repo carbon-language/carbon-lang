@@ -1,6 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse2 | FileCheck %s --check-prefix=SSE --check-prefix=SSE2
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 | FileCheck %s --check-prefix=SSE --check-prefix=SSSE3
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 | FileCheck %s --check-prefix=SSE --check-prefix=SSE41
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse2 | FileCheck %s --check-prefix=SSE2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 | FileCheck %s --check-prefix=SSSE3
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 | FileCheck %s --check-prefix=SSE41
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx2 | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
 
@@ -36,15 +36,26 @@ entry:
 }
 
 define <4 x float> @vsel_float2(<4 x float> %v1, <4 x float> %v2) {
-; SSE-LABEL: vsel_float2:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movss %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
-; SSE-NEXT:    retq
+; SSE2-LABEL: vsel_float2:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movss %xmm0, %xmm1
+; SSE2-NEXT:    movaps %xmm1, %xmm0
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: vsel_float2:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movss %xmm0, %xmm1
+; SSSE3-NEXT:    movaps %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: vsel_float2:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: vsel_float2:
 ; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovss %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; AVX-NEXT:    retq
 entry:
   %vsel = select <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x float> %v1, <4 x float> %v2
@@ -154,15 +165,26 @@ entry:
 }
 
 define <2 x double> @vsel_double(<2 x double> %v1, <2 x double> %v2) {
-; SSE-LABEL: vsel_double:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
-; SSE-NEXT:    retq
+; SSE2-LABEL: vsel_double:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movsd %xmm0, %xmm1
+; SSE2-NEXT:    movaps %xmm1, %xmm0
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: vsel_double:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movsd %xmm0, %xmm1
+; SSSE3-NEXT:    movaps %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: vsel_double:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: vsel_double:
 ; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vblendpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
 ; AVX-NEXT:    retq
 entry:
   %vsel = select <2 x i1> <i1 true, i1 false>, <2 x double> %v1, <2 x double> %v2
@@ -170,16 +192,32 @@ entry:
 }
 
 define <2 x i64> @vsel_i64(<2 x i64> %v1, <2 x i64> %v2) {
-; SSE-LABEL: vsel_i64:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
-; SSE-NEXT:    retq
+; SSE2-LABEL: vsel_i64:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movsd %xmm0, %xmm1
+; SSE2-NEXT:    movaps %xmm1, %xmm0
+; SSE2-NEXT:    retq
 ;
-; AVX-LABEL: vsel_i64:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
-; AVX-NEXT:    retq
+; SSSE3-LABEL: vsel_i64:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movsd %xmm0, %xmm1
+; SSSE3-NEXT:    movaps %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: vsel_i64:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: vsel_i64:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: vsel_i64:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3]
+; AVX2-NEXT:    retq
 entry:
   %vsel = select <2 x i1> <i1 true, i1 false>, <2 x i64> %v1, <2 x i64> %v2
   ret <2 x i64> %vsel
@@ -251,13 +289,27 @@ entry:
 ; AVX256 tests:
 
 define <8 x float> @vsel_float8(<8 x float> %v1, <8 x float> %v2) {
-; SSE-LABEL: vsel_float8:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movss %xmm0, %xmm2
-; SSE-NEXT:    movss %xmm1, %xmm3
-; SSE-NEXT:    movaps %xmm2, %xmm0
-; SSE-NEXT:    movaps %xmm3, %xmm1
-; SSE-NEXT:    retq
+; SSE2-LABEL: vsel_float8:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movss %xmm0, %xmm2
+; SSE2-NEXT:    movss %xmm1, %xmm3
+; SSE2-NEXT:    movaps %xmm2, %xmm0
+; SSE2-NEXT:    movaps %xmm3, %xmm1
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: vsel_float8:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movss %xmm0, %xmm2
+; SSSE3-NEXT:    movss %xmm1, %xmm3
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
+; SSSE3-NEXT:    movaps %xmm3, %xmm1
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: vsel_float8:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm1[0],xmm3[1,2,3]
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: vsel_float8:
 ; AVX:       # BB#0: # %entry
@@ -269,13 +321,27 @@ entry:
 }
 
 define <8 x i32> @vsel_i328(<8 x i32> %v1, <8 x i32> %v2) {
-; SSE-LABEL: vsel_i328:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movss %xmm0, %xmm2
-; SSE-NEXT:    movss %xmm1, %xmm3
-; SSE-NEXT:    movaps %xmm2, %xmm0
-; SSE-NEXT:    movaps %xmm3, %xmm1
-; SSE-NEXT:    retq
+; SSE2-LABEL: vsel_i328:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movss %xmm0, %xmm2
+; SSE2-NEXT:    movss %xmm1, %xmm3
+; SSE2-NEXT:    movaps %xmm2, %xmm0
+; SSE2-NEXT:    movaps %xmm3, %xmm1
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: vsel_i328:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movss %xmm0, %xmm2
+; SSSE3-NEXT:    movss %xmm1, %xmm3
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
+; SSSE3-NEXT:    movaps %xmm3, %xmm1
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: vsel_i328:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3,4,5,6,7]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1],xmm3[2,3,4,5,6,7]
+; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: vsel_i328:
 ; AVX1:       # BB#0: # %entry
@@ -376,13 +442,27 @@ entry:
 }
 
 define <4 x double> @vsel_double4(<4 x double> %v1, <4 x double> %v2) {
-; SSE-LABEL: vsel_double4:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movsd %xmm0, %xmm2
-; SSE-NEXT:    movsd %xmm1, %xmm3
-; SSE-NEXT:    movaps %xmm2, %xmm0
-; SSE-NEXT:    movaps %xmm3, %xmm1
-; SSE-NEXT:    retq
+; SSE2-LABEL: vsel_double4:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movsd %xmm0, %xmm2
+; SSE2-NEXT:    movsd %xmm1, %xmm3
+; SSE2-NEXT:    movaps %xmm2, %xmm0
+; SSE2-NEXT:    movaps %xmm3, %xmm1
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: vsel_double4:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movsd %xmm0, %xmm2
+; SSSE3-NEXT:    movsd %xmm1, %xmm3
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
+; SSSE3-NEXT:    movaps %xmm3, %xmm1
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: vsel_double4:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm0[0],xmm2[1]
+; SSE41-NEXT:    blendpd {{.*#+}} xmm1 = xmm1[0],xmm3[1]
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: vsel_double4:
 ; AVX:       # BB#0: # %entry
@@ -474,12 +554,25 @@ entry:
 ; If we can figure out a blend has a constant mask, we should emit the
 ; blend instruction with an immediate mask
 define <4 x double> @constant_blendvpd_avx(<4 x double> %xy, <4 x double> %ab) {
-; SSE-LABEL: constant_blendvpd_avx:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movsd %xmm1, %xmm3
-; SSE-NEXT:    movaps %xmm2, %xmm0
-; SSE-NEXT:    movaps %xmm3, %xmm1
-; SSE-NEXT:    retq
+; SSE2-LABEL: constant_blendvpd_avx:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movsd %xmm1, %xmm3
+; SSE2-NEXT:    movaps %xmm2, %xmm0
+; SSE2-NEXT:    movaps %xmm3, %xmm1
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: constant_blendvpd_avx:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movsd %xmm1, %xmm3
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
+; SSSE3-NEXT:    movaps %xmm3, %xmm1
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: constant_blendvpd_avx:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    blendpd {{.*#+}} xmm1 = xmm1[0],xmm3[1]
+; SSE41-NEXT:    movaps %xmm2, %xmm0
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: constant_blendvpd_avx:
 ; AVX:       # BB#0: # %entry
