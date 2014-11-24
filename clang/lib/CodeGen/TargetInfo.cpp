@@ -1301,18 +1301,8 @@ bool X86_32TargetCodeGenInfo::isStructReturnInRegABI(
   case llvm::Triple::FreeBSD:
   case llvm::Triple::OpenBSD:
   case llvm::Triple::Bitrig:
-    return true;
   case llvm::Triple::Win32:
-    switch (Triple.getEnvironment()) {
-    case llvm::Triple::UnknownEnvironment:
-    case llvm::Triple::Cygnus:
-    case llvm::Triple::GNU:
-    case llvm::Triple::Itanium:
-    case llvm::Triple::MSVC:
-      return true;
-    default:
-      return false;
-    }
+    return true;
   default:
     return false;
   }
