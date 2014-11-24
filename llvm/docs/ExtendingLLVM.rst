@@ -58,7 +58,7 @@ function and then be turned into an instruction if warranted.
    If it is possible to constant fold your intrinsic, add support to it in the
    ``canConstantFoldCallTo`` and ``ConstantFoldCall`` functions.
 
-#. ``llvm/test/Regression/*``:
+#. ``llvm/test/*``:
 
    Add test cases for your test cases to the test suite
 
@@ -164,10 +164,10 @@ complicated behavior in a single node (rotate).
 
 #. TODO: document complex patterns.
 
-#. ``llvm/test/Regression/CodeGen/*``:
+#. ``llvm/test/CodeGen/*``:
 
    Add test cases for your new node to the test suite.
-   ``llvm/test/Regression/CodeGen/X86/bswap.ll`` is a good example.
+   ``llvm/test/CodeGen/X86/bswap.ll`` is a good example.
 
 Adding a new instruction
 ========================
@@ -217,7 +217,7 @@ Adding a new instruction
 
    add support for your instruction to code generators, or add a lowering pass.
 
-#. ``llvm/test/Regression/*``:
+#. ``llvm/test/*``:
 
    add your test cases to the test suite.
 
