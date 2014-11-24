@@ -347,30 +347,34 @@ bool
 __pbase_type_info::can_catch(const __shim_type_info* thrown_type,
                              void*&) const
 {
-    if (is_equal(this, thrown_type, false))
-        return true;
-    return is_equal(thrown_type, &typeid(std::nullptr_t), false);
+    return is_equal(this, thrown_type, false) ||
+           is_equal(thrown_type, &typeid(std::nullptr_t), false);
 }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
 
 // Handles bullets 1, 3 and 4
+// NOTE: It might not be safe to adjust the pointer if it is not not a pointer
+// type. Only adjust the pointer after we know it is safe to do so.
 bool
 __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
                                void*& adjustedPtr) const
 {
-    // Do the dereference adjustment
-    if (adjustedPtr != NULL)
-        adjustedPtr = *static_cast<void**>(adjustedPtr);
     // bullets 1 and 4
-    if (__pbase_type_info::can_catch(thrown_type, adjustedPtr))
+    if (__pbase_type_info::can_catch(thrown_type, adjustedPtr)) {
+        if (adjustedPtr != NULL)
+            adjustedPtr = *static_cast<void**>(adjustedPtr);
         return true;
+    }
     // bullet 3
     const __pointer_type_info* thrown_pointer_type =
         dynamic_cast<const __pointer_type_info*>(thrown_type);
     if (thrown_pointer_type == 0)
         return false;
+    // Do the dereference adjustment
+    if (adjustedPtr != NULL)
+        adjustedPtr = *static_cast<void**>(adjustedPtr);
     // bullet 3B
     if (thrown_pointer_type->__flags & ~__flags)
         return false;
