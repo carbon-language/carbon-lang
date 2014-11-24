@@ -265,7 +265,6 @@ class JumpRAddiuStackMM16 :
                   [], IIBranch, FrmR> {
   let isTerminator = 1;
   let isBarrier = 1;
-  let hasDelaySlot = 1;
   let isBranch = 1;
   let isIndirectBranch = 1;
 }
