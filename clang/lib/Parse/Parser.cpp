@@ -1788,8 +1788,9 @@ bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
   }
   
   // Parse nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(Result.SS, ParsedType(), 
-                                 /*EnteringContext=*/false);
+  if (getLangOpts().CPlusPlus)
+    ParseOptionalCXXScopeSpecifier(Result.SS, ParsedType(),
+                                   /*EnteringContext=*/false);
 
   // Check nested-name specifier.
   if (Result.SS.isInvalid()) {
