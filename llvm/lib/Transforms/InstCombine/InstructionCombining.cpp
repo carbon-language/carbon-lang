@@ -2095,7 +2095,8 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   // the largest legal integer type. We need to be conservative here since
   // x86 generates redundant zero-extenstion instructions if the operand is
   // truncated to i8 or i16.
-  if (BitWidth > NewWidth && NewWidth >= DL->getLargestLegalIntTypeSize()) {
+  if (DL && BitWidth > NewWidth &&
+      NewWidth >= DL->getLargestLegalIntTypeSize()) {
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
     Builder->SetInsertPoint(&SI);
     Value *NewCond = Builder->CreateTrunc(SI.getCondition(), Ty, "trunc");
