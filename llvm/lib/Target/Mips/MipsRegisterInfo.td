@@ -289,10 +289,10 @@ def GPR32 : GPR32Class<[i32]>;
 def DSPR  : GPR32Class<[v4i8, v2i16]>;
 
 def GPRMM16 : RegisterClass<"Mips", [i32], 32, (add
-  // Return Values and Arguments
-  V0, V1, A0, A1, A2, A3,
   // Callee save
-  S0, S1)>;
+  S0, S1,
+  // Return Values and Arguments
+  V0, V1, A0, A1, A2, A3)>;
 
 def GPR64 : RegisterClass<"Mips", [i64], 64, (add
 // Reserved
