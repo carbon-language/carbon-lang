@@ -7526,6 +7526,28 @@ SDValue PPCTargetLowering::getRecipEstimate(SDValue Operand,
   return SDValue();
 }
 
+bool PPCTargetLowering::combineRepeatedFPDivisors(unsigned NumUsers) const {
+  // Note: This functionality is used only when unsafe-fp-math is enabled, and
+  // on cores with reciprocal estimates (which are used when unsafe-fp-math is
+  // enabled for division), this functionality is redundant with the default
+  // combiner logic (once the division -> reciprocal/multiply transformation
+  // has taken place). As a result, this matters more for older cores than for
+  // newer ones.
+
+  // Combine multiple FDIVs with the same divisor into multiple FMULs by the
+  // reciprocal if there are two or more FDIVs (for embedded cores with only
+  // one FP pipeline) for three or more FDIVs (for generic OOO cores).
+  switch (Subtarget.getDarwinDirective()) {
+  default:
+    return NumUsers > 2;
+  case PPC::DIR_440:
+  case PPC::DIR_A2:
+  case PPC::DIR_E500mc:
+  case PPC::DIR_E5500:
+    return NumUsers > 1;
+  }
+}
+
 static bool isConsecutiveLSLoc(SDValue Loc, EVT VT, LSBaseSDNode *Base,
                             unsigned Bytes, int Dist,
                             SelectionDAG &DAG) {
