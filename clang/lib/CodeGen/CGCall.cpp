@@ -447,9 +447,8 @@ CodeGenTypes::arrangeLLVMFunctionInfo(CanQualType resultType,
                                       FunctionType::ExtInfo info,
                                       RequiredArgs required) {
 #ifndef NDEBUG
-  for (ArrayRef<CanQualType>::const_iterator
-         I = argTypes.begin(), E = argTypes.end(); I != E; ++I)
-    assert(I->isCanonicalAsParam());
+  for (const auto &AT : argTypes)
+    assert(AT.isCanonicalAsParam());
 #endif
 
   unsigned CC = ClangCallConvToLLVMCallConv(info.getCC());
