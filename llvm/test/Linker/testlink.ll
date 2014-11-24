@@ -1,6 +1,4 @@
-; RUN: llvm-as < %s > %t.bc
-; RUN: llvm-as < %p/testlink2.ll > %t2.bc
-; RUN: llvm-link %t.bc %t2.bc -S | FileCheck %s
+; RUN: llvm-link %s %S/Inputs/testlink.ll -S | FileCheck %s
 
 ; CHECK: %Ty2 = type { %Ty1* }
 ; CHECK: %Ty1 = type { %Ty2* }

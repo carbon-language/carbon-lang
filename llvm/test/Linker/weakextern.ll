@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s > %t.bc
-; RUN: llvm-as < %p/testlink1.ll > %t2.bc
+; RUN: llvm-as < %p/testlink.ll > %t2.bc
 ; RUN: llvm-link %t.bc %t.bc %t2.bc -o %t1.bc
 ; RUN: llvm-dis < %t1.bc | FileCheck %s
 ; CHECK: kallsyms_names = extern_weak
