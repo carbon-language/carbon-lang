@@ -481,10 +481,16 @@ int AArch64A57FPLoadBalancing::scavengeRegister(Chain *G, Color C,
     RS.forward(I);
     AvailableRegs &= RS.getRegsAvailable(TRI->getRegClass(RegClassID));
 
-    // Remove any registers clobbered by a regmask.
+    // Remove any registers clobbered by a regmask or any def register that is
+    // immediately dead.
     for (auto J : I->operands()) {
       if (J.isRegMask())
         AvailableRegs.clearBitsNotInMask(J.getRegMask());
+
+      if (J.isReg() && J.isDef() && AvailableRegs[J.getReg()]) {
+        assert(J.isDead() && "Non-dead def should have been removed by now!");
+        AvailableRegs.reset(J.getReg());
+      }
     }
   }
 
