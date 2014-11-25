@@ -98,8 +98,10 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
     if (Method->hasAttrs()) {
       for (const clang::Attr *A : Method->getAttrs()) {
         if (!A->isImplicit()) {
-          InsertLoc = Sources.getExpansionLoc(A->getLocation());
-          break;
+          SourceLocation Loc = Sources.getExpansionLoc(A->getLocation());
+          if (!InsertLoc.isValid() ||
+              Sources.isBeforeInTranslationUnit(Loc, InsertLoc))
+            InsertLoc = Loc;
         }
       }
     }
