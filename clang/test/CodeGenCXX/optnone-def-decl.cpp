@@ -13,7 +13,7 @@ int decl_only(int a) {
   return a + a + a + a;
 }
 
-// CHECK: define i32 @_Z9decl_onlyi({{.*}}) [[OPTNONE:#[0-9]+]]
+// CHECK: define {{.*}} @_Z9decl_onlyi({{.*}}) [[OPTNONE:#[0-9]+]]
 
 // Test optnone on definition but not extern declaration.
 extern int def_only(int a);
@@ -29,8 +29,8 @@ int user_of_def_only() {
   return def_only(5);
 }
 
-// CHECK: define i32 @_Z8def_onlyi({{.*}}) [[OPTNONE]]
-// CHECK: define i32 @_Z16user_of_def_onlyv() [[NORMAL:#[0-9]+]]
+// CHECK: define {{.*}} @_Z8def_onlyi({{.*}}) [[OPTNONE]]
+// CHECK: define {{.*}} @_Z16user_of_def_onlyv() [[NORMAL:#[0-9]+]]
 
 // Test optnone on both definition and declaration.
 extern int def_and_decl(int a) __attribute__((optnone));
@@ -40,7 +40,7 @@ int def_and_decl(int a) {
   return a + a + a + a;
 }
 
-// CHECK: define i32 @_Z12def_and_decli({{.*}}) [[OPTNONE]]
+// CHECK: define {{.*}} @_Z12def_and_decli({{.*}}) [[OPTNONE]]
 
 // Check that optnone wins over always_inline.
 
@@ -51,13 +51,13 @@ __attribute__((optnone))
 extern int always_inline_function(int a) {
   return a + a + a + a;
 }
-// CHECK: define i32 @_Z22always_inline_functioni({{.*}}) [[OPTNONE]]
+// CHECK: define {{.*}} @_Z22always_inline_functioni({{.*}}) [[OPTNONE]]
 
 int user_of_always_inline_function() {
   return always_inline_function(4);
 }
 
-// CHECK: define i32 @_Z30user_of_always_inline_functionv() [[NORMAL]]
+// CHECK: define {{.*}} @_Z30user_of_always_inline_functionv() [[NORMAL]]
 
 // Test optnone on declaration and always_inline on definition.
 extern int optnone_function(int a) __attribute__((optnone));
@@ -66,13 +66,13 @@ __attribute__((always_inline))
 int optnone_function(int a) {
   return a + a + a + a;
 }
-// CHECK: define i32 @_Z16optnone_functioni({{.*}}) [[OPTNONE]]
+// CHECK: define {{.*}} @_Z16optnone_functioni({{.*}}) [[OPTNONE]]
 
 int user_of_optnone_function() {
   return optnone_function(4);
 }
 
-// CHECK: define i32 @_Z24user_of_optnone_functionv() [[NORMAL]]
+// CHECK: define {{.*}} @_Z24user_of_optnone_functionv() [[NORMAL]]
 
 // Test the combination of optnone with forceinline (optnone wins).
 extern __forceinline int forceinline_optnone_function(int a, int b);
