@@ -1100,3 +1100,67 @@ define i1 @icmp_shl_1_V_ne_31(i32 %V) {
 ; CHECK-LABEL: @icmp_shl_1_V_ne_31(
 ; CHECK-NEXT: ret i1 true
 }
+
+define i1 @tautological1(i32 %A, i32 %B) {
+  %C = and i32 %A, %B
+  %D = icmp ugt i32 %C, %A
+  ret i1 %D
+; CHECK-LABEL: @tautological1(
+; CHECK: ret i1 false
+}
+
+define i1 @tautological2(i32 %A, i32 %B) {
+  %C = and i32 %A, %B
+  %D = icmp ule i32 %C, %A
+  ret i1 %D
+; CHECK-LABEL: @tautological2(
+; CHECK: ret i1 true
+}
+
+define i1 @tautological3(i32 %A, i32 %B) {
+  %C = or i32 %A, %B
+  %D = icmp ule i32 %A, %C
+  ret i1 %D
+; CHECK-LABEL: @tautological3(
+; CHECK: ret i1 true
+}
+
+define i1 @tautological4(i32 %A, i32 %B) {
+  %C = or i32 %A, %B
+  %D = icmp ugt i32 %A, %C
+  ret i1 %D
+; CHECK-LABEL: @tautological4(
+; CHECK: ret i1 false
+}
+
+define i1 @tautological5(i32 %A, i32 %B) {
+  %C = or i32 %A, %B
+  %D = icmp ult i32 %C, %A
+  ret i1 %D
+; CHECK-LABEL: @tautological5(
+; CHECK: ret i1 false
+}
+
+define i1 @tautological6(i32 %A, i32 %B) {
+  %C = or i32 %A, %B
+  %D = icmp uge i32 %C, %A
+  ret i1 %D
+; CHECK-LABEL: @tautological6(
+; CHECK: ret i1 true
+}
+
+define i1 @tautological7(i32 %A, i32 %B) {
+  %C = and i32 %A, %B
+  %D = icmp uge i32 %A, %C
+  ret i1 %D
+; CHECK-LABEL: @tautological7(
+; CHECK: ret i1 true
+}
+
+define i1 @tautological8(i32 %A, i32 %B) {
+  %C = and i32 %A, %B
+  %D = icmp ult i32 %A, %C
+  ret i1 %D
+; CHECK-LABEL: @tautological8(
+; CHECK: ret i1 false
+}

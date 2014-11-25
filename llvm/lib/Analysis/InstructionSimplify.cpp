@@ -2477,6 +2477,40 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
+  // icmp pred (or X, Y), X
+  if (LBO && match(LBO, m_CombineOr(m_Or(m_Value(), m_Specific(RHS)),
+                                    m_Or(m_Specific(RHS), m_Value())))) {
+    if (Pred == ICmpInst::ICMP_ULT)
+      return getFalse(ITy);
+    if (Pred == ICmpInst::ICMP_UGE)
+      return getTrue(ITy);
+  }
+  // icmp pred X, (or X, Y)
+  if (RBO && match(RBO, m_CombineOr(m_Or(m_Value(), m_Specific(LHS)),
+                                    m_Or(m_Specific(LHS), m_Value())))) {
+    if (Pred == ICmpInst::ICMP_ULE)
+      return getTrue(ITy);
+    if (Pred == ICmpInst::ICMP_UGT)
+      return getFalse(ITy);
+  }
+
+  // icmp pred (and X, Y), X
+  if (LBO && match(LBO, m_CombineOr(m_And(m_Value(), m_Specific(RHS)),
+                                    m_And(m_Specific(RHS), m_Value())))) {
+    if (Pred == ICmpInst::ICMP_UGT)
+      return getFalse(ITy);
+    if (Pred == ICmpInst::ICMP_ULE)
+      return getTrue(ITy);
+  }
+  // icmp pred X, (and X, Y)
+  if (RBO && match(RBO, m_CombineOr(m_And(m_Value(), m_Specific(LHS)),
+                                    m_And(m_Specific(LHS), m_Value())))) {
+    if (Pred == ICmpInst::ICMP_UGE)
+      return getTrue(ITy);
+    if (Pred == ICmpInst::ICMP_ULT)
+      return getFalse(ITy);
+  }
+
   // 0 - (zext X) pred C
   if (!CmpInst::isUnsigned(Pred) && match(LHS, m_Neg(m_ZExt(m_Value())))) {
     if (ConstantInt *RHSC = dyn_cast<ConstantInt>(RHS)) {
