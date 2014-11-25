@@ -847,6 +847,61 @@ __isl_give isl_set *ScopStmt::buildDomain(TempScop &tempScop,
   return Domain;
 }
 
+void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
+  int Dimension = 0;
+  isl_ctx *Ctx = Parent.getIslCtx();
+  isl_local_space *LSpace = isl_local_space_from_space(getDomainSpace());
+  Type *Ty = GEP->getPointerOperandType();
+  ScalarEvolution &SE = *Parent.getSE();
+
+  if (auto *PtrTy = dyn_cast<PointerType>(Ty)) {
+    Dimension = 1;
+    Ty = PtrTy->getElementType();
+  }
+
+  while (auto ArrayTy = dyn_cast<ArrayType>(Ty)) {
+    unsigned int Operand = 1 + Dimension;
+
+    if (GEP->getNumOperands() <= Operand)
+      break;
+
+    const SCEV *Expr = SE.getSCEV(GEP->getOperand(Operand));
+
+    if (isAffineExpr(&Parent.getRegion(), Expr, SE)) {
+      isl_pw_aff *AccessOffset = SCEVAffinator::getPwAff(this, Expr);
+      AccessOffset =
+          isl_pw_aff_set_tuple_id(AccessOffset, isl_dim_in, getDomainId());
+
+      isl_pw_aff *DimSize = isl_pw_aff_from_aff(isl_aff_val_on_domain(
+          isl_local_space_copy(LSpace),
+          isl_val_int_from_si(Ctx, ArrayTy->getNumElements())));
+
+      isl_set *OutOfBound = isl_pw_aff_ge_set(AccessOffset, DimSize);
+      OutOfBound = isl_set_intersect(getDomain(), OutOfBound);
+      OutOfBound = isl_set_params(OutOfBound);
+      isl_set *InBound = isl_set_complement(OutOfBound);
+      isl_set *Executed = isl_set_params(getDomain());
+
+      // A => B == !A or B
+      isl_set *InBoundIfExecuted =
+          isl_set_union(isl_set_complement(Executed), InBound);
+
+      Parent.addAssumption(InBoundIfExecuted);
+    }
+
+    Dimension += 1;
+    Ty = ArrayTy->getElementType();
+  }
+
+  isl_local_space_free(LSpace);
+}
+
+void ScopStmt::deriveAssumptions() {
+  for (Instruction &Inst : *BB)
+    if (auto *GEP = dyn_cast<GetElementPtrInst>(&Inst))
+      deriveAssumptionsFromGEP(GEP);
+}
+
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
                    BasicBlock &bb, SmallVectorImpl<Loop *> &Nest,
                    SmallVectorImpl<unsigned> &Scatter)
@@ -867,6 +922,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   buildScattering(Scatter);
   buildAccesses(tempScop);
   checkForReductions();
+  deriveAssumptions();
 }
 
 /// @brief Collect loads which might form a reduction chain with @p StoreMA
@@ -1530,6 +1586,7 @@ __isl_give isl_set *Scop::getAssumedContext() const {
 
 void Scop::addAssumption(__isl_take isl_set *Set) {
   AssumedContext = isl_set_intersect(AssumedContext, Set);
+  AssumedContext = isl_set_coalesce(AssumedContext);
 }
 
 void Scop::printContext(raw_ostream &OS) const {

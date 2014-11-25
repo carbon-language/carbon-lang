@@ -41,20 +41,9 @@ ret:
   ret void
 }
 
-; At the first look both loops seem parallel, however due to the linearization
-; of memory access functions, we get the following dependences:
-;    [n] -> { loop_body[i0, i1] -> loop_body[1024 + i0, -1 + i1]:
-;                                           0 <= i0 < n - 1024  and 1 <= i1 < n}
-; They cause the outer loop to be non-parallel.  We can only prove their
-; absence, if we know that n < 1024. This information is currently not available
-; to polly. However, we should be able to obtain it due to the out of bounds
-; memory accesses, that would happen if n >= 1024.
-
-; Note that we do not delinearize this access function because it is considered
-; to already be affine: {{0,+,4}<%loop.i>,+,4096}<%loop.j>.
-
-; CHECK: for (int c1 = 0; c1 < n; c1 += 1)
-; CHECK:   #pragma simd
+; CHECK: if (n <= 1024 ? 1 : 0)
 ; CHECK:   #pragma omp parallel for
-; CHECK:   for (int c3 = 0; c3 < n; c3 += 1)
-; CHECK:     Stmt_loop_body(c1, c3);
+; CHECK:   for (int c1 = 0; c1 < n; c1 += 1)
+; CHECK:     #pragma simd
+; CHECK:     for (int c3 = 0; c3 < n; c3 += 1)
+; CHECK:       Stmt_loop_body(c1, c3);

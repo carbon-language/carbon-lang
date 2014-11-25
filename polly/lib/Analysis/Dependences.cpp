@@ -122,6 +122,9 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
     }
     *StmtSchedule = isl_union_map_add_map(*StmtSchedule, Stmt->getScattering());
   }
+
+  *StmtSchedule =
+      isl_union_map_intersect_params(*StmtSchedule, S.getAssumedContext());
 }
 
 /// @brief Fix all dimension of @p Zero to 0 and add it to @p user
