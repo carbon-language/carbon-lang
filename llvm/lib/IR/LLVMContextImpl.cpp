@@ -87,7 +87,7 @@ LLVMContextImpl::~LLVMContextImpl() {
   ArrayConstants.freeConstants();
   StructConstants.freeConstants();
   VectorConstants.freeConstants();
-  DeleteContainerSeconds(CAZConstants);
+  CAZConstants.clear();
   DeleteContainerSeconds(CPNConstants);
   DeleteContainerSeconds(UVConstants);
   InlineAsms.freeConstants();

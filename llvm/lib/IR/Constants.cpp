@@ -1330,12 +1330,12 @@ bool ConstantFP::isValueValidForType(Type *Ty, const APFloat& Val) {
 ConstantAggregateZero *ConstantAggregateZero::get(Type *Ty) {
   assert((Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()) &&
          "Cannot create an aggregate zero of non-aggregate type!");
-  
-  ConstantAggregateZero *&Entry = Ty->getContext().pImpl->CAZConstants[Ty];
-  if (!Entry)
-    Entry = new ConstantAggregateZero(Ty);
 
-  return Entry;
+  auto &Entry = Ty->getContext().pImpl->CAZConstants[Ty];
+  if (!Entry)
+    Entry.reset(new ConstantAggregateZero(Ty));
+
+  return Entry.get();
 }
 
 /// destroyConstant - Remove the constant from the constant table.

@@ -299,7 +299,10 @@ public:
   // on Context destruction.
   SmallPtrSet<GenericMDNode *, 1> NonUniquedMDNodes;
 
-  DenseMap<Type*, ConstantAggregateZero*> CAZConstants;
+  // Value is indirected through pointer to keep pointer validity over mutations
+  // of this map. Replace if/when we have an efficient map that guarantees
+  // pointer validity over mutations.
+  DenseMap<Type*, std::unique_ptr<ConstantAggregateZero>> CAZConstants;
 
   typedef ConstantUniqueMap<ConstantArray> ArrayConstantsTy;
   ArrayConstantsTy ArrayConstants;
