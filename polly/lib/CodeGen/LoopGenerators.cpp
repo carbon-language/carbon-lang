@@ -78,10 +78,11 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   else
     LI.addTopLevelLoop(NewLoop);
 
-  if (OuterLoop && GuardBB)
-    OuterLoop->addBasicBlockToLoop(GuardBB, LI.getBase());
-  else if (OuterLoop)
+  if (OuterLoop) {
+    if (GuardBB)
+      OuterLoop->addBasicBlockToLoop(GuardBB, LI.getBase());
     OuterLoop->addBasicBlockToLoop(PreHeaderBB, LI.getBase());
+  }
 
   NewLoop->addBasicBlockToLoop(HeaderBB, LI.getBase());
 
