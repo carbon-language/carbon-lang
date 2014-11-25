@@ -93,3 +93,12 @@ void f(NestedNode *node) {
   NestedNode *next = node->Next();  // expected-error-re {{no member named 'Next' in 'initializerCorrections::NestedNode'{{$}}}}
 }
 }
+
+namespace PR21669 {
+void f(int *i) {
+  // Check that arguments to a builtin with custom type checking are corrected
+  // properly, since calls to such builtins bypass much of the normal code path
+  // for building and checking the call.
+  __atomic_load(i, i, something_something);  // expected-error-re {{use of undeclared identifier 'something_something'{{$}}}}
+}
+}
