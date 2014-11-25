@@ -121,6 +121,26 @@ ProcessWindows::GetPluginDescriptionStatic()
     return "Process plugin for Windows";
 }
 
+size_t
+ProcessWindows::GetSTDOUT(char *buf, size_t buf_size, Error &error)
+{
+    error.SetErrorString("GetSTDOUT unsupported on Windows");
+    return 0;
+}
+
+size_t
+ProcessWindows::GetSTDERR(char *buf, size_t buf_size, Error &error)
+{
+    error.SetErrorString("GetSTDERR unsupported on Windows");
+    return 0;
+}
+
+size_t
+ProcessWindows::PutSTDIN(const char *buf, size_t buf_size, Error &error)
+{
+    error.SetErrorString("PutSTDIN unsupported on Windows");
+    return 0;
+}
 
 bool
 ProcessWindows::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)

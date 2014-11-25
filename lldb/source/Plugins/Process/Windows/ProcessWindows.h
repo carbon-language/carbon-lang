@@ -63,58 +63,50 @@ public:
 
     ~ProcessWindows();
 
-    virtual lldb_private::Error DoDetach(bool keep_stopped) override;
+    // lldb_private::Process overrides
+    lldb_private::ConstString GetPluginName() override;
+    uint32_t GetPluginVersion() override;
 
-    virtual bool
+    size_t GetSTDOUT(char *buf, size_t buf_size, lldb_private::Error &error) override;
+    size_t GetSTDERR(char *buf, size_t buf_size, lldb_private::Error &error) override;
+    size_t PutSTDIN(const char *buf, size_t buf_size, lldb_private::Error &error) override;
+
+    lldb_private::Error DoDetach(bool keep_stopped) override;
+    lldb_private::Error DoLaunch(lldb_private::Module *exe_module, lldb_private::ProcessLaunchInfo &launch_info) override;
+    lldb_private::Error DoResume() override;
+    lldb_private::Error DoDestroy() override;
+    lldb_private::Error DoHalt(bool &caused_stop) override;
+
+    void RefreshStateAfterStop() override;
+    lldb::addr_t GetImageInfoAddress() override;
+
+    bool CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
+    bool
     DetachRequiresHalt() override
     {
         return true;
     }
-
-    virtual bool UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list) override;
-
-    virtual lldb_private::Error DoLaunch(lldb_private::Module *exe_module, lldb_private::ProcessLaunchInfo &launch_info) override;
-
-    virtual lldb_private::Error DoResume() override;
-
-    //------------------------------------------------------------------
-    // PluginInterface protocol
-    //------------------------------------------------------------------
-    virtual lldb_private::ConstString GetPluginName() override;
-
-    virtual uint32_t GetPluginVersion() override;
-
-    virtual bool CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
-
-    virtual lldb_private::Error DoDestroy() override;
-
-    virtual bool
+    bool
     DestroyRequiresHalt() override
     {
         return false;
     }
+    bool UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list) override;
+    bool IsAlive() override;
 
-    virtual void RefreshStateAfterStop() override;
-
-    virtual bool IsAlive() override;
-
-    virtual lldb_private::Error DoHalt(bool &caused_stop) override;
-
-    virtual lldb::addr_t GetImageInfoAddress() override;
-
-    virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error) override;
-    virtual size_t DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, lldb_private::Error &error) override;
+    size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error) override;
+    size_t DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, lldb_private::Error &error) override;
 
     // IDebugDelegate overrides.
-    virtual void OnExitProcess(uint32_t exit_code) override;
-    virtual void OnDebuggerConnected(lldb::addr_t image_base) override;
-    virtual ExceptionResult OnDebugException(bool first_chance, const lldb_private::ExceptionRecord &record) override;
-    virtual void OnCreateThread(const lldb_private::HostThread &thread) override;
-    virtual void OnExitThread(const lldb_private::HostThread &thread) override;
-    virtual void OnLoadDll(const lldb_private::ModuleSpec &module_spec, lldb::addr_t module_addr) override;
-    virtual void OnUnloadDll(lldb::addr_t module_addr) override;
-    virtual void OnDebugString(const std::string &string) override;
-    virtual void OnDebuggerError(const lldb_private::Error &error, uint32_t type) override;
+    void OnExitProcess(uint32_t exit_code) override;
+    void OnDebuggerConnected(lldb::addr_t image_base) override;
+    ExceptionResult OnDebugException(bool first_chance, const lldb_private::ExceptionRecord &record) override;
+    void OnCreateThread(const lldb_private::HostThread &thread) override;
+    void OnExitThread(const lldb_private::HostThread &thread) override;
+    void OnLoadDll(const lldb_private::ModuleSpec &module_spec, lldb::addr_t module_addr) override;
+    void OnUnloadDll(lldb::addr_t module_addr) override;
+    void OnDebugString(const std::string &string) override;
+    void OnDebuggerError(const lldb_private::Error &error, uint32_t type) override;
 
   private:
     // Data for the active debugging session.

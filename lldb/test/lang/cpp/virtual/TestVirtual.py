@@ -22,6 +22,7 @@ class CppVirtualMadness(TestBase):
     # Assert message.
     PRINTF_OUTPUT_GROKKED = "The printf output from compiled code is parsed correctly"
 
+    @unittest2.skipIf(sys.platform.startswith("win32"), "Process::GetSTDOUT unsupported on Windows.  This test should be re-written to use stdout re-direction")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_virtual_madness_dsym(self):
         """Test that expression works correctly with virtual inheritance as well as virtual function."""
