@@ -1,5 +1,6 @@
 ; RUN: %lli -code-model=small %s > /dev/null
 ; XFAIL: mips
+; XFAIL: x86_64
 ;
 ; FIXME: Merge this file with non-extern-addend.ll once AArch64 supports PC-rel
 ;        relocations in ELF. (The code is identical, only the run line differs).
