@@ -208,9 +208,6 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       // Otherwise, scan to see if all of the other instructions in this command
       // set share the operand.
       bool AllSame = true;
-      // Keep track of the maximum, number of operands or any
-      // instruction we see in the group.
-      size_t MaxSize = FirstInst->Operands.size();
 
       for (NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx);
            NIT != InstIdxs.end();
@@ -219,10 +216,6 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
         // matches, we're ok, otherwise bail out.
         const AsmWriterInst *OtherInst =
           getAsmWriterInstByID(NIT-InstIdxs.begin());
-
-        if (OtherInst &&
-            OtherInst->Operands.size() > FirstInst->Operands.size())
-          MaxSize = std::max(MaxSize, OtherInst->Operands.size());
 
         if (!OtherInst || OtherInst->Operands.size() == Op ||
             OtherInst->Operands[Op] != FirstInst->Operands[Op]) {
