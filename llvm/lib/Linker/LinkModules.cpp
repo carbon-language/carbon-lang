@@ -87,7 +87,6 @@ public:
   }
 
 private:
-  Type *getImpl(Type *T);
   Type *remapType(Type *SrcTy) override { return get(SrcTy); }
 
   bool areTypesIsomorphic(Type *DstTy, Type *SrcTy);
@@ -205,54 +204,22 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
 
 void TypeMapTy::linkDefinedTypeBodies() {
   SmallVector<Type*, 16> Elements;
-  SmallString<16> TmpName;
-
-  // Note that processing entries in this loop (calling 'get') can add new
-  // entries to the SrcDefinitionsToResolve vector.
-  while (!SrcDefinitionsToResolve.empty()) {
-    StructType *SrcSTy = SrcDefinitionsToResolve.pop_back_val();
+  for (StructType *SrcSTy : SrcDefinitionsToResolve) {
     StructType *DstSTy = cast<StructType>(MappedTypes[SrcSTy]);
-
-    // TypeMap is a many-to-one mapping, if there were multiple types that
-    // provide a body for DstSTy then previous iterations of this loop may have
-    // already handled it.  Just ignore this case.
-    if (!DstSTy->isOpaque()) continue;
-    assert(!SrcSTy->isOpaque() && "Not resolving a definition?");
+    assert(DstSTy->isOpaque());
 
     // Map the body of the source type over to a new body for the dest type.
     Elements.resize(SrcSTy->getNumElements());
     for (unsigned I = 0, E = Elements.size(); I != E; ++I)
-      Elements[I] = getImpl(SrcSTy->getElementType(I));
+      Elements[I] = get(SrcSTy->getElementType(I));
 
     DstSTy->setBody(Elements, SrcSTy->isPacked());
-
-    // If DstSTy has no name or has a longer name than STy, then viciously steal
-    // STy's name.
-    if (!SrcSTy->hasName()) continue;
-    StringRef SrcName = SrcSTy->getName();
-
-    if (!DstSTy->hasName() || DstSTy->getName().size() > SrcName.size()) {
-      TmpName.insert(TmpName.end(), SrcName.begin(), SrcName.end());
-      SrcSTy->setName("");
-      DstSTy->setName(TmpName.str());
-      TmpName.clear();
-    }
   }
-
+  SrcDefinitionsToResolve.clear();
   DstResolvedOpaqueTypes.clear();
 }
 
 Type *TypeMapTy::get(Type *Ty) {
-  Type *Result = getImpl(Ty);
-
-  // If this caused a reference to any struct type, resolve it before returning.
-  if (!SrcDefinitionsToResolve.empty())
-    linkDefinedTypeBodies();
-  return Result;
-}
-
-/// This is the recursive version of get().
-Type *TypeMapTy::getImpl(Type *Ty) {
   // If we already have an entry for this type, return it.
   Type **Entry = &MappedTypes[Ty];
   if (*Entry)
@@ -271,7 +238,7 @@ Type *TypeMapTy::getImpl(Type *Ty) {
     SmallVector<Type*, 4> ElementTypes;
     ElementTypes.resize(Ty->getNumContainedTypes());
     for (unsigned I = 0, E = Ty->getNumContainedTypes(); I != E; ++I) {
-      ElementTypes[I] = getImpl(Ty->getContainedType(I));
+      ElementTypes[I] = get(Ty->getContainedType(I));
       AnyChange |= ElementTypes[I] != Ty->getContainedType(I);
     }
 
@@ -342,15 +309,27 @@ Type *TypeMapTy::getImpl(Type *Ty) {
     return *Entry = STy;
   }
 
-  // Otherwise we create a new type and resolve its body later.  This will be
-  // resolved by the top level of get().
-  SrcDefinitionsToResolve.push_back(STy);
+  // Otherwise we create a new type.
   StructType *DTy = StructType::create(STy->getContext());
   // A new identified structure type was created. Add it to the set of
   // identified structs in the destination module.
   DstStructTypesSet.insert(DTy);
-  DstResolvedOpaqueTypes.insert(DTy);
-  return *Entry = DTy;
+  *Entry = DTy;
+
+  SmallVector<Type*, 4> ElementTypes;
+  ElementTypes.resize(STy->getNumElements());
+  for (unsigned I = 0, E = ElementTypes.size(); I != E; ++I)
+    ElementTypes[I] = get(STy->getElementType(I));
+  DTy->setBody(ElementTypes, STy->isPacked());
+
+  // Steal STy's name.
+  if (STy->hasName()) {
+    SmallString<16> TmpName = STy->getName();
+    STy->setName("");
+    DTy->setName(TmpName);
+  }
+
+  return DTy;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1589,10 +1568,6 @@ bool ModuleLinker::run() {
       break;
     }
   } while (LinkedInAnyFunctions);
-
-  // Now that all of the types from the source are used, resolve any structs
-  // copied over to the dest that didn't exist there.
-  TypeMap.linkDefinedTypeBodies();
 
   return false;
 }
