@@ -17,7 +17,7 @@
 #include <limits.h>
 #include <assert.h>
 #include <sys/localedef.h>
-#include "xlocale.h"
+#include "support/solaris/xlocale.h"
 
 static _LC_locale_t *__C_locale;
 

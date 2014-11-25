@@ -3,6 +3,9 @@ file(GLOB LIBCXX_SOURCES ../src/*.cpp)
 if(WIN32)
   file(GLOB LIBCXX_WIN32_SOURCES ../src/support/win32/*.cpp)
   list(APPEND LIBCXX_SOURCES ${LIBCXX_WIN32_SOURCES})
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+  file(GLOB LIBCXX_SOLARIS_SOURCES ../src/support/solaris/*.c)
+  list(APPEND LIBCXX_SOURCES ${LIBCXX_SOLARIS_SOURCES})
 endif()
 
 # Add all the headers to the project for IDEs.
