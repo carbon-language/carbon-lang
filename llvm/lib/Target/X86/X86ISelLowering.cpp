@@ -16872,7 +16872,11 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               RoundingMode),
                                   Mask, Src0, Subtarget, DAG);
     }
-                                              
+    case INTR_TYPE_2OP_MASK: {
+      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Op.getOperand(1),
+                                              Op.getOperand(2)),
+                                  Op.getOperand(4), Op.getOperand(3), Subtarget, DAG);
+    }                                             
     case CMP_MASK:
     case CMP_MASK_CC: {
       // Comparison intrinsics with masks.
@@ -16924,7 +16928,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     case VSHIFT_MASK:
       return getVectorMaskingNode(getTargetVShiftNode(IntrData->Opc0, dl, Op.getSimpleValueType(),
                                                       Op.getOperand(1), Op.getOperand(2), DAG),
-                                  Op.getOperand(4), Op.getOperand(3), Subtarget, DAG);;
+                                  Op.getOperand(4), Op.getOperand(3), Subtarget, DAG);
     default:
       break;
     }
