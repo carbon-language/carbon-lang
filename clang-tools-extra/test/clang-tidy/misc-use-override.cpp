@@ -26,6 +26,7 @@ struct Base {
   virtual void j() const;
   virtual MustUseResultObject k();
   virtual bool l() MUST_USE_RESULT UNUSED;
+  virtual bool n() MUST_USE_RESULT UNUSED;
 
   virtual void m();
 };
@@ -75,6 +76,10 @@ public:
   virtual bool l() MUST_USE_RESULT UNUSED;
   // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
   // CHECK-FIXES: {{^  bool l\(\) override MUST_USE_RESULT UNUSED;}}
+
+  virtual bool n() UNUSED MUST_USE_RESULT;
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  bool n\(\) override UNUSED MUST_USE_RESULT;}}
 
   virtual void m() override final;
   // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
