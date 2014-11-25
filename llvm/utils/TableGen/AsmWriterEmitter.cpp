@@ -1086,12 +1086,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
 AsmWriterEmitter::AsmWriterEmitter(RecordKeeper &R) : Records(R), Target(R) {
   Record *AsmWriter = Target.getAsmWriter();
-  for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
-                                    E = Target.inst_end();
-       I != E; ++I)
-    if (!(*I)->AsmString.empty() && (*I)->TheDef->getName() != "PHI")
+  for (const CodeGenInstruction *I : Target.instructions())
+    if (!I->AsmString.empty() && I->TheDef->getName() != "PHI")
       Instructions.push_back(
-          AsmWriterInst(**I, AsmWriter->getValueAsInt("Variant")));
+          AsmWriterInst(*I, AsmWriter->getValueAsInt("Variant")));
 
   // Get the instruction numbering.
   NumberedInstructions = &Target.getInstructionsByEnumValue();

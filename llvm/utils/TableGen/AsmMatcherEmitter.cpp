@@ -255,9 +255,8 @@ public:
       return true;
 
     // ... or if any of its super classes are a subset of RHS.
-    for (std::vector<ClassInfo*>::const_iterator it = SuperClasses.begin(),
-           ie = SuperClasses.end(); it != ie; ++it)
-      if ((*it)->isSubsetOf(RHS))
+    for (const ClassInfo *CI : SuperClasses)
+      if (CI->isSubsetOf(RHS))
         return true;
 
     return false;
@@ -1087,15 +1086,12 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
   RegisterSetSet RegisterSets;
 
   // Gather the defined sets.
-  for (ArrayRef<CodeGenRegisterClass*>::const_iterator it =
-         RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it)
-    RegisterSets.insert(RegisterSet(
-        (*it)->getOrder().begin(), (*it)->getOrder().end()));
+  for (const CodeGenRegisterClass *RC : RegClassList)
+    RegisterSets.insert(RegisterSet(RC->getOrder().begin(),
+                                    RC->getOrder().end()));
 
   // Add any required singleton sets.
-  for (SmallPtrSetImpl<Record*>::iterator it = SingletonRegisters.begin(),
-       ie = SingletonRegisters.end(); it != ie; ++it) {
-    Record *Rec = *it;
+  for (Record *Rec : SingletonRegisters) {
     RegisterSets.insert(RegisterSet(&Rec, &Rec + 1));
   }
 
@@ -1103,19 +1099,16 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
   // a unique register set class), and build the mapping of registers to the set
   // they should classify to.
   std::map<Record*, RegisterSet> RegisterMap;
-  for (std::vector<CodeGenRegister*>::const_iterator it = Registers.begin(),
-         ie = Registers.end(); it != ie; ++it) {
-    const CodeGenRegister &CGR = **it;
+  for (const CodeGenRegister *CGR : Registers) {
     // Compute the intersection of all sets containing this register.
     RegisterSet ContainingSet;
 
-    for (RegisterSetSet::iterator it = RegisterSets.begin(),
-           ie = RegisterSets.end(); it != ie; ++it) {
-      if (!it->count(CGR.TheDef))
+    for (const RegisterSet &RS : RegisterSets) {
+      if (!RS.count(CGR->TheDef))
         continue;
 
       if (ContainingSet.empty()) {
-        ContainingSet = *it;
+        ContainingSet = RS;
         continue;
       }
 
@@ -1123,21 +1116,20 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
       std::swap(Tmp, ContainingSet);
       std::insert_iterator<RegisterSet> II(ContainingSet,
                                            ContainingSet.begin());
-      std::set_intersection(Tmp.begin(), Tmp.end(), it->begin(), it->end(), II,
+      std::set_intersection(Tmp.begin(), Tmp.end(), RS.begin(), RS.end(), II,
                             LessRecordByID());
     }
 
     if (!ContainingSet.empty()) {
       RegisterSets.insert(ContainingSet);
-      RegisterMap.insert(std::make_pair(CGR.TheDef, ContainingSet));
+      RegisterMap.insert(std::make_pair(CGR->TheDef, ContainingSet));
     }
   }
 
   // Construct the register classes.
   std::map<RegisterSet, ClassInfo*, LessRegisterSet> RegisterSetClasses;
   unsigned Index = 0;
-  for (RegisterSetSet::iterator it = RegisterSets.begin(),
-         ie = RegisterSets.end(); it != ie; ++it, ++Index) {
+  for (const RegisterSet &RS : RegisterSets) {
     ClassInfo *CI = new ClassInfo();
     CI->Kind = ClassInfo::RegisterClass0 + Index;
     CI->ClassName = "Reg" + utostr(Index);
@@ -1145,42 +1137,39 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
     CI->ValueName = "";
     CI->PredicateMethod = ""; // unused
     CI->RenderMethod = "addRegOperands";
-    CI->Registers = *it;
+    CI->Registers = RS;
     // FIXME: diagnostic type.
     CI->DiagnosticType = "";
     Classes.push_back(CI);
-    RegisterSetClasses.insert(std::make_pair(*it, CI));
+    RegisterSetClasses.insert(std::make_pair(RS, CI));
+    ++Index;
   }
 
   // Find the superclasses; we could compute only the subgroup lattice edges,
   // but there isn't really a point.
-  for (RegisterSetSet::iterator it = RegisterSets.begin(),
-         ie = RegisterSets.end(); it != ie; ++it) {
-    ClassInfo *CI = RegisterSetClasses[*it];
-    for (RegisterSetSet::iterator it2 = RegisterSets.begin(),
-           ie2 = RegisterSets.end(); it2 != ie2; ++it2)
-      if (*it != *it2 &&
-          std::includes(it2->begin(), it2->end(), it->begin(), it->end(),
+  for (const RegisterSet &RS : RegisterSets) {
+    ClassInfo *CI = RegisterSetClasses[RS];
+    for (const RegisterSet &RS2 : RegisterSets)
+      if (RS != RS2 &&
+          std::includes(RS2.begin(), RS2.end(), RS.begin(), RS.end(),
                         LessRecordByID()))
-        CI->SuperClasses.push_back(RegisterSetClasses[*it2]);
+        CI->SuperClasses.push_back(RegisterSetClasses[RS2]);
   }
 
   // Name the register classes which correspond to a user defined RegisterClass.
-  for (ArrayRef<CodeGenRegisterClass*>::const_iterator
-       it = RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it) {
-    const CodeGenRegisterClass &RC = **it;
+  for (const CodeGenRegisterClass *RC : RegClassList) {
     // Def will be NULL for non-user defined register classes.
-    Record *Def = RC.getDef();
+    Record *Def = RC->getDef();
     if (!Def)
       continue;
-    ClassInfo *CI = RegisterSetClasses[RegisterSet(RC.getOrder().begin(),
-                                                   RC.getOrder().end())];
+    ClassInfo *CI = RegisterSetClasses[RegisterSet(RC->getOrder().begin(),
+                                                   RC->getOrder().end())];
     if (CI->ValueName.empty()) {
-      CI->ClassName = RC.getName();
-      CI->Name = "MCK_" + RC.getName();
-      CI->ValueName = RC.getName();
+      CI->ClassName = RC->getName();
+      CI->Name = "MCK_" + RC->getName();
+      CI->ValueName = RC->getName();
     } else
-      CI->ValueName = CI->ValueName + "," + RC.getName();
+      CI->ValueName = CI->ValueName + "," + RC->getName();
 
     RegisterClassClasses.insert(std::make_pair(Def, CI));
   }
@@ -1191,9 +1180,7 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
     RegisterClasses[it->first] = RegisterSetClasses[it->second];
 
   // Name the register classes which correspond to singleton registers.
-  for (SmallPtrSetImpl<Record*>::iterator it = SingletonRegisters.begin(),
-         ie = SingletonRegisters.end(); it != ie; ++it) {
-    Record *Rec = *it;
+  for (Record *Rec : SingletonRegisters) {
     ClassInfo *CI = RegisterClasses[Rec];
     assert(CI && "Missing singleton register class info!");
 
@@ -1211,36 +1198,34 @@ void AsmMatcherInfo::buildOperandClasses() {
     Records.getAllDerivedDefinitions("AsmOperandClass");
 
   // Pre-populate AsmOperandClasses map.
-  for (std::vector<Record*>::iterator it = AsmOperands.begin(),
-         ie = AsmOperands.end(); it != ie; ++it)
-    AsmOperandClasses[*it] = new ClassInfo();
+  for (Record *Rec : AsmOperands)
+    AsmOperandClasses[Rec] = new ClassInfo();
 
   unsigned Index = 0;
-  for (std::vector<Record*>::iterator it = AsmOperands.begin(),
-         ie = AsmOperands.end(); it != ie; ++it, ++Index) {
-    ClassInfo *CI = AsmOperandClasses[*it];
+  for (Record *Rec : AsmOperands) {
+    ClassInfo *CI = AsmOperandClasses[Rec];
     CI->Kind = ClassInfo::UserClass0 + Index;
 
-    ListInit *Supers = (*it)->getValueAsListInit("SuperClasses");
+    ListInit *Supers = Rec->getValueAsListInit("SuperClasses");
     for (unsigned i = 0, e = Supers->getSize(); i != e; ++i) {
       DefInit *DI = dyn_cast<DefInit>(Supers->getElement(i));
       if (!DI) {
-        PrintError((*it)->getLoc(), "Invalid super class reference!");
+        PrintError(Rec->getLoc(), "Invalid super class reference!");
         continue;
       }
 
       ClassInfo *SC = AsmOperandClasses[DI->getDef()];
       if (!SC)
-        PrintError((*it)->getLoc(), "Invalid super class reference!");
+        PrintError(Rec->getLoc(), "Invalid super class reference!");
       else
         CI->SuperClasses.push_back(SC);
     }
-    CI->ClassName = (*it)->getValueAsString("Name");
+    CI->ClassName = Rec->getValueAsString("Name");
     CI->Name = "MCK_" + CI->ClassName;
-    CI->ValueName = (*it)->getName();
+    CI->ValueName = Rec->getName();
 
     // Get or construct the predicate method name.
-    Init *PMName = (*it)->getValueInit("PredicateMethod");
+    Init *PMName = Rec->getValueInit("PredicateMethod");
     if (StringInit *SI = dyn_cast<StringInit>(PMName)) {
       CI->PredicateMethod = SI->getValue();
     } else {
@@ -1249,7 +1234,7 @@ void AsmMatcherInfo::buildOperandClasses() {
     }
 
     // Get or construct the render method name.
-    Init *RMName = (*it)->getValueInit("RenderMethod");
+    Init *RMName = Rec->getValueInit("RenderMethod");
     if (StringInit *SI = dyn_cast<StringInit>(RMName)) {
       CI->RenderMethod = SI->getValue();
     } else {
@@ -1258,18 +1243,19 @@ void AsmMatcherInfo::buildOperandClasses() {
     }
 
     // Get the parse method name or leave it as empty.
-    Init *PRMName = (*it)->getValueInit("ParserMethod");
+    Init *PRMName = Rec->getValueInit("ParserMethod");
     if (StringInit *SI = dyn_cast<StringInit>(PRMName))
       CI->ParserMethod = SI->getValue();
 
     // Get the diagnostic type or leave it as empty.
     // Get the parse method name or leave it as empty.
-    Init *DiagnosticType = (*it)->getValueInit("DiagnosticType");
+    Init *DiagnosticType = Rec->getValueInit("DiagnosticType");
     if (StringInit *SI = dyn_cast<StringInit>(DiagnosticType))
       CI->DiagnosticType = SI->getValue();
 
-    AsmOperandClasses[*it] = CI;
+    AsmOperandClasses[Rec] = CI;
     Classes.push_back(CI);
+    ++Index;
   }
 }
 
@@ -1344,20 +1330,18 @@ void AsmMatcherInfo::buildInfo() {
     std::string RegisterPrefix = AsmVariant->getValueAsString("RegisterPrefix");
     int AsmVariantNo = AsmVariant->getValueAsInt("Variant");
 
-    for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
-           E = Target.inst_end(); I != E; ++I) {
-      const CodeGenInstruction &CGI = **I;
+    for (const CodeGenInstruction *CGI : Target.instructions()) {
 
       // If the tblgen -match-prefix option is specified (for tblgen hackers),
       // filter the set of instructions we consider.
-      if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
+      if (!StringRef(CGI->TheDef->getName()).startswith(MatchPrefix))
         continue;
 
       // Ignore "codegen only" instructions.
-      if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
+      if (CGI->TheDef->getValueAsBit("isCodeGenOnly"))
         continue;
 
-      std::unique_ptr<MatchableInfo> II(new MatchableInfo(CGI));
+      std::unique_ptr<MatchableInfo> II(new MatchableInfo(*CGI));
 
       II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
 
@@ -1411,10 +1395,7 @@ void AsmMatcherInfo::buildInfo() {
   // Build the information about matchables, now that we have fully formed
   // classes.
   std::vector<MatchableInfo*> NewMatchables;
-  for (std::vector<MatchableInfo*>::iterator it = Matchables.begin(),
-         ie = Matchables.end(); it != ie; ++it) {
-    MatchableInfo *II = *it;
-
+  for (MatchableInfo *II : Matchables) {
     // Parse the tokens after the mnemonic.
     // Note: buildInstructionOperandReference may insert new AsmOperands, so
     // don't precompute the loop bound.
@@ -1767,16 +1748,13 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
   OperandConversionKinds.insert("CVT_Tied");
   enum { CVT_Done, CVT_Reg, CVT_Tied };
 
-  for (std::vector<MatchableInfo*>::const_iterator it = Infos.begin(),
-         ie = Infos.end(); it != ie; ++it) {
-    MatchableInfo &II = **it;
-
+  for (MatchableInfo *II : Infos) {
     // Check if we have a custom match function.
     std::string AsmMatchConverter =
-      II.getResultInst()->TheDef->getValueAsString("AsmMatchConverter");
+      II->getResultInst()->TheDef->getValueAsString("AsmMatchConverter");
     if (!AsmMatchConverter.empty()) {
       std::string Signature = "ConvertCustom_" + AsmMatchConverter;
-      II.ConversionFnKind = Signature;
+      II->ConversionFnKind = Signature;
 
       // Check if we have already generated this signature.
       if (!InstructionConversionKinds.insert(Signature))
@@ -1808,16 +1786,17 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
     std::vector<uint8_t> ConversionRow;
 
     // Compute the convert enum and the case body.
-    MaxRowLength = std::max(MaxRowLength, II.ResOperands.size()*2 + 1 );
+    MaxRowLength = std::max(MaxRowLength, II->ResOperands.size()*2 + 1 );
 
-    for (unsigned i = 0, e = II.ResOperands.size(); i != e; ++i) {
-      const MatchableInfo::ResOperand &OpInfo = II.ResOperands[i];
+    for (unsigned i = 0, e = II->ResOperands.size(); i != e; ++i) {
+      const MatchableInfo::ResOperand &OpInfo = II->ResOperands[i];
 
       // Generate code to populate each result operand.
       switch (OpInfo.Kind) {
       case MatchableInfo::ResOperand::RenderAsmOperand: {
         // This comes from something we parsed.
-        MatchableInfo::AsmOperand &Op = II.AsmOperands[OpInfo.AsmOperandNum];
+        const MatchableInfo::AsmOperand &Op =
+          II->AsmOperands[OpInfo.AsmOperandNum];
 
         // Registers are always converted the same, don't duplicate the
         // conversion function based on them.
@@ -1940,7 +1919,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
     if (Signature == "Convert")
       Signature += "_NoOperands";
 
-    II.ConversionFnKind = Signature;
+    II->ConversionFnKind = Signature;
 
     // Save the signature. If we already have it, don't add a new row
     // to the table.
@@ -2011,19 +1990,17 @@ static void emitMatchClassEnumeration(CodeGenTarget &Target,
      << "/// instruction matching.\n";
   OS << "enum MatchClassKind {\n";
   OS << "  InvalidMatchClass = 0,\n";
-  for (std::vector<ClassInfo*>::iterator it = Infos.begin(),
-         ie = Infos.end(); it != ie; ++it) {
-    ClassInfo &CI = **it;
-    OS << "  " << CI.Name << ", // ";
-    if (CI.Kind == ClassInfo::Token) {
-      OS << "'" << CI.ValueName << "'\n";
-    } else if (CI.isRegisterClass()) {
-      if (!CI.ValueName.empty())
-        OS << "register class '" << CI.ValueName << "'\n";
+  for (const ClassInfo *CI : Infos) {
+    OS << "  " << CI->Name << ", // ";
+    if (CI->Kind == ClassInfo::Token) {
+      OS << "'" << CI->ValueName << "'\n";
+    } else if (CI->isRegisterClass()) {
+      if (!CI->ValueName.empty())
+        OS << "register class '" << CI->ValueName << "'\n";
       else
         OS << "derived register class\n";
     } else {
-      OS << "user defined class '" << CI.ValueName << "'\n";
+      OS << "user defined class '" << CI->ValueName << "'\n";
     }
   }
   OS << "  NumMatchClassKinds\n";
@@ -2053,20 +2030,17 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
 
   // Check the user classes. We don't care what order since we're only
   // actually matching against one of them.
-  for (std::vector<ClassInfo*>::iterator it = Info.Classes.begin(),
-         ie = Info.Classes.end(); it != ie; ++it) {
-    ClassInfo &CI = **it;
-
-    if (!CI.isUserClass())
+  for (const ClassInfo *CI : Info.Classes) {
+    if (!CI->isUserClass())
       continue;
 
-    OS << "  // '" << CI.ClassName << "' class\n";
-    OS << "  if (Kind == " << CI.Name << ") {\n";
-    OS << "    if (Operand." << CI.PredicateMethod << "())\n";
+    OS << "  // '" << CI->ClassName << "' class\n";
+    OS << "  if (Kind == " << CI->Name << ") {\n";
+    OS << "    if (Operand." << CI->PredicateMethod << "())\n";
     OS << "      return MCTargetAsmParser::Match_Success;\n";
-    if (!CI.DiagnosticType.empty())
+    if (!CI->DiagnosticType.empty())
       OS << "    return " << Info.Target.getName() << "AsmParser::Match_"
-         << CI.DiagnosticType << ";\n";
+         << CI->DiagnosticType << ";\n";
     OS << "  }\n\n";
   }
 
@@ -2075,11 +2049,9 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
   OS << "    MatchClassKind OpKind;\n";
   OS << "    switch (Operand.getReg()) {\n";
   OS << "    default: OpKind = InvalidMatchClass; break;\n";
-  for (AsmMatcherInfo::RegisterClassesTy::iterator
-         it = Info.RegisterClasses.begin(), ie = Info.RegisterClasses.end();
-       it != ie; ++it)
+  for (const auto &RC : Info.RegisterClasses)
     OS << "    case " << Info.Target.getName() << "::"
-       << it->first->getName() << ": OpKind = " << it->second->Name
+       << RC.first->getName() << ": OpKind = " << RC.second->Name
        << "; break;\n";
   OS << "    }\n";
   OS << "    return isSubclass(OpKind, Kind) ? "
@@ -2107,24 +2079,18 @@ static void emitIsSubclass(CodeGenTarget &Target,
   SS << "  switch (A) {\n";
   SS << "  default:\n";
   SS << "    return false;\n";
-  for (std::vector<ClassInfo*>::iterator it = Infos.begin(),
-         ie = Infos.end(); it != ie; ++it) {
-    ClassInfo &A = **it;
-
+  for (const ClassInfo *A : Infos) {
     std::vector<StringRef> SuperClasses;
-    for (std::vector<ClassInfo*>::iterator it = Infos.begin(),
-         ie = Infos.end(); it != ie; ++it) {
-      ClassInfo &B = **it;
-
-      if (&A != &B && A.isSubsetOf(B))
-        SuperClasses.push_back(B.Name);
+    for (const ClassInfo *B : Infos) {
+      if (A != B && A->isSubsetOf(*B))
+        SuperClasses.push_back(B->Name);
     }
 
     if (SuperClasses.empty())
       continue;
     ++Count;
 
-    SS << "\n  case " << A.Name << ":\n";
+    SS << "\n  case " << A->Name << ":\n";
 
     if (SuperClasses.size() == 1) {
       SS << "    return B == " << SuperClasses.back().str() << ";\n";
@@ -2161,13 +2127,10 @@ static void emitMatchTokenString(CodeGenTarget &Target,
                                  raw_ostream &OS) {
   // Construct the match list.
   std::vector<StringMatcher::StringPair> Matches;
-  for (std::vector<ClassInfo*>::iterator it = Infos.begin(),
-         ie = Infos.end(); it != ie; ++it) {
-    ClassInfo &CI = **it;
-
-    if (CI.Kind == ClassInfo::Token)
-      Matches.push_back(StringMatcher::StringPair(CI.ValueName,
-                                                  "return " + CI.Name + ";"));
+  for (const ClassInfo *CI : Infos) {
+    if (CI->Kind == ClassInfo::Token)
+      Matches.push_back(StringMatcher::StringPair(CI->ValueName,
+                                                  "return " + CI->Name + ";"));
   }
 
   OS << "static MatchClassKind matchTokenString(StringRef Name) {\n";
@@ -2566,9 +2529,7 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
      << " &Operands,\n                      unsigned MCK) {\n\n"
      << "  switch(MCK) {\n";
 
-  for (std::vector<ClassInfo*>::const_iterator it = Info.Classes.begin(),
-       ie = Info.Classes.end(); it != ie; ++it) {
-    ClassInfo *CI = *it;
+  for (const ClassInfo *CI : Info.Classes) {
     if (CI->ParserMethod.empty())
       continue;
     OS << "  case " << CI->Name << ":\n"
