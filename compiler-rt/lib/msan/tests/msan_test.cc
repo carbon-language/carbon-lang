@@ -20,7 +20,6 @@
 
 #include "sanitizer/allocator_interface.h"
 #include "sanitizer/msan_interface.h"
-#include "msandr_test_so.h"
 
 #include <inttypes.h>
 #include <stdlib.h>
