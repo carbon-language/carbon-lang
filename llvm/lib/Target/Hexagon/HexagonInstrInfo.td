@@ -16,47 +16,6 @@ include "HexagonOperands.td"
 
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// Compare
-//===----------------------------------------------------------------------===//
-let hasSideEffects = 0, isCompare = 1, InputType = "imm", isExtendable = 1,
-    opExtendable = 2 in
-class T_CMP <string mnemonic, bits<2> MajOp, bit isNot, Operand ImmOp>
-  : ALU32Inst <(outs PredRegs:$dst),
-               (ins IntRegs:$src1, ImmOp:$src2),
-  "$dst = "#!if(isNot, "!","")#mnemonic#"($src1, #$src2)",
-  [], "",ALU32_2op_tc_2early_SLOT0123 >, ImmRegRel {
-    bits<2> dst;
-    bits<5> src1;
-    bits<10> src2;
-    let CextOpcode = mnemonic;
-    let opExtentBits  = !if(!eq(mnemonic, "cmp.gtu"), 9, 10);
-    let isExtentSigned = !if(!eq(mnemonic, "cmp.gtu"), 0, 1);
-
-    let IClass = 0b0111;
-
-    let Inst{27-24} = 0b0101;
-    let Inst{23-22} = MajOp;
-    let Inst{21}    = !if(!eq(mnemonic, "cmp.gtu"), 0, src2{9});
-    let Inst{20-16} = src1;
-    let Inst{13-5}  = src2{8-0};
-    let Inst{4}     = isNot;
-    let Inst{3-2}   = 0b00;
-    let Inst{1-0}   = dst;
-  }
-
-def C2_cmpeqi   : T_CMP <"cmp.eq",  0b00, 0, s10Ext>;
-def C2_cmpgti   : T_CMP <"cmp.gt",  0b01, 0, s10Ext>;
-def C2_cmpgtui  : T_CMP <"cmp.gtu", 0b10, 0, u9Ext>;
-
-class T_CMP_pat <InstHexagon MI, PatFrag OpNode, PatLeaf ImmPred>
-  : Pat<(i1 (OpNode (i32 IntRegs:$src1), ImmPred:$src2)),
-        (MI IntRegs:$src1, ImmPred:$src2)>;
-
-def : T_CMP_pat <C2_cmpeqi,  seteq,  s10ImmPred>;
-def : T_CMP_pat <C2_cmpgti,  setgt,  s10ImmPred>;
-def : T_CMP_pat <C2_cmpgtui, setugt, u9ImmPred>;
-
 // Multi-class for logical operators.
 multiclass ALU32_rr_ri<string OpcStr, SDNode OpNode> {
   def rr : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
