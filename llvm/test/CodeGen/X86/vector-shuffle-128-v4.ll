@@ -775,37 +775,27 @@ define <4 x i32> @shuffle_v4i32_zz4z(<4 x i32> %a) {
 define <4 x i32> @shuffle_v4i32_zuu4(<4 x i32> %a) {
 ; SSE2-LABEL: shuffle_v4i32_zuu4:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    xorps %xmm1, %xmm1
-; SSE2-NEXT:    movss %xmm0, %xmm1
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[1,1,1,0]
+; SSE2-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v4i32_zuu4:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    xorps %xmm1, %xmm1
-; SSE3-NEXT:    movss %xmm0, %xmm1
-; SSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[1,1,1,0]
+; SSE3-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v4i32_zuu4:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    xorps %xmm1, %xmm1
-; SSSE3-NEXT:    movss %xmm0, %xmm1
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[1,1,1,0]
+; SSSE3-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v4i32_zuu4:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    xorps %xmm1, %xmm1
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
-; SSE41-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[1,1,1,0]
+; SSE41-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v4i32_zuu4:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
-; AVX-NEXT:    vblendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
-; AVX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,1,0]
+; AVX-NEXT:    vpslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3]
 ; AVX-NEXT:    retq
   %shuffle = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32> <i32 0, i32 undef, i32 undef, i32 4>
   ret <4 x i32> %shuffle

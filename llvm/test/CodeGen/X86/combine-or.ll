@@ -271,9 +271,8 @@ define <2 x i64> @test20(<2 x i64> %a, <2 x i64> %b) {
 define <2 x i64> @test21(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: test21:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    orps %xmm1, %xmm0
-; CHECK-NEXT:    movq %xmm0, %xmm0
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; CHECK-NEXT:    por %xmm1, %xmm0
+; CHECK-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7]
 ; CHECK-NEXT:    retq
   %shuf1 = shufflevector <2 x i64> %a, <2 x i64> zeroinitializer, <2 x i32><i32 2, i32 0>
   %shuf2 = shufflevector <2 x i64> %b, <2 x i64> zeroinitializer, <2 x i32><i32 2, i32 0>

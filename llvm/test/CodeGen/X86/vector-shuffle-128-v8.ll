@@ -1429,15 +1429,13 @@ define <8 x i16> @shuffle_v8i16_zzzzz8zz(i16 %i) {
 define <8 x i16> @shuffle_v8i16_zuuzuuz8(i16 %i) {
 ; SSE-LABEL: shuffle_v8i16_zuuzuuz8:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movzwl %di, %eax
-; SSE-NEXT:    movd %eax, %xmm0
+; SSE-NEXT:    movd %edi, %xmm0
 ; SSE-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v8i16_zuuzuuz8:
 ; AVX:       # BB#0:
-; AVX-NEXT:    movzwl %di, %eax
-; AVX-NEXT:    vmovd %eax, %xmm0
+; AVX-NEXT:    vmovd %edi, %xmm0
 ; AVX-NEXT:    vpslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1]
 ; AVX-NEXT:    retq
   %a = insertelement <8 x i16> undef, i16 %i, i32 0

@@ -8217,6 +8217,11 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                     getV4X86ShuffleImm8ForMask(WidenedMask, DAG)));
   }
 
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v2i64, V1, V2, Mask, DAG))
+    return Shift;
+
   // If we have a single input from V2 insert that into V1 if we can do so
   // cheaply.
   if ((Mask[0] >= 2) + (Mask[1] >= 2) == 1) {
@@ -8242,11 +8247,6 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v2i64, V1, V2, Mask,
                                                   Subtarget, DAG))
       return Blend;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v2i64, V1, V2, Mask, DAG))
-    return Shift;
 
   // Try to use byte rotation instructions.
   // Its more profitable for pre-SSSE3 to use shuffles/unpacks.
@@ -8508,6 +8508,11 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
   }
 
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v4i32, V1, V2, Mask, DAG))
+    return Shift;
+
   // There are special ways we can lower some single-element blends.
   if (NumV2Elements == 1)
     if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v4i32, DL, V1, V2,
@@ -8524,11 +8529,6 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4i32, V1, V2, Mask,
                                                   Subtarget, DAG))
       return Blend;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v4i32, V1, V2, Mask, DAG))
-    return Shift;
 
   // Try to use byte rotation instructions.
   // Its more profitable for pre-SSSE3 to use shuffles/unpacks.
@@ -8593,16 +8593,16 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v8i16, V, V, Mask, DAG))
+    return Shift;
+
   // Use dedicated unpack instructions for masks that match their pattern.
   if (isShuffleEquivalent(Mask, 0, 0, 1, 1, 2, 2, 3, 3))
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, V, V);
   if (isShuffleEquivalent(Mask, 4, 4, 5, 5, 6, 6, 7, 7))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i16, V, V);
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v8i16, V, V, Mask, DAG))
-    return Shift;
 
   // Try to use byte rotation instructions.
   if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
@@ -9210,6 +9210,11 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(NumV1Inputs > 0 && "All single-input shuffles should be canonicalized "
                             "to be V1-input shuffles.");
 
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v8i16, V1, V2, Mask, DAG))
+    return Shift;
+
   // There are special ways we can lower some single-element blends.
   if (NumV2Inputs == 1)
     if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v8i16, DL, V1, V2,
@@ -9226,11 +9231,6 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8i16, V1, V2, Mask,
                                                   Subtarget, DAG))
       return Blend;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v8i16, V1, V2, Mask, DAG))
-    return Shift;
 
   // Try to use byte rotation instructions.
   if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
