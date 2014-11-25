@@ -271,26 +271,27 @@ struct FormatToken {
   bool IsForEachMacro;
 
   bool is(tok::TokenKind Kind) const { return Tok.is(Kind); }
-
   bool is(TokenType TT) const { return Type == TT; }
-
   bool is(const IdentifierInfo *II) const {
     return II && II == Tok.getIdentifierInfo();
   }
-
-  template <typename T>
-  bool isOneOf(T K1, T K2) const {
+  template <typename A, typename B> bool isOneOf(A K1, B K2) const {
     return is(K1) || is(K2);
   }
-
-  template <typename T>
-  bool isOneOf(T K1, T K2, T K3) const {
+  template <typename A, typename B, typename C>
+  bool isOneOf(A K1, B K2, C K3) const {
     return is(K1) || is(K2) || is(K3);
   }
-
+  template <typename A, typename B, typename C, typename D>
+  bool isOneOf(A K1, B K2, C K3, D K4) const {
+    return is(K1) || is(K2) || is(K3) || is(K4);
+  }
+  template <typename A, typename B, typename C, typename D, typename E>
+  bool isOneOf(A K1, B K2, C K3, D K4, E K5) const {
+    return is(K1) || is(K2) || is(K3) || is(K4) || is(K5);
+  }
   template <typename T>
-  bool isOneOf(T K1, T K2, T K3, T K4, T K5 = tok::NUM_TOKENS,
-               T K6 = tok::NUM_TOKENS, T K7 = tok::NUM_TOKENS,
+  bool isOneOf(T K1, T K2, T K3, T K4, T K5, T K6, T K7 = tok::NUM_TOKENS,
                T K8 = tok::NUM_TOKENS, T K9 = tok::NUM_TOKENS,
                T K10 = tok::NUM_TOKENS, T K11 = tok::NUM_TOKENS,
                T K12 = tok::NUM_TOKENS) const {
@@ -298,11 +299,7 @@ struct FormatToken {
            is(K8) || is(K9) || is(K10) || is(K11) || is(K12);
   }
 
-  template <typename T>
-  bool isNot(T Kind) const {
-    return Tok.isNot(Kind);
-  }
-  bool isNot(IdentifierInfo *II) const { return II != Tok.getIdentifierInfo(); }
+  template <typename T> bool isNot(T Kind) const { return !is(Kind); }
 
   bool isStringLiteral() const { return tok::isStringLiteral(Tok.getKind()); }
 
@@ -327,20 +324,19 @@ struct FormatToken {
 
   /// \brief Returns whether \p Tok is ([{ or a template opening <.
   bool opensScope() const {
-    return isOneOf(tok::l_paren, tok::l_brace, tok::l_square) ||
-           Type == TT_TemplateOpener;
+    return isOneOf(tok::l_paren, tok::l_brace, tok::l_square,
+                   TT_TemplateOpener);
   }
   /// \brief Returns whether \p Tok is )]} or a template closing >.
   bool closesScope() const {
-    return isOneOf(tok::r_paren, tok::r_brace, tok::r_square) ||
-           Type == TT_TemplateCloser;
+    return isOneOf(tok::r_paren, tok::r_brace, tok::r_square,
+                   TT_TemplateCloser);
   }
 
   /// \brief Returns \c true if this is a "." or "->" accessing a member.
   bool isMemberAccess() const {
     return isOneOf(tok::arrow, tok::period, tok::arrowstar) &&
-           Type != TT_DesignatedInitializerPeriod &&
-           Type != TT_TrailingReturnArrow;
+           !isOneOf(TT_DesignatedInitializerPeriod, TT_TrailingReturnArrow);
   }
 
   bool isUnaryOperator() const {
@@ -366,7 +362,7 @@ struct FormatToken {
 
   bool isTrailingComment() const {
     return is(tok::comment) &&
-           (Type == TT_LineComment || !Next || Next->NewlinesBefore > 0);
+           (is(TT_LineComment) || !Next || Next->NewlinesBefore > 0);
   }
 
   /// \brief Returns \c true if this is a keyword that can be used
@@ -412,10 +408,9 @@ struct FormatToken {
   /// \brief Returns \c true if this tokens starts a block-type list, i.e. a
   /// list that should be indented with a block indent.
   bool opensBlockTypeList(const FormatStyle &Style) const {
-    return Type == TT_ArrayInitializerLSquare ||
-           (is(tok::l_brace) &&
-            (BlockKind == BK_Block || Type == TT_DictLiteral ||
-             !Style.Cpp11BracedListStyle));
+    return is(TT_ArrayInitializerLSquare) ||
+           (is(tok::l_brace) && (BlockKind == BK_Block || is(TT_DictLiteral) ||
+                                 !Style.Cpp11BracedListStyle));
   }
 
   /// \brief Same as opensBlockTypeList, but for the closing token.
@@ -550,6 +545,7 @@ struct AdditionalKeywords {
     kw_extends = &IdentTable.get("extends");
     kw_final = &IdentTable.get("final");
     kw_implements = &IdentTable.get("implements");
+    kw_instanceof = &IdentTable.get("instanceof");
     kw_interface = &IdentTable.get("interface");
     kw_synchronized = &IdentTable.get("synchronized");
     kw_throws = &IdentTable.get("throws");
@@ -575,6 +571,7 @@ struct AdditionalKeywords {
   IdentifierInfo *kw_extends;
   IdentifierInfo *kw_final;
   IdentifierInfo *kw_implements;
+  IdentifierInfo *kw_instanceof;
   IdentifierInfo *kw_interface;
   IdentifierInfo *kw_synchronized;
   IdentifierInfo *kw_throws;
