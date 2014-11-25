@@ -14,6 +14,17 @@
 include "HexagonInstrFormats.td"
 include "HexagonOperands.td"
 
+// Pattern fragment that combines the value type and the register class
+// into a single parameter.
+// The pat frags in the definitions below need to have a named register,
+// otherwise i32 will be assumed regardless of the register class. The
+// name of the register does not matter.
+def I1  : PatLeaf<(i1 PredRegs:$R)>;
+def I32 : PatLeaf<(i32 IntRegs:$R)>;
+def I64 : PatLeaf<(i64 DoubleRegs:$R)>;
+def F32 : PatLeaf<(f32 IntRegs:$R)>;
+def F64 : PatLeaf<(f64 DoubleRegs:$R)>;
+
 //===----------------------------------------------------------------------===//
 
 // Multi-class for logical operators.
@@ -656,6 +667,39 @@ let Itinerary = ALU32_3op_tc_2early_SLOT0123 in {
   def C2_cmpgt   : T_ALU32_3op_cmp< "cmp.gt",  0b10, 0, 0>;
   def C2_cmpgtu  : T_ALU32_3op_cmp< "cmp.gtu", 0b11, 0, 0>;
 }
+
+class T_ALU64_rr<string mnemonic, string suffix, bits<4> RegType,
+                 bits<3> MajOp, bits<3> MinOp, bit OpsRev, bit IsComm,
+                 string Op2Pfx>
+  : ALU64_rr<(outs DoubleRegs:$Rd), (ins DoubleRegs:$Rs, DoubleRegs:$Rt),
+             "$Rd = " #mnemonic# "($Rs, " #Op2Pfx# "$Rt)" #suffix, [],
+             "", ALU64_tc_1_SLOT23> {
+  let hasSideEffects = 0;
+  let isCommutable = IsComm;
+
+  bits<5> Rs;
+  bits<5> Rt;
+  bits<5> Rd;
+
+  let IClass = 0b1101;
+  let Inst{27-24} = RegType;
+  let Inst{23-21} = MajOp;
+  let Inst{20-16} = !if (OpsRev,Rt,Rs);
+  let Inst{12-8} = !if (OpsRev,Rs,Rt);
+  let Inst{7-5} = MinOp;
+  let Inst{4-0} = Rd;
+}
+
+class T_ALU64_arith<string mnemonic, bits<3> MajOp, bits<3> MinOp, bit IsSat,
+                    bit OpsRev, bit IsComm>
+  : T_ALU64_rr<mnemonic, !if(IsSat,":sat",""), 0b0011, MajOp, MinOp, OpsRev,
+               IsComm, "">;
+
+def A2_addp : T_ALU64_arith<"add", 0b000, 0b111, 0, 0, 1>;
+def A2_subp : T_ALU64_arith<"sub", 0b001, 0b111, 0, 1, 0>;
+
+def: Pat<(i64 (add I64:$Rs, I64:$Rt)), (A2_addp I64:$Rs, I64:$Rt)>;
+def: Pat<(i64 (sub I64:$Rs, I64:$Rt)), (A2_subp I64:$Rs, I64:$Rt)>;
 
 // Patfrag to convert the usual comparison patfrags (e.g. setlt) to ones
 // that reverse the order of the operands.
