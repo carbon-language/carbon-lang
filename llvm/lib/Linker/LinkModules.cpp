@@ -786,6 +786,11 @@ void ModuleLinker::computeTypeMapping() {
       TypeMap.addTypeMapping(DGV->getType(), SGV.getType());
   }
 
+  for (GlobalValue &SGV : SrcM->aliases()) {
+    if (GlobalValue *DGV = getLinkedToGlobal(&SGV))
+      TypeMap.addTypeMapping(DGV->getType(), SGV.getType());
+  }
+
   // Incorporate types by name, scanning all the types in the source module.
   // At this point, the destination module may have a type "%foo = { i32 }" for
   // example.  When the source module got loaded into the same LLVMContext, if
@@ -828,8 +833,6 @@ void ModuleLinker::computeTypeMapping() {
       if (!SrcStructTypesSet.count(DST) && TypeMap.DstStructTypesSet.count(DST))
         TypeMap.addTypeMapping(DST, ST);
   }
-
-  // Don't bother incorporating aliases, they aren't generally typed well.
 
   // Now that we have discovered all of the type equivalences, get a body for
   // any 'opaque' types in the dest module that are now resolved.
