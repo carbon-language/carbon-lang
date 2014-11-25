@@ -334,6 +334,23 @@ def python_api_test(func):
     wrapper.__python_api_test__ = True
     return wrapper
 
+def lldbmi_test(func):
+    """Decorate the item as a lldb-mi only test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@lldbmi_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.dont_do_lldbmi_test:
+                self.skipTest("lldb-mi tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from lldb command line tests.
+    wrapper.__lldbmi_test__ = True
+    return wrapper
+
 def benchmarks_test(func):
     """Decorate the item as a benchmarks test."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -773,6 +790,11 @@ class Base(unittest2.TestCase):
             self.lldbExec = os.environ["LLDB_EXEC"]
         else:
             self.lldbExec = None
+        if "LLDBMI_EXEC" in os.environ:
+            self.lldbMiExec = os.environ["LLDBMI_EXEC"]
+        else:
+            self.lldbMiExec = None
+            self.dont_do_lldbmi_test = True
         if "LLDB_HERE" in os.environ:
             self.lldbHere = os.environ["LLDB_HERE"]
         else:
@@ -802,6 +824,19 @@ class Base(unittest2.TestCase):
                     pass
                 else:
                     self.skipTest("non python api test")
+        except AttributeError:
+            pass
+
+        # lldb-mi only test is decorated with @lldbmi_test,
+        # which also sets the "__lldbmi_test__" attribute of the
+        # function object to True.
+        try:
+            if lldb.just_do_lldbmi_test:
+                testMethod = getattr(self, self._testMethodName)
+                if getattr(testMethod, "__lldbmi_test__", False):
+                    pass
+                else:
+                    self.skipTest("non lldb-mi test")
         except AttributeError:
             pass
 

@@ -116,6 +116,12 @@ dont_do_python_api_test = False
 # By default, both command line and Python API tests are performed.
 just_do_python_api_test = False
 
+# By default, lldb-mi tests are performed if lldb-mi can be found.
+# Use @lldbmi_test decorator, defined in lldbtest.py, to mark a test as
+# a lldb-mi test.
+dont_do_lldbmi_test = False
+just_do_lldbmi_test = False
+
 # By default, benchmarks tests are not run.
 just_do_benchmarks_test = False
 
@@ -429,6 +435,8 @@ def parseOptionsAndInitTestdirs():
 
     global dont_do_python_api_test
     global just_do_python_api_test
+    global dont_do_lldbmi_test
+    global just_do_lldbmi_test
     global just_do_benchmarks_test
     global dont_do_dsym_test
     global dont_do_dwarf_test
@@ -504,6 +512,8 @@ def parseOptionsAndInitTestdirs():
     group.add_argument('-f', metavar='filterspec', action='append', help='Specify a filter, which consists of the test class name, a dot, followed by the test method, to only admit such test into the test suite')  # FIXME: Example?
     X('-g', 'If specified, the filterspec by -f is not exclusive, i.e., if a test module does not match the filterspec (testclass.testmethod), the whole module is still admitted to the test suite')
     X('-l', "Don't skip long running tests")
+    X('-m', "Don't do lldb-mi tests")
+    X('+m', "Just do lldb-mi tests. Do not specify along with '+m'", dest='plus_m')
     group.add_argument('-p', metavar='pattern', help='Specify a regexp filename pattern for inclusion in the test suite')
     group.add_argument('-X', metavar='directory', help="Exclude a directory from consideration for test discovery. -X types => if 'types' appear in the pathname components of a potential testfile, it will be ignored")
     group.add_argument('-G', '--category', metavar='category', action='append', dest='categoriesList', help=textwrap.dedent('''Specify categories of test cases of interest. Can be specified more than once.'''))
@@ -676,6 +686,15 @@ def parseOptionsAndInitTestdirs():
     if args.l:
         skip_long_running_test = False
 
+    if args.m:
+        dont_do_lldbmi_test = True
+
+    if args.plus_m:
+        if dont_do_lldbmi_test:
+            print "Warning: -m and +m can't both be specified! Using only -m"
+        else:
+            just_do_lldbmi_test = True
+
     if args.framework:
         lldbFrameworkPath = args.framework
 
@@ -761,6 +780,10 @@ def parseOptionsAndInitTestdirs():
 
     # Do not specify both '-a' and '+a' at the same time.
     if dont_do_python_api_test and just_do_python_api_test:
+        usage(parser)
+
+    # Do not specify both '-m' and '+m' at the same time.
+    if dont_do_lldbmi_test and just_do_lldbmi_test:
         usage(parser)
 
     if args.lldb_platform_name:
@@ -917,6 +940,7 @@ def setupSysPath():
     # We'll try to locate the appropriate executable right here.
 
     lldbExec = None
+    lldbMiExec = None
     if lldbExecutablePath:
         if is_exe(lldbExecutablePath):
             lldbExec = lldbExecutablePath
@@ -983,6 +1007,20 @@ def setupSysPath():
     else:
         os.environ["LLDB_EXEC"] = lldbExec
         #print "The 'lldb' from PATH env variable", lldbExec
+
+    # Assume lldb-mi is in same place as lldb
+    # If not found, disable the lldb-mi tests
+    global dont_do_lldbmi_test
+    if is_exe(lldbExec + "-mi"):
+        lldbMiExec = lldbExec + "-mi"
+    if not lldbMiExec:
+        dont_do_lldbmi_test = True
+        if just_do_lldbmi_test:
+            print "The 'lldb-mi' executable cannot be located.  The lldb-mi tests can not be run as a result."
+        else:
+            print "The 'lldb-mi' executable cannot be located.  Some of the tests may not be run as a result."
+    else:
+        os.environ["LLDBMI_EXEC"] = lldbMiExec
 
     # Skip printing svn/git information when running in parsable (lit-test compatibility) mode
     if not svn_silent and not parsable:
@@ -1314,6 +1352,8 @@ lldb.lldbtest_remote_shell_template = lldbtest_remote_shell_template
 # Put all these test decorators in the lldb namespace.
 lldb.dont_do_python_api_test = dont_do_python_api_test
 lldb.just_do_python_api_test = just_do_python_api_test
+lldb.dont_do_lldbmi_test = dont_do_lldbmi_test
+lldb.just_do_lldbmi_test = just_do_lldbmi_test
 lldb.just_do_benchmarks_test = just_do_benchmarks_test
 lldb.dont_do_dsym_test = dont_do_dsym_test
 lldb.dont_do_dwarf_test = dont_do_dwarf_test
