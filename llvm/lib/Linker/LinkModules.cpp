@@ -63,8 +63,8 @@ public:
   /// equivalent to the specified type in the source module.
   void addTypeMapping(Type *DstTy, Type *SrcTy);
 
-  /// linkDefinedTypeBodies - Produce a body for an opaque type in the dest
-  /// module from a type definition in the source module.
+  /// Produce a body for an opaque type in the dest module from a type
+  /// definition in the source module.
   void linkDefinedTypeBodies();
 
   /// Return the mapped type to use for the specified input type from the
@@ -201,8 +201,6 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
   return true;
 }
 
-/// Produce a body for an opaque type in the dest module from a type definition
-/// in the source module.
 void TypeMapTy::linkDefinedTypeBodies() {
   SmallVector<Type*, 16> Elements;
   SmallString<16> TmpName;
