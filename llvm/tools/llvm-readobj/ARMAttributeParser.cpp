@@ -141,7 +141,7 @@ void ARMAttributeParser::CPU_arch_profile(AttrType Tag, const uint8_t *Data,
   case 'R': Profile = "Real-time"; break;
   case 'M': Profile = "Microcontroller"; break;
   case 'S': Profile = "Classic"; break;
-  case '0': Profile = "None"; break;
+  case 0: Profile = "None"; break;
   }
 
   PrintAttribute(Tag, Encoded, Profile);
