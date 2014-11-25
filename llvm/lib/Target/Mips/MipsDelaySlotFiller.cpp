@@ -520,36 +520,66 @@ Iter Filler::replaceWithCompactBranch(MachineBasicBlock &MBB,
   return Branch;
 }
 
+// For given opcode returns opcode of corresponding instruction with short
+// delay slot.
+static int getEquivalentCallShort(int Opcode) {
+  switch (Opcode) {
+  case Mips::BGEZAL:
+    return Mips::BGEZALS_MM;
+  case Mips::BLTZAL:
+    return Mips::BLTZALS_MM;
+  case Mips::JAL:
+    return Mips::JALS_MM;
+  case Mips::JALR:
+    return Mips::JALRS_MM;
+  case Mips::JALR16_MM:
+    return Mips::JALRS16_MM;
+  default:
+    llvm_unreachable("Unexpected call instruction for microMIPS.");
+  }
+}
+
 /// runOnMachineBasicBlock - Fill in delay slots for the given basic block.
 /// We assume there is only one delay slot per delayed instruction.
 bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   bool InMicroMipsMode = TM.getSubtarget<MipsSubtarget>().inMicroMipsMode();
+  const MipsInstrInfo *TII =
+      static_cast<const MipsInstrInfo *>(TM.getSubtargetImpl()->getInstrInfo());
 
   for (Iter I = MBB.begin(); I != MBB.end(); ++I) {
     if (!hasUnoccupiedSlot(&*I))
       continue;
 
-    // For microMIPS, at the moment, do not fill delay slots of call
-    // instructions.
-    //
-    // TODO: Support for replacing regular call instructions with corresponding
-    // short delay slot instructions should be implemented.
-    if (!InMicroMipsMode || !I->isCall()) {
-      ++FilledSlots;
-      Changed = true;
+    ++FilledSlots;
+    Changed = true;
 
-      // Delay slot filling is disabled at -O0.
-      if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None)) {
-        if (searchBackward(MBB, I))
-          continue;
+    // Delay slot filling is disabled at -O0.
+    if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None)) {
+      bool Filled = false;
 
-        if (I->isTerminator()) {
-          if (searchSuccBBs(MBB, I))
-            continue;
-        } else if (searchForward(MBB, I)) {
-          continue;
+      if (searchBackward(MBB, I)) {
+        Filled = true;
+      } else if (I->isTerminator()) {
+        if (searchSuccBBs(MBB, I)) {
+          Filled = true;
         }
+      } else if (searchForward(MBB, I)) {
+        Filled = true;
+      }
+
+      if (Filled) {
+        // Get instruction with delay slot.
+        MachineBasicBlock::instr_iterator DSI(I);
+
+        if (InMicroMipsMode && TII->GetInstSizeInBytes(std::next(DSI)) == 2 &&
+            DSI->isCall()) {
+          // If instruction in delay slot is 16b change opcode to
+          // corresponding instruction with short delay slot.
+          DSI->setDesc(TII->get(getEquivalentCallShort(DSI->getOpcode())));
+        }
+
+        continue;
       }
     }
 
@@ -565,8 +595,6 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
 
     } else {
       // Bundle the NOP to the instruction with the delay slot.
-      const MipsInstrInfo *TII = static_cast<const MipsInstrInfo *>(
-          TM.getSubtargetImpl()->getInstrInfo());
       BuildMI(MBB, std::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
       MIBundleBuilder(MBB, I, std::next(I, 2));
     }
