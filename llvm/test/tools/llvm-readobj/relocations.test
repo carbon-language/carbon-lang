@@ -2,6 +2,8 @@ RUN: llvm-readobj -r %p/Inputs/trivial.obj.coff-i386 \
 RUN:   | FileCheck %s -check-prefix COFF
 RUN: llvm-readobj -r %p/Inputs/bad-relocs.obj.coff-i386 \
 RUN:   | FileCheck %s -check-prefix BAD-COFF-RELOCS
+RUN: llvm-readobj -r %p/Inputs/relocs-no-symtab.obj.coff-i386 \
+RUN:   | FileCheck %s -check-prefix BAD-COFF-RELOCS
 RUN: llvm-readobj -r %p/Inputs/trivial.obj.elf-i386 \
 RUN:   | FileCheck %s -check-prefix ELF
 RUN: llvm-readobj -r %p/Inputs/trivial.obj.macho-i386 \
