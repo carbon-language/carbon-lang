@@ -702,7 +702,8 @@ TEST_F(WinLinkParserTest, Ignore) {
                     "/verbose:icf", "/wx", "/wx:no", "/tlbid:1",
                     "/tlbout:foo", "/idlout:foo", "/ignore:4000",
                     "/ignoreidl", "/implib:foo", "/safeseh",
-                    "/safeseh:no", "/functionpadmin", "a.obj", nullptr));
+                    "/safeseh:no", "/functionpadmin", "/maxilksize:1024",
+                    "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
   EXPECT_EQ(3, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));

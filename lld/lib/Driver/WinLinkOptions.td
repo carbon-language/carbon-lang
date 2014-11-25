@@ -111,6 +111,7 @@ def delay : QF<"delay">;
 def errorreport : QF<"errorreport">;
 def idlout : QF<"idlout">;
 def ignore : QF<"ignore">;
+def maxilksize : QF<"maxilksize">;
 def pdbaltpath : QF<"pdbaltpath">;
 def tlbid : QF<"tlbid">;
 def tlbout : QF<"tlbout">;
