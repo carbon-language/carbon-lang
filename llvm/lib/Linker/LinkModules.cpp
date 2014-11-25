@@ -75,12 +75,11 @@ public:
 
   /// Dump out the type map for debugging purposes.
   void dump() const {
-    for (DenseMap<Type*, Type*>::const_iterator
-           I = MappedTypes.begin(), E = MappedTypes.end(); I != E; ++I) {
+    for (auto &Pair : MappedTypes) {
       dbgs() << "TypeMap: ";
-      I->first->print(dbgs());
+      Pair.first->print(dbgs());
       dbgs() << " => ";
-      I->second->print(dbgs());
+      Pair.second->print(dbgs());
       dbgs() << '\n';
     }
   }
