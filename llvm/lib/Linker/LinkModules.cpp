@@ -383,7 +383,6 @@ namespace {
     Value *materializeValueFor(Value *V) override;
   };
 
-  namespace {
   class LinkDiagnosticInfo : public DiagnosticInfo {
     const Twine &Msg;
 
@@ -395,7 +394,6 @@ namespace {
                                          const Twine &Msg)
       : DiagnosticInfo(DK_Linker, Severity), Msg(Msg) {}
   void LinkDiagnosticInfo::print(DiagnosticPrinter &DP) const { DP << Msg; }
-  }
 
   /// This is an implementation class for the LinkModules function, which is the
   /// entrypoint for this file.
