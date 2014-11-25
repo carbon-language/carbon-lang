@@ -338,7 +338,7 @@ static unsigned doesIntrinsicContainPredicate(unsigned ID)
     case Intrinsic::hexagon_C2_mask:
       return Hexagon::MASK_p;
     case Intrinsic::hexagon_C2_mux:
-      return Hexagon::MUX_rr;
+      return Hexagon::C2_mux;
 
       // Mapping hexagon_C2_muxir to MUX_pri.  This is pretty weird - but
       // that's how it's mapped in q6protos.h.

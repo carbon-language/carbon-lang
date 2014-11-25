@@ -296,6 +296,30 @@ multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
 
 defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
 
+let CextOpcode = "MUX", InputType = "reg", hasNewValue = 1 in
+def C2_mux: ALU32_rr<(outs IntRegs:$Rd),
+                     (ins PredRegs:$Pu, IntRegs:$Rs, IntRegs:$Rt),
+      "$Rd = mux($Pu, $Rs, $Rt)", [], "", ALU32_3op_tc_1_SLOT0123>, ImmRegRel {
+  bits<5> Rd;
+  bits<2> Pu;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let CextOpcode = "mux";
+  let InputType = "reg";
+  let hasSideEffects = 0;
+  let IClass = 0b1111;
+
+  let Inst{27-24} = 0b0100;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{6-5} = Pu;
+  let Inst{4-0} = Rd;
+}
+
+def: Pat<(i32 (select (i1 PredRegs:$Pu), (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))),
+         (C2_mux PredRegs:$Pu, IntRegs:$Rs, IntRegs:$Rt)>;
+
 // Combines the two integer registers SRC1 and SRC2 into a double register.
 let isPredicable = 1 in
 class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
@@ -556,14 +580,6 @@ def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
                                                    DoubleRegs:$src3),
             "$dst = vmux($src1, $src2, $src3)",
             []>;
-
-let CextOpcode = "MUX", InputType = "reg" in
-def MUX_rr : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                            IntRegs:$src2, IntRegs:$src3),
-             "$dst = mux($src1, $src2, $src3)",
-             [(set (i32 IntRegs:$dst),
-                   (i32 (select (i1 PredRegs:$src1), (i32 IntRegs:$src2),
-                                (i32 IntRegs:$src3))))]>, ImmRegRel;
 
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8,
 CextOpcode = "MUX", InputType = "imm" in
@@ -1999,19 +2015,6 @@ def TFRI64 : ALU64_rr<(outs DoubleRegs:$dst), (ins s8Imm64:$src1),
              "$dst = #$src1",
              [(set (i64 DoubleRegs:$dst), s8Imm64Pred:$src1)]>;
 
-// Pseudo instruction to encode a set of conditional transfers.
-// This instruction is used instead of a mux and trades-off codesize
-// for performance. We conduct this transformation optimistically in
-// the hope that these instructions get promoted to dot-new transfers.
-let AddedComplexity = 100, isPredicated = 1 in
-def TFR_condset_rr : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                        IntRegs:$src2,
-                                                        IntRegs:$src3),
-                     "Error; should not emit",
-                     [(set (i32 IntRegs:$dst),
-                           (i32 (select (i1 PredRegs:$src1),
-                                        (i32 IntRegs:$src2),
-                                        (i32 IntRegs:$src3))))]>;
 let AddedComplexity = 100, isPredicated = 1 in
 def TFR_condset_ri : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, s12Imm:$src3),
@@ -2430,12 +2433,12 @@ def : Pat <(brcond (i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
 // Hexagon does not support 64-bit MUXes; so emulate with combines.
 def : Pat <(select (i1 PredRegs:$src1), (i64 DoubleRegs:$src2),
                    (i64 DoubleRegs:$src3)),
-      (i64 (COMBINE_rr (i32 (MUX_rr (i1 PredRegs:$src1),
+      (i64 (COMBINE_rr (i32 (C2_mux (i1 PredRegs:$src1),
                                     (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
                                                          subreg_hireg)),
                                     (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src3),
                                                          subreg_hireg)))),
-                       (i32 (MUX_rr (i1 PredRegs:$src1),
+                       (i32 (C2_mux (i1 PredRegs:$src1),
                                     (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
                                                          subreg_loreg)),
                                     (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src3),
