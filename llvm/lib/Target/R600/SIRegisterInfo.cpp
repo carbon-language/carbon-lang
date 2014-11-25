@@ -40,6 +40,8 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
   Reserved.set(AMDGPU::INDIRECT_BASE_ADDR);
   Reserved.set(AMDGPU::FLAT_SCR);
+  Reserved.set(AMDGPU::FLAT_SCR_LO);
+  Reserved.set(AMDGPU::FLAT_SCR_HI);
 
   // Reserve some VGPRs to use as temp registers in case we have to spill VGPRs
   Reserved.set(AMDGPU::VGPR255);
