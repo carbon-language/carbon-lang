@@ -280,8 +280,9 @@ std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
   const Elf_Ehdr *Header = EF.getHeader();
   Result = ESym->st_value;
 
-  // Clear the ARM/Thumb indicator flag.
-  if (Header->e_machine == ELF::EM_ARM && ESym->getType() == ELF::STT_FUNC)
+  // Clear the ARM/Thumb or microMIPS indicator flag.
+  if ((Header->e_machine == ELF::EM_ARM || Header->e_machine == ELF::EM_MIPS) &&
+      ESym->getType() == ELF::STT_FUNC)
     Result &= ~1;
 
   if (Header->e_type == ELF::ET_REL)
