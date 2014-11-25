@@ -96,14 +96,6 @@ private:
 }
 
 void TypeMapTy::addTypeMapping(Type *DstTy, Type *SrcTy) {
-  Type *&Entry = MappedTypes[SrcTy];
-  if (Entry) return;
-
-  if (DstTy == SrcTy) {
-    Entry = DstTy;
-    return;
-  }
-
   // Check to see if these types are recursively isomorphic and establish a
   // mapping between them if so.
   if (areTypesIsomorphic(DstTy, SrcTy)) {
