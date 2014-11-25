@@ -1180,6 +1180,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       // any effect.
       // TODO: This should disable dead stripping. Currently we can't do that
       // because removal of associative sections depends on dead stripping.
+      ctx.setDebug(true);
       break;
 
     case OPT_verbose:
@@ -1265,6 +1266,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_INPUT:
       inputFiles.push_back(ctx.allocate(inputArg->getValue()));
+      break;
+
+    case OPT_pdb:
+      ctx.setPDBFilePath(inputArg->getValue());
       break;
 
     case OPT_lldmoduledeffile:

@@ -546,8 +546,16 @@ TEST_F(WinLinkParserTest, SwapRunFromNet) {
 }
 
 TEST_F(WinLinkParserTest, Debug) {
-  EXPECT_TRUE(parse("link.exe", "/debug", "a.out", nullptr));
+  EXPECT_TRUE(parse("link.exe", "/debug", "a.obj", nullptr));
   EXPECT_TRUE(_context.deadStrip());
+  EXPECT_TRUE(_context.getDebug());
+  EXPECT_EQ("a.pdb", _context.getPDBFilePath());
+}
+
+TEST_F(WinLinkParserTest, PDB) {
+  EXPECT_TRUE(parse("link.exe", "/debug", "/pdb:foo.pdb", "a.obj", nullptr));
+  EXPECT_TRUE(_context.getDebug());
+  EXPECT_EQ("foo.pdb", _context.getPDBFilePath());
 }
 
 TEST_F(WinLinkParserTest, Fixed) {
@@ -690,10 +698,10 @@ TEST_F(WinLinkParserTest, Ignore) {
   // compatibility with link.exe.
   EXPECT_TRUE(parse("link.exe", "/nologo", "/errorreport:prompt",
                     "/incremental", "/incremental:no", "/delay:unload",
-                    "/disallowlib:foo", "/pdb:foo",
-                    "/pdbaltpath:bar", "/verbose", "/verbose:icf", "/wx",
-                    "/wx:no", "/tlbid:1", "/tlbout:foo", "/idlout:foo",
-                    "/ignore:4000", "/ignoreidl", "/implib:foo", "/safeseh",
+                    "/disallowlib:foo", "/pdbaltpath:bar", "/verbose",
+                    "/verbose:icf", "/wx", "/wx:no", "/tlbid:1",
+                    "/tlbout:foo", "/idlout:foo", "/ignore:4000",
+                    "/ignoreidl", "/implib:foo", "/safeseh",
                     "/safeseh:no", "/functionpadmin", "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
   EXPECT_EQ(3, inputFileCount());

@@ -14,6 +14,7 @@
 #include "InferSubsystemPass.h"
 #include "LinkerGeneratedSymbolFile.h"
 #include "LoadConfigPass.h"
+#include "PDBPass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Simple.h"
 #include "lld/Passes/LayoutPass.h"
@@ -274,15 +275,27 @@ void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
   _dllExports.push_back(desc);
 }
 
+static std::string replaceExtension(StringRef path, StringRef ext) {
+  SmallString<128> ss = path;
+  llvm::sys::path::replace_extension(ss, ext);
+  return ss.str();
+}
+
 std::string PECOFFLinkingContext::getOutputImportLibraryPath() const {
   if (!_implib.empty())
     return _implib;
-  SmallString<128> path = outputPath();
-  llvm::sys::path::replace_extension(path, ".lib");
-  return path.str();
+  return replaceExtension(outputPath(), ".lib");
+}
+
+std::string PECOFFLinkingContext::getPDBFilePath() const {
+  assert(_debug);
+  if (!_pdbFilePath.empty())
+    return _pdbFilePath;
+  return replaceExtension(outputPath(), ".pdb");
 }
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
+  pm.add(std::unique_ptr<Pass>(new pecoff::PDBPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));

@@ -47,8 +47,8 @@ public:
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestUAC(true), _manifestLevel("'asInvoker'"),
         _manifestUiAccess("'false'"), _isDll(false), _highEntropyVA(true),
-        _requireSEH(false), _noSEH(false), _implib(""),
-        _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
+        _requireSEH(false), _noSEH(false), _implib(""), _debug(false),
+        _pdbFilePath(""), _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
 
@@ -231,6 +231,12 @@ public:
   void setOutputImportLibraryPath(const std::string &val) { _implib = val; }
   std::string getOutputImportLibraryPath() const;
 
+  void setDebug(bool val) { _debug = val; }
+  bool getDebug() { return _debug; }
+
+  void setPDBFilePath(StringRef str) { _pdbFilePath = str; }
+  std::string getPDBFilePath() const;
+
   void addDelayLoadDLL(StringRef dll) {
     _delayLoadDLLs.insert(dll.lower());
   }
@@ -389,6 +395,12 @@ private:
 
   // /IMPLIB command line option.
   std::string _implib;
+
+  // True if /DEBUG is given.
+  bool _debug;
+
+  // PDB file output path. NB: this is dummy -- LLD just creates the empty file.
+  std::string _pdbFilePath;
 
   // /DELAYLOAD option.
   std::set<std::string> _delayLoadDLLs;
