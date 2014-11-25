@@ -71,7 +71,9 @@ public:
   /// source module.
   Type *get(Type *SrcTy);
 
-  FunctionType *get(FunctionType *T) {return cast<FunctionType>(get((Type*)T));}
+  FunctionType *get(FunctionType *T) {
+    return cast<FunctionType>(get((Type *)T));
+  }
 
   /// Dump out the type map for debugging purposes.
   void dump() const {
@@ -86,10 +88,7 @@ public:
 
 private:
   Type *getImpl(Type *T);
-  /// Implement the ValueMapTypeRemapper interface.
-  Type *remapType(Type *SrcTy) override {
-    return get(SrcTy);
-  }
+  Type *remapType(Type *SrcTy) override { return get(SrcTy); }
 
   bool areTypesIsomorphic(Type *DstTy, Type *SrcTy);
 };
@@ -122,7 +121,8 @@ void TypeMapTy::addTypeMapping(Type *DstTy, Type *SrcTy) {
 /// false if they are not.
 bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
   // Two types with differing kinds are clearly not isomorphic.
-  if (DstTy->getTypeID() != SrcTy->getTypeID()) return false;
+  if (DstTy->getTypeID() != SrcTy->getTypeID())
+    return false;
 
   // If we have an entry in the MappedTypes table, then we have our answer.
   Type *&Entry = MappedTypes[SrcTy];
@@ -194,9 +194,9 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
   Entry = DstTy;
   SpeculativeTypes.push_back(SrcTy);
 
-  for (unsigned i = 0, e = SrcTy->getNumContainedTypes(); i != e; ++i)
-    if (!areTypesIsomorphic(DstTy->getContainedType(i),
-                            SrcTy->getContainedType(i)))
+  for (unsigned I = 0, E = SrcTy->getNumContainedTypes(); I != E; ++I)
+    if (!areTypesIsomorphic(DstTy->getContainedType(I),
+                            SrcTy->getContainedType(I)))
       return false;
 
   // If everything seems to have lined up, then everything is great.
@@ -221,8 +221,8 @@ void TypeMapTy::linkDefinedTypeBodies() {
 
     // Map the body of the source type over to a new body for the dest type.
     Elements.resize(SrcSTy->getNumElements());
-    for (unsigned i = 0, e = Elements.size(); i != e; ++i)
-      Elements[i] = getImpl(SrcSTy->getElementType(i));
+    for (unsigned I = 0, E = Elements.size(); I != E; ++I)
+      Elements[I] = getImpl(SrcSTy->getElementType(I));
 
     DstSTy->setBody(Elements, SrcSTy->isPacked());
 
@@ -255,7 +255,8 @@ Type *TypeMapTy::get(Type *Ty) {
 Type *TypeMapTy::getImpl(Type *Ty) {
   // If we already have an entry for this type, return it.
   Type **Entry = &MappedTypes[Ty];
-  if (*Entry) return *Entry;
+  if (*Entry)
+    return *Entry;
 
   // If this is not a named struct type, then just map all of the elements and
   // then rebuild the type from inside out.
@@ -269,14 +270,15 @@ Type *TypeMapTy::getImpl(Type *Ty) {
     bool AnyChange = false;
     SmallVector<Type*, 4> ElementTypes;
     ElementTypes.resize(Ty->getNumContainedTypes());
-    for (unsigned i = 0, e = Ty->getNumContainedTypes(); i != e; ++i) {
-      ElementTypes[i] = getImpl(Ty->getContainedType(i));
-      AnyChange |= ElementTypes[i] != Ty->getContainedType(i);
+    for (unsigned I = 0, E = Ty->getNumContainedTypes(); I != E; ++I) {
+      ElementTypes[I] = getImpl(Ty->getContainedType(I));
+      AnyChange |= ElementTypes[I] != Ty->getContainedType(I);
     }
 
     // If we found our type while recursively processing stuff, just use it.
     Entry = &MappedTypes[Ty];
-    if (*Entry) return *Entry;
+    if (*Entry)
+      return *Entry;
 
     // If all of the element types mapped directly over, then the type is usable
     // as-is.
@@ -285,7 +287,8 @@ Type *TypeMapTy::getImpl(Type *Ty) {
 
     // Otherwise, rebuild a modified type.
     switch (Ty->getTypeID()) {
-    default: llvm_unreachable("unknown derived type to remap");
+    default:
+      llvm_unreachable("unknown derived type to remap");
     case Type::ArrayTyID:
       return *Entry = ArrayType::get(ElementTypes[0],
                                      cast<ArrayType>(Ty)->getNumElements());
@@ -293,8 +296,8 @@ Type *TypeMapTy::getImpl(Type *Ty) {
       return *Entry = VectorType::get(ElementTypes[0],
                                       cast<VectorType>(Ty)->getNumElements());
     case Type::PointerTyID:
-      return *Entry = PointerType::get(ElementTypes[0],
-                                      cast<PointerType>(Ty)->getAddressSpace());
+      return *Entry = PointerType::get(
+                 ElementTypes[0], cast<PointerType>(Ty)->getAddressSpace());
     case Type::FunctionTyID:
       return *Entry = FunctionType::get(ElementTypes[0],
                                         makeArrayRef(ElementTypes).slice(1),
