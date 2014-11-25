@@ -28,6 +28,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -837,6 +838,8 @@ static ld_plugin_status all_symbols_read_hook(void) {
               EC.message().c_str());
     Ret = allSymbolsReadHook(&ApiFile);
   }
+
+  llvm_shutdown();
 
   if (options::TheOutputType == options::OT_BC_ONLY ||
       options::TheOutputType == options::OT_DISABLE)
