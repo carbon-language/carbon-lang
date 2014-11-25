@@ -1404,7 +1404,7 @@ defm V_MUL_U32_U24 : VOP2Inst <vop2<0xb>, "v_mul_u32_u24",
   VOP_I32_I32_I32, AMDGPUmul_u24
 >;
 //defm V_MUL_HI_U32_U24 : VOP2_32 <0x0000000c, "v_mul_hi_u32_u24", []>;
-} // End isCommutable = 1
+
 
 defm V_MIN_LEGACY_F32 : VOP2Inst <vop2<0xd>, "v_min_legacy_f32",
   VOP_F32_F32_F32, AMDGPUfmin_legacy
@@ -1414,7 +1414,6 @@ defm V_MAX_LEGACY_F32 : VOP2Inst <vop2<0xe>, "v_max_legacy_f32",
   VOP_F32_F32_F32, AMDGPUfmax_legacy
 >;
 
-let isCommutable = 1 in {
 defm V_MIN_F32 : VOP2Inst <vop2<0xf>, "v_min_f32", VOP_F32_F32_F32, fminnum>;
 defm V_MAX_F32 : VOP2Inst <vop2<0x10>, "v_max_f32", VOP_F32_F32_F32, fmaxnum>;
 defm V_MIN_I32 : VOP2Inst <vop2<0x11>, "v_min_i32", VOP_I32_I32_I32, AMDGPUsmin>;
