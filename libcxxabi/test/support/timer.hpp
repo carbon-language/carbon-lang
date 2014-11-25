@@ -41,6 +41,6 @@ public:
     ~timer() {}
 };
 
-#endif /* LIBCXXABI_TIME_TESTS */
+#endif /* LIBCXXABI_NO_TIMER */
 
 #endif /* TIMER_HPP */
