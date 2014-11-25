@@ -350,7 +350,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   // in the opcode-indexed table.
   unsigned BitsLeft = 64-AsmStrBits;
 
-  std::vector<std::vector<std::string> > TableDrivenOperandPrinters;
+  std::vector<std::vector<std::string>> TableDrivenOperandPrinters;
 
   while (1) {
     std::vector<std::string> UniqueOperandCommands;
@@ -393,7 +393,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     }
 
     // Remember the handlers for this set of operands.
-    TableDrivenOperandPrinters.push_back(UniqueOperandCommands);
+    TableDrivenOperandPrinters.push_back(std::move(UniqueOperandCommands));
   }
 
 
