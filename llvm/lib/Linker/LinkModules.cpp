@@ -364,147 +364,148 @@ Type *TypeMapTy::getImpl(Type *Ty) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class ModuleLinker;
+class ModuleLinker;
 
-  /// Creates prototypes for functions that are lazily linked on the fly. This
-  /// speeds up linking for modules with many/ lazily linked functions of which
-  /// few get used.
-  class ValueMaterializerTy : public ValueMaterializer {
-    TypeMapTy &TypeMap;
-    Module *DstM;
-    std::vector<Function*> &LazilyLinkFunctions;
-  public:
-    ValueMaterializerTy(TypeMapTy &TypeMap, Module *DstM,
-                        std::vector<Function*> &LazilyLinkFunctions) :
-      ValueMaterializer(), TypeMap(TypeMap), DstM(DstM),
-      LazilyLinkFunctions(LazilyLinkFunctions) {
-    }
+/// Creates prototypes for functions that are lazily linked on the fly. This
+/// speeds up linking for modules with many/ lazily linked functions of which
+/// few get used.
+class ValueMaterializerTy : public ValueMaterializer {
+  TypeMapTy &TypeMap;
+  Module *DstM;
+  std::vector<Function *> &LazilyLinkFunctions;
 
-    Value *materializeValueFor(Value *V) override;
+public:
+  ValueMaterializerTy(TypeMapTy &TypeMap, Module *DstM,
+                      std::vector<Function *> &LazilyLinkFunctions)
+      : ValueMaterializer(), TypeMap(TypeMap), DstM(DstM),
+        LazilyLinkFunctions(LazilyLinkFunctions) {}
+
+  Value *materializeValueFor(Value *V) override;
+};
+
+class LinkDiagnosticInfo : public DiagnosticInfo {
+  const Twine &Msg;
+
+public:
+  LinkDiagnosticInfo(DiagnosticSeverity Severity, const Twine &Msg);
+  void print(DiagnosticPrinter &DP) const override;
+};
+LinkDiagnosticInfo::LinkDiagnosticInfo(DiagnosticSeverity Severity,
+                                       const Twine &Msg)
+    : DiagnosticInfo(DK_Linker, Severity), Msg(Msg) {}
+void LinkDiagnosticInfo::print(DiagnosticPrinter &DP) const { DP << Msg; }
+
+/// This is an implementation class for the LinkModules function, which is the
+/// entrypoint for this file.
+class ModuleLinker {
+  Module *DstM, *SrcM;
+
+  TypeMapTy TypeMap;
+  ValueMaterializerTy ValMaterializer;
+
+  /// Mapping of values from what they used to be in Src, to what they are now
+  /// in DstM.  ValueToValueMapTy is a ValueMap, which involves some overhead
+  /// due to the use of Value handles which the Linker doesn't actually need,
+  /// but this allows us to reuse the ValueMapper code.
+  ValueToValueMapTy ValueMap;
+
+  struct AppendingVarInfo {
+    GlobalVariable *NewGV;   // New aggregate global in dest module.
+    const Constant *DstInit; // Old initializer from dest module.
+    const Constant *SrcInit; // Old initializer from src module.
   };
 
-  class LinkDiagnosticInfo : public DiagnosticInfo {
-    const Twine &Msg;
+  std::vector<AppendingVarInfo> AppendingVars;
 
-  public:
-    LinkDiagnosticInfo(DiagnosticSeverity Severity, const Twine &Msg);
-    void print(DiagnosticPrinter &DP) const override;
-  };
-  LinkDiagnosticInfo::LinkDiagnosticInfo(DiagnosticSeverity Severity,
-                                         const Twine &Msg)
-      : DiagnosticInfo(DK_Linker, Severity), Msg(Msg) {}
-  void LinkDiagnosticInfo::print(DiagnosticPrinter &DP) const { DP << Msg; }
+  // Set of items not to link in from source.
+  SmallPtrSet<const Value *, 16> DoNotLinkFromSource;
 
-  /// This is an implementation class for the LinkModules function, which is the
-  /// entrypoint for this file.
-  class ModuleLinker {
-    Module *DstM, *SrcM;
+  // Vector of functions to lazily link in.
+  std::vector<Function *> LazilyLinkFunctions;
 
-    TypeMapTy TypeMap;
-    ValueMaterializerTy ValMaterializer;
+  Linker::DiagnosticHandlerFunction DiagnosticHandler;
 
-    /// Mapping of values from what they used to be in Src, to what they are now
-    /// in DstM.  ValueToValueMapTy is a ValueMap, which involves some overhead
-    /// due to the use of Value handles which the Linker doesn't actually need,
-    /// but this allows us to reuse the ValueMapper code.
-    ValueToValueMapTy ValueMap;
+public:
+  ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM,
+               Linker::DiagnosticHandlerFunction DiagnosticHandler)
+      : DstM(dstM), SrcM(srcM), TypeMap(Set),
+        ValMaterializer(TypeMap, DstM, LazilyLinkFunctions),
+        DiagnosticHandler(DiagnosticHandler) {}
 
-    struct AppendingVarInfo {
-      GlobalVariable *NewGV;   // New aggregate global in dest module.
-      const Constant *DstInit; // Old initializer from dest module.
-      const Constant *SrcInit; // Old initializer from src module.
-    };
+  bool run();
 
-    std::vector<AppendingVarInfo> AppendingVars;
+private:
+  bool shouldLinkFromSource(bool &LinkFromSrc, const GlobalValue &Dest,
+                            const GlobalValue &Src);
 
-    // Set of items not to link in from source.
-    SmallPtrSet<const Value*, 16> DoNotLinkFromSource;
+  /// Helper method for setting a message and returning an error code.
+  bool emitError(const Twine &Message) {
+    DiagnosticHandler(LinkDiagnosticInfo(DS_Error, Message));
+    return true;
+  }
 
-    // Vector of functions to lazily link in.
-    std::vector<Function*> LazilyLinkFunctions;
+  void emitWarning(const Twine &Message) {
+    DiagnosticHandler(LinkDiagnosticInfo(DS_Warning, Message));
+  }
 
-    Linker::DiagnosticHandlerFunction DiagnosticHandler;
+  bool getComdatLeader(Module *M, StringRef ComdatName,
+                       const GlobalVariable *&GVar);
+  bool computeResultingSelectionKind(StringRef ComdatName,
+                                     Comdat::SelectionKind Src,
+                                     Comdat::SelectionKind Dst,
+                                     Comdat::SelectionKind &Result,
+                                     bool &LinkFromSrc);
+  std::map<const Comdat *, std::pair<Comdat::SelectionKind, bool>>
+      ComdatsChosen;
+  bool getComdatResult(const Comdat *SrcC, Comdat::SelectionKind &SK,
+                       bool &LinkFromSrc);
 
-  public:
-    ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM,
-                 Linker::DiagnosticHandlerFunction DiagnosticHandler)
-        : DstM(dstM), SrcM(srcM), TypeMap(Set),
-          ValMaterializer(TypeMap, DstM, LazilyLinkFunctions),
-          DiagnosticHandler(DiagnosticHandler) {}
+  /// Given a global in the source module, return the global in the
+  /// destination module that is being linked to, if any.
+  GlobalValue *getLinkedToGlobal(const GlobalValue *SrcGV) {
+    // If the source has no name it can't link.  If it has local linkage,
+    // there is no name match-up going on.
+    if (!SrcGV->hasName() || SrcGV->hasLocalLinkage())
+      return nullptr;
 
-    bool run();
+    // Otherwise see if we have a match in the destination module's symtab.
+    GlobalValue *DGV = DstM->getNamedValue(SrcGV->getName());
+    if (!DGV)
+      return nullptr;
 
-  private:
-    bool shouldLinkFromSource(bool &LinkFromSrc, const GlobalValue &Dest,
-                              const GlobalValue &Src);
+    // If we found a global with the same name in the dest module, but it has
+    // internal linkage, we are really not doing any linkage here.
+    if (DGV->hasLocalLinkage())
+      return nullptr;
 
-    /// Helper method for setting a message and returning an error code.
-    bool emitError(const Twine &Message) {
-      DiagnosticHandler(LinkDiagnosticInfo(DS_Error, Message));
-      return true;
-    }
+    // Otherwise, we do in fact link to the destination global.
+    return DGV;
+  }
 
-    void emitWarning(const Twine &Message) {
-      DiagnosticHandler(LinkDiagnosticInfo(DS_Warning, Message));
-    }
+  void computeTypeMapping();
 
-    bool getComdatLeader(Module *M, StringRef ComdatName,
-                         const GlobalVariable *&GVar);
-    bool computeResultingSelectionKind(StringRef ComdatName,
-                                       Comdat::SelectionKind Src,
-                                       Comdat::SelectionKind Dst,
-                                       Comdat::SelectionKind &Result,
-                                       bool &LinkFromSrc);
-    std::map<const Comdat *, std::pair<Comdat::SelectionKind, bool>>
-        ComdatsChosen;
-    bool getComdatResult(const Comdat *SrcC, Comdat::SelectionKind &SK,
-                         bool &LinkFromSrc);
+  void upgradeMismatchedGlobalArray(StringRef Name);
+  void upgradeMismatchedGlobals();
 
-    /// Given a global in the source module, return the global in the
-    /// destination module that is being linked to, if any.
-    GlobalValue *getLinkedToGlobal(const GlobalValue *SrcGV) {
-      // If the source has no name it can't link.  If it has local linkage,
-      // there is no name match-up going on.
-      if (!SrcGV->hasName() || SrcGV->hasLocalLinkage())
-        return nullptr;
+  bool linkAppendingVarProto(GlobalVariable *DstGV,
+                             const GlobalVariable *SrcGV);
 
-      // Otherwise see if we have a match in the destination module's symtab.
-      GlobalValue *DGV = DstM->getNamedValue(SrcGV->getName());
-      if (!DGV) return nullptr;
+  bool linkGlobalValueProto(GlobalValue *GV);
+  GlobalValue *linkGlobalVariableProto(const GlobalVariable *SGVar,
+                                       GlobalValue *DGV, bool LinkFromSrc);
+  GlobalValue *linkFunctionProto(const Function *SF, GlobalValue *DGV,
+                                 bool LinkFromSrc);
+  GlobalValue *linkGlobalAliasProto(const GlobalAlias *SGA, GlobalValue *DGV,
+                                    bool LinkFromSrc);
 
-      // If we found a global with the same name in the dest module, but it has
-      // internal linkage, we are really not doing any linkage here.
-      if (DGV->hasLocalLinkage())
-        return nullptr;
+  bool linkModuleFlagsMetadata();
 
-      // Otherwise, we do in fact link to the destination global.
-      return DGV;
-    }
-
-    void computeTypeMapping();
-
-    void upgradeMismatchedGlobalArray(StringRef Name);
-    void upgradeMismatchedGlobals();
-
-    bool linkAppendingVarProto(GlobalVariable *DstGV,
-                               const GlobalVariable *SrcGV);
-
-    bool linkGlobalValueProto(GlobalValue *GV);
-    GlobalValue *linkGlobalVariableProto(const GlobalVariable *SGVar,
-                                         GlobalValue *DGV, bool LinkFromSrc);
-    GlobalValue *linkFunctionProto(const Function *SF, GlobalValue *DGV,
-                                   bool LinkFromSrc);
-    GlobalValue *linkGlobalAliasProto(const GlobalAlias *SGA, GlobalValue *DGV,
-                                      bool LinkFromSrc);
-
-    bool linkModuleFlagsMetadata();
-
-    void linkAppendingVarInit(const AppendingVarInfo &AVI);
-    void linkGlobalInits();
-    void linkFunctionBody(Function *Dst, Function *Src);
-    void linkAliasBodies();
-    void linkNamedMDNodes();
-  };
+  void linkAppendingVarInit(const AppendingVarInfo &AVI);
+  void linkGlobalInits();
+  void linkFunctionBody(Function *Dst, Function *Src);
+  void linkAliasBodies();
+  void linkNamedMDNodes();
+};
 }
 
 /// The LLVM SymbolTable class autorenames globals that conflict in the symbol
