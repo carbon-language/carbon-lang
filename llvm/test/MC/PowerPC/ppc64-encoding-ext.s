@@ -3633,3 +3633,9 @@
 # CHECK-BE: mtspr 280, 2                     # encoding: [0x7c,0x58,0x43,0xa6]
 # CHECK-LE: mtspr 280, 2                     # encoding: [0xa6,0x43,0x58,0x7c]
             mtasr 2
+
+# Processor-Specific Instructions
+# CHECK-BE: attn                             # encoding: [0x00,0x00,0x02,0x00]
+# CHECK-LE: attn                             # encoding: [0x00,0x02,0x00,0x00]
+            attn
+
