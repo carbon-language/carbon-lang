@@ -77,6 +77,8 @@ public:
     lldb_private::Error DoDestroy() override;
     lldb_private::Error DoHalt(bool &caused_stop) override;
 
+    void DidLaunch() override;
+
     void RefreshStateAfterStop() override;
     lldb::addr_t GetImageInfoAddress() override;
 

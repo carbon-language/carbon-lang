@@ -29,6 +29,8 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/FileAction.h"
+#include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
 #include "DebuggerThread.h"
@@ -62,6 +64,7 @@ class ProcessWindowsData
     std::shared_ptr<lldb_private::ExceptionRecord> m_active_exception;
     lldb_private::Error m_launch_error;
     lldb_private::DebuggerThreadSP m_debugger;
+    StopInfoSP m_pending_stop_info;
     HANDLE m_initial_stop_event;
     bool m_initial_stop_received;
     std::map<lldb::tid_t, HostThread> m_new_threads;
@@ -275,6 +278,30 @@ void
 ProcessWindows::RefreshStateAfterStop()
 {
     m_thread_list.RefreshStateAfterStop();
+
+    if (m_session_data->m_active_exception)
+    {
+        StopInfoSP stop_info;
+        ThreadSP stop_thread = m_thread_list.GetSelectedThread();
+        RegisterContextSP register_context = stop_thread->GetRegisterContext();
+
+        ExceptionRecord &exception = *m_session_data->m_active_exception;
+        if (exception.GetExceptionCode() == EXCEPTION_BREAKPOINT)
+        {
+            uint64_t pc = register_context->GetPC();
+            BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc));
+            lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
+            bool should_stop = true;
+            if (site)
+            {
+                should_stop = site->ValidForThisThread(stop_thread.get());
+                break_id = site->GetID();
+            }
+
+            stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, break_id, should_stop);
+            stop_thread->SetStopInfo(stop_info);
+        }
+    }
 }
 
 bool
@@ -308,6 +335,15 @@ ProcessWindows::DoHalt(bool &caused_stop)
             error.SetError(GetLastError(), eErrorTypeWin32);
     }
     return error;
+}
+
+void ProcessWindows::DidLaunch()
+{
+    StateType state = GetPrivateState();
+    // The initial stop won't broadcast the state change event, so account for that here.
+    if (m_session_data && GetPrivateState() == eStateStopped &&
+            m_session_data->m_launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
+        RefreshStateAfterStop();
 }
 
 size_t
@@ -406,6 +442,7 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
                 m_session_data->m_initial_stop_received = true;
                 ::SetEvent(m_session_data->m_initial_stop_event);
             }
+
             break;
         default:
             // For non-breakpoints, give the application a chance to handle the exception first.

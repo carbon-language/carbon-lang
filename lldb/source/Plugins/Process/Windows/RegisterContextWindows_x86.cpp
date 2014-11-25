@@ -94,6 +94,7 @@ RegisterSet g_register_sets[] = {
 RegisterContextWindows_x86::RegisterContextWindows_x86(Thread &thread, uint32_t concrete_frame_idx)
     : RegisterContext(thread, concrete_frame_idx)
     , m_context_stale(true)
+    , m_context_ptr(nullptr)
 {
 }
 
