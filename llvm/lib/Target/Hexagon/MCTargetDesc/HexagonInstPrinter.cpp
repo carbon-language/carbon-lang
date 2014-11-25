@@ -97,7 +97,7 @@ void HexagonInstPrinter::printInst(const HexagonMCInst *MI, raw_ostream &O,
       HexagonMCInst Nop;
       StringRef NoAnnot;
 
-      Nop.setOpcode (Hexagon::NOP);
+      Nop.setOpcode (Hexagon::A2_nop);
       Nop.setPacketStart (MI->isPacketStart());
       printInst (&Nop, O, NoAnnot);
     }

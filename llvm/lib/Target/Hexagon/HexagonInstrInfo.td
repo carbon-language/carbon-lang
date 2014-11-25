@@ -409,10 +409,11 @@ def AND_ri : ALU32_ri<(outs IntRegs:$dst),
                                            s10ExtPred:$src2))]>, ImmRegRel;
 
 // Nop.
-let neverHasSideEffects = 1, isCodeGenOnly = 0 in
-def NOP : ALU32_rr<(outs), (ins),
-          "nop",
-          []>;
+let hasSideEffects = 0 in
+def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
+  let IClass = 0b0111;
+  let Inst{27-24} = 0b1111;
+}
 
 // Rd32=sub(#s10,Rs32)
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 10,
