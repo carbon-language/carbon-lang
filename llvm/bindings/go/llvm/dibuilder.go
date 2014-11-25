@@ -484,6 +484,13 @@ func (d *DIBuilder) InsertDeclareAtEnd(v, diVarInfo, expr Value, bb BasicBlock) 
 	return Value{C: result}
 }
 
+// InsertValueAtEnd inserts a call to llvm.dbg.value at the end of the
+// specified basic block for the given value and associated debug metadata.
+func (d *DIBuilder) InsertValueAtEnd(v, diVarInfo, expr Value, offset uint64, bb BasicBlock) Value {
+	result := C.LLVMDIBuilderInsertValueAtEnd(d.ref, v.C, C.uint64_t(offset), diVarInfo.C, expr.C, bb.C)
+	return Value{C: result}
+}
+
 func boolToCInt(v bool) C.int {
 	if v {
 		return 1

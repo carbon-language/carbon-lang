@@ -19,8 +19,7 @@
 using namespace llvm;
 
 namespace {
-template <typename T>
-T unwrapDI(LLVMValueRef v) {
+template <typename T> T unwrapDI(LLVMValueRef v) {
   return v ? T(unwrap<MDNode>(v)) : T();
 }
 }
@@ -218,5 +217,17 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Dref,
   Instruction *Instr =
       D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
                        unwrapDI<DIExpression>(Expr), unwrap(Block));
+  return wrap(Instr);
+}
+
+LLVMValueRef LLVMDIBuilderInsertValueAtEnd(LLVMDIBuilderRef Dref,
+                                           LLVMValueRef Val, uint64_t Offset,
+                                           LLVMValueRef VarInfo,
+                                           LLVMValueRef Expr,
+                                           LLVMBasicBlockRef Block) {
+  DIBuilder *D = unwrap(Dref);
+  Instruction *Instr = D->insertDbgValueIntrinsic(
+      unwrap(Val), Offset, unwrapDI<DIVariable>(VarInfo),
+      unwrapDI<DIExpression>(Expr), unwrap(Block));
   return wrap(Instr);
 }

@@ -116,6 +116,13 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef D,
                                              LLVMValueRef Expr,
                                              LLVMBasicBlockRef Block);
 
+LLVMValueRef LLVMDIBuilderInsertValueAtEnd(LLVMDIBuilderRef D,
+                                           LLVMValueRef Val,
+                                           uint64_t Offset,
+                                           LLVMValueRef VarInfo,
+                                           LLVMValueRef Expr,
+                                           LLVMBasicBlockRef Block);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
