@@ -70,7 +70,7 @@ public:
                                llvm::Value *Ptr, QualType ElementType,
                                const CXXDestructorDecl *Dtor) override;
 
-  void emitRethrow(CodeGenFunction &CGF, bool isNoReturn);
+  void emitRethrow(CodeGenFunction &CGF, bool isNoReturn) override;
 
   llvm::GlobalVariable *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
                                                    const VPtrInfo *Info);
