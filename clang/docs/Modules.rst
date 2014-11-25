@@ -207,6 +207,9 @@ Command-line parameters
 ``-fmodules-search-all``
   If a symbol is not found, search modules referenced in the current module maps but not imported for symbols, so the error message can reference the module by name.  Note that if the global module index has not been built before, this might take some time as it needs to build all the modules.  Note that this option doesn't apply in module builds, to avoid the recursion.
 
+``-fno-modules-implicit-maps``
+  Suppresses the implicit search for files called ``module.modulemap`` and similar. Instead, module files need to be explicitly specified via ``-fmodule-map-file`` or transitively used.
+
 Module Semantics
 ================
 
