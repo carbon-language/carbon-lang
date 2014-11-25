@@ -22,15 +22,15 @@ void function(std::initializer_list<I *>);
 extern "C" void single() { function({ [I new] }); }
 
 // CHECK: [[INSTANCE:%.*]] = {{.*}} call {{.*}} i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* {{.*}}, i8* {{.*}})
-// CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[INSTANCE]] to %0*
-// CHECK-NEXT: store %0* [[CAST]], %0** [[ARRAY:%.*]],
+// CHECK-NEXT: [[CAST:%.*]] = bitcast [{{[0-9]+}} x %0*]* %{{.*}} to i8**
+// CHECK-NEXT: store i8* [[INSTANCE]], i8** [[CAST]],
 // CHECK: call {{.*}} void @objc_release(i8* {{.*}})
 
 extern "C" void multiple() { function({ [I new], [I new] }); }
 
 // CHECK: [[INSTANCE:%.*]] = {{.*}} call {{.*}} i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* {{.*}}, i8* {{.*}})
-// CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[INSTANCE]] to %0*
-// CHECK-NEXT: store %0* [[CAST]], %0** [[ARRAY:%.*]],
+// CHECK-NEXT: [[CAST:%.*]] = bitcast [{{[0-9]+}} x %0*]* %{{.*}} to i8**
+// CHECK-NEXT: store i8* [[INSTANCE]], i8** [[CAST]],
 // CHECK: call {{.*}} void @objc_release(i8* {{.*}})
 // CHECK-NEXT: icmp eq
 
@@ -42,8 +42,8 @@ extern "C" void extended() {
 }
 
 // CHECK: [[INSTANCE:%.*]] = {{.*}} call {{.*}} i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* {{.*}}, i8* {{.*}})
-// CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[INSTANCE:%.*]] to {{.*}}*
-// CHECK-NEXT: store {{.*}}* [[CAST]], {{.*}}** {{.*}}
+// CHECK-NEXT: [[CAST:%.*]] = bitcast [1 x %0*]* %{{.*}} to i8**
+// CHECK-NEXT: store i8* [[INSTANCE]], i8** [[CAST]],
 // CHECK: {{.*}} call {{.*}} void @_Z8externalv()
 // CHECK: {{.*}} call {{.*}} void @objc_release(i8* {{.*}})
 
@@ -51,7 +51,6 @@ std::initializer_list<I *> il = { [I new] };
 
 // CHECK: [[POOL:%.*]] = {{.*}} call {{.*}} i8* @objc_autoreleasePoolPush()
 // CHECK: [[INSTANCE:%.*]] = {{.*}} call {{.*}} i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* {{.*}}, i8* {{.*}})
-// CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[INSTANCE]] to %0*
-// CHECK-NEXT: store %0* [[CAST]], %0** getelementptr inbounds ([1 x %0*]* @_ZGR2il_, i32 0, i32 0)
+// CHECK-NEXT: store i8* [[INSTANCE]], i8** bitcast ([1 x %0*]* @_ZGR2il_ to i8**)
 // CHECK: {{.*}} call {{.*}} void @objc_autoreleasePoolPop(i8* [[POOL]])
 

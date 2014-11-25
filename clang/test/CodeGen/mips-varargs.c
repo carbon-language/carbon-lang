@@ -33,13 +33,11 @@ int test_i32(char *fmt, ...) {
 // NEW:   [[TMP0:%.+]] = bitcast i8** %va to i64**
 // NEW:   [[AP_CUR:%.+]] = load i64** [[TMP0]], align [[PTRALIGN]]
 //
-// O32:   [[TMP1:%.+]] = getelementptr i32* [[AP_CUR]], i32 1
-// O32:   [[AP_NEXT:%.+]] = bitcast i32* [[TMP1]] to i8*
-// N32:   [[TMP1:%.+]] = getelementptr i64* [[AP_CUR]], {{i32|i64}} 1
-// N64:   [[TMP1:%.+]] = getelementptr i64* [[AP_CUR]], {{i32|i64}} 1
-// NEW:   [[AP_NEXT:%.+]] = bitcast i64* [[TMP1]] to i8*
+// O32:   [[AP_NEXT:%.+]] = getelementptr i32* [[AP_CUR]], i32 1
+// NEW:   [[AP_NEXT:%.+]] = getelementptr i64* [[AP_CUR]], {{i32|i64}} 1
 //
-// ALL:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
+// O32:   store i32* [[AP_NEXT]], i32** [[TMP0]], align [[PTRALIGN]]
+// NEW:   store i64* [[AP_NEXT]], i64** [[TMP0]], align [[PTRALIGN]]
 //
 // O32:   [[ARG1:%.+]] = load i32* [[AP_CUR]], align 4
 // NEW:   [[TMP2:%.+]] = load i64* [[AP_CUR]], align 8
@@ -71,30 +69,25 @@ int test_i32_2args(char *fmt, ...) {
 // NEW:   [[TMP0:%.+]] = bitcast i8** %va to i64**
 // NEW:   [[AP_CUR:%.+]] = load i64** [[TMP0]], align [[PTRALIGN]]
 //
-// O32:   [[TMP1:%.+]] = getelementptr i32* [[AP_CUR]], i32 1
-// O32:   [[AP_NEXT:%.+]] = bitcast i32* [[TMP1]] to i8*
-// N32:   [[TMP1:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T:i32]] 1
-// FIXME: N32 optimised this bitcast out. Why only for this ABI?
-// N64:   [[TMP1:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T:i64]] 1
-// N64:   [[AP_NEXT:%.+]] = bitcast i64* [[TMP1]] to i8*
+// O32:   [[AP_NEXT1:%.+]] = getelementptr i32* [[AP_CUR]], i32 1
+// NEW:   [[AP_NEXT1:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T:i32|i64]] 1
 //
-// O32:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
+// O32:   store i32* [[AP_NEXT1]], i32** [[TMP0]], align [[PTRALIGN]]
 // FIXME: N32 optimised this store out. Why only for this ABI?
-// N64:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
+// N64:   store i64* [[AP_NEXT1]], i64** [[TMP0]], align [[PTRALIGN]]
 //
 // O32:   [[ARG1:%.+]] = load i32* [[AP_CUR]], align 4
 // NEW:   [[TMP3:%.+]] = load i64* [[AP_CUR]], align 8
 // NEW:   [[ARG1:%.+]] = trunc i64 [[TMP3]] to i32
 //
-// O32:   [[TMP2:%.+]] = getelementptr i32* [[AP_CUR]], i32 2
-// O32:   [[AP_NEXT:%.+]] = bitcast i32* [[TMP2]] to i8*
-// NEW:   [[TMP2:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T]] 2
-// NEW:   [[AP_NEXT:%.+]] = bitcast i64* [[TMP2]] to i8*
+// O32:   [[AP_NEXT2:%.+]] = getelementptr i32* [[AP_CUR]], i32 2
+// NEW:   [[AP_NEXT2:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T]] 2
 //
-// ALL:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
+// O32:   store i32* [[AP_NEXT2]], i32** [[TMP0]], align [[PTRALIGN]]
+// NEW:   store i64* [[AP_NEXT2]], i64** [[TMP0]], align [[PTRALIGN]]
 //
-// O32:   [[ARG2:%.+]] = load i32* [[TMP1]], align 4
-// NEW:   [[TMP4:%.+]] = load i64* [[TMP1]], align 8
+// O32:   [[ARG2:%.+]] = load i32* [[AP_NEXT1]], align 4
+// NEW:   [[TMP4:%.+]] = load i64* [[AP_NEXT1]], align 8
 // NEW:   [[ARG2:%.+]] = trunc i64 [[TMP4]] to i32
 //
 // ALL:   call void @llvm.va_end(i8* [[VA1]])
@@ -131,11 +124,10 @@ long long test_i64(char *fmt, ...) {
 // O32:   [[PTR4:%.+]] = inttoptr [[INTPTR_T]] [[PTR2]] to i8*
 //
 // O32:   [[AP_NEXT:%.+]] = getelementptr i8* [[PTR4]], [[INTPTR_T]] 8
-// N32:   [[TMP1:%.+]] = getelementptr i64* [[AP_CUR]], i32 1
-// N64:   [[TMP1:%.+]] = getelementptr i64* [[AP_CUR]], i64 1
-// NEW:   [[AP_NEXT:%.+]] = bitcast i64* [[TMP1]] to i8*
+// NEW:   [[AP_NEXT:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T:i32|i64]] 1
 //
-// ALL:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
+// O32:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
+// NEW:   store i64* [[AP_NEXT]], i64** [[TMP0]], align [[PTRALIGN]]
 //
 // O32:   [[ARG1:%.+]] = load i64* [[PTR3]], align 8
 // NEW:   [[ARG1:%.+]] = load i64* [[AP_CUR]], align 8
