@@ -647,38 +647,37 @@ class ScopedInErrorReport {
   }
 };
 
-void ReportStackOverflow(uptr pc, uptr sp, uptr bp, void *context, uptr addr) {
+void ReportStackOverflow(const SignalContext &sig) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
   Report(
       "ERROR: AddressSanitizer: stack-overflow on address %p"
       " (pc %p bp %p sp %p T%d)\n",
-      (void *)addr, (void *)pc, (void *)bp, (void *)sp,
+      (void *)sig.addr, (void *)sig.pc, (void *)sig.bp, (void *)sig.sp,
       GetCurrentTidOrInvalid());
   Printf("%s", d.EndWarning());
-  GET_STACK_TRACE_SIGNAL(pc, bp, context);
+  GET_STACK_TRACE_SIGNAL(sig);
   stack.Print();
   ReportErrorSummary("stack-overflow", &stack);
 }
 
-void ReportSIGSEGV(const char *description, uptr pc, uptr sp, uptr bp,
-                   void *context, uptr addr) {
+void ReportSIGSEGV(const char *description, const SignalContext &sig) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
   Report(
       "ERROR: AddressSanitizer: %s on unknown address %p"
       " (pc %p bp %p sp %p T%d)\n",
-      description, (void *)addr, (void *)pc, (void *)bp, (void *)sp,
-      GetCurrentTidOrInvalid());
-  if (pc < GetPageSizeCached()) {
+      description, (void *)sig.addr, (void *)sig.pc, (void *)sig.bp,
+      (void *)sig.sp, GetCurrentTidOrInvalid());
+  if (sig.pc < GetPageSizeCached()) {
     Report("Hint: pc points to the zero page.\n");
   }
   Printf("%s", d.EndWarning());
-  GET_STACK_TRACE_SIGNAL(pc, bp, context);
+  GET_STACK_TRACE_SIGNAL(sig);
   stack.Print();
-  MaybeDumpInstructionBytes(pc);
+  MaybeDumpInstructionBytes(sig.pc);
   Printf("AddressSanitizer can not provide additional info.\n");
   ReportErrorSummary("SEGV", &stack);
 }

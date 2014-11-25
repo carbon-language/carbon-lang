@@ -62,6 +62,21 @@ namespace __asan {
 class AsanThread;
 using __sanitizer::StackTrace;
 
+struct SignalContext {
+  void *context;
+  uptr addr;
+  uptr pc;
+  uptr sp;
+  uptr bp;
+
+  SignalContext(void *context, uptr addr, uptr pc, uptr sp, uptr bp) :
+      context(context), addr(addr), pc(pc), sp(sp), bp(bp) {
+  }
+
+  // Creates signal context in a platform-specific manner.
+  static SignalContext Create(void *siginfo, void *context);
+};
+
 void AsanInitFromRtl();
 
 // asan_rtl.cc

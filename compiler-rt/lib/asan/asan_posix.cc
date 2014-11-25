@@ -32,19 +32,24 @@
 
 namespace __asan {
 
+SignalContext SignalContext::Create(void *siginfo, void *context) {
+  uptr addr = (uptr)((siginfo_t*)siginfo)->si_addr;
+  uptr pc, sp, bp;
+  GetPcSpBp(context, &pc, &sp, &bp);
+  return SignalContext(context, addr, pc, sp, bp);
+}
+
 void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   ScopedDeadlySignal signal_scope(GetCurrentThread());
-  uptr addr = (uptr)((siginfo_t*)siginfo)->si_addr;
   int code = (int)((siginfo_t*)siginfo)->si_code;
   // Write the first message using the bullet-proof write.
   if (13 != internal_write(2, "ASAN:SIGSEGV\n", 13)) Die();
-  uptr pc, sp, bp;
-  GetPcSpBp(context, &pc, &sp, &bp);
+  SignalContext sig = SignalContext::Create(siginfo, context);
 
   // Access at a reasonable offset above SP, or slightly below it (to account
   // for x86_64 or PowerPC redzone, ARM push of multiple registers, etc) is
   // probably a stack overflow.
-  bool IsStackAccess = addr + 512 > sp && addr < sp + 0xFFFF;
+  bool IsStackAccess = sig.addr + 512 > sig.sp && sig.addr < sig.sp + 0xFFFF;
 
 #if __powerpc__
   // Large stack frames can be allocated with e.g.
@@ -53,8 +58,8 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   // If the store faults then sp will not have been updated, so test above
   // will not work, becase the fault address will be more than just "slightly"
   // below sp.
-  if (!IsStackAccess && IsAccessibleMemoryRange(pc, 4)) {
-    u32 inst = *(unsigned *)pc;
+  if (!IsStackAccess && IsAccessibleMemoryRange(sig.pc, 4)) {
+    u32 inst = *(unsigned *)sig.pc;
     u32 ra = (inst >> 16) & 0x1F;
     u32 opcd = inst >> 26;
     u32 xo = (inst >> 1) & 0x3FF;
@@ -75,9 +80,9 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   // then hitting the guard page or unmapped memory, like, for example,
   // unaligned memory access.
   if (IsStackAccess && (code == si_SEGV_MAPERR || code == si_SEGV_ACCERR))
-    ReportStackOverflow(pc, sp, bp, context, addr);
+    ReportStackOverflow(sig);
   else
-    ReportSIGSEGV("SEGV", pc, sp, bp, context, addr);
+    ReportSIGSEGV("SEGV", sig);
 }
 
 // ---------------------- TSD ---------------- {{{1
