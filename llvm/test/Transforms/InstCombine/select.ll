@@ -1256,7 +1256,7 @@ define i32 @test76(i1 %flag, i32* %x) {
   ret i32 %v
 }
 
-declare void @scribble_on_memory(i32*)
+declare void @scribble_on_i32(i32*)
 
 define i32 @test77(i1 %flag, i32* %x) {
 ; The load here must not be speculated around the select. One side of the
@@ -1264,13 +1264,13 @@ define i32 @test77(i1 %flag, i32* %x) {
 ; load does.
 ; CHECK-LABEL: @test77(
 ; CHECK: %[[A:.*]] = alloca i32, align 1
-; CHECK: call void @scribble_on_memory(i32* %[[A]])
+; CHECK: call void @scribble_on_i32(i32* %[[A]])
 ; CHECK: store i32 0, i32* %x
 ; CHECK: %[[P:.*]] = select i1 %flag, i32* %[[A]], i32* %x
 ; CHECK: load i32* %[[P]]
 
   %under_aligned = alloca i32, align 1
-  call void @scribble_on_memory(i32* %under_aligned)
+  call void @scribble_on_i32(i32* %under_aligned)
   store i32 0, i32* %x
   %p = select i1 %flag, i32* %under_aligned, i32* %x
   %v = load i32* %p
@@ -1327,8 +1327,8 @@ define i32 @test80(i1 %flag) {
 entry:
   %x = alloca i32
   %y = alloca i32
-  call void @scribble_on_memory(i32* %x)
-  call void @scribble_on_memory(i32* %y)
+  call void @scribble_on_i32(i32* %x)
+  call void @scribble_on_i32(i32* %y)
   %tmp = load i32* %x
   store i32 %tmp, i32* %y
   %p = select i1 %flag, i32* %x, i32* %y
@@ -1351,8 +1351,8 @@ entry:
   %y = alloca i32
   %x1 = bitcast float* %x to i32*
   %y1 = bitcast i32* %y to float*
-  call void @scribble_on_memory(i32* %x1)
-  call void @scribble_on_memory(i32* %y)
+  call void @scribble_on_i32(i32* %x1)
+  call void @scribble_on_i32(i32* %y)
   %tmp = load i32* %x1
   store i32 %tmp, i32* %y
   %p = select i1 %flag, float* %x, float* %y1
@@ -1377,11 +1377,117 @@ entry:
   %y = alloca i32
   %x1 = bitcast float* %x to i32*
   %y1 = bitcast i32* %y to float*
-  call void @scribble_on_memory(i32* %x1)
-  call void @scribble_on_memory(i32* %y)
+  call void @scribble_on_i32(i32* %x1)
+  call void @scribble_on_i32(i32* %y)
   %tmp = load float* %x
   store float %tmp, float* %y1
   %p = select i1 %flag, i32* %x1, i32* %y
   %v = load i32* %p
   ret i32 %v
+}
+
+declare void @scribble_on_i64(i64*)
+declare void @scribble_on_i128(i128*)
+
+define i8* @test83(i1 %flag) {
+; Test that we can speculate the load around the select even though they use
+; differently typed pointers and requires inttoptr casts.
+; CHECK-LABEL: @test83(
+; CHECK:         %[[X:.*]] = alloca i8*
+; CHECK-NEXT:    %[[Y:.*]] = alloca i8*
+; CHECK:         %[[V:.*]] = load i64* %[[X]]
+; CHECK-NEXT:    %[[C1:.*]] = inttoptr i64 %[[V]] to i8*
+; CHECK-NEXT:    store i8* %[[C1]], i8** %[[Y]]
+; CHECK-NEXT:    %[[C2:.*]] = inttoptr i64 %[[V]] to i8*
+; CHECK-NEXT:    %[[S:.*]] = select i1 %flag, i8* %[[C2]], i8* %[[C1]]
+; CHECK-NEXT:    ret i8* %[[S]]
+entry:
+  %x = alloca i8*
+  %y = alloca i64
+  %x1 = bitcast i8** %x to i64*
+  %y1 = bitcast i64* %y to i8**
+  call void @scribble_on_i64(i64* %x1)
+  call void @scribble_on_i64(i64* %y)
+  %tmp = load i64* %x1
+  store i64 %tmp, i64* %y
+  %p = select i1 %flag, i8** %x, i8** %y1
+  %v = load i8** %p
+  ret i8* %v
+}
+
+define i64 @test84(i1 %flag) {
+; Test that we can speculate the load around the select even though they use
+; differently typed pointers and requires a ptrtoint cast.
+; CHECK-LABEL: @test84(
+; CHECK:         %[[X:.*]] = alloca i8*
+; CHECK-NEXT:    %[[Y:.*]] = alloca i8*
+; CHECK:         %[[V:.*]] = load i8** %[[X]]
+; CHECK-NEXT:    store i8* %[[V]], i8** %[[Y]]
+; CHECK-NEXT:    %[[C:.*]] = ptrtoint i8* %[[V]] to i64
+; CHECK-NEXT:    ret i64 %[[C]]
+entry:
+  %x = alloca i8*
+  %y = alloca i64
+  %x1 = bitcast i8** %x to i64*
+  %y1 = bitcast i64* %y to i8**
+  call void @scribble_on_i64(i64* %x1)
+  call void @scribble_on_i64(i64* %y)
+  %tmp = load i8** %x
+  store i8* %tmp, i8** %y1
+  %p = select i1 %flag, i64* %x1, i64* %y
+  %v = load i64* %p
+  ret i64 %v
+}
+
+define i8* @test85(i1 %flag) {
+; Test that we can't speculate the load around the select. The load of the
+; pointer doesn't load all of the stored integer bits. We could fix this, but it
+; would require endianness checks and other nastiness.
+; CHECK-LABEL: @test85(
+; CHECK:         %[[T:.*]] = load i128*
+; CHECK-NEXT:    store i128 %[[T]], i128*
+; CHECK-NEXT:    %[[X:.*]] = load i8**
+; CHECK-NEXT:    %[[Y:.*]] = load i8**
+; CHECK-NEXT:    %[[V:.*]] = select i1 %flag, i8* %[[X]], i8* %[[Y]]
+; CHECK-NEXT:    ret i8* %[[V]]
+entry:
+  %x = alloca [2 x i8*]
+  %y = alloca i128
+  %x1 = bitcast [2 x i8*]* %x to i8**
+  %x2 = bitcast i8** %x1 to i128*
+  %y1 = bitcast i128* %y to i8**
+  call void @scribble_on_i128(i128* %x2)
+  call void @scribble_on_i128(i128* %y)
+  %tmp = load i128* %x2
+  store i128 %tmp, i128* %y
+  %p = select i1 %flag, i8** %x1, i8** %y1
+  %v = load i8** %p
+  ret i8* %v
+}
+
+define i128 @test86(i1 %flag) {
+; Test that we can't speculate the load around the select when the integer size
+; is larger than the pointer size. The store of the pointer doesn't store to all
+; the bits of the integer.
+;
+; CHECK-LABEL: @test86(
+; CHECK:         %[[T:.*]] = load i8**
+; CHECK-NEXT:    store i8* %[[T]], i8**
+; CHECK-NEXT:    %[[X:.*]] = load i128*
+; CHECK-NEXT:    %[[Y:.*]] = load i128*
+; CHECK-NEXT:    %[[V:.*]] = select i1 %flag, i128 %[[X]], i128 %[[Y]]
+; CHECK-NEXT:    ret i128 %[[V]]
+entry:
+  %x = alloca [2 x i8*]
+  %y = alloca i128
+  %x1 = bitcast [2 x i8*]* %x to i8**
+  %x2 = bitcast i8** %x1 to i128*
+  %y1 = bitcast i128* %y to i8**
+  call void @scribble_on_i128(i128* %x2)
+  call void @scribble_on_i128(i128* %y)
+  %tmp = load i8** %x1
+  store i8* %tmp, i8** %y1
+  %p = select i1 %flag, i128* %x2, i128* %y
+  %v = load i128* %p
+  ret i128 %v
 }
