@@ -25,6 +25,8 @@ static struct AsanDeactivatedFlags {
   int max_redzone;
   int malloc_context_size;
   bool poison_heap;
+  bool alloc_dealloc_mismatch;
+  bool allocator_may_return_null;
 } asan_deactivated_flags;
 
 static bool asan_is_deactivated;
@@ -37,11 +39,17 @@ void AsanStartDeactivated() {
   asan_deactivated_flags.poison_heap = flags()->poison_heap;
   asan_deactivated_flags.malloc_context_size =
       common_flags()->malloc_context_size;
+  asan_deactivated_flags.alloc_dealloc_mismatch =
+      flags()->alloc_dealloc_mismatch;
+  asan_deactivated_flags.allocator_may_return_null =
+      common_flags()->allocator_may_return_null;
 
   flags()->quarantine_size = 0;
   flags()->max_redzone = 16;
   flags()->poison_heap = false;
   common_flags()->malloc_context_size = 0;
+  flags()->alloc_dealloc_mismatch = false;
+  common_flags()->allocator_may_return_null = true;
 
   asan_is_deactivated = true;
 }
@@ -57,6 +65,10 @@ void AsanActivate() {
   flags()->poison_heap = asan_deactivated_flags.poison_heap;
   common_flags()->malloc_context_size =
       asan_deactivated_flags.malloc_context_size;
+  flags()->alloc_dealloc_mismatch =
+      asan_deactivated_flags.alloc_dealloc_mismatch;
+  common_flags()->allocator_may_return_null =
+      asan_deactivated_flags.allocator_may_return_null;
 
   ParseExtraActivationFlags();
 
@@ -65,10 +77,12 @@ void AsanActivate() {
   asan_is_deactivated = false;
   VReport(
       1,
-      "quarantine_size %d, max_redzone %d, poison_heap %d, malloc_context_size "
-      "%d\n",
+      "quarantine_size %d, max_redzone %d, poison_heap %d, "
+      "malloc_context_size %d, alloc_dealloc_mismatch %d, "
+      "allocator_may_return_null %d\n",
       flags()->quarantine_size, flags()->max_redzone, flags()->poison_heap,
-      common_flags()->malloc_context_size);
+      common_flags()->malloc_context_size, flags()->alloc_dealloc_mismatch,
+      common_flags()->allocator_may_return_null);
 }
 
 }  // namespace __asan

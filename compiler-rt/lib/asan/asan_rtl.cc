@@ -709,8 +709,7 @@ public:  // NOLINT
   AsanInitializer() {
     AsanCheckIncompatibleRT();
     AsanCheckDynamicRTPrereqs();
-    if (UNLIKELY(!asan_inited))
-      __asan_init();
+    AsanInitFromRtl();
   }
 };
 
