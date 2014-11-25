@@ -767,27 +767,25 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
 /// types 'Foo' but one got renamed when the module was loaded into the same
 /// LLVMContext.
 void ModuleLinker::computeTypeMapping() {
-  // Incorporate globals.
-  for (Module::global_iterator I = SrcM->global_begin(),
-       E = SrcM->global_end(); I != E; ++I) {
-    GlobalValue *DGV = getLinkedToGlobal(I);
-    if (!DGV) continue;
+  for (GlobalValue &SGV : SrcM->globals()) {
+    GlobalValue *DGV = getLinkedToGlobal(&SGV);
+    if (!DGV)
+      continue;
 
-    if (!DGV->hasAppendingLinkage() || !I->hasAppendingLinkage()) {
-      TypeMap.addTypeMapping(DGV->getType(), I->getType());
+    if (!DGV->hasAppendingLinkage() || !SGV.hasAppendingLinkage()) {
+      TypeMap.addTypeMapping(DGV->getType(), SGV.getType());
       continue;
     }
 
     // Unify the element type of appending arrays.
     ArrayType *DAT = cast<ArrayType>(DGV->getType()->getElementType());
-    ArrayType *SAT = cast<ArrayType>(I->getType()->getElementType());
+    ArrayType *SAT = cast<ArrayType>(SGV.getType()->getElementType());
     TypeMap.addTypeMapping(DAT->getElementType(), SAT->getElementType());
   }
 
-  // Incorporate functions.
-  for (Module::iterator I = SrcM->begin(), E = SrcM->end(); I != E; ++I) {
-    if (GlobalValue *DGV = getLinkedToGlobal(I))
-      TypeMap.addTypeMapping(DGV->getType(), I->getType());
+  for (GlobalValue &SGV : *SrcM) {
+    if (GlobalValue *DGV = getLinkedToGlobal(&SGV))
+      TypeMap.addTypeMapping(DGV->getType(), SGV.getType());
   }
 
   // Incorporate types by name, scanning all the types in the source module.
