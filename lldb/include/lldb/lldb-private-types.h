@@ -29,12 +29,20 @@ namespace lldb_private
         const char *name;        // Name of this register, can't be NULL
         const char *alt_name;    // Alternate name of this register, can be NULL
         uint32_t byte_size;      // Size in bytes of the register
-        uint32_t byte_offset;    // The byte offset in the register context data where this register's value is found
+        uint32_t byte_offset;    // The byte offset in the register context data where this register's value is found.
+                                 // This is optional, and can be 0 if a particular RegisterContext does not need to
+                                 // address its registers by byte offset.
         lldb::Encoding encoding; // Encoding of the register bits
         lldb::Format format;     // Default display format
         uint32_t kinds[lldb::kNumRegisterKinds]; // Holds all of the various register numbers for all register kinds
-        uint32_t *value_regs;    // List of registers that must be terminated with LLDB_INVALID_REGNUM
-        uint32_t *invalidate_regs; // List of registers that must be invalidated when this register is modified, list must be terminated with LLDB_INVALID_REGNUM
+        uint32_t *value_regs;      // List of registers (terminated with LLDB_INVALID_REGNUM).  If this value is not
+                                   // null, all registers in this list will be read first, at which point the value 
+                                   // for this register will be valid.  For example, the value list for ah
+                                   // would be eax (x86) or rax (x64).
+        uint32_t *invalidate_regs; // List of registers (terminated with LLDB_INVALID_REGNUM).  If this value is not
+                                   // null, all registers in this list will be invalidateed when the value of this
+                                   // register changes.  For example, the invalidate list for eax would be rax
+                                   // ax, ah, and al.
     } RegisterInfo;
 
     //----------------------------------------------------------------------
@@ -45,7 +53,11 @@ namespace lldb_private
         const char *name;           // Name of this register set
         const char *short_name;     // A short name for this register set
         size_t num_registers;       // The number of registers in REGISTERS array below
-        const uint32_t *registers;  // An array of register numbers in this set
+        const uint32_t *registers;  // An array of register indices in this set.  The values in this array are
+                                    // *indices* (not register numbers) into a particular RegisterContext's
+                                    // register array.  For example, if eax is defined at index 4 for a
+                                    // particular RegisterContext, eax would be included in this RegisterSet
+                                    // by adding the value 4.  Not by adding the value lldb_eax_i386.
     } RegisterSet;
 
     typedef struct
