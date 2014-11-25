@@ -217,8 +217,7 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
       switch (MI.getOpcode()) {
       default: continue;
       case AMDGPU::PHI: {
-        DEBUG(dbgs() << " Fixing PHI:\n");
-        DEBUG(MI.print(dbgs()));
+        DEBUG(dbgs() << "Fixing PHI: " << MI);
 
         for (unsigned i = 1; i < MI.getNumOperands(); i+=2) {
           unsigned Reg = MI.getOperand(i).getReg();
