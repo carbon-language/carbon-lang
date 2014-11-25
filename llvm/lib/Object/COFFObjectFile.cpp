@@ -1060,7 +1060,7 @@ symbol_iterator COFFObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
   else if (SymbolTable32)
     Ref.p = reinterpret_cast<uintptr_t>(SymbolTable32 + R->SymbolTableIndex);
   else
-    return symbol_end();
+    llvm_unreachable("no symbol table pointer!");
   return symbol_iterator(SymbolRef(Ref, this));
 }
 
