@@ -1350,13 +1350,6 @@ void AsmMatcherInfo::buildInfo() {
       if (!II->validate(CommentDelimiter, true))
         continue;
 
-      // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
-      //
-      // FIXME: This is a total hack.
-      if (StringRef(II->TheDef->getName()).startswith("Int_") ||
-          StringRef(II->TheDef->getName()).endswith("_Int"))
-        continue;
-
       Matchables.push_back(II.release());
     }
 
