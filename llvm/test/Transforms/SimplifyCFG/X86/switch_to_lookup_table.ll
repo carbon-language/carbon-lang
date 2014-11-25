@@ -782,7 +782,6 @@ return:
 }
 
 ; Don't create a table with illegal type
-; rdar://12779436
 define i96 @illegaltype(i32 %c) {
 entry:
   switch i32 %c, label %sw.default [
