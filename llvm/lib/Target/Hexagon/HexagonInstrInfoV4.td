@@ -2341,7 +2341,7 @@ def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 254)),
 //   if (!Pd.new) Rd=#0
 // cmp.ltu(Rs, Rt) -> cmp.gtu(Rt, Rs)
 def : Pat <(i32 (zext (i1 (setult (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
-           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rt),
+           (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rt),
                                               (i32 IntRegs:$Rs))),
                                 1, 0))>,
            Requires<[HasV4T]>;
@@ -2354,7 +2354,7 @@ def : Pat <(i32 (zext (i1 (setult (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 //   if (!Pd.new) Rd=#0
 // cmp.lt(Rs, Rt) -> cmp.gt(Rt, Rs)
 def : Pat <(i32 (zext (i1 (setlt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
-           (i32 (TFR_condset_ii (i1 (CMPGTrr (i32 IntRegs:$Rt),
+           (i32 (TFR_condset_ii (i1 (C2_cmpgt (i32 IntRegs:$Rt),
                                              (i32 IntRegs:$Rs))),
                                 1, 0))>,
            Requires<[HasV4T]>;
@@ -2366,7 +2366,7 @@ def : Pat <(i32 (zext (i1 (setlt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 //   if (Pd.new) Rd=#1
 //   if (!Pd.new) Rd=#0
 def : Pat <(i32 (zext (i1 (setugt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
-           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rs),
                                               (i32 IntRegs:$Rt))),
                                 1, 0))>,
            Requires<[HasV4T]>;
@@ -2388,7 +2388,7 @@ def : Pat <(i32 (zext (i1 (setugt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 //   if (!Pd.new) Rd=#1
 // cmp.ltu(Rs, Rt) -> cmp.gtu(Rt, Rs)
 def : Pat <(i32 (zext (i1 (setuge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
-           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rt),
+           (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rt),
                                               (i32 IntRegs:$Rs))),
                                 0, 1))>,
            Requires<[HasV4T]>;
@@ -2401,7 +2401,7 @@ def : Pat <(i32 (zext (i1 (setuge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 //   if (!Pd.new) Rd=#1
 // cmp.lt(Rs, Rt) -> cmp.gt(Rt, Rs)
 def : Pat <(i32 (zext (i1 (setge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
-           (i32 (TFR_condset_ii (i1 (CMPGTrr (i32 IntRegs:$Rt),
+           (i32 (TFR_condset_ii (i1 (C2_cmpgt (i32 IntRegs:$Rt),
                                              (i32 IntRegs:$Rs))),
                                 0, 1))>,
            Requires<[HasV4T]>;
@@ -2413,7 +2413,7 @@ def : Pat <(i32 (zext (i1 (setge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 //   if (Pd.new) Rd=#0
 //   if (!Pd.new) Rd=#1
 def : Pat <(i32 (zext (i1 (setule (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
-           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rs),
                                               (i32 IntRegs:$Rt))),
                                 0, 1))>,
            Requires<[HasV4T]>;
@@ -2425,7 +2425,7 @@ def : Pat <(i32 (zext (i1 (setule (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 //   if (Pd.new) Rd=#0
 //   if (!Pd.new) Rd=#1
 def : Pat <(i32 (zext (i1 (setle (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
-           (i32 (TFR_condset_ii (i1 (CMPGTrr (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (C2_cmpgt (i32 IntRegs:$Rs),
                                              (i32 IntRegs:$Rt))),
                                 0, 1))>,
            Requires<[HasV4T]>;
