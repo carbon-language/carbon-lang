@@ -446,10 +446,8 @@ CodeGenTypes::arrangeLLVMFunctionInfo(CanQualType resultType,
                                       ArrayRef<CanQualType> argTypes,
                                       FunctionType::ExtInfo info,
                                       RequiredArgs required) {
-#ifndef NDEBUG
-  for (const auto &AT : argTypes)
-    assert(AT.isCanonicalAsParam());
-#endif
+  assert(std::all_of(argTypes.begin(), argTypes.end(),
+                     std::mem_fun_ref(&CanQualType::isCanonicalAsParam)));
 
   unsigned CC = ClangCallConvToLLVMCallConv(info.getCC());
 
