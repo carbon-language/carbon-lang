@@ -1,5 +1,5 @@
-; RUN: llc                             -aarch64-atomic-cfg-tidy=0 -verify-machineinstrs -mtriple=aarch64-apple-darwin < %s | FileCheck %s
-; RUN: llc -fast-isel -fast-isel-abort -aarch64-atomic-cfg-tidy=0 -verify-machineinstrs -mtriple=aarch64-apple-darwin < %s | FileCheck %s
+; RUN: llc                             -aarch64-atomic-cfg-tidy=0 -verify-machineinstrs -mtriple=aarch64-apple-darwin < %s | FileCheck --check-prefix=CHECK %s
+; RUN: llc -fast-isel -fast-isel-abort -aarch64-atomic-cfg-tidy=0 -verify-machineinstrs -mtriple=aarch64-apple-darwin < %s | FileCheck --check-prefix=CHECK --check-prefix=FAST %s
 
 define i32 @icmp_eq_i8(i8 zeroext %a) {
 ; CHECK-LABEL: icmp_eq_i8
@@ -115,6 +115,160 @@ define i32 @icmp_ne_i64_2(i64 %a) {
   %1 = and i64 %a, 4294967296
   %2 = icmp ne i64 %1, 0
   br i1 %2, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_slt_i8(i8 zeroext %a) {
+; FAST-LABEL: icmp_slt_i8
+; FAST:       tbnz w0, #7, {{LBB.+_2}}
+  %1 = icmp slt i8 %a, 0
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_slt_i16(i16 zeroext %a) {
+; FAST-LABEL: icmp_slt_i16
+; FAST:       tbnz w0, #15, {{LBB.+_2}}
+  %1 = icmp slt i16 %a, 0
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_slt_i32(i32 %a) {
+; CHECK-LABEL: icmp_slt_i32
+; CHECK:       tbnz w0, #31, {{LBB.+_2}}
+  %1 = icmp slt i32 %a, 0
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_slt_i64(i64 %a) {
+; CHECK-LABEL: icmp_slt_i64
+; CHECK:       tbnz x0, #63, {{LBB.+_2}}
+  %1 = icmp slt i64 %a, 0
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sge_i8(i8 zeroext %a) {
+; FAST-LABEL: icmp_sge_i8
+; FAST:       tbz w0, #7, {{LBB.+_2}}
+  %1 = icmp sge i8 %a, 0
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sge_i16(i16 zeroext %a) {
+; FAST-LABEL: icmp_sge_i16
+; FAST:       tbz w0, #15, {{LBB.+_2}}
+  %1 = icmp sge i16 %a, 0
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sle_i8(i8 zeroext %a) {
+; FAST-LABEL: icmp_sle_i8
+; FAST:       tbnz w0, #7, {{LBB.+_2}}
+  %1 = icmp sle i8 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sle_i16(i16 zeroext %a) {
+; FAST-LABEL: icmp_sle_i16
+; FAST:       tbnz w0, #15, {{LBB.+_2}}
+  %1 = icmp sle i16 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sle_i32(i32 %a) {
+; CHECK-LABEL: icmp_sle_i32
+; CHECK:       tbnz w0, #31, {{LBB.+_2}}
+  %1 = icmp sle i32 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sle_i64(i64 %a) {
+; CHECK-LABEL: icmp_sle_i64
+; CHECK:       tbnz x0, #63, {{LBB.+_2}}
+  %1 = icmp sle i64 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sgt_i8(i8 zeroext %a) {
+; FAST-LABEL: icmp_sgt_i8
+; FAST:       tbz w0, #7, {{LBB.+_2}}
+  %1 = icmp sgt i8 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sgt_i16(i16 zeroext %a) {
+; FAST-LABEL: icmp_sgt_i16
+; FAST:       tbz w0, #15, {{LBB.+_2}}
+  %1 = icmp sgt i16 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sgt_i32(i32 %a) {
+; CHECK-LABEL: icmp_sgt_i32
+; CHECK:       tbz w0, #31, {{LBB.+_2}}
+  %1 = icmp sgt i32 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
+bb1:
+  ret i32 1
+bb2:
+  ret i32 0
+}
+
+define i32 @icmp_sgt_i64(i64 %a) {
+; FAST-LABEL: icmp_sgt_i64
+; FAST:       tbz x0, #63, {{LBB.+_2}}
+  %1 = icmp sgt i64 %a, -1
+  br i1 %1, label %bb1, label %bb2, !prof !0
 bb1:
   ret i32 1
 bb2:

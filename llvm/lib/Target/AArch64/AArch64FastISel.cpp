@@ -2112,15 +2112,15 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
 
   int TestBit = -1;
   bool IsCmpNE;
-  if ((Predicate == CmpInst::ICMP_EQ) || (Predicate == CmpInst::ICMP_NE)) {
-    if (const auto *C = dyn_cast<Constant>(LHS))
-      if (C->isNullValue())
-        std::swap(LHS, RHS);
+  switch (Predicate) {
+  default:
+    return false;
+  case CmpInst::ICMP_EQ:
+  case CmpInst::ICMP_NE:
+    if (isa<Constant>(LHS) && cast<Constant>(LHS)->isNullValue())
+      std::swap(LHS, RHS);
 
-    if (!isa<Constant>(RHS))
-      return false;
-
-    if (!cast<Constant>(RHS)->isNullValue())
+    if (!isa<Constant>(RHS) || !cast<Constant>(RHS)->isNullValue())
       return false;
 
     if (const auto *AI = dyn_cast<BinaryOperator>(LHS))
@@ -2143,26 +2143,27 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
       TestBit = 0;
 
     IsCmpNE = Predicate == CmpInst::ICMP_NE;
-  } else if (Predicate == CmpInst::ICMP_SLT) {
-    if (!isa<Constant>(RHS))
-      return false;
-
-    if (!cast<Constant>(RHS)->isNullValue())
+    break;
+  case CmpInst::ICMP_SLT:
+  case CmpInst::ICMP_SGE:
+    if (!isa<Constant>(RHS) || !cast<Constant>(RHS)->isNullValue())
       return false;
 
     TestBit = BW - 1;
-    IsCmpNE = true;
-  } else if (Predicate == CmpInst::ICMP_SGT) {
+    IsCmpNE = Predicate == CmpInst::ICMP_SLT;
+    break;
+  case CmpInst::ICMP_SGT:
+  case CmpInst::ICMP_SLE:
     if (!isa<ConstantInt>(RHS))
       return false;
 
-    if (cast<ConstantInt>(RHS)->getValue() != -1)
+    if (cast<ConstantInt>(RHS)->getValue() != APInt(BW, -1, true))
       return false;
 
     TestBit = BW - 1;
-    IsCmpNE = false;
-  } else
-    return false;
+    IsCmpNE = Predicate == CmpInst::ICMP_SLE;
+    break;
+  } // end switch
 
   static const unsigned OpcTable[2][2][2] = {
     { {AArch64::CBZW,  AArch64::CBZX },
