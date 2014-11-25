@@ -491,102 +491,81 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   return nullptr;
 }
 
-/// InstCombineStoreToCast - Fold store V, (cast P) -> store (cast V), P
-/// when possible.  This makes it generally easy to do alias analysis and/or
-/// SROA/mem2reg of the memory object.
-static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
-  User *CI = cast<User>(SI.getOperand(1));
-  Value *CastOp = CI->getOperand(0);
+/// \brief Combine stores to match the type of value being stored.
+///
+/// The core idea here is that the memory does not have any intrinsic type and
+/// where we can we should match the type of a store to the type of value being
+/// stored.
+///
+/// However, this routine must never change the width of a store or the number of
+/// stores as that would introduce a semantic change. This combine is expected to
+/// be a semantic no-op which just allows stores to more closely model the types
+/// of their incoming values.
+///
+/// Currently, we also refuse to change the precise type used for an atomic or
+/// volatile store. This is debatable, and might be reasonable to change later.
+/// However, it is risky in case some backend or other part of LLVM is relying
+/// on the exact type stored to select appropriate atomic operations.
+///
+/// \returns true if the store was successfully combined away. This indicates
+/// the caller must erase the store instruction. We have to let the caller erase
+/// the store instruction sas otherwise there is no way to signal whether it was
+/// combined or not: IC.EraseInstFromFunction returns a null pointer.
+static bool combineStoreToValueType(InstCombiner &IC, StoreInst &SI) {
+  // FIXME: We could probably with some care handle both volatile and atomic
+  // stores here but it isn't clear that this is important.
+  if (!SI.isSimple())
+    return false;
 
-  Type *DestPTy = CI->getType()->getPointerElementType();
-  PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType());
-  if (!SrcTy) return nullptr;
+  Value *Ptr = SI.getPointerOperand();
+  Value *V = SI.getValueOperand();
+  unsigned AS = SI.getPointerAddressSpace();
+  SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
+  SI.getAllMetadata(MD);
 
-  Type *SrcPTy = SrcTy->getElementType();
+  // Fold away bit casts of the stored value by storing the original type.
+  if (auto *BC = dyn_cast<BitCastInst>(V)) {
+    V = BC->getOperand(0);
+    StoreInst *NewStore = IC.Builder->CreateAlignedStore(
+        V, IC.Builder->CreateBitCast(Ptr, V->getType()->getPointerTo(AS)),
+        SI.getAlignment());
+    for (const auto &MDPair : MD) {
+      unsigned ID = MDPair.first;
+      MDNode *N = MDPair.second;
+      // Note, essentially every kind of metadata should be preserved here! This
+      // routine is supposed to clone a store instruction changing *only its
+      // type*. The only metadata it makes sense to drop is metadata which is
+      // invalidated when the pointer type changes. This should essentially
+      // never be the case in LLVM, but we explicitly switch over only known
+      // metadata to be conservatively correct. If you are adding metadata to
+      // LLVM which pertains to stores, you almost certainly want to add it
+      // here.
+      switch (ID) {
+      case LLVMContext::MD_dbg:
+      case LLVMContext::MD_tbaa:
+      case LLVMContext::MD_prof:
+      case LLVMContext::MD_fpmath:
+      case LLVMContext::MD_tbaa_struct:
+      case LLVMContext::MD_alias_scope:
+      case LLVMContext::MD_noalias:
+      case LLVMContext::MD_nontemporal:
+      case LLVMContext::MD_mem_parallel_loop_access:
+      case LLVMContext::MD_nonnull:
+        // All of these directly apply.
+        NewStore->setMetadata(ID, N);
+        break;
 
-  if (!DestPTy->isIntegerTy() && !DestPTy->isPointerTy())
-    return nullptr;
-
-  /// NewGEPIndices - If SrcPTy is an aggregate type, we can emit a "noop gep"
-  /// to its first element.  This allows us to handle things like:
-  ///   store i32 xxx, (bitcast {foo*, float}* %P to i32*)
-  /// on 32-bit hosts.
-  SmallVector<Value*, 4> NewGEPIndices;
-
-  // If the source is an array, the code below will not succeed.  Check to
-  // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
-  // constants.
-  if (SrcPTy->isArrayTy() || SrcPTy->isStructTy()) {
-    // Index through pointer.
-    Constant *Zero = Constant::getNullValue(Type::getInt32Ty(SI.getContext()));
-    NewGEPIndices.push_back(Zero);
-
-    while (1) {
-      if (StructType *STy = dyn_cast<StructType>(SrcPTy)) {
-        if (!STy->getNumElements()) /* Struct can be empty {} */
-          break;
-        NewGEPIndices.push_back(Zero);
-        SrcPTy = STy->getElementType(0);
-      } else if (ArrayType *ATy = dyn_cast<ArrayType>(SrcPTy)) {
-        NewGEPIndices.push_back(Zero);
-        SrcPTy = ATy->getElementType();
-      } else {
+      case LLVMContext::MD_invariant_load:
+      case LLVMContext::MD_range:
         break;
       }
     }
-
-    SrcTy = PointerType::get(SrcPTy, SrcTy->getAddressSpace());
+    return true;
   }
 
-  if (!SrcPTy->isIntegerTy() && !SrcPTy->isPointerTy())
-    return nullptr;
-
-  // If the pointers point into different address spaces don't do the
-  // transformation.
-  if (SrcTy->getAddressSpace() != CI->getType()->getPointerAddressSpace())
-    return nullptr;
-
-  // If the pointers point to values of different sizes don't do the
-  // transformation.
-  if (!IC.getDataLayout() ||
-      IC.getDataLayout()->getTypeSizeInBits(SrcPTy) !=
-      IC.getDataLayout()->getTypeSizeInBits(DestPTy))
-    return nullptr;
-
-  // If the pointers point to pointers to different address spaces don't do the
-  // transformation. It is not safe to introduce an addrspacecast instruction in
-  // this case since, depending on the target, addrspacecast may not be a no-op
-  // cast.
-  if (SrcPTy->isPointerTy() && DestPTy->isPointerTy() &&
-      SrcPTy->getPointerAddressSpace() != DestPTy->getPointerAddressSpace())
-    return nullptr;
-
-  // Okay, we are casting from one integer or pointer type to another of
-  // the same size.  Instead of casting the pointer before
-  // the store, cast the value to be stored.
-  Value *NewCast;
-  Instruction::CastOps opcode = Instruction::BitCast;
-  Type* CastSrcTy = DestPTy;
-  Type* CastDstTy = SrcPTy;
-  if (CastDstTy->isPointerTy()) {
-    if (CastSrcTy->isIntegerTy())
-      opcode = Instruction::IntToPtr;
-  } else if (CastDstTy->isIntegerTy()) {
-    if (CastSrcTy->isPointerTy())
-      opcode = Instruction::PtrToInt;
-  }
-
-  // SIOp0 is a pointer to aggregate and this is a store to the first field,
-  // emit a GEP to index into its first field.
-  if (!NewGEPIndices.empty())
-    CastOp = IC.Builder->CreateInBoundsGEP(CastOp, NewGEPIndices);
-
-  Value *SIOp0 = SI.getOperand(0);
-  NewCast = IC.Builder->CreateCast(opcode, SIOp0, CastDstTy,
-                                   SIOp0->getName()+".c");
-  SI.setOperand(0, NewCast);
-  SI.setOperand(1, CastOp);
-  return &SI;
+  // FIXME: We should also canonicalize loads of vectors when their elements are
+  // cast to other types.
+  return false;
 }
 
 /// equivalentAddressValues - Test if A and B will obviously have the same
@@ -621,6 +600,10 @@ static bool equivalentAddressValues(Value *A, Value *B) {
 Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   Value *Val = SI.getOperand(0);
   Value *Ptr = SI.getOperand(1);
+
+  // Try to canonicalize the stored type.
+  if (combineStoreToValueType(*this, SI))
+    return EraseInstFromFunction(SI);
 
   // Attempt to improve the alignment.
   if (DL) {
@@ -712,17 +695,6 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   // store undef, Ptr -> noop
   if (isa<UndefValue>(Val))
     return EraseInstFromFunction(SI);
-
-  // If the pointer destination is a cast, see if we can fold the cast into the
-  // source instead.
-  if (isa<CastInst>(Ptr))
-    if (Instruction *Res = InstCombineStoreToCast(*this, SI))
-      return Res;
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
-    if (CE->isCast())
-      if (Instruction *Res = InstCombineStoreToCast(*this, SI))
-        return Res;
-
 
   // If this store is the last instruction in the basic block (possibly
   // excepting debug info instructions), and if the block ends with an

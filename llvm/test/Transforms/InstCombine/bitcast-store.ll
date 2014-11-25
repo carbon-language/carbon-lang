@@ -10,11 +10,11 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 @G = external constant [5 x i8*]
 
 ; CHECK-LABEL: @foo
-; CHECK: store i32 (...)** bitcast (i8** getelementptr inbounds ([5 x i8*]* @G, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 16, !tag !0
-define void @foo(%struct.A* %a) nounwind {
+; CHECK: store i32 %x, i32* %{{.*}}, align 16, !noalias !0
+define void @foo(i32 %x, float* %p) nounwind {
 entry:
-  %0 = bitcast %struct.A* %a to i8***
-  store i8** getelementptr inbounds ([5 x i8*]* @G, i64 0, i64 2), i8*** %0, align 16, !tag !0
+  %x.cast = bitcast i32 %x to float
+  store float %x.cast, float* %p, align 16, !noalias !0
   ret void
 }
 
@@ -32,4 +32,4 @@ entry:
   ret void
 }
 
-!0 = metadata !{metadata !"hello"}
+!0 = metadata !{metadata !0}

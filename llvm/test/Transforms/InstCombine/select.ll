@@ -1395,11 +1395,11 @@ define i8* @test83(i1 %flag) {
 ; CHECK-LABEL: @test83(
 ; CHECK:         %[[X:.*]] = alloca i8*
 ; CHECK-NEXT:    %[[Y:.*]] = alloca i8*
-; CHECK:         %[[V:.*]] = load i64* %[[X]]
-; CHECK-NEXT:    %[[C1:.*]] = inttoptr i64 %[[V]] to i8*
-; CHECK-NEXT:    store i8* %[[C1]], i8** %[[Y]]
-; CHECK-NEXT:    %[[C2:.*]] = inttoptr i64 %[[V]] to i8*
-; CHECK-NEXT:    %[[S:.*]] = select i1 %flag, i8* %[[C2]], i8* %[[C1]]
+; CHECK-DAG:     %[[X2:.*]] = bitcast i8** %[[X]] to i64*
+; CHECK-DAG:     %[[Y2:.*]] = bitcast i8** %[[Y]] to i64*
+; CHECK:         %[[V:.*]] = load i64* %[[X2]]
+; CHECK-NEXT:    store i64 %[[V]], i64* %[[Y2]]
+; CHECK-NEXT:    %[[C:.*]] = inttoptr i64 %[[V]] to i8*
 ; CHECK-NEXT:    ret i8* %[[S]]
 entry:
   %x = alloca i8*

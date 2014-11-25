@@ -602,8 +602,8 @@ entry:
 	%C = load i8** %B, align 8
 	ret i8* %C
 ; CHECK-LABEL: @test34(
-; CHECK: %V.c = inttoptr i64 %V to i8*
-; CHECK: ret i8* %V.c
+; CHECK: %[[C:.*]] = inttoptr i64 %V to i8*
+; CHECK: ret i8* %[[C]]
 }
 
 %t0 = type { i8*, [19 x i8] }
