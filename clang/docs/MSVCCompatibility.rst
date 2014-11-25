@@ -84,8 +84,9 @@ The status of major ABI-impacting C++ features:
 * RTTI: :good:`Complete`.  Generation of RTTI data structures has been
   finished, along with support for the ``/GR`` flag.
 
-* Exceptions and SEH: :none:`Unstarted`.  Clang can parse both constructs, but
-  does not know how to emit compatible handlers.
+* Exceptions and SEH: :partial:`Minimal`.  Clang can parse both constructs, but
+  does not know how to emit compatible handlers.  Clang cannot throw exceptions
+  but it can rethrow them.
 
 * Thread-safe initialization of local statics: :none:`Unstarted`.  We are ABI
   compatible with MSVC 2013, which does not support thread-safe local statics.

@@ -70,6 +70,8 @@ public:
                                llvm::Value *Ptr, QualType ElementType,
                                const CXXDestructorDecl *Dtor) override;
 
+  void emitRethrow(CodeGenFunction &CGF, bool isNoReturn);
+
   llvm::GlobalVariable *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
                                                    const VPtrInfo *Info);
 
@@ -663,6 +665,30 @@ void MicrosoftCXXABI::emitVirtualObjectDelete(CodeGenFunction &CGF,
       EmitVirtualDestructorCall(CGF, Dtor, DtorType, Ptr, /*CE=*/nullptr);
   if (UseGlobalDelete)
     CGF.EmitDeleteCall(DE->getOperatorDelete(), MDThis, ElementType);
+}
+
+static llvm::Function *getRethrowFn(CodeGenModule &CGM) {
+  // _CxxThrowException takes two pointer width arguments: a value and a context
+  // object which points to a TypeInfo object.
+  llvm::Type *ArgTypes[] = {CGM.Int8PtrTy, CGM.Int8PtrTy};
+  llvm::FunctionType *FTy =
+      llvm::FunctionType::get(CGM.VoidTy, ArgTypes, false);
+  auto *Fn = cast<llvm::Function>(
+      CGM.CreateRuntimeFunction(FTy, "_CxxThrowException"));
+  // _CxxThrowException is stdcall on 32-bit x86 platforms.
+  if (CGM.getTarget().getTriple().getArch() == llvm::Triple::x86)
+    Fn->setCallingConv(llvm::CallingConv::X86_StdCall);
+  return Fn;
+}
+
+void MicrosoftCXXABI::emitRethrow(CodeGenFunction &CGF, bool isNoReturn) {
+  llvm::Value *Args[] = {llvm::ConstantPointerNull::get(CGM.Int8PtrTy),
+                         llvm::ConstantPointerNull::get(CGM.Int8PtrTy)};
+  auto *Fn = getRethrowFn(CGM);
+  if (isNoReturn)
+    CGF.EmitNoreturnRuntimeCallOrInvoke(Fn, Args);
+  else
+    CGF.EmitRuntimeCallOrInvoke(Fn, Args);
 }
 
 /// \brief Gets the offset to the virtual base that contains the vfptr for

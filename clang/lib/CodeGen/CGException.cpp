@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CGCleanup.h"
+#include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
 #include "TargetInfo.h"
 #include "clang/AST/StmtCXX.h"
@@ -50,15 +51,6 @@ static llvm::Constant *getThrowFn(CodeGenModule &CGM) {
     llvm::FunctionType::get(CGM.VoidTy, Args, /*IsVarArgs=*/false);
 
   return CGM.CreateRuntimeFunction(FTy, "__cxa_throw");
-}
-
-static llvm::Constant *getReThrowFn(CodeGenModule &CGM) {
-  // void __cxa_rethrow();
-
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGM.VoidTy, /*IsVarArgs=*/false);
-
-  return CGM.CreateRuntimeFunction(FTy, "__cxa_rethrow");
 }
 
 static llvm::Constant *getGetExceptionPtrFn(CodeGenModule &CGM) {
@@ -425,19 +417,19 @@ llvm::Value *CodeGenFunction::getSelectorFromSlot() {
 
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
                                        bool KeepInsertionPoint) {
-  if (CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment()) {
-    ErrorUnsupported(E, "throw expression");
-    return;
-  }
-
   if (!E->getSubExpr()) {
-    EmitNoreturnRuntimeCallOrInvoke(getReThrowFn(CGM), None);
+    CGM.getCXXABI().emitRethrow(*this, /*isNoReturn*/true);
 
     // throw is an expression, and the expression emitters expect us
     // to leave ourselves at a valid insertion point.
     if (KeepInsertionPoint)
       EmitBlock(createBasicBlock("throw.cont"));
 
+    return;
+  }
+
+  if (CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment()) {
+    ErrorUnsupported(E, "throw expression");
     return;
   }
 
@@ -1281,7 +1273,7 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
     // constructor function-try-block's catch handler (p14), so this
     // really only applies to destructors.
     if (doImplicitRethrow && HaveInsertPoint()) {
-      EmitRuntimeCallOrInvoke(getReThrowFn(CGM));
+      CGM.getCXXABI().emitRethrow(*this, /*isNoReturn*/false);
       Builder.CreateUnreachable();
       Builder.ClearInsertionPoint();
     }

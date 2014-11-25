@@ -213,6 +213,7 @@ public:
                                        const CXXDeleteExpr *DE,
                                        llvm::Value *Ptr, QualType ElementType,
                                        const CXXDestructorDecl *Dtor) = 0;
+  virtual void emitRethrow(CodeGenFunction &CGF, bool isNoReturn) = 0;
 
   virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) = 0;
 
