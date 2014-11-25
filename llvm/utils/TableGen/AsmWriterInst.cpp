@@ -48,9 +48,7 @@ std::string AsmWriterOperand::getCode() const {
 /// ParseAsmString - Parse the specified Instruction's AsmString into this
 /// AsmWriterInst.
 ///
-AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
-                             unsigned Variant,
-                             int OperandSpacing) {
+AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
   this->CGI = &CGI;
 
   // NOTE: Any extensions to this code need to be mirrored in the

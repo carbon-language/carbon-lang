@@ -1005,9 +1005,6 @@ class AsmWriter {
   // will specify which alternative to use.  For example "{x|y|z}" with Variant
   // == 1, will expand to "y".
   int Variant = 0;
-
-  // OperandSpacing - Space between operand columns.
-  int OperandSpacing = -1;
 }
 def DefaultAsmWriter : AsmWriter;
 

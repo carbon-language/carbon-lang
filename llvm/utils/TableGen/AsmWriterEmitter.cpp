@@ -1091,8 +1091,7 @@ AsmWriterEmitter::AsmWriterEmitter(RecordKeeper &R) : Records(R), Target(R) {
        I != E; ++I)
     if (!(*I)->AsmString.empty() && (*I)->TheDef->getName() != "PHI")
       Instructions.push_back(
-          AsmWriterInst(**I, AsmWriter->getValueAsInt("Variant"),
-                        AsmWriter->getValueAsInt("OperandSpacing")));
+          AsmWriterInst(**I, AsmWriter->getValueAsInt("Variant")));
 
   // Get the instruction numbering.
   NumberedInstructions = &Target.getInstructionsByEnumValue();
