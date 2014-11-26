@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+// Usage:
+//   not cmd
+//     Will return true if cmd doesn't crash and returns false.
+//   not --crash cmd
+//     Will return true if cmd crashes (e.g. for testing crash reporting).
 
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
