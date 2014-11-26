@@ -701,6 +701,19 @@ def A2_subp : T_ALU64_arith<"sub", 0b001, 0b111, 0, 1, 0>;
 def: Pat<(i64 (add I64:$Rs, I64:$Rt)), (A2_addp I64:$Rs, I64:$Rt)>;
 def: Pat<(i64 (sub I64:$Rs, I64:$Rt)), (A2_subp I64:$Rs, I64:$Rt)>;
 
+class T_ALU64_logical<string mnemonic, bits<3> MinOp, bit OpsRev, bit IsComm,
+                      bit IsNeg>
+  : T_ALU64_rr<mnemonic, "", 0b0011, 0b111, MinOp, OpsRev, IsComm,
+               !if(IsNeg,"~","")>;
+
+def A2_andp : T_ALU64_logical<"and", 0b000, 0, 1, 0>;
+def A2_orp  : T_ALU64_logical<"or",  0b010, 0, 1, 0>;
+def A2_xorp : T_ALU64_logical<"xor", 0b100, 0, 1, 0>;
+
+def: Pat<(i64 (and I64:$Rs, I64:$Rt)), (A2_andp I64:$Rs, I64:$Rt)>;
+def: Pat<(i64 (or  I64:$Rs, I64:$Rt)), (A2_orp  I64:$Rs, I64:$Rt)>;
+def: Pat<(i64 (xor I64:$Rs, I64:$Rt)), (A2_xorp I64:$Rs, I64:$Rt)>;
+
 // Patfrag to convert the usual comparison patfrags (e.g. setlt) to ones
 // that reverse the order of the operands.
 class RevCmp<PatFrag F> : PatFrag<(ops node:$rhs, node:$lhs), F.Fragment>;
