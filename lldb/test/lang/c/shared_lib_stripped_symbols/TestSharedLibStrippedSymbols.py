@@ -40,12 +40,6 @@ class SharedLibStrippedTestCase(TestBase):
         # Find the line number to break inside main().
         self.source = 'main.c'
         self.line = line_number(self.source, '// Set breakpoint 0 here.')
-        if sys.platform.startswith("freebsd") or sys.platform.startswith("linux"):
-            if "LD_LIBRARY_PATH" in os.environ:
-                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.environ["LD_LIBRARY_PATH"] + ":" + os.getcwd())
-            else:
-                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.getcwd())
-            self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars " + self.dylibPath))
         self.shlib_names = ["foo"]
 
     def common_setup(self):
@@ -59,8 +53,14 @@ class SharedLibStrippedTestCase(TestBase):
         # Break inside the foo function which takes a bar_ptr argument.
         lldbutil.run_break_set_by_file_and_line (self, self.source, self.line, num_expected_locations=1, loc_exact=True)
 
-        # Register our shared libraries for remote targets so they get automatically uploaded
-        environment = self.registerSharedLibrariesWithTarget(target, self.shlib_names)
+        if sys.platform.startswith("freebsd") or sys.platform.startswith("linux"):
+            if self.dylibPath in os.environ:
+                environment = [self.dylibPath + "=" + os.environ[self.dylibPath] + ":" + os.getcwd()]
+            else:
+                environment = [self.dylibPath + "=" + os.getcwd()]
+        else:
+            # Register our shared libraries for remote targets so they get automatically uploaded
+            environment = self.registerSharedLibrariesWithTarget(target, self.shlib_names)
 
         # Now launch the process, and do not stop at entry point.
         process = target.LaunchSimple (None, environment, self.get_process_working_directory())

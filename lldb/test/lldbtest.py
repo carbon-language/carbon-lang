@@ -1231,6 +1231,10 @@ class Base(unittest2.TestCase):
         module = builder_module()
         return module.getCompiler()
 
+    def getCompilerBinary(self):
+        """Returns the compiler binary the test suite is running with."""
+        return self.getCompiler().split()[0]
+
     def getCompilerVersion(self):
         """ Returns a string that represents the compiler version.
             Supports: llvm, clang.
@@ -1238,7 +1242,7 @@ class Base(unittest2.TestCase):
         from lldbutil import which
         version = 'unknown'
 
-        compiler = self.getCompiler()
+        compiler = self.getCompilerBinary()
         version_output = system([[which(compiler), "-v"]])[1]
         for line in version_output.split(os.linesep):
             m = re.search('version ([0-9\.]+)', line)
