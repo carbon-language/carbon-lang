@@ -3,7 +3,7 @@
 #error "ELF_RELOC must be defined"
 #endif
 
-// Meets 2.08 ABI Specs.
+// Meets 2.09 ABI Specs.
 ELF_RELOC(R_ARM_NONE,                   0x00)
 ELF_RELOC(R_ARM_PC24,                   0x01)
 ELF_RELOC(R_ARM_ABS32,                  0x02)
@@ -135,3 +135,4 @@ ELF_RELOC(R_ARM_PRIVATE_15,             0x7f)
 ELF_RELOC(R_ARM_ME_TOO,                 0x80)
 ELF_RELOC(R_ARM_THM_TLS_DESCSEQ16,      0x81)
 ELF_RELOC(R_ARM_THM_TLS_DESCSEQ32,      0x82)
+ELF_RELOC(R_ARM_IRELATIVE,              0xa0)

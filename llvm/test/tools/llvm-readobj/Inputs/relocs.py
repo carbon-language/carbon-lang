@@ -808,6 +808,7 @@ class Relocs_Elf_ARM(Enum):
   R_ARM_ME_TOO                = 0x80
   R_ARM_THM_TLS_DESCSEQ16     = 0x81
   R_ARM_THM_TLS_DESCSEQ32     = 0x82
+  R_ARM_IRELATIVE             = 0xa0
 
 class Relocs_Elf_Mips(Enum):
   R_MIPS_NONE              =  0
