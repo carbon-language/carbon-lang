@@ -12,12 +12,7 @@
 
 #include "lld/Core/Pass.h"
 #include "llvm/ADT/StringRef.h"
-
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <unistd.h>
-#else
-#include <io.h>
-#endif
+#include "llvm/Support/Process.h"
 
 namespace lld {
 namespace pecoff {
@@ -36,7 +31,7 @@ private:
     int fd;
     if (llvm::sys::fs::openFileForWrite(path, fd, llvm::sys::fs::F_Append))
       llvm::report_fatal_error("failed to create a PDB file");
-    ::close(fd);
+    llvm::sys::Process::SafelyCloseFileDescriptor(fd);
   }
 
   PECOFFLinkingContext &_ctx;
