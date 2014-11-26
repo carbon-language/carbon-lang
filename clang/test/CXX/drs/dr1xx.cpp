@@ -4,8 +4,8 @@
 // RUN: %clang_cc1 -std=c++1z -triple x86_64-unknown-unknown %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
 namespace dr100 { // dr100: yes
-  template<const char *> struct A {}; // expected-note {{declared here}}
-  template<const char (&)[4]> struct B {}; // expected-note {{declared here}}
+  template<const char *> struct A {}; // expected-note 0-1{{declared here}}
+  template<const char (&)[4]> struct B {}; // expected-note 0-1{{declared here}}
   A<"foo"> a; // expected-error {{does not refer to any declaration}}
   B<"bar"> b; // expected-error {{does not refer to any declaration}}
 }

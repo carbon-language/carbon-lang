@@ -4759,13 +4759,111 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return Arg;
   }
 
+  QualType ParamType = InstantiatedParamType;
+  if (getLangOpts().CPlusPlus1z) {
+    // FIXME: We can do some limited checking for a value-dependent but not
+    // type-dependent argument.
+    if (Arg->isValueDependent()) {
+      Converted = TemplateArgument(Arg);
+      return Arg;
+    }
+
+    // C++1z [temp.arg.nontype]p1:
+    //   A template-argument for a non-type template parameter shall be
+    //   a converted constant expression of the type of the template-parameter.
+    APValue Value;
+    ExprResult ArgResult = CheckConvertedConstantExpression(
+        Arg, ParamType, Value, CCEK_TemplateArg);
+    if (ArgResult.isInvalid())
+      return ExprError();
+
+    // Convert the APValue to a TemplateArgument.
+    switch (Value.getKind()) {
+    case APValue::Uninitialized:
+      assert(ParamType->isNullPtrType());
+      Converted = TemplateArgument(ParamType, /*isNullPtr*/true);
+      break;
+    case APValue::Int:
+      assert(ParamType->isIntegralOrEnumerationType());
+      Converted = TemplateArgument(Context, Value.getInt(), ParamType);
+      break;
+    case APValue::MemberPointer: {
+      assert(ParamType->isMemberPointerType());
+
+      // FIXME: We need TemplateArgument representation and mangling for these.
+      if (!Value.getMemberPointerPath().empty()) {
+        Diag(Arg->getLocStart(),
+             diag::err_template_arg_member_ptr_base_derived_not_supported)
+            << Value.getMemberPointerDecl() << ParamType
+            << Arg->getSourceRange();
+        return ExprError();
+      }
+
+      auto *VD = const_cast<ValueDecl*>(Value.getMemberPointerDecl());
+      Converted = VD ? TemplateArgument(VD, ParamType)
+                     : TemplateArgument(ParamType, /*isNullPtr*/true);
+      break;
+    }
+    case APValue::LValue: {
+      //   For a non-type template-parameter of pointer or reference type,
+      //   the value of the constant expression shall not refer to
+      assert(ParamType->isPointerType() || ParamType->isReferenceType());
+      // -- a temporary object
+      // -- a string literal
+      // -- the result of a typeid expression, or
+      // -- a predefind __func__ variable
+      if (auto *E = Value.getLValueBase().dyn_cast<const Expr*>()) {
+        if (isa<CXXUuidofExpr>(E)) {
+          Converted = TemplateArgument(const_cast<Expr*>(E));
+          break;
+        }
+        Diag(Arg->getLocStart(), diag::err_template_arg_not_decl_ref)
+          << Arg->getSourceRange();
+        return ExprError();
+      }
+      auto *VD = const_cast<ValueDecl *>(
+          Value.getLValueBase().dyn_cast<const ValueDecl *>());
+      // -- a subobject
+      if (Value.hasLValuePath() && Value.getLValuePath().size() == 1 &&
+          VD && VD->getType()->isArrayType() &&
+          Value.getLValuePath()[0].ArrayIndex == 0 &&
+          !Value.isLValueOnePastTheEnd() && ParamType->isPointerType()) {
+        // Per defect report (no number yet):
+        //   ... other than a pointer to the first element of a complete array
+        //       object.
+      } else if (!Value.hasLValuePath() || Value.getLValuePath().size() ||
+                 Value.isLValueOnePastTheEnd()) {
+        Diag(StartLoc, diag::err_non_type_template_arg_subobject)
+          << Value.getAsString(Context, ParamType);
+        return ExprError();
+      }
+      assert((VD || ParamType->isPointerType()) &&
+             "null reference should not be a constant expression");
+      Converted = VD ? TemplateArgument(VD, ParamType)
+                     : TemplateArgument(ParamType, /*isNullPtr*/true);
+      break;
+    }
+    case APValue::AddrLabelDiff:
+      return Diag(StartLoc, diag::err_non_type_template_arg_addr_label_diff);
+    case APValue::Float:
+    case APValue::ComplexInt:
+    case APValue::ComplexFloat:
+    case APValue::Vector:
+    case APValue::Array:
+    case APValue::Struct:
+    case APValue::Union:
+      llvm_unreachable("invalid kind for template argument");
+    }
+
+    return ArgResult.get();
+  }
+
   // C++ [temp.arg.nontype]p5:
   //   The following conversions are performed on each expression used
   //   as a non-type template-argument. If a non-type
   //   template-argument cannot be converted to the type of the
   //   corresponding template-parameter then the program is
   //   ill-formed.
-  QualType ParamType = InstantiatedParamType;
   if (ParamType->isIntegralOrEnumerationType()) {
     // C++11:
     //   -- for a non-type template-parameter of integral or

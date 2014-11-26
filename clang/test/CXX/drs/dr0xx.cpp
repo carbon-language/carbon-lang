@@ -521,17 +521,28 @@ namespace dr48 { // dr48: yes
 }
 
 namespace dr49 { // dr49: yes
-  template<int*> struct A {}; // expected-note {{here}}
+  template<int*> struct A {}; // expected-note 0-2{{here}}
   int k;
 #if __has_feature(cxx_constexpr)
   constexpr
 #endif
-  int *const p = &k;
+  int *const p = &k; // expected-note 0-2{{here}}
   A<&k> a;
-  A<p> b; // expected-error {{must have its address taken}}
+  A<p> b;
+#if __cplusplus <= 201402L
+  // expected-error@-2 {{must have its address taken}}
+#endif
 #if __cplusplus < 201103L
-  // expected-error@-2 {{internal linkage}}
-  // expected-note@-5 {{here}}
+  // expected-error@-5 {{internal linkage}}
+#endif
+  int *q = &k;
+  A<q> c;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{must have its address taken}}
+#else
+  // expected-error@-4 {{constant expression}}
+  // expected-note@-5 {{read of non-constexpr}}
+  // expected-note@-7 {{declared here}}
 #endif
 }
 
@@ -995,6 +1006,10 @@ namespace dr92 { // dr92: yes
     g(q); // expected-error {{is not superset}}
   }
 
+  // Prior to C++17, this is OK because the exception specification is not
+  // considered in this context. In C++17, we *do* perform an implicit
+  // conversion (which performs initialization), but we convert to the type of
+  // the template parameter, which does not include the exception specification.
   template<void() throw()> struct X {};
   X<&f> xp; // ok
 }

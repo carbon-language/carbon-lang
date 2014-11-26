@@ -2780,10 +2780,29 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   // Perform the second implicit conversion
   switch (SCS.Second) {
   case ICK_Identity:
-    // If both sides are functions (or pointers/references to them), there could
-    // be incompatible exception declarations.
-    if (CheckExceptionSpecCompatibility(From, ToType))
-      return ExprError();
+    // C++ [except.spec]p5:
+    //   [For] assignment to and initialization of pointers to functions,
+    //   pointers to member functions, and references to functions: the
+    //   target entity shall allow at least the exceptions allowed by the
+    //   source value in the assignment or initialization.
+    switch (Action) {
+    case AA_Assigning:
+    case AA_Initializing:
+      // Note, function argument passing and returning are initialization.
+    case AA_Passing:
+    case AA_Returning:
+    case AA_Sending:
+    case AA_Passing_CFAudited:
+      if (CheckExceptionSpecCompatibility(From, ToType))
+        return ExprError();
+      break;
+
+    case AA_Casting:
+    case AA_Converting:
+      // Casts and implicit conversions are not initialization, so are not
+      // checked for exception specification mismatches.
+      break;
+    }
     // Nothing else to do.
     break;
 

@@ -991,12 +991,11 @@ namespace dr289 { // dr289: yes
 namespace dr294 { // dr294: no
   void f() throw(int);
   int main() {
-    // FIXME: we reject this for the wrong reason, because we don't implement
-    // dr87 yet.
-    (void)static_cast<void (*)() throw()>(f); // expected-error {{not superset}}
-    void (*p)() throw() = f; // expected-error {{not superset}}
-
+    (void)static_cast<void (*)() throw()>(f); // FIXME: ill-formed
     (void)static_cast<void (*)() throw(int)>(f); // FIXME: ill-formed
+
+    void (*p)() throw() = f; // expected-error {{not superset}}
+    void (*q)() throw(int) = f;
   }
 }
 
