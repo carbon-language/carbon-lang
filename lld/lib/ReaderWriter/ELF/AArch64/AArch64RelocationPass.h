@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief Declares the relocation processing pass for x86-64. This includes
+/// \brief Declares the relocation processing pass for AArch64. This includes
 ///   GOT and PLT entries, TLS, COPY, and ifunc.
 ///
 //===----------------------------------------------------------------------===//
