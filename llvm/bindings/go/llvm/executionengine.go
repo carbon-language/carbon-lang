@@ -30,11 +30,9 @@ type GenericValue struct {
 type ExecutionEngine struct {
 	C C.LLVMExecutionEngineRef
 }
+
 type MCJITCompilerOptions struct {
-	OptLevel           uint
-	CodeModel          CodeModel
-	NoFramePointerElim bool
-	EnableFastISel     bool
+	C C.struct_LLVMMCJITCompilerOptions
 }
 
 // helpers
@@ -96,15 +94,19 @@ func NewInterpreter(m Module) (ee ExecutionEngine, err error) {
 	return
 }
 
+func NewMCJITCompilerOptions() MCJITCompilerOptions {
+	var options C.struct_LLVMMCJITCompilerOptions
+	C.LLVMInitializeMCJITCompilerOptions(&options, C.size_t(unsafe.Sizeof(C.struct_LLVMMCJITCompilerOptions{})))
+	return MCJITCompilerOptions{options}
+}
+
+func SetMCJITOptimizationLevel(options MCJITCompilerOptions, level uint) {
+	options.C.OptLevel = C.uint(level)
+}
+
 func NewMCJITCompiler(m Module, options MCJITCompilerOptions) (ee ExecutionEngine, err error) {
 	var cmsg *C.char
-	copts := C.struct_LLVMMCJITCompilerOptions{
-		OptLevel:           C.unsigned(options.OptLevel),
-		CodeModel:          C.LLVMCodeModel(options.CodeModel),
-		NoFramePointerElim: boolToLLVMBool(options.NoFramePointerElim),
-		EnableFastISel:     boolToLLVMBool(options.EnableFastISel),
-	}
-	fail := C.LLVMCreateMCJITCompilerForModule(&ee.C, m.C, &copts, C.size_t(unsafe.Sizeof(copts)), &cmsg)
+	fail := C.LLVMCreateMCJITCompilerForModule(&ee.C, m.C, &options.C, C.size_t(unsafe.Sizeof(C.struct_LLVMMCJITCompilerOptions{})), &cmsg)
 	if fail != 0 {
 		ee.C = nil
 		err = errors.New(C.GoString(cmsg))

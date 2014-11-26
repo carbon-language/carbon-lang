@@ -66,7 +66,9 @@ func TestFactorial(t *testing.T) {
 		return
 	}
 
-	engine, err := NewMCJITCompiler(mod, MCJITCompilerOptions{OptLevel: 2})
+	options := NewMCJITCompilerOptions()
+	SetMCJITOptimizationLevel(options, 2)
+	engine, err := NewMCJITCompiler(mod, options)
 	if err != nil {
 		t.Errorf("Error creating JIT: %s", err)
 		return
