@@ -3111,13 +3111,6 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
     CodeGenInstruction &InstInfo =
       const_cast<CodeGenInstruction &>(*Instructions[i]);
 
-    // Treat neverHasSideEffects = 1 as the equivalent of hasSideEffects = 0.
-    // This flag is obsolete and will be removed.
-    if (InstInfo.neverHasSideEffects) {
-      assert(!InstInfo.hasSideEffects);
-      InstInfo.hasSideEffects_Unset = false;
-    }
-
     // Get the primary instruction pattern.
     const TreePattern *Pattern = getInstruction(InstInfo.TheDef).getPattern();
     if (!Pattern) {

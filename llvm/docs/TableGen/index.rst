@@ -123,7 +123,6 @@ this (at the time of this writing):
     bit hasCtrlDep = 0;
     bit isNotDuplicable = 0;
     bit hasSideEffects = 0;
-    bit neverHasSideEffects = 0;
     InstrItinClass Itinerary = NoItinerary;
     string Constraints = "";
     string DisableEncoding = "";

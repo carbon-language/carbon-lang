@@ -396,11 +396,7 @@ class Instruction {
   //  hasSideEffects - The instruction has side effects that are not
   //    captured by any operands of the instruction or other flags.
   //
-  //  neverHasSideEffects (deprecated) - Set on an instruction with no pattern
-  //    if it has no side effects. This is now equivalent to setting
-  //    "hasSideEffects = 0".
   bit hasSideEffects = ?;
-  bit neverHasSideEffects = 0;
 
   // Is this instruction a "real" instruction (with a distinct machine
   // encoding), or is it a pseudo instruction used for codegen modeling
