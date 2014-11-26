@@ -757,6 +757,13 @@ void UnwrappedLineParser::parseStructuralElement() {
       // A record declaration or definition is always the start of a structural
       // element.
       break;
+    case tok::period:
+      nextToken();
+      // In Java, classes have an implicit static member "class".
+      if (Style.Language == FormatStyle::LK_Java && FormatTok &&
+          FormatTok->is(tok::kw_class))
+        nextToken();
+      break;
     case tok::semi:
       nextToken();
       addUnwrappedLine();

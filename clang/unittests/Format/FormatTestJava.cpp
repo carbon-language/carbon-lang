@@ -65,6 +65,11 @@ TEST_F(FormatTestJava, FormatsInstanceOfLikeOperators) {
                Style);
 }
 
+TEST_F(FormatTestJava, ClassKeyword) {
+  verifyFormat("SomeClass.class.getName();");
+  verifyFormat("Class c = SomeClass.class;");
+}
+
 TEST_F(FormatTestJava, ClassDeclarations) {
   verifyFormat("public class SomeClass {\n"
                "  private int a;\n"
