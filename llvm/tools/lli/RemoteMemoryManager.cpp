@@ -14,7 +14,6 @@
 
 #include "RemoteMemoryManager.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 
@@ -78,7 +77,7 @@ sys::MemoryBlock RemoteMemoryManager::allocateSection(uintptr_t Size) {
 }
 
 void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
-                                                const ObjectImage *Obj) {
+                                             const object::ObjectFile &Obj) {
   // The client should have called setRemoteTarget() before triggering any
   // code generation.
   assert(Target);

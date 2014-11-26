@@ -16,8 +16,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/ExecutionEngine/ObjectBuffer.h"
-#include "llvm/ExecutionEngine/ObjectCache.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -43,16 +42,14 @@ using namespace llvm;
 STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");
 STATISTIC(NumGlobals  , "Number of global vars initialized");
 
-// Pin the vtable to this file.
-void ObjectCache::anchor() {}
-void ObjectBuffer::anchor() {}
-void ObjectBufferStream::anchor() {}
-
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
     std::unique_ptr<Module> M, std::string *ErrorStr,
     RTDyldMemoryManager *MCJMM, std::unique_ptr<TargetMachine> TM) = nullptr;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(std::unique_ptr<Module> M,
                                                 std::string *ErrorStr) =nullptr;
+
+// Anchor for the JITEventListener class.
+void JITEventListener::anchor() {}
 
 ExecutionEngine::ExecutionEngine(std::unique_ptr<Module> M)
   : EEState(*this),

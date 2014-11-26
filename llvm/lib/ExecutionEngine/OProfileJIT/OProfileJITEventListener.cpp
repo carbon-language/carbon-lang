@@ -18,8 +18,8 @@
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/OProfileWrapper.h"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -31,31 +31,34 @@
 
 using namespace llvm;
 using namespace llvm::jitprofiling;
+using namespace llvm::object;
 
 #define DEBUG_TYPE "oprofile-jit-event-listener"
 
 namespace {
 
 class OProfileJITEventListener : public JITEventListener {
-  OProfileWrapper& Wrapper;
+  std::unique_ptr<OProfileWrapper> Wrapper;
 
   void initialize();
+  std::map<const char*, OwningBinary<ObjectFile>> DebugObjects;
 
 public:
-  OProfileJITEventListener(OProfileWrapper& LibraryWrapper)
-  : Wrapper(LibraryWrapper) {
+  OProfileJITEventListener(std::unique_ptr<OProfileWrapper> LibraryWrapper)
+    : Wrapper(std::move(LibraryWrapper)) {
     initialize();
   }
 
   ~OProfileJITEventListener();
 
-  virtual void NotifyObjectEmitted(const ObjectImage &Obj);
+  void NotifyObjectEmitted(const ObjectFile &Obj,
+                           const RuntimeDyld::LoadedObjectInfo &L) override;
 
-  virtual void NotifyFreeingObject(const ObjectImage &Obj);
+  void NotifyFreeingObject(const ObjectFile &Obj) override;
 };
 
 void OProfileJITEventListener::initialize() {
-  if (!Wrapper.op_open_agent()) {
+  if (!Wrapper->op_open_agent()) {
     const std::string err_str = sys::StrError();
     DEBUG(dbgs() << "Failed to connect to OProfile agent: " << err_str << "\n");
   } else {
@@ -64,8 +67,8 @@ void OProfileJITEventListener::initialize() {
 }
 
 OProfileJITEventListener::~OProfileJITEventListener() {
-  if (Wrapper.isAgentAvailable()) {
-    if (Wrapper.op_close_agent() == -1) {
+  if (Wrapper->isAgentAvailable()) {
+    if (Wrapper->op_close_agent() == -1) {
       const std::string err_str = sys::StrError();
       DEBUG(dbgs() << "Failed to disconnect from OProfile agent: "
                    << err_str << "\n");
@@ -75,17 +78,22 @@ OProfileJITEventListener::~OProfileJITEventListener() {
   }
 }
 
-void OProfileJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
-  if (!Wrapper.isAgentAvailable()) {
+void OProfileJITEventListener::NotifyObjectEmitted(
+                                       const ObjectFile &Obj,
+                                       const RuntimeDyld::LoadedObjectInfo &L) {
+  if (!Wrapper->isAgentAvailable()) {
     return;
   }
 
+  OwningBinary<ObjectFile> DebugObjOwner = L.getObjectForDebug(Obj);
+  const ObjectFile &DebugObj = *DebugObjOwner.getBinary();
+
   // Use symbol info to iterate functions in the object.
-  for (object::symbol_iterator I = Obj.begin_symbols(), E = Obj.end_symbols();
+  for (symbol_iterator I = DebugObj.symbol_begin(), E = DebugObj.symbol_end();
        I != E; ++I) {
-    object::SymbolRef::Type SymType;
+    SymbolRef::Type SymType;
     if (I->getType(SymType)) continue;
-    if (SymType == object::SymbolRef::ST_Function) {
+    if (SymType == SymbolRef::ST_Function) {
       StringRef  Name;
       uint64_t   Addr;
       uint64_t   Size;
@@ -93,7 +101,7 @@ void OProfileJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
       if (I->getAddress(Addr)) continue;
       if (I->getSize(Size)) continue;
 
-      if (Wrapper.op_write_native_code(Name.data(), Addr, (void*)Addr, Size)
+      if (Wrapper->op_write_native_code(Name.data(), Addr, (void*)Addr, Size)
                         == -1) {
         DEBUG(dbgs() << "Failed to tell OProfile about native function "
           << Name << " at ["
@@ -103,45 +111,48 @@ void OProfileJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
       // TODO: support line number info (similar to IntelJITEventListener.cpp)
     }
   }
+
+  DebugObjects[Obj.getData().data()] = std::move(DebugObjOwner);
 }
 
-void OProfileJITEventListener::NotifyFreeingObject(const ObjectImage &Obj) {
-  if (!Wrapper.isAgentAvailable()) {
-    return;
-  }
+void OProfileJITEventListener::NotifyFreeingObject(const ObjectFile &Obj) {
+  if (Wrapper->isAgentAvailable()) {
 
-  // Use symbol info to iterate functions in the object.
-  for (object::symbol_iterator I = Obj.begin_symbols(), E = Obj.end_symbols();
-       I != E; ++I) {
-    object::SymbolRef::Type SymType;
-    if (I->getType(SymType)) continue;
-    if (SymType == object::SymbolRef::ST_Function) {
-      uint64_t   Addr;
-      if (I->getAddress(Addr)) continue;
+    // If there was no agent registered when the original object was loaded then
+    // we won't have created a debug object for it, so bail out.
+    if (DebugObjects.find(Obj.getData().data()) == DebugObjects.end())
+      return;
 
-      if (Wrapper.op_unload_native_code(Addr) == -1) {
-        DEBUG(dbgs()
-          << "Failed to tell OProfile about unload of native function at "
-          << (void*)Addr << "\n");
-        continue;
+    const ObjectFile &DebugObj = *DebugObjects[Obj.getData().data()].getBinary();
+
+    // Use symbol info to iterate functions in the object.
+    for (symbol_iterator I = DebugObj.symbol_begin(),
+                         E = DebugObj.symbol_end();
+         I != E; ++I) {
+      SymbolRef::Type SymType;
+      if (I->getType(SymType)) continue;
+      if (SymType == SymbolRef::ST_Function) {
+        uint64_t   Addr;
+        if (I->getAddress(Addr)) continue;
+
+        if (Wrapper->op_unload_native_code(Addr) == -1) {
+          DEBUG(dbgs()
+                << "Failed to tell OProfile about unload of native function at "
+                << (void*)Addr << "\n");
+          continue;
+        }
       }
     }
   }
+
+  DebugObjects.erase(Obj.getData().data());
 }
 
 }  // anonymous namespace.
 
 namespace llvm {
 JITEventListener *JITEventListener::createOProfileJITEventListener() {
-  static std::unique_ptr<OProfileWrapper> JITProfilingWrapper(
-      new OProfileWrapper);
-  return new OProfileJITEventListener(*JITProfilingWrapper);
-}
-
-// for testing
-JITEventListener *JITEventListener::createOProfileJITEventListener(
-                                      OProfileWrapper* TestImpl) {
-  return new OProfileJITEventListener(*TestImpl);
+  return new OProfileJITEventListener(llvm::make_unique<OProfileWrapper>());
 }
 
 } // namespace llvm

@@ -22,7 +22,10 @@
 namespace llvm {
 
 class ExecutionEngine;
-class ObjectImage;
+
+  namespace object {
+    class ObjectFile;
+  }
 
 // RuntimeDyld clients often want to handle the memory management of
 // what gets placed where. For JIT clients, this is the subset of
@@ -109,7 +112,7 @@ public:
   /// address space can use this call to remap the section addresses for the
   /// newly loaded object.
   virtual void notifyObjectLoaded(ExecutionEngine *EE,
-                                  const ObjectImage *) {}
+                                  const object::ObjectFile &) {}
 
   /// This method is called when object loading is complete and section page
   /// permissions can be applied.  It is up to the memory manager implementation
