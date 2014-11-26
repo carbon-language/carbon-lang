@@ -42,42 +42,33 @@ class MiProgramArgsTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                child.send("-file-exec-and-symbols " + self.myexe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + self.myexe)
                 child.expect("\^done")
 
-                #child.send("-exec-arguments l")
-                #child.sendline('') #FIXME: not recognized and hung lldb-mi
-                child.send("settings set target.run-args l")
-                child.sendline('') #FIXME: args not passed
+                child.sendline("settings set target.run-args l") #FIXME: args not passed
+                #child.sendline("-exec-arguments l") #FIXME: not recognized and hung lldb-mi
 
                 #run to main
-                child.send("-break-insert -f main")
-                child.sendline('')
+                child.sendline("-break-insert -f main")
                 child.expect("\^done,bkpt={number=\"1\"")
-                child.send("-exec-run")
-                child.sendline('') #FIXME: hangs here; extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") #FIXME: hangs here; extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
                 #check argc to see if arg passed
-                child.send("-data-evaluate-expression argc")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression argc")
                 child.expect("value=\"2\"")
 
-                #set BP on code which is only executed if "l" was passed correctly
-                child.send("-break-insert main.c:27") #BP_argtest
-                child.sendline('')
+                #set BP on code which is only executed if "l" was passed correctly (marked BP_argtest)
+                self.line = line_number('main.c', '//BP_argtest')
+                child.sendline("-break-insert main.c:%d" % self.line)
                 child.expect("\^done,bkpt={number=\"2\"")
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.

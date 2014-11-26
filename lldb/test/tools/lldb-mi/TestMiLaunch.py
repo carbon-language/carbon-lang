@@ -42,20 +42,16 @@ class MiLaunchTestCase(TestBase):
                 child.logfile_read = f_read
 
                 #use no path
-                child.send("-file-exec-and-symbols " + self.myexe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + self.myexe)
                 child.expect("\^done")
 
-                child.send("-exec-run")
-                child.sendline('') # FIXME: lldb-mi hangs here, so the extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -93,20 +89,16 @@ class MiLaunchTestCase(TestBase):
 
                 #use full path
                 exe = os.path.join(os.getcwd(), "a.out")
-                child.send("-file-exec-and-symbols " + exe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + exe)
                 child.expect("\^done")
 
-                child.send("-exec-run")
-                child.sendline('') # FIXME: lldb-mi hangs here, so the extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -144,20 +136,16 @@ class MiLaunchTestCase(TestBase):
 
                 #use relative path
                 exe = "../../" + self.mydir + "/" + self.myexe
-                child.send("-file-exec-and-symbols " + exe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + exe)
                 child.expect("\^done")
 
-                child.send("-exec-run")
-                child.sendline('') # FIXME: lldb-mi hangs here, so the extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -174,7 +162,6 @@ class MiLaunchTestCase(TestBase):
                 print "\n\nContents of child_read.txt:"
                 print from_child
 
-    @unittest2.skip("lldb-mi badpath hang")
     @lldbmi_test
     def test_lldbmi_badpathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols badpath/exe."""
@@ -194,17 +181,13 @@ class MiLaunchTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                #use relative path
+                #use non-existant path
                 exe = "badpath/" + self.myexe
-                #print ("-file-exec-and-symbols " + exe)
-                child.send("-file-exec-and-symbols " + exe)
-                child.sendline('') #FIXME: non-existant directory caused hang
+                child.sendline("-file-exec-and-symbols " + exe)
                 child.expect("\^error")
+                #child.expect_exact(prompt) #FIXME: no prompt after error
 
-                child.expect_exact(prompt)
-
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.

@@ -41,29 +41,23 @@ class MiBreakpointTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                child.send("-file-exec-and-symbols " + self.myexe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + self.myexe)
                 child.expect("\^done")
 
-                child.send("-break-insert -f a_MyFunction")
-                child.sendline('')
+                child.sendline("-break-insert -f a_MyFunction")
                 child.expect("\^done,bkpt={number=\"1\"")
 
-                child.send("-exec-run")
-                child.sendline('') # FIXME: lldb-mi hangs here, so the extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -102,29 +96,26 @@ class MiBreakpointTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                child.send("-file-exec-and-symbols " + self.myexe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + self.myexe)
                 child.expect("\^done")
 
-                child.send("-break-insert -f main.c:22")
-                child.sendline('')
+                # Find the line number to break inside main() and set
+                # pending BP.
+                self.line = line_number('main.c', '//BP_source')
+                child.sendline("-break-insert -f main.c:%d" % self.line)
                 child.expect("\^done,bkpt={number=\"1\"")
 
-                child.send("-exec-run")
-                child.sendline('') # FIXME: lldb-mi hangs here, so the extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -163,50 +154,41 @@ class MiBreakpointTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                child.send("-file-exec-and-symbols " + self.myexe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + self.myexe)
                 child.expect("\^done")
 
-                child.send("-break-insert -f main")
-                child.sendline('')
+                child.sendline("-break-insert -f main")
                 child.expect("\^done,bkpt={number=\"1\"")
 
-                child.send("-exec-run")
-                child.sendline('') # FIXME: lldb-mi hangs here, so the extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
                 #break on symbol
-                child.send("-break-insert a_MyFunction")
-                child.sendline('')
+                child.sendline("-break-insert a_MyFunction")
                 child.expect("\^done,bkpt={number=\"2\"")
 
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
                 #break on source
-                child.send("-break-insert main.c:29")
-                child.sendline('')
+                self.line = line_number('main.c', '//BP_source')
+                child.sendline("-break-insert main.c:%d" % self.line)
                 child.expect("\^done,bkpt={number=\"3\"")
 
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
                 #run to exit
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.

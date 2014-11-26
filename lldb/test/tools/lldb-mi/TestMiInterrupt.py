@@ -42,55 +42,43 @@ class MiInterruptTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                child.send("-file-exec-and-symbols " + self.myexe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + self.myexe)
                 child.expect("\^done")
 
                 #run to main
-                child.send("-break-insert -f main")
-                child.sendline('')
+                child.sendline("-break-insert -f main")
                 child.expect("\^done,bkpt={number=\"1\"")
-                child.send("-exec-run")
-                child.sendline('') #FIXME: hangs here; extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") #FIXME: hangs here; extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
                 #set doloop=1 and run (to loop forever)
-                child.send("-data-evaluate-expression \"doloop=1\"")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression \"doloop=1\"")
                 child.expect("value=\"1\"")
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
 
-                #issue interrupt, set a bp, and resume
-                child.send("-exec-interrupt")
-                child.sendline('')
+                #issue interrupt, set BP in loop (marked BP_loop), and resume
+                child.sendline("-exec-interrupt")
                 child.expect("\*stopped,reason=\"signal-received\"")
-                child.send("-break-insert loop.c:11")
-                child.sendline('')
+                self.line = line_number('loop.c', '//BP_loop')
+                child.sendline("-break-insert loop.c:%d" % self.line)
                 child.expect("\^done,bkpt={number=\"2\"")
-                #child.send("-exec-resume")
-                #child.sendline('') #FIXME: command not recognized
-                child.send("-exec-continue")
-                child.sendline('')
+                #child.sendline("-exec-resume") #FIXME: command not recognized
+                child.sendline("-exec-continue")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-                #we should be sitting at loop.c:12
+                #we should have hit BP
                 #set loop=-1 so we'll exit the loop
-                child.send("-data-evaluate-expression \"loop=-1\"")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression \"loop=-1\"")
                 child.expect("value=\"-1\"")
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.

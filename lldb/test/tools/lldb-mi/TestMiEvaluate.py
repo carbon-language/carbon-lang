@@ -41,103 +41,79 @@ class MiEvaluateTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                child.send("-file-exec-and-symbols " + self.myexe)
-                child.sendline('')
+                child.sendline("-file-exec-and-symbols " + self.myexe)
                 child.expect("\^done")
 
                 #run to main
-                child.send("-break-insert -f main")
-                child.sendline('')
+                child.sendline("-break-insert -f main")
                 child.expect("\^done,bkpt={number=\"1\"")
 
-                child.send("-exec-run")
-                child.sendline('') #FIXME: hangs here; extra return below is needed
-                child.send("")
-                child.sendline('')
+                child.sendline("-exec-run")
+                child.sendline("") #FIXME: hangs here; extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-                #run to program return
-                child.send("-break-insert main.c:30") #BP_source
-                child.sendline('')
+                #run to program return (marked BP_source)
+                self.line = line_number('main.c', '//BP_source')
+                child.sendline("-break-insert main.c:%d" % self.line)
                 child.expect("\^done,bkpt={number=\"2\"")
 
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
                 #print non-existant variable
-                #child.send("-var-create var1 --thread 1 --frame 0 * undef")
-                #child.sendline('') #FIXME: shows undef as {...}
+                #child.sendline("-var-create var1 --thread 1 --frame 0 * undef") #FIXME: shows undef as {...}
                 #child.expect("error")
-                #child.send("-data-evaluate-expression undef")
-                #child.sendline('') #FIXME: gets value="undef"
+                #child.sendline("-data-evaluate-expression undef") #FIXME: gets value="undef"
                 #child.expect("error")
 
                 #print global "g_MyVar"
-                child.send("-var-create var1 --thread 1 --frame 0 * g_MyVar")
-                child.sendline('') #FIXME: shows name=<unnamedvariable>"
+                child.sendline("-var-create var1 --thread 1 --frame 0 * g_MyVar") #FIXME: shows name=<unnamedvariable>"
                 child.expect("value=\"3\",type=\"int\"")
-                #child.send("-var-evaluate-expression var1")
-                #child.sendline('') #FIXME: gets var1 does not exist
-                child.send("-var-show-attributes var1")
-                child.sendline('')
+                #child.sendline("-var-evaluate-expression var1") #FIXME: gets var1 does not exist
+                child.sendline("-var-show-attributes var1")
                 child.expect("status=\"editable\"")
-                child.send("-var-delete var1")
-                child.sendline('')
+                child.sendline("-var-delete var1")
                 child.expect("\^done")
-                child.send("-var-create var1 --thread 1 --frame 0 * g_MyVar")
-                child.sendline('')
+                child.sendline("-var-create var1 --thread 1 --frame 0 * g_MyVar")
                 child.expect("value=\"3\",type=\"int\"")
 
                 #print static "s_MyVar" and modify
-                child.send("-data-evaluate-expression s_MyVar")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression s_MyVar")
                 child.expect("value=\"30\"")
-                child.send("-var-create var3 --thread 1 --frame 0 * \"s_MyVar=3\"")
-                child.sendline('')
+                child.sendline("-var-create var3 --thread 1 --frame 0 * \"s_MyVar=3\"")
                 child.expect("value=\"3\",type=\"int\"")
-                child.send("-data-evaluate-expression \"s_MyVar=30\"")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression \"s_MyVar=30\"")
                 child.expect("value=\"30\"")
 
                 #print local "b" and modify
-                child.send("-data-evaluate-expression b")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression b")
                 child.expect("value=\"20\"")
-                child.send("-var-create var3 --thread 1 --frame 0 * \"b=3\"")
-                child.sendline('')
+                child.sendline("-var-create var3 --thread 1 --frame 0 * \"b=3\"")
                 child.expect("value=\"3\",type=\"int\"")
-                child.send("-data-evaluate-expression \"b=20\"")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression \"b=20\"")
                 child.expect("value=\"20\"")
 
                 #print "a + b"
-                child.send("-data-evaluate-expression \"a + b\"")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression \"a + b\"")
                 child.expect("value=\"30\"")
-                child.send("-var-create var3 --thread 1 --frame 0 * \"a + b\"")
-                child.sendline('')
+                child.sendline("-var-create var3 --thread 1 --frame 0 * \"a + b\"")
                 child.expect("value=\"30\",type=\"int\"")
 
                 #print "argv[0]"
-                child.send("-data-evaluate-expression \"argv[0]\"")
-                child.sendline('')
+                child.sendline("-data-evaluate-expression \"argv[0]\"")
                 child.expect("value=\"0x")
-                child.send("-var-create var3 --thread 1 --frame 0 * \"argv[0]\"")
-                child.sendline('')
+                child.sendline("-var-create var3 --thread 1 --frame 0 * \"argv[0]\"")
                 child.expect("numchild=\"1\",value=\"0x.*\",type=\"const char \*\"")
 
                 #run to exit
-                child.send("-exec-continue")
-                child.sendline('')
+                child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
                 child.expect_exact(prompt)
 
-                child.send("quit")
-                child.sendline('')
+                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
