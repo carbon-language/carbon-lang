@@ -4,7 +4,9 @@
 // RUN: LD_PRELOAD=%shared_libasan not %run %t 2>&1 | FileCheck %s
 
 // REQUIRES: asan-dynamic-runtime
-// XFAIL: android
+
+// This way of setting LD_PRELOAD does not work with Android test runner.
+// REQUIRES: not-android
 
 #include <stdlib.h>
 
