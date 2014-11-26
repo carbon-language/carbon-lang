@@ -1221,104 +1221,104 @@ LOADING CHECKERS:
  -load-plugin [plugin library]
 ENDTEXT
 
-# Query clang for list of checkers that are enabled.
+  # Query clang for list of checkers that are enabled.
 
-# create a list to load the plugins via the 'Xclang' command line
-# argument
-my @PluginLoadCommandline_xclang;
-foreach my $param ( @PluginsToLoad ) {
-  push ( @PluginLoadCommandline_xclang, "-Xclang" );
-  push ( @PluginLoadCommandline_xclang, $param );
-}
-my %EnabledCheckers;
-foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
-  pipe(FROM_CHILD, TO_PARENT);
-  my $pid = fork();
-  if ($pid == 0) {
-    close FROM_CHILD;
-    open(STDOUT,">&", \*TO_PARENT);
-    open(STDERR,">&", \*TO_PARENT);
-    exec $Clang, ( @PluginLoadCommandline_xclang, '--analyze', '-x', $lang, '-', '-###');
+  # create a list to load the plugins via the 'Xclang' command line
+  # argument
+  my @PluginLoadCommandline_xclang;
+  foreach my $param ( @PluginsToLoad ) {
+    push ( @PluginLoadCommandline_xclang, "-Xclang" );
+    push ( @PluginLoadCommandline_xclang, $param );
   }
-  close(TO_PARENT);
-  while(<FROM_CHILD>) {
-    foreach my $val (split /\s+/) {
-      $val =~ s/\"//g;
-      if ($val =~ /-analyzer-checker\=([^\s]+)/) {
-        $EnabledCheckers{$1} = 1;
-      }
+  my %EnabledCheckers;
+  foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
+    pipe(FROM_CHILD, TO_PARENT);
+    my $pid = fork();
+    if ($pid == 0) {
+      close FROM_CHILD;
+      open(STDOUT,">&", \*TO_PARENT);
+      open(STDERR,">&", \*TO_PARENT);
+      exec $Clang, ( @PluginLoadCommandline_xclang, '--analyze', '-x', $lang, '-', '-###');
     }
-  }
-  waitpid($pid,0);
-  close(FROM_CHILD);
-}
-
-# Query clang for complete list of checkers.
-if (defined $Clang && -x $Clang) {
-  pipe(FROM_CHILD, TO_PARENT);
-  my $pid = fork();
-  if ($pid == 0) {
-    close FROM_CHILD;
-    open(STDOUT,">&", \*TO_PARENT);
-    open(STDERR,">&", \*TO_PARENT);
-    exec $Clang, ('-cc1', @PluginsToLoad , '-analyzer-checker-help');
-  }
-  close(TO_PARENT);
-  my $foundCheckers = 0;
-  while(<FROM_CHILD>) {
-    if (/CHECKERS:/) {
-      $foundCheckers = 1;
-      last;
-    }
-  }
-  if (!$foundCheckers) {
-    print "  *** Could not query Clang for the list of available checkers.";
-  }
-  else {
-    print("\nAVAILABLE CHECKERS:\n\n");
-    my $skip = 0;
+    close(TO_PARENT);
     while(<FROM_CHILD>) {
-      if (/experimental/) {
-        $skip = 1;
-        next;
-      }
-      if ($skip) {
-        next if (!/^\s\s[^\s]/);
-        $skip = 0;
-      }
-      s/^\s\s//;
-      if (/^([^\s]+)/) {
-        # Is the checker enabled?
-        my $checker = $1;
-        my $enabled = 0;
-        my $aggregate = "";
-        foreach my $domain (split /\./, $checker) {
-          $aggregate .= $domain;
-          if ($EnabledCheckers{$aggregate}) {
-            $enabled =1;
-            last;
-          }
-          # append a dot, if an additional domain is added in the next iteration
-          $aggregate .= ".";
+      foreach my $val (split /\s+/) {
+        $val =~ s/\"//g;
+        if ($val =~ /-analyzer-checker\=([^\s]+)/) {
+          $EnabledCheckers{$1} = 1;
         }
+      }
+    }
+    waitpid($pid,0);
+    close(FROM_CHILD);
+  }
 
-        if ($enabled) {
-          print " + ";
+  # Query clang for complete list of checkers.
+  if (defined $Clang && -x $Clang) {
+    pipe(FROM_CHILD, TO_PARENT);
+    my $pid = fork();
+    if ($pid == 0) {
+      close FROM_CHILD;
+      open(STDOUT,">&", \*TO_PARENT);
+      open(STDERR,">&", \*TO_PARENT);
+      exec $Clang, ('-cc1', @PluginsToLoad , '-analyzer-checker-help');
+    }
+    close(TO_PARENT);
+    my $foundCheckers = 0;
+    while(<FROM_CHILD>) {
+      if (/CHECKERS:/) {
+        $foundCheckers = 1;
+        last;
+      }
+    }
+    if (!$foundCheckers) {
+      print "  *** Could not query Clang for the list of available checkers.";
+    }
+    else {
+      print("\nAVAILABLE CHECKERS:\n\n");
+      my $skip = 0;
+      while(<FROM_CHILD>) {
+        if (/experimental/) {
+          $skip = 1;
+          next;
+        }
+        if ($skip) {
+          next if (!/^\s\s[^\s]/);
+          $skip = 0;
+        }
+        s/^\s\s//;
+        if (/^([^\s]+)/) {
+          # Is the checker enabled?
+          my $checker = $1;
+          my $enabled = 0;
+          my $aggregate = "";
+          foreach my $domain (split /\./, $checker) {
+            $aggregate .= $domain;
+            if ($EnabledCheckers{$aggregate}) {
+              $enabled =1;
+              last;
+            }
+            # append a dot, if an additional domain is added in the next iteration
+            $aggregate .= ".";
+          }
+
+          if ($enabled) {
+            print " + ";
+          }
+          else {
+            print "   ";
+          }
         }
         else {
           print "   ";
         }
+        print $_;
       }
-      else {
-        print "   ";
-      }
-      print $_;
+      print "\nNOTE: \"+\" indicates that an analysis is enabled by default.\n"
     }
-    print "\nNOTE: \"+\" indicates that an analysis is enabled by default.\n"
+    waitpid($pid,0);
+    close(FROM_CHILD);
   }
-  waitpid($pid,0);
-  close(FROM_CHILD);
-}
 
 print <<ENDTEXT
 
