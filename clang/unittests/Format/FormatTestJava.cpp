@@ -206,6 +206,9 @@ TEST_F(FormatTestJava, Annotations) {
   verifyFormat("@Override\n"
                "@Nullable\n"
                "public String getNameIfPresent() {}");
+  verifyFormat("@Override // comment\n"
+               "@Nullable\n"
+               "public String getNameIfPresent() {}");
 
   verifyFormat("@SuppressWarnings(value = \"unchecked\")\n"
                "public void doSomething() {}");

@@ -864,7 +864,8 @@ private:
                Current.Previous->is(tok::at) &&
                Current.isNot(Keywords.kw_interface)) {
       const FormatToken &AtToken = *Current.Previous;
-      if (!AtToken.Previous || AtToken.Previous->is(TT_LeadingJavaAnnotation))
+      const FormatToken *Previous = AtToken.getPreviousNonComment();
+      if (!Previous || Previous->is(TT_LeadingJavaAnnotation))
         Current.Type = TT_LeadingJavaAnnotation;
       else
         Current.Type = TT_JavaAnnotation;
