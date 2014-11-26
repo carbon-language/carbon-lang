@@ -75,8 +75,8 @@ module LLVM_IR {
   exclude header "IR/PassManager.h"
   exclude header "IR/LegacyPassManager.h"
 
-  // Exclude this; it's intended for (repeated) textual inclusion.
-  exclude header "IR/Instruction.def"
+  // This is intended for (repeated) textual inclusion.
+  textual header "IR/Instruction.def"
 }
 
 module LLVM_LegacyPassManager {
@@ -161,6 +161,18 @@ module LLVM_Utils {
 
     // FIXME: Mislayered?
     exclude header "Support/TargetRegistry.h"
+
+    // These are intended for textual inclusion.
+    textual header "Support/ELFRelocs/AArch64.def"
+    textual header "Support/ELFRelocs/ARM.def"
+    textual header "Support/ELFRelocs/Hexagon.def"
+    textual header "Support/ELFRelocs/i386.def"
+    textual header "Support/ELFRelocs/Mips.def"
+    textual header "Support/ELFRelocs/PowerPC64.def"
+    textual header "Support/ELFRelocs/PowerPC.def"
+    textual header "Support/ELFRelocs/Sparc.def"
+    textual header "Support/ELFRelocs/SystemZ.def"
+    textual header "Support/ELFRelocs/x86_64.def"
   }
 }
 
