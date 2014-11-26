@@ -149,6 +149,7 @@ PrivateHeadersShort("p", cl::desc("Alias for --private-headers"),
                     cl::aliasopt(PrivateHeaders));
 
 static StringRef ToolName;
+static int ReturnValue = EXIT_SUCCESS;
 
 bool llvm::error(std::error_code EC) {
   if (!EC)
@@ -156,6 +157,7 @@ bool llvm::error(std::error_code EC) {
 
   outs() << ToolName << ": error reading file: " << EC.message() << ".\n";
   outs().flush();
+  ReturnValue = EXIT_FAILURE;
   return true;
 }
 
@@ -895,5 +897,5 @@ int main(int argc, char **argv) {
   std::for_each(InputFilenames.begin(), InputFilenames.end(),
                 DumpInput);
 
-  return 0;
+  return ReturnValue;
 }

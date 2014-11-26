@@ -414,7 +414,8 @@ static uint32_t getNumberOfRelocations(const coff_section *Sec,
     if (getObject(FirstReloc, M, reinterpret_cast<const coff_relocation*>(
         base + Sec->PointerToRelocations)))
       return 0;
-    return FirstReloc->VirtualAddress;
+    // -1 to exclude this first relocation entry.
+    return FirstReloc->VirtualAddress - 1;
   }
   return Sec->NumberOfRelocations;
 }
