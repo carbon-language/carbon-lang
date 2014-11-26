@@ -35,6 +35,10 @@ type MCJITCompilerOptions struct {
 	C C.struct_LLVMMCJITCompilerOptions
 }
 
+func (options *MCJITCompilerOptions) SetMCJITOptimizationLevel(level uint) {
+          options.C.OptLevel = C.uint(level)
+}
+
 // helpers
 func llvmGenericValueRefPtr(t *GenericValue) *C.LLVMGenericValueRef {
 	return (*C.LLVMGenericValueRef)(unsafe.Pointer(t))
@@ -98,10 +102,6 @@ func NewMCJITCompilerOptions() MCJITCompilerOptions {
 	var options C.struct_LLVMMCJITCompilerOptions
 	C.LLVMInitializeMCJITCompilerOptions(&options, C.size_t(unsafe.Sizeof(C.struct_LLVMMCJITCompilerOptions{})))
 	return MCJITCompilerOptions{options}
-}
-
-func SetMCJITOptimizationLevel(options MCJITCompilerOptions, level uint) {
-	options.C.OptLevel = C.uint(level)
 }
 
 func NewMCJITCompiler(m Module, options MCJITCompilerOptions) (ee ExecutionEngine, err error) {
