@@ -243,11 +243,10 @@ public:
 
   relocation_iterator
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
-                       const ObjectFile &BaseObjT,
-                       ObjSectionToIDMap &ObjSectionToID,
+                       ObjectImage &ObjImg, ObjSectionToIDMap &ObjSectionToID,
                        const SymbolTableMap &Symbols, StubMap &Stubs) override {
     const MachOObjectFile &Obj =
-      static_cast<const MachOObjectFile &>(BaseObjT);
+        static_cast<const MachOObjectFile &>(*ObjImg.getObjectFile());
     MachO::any_relocation_info RelInfo =
         Obj.getRelocation(RelI->getRawDataRefImpl());
 
@@ -269,10 +268,10 @@ public:
       RelInfo = Obj.getRelocation(RelI->getRawDataRefImpl());
     }
 
-    RelocationEntry RE(getRelocationEntry(SectionID, Obj, RelI));
+    RelocationEntry RE(getRelocationEntry(SectionID, ObjImg, RelI));
     RE.Addend = decodeAddend(RE);
     RelocationValueRef Value(
-        getRelocationValueRef(Obj, RelI, RE, ObjSectionToID, Symbols));
+        getRelocationValueRef(ObjImg, RelI, RE, ObjSectionToID, Symbols));
 
     assert((ExplicitAddend == 0 || RE.Addend == 0) && "Relocation has "\
       "ARM64_RELOC_ADDEND and embedded addend in the instruction.");
@@ -283,7 +282,7 @@ public:
 
     bool IsExtern = Obj.getPlainRelocationExternal(RelInfo);
     if (!IsExtern && RE.IsPCRel)
-      makeValueAddendPCRel(Value, Obj, RelI, 1 << RE.Size);
+      makeValueAddendPCRel(Value, ObjImg, RelI, 1 << RE.Size);
 
     RE.Addend = Value.Offset;
 
@@ -360,7 +359,7 @@ public:
     }
   }
 
-  void finalizeSection(const ObjectFile &Obj, unsigned SectionID,
+  void finalizeSection(ObjectImage &ObjImg, unsigned SectionID,
                        const SectionRef &Section) {}
 
 private:

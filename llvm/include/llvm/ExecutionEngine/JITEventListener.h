@@ -15,7 +15,6 @@
 #ifndef LLVM_EXECUTIONENGINE_JITEVENTLISTENER_H
 #define LLVM_EXECUTIONENGINE_JITEVENTLISTENER_H
 
-#include "RuntimeDyld.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/Support/DataTypes.h"
@@ -26,10 +25,7 @@ class Function;
 class MachineFunction;
 class OProfileWrapper;
 class IntelJITEventsWrapper;
-
-namespace object {
-  class ObjectFile;
-}
+class ObjectImage;
 
 /// JITEvent_EmittedFunctionDetails - Helper struct for containing information
 /// about a generated machine code function.
@@ -61,7 +57,7 @@ public:
 
 public:
   JITEventListener() {}
-  virtual ~JITEventListener() {}
+  virtual ~JITEventListener();
 
   /// NotifyObjectEmitted - Called after an object has been successfully
   /// emitted to memory.  NotifyFunctionEmitted will not be called for
@@ -71,15 +67,11 @@ public:
   /// The ObjectImage contains the generated object image
   /// with section headers updated to reflect the address at which sections
   /// were loaded and with relocations performed in-place on debug sections.
-  virtual void NotifyObjectEmitted(const object::ObjectFile &Obj,
-                                   const RuntimeDyld::LoadedObjectInfo &L) {}
+  virtual void NotifyObjectEmitted(const ObjectImage &Obj) {}
 
   /// NotifyFreeingObject - Called just before the memory associated with
   /// a previously emitted object is released.
-  virtual void NotifyFreeingObject(const object::ObjectFile &Obj) {}
-
-  // Get a pointe to the GDB debugger registration listener.
-  static JITEventListener *createGDBRegistrationListener();
+  virtual void NotifyFreeingObject(const ObjectImage &Obj) {}
 
 #if LLVM_USE_INTEL_JITEVENTS
   // Construct an IntelJITEventListener
@@ -113,8 +105,7 @@ public:
     return nullptr;
   }
 #endif // USE_OPROFILE
-private:
-  virtual void anchor();
+
 };
 
 } // end namespace llvm.

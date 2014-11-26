@@ -15,19 +15,19 @@
 #define LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/Support/Memory.h"
-#include <memory>
 
 namespace llvm {
 
 namespace object {
   class ObjectFile;
-  template <typename T> class OwningBinary;
 }
 
 class RuntimeDyldImpl;
 class RuntimeDyldCheckerImpl;
+class ObjectImage;
 
 class RuntimeDyld {
   friend class RuntimeDyldCheckerImpl;
@@ -46,35 +46,22 @@ protected:
   // Any relocations already associated with the symbol will be re-resolved.
   void reassignSectionAddress(unsigned SectionID, uint64_t Addr);
 public:
-
-  /// \brief Information about the loaded object.
-  class LoadedObjectInfo {
-    friend class RuntimeDyldImpl;
-  public:
-    LoadedObjectInfo(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
-                     unsigned EndIdx)
-      : RTDyld(RTDyld), BeginIdx(BeginIdx), EndIdx(EndIdx) { }
-
-    virtual ~LoadedObjectInfo() {}
-
-    virtual object::OwningBinary<object::ObjectFile>
-    getObjectForDebug(const object::ObjectFile &Obj) const = 0;
-
-    uint64_t getSectionLoadAddress(StringRef Name) const;
-
-  protected:
-    virtual void anchor();
-
-    RuntimeDyldImpl &RTDyld;
-    unsigned BeginIdx, EndIdx;
-  };
-
   RuntimeDyld(RTDyldMemoryManager *);
   ~RuntimeDyld();
 
-  /// Add the referenced object file to the list of objects to be loaded and
-  /// relocated.
-  std::unique_ptr<LoadedObjectInfo> loadObject(const object::ObjectFile &O);
+  /// Prepare the object contained in the input buffer for execution.
+  /// Ownership of the input buffer is transferred to the ObjectImage
+  /// instance returned from this function if successful. In the case of load
+  /// failure, the input buffer will be deleted.
+  std::unique_ptr<ObjectImage>
+  loadObject(std::unique_ptr<ObjectBuffer> InputBuffer);
+
+  /// Prepare the referenced object file for execution.
+  /// Ownership of the input object is transferred to the ObjectImage
+  /// instance returned from this function if successful. In the case of load
+  /// failure, the input object will be deleted.
+  std::unique_ptr<ObjectImage>
+  loadObject(std::unique_ptr<object::ObjectFile> InputObject);
 
   /// Get the address of our local copy of the symbol. This may or may not
   /// be the address used for relocation (clients can copy the data around

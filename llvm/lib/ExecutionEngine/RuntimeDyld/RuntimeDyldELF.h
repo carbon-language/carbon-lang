@@ -28,11 +28,9 @@ std::error_code Check(std::error_code Err) {
   }
   return Err;
 }
-
 } // end anonymous namespace
 
 class RuntimeDyldELF : public RuntimeDyldImpl {
-
   void resolveRelocation(const SectionEntry &Section, uint64_t Offset,
                          uint64_t Value, uint32_t Type, int64_t Addend,
                          uint64_t SymOffset = 0);
@@ -83,11 +81,9 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
       return 1;
   }
 
-  void findPPC64TOCSection(const ObjectFile &Obj,
-                           ObjSectionToIDMap &LocalSections,
+  void findPPC64TOCSection(ObjectImage &Obj, ObjSectionToIDMap &LocalSections,
                            RelocationValueRef &Rel);
-  void findOPDEntrySection(const ObjectFile &Obj,
-                           ObjSectionToIDMap &LocalSections,
+  void findOPDEntrySection(ObjectImage &Obj, ObjSectionToIDMap &LocalSections,
                            RelocationValueRef &Rel);
 
   uint64_t findGOTEntry(uint64_t LoadAddr, uint64_t Offset);
@@ -108,23 +104,24 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   SmallVector<SID, 2> RegisteredEHFrameSections;
 
 public:
-  RuntimeDyldELF(RTDyldMemoryManager *mm);
-  virtual ~RuntimeDyldELF();
-
-  std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
-  loadObject(const object::ObjectFile &O) override;
+  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
   void resolveRelocation(const RelocationEntry &RE, uint64_t Value) override;
   relocation_iterator
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
-                       const ObjectFile &Obj,
-                       ObjSectionToIDMap &ObjSectionToID,
+                       ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
                        const SymbolTableMap &Symbols, StubMap &Stubs) override;
-  bool isCompatibleFile(const object::ObjectFile &Obj) const override;
+  bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
+  bool isCompatibleFile(const object::ObjectFile *Buffer) const override;
   void registerEHFrames() override;
   void deregisterEHFrames() override;
-  void finalizeLoad(const ObjectFile &Obj,
+  void finalizeLoad(ObjectImage &ObjImg,
                     ObjSectionToIDMap &SectionMap) override;
+  virtual ~RuntimeDyldELF();
+
+  static std::unique_ptr<ObjectImage>
+  createObjectImage(std::unique_ptr<ObjectBuffer> InputBuffer);
+  static ObjectImage *createObjectImageFromFile(std::unique_ptr<object::ObjectFile> Obj);
 };
 
 } // end namespace llvm

@@ -1,4 +1,4 @@
-//===----- GDBRegistrationListener.cpp - Registers objects with GDB -------===//
+//===-- GDBRegistrar.cpp - Registers objects with GDB ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "JITRegistrar.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ExecutionEngine/JITEventListener.h"
-#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mutex.h"
@@ -17,7 +16,6 @@
 #include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
-using namespace llvm::object;
 
 // This must be kept in sync with gdb/gdb/jit.h .
 extern "C" {
@@ -62,49 +60,37 @@ extern "C" {
 
 namespace {
 
-struct RegisteredObjectInfo {
-  RegisteredObjectInfo() {}
-
-  RegisteredObjectInfo(std::size_t Size, jit_code_entry *Entry,
-                       OwningBinary<ObjectFile> Obj)
-    : Size(Size), Entry(Entry), Obj(std::move(Obj)) {}
-
-  std::size_t Size;
-  jit_code_entry *Entry;
-  OwningBinary<ObjectFile> Obj;
-};
-
 // Buffer for an in-memory object file in executable memory
-typedef llvm::DenseMap< const char*, RegisteredObjectInfo>
+typedef llvm::DenseMap< const char*,
+                        std::pair<std::size_t, jit_code_entry*> >
   RegisteredObjectBufferMap;
 
 /// Global access point for the JIT debugging interface designed for use with a
 /// singleton toolbox. Handles thread-safe registration and deregistration of
 /// object files that are in executable memory managed by the client of this
 /// class.
-class GDBJITRegistrationListener : public JITEventListener {
+class GDBJITRegistrar : public JITRegistrar {
   /// A map of in-memory object files that have been registered with the
   /// JIT interface.
   RegisteredObjectBufferMap ObjectBufferMap;
 
 public:
   /// Instantiates the JIT service.
-  GDBJITRegistrationListener() : ObjectBufferMap() {}
+  GDBJITRegistrar() : ObjectBufferMap() {}
 
   /// Unregisters each object that was previously registered and releases all
   /// internal resources.
-  virtual ~GDBJITRegistrationListener();
+  virtual ~GDBJITRegistrar();
 
   /// Creates an entry in the JIT registry for the buffer @p Object,
   /// which must contain an object file in executable memory with any
   /// debug information for the debugger.
-  void NotifyObjectEmitted(const ObjectFile &Object,
-                           const RuntimeDyld::LoadedObjectInfo &L) override;
+  void registerObject(const ObjectBuffer &Object) override;
 
   /// Removes the internal registration of @p Object, and
   /// frees associated resources.
   /// Returns true if @p Object was found in ObjectBufferMap.
-  void NotifyFreeingObject(const ObjectFile &Object) override;
+  bool deregisterObject(const ObjectBuffer &Object) override;
 
 private:
   /// Deregister the debug info for the given object file from the debugger
@@ -133,11 +119,10 @@ void NotifyDebugger(jit_code_entry* JITCodeEntry) {
   __jit_debug_register_code();
 }
 
-GDBJITRegistrationListener::~GDBJITRegistrationListener() {
+GDBJITRegistrar::~GDBJITRegistrar() {
   // Free all registered object files.
   llvm::MutexGuard locked(*JITDebugLock);
-  for (RegisteredObjectBufferMap::iterator I = ObjectBufferMap.begin(),
-                                           E = ObjectBufferMap.end();
+  for (RegisteredObjectBufferMap::iterator I = ObjectBufferMap.begin(), E = ObjectBufferMap.end();
        I != E; ++I) {
     // Call the private method that doesn't update the map so our iterator
     // doesn't break.
@@ -146,24 +131,14 @@ GDBJITRegistrationListener::~GDBJITRegistrationListener() {
   ObjectBufferMap.clear();
 }
 
-void GDBJITRegistrationListener::NotifyObjectEmitted(
-                                       const ObjectFile &Object,
-                                       const RuntimeDyld::LoadedObjectInfo &L) {
+void GDBJITRegistrar::registerObject(const ObjectBuffer &Object) {
 
-  OwningBinary<ObjectFile> DebugObj = L.getObjectForDebug(Object);
+  const char *Buffer = Object.getBufferStart();
+  size_t      Size = Object.getBufferSize();
 
-  // Bail out if debug objects aren't supported.
-  if (!DebugObj.getBinary())
-    return;
-
-  const char *Buffer = DebugObj.getBinary()->getMemoryBufferRef().getBufferStart();
-  size_t      Size = DebugObj.getBinary()->getMemoryBufferRef().getBufferSize();
-
-  const char *Key = Object.getMemoryBufferRef().getBufferStart();
-
-  assert(Key && "Attempt to register a null object with a debugger.");
+  assert(Buffer && "Attempt to register a null object with a debugger.");
   llvm::MutexGuard locked(*JITDebugLock);
-  assert(ObjectBufferMap.find(Key) == ObjectBufferMap.end() &&
+  assert(ObjectBufferMap.find(Buffer) == ObjectBufferMap.end() &&
          "Second attempt to perform debug registration.");
   jit_code_entry* JITCodeEntry = new jit_code_entry();
 
@@ -174,27 +149,28 @@ void GDBJITRegistrationListener::NotifyObjectEmitted(
     JITCodeEntry->symfile_addr = Buffer;
     JITCodeEntry->symfile_size = Size;
 
-    ObjectBufferMap[Key] = RegisteredObjectInfo(Size, JITCodeEntry,
-                                                std::move(DebugObj));
+    ObjectBufferMap[Buffer] = std::make_pair(Size, JITCodeEntry);
     NotifyDebugger(JITCodeEntry);
   }
 }
 
-void GDBJITRegistrationListener::NotifyFreeingObject(const ObjectFile& Object) {
-  const char *Key = Object.getMemoryBufferRef().getBufferStart();
+bool GDBJITRegistrar::deregisterObject(const ObjectBuffer& Object) {
+  const char *Buffer = Object.getBufferStart();
   llvm::MutexGuard locked(*JITDebugLock);
-  RegisteredObjectBufferMap::iterator I = ObjectBufferMap.find(Key);
+  RegisteredObjectBufferMap::iterator I = ObjectBufferMap.find(Buffer);
 
   if (I != ObjectBufferMap.end()) {
     deregisterObjectInternal(I);
     ObjectBufferMap.erase(I);
+    return true;
   }
+  return false;
 }
 
-void GDBJITRegistrationListener::deregisterObjectInternal(
+void GDBJITRegistrar::deregisterObjectInternal(
     RegisteredObjectBufferMap::iterator I) {
 
-  jit_code_entry*& JITCodeEntry = I->second.Entry;
+  jit_code_entry*& JITCodeEntry = I->second.second;
 
   // Do the unregistration.
   {
@@ -224,14 +200,14 @@ void GDBJITRegistrationListener::deregisterObjectInternal(
   JITCodeEntry = nullptr;
 }
 
-llvm::ManagedStatic<GDBJITRegistrationListener> GDBRegListener;
+llvm::ManagedStatic<GDBJITRegistrar> TheRegistrar;
 
 } // end namespace
 
 namespace llvm {
 
-JITEventListener* JITEventListener::createGDBRegistrationListener() {
-  return &*GDBRegListener;
+JITRegistrar& JITRegistrar::getGDBRegistrar() {
+  return *TheRegistrar;
 }
 
 } // namespace llvm
