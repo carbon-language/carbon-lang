@@ -36,7 +36,7 @@ type MCJITCompilerOptions struct {
 }
 
 func (options *MCJITCompilerOptions) SetMCJITOptimizationLevel(level uint) {
-          options.C.OptLevel = C.uint(level)
+	options.C.OptLevel = C.uint(level)
 }
 
 // helpers
