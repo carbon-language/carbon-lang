@@ -186,8 +186,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::SUBE, VT, Expand);
   }
 
-  setBooleanContents(ZeroOrNegativeOneBooleanContent);
-  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
   setSchedulingPreference(Sched::Source);
 }
 

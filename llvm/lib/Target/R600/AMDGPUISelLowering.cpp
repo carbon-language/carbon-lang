@@ -382,6 +382,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::STORE);
 
+  setBooleanContents(ZeroOrNegativeOneBooleanContent);
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
+
   setSchedulingPreference(Sched::RegPressure);
   setJumpIsExpensive(true);
 
