@@ -282,7 +282,7 @@ defm SQRT: FPUnary<fsqrt,MRM_FA, "fsqrt">;
 defm SIN : FPUnary<fsin, MRM_FE, "fsin">;
 defm COS : FPUnary<fcos, MRM_FF, "fcos">;
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def TST_Fp32  : FpIf32<(outs), (ins RFP32:$src), OneArgFP, []>;
 def TST_Fp64  : FpIf64<(outs), (ins RFP64:$src), OneArgFP, []>;
 def TST_Fp80  : FpI_<(outs), (ins RFP80:$src), OneArgFP, []>;
@@ -415,7 +415,7 @@ def ST_Fp80m64 : FpI_<(outs), (ins f64mem:$op, RFP80:$src), OneArgFP,
                   [(truncstoref64 RFP80:$src, addr:$op)]>;
 // FST does not support 80-bit memory target; FSTP must be used.
 
-let mayStore = 1, neverHasSideEffects = 1 in {
+let mayStore = 1, hasSideEffects = 0 in {
 def ST_FpP32m    : FpIf32<(outs), (ins f32mem:$op, RFP32:$src), OneArgFP, []>;
 def ST_FpP64m32  : FpIf64<(outs), (ins f32mem:$op, RFP64:$src), OneArgFP, []>;
 def ST_FpP64m    : FpIf64<(outs), (ins f64mem:$op, RFP64:$src), OneArgFP, []>;
@@ -424,7 +424,7 @@ def ST_FpP80m64  : FpI_<(outs), (ins f64mem:$op, RFP80:$src), OneArgFP, []>;
 }
 def ST_FpP80m    : FpI_<(outs), (ins f80mem:$op, RFP80:$src), OneArgFP,
                     [(store RFP80:$src, addr:$op)]>;
-let mayStore = 1, neverHasSideEffects = 1 in {
+let mayStore = 1, hasSideEffects = 0 in {
 def IST_Fp16m32  : FpIf32<(outs), (ins i16mem:$op, RFP32:$src), OneArgFP, []>;
 def IST_Fp32m32  : FpIf32<(outs), (ins i32mem:$op, RFP32:$src), OneArgFP, []>;
 def IST_Fp64m32  : FpIf32<(outs), (ins i64mem:$op, RFP32:$src), OneArgFP, []>;

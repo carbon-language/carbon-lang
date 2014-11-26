@@ -1454,7 +1454,7 @@ def LFD : DForm_1<50, (outs f8rc:$rD), (ins memri:$src),
 
 
 // Unindexed (r+i) Loads with Update (preinc).
-let mayLoad = 1, neverHasSideEffects = 1 in {
+let mayLoad = 1, hasSideEffects = 0 in {
 def LBZU : DForm_1<35, (outs gprc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                    "lbzu $rD, $addr", IIC_LdStLoadUpd,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
@@ -1797,7 +1797,7 @@ def NOP_GT_PWR7 : DForm_4_fixedreg_zero<24, 2, (outs), (ins),
                                         "ori 2, 2, 0", IIC_IntSimple, []>;
 }
 
-let isCompare = 1, neverHasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 0 in {
   def CMPWI : DForm_5_ext<11, (outs crrc:$crD), (ins gprc:$rA, s16imm:$imm),
                           "cmpwi $crD, $rA, $imm", IIC_IntCompare>;
   def CMPLWI : DForm_6_ext<10, (outs crrc:$dst), (ins gprc:$src1, u16imm:$src2),
@@ -1805,7 +1805,7 @@ let isCompare = 1, neverHasSideEffects = 1 in {
 }
 }
 
-let PPC970_Unit = 1, neverHasSideEffects = 1 in {  // FXU Operations.
+let PPC970_Unit = 1, hasSideEffects = 0 in {  // FXU Operations.
 let isCommutable = 1 in {
 defm NAND : XForm_6r<31, 476, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "nand", "$rA, $rS, $rB", IIC_IntSimple,
@@ -1848,7 +1848,7 @@ defm SRAW : XForm_6rc<31, 792, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 defm SRAWI : XForm_10rc<31, 824, (outs gprc:$rA), (ins gprc:$rS, u5imm:$SH),
                         "srawi", "$rA, $rS, $SH", IIC_IntShift,
                         [(set i32:$rA, (sra i32:$rS, (i32 imm:$SH)))]>;
@@ -1862,7 +1862,7 @@ defm EXTSH  : XForm_11r<31, 922, (outs gprc:$rA), (ins gprc:$rS),
                         "extsh", "$rA, $rS", IIC_IntSimple,
                         [(set i32:$rA, (sext_inreg i32:$rS, i16))]>;
 }
-let isCompare = 1, neverHasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 0 in {
   def CMPW   : XForm_16_ext<31, 0, (outs crrc:$crD), (ins gprc:$rA, gprc:$rB),
                             "cmpw $crD, $rA, $rB", IIC_IntCompare>;
   def CMPLW  : XForm_16_ext<31, 32, (outs crrc:$crD), (ins gprc:$rA, gprc:$rB),
@@ -1872,7 +1872,7 @@ let isCompare = 1, neverHasSideEffects = 1 in {
 let PPC970_Unit = 3 in {  // FPU Operations.
 //def FCMPO  : XForm_17<63, 32, (outs CRRC:$crD), (ins FPRC:$fA, FPRC:$fB),
 //                      "fcmpo $crD, $fA, $fB", IIC_FPCompare>;
-let isCompare = 1, neverHasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 0 in {
   def FCMPUS : XForm_17<63, 0, (outs crrc:$crD), (ins f4rc:$fA, f4rc:$fB),
                         "fcmpu $crD, $fA, $fB", IIC_FPCompare>;
   let Interpretation64Bit = 1, isCodeGenOnly = 1 in
@@ -1881,7 +1881,7 @@ let isCompare = 1, neverHasSideEffects = 1 in {
 }
 
 let Uses = [RM] in {
-  let neverHasSideEffects = 1 in {
+  let hasSideEffects = 0 in {
   defm FCTIW  : XForm_26r<63, 14, (outs f8rc:$frD), (ins f8rc:$frB),
                           "fctiw", "$frD, $frB", IIC_FPGeneral,
                           []>;
@@ -1902,7 +1902,7 @@ let Uses = [RM] in {
                           [(set f32:$frD, (frnd f32:$frB))]>;
   }
 
-  let neverHasSideEffects = 1 in {
+  let hasSideEffects = 0 in {
   let Interpretation64Bit = 1, isCodeGenOnly = 1 in
   defm FRIPD  : XForm_26r<63, 456, (outs f8rc:$frD), (ins f8rc:$frB),
                           "frip", "$frD, $frB", IIC_FPGeneral,
@@ -1939,13 +1939,13 @@ let Uses = [RM] in {
 /// often coalesced away and we don't want the dispatch group builder to think
 /// that they will fill slots (which could cause the load of a LSU reject to
 /// sneak into a d-group with a store).
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 defm FMR   : XForm_26r<63, 72, (outs f4rc:$frD), (ins f4rc:$frB),
                        "fmr", "$frD, $frB", IIC_FPGeneral,
                        []>,  // (set f32:$frD, f32:$frB)
                        PPC970_Unit_Pseudo;
 
-let PPC970_Unit = 3, neverHasSideEffects = 1 in {  // FPU Operations.
+let PPC970_Unit = 3, hasSideEffects = 0 in {  // FPU Operations.
 // These are artificially split into two different forms, for 4/8 byte FP.
 defm FABSS  : XForm_26r<63, 264, (outs f4rc:$frD), (ins f4rc:$frB),
                         "fabs", "$frD, $frB", IIC_FPGeneral,
@@ -1994,7 +1994,7 @@ defm FRSQRTES : XForm_26r<59, 26, (outs f4rc:$frD), (ins f4rc:$frB),
 
 // XL-Form instructions.  condition register logical ops.
 //
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def MCRF   : XLForm_3<19, 0, (outs crrc:$BF), (ins crrc:$BFA),
                       "mcrf $BF, $BFA", IIC_BrMCR>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
@@ -2133,7 +2133,7 @@ let mayLoad = 1 in
 def RESTORE_VRSAVE : Pseudo<(outs VRSAVERC:$vrsave), (ins memri:$F),
                      "#RESTORE_VRSAVE", []>;
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def MTOCRF: XFXForm_5a<31, 144, (outs crbitm:$FXM), (ins gprc:$ST),
                        "mtocrf $FXM, $ST", IIC_BrMCRX>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
@@ -2150,7 +2150,7 @@ def MFOCRF: XFXForm_5a<31, 19, (outs gprc:$rT), (ins crbitm:$FXM),
 def MFCR : XFXForm_3<31, 19, (outs gprc:$rT), (ins),
                      "mfcr $rT", IIC_SprMFCR>,
                      PPC970_MicroCode, PPC970_Unit_CRU;
-} // neverHasSideEffects = 1
+} // hasSideEffects = 0
 
 // Pseudo instruction to perform FADD in round-to-zero mode.
 let usesCustomInserter = 1, Uses = [RM] in {
@@ -2179,7 +2179,7 @@ let Uses = [RM] in {
 }
 
 
-let PPC970_Unit = 1, neverHasSideEffects = 1 in {  // FXU Operations.
+let PPC970_Unit = 1, hasSideEffects = 0 in {  // FXU Operations.
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 let isCommutable = 1 in
 defm ADD4  : XOForm_1r<31, 266, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
@@ -2250,7 +2250,7 @@ defm SUBFZE : XOForm_3rc<31, 200, 0, (outs gprc:$rT), (ins gprc:$rA),
 // A-Form instructions.  Most of the instructions executed in the FPU are of
 // this type.
 //
-let PPC970_Unit = 3, neverHasSideEffects = 1 in {  // FPU Operations.
+let PPC970_Unit = 3, hasSideEffects = 0 in {  // FPU Operations.
 let Uses = [RM] in {
 let isCommutable = 1 in {
   defm FMADD : AForm_1r<63, 29, 
@@ -2346,7 +2346,7 @@ let Uses = [RM] in {
   }
 }
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 let PPC970_Unit = 1 in {  // FXU Operations.
   let isSelect = 1 in
   def ISEL  : AForm_4<31, 15,
@@ -2382,7 +2382,7 @@ defm RLWNM  : MForm_2r<23, (outs gprc:$rA),
                        "rlwnm", "$rA, $rS, $rB, $MB, $ME", IIC_IntGeneral,
                        []>;
 }
-} // neverHasSideEffects = 1
+} // hasSideEffects = 0
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns

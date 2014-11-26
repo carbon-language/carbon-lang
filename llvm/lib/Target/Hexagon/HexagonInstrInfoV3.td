@@ -21,7 +21,7 @@ def callv3nr : SDNode<"HexagonISD::CALLv3nr", SDT_SPCall,
 // J +
 //===----------------------------------------------------------------------===//
 // Call subroutine.
-let isCall = 1, neverHasSideEffects = 1,
+let isCall = 1, hasSideEffects = 0,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, R28, R31,
                 P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
   def CALLv3 : JInst<(outs), (ins calltarget:$dst),
@@ -37,7 +37,7 @@ let isCall = 1, neverHasSideEffects = 1,
 // JR +
 //===----------------------------------------------------------------------===//
 // Call subroutine from register.
-let isCall = 1, neverHasSideEffects = 1,
+let isCall = 1, hasSideEffects = 0,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, R28, R31,
                 P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
   def CALLRv3 : JRInst<(outs), (ins IntRegs:$dst),

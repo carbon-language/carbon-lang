@@ -567,7 +567,7 @@ class MTBUF <dag outs, dag ins, string asm, list<dag> pattern> :
   let EXP_CNT = 1;
   let MTBUF = 1;
 
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
 }
 

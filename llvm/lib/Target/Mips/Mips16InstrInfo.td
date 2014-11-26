@@ -502,7 +502,7 @@ class ArithLogic16Defs<bit isCom=0> {
   bits<5> shamt = 0;
   bit isCommutable = isCom;
   bit isReMaterializable = 1;
-  bit neverHasSideEffects = 1;
+  bit hasSideEffects = 0;
 }
 
 class branch16 {
@@ -879,7 +879,7 @@ def MoveR3216: FI8_MOVR3216_ins<"move", IIAlu>;
 //
 def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIAlu> {
   let Uses = [HI0];
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 
 //
@@ -889,7 +889,7 @@ def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIAlu> {
 //
 def Mflo16: FRR16_M_ins<0b10010, "mflo", IIAlu> {
   let Uses = [LO0];
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 
 //
@@ -897,13 +897,13 @@ def Mflo16: FRR16_M_ins<0b10010, "mflo", IIAlu> {
 //
 def MultRxRy16:  FMULT16_ins<"mult",  IIAlu> {
   let isCommutable = 1;
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let Defs = [HI0, LO0];
 }
 
 def MultuRxRy16: FMULT16_ins<"multu", IIAlu> {
   let isCommutable = 1;
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let Defs = [HI0, LO0];
 }
 
@@ -914,7 +914,7 @@ def MultuRxRy16: FMULT16_ins<"multu", IIAlu> {
 //
 def MultRxRyRz16: FMULT16_LO_ins<"mult", IIAlu> {
   let isCommutable = 1;
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let Defs = [HI0, LO0];
 }
 
@@ -925,7 +925,7 @@ def MultRxRyRz16: FMULT16_LO_ins<"mult", IIAlu> {
 //
 def MultuRxRyRz16: FMULT16_LO_ins<"multu", IIAlu> {
   let isCommutable = 1;
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let Defs = [HI0, LO0];
 }
 
@@ -1910,7 +1910,7 @@ def cpinst_operand : Operand<i32> {
 // is the index into the MachineConstantPool that this is, the third is the
 // size in bytes of this constant pool entry.
 //
-let neverHasSideEffects = 1, isNotDuplicable = 1 in
+let hasSideEffects = 0, isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 MipsPseudo16<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
                       i32imm:$size), "foo", []>;

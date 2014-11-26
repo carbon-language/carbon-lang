@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 // LEA - Load Effective Address
 let SchedRW = [WriteLEA] in {
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def LEA16r   : I<0x8D, MRMSrcMem,
                  (outs GR16:$dst), (ins i32mem:$src),
                  "lea{w}\t{$src|$dst}, {$dst|$src}", [], IIC_LEA_16>, OpSize16;
@@ -65,18 +65,18 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                [(set AL, (mul AL, GR8:$src)),
                 (implicit EFLAGS)], IIC_MUL8>, Sched<[WriteIMul]>;
 // AX,DX = AX*GR16
-let Defs = [AX,DX,EFLAGS], Uses = [AX], neverHasSideEffects = 1 in
+let Defs = [AX,DX,EFLAGS], Uses = [AX], hasSideEffects = 0 in
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src),
                "mul{w}\t$src",
                [], IIC_MUL16_REG>, OpSize16, Sched<[WriteIMul]>;
 // EAX,EDX = EAX*GR32
-let Defs = [EAX,EDX,EFLAGS], Uses = [EAX], neverHasSideEffects = 1 in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX], hasSideEffects = 0 in
 def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src),
                "mul{l}\t$src",
                [/*(set EAX, EDX, EFLAGS, (X86umul_flag EAX, GR32:$src))*/],
                IIC_MUL32_REG>, OpSize32, Sched<[WriteIMul]>;
 // RAX,RDX = RAX*GR64
-let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], neverHasSideEffects = 1 in
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], hasSideEffects = 0 in
 def MUL64r : RI<0xF7, MRM4r, (outs), (ins GR64:$src),
                 "mul{q}\t$src",
                 [/*(set RAX, RDX, EFLAGS, (X86umul_flag RAX, GR64:$src))*/],
@@ -91,7 +91,7 @@ def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
                [(set AL, (mul AL, (loadi8 addr:$src))),
                 (implicit EFLAGS)], IIC_MUL8>, SchedLoadReg<WriteIMulLd>;
 // AX,DX = AX*[mem16]
-let mayLoad = 1, neverHasSideEffects = 1 in {
+let mayLoad = 1, hasSideEffects = 0 in {
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def MUL16m : I<0xF7, MRM4m, (outs), (ins i16mem:$src),
                "mul{w}\t$src",
@@ -107,7 +107,7 @@ def MUL64m : RI<0xF7, MRM4m, (outs), (ins i64mem:$src),
                 "mul{q}\t$src", [], IIC_MUL64>, SchedLoadReg<WriteIMulLd>;
 }
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 // AL,AH = AL*GR8
 let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def IMUL8r  : I<0xF6, MRM5r, (outs),  (ins GR8:$src), "imul{b}\t$src", [],
@@ -145,7 +145,7 @@ let Defs = [RAX,RDX,EFLAGS], Uses = [RAX] in
 def IMUL64m : RI<0xF7, MRM5m, (outs), (ins i64mem:$src),
                  "imul{q}\t$src", [], IIC_IMUL64>, SchedLoadReg<WriteIMulLd>;
 }
-} // neverHasSideEffects
+} // hasSideEffects
 
 
 let Defs = [EFLAGS] in {
@@ -1332,7 +1332,7 @@ let Predicates = [HasBMI] in {
 // MULX Instruction
 //
 multiclass bmi_mulx<string mnemonic, RegisterClass RC, X86MemOperand x86memop> {
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   let isCommutable = 1 in
   def rr : I<0xF6, MRMSrcReg, (outs RC:$dst1, RC:$dst2), (ins RC:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),

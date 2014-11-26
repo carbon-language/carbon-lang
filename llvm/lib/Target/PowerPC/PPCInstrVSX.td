@@ -42,7 +42,7 @@ multiclass XX3Form_Rcr<bits<6> opcode, bits<7> xo, dag OOL, dag IOL,
 def HasVSX : Predicate<"PPCSubTarget->hasVSX()">;
 let Predicates = [HasVSX] in {
 let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
-let neverHasSideEffects = 1 in { // VSX instructions don't have side effects.
+let hasSideEffects = 0 in { // VSX instructions don't have side effects.
 let Uses = [RM] in {
 
   // Load indexed instructions
@@ -728,7 +728,7 @@ let Uses = [RM] in {
   def XXSPLTW : XX2Form_2<60, 164,
                        (outs vsrc:$XT), (ins vsrc:$XB, u2imm:$UIM),
                        "xxspltw $XT, $XB, $UIM", IIC_VecPerm, []>;
-} // neverHasSideEffects
+} // hasSideEffects
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
 // instruction selection into a branch sequence.

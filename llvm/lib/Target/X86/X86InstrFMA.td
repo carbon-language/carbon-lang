@@ -69,7 +69,7 @@ multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        /* IsRVariantCommutable */ 1,
                        /* IsMVariantCommutable */ 1,
                        Op>;
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   defm r132 : fma3p_rm<opc132,
                        !strconcat(OpcodeStr, "132", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256>;
@@ -81,7 +81,7 @@ let neverHasSideEffects = 1 in {
                        MemFrag128, MemFrag256, OpTy128, OpTy256,
                        /* IsRVariantCommutable */ 1,
                        /* IsMVariantCommutable */ 0>;
-} // neverHasSideEffects = 1
+} // hasSideEffects = 0
 }
 
 // Fused Multiply-Add
@@ -155,7 +155,7 @@ multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        SDNode OpNode, RegisterClass RC, ValueType OpVT,
                        X86MemOperand x86memop, Operand memop, PatFrag mem_frag,
                        ComplexPattern mem_cpat> {
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   defm r132 : fma3s_rm<opc132, !strconcat(OpStr, "132", PackTy),
                        x86memop, RC, OpVT, mem_frag>;
   // See the other defm of r231 for the explanation regarding the

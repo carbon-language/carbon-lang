@@ -734,7 +734,7 @@ def INLINEASM : Instruction {
   let OutOperandList = (outs);
   let InOperandList = (ins variable_ops);
   let AsmString = "";
-  let neverHasSideEffects = 1;  // Note side effect is encoded in an operand.
+  let hasSideEffects = 0;  // Note side effect is encoded in an operand.
 }
 def CFI_INSTRUCTION : Instruction {
   let OutOperandList = (outs);
@@ -761,26 +761,26 @@ def KILL : Instruction {
   let OutOperandList = (outs);
   let InOperandList = (ins variable_ops);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 def EXTRACT_SUBREG : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$supersrc, i32imm:$subidx);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 def INSERT_SUBREG : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$supersrc, unknown:$subsrc, i32imm:$subidx);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let Constraints = "$supersrc = $dst";
 }
 def IMPLICIT_DEF : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let isReMaterializable = 1;
   let isAsCheapAsAMove = 1;
 }
@@ -788,33 +788,33 @@ def SUBREG_TO_REG : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$implsrc, unknown:$subsrc, i32imm:$subidx);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 def COPY_TO_REGCLASS : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$src, i32imm:$regclass);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let isAsCheapAsAMove = 1;
 }
 def DBG_VALUE : Instruction {
   let OutOperandList = (outs);
   let InOperandList = (ins variable_ops);
   let AsmString = "DBG_VALUE";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 def REG_SEQUENCE : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$supersrc, variable_ops);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let isAsCheapAsAMove = 1;
 }
 def COPY : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins unknown:$src);
   let AsmString = "";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let isAsCheapAsAMove = 1;
 }
 def BUNDLE : Instruction {
@@ -826,13 +826,13 @@ def LIFETIME_START : Instruction {
   let OutOperandList = (outs);
   let InOperandList = (ins i32imm:$id);
   let AsmString = "LIFETIME_START";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 def LIFETIME_END : Instruction {
   let OutOperandList = (outs);
   let InOperandList = (ins i32imm:$id);
   let AsmString = "LIFETIME_END";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 def STACKMAP : Instruction {
   let OutOperandList = (outs);

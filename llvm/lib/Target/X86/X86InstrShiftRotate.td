@@ -859,7 +859,7 @@ def ROT64L2R_imm8  : SDNodeXForm<imm, [{
 }]>;
 
 multiclass bmi_rotate<string asm, RegisterClass RC, X86MemOperand x86memop> {
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def ri : Ii8<0xF0, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, i8imm:$src2),
                !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                []>, TAXD, VEX, Sched<[WriteShift]>;
@@ -872,7 +872,7 @@ let neverHasSideEffects = 1 in {
 }
 
 multiclass bmi_shift<string asm, RegisterClass RC, X86MemOperand x86memop> {
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def rr : I<0xF7, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
              !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>,
              VEX_4VOp3, Sched<[WriteShift]>;

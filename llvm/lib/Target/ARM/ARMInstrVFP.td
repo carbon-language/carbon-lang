@@ -194,7 +194,7 @@ multiclass vfp_ldst_mult<string asm, bit L_bit,
   }
 }
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 defm VLDM : vfp_ldst_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
@@ -202,7 +202,7 @@ defm VLDM : vfp_ldst_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm VSTM : vfp_ldst_mult<"vstm", 0, IIC_fpStore_m, IIC_fpStore_mu>;
 
-} // neverHasSideEffects
+} // hasSideEffects
 
 def : MnemonicAlias<"vldm", "vldmia">;
 def : MnemonicAlias<"vstm", "vstmia">;
@@ -769,7 +769,7 @@ def VSQRTS : ASuI<0b11101, 0b11, 0b0001, 0b11, 0,
                   IIC_fpSQRT32, "vsqrt", ".f32\t$Sd, $Sm",
                   [(set SPR:$Sd, (fsqrt SPR:$Sm))]>;
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def VMOVD  : ADuI<0b11101, 0b11, 0b0000, 0b01, 0,
                   (outs DPR:$Dd), (ins DPR:$Dm),
                   IIC_fpUNA64, "vmov", ".f64\t$Dd, $Dm", []>;
@@ -777,7 +777,7 @@ def VMOVD  : ADuI<0b11101, 0b11, 0b0000, 0b01, 0,
 def VMOVS  : ASuI<0b11101, 0b11, 0b0000, 0b01, 0,
                   (outs SPR:$Sd), (ins SPR:$Sm),
                   IIC_fpUNA32, "vmov", ".f32\t$Sd, $Sm", []>;
-} // neverHasSideEffects
+} // hasSideEffects
 
 //===----------------------------------------------------------------------===//
 // FP <-> GPR Copies.  Int <-> FP Conversions.
@@ -827,7 +827,7 @@ def VMOVSR : AVConv4I<0b11100000, 0b1010,
   let D = VFPNeonDomain;
 }
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
                         (outs GPR:$Rt, GPR:$Rt2), (ins DPR:$Dm),
                         IIC_fpMOVDI, "vmov", "\t$Rt, $Rt2, $Dm",
@@ -876,7 +876,7 @@ def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
   let D = VFPNeonDomain;
   let DecoderMethod = "DecodeVMOVRRS";
 }
-} // neverHasSideEffects
+} // hasSideEffects
 
 // FMDHR: GPR -> SPR
 // FMDLR: GPR -> SPR
@@ -907,7 +907,7 @@ def VMOVDRR : AVConv5I<0b11000100, 0b1011,
   let isRegSequence = 1;
 }
 
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def VMOVSRR : AVConv5I<0b11000100, 0b1010,
                      (outs SPR:$dst1, SPR:$dst2), (ins GPR:$src1, GPR:$src2),
                 IIC_fpMOVID, "vmov", "\t$dst1, $dst2, $src1, $src2",
@@ -1543,7 +1543,7 @@ def : Pat<(fneg (f32 (fma SPR:$Sn, (fneg SPR:$Sm), SPR:$Sdin))),
 // FP Conditional moves.
 //
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def VMOVDcc  : PseudoInst<(outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm, cmovpred:$p),
                     IIC_fpUNA64,
                     [(set (f64 DPR:$Dd),
@@ -1555,7 +1555,7 @@ def VMOVScc  : PseudoInst<(outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm, cmovpred:$p),
                     [(set (f32 SPR:$Sd),
                           (ARMcmov SPR:$Sn, SPR:$Sm, cmovpred:$p))]>,
                RegConstraint<"$Sn = $Sd">, Requires<[HasVFP2]>;
-} // neverHasSideEffects
+} // hasSideEffects
 
 //===----------------------------------------------------------------------===//
 // Move from VFP System Register to ARM core register.

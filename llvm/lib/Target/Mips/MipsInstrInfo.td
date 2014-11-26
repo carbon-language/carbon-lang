@@ -316,7 +316,7 @@ class IsAsCheapAsAMove {
 }
 
 class NeverHasSideEffects {
-  bit neverHasSideEffects = 1;
+  bit hasSideEffects = 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -632,7 +632,7 @@ class shift_rotate_reg<string opstr, RegisterOperand RO, InstrItinClass itin,
 class LoadUpper<string opstr, RegisterOperand RO, Operand Imm>:
   InstSE<(outs RO:$rt), (ins Imm:$imm16), !strconcat(opstr, "\t$rt, $imm16"),
          [], II_LUI, FrmI, opstr>, IsAsCheapAsAMove {
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let isReMaterializable = 1;
 }
 
@@ -876,7 +876,7 @@ class Mult<string opstr, InstrItinClass itin, RegisterOperand RO,
          itin, FrmR, opstr> {
   let isCommutable = 1;
   let Defs = DefRegs;
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 
 // Pseudo multiply/divide instruction with explicit accumulator register
@@ -922,7 +922,7 @@ class MoveFromLOHI<string opstr, RegisterOperand RO, Register UseReg>:
   InstSE<(outs RO:$rd), (ins), !strconcat(opstr, "\t$rd"), [], II_MFHI_MFLO,
          FrmR, opstr> {
   let Uses = [UseReg];
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 
 class PseudoMTLOHI<RegisterClass DstRC, RegisterClass SrcRC>
@@ -934,7 +934,7 @@ class MoveToLOHI<string opstr, RegisterOperand RO, list<Register> DefRegs>:
   InstSE<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"), [], II_MTHI_MTLO,
   FrmR, opstr> {
   let Defs = DefRegs;
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 
 class EffectiveAddress<string opstr, RegisterOperand RO> :
@@ -964,7 +964,7 @@ class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
 class SubwordSwap<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"), [],
          NoItinerary, FrmR, opstr> {
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 
 // Read Hardware

@@ -1364,7 +1364,7 @@ def CONST_COPY : Instruction {
   let Pattern =
       [(set R600_Reg32:$dst, (CONST_ADDRESS ADDRGA_CONST_OFFSET:$src))];
   let AsmString = "CONST_COPY";
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let isAsCheapAsAMove = 1;
   let Itinerary = NullALU;
 }

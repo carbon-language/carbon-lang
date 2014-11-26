@@ -16,7 +16,7 @@ def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i64imm:$amt),
 def ADJCALLSTACKUP   : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
                               [(callseq_end timm:$amt1, timm:$amt2)]>;
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   // Takes as input the value of the stack pointer after a dynamic allocation
   // has been made.  Sets the output to the address of the dynamically-
   // allocated area itself, skipping the outgoing arguments.
@@ -263,7 +263,7 @@ def BASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
 //===----------------------------------------------------------------------===//
 
 // Register moves.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   // Expands to LR, RISBHG or RISBLG, depending on the choice of registers.
   def LRMux : UnaryRRPseudo<"l", null_frag, GRX32, GRX32>,
               Requires<[FeatureHighWord]>;
@@ -286,7 +286,7 @@ let Uses = [CC] in {
 }
 
 // Immediate moves.
-let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
+let hasSideEffects = 0, isAsCheapAsAMove = 1, isMoveImm = 1,
     isReMaterializable = 1 in {
   // 16-bit sign-extended immediates.  LHIMux expands to LHI or IIHF,
   // deopending on the choice of register.
@@ -402,13 +402,13 @@ let mayLoad = 1, mayStore = 1, Defs = [CC], Uses = [R0L] in
 //===----------------------------------------------------------------------===//
 
 // 32-bit extensions from registers.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def LBR : UnaryRRE<"lb", 0xB926, sext8,  GR32, GR32>;
   def LHR : UnaryRRE<"lh", 0xB927, sext16, GR32, GR32>;
 }
 
 // 64-bit extensions from registers.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def LGBR : UnaryRRE<"lgb", 0xB906, sext8,  GR64, GR64>;
   def LGHR : UnaryRRE<"lgh", 0xB907, sext16, GR64, GR64>;
   def LGFR : UnaryRRE<"lgf", 0xB914, sext32, GR64, GR32>;
@@ -452,7 +452,7 @@ let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
 //===----------------------------------------------------------------------===//
 
 // 32-bit extensions from registers.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   // Expands to LLCR or RISB[LH]G, depending on the choice of registers.
   def LLCRMux : UnaryRRPseudo<"llc", zext8, GRX32, GRX32>,
                 Requires<[FeatureHighWord]>;
@@ -464,7 +464,7 @@ let neverHasSideEffects = 1 in {
 }
 
 // 64-bit extensions from registers.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def LLGCR : UnaryRRE<"llgc", 0xB984, zext8,  GR64, GR64>;
   def LLGHR : UnaryRRE<"llgh", 0xB985, zext16, GR64, GR64>;
   def LLGFR : UnaryRRE<"llgf", 0xB916, zext32, GR64, GR32>;
@@ -546,7 +546,7 @@ def STMG : StoreMultipleRSY<"stmg", 0xEB24, GR64>;
 //===----------------------------------------------------------------------===//
 
 // Byte-swapping register moves.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def LRVR  : UnaryRRE<"lrv",  0xB91F, bswap, GR32, GR32>;
   def LRVGR : UnaryRRE<"lrvg", 0xB90F, bswap, GR64, GR64>;
 }
@@ -566,7 +566,7 @@ def STRVG : StoreRXY<"strvg", 0xE32F, storeu<bswap, nonvolatile_store>,
 //===----------------------------------------------------------------------===//
 
 // Load BDX-style addresses.
-let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
+let hasSideEffects = 0, isAsCheapAsAMove = 1, isReMaterializable = 1,
     DispKey = "la" in {
   let DispSize = "12" in
     def LA : InstRX<0x41, (outs GR64:$R1), (ins laaddr12pair:$XBD2),
@@ -580,7 +580,7 @@ let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
 
 // Load a PC-relative address.  There's no version of this instruction
 // with a 16-bit offset, so there's no relaxation.
-let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
+let hasSideEffects = 0, isAsCheapAsAMove = 1, isMoveImm = 1,
     isReMaterializable = 1 in {
   def LARL : InstRIL<0xC00, (outs GR64:$R1), (ins pcrel32:$I2),
                      "larl\t$R1, $I2",
@@ -1012,13 +1012,13 @@ def DLG  : BinaryRXY<"dlg",  0xE387, z_udivrem64, GR128, load, 8>;
 //===----------------------------------------------------------------------===//
 
 // Shift left.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   defm SLL : BinaryRSAndK<"sll", 0x89, 0xEBDF, shl, GR32>;
   def SLLG : BinaryRSY<"sllg", 0xEB0D, shl, GR64>;
 }
 
 // Logical shift right.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   defm SRL : BinaryRSAndK<"srl", 0x88, 0xEBDE, srl, GR32>;
   def SRLG : BinaryRSY<"srlg", 0xEB0C, srl, GR64>;
 }
@@ -1030,7 +1030,7 @@ let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in {
 }
 
 // Rotate left.
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def RLL  : BinaryRSY<"rll",  0xEB1D, rotl, GR32>;
   def RLLG : BinaryRSY<"rllg", 0xEB1C, rotl, GR64>;
 }

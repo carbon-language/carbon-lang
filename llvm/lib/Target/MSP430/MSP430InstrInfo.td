@@ -153,7 +153,7 @@ let usesCustomInserter = 1 in {
   }
 }
 
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def NOP : Pseudo<(outs), (ins), "nop", []>;
 
 //===----------------------------------------------------------------------===//
@@ -224,7 +224,7 @@ let isCall = 1 in
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
-let Defs = [SP], Uses = [SP], neverHasSideEffects=1 in {
+let Defs = [SP], Uses = [SP], hasSideEffects=0 in {
 let mayLoad = 1 in
 def POP16r   : IForm16<0x0, DstReg, SrcPostInc, Size2Bytes,
                        (outs GR16:$reg), (ins), "pop.w\t$reg", []>;
@@ -238,7 +238,7 @@ def PUSH16r  : II16r<0x0,
 // Move Instructions
 
 // FIXME: Provide proper encoding!
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def MOV8rr  : I8rr<0x0,
                    (outs GR8:$dst), (ins GR8:$src),
                    "mov.b\t{$src, $dst}",

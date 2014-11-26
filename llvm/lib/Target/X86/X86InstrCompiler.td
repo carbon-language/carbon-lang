@@ -32,7 +32,7 @@ def GetLo8XForm : SDNodeXForm<imm, [{
 // PIC base construction.  This expands to code that looks like this:
 //     call  $next_inst
 //     popl %destreg"
-let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
+let hasSideEffects = 0, isNotDuplicable = 1, Uses = [ESP] in
   def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins i32imm:$label),
                       "", []>;
 
@@ -259,7 +259,7 @@ def : Pat<(i64 0), (SUBREG_TO_REG (i64 0), (MOV32r0), sub_32bit)> {
 // use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however
 // that would make it more difficult to rematerialize.
 let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1,
-    isCodeGenOnly = 1, neverHasSideEffects = 1 in
+    isCodeGenOnly = 1, hasSideEffects = 0 in
 def MOV32ri64 : Ii32<0xb8, AddRegFrm, (outs GR32:$dst), (ins i64i32imm:$src),
                      "", [], IIC_ALU_NONMEM>, Sched<[WriteALU]>;
 

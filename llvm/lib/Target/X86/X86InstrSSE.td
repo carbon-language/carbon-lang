@@ -809,7 +809,7 @@ multiclass sse12_mov_packed<bits<8> opc, RegisterClass RC,
                             string asm, Domain d,
                             OpndItins itins,
                             bit IsReMaterializable = 1> {
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
   def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
               !strconcat(asm, "\t{$src, $dst|$dst, $src}"), [], itins.rr, d>,
            Sched<[WriteFShuffle]>;
@@ -1477,7 +1477,7 @@ multiclass sse12_cvt_s<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
 multiclass sse12_cvt_p<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                        X86MemOperand x86memop, string asm, Domain d,
                        OpndItins itins> {
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def rr : I<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
              [], itins.rr, d>, Sched<[itins.Sched]>;
   let mayLoad = 1 in
@@ -1488,7 +1488,7 @@ let neverHasSideEffects = 1 in {
 
 multiclass sse12_vcvt_avx<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                           X86MemOperand x86memop, string asm> {
-let neverHasSideEffects = 1, Predicates = [UseAVX] in {
+let hasSideEffects = 0, Predicates = [UseAVX] in {
   def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins DstRC:$src1, SrcRC:$src),
               !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>,
            Sched<[WriteCvtI2F]>;
@@ -1497,7 +1497,7 @@ let neverHasSideEffects = 1, Predicates = [UseAVX] in {
               (ins DstRC:$src1, x86memop:$src),
               !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>,
            Sched<[WriteCvtI2FLd, ReadAfterLd]>;
-} // neverHasSideEffects = 1
+} // hasSideEffects = 0
 }
 
 let Predicates = [UseAVX] in {
@@ -1804,7 +1804,7 @@ def : InstAlias<"cvtsd2si{q}\t{$src, $dst|$dst, $src}",
 /// SSE 2 Only
 
 // Convert scalar double to scalar single
-let neverHasSideEffects = 1, Predicates = [UseAVX] in {
+let hasSideEffects = 0, Predicates = [UseAVX] in {
 def VCVTSD2SSrr  : VSDI<0x5A, MRMSrcReg, (outs FR32:$dst),
                        (ins FR64:$src1, FR64:$src2),
                       "cvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
@@ -1869,7 +1869,7 @@ def Int_CVTSD2SSrm: I<0x5A, MRMSrcReg,
 
 // Convert scalar single to scalar double
 // SSE2 instructions with XS prefix
-let neverHasSideEffects = 1, Predicates = [UseAVX] in {
+let hasSideEffects = 0, Predicates = [UseAVX] in {
 def VCVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst),
                     (ins FR32:$src1, FR32:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -2191,7 +2191,7 @@ def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
 
 // Convert Packed DW Integers to Packed Double FP
 let Predicates = [HasAVX] in {
-let neverHasSideEffects = 1, mayLoad = 1 in
+let hasSideEffects = 0, mayLoad = 1 in
 def VCVTDQ2PDrm  : S2SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}",
                      []>, VEX, Sched<[WriteCvtI2FLd]>;
@@ -2213,7 +2213,7 @@ def VCVTDQ2PDYrr  : S2SI<0xE6, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
                     Sched<[WriteCvtI2F]>;
 }
 
-let neverHasSideEffects = 1, mayLoad = 1 in
+let hasSideEffects = 0, mayLoad = 1 in
 def CVTDQ2PDrm  : S2SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_CVT_PD_RR>, Sched<[WriteCvtI2FLd]>;
@@ -4026,7 +4026,7 @@ def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
 
 let ExeDomain = SSEPackedInt in { // SSE integer instructions
 
-let neverHasSideEffects = 1, SchedRW = [WriteMove] in {
+let hasSideEffects = 0, SchedRW = [WriteMove] in {
 def VMOVDQArr  : VPDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     "movdqa\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVA_P_RR>,
                     VEX;
@@ -4061,7 +4061,7 @@ def VMOVDQUYrr_REV : VSSI<0x7F, MRMDestReg, (outs VR256:$dst), (ins VR256:$src),
 }
 
 let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1,
-    neverHasSideEffects = 1, SchedRW = [WriteLoad] in {
+    hasSideEffects = 0, SchedRW = [WriteLoad] in {
 def VMOVDQArm  : VPDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqa\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVA_P_RM>,
                    VEX;
@@ -4078,7 +4078,7 @@ let Predicates = [HasAVX] in {
 }
 }
 
-let mayStore = 1, neverHasSideEffects = 1, SchedRW = [WriteStore] in {
+let mayStore = 1, hasSideEffects = 0, SchedRW = [WriteStore] in {
 def VMOVDQAmr  : VPDI<0x7F, MRMDestMem, (outs),
                      (ins i128mem:$dst, VR128:$src),
                      "movdqa\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVA_P_MR>,
@@ -4098,7 +4098,7 @@ def VMOVDQUYmr : I<0x7F, MRMDestMem, (outs), (ins i256mem:$dst, VR256:$src),
 }
 
 let SchedRW = [WriteMove] in {
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def MOVDQArr : PDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVA_P_RR>;
 
@@ -4119,7 +4119,7 @@ def MOVDQUrr_REV :   I<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
 } // SchedRW
 
 let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1,
-    neverHasSideEffects = 1, SchedRW = [WriteLoad] in {
+    hasSideEffects = 0, SchedRW = [WriteLoad] in {
 def MOVDQArm : PDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(set VR128:$dst, (alignedloadv2i64 addr:$src))*/],
@@ -4131,7 +4131,7 @@ def MOVDQUrm :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                  XS, Requires<[UseSSE2]>;
 }
 
-let mayStore = 1, neverHasSideEffects = 1, SchedRW = [WriteStore] in {
+let mayStore = 1, hasSideEffects = 0, SchedRW = [WriteStore] in {
 def MOVDQAmr : PDI<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/],
@@ -5414,7 +5414,7 @@ let Predicates = [UseSSE3] in {
 //===---------------------------------------------------------------------===//
 
 multiclass sse3_replicate_dfp<string OpcodeStr> {
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def rr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [], IIC_SSE_MOV_LH>, Sched<[WriteFShuffle]>;
@@ -5987,7 +5987,7 @@ defm PMULHRSW    : SS3I_binop_rm_int<0x0B, "pmulhrsw",
 //===---------------------------------------------------------------------===//
 
 multiclass ssse3_palignr<string asm, bit Is2Addr = 1> {
-  let neverHasSideEffects = 1 in {
+  let hasSideEffects = 0 in {
   def R128rr : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
       (ins VR128:$src1, VR128:$src2, i8imm:$src3),
       !if(Is2Addr,
@@ -6007,7 +6007,7 @@ multiclass ssse3_palignr<string asm, bit Is2Addr = 1> {
 }
 
 multiclass ssse3_palignr_y<string asm, bit Is2Addr = 1> {
-  let neverHasSideEffects = 1 in {
+  let hasSideEffects = 0 in {
   def R256rr : SS3AI<0x0F, MRMSrcReg, (outs VR256:$dst),
       (ins VR256:$src1, VR256:$src2, i8imm:$src3),
       !strconcat(asm,
@@ -6655,7 +6655,7 @@ multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
                  [(set GR32orGR64:$dst, (X86pextrb (v16i8 VR128:$src1),
                                          imm:$src2))]>,
                   Sched<[WriteShuffle]>;
-  let neverHasSideEffects = 1, mayStore = 1,
+  let hasSideEffects = 0, mayStore = 1,
       SchedRW = [WriteShuffleLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
                  (ins i8mem:$dst, VR128:$src1, i32i8imm:$src2),
@@ -6680,7 +6680,7 @@ multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
                    "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                    []>, Sched<[WriteShuffle]>;
 
-  let neverHasSideEffects = 1, mayStore = 1,
+  let hasSideEffects = 0, mayStore = 1,
       SchedRW = [WriteShuffleLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
                  (ins i16mem:$dst, VR128:$src1, i32i8imm:$src2),
@@ -7937,7 +7937,7 @@ multiclass pcmpistrm_SS42AI<string asm> {
     []>, Sched<[WritePCmpIStrMLd, ReadAfterLd]>;
 }
 
-let Defs = [XMM0, EFLAGS], neverHasSideEffects = 1 in {
+let Defs = [XMM0, EFLAGS], hasSideEffects = 0 in {
   let Predicates = [HasAVX] in
   defm VPCMPISTRM128 : pcmpistrm_SS42AI<"vpcmpistrm">, VEX;
   defm PCMPISTRM128  : pcmpistrm_SS42AI<"pcmpistrm"> ;
@@ -7972,7 +7972,7 @@ multiclass SS42AI_pcmpestrm<string asm> {
     []>, Sched<[WritePCmpEStrMLd, ReadAfterLd]>;
 }
 
-let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
+let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX], hasSideEffects = 0 in {
   let Predicates = [HasAVX] in
   defm VPCMPESTRM128 : SS42AI_pcmpestrm<"vpcmpestrm">, VEX;
   defm PCMPESTRM128 :  SS42AI_pcmpestrm<"pcmpestrm">;
@@ -8007,7 +8007,7 @@ multiclass SS42AI_pcmpistri<string asm> {
     []>, Sched<[WritePCmpIStrILd, ReadAfterLd]>;
 }
 
-let Defs = [ECX, EFLAGS], neverHasSideEffects = 1 in {
+let Defs = [ECX, EFLAGS], hasSideEffects = 0 in {
   let Predicates = [HasAVX] in
   defm VPCMPISTRI : SS42AI_pcmpistri<"vpcmpistri">, VEX;
   defm PCMPISTRI  : SS42AI_pcmpistri<"pcmpistri">;
@@ -8043,7 +8043,7 @@ multiclass SS42AI_pcmpestri<string asm> {
     []>, Sched<[WritePCmpEStrILd, ReadAfterLd]>;
 }
 
-let Defs = [ECX, EFLAGS], Uses = [EAX, EDX], neverHasSideEffects = 1 in {
+let Defs = [ECX, EFLAGS], Uses = [EAX, EDX], hasSideEffects = 0 in {
   let Predicates = [HasAVX] in
   defm VPCMPESTRI : SS42AI_pcmpestri<"vpcmpestri">, VEX;
   defm PCMPESTRI  : SS42AI_pcmpestri<"pcmpestri">;
@@ -8422,7 +8422,7 @@ def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
 //===----------------------------------------------------------------------===//
 // VINSERTF128 - Insert packed floating-point values
 //
-let neverHasSideEffects = 1, ExeDomain = SSEPackedSingle in {
+let hasSideEffects = 0, ExeDomain = SSEPackedSingle in {
 def VINSERTF128rr : AVXAIi8<0x18, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR128:$src2, i8imm:$src3),
           "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
@@ -8496,7 +8496,7 @@ def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1),
 //===----------------------------------------------------------------------===//
 // VEXTRACTF128 - Extract packed floating-point values
 //
-let neverHasSideEffects = 1, ExeDomain = SSEPackedSingle in {
+let hasSideEffects = 0, ExeDomain = SSEPackedSingle in {
 def VEXTRACTF128rr : AVXAIi8<0x19, MRMDestReg, (outs VR128:$dst),
           (ins VR256:$src1, i8imm:$src2),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -8756,7 +8756,7 @@ multiclass f16c_ph2ps<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
              "vcvtph2ps\t{$src, $dst|$dst, $src}",
              [(set RC:$dst, (Int VR128:$src))]>,
              T8PD, VEX, Sched<[WriteCvtF2F]>;
-  let neverHasSideEffects = 1, mayLoad = 1 in
+  let hasSideEffects = 0, mayLoad = 1 in
   def rm : I<0x13, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
              "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8PD, VEX,
              Sched<[WriteCvtF2FLd]>;
@@ -8768,7 +8768,7 @@ multiclass f16c_ps2ph<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                [(set VR128:$dst, (Int RC:$src1, imm:$src2))]>,
                TAPD, VEX, Sched<[WriteCvtF2F]>;
-  let neverHasSideEffects = 1, mayStore = 1,
+  let hasSideEffects = 0, mayStore = 1,
       SchedRW = [WriteCvtF2FLd, WriteRMW] in
   def mr : Ii8<0x1D, MRMDestMem, (outs),
                (ins x86memop:$dst, RC:$src1, i32i8imm:$src2),
@@ -9122,7 +9122,7 @@ def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1, (bc_v8i32 (loadv4i64 addr:$src2)),
 //===----------------------------------------------------------------------===//
 // VINSERTI128 - Insert packed integer values
 //
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def VINSERTI128rr : AVX2AIi8<0x38, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR128:$src2, i8imm:$src3),
           "vinserti128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
@@ -9182,7 +9182,7 @@ def VEXTRACTI128rr : AVX2AIi8<0x39, MRMDestReg, (outs VR128:$dst),
           [(set VR128:$dst,
             (int_x86_avx2_vextracti128 VR256:$src1, imm:$src2))]>,
           Sched<[WriteShuffle256]>, VEX, VEX_L;
-let neverHasSideEffects = 1, mayStore = 1 in
+let hasSideEffects = 0, mayStore = 1 in
 def VEXTRACTI128mr : AVX2AIi8<0x39, MRMDestMem, (outs),
           (ins i128mem:$dst, VR256:$src1, i8imm:$src2),
           "vextracti128\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,

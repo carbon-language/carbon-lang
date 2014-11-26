@@ -661,7 +661,7 @@ class ShuffleAsmStr4<string type>
   string s  = !strconcat(t6, ShuffleOneLine<"4", "3", type>.s);
 }
 
-let neverHasSideEffects=1, VecInstType=isVecShuffle.Value in {
+let hasSideEffects=0, VecInstType=isVecShuffle.Value in {
 def VecShuffle_v4f32 : NVPTXVecInst<(outs V4F32Regs:$dst),
                        (ins  V4F32Regs:$src1, V4F32Regs:$src2,
                              i8imm:$c0, i8imm:$c1, i8imm:$c2, i8imm:$c3),
@@ -847,7 +847,7 @@ class Vec_Move<string asmstr, NVPTXRegClass vclass, NVPTXInst sop=NOP>
                    !strconcat(asmstr, "\t${dst:vecfull}, ${src:vecfull};"),
                    [], sop>;
 
-let isAsCheapAsAMove=1, neverHasSideEffects=1, IsSimpleMove=1,
+let isAsCheapAsAMove=1, hasSideEffects=0, IsSimpleMove=1,
   VecInstType=isVecOther.Value in {
 def V4f32Mov : Vec_Move<"mov.v4.f32", V4F32Regs, FMOV32rr>;
 def V2f32Mov : Vec_Move<"mov.v2.f32", V2F32Regs, FMOV32rr>;

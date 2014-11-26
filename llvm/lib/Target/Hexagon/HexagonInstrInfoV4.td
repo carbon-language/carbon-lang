@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 class T_Immext<dag ins> :
   EXTENDERInst<(outs), ins, "immext(#$imm)", []>,
   Requires<[HasV4T]>;
@@ -96,7 +96,7 @@ def NumUsesBelowThresCONST32 : PatFrag<(ops node:$addr),
 // ALU32 +
 //===----------------------------------------------------------------------===//
 // Generate frame index addresses.
-let neverHasSideEffects = 1, isReMaterializable = 1,
+let hasSideEffects = 0, isReMaterializable = 1,
 isExtended = 1, opExtendable = 2, validSubTargets = HasV4SubT in
 def TFR_FI_immext_V4 : ALU32_ri<(outs IntRegs:$dst),
             (ins IntRegs:$src1, s32Imm:$offset),
@@ -165,7 +165,7 @@ def V4_A4_rcmpneq : ALU32_ri<(outs IntRegs:$Rd),
 // Combine
 // Rdd=combine(Rs, #s8)
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8,
-    neverHasSideEffects = 1, validSubTargets = HasV4SubT in
+    hasSideEffects = 0, validSubTargets = HasV4SubT in
 def COMBINE_rI_V4 : ALU32_ri<(outs DoubleRegs:$dst),
             (ins IntRegs:$src1, s8Ext:$src2),
             "$dst = combine($src1, #$src2)",
@@ -174,7 +174,7 @@ def COMBINE_rI_V4 : ALU32_ri<(outs DoubleRegs:$dst),
 
 // Rdd=combine(#s8, Rs)
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8,
-    neverHasSideEffects = 1, validSubTargets = HasV4SubT in
+    hasSideEffects = 0, validSubTargets = HasV4SubT in
 def COMBINE_Ir_V4 : ALU32_ir<(outs DoubleRegs:$dst),
             (ins s8Ext:$src1, IntRegs:$src2),
             "$dst = combine(#$src1, $src2)",
@@ -195,7 +195,7 @@ def : Pat <(HexagonWrapperCombineIR_V4 s8ExtPred:$i, IntRegs:$r),
           Requires<[HasV4T]>;
 
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 6,
-    neverHasSideEffects = 1, validSubTargets = HasV4SubT in
+    hasSideEffects = 0, validSubTargets = HasV4SubT in
 def COMBINE_iI_V4 : ALU32_ii<(outs DoubleRegs:$dst),
             (ins s8Imm:$src1, u6Ext:$src2),
             "$dst = combine(#$src1, #$src2)",
@@ -212,7 +212,7 @@ def COMBINE_iI_V4 : ALU32_ii<(outs DoubleRegs:$dst),
 //===----------------------------------------------------------------------===//
 // Template class for load instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
-let isExtended = 1, opExtendable = 2, neverHasSideEffects = 1,
+let isExtended = 1, opExtendable = 2, hasSideEffects = 0,
 validSubTargets = HasV4SubT, addrMode = AbsoluteSet in
 class T_LD_abs_set<string mnemonic, RegisterClass RC>:
             LDInst2<(outs RC:$dst1, IntRegs:$dst2),
@@ -249,7 +249,7 @@ multiclass ld_idxd_shl_pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let neverHasSideEffects  = 1 in
+let hasSideEffects = 0 in
 multiclass ld_idxd_shl<string mnemonic, string CextOp, RegisterClass RC> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed_shl in {
     let isPredicable = 1 in
@@ -561,7 +561,7 @@ multiclass ST_Idxd_shl_nv<string mnemonic, string CextOp, RegisterClass RC> {
   }
 }
 
-let addrMode = BaseRegOffset, neverHasSideEffects = 1,
+let addrMode = BaseRegOffset, hasSideEffects = 0,
 validSubTargets = HasV4SubT in {
   let accessSize = ByteAccess in
     defm STrib_indexed_shl: ST_Idxd_shl<"memb", "STrib", IntRegs>,
@@ -692,7 +692,7 @@ multiclass ST_Imm_Pred<string mnemonic, Operand OffsetOp, bit PredNot> {
   }
 }
 
-let isExtendable = 1, isExtentSigned = 1, neverHasSideEffects = 1 in
+let isExtendable = 1, isExtentSigned = 1, hasSideEffects = 0 in
 multiclass ST_Imm<string mnemonic, string CextOp, Operand OffsetOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_imm in {
     let opExtendable = 2, opExtentBits = 8, isPredicable = 1 in
@@ -782,7 +782,7 @@ def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // TODO: Needs to be implemented.
 
 // Store predicate:
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def STriw_pred_V4 : STInst2<(outs),
             (ins MEMri:$addr, PredRegs:$src1),
             "Error; should not emit",
@@ -831,7 +831,7 @@ multiclass ST_Idxd_Pred_nv<string mnemonic, RegisterClass RC, Operand predImmOp,
   }
 }
 
-let mayStore = 1, isNVStore = 1, neverHasSideEffects = 1, isExtendable = 1 in
+let mayStore = 1, isNVStore = 1, hasSideEffects = 0, isExtendable = 1 in
 multiclass ST_Idxd_nv<string mnemonic, string CextOp, RegisterClass RC,
                    Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
                    bits<5> PredImmBits> {
@@ -889,7 +889,7 @@ multiclass ST_MEMri_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let mayStore = 1, isNVStore = 1, isExtendable = 1, neverHasSideEffects = 1 in
+let mayStore = 1, isNVStore = 1, isExtendable = 1, hasSideEffects = 0 in
 multiclass ST_MEMri_nv<string mnemonic, string CextOp, RegisterClass RC,
                     bits<5> ImmBits, bits<5> PredImmBits> {
 
@@ -903,7 +903,7 @@ multiclass ST_MEMri_nv<string mnemonic, string CextOp, RegisterClass RC,
             Requires<[HasV4T]>;
 
     let opExtendable = 2, isExtentSigned = 0, opExtentBits = PredImmBits,
-        neverHasSideEffects = 1, isPredicated = 1 in {
+        hasSideEffects = 0, isPredicated = 1 in {
       defm Pt : ST_MEMri_Pred_nv<mnemonic, RC, 0>;
       defm NotPt : ST_MEMri_Pred_nv<mnemonic, RC, 1>;
     }
@@ -949,7 +949,7 @@ multiclass ST_PostInc_Pred_nv<string mnemonic, RegisterClass RC,
   }
 }
 
-let hasCtrlDep = 1, isNVStore = 1, neverHasSideEffects = 1 in
+let hasCtrlDep = 1, isNVStore = 1, hasSideEffects = 0 in
 multiclass ST_PostInc_nv<string mnemonic, string BaseOp, RegisterClass RC,
                       Operand ImmOp> {
 
@@ -1064,7 +1064,7 @@ multiclass NVJrr_base<string mnemonic, string BaseOp, bits<3> majOp,
 // if ([!]cmp.gtu(Rt,Ns.new)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-  Defs = [PC], neverHasSideEffects = 1, validSubTargets = HasV4SubT in {
+  Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
   defm CMPEQrr  : NVJrr_base<"cmp.eq",  "CMPEQ",  0b000, 0>, PredRel;
   defm CMPGTrr  : NVJrr_base<"cmp.gt",  "CMPGT",  0b001, 0>, PredRel;
   defm CMPGTUrr : NVJrr_base<"cmp.gtu", "CMPGTU", 0b010, 0>, PredRel;
@@ -1124,7 +1124,7 @@ multiclass NVJri_base<string mnemonic, string BaseOp, bits<3> majOp> {
 // if ([!]cmp.gtu(Ns.new,#U5)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-  Defs = [PC], neverHasSideEffects = 1, validSubTargets = HasV4SubT in {
+  Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
   defm CMPEQri  : NVJri_base<"cmp.eq", "CMPEQ", 0b000>, PredRel;
   defm CMPGTri  : NVJri_base<"cmp.gt", "CMPGT", 0b001>, PredRel;
   defm CMPGTUri : NVJri_base<"cmp.gtu", "CMPGTU", 0b010>, PredRel;
@@ -1182,7 +1182,7 @@ multiclass NVJ_ConstImm_base<string mnemonic, string BaseOp, bits<3> majOp,
 // if ([!]cmp.gt(Ns.new,#-1)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator=1,
-  Defs = [PC], neverHasSideEffects = 1 in {
+  Defs = [PC], hasSideEffects = 0 in {
   defm TSTBIT0  : NVJ_ConstImm_base<"tstbit", "TSTBIT", 0b011, "0">, PredRel;
   defm CMPEQn1  : NVJ_ConstImm_base<"cmp.eq", "CMPEQ",  0b100, "-1">, PredRel;
   defm CMPGTn1  : NVJ_ConstImm_base<"cmp.gt", "CMPGT",  0b101, "-1">, PredRel;
@@ -2579,7 +2579,7 @@ def NTSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
 //Deallocate frame and return.
 //    dealloc_return
 let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicable = 1,
-  Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1 in {
+  Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0 in {
 let validSubTargets = HasV4SubT in
   def DEALLOC_RET_V4 : LD0Inst<(outs), (ins),
             "dealloc_return",
@@ -2621,7 +2621,7 @@ let isCall = 1, isBarrier = 1,
 
 //    if (Ps) dealloc_return
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
     isPredicated = 1 in {
 let validSubTargets = HasV4SubT in
   def DEALLOC_RET_cPt_V4 : LD0Inst<(outs),
@@ -2633,7 +2633,7 @@ let validSubTargets = HasV4SubT in
 
 //    if (!Ps) dealloc_return
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
     isPredicated = 1, isPredicatedFalse = 1 in {
 let validSubTargets = HasV4SubT in
   def DEALLOC_RET_cNotPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
@@ -2644,7 +2644,7 @@ let validSubTargets = HasV4SubT in
 
 //    if (Ps.new) dealloc_return:nt
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
     isPredicated = 1 in {
 let validSubTargets = HasV4SubT in
   def DEALLOC_RET_cdnPnt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
@@ -2655,7 +2655,7 @@ let validSubTargets = HasV4SubT in
 
 //    if (!Ps.new) dealloc_return:nt
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
     isPredicated = 1, isPredicatedFalse = 1 in {
 let validSubTargets = HasV4SubT in
   def DEALLOC_RET_cNotdnPnt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
@@ -2666,7 +2666,7 @@ let validSubTargets = HasV4SubT in
 
 //    if (Ps.new) dealloc_return:t
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
     isPredicated = 1 in {
 let validSubTargets = HasV4SubT in
   def DEALLOC_RET_cdnPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
@@ -2677,7 +2677,7 @@ let validSubTargets = HasV4SubT in
 
 // if (!Ps.new) dealloc_return:nt
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
     isPredicated = 1, isPredicatedFalse = 1 in {
 let validSubTargets = HasV4SubT in
   def DEALLOC_RET_cNotdnPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
@@ -2708,7 +2708,7 @@ multiclass ST_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let isNVStorable = 1, isExtended = 1, neverHasSideEffects = 1 in
+let isNVStorable = 1, isExtended = 1, hasSideEffects = 0 in
 multiclass ST_Abs<string mnemonic, string CextOp, RegisterClass RC> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
     let opExtendable = 0, isPredicable = 1 in
@@ -2744,7 +2744,7 @@ multiclass ST_Abs_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let mayStore = 1, isNVStore = 1, isExtended = 1, neverHasSideEffects = 1 in
+let mayStore = 1, isNVStore = 1, isExtended = 1, hasSideEffects = 0 in
 multiclass ST_Abs_nv<string mnemonic, string CextOp, RegisterClass RC> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
     let opExtendable = 0, isPredicable = 1 in
@@ -2835,7 +2835,7 @@ multiclass ST_GP_nv<string mnemonic, string BaseOp, RegisterClass RC> {
   }
 }
 
-let validSubTargets = HasV4SubT, neverHasSideEffects = 1 in {
+let validSubTargets = HasV4SubT, hasSideEffects = 0 in {
   let isNVStorable = 0 in
   defm STd_GP : ST_GP <"memd", "STd_GP", DoubleRegs>, PredNewRel;
 
@@ -2918,7 +2918,7 @@ multiclass LD_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let isExtended = 1, neverHasSideEffects = 1 in
+let isExtended = 1, hasSideEffects = 0 in
 multiclass LD_Abs<string mnemonic, string CextOp, RegisterClass RC> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
     let  opExtendable = 1, isPredicable = 1 in
@@ -2973,7 +2973,7 @@ def : Pat<(i32 (zextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
 // Rx=mem[bhwd](##global)
 // if ([!]Pv[.new]) Rx=mem[bhwd](##global)
 //===----------------------------------------------------------------------===//
-let neverHasSideEffects = 1, validSubTargets = HasV4SubT in
+let hasSideEffects = 0, validSubTargets = HasV4SubT in
 multiclass LD_GP<string mnemonic, string BaseOp, RegisterClass RC> {
   let BaseOpcode = BaseOp in {
     let isPredicable = 1 in
@@ -3083,7 +3083,7 @@ def : Pat<(HexagonCONST32_GP tblockaddress:$src1),
           Requires<[HasV4T]>;
 
 let isExtended = 1, opExtendable = 2, AddedComplexity=50,
-neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
+hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cPt_V4 : ALU32_ri<(outs IntRegs:$dst),
                            (ins PredRegs:$src1, s16Ext:$src2),
            "if($src1) $dst = #$src2",
@@ -3091,7 +3091,7 @@ def TFRI_cPt_V4 : ALU32_ri<(outs IntRegs:$dst),
            Requires<[HasV4T]>;
 
 let isExtended = 1, opExtendable = 2, AddedComplexity=50, isPredicatedFalse = 1,
-neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
+hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cNotPt_V4 : ALU32_ri<(outs IntRegs:$dst),
                               (ins PredRegs:$src1, s16Ext:$src2),
            "if(!$src1) $dst = #$src2",
@@ -3099,7 +3099,7 @@ def TFRI_cNotPt_V4 : ALU32_ri<(outs IntRegs:$dst),
            Requires<[HasV4T]>;
 
 let isExtended = 1, opExtendable = 2, AddedComplexity=50,
-neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
+hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cdnPt_V4 : ALU32_ri<(outs IntRegs:$dst),
                              (ins PredRegs:$src1, s16Ext:$src2),
            "if($src1.new) $dst = #$src2",
@@ -3107,7 +3107,7 @@ def TFRI_cdnPt_V4 : ALU32_ri<(outs IntRegs:$dst),
            Requires<[HasV4T]>;
 
 let isExtended = 1, opExtendable = 2, AddedComplexity=50, isPredicatedFalse = 1,
-neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
+hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cdnNotPt_V4 : ALU32_ri<(outs IntRegs:$dst),
                                 (ins PredRegs:$src1, s16Ext:$src2),
            "if(!$src1.new) $dst = #$src2",

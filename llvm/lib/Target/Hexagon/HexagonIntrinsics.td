@@ -1851,7 +1851,7 @@ class T_RI_pat <InstHexagon MI, Intrinsic IntID>
 //
 // LDInst classes.
 //
-let mayLoad = 1, neverHasSideEffects = 1 in
+let mayLoad = 1, hasSideEffects = 0 in
 class di_LDInstPI_diu4<string opc, Intrinsic IntID>
   : LDInstPI<(outs IntRegs:$dst, DoubleRegs:$dst2),
            (ins IntRegs:$src1, IntRegs:$src2, CRRegs:$src3, s4Imm:$offset),

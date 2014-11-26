@@ -257,7 +257,7 @@ def MMX_MOVD64from64rr : MMXRI<0x7E, MRMDestReg,
                                "movd\t{$src, $dst|$dst, $src}", 
                              [(set GR64:$dst,
                               (bitconvert VR64:$src))], IIC_MMX_MOV_REG_MM>;
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}", [],
                         IIC_MMX_MOVQ_RR>;

@@ -282,7 +282,7 @@ def : Pat<(PPCtc_return CTRRC8:$dst, imm:$imm),
 
 // 64-bit CR instructions
 let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 def MTOCRF8: XFXForm_5a<31, 144, (outs crbitm:$FXM), (ins g8rc:$ST),
                         "mtocrf $FXM, $ST", IIC_BrMCRX>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
@@ -299,7 +299,7 @@ def MFOCRF8: XFXForm_5a<31, 19, (outs g8rc:$rT), (ins crbitm:$FXM),
 def MFCR8 : XFXForm_3<31, 19, (outs g8rc:$rT), (ins),
                      "mfcr $rT", IIC_SprMFCR>,
                      PPC970_MicroCode, PPC970_Unit_CRU;
-} // neverHasSideEffects = 1
+} // hasSideEffects = 0
 
 let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
   let Defs = [CTR8] in
@@ -366,7 +366,7 @@ def MFLR8  : XFXForm_1_ext<31, 339, 8, (outs g8rc:$rT), (ins),
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 let Interpretation64Bit = 1 in {
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 let isCodeGenOnly = 1 in {
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
@@ -517,7 +517,7 @@ defm MULHDU : XOForm_1r<31, 9, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
 }
 } // Interpretation64Bit
 
-let isCompare = 1, neverHasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 0 in {
   def CMPD   : XForm_16_ext<31, 0, (outs crrc:$crD), (ins g8rc:$rA, g8rc:$rB),
                             "cmpd $crD, $rA, $rB", IIC_IntCompare>, isPPC64;
   def CMPLD  : XForm_16_ext<31, 32, (outs crrc:$crD), (ins g8rc:$rA, g8rc:$rB),
@@ -529,7 +529,7 @@ let isCompare = 1, neverHasSideEffects = 1 in {
                            IIC_IntCompare>, isPPC64;
 }
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 defm SLD  : XForm_6r<31,  27, (outs g8rc:$rA), (ins g8rc:$rS, gprc:$rB),
                      "sld", "$rA, $rS, $rB", IIC_IntRotateD,
                      [(set i64:$rA, (PPCshl i64:$rS, i32:$rB))]>, isPPC64;
@@ -600,7 +600,7 @@ def MULLI8 : DForm_2<7, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
                        [(set i64:$rD, (mul i64:$rA, imm64SExt16:$imm))]>;
 }
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 let isCommutable = 1 in {
 defm RLDIMI : MDForm_1r<30, 3, (outs g8rc:$rA),
                         (ins g8rc:$rSi, g8rc:$rS, u6imm:$SH, u6imm:$MBE),
@@ -661,7 +661,7 @@ def ISEL8   : AForm_4<31, 15,
                      "isel $rT, $rA, $rB, $cond", IIC_IntGeneral,
                      []>;
 }  // Interpretation64Bit
-}  // neverHasSideEffects = 1
+}  // hasSideEffects = 0
 }  // End FXU Operations.
 
 
@@ -702,7 +702,7 @@ def LWAX_32 : XForm_1<31, 341, (outs gprc:$rD), (ins memrr:$src),
 } // end fast-isel isCodeGenOnly
 
 // Update forms.
-let mayLoad = 1, neverHasSideEffects = 1 in {
+let mayLoad = 1, hasSideEffects = 0 in {
 let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 def LHAU8 : DForm_1<43, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                     (ins memri:$addr),
@@ -750,7 +750,7 @@ def LWZX8 : XForm_1<31,  23, (outs g8rc:$rD), (ins memrr:$src),
                    
                    
 // Update forms.
-let mayLoad = 1, neverHasSideEffects = 1 in {
+let mayLoad = 1, hasSideEffects = 0 in {
 def LBZU8 : DForm_1<35, (outs g8rc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                     "lbzu $rD, $addr", IIC_LdStLoadUpd,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
@@ -821,7 +821,7 @@ def LDBRX : XForm_1<31,  532, (outs g8rc:$rD), (ins memrr:$src),
                    "ldbrx $rD, $src", IIC_LdStLoad,
                    [(set i64:$rD, (PPClbrx xoaddr:$src, i64))]>, isPPC64;
 
-let mayLoad = 1, neverHasSideEffects = 1 in {
+let mayLoad = 1, hasSideEffects = 0 in {
 def LDU  : DSForm_1<58, 1, (outs g8rc:$rD, ptr_rc_nor0:$ea_result), (ins memrix:$addr),
                     "ldu $rD, $addr", IIC_LdStLDU,
                     []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64,
@@ -1006,7 +1006,7 @@ def : Pat<(pre_store i64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
 //
 
 
-let PPC970_Unit = 3, neverHasSideEffects = 1,
+let PPC970_Unit = 3, hasSideEffects = 0,
     Uses = [RM] in {  // FPU Operations.
 defm FCFID  : XForm_26r<63, 846, (outs f8rc:$frD), (ins f8rc:$frB),
                         "fcfid", "$frD, $frB", IIC_FPGeneral,

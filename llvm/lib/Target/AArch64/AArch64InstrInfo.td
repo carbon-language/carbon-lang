@@ -789,7 +789,7 @@ def : Pat<(bswap (rotr GPR64:$Rn, (i64 32))), (REV32Xr GPR64:$Rn)>;
 //===----------------------------------------------------------------------===//
 // Bitfield immediate extraction instruction.
 //===----------------------------------------------------------------------===//
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 defm EXTR : ExtractImm<"extr">;
 def : InstAlias<"ror $dst, $src, $shift",
             (EXTRWrri GPR32:$dst, GPR32:$src, GPR32:$src, imm0_31:$shift)>;
@@ -804,7 +804,7 @@ def : Pat<(rotr GPR64:$Rn, (i64 imm0_63:$imm)),
 //===----------------------------------------------------------------------===//
 // Other bitfield immediate instructions.
 //===----------------------------------------------------------------------===//
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
 defm BFM  : BitfieldImmWith2RegArgs<0b01, "bfm">;
 defm SBFM : BitfieldImm<0b00, "sbfm">;
 defm UBFM : BitfieldImm<0b10, "ubfm">;
@@ -977,9 +977,9 @@ def : InstAlias<"cneg $dst, $src, $cc",
 // PC-relative instructions.
 //===----------------------------------------------------------------------===//
 let isReMaterializable = 1 in {
-let neverHasSideEffects = 1, mayStore = 0, mayLoad = 0 in {
+let hasSideEffects = 0, mayStore = 0, mayLoad = 0 in {
 def ADR  : ADRI<0, "adr", adrlabel, []>;
-} // neverHasSideEffects = 1
+} // hasSideEffects = 0
 
 def ADRP : ADRI<1, "adrp", adrplabel,
                 [(set GPR64:$Xd, (AArch64adrp tglobaladdr:$label))]>;
@@ -4124,7 +4124,7 @@ def MVNIv4s_msl   : SIMDModifiedImmMoveMSL<1, 1, {1,1,0,?}, V128, "mvni", ".4s",
 // AdvSIMD indexed element
 //----------------------------------------------------------------------------
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   defm FMLA  : SIMDFPIndexedSDTied<0, 0b0001, "fmla">;
   defm FMLS  : SIMDFPIndexedSDTied<0, 0b0101, "fmls">;
 }
@@ -4678,7 +4678,7 @@ defm LD1R          : SIMDLdR<0, 0b110, 0, "ld1r", "One", 1, 2, 4, 8>;
 defm LD2R          : SIMDLdR<1, 0b110, 0, "ld2r", "Two", 2, 4, 8, 16>;
 defm LD3R          : SIMDLdR<0, 0b111, 0, "ld3r", "Three", 3, 6, 12, 24>;
 defm LD4R          : SIMDLdR<1, 0b111, 0, "ld4r", "Four", 4, 8, 16, 32>;
-let mayLoad = 1, neverHasSideEffects = 1 in {
+let mayLoad = 1, hasSideEffects = 0 in {
 defm LD1 : SIMDLdSingleBTied<0, 0b000,       "ld1", VecListOneb,   GPR64pi1>;
 defm LD1 : SIMDLdSingleHTied<0, 0b010, 0,    "ld1", VecListOneh,   GPR64pi2>;
 defm LD1 : SIMDLdSingleSTied<0, 0b100, 0b00, "ld1", VecListOnes,   GPR64pi4>;
@@ -4848,7 +4848,7 @@ defm : St1LanePost128Pat<post_store, VectorIndexD, v2i64, i64, ST1i64_POST, 8>;
 defm : St1LanePost128Pat<post_store, VectorIndexD, v2f64, f64, ST1i64_POST, 8>;
 defm : St1LanePost128Pat<post_store, VectorIndexH, v8f16, f16, ST1i16_POST, 2>;
 
-let mayStore = 1, neverHasSideEffects = 1 in {
+let mayStore = 1, hasSideEffects = 0 in {
 defm ST2 : SIMDStSingleB<1, 0b000,       "st2", VecListTwob,   GPR64pi2>;
 defm ST2 : SIMDStSingleH<1, 0b010, 0,    "st2", VecListTwoh,   GPR64pi4>;
 defm ST2 : SIMDStSingleS<1, 0b100, 0b00, "st2", VecListTwos,   GPR64pi8>;

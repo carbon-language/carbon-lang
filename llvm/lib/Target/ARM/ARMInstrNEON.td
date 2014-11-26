@@ -665,7 +665,7 @@ class VLDQQQQWBPseudo<InstrItinClass itin>
                 (ins addrmode6:$addr, am6offset:$offset, QQQQPR:$src), itin,
                 "$addr.addr = $wb, $src = $dst">;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+let mayLoad = 1, hasSideEffects = 0, hasExtraDefRegAllocReq = 1 in {
 
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<bits<4> op7_4, string Dt, Operand AddrMode>
@@ -1023,7 +1023,7 @@ def VLD4q8oddPseudo_UPD  : VLDQQQQWBPseudo<IIC_VLD4u>;
 def VLD4q16oddPseudo_UPD : VLDQQQQWBPseudo<IIC_VLD4u>;
 def VLD4q32oddPseudo_UPD : VLDQQQQWBPseudo<IIC_VLD4u>;
 
-} // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
+} // mayLoad = 1, hasSideEffects = 0, hasExtraDefRegAllocReq = 1
 
 // Classes for VLD*LN pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
@@ -1106,7 +1106,7 @@ def : Pat<(vector_insert (v4f32 QPR:$src),
                          (f32 (load addrmode6:$addr)), imm:$lane),
           (VLD1LNq32Pseudo addrmode6:$addr, QPR:$src, imm:$lane)>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+let mayLoad = 1, hasSideEffects = 0, hasExtraDefRegAllocReq = 1 in {
 
 // ...with address register writeback:
 class VLD1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -1359,7 +1359,7 @@ def VLD4LNq32_UPD : VLD4LNWB<0b1011, {?,1,?,?}, "32"> {
 def VLD4LNq16Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
 def VLD4LNq32Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
 
-} // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
+} // mayLoad = 1, hasSideEffects = 0, hasExtraDefRegAllocReq = 1
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 class VLD1DUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp,
@@ -1405,7 +1405,7 @@ def VLD1DUPq32 : VLD1QDUP<{1,0,1,?}, "32", v4i32, load,
 def : Pat<(v4f32 (NEONvdup (f32 (load addrmode6dup:$addr)))),
           (VLD1DUPq32 addrmode6:$addr)>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+let mayLoad = 1, hasSideEffects = 0, hasExtraDefRegAllocReq = 1 in {
 // ...with address register writeback:
 multiclass VLD1DUPWB<bits<4> op7_4, string Dt, Operand AddrMode> {
   def _fixed : NLdSt<1, 0b10, 0b1100, op7_4,
@@ -1609,9 +1609,9 @@ def VLD4DUPd8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD4dupu>;
 def VLD4DUPd16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD4dupu>;
 def VLD4DUPd32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD4dupu>;
 
-} // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
+} // mayLoad = 1, hasSideEffects = 0, hasExtraDefRegAllocReq = 1
 
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
+let mayStore = 1, hasSideEffects = 0, hasExtraSrcRegAllocReq = 1 in {
 
 // Classes for VST* pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
@@ -2025,7 +2025,7 @@ def VST4q8oddPseudo_UPD  : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q16oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q32oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
 
-} // mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1
+} // mayStore = 1, hasSideEffects = 0, hasExtraSrcRegAllocReq = 1
 
 // Classes for VST*LN pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
@@ -2129,7 +2129,7 @@ def VST1LNq8Pseudo_UPD  : VST1QLNWBPseudo<v16i8, post_truncsti8, NEONvgetlaneu>;
 def VST1LNq16Pseudo_UPD : VST1QLNWBPseudo<v8i16, post_truncsti16,NEONvgetlaneu>;
 def VST1LNq32Pseudo_UPD : VST1QLNWBPseudo<v4i32, post_store, extractelt>;
 
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
+let mayStore = 1, hasSideEffects = 0, hasExtraSrcRegAllocReq = 1 in {
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
 class VST2LN<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -2351,7 +2351,7 @@ def VST4LNq32_UPD : VST4LNWB<0b1011, {?,1,?,?}, "32"> {
 def VST4LNq16Pseudo_UPD : VSTQQQQLNWBPseudo<IIC_VST4lnu>;
 def VST4LNq32Pseudo_UPD : VSTQQQQLNWBPseudo<IIC_VST4lnu>;
 
-} // mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1
+} // mayStore = 1, hasSideEffects = 0, hasExtraSrcRegAllocReq = 1
 
 // Use vld1/vst1 for unaligned f64 load / store
 def : Pat<(f64 (hword_alignedload addrmode6:$addr)),

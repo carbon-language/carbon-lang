@@ -4383,7 +4383,7 @@ class BaseSIMDVectorLShiftLongBySize<bit Q, bits<2> size,
 }
 
 multiclass SIMDVectorLShiftLongBySizeBHS {
-  let neverHasSideEffects = 1 in {
+  let hasSideEffects = 0 in {
   def v8i8  : BaseSIMDVectorLShiftLongBySize<0, 0b00, V64,
                                              "shll", ".8h",  ".8b", "8">;
   def v16i8 : BaseSIMDVectorLShiftLongBySize<1, 0b00, V128,

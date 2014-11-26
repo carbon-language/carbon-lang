@@ -343,7 +343,7 @@ class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
 multiclass Combine_base {
   let BaseOpcode = "combine" in {
     def NAME : T_Combine;
-    let neverHasSideEffects = 1, isPredicated = 1 in {
+    let hasSideEffects = 0, isPredicated = 1 in {
       defm Pt : ALU32_Pred<"combine", DoubleRegs, 0>;
       defm NotPt : ALU32_Pred<"combine", DoubleRegs, 1>;
     }
@@ -394,7 +394,7 @@ multiclass ALU32ri_base<string mnemonic, string CextOp, SDNode OpNode> {
                                               (s16ExtPred:$src2)))]>;
 
     let opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
-    neverHasSideEffects = 1, isPredicated = 1 in {
+    hasSideEffects = 0, isPredicated = 1 in {
       defm Pt : ALU32ri_Pred<mnemonic, 0>;
       defm NotPt : ALU32ri_Pred<mnemonic, 1>;
     }
@@ -457,7 +457,7 @@ multiclass TFR_Pred<bit PredNot> {
   }
 }
 
-let InputType = "reg", neverHasSideEffects = 1 in
+let InputType = "reg", hasSideEffects = 0 in
 multiclass TFR_base<string CextOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp in {
     let isPredicable = 1 in
@@ -503,7 +503,7 @@ multiclass TFR64_Pred<bit PredNot> {
   }
 }
 
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 multiclass TFR64_base<string BaseName> {
   let BaseOpcode = BaseName in {
     let isPredicable = 1 in
@@ -554,7 +554,7 @@ multiclass TFRI_base<string CextOp> {
             "$dst = #$src1",
             [(set (i32 IntRegs:$dst), s16ExtPred:$src1)]>;
 
-    let opExtendable = 2,  opExtentBits = 12, neverHasSideEffects = 1,
+    let opExtendable = 2,  opExtentBits = 12, hasSideEffects = 0,
     isPredicated = 1 in {
       defm Pt    : TFRI_Pred<0>;
       defm NotPt : TFRI_Pred<1>;
@@ -567,7 +567,7 @@ defm TFR : TFR_base<"TFR">, ImmRegRel, PredNewRel;
 defm TFR64 : TFR64_base<"TFR64">, PredNewRel;
 
 // Transfer control register.
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def TFCR : CRInst<(outs CRRegs:$dst), (ins IntRegs:$src1),
            "$dst = $src1",
            []>;
@@ -580,7 +580,7 @@ def TFCR : CRInst<(outs CRRegs:$dst), (ins IntRegs:$src1),
 // ALU32/PERM +
 //===----------------------------------------------------------------------===//
 
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def COMBINE_ii : ALU32_ii<(outs DoubleRegs:$dst),
             (ins s8Imm:$src1, s8Imm:$src2),
             "$dst = combine(#$src1, #$src2)",
@@ -914,7 +914,7 @@ def AND_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1, PredRegs:$src2),
              [(set (i1 PredRegs:$dst), (and (i1 PredRegs:$src1),
                                             (i1 PredRegs:$src2)))]>;
 
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def AND_pnotp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1,
                                                  PredRegs:$src2),
                 "$dst = and($src1, !$src2)",
@@ -1088,7 +1088,7 @@ multiclass JMPR_base<string BaseOp> {
   }
 }
 
-let isTerminator = 1, neverHasSideEffects = 1 in {
+let isTerminator = 1, hasSideEffects = 0 in {
 let isBranch = 1 in
 defm JMP : JMP_base<"JMP">, PredNewRel;
 
@@ -1106,7 +1106,7 @@ def : Pat <(brcond (i1 PredRegs:$src1), bb:$offset),
       (JMP_t (i1 PredRegs:$src1), bb:$offset)>;
 
 // A return through builtin_eh_return.
-let isReturn = 1, isTerminator = 1, isBarrier = 1, neverHasSideEffects = 1,
+let isReturn = 1, isTerminator = 1, isBarrier = 1, hasSideEffects = 0,
 isCodeGenOnly = 1, Defs = [PC], Uses = [R28], isPredicable = 0 in
 def EH_RETURN_JMPR : T_JMPr;
 
@@ -1146,7 +1146,7 @@ multiclass LD_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let isExtendable = 1, neverHasSideEffects = 1 in
+let isExtendable = 1, hasSideEffects = 0 in
 multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
                     bits<5> ImmBits, bits<5> PredImmBits> {
 
@@ -1222,7 +1222,7 @@ multiclass LD_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
   }
 }
 
-let isExtendable = 1, neverHasSideEffects = 1 in
+let isExtendable = 1, hasSideEffects = 0 in
 multiclass LD_Idxd<string mnemonic, string CextOp, RegisterClass RC,
                    Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
                    bits<5> PredImmBits> {
@@ -1327,7 +1327,7 @@ multiclass LD_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
   }
 }
 
-let hasCtrlDep = 1, neverHasSideEffects = 1, addrMode = PostInc in {
+let hasCtrlDep = 1, hasSideEffects = 0, addrMode = PostInc in {
   defm POST_LDrib : LD_PostInc<"memb", "LDrib", IntRegs, s4_0Imm>,
                     PredNewRel;
   defm POST_LDriub : LD_PostInc<"memub", "LDriub", IntRegs, s4_0Imm>,
@@ -1371,14 +1371,14 @@ def : Pat < (i32 (zextloadi1 (add IntRegs:$src1, s11_0ImmPred:$offset))),
 
 // Load predicate.
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 13,
-isPseudo = 1, Defs = [R10,R11,D5], neverHasSideEffects = 1 in
+isPseudo = 1, Defs = [R10,R11,D5], hasSideEffects = 0 in
 def LDriw_pred : LDInst2<(outs PredRegs:$dst),
             (ins MEMri:$addr),
             "Error; should not emit",
             []>;
 
 // Deallocate stack frame.
-let Defs = [R29, R30, R31], Uses = [R29], neverHasSideEffects = 1 in {
+let Defs = [R29, R30, R31], Uses = [R29], hasSideEffects = 0 in {
   def DEALLOCFRAME : LDInst2<(outs), (ins),
                      "deallocframe",
                      []>;
@@ -1637,7 +1637,7 @@ multiclass ST_PostInc_Pred<string mnemonic, RegisterClass RC,
   }
 }
 
-let hasCtrlDep = 1, isNVStorable = 1, neverHasSideEffects = 1 in
+let hasCtrlDep = 1, isNVStorable = 1, hasSideEffects = 0 in
 multiclass ST_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
                       Operand ImmOp> {
 
@@ -1701,7 +1701,7 @@ multiclass ST_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-let isExtendable = 1, isNVStorable = 1, neverHasSideEffects = 1 in
+let isExtendable = 1, isNVStorable = 1, hasSideEffects = 0 in
 multiclass ST_MEMri<string mnemonic, string CextOp, RegisterClass RC,
                     bits<5> ImmBits, bits<5> PredImmBits> {
 
@@ -1773,7 +1773,7 @@ multiclass ST_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
   }
 }
 
-let isExtendable = 1, isNVStorable = 1, neverHasSideEffects = 1 in
+let isExtendable = 1, isNVStorable = 1, hasSideEffects = 0 in
 multiclass ST_Idxd<string mnemonic, string CextOp, RegisterClass RC,
                    Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
                    bits<5> PredImmBits> {
@@ -1837,14 +1837,14 @@ def : Pat<(store (i64 DoubleRegs:$src1), (add IntRegs:$src2,
 
 // Store word.
 // Store predicate.
-let Defs = [R10,R11,D5], neverHasSideEffects = 1 in
+let Defs = [R10,R11,D5], hasSideEffects = 0 in
 def STriw_pred : STInst2<(outs),
             (ins MEMri:$addr, PredRegs:$src1),
             "Error; should not emit",
             []>;
 
 // Allocate stack frame.
-let Defs = [R29, R30], Uses = [R31, R30], neverHasSideEffects = 1 in {
+let Defs = [R29, R30], Uses = [R31, R30], hasSideEffects = 0 in {
   def ALLOCFRAME : STInst2<(outs),
              (ins i32imm:$amt),
              "allocframe(#$amt)",
@@ -1918,7 +1918,7 @@ def : Pat <(xor (i32 IntRegs:$src1), -2147483648),
       (TOGBIT_31 (i32 IntRegs:$src1), 31)>;
 
 // Predicate transfer.
-let neverHasSideEffects = 1 in
+let hasSideEffects = 0 in
 def TFR_RsPd : SInst<(outs IntRegs:$dst), (ins PredRegs:$src1),
                "$dst = $src1  /* Should almost never emit this. */",
                []>;
@@ -2093,19 +2093,19 @@ def TFR_FI : ALU32_ri<(outs IntRegs:$dst), (ins FrameIndex:$src1),
 //
 // CR - Type.
 //
-let neverHasSideEffects = 1, Defs = [SA0, LC0] in {
+let hasSideEffects = 0, Defs = [SA0, LC0] in {
 def LOOP0_i : CRInst<(outs), (ins brtarget:$offset, u10Imm:$src2),
                       "loop0($offset, #$src2)",
                       []>;
 }
 
-let neverHasSideEffects = 1, Defs = [SA0, LC0] in {
+let hasSideEffects = 0, Defs = [SA0, LC0] in {
 def LOOP0_r : CRInst<(outs), (ins brtarget:$offset, IntRegs:$src2),
                       "loop0($offset, $src2)",
                       []>;
 }
 
-let isBranch = 1, isTerminator = 1, neverHasSideEffects = 1,
+let isBranch = 1, isTerminator = 1, hasSideEffects = 0,
     Defs = [PC, LC0], Uses = [SA0, LC0] in {
 def ENDLOOP0 : Endloop<(outs), (ins brtarget:$offset),
                        ":endloop0",
@@ -2122,44 +2122,44 @@ def HexagonCONST32 : SDNode<"HexagonISD::CONST32",     SDTHexagonCONST32>;
 def HexagonCONST32_GP : SDNode<"HexagonISD::CONST32_GP",     SDTHexagonCONST32>;
 
 // HI/LO Instructions
-let isReMaterializable = 1, isMoveImm = 1, neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0 in
 def LO : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
                   "$dst.l = #LO($global)",
                   []>;
 
-let isReMaterializable = 1, isMoveImm = 1, neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0 in
 def HI : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
                   "$dst.h = #HI($global)",
                   []>;
 
-let isReMaterializable = 1, isMoveImm = 1, neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0 in
 def LOi : ALU32_ri<(outs IntRegs:$dst), (ins i32imm:$imm_value),
                   "$dst.l = #LO($imm_value)",
                   []>;
 
 
-let isReMaterializable = 1, isMoveImm = 1, neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0 in
 def HIi : ALU32_ri<(outs IntRegs:$dst), (ins i32imm:$imm_value),
                   "$dst.h = #HI($imm_value)",
                   []>;
 
-let isReMaterializable = 1, isMoveImm = 1, neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0 in
 def LO_jt : ALU32_ri<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                   "$dst.l = #LO($jt)",
                   []>;
 
-let isReMaterializable = 1, isMoveImm = 1, neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0 in
 def HI_jt : ALU32_ri<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                   "$dst.h = #HI($jt)",
                   []>;
 
 
-let isReMaterializable = 1, isMoveImm = 1, neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0 in
 def LO_label : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
                   "$dst.l = #LO($label)",
                   []>;
 
-let isReMaterializable = 1, isMoveImm = 1 , neverHasSideEffects = 1 in
+let isReMaterializable = 1, isMoveImm = 1 , hasSideEffects = 0 in
 def HI_label : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
                   "$dst.h = #HI($label)",
                   []>;
@@ -2257,7 +2257,7 @@ let Defs = [R29, R30, R31], Uses = [R29] in {
                       [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 // Call subroutine.
-let isCall = 1, neverHasSideEffects = 1,
+let isCall = 1, hasSideEffects = 0,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
           R22, R23, R28, R31, P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
   def CALL : JInst<(outs), (ins calltarget:$dst),
@@ -2265,7 +2265,7 @@ let isCall = 1, neverHasSideEffects = 1,
 }
 
 // Call subroutine from register.
-let isCall = 1, neverHasSideEffects = 1,
+let isCall = 1, hasSideEffects = 0,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
           R22, R23, R28, R31, P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
   def CALLR : JRInst<(outs), (ins IntRegs:$dst),
