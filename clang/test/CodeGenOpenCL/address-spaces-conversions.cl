@@ -15,8 +15,8 @@ void test(global int *arg_glob, generic int *arg_gen) {
       (global int *)arg_glob; // explicit cast in the same address space
   // CHECK-NOT: %{{[0-9]+}} = addrspacecast i32 addrspace(1)* %{{[0-9]+}} to i32 addrspace(1)*
   var_priv = arg_gen - arg_glob; // arithmetic operation
-  // CHECK: %sub.ptr.lhs.cast = ptrtoint i32 addrspace(4)* %6 to i64
-  // CHECK: %sub.ptr.rhs.cast = ptrtoint i32 addrspace(1)* %7 to i64
+  // CHECK: %{{.*}} = ptrtoint i32 addrspace(4)* %{{.*}} to i64
+  // CHECK: %{{.*}} = ptrtoint i32 addrspace(1)* %{{.*}} to i64
   var_priv = arg_gen > arg_glob; // comparison
   // CHECK: %{{[0-9]+}} = addrspacecast i32 addrspace(1)* %{{[0-9]+}} to i32 addrspace(4)*
 }
