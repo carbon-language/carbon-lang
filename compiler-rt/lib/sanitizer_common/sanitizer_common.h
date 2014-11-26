@@ -34,7 +34,7 @@ const uptr kWordSizeInBits = 8 * kWordSize;
   const uptr kCacheLineSize = 64;
 #endif
 
-const uptr kMaxPathLength = 512;
+const uptr kMaxPathLength = 4096;
 
 const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
 
@@ -149,7 +149,7 @@ extern StaticSpinMutex CommonSanitizerReportMutex;
 void MaybeOpenReportFile();
 extern fd_t report_fd;
 extern bool log_to_file;
-extern char report_path_prefix[4096];
+extern char report_path_prefix[kMaxPathLength];
 extern uptr report_fd_pid;
 extern uptr stoptheworld_tracer_pid;
 extern uptr stoptheworld_tracer_ppid;

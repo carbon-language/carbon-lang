@@ -132,7 +132,7 @@ class CoverageData {
 static CoverageData coverage_data;
 
 void CoverageData::DirectOpen() {
-  InternalScopedString path(1024);
+  InternalScopedString path(kMaxPathLength);
   internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.raw",
                     common_flags()->coverage_dir, internal_getpid());
   pc_fd = OpenFile(path.data(), true);
@@ -339,7 +339,7 @@ static void CovWritePacked(int pid, const char *module, const void *blob,
 // If packed = true and name != 0: <name>.<sancov>.<packed> (name is
 // user-supplied).
 static int CovOpenFile(bool packed, const char* name) {
-  InternalScopedBuffer<char> path(1024);
+  InternalScopedBuffer<char> path(kMaxPathLength);
   if (!packed) {
     CHECK(name);
     internal_snprintf((char *)path.data(), path.size(), "%s/%s.%zd.sancov",
@@ -465,8 +465,8 @@ static void CovDump() {
   SortArray(vb, size);
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr mb, me, off, prot;
-  InternalScopedBuffer<char> module(4096);
-  InternalScopedBuffer<char> path(4096 * 2);
+  InternalScopedBuffer<char> module(kMaxPathLength);
+  InternalScopedBuffer<char> path(kMaxPathLength);
   for (int i = 0;
        proc_maps.Next(&mb, &me, &off, module.data(), module.size(), &prot);
        i++) {
