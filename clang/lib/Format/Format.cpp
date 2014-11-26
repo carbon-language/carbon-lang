@@ -74,6 +74,7 @@ template <> struct ScalarEnumerationTraits<FormatStyle::ShortFunctionStyle> {
     IO.enumCase(Value, "All", FormatStyle::SFS_All);
     IO.enumCase(Value, "true", FormatStyle::SFS_All);
     IO.enumCase(Value, "Inline", FormatStyle::SFS_Inline);
+    IO.enumCase(Value, "Empty", FormatStyle::SFS_Empty);
   }
 };
 
@@ -414,7 +415,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
 
   if (Language == FormatStyle::LK_Java) {
     GoogleStyle.AlignAfterOpenBracket = false;
-    GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
+    GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Empty;
     GoogleStyle.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
     GoogleStyle.ColumnLimit = 100;
     GoogleStyle.SpaceAfterCStyleCast = true;
@@ -639,6 +640,8 @@ public:
     // If necessary, change to something smarter.
     bool MergeShortFunctions =
         Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_All ||
+        (Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_Empty &&
+         I[1]->First->is(tok::r_brace)) ||
         (Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_Inline &&
          TheLine->Level != 0);
 
@@ -768,7 +771,8 @@ private:
     AnnotatedLine &Line = **I;
 
     // Don't merge ObjC @ keywords and methods.
-    if (Line.First->isOneOf(tok::at, tok::minus, tok::plus))
+    if (Style.Language != FormatStyle::LK_Java &&
+        Line.First->isOneOf(tok::at, tok::minus, tok::plus))
       return 0;
 
     // Check that the current line allows merging. This depends on whether we

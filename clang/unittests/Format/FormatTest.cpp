@@ -8680,6 +8680,8 @@ TEST_F(FormatTest, ParsesConfiguration) {
               AllowShortFunctionsOnASingleLine, FormatStyle::SFS_None);
   CHECK_PARSE("AllowShortFunctionsOnASingleLine: Inline",
               AllowShortFunctionsOnASingleLine, FormatStyle::SFS_Inline);
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: Empty",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_Empty);
   CHECK_PARSE("AllowShortFunctionsOnASingleLine: All",
               AllowShortFunctionsOnASingleLine, FormatStyle::SFS_All);
   // For backward compatibility:

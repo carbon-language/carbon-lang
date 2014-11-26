@@ -212,6 +212,8 @@ struct FormatStyle {
     SFS_None,
     /// \brief Only merge functions defined inside a class.
     SFS_Inline,
+    /// \brief Only merge empty functions.
+    SFS_Empty,
     /// \brief Merge all functions fitting on a single line.
     SFS_All,
   };
