@@ -54,6 +54,10 @@ TEST_F(FormatTestJava, NoAlternativeOperatorNames) {
   verifyFormat("someObject.and();");
 }
 
+TEST_F(FormatTestJava, UnderstandsCasts) {
+  verifyFormat("a[b >> 1] = (byte) (c() << 4);");
+}
+
 TEST_F(FormatTestJava, FormatsInstanceOfLikeOperators) {
   FormatStyle Style = getStyleWithColumns(50);
   verifyFormat("return aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"

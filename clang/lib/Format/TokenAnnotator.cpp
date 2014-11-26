@@ -921,15 +921,19 @@ private:
         LeftOfParens->MatchingParen &&
         LeftOfParens->MatchingParen->is(TT_LambdaLSquare))
       return false;
+    if (Tok.Next) {
+      if (Style.Language == FormatStyle::LK_JavaScript &&
+          Tok.Next->is(Keywords.kw_in))
+        return false;
+      if (Style.Language == FormatStyle::LK_Java && Tok.Next->is(tok::l_paren))
+        return true;
+    }
     bool IsCast = false;
     bool ParensAreEmpty = Tok.Previous == Tok.MatchingParen;
     bool ParensAreType =
         !Tok.Previous ||
         Tok.Previous->isOneOf(TT_PointerOrReference, TT_TemplateCloser) ||
         Tok.Previous->isSimpleTypeSpecifier();
-    if (Style.Language == FormatStyle::LK_JavaScript && Tok.Next &&
-        Tok.Next->is(Keywords.kw_in))
-      return false;
     bool ParensCouldEndDecl =
         Tok.Next && Tok.Next->isOneOf(tok::equal, tok::semi, tok::l_brace);
     bool IsSizeOfOrAlignOf =
