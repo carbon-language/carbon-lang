@@ -1265,3 +1265,88 @@ for further details including limitations of the unroll hints.
   }];
 }
 
+def DocOpenCLAddressSpaces : DocumentationCategory<"OpenCL Address Spaces"> {
+  let Content = [{
+The address space qualifier may be used to specify the region of memory that is
+used to allocate the object. OpenCL supports the following address spaces:
+__generic(generic), __global(global), __local(local), __private(private),
+__constant(constant).
+
+   .. code-block:: opencl
+
+  __constant int c = ...;
+
+  __generic int* foo(global int* g) {
+     __local int* l;
+     private int p;
+     ...
+     return l;
+  }
+
+More details can be found in the OpenCL C language Spec v2.0, Section 6.5.
+  }];
+}
+
+def OpenCLAddressSpaceGenericDocs : Documentation {
+  let Category = DocOpenCLAddressSpaces;
+  let Heading = "__generic(generic)";
+  let Content = [{
+The generic address space attribute is only available with OpenCL v2.0 and later.
+It can be used with pointer types. Variables in global and local scope and
+function parameters in non-kernel functions can have the generic address space
+type attribute. It is intended to be a placeholder for any other address space
+except for '__constant' in OpenCL code which can be used with multiple address
+spaces.
+  }];
+}
+
+def OpenCLAddressSpaceConstantDocs : Documentation {
+  let Category = DocOpenCLAddressSpaces;
+  let Heading = "__constant(constant)";
+  let Content = [{
+The constant address space attribute signals that an object is located in
+a constant (non-modifiable) memory region. It is available to all work items.
+Any type can be annotated with the constant address space attribute. Objects
+with the constant address space qualifier can be declared in any scope and must
+have an initializer.
+  }];
+}
+
+def OpenCLAddressSpaceGlobalDocs : Documentation {
+  let Category = DocOpenCLAddressSpaces;
+  let Heading = "__global(global)";
+  let Content = [{
+The global address space attribute specifies that an object is allocated in
+global memory, which is accessible by all work items. The content stored in this
+memory area persists between kernel executions. Pointer types to the global
+address space are allowed as function parameters or local variables. Starting
+with OpenCL v2.0, the global address space can be used with global (program
+scope) variables and static local variable as well.
+  }];
+}
+
+def OpenCLAddressSpaceLocalDocs : Documentation {
+  let Category = DocOpenCLAddressSpaces;
+  let Heading = "__local(local)";
+  let Content = [{
+The local address space specifies that an object is allocated in the local (work
+group) memory area, which is accessible to all work items in the same work
+group. The content stored in this memory region is not accessible after
+the kernel execution ends. In a kernel function scope, any variable can be in
+the local address space. In other scopes, only pointer types to the local address
+space are allowed. Local address space variables cannot have an initializer.
+  }];
+}
+
+def OpenCLAddressSpacePrivateDocs : Documentation {
+  let Category = DocOpenCLAddressSpaces;
+  let Heading = "__private(private)";
+  let Content = [{
+The private address space specifies that an object is allocated in the private
+(work item) memory. Other work items cannot access the same memory area and its
+content is destroyed after work item execution ends. Local variables can be
+declared in the private address space. Function arguments are always in the
+private address space. Kernel function arguments of a pointer or an array type
+cannot point to the private address space.
+  }];
+}

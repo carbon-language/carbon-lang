@@ -1490,6 +1490,9 @@ void Qualifiers::print(raw_ostream &OS, const PrintingPolicy& Policy,
       case LangAS::opencl_constant:
         OS << "__constant";
         break;
+      case LangAS::opencl_generic:
+        OS << "__generic";
+        break;
       default:
         OS << "__attribute__((address_space(";
         OS << addrspace;

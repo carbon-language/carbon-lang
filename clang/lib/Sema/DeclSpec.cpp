@@ -508,14 +508,14 @@ bool DeclSpec::SetStorageClassSpec(Sema &S, SCS SC, SourceLocation Loc,
     case SCS_private_extern:
     case SCS_static:
         if (S.getLangOpts().OpenCLVersion < 120) {
-          DiagID   = diag::err_not_opencl_storage_class_specifier;
+          DiagID   = diag::err_opencl_unknown_type_specifier;
           PrevSpec = getSpecifierName(SC);
           return true;
         }
         break;
     case SCS_auto:
     case SCS_register:
-      DiagID   = diag::err_not_opencl_storage_class_specifier;
+      DiagID   = diag::err_opencl_unknown_type_specifier;
       PrevSpec = getSpecifierName(SC);
       return true;
     default:
