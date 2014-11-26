@@ -347,13 +347,13 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
   // Set mask and the first source register.
   switch (Opc) {
     case Hexagon::CMPEHexagon4rr:
-    case Hexagon::CMPEQri:
+    case Hexagon::C2_cmpeqi:
     case Hexagon::C2_cmpeq:
     case Hexagon::CMPGT64rr:
     case Hexagon::CMPGTU64rr:
-    case Hexagon::CMPGTUri:
+    case Hexagon::C2_cmpgtui:
     case Hexagon::C2_cmpgtu:
-    case Hexagon::CMPGTri:
+    case Hexagon::C2_cmpgti:
     case Hexagon::C2_cmpgt:
       SrcReg = MI->getOperand(1).getReg();
       Mask = ~0;
@@ -397,9 +397,9 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
       SrcReg2 = MI->getOperand(2).getReg();
       return true;
 
-    case Hexagon::CMPEQri:
-    case Hexagon::CMPGTUri:
-    case Hexagon::CMPGTri:
+    case Hexagon::C2_cmpeqi:
+    case Hexagon::C2_cmpgtui:
+    case Hexagon::C2_cmpgti:
     case Hexagon::CMPbEQri_V4:
     case Hexagon::CMPbGTUri_V4:
     case Hexagon::CMPhEQri_V4:
@@ -1265,11 +1265,11 @@ bool HexagonInstrInfo::isNewValueJumpCandidate(const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
     default: return false;
     case Hexagon::C2_cmpeq:
-    case Hexagon::CMPEQri:
+    case Hexagon::C2_cmpeqi:
     case Hexagon::C2_cmpgt:
-    case Hexagon::CMPGTri:
+    case Hexagon::C2_cmpgti:
     case Hexagon::C2_cmpgtu:
-    case Hexagon::CMPGTUri:
+    case Hexagon::C2_cmpgtui:
       return true;
   }
 }

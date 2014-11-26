@@ -540,15 +540,15 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
     return nullptr;
 
   switch (CondOpc) {
-    case Hexagon::CMPEQri:
+    case Hexagon::C2_cmpeqi:
     case Hexagon::C2_cmpeq:
       Cmp = !Negated ? Comparison::EQ : Comparison::NE;
       break;
-    case Hexagon::CMPGTUri:
+    case Hexagon::C2_cmpgtui:
     case Hexagon::C2_cmpgtu:
       Cmp = !Negated ? Comparison::GTu : Comparison::LEu;
       break;
-    case Hexagon::CMPGTri:
+    case Hexagon::C2_cmpgti:
     case Hexagon::C2_cmpgt:
       Cmp = !Negated ? Comparison::GTs : Comparison::LEs;
       break;
