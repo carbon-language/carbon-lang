@@ -628,9 +628,11 @@ namespace lldb_private {
         bool m_interrupt_exits;
     };
     
+    // The order of base classes is important. Look at the constructor of IOHandlerConfirm
+    // to see how.
     class IOHandlerConfirm :
-        public IOHandlerEditline,
-        public IOHandlerDelegate
+        public IOHandlerDelegate,
+        public IOHandlerEditline
     {
     public:
         IOHandlerConfirm (Debugger &debugger,
