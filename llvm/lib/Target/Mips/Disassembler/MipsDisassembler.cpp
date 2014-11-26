@@ -255,6 +255,11 @@ static DecodeStatus DecodeCacheOp(MCInst &Inst,
 static DecodeStatus DecodeMSA128Mem(MCInst &Inst, unsigned Insn,
                                     uint64_t Address, const void *Decoder);
 
+static DecodeStatus DecodeMemMMImm4(MCInst &Inst,
+                                    unsigned Insn,
+                                    uint64_t Address,
+                                    const void *Decoder);
+
 static DecodeStatus DecodeMemMMImm12(MCInst &Inst,
                                      unsigned Insn,
                                      uint64_t Address,
@@ -909,7 +914,11 @@ static DecodeStatus DecodeGPRMM16ZeroRegisterClass(MCInst &Inst,
                                                    unsigned RegNo,
                                                    uint64_t Address,
                                                    const void *Decoder) {
-  return MCDisassembler::Fail;
+  if (RegNo > 7)
+    return MCDisassembler::Fail;
+  unsigned Reg = getReg(Decoder, Mips::GPRMM16ZeroRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
 }
 
 static DecodeStatus DecodeGPR32RegisterClass(MCInst &Inst,
@@ -1077,6 +1086,58 @@ static DecodeStatus DecodeMSA128Mem(MCInst &Inst, unsigned Insn,
   case Mips::ST_D:
     Inst.addOperand(MCOperand::CreateImm(Offset * 8));
     break;
+  }
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeMemMMImm4(MCInst &Inst,
+                                    unsigned Insn,
+                                    uint64_t Address,
+                                    const void *Decoder) {
+  unsigned Offset = Insn & 0xf;
+  unsigned Reg = fieldFromInstruction(Insn, 7, 3);
+  unsigned Base = fieldFromInstruction(Insn, 4, 3);
+
+  switch (Inst.getOpcode()) {
+    case Mips::LBU16_MM:
+    case Mips::LHU16_MM:
+    case Mips::LW16_MM:
+      if (DecodeGPRMM16RegisterClass(Inst, Reg, Address, Decoder)
+            == MCDisassembler::Fail)
+        return MCDisassembler::Fail;
+      break;
+    case Mips::SB16_MM:
+    case Mips::SH16_MM:
+    case Mips::SW16_MM:
+      if (DecodeGPRMM16ZeroRegisterClass(Inst, Reg, Address, Decoder)
+            == MCDisassembler::Fail)
+        return MCDisassembler::Fail;
+      break;
+  }
+
+  if (DecodeGPRMM16RegisterClass(Inst, Base, Address, Decoder)
+        == MCDisassembler::Fail)
+    return MCDisassembler::Fail;
+
+  switch (Inst.getOpcode()) {
+    case Mips::LBU16_MM:
+      if (Offset == 0xf)
+        Inst.addOperand(MCOperand::CreateImm(-1));
+      else
+        Inst.addOperand(MCOperand::CreateImm(Offset));
+      break;
+    case Mips::SB16_MM:
+      Inst.addOperand(MCOperand::CreateImm(Offset));
+      break;
+    case Mips::LHU16_MM:
+    case Mips::SH16_MM:
+      Inst.addOperand(MCOperand::CreateImm(Offset << 1));
+      break;
+    case Mips::LW16_MM:
+    case Mips::SW16_MM:
+      Inst.addOperand(MCOperand::CreateImm(Offset << 2));
+      break;
   }
 
   return MCDisassembler::Success;

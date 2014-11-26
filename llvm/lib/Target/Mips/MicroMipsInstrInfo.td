@@ -186,6 +186,7 @@ class LoadMM16<string opstr, DAGOperand RO, SDPatternOperator OpNode,
                InstrItinClass Itin, Operand MemOpnd> :
   MicroMipsInst16<(outs RO:$rt), (ins MemOpnd:$addr),
                   !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm4";
   let canFoldAsLoad = 1;
   let mayLoad = 1;
 }
@@ -195,6 +196,7 @@ class StoreMM16<string opstr, DAGOperand RTOpnd, DAGOperand RO,
                 Operand MemOpnd> :
   MicroMipsInst16<(outs), (ins RTOpnd:$rt, MemOpnd:$addr),
                   !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm4";
   let mayStore = 1;
 }
 

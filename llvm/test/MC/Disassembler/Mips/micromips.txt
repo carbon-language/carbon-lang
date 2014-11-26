@@ -346,6 +346,30 @@
 # CHECK: srl16 $4, $17, 6
 0x26 0x1d
 
+# CHECK: lbu16 $3, 4($17)
+0x09 0x94
+
+# CHECK: lbu16 $3, -1($16)
+0x09 0x8f
+
+# CHECK: lhu16 $3, 4($16)
+0x29 0x82
+
+# CHECK: lw16 $4, 8($17)
+0x6a 0x12
+
+# CHECK: sb16 $3, 4($16)
+0x89 0x84
+
+# CHECK: sh16 $4, 8($17)
+0xaa 0x14
+
+# CHECK: sw16 $4, 4($17)
+0xea 0x11
+
+# CHECK: sw16 $zero, 4($17)
+0xe8 0x11
+
 # CHECK: mfhi $9
 0x46 0x09
 
