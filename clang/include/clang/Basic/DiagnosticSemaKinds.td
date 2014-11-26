@@ -4970,6 +4970,10 @@ def err_typecheck_comparison_of_distinct_pointers : Error<
 def ext_typecheck_comparison_of_distinct_pointers_nonstandard : ExtWarn<
   "comparison of distinct pointer types (%0 and %1) uses non-standard "
   "composite pointer type %2">, InGroup<CompareDistinctPointerType>;
+def err_typecheck_op_on_nonoverlapping_address_space_pointers : Error<
+  "%select{comparison between %diff{ ($ and $)|}0,1"
+  "|arithmetic operation with operands of type %diff{ ($ and $)|}0,1}2"
+  " which are pointers to non-overlapping address spaces">;
 def err_typecheck_assign_const : Error<"read-only variable is not assignable">;
 def err_stmtexpr_file_scope : Error<
   "statement expression not allowed at file scope">;

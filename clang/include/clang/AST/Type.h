@@ -16,6 +16,7 @@
 
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
+#include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/ExceptionSpecificationType.h"
 #include "clang/Basic/LLVM.h"
@@ -400,21 +401,36 @@ public:
     Mask |= qs.Mask;
   }
 
+  /// \brief Returns true if this address space is a superset of the other one.
+  /// OpenCL v2.0 defines conversion rules (OpenCLC v2.0 s6.5.5) and notion of
+  /// overlapping address spaces.
+  /// CL1.1 or CL1.2:
+  ///   every address space is a superset of itself.
+  /// CL2.0 adds:
+  ///   __generic is a superset of any address space except for __constant.
+  bool isAddressSpaceSupersetOf(Qualifiers other) const {
+    return
+        // Address spaces must match exactly.
+        getAddressSpace() == other.getAddressSpace() ||
+        // Otherwise in OpenCLC v2.0 s6.5.5: every address space except
+        // for __constant can be used as __generic.
+        (getAddressSpace() == LangAS::opencl_generic &&
+         other.getAddressSpace() != LangAS::opencl_constant);
+  }
+
   /// \brief Determines if these qualifiers compatibly include another set.
   /// Generally this answers the question of whether an object with the other
   /// qualifiers can be safely used as an object with these qualifiers.
   bool compatiblyIncludes(Qualifiers other) const {
-    return
-      // Address spaces must match exactly.
-      getAddressSpace() == other.getAddressSpace() &&
-      // ObjC GC qualifiers can match, be added, or be removed, but can't be
-      // changed.
-      (getObjCGCAttr() == other.getObjCGCAttr() ||
-       !hasObjCGCAttr() || !other.hasObjCGCAttr()) &&
-      // ObjC lifetime qualifiers must match exactly.
-      getObjCLifetime() == other.getObjCLifetime() &&
-      // CVR qualifiers may subset.
-      (((Mask & CVRMask) | (other.Mask & CVRMask)) == (Mask & CVRMask));
+    return isAddressSpaceSupersetOf(other) &&
+           // ObjC GC qualifiers can match, be added, or be removed, but can't
+           // be changed.
+           (getObjCGCAttr() == other.getObjCGCAttr() || !hasObjCGCAttr() ||
+            !other.hasObjCGCAttr()) &&
+           // ObjC lifetime qualifiers must match exactly.
+           getObjCLifetime() == other.getObjCLifetime() &&
+           // CVR qualifiers may subset.
+           (((Mask & CVRMask) | (other.Mask & CVRMask)) == (Mask & CVRMask));
   }
 
   /// \brief Determines if these qualifiers compatibly include another set of
@@ -1987,6 +2003,22 @@ class PointerType : public Type, public llvm::FoldingSetNode {
 public:
 
   QualType getPointeeType() const { return PointeeType; }
+
+  /// \brief Returns true if address spaces of pointers overlap.
+  /// OpenCL v2.0 defines conversion rules for pointers to different
+  /// address spaces (OpenCLC v2.0 s6.5.5) and notion of overlapping
+  /// address spaces.
+  /// CL1.1 or CL1.2:
+  ///   address spaces overlap iff they are they same.
+  /// CL2.0 adds:
+  ///   __generic overlaps with any address space except for __constant.
+  bool isAddressSpaceOverlapping(const PointerType &other) const {
+    Qualifiers thisQuals = PointeeType.getQualifiers();
+    Qualifiers otherQuals = other.getPointeeType().getQualifiers();
+    // Address spaces overlap if at least one of them is a superset of another
+    return thisQuals.isAddressSpaceSupersetOf(otherQuals) ||
+           otherQuals.isAddressSpaceSupersetOf(thisQuals);
+  }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

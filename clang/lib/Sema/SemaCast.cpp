@@ -2212,8 +2212,8 @@ void CastOperation::CheckCStyleCast() {
   // address space B is illegal.
   if (Self.getLangOpts().OpenCL && DestType->isPointerType() &&
       SrcType->isPointerType()) {
-    if (DestType->getPointeeType().getAddressSpace() !=
-        SrcType->getPointeeType().getAddressSpace()) {
+    const PointerType *DestPtr = DestType->getAs<PointerType>();
+    if (!DestPtr->isAddressSpaceOverlapping(*SrcType->getAs<PointerType>())) {
       Self.Diag(OpRange.getBegin(),
                 diag::err_typecheck_incompatible_address_space)
           << SrcType << DestType << Sema::AA_Casting
