@@ -14,7 +14,6 @@
 #ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDMACHO_H
 #define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDMACHO_H
 
-#include "ObjectImageCommon.h"
 #include "RuntimeDyldImpl.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Format.h"
@@ -61,10 +60,11 @@ protected:
   /// filled in, since immediate encodings are highly target/opcode specific.
   /// For targets/opcodes with simple, contiguous immediates (e.g. X86) the
   /// memcpyAddend method can be used to read the immediate.
-  RelocationEntry getRelocationEntry(unsigned SectionID, ObjectImage &ObjImg,
+  RelocationEntry getRelocationEntry(unsigned SectionID,
+                                     const ObjectFile &BaseTObj,
                                      const relocation_iterator &RI) const {
     const MachOObjectFile &Obj =
-      static_cast<const MachOObjectFile &>(*ObjImg.getObjectFile());
+      static_cast<const MachOObjectFile &>(BaseTObj);
     MachO::any_relocation_info RelInfo =
       Obj.getRelocation(RI->getRawDataRefImpl());
 
@@ -87,14 +87,15 @@ protected:
   /// In both cases the Addend field is *NOT* fixed up to be PC-relative. That
   /// should be done by the caller where appropriate by calling makePCRel on
   /// the RelocationValueRef.
-  RelocationValueRef getRelocationValueRef(ObjectImage &ObjImg,
+  RelocationValueRef getRelocationValueRef(const ObjectFile &BaseTObj,
                                            const relocation_iterator &RI,
                                            const RelocationEntry &RE,
                                            ObjSectionToIDMap &ObjSectionToID,
                                            const SymbolTableMap &Symbols);
 
   /// Make the RelocationValueRef addend PC-relative.
-  void makeValueAddendPCRel(RelocationValueRef &Value, ObjectImage &ObjImg,
+  void makeValueAddendPCRel(RelocationValueRef &Value,
+                            const ObjectFile &BaseTObj,
                             const relocation_iterator &RI,
                             unsigned OffsetToNextPC);
 
@@ -107,31 +108,22 @@ protected:
 
 
   // Populate __pointers section.
-  void populateIndirectSymbolPointersSection(MachOObjectFile &Obj,
+  void populateIndirectSymbolPointersSection(const MachOObjectFile &Obj,
                                              const SectionRef &PTSection,
                                              unsigned PTSectionID);
 
 public:
-  /// Create an ObjectImage from the given ObjectBuffer.
-  static std::unique_ptr<ObjectImage>
-  createObjectImage(std::unique_ptr<ObjectBuffer> InputBuffer) {
-    return llvm::make_unique<ObjectImageCommon>(std::move(InputBuffer));
-  }
-
-  /// Create an ObjectImage from the given ObjectFile.
-  static ObjectImage *
-  createObjectImageFromFile(std::unique_ptr<object::ObjectFile> InputObject) {
-    return new ObjectImageCommon(std::move(InputObject));
-  }
 
   /// Create a RuntimeDyldMachO instance for the given target architecture.
   static std::unique_ptr<RuntimeDyldMachO> create(Triple::ArchType Arch,
                                                   RTDyldMemoryManager *mm);
 
+  std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
+  loadObject(const object::ObjectFile &O) override;
+
   SectionEntry &getSection(unsigned SectionID) { return Sections[SectionID]; }
 
-  bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
-  bool isCompatibleFile(const object::ObjectFile *Obj) const override;
+  bool isCompatibleFile(const object::ObjectFile &Obj) const override;
 };
 
 /// RuntimeDyldMachOTarget - Templated base class for generic MachO linker
@@ -153,7 +145,7 @@ private:
 public:
   RuntimeDyldMachOCRTPBase(RTDyldMemoryManager *mm) : RuntimeDyldMachO(mm) {}
 
-  void finalizeLoad(ObjectImage &ObjImg,
+  void finalizeLoad(const ObjectFile &Obj,
                     ObjSectionToIDMap &SectionMap) override;
   void registerEHFrames() override;
 };

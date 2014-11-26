@@ -10,12 +10,12 @@
 #ifndef LLVM_LIB_EXECUTIONENGINE_MCJIT_MCJIT_H
 #define LLVM_LIB_EXECUTIONENGINE_MCJIT_MCJIT_H
 
+#include "ObjectBuffer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
-#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/IR/Module.h"
 
@@ -57,7 +57,7 @@ public:
   }
 
   void notifyObjectLoaded(ExecutionEngine *EE,
-                          const ObjectImage *Obj) override {
+                          const object::ObjectFile &Obj) override {
     ClientMM->notifyObjectLoaded(EE, Obj);
   }
 
@@ -222,7 +222,7 @@ class MCJIT : public ExecutionEngine {
   SmallVector<object::OwningBinary<object::Archive>, 2> Archives;
   SmallVector<std::unique_ptr<MemoryBuffer>, 2> Buffers;
 
-  SmallVector<std::unique_ptr<ObjectImage>, 2> LoadedObjects;
+  SmallVector<std::unique_ptr<object::ObjectFile>, 2> LoadedObjects;
 
   // An optional ObjectCache to be notified of compiled objects and used to
   // perform lookup of pre-compiled code to avoid re-compilation.
@@ -341,10 +341,11 @@ protected:
   /// this function call is expected to be the contained module.  The module
   /// is passed as a parameter here to prepare for multiple module support in
   /// the future.
-  std::unique_ptr<ObjectBufferStream> emitObject(Module *M);
+  std::unique_ptr<MemoryBuffer> emitObject(Module *M);
 
-  void NotifyObjectEmitted(const ObjectImage& Obj);
-  void NotifyFreeingObject(const ObjectImage& Obj);
+  void NotifyObjectEmitted(const object::ObjectFile& Obj,
+                           const RuntimeDyld::LoadedObjectInfo &L);
+  void NotifyFreeingObject(const object::ObjectFile& Obj);
 
   uint64_t getExistingSymbolAddress(const std::string &Name);
   Module *findModuleForSymbol(const std::string &Name,

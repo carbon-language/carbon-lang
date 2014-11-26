@@ -18,7 +18,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/ExecutionEngine/RuntimeDyldChecker.h"
 #include "llvm/Object/ObjectFile.h"
@@ -37,7 +36,6 @@ using namespace llvm::object;
 
 namespace llvm {
 
-class ObjectBuffer;
 class Twine;
 
 /// SectionEntry - represents a section emitted into memory by the dynamic
@@ -159,6 +157,7 @@ public:
 };
 
 class RuntimeDyldImpl {
+  friend class RuntimeDyld::LoadedObjectInfo;
   friend class RuntimeDyldCheckerImpl;
 private:
 
@@ -296,14 +295,15 @@ protected:
   /// \brief Given the common symbols discovered in the object file, emit a
   /// new section for them and update the symbol mappings in the object and
   /// symbol table.
-  void emitCommonSymbols(ObjectImage &Obj, const CommonSymbolMap &CommonSymbols,
+  void emitCommonSymbols(const ObjectFile &Obj,
+                         const CommonSymbolMap &CommonSymbols,
                          uint64_t TotalSize, SymbolTableMap &SymbolTable);
 
   /// \brief Emits section data from the object file to the MemoryManager.
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned emitSection(ObjectImage &Obj, const SectionRef &Section,
+  unsigned emitSection(const ObjectFile &Obj, const SectionRef &Section,
                        bool IsCode);
 
   /// \brief Find Section in LocalSections. If the secton is not found - emit
@@ -311,7 +311,7 @@ protected:
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emmits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned findOrEmitSection(ObjectImage &Obj, const SectionRef &Section,
+  unsigned findOrEmitSection(const ObjectFile &Obj, const SectionRef &Section,
                              bool IsCode, ObjSectionToIDMap &LocalSections);
 
   // \brief Add a relocation entry that uses the given section.
@@ -339,7 +339,7 @@ protected:
   /// \return Iterator to the next relocation that needs to be parsed.
   virtual relocation_iterator
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
-                       ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
+                       const ObjectFile &Obj, ObjSectionToIDMap &ObjSectionToID,
                        const SymbolTableMap &Symbols, StubMap &Stubs) = 0;
 
   /// \brief Resolve relocations to external symbols.
@@ -351,12 +351,15 @@ protected:
 
   // \brief Compute an upper bound of the memory that is required to load all
   // sections
-  void computeTotalAllocSize(ObjectImage &Obj, uint64_t &CodeSize,
+  void computeTotalAllocSize(const ObjectFile &Obj, uint64_t &CodeSize,
                              uint64_t &DataSizeRO, uint64_t &DataSizeRW);
 
   // \brief Compute the stub buffer size required for a section
-  unsigned computeSectionStubBufSize(ObjectImage &Obj,
+  unsigned computeSectionStubBufSize(const ObjectFile &Obj,
                                      const SectionRef &Section);
+
+  // \brief Implementation of the generic part of the loadObject algorithm.
+  std::pair<unsigned, unsigned> loadObjectImpl(const object::ObjectFile &Obj);
 
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm)
@@ -373,8 +376,8 @@ public:
     this->Checker = Checker;
   }
 
-  std::unique_ptr<ObjectImage>
-  loadObject(std::unique_ptr<ObjectImage> InputObject);
+  virtual std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
+  loadObject(const object::ObjectFile &Obj) = 0;
 
   uint8_t* getSymbolAddress(StringRef Name) const {
     // FIXME: Just look up as a function for now. Overly simple of course.
@@ -411,14 +414,14 @@ public:
   // Get the error message.
   StringRef getErrorString() { return ErrorStr; }
 
-  virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const = 0;
-  virtual bool isCompatibleFile(const ObjectFile *Obj) const = 0;
+  virtual bool isCompatibleFile(const ObjectFile &Obj) const = 0;
 
   virtual void registerEHFrames();
 
   virtual void deregisterEHFrames();
 
-  virtual void finalizeLoad(ObjectImage &ObjImg, ObjSectionToIDMap &SectionMap) {}
+  virtual void finalizeLoad(const ObjectFile &ObjImg,
+                            ObjSectionToIDMap &SectionMap) {}
 };
 
 } // end namespace llvm
