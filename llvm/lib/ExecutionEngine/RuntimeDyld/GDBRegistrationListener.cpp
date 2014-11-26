@@ -76,6 +76,7 @@ struct RegisteredObjectInfo {
     Size = Other.Size;
     Entry = Other.Entry;
     Obj = std::move(Other.Obj);
+    return *this;
   }
 
   std::size_t Size;
