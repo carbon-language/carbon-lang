@@ -77,7 +77,7 @@
 
    adrp x2, :tlsdesc:sym
 // CHECK: adrp x2, :tlsdesc:sym
-// CHECK-OBJ: 58 R_AARCH64_TLSDESC_ADR_PAGE sym
+// CHECK-OBJ: 58 R_AARCH64_TLSDESC_ADR_PAGE21 sym
 
    // LLVM is not competent enough to do this relocation because the
    // page boundary could occur anywhere after linking. A relocation

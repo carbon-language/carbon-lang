@@ -73,7 +73,7 @@ test_inline_modifier_A:                 // @test_inline_modifier_A
 	.size	test_inline_modifier_A, .Ltmp2-test_inline_modifier_A
 // CHECK: R_AARCH64_ADR_PREL_PG_HI21 var_simple
 // CHECK: R_AARCH64_ADR_GOT_PAGE var_got
-// CHECK: R_AARCH64_TLSDESC_ADR_PAGE var_tlsgd
+// CHECK: R_AARCH64_TLSDESC_ADR_PAGE21 var_tlsgd
 // CHECK: R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 var_tlsie
 
 	.globl	test_inline_modifier_wx

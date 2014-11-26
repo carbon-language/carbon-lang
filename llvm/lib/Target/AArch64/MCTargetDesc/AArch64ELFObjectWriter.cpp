@@ -78,7 +78,7 @@ unsigned AArch64ELFObjectWriter::GetRelocType(const MCValue &Target,
       if (SymLoc == AArch64MCExpr::VK_GOTTPREL && !IsNC)
         return ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21;
       if (SymLoc == AArch64MCExpr::VK_TLSDESC && !IsNC)
-        return ELF::R_AARCH64_TLSDESC_ADR_PAGE;
+        return ELF::R_AARCH64_TLSDESC_ADR_PAGE21;
       llvm_unreachable("invalid symbol kind for ADRP relocation");
     case AArch64::fixup_aarch64_pcrel_branch26:
       return ELF::R_AARCH64_JUMP26;
