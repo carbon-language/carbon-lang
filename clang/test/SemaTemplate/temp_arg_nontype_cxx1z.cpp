@@ -52,7 +52,7 @@ void Func() {
 
 namespace LabelAddrDiff {
   void f() {
-    a: b: A<int, __builtin_constant_p(true) ? (long)&&b - (long)&&a : 0> s; // expected-error {{label address difference}}
+    a: b: A<int, __builtin_constant_p(true) ? (__INTPTR_TYPE__)&&b - (__INTPTR_TYPE__)&&a : 0> s; // expected-error {{label address difference}}
   };
 }
 
