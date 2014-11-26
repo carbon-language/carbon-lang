@@ -42,15 +42,19 @@ int main(int argc, char **argv) {
     RecursiveFunctionWithStackFrame<500>(depth);
     RecursiveFunctionWithStackFrame<1024>(depth);
     RecursiveFunctionWithStackFrame<2000>(depth);
+    // The stack size is tight for the main thread in multithread
+    // environment on FreeBSD.
+#if !defined(__FreeBSD__)
     RecursiveFunctionWithStackFrame<5000>(depth);
     RecursiveFunctionWithStackFrame<10000>(depth);
+#endif
   }
   char *stale_stack = LeakStack();
   RecursiveFunctionWithStackFrame<1024>(10);
   stale_stack[100]++;
   // CHECK: ERROR: AddressSanitizer: stack-use-after-return on address
   // CHECK: is located in stack of thread T0 at offset {{116|132}} in frame
-  // CHECK:  in LeakStack(){{.*}}heavy_uar_test.cc:
+  // CHECK:  in LeakStack{{.*}}heavy_uar_test.cc:
   // CHECK: [{{16|32}}, {{1040|1056}}) 'x'
   return 0;
 }
