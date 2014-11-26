@@ -151,6 +151,11 @@ void GDBJITRegistrationListener::NotifyObjectEmitted(
                                        const RuntimeDyld::LoadedObjectInfo &L) {
 
   OwningBinary<ObjectFile> DebugObj = L.getObjectForDebug(Object);
+
+  // Bail out if debug objects aren't supported.
+  if (!DebugObj.getBinary())
+    return;
+
   const char *Buffer = DebugObj.getBinary()->getMemoryBufferRef().getBufferStart();
   size_t      Size = DebugObj.getBinary()->getMemoryBufferRef().getBufferSize();
 

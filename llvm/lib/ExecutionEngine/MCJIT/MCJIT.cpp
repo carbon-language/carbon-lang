@@ -75,6 +75,7 @@ MCJIT::MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
 
   OwnedModules.addModule(std::move(First));
   setDataLayout(TM->getSubtargetImpl()->getDataLayout());
+  RegisterJITEventListener(JITEventListener::createGDBRegistrationListener());
 }
 
 MCJIT::~MCJIT() {
