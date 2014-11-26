@@ -202,6 +202,8 @@ TEST_F(FormatTestJava, ArrayInitializers) {
 TEST_F(FormatTestJava, ThrowsDeclarations) {
   verifyFormat("public void doSooooooooooooooooooooooooooomething()\n"
                "    throws LooooooooooooooooooooooooooooongException {}");
+  verifyFormat("public void doSooooooooooooooooooooooooooomething()\n"
+               "    throws LoooooooooongException, LooooooooooongException {}");
 }
 
 TEST_F(FormatTestJava, Annotations) {

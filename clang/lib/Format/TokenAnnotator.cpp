@@ -1200,7 +1200,8 @@ private:
       else if (Current->isOneOf(tok::period, tok::arrow))
         return PrecedenceArrowAndPeriod;
       else if (Style.Language == FormatStyle::LK_Java &&
-               Current->isOneOf(Keywords.kw_extends, Keywords.kw_implements))
+               Current->isOneOf(Keywords.kw_extends, Keywords.kw_implements,
+                                Keywords.kw_throws))
         return 0;
     }
     return -1;
@@ -1470,7 +1471,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(TT_LeadingJavaAnnotation))
       return 1;
-    if (Right.is(Keywords.kw_extends))
+    if (Right.isOneOf(Keywords.kw_extends, Keywords.kw_throws))
       return 1;
     if (Right.is(Keywords.kw_implements))
       return 2;
