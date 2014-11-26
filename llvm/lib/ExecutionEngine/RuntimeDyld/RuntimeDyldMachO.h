@@ -119,7 +119,7 @@ public:
                                                   RTDyldMemoryManager *mm);
 
   std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
-  loadObject(const object::ObjectFile &O);
+  loadObject(const object::ObjectFile &O) override;
 
   SectionEntry &getSection(unsigned SectionID) { return Sections[SectionID]; }
 
