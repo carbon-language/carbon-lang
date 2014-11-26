@@ -16799,6 +16799,23 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
     return DAG.getNode(ISD::VSELECT, dl, VT, VMask, Op, PreservedSrc);
 }
 
+static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
+                                    SDValue PreservedSrc,
+                                    const X86Subtarget *Subtarget,
+                                    SelectionDAG &DAG) {
+    if (isAllOnes(Mask))
+      return Op;
+
+    EVT VT = Op.getValueType();
+    SDLoc dl(Op);
+    // The mask should be of type MVT::i1
+    SDValue IMask = DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, Mask);
+
+    if (PreservedSrc.getOpcode() == ISD::UNDEF)
+      PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
+    return DAG.getNode(X86ISD::SELECT, dl, VT, IMask, Op, PreservedSrc);
+}
+
 static unsigned getOpcodeForFMAIntrinsic(unsigned IntNo) {
     switch (IntNo) {
     default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
@@ -16872,6 +16889,16 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               RoundingMode),
                                   Mask, Src0, Subtarget, DAG);
     }
+    case INTR_TYPE_SCALAR_MASK_RM: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src0 = Op.getOperand(3);
+      SDValue Mask = Op.getOperand(4);
+      SDValue RoundingMode = Op.getOperand(5);
+      return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2,
+                                              RoundingMode),
+                                  Mask, Src0, Subtarget, DAG);
+    }                                              
     case INTR_TYPE_2OP_MASK: {
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Op.getOperand(1),
                                               Op.getOperand(2)),
