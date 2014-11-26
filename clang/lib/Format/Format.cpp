@@ -435,12 +435,17 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
 
 FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
   FormatStyle ChromiumStyle = getGoogleStyle(Language);
-  ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
-  ChromiumStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
-  ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
-  ChromiumStyle.AllowShortLoopsOnASingleLine = false;
-  ChromiumStyle.BinPackParameters = false;
-  ChromiumStyle.DerivePointerAlignment = false;
+  if (Language == FormatStyle::LK_Java) {
+    ChromiumStyle.IndentWidth = 4;
+    ChromiumStyle.ContinuationIndentWidth = 8;
+  } else {
+    ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
+    ChromiumStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
+    ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
+    ChromiumStyle.AllowShortLoopsOnASingleLine = false;
+    ChromiumStyle.BinPackParameters = false;
+    ChromiumStyle.DerivePointerAlignment = false;
+  }
   return ChromiumStyle;
 }
 

@@ -69,6 +69,21 @@ TEST_F(FormatTestJava, FormatsInstanceOfLikeOperators) {
                Style);
 }
 
+TEST_F(FormatTestJava, Chromium) {
+  verifyFormat("class SomeClass {\n"
+               "    void f() {}\n"
+               "    int g() {\n"
+               "        return 0;\n"
+               "    }\n"
+               "    void h() {\n"
+               "        while (true) f();\n"
+               "        for (;;) f();\n"
+               "        if (true) f();\n"
+               "    }\n"
+               "}",
+               getChromiumStyle(FormatStyle::LK_Java));
+}
+
 TEST_F(FormatTestJava, ClassKeyword) {
   verifyFormat("SomeClass.class.getName();");
   verifyFormat("Class c = SomeClass.class;");
