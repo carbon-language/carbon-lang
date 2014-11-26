@@ -612,8 +612,10 @@ public:
     // definitions (code.google.com/p/protobuf) or missing "#" (either way we
     // should not break the line).
     IdentifierInfo *Info = CurrentToken->Tok.getIdentifierInfo();
-    if (Info && Info->getPPKeywordID() == tok::pp_import &&
-        CurrentToken->Next) {
+    if ((Style.Language == FormatStyle::LK_Java &&
+         CurrentToken->is(Keywords.kw_package)) ||
+        (Info && Info->getPPKeywordID() == tok::pp_import &&
+         CurrentToken->Next)) {
       next();
       parseIncludeDirective();
       return LT_ImportStatement;

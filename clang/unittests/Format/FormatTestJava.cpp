@@ -319,6 +319,11 @@ TEST_F(FormatTestJava, SynchronizedKeyword) {
                "}");
 }
 
+TEST_F(FormatTestJava, PackageDeclarations) {
+  verifyFormat("package some.really.loooooooooooooooooooooong.package;",
+               getStyleWithColumns(50));
+}
+
 TEST_F(FormatTestJava, ImportDeclarations) {
   verifyFormat("import some.really.loooooooooooooooooooooong.imported.Class;",
                getStyleWithColumns(50));
