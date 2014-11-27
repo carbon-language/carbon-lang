@@ -52,8 +52,7 @@ int64_t RuntimeDyldMachO::memcpyAddend(const RelocationEntry &RE) const {
 
 RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
     const ObjectFile &BaseTObj, const relocation_iterator &RI,
-    const RelocationEntry &RE, ObjSectionToIDMap &ObjSectionToID,
-    const SymbolTableMap &Symbols) {
+    const RelocationEntry &RE, ObjSectionToIDMap &ObjSectionToID) {
 
   const MachOObjectFile &Obj =
       static_cast<const MachOObjectFile &>(BaseTObj);
@@ -66,19 +65,14 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
     symbol_iterator Symbol = RI->getSymbol();
     StringRef TargetName;
     Symbol->getName(TargetName);
-    SymbolTableMap::const_iterator SI = Symbols.find(TargetName.data());
-    if (SI != Symbols.end()) {
+    SymbolTableMap::const_iterator SI =
+      GlobalSymbolTable.find(TargetName.data());
+    if (SI != GlobalSymbolTable.end()) {
       Value.SectionID = SI->second.first;
       Value.Offset = SI->second.second + RE.Addend;
     } else {
-      SI = GlobalSymbolTable.find(TargetName.data());
-      if (SI != GlobalSymbolTable.end()) {
-        Value.SectionID = SI->second.first;
-        Value.Offset = SI->second.second + RE.Addend;
-      } else {
-        Value.SymbolName = TargetName.data();
-        Value.Offset = RE.Addend;
-      }
+      Value.SymbolName = TargetName.data();
+      Value.Offset = RE.Addend;
     }
   } else {
     SectionRef Sec = Obj.getRelocationSection(RelInfo);

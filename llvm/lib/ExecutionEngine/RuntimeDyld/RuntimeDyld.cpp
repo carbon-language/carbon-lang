@@ -155,8 +155,6 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
     MemMgr->reserveAllocationSpace(CodeSize, DataSizeRO, DataSizeRW);
   }
 
-  // Symbols found in this object
-  StringMap<SymbolLoc> LocalSymbols;
   // Used sections from the object file
   ObjSectionToIDMap LocalSections;
 
@@ -202,7 +200,6 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
         bool IsCode = SI->isText();
         unsigned SectionID =
             findOrEmitSection(Obj, *SI, IsCode, LocalSections);
-        LocalSymbols[Name.data()] = SymbolLoc(SectionID, SectOffset);
         DEBUG(dbgs() << "\tOffset: " << format("%p", (uintptr_t)SectOffset)
                      << " flags: " << Flags << " SID: " << SectionID);
         GlobalSymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
@@ -235,8 +232,7 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
     DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
 
     for (; I != E;)
-      I = processRelocationRef(SectionID, I, Obj, LocalSections, LocalSymbols,
-                               Stubs);
+      I = processRelocationRef(SectionID, I, Obj, LocalSections, Stubs);
 
     // If there is an attached checker, notify it about the stubs for this
     // section so that they can be verified.

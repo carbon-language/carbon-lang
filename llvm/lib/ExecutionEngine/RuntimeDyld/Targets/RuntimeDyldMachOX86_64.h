@@ -33,7 +33,7 @@ public:
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
                        const ObjectFile &BaseObjT,
                        ObjSectionToIDMap &ObjSectionToID,
-                       const SymbolTableMap &Symbols, StubMap &Stubs) override {
+                       StubMap &Stubs) override {
     const MachOObjectFile &Obj =
       static_cast<const MachOObjectFile &>(BaseObjT);
     MachO::any_relocation_info RelInfo =
@@ -45,7 +45,7 @@ public:
     RelocationEntry RE(getRelocationEntry(SectionID, Obj, RelI));
     RE.Addend = memcpyAddend(RE);
     RelocationValueRef Value(
-        getRelocationValueRef(Obj, RelI, RE, ObjSectionToID, Symbols));
+        getRelocationValueRef(Obj, RelI, RE, ObjSectionToID));
 
     bool IsExtern = Obj.getPlainRelocationExternal(RelInfo);
     if (!IsExtern && RE.IsPCRel)

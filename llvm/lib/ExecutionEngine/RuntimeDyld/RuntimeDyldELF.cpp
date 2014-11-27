@@ -901,7 +901,7 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
 relocation_iterator RuntimeDyldELF::processRelocationRef(
     unsigned SectionID, relocation_iterator RelI,
     const ObjectFile &Obj,
-    ObjSectionToIDMap &ObjSectionToID, const SymbolTableMap &Symbols,
+    ObjSectionToIDMap &ObjSectionToID,
     StubMap &Stubs) {
   uint64_t RelType;
   Check(RelI->getType(RelType));
@@ -917,60 +917,53 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
                << " TargetName: " << TargetName << "\n");
   RelocationValueRef Value;
   // First search for the symbol in the local symbol table
-  SymbolTableMap::const_iterator lsi = Symbols.end();
   SymbolRef::Type SymType = SymbolRef::ST_Unknown;
+
+  // Search for the symbol in the global symbol table
+  SymbolTableMap::const_iterator gsi = GlobalSymbolTable.end();
   if (Symbol != Obj.symbol_end()) {
-    lsi = Symbols.find(TargetName.data());
+    gsi = GlobalSymbolTable.find(TargetName.data());
     Symbol->getType(SymType);
   }
-  if (lsi != Symbols.end()) {
-    Value.SectionID = lsi->second.first;
-    Value.Offset = lsi->second.second;
-    Value.Addend = lsi->second.second + Addend;
+  if (gsi != GlobalSymbolTable.end()) {
+    Value.SectionID = gsi->second.first;
+    Value.Offset = gsi->second.second;
+    Value.Addend = gsi->second.second + Addend;
   } else {
-    // Search for the symbol in the global symbol table
-    SymbolTableMap::const_iterator gsi = GlobalSymbolTable.end();
-    if (Symbol != Obj.symbol_end())
-      gsi = GlobalSymbolTable.find(TargetName.data());
-    if (gsi != GlobalSymbolTable.end()) {
-      Value.SectionID = gsi->second.first;
-      Value.Offset = gsi->second.second;
-      Value.Addend = gsi->second.second + Addend;
-    } else {
-      switch (SymType) {
-      case SymbolRef::ST_Debug: {
-        // TODO: Now ELF SymbolRef::ST_Debug = STT_SECTION, it's not obviously
-        // and can be changed by another developers. Maybe best way is add
-        // a new symbol type ST_Section to SymbolRef and use it.
-        section_iterator si(Obj.section_end());
-        Symbol->getSection(si);
-        if (si == Obj.section_end())
-          llvm_unreachable("Symbol section not found, bad object file format!");
-        DEBUG(dbgs() << "\t\tThis is section symbol\n");
-        bool isCode = si->isText();
-        Value.SectionID = findOrEmitSection(Obj, (*si), isCode, ObjSectionToID);
-        Value.Addend = Addend;
-        break;
-      }
-      case SymbolRef::ST_Data:
-      case SymbolRef::ST_Unknown: {
-        Value.SymbolName = TargetName.data();
-        Value.Addend = Addend;
+    switch (SymType) {
+    case SymbolRef::ST_Debug: {
+      // TODO: Now ELF SymbolRef::ST_Debug = STT_SECTION, it's not obviously
+      // and can be changed by another developers. Maybe best way is add
+      // a new symbol type ST_Section to SymbolRef and use it.
+      section_iterator si(Obj.section_end());
+      Symbol->getSection(si);
+      if (si == Obj.section_end())
+        llvm_unreachable("Symbol section not found, bad object file format!");
+      DEBUG(dbgs() << "\t\tThis is section symbol\n");
+      bool isCode = si->isText();
+      Value.SectionID = findOrEmitSection(Obj, (*si), isCode, ObjSectionToID);
+      Value.Addend = Addend;
+      break;
+    }
+    case SymbolRef::ST_Data:
+    case SymbolRef::ST_Unknown: {
+      Value.SymbolName = TargetName.data();
+      Value.Addend = Addend;
 
-        // Absolute relocations will have a zero symbol ID (STN_UNDEF), which
-        // will manifest here as a NULL symbol name.
-        // We can set this as a valid (but empty) symbol name, and rely
-        // on addRelocationForSymbol to handle this.
-        if (!Value.SymbolName)
-          Value.SymbolName = "";
-        break;
-      }
-      default:
-        llvm_unreachable("Unresolved symbol type!");
-        break;
-      }
+      // Absolute relocations will have a zero symbol ID (STN_UNDEF), which
+      // will manifest here as a NULL symbol name.
+      // We can set this as a valid (but empty) symbol name, and rely
+      // on addRelocationForSymbol to handle this.
+      if (!Value.SymbolName)
+        Value.SymbolName = "";
+      break;
+    }
+    default:
+      llvm_unreachable("Unresolved symbol type!");
+      break;
     }
   }
+
   uint64_t Offset;
   Check(RelI->getOffset(Offset));
 

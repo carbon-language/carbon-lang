@@ -119,7 +119,7 @@ public:
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
                        const ObjectFile &Obj,
                        ObjSectionToIDMap &ObjSectionToID,
-                       const SymbolTableMap &Symbols, StubMap &Stubs) override;
+                       StubMap &Stubs) override;
   bool isCompatibleFile(const object::ObjectFile &Obj) const override;
   void registerEHFrames() override;
   void deregisterEHFrames() override;

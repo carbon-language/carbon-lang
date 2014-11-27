@@ -90,8 +90,7 @@ protected:
   RelocationValueRef getRelocationValueRef(const ObjectFile &BaseTObj,
                                            const relocation_iterator &RI,
                                            const RelocationEntry &RE,
-                                           ObjSectionToIDMap &ObjSectionToID,
-                                           const SymbolTableMap &Symbols);
+                                           ObjSectionToIDMap &ObjSectionToID);
 
   /// Make the RelocationValueRef addend PC-relative.
   void makeValueAddendPCRel(RelocationValueRef &Value,

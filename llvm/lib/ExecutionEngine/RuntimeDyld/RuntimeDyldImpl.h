@@ -332,7 +332,7 @@ protected:
   virtual relocation_iterator
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
                        const ObjectFile &Obj, ObjSectionToIDMap &ObjSectionToID,
-                       const SymbolTableMap &Symbols, StubMap &Stubs) = 0;
+                       StubMap &Stubs) = 0;
 
   /// \brief Resolve relocations to external symbols.
   void resolveExternalSymbols();

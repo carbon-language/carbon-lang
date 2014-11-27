@@ -33,7 +33,7 @@ public:
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
                        const ObjectFile &BaseObjT,
                        ObjSectionToIDMap &ObjSectionToID,
-                       const SymbolTableMap &Symbols, StubMap &Stubs) override {
+                       StubMap &Stubs) override {
     const MachOObjectFile &Obj =
         static_cast<const MachOObjectFile &>(BaseObjT);
     MachO::any_relocation_info RelInfo =
@@ -54,7 +54,7 @@ public:
     RelocationEntry RE(getRelocationEntry(SectionID, Obj, RelI));
     RE.Addend = memcpyAddend(RE);
     RelocationValueRef Value(
-        getRelocationValueRef(Obj, RelI, RE, ObjSectionToID, Symbols));
+        getRelocationValueRef(Obj, RelI, RE, ObjSectionToID));
 
     // Addends for external, PC-rel relocations on i386 point back to the zero
     // offset. Calculate the final offset from the relocation target instead.
