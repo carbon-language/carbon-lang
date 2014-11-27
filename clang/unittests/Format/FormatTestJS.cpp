@@ -232,6 +232,11 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "    };\n"
                "  }\n"
                "};");
+  verifyFormat("{\n"
+               "  var someVariable = function(x) {\n"
+               "    return x.zIsTooLongForOneLineWithTheDeclarationLine();\n"
+               "  };\n"
+               "}");
 
   verifyFormat("var x = {a: function() { return 1; }};",
                getGoogleJSStyleWithColumns(38));

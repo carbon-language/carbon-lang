@@ -1480,6 +1480,9 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       return 2;
     if (Left.is(tok::comma) && Left.NestingLevel == 0)
       return 3;
+  } else if (Style.Language == FormatStyle::LK_JavaScript) {
+    if (Right.is(Keywords.kw_function))
+      return 100;
   }
 
   if (Left.is(tok::comma) || (Right.is(tok::identifier) && Right.Next &&
@@ -1548,8 +1551,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 0;
   if (Left.is(tok::colon) && Left.is(TT_ObjCMethodExpr))
     return Line.MightBeFunctionDecl ? 50 : 500;
-  if (Left.is(tok::colon) && Left.is(TT_DictLiteral))
-    return 100;
 
   if (Left.is(tok::l_paren) && InFunctionDecl && Style.AlignAfterOpenBracket)
     return 100;
