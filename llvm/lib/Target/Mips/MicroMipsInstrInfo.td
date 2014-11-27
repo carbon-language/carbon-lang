@@ -86,6 +86,22 @@ def mem_mm_12 : Operand<i32> {
   let OperandType = "OPERAND_MEMORY";
 }
 
+def MipsMemUimm4AsmOperand : AsmOperandClass {
+  let Name = "MemOffsetUimm4";
+  let SuperClasses = [MipsMemAsmOperand];
+  let RenderMethod = "addMemOperands";
+  let ParserMethod = "parseMemOperand";
+  let PredicateMethod = "isMemWithUimmOffsetSP<6>";
+}
+
+def mem_mm_4sp : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops GPR32, uimm8);
+  let EncoderMethod = "getMemEncodingMMImm4sp";
+  let ParserMatchClass = MipsMemUimm4AsmOperand;
+  let OperandType = "OPERAND_MEMORY";
+}
+
 def jmptarget_mm : Operand<OtherVT> {
   let EncoderMethod = "getJumpTargetOpValueMM";
 }
@@ -339,6 +355,20 @@ def reglist : Operand<i32> {
   let DecoderMethod = "DecodeRegListOperand";
 }
 
+def RegList16AsmOperand : AsmOperandClass {
+  let Name = "RegList16";
+  let ParserMethod = "parseRegisterList";
+  let PredicateMethod = "isRegList16";
+  let RenderMethod = "addRegListOperands";
+}
+
+def reglist16 : Operand<i32> {
+  let EncoderMethod = "getRegisterListOpValue16";
+  let DecoderMethod = "DecodeRegListOperand16";
+  let PrintMethod = "printRegisterList";
+  let ParserMatchClass = RegList16AsmOperand;
+}
+
 class StoreMultMM<string opstr,
             InstrItinClass Itin = NoItinerary, ComplexPattern Addr = addr> :
   InstSE<(outs), (ins reglist:$rt, mem_mm_12:$addr),
@@ -352,6 +382,22 @@ class LoadMultMM<string opstr,
   InstSE<(outs reglist:$rt), (ins mem_mm_12:$addr),
           !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI, opstr> {
   let DecoderMethod = "DecodeMemMMImm12";
+  let mayLoad = 1;
+}
+
+class StoreMultMM16<string opstr,
+                    InstrItinClass Itin = NoItinerary,
+                    ComplexPattern Addr = addr> :
+  MicroMipsInst16<(outs), (ins reglist16:$rt, mem_mm_4sp:$addr),
+                  !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
+  let mayStore = 1;
+}
+
+class LoadMultMM16<string opstr,
+                   InstrItinClass Itin = NoItinerary,
+                   ComplexPattern Addr = addr> :
+  MicroMipsInst16<(outs reglist16:$rt), (ins mem_mm_4sp:$addr),
+                  !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
   let mayLoad = 1;
 }
 
@@ -504,6 +550,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Load and Store Instructions - multiple
   def SWM32_MM  : StoreMultMM<"swm32">, LWM_FM_MM<0xd>;
   def LWM32_MM  : LoadMultMM<"lwm32">, LWM_FM_MM<0x5>;
+  def SWM16_MM : StoreMultMM16<"swm16">, LWM_FM_MM16<0x5>;
+  def LWM16_MM : LoadMultMM16<"lwm16">, LWM_FM_MM16<0x4>;
 
   /// Move Conditional
   def MOVZ_I_MM : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd,

@@ -380,6 +380,10 @@ static DecodeStatus DecodeRegListOperand(MCInst &Inst, unsigned Insn,
                                          uint64_t Address,
                                          const void *Decoder);
 
+static DecodeStatus DecodeRegListOperand16(MCInst &Inst, unsigned Insn,
+                                           uint64_t Address,
+                                           const void *Decoder);
+
 namespace llvm {
 extern Target TheMipselTarget, TheMipsTarget, TheMips64Target,
               TheMips64elTarget;
@@ -1606,6 +1610,26 @@ static DecodeStatus DecodeRegListOperand(MCInst &Inst,
 
   if (RegLst & 0x10)
     Inst.addOperand(MCOperand::CreateReg(Mips::RA));
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeRegListOperand16(MCInst &Inst, unsigned Insn,
+                                           uint64_t Address,
+                                           const void *Decoder) {
+  unsigned Regs[] = {Mips::S0, Mips::S1, Mips::S2, Mips::S3};
+  unsigned RegNum;
+
+  unsigned RegLst = fieldFromInstruction(Insn, 4, 2);
+  // Empty register lists are not allowed.
+  if (RegLst == 0)
+    return MCDisassembler::Fail;
+
+  RegNum = RegLst & 0x3;
+  for (unsigned i = 0; i < RegNum - 1; i++)
+    Inst.addOperand(MCOperand::CreateReg(Regs[i]));
+
+  Inst.addOperand(MCOperand::CreateReg(Mips::RA));
 
   return MCDisassembler::Success;
 }

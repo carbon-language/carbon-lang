@@ -22,6 +22,15 @@
   li16  $4, -2 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
   addiur2 $9, $7, -1 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   addiur2 $6, $7, 10 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  lwm16   $5, $6, $ra, 8($sp)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: $16 or $31 expected
+  lwm16   $16, $19, $ra, 8($sp)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: consecutive register numbers expected
+  lwm16   $16-$25, $ra, 8($sp)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register operand
+  lwm16   $16, 8($sp)            # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  lwm16   $16, $17, 8($sp)       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  lwm16   $16-$20, 8($sp)        # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  swm16   $5, $6, $ra, 8($sp)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: $16 or $31 expected
+  swm16   $16, $19, $ra, 8($sp)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: consecutive register numbers expected
+  swm16   $16-$25, $ra, 8($sp)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register operand
   lwm32   $5, $6, 8($4)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: $16 or $31 expected
   lwm32   $16, $19, 8($4)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: consecutive register numbers expected
   lwm32   $16-$25, 8($4)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register operand

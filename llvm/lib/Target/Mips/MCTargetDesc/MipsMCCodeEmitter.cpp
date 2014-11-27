@@ -699,6 +699,30 @@ getMemEncodingMMImm12(const MCInst &MI, unsigned OpNo,
   return (OffBits & 0x0FFF) | RegBits;
 }
 
+unsigned MipsMCCodeEmitter::
+getMemEncodingMMImm4sp(const MCInst &MI, unsigned OpNo,
+                       SmallVectorImpl<MCFixup> &Fixups,
+                       const MCSubtargetInfo &STI) const {
+  // opNum can be invalid if instruction had reglist as operand
+  // MemOperand is always last operand of instruction (base + offset)
+  switch (MI.getOpcode()) {
+  default:
+    break;
+  case Mips::SWM16_MM:
+  case Mips::LWM16_MM:
+    OpNo = MI.getNumOperands() - 2;
+    break;
+  }
+
+  // Offset is encoded in bits 4-0.
+  assert(MI.getOperand(OpNo).isReg());
+  // Base register is always SP - thus it is not encoded.
+  assert(MI.getOperand(OpNo+1).isImm());
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups, STI);
+
+  return ((OffBits >> 2) & 0x0F);
+}
+
 unsigned
 MipsMCCodeEmitter::getSizeExtEncoding(const MCInst &MI, unsigned OpNo,
                                       SmallVectorImpl<MCFixup> &Fixups,
@@ -828,6 +852,13 @@ MipsMCCodeEmitter::getRegisterListOpValue(const MCInst &MI, unsigned OpNo,
       res |= 0x10;
   }
   return res;
+}
+
+unsigned
+MipsMCCodeEmitter::getRegisterListOpValue16(const MCInst &MI, unsigned OpNo,
+                                            SmallVectorImpl<MCFixup> &Fixups,
+                                            const MCSubtargetInfo &STI) const {
+  return (MI.getNumOperands() - 4);
 }
 
 #include "MipsGenMCCodeEmitter.inc"

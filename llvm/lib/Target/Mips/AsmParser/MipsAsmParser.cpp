@@ -809,6 +809,29 @@ public:
   bool isMemWithGRPMM16Base() const {
     return isMem() && getMemBase()->isMM16AsmReg();
   }
+  template <unsigned Bits> bool isMemWithUimmOffsetSP() const {
+    return isMem() && isConstantMemOff() && isUInt<Bits>(getConstantMemOff())
+      && getMemBase()->isRegIdx() && (getMemBase()->getGPR32Reg() == Mips::SP);
+  }
+  bool isRegList16() const {
+    if (!isRegList())
+      return false;
+
+    int Size = RegList.List->size();
+    if (Size < 2 || Size > 5 || *RegList.List->begin() != Mips::S0 ||
+        RegList.List->back() != Mips::RA)
+      return false;
+
+    int PrevReg = *RegList.List->begin();
+    for (int i = 1; i < Size - 1; i++) {
+      int Reg = (*(RegList.List))[i];
+      if ( Reg != PrevReg + 1)
+        return false;
+      PrevReg = Reg;
+    }
+
+    return true;
+  }
   bool isInvNum() const { return Kind == k_Immediate; }
   bool isLSAImm() const {
     if (!isConstantImm())
