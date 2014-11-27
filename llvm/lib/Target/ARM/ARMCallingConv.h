@@ -194,20 +194,16 @@ static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
 
     // Try to allocate a contiguous block of registers, each of the correct
     // size to hold one member.
-    const uint16_t *RegList;
-    unsigned NumRegs;
+    ArrayRef<const uint16_t> RegList;
     switch (LocVT.SimpleTy) {
     case MVT::f32:
       RegList = SRegList;
-      NumRegs = 16;
       break;
     case MVT::f64:
       RegList = DRegList;
-      NumRegs = 8;
       break;
     case MVT::v2f64:
       RegList = QRegList;
-      NumRegs = 4;
       break;
     default:
       llvm_unreachable("Unexpected member type for HA");
@@ -215,7 +211,7 @@ static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
     }
 
     unsigned RegResult =
-        State.AllocateRegBlock(RegList, NumRegs, PendingHAMembers.size());
+        State.AllocateRegBlock(RegList, PendingHAMembers.size());
 
     if (RegResult) {
       for (SmallVectorImpl<CCValAssign>::iterator It = PendingHAMembers.begin();

@@ -96,7 +96,7 @@ define void @test_nospare([8 x i64], [8 x float], ...) {
 
 ; If there are non-variadic arguments on the stack (here two i64s) then the
 ; __stack field should point just past them.
-define void @test_offsetstack([10 x i64], [3 x float], ...) {
+define void @test_offsetstack([8 x i64], [2 x i64], [3 x float], ...) {
 ; CHECK-LABEL: test_offsetstack:
 ; CHECK: sub sp, sp, #80
 ; CHECK: add [[STACK_TOP:x[0-9]+]], sp, #96

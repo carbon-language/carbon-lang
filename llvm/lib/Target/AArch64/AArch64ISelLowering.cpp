@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64ISelLowering.h"
+#include "AArch64CallingConvention.h"
 #include "AArch64MachineFunctionInfo.h"
 #include "AArch64PerfectShuffle.h"
 #include "AArch64Subtarget.h"
@@ -8841,4 +8842,9 @@ Value *AArch64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
       Stxr, Builder.CreateZExtOrBitCast(
                 Val, Stxr->getFunctionType()->getParamType(0)),
       Addr);
+}
+
+bool AArch64TargetLowering::functionArgumentNeedsConsecutiveRegisters(
+    Type *Ty, CallingConv::ID CallConv, bool isVarArg) const {
+  return Ty->isArrayTy();
 }

@@ -40,6 +40,8 @@ def CC_AArch64_AAPCS : CallingConv<[
   // slot is 64-bit.
   CCIfByVal<CCPassByVal<8, 8>>,
 
+  CCIfConsecutiveRegs<CCCustom<"CC_AArch64_Custom_Block">>,
+
   // Handle i1, i8, i16, i32, i64, f32, f64 and v2f64 by passing in registers,
   // up to eight each of GPR and FPR.
   CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
@@ -119,6 +121,8 @@ def CC_AArch64_DarwinPCS : CallingConv<[
   // slot is 64-bit.
   CCIfByVal<CCPassByVal<8, 8>>,
 
+  CCIfConsecutiveRegs<CCCustom<"CC_AArch64_Custom_Block">>,
+
   // Handle i1, i8, i16, i32, i64, f32, f64 and v2f64 by passing in registers,
   // up to eight each of GPR and FPR.
   CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
@@ -158,6 +162,8 @@ def CC_AArch64_DarwinPCS : CallingConv<[
 def CC_AArch64_DarwinPCS_VarArg : CallingConv<[
   CCIfType<[v2f32], CCBitConvertToType<v2i32>>,
   CCIfType<[v2f64, v4f32, f128], CCBitConvertToType<v2i64>>,
+
+  CCIfConsecutiveRegs<CCCustom<"CC_AArch64_Custom_Stack_Block">>,
 
   // Handle all scalar types as either i64 or f64.
   CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
