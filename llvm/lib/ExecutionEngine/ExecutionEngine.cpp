@@ -48,9 +48,6 @@ ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(std::unique_ptr<Module> M,
                                                 std::string *ErrorStr) =nullptr;
 
-// Anchor for the JITEventListener class.
-void JITEventListener::anchor() {}
-
 ExecutionEngine::ExecutionEngine(std::unique_ptr<Module> M)
   : EEState(*this),
     LazyFunctionCreator(nullptr) {
