@@ -17,7 +17,7 @@ void test2(int x0, Small x2_x3, int x4, Small x6_x7, int sp, Small sp16) {
 // stack in order to avoid holes. Make sure we get all of them, and not just the
 // first:
 
-// CHECK: void @test3(float %s0_s3.0, float %s0_s3.1, float %s0_s3.2, float %s0_s3.3, float %s4, [3 x float], [2 x double] %sp.coerce, [2 x double] %sp16.coerce)
+// CHECK: void @test3([4 x float] %s0_s3.coerce, float %s4, [4 x float] %sp.coerce, [4 x float] %sp16.coerce)
 typedef struct { float arr[4]; } HFA;
 void test3(HFA s0_s3, float s4, HFA sp, HFA sp16) {
 }
@@ -28,7 +28,7 @@ void test3(HFA s0_s3, float s4, HFA sp, HFA sp16) {
 // fp128] or something, but leaving them as-is retains more information for
 // users to debug.
 
-//  CHECK: void @test4(<16 x i8> %v0_v2.0, <16 x i8> %v0_v2.1, <16 x i8> %v0_v2.2, <16 x i8> %v3_v5.0, <16 x i8> %v3_v5.1, <16 x i8> %v3_v5.2, [2 x float], <16 x i8> %sp.0, <16 x i8> %sp.1, <16 x i8> %sp.2, double %sp48, <16 x i8> %sp64.0, <16 x i8> %sp64.1, <16 x i8> %sp64.2)
+//  CHECK: void @test4([3 x <16 x i8>] %v0_v2.coerce, [3 x <16 x i8>] %v3_v5.coerce, [3 x <16 x i8>] %sp.coerce, double %sp48, [3 x <16 x i8>] %sp64.coerce)
 typedef __attribute__((neon_vector_type(16))) signed char int8x16_t;
 typedef struct { int8x16_t arr[3]; } BigHFA;
 void test4(BigHFA v0_v2, BigHFA v3_v5, BigHFA sp, double sp48, BigHFA sp64) {
@@ -46,6 +46,6 @@ unsigned char test5(unsigned char a, signed short b) {
 __fp16 test_half(__fp16 A) { }
 
 // __fp16 is a base type for homogeneous floating-point aggregates for AArch64 (but not 32-bit ARM).
-// CHECK: define %struct.HFA_half @test_half_hfa(half %{{.*}}, half %{{.*}}, half %{{.*}}, half %{{.*}})
+// CHECK: define %struct.HFA_half @test_half_hfa([4 x half] %{{.*}})
 struct HFA_half { __fp16 a[4]; };
 struct HFA_half test_half_hfa(struct HFA_half A) { }
