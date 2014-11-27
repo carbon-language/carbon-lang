@@ -419,7 +419,8 @@ void ClassifyRefs::VisitCallExpr(CallExpr *CE) {
   // Classify arguments to std::move as used.
   if (CE->getNumArgs() == 1) {
     if (FunctionDecl *FD = CE->getDirectCallee()) {
-      if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
+      if (FD->isInStdNamespace() && FD->getIdentifier() &&
+          FD->getIdentifier()->isStr("move")) {
         classify(CE->getArg(0), Use);
         return;
       }
