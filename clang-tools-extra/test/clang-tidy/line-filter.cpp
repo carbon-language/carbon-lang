@@ -2,25 +2,25 @@
 
 #include "header1.h"
 // CHECK-NOT: header1.h:{{.*}} warning
-// CHECK: header1.h:1:12: warning: Single-argument constructors must be explicit [google-explicit-constructor]
-// CHECK: header1.h:2:12: warning: Single-argument constructors {{.*}}
+// CHECK: header1.h:1:12: warning: single-argument constructors must be explicit [google-explicit-constructor]
+// CHECK: header1.h:2:12: warning: single-argument constructors {{.*}}
 // CHECK-NOT: header1.h:{{.*}} warning
 
 #include "header2.h"
-// CHECK: header2.h:1:12: warning: Single-argument constructors {{.*}}
-// CHECK: header2.h:2:12: warning: Single-argument constructors {{.*}}
-// CHECK: header2.h:3:12: warning: Single-argument constructors {{.*}}
+// CHECK: header2.h:1:12: warning: single-argument constructors {{.*}}
+// CHECK: header2.h:2:12: warning: single-argument constructors {{.*}}
+// CHECK: header2.h:3:12: warning: single-argument constructors {{.*}}
 // CHECK-NOT: header2.h:{{.*}} warning
 
 #include "header3.h"
 // CHECK-NOT: header3.h:{{.*}} warning
 
 class A { A(int); };
-// CHECK: :[[@LINE-1]]:11: warning: Single-argument constructors {{.*}}
+// CHECK: :[[@LINE-1]]:11: warning: single-argument constructors {{.*}}
 class B { B(int); };
 // CHECK-NOT: :[[@LINE-1]]:{{.*}} warning
 class C { C(int); };
-// CHECK: :[[@LINE-1]]:11: warning: Single-argument constructors {{.*}}
+// CHECK: :[[@LINE-1]]:11: warning: single-argument constructors {{.*}}
 
 // CHECK-NOT: warning:
 

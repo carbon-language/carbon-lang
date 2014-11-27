@@ -47,15 +47,33 @@ SourceRange FindToken(const SourceManager &Sources, LangOptions LangOpts,
   return SourceRange();
 }
 
+bool isStdInitializerList(QualType Type) {
+  if (const RecordType *RT = Type.getCanonicalType()->getAs<RecordType>()) {
+    if (ClassTemplateSpecializationDecl *Specialization =
+            dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl())) {
+      ClassTemplateDecl *Template = Specialization->getSpecializedTemplate();
+      // First use the fast getName() method to avoid unnecessary calls to the
+      // slow getQualifiedNameAsString().
+      return Template->getName() == "initializer_list" &&
+             Template->getQualifiedNameAsString() == "std::initializer_list";
+    }
+  }
+  return false;
+}
+
 void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
   const CXXConstructorDecl *Ctor =
       Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
   // Do not be confused: isExplicit means 'explicit' keyword is present,
   // isImplicit means that it's a compiler-generated constructor.
-  if (Ctor->isOutOfLine() || Ctor->isImplicit() || Ctor->isDeleted())
+  if (Ctor->isOutOfLine() || Ctor->isImplicit() || Ctor->isDeleted() ||
+      Ctor->getNumParams() == 0 || Ctor->getMinRequiredArguments() > 1)
     return;
 
-  if (Ctor->isExplicit() && Ctor->isCopyOrMoveConstructor()) {
+  bool takesInitializerList = isStdInitializerList(
+      Ctor->getParamDecl(0)->getType().getNonReferenceType());
+  if (Ctor->isExplicit() &&
+      (Ctor->isCopyOrMoveConstructor() || takesInitializerList)) {
     auto isKWExplicit = [](const Token &Tok) {
       return Tok.is(tok::raw_identifier) &&
              Tok.getRawIdentifier() == "explicit";
@@ -63,21 +81,31 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
     SourceRange ExplicitTokenRange =
         FindToken(*Result.SourceManager, Result.Context->getLangOpts(),
                   Ctor->getOuterLocStart(), Ctor->getLocEnd(), isKWExplicit);
+    StringRef ConstructorDescription;
+    if (Ctor->isMoveConstructor())
+      ConstructorDescription = "move";
+    else if (Ctor->isCopyConstructor())
+      ConstructorDescription = "copy";
+    else
+      ConstructorDescription = "initializer-list";
+
     DiagnosticBuilder Diag =
-        diag(Ctor->getLocation(), "%0 constructor declared explicit.")
-        << (Ctor->isMoveConstructor() ? "Move" : "Copy");
+        diag(Ctor->getLocation(),
+             "%0 constructor should not be declared explicit")
+        << ConstructorDescription;
     if (ExplicitTokenRange.isValid()) {
       Diag << FixItHint::CreateRemoval(
           CharSourceRange::getCharRange(ExplicitTokenRange));
     }
+    return;
   }
 
   if (Ctor->isExplicit() || Ctor->isCopyOrMoveConstructor() ||
-      Ctor->getNumParams() == 0 || Ctor->getMinRequiredArguments() > 1)
+      takesInitializerList)
     return;
 
   SourceLocation Loc = Ctor->getLocation();
-  diag(Loc, "Single-argument constructors must be explicit")
+  diag(Loc, "single-argument constructors must be explicit")
       << FixItHint::CreateInsertion(Loc, "explicit ");
 }
 

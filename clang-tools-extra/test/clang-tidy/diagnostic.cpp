@@ -14,8 +14,8 @@
 // CHECK3: :[[@LINE+1]]:9: warning: implicit conversion from 'double' to 'int' changes value
 int a = 1.5;
 
-// CHECK2: :[[@LINE+2]]:11: warning: Single-argument constructors must be explicit [google-explicit-constructor]
-// CHECK3: :[[@LINE+1]]:11: warning: Single-argument constructors must be explicit [google-explicit-constructor]
+// CHECK2: :[[@LINE+2]]:11: warning: single-argument constructors must be explicit [google-explicit-constructor]
+// CHECK3: :[[@LINE+1]]:11: warning: single-argument constructors must be explicit [google-explicit-constructor]
 class A { A(int) {} };
 
 // CHECK2-NOT: warning:

@@ -2,7 +2,7 @@
 
 template<typename T>
 struct A { A(T); };
-// CHECK: :[[@LINE-1]]:12: warning: Single-argument constructors must be explicit [google-explicit-constructor]
+// CHECK: :[[@LINE-1]]:12: warning: single-argument constructors must be explicit [google-explicit-constructor]
 // CHECK-NOT: warning:
 
 
