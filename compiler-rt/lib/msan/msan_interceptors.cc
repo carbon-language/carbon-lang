@@ -266,6 +266,8 @@ INTERCEPTOR(void, malloc_stats, void) {
 #endif
 
 INTERCEPTOR(SIZE_T, strlen, const char *s) {
+  if (msan_init_is_running)
+    return REAL(strlen)(s);
   ENSURE_MSAN_INITED();
   SIZE_T res = REAL(strlen)(s);
   CHECK_UNPOISONED(s, res + 1);
@@ -636,6 +638,8 @@ INTERCEPTOR(char *, fcvt, double x, int a, int *b, int *c) {
 }
 
 INTERCEPTOR(char *, getenv, char *name) {
+  if (msan_init_is_running)
+    return REAL(getenv)(name);
   ENSURE_MSAN_INITED();
   char *res = REAL(getenv)(name);
   if (res) __msan_unpoison(res, REAL(strlen)(res) + 1);
@@ -961,6 +965,8 @@ void __msan_allocated_memory(const void* data, uptr size) {
 
 INTERCEPTOR(void *, mmap, void *addr, SIZE_T length, int prot, int flags,
             int fd, OFF_T offset) {
+  if (msan_init_is_running)
+    return REAL(mmap)(addr, length, prot, flags, fd, offset);
   ENSURE_MSAN_INITED();
   if (addr && !MEM_IS_APP(addr)) {
     if (flags & map_fixed) {
