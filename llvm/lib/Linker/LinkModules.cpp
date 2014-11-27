@@ -96,23 +96,12 @@ private:
 void TypeMapTy::addTypeMapping(Type *DstTy, Type *SrcTy) {
   // Check to see if these types are recursively isomorphic and establish a
   // mapping between them if so.
-  if (areTypesIsomorphic(DstTy, SrcTy)) {
-    SpeculativeTypes.clear();
-    return;
+  if (!areTypesIsomorphic(DstTy, SrcTy)) {
+    // Oops, they aren't isomorphic.  Just discard this request by rolling out
+    // any speculative mappings we've established.
+    for (unsigned i = 0, e = SpeculativeTypes.size(); i != e; ++i)
+      MappedTypes.erase(SpeculativeTypes[i]);
   }
-
-  // Oops, they aren't isomorphic. Just discard this request by rolling out
-  // any speculative mappings we've established.
-  unsigned Removed = 0;
-  for (unsigned I = 0, E = SpeculativeTypes.size(); I != E; ++I) {
-    Type *SrcTy = SpeculativeTypes[I];
-    auto Iter = MappedTypes.find(SrcTy);
-    auto *DstTy = dyn_cast<StructType>(Iter->second);
-    if (DstTy && DstResolvedOpaqueTypes.erase(DstTy))
-      Removed++;
-    MappedTypes.erase(Iter);
-  }
-  SrcDefinitionsToResolve.resize(SrcDefinitionsToResolve.size() - Removed);
   SpeculativeTypes.clear();
 }
 
@@ -148,14 +137,14 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
 
     // Mapping a non-opaque source type to an opaque dest.  If this is the first
     // type that we're mapping onto this destination type then we succeed.  Keep
-    // the dest, but fill it in later. If this is the second (different) type
-    // that we're trying to map onto the same opaque type then we fail.
+    // the dest, but fill it in later.  This doesn't need to be speculative.  If
+    // this is the second (different) type that we're trying to map onto the
+    // same opaque type then we fail.
     if (cast<StructType>(DstTy)->isOpaque()) {
       // We can only map one source type onto the opaque destination type.
       if (!DstResolvedOpaqueTypes.insert(cast<StructType>(DstTy)).second)
         return false;
       SrcDefinitionsToResolve.push_back(SSTy);
-      SpeculativeTypes.push_back(SrcTy);
       Entry = DstTy;
       return true;
     }
