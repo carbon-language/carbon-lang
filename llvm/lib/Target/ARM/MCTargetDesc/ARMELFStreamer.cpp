@@ -979,12 +979,12 @@ void ARMTargetELFStreamer::finishAttributeSection() {
       Streamer.EmitULEB128IntValue(item.IntValue);
       break;
     case AttributeItem::TextAttribute:
-      Streamer.EmitBytes(item.StringValue.upper());
+      Streamer.EmitBytes(item.StringValue);
       Streamer.EmitIntValue(0, 1); // '\0'
       break;
     case AttributeItem::NumericAndTextAttributes:
       Streamer.EmitULEB128IntValue(item.IntValue);
-      Streamer.EmitBytes(item.StringValue.upper());
+      Streamer.EmitBytes(item.StringValue);
       Streamer.EmitIntValue(0, 1); // '\0'
       break;
     }

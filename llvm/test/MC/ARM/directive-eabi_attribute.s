@@ -9,12 +9,12 @@
 @ CHECK: .eabi_attribute 4, "Cortex-A9"
 @ CHECK-OBJ:        Tag: 4
 @ CHECK-OBJ-NEXT:   TagName: CPU_raw_name
-@ CHECK-OBJ-NEXT:   Value: CORTEX-A9
+@ CHECK-OBJ-NEXT:   Value: Cortex-A9
 	.eabi_attribute Tag_CPU_name, "cortex-a9"
 @ CHECK: .cpu cortex-a9
 @ CHECK-OBJ:        Tag: 5
 @ CHECK-OBJ-NEXT:   TagName: CPU_name
-@ CHECK-OBJ-NEXT:   Value: CORTEX-A9
+@ CHECK-OBJ-NEXT:   Value: cortex-a9
 	.eabi_attribute Tag_CPU_arch, 10
 @ CHECK: .eabi_attribute 6, 10
 @ CHECK-OBJ:        Tag: 6
@@ -170,7 +170,7 @@
 	.eabi_attribute Tag_compatibility, 1, "aeabi"
 @ CHECK: .eabi_attribute 32, 1, "aeabi"
 @ CHECK-OBJ:        Tag: 32
-@ CHECK-OBJ-NEXT:   Value: 1, AEABI
+@ CHECK-OBJ-NEXT:   Value: 1, aeabi
 @ CHECK-OBJ-NEXT:   TagName: compatibility
 @ CHECK-OBJ-NEXT:   Description: AEABI Conformant
 	.eabi_attribute Tag_CPU_unaligned_access, 0
@@ -213,7 +213,7 @@
 @ CHECK: .eabi_attribute 65, "gnu"
 @ CHECK-OBJ:        Tag: 65
 @ CHECK-OBJ-NEXT:   TagName: also_compatible_with
-@ CHECK-OBJ-NEXT:   Value: GNU
+@ CHECK-OBJ-NEXT:   Value: gnu
 	.eabi_attribute Tag_T2EE_use, 0
 @ CHECK: .eabi_attribute 66, 0
 @ CHECK-OBJ:        Tag: 66

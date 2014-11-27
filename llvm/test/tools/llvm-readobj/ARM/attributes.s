@@ -54,12 +54,12 @@
 @ CHECK:       Attribute {
 @ CHECK:         Tag: 4
 @ CHECK:         TagName: CPU_raw_name
-@ CHECK:         Value: CORTEX-A9
+@ CHECK:         Value: Cortex-A9
 @ CHECK:       }
 @ CHECK:       Attribute {
 @ CHECK:         Tag: 5
 @ CHECK:         TagName: CPU_name
-@ CHECK:         Value: CORTEX-A9
+@ CHECK:         Value: cortex-a9
 @ CHECK:       }
 @ CHECK:       Attribute {
 @ CHECK:         Tag: 6
@@ -219,7 +219,7 @@
 @ CHECK:       }
 @ CHECK:       Attribute {
 @ CHECK:         Tag: 32
-@ CHECK:         Value: 1, AEABI
+@ CHECK:         Value: 1, aeabi
 @ CHECK:         TagName: compatibility
 @ CHECK:         Description: AEABI Conformant
 @ CHECK:       }
@@ -262,7 +262,7 @@
 @ CHECK:       Attribute {
 @ CHECK:         Tag: 65
 @ CHECK:         TagName: also_compatible_with
-@ CHECK:         Value: GNU
+@ CHECK:         Value: gnu
 @ CHECK:       }
 @ CHECK:       Attribute {
 @ CHECK:         Tag: 66

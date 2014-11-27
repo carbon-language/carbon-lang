@@ -16,7 +16,7 @@
 @ CHECK-ATTR: FileAttributes {
 @ CHECK-ATTR:   Attribute {
 @ CHECK-ATTR:     TagName: CPU_name
-@ CHECK-ATTR:     Value: IWMMXT
+@ CHECK-ATTR:     Value: iwmmxt
 @ CHECK-ATTR:   }
 @ CHECK-ATTR:   Attribute {
 @ CHECK-ATTR:     TagName: CPU_arch
