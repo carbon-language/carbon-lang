@@ -13,8 +13,6 @@ LOADABLE_MODULE = 1
 CPP.Flags += $(POLLY_INC)
 LD.Flags += $(POLLY_LD) $(POLLY_LIB)
 
-LIBS += $(POLLY_LD) $(POLLY_LIB)
-
 include $(LEVEL)/Makefile.config
 
 # Enable optional source files
@@ -73,3 +71,5 @@ SOURCES= Polly.cpp \
 # Include Makefile.common so we know what to do.
 #
 include $(LEVEL)/Makefile.common
+
+LIBS += $(POLLY_LD) $(POLLY_LIB)
