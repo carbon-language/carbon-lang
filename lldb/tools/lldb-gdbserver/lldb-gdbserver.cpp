@@ -306,6 +306,29 @@ JoinListenThread ()
     return true;
 }
 
+Error
+writePortToPipe (const char *const named_pipe_path, const uint16_t port)
+{
+    Error error;
+
+    // FIXME use new generic named pipe support.
+    int fd = ::open (named_pipe_path, O_WRONLY);
+    if (fd == -1)
+    {
+        error.SetErrorToErrno ();
+        return error;
+    }
+
+    char port_str[64];
+    const ssize_t port_str_len = ::snprintf (port_str, sizeof(port_str), "%u", port);
+    // Write the port number as a C string with the NULL terminator.
+    if (::write (fd, port_str, port_str_len + 1) == -1)
+        error.SetErrorToErrno ();
+
+    close (fd);
+    return error;
+}
+
 void
 ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect, const char *const host_and_port, const char *const progname, const char *const named_pipe_path)
 {
@@ -383,24 +406,18 @@ ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect,
             // If we have a named pipe to write the port number back to, do that now.
             if (named_pipe_path && named_pipe_path[0] && connection_portno == 0)
             {
-                // FIXME use new generic named pipe support.
-                int fd = ::open(named_pipe_path, O_WRONLY);
-                const uint16_t bound_port = s_listen_connection_up->GetListeningPort(10);
-                if (fd > -1 && bound_port > 0)
+                const uint16_t bound_port = s_listen_connection_up->GetListeningPort (10);
+                if (bound_port > 0)
                 {
-
-                    char port_str[64];
-                    const ssize_t port_str_len = ::snprintf (port_str, sizeof(port_str), "%u", bound_port);
-                    // Write the port number as a C string with the NULL terminator.
-                    ::write (fd, port_str, port_str_len + 1);
-                    close (fd);
+                    error = writePortToPipe (named_pipe_path, bound_port);
+                    if (error.Fail ())
+                    {
+                        fprintf (stderr, "failed to write to the named pipe \'%s\': %s", named_pipe_path, error.AsCString());
+                    }
                 }
                 else
                 {
-                    if (fd < 0)
-                        fprintf (stderr, "failed to open named pipe '%s' for writing\n", named_pipe_path);
-                    else
-                        fprintf(stderr, "unable to get the bound port for the listening connection\n");
+                    fprintf (stderr, "unable to get the bound port for the listening connection\n");
                 }
             }
 
