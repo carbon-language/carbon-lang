@@ -131,6 +131,11 @@ TEST_F(FormatTestJS, ContainerLiterals) {
                "      //\n"
                "      a\n"
                "};");
+  verifyFormat("var obj = {\n"
+               "  fooooooooo: function(x) {\n"
+               "    return x.zIsTooLongForOneLineWithTheDeclarationLine();\n"
+               "  }\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, SpacesInContainerLiterals) {
