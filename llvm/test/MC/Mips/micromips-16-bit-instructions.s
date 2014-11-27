@@ -43,6 +43,8 @@
 # CHECK-EL: move    $zero, $zero    # encoding: [0x00,0x0c]
 # CHECK-EL: jr16    $9              # encoding: [0x89,0x45]
 # CHECK-EL: nop                     # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EL: break16 8               # encoding: [0x88,0x46]
+# CHECK-EL: sdbbp16 14              # encoding: [0xce,0x46]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -80,6 +82,8 @@
 # CHECK-EB: move    $zero, $zero    # encoding: [0x0c,0x00]
 # CHECK-EB: jr16    $9              # encoding: [0x45,0x89]
 # CHECK-EB: nop                     # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EB: break16 8               # encoding: [0x46,0x88]
+# CHECK-EB: sdbbp16 14              # encoding: [0x46,0xce]
 
     addu16  $6, $17, $4
     subu16  $5, $16, $3
@@ -113,3 +117,5 @@
     jraddiusp 20
     jalrs16 $9
     jr16    $9
+    break16 8
+    sdbbp16 14

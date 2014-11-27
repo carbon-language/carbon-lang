@@ -296,6 +296,12 @@ class JumpRegCMM16<string opstr, RegisterOperand RO> :
   let isIndirectBranch = 1;
 }
 
+// Break16 and Sdbbp16
+class BrkSdbbp16MM<string opstr> :
+  MicroMipsInst16<(outs), (ins uimm4:$code_),
+                  !strconcat(opstr, "\t$code_"),
+                  [], NoItinerary, FrmOther>;
+
 // MicroMIPS Jump and Link (Call) - Short Delay Slot
 let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
   class JumpLinkMM<string opstr, DAGOperand opnd> :
@@ -392,6 +398,8 @@ def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;
 def JRC16_MM : JumpRegCMM16<"jrc", GPR32Opnd>, JALR_FM_MM16<0x0d>;
 def JRADDIUSP : JumpRAddiuStackMM16, JRADDIUSP_FM_MM16<0x18>;
 def JR16_MM : JumpRegMM16<"jr16", GPR32Opnd>, JALR_FM_MM16<0x0c>;
+def BREAK16_MM : BrkSdbbp16MM<"break16">, BRKSDBBP16_FM_MM<0x28>;
+def SDBBP16_MM : BrkSdbbp16MM<"sdbbp16">, BRKSDBBP16_FM_MM<0x2C>;
 
 class WaitMM<string opstr> :
   InstSE<(outs), (ins uimm10:$code_), !strconcat(opstr, "\t$code_"), [],
