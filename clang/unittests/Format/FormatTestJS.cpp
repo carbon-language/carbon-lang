@@ -361,6 +361,8 @@ TEST_F(FormatTestJS, TryCatch) {
 
   // But, of course, "catch" is a perfectly fine function name in JavaScript.
   verifyFormat("someObject.catch();");
+  verifyFormat("someObject.new();");
+  verifyFormat("someObject.delete();");
 }
 
 TEST_F(FormatTestJS, StringLiteralConcatenation) {
