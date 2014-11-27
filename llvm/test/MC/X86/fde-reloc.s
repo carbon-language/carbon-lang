@@ -1,6 +1,4 @@
-// RUN: llvm-mc -filetype=obj %s -o - -triple x86_64-pc-linux \
-// RUN: -relocation-model=pic -code-model=small \
-// RUN: | llvm-objdump -r - | FileCheck --check-prefix=X86-64 %s
+// RUN: llvm-mc -filetype=obj %s -o - -triple x86_64-pc-linux | llvm-objdump -r - | FileCheck --check-prefix=X86-64 %s
 // RUN: llvm-mc -filetype=obj %s -o - -triple i686-pc-linux | llvm-objdump -r - | FileCheck --check-prefix=I686 %s
 
 // PR15448

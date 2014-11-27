@@ -1,6 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - \
-// RUN: -relocation-model=pic -code-model=small \
-// RUN: | llvm-readobj -s -sd | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sd | FileCheck %s
 
 f:
         .cfi_startproc

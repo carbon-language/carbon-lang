@@ -1,6 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - \
-// RUN: -relocation-model=pic -code-model=small \
-// RUN: | llvm-readobj -s -sr -sd | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sr -sd | FileCheck %s
 
 // Test that we don't produce a DW_CFA_advance_loc 0
 
