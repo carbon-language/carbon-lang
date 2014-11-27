@@ -617,6 +617,34 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
     }
   }
 
+  {
+    Value *X;
+    const APInt *Y, *C;
+    if (match(CmpLHS, m_And(m_Value(X), m_Power2(Y))) &&
+        match(CmpRHS, m_Zero())) {
+      Value *V = nullptr;
+      // (X & Y) == 0 ? X : X ^ Y  --> X & ~Y
+      if (Pred == ICmpInst::ICMP_EQ && TrueVal == X &&
+          match(FalseVal, m_Xor(m_Specific(X), m_APInt(C))) && *Y == *C)
+        V = Builder->CreateAnd(X, ~(*Y));
+      // (X & Y) != 0 ? X ^ Y : X  --> X & ~Y
+      else if (Pred == ICmpInst::ICMP_NE && FalseVal == X &&
+               match(TrueVal, m_Xor(m_Specific(X), m_APInt(C))) && *Y == *C)
+        V = Builder->CreateAnd(X, ~(*Y));
+      // (X & Y) == 0 ? X ^ Y : X  --> X | Y
+      else if (Pred == ICmpInst::ICMP_EQ && FalseVal == X &&
+               match(TrueVal, m_Xor(m_Specific(X), m_APInt(C))) && *Y == *C)
+        V = Builder->CreateOr(X, *Y);
+      // (X & Y) != 0 ? X : X ^ Y  --> X | Y
+      else if (Pred == ICmpInst::ICMP_NE && TrueVal == X &&
+               match(FalseVal, m_Xor(m_Specific(X), m_APInt(C))) && *Y == *C)
+        V = Builder->CreateOr(X, *Y);
+
+      if (V)
+        return ReplaceInstUsesWith(SI, V);
+    }
+  }
+
   if (Value *V = foldSelectICmpAndOr(SI, TrueVal, FalseVal, Builder))
     return ReplaceInstUsesWith(SI, V);
 
