@@ -425,7 +425,14 @@ def MipsMemSimm11AsmOperand : AsmOperandClass {
   let RenderMethod = "addMemOperands";
   let ParserMethod = "parseMemOperand";
   let PredicateMethod = "isMemWithSimmOffset<11>";
-  //let DiagnosticType = "Simm11";
+}
+
+def MipsMemSimm16AsmOperand : AsmOperandClass {
+  let Name = "MemOffsetSimm16";
+  let SuperClasses = [MipsMemAsmOperand];
+  let RenderMethod = "addMemOperands";
+  let ParserMethod = "parseMemOperand";
+  let PredicateMethod = "isMemWithSimmOffset<16>";
 }
 
 def MipsInvertedImmoperand : AsmOperandClass {
@@ -468,6 +475,12 @@ def mem_simm11 : mem_generic {
   let MIOperandInfo = (ops ptr_rc, simm11);
   let EncoderMethod = "getMemEncoding";
   let ParserMatchClass = MipsMemSimm11AsmOperand;
+}
+
+def mem_simm16 : mem_generic {
+  let MIOperandInfo = (ops ptr_rc, simm16);
+  let EncoderMethod = "getMemEncoding";
+  let ParserMatchClass = MipsMemSimm16AsmOperand;
 }
 
 def mem_ea : Operand<iPTR> {
@@ -860,6 +873,13 @@ class SYNC_FT<string opstr> :
   InstSE<(outs), (ins i32imm:$stype), "sync $stype", [(MipsSync imm:$stype)],
          NoItinerary, FrmOther, opstr>;
 
+class SYNCI_FT<string opstr> :
+  InstSE<(outs), (ins mem_simm16:$addr), !strconcat(opstr, "\t$addr"), [],
+         NoItinerary, FrmOther, opstr> {
+  let hasSideEffects = 1;
+  let DecoderMethod = "DecodeSyncI";
+}
+
 let hasSideEffects = 1 in
 class TEQ_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs), (ins RO:$rs, RO:$rt, uimm16:$code_),
@@ -1209,6 +1229,7 @@ let DecoderNamespace = "COP3_" in {
 }
 
 def SYNC : MMRel, SYNC_FT<"sync">, SYNC_FM, ISA_MIPS32;
+def SYNCI : MMRel, SYNCI_FT<"synci">, SYNCI_FM, ISA_MIPS32R2;
 
 def TEQ : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>, ISA_MIPS2;
 def TGE : MMRel, TEQ_FT<"tge", GPR32Opnd>, TEQ_FM<0x30>, ISA_MIPS2;

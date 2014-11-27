@@ -293,7 +293,6 @@
         swe             $24,94($k0)
         swle            $v1,-209($gp)
         swre            $k0,-202($s2)
-        synci           20023($s0)
         tlbginv
         tlbginvf
         tlbgp
