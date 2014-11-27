@@ -1272,16 +1272,16 @@ used to allocate the object. OpenCL supports the following address spaces:
 __generic(generic), __global(global), __local(local), __private(private),
 __constant(constant).
 
-   .. code-block:: opencl
+  .. code-block:: c
 
-  __constant int c = ...;
+    __constant int c = ...;
 
-  __generic int* foo(global int* g) {
-     __local int* l;
-     private int p;
-     ...
-     return l;
-  }
+    __generic int* foo(global int* g) {
+      __local int* l;
+      private int p;
+      ...
+      return l;
+    }
 
 More details can be found in the OpenCL C language Spec v2.0, Section 6.5.
   }];
