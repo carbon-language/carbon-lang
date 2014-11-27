@@ -214,17 +214,19 @@ namespace test6 {
 namespace test7 {
   void f() {
     int arr[5], b;
-    for (a : arr) {} // expected-warning {{extension}}
-    // FIXME: Give a -Wshadow for this by default?
-    for (b : arr) {} // expected-warning {{extension}}
-    for (arr : arr) {} // expected-warning {{extension}}
-    for (c alignas(8) : arr) { // expected-warning {{extension}}
+    for (a : arr) {} // expected-error {{requires type for loop variable}}
+    // FIXME: Give a different error in this case?
+    for (b : arr) {} // expected-error {{requires type for loop variable}}
+    for (arr : arr) {} // expected-error {{requires type for loop variable}}
+    for (c alignas(8) : arr) { // expected-error {{requires type for loop variable}}
       static_assert(alignof(c) == 8, ""); // expected-warning {{extension}}
     }
-    // FIXME: We should reject this, but don't, because we only check the
-    // attribute before we deduce the 'auto' type.
-    for (d alignas(1) : arr) {} // expected-warning {{extension}}
-    for (e [[deprecated]] : arr) { e = 0; } // expected-warning {{deprecated}} expected-note {{here}} expected-warning {{extension}}
+    // FIXME: The fix-it hint here is not sufficient to fix the error.
+    // We fail to diagnose that d is underaligned for its type, because
+    // we check the alignment attribute before we perform the auto
+    // deduction.
+    for (d alignas(1) : arr) {} // expected-error {{requires type for loop variable}}
+    for (e [[deprecated]] : arr) { e = 0; } // expected-warning {{deprecated}} expected-note {{here}} expected-error {{requires type for loop variable}}
   }
 }
 

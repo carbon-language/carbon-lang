@@ -290,13 +290,8 @@ def ext_for_range : ExtWarn<
 def warn_cxx98_compat_for_range : Warning<
   "range-based for loop is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
-def ext_for_range_identifier : ExtWarn<
-  "range-based for loop with implicit deduced type is a C++1z extension">,
-  InGroup<CXX1z>;
-def warn_cxx14_compat_for_range_identifier : Warning<
-  "range-based for loop with implicit deduced type is incompatible with "
-  "C++ standards before C++1z">,
-  InGroup<CXXPre1zCompat>, DefaultIgnore;
+def err_for_range_identifier : Error<
+  "range-based for loop requires type for loop variable">;
 def err_for_range_expected_decl : Error<
   "for range declaration must declare a variable">;
 def err_argument_required_after_attribute : Error<

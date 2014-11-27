@@ -1520,9 +1520,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
     else
       ForRangeInit.RangeExpr = ParseExpression();
 
-    Diag(Loc, getLangOpts().CPlusPlus1z
-                  ? diag::warn_cxx14_compat_for_range_identifier
-                  : diag::ext_for_range_identifier)
+    Diag(Loc, diag::err_for_range_identifier)
       << ((getLangOpts().CPlusPlus11 && !getLangOpts().CPlusPlus1z)
               ? FixItHint::CreateInsertion(Loc, "auto &&")
               : FixItHint());
