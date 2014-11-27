@@ -11,6 +11,10 @@
 # CHECK-NEXT:        Symbol:          main
 # CHECK-NEXT:        Type:            R_AARCH64_ABS64
 # CHECK-NEXT:        Addend:          0
+# CHECK-NEXT:      - Offset:          0x0000000000000008
+# CHECK-NEXT:        Symbol:          main
+# CHECK-NEXT:        Type:            R_AARCH64_TLSGD_ADR_PREL21
+# CHECK-NEXT:        Addend:          0
 
 FileHeader:
   Class:           ELFCLASS64
@@ -22,7 +26,7 @@ Sections:
     Name:            .text
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x04
-    Content:         0000000000000000
+    Content:         00000000000000000000000000000000
   - Type:            SHT_RELA
     Name:            .rela.text
     Link:            .symtab
@@ -32,6 +36,10 @@ Sections:
       - Offset:          0
         Symbol:          main
         Type:            R_AARCH64_ABS64
+        Addend:          0
+      - Offset:          8
+        Symbol:          main
+        Type:            R_AARCH64_TLSGD_ADR_PREL21
         Addend:          0
 
 Symbols:
