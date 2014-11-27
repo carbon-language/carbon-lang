@@ -603,6 +603,31 @@ function(add_unittest test_suite test_name)
   endif ()
 endfunction()
 
+function(llvm_add_go_executable binary pkgpath)
+  cmake_parse_arguments(ARG "ALL" "" "DEPENDS;GOFLAGS" ${ARGN})
+
+  if(LLVM_BINDINGS MATCHES "go")
+    # FIXME: This should depend only on the libraries Go needs.
+    get_property(llvmlibs GLOBAL PROPERTY LLVM_LIBS)
+    set(binpath ${CMAKE_BINARY_DIR}/bin/${binary}${CMAKE_EXECUTABLE_SUFFIX})
+    set(cc "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
+    set(cxx "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1}")
+    set(ldflags "${CMAKE_EXE_LINKER_FLAGS}")
+    add_custom_command(OUTPUT ${binpath}
+      COMMAND ${CMAKE_BINARY_DIR}/bin/llvm-go "cc=${cc}" "cxx=${cxx}" "ldflags=${ldflags}"
+              ${ARG_GOFLAGS} build -o ${binpath} ${pkgpath}
+      DEPENDS llvm-config ${CMAKE_BINARY_DIR}/bin/llvm-go${CMAKE_EXECUTABLE_SUFFIX}
+              ${llvmlibs} ${ARG_DEPENDS}
+      COMMENT "Building Go executable ${binary}"
+      VERBATIM)
+    if (ARG_ALL)
+      add_custom_target(${binary} ALL DEPENDS ${binpath})
+    else()
+      add_custom_target(${binary} DEPENDS ${binpath})
+    endif()
+  endif()
+endfunction()
+
 # This function provides an automatic way to 'configure'-like generate a file
 # based on a set of common and custom variables, specifically targeting the
 # variables needed for the 'lit.site.cfg' files. This function bundles the
