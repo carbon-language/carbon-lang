@@ -661,7 +661,8 @@ private:
            Tok.TokenText == "goog" && Tok.Next && Tok.Next->is(tok::period) &&
            Tok.Next->Next && (Tok.Next->Next->TokenText == "module" ||
                               Tok.Next->Next->TokenText == "require" ||
-                              Tok.Next->Next->TokenText == "provide");
+                              Tok.Next->Next->TokenText == "provide") &&
+           Tok.Next->Next->Next && Tok.Next->Next->Next->is(tok::l_paren);
   }
 
   void resetTokenMetadata(FormatToken *Token) {

@@ -167,6 +167,11 @@ TEST_F(FormatTestJS, GoogModules) {
                getGoogleJSStyleWithColumns(40));
   verifyFormat("var long = goog.require('this.is.really.absurdly.long');",
                getGoogleJSStyleWithColumns(40));
+
+  // These should be wrapped normally.
+  verifyFormat(
+      "var MyLongClassName =\n"
+      "    goog.module.get('my.long.module.name.followedBy.MyLongClassName');");
 }
 
 TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
