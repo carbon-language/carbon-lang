@@ -3055,6 +3055,40 @@ static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal,
   if (isa<UndefValue>(FalseVal))   // select C, X, undef -> X
     return TrueVal;
 
+  if (const auto *ICI = dyn_cast<ICmpInst>(CondVal)) {
+    Value *X;
+    const APInt *Y;
+    if (ICI->isEquality() &&
+        match(ICI->getOperand(0), m_And(m_Value(X), m_APInt(Y))) &&
+        match(ICI->getOperand(1), m_Zero())) {
+      ICmpInst::Predicate Pred = ICI->getPredicate();
+      const APInt *C;
+      // (X & Y) == 0 ? X & ~Y : X  --> X
+      // (X & Y) != 0 ? X & ~Y : X  --> X & ~Y
+      if (FalseVal == X && match(TrueVal, m_And(m_Specific(X), m_APInt(C))) &&
+          *Y == ~*C)
+        return Pred == ICmpInst::ICMP_EQ ? FalseVal : TrueVal;
+      // (X & Y) == 0 ? X : X & ~Y  --> X & ~Y
+      // (X & Y) != 0 ? X : X & ~Y  --> X
+      if (TrueVal == X && match(FalseVal, m_And(m_Specific(X), m_APInt(C))) &&
+          *Y == ~*C)
+        return Pred == ICmpInst::ICMP_EQ ? FalseVal : TrueVal;
+
+      if (Y->isPowerOf2()) {
+        // (X & Y) == 0 ? X | Y : X  --> X | Y
+        // (X & Y) != 0 ? X | Y : X  --> X
+        if (FalseVal == X && match(TrueVal, m_Or(m_Specific(X), m_APInt(C))) &&
+            *Y == *C)
+          return Pred == ICmpInst::ICMP_EQ ? TrueVal : FalseVal;
+        // (X & Y) == 0 ? X : X | Y  --> X
+        // (X & Y) != 0 ? X : X | Y  --> X | Y
+        if (TrueVal == X && match(FalseVal, m_Or(m_Specific(X), m_APInt(C))) &&
+            *Y == *C)
+          return Pred == ICmpInst::ICMP_EQ ? TrueVal : FalseVal;
+      }
+    }
+  }
+
   return nullptr;
 }
 

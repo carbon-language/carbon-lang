@@ -1386,13 +1386,3 @@ entry:
   %v = load i128* %p
   ret i128 %v
 }
-
-define i32 @test87(i32 %x) {
-  %and = and i32 %x, 1
-  %cmp = icmp ne i32 %and, 0
-  %and1 = and i32 %x, -2
-  %and1.x = select i1 %cmp, i32 %and1, i32 %x
-  ret i32 %and1.x
-; CHECK-LABEL: @test87(
-; CHECK: and i32 %x, -2
-}
