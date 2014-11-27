@@ -85,7 +85,7 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                     ISD::ArgFlagsTy &ArgFlags, CCState &State) {
   // Try to allocate a contiguous block of registers, each of the correct
   // size to hold one member.
-  ArrayRef<const uint16_t> RegList;
+  ArrayRef<uint16_t> RegList;
   if (LocVT.SimpleTy == MVT::i64)
     RegList = XRegList;
   else if (LocVT.SimpleTy == MVT::f32)

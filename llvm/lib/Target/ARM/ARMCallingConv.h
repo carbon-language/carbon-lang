@@ -194,7 +194,7 @@ static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
 
     // Try to allocate a contiguous block of registers, each of the correct
     // size to hold one member.
-    ArrayRef<const uint16_t> RegList;
+    ArrayRef<uint16_t> RegList;
     switch (LocVT.SimpleTy) {
     case MVT::f32:
       RegList = SRegList;
