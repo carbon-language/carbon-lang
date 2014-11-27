@@ -1,7 +1,11 @@
 def addrimm12 : ComplexPattern<iPTR, 2, "selectIntAddrMM", [frameindex]>;
 
-def simm4 : Operand<i32>;
-def simm7 : Operand<i32>;
+def simm4 : Operand<i32> {
+  let DecoderMethod = "DecodeSimm4";
+}
+def li_simm7 : Operand<i32> {
+  let DecoderMethod = "DecodeLiSimm7";
+}
 
 def simm12 : Operand<i32> {
   let DecoderMethod = "DecodeSimm12";
@@ -13,6 +17,7 @@ def uimm5_lsl2 : Operand<OtherVT> {
 
 def uimm6_lsl2 : Operand<i32> {
   let EncoderMethod = "getUImm6Lsl2Encoding";
+  let DecoderMethod = "DecodeUImm6Lsl2";
 }
 
 def simm9_addiusp : Operand<i32> {
@@ -25,6 +30,7 @@ def uimm3_shift : Operand<i32> {
 
 def simm3_lsa2 : Operand<i32> {
   let EncoderMethod = "getSImm3Lsa2Value";
+  let DecoderMethod = "DecodeAddiur2Simm7";
 }
 
 def uimm4_andi : Operand<i32> {
@@ -379,7 +385,7 @@ def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
 def MFLO16_MM : MoveFromHILOMM<"mflo", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x12>;
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
-def LI16_MM : LoadImmMM16<"li16", simm7, GPRMM16Opnd, immLi16>,
+def LI16_MM : LoadImmMM16<"li16", li_simm7, GPRMM16Opnd, immLi16>,
               LI_FM_MM16, IsAsCheapAsAMove;
 def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
 def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;

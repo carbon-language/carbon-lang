@@ -390,3 +390,21 @@
 
 # CHECK: jr16 $9
 0x89 0x45
+
+# CHECK: li16 $3, -1
+0xff 0xed
+
+# CHECK: li16 $3, 126
+0xfe 0xed
+
+# CHECK: addiur1sp $7, 4
+0x83 0x6f
+
+# CHECK: addiur2 $6, $7, -1
+0x7e 0x6f
+
+# CHECK: addiur2 $6, $7, 12
+0x76 0x6f
+
+# CHECK: addius5 $7, -2
+0xfc 0x4c

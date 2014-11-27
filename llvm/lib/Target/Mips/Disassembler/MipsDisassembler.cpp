@@ -287,6 +287,26 @@ static DecodeStatus DecodeSpecial3LlSc(MCInst &Inst,
                                        uint64_t Address,
                                        const void *Decoder);
 
+static DecodeStatus DecodeAddiur2Simm7(MCInst &Inst,
+                                       unsigned Value,
+                                       uint64_t Address,
+                                       const void *Decoder);
+
+static DecodeStatus DecodeUImm6Lsl2(MCInst &Inst,
+                                    unsigned Value,
+                                    uint64_t Address,
+                                    const void *Decoder);
+
+static DecodeStatus DecodeLiSimm7(MCInst &Inst,
+                                  unsigned Value,
+                                  uint64_t Address,
+                                  const void *Decoder);
+
+static DecodeStatus DecodeSimm4(MCInst &Inst,
+                                unsigned Value,
+                                uint64_t Address,
+                                const void *Decoder);
+
 static DecodeStatus DecodeSimm16(MCInst &Inst,
                                  unsigned Insn,
                                  uint64_t Address,
@@ -1455,6 +1475,46 @@ static DecodeStatus DecodeJumpTargetMM(MCInst &Inst,
                                        const void *Decoder) {
   unsigned JumpOffset = fieldFromInstruction(Insn, 0, 26) << 1;
   Inst.addOperand(MCOperand::CreateImm(JumpOffset));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeAddiur2Simm7(MCInst &Inst,
+                                       unsigned Value,
+                                       uint64_t Address,
+                                       const void *Decoder) {
+  if (Value == 0)
+    Inst.addOperand(MCOperand::CreateImm(1));
+  else if (Value == 0x7)
+    Inst.addOperand(MCOperand::CreateImm(-1));
+  else
+    Inst.addOperand(MCOperand::CreateImm(Value << 2));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeUImm6Lsl2(MCInst &Inst,
+                                    unsigned Value,
+                                    uint64_t Address,
+                                    const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(Value << 2));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeLiSimm7(MCInst &Inst,
+                                  unsigned Value,
+                                  uint64_t Address,
+                                  const void *Decoder) {
+  if (Value == 0x7F)
+    Inst.addOperand(MCOperand::CreateImm(-1));
+  else
+    Inst.addOperand(MCOperand::CreateImm(Value));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeSimm4(MCInst &Inst,
+                                unsigned Value,
+                                uint64_t Address,
+                                const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(SignExtend32<4>(Value)));
   return MCDisassembler::Success;
 }
 
