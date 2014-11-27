@@ -159,14 +159,6 @@ public:
 class RuntimeDyldImpl {
   friend class RuntimeDyld::LoadedObjectInfo;
   friend class RuntimeDyldCheckerImpl;
-private:
-
-  uint64_t getAnySymbolRemoteAddress(StringRef Symbol) {
-    if (uint64_t InternalSymbolAddr = getSymbolLoadAddress(Symbol))
-      return InternalSymbolAddr;
-    return MemMgr->getSymbolAddress(Symbol);
-  }
-
 protected:
   // The MemoryManager to load objects into.
   RTDyldMemoryManager *MemMgr;

@@ -740,7 +740,9 @@ uint64_t RuntimeDyldCheckerImpl::getSymbolLinkerAddr(StringRef Symbol) const {
 }
 
 uint64_t RuntimeDyldCheckerImpl::getSymbolRemoteAddr(StringRef Symbol) const {
-  return getRTDyld().getAnySymbolRemoteAddress(Symbol);
+  if (uint64_t InternalSymbolAddr = getRTDyld().getSymbolLoadAddress(Symbol))
+      return InternalSymbolAddr;
+  return getRTDyld().MemMgr->getSymbolAddress(Symbol);
 }
 
 uint64_t RuntimeDyldCheckerImpl::readMemoryAtAddr(uint64_t SrcAddr,
