@@ -113,6 +113,8 @@ public:
     return nullptr;
   }
 #endif // USE_OPROFILE
+private:
+  virtual void anchor();
 };
 
 } // end namespace llvm.
