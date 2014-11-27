@@ -212,6 +212,13 @@ TEST_F(FormatTestJava, ArrayInitializers) {
   verifyFormat("new int[] {\n"
                "    1, 2, 3, 4,\n"
                "};");
+
+  FormatStyle Style = getStyleWithColumns(65);
+  Style.Cpp11BracedListStyle = false;
+  verifyFormat(
+      "expected = new int[] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,\n"
+      "  100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };",
+      Style);
 }
 
 TEST_F(FormatTestJava, ThrowsDeclarations) {

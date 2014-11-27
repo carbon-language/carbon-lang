@@ -138,6 +138,10 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
       Commas.size() < 19)
     return;
 
+  // Column format doesn't really make sense if we don't align after brackets.
+  if (!Style.AlignAfterOpenBracket)
+    return;
+
   FormatToken *ItemBegin = Token->Next;
   SmallVector<bool, 8> MustBreakBeforeItem;
 
