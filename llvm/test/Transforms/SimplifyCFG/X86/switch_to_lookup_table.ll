@@ -1077,3 +1077,97 @@ return:
 ; CHECK-NEXT: ret i8 %switch.idx.cast
 }
 
+; Reuse the inverted table range compare.
+define i32 @reuse_cmp1(i32 %x) {
+entry:
+  switch i32 %x, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+    i32 3, label %sw.bb3
+  ]
+sw.bb: br label %sw.epilog
+sw.bb1: br label %sw.epilog
+sw.bb2: br label %sw.epilog
+sw.bb3: br label %sw.epilog
+sw.default: br label %sw.epilog
+sw.epilog:
+  %r.0 = phi i32 [ 0, %sw.default ], [ 13, %sw.bb3 ], [ 12, %sw.bb2 ], [ 11, %sw.bb1 ], [ 10, %sw.bb ]
+  %cmp = icmp eq i32 %r.0, 0       ; This compare can be "replaced".
+  br i1 %cmp, label %if.then, label %if.end
+if.then: br label %return
+if.end: br label %return
+return:
+  %retval.0 = phi i32 [ 100, %if.then ], [ %r.0, %if.end ]
+  ret i32 %retval.0
+; CHECK-LABEL: @reuse_cmp1(
+; CHECK: entry:
+; CHECK-NEXT: %switch.tableidx = sub i32 %x, 0
+; CHECK-NEXT: [[C:%.+]] = icmp ult i32 %switch.tableidx, 4
+; CHECK-NEXT: %inverted.cmp = xor i1 [[C]], true
+; CHECK:      [[R:%.+]] = select i1 %inverted.cmp, i32 100, i32 {{.*}}
+; CHECK-NEXT: ret i32 [[R]]
+}
+
+; Reuse the table range compare.
+define i32 @reuse_cmp2(i32 %x) {
+entry:
+  switch i32 %x, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+    i32 3, label %sw.bb3
+  ]
+sw.bb: br label %sw.epilog
+sw.bb1: br label %sw.epilog
+sw.bb2: br label %sw.epilog
+sw.bb3: br label %sw.epilog
+sw.default: br label %sw.epilog
+sw.epilog:
+  %r.0 = phi i32 [ 4, %sw.default ], [ 3, %sw.bb3 ], [ 2, %sw.bb2 ], [ 1, %sw.bb1 ], [ 0, %sw.bb ]
+  %cmp = icmp ne i32 %r.0, 4       ; This compare can be "replaced".
+  br i1 %cmp, label %if.then, label %if.end
+if.then: br label %return
+if.end: br label %return
+return:
+  %retval.0 = phi i32 [ %r.0, %if.then ], [ 100, %if.end ]
+  ret i32 %retval.0
+; CHECK-LABEL: @reuse_cmp2(
+; CHECK: entry:
+; CHECK-NEXT: %switch.tableidx = sub i32 %x, 0
+; CHECK-NEXT: [[C:%.+]] = icmp ult i32 %switch.tableidx, 4
+; CHECK:      [[R:%.+]] = select i1 [[C]], i32 {{.*}}, i32 100
+; CHECK-NEXT: ret i32 [[R]]
+}
+
+; Cannot reuse the table range compare, because the default value is the same
+; as one of the case values.
+define i32 @no_reuse_cmp(i32 %x) {
+entry:
+  switch i32 %x, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+    i32 3, label %sw.bb3
+  ]
+sw.bb: br label %sw.epilog
+sw.bb1: br label %sw.epilog
+sw.bb2: br label %sw.epilog
+sw.bb3: br label %sw.epilog
+sw.default: br label %sw.epilog
+sw.epilog:
+  %r.0 = phi i32 [ 12, %sw.default ], [ 13, %sw.bb3 ], [ 12, %sw.bb2 ], [ 11, %sw.bb1 ], [ 10, %sw.bb ]
+  %cmp = icmp ne i32 %r.0, 0
+  br i1 %cmp, label %if.then, label %if.end
+if.then: br label %return
+if.end: br label %return
+return:
+  %retval.0 = phi i32 [ %r.0, %if.then ], [ 100, %if.end ]
+  ret i32 %retval.0
+; CHECK-LABEL: @no_reuse_cmp(
+; CHECK:  [[S:%.+]] = select 
+; CHECK-NEXT:  %cmp = icmp ne i32 [[S]], 0
+; CHECK-NEXT:  [[R:%.+]] = select i1 %cmp, i32 [[S]], i32 100
+; CHECK-NEXT:  ret i32 [[R]]
+}
+
