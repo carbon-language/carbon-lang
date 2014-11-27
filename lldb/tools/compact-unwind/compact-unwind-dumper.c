@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdint.h>
 #include <mach-o/loader.h>
 #include <mach-o/compact_unwind_encoding.h>
@@ -12,6 +11,7 @@
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <inttypes.h>
+#include <stdio.h>
 
 
 // A quick sketch of a program which can parse the compact unwind info
@@ -29,7 +29,9 @@ struct baton
 
     int addr_size;                   // 4 or 8 bytes, the size of addresses in this file
 
-    uint64_t text_segment_vmaddr;
+    uint64_t text_segment_vmaddr;    // __TEXT segment vmaddr
+    uint64_t text_section_vmaddr;    // __TEXT,__text section vmaddr
+
     uint64_t eh_section_file_address; // the file address of the __TEXT,__eh_frame section
 
     uint8_t *lsda_array_start;       // for the currently-being-processed first-level index
@@ -117,7 +119,8 @@ scan_macho_load_commands (struct baton *baton)
             offset += sizeof (struct segment_command);
         }
 
-        if (nsects != 0 && segment_name[0] != '\0' && strcmp (segment_name, "__TEXT") == 0)
+        if ((*lc_cmd == LC_SEGMENT || *lc_cmd == LC_SEGMENT_64)
+             && nsects != 0 && segment_name[0] != '\0' && strcmp (segment_name, "__TEXT") == 0)
         {
             baton->text_segment_vmaddr = segment_vmaddr;
 
@@ -155,6 +158,21 @@ scan_macho_load_commands (struct baton *baton)
                         struct section sect;
                         memcpy (&sect, offset, sizeof (struct section));
                         baton->eh_section_file_address = sect.addr;
+                    }
+                }
+                if (strcmp (sect_name, "__text") == 0)
+                {
+                    if (is_64bit)
+                    {
+                        struct section_64 sect;
+                        memcpy (&sect, offset, sizeof (struct section_64));
+                        baton->text_section_vmaddr = sect.addr;
+                    }
+                    else
+                    {
+                        struct section sect;
+                        memcpy (&sect, offset, sizeof (struct section));
+                        baton->text_section_vmaddr = sect.addr;
                     }
                 }
 
@@ -228,17 +246,12 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
         }
         case UNWIND_X86_64_MODE_STACK_IMMD:
         {
-            printf (" UNWIND_X86_64_MODE_STACK_IND not yet supported\n");
-            break;
-
-            // FIXME not getting the rbp register saves out of the register permutation yet
-
             uint32_t stack_size = (encoding & UNWIND_X86_64_FRAMELESS_STACK_SIZE) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_SIZE));
-            uint32_t stack_adjust = (encoding & UNWIND_X86_FRAMELESS_STACK_ADJUST) >> (__builtin_ctz (UNWIND_X86_FRAMELESS_STACK_ADJUST));
+            uint32_t stack_adjust = (encoding & UNWIND_X86_64_FRAMELESS_STACK_ADJUST) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_ADJUST));
             uint32_t register_count = (encoding & UNWIND_X86_64_FRAMELESS_STACK_REG_COUNT) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_REG_COUNT));
-            uint32_t permutation = (encoding & UNWIND_X86_FRAMELESS_STACK_REG_PERMUTATION) >> (__builtin_ctz (UNWIND_X86_FRAMELESS_STACK_REG_PERMUTATION));
+            uint32_t permutation = (encoding & UNWIND_X86_64_FRAMELESS_STACK_REG_PERMUTATION) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_REG_PERMUTATION));
             
-//            printf (" frameless function: stack size %d, stack adjust %d, register count %d ", stack_size * 8, stack_adjust * 8, register_count);
+            printf (" frameless function: stack size %d, stack adjust %d, register count %d ", stack_size * 8, stack_adjust * 8, register_count);
             if ((encoding & UNWIND_X86_64_MODE_MASK) == UNWIND_X86_64_MODE_STACK_IND)
             {
                 printf (" UNWIND_X86_64_MODE_STACK_IND not handled ");
@@ -255,6 +268,10 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
             else
             {
                 int permunreg[6];
+
+                // Decode the variable base number that's used to encode
+                // the Lehmer code for this permutation.
+                // v. http://stackoverflow.com/questions/1506078/fast-permutation-number-permutation-mapping-algorithms
                 switch (register_count) 
                 {
                     case 6:
@@ -306,12 +323,15 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
                         break;
                 }
                 
+                // Decode the Lehmer code for this permutation of
+                // the registers v. http://en.wikipedia.org/wiki/Lehmer_code
+
                 int registers[6];
                 bool used[7] = { false, false, false, false, false, false, false };
                 for (int i = 0; i < register_count; i++)
                 {
                     int renum = 0;
-                    for (int j = 0; j < 7; j++)
+                    for (int j = 1; j < 7; j++)
                     {
                         if (used[j] == false)
                         {
@@ -327,7 +347,7 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
                 }
 
 
-                printf ("CFA is rsp+%d ", stack_size * 8);
+                printf (" CFA is rsp+%d ", stack_size * 8);
 
                 uint32_t saved_registers_offset = 1;
                 printf (" rip=[CFA-%d]", saved_registers_offset * 8);
@@ -369,11 +389,16 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
         case UNWIND_X86_64_MODE_DWARF:
         {
             uint32_t dwarf_offset = encoding & UNWIND_X86_DWARF_SECTION_OFFSET;
-            printf (" use DWARF unwind instructions: FDE at offset %d (file address 0x%" PRIx64 ")\n",
+            printf (" use DWARF unwind instructions: FDE at offset %d (file address 0x%" PRIx64 ")",
                     dwarf_offset, dwarf_offset + baton.eh_section_file_address);
         }
         break;
 
+        case 0:
+        {
+            printf (" no unwind information");
+        }
+        break;
     }
 }
 
@@ -405,7 +430,10 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
     }
     printf ("    func [%d] offset %d (file addr 0x%" PRIx64 ")%s - 0x%x", 
             idx, entry_func_offset, 
-            entry_func_offset + baton.first_level_index_entry.functionOffset + baton.text_segment_vmaddr, 
+            entry_func_offset + baton.text_segment_vmaddr,  // FIXME
+#if 0
+            entry_func_offset + baton.first_level_index_entry.functionOffset + baton.text_segment_vmaddr,  // FIXME
+#endif
             entry_encoding_index_str, 
             encoding);
 
@@ -466,16 +494,18 @@ void
 print_second_level_index_regular (struct baton baton)
 {
     uint8_t *page_entries = baton.compact_unwind_start + baton.first_level_index_entry.secondLevelPagesSectionOffset + baton.regular_second_level_page_header.entryPageOffset;
-    uint8_t entries_count =  baton.regular_second_level_page_header.entryCount;
+    uint32_t entries_count =  baton.regular_second_level_page_header.entryCount;
 
     uint8_t *offset = page_entries;
-    uint8_t idx = 0;
 
-    for (uint32_t idx = 0; idx < entries_count; idx++, offset += 8)
+    uint32_t idx = 0;
+    while (idx < entries_count)
     {
         uint32_t func_offset = *((uint32_t *) (offset));
         uint32_t encoding = *((uint32_t *) (offset + 4)); 
         print_function_encoding (baton, idx, encoding, (uint32_t) -1, func_offset);
+        idx++;
+        offset += 8;
     }
 }
 
@@ -512,7 +542,7 @@ print_second_level_index_compressed (struct baton baton)
 }
 
 void
-print_second_level_index (struct baton baton)
+print_second_level_index (struct baton baton, uint32_t second_level_index_count)
 {
     uint8_t *index_start = baton.compact_unwind_start + baton.first_level_index_entry.secondLevelPagesSectionOffset;
 
@@ -520,7 +550,7 @@ print_second_level_index (struct baton baton)
     {
         struct unwind_info_regular_second_level_page_header header;
         memcpy (&header, index_start, sizeof (struct unwind_info_regular_second_level_page_header));
-        printf ("  UNWIND_SECOND_LEVEL_REGULAR entryPageOffset %d, entryCount %d\n", header.entryPageOffset, header.entryCount);
+        printf ("  UNWIND_SECOND_LEVEL_REGULAR #%d entryPageOffset %d, entryCount %d\n", second_level_index_count, header.entryPageOffset, header.entryCount);
         baton.regular_second_level_page_header = header;
         print_second_level_index_regular (baton);
     }
@@ -529,7 +559,7 @@ print_second_level_index (struct baton baton)
     {
         struct unwind_info_compressed_second_level_page_header header;
         memcpy (&header, index_start, sizeof (struct unwind_info_compressed_second_level_page_header));
-        printf ("  UNWIND_SECOND_LEVEL_COMPRESSED entryPageOffset %d, entryCount %d, encodingsPageOffset %d, encodingsCount %d\n", header.entryPageOffset, header.entryCount, header.encodingsPageOffset, header.encodingsCount);
+        printf ("  UNWIND_SECOND_LEVEL_COMPRESSED #%d entryPageOffset %d, entryCount %d, encodingsPageOffset %d, encodingsCount %d\n", second_level_index_count, header.entryPageOffset, header.entryCount, header.encodingsPageOffset, header.encodingsCount);
         baton.compressed_second_level_page_header = header;
         print_second_level_index_compressed (baton);
     }
@@ -569,8 +599,8 @@ print_index_sections (struct baton baton)
                 printf ("    LSDA [%d] functionOffset %d (%d) (file address 0x%" PRIx64 "), lsdaOffset %d (file address 0x%" PRIx64 ")\n", 
                         lsda_count, lsda_entry.functionOffset, 
                         lsda_entry.functionOffset - index_entry.functionOffset, 
-                        lsda_entry.functionOffset + baton.text_segment_vmaddr,
-                        lsda_entry.lsdaOffset, lsda_entry.lsdaOffset + baton.text_segment_vmaddr);
+                        lsda_entry.functionOffset - index_entry.functionOffset + baton.text_section_vmaddr,
+                        lsda_entry.lsdaOffset, lsda_entry.lsdaOffset + baton.text_section_vmaddr);
                 lsda_count++;
                 lsda_entry_offset += sizeof (struct unwind_info_section_header_lsda_index_entry);
             }
@@ -578,7 +608,7 @@ print_index_sections (struct baton baton)
             printf ("\n");
 
             baton.first_level_index_entry = index_entry;
-            print_second_level_index (baton);
+            print_second_level_index (baton, cur_idx);
         }
 
         printf ("\n");
@@ -648,7 +678,7 @@ int main (int argc, char **argv)
     while (pers_idx < header.personalityArrayCount)
     {
         int32_t pers_delta = *((int32_t*) (baton.compact_unwind_start + header.personalityArraySectionOffset + (pers_idx * sizeof (uint32_t))));
-        printf ("    Personality [%d]: offset to personality function address ptr %d (file address 0x%" PRIx64 ")\n", pers_idx, pers_delta, baton.text_segment_vmaddr + pers_delta);
+        printf ("    Personality [%d]: offset to personality function address ptr %d (file address 0x%" PRIx64 ")\n", pers_idx, pers_delta, baton.text_section_vmaddr + pers_delta);
         pers_idx++;
         pers_arr += sizeof (uint32_t);
     }
