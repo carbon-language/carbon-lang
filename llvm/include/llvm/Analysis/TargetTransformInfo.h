@@ -270,13 +270,6 @@ public:
                                      int64_t BaseOffset, bool HasBaseReg,
                                      int64_t Scale) const;
 
-  /// \brief Return true if the target works with masked instruction
-  /// AVX2 allows masks for consecutive load and store for i32 and i64 elements.
-  /// AVX-512 architecture will also allow masks for non-consecutive memory
-  /// accesses.
-  virtual bool isLegalPredicatedStore(Type *DataType, int Consecutive) const;
-  virtual bool isLegalPredicatedLoad (Type *DataType, int Consecutive) const;
-
   /// \brief Return the cost of the scaling factor used in the addressing
   /// mode represented by AM for this target, for a load/store
   /// of the specified type.

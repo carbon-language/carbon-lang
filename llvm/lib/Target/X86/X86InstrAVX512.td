@@ -2122,41 +2122,6 @@ def: Pat<(int_x86_avx512_mask_storeu_pd_512 addr:$ptr, (v8f64 VR512:$src),
          (VMOVUPDZmrk addr:$ptr, (v8i1 (COPY_TO_REGCLASS GR8:$mask, VK8WM)),
             VR512:$src)>;
 
-def: Pat<(masked_store addr:$ptr, VK8WM:$mask, (v8f32 VR256:$src)),
-         (VMOVUPSZmrk addr:$ptr,
-         (v16i1 (COPY_TO_REGCLASS VK8WM:$mask, VK16WM)),
-         (INSERT_SUBREG (v16f32 (IMPLICIT_DEF)), VR256:$src, sub_ymm))>;
-
-def: Pat<(v8f32 (masked_load addr:$ptr, VK8WM:$mask, undef)),
-         (v8f32 (EXTRACT_SUBREG (v16f32 (VMOVUPSZrmkz 
-          (v16i1 (COPY_TO_REGCLASS VK8WM:$mask, VK16WM)), addr:$ptr)), sub_ymm))>;
-
-def: Pat<(masked_store addr:$ptr, VK16WM:$mask, (v16f32 VR512:$src)),
-         (VMOVUPSZmrk addr:$ptr, VK16WM:$mask, VR512:$src)>;
-
-def: Pat<(masked_store addr:$ptr, VK8WM:$mask, (v8f64 VR512:$src)),
-         (VMOVUPDZmrk addr:$ptr, VK8WM:$mask, VR512:$src)>;
-
-def: Pat<(v16f32 (masked_load addr:$ptr, VK16WM:$mask, undef)),
-         (VMOVUPSZrmkz VK16WM:$mask, addr:$ptr)>;
-
-def: Pat<(v16f32 (masked_load addr:$ptr, VK16WM:$mask,
-                              (bc_v16f32 (v16i32 immAllZerosV)))),
-         (VMOVUPSZrmkz VK16WM:$mask, addr:$ptr)>;
-
-def: Pat<(v16f32 (masked_load addr:$ptr, VK16WM:$mask, (v16f32 VR512:$src0))),
-         (VMOVUPSZrmk VR512:$src0, VK16WM:$mask, addr:$ptr)>;
-
-def: Pat<(v8f64 (masked_load addr:$ptr, VK8WM:$mask, undef)),
-         (VMOVUPDZrmkz VK8WM:$mask, addr:$ptr)>;
-
-def: Pat<(v8f64 (masked_load addr:$ptr, VK8WM:$mask,
-                             (bc_v8f64 (v16i32 immAllZerosV)))),
-         (VMOVUPDZrmkz VK8WM:$mask, addr:$ptr)>;
-
-def: Pat<(v8f64 (masked_load addr:$ptr, VK8WM:$mask, (v8f64 VR512:$src0))),
-         (VMOVUPDZrmk VR512:$src0, VK8WM:$mask, addr:$ptr)>;
-
 defm VMOVDQA32 : avx512_load_vl<0x6F, "vmovdqa32", "alignedload", "i", "32",
                                 "16", "8", "4", SSEPackedInt, HasAVX512>,
                  avx512_store_vl<0x7F, "vmovdqa32", "alignedstore",
@@ -2230,46 +2195,6 @@ def : Pat<(v16i32 (vselect VK16WM:$mask, (v16i32 immAllZerosV),
                            (v16i32 VR512:$src))),
                   (VMOVDQU32Zrrkz (KNOTWrr VK16WM:$mask), VR512:$src)>;
 }
-
-def: Pat<(v16i32 (masked_load addr:$ptr, VK16WM:$mask, (v16i32 immAllZerosV))),
-         (VMOVDQU32Zrmkz VK16WM:$mask, addr:$ptr)>;
-
-def: Pat<(v16i32 (masked_load addr:$ptr, VK16WM:$mask, undef)),
-         (VMOVDQU32Zrmkz VK16WM:$mask, addr:$ptr)>;
-
-def: Pat<(v16i32 (masked_load addr:$ptr, VK16WM:$mask, (v16i32 VR512:$src0))),
-         (VMOVDQU32Zrmk VR512:$src0, VK16WM:$mask, addr:$ptr)>;
-
-def: Pat<(v8i64 (masked_load addr:$ptr, VK8WM:$mask,
-                             (bc_v8i64 (v16i32 immAllZerosV)))),
-         (VMOVDQU64Zrmkz VK8WM:$mask, addr:$ptr)>;
-
-def: Pat<(v8i64 (masked_load addr:$ptr, VK8WM:$mask, undef)),
-         (VMOVDQU64Zrmkz VK8WM:$mask, addr:$ptr)>;
-
-def: Pat<(v8i64 (masked_load addr:$ptr, VK8WM:$mask, (v8i64 VR512:$src0))),
-         (VMOVDQU64Zrmk VR512:$src0, VK8WM:$mask, addr:$ptr)>;
-
-def: Pat<(masked_store addr:$ptr, VK16WM:$mask, (v16i32 VR512:$src)),
-         (VMOVDQU32Zmrk addr:$ptr, VK16WM:$mask, VR512:$src)>;
-
-def: Pat<(masked_store addr:$ptr, VK8WM:$mask, (v8i64 VR512:$src)),
-         (VMOVDQU64Zmrk addr:$ptr, VK8WM:$mask, VR512:$src)>;
-
-// SKX replacement
-def: Pat<(masked_store addr:$ptr, VK8WM:$mask, (v8i32 VR256:$src)),
-         (VMOVDQU32Z256mrk addr:$ptr, VK8WM:$mask, VR256:$src)>;
-
-// KNL replacement
-def: Pat<(masked_store addr:$ptr, VK8WM:$mask, (v8i32 VR256:$src)),
-         (VMOVDQU32Zmrk addr:$ptr,
-         (v16i1 (COPY_TO_REGCLASS VK8WM:$mask, VK16WM)),
-         (INSERT_SUBREG (v16i32 (IMPLICIT_DEF)), VR256:$src, sub_ymm))>;
-
-def: Pat<(v8i32 (masked_load addr:$ptr, VK8WM:$mask, undef)),
-         (v8i32 (EXTRACT_SUBREG (v16i32 (VMOVDQU32Zrmkz 
-          (v16i1 (COPY_TO_REGCLASS VK8WM:$mask, VK16WM)), addr:$ptr)), sub_ymm))>;
-
 
 // Move Int Doubleword to Packed Double Int
 //

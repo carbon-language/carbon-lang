@@ -112,10 +112,6 @@ class LLVMMatchType<int num>
 // the intrinsic is overloaded, so the matched type should be declared as iAny.
 class LLVMExtendedType<int num> : LLVMMatchType<num>;
 class LLVMTruncatedType<int num> : LLVMMatchType<num>;
-class LLVMVectorSameWidth<int num, LLVMType elty>
-  : LLVMMatchType<num> {
-  ValueType ElTy = elty.VT;
-}
 
 // Match the type of another intrinsic parameter that is expected to be a
 // vector type, but change the element count to be half as many
@@ -543,17 +539,6 @@ def int_convertuu  : Intrinsic<[llvm_anyint_ty],
 def int_clear_cache : Intrinsic<[], [llvm_ptr_ty, llvm_ptr_ty],
                                 [], "llvm.clear_cache">;
 
-//===-------------------------- Masked Intrinsics -------------------------===//
-//
-def int_masked_store : Intrinsic<[], [llvm_ptr_ty, llvm_anyvector_ty,
-                                      llvm_i32_ty,
-                                      LLVMVectorSameWidth<0, llvm_i1_ty>],
-                                 [IntrReadWriteArgMem]>;
-
-def int_masked_load  : Intrinsic<[llvm_anyvector_ty],
-                                 [llvm_ptr_ty, LLVMMatchType<0>, llvm_i32_ty,
-                                  LLVMVectorSameWidth<0, llvm_i1_ty>],
-                                 [IntrReadArgMem]>;
 //===----------------------------------------------------------------------===//
 // Target-specific intrinsics
 //===----------------------------------------------------------------------===//

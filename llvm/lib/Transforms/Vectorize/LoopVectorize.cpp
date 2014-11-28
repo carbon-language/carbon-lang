@@ -580,10 +580,9 @@ public:
 
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                             DominatorTree *DT, TargetLibraryInfo *TLI,
-                            AliasAnalysis *AA, Function *F,
-                            const TargetTransformInfo *TTI)
+                            AliasAnalysis *AA, Function *F)
       : NumLoads(0), NumStores(0), NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        DT(DT), TLI(TLI), AA(AA), TheFunction(F), TTI(TTI), Induction(nullptr),
+        DT(DT), TLI(TLI), AA(AA), TheFunction(F), Induction(nullptr),
         WidestIndTy(nullptr), HasFunNoNaNAttr(false), MaxSafeDepDistBytes(-1U) {
   }
 
@@ -769,15 +768,6 @@ public:
   }
   SmallPtrSet<Value *, 8>::iterator strides_end() { return StrideSet.end(); }
 
-  bool canPredicateStore(Type *DataType, Value *Ptr) {
-    return TTI->isLegalPredicatedStore(DataType, isConsecutivePtr(Ptr));
-  }
-  bool canPredicateLoad(Type *DataType, Value *Ptr) {
-    return TTI->isLegalPredicatedLoad(DataType, isConsecutivePtr(Ptr));
-  }
-  bool setMaskedOp(const Instruction* I) {
-    return (MaskedOp.find(I) != MaskedOp.end());
-  }
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -850,8 +840,6 @@ private:
   AliasAnalysis *AA;
   /// Parent function
   Function *TheFunction;
-  /// Target Transform Info
-  const TargetTransformInfo *TTI;
 
   //  ---  vectorization state --- //
 
@@ -883,10 +871,6 @@ private:
 
   ValueToValueMap Strides;
   SmallPtrSet<Value *, 8> StrideSet;
-  
-  /// While vectorizing these instructions we have to generate a
-  /// call to an appropriate masked intrinsic
-  std::set<const Instruction*> MaskedOp;
 };
 
 /// LoopVectorizationCostModel - estimates the expected speedups due to
@@ -1391,7 +1375,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F, TTI);
+    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       emitMissedWarning(F, L, Hints);
@@ -1779,8 +1763,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   unsigned ScalarAllocatedSize = DL->getTypeAllocSize(ScalarDataTy);
   unsigned VectorElementSize = DL->getTypeStoreSize(DataTy)/VF;
 
-  if (SI && Legal->blockNeedsPredication(SI->getParent()) &&
-      !Legal->setMaskedOp(SI))
+  if (SI && Legal->blockNeedsPredication(SI->getParent()))
     return scalarizeInstruction(Instr, true);
 
   if (ScalarAllocatedSize != VectorElementSize)
@@ -1874,25 +1857,8 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 
       Value *VecPtr = Builder.CreateBitCast(PartPtr,
                                             DataTy->getPointerTo(AddressSpace));
-
-      Instruction *NewSI;
-      if (Legal->setMaskedOp(SI)) {
-        Type *I8PtrTy =
-        Builder.getInt8PtrTy(PartPtr->getType()->getPointerAddressSpace());
-
-        Value *I8Ptr = Builder.CreateBitCast(PartPtr, I8PtrTy);
-
-        VectorParts Cond = createEdgeMask(SI->getParent()->getSinglePredecessor(),
-                                          SI->getParent());
-        SmallVector <Value *, 8> Ops;
-        Ops.push_back(I8Ptr);
-        Ops.push_back(StoredVal[Part]);
-        Ops.push_back(Builder.getInt32(Alignment));
-        Ops.push_back(Cond[Part]);
-        NewSI = Builder.CreateMaskedStore(Ops);
-      }
-      else 
-        NewSI = Builder.CreateAlignedStore(StoredVal[Part], VecPtr, Alignment);
+      StoreInst *NewSI =
+        Builder.CreateAlignedStore(StoredVal[Part], VecPtr, Alignment);
       propagateMetadata(NewSI, SI);
     }
     return;
@@ -1907,31 +1873,14 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 
     if (Reverse) {
       // If the address is consecutive but reversed, then the
-      // wide load needs to start at the last vector element.
+      // wide store needs to start at the last vector element.
       PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF));
       PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
     }
 
-    Instruction* NewLI;
-    if (Legal->setMaskedOp(LI)) {
-      Type *I8PtrTy =
-        Builder.getInt8PtrTy(PartPtr->getType()->getPointerAddressSpace());
-
-      Value *I8Ptr = Builder.CreateBitCast(PartPtr, I8PtrTy);
-
-      VectorParts SrcMask = createBlockInMask(LI->getParent());
-      SmallVector <Value *, 8> Ops;
-      Ops.push_back(I8Ptr);
-      Ops.push_back(UndefValue::get(DataTy));
-      Ops.push_back(Builder.getInt32(Alignment));
-      Ops.push_back(SrcMask[Part]);
-      NewLI = Builder.CreateMaskedLoad(Ops);
-    }
-    else {
-      Value *VecPtr = Builder.CreateBitCast(PartPtr,
-                                            DataTy->getPointerTo(AddressSpace));
-      NewLI = Builder.CreateAlignedLoad(VecPtr, Alignment, "wide.load");
-    }
+    Value *VecPtr = Builder.CreateBitCast(PartPtr,
+                                          DataTy->getPointerTo(AddressSpace));
+    LoadInst *NewLI = Builder.CreateAlignedLoad(VecPtr, Alignment, "wide.load");
     propagateMetadata(NewLI, LI);
     Entry[Part] = Reverse ? reverseVector(NewLI) :  NewLI;
   }
@@ -5355,15 +5304,8 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
     // We might be able to hoist the load.
     if (it->mayReadFromMemory()) {
       LoadInst *LI = dyn_cast<LoadInst>(it);
-      if (!LI)
+      if (!LI || !SafePtrs.count(LI->getPointerOperand()))
         return false;
-      if (!SafePtrs.count(LI->getPointerOperand())) {
-        if (canPredicateLoad(LI->getType(), LI->getPointerOperand())) {
-          MaskedOp.insert(LI);
-          continue;
-        }
-        return false;
-      }
     }
 
     // We don't predicate stores at the moment.
@@ -5371,20 +5313,10 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
       StoreInst *SI = dyn_cast<StoreInst>(it);
       // We only support predication of stores in basic blocks with one
       // predecessor.
-      if (!SI)
-        return false;
-
-      if (++NumPredStores > NumberOfStoresToPredicate ||
+      if (!SI || ++NumPredStores > NumberOfStoresToPredicate ||
           !SafePtrs.count(SI->getPointerOperand()) ||
-          !SI->getParent()->getSinglePredecessor()) {
-        if (canPredicateStore(SI->getValueOperand()->getType(),
-                                  SI->getPointerOperand())) {
-          MaskedOp.insert(SI);
-          --NumPredStores;
-          continue;
-        }
+          !SI->getParent()->getSinglePredecessor())
         return false;
-      }        
     }
     if (it->mayThrow())
       return false;
@@ -5448,7 +5380,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     MaxVectorSize = 1;
   }
 
-  assert(MaxVectorSize <= 64 && "Did not expect to pack so many elements"
+  assert(MaxVectorSize <= 32 && "Did not expect to pack so many elements"
          " into one vector!");
 
   unsigned VF = MaxVectorSize;
@@ -5509,7 +5441,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     // the vector elements.
     float VectorCost = expectedCost(i) / (float)i;
     DEBUG(dbgs() << "LV: Vector loop of width " << i << " costs: " <<
-          VectorCost << ".\n");
+          (int)VectorCost << ".\n");
     if (VectorCost < Cost) {
       Cost = VectorCost;
       Width = i;

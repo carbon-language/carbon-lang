@@ -101,17 +101,6 @@ bool TargetTransformInfo::isLegalICmpImmediate(int64_t Imm) const {
   return PrevTTI->isLegalICmpImmediate(Imm);
 }
 
-bool TargetTransformInfo::isLegalPredicatedLoad(Type *DataType,
-                                                int Consecutive) const {
-  return false;
-}
-
-bool TargetTransformInfo::isLegalPredicatedStore(Type *DataType,
-                                                 int Consecutive) const {
-  return false;
-}
-
-
 bool TargetTransformInfo::isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
                                                 int64_t BaseOffset,
                                                 bool HasBaseReg,
