@@ -35,3 +35,6 @@ kernel void foo(image1d_t img) {
   fnc4smp(glb_smp);
 // CHECK: call void @fnc4smp(i32
 }
+
+void __attribute__((overloadable)) bad1(image1d_t *b, image2d_t *c, image2d_t *d) {}
+// CHECK-LABEL: @_Z4bad1P11ocl_image1dP11ocl_image2dS2_

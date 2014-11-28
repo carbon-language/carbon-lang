@@ -1840,6 +1840,19 @@ void CXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
   Context.mangleObjCMethodName(MD, Out);
 }
 
+static bool isTypeSubstitutable(Qualifiers Quals, const Type *Ty) {
+  if (Quals)
+    return true;
+  if (Ty->isSpecificBuiltinType(BuiltinType::ObjCSel))
+    return true;
+  if (Ty->isOpenCLSpecificType())
+    return true;
+  if (Ty->isBuiltinType())
+    return false;
+
+  return true;
+}
+
 void CXXNameMangler::mangleType(QualType T) {
   // If our type is instantiation-dependent but not dependent, we mangle
   // it as it was written in the source, removing any top-level sugar. 
@@ -1881,7 +1894,7 @@ void CXXNameMangler::mangleType(QualType T) {
   Qualifiers quals = split.Quals;
   const Type *ty = split.Ty;
 
-  bool isSubstitutable = quals || !isa<BuiltinType>(T);
+  bool isSubstitutable = isTypeSubstitutable(quals, ty);
   if (isSubstitutable && mangleSubstitution(T))
     return;
 
