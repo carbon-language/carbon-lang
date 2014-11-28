@@ -607,10 +607,10 @@ public:
   CodeGenTarget &Target;
 
   /// The classes which are needed for matching.
-  std::vector<ClassInfo*> Classes;
+  std::vector<std::unique_ptr<ClassInfo>> Classes;
 
   /// The information on the matchables to match.
-  std::vector<MatchableInfo*> Matchables;
+  std::vector<std::unique_ptr<MatchableInfo>> Matchables;
 
   /// Info for custom matching operands by user defined methods.
   std::vector<OperandMatchEntry> OperandMatchInfo;
@@ -620,7 +620,8 @@ public:
   RegisterClassesTy RegisterClasses;
 
   /// Map of Predicate records to their subtarget information.
-  std::map<Record*, SubtargetFeatureInfo*, LessRecordByID> SubtargetFeatures;
+  std::map<Record*, std::unique_ptr<SubtargetFeatureInfo>,
+           LessRecordByID> SubtargetFeatures;
 
   /// Map of AsmOperandClass records to their class information.
   std::map<Record*, ClassInfo*> AsmOperandClasses;
@@ -671,7 +672,7 @@ public:
   SubtargetFeatureInfo *getSubtargetFeature(Record *Def) const {
     assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
     const auto &I = SubtargetFeatures.find(Def);
-    return I == SubtargetFeatures.end() ? nullptr : I->second;
+    return I == SubtargetFeatures.end() ? nullptr : I->second.get();
   }
 
   RecordKeeper &getRecords() const {
@@ -1002,7 +1003,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
     Entry->RenderMethod = "<invalid>";
     Entry->ParserMethod = "";
     Entry->DiagnosticType = "";
-    Classes.push_back(Entry);
+    Classes.push_back(std::unique_ptr<ClassInfo>(Entry));
   }
 
   return Entry;
@@ -1139,7 +1140,7 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
     CI->Registers = RS;
     // FIXME: diagnostic type.
     CI->DiagnosticType = "";
-    Classes.push_back(CI);
+    Classes.push_back(std::unique_ptr<ClassInfo>(CI));
     RegisterSetClasses.insert(std::make_pair(RS, CI));
     ++Index;
   }
@@ -1252,8 +1253,7 @@ void AsmMatcherInfo::buildOperandClasses() {
     if (StringInit *SI = dyn_cast<StringInit>(DiagnosticType))
       CI->DiagnosticType = SI->getValue();
 
-    AsmOperandClasses[Rec] = CI;
-    Classes.push_back(CI);
+    Classes.push_back(std::unique_ptr<ClassInfo>(CI));
     ++Index;
   }
 }
@@ -1273,7 +1273,7 @@ void AsmMatcherInfo::buildOperandMatchInfo() {
   typedef std::map<ClassInfo *, unsigned, less_ptr<ClassInfo>> OpClassMaskTy;
   OpClassMaskTy OpClassMask;
 
-  for (const MatchableInfo *MI : Matchables) {
+  for (const auto &MI : Matchables) {
     OpClassMask.clear();
 
     // Keep track of all operands of this instructions which belong to the
@@ -1290,7 +1290,8 @@ void AsmMatcherInfo::buildOperandMatchInfo() {
     for (const auto &OCM : OpClassMask) {
       unsigned OpMask = OCM.second;
       ClassInfo *CI = OCM.first;
-      OperandMatchInfo.push_back(OperandMatchEntry::create(MI, CI, OpMask));
+      OperandMatchInfo.push_back(OperandMatchEntry::create(MI.get(), CI,
+                                                           OpMask));
     }
   }
 }
@@ -1309,7 +1310,8 @@ void AsmMatcherInfo::buildInfo() {
       PrintFatalError(Pred->getLoc(), "Predicate has no name!");
 
     uint64_t FeatureNo = SubtargetFeatures.size();
-    SubtargetFeatures[Pred] = new SubtargetFeatureInfo(Pred, FeatureNo);
+    SubtargetFeatures[Pred] =
+      llvm::make_unique<SubtargetFeatureInfo>(Pred, FeatureNo);
     DEBUG(SubtargetFeatures[Pred]->dump());
     assert(FeatureNo < 64 && "Too many subtarget features!");
   }
@@ -1345,7 +1347,7 @@ void AsmMatcherInfo::buildInfo() {
       if (!II->validate(CommentDelimiter, true))
         continue;
 
-      Matchables.push_back(II.release());
+      Matchables.push_back(std::move(II));
     }
 
     // Parse all of the InstAlias definitions and stick them in the list of
@@ -1370,7 +1372,7 @@ void AsmMatcherInfo::buildInfo() {
       // Validate the alias definitions.
       II->validate(CommentDelimiter, false);
 
-      Matchables.push_back(II.release());
+      Matchables.push_back(std::move(II));
     }
   }
 
@@ -1382,8 +1384,8 @@ void AsmMatcherInfo::buildInfo() {
 
   // Build the information about matchables, now that we have fully formed
   // classes.
-  std::vector<MatchableInfo*> NewMatchables;
-  for (MatchableInfo *II : Matchables) {
+  std::vector<std::unique_ptr<MatchableInfo>> NewMatchables;
+  for (auto &II : Matchables) {
     // Parse the tokens after the mnemonic.
     // Note: buildInstructionOperandReference may insert new AsmOperands, so
     // don't precompute the loop bound.
@@ -1418,9 +1420,9 @@ void AsmMatcherInfo::buildInfo() {
         OperandName = Token.substr(1);
 
       if (II->DefRec.is<const CodeGenInstruction*>())
-        buildInstructionOperandReference(II, OperandName, i);
+        buildInstructionOperandReference(II.get(), OperandName, i);
       else
-        buildAliasOperandReference(II, OperandName, Op);
+        buildAliasOperandReference(II.get(), OperandName, Op);
     }
 
     if (II->DefRec.is<const CodeGenInstruction*>()) {
@@ -1438,14 +1440,14 @@ void AsmMatcherInfo::buildInfo() {
         AliasII->formTwoOperandAlias(Constraint);
 
         // Add the alias to the matchables list.
-        NewMatchables.push_back(AliasII.release());
+        NewMatchables.push_back(std::move(AliasII));
       }
     } else
       II->buildAliasResultOperands();
   }
   if (!NewMatchables.empty())
-    Matchables.insert(Matchables.end(), NewMatchables.begin(),
-                      NewMatchables.end());
+    std::move(NewMatchables.begin(), NewMatchables.end(),
+              std::back_inserter(Matchables));
 
   // Process token alias definitions and set up the associated superclass
   // information.
@@ -1462,7 +1464,10 @@ void AsmMatcherInfo::buildInfo() {
   }
 
   // Reorder classes so that classes precede super classes.
-  std::sort(Classes.begin(), Classes.end(), less_ptr<ClassInfo>());
+  std::sort(Classes.begin(), Classes.end(),
+            [](const std::unique_ptr<ClassInfo> &a,
+               const std::unique_ptr<ClassInfo> &b){
+              return *a < *b;});
 }
 
 /// buildInstructionOperandReference - The specified operand is a reference to a
@@ -1672,7 +1677,7 @@ static unsigned getConverterOperandID(const std::string &Name,
 
 
 static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
-                             std::vector<MatchableInfo*> &Infos,
+                             std::vector<std::unique_ptr<MatchableInfo>> &Infos,
                              raw_ostream &OS) {
   SetVector<std::string> OperandConversionKinds;
   SetVector<std::string> InstructionConversionKinds;
@@ -1736,7 +1741,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
   OperandConversionKinds.insert("CVT_Tied");
   enum { CVT_Done, CVT_Reg, CVT_Tied };
 
-  for (MatchableInfo *II : Infos) {
+  for (auto &II : Infos) {
     // Check if we have a custom match function.
     std::string AsmMatchConverter =
       II->getResultInst()->TheDef->getValueAsString("AsmMatchConverter");
@@ -1970,15 +1975,15 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
 
 /// emitMatchClassEnumeration - Emit the enumeration for match class kinds.
 static void emitMatchClassEnumeration(CodeGenTarget &Target,
-                                      std::vector<ClassInfo*> &Infos,
-                                      raw_ostream &OS) {
+                                 std::vector<std::unique_ptr<ClassInfo>> &Infos,
+                                 raw_ostream &OS) {
   OS << "namespace {\n\n";
 
   OS << "/// MatchClassKind - The kinds of classes which participate in\n"
      << "/// instruction matching.\n";
   OS << "enum MatchClassKind {\n";
   OS << "  InvalidMatchClass = 0,\n";
-  for (const ClassInfo *CI : Infos) {
+  for (const auto &CI : Infos) {
     OS << "  " << CI->Name << ", // ";
     if (CI->Kind == ClassInfo::Token) {
       OS << "'" << CI->ValueName << "'\n";
@@ -2018,7 +2023,7 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
 
   // Check the user classes. We don't care what order since we're only
   // actually matching against one of them.
-  for (const ClassInfo *CI : Info.Classes) {
+  for (const auto &CI : Info.Classes) {
     if (!CI->isUserClass())
       continue;
 
@@ -2054,7 +2059,7 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
 
 /// emitIsSubclass - Emit the subclass predicate function.
 static void emitIsSubclass(CodeGenTarget &Target,
-                           std::vector<ClassInfo*> &Infos,
+                           std::vector<std::unique_ptr<ClassInfo>> &Infos,
                            raw_ostream &OS) {
   OS << "/// isSubclass - Compute whether \\p A is a subclass of \\p B.\n";
   OS << "static bool isSubclass(MatchClassKind A, MatchClassKind B) {\n";
@@ -2067,9 +2072,9 @@ static void emitIsSubclass(CodeGenTarget &Target,
   SS << "  switch (A) {\n";
   SS << "  default:\n";
   SS << "    return false;\n";
-  for (const ClassInfo *A : Infos) {
+  for (const auto &A : Infos) {
     std::vector<StringRef> SuperClasses;
-    for (const ClassInfo *B : Infos) {
+    for (const auto &B : Infos) {
       if (A != B && A->isSubsetOf(*B))
         SuperClasses.push_back(B->Name);
     }
@@ -2111,11 +2116,11 @@ static void emitIsSubclass(CodeGenTarget &Target,
 /// emitMatchTokenString - Emit the function to match a token string to the
 /// appropriate match class value.
 static void emitMatchTokenString(CodeGenTarget &Target,
-                                 std::vector<ClassInfo*> &Infos,
+                                 std::vector<std::unique_ptr<ClassInfo>> &Infos,
                                  raw_ostream &OS) {
   // Construct the match list.
   std::vector<StringMatcher::StringPair> Matches;
-  for (const ClassInfo *CI : Infos) {
+  for (const auto &CI : Infos) {
     if (CI->Kind == ClassInfo::Token)
       Matches.push_back(StringMatcher::StringPair(CI->ValueName,
                                                   "return " + CI->Name + ";"));
@@ -2511,7 +2516,7 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
      << " &Operands,\n                      unsigned MCK) {\n\n"
      << "  switch(MCK) {\n";
 
-  for (const ClassInfo *CI : Info.Classes) {
+  for (const auto &CI : Info.Classes) {
     if (CI->ParserMethod.empty())
       continue;
     OS << "  case " << CI->Name << ":\n"
@@ -2594,10 +2599,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // stable_sort to ensure that ambiguous instructions are still
   // deterministically ordered.
   std::stable_sort(Info.Matchables.begin(), Info.Matchables.end(),
-                   less_ptr<MatchableInfo>());
+                   [](const std::unique_ptr<MatchableInfo> &a,
+                      const std::unique_ptr<MatchableInfo> &b){
+                     return *a < *b;});
 
   DEBUG_WITH_TYPE("instruction_info", {
-      for (const MatchableInfo *MI : Info.Matchables)
+      for (const auto &MI : Info.Matchables)
         MI->dump();
     });
 
@@ -2727,7 +2734,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   size_t MaxNumOperands = 0;
   unsigned MaxMnemonicIndex = 0;
   bool HasDeprecation = false;
-  for (const MatchableInfo *MI : Info.Matchables) {
+  for (const auto &MI : Info.Matchables) {
     MaxNumOperands = std::max(MaxNumOperands, MI->AsmOperands.size());
     HasDeprecation |= MI->HasDeprecation;
 
@@ -2790,7 +2797,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
     OS << "static const MatchEntry MatchTable" << VC << "[] = {\n";
 
-    for (const MatchableInfo *MI : Info.Matchables) {
+    for (const auto &MI : Info.Matchables) {
       if (MI->AsmVariantID != AsmVariantNo)
         continue;
 
