@@ -17,3 +17,17 @@ entry:
 ; CHECK: [[A:%.*]] = load i32* {{.*}}@__msan_param_origin_tls,
 ; CHECK: store i32 [[A]], i32* @__msan_retval_origin_tls
 ; CHECK: ret <4 x i32>
+
+
+; Regression test for origin propagation in "select i1, float, float".
+; https://code.google.com/p/memory-sanitizer/issues/detail?id=78
+
+define float @SelectFloat(i1 %b, float %x, float %y) nounwind uwtable sanitize_memory {
+entry:
+  %z = select i1 %b, float %x, float %y
+  ret float %z
+}
+
+; CHECK-LABEL: @SelectFloat(
+; CHECK-NOT: select {{.*}} i32 0, i32 0
+; CHECK: ret float

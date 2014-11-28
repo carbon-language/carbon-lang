@@ -2452,9 +2452,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       }
       // a = select b, c, d
       // Oa = Sb ? Ob : (b ? Oc : Od)
-      setOrigin(&I, IRB.CreateSelect(
-                        Sb, getOrigin(I.getCondition()),
-                        IRB.CreateSelect(B, getOrigin(C), getOrigin(D))));
+      setOrigin(
+          &I, IRB.CreateSelect(Sb, getOrigin(I.getCondition()),
+                               IRB.CreateSelect(B, getOrigin(I.getTrueValue()),
+                                                getOrigin(I.getFalseValue()))));
     }
   }
 
