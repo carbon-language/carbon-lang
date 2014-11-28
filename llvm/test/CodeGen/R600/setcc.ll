@@ -1,5 +1,7 @@
-;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=R600 --check-prefix=FUNC %s
-;RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs| FileCheck --check-prefix=SI --check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+
+declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 
 ; FUNC-LABEL: {{^}}setcc_v2i32:
 ; R600-DAG: SETE_INT * T{{[0-9]+\.[XYZW]}}, KC0[3].X, KC0[3].Z
@@ -341,5 +343,48 @@ entry:
   %0 = icmp sle i32 %a, %b
   %1 = sext i1 %0 to i32
   store i32 %1, i32 addrspace(1)* %out
+  ret void
+}
+
+; FIXME: This does 4 compares
+; FUNC-LABEL: {{^}}v3i32_eq:
+; SI-DAG: v_cmp_eq_i32
+; SI-DAG: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1,
+; SI-DAG: v_cmp_eq_i32
+; SI-DAG: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1,
+; SI-DAG: v_cmp_eq_i32
+; SI-DAG: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1,
+; SI: s_endpgm
+define void @v3i32_eq(<3 x i32> addrspace(1)* %out, <3 x i32> addrspace(1)* %ptra, <3 x i32> addrspace(1)* %ptrb) {
+  %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %gep.a = getelementptr <3 x i32> addrspace(1)* %ptra, i32 %tid
+  %gep.b = getelementptr <3 x i32> addrspace(1)* %ptrb, i32 %tid
+  %gep.out = getelementptr <3 x i32> addrspace(1)* %out, i32 %tid
+  %a = load <3 x i32> addrspace(1)* %gep.a
+  %b = load <3 x i32> addrspace(1)* %gep.b
+  %cmp = icmp eq <3 x i32> %a, %b
+  %ext = sext <3 x i1> %cmp to <3 x i32>
+  store <3 x i32> %ext, <3 x i32> addrspace(1)* %gep.out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v3i8_eq:
+; SI-DAG: v_cmp_eq_i32
+; SI-DAG: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1,
+; SI-DAG: v_cmp_eq_i32
+; SI-DAG: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1,
+; SI-DAG: v_cmp_eq_i32
+; SI-DAG: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1,
+; SI: s_endpgm
+define void @v3i8_eq(<3 x i8> addrspace(1)* %out, <3 x i8> addrspace(1)* %ptra, <3 x i8> addrspace(1)* %ptrb) {
+  %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %gep.a = getelementptr <3 x i8> addrspace(1)* %ptra, i32 %tid
+  %gep.b = getelementptr <3 x i8> addrspace(1)* %ptrb, i32 %tid
+  %gep.out = getelementptr <3 x i8> addrspace(1)* %out, i32 %tid
+  %a = load <3 x i8> addrspace(1)* %gep.a
+  %b = load <3 x i8> addrspace(1)* %gep.b
+  %cmp = icmp eq <3 x i8> %a, %b
+  %ext = sext <3 x i1> %cmp to <3 x i8>
+  store <3 x i8> %ext, <3 x i8> addrspace(1)* %gep.out
   ret void
 }

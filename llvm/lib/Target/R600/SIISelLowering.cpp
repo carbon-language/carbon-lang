@@ -640,11 +640,11 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   return BB;
 }
 
-EVT SITargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
+EVT SITargetLowering::getSetCCResultType(LLVMContext &Ctx, EVT VT) const {
   if (!VT.isVector()) {
     return MVT::i1;
   }
-  return MVT::getVectorVT(MVT::i1, VT.getVectorNumElements());
+  return EVT::getVectorVT(Ctx, MVT::i1, VT.getVectorNumElements());
 }
 
 MVT SITargetLowering::getScalarShiftAmountTy(EVT VT) const {
