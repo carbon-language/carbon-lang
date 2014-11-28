@@ -476,7 +476,7 @@ private:
 
   bool functionArgumentNeedsConsecutiveRegisters(Type *Ty,
                                                  CallingConv::ID CallConv,
-                                                 bool isVarArg) const;
+                                                 bool isVarArg) const override;
 };
 
 namespace AArch64 {
