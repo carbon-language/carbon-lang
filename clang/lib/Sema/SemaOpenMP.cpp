@@ -3222,14 +3222,14 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   // expr or subexpressions of expr.
   // * For forms that allow multiple occurrences of x, the number of times
   // that x is evaluated is unspecified.
+  enum {
+    NotAnExpression,
+    NotAnAssignmentOp,
+    NotAScalarType,
+    NotAnLValue,
+    NoError
+  } ErrorFound = NoError;
   if (AtomicKind == OMPC_read) {
-    enum {
-      NotAnExpression,
-      NotAnAssignmentOp,
-      NotAScalarType,
-      NotAnLValue,
-      NoError
-    } ErrorFound = NoError;
     SourceLocation ErrorLoc, NoteLoc;
     SourceRange ErrorRange, NoteRange;
     // If clause is read:
@@ -3279,16 +3279,65 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
     if (ErrorFound != NoError) {
       Diag(ErrorLoc, diag::err_omp_atomic_read_not_expression_statement)
           << ErrorRange;
-      Diag(NoteLoc, diag::note_omp_atomic_read) << ErrorFound << NoteRange;
+      Diag(NoteLoc, diag::note_omp_atomic_read_write) << ErrorFound
+                                                      << NoteRange;
       return StmtError();
     } else if (CurContext->isDependentContext())
       V = X = nullptr;
   } else if (AtomicKind == OMPC_write) {
-    if (!isa<Expr>(Body)) {
-      Diag(Body->getLocStart(),
-           diag::err_omp_atomic_write_not_expression_statement);
-      return StmtError();
+    SourceLocation ErrorLoc, NoteLoc;
+    SourceRange ErrorRange, NoteRange;
+    // If clause is write:
+    //  x = expr;
+    if (auto AtomicBody = dyn_cast<Expr>(Body)) {
+      auto AtomicBinOp =
+          dyn_cast<BinaryOperator>(AtomicBody->IgnoreParenImpCasts());
+      if (AtomicBinOp && AtomicBinOp->getOpcode() == BO_Assign) {
+        X = AtomicBinOp->getLHS()->IgnoreParenImpCasts();
+        E = AtomicBinOp->getRHS()->IgnoreParenImpCasts();
+        if ((X->isInstantiationDependent() || X->getType()->isScalarType()) &&
+            (E->isInstantiationDependent() || E->getType()->isScalarType())) {
+          if (!X->isLValue()) {
+            ErrorFound = NotAnLValue;
+            ErrorLoc = AtomicBinOp->getExprLoc();
+            ErrorRange = AtomicBinOp->getSourceRange();
+            NoteLoc = X->getExprLoc();
+            NoteRange = X->getSourceRange();
+          }
+        } else if (!X->isInstantiationDependent() ||
+                   !E->isInstantiationDependent()) {
+          auto NotScalarExpr =
+              (X->isInstantiationDependent() || X->getType()->isScalarType())
+                  ? E
+                  : X;
+          ErrorFound = NotAScalarType;
+          ErrorLoc = AtomicBinOp->getExprLoc();
+          ErrorRange = AtomicBinOp->getSourceRange();
+          NoteLoc = NotScalarExpr->getExprLoc();
+          NoteRange = NotScalarExpr->getSourceRange();
+        }
+      } else {
+        ErrorFound = NotAnAssignmentOp;
+        ErrorLoc = AtomicBody->getExprLoc();
+        ErrorRange = AtomicBody->getSourceRange();
+        NoteLoc = AtomicBinOp ? AtomicBinOp->getOperatorLoc()
+                              : AtomicBody->getExprLoc();
+        NoteRange = AtomicBinOp ? AtomicBinOp->getSourceRange()
+                                : AtomicBody->getSourceRange();
+      }
+    } else {
+      ErrorFound = NotAnExpression;
+      NoteLoc = ErrorLoc = Body->getLocStart();
+      NoteRange = ErrorRange = SourceRange(NoteLoc, NoteLoc);
     }
+    if (ErrorFound != NoError) {
+      Diag(ErrorLoc, diag::err_omp_atomic_write_not_expression_statement)
+          << ErrorRange;
+      Diag(NoteLoc, diag::note_omp_atomic_read_write) << ErrorFound
+                                                      << NoteRange;
+      return StmtError();
+    } else if (CurContext->isDependentContext())
+      E = X = nullptr;
   } else if (AtomicKind == OMPC_update || AtomicKind == OMPC_unknown) {
     if (!isa<Expr>(Body)) {
       Diag(Body->getLocStart(),

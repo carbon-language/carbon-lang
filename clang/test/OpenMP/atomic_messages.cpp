@@ -100,10 +100,23 @@ T write() {
   T a, b = 0;
 // Test for atomic write
 #pragma omp atomic write
-  // expected-error@+1 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'write' clause}}
 #pragma omp atomic write write
+  a = b;
+#pragma omp atomic write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  foo();
+#pragma omp atomic write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  a += b;
+#pragma omp atomic write
+  a = 0;
+#pragma omp atomic write
   a = b;
 
   return T();
@@ -113,11 +126,24 @@ int write() {
   int a, b = 0;
 // Test for atomic write
 #pragma omp atomic write
-  // expected-error@+1 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'write' clause}}
 #pragma omp atomic write write
   a = b;
+#pragma omp atomic write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  foo();
+#pragma omp atomic write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  a += b;
+#pragma omp atomic write
+  a = 0;
+#pragma omp atomic write
+  a = foo();
 
   return write<int>();
 }

@@ -63,3 +63,40 @@ int readS() {
 
   return a.a;
 }
+
+int writeint() {
+  int a = 0, b = 0;
+// Test for atomic write
+#pragma omp atomic write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
+  ;
+#pragma omp atomic write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  foo();
+#pragma omp atomic write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected built-in assignment operator}}
+  a += b;
+#pragma omp atomic write
+  a = 0;
+#pragma omp atomic write
+  a = b;
+  // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'write' clause}}
+#pragma omp atomic write write
+  a = b;
+
+  return 0;
+}
+
+int writeS() {
+  struct S a, b;
+  // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'write' clause}}
+#pragma omp atomic write write
+  // expected-error@+2 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is a lvalue expression with scalar type}}
+  // expected-note@+1 {{expected expression of scalar type}}
+  a = b;
+
+  return a.a;
+}
