@@ -29,10 +29,6 @@ set(ASAN_PREINIT_SOURCES
 
 include_directories(..)
 
-if(ANDROID)
-  include_directories(${COMPILER_RT_EXTRA_ANDROID_HEADERS})
-endif()
-
 set(ASAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_no_rtti_flag(ASAN_CFLAGS)
 

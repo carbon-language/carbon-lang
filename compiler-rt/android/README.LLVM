@@ -1,9 +1,0 @@
-LLVM notes
-----------
-
-This directory contains Android header ucontext.h missing from the NDK.
-This version of the header was copied from google-breakpad at r1279.
-
-Local changes:
-  * Re-licensed under the standard dual license of compiler-rt.
-
