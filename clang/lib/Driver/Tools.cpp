@@ -589,6 +589,9 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
     Features.push_back("+crypto");
   } else if (FPU == "neon") {
     Features.push_back("+neon");
+  } else if (FPU == "neon-vfpv3") {
+    Features.push_back("+vfpv3");
+    Features.push_back("+neon");
   } else if (FPU == "neon-vfpv4") {
     Features.push_back("+neon");
     Features.push_back("+vfpv4");
