@@ -506,3 +506,13 @@ define i1 @test47(i8 signext %c)  {
 ; CHECK-NEXT:  add i8 %1, -65
 ; CHECK-NEXT:  icmp ult i8 %2, 27
 }
+
+define i1 @test48(i64 %x, i1 %b) {
+  %1 = icmp ult i64 %x, 2305843009213693952
+  %2 = icmp ugt i64 %x, 2305843009213693951
+  %.b = or i1 %2, %b
+  %3 = or i1 %1, %.b
+  ret i1 %3
+; CHECK-LABEL: @test48(
+; CHECK-NEXT:  ret i1 true
+}
