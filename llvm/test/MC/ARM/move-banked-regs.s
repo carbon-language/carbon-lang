@@ -8,13 +8,13 @@
         mrs r11, r12_usr
         mrs r1, sp_usr
         mrs r2, lr_usr
-@ CHECK-ARM:         mrs     r2, r8_usr              @ encoding: [0x00,0x22,0x20,0xe1]
-@ CHECK-ARM:         mrs     r3, r9_usr              @ encoding: [0x00,0x32,0x21,0xe1]
-@ CHECK-ARM:         mrs     r5, r10_usr             @ encoding: [0x00,0x52,0x22,0xe1]
-@ CHECK-ARM:         mrs     r7, r11_usr             @ encoding: [0x00,0x72,0x23,0xe1]
-@ CHECK-ARM:         mrs     r11, r12_usr            @ encoding: [0x00,0xb2,0x24,0xe1]
-@ CHECK-ARM:         mrs     r1, sp_usr              @ encoding: [0x00,0x12,0x25,0xe1]
-@ CHECK-ARM:         mrs     r2, lr_usr              @ encoding: [0x00,0x22,0x26,0xe1]
+@ CHECK-ARM:         mrs     r2, r8_usr              @ encoding: [0x00,0x22,0x00,0xe1]
+@ CHECK-ARM:         mrs     r3, r9_usr              @ encoding: [0x00,0x32,0x01,0xe1]
+@ CHECK-ARM:         mrs     r5, r10_usr             @ encoding: [0x00,0x52,0x02,0xe1]
+@ CHECK-ARM:         mrs     r7, r11_usr             @ encoding: [0x00,0x72,0x03,0xe1]
+@ CHECK-ARM:         mrs     r11, r12_usr            @ encoding: [0x00,0xb2,0x04,0xe1]
+@ CHECK-ARM:         mrs     r1, sp_usr              @ encoding: [0x00,0x12,0x05,0xe1]
+@ CHECK-ARM:         mrs     r2, lr_usr              @ encoding: [0x00,0x22,0x06,0xe1]
 @ CHECK-THUMB:         mrs     r2, r8_usr              @ encoding: [0xe0,0xf3,0x20,0x82]
 @ CHECK-THUMB:         mrs     r3, r9_usr              @ encoding: [0xe1,0xf3,0x20,0x83]
 @ CHECK-THUMB:         mrs     r5, r10_usr             @ encoding: [0xe2,0xf3,0x20,0x85]
@@ -31,14 +31,14 @@
         mrs r1, sp_fiq
         mrs r2, lr_fiq
         mrs r3, spsr_fiq
-@ CHECK-ARM:         mrs     r2, r8_fiq              @ encoding: [0x00,0x22,0x28,0xe1]
-@ CHECK-ARM:         mrs     r3, r9_fiq              @ encoding: [0x00,0x32,0x29,0xe1]
-@ CHECK-ARM:         mrs     r5, r10_fiq             @ encoding: [0x00,0x52,0x2a,0xe1]
-@ CHECK-ARM:         mrs     r7, r11_fiq             @ encoding: [0x00,0x72,0x2b,0xe1]
-@ CHECK-ARM:         mrs     r11, r12_fiq            @ encoding: [0x00,0xb2,0x2c,0xe1]
-@ CHECK-ARM:         mrs     r1, sp_fiq              @ encoding: [0x00,0x12,0x2d,0xe1]
-@ CHECK-ARM:         mrs     r2, lr_fiq              @ encoding: [0x00,0x22,0x2e,0xe1]
-@ CHECK-ARM:         mrs     r3, SPSR_fiq            @ encoding: [0x00,0x32,0x6e,0xe1]
+@ CHECK-ARM:         mrs     r2, r8_fiq              @ encoding: [0x00,0x22,0x08,0xe1]
+@ CHECK-ARM:         mrs     r3, r9_fiq              @ encoding: [0x00,0x32,0x09,0xe1]
+@ CHECK-ARM:         mrs     r5, r10_fiq             @ encoding: [0x00,0x52,0x0a,0xe1]
+@ CHECK-ARM:         mrs     r7, r11_fiq             @ encoding: [0x00,0x72,0x0b,0xe1]
+@ CHECK-ARM:         mrs     r11, r12_fiq            @ encoding: [0x00,0xb2,0x0c,0xe1]
+@ CHECK-ARM:         mrs     r1, sp_fiq              @ encoding: [0x00,0x12,0x0d,0xe1]
+@ CHECK-ARM:         mrs     r2, lr_fiq              @ encoding: [0x00,0x22,0x0e,0xe1]
+@ CHECK-ARM:         mrs     r3, SPSR_fiq            @ encoding: [0x00,0x32,0x4e,0xe1]
 @ CHECK-THUMB:         mrs     r2, r8_fiq              @ encoding: [0xe8,0xf3,0x20,0x82]
 @ CHECK-THUMB:         mrs     r3, r9_fiq              @ encoding: [0xe9,0xf3,0x20,0x83]
 @ CHECK-THUMB:         mrs     r5, r10_fiq             @ encoding: [0xea,0xf3,0x20,0x85]
@@ -51,9 +51,9 @@
         mrs r4, lr_irq
         mrs r9, sp_irq
         mrs r1, spsr_irq
-@ CHECK-ARM:         mrs     r4, lr_irq              @ encoding: [0x00,0x43,0x20,0xe1]
-@ CHECK-ARM:         mrs     r9, sp_irq              @ encoding: [0x00,0x93,0x21,0xe1]
-@ CHECK-ARM:         mrs     r1, SPSR_irq            @ encoding: [0x00,0x13,0x60,0xe1]
+@ CHECK-ARM:         mrs     r4, lr_irq              @ encoding: [0x00,0x43,0x00,0xe1]
+@ CHECK-ARM:         mrs     r9, sp_irq              @ encoding: [0x00,0x93,0x01,0xe1]
+@ CHECK-ARM:         mrs     r1, SPSR_irq            @ encoding: [0x00,0x13,0x40,0xe1]
 @ CHECK-THUMB:         mrs     r4, lr_irq              @ encoding: [0xe0,0xf3,0x30,0x84]
 @ CHECK-THUMB:         mrs     r9, sp_irq              @ encoding: [0xe1,0xf3,0x30,0x89]
 @ CHECK-THUMB:         mrs     r1, SPSR_irq            @ encoding: [0xf0,0xf3,0x30,0x81]
@@ -61,9 +61,9 @@
         mrs r1, lr_svc
         mrs r3, sp_svc
         mrs r5, spsr_svc
-@ CHECK-ARM:         mrs     r1, lr_svc              @ encoding: [0x00,0x13,0x22,0xe1]
-@ CHECK-ARM:         mrs     r3, sp_svc              @ encoding: [0x00,0x33,0x23,0xe1]
-@ CHECK-ARM:         mrs     r5, SPSR_svc            @ encoding: [0x00,0x53,0x62,0xe1]
+@ CHECK-ARM:         mrs     r1, lr_svc              @ encoding: [0x00,0x13,0x02,0xe1]
+@ CHECK-ARM:         mrs     r3, sp_svc              @ encoding: [0x00,0x33,0x03,0xe1]
+@ CHECK-ARM:         mrs     r5, SPSR_svc            @ encoding: [0x00,0x53,0x42,0xe1]
 @ CHECK-THUMB:         mrs     r1, lr_svc              @ encoding: [0xe2,0xf3,0x30,0x81]
 @ CHECK-THUMB:         mrs     r3, sp_svc              @ encoding: [0xe3,0xf3,0x30,0x83]
 @ CHECK-THUMB:         mrs     r5, SPSR_svc            @ encoding: [0xf2,0xf3,0x30,0x85]
@@ -71,9 +71,9 @@
         mrs r5, lr_abt
         mrs r7, sp_abt
         mrs r9, spsr_abt
-@ CHECK-ARM:         mrs     r5, lr_abt              @ encoding: [0x00,0x53,0x24,0xe1]
-@ CHECK-ARM:         mrs     r7, sp_abt              @ encoding: [0x00,0x73,0x25,0xe1]
-@ CHECK-ARM:         mrs     r9, SPSR_abt            @ encoding: [0x00,0x93,0x64,0xe1]
+@ CHECK-ARM:         mrs     r5, lr_abt              @ encoding: [0x00,0x53,0x04,0xe1]
+@ CHECK-ARM:         mrs     r7, sp_abt              @ encoding: [0x00,0x73,0x05,0xe1]
+@ CHECK-ARM:         mrs     r9, SPSR_abt            @ encoding: [0x00,0x93,0x44,0xe1]
 @ CHECK-THUMB:         mrs     r5, lr_abt              @ encoding: [0xe4,0xf3,0x30,0x85]
 @ CHECK-THUMB:         mrs     r7, sp_abt              @ encoding: [0xe5,0xf3,0x30,0x87]
 @ CHECK-THUMB:         mrs     r9, SPSR_abt            @ encoding: [0xf4,0xf3,0x30,0x89]
@@ -81,9 +81,9 @@
         mrs r9, lr_und
         mrs r11, sp_und
         mrs r12, spsr_und
-@ CHECK-ARM:         mrs     r9, lr_und              @ encoding: [0x00,0x93,0x26,0xe1]
-@ CHECK-ARM:         mrs     r11, sp_und             @ encoding: [0x00,0xb3,0x27,0xe1]
-@ CHECK-ARM:         mrs     r12, SPSR_und           @ encoding: [0x00,0xc3,0x66,0xe1]
+@ CHECK-ARM:         mrs     r9, lr_und              @ encoding: [0x00,0x93,0x06,0xe1]
+@ CHECK-ARM:         mrs     r11, sp_und             @ encoding: [0x00,0xb3,0x07,0xe1]
+@ CHECK-ARM:         mrs     r12, SPSR_und           @ encoding: [0x00,0xc3,0x46,0xe1]
 @ CHECK-THUMB:         mrs     r9, lr_und              @ encoding: [0xe6,0xf3,0x30,0x89]
 @ CHECK-THUMB:         mrs     r11, sp_und             @ encoding: [0xe7,0xf3,0x30,0x8b]
 @ CHECK-THUMB:         mrs     r12, SPSR_und           @ encoding: [0xf6,0xf3,0x30,0x8c]
@@ -92,9 +92,9 @@
         mrs r2, lr_mon
         mrs r4, sp_mon
         mrs r6, spsr_mon
-@ CHECK-ARM:         mrs     r2, lr_mon              @ encoding: [0x00,0x23,0x2c,0xe1]
-@ CHECK-ARM:         mrs     r4, sp_mon              @ encoding: [0x00,0x43,0x2d,0xe1]
-@ CHECK-ARM:         mrs     r6, SPSR_mon            @ encoding: [0x00,0x63,0x6c,0xe1]
+@ CHECK-ARM:         mrs     r2, lr_mon              @ encoding: [0x00,0x23,0x0c,0xe1]
+@ CHECK-ARM:         mrs     r4, sp_mon              @ encoding: [0x00,0x43,0x0d,0xe1]
+@ CHECK-ARM:         mrs     r6, SPSR_mon            @ encoding: [0x00,0x63,0x4c,0xe1]
 @ CHECK-THUMB:         mrs     r2, lr_mon              @ encoding: [0xec,0xf3,0x30,0x82]
 @ CHECK-THUMB:         mrs     r4, sp_mon              @ encoding: [0xed,0xf3,0x30,0x84]
 @ CHECK-THUMB:         mrs     r6, SPSR_mon            @ encoding: [0xfc,0xf3,0x30,0x86]
@@ -103,9 +103,9 @@
         mrs r6, elr_hyp
         mrs r8, sp_hyp
         mrs r10, spsr_hyp
-@ CHECK-ARM:         mrs     r6, elr_hyp             @ encoding: [0x00,0x63,0x2e,0xe1]
-@ CHECK-ARM:         mrs     r8, sp_hyp              @ encoding: [0x00,0x83,0x2f,0xe1]
-@ CHECK-ARM:         mrs     r10, SPSR_hyp            @ encoding: [0x00,0xa3,0x6e,0xe1]
+@ CHECK-ARM:         mrs     r6, elr_hyp             @ encoding: [0x00,0x63,0x0e,0xe1]
+@ CHECK-ARM:         mrs     r8, sp_hyp              @ encoding: [0x00,0x83,0x0f,0xe1]
+@ CHECK-ARM:         mrs     r10, SPSR_hyp            @ encoding: [0x00,0xa3,0x4e,0xe1]
 @ CHECK-THUMB:         mrs     r6, elr_hyp             @ encoding: [0xee,0xf3,0x30,0x86]
 @ CHECK-THUMB:         mrs     r8, sp_hyp              @ encoding: [0xef,0xf3,0x30,0x88]
 @ CHECK-THUMB:         mrs     r10, SPSR_hyp            @ encoding: [0xfe,0xf3,0x30,0x8a]

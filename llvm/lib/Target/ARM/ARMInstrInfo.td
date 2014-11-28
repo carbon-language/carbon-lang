@@ -5074,7 +5074,7 @@ def MRSbanked : ABI<0b0001, (outs GPRnopc:$Rd), (ins banked_reg:$banked),
 
   let Inst{23} = 0;
   let Inst{22} = banked{5}; // R bit
-  let Inst{21-20} = 0b10;
+  let Inst{21-20} = 0b00;
   let Inst{19-16} = banked{3-0};
   let Inst{15-12} = Rd;
   let Inst{11-9} = 0b001;
