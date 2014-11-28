@@ -687,26 +687,39 @@ static void checkCaseValue(Sema &S, SourceLocation Loc, const llvm::APSInt &Val,
   }
 }
 
+typedef SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64> EnumValsTy;
+
 /// Returns true if we should emit a diagnostic about this case expression not
 /// being a part of the enum used in the switch controlling expression.
-static bool ShouldDiagnoseSwitchCaseNotInEnum(const ASTContext &Ctx,
+static bool ShouldDiagnoseSwitchCaseNotInEnum(const Sema &S,
                                               const EnumDecl *ED,
-                                              const Expr *CaseExpr) {
-  // Don't warn if the 'case' expression refers to a static const variable of
-  // the enum type.
-  CaseExpr = CaseExpr->IgnoreParenImpCasts();
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CaseExpr)) {
+                                              const Expr *CaseExpr,
+                                              EnumValsTy::iterator &EI,
+                                              EnumValsTy::iterator &EIEnd,
+                                              const llvm::APSInt &Val) {
+  bool FlagType = ED->hasAttr<FlagEnumAttr>();
+
+  if (const DeclRefExpr *DRE =
+          dyn_cast<DeclRefExpr>(CaseExpr->IgnoreParenImpCasts())) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
-      if (!VD->hasGlobalStorage())
-        return true;
       QualType VarType = VD->getType();
-      if (!VarType.isConstQualified())
-        return true;
-      QualType EnumType = Ctx.getTypeDeclType(ED);
-      if (Ctx.hasSameUnqualifiedType(EnumType, VarType))
+      QualType EnumType = S.Context.getTypeDeclType(ED);
+      if (VD->hasGlobalStorage() && VarType.isConstQualified() &&
+          S.Context.hasSameUnqualifiedType(EnumType, VarType))
         return false;
     }
   }
+
+  if (FlagType) {
+    return !S.IsValueInFlagEnum(ED, Val, false);
+  } else {
+    while (EI != EIEnd && EI->first < Val)
+      EI++;
+
+    if (EI != EIEnd && EI->first == Val)
+      return false;
+  }
+
   return true;
 }
 
@@ -1045,8 +1058,6 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     // If switch has default case, then ignore it.
     if (!CaseListIsErroneous  && !HasConstantCond && ET) {
       const EnumDecl *ED = ET->getDecl();
-      typedef SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64>
-        EnumValsTy;
       EnumValsTy EnumVals;
 
       // Gather all enum values, set their type and sort them,
@@ -1057,57 +1068,48 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         EnumVals.push_back(std::make_pair(Val, EDI));
       }
       std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
-      EnumValsTy::iterator EIend =
+      auto EI = EnumVals.begin(), EIEnd =
         std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
 
       // See which case values aren't in enum.
-      EnumValsTy::const_iterator EI = EnumVals.begin();
       for (CaseValsTy::const_iterator CI = CaseVals.begin();
-           CI != CaseVals.end(); CI++) {
-        while (EI != EIend && EI->first < CI->first)
-          EI++;
-        if (EI == EIend || EI->first > CI->first) {
-          Expr *CaseExpr = CI->second->getLHS();
-          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
-            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
-              << CondTypeBeforePromotion;
-        }
+          CI != CaseVals.end(); CI++) {
+        Expr *CaseExpr = CI->second->getLHS();
+        if (ShouldDiagnoseSwitchCaseNotInEnum(*this, ED, CaseExpr, EI, EIEnd,
+                                              CI->first))
+          Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+            << CondTypeBeforePromotion;
       }
+
       // See which of case ranges aren't in enum
       EI = EnumVals.begin();
       for (CaseRangesTy::const_iterator RI = CaseRanges.begin();
-           RI != CaseRanges.end() && EI != EIend; RI++) {
-        while (EI != EIend && EI->first < RI->first)
-          EI++;
-
-        if (EI == EIend || EI->first != RI->first) {
-          Expr *CaseExpr = RI->second->getLHS();
-          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
-            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
-              << CondTypeBeforePromotion;
-        }
+          RI != CaseRanges.end(); RI++) {
+        Expr *CaseExpr = RI->second->getLHS();
+        if (ShouldDiagnoseSwitchCaseNotInEnum(*this, ED, CaseExpr, EI, EIEnd,
+                                              RI->first))
+          Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+            << CondTypeBeforePromotion;
 
         llvm::APSInt Hi =
           RI->second->getRHS()->EvaluateKnownConstInt(Context);
         AdjustAPSInt(Hi, CondWidth, CondIsSigned);
-        while (EI != EIend && EI->first < Hi)
-          EI++;
-        if (EI == EIend || EI->first != Hi) {
-          Expr *CaseExpr = RI->second->getRHS();
-          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
-            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
-              << CondTypeBeforePromotion;
-        }
+
+        CaseExpr = RI->second->getRHS();
+        if (ShouldDiagnoseSwitchCaseNotInEnum(*this, ED, CaseExpr, EI, EIEnd,
+                                              Hi))
+          Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+            << CondTypeBeforePromotion;
       }
 
       // Check which enum vals aren't in switch
-      CaseValsTy::const_iterator CI = CaseVals.begin();
-      CaseRangesTy::const_iterator RI = CaseRanges.begin();
+      auto CI = CaseVals.begin();
+      auto RI = CaseRanges.begin();
       bool hasCasesNotInSwitch = false;
 
       SmallVector<DeclarationName,8> UnhandledNames;
 
-      for (EI = EnumVals.begin(); EI != EIend; EI++){
+      for (EI = EnumVals.begin(); EI != EIEnd; EI++){
         // Drop unneeded case values
         while (CI != CaseVals.end() && CI->first < EI->first)
           CI++;
@@ -1194,30 +1196,37 @@ Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
         llvm::APSInt RhsVal = SrcExpr->EvaluateKnownConstInt(Context);
         AdjustAPSInt(RhsVal, DstWidth, DstIsSigned);
         const EnumDecl *ED = ET->getDecl();
-        typedef SmallVector<std::pair<llvm::APSInt, EnumConstantDecl *>, 64>
-            EnumValsTy;
-        EnumValsTy EnumVals;
 
-        // Gather all enum values, set their type and sort them,
-        // allowing easier comparison with rhs constant.
-        for (auto *EDI : ED->enumerators()) {
-          llvm::APSInt Val = EDI->getInitVal();
-          AdjustAPSInt(Val, DstWidth, DstIsSigned);
-          EnumVals.push_back(std::make_pair(Val, EDI));
-        }
-        if (EnumVals.empty())
-          return;
-        std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
-        EnumValsTy::iterator EIend =
-            std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
-
-        // See which values aren't in the enum.
-        EnumValsTy::const_iterator EI = EnumVals.begin();
-        while (EI != EIend && EI->first < RhsVal)
-          EI++;
-        if (EI == EIend || EI->first != RhsVal) {
-          Diag(SrcExpr->getExprLoc(), diag::warn_not_in_enum_assignment)
+        if (ED->hasAttr<FlagEnumAttr>()) {
+          if (!IsValueInFlagEnum(ED, RhsVal, true))
+            Diag(SrcExpr->getExprLoc(), diag::warn_not_in_enum_assignment)
               << DstType.getUnqualifiedType();
+        } else {
+          typedef SmallVector<std::pair<llvm::APSInt, EnumConstantDecl *>, 64>
+              EnumValsTy;
+          EnumValsTy EnumVals;
+
+          // Gather all enum values, set their type and sort them,
+          // allowing easier comparison with rhs constant.
+          for (auto *EDI : ED->enumerators()) {
+            llvm::APSInt Val = EDI->getInitVal();
+            AdjustAPSInt(Val, DstWidth, DstIsSigned);
+            EnumVals.push_back(std::make_pair(Val, EDI));
+          }
+          if (EnumVals.empty())
+            return;
+          std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
+          EnumValsTy::iterator EIend =
+              std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
+
+          // See which values aren't in the enum.
+          EnumValsTy::const_iterator EI = EnumVals.begin();
+          while (EI != EIend && EI->first < RhsVal)
+            EI++;
+          if (EI == EIend || EI->first != RhsVal) {
+            Diag(SrcExpr->getExprLoc(), diag::warn_not_in_enum_assignment)
+                << DstType.getUnqualifiedType();
+          }
         }
       }
     }

@@ -822,6 +822,7 @@ enum AttributeDeclKind {
   ExpectedFunctionMethodOrClass,
   ExpectedFunctionMethodOrParameter,
   ExpectedClass,
+  ExpectedEnum,
   ExpectedVariable,
   ExpectedMethod,
   ExpectedVariableFunctionOrLabel,
