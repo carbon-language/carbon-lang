@@ -79,6 +79,10 @@ def FeatureSlowBTMem : SubtargetFeature<"slow-bt-mem", "IsBTMemSlow", "true",
                                        "Bit testing of memory is slow">;
 def FeatureSlowSHLD : SubtargetFeature<"slow-shld", "IsSHLDSlow", "true",
                                        "SHLD instruction is slow">;
+// FIXME: This is a 16-byte (SSE/AVX) feature; we should rename it to make that
+// explicit. Also, it seems this would be the default state for most chips
+// going forward, so it would probably be better to negate the logic and
+// match the 32-byte "slow mem" feature below.
 def FeatureFastUAMem : SubtargetFeature<"fast-unaligned-mem",
                                         "IsUAMemFast", "true",
                                         "Fast unaligned memory access">;
@@ -361,8 +365,10 @@ def : ProcessorModel<"btver2", BtVer2Model,
                      [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
                       FeaturePRFCHW, FeatureAES, FeaturePCLMUL,
                       FeatureBMI, FeatureF16C, FeatureMOVBE,
-                      FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD,
-                      FeatureUseSqrtEst, FeatureUseRecipEst]>;
+                      FeatureLZCNT, FeaturePOPCNT, FeatureFastUAMem,
+                      FeatureSlowSHLD, FeatureUseSqrtEst, FeatureUseRecipEst]>;
+
+// TODO: We should probably add 'FeatureFastUAMem' to all of the AMD chips.
 
 // Bulldozer
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,

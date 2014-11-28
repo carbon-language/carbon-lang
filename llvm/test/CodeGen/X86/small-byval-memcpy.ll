@@ -1,20 +1,25 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=core2   | grep movsd  | count 8
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=nehalem | grep movups | count 2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core2 | FileCheck %s --check-prefix=CORE2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=nehalem | FileCheck %s --check-prefix=NEHALEM
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=btver2 | FileCheck %s --check-prefix=BTVER2
 
-define void @ccosl({ x86_fp80, x86_fp80 }* noalias sret  %agg.result, { x86_fp80, x86_fp80 }* byval align 4  %z) nounwind  {
-entry:
-	%iz = alloca { x86_fp80, x86_fp80 }		; <{ x86_fp80, x86_fp80 }*> [#uses=3]
-	%tmp1 = getelementptr { x86_fp80, x86_fp80 }* %z, i32 0, i32 1		; <x86_fp80*> [#uses=1]
-	%tmp2 = load x86_fp80* %tmp1, align 16		; <x86_fp80> [#uses=1]
-	%tmp3 = fsub x86_fp80 0xK80000000000000000000, %tmp2		; <x86_fp80> [#uses=1]
-	%tmp4 = getelementptr { x86_fp80, x86_fp80 }* %iz, i32 0, i32 1		; <x86_fp80*> [#uses=1]
-	%real = getelementptr { x86_fp80, x86_fp80 }* %iz, i32 0, i32 0		; <x86_fp80*> [#uses=1]
-	%tmp6 = getelementptr { x86_fp80, x86_fp80 }* %z, i32 0, i32 0		; <x86_fp80*> [#uses=1]
-	%tmp7 = load x86_fp80* %tmp6, align 16		; <x86_fp80> [#uses=1]
-	store x86_fp80 %tmp3, x86_fp80* %real, align 16
-	store x86_fp80 %tmp7, x86_fp80* %tmp4, align 16
-	call void @ccoshl( { x86_fp80, x86_fp80 }* noalias sret  %agg.result, { x86_fp80, x86_fp80 }* byval align 4  %iz ) nounwind 
-	ret void
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
+
+define void @copy16bytes(i8* nocapture %a, i8* nocapture readonly %b) {
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 16, i32 1, i1 false)
+  ret void
+
+  ; CHECK-LABEL: copy16bytes
+  ; CORE2: movq
+  ; CORE2-NEXT: movq
+  ; CORE2-NEXT: movq
+  ; CORE2-NEXT: movq
+  ; CORE2-NEXT: retq
+
+  ; NEHALEM: movups
+  ; NEHALEM-NEXT: movups
+  ; NEHALEM-NEXT: retq
+
+  ; BTVER2: movups
+  ; BTVER2-NEXT: movups
+  ; BTVER2-NEXT: retq
 }
-
-declare void @ccoshl({ x86_fp80, x86_fp80 }* noalias sret , { x86_fp80, x86_fp80 }* byval align 4 ) nounwind 
