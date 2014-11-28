@@ -36,7 +36,6 @@ namespace std {
 struct A {
   A() {}
   A(int x, int y) {}
-  A(std::initializer_list<int> list1) {}
 
   explicit A(void *x) {}
   explicit A(void *x, void *y) {}
@@ -45,10 +44,6 @@ struct A {
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: copy constructor should not be declared explicit [google-explicit-constructor]
   // CHECK-FIXES: {{^  }}A(const A& a) {}
 
-  explicit A(std::initializer_list<double> list2) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor should not be declared explicit [google-explicit-constructor]
-  // CHECK-FIXES: {{^  }}A(std::initializer_list<double> list2) {}
-
   A(int x1) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors must be explicit [google-explicit-constructor]
   // CHECK-FIXES: {{^  }}explicit A(int x1) {}
@@ -56,4 +51,30 @@ struct A {
   A(double x2, double y = 3.14) {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors must be explicit
   // CHECK-FIXES: {{^  }}explicit A(double x2, double y = 3.14) {}
+};
+
+struct B {
+  B(std::initializer_list<int> list1) {}
+  B(const std::initializer_list<unsigned> &list2) {}
+  B(std::initializer_list<unsigned> &&list3) {}
+
+  explicit B(::std::initializer_list<double> list4) {}
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor should not be declared explicit [google-explicit-constructor]
+  // CHECK-FIXES: {{^  }}B(::std::initializer_list<double> list4) {}
+
+  explicit B(const ::std::initializer_list<char> &list5) {}
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor should not be declared explicit [google-explicit-constructor]
+  // CHECK-FIXES: {{^  }}B(const ::std::initializer_list<char> &list5) {}
+
+  explicit B(::std::initializer_list<char> &&list6) {}
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor should not be declared explicit [google-explicit-constructor]
+  // CHECK-FIXES: {{^  }}B(::std::initializer_list<char> &&list6) {}
+};
+
+using namespace std;
+
+struct C {
+  C(initializer_list<int> list1) {}
+  C(const initializer_list<unsigned> &list2) {}
+  C(initializer_list<unsigned> &&list3) {}
 };
