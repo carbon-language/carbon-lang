@@ -19,14 +19,6 @@
 // CHECK-FPA: "-target-feature" "-vfp3"
 // CHECK-FPA: "-target-feature" "-neon"
 
-// RUN: %clang -target arm-linux-eabi -mfpu=vfp3-d16 %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-VFP3-D16 %s
-// RUN: %clang -target arm-linux-eabi -mfpu=vfpv3-d16 %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-VFP3-D16 %s
-// CHECK-VFP3-D16: "-target-feature" "+vfp3"
-// CHECK-VFP3-D16: "-target-feature" "+d16"
-// CHECK-VFP3-D16: "-target-feature" "-neon"
-
 // RUN: %clang -target arm-linux-eabi -mfpu=vfp %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-VFP %s
 // CHECK-VFP: "-target-feature" "+vfp2"
@@ -38,6 +30,14 @@
 // RUN:   | FileCheck --check-prefix=CHECK-VFP3 %s
 // CHECK-VFP3: "-target-feature" "+vfp3"
 // CHECK-VFP3: "-target-feature" "-neon"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=vfp3-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP3-D16 %s
+// RUN: %clang -target arm-linux-eabi -mfpu=vfpv3-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP3-D16 %s
+// CHECK-VFP3-D16: "-target-feature" "+vfp3"
+// CHECK-VFP3-D16: "-target-feature" "+d16"
+// CHECK-VFP3-D16: "-target-feature" "-neon"
 
 // RUN: %clang -target arm-linux-eabi -mfpu=vfp4 %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-VFP4 %s
@@ -85,6 +85,11 @@
 // RUN: %clang -target arm-linux-eabi -mfpu=neon %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: "-target-feature" "+neon"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=neon-vfpv4 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NEON-VFPV4 %s
+// CHECK-NEON-VFPV4: "-target-feature" "+neon"
+// CHECK-NEON-VFPV4: "-target-feature" "+vfpv4"
 
 // RUN: %clang -target arm-linux-eabi -msoft-float %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-FLOAT %s
