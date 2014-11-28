@@ -515,7 +515,7 @@ struct MatchableInfo {
   /// couldMatchAmbiguouslyWith - Check whether this matchable could
   /// ambiguously match the same set of operands as \p RHS (without being a
   /// strictly superior match).
-  bool couldMatchAmbiguouslyWith(const MatchableInfo &RHS) {
+  bool couldMatchAmbiguouslyWith(const MatchableInfo &RHS) const {
     // The primary comparator is the instruction mnemonic.
     if (Mnemonic != RHS.Mnemonic)
       return false;
@@ -551,7 +551,7 @@ struct MatchableInfo {
     return !(HasLT ^ HasGT);
   }
 
-  void dump();
+  void dump() const;
 
 private:
   void tokenizeAsmString(const AsmMatcherInfo &Info);
@@ -573,7 +573,7 @@ struct SubtargetFeatureInfo {
     return "Feature_" + TheDef->getName();
   }
 
-  void dump() {
+  void dump() const {
     errs() << getEnumName() << " " << Index << "\n";
     TheDef->dump();
   }
@@ -581,10 +581,10 @@ struct SubtargetFeatureInfo {
 
 struct OperandMatchEntry {
   unsigned OperandMask;
-  MatchableInfo* MI;
+  const MatchableInfo* MI;
   ClassInfo *CI;
 
-  static OperandMatchEntry create(MatchableInfo* mi, ClassInfo *ci,
+  static OperandMatchEntry create(const MatchableInfo *mi, ClassInfo *ci,
                                   unsigned opMask) {
     OperandMatchEntry X;
     X.OperandMask = opMask;
@@ -670,8 +670,7 @@ public:
   /// given operand.
   SubtargetFeatureInfo *getSubtargetFeature(Record *Def) const {
     assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
-    std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator I =
-      SubtargetFeatures.find(Def);
+    const auto &I = SubtargetFeatures.find(Def);
     return I == SubtargetFeatures.end() ? nullptr : I->second;
   }
 
@@ -682,11 +681,11 @@ public:
 
 } // End anonymous namespace
 
-void MatchableInfo::dump() {
+void MatchableInfo::dump() const {
   errs() << TheDef->getName() << " -- " << "flattened:\"" << AsmString <<"\"\n";
 
   for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
-    AsmOperand &Op = AsmOperands[i];
+    const AsmOperand &Op = AsmOperands[i];
     errs() << "  op[" << i << "] = " << Op.Class->ClassName << " - ";
     errs() << '\"' << Op.Token << "\"\n";
   }
@@ -1274,16 +1273,13 @@ void AsmMatcherInfo::buildOperandMatchInfo() {
   typedef std::map<ClassInfo *, unsigned, less_ptr<ClassInfo>> OpClassMaskTy;
   OpClassMaskTy OpClassMask;
 
-  for (std::vector<MatchableInfo*>::const_iterator it =
-       Matchables.begin(), ie = Matchables.end();
-       it != ie; ++it) {
-    MatchableInfo &II = **it;
+  for (const MatchableInfo *MI : Matchables) {
     OpClassMask.clear();
 
     // Keep track of all operands of this instructions which belong to the
     // same class.
-    for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
-      MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
+    for (unsigned i = 0, e = MI->AsmOperands.size(); i != e; ++i) {
+      const MatchableInfo::AsmOperand &Op = MI->AsmOperands[i];
       if (Op.Class->ParserMethod.empty())
         continue;
       unsigned &OperandMask = OpClassMask[Op.Class];
@@ -1291,11 +1287,10 @@ void AsmMatcherInfo::buildOperandMatchInfo() {
     }
 
     // Generate operand match info for each mnemonic/operand class pair.
-    for (OpClassMaskTy::iterator iit = OpClassMask.begin(),
-         iie = OpClassMask.end(); iit != iie; ++iit) {
-      unsigned OpMask = iit->second;
-      ClassInfo *CI = iit->first;
-      OperandMatchInfo.push_back(OperandMatchEntry::create(&II, CI, OpMask));
+    for (const auto &OCM : OpClassMask) {
+      unsigned OpMask = OCM.second;
+      ClassInfo *CI = OCM.first;
+      OperandMatchInfo.push_back(OperandMatchEntry::create(MI, CI, OpMask));
     }
   }
 }
@@ -2186,10 +2181,8 @@ static void emitSubtargetFeatureFlagEnumeration(AsmMatcherInfo &Info,
      << "instruction matching.\n";
   OS << "enum SubtargetFeatureFlag : " << getMinimalRequiredFeaturesType(Info)
      << " {\n";
-  for (std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator
-         it = Info.SubtargetFeatures.begin(),
-         ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
-    SubtargetFeatureInfo &SFI = *it->second;
+  for (const auto &SF : Info.SubtargetFeatures) {
+    SubtargetFeatureInfo &SFI = *SF.second;
     OS << "  " << SFI.getEnumName() << " = (1ULL << " << SFI.Index << "),\n";
   }
   OS << "  Feature_None = 0\n";
@@ -2224,10 +2217,8 @@ static void emitGetSubtargetFeatureName(AsmMatcherInfo &Info, raw_ostream &OS) {
      << "static const char *getSubtargetFeatureName(uint64_t Val) {\n";
   if (!Info.SubtargetFeatures.empty()) {
     OS << "  switch(Val) {\n";
-    typedef std::map<Record*, SubtargetFeatureInfo*, LessRecordByID> RecFeatMap;
-    for (RecFeatMap::const_iterator it = Info.SubtargetFeatures.begin(),
-             ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
-      SubtargetFeatureInfo &SFI = *it->second;
+    for (const auto &SF : Info.SubtargetFeatures) {
+      SubtargetFeatureInfo &SFI = *SF.second;
       // FIXME: Totally just a placeholder name to get the algorithm working.
       OS << "  case " << SFI.getEnumName() << ": return \""
          << SFI.TheDef->getValueAsString("PredicateName") << "\";\n";
@@ -2251,10 +2242,8 @@ static void emitComputeAvailableFeatures(AsmMatcherInfo &Info,
   OS << "uint64_t " << Info.Target.getName() << ClassName << "::\n"
      << "ComputeAvailableFeatures(uint64_t FB) const {\n";
   OS << "  uint64_t Features = 0;\n";
-  for (std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator
-         it = Info.SubtargetFeatures.begin(),
-         ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
-    SubtargetFeatureInfo &SFI = *it->second;
+  for (const auto &SF : Info.SubtargetFeatures) {
+    SubtargetFeatureInfo &SFI = *SF.second;
 
     OS << "  if (";
     std::string CondStorage =
@@ -2608,10 +2597,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
                    less_ptr<MatchableInfo>());
 
   DEBUG_WITH_TYPE("instruction_info", {
-      for (std::vector<MatchableInfo*>::iterator
-             it = Info.Matchables.begin(), ie = Info.Matchables.end();
-           it != ie; ++it)
-        (*it)->dump();
+      for (const MatchableInfo *MI : Info.Matchables)
+        MI->dump();
     });
 
   // Check for ambiguous matchables.
@@ -2619,8 +2606,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     unsigned NumAmbiguous = 0;
     for (unsigned i = 0, e = Info.Matchables.size(); i != e; ++i) {
       for (unsigned j = i + 1; j != e; ++j) {
-        MatchableInfo &A = *Info.Matchables[i];
-        MatchableInfo &B = *Info.Matchables[j];
+        const MatchableInfo &A = *Info.Matchables[i];
+        const MatchableInfo &B = *Info.Matchables[j];
 
         if (A.couldMatchAmbiguouslyWith(B)) {
           errs() << "warning: ambiguous matchables:\n";
@@ -2740,15 +2727,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   size_t MaxNumOperands = 0;
   unsigned MaxMnemonicIndex = 0;
   bool HasDeprecation = false;
-  for (std::vector<MatchableInfo*>::const_iterator it =
-         Info.Matchables.begin(), ie = Info.Matchables.end();
-       it != ie; ++it) {
-    MatchableInfo &II = **it;
-    MaxNumOperands = std::max(MaxNumOperands, II.AsmOperands.size());
-    HasDeprecation |= II.HasDeprecation;
+  for (const MatchableInfo *MI : Info.Matchables) {
+    MaxNumOperands = std::max(MaxNumOperands, MI->AsmOperands.size());
+    HasDeprecation |= MI->HasDeprecation;
 
     // Store a pascal-style length byte in the mnemonic.
-    std::string LenMnemonic = char(II.Mnemonic.size()) + II.Mnemonic.str();
+    std::string LenMnemonic = char(MI->Mnemonic.size()) + MI->Mnemonic.str();
     MaxMnemonicIndex = std::max(MaxMnemonicIndex,
                         StringTable.GetOrAddStringOffset(LenMnemonic, false));
   }
@@ -2806,33 +2790,30 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
     OS << "static const MatchEntry MatchTable" << VC << "[] = {\n";
 
-    for (std::vector<MatchableInfo*>::const_iterator it =
-         Info.Matchables.begin(), ie = Info.Matchables.end();
-         it != ie; ++it) {
-      MatchableInfo &II = **it;
-      if (II.AsmVariantID != AsmVariantNo)
+    for (const MatchableInfo *MI : Info.Matchables) {
+      if (MI->AsmVariantID != AsmVariantNo)
         continue;
 
       // Store a pascal-style length byte in the mnemonic.
-      std::string LenMnemonic = char(II.Mnemonic.size()) + II.Mnemonic.str();
+      std::string LenMnemonic = char(MI->Mnemonic.size()) + MI->Mnemonic.str();
       OS << "  { " << StringTable.GetOrAddStringOffset(LenMnemonic, false)
-         << " /* " << II.Mnemonic << " */, "
+         << " /* " << MI->Mnemonic << " */, "
          << Target.getName() << "::"
-         << II.getResultInst()->TheDef->getName() << ", "
-         << II.ConversionFnKind << ", ";
+         << MI->getResultInst()->TheDef->getName() << ", "
+         << MI->ConversionFnKind << ", ";
 
       // Write the required features mask.
-      if (!II.RequiredFeatures.empty()) {
-        for (unsigned i = 0, e = II.RequiredFeatures.size(); i != e; ++i) {
+      if (!MI->RequiredFeatures.empty()) {
+        for (unsigned i = 0, e = MI->RequiredFeatures.size(); i != e; ++i) {
           if (i) OS << "|";
-          OS << II.RequiredFeatures[i]->getEnumName();
+          OS << MI->RequiredFeatures[i]->getEnumName();
         }
       } else
         OS << "0";
 
       OS << ", { ";
-      for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
-        MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
+      for (unsigned i = 0, e = MI->AsmOperands.size(); i != e; ++i) {
+        const MatchableInfo::AsmOperand &Op = MI->AsmOperands[i];
 
         if (i) OS << ", ";
         OS << Op.Class->Name;
