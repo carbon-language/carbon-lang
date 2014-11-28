@@ -282,8 +282,23 @@ void TempScopInfo::buildCondition(BasicBlock *BB, BasicBlock *RegionEntry) {
     if (Br->isUnconditional())
       continue;
 
+    BasicBlock *TrueBB = Br->getSuccessor(0), *FalseBB = Br->getSuccessor(1);
+
     // Is BB on the ELSE side of the branch?
-    bool inverted = DT->dominates(Br->getSuccessor(1), BB);
+    bool inverted = DT->dominates(FalseBB, BB);
+
+    // If both TrueBB and FalseBB dominate BB, one of them must be the target of
+    // a back-edge, i.e. a loop header.
+    if (inverted && DT->dominates(TrueBB, BB)) {
+      assert(
+          (DT->dominates(TrueBB, FalseBB) || DT->dominates(FalseBB, TrueBB)) &&
+          "One of the successors should be the loop header and dominate the"
+          "other!");
+
+      // It is not an invert if the FalseBB is the header.
+      if (DT->dominates(FalseBB, TrueBB))
+        inverted = false;
+    }
 
     Comparison *Cmp;
     buildAffineCondition(*(Br->getCondition()), inverted, &Cmp);
