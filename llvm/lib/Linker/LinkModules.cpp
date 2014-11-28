@@ -94,13 +94,15 @@ private:
 }
 
 void TypeMapTy::addTypeMapping(Type *DstTy, Type *SrcTy) {
+  assert(SpeculativeTypes.empty());
+
   // Check to see if these types are recursively isomorphic and establish a
   // mapping between them if so.
   if (!areTypesIsomorphic(DstTy, SrcTy)) {
     // Oops, they aren't isomorphic.  Just discard this request by rolling out
     // any speculative mappings we've established.
-    for (unsigned i = 0, e = SpeculativeTypes.size(); i != e; ++i)
-      MappedTypes.erase(SpeculativeTypes[i]);
+    for (Type *Ty : SpeculativeTypes)
+      MappedTypes.erase(Ty);
   }
   SpeculativeTypes.clear();
 }
