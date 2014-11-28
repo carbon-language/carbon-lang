@@ -442,6 +442,11 @@ struct MatchableInfo {
       AsmString(Alias->AsmString) {
   }
 
+  ~MatchableInfo() {
+    if (DefRec.is<const CodeGenInstAlias*>())
+      delete DefRec.get<const CodeGenInstAlias*>();
+  }
+
   // Two-operand aliases clone from the main matchable, but mark the second
   // operand as a tied operand of the first for purposes of the assembler.
   void formTwoOperandAlias(StringRef Constraint);
