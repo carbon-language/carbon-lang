@@ -395,6 +395,10 @@ struct MatchableInfo {
   /// matchable came from.
   Record *const TheDef;
 
+  /// AsmString - The assembly string for this instruction (with variants
+  /// removed), e.g. "movsx $src, $dst".
+  std::string AsmString;
+
   /// DefRec - This is the definition that it came from.
   PointerUnion<const CodeGenInstruction*, const CodeGenInstAlias*> DefRec;
 
@@ -407,10 +411,6 @@ struct MatchableInfo {
   /// ResOperands - This is the operand list that should be built for the result
   /// MCInst.
   SmallVector<ResOperand, 8> ResOperands;
-
-  /// AsmString - The assembly string for this instruction (with variants
-  /// removed), e.g. "movsx $src, $dst".
-  std::string AsmString;
 
   /// Mnemonic - This is the first token of the matched instruction, its
   /// mnemonic.
@@ -434,19 +434,14 @@ struct MatchableInfo {
   bool HasDeprecation;
 
   MatchableInfo(const CodeGenInstruction &CGI)
-    : AsmVariantID(0), TheDef(CGI.TheDef), DefRec(&CGI),
-      AsmString(CGI.AsmString) {
-  }
+      : AsmVariantID(0), TheDef(CGI.TheDef), AsmString(CGI.AsmString),
+        DefRec(&CGI) {}
 
-  MatchableInfo(const CodeGenInstAlias *Alias)
-    : AsmVariantID(0), TheDef(Alias->TheDef), DefRec(Alias),
-      AsmString(Alias->AsmString) {
-  }
+  MatchableInfo(std::unique_ptr<CodeGenInstAlias> Alias)
+      : AsmVariantID(0), TheDef(Alias->TheDef), AsmString(Alias->AsmString),
+        DefRec(Alias.release()) {}
 
-  ~MatchableInfo() {
-    if (DefRec.is<const CodeGenInstAlias*>())
-      delete DefRec.get<const CodeGenInstAlias*>();
-  }
+  ~MatchableInfo() { delete DefRec.dyn_cast<const CodeGenInstAlias *>(); }
 
   // Two-operand aliases clone from the main matchable, but mark the second
   // operand as a tied operand of the first for purposes of the assembler.
@@ -1359,8 +1354,8 @@ void AsmMatcherInfo::buildInfo() {
     std::vector<Record*> AllInstAliases =
       Records.getAllDerivedDefinitions("InstAlias");
     for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
-      CodeGenInstAlias *Alias =
-          new CodeGenInstAlias(AllInstAliases[i], AsmVariantNo, Target);
+      auto Alias = llvm::make_unique<CodeGenInstAlias>(AllInstAliases[i],
+                                                       AsmVariantNo, Target);
 
       // If the tblgen -match-prefix option is specified (for tblgen hackers),
       // filter the set of instruction aliases we consider, based on the target
@@ -1369,7 +1364,7 @@ void AsmMatcherInfo::buildInfo() {
             .startswith( MatchPrefix))
         continue;
 
-      Matchables.emplace_front(Alias);
+      Matchables.emplace_front(std::move(Alias));
       MatchableInfo *II = &Matchables.front();
 
       II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
