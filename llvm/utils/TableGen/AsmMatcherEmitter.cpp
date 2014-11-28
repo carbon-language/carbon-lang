@@ -115,6 +115,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <forward_list>
 using namespace llvm;
 
 #define DEBUG_TYPE "asm-matcher-emitter"
@@ -612,7 +613,7 @@ public:
   CodeGenTarget &Target;
 
   /// The classes which are needed for matching.
-  std::vector<std::unique_ptr<ClassInfo>> Classes;
+  std::forward_list<ClassInfo> Classes;
 
   /// The information on the matchables to match.
   std::vector<std::unique_ptr<MatchableInfo>> Matchables;
@@ -999,7 +1000,8 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
   ClassInfo *&Entry = TokenClasses[Token];
 
   if (!Entry) {
-    Entry = new ClassInfo();
+    Classes.emplace_front();
+    Entry = &Classes.front();
     Entry->Kind = ClassInfo::Token;
     Entry->ClassName = "Token";
     Entry->Name = "MCK_" + getEnumNameForToken(Token);
@@ -1008,7 +1010,6 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
     Entry->RenderMethod = "<invalid>";
     Entry->ParserMethod = "";
     Entry->DiagnosticType = "";
-    Classes.push_back(std::unique_ptr<ClassInfo>(Entry));
   }
 
   return Entry;
@@ -1135,7 +1136,8 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
   std::map<RegisterSet, ClassInfo*, LessRegisterSet> RegisterSetClasses;
   unsigned Index = 0;
   for (const RegisterSet &RS : RegisterSets) {
-    ClassInfo *CI = new ClassInfo();
+    Classes.emplace_front();
+    ClassInfo *CI = &Classes.front();
     CI->Kind = ClassInfo::RegisterClass0 + Index;
     CI->ClassName = "Reg" + utostr(Index);
     CI->Name = "MCK_Reg" + utostr(Index);
@@ -1145,7 +1147,6 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
     CI->Registers = RS;
     // FIXME: diagnostic type.
     CI->DiagnosticType = "";
-    Classes.push_back(std::unique_ptr<ClassInfo>(CI));
     RegisterSetClasses.insert(std::make_pair(RS, CI));
     ++Index;
   }
@@ -1203,8 +1204,10 @@ void AsmMatcherInfo::buildOperandClasses() {
     Records.getAllDerivedDefinitions("AsmOperandClass");
 
   // Pre-populate AsmOperandClasses map.
-  for (Record *Rec : AsmOperands)
-    AsmOperandClasses[Rec] = new ClassInfo();
+  for (Record *Rec : AsmOperands) {
+    Classes.emplace_front();
+    AsmOperandClasses[Rec] = &Classes.front();
+  }
 
   unsigned Index = 0;
   for (Record *Rec : AsmOperands) {
@@ -1258,7 +1261,6 @@ void AsmMatcherInfo::buildOperandClasses() {
     if (StringInit *SI = dyn_cast<StringInit>(DiagnosticType))
       CI->DiagnosticType = SI->getValue();
 
-    Classes.push_back(std::unique_ptr<ClassInfo>(CI));
     ++Index;
   }
 }
@@ -1469,10 +1471,7 @@ void AsmMatcherInfo::buildInfo() {
   }
 
   // Reorder classes so that classes precede super classes.
-  std::sort(Classes.begin(), Classes.end(),
-            [](const std::unique_ptr<ClassInfo> &a,
-               const std::unique_ptr<ClassInfo> &b){
-              return *a < *b;});
+  Classes.sort();
 }
 
 /// buildInstructionOperandReference - The specified operand is a reference to a
@@ -1980,8 +1979,8 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
 
 /// emitMatchClassEnumeration - Emit the enumeration for match class kinds.
 static void emitMatchClassEnumeration(CodeGenTarget &Target,
-                                 std::vector<std::unique_ptr<ClassInfo>> &Infos,
-                                 raw_ostream &OS) {
+                                      std::forward_list<ClassInfo> &Infos,
+                                      raw_ostream &OS) {
   OS << "namespace {\n\n";
 
   OS << "/// MatchClassKind - The kinds of classes which participate in\n"
@@ -1989,16 +1988,16 @@ static void emitMatchClassEnumeration(CodeGenTarget &Target,
   OS << "enum MatchClassKind {\n";
   OS << "  InvalidMatchClass = 0,\n";
   for (const auto &CI : Infos) {
-    OS << "  " << CI->Name << ", // ";
-    if (CI->Kind == ClassInfo::Token) {
-      OS << "'" << CI->ValueName << "'\n";
-    } else if (CI->isRegisterClass()) {
-      if (!CI->ValueName.empty())
-        OS << "register class '" << CI->ValueName << "'\n";
+    OS << "  " << CI.Name << ", // ";
+    if (CI.Kind == ClassInfo::Token) {
+      OS << "'" << CI.ValueName << "'\n";
+    } else if (CI.isRegisterClass()) {
+      if (!CI.ValueName.empty())
+        OS << "register class '" << CI.ValueName << "'\n";
       else
         OS << "derived register class\n";
     } else {
-      OS << "user defined class '" << CI->ValueName << "'\n";
+      OS << "user defined class '" << CI.ValueName << "'\n";
     }
   }
   OS << "  NumMatchClassKinds\n";
@@ -2029,16 +2028,16 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
   // Check the user classes. We don't care what order since we're only
   // actually matching against one of them.
   for (const auto &CI : Info.Classes) {
-    if (!CI->isUserClass())
+    if (!CI.isUserClass())
       continue;
 
-    OS << "  // '" << CI->ClassName << "' class\n";
-    OS << "  if (Kind == " << CI->Name << ") {\n";
-    OS << "    if (Operand." << CI->PredicateMethod << "())\n";
+    OS << "  // '" << CI.ClassName << "' class\n";
+    OS << "  if (Kind == " << CI.Name << ") {\n";
+    OS << "    if (Operand." << CI.PredicateMethod << "())\n";
     OS << "      return MCTargetAsmParser::Match_Success;\n";
-    if (!CI->DiagnosticType.empty())
+    if (!CI.DiagnosticType.empty())
       OS << "    return " << Info.Target.getName() << "AsmParser::Match_"
-         << CI->DiagnosticType << ";\n";
+         << CI.DiagnosticType << ";\n";
     OS << "  }\n\n";
   }
 
@@ -2064,7 +2063,7 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
 
 /// emitIsSubclass - Emit the subclass predicate function.
 static void emitIsSubclass(CodeGenTarget &Target,
-                           std::vector<std::unique_ptr<ClassInfo>> &Infos,
+                           std::forward_list<ClassInfo> &Infos,
                            raw_ostream &OS) {
   OS << "/// isSubclass - Compute whether \\p A is a subclass of \\p B.\n";
   OS << "static bool isSubclass(MatchClassKind A, MatchClassKind B) {\n";
@@ -2080,15 +2079,15 @@ static void emitIsSubclass(CodeGenTarget &Target,
   for (const auto &A : Infos) {
     std::vector<StringRef> SuperClasses;
     for (const auto &B : Infos) {
-      if (A != B && A->isSubsetOf(*B))
-        SuperClasses.push_back(B->Name);
+      if (&A != &B && A.isSubsetOf(B))
+        SuperClasses.push_back(B.Name);
     }
 
     if (SuperClasses.empty())
       continue;
     ++Count;
 
-    SS << "\n  case " << A->Name << ":\n";
+    SS << "\n  case " << A.Name << ":\n";
 
     if (SuperClasses.size() == 1) {
       SS << "    return B == " << SuperClasses.back().str() << ";\n";
@@ -2121,14 +2120,14 @@ static void emitIsSubclass(CodeGenTarget &Target,
 /// emitMatchTokenString - Emit the function to match a token string to the
 /// appropriate match class value.
 static void emitMatchTokenString(CodeGenTarget &Target,
-                                 std::vector<std::unique_ptr<ClassInfo>> &Infos,
+                                 std::forward_list<ClassInfo> &Infos,
                                  raw_ostream &OS) {
   // Construct the match list.
   std::vector<StringMatcher::StringPair> Matches;
   for (const auto &CI : Infos) {
-    if (CI->Kind == ClassInfo::Token)
-      Matches.push_back(StringMatcher::StringPair(CI->ValueName,
-                                                  "return " + CI->Name + ";"));
+    if (CI.Kind == ClassInfo::Token)
+      Matches.push_back(StringMatcher::StringPair(CI.ValueName,
+                                                  "return " + CI.Name + ";"));
   }
 
   OS << "static MatchClassKind matchTokenString(StringRef Name) {\n";
@@ -2443,8 +2442,8 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
                << " RequiredFeatures;\n";
   OS << "    " << getMinimalTypeForRange(MaxMnemonicIndex)
                << " Mnemonic;\n";
-  OS << "    " << getMinimalTypeForRange(Info.Classes.size())
-               << " Class;\n";
+  OS << "    " << getMinimalTypeForRange(std::distance(
+                      Info.Classes.begin(), Info.Classes.end())) << " Class;\n";
   OS << "    " << getMinimalTypeForRange(MaxMask)
                << " OperandMask;\n\n";
   OS << "    StringRef getMnemonic() const {\n";
@@ -2522,10 +2521,10 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
      << "  switch(MCK) {\n";
 
   for (const auto &CI : Info.Classes) {
-    if (CI->ParserMethod.empty())
+    if (CI.ParserMethod.empty())
       continue;
-    OS << "  case " << CI->Name << ":\n"
-       << "    return " << CI->ParserMethod << "(Operands);\n";
+    OS << "  case " << CI.Name << ":\n"
+       << "    return " << CI.ParserMethod << "(Operands);\n";
   }
 
   OS << "  default:\n";
@@ -2772,8 +2771,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
                << " ConvertFn;\n";
   OS << "    " << getMinimalRequiredFeaturesType(Info)
                << " RequiredFeatures;\n";
-  OS << "    " << getMinimalTypeForRange(Info.Classes.size())
-               << " Classes[" << MaxNumOperands << "];\n";
+  OS << "    " << getMinimalTypeForRange(
+                      std::distance(Info.Classes.begin(), Info.Classes.end()))
+     << " Classes[" << MaxNumOperands << "];\n";
   OS << "    StringRef getMnemonic() const {\n";
   OS << "      return StringRef(MnemonicTable + Mnemonic + 1,\n";
   OS << "                       MnemonicTable[Mnemonic]);\n";
