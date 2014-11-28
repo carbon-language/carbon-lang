@@ -521,6 +521,7 @@ namespace llvm {
 
   public:
     CodeGenRegBank(RecordKeeper&);
+    ~CodeGenRegBank();
 
     SetTheory &getSets() { return Sets; }
 

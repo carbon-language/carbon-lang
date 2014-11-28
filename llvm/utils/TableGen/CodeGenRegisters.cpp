@@ -1012,6 +1012,12 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   CodeGenRegisterClass::computeSubClasses(*this);
 }
 
+CodeGenRegBank::~CodeGenRegBank() {
+  DeleteContainerPointers(SubRegIndices);
+  DeleteContainerPointers(Registers);
+  DeleteContainerPointers(RegClasses);
+}
+
 // Create a synthetic CodeGenSubRegIndex without a corresponding Record.
 CodeGenSubRegIndex*
 CodeGenRegBank::createSubRegIndex(StringRef Name, StringRef Namespace) {
