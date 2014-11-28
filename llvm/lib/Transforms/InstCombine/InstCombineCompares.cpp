@@ -3594,7 +3594,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 }
 
 /// FoldFCmp_IntToFP_Cst - Fold fcmp ([us]itofp x, cst) if possible.
-///
 Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
                                                 Instruction *LHSI,
                                                 Constant *RHSC) {
