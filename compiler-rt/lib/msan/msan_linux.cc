@@ -9,11 +9,11 @@
 //
 // This file is a part of MemorySanitizer.
 //
-// Linux-specific code.
+// Linux- and FreeBSD-specific code.
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_LINUX
+#if SANITIZER_FREEBSD || SANITIZER_LINUX
 
 #include "msan.h"
 #include "msan_thread.h"
@@ -35,55 +35,98 @@
 
 namespace __msan {
 
-#if defined(__mips64)
-static const uptr kMemBeg     = 0xe000000000;
-static const uptr kMemEnd     = 0xffffffffff;
-#elif defined(__x86_64__)
-static const uptr kMemBeg     = 0x600000000000;
-static const uptr kMemEnd     = 0x7fffffffffff;
-#endif
-
-static const uptr kShadowBeg  = MEM_TO_SHADOW(kMemBeg);
-static const uptr kShadowEnd  = MEM_TO_SHADOW(kMemEnd);
-static const uptr kBad1Beg    = 0;
-static const uptr kBad1End    = kShadowBeg - 1;
-static const uptr kBad2Beg    = kShadowEnd + 1;
-static const uptr kBad2End    = kMemBeg - 1;
-static const uptr kOriginsBeg = kBad2Beg;
-static const uptr kOriginsEnd = kBad2End;
-
-bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins) {
-  if ((uptr) & InitShadow < kMemBeg) {
-    Printf("FATAL: Code below application range: %p < %p. Non-PIE build?\n",
-           &InitShadow, (void *)kMemBeg);
-    return false;
+void ReportMapRange(const char *descr, uptr beg, uptr size) {
+  if (size > 0) {
+    uptr end = beg + size - 1;
+    VPrintf(1, "%s : %p - %p\n", descr, beg, end);
   }
+}
 
+static bool CheckMemoryRangeAvailability(uptr beg, uptr size) {
+  if (size > 0) {
+    uptr end = beg + size - 1;
+    if (!MemoryRangeIsAvailable(beg, end)) {
+      Printf("FATAL: Memory range %p - %p is not available.\n", beg, end);
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool ProtectMemoryRange(uptr beg, uptr size) {
+  if (size > 0) {
+    uptr end = beg + size - 1;
+    if (!Mprotect(beg, size)) {
+      Printf("FATAL: Cannot protect memory range %p - %p.\n", beg, end);
+      return false;
+    }
+  }
+  return true;
+}
+
+bool InitShadow(bool map_shadow, bool init_origins) {
+  // Let user know mapping parameters first.
   VPrintf(1, "__msan_init %p\n", &__msan_init);
-  VPrintf(1, "Memory   : %p %p\n", kMemBeg, kMemEnd);
-  VPrintf(1, "Bad2     : %p %p\n", kBad2Beg, kBad2End);
-  VPrintf(1, "Origins  : %p %p\n", kOriginsBeg, kOriginsEnd);
-  VPrintf(1, "Shadow   : %p %p\n", kShadowBeg, kShadowEnd);
-  VPrintf(1, "Bad1     : %p %p\n", kBad1Beg, kBad1End);
+  ReportMapRange("Low Memory ", kLowMemBeg, kLowMemSize);
+  ReportMapRange("Bad1       ", kBad1Beg, kBad1Size);
+  ReportMapRange("Shadow     ", kShadowBeg, kShadowSize);
+  ReportMapRange("Bad2       ", kBad2Beg, kBad2Size);
+  ReportMapRange("Origins    ", kOriginsBeg, kOriginsSize);
+  ReportMapRange("Bad3       ", kBad3Beg, kBad3Size);
+  ReportMapRange("High Memory", kHighMemBeg, kHighMemSize);
 
-  if (!MemoryRangeIsAvailable(kShadowBeg,
-                              init_origins ? kOriginsEnd : kShadowEnd) ||
-      (prot1 && !MemoryRangeIsAvailable(kBad1Beg, kBad1End)) ||
-      (prot2 && !MemoryRangeIsAvailable(kBad2Beg, kBad2End))) {
-    Printf("FATAL: Shadow memory range is not available.\n");
+  // Check mapping sanity (the invariant).
+  CHECK_EQ(kLowMemBeg, 0);
+  CHECK_EQ(kBad1Beg, kLowMemBeg + kLowMemSize);
+  CHECK_EQ(kShadowBeg, kBad1Beg + kBad1Size);
+  CHECK_GT(kShadowSize, 0);
+  CHECK_GE(kShadowSize, kLowMemSize + kHighMemSize);
+  CHECK_EQ(kBad2Beg, kShadowBeg + kShadowSize);
+  CHECK_EQ(kOriginsBeg, kBad2Beg + kBad2Size);
+  CHECK_EQ(kOriginsSize, kShadowSize);
+  CHECK_EQ(kBad3Beg, kOriginsBeg + kOriginsSize);
+  CHECK_EQ(kHighMemBeg, kBad3Beg + kBad3Size);
+  CHECK_GT(kHighMemSize, 0);
+  CHECK_GE(kHighMemBeg + kHighMemSize, kHighMemBeg);  // Tests for no overflow.
+
+  if (kLowMemSize > 0) {
+    CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kLowMemBeg)));
+    CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kLowMemBeg + kLowMemSize - 1)));
+    CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kLowMemBeg)));
+    CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kLowMemBeg + kLowMemSize - 1)));
+  }
+  CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kHighMemBeg)));
+  CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kHighMemBeg + kHighMemSize - 1)));
+  CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kHighMemBeg)));
+  CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kHighMemBeg + kHighMemSize - 1)));
+
+  if (!MEM_IS_APP(&__msan_init)) {
+    Printf("FATAL: Code %p is out of application range. Non-PIE build?\n",
+           (uptr)&__msan_init);
     return false;
   }
 
-  if (prot1 && !Mprotect(kBad1Beg, kBad1End - kBad1Beg))
+  if (!CheckMemoryRangeAvailability(kShadowBeg, kShadowSize) ||
+      (init_origins &&
+        !CheckMemoryRangeAvailability(kOriginsBeg, kOriginsSize)) ||
+      !CheckMemoryRangeAvailability(kBad1Beg, kBad1Size) ||
+      !CheckMemoryRangeAvailability(kBad2Beg, kBad2Size) ||
+      !CheckMemoryRangeAvailability(kBad3Beg, kBad3Size)) {
     return false;
-  if (prot2 && !Mprotect(kBad2Beg, kBad2End - kBad2Beg))
+  }
+
+  if (!ProtectMemoryRange(kBad1Beg, kBad1Size) ||
+      !ProtectMemoryRange(kBad2Beg, kBad2Size) ||
+      !ProtectMemoryRange(kBad3Beg, kBad3Size)) {
     return false;
+  }
+
   if (map_shadow) {
-    void *shadow = MmapFixedNoReserve(kShadowBeg, kShadowEnd - kShadowBeg);
+    void *shadow = MmapFixedNoReserve(kShadowBeg, kShadowSize);
     if (shadow != (void*)kShadowBeg) return false;
   }
   if (init_origins) {
-    void *origins = MmapFixedNoReserve(kOriginsBeg, kOriginsEnd - kOriginsBeg);
+    void *origins = MmapFixedNoReserve(kOriginsBeg, kOriginsSize);
     if (origins != (void*)kOriginsBeg) return false;
   }
   return true;
@@ -140,4 +183,4 @@ void MsanTSDDtor(void *tsd) {
 
 }  // namespace __msan
 
-#endif  // __linux__
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX

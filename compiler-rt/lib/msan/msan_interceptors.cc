@@ -1450,7 +1450,7 @@ u32 GetOriginIfPoisoned(uptr addr, uptr size) {
   unsigned char *s = (unsigned char *)MEM_TO_SHADOW(addr);
   for (uptr i = 0; i < size; ++i)
     if (s[i])
-      return *(u32 *)SHADOW_TO_ORIGIN((s + i) & ~3UL);
+      return *(u32 *)SHADOW_TO_ORIGIN(((uptr)s + i) & ~3UL);
   return 0;
 }
 
