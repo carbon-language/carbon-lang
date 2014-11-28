@@ -13,6 +13,9 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#define EXTRACT_BITS(value, mask) \
+        ( (value >> __builtin_ctz(mask)) & (((1 << __builtin_popcount(mask)))-1) )
+
 
 // A quick sketch of a program which can parse the compact unwind info
 // used on Darwin systems for exception handling.  The output of
@@ -30,7 +33,12 @@ struct baton
     int addr_size;                   // 4 or 8 bytes, the size of addresses in this file
 
     uint64_t text_segment_vmaddr;    // __TEXT segment vmaddr
+    uint64_t text_segment_file_offset;
+
     uint64_t text_section_vmaddr;    // __TEXT,__text section vmaddr
+    uint64_t text_section_file_offset;
+
+    uint8_t *text_section_start;     // pointer into this program's address space
 
     uint64_t eh_section_file_address; // the file address of the __TEXT,__eh_frame section
 
@@ -123,6 +131,7 @@ scan_macho_load_commands (struct baton *baton)
              && nsects != 0 && segment_name[0] != '\0' && strcmp (segment_name, "__TEXT") == 0)
         {
             baton->text_segment_vmaddr = segment_vmaddr;
+            baton->text_segment_file_offset = segment_offset;
 
             uint32_t current_sect = 0;
             while (current_sect < nsects && (offset - start_of_this_load_cmd) < *lc_cmdsize)
@@ -167,6 +176,7 @@ scan_macho_load_commands (struct baton *baton)
                         struct section_64 sect;
                         memcpy (&sect, offset, sizeof (struct section_64));
                         baton->text_section_vmaddr = sect.addr;
+                        baton->text_section_file_offset = sect.offset;
                     }
                     else
                     {
@@ -195,7 +205,7 @@ scan_macho_load_commands (struct baton *baton)
 }
 
 void
-print_encoding_x86_64 (struct baton baton, uint32_t encoding)
+print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t encoding)
 {
     int mode = encoding & UNWIND_X86_64_MODE_MASK;
     switch (mode)
@@ -204,9 +214,9 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
         {
             printf (" - frame func: CFA is rbp+%d ", 16);
             printf (" rip=[CFA-8] rbp=[CFA-16]");
-            uint32_t saved_registers_offset = (encoding & UNWIND_X86_64_RBP_FRAME_OFFSET) >> (__builtin_ctz (UNWIND_X86_64_RBP_FRAME_OFFSET));
+            uint32_t saved_registers_offset = EXTRACT_BITS (encoding, UNWIND_X86_64_RBP_FRAME_OFFSET);
 
-            uint32_t saved_registers_locations = (encoding & UNWIND_X86_64_RBP_FRAME_REGISTERS) >> (__builtin_ctz (UNWIND_X86_64_RBP_FRAME_REGISTERS));
+            uint32_t saved_registers_locations = EXTRACT_BITS (encoding, UNWIND_X86_64_RBP_FRAME_REGISTERS);
 
 
             saved_registers_offset += 2;
@@ -240,26 +250,25 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
         break;
 
         case UNWIND_X86_64_MODE_STACK_IND:
-        {
-            printf (" UNWIND_X86_64_MODE_STACK_IND not yet supported\n");
-            break;
-        }
         case UNWIND_X86_64_MODE_STACK_IMMD:
         {
-            uint32_t stack_size = (encoding & UNWIND_X86_64_FRAMELESS_STACK_SIZE) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_SIZE));
-            uint32_t stack_adjust = (encoding & UNWIND_X86_64_FRAMELESS_STACK_ADJUST) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_ADJUST));
-            uint32_t register_count = (encoding & UNWIND_X86_64_FRAMELESS_STACK_REG_COUNT) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_REG_COUNT));
-            uint32_t permutation = (encoding & UNWIND_X86_64_FRAMELESS_STACK_REG_PERMUTATION) >> (__builtin_ctz (UNWIND_X86_64_FRAMELESS_STACK_REG_PERMUTATION));
-            
-            printf (" frameless function: stack size %d, stack adjust %d, register count %d ", stack_size * 8, stack_adjust * 8, register_count);
-            if ((encoding & UNWIND_X86_64_MODE_MASK) == UNWIND_X86_64_MODE_STACK_IND)
+            uint32_t stack_size = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_SIZE);
+            uint32_t register_count = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_REG_COUNT);
+            uint32_t permutation = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_REG_PERMUTATION);
+
+            if (mode == UNWIND_X86_64_MODE_STACK_IND && function_start)
             {
-                printf (" UNWIND_X86_64_MODE_STACK_IND not handled ");
-                // stack size is too large to store in UNWIND_X86_64_FRAMELESS_STACK_SIZE; instead 
-                // stack_size is an offset into the function's instruction stream to the 32-bit literal
-                // value in a "sub $xxx, %rsp" instruction.
-                return;
+                uint32_t stack_adjust = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_ADJUST);
+
+                // offset into the function instructions; 0 == beginning of first instruction
+                uint32_t offset_to_subl_insn = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_SIZE);
+
+                stack_size = *((uint32_t*) (function_start + offset_to_subl_insn));
+
+                stack_size += stack_adjust * 8;
             }
+            
+            printf (" frameless function: stack size %d, register count %d ", stack_size * 8, register_count);
 
             if (register_count == 0)
             {
@@ -267,23 +276,31 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
             }
             else
             {
+
+                // We need to include (up to) 6 registers in 10 bits.
+                // That would be 18 bits if we just used 3 bits per reg to indicate
+                // the order they're saved on the stack. 
+                //
+                // This is done with Lehmer code permutation, e.g. see
+                // http://stackoverflow.com/questions/1506078/fast-permutation-number-permutation-mapping-algorithms
                 int permunreg[6];
 
-                // Decode the variable base number that's used to encode
-                // the Lehmer code for this permutation.
-                // v. http://stackoverflow.com/questions/1506078/fast-permutation-number-permutation-mapping-algorithms
+                // This decodes the variable-base number in the 10 bits
+                // and gives us the Lehmer code sequence which can then
+                // be decoded.
+
                 switch (register_count) 
                 {
                     case 6:
-                        permunreg[0] = permutation/120;
+                        permunreg[0] = permutation/120;    // 120 == 5!
                         permutation -= (permunreg[0]*120);
-                        permunreg[1] = permutation/24;
+                        permunreg[1] = permutation/24;     // 24 == 4!
                         permutation -= (permunreg[1]*24);
-                        permunreg[2] = permutation/6;
+                        permunreg[2] = permutation/6;      // 6 == 3!
                         permutation -= (permunreg[2]*6);
-                        permunreg[3] = permutation/2;
+                        permunreg[3] = permutation/2;      // 2 == 2!
                         permutation -= (permunreg[3]*2);
-                        permunreg[4] = permutation;
+                        permunreg[4] = permutation;        // 1 == 1!
                         permunreg[5] = 0;
                         break;
                     case 5:
@@ -402,12 +419,12 @@ print_encoding_x86_64 (struct baton baton, uint32_t encoding)
     }
 }
 
-void print_encoding (struct baton baton, uint32_t encoding)
+void print_encoding (struct baton baton, uint8_t *function_start, uint32_t encoding)
 {
 
     if (baton.cputype == CPU_TYPE_X86_64)
     {
-        print_encoding_x86_64 (baton, encoding);
+        print_encoding_x86_64 (baton, function_start, encoding);
     }
     else
     {
@@ -430,14 +447,11 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
     }
     printf ("    func [%d] offset %d (file addr 0x%" PRIx64 ")%s - 0x%x", 
             idx, entry_func_offset, 
-            entry_func_offset + baton.text_segment_vmaddr,  // FIXME
-#if 0
-            entry_func_offset + baton.first_level_index_entry.functionOffset + baton.text_segment_vmaddr,  // FIXME
-#endif
+            baton.first_level_index_entry.functionOffset + entry_func_offset + baton.text_segment_vmaddr,  // FIXME
             entry_encoding_index_str, 
             encoding);
 
-    print_encoding (baton, encoding);
+    print_encoding (baton, baton.mach_header_start + baton.first_level_index_entry.functionOffset + baton.text_section_file_offset + entry_func_offset, encoding);
 
     bool has_lsda = encoding & UNWIND_HAS_LSDA;
 
@@ -475,7 +489,7 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
         printf (", LSDA offset %d", lsda_offset);
     }
 
-    uint32_t pers_idx = (encoding & UNWIND_PERSONALITY_MASK) >> (__builtin_ctz(UNWIND_PERSONALITY_MASK));
+    uint32_t pers_idx = EXTRACT_BITS (encoding, UNWIND_PERSONALITY_MASK);
     if (pers_idx != 0)
     {
         pers_idx--;  // Change 1-based to 0-based index
@@ -503,7 +517,14 @@ print_second_level_index_regular (struct baton baton)
     {
         uint32_t func_offset = *((uint32_t *) (offset));
         uint32_t encoding = *((uint32_t *) (offset + 4)); 
-        print_function_encoding (baton, idx, encoding, (uint32_t) -1, func_offset);
+
+        // UNWIND_SECOND_LEVEL_REGULAR entries have a funcOffset which includes the 
+        // functionOffset from the containing index table already.  UNWIND_SECOND_LEVEL_COMPRESSED
+        // entries only have the offset from the containing index table functionOffset.
+        // So strip off the contianing index table functionOffset value here so they can
+        // be treated the same at the lower layers.
+
+        print_function_encoding (baton, idx, encoding, (uint32_t) -1, func_offset - baton.first_level_index_entry.functionOffset);
         idx++;
         offset += 8;
     }
@@ -667,7 +688,7 @@ int main (int argc, char **argv)
     {
         uint32_t encoding = *((uint32_t*) common_encodings);
         printf ("    Common Encoding [%d]: 0x%x", encoding_idx, encoding);
-        print_encoding (baton, encoding);
+        print_encoding (baton, NULL, encoding);
         printf ("\n");
         common_encodings += sizeof (uint32_t);
         encoding_idx++;
