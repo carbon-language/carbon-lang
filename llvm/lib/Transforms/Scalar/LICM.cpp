@@ -810,6 +810,7 @@ void LICM::PromoteAliasSet(AliasSet &AS,
   // us to prove better alignment.
   unsigned Alignment = 1;
   AAMDNodes AATags;
+  bool HasDedicatedExits = CurLoop->hasDedicatedExits();
 
   // Check that all of the pointers in the alias set have the same type.  We
   // cannot (yet) promote a memory location that is loaded and stored in
@@ -843,6 +844,11 @@ void LICM::PromoteAliasSet(AliasSet &AS,
           continue;
         assert(!store->isVolatile() && "AST broken");
         if (!store->isSimple())
+          return;
+        // Don't sink stores from loops without dedicated block exits. Exits
+        // containing indirect branches are not transformed by loop simplify,
+        // make sure we catch that.
+        if (!HasDedicatedExits)
           return;
 
         // Note that we only check GuaranteedToExecute inside the store case
