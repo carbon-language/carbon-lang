@@ -459,12 +459,12 @@ MultiClass *TGParser::ParseMultiClassID() {
     return nullptr;
   }
 
-  MultiClass *Result = MultiClasses[Lex.getCurStrVal()];
-  if (!Result)
+  auto it = MultiClasses.find(Lex.getCurStrVal());
+  if (it == MultiClasses.end())
     TokError("Couldn't find multiclass '" + Lex.getCurStrVal() + "'");
 
   Lex.Lex();
-  return Result;
+  return &it->second;
 }
 
 /// ParseSubClassReference - Parse a reference to a subclass or to a templated
@@ -2290,11 +2290,13 @@ bool TGParser::ParseMultiClass() {
     return TokError("expected identifier after multiclass for name");
   std::string Name = Lex.getCurStrVal();
 
-  if (MultiClasses.count(Name))
+  auto Result =
+    MultiClasses.insert(std::make_pair(Name,
+                                       MultiClass(Name, Lex.getLoc(),Records)));
+  if (!Result.second)
     return TokError("multiclass '" + Name + "' already defined");
+  CurMultiClass = &Result.first->second;
 
-  CurMultiClass = MultiClasses[Name] = new MultiClass(Name, 
-                                                      Lex.getLoc(), Records);
   Lex.Lex();  // Eat the identifier.
 
   // If there are template args, parse them.
@@ -2555,8 +2557,9 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     // To instantiate a multiclass, we need to first get the multiclass, then
     // instantiate each def contained in the multiclass with the SubClassRef
     // template parameters.
-    MultiClass *MC = MultiClasses[Ref.Rec->getName()];
-    assert(MC && "Didn't lookup multiclass correctly?");
+    auto it = MultiClasses.find(Ref.Rec->getName());
+    assert(it != MultiClasses.end() && "Didn't lookup multiclass correctly?");
+    MultiClass *MC = &it->second;
     std::vector<Init*> &TemplateVals = Ref.TemplateArgs;
 
     // Verify that the correct number of template arguments were specified.
