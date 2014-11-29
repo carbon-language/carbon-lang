@@ -2676,7 +2676,7 @@ static bool BaseInSet(const CXXBaseSpecifier *Specifier,
 // In this hierarchy, f() belongs to the vftable of A, so B::f() expects
 // "this" parameter to point at the A subobject, which is B+4.
 // In the B::f() prologue, it adjusts "this" back to B by subtracting 4,
-// peformed as a *static* adjustment.
+// performed as a *static* adjustment.
 //
 // Interesting thing happens when we alter the relative placement of A and B
 // subobjects in a class:
