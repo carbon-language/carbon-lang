@@ -28,7 +28,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <forward_list>
+#include <deque>
 
 namespace llvm {
   class CodeGenRegBank;
@@ -449,8 +449,7 @@ namespace llvm {
   class CodeGenRegBank {
     SetTheory Sets;
 
-    //std::forward_list<CodeGenSubRegIndex> SubRegIndices;
-    std::vector<CodeGenSubRegIndex*> SubRegIndices;
+    std::deque<CodeGenSubRegIndex> SubRegIndices;
     DenseMap<Record*, CodeGenSubRegIndex*> Def2SubRegIdx;
 
     CodeGenSubRegIndex *createSubRegIndex(StringRef Name, StringRef NameSpace);
@@ -531,7 +530,9 @@ namespace llvm {
     // Sub-register indices. The first NumNamedIndices are defined by the user
     // in the .td files. The rest are synthesized such that all sub-registers
     // have a unique name.
-    std::vector<CodeGenSubRegIndex*> &getSubRegIndices() { return SubRegIndices; }
+    const std::deque<CodeGenSubRegIndex> &getSubRegIndices() const {
+      return SubRegIndices;
+    }
 
     // Find a SubRegIndex form its Record def.
     CodeGenSubRegIndex *getSubRegIdx(Record*);

@@ -140,13 +140,13 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS,
   auto &SubRegIndices = Bank.getSubRegIndices();
   if (!SubRegIndices.empty()) {
     OS << "\n// Subregister indices\n";
-    std::string Namespace = SubRegIndices.front()->getNamespace();
+    std::string Namespace = SubRegIndices.front().getNamespace();
     if (!Namespace.empty())
       OS << "namespace " << Namespace << " {\n";
     OS << "enum {\n  NoSubRegister,\n";
     unsigned i = 0;
     for (const auto &Idx : SubRegIndices)
-      OS << "  " << Idx->getName() << ",\t// " << ++i << "\n";
+      OS << "  " << Idx.getName() << ",\t// " << ++i << "\n";
     OS << "  NUM_TARGET_SUBREGS\n};\n";
     if (!Namespace.empty())
       OS << "}\n";
@@ -648,7 +648,7 @@ RegisterInfoEmitter::emitComposeSubRegIndices(raw_ostream &OS,
   for (const auto &Idx : SubRegIndices) {
     unsigned Found = ~0u;
     for (unsigned r = 0, re = Rows.size(); r != re; ++r) {
-      if (combine(Idx, Rows[r])) {
+      if (combine(&Idx, Rows[r])) {
         Found = r;
         break;
       }
@@ -657,7 +657,7 @@ RegisterInfoEmitter::emitComposeSubRegIndices(raw_ostream &OS,
       Found = Rows.size();
       Rows.resize(Found + 1);
       Rows.back().resize(SubRegIndicesSize);
-      combine(Idx, Rows.back());
+      combine(&Idx, Rows.back());
     }
     RowMap.push_back(Found);
   }
@@ -800,9 +800,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << TargetName << "SubRegIdxRanges[] = {\n";
   OS << "  { " << (uint16_t)-1 << ", " << (uint16_t)-1 << " },\n";
   for (const auto &Idx : SubRegIndices) {
-    OS << "  { " << Idx->Offset << ", "
-                 << Idx->Size
-       << " },\t// " << Idx->getName() << "\n";
+    OS << "  { " << Idx.Offset << ", " << Idx.Size << " },\t// "
+       << Idx.getName() << "\n";
   }
   OS << "};\n\n";
 
@@ -1056,7 +1055,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "\nstatic const char *const SubRegIndexNameTable[] = { \"";
 
   for (const auto &Idx : SubRegIndices) {
-    OS << Idx->getName();
+    OS << Idx.getName();
     OS << "\", \"";
   }
   OS << "\" };\n\n";
@@ -1064,8 +1063,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Emit SubRegIndex lane masks, including 0.
   OS << "\nstatic const unsigned SubRegIndexLaneMaskTable[] = {\n  ~0u,\n";
   for (const auto &Idx : SubRegIndices) {
-    OS << format("  0x%08x, // ", Idx->LaneMask)
-       << Idx->getName() << '\n';
+    OS << format("  0x%08x, // ", Idx.LaneMask) << Idx.getName() << '\n';
   }
   OS << " };\n\n";
 
@@ -1110,13 +1108,13 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       IdxList &SRIList = SuperRegIdxLists[rc];
       for (auto &Idx : SubRegIndices) {
         MaskBV.reset();
-        RC.getSuperRegClasses(Idx, MaskBV);
+        RC.getSuperRegClasses(&Idx, MaskBV);
         if (MaskBV.none())
           continue;
-        SRIList.push_back(Idx);
+        SRIList.push_back(&Idx);
         OS << "\n  ";
         printBitVectorAsHex(OS, MaskBV, 32);
-        OS << "// " << Idx->getName();
+        OS << "// " << Idx.getName();
       }
       SuperRegIdxSeqs.add(SRIList);
       OS << "\n};\n\n";
@@ -1253,11 +1251,11 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       const CodeGenRegisterClass &RC = *RegisterClasses[rci];
       OS << "    {\t// " << RC.getName() << "\n";
       for (auto &Idx : SubRegIndices) {
-        if (CodeGenRegisterClass *SRC = RC.getSubClassWithSubReg(Idx))
-          OS << "      " << SRC->EnumValue + 1 << ",\t// " << Idx->getName()
+        if (CodeGenRegisterClass *SRC = RC.getSubClassWithSubReg(&Idx))
+          OS << "      " << SRC->EnumValue + 1 << ",\t// " << Idx.getName()
              << " -> " << SRC->getName() << "\n";
         else
-          OS << "      0,\t// " << Idx->getName() << "\n";
+          OS << "      0,\t// " << Idx.getName() << "\n";
       }
       OS << "    },\n";
     }
