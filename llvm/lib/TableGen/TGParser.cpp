@@ -2330,25 +2330,24 @@ bool TGParser::ParseMultiClass() {
   if (Lex.getCode() != tgtok::l_brace) {
     if (!inherits)
       return TokError("expected '{' in multiclass definition");
-    else if (Lex.getCode() != tgtok::semi)
+    if (Lex.getCode() != tgtok::semi)
       return TokError("expected ';' in multiclass definition");
-    else
-      Lex.Lex();  // eat the ';'.
+    Lex.Lex();  // eat the ';'.
   } else {
     if (Lex.Lex() == tgtok::r_brace)  // eat the '{'.
       return TokError("multiclass must contain at least one def");
 
     while (Lex.getCode() != tgtok::r_brace) {
       switch (Lex.getCode()) {
-        default:
-          return TokError("expected 'let', 'def' or 'defm' in multiclass body");
-        case tgtok::Let:
-        case tgtok::Def:
-        case tgtok::Defm:
-        case tgtok::Foreach:
-          if (ParseObject(CurMultiClass))
-            return true;
-         break;
+      default:
+        return TokError("expected 'let', 'def' or 'defm' in multiclass body");
+      case tgtok::Let:
+      case tgtok::Def:
+      case tgtok::Defm:
+      case tgtok::Foreach:
+        if (ParseObject(CurMultiClass))
+          return true;
+        break;
       }
     }
     Lex.Lex();  // eat the '}'.
