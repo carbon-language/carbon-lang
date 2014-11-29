@@ -72,7 +72,7 @@ countTrailingZeros(T Val, ZeroBehavior ZB = ZB_Width) {
 template <typename T>
 typename std::enable_if<std::numeric_limits<T>::is_integer &&
                         std::numeric_limits<T>::is_signed, std::size_t>::type
-countTrailingZeros(T Val, ZeroBehavior ZB = ZB_Width) LLVM_DELETED_FUNCTION;
+countTrailingZeros(T, ZeroBehavior = ZB_Width) LLVM_DELETED_FUNCTION;
 
 #if __GNUC__ >= 4 || _MSC_VER
 template <>
@@ -138,7 +138,7 @@ countLeadingZeros(T Val, ZeroBehavior ZB = ZB_Width) {
 template <typename T>
 typename std::enable_if<std::numeric_limits<T>::is_integer &&
                         std::numeric_limits<T>::is_signed, std::size_t>::type
-countLeadingZeros(T Val, ZeroBehavior ZB = ZB_Width) LLVM_DELETED_FUNCTION;
+countLeadingZeros(T, ZeroBehavior = ZB_Width) LLVM_DELETED_FUNCTION;
 
 #if __GNUC__ >= 4 || _MSC_VER
 template <>
@@ -193,7 +193,7 @@ findFirstSet(T Val, ZeroBehavior ZB = ZB_Max) {
 template <typename T>
 typename std::enable_if<std::numeric_limits<T>::is_integer &&
                         std::numeric_limits<T>::is_signed, T>::type
-findFirstSet(T Val, ZeroBehavior ZB = ZB_Max) LLVM_DELETED_FUNCTION;
+findFirstSet(T, ZeroBehavior = ZB_Max) LLVM_DELETED_FUNCTION;
 
 /// \brief Get the index of the last set bit starting from the least
 ///   significant bit.
@@ -219,7 +219,7 @@ findLastSet(T Val, ZeroBehavior ZB = ZB_Max) {
 template <typename T>
 typename std::enable_if<std::numeric_limits<T>::is_integer &&
                         std::numeric_limits<T>::is_signed, T>::type
-findLastSet(T Val, ZeroBehavior ZB = ZB_Max) LLVM_DELETED_FUNCTION;
+findLastSet(T, ZeroBehavior = ZB_Max) LLVM_DELETED_FUNCTION;
 
 /// \brief Macro compressed bit reversal table for 256 bits.
 ///
