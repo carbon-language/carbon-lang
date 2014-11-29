@@ -636,12 +636,232 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
     }
 }
 
+void
+print_encoding_i386 (struct baton baton, uint8_t *function_start, uint32_t encoding)
+{
+    int mode = encoding & UNWIND_X86_MODE_MASK;
+    switch (mode)
+    {
+        case UNWIND_X86_MODE_EBP_FRAME:
+        {
+            printf ("frame func: CFA is ebp+%d ", 8);
+            printf (" eip=[CFA-4] ebp=[CFA-8]");
+            uint32_t saved_registers_offset = EXTRACT_BITS (encoding, UNWIND_X86_EBP_FRAME_OFFSET);
+
+            uint32_t saved_registers_locations = EXTRACT_BITS (encoding, UNWIND_X86_EBP_FRAME_REGISTERS);
+
+
+            saved_registers_offset += 2;
+
+            for (int i = 0; i < 5; i++)
+            {
+                switch (saved_registers_locations & 0x7)
+                {
+                    case UNWIND_X86_REG_NONE:
+                        break;
+                    case UNWIND_X86_REG_EBX:
+                        printf (" ebx=[CFA-%d]", saved_registers_offset * 4);
+                        break;
+                    case UNWIND_X86_REG_ECX:
+                        printf (" ecx=[CFA-%d]", saved_registers_offset * 4);
+                        break;
+                    case UNWIND_X86_REG_EDX:
+                        printf (" edx=[CFA-%d]", saved_registers_offset * 4);
+                        break;
+                    case UNWIND_X86_REG_EDI:
+                        printf (" edi=[CFA-%d]", saved_registers_offset * 4);
+                        break;
+                    case UNWIND_X86_REG_ESI:
+                        printf (" esi=[CFA-%d]", saved_registers_offset * 4);
+                        break;
+                }
+                saved_registers_offset--;
+                saved_registers_locations >>= 3;
+            }
+        }
+        break;
+
+        case UNWIND_X86_MODE_STACK_IND:
+        case UNWIND_X86_MODE_STACK_IMMD:
+        {
+            uint32_t stack_size = EXTRACT_BITS (encoding, UNWIND_X86_FRAMELESS_STACK_SIZE);
+            uint32_t register_count = EXTRACT_BITS (encoding, UNWIND_X86_FRAMELESS_STACK_REG_COUNT);
+            uint32_t permutation = EXTRACT_BITS (encoding, UNWIND_X86_FRAMELESS_STACK_REG_PERMUTATION);
+
+            if (mode == UNWIND_X86_MODE_STACK_IND && function_start)
+            {
+                uint32_t stack_adjust = EXTRACT_BITS (encoding, UNWIND_X86_FRAMELESS_STACK_ADJUST);
+
+                // offset into the function instructions; 0 == beginning of first instruction
+                uint32_t offset_to_subl_insn = EXTRACT_BITS (encoding, UNWIND_X86_FRAMELESS_STACK_SIZE);
+
+                stack_size = *((uint32_t*) (function_start + offset_to_subl_insn));
+
+                stack_size += stack_adjust * 4;
+            }
+            
+            printf ("frameless function: stack size %d, register count %d ", stack_size * 4, register_count);
+
+            if (register_count == 0)
+            {
+                printf (" no registers saved");
+            }
+            else
+            {
+
+                // We need to include (up to) 6 registers in 10 bits.
+                // That would be 18 bits if we just used 3 bits per reg to indicate
+                // the order they're saved on the stack. 
+                //
+                // This is done with Lehmer code permutation, e.g. see
+                // http://stackoverflow.com/questions/1506078/fast-permutation-number-permutation-mapping-algorithms
+                int permunreg[6];
+
+                // This decodes the variable-base number in the 10 bits
+                // and gives us the Lehmer code sequence which can then
+                // be decoded.
+
+                switch (register_count) 
+                {
+                    case 6:
+                        permunreg[0] = permutation/120;    // 120 == 5!
+                        permutation -= (permunreg[0]*120);
+                        permunreg[1] = permutation/24;     // 24 == 4!
+                        permutation -= (permunreg[1]*24);
+                        permunreg[2] = permutation/6;      // 6 == 3!
+                        permutation -= (permunreg[2]*6);
+                        permunreg[3] = permutation/2;      // 2 == 2!
+                        permutation -= (permunreg[3]*2);
+                        permunreg[4] = permutation;        // 1 == 1!
+                        permunreg[5] = 0;
+                        break;
+                    case 5:
+                        permunreg[0] = permutation/120;
+                        permutation -= (permunreg[0]*120);
+                        permunreg[1] = permutation/24;
+                        permutation -= (permunreg[1]*24);
+                        permunreg[2] = permutation/6;
+                        permutation -= (permunreg[2]*6);
+                        permunreg[3] = permutation/2;
+                        permutation -= (permunreg[3]*2);
+                        permunreg[4] = permutation;
+                        break;
+                    case 4:
+                        permunreg[0] = permutation/60;
+                        permutation -= (permunreg[0]*60);
+                        permunreg[1] = permutation/12;
+                        permutation -= (permunreg[1]*12);
+                        permunreg[2] = permutation/3;
+                        permutation -= (permunreg[2]*3);
+                        permunreg[3] = permutation;
+                        break;
+                    case 3:
+                        permunreg[0] = permutation/20;
+                        permutation -= (permunreg[0]*20);
+                        permunreg[1] = permutation/4;
+                        permutation -= (permunreg[1]*4);
+                        permunreg[2] = permutation;
+                        break;
+                    case 2:
+                        permunreg[0] = permutation/5;
+                        permutation -= (permunreg[0]*5);
+                        permunreg[1] = permutation;
+                        break;
+                    case 1:
+                        permunreg[0] = permutation;
+                        break;
+                }
+                
+                // Decode the Lehmer code for this permutation of
+                // the registers v. http://en.wikipedia.org/wiki/Lehmer_code
+
+                int registers[6];
+                bool used[7] = { false, false, false, false, false, false, false };
+                for (int i = 0; i < register_count; i++)
+                {
+                    int renum = 0;
+                    for (int j = 1; j < 7; j++)
+                    {
+                        if (used[j] == false)
+                        {
+                            if (renum == permunreg[i])
+                            {
+                                registers[i] = j;
+                                used[j] = true;
+                                break;
+                            }
+                            renum++;
+                        }
+                    }
+                }
+
+
+                printf (" CFA is esp+%d ", stack_size * 4);
+
+                uint32_t saved_registers_offset = 1;
+                printf (" eip=[CFA-%d]", saved_registers_offset * 4);
+                saved_registers_offset++;
+
+                for (int i = (sizeof (registers) / sizeof (int)) - 1; i >= 0; i--)
+                {
+                    switch (registers[i])
+                    {
+                        case UNWIND_X86_REG_NONE:
+                            break;
+                        case UNWIND_X86_REG_EBX:
+                            printf (" ebx=[CFA-%d]", saved_registers_offset * 4);
+                            break;
+                        case UNWIND_X86_REG_ECX:
+                            printf (" ecx=[CFA-%d]", saved_registers_offset * 4);
+                            break;
+                        case UNWIND_X86_REG_EDX:
+                            printf (" edx=[CFA-%d]", saved_registers_offset * 4);
+                            break;
+                        case UNWIND_X86_REG_EDI:
+                            printf (" edi=[CFA-%d]", saved_registers_offset * 4);
+                            break;
+                        case UNWIND_X86_REG_ESI:
+                            printf (" esi=[CFA-%d]", saved_registers_offset * 4);
+                            break;
+                        case UNWIND_X86_REG_EBP:
+                            printf (" ebp=[CFA-%d]", saved_registers_offset * 4);
+                            break;
+                    }
+                    saved_registers_offset++;
+                }
+
+            }
+
+        }
+        break;
+
+        case UNWIND_X86_MODE_DWARF:
+        {
+            uint32_t dwarf_offset = encoding & UNWIND_X86_DWARF_SECTION_OFFSET;
+            printf ("DWARF unwind instructions: FDE at offset %d (file address 0x%" PRIx64 ")",
+                    dwarf_offset, dwarf_offset + baton.eh_section_file_address);
+        }
+        break;
+
+        case 0:
+        {
+            printf (" no unwind information");
+        }
+        break;
+    }
+}
+
+
 void print_encoding (struct baton baton, uint8_t *function_start, uint32_t encoding)
 {
 
     if (baton.cputype == CPU_TYPE_X86_64)
     {
         print_encoding_x86_64 (baton, function_start, encoding);
+    }
+    else if (baton.cputype == CPU_TYPE_I386)
+    {
+        print_encoding_i386 (baton, function_start, encoding);
     }
     else
     {
@@ -717,7 +937,7 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
     {
         uint32_t func_offset = entry_func_offset + baton.first_level_index_entry.functionOffset;
 
-        uint32_t lsda_offset = 0;
+        int lsda_entry_number = -1;
 
         uint32_t low = 0;
         uint32_t high = (baton.lsda_array_end - baton.lsda_array_start) / sizeof (struct unwind_info_section_header_lsda_index_entry);
@@ -731,7 +951,7 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
             memcpy (&mid_lsda_entry, mid_lsda_entry_addr, sizeof (struct unwind_info_section_header_lsda_index_entry));
             if (mid_lsda_entry.functionOffset == func_offset)
             {
-                lsda_offset = mid_lsda_entry.lsdaOffset;
+                lsda_entry_number = (mid_lsda_entry_addr - baton.lsda_array_start) / sizeof (struct unwind_info_section_header_lsda_index_entry);
                 break;
             }
             else if (mid_lsda_entry.functionOffset < func_offset)
@@ -744,19 +964,21 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
             }
         }
 
-        printf (", LSDA offset %d", lsda_offset);
+        if (lsda_entry_number != -1)
+        {
+            printf (", LSDA entry #%d", lsda_entry_number);
+        }
+        else
+        {
+            printf (", LSDA entry not found");
+        }
     }
 
     uint32_t pers_idx = EXTRACT_BITS (encoding, UNWIND_PERSONALITY_MASK);
     if (pers_idx != 0)
     {
         pers_idx--;  // Change 1-based to 0-based index
-        uint32_t pers_delta = *((uint32_t*) (baton.compact_unwind_start + baton.unwind_header.personalityArraySectionOffset + pers_idx * 4));
-
-        uint8_t **personality_addr = (uint8_t **) (baton.mach_header_start + pers_delta);
-        void *personality = *personality_addr;
-        printf (", personality func offset %d", pers_delta);
-//            printf (", personality %p", personality);
+        printf (", personality entry #%d", pers_idx);
     }
 
     printf ("\n");
