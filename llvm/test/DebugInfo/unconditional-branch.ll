@@ -27,11 +27,12 @@ entry:
   switch i32 %0, label %sw.default [
   ], !dbg !14
 
+sw.epilog:                                        ; preds = %sw.default
+  ret void, !dbg !17
+
 sw.default:                                       ; preds = %entry
   br label %sw.epilog, !dbg !15
 
-sw.epilog:                                        ; preds = %sw.default
-  ret void, !dbg !17
 }
 
 ; Function Attrs: nounwind readnone

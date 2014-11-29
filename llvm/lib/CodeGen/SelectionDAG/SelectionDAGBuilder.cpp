@@ -2694,6 +2694,9 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = nullptr;
+  if (SwitchMBB + 1 != FuncInfo.MF->end())
+    NextBlock = SwitchMBB + 1;
+
   MachineBasicBlock *Default = FuncInfo.MBBMap[SI.getDefaultDest()];
 
   // If there is only the default destination, branch to it if it is not the
