@@ -414,7 +414,7 @@ static void InitLibcallNames(const char **Names, const Triple &TT) {
     Names[RTLIB::SINCOS_PPCF128] = nullptr;
   }
 
-  if (TT.getOS() != Triple::OpenBSD) {
+  if (!TT.isOSOpenBSD()) {
     Names[RTLIB::STACKPROTECTOR_CHECK_FAIL] = "__stack_chk_fail";
   } else {
     // These are generally not available.

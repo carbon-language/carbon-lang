@@ -346,7 +346,7 @@ static bool CreatePrologue(Function *F, Module *M, ReturnInst *RI,
 
     StackGuardVar = ConstantExpr::getIntToPtr(
         OffsetVal, PointerType::get(PtrTy, AddressSpace));
-  } else if (Trip.getOS() == llvm::Triple::OpenBSD) {
+  } else if (Trip.isOSOpenBSD()) {
     StackGuardVar = M->getOrInsertGlobal("__guard_local", PtrTy);
     cast<GlobalValue>(StackGuardVar)
         ->setVisibility(GlobalValue::HiddenVisibility);
@@ -477,7 +477,7 @@ BasicBlock *StackProtector::CreateFailBB() {
   LLVMContext &Context = F->getContext();
   BasicBlock *FailBB = BasicBlock::Create(Context, "CallStackCheckFailBlk", F);
   IRBuilder<> B(FailBB);
-  if (Trip.getOS() == llvm::Triple::OpenBSD) {
+  if (Trip.isOSOpenBSD()) {
     Constant *StackChkFail = M->getOrInsertFunction(
         "__stack_smash_handler", Type::getVoidTy(Context),
         Type::getInt8PtrTy(Context), nullptr);
