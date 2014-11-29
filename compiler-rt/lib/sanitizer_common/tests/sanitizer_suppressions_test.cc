@@ -153,4 +153,14 @@ TEST_F(SuppressionContextTest, ParseType) {
   EXPECT_EQ(0, strcmp((*Suppressions())[0].templ, "foo"));
 }
 
+TEST_F(SuppressionContextTest, HasSuppressionType) {
+  ctx_->Parse(
+    "race:foo\n"
+    "thread:bar\n");
+  EXPECT_TRUE(ctx_->HasSuppressionType(SuppressionRace));
+  EXPECT_TRUE(ctx_->HasSuppressionType(SuppressionThread));
+  EXPECT_FALSE(ctx_->HasSuppressionType(SuppressionMutex));
+  EXPECT_FALSE(ctx_->HasSuppressionType(SuppressionSignal));
+}
+
 }  // namespace __sanitizer

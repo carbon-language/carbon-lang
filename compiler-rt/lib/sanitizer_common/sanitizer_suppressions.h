@@ -43,6 +43,7 @@ class SuppressionContext {
   void Parse(const char *str);
   bool Match(const char* str, SuppressionType type, Suppression **s);
   uptr SuppressionCount() const;
+  bool HasSuppressionType(SuppressionType type) const;
   const Suppression *SuppressionAt(uptr i) const;
   void GetMatched(InternalMmapVector<Suppression *> *matched);
 
@@ -54,8 +55,9 @@ class SuppressionContext {
   static SuppressionContext *Get();
 
  private:
-  SuppressionContext() : suppressions_(1), can_parse_(true) {}
+  SuppressionContext();
   InternalMmapVector<Suppression> suppressions_;
+  bool has_suppresson_type_[SuppressionTypeCount];
   bool can_parse_;
 
   friend class SuppressionContextTest;
