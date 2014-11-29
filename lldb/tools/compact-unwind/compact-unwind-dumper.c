@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <mach-o/nlist.h>
 
 #define EXTRACT_BITS(value, mask) \
         ( (value >> __builtin_ctz(mask)) & (((1 << __builtin_popcount(mask)))-1) )
@@ -22,6 +23,18 @@
 // unwinddump will be more authoritative/reliable but this program
 // can dump at least the UNWIND_X86_64_MODE_RBP_FRAME format entries
 // correctly.
+
+struct symbol
+{
+    uint64_t file_address;
+    const char *name;
+};
+
+int
+symbol_compare (const void *a, const void *b)
+{
+    return (int) ((struct symbol *)a)->file_address - ((struct symbol *)b)->file_address;
+}
 
 struct baton
 {
@@ -38,12 +51,18 @@ struct baton
     uint64_t text_section_vmaddr;    // __TEXT,__text section vmaddr
     uint64_t text_section_file_offset;
 
-    uint8_t *text_section_start;     // pointer into this program's address space
-
     uint64_t eh_section_file_address; // the file address of the __TEXT,__eh_frame section
 
     uint8_t *lsda_array_start;       // for the currently-being-processed first-level index
     uint8_t *lsda_array_end;         // the lsda_array_start for the NEXT first-level index
+
+    struct symbol *symbols;
+    int    symbols_count;
+
+    uint64_t *function_start_addresses;
+    int function_start_addresses_count;
+
+    int current_index_table_number;
 
     struct unwind_info_section_header unwind_header;
     struct unwind_info_section_header_index_entry first_level_index_entry;
@@ -52,13 +71,35 @@ struct baton
 };
 
 
+uint64_t 
+read_leb128 (uint8_t **offset)
+{
+    uint64_t result = 0;
+    int shift = 0;
+    while (1) 
+    {
+        uint8_t byte = **offset;
+        *offset = *offset + 1;
+        result |= (byte & 0x7f) << shift;
+        if ((byte & 0x80) == 0)
+            break;
+        shift += 7;
+    }
+
+    return result;
+}
+
 // step through the load commands in a thin mach-o binary,
 // find the cputype and the start of the __TEXT,__unwind_info
 // section, return a pointer to that section or NULL if not found.
 
-void
+static void
 scan_macho_load_commands (struct baton *baton)
 {
+    struct symtab_command symtab_cmd;
+    uint64_t linkedit_segment_vmaddr;
+    uint64_t linkedit_segment_file_offset;
+
     baton->compact_unwind_start = 0;
 
     uint32_t *magic = (uint32_t *) baton->mach_header_start;
@@ -89,119 +130,295 @@ scan_macho_load_commands (struct baton *baton)
 
     baton->cputype = mh.cputype;
 
+    uint8_t *start_of_load_commands = offset;
+
     uint32_t cur_cmd = 0;
-    while (cur_cmd < mh.ncmds && (offset - baton->mach_header_start) < mh.sizeofcmds)
+    while (cur_cmd < mh.ncmds && (offset - start_of_load_commands) < mh.sizeofcmds)
     {
         struct load_command lc;
         uint32_t *lc_cmd = (uint32_t *) offset;
         uint32_t *lc_cmdsize = (uint32_t *) offset + 1;
         uint8_t *start_of_this_load_cmd = offset;
-        
-        char segment_name[17];
-        segment_name[0] = '\0';
-        uint32_t nsects = 0;
-        uint64_t segment_offset = 0;
-        uint64_t segment_vmaddr = 0;
 
-        if (*lc_cmd == LC_SEGMENT_64)
+        if (*lc_cmd == LC_SEGMENT || *lc_cmd == LC_SEGMENT_64)
         {
-            struct segment_command_64 seg;
-            memcpy (&seg, offset, sizeof (struct segment_command_64));
-            memcpy (&segment_name, &seg.segname, 16);
-            segment_name[16] = '\0';
-            nsects = seg.nsects;
-            segment_offset = seg.fileoff;
-            segment_vmaddr = seg.vmaddr;
-            offset += sizeof (struct segment_command_64);
-        }
+            char segment_name[17];
+            segment_name[0] = '\0';
+            uint32_t nsects = 0;
+            uint64_t segment_offset = 0;
+            uint64_t segment_vmaddr = 0;
 
-        if (*lc_cmd == LC_SEGMENT)
-        {
-            struct segment_command seg;
-            memcpy (&seg, offset, sizeof (struct segment_command));
-            memcpy (&segment_name, &seg.segname, 16);
-            segment_name[16] = '\0';
-            nsects = seg.nsects;
-            segment_offset = seg.fileoff;
-            segment_vmaddr = seg.vmaddr;
-            offset += sizeof (struct segment_command);
-        }
-
-        if ((*lc_cmd == LC_SEGMENT || *lc_cmd == LC_SEGMENT_64)
-             && nsects != 0 && segment_name[0] != '\0' && strcmp (segment_name, "__TEXT") == 0)
-        {
-            baton->text_segment_vmaddr = segment_vmaddr;
-            baton->text_segment_file_offset = segment_offset;
-
-            uint32_t current_sect = 0;
-            while (current_sect < nsects && (offset - start_of_this_load_cmd) < *lc_cmdsize)
+            if (*lc_cmd == LC_SEGMENT_64)
             {
-                char sect_name[17];
-                memcpy (&sect_name, offset, 16);
-                sect_name[16] = '\0';
-                if (strcmp (sect_name, "__unwind_info") == 0)
-                {
-                    if (is_64bit)
-                    {
-                        struct section_64 sect;
-                        memcpy (&sect, offset, sizeof (struct section_64));
-                        baton->compact_unwind_start = baton->mach_header_start + sect.offset;
-                    }
-                    else
-                    {
-                        struct section sect;
-                        memcpy (&sect, offset, sizeof (struct section));
-                        baton->compact_unwind_start = baton->mach_header_start + sect.offset;
-                    }
-                }
-                if (strcmp (sect_name, "__eh_frame") == 0)
-                {
-                    if (is_64bit)
-                    {
-                        struct section_64 sect;
-                        memcpy (&sect, offset, sizeof (struct section_64));
-                        baton->eh_section_file_address = sect.addr;
-                    }
-                    else
-                    {
-                        struct section sect;
-                        memcpy (&sect, offset, sizeof (struct section));
-                        baton->eh_section_file_address = sect.addr;
-                    }
-                }
-                if (strcmp (sect_name, "__text") == 0)
-                {
-                    if (is_64bit)
-                    {
-                        struct section_64 sect;
-                        memcpy (&sect, offset, sizeof (struct section_64));
-                        baton->text_section_vmaddr = sect.addr;
-                        baton->text_section_file_offset = sect.offset;
-                    }
-                    else
-                    {
-                        struct section sect;
-                        memcpy (&sect, offset, sizeof (struct section));
-                        baton->text_section_vmaddr = sect.addr;
-                    }
-                }
+                struct segment_command_64 seg;
+                memcpy (&seg, offset, sizeof (struct segment_command_64));
+                memcpy (&segment_name, &seg.segname, 16);
+                segment_name[16] = '\0';
+                nsects = seg.nsects;
+                segment_offset = seg.fileoff;
+                segment_vmaddr = seg.vmaddr;
+                offset += sizeof (struct segment_command_64);
+            }
 
-                if (is_64bit)
+            if (*lc_cmd == LC_SEGMENT)
+            {
+                struct segment_command seg;
+                memcpy (&seg, offset, sizeof (struct segment_command));
+                memcpy (&segment_name, &seg.segname, 16);
+                segment_name[16] = '\0';
+                nsects = seg.nsects;
+                segment_offset = seg.fileoff;
+                segment_vmaddr = seg.vmaddr;
+                offset += sizeof (struct segment_command);
+            }
+
+            if (nsects != 0 && strcmp (segment_name, "__TEXT") == 0)
+            {
+                baton->text_segment_vmaddr = segment_vmaddr;
+                baton->text_segment_file_offset = segment_offset;
+
+                uint32_t current_sect = 0;
+                while (current_sect < nsects && (offset - start_of_this_load_cmd) < *lc_cmdsize)
                 {
-                    offset += sizeof (struct section_64);
-                }
-                else
-                {
-                    offset += sizeof (struct section);
+                    char sect_name[17];
+                    memcpy (&sect_name, offset, 16);
+                    sect_name[16] = '\0';
+                    if (strcmp (sect_name, "__unwind_info") == 0)
+                    {
+                        if (is_64bit)
+                        {
+                            struct section_64 sect;
+                            memcpy (&sect, offset, sizeof (struct section_64));
+                            baton->compact_unwind_start = baton->mach_header_start + sect.offset;
+                        }
+                        else
+                        {
+                            struct section sect;
+                            memcpy (&sect, offset, sizeof (struct section));
+                            baton->compact_unwind_start = baton->mach_header_start + sect.offset;
+                        }
+                    }
+                    if (strcmp (sect_name, "__eh_frame") == 0)
+                    {
+                        if (is_64bit)
+                        {
+                            struct section_64 sect;
+                            memcpy (&sect, offset, sizeof (struct section_64));
+                            baton->eh_section_file_address = sect.addr;
+                        }
+                        else
+                        {
+                            struct section sect;
+                            memcpy (&sect, offset, sizeof (struct section));
+                            baton->eh_section_file_address = sect.addr;
+                        }
+                    }
+                    if (strcmp (sect_name, "__text") == 0)
+                    {
+                        if (is_64bit)
+                        {
+                            struct section_64 sect;
+                            memcpy (&sect, offset, sizeof (struct section_64));
+                            baton->text_section_vmaddr = sect.addr;
+                            baton->text_section_file_offset = sect.offset;
+                        }
+                        else
+                        {
+                            struct section sect;
+                            memcpy (&sect, offset, sizeof (struct section));
+                            baton->text_section_vmaddr = sect.addr;
+                        }
+                    }
+                    if (is_64bit)
+                    {
+                        offset += sizeof (struct section_64);
+                    }
+                    else
+                    {
+                        offset += sizeof (struct section);
+                    }
                 }
             }
 
-            return;
+            if (strcmp (segment_name, "__LINKEDIT") == 0)
+            {
+                linkedit_segment_vmaddr = segment_vmaddr;
+                linkedit_segment_file_offset = segment_offset;
+            }
+        }
+
+        if (*lc_cmd == LC_SYMTAB)
+        {
+            memcpy (&symtab_cmd, offset, sizeof (struct symtab_command));
+        }
+
+        if (*lc_cmd == LC_DYSYMTAB)
+        {
+            struct dysymtab_command dysymtab_cmd;
+            memcpy (&dysymtab_cmd, offset, sizeof (struct dysymtab_command));
+
+            int nlist_size = 12;
+            if (is_64bit)
+                nlist_size = 16;
+
+            char *string_table = (char *) (baton->mach_header_start + symtab_cmd.stroff);
+            uint8_t *local_syms = baton->mach_header_start + symtab_cmd.symoff + (dysymtab_cmd.ilocalsym * nlist_size);
+            int local_syms_count = dysymtab_cmd.nlocalsym;
+            uint8_t *exported_syms = baton->mach_header_start + symtab_cmd.symoff + (dysymtab_cmd.iextdefsym * nlist_size);
+            int exported_syms_count = dysymtab_cmd.nextdefsym;
+
+            // We're only going to create records for a small number of these symbols but to 
+            // simplify the memory management I'll allocate enough space to store all of them.
+            baton->symbols = (struct symbol *) malloc (sizeof (struct symbol) * (local_syms_count + exported_syms_count));
+            baton->symbols_count = 0;
+
+            for (int i = 0; i < local_syms_count; i++)
+            {
+                struct nlist_64 nlist;
+                if (is_64bit)
+                {
+                    memcpy (&nlist, local_syms + (i * nlist_size), sizeof (struct nlist_64));
+                }
+                else
+                {
+                    struct nlist nlist_32;
+                    memcpy (&nlist_32, local_syms + (i * nlist_size), sizeof (struct nlist));
+                    nlist.n_un.n_strx = nlist_32.n_un.n_strx;
+                    nlist.n_type = nlist_32.n_type;
+                    nlist.n_sect = nlist_32.n_sect;
+                    nlist.n_desc = nlist_32.n_desc;
+                    nlist.n_value = nlist_32.n_value;
+                }
+                if ((nlist.n_type & N_STAB) == 0
+                    && ((nlist.n_type & N_EXT) == 1 || 
+                        ((nlist.n_type & N_TYPE) == N_TYPE && nlist.n_sect != NO_SECT))
+                    && nlist.n_value != 0
+                    && nlist.n_value != baton->text_segment_vmaddr)
+                {
+                    baton->symbols[baton->symbols_count].file_address = nlist.n_value;
+                    baton->symbols[baton->symbols_count].name = string_table + nlist.n_un.n_strx;
+                    baton->symbols_count++;
+                }
+            }
+
+            for (int i = 0; i < exported_syms_count; i++)
+            {
+                struct nlist_64 nlist;
+                if (is_64bit)
+                {
+                    memcpy (&nlist, exported_syms + (i * nlist_size), sizeof (struct nlist_64));
+                }
+                else
+                {
+                    struct nlist nlist_32;
+                    memcpy (&nlist_32, exported_syms + (i * nlist_size), sizeof (struct nlist));
+                    nlist.n_un.n_strx = nlist_32.n_un.n_strx;
+                    nlist.n_type = nlist_32.n_type;
+                    nlist.n_sect = nlist_32.n_sect;
+                    nlist.n_desc = nlist_32.n_desc;
+                    nlist.n_value = nlist_32.n_value;
+                }
+                if ((nlist.n_type & N_STAB) == 0
+                    && ((nlist.n_type & N_EXT) == 1 || 
+                        ((nlist.n_type & N_TYPE) == N_TYPE && nlist.n_sect != NO_SECT))
+                    && nlist.n_value != 0
+                    && nlist.n_value != baton->text_segment_vmaddr)
+                {
+                    baton->symbols[baton->symbols_count].file_address = nlist.n_value;
+                    baton->symbols[baton->symbols_count].name = string_table + nlist.n_un.n_strx;
+                    baton->symbols_count++;
+                }
+            }
+
+            qsort (baton->symbols, baton->symbols_count, sizeof (struct symbol), symbol_compare);
+        }
+
+        if (*lc_cmd == LC_FUNCTION_STARTS)
+        {
+            struct linkedit_data_command function_starts_cmd;
+            memcpy (&function_starts_cmd, offset, sizeof (struct linkedit_data_command));
+
+            uint8_t *funcstarts_offset = baton->mach_header_start + function_starts_cmd.dataoff;
+            uint8_t *function_end = funcstarts_offset + function_starts_cmd.datasize;
+            int count = 0;
+
+            while (funcstarts_offset < function_end)
+            {
+                if (read_leb128 (&funcstarts_offset) != 0)
+                {
+                    count++;
+                }
+            }
+
+            baton->function_start_addresses = (uint64_t *) malloc (sizeof (uint64_t) * count);
+            baton->function_start_addresses_count = count;
+
+            funcstarts_offset = baton->mach_header_start + function_starts_cmd.dataoff;
+            uint64_t current_pc = baton->text_segment_vmaddr;
+            int i = 0;
+            while (funcstarts_offset < function_end)
+            {
+                uint64_t func_start = read_leb128 (&funcstarts_offset);
+                if (func_start != 0)
+                {
+                    current_pc += func_start;
+                    baton->function_start_addresses[i++] = current_pc;
+                }
+            }
         }
 
         offset = start_of_this_load_cmd + *lc_cmdsize;
         cur_cmd++;
     }
+
+
+    // Augment the symbol table with the function starts table -- adding symbol entries
+    // for functions that were stripped.
+
+    int unnamed_functions_to_add = 0;
+    for (int i = 0; i < baton->function_start_addresses_count; i++)
+    {
+        struct symbol search_key;
+        search_key.file_address = baton->function_start_addresses[i];
+        struct symbol *sym = bsearch (&search_key, baton->symbols, baton->symbols_count, sizeof (struct symbol), symbol_compare);
+        if (sym == NULL)
+            unnamed_functions_to_add++;
+    }
+
+    baton->symbols = (struct symbol *) realloc (baton->symbols, sizeof (struct symbol) * (baton->symbols_count + unnamed_functions_to_add));
+
+    int current_unnamed_symbol = 1;
+    int number_symbols_added = 0;
+    for (int i = 0; i < baton->function_start_addresses_count; i++)
+    {
+        struct symbol search_key;
+        search_key.file_address = baton->function_start_addresses[i];
+        struct symbol *sym = bsearch (&search_key, baton->symbols, baton->symbols_count, sizeof (struct symbol), symbol_compare);
+        if (sym == NULL)
+        {
+            char *name;
+            asprintf (&name, "unnamed function #%d", current_unnamed_symbol++);
+            baton->symbols[baton->symbols_count + number_symbols_added].file_address = baton->function_start_addresses[i];
+            baton->symbols[baton->symbols_count + number_symbols_added].name = name;
+            number_symbols_added++;
+        }
+    }
+    baton->symbols_count += number_symbols_added;
+    qsort (baton->symbols, baton->symbols_count, sizeof (struct symbol), symbol_compare);
+
+
+//    printf ("function start addresses\n");
+//    for (int i = 0; i < baton->function_start_addresses_count; i++)
+//    {
+//        printf ("0x%012llx\n", baton->function_start_addresses[i]);
+//    }
+
+//    printf ("symbol table names & addresses\n");
+//    for (int i = 0; i < baton->symbols_count; i++)
+//    {
+//        printf ("0x%012llx %s\n", baton->symbols[i].file_address, baton->symbols[i].name);
+//    }
+
 }
 
 void
@@ -212,7 +429,7 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
     {
         case UNWIND_X86_64_MODE_RBP_FRAME:
         {
-            printf (" - frame func: CFA is rbp+%d ", 16);
+            printf ("frame func: CFA is rbp+%d ", 16);
             printf (" rip=[CFA-8] rbp=[CFA-16]");
             uint32_t saved_registers_offset = EXTRACT_BITS (encoding, UNWIND_X86_64_RBP_FRAME_OFFSET);
 
@@ -268,7 +485,7 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
                 stack_size += stack_adjust * 8;
             }
             
-            printf (" frameless function: stack size %d, register count %d ", stack_size * 8, register_count);
+            printf ("frameless function: stack size %d, register count %d ", stack_size * 8, register_count);
 
             if (register_count == 0)
             {
@@ -406,7 +623,7 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
         case UNWIND_X86_64_MODE_DWARF:
         {
             uint32_t dwarf_offset = encoding & UNWIND_X86_DWARF_SECTION_OFFSET;
-            printf (" use DWARF unwind instructions: FDE at offset %d (file address 0x%" PRIx64 ")",
+            printf ("DWARF unwind instructions: FDE at offset %d (file address 0x%" PRIx64 ")",
                     dwarf_offset, dwarf_offset + baton.eh_section_file_address);
         }
         break;
@@ -445,11 +662,52 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
     {
         asprintf (&entry_encoding_index_str, "");
     }
-    printf ("    func [%d] offset %d (file addr 0x%" PRIx64 ")%s - 0x%x", 
+
+    uint64_t file_address = baton.first_level_index_entry.functionOffset + entry_func_offset + baton.text_segment_vmaddr;
+
+    printf ("    func [%d] offset %d (file addr 0x%" PRIx64 ")%s, encoding is 0x%x", 
             idx, entry_func_offset, 
-            baton.first_level_index_entry.functionOffset + entry_func_offset + baton.text_segment_vmaddr,  // FIXME
+            file_address,
             entry_encoding_index_str, 
             encoding);
+
+    struct symbol *symbol = NULL;
+    for (int i = 0; i < baton.symbols_count; i++)
+    {
+        if (i == baton.symbols_count - 1 && baton.symbols[i].file_address <= file_address)
+        {
+            symbol = &(baton.symbols[i]);
+            break;
+        }
+        else
+        {
+            if (baton.symbols[i].file_address <= file_address && baton.symbols[i + 1].file_address > file_address)
+            {
+                symbol = &(baton.symbols[i]);
+                break;
+            }
+        }
+    }
+
+    printf ("\n         ");
+    if (symbol)
+    {
+        int offset = file_address - symbol->file_address;
+
+        // FIXME this is a poor heuristic - if we're greater than 16 bytes past the
+        // start of the function, this is the unwind info for a stripped function.
+        // In reality the compact unwind entry may not line up exactly with the 
+        // function bounds.
+        if (offset >= 0)
+        {
+            printf ("name: %s", symbol->name);
+            if (offset > 0)
+            {
+                printf (" + %d", offset);
+            }
+        }
+        printf ("\n         ");
+    }
 
     print_encoding (baton, baton.mach_header_start + baton.first_level_index_entry.functionOffset + baton.text_section_file_offset + entry_func_offset, encoding);
 
@@ -497,7 +755,7 @@ print_function_encoding (struct baton baton, uint32_t idx, uint32_t encoding, ui
 
         uint8_t **personality_addr = (uint8_t **) (baton.mach_header_start + pers_delta);
         void *personality = *personality_addr;
-        printf (", personality func addr @ offset %d", pers_delta);
+        printf (", personality func offset %d", pers_delta);
 //            printf (", personality %p", personality);
     }
 
@@ -563,7 +821,7 @@ print_second_level_index_compressed (struct baton baton)
 }
 
 void
-print_second_level_index (struct baton baton, uint32_t second_level_index_count)
+print_second_level_index (struct baton baton)
 {
     uint8_t *index_start = baton.compact_unwind_start + baton.first_level_index_entry.secondLevelPagesSectionOffset;
 
@@ -571,7 +829,7 @@ print_second_level_index (struct baton baton, uint32_t second_level_index_count)
     {
         struct unwind_info_regular_second_level_page_header header;
         memcpy (&header, index_start, sizeof (struct unwind_info_regular_second_level_page_header));
-        printf ("  UNWIND_SECOND_LEVEL_REGULAR #%d entryPageOffset %d, entryCount %d\n", second_level_index_count, header.entryPageOffset, header.entryCount);
+        printf ("  UNWIND_SECOND_LEVEL_REGULAR #%d entryPageOffset %d, entryCount %d\n", baton.current_index_table_number, header.entryPageOffset, header.entryCount);
         baton.regular_second_level_page_header = header;
         print_second_level_index_regular (baton);
     }
@@ -580,7 +838,7 @@ print_second_level_index (struct baton baton, uint32_t second_level_index_count)
     {
         struct unwind_info_compressed_second_level_page_header header;
         memcpy (&header, index_start, sizeof (struct unwind_info_compressed_second_level_page_header));
-        printf ("  UNWIND_SECOND_LEVEL_COMPRESSED #%d entryPageOffset %d, entryCount %d, encodingsPageOffset %d, encodingsCount %d\n", second_level_index_count, header.entryPageOffset, header.entryCount, header.encodingsPageOffset, header.encodingsCount);
+        printf ("  UNWIND_SECOND_LEVEL_COMPRESSED #%d entryPageOffset %d, entryCount %d, encodingsPageOffset %d, encodingsCount %d\n", baton.current_index_table_number, header.entryPageOffset, header.entryCount, header.encodingsPageOffset, header.encodingsCount);
         baton.compressed_second_level_page_header = header;
         print_second_level_index_compressed (baton);
     }
@@ -598,6 +856,7 @@ print_index_sections (struct baton baton)
     uint8_t *offset = index_section_offset;
     while (cur_idx < index_count)
     {
+        baton.current_index_table_number = cur_idx;
         struct unwind_info_section_header_index_entry index_entry;
         memcpy (&index_entry, offset, sizeof (struct unwind_info_section_header_index_entry));
         printf ("index section #%d: functionOffset %d, secondLevelPagesSectionOffset %d, lsdaIndexArraySectionOffset %d\n", cur_idx, index_entry.functionOffset, index_entry.secondLevelPagesSectionOffset, index_entry.lsdaIndexArraySectionOffset);
@@ -617,11 +876,13 @@ print_index_sections (struct baton baton)
             {
                 struct unwind_info_section_header_lsda_index_entry lsda_entry;
                 memcpy (&lsda_entry, lsda_entry_offset, sizeof (struct unwind_info_section_header_lsda_index_entry));
+                uint64_t function_file_address = baton.first_level_index_entry.functionOffset + lsda_entry.functionOffset + baton.text_segment_vmaddr;
+                uint64_t lsda_file_address = lsda_entry.lsdaOffset + baton.text_segment_vmaddr;
                 printf ("    LSDA [%d] functionOffset %d (%d) (file address 0x%" PRIx64 "), lsdaOffset %d (file address 0x%" PRIx64 ")\n", 
                         lsda_count, lsda_entry.functionOffset, 
                         lsda_entry.functionOffset - index_entry.functionOffset, 
-                        lsda_entry.functionOffset - index_entry.functionOffset + baton.text_section_vmaddr,
-                        lsda_entry.lsdaOffset, lsda_entry.lsdaOffset + baton.text_section_vmaddr);
+                        function_file_address,
+                        lsda_entry.lsdaOffset, lsda_file_address);
                 lsda_count++;
                 lsda_entry_offset += sizeof (struct unwind_info_section_header_lsda_index_entry);
             }
@@ -629,7 +890,7 @@ print_index_sections (struct baton baton)
             printf ("\n");
 
             baton.first_level_index_entry = index_entry;
-            print_second_level_index (baton, cur_idx);
+            print_second_level_index (baton);
         }
 
         printf ("\n");
@@ -662,6 +923,11 @@ int main (int argc, char **argv)
 
     struct baton baton;
     baton.mach_header_start = file_mem;
+    baton.symbols = NULL;
+    baton.symbols_count = 0;
+    baton.function_start_addresses = NULL;
+    baton.function_start_addresses_count = 0;
+
     scan_macho_load_commands (&baton);
 
     if (baton.compact_unwind_start == NULL)
@@ -699,7 +965,7 @@ int main (int argc, char **argv)
     while (pers_idx < header.personalityArrayCount)
     {
         int32_t pers_delta = *((int32_t*) (baton.compact_unwind_start + header.personalityArraySectionOffset + (pers_idx * sizeof (uint32_t))));
-        printf ("    Personality [%d]: offset to personality function address ptr %d (file address 0x%" PRIx64 ")\n", pers_idx, pers_delta, baton.text_section_vmaddr + pers_delta);
+        printf ("    Personality [%d]: personality function ptr @ offset %d (file address 0x%" PRIx64 ")\n", pers_idx, pers_delta, baton.text_segment_vmaddr + pers_delta);
         pers_idx++;
         pers_arr += sizeof (uint32_t);
     }
