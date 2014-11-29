@@ -173,7 +173,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // Unfortunately in MIPS both NOP and SLL will come in with Binary == 0
   // so we have to special check for them.
   unsigned Opcode = TmpInst.getOpcode();
-  if ((Opcode != Mips::NOP) && (Opcode != Mips::SLL) && !Binary)
+  if ((Opcode != Mips::NOP) && (Opcode != Mips::SLL) &&
+      (Opcode != Mips::SLL_MM) && !Binary)
     llvm_unreachable("unimplemented opcode in EncodeInstruction()");
 
   if (STI.getFeatureBits() & Mips::FeatureMicroMips) {

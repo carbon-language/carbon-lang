@@ -710,4 +710,6 @@ def : MipsPat<(srl GPR32:$src, immZExt5:$imm),
 //===----------------------------------------------------------------------===//
 
   def : MipsInstAlias<"wait", (WAIT_MM 0x0), 1>;
+  def : MipsInstAlias<"nop", (SLL_MM ZERO, ZERO, 0), 1>;
+  def : MipsInstAlias<"nop", (MOVE16_MM ZERO, ZERO), 1>;
 }
