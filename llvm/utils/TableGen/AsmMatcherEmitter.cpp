@@ -1080,8 +1080,7 @@ struct LessRegisterSet {
 
 void AsmMatcherInfo::
 buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
-  const std::vector<CodeGenRegister*> &Registers =
-    Target.getRegBank().getRegisters();
+  const auto &Registers = Target.getRegBank().getRegisters();
   ArrayRef<CodeGenRegisterClass*> RegClassList =
     Target.getRegBank().getRegClasses();
 
@@ -1104,12 +1103,12 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
   // a unique register set class), and build the mapping of registers to the set
   // they should classify to.
   std::map<Record*, RegisterSet> RegisterMap;
-  for (const CodeGenRegister *CGR : Registers) {
+  for (const CodeGenRegister &CGR : Registers) {
     // Compute the intersection of all sets containing this register.
     RegisterSet ContainingSet;
 
     for (const RegisterSet &RS : RegisterSets) {
-      if (!RS.count(CGR->TheDef))
+      if (!RS.count(CGR.TheDef))
         continue;
 
       if (ContainingSet.empty()) {
@@ -1127,7 +1126,7 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
 
     if (!ContainingSet.empty()) {
       RegisterSets.insert(ContainingSet);
-      RegisterMap.insert(std::make_pair(CGR->TheDef, ContainingSet));
+      RegisterMap.insert(std::make_pair(CGR.TheDef, ContainingSet));
     }
   }
 
@@ -2142,16 +2141,14 @@ static void emitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
                                   raw_ostream &OS) {
   // Construct the match list.
   std::vector<StringMatcher::StringPair> Matches;
-  const std::vector<CodeGenRegister*> &Regs =
-    Target.getRegBank().getRegisters();
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister *Reg = Regs[i];
-    if (Reg->TheDef->getValueAsString("AsmName").empty())
+  const auto &Regs = Target.getRegBank().getRegisters();
+  for (const CodeGenRegister &Reg : Regs) {
+    if (Reg.TheDef->getValueAsString("AsmName").empty())
       continue;
 
-    Matches.push_back(StringMatcher::StringPair(
-                                     Reg->TheDef->getValueAsString("AsmName"),
-                                     "return " + utostr(Reg->EnumValue) + ";"));
+    Matches.push_back(
+        StringMatcher::StringPair(Reg.TheDef->getValueAsString("AsmName"),
+                                  "return " + utostr(Reg.EnumValue) + ";"));
   }
 
   OS << "static unsigned MatchRegisterName(StringRef Name) {\n";

@@ -524,12 +524,12 @@ static const char *getMinimalTypeForRange(uint64_t Range) {
 
 static void
 emitRegisterNameString(raw_ostream &O, StringRef AltName,
-                       const std::vector<CodeGenRegister*> &Registers) {
+                       const std::deque<CodeGenRegister> &Registers) {
   SequenceToOffsetTable<std::string> StringTable;
   SmallVector<std::string, 4> AsmNames(Registers.size());
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = *Registers[i];
-    std::string &AsmName = AsmNames[i];
+  unsigned i = 0;
+  for (const auto &Reg : Registers) {
+    std::string &AsmName = AsmNames[i++];
 
     // "NoRegAltName" is special. We don't need to do a lookup for that,
     // as it's just a reference to the default register name.
@@ -580,8 +580,7 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
 void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
   Record *AsmWriter = Target.getAsmWriter();
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
-  const std::vector<CodeGenRegister*> &Registers =
-    Target.getRegBank().getRegisters();
+  const auto &Registers = Target.getRegBank().getRegisters();
   std::vector<Record*> AltNameIndices = Target.getRegAltNameIndices();
   bool hasAltNames = AltNameIndices.size() > 1;
 

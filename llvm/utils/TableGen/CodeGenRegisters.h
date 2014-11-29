@@ -459,7 +459,7 @@ namespace llvm {
     ConcatIdxMap ConcatIdx;
 
     // Registers.
-    std::vector<CodeGenRegister*> Registers;
+    std::deque<CodeGenRegister> Registers;
     StringMap<CodeGenRegister*> RegistersByName;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
     unsigned NumNativeRegUnits;
@@ -552,7 +552,7 @@ namespace llvm {
       ConcatIdx.insert(std::make_pair(Parts, Idx));
     }
 
-    const std::vector<CodeGenRegister*> &getRegisters() { return Registers; }
+    const std::deque<CodeGenRegister> &getRegisters() { return Registers; }
     const StringMap<CodeGenRegister*> &getRegistersByName() {
       return RegistersByName;
     }

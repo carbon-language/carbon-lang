@@ -936,7 +936,6 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   // Read in the register definitions.
   std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");
   std::sort(Regs.begin(), Regs.end(), LessRecordRegister());
-  Registers.reserve(Regs.size());
   // Assign the enumeration values.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     getReg(Regs[i]);
@@ -958,32 +957,32 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
 
   // Now all the registers are known. Build the object graph of explicit
   // register-register references.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i]->buildObjectGraph(*this);
+  for (auto &Reg : Registers)
+    Reg.buildObjectGraph(*this);
 
   // Compute register name map.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+  for (auto &Reg : Registers)
     // FIXME: This could just be RegistersByName[name] = register, except that
     // causes some failures in MIPS - perhaps they have duplicate register name
     // entries? (or maybe there's a reason for it - I don't know much about this
     // code, just drive-by refactoring)
-    RegistersByName.insert(std::make_pair(
-        Registers[i]->TheDef->getValueAsString("AsmName"), Registers[i]));
+    RegistersByName.insert(
+        std::make_pair(Reg.TheDef->getValueAsString("AsmName"), &Reg));
 
   // Precompute all sub-register maps.
   // This will create Composite entries for all inferred sub-register indices.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i]->computeSubRegs(*this);
+  for (auto &Reg : Registers)
+    Reg.computeSubRegs(*this);
 
   // Infer even more sub-registers by combining leading super-registers.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    if (Registers[i]->CoveredBySubRegs)
-      Registers[i]->computeSecondarySubRegs(*this);
+  for (auto &Reg : Registers)
+    if (Reg.CoveredBySubRegs)
+      Reg.computeSecondarySubRegs(*this);
 
   // After the sub-register graph is complete, compute the topologically
   // ordered SuperRegs list.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i]->computeSuperRegs(*this);
+  for (auto &Reg : Registers)
+    Reg.computeSuperRegs(*this);
 
   // Native register units are associated with a leaf register. They've all been
   // discovered now.
@@ -1010,7 +1009,6 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
 }
 
 CodeGenRegBank::~CodeGenRegBank() {
-  DeleteContainerPointers(Registers);
   DeleteContainerPointers(RegClasses);
 }
 
@@ -1034,8 +1032,8 @@ CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
   CodeGenRegister *&Reg = Def2Reg[Def];
   if (Reg)
     return Reg;
-  Reg = new CodeGenRegister(Def, Registers.size() + 1);
-  Registers.push_back(Reg);
+  Registers.emplace_back(Def, Registers.size() + 1);
+  Reg = &Registers.back();
   return Reg;
 }
 
@@ -1126,21 +1124,19 @@ void CodeGenRegBank::computeComposites() {
   // and many registers will share TopoSigs on regular architectures.
   BitVector TopoSigs(getNumTopoSigs());
 
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    CodeGenRegister *Reg1 = Registers[i];
-
+  for (const auto &Reg1 : Registers) {
     // Skip identical subreg structures already processed.
-    if (TopoSigs.test(Reg1->getTopoSig()))
+    if (TopoSigs.test(Reg1.getTopoSig()))
       continue;
-    TopoSigs.set(Reg1->getTopoSig());
+    TopoSigs.set(Reg1.getTopoSig());
 
-    const CodeGenRegister::SubRegMap &SRM1 = Reg1->getSubRegs();
+    const CodeGenRegister::SubRegMap &SRM1 = Reg1.getSubRegs();
     for (CodeGenRegister::SubRegMap::const_iterator i1 = SRM1.begin(),
          e1 = SRM1.end(); i1 != e1; ++i1) {
       CodeGenSubRegIndex *Idx1 = i1->first;
       CodeGenRegister *Reg2 = i1->second;
       // Ignore identity compositions.
-      if (Reg1 == Reg2)
+      if (&Reg1 == Reg2)
         continue;
       const CodeGenRegister::SubRegMap &SRM2 = Reg2->getSubRegs();
       // Try composing Idx1 with another SubRegIndex.
@@ -1152,7 +1148,7 @@ void CodeGenRegBank::computeComposites() {
         if (Reg2 == Reg3)
           continue;
         // OK Reg1:IdxPair == Reg3. Find the index with Reg:Idx == Reg3.
-        CodeGenSubRegIndex *Idx3 = Reg1->getSubRegIndex(Reg3);
+        CodeGenSubRegIndex *Idx3 = Reg1.getSubRegIndex(Reg3);
         assert(Idx3 && "Sub-register doesn't have an index");
 
         // Conflicting composition? Emit a warning but allow it.
@@ -1246,10 +1242,10 @@ static void computeUberSets(std::vector<UberRegSet> &UberSets,
                             std::vector<UberRegSet*> &RegSets,
                             CodeGenRegBank &RegBank) {
 
-  const std::vector<CodeGenRegister*> &Registers = RegBank.getRegisters();
+  const auto &Registers = RegBank.getRegisters();
 
   // The Register EnumValue is one greater than its index into Registers.
-  assert(Registers.size() == Registers[Registers.size()-1]->EnumValue &&
+  assert(Registers.size() == Registers.back().EnumValue &&
          "register enum value mismatch");
 
   // For simplicitly make the SetID the same as EnumValue.
@@ -1276,8 +1272,8 @@ static void computeUberSets(std::vector<UberRegSet> &UberSets,
     }
   }
   // Combine non-allocatable regs.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    unsigned RegNum = Registers[i]->EnumValue;
+  for (const auto &Reg : Registers) {
+    unsigned RegNum = Reg.EnumValue;
     if (AllocatableRegs.count(RegNum))
       continue;
 
@@ -1291,17 +1287,17 @@ static void computeUberSets(std::vector<UberRegSet> &UberSets,
   // Insert Registers into the UberSets formed by union-find.
   // Do not resize after this.
   UberSets.resize(UberSetIDs.getNumClasses());
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    const CodeGenRegister *Reg = Registers[i];
-    unsigned USetID = UberSetIDs[Reg->EnumValue];
+  unsigned i = 0;
+  for (const CodeGenRegister &Reg : Registers) {
+    unsigned USetID = UberSetIDs[Reg.EnumValue];
     if (!USetID)
       USetID = ZeroID;
     else if (USetID == ZeroID)
       USetID = 0;
 
     UberRegSet *USet = &UberSets[USetID];
-    USet->Regs.insert(Reg);
-    RegSets[i] = USet;
+    USet->Regs.insert(&Reg);
+    RegSets[i++] = USet;
   }
 }
 
@@ -1439,11 +1435,11 @@ void CodeGenRegBank::computeRegUnitWeights() {
   for (bool Changed = true; Changed; ++NumIters) {
     assert(NumIters <= NumNativeRegUnits && "Runaway register unit weights");
     Changed = false;
-    for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
+    for (auto &Reg : Registers) {
       CodeGenRegister::RegUnitList NormalUnits;
       std::set<unsigned> NormalRegs;
-      Changed |= normalizeWeight(Registers[i], UberSets, RegSets,
-                                 NormalRegs, NormalUnits, *this);
+      Changed |= normalizeWeight(&Reg, UberSets, RegSets, NormalRegs,
+                                 NormalUnits, *this);
     }
   }
 }
