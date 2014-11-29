@@ -28,6 +28,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <forward_list>
 
 namespace llvm {
   class CodeGenRegBank;
@@ -42,7 +43,7 @@ namespace llvm {
     uint16_t Size;
     uint16_t Offset;
     const unsigned EnumValue;
-    unsigned LaneMask;
+    mutable unsigned LaneMask;
 
     // Are all super-registers containing this SubRegIndex covered by their
     // sub-registers?
@@ -101,7 +102,7 @@ namespace llvm {
     const CompMap &getComposites() const { return Composed; }
 
     // Compute LaneMask from Composed. Return LaneMask.
-    unsigned computeLaneMask();
+    unsigned computeLaneMask() const;
 
   private:
     CompMap Composed;
@@ -257,15 +258,16 @@ namespace llvm {
 
     // Map SubRegIndex -> sub-class.  This is the largest sub-class where all
     // registers have a SubRegIndex sub-register.
-    DenseMap<CodeGenSubRegIndex*, CodeGenRegisterClass*> SubClassWithSubReg;
+    DenseMap<const CodeGenSubRegIndex *, CodeGenRegisterClass *>
+        SubClassWithSubReg;
 
     // Map SubRegIndex -> set of super-reg classes.  This is all register
     // classes SuperRC such that:
     //
     //   R:SubRegIndex in this RC for all R in SuperRC.
     //
-    DenseMap<CodeGenSubRegIndex*,
-             SmallPtrSet<CodeGenRegisterClass*, 8> > SuperRegClasses;
+    DenseMap<const CodeGenSubRegIndex *, SmallPtrSet<CodeGenRegisterClass *, 8>>
+        SuperRegClasses;
 
     // Bit vector of TopoSigs for the registers in this class. This will be
     // very sparse on regular architectures.
@@ -314,19 +316,20 @@ namespace llvm {
 
     // getSubClassWithSubReg - Returns the largest sub-class where all
     // registers have a SubIdx sub-register.
-    CodeGenRegisterClass*
-    getSubClassWithSubReg(CodeGenSubRegIndex *SubIdx) const {
+    CodeGenRegisterClass *
+    getSubClassWithSubReg(const CodeGenSubRegIndex *SubIdx) const {
       return SubClassWithSubReg.lookup(SubIdx);
     }
 
-    void setSubClassWithSubReg(CodeGenSubRegIndex *SubIdx,
+    void setSubClassWithSubReg(const CodeGenSubRegIndex *SubIdx,
                                CodeGenRegisterClass *SubRC) {
       SubClassWithSubReg[SubIdx] = SubRC;
     }
 
     // getSuperRegClasses - Returns a bit vector of all register classes
     // containing only SubIdx super-registers of this class.
-    void getSuperRegClasses(CodeGenSubRegIndex *SubIdx, BitVector &Out) const;
+    void getSuperRegClasses(const CodeGenSubRegIndex *SubIdx,
+                            BitVector &Out) const;
 
     // addSuperRegClass - Add a class containing only SudIdx super-registers.
     void addSuperRegClass(CodeGenSubRegIndex *SubIdx,
@@ -446,7 +449,7 @@ namespace llvm {
   class CodeGenRegBank {
     SetTheory Sets;
 
-    // SubRegIndices.
+    //std::forward_list<CodeGenSubRegIndex> SubRegIndices;
     std::vector<CodeGenSubRegIndex*> SubRegIndices;
     DenseMap<Record*, CodeGenSubRegIndex*> Def2SubRegIdx;
 
@@ -528,7 +531,7 @@ namespace llvm {
     // Sub-register indices. The first NumNamedIndices are defined by the user
     // in the .td files. The rest are synthesized such that all sub-registers
     // have a unique name.
-    ArrayRef<CodeGenSubRegIndex*> getSubRegIndices() { return SubRegIndices; }
+    std::vector<CodeGenSubRegIndex*> &getSubRegIndices() { return SubRegIndices; }
 
     // Find a SubRegIndex form its Record def.
     CodeGenSubRegIndex *getSubRegIdx(Record*);
