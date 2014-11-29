@@ -74,10 +74,6 @@ namespace {
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
 
-  cl::opt<bool> DebugIR(
-    "debug-ir", cl::desc("Generate debug information to allow debugging IR."),
-    cl::init(false));
-
   // The MCJIT supports building for a target address space separate from
   // the JIT compilation process. Use a forked process and a copying
   // memory manager with IPC to execute using this functionality.
@@ -412,11 +408,6 @@ int main(int argc, char **argv, char * const *envp) {
       errs() << "Reason: " << EC.message() << "\n";
       exit(1);
     }
-  }
-
-  if (DebugIR) {
-    ModulePass *DebugIRPass = createDebugIRPass();
-    DebugIRPass->runOnModule(*Mod);
   }
 
   std::string ErrorMsg;
