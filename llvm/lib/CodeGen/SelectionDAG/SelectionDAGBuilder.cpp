@@ -2514,15 +2514,14 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
     return false;
 
   size_t numCmps = 0;
-  for (CaseItr I = CR.Range.first, E = CR.Range.second;
-       I!=E; ++I) {
+  for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I) {
     // Single case counts one, case range - two.
     numCmps += (I->Low == I->High ? 1 : 2);
   }
 
   // Count unique destinations
   SmallSet<MachineBasicBlock*, 4> Dests;
-  for (CaseItr I = CR.Range.first, E = CR.Range.second; I!=E; ++I) {
+  for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I) {
     Dests.insert(I->BB);
     if (Dests.size() > 3)
       // Don't bother the code below, if there are too much unique destinations
@@ -2629,9 +2628,8 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
 void SelectionDAGBuilder::Clusterify(CaseVector& Cases,
                                      const SwitchInst& SI) {
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
-  // Start with "simple" cases
-  for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
-       i != e; ++i) {
+  // Start with "simple" cases.
+  for (SwitchInst::ConstCaseIt i : SI.cases()) {
     const BasicBlock *SuccBB = i.getCaseSuccessor();
     MachineBasicBlock *SMBB = FuncInfo.MBBMap[SuccBB];
 
@@ -2703,9 +2701,9 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   // next basic block.  Otherwise, just fall through.
   if (!SI.getNumCases()) {
     // Update machine-CFG edges.
+    SwitchMBB->addSuccessor(Default);
 
     // If this is not a fall-through branch, emit the branch.
-    SwitchMBB->addSuccessor(Default);
     if (Default != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(),
                               MVT::Other, getControlRoot(),
