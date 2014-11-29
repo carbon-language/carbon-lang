@@ -371,7 +371,7 @@ bool TGParser::ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals){
   }
 
   Record *IterRecSave = IterRec.get(); // Keep a copy before release.
-  Records.addDef(IterRec.release());
+  Records.addDef(std::move(IterRec));
   IterRecSave->resolveReferences();
   return false;
 }
@@ -1252,7 +1252,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
 
     if (!CurMultiClass) {
       NewRec->resolveReferences();
-      Records.addDef(NewRecOwner.release());
+      Records.addDef(std::move(NewRecOwner));
     } else {
       // This needs to get resolved once the multiclass template arguments are
       // known before any use.
@@ -2044,7 +2044,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
     if (Records.getDef(CurRec->getNameInitAsString()))
       return Error(DefLoc, "def '" + CurRec->getNameInitAsString()+
                    "' already defined");
-    Records.addDef(CurRecOwner.release());
+    Records.addDef(std::move(CurRecOwner));
 
     if (ParseObjectBody(CurRec))
       return true;
@@ -2169,8 +2169,10 @@ bool TGParser::ParseClass() {
                       + "' already defined");
   } else {
     // If this is the first reference to this class, create and add it.
-    CurRec = new Record(Lex.getCurStrVal(), Lex.getLoc(), Records);
-    Records.addClass(CurRec);
+    auto NewRec = make_unique<Record>(Lex.getCurStrVal(), Lex.getLoc(),
+                                      Records);
+    CurRec = NewRec.get();
+    Records.addClass(std::move(NewRec));
   }
   Lex.Lex(); // eat the name.
 
@@ -2442,7 +2444,7 @@ InstantiateMulticlassDef(MultiClass &MC,
     }
 
     Record *CurRecSave = CurRec.get(); // Keep a copy before we release.
-    Records.addDef(CurRec.release());
+    Records.addDef(std::move(CurRec));
     return CurRecSave;
   }
 
