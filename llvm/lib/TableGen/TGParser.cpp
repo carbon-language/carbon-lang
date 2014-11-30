@@ -2169,8 +2169,8 @@ bool TGParser::ParseClass() {
                       + "' already defined");
   } else {
     // If this is the first reference to this class, create and add it.
-    auto NewRec = make_unique<Record>(Lex.getCurStrVal(), Lex.getLoc(),
-                                      Records);
+    auto NewRec =
+        llvm::make_unique<Record>(Lex.getCurStrVal(), Lex.getLoc(), Records);
     CurRec = NewRec.get();
     Records.addClass(std::move(NewRec));
   }
