@@ -224,7 +224,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
     if (AddValue(CurRec, SubMultiClass.RefRange.Start, SMCVals[i]))
       return true;
 
-  int newDefStart = CurMC->DefPrototypes.size();
+  unsigned newDefStart = CurMC->DefPrototypes.size();
 
   // Add all of the defs in the subclass into the current multiclass.
   for (MultiClass::RecordVector::const_iterator i = SMC->DefPrototypes.begin(),
