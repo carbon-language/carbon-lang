@@ -1239,8 +1239,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     SMLoc EndLoc = Lex.getLoc();
 
     // Create the new record, set it as CurRec temporarily.
-    auto NewRecOwner = make_unique<Record>(GetNewAnonymousName(), NameLoc,
-                                           Records, /*IsAnonymous=*/true);
+    auto NewRecOwner = llvm::make_unique<Record>(GetNewAnonymousName(), NameLoc,
+                                                 Records, /*IsAnonymous=*/true);
     Record *NewRec = NewRecOwner.get(); // Keep a copy since we may release.
     SubClassReference SCRef;
     SCRef.RefRange = SMRange(NameLoc, EndLoc);
@@ -2033,8 +2033,8 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   if (Name)
     CurRecOwner = make_unique<Record>(Name, DefLoc, Records);
   else
-    CurRecOwner = make_unique<Record>(GetNewAnonymousName(), DefLoc, Records,
-                                      /*IsAnonymous=*/true);
+    CurRecOwner = llvm::make_unique<Record>(GetNewAnonymousName(), DefLoc,
+                                            Records, /*IsAnonymous=*/true);
   Record *CurRec = CurRecOwner.get(); // Keep a copy since we may release.
 
   if (!CurMultiClass && Loops.empty()) {
