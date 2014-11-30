@@ -432,7 +432,6 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
         isDataPageAlignedForNMagic = true;
       } else
         fileOffset = llvm::RoundUpToAlignment(fileOffset, section->align2());
-
       if (isFirstSection) {
         slice->setFileOffset(fileOffset);
         isFirstSection = false;
@@ -524,7 +523,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       }
       uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->align2());
       // If the newAddress computed is more than a page away, let's create
-      // a separate segment, so that memory is not used up while running
+      // a separate segment, so that memory is not used up while running.
       if (((newAddr - curAddr) > this->_context.getPageSize()) &&
           (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
            _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {

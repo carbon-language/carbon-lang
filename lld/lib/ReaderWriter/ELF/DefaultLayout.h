@@ -173,8 +173,12 @@ public:
   SectionOrder getSectionOrder(StringRef name, int32_t contentType,
                                int32_t contentPermissions) override;
 
-  /// \brief This maps the input sections to the output section names
-  virtual StringRef getSectionName(const DefinedAtom *da) const;
+  /// \brief Return the name of the input section by decoding the input
+  /// sectionChoice.
+  virtual StringRef getInputSectionName(const DefinedAtom *da) const;
+
+  /// \brief Return the name of the output section from the input section.
+  virtual StringRef getOutputSectionName(StringRef inputSectionName) const;
 
   /// \brief Gets or creates a section.
   AtomSection<ELFT> *getSection(
@@ -399,7 +403,8 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
 
 /// \brief This maps the input sections to the output section names
 template <class ELFT>
-StringRef DefaultLayout<ELFT>::getSectionName(const DefinedAtom *da) const {
+StringRef
+DefaultLayout<ELFT>::getInputSectionName(const DefinedAtom *da) const {
   if (da->sectionChoice() == DefinedAtom::sectionBasedOnContent) {
     switch (da->contentType()) {
     case DefinedAtom::typeCode:
@@ -418,7 +423,14 @@ StringRef DefaultLayout<ELFT>::getSectionName(const DefinedAtom *da) const {
       break;
     }
   }
-  return llvm::StringSwitch<StringRef>(da->customSectionName())
+  return da->customSectionName();
+}
+
+/// \brief This maps the input sections to the output section names.
+template <class ELFT>
+StringRef
+DefaultLayout<ELFT>::getOutputSectionName(StringRef inputSectionName) const {
+  return llvm::StringSwitch<StringRef>(inputSectionName)
       .StartsWith(".text", ".text")
       .StartsWith(".ctors", ".ctors")
       .StartsWith(".dtors", ".dtors")
@@ -431,7 +443,7 @@ StringRef DefaultLayout<ELFT>::getSectionName(const DefinedAtom *da) const {
       .StartsWith(".tbss", ".tbss")
       .StartsWith(".init_array", ".init_array")
       .StartsWith(".fini_array", ".fini_array")
-      .Default(da->customSectionName());
+      .Default(inputSectionName);
 }
 
 /// \brief Gets the segment for a output section
@@ -543,6 +555,7 @@ AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
       getSectionOrder(sectionName, contentType, permissions);
   AtomSection<ELFT> *newSec =
       createSection(sectionName, contentType, permissions, sectionOrder);
+  newSec->setOutputSectionName(getOutputSectionName(sectionName));
   newSec->setOrder(sectionOrder);
   _sections.push_back(newSec);
   _sectionMap.insert(std::make_pair(sectionKey, newSec));
@@ -561,7 +574,7 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
         definedAtom->permissions();
     const DefinedAtom::ContentType contentType = definedAtom->contentType();
 
-    StringRef sectionName = getSectionName(definedAtom);
+    StringRef sectionName = getInputSectionName(definedAtom);
     AtomSection<ELFT> *section =
         getSection(sectionName, contentType, permissions);
 
@@ -608,15 +621,18 @@ template <class ELFT> void DefaultLayout<ELFT>::createOutputSections() {
   OutputSection<ELFT> *outputSection;
 
   for (auto &si : _sections) {
+    Section<ELFT> *section = dyn_cast<Section<ELFT>>(si);
+    if (!section)
+      continue;
     const std::pair<StringRef, OutputSection<ELFT> *> currentOutputSection(
-        si->name(), nullptr);
+        section->outputSectionName(), nullptr);
     std::pair<typename OutputSectionMapT::iterator, bool> outputSectionInsert(
         _outputSectionMap.insert(currentOutputSection));
     if (!outputSectionInsert.second) {
       outputSection = outputSectionInsert.first->second;
     } else {
       outputSection = new (_allocator.Allocate<OutputSection<ELFT>>())
-          OutputSection<ELFT>(si->name());
+          OutputSection<ELFT>(section->outputSectionName());
       _outputSections.push_back(outputSection);
       outputSectionInsert.first->second = outputSection;
     }

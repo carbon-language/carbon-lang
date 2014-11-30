@@ -38,11 +38,13 @@ template <class ELFT> class Segment;
 /// \brief An ELF section.
 template <class ELFT> class Section : public Chunk<ELFT> {
 public:
-  Section(const ELFLinkingContext &context, StringRef name,
+  Section(const ELFLinkingContext &context, StringRef sectionName,
+          StringRef chunkName,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
-      : Chunk<ELFT>(name, k, context), _outputSection(nullptr), _flags(0),
+      : Chunk<ELFT>(chunkName, k, context), _outputSection(nullptr), _flags(0),
         _entSize(0), _type(0), _link(0), _info(0),
-        _isFirstSectionInOutputSection(false), _segmentType(SHT_NULL) {}
+        _isFirstSectionInOutputSection(false), _segmentType(SHT_NULL),
+        _inputSectionName(sectionName), _outputSectionName(sectionName) {}
 
   /// \brief Modify the section contents before assigning virtual addresses
   //  or assigning file offsets
@@ -110,6 +112,14 @@ public:
                                           : this->_align2;
   }
 
+  virtual StringRef inputSectionName() const { return _inputSectionName; }
+
+  virtual StringRef outputSectionName() const { return _outputSectionName; }
+
+  virtual void setOutputSectionName(StringRef outputSectionName) {
+    _outputSectionName = outputSectionName;
+  }
+
 protected:
   /// \brief OutputSection this Section is a member of, or nullptr.
   OutputSection<ELFT> *_outputSection;
@@ -127,14 +137,19 @@ protected:
   bool _isFirstSectionInOutputSection;
   /// \brief the output ELF segment type of this section.
   Layout::SegmentType _segmentType;
+  /// \brief Input section name.
+  StringRef _inputSectionName;
+  /// \brief Output section name.
+  StringRef _outputSectionName;
 };
 
 /// \brief A section containing atoms.
 template <class ELFT> class AtomSection : public Section<ELFT> {
 public:
-  AtomSection(const ELFLinkingContext &context, StringRef name,
+  AtomSection(const ELFLinkingContext &context, StringRef sectionName,
               int32_t contentType, int32_t permissions, int32_t order)
-      : Section<ELFT>(context, name, Chunk<ELFT>::Kind::AtomSection),
+      : Section<ELFT>(context, sectionName, "AtomSection",
+                      Chunk<ELFT>::Kind::AtomSection),
         _contentType(contentType), _contentPermissions(permissions),
         _isLoadedInMemory(true) {
     this->setOrder(order);
@@ -555,7 +570,7 @@ private:
 template <class ELFT>
 StringTable<ELFT>::StringTable(const ELFLinkingContext &context,
                                const char *str, int32_t order, bool dynamic)
-    : Section<ELFT>(context, str) {
+    : Section<ELFT>(context, str, "StringTable") {
   // the string table has a NULL entry for which
   // add an empty string
   _strings.push_back("");
@@ -679,7 +694,7 @@ protected:
 template <class ELFT>
 SymbolTable<ELFT>::SymbolTable(const ELFLinkingContext &context,
                                const char *str, int32_t order)
-    : Section<ELFT>(context, str) {
+    : Section<ELFT>(context, str, "SymbolTable") {
   this->setOrder(order);
   Elf_Sym symbol;
   std::memset(&symbol, 0, sizeof(Elf_Sym));
@@ -911,7 +926,7 @@ public:
 
   RelocationTable(const ELFLinkingContext &context, StringRef str,
                   int32_t order)
-      : Section<ELFT>(context, str), _symbolTable(nullptr) {
+      : Section<ELFT>(context, str, "RelocationTable"), _symbolTable(nullptr) {
     this->setOrder(order);
     this->_flags = SHF_ALLOC;
     // Set the alignment properly depending on the target architecture
@@ -1027,7 +1042,7 @@ public:
 
   DynamicTable(const ELFLinkingContext &context, TargetLayout<ELFT> &layout,
                StringRef str, int32_t order)
-      : Section<ELFT>(context, str), _layout(layout) {
+      : Section<ELFT>(context, str, "DynamicSection"), _layout(layout) {
     this->setOrder(order);
     this->_entSize = sizeof(Elf_Dyn);
     this->_align2 = ELFT::Is64Bits ? 8 : 4;
@@ -1210,7 +1225,7 @@ template <class ELFT> class InterpSection : public Section<ELFT> {
 public:
   InterpSection(const ELFLinkingContext &context, StringRef str, int32_t order,
                 StringRef interp)
-      : Section<ELFT>(context, str), _interp(interp) {
+      : Section<ELFT>(context, str, "Dynamic:Interp"), _interp(interp) {
     this->setOrder(order);
     this->_align2 = 1;
     // + 1 for null term.
@@ -1259,7 +1274,7 @@ template <class ELFT> class HashSection : public Section<ELFT> {
 
 public:
   HashSection(const ELFLinkingContext &context, StringRef name, int32_t order)
-      : Section<ELFT>(context, name), _symbolTable(nullptr) {
+      : Section<ELFT>(context, name, "Dynamic:Hash"), _symbolTable(nullptr) {
     this->setOrder(order);
     this->_entSize = 4;
     this->_type = SHT_HASH;
@@ -1363,7 +1378,7 @@ template <class ELFT> class EHFrameHeader : public Section<ELFT> {
 public:
   EHFrameHeader(const ELFLinkingContext &context, StringRef name,
                 TargetLayout<ELFT> &layout, int32_t order)
-      : Section<ELFT>(context, name), _layout(layout) {
+      : Section<ELFT>(context, name, "EHFrameHeader"), _layout(layout) {
     this->setOrder(order);
     this->_entSize = 0;
     this->_type = SHT_PROGBITS;

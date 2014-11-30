@@ -46,8 +46,8 @@ public:
                                                           contentPermissions);
   }
 
-  /// \brief This maps the input sections to the output section names
-  virtual StringRef getSectionName(const DefinedAtom *da) const {
+  /// \brief Return the appropriate input section name.
+  virtual StringRef getInputSectionName(const DefinedAtom *da) const {
     switch (da->contentType()) {
     case DefinedAtom::typeDataFast:
     case DefinedAtom::typeZeroFillFast:
@@ -55,7 +55,7 @@ public:
     default:
       break;
     }
-    return DefaultLayout<HexagonELFType>::getSectionName(da);
+    return DefaultLayout<HexagonELFType>::getInputSectionName(da);
   }
 
   /// \brief Gets or creates a section.
