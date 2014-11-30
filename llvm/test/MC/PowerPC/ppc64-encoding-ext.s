@@ -3634,6 +3634,33 @@
 # CHECK-LE: mtspr 280, 2                     # encoding: [0xa6,0x43,0x58,0x7c]
             mtasr 2
 
+# Load and Store Caching Inhibited Instructions
+# CHECK-BE: lbzcix 21, 5, 7                  # encoding: [0x7e,0xa5,0x3e,0xaa]
+# CHECK-LE: lbzcix 21, 5, 7                  # encoding: [0xaa,0x3e,0xa5,0x7e]
+            lbzcix 21, 5, 7
+# CHECK-BE: lhzcix 21, 5, 7                  # encoding: [0x7e,0xa5,0x3e,0x6a]
+# CHECK-LE: lhzcix 21, 5, 7                  # encoding: [0x6a,0x3e,0xa5,0x7e]
+            lhzcix 21, 5, 7
+# CHECK-BE: lwzcix 21, 5, 7                  # encoding: [0x7e,0xa5,0x3e,0x2a]
+# CHECK-LE: lwzcix 21, 5, 7                  # encoding: [0x2a,0x3e,0xa5,0x7e]
+            lwzcix 21, 5, 7
+# CHECK-BE: ldcix  21, 5, 7                  # encoding: [0x7e,0xa5,0x3e,0xea]
+# CHECK-LE: ldcix  21, 5, 7                  # encoding: [0xea,0x3e,0xa5,0x7e]
+            ldcix  21, 5, 7
+            
+# CHECK-BE: stbcix 21, 5, 7                  # encoding: [0x7e,0xa5,0x3f,0xaa]
+# CHECK-LE: stbcix 21, 5, 7                  # encoding: [0xaa,0x3f,0xa5,0x7e]
+            stbcix 21, 5, 7
+# CHECK-BE: sthcix 21, 5, 7                  # encoding: [0x7e,0xa5,0x3f,0x6a]
+# CHECK-LE: sthcix 21, 5, 7                  # encoding: [0x6a,0x3f,0xa5,0x7e]
+            sthcix 21, 5, 7
+# CHECK-BE: stwcix 21, 5, 7                  # encoding: [0x7e,0xa5,0x3f,0x2a]
+# CHECK-LE: stwcix 21, 5, 7                  # encoding: [0x2a,0x3f,0xa5,0x7e]
+            stwcix 21, 5, 7
+# CHECK-BE: stdcix 21, 5, 7                  # encoding: [0x7e,0xa5,0x3f,0xea]
+# CHECK-LE: stdcix 21, 5, 7                  # encoding: [0xea,0x3f,0xa5,0x7e]
+            stdcix 21, 5, 7
+
 # Processor-Specific Instructions
 # CHECK-BE: attn                             # encoding: [0x00,0x00,0x02,0x00]
 # CHECK-LE: attn                             # encoding: [0x00,0x02,0x00,0x00]
