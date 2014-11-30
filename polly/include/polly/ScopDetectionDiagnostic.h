@@ -92,7 +92,6 @@ enum RejectReasonKind {
   // IndVar
   rrkIndVar,
   rrkPhiNodeRefInRegion,
-  rrkNonCanonicalPhiNode,
   rrkLastIndVar,
 
   rrkIndEdge,
