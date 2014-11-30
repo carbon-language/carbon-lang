@@ -547,7 +547,11 @@ template <class ELFT>
 AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
     StringRef sectionName, int32_t contentType,
     DefinedAtom::ContentPermissions permissions) {
-  const SectionKey sectionKey(sectionName, permissions);
+  // FIXME: We really need the file path here in the SectionKey, when that
+  // is available, replace the sectionKey that has outputSectionName to the
+  // inputSectionName.
+  StringRef outputSectionName = getOutputSectionName(sectionName);
+  const SectionKey sectionKey(outputSectionName, permissions);
   auto sec = _sectionMap.find(sectionKey);
   if (sec != _sectionMap.end())
     return sec->second;
@@ -555,7 +559,7 @@ AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
       getSectionOrder(sectionName, contentType, permissions);
   AtomSection<ELFT> *newSec =
       createSection(sectionName, contentType, permissions, sectionOrder);
-  newSec->setOutputSectionName(getOutputSectionName(sectionName));
+  newSec->setOutputSectionName(outputSectionName);
   newSec->setOrder(sectionOrder);
   _sections.push_back(newSec);
   _sectionMap.insert(std::make_pair(sectionKey, newSec));

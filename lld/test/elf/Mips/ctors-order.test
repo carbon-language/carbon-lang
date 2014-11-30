@@ -5,6 +5,9 @@
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-obj.o
 # RUN: lld -flavor gnu -target mipsel -shared --output-filetype=yaml \
 # RUN:     %t-crtbeginS.o %t-obj.o %t-crtendS.o | FileCheck %s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so \
+# RUN:     %t-crtbeginS.o %t-obj.o %t-crtendS.o
+# RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=RAW %s
 
 # CHECK:      defined-atoms:
 # CHECK-NEXT:   - ref-name:        L000
@@ -52,6 +55,8 @@
 # CHECK-NEXT:     section-choice:  custom-required
 # CHECK-NEXT:     section-name:    .ctors
 
+# RAW:      Contents of section .ctors:
+# RAW-NEXT: 2000 ffffffff 11111111 22222222 00000000
 # crtbeginS.o
 ---
 FileHeader:
