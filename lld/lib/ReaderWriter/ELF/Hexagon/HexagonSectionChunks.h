@@ -26,7 +26,7 @@ public:
             HexagonTargetLayout<HexagonELFType>::ORDER_SDATA) {
     this->_type = SHT_PROGBITS;
     this->_flags = SHF_ALLOC | SHF_WRITE;
-    this->_align2 = 4096;
+    this->_alignment = 4096;
   }
 
   /// \brief Finalize the section contents before writing
@@ -38,12 +38,12 @@ public:
   const lld::AtomLayout &appendAtom(const Atom *atom) {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
-    uint64_t align2 = 1u << atomAlign.powerOf2;
+    uint64_t alignment = 1u << atomAlign.powerOf2;
     this->_atoms.push_back(new (this->_alloc) lld::AtomLayout(atom, 0, 0));
     // Set the section alignment to the largest alignment
     // std::max doesn't support uint64_t
-    if (this->_align2 < align2)
-      this->_align2 = align2;
+    if (this->_alignment < alignment)
+      this->_alignment = alignment;
     return *(this->_atoms.back());
   }
 
@@ -57,15 +57,15 @@ void SDataSection<HexagonELFType>::doPreFlight() {
                                                 const lld::AtomLayout * B) {
     const DefinedAtom *definedAtomA = cast<DefinedAtom>(A->_atom);
     const DefinedAtom *definedAtomB = cast<DefinedAtom>(B->_atom);
-    int64_t align2A = 1 << definedAtomA->alignment().powerOf2;
-    int64_t align2B = 1 << definedAtomB->alignment().powerOf2;
-    if (align2A == align2B) {
+    int64_t alignmentA = 1 << definedAtomA->alignment().powerOf2;
+    int64_t alignmentB = 1 << definedAtomB->alignment().powerOf2;
+    if (alignmentA == alignmentB) {
       if (definedAtomA->merge() == DefinedAtom::mergeAsTentative)
         return false;
       if (definedAtomB->merge() == DefinedAtom::mergeAsTentative)
         return true;
     }
-    return align2A < align2B;
+    return alignmentA < alignmentB;
   });
 
   // Set the fileOffset, and the appropriate size of the section

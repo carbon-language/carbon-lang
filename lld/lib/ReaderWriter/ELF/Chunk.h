@@ -45,7 +45,7 @@ public:
   enum ContentType : uint8_t{ Unknown, Header, Code, Data, Note, TLS };
 
   Chunk(StringRef name, Kind kind, const ELFLinkingContext &context)
-      : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
+      : _name(name), _kind(kind), _fsize(0), _msize(0), _alignment(0), _order(0),
         _ordinal(1), _start(0), _fileoffset(0), _context(context) {}
   virtual ~Chunk() {}
   // The name of the chunk
@@ -54,8 +54,8 @@ public:
   Kind kind() const { return _kind; }
   virtual uint64_t fileSize() const { return _fsize; }
   virtual void setFileSize(uint64_t sz) { _fsize = sz; }
-  virtual void setAlign(uint64_t align) { _align2 = align; }
-  virtual uint64_t align2() const { return _align2; }
+  virtual void setAlign(uint64_t align) { _alignment = align; }
+  virtual uint64_t alignment() const { return _alignment; }
 
   // The ordinal value of the chunk
   uint64_t            ordinal() const { return _ordinal;}
@@ -87,7 +87,7 @@ protected:
   Kind _kind;
   uint64_t _fsize;
   uint64_t _msize;
-  uint64_t _align2;
+  uint64_t _alignment;
   uint32_t _order;
   uint64_t _ordinal;
   uint64_t _start;

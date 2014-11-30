@@ -74,7 +74,7 @@ private:
 template <class ELFT>
 ELFHeader<ELFT>::ELFHeader(const ELFLinkingContext &context)
     : Chunk<ELFT>("elfhdr", Chunk<ELFT>::Kind::ELFHeader, context) {
-  this->_align2 = ELFT::Is64Bits ? 8 : 4;
+  this->_alignment = ELFT::Is64Bits ? 8 : 4;
   this->_fsize = sizeof(Elf_Ehdr);
   this->_msize = sizeof(Elf_Ehdr);
   memset(_eh.e_ident, 0, llvm::ELF::EI_NIDENT);
@@ -126,7 +126,7 @@ public:
 
   ProgramHeader(const ELFLinkingContext &context)
       : Chunk<ELFT>("elfphdr", Chunk<ELFT>::Kind::ProgramHeader, context) {
-    this->_align2 = ELFT::Is64Bits ? 8 : 4;
+    this->_alignment = ELFT::Is64Bits ? 8 : 4;
     resetProgramHeaders();
   }
 
@@ -210,7 +210,7 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
     phdr->p_filesz = segment->fileSize();
     phdr->p_memsz = segment->memSize();
     phdr->p_flags = segment->flags();
-    phdr->p_align = segment->align2();
+    phdr->p_align = segment->alignment();
     this->_fsize = fileSize();
     this->_msize = this->_fsize;
     return allocatedNew;
@@ -226,9 +226,9 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
     phdr->p_filesz = slice->fileSize();
     phdr->p_memsz = slice->memSize();
     phdr->p_flags = segment->flags();
-    phdr->p_align = slice->align2();
+    phdr->p_align = slice->alignment();
     uint64_t segPageSize = segment->pageSize();
-    uint64_t sliceAlign = slice->align2();
+    uint64_t sliceAlign = slice->alignment();
     // Alignment of PT_LOAD segments are set to the page size, but if the
     // alignment of the slice is greater than the page size, set the alignment
     // of the segment appropriately.
@@ -238,7 +238,7 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
           ? (segPageSize < sliceAlign) ? sliceAlign : segPageSize
           : sliceAlign;
     } else
-      phdr->p_align = slice->align2();
+      phdr->p_align = slice->alignment();
   }
   this->_fsize = fileSize();
   this->_msize = this->_fsize;
@@ -308,7 +308,7 @@ SectionHeader<ELFT>::SectionHeader(const ELFLinkingContext &context,
                                    int32_t order)
     : Chunk<ELFT>("shdr", Chunk<ELFT>::Kind::SectionHeader, context) {
   this->_fsize = 0;
-  this->_align2 = 8;
+  this->_alignment = 8;
   this->setOrder(order);
   // The first element in the list is always NULL
   Elf_Shdr *nullshdr = new (_sectionAllocate.Allocate<Elf_Shdr>()) Elf_Shdr;
@@ -331,7 +331,7 @@ void SectionHeader<ELFT>::appendSection(OutputSection<ELFT> *section) {
     shdr->sh_size = section->fileSize();
   shdr->sh_link = section->link();
   shdr->sh_info   = section->shinfo();
-  shdr->sh_addralign = section->align2();
+  shdr->sh_addralign = section->alignment();
   shdr->sh_entsize = section->entsize();
   _sectionInfo.push_back(shdr);
 }
@@ -347,7 +347,7 @@ SectionHeader<ELFT>::updateSection(Section<ELFT> *section) {
   shdr->sh_size   = section->fileSize();
   shdr->sh_link = section->getLink();
   shdr->sh_info = section->getInfo();
-  shdr->sh_addralign = section->align2();
+  shdr->sh_addralign = section->alignment();
   shdr->sh_entsize = section->getEntSize();
 }
 

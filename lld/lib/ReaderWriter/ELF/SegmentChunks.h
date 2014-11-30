@@ -70,13 +70,13 @@ public:
   inline uint64_t memSize() const { return _memSize; }
 
   // Return the alignment of the slice
-  inline uint64_t align2() const { return _align2; }
+  inline uint64_t alignment() const { return _alignment; }
 
   inline void setMemSize(uint64_t memsz) { _memSize = memsz; }
 
   inline void setVirtualAddr(uint64_t addr) { _addr = addr; }
 
-  inline void setAlign(uint64_t align) { _align2 = align; }
+  inline void setAlign(uint64_t align) { _alignment = align; }
 
   static bool compare_slices(SegmentSlice<ELFT> *a, SegmentSlice<ELFT> *b) {
     return a->startSection() < b->startSection();
@@ -91,7 +91,7 @@ private:
   int32_t _startSection;
   uint64_t _addr;
   uint64_t _offset;
-  uint64_t _align2;
+  uint64_t _alignment;
   uint64_t _fsize;
   uint64_t _memSize;
 };
@@ -286,7 +286,7 @@ template <class ELFT> class ProgramHeaderSegment : public Segment<ELFT> {
 public:
   ProgramHeaderSegment(const ELFLinkingContext &context)
       : Segment<ELFT>(context, "PHDR", llvm::ELF::PT_PHDR) {
-    this->_align2 = 8;
+    this->_alignment = 8;
     this->_flags = (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR);
   }
 
@@ -316,7 +316,7 @@ Segment<ELFT>::Segment(const ELFLinkingContext &context, StringRef name,
                        const Layout::SegmentType type)
     : Chunk<ELFT>(name, Chunk<ELFT>::Kind::ELFSegment, context),
       _segmentType(type), _flags(0), _atomflags(0) {
-  this->_align2 = 0;
+  this->_alignment = 0;
   this->_fsize = 0;
   _outputMagic = context.getOutputMagic();
 }
@@ -344,8 +344,8 @@ template <class ELFT> void Segment<ELFT>::append(Section<ELFT> *section) {
     _flags |= section->getFlags();
   if (_atomflags < toAtomPerms(_flags))
     _atomflags = toAtomPerms(_flags);
-  if (this->_align2 < section->align2())
-    this->_align2 = section->align2();
+  if (this->_alignment < section->alignment())
+    this->_alignment = section->alignment();
 }
 
 template <class ELFT>
@@ -407,7 +407,7 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
     bool isFirstSection = true;
     for (auto section : slice->sections()) {
       // Align fileoffset to the alignment of the section.
-      fileOffset = llvm::RoundUpToAlignment(fileOffset, section->align2());
+      fileOffset = llvm::RoundUpToAlignment(fileOffset, section->alignment());
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
       // to a page boundary
       if (isFirstSection &&
@@ -491,16 +491,16 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         isDataPageAlignedForNMagic = true;
       }
       // align the startOffset to the section alignment
-      uint64_t newAddr = llvm::RoundUpToAlignment(startAddr, (*si)->align2());
+      uint64_t newAddr = llvm::RoundUpToAlignment(startAddr, (*si)->alignment());
       curSliceAddress = newAddr;
-      sliceAlign = (*si)->align2();
+      sliceAlign = (*si)->alignment();
       (*si)->setVirtualAddr(curSliceAddress);
 
       // Handle TLS.
       if (auto section = dyn_cast<Section<ELFT>>(*si)) {
         if (section->getSegmentType() == llvm::ELF::PT_TLS) {
           tlsStartAddr =
-              llvm::RoundUpToAlignment(tlsStartAddr, (*si)->align2());
+              llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
           section->assignVirtualAddress(tlsStartAddr);
           tlsStartAddr += (*si)->memSize();
         } else {
@@ -523,7 +523,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
             llvm::RoundUpToAlignment(curAddr, this->_context.getPageSize());
         isDataPageAlignedForNMagic = true;
       }
-      uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->align2());
+      uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->alignment());
       Section<ELFT> *sec = dyn_cast<Section<ELFT>>(*si);
       StringRef curOutputSectionName =
           sec ? sec->outputSectionName() : (*si)->name();
@@ -563,16 +563,16 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         if (auto section = dyn_cast<Section<ELFT>>(*si))
           section->assignVirtualAddress(newAddr);
         curSliceSize = newAddr - curSliceAddress + (*si)->memSize();
-        sliceAlign = (*si)->align2();
+        sliceAlign = (*si)->alignment();
       } else {
-        if (sliceAlign < (*si)->align2())
-          sliceAlign = (*si)->align2();
+        if (sliceAlign < (*si)->alignment())
+          sliceAlign = (*si)->alignment();
         (*si)->setVirtualAddr(newAddr);
         // Handle TLS.
         if (auto section = dyn_cast<Section<ELFT>>(*si)) {
           if (section->getSegmentType() == llvm::ELF::PT_TLS) {
             tlsStartAddr =
-                llvm::RoundUpToAlignment(tlsStartAddr, (*si)->align2());
+                llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
             section->assignVirtualAddress(tlsStartAddr);
             tlsStartAddr += (*si)->memSize();
           } else {

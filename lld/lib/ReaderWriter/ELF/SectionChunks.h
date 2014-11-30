@@ -107,9 +107,9 @@ public:
            c->kind() == Chunk<ELFT>::Kind::AtomSection;
   }
 
-  uint64_t align2() const override {
-    return _isFirstSectionInOutputSection ? _outputSection->align2()
-                                          : this->_align2;
+  uint64_t alignment() const override {
+    return _isFirstSectionInOutputSection ? _outputSection->alignment()
+                                          : this->_alignment;
   }
 
   virtual StringRef inputSectionName() const { return _inputSectionName; }
@@ -277,14 +277,14 @@ template <class ELFT>
 uint64_t AtomSection<ELFT>::alignOffset(uint64_t offset,
                                         DefinedAtom::Alignment &atomAlign) {
   uint64_t requiredModulus = atomAlign.modulus;
-  uint64_t align2 = 1u << atomAlign.powerOf2;
-  uint64_t currentModulus = (offset % align2);
+  uint64_t alignment = 1u << atomAlign.powerOf2;
+  uint64_t currentModulus = (offset % alignment);
   uint64_t retOffset = offset;
   if (currentModulus != requiredModulus) {
     if (requiredModulus > currentModulus)
       retOffset += requiredModulus - currentModulus;
     else
-      retOffset += align2 + requiredModulus - currentModulus;
+      retOffset += alignment + requiredModulus - currentModulus;
   }
   return retOffset;
 }
@@ -297,7 +297,7 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
 
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
-  uint64_t align2 = 1u << atomAlign.powerOf2;
+  uint64_t alignment = 1u << atomAlign.powerOf2;
   // Align the atom to the required modulus/ align the file offset and the
   // memory offset separately this is required so that BSS symbols are handled
   // properly as the BSS symbols only occupy memory size and not file size
@@ -342,8 +342,8 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
   }
   // Set the section alignment to the largest alignment
   // std::max doesn't support uint64_t
-  if (this->_align2 < align2)
-    this->_align2 = align2;
+  if (this->_alignment < alignment)
+    this->_alignment = alignment;
 
   return *_atoms.back();
 }
@@ -467,7 +467,7 @@ public:
 
   inline int64_t shinfo() const { return _shInfo; }
 
-  inline uint64_t align2() const { return _align2; }
+  inline uint64_t alignment() const { return _alignment; }
 
   inline int64_t link() const { return _link; }
 
@@ -501,7 +501,7 @@ private:
   int64_t _shInfo;
   int64_t _entSize;
   int64_t _link;
-  uint64_t _align2;
+  uint64_t _alignment;
   int64_t _kind;
   int64_t _type;
   bool _isLoadableSection;
@@ -513,11 +513,11 @@ template <class ELFT>
 OutputSection<ELFT>::OutputSection(StringRef name)
     : _name(name), _hasSegment(false), _ordinal(0), _flags(0), _size(0),
       _memSize(0), _fileOffset(0), _virtualAddr(0), _shInfo(0), _entSize(0),
-      _link(0), _align2(0), _kind(0), _type(0), _isLoadableSection(false) {}
+      _link(0), _alignment(0), _kind(0), _type(0), _isLoadableSection(false) {}
 
 template <class ELFT> void OutputSection<ELFT>::appendSection(Chunk<ELFT> *c) {
-  if (c->align2() > _align2)
-    _align2 = c->align2();
+  if (c->alignment() > _alignment)
+    _alignment = c->alignment();
   if (const auto section = dyn_cast<Section<ELFT>>(c)) {
     assert(!_link && "Section already has a link!");
     _link = section->getLink();
@@ -575,7 +575,7 @@ StringTable<ELFT>::StringTable(const ELFLinkingContext &context,
   // add an empty string
   _strings.push_back("");
   this->_fsize = 1;
-  this->_align2 = 1;
+  this->_alignment = 1;
   this->setOrder(order);
   this->_type = SHT_STRTAB;
   if (dynamic) {
@@ -701,7 +701,7 @@ SymbolTable<ELFT>::SymbolTable(const ELFLinkingContext &context,
   _symbolTable.push_back(SymbolEntry(nullptr, symbol, nullptr));
   this->_entSize = sizeof(Elf_Sym);
   this->_fsize = sizeof(Elf_Sym);
-  this->_align2 = sizeof(Elf_Addr);
+  this->_alignment = sizeof(Elf_Addr);
   this->_type = SHT_SYMTAB;
 }
 
@@ -930,7 +930,7 @@ public:
     this->setOrder(order);
     this->_flags = SHF_ALLOC;
     // Set the alignment properly depending on the target architecture
-    this->_align2 = ELFT::Is64Bits ? 8 : 4;
+    this->_alignment = ELFT::Is64Bits ? 8 : 4;
     if (context.isRelaOutputFormat()) {
       this->_entSize = sizeof(Elf_Rela);
       this->_type = SHT_RELA;
@@ -1045,7 +1045,7 @@ public:
       : Section<ELFT>(context, str, "DynamicSection"), _layout(layout) {
     this->setOrder(order);
     this->_entSize = sizeof(Elf_Dyn);
-    this->_align2 = ELFT::Is64Bits ? 8 : 4;
+    this->_alignment = ELFT::Is64Bits ? 8 : 4;
     // Reserve space for the DT_NULL entry.
     this->_fsize = sizeof(Elf_Dyn);
     this->_msize = sizeof(Elf_Dyn);
@@ -1227,7 +1227,7 @@ public:
                 StringRef interp)
       : Section<ELFT>(context, str, "Dynamic:Interp"), _interp(interp) {
     this->setOrder(order);
-    this->_align2 = 1;
+    this->_alignment = 1;
     // + 1 for null term.
     this->_fsize = interp.size() + 1;
     this->_msize = this->_fsize;
@@ -1279,7 +1279,7 @@ public:
     this->_entSize = 4;
     this->_type = SHT_HASH;
     this->_flags = SHF_ALLOC;
-    this->_align2 = ELFT::Is64Bits ? 8 : 4;
+    this->_alignment = ELFT::Is64Bits ? 8 : 4;
     this->_fsize = 0;
     this->_msize = 0;
   }
@@ -1383,7 +1383,7 @@ public:
     this->_entSize = 0;
     this->_type = SHT_PROGBITS;
     this->_flags = SHF_ALLOC;
-    this->_align2 = ELFT::Is64Bits ? 8 : 4;
+    this->_alignment = ELFT::Is64Bits ? 8 : 4;
     // Minimum size for empty .eh_frame_hdr.
     this->_fsize = 1 + 1 + 1 + 1 + 4;
     this->_msize = this->_fsize;

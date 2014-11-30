@@ -762,7 +762,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   for (auto si : _segments) {
     if (si->segmentType() == llvm::ELF::PT_LOAD) {
       firstLoadSegment = si;
-      si->firstSection()->setAlign(si->align2());
+      si->firstSection()->setAlign(si->alignment());
       break;
     }
   }
@@ -867,7 +867,7 @@ void DefaultLayout<ELFT>::assignFileOffsetsForMiscSections() {
     section = dyn_cast<Section<ELFT>>(si);
     if (section && DefaultLayout<ELFT>::hasOutputSegment(section))
       continue;
-    fileoffset = llvm::RoundUpToAlignment(fileoffset, si->align2());
+    fileoffset = llvm::RoundUpToAlignment(fileoffset, si->alignment());
     si->setFileOffset(fileoffset);
     si->setVirtualAddr(0);
     fileoffset += si->fileSize();

@@ -24,7 +24,7 @@ public:
                              MipsTargetLayout<ELFType>::ORDER_GOT),
         _hasNonLocal(false), _localCount(0) {
     this->_flags |= SHF_MIPS_GPREL;
-    this->_align2 = 4;
+    this->_alignment = 4;
   }
 
   /// \brief Number of local GOT entries.
