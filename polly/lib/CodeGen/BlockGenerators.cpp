@@ -39,30 +39,17 @@ static cl::opt<bool> Aligned("enable-polly-aligned",
                              cl::Hidden, cl::init(false), cl::ZeroOrMore,
                              cl::cat(PollyCategory));
 
-static cl::opt<bool, true>
-    SCEVCodegenF("polly-codegen-scev",
-                 cl::desc("Use SCEV based code generation."), cl::Hidden,
-                 cl::location(SCEVCodegen), cl::init(true), cl::ZeroOrMore,
-                 cl::cat(PollyCategory));
-
-bool polly::SCEVCodegen;
-
 bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
                           ScalarEvolution *SE, const Region *R) {
-  if (SCEVCodegen) {
-    if (!I || !SE->isSCEVable(I->getType()))
-      return false;
-
-    if (const SCEV *Scev = SE->getSCEV(const_cast<Instruction *>(I)))
-      if (!isa<SCEVCouldNotCompute>(Scev))
-        if (!hasScalarDepsInsideRegion(Scev, R))
-          return true;
-
+  if (!I || !SE->isSCEVable(I->getType()))
     return false;
-  }
 
-  Loop *L = LI->getLoopFor(I->getParent());
-  return L && I == L->getCanonicalInductionVariable() && R->contains(L);
+  if (const SCEV *Scev = SE->getSCEV(const_cast<Instruction *>(I)))
+    if (!isa<SCEVCouldNotCompute>(Scev))
+      if (!hasScalarDepsInsideRegion(Scev, R))
+        return true;
+
+  return false;
 }
 
 BlockGenerator::BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P,
@@ -91,7 +78,7 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
   if (Value *New = BBMap.lookup(Old))
     return New;
 
-  if (SCEVCodegen && SE.isSCEVable(Old->getType()))
+  if (SE.isSCEVable(Old->getType()))
     if (const SCEV *Scev = SE.getSCEVAtScope(const_cast<Value *>(Old), L)) {
       if (!isa<SCEVCouldNotCompute>(Scev)) {
         const SCEV *NewScev = apply(Scev, LTS, SE);

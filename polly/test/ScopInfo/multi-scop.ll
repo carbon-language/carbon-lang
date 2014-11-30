@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect -analyze -polly-codegen-scev < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-scops -analyze -polly-codegen-scev < %s
+; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 

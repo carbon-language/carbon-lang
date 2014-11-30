@@ -577,12 +577,7 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
                                        DetectionContext &Context) const {
   if (PHINode *PN = dyn_cast<PHINode>(&Inst))
     if (!canSynthesize(PN, LI, SE, &Context.CurRegion)) {
-      if (SCEVCodegen)
-        return invalid<ReportPhiNodeRefInRegion>(Context, /*Assert=*/true,
-                                                 &Inst);
-      else
-        return invalid<ReportNonCanonicalPhiNode>(Context, /*Assert=*/true,
-                                                  &Inst);
+      return invalid<ReportPhiNodeRefInRegion>(Context, /*Assert=*/true, &Inst);
     }
 
   // We only check the call instruction but not invoke instruction.
@@ -609,14 +604,6 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 }
 
 bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
-  if (!SCEVCodegen) {
-    // If code generation is not in scev based mode, we need to ensure that
-    // each loop has a canonical induction variable.
-    PHINode *IndVar = L->getCanonicalInductionVariable();
-    if (!IndVar)
-      return invalid<ReportLoopHeader>(Context, /*Assert=*/true, L);
-  }
-
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
   if (!isAffineExpr(&Context.CurRegion, LoopCount, *SE))

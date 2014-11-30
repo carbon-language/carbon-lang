@@ -21,7 +21,6 @@
 
 #include "polly/RegisterPasses.h"
 #include "polly/Canonicalization.h"
-#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/Cloog.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
@@ -195,7 +194,7 @@ void initializePollyPasses(PassRegistry &Registry) {
 /// code generator. For the moment, the CLooG code generator is enabled by
 /// default.
 static void registerPollyPasses(llvm::PassManagerBase &PM) {
-  registerCanonicalicationPasses(PM, SCEVCodegen);
+  registerCanonicalicationPasses(PM);
 
   PM.add(polly::createScopInfoPass());
 

@@ -17,7 +17,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 #include "polly/Options.h"
@@ -905,16 +904,10 @@ void ScopStmt::deriveAssumptions() {
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
                    BasicBlock &bb, SmallVectorImpl<Loop *> &Nest,
                    SmallVectorImpl<unsigned> &Scatter)
-    : Parent(parent), BB(&bb), IVS(Nest.size()), NestLoops(Nest.size()) {
+    : Parent(parent), BB(&bb), NestLoops(Nest.size()) {
   // Setup the induction variables.
-  for (unsigned i = 0, e = Nest.size(); i < e; ++i) {
-    if (!SCEVCodegen) {
-      PHINode *PN = Nest[i]->getCanonicalInductionVariable();
-      assert(PN && "Non canonical IV in Scop!");
-      IVS[i] = PN;
-    }
+  for (unsigned i = 0, e = Nest.size(); i < e; ++i)
     NestLoops[i] = Nest[i];
-  }
 
   BaseName = getIslCompatibleName("Stmt_", &bb, "");
 
@@ -1075,11 +1068,6 @@ unsigned ScopStmt::getNumScattering() const {
 }
 
 const char *ScopStmt::getBaseName() const { return BaseName.c_str(); }
-
-const PHINode *
-ScopStmt::getInductionVariableForDimension(unsigned Dimension) const {
-  return IVS[Dimension];
-}
 
 const Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
   return NestLoops[Dimension];

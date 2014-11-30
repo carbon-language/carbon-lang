@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-codegen-isl -S -polly-delinearize -polly-codegen-scev < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
 
 ; Verify that we generate the runtime check code after the conditional branch
 ; in the SCoP region entering block (here %entry).

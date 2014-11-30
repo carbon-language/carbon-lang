@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-parallel -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
 ; RUN: opt %loadPolly -polly-parallel -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=IR
-; RUN: opt %loadPolly -polly-parallel -polly-codegen-isl -S -polly-codegen-scev < %s | FileCheck %s -check-prefix=IR
+; RUN: opt %loadPolly -polly-parallel -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=IR
 ;
 ; float A[100];
 ;

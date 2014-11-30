@@ -1,16 +1,12 @@
 ; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
-; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -polly-codegen-scev=false -verify-dom-info < %s | FileCheck %s -check-prefix=IR
-; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -polly-codegen-scev=true -verify-dom-info < %s | FileCheck %s -check-prefix=IR-SCEV
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
 
 ; AST: #pragma simd
 ; AST: #pragma omp parallel for
 ; AST: for (int c1 = 0; c1 <= 1023; c1 += 1)
 ; AST:   Stmt_for_i(c1);
 
-; IR: %[[gep:[._a-zA-Z0-9]*]] = getelementptr inbounds { [1024 x double]*, i64 }* %polly.par.userContext, i32 0, i32 1
-; IR: store i64 %extern, i64* %[[gep]]
-
-; IR-SCEV: getelementptr inbounds { [1024 x double]* }* %polly.par.userContext, i32 0, i32 0
+; IR: getelementptr inbounds { [1024 x double]* }* %polly.par.userContext, i32 0, i32 0
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"

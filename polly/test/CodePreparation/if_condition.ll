@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-prepare -S < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-prepare -S -polly-codegen-scev < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-prepare -S < %s | FileCheck %s
 
 ; void f(long A[], long N) {
 ;   long i;

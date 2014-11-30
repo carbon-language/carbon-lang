@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen-scev -polly-codegen-isl -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl -S < %s | FileCheck %s
 ;
 ; Check that the special alignment information is kept
 ;

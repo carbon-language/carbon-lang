@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen-scev -polly-code-generator=isl -analyze -polly-scops < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-code-generator=isl -analyze -polly-scops < %s | FileCheck %s
 ;
 ; Check that RTC generation does not die when accesses are dead.
 ;

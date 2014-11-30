@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -polly-codegen-scev -verify-dom-info < %s | FileCheck %s -check-prefix=IR
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
 
 ; IR: @foo.polly.subfn
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

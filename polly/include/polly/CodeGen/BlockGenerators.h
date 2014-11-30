@@ -33,8 +33,6 @@ class ScalarEvolution;
 }
 
 namespace polly {
-extern bool SCEVCodegen;
-
 using namespace llvm;
 class ScopStmt;
 class MemoryAccess;

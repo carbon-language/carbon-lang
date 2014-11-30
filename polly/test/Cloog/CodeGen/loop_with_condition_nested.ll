@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly -basicaa -polly-cloog -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -basicaa -polly-codegen -polly-codegen-scev=false -loops -analyze < %s | FileCheck %s -check-prefix=LOOPS
 
 ;#include <string.h>
 ;#define N 1024

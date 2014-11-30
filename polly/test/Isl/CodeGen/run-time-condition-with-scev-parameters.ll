@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-codegen-isl -S -polly-delinearize -polly-codegen-scev < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
 
 ; CHECK: %1 = zext i32 %n to i64
 ; CHECK: %2 = icmp sge i64 %1, 1

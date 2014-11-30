@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -tbaa -polly-parallel -polly-parallel-force -polly-parallel-force -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
 ; RUN: opt %loadPolly -tbaa -polly-parallel -polly-parallel-force -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
-; RUN: opt %loadPolly -tbaa -polly-parallel -polly-parallel-force -polly-parallel-force -polly-codegen-isl -S -polly-codegen-scev -verify-dom-info < %s | FileCheck %s -check-prefix=IR
+; RUN: opt %loadPolly -tbaa -polly-parallel -polly-parallel-force -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
 
 ; #define N 1024
 ; float A[N];

@@ -9,20 +9,9 @@
 //
 // The Polly code preparation pass is executed before SCoP detection. Its only
 // use is to translate all PHI nodes that can not be expressed by the code
-// generator into explicit memory dependences. Depending of the code generation
-// strategy different PHI nodes are translated:
+// generator into explicit memory dependences.
 //
-// - indvars based code generation:
-//
-// The indvars based code generation requires explicit canonical induction
-// variables. Such variables are generated before scop detection and
-// also before the code preparation pass. All PHI nodes that are not canonical
-// induction variables are not supported by the indvars based code generation
-// and are consequently translated into explicit memory accesses.
-//
-// - scev based code generation:
-//
-// The scev based code generation can code generate all PHI nodes that do not
+// Polly's code generation can code generate all PHI nodes that do not
 // reference parameters within the scop. As the code preparation pass is run
 // before scop detection, we can not check this condition, because without
 // a detected scop, we do not know SCEVUnknowns that appear in the SCEV of
@@ -128,21 +117,11 @@ bool CodePreparation::eliminatePHINodes(Function &F) {
     for (BasicBlock::iterator II = BI->begin(), IE = BI->getFirstNonPHI();
          II != IE; ++II) {
       PHINode *PN = cast<PHINode>(II);
-      if (SCEVCodegen) {
-        if (SE->isSCEVable(PN->getType())) {
-          const SCEV *S = SE->getSCEV(PN);
-          if (!isa<SCEVUnknown>(S) && !isa<SCEVCouldNotCompute>(S)) {
-            PNtoPreserve.push_back(PN);
-            continue;
-          }
-        }
-      } else {
-        if (Loop *L = LI->getLoopFor(BI)) {
-          // Induction variables will be preserved.
-          if (L->getCanonicalInductionVariable() == PN) {
-            PNtoPreserve.push_back(PN);
-            continue;
-          }
+      if (SE->isSCEVable(PN->getType())) {
+        const SCEV *S = SE->getSCEV(PN);
+        if (!isa<SCEVUnknown>(S) && !isa<SCEVCouldNotCompute>(S)) {
+          PNtoPreserve.push_back(PN);
+          continue;
         }
       }
 

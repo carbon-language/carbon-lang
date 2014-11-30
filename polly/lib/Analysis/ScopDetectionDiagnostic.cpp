@@ -351,43 +351,6 @@ bool ReportPhiNodeRefInRegion::classof(const RejectReason *RR) {
 }
 
 //===----------------------------------------------------------------------===//
-// ReportNonCanonicalPhiNode.
-
-ReportNonCanonicalPhiNode::ReportNonCanonicalPhiNode(Instruction *Inst)
-    : ReportIndVar(rrkNonCanonicalPhiNode), Inst(Inst) {}
-
-std::string ReportNonCanonicalPhiNode::getMessage() const {
-  return "Non canonical PHI node: " + *Inst;
-}
-
-const DebugLoc &ReportNonCanonicalPhiNode::getDebugLoc() const {
-  return Inst->getDebugLoc();
-}
-
-bool ReportNonCanonicalPhiNode::classof(const RejectReason *RR) {
-  return RR->getKind() == rrkNonCanonicalPhiNode;
-}
-
-//===----------------------------------------------------------------------===//
-// ReportLoopHeader.
-
-ReportLoopHeader::ReportLoopHeader(Loop *L)
-    : ReportIndVar(rrkLoopHeader), L(L) {}
-
-std::string ReportLoopHeader::getMessage() const {
-  return ("No canonical IV at loop header: " + L->getHeader()->getName()).str();
-}
-
-const DebugLoc &ReportLoopHeader::getDebugLoc() const {
-  BasicBlock *BB = L->getHeader();
-  return BB->getTerminator()->getDebugLoc();
-}
-
-bool ReportLoopHeader::classof(const RejectReason *RR) {
-  return RR->getKind() == rrkLoopHeader;
-}
-
-//===----------------------------------------------------------------------===//
 // ReportIndEdge.
 
 ReportIndEdge::ReportIndEdge(BasicBlock *BB)

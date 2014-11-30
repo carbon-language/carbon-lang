@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-dependences -polly-codegen-scev -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-dependences -analyze < %s | FileCheck %s
 ;
 ;  CHECK: RAW dependences:
 ;  CHECK-DAG:  Stmt_S2[0, 0] -> Stmt_S3[1]

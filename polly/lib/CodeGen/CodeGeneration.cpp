@@ -412,16 +412,6 @@ void ClastStmtCodeGen::codegen(const clast_assignment *A, ScopStmt *Stmt,
   if (VLTS)
     (*VLTS)[VectorDim][Stmt->getLoopForDimension(Dim)] = URHS;
   LoopToScev[Stmt->getLoopForDimension(Dim)] = URHS;
-
-  const PHINode *PN = Stmt->getInductionVariableForDimension(Dim);
-  if (PN) {
-    RHS = Builder.CreateTruncOrBitCast(RHS, PN->getType());
-
-    if (VectorVMap)
-      (*VectorVMap)[VectorDim][PN] = RHS;
-
-    ValueMap[PN] = RHS;
-  }
 }
 
 void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,

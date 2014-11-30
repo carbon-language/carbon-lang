@@ -1,5 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev=false %vector-opt -dce -S < %s | FileCheck %s
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev=true %vector-opt -dce -S < %s | FileCheck %s -check-prefix=CHECK-SCEV
+; RUN: opt %loadPolly -basicaa -polly-codegen-isl %vector-opt -dce -S < %s | FileCheck %s -check-prefix=CHECK
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -30,15 +29,8 @@ bb4:                                              ; preds = %bb1
   ret void
 }
 
-; CHECK: [[PTR:%[a-zA-Z0-9_\.]+]] = getelementptr [1024 x double]* @B, i64 0, i64 0
-; CHECK: %tmp_p_splat_one = load <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8
+; CHECK: %tmp_p_splat_one = load <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8, !alias.scope !0, !noalias !2
 ; CHECK: %tmp_p_splat = shufflevector <1 x float> %tmp_p_splat_one, <1 x float> %tmp_p_splat_one, <4 x i32> zeroinitializer
 ; CHECK: %0 = fpext <4 x float> %tmp_p_splat to <4 x double>
-; CHECK: %vector_ptr = bitcast double* [[PTR]] to <4 x double>*
-; CHECK: store <4 x double> %0, <4 x double>* %vector_ptr, align 8
-
-; CHECK-SCEV: %tmp_p_splat_one = load <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8, !alias.scope !0, !noalias !2
-; CHECK-SCEV: %tmp_p_splat = shufflevector <1 x float> %tmp_p_splat_one, <1 x float> %tmp_p_splat_one, <4 x i32> zeroinitializer
-; CHECK-SCEV: %0 = fpext <4 x float> %tmp_p_splat to <4 x double>
-; CHECK-SCEV: store <4 x double> %0, <4 x double>* bitcast ([1024 x double]* @B to <4 x double>*), align 8, !alias.scope !3, !noalias !4
+; CHECK: store <4 x double> %0, <4 x double>* bitcast ([1024 x double]* @B to <4 x double>*), align 8, !alias.scope !3, !noalias !4
 

@@ -93,7 +93,6 @@ enum RejectReasonKind {
   rrkIndVar,
   rrkPhiNodeRefInRegion,
   rrkNonCanonicalPhiNode,
-  rrkLoopHeader,
   rrkLastIndVar,
 
   rrkIndEdge,
@@ -560,52 +559,6 @@ class ReportPhiNodeRefInRegion : public ReportIndVar {
 
 public:
   ReportPhiNodeRefInRegion(Instruction *Inst);
-
-  /// @name LLVM-RTTI interface
-  //@{
-  static bool classof(const RejectReason *RR);
-  //@}
-
-  /// @name RejectReason interface
-  //@{
-  virtual std::string getMessage() const override;
-  virtual const DebugLoc &getDebugLoc() const override;
-  //@}
-};
-
-//===----------------------------------------------------------------------===//
-/// @brief Captures a non canonical phi node.
-class ReportNonCanonicalPhiNode : public ReportIndVar {
-  //===--------------------------------------------------------------------===//
-
-  // The offending instruction.
-  Instruction *Inst;
-
-public:
-  ReportNonCanonicalPhiNode(Instruction *Inst);
-
-  /// @name LLVM-RTTI interface
-  //@{
-  static bool classof(const RejectReason *RR);
-  //@}
-
-  /// @name RejectReason interface
-  //@{
-  virtual std::string getMessage() const override;
-  virtual const DebugLoc &getDebugLoc() const override;
-  //@}
-};
-
-//===----------------------------------------------------------------------===//
-/// @brief Captures a non canonical induction variable in the loop header.
-class ReportLoopHeader : public ReportIndVar {
-  //===--------------------------------------------------------------------===//
-
-  // The offending loop.
-  Loop *L;
-
-public:
-  ReportLoopHeader(Loop *L);
 
   /// @name LLVM-RTTI interface
   //@{

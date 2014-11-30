@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-ast -analyze -polly-codegen-scev < %s | FileCheck %s -check-prefix=AST
-; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -polly-codegen-scev -verify-dom-info < %s | FileCheck %s -check-prefix=IR
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
 
 
 ; - Test the case where scalar evolution references a loop that is outside

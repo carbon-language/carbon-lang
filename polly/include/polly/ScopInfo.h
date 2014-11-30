@@ -426,10 +426,6 @@ class ScopStmt {
   /// The BasicBlock represented by this statement.
   BasicBlock *BB;
 
-  /// @brief The loop induction variables surrounding the statement.
-  ///
-  /// This information is only needed for final code generation.
-  std::vector<PHINode *> IVS;
   std::vector<Loop *> NestLoops;
 
   std::string BaseName;
@@ -562,11 +558,6 @@ public:
   const Scop *getParent() const { return &Parent; }
 
   const char *getBaseName() const;
-  /// @brief Get the induction variable for a dimension.
-  ///
-  /// @param Dimension The dimension of the induction variable
-  /// @return The induction variable at a certain dimension.
-  const PHINode *getInductionVariableForDimension(unsigned Dimension) const;
 
   /// @brief Restrict the domain of the statement.
   ///

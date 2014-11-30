@@ -751,15 +751,6 @@ void IslNodeBuilder::createSubstitutions(isl_ast_expr *Expr, ScopStmt *Stmt,
     V = ExprBuilder.create(SubExpr);
     ScalarEvolution *SE = Stmt->getParent()->getSE();
     LTS[Stmt->getLoopForDimension(i)] = SE->getUnknown(V);
-
-    // CreateIntCast can introduce trunc expressions. This is correct, as the
-    // result will always fit into the type of the original induction variable
-    // (because we calculate a value of the original induction variable).
-    const Value *OldIV = Stmt->getInductionVariableForDimension(i);
-    if (OldIV) {
-      V = Builder.CreateIntCast(V, OldIV->getType(), true);
-      VMap[OldIV] = V;
-    }
   }
 
   // Add the current ValueMap to our per-statement value map.

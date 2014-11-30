@@ -1,10 +1,10 @@
 ; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
 ; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
-; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -polly-codegen-scev -verify-dom-info < %s | FileCheck %s -check-prefix=IR
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
 
 ; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-import-jscop -polly-import-jscop-dir=%S -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST-STRIDE4
 ; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=IR-STRIDE4
-; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen-isl -polly-codegen-scev -S < %s | FileCheck %s -check-prefix=IR-STRIDE4
+; RUN: opt %loadPolly -polly-parallel -polly-parallel-force -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=IR-STRIDE4
 
 ; This extensive test case tests the creation of the full set of OpenMP calls
 ; as well as the subfunction creation using a trivial loop as example.

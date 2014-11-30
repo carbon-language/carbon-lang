@@ -1,5 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev=false %vector-opt -dce -S < %s | FileCheck %s
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev=true %vector-opt -dce -S < %s | FileCheck %s -check-prefix=CHECK-SCEV
+; RUN: opt %loadPolly -basicaa -polly-codegen-isl %vector-opt -dce -S < %s | FileCheck %s
 
 ;#define N 1024
 ;float A[N];
@@ -56,14 +55,6 @@ bb:
   ret i32 %tmp1
 }
 
-; CHECK: %p_scevgep1.moved.to.bb3 = getelementptr [1024 x float]* @A, i64 0, i64 0
-; CHECK: %p_scevgep.moved.to.bb3 = getelementptr [1024 x float]* @B, i64 0, i64 0
-; CHECK: %vector_ptr = bitcast float* %p_scevgep1.moved.to.bb3 to <4 x float>*
-; CHECK: %tmp_p_vec_full = load <4 x float>* %vector_ptr, align 8
+; CHECK: %tmp_p_vec_full = load <4 x float>* bitcast ([1024 x float]* @A to <4 x float>*), align 8, !alias.scope !0, !noalias !2
 ; CHECK: %tmp4p_vec = fadd <4 x float> %tmp_p_vec_full, <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>
-; CHECK: %vector_ptr7 = bitcast float* %p_scevgep.moved.to.bb3 to <4 x float>*
-; CHECK: store <4 x float> %tmp4p_vec, <4 x float>* %vector_ptr7, align 8
-
-; CHECK-SCEV: %tmp_p_vec_full = load <4 x float>* bitcast ([1024 x float]* @A to <4 x float>*), align 8, !alias.scope !0, !noalias !2
-; CHECK-SCEV: %tmp4p_vec = fadd <4 x float> %tmp_p_vec_full, <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>
-; CHECK-SCEV: store <4 x float> %tmp4p_vec, <4 x float>* bitcast ([1024 x float]* @B to <4 x float>*), align 8, !alias.scope !3, !noalias !4
+; CHECK: store <4 x float> %tmp4p_vec, <4 x float>* bitcast ([1024 x float]* @B to <4 x float>*), align 8, !alias.scope !3, !noalias !4

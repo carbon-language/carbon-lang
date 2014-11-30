@@ -1,6 +1,5 @@
 ; RUN: opt %loadPolly -basicaa -polly-ast -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev=false -loops -analyze < %s | FileCheck %s -check-prefix=LOOPS
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev=true -loops -analyze < %s | FileCheck %s -check-prefix=LOOPS
+; RUN: opt %loadPolly -basicaa -polly-codegen-isl -loops -analyze < %s | FileCheck %s -check-prefix=LOOPS
 
 
 ;#include <string.h>

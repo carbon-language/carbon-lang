@@ -1,5 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen-isl -polly-ast-detect-parallel -polly-codegen-scev=false -S < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-codegen-isl -polly-ast-detect-parallel -polly-codegen-scev=true -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl -polly-ast-detect-parallel -S < %s | FileCheck %s
 ;
 ; Check that we mark multiple parallel loops correctly including the memory instructions.
 ;
