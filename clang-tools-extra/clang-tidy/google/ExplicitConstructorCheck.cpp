@@ -19,7 +19,8 @@ namespace clang {
 namespace tidy {
 
 void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(constructorDecl().bind("ctor"), this);
+  Finder->addMatcher(constructorDecl(unless(isInstantiated())).bind("ctor"),
+                     this);
 }
 
 // Looks for the token matching the predicate and returns the range of the found

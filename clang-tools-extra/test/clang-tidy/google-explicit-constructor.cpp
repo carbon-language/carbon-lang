@@ -78,3 +78,21 @@ struct C {
   C(const initializer_list<unsigned> &list2) {}
   C(initializer_list<unsigned> &&list3) {}
 };
+
+struct D {
+  template <typename T>
+  explicit D(T t) {}
+};
+
+template <typename T>
+struct E {
+  explicit E(T t) {}
+  template <typename U>
+  explicit E(U u) {}
+};
+
+void f(std::initializer_list<int> list) {
+  D d(list);
+  E<decltype(list)> e(list);
+  E<int> e2(list);
+}
