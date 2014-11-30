@@ -45,8 +45,10 @@ macro(add_polly_library name)
     set_target_properties(${name} PROPERTIES COMPILE_FLAGS ${cflag})
   endif(MSVC)
   install(TARGETS ${name}
+    EXPORT LLVMExports
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${name})
 endmacro(add_polly_library)
 
 macro(add_polly_loadable_module name)
