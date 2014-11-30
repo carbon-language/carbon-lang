@@ -59,7 +59,6 @@ SOURCES= Polly.cpp \
 	 Transform/CodePreparation.cpp \
 	 Transform/DeadCodeElimination.cpp \
 	 Transform/IndependentBlocks.cpp \
-	 Transform/IndVarSimplify.cpp \
 	 Transform/ScheduleOptimizer.cpp \
 	 ${GPGPU_FILES} \
 	 ${ISL_CODEGEN_FILES} \

@@ -39,7 +39,6 @@ llvm::Pass *createDOTOnlyViewerPass();
 llvm::Pass *createDOTPrinterPass();
 llvm::Pass *createDOTViewerPass();
 llvm::Pass *createIndependentBlocksPass();
-llvm::Pass *createIndVarSimplifyPass();
 llvm::Pass *createJSONExporterPass();
 llvm::Pass *createJSONImporterPass();
 #ifdef PLUTO_FOUND
@@ -80,7 +79,6 @@ struct PollyForcePassLinking {
     polly::createDOTPrinterPass();
     polly::createDOTViewerPass();
     polly::createIndependentBlocksPass();
-    polly::createIndVarSimplifyPass();
     polly::createJSONExporterPass();
     polly::createJSONImporterPass();
     polly::createScopDetectionPass();
@@ -114,7 +112,6 @@ void initializeIslScheduleOptimizerPass(llvm::PassRegistry &);
 void initializePlutoOptimizerPass(llvm::PassRegistry &);
 #endif
 void initializePollyCanonicalizePass(llvm::PassRegistry &);
-void initializePollyIndVarSimplifyPass(llvm::PassRegistry &);
 }
 
 #endif

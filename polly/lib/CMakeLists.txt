@@ -52,7 +52,6 @@ add_polly_library(Polly
   Transform/CodePreparation.cpp
   Transform/DeadCodeElimination.cpp
   Transform/IndependentBlocks.cpp
-  Transform/IndVarSimplify.cpp
   Transform/ScheduleOptimizer.cpp
   ${POLLY_PLUTO_FILES}
   )

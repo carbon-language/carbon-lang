@@ -156,7 +156,6 @@ void initializePollyPasses(PassRegistry &Registry) {
   initializeJSONImporterPass(Registry);
   initializeIslAstInfoPass(Registry);
   initializeIslScheduleOptimizerPass(Registry);
-  initializePollyIndVarSimplifyPass(Registry);
   initializePollyCanonicalizePass(Registry);
   initializeScopDetectionPass(Registry);
   initializeScopInfoPass(Registry);
