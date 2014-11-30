@@ -239,7 +239,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
       if (AddValue(NewDef.get(), SubMultiClass.RefRange.Start, MCVals[i]))
         return true;
 
-    CurMC->DefPrototypes.push_back(NewDef.release());
+    CurMC->DefPrototypes.push_back(std::move(NewDef));
   }
 
   const std::vector<Init *> &SMCTArgs = SMC->Rec.getTemplateArgs();
@@ -274,7 +274,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
              jend = CurMC->DefPrototypes.end();
            j != jend;
            ++j) {
-        Record *Def = *j;
+        Record *Def = j->get();
 
         if (SetValue(Def, SubMultiClass.RefRange.Start, SMCTArgs[i],
                      std::vector<unsigned>(),
@@ -1258,7 +1258,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       // known before any use.
       NewRec->setResolveFirst(true);
       // Otherwise, we're inside a multiclass, add it to the multiclass.
-      CurMultiClass->DefPrototypes.push_back(NewRecOwner.release());
+      CurMultiClass->DefPrototypes.push_back(std::move(NewRecOwner));
 
       // Copy the template arguments for the multiclass into the def.
       const std::vector<Init *> &TArgs =
@@ -2063,7 +2063,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
           == CurRec->getNameInit())
         return Error(DefLoc, "def '" + CurRec->getNameInitAsString() +
                      "' already defined in this multiclass!");
-    CurMultiClass->DefPrototypes.push_back(CurRecOwner.release());
+    CurMultiClass->DefPrototypes.push_back(std::move(CurRecOwner));
   } else if (ParseObjectBody(CurRec)) {
     return true;
   }
@@ -2507,7 +2507,7 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
         == CurRec->getNameInit())
       return Error(DefmPrefixLoc, "defm '" + CurRec->getNameInitAsString() +
                    "' already defined in this multiclass!");
-  CurMultiClass->DefPrototypes.push_back(CurRec);
+  CurMultiClass->DefPrototypes.push_back(std::unique_ptr<Record>(CurRec));
 
   // Copy the template arguments for the multiclass into the new def.
   const std::vector<Init *> &TA =
@@ -2570,7 +2570,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
 
     // Loop over all the def's in the multiclass, instantiating each one.
     for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
-      Record *DefProto = MC->DefPrototypes[i];
+      Record *DefProto = MC->DefPrototypes[i].get();
 
       Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix,
                                                 SMRange(DefmLoc,

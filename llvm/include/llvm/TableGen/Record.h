@@ -1663,7 +1663,7 @@ raw_ostream &operator<<(raw_ostream &OS, const Record &R);
 
 struct MultiClass {
   Record Rec;  // Placeholder for template args and Name.
-  typedef std::vector<Record*> RecordVector;
+  typedef std::vector<std::unique_ptr<Record>> RecordVector;
   RecordVector DefPrototypes;
 
   void dump() const;
