@@ -32,7 +32,7 @@ LinkingContext::LinkingContext()
   llvm::Optional<std::string> env =
       llvm::sys::Process::GetEnv("LLD_RUN_ROUNDTRIP_TEST");
   if (env.hasValue() && !env.getValue().empty())
-    setRunRoundTripPass(true);
+    _runRoundTripPasses = true;
 }
 #else
 LinkingContext::LinkingContext()

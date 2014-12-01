@@ -319,10 +319,6 @@ public:
   virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }
 
 #ifndef NDEBUG
-  void setRunRoundTripPass(bool roundTripPass) {
-    _runRoundTripPasses = roundTripPass;
-  }
-
   bool runRoundTripPass() const { return _runRoundTripPasses; }
 #endif
 
