@@ -3120,6 +3120,55 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
           --i; --e;
           Changed = true;
         }
+      // If the default value is unreachable, figure out the most popular
+      // destination and make it the default.
+      if (SI->getDefaultDest() == BB) {
+        std::map<BasicBlock*, std::pair<unsigned, unsigned> > Popularity;
+        for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
+             i != e; ++i) {
+          std::pair<unsigned, unsigned> &entry =
+              Popularity[i.getCaseSuccessor()];
+          if (entry.first == 0) {
+            entry.first = 1;
+            entry.second = i.getCaseIndex();
+          } else {
+            entry.first++;
+          }
+        }
+
+        // Find the most popular block.
+        unsigned MaxPop = 0;
+        unsigned MaxIndex = 0;
+        BasicBlock *MaxBlock = nullptr;
+        for (std::map<BasicBlock*, std::pair<unsigned, unsigned> >::iterator
+             I = Popularity.begin(), E = Popularity.end(); I != E; ++I) {
+          if (I->second.first > MaxPop ||
+              (I->second.first == MaxPop && MaxIndex > I->second.second)) {
+            MaxPop = I->second.first;
+            MaxIndex = I->second.second;
+            MaxBlock = I->first;
+          }
+        }
+        if (MaxBlock) {
+          // Make this the new default, allowing us to delete any explicit
+          // edges to it.
+          SI->setDefaultDest(MaxBlock);
+          Changed = true;
+
+          // If MaxBlock has phinodes in it, remove MaxPop-1 entries from
+          // it.
+          if (isa<PHINode>(MaxBlock->begin()))
+            for (unsigned i = 0; i != MaxPop-1; ++i)
+              MaxBlock->removePredecessor(SI->getParent());
+
+          for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
+               i != e; ++i)
+            if (i.getCaseSuccessor() == MaxBlock) {
+              SI->removeCase(i);
+              --i; --e;
+            }
+        }
+      }
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
       if (II->getUnwindDest() == BB) {
         // Convert the invoke to a call instruction.  This would be a good
@@ -4134,20 +4183,19 @@ static bool SwitchToLookupTable(SwitchInst *SI,
          "It is impossible for a switch to have more entries than the max "
          "representable value of its input integer type's size.");
 
-  // If the default destination is unreachable, or if the lookup table covers
-  // all values of the conditional variable, branch directly to the lookup table
-  // BB. Otherwise, check that the condition is within the case range.
-  const bool DefaultIsReachable =
-      !isa<UnreachableInst>(SI->getDefaultDest()->getFirstNonPHIOrDbg());
-  const bool GeneratingCoveredLookupTable = (MaxTableSize == TableSize);
+  // If we have a fully covered lookup table, unconditionally branch to the
+  // lookup table BB. Otherwise, check if the condition value is within the case
+  // range. If it is so, branch to the new BB. Otherwise branch to SI's default
+  // destination.
   BranchInst *RangeCheckBranch = nullptr;
 
-  if (!DefaultIsReachable || GeneratingCoveredLookupTable) {
+  const bool GeneratingCoveredLookupTable = MaxTableSize == TableSize;
+  if (GeneratingCoveredLookupTable) {
     Builder.CreateBr(LookupBB);
     // We cached PHINodes in PHIs, to avoid accessing deleted PHINodes later,
     // do not delete PHINodes here.
     SI->getDefaultDest()->removePredecessor(SI->getParent(),
-                                            true /*DontDeleteUselessPHIs*/);
+                                            true/*DontDeleteUselessPHIs*/);
   } else {
     Value *Cmp = Builder.CreateICmpULT(TableIndex, ConstantInt::get(
                                        MinCaseVal->getType(), TableSize));

@@ -24,7 +24,7 @@ if.end:                                           ; preds = %if.then
   br label %cleanup
 
 cleanup:                                          ; preds = %if.end, %if.then9
-  switch i32 undef, label %default [
+  switch i32 undef, label %unreachable [
     i32 0, label %cleanup.cont
     i32 1, label %if.end11
   ]
@@ -35,6 +35,6 @@ cleanup.cont:                                     ; preds = %cleanup
 if.end11:                                         ; preds = %cleanup.cont, %cleanup, %land.lhs.true, %entry
   ret void
 
-default:                                          ; preds = %cleanup
-  br label %if.end11
+unreachable:                                      ; preds = %cleanup
+  unreachable
 }

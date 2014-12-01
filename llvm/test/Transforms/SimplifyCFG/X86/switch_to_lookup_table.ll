@@ -21,8 +21,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; The table for @cprop
 ; CHECK: @switch.table5 = private unnamed_addr constant [7 x i32] [i32 5, i32 42, i32 126, i32 -452, i32 128, i32 6, i32 7]
 
-; The table for @unreachable_case
-; CHECK: @switch.table6 = private unnamed_addr constant [9 x i32] [i32 0, i32 0, i32 0, i32 2, i32 -1, i32 1, i32 1, i32 1, i32 1]
+; The table for @unreachable
+; CHECK: @switch.table6 = private unnamed_addr constant [5 x i32] [i32 0, i32 0, i32 0, i32 1, i32 -1]
 
 ; A simple int-to-int selection switch.
 ; It is dense enough to be replaced by table lookup.
@@ -752,7 +752,7 @@ return:
 ; CHECK: %switch.gep = getelementptr inbounds [7 x i32]* @switch.table5, i32 0, i32 %switch.tableidx
 }
 
-define i32 @unreachable_case(i32 %x)  {
+define i32 @unreachable(i32 %x)  {
 entry:
   switch i32 %x, label %sw.default [
     i32 0, label %sw.bb
@@ -770,44 +770,15 @@ sw.bb: br label %return
 sw.bb1: unreachable
 sw.bb2: br label %return
 sw.bb3: br label %return
-sw.default: br label %return
+sw.default: unreachable
 
 return:
-  %retval.0 = phi i32 [ 1, %sw.bb3 ], [ -1, %sw.bb2 ], [ 0, %sw.bb ], [ 2, %sw.default ]
+  %retval.0 = phi i32 [ 1, %sw.bb3 ], [ -1, %sw.bb2 ], [ 0, %sw.bb ]
   ret i32 %retval.0
 
-; CHECK-LABEL: @unreachable_case(
+; CHECK-LABEL: @unreachable(
 ; CHECK: switch.lookup:
-; CHECK: getelementptr inbounds [9 x i32]* @switch.table6, i32 0, i32 %switch.tableidx
-}
-
-define i32 @unreachable_default(i32 %x)  {
-entry:
-  switch i32 %x, label %default [
-    i32 0, label %bb0
-    i32 1, label %bb1
-    i32 2, label %bb2
-    i32 3, label %bb3
-  ]
-
-bb0: br label %return
-bb1: br label %return
-bb2: br label %return
-bb3: br label %return
-default: unreachable
-
-return:
-  %retval = phi i32 [ 42, %bb0 ], [ 52, %bb1 ], [ 1, %bb2 ], [ 2, %bb3 ]
-  ret i32 %retval
-
-; CHECK-LABEL: @unreachable_default(
-; CHECK: entry:
-; CHECK-NEXT: %switch.tableidx = sub i32 %x, 0
-; CHECK-NOT: icmp
-; CHECK-NOT: br 1i
-; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i32]* @switch.table7, i32 0, i32 %switch.tableidx
-; CHECK-NEXT: %switch.load = load i32* %switch.gep
-; CHECK-NEXT: ret i32 %switch.load
+; CHECK: getelementptr inbounds [5 x i32]* @switch.table6, i32 0, i32 %switch.tableidx
 }
 
 ; Don't create a table with illegal type

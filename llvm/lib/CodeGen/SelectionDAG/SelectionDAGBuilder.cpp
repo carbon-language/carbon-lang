@@ -2695,57 +2695,32 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   if (SwitchMBB + 1 != FuncInfo.MF->end())
     NextBlock = SwitchMBB + 1;
 
-
-  // Create a vector of Cases, sorted so that we can efficiently create a binary
-  // search tree from them.
-  CaseVector Cases;
-  Clusterify(Cases, SI);
-
-  // Get the default destination MBB.
   MachineBasicBlock *Default = FuncInfo.MBBMap[SI.getDefaultDest()];
 
-  if (isa<UnreachableInst>(SI.getDefaultDest()->getFirstNonPHIOrDbg())) {
-    // Replace an unreachable default destination with the most popular case
-    // destination.
-    DenseMap<const BasicBlock*, uint64_t> Popularity;
-    uint64_t MaxPop = 0;
-    const BasicBlock *MaxBB = nullptr;
-    for (auto I : SI.cases()) {
-      const BasicBlock *BB = I.getCaseSuccessor();
-      if (++Popularity[BB] > MaxPop) {
-        MaxPop = Popularity[BB];
-        MaxBB = BB;
-      }
-    }
-
-    // Set new default.
-    Default = FuncInfo.MBBMap[MaxBB];
-
-    // Remove cases that have been replaced by the default.
-    CaseItr I = Cases.begin();
-    while (I != Cases.end()) {
-      if (I->BB == Default) {
-        I = Cases.erase(I);
-        continue;
-      }
-      ++I;
-    }
-  }
-
-  // If there is only the default destination, go there directly.
-  if (Cases.empty()) {
+  // If there is only the default destination, branch to it if it is not the
+  // next basic block.  Otherwise, just fall through.
+  if (!SI.getNumCases()) {
     // Update machine-CFG edges.
     SwitchMBB->addSuccessor(Default);
 
     // If this is not a fall-through branch, emit the branch.
-    if (Default != NextBlock) {
-      DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other,
-                              getControlRoot(), DAG.getBasicBlock(Default)));
-    }
+    if (Default != NextBlock)
+      DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(),
+                              MVT::Other, getControlRoot(),
+                              DAG.getBasicBlock(Default)));
+
     return;
   }
 
-  // Get the Value to be switched on.
+  // If there are any non-default case statements, create a vector of Cases
+  // representing each one, and sort the vector so that we can efficiently
+  // create a binary search tree from them.
+  CaseVector Cases;
+  Clusterify(Cases, SI);
+
+  // Get the Value to be switched on and default basic blocks, which will be
+  // inserted into CaseBlock records, representing basic blocks in the binary
+  // search tree.
   const Value *SV = SI.getCondition();
 
   // Push the initial CaseRec onto the worklist
