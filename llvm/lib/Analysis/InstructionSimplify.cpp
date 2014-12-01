@@ -20,6 +20,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -31,6 +32,7 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
+#include <algorithm>
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -2007,6 +2009,39 @@ static Constant *computePointerICmp(const DataLayout *DL,
       return ConstantExpr::getICmp(Pred,
                                    ConstantExpr::getAdd(LHSOffset, LHSNoBound),
                                    ConstantExpr::getAdd(RHSOffset, RHSNoBound));
+
+    // If one side of the equality comparison must come from a noalias call
+    // (meaning a system memory allocation function), and the other side must
+    // come from a pointer that cannot overlap with dynamically-allocated
+    // memory within the lifetime of the current function (allocas, byval
+    // arguments, globals), then determine the comparison result here.
+    SmallVector<Value *, 8> LHSUObjs, RHSUObjs;
+    GetUnderlyingObjects(LHS, LHSUObjs, DL);
+    GetUnderlyingObjects(RHS, RHSUObjs, DL);
+
+    // Is the set of underlying objects all noalias calls?
+    auto IsNAC = [](SmallVectorImpl<Value *> &Objects) {
+      return std::all_of(Objects.begin(), Objects.end(),
+                         [](Value *V){ return isNoAliasCall(V); });
+    };
+
+    // Is the set of underlying objects all things which must be disjoint from
+    // noalias calls.
+    auto IsAllocDisjoint = [](SmallVectorImpl<Value *> &Objects) {
+      return std::all_of(Objects.begin(), Objects.end(),
+                         [](Value *V){
+                           if (isa<AllocaInst>(V) || isa<GlobalValue>(V))
+                             return true;
+                           if (const Argument *A = dyn_cast<Argument>(V))
+                             return A->hasByValAttr();
+                           return false;
+                         });
+    };
+
+    if ((IsNAC(LHSUObjs) && IsAllocDisjoint(RHSUObjs)) ||
+        (IsNAC(RHSUObjs) && IsAllocDisjoint(LHSUObjs)))
+        return ConstantInt::get(GetCompareTy(LHS),
+                                !CmpInst::isTrueWhenEqual(Pred));
   }
 
   // Otherwise, fail.
