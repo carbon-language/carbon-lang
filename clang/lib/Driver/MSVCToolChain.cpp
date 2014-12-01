@@ -43,6 +43,9 @@ using namespace llvm::opt;
 MSVCToolChain::MSVCToolChain(const Driver &D, const llvm::Triple& Triple,
                              const ArgList &Args)
   : ToolChain(D, Triple, Args) {
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir)
+    getProgramPaths().push_back(getDriver().Dir);
 }
 
 Tool *MSVCToolChain::buildLinker() const {
