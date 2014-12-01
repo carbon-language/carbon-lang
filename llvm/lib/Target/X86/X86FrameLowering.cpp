@@ -1137,13 +1137,13 @@ int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
 
 // Simplified from getFrameIndexOffset keeping only StackPointer cases
 int X86FrameLowering::getFrameIndexOffsetFromSP(const MachineFunction &MF, int FI) const {
-  const X86RegisterInfo *RegInfo =
-    static_cast<const X86RegisterInfo*>(MF.getSubtarget().getRegisterInfo());
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const uint64_t StackSize = MFI->getStackSize(); //not including dynamic realign
-
+  // Does not include any dynamic realign.
+  const uint64_t StackSize = MFI->getStackSize(); 
   {
 #ifndef NDEBUG
+    const X86RegisterInfo *RegInfo =
+      static_cast<const X86RegisterInfo*>(MF.getSubtarget().getRegisterInfo());
     // Note: LLVM arranges the stack as:
     // Args > Saved RetPC (<--FP) > CSRs > dynamic alignment (<--BP)
     //      > "Stack Slots" (<--SP)
