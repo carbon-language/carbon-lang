@@ -495,21 +495,12 @@ void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &) {
 }
 
 void CodeGenFunction::EmitOMPCriticalDirective(const OMPCriticalDirective &S) {
-  // __kmpc_critical();
-  // <captured_body>
-  // __kmpc_end_critical();
-  //
-
-  auto Lock = CGM.getOpenMPRuntime().GetCriticalRegionLock(
-      S.getDirectiveName().getAsString());
-  CGM.getOpenMPRuntime().EmitOMPCriticalRegionStart(*this, Lock,
-                                                    S.getLocStart());
-  {
+  CGM.getOpenMPRuntime().EmitOMPCriticalRegion(
+      *this, S.getDirectiveName().getAsString(), [&]() -> void {
     RunCleanupsScope Scope(*this);
     EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     EnsureInsertPoint();
-  }
-  CGM.getOpenMPRuntime().EmitOMPCriticalRegionEnd(*this, Lock, S.getLocEnd());
+  }, S.getLocStart());
 }
 
 void

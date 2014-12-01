@@ -616,24 +616,21 @@ llvm::Value *CGOpenMPRuntime::GetCriticalRegionLock(StringRef CriticalName) {
   return GetOrCreateInternalVariable(KmpCriticalNameTy, Name.concat(".var"));
 }
 
-void CGOpenMPRuntime::EmitOMPCriticalRegionStart(CodeGenFunction &CGF,
-                                                 llvm::Value *RegionLock,
-                                                 SourceLocation Loc) {
-  // Prepare other arguments and build a call to __kmpc_critical
+void CGOpenMPRuntime::EmitOMPCriticalRegion(
+    CodeGenFunction &CGF, StringRef CriticalName,
+    const std::function<void()> &CriticalOpGen, SourceLocation Loc) {
+  auto RegionLock = GetCriticalRegionLock(CriticalName);
+  // __kmpc_critical(ident_t *, gtid, Lock);
+  // CriticalOpGen();
+  // __kmpc_end_critical(ident_t *, gtid, Lock);
+  // Prepare arguments and build a call to __kmpc_critical
   llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
                          GetOpenMPThreadID(CGF, Loc), RegionLock};
   auto RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_critical);
   CGF.EmitRuntimeCall(RTLFn, Args);
-}
-
-void CGOpenMPRuntime::EmitOMPCriticalRegionEnd(CodeGenFunction &CGF,
-                                               llvm::Value *RegionLock,
-                                               SourceLocation Loc) {
-  // Prepare other arguments and build a call to __kmpc_end_critical
-  llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
-                         GetOpenMPThreadID(CGF, Loc), RegionLock};
-  auto RTLFn =
-      CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_end_critical);
+  CriticalOpGen();
+  // Build a call to __kmpc_end_critical
+  RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_end_critical);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
