@@ -3120,55 +3120,6 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
           --i; --e;
           Changed = true;
         }
-      // If the default value is unreachable, figure out the most popular
-      // destination and make it the default.
-      if (SI->getDefaultDest() == BB) {
-        std::map<BasicBlock*, std::pair<unsigned, unsigned> > Popularity;
-        for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
-             i != e; ++i) {
-          std::pair<unsigned, unsigned> &entry =
-              Popularity[i.getCaseSuccessor()];
-          if (entry.first == 0) {
-            entry.first = 1;
-            entry.second = i.getCaseIndex();
-          } else {
-            entry.first++;
-          }
-        }
-
-        // Find the most popular block.
-        unsigned MaxPop = 0;
-        unsigned MaxIndex = 0;
-        BasicBlock *MaxBlock = nullptr;
-        for (std::map<BasicBlock*, std::pair<unsigned, unsigned> >::iterator
-             I = Popularity.begin(), E = Popularity.end(); I != E; ++I) {
-          if (I->second.first > MaxPop ||
-              (I->second.first == MaxPop && MaxIndex > I->second.second)) {
-            MaxPop = I->second.first;
-            MaxIndex = I->second.second;
-            MaxBlock = I->first;
-          }
-        }
-        if (MaxBlock) {
-          // Make this the new default, allowing us to delete any explicit
-          // edges to it.
-          SI->setDefaultDest(MaxBlock);
-          Changed = true;
-
-          // If MaxBlock has phinodes in it, remove MaxPop-1 entries from
-          // it.
-          if (isa<PHINode>(MaxBlock->begin()))
-            for (unsigned i = 0; i != MaxPop-1; ++i)
-              MaxBlock->removePredecessor(SI->getParent());
-
-          for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
-               i != e; ++i)
-            if (i.getCaseSuccessor() == MaxBlock) {
-              SI->removeCase(i);
-              --i; --e;
-            }
-        }
-      }
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
       if (II->getUnwindDest() == BB) {
         // Convert the invoke to a call instruction.  This would be a good
