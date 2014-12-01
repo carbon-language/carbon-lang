@@ -431,6 +431,10 @@ protected:
     {
         return m_source_file_cache;
     }
+
+    void
+    InstanceInitialize ();
+
     lldb::StreamFileSP m_input_file_sp;
     lldb::StreamFileSP m_output_file_sp;
     lldb::StreamFileSP m_error_file_sp;
@@ -454,10 +458,17 @@ protected:
     LoadedPluginsList m_loaded_plugins;
     HostThread m_event_handler_thread;
     HostThread m_io_handler_thread;
+    Broadcaster m_sync_broadcaster;
     lldb::ListenerSP m_forward_listener_sp;
-    void
-    InstanceInitialize ();
-    
+
+    //----------------------------------------------------------------------
+    // Events for m_sync_broadcaster
+    //----------------------------------------------------------------------
+    enum
+    {
+        eBroadcastBitEventThreadIsListening   = (1 << 0),
+    };
+
 private:
 
     // Use Debugger::CreateInstance() to get a shared pointer to a new

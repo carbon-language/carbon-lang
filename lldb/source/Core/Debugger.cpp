@@ -661,7 +661,10 @@ Debugger::Debugger(lldb::LogOutputCallback log_callback, void *baton) :
     m_command_interpreter_ap(new CommandInterpreter(*this, eScriptLanguageDefault, false)),
     m_input_reader_stack(),
     m_instance_name(),
-    m_loaded_plugins()
+    m_loaded_plugins(),
+    m_event_handler_thread (),
+    m_io_handler_thread (),
+    m_sync_broadcaster (NULL, "lldb.debugger.sync")
 {
     char instance_cstr[256];
     snprintf(instance_cstr, sizeof(instance_cstr), "debugger_%d", (int)GetID());
@@ -3250,17 +3253,14 @@ Debugger::DefaultEventHandler()
                                       CommandInterpreter::eBroadcastBitQuitCommandReceived      |
                                       CommandInterpreter::eBroadcastBitAsynchronousOutputData   |
                                       CommandInterpreter::eBroadcastBitAsynchronousErrorData    );
-    
+
+    // Let the thread that spawned us know that we have started up and
+    // that we are now listening to all required events so no events get missed
+    m_sync_broadcaster.BroadcastEvent(eBroadcastBitEventThreadIsListening);
+
     bool done = false;
     while (!done)
     {
-//        Mutex::Locker locker;
-//        if (locker.TryLock(m_input_reader_stack.GetMutex()))
-//        {
-//            if (m_input_reader_stack.IsEmpty())
-//                break;
-//        }
-//
         EventSP event_sp;
         if (listener.WaitForEvent(NULL, event_sp))
         {
@@ -3344,9 +3344,25 @@ Debugger::StartEventHandlerThread()
 {
     if (!m_event_handler_thread.IsJoinable())
     {
+        // We must synchronize with the DefaultEventHandler() thread to ensure
+        // it is up and running and listening to events before we return from
+        // this function. We do this by listening to events for the
+        // eBroadcastBitEventThreadIsListening from the m_sync_broadcaster
+        Listener listener("lldb.debugger.event-handler");
+        listener.StartListeningForEvents(&m_sync_broadcaster, eBroadcastBitEventThreadIsListening);
+
         // Use larger 8MB stack for this thread
-        m_event_handler_thread = ThreadLauncher::LaunchThread("lldb.debugger.event-handler", EventHandlerThread, this, NULL,
+        m_event_handler_thread = ThreadLauncher::LaunchThread("lldb.debugger.event-handler", EventHandlerThread,
+                                                              this,
+                                                              NULL,
                                                               g_debugger_event_thread_stack_bytes);
+
+        // Make sure DefaultEventHandler() is running and listening to events before we return
+        // from this function. We are only listening for events of type
+        // eBroadcastBitEventThreadIsListening so we don't need to check the event, we just need
+        // to wait an infinite amount of time for it (NULL timeout as the first parameter)
+        lldb::EventSP event_sp;
+        listener.WaitForEvent(NULL, event_sp);
     }
     return m_event_handler_thread.IsJoinable();
 }
