@@ -417,8 +417,8 @@ private:
       assert(!shouldEmitStackProtector() && "Stack Protector Descriptor is "
              "already initialized!");
       ParentMBB = MBB;
-      SuccessMBB = AddSuccessorMBB(BB, MBB);
-      FailureMBB = AddSuccessorMBB(BB, MBB, FailureMBB);
+      SuccessMBB = AddSuccessorMBB(BB, MBB, /* IsLikely */ true);
+      FailureMBB = AddSuccessorMBB(BB, MBB, /* IsLikely */ false, FailureMBB);
       if (!Guard)
         Guard = StackProtCheckCall.getArgOperand(0);
     }
@@ -487,9 +487,10 @@ private:
 
     /// Add a successor machine basic block to ParentMBB. If the successor mbb
     /// has not been created yet (i.e. if SuccMBB = 0), then the machine basic
-    /// block will be created.
+    /// block will be created. Assign a large weight if IsLikely is true.
     MachineBasicBlock *AddSuccessorMBB(const BasicBlock *BB,
                                        MachineBasicBlock *ParentMBB,
+                                       bool IsLikely,
                                        MachineBasicBlock *SuccMBB = nullptr);
   };
 

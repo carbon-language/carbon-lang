@@ -7763,6 +7763,7 @@ MachineBasicBlock *
 SelectionDAGBuilder::StackProtectorDescriptor::
 AddSuccessorMBB(const BasicBlock *BB,
                 MachineBasicBlock *ParentMBB,
+                bool IsLikely,
                 MachineBasicBlock *SuccMBB) {
   // If SuccBB has not been created yet, create it.
   if (!SuccMBB) {
@@ -7772,6 +7773,7 @@ AddSuccessorMBB(const BasicBlock *BB,
     MF->insert(++BBI, SuccMBB);
   }
   // Add it as a successor of ParentMBB.
-  ParentMBB->addSuccessor(SuccMBB);
+  ParentMBB->addSuccessor(
+      SuccMBB, BranchProbabilityInfo::getBranchWeightStackProtector(IsLikely));
   return SuccMBB;
 }

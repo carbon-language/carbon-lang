@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/StackProtector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/Passes.h"
@@ -31,6 +32,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -459,7 +461,13 @@ bool StackProtector::InsertStackProtectors() {
       LoadInst *LI1 = B.CreateLoad(StackGuardVar);
       LoadInst *LI2 = B.CreateLoad(AI);
       Value *Cmp = B.CreateICmpEQ(LI1, LI2);
-      B.CreateCondBr(Cmp, NewBB, FailBB);
+      unsigned SuccessWeight =
+          BranchProbabilityInfo::getBranchWeightStackProtector(true);
+      unsigned FailureWeight =
+          BranchProbabilityInfo::getBranchWeightStackProtector(false);
+      MDNode *Weights = MDBuilder(F->getContext())
+                            .createBranchWeights(SuccessWeight, FailureWeight);
+      B.CreateCondBr(Cmp, NewBB, FailBB, Weights);
     }
   }
 

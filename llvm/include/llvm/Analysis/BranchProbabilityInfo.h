@@ -111,6 +111,10 @@ public:
   void setEdgeWeight(const BasicBlock *Src, unsigned IndexInSuccessors,
                      uint32_t Weight);
 
+  static uint32_t getBranchWeightStackProtector(bool IsLikely) {
+    return IsLikely ? (1u << 20) - 1 : 1;
+  }
+
 private:
   // Since we allow duplicate edges from one basic block to another, we use
   // a pair (PredBlock and an index in the successors) to specify an edge.
