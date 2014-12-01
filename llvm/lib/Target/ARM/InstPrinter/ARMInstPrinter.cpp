@@ -269,7 +269,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   // expressed as a GPRPair, so we have to manually merge them.
   // FIXME: We would really like to be able to tablegen'erate this.
   case ARM::LDREXD: case ARM::STREXD:
-  case ARM::LDAEXD: case ARM::STLEXD:
+  case ARM::LDAEXD: case ARM::STLEXD: {
     const MCRegisterClass& MRC = MRI.getRegClass(ARM::GPRRegClassID);
     bool isStore = Opcode == ARM::STREXD || Opcode == ARM::STLEXD;
     unsigned Reg = MI->getOperand(isStore ? 1 : 0).getReg();
@@ -290,6 +290,8 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       printInstruction(&NewMI, O);
       return;
     }
+    break;
+  }
   }
 
   printInstruction(MI, O);

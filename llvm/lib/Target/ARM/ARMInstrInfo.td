@@ -2387,6 +2387,33 @@ def RFEIB_UPD : RFEI<1, "rfeib\t$Rn!"> {
   let Inst{24-23} = 0b11;
 }
 
+// Hypervisor Call is a system instruction
+let isCall = 1 in {
+def HVC : AInoP< (outs), (ins imm0_65535:$imm), BrFrm, NoItinerary,
+                "hvc", "\t$imm", []>,
+          Requires<[IsARM, HasVirtualization]> {
+  bits<16> imm;
+
+  // Even though HVC isn't predicable, it's encoding includes a condition field.
+  // The instruction is undefined if the condition field is 0xf otherwise it is
+  // unpredictable if it isn't condition AL (0xe).
+  let Inst{31-28} = 0b1110;
+  let Unpredictable{31-28} = 0b1111;
+  let Inst{27-24} = 0b0001;
+  let Inst{23-20} = 0b0100;
+  let Inst{19-8} = imm{15-4};
+  let Inst{7-4} = 0b0111;
+  let Inst{3-0} = imm{3-0};
+}
+}
+
+// Return from exception in Hypervisor mode.
+let isReturn = 1, isBarrier = 1, isTerminator = 1, Defs = [PC] in
+def ERET : ABI<0b0001, (outs), (ins), NoItinerary, "eret", "", []>,
+    Requires<[IsARM, HasVirtualization]> {
+    let Inst{23-0} = 0b011000000000000001101110;
+}
+
 //===----------------------------------------------------------------------===//
 //  Load / Store Instructions.
 //
