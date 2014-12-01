@@ -248,9 +248,9 @@ static inline bool processLogicalImmediate(uint64_t Imm, unsigned RegSize,
   }
 
   // Encode in Immr the number of RORs it would take to get *from* 0^m 1^n
-  // to our target value, where i is the number of RORs to go the opposite
+  // to our target value, where I is the number of RORs to go the opposite
   // direction.
-  assert(Size > I && "I should be smaller than element Size");
+  assert(Size > I && "I should be smaller than element size");
   unsigned Immr = (Size - I) & (Size - 1);
 
   // If size has a 1 in the n'th bit, create a value that has zeroes in
