@@ -8479,6 +8479,12 @@ static SDValue performSelectCombine(SDNode *N, SelectionDAG &DAG) {
   // largest real NEON comparison is 64-bits per lane, which means the result is
   // at most 32-bits and an illegal vector. Just bail out for now.
   EVT SrcVT = N0.getOperand(0).getValueType();
+
+  // Don't try to do this optimization when the setcc itself has i1 operands.
+  // There are no legal vectors of i1, so this would be pointless.
+  if (SrcVT == MVT::i1)
+    return SDValue();
+
   int NumMaskElts = ResVT.getSizeInBits() / SrcVT.getSizeInBits();
   if (!ResVT.isVector() || NumMaskElts == 0)
     return SDValue();

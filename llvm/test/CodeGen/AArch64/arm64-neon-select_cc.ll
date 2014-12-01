@@ -204,3 +204,18 @@ define <2 x double> @test_select_cc_v2f64(double %a, double %b, <2 x double> %c,
   %e = select i1 %cmp31, <2 x double> %c, <2 x double> %d
   ret <2 x double> %e
 }
+
+; Special case: when the select condition is an icmp with i1 operands, don't
+; do the comparison on vectors.
+; Part of PR21549.
+define <2 x i32> @test_select_cc_v2i32_icmpi1(i1 %cc, <2 x i32> %a, <2 x i32> %b) {
+; CHECK-LABEL: test_select_cc_v2i32_icmpi1:
+; CHECK: tst   w0, #0x1
+; CHECK: csetm [[MASK:w[0-9]+]], ne
+; CHECK: dup   [[DUPMASK:v[0-9]+]].2s, [[MASK]]
+; CHECK: bsl   [[DUPMASK]].8b, v0.8b, v1.8b
+; CHECK: mov   v0.16b, [[DUPMASK]].16b
+  %cmp = icmp ne i1 %cc, 0
+  %e = select i1 %cmp, <2 x i32> %a, <2 x i32> %b
+  ret <2 x i32> %e
+}
