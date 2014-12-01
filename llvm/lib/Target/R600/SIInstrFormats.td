@@ -17,31 +17,53 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   field bits<1> VM_CNT = 0;
   field bits<1> EXP_CNT = 0;
   field bits<1> LGKM_CNT = 0;
-  field bits<1> MIMG = 0;
-  field bits<1> SMRD = 0;
+
+  field bits<1> SALU = 0;
+  field bits<1> VALU = 0;
+
+  field bits<1> SOP1 = 0;
+  field bits<1> SOP2 = 0;
+  field bits<1> SOPC = 0;
+  field bits<1> SOPK = 0;
+  field bits<1> SOPP = 0;
+
   field bits<1> VOP1 = 0;
   field bits<1> VOP2 = 0;
   field bits<1> VOP3 = 0;
   field bits<1> VOPC = 0;
-  field bits<1> SALU = 0;
+
   field bits<1> MUBUF = 0;
   field bits<1> MTBUF = 0;
+  field bits<1> SMRD = 0;
+  field bits<1> DS = 0;
+  field bits<1> MIMG = 0;
   field bits<1> FLAT = 0;
 
   // These need to be kept in sync with the enum in SIInstrFlags.
   let TSFlags{0} = VM_CNT;
   let TSFlags{1} = EXP_CNT;
   let TSFlags{2} = LGKM_CNT;
-  let TSFlags{3} = MIMG;
-  let TSFlags{4} = SMRD;
-  let TSFlags{5} = VOP1;
-  let TSFlags{6} = VOP2;
-  let TSFlags{7} = VOP3;
-  let TSFlags{8} = VOPC;
-  let TSFlags{9} = SALU;
-  let TSFlags{10} = MUBUF;
-  let TSFlags{11} = MTBUF;
-  let TSFlags{12} = FLAT;
+
+  let TSFlags{3} = SALU;
+  let TSFlags{4} = VALU;
+
+  let TSFlags{5} = SOP1;
+  let TSFlags{6} = SOP2;
+  let TSFlags{7} = SOPC;
+  let TSFlags{8} = SOPK;
+  let TSFlags{9} = SOPP;
+
+  let TSFlags{10} = VOP1;
+  let TSFlags{11} = VOP2;
+  let TSFlags{12} = VOP3;
+  let TSFlags{13} = VOPC;
+
+  let TSFlags{14} = MUBUF;
+  let TSFlags{15} = MTBUF;
+  let TSFlags{16} = SMRD;
+  let TSFlags{17} = DS;
+  let TSFlags{18} = MIMG;
+  let TSFlags{19} = FLAT;
 
   // Most instructions require adjustments after selection to satisfy
   // operand requirements.
@@ -67,6 +89,7 @@ class VOP1Common <dag outs, dag ins, string asm, list<dag> pattern> :
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
   let VOP1 = 1;
+  let VALU = 1;
 }
 
 class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern> :
@@ -83,6 +106,7 @@ class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern> :
   let AddedComplexity = -1000;
 
   let VOP3 = 1;
+  let VALU = 1;
 
   int Size = 8;
   let Uses = [EXEC];
@@ -168,6 +192,7 @@ class SOP1 <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+  let SOP1 = 1;
 }
 
 class SOP2 <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -177,6 +202,7 @@ class SOP2 <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+  let SOP2 = 1;
 
   let UseNamedOperandTable = 1;
 }
@@ -189,6 +215,7 @@ class SOPC <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+  let SOPC = 1;
 
   let UseNamedOperandTable = 1;
 }
@@ -200,6 +227,7 @@ class SOPK <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+  let SOPK = 1;
 
   let UseNamedOperandTable = 1;
 }
@@ -212,6 +240,7 @@ class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern = []> :
   let hasSideEffects = 0;
   let isCodeGenOnly = 0;
   let SALU = 1;
+  let SOPP = 1;
 
   let UseNamedOperandTable = 1;
 }
@@ -507,6 +536,7 @@ class VOP2 <bits<6> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
   let VOP2 = 1;
+  let VALU = 1;
 }
 
 class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -524,6 +554,7 @@ class VOPC <bits<8> op, dag ins, string asm, list<dag> pattern> :
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
   let VOPC = 1;
+  let VALU = 1;
 }
 
 class VINTRP <bits <2> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -545,6 +576,7 @@ class DS <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern> , DSe<op> {
 
   let LGKM_CNT = 1;
+  let DS = 1;
   let UseNamedOperandTable = 1;
   let DisableEncoding = "$m0";
 }

@@ -14,16 +14,26 @@
 namespace SIInstrFlags {
 // This needs to be kept in sync with the field bits in InstSI.
 enum {
-  MIMG = 1 << 3,
-  SMRD = 1 << 4,
-  VOP1 = 1 << 5,
-  VOP2 = 1 << 6,
-  VOP3 = 1 << 7,
-  VOPC = 1 << 8,
-  SALU = 1 << 9,
-  MUBUF = 1 << 10,
-  MTBUF = 1 << 11,
-  FLAT = 1 << 12
+  SALU = 1 << 3,
+  VALU = 1 << 4,
+
+  SOP1 = 1 << 5,
+  SOP2 = 1 << 6,
+  SOPC = 1 << 7,
+  SOPK = 1 << 8,
+  SOPP = 1 << 9,
+
+  VOP1 = 1 << 10,
+  VOP2 = 1 << 11,
+  VOP3 = 1 << 12,
+  VOPC = 1 << 13,
+
+  MUBUF = 1 << 14,
+  MTBUF = 1 << 15,
+  SMRD = 1 << 16,
+  DS = 1 << 17,
+  MIMG = 1 << 18,
+  FLAT = 1 << 19
 };
 }
 

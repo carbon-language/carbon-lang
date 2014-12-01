@@ -1497,14 +1497,6 @@ def getCommuteOrig : InstrMapping {
   let ValueCols = [["1"]];
 }
 
-def isDS : InstrMapping {
-  let FilterClass = "DS";
-  let RowFields = ["Inst"];
-  let ColFields = ["Size"];
-  let KeyCol = ["8"];
-  let ValueCols = [["8"]];
-}
-
 def getMCOpcode : InstrMapping {
   let FilterClass = "SIMCInstr";
   let RowFields = ["PseudoInstr"];
