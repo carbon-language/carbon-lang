@@ -13,9 +13,28 @@
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/Process.h"
 
 namespace lld {
 
+#ifndef NDEBUG
+LinkingContext::LinkingContext()
+    : _deadStrip(false), _allowDuplicates(false),
+      _globalsAreDeadStripRoots(false),
+      _searchArchivesToOverrideTentativeDefinitions(false),
+      _searchSharedLibrariesToOverrideTentativeDefinitions(false),
+      _warnIfCoalesableAtomsHaveDifferentCanBeNull(false),
+      _warnIfCoalesableAtomsHaveDifferentLoadName(false),
+      _printRemainingUndefines(true), _allowRemainingUndefines(false),
+      _logInputFiles(false), _allowShlibUndefines(false),
+      _runRoundTripPasses(false), _outputFileType(OutputFileType::Default),
+      _nextOrdinal(0) {
+  llvm::Optional<std::string> env =
+      llvm::sys::Process::GetEnv("LLD_RUN_ROUNDTRIP_TEST");
+  if (env.hasValue() && !env.getValue().empty())
+    setRunRoundTripPass(true);
+}
+#else
 LinkingContext::LinkingContext()
     : _deadStrip(false), _allowDuplicates(false),
       _globalsAreDeadStripRoots(false),
@@ -26,6 +45,7 @@ LinkingContext::LinkingContext()
       _printRemainingUndefines(true), _allowRemainingUndefines(false),
       _logInputFiles(false), _allowShlibUndefines(false),
       _outputFileType(OutputFileType::Default), _nextOrdinal(0) {}
+#endif
 
 LinkingContext::~LinkingContext() {}
 

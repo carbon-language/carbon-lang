@@ -23,7 +23,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
 #include <mutex>
 
@@ -114,8 +113,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   context.addPasses(pm);
 
 #ifndef NDEBUG
-  llvm::Optional<std::string> env = llvm::sys::Process::GetEnv("LLD_RUN_ROUNDTRIP_TEST");
-  if (env.hasValue() && !env.getValue().empty()) {
+  if (context.runRoundTripPass()) {
     pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(context)));
     pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(context)));
   }
