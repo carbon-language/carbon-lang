@@ -797,6 +797,26 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
         continue;
       }
 
+      // TODO: This code should be commoned with the code for
+      // PATCHPOINT. There's no good reason for the difference in
+      // implementation other than historical accident.  The only
+      // remaining difference is the unconditional use of the stack
+      // pointer as the base register.
+      if (MI->getOpcode() == TargetOpcode::STATEPOINT) {
+        assert((!MI->isDebugValue() || i == 0) &&
+               "Frame indicies can only appear as the first operand of a "
+               "DBG_VALUE machine instruction");
+        unsigned Reg;
+        MachineOperand &Offset = MI->getOperand(i + 1);
+        const unsigned refOffset =
+          TFI->getFrameIndexReferenceFromSP(Fn, MI->getOperand(i).getIndex(),
+                                            Reg);
+
+        Offset.setImm(Offset.getImm() + refOffset);
+        MI->getOperand(i).ChangeToRegister(Reg, false /*isDef*/);
+        continue;
+      }
+
       // Some instructions (e.g. inline asm instructions) can have
       // multiple frame indices and/or cause eliminateFrameIndex
       // to insert more than one instruction. We need the register

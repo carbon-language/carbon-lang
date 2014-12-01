@@ -1088,7 +1088,8 @@ foldMemoryOperand(ArrayRef<std::pair<MachineInstr*, unsigned> > Ops,
   bool WasCopy = MI->isCopy();
   unsigned ImpReg = 0;
 
-  bool SpillSubRegs = (MI->getOpcode() == TargetOpcode::PATCHPOINT ||
+  bool SpillSubRegs = (MI->getOpcode() == TargetOpcode::STATEPOINT ||
+                       MI->getOpcode() == TargetOpcode::PATCHPOINT ||
                        MI->getOpcode() == TargetOpcode::STACKMAP);
 
   // TargetInstrInfo::foldMemoryOperand only expects explicit, non-tied

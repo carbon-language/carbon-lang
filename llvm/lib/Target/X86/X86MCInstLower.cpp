@@ -808,6 +808,66 @@ static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit, const MCSu
   } // while (NumBytes)
 }
 
+static void LowerSTATEPOINT(MCStreamer &OS, StackMaps &SM,
+                            const MachineInstr &MI, bool Is64Bit,
+                            const TargetMachine& TM,
+                            const MCSubtargetInfo& STI,
+                            X86MCInstLower &MCInstLowering) {
+  assert(Is64Bit && "Statepoint currently only supports X86-64");
+
+  // We need to record the frame size for stack walking
+  const MachineFunction* MF = MI.getParent()->getParent();
+  assert(MF && "can't find machine function?");
+
+  //
+  // Emit call instruction
+  //
+
+  // Lower call target and choose correct opcode
+  const MachineOperand &call_target = StatepointOpers(&MI).getCallTarget();
+  MCOperand call_target_mcop;
+  unsigned call_opcode;
+  switch (call_target.getType()) {
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ExternalSymbol:
+    call_target_mcop = MCInstLowering.LowerSymbolOperand(
+      call_target,
+      MCInstLowering.GetSymbolFromOperand(call_target));
+    call_opcode = X86::CALL64pcrel32;
+    // Currently, we only support relative addressing with statepoints.
+    // Otherwise, we'll need a scratch register to hold the target
+    // address.  You'll fail asserts during load & relocation if this
+    // symbol is to far away. (TODO: support non-relative addressing)
+    break;
+  case MachineOperand::MO_Immediate:
+    call_target_mcop = MCOperand::CreateImm(call_target.getImm());
+    call_opcode = X86::CALL64pcrel32;
+    // Currently, we only support relative addressing with statepoints.
+    // Otherwise, we'll need a scratch register to hold the target
+    // immediate.  You'll fail asserts during load & relocation if this
+    // address is to far away. (TODO: support non-relative addressing)
+    break;
+  case MachineOperand::MO_Register:
+    call_target_mcop = MCOperand::CreateReg(call_target.getReg());
+    call_opcode = X86::CALL64r;
+    break;
+  default:
+    llvm_unreachable("Unsupported operand type in statepoint call target");
+    break;
+  }
+
+  // Emit call
+  MCInst call_inst;
+  call_inst.setOpcode(call_opcode);
+  call_inst.addOperand(call_target_mcop);
+  OS.EmitInstruction(call_inst, STI);
+
+  // Record our statepoint node in the same section used by STACKMAP
+  // and PATCHPOINT
+  SM.recordStatepoint(MI);  
+}
+
+
 // Lower a stackmap of the form:
 // <id>, <shadowBytes>, ...
 void X86AsmPrinter::LowerSTACKMAP(const MachineInstr &MI) {
@@ -1030,7 +1090,9 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addExpr(DotExpr));
     return;
   }
-
+  case TargetOpcode::STATEPOINT:
+    return LowerSTATEPOINT(OutStreamer, SM, *MI, Subtarget->is64Bit(), TM,
+      getSubtargetInfo(), MCInstLowering);
   case TargetOpcode::STACKMAP:
     return LowerSTACKMAP(*MI);
 

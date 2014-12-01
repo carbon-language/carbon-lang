@@ -845,6 +845,15 @@ def PATCHPOINT : Instruction {
   let mayLoad = 1;
   let usesCustomInserter = 1;
 }
+def STATEPOINT : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins variable_ops);
+  let usesCustomInserter = 1;
+  let mayLoad = 1;
+  let mayStore = 1;
+  let hasSideEffects = 1;
+  let isCall = 1;
+}
 def LOAD_STACK_GUARD : Instruction {
   let OutOperandList = (outs ptr_rc:$dst);
   let InOperandList = (ins);

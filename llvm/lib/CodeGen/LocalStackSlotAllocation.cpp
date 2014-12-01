@@ -291,6 +291,7 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
       // Debug value, stackmap and patchpoint instructions can't be out of
       // range, so they don't need any updates.
       if (MI->isDebugValue() ||
+          MI->getOpcode() == TargetOpcode::STATEPOINT ||
           MI->getOpcode() == TargetOpcode::STACKMAP ||
           MI->getOpcode() == TargetOpcode::PATCHPOINT)
         continue;

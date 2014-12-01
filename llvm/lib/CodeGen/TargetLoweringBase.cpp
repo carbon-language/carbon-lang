@@ -992,8 +992,14 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
     // Add a new memory operand for this FI.
     const MachineFrameInfo &MFI = *MF.getFrameInfo();
     assert(MFI.getObjectOffset(FI) != -1);
+
+    unsigned Flags = MachineMemOperand::MOLoad;
+    if (MI->getOpcode() == TargetOpcode::STATEPOINT) {
+      Flags |= MachineMemOperand::MOStore;
+      Flags |= MachineMemOperand::MOVolatile;
+    }
     MachineMemOperand *MMO = MF.getMachineMemOperand(
-        MachinePointerInfo::getFixedStack(FI), MachineMemOperand::MOLoad,
+        MachinePointerInfo::getFixedStack(FI), Flags,
         TM.getSubtargetImpl()->getDataLayout()->getPointerSize(),
         MFI.getObjectAlignment(FI));
     MIB->addMemOperand(MF, MMO);

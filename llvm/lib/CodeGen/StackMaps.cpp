@@ -286,6 +286,18 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
   }
 #endif
 }
+void StackMaps::recordStatepoint(const MachineInstr &MI) {
+  assert(MI.getOpcode() == TargetOpcode::STATEPOINT &&
+         "expected statepoint");
+
+  StatepointOpers opers(&MI);
+  // Record all the deopt and gc operands (they're contiguous and run from the
+  // initial index to the end of the operand list)
+  const unsigned StartIdx = opers.getVarIdx();
+  recordStackMapOpers(MI, 0xABCDEF00,
+                      MI.operands_begin() + StartIdx, MI.operands_end(),
+                      false);
+}
 
 /// Emit the stackmap header.
 ///
