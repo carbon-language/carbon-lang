@@ -145,6 +145,18 @@ ProcessWindows::PutSTDIN(const char *buf, size_t buf_size, Error &error)
     return 0;
 }
 
+Error
+ProcessWindows::EnableBreakpointSite(BreakpointSite *bp_site)
+{
+    return EnableSoftwareBreakpoint(bp_site);
+}
+
+Error
+ProcessWindows::DisableBreakpointSite(BreakpointSite *bp_site)
+{
+    return DisableSoftwareBreakpoint(bp_site);
+}
+
 bool
 ProcessWindows::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
