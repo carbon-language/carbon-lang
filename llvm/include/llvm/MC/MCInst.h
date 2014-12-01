@@ -31,7 +31,7 @@ class MCInst;
 /// MCOperand - Instances of this class represent operands of the MCInst class.
 /// This is a simple discriminated union.
 class MCOperand {
-  enum MachineOperandType {
+  enum MachineOperandType : unsigned char {
     kInvalid,                 ///< Uninitialized.
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
@@ -39,7 +39,7 @@ class MCOperand {
     kExpr,                    ///< Relocatable immediate operand.
     kInst                     ///< Sub-instruction operand.
   };
-  unsigned char Kind;
+  MachineOperandType Kind;
 
   union {
     unsigned RegVal;
