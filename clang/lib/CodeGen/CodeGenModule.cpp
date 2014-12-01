@@ -3270,6 +3270,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     if (DebugInfo &&
         Spec->getSpecializationKind() == TSK_ExplicitInstantiationDefinition)
       DebugInfo->completeTemplateDefinition(*Spec);
+    break;
   }
 
   default:
@@ -3277,6 +3278,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     // non-top-level decl.  FIXME: Would be nice to have an isTopLevelDeclKind
     // function. Need to recode Decl::Kind to do that easily.
     assert(isa<TypeDecl>(D) && "Unsupported decl kind");
+    break;
   }
 }
 
