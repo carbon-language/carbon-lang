@@ -26,7 +26,7 @@ class WinSymbolizer : public Symbolizer {
  public:
   WinSymbolizer() : initialized_(false) {}
 
-  uptr SymbolizePC(uptr addr, AddressInfo *frames, uptr max_frames) {
+  uptr SymbolizePC(uptr addr, AddressInfo *frames, uptr max_frames) override {
     if (max_frames == 0)
       return 0;
 
@@ -85,11 +85,11 @@ class WinSymbolizer : public Symbolizer {
     return 1;
   }
 
-  bool CanReturnFileLineInfo() {
+  bool CanReturnFileLineInfo() override {
     return true;
   }
 
-  const char *Demangle(const char *name) {
+  const char *Demangle(const char *name) override {
     CHECK(initialized_);
     static char demangle_buffer[1000];
     if (name[0] == '\01' &&
