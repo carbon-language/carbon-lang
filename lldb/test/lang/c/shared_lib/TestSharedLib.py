@@ -1,6 +1,5 @@
 """Test that types defined in shared libraries work correctly."""
 
-import os, time
 import unittest2
 import lldb
 from lldbtest import *
@@ -53,14 +52,8 @@ class SharedLibTestCase(TestBase):
         # Break inside the foo function which takes a bar_ptr argument.
         lldbutil.run_break_set_by_file_and_line (self, self.source, self.line, num_expected_locations=1, loc_exact=True)
 
-        if sys.platform.startswith("freebsd") or sys.platform.startswith("linux"):
-            if self.dylibPath in os.environ:
-                environment = [self.dylibPath + "=" + os.environ[self.dylibPath] + ":" + os.getcwd()]
-            else:
-                environment = [self.dylibPath + "=" + os.getcwd()]
-        else:
-            # Register our shared libraries for remote targets so they get automatically uploaded
-            environment = self.registerSharedLibrariesWithTarget(target, self.shlib_names)
+        # Register our shared libraries for remote targets so they get automatically uploaded
+        environment = self.registerSharedLibrariesWithTarget(target, self.shlib_names)
 
         # Now launch the process, and do not stop at entry point.
         process = target.LaunchSimple (None, environment, self.get_process_working_directory())
