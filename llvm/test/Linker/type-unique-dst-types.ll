@@ -9,7 +9,10 @@
 
 ; CHECK: %A = type { %B }
 ; CHECK-NEXT: %B = type { i8 }
-; CHECK-NEXT: %A.11.1 = type opaque
+
+; CHECK: @g3 = external global %A
+; CHECK: @g1 = external global %A
+; CHECK: @g2 = external global %A
 
 %A = type { %B }
 %B = type { i8 }
