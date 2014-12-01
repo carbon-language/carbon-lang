@@ -32,6 +32,10 @@
 # CHECK-EL: addiur2 $6, $7, -1      # encoding: [0x7e,0x6f]
 # CHECK-EL: addiur2 $6, $7, 12      # encoding: [0x76,0x6f]
 # CHECK-EL: addius5 $7, -2          # encoding: [0xfc,0x4c]
+# CHECK-EL: addiusp -1028           # encoding: [0xff,0x4f]
+# CHECK-EL: addiusp -1032           # encoding: [0xfd,0x4f]
+# CHECK-EL: addiusp 1024            # encoding: [0x01,0x4c]
+# CHECK-EL: addiusp 1028            # encoding: [0x03,0x4c]
 # CHECK-EL: addiusp -16             # encoding: [0xf9,0x4f]
 # CHECK-EL: mfhi    $9              # encoding: [0x09,0x46]
 # CHECK-EL: mflo    $9              # encoding: [0x49,0x46]
@@ -71,6 +75,10 @@
 # CHECK-EB: addiur2 $6, $7, -1      # encoding: [0x6f,0x7e]
 # CHECK-EB: addiur2 $6, $7, 12      # encoding: [0x6f,0x76]
 # CHECK-EB: addius5 $7, -2          # encoding: [0x4c,0xfc]
+# CHECK-EB: addiusp -1028           # encoding: [0x4f,0xff]
+# CHECK-EB: addiusp -1032           # encoding: [0x4f,0xfd]
+# CHECK-EB: addiusp 1024            # encoding: [0x4c,0x01]
+# CHECK-EB: addiusp 1028            # encoding: [0x4c,0x03]
 # CHECK-EB: addiusp -16             # encoding: [0x4f,0xf9]
 # CHECK-EB: mfhi    $9              # encoding: [0x46,0x09]
 # CHECK-EB: mflo    $9              # encoding: [0x46,0x49]
@@ -108,6 +116,10 @@
     addiur2 $6, $7, -1
     addiur2 $6, $7, 12
     addius5 $7, -2
+    addiusp -1028
+    addiusp -1032
+    addiusp 1024
+    addiusp 1028
     addiusp -16
     mfhi    $9
     mflo    $9

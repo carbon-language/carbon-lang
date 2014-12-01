@@ -340,6 +340,15 @@ static DecodeStatus DecodeSimm19Lsl2(MCInst &Inst, unsigned Insn,
 static DecodeStatus DecodeSimm18Lsl3(MCInst &Inst, unsigned Insn,
                                      uint64_t Address, const void *Decoder);
 
+static DecodeStatus DecodeSimm9SP(MCInst &Inst, unsigned Insn,
+                                  uint64_t Address, const void *Decoder);
+
+static DecodeStatus DecodeANDI16Imm(MCInst &Inst, unsigned Insn,
+                                    uint64_t Address, const void *Decoder);
+
+static DecodeStatus DecodeUImm5lsl2(MCInst &Inst, unsigned Insn,
+                                   uint64_t Address, const void *Decoder);
+
 /// INSVE_[BHWD] have an implicit operand that the generated decoder doesn't
 /// handle.
 template <typename InsnType>
@@ -1588,6 +1597,36 @@ static DecodeStatus DecodeSimm19Lsl2(MCInst &Inst, unsigned Insn,
 static DecodeStatus DecodeSimm18Lsl3(MCInst &Inst, unsigned Insn,
                                      uint64_t Address, const void *Decoder) {
   Inst.addOperand(MCOperand::CreateImm(SignExtend32<18>(Insn) * 8));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeSimm9SP(MCInst &Inst, unsigned Insn,
+                                  uint64_t Address, const void *Decoder) {
+  int32_t DecodedValue;
+  switch (Insn) {
+  case 0: DecodedValue = 256; break;
+  case 1: DecodedValue = 257; break;
+  case 510: DecodedValue = -258; break;
+  case 511: DecodedValue = -257; break;
+  default: DecodedValue = SignExtend32<9>(Insn); break;
+  }
+  Inst.addOperand(MCOperand::CreateImm(DecodedValue << 2));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeANDI16Imm(MCInst &Inst, unsigned Insn,
+                                    uint64_t Address, const void *Decoder) {
+  // Insn must be >= 0, since it is unsigned that condition is always true.
+  assert(Insn < 16);
+  int32_t DecodedValues[] = {128, 1, 2, 3, 4, 7, 8, 15, 16, 31, 32, 63, 64,
+                             255, 32768, 65535};
+  Inst.addOperand(MCOperand::CreateImm(DecodedValues[Insn]));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeUImm5lsl2(MCInst &Inst, unsigned Insn,
+                                    uint64_t Address, const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(Insn << 2));
   return MCDisassembler::Success;
 }
 
