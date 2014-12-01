@@ -2559,7 +2559,88 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert1(isa<ConstantInt>(CI.getArgOperand(1)),
             "llvm.invariant.end parameter #2 must be a constant integer", &CI);
     break;
+ 
+  case Intrinsic::experimental_gc_statepoint: {
+    // target, # call args = 0, # deopt args = 0, #gc args = 0 -> 4 args
+    assert(CI.getNumArgOperands() >= 4 &&
+           "not enough arguments to statepoint");
+    for (User* U : CI.users()) {
+      const CallInst* GCRelocCall = cast<const CallInst>(U);
+      const Function *GCRelocFn = GCRelocCall->getCalledFunction();
+      Assert1(GCRelocFn && GCRelocFn->isDeclaration() &&
+              (GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_result_int ||
+               GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_result_float ||
+               GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_result_ptr ||
+               GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_relocate),
+              "gc.result or gc.relocate are the only value uses of statepoint", &CI);
+      if (GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_result_int ||
+          GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_result_float ||
+          GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_result_ptr ) {
+        Assert1(GCRelocCall->getNumArgOperands() == 1, "wrong number of arguments", &CI);
+        Assert2(GCRelocCall->getArgOperand(0) == &CI, "connected to wrong statepoint", &CI, GCRelocCall);
+      } else if (GCRelocFn->getIntrinsicID() == Intrinsic::experimental_gc_relocate) {
+        Assert1(GCRelocCall->getNumArgOperands() == 3, "wrong number of arguments", &CI);
+        Assert2(GCRelocCall->getArgOperand(0) == &CI, "connected to wrong statepoint", &CI, GCRelocCall);
+      } else {
+        llvm_unreachable("unsupported use type - how'd we get past the assert?");
+      }
+    }
+
+    // Note: It is legal for a single derived pointer to be listed multiple
+    // times.  It's non-optimal, but it is legal.  It can also happen after
+    // insertion if we strip a bitcast away.
+    // Note: It is really tempting to check that each base is relocated and
+    // that a derived pointer is never reused as a base pointer.  This turns
+    // out to be problematic since optimizations run after safepoint insertion
+    // can recognize equality properties that the insertion logic doesn't know
+    // about.  See example statepoint.ll in the verifier subdirectory
+    break;
   }
+  case Intrinsic::experimental_gc_result_int:
+  case Intrinsic::experimental_gc_result_float:
+  case Intrinsic::experimental_gc_result_ptr: {
+    Assert1(CI.getNumArgOperands() == 1, "wrong number of arguments", &CI);
+
+    // Are we tied to a statepoint properly?
+    CallSite StatepointCS(CI.getArgOperand(0));
+    const Function *StatepointFn = StatepointCS.getCalledFunction();
+    Assert2(StatepointFn && StatepointFn->isDeclaration() &&
+            StatepointFn->getIntrinsicID() == Intrinsic::experimental_gc_statepoint,
+            "token must be from a statepoint", &CI, CI.getArgOperand(0));
+    break;
+  }
+  case Intrinsic::experimental_gc_relocate: {
+    // Some checks to ensure gc.relocate has the correct set of
+    // parameters.  TODO: we can make these tests much stricter.
+    Assert1(CI.getNumArgOperands() == 3, "wrong number of arguments", &CI);
+
+    // Are we tied to a statepoint properly?
+    CallSite StatepointCS(CI.getArgOperand(0));
+    const Function *StatepointFn =
+        StatepointCS.getInstruction() ? StatepointCS.getCalledFunction() : NULL;
+    Assert2(StatepointFn && StatepointFn->isDeclaration() &&
+            StatepointFn->getIntrinsicID() == Intrinsic::experimental_gc_statepoint,
+            "token must be from a statepoint", &CI, CI.getArgOperand(0));
+
+    // Both the base and derived must be piped through the safepoint
+    Value* Base = CI.getArgOperand(1);
+    Assert1( isa<ConstantInt>(Base), "must be integer offset", &CI);
+    
+    Value* Derived = CI.getArgOperand(2);
+    Assert1( isa<ConstantInt>(Derived), "must be integer offset", &CI);
+
+    const int BaseIndex = cast<ConstantInt>(Base)->getZExtValue();
+    const int DerivedIndex = cast<ConstantInt>(Derived)->getZExtValue();
+    // Check the bounds
+    Assert1(0 <= BaseIndex &&
+            BaseIndex < (int)StatepointCS.arg_size(),
+            "index out of bounds", &CI);
+    Assert1(0 <= DerivedIndex &&
+            DerivedIndex < (int)StatepointCS.arg_size(),
+            "index out of bounds", &CI);
+    break;
+  }
+  };
 }
 
 void DebugInfoVerifier::verifyDebugInfo() {
