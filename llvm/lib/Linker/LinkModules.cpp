@@ -793,8 +793,6 @@ void ModuleLinker::computeTypeMapping() {
   // it had the same type, it would have been renamed to "%foo.42 = { i32 }".
   TypeFinder SrcStructTypes;
   SrcStructTypes.run(*SrcM, true);
-  SmallPtrSet<StructType*, 32> SrcStructTypesSet(SrcStructTypes.begin(),
-                                                 SrcStructTypes.end());
 
   for (unsigned i = 0, e = SrcStructTypes.size(); i != e; ++i) {
     StructType *ST = SrcStructTypes[i];
@@ -826,7 +824,7 @@ void ModuleLinker::computeTypeMapping() {
       // we prefer to take the '%C' version. So we are then left with both
       // '%C.1' and '%C' being used for the same types. This leads to some
       // variables using one type and some using the other.
-      if (!SrcStructTypesSet.count(DST) && TypeMap.DstStructTypesSet.count(DST))
+      if (TypeMap.DstStructTypesSet.count(DST))
         TypeMap.addTypeMapping(DST, ST);
   }
 
