@@ -104,3 +104,45 @@ if (LLVM_ENABLE_SPHINX)
 
   endif()
 endif()
+
+list(FIND LLVM_BINDINGS_LIST ocaml uses_ocaml)
+if( NOT uses_ocaml LESS 0 )
+  set(doc_targets
+        ocaml_llvm
+        ocaml_llvm_all_backends
+        ocaml_llvm_analysis
+        ocaml_llvm_bitreader
+        ocaml_llvm_bitwriter
+        ocaml_llvm_executionengine
+        ocaml_llvm_irreader
+        ocaml_llvm_linker
+        ocaml_llvm_target
+        ocaml_llvm_ipo
+        ocaml_llvm_passmgr_builder
+        ocaml_llvm_scalar_opts
+        ocaml_llvm_vectorize
+      )
+
+  foreach(llvm_target ${LLVM_TARGETS_TO_BUILD})
+    list(APPEND doc_targets ocaml_llvm_${llvm_target})
+  endforeach()
+
+  set(odoc_files)
+  foreach( doc_target ${doc_targets} )
+    get_target_property(odoc_file ${doc_target} OCAML_ODOC)
+    list(APPEND odoc_files -load ${odoc_file})
+  endforeach()
+
+  add_custom_target(ocaml_doc
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html
+    COMMAND ${OCAMLFIND} ocamldoc -d ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html
+                                  -sort -colorize-code -html ${odoc_files})
+
+  add_dependencies(ocaml_doc ${doc_targets})
+
+  if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html
+      DESTINATION docs/ocaml/html)
+  endif()
+endif()

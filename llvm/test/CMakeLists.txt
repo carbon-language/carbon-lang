@@ -68,6 +68,24 @@ if(TARGET llvm-go)
   set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} llvm-go)
 endif()
 
+if(TARGET ocaml_llvm)
+  set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS}
+          ocaml_llvm
+          ocaml_llvm_all_backends
+          ocaml_llvm_analysis
+          ocaml_llvm_bitreader
+          ocaml_llvm_bitwriter
+          ocaml_llvm_executionengine
+          ocaml_llvm_irreader
+          ocaml_llvm_linker
+          ocaml_llvm_target
+          ocaml_llvm_ipo
+          ocaml_llvm_passmgr_builder
+          ocaml_llvm_scalar_opts
+          ocaml_llvm_vectorize
+        )
+endif()
+
 add_lit_testsuite(check-llvm "Running the LLVM regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
   PARAMS llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg

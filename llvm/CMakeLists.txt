@@ -561,6 +561,12 @@ if(LLVM_INCLUDE_TESTS)
   add_subdirectory(utils/unittest)
 endif()
 
+foreach( binding ${LLVM_BINDINGS_LIST} )
+  if( EXISTS "${LLVM_MAIN_SRC_DIR}/bindings/${binding}/CMakeLists.txt" )
+    add_subdirectory(bindings/${binding})
+  endif()
+endforeach()
+
 add_subdirectory(projects)
 
 if(WITH_POLLY)
