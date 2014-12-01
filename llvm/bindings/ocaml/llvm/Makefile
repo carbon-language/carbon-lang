@@ -13,7 +13,7 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm
-UsedComponents := core transformutils
+UsedComponents := core
 UsedOcamlLibs := llvm
 ExtraLibs := -lstdc++
 

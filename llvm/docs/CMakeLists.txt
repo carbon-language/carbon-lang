@@ -120,6 +120,7 @@ if( NOT uses_ocaml LESS 0 )
         ocaml_llvm_ipo
         ocaml_llvm_passmgr_builder
         ocaml_llvm_scalar_opts
+        ocaml_llvm_transform_utils
         ocaml_llvm_vectorize
       )
 

@@ -61,6 +61,14 @@ package "scalar_opts" (
     archive(native) = "llvm_scalar_opts.cmxa"
 )
 
+package "transform_utils" (
+    requires = "llvm"
+    version = "@PACKAGE_VERSION@"
+    description = "Transform utilities for LLVM"
+    archive(byte) = "llvm_transform_utils.cma"
+    archive(native) = "llvm_transform_utils.cmxa"
+)
+
 package "vectorize" (
     requires = "llvm"
     version = "@PACKAGE_VERSION@"
