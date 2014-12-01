@@ -50,5 +50,6 @@ NVPTXMCAsmInfo::NVPTXMCAsmInfo(StringRef TT) {
   AscizDirective = " .b8";
 
   // @TODO: Can we just disable this?
+  WeakDirective = "\t// .weak\t";
   GlobalDirective = "\t// .globl\t";
 }

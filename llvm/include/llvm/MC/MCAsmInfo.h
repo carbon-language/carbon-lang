@@ -215,7 +215,8 @@ protected:
 
   //===--- Global Variable Emission Directives --------------------------===//
 
-  /// This is the directive used to declare a global entity.  Defaults to NULL.
+  /// This is the directive used to declare a global entity. Defaults to
+  /// ".globl".
   const char *GlobalDirective;
 
   /// True if the expression
@@ -263,6 +264,9 @@ protected:
   /// True if this target supports the MachO .no_dead_strip directive.  Defaults
   /// to false.
   bool HasNoDeadStrip;
+
+  /// Used to declare a global as being a weak symbol. Defaults to ".weak".
+  const char *WeakDirective;
 
   /// This directive, if non-null, is used to declare a global as being a weak
   /// undefined symbol.  Defaults to NULL.
@@ -452,6 +456,7 @@ public:
   bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
   bool hasIdentDirective() const { return HasIdentDirective; }
   bool hasNoDeadStrip() const { return HasNoDeadStrip; }
+  const char *getWeakDirective() const { return WeakDirective; }
   const char *getWeakRefDirective() const { return WeakRefDirective; }
   bool hasWeakDefDirective() const { return HasWeakDefDirective; }
   bool hasWeakDefCanBeHiddenDirective() const {
