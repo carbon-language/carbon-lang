@@ -172,7 +172,7 @@
 		265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A213D3E3F700132FE2 /* RegisterContextKDP_arm.cpp */; };
 		265205AA13D3E3F700132FE2 /* RegisterContextKDP_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A413D3E3F700132FE2 /* RegisterContextKDP_i386.cpp */; };
 		265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A613D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp */; };
-		2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
+		2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; settings = {COMPILER_FLAGS = "-Dregister="; }; };
 		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
 		266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
