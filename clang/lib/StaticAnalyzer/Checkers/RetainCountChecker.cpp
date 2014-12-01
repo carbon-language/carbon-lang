@@ -1580,19 +1580,19 @@ void RetainSummaryManager::InitializeMethodSummaries() {
 
   // Create summaries QCRenderer/QCView -createSnapShotImageOfType:
   addInstMethSummary("QCRenderer", AllocSumm,
-                     "createSnapshotImageOfType", NULL);
+                     "createSnapshotImageOfType", nullptr);
   addInstMethSummary("QCView", AllocSumm,
-                     "createSnapshotImageOfType", NULL);
+                     "createSnapshotImageOfType", nullptr);
 
   // Create summaries for CIContext, 'createCGImage' and
   // 'createCGLayerWithSize'.  These objects are CF objects, and are not
   // automatically garbage collected.
   addInstMethSummary("CIContext", CFAllocSumm,
-                     "createCGImage", "fromRect", NULL);
-  addInstMethSummary("CIContext", CFAllocSumm,
-                     "createCGImage", "fromRect", "format", "colorSpace", NULL);
-  addInstMethSummary("CIContext", CFAllocSumm, "createCGLayerWithSize",
-           "info", NULL);
+                     "createCGImage", "fromRect", nullptr);
+  addInstMethSummary("CIContext", CFAllocSumm, "createCGImage", "fromRect",
+                     "format", "colorSpace", nullptr);
+  addInstMethSummary("CIContext", CFAllocSumm, "createCGLayerWithSize", "info",
+                     nullptr);
 }
 
 //===----------------------------------------------------------------------===//

@@ -3257,7 +3257,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI__builtin_arm_stlex
                                        ? Intrinsic::arm_stlexd
                                        : Intrinsic::arm_strexd);
-    llvm::Type *STy = llvm::StructType::get(Int32Ty, Int32Ty, NULL);
+    llvm::Type *STy = llvm::StructType::get(Int32Ty, Int32Ty, nullptr);
 
     Value *Tmp = CreateMemTemp(E->getArg(0)->getType());
     Value *Val = EmitScalarExpr(E->getArg(0));
@@ -4028,7 +4028,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_stlex
                                        ? Intrinsic::aarch64_stlxp
                                        : Intrinsic::aarch64_stxp);
-    llvm::Type *STy = llvm::StructType::get(Int64Ty, Int64Ty, NULL);
+    llvm::Type *STy = llvm::StructType::get(Int64Ty, Int64Ty, nullptr);
 
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(ConvertType(E->getArg(0)->getType()),

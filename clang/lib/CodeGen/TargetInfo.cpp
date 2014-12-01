@@ -2406,7 +2406,7 @@ GetX86_64ByValArgumentPair(llvm::Type *Lo, llvm::Type *Hi,
     }
   }
 
-  llvm::StructType *Result = llvm::StructType::get(Lo, Hi, NULL);
+  llvm::StructType *Result = llvm::StructType::get(Lo, Hi, nullptr);
 
 
   // Verify that the second element is at an 8-byte offset.
@@ -2483,7 +2483,7 @@ classifyReturnType(QualType RetTy) const {
     assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
     ResType = llvm::StructType::get(llvm::Type::getX86_FP80Ty(getVMContext()),
                                     llvm::Type::getX86_FP80Ty(getVMContext()),
-                                    NULL);
+                                    nullptr);
     break;
   }
 
@@ -2886,7 +2886,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     llvm::Type *DoubleTy = CGF.DoubleTy;
     llvm::Type *DblPtrTy =
       llvm::PointerType::getUnqual(DoubleTy);
-    llvm::StructType *ST = llvm::StructType::get(DoubleTy, DoubleTy, NULL);
+    llvm::StructType *ST = llvm::StructType::get(DoubleTy, DoubleTy, nullptr);
     llvm::Value *V, *Tmp = CGF.CreateMemTemp(Ty);
     Tmp = CGF.Builder.CreateBitCast(Tmp, ST->getPointerTo());
     V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrLo,
@@ -3636,7 +3636,7 @@ PPC64_SVR4_ABIInfo::classifyReturnType(QualType RetTy) const {
       llvm::Type *CoerceTy;
       if (Bits > GPRBits) {
         CoerceTy = llvm::IntegerType::get(getVMContext(), GPRBits);
-        CoerceTy = llvm::StructType::get(CoerceTy, CoerceTy, NULL);
+        CoerceTy = llvm::StructType::get(CoerceTy, CoerceTy, nullptr);
       } else
         CoerceTy = llvm::IntegerType::get(getVMContext(),
                                           llvm::RoundUpToAlignment(Bits, 8));
