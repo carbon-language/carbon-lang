@@ -625,7 +625,7 @@ static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   }
 
   // The record definition is complete, now look up the member.
-  SemaRef.LookupQualifiedName(R, DC);
+  SemaRef.LookupQualifiedName(R, DC, SS);
 
   if (!R.empty())
     return false;

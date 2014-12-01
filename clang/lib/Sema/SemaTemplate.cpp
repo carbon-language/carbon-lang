@@ -8004,11 +8004,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
 
   DeclarationName Name(&II);
   LookupResult Result(*this, Name, IILoc, LookupOrdinaryName);
-  NestedNameSpecifier *NNS = SS.getScopeRep();
-  if (NNS->getKind() == NestedNameSpecifier::Super)
-    LookupInSuper(Result, NNS->getAsRecordDecl());
-  else
-    LookupQualifiedName(Result, Ctx);
+  LookupQualifiedName(Result, Ctx, SS);
   unsigned DiagID = 0;
   Decl *Referenced = nullptr;
   switch (Result.getResultKind()) {

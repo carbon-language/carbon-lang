@@ -1762,6 +1762,31 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   return true;
 }
 
+/// \brief Performs qualified name lookup or special type of lookup for
+/// "__super::" scope specifier.
+///
+/// This routine is a convenience overload meant to be called from contexts
+/// that need to perform a qualified name lookup with an optional C++ scope
+/// specifier that might require special kind of lookup.
+///
+/// \param R captures both the lookup criteria and any lookup results found.
+///
+/// \param LookupCtx The context in which qualified name lookup will
+/// search.
+///
+/// \param SS An optional C++ scope-specifier.
+///
+/// \returns true if lookup succeeded, false if it failed.
+bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
+                               CXXScopeSpec &SS) {
+  auto *NNS = SS.getScopeRep();
+  if (NNS && NNS->getKind() == NestedNameSpecifier::Super)
+    return LookupInSuper(R, NNS->getAsRecordDecl());
+  else
+
+    return LookupQualifiedName(R, LookupCtx);
+}
+
 /// @brief Performs name lookup for a name that was parsed in the
 /// source code, and may contain a C++ scope specifier.
 ///

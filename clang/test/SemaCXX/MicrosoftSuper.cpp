@@ -88,14 +88,14 @@ template <typename T>
 struct BaseTemplate {
   typedef int XXX;
 
-  void foo() {}
+  int foo() { return 0; }
 };
 
 struct DerivedFromKnownSpecialization : BaseTemplate<int> {
   __super::XXX a;
   typedef __super::XXX b;
 
-  void test() {
+  void foo() {
     __super::XXX c;
     typedef __super::XXX d;
 
@@ -111,14 +111,14 @@ struct DerivedFromDependentBase : BaseTemplate<T> {
   __super::XXX c;         // expected-error {{missing 'typename'}}
   typedef __super::XXX d; // expected-error {{missing 'typename'}}
 
-  void test() {
+  void foo() {
     typename __super::XXX e;
     typedef typename __super::XXX f;
 
     __super::XXX g;         // expected-error {{missing 'typename'}}
     typedef __super::XXX h; // expected-error {{missing 'typename'}}
 
-    __super::foo();
+    int x = __super::foo();
   }
 };
 
@@ -130,7 +130,7 @@ struct DerivedFromTemplateParameter : T {
   __super::XXX c;         // expected-error {{missing 'typename'}}
   typedef __super::XXX d; // expected-error {{missing 'typename'}}
 
-  void test() {
+  void foo() {
     typename __super::XXX e;
     typedef typename __super::XXX f;
 
@@ -143,7 +143,7 @@ struct DerivedFromTemplateParameter : T {
 
 void instantiate() {
   DerivedFromDependentBase<int> d;
-  d.test();
+  d.foo();
   DerivedFromTemplateParameter<Base1> t;
-  t.test();
+  t.foo();
 }
