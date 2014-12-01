@@ -268,14 +268,18 @@ FileSpec::SetFile (const char *pathname, bool resolve, PathSyntax syntax)
         return;
 
     llvm::SmallString<64> normalized(pathname);
-    Normalize(normalized, syntax);
 
     if (resolve)
     {
         FileSpec::Resolve (normalized);
         m_is_resolved = true;
     }
-    
+
+    // Only normalize after resolving the path.  Resolution will modify the path
+    // string, potentially adding wrong kinds of slashes to the path, that need
+    // to be re-normalized.
+    Normalize(normalized, syntax);
+
     llvm::StringRef resolve_path_ref(normalized.c_str());
     llvm::StringRef filename_ref = llvm::sys::path::filename(resolve_path_ref);
     if (!filename_ref.empty())
