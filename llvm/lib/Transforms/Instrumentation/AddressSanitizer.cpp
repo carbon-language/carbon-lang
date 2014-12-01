@@ -27,6 +27,7 @@
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
@@ -348,9 +349,14 @@ static size_t RedzoneSizeForScale(int MappingScale) {
 
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer : public FunctionPass {
-  AddressSanitizer() : FunctionPass(ID) {}
+  AddressSanitizer() : FunctionPass(ID) {
+    initializeAddressSanitizerPass(*PassRegistry::getPassRegistry());
+  }
   const char *getPassName() const override {
     return "AddressSanitizerFunctionPass";
+  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<DominatorTreeWrapperPass>();
   }
   void instrumentMop(Instruction *I, bool UseCalls);
   void instrumentPointerComparisonOrSubtraction(Instruction *I);
@@ -369,6 +375,8 @@ struct AddressSanitizer : public FunctionPass {
   bool doInitialization(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid
 
+  DominatorTree &getDominatorTree() const { return *DT; }
+
  private:
   void initializeCallbacks(Module &M);
 
@@ -380,6 +388,7 @@ struct AddressSanitizer : public FunctionPass {
   int LongSize;
   Type *IntptrTy;
   ShadowMapping Mapping;
+  DominatorTree *DT;
   Function *AsanCtorFunction;
   Function *AsanInitFunction;
   Function *AsanHandleNoReturnFunc;
@@ -471,10 +480,11 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
     AllocaInst *AI;
     Value *LeftRzAddr;
     Value *RightRzAddr;
+    bool Poison;
     explicit DynamicAllocaCall(AllocaInst *AI,
                       Value *LeftRzAddr = nullptr,
                       Value *RightRzAddr = nullptr)
-      : AI(AI), LeftRzAddr(LeftRzAddr), RightRzAddr(RightRzAddr)
+      : AI(AI), LeftRzAddr(LeftRzAddr), RightRzAddr(RightRzAddr), Poison(true)
     {}
   };
   SmallVector<DynamicAllocaCall, 1> DynamicAllocaVec;
@@ -520,6 +530,8 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   // Unpoison dynamic allocas redzones.
   void unpoisonDynamicAlloca(DynamicAllocaCall &AllocaCall) {
+    if (!AllocaCall.Poison)
+      return;
     for (auto Ret : RetVec) {
       IRBuilder<> IRBRet(Ret);
       PointerType *Int32PtrTy = PointerType::getUnqual(IRBRet.getInt32Ty());
@@ -605,6 +617,14 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   // ---------------------- Helpers.
   void initializeCallbacks(Module &M);
 
+  bool doesDominateAllExits(const Instruction *I) const {
+    for (auto Ret : RetVec) {
+      if (!ASan.getDominatorTree().dominates(I, Ret))
+        return false;
+    }
+    return true;
+  }
+
   bool isDynamicAlloca(AllocaInst &AI) const {
     return AI.isArrayAllocation() || !AI.isStaticAlloca();
   }
@@ -634,7 +654,11 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 }  // namespace
 
 char AddressSanitizer::ID = 0;
-INITIALIZE_PASS(AddressSanitizer, "asan",
+INITIALIZE_PASS_BEGIN(AddressSanitizer, "asan",
+    "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
+    false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_END(AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
     false, false)
 FunctionPass *llvm::createAddressSanitizerFunctionPass() {
@@ -1354,6 +1378,8 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   DEBUG(dbgs() << "ASAN instrumenting:\n" << F << "\n");
   initializeCallbacks(*F.getParent());
 
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
   // If needed, insert __asan_init before checking for SanitizeAddress attr.
   maybeInsertAsanInitAtFunctionEntry(F);
 
@@ -1825,6 +1851,12 @@ Value *FunctionStackPoisoner::computePartialRzMagic(Value *PartialSize,
 void FunctionStackPoisoner::handleDynamicAllocaCall(
     DynamicAllocaCall &AllocaCall) {
   AllocaInst *AI = AllocaCall.AI;
+  if (!doesDominateAllExits(AI)) {
+    // We do not yet handle complex allocas
+    AllocaCall.Poison = false;
+    return;
+  }
+
   IRBuilder<> IRB(AI);
 
   PointerType *Int32PtrTy = PointerType::getUnqual(IRB.getInt32Ty());
