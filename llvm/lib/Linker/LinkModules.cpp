@@ -794,9 +794,9 @@ void ModuleLinker::computeTypeMapping() {
   TypeFinder SrcStructTypes;
   SrcStructTypes.run(*SrcM, true);
 
-  for (unsigned i = 0, e = SrcStructTypes.size(); i != e; ++i) {
-    StructType *ST = SrcStructTypes[i];
-    if (!ST->hasName()) continue;
+  for (StructType *ST : SrcStructTypes) {
+    if (!ST->hasName())
+      continue;
 
     // Check to see if there is a dot in the name followed by a digit.
     size_t DotPos = ST->getName().rfind('.');
