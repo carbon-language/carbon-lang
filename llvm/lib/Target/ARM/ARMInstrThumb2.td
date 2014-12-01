@@ -3824,6 +3824,27 @@ def t2SUBS_PC_LR : T2I <(outs), (ins imm0_255:$imm), NoItinerary,
   let Inst{7-0} = imm;
 }
 
+// Hypervisor Call is a system instruction.
+let isCall = 1 in {
+def t2HVC : T2XI <(outs), (ins imm0_65535:$imm16), IIC_Br, "hvc.w\t$imm16", []>,
+      Requires<[IsThumb2, HasVirtualization]>, Sched<[WriteBr]> {
+    bits<16> imm16;
+    let Inst{31-20} = 0b111101111110;
+    let Inst{19-16} = imm16{15-12};
+    let Inst{15-12} = 0b1000;
+    let Inst{11-0} = imm16{11-0};
+}
+}
+
+// Alias for HVC without the ".w" optional width specifier
+def : t2InstAlias<"hvc\t$imm16", (t2HVC imm0_65535:$imm16)>;
+
+// ERET - Return from exception in Hypervisor mode.
+// B9.3.3, B9.3.20: ERET is an alias for "SUBS PC, LR, #0" in an implementation that
+// includes virtualization extensions.
+def t2ERET : InstAlias<"eret${p}", (t2SUBS_PC_LR 0, pred:$p)>,
+             Requires<[IsThumb2, HasVirtualization]>;
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
