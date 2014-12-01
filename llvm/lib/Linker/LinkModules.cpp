@@ -58,8 +58,9 @@ class TypeMapTy : public ValueMapTypeRemapper {
   SmallPtrSet<StructType*, 16> DstResolvedOpaqueTypes;
 
 public:
-  TypeMapTy() {}
+  TypeMapTy(TypeSet &Set) : DstStructTypesSet(Set) {}
 
+  TypeSet &DstStructTypesSet;
   /// Indicate that the specified type in the destination module is conceptually
   /// equivalent to the specified type in the source module.
   void addTypeMapping(Type *DstTy, Type *SrcTy);
@@ -225,6 +226,13 @@ void TypeMapTy::linkDefinedTypeBodies() {
 }
 
 Type *TypeMapTy::get(Type *Ty) {
+#ifndef NDEBUG
+  for (auto &Pair : MappedTypes) {
+    assert(!(Pair.first != Ty && Pair.second == Ty) &&
+           "mapping to a source type");
+  }
+#endif
+
   // If we already have an entry for this type, return it.
   Type **Entry = &MappedTypes[Ty];
   if (*Entry)
@@ -310,6 +318,7 @@ Type *TypeMapTy::get(Type *Ty) {
   if (STy->isOpaque()) {
     // A named structure type from src module is used. Add it to the Set of
     // identified structs in the destination module.
+    DstStructTypesSet.insert(STy);
     return *Entry = STy;
   }
 
@@ -317,6 +326,7 @@ Type *TypeMapTy::get(Type *Ty) {
   StructType *DTy = StructType::create(STy->getContext());
   // A new identified structure type was created. Add it to the set of
   // identified structs in the destination module.
+  DstStructTypesSet.insert(DTy);
   *Entry = DTy;
 
   SmallVector<Type*, 4> ElementTypes;
@@ -402,9 +412,9 @@ class ModuleLinker {
   Linker::DiagnosticHandlerFunction DiagnosticHandler;
 
 public:
-  ModuleLinker(Module *dstM, Module *srcM,
+  ModuleLinker(Module *dstM, TypeSet &Set, Module *srcM,
                Linker::DiagnosticHandlerFunction DiagnosticHandler)
-      : DstM(dstM), SrcM(srcM),
+      : DstM(dstM), SrcM(srcM), TypeMap(Set),
         ValMaterializer(TypeMap, DstM, LazilyLinkFunctions),
         DiagnosticHandler(DiagnosticHandler) {}
 
@@ -816,7 +826,7 @@ void ModuleLinker::computeTypeMapping() {
       // we prefer to take the '%C' version. So we are then left with both
       // '%C.1' and '%C' being used for the same types. This leads to some
       // variables using one type and some using the other.
-      if (!SrcStructTypesSet.count(DST))
+      if (!SrcStructTypesSet.count(DST) && TypeMap.DstStructTypesSet.count(DST))
         TypeMap.addTypeMapping(DST, ST);
   }
 
@@ -1578,6 +1588,10 @@ bool ModuleLinker::run() {
 void Linker::init(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
   this->Composite = M;
   this->DiagnosticHandler = DiagnosticHandler;
+
+  TypeFinder StructTypes;
+  StructTypes.run(*M, true);
+  IdentifiedStructTypes.insert(StructTypes.begin(), StructTypes.end());
 }
 
 Linker::Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {
@@ -1599,7 +1613,8 @@ void Linker::deleteModule() {
 }
 
 bool Linker::linkInModule(Module *Src) {
-  ModuleLinker TheLinker(Composite, Src, DiagnosticHandler);
+  ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src,
+                         DiagnosticHandler);
   return TheLinker.run();
 }
 
