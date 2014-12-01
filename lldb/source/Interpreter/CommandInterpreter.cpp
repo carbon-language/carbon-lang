@@ -424,6 +424,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["watchpoint"]= CommandObjectSP (new CommandObjectMultiwordWatchpoint (*this));
 
     const char *break_regexes[][2] = {{"^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2"},
+                                      {"^/([^/]+)/$", "breakpoint set --source-pattern-regexp '%1'"},
                                       {"^([[:digit:]]+)[[:space:]]*$", "breakpoint set --line %1"},
                                       {"^\\*?(0x[[:xdigit:]]+)[[:space:]]*$", "breakpoint set --address %1"},
                                       {"^[\"']?([-+]?\\[.*\\])[\"']?[[:space:]]*$", "breakpoint set --name '%1'"},
