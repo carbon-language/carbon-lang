@@ -15,7 +15,7 @@ declare coldcc void @coldcc()
 ; CHECK: declare coldcc void @coldcc
 
 declare cc10 void @cc10()
-; CHECK: declare cc10 void @cc10
+; CHECK: declare ghccc void @cc10
 
 declare spir_kernel void @spir_kernel()
 ; CHECK: declare spir_kernel void @spir_kernel
@@ -72,7 +72,7 @@ define void @call_coldcc() {
 }
 
 define void @call_cc10 () { 
-; CHECK: call cc10 void @cc10 
+; CHECK: call ghccc void @cc10
   call cc10 void @cc10 ()
   ret void
 }

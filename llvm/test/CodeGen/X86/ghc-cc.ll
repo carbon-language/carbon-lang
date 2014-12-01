@@ -12,13 +12,13 @@ entry:
   ; CHECK: movl {{[0-9]*}}(%esp), %ebx
   ; CHECK-NEXT: movl {{[0-9]*}}(%esp), %ebp
   ; CHECK-NEXT: calll addtwo
-  %0 = call cc 10 i32 @addtwo(i32 %a, i32 %b)
+  %0 = call ghccc i32 @addtwo(i32 %a, i32 %b)
   ; CHECK: calll foo
   call void @foo() nounwind
   ret void
 }
 
-define cc 10 i32 @addtwo(i32 %x, i32 %y) nounwind {
+define ghccc i32 @addtwo(i32 %x, i32 %y) nounwind {
 entry:
   ; CHECK: leal (%ebx,%ebp), %eax
   %0 = add i32 %x, %y
@@ -26,7 +26,7 @@ entry:
   ret i32 %0
 }
 
-define cc 10 void @foo() nounwind {
+define ghccc void @foo() nounwind {
 entry:
   ; CHECK:      movl r1, %esi
   ; CHECK-NEXT: movl hp, %edi
@@ -37,8 +37,8 @@ entry:
   %2 = load i32* @sp
   %3 = load i32* @base
   ; CHECK: jmp bar
-  tail call cc 10 void @bar( i32 %3, i32 %2, i32 %1, i32 %0 ) nounwind
+  tail call ghccc void @bar( i32 %3, i32 %2, i32 %1, i32 %0 ) nounwind
   ret void
 }
 
-declare cc 10 void @bar(i32, i32, i32, i32)
+declare ghccc void @bar(i32, i32, i32, i32)
