@@ -21,8 +21,6 @@ TEST_F (StringExtractorTest, InitEmpty)
     ASSERT_EQ (true, ex.Empty());
     ASSERT_EQ (0, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
-
-    ASSERT_EQ (nullptr, ex.Peek());
 }
 
 TEST_F (StringExtractorTest, InitMisc)
@@ -38,6 +36,79 @@ TEST_F (StringExtractorTest, InitMisc)
     ASSERT_EQ (kInitMiscString[0], *ex.Peek());
 }
 
+TEST_F (StringExtractorTest, DecodeHexU8_Underflow)
+{
+    const char kEmptyString[] = "";
+    StringExtractor ex (kEmptyString);
+
+    ASSERT_EQ (-1, ex.DecodeHexU8());
+    ASSERT_EQ (true, ex.IsGood());
+    ASSERT_EQ (0, ex.GetFilePos());
+    ASSERT_EQ (true, ex.Empty());
+    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (nullptr, ex.Peek());
+}
+
+TEST_F (StringExtractorTest, DecodeHexU8_Underflow2)
+{
+    const char kEmptyString[] = "1";
+    StringExtractor ex (kEmptyString);
+
+    ASSERT_EQ (-1, ex.DecodeHexU8());
+    ASSERT_EQ (true, ex.IsGood());
+    ASSERT_EQ (0, ex.GetFilePos());
+    ASSERT_EQ (1, ex.GetBytesLeft());
+    ASSERT_EQ ('1', *ex.Peek());
+}
+
+TEST_F (StringExtractorTest, DecodeHexU8_InvalidHex)
+{
+    const char kInvalidHex[] = "xa";
+    StringExtractor ex (kInvalidHex);
+
+    ASSERT_EQ (-1, ex.DecodeHexU8());
+    ASSERT_EQ (true, ex.IsGood());
+    ASSERT_EQ (0, ex.GetFilePos());
+    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ ('x', *ex.Peek());
+}
+
+TEST_F (StringExtractorTest, DecodeHexU8_InvalidHex2)
+{
+    const char kInvalidHex[] = "ax";
+    StringExtractor ex (kInvalidHex);
+
+    ASSERT_EQ (-1, ex.DecodeHexU8());
+    ASSERT_EQ (true, ex.IsGood());
+    ASSERT_EQ (0, ex.GetFilePos());
+    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ ('a', *ex.Peek());
+}
+
+TEST_F (StringExtractorTest, DecodeHexU8_Exact)
+{
+    const char kValidHexPair[] = "12";
+    StringExtractor ex (kValidHexPair);
+
+    ASSERT_EQ (0x12, ex.DecodeHexU8());
+    ASSERT_EQ (true, ex.IsGood());
+    ASSERT_EQ (2, ex.GetFilePos());
+    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (nullptr, ex.Peek());
+}
+
+TEST_F (StringExtractorTest, DecodeHexU8_Extra)
+{
+    const char kValidHexPair[] = "1234";
+    StringExtractor ex (kValidHexPair);
+
+    ASSERT_EQ (0x12, ex.DecodeHexU8());
+    ASSERT_EQ (true, ex.IsGood());
+    ASSERT_EQ (2, ex.GetFilePos());
+    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ ('3', *ex.Peek());
+}
+
 TEST_F (StringExtractorTest, GetHexU8_Underflow)
 {
     const char kEmptyString[] = "";
@@ -46,7 +117,6 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow)
     ASSERT_EQ (0xab, ex.GetHexU8(0xab));
     ASSERT_EQ (false, ex.IsGood());
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
-    ASSERT_STREQ (kEmptyString, ex.GetStringRef().c_str());
     ASSERT_EQ (true, ex.Empty());
     ASSERT_EQ (0, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
@@ -60,8 +130,6 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow2)
     ASSERT_EQ (0xbc, ex.GetHexU8(0xbc));
     ASSERT_EQ (false, ex.IsGood());
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
-    ASSERT_STREQ (kOneNibble, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (0, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
@@ -74,8 +142,6 @@ TEST_F (StringExtractorTest, GetHexU8_InvalidHex)
     ASSERT_EQ (0xcd, ex.GetHexU8(0xcd));
     ASSERT_EQ (false, ex.IsGood());
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
-    ASSERT_STREQ (kInvalidHex, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (0, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
@@ -88,8 +154,6 @@ TEST_F (StringExtractorTest, GetHexU8_Exact)
     ASSERT_EQ (0x12, ex.GetHexU8(0x12));
     ASSERT_EQ (true, ex.IsGood());
     ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_STREQ (kValidHexPair, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (0, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
@@ -102,8 +166,6 @@ TEST_F (StringExtractorTest, GetHexU8_Extra)
     ASSERT_EQ (0x12, ex.GetHexU8(0x12));
     ASSERT_EQ (true, ex.IsGood());
     ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_STREQ (kValidHexPair, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (2, ex.GetBytesLeft());
     ASSERT_EQ ('3', *ex.Peek());
 }
@@ -117,7 +179,6 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow_NoEof)
     ASSERT_EQ (0xab, ex.GetHexU8(0xab, kSetEofOnFail));
     ASSERT_EQ (false, ex.IsGood()); // this result seems inconsistent with kSetEofOnFail == false
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
-    ASSERT_STREQ (kEmptyString, ex.GetStringRef().c_str());
     ASSERT_EQ (true, ex.Empty());
     ASSERT_EQ (0, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
@@ -132,8 +193,6 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow2_NoEof)
     ASSERT_EQ (0xbc, ex.GetHexU8(0xbc, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
     ASSERT_EQ (0, ex.GetFilePos());
-    ASSERT_STREQ (kOneNibble, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (1, ex.GetBytesLeft());
     ASSERT_EQ ('1', *ex.Peek());
 }
@@ -147,8 +206,6 @@ TEST_F (StringExtractorTest, GetHexU8_InvalidHex_NoEof)
     ASSERT_EQ (0xcd, ex.GetHexU8(0xcd, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
     ASSERT_EQ (0, ex.GetFilePos());
-    ASSERT_STREQ (kInvalidHex, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (2, ex.GetBytesLeft());
     ASSERT_EQ ('x', *ex.Peek());
 }
@@ -162,8 +219,6 @@ TEST_F (StringExtractorTest, GetHexU8_Exact_NoEof)
     ASSERT_EQ (0x12, ex.GetHexU8(0x12, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
     ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_STREQ (kValidHexPair, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (0, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
@@ -177,8 +232,6 @@ TEST_F (StringExtractorTest, GetHexU8_Extra_NoEof)
     ASSERT_EQ (0x12, ex.GetHexU8(0x12, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
     ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_STREQ (kValidHexPair, ex.GetStringRef().c_str());
-    ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (2, ex.GetBytesLeft());
     ASSERT_EQ ('3', *ex.Peek());
 }
@@ -265,3 +318,89 @@ TEST_F (StringExtractorTest, GetHexBytes_Partial)
     ASSERT_EQ(12, ex.GetBytesLeft());
     ASSERT_EQ('2', *ex.Peek());
 }
+
+TEST_F (StringExtractorTest, GetHexBytesAvail)
+{
+    const char kHexEncodedBytes[] = "abcdef0123456789xyzw";
+    const size_t kValidHexPairs = 8;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[kValidHexPairs];
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail (dst, kValidHexPairs));
+    EXPECT_EQ(0xab,dst[0]);
+    EXPECT_EQ(0xcd,dst[1]);
+    EXPECT_EQ(0xef,dst[2]);
+    EXPECT_EQ(0x01,dst[3]);
+    EXPECT_EQ(0x23,dst[4]);
+    EXPECT_EQ(0x45,dst[5]);
+    EXPECT_EQ(0x67,dst[6]);
+    EXPECT_EQ(0x89,dst[7]);
+
+    ASSERT_EQ(true, ex.IsGood());
+    ASSERT_EQ(2*kValidHexPairs, ex.GetFilePos());
+    ASSERT_EQ(false, ex.Empty());
+    ASSERT_EQ(4, ex.GetBytesLeft());
+    ASSERT_EQ('x', *ex.Peek());
+}
+
+TEST_F (StringExtractorTest, GetHexBytesAvail_Underflow)
+{
+    const char kHexEncodedBytes[] = "abcdef0123456789xyzw";
+    const size_t kValidHexPairs = 8;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[12];
+    memset(dst, 0xef, sizeof(dst));
+    ASSERT_EQ(kValidHexPairs, ex.GetHexBytesAvail (dst, sizeof(dst)));
+    EXPECT_EQ(0xab,dst[0]);
+    EXPECT_EQ(0xcd,dst[1]);
+    EXPECT_EQ(0xef,dst[2]);
+    EXPECT_EQ(0x01,dst[3]);
+    EXPECT_EQ(0x23,dst[4]);
+    EXPECT_EQ(0x45,dst[5]);
+    EXPECT_EQ(0x67,dst[6]);
+    EXPECT_EQ(0x89,dst[7]);
+    // these bytes should be unchanged
+    EXPECT_EQ(0xef,dst[8]);
+    EXPECT_EQ(0xef,dst[9]);
+    EXPECT_EQ(0xef,dst[10]);
+    EXPECT_EQ(0xef,dst[11]);
+
+    ASSERT_EQ(true, ex.IsGood());
+    ASSERT_EQ(kValidHexPairs*2, ex.GetFilePos());
+    ASSERT_EQ(false, ex.Empty());
+    ASSERT_EQ(4, ex.GetBytesLeft());
+    ASSERT_EQ('x', *ex.Peek());
+}
+
+TEST_F (StringExtractorTest, GetHexBytesAvail_Partial)
+{
+    const char kHexEncodedBytes[] = "abcdef0123456789xyzw";
+    const size_t kReadBytes = 4;
+    StringExtractor ex(kHexEncodedBytes);
+
+    uint8_t dst[12];
+    memset(dst, 0xab, sizeof(dst));
+    ASSERT_EQ(kReadBytes, ex.GetHexBytesAvail (dst, kReadBytes));
+    EXPECT_EQ(0xab,dst[0]);
+    EXPECT_EQ(0xcd,dst[1]);
+    EXPECT_EQ(0xef,dst[2]);
+    EXPECT_EQ(0x01,dst[3]);
+    // these bytes should be unchanged
+    EXPECT_EQ(0xab,dst[4]);
+    EXPECT_EQ(0xab,dst[5]);
+    EXPECT_EQ(0xab,dst[6]);
+    EXPECT_EQ(0xab,dst[7]);
+    EXPECT_EQ(0xab,dst[8]);
+    EXPECT_EQ(0xab,dst[9]);
+    EXPECT_EQ(0xab,dst[10]);
+    EXPECT_EQ(0xab,dst[11]);
+
+    ASSERT_EQ(true, ex.IsGood());
+    ASSERT_EQ(kReadBytes*2, ex.GetFilePos());
+    ASSERT_EQ(false, ex.Empty());
+    ASSERT_EQ(12, ex.GetBytesLeft());
+    ASSERT_EQ('2', *ex.Peek());
+}
+
+
