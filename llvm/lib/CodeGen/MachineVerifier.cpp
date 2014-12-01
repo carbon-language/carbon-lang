@@ -592,7 +592,11 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       }
     } else if (TBB && !FBB && Cond.empty()) {
       // Block unconditionally branches somewhere.
-      if (MBB->succ_size() != 1+LandingPadSuccs.size()) {
+      // If the block has exactly one successor, that happens to be a
+      // landingpad, accept it as valid control flow.
+      if (MBB->succ_size() != 1+LandingPadSuccs.size() &&
+          (MBB->succ_size() != 1 || LandingPadSuccs.size() != 1 ||
+           *MBB->succ_begin() != *LandingPadSuccs.begin())) {
         report("MBB exits via unconditional branch but doesn't have "
                "exactly one CFG successor!", MBB);
       } else if (!MBB->isSuccessor(TBB)) {
