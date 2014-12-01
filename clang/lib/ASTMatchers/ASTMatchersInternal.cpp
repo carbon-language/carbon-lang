@@ -50,15 +50,15 @@ void BoundNodesTreeBuilder::visitMatches(Visitor *ResultVisitor) {
 
 namespace {
 
+typedef bool (*VariadicOperatorFunction)(
+    const ast_type_traits::DynTypedNode DynNode, ASTMatchFinder *Finder,
+    BoundNodesTreeBuilder *Builder, ArrayRef<DynTypedMatcher> InnerMatchers);
+
+template <VariadicOperatorFunction Func>
 class VariadicMatcher : public DynMatcherInterface {
 public:
-  typedef bool (*VariadicOperatorFunction)(
-      const ast_type_traits::DynTypedNode DynNode, ASTMatchFinder *Finder,
-      BoundNodesTreeBuilder *Builder, ArrayRef<DynTypedMatcher> InnerMatchers);
-
-  VariadicMatcher(VariadicOperatorFunction Func,
-                  std::vector<DynTypedMatcher> InnerMatchers)
-      : Func(Func), InnerMatchers(std::move(InnerMatchers)) {}
+  VariadicMatcher(std::vector<DynTypedMatcher> InnerMatchers)
+      : InnerMatchers(std::move(InnerMatchers)) {}
 
   bool dynMatches(const ast_type_traits::DynTypedNode &DynNode,
                   ASTMatchFinder *Finder,
@@ -67,7 +67,6 @@ public:
   }
 
 private:
-  VariadicOperatorFunction Func;
   std::vector<DynTypedMatcher> InnerMatchers;
 };
 
@@ -119,29 +118,45 @@ DynTypedMatcher DynTypedMatcher::constructVariadic(
          }) &&
          "SupportedKind must match!");
 
+  auto SupportedKind = InnerMatchers[0].SupportedKind;
   // We must relax the restrict kind here.
   // The different operators might deal differently with a mismatch.
   // Make it the same as SupportedKind, since that is the broadest type we are
   // allowed to accept.
-  auto SupportedKind = InnerMatchers[0].SupportedKind;
-  VariadicMatcher::VariadicOperatorFunction Func;
+  auto RestrictKind = SupportedKind;
+
   switch (Op) {
   case VO_AllOf:
-    Func = AllOfVariadicOperator;
-    break;
-  case VO_AnyOf:
-    Func = AnyOfVariadicOperator;
-    break;
-  case VO_EachOf:
-    Func = EachOfVariadicOperator;
-    break;
-  case VO_UnaryNot:
-    Func = NotUnaryOperator;
-    break;
-  }
+    // In the case of allOf() we must pass all the checks, so making
+    // RestrictKind the most restrictive can save us time. This way we reject
+    // invalid types earlier and we can elide the kind checks inside the
+    // matcher.
+    for (auto &IM : InnerMatchers) {
+      RestrictKind = ast_type_traits::ASTNodeKind::getMostDerivedType(
+          RestrictKind, IM.RestrictKind);
+    }
+    return DynTypedMatcher(
+        SupportedKind, RestrictKind,
+        new VariadicMatcher<AllOfVariadicOperator>(std::move(InnerMatchers)));
 
-  return DynTypedMatcher(SupportedKind, SupportedKind,
-                         new VariadicMatcher(Func, std::move(InnerMatchers)));
+  case VO_AnyOf:
+    return DynTypedMatcher(
+        SupportedKind, RestrictKind,
+        new VariadicMatcher<AnyOfVariadicOperator>(std::move(InnerMatchers)));
+
+  case VO_EachOf:
+    return DynTypedMatcher(
+        SupportedKind, RestrictKind,
+        new VariadicMatcher<EachOfVariadicOperator>(std::move(InnerMatchers)));
+
+  case VO_UnaryNot:
+    // FIXME: Implement the Not operator to take a single matcher instead of a
+    // vector.
+    return DynTypedMatcher(
+        SupportedKind, RestrictKind,
+        new VariadicMatcher<NotUnaryOperator>(std::move(InnerMatchers)));
+  }
+  llvm_unreachable("Invalid Op value.");
 }
 
 DynTypedMatcher DynTypedMatcher::trueMatcher(
@@ -241,7 +256,7 @@ bool AllOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
   // matcher combined with each alternative in the second matcher.
   // Thus, we can reuse the same Builder.
   for (const DynTypedMatcher &InnerMatcher : InnerMatchers) {
-    if (!InnerMatcher.matches(DynNode, Finder, Builder))
+    if (!InnerMatcher.matchesNoKindCheck(DynNode, Finder, Builder))
       return false;
   }
   return true;
