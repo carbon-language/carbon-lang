@@ -3475,9 +3475,9 @@ typedef shuffle_order_engine<minstd_rand0, 256>                         knuth_b;
 
 class _LIBCPP_TYPE_VIS random_device
 {
-#if !defined(_WIN32)
+#if !(defined(_WIN32) || defined(_LIBCPP_USING_NACL_RANDOM))
     int __f_;
-#endif // defined(_WIN32)
+#endif // !(defined(_WIN32) || defined(_LIBCPP_USING_NACL_RANDOM))
 public:
     // types
     typedef unsigned result_type;

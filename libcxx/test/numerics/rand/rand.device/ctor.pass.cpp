@@ -11,39 +11,75 @@
 
 // class random_device;
 
-// explicit random_device(const string& token = "/dev/urandom");
+// explicit random_device(const string& token = implementation-defined);
+
+// For the following ctors, the standard states: "The semantics and default
+// value of the token parameter are implementation-defined". Implementations
+// therefore aren't required to accept any string, but the default shouldn't
+// throw.
 
 #include <random>
 #include <cassert>
 #include <unistd.h>
 
-int main()
-{
-    try
-    {
-        std::random_device r("wrong file");
-        assert(false);
-    }
-    catch (const std::system_error& e)
-    {
-    }
-    {
-        std::random_device r;
-    }
-    {
-        int ec;
-        ec = close(STDIN_FILENO);
-        assert(!ec);
-        ec = close(STDOUT_FILENO);
-        assert(!ec);
-        ec = close(STDERR_FILENO);
-        assert(!ec);
-        std::random_device r;
-    }
-    {
-        std::random_device r("/dev/urandom");;
-    }
-    {
-        std::random_device r("/dev/random");;
-    }
+bool is_valid_random_device(const std::string &token) {
+#if defined(_WIN32)
+  return true;
+#elif defined(_LIBCPP_USING_NACL_RANDOM)
+  return token == "/dev/urandom";
+#else  // !defined(_WIN32) && !defined(_LIBCPP_USING_NACL_RANDOM)
+  // Not an exhaustive list: they're the only tokens that are tested below.
+  return token == "/dev/urandom" || token == "/dev/random";
+#endif // defined(_WIN32) || defined(_LIBCPP_USING_NACL_RANDOM)
+}
+
+void check_random_device_valid(const std::string &token) {
+  std::random_device r(token);
+}
+
+void check_random_device_invalid(const std::string &token) {
+  try {
+    std::random_device r(token);
+    assert(false);
+  } catch (const std::system_error &e) {
+  }
+}
+
+int main() {
+  { std::random_device r; }
+
+  {
+    int ec;
+    ec = close(STDIN_FILENO);
+    assert(!ec);
+    ec = close(STDOUT_FILENO);
+    assert(!ec);
+    ec = close(STDERR_FILENO);
+    assert(!ec);
+    std::random_device r;
+  }
+
+  {
+    std::string token = "wrong file";
+    if (is_valid_random_device(token))
+      check_random_device_valid(token);
+    else
+      check_random_device_invalid(token);
+  }
+
+  {
+    std::string token = "/dev/urandom";
+    if (is_valid_random_device(token))
+      check_random_device_valid(token);
+    else
+      check_random_device_invalid(token);
+  }
+
+  {
+    std::string token = "/dev/random";
+    if (is_valid_random_device(token))
+      check_random_device_valid(token);
+    else
+      check_random_device_invalid(token);
+  }
 }
