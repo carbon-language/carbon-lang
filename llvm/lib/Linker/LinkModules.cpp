@@ -802,30 +802,33 @@ void ModuleLinker::computeTypeMapping() {
     size_t DotPos = ST->getName().rfind('.');
     if (DotPos == 0 || DotPos == StringRef::npos ||
         ST->getName().back() == '.' ||
-        !isdigit(static_cast<unsigned char>(ST->getName()[DotPos+1])))
+        !isdigit(static_cast<unsigned char>(ST->getName()[DotPos + 1])))
       continue;
 
     // Check to see if the destination module has a struct with the prefix name.
-    if (StructType *DST = DstM->getTypeByName(ST->getName().substr(0, DotPos)))
-      // Don't use it if this actually came from the source module. They're in
-      // the same LLVMContext after all. Also don't use it unless the type is
-      // actually used in the destination module. This can happen in situations
-      // like this:
-      //
-      //      Module A                         Module B
-      //      --------                         --------
-      //   %Z = type { %A }                %B = type { %C.1 }
-      //   %A = type { %B.1, [7 x i8] }    %C.1 = type { i8* }
-      //   %B.1 = type { %C }              %A.2 = type { %B.3, [5 x i8] }
-      //   %C = type { i8* }               %B.3 = type { %C.1 }
-      //
-      // When we link Module B with Module A, the '%B' in Module B is
-      // used. However, that would then use '%C.1'. But when we process '%C.1',
-      // we prefer to take the '%C' version. So we are then left with both
-      // '%C.1' and '%C' being used for the same types. This leads to some
-      // variables using one type and some using the other.
-      if (TypeMap.DstStructTypesSet.count(DST))
-        TypeMap.addTypeMapping(DST, ST);
+    StructType *DST = DstM->getTypeByName(ST->getName().substr(0, DotPos));
+    if (!DST)
+      continue;
+
+    // Don't use it if this actually came from the source module. They're in
+    // the same LLVMContext after all. Also don't use it unless the type is
+    // actually used in the destination module. This can happen in situations
+    // like this:
+    //
+    //      Module A                         Module B
+    //      --------                         --------
+    //   %Z = type { %A }                %B = type { %C.1 }
+    //   %A = type { %B.1, [7 x i8] }    %C.1 = type { i8* }
+    //   %B.1 = type { %C }              %A.2 = type { %B.3, [5 x i8] }
+    //   %C = type { i8* }               %B.3 = type { %C.1 }
+    //
+    // When we link Module B with Module A, the '%B' in Module B is
+    // used. However, that would then use '%C.1'. But when we process '%C.1',
+    // we prefer to take the '%C' version. So we are then left with both
+    // '%C.1' and '%C' being used for the same types. This leads to some
+    // variables using one type and some using the other.
+    if (TypeMap.DstStructTypesSet.count(DST))
+      TypeMap.addTypeMapping(DST, ST);
   }
 
   // Now that we have discovered all of the type equivalences, get a body for
