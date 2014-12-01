@@ -9,4 +9,3 @@ entry:
 	%sub6 = add i32 %sub4, %d		; <i32> [#uses=1]
 	ret i32 %sub6
 }
-
