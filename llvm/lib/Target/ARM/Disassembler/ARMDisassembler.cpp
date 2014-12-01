@@ -405,6 +405,28 @@ static MCDisassembler *createThumbDisassembler(const Target &T,
   return new ThumbDisassembler(STI, Ctx);
 }
 
+// Post-decoding checks
+static DecodeStatus checkDecodedInstruction(MCInst &MI, uint64_t &Size,
+                                            uint64_t Address, raw_ostream &OS,
+                                            raw_ostream &CS,
+                                            uint32_t Insn,
+                                            DecodeStatus Result)
+{
+  switch (MI.getOpcode()) {
+    case ARM::HVC: {
+      // HVC is undefined if condition = 0xf otherwise upredictable
+      // if condition != 0xe
+      uint32_t Cond = (Insn >> 28) & 0xF;
+      if (Cond == 0xF)
+        return MCDisassembler::Fail;
+      if (Cond != 0xE)
+        return MCDisassembler::SoftFail;
+      return Result;
+    }
+    default: return Result;
+  }
+}
+
 DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                              ArrayRef<uint8_t> Bytes,
                                              uint64_t Address, raw_ostream &OS,
@@ -430,7 +452,7 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       decodeInstruction(DecoderTableARM32, MI, Insn, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
     Size = 4;
-    return Result;
+    return checkDecodedInstruction(MI, Size, Address, OS, CS, Insn, Result);
   }
 
   // VFP and NEON instructions, similarly, are shared between ARM
