@@ -4134,19 +4134,20 @@ static bool SwitchToLookupTable(SwitchInst *SI,
          "It is impossible for a switch to have more entries than the max "
          "representable value of its input integer type's size.");
 
-  // If we have a fully covered lookup table, unconditionally branch to the
-  // lookup table BB. Otherwise, check if the condition value is within the case
-  // range. If it is so, branch to the new BB. Otherwise branch to SI's default
-  // destination.
+  // If the default destination is unreachable, or if the lookup table covers
+  // all values of the conditional variable, branch directly to the lookup table
+  // BB. Otherwise, check that the condition is within the case range.
+  const bool DefaultIsReachable =
+      !isa<UnreachableInst>(SI->getDefaultDest()->getFirstNonPHIOrDbg());
+  const bool GeneratingCoveredLookupTable = (MaxTableSize == TableSize);
   BranchInst *RangeCheckBranch = nullptr;
 
-  const bool GeneratingCoveredLookupTable = MaxTableSize == TableSize;
-  if (GeneratingCoveredLookupTable) {
+  if (!DefaultIsReachable || GeneratingCoveredLookupTable) {
     Builder.CreateBr(LookupBB);
     // We cached PHINodes in PHIs, to avoid accessing deleted PHINodes later,
     // do not delete PHINodes here.
     SI->getDefaultDest()->removePredecessor(SI->getParent(),
-                                            true/*DontDeleteUselessPHIs*/);
+                                            true /*DontDeleteUselessPHIs*/);
   } else {
     Value *Cmp = Builder.CreateICmpULT(TableIndex, ConstantInt::get(
                                        MinCaseVal->getType(), TableSize));
