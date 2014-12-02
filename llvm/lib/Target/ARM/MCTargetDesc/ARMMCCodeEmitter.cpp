@@ -304,6 +304,28 @@ public:
     return Binary;
   }
 
+  unsigned getModImmOpValue(const MCInst &MI, unsigned Op,
+                            SmallVectorImpl<MCFixup> &Fixups,
+                            const MCSubtargetInfo &ST) const {
+    const MCOperand &MO = MI.getOperand(Op);
+
+    // Support for fixups (MCFixup)
+    if (MO.isExpr()) {
+      const MCExpr *Expr = MO.getExpr();
+      // In instruction code this value always encoded as lowest 12 bits,
+      // so we don't have to perform any specific adjustments.
+      // Due to requirements of relocatable records we have to use FK_Data_4.
+      // See ARMELFObjectWriter::ExplicitRelSym and
+      //     ARMELFObjectWriter::GetRelocTypeInner for more details.
+      MCFixupKind Kind = MCFixupKind(FK_Data_4);
+      Fixups.push_back(MCFixup::Create(0, Expr, Kind, MI.getLoc()));
+      return 0;
+    }
+
+    // Immediate is already in its encoded format
+    return MO.getImm();
+  }
+
   /// getT2SOImmOpValue - Return an encoded 12-bit shifted-immediate value.
   unsigned getT2SOImmOpValue(const MCInst &MI, unsigned Op,
                            SmallVectorImpl<MCFixup> &Fixups,

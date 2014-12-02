@@ -587,6 +587,38 @@ def so_imm : Operand<i32>, ImmLeaf<i32, [{
   let DecoderMethod = "DecodeSOImmOperand";
 }
 
+// mod_imm: match a 32-bit immediate operand, which is encoded as a 12-bit
+// immediate (See ARMARM - "Modified Immediate Constants"). Unlike so_imm,
+// mod_imm keeps the immediate in its encoded form (within the MC layer).
+def ModImmAsmOperand: AsmOperandClass {
+  let Name = "ModImm";
+  let ParserMethod = "parseModImm";
+}
+def mod_imm : Operand<i32>, ImmLeaf<i32, [{
+    return ARM_AM::getSOImmVal(Imm) != -1;
+  }]> {
+  let EncoderMethod = "getModImmOpValue";
+  let PrintMethod = "printModImmOperand";
+  let ParserMatchClass = ModImmAsmOperand;
+}
+
+// similar to so_imm_not, but keeps the immediate in its encoded form
+def ModImmNotAsmOperand : AsmOperandClass { let Name = "ModImmNot"; }
+def mod_imm_not : Operand<i32>, PatLeaf<(imm), [{
+    return ARM_AM::getSOImmVal(~(uint32_t)N->getZExtValue()) != -1;
+  }], imm_not_XFORM> {
+  let ParserMatchClass = ModImmNotAsmOperand;
+}
+
+// similar to so_imm_neg, but keeps the immediate in its encoded form
+def ModImmNegAsmOperand : AsmOperandClass { let Name = "ModImmNeg"; }
+def mod_imm_neg : Operand<i32>, PatLeaf<(imm), [{
+    unsigned Value = -(unsigned)N->getZExtValue();
+    return Value && ARM_AM::getSOImmVal(Value) != -1;
+  }], imm_neg_XFORM> {
+  let ParserMatchClass = ModImmNegAsmOperand;
+}
+
 // Break so_imm's up into two pieces.  This handles immediates with up to 16
 // bits set in them.  This uses so_imm2part to match and so_imm2part_[12] to
 // get the first/second pieces.
@@ -1213,9 +1245,9 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   // The register-immediate version is re-materializable. This is useful
   // in particular for taking the address of a local.
   let isReMaterializable = 1 in {
-  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
+  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, mod_imm:$imm), DPFrm,
                iii, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
+               [(set GPR:$Rd, (opnode GPR:$Rn, mod_imm:$imm))]>,
            Sched<[WriteALU, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
@@ -1286,9 +1318,9 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
   // The register-immediate version is re-materializable. This is useful
   // in particular for taking the address of a local.
   let isReMaterializable = 1 in {
-  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
+  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, mod_imm:$imm), DPFrm,
                iii, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, (opnode so_imm:$imm, GPR:$Rn))]>,
+               [(set GPR:$Rd, (opnode mod_imm:$imm, GPR:$Rn))]>,
            Sched<[WriteALU, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
@@ -1356,9 +1388,9 @@ let hasPostISelHook = 1, Defs = [CPSR] in {
 multiclass AsI1_bin_s_irs<InstrItinClass iii, InstrItinClass iir,
                           InstrItinClass iis, PatFrag opnode,
                           bit Commutable = 0> {
-  def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm, pred:$p),
+  def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, mod_imm:$imm, pred:$p),
                          4, iii,
-                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm))]>,
+                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, mod_imm:$imm))]>,
                          Sched<[WriteALU, ReadALU]>;
 
   def rr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, pred:$p),
@@ -1389,9 +1421,9 @@ let hasPostISelHook = 1, Defs = [CPSR] in {
 multiclass AsI1_rbin_s_is<InstrItinClass iii, InstrItinClass iir,
                           InstrItinClass iis, PatFrag opnode,
                           bit Commutable = 0> {
-  def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm, pred:$p),
+  def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, mod_imm:$imm, pred:$p),
                          4, iii,
-                         [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn))]>,
+                         [(set GPR:$Rd, CPSR, (opnode mod_imm:$imm, GPR:$Rn))]>,
            Sched<[WriteALU, ReadALU]>;
 
   def rsi : ARMPseudoInst<(outs GPR:$Rd),
@@ -1417,9 +1449,9 @@ let isCompare = 1, Defs = [CPSR] in {
 multiclass AI1_cmp_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                        PatFrag opnode, bit Commutable = 0> {
-  def ri : AI1<opcod, (outs), (ins GPR:$Rn, so_imm:$imm), DPFrm, iii,
+  def ri : AI1<opcod, (outs), (ins GPR:$Rn, mod_imm:$imm), DPFrm, iii,
                opc, "\t$Rn, $imm",
-               [(opnode GPR:$Rn, so_imm:$imm)]>,
+               [(opnode GPR:$Rn, mod_imm:$imm)]>,
            Sched<[WriteCMP, ReadALU]> {
     bits<4> Rn;
     bits<12> imm;
@@ -1547,9 +1579,9 @@ let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                              bit Commutable = 0> {
   let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
-  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, mod_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm, CPSR))]>,
+               [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, mod_imm:$imm, CPSR))]>,
                Requires<[IsARM]>,
            Sched<[WriteALU, ReadALU]> {
     bits<4> Rd;
@@ -1617,9 +1649,9 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode> {
   let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
-  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, mod_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn, CPSR))]>,
+               [(set GPR:$Rd, CPSR, (opnode mod_imm:$imm, GPR:$Rn, CPSR))]>,
                Requires<[IsARM]>,
            Sched<[WriteALU, ReadALU]> {
     bits<4> Rd;
@@ -3224,8 +3256,8 @@ def MOVsi : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg_imm:$src),
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
-def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
-                "mov", "\t$Rd, $imm", [(set GPR:$Rd, so_imm:$imm)]>, UnaryDP,
+def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins mod_imm:$imm), DPFrm, IIC_iMOVi,
+                "mov", "\t$Rd, $imm", [(set GPR:$Rd, mod_imm:$imm)]>, UnaryDP,
                 Sched<[WriteALU]> {
   bits<4> Rd;
   bits<12> imm;
@@ -3732,9 +3764,9 @@ def  MVNsr  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_reg:$shift),
   let Inst{3-0} = shift{3-0};
 }
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
-def  MVNi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm,
+def  MVNi  : AsI1<0b1111, (outs GPR:$Rd), (ins mod_imm:$imm), DPFrm,
                   IIC_iMVNi, "mvn", "\t$Rd, $imm",
-                  [(set GPR:$Rd, so_imm_not:$imm)]>,UnaryDP, Sched<[WriteALU]> {
+                  [(set GPR:$Rd, mod_imm_not:$imm)]>,UnaryDP, Sched<[WriteALU]> {
   bits<4> Rd;
   bits<12> imm;
   let Inst{25} = 1;
@@ -4280,9 +4312,9 @@ def : ARMPat<(ARMcmpZ GPR:$src, so_reg_reg:$rhs),
 
 // CMN register-integer
 let isCompare = 1, Defs = [CPSR] in {
-def CMNri : AI1<0b1011, (outs), (ins GPR:$Rn, so_imm:$imm), DPFrm, IIC_iCMPi,
+def CMNri : AI1<0b1011, (outs), (ins GPR:$Rn, mod_imm:$imm), DPFrm, IIC_iCMPi,
                 "cmn", "\t$Rn, $imm",
-                [(ARMcmn GPR:$Rn, so_imm:$imm)]>,
+                [(ARMcmn GPR:$Rn, mod_imm:$imm)]>,
                 Sched<[WriteCMP, ReadALU]> {
   bits<4> Rn;
   bits<12> imm;
@@ -5130,17 +5162,17 @@ def MSR : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
   let Inst{3-0} = Rn;
 }
 
-def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
-               "msr", "\t$mask, $a", []> {
+def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  mod_imm:$imm), NoItinerary,
+               "msr", "\t$mask, $imm", []> {
   bits<5> mask;
-  bits<12> a;
+  bits<12> imm;
 
   let Inst{23} = 0;
   let Inst{22} = mask{4}; // R bit
   let Inst{21-20} = 0b10;
   let Inst{19-16} = mask{3-0};
   let Inst{15-12} = 0b1111;
-  let Inst{11-0} = a;
+  let Inst{11-0} = imm;
 }
 
 // However, the MSR (banked register) system instruction (ARMv7VE) *does* have a
@@ -5549,33 +5581,33 @@ def : MnemonicAlias<"usubaddx", "usax">;
 // "mov Rd, so_imm_not" can be handled via "mvn" in assembly, just like
 // for isel.
 def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
-                   (MVNi rGPR:$Rd, so_imm_not:$imm, pred:$p, cc_out:$s)>;
+                   (MVNi rGPR:$Rd, mod_imm_not:$imm, pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"mvn${s}${p} $Rd, $imm",
-                   (MOVi rGPR:$Rd, so_imm_not:$imm, pred:$p, cc_out:$s)>;
+                   (MOVi rGPR:$Rd, mod_imm_not:$imm, pred:$p, cc_out:$s)>;
 // Same for AND <--> BIC
 def : ARMInstAlias<"bic${s}${p} $Rd, $Rn, $imm",
-                   (ANDri rGPR:$Rd, rGPR:$Rn, so_imm_not:$imm,
+                   (ANDri rGPR:$Rd, rGPR:$Rn, mod_imm_not:$imm,
                           pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"bic${s}${p} $Rdn, $imm",
-                   (ANDri rGPR:$Rdn, rGPR:$Rdn, so_imm_not:$imm,
+                   (ANDri rGPR:$Rdn, rGPR:$Rdn, mod_imm_not:$imm,
                           pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"and${s}${p} $Rd, $Rn, $imm",
-                   (BICri rGPR:$Rd, rGPR:$Rn, so_imm_not:$imm,
+                   (BICri rGPR:$Rd, rGPR:$Rn, mod_imm_not:$imm,
                           pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"and${s}${p} $Rdn, $imm",
-                   (BICri rGPR:$Rdn, rGPR:$Rdn, so_imm_not:$imm,
+                   (BICri rGPR:$Rdn, rGPR:$Rdn, mod_imm_not:$imm,
                           pred:$p, cc_out:$s)>;
 
 // Likewise, "add Rd, so_imm_neg" -> sub
 def : ARMInstAlias<"add${s}${p} $Rd, $Rn, $imm",
-                 (SUBri GPR:$Rd, GPR:$Rn, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
+                 (SUBri GPR:$Rd, GPR:$Rn, mod_imm_neg:$imm, pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"add${s}${p} $Rd, $imm",
-                 (SUBri GPR:$Rd, GPR:$Rd, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
+                 (SUBri GPR:$Rd, GPR:$Rd, mod_imm_neg:$imm, pred:$p, cc_out:$s)>;
 // Same for CMP <--> CMN via so_imm_neg
 def : ARMInstAlias<"cmp${p} $Rd, $imm",
-                   (CMNri rGPR:$Rd, so_imm_neg:$imm, pred:$p)>;
+                   (CMNri rGPR:$Rd, mod_imm_neg:$imm, pred:$p)>;
 def : ARMInstAlias<"cmn${p} $Rd, $imm",
-                   (CMPri rGPR:$Rd, so_imm_neg:$imm, pred:$p)>;
+                   (CMPri rGPR:$Rd, mod_imm_neg:$imm, pred:$p)>;
 
 // The shifter forms of the MOV instruction are aliased to the ASR, LSL,
 // LSR, ROR, and RRX instructions.

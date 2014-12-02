@@ -206,7 +206,7 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         add sp, sp, #512
 @ CHECK-ERRORS:                     ^
-@ CHECK-ERRORS: error: instruction requires: arm-mode
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         add r2, sp, #1024
 @ CHECK-ERRORS:         ^
 

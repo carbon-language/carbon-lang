@@ -119,11 +119,45 @@ void llvm::LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                         ARMAsmPrinter &AP) {
   OutMI.setOpcode(MI->getOpcode());
 
+  // In the MC layer, we keep modified immediates in their encoded form
+  bool EncodeImms = false;
+  switch (MI->getOpcode()) {
+  default: break;
+  case ARM::MOVi:
+  case ARM::MVNi:
+  case ARM::CMPri:
+  case ARM::CMNri:
+  case ARM::TSTri:
+  case ARM::TEQri:
+  case ARM::MSRi:
+  case ARM::ADCri:
+  case ARM::ADDri:
+  case ARM::ADDSri:
+  case ARM::SBCri:
+  case ARM::SUBri:
+  case ARM::SUBSri:
+  case ARM::ANDri:
+  case ARM::ORRri:
+  case ARM::EORri:
+  case ARM::BICri:
+  case ARM::RSBri:
+  case ARM::RSBSri:
+  case ARM::RSCri:
+    EncodeImms = true;
+    break;
+  }
+
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
 
     MCOperand MCOp;
-    if (AP.lowerOperand(MO, MCOp))
+    if (AP.lowerOperand(MO, MCOp)) {
+      if (MCOp.isImm() && EncodeImms) {
+        int32_t Enc = ARM_AM::getSOImmVal(MCOp.getImm());
+        if (Enc != -1)
+          MCOp.setImm(Enc);
+      }
       OutMI.addOperand(MCOp);
+    }
   }
 }

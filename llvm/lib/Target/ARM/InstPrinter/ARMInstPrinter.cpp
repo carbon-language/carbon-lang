@@ -1318,6 +1318,52 @@ void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
   O << markup(">");
 }
 
+void ARMInstPrinter::printModImmOperand(const MCInst *MI, unsigned OpNum,
+                                        raw_ostream &O) {
+  MCOperand Op = MI->getOperand(OpNum);
+
+  // Support for fixups (MCFixup)
+  if (Op.isExpr())
+    return printOperand(MI, OpNum, O);
+
+  unsigned Bits = Op.getImm() & 0xFF;
+  unsigned Rot = (Op.getImm() & 0xF00) >> 7;
+
+  bool  PrintUnsigned = false;
+  switch (MI->getOpcode()){
+  case ARM::MOVi:
+    // Movs to PC should be treated unsigned
+    PrintUnsigned = (MI->getOperand(OpNum - 1).getReg() == ARM::PC);
+    break;
+  case ARM::MSRi:
+    // Movs to special registers should be treated unsigned
+    PrintUnsigned = true;
+    break;
+  }
+
+  int32_t Rotated = ARM_AM::rotr32(Bits, Rot);
+  if (ARM_AM::getSOImmVal(Rotated) == Op.getImm()) {
+    // #rot has the least possible value
+    O << "#" << markup("<imm:");
+    if (PrintUnsigned)
+      O << static_cast<uint32_t>(Rotated);
+    else
+      O << Rotated;
+    O << markup(">");
+    return;
+  }
+
+  // Explicit #bits, #rot implied
+  O << "#"
+    << markup("<imm:")
+    << Bits
+    << markup(">")
+    << ", #"
+    << markup("<imm:")
+    << Rot
+    << markup(">");
+}
+
 void ARMInstPrinter::printFBits16(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {
   O << markup("<imm:")
