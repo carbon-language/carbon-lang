@@ -666,6 +666,11 @@ CAMLprim LLVMValueRef llvm_mdnode(LLVMContextRef C, value ElementVals) {
                              Wosize_val(ElementVals));
 }
 
+/* llcontext -> llvalue */
+CAMLprim LLVMValueRef llvm_mdnull(LLVMContextRef C) {
+  return NULL;
+}
+
 /* llvalue -> string option */
 CAMLprim value llvm_get_mdstring(LLVMValueRef V) {
   CAMLparam0();

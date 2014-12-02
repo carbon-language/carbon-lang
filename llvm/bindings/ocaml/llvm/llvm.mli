@@ -819,6 +819,9 @@ val mdstring : llcontext -> string -> llvalue
     See the method [llvm::MDNode::get]. *)
 val mdnode : llcontext -> llvalue array -> llvalue
 
+(** [mdnull c ] returns a null MDNode in context [c].  *)
+val mdnull : llcontext -> llvalue
+
 (** [get_mdstring v] returns the MDString.
     See the method [llvm::MDString::getString] *)
 val get_mdstring : llvalue -> string option
