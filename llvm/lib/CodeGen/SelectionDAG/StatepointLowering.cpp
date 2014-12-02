@@ -230,6 +230,7 @@ static SDNode *lowerCallFromStatepoint(const CallInst &CI,
 
   int NumCallArgs = dyn_cast<ConstantInt>(CI.getArgOperand(1))->getZExtValue();
   assert(NumCallArgs >= 0 && "non-negative");
+  (void)NumCallArgs;
 
   ImmutableStatepoint StatepointOperands(&CI);
 
