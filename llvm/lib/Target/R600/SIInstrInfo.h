@@ -308,6 +308,9 @@ public:
                                         unsigned OpName) const {
     return getNamedOperand(const_cast<MachineInstr &>(MI), OpName);
   }
+
+  uint64_t getDefaultRsrcDataFormat() const;
+
 };
 
 namespace AMDGPU {

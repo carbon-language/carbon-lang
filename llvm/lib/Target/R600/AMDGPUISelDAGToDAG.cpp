@@ -1012,6 +1012,8 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc,
                                            SDValue &GLC, SDValue &SLC,
                                            SDValue &TFE) const {
   SDValue Ptr, VAddr, Offen, Idxen, Addr64;
+  const SIInstrInfo *TII =
+    static_cast<const SIInstrInfo *>(Subtarget.getInstrInfo());
 
   SelectMUBUF(Addr, Ptr, VAddr, SOffset, Offset, Offen, Idxen, Addr64,
               GLC, SLC, TFE);
@@ -1019,7 +1021,7 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc,
   if (!cast<ConstantSDNode>(Offen)->getSExtValue() &&
       !cast<ConstantSDNode>(Idxen)->getSExtValue() &&
       !cast<ConstantSDNode>(Addr64)->getSExtValue()) {
-    uint64_t Rsrc = AMDGPU::RSRC_DATA_FORMAT |
+    uint64_t Rsrc = TII->getDefaultRsrcDataFormat() |
                     APInt::getAllOnesValue(32).getZExtValue(); // Size
     SDLoc DL(Addr);
 

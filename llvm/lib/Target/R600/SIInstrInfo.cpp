@@ -1580,6 +1580,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     unsigned SRsrcFormatLo = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
     unsigned SRsrcFormatHi = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
     unsigned NewSRsrc = MRI.createVirtualRegister(&AMDGPU::SReg_128RegClass);
+    uint64_t RsrcDataFormat = getDefaultRsrcDataFormat();
 
     // Zero64 = 0
     BuildMI(MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B64),
@@ -1589,12 +1590,12 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     // SRsrcFormatLo = RSRC_DATA_FORMAT{31-0}
     BuildMI(MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32),
             SRsrcFormatLo)
-            .addImm(AMDGPU::RSRC_DATA_FORMAT & 0xFFFFFFFF);
+            .addImm(RsrcDataFormat & 0xFFFFFFFF);
 
     // SRsrcFormatHi = RSRC_DATA_FORMAT{63-32}
     BuildMI(MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32),
             SRsrcFormatHi)
-            .addImm(AMDGPU::RSRC_DATA_FORMAT >> 32);
+            .addImm(RsrcDataFormat >> 32);
 
     // NewSRsrc = {Zero64, SRsrcFormat}
     BuildMI(MBB, MI, MI->getDebugLoc(), get(AMDGPU::REG_SEQUENCE),
@@ -1798,13 +1799,14 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
       unsigned DWord1 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
       unsigned DWord2 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
       unsigned DWord3 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+      uint64_t RsrcDataFormat = getDefaultRsrcDataFormat();
 
       BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32), DWord1)
               .addImm(0);
       BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32), DWord2)
-              .addImm(AMDGPU::RSRC_DATA_FORMAT & 0xFFFFFFFF);
+              .addImm(RsrcDataFormat & 0xFFFFFFFF);
       BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32), DWord3)
-              .addImm(AMDGPU::RSRC_DATA_FORMAT >> 32);
+              .addImm(RsrcDataFormat >> 32);
       BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::REG_SEQUENCE), SRsrc)
               .addReg(DWord0)
               .addImm(AMDGPU::sub0)
@@ -2412,4 +2414,12 @@ MachineOperand *SIInstrInfo::getNamedOperand(MachineInstr &MI,
     return nullptr;
 
   return &MI.getOperand(Idx);
+}
+
+uint64_t SIInstrInfo::getDefaultRsrcDataFormat() const {
+  uint64_t RsrcDataFormat = AMDGPU::RSRC_DATA_FORMAT;
+  if (ST.isAmdHsaOS())
+    RsrcDataFormat |= (1ULL << 56);
+
+  return RsrcDataFormat;
 }

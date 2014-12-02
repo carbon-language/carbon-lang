@@ -68,6 +68,7 @@ private:
   std::unique_ptr<AMDGPUTargetLowering> TLInfo;
   std::unique_ptr<AMDGPUInstrInfo> InstrInfo;
   InstrItineraryData InstrItins;
+  Triple TargetTriple;
 
 public:
   AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS, TargetMachine &TM);
@@ -216,6 +217,9 @@ public:
   }
   bool r600ALUEncoding() const {
     return R600ALUInst;
+  }
+  bool isAmdHsaOS() const {
+    return TargetTriple.getOS() == Triple::AMDHSA;
   }
 };
 

@@ -2030,6 +2030,8 @@ static SDValue buildSMovImm32(SelectionDAG &DAG, SDLoc DL, uint64_t Val) {
 MachineSDNode *SITargetLowering::wrapAddr64Rsrc(SelectionDAG &DAG,
                                                 SDLoc DL,
                                                 SDValue Ptr) const {
+  const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
+      getTargetMachine().getSubtargetImpl()->getInstrInfo());
 #if 1
     // XXX - Workaround for moveToVALU not handling different register class
     // inserts for REG_SEQUENCE.
@@ -2039,7 +2041,7 @@ MachineSDNode *SITargetLowering::wrapAddr64Rsrc(SelectionDAG &DAG,
       DAG.getTargetConstant(AMDGPU::SGPR_64RegClassID, MVT::i32),
       buildSMovImm32(DAG, DL, 0),
       DAG.getTargetConstant(AMDGPU::sub0, MVT::i32),
-      buildSMovImm32(DAG, DL, AMDGPU::RSRC_DATA_FORMAT >> 32),
+      buildSMovImm32(DAG, DL, TII->getDefaultRsrcDataFormat() >> 32),
       DAG.getTargetConstant(AMDGPU::sub1, MVT::i32)
     };
 
@@ -2063,7 +2065,7 @@ MachineSDNode *SITargetLowering::wrapAddr64Rsrc(SelectionDAG &DAG,
       DAG.getTargetConstant(AMDGPU::sub0_sub1, MVT::i32),
       buildSMovImm32(DAG, DL, 0),
       DAG.getTargetConstant(AMDGPU::sub2, MVT::i32),
-      buildSMovImm32(DAG, DL, AMDGPU::RSRC_DATA_FORMAT >> 32),
+      buildSMovImm32(DAG, DL, TII->getDefaultRsrcFormat() >> 32),
       DAG.getTargetConstant(AMDGPU::sub3, MVT::i32)
     };
 
@@ -2110,7 +2112,9 @@ MachineSDNode *SITargetLowering::buildRSRC(SelectionDAG &DAG,
 MachineSDNode *SITargetLowering::buildScratchRSRC(SelectionDAG &DAG,
                                                   SDLoc DL,
                                                   SDValue Ptr) const {
-  uint64_t Rsrc = AMDGPU::RSRC_DATA_FORMAT | AMDGPU::RSRC_TID_ENABLE |
+  const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
+      getTargetMachine().getSubtargetImpl()->getInstrInfo());
+  uint64_t Rsrc = TII->getDefaultRsrcDataFormat() | AMDGPU::RSRC_TID_ENABLE |
                   0xffffffff; // Size
 
   return buildRSRC(DAG, DL, Ptr, 0, Rsrc);
