@@ -171,6 +171,8 @@ enum {
   WCharWidth4Bytes = 4, // sizeof(wchar_t) == 4
 
   // Tag_ABI_FP_denormal, (=20), uleb128
+  PositiveZero = 0,
+  IEEEDenormals = 1,
   PreserveFPSign = 2, // sign when flushed-to-zero is preserved
 
   // Tag_ABI_FP_number_model, (=23), uleb128

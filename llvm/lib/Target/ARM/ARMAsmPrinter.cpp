@@ -694,9 +694,34 @@ void ARMAsmPrinter::emitAttributes() {
 
   // Signal various FP modes.
   if (!TM.Options.UnsafeFPMath) {
-    ATS.emitAttribute(ARMBuildAttrs::ABI_FP_denormal, ARMBuildAttrs::Allowed);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_FP_denormal,
+                      ARMBuildAttrs::IEEEDenormals);
     ATS.emitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
                       ARMBuildAttrs::Allowed);
+  } else {
+    if (!Subtarget->hasVFP2()) {
+      // When the target doesn't have an FPU (by design or
+      // intention), the assumptions made on the software support
+      // mirror that of the equivalent hardware support *if it
+      // existed*. For v7 and better we indicate that denormals are
+      // flushed preserving sign, and for V6 we indicate that
+      // denormals are flushed to positive zero.
+      if (Subtarget->hasV7Ops())
+        ATS.emitAttribute(ARMBuildAttrs::ABI_FP_denormal,
+                          ARMBuildAttrs::PreserveFPSign);
+    } else if (Subtarget->hasVFP3()) {
+      // In VFPv4, VFPv4U, VFPv3, or VFPv3U, it is preserved. That is,
+      // the sign bit of the zero matches the sign bit of the input or
+      // result that is being flushed to zero.
+      ATS.emitAttribute(ARMBuildAttrs::ABI_FP_denormal,
+                        ARMBuildAttrs::PreserveFPSign);
+    }
+    // For VFPv2 implementations it is implementation defined as
+    // to whether denormals are flushed to positive zero or to
+    // whatever the sign of zero is (ARM v7AR ARM 2.7.5). Historically
+    // LLVM has chosen to flush this to positive zero (most likely for
+    // GCC compatibility), so that's the chosen value here (the
+    // absence of its emission implies zero).
   }
 
   if (TM.Options.NoInfsFPMath && TM.Options.NoNaNsFPMath)
