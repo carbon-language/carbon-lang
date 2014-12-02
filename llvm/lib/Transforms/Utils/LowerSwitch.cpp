@@ -149,6 +149,7 @@ static void fixPhis(BasicBlock *SuccBB, BasicBlock *OrigBB, BasicBlock *NewBB,
 
     // Only update the first occurence.
     unsigned Idx = 0, E = PN->getNumIncomingValues();
+    unsigned LocalNumMergedCases = NumMergedCases;
     for (; Idx != E; ++Idx) {
       if (PN->getIncomingBlock(Idx) == OrigBB) {
         PN->setIncomingBlock(Idx, NewBB);
@@ -158,10 +159,10 @@ static void fixPhis(BasicBlock *SuccBB, BasicBlock *OrigBB, BasicBlock *NewBB,
 
     // Remove additional occurences coming from condensed cases and keep the
     // number of incoming values equal to the number of branches to SuccBB.
-    for (++Idx; NumMergedCases > 0 && Idx != E; ++Idx)
+    for (++Idx; LocalNumMergedCases > 0 && Idx < E; ++Idx)
       if (PN->getIncomingBlock(Idx) == OrigBB) {
         PN->removeIncomingValue(Idx);
-        NumMergedCases--;
+        LocalNumMergedCases--;
       }
   }
 }
