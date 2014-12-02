@@ -815,15 +815,6 @@ static void LowerSTATEPOINT(MCStreamer &OS, StackMaps &SM,
                             X86MCInstLower &MCInstLowering) {
   assert(Is64Bit && "Statepoint currently only supports X86-64");
 
-  // We need to record the frame size for stack walking
-  const MachineFunction *MF = MI.getParent()->getParent();
-  assert(MF && "can't find machine function?");
-  (void)MF;
-
-  //
-  // Emit call instruction
-  //
-
   // Lower call target and choose correct opcode
   const MachineOperand &call_target = StatepointOpers(&MI).getCallTarget();
   MCOperand call_target_mcop;
@@ -1093,7 +1084,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case TargetOpcode::STATEPOINT:
     return LowerSTATEPOINT(OutStreamer, SM, *MI, Subtarget->is64Bit(), TM,
-      getSubtargetInfo(), MCInstLowering);
+                           getSubtargetInfo(), MCInstLowering);
+    
   case TargetOpcode::STACKMAP:
     return LowerSTACKMAP(*MI);
 
