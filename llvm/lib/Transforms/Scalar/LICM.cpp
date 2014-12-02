@@ -847,8 +847,10 @@ void LICM::PromoteAliasSet(AliasSet &AS,
           return;
         // Don't sink stores from loops without dedicated block exits. Exits
         // containing indirect branches are not transformed by loop simplify,
-        // make sure we catch that.
-        if (!HasDedicatedExits)
+        // make sure we catch that. An additional load may be generated in the
+        // preheader for SSA updater, so also avoid sinking when no preheader
+        // is available.
+        if (!HasDedicatedExits || !Preheader)
           return;
 
         // Note that we only check GuaranteedToExecute inside the store case

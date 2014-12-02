@@ -359,6 +359,39 @@ lab22:
   indirectbr i8* undef, [label %lab5, label %lab6, label %lab7]
 }
 
+; Test that we don't crash when trying to sink stores and there's no preheader
+; available (which is used for creating loads that may be used by the SSA
+; updater)
+define void @test13() {
+; CHECK-LABEL: @test13
+  br label %lab59
+
+lab19:
+  br i1 undef, label %lab20, label %lab38
+
+lab20:
+  br label %lab60
+
+lab21:
+  br i1 undef, label %lab22, label %lab38
+
+lab22:
+  br label %lab38
+
+lab38:
+  ret void
+
+lab59:
+  indirectbr i8* undef, [label %lab60, label %lab38]
+
+lab60:
+; CHECK: lab60:
+; CHECK: store
+; CHECK-NEXT: indirectbr
+  store i32 2145244101, i32* undef, align 4
+  indirectbr i8* undef, [label %lab21, label %lab19]
+}
+
 declare void @f(i32*)
 
 declare void @g()
