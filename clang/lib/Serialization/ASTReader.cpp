@@ -1563,9 +1563,8 @@ HeaderFileInfoTrait::ReadData(internal_key_ref key, const unsigned char *d,
       // information should be propagated through the SUBMODULE_HEADER etc
       // records rather than from here.
       // FIXME: We don't ever mark excluded headers.
-      ModMap.addHeader(
-          Mod, Module::Header{key.Filename, FileMgr.getFile(key.Filename)},
-          HFI.getHeaderRole());
+      Module::Header H = { key.Filename, FileMgr.getFile(key.Filename) };
+      ModMap.addHeader(Mod, H, HFI.getHeaderRole());
     }
   }
 

@@ -1786,23 +1786,23 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
         Map.setUmbrellaHeader(ActiveModule, File);
       }
     } else if (LeadingToken == MMToken::ExcludeKeyword) {
-      Map.excludeHeader(ActiveModule,
-                        Module::Header{RelativePathName.str(), File});
+      Module::Header H = {RelativePathName.str(), File};
+      Map.excludeHeader(ActiveModule, H);
     } else {
       // If there is a builtin counterpart to this file, add it now, before
       // the "real" header, so we build the built-in one first when building
       // the module.
-      if (BuiltinFile)
+      if (BuiltinFile) {
         // FIXME: Taking the name from the FileEntry is unstable and can give
         // different results depending on how we've previously named that file
         // in this build.
-        Map.addHeader(ActiveModule,
-                      Module::Header{BuiltinFile->getName(), BuiltinFile},
-                      Role);
+        Module::Header H = { BuiltinFile->getName(), BuiltinFile };
+        Map.addHeader(ActiveModule, H, Role);
+      }
 
       // Record this header.
-      Map.addHeader(ActiveModule, Module::Header{RelativePathName.str(), File},
-                    Role);
+      Module::Header H = { RelativePathName.str(), File };
+      Map.addHeader(ActiveModule, H, Role);
     }
   } else if (LeadingToken != MMToken::ExcludeKeyword) {
     // Ignore excluded header files. They're optional anyway.
