@@ -539,7 +539,4 @@
 /* Define to 1 if you have the `_chsize_s' function. */
 #cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
 
-/* Maximum path length */
-#cmakedefine MAXPATHLEN ${MAXPATHLEN}
-
 #endif
