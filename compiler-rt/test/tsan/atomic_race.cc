@@ -36,7 +36,7 @@ void *Thread(void *p) {
   for (int i = 0; i < kTestCount; i++) {
     Test(i, &atomics[i], false);
   }
-  sleep(2);
+  sleep(4);
   for (int i = 0; i < kTestCount; i++) {
     fprintf(stderr, "Test %d reverse\n", i);
     Test(i, &atomics[kTestCount + i], false);
