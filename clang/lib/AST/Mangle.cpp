@@ -236,7 +236,11 @@ void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
         (void) getBlockId(cast<BlockDecl>(DC), true);
     assert((isa<TranslationUnitDecl>(DC) || isa<NamedDecl>(DC)) &&
            "expected a TranslationUnitDecl or a NamedDecl");
-    if (auto ND = dyn_cast<NamedDecl>(DC)) {
+    if (const auto *CD = dyn_cast<CXXConstructorDecl>(DC))
+      mangleCtorBlock(CD, /*CT*/ Ctor_Complete, BD, Out);
+    else if (const auto *DD = dyn_cast<CXXDestructorDecl>(DC))
+      mangleDtorBlock(DD, /*DT*/ Dtor_Complete, BD, Out);
+    else if (auto ND = dyn_cast<NamedDecl>(DC)) {
       if (!shouldMangleDeclName(ND) && ND->getIdentifier())
         Stream << ND->getIdentifier()->getName();
       else {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 %s -triple %itanium_abi_triple -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fblocks %s -triple %itanium_abi_triple -emit-llvm -o - | FileCheck %s
 
 // CHECK: private unnamed_addr constant [15 x i8] c"externFunction\00"
 // CHECK: private unnamed_addr constant [26 x i8] c"void NS::externFunction()\00"
@@ -537,3 +537,33 @@ int main() {
 
   return 0;
 }
+
+// rdar://19065361
+class XXX {
+  XXX();
+  ~XXX();
+};
+
+void XXLog(const char *functionName) { }
+
+typedef void (^notify_handler_t)(int token);
+
+typedef void (^dispatch_block_t)(void);
+
+void notify_register_dispatch(notify_handler_t handler);
+
+void _dispatch_once(dispatch_block_t block);
+
+XXX::XXX()
+{
+   _dispatch_once(^{ notify_register_dispatch( ^(int token) { XXLog(__FUNCTION__); }); 
+   });
+}
+// CHECK: define internal void @___ZN3XXXC2Ev_block_invoke_
+
+XXX::~XXX()
+{
+   _dispatch_once(^{ notify_register_dispatch( ^(int token) { XXLog(__FUNCTION__); }); 
+   });
+}
+// CHECK: define internal void @___ZN3XXXD2Ev_block_invoke_
