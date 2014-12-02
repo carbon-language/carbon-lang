@@ -569,6 +569,27 @@ bool AArch64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
   return isWorthFolding(N);
 }
 
+/// If there's a use of this ADDlow that's not itself a load/store then we'll
+/// need to create a real ADD instruction from it anyway and there's no point in
+/// folding it into the mem op. Theoretically, it shouldn't matter, but there's
+/// a single pseudo-instruction for an ADRP/ADD pair so over-aggressive folding
+/// leads to duplaicated ADRP instructions.
+static bool isWorthFoldingADDlow(SDValue N) {
+  for (auto Use : N->uses()) {
+    if (Use->getOpcode() != ISD::LOAD && Use->getOpcode() != ISD::STORE &&
+        Use->getOpcode() != ISD::ATOMIC_LOAD &&
+        Use->getOpcode() != ISD::ATOMIC_STORE)
+      return false;
+
+    // ldar and stlr have much more restrictive addressing modes (just a
+    // register).
+    if (cast<MemSDNode>(Use)->getOrdering() > Monotonic)
+      return false;
+  }
+
+  return true;
+}
+
 /// SelectAddrModeIndexed - Select a "register plus scaled unsigned 12-bit
 /// immediate" address.  The "Size" argument is the size in bytes of the memory
 /// reference, which determines the scale.
@@ -582,7 +603,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
     return true;
   }
 
-  if (N.getOpcode() == AArch64ISD::ADDlow) {
+  if (N.getOpcode() == AArch64ISD::ADDlow && isWorthFoldingADDlow(N)) {
     GlobalAddressSDNode *GAN =
         dyn_cast<GlobalAddressSDNode>(N.getOperand(1).getNode());
     Base = N.getOperand(0);

@@ -12,6 +12,7 @@ define void @test_simple(i32 %n, ...) {
 ; CHECK: add [[STACK_TOP:x[0-9]+]], sp, #[[STACKSIZE]]
 
 ; CHECK: adrp x[[VA_LIST_HI:[0-9]+]], var
+; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, :lo12:var
 
 ; CHECK: stp x1, x2, [sp, #[[GR_BASE:[0-9]+]]]
 ; ... omit middle ones ...
@@ -21,11 +22,10 @@ define void @test_simple(i32 %n, ...) {
 ; ... omit middle ones ...
 ; CHECK: stp q6, q7, [sp, #
 
-; CHECK: str [[STACK_TOP]], [x[[VA_LIST_HI]], :lo12:var]
+; CHECK: str [[STACK_TOP]], [x[[VA_LIST]]]
 
 ; CHECK: add [[GR_TOPTMP:x[0-9]+]], sp, #[[GR_BASE]]
 ; CHECK: add [[GR_TOP:x[0-9]+]], [[GR_TOPTMP]], #56
-; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, :lo12:var
 ; CHECK: str [[GR_TOP]], [x[[VA_LIST]], #8]
 
 ; CHECK: mov [[VR_TOPTMP:x[0-9]+]], sp
@@ -50,6 +50,7 @@ define void @test_fewargs(i32 %n, i32 %n1, i32 %n2, float %m, ...) {
 ; CHECK: add [[STACK_TOP:x[0-9]+]], sp, #[[STACKSIZE]]
 
 ; CHECK: adrp x[[VA_LIST_HI:[0-9]+]], var
+; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, :lo12:var
 
 ; CHECK: stp x3, x4, [sp, #[[GR_BASE:[0-9]+]]]
 ; ... omit middle ones ...
@@ -59,11 +60,10 @@ define void @test_fewargs(i32 %n, i32 %n1, i32 %n2, float %m, ...) {
 ; ... omit middle ones ...
 ; CHECK: str q7, [sp, #
 
-; CHECK: str [[STACK_TOP]], [x[[VA_LIST_HI]], :lo12:var]
+; CHECK: str [[STACK_TOP]], [x[[VA_LIST]]]
 
 ; CHECK: add [[GR_TOPTMP:x[0-9]+]], sp, #[[GR_BASE]]
 ; CHECK: add [[GR_TOP:x[0-9]+]], [[GR_TOPTMP]], #40
-; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, :lo12:var
 ; CHECK: str [[GR_TOP]], [x[[VA_LIST]], #8]
 
 ; CHECK: mov [[VR_TOPTMP:x[0-9]+]], sp
@@ -89,7 +89,8 @@ define void @test_nospare([8 x i64], [8 x float], ...) {
   call void @llvm.va_start(i8* %addr)
 ; CHECK-NOT: sub sp, sp
 ; CHECK: mov [[STACK:x[0-9]+]], sp
-; CHECK: str [[STACK]], [{{x[0-9]+}}, :lo12:var]
+; CHECK: add x[[VAR:[0-9]+]], {{x[0-9]+}}, :lo12:var
+; CHECK: str [[STACK]], [x[[VAR]]]
 
   ret void
 }
@@ -100,7 +101,8 @@ define void @test_offsetstack([8 x i64], [2 x i64], [3 x float], ...) {
 ; CHECK-LABEL: test_offsetstack:
 ; CHECK: sub sp, sp, #80
 ; CHECK: add [[STACK_TOP:x[0-9]+]], sp, #96
-; CHECK: str [[STACK_TOP]], [{{x[0-9]+}}, :lo12:var]
+; CHECK: add x[[VAR:[0-9]+]], {{x[0-9]+}}, :lo12:var
+; CHECK: str [[STACK_TOP]], [x[[VAR]]]
 
   %addr = bitcast %va_list* @var to i8*
   call void @llvm.va_start(i8* %addr)

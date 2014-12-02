@@ -96,10 +96,8 @@ define [2 x i64] @return_struct() {
     %addr = bitcast %myStruct* @varstruct to [2 x i64]*
     %val = load [2 x i64]* %addr
     ret [2 x i64] %val
-; CHECK-DAG: ldr x0, [{{x[0-9]+}}, {{#?}}:lo12:varstruct]
-    ; Odd register regex below disallows x0 which we want to be live now.
-; CHECK-DAG: add {{x[1-9][0-9]*}}, {{x[1-9][0-9]*}}, {{#?}}:lo12:varstruct
-; CHECK: ldr x1, [{{x[1-9][0-9]*}}, #8]
+; CHECK: add x[[VARSTRUCT:[0-9]+]], {{x[0-9]+}}, :lo12:varstruct
+; CHECK: ldp x0, x1, [x[[VARSTRUCT]]]
     ; Make sure epilogue immediately follows
 ; CHECK-NEXT: ret
 }
@@ -166,8 +164,8 @@ define void @stacked_fpu(float %var0, double %var1, float %var2, float %var3,
 define i64 @check_i128_regalign(i32 %val0, i128 %val1, i64 %val2) {
 ; CHECK-LABEL: check_i128_regalign
     store i128 %val1, i128* @var128
-; CHECK-DAG: str x2, [{{x[0-9]+}}, {{#?}}:lo12:var128]
-; CHECK-DAG: str x3, [{{x[0-9]+}}, #8]
+; CHECK: add x[[VAR128:[0-9]+]], {{x[0-9]+}}, :lo12:var128
+; CHECK-DAG: stp x2, x3, [x[[VAR128]]]
 
     ret i64 %val2
 ; CHECK: mov x0, x4
