@@ -11,7 +11,7 @@
 ; EG-CHECK: .long 166120
 ; EG-CHECK-NEXT: .long 8
 ; SI-CHECK: .long 47180
-; SI-CHECK-NEXT: .long 32768
+; SI-CHECK-NEXT: .long 38792
 
 ; We would like to check the the lds writes are using different
 ; addresses, but due to variations in the scheduler, we can't do

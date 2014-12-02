@@ -240,6 +240,8 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(const MachineFunction &MF) {
 
 void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
                                         const MachineFunction &MF) const {
+  const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
+  const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   uint64_t CodeSize = 0;
   unsigned MaxSGPR = 0;
   unsigned MaxVGPR = 0;
@@ -340,6 +342,8 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   ProgInfo.NumVGPR = MaxVGPR + 1;
   ProgInfo.NumSGPR = MaxSGPR + 1;
 
+  ProgInfo.VGPRBlocks = (ProgInfo.NumVGPR - 1) / 4;
+  ProgInfo.SGPRBlocks = (ProgInfo.NumSGPR - 1) / 8;
   // Set the value to initialize FP_ROUND and FP_DENORM parts of the mode
   // register.
   ProgInfo.FloatMode = getFPMode(MF);
@@ -356,6 +360,51 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   ProgInfo.FlatUsed = FlatUsed;
   ProgInfo.VCCUsed = VCCUsed;
   ProgInfo.CodeLen = CodeSize;
+
+  unsigned LDSAlignShift;
+  if (STM.getGeneration() < AMDGPUSubtarget::SEA_ISLANDS) {
+    // LDS is allocated in 64 dword blocks.
+    LDSAlignShift = 8;
+  } else {
+    // LDS is allocated in 128 dword blocks.
+    LDSAlignShift = 9;
+  }
+
+  unsigned LDSSpillSize = MFI->LDSWaveSpillSize *
+                          MFI->getMaximumWorkGroupSize(MF);
+
+  ProgInfo.LDSSize = MFI->LDSSize + LDSSpillSize;
+  ProgInfo.LDSBlocks =
+     RoundUpToAlignment(ProgInfo.LDSSize, 1 << LDSAlignShift) >> LDSAlignShift;
+
+  // Scratch is allocated in 256 dword blocks.
+  unsigned ScratchAlignShift = 10;
+  // We need to program the hardware with the amount of scratch memory that
+  // is used by the entire wave.  ProgInfo.ScratchSize is the amount of
+  // scratch memory used per thread.
+  ProgInfo.ScratchBlocks =
+    RoundUpToAlignment(ProgInfo.ScratchSize * STM.getWavefrontSize(),
+                       1 << ScratchAlignShift) >> ScratchAlignShift;
+
+  ProgInfo.ComputePGMRSrc1 =
+      S_00B848_VGPRS(ProgInfo.VGPRBlocks) |
+      S_00B848_SGPRS(ProgInfo.SGPRBlocks) |
+      S_00B848_PRIORITY(ProgInfo.Priority) |
+      S_00B848_FLOAT_MODE(ProgInfo.FloatMode) |
+      S_00B848_PRIV(ProgInfo.Priv) |
+      S_00B848_DX10_CLAMP(ProgInfo.DX10Clamp) |
+      S_00B848_IEEE_MODE(ProgInfo.DebugMode) |
+      S_00B848_IEEE_MODE(ProgInfo.IEEEMode);
+
+  ProgInfo.ComputePGMRSrc2 =
+      S_00B84C_SCRATCH_EN(ProgInfo.ScratchBlocks > 0) |
+      S_00B84C_USER_SGPR(MFI->NumUserSGPRs) |
+      S_00B84C_TGID_X_EN(1) |
+      S_00B84C_TGID_Y_EN(1) |
+      S_00B84C_TGID_Z_EN(1) |
+      S_00B84C_TG_SIZE_EN(1) |
+      S_00B84C_TIDIG_COMP_CNT(2) |
+      S_00B84C_LDS_SIZE(ProgInfo.LDSBlocks);
 }
 
 static unsigned getRsrcReg(unsigned ShaderType) {
@@ -370,74 +419,31 @@ static unsigned getRsrcReg(unsigned ShaderType) {
 
 void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
                                          const SIProgramInfo &KernelInfo) {
-  const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
   const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   unsigned RsrcReg = getRsrcReg(MFI->getShaderType());
-
-  unsigned LDSAlignShift;
-  if (STM.getGeneration() < AMDGPUSubtarget::SEA_ISLANDS) {
-    // LDS is allocated in 64 dword blocks.
-    LDSAlignShift = 8;
-  } else {
-    // LDS is allocated in 128 dword blocks.
-    LDSAlignShift = 9;
-  }
-
-  unsigned LDSSpillSize = MFI->LDSWaveSpillSize *
-                          MFI->getMaximumWorkGroupSize(MF);
-
-  unsigned LDSBlocks =
-     RoundUpToAlignment(MFI->LDSSize + LDSSpillSize,
-	                      1 << LDSAlignShift) >> LDSAlignShift;
-
-  // Scratch is allocated in 256 dword blocks.
-  unsigned ScratchAlignShift = 10;
-  // We need to program the hardware with the amount of scratch memory that
-  // is used by the entire wave.  KernelInfo.ScratchSize is the amount of
-  // scratch memory used per thread.
-  unsigned ScratchBlocks =
-    RoundUpToAlignment(KernelInfo.ScratchSize * STM.getWavefrontSize(),
-                       1 << ScratchAlignShift) >> ScratchAlignShift;
-
-  unsigned VGPRBlocks = (KernelInfo.NumVGPR - 1) / 4;
-  unsigned SGPRBlocks = (KernelInfo.NumSGPR - 1) / 8;
 
   if (MFI->getShaderType() == ShaderType::COMPUTE) {
     OutStreamer.EmitIntValue(R_00B848_COMPUTE_PGM_RSRC1, 4);
 
-    const uint32_t ComputePGMRSrc1 =
-      S_00B848_VGPRS(VGPRBlocks) |
-      S_00B848_SGPRS(SGPRBlocks) |
-      S_00B848_PRIORITY(KernelInfo.Priority) |
-      S_00B848_FLOAT_MODE(KernelInfo.FloatMode) |
-      S_00B848_PRIV(KernelInfo.Priv) |
-      S_00B848_DX10_CLAMP(KernelInfo.DX10Clamp) |
-      S_00B848_IEEE_MODE(KernelInfo.DebugMode) |
-      S_00B848_IEEE_MODE(KernelInfo.IEEEMode);
-
-    OutStreamer.EmitIntValue(ComputePGMRSrc1, 4);
+    OutStreamer.EmitIntValue(KernelInfo.ComputePGMRSrc1, 4);
 
     OutStreamer.EmitIntValue(R_00B84C_COMPUTE_PGM_RSRC2, 4);
-    const uint32_t ComputePGMRSrc2 =
-      S_00B84C_LDS_SIZE(LDSBlocks) |
-      S_00B02C_SCRATCH_EN(ScratchBlocks > 0);
-
-    OutStreamer.EmitIntValue(ComputePGMRSrc2, 4);
+    OutStreamer.EmitIntValue(KernelInfo.ComputePGMRSrc2, 4);
 
     OutStreamer.EmitIntValue(R_00B860_COMPUTE_TMPRING_SIZE, 4);
-    OutStreamer.EmitIntValue(S_00B860_WAVESIZE(ScratchBlocks), 4);
+    OutStreamer.EmitIntValue(S_00B860_WAVESIZE(KernelInfo.ScratchBlocks), 4);
 
     // TODO: Should probably note flat usage somewhere. SC emits a "FlatPtr32 =
     // 0" comment but I don't see a corresponding field in the register spec.
   } else {
     OutStreamer.EmitIntValue(RsrcReg, 4);
-    OutStreamer.EmitIntValue(S_00B028_VGPRS(VGPRBlocks) |
-                             S_00B028_SGPRS(SGPRBlocks), 4);
+    OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.VGPRBlocks) |
+                             S_00B028_SGPRS(KernelInfo.SGPRBlocks), 4);
   }
 
   if (MFI->getShaderType() == ShaderType::PIXEL) {
     OutStreamer.EmitIntValue(R_00B02C_SPI_SHADER_PGM_RSRC2_PS, 4);
-    OutStreamer.EmitIntValue(S_00B02C_EXTRA_LDS_SIZE(LDSBlocks), 4);
+    OutStreamer.EmitIntValue(S_00B02C_EXTRA_LDS_SIZE(KernelInfo.LDSBlocks), 4);
     OutStreamer.EmitIntValue(R_0286CC_SPI_PS_INPUT_ENA, 4);
     OutStreamer.EmitIntValue(MFI->PSInputAddr, 4);
   }

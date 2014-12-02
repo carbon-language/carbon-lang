@@ -71,7 +71,14 @@ namespace SIOutMods {
 #define   S_00B028_VGPRS(x)                                           (((x) & 0x3F) << 0)
 #define   S_00B028_SGPRS(x)                                           (((x) & 0x0F) << 6)
 #define R_00B84C_COMPUTE_PGM_RSRC2                                      0x00B84C
-#define   S_00B02C_SCRATCH_EN(x)                                      (((x) & 0x1) << 0)
+#define   S_00B84C_SCRATCH_EN(x)                                      (((x) & 0x1) << 0)
+#define   S_00B84C_USER_SGPR(x)                                       (((x) & 0x1F) << 1)
+#define   S_00B84C_TGID_X_EN(x)                                       (((x) & 0x1) << 7)
+#define   S_00B84C_TGID_Y_EN(x)                                       (((x) & 0x1) << 8)
+#define   S_00B84C_TGID_Z_EN(x)                                       (((x) & 0x1) << 9)
+#define   S_00B84C_TG_SIZE_EN(x)                                      (((x) & 0x1) << 10)
+#define   S_00B84C_TIDIG_COMP_CNT(x)                                  (((x) & 0x03) << 11)
+
 #define   S_00B84C_LDS_SIZE(x)                                        (((x) & 0x1FF) << 15)
 #define R_0286CC_SPI_PS_INPUT_ENA                                       0x0286CC
 
