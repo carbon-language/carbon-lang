@@ -489,7 +489,10 @@ SDValue SITargetLowering::LowerFormalArguments(
   // The pointer to the list of arguments is stored in SGPR0, SGPR1
 	// The pointer to the scratch buffer is stored in SGPR2, SGPR3
   if (Info->getShaderType() == ShaderType::COMPUTE) {
-    Info->NumUserSGPRs = 4;
+    if (Subtarget->isAmdHsaOS())
+      Info->NumUserSGPRs = 2;  // FIXME: Need to support scratch buffers.
+    else
+      Info->NumUserSGPRs = 4;
 
     unsigned InputPtrReg =
         TRI->getPreloadedValue(MF, SIRegisterInfo::INPUT_PTR);
