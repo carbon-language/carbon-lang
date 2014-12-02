@@ -288,6 +288,12 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(TrapFuncName) &&
     ARE_EQUAL(FloatABIType) &&
     ARE_EQUAL(AllowFPOpFusion) &&
+    ARE_EQUAL(JTType) &&
+    ARE_EQUAL(FCFI) &&
+    ARE_EQUAL(ThreadModel) &&
+    ARE_EQUAL(CFIType) &&
+    ARE_EQUAL(CFIEnforcing) &&
+    ARE_EQUAL(CFIFuncName) &&
     ARE_EQUAL(MCOptions);
 #undef ARE_EQUAL
 }
