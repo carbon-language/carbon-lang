@@ -161,6 +161,10 @@ elseif (MSVC_VERSION LESS 1700)
           "required to build lld.")
 endif()
 
+if (MSVC)
+  add_definitions(-wd4530) # Suppress 'warning C4530: C++ exception handler used, but unwind semantics are not enabled.'
+endif()
+
 macro(add_lld_library name)
   llvm_process_sources(srcs ${ARGN})
   if (MSVC_IDE OR XCODE)
