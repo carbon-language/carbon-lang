@@ -100,6 +100,58 @@ void Preprocessor::DiscardUntilEndOfDirective() {
   } while (Tmp.isNot(tok::eod));
 }
 
+/// \brief Enumerates possible cases of #define/#undef a reserved identifier.
+enum MacroDiag {
+  MD_NoWarn,        //> Not a reserved identifier
+  MD_KeywordDef,    //> Macro hides keyword, enabled by default
+  MD_KeywordUndef,  //> #undef keyword, enabled by default
+  MD_WarnStrict     //> Other reserved id, disabled by default
+};
+
+/// \brief Checks if the specified identifier is reserved in the specified
+/// language.
+/// This function does not check if the identifier is a keyword.
+static bool isReservedId(StringRef Text, const LangOptions &Lang) {
+  // C++ [macro.names], C11 7.1.3:
+  // All identifiers that begin with an underscore and either an uppercase
+  // letter or another underscore are always reserved for any use.
+  if (Text.size() >= 2 && Text[0] == '_' &&
+      (isUppercase(Text[1]) || Text[1] == '_'))
+    return true;
+  // C++ [global.names]
+  // Each name that contains a double underscore ... is reserved to the
+  // implementation for any use.
+  if (Lang.CPlusPlus) {
+    if (Text.find("__") != StringRef::npos)
+      return true;
+  }
+  return false;
+}
+
+static MacroDiag shouldWarnOnMacroDef(Preprocessor &PP, IdentifierInfo *II) {
+  const LangOptions &Lang = PP.getLangOpts();
+  StringRef Text = II->getName();
+  if (isReservedId(Text, Lang))
+    return MD_WarnStrict;
+  if (II->isKeyword(Lang))
+    return MD_KeywordDef;
+  if (Lang.CPlusPlus && (Text.equals("override") || Text.equals("final")))
+    return MD_KeywordDef;
+  return MD_NoWarn;
+}
+
+static MacroDiag shouldWarnOnMacroUndef(Preprocessor &PP, IdentifierInfo *II) {
+  const LangOptions &Lang = PP.getLangOpts();
+  if (II->isKeyword(Lang))
+    return MD_KeywordUndef;
+  StringRef Text = II->getName();
+  if (Lang.CPlusPlus && (Text.equals("override") || Text.equals("final")))
+    return MD_KeywordUndef;
+  if (isReservedId(Text, Lang))
+    return MD_WarnStrict;
+  return MD_NoWarn;
+}
+
 bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
   // Missing macro name?
   if (MacroNameTok.is(tok::eod))
@@ -138,6 +190,23 @@ bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
     // Warn if undefining "__LINE__" and other builtins, per C99 6.10.8/4
     // and C++ [cpp.predefined]p4], but allow it as an extension.
     Diag(MacroNameTok, diag::ext_pp_undef_builtin_macro);
+  }
+
+  // Warn if defining/undefining reserved identifier including keywords.
+  SourceLocation MacroNameLoc = MacroNameTok.getLocation();
+  if (!SourceMgr.isInSystemHeader(MacroNameLoc) &&
+      (strcmp(SourceMgr.getBufferName(MacroNameLoc), "<built-in>") != 0)) {
+    MacroDiag D = MD_NoWarn;
+    if (isDefineUndef == MU_Define)
+      D = shouldWarnOnMacroDef(*this, II);
+    else if (isDefineUndef == MU_Undef)
+      D = shouldWarnOnMacroUndef(*this, II);
+    if (D == MD_KeywordDef)
+      Diag(MacroNameTok, diag::warn_pp_macro_hides_keyword);
+    if (D == MD_KeywordUndef)
+      Diag(MacroNameTok, diag::warn_pp_macro_is_reserved_id);
+    else if (D == MD_WarnStrict)
+      Diag(MacroNameTok, diag::warn_pp_defundef_reserved_ident);
   }
 
   // Okay, we got a good identifier.

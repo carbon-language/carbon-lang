@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 %s -E -verify -fms-extensions
 // expected-no-diagnostics
 
+#pragma clang diagnostic ignored "-Wkeyword-macro"
+
 bool f() {
   // Check that operators still work before redefining them.
 #if compl 0 bitand 1
