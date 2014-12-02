@@ -440,11 +440,11 @@ public:
 
   /// \brief Adds this header to the given module.
   /// \param Role The role of the header wrt the module.
-  void addHeader(Module *Mod, const FileEntry *Header,
+  void addHeader(Module *Mod, Module::Header Header,
                  ModuleHeaderRole Role);
 
   /// \brief Marks this header as being excluded from the given module.
-  void excludeHeader(Module *Mod, const FileEntry *Header);
+  void excludeHeader(Module *Mod, Module::Header Header);
 
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.

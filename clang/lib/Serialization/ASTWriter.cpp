@@ -2511,24 +2511,31 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
 
     // Emit the headers.
     struct {
-      unsigned Kind;
+      unsigned RecordKind;
       unsigned Abbrev;
-      ArrayRef<const FileEntry*> Headers;
+      Module::HeaderKind HeaderKind;
     } HeaderLists[] = {
-      {SUBMODULE_HEADER, HeaderAbbrev, Mod->NormalHeaders},
-      {SUBMODULE_TEXTUAL_HEADER, TextualHeaderAbbrev, Mod->TextualHeaders},
-      {SUBMODULE_PRIVATE_HEADER, PrivateHeaderAbbrev, Mod->PrivateHeaders},
+      {SUBMODULE_HEADER, HeaderAbbrev, Module::HK_Normal},
+      {SUBMODULE_TEXTUAL_HEADER, TextualHeaderAbbrev, Module::HK_Textual},
+      {SUBMODULE_PRIVATE_HEADER, PrivateHeaderAbbrev, Module::HK_Private},
       {SUBMODULE_PRIVATE_TEXTUAL_HEADER, PrivateTextualHeaderAbbrev,
-       Mod->PrivateTextualHeaders},
-      {SUBMODULE_EXCLUDED_HEADER, ExcludedHeaderAbbrev, Mod->ExcludedHeaders},
-      {SUBMODULE_TOPHEADER, TopHeaderAbbrev,
-       Mod->getTopHeaders(PP->getFileManager())}
+        Module::HK_PrivateTextual},
+      {SUBMODULE_EXCLUDED_HEADER, ExcludedHeaderAbbrev, Module::HK_Excluded}
     };
     for (auto &HL : HeaderLists) {
       Record.clear();
-      Record.push_back(HL.Kind);
-      for (auto *H : HL.Headers)
-        Stream.EmitRecordWithBlob(HL.Abbrev, Record, H->getName());
+      Record.push_back(HL.RecordKind);
+      for (auto &H : Mod->Headers[HL.HeaderKind])
+        Stream.EmitRecordWithBlob(HL.Abbrev, Record, H.NameAsWritten);
+    }
+
+    // Emit the top headers.
+    {
+      auto TopHeaders = Mod->getTopHeaders(PP->getFileManager());
+      Record.clear();
+      Record.push_back(SUBMODULE_TOPHEADER);
+      for (auto *H : TopHeaders)
+        Stream.EmitRecordWithBlob(TopHeaderAbbrev, Record, H->getName());
     }
 
     // Emit the imports. 

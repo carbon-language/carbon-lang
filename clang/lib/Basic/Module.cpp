@@ -26,7 +26,7 @@ using namespace clang;
 
 Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
                bool IsFramework, bool IsExplicit)
-    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent),
+    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), Directory(),
       Umbrella(), ASTFile(nullptr), IsMissingRequirement(false),
       IsAvailable(true), IsFromModuleFile(false), IsFramework(IsFramework),
       IsExplicit(IsExplicit), IsSystem(false), IsExternC(false),
@@ -70,9 +70,9 @@ static bool hasFeature(StringRef Feature, const LangOptions &LangOpts,
            .Default(Target.hasFeature(Feature));
 }
 
-bool
-Module::isAvailable(const LangOptions &LangOpts, const TargetInfo &Target,
-                    Requirement &Req, HeaderDirective &MissingHeader) const {
+bool Module::isAvailable(const LangOptions &LangOpts, const TargetInfo &Target,
+                         Requirement &Req,
+                         UnresolvedHeaderDirective &MissingHeader) const {
   if (IsAvailable)
     return true;
 
@@ -338,19 +338,20 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
     OS << "\n";
   }
 
-  struct HeaderKind {
+  struct {
     StringRef Prefix;
-    const SmallVectorImpl<const FileEntry *> &Headers;
-  } Kinds[] = {{"", NormalHeaders},
-               {"exclude ", ExcludedHeaders},
-               {"textual ", TextualHeaders},
-               {"private ", PrivateHeaders}};
+    HeaderKind Kind;
+  } Kinds[] = {{"", HK_Normal},
+               {"textual ", HK_Textual},
+               {"private ", HK_Private},
+               {"private textual ", HK_PrivateTextual},
+               {"exclude ", HK_Excluded}};
 
   for (auto &K : Kinds) {
-    for (auto *H : K.Headers) {
+    for (auto &H : Headers[K.Kind]) {
       OS.indent(Indent + 2);
       OS << K.Prefix << "header \"";
-      OS.write_escaped(H->getName());
+      OS.write_escaped(H.NameAsWritten);
       OS << "\"\n";
     }
   }

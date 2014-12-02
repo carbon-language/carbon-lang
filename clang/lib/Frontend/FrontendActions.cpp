@@ -142,17 +142,9 @@ static std::error_code addHeaderInclude(StringRef HeaderName,
     Includes += "#import \"";
   else
     Includes += "#include \"";
-  // Use an absolute path for the include; there's no reason to think that
-  // a relative path will work (. might not be on our include path) or that
-  // it will find the same file.
-  if (llvm::sys::path::is_absolute(HeaderName)) {
-    Includes += HeaderName;
-  } else {
-    SmallString<256> Header = HeaderName;
-    if (std::error_code Err = llvm::sys::fs::make_absolute(Header))
-      return Err;
-    Includes += Header;
-  }
+
+  Includes += HeaderName;
+
   Includes += "\"\n";
   if (IsExternC && LangOpts.CPlusPlus)
     Includes += "}\n";
@@ -163,7 +155,16 @@ static std::error_code addHeaderInclude(const FileEntry *Header,
                                         SmallVectorImpl<char> &Includes,
                                         const LangOptions &LangOpts,
                                         bool IsExternC) {
-  return addHeaderInclude(Header->getName(), Includes, LangOpts, IsExternC);
+  // Use an absolute path if we don't have a filename as written in the module
+  // map file; this ensures that we will identify the right file independent of
+  // header search paths.
+  if (llvm::sys::path::is_absolute(Header->getName()))
+    return addHeaderInclude(Header->getName(), Includes, LangOpts, IsExternC);
+
+  SmallString<256> AbsName(Header->getName());
+  if (std::error_code Err = llvm::sys::fs::make_absolute(AbsName))
+    return Err;
+  return addHeaderInclude(AbsName, Includes, LangOpts, IsExternC);
 }
 
 /// \brief Collect the set of header includes needed to construct the given 
@@ -182,16 +183,20 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
     return std::error_code();
 
   // Add includes for each of these headers.
-  for (unsigned I = 0, N = Module->NormalHeaders.size(); I != N; ++I) {
-    const FileEntry *Header = Module->NormalHeaders[I];
-    Module->addTopHeader(Header);
-    if (std::error_code Err =
-            addHeaderInclude(Header, Includes, LangOpts, Module->IsExternC))
+  for (Module::Header &H : Module->Headers[Module::HK_Normal]) {
+    Module->addTopHeader(H.Entry);
+    // Use the path as specified in the module map file. We'll look for this
+    // file relative to the module build directory (the directory containing
+    // the module map file) so this will find the same file that we found
+    // while parsing the module map.
+    if (std::error_code Err = addHeaderInclude(H.NameAsWritten, Includes,
+                                               LangOpts, Module->IsExternC))
       return Err;
   }
   // Note that Module->PrivateHeaders will not be a TopHeader.
 
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader()) {
+    // FIXME: Track the name as written here.
     Module->addTopHeader(UmbrellaHeader);
     if (Module->Parent) {
       // Include the umbrella header for submodules.
@@ -213,25 +218,30 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
           .Cases(".h", ".H", ".hh", ".hpp", true)
           .Default(false))
         continue;
-      
+
+      const FileEntry *Header = FileMgr.getFile(Dir->path());
+      // FIXME: This shouldn't happen unless there is a file system race. Is
+      // that worth diagnosing?
+      if (!Header)
+        continue;
+
       // If this header is marked 'unavailable' in this module, don't include 
       // it.
-      if (const FileEntry *Header = FileMgr.getFile(Dir->path())) {
-        if (ModMap.isHeaderUnavailableInModule(Header, Module))
-          continue;
-        Module->addTopHeader(Header);
-      }
-      
+      if (ModMap.isHeaderUnavailableInModule(Header, Module))
+        continue;
+
       // Include this header as part of the umbrella directory.
-      if (std::error_code Err = addHeaderInclude(Dir->path(), Includes,
-                                                 LangOpts, Module->IsExternC))
+      // FIXME: Track the name as written through to here.
+      Module->addTopHeader(Header);
+      if (std::error_code Err =
+              addHeaderInclude(Header, Includes, LangOpts, Module->IsExternC))
         return Err;
     }
 
     if (EC)
       return EC;
   }
-  
+
   // Recurse into submodules.
   for (clang::Module::submodule_iterator Sub = Module->submodule_begin(),
                                       SubEnd = Module->submodule_end();
@@ -288,7 +298,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
 
   // Check whether we can build this module at all.
   clang::Module::Requirement Requirement;
-  clang::Module::HeaderDirective MissingHeader;
+  clang::Module::UnresolvedHeaderDirective MissingHeader;
   if (!Module->isAvailable(CI.getLangOpts(), CI.getTarget(), Requirement,
                            MissingHeader)) {
     if (MissingHeader.FileNameLoc.isValid()) {
@@ -317,6 +327,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   SmallString<256> HeaderContents;
   std::error_code Err = std::error_code();
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader())
+    // FIXME: Track the file name as written.
     Err = addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
                            Module->IsExternC);
   if (!Err)
@@ -330,6 +341,10 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
       << Module->getFullModuleName() << Err.message();
     return false;
   }
+
+  // Inform the preprocessor that includes from within the input buffer should
+  // be resolved relative to the build directory of the module map file.
+  CI.getPreprocessor().setMainFileDir(Module->Directory);
 
   std::unique_ptr<llvm::MemoryBuffer> InputBuffer =
       llvm::MemoryBuffer::getMemBufferCopy(HeaderContents,

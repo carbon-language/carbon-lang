@@ -624,11 +624,20 @@ const FileEntry *HeaderSearch::LookupFile(
       // FIXME: We don't cache the result of getFileInfo across the call to
       // getFileAndSuggestModule, because it's a reference to an element of
       // a container that could be reallocated across this call.
+      //
+      // FIXME: If we have no includer, that means we're processing a #include
+      // from a module build. We should treat this as a system header if we're
+      // building a [system] module.
       bool IncluderIsSystemHeader =
-          getFileInfo(Includer).DirInfo != SrcMgr::C_User;
+          Includer && getFileInfo(Includer).DirInfo != SrcMgr::C_User;
       if (const FileEntry *FE = getFileAndSuggestModule(
               *this, TmpDir.str(), IncluderAndDir.second,
               IncluderIsSystemHeader, SuggestedModule)) {
+        if (!Includer) {
+          assert(First && "only first includer can have no file");
+          return FE;
+        }
+
         // Leave CurDir unset.
         // This file is a system header or C++ unfriendly if the old file is.
         //
@@ -770,7 +779,7 @@ const FileEntry *HeaderSearch::LookupFile(
   // a header in a framework that is currently being built, and we couldn't
   // resolve "foo.h" any other way, change the include to <Foo/foo.h>, where
   // "Foo" is the name of the framework in which the including header was found.
-  if (!Includers.empty() && !isAngled &&
+  if (!Includers.empty() && Includers.front().first && !isAngled &&
       Filename.find('/') == StringRef::npos) {
     HeaderFileInfo &IncludingHFI = getFileInfo(Includers.front().first);
     if (IncludingHFI.IndexHeaderMapHeader) {
@@ -1079,7 +1088,9 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
       return false;
 
     // Try to load the module map file in this directory.
-    switch (loadModuleMapFile(Dir, IsSystem, /*IsFramework*/false)) {
+    switch (loadModuleMapFile(Dir, IsSystem,
+                              llvm::sys::path::extension(Dir->getName()) ==
+                                  ".framework")) {
     case LMM_NewlyLoaded:
     case LMM_AlreadyLoaded:
       // Success. All of the directories we stepped through inherit this module

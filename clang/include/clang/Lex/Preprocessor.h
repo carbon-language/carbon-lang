@@ -257,6 +257,11 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \brief True if we hit the code-completion point.
   bool CodeCompletionReached;
 
+  /// \brief The directory that the main file should be considered to occupy,
+  /// if it does not correspond to a real file (as happens when building a
+  /// module).
+  const DirectoryEntry *MainFileDir;
+
   /// \brief The number of bytes that we will initially skip when entering the
   /// main file, along with a flag that indicates whether skipping this number
   /// of bytes will place the lexer at the start of a line.
@@ -1012,6 +1017,12 @@ public:
   /// arc_cf_code_audited begin.  An invalid location ends the pragma.
   void setPragmaARCCFCodeAuditedLoc(SourceLocation Loc) {
     PragmaARCCFCodeAuditedLoc = Loc;
+  }
+
+  /// \brief Set the directory in which the main file should be considered
+  /// to have been found, if it is not a real file.
+  void setMainFileDir(const DirectoryEntry *Dir) {
+    MainFileDir = Dir;
   }
 
   /// \brief Instruct the preprocessor to skip part of the main source file.

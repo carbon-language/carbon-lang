@@ -55,7 +55,12 @@ public:
   /// \brief The parent of this module. This will be NULL for the top-level
   /// module.
   Module *Parent;
-  
+
+  /// \brief The build directory of this module. This is the directory in
+  /// which the module is notionally built, and relative to which its headers
+  /// are found.
+  const DirectoryEntry *Directory;
+
   /// \brief The umbrella header or directory.
   llvm::PointerUnion<const DirectoryEntry *, const FileEntry *> Umbrella;
   
@@ -81,26 +86,28 @@ private:
   mutable llvm::DenseSet<const Module*> VisibleModulesCache;
 
 public:
-  /// \brief The headers that are part of this module.
-  SmallVector<const FileEntry *, 2> NormalHeaders;
-
-  /// \brief The headers that are logically part of this module but
-  /// must be textually included.
-  SmallVector<const FileEntry *, 2> TextualHeaders;
-
-  /// \brief The headers that are private to this module.
-  SmallVector<const FileEntry *, 2> PrivateHeaders;
-
-  /// \brief The headers that are private to this module and are to be
-  /// included textually.
-  SmallVector<const FileEntry *, 2> PrivateTextualHeaders;
-
-  /// \brief The headers that are explicitly excluded from this module.
-  SmallVector<const FileEntry *, 2> ExcludedHeaders;
+  enum HeaderKind {
+    HK_Normal,
+    HK_Textual,
+    HK_Private,
+    HK_PrivateTextual,
+    HK_Excluded
+  };
+  static const int NumHeaderKinds = HK_Excluded + 1;
 
   /// \brief Information about a header directive as found in the module map
   /// file.
-  struct HeaderDirective {
+  struct Header {
+    std::string NameAsWritten;
+    const FileEntry *Entry;
+  };
+
+  /// \brief The headers that are part of this module.
+  SmallVector<Header, 2> Headers[5];
+
+  /// \brief Stored information about a header directive that was found in the
+  /// module map file but has not been resolved to a file.
+  struct UnresolvedHeaderDirective {
     SourceLocation FileNameLoc;
     std::string FileName;
     bool IsUmbrella;
@@ -108,7 +115,7 @@ public:
 
   /// \brief Headers that are mentioned in the module map file but could not be
   /// found on the file system.
-  SmallVector<HeaderDirective, 1> MissingHeaders;
+  SmallVector<UnresolvedHeaderDirective, 1> MissingHeaders;
 
   /// \brief An individual requirement: a feature name and a flag indicating
   /// the required state of that feature.
@@ -303,7 +310,7 @@ public:
   bool isAvailable(const LangOptions &LangOpts, 
                    const TargetInfo &Target,
                    Requirement &Req,
-                   HeaderDirective &MissingHeader) const;
+                   UnresolvedHeaderDirective &MissingHeader) const;
 
   /// \brief Determine whether this module is a submodule.
   bool isSubModule() const { return Parent != nullptr; }

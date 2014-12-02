@@ -71,7 +71,7 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
       CodeComplete(nullptr), CodeCompletionFile(nullptr),
       CodeCompletionOffset(0), LastTokenWasAt(false),
       ModuleImportExpectsIdentifier(false), CodeCompletionReached(0),
-      SkipMainFilePreamble(0, true), CurPPLexer(nullptr),
+      MainFileDir(nullptr), SkipMainFilePreamble(0, true), CurPPLexer(nullptr),
       CurDirLookup(nullptr), CurLexerKind(CLK_Lexer), CurSubmodule(nullptr),
       Callbacks(nullptr), MacroArgCache(nullptr), Record(nullptr),
       MIChainHead(nullptr), DeserialMIChainHead(nullptr) {
