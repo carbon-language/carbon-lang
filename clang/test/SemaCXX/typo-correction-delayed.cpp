@@ -102,3 +102,7 @@ void f(int *i) {
   __atomic_load(i, i, something_something);  // expected-error-re {{use of undeclared identifier 'something_something'{{$}}}}
 }
 }
+
+const int DefaultArg = 9;  // expected-note {{'DefaultArg' declared here}}
+template <int I = defaultArg> struct S {};  // expected-error {{use of undeclared identifier 'defaultArg'; did you mean 'DefaultArg'?}}
+S<1> s;

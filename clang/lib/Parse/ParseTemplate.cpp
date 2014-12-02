@@ -676,7 +676,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
     GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
     EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
 
-    DefaultArg = ParseAssignmentExpression();
+    DefaultArg = Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression());
     if (DefaultArg.isInvalid())
       SkipUntil(tok::comma, tok::greater, StopAtSemi | StopBeforeMatch);
   }
