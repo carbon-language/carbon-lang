@@ -615,7 +615,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
     unsigned Alignment = GV->getAlignment();
     const DataLayout *DL = TLI->getDataLayout();
     Type *Ty = GV->getType()->getElementType();
-    if (Alignment == 0 && Ty->isSized() && !Subtarget->isTargetDarwin())
+    if (Alignment == 0 && Ty->isSized())
       Alignment = DL->getABITypeAlignment(Ty);
 
     if (Alignment >= Size)

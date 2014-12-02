@@ -11,6 +11,7 @@
 @n = internal global i32 0, align 4
 
 define void @f1(i32 %a1, i32 %a2) {
+;CHECK-APPLE-IOS-NOT: adrp
 ;CHECK-APPLE-IOS: adrp	x8, __MergedGlobals@PAGE
 ;CHECK-APPLE-IOS-NOT: adrp
 ;CHECK-APPLE-IOS: add	x8, x8, __MergedGlobals@PAGEOFF

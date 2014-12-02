@@ -8,6 +8,7 @@
 
 define void @f1(i32 %a1, i32 %a2) {
 ;CHECK-APPLE-IOS-LABEL: _f1:
+;CHECK-APPLE-IOS-NOT: adrp
 ;CHECK-APPLE-IOS: adrp	x8, __MergedGlobals_x@PAGE
 ;CHECK-APPLE-IOS: add	x8, x8, __MergedGlobals_x@PAGEOFF
 ;CHECK-APPLE-IOS-NOT: adrp
