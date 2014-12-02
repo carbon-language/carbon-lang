@@ -40,6 +40,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <functional>
+#include <list>
 #include <map>
 #include <system_error>
 
@@ -177,7 +178,7 @@ private:
 
 private:
     StringRef                 _cummulativeString;
-    SmallVector<TrieEdge, 8>  _children;
+    std::list<TrieEdge>       _children;
     uint64_t                  _address;
     uint64_t                  _flags;
     uint64_t                  _other;
@@ -1079,8 +1080,8 @@ void MachOFileLayout::TrieNode::addSymbol(const Export& entry,
         TrieEdge& abEdge = edge;
         abEdge._subString = abEdgeStr;
         abEdge._child = bNode;
-        TrieEdge bcEdge(bcEdgeStr, cNode);
-        bNode->_children.push_back(bcEdge);
+        TrieEdge *bcEdge = new (allocator) TrieEdge(bcEdgeStr, cNode);
+        bNode->_children.push_back(std::move(*bcEdge));
         bNode->addSymbol(entry, allocator, allNodes);
         return;
       }
@@ -1094,8 +1095,8 @@ void MachOFileLayout::TrieNode::addSymbol(const Export& entry,
   }
   // No commonality with any existing child, make a new edge.
   TrieNode* newNode = new (allocator) TrieNode(entry.name.copy(allocator));
-  TrieEdge newEdge(partialStr, newNode);
-  _children.push_back(newEdge);
+  TrieEdge *newEdge = new (allocator) TrieEdge(partialStr, newNode);
+  _children.push_back(std::move(*newEdge));
   DEBUG_WITH_TYPE("trie-builder", llvm::dbgs()
                    << "new TrieNode('" << entry.name << "') with edge '"
                    << partialStr << "' from node='"
