@@ -816,8 +816,9 @@ static void LowerSTATEPOINT(MCStreamer &OS, StackMaps &SM,
   assert(Is64Bit && "Statepoint currently only supports X86-64");
 
   // We need to record the frame size for stack walking
-  const MachineFunction* MF = MI.getParent()->getParent();
+  const MachineFunction *MF = MI.getParent()->getParent();
   assert(MF && "can't find machine function?");
+  (void)MF;
 
   //
   // Emit call instruction
