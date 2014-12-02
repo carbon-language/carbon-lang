@@ -902,8 +902,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   // FIXME: It would be far better to avoid inserting those -static arguments,
   // but we can't check the deployment target in the translation code until
   // it is set here.
-  if (isTargetIOSBased() && !isIPhoneOSVersionLT(6, 0) &&
-      getTriple().getArch() != llvm::Triple::aarch64) {
+  if (isTargetIOSBased() && !isIPhoneOSVersionLT(6, 0)) {
     for (ArgList::iterator it = DAL->begin(), ie = DAL->end(); it != ie; ) {
       Arg *A = *it;
       ++it;
