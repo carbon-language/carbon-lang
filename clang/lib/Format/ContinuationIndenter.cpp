@@ -168,7 +168,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
 
   if (State.Column < getNewLineColumn(State))
     return false;
-  if (!Style.BreakBeforeBinaryOperators) {
+  if (Style.BreakBeforeBinaryOperators == FormatStyle::BOS_None) {
     // If we need to break somewhere inside the LHS of a binary expression, we
     // should also break after the operator. Otherwise, the formatting would
     // hide the operator precedence, e.g. in:
@@ -740,11 +740,12 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     if (Previous && Previous->getPrecedence() > prec::Assignment &&
         Previous->isOneOf(TT_BinaryOperator, TT_ConditionalExpr) &&
         Previous->getPrecedence() != prec::Relational) {
-      bool BreakBeforeOperator = Previous->is(tok::lessless) ||
-                                 (Previous->is(TT_BinaryOperator) &&
-                                  Style.BreakBeforeBinaryOperators) ||
-                                 (Previous->is(TT_ConditionalExpr) &&
-                                  Style.BreakBeforeTernaryOperators);
+      bool BreakBeforeOperator =
+          Previous->is(tok::lessless) ||
+          (Previous->is(TT_BinaryOperator) &&
+           Style.BreakBeforeBinaryOperators != FormatStyle::BOS_None) ||
+          (Previous->is(TT_ConditionalExpr) &&
+           Style.BreakBeforeTernaryOperators);
       if ((!Newline && !BreakBeforeOperator) ||
           (!State.Stack.back().LastOperatorWrapped && BreakBeforeOperator))
         NewParenState.NoLineBreak = true;
@@ -766,7 +767,7 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     // other expression, unless the indentation needs to be skipped.
     if (*I == prec::Conditional ||
         (!SkipFirstExtraIndent && *I > prec::Assignment &&
-         !Current.isTrailingComment() && !Style.BreakBeforeBinaryOperators))
+         !Current.isTrailingComment()))
       NewParenState.Indent += Style.ContinuationIndentWidth;
     if ((Previous && !Previous->opensScope()) || *I > prec::Comma)
       NewParenState.BreakBeforeParameter = false;
