@@ -5,12 +5,12 @@
 // REQUIRES: shell
 //
 // The PATH variable is heavily used when trying to find a linker.
-// RUN: env -u PATH -- %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN: env -i LC_ALL=C %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=i386-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-32 %s
 //
-// RUN: env PATH="" %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN: env -i LC_ALL=C PATH="" %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=i386-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-32 %s
