@@ -416,7 +416,7 @@ __int64 _sarx_i64(__int64, unsigned int);
 int __cdecl _setjmpex(jmp_buf);
 #endif
 unsigned __int64 _shlx_u64(unsigned __int64, unsigned int);
-unsigned __int64 shrx_u64(unsigned __int64, unsigned int);
+unsigned __int64 _shrx_u64(unsigned __int64, unsigned int);
 /*
  * Multiply two 64-bit integers and obtain a 64-bit result.
  * The low-half is returned directly and the high half is in an out parameter.
