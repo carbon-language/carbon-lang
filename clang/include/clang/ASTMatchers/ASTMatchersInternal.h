@@ -218,10 +218,7 @@ public:
   bool dynMatches(const ast_type_traits::DynTypedNode &DynNode,
                   ASTMatchFinder *Finder,
                   BoundNodesTreeBuilder *Builder) const override {
-    if (const T *Node = DynNode.get<T>()) {
-      return matches(*Node, Finder, Builder);
-    }
-    return false;
+    return matches(DynNode.getUnchecked<T>(), Finder, Builder);
   }
 };
 
