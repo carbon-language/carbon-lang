@@ -6196,7 +6196,7 @@ ExprResult Sema::CorrectDelayedTyposInExpr(
   // If the current evaluation context indicates there are uncorrected typos
   // and the current expression isn't guaranteed to not have typos, try to
   // resolve any TypoExpr nodes that might be in the expression.
-  if (!ExprEvalContexts.empty() && ExprEvalContexts.back().NumTypos &&
+  if (E && !ExprEvalContexts.empty() && ExprEvalContexts.back().NumTypos &&
       (E->isTypeDependent() || E->isValueDependent() ||
        E->isInstantiationDependent())) {
     auto TyposResolved = DelayedTypos.size();
