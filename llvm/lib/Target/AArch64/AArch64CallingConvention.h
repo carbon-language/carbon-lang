@@ -88,11 +88,11 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   ArrayRef<uint16_t> RegList;
   if (LocVT.SimpleTy == MVT::i64)
     RegList = XRegList;
-  else if (LocVT.SimpleTy == MVT::f32)
+  else if (LocVT.SimpleTy == MVT::f32 || LocVT.is32BitVector())
     RegList = SRegList;
-  else if (LocVT.SimpleTy == MVT::f64)
+  else if (LocVT.SimpleTy == MVT::f64 || LocVT.is64BitVector())
     RegList = DRegList;
-  else if (LocVT.SimpleTy == MVT::v2f64)
+  else if (LocVT.SimpleTy == MVT::f128 || LocVT.is128BitVector())
     RegList = QRegList;
   else {
     // Not an array we want to split up after all.
