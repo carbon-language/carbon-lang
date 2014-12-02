@@ -228,10 +228,6 @@ static SDNode *lowerCallFromStatepoint(const CallInst &CI,
              dyn_cast<IntrinsicInst>(&CI)->getIntrinsicID() &&
          "function called must be the statepoint function");
 
-  int NumCallArgs = dyn_cast<ConstantInt>(CI.getArgOperand(1))->getZExtValue();
-  assert(NumCallArgs >= 0 && "non-negative");
-  (void)NumCallArgs;
-
   ImmutableStatepoint StatepointOperands(&CI);
 
   // Lower the actual call itself - This is a bit of a hack, but we want to
@@ -240,9 +236,6 @@ static SDNode *lowerCallFromStatepoint(const CallInst &CI,
   // differently.  Hopefully, this is slightly more robust w.r.t. calling
   // convention, return values, and other function attributes.
   Value *ActualCallee = const_cast<Value *>(StatepointOperands.actualCallee());
-#ifndef NDEBUG
-  StatepointOperands.verify();
-#endif
 
   std::vector<Value *> Args;
   CallInst::const_op_iterator arg_begin = StatepointOperands.call_args_begin();
@@ -500,6 +493,13 @@ void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
 #endif
 
   ImmutableStatepoint ISP(&CI);
+#ifndef NDEBUG
+  // If this is a malformed statepoint, report it early to simplify debugging.
+  // This should catch any IR level mistake that's made when constructing or
+  // transforming statepoints.
+  ISP.verify();
+#endif
+
 
   // Lower statepoint vmstate and gcstate arguments
   SmallVector<SDValue, 10> LoweredArgs;

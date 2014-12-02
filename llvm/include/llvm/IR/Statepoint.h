@@ -129,7 +129,13 @@ class StatepointBase {
 
 
 #ifndef NDEBUG
+  /// Asserts if this statepoint is malformed.  Common cases for failure
+  /// include incorrect length prefixes for variable length sections or
+  /// illegal values for parameters.
   void verify() {
+    assert(numCallArgs() >= 0 &&
+           "number of arguments to actually callee can't be negative");
+
     // The internal asserts in the iterator accessors do the rest.
     (void)call_args_begin();
     (void)call_args_end();
