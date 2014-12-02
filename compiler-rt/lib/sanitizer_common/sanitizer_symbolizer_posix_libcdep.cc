@@ -514,34 +514,32 @@ class POSIXSymbolizer : public Symbolizer {
         internal_symbolizer_(internal_symbolizer),
         libbacktrace_symbolizer_(libbacktrace_symbolizer) {}
 
-  uptr SymbolizePC(uptr addr, AddressInfo *frames, uptr max_frames) override {
+  SymbolizedStack *SymbolizePC(uptr addr) override {
     BlockingMutexLock l(&mu_);
-    if (max_frames == 0)
-      return 0;
     const char *module_name;
     uptr module_offset;
     if (!FindModuleNameAndOffsetForAddress(addr, &module_name, &module_offset))
-      return 0;
+      return SymbolizedStack::New(addr);
     // First, try to use libbacktrace symbolizer (if it's available).
     if (libbacktrace_symbolizer_ != 0) {
       mu_.CheckLocked();
-      uptr res = libbacktrace_symbolizer_->SymbolizeCode(
-          addr, frames, max_frames, module_name, module_offset);
-      if (res > 0)
+      if (SymbolizedStack *res = libbacktrace_symbolizer_->SymbolizeCode(
+              addr, module_name, module_offset))
         return res;
     }
+    // Always fill data about module name and offset.
+    SymbolizedStack *res = SymbolizedStack::New(addr);
+    res->info.FillAddressAndModuleInfo(addr, module_name, module_offset);
+
     const char *str = SendCommand(false, module_name, module_offset);
     if (str == 0) {
-      // Symbolizer was not initialized or failed. Fill only data
-      // about module name and offset.
-      AddressInfo *info = &frames[0];
-      info->Clear();
-      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
-      return 1;
+      // Symbolizer was not initialized or failed.
+      return res;
     }
-    uptr frame_id = 0;
-    for (frame_id = 0; frame_id < max_frames; frame_id++) {
-      AddressInfo *info = &frames[frame_id];
+
+    bool top_frame = true;
+    SymbolizedStack *last = res;
+    while (true) {
       char *function_name = 0;
       str = ExtractToken(str, "\n", &function_name);
       CHECK(function_name);
@@ -549,8 +547,18 @@ class POSIXSymbolizer : public Symbolizer {
         // There are no more frames.
         break;
       }
-      info->Clear();
-      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
+      SymbolizedStack *cur;
+      if (top_frame) {
+        cur = res;
+        top_frame = false;
+      } else {
+        cur = SymbolizedStack::New(addr);
+        cur->info.FillAddressAndModuleInfo(addr, module_name, module_offset);
+        last->next = cur;
+        last = cur;
+      }
+
+      AddressInfo *info = &cur->info;
       info->function = function_name;
       // Parse <file>:<line>:<column> buffer.
       char *file_line_info = 0;
@@ -572,14 +580,7 @@ class POSIXSymbolizer : public Symbolizer {
         info->file = 0;
       }
     }
-    if (frame_id == 0) {
-      // Make sure we return at least one frame.
-      AddressInfo *info = &frames[0];
-      info->Clear();
-      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
-      frame_id = 1;
-    }
-    return frame_id;
+    return res;
   }
 
   bool SymbolizeData(uptr addr, DataInfo *info) override {

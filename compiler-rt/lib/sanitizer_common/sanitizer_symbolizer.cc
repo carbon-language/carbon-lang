@@ -11,12 +11,60 @@
 // run-time libraries.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_allocator_internal.h"
 #include "sanitizer_platform.h"
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_libc.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
+
+AddressInfo::AddressInfo() {
+  internal_memset(this, 0, sizeof(AddressInfo));
+  function_offset = kUnknown;
+}
+
+void AddressInfo::Clear() {
+  InternalFree(module);
+  InternalFree(function);
+  InternalFree(file);
+  internal_memset(this, 0, sizeof(AddressInfo));
+  function_offset = kUnknown;
+}
+
+void AddressInfo::FillAddressAndModuleInfo(uptr addr, const char *mod_name,
+                                           uptr mod_offset) {
+  address = addr;
+  module = internal_strdup(mod_name);
+  module_offset = mod_offset;
+}
+
+SymbolizedStack::SymbolizedStack() : next(nullptr), info() {}
+
+SymbolizedStack *SymbolizedStack::New(uptr addr) {
+  void *mem = InternalAlloc(sizeof(SymbolizedStack));
+  SymbolizedStack *res = new(mem) SymbolizedStack();
+  res->info.address = addr;
+  return res;
+}
+
+void SymbolizedStack::ClearAll() {
+  info.Clear();
+  if (next)
+    next->ClearAll();
+  InternalFree(this);
+}
+
+DataInfo::DataInfo() {
+  internal_memset(this, 0, sizeof(DataInfo));
+}
+
+void DataInfo::Clear() {
+  InternalFree(module);
+  InternalFree(name);
+  internal_memset(this, 0, sizeof(DataInfo));
+}
 
 Symbolizer *Symbolizer::symbolizer_;
 StaticSpinMutex Symbolizer::init_mu_;

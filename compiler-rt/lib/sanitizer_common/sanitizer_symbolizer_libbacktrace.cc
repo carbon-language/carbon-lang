@@ -83,44 +83,52 @@ char *CplusV3Demangle(const char *name) {
 }
 # endif  // SANITIZER_CP_DEMANGLE
 
-struct SymbolizeCodeData {
-  AddressInfo *frames;
-  uptr n_frames;
-  uptr max_frames;
+struct SymbolizeCodeCallbackArg {
+  SymbolizedStack *first;
+  SymbolizedStack *last;
   const char *module_name;
   uptr module_offset;
+
+  void append(SymbolizedStack *f) {
+    if (last != nullptr) {
+      last->next = f;
+      last = f;
+    } else {
+      first = f;
+      last = f;
+    }
+  }
 };
 
 extern "C" {
 static int SymbolizeCodePCInfoCallback(void *vdata, uintptr_t addr,
                                        const char *filename, int lineno,
                                        const char *function) {
-  SymbolizeCodeData *cdata = (SymbolizeCodeData *)vdata;
+  SymbolizeCodeCallbackArg *cdata = (SymbolizeCodeCallbackArg *)vdata;
   if (function) {
-    AddressInfo *info = &cdata->frames[cdata->n_frames++];
-    info->Clear();
+    SymbolizedStack *cur = SymbolizedStack::New(addr);
+    cdata->append(cur);
+    AddressInfo *info = &cur->info;
     info->FillAddressAndModuleInfo(addr, cdata->module_name,
                                    cdata->module_offset);
     info->function = LibbacktraceSymbolizer::Demangle(function, true);
     if (filename)
       info->file = internal_strdup(filename);
     info->line = lineno;
-    if (cdata->n_frames == cdata->max_frames)
-      return 1;
   }
   return 0;
 }
 
 static void SymbolizeCodeCallback(void *vdata, uintptr_t addr,
                                   const char *symname, uintptr_t, uintptr_t) {
-  SymbolizeCodeData *cdata = (SymbolizeCodeData *)vdata;
+  SymbolizeCodeCallbackArg *cdata = (SymbolizeCodeCallbackArg *)vdata;
   if (symname) {
-    AddressInfo *info = &cdata->frames[0];
-    info->Clear();
+    SymbolizedStack *cur = SymbolizedStack::New(addr);
+    cdata->append(cur);
+    AddressInfo *info = &cur->info;
     info->FillAddressAndModuleInfo(addr, cdata->module_name,
                                    cdata->module_offset);
     info->function = LibbacktraceSymbolizer::Demangle(symname, true);
-    cdata->n_frames = 1;
   }
 }
 
@@ -148,23 +156,21 @@ LibbacktraceSymbolizer *LibbacktraceSymbolizer::get(LowLevelAllocator *alloc) {
   return new(*alloc) LibbacktraceSymbolizer(state);
 }
 
-uptr LibbacktraceSymbolizer::SymbolizeCode(uptr addr, AddressInfo *frames,
-                                           uptr max_frames,
-                                           const char *module_name,
-                                           uptr module_offset) {
-  SymbolizeCodeData data;
-  data.frames = frames;
-  data.n_frames = 0;
-  data.max_frames = max_frames;
+SymbolizedStack *LibbacktraceSymbolizer::SymbolizeCode(uptr addr,
+                                                       const char *module_name,
+                                                       uptr module_offset) {
+  SymbolizeCodeCallbackArg data;
+  data.first = nullptr;
+  data.last = nullptr;
   data.module_name = module_name;
   data.module_offset = module_offset;
   backtrace_pcinfo((backtrace_state *)state_, addr, SymbolizeCodePCInfoCallback,
                    ErrorCallback, &data);
-  if (data.n_frames)
-    return data.n_frames;
+  if (data.first)
+    return data.first;
   backtrace_syminfo((backtrace_state *)state_, addr, SymbolizeCodeCallback,
                     ErrorCallback, &data);
-  return data.n_frames;
+  return data.first;
 }
 
 bool LibbacktraceSymbolizer::SymbolizeData(DataInfo *info) {
@@ -179,12 +185,11 @@ LibbacktraceSymbolizer *LibbacktraceSymbolizer::get(LowLevelAllocator *alloc) {
   return 0;
 }
 
-uptr LibbacktraceSymbolizer::SymbolizeCode(uptr addr, AddressInfo *frames,
-                                           uptr max_frames,
-                                           const char *module_name,
-                                           uptr module_offset) {
+SymbolizedStack *LibbacktraceSymbolizer::SymbolizeCode(uptr addr,
+                                                       const char *module_name,
+                                                       uptr module_offset) {
   (void)state_;
-  return 0;
+  return nullptr;
 }
 
 bool LibbacktraceSymbolizer::SymbolizeData(DataInfo *info) {

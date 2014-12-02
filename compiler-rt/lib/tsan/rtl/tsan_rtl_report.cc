@@ -56,40 +56,43 @@ bool WEAK OnReport(const ReportDesc *rep, bool suppressed) {
 }
 #endif
 
-static void StackStripMain(ReportStack *stack) {
-  ReportStack *last_frame = 0;
-  ReportStack *last_frame2 = 0;
-  for (ReportStack *ent = stack; ent; ent = ent->next) {
+static void StackStripMain(SymbolizedStack *frames) {
+  SymbolizedStack *last_frame = nullptr;
+  SymbolizedStack *last_frame2 = nullptr;
+  for (SymbolizedStack *cur = frames; cur; cur = cur->next) {
     last_frame2 = last_frame;
-    last_frame = ent;
+    last_frame = cur;
   }
 
   if (last_frame2 == 0)
     return;
-  const char *last = last_frame->info.function;
 #ifndef TSAN_GO
+  const char *last = last_frame->info.function;
   const char *last2 = last_frame2->info.function;
   // Strip frame above 'main'
   if (last2 && 0 == internal_strcmp(last2, "main")) {
-    last_frame2->next = 0;
+    last_frame->ClearAll();
+    last_frame2->next = nullptr;
   // Strip our internal thread start routine.
   } else if (last && 0 == internal_strcmp(last, "__tsan_thread_start_func")) {
-    last_frame2->next = 0;
+    last_frame->ClearAll();
+    last_frame2->next = nullptr;
   // Strip global ctors init.
   } else if (last && 0 == internal_strcmp(last, "__do_global_ctors_aux")) {
-    last_frame2->next = 0;
+    last_frame->ClearAll();
+    last_frame2->next = nullptr;
   // If both are 0, then we probably just failed to symbolize.
   } else if (last || last2) {
     // Ensure that we recovered stack completely. Trimmed stack
     // can actually happen if we do not instrument some code,
     // so it's only a debug print. However we must try hard to not miss it
     // due to our fault.
-    DPrintf("Bottom stack frame of stack %zx is missed\n", stack->pc);
+    DPrintf("Bottom stack frame of stack %zx is missed\n", stack->info.address);
   }
 #else
   // The last frame always point into runtime (gosched0, goexit0, runtime.main).
-  last_frame2->next = 0;
-  (void)last;
+  last_frame->ClearAll();
+  last_frame2->next = nullptr;
 #endif
 }
 
@@ -105,12 +108,12 @@ ReportStack *SymbolizeStackId(u32 stack_id) {
 static ReportStack *SymbolizeStack(StackTrace trace) {
   if (trace.size == 0)
     return 0;
-  ReportStack *stack = 0;
+  SymbolizedStack *top = nullptr;
   for (uptr si = 0; si < trace.size; si++) {
     const uptr pc = trace.trace[si];
 #ifndef TSAN_GO
-    // We obtain the return address, that is, address of the next instruction,
-    // so offset it by 1 byte.
+    // We obtain the return address, but we're interested in the previous
+    // instruction.
     const uptr pc1 = StackTrace::GetPreviousInstructionPc(pc);
 #else
     // FIXME(dvyukov): Go sometimes uses address of a function as top pc.
@@ -118,18 +121,21 @@ static ReportStack *SymbolizeStack(StackTrace trace) {
     if (si != trace.size - 1)
       pc1 -= 1;
 #endif
-    ReportStack *ent = SymbolizeCode(pc1);
+    SymbolizedStack *ent = SymbolizeCode(pc1);
     CHECK_NE(ent, 0);
-    ReportStack *last = ent;
+    SymbolizedStack *last = ent;
     while (last->next) {
       last->info.address = pc;  // restore original pc for report
       last = last->next;
     }
     last->info.address = pc;  // restore original pc for report
-    last->next = stack;
-    stack = ent;
+    last->next = top;
+    top = ent;
   }
-  StackStripMain(stack);
+  StackStripMain(top);
+
+  ReportStack *stack = ReportStack::New();
+  stack->frames = top;
   return stack;
 }
 
@@ -545,16 +551,6 @@ static bool IsFiredSuppression(Context *ctx,
     }
   }
   return false;
-}
-
-bool FrameIsInternal(const ReportStack *frame) {
-  if (frame == 0)
-    return false;
-  const char *file = frame->info.file;
-  return file != 0 &&
-         (internal_strstr(file, "tsan_interceptors.cc") ||
-          internal_strstr(file, "sanitizer_common_interceptors.inc") ||
-          internal_strstr(file, "tsan_interface_"));
 }
 
 static bool RaceBetweenAtomicAndFree(ThreadState *thr) {

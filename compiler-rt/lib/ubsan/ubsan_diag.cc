@@ -79,18 +79,26 @@ Location __ubsan::getFunctionLocation(uptr Loc, const char **FName) {
     return Location();
   InitIfNecessary();
 
-  AddressInfo Info;
-  if (!Symbolizer::GetOrInit()->SymbolizePC(Loc, &Info, 1) || !Info.module ||
-      !*Info.module)
+  SymbolizedStack *Frames = Symbolizer::GetOrInit()->SymbolizePC(Loc);
+  const AddressInfo &Info = Frames->info;
+
+  if (!Info.module) {
+    Frames->ClearAll();
     return Location(Loc);
+  }
 
   if (FName && Info.function)
-    *FName = Info.function;
+    *FName = internal_strdup(Info.function);
 
-  if (!Info.file)
-    return ModuleLocation(Info.module, Info.module_offset);
+  if (!Info.file) {
+    ModuleLocation MLoc(internal_strdup(Info.module), Info.module_offset);
+    Frames->ClearAll();
+    return MLoc;
+  }
 
-  return SourceLocation(Info.file, Info.line, Info.column);
+  SourceLocation SLoc(internal_strdup(Info.file), Info.line, Info.column);
+  Frames->ClearAll();
+  return SLoc;
 }
 
 Diag &Diag::operator<<(const TypeDescriptor &V) {

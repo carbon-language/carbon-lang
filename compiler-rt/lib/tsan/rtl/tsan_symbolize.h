@@ -20,7 +20,7 @@ namespace __tsan {
 
 void EnterSymbolizer();
 void ExitSymbolizer();
-ReportStack *SymbolizeCode(uptr addr);
+SymbolizedStack *SymbolizeCode(uptr addr);
 ReportLocation *SymbolizeData(uptr addr);
 void SymbolizeFlush();
 

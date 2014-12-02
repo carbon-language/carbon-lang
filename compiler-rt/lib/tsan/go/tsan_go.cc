@@ -59,18 +59,19 @@ struct SymbolizeContext {
 // Callback into Go.
 static void (*symbolize_cb)(SymbolizeContext *ctx);
 
-ReportStack *SymbolizeCode(uptr addr) {
-  ReportStack *s = ReportStack::New(addr);
+SymbolizedStack *SymbolizeCode(uptr addr) {
+  SymbolizedStack *s = SymbolizedStack::New(addr);
   SymbolizeContext ctx;
   internal_memset(&ctx, 0, sizeof(ctx));
   ctx.pc = addr;
   symbolize_cb(&ctx);
   if (ctx.res) {
-    s->info.module_offset = ctx.off;
-    s->info.function = internal_strdup(ctx.func ? ctx.func : "??");
-    s->info.file = internal_strdup(ctx.file ? ctx.file : "-");
-    s->info.line = ctx.line;
-    s->info.column = 0;
+    AddressInfo &info = s->info;
+    info.module_offset = ctx.off;
+    info.function = internal_strdup(ctx.func ? ctx.func : "??");
+    info.file = internal_strdup(ctx.file ? ctx.file : "-");
+    info.line = ctx.line;
+    info.column = 0;
   }
   return s;
 }

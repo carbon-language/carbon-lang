@@ -26,9 +26,8 @@ class WinSymbolizer : public Symbolizer {
  public:
   WinSymbolizer() : initialized_(false) {}
 
-  uptr SymbolizePC(uptr addr, AddressInfo *frames, uptr max_frames) override {
-    if (max_frames == 0)
-      return 0;
+  SymbolizedStack *SymbolizePC(uptr addr) override {
+    SymbolizedStack *frame = SymbolizedStack::New(addr);
 
     BlockingMutexLock l(&dbghelp_mu_);
     if (!initialized_) {
@@ -60,29 +59,27 @@ class WinSymbolizer : public Symbolizer {
     BOOL got_objname = SymFromAddr(GetCurrentProcess(),
                                    (DWORD64)addr, &offset, symbol);
     if (!got_objname)
-      return 0;
+      return frame;
 
     DWORD unused;
     IMAGEHLP_LINE64 line_info;
     line_info.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
     BOOL got_fileline = SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64)addr,
                                              &unused, &line_info);
-    AddressInfo *info = &frames[0];
-    info->Clear();
-    info->function = internal_strdup(symbol->Name);
-    info->function_offset = (uptr)offset;
+    frame->info.function = internal_strdup(symbol->Name);
+    frame->info.function_offset = (uptr)offset;
     if (got_fileline) {
-      info->file = internal_strdup(line_info.FileName);
-      info->line = line_info.LineNumber;
+      frame->info.file = internal_strdup(line_info.FileName);
+      frame->info.line = line_info.LineNumber;
     }
 
     IMAGEHLP_MODULE64 mod_info;
     internal_memset(&mod_info, 0, sizeof(mod_info));
     mod_info.SizeOfStruct = sizeof(mod_info);
     if (SymGetModuleInfo64(GetCurrentProcess(), addr, &mod_info))
-      info->FillAddressAndModuleInfo(addr, mod_info.ImageName,
-                                     addr - (uptr)mod_info.BaseOfImage);
-    return 1;
+      frame->info.FillAddressAndModuleInfo(addr, mod_info.ImageName,
+                                           addr - (uptr)mod_info.BaseOfImage);
+    return frame;
   }
 
   bool CanReturnFileLineInfo() override {

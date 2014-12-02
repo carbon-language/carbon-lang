@@ -457,30 +457,27 @@ void DoLeakCheck() {
 }
 
 static Suppression *GetSuppressionForAddr(uptr addr) {
-  Suppression *s;
+  Suppression *s = nullptr;
 
   // Suppress by module name.
   const char *module_name;
   uptr module_offset;
-  if (Symbolizer::GetOrInit()
-          ->GetModuleNameAndOffsetForPC(addr, &module_name, &module_offset) &&
+  if (Symbolizer::GetOrInit()->GetModuleNameAndOffsetForPC(addr, &module_name,
+                                                           &module_offset) &&
       SuppressionContext::Get()->Match(module_name, SuppressionLeak, &s))
     return s;
 
   // Suppress by file or function name.
-  static const uptr kMaxAddrFrames = 16;
-  InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
-  for (uptr i = 0; i < kMaxAddrFrames; i++) new (&addr_frames[i]) AddressInfo();
-  uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
-      addr, addr_frames.data(), kMaxAddrFrames);
-  for (uptr i = 0; i < addr_frames_num; i++) {
-    if (SuppressionContext::Get()->Match(addr_frames[i].function,
-                                         SuppressionLeak, &s) ||
-        SuppressionContext::Get()->Match(addr_frames[i].file, SuppressionLeak,
-                                         &s))
-      return s;
+  SymbolizedStack *frames = Symbolizer::GetOrInit()->SymbolizePC(addr);
+  for (SymbolizedStack *cur = frames; cur; cur = cur->next) {
+    if (SuppressionContext::Get()->Match(cur->info.function, SuppressionLeak,
+                                         &s) ||
+        SuppressionContext::Get()->Match(cur->info.file, SuppressionLeak, &s)) {
+      break;
+    }
   }
-  return 0;
+  frames->ClearAll();
+  return s;
 }
 
 static Suppression *GetSuppressionForStack(u32 stack_trace_id) {

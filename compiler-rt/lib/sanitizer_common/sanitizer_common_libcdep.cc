@@ -52,16 +52,20 @@ void SetSandboxingCallback(void (*f)()) {
 void ReportErrorSummary(const char *error_type, StackTrace *stack) {
   if (!common_flags()->print_summary)
     return;
-  AddressInfo ai;
 #if !SANITIZER_GO
   if (stack->size > 0 && Symbolizer::GetOrInit()->CanReturnFileLineInfo()) {
     // Currently, we include the first stack frame into the report summary.
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
     uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
-    Symbolizer::GetOrInit()->SymbolizePC(pc, &ai, 1);
+    SymbolizedStack *frame = Symbolizer::GetOrInit()->SymbolizePC(pc);
+    const AddressInfo &ai = frame->info;
+    ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
+    frame->ClearAll();
   }
-#endif
+#else
+  AddressInfo ai;
   ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
+#endif
 }
 
 }  // namespace __sanitizer

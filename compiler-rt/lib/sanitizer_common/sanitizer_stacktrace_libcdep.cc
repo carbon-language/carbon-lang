@@ -24,30 +24,21 @@ void StackTrace::Print() const {
     Printf("    <empty stack>\n\n");
     return;
   }
-  const int kMaxAddrFrames = 64;
-  InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
-  for (uptr i = 0; i < kMaxAddrFrames; i++)
-    new(&addr_frames[i]) AddressInfo();
   InternalScopedString frame_desc(GetPageSizeCached() * 2);
   uptr frame_num = 0;
   for (uptr i = 0; i < size && trace[i]; i++) {
     // PCs in stack traces are actually the return addresses, that is,
     // addresses of the next instructions after the call.
     uptr pc = GetPreviousInstructionPc(trace[i]);
-    uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
-        pc, addr_frames.data(), kMaxAddrFrames);
-    if (addr_frames_num == 0) {
-      addr_frames[0].address = pc;
-      addr_frames_num = 1;
-    }
-    for (uptr j = 0; j < addr_frames_num; j++) {
-      AddressInfo &info = addr_frames[j];
+    SymbolizedStack *frames = Symbolizer::GetOrInit()->SymbolizePC(pc);
+    CHECK(frames);
+    for (SymbolizedStack *cur = frames; cur; cur = cur->next) {
       frame_desc.clear();
       RenderFrame(&frame_desc, common_flags()->stack_trace_format, frame_num++,
-                  info, common_flags()->strip_path_prefix);
+                  cur->info, common_flags()->strip_path_prefix);
       Printf("%s\n", frame_desc.data());
-      info.Clear();
     }
+    frames->ClearAll();
   }
   // Always print a trailing empty line after stack trace.
   Printf("\n");

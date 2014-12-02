@@ -568,8 +568,6 @@ bool IsFiredSuppression(Context *ctx, const ScopedReport &srep,
                         StackTrace trace);
 bool IsExpectedReport(uptr addr, uptr size);
 void PrintMatchedBenignRaces();
-bool FrameIsInternal(const ReportStack *frame);
-ReportStack *SkipTsanInternalFrames(ReportStack *ent);
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 1
 # define DPrintf Printf

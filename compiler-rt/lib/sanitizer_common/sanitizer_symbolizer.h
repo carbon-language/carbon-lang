@@ -19,13 +19,14 @@
 #ifndef SANITIZER_SYMBOLIZER_H
 #define SANITIZER_SYMBOLIZER_H
 
-#include "sanitizer_allocator_internal.h"
-#include "sanitizer_internal_defs.h"
-#include "sanitizer_libc.h"
+#include "sanitizer_common.h"
+#include "sanitizer_mutex.h"
 
 namespace __sanitizer {
 
 struct AddressInfo {
+  // Owns all the string members. Storage for them is
+  // (de)allocated using sanitizer internal allocator.
   uptr address;
 
   char *module;
@@ -39,45 +40,38 @@ struct AddressInfo {
   int line;
   int column;
 
-  AddressInfo() {
-    internal_memset(this, 0, sizeof(AddressInfo));
-    function_offset = kUnknown;
-  }
-
+  AddressInfo();
   // Deletes all strings and resets all fields.
-  void Clear() {
-    InternalFree(module);
-    InternalFree(function);
-    InternalFree(file);
-    internal_memset(this, 0, sizeof(AddressInfo));
-    function_offset = kUnknown;
-  }
-
+  void Clear();
   void FillAddressAndModuleInfo(uptr addr, const char *mod_name,
-                                uptr mod_offset) {
-    address = addr;
-    module = internal_strdup(mod_name);
-    module_offset = mod_offset;
-  }
+                                uptr mod_offset);
+};
+
+// Linked list of symbolized frames (each frame is described by AddressInfo).
+struct SymbolizedStack {
+  SymbolizedStack *next;
+  AddressInfo info;
+  static SymbolizedStack *New(uptr addr);
+  // Deletes current, and all subsequent frames in the linked list.
+  // The object cannot be accessed after the call to this function.
+  void ClearAll();
+
+ private:
+  SymbolizedStack();
 };
 
 // For now, DataInfo is used to describe global variable.
 struct DataInfo {
+  // Owns all the string members. Storage for them is
+  // (de)allocated using sanitizer internal allocator.
   char *module;
   uptr module_offset;
   char *name;
   uptr start;
   uptr size;
 
-  DataInfo() {
-    internal_memset(this, 0, sizeof(DataInfo));
-  }
-
-  void Clear() {
-    InternalFree(module);
-    InternalFree(name);
-    internal_memset(this, 0, sizeof(DataInfo));
-  }
+  DataInfo();
+  void Clear();
 };
 
 class Symbolizer {
@@ -85,11 +79,10 @@ class Symbolizer {
   /// Initialize and return platform-specific implementation of symbolizer
   /// (if it wasn't already initialized).
   static Symbolizer *GetOrInit();
-  // Fills at most "max_frames" elements of "frames" with descriptions
-  // for a given address (in all inlined functions). Returns the number
-  // of descriptions actually filled.
-  virtual uptr SymbolizePC(uptr address, AddressInfo *frames, uptr max_frames) {
-    return 0;
+  // Returns a list of symbolized frames for a given address (containing
+  // all inlined functions, if necessary).
+  virtual SymbolizedStack *SymbolizePC(uptr address) {
+    return SymbolizedStack::New(address);
   }
   virtual bool SymbolizeData(uptr address, DataInfo *info) {
     return false;

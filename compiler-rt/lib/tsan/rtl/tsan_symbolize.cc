@@ -55,7 +55,7 @@ bool __tsan_symbolize_external(uptr pc,
   return false;
 }
 
-ReportStack *SymbolizeCode(uptr addr) {
+SymbolizedStack *SymbolizeCode(uptr addr) {
   // Check if PC comes from non-native land.
   if (addr & kExternalPCBit) {
     // Declare static to not consume too much stack space.
@@ -63,36 +63,17 @@ ReportStack *SymbolizeCode(uptr addr) {
     static char func_buf[1024];
     static char file_buf[1024];
     int line, col;
-    ReportStack *ent = ReportStack::New(addr);
-    if (!__tsan_symbolize_external(addr, func_buf, sizeof(func_buf),
-                                  file_buf, sizeof(file_buf), &line, &col))
-      return ent;
-    ent->info.function = internal_strdup(func_buf);
-    ent->info.file = internal_strdup(file_buf);
-    ent->info.line = line;
-    ent->info.column = col;
-    return ent;
+    SymbolizedStack *frame = SymbolizedStack::New(addr);
+    if (__tsan_symbolize_external(addr, func_buf, sizeof(func_buf), file_buf,
+                                  sizeof(file_buf), &line, &col)) {
+      frame->info.function = internal_strdup(func_buf);
+      frame->info.file = internal_strdup(file_buf);
+      frame->info.line = line;
+      frame->info.column = col;
+    }
+    return frame;
   }
-  static const uptr kMaxAddrFrames = 16;
-  InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
-  for (uptr i = 0; i < kMaxAddrFrames; i++)
-    new(&addr_frames[i]) AddressInfo();
-  uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
-      addr, addr_frames.data(), kMaxAddrFrames);
-  if (addr_frames_num == 0)
-    return ReportStack::New(addr);
-  ReportStack *top = 0;
-  ReportStack *bottom = 0;
-  for (uptr i = 0; i < addr_frames_num; i++) {
-    ReportStack *cur_entry = ReportStack::New(addr);
-    cur_entry->info = addr_frames[i];
-    if (i == 0)
-      top = cur_entry;
-    else
-      bottom->next = cur_entry;
-    bottom = cur_entry;
-  }
-  return top;
+  return Symbolizer::GetOrInit()->SymbolizePC(addr);
 }
 
 ReportLocation *SymbolizeData(uptr addr) {

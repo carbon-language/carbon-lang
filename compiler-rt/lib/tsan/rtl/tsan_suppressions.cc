@@ -92,7 +92,8 @@ uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp) {
   if (stype == SuppressionNone)
     return 0;
   Suppression *s;
-  for (const ReportStack *frame = stack; frame; frame = frame->next) {
+  for (const SymbolizedStack *frame = stack->frames; frame;
+       frame = frame->next) {
     const AddressInfo &info = frame->info;
     if (SuppressionContext::Get()->Match(info.function, stype, &s) ||
         SuppressionContext::Get()->Match(info.file, stype, &s) ||
