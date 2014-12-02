@@ -331,20 +331,9 @@ bool ModuleMapChecker::collectModuleHeaders(const Module &Mod) {
       return false;
   }
 
-  for (unsigned I = 0, N = Mod.NormalHeaders.size(); I != N; ++I) {
-    ModuleMapHeadersSet.insert(
-        getCanonicalPath(Mod.NormalHeaders[I]->getName()));
-  }
-
-  for (unsigned I = 0, N = Mod.ExcludedHeaders.size(); I != N; ++I) {
-    ModuleMapHeadersSet.insert(
-        getCanonicalPath(Mod.ExcludedHeaders[I]->getName()));
-  }
-
-  for (unsigned I = 0, N = Mod.PrivateHeaders.size(); I != N; ++I) {
-    ModuleMapHeadersSet.insert(
-        getCanonicalPath(Mod.PrivateHeaders[I]->getName()));
-  }
+  for (auto &HeaderKind : Mod.Headers)
+    for (auto &Header : HeaderKind)
+      ModuleMapHeadersSet.insert(getCanonicalPath(Header.Entry->getName()));
 
   for (Module::submodule_const_iterator MI = Mod.submodule_begin(),
                                         MIEnd = Mod.submodule_end();
