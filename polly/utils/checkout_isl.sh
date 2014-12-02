@@ -39,7 +39,19 @@ check_isl_directory() {
     IS_GIT=0
   else
     echo ":: Existing git repo found"
-    IS_GIT=1
+
+    git log cc726006058136865f8c2f496d3df57b9f937ea5 2> /dev/null > /dev/null
+    OUT=$?
+    if [ $OUT -eq 0 ];then
+         echo ":: ISL repository found!"
+         IS_GIT=1
+    else
+         echo ":: Unknown repository found (CLooG?)!"
+         echo ":: Moving it to ${ISL_DIR}_old"
+         run mv ${ISL_DIR} ${ISL_DIR}_old
+         run mkdir ${ISL_DIR}
+         IS_GIT=0
+    fi
   fi
 }
 
