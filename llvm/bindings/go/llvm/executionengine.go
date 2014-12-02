@@ -39,6 +39,18 @@ func (options *MCJITCompilerOptions) SetMCJITOptimizationLevel(level uint) {
 	options.C.OptLevel = C.uint(level)
 }
 
+func (options *MCJITCompilerOptions) SetMCJITNoFramePointerElim(nfp bool) {
+	options.C.NoFramePointerElim = boolToLLVMBool(nfp)
+}
+
+func (options *MCJITCompilerOptions) SetMCJITEnableFastISel(fastisel bool) {
+	options.C.EnableFastISel = boolToLLVMBool(fastisel)
+}
+
+func (options *MCJITCompilerOptions) SetMCJITCodeModel(CodeModel CodeModel) {
+	options.C.CodeModel = C.LLVMCodeModel(CodeModel)
+}
+
 // helpers
 func llvmGenericValueRefPtr(t *GenericValue) *C.LLVMGenericValueRef {
 	return (*C.LLVMGenericValueRef)(unsafe.Pointer(t))
