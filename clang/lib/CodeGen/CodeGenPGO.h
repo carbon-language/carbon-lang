@@ -31,8 +31,7 @@ class RegionCounter;
 class CodeGenPGO {
 private:
   CodeGenModule &CGM;
-  std::string PrefixedFuncName;
-  StringRef RawFuncName;
+  std::string FuncName;
   llvm::GlobalValue::LinkageTypes VarLinkage;
 
   unsigned NumRegionCounters;
@@ -60,9 +59,9 @@ public:
 
   /// Get the string used to identify this function in the profile data.
   /// For functions with local linkage, this includes the main file name.
-  StringRef getFuncName() const { return StringRef(PrefixedFuncName); }
+  StringRef getFuncName() const { return StringRef(FuncName); }
   std::string getFuncVarName(StringRef VarName) const {
-    return ("__llvm_profile_" + VarName + "_" + RawFuncName).str();
+    return ("__llvm_profile_" + VarName + "_" + FuncName).str();
   }
 
   /// Return the counter value of the current region.

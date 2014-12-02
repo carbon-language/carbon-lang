@@ -18,7 +18,7 @@
 // PGOGEN: @[[BLC:__llvm_profile_counters_boolop_loops]] = hidden global [9 x i64] zeroinitializer
 // PGOGEN: @[[COC:__llvm_profile_counters_conditional_operator]] = hidden global [3 x i64] zeroinitializer
 // PGOGEN: @[[MAC:__llvm_profile_counters_main]] = hidden global [1 x i64] zeroinitializer
-// PGOGEN: @[[STC:__llvm_profile_counters_static_func]] = internal global [2 x i64] zeroinitializer
+// PGOGEN: @[[STC:"__llvm_profile_counters_c-general.c:static_func"]] = internal global [2 x i64] zeroinitializer
 
 // PGOGEN-LABEL: @simple_loops()
 // PGOUSE-LABEL: @simple_loops()

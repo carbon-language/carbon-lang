@@ -27,7 +27,7 @@ using namespace CodeGen;
 
 void CodeGenPGO::setFuncName(StringRef Name,
                              llvm::GlobalValue::LinkageTypes Linkage) {
-  RawFuncName = Name;
+  StringRef RawFuncName = Name;
 
   // Function names may be prefixed with a binary '1' to indicate
   // that the backend should not modify the symbols due to any platform
@@ -35,20 +35,17 @@ void CodeGenPGO::setFuncName(StringRef Name,
   if (RawFuncName[0] == '\1')
     RawFuncName = RawFuncName.substr(1);
 
-  if (!llvm::GlobalValue::isLocalLinkage(Linkage)) {
-    PrefixedFuncName = RawFuncName;
-    return;
+  FuncName = RawFuncName;
+  if (llvm::GlobalValue::isLocalLinkage(Linkage)) {
+    // For local symbols, prepend the main file name to distinguish them.
+    // Do not include the full path in the file name since there's no guarantee
+    // that it will stay the same, e.g., if the files are checked out from
+    // version control in different locations.
+    if (CGM.getCodeGenOpts().MainFileName.empty())
+      FuncName = FuncName.insert(0, "<unknown>:");
+    else
+      FuncName = FuncName.insert(0, CGM.getCodeGenOpts().MainFileName + ":");
   }
-
-  // For local symbols, prepend the main file name to distinguish them.
-  // Do not include the full path in the file name since there's no guarantee
-  // that it will stay the same, e.g., if the files are checked out from
-  // version control in different locations.
-  PrefixedFuncName = CGM.getCodeGenOpts().MainFileName;
-  if (PrefixedFuncName.empty())
-    PrefixedFuncName.assign("<unknown>");
-  PrefixedFuncName.append(":");
-  PrefixedFuncName.append(RawFuncName);
 }
 
 void CodeGenPGO::setFuncName(llvm::Function *Fn) {
