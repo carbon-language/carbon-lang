@@ -7734,7 +7734,7 @@ let Predicates = [UseAVX] in {
   def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
             (VBLENDPSrri (v4f32 (V_SET0)), VR128:$src, (i8 1))>;
   def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-            (VBLENDPSrri (v4i32 (V_SET0)), VR128:$src, (i8 1))>;
+            (VPBLENDWrri (v4i32 (V_SET0)), VR128:$src, (i8 3))>;
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
             (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)>;
 
@@ -7769,7 +7769,7 @@ let Predicates = [UseSSE41] in {
   def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
             (BLENDPSrri (v4f32 (V_SET0)), VR128:$src, (i8 1))>;
   def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-            (BLENDPSrri (v4f32 (V_SET0)), VR128:$src, (i8 1))>;
+            (PBLENDWrri (v4i32 (V_SET0)), VR128:$src, (i8 3))>;
   def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
             (BLENDPDrri (v2f64 (V_SET0)), VR128:$src, (i8 1))>;
 }

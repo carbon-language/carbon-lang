@@ -10,7 +10,7 @@ define <4 x i32> @test1(<4 x i32> %A) {
   ret <4 x i32> %1
 }
 ; CHECK-LABEL: test1
-; CHECK: blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
+; CHECK: pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
 ; CHECK-NEXT: retq
 
 

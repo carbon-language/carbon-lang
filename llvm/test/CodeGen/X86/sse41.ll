@@ -695,15 +695,15 @@ define <4 x i32> @i32_shuf_W00W(<4 x i32> %x, <4 x i32> %a) {
 define <4 x i32> @i32_shuf_X00A(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_X00A:
 ; X32:       ## BB#0:
-; X32-NEXT:    xorps %xmm2, %xmm2
-; X32-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; X32-NEXT:    pxor %xmm2, %xmm2
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3,4,5,6,7]
 ; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_X00A:
 ; X64:       ## BB#0:
-; X64-NEXT:    xorps %xmm2, %xmm2
-; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm2[1,2,3]
+; X64-NEXT:    pxor %xmm2, %xmm2
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3,4,5,6,7]
 ; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[0]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x i32> %x, i32 0
@@ -717,16 +717,16 @@ define <4 x i32> @i32_shuf_X00A(<4 x i32> %x, <4 x i32> %a) {
 define <4 x i32> @i32_shuf_X00X(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_X00X:
 ; X32:       ## BB#0:
-; X32-NEXT:    xorps %xmm1, %xmm1
-; X32-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
+; X32-NEXT:    pxor %xmm1, %xmm1
+; X32-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3,4,5,6,7]
 ; X32-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
 ; X32-NEXT:    movaps %xmm1, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_X00X:
 ; X64:       ## BB#0:
-; X64-NEXT:    xorps %xmm1, %xmm1
-; X64-NEXT:    blendps {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3]
+; X64-NEXT:    pxor %xmm1, %xmm1
+; X64-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3,4,5,6,7]
 ; X64-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
 ; X64-NEXT:    movaps %xmm1, %xmm0
 ; X64-NEXT:    retq
