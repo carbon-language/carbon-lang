@@ -584,7 +584,6 @@ def so_imm : Operand<i32>, ImmLeaf<i32, [{
   }]> {
   let EncoderMethod = "getSOImmOpValue";
   let ParserMatchClass = SOImmAsmOperand;
-  let DecoderMethod = "DecodeSOImmOperand";
 }
 
 // mod_imm: match a 32-bit immediate operand, which is encoded as a 12-bit
