@@ -4330,7 +4330,7 @@ private:
 public:
   ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind),
     NumVFPs(16), NumGPRs(4) {
-    setRuntimeCC();
+    setCCs();
     resetAllocatedRegs();
   }
 
@@ -4376,7 +4376,7 @@ private:
 
   llvm::CallingConv::ID getLLVMDefaultCC() const;
   llvm::CallingConv::ID getABIDefaultCC() const;
-  void setRuntimeCC();
+  void setCCs();
 
   void markAllocatedGPRs(unsigned Alignment, unsigned NumRequired) const;
   void markAllocatedVFPs(unsigned Alignment, unsigned NumRequired) const;
@@ -4535,7 +4535,7 @@ llvm::CallingConv::ID ARMABIInfo::getABIDefaultCC() const {
   llvm_unreachable("bad ABI kind");
 }
 
-void ARMABIInfo::setRuntimeCC() {
+void ARMABIInfo::setCCs() {
   assert(getRuntimeCC() == llvm::CallingConv::C);
 
   // Don't muddy up the IR with a ton of explicit annotations if
@@ -4543,6 +4543,9 @@ void ARMABIInfo::setRuntimeCC() {
   llvm::CallingConv::ID abiCC = getABIDefaultCC();
   if (abiCC != getLLVMDefaultCC())
     RuntimeCC = abiCC;
+
+  BuiltinCC = (getABIKind() == APCS ?
+               llvm::CallingConv::ARM_APCS : llvm::CallingConv::ARM_AAPCS);
 }
 
 /// markAllocatedVFPs - update VFPRegs according to the alignment and

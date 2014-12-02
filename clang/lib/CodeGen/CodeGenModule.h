@@ -150,6 +150,8 @@ struct CodeGenTypeCache {
 
   llvm::CallingConv::ID RuntimeCC;
   llvm::CallingConv::ID getRuntimeCC() const { return RuntimeCC; }
+  llvm::CallingConv::ID BuiltinCC;
+  llvm::CallingConv::ID getBuiltinCC() const { return BuiltinCC; }
 };
 
 struct RREntrypoints {
@@ -871,6 +873,11 @@ public:
 
   /// Create a new runtime function with the specified type and name.
   llvm::Constant *CreateRuntimeFunction(llvm::FunctionType *Ty,
+                                        StringRef Name,
+                                        llvm::AttributeSet ExtraAttrs =
+                                          llvm::AttributeSet());
+  /// Create a new compiler builtin function with the specified type and name.
+  llvm::Constant *CreateBuiltinFunction(llvm::FunctionType *Ty,
                                         StringRef Name,
                                         llvm::AttributeSet ExtraAttrs =
                                           llvm::AttributeSet());

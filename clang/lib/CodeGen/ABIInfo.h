@@ -44,9 +44,12 @@ namespace clang {
     CodeGen::CodeGenTypes &CGT;
   protected:
     llvm::CallingConv::ID RuntimeCC;
+    llvm::CallingConv::ID BuiltinCC;
   public:
     ABIInfo(CodeGen::CodeGenTypes &cgt)
-      : CGT(cgt), RuntimeCC(llvm::CallingConv::C) {}
+      : CGT(cgt),
+        RuntimeCC(llvm::CallingConv::C),
+        BuiltinCC(llvm::CallingConv::C) {}
 
     virtual ~ABIInfo();
 
@@ -60,6 +63,11 @@ namespace clang {
     /// functions.
     llvm::CallingConv::ID getRuntimeCC() const {
       return RuntimeCC;
+    }
+
+    /// Return the calling convention to use for compiler builtins
+    llvm::CallingConv::ID getBuiltinCC() const {
+      return BuiltinCC;
     }
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI) const = 0;

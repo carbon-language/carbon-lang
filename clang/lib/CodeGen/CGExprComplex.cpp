@@ -582,13 +582,22 @@ ComplexPairTy ComplexExprEmitter::EmitComplexBinOpLibCall(StringRef LibCallName,
            Op.Ty->castAs<ComplexType>()->getElementType());
 
   // We *must* use the full CG function call building logic here because the
-  // complex type has special ABI handling.
-  const CGFunctionInfo &FuncInfo = CGF.CGM.getTypes().arrangeFreeFunctionCall(
-      Op.Ty, Args, FunctionType::ExtInfo(), RequiredArgs::All);
+  // complex type has special ABI handling. We also should not forget about
+  // special calling convention which may be used for compiler builtins.
+  const CGFunctionInfo &FuncInfo =
+    CGF.CGM.getTypes().arrangeFreeFunctionCall(
+      Op.Ty, Args, FunctionType::ExtInfo(/* No CC here - will be added later */),
+      RequiredArgs::All);
   llvm::FunctionType *FTy = CGF.CGM.getTypes().GetFunctionType(FuncInfo);
-  llvm::Constant *Func = CGF.CGM.CreateRuntimeFunction(FTy, LibCallName);
+  llvm::Constant *Func = CGF.CGM.CreateBuiltinFunction(FTy, LibCallName);
+  llvm::Instruction *Call;
 
-  return CGF.EmitCall(FuncInfo, Func, ReturnValueSlot(), Args).getComplexVal();
+  RValue Res = CGF.EmitCall(FuncInfo, Func, ReturnValueSlot(), Args,
+                            nullptr, &Call);
+  cast<llvm::CallInst>(Call)->setCallingConv(CGF.CGM.getBuiltinCC());
+  cast<llvm::CallInst>(Call)->setDoesNotThrow();
+
+  return Res.getComplexVal();
 }
 
 /// \brief Lookup the libcall name for a given floating point type complex
