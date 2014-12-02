@@ -165,7 +165,7 @@ static SDValue InsertSubVector(SDValue Result, SDValue Vec,
 /// sets things up to match to an AVX VINSERTF128/VINSERTI128 or
 /// AVX-512 VINSERTF32x4/VINSERTI32x4 instructions or a
 /// simple superregister reference.  Idx is an index in the 128 bits
-/// we want.  It need not be aligned to a 128-bit bounday.  That makes
+/// we want.  It need not be aligned to a 128-bit boundary.  That makes
 /// lowering INSERT_VECTOR_ELT operations easier.
 static SDValue Insert128BitVector(SDValue Result, SDValue Vec,
                                   unsigned IdxVal, SelectionDAG &DAG,
