@@ -19,6 +19,7 @@ add_llvm_library(LLVMSelectionDAG
   SelectionDAGDumper.cpp
   SelectionDAGISel.cpp
   SelectionDAGPrinter.cpp
+  StatepointLowering.cpp
   ScheduleDAGVLIW.cpp
   TargetLowering.cpp
   TargetSelectionDAGInfo.cpp

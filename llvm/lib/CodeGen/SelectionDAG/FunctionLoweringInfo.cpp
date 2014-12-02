@@ -273,6 +273,7 @@ void FunctionLoweringInfo::clear() {
   ArgDbgValues.clear();
   ByValArgFrameIndexMap.clear();
   RegFixups.clear();
+  StatepointStackSlots.clear();
   PreferredExtendType.clear();
 }
 

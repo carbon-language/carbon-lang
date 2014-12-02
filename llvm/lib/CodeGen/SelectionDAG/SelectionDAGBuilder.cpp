@@ -16,6 +16,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -46,6 +47,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Statepoint.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -884,6 +886,7 @@ void SelectionDAGBuilder::clear() {
   CurInst = nullptr;
   HasTailCall = false;
   SDNodeOrder = LowestSDNodeOrder;
+  StatepointLowering.clear();
 }
 
 /// clearDanglingDebugInfo - Clear the dangling debug information
@@ -5458,6 +5461,20 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::experimental_patchpoint_void:
   case Intrinsic::experimental_patchpoint_i64: {
     visitPatchpoint(&I);
+    return nullptr;
+  }
+  case Intrinsic::experimental_gc_statepoint: {
+    visitStatepoint(I);
+    return nullptr;
+  }
+  case Intrinsic::experimental_gc_result_int:
+  case Intrinsic::experimental_gc_result_float:
+  case Intrinsic::experimental_gc_result_ptr: {
+    visitGCResult(I);
+    return nullptr;
+  }
+  case Intrinsic::experimental_gc_relocate: {
+    visitGCRelocate(I);
     return nullptr;
   }
   }

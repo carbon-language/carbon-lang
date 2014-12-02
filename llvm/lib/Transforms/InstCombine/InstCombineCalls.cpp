@@ -18,6 +18,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/Statepoint.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
@@ -1163,6 +1164,14 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
                                          const DataLayout * const DL,
                                          const int ix) {
   if (!CI->isLosslessCast())
+    return false;
+
+  // If this is a GC intrinsic, avoid munging types.  We need types for
+  // statepoint reconstruction in SelectionDAG.
+  // TODO: This is probably something which should be expanded to all
+  // intrinsics since the entire point of intrinsics is that
+  // they are understandable by the optimizer.
+  if (isStatepoint(CS) || isGCRelocate(CS) || isGCResult(CS))
     return false;
 
   // The size of ByVal or InAlloca arguments is derived from the type, so we

@@ -22,6 +22,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLowering.h"
+#include "StatepointLowering.h"
 #include <vector>
 
 namespace llvm {
@@ -115,6 +116,10 @@ public:
   /// get simple disambiguation between loads without worrying about alias
   /// analysis.
   SmallVector<SDValue, 8> PendingLoads;
+
+  /// State used while lowering a statepoint sequence (gc_statepoint,
+  /// gc_relocate, and gc_result).  See StatepointLowering.hpp/cpp for details.
+  StatepointLoweringState StatepointLowering;
 private:
 
   /// PendingExports - CopyToReg nodes that copy values to virtual registers
@@ -613,6 +618,13 @@ public:
     N = NewN;
   }
 
+  void removeValue(const Value *V) {
+    // This is to support hack in lowerCallFromStatepoint
+    // Should be removed when hack is resolved
+    if (NodeMap.count(V))
+      NodeMap.erase(V);
+  }
+
   void setUnusedArgValue(const Value *V, SDValue NewN) {
     SDValue &N = UnusedArgNodeMap[V];
     assert(!N.getNode() && "Already set a value for this node!");
@@ -784,6 +796,11 @@ private:
   void visitStackmap(const CallInst &I);
   void visitPatchpoint(ImmutableCallSite CS,
                        MachineBasicBlock *LandingPad = nullptr);
+
+  // These three are implemented in StatepointLowering.cpp
+  void visitStatepoint(const CallInst &I);
+  void visitGCRelocate(const CallInst &I);
+  void visitGCResult(const CallInst &I);
 
   void visitUserOp1(const Instruction &I) {
     llvm_unreachable("UserOp1 should not exist at instruction selection time!");
