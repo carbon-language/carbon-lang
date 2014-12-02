@@ -14,7 +14,6 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/CodeGen/BlockGenerators.h"
-#include "polly/CodeGen/Cloog.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"
 #include "llvm/Analysis/DominanceFrontier.h"
@@ -505,9 +504,6 @@ void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<ScalarEvolution>();
   AU.addRequired<ScopDetection>();
   AU.addPreserved<ScopDetection>();
-#ifdef CLOOG_FOUND
-  AU.addPreserved<CloogInfo>();
-#endif
 }
 
 bool IndependentBlocks::runOnFunction(llvm::Function &F) {

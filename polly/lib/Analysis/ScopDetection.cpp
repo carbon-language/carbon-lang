@@ -207,14 +207,6 @@ ScopDetection::ScopDetection() : FunctionPass(ID) {
                     "accesses are enabled.\n");
     PollyUseRuntimeAliasChecks = false;
   }
-
-#ifdef CLOOG_FOUND
-  if (PollyCodeGenChoice == CODEGEN_CLOOG) {
-    DEBUG(errs() << "WARNING: We disable runtime alias checks as the cloog "
-                    "code generation cannot emit them.\n");
-    PollyUseRuntimeAliasChecks = false;
-  }
-#endif
 }
 
 template <class RR, typename... Args>

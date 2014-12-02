@@ -67,30 +67,29 @@ git clone http://llvm.org/git/clang.git ${CLANG_SRC}
 <h3 id="prerequisites"> Prerequisites </h3>
 <ul>
 <li>libgmp</li>
-<li>CLooG/isl</li>
+<li>isl</li>
 </ul>
 
 <h4> libgmp </h4>
 Install libgmp (library + developer package) through the package management
 system of your operating system.
 
-<h4> CLooG/isl</h4>
+<h4> isl</h4>
 
-Polly is tested with a fixed version of <a href="http://www.cloog.org">CLooG</a>
-and isl. To obtain the source code of CLooG (including isl) use
-checkout_cloog.sh as available in ${POLLY_SRC}/utils/checkout_cloog.sh.
+Polly is tested with a fixed version of isl. To obtain the source code of isl
+use checkout_isl.sh as available in ${POLLY_SRC}/utils/checkout_isl.sh.
 
 <h4>Set the directory layout:</h4>
 <pre>
-export CLOOG_SRC=${BASE}/cloog_src
-export CLOOG_INSTALL=${BASE}/cloog_install
+export ISL_SRC=${BASE}/isl_src
+export ISL_INSTALL=${BASE}/isl_install
 </pre>
 
 <h4> First installation</h4>
 <pre>
-${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
-cd ${CLOOG_SRC}
-./configure --prefix=${CLOOG_INSTALL}
+${POLLY_SRC}/utils/checkout_isl.sh ${ISL_SRC}
+cd ${ISL_SRC}
+./configure --prefix=${ISL_INSTALL}
 make
 make install
 cd ${BASE}
@@ -98,11 +97,11 @@ cd ${BASE}
 
 <h4> Update the installation</h4>
 
-Updating CLooG may become necessary, if Polly uses a feature
-only available in a recent version of CLooG.
+Updating isl may become necessary, if Polly uses a feature
+only available in a recent version of isl.
 <pre>
-${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
-cd ${CLOOG_SRC}
+${POLLY_SRC}/utils/checkout_isl.sh ${ISL_SRC}
+cd ${ISL_SRC}
 make
 make install
 cd ${BASE}
@@ -124,14 +123,14 @@ cd ${LLVM_BUILD}
 <h4>CMake</h4>
 
 <pre>
-cmake -DCMAKE_PREFIX_PATH=${CLOOG_INSTALL} ${LLVM_SRC}
+cmake -DCMAKE_PREFIX_PATH=${ISL_INSTALL} ${LLVM_SRC}
 make
 </pre>
 
 <h4> Autoconf </h4>
 
 <pre>
-${LLVM_SRC}/configure --with-cloog=${CLOOG_INSTALL} --with-isl=${CLOOG_INSTALL}
+${LLVM_SRC}/configure --with-isl=${ISL_INSTALL}
 make
 </pre>
 
@@ -142,11 +141,11 @@ cmake build or <em>make check-polly -C tools/polly/test/</em> for the autoconf
 build.
 
 <p>If you get something like <em>"... libisl.so.9: cannot open shared object file .."</em>,
-it is because you installed cloog to a non-standard path, and libisl/libcloog
+it is because you installed isl to a non-standard path, and libisl
 could not be found. To solve this issue, you need to append the path of parent
-directory of libisl/libcloog, i.e. ${CLOOG_INSTALL}/lib, to LD_LIBRARY_PATH by:
+directory of libisl, i.e. ${ISL_INSTALL}/lib, to LD_LIBRARY_PATH by:
 
-<pre>export LD_LIBRARY_PATH=${CLOOG_INSTALL}/lib:$LD_LIBRARY_PATH</pre>
+<pre>export LD_LIBRARY_PATH=${ISL_INSTALL}/lib:$LD_LIBRARY_PATH</pre>
 
 <p>Also try the above command if you get errors such as:
 <code>undefined symbol: isl_ctx_get_max_operations</code>
@@ -157,7 +156,7 @@ To solve this issue, run <code>cmake</code> again, but with the added argument:
 <code>-DPYTHON_EXECUTABLE=/usr/bin/python2</code> (replace <code>/usr/bin/python2</code>
 with the location of the python2 interpreter under your system).
 
-<pre>cmake -DCMAKE_PREFIX_PATH=${CLOOG_INSTALL} -DPYTHON_EXECUTABLE=/usr/bin/python2 ${LLVM_SRC}</pre>
+<pre>cmake -DCMAKE_PREFIX_PATH=${ISL_INSTALL} -DPYTHON_EXECUTABLE=/usr/bin/python2 ${LLVM_SRC}</pre>
 
 <h2> Optional Features </h2>
 

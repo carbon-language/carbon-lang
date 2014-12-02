@@ -26,11 +26,6 @@ class RegionPass;
 }
 
 namespace polly {
-#ifdef CLOOG_FOUND
-llvm::Pass *createCloogExporterPass();
-llvm::Pass *createCloogInfoPass();
-llvm::Pass *createCodeGenerationPass();
-#endif
 llvm::Pass *createCodePreparationPass();
 llvm::Pass *createDeadCodeElimPass();
 llvm::Pass *createDependencesPass();
@@ -66,11 +61,6 @@ struct PollyForcePassLinking {
     if (std::getenv("bar") != (char *)-1)
       return;
 
-#ifdef CLOOG_FOUND
-    polly::createCloogExporterPass();
-    polly::createCloogInfoPass();
-    polly::createCodeGenerationPass();
-#endif
     polly::createCodePreparationPass();
     polly::createDeadCodeElimPass();
     polly::createDependencesPass();
@@ -97,9 +87,6 @@ struct PollyForcePassLinking {
 
 namespace llvm {
 class PassRegistry;
-#ifdef CLOOG_FOUND
-void initializeCodeGenerationPass(llvm::PassRegistry &);
-#endif
 void initializeCodePreparationPass(llvm::PassRegistry &);
 void initializeDeadCodeElimPass(llvm::PassRegistry &);
 void initializeIndependentBlocksPass(llvm::PassRegistry &);

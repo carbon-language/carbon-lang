@@ -27,13 +27,7 @@ enum VectorizerChoice {
 };
 extern VectorizerChoice PollyVectorizerChoice;
 
-enum CodeGenChoice {
-#ifdef CLOOG_FOUND
-  CODEGEN_CLOOG,
-#endif
-  CODEGEN_ISL,
-  CODEGEN_NONE
-};
+enum CodeGenChoice { CODEGEN_ISL, CODEGEN_NONE };
 extern CodeGenChoice PollyCodeGenChoice;
 
 /// @brief Flag to turn on/off annotation of alias scopes.

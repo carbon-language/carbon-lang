@@ -11,7 +11,7 @@ echo "--> 3. Prepare the LLVM-IR for Polly"
 opt -S -polly-canonicalize matmul.s > matmul.preopt.ll
 
 echo "--> 4. Show the SCoPs detected by Polly"
-opt -basicaa -polly-cloog -analyze -q matmul.preopt.ll
+opt -basicaa -polly-ast -analyze -q matmul.preopt.ll
 
 echo "--> 5.1 Highlight the detected SCoPs in the CFGs of the program"
 # We only create .dot files, as directly -view-scops directly calls graphviz
@@ -39,12 +39,12 @@ echo "--> 8. Export jscop files"
 opt -basicaa -polly-export-jscop matmul.preopt.ll
 
 echo "--> 9. Import the updated jscop files and print the new SCoPs. (optional)"
-opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll
-opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll \
+opt -basicaa -polly-import-jscop -polly-ast -analyze matmul.preopt.ll
+opt -basicaa -polly-import-jscop -polly-ast -analyze matmul.preopt.ll \
     -polly-import-jscop-postfix=interchanged
-opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll \
+opt -basicaa -polly-import-jscop -polly-ast -analyze matmul.preopt.ll \
     -polly-import-jscop-postfix=interchanged+tiled
-opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll \
+opt -basicaa -polly-import-jscop -polly-ast -analyze matmul.preopt.ll \
     -polly-import-jscop-postfix=interchanged+tiled+vector
 
 echo "--> 10. Codegenerate the SCoPs"

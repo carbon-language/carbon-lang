@@ -16,11 +16,6 @@ LD.Flags += $(POLLY_LD) $(POLLY_LIB)
 include $(LEVEL)/Makefile.config
 
 # Enable optional source files
-ifeq ($(CLOOG_FOUND), yes)
-CLOOG_FILES= CodeGen/Cloog.cpp \
-	     CodeGen/CodeGeneration.cpp
-endif
-
 ifeq ($(GPU_CODEGEN), yes)
 GPGPU_CODEGEN_FILES= CodeGen/PTXGenerator.cpp
 endif
@@ -62,7 +57,6 @@ SOURCES= Polly.cpp \
 	 Transform/ScheduleOptimizer.cpp \
 	 ${GPGPU_FILES} \
 	 ${ISL_CODEGEN_FILES} \
-         ${CLOOG_FILES} \
 	 ${POLLY_JSON_FILES} \
 	 ${POLLY_PLUTO_FILES}
 

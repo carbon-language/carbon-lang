@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
           "http://www.w3.org/TR/html4/strict.dtd">
 <!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
 <html>
@@ -64,7 +64,7 @@ To understand if Polly was able to detect SCoPs, we print the
 structure of the detected SCoPs. In our example two SCoPs were detected. One in
 'init_array' the other in 'main'.
 
-<pre class="code">opt -basicaa -polly-cloog -analyze -q matmul.preopt.ll</pre>
+<pre class="code">opt -basicaa -polly-ast -analyze -q matmul.preopt.ll</pre>
 
 <pre>
 init_array():
@@ -118,18 +118,18 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region:
                { Stmt_5[i0, i1]&nbsp;: i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 };
            Scattering&nbsp;:=
                { Stmt_5[i0, i1] -&gt; scattering[0, i0, 0, i1, 0] };
-           WriteAccess&nbsp;:= 
+           WriteAccess&nbsp;:=
                { Stmt_5[i0, i1] -&gt; MemRef_A[1037i0 + i1] };
-           WriteAccess&nbsp;:= 
+           WriteAccess&nbsp;:=
                { Stmt_5[i0, i1] -&gt; MemRef_B[1047i0 + i1] };
    	FinalRead
            Domain&nbsp;:=
                { FinalRead[0] };
            Scattering&nbsp;:=
                { FinalRead[i0] -&gt; scattering[200000000, o1, o2, o3, o4] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { FinalRead[i0] -&gt; MemRef_A[o0] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { FinalRead[i0] -&gt; MemRef_B[o0] };
    }
 [...]
@@ -143,31 +143,31 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region:
                { Stmt_4[i0, i1]&nbsp;: i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 };
            Scattering&nbsp;:=
                { Stmt_4[i0, i1] -&gt; scattering[0, i0, 0, i1, 0, 0, 0] };
-           WriteAccess&nbsp;:= 
+           WriteAccess&nbsp;:=
                { Stmt_4[i0, i1] -&gt; MemRef_C[1067i0 + i1] };
    	Stmt_6
            Domain&nbsp;:=
                { Stmt_6[i0, i1, i2]&nbsp;: i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1023 };
            Scattering&nbsp;:=
                { Stmt_6[i0, i1, i2] -&gt; scattering[0, i0, 0, i1, 1, i2, 0] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { Stmt_6[i0, i1, i2] -&gt; MemRef_C[1067i0 + i1] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { Stmt_6[i0, i1, i2] -&gt; MemRef_A[1037i0 + i2] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { Stmt_6[i0, i1, i2] -&gt; MemRef_B[i1 + 1047i2] };
-           WriteAccess&nbsp;:= 
+           WriteAccess&nbsp;:=
                { Stmt_6[i0, i1, i2] -&gt; MemRef_C[1067i0 + i1] };
    	FinalRead
            Domain&nbsp;:=
                { FinalRead[0] };
            Scattering&nbsp;:=
                { FinalRead[i0] -&gt; scattering[200000000, o1, o2, o3, o4, o5, o6] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { FinalRead[i0] -&gt; MemRef_C[o0] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { FinalRead[i0] -&gt; MemRef_A[o0] };
-           ReadAccess&nbsp;:= 
+           ReadAccess&nbsp;:=
                { FinalRead[i0] -&gt; MemRef_B[o0] };
    }
 [...]
@@ -192,19 +192,19 @@ Printing analysis 'Polly - Calculate dependences for SCoP' for region:
        {  Stmt_4[i0, i1] -&gt; Stmt_6[i0, i1, 0]&nbsp;:
               i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023;
           Stmt_6[i0, i1, i2] -&gt; Stmt_6[i0, i1, 1 + i2]&nbsp;:
-              i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1022; 
+              i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1022;
           Stmt_6[i0, i1, 1023] -&gt; FinalRead[0]&nbsp;:
               i1 &lt;= 1091540 - 1067i0 and i1 &gt;= -1067i0 and i1 &gt;= 0 and i1 &lt;= 1023;
           Stmt_6[1023, i1, 1023] -&gt; FinalRead[0]&nbsp;:
-              i1 &gt;= 0 and i1 &lt;= 1023 
+              i1 &gt;= 0 and i1 &lt;= 1023
        }
    May dependences:
        {  }
    Must no source:
        {  Stmt_6[i0, i1, i2] -&gt; MemRef_A[1037i0 + i2]&nbsp;:
-              i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1023; 
+              i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1023;
           Stmt_6[i0, i1, i2] -&gt; MemRef_B[i1 + 1047i2]&nbsp;:
-              i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1023; 
+              i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1023;
           FinalRead[0] -&gt; MemRef_A[o0];
           FinalRead[0] -&gt; MemRef_B[o0]
           FinalRead[0] -&gt; MemRef_C[o0]&nbsp;:
@@ -242,7 +242,7 @@ normal -O3 optimizations.</p>
 <pre class="code">
 opt matmul.preopt.ll -basicaa \
     -polly-import-jscop \
-    -polly-cloog -analyze
+    -polly-ast -analyze
 </pre>
 <pre>
 [...]
@@ -263,7 +263,7 @@ enumerate Stmt_6.</p>
 <pre class="code">
 opt matmul.preopt.ll -basicaa \
     -polly-import-jscop -polly-import-jscop-postfix=interchanged \
-    -polly-cloog -analyze
+    -polly-ast -analyze
 </pre>
 <pre>
 [...]
@@ -290,7 +290,7 @@ for (c2=0;c2&lt;=1535;c2++) {
 <pre class="code">
 opt matmul.preopt.ll -basicaa \
     -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled \
-    -polly-cloog -analyze
+    -polly-ast -analyze
 </pre>
 <pre>
 [...]
@@ -324,7 +324,7 @@ replaced by 4-element SIMD instructions.
 <pre class="code">
 opt matmul.preopt.ll -basicaa \
     -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled+vector \
-    -polly-cloog -analyze </pre>
+    -polly-ast -analyze </pre>
 
 <pre>
 [...]

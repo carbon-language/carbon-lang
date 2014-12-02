@@ -122,7 +122,7 @@ The jscop file describing the tiling transformation is:
 We can test the schedule with the following command line.
 <pre>
 opt -load /path/to/polly/build/LLVMPolly.so -basicaa -polly-import-jscop
-    -polly-cloog -analyze -q ./test.ll
+    -polly-ast -analyze -q ./test.ll
     -polly-import-jscop-postfix=transformed+gpu
 </pre>
 The output of this schedule is:

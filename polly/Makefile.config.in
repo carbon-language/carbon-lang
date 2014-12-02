@@ -29,13 +29,12 @@ endif
 POLLY_CXXFLAGS += "-fno-rtti -fno-exceptions"
 
 PLUTO_FOUND := @pluto_found@
-CLOOG_FOUND := @cloog_found@
 CUDALIB_FOUND := @cuda_found@
 
 # Set include directroys
-POLLY_INC :=  @gmp_inc@ @isl_inc@ @cloog_inc@ @cuda_inc@\
+POLLY_INC :=  @gmp_inc@ @isl_inc@ @cuda_inc@\
 				      @pluto_inc@ -I$(POLLY_SRC_ROOT)/lib/JSON/include
 
-POLLY_LD := @gmp_ld@ @isl_ld@ @cloog_ld@ @cuda_ld@ @pluto_ld@
+POLLY_LD := @gmp_ld@ @isl_ld@ @cuda_ld@ @pluto_ld@
 
-POLLY_LIB := @gmp_lib@ @isl_lib@ @cloog_lib@ @cuda_lib@ @pluto_lib@
+POLLY_LIB := @gmp_lib@ @isl_lib@ @cuda_lib@ @pluto_lib@

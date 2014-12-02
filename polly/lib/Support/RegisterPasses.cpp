@@ -21,7 +21,6 @@
 
 #include "polly/RegisterPasses.h"
 #include "polly/Canonicalization.h"
-#include "polly/CodeGen/Cloog.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
@@ -68,12 +67,9 @@ static cl::opt<OptimizerChoice> Optimizer(
 CodeGenChoice polly::PollyCodeGenChoice;
 static cl::opt<CodeGenChoice, true> XCodeGenerator(
     "polly-code-generator", cl::desc("Select the code generator"),
-    cl::values(
-#ifdef CLOOG_FOUND
-        clEnumValN(CODEGEN_CLOOG, "cloog", "CLooG"),
-#endif
-        clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
-        clEnumValN(CODEGEN_NONE, "none", "no code generation"), clEnumValEnd),
+    cl::values(clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
+               clEnumValN(CODEGEN_NONE, "none", "no code generation"),
+               clEnumValEnd),
     cl::Hidden, cl::location(PollyCodeGenChoice), cl::init(CODEGEN_ISL),
     cl::ZeroOrMore, cl::cat(PollyCategory));
 
@@ -143,10 +139,6 @@ static cl::opt<bool, true> XPollyAnnotateAliasScopes(
 
 namespace polly {
 void initializePollyPasses(PassRegistry &Registry) {
-#ifdef CLOOG_FOUND
-  initializeCloogInfoPass(Registry);
-  initializeCodeGenerationPass(Registry);
-#endif
   initializeIslCodeGenerationPass(Registry);
   initializeCodePreparationPass(Registry);
   initializeDeadCodeElimPass(Registry);
@@ -189,9 +181,7 @@ void initializePollyPasses(PassRegistry &Registry) {
 /// provided to analyze the run and compile time changes caused by the
 /// scheduling optimizer.
 ///
-/// Polly supports both CLooG (http://www.cloog.org) as well as the isl internal
-/// code generator. For the moment, the CLooG code generator is enabled by
-/// default.
+/// Polly supports the isl internal code generator.
 static void registerPollyPasses(llvm::PassManagerBase &PM) {
   registerCanonicalicationPasses(PM);
 
@@ -231,16 +221,6 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     PM.add(polly::createJSONExporterPass());
 
   switch (PollyCodeGenChoice) {
-#ifdef CLOOG_FOUND
-  case CODEGEN_CLOOG:
-    PM.add(polly::createCodeGenerationPass());
-    if (PollyVectorizerChoice == VECTORIZER_BB) {
-      VectorizeConfig C;
-      C.FastDep = true;
-      PM.add(createBBVectorizePass(C));
-    }
-    break;
-#endif
   case CODEGEN_ISL:
     PM.add(polly::createIslCodeGenerationPass());
     break;

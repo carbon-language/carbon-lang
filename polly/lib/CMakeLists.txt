@@ -10,12 +10,6 @@ set(POLLY_JSON_FILES
     JSON/json_writer.cpp
 )
 
-if (CLOOG_FOUND)
-  set(CLOOG_FILES
-      CodeGen/Cloog.cpp
-      CodeGen/CodeGeneration.cpp)
-endif (CLOOG_FOUND)
-
 set(ISL_CODEGEN_FILES
     CodeGen/IslAst.cpp
     CodeGen/IslExprBuilder.cpp
@@ -35,7 +29,6 @@ add_polly_library(Polly
   Analysis/ScopPass.cpp
   Analysis/TempScopInfo.cpp
   CodeGen/BlockGenerators.cpp
-  ${CLOOG_FILES}
   ${ISL_CODEGEN_FILES}
   CodeGen/LoopGenerators.cpp
   CodeGen/IRBuilder.cpp
