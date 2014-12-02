@@ -801,6 +801,36 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
                     break;
             }
         }
+        else if (name[0] == 'q')
+        {
+            switch (name[1])
+            {
+                case '1':
+                    switch (name[2])
+                    {
+                        case '\0':
+                            return true;  // q1 is volatile
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                            return true; // q10-q15 are volatile
+                        default:
+                            break;
+                    };
+                case '0': 
+                case '2': 
+                case '3': 
+                    return name[2] == '\0'; // q0-q3 are volatile
+                case '8':
+                case '9':
+                    return name[2] == '\0'; // q8-q9 are volatile
+                default:
+                    break;
+            }
+        }
         else if (name[0] == 's' && name[1] == 'p' && name[2] == '\0')
             return true;
     }
