@@ -1,6 +1,8 @@
 // This test explicitly cd's to the test/Modules directory so that we can test
 // that filenames found via relative -I paths are printed correctly.
 //
+// REQUIRES: shell
+//
 // RUN: rm -rf %t
 // RUN: cd %S
 // RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -I Inputs/malformed -DHEADER="a1.h" %s 2>&1 | FileCheck %s --check-prefix=CHECK-A
