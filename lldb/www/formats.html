@@ -81,7 +81,12 @@
                     <tr valign=top><td><b>frame.reg.NAME</b></td><td>Access to any platform specific register by name (replace <b>NAME</b> with the name of the desired register).</td></tr>
                     <tr valign=top><td><b>function.name</b></td><td>The name of the current function or symbol.</td></tr>
                     <tr valign=top><td><b>function.name-with-args</b></td><td>The name of the current function with arguments and values or the symbol name.</td></tr>
+                    <tr valign=top><td><b>function.name-without-args</b></td><td>The name of the current function without arguments and values (used to include a function name in-line in the <tt>disassembly-format</tt>)</td></tr>
                     <tr valign=top><td><b>function.pc-offset</b></td><td>The program counter offset within the current function or symbol</td></tr>
+                    <tr valign=top><td><b>function.addr-offset</b></td><td>The offset in bytes of the current function, formatted as " + dddd"</td></tr>
+                    <tr valign=top><td><b>function.concrete-only-addr-offset-no-padding</b></td><td>Similar to <b>function.addr-offset</b> except that there are no spaces in the output (e.g. "+dddd") and the offset is computed from the nearest concrete function -- inlined functions are not included</td></tr>
+                    <tr valign=top><td><b>function.changed</b></td><td>Will evaluate to true when the line being formatted is a different symbol context from the previous line (may be used in <tt>disassembly-format</tt> to print the new function name on a line by itself at the start of a new function).  Inlined functions are not considered for this variable</td></tr>
+                    <tr valign=top><td><b>function.initial-function</b></td><td>Will evaluate to true if this is the start of the first function, as opposed to a change of functions (may be used in <tt>disassembly-format</tt> to print the function name for the first function being disassembled)</td></tr>
                     <tr valign=top><td><b>line.file.basename</b></td><td>The line table entry basename to the file for the current line entry in the current frame.</td></tr>
                     <tr valign=top><td><b>line.file.fullpath</b></td><td>The line table entry fullpath to the file for the current line entry in the current frame.</td></tr>
                     <tr valign=top><td><b>line.number</b></td><td>The line table entry line number for the current line entry in the current frame.</td></tr>
@@ -105,6 +110,8 @@
                     <tr valign=top><td><b>process.script:<i>python_func</i></b></td><td>Use a Python function to generate a piece of textual output</td></tr>
                     <tr valign=top><td><b>thread.script:<i>python_func</i></b></td><td>Use a Python function to generate a piece of textual output</td></tr>
                     <tr valign=top><td><b>frame.script:<i>python_func</i></b></td><td>Use a Python function to generate a piece of textual output</td></tr>
+                    <tr valign=top><td><b>current-pc-arrow</b></td><td>Prints either '<tt>-> </tt>' or '<tt>   </tt>' if the current pc value is matched (used in <tt>disassembly-format</tt>)</td></tr>
+                    <tr valign=top><td><b>addr-file-or-load</b></td><td>Formats an address either as a load address, or if process has not yet been launched, as a load address (used in <tt>disassembly-format</tt>)</td></tr>
                     </table>
                     
                        </div>

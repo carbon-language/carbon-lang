@@ -125,7 +125,7 @@ g_language_enumerators[] =
     FILE_AND_LINE\
     "\\n"
 
-#define DEFAULT_DISASSEMBLY_FORMAT "${current-pc-arrow} ${addr-file-or-load}{ <${function.name-without-args}${function.concrete-only-addr-offset-no-padding}>}: "
+#define DEFAULT_DISASSEMBLY_FORMAT "${current-pc-arrow}${addr-file-or-load}{ <${function.name-without-args}${function.concrete-only-addr-offset-no-padding}>}: "
 
 static PropertyDefinition
 g_properties[] =
@@ -2626,17 +2626,18 @@ FormatPromptRecurse
                                             pc.SetLoadAddress (pc_loadaddr, exe_ctx->GetTargetPtr());
                                             if (pc == *addr)
                                             {
-                                                s.Printf ("->");
-                                                var_success = true;
-                                            }
-                                            else
-                                            {
-                                                s.Printf("  ");
+                                                s.Printf ("-> ");
                                                 var_success = true;
                                             }
                                         }
                                     }
+                                    if (var_success == false)
+                                    {
+                                        s.Printf("   ");
+                                        var_success = true;
+                                    }
                                 }
+                                var_success = true;
                             }
                             break;
                         }
