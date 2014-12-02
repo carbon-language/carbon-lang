@@ -585,7 +585,8 @@ def warn_atprotocol_protocol : Warning<
   "@protocol is using a forward protocol declaration of %0">, InGroup<AtProtocol>;
 def warn_readonly_property : Warning<
   "attribute 'readonly' of property %0 restricts attribute "
-  "'readwrite' of property inherited from %1">;
+  "'readwrite' of property inherited from %1">,
+  InGroup<PropertyAttr>;
 
 def warn_property_attribute : Warning<
   "'%1' attribute on property %0 does not match the property inherited from %2">,

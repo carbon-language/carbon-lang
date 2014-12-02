@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (98):
+CHECK: Warnings without flags (97):
 CHECK-NEXT:   ext_excess_initializers
 CHECK-NEXT:   ext_excess_initializers_in_char_array_initializer
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -103,7 +103,6 @@ CHECK-NEXT:   warn_pp_line_decimal
 CHECK-NEXT:   warn_pragma_pack_pop_identifer_and_alignment
 CHECK-NEXT:   warn_pragma_pack_show
 CHECK-NEXT:   warn_property_getter_owning_mismatch
-CHECK-NEXT:   warn_readonly_property
 CHECK-NEXT:   warn_register_objc_catch_parm
 CHECK-NEXT:   warn_related_result_type_compatibility_class
 CHECK-NEXT:   warn_related_result_type_compatibility_protocol
