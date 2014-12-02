@@ -748,6 +748,8 @@ class Base(unittest2.TestCase):
             cls.platformContext = _PlatformContext('DYLD_LIBRARY_PATH', 'lib', 'dylib')
         elif sys.platform.startswith('linux') or sys.platform.startswith('freebsd'):
             cls.platformContext = _PlatformContext('LD_LIBRARY_PATH', 'lib', 'so')
+        else:
+            cls.platformContext = None
 
     @classmethod
     def tearDownClass(cls):
@@ -914,8 +916,9 @@ class Base(unittest2.TestCase):
         # See HideStdout(self).
         self.sys_stdout_hidden = False
 
-        # set environment variable names for finding shared libraries
-        self.dylibPath = self.platformContext.shlib_environment_var
+        if self.platformContext:
+            # set environment variable names for finding shared libraries
+            self.dylibPath = self.platformContext.shlib_environment_var
 
     def runHooks(self, child=None, child_prompt=None, use_cmd_api=False):
         """Perform the run hooks to bring lldb debugger to the desired state.
@@ -1683,7 +1686,7 @@ class TestBase(Base):
         shared libraries with the target and sets their remote install locations so they will
         be uploaded when the target is run.
         '''
-        if not shlibs:
+        if not shlibs or not self.platformContext:
             return None
 
         shlib_environment_var = self.platformContext.shlib_environment_var
