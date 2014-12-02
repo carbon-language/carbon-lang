@@ -63,11 +63,12 @@ ErrorOr<std::string> sys::findProgramByName(StringRef Name,
   if (Name.find('/') != StringRef::npos)
     return std::string(Name);
 
-  if (Paths.empty()) {
-    SmallVector<StringRef, 16> SearchPaths;
-    SplitString(std::getenv("PATH"), SearchPaths, ":");
-    return findProgramByName(Name, SearchPaths);
-  }
+  SmallVector<StringRef, 16> EnvironmentPaths;
+  if (Paths.empty())
+    if (const char *PathEnv = std::getenv("PATH")) {
+      SplitString(PathEnv, EnvironmentPaths, ":");
+      Paths = EnvironmentPaths;
+    }
 
   for (auto Path : Paths) {
     if (Path.empty())

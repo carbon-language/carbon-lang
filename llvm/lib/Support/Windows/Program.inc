@@ -62,7 +62,8 @@ ErrorOr<std::string> sys::findProgramByName(StringRef Name,
   SmallVector<StringRef, 12> PathExts;
   PathExts.push_back("");
   PathExts.push_back(".exe"); // FIXME: This must be in %PATHEXT%.
-  SplitString(std::getenv("PATHEXT"), PathExts, ";");
+  if (const char *PathExtEnv = std::getenv("PATHEXT"))
+    SplitString(PathExtEnv, PathExts, ";");
 
   SmallVector<wchar_t, MAX_PATH> U16Result;
   DWORD Len = MAX_PATH;
