@@ -240,6 +240,10 @@ struct FormatStyle {
   /// \endcode
   bool AlignAfterOpenBracket;
 
+  /// \brief If \c true, horizontally align operands of binary and ternary
+  /// expressions.
+  bool AlignOperands;
+
   /// \brief If \c true, aligns trailing comments.
   bool AlignTrailingComments;
 
@@ -407,6 +411,7 @@ struct FormatStyle {
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignAfterOpenBracket == R.AlignAfterOpenBracket &&
+           AlignOperands == R.AlignOperands &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
            AlignTrailingComments == R.AlignTrailingComments &&
            AllowAllParametersOfDeclarationOnNextLine ==

@@ -150,9 +150,23 @@ the configuration (without a prefix: ``Auto``).
 **AccessModifierOffset** (``int``)
   The extra indent or outdent of access modifiers, e.g. ``public:``.
 
+**AlignAfterOpenBracket** (``bool``)
+  If ``true``, horizontally aligns arguments after an open bracket.
+
+  This applies to round brackets (parentheses), angle brackets and square
+  brackets. This will result in formattings like
+  \code
+  someLongFunction(argument1,
+  argument2);
+  \endcode
+
 **AlignEscapedNewlinesLeft** (``bool``)
   If ``true``, aligns escaped newlines as far left as possible.
   Otherwise puts them into the right-most column.
+
+**AlignOperands** (``bool``)
+  If ``true``, horizontally align operands of binary and ternary
+  expressions.
 
 **AlignTrailingComments** (``bool``)
   If ``true``, aligns trailing comments.
@@ -179,6 +193,8 @@ the configuration (without a prefix: ``Auto``).
     Never merge functions into a single line.
   * ``SFS_Inline`` (in configuration: ``Inline``)
     Only merge functions defined inside a class.
+  * ``SFS_Empty`` (in configuration: ``Empty``)
+    Only merge empty functions.
   * ``SFS_All`` (in configuration: ``All``)
     Merge all functions fitting on a single line.
 
@@ -292,7 +308,7 @@ the configuration (without a prefix: ``Auto``).
 
 **DerivePointerAlignment** (``bool``)
   If ``true``, analyze the formatted file for the most common
-  alignment of & and \*. ``PointerAlignment`` is then used only as fallback.
+  alignment of & and *. ``PointerAlignment`` is then used only as fallback.
 
 **DisableFormat** (``bool``)
   Disables formatting at all.

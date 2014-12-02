@@ -291,7 +291,7 @@ TEST_F(FormatTestJava, Generics) {
 
 TEST_F(FormatTestJava, StringConcatenation) {
   verifyFormat("String someString = \"abc\"\n"
-               "                    + \"cde\";");
+               "    + \"cde\";");
 }
 
 TEST_F(FormatTestJava, TryCatchFinally) {

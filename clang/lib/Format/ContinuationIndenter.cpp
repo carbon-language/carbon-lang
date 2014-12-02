@@ -178,9 +178,6 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     // expression itself as otherwise, the line breaks seem superfluous.
     // We need special cases for ">>" which we have split into two ">" while
     // lexing in order to make template parsing easier.
-    //
-    // FIXME: We'll need something similar for styles that break before binary
-    // operators.
     bool IsComparison = (Previous.getPrecedence() == prec::Relational ||
                          Previous.getPrecedence() == prec::Equality) &&
                         Previous.Previous &&
@@ -193,7 +190,12 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
         Previous.getPrecedence() != prec::Assignment &&
         State.Stack.back().BreakBeforeParameter)
       return true;
+  } else {
+    if (Current.is(TT_BinaryOperator) && Previous.EndsBinaryExpression &&
+        State.Stack.back().BreakBeforeParameter)
+      return true;
   }
+
 
   // Same as above, but for the first "<<" operator.
   if (Current.is(tok::lessless) && Current.isNot(TT_OverloadedOperator) &&
@@ -712,7 +714,8 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
   // is special cased.
   bool SkipFirstExtraIndent =
       (Previous && (Previous->opensScope() || Previous->is(tok::kw_return) ||
-                    Previous->getPrecedence() == prec::Assignment ||
+                    (Previous->getPrecedence() == prec::Assignment &&
+                     Style.AlignOperands) ||
                     Previous->is(TT_ObjCMethodExpr)));
   for (SmallVectorImpl<prec::Level>::const_reverse_iterator
            I = Current.FakeLParens.rbegin(),
@@ -725,6 +728,7 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     // a builder type call after 'return' or, if the alignment after opening
     // brackets is disabled.
     if (!Current.isTrailingComment() &&
+        (Style.AlignOperands || *I < prec::Assignment) &&
         (!Previous || Previous->isNot(tok::kw_return) ||
          (Style.Language != FormatStyle::LK_Java && *I > 0)) &&
         (Style.AlignAfterOpenBracket || *I != prec::Comma ||
