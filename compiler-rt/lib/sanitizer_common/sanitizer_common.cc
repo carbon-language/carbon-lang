@@ -166,9 +166,8 @@ const char *StripModuleName(const char *module) {
 void ReportErrorSummary(const char *error_message) {
   if (!common_flags()->print_summary)
     return;
-  InternalScopedBuffer<char> buff(kMaxSummaryLength);
-  internal_snprintf(buff.data(), buff.size(),
-                    "SUMMARY: %s: %s", SanitizerToolName, error_message);
+  InternalScopedString buff(kMaxSummaryLength);
+  buff.append("SUMMARY: %s: %s", SanitizerToolName, error_message);
   __sanitizer_report_error_summary(buff.data());
 }
 
@@ -176,11 +175,11 @@ void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function) {
   if (!common_flags()->print_summary)
     return;
-  InternalScopedBuffer<char> buff(kMaxSummaryLength);
-  internal_snprintf(
-      buff.data(), buff.size(), "%s %s:%d %s", error_type,
-      file ? StripPathPrefix(file, common_flags()->strip_path_prefix) : "??",
-      line, function ? function : "??");
+  InternalScopedString buff(kMaxSummaryLength);
+  buff.append("%s %s:%d %s", error_type,
+              file ? StripPathPrefix(file, common_flags()->strip_path_prefix)
+                   : "??",
+              line, function ? function : "??");
   ReportErrorSummary(buff.data());
 }
 

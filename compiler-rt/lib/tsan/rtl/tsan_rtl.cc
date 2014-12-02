@@ -143,9 +143,8 @@ static void BackgroundThread(void *arg) {
     } else if (internal_strcmp(flags()->profile_memory, "stderr") == 0) {
       mprof_fd = 2;
     } else {
-      InternalScopedBuffer<char> filename(4096);
-      internal_snprintf(filename.data(), filename.size(), "%s.%d",
-          flags()->profile_memory, (int)internal_getpid());
+      InternalScopedString filename(kMaxPathLength);
+      filename.append("%s.%d", flags()->profile_memory, (int)internal_getpid());
       uptr openrv = OpenFile(filename.data(), true);
       if (internal_iserror(openrv)) {
         Printf("ThreadSanitizer: failed to open memory profile file '%s'\n",

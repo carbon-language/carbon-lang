@@ -370,16 +370,15 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrData *data = (DlIteratePhdrData*)arg;
   if (data->current_n == data->max_n)
     return 0;
-  InternalScopedBuffer<char> module_name(kMaxPathLength);
-  module_name.data()[0] = '\0';
+  InternalScopedString module_name(kMaxPathLength);
   if (data->first) {
     data->first = false;
     // First module is the binary itself.
     ReadBinaryName(module_name.data(), module_name.size());
   } else if (info->dlpi_name) {
-    internal_strncpy(module_name.data(), info->dlpi_name, module_name.size());
+    module_name.append("%s", info->dlpi_name);
   }
-  if (module_name.data()[0] == '\0')
+  if (module_name[0] == '\0')
     return 0;
   if (data->filter && !data->filter(module_name.data()))
     return 0;

@@ -339,19 +339,17 @@ static void CovWritePacked(int pid, const char *module, const void *blob,
 // If packed = true and name != 0: <name>.<sancov>.<packed> (name is
 // user-supplied).
 static int CovOpenFile(bool packed, const char* name) {
-  InternalScopedBuffer<char> path(kMaxPathLength);
+  InternalScopedString path(kMaxPathLength);
   if (!packed) {
     CHECK(name);
-    internal_snprintf((char *)path.data(), path.size(), "%s/%s.%zd.sancov",
-                      common_flags()->coverage_dir, name, internal_getpid());
+    path.append("%s/%s.%zd.sancov", common_flags()->coverage_dir, name,
+                internal_getpid());
   } else {
     if (!name)
-      internal_snprintf((char *)path.data(), path.size(),
-                        "%s/%zd.sancov.packed", common_flags()->coverage_dir,
-                        internal_getpid());
+      path.append("%s/%zd.sancov.packed", common_flags()->coverage_dir,
+                  internal_getpid());
     else
-      internal_snprintf((char *)path.data(), path.size(), "%s/%s.sancov.packed",
-                        common_flags()->coverage_dir, name);
+      path.append("%s/%s.sancov.packed", common_flags()->coverage_dir, name);
   }
   uptr fd = OpenFile(path.data(), true);
   if (internal_iserror(fd)) {
@@ -465,8 +463,8 @@ static void CovDump() {
   SortArray(vb, size);
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr mb, me, off, prot;
-  InternalScopedBuffer<char> module(kMaxPathLength);
-  InternalScopedBuffer<char> path(kMaxPathLength);
+  InternalScopedString module(kMaxPathLength);
+  InternalScopedString path(kMaxPathLength);
   for (int i = 0;
        proc_maps.Next(&mb, &me, &off, module.data(), module.size(), &prot);
        i++) {
@@ -492,9 +490,9 @@ static void CovDump() {
         }
       } else {
         // One file per module per process.
-        internal_snprintf((char *)path.data(), path.size(), "%s/%s.%zd.sancov",
-                          common_flags()->coverage_dir, module_name,
-                          internal_getpid());
+        path.clear();
+        path.append("%s/%s.%zd.sancov", common_flags()->coverage_dir,
+                    module_name, internal_getpid());
         int fd = CovOpenFile(false /* packed */, module_name);
         if (fd > 0) {
           internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));

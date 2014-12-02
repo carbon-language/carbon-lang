@@ -90,9 +90,9 @@ INTERCEPTOR(void, malloc_set_zone_name, malloc_zone_t *zone, const char *name) {
   ENSURE_ASAN_INITED();
   // Allocate |strlen("asan-") + 1 + internal_strlen(name)| bytes.
   size_t buflen = 6 + (name ? internal_strlen(name) : 0);
-  InternalScopedBuffer<char> new_name(buflen);
+  InternalScopedString new_name(buflen);
   if (name && zone->introspect == asan_zone.introspect) {
-    internal_snprintf(new_name.data(), buflen, "asan-%s", name);
+    new_name.append("asan-%s", name);
     name = new_name.data();
   }
 

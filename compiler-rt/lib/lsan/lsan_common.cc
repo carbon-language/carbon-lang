@@ -590,10 +590,9 @@ void LeakReport::PrintSummary() {
       bytes += leaks_[i].total_size;
       allocations += leaks_[i].hit_count;
   }
-  InternalScopedBuffer<char> summary(kMaxSummaryLength);
-  internal_snprintf(summary.data(), summary.size(),
-                    "%zu byte(s) leaked in %zu allocation(s).", bytes,
-                    allocations);
+  InternalScopedString summary(kMaxSummaryLength);
+  summary.append("%zu byte(s) leaked in %zu allocation(s).", bytes,
+                 allocations);
   ReportErrorSummary(summary.data());
 }
 

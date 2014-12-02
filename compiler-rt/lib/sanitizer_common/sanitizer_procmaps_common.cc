@@ -119,7 +119,7 @@ uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
                                             string_predicate_t filter) {
   Reset();
   uptr cur_beg, cur_end, cur_offset, prot;
-  InternalScopedBuffer<char> module_name(kMaxPathLength);
+  InternalScopedString module_name(kMaxPathLength);
   uptr n_modules = 0;
   for (uptr i = 0; n_modules < max_modules &&
                        Next(&cur_beg, &cur_end, &cur_offset, module_name.data(),

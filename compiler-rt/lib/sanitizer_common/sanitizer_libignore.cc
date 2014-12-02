@@ -42,9 +42,9 @@ void LibIgnore::Init(const SuppressionContext &supp) {
 void LibIgnore::OnLibraryLoaded(const char *name) {
   BlockingMutexLock lock(&mutex_);
   // Try to match suppressions with symlink target.
-  InternalScopedBuffer<char> buf(kMaxPathLength);
+  InternalScopedString buf(kMaxPathLength);
   if (name != 0 && internal_readlink(name, buf.data(), buf.size() - 1) > 0 &&
-      buf.data()[0]) {
+      buf[0]) {
     for (uptr i = 0; i < count_; i++) {
       Lib *lib = &libs_[i];
       if (!lib->loaded && lib->real_name == 0 &&
@@ -55,7 +55,7 @@ void LibIgnore::OnLibraryLoaded(const char *name) {
 
   // Scan suppressions list and find newly loaded and unloaded libraries.
   MemoryMappingLayout proc_maps(/*cache_enabled*/false);
-  InternalScopedBuffer<char> module(kMaxPathLength);
+  InternalScopedString module(kMaxPathLength);
   for (uptr i = 0; i < count_; i++) {
     Lib *lib = &libs_[i];
     bool loaded = false;
