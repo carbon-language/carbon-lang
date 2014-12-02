@@ -51,6 +51,9 @@ public:
     case gotOffset12:
       canBypassGOT = true;
       return true;
+    case imageOffsetGot:
+      canBypassGOT = false;
+      return true;
     default:
       return false;
     }
@@ -72,6 +75,9 @@ public:
       const_cast<Reference *>(ref)->setKindValue(targetNowGOT ?
                                                  offset12scale8 : addOffset12);
       break;
+    case imageOffsetGot:
+      const_cast<Reference *>(ref)->setKindValue(imageOffset);
+      break;
     default:
       llvm_unreachable("Not a GOT reference");
     }
@@ -88,30 +94,29 @@ public:
   bool isPairedReloc(const normalized::Relocation &) override;
 
   bool needsCompactUnwind() override {
-    return false;
+    return true;
   }
   Reference::KindValue imageOffsetKind() override {
-    return invalid;
+    return imageOffset;
   }
   Reference::KindValue imageOffsetKindIndirect() override {
-    return invalid;
+    return imageOffsetGot;
   }
 
   Reference::KindValue unwindRefToCIEKind() override {
-    return invalid;
+    return negDelta32;
   }
 
   Reference::KindValue unwindRefToFunctionKind() override {
-    return invalid;
+    return unwindFDEToFunction;
   }
 
   Reference::KindValue unwindRefToEhFrameKind() override {
-    return invalid;
+    return unwindInfoToEhFrame;
   }
 
   uint32_t dwarfCompactUnwindType() override {
-    // FIXME
-    return -1;
+    return 0x03000000;
   }
 
   std::error_code getReferenceInfo(const normalized::Relocation &reloc,
@@ -176,6 +181,7 @@ private:
     pointer64,             /// ex: .quad _foo
     delta64,               /// ex: .quad _foo - .
     delta32,               /// ex: .long _foo - .
+    negDelta32,            /// ex: .long . - _foo
     pointer64ToGOT,        /// ex: .quad _foo@GOT
     delta32ToGOT,          /// ex: .long _foo@GOT - .
 
@@ -183,11 +189,19 @@ private:
     addOffset12,           /// Location contains LDR to change into ADD.
     lazyPointer,           /// Location contains a lazy pointer.
     lazyImmediateLocation, /// Location contains immediate value used in stub.
+    imageOffset,           /// Location contains offset of atom in final image
+    imageOffsetGot,        /// Location contains offset of GOT entry for atom in
+                           /// final image (typically personality function).
+    unwindFDEToFunction,   /// Nearly delta64, but cannot be rematerialized in
+                           /// relocatable object (yay for implicit contracts!).
+    unwindInfoToEhFrame,   /// Fix low 24 bits of compact unwind encoding to
+                           /// refer to __eh_frame entry.
   };
 
   void applyFixupFinal(const Reference &ref, uint8_t *location,
                        uint64_t fixupAddress, uint64_t targetAddress,
-                       uint64_t inAtomAddress);
+                       uint64_t inAtomAddress, uint64_t imageBaseAddress,
+                       FindAddressForAtom findSectionAddress);
 
   void applyFixupRelocatable(const Reference &ref, uint8_t *location,
                              uint64_t fixupAddress, uint64_t targetAddress,
@@ -220,12 +234,17 @@ const Registry::KindStrings ArchHandler_arm64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(pointer64),
   LLD_KIND_STRING_ENTRY(delta64),
   LLD_KIND_STRING_ENTRY(delta32),
+  LLD_KIND_STRING_ENTRY(negDelta32),
   LLD_KIND_STRING_ENTRY(pointer64ToGOT),
   LLD_KIND_STRING_ENTRY(delta32ToGOT),
 
   LLD_KIND_STRING_ENTRY(addOffset12),
   LLD_KIND_STRING_ENTRY(lazyPointer),
   LLD_KIND_STRING_ENTRY(lazyImmediateLocation),
+  LLD_KIND_STRING_ENTRY(imageOffset),
+  LLD_KIND_STRING_ENTRY(imageOffsetGot),
+  LLD_KIND_STRING_ENTRY(unwindFDEToFunction),
+  LLD_KIND_STRING_ENTRY(unwindInfoToEhFrame),
 
   LLD_KIND_STRING_END
 };
@@ -498,7 +517,8 @@ void ArchHandler_arm64::generateAtomContent(
                             targetAddress, atomAddress, targetUnnamed);
     } else {
       applyFixupFinal(*ref, &atomContentBuffer[offset], fixupAddress,
-                      targetAddress, atomAddress);
+                      targetAddress, atomAddress, imageBaseAddress,
+                      findSectionAddress);
     }
   }
 }
@@ -506,7 +526,9 @@ void ArchHandler_arm64::generateAtomContent(
 void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *loc,
                                         uint64_t fixupAddress,
                                         uint64_t targetAddress,
-                                        uint64_t inAtomAddress) {
+                                        uint64_t inAtomAddress,
+                                        uint64_t imageBaseAddress,
+                                        FindAddressForAtom findSectionAddress) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::AArch64);
@@ -515,6 +537,7 @@ void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *loc,
   int32_t displacement;
   uint32_t instruction;
   uint32_t value32;
+  uint32_t value64;
   switch (static_cast<Arm64_Kinds>(ref.kindValue())) {
   case branch26:
     displacement = (targetAddress - fixupAddress) + ref.addend();
@@ -571,17 +594,32 @@ void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *loc,
     *loc64 = targetAddress + ref.addend();
     return;
   case delta64:
+  case unwindFDEToFunction:
     *loc64 = (targetAddress - fixupAddress) + ref.addend();
     return;
   case delta32:
   case delta32ToGOT:
     *loc32 = (targetAddress - fixupAddress) + ref.addend();
     return;
+  case negDelta32:
+    *loc32 = fixupAddress - targetAddress + ref.addend();
+    return;
   case lazyPointer:
     // Do nothing
     return;
   case lazyImmediateLocation:
     *loc32 = ref.addend();
+    return;
+  case imageOffset:
+    *loc32 = (targetAddress - imageBaseAddress) + ref.addend();
+    return;
+  case imageOffsetGot:
+    llvm_unreachable("imageOffsetGot should have been changed to imageOffset");
+    break;
+  case unwindInfoToEhFrame:
+    value64 = targetAddress - findSectionAddress(*ref.target()) + ref.addend();
+    assert(value64 < 0xffffffU && "offset in __eh_frame too large");
+    *loc32 = (*loc32 & 0xff000000U) | value64;
     return;
   case invalid:
     // Fall into llvm_unreachable().
@@ -631,6 +669,9 @@ void ArchHandler_arm64::applyFixupRelocatable(const Reference &ref,
   case delta32:
     *loc32 = ref.addend() + inAtomAddress - fixupAddress;
     return;
+  case negDelta32:
+    *loc32 = fixupAddress - inAtomAddress + ref.addend();
+    return;
   case pointer64ToGOT:
     *loc64 = 0;
     return;
@@ -642,6 +683,14 @@ void ArchHandler_arm64::applyFixupRelocatable(const Reference &ref,
   case lazyPointer:
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
+  case imageOffset:
+  case imageOffsetGot:
+  case unwindInfoToEhFrame:
+    llvm_unreachable("fixup implies __unwind_info");
+    return;
+  case unwindFDEToFunction:
+    // Do nothing for now
+    return;
   case invalid:
     // Fall into llvm_unreachable().
     break;
@@ -751,6 +800,14 @@ void ArchHandler_arm64::appendSectionRelocations(
   case lazyPointer:
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
+  case imageOffset:
+  case imageOffsetGot:
+    llvm_unreachable("deltas from mach_header can only be in final images");
+  case unwindFDEToFunction:
+  case unwindInfoToEhFrame:
+  case negDelta32:
+    // Do nothing.
+    return;
   case invalid:
     // Fall into llvm_unreachable().
     break;
