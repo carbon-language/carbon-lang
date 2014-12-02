@@ -2072,6 +2072,12 @@ def MTSPR : XFXForm_1<31, 467, (outs), (ins i32imm:$SPR, gprc:$RT),
 def MFTB : XFXForm_1<31, 371, (outs gprc:$RT), (ins i32imm:$SPR),
                      "mftb $RT, $SPR", IIC_SprMFTB>, Deprecated<DeprecatedMFTB>;
 
+// A pseudo-instruction used to implement the read of the 64-bit cycle counter
+// on a 32-bit target.
+let hasSideEffects = 1, usesCustomInserter = 1 in
+def ReadTB : Pseudo<(outs gprc:$lo, gprc:$hi), (ins),
+                    "#ReadTB", []>;
+
 let Uses = [CTR] in {
 def MFCTR : XFXForm_1_ext<31, 339, 9, (outs gprc:$rT), (ins),
                           "mfctr $rT", IIC_SprMFSPR>,

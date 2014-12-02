@@ -1026,6 +1026,11 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
                                   N->getOperand(0), InFlag);
   }
 
+  case PPCISD::READ_TIME_BASE: {
+    return CurDAG->getMachineNode(PPC::ReadTB, dl, MVT::i32, MVT::i32,
+                                  MVT::Other, N->getOperand(0));
+  }
+
   case ISD::SDIV: {
     // FIXME: since this depends on the setting of the carry flag from the srawi
     //        we should really be making notes about that for the scheduler.

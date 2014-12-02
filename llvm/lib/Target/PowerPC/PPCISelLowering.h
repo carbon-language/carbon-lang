@@ -125,6 +125,10 @@ namespace llvm {
       /// implement truncation of i32 or i64 to i1.
       ANDIo_1_EQ_BIT, ANDIo_1_GT_BIT,
 
+      // READ_TIME_BASE - A read of the 64-bit time-base register on a 32-bit
+      // target (returns (Lo, Hi)). It takes a chain operand.
+      READ_TIME_BASE,
+
       // EH_SJLJ_SETJMP - SjLj exception handling setjmp.
       EH_SJLJ_SETJMP,
 
