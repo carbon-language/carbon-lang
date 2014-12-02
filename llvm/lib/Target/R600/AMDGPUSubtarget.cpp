@@ -108,3 +108,10 @@ unsigned AMDGPUSubtarget::getStackEntrySize() const {
     llvm_unreachable("Illegal wavefront size.");
   }
 }
+
+unsigned AMDGPUSubtarget::getAmdKernelCodeChipID() const {
+  switch(getGeneration()) {
+  default: llvm_unreachable("ChipID unknown");
+  case SEA_ISLANDS: return 12;
+  }
+}

@@ -81,6 +81,8 @@ private:
   /// can correctly setup the GPU state.
   void EmitProgramInfoR600(const MachineFunction &MF);
   void EmitProgramInfoSI(const MachineFunction &MF, const SIProgramInfo &KernelInfo);
+  void EmitAmdKernelCodeT(const MachineFunction &MF,
+                          const SIProgramInfo &KernelInfo) const;
 
 public:
   explicit AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer);

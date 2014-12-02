@@ -199,6 +199,8 @@ public:
     return LocalMemorySize;
   }
 
+  unsigned getAmdKernelCodeChipID() const;
+
   bool enableMachineScheduler() const override {
     return getGeneration() <= NORTHERN_ISLANDS;
   }
