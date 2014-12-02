@@ -249,9 +249,6 @@ public:
   }
   bool isCPlusPlusOperatorKeyword() const { return IsCPPOperatorKeyword; }
 
-  /// \brief Return true if this token is a keyword in the specified language.
-  bool isKeyword(const LangOptions &LangOpts);
-
   /// getFETokenInfo/setFETokenInfo - The language front-end is allowed to
   /// associate arbitrary metadata with this token.
   template<typename T>
