@@ -139,8 +139,8 @@ BUILTIN(__nvvm_brev64, "ULLiULLi", "")
 
 // Sad
 
-BUILTIN(__nvvm_sad_i, "iii", "")
-BUILTIN(__nvvm_sad_ui, "UiUiUi", "")
+BUILTIN(__nvvm_sad_i, "iiii", "")
+BUILTIN(__nvvm_sad_ui, "UiUiUiUi", "")
 
 // Floor, Ceil
 
@@ -255,19 +255,19 @@ BUILTIN(__nvvm_rsqrt_approx_d, "dd", "")
 
 // Add
 
-BUILTIN(__nvvm_add_rn_ftz_f, "ff", "")
-BUILTIN(__nvvm_add_rn_f, "ff", "")
-BUILTIN(__nvvm_add_rz_ftz_f, "ff", "")
-BUILTIN(__nvvm_add_rz_f, "ff", "")
-BUILTIN(__nvvm_add_rm_ftz_f, "ff", "")
-BUILTIN(__nvvm_add_rm_f, "ff", "")
-BUILTIN(__nvvm_add_rp_ftz_f, "ff", "")
-BUILTIN(__nvvm_add_rp_f, "ff", "")
+BUILTIN(__nvvm_add_rn_ftz_f, "fff", "")
+BUILTIN(__nvvm_add_rn_f, "fff", "")
+BUILTIN(__nvvm_add_rz_ftz_f, "fff", "")
+BUILTIN(__nvvm_add_rz_f, "fff", "")
+BUILTIN(__nvvm_add_rm_ftz_f, "fff", "")
+BUILTIN(__nvvm_add_rm_f, "fff", "")
+BUILTIN(__nvvm_add_rp_ftz_f, "fff", "")
+BUILTIN(__nvvm_add_rp_f, "fff", "")
 
-BUILTIN(__nvvm_add_rn_d, "dd", "")
-BUILTIN(__nvvm_add_rz_d, "dd", "")
-BUILTIN(__nvvm_add_rm_d, "dd", "")
-BUILTIN(__nvvm_add_rp_d, "dd", "")
+BUILTIN(__nvvm_add_rn_d, "ddd", "")
+BUILTIN(__nvvm_add_rz_d, "ddd", "")
+BUILTIN(__nvvm_add_rm_d, "ddd", "")
+BUILTIN(__nvvm_add_rp_d, "ddd", "")
 
 // Convert
 

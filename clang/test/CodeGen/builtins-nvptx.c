@@ -155,6 +155,8 @@ void nvvm_math(float f1, float f2, double d1, double d2) {
   float t3 = __nvvm_sqrt_rn_f(f1);
 // CHECK: call float @llvm.nvvm.rcp.rn.f
   float t4 = __nvvm_rcp_rn_f(f2);
+// CHECK: call float @llvm.nvvm.add.rn.f
+  float t5 = __nvvm_add_rn_f(f1, f2);
 
 // CHECK: call double @llvm.nvvm.fmax.d
   double td1 = __nvvm_fmax_d(d1, d2);
