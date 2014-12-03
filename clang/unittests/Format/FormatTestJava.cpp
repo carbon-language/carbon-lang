@@ -84,6 +84,11 @@ TEST_F(FormatTestJava, Chromium) {
                getChromiumStyle(FormatStyle::LK_Java));
 }
 
+TEST_F(FormatTestJava, QualifiedNames) {
+  verifyFormat("public some.package.Type someFunction( // comment\n"
+               "    int parameter) {}");
+}
+
 TEST_F(FormatTestJava, ClassKeyword) {
   verifyFormat("SomeClass.class.getName();");
   verifyFormat("Class c = SomeClass.class;");

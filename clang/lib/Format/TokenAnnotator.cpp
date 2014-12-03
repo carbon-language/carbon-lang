@@ -1147,16 +1147,7 @@ public:
           (CurrentPrecedence != -1 && CurrentPrecedence < Precedence) ||
           (CurrentPrecedence == prec::Conditional &&
            Precedence == prec::Assignment && Current->is(tok::colon))) {
-        if (LatestOperator) {
-          LatestOperator->LastOperator = true;
-          if (Precedence == PrecedenceArrowAndPeriod) {
-            // Call expressions don't have a binary operator precedence.
-            addFakeParenthesis(Start, prec::Unknown);
-          } else {
-            addFakeParenthesis(Start, prec::Level(Precedence));
-          }
-        }
-        return;
+        break;
       }
 
       // Consume scopes: (), [], <> and {}
@@ -1174,6 +1165,16 @@ public:
           ++OperatorIndex;
         }
         next(/*SkipPastLeadingComments=*/Precedence > 0);
+      }
+    }
+
+    if (LatestOperator && (Current || Precedence > 0)) {
+      LatestOperator->LastOperator = true;
+      if (Precedence == PrecedenceArrowAndPeriod) {
+        // Call expressions don't have a binary operator precedence.
+        addFakeParenthesis(Start, prec::Unknown);
+      } else {
+        addFakeParenthesis(Start, prec::Level(Precedence));
       }
     }
   }
