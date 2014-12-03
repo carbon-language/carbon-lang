@@ -13,6 +13,7 @@
 // C Includes
 #include <limits.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 
 // C++ Includes
@@ -41,6 +42,50 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+namespace
+{
+
+Error
+ReadPortFromPipe (const char *const named_pipe_path, uint16_t& port, const int timeout_secs)
+{
+    File name_pipe_file;
+    auto error = name_pipe_file.Open (named_pipe_path, File::eOpenOptionRead | File::eOpenOptionNonBlocking);
+    if (error.Fail ())
+        return error;
+
+    struct timeval tv = {timeout_secs, 0};
+    const auto pipe_handle = name_pipe_file.GetWaitableHandle ();
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(pipe_handle, &rfds);
+
+    const auto retval = ::select (pipe_handle + 1, &rfds, NULL, NULL, &tv);
+    if (retval == -1)
+    {
+        error.SetErrorToErrno ();
+        return error;
+    }
+    if (retval == 0)
+    {
+        error.SetErrorString ("timeout exceeded");
+        return error;
+    }
+
+    char port_cstr[256];
+    port_cstr[0] = '\0';
+    size_t num_bytes = sizeof(port_cstr);
+    error = name_pipe_file.Read (port_cstr, num_bytes);
+
+    if (error.Success ())
+    {
+        assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
+        port = Args::StringToUInt32 (port_cstr, 0);
+    }
+    return error;
+}
+
+}
 
 GDBRemoteCommunication::History::History (uint32_t size) :
     m_packets(),
@@ -872,25 +917,23 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         launch_info.AppendSuppressFileAction (STDIN_FILENO, true, false);
         launch_info.AppendSuppressFileAction (STDOUT_FILENO, false, true);
         launch_info.AppendSuppressFileAction (STDERR_FILENO, false, true);
-        
+
         error = Host::LaunchProcess(launch_info);
-        
+
         if (error.Success() && launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
         {
             if (named_pipe_path[0])
             {
-                File name_pipe_file;
-                error = name_pipe_file.Open(named_pipe_path, File::eOpenOptionRead);
+                error = ReadPortFromPipe(named_pipe_path, out_port, 10);
                 if (error.Success())
                 {
-                    char port_cstr[256];
-                    port_cstr[0] = '\0';
-                    size_t num_bytes = sizeof(port_cstr);
-                    error = name_pipe_file.Read(port_cstr, num_bytes);
-                    assert (error.Success());
-                    assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
-                    out_port = Args::StringToUInt32(port_cstr, 0);
-                    name_pipe_file.Close();
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() debugserver listens %u port", __FUNCTION__, out_port);
+                }
+                else
+                {
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() failed to read a port value from named pipe %s: %s", __FUNCTION__, named_pipe_path, error.AsCString());
                 }
                 FileSystem::Unlink(named_pipe_path);
             }
