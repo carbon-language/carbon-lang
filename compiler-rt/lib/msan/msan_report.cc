@@ -61,34 +61,23 @@ static void DescribeStackOrigin(const char *so, uptr pc) {
 static void DescribeOrigin(u32 id) {
   VPrintf(1, "  raw origin id: %d\n", id);
   Decorator d;
-  while (true) {
-    Origin o(id);
-    if (!o.isValid()) {
-      Printf("  %sinvalid origin id(%d)%s\n", d.Warning(), id, d.End());
-      break;
-    }
-    u32 prev_id;
-    u32 stack_id = ChainedOriginDepotGet(o.id(), &prev_id);
-    Origin prev_o(prev_id);
-
-    if (prev_o.isStackRoot()) {
-      uptr pc;
-      const char *so = GetStackOriginDescr(stack_id, &pc);
-      DescribeStackOrigin(so, pc);
-      break;
-    } else if (prev_o.isHeapRoot()) {
-      Printf("  %sUninitialized value was created by a heap allocation%s\n",
-             d.Origin(), d.End());
-      StackDepotGet(stack_id).Print();
-      break;
-    } else {
-      // chained origin
-      // FIXME: copied? modified? passed through? observed?
-      Printf("  %sUninitialized value was stored to memory at%s\n", d.Origin(),
-             d.End());
-      StackDepotGet(stack_id).Print();
-      id = prev_id;
-    }
+  Origin o = Origin::FromRawId(id);
+  while (o.isChainedOrigin()) {
+    StackTrace stack;
+    o = o.getNextChainedOrigin(&stack);
+    Printf("  %sUninitialized value was stored to memory at%s\n", d.Origin(),
+        d.End());
+    stack.Print();
+  }
+  if (o.isStackOrigin()) {
+    uptr pc;
+    const char *so = GetStackOriginDescr(o.getStackId(), &pc);
+    DescribeStackOrigin(so, pc);
+  } else {
+    StackTrace stack = o.getStackTraceForHeapOrigin();
+    Printf("  %sUninitialized value was created by a heap allocation%s\n",
+           d.Origin(), d.End());
+    stack.Print();
   }
 }
 

@@ -956,10 +956,8 @@ void __msan_allocated_memory(const void* data, uptr size) {
   if (flags()->poison_in_malloc)
     __msan_poison(data, size);
   if (__msan_get_track_origins()) {
-    u32 stack_id = StackDepotPut(stack);
-    u32 id;
-    ChainedOriginDepotPut(stack_id, Origin::kHeapRoot, &id);
-    __msan_set_origin(data, size, Origin(id, 1).raw_id());
+    Origin o = Origin::CreateHeapOrigin(&stack);
+    __msan_set_origin(data, size, o.raw_id());
   }
 }
 
