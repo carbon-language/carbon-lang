@@ -310,11 +310,15 @@ namespace {
 
       Function *F = SP.getFunction();
       DEBUG(dbgs() << "Function: " << getFunctionName(SP) << "\n");
-      uint32_t i = 0;
-      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+
+      Function::iterator BB = F->begin(), E = F->end();
+      Blocks[BB++] = new GCOVBlock(0, os);
+      ReturnBlock = new GCOVBlock(1, os);
+
+      uint32_t i = 2;
+      for (; BB != E; ++BB) {
         Blocks[BB] = new GCOVBlock(i++, os);
       }
-      ReturnBlock = new GCOVBlock(i++, os);
 
       std::string FunctionNameAndLine;
       raw_string_ostream FNLOS(FunctionNameAndLine);
