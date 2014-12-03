@@ -166,7 +166,8 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
 bool SanitizerCoverageModule::runOnFunction(Function &F) {
   if (F.empty()) return false;
   // For now instrument only functions that will also be asan-instrumented.
-  if (!F.hasFnAttribute(Attribute::SanitizeAddress))
+  if (!F.hasFnAttribute(Attribute::SanitizeAddress) &&
+      !F.hasFnAttribute(Attribute::SanitizeMemory))
     return false;
   if (CoverageLevel >= 3)
     SplitAllCriticalEdges(F, this);
@@ -273,6 +274,8 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F,
   LoadInst *Load = IRB.CreateLoad(Guard);
   Load->setAtomic(Monotonic);
   Load->setAlignment(1);
+  Load->setMetadata(F.getParent()->getMDKindID("nosanitize"),
+                    MDNode::get(*C, ArrayRef<llvm::Value *>()));
   Value *Cmp = IRB.CreateICmpEQ(Constant::getNullValue(Int8Ty), Load);
   Instruction *Ins = SplitBlockAndInsertIfThen(
       Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
