@@ -234,7 +234,7 @@ LLVM-specific variables
   Enable all compiler warnings. Defaults to ON.
 
 **LLVM_ENABLE_PEDANTIC**:BOOL
-  Enable pedantic mode. This disable compiler specific extensions, is
+  Enable pedantic mode. This disables compiler specific extensions, if
   possible. Defaults to ON.
 
 **LLVM_ENABLE_WERROR**:BOOL
