@@ -285,6 +285,15 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   LiveInterval &M0RegLI = LIS->getInterval(M0Reg->getReg());
   LIS->shrinkToUses(&M0RegLI);
 
+  // Currently m0 is treated as a register class with one member instead of an
+  // implicit physical register. We are using the virtual register for the first
+  // one, but we still need to update the live range of the now unused second m0
+  // virtual register to avoid verifier errors.
+  const MachineOperand *PairedM0Reg
+    = TII->getNamedOperand(*Paired, AMDGPU::OpName::m0);
+  LiveInterval &PairedM0RegLI = LIS->getInterval(PairedM0Reg->getReg());
+  LIS->shrinkToUses(&PairedM0RegLI);
+
   LIS->getInterval(DestReg); // Create new LI
 
   DEBUG(dbgs() << "Inserted read2: " << *Read2 << '\n');
