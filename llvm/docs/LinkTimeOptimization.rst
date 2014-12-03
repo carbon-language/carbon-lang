@@ -134,7 +134,7 @@ Alternative Approaches
 Multi-phase communication between ``libLTO`` and linker
 =======================================================
 
-The linker collects information about symbol defininitions and uses in various
+The linker collects information about symbol definitions and uses in various
 link objects which is more accurate than any information collected by other
 tools during typical build cycles.  The linker collects this information by
 looking at the definitions and uses of symbols in native .o files and using
