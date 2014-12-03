@@ -10,7 +10,9 @@
 #ifndef LLVM_LINKER_LINKER_H
 #define LLVM_LINKER_LINKER_H
 
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 
 #include <functional>
 
@@ -18,6 +20,7 @@ namespace llvm {
 class DiagnosticInfo;
 class Module;
 class StructType;
+class Type;
 
 /// This class provides the core functionality of linking in LLVM. It keeps a
 /// pointer to the merged module so far. It doesn't take ownership of the
@@ -26,6 +29,40 @@ class StructType;
 class Linker {
 public:
   typedef std::function<void(const DiagnosticInfo &)> DiagnosticHandlerFunction;
+
+  struct StructTypeKeyInfo {
+    struct KeyTy {
+      ArrayRef<Type *> ETypes;
+      bool IsPacked;
+      KeyTy(ArrayRef<Type *> E, bool P);
+      KeyTy(const StructType *ST);
+      bool operator==(const KeyTy &that) const;
+      bool operator!=(const KeyTy &that) const;
+    };
+    static StructType *getEmptyKey();
+    static StructType *getTombstoneKey();
+    static unsigned getHashValue(const KeyTy &Key);
+    static unsigned getHashValue(const StructType *ST);
+    static bool isEqual(const KeyTy &LHS, const StructType *RHS);
+    static bool isEqual(const StructType *LHS, const StructType *RHS);
+  };
+
+  typedef DenseMap<StructType *, bool, StructTypeKeyInfo>
+      NonOpaqueStructTypeSet;
+  typedef DenseSet<StructType *> OpaqueStructTypeSet;
+
+  struct IdentifiedStructTypeSet {
+    // The set of opaque types is the composite module.
+    OpaqueStructTypeSet OpaqueStructTypes;
+
+    // The set of identified but non opaque structures in the composite module.
+    NonOpaqueStructTypeSet NonOpaqueStructTypes;
+
+    void addNonOpaque(StructType *Ty);
+    void addOpaque(StructType *Ty);
+    StructType *findNonOpaque(ArrayRef<Type *> ETypes, bool IsPacked);
+    bool hasType(StructType *Ty);
+  };
 
   Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
   Linker(Module *M);
@@ -46,7 +83,9 @@ public:
 private:
   void init(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
   Module *Composite;
-  SmallPtrSet<StructType *, 32> IdentifiedStructTypes;
+
+  IdentifiedStructTypeSet IdentifiedStructTypes;
+
   DiagnosticHandlerFunction DiagnosticHandler;
 };
 
