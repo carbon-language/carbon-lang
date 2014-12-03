@@ -29,6 +29,11 @@ void test() {
   a = f(a++, 0); // ok
   a = f(++a, a++); // expected-warning {{multiple unsequenced modifications}}
 
+  ++a + f(++a, 0); // expected-warning {{multiple unsequenced modifications}}
+  f(++a, 0) + ++a; // expected-warning {{multiple unsequenced modifications}}
+  a++ + f(a++, 0); // expected-warning {{multiple unsequenced modifications}}
+  f(a++, 0) + a++; // expected-warning {{multiple unsequenced modifications}}
+
   a = ++a; // expected-warning {{multiple unsequenced modifications}}
   a += ++a; // expected-warning {{unsequenced modification and access}}
 
@@ -48,7 +53,7 @@ void test() {
   (1 ? a : ++a) + a; // ok
   (xs[5] ? ++a : ++a) + a; // FIXME: warn here
 
-  (++a, xs[6] ? ++a : 0) + a; // FIXME: warn here
+  (++a, xs[6] ? ++a : 0) + a; // expected-warning {{unsequenced modification and access}}
 
   // Here, the read of the fourth 'a' might happen before or after the write to
   // the second 'a'.
@@ -84,5 +89,5 @@ void test() {
 
   (__builtin_classify_type(++a) ? 1 : 0) + ++a; // ok
   (__builtin_constant_p(++a) ? 1 : 0) + ++a; // ok
-  (__builtin_expect(++a, 0) ? 1 : 0) + ++a; // FIXME: warn here
+  (__builtin_expect(++a, 0) ? 1 : 0) + ++a; // expected-warning {{multiple unsequenced modifications}}
 }
