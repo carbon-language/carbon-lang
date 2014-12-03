@@ -717,7 +717,6 @@ template <int I> struct EmplaceableArg {
   explicit EmplaceableArg(bool) : State(EAS_Arg) {}
 
 private:
-  EmplaceableArg(const EmplaceableArg &X) LLVM_DELETED_FUNCTION;
   EmplaceableArg &operator=(EmplaceableArg &&) LLVM_DELETED_FUNCTION;
   EmplaceableArg &operator=(const EmplaceableArg &) LLVM_DELETED_FUNCTION;
 };
