@@ -1390,6 +1390,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         SourceLocation OpenLoc = ConsumeToken();
 
         if (ParseSimpleExpressionList(ExecConfigExprs, ExecConfigCommaLocs)) {
+          (void)Actions.CorrectDelayedTyposInExpr(LHS);
           LHS = ExprError();
         }
 
@@ -1440,6 +1441,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         if (Tok.isNot(tok::r_paren)) {
           if (ParseExpressionList(ArgExprs, CommaLocs, &Sema::CodeCompleteCall,
                                   LHS.get())) {
+            (void)Actions.CorrectDelayedTyposInExpr(LHS);
             LHS = ExprError();
           }
         }

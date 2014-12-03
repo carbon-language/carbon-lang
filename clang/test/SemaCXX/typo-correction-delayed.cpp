@@ -106,3 +106,9 @@ void f(int *i) {
 const int DefaultArg = 9;  // expected-note {{'DefaultArg' declared here}}
 template <int I = defaultArg> struct S {};  // expected-error {{use of undeclared identifier 'defaultArg'; did you mean 'DefaultArg'?}}
 S<1> s;
+
+namespace foo {}
+void test_paren_suffix() {
+  foo::bar({5, 6});  // expected-error-re {{no member named 'bar' in namespace 'foo'{{$}}}} \
+                     // expected-error {{expected expression}}
+}
