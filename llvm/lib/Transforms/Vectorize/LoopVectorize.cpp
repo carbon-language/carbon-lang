@@ -1194,8 +1194,6 @@ private:
     NewLoopID->replaceOperandWith(0, NewLoopID);
 
     TheLoop->setLoopID(NewLoopID);
-    if (LoopID)
-      LoopID->replaceAllUsesWith(NewLoopID);
     LoopID = NewLoopID;
   }
 
