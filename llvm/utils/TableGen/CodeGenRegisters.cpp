@@ -1324,11 +1324,8 @@ static void computeUberWeights(std::vector<UberRegSet> &UberSets,
     if (I->Weight != MaxWeight) {
       DEBUG(
         dbgs() << "UberSet " << I - UberSets.begin() << " Weight " << MaxWeight;
-        for (CodeGenRegister::Set::iterator
-               UnitI = I->Regs.begin(), UnitE = I->Regs.end();
-             UnitI != UnitE; ++UnitI) {
-          dbgs() << " " << (*UnitI)->getName();
-        }
+        for (auto &Unit : I->Regs)
+          dbgs() << " " << Unit->getName();
         dbgs() << "\n");
       // Update the set weight.
       I->Weight = MaxWeight;
@@ -1548,9 +1545,8 @@ void CodeGenRegBank::computeRegUnitSets() {
              USIdx < USEnd; ++USIdx) {
           dbgs() << "UnitSet " << USIdx << " " << RegUnitSets[USIdx].Name
                  << ":";
-          ArrayRef<unsigned> Units = RegUnitSets[USIdx].Units;
-          for (unsigned i = 0, e = Units.size(); i < e; ++i)
-            dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+          for (auto &U : RegUnitSets[USIdx].Units)
+            dbgs() << " " << RegUnits[U].Roots[0]->getName();
           dbgs() << "\n";
         });
 
@@ -1562,9 +1558,8 @@ void CodeGenRegBank::computeRegUnitSets() {
              USIdx < USEnd; ++USIdx) {
           dbgs() << "UnitSet " << USIdx << " " << RegUnitSets[USIdx].Name
                  << ":";
-          ArrayRef<unsigned> Units = RegUnitSets[USIdx].Units;
-          for (unsigned i = 0, e = Units.size(); i < e; ++i)
-            dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+          for (auto &U : RegUnitSets[USIdx].Units)
+            dbgs() << " " << RegUnits[U].Roots[0]->getName();
           dbgs() << "\n";
         }
         dbgs() << "\nUnion sets:\n");
@@ -1609,9 +1604,8 @@ void CodeGenRegBank::computeRegUnitSets() {
       else {
         DEBUG(dbgs() << "UnitSet " << RegUnitSets.size()-1
               << " " << RegUnitSets.back().Name << ":";
-              ArrayRef<unsigned> Units = RegUnitSets.back().Units;
-              for (unsigned i = 0, e = Units.size(); i < e; ++i)
-                dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+              for (auto &U : RegUnitSets.back().Units)
+                dbgs() << " " << RegUnits[U].Roots[0]->getName();
               dbgs() << "\n";);
       }
     }
@@ -1625,9 +1619,8 @@ void CodeGenRegBank::computeRegUnitSets() {
              USIdx < USEnd; ++USIdx) {
           dbgs() << "UnitSet " << USIdx << " " << RegUnitSets[USIdx].Name
                  << ":";
-          ArrayRef<unsigned> Units = RegUnitSets[USIdx].Units;
-          for (unsigned i = 0, e = Units.size(); i < e; ++i)
-            dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+          for (auto &U : RegUnitSets[USIdx].Units)
+            dbgs() << " " << RegUnits[U].Roots[0]->getName();
           dbgs() << "\n";
         });
 
@@ -1648,8 +1641,8 @@ void CodeGenRegBank::computeRegUnitSets() {
       continue;
 
     DEBUG(dbgs() << "RC " << RC.getName() << " Units: \n";
-          for (unsigned i = 0, e = RCRegUnits.size(); i < e; ++i) dbgs()
-              << RegUnits[RCRegUnits[i]].getRoots()[0]->getName() << " ";
+          for (auto &U : RCRegUnits)
+            dbgs() << RegUnits[U].getRoots()[0]->getName() << " ";
           dbgs() << "\n  UnitSetIDs:");
 
     // Find all supersets.
