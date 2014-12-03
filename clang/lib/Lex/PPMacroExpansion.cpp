@@ -913,6 +913,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
       .Case("arc_cf_code_audited", true)
       // C11 features
       .Case("c_alignas", LangOpts.C11)
+      .Case("c_alignof", LangOpts.C11)
       .Case("c_atomic", LangOpts.C11)
       .Case("c_generic_selections", LangOpts.C11)
       .Case("c_static_assert", LangOpts.C11)
@@ -922,6 +923,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
       .Case("cxx_access_control_sfinae", LangOpts.CPlusPlus11)
       .Case("cxx_alias_templates", LangOpts.CPlusPlus11)
       .Case("cxx_alignas", LangOpts.CPlusPlus11)
+      .Case("cxx_alignof", LangOpts.CPlusPlus11)
       .Case("cxx_atomic", LangOpts.CPlusPlus11)
       .Case("cxx_attributes", LangOpts.CPlusPlus11)
       .Case("cxx_auto_type", LangOpts.CPlusPlus11)
@@ -1030,6 +1032,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
   return llvm::StringSwitch<bool>(Extension)
            // C11 features supported by other languages as extensions.
            .Case("c_alignas", true)
+           .Case("c_alignof", true)
            .Case("c_atomic", true)
            .Case("c_generic_selections", true)
            .Case("c_static_assert", true)

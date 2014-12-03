@@ -12,7 +12,6 @@ int has_atomic();
 #else
 int no_atomic();
 #endif
-
 // CHECK-1X: has_atomic
 // CHECK-NO-1X: no_atomic
 
@@ -21,7 +20,6 @@ int has_static_assert();
 #else
 int no_static_assert();
 #endif
-
 // CHECK-1X: has_static_assert
 // CHECK-NO-1X: no_static_assert
 
@@ -30,7 +28,6 @@ int has_generic_selections();
 #else
 int no_generic_selections();
 #endif
-
 // CHECK-1X: has_generic_selections
 // CHECK-NO-1X: no_generic_selections
 
@@ -39,9 +36,16 @@ int has_alignas();
 #else
 int no_alignas();
 #endif
-
 // CHECK-1X: has_alignas
 // CHECK-NO-1X: no_alignas
+
+#if __has_feature(c_alignof)
+int has_alignof();
+#else
+int no_alignof();
+#endif
+// CHECK-1X: has_alignof
+// CHECK-NO-1X: no_alignof
 
 #if __has_feature(c_thread_local)
 int has_thread_local();

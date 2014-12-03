@@ -234,6 +234,16 @@ int no_alignas();
 // CHECK-11: has_alignas
 // CHECK-NO-11: no_alignas
 
+#if __has_feature(cxx_alignof)
+int has_alignof();
+#else
+int no_alignof();
+#endif
+
+// CHECK-1Y: has_alignof
+// CHECK-11: has_alignof
+// CHECK-NO-11: no_alignof
+
 #if __has_feature(cxx_raw_string_literals)
 int has_raw_string_literals();
 #else

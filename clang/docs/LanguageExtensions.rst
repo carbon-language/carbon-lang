@@ -543,6 +543,9 @@ C++11 alignment specifiers
 Use ``__has_feature(cxx_alignas)`` or ``__has_extension(cxx_alignas)`` to
 determine if support for alignment specifiers using ``alignas`` is enabled.
 
+Use ``__has_feature(cxx_alignof)`` or ``__has_extension(cxx_alignof)`` to
+determine if support for the ``alignof`` keyword is enabled.
+
 C++11 attributes
 ^^^^^^^^^^^^^^^^
 
@@ -856,6 +859,9 @@ C11 alignment specifiers
 
 Use ``__has_feature(c_alignas)`` or ``__has_extension(c_alignas)`` to determine
 if support for alignment specifiers using ``_Alignas`` is enabled.
+
+Use ``__has_feature(c_alignof)`` or ``__has_extension(c_alignof)`` to determine
+if support for the ``_Alignof`` keyword is enabled.
 
 C11 atomic operations
 ^^^^^^^^^^^^^^^^^^^^^
