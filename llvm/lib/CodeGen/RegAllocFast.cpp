@@ -372,15 +372,23 @@ void RAFast::usePhysReg(MachineOperand &MO) {
     case regDisabled:
       break;
     case regReserved:
-      assert(TRI->isSuperRegister(PhysReg, Alias) &&
+      // Either PhysReg is a subregister of Alias and we mark the
+      // whole register as free, or PhysReg is the superregister of
+      // Alias and we mark all the aliases as disabled before freeing
+      // PhysReg.
+      // In the latter case, since PhysReg was disabled, this means that
+      // its value is defined only by physical sub-registers. This check
+      // is performed by the assert of the default case in this loop.
+      // Note: The value of the superregister may only be partial
+      // defined, that is why regDisabled is a valid state for aliases.
+      assert((TRI->isSuperRegister(PhysReg, Alias) ||
+              TRI->isSuperRegister(Alias, PhysReg)) &&
              "Instruction is not using a subregister of a reserved register");
-      // Leave the superregister in the working set.
-      PhysRegState[Alias] = regFree;
-      MO.getParent()->addRegisterKilled(Alias, TRI, true);
-      return;
+      // Fall through.
     case regFree:
       if (TRI->isSuperRegister(PhysReg, Alias)) {
         // Leave the superregister in the working set.
+        PhysRegState[Alias] = regFree;
         MO.getParent()->addRegisterKilled(Alias, TRI, true);
         return;
       }
@@ -1023,8 +1031,7 @@ void RAFast::AllocateBasicBlock() {
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         if (!MRI->isAllocatable(Reg)) continue;
-        definePhysReg(MI, Reg, (MO.isImplicit() || MO.isDead()) ?
-                               regFree : regReserved);
+        definePhysReg(MI, Reg, MO.isDead() ? regFree : regReserved);
         continue;
       }
       LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, CopySrc);

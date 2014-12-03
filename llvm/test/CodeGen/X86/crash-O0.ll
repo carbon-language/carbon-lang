@@ -1,4 +1,4 @@
-; RUN: llc -O0 -relocation-model=pic -disable-fp-elim < %s
+; RUN: llc -O0 -relocation-model=pic -disable-fp-elim < %s | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10"
 
@@ -28,4 +28,24 @@ entry:
 
 "41":                                             ; preds = %"39"
   unreachable
+}
+
+; When using fast isel, sdiv is lowered into a sequence of CQO + DIV64.
+; CQO defines implicitly AX and DIV64 uses it implicitly too.
+; When an instruction gets between those two, RegAllocFast was reusing
+; AX for the vreg defined in between and the compiler crashed.
+;
+; An instruction gets between CQO and DIV64 because the load is folded
+; into the division but it requires a sign extension.
+; PR21700
+; CHECK-LABEL: addressModeWith32bitIndex:
+; CHECK: cqto
+; CHECK-NEXT: movslq
+; CHECK-NEXT: idivq
+; CHECK: retq
+define i64 @addressModeWith32bitIndex(i32 %V) {
+  %gep = getelementptr i64* null, i32 %V
+  %load = load i64* %gep
+  %sdiv = sdiv i64 0, %load
+  ret i64 %sdiv
 }
