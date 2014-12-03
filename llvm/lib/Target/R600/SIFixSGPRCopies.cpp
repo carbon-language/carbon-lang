@@ -136,12 +136,12 @@ const TargetRegisterClass *SIFixSGPRCopies::inferRegClassFromUses(
                                                  const MachineRegisterInfo &MRI,
                                                  unsigned Reg,
                                                  unsigned SubReg) const {
-  // The Reg parameter to the function must always be defined by either a PHI
-  // or a COPY, therefore it cannot be a physical register.
-  assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
-         "Reg cannot be a physical register");
 
-  const TargetRegisterClass *RC = MRI.getRegClass(Reg);
+  const TargetRegisterClass *RC
+    = TargetRegisterInfo::isVirtualRegister(Reg) ?
+    MRI.getRegClass(Reg) :
+    TRI->getRegClass(Reg);
+
   RC = TRI->getSubRegClass(RC, SubReg);
   for (MachineRegisterInfo::use_instr_iterator
        I = MRI.use_instr_begin(Reg), E = MRI.use_instr_end(); I != E; ++I) {
