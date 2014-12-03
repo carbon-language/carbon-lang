@@ -699,4 +699,135 @@ TEST(SmallVectorTest, MidInsert) {
     EXPECT_TRUE(m.hasValue);
 }
 
+enum EmplaceableArgState {
+  EAS_Defaulted,
+  EAS_Arg,
+  EAS_LValue,
+  EAS_RValue,
+  EAS_Failure
+};
+template <int I> struct EmplaceableArg {
+  EmplaceableArgState State;
+  EmplaceableArg() : State(EAS_Defaulted) {}
+  EmplaceableArg(EmplaceableArg &&X)
+      : State(X.State == EAS_Arg ? EAS_RValue : EAS_Failure) {}
+  EmplaceableArg(EmplaceableArg &X)
+      : State(X.State == EAS_Arg ? EAS_LValue : EAS_Failure) {}
+
+  explicit EmplaceableArg(bool) : State(EAS_Arg) {}
+
+private:
+  EmplaceableArg(const EmplaceableArg &X) LLVM_DELETED_FUNCTION;
+  EmplaceableArg &operator=(EmplaceableArg &&) LLVM_DELETED_FUNCTION;
+  EmplaceableArg &operator=(const EmplaceableArg &) LLVM_DELETED_FUNCTION;
+};
+
+enum EmplaceableState { ES_Emplaced, ES_Moved };
+struct Emplaceable {
+  EmplaceableArg<0> A0;
+  EmplaceableArg<1> A1;
+  EmplaceableArg<2> A2;
+  EmplaceableArg<3> A3;
+  EmplaceableState State;
+
+  Emplaceable() : State(ES_Emplaced) {}
+
+  template <class A0Ty>
+  explicit Emplaceable(A0Ty &&A0)
+      : A0(std::forward<A0Ty>(A0)), State(ES_Emplaced) {}
+
+  template <class A0Ty, class A1Ty>
+  Emplaceable(A0Ty &&A0, A1Ty &&A1)
+      : A0(std::forward<A0Ty>(A0)), A1(std::forward<A1Ty>(A1)),
+        State(ES_Emplaced) {}
+
+  template <class A0Ty, class A1Ty, class A2Ty>
+  Emplaceable(A0Ty &&A0, A1Ty &&A1, A2Ty &&A2)
+      : A0(std::forward<A0Ty>(A0)), A1(std::forward<A1Ty>(A1)),
+        A2(std::forward<A2Ty>(A2)), State(ES_Emplaced) {}
+
+  template <class A0Ty, class A1Ty, class A2Ty, class A3Ty>
+  Emplaceable(A0Ty &&A0, A1Ty &&A1, A2Ty &&A2, A3Ty &&A3)
+      : A0(std::forward<A0Ty>(A0)), A1(std::forward<A1Ty>(A1)),
+        A2(std::forward<A2Ty>(A2)), A3(std::forward<A3Ty>(A3)),
+        State(ES_Emplaced) {}
+
+  Emplaceable(Emplaceable &&) : State(ES_Moved) {}
+  Emplaceable &operator=(Emplaceable &&) {
+    State = ES_Moved;
+    return *this;
+  }
+
+private:
+  Emplaceable(const Emplaceable &) LLVM_DELETED_FUNCTION;
+  Emplaceable &operator=(const Emplaceable &) LLVM_DELETED_FUNCTION;
+};
+
+TEST(SmallVectorTest, EmplaceBack) {
+  EmplaceableArg<0> A0(true);
+  EmplaceableArg<1> A1(true);
+  EmplaceableArg<2> A2(true);
+  EmplaceableArg<3> A3(true);
+  {
+    SmallVector<Emplaceable, 3> V;
+    V.emplace_back();
+    EXPECT_TRUE(V.size() == 1);
+    EXPECT_TRUE(V.back().State == ES_Emplaced);
+    EXPECT_TRUE(V.back().A0.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A1.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A2.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A3.State == EAS_Defaulted);
+  }
+  {
+    SmallVector<Emplaceable, 3> V;
+    V.emplace_back(std::move(A0));
+    EXPECT_TRUE(V.size() == 1);
+    EXPECT_TRUE(V.back().State == ES_Emplaced);
+    EXPECT_TRUE(V.back().A0.State == EAS_RValue);
+    EXPECT_TRUE(V.back().A1.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A2.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A3.State == EAS_Defaulted);
+  }
+  {
+    SmallVector<Emplaceable, 3> V;
+    V.emplace_back(A0);
+    EXPECT_TRUE(V.size() == 1);
+    EXPECT_TRUE(V.back().State == ES_Emplaced);
+    EXPECT_TRUE(V.back().A0.State == EAS_LValue);
+    EXPECT_TRUE(V.back().A1.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A2.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A3.State == EAS_Defaulted);
+  }
+  {
+    SmallVector<Emplaceable, 3> V;
+    V.emplace_back(A0, A1);
+    EXPECT_TRUE(V.size() == 1);
+    EXPECT_TRUE(V.back().State == ES_Emplaced);
+    EXPECT_TRUE(V.back().A0.State == EAS_LValue);
+    EXPECT_TRUE(V.back().A1.State == EAS_LValue);
+    EXPECT_TRUE(V.back().A2.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A3.State == EAS_Defaulted);
+  }
+  {
+    SmallVector<Emplaceable, 3> V;
+    V.emplace_back(std::move(A0), std::move(A1));
+    EXPECT_TRUE(V.size() == 1);
+    EXPECT_TRUE(V.back().State == ES_Emplaced);
+    EXPECT_TRUE(V.back().A0.State == EAS_RValue);
+    EXPECT_TRUE(V.back().A1.State == EAS_RValue);
+    EXPECT_TRUE(V.back().A2.State == EAS_Defaulted);
+    EXPECT_TRUE(V.back().A3.State == EAS_Defaulted);
+  }
+  {
+    SmallVector<Emplaceable, 3> V;
+    V.emplace_back(std::move(A0), A1, std::move(A2), A3);
+    EXPECT_TRUE(V.size() == 1);
+    EXPECT_TRUE(V.back().State == ES_Emplaced);
+    EXPECT_TRUE(V.back().A0.State == EAS_RValue);
+    EXPECT_TRUE(V.back().A1.State == EAS_LValue);
+    EXPECT_TRUE(V.back().A2.State == EAS_RValue);
+    EXPECT_TRUE(V.back().A3.State == EAS_LValue);
+  }
 }
+
+} // end namespace

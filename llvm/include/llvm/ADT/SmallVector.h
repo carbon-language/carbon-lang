@@ -236,6 +236,51 @@ public:
     this->setEnd(this->end()-1);
     this->end()->~T();
   }
+
+#if LLVM_HAS_VARIADIC_TEMPLATES
+  template <typename... ArgTypes> void emplace_back(ArgTypes &&... Args) {
+    if (LLVM_UNLIKELY(this->EndX >= this->CapacityX))
+      this->grow();
+    ::new ((void *)this->end()) T(std::forward<ArgTypes>(Args)...);
+    this->setEnd(this->end() + 1);
+  }
+#else
+private:
+  template <typename Constructor> emplace_back_impl(Constructor emplace) {
+    if (LLVM_UNLIKELY(this->EndX >= this->CapacityX))
+      this->grow();
+    emplace((void *)this->end());
+    this->setEnd(this->end() + 1);
+  }
+
+public:
+  void emplace_back() {
+    emplace_back_impl([](void *Mem) { ::new (Mem) T(); });
+  }
+  template <typename T1> void emplace_back(T1 &&A1) {
+    emplace_back_impl([&](void *Mem) { ::new (Mem) T(std::forward<T1>(A1)); });
+  }
+  template <typename T1, typename T2> void emplace_back(T1 &&A1, T2 &&A2) {
+    emplace_back_impl([&](void *Mem) {
+      ::new (Mem) T(std::forward<T1>(A1), std::forward<T2>(A2));
+    });
+  }
+  template <typename T1, typename T2, typename T3>
+  void emplace_back(T1 &&A1, T2 &&A2, T3 &&A3) {
+    T(std::forward<T1>(A1), std::forward<T2>(A2), std::forward<T3>(A3));
+    emplace_back_impl([&](void *Mem) {
+      ::new (Mem)
+          T(std::forward<T1>(A1), std::forward<T2>(A2), std::forward<T3>(A3));
+    });
+  }
+  template <typename T1, typename T2, typename T3, typename T4>
+  void emplace_back(T1 &&A1, T2 &&A2, T3 &&A3, T4 &&A4) {
+    emplace_back_impl([&](void *Mem) {
+      ::new (Mem) T(std::forward<T1>(A1), std::forward<T2>(A2),
+                    std::forward<T3>(A3), std::forward<T4>(A4));
+    });
+  }
+#endif // LLVM_HAS_VARIADIC_TEMPLATES
 };
 
 // Define this out-of-line to dissuade the C++ compiler from inlining it.
