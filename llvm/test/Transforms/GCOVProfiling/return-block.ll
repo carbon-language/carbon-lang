@@ -33,7 +33,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { nounwind }
 
-!llvm.gcov = !{!19}
+!llvm.gcov = !{!14}
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!11, !12}
 !llvm.ident = !{!13}
