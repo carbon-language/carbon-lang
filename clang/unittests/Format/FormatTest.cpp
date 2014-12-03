@@ -3337,6 +3337,13 @@ TEST_F(FormatTest, NoOperandAlignment) {
                "    + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
                "        * cccccccccccccccccccccccccccccccccccc;",
                Style);
+
+  Style.AlignAfterOpenBracket = false;
+  verifyFormat("return (a > b\n"
+               "    // comment1\n"
+               "    // comment2\n"
+               "    || c);",
+               Style);
 }
 
 TEST_F(FormatTest, BreakingBeforeNonAssigmentOperators) {

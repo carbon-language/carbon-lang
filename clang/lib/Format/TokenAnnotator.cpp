@@ -1217,7 +1217,7 @@ private:
       Start->StartsBinaryExpression = true;
     if (Current) {
       FormatToken *Previous = Current->Previous;
-      if (Previous->is(tok::comment) && Previous->Previous)
+      while (Previous->is(tok::comment) && Previous->Previous)
         Previous = Previous->Previous;
       ++Previous->FakeRParens;
       if (Precedence > prec::Unknown)
