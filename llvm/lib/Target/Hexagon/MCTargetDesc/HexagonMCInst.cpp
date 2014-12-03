@@ -19,18 +19,18 @@
 using namespace llvm;
 
 HexagonMCInst::HexagonMCInst()
-    : MCInst(), MCID(nullptr), packetBegin(0), packetEnd(0){};
+    : MCInst(), MCID(nullptr), packetBegin(0), packetEnd(0){}
 HexagonMCInst::HexagonMCInst(MCInstrDesc const &mcid)
-    : MCInst(), MCID(&mcid), packetBegin(0), packetEnd(0){};
+    : MCInst(), MCID(&mcid), packetBegin(0), packetEnd(0){}
 
-bool HexagonMCInst::isPacketBegin() const { return (packetBegin); };
-bool HexagonMCInst::isPacketEnd() const { return (packetEnd); };
-void HexagonMCInst::setPacketBegin(bool Y) { packetBegin = Y; };
-void HexagonMCInst::setPacketEnd(bool Y) { packetEnd = Y; };
+bool HexagonMCInst::isPacketBegin() const { return (packetBegin); }
+bool HexagonMCInst::isPacketEnd() const { return (packetEnd); }
+void HexagonMCInst::setPacketBegin(bool Y) { packetBegin = Y; }
+void HexagonMCInst::setPacketEnd(bool Y) { packetEnd = Y; }
 void HexagonMCInst::resetPacket() {
   setPacketBegin(false);
   setPacketEnd(false);
-};
+}
 
 // Return the slots used by the insn.
 unsigned HexagonMCInst::getUnits(const HexagonTargetMachine *TM) const {
