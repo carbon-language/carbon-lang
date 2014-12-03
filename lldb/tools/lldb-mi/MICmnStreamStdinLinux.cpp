@@ -215,15 +215,3 @@ CMICmnStreamStdinLinux::ReadLine(CMIUtilString &vwErrMsg)
     return pText;
 }
 
-//++ ------------------------------------------------------------------------------------
-// Details: Interrupt current and prevent new ReadLine operations.
-// Type:    Method.
-// Args:    None.
-// Return:  None.
-// Throws:  None.
-//--
-void
-CMICmnStreamStdinLinux::InterruptReadLine(void)
-{
-    fclose(stdin);
-}
