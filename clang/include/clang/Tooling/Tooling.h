@@ -274,7 +274,7 @@ class ClangTool {
   ///
   /// \param Adjuster An argument adjuster, which will be run on the output of
   ///        previous argument adjusters.
-  void appendArgumentsAdjuster(ArgumentsAdjuster *Adjuster);
+  void appendArgumentsAdjuster(ArgumentsAdjuster Adjuster);
 
   /// \brief Clear the command line arguments adjuster chain.
   void clearArgumentsAdjusters();
@@ -301,7 +301,7 @@ class ClangTool {
   // Contains a list of pairs (<file name>, <file content>).
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
 
-  SmallVector<std::unique_ptr<ArgumentsAdjuster>, 2> ArgsAdjusters;
+  ArgumentsAdjuster ArgsAdjuster;
 
   DiagnosticConsumer *DiagConsumer;
 };

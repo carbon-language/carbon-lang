@@ -155,12 +155,12 @@ int main(int argc, const char **argv) {
 
   // Clear adjusters because -fsyntax-only is inserted by the default chain.
   Tool.clearArgumentsAdjusters();
-  Tool.appendArgumentsAdjuster(new ClangStripOutputAdjuster());
+  Tool.appendArgumentsAdjuster(getClangStripOutputAdjuster());
 
   // Running the analyzer requires --analyze. Other modes can work with the
   // -fsyntax-only option.
-  Tool.appendArgumentsAdjuster(new InsertArgumentAdjuster(
-      Analyze ? "--analyze" : "-fsyntax-only", InsertArgumentAdjuster::BEGIN));
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(
+      Analyze ? "--analyze" : "-fsyntax-only", ArgumentInsertPosition::BEGIN));
 
   ClangCheckActionFactory CheckFactory;
   std::unique_ptr<FrontendActionFactory> FrontendFactory;

@@ -19,55 +19,66 @@
 namespace clang {
 namespace tooling {
 
-void ArgumentsAdjuster::anchor() {
-}
-
 /// Add -fsyntax-only option to the commnand line arguments.
-CommandLineArguments
-ClangSyntaxOnlyAdjuster::Adjust(const CommandLineArguments &Args) {
-  CommandLineArguments AdjustedArgs;
-  for (size_t i = 0, e = Args.size(); i != e; ++i) {
-    StringRef Arg = Args[i];
-    // FIXME: Remove options that generate output.
-    if (!Arg.startswith("-fcolor-diagnostics") &&
-        !Arg.startswith("-fdiagnostics-color"))
-      AdjustedArgs.push_back(Args[i]);
-  }
-  AdjustedArgs.push_back("-fsyntax-only");
-  return AdjustedArgs;
-}
-
-CommandLineArguments
-ClangStripOutputAdjuster::Adjust(const CommandLineArguments &Args) {
-  CommandLineArguments AdjustedArgs;
-  for (size_t i = 0, e = Args.size(); i < e; ++i) {
-    StringRef Arg = Args[i];
-    if(!Arg.startswith("-o"))
-      AdjustedArgs.push_back(Args[i]);
-
-    if(Arg == "-o") {
-      // Output is specified as -o foo. Skip the next argument also.
-      ++i;
+ArgumentsAdjuster getClangSyntaxOnlyAdjuster() {
+  return [](const CommandLineArguments &Args) {
+    CommandLineArguments AdjustedArgs;
+    for (size_t i = 0, e = Args.size(); i != e; ++i) {
+      StringRef Arg = Args[i];
+      // FIXME: Remove options that generate output.
+      if (!Arg.startswith("-fcolor-diagnostics") &&
+          !Arg.startswith("-fdiagnostics-color"))
+        AdjustedArgs.push_back(Args[i]);
     }
-    // Else, the output is specified as -ofoo. Just do nothing.
-  }
-  return AdjustedArgs;
+    AdjustedArgs.push_back("-fsyntax-only");
+    return AdjustedArgs;
+  };
 }
 
-CommandLineArguments
-InsertArgumentAdjuster::Adjust(const CommandLineArguments &Args) {
-  CommandLineArguments Return(Args);
+ArgumentsAdjuster getClangStripOutputAdjuster() {
+  return [](const CommandLineArguments &Args) {
+    CommandLineArguments AdjustedArgs;
+    for (size_t i = 0, e = Args.size(); i < e; ++i) {
+      StringRef Arg = Args[i];
+      if (!Arg.startswith("-o"))
+        AdjustedArgs.push_back(Args[i]);
 
-  CommandLineArguments::iterator I;
-  if (Pos == END) {
-    I = Return.end();
-  } else {
-    I = Return.begin();
-    ++I; // To leave the program name in place
-  }
+      if (Arg == "-o") {
+        // Output is specified as -o foo. Skip the next argument also.
+        ++i;
+      }
+      // Else, the output is specified as -ofoo. Just do nothing.
+    }
+    return AdjustedArgs;
+  };
+}
 
-  Return.insert(I, Extra.begin(), Extra.end());
-  return Return;
+ArgumentsAdjuster getInsertArgumentAdjuster(const CommandLineArguments &Extra,
+                                            ArgumentInsertPosition Pos) {
+  return [Extra, Pos](const CommandLineArguments &Args) {
+    CommandLineArguments Return(Args);
+
+    CommandLineArguments::iterator I;
+    if (Pos == ArgumentInsertPosition::END) {
+      I = Return.end();
+    } else {
+      I = Return.begin();
+      ++I; // To leave the program name in place
+    }
+
+    Return.insert(I, Extra.begin(), Extra.end());
+    return Return;
+  };
+}
+
+ArgumentsAdjuster getInsertArgumentAdjuster(const char *Extra,
+                                            ArgumentInsertPosition Pos) {
+  return getInsertArgumentAdjuster(CommandLineArguments(1, Extra), Pos);
+}
+
+ArgumentsAdjuster combineAdjusters(ArgumentsAdjuster First,
+                                   ArgumentsAdjuster Second) {
+  return std::bind(Second, std::bind(First, std::placeholders::_1));
 }
 
 } // end namespace tooling

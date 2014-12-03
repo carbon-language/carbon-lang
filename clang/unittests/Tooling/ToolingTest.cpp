@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/llvm-config.h"
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <string>
 
 namespace clang {
@@ -260,25 +261,6 @@ TEST(runToolOnCodeWithArgs, TestNoDepFile) {
   EXPECT_FALSE(llvm::sys::fs::remove(DepFilePath.str()));
 }
 
-struct CheckSyntaxOnlyAdjuster: public ArgumentsAdjuster {
-  bool &Found;
-  bool &Ran;
-
-  CheckSyntaxOnlyAdjuster(bool &Found, bool &Ran) : Found(Found), Ran(Ran) { }
-
-  virtual CommandLineArguments
-  Adjust(const CommandLineArguments &Args) override {
-    Ran = true;
-    for (unsigned I = 0, E = Args.size(); I != E; ++I) {
-      if (Args[I] == "-fsyntax-only") {
-        Found = true;
-        break;
-      }
-    }
-    return Args;
-  }
-};
-
 TEST(ClangToolTest, ArgumentAdjusters) {
   FixedCompilationDatabase Compilations("/", std::vector<std::string>());
 
@@ -290,15 +272,22 @@ TEST(ClangToolTest, ArgumentAdjusters) {
 
   bool Found = false;
   bool Ran = false;
-  Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
+  ArgumentsAdjuster CheckSyntaxOnlyAdjuster =
+      [&Found, &Ran](const CommandLineArguments &Args) {
+    Ran = true;
+    if (std::find(Args.begin(), Args.end(), "-fsyntax-only") != Args.end())
+      Found = true;
+    return Args;
+  };
+  Tool.appendArgumentsAdjuster(CheckSyntaxOnlyAdjuster);
   Tool.run(Action.get());
   EXPECT_TRUE(Ran);
   EXPECT_TRUE(Found);
 
   Ran = Found = false;
   Tool.clearArgumentsAdjusters();
-  Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
-  Tool.appendArgumentsAdjuster(new ClangSyntaxOnlyAdjuster());
+  Tool.appendArgumentsAdjuster(CheckSyntaxOnlyAdjuster);
+  Tool.appendArgumentsAdjuster(getClangSyntaxOnlyAdjuster());
   Tool.run(Action.get());
   EXPECT_TRUE(Ran);
   EXPECT_FALSE(Found);
