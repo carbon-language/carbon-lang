@@ -42,8 +42,7 @@ void AMDGPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 }
 
 unsigned AMDGPURegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  assert(!"Subroutines not supported yet");
-  return 0;
+  return AMDGPU::NoRegister;
 }
 
 unsigned AMDGPURegisterInfo::getSubRegFromChannel(unsigned Channel) const {
