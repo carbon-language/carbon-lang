@@ -157,10 +157,9 @@ bool AMDGPUPassConfig::addInstSelector() {
   if (ST.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
     addPass(createSILowerI1CopiesPass());
     addPass(createSIFixSGPRCopiesPass(*TM));
+    addPass(createSIFoldOperandsPass());
   }
 
-  addPass(createSILowerI1CopiesPass());
-  addPass(createSIFoldOperandsPass());
   return false;
 }
 
