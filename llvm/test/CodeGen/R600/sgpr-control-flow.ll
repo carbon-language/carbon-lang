@@ -59,6 +59,47 @@ endif:
   ret void
 }
 
+; FIXME: Should write to different SGPR pairs instead of copying to
+; VALU for i1 phi.
+
+; SI-LABEL: {{^}}sgpr_if_else_valu_cmp_phi_br:
+; SI: buffer_load_dword [[AVAL:v[0-9]+]]
+; SI: v_cmp_lt_i32_e64 [[CMP_IF:s\[[0-9]+:[0-9]+\]]], [[AVAL]], 0
+; SI: v_cndmask_b32_e64 [[V_CMP:v[0-9]+]], 0, -1, [[CMP_IF]]
+
+; SI: BB2_1:
+; SI: buffer_load_dword [[AVAL:v[0-9]+]]
+; SI: v_cmp_eq_i32_e64 [[CMP_ELSE:s\[[0-9]+:[0-9]+\]]], [[AVAL]], 0
+; SI: v_cndmask_b32_e64 [[V_CMP]], 0, -1, [[CMP_ELSE]]
+
+; SI: v_cmp_ne_i32_e64 [[CMP_CMP:s\[[0-9]+:[0-9]+\]]], [[V_CMP]], 0
+; SI: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, -1, [[CMP_CMP]]
+; SI: buffer_store_dword [[RESULT]]
+define void @sgpr_if_else_valu_cmp_phi_br(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 addrspace(1)* %b) {
+entry:
+  %tid = call i32 @llvm.r600.read.tidig.x() #0
+  %tmp1 = icmp eq i32 %tid, 0
+  br i1 %tmp1, label %if, label %else
+
+if:
+  %gep.if = getelementptr i32 addrspace(1)* %a, i32 %tid
+  %a.val = load i32 addrspace(1)* %gep.if
+  %cmp.if = icmp eq i32 %a.val, 0
+  br label %endif
+
+else:
+  %gep.else = getelementptr i32 addrspace(1)* %b, i32 %tid
+  %b.val = load i32 addrspace(1)* %gep.else
+  %cmp.else = icmp slt i32 %b.val, 0
+  br label %endif
+
+endif:
+  %tmp4 = phi i1 [%cmp.if, %if], [%cmp.else, %else]
+  %ext = sext i1 %tmp4 to i32
+  store i32 %ext, i32 addrspace(1)* %out
+  ret void
+}
+
 declare i32 @llvm.r600.read.tidig.x() #0
 
 attributes #0 = { readnone }

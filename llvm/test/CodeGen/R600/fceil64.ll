@@ -1,5 +1,5 @@
-; RUN: llc -march=r600 -mcpu=bonaire < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 declare double @llvm.ceil.f64(double) nounwind readnone
 declare <2 x double> @llvm.ceil.v2f64(<2 x double>) nounwind readnone
@@ -22,12 +22,15 @@ declare <16 x double> @llvm.ceil.v16f64(<16 x double>) nounwind readnone
 ; SI: cmp_gt_i32
 ; SI: cndmask_b32
 ; SI: cndmask_b32
-; SI: cmp_gt_f64
-; SI: cndmask_b32
-; SI: cmp_ne_i32
-; SI: cndmask_b32
-; SI: cndmask_b32
+; SI: v_cmp_o_f64
+; SI: v_cmp_neq_f64
+; SI: s_and_b64
+; SI: v_cmp_gt_f64
+; SI: s_and_b64
+; SI: v_cndmask_b32
+; SI: v_cndmask_b32
 ; SI: v_add_f64
+; SI: s_endpgm
 define void @fceil_f64(double addrspace(1)* %out, double %x) {
   %y = call double @llvm.ceil.f64(double %x) nounwind readnone
   store double %y, double addrspace(1)* %out

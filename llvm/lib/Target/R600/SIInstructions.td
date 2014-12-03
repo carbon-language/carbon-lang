@@ -1686,29 +1686,7 @@ defm V_TRIG_PREOP_F64 : VOP3Inst <
 //===----------------------------------------------------------------------===//
 // Pseudo Instructions
 //===----------------------------------------------------------------------===//
-
 let isCodeGenOnly = 1, isPseudo = 1 in {
-
-def V_MOV_I1 : InstSI <
-  (outs VReg_1:$dst),
-  (ins i1imm:$src),
-  "", [(set i1:$dst, (imm:$src))]
->;
-
-def V_AND_I1 : InstSI <
-   (outs VReg_1:$dst), (ins VReg_1:$src0, VReg_1:$src1), "",
-   [(set i1:$dst, (and i1:$src0, i1:$src1))]
->;
-
-def V_OR_I1 : InstSI <
-   (outs VReg_1:$dst), (ins VReg_1:$src0, VReg_1:$src1), "",
-   [(set i1:$dst, (or i1:$src0, i1:$src1))]
->;
-
-def V_XOR_I1 : InstSI <
-  (outs VReg_1:$dst), (ins VReg_1:$src0, VReg_1:$src1), "",
-  [(set i1:$dst, (xor i1:$src0, i1:$src1))]
->;
 
 let hasSideEffects = 1 in {
 def SGPR_USE : InstSI <(outs),(ins), "", []>;
@@ -2495,6 +2473,14 @@ def : Pat <
   (S_MOV_B64 InlineImm<i64>:$imm)
 >;
 
+// XXX - Should this use a s_cmp to set SCC?
+
+// Set to sign-extended 64-bit value (true = -1, false = 0)
+def : Pat <
+  (i1 imm:$imm),
+  (S_MOV_B64 (i64 (as_i64imm $imm)))
+>;
+
 /********** ===================== **********/
 /********** Interpolation Paterns **********/
 /********** ===================== **********/
@@ -3045,6 +3031,27 @@ def : Pat <
     (V_CNDMASK_B32_e64 0, -1, $src), sub1)
 >;
 
+// If we need to perform a logical operation on i1 values, we need to
+// use vector comparisons since there is only one SCC register. Vector
+// comparisions still write to a pair of SGPRs, so treat these as
+// 64-bit comparisons. When legalizing SGPR copies, instructions
+// resulting in the copies from SCC to these instructions will be
+// moved to the VALU.
+def : Pat <
+  (i1 (and i1:$src0, i1:$src1)),
+  (S_AND_B64 $src0, $src1)
+>;
+
+def : Pat <
+  (i1 (or i1:$src0, i1:$src1)),
+  (S_OR_B64 $src0, $src1)
+>;
+
+def : Pat <
+  (i1 (xor i1:$src0, i1:$src1)),
+  (S_XOR_B64 $src0, $src1)
+>;
+
 def : Pat <
   (f32 (sint_to_fp i1:$src)),
   (V_CNDMASK_B32_e64 (i32 0), CONST.FP32_NEG_ONE, $src)
@@ -3057,7 +3064,7 @@ def : Pat <
 
 def : Pat <
   (f64 (sint_to_fp i1:$src)),
-    (V_CVT_F64_I32_e32 (V_CNDMASK_B32_e64 (i32 0), (i32 -1), $src))
+  (V_CVT_F64_I32_e32 (V_CNDMASK_B32_e64 (i32 0), (i32 -1), $src))
 >;
 
 def : Pat <

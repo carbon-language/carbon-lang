@@ -131,6 +131,10 @@ def as_i32imm: SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i32);
 }]>;
 
+def as_i64imm: SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i64);
+}]>;
+
 def IMM8bit : PatLeaf <(imm),
   [{return isUInt<8>(N->getZExtValue());}]
 >;

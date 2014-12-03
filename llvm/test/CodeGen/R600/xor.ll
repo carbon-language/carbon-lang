@@ -39,16 +39,34 @@ define void @xor_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in
 ; FUNC-LABEL: {{^}}xor_i1:
 ; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
 
-; SI: v_xor_b32_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
-
+; SI-DAG: v_cmp_ge_f32_e64 [[CMP0:s\[[0-9]+:[0-9]+\]]], {{v[0-9]+}}, 0.0
+; SI-DAG: v_cmp_ge_f32_e64 [[CMP1:s\[[0-9]+:[0-9]+\]]], {{v[0-9]+}}, 1.0
+; SI: s_xor_b64 [[XOR:s\[[0-9]+:[0-9]+\]]], [[CMP0]], [[CMP1]]
+; SI: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], {{v[0-9]+}}, {{v[0-9]+}}, [[XOR]]
+; SI: buffer_store_dword [[RESULT]]
+; SI: s_endpgm
 define void @xor_i1(float addrspace(1)* %out, float addrspace(1)* %in0, float addrspace(1)* %in1) {
   %a = load float addrspace(1) * %in0
   %b = load float addrspace(1) * %in1
   %acmp = fcmp oge float %a, 0.000000e+00
-  %bcmp = fcmp oge float %b, 0.000000e+00
+  %bcmp = fcmp oge float %b, 1.000000e+00
   %xor = xor i1 %acmp, %bcmp
   %result = select i1 %xor, float %a, float %b
   store float %result, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_xor_i1:
+; SI: buffer_load_ubyte [[A:v[0-9]+]]
+; SI: buffer_load_ubyte [[B:v[0-9]+]]
+; SI: v_xor_b32_e32 [[XOR:v[0-9]+]], [[B]], [[A]]
+; SI: v_and_b32_e32 [[RESULT:v[0-9]+]], 1, [[XOR]]
+; SI: buffer_store_byte [[RESULT]]
+define void @v_xor_i1(i1 addrspace(1)* %out, i1 addrspace(1)* %in0, i1 addrspace(1)* %in1) {
+  %a = load i1 addrspace(1)* %in0
+  %b = load i1 addrspace(1)* %in1
+  %xor = xor i1 %a, %b
+  store i1 %xor, i1 addrspace(1)* %out
   ret void
 }
 

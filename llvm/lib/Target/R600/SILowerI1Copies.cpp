@@ -85,30 +85,6 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
       Next = std::next(I);
       MachineInstr &MI = *I;
 
-      if (MI.getOpcode() == AMDGPU::V_MOV_I1) {
-        I1Defs.push_back(MI.getOperand(0).getReg());
-        MI.setDesc(TII->get(AMDGPU::V_MOV_B32_e32));
-        continue;
-      }
-
-      if (MI.getOpcode() == AMDGPU::V_AND_I1) {
-        I1Defs.push_back(MI.getOperand(0).getReg());
-        MI.setDesc(TII->get(AMDGPU::V_AND_B32_e64));
-        continue;
-      }
-
-      if (MI.getOpcode() == AMDGPU::V_OR_I1) {
-        I1Defs.push_back(MI.getOperand(0).getReg());
-        MI.setDesc(TII->get(AMDGPU::V_OR_B32_e64));
-        continue;
-      }
-
-      if (MI.getOpcode() == AMDGPU::V_XOR_I1) {
-        I1Defs.push_back(MI.getOperand(0).getReg());
-        MI.setDesc(TII->get(AMDGPU::V_XOR_B32_e64));
-        continue;
-      }
-
       if (MI.getOpcode() == AMDGPU::IMPLICIT_DEF) {
         unsigned Reg = MI.getOperand(0).getReg();
         const TargetRegisterClass *RC = MRI.getRegClass(Reg);
@@ -117,32 +93,52 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
         continue;
       }
 
-      if (MI.getOpcode() != AMDGPU::COPY ||
-          !TargetRegisterInfo::isVirtualRegister(MI.getOperand(0).getReg()) ||
-          !TargetRegisterInfo::isVirtualRegister(MI.getOperand(1).getReg()))
+      if (MI.getOpcode() != AMDGPU::COPY)
         continue;
 
+      const MachineOperand &Dst = MI.getOperand(0);
+      const MachineOperand &Src = MI.getOperand(1);
 
-      const TargetRegisterClass *DstRC =
-          MRI.getRegClass(MI.getOperand(0).getReg());
-      const TargetRegisterClass *SrcRC =
-          MRI.getRegClass(MI.getOperand(1).getReg());
+      if (!TargetRegisterInfo::isVirtualRegister(Src.getReg()) ||
+          !TargetRegisterInfo::isVirtualRegister(Dst.getReg()))
+        continue;
+
+      const TargetRegisterClass *DstRC = MRI.getRegClass(Dst.getReg());
+      const TargetRegisterClass *SrcRC = MRI.getRegClass(Src.getReg());
 
       if (DstRC == &AMDGPU::VReg_1RegClass &&
           TRI->getCommonSubClass(SrcRC, &AMDGPU::SGPR_64RegClass)) {
-        I1Defs.push_back(MI.getOperand(0).getReg());
-        BuildMI(MBB, &MI, MI.getDebugLoc(), TII->get(AMDGPU::V_CNDMASK_B32_e64))
-                .addOperand(MI.getOperand(0))
-                .addImm(0)
-                .addImm(-1)
-                .addOperand(MI.getOperand(1));
+        I1Defs.push_back(Dst.getReg());
+        DebugLoc DL = MI.getDebugLoc();
+
+        MachineInstr *DefInst = MRI.getUniqueVRegDef(Src.getReg());
+        if (DefInst->getOpcode() == AMDGPU::S_MOV_B64) {
+          if (DefInst->getOperand(1).isImm()) {
+            I1Defs.push_back(Dst.getReg());
+
+            int64_t Val = DefInst->getOperand(1).getImm();
+            assert(Val == 0 || Val == -1);
+
+            BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_MOV_B32_e32))
+              .addOperand(Dst)
+              .addImm(Val);
+            MI.eraseFromParent();
+            continue;
+          }
+        }
+
+        BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CNDMASK_B32_e64))
+          .addOperand(Dst)
+          .addImm(0)
+          .addImm(-1)
+          .addOperand(Src);
         MI.eraseFromParent();
       } else if (TRI->getCommonSubClass(DstRC, &AMDGPU::SGPR_64RegClass) &&
                  SrcRC == &AMDGPU::VReg_1RegClass) {
         BuildMI(MBB, &MI, MI.getDebugLoc(), TII->get(AMDGPU::V_CMP_NE_I32_e64))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(1))
-                .addImm(0);
+          .addOperand(Dst)
+          .addOperand(Src)
+          .addImm(0);
         MI.eraseFromParent();
       }
     }
