@@ -219,11 +219,13 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
       case AMDGPU::PHI: {
         DEBUG(dbgs() << "Fixing PHI: " << MI);
 
-        for (unsigned i = 1; i < MI.getNumOperands(); i+=2) {
-          unsigned Reg = MI.getOperand(i).getReg();
-          const TargetRegisterClass *RC = inferRegClassFromDef(TRI, MRI, Reg,
-                                                  MI.getOperand(0).getSubReg());
-          MRI.constrainRegClass(Reg, RC);
+        for (unsigned i = 1; i < MI.getNumOperands(); i += 2) {
+          const MachineOperand &Op = MI.getOperand(i);
+          unsigned Reg = Op.getReg();
+          const TargetRegisterClass *RC
+            = inferRegClassFromDef(TRI, MRI, Reg, Op.getSubReg());
+
+          MRI.constrainRegClass(Op.getReg(), RC);
         }
         unsigned Reg = MI.getOperand(0).getReg();
         const TargetRegisterClass *RC = inferRegClassFromUses(TRI, MRI, Reg,
