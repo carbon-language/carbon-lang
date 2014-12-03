@@ -325,7 +325,7 @@ protected:
     EngineBuilder EB(std::move(M));
     std::string Error;
     TheJIT.reset(EB.setEngineKind(EngineKind::JIT)
-                 .setMCJITMemoryManager(MM)
+                 .setMCJITMemoryManager(std::move(MM))
                  .setErrorStr(&Error)
                  .setOptLevel(CodeGenOpt::None)
                  .setCodeModel(CodeModel::JITDefault)
@@ -344,7 +344,7 @@ protected:
   StringRef MArch;
   SmallVector<std::string, 1> MAttrs;
   std::unique_ptr<ExecutionEngine> TheJIT;
-  RTDyldMemoryManager *MM;
+  std::unique_ptr<RTDyldMemoryManager> MM;
 
   std::unique_ptr<Module> M;
 };

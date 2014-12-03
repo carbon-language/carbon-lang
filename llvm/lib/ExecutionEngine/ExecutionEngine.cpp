@@ -44,7 +44,8 @@ STATISTIC(NumGlobals  , "Number of global vars initialized");
 
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
     std::unique_ptr<Module> M, std::string *ErrorStr,
-    RTDyldMemoryManager *MCJMM, std::unique_ptr<TargetMachine> TM) = nullptr;
+    std::unique_ptr<RTDyldMemoryManager> MCJMM,
+    std::unique_ptr<TargetMachine> TM) = nullptr;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(std::unique_ptr<Module> M,
                                                 std::string *ErrorStr) =nullptr;
 
@@ -392,6 +393,19 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   return runFunction(Fn, GVArgs).IntVal.getZExtValue();
 }
 
+EngineBuilder::EngineBuilder(std::unique_ptr<Module> M)
+  : M(std::move(M)), MCJMM(nullptr) {
+  InitEngine();
+}
+
+EngineBuilder::~EngineBuilder() {}
+
+EngineBuilder &EngineBuilder::setMCJITMemoryManager(
+                                   std::unique_ptr<RTDyldMemoryManager> mcjmm) {
+  MCJMM = std::move(mcjmm);
+  return *this;
+}
+
 void EngineBuilder::InitEngine() {
   WhichEngine = EngineKind::Either;
   ErrorStr = nullptr;
@@ -443,7 +457,7 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
 
     ExecutionEngine *EE = nullptr;
     if (ExecutionEngine::MCJITCtor)
-      EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr, MCJMM,
+      EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr, std::move(MCJMM),
                                       std::move(TheTM));
     if (EE) {
       EE->setVerifyModules(VerifyModules);

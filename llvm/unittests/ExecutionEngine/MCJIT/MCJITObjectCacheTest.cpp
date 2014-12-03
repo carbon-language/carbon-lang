@@ -163,7 +163,7 @@ TEST_F(MCJITObjectCacheTest, VerifyLoadFromCache) {
   TheJIT.reset();
 
   // Create a new memory manager.
-  MM = new SectionMemoryManager;
+  MM.reset(new SectionMemoryManager());
 
   // Create a new module and save it. Use a different return code so we can
   // tell if MCJIT compiled this module or used the cache.
@@ -197,7 +197,7 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
   TheJIT.reset();
 
   // Create a new memory manager.
-  MM = new SectionMemoryManager;
+  MM.reset(new SectionMemoryManager());
 
   // Create a new module and save it. Use a different return code so we can
   // tell if MCJIT compiled this module or used the cache. Note that we use

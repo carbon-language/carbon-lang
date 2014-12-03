@@ -28,8 +28,9 @@ class MCJIT;
 // to that object.
 class LinkingMemoryManager : public RTDyldMemoryManager {
 public:
-  LinkingMemoryManager(MCJIT *Parent, RTDyldMemoryManager *MM)
-    : ParentEngine(Parent), ClientMM(MM) {}
+  LinkingMemoryManager(MCJIT *Parent,
+                       std::unique_ptr<RTDyldMemoryManager> MM)
+    : ParentEngine(Parent), ClientMM(std::move(MM)) {}
 
   uint64_t getSymbolAddress(const std::string &Name) override;
 
@@ -102,7 +103,7 @@ private:
 
 class MCJIT : public ExecutionEngine {
   MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
-        RTDyldMemoryManager *MemMgr);
+        std::unique_ptr<RTDyldMemoryManager> MemMgr);
 
   typedef llvm::SmallPtrSet<Module *, 4> ModulePtrSet;
 
@@ -325,7 +326,7 @@ public:
 
   static ExecutionEngine *createJIT(std::unique_ptr<Module> M,
                                     std::string *ErrorStr,
-                                    RTDyldMemoryManager *MemMgr,
+                                    std::unique_ptr<RTDyldMemoryManager> MemMgr,
                                     std::unique_ptr<TargetMachine> TM);
 
   // @}
