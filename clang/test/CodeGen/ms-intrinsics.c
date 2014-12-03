@@ -1,15 +1,28 @@
-// RUN: %clang_cc1 -triple i686--windows -fms-compatibility -Oz -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK -check-prefix CHECK-I386
-// RUN: %clang_cc1 -triple thumbv7--windows -fms-compatibility -Oz -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -ffreestanding -fms-extensions -fms-compatibility -fms-compatibility-version=17.00 \
+// RUN:         -triple i686--windows -Oz -emit-llvm %s -o - \
+// RUN:         | FileCheck %s -check-prefix CHECK -check-prefix CHECK-I386
+// RUN: %clang_cc1 -ffreestanding -fms-extensions -fms-compatibility -fms-compatibility-version=17.00 \
+// RUN:         -triple thumbv7--windows -Oz -emit-llvm %s -o - \
+// RUN:         | FileCheck %s
+// RUN: %clang_cc1 -ffreestanding -fms-extensions -fms-compatibility -fms-compatibility-version=17.00 \
+// RUN:         -triple x86_64--windows -Oz -emit-llvm %s -o - \
+// RUN:         | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-X64
+
+// Intrin.h needs size_t, but -ffreestanding prevents us from getting it from
+// stddef.h.  Work around it with this typedef.
+typedef __SIZE_TYPE__ size_t;
+
+#include <Intrin.h>
 
 void *test_InterlockedExchangePointer(void * volatile *Target, void *Value) {
   return _InterlockedExchangePointer(Target, Value);
 }
 
 // CHECK: define{{.*}}i8* @test_InterlockedExchangePointer(i8** %Target, i8* %Value){{.*}}{
-// CHECK:   %[[TARGET:[0-9]+]] = bitcast i8** %Target to i32*
-// CHECK:   %[[VALUE:[0-9]+]] = ptrtoint i8* %Value to i32
-// CHECK:   %[[EXCHANGE:[0-9]+]] = atomicrmw xchg i32* %[[TARGET]], i32 %[[VALUE]] seq_cst
-// CHECK:   %[[RESULT:[0-9]+]] = inttoptr i32 %[[EXCHANGE]] to i8*
+// CHECK:   %[[TARGET:[0-9]+]] = bitcast i8** %Target to [[iPTR:i[0-9]+]]*
+// CHECK:   %[[VALUE:[0-9]+]] = ptrtoint i8* %Value to [[iPTR]]
+// CHECK:   %[[EXCHANGE:[0-9]+]] = atomicrmw xchg [[iPTR]]* %[[TARGET]], [[iPTR]] %[[VALUE]] seq_cst
+// CHECK:   %[[RESULT:[0-9]+]] = inttoptr [[iPTR]] %[[EXCHANGE]] to i8*
 // CHECK:   ret i8* %[[RESULT]]
 // CHECK: }
 
@@ -19,12 +32,12 @@ void *test_InterlockedCompareExchangePointer(void * volatile *Destination,
 }
 
 // CHECK: define{{.*}}i8* @test_InterlockedCompareExchangePointer(i8** %Destination, i8* %Exchange, i8* %Comparand){{.*}}{
-// CHECK:   %[[DEST:[0-9]+]] = bitcast i8** %Destination to i32*
-// CHECK:   %[[EXCHANGE:[0-9]+]] = ptrtoint i8* %Exchange to i32
-// CHECK:   %[[COMPARAND:[0-9]+]] = ptrtoint i8* %Comparand to i32
-// CHECK:   %[[XCHG:[0-9]+]] = cmpxchg volatile i32* %[[DEST:[0-9]+]], i32 %[[COMPARAND:[0-9]+]], i32 %[[EXCHANGE:[0-9]+]] seq_cst seq_cst
-// CHECK:   %[[EXTRACT:[0-9]+]] = extractvalue { i32, i1 } %[[XCHG]], 0
-// CHECK:   %[[RESULT:[0-9]+]] = inttoptr i32 %[[EXTRACT]] to i8*
+// CHECK:   %[[DEST:[0-9]+]] = bitcast i8** %Destination to [[iPTR]]*
+// CHECK:   %[[EXCHANGE:[0-9]+]] = ptrtoint i8* %Exchange to [[iPTR]]
+// CHECK:   %[[COMPARAND:[0-9]+]] = ptrtoint i8* %Comparand to [[iPTR]]
+// CHECK:   %[[XCHG:[0-9]+]] = cmpxchg volatile [[iPTR]]* %[[DEST:[0-9]+]], [[iPTR]] %[[COMPARAND:[0-9]+]], [[iPTR]] %[[EXCHANGE:[0-9]+]] seq_cst seq_cst
+// CHECK:   %[[EXTRACT:[0-9]+]] = extractvalue { [[iPTR]], i1 } %[[XCHG]], 0
+// CHECK:   %[[RESULT:[0-9]+]] = inttoptr [[iPTR]] %[[EXTRACT]] to i8*
 // CHECK:   ret i8* %[[RESULT:[0-9]+]]
 // CHECK: }
 
@@ -47,5 +60,14 @@ long test__readfsdword(unsigned long Offset) {
 // CHECK-I386:   [[VALUE:%[0-9]+]] = load volatile i32 addrspace(257)* [[PTR]], align 4
 // CHECK-I386:   ret i32 [[VALUE:%[0-9]+]]
 // CHECK-I386: }
+#endif
+
+#if defined(__x86_64__)
+unsigned __int64 test__umulh(unsigned __int64 a, unsigned __int64 b) {
+  return __umulh(a, b);
+}
+// CHECK-X64-LABEL: define i64 @test__umulh(i64 %a, i64 %b)
+// CHECK-X64: = mul i128 %
+
 #endif
 
