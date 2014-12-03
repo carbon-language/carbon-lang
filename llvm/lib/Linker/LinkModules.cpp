@@ -1505,11 +1505,16 @@ bool ModuleLinker::run() {
     if (DoNotLinkFromSource.count(SF)) continue;
 
     Function *DF = cast<Function>(ValueMap[SF]);
-    if (SF->hasPrefixData()) {
-      // Link in the prefix data.
+
+    // Link in the prefix data.
+    if (SF->hasPrefixData())
       DF->setPrefixData(MapValue(
           SF->getPrefixData(), ValueMap, RF_None, &TypeMap, &ValMaterializer));
-    }
+
+    // Link in the prologue data.
+    if (SF->hasPrologueData())
+      DF->setPrologueData(MapValue(
+          SF->getPrologueData(), ValueMap, RF_None, &TypeMap, &ValMaterializer));
 
     // Materialize if needed.
     if (std::error_code EC = SF->materialize())

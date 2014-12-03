@@ -3,7 +3,7 @@
 
 @i = linkonce_odr global i32 1
 
-; CHECK: define void @f() prefix i32* @i
-define void @f() prefix i32* @i {
+; CHECK: define void @f() prologue i32* @i
+define void @f() prologue i32* @i {
   ret void
 }

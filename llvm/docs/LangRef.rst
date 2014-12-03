@@ -633,7 +633,8 @@ name, a (possibly empty) argument list (each with optional :ref:`parameter
 attributes <paramattrs>`), optional :ref:`function attributes <fnattrs>`,
 an optional section, an optional alignment,
 an optional :ref:`comdat <langref_comdats>`,
-an optional :ref:`garbage collector name <gc>`, an optional :ref:`prefix <prefixdata>`, an opening
+an optional :ref:`garbage collector name <gc>`, an optional :ref:`prefix <prefixdata>`,
+an optional :ref:`prologue <prologuedata>`, an opening
 curly brace, a list of basic blocks, and a closing curly brace.
 
 LLVM function declarations consist of the "``declare``" keyword, an
@@ -643,7 +644,8 @@ an optional :ref:`calling convention <callingconv>`,
 an optional ``unnamed_addr`` attribute, a return type, an optional
 :ref:`parameter attribute <paramattrs>` for the return type, a function
 name, a possibly empty list of arguments, an optional alignment, an optional
-:ref:`garbage collector name <gc>` and an optional :ref:`prefix <prefixdata>`.
+:ref:`garbage collector name <gc>`, an optional :ref:`prefix <prefixdata>`,
+and an optional :ref:`prologue <prologuedata>`.
 
 A function definition contains a list of basic blocks, forming the CFG (Control
 Flow Graph) for the function. Each basic block may optionally start with a label
@@ -680,7 +682,7 @@ Syntax::
            [cconv] [ret attrs]
            <ResultType> @<FunctionName> ([argument list])
            [unnamed_addr] [fn Attrs] [section "name"] [comdat $<ComdatName>]
-           [align N] [gc] [prefix Constant] { ... }
+           [align N] [gc] [prefix Constant] [prologue Constant] { ... }
 
 The argument list is a comma seperated sequence of arguments where each
 argument is of the following form
@@ -1021,47 +1023,79 @@ support the named garbage collection algorithm.
 Prefix Data
 -----------
 
-Prefix data is data associated with a function which the code generator
-will emit immediately before the function body.  The purpose of this feature
-is to allow frontends to associate language-specific runtime metadata with
-specific functions and make it available through the function pointer while
-still allowing the function pointer to be called.  To access the data for a
-given function, a program may bitcast the function pointer to a pointer to
-the constant's type.  This implies that the IR symbol points to the start
-of the prefix data.
+Prefix data is data associated with a function which the code
+generator will emit immediately before the function's entrypoint.
+The purpose of this feature is to allow frontends to associate
+language-specific runtime metadata with specific functions and make it
+available through the function pointer while still allowing the
+function pointer to be called.
 
-To maintain the semantics of ordinary function calls, the prefix data must
+To access the data for a given function, a program may bitcast the
+function pointer to a pointer to the constant's type and dereference
+index -1.  This implies that the IR symbol points just past the end of
+the prefix data. For instance, take the example of a function annotated
+with a single ``i32``,
+
+.. code-block:: llvm
+
+    define void @f() prefix i32 123 { ... }
+
+The prefix data can be referenced as,
+
+.. code-block:: llvm
+
+    %0 = bitcast *void () @f to *i32
+    %a = getelementptr inbounds *i32 %0, i32 -1
+    %b = load i32* %a
+
+Prefix data is laid out as if it were an initializer for a global variable
+of the prefix data's type.  The function will be placed such that the
+beginning of the prefix data is aligned. This means that if the size
+of the prefix data is not a multiple of the alignment size, the
+function's entrypoint will not be aligned. If alignment of the
+function's entrypoint is desired, padding must be added to the prefix
+data.
+
+A function may have prefix data but no body.  This has similar semantics
+to the ``available_externally`` linkage in that the data may be used by the
+optimizers but will not be emitted in the object file.
+
+.. _prologuedata:
+
+Prologue Data
+-------------
+
+The ``prologue`` attribute allows arbitrary code (encoded as bytes) to
+be inserted prior to the function body. This can be used for enabling
+function hot-patching and instrumentation.
+
+To maintain the semantics of ordinary function calls, the prologue data must
 have a particular format.  Specifically, it must begin with a sequence of
 bytes which decode to a sequence of machine instructions, valid for the
 module's target, which transfer control to the point immediately succeeding
-the prefix data, without performing any other visible action.  This allows
+the prologue data, without performing any other visible action.  This allows
 the inliner and other passes to reason about the semantics of the function
-definition without needing to reason about the prefix data.  Obviously this
-makes the format of the prefix data highly target dependent.
+definition without needing to reason about the prologue data.  Obviously this
+makes the format of the prologue data highly target dependent.
 
-Prefix data is laid out as if it were an initializer for a global variable
-of the prefix data's type.  No padding is automatically placed between the
-prefix data and the function body.  If padding is required, it must be part
-of the prefix data.
-
-A trivial example of valid prefix data for the x86 architecture is ``i8 144``,
+A trivial example of valid prologue data for the x86 architecture is ``i8 144``,
 which encodes the ``nop`` instruction:
 
 .. code-block:: llvm
 
-    define void @f() prefix i8 144 { ... }
+    define void @f() prologue i8 144 { ... }
 
-Generally prefix data can be formed by encoding a relative branch instruction
-which skips the metadata, as in this example of valid prefix data for the
+Generally prologue data can be formed by encoding a relative branch instruction
+which skips the metadata, as in this example of valid prologue data for the
 x86_64 architecture, where the first two bytes encode ``jmp .+10``:
 
 .. code-block:: llvm
 
     %0 = type <{ i8, i8, i8* }>
 
-    define void @f() prefix %0 <{ i8 235, i8 8, i8* @md}> { ... }
+    define void @f() prologue %0 <{ i8 235, i8 8, i8* @md}> { ... }
 
-A function may have prefix data but no body.  This has similar semantics
+A function may have prologue data but no body.  This has similar semantics
 to the ``available_externally`` linkage in that the data may be used by the
 optimizers but will not be emitted in the object file.
 

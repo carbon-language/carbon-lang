@@ -58,6 +58,50 @@ Non-comprehensive list of changes in this release
 
    Makes programs 10x faster by doing Special New Thing.
 
+Prefix data rework
+------------------
+
+The semantics of the ``prefix`` attribute have been changed. Users
+that want the previous ``prefix`` semantics should instead use
+``prologue``.  To motivate this change, let's examine the primary
+usecases that these attributes aim to serve,
+
+  1. Code sanitization metadata (e.g. Clang's undefined behavior
+     sanitizer)
+
+  2. Function hot-patching: Enable the user to insert ``nop`` operations
+     at the beginning of the function which can later be safely replaced
+     with a call to some instrumentation facility.
+
+  3. Language runtime metadata: Allow a compiler to insert data for
+     use by the runtime during execution. GHC is one example of a
+     compiler that needs this functionality for its
+     tables-next-to-code functionality.
+
+Previously ``prefix`` served cases (1) and (2) quite well by allowing the user
+to introduce arbitrary data at the entrypoint but before the function
+body. Case (3), however, was poorly handled by this approach as it
+required that prefix data was valid executable code.
+
+In this release the concept of prefix data has been redefined to be
+data which occurs immediately before the function entrypoint (i.e. the
+symbol address). Since prefix data now occurs before the function
+entrypoint, there is no need for the data to be valid code.
+
+The previous notion of prefix data now goes under the name "prologue
+data" to emphasize its duality with the function epilogue.
+
+The intention here is to handle cases (1) and (2) with prologue data and
+case (3) with prefix data. See the language reference for further details
+on the semantics of these attributes.
+
+This refactoring arose out of discussions_ with Reid Kleckner in
+response to a proposal to introduce the notion of symbol offsets to
+enable handling of case (3).
+
+.. _discussions: http://lists.cs.uiuc.edu/pipermail/llvmdev/2014-May/073235.html
+
+
 Changes to the ARM Backend
 --------------------------
 

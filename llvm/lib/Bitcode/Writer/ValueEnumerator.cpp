@@ -85,10 +85,14 @@ static OrderMap orderModule(const Module &M) {
   for (const GlobalAlias &A : M.aliases())
     if (!isa<GlobalValue>(A.getAliasee()))
       orderValue(A.getAliasee(), OM);
-  for (const Function &F : M)
+  for (const Function &F : M) {
     if (F.hasPrefixData())
       if (!isa<GlobalValue>(F.getPrefixData()))
         orderValue(F.getPrefixData(), OM);
+    if (F.hasPrologueData())
+      if (!isa<GlobalValue>(F.getPrologueData()))
+        orderValue(F.getPrologueData(), OM);
+  }
   OM.LastGlobalConstantID = OM.size();
 
   // Initializers of GlobalValues are processed in
@@ -264,9 +268,12 @@ static UseListOrderStack predictUseListOrder(const Module &M) {
       predictValueUseListOrder(G.getInitializer(), nullptr, OM, Stack);
   for (const GlobalAlias &A : M.aliases())
     predictValueUseListOrder(A.getAliasee(), nullptr, OM, Stack);
-  for (const Function &F : M)
+  for (const Function &F : M) {
     if (F.hasPrefixData())
       predictValueUseListOrder(F.getPrefixData(), nullptr, OM, Stack);
+    if (F.hasPrologueData())
+      predictValueUseListOrder(F.getPrologueData(), nullptr, OM, Stack);
+  }
 
   return Stack;
 }
@@ -313,6 +320,11 @@ ValueEnumerator::ValueEnumerator(const Module &M) {
   for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (I->hasPrefixData())
       EnumerateValue(I->getPrefixData());
+
+  // Enumerate the prologue data constants.
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (I->hasPrologueData())
+      EnumerateValue(I->getPrologueData());
 
   // Insert constants and metadata that are named at module level into the slot
   // pool so that the module symbol table can refer to them...

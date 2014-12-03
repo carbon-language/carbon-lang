@@ -401,6 +401,12 @@ public:
   typedef DenseMap<const Function *, ReturnInst *> PrefixDataMapTy;
   PrefixDataMapTy PrefixDataMap;
 
+  /// \brief Mapping from a function to its prologue data, which is stored as
+  /// the operand of an unparented ReturnInst so that the prologue data has a
+  /// Use.
+  typedef DenseMap<const Function *, ReturnInst *> PrologueDataMapTy;
+  PrologueDataMapTy PrologueDataMap;
+
   int getOrAddScopeRecordIdxEntry(MDNode *N, int ExistingIdx);
   int getOrAddScopeInlinedAtIdxEntry(MDNode *Scope, MDNode *IA,int ExistingIdx);
   

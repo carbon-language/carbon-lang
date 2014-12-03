@@ -298,7 +298,7 @@ void Function::BuildLazyArguments() const {
 
   // Clear the lazy arguments bit.
   unsigned SDC = getSubclassDataFromValue();
-  const_cast<Function*>(this)->setValueSubclassData(SDC &= ~1);
+  const_cast<Function*>(this)->setValueSubclassData(SDC &= ~(1<<0));
 }
 
 size_t Function::arg_size() const {
@@ -335,8 +335,9 @@ void Function::dropAllReferences() {
   while (!BasicBlocks.empty())
     BasicBlocks.begin()->eraseFromParent();
 
-  // Prefix data is stored in a side table.
+  // Prefix and prologue data are stored in a side table.
   setPrefixData(nullptr);
+  setPrologueData(nullptr);
 }
 
 void Function::addAttribute(unsigned i, Attribute::AttrKind attr) {
@@ -416,6 +417,10 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
     setPrefixData(SrcF->getPrefixData());
   else
     setPrefixData(nullptr);
+  if (SrcF->hasPrologueData())
+    setPrologueData(SrcF->getPrologueData());
+  else
+    setPrologueData(nullptr);
 }
 
 /// getIntrinsicID - This method returns the ID number of the specified
@@ -880,11 +885,40 @@ void Function::setPrefixData(Constant *PrefixData) {
       PDHolder->setOperand(0, PrefixData);
     else
       PDHolder = ReturnInst::Create(getContext(), PrefixData);
-    SCData |= 2;
+    SCData |= (1<<1);
   } else {
     delete PDHolder;
     PDMap.erase(this);
-    SCData &= ~2;
+    SCData &= ~(1<<1);
   }
   setValueSubclassData(SCData);
+}
+
+Constant *Function::getPrologueData() const {
+  assert(hasPrologueData());
+  const LLVMContextImpl::PrologueDataMapTy &SOMap =
+      getContext().pImpl->PrologueDataMap;
+  assert(SOMap.find(this) != SOMap.end());
+  return cast<Constant>(SOMap.find(this)->second->getReturnValue());
+}
+
+void Function::setPrologueData(Constant *PrologueData) {
+  if (!PrologueData && !hasPrologueData())
+    return;
+
+  unsigned PDData = getSubclassDataFromValue();
+  LLVMContextImpl::PrologueDataMapTy &PDMap = getContext().pImpl->PrologueDataMap;
+  ReturnInst *&PDHolder = PDMap[this];
+  if (PrologueData) {
+    if (PDHolder)
+      PDHolder->setOperand(0, PrologueData);
+    else
+      PDHolder = ReturnInst::Create(getContext(), PrologueData);
+    PDData |= (1<<2);
+  } else {
+    delete PDHolder;
+    PDMap.erase(this);
+    PDData &= ~(1<<2);
+  }
+  setValueSubclassData(PDData);
 }
