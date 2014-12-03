@@ -444,7 +444,8 @@ def main(builtinParameters = {}):
         xunit_output_file.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n")
         xunit_output_file.write("<testsuites>\n")
         for suite_name, suite in by_suite.items():
-            xunit_output_file.write("<testsuite name='" + suite_name + "'")
+            safe_suite_name = suite_name.replace(".", "-")
+            xunit_output_file.write("<testsuite name='" + safe_suite_name + "'")
             xunit_output_file.write(" tests='" + str(suite['passes'] + 
               suite['failures']) + "'")
             xunit_output_file.write(" failures='" + str(suite['failures']) + 
