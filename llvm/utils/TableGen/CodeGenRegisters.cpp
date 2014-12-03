@@ -1816,7 +1816,7 @@ void CodeGenRegBank::inferSubClassWithSubReg(CodeGenRegisterClass *RC) {
 //
 
 void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
-                                                unsigned FirstSubRegRC) {
+                                                std::list<CodeGenRegisterClass>::iterator FirstSubRegRC) {
   SmallVector<std::pair<const CodeGenRegister*,
                         const CodeGenRegister*>, 16> SSPairs;
   BitVector TopoSigs(getNumTopoSigs());
@@ -1843,11 +1843,10 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
 
     // Iterate over sub-register class candidates.  Ignore classes created by
     // this loop. They will never be useful.
-    // Careful if trying to transform this loop to use iterators - as this loop
-    // will add new classes it will invalidate iterators to RegClasses.
+    // Store an iterator to the last element (not end) so that this loop doesn't
+    // visit newly inserted elements.
     assert(!RegClasses.empty());
-    for (auto I = std::next(RegClasses.begin(), FirstSubRegRC),
-              E = std::prev(RegClasses.end());
+    for (auto I = FirstSubRegRC, E = std::prev(RegClasses.end());
          I != std::next(E); ++I) {
       CodeGenRegisterClass &SubRC = *I;
       // Topological shortcut: SubRC members have the wrong shape.
@@ -1879,16 +1878,19 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
 // Infer missing register classes.
 //
 void CodeGenRegBank::computeInferredRegisterClasses() {
+  assert(!RegClasses.empty());
   // When this function is called, the register classes have not been sorted
   // and assigned EnumValues yet.  That means getSubClasses(),
   // getSuperClasses(), and hasSubClass() functions are defunct.
-  unsigned FirstNewRC = RegClasses.size();
+
+  // Use one-before-the-end so it doesn't move forward when new elements are
+  // added.
+  auto FirstNewRC = std::prev(RegClasses.end());
 
   // Visit all register classes, including the ones being added by the loop.
   // Watch out for iterator invalidation here.
-  unsigned rci = 0;
-  for (auto &RCR : RegClasses) {
-    CodeGenRegisterClass *RC = &RCR;
+  for (auto I = RegClasses.begin(), E = RegClasses.end(); I != E; ++I) {
+    CodeGenRegisterClass *RC = &*I;
 
     // Synthesize answers for getSubClassWithSubReg().
     inferSubClassWithSubReg(RC);
@@ -1905,13 +1907,11 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
     // after inferMatchingSuperRegClass was called.  At this point,
     // inferMatchingSuperRegClass has checked SuperRC = [0..rci] with SubRC =
     // [0..FirstNewRC).  We need to cover SubRC = [FirstNewRC..rci].
-    if (rci + 1 == FirstNewRC) {
-      unsigned NextNewRC = RegClasses.size();
-      auto I2 = RegClasses.begin();
-      for (unsigned rci2 = 0; rci2 != FirstNewRC; ++rci2, ++I2)
-        // This can add more things to RegClasses, be careful about iterator
-        // invalidation of outer loop variables.
-        inferMatchingSuperRegClass(&*I2, FirstNewRC);
+    if (I == FirstNewRC) {
+      auto NextNewRC = std::prev(RegClasses.end());
+      for (auto I2 = RegClasses.begin(), E2 = std::next(FirstNewRC); I2 != E2;
+           ++I2)
+        inferMatchingSuperRegClass(&*I2, E2);
       FirstNewRC = NextNewRC;
     }
   }

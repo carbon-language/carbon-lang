@@ -504,8 +504,13 @@ namespace llvm {
     void computeInferredRegisterClasses();
     void inferCommonSubClass(CodeGenRegisterClass *RC);
     void inferSubClassWithSubReg(CodeGenRegisterClass *RC);
-    void inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
-                                    unsigned FirstSubRegRC = 0);
+    void inferMatchingSuperRegClass(CodeGenRegisterClass *RC) {
+      inferMatchingSuperRegClass(RC, RegClasses.begin());
+    }
+
+    void inferMatchingSuperRegClass(
+        CodeGenRegisterClass *RC,
+        std::list<CodeGenRegisterClass>::iterator FirstSubRegRC);
 
     // Iteratively prune unit sets.
     void pruneUnitSets();
