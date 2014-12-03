@@ -17,14 +17,16 @@
 #include "HexagonTargetMachine.h"
 #include "llvm/MC/MCInst.h"
 
+#include <memory>
+
+extern "C" void LLVMInitializeHexagonTargetMC();
 namespace llvm {
 class MCOperand;
 
 class HexagonMCInst : public MCInst {
-  // MCID is set during instruction lowering.
-  // It is needed in order to access TSFlags for
-  // use in checking MC instruction properties.
-  const MCInstrDesc *MCID;
+  friend void ::LLVMInitializeHexagonTargetMC();
+  // Used to access TSFlags
+  static std::unique_ptr <MCInstrInfo const> MCII;
 
 public:
   explicit HexagonMCInst();
@@ -55,8 +57,7 @@ public:
   // Return the Hexagon ISA class for the insn.
   unsigned getType() const;
 
-  void setDesc(const MCInstrDesc &mcid) { MCID = &mcid; };
-  const MCInstrDesc &getDesc(void) const { return *MCID; };
+  MCInstrDesc const &getDesc() const;
 
   // Return whether the insn is an actual insn.
   bool isCanon() const;
