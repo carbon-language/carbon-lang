@@ -26,17 +26,27 @@ class HexagonMCInst : public MCInst {
   // use in checking MC instruction properties.
   const MCInstrDesc *MCID;
 
-  // Packet start and end markers
-  unsigned packetBegin : 1, packetEnd : 1;
-
 public:
   explicit HexagonMCInst();
   HexagonMCInst(const MCInstrDesc &mcid);
 
-  bool isPacketBegin() const;
-  bool isPacketEnd() const;
+  static void AppendImplicitOperands(MCInst &MCI);
+  static std::bitset<16> GetImplicitBits(MCInst const &MCI);
+  static void SetImplicitBits(MCInst &MCI, std::bitset<16> Bits);
+  static void SanityCheckImplicitOperands(MCInst const &MCI) {
+    assert(MCI.getNumOperands() >= 2 && "At least the two implicit operands");
+    assert(MCI.getOperand(MCI.getNumOperands() - 1).isInst() &&
+           "Implicit bits and flags");
+    assert(MCI.getOperand(MCI.getNumOperands() - 2).isImm() &&
+           "Parent pointer");
+  }
+
   void setPacketBegin(bool Y);
+  bool isPacketBegin() const;
+  size_t const packetBeginIndex = 0;
   void setPacketEnd(bool Y);
+  bool isPacketEnd() const;
+  size_t const packetEndIndex = 1;
   void resetPacket();
 
   // Return the slots used by the insn.

@@ -18,15 +18,47 @@
 
 using namespace llvm;
 
-HexagonMCInst::HexagonMCInst()
-    : MCInst(), MCID(nullptr), packetBegin(0), packetEnd(0){}
-HexagonMCInst::HexagonMCInst(MCInstrDesc const &mcid)
-    : MCInst(), MCID(&mcid), packetBegin(0), packetEnd(0){}
+HexagonMCInst::HexagonMCInst() : MCInst(), MCID(nullptr) {}
+HexagonMCInst::HexagonMCInst(MCInstrDesc const &mcid) : MCInst(), MCID(&mcid) {}
 
-bool HexagonMCInst::isPacketBegin() const { return (packetBegin); }
-bool HexagonMCInst::isPacketEnd() const { return (packetEnd); }
-void HexagonMCInst::setPacketBegin(bool Y) { packetBegin = Y; }
-void HexagonMCInst::setPacketEnd(bool Y) { packetEnd = Y; }
+void HexagonMCInst::AppendImplicitOperands(MCInst &MCI) {
+  MCI.addOperand(MCOperand::CreateImm(0));
+  MCI.addOperand(MCOperand::CreateInst(nullptr));
+}
+
+std::bitset<16> HexagonMCInst::GetImplicitBits(MCInst const &MCI) {
+  SanityCheckImplicitOperands(MCI);
+  std::bitset<16> Bits(MCI.getOperand(MCI.getNumOperands() - 2).getImm());
+  return Bits;
+}
+
+void HexagonMCInst::SetImplicitBits(MCInst &MCI, std::bitset<16> Bits) {
+  SanityCheckImplicitOperands(MCI);
+  MCI.getOperand(MCI.getNumOperands() - 2).setImm(Bits.to_ulong());
+}
+
+void HexagonMCInst::setPacketBegin(bool f) {
+  std::bitset<16> Bits(GetImplicitBits(*this));
+  Bits.set(packetBeginIndex, f);
+  SetImplicitBits(*this, Bits);
+}
+
+bool HexagonMCInst::isPacketBegin() const {
+  std::bitset<16> Bits(GetImplicitBits(*this));
+  return Bits.test(packetBeginIndex);
+}
+
+void HexagonMCInst::setPacketEnd(bool f) {
+  std::bitset<16> Bits(GetImplicitBits(*this));
+  Bits.set(packetEndIndex, f);
+  SetImplicitBits(*this, Bits);
+}
+
+bool HexagonMCInst::isPacketEnd() const {
+  std::bitset<16> Bits(GetImplicitBits(*this));
+  return Bits.test(packetEndIndex);
+}
+
 void HexagonMCInst::resetPacket() {
   setPacketBegin(false);
   setPacketEnd(false);
