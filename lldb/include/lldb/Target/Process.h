@@ -2477,17 +2477,26 @@ public:
     //------------------------------------------------------------------
     /// Get any available STDOUT.
     ///
-    /// If the process was launched without supplying valid file paths
-    /// for stdin, stdout, and stderr, then the Process class might
-    /// try to cache the STDOUT for the process if it is able. Events
-    /// will be queued indicating that there is STDOUT available that
-    /// can be retrieved using this function.
+    /// Calling this method is a valid operation only if all of the
+    /// following conditions are true:
+    /// 1) The process was launched, and not attached to.
+    /// 2) The process was not launched with eLaunchFlagDisableSTDIO.
+    /// 3) The process was launched without supplying a valid file path
+    ///    for STDOUT.
+    ///
+    /// Note that the implementation will probably need to start a read
+    /// thread in the background to make sure that the pipe is drained
+    /// and the STDOUT buffered appropriately, to prevent the process
+    /// from deadlocking trying to write to a full buffer.
+    ///
+    /// Events will be queued indicating that there is STDOUT available
+    /// that can be retrieved using this function.
     ///
     /// @param[out] buf
     ///     A buffer that will receive any STDOUT bytes that are
     ///     currently available.
     ///
-    /// @param[out] buf_size
+    /// @param[in] buf_size
     ///     The size in bytes for the buffer \a buf.
     ///
     /// @return
@@ -2501,13 +2510,22 @@ public:
     //------------------------------------------------------------------
     /// Get any available STDERR.
     ///
-    /// If the process was launched without supplying valid file paths
-    /// for stdin, stdout, and stderr, then the Process class might
-    /// try to cache the STDERR for the process if it is able. Events
-    /// will be queued indicating that there is STDERR available that
-    /// can be retrieved using this function.
+    /// Calling this method is a valid operation only if all of the
+    /// following conditions are true:
+    /// 1) The process was launched, and not attached to.
+    /// 2) The process was not launched with eLaunchFlagDisableSTDIO.
+    /// 3) The process was launched without supplying a valid file path
+    ///    for STDERR.
     ///
-    /// @param[out] buf
+    /// Note that the implementation will probably need to start a read
+    /// thread in the background to make sure that the pipe is drained
+    /// and the STDERR buffered appropriately, to prevent the process
+    /// from deadlocking trying to write to a full buffer.
+    ///
+    /// Events will be queued indicating that there is STDERR available
+    /// that can be retrieved using this function.
+    ///
+    /// @param[in] buf
     ///     A buffer that will receive any STDERR bytes that are
     ///     currently available.
     ///
@@ -2522,6 +2540,27 @@ public:
     virtual size_t
     GetSTDERR (char *buf, size_t buf_size, Error &error);
 
+    //------------------------------------------------------------------
+    /// Puts data into this process's STDIN.
+    ///
+    /// Calling this method is a valid operation only if all of the
+    /// following conditions are true:
+    /// 1) The process was launched, and not attached to.
+    /// 2) The process was not launched with eLaunchFlagDisableSTDIO.
+    /// 3) The process was launched without supplying a valid file path
+    ///    for STDIN.
+    ///
+    /// @param[in] buf
+    ///     A buffer that contains the data to write to the process's STDIN.
+    ///
+    /// @param[in] buf_size
+    ///     The size in bytes for the buffer \a buf.
+    ///
+    /// @return
+    ///     The number of bytes written into \a buf. If this value is
+    ///     less than \a buf_size, another call to this function should
+    ///     be made to write the rest of the data.
+    //------------------------------------------------------------------
     virtual size_t
     PutSTDIN (const char *buf, size_t buf_size, Error &error) 
     {
