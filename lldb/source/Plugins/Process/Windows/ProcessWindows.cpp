@@ -418,6 +418,11 @@ ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
 void
 ProcessWindows::OnExitProcess(uint32_t exit_code)
 {
+    ModuleSP executable_module = GetTarget().GetExecutableModule();
+    ModuleList unloaded_modules;
+    unloaded_modules.Append(executable_module);
+    GetTarget().ModulesDidUnload(unloaded_modules, true);
+
     SetProcessExitStatus(nullptr, GetID(), true, 0, exit_code);
     SetPrivateState(eStateExited);
 }
@@ -430,6 +435,12 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
     ModuleSP module = GetTarget().GetExecutableModule();
     bool load_addr_changed;
     module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
+
+    // Notify the target that the executable module has loaded.  This will cause any pending
+    // breakpoints to be resolved to explicit brekapoint sites.
+    ModuleList loaded_modules;
+    loaded_modules.Append(module);
+    GetTarget().ModulesDidLoad(loaded_modules);
 
     DebuggerThreadSP debugger = m_session_data->m_debugger;
     const HostThreadWindows &wmain_thread = debugger->GetMainThread().GetNativeThread();
