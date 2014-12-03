@@ -91,14 +91,14 @@ void HexagonInstPrinter::printInst(const HexagonMCInst *MI, raw_ostream &O,
     // Ending a harware loop is different from ending an regular packet.
     assert(MI->isPacketEnd() && "Loop-end must also end the packet");
 
-    if (MI->isPacketStart()) {
+    if (MI->isPacketBegin()) {
       // There must be a packet to end a loop.
       // FIXME: when shuffling is always run, this shouldn't be needed.
       HexagonMCInst Nop;
       StringRef NoAnnot;
 
       Nop.setOpcode (Hexagon::A2_nop);
-      Nop.setPacketStart (MI->isPacketStart());
+      Nop.setPacketBegin (MI->isPacketBegin());
       printInst (&Nop, O, NoAnnot);
     }
 
@@ -110,7 +110,7 @@ void HexagonInstPrinter::printInst(const HexagonMCInst *MI, raw_ostream &O,
   }
   else {
     // Prefix the insn opening the packet.
-    if (MI->isPacketStart())
+    if (MI->isPacketBegin())
       O << PacketPadding << startPacket << '\n';
 
     printInstruction(MI, O);

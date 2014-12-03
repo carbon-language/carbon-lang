@@ -196,7 +196,7 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     assert((Size+IgnoreCount) == MI->getBundleSize() && "Corrupt Bundle!");
     for (unsigned Index = 0; Index < Size; Index++) {
       HexagonMCInst MCI;
-      MCI.setPacketStart(Index == 0);
+      MCI.setPacketBegin(Index == 0);
       MCI.setPacketEnd(Index == (Size-1));
 
       HexagonLowerToMC(BundleMIs[Index], MCI, *this);
@@ -206,7 +206,7 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   else {
     HexagonMCInst MCI;
     if (MI->getOpcode() == Hexagon::ENDLOOP0) {
-      MCI.setPacketStart(true);
+      MCI.setPacketBegin(true);
       MCI.setPacketEnd(true);
     }
     HexagonLowerToMC(MI, MCI, *this);

@@ -27,19 +27,19 @@ namespace llvm {
     const MCInstrDesc *MCID;
 
     // Packet start and end markers
-    unsigned packetStart: 1, packetEnd: 1;
+    unsigned packetBegin: 1, packetEnd: 1;
 
   public:
     explicit HexagonMCInst():
-      MCInst(), MCID(nullptr), packetStart(0), packetEnd(0) {};
+      MCInst(), MCID(nullptr), packetBegin(0), packetEnd(0) {};
     HexagonMCInst(const MCInstrDesc& mcid):
-      MCInst(), MCID(&mcid), packetStart(0), packetEnd(0) {};
+      MCInst(), MCID(&mcid), packetBegin(0), packetEnd(0) {};
 
-    bool isPacketStart() const { return (packetStart); };
+    bool isPacketBegin() const { return (packetBegin); };
     bool isPacketEnd() const { return (packetEnd); };
-    void setPacketStart(bool Y) { packetStart = Y; };
+    void setPacketBegin(bool Y) { packetBegin = Y; };
     void setPacketEnd(bool Y) { packetEnd = Y; };
-    void resetPacket() { setPacketStart(false); setPacketEnd(false); };
+    void resetPacket() { setPacketBegin(false); setPacketEnd(false); };
 
     // Return the slots used by the insn.
     unsigned getUnits(const HexagonTargetMachine* TM) const;
