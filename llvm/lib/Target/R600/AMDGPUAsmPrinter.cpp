@@ -470,7 +470,7 @@ void AMDGPUAsmPrinter::EmitAmdKernelCodeT(const MachineFunction &MF,
 
   header.target_chip = STM.getAmdKernelCodeChipID();
 
-  header.kernel_code_entry_byte_offset = (1 << MF.getAlignment());
+  header.kernel_code_entry_byte_offset = (1ULL << MF.getAlignment());
 
   header.compute_pgm_resource_registers =
       KernelInfo.ComputePGMRSrc1 |
