@@ -4,23 +4,30 @@
 ; RUN: llc < %s -mtriple=thumbv5-linux-gnueabi -mcpu=xscale | FileCheck %s --check-prefix=XSCALE
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi | FileCheck %s --check-prefix=V6
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -enable-unsafe-fp-math | FileCheck %s --check-prefix=V6-FAST
+; RUN: llc < %s -mtriple=armv6-linux-gnueabi -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi | FileCheck %s --check-prefix=V6M
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -enable-unsafe-fp-math | FileCheck %s --check-prefix=V6M-FAST
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s | FileCheck %s --check-prefix=ARM1156T2F-S
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s -enable-unsafe-fp-math  | FileCheck %s --check-prefix=ARM1156T2F-S-FAST
+; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi | FileCheck %s --check-prefix=V7M
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -enable-unsafe-fp-math | FileCheck %s --check-prefix=V7M-FAST
+; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=V7
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -enable-unsafe-fp-math | FileCheck %s --check-prefix=V7-FAST
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi | FileCheck %s --check-prefix=V8
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -enable-unsafe-fp-math | FileCheck %s --check-prefix=V8-FAST
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv8-linux-gnueabi | FileCheck %s --check-prefix=Vt8
+; RUN: llc < %s -mtriple=thumbv8-linux-gnueabi -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=-neon,-crypto | FileCheck %s --check-prefix=V8-FPARMv8
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=-fp-armv8,-crypto | FileCheck %s --check-prefix=V8-NEON
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mattr=-crypto | FileCheck %s --check-prefix=V8-FPARMv8-NEON
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi | FileCheck %s --check-prefix=V8-FPARMv8-NEON-CRYPTO
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a5 | FileCheck %s --check-prefix=CORTEX-A5-DEFAULT
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a5 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A5-DEFAULT-FAST
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a5 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a5 -mattr=-neon,+d16 | FileCheck %s --check-prefix=CORTEX-A5-NONEON
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a5 -mattr=-vfp2 | FileCheck %s --check-prefix=CORTEX-A5-NOFPU
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a5 -mattr=-vfp2 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A5-NOFPU-FAST
@@ -28,40 +35,53 @@
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 -float-abi=soft -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A9-SOFT-FAST
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 -float-abi=hard | FileCheck %s --check-prefix=CORTEX-A9-HARD
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 -float-abi=hard -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A9-HARD-FAST
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a12 | FileCheck %s --check-prefix=CORTEX-A12-DEFAULT
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 -float-abi=soft | FileCheck %s --check-prefix=CORTEX-A9-SOFT
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a12 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A12-DEFAULT-FAST
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a12 -mattr=-vfp2 | FileCheck %s --check-prefix=CORTEX-A12-NOFPU
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a12 -mattr=-vfp2 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A12-NOFPU-FAST
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a12 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a15 | FileCheck %s --check-prefix=CORTEX-A15
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a15 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A15-FAST
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a15 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 | FileCheck %s --check-prefix=CORTEX-A17-DEFAULT
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A17-FAST
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 -mattr=-vfp2 | FileCheck %s --check-prefix=CORTEX-A17-NOFPU
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 -mattr=-vfp2 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A17-NOFPU-FAST
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 | FileCheck %s --check-prefix=CORTEX-M0
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-M0-FAST
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3 | FileCheck %s --check-prefix=CORTEX-M3
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-M3-FAST
+; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=soft | FileCheck %s --check-prefix=CORTEX-M4-SOFT
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=soft -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-M4-SOFT-FAST
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=hard | FileCheck %s --check-prefix=CORTEX-M4-HARD
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=hard -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-M4-HARD-FAST
+; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -mattr=-vfp2 | FileCheck %s --check-prefix=CORTEX-M7 --check-prefix=CORTEX-M7-SOFT
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -mattr=-vfp2 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-M7-NOFPU-FAST
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -mattr=+fp-only-sp | FileCheck %s --check-prefix=CORTEX-M7 --check-prefix=CORTEX-M7-SINGLE
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -mattr=+fp-only-sp -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-M7-FAST
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 | FileCheck %s --check-prefix=CORTEX-M7-DOUBLE
+; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 | FileCheck %s --check-prefix=CORTEX-R5
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-R5-FAST
+; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 | FileCheck %s --check-prefix=CORTEX-A53
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A53-FAST
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a57 | FileCheck %s --check-prefix=CORTEX-A57
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a57 -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A57-FAST
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a57 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 | FileCheck %s  --check-prefix=CORTEX-A7-CHECK
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -enable-unsafe-fp-math | FileCheck %s  --check-prefix=CORTEX-A7-CHECK-FAST
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=-vfp2,-vfp3,-vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-NOFPU
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=-vfp2,-vfp3,-vfp4,-neon -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A7-NOFPU-FAST
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,-neon -enable-unsafe-fp-math | FileCheck %s --check-prefix=CORTEX-A7-FPUV4-FAST
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,,+d16,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=pic | FileCheck %s --check-prefix=RELOC-PIC
@@ -108,6 +128,8 @@
 ; XSCALE:      .eabi_attribute 6, 5
 ; XSCALE:      .eabi_attribute 8, 1
 ; XSCALE:      .eabi_attribute 9, 1
+
+; DYN-ROUNDING: .eabi_attribute 19, 1
 
 ; V6:   .eabi_attribute 6, 6
 ; V6:   .eabi_attribute 8, 1

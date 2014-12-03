@@ -698,6 +698,12 @@ void ARMAsmPrinter::emitAttributes() {
                       ARMBuildAttrs::IEEEDenormals);
     ATS.emitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
                       ARMBuildAttrs::Allowed);
+
+    // If the user has permitted this code to choose the IEEE 754
+    // rounding at run-time, emit the rounding attribute.
+    if (TM.Options.HonorSignDependentRoundingFPMathOption)
+      ATS.emitAttribute(ARMBuildAttrs::ABI_FP_rounding,
+                        ARMBuildAttrs::Allowed);
   } else {
     if (!Subtarget->hasVFP2()) {
       // When the target doesn't have an FPU (by design or
