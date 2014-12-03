@@ -1044,10 +1044,10 @@ static Value *valueHasFloatPrecision(Value *Val) {
   }
   if (ConstantFP *Const = dyn_cast<ConstantFP>(Val)) {
     APFloat F = Const->getValueAPF();
-    bool loosesInfo;
+    bool losesInfo;
     (void)F.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven,
-                    &loosesInfo);
-    if (!loosesInfo)
+                    &losesInfo);
+    if (!losesInfo)
       return ConstantFP::get(Const->getContext(), F);
   }
   return nullptr;
