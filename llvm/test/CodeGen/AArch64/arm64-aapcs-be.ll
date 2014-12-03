@@ -22,3 +22,19 @@ entry:
 ; CHECK-DAG: strb w{{[0-9]}}, [sp, #7]
   ret i32 %call
 }
+
+define float @test_block_addr([8 x float], [1 x float] %in) {
+; CHECK-LABEL: test_block_addr:
+; CHECK: ldr s0, [sp]
+  %val = extractvalue [1 x float] %in, 0
+  ret float %val
+}
+
+define void @test_block_addr_callee() {
+; CHECK-LABEL: test_block_addr_callee:
+; CHECK: str {{[a-z0-9]+}}, [sp]
+; CHECK: bl test_block_addr
+  %val = insertvalue [1 x float] undef, float 0.0, 0
+  call float @test_block_addr([8 x float] undef, [1 x float] %val)
+  ret void
+}

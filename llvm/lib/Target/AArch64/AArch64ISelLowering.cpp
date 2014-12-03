@@ -2107,7 +2107,8 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       unsigned ArgSize = VA.getValVT().getSizeInBits() / 8;
 
       uint32_t BEAlign = 0;
-      if (ArgSize < 8 && !Subtarget->isLittleEndian())
+      if (!Subtarget->isLittleEndian() && ArgSize < 8 &&
+          !Ins[i].Flags.isInConsecutiveRegs())
         BEAlign = 8 - ArgSize;
 
       int FI = MFI->CreateFixedObject(ArgSize, ArgOffset + BEAlign, true);
@@ -2661,7 +2662,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       unsigned OpSize = Flags.isByVal() ? Flags.getByValSize() * 8
                                         : VA.getValVT().getSizeInBits();
       OpSize = (OpSize + 7) / 8;
-      if (!Subtarget->isLittleEndian() && !Flags.isByVal()) {
+      if (!Subtarget->isLittleEndian() && !Flags.isByVal() &&
+          !Flags.isInConsecutiveRegs()) {
         if (OpSize < 8)
           BEAlign = 8 - OpSize;
       }
