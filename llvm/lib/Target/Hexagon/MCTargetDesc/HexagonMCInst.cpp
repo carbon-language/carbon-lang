@@ -18,13 +18,27 @@
 
 using namespace llvm;
 
+HexagonMCInst::HexagonMCInst()
+    : MCInst(), MCID(nullptr), packetBegin(0), packetEnd(0){};
+HexagonMCInst::HexagonMCInst(MCInstrDesc const &mcid)
+    : MCInst(), MCID(&mcid), packetBegin(0), packetEnd(0){};
+
+bool HexagonMCInst::isPacketBegin() const { return (packetBegin); };
+bool HexagonMCInst::isPacketEnd() const { return (packetEnd); };
+void HexagonMCInst::setPacketBegin(bool Y) { packetBegin = Y; };
+void HexagonMCInst::setPacketEnd(bool Y) { packetEnd = Y; };
+void HexagonMCInst::resetPacket() {
+  setPacketBegin(false);
+  setPacketEnd(false);
+};
+
 // Return the slots used by the insn.
-unsigned HexagonMCInst::getUnits(const HexagonTargetMachine* TM) const {
+unsigned HexagonMCInst::getUnits(const HexagonTargetMachine *TM) const {
   const HexagonInstrInfo *QII = TM->getSubtargetImpl()->getInstrInfo();
   const InstrItineraryData *II =
       TM->getSubtargetImpl()->getInstrItineraryData();
-  const InstrStage*
-    IS = II->beginStage(QII->get(this->getOpcode()).getSchedClass());
+  const InstrStage *IS =
+      II->beginStage(QII->get(this->getOpcode()).getSchedClass());
 
   return (IS->getUnits());
 }
@@ -38,8 +52,7 @@ unsigned HexagonMCInst::getType() const {
 
 // Return whether the insn is an actual insn.
 bool HexagonMCInst::isCanon() const {
-  return (!MCID->isPseudo() &&
-          !isPrefix() &&
+  return (!MCID->isPseudo() && !isPrefix() &&
           getType() != HexagonII::TypeENDLOOP);
 }
 
@@ -67,13 +80,13 @@ bool HexagonMCInst::hasNewValue() const {
 }
 
 // Return the operand that consumes or produces a new value.
-const MCOperand& HexagonMCInst::getNewValue() const {
+const MCOperand &HexagonMCInst::getNewValue() const {
   const uint64_t F = MCID->TSFlags;
-  const unsigned O = (F >> HexagonII::NewValueOpPos) &
-                     HexagonII::NewValueOpMask;
-  const MCOperand& MCO = getOperand(O);
+  const unsigned O =
+      (F >> HexagonII::NewValueOpPos) & HexagonII::NewValueOpMask;
+  const MCOperand &MCO = getOperand(O);
 
-  assert ((isNewValue() || hasNewValue()) && MCO.isReg());
+  assert((isNewValue() || hasNewValue()) && MCO.isReg());
   return (MCO);
 }
 
@@ -93,9 +106,9 @@ bool HexagonMCInst::isConstExtended(void) const {
     return false;
 
   short ExtOpNum = getCExtOpNum();
-  int MinValue   = getMinValue();
-  int MaxValue   = getMaxValue();
-  const MCOperand& MO = getOperand(ExtOpNum);
+  int MinValue = getMinValue();
+  int MaxValue = getMaxValue();
+  const MCOperand &MO = getOperand(ExtOpNum);
 
   // We could be using an instruction with an extendable immediate and shoehorn
   // a global address into it. If it is a global address it will be constant
@@ -141,18 +154,17 @@ unsigned short HexagonMCInst::getCExtOpNum(void) const {
 // Return whether the operand can be constant extended.
 bool HexagonMCInst::isOperandExtended(const unsigned short OperandNum) const {
   const uint64_t F = MCID->TSFlags;
-  return ((F >> HexagonII::ExtendableOpPos) & HexagonII::ExtendableOpMask)
-          == OperandNum;
+  return ((F >> HexagonII::ExtendableOpPos) & HexagonII::ExtendableOpMask) ==
+         OperandNum;
 }
 
 // Return the min value that a constant extendable operand can have
 // without being extended.
 int HexagonMCInst::getMinValue(void) const {
   const uint64_t F = MCID->TSFlags;
-  unsigned isSigned = (F >> HexagonII::ExtentSignedPos)
-                    & HexagonII::ExtentSignedMask;
-  unsigned bits =  (F >> HexagonII::ExtentBitsPos)
-                    & HexagonII::ExtentBitsMask;
+  unsigned isSigned =
+      (F >> HexagonII::ExtentSignedPos) & HexagonII::ExtentSignedMask;
+  unsigned bits = (F >> HexagonII::ExtentBitsPos) & HexagonII::ExtentBitsMask;
 
   if (isSigned) // if value is signed
     return -1U << (bits - 1);
@@ -164,10 +176,9 @@ int HexagonMCInst::getMinValue(void) const {
 // without being extended.
 int HexagonMCInst::getMaxValue(void) const {
   const uint64_t F = MCID->TSFlags;
-  unsigned isSigned = (F >> HexagonII::ExtentSignedPos)
-                    & HexagonII::ExtentSignedMask;
-  unsigned bits =  (F >> HexagonII::ExtentBitsPos)
-                    & HexagonII::ExtentBitsMask;
+  unsigned isSigned =
+      (F >> HexagonII::ExtentSignedPos) & HexagonII::ExtentSignedMask;
+  unsigned bits = (F >> HexagonII::ExtentBitsPos) & HexagonII::ExtentBitsMask;
 
   if (isSigned) // if value is signed
     return ~(-1U << (bits - 1));
