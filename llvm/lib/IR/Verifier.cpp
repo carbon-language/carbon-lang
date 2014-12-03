@@ -2567,6 +2567,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert2(PT && PT->getElementType()->isFunctionTy(),
             "gc.statepoint callee must be of function pointer type",
             &CI, Target);
+    FunctionType *TargetFuncType = cast<FunctionType>(PT->getElementType());
 
     const Value *NumCallArgsV = CI.getArgOperand(1);
     Assert1(isa<ConstantInt>(NumCallArgsV),
@@ -2582,9 +2583,15 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             cast<ConstantInt>(Unused)->isNullValue(),
             "gc.statepoint parameter #3 must be zero", &CI);
 
-    // TODO: Verify that the types of the call parameter arguments match
-    // the type of the callee.
-
+    // Verify that the types of the call parameter arguments match
+    // the type of the wrapped callee.
+    for (int i = 0; i < NumCallArgs; i++) {
+      Type *ParamType = TargetFuncType->getParamType(i);
+      Type *ArgType = CI.getArgOperand(3+i)->getType();
+      Assert1(ArgType == ParamType,
+              "gc.statepoint call argument does not match wrapped "
+              "function type", &CI);
+    }
     const int EndCallArgsInx = 2+NumCallArgs;
     const Value *NumDeoptArgsV = CI.getArgOperand(EndCallArgsInx+1);
     Assert1(isa<ConstantInt>(NumDeoptArgsV),
@@ -2639,7 +2646,14 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             StatepointFn->getIntrinsicID() == Intrinsic::experimental_gc_statepoint,
             "token must be from a statepoint", &CI, CI.getArgOperand(0));
 
-    //TODO: assert that result type matches wrapped callee
+    // Assert that result type matches wrapped callee.
+    const Value *Target = StatepointCS.getArgument(0);
+    const PointerType *PT = cast<PointerType>(Target->getType());
+    const FunctionType *TargetFuncType =
+      cast<FunctionType>(PT->getElementType());
+    Assert1(CI.getType() == TargetFuncType->getReturnType(),
+            "gc.result result type does not match wrapped callee",
+            &CI);
     break;
   }
   case Intrinsic::experimental_gc_relocate: {
@@ -2668,8 +2682,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             DerivedIndex < (int)StatepointCS.arg_size(),
             "index out of bounds", &CI);
 
-    // TODO: assert that the result type matches the type of the
-    // relocated pointer
+    // Assert that the result type matches the type of the relocated pointer
+    GCRelocateOperands Operands(&CI);
+    Assert1(Operands.derivedPtr()->getType() == CI.getType(),
+            "gc.relocate: relocating a pointer shouldn't change it's type",
+            &CI);
     break;
   }
   };
