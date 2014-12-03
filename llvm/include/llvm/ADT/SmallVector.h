@@ -246,10 +246,10 @@ public:
   }
 #else
 private:
-  template <typename Constructor> void emplace_back_impl(Constructor emplace) {
+  template <typename Constructor> void emplace_back_impl(Constructor construct) {
     if (LLVM_UNLIKELY(this->EndX >= this->CapacityX))
       this->grow();
-    emplace((void *)this->end());
+    construct((void *)this->end());
     this->setEnd(this->end() + 1);
   }
 
