@@ -250,18 +250,16 @@ public:
       : VirtualArchiveLibraryFile("<export>"), _syms(syms),
         _ctx(const_cast<PECOFFLinkingContext *>(&ctx)) {
     for (PECOFFLinkingContext::ExportDesc &desc : _ctx->getDllExports())
-      _exportedSyms[desc.name] = &desc;
+      _exportedSyms.insert(desc.name);
   }
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
     typedef PECOFFLinkingContext::ExportDesc ExportDesc;
-    auto it = _exportedSyms.find(sym);
-    if (it == _exportedSyms.end())
+    if (_exportedSyms.count(sym) == 0)
       return nullptr;
     std::string replace;
     if (!findDecoratedSymbol(_ctx, _syms.get(), sym.str(), replace))
       return nullptr;
-    ExportDesc *desc = it->second;
 
     // We found a decorated symbol. There may be another symbol that
     // has the same decorated name. If that's the case, we remove the
@@ -273,10 +271,15 @@ public:
     if (isFound != exp.end()) {
       exp.erase(
           std::remove_if(exp.begin(), exp.end(),
-                         [&](ExportDesc &e) { return &e == desc; }),
+                         [&](ExportDesc &e) { return e.name == sym; }),
           exp.end());
     } else {
-      it->second->name = replace;
+      for (ExportDesc &e : exp) {
+        if (e.name == sym) {
+          e.name = replace;
+          break;
+        }
+      }
       if (_ctx->deadStrip())
         _ctx->addDeadStripRoot(_ctx->allocate(replace));
     }
@@ -285,7 +288,7 @@ public:
   }
 
 private:
-  std::map<std::string, PECOFFLinkingContext::ExportDesc *> _exportedSyms;
+  std::set<std::string> _exportedSyms;
   std::shared_ptr<ResolvableSymbols> _syms;
   mutable llvm::BumpPtrAllocator _alloc;
   mutable PECOFFLinkingContext *_ctx;
