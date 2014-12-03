@@ -33,7 +33,19 @@ static cl::extrahelp ClangTidyHelp(
     "  .clang-tidy file located in the closest parent directory of the source\n"
     "  file. If any configuration options have a corresponding command-line\n"
     "  option, command-line option takes precedence. The effective\n"
-    "  configuration can be inspected using -dump-config.\n\n");
+    "  configuration can be inspected using -dump-config:\n"
+    "\n"
+    "    $ clang-tidy -dump-config - --\n"
+    "    ---\n"
+    "    Checks:          '-*,some-check'\n"
+    "    HeaderFilterRegex: ''\n"
+    "    AnalyzeTemporaryDtors: false\n"
+    "    User:            user\n"
+    "    CheckOptions:    \n"
+    "      - key:             some-check.SomeOption\n"
+    "        value:           'some value'\n"
+    "    ...\n"
+    "\n\n");
 
 const char DefaultChecks[] =  // Enable these checks:
     "clang-diagnostic-*,"     //   * compiler diagnostics
@@ -100,16 +112,19 @@ ListChecks("list-checks",
 static cl::opt<std::string> Config(
     "config",
     cl::desc("Specifies a configuration in YAML/JSON format:\n"
-             "  -config=\"{Checks: '*', CheckOptions: {key: x, value: y}}\"\n"
+             "  -config=\"{Checks: '*', CheckOptions: [{key: x, value: y}]}\"\n"
              "When the value is empty, clang-tidy will attempt to find\n"
              "a file named .clang-tidy for each source file in its parent\n"
              "directories."),
     cl::init(""), cl::cat(ClangTidyCategory));
 
-static cl::opt<bool>
-DumpConfig("dump-config",
-           cl::desc("Dumps configuration in the YAML format to stdout."),
-           cl::init(false), cl::cat(ClangTidyCategory));
+static cl::opt<bool> DumpConfig(
+    "dump-config",
+    cl::desc("Dumps configuration in the YAML format to stdout. This option\n"
+             "should be used along with a file name (and '--' if the file is\n"
+             "outside of a project with configured compilation database). The\n"
+             "configuration used for this file will be printed."),
+    cl::init(false), cl::cat(ClangTidyCategory));
 
 static cl::opt<bool> EnableCheckProfile(
     "enable-check-profile",

@@ -86,71 +86,95 @@ An overview of all the command-line options:
 
   clang-tidy options:
 
-    -analyze-temporary-dtors - Enable temporary destructor-aware analysis in
-                               clang-analyzer- checks.
-    -checks=<string>         - Comma-separated list of globs with optional '-'
-                               prefix. Globs are processed in order of appearance
-                               in the list. Globs without '-' prefix add checks
-                               with matching names to the set, globs with the '-'
-                               prefix remove checks with matching names from the
-                               set of enabled checks.
-                               This option's value is appended to the value read
-                               from a .clang-tidy file, if any.
-    -config=<string>         - Specifies a configuration in YAML/JSON format:
-                                 -config="{Checks: '*', CheckOptions: {key: x, value: y}}"
-                               When the value is empty, clang-tidy will attempt to find
-                               a file named .clang-tidy for each source file in its parent
-                               directories.
-    -dump-config             - Dumps configuration in the YAML format to stdout.
-    -export-fixes=<filename> - YAML file to store suggested fixes in. The
-                               stored fixes can be applied to the input source
-                               code with clang-apply-replacements.
-    -fix                     - Fix detected errors if possible.
-    -header-filter=<string>  - Regular expression matching the names of the
-                               headers to output diagnostics from. Diagnostics
-                               from the main file of each translation unit are
-                               always displayed.
-                               Can be used together with -line-filter.
-                               This option overrides the value read from a
-                               .clang-tidy file.
-    -line-filter=<string>    - List of files with line ranges to filter the
-                               warnings. Can be used together with
-                               -header-filter. The format of the list is a JSON
-                               array of objects:
-                                 [
-                                   {"name":"file1.cpp","lines":[[1,3],[5,7]]},
-                                   {"name":"file2.h"}
-                                 ]
-    -list-checks             - List all enabled checks and exit. Use with
-                               -checks='*' to list all available checks.
-    -p=<string>              - Build path
-    -system-headers          - Display the errors from system headers
+    -analyze-temporary-dtors   - Enable temporary destructor-aware analysis in
+                                 clang-analyzer- checks.
+                                 This option overrides the value read from a
+                                 .clang-tidy file.
+    -checks=<string>           - Comma-separated list of globs with optional '-'
+                                 prefix. Globs are processed in order of appearance
+                                 in the list. Globs without '-' prefix add checks
+                                 with matching names to the set, globs with the '-'
+                                 prefix remove checks with matching names from the
+                                 set of enabled checks.
+                                 This option's value is appended to the value read
+                                 from a .clang-tidy file, if any.
+    -config=<string>           - Specifies a configuration in YAML/JSON format:
+                                   -config="{Checks: '*', CheckOptions: [{key: x, value: y}]}"
+                                 When the value is empty, clang-tidy will attempt to find
+                                 a file named .clang-tidy for each source file in its parent
+                                 directories.
+    -dump-config               - Dumps configuration in the YAML format to stdout. This option
+                                 should be used along with a file name (and '--' if the file is
+                                 outside of a project with configured compilation database). The
+                                 configuration used for this file will be printed.
+    -enable-check-profile      - Enable per-check timing profiles, and print a report to stderr.
+    -export-fixes=<filename>   - YAML file to store suggested fixes in. The
+                                 stored fixes can be applied to the input source
+                                 code with clang-apply-replacements.
+    -extra-arg=<string>        - Additional argument to append to the compiler command line
+    -extra-arg-before=<string> - Additional argument to prepend to the compiler command line
+    -fix                       - Apply suggested fixes. Without -fix-errors
+                                 clang-tidy will bail out if any compilation
+                                 errors were found.
+    -fix-errors                - Apply suggested fixes even if compilation errors
+                                 were found. If compiler errors have attached
+                                 fix-its, clang-tidy will apply them as well.
+    -header-filter=<string>    - Regular expression matching the names of the
+                                 headers to output diagnostics from. Diagnostics
+                                 from the main file of each translation unit are
+                                 always displayed.
+                                 Can be used together with -line-filter.
+                                 This option overrides the value read from a
+                                 .clang-tidy file.
+    -line-filter=<string>      - List of files with line ranges to filter the
+                                 warnings. Can be used together with
+                                 -header-filter. The format of the list is a JSON
+                                 array of objects:
+                                   [
+                                     {"name":"file1.cpp","lines":[[1,3],[5,7]]},
+                                     {"name":"file2.h"}
+                                   ]
+    -list-checks               - List all enabled checks and exit. Use with
+                                 -checks='*' to list all available checks.
+    -p=<string>                - Build path
+    -system-headers            - Display the errors from system headers.
 
   -p <build-path> is used to read a compile command database.
 
-    For example, it can be a CMake build directory in which a file named
-    compile_commands.json exists (use -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-    CMake option to get this output). When no build path is specified,
-    a search for compile_commands.json will be attempted through all
-    parent paths of the first input file . See:
-    http://clang.llvm.org/docs/HowToSetupToolingForLLVM.html for an
-    example of setting up Clang Tooling on a source tree.
+          For example, it can be a CMake build directory in which a file named
+          compile_commands.json exists (use -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          CMake option to get this output). When no build path is specified,
+          a search for compile_commands.json will be attempted through all
+          parent paths of the first input file . See:
+          http://clang.llvm.org/docs/HowToSetupToolingForLLVM.html for an
+          example of setting up Clang Tooling on a source tree.
 
   <source0> ... specify the paths of source files. These paths are
-    looked up in the compile command database. If the path of a file is
-    absolute, it needs to point into CMake's source tree. If the path is
-    relative, the current working directory needs to be in the CMake
-    source tree and the file must be in a subdirectory of the current
-    working directory. "./" prefixes in the relative files will be
-    automatically removed, but the rest of a relative path must be a
-    suffix of a path in the compile command database.
+          looked up in the compile command database. If the path of a file is
+          absolute, it needs to point into CMake's source tree. If the path is
+          relative, the current working directory needs to be in the CMake
+          source tree and the file must be in a subdirectory of the current
+          working directory. "./" prefixes in the relative files will be
+          automatically removed, but the rest of a relative path must be a
+          suffix of a path in the compile command database.
 
   Configuration files:
     clang-tidy attempts to read configuration for each source file from a
     .clang-tidy file located in the closest parent directory of the source
     file. If any configuration options have a corresponding command-line
     option, command-line option takes precedence. The effective
-    configuration can be inspected using -dump-config.
+    configuration can be inspected using -dump-config:
+
+      $ clang-tidy -dump-config - --
+      ---
+      Checks:          '-*,some-check'
+      HeaderFilterRegex: ''
+      AnalyzeTemporaryDtors: false
+      User:            user
+      CheckOptions:    
+        - key:             some-check.SomeOption
+          value:           'some value'
+      ...
 
 .. _LibTooling: http://clang.llvm.org/docs/LibTooling.html
 .. _How To Setup Tooling For LLVM: http://clang.llvm.org/docs/HowToSetupToolingForLLVM.html
@@ -384,7 +408,7 @@ the check implements and what the current values are (e.g. for the
         SomeOption(Options.get("SomeOption1", -1U)),
         SomeOption(Options.get("SomeOption2", "some default")) {}
 
-    void storeOptions(ClangTidyOptions::OptionMap &Opts) {
+    void storeOptions(ClangTidyOptions::OptionMap &Opts) override {
       Options.store(Opts, "SomeOption1", SomeOption1);
       Options.store(Opts, "SomeOption2", SomeOption2);
     }
@@ -395,12 +419,18 @@ be set in a ``.clang-tidy`` file in the following way:
 
 .. code-block:: yaml
 
-  CheckOptions: {
+  CheckOptions:
     - key: my-check.SomeOption1
       value: 123
     - key: my-check.SomeOption2
       value: 'some other value'
-  }
+
+If you need to specify check options on a command line, you can use the inline
+YAML format:
+
+.. code-block:: bash
+
+  $ clang-tidy -config="{CheckOptions: [{key: a, value: b}, {key: x, value: y}]}" ...
 
 
 Testing Checks
