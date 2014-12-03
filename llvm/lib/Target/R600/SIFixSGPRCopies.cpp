@@ -182,7 +182,12 @@ bool SIFixSGPRCopies::isVGPRToSGPRCopy(const MachineInstr &Copy,
   unsigned DstReg = Copy.getOperand(0).getReg();
   unsigned SrcReg = Copy.getOperand(1).getReg();
   unsigned SrcSubReg = Copy.getOperand(1).getSubReg();
-  const TargetRegisterClass *DstRC = MRI.getRegClass(DstReg);
+
+  const TargetRegisterClass *DstRC
+    = TargetRegisterInfo::isVirtualRegister(DstReg) ?
+    MRI.getRegClass(DstReg) :
+    TRI->getRegClass(DstReg);
+
   const TargetRegisterClass *SrcRC;
 
   if (!TargetRegisterInfo::isVirtualRegister(SrcReg) ||
