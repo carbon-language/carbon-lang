@@ -53,26 +53,32 @@ namespace Test3 {
 namespace Test4 {
   struct A {
     virtual void f();
+    virtual int operator-();
   };
 
   struct B final : A {
     virtual void f();
+    virtual int operator-();
   };
 
   // CHECK-LABEL: define void @_ZN5Test41fEPNS_1BE
   void f(B* d) {
     // CHECK: call void @_ZN5Test41B1fEv
     static_cast<A*>(d)->f();
+    // CHECK: call i32 @_ZN5Test41BngEv
+    -static_cast<A&>(*d);
   }
 }
 
 namespace Test5 {
   struct A {
     virtual void f();
+    virtual int operator-();
   };
 
   struct B : A {
     virtual void f();
+    virtual int operator-();
   };
 
   struct C final : B {
@@ -86,6 +92,15 @@ namespace Test5 {
     // CHECK-NEXT: %[[FUNC:.*]] = load
     // CHECK-NEXT: call void %[[FUNC]]
     static_cast<A*>(d)->f();
+  }
+  // CHECK-LABEL: define void @_ZN5Test53fopEPNS_1CE
+  void fop(C* d) {
+    // FIXME: It should be possible to devirtualize this case, but that is
+    // not implemented yet.
+    // CHECK: getelementptr
+    // CHECK-NEXT: %[[FUNC:.*]] = load
+    // CHECK-NEXT: call i32 %[[FUNC]]
+    -static_cast<A&>(*d);
   }
 }
 
@@ -165,9 +180,18 @@ namespace Test9 {
     virtual A *f() {
       return 0;
     }
+    virtual A *operator-() {
+      return 0;
+    }
   };
   struct RC final : public RA {
     virtual C *f() {
+      C *x = new C();
+      x->a = 1;
+      x->b = 2;
+      return x;
+    }
+    virtual C *operator-() {
       C *x = new C();
       x->a = 1;
       x->b = 2;
@@ -186,5 +210,18 @@ namespace Test9 {
     // CHECK-NEXT: %[[FUNC:.*]] = load {{.+}} [[VFN]]
     // CHECK-NEXT: = call {{.*}} %[[FUNC]]
     return static_cast<RA*>(x)->f();
+  }
+  // CHECK: define {{.*}} @_ZN5Test93fopEPNS_2RCE
+  A *fop(RC *x) {
+    // FIXME: It should be possible to devirtualize this case, but that is
+    // not implemented yet.
+    // CHECK: load
+    // CHECK: bitcast
+    // CHECK: [[F_PTR_RA:%.+]] = bitcast
+    // CHECK: [[VTABLE:%.+]] = load {{.+}} [[F_PTR_RA]]
+    // CHECK: [[VFN:%.+]] = getelementptr inbounds {{.+}} [[VTABLE]], i{{[0-9]+}} 1
+    // CHECK-NEXT: %[[FUNC:.*]] = load {{.+}} [[VFN]]
+    // CHECK-NEXT: = call {{.*}} %[[FUNC]]
+    return -static_cast<RA&>(*x);
   }
 }

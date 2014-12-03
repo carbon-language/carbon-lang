@@ -2163,20 +2163,6 @@ CodeGenFunction::CanDevirtualizeMemberFunctionCall(const Expr *Base,
   return false;
 }
 
-llvm::Value *
-CodeGenFunction::EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
-                                             const CXXMethodDecl *MD,
-                                             llvm::Value *This) {
-  llvm::FunctionType *fnType =
-    CGM.getTypes().GetFunctionType(
-                             CGM.getTypes().arrangeCXXMethodDeclaration(MD));
-
-  if (MD->isVirtual() && !CanDevirtualizeMemberFunctionCall(E->getArg(0), MD))
-    return CGM.getCXXABI().getVirtualFunctionPointer(*this, MD, This, fnType);
-
-  return CGM.GetAddrOfFunction(MD, fnType);
-}
-
 void CodeGenFunction::EmitForwardingCallToLambda(
                                       const CXXMethodDecl *callOperator,
                                       CallArgList &callArgs) {

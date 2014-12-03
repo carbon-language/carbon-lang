@@ -2329,12 +2329,16 @@ public:
                              StructorType Type);
   RValue EmitCXXMemberCallExpr(const CXXMemberCallExpr *E,
                                ReturnValueSlot ReturnValue);
+  RValue EmitCXXMemberOrOperatorMemberCallExpr(const CallExpr *CE,
+                                               const CXXMethodDecl *MD,
+                                               ReturnValueSlot ReturnValue,
+                                               bool HasQualifier,
+                                               NestedNameSpecifier *Qualifier,
+                                               bool IsArrow, const Expr *Base);
+  // Compute the object pointer.
   RValue EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
                                       ReturnValueSlot ReturnValue);
 
-  llvm::Value *EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
-                                           const CXXMethodDecl *MD,
-                                           llvm::Value *This);
   RValue EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                        const CXXMethodDecl *MD,
                                        ReturnValueSlot ReturnValue);
