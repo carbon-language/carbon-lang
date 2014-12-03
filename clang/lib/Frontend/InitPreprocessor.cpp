@@ -870,6 +870,13 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("_OPENMP", "201307");
   }
 
+  // CUDA device path compilaton
+  if (LangOpts.CUDAIsDevice) {
+    // The CUDA_ARCH value is set for the GPU target specified in the NVPTX
+    // backend's target defines.
+    Builder.defineMacro("__CUDA_ARCH__");
+  }
+
   // Get other target #defines.
   TI.getTargetDefines(LangOpts, Builder);
 }
