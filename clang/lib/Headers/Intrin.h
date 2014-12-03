@@ -330,7 +330,6 @@ unsigned __int64 __shiftright128(unsigned __int64 _LowPart,
                                  unsigned char _Shift);
 static __inline__
 void __stosq(unsigned __int64 *, unsigned __int64, size_t);
-unsigned __int64 __umulh(unsigned __int64, unsigned __int64);
 unsigned char __vmx_on(unsigned __int64 *);
 unsigned char __vmx_vmclear(unsigned __int64 *);
 unsigned char __vmx_vmlaunch(void);
@@ -428,6 +427,12 @@ _umul128(unsigned __int64 _Multiplier, unsigned __int64 _Multiplicand,
       (unsigned __int128)_Multiplier * (unsigned __int128)_Multiplicand;
   *_HighProduct = _FullProduct >> 64;
   return _FullProduct;
+}
+static __inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+__umulh(unsigned __int64 _Multiplier, unsigned __int64 _Multiplicand) {
+  unsigned __int128 _FullProduct =
+      (unsigned __int128)_Multiplier * (unsigned __int128)_Multiplicand;
+  return _FullProduct >> 64;
 }
 void __cdecl _xrstor64(void const *, unsigned __int64);
 void __cdecl _xsave64(void *, unsigned __int64);
