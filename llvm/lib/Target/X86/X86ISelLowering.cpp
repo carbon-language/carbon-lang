@@ -107,7 +107,7 @@ static SDValue ExtractSubVector(SDValue Vec, unsigned IdxVal,
   // If the input is a buildvector just emit a smaller one.
   if (Vec.getOpcode() == ISD::BUILD_VECTOR)
     return DAG.getNode(ISD::BUILD_VECTOR, dl, ResultVT,
-                       makeArrayRef(Vec->op_begin()+NormalizedIdxVal,
+                       makeArrayRef(Vec->op_begin() + NormalizedIdxVal,
                                     ElemsPerChunk));
 
   SDValue VecIdx = DAG.getIntPtrConstant(NormalizedIdxVal);
@@ -115,13 +115,13 @@ static SDValue ExtractSubVector(SDValue Vec, unsigned IdxVal,
                                VecIdx);
 
   return Result;
-
 }
+
 /// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
 /// sets things up to match to an AVX VEXTRACTF128 / VEXTRACTI128
 /// or AVX-512 VEXTRACTF32x4 / VEXTRACTI32x4
 /// instructions or a simple subregister reference. Idx is an index in the
-/// 128 bits we want.  It need not be aligned to a 128-bit bounday.  That makes
+/// 128 bits we want.  It need not be aligned to a 128-bit boundary.  That makes
 /// lowering EXTRACT_VECTOR_ELT operations easier.
 static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
                                    SelectionDAG &DAG, SDLoc dl) {
@@ -158,25 +158,23 @@ static SDValue InsertSubVector(SDValue Result, SDValue Vec,
                                * ElemsPerChunk);
 
   SDValue VecIdx = DAG.getIntPtrConstant(NormalizedIdxVal);
-  return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
-                     VecIdx);
+  return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec, VecIdx);
 }
+
 /// Generate a DAG to put 128-bits into a vector > 128 bits.  This
 /// sets things up to match to an AVX VINSERTF128/VINSERTI128 or
 /// AVX-512 VINSERTF32x4/VINSERTI32x4 instructions or a
 /// simple superregister reference.  Idx is an index in the 128 bits
 /// we want.  It need not be aligned to a 128-bit boundary.  That makes
 /// lowering INSERT_VECTOR_ELT operations easier.
-static SDValue Insert128BitVector(SDValue Result, SDValue Vec,
-                                  unsigned IdxVal, SelectionDAG &DAG,
-                                  SDLoc dl) {
+static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
+                                  SelectionDAG &DAG,SDLoc dl) {
   assert(Vec.getValueType().is128BitVector() && "Unexpected vector size!");
   return InsertSubVector(Result, Vec, IdxVal, DAG, dl, 128);
 }
 
-static SDValue Insert256BitVector(SDValue Result, SDValue Vec,
-                                  unsigned IdxVal, SelectionDAG &DAG,
-                                  SDLoc dl) {
+static SDValue Insert256BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
+                                  SelectionDAG &DAG, SDLoc dl) {
   assert(Vec.getValueType().is256BitVector() && "Unexpected vector size!");
   return InsertSubVector(Result, Vec, IdxVal, DAG, dl, 256);
 }
@@ -230,13 +228,13 @@ void X86TargetLowering::resetOperationActions() {
   // Set up the TargetLowering object.
   static const MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };
 
-  // X86 is weird, it always uses i8 for shift amounts and setcc results.
+  // X86 is weird. It always uses i8 for shift amounts and setcc results.
   setBooleanContents(ZeroOrOneBooleanContent);
   // X86-SSE is even stranger. It uses -1 or 0 for vector masks.
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
-  // For 64-bit since we have so many registers use the ILP scheduler, for
-  // 32-bit code use the register pressure specific scheduling.
+  // For 64-bit, since we have so many registers, use the ILP scheduler.
+  // For 32-bit, use the register pressure specific scheduling.
   // For Atom, always use ILP scheduling.
   if (Subtarget->isAtom())
     setSchedulingPreference(Sched::ILP);
@@ -248,7 +246,7 @@ void X86TargetLowering::resetOperationActions() {
       TM.getSubtarget<X86Subtarget>().getRegisterInfo();
   setStackPointerRegisterToSaveRestore(RegInfo->getStackRegister());
 
-  // Bypass expensive divides on Atom when compiling with O2
+  // Bypass expensive divides on Atom when compiling with O2.
   if (TM.getOptLevel() >= CodeGenOpt::Default) {
     if (Subtarget->hasSlowDivide32()) 
       addBypassSlowDiv(32, 8);
@@ -1517,7 +1515,7 @@ void X86TargetLowering::resetOperationActions() {
     for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
       MVT VT = (MVT::SimpleValueType)i;
 
-      // Do not attempt to promote non-256-bit vectors
+      // Do not attempt to promote non-256-bit vectors.
       if (!VT.is512BitVector())
         continue;
 
@@ -1543,11 +1541,11 @@ void X86TargetLowering::resetOperationActions() {
 
       const unsigned EltSize = VT.getVectorElementType().getSizeInBits();
 
-      // Do not attempt to promote non-256-bit vectors
+      // Do not attempt to promote non-256-bit vectors.
       if (!VT.is512BitVector())
         continue;
 
-      if ( EltSize < 32) {
+      if (EltSize < 32) {
         setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
         setOperationAction(ISD::VSELECT,             VT, Legal);
       }
@@ -1608,9 +1606,8 @@ void X86TargetLowering::resetOperationActions() {
     setLibcallName(RTLIB::SINCOS_F32, "sincosf");
     setLibcallName(RTLIB::SINCOS_F64, "sincos");
     if (Subtarget->isTargetDarwin()) {
-      // For MacOSX, we don't want to the normal expansion of a libcall to
-      // sincos. We want to issue a libcall to __sincos_stret to avoid memory
-      // traffic.
+      // For MacOSX, we don't want the normal expansion of a libcall to sincos.
+      // We want to issue a libcall to __sincos_stret to avoid memory traffic.
       setOperationAction(ISD::FSINCOS, MVT::f64, Custom);
       setOperationAction(ISD::FSINCOS, MVT::f32, Custom);
     }
@@ -1995,7 +1992,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     SDValue ValToCopy = OutVals[i];
     EVT ValVT = ValToCopy.getValueType();
 
-    // Promote values to the appropriate types
+    // Promote values to the appropriate types.
     if (VA.getLocInfo() == CCValAssign::SExt)
       ValToCopy = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), ValToCopy);
     else if (VA.getLocInfo() == CCValAssign::ZExt)
