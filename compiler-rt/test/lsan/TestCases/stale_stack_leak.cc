@@ -31,6 +31,7 @@ int main() {
 // it had a chance to see it. If LSan is invoked with atexit(), this works.
 // Otherwise, we need a different method.
 __attribute__((destructor))
+__attribute__((no_sanitize_address))
 void ConfirmPointerHasSurvived() {
   fprintf(stderr, "Value after LSan: %p.\n", *pp);
 }
