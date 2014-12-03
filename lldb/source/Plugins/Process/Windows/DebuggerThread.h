@@ -45,10 +45,18 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
     {
         return m_main_thread;
     }
+    ExceptionRecord *
+    GetActiveException()
+    {
+        return m_active_exception.get();
+    }
+
+    Error StopDebugging(bool terminate);
 
     void ContinueAsyncException(ExceptionResult result);
 
   private:
+    void FreeProcessHandles();
     void DebugLoop();
     ExceptionResult HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thread_id);
     DWORD HandleCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO &info, DWORD thread_id);
@@ -66,9 +74,11 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
     HostThread m_main_thread; // The main thread of the inferior.
     HANDLE m_image_file;      // The image file of the process being debugged.
 
-    Predicate<ExceptionResult> m_exception; // A predicate which gets signalled when an exception
-                                            // is finished processing and the debug loop can be
-                                            // continued.
+    ExceptionRecordUP m_active_exception; // The current exception waiting to be handled
+
+    Predicate<ExceptionResult> m_exception_pred; // A predicate which gets signalled when an exception
+                                                 // is finished processing and the debug loop can be
+                                                 // continued.
 
     static lldb::thread_result_t DebuggerThreadRoutine(void *data);
     lldb::thread_result_t DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info);

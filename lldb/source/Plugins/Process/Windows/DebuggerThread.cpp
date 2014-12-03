@@ -97,18 +97,74 @@ DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
     return 0;
 }
 
+Error
+DebuggerThread::StopDebugging(bool terminate)
+{
+    Error error;
+
+    if (terminate)
+    {
+        // Make a copy of the process, since the termination sequence will reset DebuggerThread's
+        // internal copy and it needs to remain open for us to perform the Wait operation.
+        HostProcess process_copy = m_process;
+        lldb::process_t handle = process_copy.GetNativeProcess().GetSystemHandle();
+
+        // Initiate the termination before continuing the exception, so that the next debug event
+        // we get is the exit process event, and not some other event.
+        BOOL terminate_suceeded = TerminateProcess(handle, 0);
+
+        // If we're stuck waiting for an exception to continue, continue it now.  But only
+        // AFTER setting the termination event, to make sure that we don't race and enter
+        // another wait for another debug event.
+        if (m_active_exception.get())
+            ContinueAsyncException(ExceptionResult::MaskException);
+
+        // Don't return until the process has exited.
+        if (terminate_suceeded)
+        {
+            DWORD wait_result = ::WaitForSingleObject(handle, 5000);
+            if (wait_result != WAIT_OBJECT_0)
+                terminate_suceeded = false;
+        }
+
+        if (!terminate_suceeded)
+            error.SetError(GetLastError(), eErrorTypeWin32);
+    }
+    else
+    {
+        error.SetErrorString("Detach not yet supported on Windows.");
+        // TODO: Implement detach.
+    }
+    return error;
+}
+
 void
 DebuggerThread::ContinueAsyncException(ExceptionResult result)
 {
-    m_exception.SetValue(result, eBroadcastAlways);
+    if (!m_active_exception.get())
+        return;
+
+    m_active_exception.reset();
+    m_exception_pred.SetValue(result, eBroadcastAlways);
+}
+
+void
+DebuggerThread::FreeProcessHandles()
+{
+    m_process = HostProcess();
+    m_main_thread = HostThread();
+    if (m_image_file)
+    {
+        ::CloseHandle(m_image_file);
+        m_image_file = nullptr;
+    }
 }
 
 void
 DebuggerThread::DebugLoop()
 {
     DEBUG_EVENT dbe = {0};
-    bool exit = false;
-    while (!exit && WaitForDebugEvent(&dbe, INFINITE))
+    while (WaitForDebugEvent(&dbe, INFINITE))
     {
         DWORD continue_status = DBG_CONTINUE;
         switch (dbe.dwDebugEventCode)
@@ -116,8 +172,6 @@ DebuggerThread::DebugLoop()
             case EXCEPTION_DEBUG_EVENT:
             {
                 ExceptionResult status = HandleExceptionEvent(dbe.u.Exception, dbe.dwThreadId);
-                m_exception.SetValue(status, eBroadcastNever);
-                m_exception.WaitForValueNotEqualTo(ExceptionResult::BreakInDebugger, status);
 
                 if (status == ExceptionResult::MaskException)
                     continue_status = DBG_CONTINUE;
@@ -136,7 +190,7 @@ DebuggerThread::DebugLoop()
                 break;
             case EXIT_PROCESS_DEBUG_EVENT:
                 continue_status = HandleExitProcessEvent(dbe.u.ExitProcess, dbe.dwThreadId);
-                exit = true;
+                should_debug = false;
                 break;
             case LOAD_DLL_DEBUG_EVENT:
                 continue_status = HandleLoadDllEvent(dbe.u.LoadDll, dbe.dwThreadId);
@@ -150,19 +204,27 @@ DebuggerThread::DebugLoop()
             case RIP_EVENT:
                 continue_status = HandleRipEvent(dbe.u.RipInfo, dbe.dwThreadId);
                 if (dbe.u.RipInfo.dwType == SLE_ERROR)
-                    exit = true;
+                    should_debug = false;
                 break;
         }
 
         ::ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, continue_status);
     }
+    FreeProcessHandles();
 }
 
 ExceptionResult
 DebuggerThread::HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thread_id)
 {
     bool first_chance = (info.dwFirstChance != 0);
-    return m_debug_delegate->OnDebugException(first_chance, ExceptionRecord(info.ExceptionRecord));
+
+    m_active_exception.reset(new ExceptionRecord(info.ExceptionRecord));
+
+    ExceptionResult result = m_debug_delegate->OnDebugException(first_chance, *m_active_exception);
+    m_exception_pred.SetValue(result, eBroadcastNever);
+    m_exception_pred.WaitForValueNotEqualTo(ExceptionResult::BreakInDebugger, result);
+
+    return result;
 }
 
 DWORD
@@ -203,12 +265,9 @@ DebuggerThread::HandleExitThreadEvent(const EXIT_THREAD_DEBUG_INFO &info, DWORD 
 DWORD
 DebuggerThread::HandleExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO &info, DWORD thread_id)
 {
-    m_debug_delegate->OnExitProcess(info.dwExitCode);
+    FreeProcessHandles();
 
-    m_process = HostProcess();
-    m_main_thread = HostThread();
-    ::CloseHandle(m_image_file);
-    m_image_file = nullptr;
+    m_debug_delegate->OnExitProcess(info.dwExitCode);
     return DBG_CONTINUE;
 }
 

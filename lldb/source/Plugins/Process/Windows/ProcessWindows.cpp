@@ -61,7 +61,6 @@ class ProcessWindowsData
     ~ProcessWindowsData() { ::CloseHandle(m_initial_stop_event); }
 
     ProcessLaunchInfo m_launch_info;
-    std::shared_ptr<lldb_private::ExceptionRecord> m_active_exception;
     lldb_private::Error m_launch_error;
     lldb_private::DebuggerThreadSP m_debugger;
     StopInfoSP m_pending_stop_info;
@@ -237,11 +236,10 @@ ProcessWindows::DoResume()
     Error error;
     if (GetPrivateState() == eStateStopped)
     {
-        if (m_session_data->m_active_exception)
+        if (m_session_data->m_debugger->GetActiveException())
         {
             // Resume the process and continue processing debug events.  Mask the exception so that
             // from the process's view, there is no indication that anything happened.
-            m_session_data->m_active_exception.reset();
             m_session_data->m_debugger->ContinueAsyncException(ExceptionResult::MaskException);
         }
 
@@ -279,10 +277,10 @@ ProcessWindows::DoDestroy()
     Error error;
     if (GetPrivateState() != eStateExited && GetPrivateState() != eStateDetached && m_session_data)
     {
-        // Ends the debugging session and terminates the inferior process.
-        DebugActiveProcessStop(m_session_data->m_debugger->GetProcess().GetProcessId());
-        SetPrivateState(eStateExited);
+        DebuggerThread &debugger = *m_session_data->m_debugger;
+        error = debugger.StopDebugging(true);
     }
+    m_session_data.reset();
     return error;
 }
 
@@ -291,28 +289,28 @@ ProcessWindows::RefreshStateAfterStop()
 {
     m_thread_list.RefreshStateAfterStop();
 
-    if (m_session_data->m_active_exception)
+    ExceptionRecord *active_exception = m_session_data->m_debugger->GetActiveException();
+    if (!active_exception)
+        return;
+
+    StopInfoSP stop_info;
+    ThreadSP stop_thread = m_thread_list.GetSelectedThread();
+    RegisterContextSP register_context = stop_thread->GetRegisterContext();
+
+    if (active_exception->GetExceptionCode() == EXCEPTION_BREAKPOINT)
     {
-        StopInfoSP stop_info;
-        ThreadSP stop_thread = m_thread_list.GetSelectedThread();
-        RegisterContextSP register_context = stop_thread->GetRegisterContext();
-
-        ExceptionRecord &exception = *m_session_data->m_active_exception;
-        if (exception.GetExceptionCode() == EXCEPTION_BREAKPOINT)
+        uint64_t pc = register_context->GetPC();
+        BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc));
+        lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
+        bool should_stop = true;
+        if (site)
         {
-            uint64_t pc = register_context->GetPC();
-            BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc));
-            lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
-            bool should_stop = true;
-            if (site)
-            {
-                should_stop = site->ValidForThisThread(stop_thread.get());
-                break_id = site->GetID();
-            }
-
-            stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, break_id, should_stop);
-            stop_thread->SetStopInfo(stop_info);
+            should_stop = site->ValidForThisThread(stop_thread.get());
+            break_id = site->GetID();
         }
+
+        stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, break_id, should_stop);
+        stop_thread->SetStopInfo(stop_info);
     }
 }
 
@@ -442,7 +440,6 @@ ExceptionResult
 ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &record)
 {
     ExceptionResult result = ExceptionResult::SendToApplication;
-    m_session_data->m_active_exception.reset(new ExceptionRecord(record));
     switch (record.GetExceptionCode())
     {
         case EXCEPTION_BREAKPOINT:

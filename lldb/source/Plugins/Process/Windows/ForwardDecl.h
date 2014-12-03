@@ -34,6 +34,7 @@ class ExceptionRecord;
 
 typedef std::shared_ptr<IDebugDelegate> DebugDelegateSP;
 typedef std::shared_ptr<DebuggerThread> DebuggerThreadSP;
+typedef std::unique_ptr<ExceptionRecord> ExceptionRecordUP;
 }
 
 #endif
