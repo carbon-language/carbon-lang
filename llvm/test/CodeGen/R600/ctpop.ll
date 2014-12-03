@@ -250,7 +250,7 @@ define void @v_ctpop_i32_add_var_inv(i32 addrspace(1)* noalias %out, i32 addrspa
 
 ; FUNC-LABEL: {{^}}v_ctpop_i32_add_vvar_inv:
 ; SI-DAG: buffer_load_dword [[VAL:v[0-9]+]], s[{{[0-9]+:[0-9]+}}], {{0$}}
-; SI-DAG: buffer_load_dword [[VAR:v[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0 offset:0x10
+; SI-DAG: buffer_load_dword [[VAR:v[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0 offset:16
 ; SI: v_bcnt_u32_b32_e32 [[RESULT:v[0-9]+]], [[VAL]], [[VAR]]
 ; SI: buffer_store_dword [[RESULT]],
 ; SI: s_endpgm

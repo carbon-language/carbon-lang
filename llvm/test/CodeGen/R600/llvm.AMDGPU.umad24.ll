@@ -20,7 +20,7 @@ define void @test_umad24(i32 addrspace(1)* %out, i32 %src0, i32 %src1, i32 %src2
 
 ; FUNC-LABEL: {{^}}commute_umad24:
 ; SI-DAG: buffer_load_dword [[SRC0:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
-; SI-DAG: buffer_load_dword [[SRC2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI-DAG: buffer_load_dword [[SRC2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_mad_u32_u24 [[RESULT:v[0-9]+]], 4, [[SRC0]], [[SRC2]]
 ; SI: buffer_store_dword [[RESULT]]
 define void @commute_umad24(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {

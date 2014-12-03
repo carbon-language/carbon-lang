@@ -8,7 +8,7 @@ declare i32 @llvm.r600.read.tidig.x() readnone
 
 ; MUBUF load with an immediate byte offset that fits into 12-bits
 ; CHECK-LABEL: {{^}}mubuf_load0:
-; CHECK: buffer_load_dword v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0x4 ; encoding: [0x04,0x00,0x30,0xe0
+; CHECK: buffer_load_dword v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:4 ; encoding: [0x04,0x00,0x30,0xe0
 define void @mubuf_load0(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
   %0 = getelementptr i32 addrspace(1)* %in, i64 1
@@ -19,7 +19,7 @@ entry:
 
 ; MUBUF load with the largest possible immediate offset
 ; CHECK-LABEL: {{^}}mubuf_load1:
-; CHECK: buffer_load_ubyte v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0xfff ; encoding: [0xff,0x0f,0x20,0xe0
+; CHECK: buffer_load_ubyte v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:4095 ; encoding: [0xff,0x0f,0x20,0xe0
 define void @mubuf_load1(i8 addrspace(1)* %out, i8 addrspace(1)* %in) {
 entry:
   %0 = getelementptr i8 addrspace(1)* %in, i64 4095
@@ -42,7 +42,7 @@ entry:
 ; MUBUF load with a 12-bit immediate offset and a register offset
 ; CHECK-LABEL: {{^}}mubuf_load3:
 ; CHECK-NOT: ADD
-; CHECK: buffer_load_dword v{{[0-9]}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64 offset:0x4 ; encoding: [0x04,0x80,0x30,0xe0
+; CHECK: buffer_load_dword v{{[0-9]}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64 offset:4 ; encoding: [0x04,0x80,0x30,0xe0
 define void @mubuf_load3(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i64 %offset) {
 entry:
   %0 = getelementptr i32 addrspace(1)* %in, i64 %offset
@@ -58,7 +58,7 @@ entry:
 
 ; MUBUF store with an immediate byte offset that fits into 12-bits
 ; CHECK-LABEL: {{^}}mubuf_store0:
-; CHECK: buffer_store_dword v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0x4 ; encoding: [0x04,0x00,0x70,0xe0
+; CHECK: buffer_store_dword v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:4 ; encoding: [0x04,0x00,0x70,0xe0
 define void @mubuf_store0(i32 addrspace(1)* %out) {
 entry:
   %0 = getelementptr i32 addrspace(1)* %out, i64 1
@@ -68,7 +68,7 @@ entry:
 
 ; MUBUF store with the largest possible immediate offset
 ; CHECK-LABEL: {{^}}mubuf_store1:
-; CHECK: buffer_store_byte v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0xfff ; encoding: [0xff,0x0f,0x60,0xe0
+; CHECK: buffer_store_byte v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:4095 ; encoding: [0xff,0x0f,0x60,0xe0
 
 define void @mubuf_store1(i8 addrspace(1)* %out) {
 entry:
@@ -90,7 +90,7 @@ entry:
 ; MUBUF store with a 12-bit immediate offset and a register offset
 ; CHECK-LABEL: {{^}}mubuf_store3:
 ; CHECK-NOT: ADD
-; CHECK: buffer_store_dword v{{[0-9]}}, v[{{[0-9]:[0-9]}}], s[{{[0-9]:[0-9]}}], 0 addr64 offset:0x4 ; encoding: [0x04,0x80,0x70,0xe0
+; CHECK: buffer_store_dword v{{[0-9]}}, v[{{[0-9]:[0-9]}}], s[{{[0-9]:[0-9]}}], 0 addr64 offset:4 ; encoding: [0x04,0x80,0x70,0xe0
 define void @mubuf_store3(i32 addrspace(1)* %out, i64 %offset) {
 entry:
   %0 = getelementptr i32 addrspace(1)* %out, i64 %offset
@@ -107,7 +107,7 @@ define void @store_sgpr_ptr(i32 addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: {{^}}store_sgpr_ptr_offset:
-; CHECK: buffer_store_dword v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, 0 offset:0x28
+; CHECK: buffer_store_dword v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, 0 offset:40
 define void @store_sgpr_ptr_offset(i32 addrspace(1)* %out) #0 {
   %out.gep = getelementptr i32 addrspace(1)* %out, i32 10
   store i32 99, i32 addrspace(1)* %out.gep, align 4

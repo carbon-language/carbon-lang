@@ -10,7 +10,7 @@ declare i32 @llvm.r600.read.tidig.x() #1
 
 ; FUNC-LABEL: {{^}}cluster_global_arg_loads:
 ; SI-DAG: buffer_load_dword [[REG0:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0{{$}}
-; SI-DAG: buffer_load_dword [[REG1:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0 offset:0x4
+; SI-DAG: buffer_load_dword [[REG1:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0 offset:4
 ; SI: buffer_store_dword [[REG0]]
 ; SI: buffer_store_dword [[REG1]]
 define void @cluster_global_arg_loads(i32 addrspace(1)* %out0, i32 addrspace(1)* %out1, i32 addrspace(1)* %ptr) #0 {

@@ -171,7 +171,7 @@ define void @mad_fabs_sub_f32(float addrspace(1)* noalias nocapture %out, float 
 
 ; FUNC-LABEL: {{^}}fsub_c_fadd_a_a:
 ; SI-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
-; SI-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_mad_f32 [[RESULT:v[0-9]+]], -2.0, [[R1]], [[R2]]
 ; SI: buffer_store_dword [[RESULT]]
 define void @fsub_c_fadd_a_a(float addrspace(1)* %out, float addrspace(1)* %in) {
@@ -192,7 +192,7 @@ define void @fsub_c_fadd_a_a(float addrspace(1)* %out, float addrspace(1)* %in) 
 
 ; FUNC-LABEL: {{^}}fsub_fadd_a_a_c:
 ; SI-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
-; SI-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], -[[R2]]
 ; SI: buffer_store_dword [[RESULT]]
 define void @fsub_fadd_a_a_c(float addrspace(1)* %out, float addrspace(1)* %in) {

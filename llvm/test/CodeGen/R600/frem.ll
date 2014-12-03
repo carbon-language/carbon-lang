@@ -2,7 +2,7 @@
 
 ; FUNC-LABEL: {{^}}frem_f32:
 ; SI-DAG: buffer_load_dword [[X:v[0-9]+]], {{.*$}}
-; SI-DAG: buffer_load_dword [[Y:v[0-9]+]], {{.*}} offset:0x10
+; SI-DAG: buffer_load_dword [[Y:v[0-9]+]], {{.*}} offset:16
 ; SI-DAG: v_cmp
 ; SI-DAG: v_mul_f32
 ; SI: v_rcp_f32_e32
@@ -22,7 +22,7 @@ define void @frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
 }
 
 ; FUNC-LABEL: {{^}}unsafe_frem_f32:
-; SI: buffer_load_dword [[Y:v[0-9]+]], {{.*}} offset:0x10
+; SI: buffer_load_dword [[Y:v[0-9]+]], {{.*}} offset:16
 ; SI: buffer_load_dword [[X:v[0-9]+]], {{.*}}
 ; SI: v_rcp_f32_e32 [[INVY:v[0-9]+]], [[Y]]
 ; SI: v_mul_f32_e32 [[DIV:v[0-9]+]], [[INVY]], [[X]]

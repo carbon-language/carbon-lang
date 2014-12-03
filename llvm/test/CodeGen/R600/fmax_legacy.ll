@@ -5,7 +5,7 @@ declare i32 @llvm.r600.read.tidig.x() #1
 
 ; FUNC-LABEL: @test_fmax_legacy_uge_f32
 ; SI: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
-; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_max_legacy_f32_e32 {{v[0-9]+}}, [[A]], [[B]]
 ; EG: MAX
 define void @test_fmax_legacy_uge_f32(float addrspace(1)* %out, float addrspace(1)* %in) #0 {
@@ -24,7 +24,7 @@ define void @test_fmax_legacy_uge_f32(float addrspace(1)* %out, float addrspace(
 
 ; FUNC-LABEL: @test_fmax_legacy_oge_f32
 ; SI: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
-; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_max_legacy_f32_e32 {{v[0-9]+}}, [[A]], [[B]]
 ; EG: MAX
 define void @test_fmax_legacy_oge_f32(float addrspace(1)* %out, float addrspace(1)* %in) #0 {
@@ -43,7 +43,7 @@ define void @test_fmax_legacy_oge_f32(float addrspace(1)* %out, float addrspace(
 
 ; FUNC-LABEL: @test_fmax_legacy_ugt_f32
 ; SI: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
-; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_max_legacy_f32_e32 {{v[0-9]+}}, [[A]], [[B]]
 ; EG: MAX
 define void @test_fmax_legacy_ugt_f32(float addrspace(1)* %out, float addrspace(1)* %in) #0 {
@@ -62,7 +62,7 @@ define void @test_fmax_legacy_ugt_f32(float addrspace(1)* %out, float addrspace(
 
 ; FUNC-LABEL: @test_fmax_legacy_ogt_f32
 ; SI: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
-; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_max_legacy_f32_e32 {{v[0-9]+}}, [[A]], [[B]]
 ; EG: MAX
 define void @test_fmax_legacy_ogt_f32(float addrspace(1)* %out, float addrspace(1)* %in) #0 {

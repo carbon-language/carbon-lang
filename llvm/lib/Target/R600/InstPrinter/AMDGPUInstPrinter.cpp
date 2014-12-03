@@ -74,7 +74,7 @@ void AMDGPUInstPrinter::printMBUFOffset(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
   if (MI->getOperand(OpNo).getImm()) {
     O << " offset:";
-    printU16ImmOperand(MI, OpNo, O);
+    printU16ImmDecOperand(MI, OpNo, O);
   }
 }
 

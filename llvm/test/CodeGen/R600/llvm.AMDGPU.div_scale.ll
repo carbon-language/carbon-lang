@@ -6,7 +6,7 @@ declare { double, i1 } @llvm.AMDGPU.div.scale.f64(double, double, i1) nounwind r
 
 ; SI-LABEL @test_div_scale_f32_1:
 ; SI-DAG: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64
-; SI-DAG: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI-DAG: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_div_scale_f32 [[RESULT0:v[0-9]+]], [[RESULT1:s\[[0-9]+:[0-9]+\]]], [[B]], [[B]], [[A]]
 ; SI: buffer_store_dword [[RESULT0]]
 ; SI: s_endpgm
@@ -26,7 +26,7 @@ define void @test_div_scale_f32_1(float addrspace(1)* %out, float addrspace(1)* 
 
 ; SI-LABEL @test_div_scale_f32_2:
 ; SI-DAG: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64
-; SI-DAG: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; SI-DAG: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; SI: v_div_scale_f32 [[RESULT0:v[0-9]+]], [[RESULT1:s\[[0-9]+:[0-9]+\]]], [[A]], [[B]], [[A]]
 ; SI: buffer_store_dword [[RESULT0]]
 ; SI: s_endpgm
@@ -46,7 +46,7 @@ define void @test_div_scale_f32_2(float addrspace(1)* %out, float addrspace(1)* 
 
 ; SI-LABEL @test_div_scale_f64_1:
 ; SI-DAG: buffer_load_dwordx2 [[A:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64
-; SI-DAG: buffer_load_dwordx2 [[B:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x8
+; SI-DAG: buffer_load_dwordx2 [[B:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:8
 ; SI: v_div_scale_f64 [[RESULT0:v\[[0-9]+:[0-9]+\]]], [[RESULT1:s\[[0-9]+:[0-9]+\]]], [[B]], [[B]], [[A]]
 ; SI: buffer_store_dwordx2 [[RESULT0]]
 ; SI: s_endpgm
@@ -66,7 +66,7 @@ define void @test_div_scale_f64_1(double addrspace(1)* %out, double addrspace(1)
 
 ; SI-LABEL @test_div_scale_f64_1:
 ; SI-DAG: buffer_load_dwordx2 [[A:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64
-; SI-DAG: buffer_load_dwordx2 [[B:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x8
+; SI-DAG: buffer_load_dwordx2 [[B:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:8
 ; SI: v_div_scale_f64 [[RESULT0:v\[[0-9]+:[0-9]+\]]], [[RESULT1:s\[[0-9]+:[0-9]+\]]], [[A]], [[B]], [[A]]
 ; SI: buffer_store_dwordx2 [[RESULT0]]
 ; SI: s_endpgm
