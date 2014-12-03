@@ -90,4 +90,7 @@ void test() {
   (__builtin_classify_type(++a) ? 1 : 0) + ++a; // ok
   (__builtin_constant_p(++a) ? 1 : 0) + ++a; // ok
   (__builtin_expect(++a, 0) ? 1 : 0) + ++a; // expected-warning {{multiple unsequenced modifications}}
+  _Generic(++a, default: 0) + ++a; // ok
+  sizeof(++a) + ++a; // ok
+  _Alignof(++a) + ++a; // expected-warning {{extension}}
 }
