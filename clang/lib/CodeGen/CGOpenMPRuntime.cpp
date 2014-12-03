@@ -148,10 +148,10 @@ llvm::Value *CGOpenMPRuntime::EmitOpenMPUpdateLocation(
   assert(CGF.CurFn && "No function in current CodeGenFunction.");
 
   llvm::Value *LocValue = nullptr;
-  OpenMPLocThreadIDMapTy::iterator I = OpenMPLocThreadIDMap.find(CGF.CurFn);
-  if (I != OpenMPLocThreadIDMap.end()) {
+  auto I = OpenMPLocThreadIDMap.find(CGF.CurFn);
+  if (I != OpenMPLocThreadIDMap.end())
     LocValue = I->second.DebugLoc;
-  } else {
+  else {
     // Generate "ident_t .kmpc_loc.addr;"
     llvm::AllocaInst *AI = CGF.CreateTempAlloca(IdentTy, ".kmpc_loc.addr");
     AI->setAlignment(CGM.getDataLayout().getPrefTypeAlignment(IdentTy));
@@ -167,7 +167,7 @@ llvm::Value *CGOpenMPRuntime::EmitOpenMPUpdateLocation(
   }
 
   // char **psource = &.kmpc_loc_<flags>.addr.psource;
-  llvm::Value *PSource =
+  auto *PSource =
       CGF.Builder.CreateConstInBoundsGEP2_32(LocValue, 0, IdentField_PSource);
 
   auto OMPDebugLoc = OpenMPDebugLocMap.lookup(Loc.getRawEncoding());
@@ -198,14 +198,14 @@ llvm::Value *CGOpenMPRuntime::GetOpenMPThreadID(CodeGenFunction &CGF,
   llvm::Value *ThreadID = nullptr;
   // Check whether we've already cached a load of the thread id in this
   // function.
-  OpenMPLocThreadIDMapTy::iterator I = OpenMPLocThreadIDMap.find(CGF.CurFn);
+  auto I = OpenMPLocThreadIDMap.find(CGF.CurFn);
   if (I != OpenMPLocThreadIDMap.end()) {
     ThreadID = I->second.ThreadID;
     if (ThreadID != nullptr)
       return ThreadID;
   }
   if (auto OMPRegionInfo =
-                 dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
+          dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
     // Check if this an outlined function with thread id passed as argument.
     auto ThreadIDVar = OMPRegionInfo->getThreadIDVariable();
     auto LVal = OMPRegionInfo->getThreadIDVariableLValue(CGF);
@@ -409,9 +409,8 @@ void CGOpenMPRuntime::EmitOMPThreadPrivateVarInit(
   llvm::Value *Args[] = {OMPLoc,
                          CGF.Builder.CreatePointerCast(VDAddr, CGM.VoidPtrTy),
                          Ctor, CopyCtor, Dtor};
-  CGF.EmitRuntimeCall(CreateRuntimeFunction(
-                          CGOpenMPRuntime::OMPRTL__kmpc_threadprivate_register),
-                      Args);
+  CGF.EmitRuntimeCall(
+      CreateRuntimeFunction(OMPRTL__kmpc_threadprivate_register), Args);
 }
 
 llvm::Function *CGOpenMPRuntime::EmitOMPThreadPrivateVarDefinition(
@@ -537,7 +536,7 @@ void CGOpenMPRuntime::EmitOMPParallelCall(CodeGenFunction &CGF,
       // (there is only one additional argument - 'context')
       CGF.Builder.CreateBitCast(OutlinedFn, getKmpc_MicroPointerTy()),
       CGF.EmitCastToVoidPtr(CapturedStruct)};
-  auto RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_fork_call);
+  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_fork_call);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
@@ -549,8 +548,7 @@ void CGOpenMPRuntime::EmitOMPSerialCall(CodeGenFunction &CGF,
   // Build calls:
   // __kmpc_serialized_parallel(&Loc, GTid);
   llvm::Value *SerArgs[] = {EmitOpenMPUpdateLocation(CGF, Loc), ThreadID};
-  auto RTLFn =
-      CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_serialized_parallel);
+  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_serialized_parallel);
   CGF.EmitRuntimeCall(RTLFn, SerArgs);
 
   // OutlinedFn(&GTid, &zero, CapturedStruct);
@@ -564,8 +562,7 @@ void CGOpenMPRuntime::EmitOMPSerialCall(CodeGenFunction &CGF,
 
   // __kmpc_end_serialized_parallel(&Loc, GTid);
   llvm::Value *EndSerArgs[] = {EmitOpenMPUpdateLocation(CGF, Loc), ThreadID};
-  RTLFn = CreateRuntimeFunction(
-      CGOpenMPRuntime::OMPRTL__kmpc_end_serialized_parallel);
+  RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_end_serialized_parallel);
   CGF.EmitRuntimeCall(RTLFn, EndSerArgs);
 }
 
@@ -626,11 +623,11 @@ void CGOpenMPRuntime::EmitOMPCriticalRegion(
   // Prepare arguments and build a call to __kmpc_critical
   llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
                          GetOpenMPThreadID(CGF, Loc), RegionLock};
-  auto RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_critical);
+  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_critical);
   CGF.EmitRuntimeCall(RTLFn, Args);
   CriticalOpGen();
   // Build a call to __kmpc_end_critical
-  RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_end_critical);
+  RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_end_critical);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
@@ -640,7 +637,7 @@ void CGOpenMPRuntime::EmitOMPBarrierCall(CodeGenFunction &CGF,
   // Build call __kmpc_barrier(loc, thread_id)
   llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc, Flags),
                          GetOpenMPThreadID(CGF, Loc)};
-  auto RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_barrier);
+  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_barrier);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
@@ -651,8 +648,7 @@ void CGOpenMPRuntime::EmitOMPNumThreadsClause(CodeGenFunction &CGF,
   llvm::Value *Args[] = {
       EmitOpenMPUpdateLocation(CGF, Loc), GetOpenMPThreadID(CGF, Loc),
       CGF.Builder.CreateIntCast(NumThreads, CGF.Int32Ty, /*isSigned*/ true)};
-  llvm::Constant *RTLFn = CGF.CGM.getOpenMPRuntime().CreateRuntimeFunction(
-      CGOpenMPRuntime::OMPRTL__kmpc_push_num_threads);
+  llvm::Constant *RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_push_num_threads);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
@@ -663,7 +659,6 @@ void CGOpenMPRuntime::EmitOMPFlush(CodeGenFunction &CGF, ArrayRef<const Expr *>,
   // generate it, just request full memory fence.
   llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
                          llvm::ConstantInt::get(CGM.Int32Ty, 0)};
-  auto *RTLFn = CGF.CGM.getOpenMPRuntime().CreateRuntimeFunction(
-      CGOpenMPRuntime::OMPRTL__kmpc_flush);
+  auto *RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_flush);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }

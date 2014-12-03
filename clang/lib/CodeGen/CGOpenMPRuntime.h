@@ -64,6 +64,8 @@ public:
     /// \brief Implicit barrier in 'single' directive.
     OMP_IDENT_BARRIER_IMPL_SINGLE = 0x140
   };
+
+private:
   enum OpenMPRTLFunction {
     /// \brief Call to void __kmpc_fork_call(ident_t *loc, kmp_int32 argc,
     /// kmpc_micro microtask, ...);
@@ -97,7 +99,6 @@ public:
     OMPRTL__kmpc_flush
   };
 
-private:
   CodeGenModule &CGM;
   /// \brief Default const ident_t object used for initialization of all other
   /// ident_t objects.
