@@ -599,12 +599,10 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
     }
   }
 
-  if (Subtarget.has64BitSupport()) {
+  if (Subtarget.has64BitSupport())
     setOperationAction(ISD::PREFETCH, MVT::Other, Legal);
-    setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
-  } else {
-    setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
-  }
+
+  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, isPPC64 ? Legal : Custom);
 
   if (!isPPC64) {
     setOperationAction(ISD::ATOMIC_LOAD,  MVT::i64, Expand);
