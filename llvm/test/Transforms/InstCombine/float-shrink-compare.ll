@@ -235,6 +235,30 @@ define i32 @test19(float %x, float %y, float %z) nounwind uwtable {
 ; CHECK-NEXT: fcmp oeq float %copysignf, %z
 }
 
+define i32 @test20(float %x, float %y) nounwind uwtable {
+  %1 = fpext float %y to double
+  %2 = fpext float %x to double
+  %3 = call double @fmin(double 1.000000e+00, double %2) nounwind
+  %4 = fcmp oeq double %1, %3
+  %5 = zext i1 %4 to i32
+  ret i32 %5
+; CHECK-LABEL: @test20(
+; CHECK-NEXT: %fminf = call float @fminf(float 1.000000e+00, float %x)
+; CHECK-NEXT: fcmp oeq float %fminf, %y
+}
+
+define i32 @test21(float %x, float %y) nounwind uwtable {
+  %1 = fpext float %y to double
+  %2 = fpext float %x to double
+  %3 = call double @fmin(double 1.300000e+00, double %2) nounwind
+  %4 = fcmp oeq double %1, %3
+  %5 = zext i1 %4 to i32
+  ret i32 %5
+; should not be changed to fminf as the constant would loose precision
+; CHECK-LABEL: @test21(
+; CHECK: %3 = call double @fmin(double 1.300000e+00, double %2)
+}
+
 declare double @fabs(double) nounwind readnone
 declare double @ceil(double) nounwind readnone
 declare double @copysign(double, double) nounwind readnone
