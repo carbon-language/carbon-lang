@@ -28,18 +28,18 @@ static MVT::SimpleValueType getRegisterValueType(Record *R,
   MVT::SimpleValueType VT = MVT::Other;
   const CodeGenRegister *Reg = T.getRegBank().getReg(R);
 
-  for (const auto *RC : T.getRegBank().getRegClasses()) {
-    if (!RC->contains(Reg))
+  for (const auto &RC : T.getRegBank().getRegClasses()) {
+    if (!RC.contains(Reg))
       continue;
 
     if (!FoundRC) {
       FoundRC = true;
-      VT = RC->getValueTypeNum(0);
+      VT = RC.getValueTypeNum(0);
       continue;
     }
 
     // If this occurs in multiple register classes, they all have to agree.
-    assert(VT == RC->getValueTypeNum(0));
+    assert(VT == RC.getValueTypeNum(0));
   }
   return VT;
 }

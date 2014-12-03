@@ -810,34 +810,34 @@ static bool testSubClass(const CodeGenRegisterClass *A,
 /// Register classes with the same registers, spill size, and alignment form a
 /// clique.  They will be ordered alphabetically.
 ///
-static int TopoOrderRC(CodeGenRegisterClass *const *PA,
-                       CodeGenRegisterClass *const *PB) {
-  auto *A = *PA;
-  auto *B = *PB;
+static bool TopoOrderRC(const CodeGenRegisterClass &PA,
+                        const CodeGenRegisterClass &PB) {
+  auto *A = &PA;
+  auto *B = &PB;
   if (A == B)
     return 0;
 
   // Order by ascending spill size.
   if (A->SpillSize < B->SpillSize)
-    return -1;
+    return true;
   if (A->SpillSize > B->SpillSize)
-    return 1;
+    return false;
 
   // Order by ascending spill alignment.
   if (A->SpillAlignment < B->SpillAlignment)
-    return -1;
+    return true;
   if (A->SpillAlignment > B->SpillAlignment)
-    return 1;
+    return false;
 
   // Order by descending set size.  Note that the classes' allocation order may
   // not have been computed yet.  The Members set is always vaild.
   if (A->getMembers().size() > B->getMembers().size())
-    return -1;
+    return true;
   if (A->getMembers().size() < B->getMembers().size())
-    return 1;
+    return false;
 
   // Finally order by name as a tie breaker.
-  return StringRef(A->getName()).compare(B->getName());
+  return StringRef(A->getName()) < B->getName();
 }
 
 std::string CodeGenRegisterClass::getQualifiedName() const {
@@ -854,13 +854,13 @@ void CodeGenRegisterClass::computeSubClasses(CodeGenRegBank &RegBank) {
 
   // Visit backwards so sub-classes are seen first.
   for (auto I = RegClasses.rbegin(), E = RegClasses.rend(); I != E; ++I) {
-    CodeGenRegisterClass &RC = **I;
+    CodeGenRegisterClass &RC = *I;
     RC.SubClasses.resize(RegClasses.size());
     RC.SubClasses.set(RC.EnumValue);
 
     // Normally, all subclasses have IDs >= rci, unless RC is part of a clique.
     for (auto I2 = I.base(), E2 = RegClasses.end(); I2 != E2; ++I2) {
-      CodeGenRegisterClass &SubRC = **I2;
+      CodeGenRegisterClass &SubRC = *I2;
       if (RC.SubClasses.test(SubRC.EnumValue))
         continue;
       if (!testSubClass(&RC, &SubRC))
@@ -871,30 +871,30 @@ void CodeGenRegisterClass::computeSubClasses(CodeGenRegBank &RegBank) {
     }
 
     // Sweep up missed clique members.  They will be immediately preceding RC.
-    for (auto I2 = std::next(I); I2 != E && testSubClass(&RC, *I2); ++I2)
-      RC.SubClasses.set((*I2)->EnumValue);
+    for (auto I2 = std::next(I); I2 != E && testSubClass(&RC, &*I2); ++I2)
+      RC.SubClasses.set(I2->EnumValue);
   }
 
   // Compute the SuperClasses lists from the SubClasses vectors.
-  for (auto *RC : RegClasses) {
-    const BitVector &SC = RC->getSubClasses();
+  for (auto &RC : RegClasses) {
+    const BitVector &SC = RC.getSubClasses();
     auto I = RegClasses.begin();
     for (int s = 0, next_s = SC.find_first(); next_s != -1;
          next_s = SC.find_next(s)) {
       std::advance(I, next_s - s);
       s = next_s;
-      if (*I == RC)
+      if (&*I == &RC)
         continue;
-      (*I)->SuperClasses.push_back(RC);
+      I->SuperClasses.push_back(&RC);
     }
   }
 
   // With the class hierarchy in place, let synthesized register classes inherit
   // properties from their closest super-class. The iteration order here can
   // propagate properties down multiple levels.
-  for (auto *RC : RegClasses)
-    if (!RC->getDef())
-      RC->inheritProperties(RegBank);
+  for (auto &RC : RegClasses)
+    if (!RC.getDef())
+      RC.inheritProperties(RegBank);
 }
 
 void CodeGenRegisterClass::getSuperRegClasses(const CodeGenSubRegIndex *SubIdx,
@@ -995,18 +995,18 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
 
   // Allocate user-defined register classes.
   for (auto *RC : RCs) {
-    RegClasses.push_back(new CodeGenRegisterClass(*this, RC));
-    addToMaps(RegClasses.back());
+    RegClasses.push_back(CodeGenRegisterClass(*this, RC));
+    addToMaps(&RegClasses.back());
   }
 
   // Infer missing classes to create a full algebra.
   computeInferredRegisterClasses();
 
   // Order register classes topologically and assign enum values.
-  array_pod_sort(RegClasses.begin(), RegClasses.end(), TopoOrderRC);
+  RegClasses.sort(TopoOrderRC);
   unsigned i = 0;
-  for (auto *RC : RegClasses)
-    RC->EnumValue = i++;
+  for (auto &RC : RegClasses)
+    RC.EnumValue = i++;
   CodeGenRegisterClass::computeSubClasses(*this);
 }
 
@@ -1057,9 +1057,9 @@ CodeGenRegBank::getOrCreateSubClass(const CodeGenRegisterClass *RC,
     return FoundI->second;
 
   // Sub-class doesn't exist, create a new one.
-  RegClasses.push_back(new CodeGenRegisterClass(*this, Name, K));
-  addToMaps(RegClasses.back());
-  return RegClasses.back();
+  RegClasses.push_back(CodeGenRegisterClass(*this, Name, K));
+  addToMaps(&RegClasses.back());
+  return &RegClasses.back();
 }
 
 CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
@@ -1247,11 +1247,11 @@ static void computeUberSets(std::vector<UberRegSet> &UberSets,
   // For simplicitly make the SetID the same as EnumValue.
   IntEqClasses UberSetIDs(Registers.size()+1);
   std::set<unsigned> AllocatableRegs;
-  for (auto *RegClass : RegBank.getRegClasses()) {
-    if (!RegClass->Allocatable)
+  for (auto &RegClass : RegBank.getRegClasses()) {
+    if (!RegClass.Allocatable)
       continue;
 
-    const CodeGenRegister::Set &Regs = RegClass->getMembers();
+    const CodeGenRegister::Set &Regs = RegClass.getMembers();
     if (Regs.empty())
       continue;
 
@@ -1525,16 +1525,16 @@ void CodeGenRegBank::computeRegUnitSets() {
 
   // Compute a unique RegUnitSet for each RegClass.
   auto &RegClasses = getRegClasses();
-  for (auto *RC : RegClasses) {
-    if (!RC->Allocatable)
+  for (auto &RC : RegClasses) {
+    if (!RC.Allocatable)
       continue;
 
     // Speculatively grow the RegUnitSets to hold the new set.
     RegUnitSets.resize(RegUnitSets.size() + 1);
-    RegUnitSets.back().Name = RC->getName();
+    RegUnitSets.back().Name = RC.getName();
 
     // Compute a sorted list of units in this class.
-    RC->buildRegUnitSet(RegUnitSets.back().Units);
+    RC.buildRegUnitSet(RegUnitSets.back().Units);
 
     // Find an existing RegUnitSet.
     std::vector<RegUnitSet>::const_iterator SetI =
@@ -1634,20 +1634,20 @@ void CodeGenRegBank::computeRegUnitSets() {
   // For each register class, list the UnitSets that are supersets.
   RegClassUnitSets.resize(RegClasses.size());
   int RCIdx = -1;
-  for (auto *RC : RegClasses) {
+  for (auto &RC : RegClasses) {
     ++RCIdx;
-    if (!RC->Allocatable)
+    if (!RC.Allocatable)
       continue;
 
     // Recompute the sorted list of units in this class.
     std::vector<unsigned> RCRegUnits;
-    RC->buildRegUnitSet(RCRegUnits);
+    RC.buildRegUnitSet(RCRegUnits);
 
     // Don't increase pressure for unallocatable regclasses.
     if (RCRegUnits.empty())
       continue;
 
-    DEBUG(dbgs() << "RC " << RC->getName() << " Units: \n";
+    DEBUG(dbgs() << "RC " << RC.getName() << " Units: \n";
           for (unsigned i = 0, e = RCRegUnits.size(); i < e; ++i) dbgs()
               << RegUnits[RCRegUnits[i]].getRoots()[0]->getName() << " ";
           dbgs() << "\n  UnitSetIDs:");
@@ -1732,12 +1732,13 @@ void CodeGenRegBank::computeDerivedInfo() {
 // returns a maximal register class for all X.
 //
 void CodeGenRegBank::inferCommonSubClass(CodeGenRegisterClass *RC) {
-  // This loop might add more subclasses, invalidating iterators, so don't use
-  // range-for or iterator-based loops (unless RegClasses is changed to use a
-  // container with appropriate iterator invalidation semantics for this).
-  for (unsigned rci = 0, rce = RegClasses.size(); rci != rce; ++rci) {
+  assert(!RegClasses.empty());
+  // Stash the iterator to the last element so that this loop doesn't visit
+  // elements added by the getOrCreateSubClass call within it.
+  for (auto I = RegClasses.begin(), E = std::prev(RegClasses.end());
+       I != std::next(E); ++I) {
     CodeGenRegisterClass *RC1 = RC;
-    CodeGenRegisterClass *RC2 = RegClasses[rci];
+    CodeGenRegisterClass *RC2 = &*I;
     if (RC1 == RC2)
       continue;
 
@@ -1844,9 +1845,11 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
     // this loop. They will never be useful.
     // Careful if trying to transform this loop to use iterators - as this loop
     // will add new classes it will invalidate iterators to RegClasses.
-    for (unsigned rci = FirstSubRegRC, rce = RegClasses.size(); rci != rce;
-         ++rci) {
-      CodeGenRegisterClass &SubRC = *RegClasses[rci];
+    assert(!RegClasses.empty());
+    for (auto I = std::next(RegClasses.begin(), FirstSubRegRC),
+              E = std::prev(RegClasses.end());
+         I != std::next(E); ++I) {
+      CodeGenRegisterClass &SubRC = *I;
       // Topological shortcut: SubRC members have the wrong shape.
       if (!TopoSigs.anyCommon(SubRC.getTopoSigs()))
         continue;
@@ -1883,10 +1886,9 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
 
   // Visit all register classes, including the ones being added by the loop.
   // Watch out for iterator invalidation here.
-  // inferMatchingSuperRegClass inside this loop can add new elements to
-  // RegClasses, so this loop can't use range-for or even explicit iterators.
-  for (unsigned rci = 0; rci != RegClasses.size(); ++rci) {
-    CodeGenRegisterClass *RC = RegClasses[rci];
+  unsigned rci = 0;
+  for (auto &RCR : RegClasses) {
+    CodeGenRegisterClass *RC = &RCR;
 
     // Synthesize answers for getSubClassWithSubReg().
     inferSubClassWithSubReg(RC);
@@ -1905,10 +1907,11 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
     // [0..FirstNewRC).  We need to cover SubRC = [FirstNewRC..rci].
     if (rci + 1 == FirstNewRC) {
       unsigned NextNewRC = RegClasses.size();
-      for (unsigned rci2 = 0; rci2 != FirstNewRC; ++rci2)
+      auto I2 = RegClasses.begin();
+      for (unsigned rci2 = 0; rci2 != FirstNewRC; ++rci2, ++I2)
         // This can add more things to RegClasses, be careful about iterator
         // invalidation of outer loop variables.
-        inferMatchingSuperRegClass(RegClasses[rci2], FirstNewRC);
+        inferMatchingSuperRegClass(&*I2, FirstNewRC);
       FirstNewRC = NextNewRC;
     }
   }
@@ -1923,8 +1926,7 @@ const CodeGenRegisterClass*
 CodeGenRegBank::getRegClassForRegister(Record *R) {
   const CodeGenRegister *Reg = getReg(R);
   const CodeGenRegisterClass *FoundRC = nullptr;
-  for (const auto *RCP : getRegClasses()) {
-    const CodeGenRegisterClass &RC = *RCP;
+  for (const auto &RC : getRegClasses()) {
     if (!RC.contains(Reg))
       continue;
 

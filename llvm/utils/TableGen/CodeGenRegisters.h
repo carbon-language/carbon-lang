@@ -471,7 +471,7 @@ namespace llvm {
     SmallVector<RegUnit, 8> RegUnits;
 
     // Register classes.
-    std::vector<CodeGenRegisterClass*> RegClasses;
+    std::list<CodeGenRegisterClass> RegClasses;
     DenseMap<Record*, CodeGenRegisterClass*> Def2RC;
     typedef std::map<CodeGenRegisterClass::Key, CodeGenRegisterClass*> RCKeyMap;
     RCKeyMap Key2RC;
@@ -609,9 +609,9 @@ namespace llvm {
     RegUnit &getRegUnit(unsigned RUID) { return RegUnits[RUID]; }
     const RegUnit &getRegUnit(unsigned RUID) const { return RegUnits[RUID]; }
 
-    std::vector<CodeGenRegisterClass *> &getRegClasses() { return RegClasses; }
+    std::list<CodeGenRegisterClass> &getRegClasses() { return RegClasses; }
 
-    const std::vector<CodeGenRegisterClass *> &getRegClasses() const {
+    const std::list<CodeGenRegisterClass> &getRegClasses() const {
       return RegClasses;
     }
 

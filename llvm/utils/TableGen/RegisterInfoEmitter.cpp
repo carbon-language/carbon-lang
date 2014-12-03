@@ -111,9 +111,9 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS,
     if (!Namespace.empty())
       OS << "namespace " << Namespace << " {\n";
     OS << "enum {\n";
-    for (const auto *RC : RegisterClasses)
-      OS << "  " << RC->getName() << "RegClassID"
-         << " = " << RC->EnumValue << ",\n";
+    for (const auto &RC : RegisterClasses)
+      OS << "  " << RC.getName() << "RegClassID"
+         << " = " << RC.EnumValue << ",\n";
     OS << "\n  };\n";
     if (!Namespace.empty())
       OS << "}\n";
@@ -177,8 +177,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "const RegClassWeight &" << ClassName << "::\n"
      << "getRegClassWeight(const TargetRegisterClass *RC) const {\n"
      << "  static const RegClassWeight RCWeightTable[] = {\n";
-  for (const auto *RCP : RegBank.getRegClasses()) {
-    const CodeGenRegisterClass &RC = *RCP;
+  for (const auto &RC : RegBank.getRegClasses()) {
     const CodeGenRegister::Set &Regs = RC.getMembers();
     if (Regs.empty())
       OS << "    {0, 0";
@@ -844,8 +843,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   SequenceToOffsetTable<std::string> RegClassStrings;
 
   // Emit the register enum value arrays for each RegisterClass
-  for (const auto *RCP : RegisterClasses) {
-    const CodeGenRegisterClass &RC = *RCP;
+  for (const auto &RC : RegisterClasses) {
     ArrayRef<Record*> Order = RC.getOrder();
 
     // Give the register class a legal C name if it's anonymous.
@@ -885,9 +883,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern const MCRegisterClass " << TargetName
      << "MCRegisterClasses[] = {\n";
 
-  for (const auto *RCP : RegisterClasses) {
-    const CodeGenRegisterClass &RC = *RCP;
-
+  for (const auto &RC : RegisterClasses) {
     // Asserts to make sure values will fit in table assuming types from
     // MCRegisterInfo.h
     assert((RC.SpillSize/8) <= 0xffff && "SpillSize too large.");
@@ -989,11 +985,10 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
   const auto &RegisterClasses = RegBank.getRegClasses();
 
   if (!RegisterClasses.empty()) {
-    OS << "namespace " << RegisterClasses.front()->Namespace
+    OS << "namespace " << RegisterClasses.front().Namespace
        << " { // Register classes\n";
 
-    for (const auto *RCP : RegisterClasses) {
-      const CodeGenRegisterClass &RC = *RCP;
+    for (const auto &RC : RegisterClasses) {
       const std::string &Name = RC.getName();
 
       // Output the extern for the instance.
@@ -1030,8 +1025,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   std::set<Record*> AllocatableRegs;
 
   // Collect allocatable registers.
-  for (const auto *RCP : RegisterClasses) {
-    const CodeGenRegisterClass &RC = *RCP;
+  for (const auto &RC : RegisterClasses) {
     ArrayRef<Record*> Order = RC.getOrder();
 
     if (RC.Allocatable)
@@ -1040,8 +1034,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Build a shared array of value types.
   SequenceToOffsetTable<SmallVector<MVT::SimpleValueType, 4> > VTSeqs;
-  for (const auto *RC : RegisterClasses)
-    VTSeqs.add(RC->VTs);
+  for (const auto &RC : RegisterClasses)
+    VTSeqs.add(RC.VTs);
   VTSeqs.layout();
   OS << "\nstatic const MVT::SimpleValueType VTLists[] = {\n";
   VTSeqs.emit(OS, printSimpleValueType, "MVT::Other");
@@ -1094,8 +1088,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     SequenceToOffsetTable<IdxList, CodeGenSubRegIndex::Less> SuperRegIdxSeqs;
     BitVector MaskBV(RegisterClasses.size());
 
-    for (const auto *RCP : RegisterClasses) {
-      const CodeGenRegisterClass &RC = *RCP;
+    for (const auto &RC : RegisterClasses) {
       OS << "static const uint32_t " << RC.getName() << "SubClassMask[] = {\n  ";
       printBitVectorAsHex(OS, RC.getSubClasses(), 32);
 
@@ -1122,8 +1115,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "};\n\n";
 
     // Emit NULL terminated super-class lists.
-    for (const auto *RCP : RegisterClasses) {
-      const CodeGenRegisterClass &RC = *RCP;
+    for (const auto &RC : RegisterClasses) {
       ArrayRef<CodeGenRegisterClass*> Supers = RC.getSuperClasses();
 
       // Skip classes without supers.  We can reuse NullRegClasses.
@@ -1138,8 +1130,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     }
 
     // Emit methods.
-    for (const auto *RCP : RegisterClasses) {
-      const CodeGenRegisterClass &RC = *RCP;
+    for (const auto &RC : RegisterClasses) {
       if (!RC.AltOrderSelect.empty()) {
         OS << "\nstatic inline unsigned " << RC.getName()
            << "AltOrderSelect(const MachineFunction &MF) {"
@@ -1171,11 +1162,10 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     }
 
     // Now emit the actual value-initialized register class instances.
-    OS << "\nnamespace " << RegisterClasses.front()->Namespace
+    OS << "\nnamespace " << RegisterClasses.front().Namespace
        << " {   // Register class instances\n";
 
-    for (const auto *RCP : RegisterClasses) {
-      const CodeGenRegisterClass &RC = *RCP;
+    for (const auto &RC : RegisterClasses) {
       OS << "  extern const TargetRegisterClass " << RC.getName()
          << "RegClass = {\n    " << '&' << Target.getName()
          << "MCRegisterClasses[" << RC.getName() << "RegClassID],\n    "
@@ -1198,8 +1188,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "\nnamespace {\n";
   OS << "  const TargetRegisterClass* const RegisterClasses[] = {\n";
-  for (const auto *RC : RegisterClasses)
-    OS << "    &" << RC->getQualifiedName() << "RegClass,\n";
+  for (const auto &RC : RegisterClasses)
+    OS << "    &" << RC.getQualifiedName() << "RegClass,\n";
   OS << "  };\n";
   OS << "}\n";       // End of anonymous namespace...
 
@@ -1240,8 +1230,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     else
       PrintFatalError("Too many register classes.");
     OS << RegisterClasses.size() << "][" << SubRegIndicesSize << "] = {\n";
-    for (const auto *RCP : RegisterClasses) {
-      const CodeGenRegisterClass &RC = *RCP;
+    for (const auto &RC : RegisterClasses) {
       OS << "    {\t// " << RC.getName() << "\n";
       for (auto &Idx : SubRegIndices) {
         if (CodeGenRegisterClass *SRC = RC.getSubClassWithSubReg(&Idx))
