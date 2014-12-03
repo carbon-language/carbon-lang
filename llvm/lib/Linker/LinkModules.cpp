@@ -791,10 +791,8 @@ void ModuleLinker::computeTypeMapping() {
   // At this point, the destination module may have a type "%foo = { i32 }" for
   // example.  When the source module got loaded into the same LLVMContext, if
   // it had the same type, it would have been renamed to "%foo.42 = { i32 }".
-  TypeFinder SrcStructTypes;
-  SrcStructTypes.run(*SrcM, true);
-
-  for (StructType *ST : SrcStructTypes) {
+  std::vector<StructType *> Types = SrcM->getIdentifiedStructTypes();
+  for (StructType *ST : Types) {
     if (!ST->hasName())
       continue;
 

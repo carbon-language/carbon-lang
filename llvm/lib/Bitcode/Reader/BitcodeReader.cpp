@@ -487,7 +487,20 @@ Type *BitcodeReader::getTypeByID(unsigned ID) {
 
   // If we have a forward reference, the only possible case is when it is to a
   // named struct.  Just create a placeholder for now.
-  return TypeList[ID] = StructType::create(Context);
+  return TypeList[ID] = createIdentifiedStructType(Context);
+}
+
+StructType *BitcodeReader::createIdentifiedStructType(LLVMContext &Context,
+                                                      StringRef Name) {
+  auto *Ret = StructType::create(Context, Name);
+  IdentifiedStructTypes.push_back(Ret);
+  return Ret;
+}
+
+StructType *BitcodeReader::createIdentifiedStructType(LLVMContext &Context) {
+  auto *Ret = StructType::create(Context);
+  IdentifiedStructTypes.push_back(Ret);
+  return Ret;
 }
 
 
@@ -922,7 +935,7 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
         Res->setName(TypeName);
         TypeList[NumRecords] = nullptr;
       } else  // Otherwise, create a new struct.
-        Res = StructType::create(Context, TypeName);
+        Res = createIdentifiedStructType(Context, TypeName);
       TypeName.clear();
 
       SmallVector<Type*, 8> EltTys;
@@ -951,7 +964,7 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
         Res->setName(TypeName);
         TypeList[NumRecords] = nullptr;
       } else  // Otherwise, create a new struct with no body.
-        Res = StructType::create(Context, TypeName);
+        Res = createIdentifiedStructType(Context, TypeName);
       TypeName.clear();
       ResultTy = Res;
       break;
@@ -3414,6 +3427,10 @@ std::error_code BitcodeReader::MaterializeModule(Module *M) {
 
   UpgradeDebugInfo(*M);
   return std::error_code();
+}
+
+std::vector<StructType *> BitcodeReader::getIdentifiedStructTypes() const {
+  return IdentifiedStructTypes;
 }
 
 std::error_code BitcodeReader::InitStream() {

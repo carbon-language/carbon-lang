@@ -227,6 +227,7 @@ public:
   bool isDematerializable(const GlobalValue *GV) const override;
   std::error_code materialize(GlobalValue *GV) override;
   std::error_code MaterializeModule(Module *M) override;
+  std::vector<StructType *> getIdentifiedStructTypes() const override;
   void Dematerialize(GlobalValue *GV) override;
 
   /// @brief Main interface to parsing a bitcode buffer.
@@ -240,6 +241,10 @@ public:
   static uint64_t decodeSignRotatedValue(uint64_t V);
 
 private:
+  std::vector<StructType *> IdentifiedStructTypes;
+  StructType *createIdentifiedStructType(LLVMContext &Context, StringRef Name);
+  StructType *createIdentifiedStructType(LLVMContext &Context);
+
   Type *getTypeByID(unsigned ID);
   Value *getFnValueByID(unsigned ID, Type *Ty) {
     if (Ty && Ty->isMetadataTy())

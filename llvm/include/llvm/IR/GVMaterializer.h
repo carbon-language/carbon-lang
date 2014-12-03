@@ -19,11 +19,13 @@
 #define LLVM_IR_GVMATERIALIZER_H
 
 #include <system_error>
+#include <vector>
 
 namespace llvm {
 class Function;
 class GlobalValue;
 class Module;
+class StructType;
 
 class GVMaterializer {
 protected:
@@ -50,6 +52,8 @@ public:
   /// Make sure the entire Module has been completely read.
   ///
   virtual std::error_code MaterializeModule(Module *M) = 0;
+
+  virtual std::vector<StructType *> getIdentifiedStructTypes() const = 0;
 };
 
 } // End llvm namespace

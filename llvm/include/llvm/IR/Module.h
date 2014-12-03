@@ -327,6 +327,8 @@ public:
   /// name.
   StructType *getTypeByName(StringRef Name) const;
 
+  std::vector<StructType *> getIdentifiedStructTypes() const;
+
 /// @}
 /// @name Function Accessors
 /// @{
