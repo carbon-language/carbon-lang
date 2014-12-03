@@ -177,8 +177,9 @@ class GCRelocateOperands {
   ImmutableCallSite RelocateCS;
 
  public:
-  GCRelocateOperands(const User* U)
-    : GCRelocateOperands(cast<Instruction>(U)) {}
+  GCRelocateOperands(const User* U) : RelocateCS(U) {
+    assert(isGCRelocate(U));
+  }
   GCRelocateOperands(const Instruction *inst) : RelocateCS(inst) {
     assert(isGCRelocate(inst));
   }
