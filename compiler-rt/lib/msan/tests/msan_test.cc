@@ -3752,8 +3752,7 @@ struct S {
   U2 b;
 };
 
-// http://code.google.com/p/memory-sanitizer/issues/detail?id=6
-TEST(MemorySanitizerOrigins, DISABLED_InitializedStoreDoesNotChangeOrigin) {
+TEST(MemorySanitizerOrigins, InitializedStoreDoesNotChangeOrigin) {
   if (!TrackingOrigins()) return;
 
   S s;
