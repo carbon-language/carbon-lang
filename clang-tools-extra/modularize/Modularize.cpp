@@ -304,32 +304,24 @@ std::string findInputFile(const CommandLineArguments &CLArgs) {
   return Inputs.back();
 }
 
-// We provide this derivation to add in "-include (file)" arguments for header
+// This arguments adjuster inserts "-include (file)" arguments for header
 // dependencies.
-class AddDependenciesAdjuster : public ArgumentsAdjuster {
-public:
-  AddDependenciesAdjuster(DependencyMap &Dependencies)
-      : Dependencies(Dependencies) {}
-
-private:
-  // Callback for adjusting commandline arguments.
-  CommandLineArguments Adjust(const CommandLineArguments &Args) {
+ArgumentsAdjuster getAddDependenciesAdjuster(DependencyMap &Dependencies) {
+  return [&Dependencies](const CommandLineArguments &Args) {
     std::string InputFile = findInputFile(Args);
     DependentsVector &FileDependents = Dependencies[InputFile];
-    int Count = FileDependents.size();
-    if (Count == 0)
-      return Args;
     CommandLineArguments NewArgs(Args);
-    for (int Index = 0; Index < Count; ++Index) {
-      NewArgs.push_back("-include");
-      std::string File(std::string("\"") + FileDependents[Index] +
-                       std::string("\""));
-      NewArgs.push_back(FileDependents[Index]);
+    if (int Count = FileDependents.size()) {
+      for (int Index = 0; Index < Count; ++Index) {
+        NewArgs.push_back("-include");
+        std::string File(std::string("\"") + FileDependents[Index] +
+                         std::string("\""));
+        NewArgs.push_back(FileDependents[Index]);
+      }
     }
     return NewArgs;
-  }
-  DependencyMap &Dependencies;
-};
+  };
+}
 
 // FIXME: The Location class seems to be something that we might
 // want to design to be applicable to a wider range of tools, and stick it
@@ -734,7 +726,7 @@ int main(int Argc, const char **Argv) {
   // Parse all of the headers, detecting duplicates.
   EntityMap Entities;
   ClangTool Tool(*Compilations, Headers);
-  Tool.appendArgumentsAdjuster(new AddDependenciesAdjuster(Dependencies));
+  Tool.appendArgumentsAdjuster(getAddDependenciesAdjuster(Dependencies));
   int HadErrors = 0;
   ModularizeFrontendActionFactory Factory(Entities, *PPTracker, HadErrors);
   HadErrors |= Tool.run(&Factory);
