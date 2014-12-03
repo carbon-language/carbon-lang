@@ -232,11 +232,9 @@ std::vector<MVT::SimpleValueType> CodeGenTarget::
 getRegisterVTs(Record *R) const {
   const CodeGenRegister *Reg = getRegBank().getReg(R);
   std::vector<MVT::SimpleValueType> Result;
-  ArrayRef<CodeGenRegisterClass*> RCs = getRegBank().getRegClasses();
-  for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
-    const CodeGenRegisterClass &RC = *RCs[i];
-    if (RC.contains(Reg)) {
-      ArrayRef<MVT::SimpleValueType> InVTs = RC.getValueTypes();
+  for (const auto &RC : getRegBank().getRegClasses()) {
+    if (RC->contains(Reg)) {
+      ArrayRef<MVT::SimpleValueType> InVTs = RC->getValueTypes();
       Result.insert(Result.end(), InVTs.begin(), InVTs.end());
     }
   }
@@ -249,10 +247,9 @@ getRegisterVTs(Record *R) const {
 
 
 void CodeGenTarget::ReadLegalValueTypes() const {
-  ArrayRef<CodeGenRegisterClass*> RCs = getRegBank().getRegClasses();
-  for (unsigned i = 0, e = RCs.size(); i != e; ++i)
-    for (unsigned ri = 0, re = RCs[i]->VTs.size(); ri != re; ++ri)
-      LegalValueTypes.push_back(RCs[i]->VTs[ri]);
+  for (const auto *RC : getRegBank().getRegClasses())
+    for (unsigned ri = 0, re = RC->VTs.size(); ri != re; ++ri)
+      LegalValueTypes.push_back(RC->VTs[ri]);
 
   // Remove duplicates.
   std::sort(LegalValueTypes.begin(), LegalValueTypes.end());

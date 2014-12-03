@@ -24,6 +24,7 @@
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/SetTheory.h"
 #include <cstdlib>
+#include <list>
 #include <map>
 #include <set>
 #include <string>
@@ -523,7 +524,6 @@ namespace llvm {
 
   public:
     CodeGenRegBank(RecordKeeper&);
-    ~CodeGenRegBank();
 
     SetTheory &getSets() { return Sets; }
 
@@ -609,7 +609,9 @@ namespace llvm {
     RegUnit &getRegUnit(unsigned RUID) { return RegUnits[RUID]; }
     const RegUnit &getRegUnit(unsigned RUID) const { return RegUnits[RUID]; }
 
-    ArrayRef<CodeGenRegisterClass*> getRegClasses() const {
+    std::vector<CodeGenRegisterClass *> &getRegClasses() { return RegClasses; }
+
+    const std::vector<CodeGenRegisterClass *> &getRegClasses() const {
       return RegClasses;
     }
 
