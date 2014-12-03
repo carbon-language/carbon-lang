@@ -372,6 +372,11 @@ void __msan_init() {
 
   Symbolizer::GetOrInit()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 
+  if (common_flags()->coverage) {
+    __sanitizer_cov_init();
+    Atexit(__sanitizer_cov_dump);
+  }
+
   MsanTSDInit(MsanTSDDtor);
 
   MsanThread *main_thread = MsanThread::Create(0, 0);

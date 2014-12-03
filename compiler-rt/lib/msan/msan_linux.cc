@@ -133,6 +133,8 @@ bool InitShadow(bool map_shadow, bool init_origins) {
 }
 
 void MsanDie() {
+  if (common_flags()->coverage)
+    __sanitizer_cov_dump();
   if (death_callback)
     death_callback();
   _exit(flags()->exit_code);
