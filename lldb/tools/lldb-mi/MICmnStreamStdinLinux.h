@@ -51,6 +51,7 @@ class CMICmnStreamStdinLinux : public CMICmnBase, public CMICmnStreamStdin::IOSS
     // From CMICmnStreamStdin::IOSpecificReadStreamStdin
     virtual bool InputAvailable(bool &vwbAvail);
     virtual const MIchar *ReadLine(CMIUtilString &vwErrMsg);
+    virtual void InterruptReadLine(void);
 
     // Methods:
   private:
