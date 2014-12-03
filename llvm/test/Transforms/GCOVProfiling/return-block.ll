@@ -2,7 +2,7 @@
 ; RUN: echo '!19 = metadata !{metadata !"%/T/return-block.ll", metadata !0}' > %t1
 ; RUN: cat %s %t1 > %t2
 ; RUN: opt -insert-gcov-profiling -disable-output %t2
-; RUN: llvm-cov gcov -n -dump return-block.gcno 2>&1 | FileCheck %s
+; RUN: llvm-cov gcov -n -dump %T/return-block.gcno 2>&1 | FileCheck %s
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -33,7 +33,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { nounwind }
 
-!llvm.gcov = !{!14}
+!llvm.gcov = !{!19}
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!11, !12}
 !llvm.ident = !{!13}
