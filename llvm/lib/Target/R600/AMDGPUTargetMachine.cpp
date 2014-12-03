@@ -190,7 +190,6 @@ bool AMDGPUPassConfig::addPostRegAlloc() {
 
   if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createSIShrinkInstructionsPass());
-    addPass(createSIInsertWaits(*TM));
   }
   return false;
 }
@@ -204,6 +203,9 @@ bool AMDGPUPassConfig::addPreSched2() {
     addPass(&IfConverterID);
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
     addPass(createR600ClauseMergePass(*TM));
+  if (ST.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+    addPass(createSIInsertWaits(*TM));
+  }
   return false;
 }
 
