@@ -298,7 +298,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
 
   // Parse -fsanitize-coverage=N
-  if (NeedsAsan) {  // Currently asan is required.
+  if (NeedsAsan || NeedsMsan) {  // Currently asan or msan is required.
     if (Arg *A = Args.getLastArg(options::OPT_fsanitize_coverage)) {
       StringRef S = A->getValue();
       // Legal values are 0..4.
