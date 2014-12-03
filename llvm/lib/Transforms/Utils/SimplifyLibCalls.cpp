@@ -2177,6 +2177,7 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
       if (UnsafeFPShrink && hasFloatVersion(FuncName))
         return optimizeUnaryDoubleFP(CI, Builder, true);
       return nullptr;
+    case LibFunc::copysign:
     case LibFunc::fmin:
     case LibFunc::fmax:
       if (hasFloatVersion(FuncName))
