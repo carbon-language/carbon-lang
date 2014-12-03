@@ -793,11 +793,6 @@ static bool usedInOneFunc(const User *U, Function const *&oneFunc) {
       return false;
   }
 
-  if (const MDNode *md = dyn_cast<MDNode>(U))
-    if (md->hasName() && ((md->getName().str() == "llvm.dbg.gv") ||
-                          (md->getName().str() == "llvm.dbg.sp")))
-      return true;
-
   for (const User *UU : U->users())
     if (usedInOneFunc(UU, oneFunc) == false)
       return false;
