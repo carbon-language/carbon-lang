@@ -135,9 +135,9 @@ else()
       add_dependencies(asan clang_rt.asan-preinit-${arch})
 
       if (WIN32)
-         set(SHARED_ASAN_NAME clang_rt.asan_dynamic-${arch}${COMPILER_RT_OS_SUFFIX})
+        set(SHARED_ASAN_NAME clang_rt.asan_dynamic-${arch}${COMPILER_RT_OS_SUFFIX})
       else()
-         set(SHARED_ASAN_NAME clang_rt.asan-${arch}${COMPILER_RT_OS_SUFFIX})
+        set(SHARED_ASAN_NAME clang_rt.asan-${arch}${COMPILER_RT_OS_SUFFIX})
       endif()
 
       add_compiler_rt_runtime(clang_rt.asan-dynamic-${arch} ${arch} SHARED
