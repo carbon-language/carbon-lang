@@ -9084,7 +9084,7 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
   StringRef CPU = getParser().parseStringToEndOfStatement().trim();
   getTargetStreamer().emitTextAttribute(ARMBuildAttrs::CPU_name, CPU);
 
-  if (!STI.CPUStringIsValid(CPU)) {
+  if (!STI.isCPUStringValid(CPU)) {
     Error(L, "Unknown CPU name");
     return false;
   }

@@ -138,7 +138,7 @@ public:
   void initInstrItins(InstrItineraryData &InstrItins) const;
 
   /// Check whether the CPU string is valid.
-  bool CPUStringIsValid(StringRef CPU) {
+  bool isCPUStringValid(StringRef CPU) {
     auto Found = std::find_if(ProcDesc.begin(), ProcDesc.end(),
                               [=](const SubtargetFeatureKV &KV) {
                                 return CPU == KV.Key; 
