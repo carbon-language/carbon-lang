@@ -901,13 +901,11 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   if (!DeadDefs.empty()) {
     // If the virtual SrcReg is completely eliminated, update all DBG_VALUEs
     // to describe DstReg instead.
-    for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SrcReg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
-      MachineOperand &UseMO = *UI;
+    for (MachineOperand &UseMO : MRI->use_operands(SrcReg)) {
       MachineInstr *UseMI = UseMO.getParent();
       if (UseMI->isDebugValue()) {
         UseMO.setReg(DstReg);
-        DEBUG({dbgs() << "\t\tupdated: " <<  *UseMI;});
+        DEBUG(dbgs() << "\t\tupdated: " << *UseMI);
       }
     }
     eliminateDeadDefs();
