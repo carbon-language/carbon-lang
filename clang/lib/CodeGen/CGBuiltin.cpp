@@ -3122,40 +3122,40 @@ static Value *packTBLDVectorList(CodeGenFunction &CGF, ArrayRef<Value *> Ops,
   return CGF.EmitNeonCall(TblF, TblOps, Name);
 }
 
-Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
-                                           const CallExpr *E) {
-  unsigned HintID = static_cast<unsigned>(-1);
+Value *CodeGenFunction::GetValueForARMHint(unsigned BuiltinID) {
   switch (BuiltinID) {
-  default: break;
+  default:
+    return nullptr;
   case ARM::BI__builtin_arm_nop:
-    HintID = 0;
-    break;
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_hint),
+                              llvm::ConstantInt::get(Int32Ty, 0));
   case ARM::BI__builtin_arm_yield:
   case ARM::BI__yield:
-    HintID = 1;
-    break;
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_hint),
+                              llvm::ConstantInt::get(Int32Ty, 1));
   case ARM::BI__builtin_arm_wfe:
   case ARM::BI__wfe:
-    HintID = 2;
-    break;
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_hint),
+                              llvm::ConstantInt::get(Int32Ty, 2));
   case ARM::BI__builtin_arm_wfi:
   case ARM::BI__wfi:
-    HintID = 3;
-    break;
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_hint),
+                              llvm::ConstantInt::get(Int32Ty, 3));
   case ARM::BI__builtin_arm_sev:
   case ARM::BI__sev:
-    HintID = 4;
-    break;
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_hint),
+                              llvm::ConstantInt::get(Int32Ty, 4));
   case ARM::BI__builtin_arm_sevl:
   case ARM::BI__sevl:
-    HintID = 5;
-    break;
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_hint),
+                              llvm::ConstantInt::get(Int32Ty, 5));
   }
+}
 
-  if (HintID != static_cast<unsigned>(-1)) {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_hint);
-    return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, HintID));
-  }
+Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
+                                           const CallExpr *E) {
+  if (auto Hint = GetValueForARMHint(BuiltinID))
+    return Hint;
 
   if (BuiltinID == ARM::BI__builtin_arm_dbg) {
     Value *Option = EmitScalarExpr(E->getArg(0));
