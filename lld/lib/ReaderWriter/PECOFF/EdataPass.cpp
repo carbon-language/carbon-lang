@@ -41,7 +41,7 @@ static void dedupExports(PECOFFLinkingContext &ctx) {
   std::map<StringRef, ExportDesc *> map;
   for (ExportDesc &exp : exports) {
     if (!exp.externalName.empty())
-      continue;;
+      continue;
     StringRef symbol = exp.getRealName();
     auto it = map.find(symbol);
     if (it == map.end()) {
