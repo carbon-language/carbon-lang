@@ -22558,7 +22558,9 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
 
 /// PerformEXTRACT_VECTOR_ELTCombine - Detect vector gather/scatter index
 /// generation and convert it from being a bunch of shuffles and extracts
-/// to a simple store and scalar loads to extract the elements.
+/// into a somewhat faster sequence. For i686, the best sequence is apparently
+/// storing the value and loading scalars back, while for x64 we should
+/// use 64-bit extracts and shifts.
 static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
                                          TargetLowering::DAGCombinerInfo &DCI) {
   SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI);
@@ -22617,36 +22619,61 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // Ok, we've now decided to do the transformation.
+  // If 64-bit shifts are legal, use the extract-shift sequence,
+  // otherwise bounce the vector off the cache.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  SDValue Vals[4];
   SDLoc dl(InputVector);
+  
+  if (TLI.isOperationLegal(ISD::SRA, MVT::i64)) {
+    SDValue Cst = DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, InputVector);
+    EVT VecIdxTy = DAG.getTargetLoweringInfo().getVectorIdxTy();
+    SDValue BottomHalf = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64, Cst,
+      DAG.getConstant(0, VecIdxTy));
+    SDValue TopHalf = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64, Cst,
+      DAG.getConstant(1, VecIdxTy));
 
-  // Store the value to a temporary stack slot.
-  SDValue StackPtr = DAG.CreateStackTemporary(InputVector.getValueType());
-  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, InputVector, StackPtr,
-                            MachinePointerInfo(), false, false, 0);
+    SDValue ShAmt = DAG.getConstant(32, 
+      DAG.getTargetLoweringInfo().getShiftAmountTy(MVT::i64));
+    Vals[0] = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, BottomHalf);
+    Vals[1] = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
+      DAG.getNode(ISD::SRA, dl, MVT::i64, BottomHalf, ShAmt));
+    Vals[2] = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, TopHalf);
+    Vals[3] = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
+      DAG.getNode(ISD::SRA, dl, MVT::i64, TopHalf, ShAmt));
+  } else {
+    // Store the value to a temporary stack slot.
+    SDValue StackPtr = DAG.CreateStackTemporary(InputVector.getValueType());
+    SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, InputVector, StackPtr,
+      MachinePointerInfo(), false, false, 0);
 
-  // Replace each use (extract) with a load of the appropriate element.
+    EVT ElementType = InputVector.getValueType().getVectorElementType();
+    unsigned EltSize = ElementType.getSizeInBits() / 8;
+
+    // Replace each use (extract) with a load of the appropriate element.
+    for (unsigned i = 0; i < 4; ++i) {
+      uint64_t Offset = EltSize * i;
+      SDValue OffsetVal = DAG.getConstant(Offset, TLI.getPointerTy());
+
+      SDValue ScalarAddr = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(),
+                                       StackPtr, OffsetVal);
+
+      // Load the scalar.
+      Vals[i] = DAG.getLoad(ElementType, dl, Ch,
+                            ScalarAddr, MachinePointerInfo(),
+                            false, false, false, 0);
+
+    }
+  }
+
+  // Replace the extracts
   for (SmallVectorImpl<SDNode *>::iterator UI = Uses.begin(),
-       UE = Uses.end(); UI != UE; ++UI) {
+    UE = Uses.end(); UI != UE; ++UI) {
     SDNode *Extract = *UI;
 
-    // cOMpute the element's address.
     SDValue Idx = Extract->getOperand(1);
-    unsigned EltSize =
-        InputVector.getValueType().getVectorElementType().getSizeInBits()/8;
-    uint64_t Offset = EltSize * cast<ConstantSDNode>(Idx)->getZExtValue();
-    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-    SDValue OffsetVal = DAG.getConstant(Offset, TLI.getPointerTy());
-
-    SDValue ScalarAddr = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(),
-                                     StackPtr, OffsetVal);
-
-    // Load the scalar.
-    SDValue LoadScalar = DAG.getLoad(Extract->getValueType(0), dl, Ch,
-                                     ScalarAddr, MachinePointerInfo(),
-                                     false, false, false, 0);
-
-    // Replace the exact with the load.
-    DAG.ReplaceAllUsesOfValueWith(SDValue(Extract, 0), LoadScalar);
+    uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+    DAG.ReplaceAllUsesOfValueWith(SDValue(Extract, 0), Vals[IdxVal]);
   }
 
   // The replacement was made in place; don't return anything.
