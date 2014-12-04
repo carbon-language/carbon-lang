@@ -9,9 +9,6 @@
         iteeee gt
         ittfe le
         nopeq
-        ite eq
-        ldmiaeq sp!, {r4, pc}
-        movne r0, #0
 
 @ CHECK-ERRORS: error: incorrect condition in IT block; got 'le', but expected 'eq'
 @ CHECK-ERRORS:         addle r0, r1, r2
@@ -31,9 +28,6 @@
 @ CHECK-ERRORS: error: predicated instructions must be in IT block
 @ CHECK-ERRORS:         nopeq
 @ CHECK-ERRORS:         ^
-@ CHECK-ERRORS: error: Instruction should be outside an IT block or last in IT block, when PC is in the register list
-@ CHECK-ERRORS:         ldmiaeq sp!, {r4, pc}
-@ CHECK-ERRORS:                      ^
 
         @ Out of range immediates for MRC/MRC2/MRRC/MRRC2
         mrc  p14, #8, r1, c1, c2, #4
