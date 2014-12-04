@@ -16,6 +16,9 @@ _func:
 @ ADC (immediate)
 @------------------------------------------------------------------------------
         adc r1, r2, #0xf
+        adc r1, r2, $0xf
+        adc r1, r2, 0xf
+        adc r1, r2, 15
         adc r7, r8, #42, #2
         adc r7, r8, #-2147483638
         adc r7, r8, #40, #2
@@ -33,6 +36,9 @@ _func:
         adcseq r1, r2, #0xf00
         adceq r1, r2, #0xf00
 
+@ CHECK: adc	r1, r2, #15             @ encoding: [0x0f,0x10,0xa2,0xe2]
+@ CHECK: adc	r1, r2, #15             @ encoding: [0x0f,0x10,0xa2,0xe2]
+@ CHECK: adc	r1, r2, #15             @ encoding: [0x0f,0x10,0xa2,0xe2]
 @ CHECK: adc	r1, r2, #15             @ encoding: [0x0f,0x10,0xa2,0xe2]
 @ CHECK: adc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xa8,0xe2]
 @ CHECK: adc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xa8,0xe2]

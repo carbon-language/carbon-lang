@@ -4418,15 +4418,31 @@ ARMAsmParser::parseModImm(OperandVector &Operands) {
   MCAsmLexer &Lexer = getLexer();
   int64_t Imm1, Imm2;
 
-  if ((Parser.getTok().isNot(AsmToken::Hash) &&
-       Parser.getTok().isNot(AsmToken::Dollar))
-      || Lexer.peekTok().is(AsmToken::Colon))
-    return MatchOperand_NoMatch;
-
   SMLoc S = Parser.getTok().getLoc();
 
-  // Eat the hash (or dollar)
-  Parser.Lex();
+  // 1) A mod_imm operand can appear in the place of a register name:
+  //   add r0, #mod_imm
+  //   add r0, r0, #mod_imm
+  // to correctly handle the latter, we bail out as soon as we see an
+  // identifier.
+  //
+  // 2) Similarly, we do not want to parse into complex operands:
+  //   mov r0, #mod_imm
+  //   mov r0, :lower16:(_foo)
+  if (Parser.getTok().is(AsmToken::Identifier) ||
+      Parser.getTok().is(AsmToken::Colon))
+    return MatchOperand_NoMatch;
+
+  // Hash (dollar) is optional as per the ARMARM
+  if (Parser.getTok().is(AsmToken::Hash) ||
+      Parser.getTok().is(AsmToken::Dollar)) {
+    // Avoid parsing into complex operands (#:)
+    if (Lexer.peekTok().is(AsmToken::Colon))
+      return MatchOperand_NoMatch;
+
+    // Eat the hash (dollar)
+    Parser.Lex();
+  }
 
   SMLoc Sx1, Ex1;
   Sx1 = Parser.getTok().getLoc();
@@ -4483,12 +4499,6 @@ ARMAsmParser::parseModImm(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  if (Lexer.peekTok().isNot(AsmToken::Hash) &&
-       Lexer.peekTok().isNot(AsmToken::Dollar)) {
-    Error(Lexer.peekTok().getLoc(), "immediate operand expected");
-    return MatchOperand_ParseFail;
-  }
-
   // Eat the comma
   Parser.Lex();
 
@@ -4496,8 +4506,10 @@ ARMAsmParser::parseModImm(OperandVector &Operands) {
   SMLoc Sx2, Ex2;
   Sx2 = Parser.getTok().getLoc();
 
-  // Eat the hash (or dollar)
-  Parser.Lex();
+  // Eat the optional hash (dollar)
+  if (Parser.getTok().is(AsmToken::Hash) ||
+      Parser.getTok().is(AsmToken::Dollar))
+    Parser.Lex();
 
   const MCExpr *Imm2Exp;
   if (getParser().parseExpression(Imm2Exp, Ex2)) {

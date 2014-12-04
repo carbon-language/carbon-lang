@@ -4,7 +4,7 @@
 .text
 bar:
   mov r0, =0x101
-@ CHECK: error: unexpected token in operand
+@ CHECK: error: unknown token in expression
 @ CHECK: mov r0, =0x101
 @ CHECK:         ^
 
