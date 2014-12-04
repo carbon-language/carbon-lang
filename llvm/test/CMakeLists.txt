@@ -24,7 +24,6 @@ set(LLVM_TEST_DEPENDS
           lli
           lli-child-target
           llvm-ar
-          llvm-ranlib
           llvm-as
           llvm-bcanalyzer
           llvm-c-test
