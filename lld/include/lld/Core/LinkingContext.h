@@ -322,6 +322,10 @@ public:
   bool runRoundTripPass() const { return _runRoundTripPasses; }
 #endif
 
+  // This function is called just before the Resolver kicks in.
+  // Derived classes may use that chance to rearrange the input files.
+  virtual void maybeSortInputFiles() {}
+
   /// @}
 protected:
   LinkingContext(); // Must be subclassed

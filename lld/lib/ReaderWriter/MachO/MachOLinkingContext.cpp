@@ -22,6 +22,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Errc.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/Path.h"
@@ -921,6 +922,37 @@ bool MachOLinkingContext::customAtomOrderer(const DefinedAtom *left,
     leftBeforeRight = (leftOrder < rightOrder);
 
   return true;
+}
+
+static File *getFirstFile(const std::unique_ptr<InputElement> &elem) {
+  FileNode *e = dyn_cast<FileNode>(const_cast<InputElement *>(elem.get()));
+  if (!e || e->files().empty())
+    return nullptr;
+  return e->files()[0].get();
+}
+
+static bool isLibrary(const std::unique_ptr<InputElement> &elem) {
+  File *f = getFirstFile(elem);
+  return f && (isa<SharedLibraryFile>(f) || isa<ArchiveLibraryFile>(f));
+}
+
+// The darwin linker processes input files in two phases.  The first phase
+// links in all object (.o) files in command line order. The second phase
+// links in libraries in command line order.
+// In this function we reorder the input files so that all the object files
+// comes before any library file. We also make a group for the library files
+// so that the Resolver will reiterate over the libraries as long as we find
+// new undefines from libraries.
+void MachOLinkingContext::maybeSortInputFiles() {
+  std::vector<std::unique_ptr<InputElement>> &elements
+      = getInputGraph().inputElements();
+  std::stable_sort(elements.begin(), elements.end(),
+                   [](const std::unique_ptr<InputElement> &a,
+                      const std::unique_ptr<InputElement> &b) {
+                     return !isLibrary(a) && isLibrary(b);
+                   });
+  size_t numLibs = std::count_if(elements.begin(), elements.end(), isLibrary);
+  elements.push_back(llvm::make_unique<GroupEnd>(numLibs));
 }
 
 } // end namespace lld

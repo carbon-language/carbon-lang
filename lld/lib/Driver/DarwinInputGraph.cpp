@@ -18,48 +18,6 @@
 namespace lld {
 
 
-ErrorOr<File &> DarwinInputGraph::getNextFile() {
-  // The darwin linker processes input files in two phases.  The first phase
-  // links in all object (.o) files in command line order. The second phase
-  // links in libraries in command line order. If there are still UndefinedAtoms
-  // the second phase is repeated until notifyProgress() is not called by
-  // resolver.
-  for (;;) {
-    if (_currentInputElement) {
-      for(;;) {
-        ErrorOr<File &> next = _currentInputElement->getNextFile();
-        if (next.getError())
-          break;
-        File *file = &next.get();
-        bool fileIsLibrary = isa<SharedLibraryFile>(file) ||
-                             isa<ArchiveLibraryFile>(file);
-        if (fileIsLibrary == _librariesPhase) {
-          // Return library in library phase and object files in non-lib mode.
-          return *file;
-        }
-      }
-    }
-
-    if (_nextElementIndex >= _inputArgs.size()) {
-      // If no more elements, done unless we need to repeat library scan.
-      if (_librariesPhase && !_repeatLibraries)
-        return make_error_code(InputGraphError::no_more_files);
-      // Clear iterations and only look for libraries.
-      _librariesPhase = true;
-      _repeatLibraries = false;
-      _nextElementIndex = 0;
-      for (auto &ie : _inputArgs) {
-        ie->resetNextIndex();
-      }
-    }
-    _currentInputElement = _inputArgs[_nextElementIndex++].get();
-  }
-}
-
-void DarwinInputGraph::notifyProgress() {
-  _repeatLibraries = true;
-}
-
 /// \brief Parse the input file to lld::File.
 std::error_code MachOFileNode::parse(const LinkingContext &ctx,
                                      raw_ostream &diagnostics)  {

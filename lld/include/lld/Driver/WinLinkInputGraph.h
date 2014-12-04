@@ -55,21 +55,6 @@ public:
   ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 };
 
-/// \brief Represents a ELF control node
-class PECOFFGroup : public Group {
-public:
-  PECOFFGroup(PECOFFLinkingContext &ctx) : Group(), _ctx(ctx) {}
-
-  /// \brief Parse the group members.
-  std::error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
-    std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
-    return Group::parse(ctx, diag);
-  }
-
-private:
-  PECOFFLinkingContext &_ctx;
-};
-
 } // namespace lld
 
 #endif

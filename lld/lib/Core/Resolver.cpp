@@ -27,7 +27,7 @@
 
 namespace lld {
 
-void Resolver::handleFile(const File &file) {
+bool Resolver::handleFile(const File &file) {
   bool undefAdded = false;
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
@@ -38,13 +38,7 @@ void Resolver::handleFile(const File &file) {
     doSharedLibraryAtom(*atom);
   for (const AbsoluteAtom *atom : file.absolute())
     doAbsoluteAtom(*atom);
-
-  // Notify the input file manager of the fact that we have made some progress
-  // on linking using the current input file. It may want to know the fact for
-  // --start-group/--end-group.
-  if (undefAdded) {
-    _context.getInputGraph().notifyProgress();
-  }
+  return undefAdded;
 }
 
 void Resolver::forEachUndefines(bool searchForOverrides,
@@ -76,17 +70,19 @@ void Resolver::forEachUndefines(bool searchForOverrides,
   } while (undefineGenCount != _symbolTable.size());
 }
 
-void Resolver::handleArchiveFile(const File &file) {
+bool Resolver::handleArchiveFile(const File &file) {
   const ArchiveLibraryFile *archiveFile = cast<ArchiveLibraryFile>(&file);
   bool searchForOverrides =
       _context.searchArchivesToOverrideTentativeDefinitions();
+  bool undefAdded = false;
   forEachUndefines(searchForOverrides,
                    [&](StringRef undefName, bool dataSymbolOnly) {
     if (const File *member = archiveFile->find(undefName, dataSymbolOnly)) {
       member->setOrdinal(_context.getNextOrdinalAndIncrement());
-      handleFile(*member);
+      undefAdded = undefAdded || handleFile(*member);
     }
   });
+  return undefAdded;
 }
 
 void Resolver::handleSharedLibrary(const File &file) {
@@ -233,31 +229,66 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
     doDefinedAtom(*newAtom);
 }
 
+// Returns true if at least one of N previous files has created an
+// undefined symbol.
+bool Resolver::undefinesAdded(int n) {
+  for (size_t i = _fileIndex - n; i < _fileIndex; ++i)
+    if (_newUndefinesAdded[_files[i]])
+      return true;
+  return false;
+}
+
+ErrorOr<File &> Resolver::nextFile(bool &inGroup) {
+  if (size_t groupSize = _context.getInputGraph().getGroupSize()) {
+    // We are at the end of the current group. If one or more new
+    // undefined atom has been added in the last groupSize files, we
+    // reiterate over the files.
+    if (undefinesAdded(groupSize))
+      _fileIndex -= groupSize;
+    _context.getInputGraph().skipGroup();
+    return nextFile(inGroup);
+  }
+  if (_fileIndex < _files.size()) {
+    // We are still in the current group.
+    inGroup = true;
+    return *_files[_fileIndex++];
+  }
+  // We are not in a group. Get a new file.
+  ErrorOr<File &> file = _context.getInputGraph().getNextFile();
+  if (std::error_code ec = file.getError()) {
+    if (ec != InputGraphError::no_more_files)
+      llvm::errs() << "Error occurred in getNextFile: " << ec.message() << "\n";
+    return ec;
+  }
+  _files.push_back(&*file);
+  ++_fileIndex;
+  inGroup = false;
+  return *file;
+}
+
 // Keep adding atoms until _context.getNextFile() returns an error. This
 // function is where undefined atoms are resolved.
 bool Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
   for (;;) {
-    ErrorOr<File &> file = _context.getInputGraph().getNextFile();
-    std::error_code ec = file.getError();
-    if (ec == InputGraphError::no_more_files)
-      return true;
-    if (!file) {
-      llvm::errs() << "Error occurred in getNextFile: " << ec.message() << "\n";
-      return false;
-    }
-
+    bool inGroup = false;
+    bool undefAdded = false;
+    ErrorOr<File &> file = nextFile(inGroup);
+    if (std::error_code ec = file.getError())
+      return ec == InputGraphError::no_more_files;
     switch (file->kind()) {
     case File::kindObject:
+      if (inGroup)
+        break;
       assert(!file->hasOrdinal());
       file->setOrdinal(_context.getNextOrdinalAndIncrement());
-      handleFile(*file);
+      undefAdded = handleFile(*file);
       break;
     case File::kindArchiveLibrary:
       if (!file->hasOrdinal())
         file->setOrdinal(_context.getNextOrdinalAndIncrement());
-      handleArchiveFile(*file);
+      undefAdded = handleArchiveFile(*file);
       break;
     case File::kindSharedLibrary:
       if (!file->hasOrdinal())
@@ -265,6 +296,7 @@ bool Resolver::resolveUndefines() {
       handleSharedLibrary(*file);
       break;
     }
+    _newUndefinesAdded[&*file] = undefAdded;
   }
 }
 

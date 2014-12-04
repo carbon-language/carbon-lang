@@ -91,7 +91,7 @@ std::error_code ELFGNULdScript::parse(const LinkingContext &ctx,
     auto *group = dyn_cast<script::Group>(c);
     if (!group)
       continue;
-    std::unique_ptr<Group> groupStart(new Group());
+    size_t numfiles = 0;
     for (const script::Path &path : group->getPaths()) {
       // TODO : Propagate Set WholeArchive/dashlPrefix
       attributes.setAsNeeded(path._asNeeded);
@@ -100,9 +100,10 @@ std::error_code ELFGNULdScript::parse(const LinkingContext &ctx,
           _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
           attributes);
       std::unique_ptr<InputElement> inputFile(inputNode);
-      groupStart.get()->addFile(std::move(inputFile));
+      _expandElements.push_back(std::move(inputFile));
+      ++numfiles;
     }
-    _expandElements.push_back(std::move(groupStart));
+    _expandElements.push_back(llvm::make_unique<GroupEnd>(numfiles));
   }
   return std::error_code();
 }
