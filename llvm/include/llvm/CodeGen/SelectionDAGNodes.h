@@ -1177,6 +1177,8 @@ public:
            N->getOpcode() == ISD::ATOMIC_LOAD_UMAX    ||
            N->getOpcode() == ISD::ATOMIC_LOAD         ||
            N->getOpcode() == ISD::ATOMIC_STORE        ||
+           N->getOpcode() == ISD::MLOAD               ||
+           N->getOpcode() == ISD::MSTORE              ||
            N->isMemIntrinsic()                        ||
            N->isTargetMemoryOpcode();
   }
@@ -1923,6 +1925,72 @@ public:
 
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::STORE;
+  }
+};
+
+/// MaskedLoadStoreSDNode - This is a base class is used to represent MLOAD and
+/// MSTORE nodes
+///
+class MaskedLoadStoreSDNode : public MemSDNode {
+  // Operands
+  SDUse Ops[4];
+public:
+  friend class SelectionDAG;
+  MaskedLoadStoreSDNode(ISD::NodeType NodeTy, unsigned Order, DebugLoc dl,
+                   SDValue *Operands, unsigned numOperands, 
+                   SDVTList VTs, EVT MemVT, MachineMemOperand *MMO)
+    : MemSDNode(NodeTy, Order, dl, VTs, MemVT, MMO) {
+    InitOperands(Ops, Operands, numOperands);
+  }
+
+  // In the both nodes address is Op1, mask is Op2:
+  // MaskedLoadSDNode (Chain, ptr, mask, src0), src0 is a passthru value
+  // MaskedStoreSDNode (Chain, ptr, mask, data)
+  // Mask is a vector of i1 elements
+  const SDValue &getBasePtr() const { return getOperand(1); }
+  const SDValue &getMask() const    { return getOperand(2); }
+
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::MLOAD ||
+           N->getOpcode() == ISD::MSTORE;
+  }
+};
+
+/// MaskedLoadSDNode - This class is used to represent an MLOAD node
+///
+class MaskedLoadSDNode : public MaskedLoadStoreSDNode {
+public:
+  friend class SelectionDAG;
+  MaskedLoadSDNode(unsigned Order, DebugLoc dl,
+                   SDValue *Operands, unsigned numOperands, 
+                   SDVTList VTs, EVT MemVT, MachineMemOperand *MMO)
+    : MaskedLoadStoreSDNode(ISD::MLOAD, Order, dl, Operands, numOperands,
+                            VTs, MemVT, MMO) 
+  {}
+
+  const SDValue &getSrc0() const { return getOperand(3); }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::MLOAD;
+  }
+};
+
+/// MaskedStoreSDNode - This class is used to represent an MSTORE node
+///
+class MaskedStoreSDNode : public MaskedLoadStoreSDNode {
+
+public:
+  friend class SelectionDAG;
+  MaskedStoreSDNode(unsigned Order, DebugLoc dl,
+                   SDValue *Operands, unsigned numOperands, 
+                   SDVTList VTs, EVT MemVT, MachineMemOperand *MMO)
+    : MaskedLoadStoreSDNode(ISD::MSTORE, Order, dl, Operands, numOperands,
+                            VTs, MemVT, MMO) 
+  {}
+
+  const SDValue &getData() const { return getOperand(3); }
+
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::MSTORE;
   }
 };
 

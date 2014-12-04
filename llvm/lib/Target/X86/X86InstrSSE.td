@@ -9260,6 +9260,61 @@ defm VPMASKMOVQ : avx2_pmovmask<"vpmaskmovq",
                                 int_x86_avx2_maskstore_q,
                                 int_x86_avx2_maskstore_q_256>, VEX_W;
 
+def: Pat<(masked_store addr:$ptr, (v8i32 VR256:$mask), (v8f32 VR256:$src)),
+         (VPMASKMOVDYmr addr:$ptr, VR256:$mask, VR256:$src)>;
+
+def: Pat<(masked_store addr:$ptr, (v8i32 VR256:$mask), (v8i32 VR256:$src)),
+         (VPMASKMOVDYmr addr:$ptr, VR256:$mask, VR256:$src)>;
+
+def: Pat<(v8f32 (masked_load addr:$ptr, (v8i32 VR256:$mask), undef)),
+         (VPMASKMOVDYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v8f32 (masked_load addr:$ptr, (v8i32 VR256:$mask),
+                             (bc_v8f32 (v8i32 immAllZerosV)))),
+         (VPMASKMOVDYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v8f32 (masked_load addr:$ptr, (v8i32 VR256:$mask), (v8f32 VR256:$src0))),
+         (VBLENDVPSYrr VR256:$src0, (VPMASKMOVDYrm VR256:$mask, addr:$ptr),
+                       VR256:$mask)>;
+
+def: Pat<(v8i32 (masked_load addr:$ptr, (v8i32 VR256:$mask), undef)),
+         (VPMASKMOVDYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v8i32 (masked_load addr:$ptr, (v8i32 VR256:$mask), (v8i32 immAllZerosV))),
+         (VPMASKMOVDYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v8i32 (masked_load addr:$ptr, (v8i32 VR256:$mask), (v8i32 VR256:$src0))),
+         (VBLENDVPSYrr VR256:$src0, (VPMASKMOVDYrm VR256:$mask, addr:$ptr),
+                       VR256:$mask)>;
+
+def: Pat<(masked_store addr:$ptr, (v4i64 VR256:$mask), (v4f64 VR256:$src)),
+         (VPMASKMOVQYmr addr:$ptr, VR256:$mask, VR256:$src)>;
+
+def: Pat<(masked_store addr:$ptr, (v4i64 VR256:$mask), (v4i64 VR256:$src)),
+         (VPMASKMOVQYmr addr:$ptr, VR256:$mask, VR256:$src)>;
+
+def: Pat<(v4f64 (masked_load addr:$ptr, (v4i64 VR256:$mask), undef)),
+         (VPMASKMOVQYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v4f64 (masked_load addr:$ptr, (v4i64 VR256:$mask),
+                             (v4f64 immAllZerosV))),
+         (VPMASKMOVQYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v4f64 (masked_load addr:$ptr, (v4i64 VR256:$mask), (v4f64 VR256:$src0))),
+         (VBLENDVPDYrr VR256:$src0, (VPMASKMOVQYrm VR256:$mask, addr:$ptr),
+                       VR256:$mask)>;
+
+def: Pat<(v4i64 (masked_load addr:$ptr, (v4i64 VR256:$mask), undef)),
+         (VPMASKMOVQYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v4i64 (masked_load addr:$ptr, (v4i64 VR256:$mask),
+                             (bc_v4i64 (v8i32 immAllZerosV)))),
+         (VPMASKMOVQYrm VR256:$mask, addr:$ptr)>;
+
+def: Pat<(v4i64 (masked_load addr:$ptr, (v4i64 VR256:$mask), (v4i64 VR256:$src0))),
+         (VBLENDVPDYrr VR256:$src0, (VPMASKMOVQYrm VR256:$mask, addr:$ptr),
+                       VR256:$mask)>;
+
 
 //===----------------------------------------------------------------------===//
 // Variable Bit Shifts

@@ -597,6 +597,9 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::LOAD:
     SplitVecRes_LOAD(cast<LoadSDNode>(N), Lo, Hi);
     break;
+  case ISD::MLOAD:
+    SplitVecRes_MLOAD(cast<MaskedLoadSDNode>(N), Lo, Hi);
+    break;
   case ISD::SETCC:
     SplitVecRes_SETCC(N, Lo, Hi);
     break;
@@ -979,6 +982,64 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
   ReplaceValueWith(SDValue(LD, 1), Ch);
 }
 
+void DAGTypeLegalizer::SplitVecRes_MLOAD(MaskedLoadSDNode *MLD,
+                                         SDValue &Lo, SDValue &Hi) {
+  EVT LoVT, HiVT;
+  SDLoc dl(MLD);
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(MLD->getValueType(0));
+
+  SDValue Ch = MLD->getChain();
+  SDValue Ptr = MLD->getBasePtr();
+  SDValue Mask = MLD->getMask();
+  unsigned Alignment = MLD->getOriginalAlignment();
+
+  // if Alignment is equal to the vector size,
+  // take the half of it for the second part
+  unsigned SecondHalfAlignment =
+    (Alignment == MLD->getValueType(0).getSizeInBits()/8) ?
+     Alignment/2 : Alignment;
+
+  SDValue MaskLo, MaskHi;
+  std::tie(MaskLo, MaskHi) = DAG.SplitVector(Mask, dl);
+
+  EVT MemoryVT = MLD->getMemoryVT();
+  EVT LoMemVT, HiMemVT;
+  std::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemoryVT);
+
+  SDValue Src0 = MLD->getSrc0();
+  SDValue Src0Lo, Src0Hi;
+  std::tie(Src0Lo, Src0Hi) = DAG.SplitVector(Src0, dl);
+
+  MachineMemOperand *MMO = DAG.getMachineFunction().
+    getMachineMemOperand(MLD->getPointerInfo(), 
+                         MachineMemOperand::MOLoad,  LoMemVT.getStoreSize(),
+                         Alignment, MLD->getAAInfo(), MLD->getRanges());
+
+  Lo = DAG.getMaskedLoad(LoVT, dl, Ch, Ptr, MaskLo, Src0Lo, MMO);
+
+  unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
+  Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
+                    DAG.getConstant(IncrementSize, Ptr.getValueType()));
+
+  MMO = DAG.getMachineFunction().
+    getMachineMemOperand(MLD->getPointerInfo(), 
+                         MachineMemOperand::MOLoad,  HiMemVT.getStoreSize(),
+                         SecondHalfAlignment, MLD->getAAInfo(), MLD->getRanges());
+
+  Hi = DAG.getMaskedLoad(HiVT, dl, Ch, Ptr, MaskHi, Src0Hi, MMO);
+
+
+  // Build a factor node to remember that this load is independent of the
+  // other one.
+  Ch = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo.getValue(1),
+                   Hi.getValue(1));
+
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDValue(MLD, 1), Ch);
+
+}
+
 void DAGTypeLegalizer::SplitVecRes_SETCC(SDNode *N, SDValue &Lo, SDValue &Hi) {
   assert(N->getValueType(0).isVector() &&
          N->getOperand(0).getValueType().isVector() &&
@@ -1234,6 +1295,9 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::STORE:
       Res = SplitVecOp_STORE(cast<StoreSDNode>(N), OpNo);
       break;
+    case ISD::MSTORE:
+      Res = SplitVecOp_MSTORE(cast<MaskedStoreSDNode>(N), OpNo);
+      break;
     case ISD::VSELECT:
       Res = SplitVecOp_VSELECT(N, OpNo);
       break;
@@ -1393,6 +1457,56 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   StackPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
   return DAG.getExtLoad(ISD::EXTLOAD, dl, N->getValueType(0), Store, StackPtr,
                         MachinePointerInfo(), EltVT, false, false, false, 0);
+}
+
+SDValue DAGTypeLegalizer::SplitVecOp_MSTORE(MaskedStoreSDNode *N,
+                                            unsigned OpNo) {
+  SDValue Ch  = N->getChain();
+  SDValue Ptr = N->getBasePtr();
+  SDValue Mask = N->getMask();
+  SDValue Data = N->getData();
+  EVT MemoryVT = N->getMemoryVT();
+  unsigned Alignment = N->getOriginalAlignment();
+  SDLoc DL(N);
+  
+  EVT LoMemVT, HiMemVT;
+  std::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemoryVT);
+
+  SDValue DataLo, DataHi;
+  GetSplitVector(Data, DataLo, DataHi);
+  SDValue MaskLo, MaskHi;
+  GetSplitVector(Mask, MaskLo, MaskHi);
+
+  // if Alignment is equal to the vector size,
+  // take the half of it for the second part
+  unsigned SecondHalfAlignment =
+    (Alignment == Data->getValueType(0).getSizeInBits()/8) ?
+       Alignment/2 : Alignment;
+
+  SDValue Lo, Hi;
+  MachineMemOperand *MMO = DAG.getMachineFunction().
+    getMachineMemOperand(N->getPointerInfo(), 
+                         MachineMemOperand::MOStore, LoMemVT.getStoreSize(),
+                         Alignment, N->getAAInfo(), N->getRanges());
+
+  Lo = DAG.getMaskedStore(Ch, DL, DataLo, Ptr, MaskLo, MMO);
+
+  unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
+  Ptr = DAG.getNode(ISD::ADD, DL, Ptr.getValueType(), Ptr,
+                    DAG.getConstant(IncrementSize, Ptr.getValueType()));
+
+  MMO = DAG.getMachineFunction().
+    getMachineMemOperand(N->getPointerInfo(), 
+                         MachineMemOperand::MOStore,  HiMemVT.getStoreSize(),
+                         SecondHalfAlignment, N->getAAInfo(), N->getRanges());
+
+  Hi = DAG.getMaskedStore(Ch, DL, DataHi, Ptr, MaskHi, MMO);
+
+
+  // Build a factor node to remember that this store is independent of the
+  // other one.
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Lo, Hi);
+
 }
 
 SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
