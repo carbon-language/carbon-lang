@@ -20,7 +20,7 @@ void X86MachineFunctionInfo::setRestoreBasePointer(const MachineFunction *MF) {
     const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
       MF->getSubtarget().getRegisterInfo());
     unsigned SlotSize = RegInfo->getSlotSize();
-    for (const MCPhysReg *CSR = 
+    for (const MCPhysReg *CSR =
       RegInfo->X86RegisterInfo::getCalleeSavedRegs(MF);
       unsigned Reg = *CSR;
        ++CSR)

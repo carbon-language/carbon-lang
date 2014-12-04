@@ -512,7 +512,7 @@ protected:
         // Defines a new offset for the CFA. E.g.
         //
         //  With frame:
-        //  
+        //
         //     pushq %rbp
         //  L0:
         //     .cfi_def_cfa_offset 16

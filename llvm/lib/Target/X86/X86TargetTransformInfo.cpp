@@ -352,7 +352,7 @@ unsigned X86TTI::getArithmeticInstrCost(
     { ISD::SHL,  MVT::v8i16,  8*10 }, // Scalarized.
     { ISD::SHL,  MVT::v4i32,  2*5 }, // We optimized this using mul.
     { ISD::SHL,  MVT::v2i64,  2*10 }, // Scalarized.
-    { ISD::SHL,  MVT::v4i64,  4*10 }, // Scalarized. 
+    { ISD::SHL,  MVT::v4i64,  4*10 }, // Scalarized.
 
     { ISD::SRL,  MVT::v16i8,  16*10 }, // Scalarized.
     { ISD::SRL,  MVT::v8i16,  8*10 }, // Scalarized.
@@ -525,7 +525,7 @@ unsigned X86TTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
       {ISD::VECTOR_SHUFFLE, MVT::v8i16, 3}, // pshufb + pshufb + or
       {ISD::VECTOR_SHUFFLE, MVT::v16i8, 3}  // pshufb + pshufb + or
     };
- 
+
     if (ST->hasSSSE3()) {
       int Idx = CostTableLookup(SSSE3AltShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
       if (Idx != -1)
@@ -538,7 +538,7 @@ unsigned X86TTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
 
       {ISD::VECTOR_SHUFFLE, MVT::v4i32, 2}, // shufps + pshufd
       {ISD::VECTOR_SHUFFLE, MVT::v4f32, 2}, // shufps + pshufd
- 
+
       // This is expanded into a long sequence of four extract + four insert.
       {ISD::VECTOR_SHUFFLE, MVT::v8i16, 8}, // 4 x pextrw + 4 pinsrw.
 
@@ -546,7 +546,7 @@ unsigned X86TTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
       {ISD::VECTOR_SHUFFLE, MVT::v16i8, 48}
     };
 
-    // Fall-back (SSE3 and SSE2). 
+    // Fall-back (SSE3 and SSE2).
     int Idx = CostTableLookup(SSEAltShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
     if (Idx != -1)
       return LT.first * SSEAltShuffleTbl[Idx].Cost;
@@ -930,17 +930,17 @@ unsigned X86TTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
 
 unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
                                   bool IsPairwise) const {
-  
+
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(ValTy);
-  
+
   MVT MTy = LT.second;
-  
+
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
- 
-  // We use the Intel Architecture Code Analyzer(IACA) to measure the throughput 
-  // and make it as the cost. 
- 
+
+  // We use the Intel Architecture Code Analyzer(IACA) to measure the throughput
+  // and make it as the cost.
+
   static const CostTblEntry<MVT::SimpleValueType> SSE42CostTblPairWise[] = {
     { ISD::FADD,  MVT::v2f64,   2 },
     { ISD::FADD,  MVT::v4f32,   4 },
@@ -948,7 +948,7 @@ unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
     { ISD::ADD,   MVT::v4i32,   3 },      // The data reported by the IACA tool is "3.5".
     { ISD::ADD,   MVT::v8i16,   5 },
   };
- 
+
   static const CostTblEntry<MVT::SimpleValueType> AVX1CostTblPairWise[] = {
     { ISD::FADD,  MVT::v4f32,   4 },
     { ISD::FADD,  MVT::v4f64,   5 },
@@ -967,7 +967,7 @@ unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
     { ISD::ADD,   MVT::v4i32,   3 },      // The data reported by the IACA tool is "3.3".
     { ISD::ADD,   MVT::v8i16,   4 },      // The data reported by the IACA tool is "4.3".
   };
-  
+
   static const CostTblEntry<MVT::SimpleValueType> AVX1CostTblNoPairWise[] = {
     { ISD::FADD,  MVT::v4f32,   3 },
     { ISD::FADD,  MVT::v4f64,   3 },
@@ -978,14 +978,14 @@ unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
     { ISD::ADD,   MVT::v8i16,   4 },
     { ISD::ADD,   MVT::v8i32,   5 },
   };
-  
+
   if (IsPairwise) {
     if (ST->hasAVX()) {
       int Idx = CostTableLookup(AVX1CostTblPairWise, ISD, MTy);
       if (Idx != -1)
         return LT.first * AVX1CostTblPairWise[Idx].Cost;
     }
-  
+
     if (ST->hasSSE42()) {
       int Idx = CostTableLookup(SSE42CostTblPairWise, ISD, MTy);
       if (Idx != -1)
@@ -997,7 +997,7 @@ unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
       if (Idx != -1)
         return LT.first * AVX1CostTblNoPairWise[Idx].Cost;
     }
-    
+
     if (ST->hasSSE42()) {
       int Idx = CostTableLookup(SSE42CostTblNoPairWise, ISD, MTy);
       if (Idx != -1)

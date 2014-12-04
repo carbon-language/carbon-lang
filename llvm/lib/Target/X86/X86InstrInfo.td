@@ -188,7 +188,7 @@ def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG", SDTX86Void,
 def X86rdtscp  : SDNode<"X86ISD::RDTSCP_DAG", SDTX86Void,
                         [SDNPHasChain, SDNPOutGlue, SDNPSideEffect]>;
 def X86rdpmc   : SDNode<"X86ISD::RDPMC_DAG", SDTX86Void,
-                        [SDNPHasChain, SDNPOutGlue, SDNPSideEffect]>; 
+                        [SDNPHasChain, SDNPOutGlue, SDNPSideEffect]>;
 
 def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
 def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
@@ -1982,7 +1982,7 @@ let Predicates = [HasLZCNT], Defs = [EFLAGS] in {
 
 let Predicates = [HasLZCNT] in {
   def : Pat<(X86cmov (ctlz GR16:$src), (i16 16), (X86_COND_E),
-              (X86cmp GR16:$src, (i16 0))), 
+              (X86cmp GR16:$src, (i16 0))),
             (LZCNT16rr GR16:$src)>;
   def : Pat<(X86cmov (ctlz GR32:$src), (i32 32), (X86_COND_E),
               (X86cmp GR32:$src, (i32 0))),
@@ -2001,22 +2001,22 @@ let Predicates = [HasLZCNT] in {
             (LZCNT64rr GR64:$src)>;
 
   def : Pat<(X86cmov (ctlz (loadi16 addr:$src)), (i16 16), (X86_COND_E),
-              (X86cmp (loadi16 addr:$src), (i16 0))), 
+              (X86cmp (loadi16 addr:$src), (i16 0))),
             (LZCNT16rm addr:$src)>;
   def : Pat<(X86cmov (ctlz (loadi32 addr:$src)), (i32 32), (X86_COND_E),
-              (X86cmp (loadi32 addr:$src), (i32 0))), 
+              (X86cmp (loadi32 addr:$src), (i32 0))),
             (LZCNT32rm addr:$src)>;
   def : Pat<(X86cmov (ctlz (loadi64 addr:$src)), (i64 64), (X86_COND_E),
-              (X86cmp (loadi64 addr:$src), (i64 0))), 
+              (X86cmp (loadi64 addr:$src), (i64 0))),
             (LZCNT64rm addr:$src)>;
   def : Pat<(X86cmov (i16 16), (ctlz (loadi16 addr:$src)), (X86_COND_E),
-              (X86cmp (loadi16 addr:$src), (i16 0))), 
+              (X86cmp (loadi16 addr:$src), (i16 0))),
             (LZCNT16rm addr:$src)>;
   def : Pat<(X86cmov (i32 32), (ctlz (loadi32 addr:$src)), (X86_COND_E),
-              (X86cmp (loadi32 addr:$src), (i32 0))), 
+              (X86cmp (loadi32 addr:$src), (i32 0))),
             (LZCNT32rm addr:$src)>;
   def : Pat<(X86cmov (i64 64), (ctlz (loadi64 addr:$src)), (X86_COND_E),
-              (X86cmp (loadi64 addr:$src), (i64 0))), 
+              (X86cmp (loadi64 addr:$src), (i64 0))),
             (LZCNT64rm addr:$src)>;
 }
 
@@ -2117,22 +2117,22 @@ let Predicates = [HasBMI] in {
             (TZCNT64rr GR64:$src)>;
 
   def : Pat<(X86cmov (cttz (loadi16 addr:$src)), (i16 16), (X86_COND_E),
-              (X86cmp (loadi16 addr:$src), (i16 0))), 
+              (X86cmp (loadi16 addr:$src), (i16 0))),
             (TZCNT16rm addr:$src)>;
   def : Pat<(X86cmov (cttz (loadi32 addr:$src)), (i32 32), (X86_COND_E),
-              (X86cmp (loadi32 addr:$src), (i32 0))), 
+              (X86cmp (loadi32 addr:$src), (i32 0))),
             (TZCNT32rm addr:$src)>;
   def : Pat<(X86cmov (cttz (loadi64 addr:$src)), (i64 64), (X86_COND_E),
-              (X86cmp (loadi64 addr:$src), (i64 0))), 
+              (X86cmp (loadi64 addr:$src), (i64 0))),
             (TZCNT64rm addr:$src)>;
   def : Pat<(X86cmov (i16 16), (cttz (loadi16 addr:$src)), (X86_COND_E),
-              (X86cmp (loadi16 addr:$src), (i16 0))), 
+              (X86cmp (loadi16 addr:$src), (i16 0))),
             (TZCNT16rm addr:$src)>;
   def : Pat<(X86cmov (i32 32), (cttz (loadi32 addr:$src)), (X86_COND_E),
-              (X86cmp (loadi32 addr:$src), (i32 0))), 
+              (X86cmp (loadi32 addr:$src), (i32 0))),
             (TZCNT32rm addr:$src)>;
   def : Pat<(X86cmov (i64 64), (cttz (loadi64 addr:$src)), (X86_COND_E),
-              (X86cmp (loadi64 addr:$src), (i64 0))), 
+              (X86cmp (loadi64 addr:$src), (i64 0))),
             (TZCNT64rm addr:$src)>;
 }
 

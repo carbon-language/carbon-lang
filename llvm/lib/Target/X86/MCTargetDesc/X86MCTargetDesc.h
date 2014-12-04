@@ -40,8 +40,8 @@ namespace DWARFFlavour {
   enum {
     X86_64 = 0, X86_32_DarwinEH = 1, X86_32_Generic = 2
   };
-} 
-  
+}
+
 /// N86 namespace - Native X86 register numbers
 ///
 namespace N86 {

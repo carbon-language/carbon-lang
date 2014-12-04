@@ -759,7 +759,7 @@ namespace X86II {
             (RegNo > X86::ZMM15 && RegNo <= X86::ZMM31));
   }
 
-  
+
   inline bool isX86_64NonExtLowByteReg(unsigned reg) {
     return (reg == X86::SPL || reg == X86::BPL ||
             reg == X86::SIL || reg == X86::DIL);

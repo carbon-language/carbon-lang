@@ -31,12 +31,12 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// contains stack pointer re-alignment code which requires FP.
   bool ForceFramePointer;
 
-  /// RestoreBasePointerOffset - Non-zero if the function has base pointer 
-  /// and makes call to llvm.eh.sjlj.setjmp. When non-zero, the value is a 
-  /// displacement from the frame pointer to a slot where the base pointer 
-  /// is stashed. 
+  /// RestoreBasePointerOffset - Non-zero if the function has base pointer
+  /// and makes call to llvm.eh.sjlj.setjmp. When non-zero, the value is a
+  /// displacement from the frame pointer to a slot where the base pointer
+  /// is stashed.
   signed char RestoreBasePointerOffset;
- 
+
   /// CalleeSavedFrameSize - Size of the callee-saved register portion of the
   /// stack frame in bytes.
   unsigned CalleeSavedFrameSize;

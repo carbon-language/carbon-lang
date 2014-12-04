@@ -721,7 +721,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //  MemAddr, src1(VEX_4V), src2(ModR/M)
     //  MemAddr, src1(ModR/M), imm8
     //
-    if (X86II::isX86_64ExtendedReg(MI.getOperand(MemOperand + 
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(MemOperand +
                                                  X86::AddrBaseReg).getReg()))
       VEX_B = 0x0;
     if (X86II::isX86_64ExtendedReg(MI.getOperand(MemOperand +
@@ -863,7 +863,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
         EVEX_rc = MI.getOperand(RcOperand).getImm() & 0x3;
       }
       EncodeRC = true;
-    }      
+    }
     break;
   case X86II::MRMDestReg:
     // MRMDestReg instructions forms:

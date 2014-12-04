@@ -331,7 +331,7 @@ def : Proc<"athlon",          [Feature3DNowA, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
 def : Proc<"athlon-tbird",    [Feature3DNowA, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"athlon-4",        [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem, 
+def : Proc<"athlon-4",        [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
 def : Proc<"athlon-xp",       [FeatureSSE1,   Feature3DNowA, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
@@ -409,7 +409,7 @@ def : Proc<"c3-2",            [FeatureSSE1]>;
 // be good for modern chips without enabling instruction set encodings past the
 // basic SSE2 and 64-bit ones. It disables slow things from any mainstream and
 // modern 64-bit x86 chip, and enables features that are generally beneficial.
-// 
+//
 // We currently use the Sandy Bridge model as the default scheduling model as
 // we use it across Nehalem, Westmere, Sandy Bridge, and Ivy Bridge which
 // covers a huge swath of x86 processors. If there are specific scheduling

@@ -86,7 +86,7 @@ private:
     typedef std::pair< InfixCalculatorTok, int64_t > ICToken;
     SmallVector<InfixCalculatorTok, 4> InfixOperatorStack;
     SmallVector<ICToken, 4> PostfixStack;
-    
+
   public:
     int64_t popOperand() {
       assert (!PostfixStack.empty() && "Poped an empty stack!");
@@ -100,7 +100,7 @@ private:
               "Unexpected operand!");
       PostfixStack.push_back(std::make_pair(Op, Val));
     }
-    
+
     void popOperator() { InfixOperatorStack.pop_back(); }
     void pushOperator(InfixCalculatorTok Op) {
       // Push the new operator if the stack is empty.
@@ -108,7 +108,7 @@ private:
         InfixOperatorStack.push_back(Op);
         return;
       }
-      
+
       // Push the new operator if it has a higher precedence than the operator
       // on the top of the stack or the operator on the top of the stack is a
       // left parentheses.
@@ -118,7 +118,7 @@ private:
         InfixOperatorStack.push_back(Op);
         return;
       }
-      
+
       // The operator on the top of the stack has higher precedence than the
       // new operator.
       unsigned ParenCount = 0;
@@ -126,17 +126,17 @@ private:
         // Nothing to process.
         if (InfixOperatorStack.empty())
           break;
-        
+
         Idx = InfixOperatorStack.size() - 1;
         StackOp = InfixOperatorStack[Idx];
         if (!(OpPrecedence[StackOp] >= OpPrecedence[Op] || ParenCount))
           break;
-        
+
         // If we have an even parentheses count and we see a left parentheses,
         // then stop processing.
         if (!ParenCount && StackOp == IC_LPAREN)
           break;
-        
+
         if (StackOp == IC_RPAREN) {
           ++ParenCount;
           InfixOperatorStack.pop_back();
@@ -158,10 +158,10 @@ private:
         if (StackOp != IC_LPAREN && StackOp != IC_RPAREN)
           PostfixStack.push_back(std::make_pair(StackOp, 0));
       }
-      
+
       if (PostfixStack.empty())
         return 0;
-      
+
       SmallVector<ICToken, 16> OperandStack;
       for (unsigned i = 0, e = PostfixStack.size(); i != e; ++i) {
         ICToken Op = PostfixStack[i];
@@ -263,7 +263,7 @@ private:
       State(IES_PLUS), PrevState(IES_ERROR), BaseReg(0), IndexReg(0), TmpReg(0),
       Scale(1), Imm(imm), Sym(nullptr), StopOnLBrac(stoponlbrac),
       AddImmPrefix(addimmprefix) { Info.clear(); }
-    
+
     unsigned getBaseReg() { return BaseReg; }
     unsigned getIndexReg() { return IndexReg; }
     unsigned getScale() { return Scale; }
@@ -1103,7 +1103,7 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
       (*I).Kind = AOK_Delete;
   }
   const char *SymLocPtr = SymName.data();
-  // Skip everything before the symbol.        
+  // Skip everything before the symbol.
   if (unsigned Len = SymLocPtr - StartInBrac.getPointer()) {
     assert(Len > 0 && "Expected a non-negative length.");
     AsmRewrites->push_back(AsmRewrite(AOK_Skip, StartInBrac, Len));
@@ -1128,7 +1128,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     // identifier.  Don't try an parse it as a register.
     if (Tok.getString().startswith("."))
       break;
-    
+
     // If we're parsing an immediate expression, we don't expect a '['.
     if (SM.getStopOnLBrac() && getLexer().getKind() == AsmToken::LBrac)
       break;
@@ -1194,7 +1194,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
           MCSymbol *Sym =
               getContext().GetDirectionalLocalSymbol(IntVal, IDVal == "b");
           MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
-          const MCExpr *Val = 
+          const MCExpr *Val =
 	    MCSymbolRefExpr::Create(Sym, Variant, getContext());
           if (IDVal == "b" && Sym->isUndefined())
             return Error(Loc, "invalid reference to undefined symbol");
@@ -1279,7 +1279,7 @@ X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
     const MCExpr *NewDisp;
     if (ParseIntelDotOperator(Disp, NewDisp))
       return nullptr;
-    
+
     End = Tok.getEndLoc();
     Parser.Lex();  // Eat the field.
     Disp = NewDisp;

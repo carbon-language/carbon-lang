@@ -163,8 +163,7 @@ void X86ATTInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
     int64_t Address;
     if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
       O << formatHex((uint64_t)Address);
-    }
-    else {
+    } else {
       // Otherwise, just print the expression.
       O << *Op.getExpr();
     }

@@ -56,7 +56,7 @@ public:
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  
+
   void printi8mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
@@ -137,7 +137,7 @@ public:
 private:
   bool HasCustomInstComment;
 };
-  
+
 }
 
 #endif

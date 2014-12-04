@@ -48,7 +48,7 @@ public:
     O << "opaque ptr ";
     printMemReference(MI, OpNo, O);
   }
-  
+
   void printi8mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "byte ptr ";
     printMemReference(MI, OpNo, O);
@@ -152,7 +152,7 @@ public:
     printMemOffset(MI, OpNo, O);
   }
 };
-  
+
 }
 
 #endif

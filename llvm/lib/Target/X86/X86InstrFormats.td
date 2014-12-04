@@ -327,26 +327,26 @@ class I<bits<8> o, Format f, dag outs, dag ins, string asm,
   let Pattern = pattern;
   let CodeSize = 3;
 }
-class Ii8 <bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Ii8 <bits<8> o, Format f, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary,
            Domain d = GenericDomain>
   : X86Inst<o, f, Imm8, outs, ins, asm, itin, d> {
   let Pattern = pattern;
   let CodeSize = 3;
 }
-class Ii8PCRel<bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Ii8PCRel<bits<8> o, Format f, dag outs, dag ins, string asm,
                list<dag> pattern, InstrItinClass itin = NoItinerary>
   : X86Inst<o, f, Imm8PCRel, outs, ins, asm, itin> {
   let Pattern = pattern;
   let CodeSize = 3;
 }
-class Ii16<bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Ii16<bits<8> o, Format f, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
   : X86Inst<o, f, Imm16, outs, ins, asm, itin> {
   let Pattern = pattern;
   let CodeSize = 3;
 }
-class Ii32<bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Ii32<bits<8> o, Format f, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
   : X86Inst<o, f, Imm32, outs, ins, asm, itin> {
   let Pattern = pattern;
@@ -359,14 +359,14 @@ class Ii32S<bits<8> o, Format f, dag outs, dag ins, string asm,
   let CodeSize = 3;
 }
 
-class Ii16PCRel<bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Ii16PCRel<bits<8> o, Format f, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
            : X86Inst<o, f, Imm16PCRel, outs, ins, asm, itin> {
   let Pattern = pattern;
   let CodeSize = 3;
 }
 
-class Ii32PCRel<bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Ii32PCRel<bits<8> o, Format f, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
   : X86Inst<o, f, Imm32PCRel, outs, ins, asm, itin> {
   let Pattern = pattern;
@@ -393,14 +393,14 @@ class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern,
 //   Iseg16 - 16-bit segment selector, 16-bit offset
 //   Iseg32 - 16-bit segment selector, 32-bit offset
 
-class Iseg16 <bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Iseg16 <bits<8> o, Format f, dag outs, dag ins, string asm,
               list<dag> pattern, InstrItinClass itin = NoItinerary>
       : X86Inst<o, f, Imm16, outs, ins, asm, itin> {
   let Pattern = pattern;
   let CodeSize = 3;
 }
 
-class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm, 
+class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm,
               list<dag> pattern, InstrItinClass itin = NoItinerary>
       : X86Inst<o, f, Imm32, outs, ins, asm, itin> {
   let Pattern = pattern;
@@ -478,7 +478,7 @@ class PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 }
 
 // SSE1 Instruction Templates:
-// 
+//
 //   SSI   - SSE1 instructions with XS prefix.
 //   PSI   - SSE1 instructions with PS prefix.
 //   PSIi8 - SSE1 instructions with ImmT == Imm8 and PS prefix.
@@ -509,7 +509,7 @@ class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasAVX]>;
 
 // SSE2 Instruction Templates:
-// 
+//
 //   SDI    - SSE2 instructions with XD prefix.
 //   SDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix.
 //   S2SI   - SSE2 instructions with XS prefix.
@@ -573,16 +573,16 @@ class MMXS2SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
       : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE2]>;
 
 // SSE3 Instruction Templates:
-// 
+//
 //   S3I   - SSE3 instructions with PD prefixes.
 //   S3SI  - SSE3 instructions with XS prefix.
 //   S3DI  - SSE3 instructions with XD prefix.
 
-class S3SI<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class S3SI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin, SSEPackedSingle>, XS,
         Requires<[UseSSE3]>;
-class S3DI<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class S3DI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin, SSEPackedDouble>, XD,
         Requires<[UseSSE3]>;
@@ -593,7 +593,7 @@ class S3I<bits<8> o, Format F, dag outs, dag ins, string asm,
 
 
 // SSSE3 Instruction Templates:
-// 
+//
 //   SS38I - SSSE3 instructions with T8 prefix.
 //   SS3AI - SSSE3 instructions with TA prefix.
 //   MMXSS38I - SSSE3 instructions with T8 prefix and MMX operands.
@@ -621,7 +621,7 @@ class MMXSS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasSSSE3]>;
 
 // SSE4.1 Instruction Templates:
-// 
+//
 //   SS48I - SSE 4.1 instructions with T8 prefix.
 //   SS41AIi8 - SSE 4.1 instructions with TA prefix and ImmT == Imm8.
 //
@@ -635,7 +635,7 @@ class SS4AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[UseSSE41]>;
 
 // SSE4.2 Instruction Templates:
-// 
+//
 //   SS428I - SSE 4.2 instructions with T8 prefix.
 class SS428I<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern, InstrItinClass itin = NoItinerary>
@@ -868,27 +868,27 @@ class VRS2I<bits<8> o, Format F, dag outs, dag ins, string asm,
 // MMXIi8 - MMX instructions with ImmT == Imm8 and PS prefix.
 // MMXID  - MMX instructions with XD prefix.
 // MMXIS  - MMX instructions with XS prefix.
-class MMXI<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMXI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, PS, Requires<[HasMMX]>;
-class MMXI32<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMXI32<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, PS, Requires<[HasMMX,Not64BitMode]>;
-class MMXI64<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMXI64<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, PS, Requires<[HasMMX,In64BitMode]>;
-class MMXRI<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMXRI<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, PS, REX_W, Requires<[HasMMX]>;
-class MMX2I<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMX2I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, PD, Requires<[HasMMX]>;
-class MMXIi8<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMXIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin>, PS, Requires<[HasMMX]>;
-class MMXID<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMXID<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin>, XD, Requires<[HasMMX]>;
-class MMXIS<bits<8> o, Format F, dag outs, dag ins, string asm, 
+class MMXIS<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin>, XS, Requires<[HasMMX]>;

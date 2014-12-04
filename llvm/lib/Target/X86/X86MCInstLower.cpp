@@ -390,9 +390,8 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
   Inst.addOperand(Seg);
 }
 
-static unsigned getRetOpcode(const X86Subtarget &Subtarget)
-{
-	return Subtarget.is64Bit() ? X86::RETQ : X86::RETL;
+static unsigned getRetOpcode(const X86Subtarget &Subtarget) {
+  return Subtarget.is64Bit() ? X86::RETQ : X86::RETL;
 }
 
 void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
@@ -856,7 +855,7 @@ static void LowerSTATEPOINT(MCStreamer &OS, StackMaps &SM,
 
   // Record our statepoint node in the same section used by STACKMAP
   // and PATCHPOINT
-  SM.recordStatepoint(MI);  
+  SM.recordStatepoint(MI);
 }
 
 
@@ -1085,7 +1084,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case TargetOpcode::STATEPOINT:
     return LowerSTATEPOINT(OutStreamer, SM, *MI, Subtarget->is64Bit(), TM,
                            getSubtargetInfo(), MCInstLowering);
-    
+
   case TargetOpcode::STACKMAP:
     return LowerSTACKMAP(*MI);
 

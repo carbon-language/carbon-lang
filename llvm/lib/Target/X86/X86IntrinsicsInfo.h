@@ -20,7 +20,7 @@ enum IntrinsicType {
   INTR_NO_TYPE,
   GATHER, SCATTER, PREFETCH, RDSEED, RDRAND, RDPMC, RDTSC, XTEST, ADX,
   INTR_TYPE_1OP, INTR_TYPE_2OP, INTR_TYPE_3OP,
-  CMP_MASK, CMP_MASK_CC, VSHIFT, VSHIFT_MASK, COMI, 
+  CMP_MASK, CMP_MASK_CC, VSHIFT, VSHIFT_MASK, COMI,
   INTR_TYPE_1OP_MASK_RM, INTR_TYPE_2OP_MASK, INTR_TYPE_SCALAR_MASK_RM
 };
 
@@ -51,7 +51,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
   X86_INTRINSIC_DATA(addcarry_u64,  ADX, X86ISD::ADC, 0),
   X86_INTRINSIC_DATA(addcarryx_u32, ADX, X86ISD::ADC, 0),
   X86_INTRINSIC_DATA(addcarryx_u64, ADX, X86ISD::ADC, 0),
-  
+
   X86_INTRINSIC_DATA(avx512_gather_dpd_512, GATHER, X86::VGATHERDPDZrm, 0),
   X86_INTRINSIC_DATA(avx512_gather_dpi_512, GATHER, X86::VPGATHERDDZrm, 0),
   X86_INTRINSIC_DATA(avx512_gather_dpq_512, GATHER, X86::VPGATHERDQZrm, 0),
@@ -60,7 +60,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
   X86_INTRINSIC_DATA(avx512_gather_qpi_512, GATHER, X86::VPGATHERQDZrm, 0),
   X86_INTRINSIC_DATA(avx512_gather_qpq_512, GATHER, X86::VPGATHERQQZrm, 0),
   X86_INTRINSIC_DATA(avx512_gather_qps_512, GATHER, X86::VGATHERQPSZrm, 0),
-  
+
   X86_INTRINSIC_DATA(avx512_gatherpf_dpd_512, PREFETCH,
                      X86::VGATHERPF0DPDm, X86::VGATHERPF1DPDm),
   X86_INTRINSIC_DATA(avx512_gatherpf_dps_512, PREFETCH,
@@ -69,7 +69,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
                      X86::VGATHERPF0QPDm, X86::VGATHERPF1QPDm),
   X86_INTRINSIC_DATA(avx512_gatherpf_qps_512, PREFETCH,
                      X86::VGATHERPF0QPSm, X86::VGATHERPF1QPSm),
-  
+
   X86_INTRINSIC_DATA(avx512_scatter_dpd_512, SCATTER, X86::VSCATTERDPDZmr, 0),
   X86_INTRINSIC_DATA(avx512_scatter_dpi_512, SCATTER, X86::VPSCATTERDDZmr, 0),
   X86_INTRINSIC_DATA(avx512_scatter_dpq_512, SCATTER, X86::VPSCATTERDQZmr, 0),
@@ -78,7 +78,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
   X86_INTRINSIC_DATA(avx512_scatter_qpi_512, SCATTER, X86::VPSCATTERQDZmr, 0),
   X86_INTRINSIC_DATA(avx512_scatter_qpq_512, SCATTER, X86::VPSCATTERQQZmr, 0),
   X86_INTRINSIC_DATA(avx512_scatter_qps_512, SCATTER, X86::VSCATTERQPSZmr, 0),
-  
+
   X86_INTRINSIC_DATA(avx512_scatterpf_dpd_512, PREFETCH,
                      X86::VSCATTERPF0DPDm, X86::VSCATTERPF1DPDm),
   X86_INTRINSIC_DATA(avx512_scatterpf_dps_512, PREFETCH,
@@ -87,7 +87,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
                      X86::VSCATTERPF0QPDm, X86::VSCATTERPF1QPDm),
   X86_INTRINSIC_DATA(avx512_scatterpf_qps_512, PREFETCH,
                      X86::VSCATTERPF0QPSm, X86::VSCATTERPF1QPSm),
-  
+
   X86_INTRINSIC_DATA(rdpmc,     RDPMC,  X86ISD::RDPMC_DAG, 0),
   X86_INTRINSIC_DATA(rdrand_16, RDRAND, X86ISD::RDRAND, 0),
   X86_INTRINSIC_DATA(rdrand_32, RDRAND, X86ISD::RDRAND, 0),
@@ -97,7 +97,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
   X86_INTRINSIC_DATA(rdseed_64, RDSEED, X86ISD::RDSEED, 0),
   X86_INTRINSIC_DATA(rdtsc,     RDTSC,  X86ISD::RDTSC_DAG, 0),
   X86_INTRINSIC_DATA(rdtscp,    RDTSC,  X86ISD::RDTSCP_DAG, 0),
-  
+
   X86_INTRINSIC_DATA(subborrow_u32, ADX, X86ISD::SBB, 0),
   X86_INTRINSIC_DATA(subborrow_u64, ADX, X86ISD::SBB, 0),
   X86_INTRINSIC_DATA(xtest,     XTEST,  X86ISD::XTEST,  0),

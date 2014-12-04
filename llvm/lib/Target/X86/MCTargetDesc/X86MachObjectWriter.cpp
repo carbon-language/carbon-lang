@@ -184,7 +184,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     if (A->isUndefined() || B->isUndefined()) {
       StringRef Name = A->isUndefined() ? A->getName() : B->getName();
       Asm.getContext().FatalError(Fixup.getLoc(),
-        "unsupported relocation with subtraction expression, symbol '" + 
+        "unsupported relocation with subtraction expression, symbol '" +
         Name + "' can not be undefined in a subtraction expression");
     }
 
@@ -196,8 +196,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     if (A_Base) {
       Index = A_Base->getIndex();
       IsExtern = 1;
-    }
-    else {
+    } else {
       Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
       IsExtern = 0;
     }
@@ -215,8 +214,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     if (B_Base) {
       Index = B_Base->getIndex();
       IsExtern = 1;
-    }
-    else {
+    } else {
       Index = B_SD.getFragment()->getParent()->getOrdinal() + 1;
       IsExtern = 0;
     }

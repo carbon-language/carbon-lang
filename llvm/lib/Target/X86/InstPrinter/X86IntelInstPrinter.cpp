@@ -168,21 +168,21 @@ void X86IntelInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
   const MCOperand &IndexReg = MI->getOperand(Op+X86::AddrIndexReg);
   const MCOperand &DispSpec = MI->getOperand(Op+X86::AddrDisp);
   const MCOperand &SegReg   = MI->getOperand(Op+X86::AddrSegmentReg);
-  
+
   // If this has a segment register, print it.
   if (SegReg.getReg()) {
     printOperand(MI, Op+X86::AddrSegmentReg, O);
     O << ':';
   }
-  
+
   O << '[';
-  
+
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
     printOperand(MI, Op+X86::AddrBaseReg, O);
     NeedPlus = true;
   }
-  
+
   if (IndexReg.getReg()) {
     if (NeedPlus) O << " + ";
     if (ScaleVal != 1)
@@ -209,7 +209,7 @@ void X86IntelInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
       O << formatImm(DispVal);
     }
   }
-  
+
   O << ']';
 }
 
