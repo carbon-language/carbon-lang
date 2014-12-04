@@ -2562,12 +2562,21 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
  
   case Intrinsic::experimental_gc_statepoint: {
+    Assert1(!CI.doesNotAccessMemory() &&
+            !CI.onlyReadsMemory(),
+            "gc.statepoint must read and write memory to preserve "
+            "reordering restrictions required by safepoint semantics", &CI);
+    Assert1(!CI.isInlineAsm(),
+            "gc.statepoint support for inline assembly unimplemented", &CI);
+    
     const Value *Target = CI.getArgOperand(0);
     const PointerType *PT = dyn_cast<PointerType>(Target->getType());
     Assert2(PT && PT->getElementType()->isFunctionTy(),
             "gc.statepoint callee must be of function pointer type",
             &CI, Target);
     FunctionType *TargetFuncType = cast<FunctionType>(PT->getElementType());
+    Assert1(!TargetFuncType->isVarArg(),
+            "gc.statepoint support for var arg functions not implemented", &CI);
 
     const Value *NumCallArgsV = CI.getArgOperand(1);
     Assert1(isa<ConstantInt>(NumCallArgsV),
@@ -2577,6 +2586,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert1(NumCallArgs >= 0,
             "gc.statepoint number of arguments to underlying call "
             "must be positive", &CI);
+    Assert1(NumCallArgs == (int)TargetFuncType->getNumParams(),
+            "gc.statepoint mismatch in number of call args", &CI);
 
     const Value *Unused = CI.getArgOperand(2);
     Assert1(isa<ConstantInt>(Unused) &&
