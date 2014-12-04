@@ -32,12 +32,7 @@ protected:
   bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override;
-
-  std::error_code setELFHeader() override {
-    ExecutableWriter<ELFT>::setELFHeader();
-    _writeHelper.setELFHeader(*this->_elfHeader);
-    return std::error_code();
-  }
+  std::error_code setELFHeader() override;
 
   LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) createSymbolTable() override;
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable() override;
@@ -58,6 +53,25 @@ MipsExecutableWriter<ELFT>::MipsExecutableWriter(
     : ExecutableWriter<ELFT>(ctx, layout),
       _writeHelper(ctx, layout, elfFlagsMerger), _mipsContext(ctx),
       _mipsTargetLayout(layout) {}
+
+template <class ELFT>
+std::error_code MipsExecutableWriter<ELFT>::setELFHeader() {
+  std::error_code ec = ExecutableWriter<ELFT>::setELFHeader();
+  if (ec)
+    return ec;
+
+  StringRef entryName = _mipsContext.entrySymbolName();
+  if (const AtomLayout *al = this->_layout.findAtomLayoutByName(entryName)) {
+    const auto *ea = cast<DefinedAtom>(al->_atom);
+    if (ea->codeModel() == DefinedAtom::codeMipsMicro ||
+        ea->codeModel() == DefinedAtom::codeMipsMicroPIC)
+      // Adjust entry symbol value if this symbol is microMIPS encoded.
+      this->_elfHeader->e_entry(al->_virtualAddr + 1);
+  }
+
+  _writeHelper.setELFHeader(*this->_elfHeader);
+  return std::error_code();
+}
 
 template <class ELFT>
 void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {

@@ -95,7 +95,9 @@ public:
     this->_segmentType = segmentType;
   }
 
-  virtual bool findAtomAddrByName(StringRef, uint64_t &) { return false; }
+  virtual const AtomLayout *findAtomLayoutByName(StringRef) const {
+    return nullptr;
+  }
 
   void setOutputSection(OutputSection<ELFT> *os, bool isFirst = false) {
     _outputSection = os;
@@ -237,14 +239,11 @@ public:
   /// \brief Find the Atom address given a name, this is needed to properly
   ///  apply relocation. The section class calls this to find the atom address
   ///  to fix the relocation
-  virtual bool findAtomAddrByName(StringRef name, uint64_t &addr) {
-    for (auto ai : _atoms) {
-      if (ai->_atom->name() == name) {
-        addr = ai->_virtualAddr;
-        return true;
-      }
-    }
-    return false;
+  const AtomLayout *findAtomLayoutByName(StringRef name) const override {
+    for (auto ai : _atoms)
+      if (ai->_atom->name() == name)
+        return ai;
+    return nullptr;
   }
 
   /// \brief Return the raw flags, we need this to sort segments

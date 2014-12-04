@@ -236,12 +236,12 @@ public:
       si->doPreFlight();
   }
 
-  inline bool findAtomAddrByName(StringRef name, uint64_t &addr) override {
+  inline const AtomLayout *findAtomLayoutByName(StringRef name) const override {
     for (auto sec : _sections)
-      if (auto section = dyn_cast<Section<ELFT> >(sec))
-        if (section->findAtomAddrByName(name, addr))
-         return true;
-    return false;
+      if (auto section = dyn_cast<Section<ELFT>>(sec))
+        if (auto *al = section->findAtomLayoutByName(name))
+          return al;
+    return nullptr;
   }
 
   inline void setHeader(ELFHeader<ELFT> *elfHeader) { _elfHeader = elfHeader; }
