@@ -360,6 +360,8 @@ public:
   getDylinkerCommand(const LoadCommandInfo &L) const;
   MachO::uuid_command
   getUuidCommand(const LoadCommandInfo &L) const;
+  MachO::rpath_command
+  getRpathCommand(const LoadCommandInfo &L) const;
   MachO::source_version_command
   getSourceVersionCommand(const LoadCommandInfo &L) const;
   MachO::entry_point_command

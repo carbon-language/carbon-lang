@@ -1109,6 +1109,12 @@ namespace llvm {
       sys::swapByteOrder(u.cmdsize);
     }
 
+    inline void swapStruct(rpath_command &r) {
+      sys::swapByteOrder(r.cmd);
+      sys::swapByteOrder(r.cmdsize);
+      sys::swapByteOrder(r.path);
+    }
+
     inline void swapStruct(source_version_command &s) {
       sys::swapByteOrder(s.cmd);
       sys::swapByteOrder(s.cmdsize);

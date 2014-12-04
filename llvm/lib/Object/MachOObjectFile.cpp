@@ -2299,6 +2299,11 @@ MachOObjectFile::getUuidCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::uuid_command>(this, L.Ptr);
 }
 
+MachO::rpath_command
+MachOObjectFile::getRpathCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::rpath_command>(this, L.Ptr);
+}
+
 MachO::source_version_command
 MachOObjectFile::getSourceVersionCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::source_version_command>(this, L.Ptr);

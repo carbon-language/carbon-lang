@@ -3299,6 +3299,22 @@ static void PrintUuidLoadCommand(MachO::uuid_command uuid) {
   outs() << "\n";
 }
 
+static void PrintRpathLoadCommand(MachO::rpath_command rpath,
+                                  const char *Ptr) {
+  outs() << "          cmd LC_RPATH\n";
+  outs() << "      cmdsize " << rpath.cmdsize;
+  if (rpath.cmdsize < sizeof(struct MachO::rpath_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  if (rpath.path >= rpath.cmdsize)
+    outs() << "         path ?(bad offset " << rpath.path << ")\n";
+  else {
+    const char *P = (const char *)(Ptr) + rpath.path;
+    outs() << "         path " << P << " (offset " << rpath.path << ")\n";
+  }
+}
+
 static void PrintVersionMinLoadCommand(MachO::version_min_command vd) {
   if (vd.cmd == MachO::LC_VERSION_MIN_MACOSX)
     outs() << "      cmd LC_VERSION_MIN_MACOSX\n";
@@ -3494,6 +3510,9 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
     } else if (Command.C.cmd == MachO::LC_UUID) {
       MachO::uuid_command Uuid = Obj->getUuidCommand(Command);
       PrintUuidLoadCommand(Uuid);
+    } else if (Command.C.cmd == MachO::LC_RPATH) {
+      MachO::rpath_command Rpath = Obj->getRpathCommand(Command);
+      PrintRpathLoadCommand(Rpath, Command.Ptr);
     } else if (Command.C.cmd == MachO::LC_VERSION_MIN_MACOSX) {
       MachO::version_min_command Vd = Obj->getVersionMinLoadCommand(Command);
       PrintVersionMinLoadCommand(Vd);
