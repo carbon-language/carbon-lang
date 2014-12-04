@@ -182,7 +182,10 @@ public:
   /// GetStringMapEntryFromValue - Given a value that is known to be embedded
   /// into a StringMapEntry, return the StringMapEntry itself.
   static StringMapEntry &GetStringMapEntryFromValue(ValueTy &V) {
-    char *Ptr = reinterpret_cast<char *>(&V) - offsetof(StringMapEntry, second);
+    StringMapEntry *EPtr = 0;
+    char *Ptr = reinterpret_cast<char*>(&V) -
+                  (reinterpret_cast<char*>(&EPtr->second) -
+                   reinterpret_cast<char*>(EPtr));
     return *reinterpret_cast<StringMapEntry*>(Ptr);
   }
   static const StringMapEntry &GetStringMapEntryFromValue(const ValueTy &V) {
