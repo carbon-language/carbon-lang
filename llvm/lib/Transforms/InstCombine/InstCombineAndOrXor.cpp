@@ -117,6 +117,61 @@ static Value *getFCmpValue(bool isordered, unsigned code,
   return Builder->CreateFCmp(Pred, LHS, RHS);
 }
 
+/// \brief Transform BITWISE_OP(BSWAP(A),BSWAP(B)) to BSWAP(BITWISE_OP(A, B))
+/// \param I Binary operator to transform.
+/// \return Pointer to node that must replace the original binary operator, or
+///         null pointer if no transformation was made.
+Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
+  IntegerType *ITy = dyn_cast<IntegerType>(I.getType());
+
+  // Can't do vectors.
+  if (I.getType()->isVectorTy()) return nullptr;
+
+  // Can only do bitwise ops.
+  unsigned Op = I.getOpcode();
+  if (Op != Instruction::And && Op != Instruction::Or &&
+      Op != Instruction::Xor)
+    return nullptr;
+
+  Value *OldLHS = I.getOperand(0);
+  Value *OldRHS = I.getOperand(1);
+  ConstantInt *ConstLHS = dyn_cast<ConstantInt>(OldLHS);
+  ConstantInt *ConstRHS = dyn_cast<ConstantInt>(OldRHS);
+  IntrinsicInst *IntrLHS = dyn_cast<IntrinsicInst>(OldLHS);
+  IntrinsicInst *IntrRHS = dyn_cast<IntrinsicInst>(OldRHS);
+  bool IsBswapLHS = (IntrLHS && IntrLHS->getIntrinsicID() == Intrinsic::bswap);
+  bool IsBswapRHS = (IntrRHS && IntrRHS->getIntrinsicID() == Intrinsic::bswap);
+
+  if (!IsBswapLHS && !IsBswapRHS)
+    return nullptr;
+
+  if (!IsBswapLHS && !ConstLHS)
+    return nullptr;
+
+  if (!IsBswapRHS && !ConstRHS)
+    return nullptr;
+
+  /// OP( BSWAP(x), BSWAP(y) ) -> BSWAP( OP(x, y) )
+  /// OP( BSWAP(x), CONSTANT ) -> BSWAP( OP(x, BSWAP(CONSTANT) ) )
+  Value *NewLHS = IsBswapLHS ? IntrLHS->getOperand(0) :
+                  Builder->getInt(ConstLHS->getValue().byteSwap());
+
+  Value *NewRHS = IsBswapRHS ? IntrRHS->getOperand(0) :
+                  Builder->getInt(ConstRHS->getValue().byteSwap());
+
+  Value *BinOp = nullptr;
+  if (Op == Instruction::And)
+    BinOp = Builder->CreateAnd(NewLHS, NewRHS);
+  else if (Op == Instruction::Or)
+    BinOp = Builder->CreateOr(NewLHS, NewRHS);
+  else //if (Op == Instruction::Xor)
+    BinOp = Builder->CreateXor(NewLHS, NewRHS);
+
+  Module *M = I.getParent()->getParent()->getParent();
+  Function *F = Intrinsic::getDeclaration(M, Intrinsic::bswap, ITy);
+  return Builder->CreateCall(F, BinOp);
+}
+
 // OptAndOp - This handles expressions of the form ((val OP C1) & C2).  Where
 // the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
 // guaranteed to be a binary operator.
@@ -1185,6 +1240,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (SimplifyDemandedInstructionBits(I))
     return &I;
 
+  if (Value *V = SimplifyBSwap(I))
+    return ReplaceInstUsesWith(I, V);
+
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
     const APInt &AndRHSMask = AndRHS->getValue();
 
@@ -2118,6 +2176,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (SimplifyDemandedInstructionBits(I))
     return &I;
 
+  if (Value *V = SimplifyBSwap(I))
+    return ReplaceInstUsesWith(I, V);
+
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     ConstantInt *C1 = nullptr; Value *X = nullptr;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
@@ -2501,6 +2562,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
     return &I;
+
+  if (Value *V = SimplifyBSwap(I))
+    return ReplaceInstUsesWith(I, V);
 
   // Is this a ~ operation?
   if (Value *NotOp = dyn_castNotVal(&I)) {

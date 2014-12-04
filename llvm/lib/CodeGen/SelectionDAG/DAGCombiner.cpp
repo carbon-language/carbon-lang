@@ -2526,6 +2526,7 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // fold (OP (zext x), (zext y)) -> (zext (OP x, y))
   // fold (OP (sext x), (sext y)) -> (sext (OP x, y))
   // fold (OP (aext x), (aext y)) -> (aext (OP x, y))
+  // fold (OP (bswap x), (bswap y)) -> (bswap (OP x, y))
   // fold (OP (trunc x), (trunc y)) -> (trunc (OP x, y)) (if trunc isn't free)
   //
   // do not sink logical op inside of a vector extend, since it may combine
@@ -2533,6 +2534,7 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   EVT Op0VT = N0.getOperand(0).getValueType();
   if ((N0.getOpcode() == ISD::ZERO_EXTEND ||
        N0.getOpcode() == ISD::SIGN_EXTEND ||
+       N0.getOpcode() == ISD::BSWAP ||
        // Avoid infinite looping with PromoteIntBinOp.
        (N0.getOpcode() == ISD::ANY_EXTEND &&
         (!LegalTypes || TLI.isTypeDesirableForOp(N->getOpcode(), Op0VT))) ||
