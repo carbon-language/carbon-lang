@@ -11,11 +11,12 @@ add_llvm_tool(llvm-ar
 
 if(UNIX)
   set(LLVM_LINK_OR_COPY create_symlink)
+  set(llvm_ar_binary "llvm-ar${CMAKE_EXECUTABLE_SUFFIX}")
 else()
   set(LLVM_LINK_OR_COPY copy)
+  set(llvm_ar_binary "${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ar${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
-set(llvm_ar_binary "llvm-ar${CMAKE_EXECUTABLE_SUFFIX}")
 set(llvm_ranlib "${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ranlib${CMAKE_EXECUTABLE_SUFFIX}")
 
 add_custom_command(OUTPUT ${llvm_ranlib}
