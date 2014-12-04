@@ -45,10 +45,10 @@ public:
 
   void setPacketBegin(bool Y);
   bool isPacketBegin() const;
-  size_t const packetBeginIndex = 0;
+  static const size_t packetBeginIndex = 0;
   void setPacketEnd(bool Y);
   bool isPacketEnd() const;
-  size_t const packetEndIndex = 1;
+  static const size_t packetEndIndex = 1;
   void resetPacket();
 
   // Return the slots used by the insn.
