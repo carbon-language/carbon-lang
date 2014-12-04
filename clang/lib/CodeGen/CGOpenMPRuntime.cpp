@@ -371,6 +371,22 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_flush");
     break;
   }
+  case OMPRTL__kmpc_master: {
+    // Build kmp_int32 __kmpc_master(ident_t *loc, kmp_int32 global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_master");
+    break;
+  }
+  case OMPRTL__kmpc_end_master: {
+    // Build void __kmpc_end_master(ident_t *loc, kmp_int32 global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_end_master");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -629,6 +645,57 @@ void CGOpenMPRuntime::EmitOMPCriticalRegion(
   // Build a call to __kmpc_end_critical
   RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_end_critical);
   CGF.EmitRuntimeCall(RTLFn, Args);
+}
+
+static void EmitOMPIfStmt(CodeGenFunction &CGF, llvm::Value *IfCond,
+                          const std::function<void()> &BodyOpGen) {
+  llvm::Value *CallBool = CGF.EmitScalarConversion(
+      IfCond,
+      CGF.getContext().getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/true),
+      CGF.getContext().BoolTy);
+
+  auto *ThenBlock = CGF.createBasicBlock("omp_if.then");
+  auto *ContBlock = CGF.createBasicBlock("omp_if.end");
+  // Generate the branch (If-stmt)
+  CGF.Builder.CreateCondBr(CallBool, ThenBlock, ContBlock);
+  CGF.EmitBlock(ThenBlock);
+  BodyOpGen();
+  // Emit the rest of bblocks/branches
+  CGF.EmitBranch(ContBlock);
+  CGF.EmitBlock(ContBlock, true);
+}
+
+void CGOpenMPRuntime::EmitOMPMasterRegion(
+    CodeGenFunction &CGF, const std::function<void()> &MasterOpGen,
+    SourceLocation Loc) {
+  // if(__kmpc_master(ident_t *, gtid)) {
+  //   MasterOpGen();
+  //   __kmpc_end_master(ident_t *, gtid);
+  // }
+  // Prepare arguments and build a call to __kmpc_master
+  llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
+                         GetOpenMPThreadID(CGF, Loc)};
+  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_master);
+  auto *IsMaster = CGF.EmitRuntimeCall(RTLFn, Args);
+  EmitOMPIfStmt(CGF, IsMaster, [&]() -> void {
+    MasterOpGen();
+    // Build a call to __kmpc_end_master.
+    // OpenMP [1.2.2 OpenMP Language Terminology]
+    // For C/C++, an executable statement, possibly compound, with a single
+    // entry at the top and a single exit at the bottom, or an OpenMP construct.
+    // * Access to the structured block must not be the result of a branch.
+    // * The point of exit cannot be a branch out of the structured block.
+    // * The point of entry must not be a call to setjmp().
+    // * longjmp() and throw() must not violate the entry/exit criteria.
+    // * An expression statement, iteration statement, selection statement, or
+    // try block is considered to be a structured block if the corresponding
+    // compound statement obtained by enclosing it in { and } would be a
+    // structured block.
+    // It is analyzed in Sema, so we can just call __kmpc_end_master() on
+    // fallthrough rather than pushing a normal cleanup for it.
+    RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_end_master);
+    CGF.EmitRuntimeCall(RTLFn, Args);
+  });
 }
 
 void CGOpenMPRuntime::EmitOMPBarrierCall(CodeGenFunction &CGF,

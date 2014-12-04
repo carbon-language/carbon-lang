@@ -96,7 +96,11 @@ private:
     // kmp_int32 num_threads);
     OMPRTL__kmpc_push_num_threads,
     // Call to void __kmpc_flush(ident_t *loc, ...);
-    OMPRTL__kmpc_flush
+    OMPRTL__kmpc_flush,
+    // Call to kmp_int32 __kmpc_master(ident_t *, kmp_int32 global_tid);
+    OMPRTL__kmpc_master,
+    // Call to void __kmpc_end_master(ident_t *, kmp_int32 global_tid);
+    OMPRTL__kmpc_end_master,
   };
 
   CodeGenModule &CGM;
@@ -286,6 +290,13 @@ public:
                                      StringRef CriticalName,
                                      const std::function<void()> &CriticalOpGen,
                                      SourceLocation Loc);
+
+  /// \brief Emits a master region.
+  /// \param MasterOpGen Generator for the statement associated with the given
+  /// master region.
+  virtual void EmitOMPMasterRegion(CodeGenFunction &CGF,
+                                   const std::function<void()> &MasterOpGen,
+                                   SourceLocation Loc);
 
   /// \brief Emits a barrier for OpenMP threads.
   /// \param Flags Flags for the barrier.
