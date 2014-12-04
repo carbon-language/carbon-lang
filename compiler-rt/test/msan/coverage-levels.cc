@@ -1,13 +1,14 @@
 // Test various levels of coverage
 //
 // RUN: %clangxx_msan -DINIT_VAR=1 -O1 -fsanitize-coverage=1  %s -o %t
-// RUN: MSAN_OPTIONS=coverage=1:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1 --check-prefix=CHECK_NOWARN
+// RUN: mkdir -p %T/coverage-levels
+// RUN: MSAN_OPTIONS=coverage=1:verbosity=1:coverage_dir=%T/coverage-levels %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1 --check-prefix=CHECK_NOWARN
 // RUN: %clangxx_msan -O1 -fsanitize-coverage=1  %s -o %t
-// RUN: MSAN_OPTIONS=coverage=1:verbosity=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1 --check-prefix=CHECK_WARN
+// RUN: MSAN_OPTIONS=coverage=1:verbosity=1:coverage_dir=%T/coverage-levels not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1 --check-prefix=CHECK_WARN
 // RUN: %clangxx_msan -O1 -fsanitize-coverage=2  %s -o %t
-// RUN: MSAN_OPTIONS=coverage=1:verbosity=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK2 --check-prefix=CHECK_WARN
+// RUN: MSAN_OPTIONS=coverage=1:verbosity=1:coverage_dir=%T/coverage-levels not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK2 --check-prefix=CHECK_WARN
 // RUN: %clangxx_msan -O1 -fsanitize-coverage=3  %s -o %t
-// RUN: MSAN_OPTIONS=coverage=1:verbosity=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3 --check-prefix=CHECK_WARN
+// RUN: MSAN_OPTIONS=coverage=1:verbosity=1:coverage_dir=%T/coverage-levels not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3 --check-prefix=CHECK_WARN
 //
 volatile int sink;
 int main(int argc, char **argv) {
