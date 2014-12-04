@@ -26,20 +26,54 @@ using llvm::object::export_directory_table_entry;
 namespace lld {
 namespace pecoff {
 
+typedef PECOFFLinkingContext::ExportDesc ExportDesc;
+
+// dedupExports removes duplicate export entries. If two exports are
+// referring the same symbol, they are considered duplicates.
+// This could happen if the same symbol name is specified as an argument
+// to /export more than once, or an unmangled and mangled name of the
+// same symbol are given to /export. In the latter case, we choose
+// unmangled (shorter) name.
+static void dedupExports(PECOFFLinkingContext &ctx) {
+  std::vector<ExportDesc> &exports = ctx.getDllExports();
+  // Pass 1: find duplicate entries
+  std::set<const ExportDesc *> dup;
+  std::map<StringRef, ExportDesc *> map;
+  for (ExportDesc &exp : exports) {
+    if (!exp.externalName.empty())
+      continue;;
+    StringRef symbol = exp.getRealName();
+    auto it = map.find(symbol);
+    if (it == map.end()) {
+      map[symbol] = &exp;
+    } else if (symbol.size() < it->second->getRealName().size()) {
+      map[symbol] = &exp;
+      dup.insert(it->second);
+    } else {
+      dup.insert(&exp);
+    }
+  }
+  // Pass 2: remove duplicate entries
+  auto pred = [&](const ExportDesc &exp) {
+    return dup.count(&exp) == 1;
+  };
+  exports.erase(std::remove_if(exports.begin(), exports.end(), pred),
+                exports.end());
+}
+
 static void assignOrdinals(PECOFFLinkingContext &ctx) {
-  std::vector<PECOFFLinkingContext::ExportDesc> &exports = ctx.getDllExports();
+  std::vector<ExportDesc> &exports = ctx.getDllExports();
   int maxOrdinal = -1;
-  for (PECOFFLinkingContext::ExportDesc &desc : exports)
+  for (ExportDesc &desc : exports)
     maxOrdinal = std::max(maxOrdinal, desc.ordinal);
 
   std::sort(exports.begin(), exports.end(),
-            [](const PECOFFLinkingContext::ExportDesc &a,
-               const PECOFFLinkingContext::ExportDesc &b) {
+            [](const ExportDesc &a, const ExportDesc &b) {
     return a.getExternalName().compare(b.getExternalName()) < 0;
   });
 
   int nextOrdinal = (maxOrdinal == -1) ? 1 : (maxOrdinal + 1);
-  for (PECOFFLinkingContext::ExportDesc &desc : exports)
+  for (ExportDesc &desc : exports)
     if (desc.ordinal == -1)
       desc.ordinal = nextOrdinal++;
 }
@@ -51,7 +85,7 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
     definedAtoms[atom->name()] = atom;
 
   for (PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports()) {
-    auto it = definedAtoms.find(desc.name);
+    auto it = definedAtoms.find(desc.getRealName());
     if (it == definedAtoms.end()) {
       llvm::errs() << "Symbol <" << desc.name
                    << "> is exported but not defined.\n";
@@ -142,6 +176,7 @@ EdataPass::createOrdinalTable(const std::vector<TableEntry> &entries,
 }
 
 void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
+  dedupExports(_ctx);
   assignOrdinals(_ctx);
 
   std::vector<TableEntry> entries;

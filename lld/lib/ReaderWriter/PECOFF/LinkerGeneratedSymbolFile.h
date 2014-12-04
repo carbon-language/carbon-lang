@@ -261,29 +261,11 @@ public:
     if (!findDecoratedSymbol(_ctx, _syms.get(), sym.str(), replace))
       return nullptr;
 
-    // We found a decorated symbol. There may be another symbol that
-    // has the same decorated name. If that's the case, we remove the
-    // duplicate item.
-    std::vector<ExportDesc> &exp = _ctx->getDllExports();
-    auto isFound = std::find_if(
-        exp.begin(), exp.end(),
-        [&](ExportDesc &e) { return e.getExternalName().equals(replace); });
-    if (isFound != exp.end()) {
-      exp.erase(
-          std::remove_if(exp.begin(), exp.end(),
-                         [&](ExportDesc &e) { return e.name == sym; }),
-          exp.end());
-    } else {
-      for (ExportDesc &e : exp) {
-        if (e.name == sym) {
-          e.name = replace;
-          break;
-        }
-      }
-      if (_ctx->deadStrip())
-        _ctx->addDeadStripRoot(_ctx->allocate(replace));
-    }
-
+    for (ExportDesc &exp : _ctx->getDllExports())
+      if (exp.name == sym)
+        exp.mangledName = replace;
+    if (_ctx->deadStrip())
+      _ctx->addDeadStripRoot(_ctx->allocate(replace));
     return new (_alloc) impl::SymbolRenameFile(sym, replace);
   }
 

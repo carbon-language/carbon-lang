@@ -59,30 +59,31 @@ CHECK5-NEXT:        2   0x2010  exportfn7
 CHECK6:      Export Table:
 CHECK6:      DLL name: export.test.tmp6.dll
 CHECK6:       Ordinal      RVA  Name
-CHECK6-NEXT:        1   0x2010  ?exportfn8@@YAXXZ
+CHECK6-NEXT:        1   0x2010  exportfn3@256
+CHECK6-NEXT:        2   0x2010  exportfn8
 
-# RUN: lld -flavor link /out:%t6.dll /dll /entry:init \
+# RUN: lld -flavor link /out:%t7.dll /dll /entry:init \
 # RUN:   /export:exportfn7 /export:exportfn7@8 \
 # RUN:   /export:exportfn8 /export:exportfn8 /export:exportfn3 -- %t.obj
-# RUN: llvm-objdump -p %t6.dll | FileCheck -check-prefix=DUP %s
+# RUN: llvm-objdump -p %t7.dll | FileCheck -check-prefix=DUP %s
 
 DUP:      Export Table:
-DUP:      DLL name: export.test.tmp6.dll
+DUP:      DLL name: export.test.tmp7.dll
 DUP:       Ordinal      RVA  Name
-DUP-NEXT:        1   0x2010  ?exportfn8@@YAXXZ
-DUP-NEXT:        2   0x2010  exportfn3@256
-DUP-NEXT:        3   0x2010  exportfn7@8
+DUP-NEXT:        1   0x2010  exportfn3
+DUP-NEXT:        2   0x2010  exportfn7
+DUP-NEXT:        3   0x2010  exportfn8
 DUP-NOT:  ?exportfn8@@YAXXZ
 DUP-NOT:  exportfn3@256
 
 # RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1.dll /dll /entry:init \
+# RUN: lld -flavor link /out:%t8.dll /dll /entry:init \
 # RUN:   /export:f1=exportfn1 /export:f2@4=exportfn2,private -- %t.obj
-# RUN: llvm-objdump -p %t1.dll | FileCheck -check-prefix=EQUAL %s
+# RUN: llvm-objdump -p %t8.dll | FileCheck -check-prefix=EQUAL %s
 
 EQUAL:      Export Table:
-EQUAL:      DLL name: export.test.tmp1.dll
+EQUAL:      DLL name: export.test.tmp8.dll
 EQUAL:       Ordinal      RVA  Name
 EQUAL-NEXT:       1   0x2010  exportfn3@256
 EQUAL-NEXT:       2   0x2008  f1

@@ -65,14 +65,17 @@ public:
       return getExternalName().compare(other.getExternalName()) < 0;
     }
 
+    StringRef getRealName() const {
+      return mangledName.empty() ? name : mangledName;
+    }
+
     StringRef getExternalName() const {
-      if (!externalName.empty())
-        return externalName;
-      return name;
+      return externalName.empty() ? name : externalName;
     }
 
     std::string name;
     std::string externalName;
+    std::string mangledName;
     int ordinal;
     bool noname;
     bool isData;
