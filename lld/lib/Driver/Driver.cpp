@@ -62,6 +62,9 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
       if (std::error_code ec = ie->parse(context, stream)) {
         if (FileNode *fileNode = dyn_cast<FileNode>(ie.get()))
           stream << fileNode->errStr(ec) << "\n";
+        else if (dyn_cast<Group>(ie.get()))
+          // FIXME: We need a better diagnostics here
+          stream << "Cannot parse group input element\n";
         else
           llvm_unreachable("Unknown type of input element");
         fail = true;
@@ -80,24 +83,21 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   if (fail)
     return false;
 
+  std::unique_ptr<SimpleFileNode> fileNode(
+      new SimpleFileNode("Internal Files"));
+
   InputGraph::FileVectorT internalFiles;
   context.createInternalFiles(internalFiles);
-  for (auto i = internalFiles.rbegin(), e = internalFiles.rend(); i != e; ++i) {
-    context.getInputGraph().addInputElementFront(
-        llvm::make_unique<SimpleFileNode>("internal", std::move(*i)));
-  }
+
+  if (internalFiles.size())
+    fileNode->addFiles(std::move(internalFiles));
 
   // Give target a chance to add files.
   InputGraph::FileVectorT implicitFiles;
   context.createImplicitFiles(implicitFiles);
-  for (auto i = implicitFiles.rbegin(), e = implicitFiles.rend(); i != e; ++i) {
-    context.getInputGraph().addInputElementFront(
-        llvm::make_unique<SimpleFileNode>("implicit", std::move(*i)));
-  }
-
-  // Give target a chance to sort the input files.
-  // Mach-O uses this chance to move all object files before library files.
-  context.maybeSortInputFiles();
+  if (implicitFiles.size())
+    fileNode->addFiles(std::move(implicitFiles));
+  context.getInputGraph().addInputElementFront(std::move(fileNode));
 
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");

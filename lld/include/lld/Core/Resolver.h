@@ -28,8 +28,7 @@ class LinkingContext;
 class Resolver {
 public:
   Resolver(LinkingContext &context)
-      : _context(context), _symbolTable(context), _result(new MergedFile()),
-        _fileIndex(0) {}
+      : _context(context), _symbolTable(context), _result(new MergedFile()) {}
 
   // InputFiles::Handler methods
   void doDefinedAtom(const DefinedAtom&);
@@ -39,10 +38,10 @@ public:
 
   // Handle files, this adds atoms from the current file thats
   // being processed by the resolver
-  bool handleFile(const File &);
+  void handleFile(const File &);
 
   // Handle an archive library file.
-  bool handleArchiveFile(const File &);
+  void handleArchiveFile(const File &);
 
   // Handle a shared library file.
   void handleSharedLibrary(const File &);
@@ -54,9 +53,6 @@ public:
 
 private:
   typedef std::function<void(StringRef, bool)> UndefCallback;
-
-  bool undefinesAdded(int count);
-  ErrorOr<File &> nextFile(bool &inGroup);
 
   /// \brief Add section group/.gnu.linkonce if it does not exist previously.
   void maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom);
@@ -114,11 +110,6 @@ private:
   llvm::DenseSet<const Atom *>  _deadAtoms;
   std::unique_ptr<MergedFile>   _result;
   llvm::DenseMap<const Atom *, llvm::DenseSet<const Atom *>> _reverseRef;
-
-  // --start-group and --end-group
-  std::vector<File *> _files;
-  std::map<File *, bool> _newUndefinesAdded;
-  size_t _fileIndex;
 };
 
 } // namespace lld

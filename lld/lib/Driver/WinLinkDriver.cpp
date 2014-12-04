@@ -781,7 +781,7 @@ static bool hasLibrary(const PECOFFLinkingContext &ctx, FileNode *fileNode) {
   ErrorOr<StringRef> path = fileNode->getPath(ctx);
   if (!path)
     return false;
-  for (std::unique_ptr<InputElement> &p : ctx.getInputGraph().inputElements())
+  for (std::unique_ptr<InputElement> &p : ctx.getLibraryGroup()->elements())
     if (auto *f = dyn_cast<FileNode>(p.get()))
       if (*path == *f->getPath(ctx))
         return true;
@@ -1397,8 +1397,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     ctx.setEntryNode(entry.get());
     ctx.getInputGraph().addInputElement(std::move(entry));
 
-    // Add a group-end marker.
-    ctx.getInputGraph().addInputElement(llvm::make_unique<GroupEnd>(0));
+    // The container for all library files.
+    std::unique_ptr<Group> group(new PECOFFGroup(ctx));
+    ctx.setLibraryGroup(group.get());
+    ctx.getInputGraph().addInputElement(std::move(group));
   }
 
   // Add the library files to the library group.
@@ -1407,7 +1409,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       if (isReadingDirectiveSection)
         if (lib->parse(ctx, diag))
           return false;
-      ctx.addLibraryFile(std::move(lib));
+      ctx.getLibraryGroup()->addFile(std::move(lib));
     }
   }
 
