@@ -194,6 +194,7 @@ is_m68k=no
 mips_abi=unknown
 is_ppc=no
 is_ppc64=no
+is_ppc64le=no
 is_s390=no
 is_s390x=no
 is_sparc=no
@@ -266,11 +267,18 @@ changequote([,])dnl
 #ifdef _ARCH_PPC64
 #error 64-bit
 #endif],
-[is_ppc=yes], [is_ppc64=yes])
+[is_ppc=yes],
+    [AC_COMPILE_IFELSE([
+#if defined(_BIG_ENDIAN) || defined(__BIG_ENDIAN__)
+#error 64be
+#endif],
+[is_ppc64le=yes],[is_ppc64=yes])])
     if test "$is_ppc" = "yes"; then
       GOARCH=ppc
-    else
+    elif test "$is_ppc64" = "yes"; then
       GOARCH=ppc64
+    else
+      GOARCH=ppc64le
     fi
     ;;
   s390*-*-*)
@@ -310,6 +318,7 @@ AM_CONDITIONAL(LIBGO_IS_MIPSN64, test $mips_abi = n64)
 AM_CONDITIONAL(LIBGO_IS_MIPSO64, test $mips_abi = o64)
 AM_CONDITIONAL(LIBGO_IS_PPC, test $is_ppc = yes)
 AM_CONDITIONAL(LIBGO_IS_PPC64, test $is_ppc64 = yes)
+AM_CONDITIONAL(LIBGO_IS_PPC64LE, test $is_ppc64le = yes)
 AM_CONDITIONAL(LIBGO_IS_S390, test $is_s390 = yes)
 AM_CONDITIONAL(LIBGO_IS_S390X, test $is_s390x = yes)
 AM_CONDITIONAL(LIBGO_IS_SPARC, test $is_sparc = yes)

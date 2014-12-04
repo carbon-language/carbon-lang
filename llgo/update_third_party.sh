@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 gofrontendrepo=https://code.google.com/p/gofrontend
-gofrontendrev=82f97044669e
+gofrontendrev=2a85649c19e1
 
 gccrepo=svn://gcc.gnu.org/svn/gcc/trunk
 gccrev=216268
@@ -48,7 +48,6 @@ mkdir -p third_party/gofrontend/include third_party/gofrontend/libgcc
 cp include/dwarf2.h third_party/gofrontend/include/
 cp include/filenames.h third_party/gofrontend/include/
 cp include/unwind-pe.h third_party/gofrontend/libgcc/
-cp mvifdiff.sh third_party/gofrontend/move-if-change
 
 cp ../../autoconf/config.guess third_party/gofrontend/
 cp ../../autoconf/config.sub third_party/gofrontend/

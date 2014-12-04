@@ -637,6 +637,8 @@ LIBGO_IS_S390X_FALSE
 LIBGO_IS_S390X_TRUE
 LIBGO_IS_S390_FALSE
 LIBGO_IS_S390_TRUE
+LIBGO_IS_PPC64LE_FALSE
+LIBGO_IS_PPC64LE_TRUE
 LIBGO_IS_PPC64_FALSE
 LIBGO_IS_PPC64_TRUE
 LIBGO_IS_PPC_FALSE
@@ -11119,7 +11121,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11122 "configure"
+#line 11124 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11225,7 +11227,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11228 "configure"
+#line 11230 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13622,6 +13624,7 @@ is_m68k=no
 mips_abi=unknown
 is_ppc=no
 is_ppc64=no
+is_ppc64le=no
 is_s390=no
 is_s390x=no
 is_sparc=no
@@ -13734,13 +13737,27 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   is_ppc=yes
 else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if defined(_BIG_ENDIAN) || defined(__BIG_ENDIAN__)
+#error 64be
+#endif
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  is_ppc64le=yes
+else
   is_ppc64=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     if test "$is_ppc" = "yes"; then
       GOARCH=ppc
-    else
+    elif test "$is_ppc64" = "yes"; then
       GOARCH=ppc64
+    else
+      GOARCH=ppc64le
     fi
     ;;
   s390*-*-*)
@@ -13878,6 +13895,14 @@ fi
 else
   LIBGO_IS_PPC64_TRUE='#'
   LIBGO_IS_PPC64_FALSE=
+fi
+
+ if test $is_ppc64le = yes; then
+  LIBGO_IS_PPC64LE_TRUE=
+  LIBGO_IS_PPC64LE_FALSE='#'
+else
+  LIBGO_IS_PPC64LE_TRUE='#'
+  LIBGO_IS_PPC64LE_FALSE=
 fi
 
  if test $is_s390 = yes; then
@@ -15689,6 +15714,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBGO_IS_PPC64_TRUE}" && test -z "${LIBGO_IS_PPC64_FALSE}"; then
   as_fn_error "conditional \"LIBGO_IS_PPC64\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LIBGO_IS_PPC64LE_TRUE}" && test -z "${LIBGO_IS_PPC64LE_FALSE}"; then
+  as_fn_error "conditional \"LIBGO_IS_PPC64LE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBGO_IS_S390_TRUE}" && test -z "${LIBGO_IS_S390_FALSE}"; then

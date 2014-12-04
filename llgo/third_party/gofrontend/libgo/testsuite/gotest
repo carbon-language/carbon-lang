@@ -379,7 +379,7 @@ localname() {
 {
 	text="T"
 	case "$GOARCH" in
-	ppc64) text="[TD]" ;;
+	ppc64*) text="[TD]" ;;
 	esac
 
 	symtogo='sed -e s/_test/XXXtest/ -e s/.*_\([^_]*\.\)/\1/ -e s/XXXtest/_test/'
