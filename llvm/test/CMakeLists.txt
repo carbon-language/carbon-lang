@@ -39,6 +39,7 @@ set(LLVM_TEST_DEPENDS
           llvm-nm
           llvm-objdump
           llvm-profdata
+          llvm-ranlib
           llvm-readobj
           llvm-rtdyld
           llvm-size

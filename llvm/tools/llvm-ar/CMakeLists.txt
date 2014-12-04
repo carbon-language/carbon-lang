@@ -23,5 +23,5 @@ add_custom_command(OUTPUT ${llvm_ranlib}
                    COMMAND ${CMAKE_COMMAND} -E ${LLVM_LINK_OR_COPY} "${llvm_ar_binary}" "${llvm_ranlib}"
                    DEPENDS llvm-ar)
 
-add_custom_target(llvm_ranlib_build ALL DEPENDS ${llvm_ranlib})
+add_custom_target(llvm-ranlib ALL DEPENDS ${llvm_ranlib})
 install(FILES "${llvm_ranlib}" DESTINATION bin)
