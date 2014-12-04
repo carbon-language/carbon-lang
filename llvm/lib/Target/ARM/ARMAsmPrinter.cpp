@@ -120,6 +120,23 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit the rest of the function body.
   EmitFunctionBody();
 
+  // If we need V4T thumb mode Register Indirect Jump pads, emit them.
+  // These are created per function, rather than per TU, since it's
+  // relatively easy to exceed the thumb branch range within a TU.
+  if (! ThumbIndirectPads.empty()) {
+    OutStreamer.EmitAssemblerFlag(MCAF_Code16);
+    EmitAlignment(1);
+    for (unsigned i = 0, e = ThumbIndirectPads.size(); i < e; i++) {
+      OutStreamer.EmitLabel(ThumbIndirectPads[i].second);
+      EmitToStreamer(OutStreamer, MCInstBuilder(ARM::tBX)
+        .addReg(ThumbIndirectPads[i].first)
+        // Add predicate operands.
+        .addImm(ARMCC::AL)
+        .addReg(0));
+    }
+    ThumbIndirectPads.clear();
+  }
+
   // We didn't modify anything.
   return false;
 }
@@ -1282,18 +1299,34 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   case ARM::tBX_CALL: {
-    EmitToStreamer(OutStreamer, MCInstBuilder(ARM::tMOVr)
-      .addReg(ARM::LR)
-      .addReg(ARM::PC)
-      // Add predicate operands.
-      .addImm(ARMCC::AL)
-      .addReg(0));
+    if (Subtarget->hasV5TOps())
+      llvm_unreachable("Expected BLX to be selected for v5t+");
 
-    EmitToStreamer(OutStreamer, MCInstBuilder(ARM::tBX)
-      .addReg(MI->getOperand(0).getReg())
-      // Add predicate operands.
-      .addImm(ARMCC::AL)
-      .addReg(0));
+    // On ARM v4t, when doing a call from thumb mode, we need to ensure
+    // that the saved lr has its LSB set correctly (the arch doesn't
+    // have blx).
+    // So here we generate a bl to a small jump pad that does bx rN.
+    // The jump pads are emitted after the function body.
+
+    unsigned TReg = MI->getOperand(0).getReg();
+    MCSymbol *TRegSym = nullptr;
+    for (unsigned i = 0, e = ThumbIndirectPads.size(); i < e; i++) {
+      if (ThumbIndirectPads[i].first == TReg) {
+        TRegSym = ThumbIndirectPads[i].second;
+        break;
+      }
+    }
+
+    if (!TRegSym) {
+      TRegSym = OutContext.CreateTempSymbol();
+      ThumbIndirectPads.push_back(std::make_pair(TReg, TRegSym));
+    }
+
+    // Create a link-saving branch to the Reg Indirect Jump Pad.
+    EmitToStreamer(OutStreamer, MCInstBuilder(ARM::tBL)
+        // Predicate comes first here.
+        .addImm(ARMCC::AL).addReg(0)
+        .addExpr(MCSymbolRefExpr::Create(TRegSym, OutContext)));
     return;
   }
   case ARM::BMOVPCRX_CALL: {

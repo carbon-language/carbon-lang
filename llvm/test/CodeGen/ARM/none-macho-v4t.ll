@@ -11,11 +11,15 @@ define void @test_call() {
 ; CHECK: [[PC_LABEL:LPC[0-9]+_[0-9]+]]:
 ; CHECK-NEXT: add r[[CALLEE_STUB]], pc
 ; CHECK: ldr [[CALLEE:r[0-9]+]], [r[[CALLEE_STUB]]]
-; CHECK: mov lr, pc
-; CHECK: bx [[CALLEE]]
+; CHECK-NOT: mov lr, pc
+; CHECK: bl [[INDIRECT_PAD:Ltmp[0-9]+]]
 
 ; CHECK: [[LITPOOL]]:
 ; CHECK-NEXT: .long L_callee$non_lazy_ptr-([[PC_LABEL]]+4)
+
+; CHECK: [[INDIRECT_PAD]]:
+; CHECK: bx [[CALLEE]]
+
   call void @callee()
   ret void
 }

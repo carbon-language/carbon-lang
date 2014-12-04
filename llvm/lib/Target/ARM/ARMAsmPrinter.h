@@ -20,6 +20,7 @@ class ARMFunctionInfo;
 class MCOperand;
 class MachineConstantPool;
 class MachineOperand;
+class MCSymbol;
 
 namespace ARM {
   enum DW_ISA {
@@ -45,6 +46,11 @@ class LLVM_LIBRARY_VISIBILITY ARMAsmPrinter : public AsmPrinter {
   /// InConstantPool - Maintain state when emitting a sequence of constant
   /// pool entries so we can properly mark them as data regions.
   bool InConstantPool;
+
+  /// ThumbIndirectPads - These maintain a per-function list of jump pad
+  /// labels used for ARMv4t thumb code to make register indirect calls.
+  SmallVector<std::pair<unsigned, MCSymbol*>, 4> ThumbIndirectPads;
+
 public:
   explicit ARMAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
     : AsmPrinter(TM, Streamer), AFI(nullptr), MCP(nullptr),
