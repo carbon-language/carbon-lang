@@ -14477,17 +14477,6 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
                               false, false, false, 16);
   SDValue SignBit = DAG.getNode(X86ISD::FAND, dl, SrcVT, Op1, Mask1);
 
-  // Shift sign bit right or left if the two operands have different types.
-  if (SrcVT.bitsGT(VT)) {
-    // Op0 is MVT::f32, Op1 is MVT::f64.
-    SignBit = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2f64, SignBit);
-    SignBit = DAG.getNode(X86ISD::FSRL, dl, MVT::v2f64, SignBit,
-                          DAG.getConstant(32, MVT::i32));
-    SignBit = DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, SignBit);
-    SignBit = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f32, SignBit,
-                          DAG.getIntPtrConstant(0));
-  }
-
   // Clear first operand sign bit.
   CV.clear();
   if (VT == MVT::f64) {
