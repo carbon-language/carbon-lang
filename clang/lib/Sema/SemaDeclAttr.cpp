@@ -3940,6 +3940,32 @@ static void handleInterruptAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     handleARMInterruptAttr(S, D, Attr);
 }
 
+static void handleAMDGPUNumVGPRAttr(Sema &S, Decl *D,
+                                    const AttributeList &Attr) {
+  uint32_t NumRegs;
+  Expr *NumRegsExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
+  if (!checkUInt32Argument(S, Attr, NumRegsExpr, NumRegs))
+    return;
+
+  D->addAttr(::new (S.Context)
+             AMDGPUNumVGPRAttr(Attr.getLoc(), S.Context,
+                               NumRegs,
+                               Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleAMDGPUNumSGPRAttr(Sema &S, Decl *D,
+                                    const AttributeList &Attr) {
+  uint32_t NumRegs;
+  Expr *NumRegsExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
+  if (!checkUInt32Argument(S, Attr, NumRegsExpr, NumRegs))
+    return;
+
+  D->addAttr(::new (S.Context)
+             AMDGPUNumSGPRAttr(Attr.getLoc(), S.Context,
+                               NumRegs,
+                               Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleX86ForceAlignArgPointerAttr(Sema &S, Decl *D,
                                               const AttributeList& Attr) {
   // If we try to apply it to a function pointer, don't warn, but don't
@@ -4246,6 +4272,12 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_NoMips16:
     handleSimpleAttribute<NoMips16Attr>(S, D, Attr);
+    break;
+  case AttributeList::AT_AMDGPUNumVGPR:
+    handleAMDGPUNumVGPRAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_AMDGPUNumSGPR:
+    handleAMDGPUNumSGPRAttr(S, D, Attr);
     break;
   case AttributeList::AT_IBAction:
     handleSimpleAttribute<IBActionAttr>(S, D, Attr);

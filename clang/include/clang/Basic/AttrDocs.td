@@ -673,6 +673,65 @@ The semantics are as follows:
   }];
 }
 
+def DocCatAMDGPURegisterAttributes :
+  DocumentationCategory<"AMD GPU Register Attributes"> {
+  let Content = [{
+Clang supports attributes for controlling register usage on AMD GPU
+targets. These attributes may be attached to a kernel function
+definition and is an optimization hint to the backend for the maximum
+number of registers to use. This is useful in cases where register
+limited occupancy is known to be an important factor for the
+performance for the kernel.
+
+The semantics are as follows:
+
+- The backend will attempt to limit the number of used registers to
+  the specified value, but the exact number used is not
+  guaranteed. The number used may be rounded up to satisfy the
+  allocation requirements or ABI constraints of the subtarget. For
+  example, on Southern Islands VGPRs may only be allocated in
+  increments of 4, so requesting a limit of 39 VGPRs will really
+  attempt to use up to 40. Requesting more registers than the
+  subtarget supports will truncate to the maximum allowed. The backend
+  may also use fewer registers than requested whenever possible.
+
+- 0 implies the default no limit on register usage.
+
+- Ignored on older VLIW subtargets which did not have separate scalar
+and vector registers, R600 through Northern Islands.
+}];
+}
+
+
+def AMDGPUNumVGPRDocs : Documentation {
+  let Category = DocCatAMDGPURegisterAttributes;
+  let Content = [{
+Clang supports the
+``__attribute__((amdgpu_num_vgpr(<num_registers>)))`` attribute on AMD
+Southern Islands GPUs and later for controlling the number of vector
+registers. A typical value would be between 4 and 256 in increments
+of 4.
+}];
+}
+
+def AMDGPUNumSGPRDocs : Documentation {
+  let Category = DocCatAMDGPURegisterAttributes;
+  let Content = [{
+
+Clang supports the
+``__attribute__((amdgpu_num_sgpr(<num_registers>)))`` attribute on AMD
+Southern Islands GPUs and later for controlling the number of scalar
+registers. A typical value would be between 8 and 104 in increments of
+8.
+
+Due to common instruction constraints, an additional 2-4 SGPRs are
+typically required for internal use depending on features used. This
+value is a hint for the total number of SGPRs to use, and not the
+number of user SGPRs, so no special consideration needs to be given
+for these.
+}];
+}
+
 def DocCatCallingConvs : DocumentationCategory<"Calling Conventions"> {
   let Content = [{
 Clang supports several different calling conventions, depending on the target

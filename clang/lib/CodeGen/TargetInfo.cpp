@@ -20,6 +20,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Type.h"
@@ -6082,6 +6083,45 @@ llvm::Value *HexagonABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return AddrTyped;
 }
 
+//===----------------------------------------------------------------------===//
+// AMDGPU ABI Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class AMDGPUTargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  AMDGPUTargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new DefaultABIInfo(CGT)) {}
+  void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &M) const override;
+};
+
+}
+
+void AMDGPUTargetCodeGenInfo::SetTargetAttributes(
+  const Decl *D,
+  llvm::GlobalValue *GV,
+  CodeGen::CodeGenModule &M) const {
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD)
+    return;
+
+  if (const auto Attr = FD->getAttr<AMDGPUNumVGPRAttr>()) {
+    llvm::Function *F = cast<llvm::Function>(GV);
+    uint32_t NumVGPR = Attr->getNumVGPR();
+    if (NumVGPR != 0)
+      F->addFnAttr("amdgpu_num_vgpr", llvm::utostr(NumVGPR));
+  }
+
+  if (const auto Attr = FD->getAttr<AMDGPUNumSGPRAttr>()) {
+    llvm::Function *F = cast<llvm::Function>(GV);
+    unsigned NumSGPR = Attr->getNumSGPR();
+    if (NumSGPR != 0)
+      F->addFnAttr("amdgpu_num_sgpr", llvm::utostr(NumSGPR));
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 // SPARC v9 ABI Implementation.
@@ -7143,6 +7183,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   }
   case llvm::Triple::hexagon:
     return *(TheTargetCodeGenInfo = new HexagonTargetCodeGenInfo(Types));
+  case llvm::Triple::r600:
+    return *(TheTargetCodeGenInfo = new AMDGPUTargetCodeGenInfo(Types));
   case llvm::Triple::sparcv9:
     return *(TheTargetCodeGenInfo = new SparcV9TargetCodeGenInfo(Types));
   case llvm::Triple::xcore:
