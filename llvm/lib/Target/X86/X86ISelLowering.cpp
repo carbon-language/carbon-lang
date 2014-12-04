@@ -3673,7 +3673,7 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
   // For kernel code model we know that all object resist in the negative half
   // of 32bits address space. We may not accept negative offsets, since they may
   // be just off and we may accept pretty large positive ones.
-  if (M == CodeModel::Kernel && Offset > 0)
+  if (M == CodeModel::Kernel && Offset >= 0)
     return true;
 
   return false;
