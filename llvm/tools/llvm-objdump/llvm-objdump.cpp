@@ -109,7 +109,7 @@ llvm::MCPU("mcpu",
      cl::init(""));
 
 cl::opt<std::string>
-llvm::ArchName("arch", cl::desc("Target arch to disassemble for, "
+llvm::ArchName("arch-name", cl::desc("Target arch to disassemble for, "
                                 "see -version for available targets"));
 
 static cl::opt<bool>

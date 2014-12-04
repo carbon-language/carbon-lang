@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=thumb-unknown-unknown -filetype=obj -o %t.o
-; RUN: llvm-objdump -disassemble -arch=thumb %t.o | FileCheck %s
+; RUN: llvm-objdump -disassemble -arch-name=thumb %t.o | FileCheck %s
 
 define i32 @test(i32 %a) {
         %tmp1neg = sub i32 0, %a
