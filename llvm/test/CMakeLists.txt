@@ -37,11 +37,11 @@ set(LLVM_TEST_DEPENDS
           llvm-mc
           llvm-mcmarkup
           llvm-nm
-          llvm-size
           llvm-objdump
           llvm-profdata
           llvm-readobj
           llvm-rtdyld
+          llvm-size
           llvm-symbolizer
           llvm-tblgen
           llvm-vtabledump
