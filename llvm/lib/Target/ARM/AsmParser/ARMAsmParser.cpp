@@ -174,6 +174,11 @@ class ARMAsmParser : public MCTargetAsmParser {
       ITState.CurPosition = ~0U; // Done with the IT block after this.
   }
 
+  bool lastInITBlock() {
+    unsigned TZ = countTrailingZeros(ITState.Mask);
+    return (ITState.CurPosition == 4 - TZ);
+  }
+
   void Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges = None) {
     return getParser().Note(L, Msg, Ranges);
   }
@@ -322,6 +327,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool processInstruction(MCInst &Inst, const OperandVector &Ops, MCStreamer &Out);
   bool shouldOmitCCOutOperand(StringRef Mnemonic, OperandVector &Operands);
   bool shouldOmitPredicateOperand(StringRef Mnemonic, OperandVector &Operands);
+  bool validateRegListOperands(MCInst &Inst, const OperandVector &Operands,
+                               unsigned OpNo);
 
 public:
   enum ARMMatchResultTy {
@@ -5977,13 +5984,138 @@ static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
   return false;
 }
 
-// Check if the specified regisgter is in the register list of the inst,
+// Check if there are any special registers in the register list of the inst,
 // starting at the indicated operand number.
-static bool listContainsReg(MCInst &Inst, unsigned OpNo, unsigned Reg) {
+static void findSpecialRegsInList(MCInst &Inst, unsigned OpNo, bool &SP,
+                                  bool &PC, bool &LR, bool &BaseReg) {
+  SP = PC = LR = BaseReg = false;
+  unsigned Rn = Inst.getOperand(0).getReg();
   for (unsigned i = OpNo; i < Inst.getNumOperands(); ++i) {
     unsigned OpReg = Inst.getOperand(i).getReg();
-    if (OpReg == Reg)
-      return true;
+    if (OpReg == ARM::SP)
+      SP = true;
+    else if (OpReg == ARM::PC)
+      PC = true;
+    else if (OpReg == ARM::LR)
+      LR = true;
+    if (OpReg == Rn)
+      BaseReg = true;
+  }
+
+  return;
+}
+
+bool ARMAsmParser::validateRegListOperands(MCInst &Inst,
+                                           const OperandVector &Operands,
+                                           unsigned OpNo) {
+  bool SP, PC, LR, BaseReg, LowReg, listContainsBase = false;
+  const unsigned Opcode = Inst.getOpcode();
+  unsigned Rn = Inst.getOperand(0).getReg();
+  findSpecialRegsInList(Inst, OpNo, SP, PC, LR, BaseReg);
+  LowReg = checkLowRegisterList(Inst, OpNo, Rn, 0, listContainsBase);
+
+  switch (Opcode) {
+  case ARM::t2LDMIA_UPD:
+  case ARM::t2LDMDB_UPD: {
+    if (BaseReg)
+      return Error(Operands.back()->getStartLoc(),
+                   "writeback register not allowed in register list");
+  }
+  case ARM::tLDMIA: {
+    // If we're parsing Thumb2, the .w variant is available and handles
+    // most cases that are normally illegal for a Thumb1 LDM instruction.
+    // We'll make the transformation in processInstruction() if necessary.
+    //
+    // Thumb LDM instructions are writeback iff the base register is not
+    // in the register list.
+    bool HasWritebackToken =
+        (static_cast<ARMOperand &>(*Operands[3]).isToken() &&
+         static_cast<ARMOperand &>(*Operands[3]).getToken() == "!");
+
+    if (LowReg && !isThumbTwo())
+      return Error(Operands[3 + HasWritebackToken]->getStartLoc(),
+                   "registers must be in range r0-r7");
+    // If we should have writeback, then there should be a '!' token.
+    if (!BaseReg && !HasWritebackToken && !isThumbTwo())
+      return Error(Operands[2]->getStartLoc(),
+                   "writeback operator '!' expected");
+
+    // If we should not have writeback, there must not be a '!'. This is
+    // true even for the 32-bit wide encodings.
+    if (BaseReg && HasWritebackToken)
+      return Error(Operands[3]->getStartLoc(),
+                   "writeback operator '!' not allowed when base register "
+                   "in register list");
+  }
+  case ARM::tPOP: {
+    if (LowReg && !PC && !isThumbTwo())
+      return Error(Operands[2]->getStartLoc(),
+                   "registers must be in range r0-r7 or pc");
+  }
+  case ARM::t2LDMIA:
+  case ARM::t2LDMDB: {
+    if (SP)
+      return Error(Operands[OpNo]->getStartLoc(),
+                   "SP not allowed in register list");
+    if (PC && LR)
+      return Error(
+          Operands[OpNo]->getStartLoc(),
+          "LR not allowed in the list, when PC is in the register list");
+    if (PC && inITBlock() && !lastInITBlock())
+      return Error(Operands[OpNo]->getStartLoc(),
+                   "Instruction should be outside an IT block or last in IT "
+                   "block, when PC is in the register list");
+    break;
+  }
+  case ARM::t2STMIA_UPD:
+  case ARM::t2STMDB_UPD: {
+    if (BaseReg)
+      return Error(Operands.back()->getStartLoc(),
+                   "writeback register not allowed in register list");
+  }
+  case ARM::tSTMIA_UPD: {
+    if (LowReg && !isThumbTwo())
+      return Error(Operands[4]->getStartLoc(),
+                   "registers must be in range r0-r7");
+
+    // This would be converted to a 32-bit stm, but that's not valid if the
+    // writeback register is in the list.
+    if (LowReg && BaseReg)
+      return Error(Operands[4]->getStartLoc(),
+                   "writeback operator '!' not allowed when base register "
+                   "in register list");
+  }
+  case ARM::tPUSH: {
+    if (LowReg && !LR && !isThumbTwo())
+      return Error(Operands[2]->getStartLoc(),
+                   "registers must be in range r0-r7 or lr");
+  }
+  case ARM::t2STMIA:
+  case ARM::t2STMDB: {
+    if (SP || PC)
+      return Error(Operands[OpNo]->getStartLoc(),
+                   "SP, PC not allowed in register list");
+    break;
+  }
+  case ARM::LDMIA_UPD:
+  case ARM::LDMDB_UPD:
+  case ARM::LDMIB_UPD:
+  case ARM::LDMDA_UPD: {
+    if (BaseReg)
+      return Error(Operands.back()->getStartLoc(),
+                   "writeback register not allowed in register list");
+    break;
+  }
+  case ARM::sysLDMIA_UPD:
+  case ARM::sysLDMDA_UPD:
+  case ARM::sysLDMDB_UPD:
+  case ARM::sysLDMIB_UPD: {
+    if (!PC)
+      return Error(Operands[4]->getStartLoc(),
+                   "writeback register only allowed on system LDM "
+                   "if PC in register-list");
+    break;
+  }
   }
   return false;
 }
@@ -6155,37 +6287,6 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
                    "bitfield width must be in range [1,32-lsb]");
     return false;
   }
-  // Notionally handles ARM::tLDMIA_UPD too.
-  case ARM::tLDMIA: {
-    // If we're parsing Thumb2, the .w variant is available and handles
-    // most cases that are normally illegal for a Thumb1 LDM instruction.
-    // We'll make the transformation in processInstruction() if necessary.
-    //
-    // Thumb LDM instructions are writeback iff the base register is not
-    // in the register list.
-    unsigned Rn = Inst.getOperand(0).getReg();
-    bool HasWritebackToken =
-        (static_cast<ARMOperand &>(*Operands[3]).isToken() &&
-         static_cast<ARMOperand &>(*Operands[3]).getToken() == "!");
-    bool ListContainsBase;
-    if (checkLowRegisterList(Inst, 3, Rn, 0, ListContainsBase) && !isThumbTwo())
-      return Error(Operands[3 + HasWritebackToken]->getStartLoc(),
-                   "registers must be in range r0-r7");
-    // If we should have writeback, then there should be a '!' token.
-    if (!ListContainsBase && !HasWritebackToken && !isThumbTwo())
-      return Error(Operands[2]->getStartLoc(),
-                   "writeback operator '!' expected");
-    // If we should not have writeback, there must not be a '!'. This is
-    // true even for the 32-bit wide encodings.
-    if (ListContainsBase && HasWritebackToken)
-      return Error(Operands[3]->getStartLoc(),
-                   "writeback operator '!' not allowed when base register "
-                   "in register list");
-    if (listContainsReg(Inst, 3 + HasWritebackToken, ARM::SP))
-      return Error(Operands[3 + HasWritebackToken]->getStartLoc(),
-                   "SP not allowed in register list");
-    break;
-  }
   case ARM::LDMIA_UPD:
   case ARM::LDMDB_UPD:
   case ARM::LDMIB_UPD:
@@ -6194,41 +6295,22 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
     // UNPREDICTABLE on v7 upwards. Goodness knows what they did before.
     if (!hasV7Ops())
       break;
-    if (listContainsReg(Inst, 3, Inst.getOperand(0).getReg()))
-      return Error(Operands.back()->getStartLoc(),
-                   "writeback register not allowed in register list");
-    break;
+  case ARM::tLDMIA: // Notionally handles ARM::tLDMIA_UPD too.
   case ARM::t2LDMIA:
   case ARM::t2LDMDB:
   case ARM::t2STMIA:
-  case ARM::t2STMDB: {
-    if (listContainsReg(Inst, 3, ARM::SP))
-      return Error(Operands.back()->getStartLoc(),
-                   "SP not allowed in register list");
-    break;
-  }
+  case ARM::t2STMDB:
   case ARM::t2LDMIA_UPD:
   case ARM::t2LDMDB_UPD:
   case ARM::t2STMIA_UPD:
-  case ARM::t2STMDB_UPD: {
-    if (listContainsReg(Inst, 3, Inst.getOperand(0).getReg()))
-      return Error(Operands.back()->getStartLoc(),
-                   "writeback register not allowed in register list");
-
-    if (listContainsReg(Inst, 4, ARM::SP))
-      return Error(Operands.back()->getStartLoc(),
-                   "SP not allowed in register list");
-    break;
-  }
+  case ARM::t2STMDB_UPD:
   case ARM::sysLDMIA_UPD:
   case ARM::sysLDMDA_UPD:
   case ARM::sysLDMDB_UPD:
-  case ARM::sysLDMIB_UPD:
-    if (!listContainsReg(Inst, 3, ARM::PC))
-      return Error(Operands[4]->getStartLoc(),
-                   "writeback register only allowed on system LDM "
-                   "if PC in register-list");
+  case ARM::sysLDMIB_UPD: {
+    validateRegListOperands(Inst, Operands, 3);
     break;
+  }
   case ARM::sysSTMIA_UPD:
   case ARM::sysSTMDA_UPD:
   case ARM::sysSTMDB_UPD:
@@ -6256,39 +6338,13 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
   // Like for ldm/stm, push and pop have hi-reg handling version in Thumb2,
   // so only issue a diagnostic for thumb1. The instructions will be
   // switched to the t2 encodings in processInstruction() if necessary.
-  case ARM::tPOP: {
-    bool ListContainsBase;
-    if (checkLowRegisterList(Inst, 2, 0, ARM::PC, ListContainsBase) &&
-        !isThumbTwo())
-      return Error(Operands[2]->getStartLoc(),
-                   "registers must be in range r0-r7 or pc");
-    break;
-  }
+  case ARM::tPOP:
   case ARM::tPUSH: {
-    bool ListContainsBase;
-    if (checkLowRegisterList(Inst, 2, 0, ARM::LR, ListContainsBase) &&
-        !isThumbTwo())
-      return Error(Operands[2]->getStartLoc(),
-                   "registers must be in range r0-r7 or lr");
+    validateRegListOperands(Inst, Operands, 2);
     break;
   }
   case ARM::tSTMIA_UPD: {
-    bool ListContainsBase, InvalidLowList;
-    InvalidLowList = checkLowRegisterList(Inst, 4, Inst.getOperand(0).getReg(),
-                                          0, ListContainsBase);
-    if (InvalidLowList && !isThumbTwo())
-      return Error(Operands[4]->getStartLoc(),
-                   "registers must be in range r0-r7");
-
-    // This would be converted to a 32-bit stm, but that's not valid if the
-    // writeback register is in the list.
-    if (InvalidLowList && ListContainsBase)
-      return Error(Operands[4]->getStartLoc(),
-                   "writeback operator '!' not allowed when base register "
-                   "in register list");
-    if (listContainsReg(Inst, 4, ARM::SP) && !inITBlock())
-      return Error(Operands.back()->getStartLoc(),
-                   "SP not allowed in register list");
+    validateRegListOperands(Inst, Operands, 4);
     break;
   }
   case ARM::tADDrSP: {

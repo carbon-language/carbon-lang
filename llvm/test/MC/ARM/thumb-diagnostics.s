@@ -68,6 +68,7 @@ error: invalid operand for instruction
         ldmfd r2!, {r1, r3-r6, sp}
         ldmdb r1, {r2, r3, sp}
         ldmdb r1!, {r2, r3, sp} 
+        ldm r2, {r5, lr, pc}
 @ CHECK-ERRORS: error: registers must be in range r0-r7
 @ CHECK-ERRORS:         ldm r2!, {r5, r8}
 @ CHECK-ERRORS:                  ^
@@ -104,16 +105,31 @@ error: invalid operand for instruction
 @ CHECK-ERRORS-V7M: error: SP not allowed in register list
 @ CHECK-ERRORS-V7M:         ldmdb r1!, {r2, r3, sp}
 @ CHECK-ERRORS-V7M:                    ^
+@ CHECK-ERRORS-V7M: error: LR not allowed in the list, when PC is in the register list
+@ CHECK-ERRORS-V7M:         ldm r2, {r5, lr, pc}
+@ CHECK-ERRORS-V7M:                 ^
 
 @ Invalid writeback and register lists for PUSH/POP
         pop {r1, r2, r10}
+        pop {r1, r2, lr, pc}
         push {r8, r9}
+        push {r8, r9, sp}
+        push {r8, r9, pc}
 @ CHECK-ERRORS: error: registers must be in range r0-r7 or pc
 @ CHECK-ERRORS:         pop {r1, r2, r10}
 @ CHECK-ERRORS:             ^
+@ CHECK-ERRORS-V7M: error: LR not allowed in the list, when PC is in the register list
+@ CHECK-ERRORS-V7M:         pop {r1, r2, lr, pc}
+@ CHECK-ERRORS-V7M:             ^
 @ CHECK-ERRORS: error: registers must be in range r0-r7 or lr
 @ CHECK-ERRORS:         push {r8, r9}
 @ CHECK-ERRORS:              ^
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
+@ CHECK-ERRORS-V7M:          push {r8, r9, sp}
+@ CHECK-ERRORS-V7M:               ^
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
+@ CHECK-ERRORS-V7M:          push {r8, r9, pc}
+@ CHECK-ERRORS-V7M:               ^
 
 
 @ Invalid writeback and register lists for STM
@@ -125,6 +141,8 @@ error: invalid operand for instruction
         stmia r4!, {r0-r3, sp}
         stmdb r1, {r2, r3, sp}
         stmdb r1!, {r2, r3, sp}
+        stmia r4, {r2, sp, pc}
+        stmdb r1!, {r2, r3, pc} 
 @ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         stm r1, {r2, r6}
 @ CHECK-ERRORS:         ^
@@ -137,17 +155,23 @@ error: invalid operand for instruction
 @ CHECK-ERRORS-V8: error: writeback register not allowed in register list
 @ CHECK-ERRORS-V8:         stmdb r2!, {r0, r2}
 @ CHECK-ERRORS-V8:                  ^
-@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
 @ CHECK-ERRORS-V7M:         stm r1!, {r2, sp}
 @ CHECK-ERRORS-V7M:                  ^
-@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
 @ CHECK-ERRORS-V7M:         stmia r4!, {r0-r3, sp}
 @ CHECK-ERRORS-V7M:                    ^
-@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
 @ CHECK-ERRORS-V7M:         stmdb r1, {r2, r3, sp}
 @ CHECK-ERRORS-V7M:                   ^
-@ CHECK-ERRORS-V7M: error: SP not allowed in register list
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
 @ CHECK-ERRORS-V7M:         stmdb r1!, {r2, r3, sp}
+@ CHECK-ERRORS-V7M:                    ^
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
+@ CHECK-ERRORS-V7M:         stmia r4, {r2, sp, pc}
+@ CHECK-ERRORS-V7M:                   ^
+@ CHECK-ERRORS-V7M: error: SP, PC not allowed in register list
+@ CHECK-ERRORS-V7M:         stmdb r1!, {r2, r3, pc}
 @ CHECK-ERRORS-V7M:                    ^
 
 @ Out of range immediates for LSL instruction.
