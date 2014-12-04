@@ -164,7 +164,8 @@ void
 DebuggerThread::DebugLoop()
 {
     DEBUG_EVENT dbe = {0};
-    while (WaitForDebugEvent(&dbe, INFINITE))
+    bool should_debug = true;
+    while (should_debug && WaitForDebugEvent(&dbe, INFINITE))
     {
         DWORD continue_status = DBG_CONTINUE;
         switch (dbe.dwDebugEventCode)
