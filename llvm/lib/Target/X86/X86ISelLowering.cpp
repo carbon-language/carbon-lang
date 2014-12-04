@@ -20925,6 +20925,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   //  v = phi(main, restore)
   //
   // restoreMBB:
+  //  if base pointer being used, load it from frame
   //  v_restore = 1
 
   MachineBasicBlock *thisMBB = MBB;
@@ -21008,6 +21009,18 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
     .addReg(restoreDstReg).addMBB(restoreMBB);
 
   // restoreMBB:
+  if (RegInfo->hasBasePointer(*MF)) { 
+    const X86Subtarget &STI = MF->getTarget().getSubtarget<X86Subtarget>();
+    const bool Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
+    X86MachineFunctionInfo *X86FI = MF->getInfo<X86MachineFunctionInfo>();
+    X86FI->setRestoreBasePointer(MF);
+    unsigned FramePtr = RegInfo->getFrameRegister(*MF);
+    unsigned BasePtr = RegInfo->getBaseRegister();
+    unsigned Opm = Uses64BitFramePtr ? X86::MOV64rm : X86::MOV32rm;
+    addRegOffset(BuildMI(restoreMBB, DL, TII->get(Opm), BasePtr),
+                 FramePtr, true, X86FI->getRestoreBasePointerOffset())
+      .setMIFlag(MachineInstr::FrameSetup);
+  }
   BuildMI(restoreMBB, DL, TII->get(X86::MOV32ri), restoreDstReg).addImm(1);
   BuildMI(restoreMBB, DL, TII->get(X86::JMP_4)).addMBB(sinkMBB);
   restoreMBB->addSuccessor(sinkMBB);

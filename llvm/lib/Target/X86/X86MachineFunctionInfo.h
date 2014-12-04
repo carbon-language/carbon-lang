@@ -31,6 +31,12 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// contains stack pointer re-alignment code which requires FP.
   bool ForceFramePointer;
 
+  /// RestoreBasePointerOffset - Non-zero if the function has base pointer 
+  /// and makes call to llvm.eh.sjlj.setjmp. When non-zero, the value is a 
+  /// displacement from the frame pointer to a slot where the base pointer 
+  /// is stashed. 
+  signed char RestoreBasePointerOffset;
+ 
   /// CalleeSavedFrameSize - Size of the callee-saved register portion of the
   /// stack frame in bytes.
   unsigned CalleeSavedFrameSize;
@@ -89,6 +95,7 @@ private:
 
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
+                             RestoreBasePointerOffset(0),
                              CalleeSavedFrameSize(0),
                              BytesToPopOnReturn(0),
                              ReturnAddrIndex(0),
@@ -104,6 +111,7 @@ public:
 
   explicit X86MachineFunctionInfo(MachineFunction &MF)
     : ForceFramePointer(false),
+      RestoreBasePointerOffset(0),
       CalleeSavedFrameSize(0),
       BytesToPopOnReturn(0),
       ReturnAddrIndex(0),
@@ -119,6 +127,10 @@ public:
 
   bool getForceFramePointer() const { return ForceFramePointer;}
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
+
+  bool getRestoreBasePointer() const { return RestoreBasePointerOffset!=0; }
+  void setRestoreBasePointer(const MachineFunction *MF);
+  int getRestoreBasePointerOffset() const {return RestoreBasePointerOffset; }
 
   unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
   void setCalleeSavedFrameSize(unsigned bytes) { CalleeSavedFrameSize = bytes; }

@@ -448,6 +448,8 @@ void X86FrameLowering::getStackProbeFunction(const X86Subtarget &STI,
 
   [if needs base pointer]
       mov  %rsp, %rbx
+      [if needs to restore base pointer]
+          mov %rsp, -MMM(%rbp)
 
   ; Emit CFI info
   [if needs FP]
@@ -570,6 +572,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   if (HasFP) {
     // Calculate required stack adjustment.
     uint64_t FrameSize = StackSize - SlotSize;
+    // If required, include space for extra hidden slot for stashing base pointer.
+    if (X86FI->getRestoreBasePointer()) 
+      FrameSize += SlotSize;
     if (RegInfo->needsStackRealignment(MF)) {
       // Callee-saved registers are pushed on stack before the stack
       // is realigned.
@@ -838,6 +843,14 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, DL, TII.get(Opc), BasePtr)
       .addReg(StackPtr)
       .setMIFlag(MachineInstr::FrameSetup);
+    if (X86FI->getRestoreBasePointer()) {
+      // Stash value of base pointer.  Saving RSP instead of EBP shortens dependence chain.
+      unsigned Opm = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
+      addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opm)),
+                   FramePtr, true, X86FI->getRestoreBasePointerOffset())
+        .addReg(StackPtr)
+        .setMIFlag(MachineInstr::FrameSetup);
+    }
   }
 
   if (((!HasFP && NumBytes) || PushedRegs) && NeedsDwarfCFI) {
