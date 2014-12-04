@@ -161,23 +161,14 @@ CMICmnStreamStdinLinux::InputAvailable(bool &vwbAvail)
     // Although this problem was not observed on Linux.
     // A solution based on 'select' was also proposed but it seems to slow things down
     // a lot.
-    static bool bInitialized = false;
-
-    if (!bInitialized)
-    {
-        // Use termios to turn off line buffering
-        ::termios term;
-        ::tcgetattr(STDIN_FILENO, &term);
-        term.c_lflag &= ~ICANON;
-        ::tcsetattr(STDIN_FILENO, TCSANOW, &term);
-        ::setbuf(stdin, NULL);
-        bInitialized = true;
-    }
-
     int nBytesWaiting;
-    ::ioctl(STDIN_FILENO, FIONREAD, &nBytesWaiting);
+    if (::ioctl(STDIN_FILENO, FIONREAD, &nBytesWaiting) == -1)
+    {
+        vwbAvail = false;
+        return MIstatus::failure;;
+    }
     vwbAvail = (nBytesWaiting > 0);
-#endif
+#endif // !defined( _WIN32 )
     return MIstatus::success;
 }
 
