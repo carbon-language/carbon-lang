@@ -37,6 +37,7 @@ AArch64MCAsmInfoDarwin::AArch64MCAsmInfoDarwin() {
   AssemblerDialect = AsmWriterVariant == Default ? 1 : AsmWriterVariant;
 
   PrivateGlobalPrefix = "L";
+  PrivateLabelPrefix = "L";
   SeparatorString = "%%";
   CommentString = ";";
   PointerSize = CalleeSaveStackSlotSize = 8;
@@ -79,6 +80,7 @@ AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(StringRef TT) {
 
   CommentString = "//";
   PrivateGlobalPrefix = ".L";
+  PrivateLabelPrefix = ".L";
   Code32Directive = ".code\t32";
 
   Data16bitsDirective = "\t.hword\t";

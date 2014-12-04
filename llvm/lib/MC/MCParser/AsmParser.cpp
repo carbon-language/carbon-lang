@@ -4662,7 +4662,7 @@ bool AsmParser::parseMSInlineAsm(
       OS << "$$";
       break;
     case AOK_Label:
-      OS << Ctx.getAsmInfo()->getPrivateGlobalPrefix() << AR.Label;
+      OS << Ctx.getAsmInfo()->getPrivateLabelPrefix() << AR.Label;
       break;
     case AOK_Input:
       OS << '$' << InputIdx++;

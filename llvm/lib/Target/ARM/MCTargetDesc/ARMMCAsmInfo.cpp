@@ -89,6 +89,7 @@ ARMCOFFMCAsmInfoMicrosoft::ARMCOFFMCAsmInfoMicrosoft() {
   AlignmentIsInBytes = false;
 
   PrivateGlobalPrefix = "$M";
+  PrivateLabelPrefix = "$M";
 }
 
 void ARMCOFFMCAsmInfoGNU::anchor() { }
@@ -101,6 +102,7 @@ ARMCOFFMCAsmInfoGNU::ARMCOFFMCAsmInfoGNU() {
   Code16Directive = ".code\t16";
   Code32Directive = ".code\t32";
   PrivateGlobalPrefix = ".L";
+  PrivateLabelPrefix = ".L";
 
   SupportsDebugInformation = true;
   ExceptionsType = ExceptionHandling::None;

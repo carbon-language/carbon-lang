@@ -123,6 +123,10 @@ protected:
   /// file.  Defaults to "L"
   const char *PrivateGlobalPrefix;
 
+  /// This prefix is used for labels for basic blocks. Defaults to the same as
+  /// PrivateGlobalPrefix.
+  const char *PrivateLabelPrefix;
+
   /// This prefix is used for symbols that should be passed through the
   /// assembler but be removed by the linker.  This is 'l' on Darwin, currently
   /// used for some ObjC metadata.  The default of "" meast that for this system
@@ -418,6 +422,7 @@ public:
 
   bool useAssignmentForEHBegin() const { return UseAssignmentForEHBegin; }
   const char *getPrivateGlobalPrefix() const { return PrivateGlobalPrefix; }
+  const char *getPrivateLabelPrefix() const { return PrivateLabelPrefix; }
   bool hasLinkerPrivateGlobalPrefix() const {
     return LinkerPrivateGlobalPrefix[0] != '\0';
   }

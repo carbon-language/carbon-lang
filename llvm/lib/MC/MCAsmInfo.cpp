@@ -40,6 +40,7 @@ MCAsmInfo::MCAsmInfo() {
   LabelSuffix = ":";
   UseAssignmentForEHBegin = false;
   PrivateGlobalPrefix = "L";
+  PrivateLabelPrefix = PrivateGlobalPrefix;
   LinkerPrivateGlobalPrefix = "";
   InlineAsmStart = "APP";
   InlineAsmEnd = "NO_APP";
