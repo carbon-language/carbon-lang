@@ -18447,22 +18447,12 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
     SDValue BaseShAmt;
     EVT EltVT = VT.getVectorElementType();
 
-    if (Amt.getOpcode() == ISD::BUILD_VECTOR) {
-      unsigned NumElts = VT.getVectorNumElements();
-      unsigned i, j;
-      for (i = 0; i != NumElts; ++i) {
-        if (Amt.getOperand(i).getOpcode() == ISD::UNDEF)
-          continue;
-        break;
-      }
-      for (j = i; j != NumElts; ++j) {
-        SDValue Arg = Amt.getOperand(j);
-        if (Arg.getOpcode() == ISD::UNDEF) continue;
-        if (Arg != Amt.getOperand(i))
-          break;
-      }
-      if (i != NumElts && j == NumElts)
-        BaseShAmt = Amt.getOperand(i);
+    if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(Amt)) {
+      // Check if this build_vector node is doing a splat.
+      // If so, then set BaseShAmt equal to the splat value.
+      BaseShAmt = BV->getSplatValue();
+      if (BaseShAmt && BaseShAmt.getOpcode() == ISD::UNDEF)
+        BaseShAmt = SDValue();
     } else {
       if (Amt.getOpcode() == ISD::EXTRACT_SUBVECTOR)
         Amt = Amt.getOperand(0);
