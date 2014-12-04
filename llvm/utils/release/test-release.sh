@@ -299,7 +299,8 @@ function configure_llvmCore() {
     echo "# Configuring llvm $Release-$RC $Flavor"
     echo "# $BuildDir/llvm.src/configure --prefix=$InstallDir \
         --enable-optimized=$Optimized \
-        --enable-assertions=$Assertions"
+        --enable-assertions=$Assertions \
+        --disable-timestamps"
     env CC="$c_compiler" CXX="$cxx_compiler" \
     $BuildDir/llvm.src/configure --prefix=$InstallDir \
         --enable-optimized=$Optimized \
