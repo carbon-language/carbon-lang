@@ -261,6 +261,16 @@ static bool sameExportDesc(const PECOFFLinkingContext::ExportDesc &a,
 void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
   addInitialUndefinedSymbol(allocate(desc.name));
 
+  // MSVC link.exe silently drops characters after the first atsign.
+  // For example, /export:foo@4=bar is equivalent to /export:foo=bar.
+  // We do the same thing for compatibility.
+  if (!desc.externalName.empty()) {
+    StringRef s(desc.externalName);
+    size_t pos = s.find('@');
+    if (pos != s.npos)
+      desc.externalName = s.substr(0, pos);
+  }
+
   // Scan the vector to look for existing entry. It's not very fast,
   // but because the number of exported symbol is usually not that
   // much, it should be okay.

@@ -78,7 +78,7 @@ DUP-NOT:  exportfn3@256
 # RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
 #
 # RUN: lld -flavor link /out:%t1.dll /dll /entry:init \
-# RUN:   /export:f1=exportfn1 /export:f2=exportfn2,private -- %t.obj
+# RUN:   /export:f1=exportfn1 /export:f2@4=exportfn2,private -- %t.obj
 # RUN: llvm-objdump -p %t1.dll | FileCheck -check-prefix=EQUAL %s
 
 EQUAL:      Export Table:
@@ -86,4 +86,4 @@ EQUAL:      DLL name: export.test.tmp1.dll
 EQUAL:       Ordinal      RVA  Name
 EQUAL-NEXT:       1   0x2010  exportfn3@256
 EQUAL-NEXT:       2   0x2008  f1
-EQUAL-NEXT:       3   0x2010  f2
+EQUAL-NEXT:       3   0x2010  f2{{$}}
