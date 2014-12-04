@@ -19,6 +19,7 @@ _func:
         adc r7, r8, #42, #2
         adc r7, r8, #-2147483638
         adc r7, r8, #40, #2
+	adc r7, r8, #(0xff << 16)
         adc r1, r2, #0xf0
         adc r1, r2, #0xf00
         adc r1, r2, #0xf000
@@ -36,6 +37,7 @@ _func:
 @ CHECK: adc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xa8,0xe2]
 @ CHECK: adc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xa8,0xe2]
 @ CHECK: adc    r7, r8, #40, #2         @ encoding: [0x28,0x71,0xa8,0xe2]
+@ CHECK: adc	r7, r8, #16711680       @ encoding: [0xff,0x78,0xa8,0xe2]
 @ CHECK: adc	r1, r2, #240            @ encoding: [0xf0,0x10,0xa2,0xe2]
 @ CHECK: adc	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xa2,0xe2]
 @ CHECK: adc	r1, r2, #61440          @ encoding: [0x0f,0x1a,0xa2,0xe2]
@@ -172,6 +174,7 @@ Lforward:
         add r7, r8, #42, #2
         add r7, r8, #-2147483638
         add r7, r8, #40, #2
+	add r7, r8, #(0xff << 16)
         add r4, r5, r6
         add r4, r5, r6, lsl #5
         add r4, r5, r6, lsr #5
@@ -209,6 +212,7 @@ Lforward:
 @ CHECK: add    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x88,0xe2]
 @ CHECK: add    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x88,0xe2]
 @ CHECK: add    r7, r8, #40, #2         @ encoding: [0x28,0x71,0x88,0xe2]
+@ CHECK: add	r7, r8, #16711680       @ encoding: [0xff,0x78,0x88,0xe2]
 @ CHECK: add	r4, r5, r6              @ encoding: [0x06,0x40,0x85,0xe0]
 @ CHECK: add	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x85,0xe0]
 @ CHECK: add	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x85,0xe0]
@@ -255,10 +259,12 @@ Lforward:
     adds r7, r8, #42, #2
     adds r7, r8, #-2147483638
     adds r7, r8, #40, #2
+    adds r7, r8, #(0xff << 16)
 
 @ CHECK: adds   r7, r8, #-2147483638      @ encoding: [0x2a,0x71,0x98,0xe2]
 @ CHECK: adds   r7, r8, #-2147483638      @ encoding: [0x2a,0x71,0x98,0xe2]
 @ CHECK: adds   r7, r8, #40, #2           @ encoding: [0x28,0x71,0x98,0xe2]
+@ CHECK: adds	r7, r8, #16711680         @ encoding: [0xff,0x78,0x98,0xe2]
 
 @------------------------------------------------------------------------------
 @ AND
@@ -267,6 +273,7 @@ Lforward:
     and r7, r8, #42, #2
     and r7, r8, #-2147483638
     and r7, r8, #40, #2
+    and r7, r8, #(0xff << 16)
     and r10, r1, r6
     and r10, r1, r6, lsl #10
     and r10, r1, r6, lsr #10
@@ -298,6 +305,7 @@ Lforward:
 @ CHECK: and    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x08,0xe2]
 @ CHECK: and    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x08,0xe2]
 @ CHECK: and    r7, r8, #40, #2         @ encoding: [0x28,0x71,0x08,0xe2]
+@ CHECK: and	r7, r8, #16711680       @ encoding: [0xff,0x78,0x08,0xe2]
 @ CHECK: and	r10, r1, r6             @ encoding: [0x06,0xa0,0x01,0xe0]
 @ CHECK: and	r10, r1, r6, lsl #10    @ encoding: [0x06,0xa5,0x01,0xe0]
 @ CHECK: and	r10, r1, r6, lsr #10    @ encoding: [0x26,0xa5,0x01,0xe0]
@@ -387,6 +395,7 @@ Lforward:
         bic r7, r8, #42, #2
         bic r7, r8, #-2147483638
         bic r7, r8, #40, #2
+        bic r7, r8, #(0xff << 16)
         bic r10, r1, r6
         bic r10, r1, r6, lsl #10
         bic r10, r1, r6, lsr #10
@@ -404,6 +413,7 @@ Lforward:
         bic r7, #42, #2
         bic r7, #-2147483638
         bic r7, #40, #2
+        bic r7, #(0xff << 16)
         bic r10, r1
         bic r10, r1, lsl #10
         bic r10, r1, lsr #10
@@ -420,6 +430,7 @@ Lforward:
 @ CHECK: bic    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xc8,0xe3]
 @ CHECK: bic    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xc8,0xe3]
 @ CHECK: bic    r7, r8, #40, #2         @ encoding: [0x28,0x71,0xc8,0xe3]
+@ CHECK: bic	r7, r8, #16711680       @ encoding: [0xff,0x78,0xc8,0xe3]
 @ CHECK: bic	r10, r1, r6             @ encoding: [0x06,0xa0,0xc1,0xe1]
 @ CHECK: bic	r10, r1, r6, lsl #10    @ encoding: [0x06,0xa5,0xc1,0xe1]
 @ CHECK: bic	r10, r1, r6, lsr #10    @ encoding: [0x26,0xa5,0xc1,0xe1]
@@ -437,6 +448,7 @@ Lforward:
 @ CHECK: bic    r7, r7, #-2147483638    @ encoding: [0x2a,0x71,0xc7,0xe3]
 @ CHECK: bic    r7, r7, #-2147483638    @ encoding: [0x2a,0x71,0xc7,0xe3]
 @ CHECK: bic    r7, r7, #40, #2         @ encoding: [0x28,0x71,0xc7,0xe3]
+@ CHECK: bic	r7, r7, #16711680       @ encoding: [0xff,0x78,0xc7,0xe3]
 @ CHECK: bic	r10, r10, r1            @ encoding: [0x01,0xa0,0xca,0xe1]
 @ CHECK: bic	r10, r10, r1, lsl #10   @ encoding: [0x01,0xa5,0xca,0xe1]
 @ CHECK: bic	r10, r10, r1, lsr #10   @ encoding: [0x21,0xa5,0xca,0xe1]
@@ -556,6 +568,7 @@ Lforward:
         cmn r7, #42, #2
         cmn r7, #-2147483638
         cmn r7, #40, #2
+        cmn r7, #(0xff << 16)
         cmn r1, r6
         cmn r1, r6, lsl #10
         cmn r1, r6, lsr #10
@@ -572,6 +585,7 @@ Lforward:
 @ CHECK: cmn	r7, #-2147483638        @ encoding: [0x2a,0x01,0x77,0xe3]
 @ CHECK: cmn	r7, #-2147483638        @ encoding: [0x2a,0x01,0x77,0xe3]
 @ CHECK: cmn	r7, #40, #2             @ encoding: [0x28,0x01,0x77,0xe3]
+@ CHECK: cmn	r7, #16711680           @ encoding: [0xff,0x08,0x77,0xe3]
 @ CHECK: cmn	r1, r6                  @ encoding: [0x06,0x00,0x71,0xe1]
 @ CHECK: cmn	r1, r6, lsl #10         @ encoding: [0x06,0x05,0x71,0xe1]
 @ CHECK: cmn	r1, r6, lsr #10         @ encoding: [0x26,0x05,0x71,0xe1]
@@ -591,6 +605,7 @@ Lforward:
         cmp r7, #42, #2
         cmp r7, #-2147483638
         cmp r7, #40, #2
+        cmp r7, #(0xff << 16)
         cmp r1, r6
         cmp r1, r6, lsl #10
         cmp r1, r6, lsr #10
@@ -609,6 +624,7 @@ Lforward:
 @ CHECK: cmp	r7, #-2147483638        @ encoding: [0x2a,0x01,0x57,0xe3]
 @ CHECK: cmp	r7, #-2147483638        @ encoding: [0x2a,0x01,0x57,0xe3]
 @ CHECK: cmp    r7, #40, #2             @ encoding: [0x28,0x01,0x57,0xe3]
+@ CHECK: cmp	r7, #16711680           @ encoding: [0xff,0x08,0x57,0xe3]
 @ CHECK: cmp	r1, r6                  @ encoding: [0x06,0x00,0x51,0xe1]
 @ CHECK: cmp	r1, r6, lsl #10         @ encoding: [0x06,0x05,0x51,0xe1]
 @ CHECK: cmp	r1, r6, lsr #10         @ encoding: [0x26,0x05,0x51,0xe1]
@@ -797,6 +813,7 @@ Lforward:
         eor r7, r8, #42, #2
         eor r7, r8, #-2147483638
         eor r7, r8, #40, #2
+        eor r7, r8, #(0xff << 16)
         eor r4, r5, r6
         eor r4, r5, r6, lsl #5
         eor r4, r5, r6, lsr #5
@@ -827,6 +844,7 @@ Lforward:
 @ CHECK: eor    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x28,0xe2]
 @ CHECK: eor    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x28,0xe2]
 @ CHECK: eor    r7, r8, #40, #2         @ encoding: [0x28,0x71,0x28,0xe2]
+@ CHECK: eor	r7, r8, #16711680       @ encoding: [0xff,0x78,0x28,0xe2]
 @ CHECK: eor	r4, r5, r6              @ encoding: [0x06,0x40,0x25,0xe0]
 @ CHECK: eor	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x25,0xe0]
 @ CHECK: eor	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x25,0xe0]
@@ -1104,6 +1122,7 @@ Lforward:
         mov r7, #42, #2
         mov r7, #-2147483638
         mov pc, #42, #2
+	mov r7, #(0xff << 16)
         mov r6, #0xffff
         movw r9, #0xffff
         movs r3, #7
@@ -1121,6 +1140,7 @@ Lforward:
 @ CHECK: mov    r7, #-2147483638        @ encoding: [0x2a,0x71,0xa0,0xe3]
 @ CHECK: mov    r7, #-2147483638        @ encoding: [0x2a,0x71,0xa0,0xe3]
 @ CHECK: mov    pc, #2147483658         @ encoding: [0x2a,0xf1,0xa0,0xe3]
+@ CHECK: mov	r7, #16711680           @ encoding: [0xff,0x78,0xa0,0xe3]
 @ CHECK: movw	r6, #65535              @ encoding: [0xff,0x6f,0x0f,0xe3]
 @ CHECK: movw	r9, #65535              @ encoding: [0xff,0x9f,0x0f,0xe3]
 @ CHECK: movs	r3, #7                  @ encoding: [0x07,0x30,0xb0,0xe3]
@@ -1228,6 +1248,7 @@ Lforward:
         msr  SPSR_fsxc, #5
         msr  cpsr_fsxc, #5
         msr  APSR_nzcvq, #42, #2
+	msr  apsr_nzcvqg, #(0xff << 16)
         msr  apsr_nzcvqg, #2147483658
         msr  SPSR_fsxc, #40, #2
 
@@ -1246,6 +1267,7 @@ Lforward:
 @ CHECK: msr	SPSR_fsxc, #5           @ encoding: [0x05,0xf0,0x6f,0xe3]
 @ CHECK: msr	CPSR_fsxc, #5           @ encoding: [0x05,0xf0,0x2f,0xe3]
 @ CHECK: msr    APSR_nzcvq, #2147483658 @ encoding: [0x2a,0xf1,0x28,0xe3]
+@ CHECK: msr	APSR_nzcvqg, #16711680  @ encoding: [0xff,0xf8,0x2c,0xe3]
 @ CHECK: msr    APSR_nzcvqg, #2147483658 @ encoding: [0x2a,0xf1,0x2c,0xe3]
 @ CHECK: msr    SPSR_fsxc, #40, #2      @ encoding: [0x28,0xf1,0x6f,0xe3]
 
@@ -1303,6 +1325,7 @@ Lforward:
         mvn r7, #42, #2
         mvn r7, #-2147483638
         mvn r7, #40, #2
+	mvn r7, #(0xff << 16)
         mvns r3, #7
         mvneq r4, #0xff0
         mvnseq r5, #0xff0000
@@ -1313,6 +1336,7 @@ Lforward:
 @ CHECK: mvn    r7, #-2147483638        @ encoding: [0x2a,0x71,0xe0,0xe3]
 @ CHECK: mvn    r7, #-2147483638        @ encoding: [0x2a,0x71,0xe0,0xe3]
 @ CHECK: mvn    r7, #40, #2             @ encoding: [0x28,0x71,0xe0,0xe3]
+@ CHECK: mvn	r7, #16711680           @ encoding: [0xff,0x78,0xe0,0xe3]
 @ CHECK: mvns	r3, #7                  @ encoding: [0x07,0x30,0xf0,0xe3]
 @ CHECK: mvneq	r4, #4080               @ encoding: [0xff,0x4e,0xe0,0x03]
 @ CHECK: mvnseq	r5, #16711680           @ encoding: [0xff,0x58,0xf0,0x03]
@@ -1382,6 +1406,7 @@ Lforward:
         orr r7, r8, #42, #2
         orr r7, r8, #-2147483638
         orr r7, r8, #40, #2
+	orr r7, r8, #(0xff << 16)
         orr r4, r5, r6
         orr r4, r5, r6, lsl #5
         orr r4, r5, r6, lsr #5
@@ -1412,6 +1437,7 @@ Lforward:
 @ CHECK: orr    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x88,0xe3]
 @ CHECK: orr    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x88,0xe3]
 @ CHECK: orr    r7, r8, #40, #2         @ encoding: [0x28,0x71,0x88,0xe3]
+@ CHECK: orr	r7, r8, #16711680       @ encoding: [0xff,0x78,0x88,0xe3]
 @ CHECK: orr	r4, r5, r6              @ encoding: [0x06,0x40,0x85,0xe1]
 @ CHECK: orr	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x85,0xe1]
 @ CHECK: orr	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x85,0xe1]
@@ -1673,6 +1699,7 @@ Lforward:
         rsb r7, r8, #42, #2
         rsb r7, r8, #-2147483638
         rsb r7, r8, #40, #2
+        rsb r7, r8, #(0xff << 16)
         rsb r4, r5, r6
         rsb r4, r5, r6, lsl #5
         rsblo r4, r5, r6, lsr #5
@@ -1703,6 +1730,7 @@ Lforward:
 @ CHECK: rsb    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x68,0xe2]
 @ CHECK: rsb    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x68,0xe2]
 @ CHECK: rsb    r7, r8, #40, #2         @ encoding: [0x28,0x71,0x68,0xe2]
+@ CHECK: rsb	r7, r8, #16711680       @ encoding: [0xff,0x78,0x68,0xe2]
 @ CHECK: rsb	r4, r5, r6              @ encoding: [0x06,0x40,0x65,0xe0]
 @ CHECK: rsb	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x65,0xe0]
 @ CHECK: rsblo	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x65,0x30]
@@ -1734,10 +1762,12 @@ Lforward:
     rsbs r7, r8, #42, #2
     rsbs r7, r8, #-2147483638
     rsbs r7, r8, #40, #2
+    rsbs r7, #(0xff << 16)
 
 @ CHECK: rsbs   r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x78,0xe2]
 @ CHECK: rsbs   r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x78,0xe2]
 @ CHECK: rsbs   r7, r8, #40, #2         @ encoding: [0x28,0x71,0x78,0xe2]
+@ CHECK: rsbs	r7, r7, #16711680       @ encoding: [0xff,0x78,0x77,0xe2]
 
 @------------------------------------------------------------------------------
 @ RSC
@@ -1746,6 +1776,7 @@ Lforward:
         rsc r7, r8, #42, #2
         rsc r7, r8, #-2147483638
         rsc r7, r8, #40, #2
+        rsc r7, r8, #(0xff << 16)
         rsc r4, r5, r6
         rsc r4, r5, r6, lsl #5
         rsclo r4, r5, r6, lsr #5
@@ -1775,6 +1806,7 @@ Lforward:
 @ CHECK: rsc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xe8,0xe2]
 @ CHECK: rsc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xe8,0xe2]
 @ CHECK: rsc    r7, r8, #40, #2         @ encoding: [0x28,0x71,0xe8,0xe2]
+@ CHECK: rsc    r7, r8, #16711680       @ encoding: [0xff,0x78,0xe8,0xe2]
 @ CHECK: rsc	r4, r5, r6              @ encoding: [0x06,0x40,0xe5,0xe0]
 @ CHECK: rsc	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0xe5,0xe0]
 @ CHECK: rsclo	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0xe5,0x30]
@@ -1854,6 +1886,7 @@ Lforward:
         sbc r7, r8, #42, #2
         sbc r7, r8, #-2147483638
         sbc r7, r8, #40, #2
+        sbc r7, r8, #(0xff << 16)
         sbc r4, r5, r6
         sbc r4, r5, r6, lsl #5
         sbc r4, r5, r6, lsr #5
@@ -1882,6 +1915,7 @@ Lforward:
 @ CHECK: sbc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xc8,0xe2]
 @ CHECK: sbc    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0xc8,0xe2]
 @ CHECK: sbc    r7, r8, #40, #2         @ encoding: [0x28,0x71,0xc8,0xe2]
+@ CHECK: sbc	r7, r8, #16711680       @ encoding: [0xff,0x78,0xc8,0xe2]
 @ CHECK: sbc	r4, r5, r6              @ encoding: [0x06,0x40,0xc5,0xe0]
 @ CHECK: sbc	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0xc5,0xe0]
 @ CHECK: sbc	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0xc5,0xe0]
@@ -2515,6 +2549,7 @@ Lforward:
         sub r7, r8, #42, #2
         sub r7, r8, #-2147483638
         sub r7, r8, #40, #2
+        sub r7, r8, #(0xff << 16)
         sub r4, r5, r6
         sub r4, r5, r6, lsl #5
         sub r4, r5, r6, lsr #5
@@ -2543,6 +2578,7 @@ Lforward:
 @ CHECK: sub    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x48,0xe2]
 @ CHECK: sub    r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x48,0xe2]
 @ CHECK: sub    r7, r8, #40, #2         @ encoding: [0x28,0x71,0x48,0xe2]
+@ CHECK: sub	r7, r8, #16711680       @ encoding: [0xff,0x78,0x48,0xe2]
 @ CHECK: sub	r4, r5, r6              @ encoding: [0x06,0x40,0x45,0xe0]
 @ CHECK: sub	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x45,0xe0]
 @ CHECK: sub	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x45,0xe0]
@@ -2579,10 +2615,12 @@ Lforward:
     subs r7, r8, #42, #2
     subs r7, r8, #-2147483638
     subs r7, r8, #40, #2
+    subs r7, r8, #(0xff << 16)
 
 @ CHECK: subs   r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x58,0xe2]
 @ CHECK: subs   r7, r8, #-2147483638    @ encoding: [0x2a,0x71,0x58,0xe2]
 @ CHECK: subs   r7, r8, #40, #2         @ encoding: [0x28,0x71,0x58,0xe2]
+@ CHECK: subs	r7, r8, #16711680       @ encoding: [0xff,0x78,0x58,0xe2]
 
 @------------------------------------------------------------------------------
 @ SVC
@@ -2709,6 +2747,7 @@ Lforward:
         teq r7, #42, #2
         teq r7, #-2147483638
         teq r7, #40, #2
+        teq r7, #(0xff << 16)
         teq r4, r5
         teq r4, r5, lsl #5
         teq r4, r5, lsr #5
@@ -2724,6 +2763,7 @@ Lforward:
 @ CHECK: teq    r7, #-2147483638        @ encoding: [0x2a,0x01,0x37,0xe3]
 @ CHECK: teq    r7, #-2147483638        @ encoding: [0x2a,0x01,0x37,0xe3]
 @ CHECK: teq    r7, #40, #2             @ encoding: [0x28,0x01,0x37,0xe3]
+@ CHECK: teq	r7, #16711680           @ encoding: [0xff,0x08,0x37,0xe3]
 @ CHECK: teq	r4, r5                  @ encoding: [0x05,0x00,0x34,0xe1]
 @ CHECK: teq	r4, r5, lsl #5          @ encoding: [0x85,0x02,0x34,0xe1]
 @ CHECK: teq	r4, r5, lsr #5          @ encoding: [0xa5,0x02,0x34,0xe1]
@@ -2743,6 +2783,7 @@ Lforward:
         tst r7, #42, #2
         tst r7, #-2147483638
         tst r7, #40, #2
+        tst r7, #(0xff << 16)
         tst r4, r5
         tst r4, r5, lsl #5
         tst r4, r5, lsr #5
@@ -2758,6 +2799,7 @@ Lforward:
 @ CHECK: tst    r7, #-2147483638        @ encoding: [0x2a,0x01,0x17,0xe3]
 @ CHECK: tst    r7, #-2147483638        @ encoding: [0x2a,0x01,0x17,0xe3]
 @ CHECK: tst    r7, #40, #2             @ encoding: [0x28,0x01,0x17,0xe3]
+@ CHECK: tst    r7, #16711680           @ encoding: [0xff,0x08,0x17,0xe3]
 @ CHECK: tst	r4, r5                  @ encoding: [0x05,0x00,0x14,0xe1]
 @ CHECK: tst	r4, r5, lsl #5          @ encoding: [0x85,0x02,0x14,0xe1]
 @ CHECK: tst	r4, r5, lsr #5          @ encoding: [0xa5,0x02,0x14,0xe1]
