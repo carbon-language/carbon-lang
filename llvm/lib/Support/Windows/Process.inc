@@ -49,10 +49,6 @@
 using namespace llvm;
 using namespace sys;
 
-process::id_type self_process::get_id() {
-  return GetCurrentProcessId();
-}
-
 static TimeValue getTimeValueFromFILETIME(FILETIME Time) {
   ULARGE_INTEGER TimeInteger;
   TimeInteger.LowPart = Time.dwLowDateTime;
@@ -65,28 +61,10 @@ static TimeValue getTimeValueFromFILETIME(FILETIME Time) {
           (TimeInteger.QuadPart % 10000000) * 100));
 }
 
-TimeValue self_process::get_user_time() const {
-  FILETIME ProcCreate, ProcExit, KernelTime, UserTime;
-  if (GetProcessTimes(GetCurrentProcess(), &ProcCreate, &ProcExit, &KernelTime,
-                      &UserTime) == 0)
-    return TimeValue();
-
-  return getTimeValueFromFILETIME(UserTime);
-}
-
-TimeValue self_process::get_system_time() const {
-  FILETIME ProcCreate, ProcExit, KernelTime, UserTime;
-  if (GetProcessTimes(GetCurrentProcess(), &ProcCreate, &ProcExit, &KernelTime,
-                      &UserTime) == 0)
-    return TimeValue();
-
-  return getTimeValueFromFILETIME(KernelTime);
-}
-
 // This function retrieves the page size using GetNativeSystemInfo() and is
 // present solely so it can be called once to initialize the self_process member
 // below.
-static unsigned getPageSize() {
+static unsigned computePageSize() {
   // GetNativeSystemInfo() provides the physical page size which may differ
   // from GetSystemInfo() in 32-bit applications running under WOW64.
   SYSTEM_INFO info;
@@ -96,11 +74,10 @@ static unsigned getPageSize() {
   return static_cast<unsigned>(info.dwPageSize);
 }
 
-// This constructor guaranteed to be run exactly once on a single thread, and
-// sets up various process invariants that can be queried cheaply from then on.
-self_process::self_process() : PageSize(getPageSize()) {
+unsigned Process::getPageSize() {
+  static unsigned Ret = computePageSize();
+  return Ret;
 }
-
 
 size_t
 Process::GetMallocUsage()

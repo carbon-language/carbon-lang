@@ -57,10 +57,6 @@
 using namespace llvm;
 using namespace sys;
 
-process::id_type self_process::get_id() {
-  return getpid();
-}
-
 static std::pair<TimeValue, TimeValue> getRUsageTimes() {
 #if defined(HAVE_GETRUSAGE)
   struct rusage RU;
@@ -80,42 +76,18 @@ static std::pair<TimeValue, TimeValue> getRUsageTimes() {
 #endif
 }
 
-TimeValue self_process::get_user_time() const {
-#if _POSIX_TIMERS > 0 && _POSIX_CPUTIME > 0
-  // Try to get a high resolution CPU timer.
-  struct timespec TS;
-  if (::clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &TS) == 0)
-    return TimeValue(static_cast<TimeValue::SecondsType>(TS.tv_sec),
-                     static_cast<TimeValue::NanoSecondsType>(TS.tv_nsec));
-#endif
-
-  // Otherwise fall back to rusage based timing.
-  return getRUsageTimes().first;
-}
-
-TimeValue self_process::get_system_time() const {
-  // We can only collect system time by inspecting the results of getrusage.
-  return getRUsageTimes().second;
-}
-
 // On Cygwin, getpagesize() returns 64k(AllocationGranularity) and
 // offset in mmap(3) should be aligned to the AllocationGranularity.
-static unsigned getPageSize() {
+unsigned Process::getPageSize() {
 #if defined(HAVE_GETPAGESIZE)
-  const int page_size = ::getpagesize();
+  static const int page_size = ::getpagesize();
 #elif defined(HAVE_SYSCONF)
-  long page_size = ::sysconf(_SC_PAGE_SIZE);
+  static long page_size = ::sysconf(_SC_PAGE_SIZE);
 #else
 #warning Cannot get the page size on this machine
 #endif
   return static_cast<unsigned>(page_size);
 }
-
-// This constructor guaranteed to be run exactly once on a single thread, and
-// sets up various process invariants that can be queried cheaply from then on.
-self_process::self_process() : PageSize(getPageSize()) {
-}
-
 
 size_t Process::GetMallocUsage() {
 #if defined(HAVE_MALLINFO)

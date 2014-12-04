@@ -330,7 +330,7 @@ static ErrorOr<std::unique_ptr<MemoryBuffer>>
 getOpenFileImpl(int FD, const Twine &Filename, uint64_t FileSize,
                 uint64_t MapSize, int64_t Offset, bool RequiresNullTerminator,
                 bool IsVolatileSize) {
-  static int PageSize = sys::process::get_self()->page_size();
+  static int PageSize = sys::Process::getPageSize();
 
   // Default is to map the full file.
   if (MapSize == uint64_t(-1)) {

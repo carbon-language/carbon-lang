@@ -88,7 +88,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
   if (NumBytes == 0)
     return MemoryBlock();
 
-  static const size_t PageSize = process::get_self()->page_size();
+  static const size_t PageSize = Process::getPageSize();
   const size_t NumPages = (NumBytes+PageSize-1)/PageSize;
 
   int fd = -1;
@@ -181,7 +181,7 @@ Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
                     std::string *ErrMsg) {
   if (NumBytes == 0) return MemoryBlock();
 
-  size_t PageSize = process::get_self()->page_size();
+  size_t PageSize = Process::getPageSize();
   size_t NumPages = (NumBytes+PageSize-1)/PageSize;
 
   int fd = -1;
