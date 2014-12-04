@@ -170,12 +170,13 @@ multiclass T_ALU32_3op_A2<string mnemonic, bits<3> MajOp, bits<3> MinOp,
   defm A2_p#NAME : T_ALU32_3op_p<mnemonic, MajOp, MinOp, OpsRev>;
 }
 
-let isCodeGenOnly = 0 in
+let isCodeGenOnly = 0 in {
 defm add : T_ALU32_3op_A2<"add", 0b011, 0b000, 0, 1>;
 defm and : T_ALU32_3op_A2<"and", 0b001, 0b000, 0, 1>;
 defm or  : T_ALU32_3op_A2<"or",  0b001, 0b001, 0, 1>;
 defm sub : T_ALU32_3op_A2<"sub", 0b011, 0b001, 1, 0>;
 defm xor : T_ALU32_3op_A2<"xor", 0b001, 0b011, 0, 1>;
+}
 
 // Pats for instruction selection.
 class BinOp32_pat<SDNode Op, InstHexagon MI, ValueType ResT>
@@ -275,11 +276,13 @@ multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
   }
 }
 
+let isCodeGenOnly = 0 in {
 defm aslh : ALU32_2op_base<"aslh", 0b000>, PredNewRel;
 defm asrh : ALU32_2op_base<"asrh", 0b001>, PredNewRel;
 defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
 defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
 defm zxth : ALU32_2op_base<"zxth", 0b110>, PredNewRel;
+}
 
 // Rd=zxtb(Rs): assembler mapped to Rd=and(Rs,#255).
 // Compiler would want to generate 'zxtb' instead of 'and' becuase 'zxtb' has
