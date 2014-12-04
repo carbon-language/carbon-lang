@@ -615,7 +615,8 @@ public:
     if ((Style.Language == FormatStyle::LK_Java &&
          CurrentToken->is(Keywords.kw_package)) ||
         (Info && Info->getPPKeywordID() == tok::pp_import &&
-         CurrentToken->Next)) {
+         CurrentToken->Next &&
+         CurrentToken->Next->isOneOf(tok::string_literal, tok::identifier))) {
       next();
       parseIncludeDirective();
       return LT_ImportStatement;
