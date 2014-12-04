@@ -63,7 +63,7 @@ Instead, the statepoint intrinsic marks the actual site of the safepoint or stat
 When lowered, this example would generate the following x86 assembly::
   put assembly here
 
-Each of the potentially relocated values has been spilled to the stack, and a record of that location has been recorded to the StackMap section.  If the garbage collector needs to update any of these pointers during the call, it knows exactly what to change.  
+Each of the potentially relocated values has been spilled to the stack, and a record of that location has been recorded to the :ref:`Stack Map section <stackmap-section>`.  If the garbage collector needs to update any of these pointers during the call, it knows exactly what to change.  
 
 Intrinsics
 ===========
@@ -175,12 +175,10 @@ The return value of ''gc_relocate'' is the potentially relocated value of the po
 A ''gc_relocate'' is modeled as a 'readnone' pure function.  It has no side effects since it is just a way to extract information about work done during the actual call modeled by the ''gc_statepoint''.
 
 
-StackMap Format
+Stack Map Format
 ================
 
-Locations for each pointer value which may need read and/or updated by the runtime or collector are provided via the StackMap format specified in the PatchPoint documentation. 
-
-.. TODO: link
+Locations for each pointer value which may need read and/or updated by the runtime or collector are provided via the :ref:`Stack Map format <stackmap-format>` specified in the PatchPoint documentation. 
 
 Each statepoint generates the following Locations:
 
