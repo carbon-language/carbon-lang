@@ -918,3 +918,7 @@ int run2 = x2.fooG3();
 
 
 } //end ns inclass_lambdas_within_nested_classes
+
+namespace pr21684_disambiguate_auto_followed_by_ellipsis_no_id {
+int a = [](auto ...) { return 0; }();
+}

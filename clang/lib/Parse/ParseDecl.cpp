@@ -4873,19 +4873,20 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     }
 
     // C++0x [dcl.fct]p14:
-    //   There is a syntactic ambiguity when an ellipsis occurs at the end
-    //   of a parameter-declaration-clause without a preceding comma. In
-    //   this case, the ellipsis is parsed as part of the
-    //   abstract-declarator if the type of the parameter names a template
-    //   parameter pack that has not been expanded; otherwise, it is parsed
-    //   as part of the parameter-declaration-clause.
+    //   There is a syntactic ambiguity when an ellipsis occurs at the end of a
+    //   parameter-declaration-clause without a preceding comma. In this case,
+    //   the ellipsis is parsed as part of the abstract-declarator if the type
+    //   of the parameter either names a template parameter pack that has not
+    //   been expanded or contains auto; otherwise, it is parsed as part of the
+    //   parameter-declaration-clause.
     if (Tok.is(tok::ellipsis) && D.getCXXScopeSpec().isEmpty() &&
         !((D.getContext() == Declarator::PrototypeContext ||
            D.getContext() == Declarator::LambdaExprParameterContext ||
            D.getContext() == Declarator::BlockLiteralContext) &&
           NextToken().is(tok::r_paren) &&
           !D.hasGroupingParens() &&
-          !Actions.containsUnexpandedParameterPacks(D))) {
+          !Actions.containsUnexpandedParameterPacks(D) &&
+          D.getDeclSpec().getTypeSpecType() != TST_auto)) {
       SourceLocation EllipsisLoc = ConsumeToken();
       if (isPtrOperatorToken(Tok.getKind(), getLangOpts(), D.getContext())) {
         // The ellipsis was put in the wrong place. Recover, and explain to
