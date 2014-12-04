@@ -412,7 +412,7 @@ public:
     this->EndX = this->BeginX;
   }
 
-  void resize(unsigned N) {
+  void resize(size_type N) {
     if (N < this->size()) {
       this->destroy_range(this->begin()+N, this->end());
       this->setEnd(this->begin()+N);
@@ -425,7 +425,7 @@ public:
     }
   }
 
-  void resize(unsigned N, const T &NV) {
+  void resize(size_type N, const T &NV) {
     if (N < this->size()) {
       this->destroy_range(this->begin()+N, this->end());
       this->setEnd(this->begin()+N);
@@ -437,7 +437,7 @@ public:
     }
   }
 
-  void reserve(unsigned N) {
+  void reserve(size_type N) {
     if (this->capacity() < N)
       this->grow(N);
   }
@@ -476,7 +476,7 @@ public:
     this->setEnd(this->end() + NumInputs);
   }
 
-  void assign(unsigned NumElts, const T &Elt) {
+  void assign(size_type NumElts, const T &Elt) {
     clear();
     if (this->capacity() < NumElts)
       this->grow(NumElts);
@@ -582,7 +582,7 @@ public:
     assert(I <= this->end() && "Inserting past the end of the vector.");
 
     // Ensure there is enough space.
-    reserve(static_cast<unsigned>(this->size() + NumToInsert));
+    reserve(this->size() + NumToInsert);
 
     // Uninvalidate the iterator.
     I = this->begin()+InsertElt;
@@ -636,7 +636,7 @@ public:
     size_t NumToInsert = std::distance(From, To);
 
     // Ensure there is enough space.
-    reserve(static_cast<unsigned>(this->size() + NumToInsert));
+    reserve(this->size() + NumToInsert);
 
     // Uninvalidate the iterator.
     I = this->begin()+InsertElt;
@@ -703,7 +703,7 @@ public:
   /// of the buffer when they know that more elements are available, and only
   /// update the size later. This avoids the cost of value initializing elements
   /// which will only be overwritten.
-  void set_size(unsigned N) {
+  void set_size(size_type N) {
     assert(N <= this->capacity());
     this->setEnd(this->begin() + N);
   }
@@ -729,7 +729,7 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
   // Swap the shared elements.
   size_t NumShared = this->size();
   if (NumShared > RHS.size()) NumShared = RHS.size();
-  for (unsigned i = 0; i != static_cast<unsigned>(NumShared); ++i)
+  for (size_type i = 0; i != NumShared; ++i)
     std::swap((*this)[i], RHS[i]);
 
   // Copy over the extra elts.
@@ -886,7 +886,7 @@ public:
   SmallVector() : SmallVectorImpl<T>(N) {
   }
 
-  explicit SmallVector(unsigned Size, const T &Value = T())
+  explicit SmallVector(size_t Size, const T &Value = T())
     : SmallVectorImpl<T>(N) {
     this->assign(Size, Value);
   }
