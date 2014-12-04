@@ -205,3 +205,7 @@ By construction, this property will be upheld by the optimizer if correctly esta
 
 The existing IR Verifier pass has been extended to check most of the local restrictions on the intrinsics mentioned in their respective documentation.  The current implementation in LLVM does not check the key relocation invariant, but this is ongoing work on developing such a verifier.  Please ask on llvmdev if you're interested in experimenting with the current version.
 
+Bugs and Enhancements
+=====================
+Currently known bugs and enhancements under consideration can be tracked by performing a `bugzilla search <http://llvm.org/bugs/buglist.cgi?cmdtype=runnamed&namedcmd=Statepoint%20Bugs&list_id=64342>`_ for [Statepoint] in the summary field. When filing new bugs, please use this tag so that interested parties see the newly filed bug.  As with most LLVM features, design discussions take place on `llvmdev <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_, and patches should be sent to `llvm-commits <http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits>`_ for review.
+
