@@ -51,8 +51,9 @@ ArgumentsAdjuster getInsertArgumentAdjuster(const CommandLineArguments &Extra,
 
 /// \brief Gets an argument adjuster which inserts an \p Extra argument in the
 /// specified position.
-ArgumentsAdjuster getInsertArgumentAdjuster(const char *Extra,
-                                            ArgumentInsertPosition Pos);
+ArgumentsAdjuster getInsertArgumentAdjuster(
+    const char *Extra,
+    ArgumentInsertPosition Pos = ArgumentInsertPosition::END);
 
 /// \brief Gets an argument adjuster which adjusts the arguments in sequence
 /// with the \p First adjuster and then with the \p Second one.
