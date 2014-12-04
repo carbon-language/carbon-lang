@@ -94,7 +94,10 @@ TEST_F(FormatTestJS, LiteralOperatorsCanBeKeywords) {
 
 TEST_F(FormatTestJS, ES6DestructuringAssignment) {
   verifyFormat("var [a, b, c] = [1, 2, 3];");
-  verifyFormat("var {a, b} = {a: 1, b: 2};");
+  verifyFormat("var {a, b} = {\n"
+               "  a: 1,\n"
+               "  b: 2\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, ContainerLiterals) {
@@ -140,16 +143,16 @@ TEST_F(FormatTestJS, ContainerLiterals) {
 
 TEST_F(FormatTestJS, SpacesInContainerLiterals) {
   verifyFormat("var arr = [1, 2, 3];");
-  verifyFormat("var obj = {a: 1, b: 2, c: 3};");
+  verifyFormat("f({a: 1, b: 2, c: 3});");
 
   verifyFormat("var object_literal_with_long_name = {\n"
                "  a: 'aaaaaaaaaaaaaaaaaa',\n"
                "  b: 'bbbbbbbbbbbbbbbbbb'\n"
                "};");
 
-  verifyFormat("var obj = {a: 1, b: 2, c: 3};",
+  verifyFormat("f({a: 1, b: 2, c: 3});",
                getChromiumStyle(FormatStyle::LK_JavaScript));
-  verifyFormat("someVariable = {'a': [{}]};");
+  verifyFormat("f({'a': [{}]});");
 }
 
 TEST_F(FormatTestJS, SingleQuoteStrings) {
@@ -238,12 +241,12 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "  };\n"
                "}");
 
-  verifyFormat("var x = {a: function() { return 1; }};",
-               getGoogleJSStyleWithColumns(38));
-  verifyFormat("var x = {\n"
+  verifyFormat("f({a: function() { return 1; }});",
+               getGoogleJSStyleWithColumns(33));
+  verifyFormat("f({\n"
                "  a: function() { return 1; }\n"
-               "};",
-               getGoogleJSStyleWithColumns(37));
+               "});",
+               getGoogleJSStyleWithColumns(32));
 
   verifyFormat("return {\n"
                "  a: function SomeFunction() {\n"
