@@ -2026,22 +2026,12 @@ static Constant *computePointerICmp(const DataLayout *DL,
     };
 
     // Is the set of underlying objects all things which must be disjoint from
-    // noalias calls. For allocas, we consider only static ones (dynamic
-    // allocas might be transformed into calls to malloc not simultaneously
-    // live with the compared-to allocation). For globals, we exclude symbols
-    // that might be resolve lazily to symbols in another dynamically-loaded
-    // library (and, thus, could be malloc'ed by the implementation).
+    // noalias calls.
     auto IsAllocDisjoint = [](SmallVectorImpl<Value *> &Objects) {
       return std::all_of(Objects.begin(), Objects.end(),
                          [](Value *V){
-                           if (const AllocaInst *AI = dyn_cast<AllocaInst>(V))
-                             return AI->isStaticAlloca();
-                           if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-                             return (GV->hasLocalLinkage() ||
-                                     GV->hasHiddenVisibility() ||
-                                     GV->hasProtectedVisibility() ||
-                                     GV->hasUnnamedAddr()) &&
-                                    !GV->isThreadLocal();
+                           if (isa<AllocaInst>(V) || isa<GlobalValue>(V))
+                             return true;
                            if (const Argument *A = dyn_cast<Argument>(V))
                              return A->hasByValAttr();
                            return false;
