@@ -79,6 +79,7 @@ struct M {
 
 // __unaligned handling
 typedef char __unaligned *aligned_type;
+typedef struct UnalignedTag { int f; } __unaligned *aligned_type2;
 
 
 template<typename T> void h1(T (__stdcall M::* const )()) { }
