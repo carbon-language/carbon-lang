@@ -421,11 +421,6 @@ protected:
                                 const DWARFMappedHash::MemoryTable &memory_table,
                                 lldb_private::SymbolContextList& sc_list);
 
-    lldb::TypeSP            FindDefinitionTypeForDIE (
-                                DWARFCompileUnit* dwarf_cu, 
-                                const DWARFDebugInfoEntry *die, 
-                                const lldb_private::ConstString &type_name);
-    
     lldb::TypeSP            FindDefinitionTypeForDWARFDeclContext (
                                 const DWARFDeclContext &die_decl_ctx);
 
