@@ -142,6 +142,14 @@ function(add_llvm_symbol_exports target_name export_file)
   set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} PARENT_SCOPE)
 endfunction(add_llvm_symbol_exports)
 
+if(NOT WIN32 AND NOT APPLE)
+  execute_process(COMMAND ${CMAKE_C_COMPILER} -Wl,--version
+                  OUTPUT_VARIABLE stdout)
+  if("${stdout}" MATCHES "GNU gold")
+    set(LLVM_LINKER_IS_GOLD ON)
+  endif()
+endif()
+
 function(add_link_opts target_name)
   # Pass -O3 to the linker. This enabled different optimizations on different
   # linkers.
@@ -150,12 +158,18 @@ function(add_link_opts target_name)
                  LINK_FLAGS " -Wl,-O3")
   endif()
 
+  if(LLVM_LINKER_IS_GOLD)
+    # With gold gc-sections is always safe.
+    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                 LINK_FLAGS " -Wl,--gc-sections")
+  endif()
+
   if(NOT LLVM_NO_DEAD_STRIP)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       # ld64's implementation of -dead_strip breaks tools that use plugins.
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                    LINK_FLAGS " -Wl,-dead_strip")
-    elseif(NOT WIN32)
+    elseif(NOT WIN32 AND NOT LLVM_LINKER_IS_GOLD)
       # Object files are compiled with -ffunction-data-sections.
       # Versions of bfd ld < 2.23.1 have a bug in --gc-sections that breaks
       # tools that use plugins. Always pass --gc-sections once we require
