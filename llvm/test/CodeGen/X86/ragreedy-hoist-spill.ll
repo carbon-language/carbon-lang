@@ -202,7 +202,6 @@ lor.rhs500:
   ; CHECK: lor.rhs500
   ; Make sure that we don't hoist the spill to outer loops.
   ; CHECK: movq %r{{.*}}, {{[0-9]+}}(%rsp)
-  ; CHECK: movq %r{{.*}}, {{[0-9]+}}(%rsp)
   ; CHECK: callq {{.*}}maskrune
   %call3.i.i2792 = call i32 @__maskrune(i32 undef, i64 256)
   br i1 undef, label %land.lhs.true504, label %do.body479.backedge

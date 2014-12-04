@@ -112,7 +112,7 @@ namespace {
     /// for the lifetime of an iteration.
     ///
     /// \return True if the edge is marked as toSplit, false otherwise.
-    /// False can be retruned if, for instance, this is not profitable.
+    /// False can be returned if, for instance, this is not profitable.
     bool PostponeSplitCriticalEdge(MachineInstr *MI,
                                    MachineBasicBlock *From,
                                    MachineBasicBlock *To,
@@ -504,7 +504,7 @@ bool MachineSinking::isProfitableToSinkTo(unsigned Reg, MachineInstr *MI,
   // If SuccToSinkTo post dominates then also it may be profitable if MI
   // can further profitably sinked into another block in next round.
   bool BreakPHIEdge = false;
-  // FIXME - If finding successor is compile time expensive then catch results.
+  // FIXME - If finding successor is compile time expensive then cache results.
   if (MachineBasicBlock *MBB2 = FindSuccToSinkTo(MI, SuccToSinkTo, BreakPHIEdge))
     return isProfitableToSinkTo(Reg, MI, SuccToSinkTo, MBB2);
 
@@ -553,19 +553,6 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
       if (!TII->isSafeToMoveRegClassDefs(MRI->getRegClass(Reg)))
         return nullptr;
 
-      // FIXME: This picks a successor to sink into based on having one
-      // successor that dominates all the uses.  However, there are cases where
-      // sinking can happen but where the sink point isn't a successor.  For
-      // example:
-      //
-      //   x = computation
-      //   if () {} else {}
-      //   use x
-      //
-      // the instruction could be sunk over the whole diamond for the
-      // if/then/else (or loop, etc), allowing it to be sunk into other blocks
-      // after that.
-
       // Virtual register defs can only be sunk if all their uses are in blocks
       // dominated by one of the successors.
       if (SuccToSinkTo) {
@@ -585,6 +572,23 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
       // higher priority, otherwise prioritize smaller loop depths.
       SmallVector<MachineBasicBlock*, 4> Succs(MBB->succ_begin(),
                                                MBB->succ_end());
+
+      // Handle cases where sinking can happen but where the sink point isn't a
+      // successor. For example:
+      //
+      //   x = computation
+      //   if () {} else {}
+      //   use x
+      //
+      const std::vector<MachineDomTreeNode *> &Children =
+        DT->getNode(MBB)->getChildren();
+      for (const auto &DTChild : Children)
+        // DomTree children of MBB that have MBB as immediate dominator are added.
+        if (DTChild->getIDom()->getBlock() == MI->getParent() &&
+            // Skip MBBs already added to the Succs vector above.
+            !MBB->isSuccessor(DTChild->getBlock()))
+          Succs.push_back(DTChild->getBlock());
+
       // Sort Successors according to their loop depth or block frequency info.
       std::stable_sort(
           Succs.begin(), Succs.end(),
