@@ -309,7 +309,7 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
     builder.setEngineKind(llvm::EngineKind::JIT)
     .setErrorStr(&error_string)
     .setRelocationModel(relocModel)
-    .setMCJITMemoryManager(new MemoryManager(*this))
+    .setMCJITMemoryManager(std::unique_ptr<MemoryManager>(new MemoryManager(*this)))
     .setCodeModel(codeModel)
     .setOptLevel(llvm::CodeGenOpt::Less);
 
