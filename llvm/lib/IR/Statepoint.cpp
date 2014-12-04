@@ -51,7 +51,7 @@ bool llvm::isGCResult(const ImmutableCallSite &CS) {
   return isGCResult(CS.getInstruction());
 }
 bool llvm::isGCResult(const Instruction *inst) {
-  if (const CallInst *call = cast<CallInst>(inst)) {
+  if (const CallInst *call = dyn_cast<CallInst>(inst)) {
     if (Function *F = call->getCalledFunction()) {
       return (F->getIntrinsicID() == Intrinsic::experimental_gc_result_int ||
               F->getIntrinsicID() == Intrinsic::experimental_gc_result_float ||
