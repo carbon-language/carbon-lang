@@ -139,6 +139,9 @@ class PPCFastISel final : public FastISel {
   private:
     bool isTypeLegal(Type *Ty, MVT &VT);
     bool isLoadTypeLegal(Type *Ty, MVT &VT);
+    bool isVSFRCRegister(unsigned Register) const {
+      return MRI.getRegClass(Register)->getID() == PPC::VSFRCRegClassID;
+    }
     bool PPCEmitCmp(const Value *Src1Value, const Value *Src2Value,
                     bool isZExt, unsigned DestReg);
     bool PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
@@ -482,6 +485,16 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
   // the indexed form.  Also handle stack pointers with special needs.
   unsigned IndexReg = 0;
   PPCSimplifyAddress(Addr, VT, UseOffset, IndexReg);
+
+  // If this is a potential VSX load with an offset of 0, a VSX indexed load can
+  // be used.
+  bool IsVSFRC = (ResultReg != 0) && isVSFRCRegister(ResultReg);
+  if (IsVSFRC && (Opc == PPC::LFD) && 
+      (Addr.BaseType != Address::FrameIndexBase) && UseOffset &&
+      (Addr.Offset == 0)) {
+    UseOffset = false;
+  }
+
   if (ResultReg == 0)
     ResultReg = createResultReg(UseRC);
 
@@ -489,6 +502,8 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
   // in range, as otherwise PPCSimplifyAddress would have converted it
   // into a RegBase.
   if (Addr.BaseType == Address::FrameIndexBase) {
+    // VSX only provides an indexed load.
+    if (IsVSFRC && Opc == PPC::LFD) return false;
 
     MachineMemOperand *MMO =
       FuncInfo.MF->getMachineMemOperand(
@@ -501,6 +516,8 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
 
   // Base reg with offset in range.
   } else if (UseOffset) {
+    // VSX only provides an indexed load.
+    if (IsVSFRC && Opc == PPC::LFD) return false;
 
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addImm(Addr.Offset).addReg(Addr.Base.Reg);
@@ -524,7 +541,7 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
       case PPC::LWA_32: Opc = PPC::LWAX_32; break;
       case PPC::LD:     Opc = PPC::LDX;     break;
       case PPC::LFS:    Opc = PPC::LFSX;    break;
-      case PPC::LFD:    Opc = PPC::LFDX;    break;
+      case PPC::LFD:    Opc = IsVSFRC ? PPC::LXSDX : PPC::LFDX; break;
     }
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addReg(Addr.Base.Reg).addReg(IndexReg);
@@ -602,10 +619,22 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
   unsigned IndexReg = 0;
   PPCSimplifyAddress(Addr, VT, UseOffset, IndexReg);
 
+  // If this is a potential VSX store with an offset of 0, a VSX indexed store
+  // can be used.
+  bool IsVSFRC = isVSFRCRegister(SrcReg);
+  if (IsVSFRC && (Opc == PPC::STFD) && 
+      (Addr.BaseType != Address::FrameIndexBase) && UseOffset && 
+      (Addr.Offset == 0)) {
+    UseOffset = false;
+  }
+
   // Note: If we still have a frame index here, we know the offset is
   // in range, as otherwise PPCSimplifyAddress would have converted it
   // into a RegBase.
   if (Addr.BaseType == Address::FrameIndexBase) {
+    // VSX only provides an indexed store.
+    if (IsVSFRC && Opc == PPC::STFD) return false;
+
     MachineMemOperand *MMO =
       FuncInfo.MF->getMachineMemOperand(
         MachinePointerInfo::getFixedStack(Addr.Base.FI, Addr.Offset),
@@ -619,12 +648,15 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
         .addMemOperand(MMO);
 
   // Base reg with offset in range.
-  } else if (UseOffset)
+  } else if (UseOffset) {
+    // VSX only provides an indexed store.
+    if (IsVSFRC && Opc == PPC::STFD) return false;
+    
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc))
       .addReg(SrcReg).addImm(Addr.Offset).addReg(Addr.Base.Reg);
 
   // Indexed form.
-  else {
+  } else {
     // Get the RR opcode corresponding to the RI one.  FIXME: It would be
     // preferable to use the ImmToIdxMap from PPCRegisterInfo.cpp, but it
     // is hard to get at.
@@ -638,7 +670,7 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
       case PPC::STW8: Opc = PPC::STWX8; break;
       case PPC::STD:  Opc = PPC::STDX;  break;
       case PPC::STFS: Opc = PPC::STFSX; break;
-      case PPC::STFD: Opc = PPC::STFDX; break;
+      case PPC::STFD: Opc = IsVSFRC ? PPC::STXSDX : PPC::STFDX; break;
     }
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc))
       .addReg(SrcReg).addReg(Addr.Base.Reg).addReg(IndexReg);
