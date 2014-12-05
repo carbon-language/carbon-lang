@@ -17636,7 +17636,8 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
       DAG.getSubtarget().getRegisterInfo());
-  unsigned FrameReg = RegInfo->getFrameRegister(DAG.getMachineFunction());
+  unsigned FrameReg = RegInfo->getPtrSizedFrameRegister(
+      DAG.getMachineFunction());
   assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
           (FrameReg == X86::EBP && VT == MVT::i32)) &&
          "Invalid Frame Register!");

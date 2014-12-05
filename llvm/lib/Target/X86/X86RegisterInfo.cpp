@@ -535,6 +535,14 @@ unsigned X86RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return TFI->hasFP(MF) ? FramePtr : StackPtr;
 }
 
+unsigned X86RegisterInfo::getPtrSizedFrameRegister(
+    const MachineFunction &MF) const {
+  unsigned FrameReg = getFrameRegister(MF);
+  if (Subtarget.isTarget64BitILP32())
+    FrameReg = getX86SubSuperRegister(FrameReg, MVT::i32, false);
+  return FrameReg;
+}
+
 namespace llvm {
 unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
                                 bool High) {

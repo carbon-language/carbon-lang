@@ -2143,14 +2143,14 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     case MVT::i64: Opc = X86::MOV64rm; RC = &X86::GR64RegClass; break;
     }
 
-    // This needs to be set before we call getFrameRegister, otherwise we get
-    // the wrong frame register.
+    // This needs to be set before we call getPtrSizedFrameRegister, otherwise
+    // we get the wrong frame register.
     MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
     MFI->setFrameAddressIsTaken(true);
 
     const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
         TM.getSubtargetImpl()->getRegisterInfo());
-    unsigned FrameReg = RegInfo->getFrameRegister(*(FuncInfo.MF));
+    unsigned FrameReg = RegInfo->getPtrSizedFrameRegister(*(FuncInfo.MF));
     assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
             (FrameReg == X86::EBP && VT == MVT::i32)) &&
            "Invalid Frame Register!");
