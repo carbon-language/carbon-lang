@@ -853,8 +853,8 @@ namespace lldb {
         ePathTypePythonDir,             // Find Python modules (PYTHONPATH) directory
         ePathTypeLLDBSystemPlugins,     // System plug-ins directory
         ePathTypeLLDBUserPlugins,       // User plug-ins directory
-        ePathTypeLLDBTempSystemDir      // The LLDB temp directory for this system that will be cleaned up on exit
-        
+        ePathTypeLLDBTempSystemDir,     // The LLDB temp directory for this system that will be cleaned up on exit
+        ePathTypeClangDir               // Find path to Clang builtin headers
     } PathType;
     
     //----------------------------------------------------------------------
