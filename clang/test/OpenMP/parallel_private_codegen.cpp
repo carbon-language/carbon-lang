@@ -73,7 +73,7 @@ int main() {
 // CHECK: call {{.*}} [[S_FLOAT_TY_DEF_CONSTR]]([[S_FLOAT_TY]]* [[VAR_PRIV]])
 // CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}** [[GTID_ADDR_REF]]
 // CHECK: [[GTID:%.+]] = load i{{[0-9]+}}* [[GTID_REF]]
-// CHECK: call void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
+// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
 // CHECK-DAG: call void [[S_FLOAT_TY_DESTR]]([[S_FLOAT_TY]]* [[VAR_PRIV]])
 // CHECK-DAG: call void [[S_FLOAT_TY_DESTR]]([[S_FLOAT_TY]]*
 // CHECK: ret void
@@ -101,7 +101,7 @@ int main() {
 // CHECK: call {{.*}} [[S_INT_TY_DEF_CONSTR]]([[S_INT_TY]]* [[VAR_PRIV]])
 // CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}** [[GTID_ADDR_REF]]
 // CHECK: [[GTID:%.+]] = load i{{[0-9]+}}* [[GTID_REF]]
-// CHECK: call void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
+// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
 // CHECK-DAG: call void [[S_INT_TY_DESTR]]([[S_INT_TY]]* [[VAR_PRIV]])
 // CHECK-DAG: call void [[S_INT_TY_DESTR]]([[S_INT_TY]]*
 // CHECK: ret void

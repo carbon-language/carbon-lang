@@ -531,8 +531,8 @@ void CodeGenFunction::EmitOMPTaskyieldDirective(const OMPTaskyieldDirective &) {
   llvm_unreachable("CodeGen for 'omp taskyield' is not supported yet.");
 }
 
-void CodeGenFunction::EmitOMPBarrierDirective(const OMPBarrierDirective &) {
-  llvm_unreachable("CodeGen for 'omp barrier' is not supported yet.");
+void CodeGenFunction::EmitOMPBarrierDirective(const OMPBarrierDirective &S) {
+  CGM.getOpenMPRuntime().EmitOMPBarrierCall(*this, S.getLocStart());
 }
 
 void CodeGenFunction::EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &) {

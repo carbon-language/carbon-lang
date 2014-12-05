@@ -73,14 +73,10 @@ void CGOpenMPRegionInfo::EmitBody(CodeGenFunction &CGF, Stmt *S) {
   CodeGenFunction::OMPPrivateScope PrivateScope(CGF);
   CGF.EmitOMPPrivateClause(Directive, PrivateScope);
   CGF.EmitOMPFirstprivateClause(Directive, PrivateScope);
-  if (PrivateScope.Privatize()) {
+  if (PrivateScope.Privatize())
     // Emit implicit barrier to synchronize threads and avoid data races.
-    auto Flags = static_cast<CGOpenMPRuntime::OpenMPLocationFlags>(
-        CGOpenMPRuntime::OMP_IDENT_KMPC |
-        CGOpenMPRuntime::OMP_IDENT_BARRIER_IMPL);
     CGF.CGM.getOpenMPRuntime().EmitOMPBarrierCall(CGF, Directive.getLocStart(),
-                                                  Flags);
-  }
+                                                  /*IsExplicit=*/false);
   CGCapturedStmtInfo::EmitBody(CGF, S);
 }
 
@@ -327,12 +323,13 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_end_critical");
     break;
   }
-  case OMPRTL__kmpc_barrier: {
-    // Build void __kmpc_barrier(ident_t *loc, kmp_int32 global_tid);
+  case OMPRTL__kmpc_cancel_barrier: {
+    // Build kmp_int32 __kmpc_cancel_barrier(ident_t *loc, kmp_int32
+    // global_tid);
     llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
     llvm::FunctionType *FnTy =
-        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
-    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name*/ "__kmpc_barrier");
+        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name*/ "__kmpc_cancel_barrier");
     break;
   }
   case OMPRTL__kmpc_push_num_threads: {
@@ -699,12 +696,20 @@ void CGOpenMPRuntime::EmitOMPMasterRegion(
 }
 
 void CGOpenMPRuntime::EmitOMPBarrierCall(CodeGenFunction &CGF,
-                                         SourceLocation Loc,
-                                         OpenMPLocationFlags Flags) {
-  // Build call __kmpc_barrier(loc, thread_id)
+                                         SourceLocation Loc, bool IsExplicit) {
+  // Build call __kmpc_cancel_barrier(loc, thread_id);
+  auto Flags = static_cast<OpenMPLocationFlags>(
+      OMP_IDENT_KMPC |
+      (IsExplicit ? OMP_IDENT_BARRIER_EXPL : OMP_IDENT_BARRIER_IMPL));
+  // Build call __kmpc_cancel_barrier(loc, thread_id);
+  // Replace __kmpc_barrier() function by __kmpc_cancel_barrier() because this
+  // one provides the same functionality and adds initial support for
+  // cancellation constructs introduced in OpenMP 4.0. __kmpc_cancel_barrier()
+  // is provided default by the runtime library so it safe to make such
+  // replacement.
   llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc, Flags),
                          GetOpenMPThreadID(CGF, Loc)};
-  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_barrier);
+  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_cancel_barrier);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
