@@ -7,6 +7,8 @@
 // RUN: echo "interceptor_via_lib:%t-so.so" > %t.supp
 // RUN: ASAN_OPTIONS=suppressions=%t.supp %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
+// XFAIL: android
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
