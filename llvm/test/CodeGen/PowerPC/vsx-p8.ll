@@ -1,4 +1,7 @@
 ; RUN: llc -mcpu=pwr8 -mattr=+power8-vector < %s | FileCheck %s
+; RUN: llc -mcpu=pwr8 -mattr=+power8-vector < %s | FileCheck -check-prefix=CHECK-REG %s
+; RUN: llc -mcpu=pwr8 -mattr=+power8-vector -fast-isel -O0 < %s | FileCheck %s
+; RUN: llc -mcpu=pwr8 -mattr=+power8-vector -fast-isel -O0 < %s | FileCheck -check-prefix=CHECK-FISL %s
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
@@ -26,17 +29,27 @@ define <4 x float> @test32u(<4 x float>* %a) {
   %v = load <4 x float>* %a, align 8
   ret <4 x float> %v
 
-; CHECK-LABEL: @test32u
-; CHECK: lxvw4x 34, 0, 3
-; CHECK: blr
+; CHECK-REG-LABEL: @test32u
+; CHECK-REG: lxvw4x 34, 0, 3
+; CHECK-REG: blr
+
+; CHECK-FISL-LABEL: @test32u
+; CHECK-FISL: lxvw4x 0, 0, 3
+; CHECK-FISL: xxlor 34, 0, 0
+; CHECK-FISL: blr
 }
 
 define void @test33u(<4 x float>* %a, <4 x float> %b) {
   store <4 x float> %b, <4 x float>* %a, align 8
   ret void
 
-; CHECK-LABEL: @test33u
-; CHECK: stxvw4x 34, 0, 3
-; CHECK: blr
+; CHECK-REG-LABEL: @test33u
+; CHECK-REG: stxvw4x 34, 0, 3
+; CHECK-REG: blr
+
+; CHECK-FISL-LABEL: @test33u
+; CHECK-FISL: vor 3, 2, 2
+; CHECK-FISL: stxvw4x 35, 0, 3
+; CHECK-FISL: blr
 }
 

@@ -1,4 +1,7 @@
 ; RUN: llc -mcpu=pwr7 -mattr=+vsx < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -mattr=+vsx < %s | FileCheck -check-prefix=CHECK-REG %s
+; RUN: llc -mcpu=pwr7 -mattr=+vsx -fast-isel -O0 < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -mattr=+vsx -fast-isel -O0 < %s | FileCheck -check-prefix=CHECK-FISL %s
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
@@ -7,10 +10,16 @@ entry:
   call void asm sideeffect "", "~{f0},~{f1},~{f2},~{f3},~{f4},~{f5},~{f6},~{f7},~{f8},~{f9},~{f10},~{f11},~{f12},~{f13},~{f14},~{f15},~{f16},~{f17},~{f18},~{f19},~{f20},~{f21},~{f22},~{f23},~{f24},~{f25},~{f26},~{f27},~{f28},~{f29},~{f30},~{f31}"() nounwind
   br label %return
 
-; CHECK: @foo1
-; CHECK: xxlor [[R1:[0-9]+]], 1, 1
-; CHECK: xxlor 1, [[R1]], [[R1]]
-; CHECK: blr
+; CHECK-REG: @foo1
+; CHECK-REG: xxlor [[R1:[0-9]+]], 1, 1
+; CHECK-REG: xxlor 1, [[R1]], [[R1]]
+; CHECK-REG: blr
+
+; CHECK-FISL: @foo1
+; CHECK-FISL: lis 0, -1
+; CHECK-FISL: ori 0, 0, 65384
+; CHECK-FISL: stxsdx 1, 1, 0
+; CHECK-FISL: blr
 
 return:                                           ; preds = %entry
   ret double %a
@@ -22,10 +31,16 @@ entry:
   call void asm sideeffect "", "~{f0},~{f1},~{f2},~{f3},~{f4},~{f5},~{f6},~{f7},~{f8},~{f9},~{f10},~{f11},~{f12},~{f13},~{f14},~{f15},~{f16},~{f17},~{f18},~{f19},~{f20},~{f21},~{f22},~{f23},~{f24},~{f25},~{f26},~{f27},~{f28},~{f29},~{f30},~{f31}"() nounwind
   br label %return
 
-; CHECK: @foo2
-; CHECK: {{xxlor|xsadddp}} [[R1:[0-9]+]], 1, 1
-; CHECK: {{xxlor|xsadddp}} 1, [[R1]], [[R1]]
-; CHECK: blr
+; CHECK-REG: @foo2
+; CHECK-REG: {{xxlor|xsadddp}} [[R1:[0-9]+]], 1, 1
+; CHECK-REG: {{xxlor|xsadddp}} 1, [[R1]], [[R1]]
+; CHECK-REG: blr
+
+; CHECK-FISL: @foo2
+; CHECK-FISL: xsadddp [[R1:[0-9]+]], 1, 1
+; CHECK-FISL: stxsdx [[R1]], [[R1]], 0
+; CHECK-FISL: lxsdx [[R1]], [[R1]], 0
+; CHECK-FISL: blr
 
 return:                                           ; preds = %entry
   ret double %b

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mcpu=pwr7 -mattr=+vsx | FileCheck %s
+; RUN: llc < %s -mcpu=pwr7 -mattr=+vsx -fast-isel -O0 | FileCheck -check-prefix=CHECK-FISL %s
 
 ; Also run with -schedule-ppc-vsx-fma-mutation-early as a stress test for the
 ; live-interval-updating logic.
@@ -22,6 +23,15 @@ entry:
 ; CHECK-DAG: stxsdx 3, 0, 7
 ; CHECK-DAG: stxsdx 1, 7, [[C1]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @test1
+; CHECK-FISL-DAG: fmr 0, 1
+; CHECK-FISL-DAG: xsmaddadp 0, 2, 3
+; CHECK-FISL-DAG: stxsdx 0, 0, 7
+; CHECK-FISL-DAG: xsmaddadp 1, 2, 4
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 8
+; CHECK-FISL-DAG: stxsdx 1, 7, [[C1]]
+; CHECK-FISL: blr
 }
 
 define void @test2(double %a, double %b, double %c, double %e, double %f, double* nocapture %d) #0 {
@@ -46,6 +56,19 @@ entry:
 ; CHECK-DAG: stxsdx 4, 8, [[C1]]
 ; CHECK-DAG: stxsdx 1, 8, [[C2]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @test2
+; CHECK-FISL-DAG: fmr 0, 1
+; CHECK-FISL-DAG: xsmaddadp 0, 2, 3
+; CHECK-FISL-DAG: stxsdx 0, 0, 8
+; CHECK-FISL-DAG: fmr 0, 1
+; CHECK-FISL-DAG: xsmaddadp 0, 2, 4
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 8
+; CHECK-FISL-DAG: stxsdx 0, 8, [[C1]]
+; CHECK-FISL-DAG: xsmaddadp 1, 2, 5
+; CHECK-FISL-DAG: li [[C2:[0-9]+]], 16
+; CHECK-FISL-DAG: stxsdx 1, 8, [[C2]]
+; CHECK-FISL: blr
 }
 
 define void @test3(double %a, double %b, double %c, double %e, double %f, double* nocapture %d) #0 {
@@ -81,6 +104,20 @@ entry:
 ; CHECK-DAG: stxsdx 1, 8, [[C2]]
 ; CHECK-DAG: stxsdx 4, 8, [[C3]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @test3
+; CHECK-FISL-DAG: fmr [[F1:[0-9]+]], 1
+; CHECK-FISL-DAG: xsmaddadp [[F1]], 2, 4
+; CHECK-FISL-DAG: fmr 4, [[F1]]
+; CHECK-FISL-DAG: xsmaddadp 4, 2, 3
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 24
+; CHECK-FISL-DAG: stxsdx 4, 8, [[C1]]
+; CHECK-FISL-DAG: xsmaddadp 1, 2, 5
+; CHECK-FISL-DAG: li [[C2:[0-9]+]], 16
+; CHECK-FISL-DAG: stxsdx 1, 8, [[C2]]
+; CHECK-FISL-DAG: li [[C3:[0-9]+]], 8
+; CHECK-FISL-DAG: stxsdx 0, 8, [[C3]]
+; CHECK-FISL: blr
 }
 
 define void @test4(double %a, double %b, double %c, double %e, double %f, double* nocapture %d) #0 {
@@ -116,6 +153,22 @@ entry:
 ; CHECK-DAG: stxsdx 4, 8, [[C3]]
 ; CHECK-DAG: stxsdx 1, 8, [[C2]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @test4
+; CHECK-FISL-DAG: fmr [[F1:[0-9]+]], 1
+; CHECK-FISL-DAG: xsmaddadp [[F1]], 2, 3
+; CHECK-FISL-DAG: stxsdx 0, 0, 8
+; CHECK-FISL-DAG: fmr [[F1]], 1
+; CHECK-FISL-DAG: xsmaddadp [[F1]], 2, 4
+; CHECK-FISL-DAG: li [[C3:[0-9]+]], 8
+; CHECK-FISL-DAG: stxsdx 0, 8, [[C3]]
+; CHECK-FISL-DAG: xsmaddadp 0, 2, 3
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 24
+; CHECK-FISL-DAG: stxsdx 0, 8, [[C1]]
+; CHECK-FISL-DAG: xsmaddadp 1, 2, 5
+; CHECK-FISL-DAG: li [[C2:[0-9]+]], 16
+; CHECK-FISL-DAG: stxsdx 1, 8, [[C2]]
+; CHECK-FISL: blr
 }
 
 declare double @llvm.fma.f64(double, double, double) #0
@@ -136,6 +189,15 @@ entry:
 ; CHECK-DAG: stxvd2x 36, 0, 3
 ; CHECK-DAG: stxvd2x 34, 3, [[C1:[0-9]+]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @testv1
+; CHECK-FISL-DAG: xxlor 0, 34, 34
+; CHECK-FISL-DAG: xvmaddadp 0, 35, 36
+; CHECK-FISL-DAG: stxvd2x 0, 0, 3
+; CHECK-FISL-DAG: xvmaddadp 34, 35, 37
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 16
+; CHECK-FISL-DAG: stxvd2x 34, 3, [[C1:[0-9]+]]
+; CHECK-FISL: blr
 }
 
 define void @testv2(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double> %e, <2 x double> %f, <2 x double>* nocapture %d) #0 {
@@ -160,6 +222,19 @@ entry:
 ; CHECK-DAG: stxvd2x 37, 3, [[C1:[0-9]+]]
 ; CHECK-DAG: stxvd2x 34, 3, [[C2:[0-9]+]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @testv2
+; CHECK-FISL-DAG: xxlor 0, 34, 34
+; CHECK-FISL-DAG: xvmaddadp 0, 35, 36
+; CHECK-FISL-DAG: stxvd2x 0, 0, 3
+; CHECK-FISL-DAG: xxlor 0, 34, 34
+; CHECK-FISL-DAG: xvmaddadp 0, 35, 37
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 16
+; CHECK-FISL-DAG: stxvd2x 0, 3, [[C1:[0-9]+]]
+; CHECK-FISL-DAG: xvmaddadp 34, 35, 38
+; CHECK-FISL-DAG: li [[C2:[0-9]+]], 32
+; CHECK-FISL-DAG: stxvd2x 34, 3, [[C2:[0-9]+]]
+; CHECK-FISL: blr
 }
 
 define void @testv3(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double> %e, <2 x double> %f, <2 x double>* nocapture %d) #0 {
@@ -201,6 +276,23 @@ entry:
 ; CHECK-DAG: stxvd2x 34, 3, [[C2]]
 ; CHECK-DAG: stxvd2x 37, 3, [[C3]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @testv3
+; CHECK-FISL-DAG: xxlor [[V1:[0-9]+]], 34, 34
+; CHECK-FISL-DAG: xvmaddadp [[V1]], 35, 36
+; CHECK-FISL-DAG: stxvd2x [[V1]], 0, 3
+; CHECK-FISL-DAG: xxlor [[V2:[0-9]+]], 34, 34
+; CHECK-FISL-DAG: xvmaddadp [[V2]], 35, 37
+; CHECK-FISL-DAG: xxlor [[V3:[0-9]+]], 0, 0
+; CHECK-FISL-DAG: xvmaddadp [[V3]], 35, 36
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 48
+; CHECK-FISL-DAG: stxvd2x [[V3]], 3, [[C1]]
+; CHECK-FISL-DAG: xvmaddadp 34, 35, 38
+; CHECK-FISL-DAG: li [[C2:[0-9]+]], 32
+; CHECK-FISL-DAG: stxvd2x 34, 3, [[C2]]
+; CHECK-FISL-DAG: li [[C3:[0-9]+]], 16
+; CHECK-FISL-DAG: stxvd2x 0, 3, [[C3]]
+; CHECK-FISL: blr
 }
 
 define void @testv4(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double> %e, <2 x double> %f, <2 x double>* nocapture %d) #0 {
@@ -236,6 +328,22 @@ entry:
 ; CHECK-DAG: stxvd2x 37, 3, [[C3]]
 ; CHECK-DAG: stxvd2x 34, 3, [[C2]]
 ; CHECK: blr
+
+; CHECK-FISL-LABEL: @testv4
+; CHECK-FISL-DAG: xxlor [[V1:[0-9]+]], 34, 34
+; CHECK-FISL-DAG: xvmaddadp [[V1]], 35, 36
+; CHECK-FISL-DAG: stxvd2x 0, 0, 3
+; CHECK-FISL-DAG: xxlor [[V2:[0-9]+]], 34, 34
+; CHECK-FISL-DAG: xvmaddadp [[V2]], 35, 37
+; CHECK-FISL-DAG: li [[C1:[0-9]+]], 16
+; CHECK-FISL-DAG: stxvd2x 0, 3, [[C1]]
+; CHECK-FISL-DAG: xvmaddadp 0, 35, 37
+; CHECK-FISL-DAG: li [[C3:[0-9]+]], 48
+; CHECK-FISL-DAG: stxvd2x 0, 3, [[C3]]
+; CHECK-FISL-DAG: xvmaddadp 0, 35, 36
+; CHECK-FISL-DAG: li [[C2:[0-9]+]], 32
+; CHECK-FISL-DAG: stxvd2x 34, 3, [[C2]]
+; CHECK-FISL: blr
 }
 
 declare <2 x double> @llvm.fma.v2f64(<2 x double>, <2 x double>, <2 x double>) #0
