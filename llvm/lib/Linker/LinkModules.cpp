@@ -1028,30 +1028,30 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   else
     NewGV = linkGlobalAliasProto(cast<GlobalAlias>(SGV), DGV, LinkFromSrc);
 
-  if (NewGV) {
-    if (NewGV != DGV)
-      copyGVAttributes(NewGV, SGV);
+  if (!NewGV)
+    return false;
 
-    NewGV->setUnnamedAddr(HasUnnamedAddr);
-    NewGV->setVisibility(Visibility);
+  if (NewGV != DGV)
+    copyGVAttributes(NewGV, SGV);
 
-    if (auto *NewGO = dyn_cast<GlobalObject>(NewGV)) {
-      if (C)
-        NewGO->setComdat(C);
+  NewGV->setUnnamedAddr(HasUnnamedAddr);
+  NewGV->setVisibility(Visibility);
 
-      if (DGV && DGV->hasCommonLinkage() && SGV->hasCommonLinkage())
-        NewGO->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
+  if (auto *NewGO = dyn_cast<GlobalObject>(NewGV)) {
+    if (C)
+      NewGO->setComdat(C);
+
+    if (DGV && DGV->hasCommonLinkage() && SGV->hasCommonLinkage())
+      NewGO->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
+  }
+
+  // Make sure to remember this mapping.
+  if (NewGV != DGV) {
+    if (DGV) {
+      DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewGV, DGV->getType()));
+      DGV->eraseFromParent();
     }
-
-    // Make sure to remember this mapping.
-    if (NewGV != DGV) {
-      if (DGV) {
-        DGV->replaceAllUsesWith(
-            ConstantExpr::getBitCast(NewGV, DGV->getType()));
-        DGV->eraseFromParent();
-      }
-      ValueMap[SGV] = NewGV;
-    }
+    ValueMap[SGV] = NewGV;
   }
 
   return false;
