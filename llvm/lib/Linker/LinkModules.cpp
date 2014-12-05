@@ -1045,6 +1045,14 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
       NewGO->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
   }
 
+  if (auto *NewGVar = dyn_cast<GlobalVariable>(NewGV)) {
+    auto *DGVar = dyn_cast_or_null<GlobalVariable>(DGV);
+    auto *SGVar = dyn_cast<GlobalVariable>(SGV);
+    if (DGVar && SGVar && DGVar->isDeclaration() && SGVar->isDeclaration() &&
+        (!DGVar->isConstant() || !SGVar->isConstant()))
+      NewGVar->setConstant(false);
+  }
+
   // Make sure to remember this mapping.
   if (NewGV != DGV) {
     if (DGV) {
@@ -1062,21 +1070,8 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
 GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
                                                    GlobalValue *DGV,
                                                    bool LinkFromSrc) {
-  bool ClearConstant = false;
-
-  if (DGV) {
-    auto *DGVar = dyn_cast<GlobalVariable>(DGV);
-    if (!SGVar->isConstant() || (DGVar && !DGVar->isConstant()))
-      ClearConstant = true;
-  }
-
-  if (!LinkFromSrc) {
-    if (auto *NewGVar = dyn_cast<GlobalVariable>(DGV)) {
-      if (NewGVar->isDeclaration() && ClearConstant)
-        NewGVar->setConstant(false);
-    }
+  if (!LinkFromSrc)
     return DGV;
-  }
 
   // No linking to be performed or linking from the source: simply create an
   // identical version of the symbol over in the dest module... the
