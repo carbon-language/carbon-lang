@@ -462,6 +462,20 @@ Platform::GetOSKernelDescription (std::string &s)
         return GetRemoteOSKernelDescription (s);
 }
 
+void
+Platform::AddClangModuleCompilationOptions (std::vector<std::string> &options)
+{
+    std::vector<std::string> default_compilation_options =
+    {
+        "-x", "c++", "-Xclang", "-nostdsysteminc", "-Xclang", "-nostdsysteminc"
+    };
+    
+    options.insert(options.end(),
+                   default_compilation_options.begin(),
+                   default_compilation_options.end());
+}
+
+
 ConstString
 Platform::GetWorkingDirectory ()
 {

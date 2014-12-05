@@ -97,6 +97,12 @@ public:
     virtual bool
     GetSupportedArchitectureAtIndex (uint32_t idx, 
                                      lldb_private::ArchSpec &arch);
+    
+    void
+    AddClangModuleCompilationOptions (std::vector<std::string> &options) override
+    {
+        return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(options, PlatformDarwin::SDKType::iPhoneSimulator);
+    }
 
 protected:
     std::string m_sdk_directory;

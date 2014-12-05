@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Host/FileSpec.h"
 #include "Plugins/Platform/POSIX/PlatformPOSIX.h"
 
 class PlatformDarwin : public PlatformPOSIX
@@ -79,6 +80,9 @@ public:
 
     void
     CalculateTrapHandlerSymbolNames () override;
+    
+    bool
+    SupportsModules () override { return true; }
 
 protected:
 
@@ -94,6 +98,39 @@ protected:
                                    const lldb_private::FileSpecList *module_search_paths_ptr,
                                    lldb::ModuleSP *old_module_sp_ptr,
                                    bool *did_create_ptr);
+    
+    
+    enum class SDKType {
+        MacOSX = 0,
+        iPhoneSimulator,
+        iPhoneOS,
+    };
+    
+    static bool
+    SDKSupportsModules (SDKType sdk_type, uint32_t major, uint32_t minor, uint32_t micro);
+    
+    static bool
+    SDKSupportsModules (SDKType desired_type, const lldb_private::FileSpec &sdk_path);
+    
+    struct SDKEnumeratorInfo {
+        lldb_private::FileSpec  found_path;
+        SDKType                 sdk_type;
+    };
+    
+    static lldb_private::FileSpec::EnumerateDirectoryResult
+    DirectoryEnumerator(void *baton,
+                        lldb_private::FileSpec::FileType file_type,
+                        const lldb_private::FileSpec &spec);
+    
+    static lldb_private::FileSpec
+    FindSDKInXcodeForModules (SDKType sdk_type,
+                              const lldb_private::FileSpec &sdks_spec);
+
+    static lldb_private::FileSpec
+    GetSDKDirectoryForModules (PlatformDarwin::SDKType sdk_type);
+
+    void
+    AddClangModuleCompilationOptionsForSDKType (std::vector<std::string> &options, SDKType sdk_type);
 
     std::string                 m_developer_directory;
 

@@ -97,6 +97,12 @@ public:
 
     virtual lldb_private::ConstString
     GetSDKDirectory (lldb_private::Target &target);
+    
+    void
+    AddClangModuleCompilationOptions (std::vector<std::string> &options) override
+    {
+        return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(options, PlatformDarwin::SDKType::MacOSX);
+    }
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformMacOSX);

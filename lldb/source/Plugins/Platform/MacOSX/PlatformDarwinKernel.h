@@ -93,6 +93,9 @@ public:
     virtual bool
     GetSupportedArchitectureAtIndex (uint32_t idx, 
                                      lldb_private::ArchSpec &arch);
+    
+    bool
+    SupportsModules() override { return false; }
 
 protected:
 
