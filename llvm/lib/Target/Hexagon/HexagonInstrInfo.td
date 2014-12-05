@@ -95,7 +95,7 @@ multiclass CMP64_rr<string OpcStr, PatFrag OpNode> {
 //===----------------------------------------------------------------------===//
 def SDTHexagonI64I32I32 : SDTypeProfile<1, 2,
   [SDTCisVT<0, i64>, SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
-  
+
 def HexagonCOMBINE : SDNode<"HexagonISD::COMBINE", SDTHexagonI64I32I32>;
 
 def HexagonWrapperCombineII :
@@ -295,6 +295,85 @@ def A2_combineii: ALU32Inst <(outs DoubleRegs:$Rdd), (ins s8Ext:$s8, s8Imm:$S8),
     let Inst{4-0}   = Rdd;
   }
 
+//===----------------------------------------------------------------------===//
+// Template class for predicated ADD of a reg and an Immediate value.
+//===----------------------------------------------------------------------===//
+let hasNewValue = 1 in
+class T_Addri_Pred <bit PredNot, bit PredNew>
+  : ALU32_ri <(outs IntRegs:$Rd),
+              (ins PredRegs:$Pu, IntRegs:$Rs, s8Ext:$s8),
+  !if(PredNot, "if (!$Pu", "if ($Pu")#!if(PredNew,".new) $Rd = ",
+  ") $Rd = ")#"add($Rs, #$s8)"> {
+    bits<5> Rd;
+    bits<2> Pu;
+    bits<5> Rs;
+    bits<8> s8;
+
+    let isPredicatedNew = PredNew;
+    let IClass = 0b0111;
+
+    let Inst{27-24} = 0b0100;
+    let Inst{23}    = PredNot;
+    let Inst{22-21} = Pu;
+    let Inst{20-16} = Rs;
+    let Inst{13}    = PredNew;
+    let Inst{12-5}  = s8;
+    let Inst{4-0}   = Rd;
+  }
+
+//===----------------------------------------------------------------------===//
+// A2_addi: Add a signed immediate to a register.
+//===----------------------------------------------------------------------===//
+let hasNewValue = 1 in
+class T_Addri <Operand immOp, list<dag> pattern = [] >
+  : ALU32_ri <(outs IntRegs:$Rd),
+              (ins IntRegs:$Rs, immOp:$s16),
+  "$Rd = add($Rs, #$s16)", pattern,
+  //[(set (i32 IntRegs:$Rd), (add (i32 IntRegs:$Rs), (s16ExtPred:$s16)))],
+  "", ALU32_ADDI_tc_1_SLOT0123> {
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<16> s16;
+
+    let IClass = 0b1011;
+
+    let Inst{27-21} = s16{15-9};
+    let Inst{20-16} = Rs;
+    let Inst{13-5}  = s16{8-0};
+    let Inst{4-0}   = Rd;
+  }
+
+//===----------------------------------------------------------------------===//
+// Multiclass for ADD of a register and an immediate value.
+//===----------------------------------------------------------------------===//
+multiclass Addri_Pred<string mnemonic, bit PredNot> {
+  let isPredicatedFalse = PredNot in {
+    def _c#NAME : T_Addri_Pred<PredNot, 0>;
+    // Predicate new
+    def _cdn#NAME : T_Addri_Pred<PredNot, 1>;
+  }
+}
+
+let isExtendable = 1, InputType = "imm" in
+multiclass Addri_base<string mnemonic, SDNode OpNode> {
+  let CextOpcode = mnemonic, BaseOpcode = mnemonic#_ri in {
+    let opExtendable = 2, isExtentSigned = 1, opExtentBits = 16,
+    isPredicable = 1 in
+    def NAME : T_Addri< s16Ext, // Rd=add(Rs,#s16)
+                        [(set (i32 IntRegs:$Rd),
+                              (add IntRegs:$Rs, s16ExtPred:$s16))]>;
+
+    let opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
+    hasSideEffects = 0, isPredicated = 1 in {
+      defm Pt : Addri_Pred<mnemonic, 0>;
+      defm NotPt : Addri_Pred<mnemonic, 1>;
+    }
+  }
+}
+
+let isCodeGenOnly = 0 in
+defm ADD_ri : Addri_base<"add", add>, ImmRegRel, PredNewRel;
+
 // Nop.
 let hasSideEffects = 0, isCodeGenOnly = 0 in
 def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
@@ -465,47 +544,6 @@ class COMBINE_imm<Operand imm1, Operand imm2, PatLeaf pat1, PatLeaf pat2> :
 
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8 in
 def COMBINE_Ii : COMBINE_imm<s8Ext, s8Imm, s8ExtPred, s8ImmPred>;
-
-//===----------------------------------------------------------------------===//
-// ALU32/ALU (ADD with register-immediate form)
-//===----------------------------------------------------------------------===//
-multiclass ALU32ri_Pbase<string mnemonic, bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Ext: $src3),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
-            ") $dst = ")#mnemonic#"($src2, #$src3)",
-            []>;
-}
-
-multiclass ALU32ri_Pred<string mnemonic, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ALU32ri_Pbase<mnemonic, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ALU32ri_Pbase<mnemonic, PredNot, 1>;
-  }
-}
-
-let isExtendable = 1, InputType = "imm" in
-multiclass ALU32ri_base<string mnemonic, string CextOp, SDNode OpNode> {
-  let CextOpcode = CextOp, BaseOpcode = CextOp#_ri in {
-    let opExtendable = 2, isExtentSigned = 1, opExtentBits = 16,
-    isPredicable = 1 in
-    def NAME : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s16Ext:$src2),
-            "$dst = "#mnemonic#"($src1, #$src2)",
-            [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
-                                              (s16ExtPred:$src2)))]>;
-
-    let opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
-    hasSideEffects = 0, isPredicated = 1 in {
-      defm Pt : ALU32ri_Pred<mnemonic, 0>;
-      defm NotPt : ALU32ri_Pred<mnemonic, 1>;
-    }
-  }
-}
-
-defm ADD_ri : ALU32ri_base<"add", "ADD", add>, ImmRegRel, PredNewRel;
 
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 10,
 CextOpcode = "OR", InputType = "imm" in
