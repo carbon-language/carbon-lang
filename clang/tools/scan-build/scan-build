@@ -1533,6 +1533,7 @@ while (@ARGV) {
   }
 
   if ($arg eq "-no-failure-reports") {
+    shift @ARGV;
     $ENV{"CCC_REPORT_FAILURES"} = 0;
     next;
   }
