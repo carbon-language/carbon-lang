@@ -310,15 +310,9 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
       SUnit *DefSU = I->SU;
       if (DefSU == &ExitSU)
         continue;
-      auto IsDefDead = [this](SUnit *DefSU, unsigned Reg) {
-        for (MCSubRegIterator SR(Reg, TRI, true); SR.isValid(); ++SR)
-          if (!DefSU->getInstr()->registerDefIsDead(*SR))
-            return false;
-        return true;
-      };
       if (DefSU != SU &&
           (Kind != SDep::Output || !MO.isDead() ||
-           !IsDefDead(DefSU, *Alias))) {
+           !DefSU->getInstr()->registerDefIsDead(*Alias))) {
         if (Kind == SDep::Anti)
           DefSU->addPred(SDep(SU, Kind, /*Reg=*/*Alias));
         else {
