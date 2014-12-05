@@ -118,7 +118,7 @@ def V4_A4_rcmpeqi : ALU32_ri<(outs IntRegs:$Rd),
 // Preserve the TSTBIT generation
 def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 (shl 1, (i32 IntRegs:$src2))),
                                            (i32 IntRegs:$src1))), 0)))),
-      (i32 (MUX_ii (i1 (TSTBIT_rr (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
+      (i32 (C2_muxii (i1 (TSTBIT_rr (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
                    1, 0))>;
 
 // Interfered with tstbit generation, above pattern preserves, see : tstbit.ll
@@ -377,7 +377,7 @@ def : Pat <(i32 (load (add IntRegs:$src1, IntRegs:$src2))),
 
 // zext i1->i64
 def : Pat <(i64 (zext (i1 PredRegs:$src1))),
-      (i64 (COMBINE_Ir_V4 0, (MUX_ii (i1 PredRegs:$src1), 1, 0)))>,
+      (i64 (COMBINE_Ir_V4 0, (C2_muxii (i1 PredRegs:$src1), 1, 0)))>,
       Requires<[HasV4T]>;
 
 // zext i32->i64
@@ -2449,7 +2449,7 @@ def : Pat <(i32 (zext (i1 (setle (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 let AddedComplexity = 139 in
 def : Pat <(i32 (zext (i1 (setult (i32 (and (i32 IntRegs:$src1), 255)),
                                   u7StrictPosImmPred:$src2)))),
-  (i32 (MUX_ii (i1 (CMPbGTUri_V4 (i32 IntRegs:$src1),
+  (i32 (C2_muxii (i1 (CMPbGTUri_V4 (i32 IntRegs:$src1),
                                  (DEC_CONST_BYTE u7StrictPosImmPred:$src2))),
                    0, 1))>,
                    Requires<[HasV4T]>;
