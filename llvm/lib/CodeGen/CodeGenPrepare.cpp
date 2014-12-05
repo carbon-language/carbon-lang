@@ -2962,11 +2962,13 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
   if (LI->getParent() == I->getParent())
     return false;
 
+  EVT VT = TLI->getValueType(I->getType());
+  EVT LoadVT = TLI->getValueType(LI->getType());
+
   // If the load has other users and the truncate is not free, this probably
   // isn't worthwhile.
-  if (!LI->hasOneUse() &&
-      TLI && (TLI->isTypeLegal(TLI->getValueType(LI->getType())) ||
-              !TLI->isTypeLegal(TLI->getValueType(I->getType()))) &&
+  if (!LI->hasOneUse() && TLI &&
+      (TLI->isTypeLegal(LoadVT) || !TLI->isTypeLegal(VT)) &&
       !TLI->isTruncateFree(I->getType(), LI->getType()))
     return false;
 
@@ -2978,7 +2980,7 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
     assert(isa<SExtInst>(I) && "Unexpected ext type!");
     LType = ISD::SEXTLOAD;
   }
-  if (TLI && !TLI->isLoadExtLegal(LType, TLI->getValueType(LI->getType())))
+  if (TLI && !TLI->isLoadExtLegal(LType, LoadVT))
     return false;
 
   // Move the extend into the same block as the load, so that SelectionDAG
