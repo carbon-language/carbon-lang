@@ -54,6 +54,7 @@ struct HostInfoBaseFields
     FileSpec m_lldb_support_exe_dir;
     FileSpec m_lldb_headers_dir;
     FileSpec m_lldb_python_dir;
+    FileSpec m_lldb_clang_resource_dir;
     FileSpec m_lldb_system_plugin_dir;
     FileSpec m_lldb_user_plugin_dir;
     FileSpec m_lldb_tmp_dir;
@@ -196,6 +197,11 @@ HostInfoBase::GetLLDBPath(lldb::PathType type, FileSpec &file_spec)
             if (log)
                 log->Printf("HostInfoBase::GetLLDBPath(ePathTypePythonDir) => '%s'", g_fields->m_lldb_python_dir.GetPath().c_str());
             break;
+        case lldb::ePathTypeClangDir:
+            COMPUTE_LLDB_PATH(ComputeClangDirectory, g_fields->m_lldb_clang_resource_dir)
+            if (log)
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeClangResourceDir) => '%s'", g_fields->m_lldb_clang_resource_dir.GetPath().c_str());
+            break;
         case lldb::ePathTypeLLDBSystemPlugins:
             COMPUTE_LLDB_PATH(ComputeSystemPluginsDirectory, g_fields->m_lldb_system_plugin_dir)
             if (log)
@@ -285,6 +291,12 @@ bool
 HostInfoBase::ComputeSystemPluginsDirectory(FileSpec &file_spec)
 {
     // TODO(zturner): Figure out how to compute the system plugins directory for all platforms.
+    return false;
+}
+
+bool
+HostInfoBase::ComputeClangDirectory(FileSpec &file_spec)
+{
     return false;
 }
 

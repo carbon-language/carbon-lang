@@ -118,6 +118,7 @@ class HostInfoBase
     static bool ComputeTempFileDirectory(FileSpec &file_spec);
     static bool ComputeHeaderDirectory(FileSpec &file_spec);
     static bool ComputeSystemPluginsDirectory(FileSpec &file_spec);
+    static bool ComputeClangDirectory(FileSpec &file_spec);
     static bool ComputeUserPluginsDirectory(FileSpec &file_spec);
 
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
