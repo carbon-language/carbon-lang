@@ -67,9 +67,9 @@ struct UnwindInfoPage {
 class UnwindInfoAtom : public SimpleDefinedAtom {
 public:
   UnwindInfoAtom(ArchHandler &archHandler, const File &file, bool isBig,
-                 std::vector<uint32_t> commonEncodings,
-                 std::vector<const Atom *> personalities,
-                 std::vector<UnwindInfoPage> pages, uint32_t numLSDAs)
+                 std::vector<const Atom *> &personalities,
+                 std::vector<uint32_t> &commonEncodings,
+                 std::vector<UnwindInfoPage> &pages, uint32_t numLSDAs)
       : SimpleDefinedAtom(file), _archHandler(archHandler),
         _commonEncodingsOffset(7 * sizeof(uint32_t)),
         _personalityArrayOffset(_commonEncodingsOffset +
@@ -302,6 +302,9 @@ private:
     // also probably be sorted by frequency.
     assert(personalities.size() <= 4);
 
+    // TODO: Find commmon encodings for use by compressed pages.
+    std::vector<uint32_t> commonEncodings;
+
     // Now sort the entries by final address and fixup the compact encoding to
     // its final form (i.e. set personality function bits & create DWARF
     // references where needed).
@@ -338,8 +341,8 @@ private:
     } while (pageStart < unwindInfos.size());
 
     UnwindInfoAtom *unwind = new (_file.allocator())
-        UnwindInfoAtom(_archHandler, _file, _isBig, std::vector<uint32_t>(),
-                       personalities, pages, numLSDAs);
+        UnwindInfoAtom(_archHandler, _file, _isBig, personalities,
+                       commonEncodings, pages, numLSDAs);
     mergedFile->addAtom(*unwind);
 
     // Finally, remove all __compact_unwind atoms now that we've processed them.
