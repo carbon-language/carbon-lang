@@ -25,28 +25,31 @@ endmacro()
 find_first_existing_vc_file(llvm_vc "${LLVM_MAIN_SRC_DIR}")
 find_first_existing_vc_file(clang_vc "${CLANG_SOURCE_DIR}")
 
+# The VC revision include that we want to generate.
+set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc")
+
 if(DEFINED llvm_vc AND DEFINED clang_vc)
   # Create custom target to generate the VC revision include.
-  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc"
+  add_custom_command(OUTPUT "${version_inc}"
     DEPENDS "${llvm_vc}" "${clang_vc}"
     COMMAND
     ${CMAKE_COMMAND} "-DFIRST_SOURCE_DIR=${LLVM_MAIN_SRC_DIR}"
                      "-DFIRST_NAME=LLVM"
                      "-DSECOND_SOURCE_DIR=${CLANG_SOURCE_DIR}"
                      "-DSECOND_NAME=SVN"
-                     "-DHEADER_FILE=${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc"
+                     "-DHEADER_FILE=${version_inc}"
                      -P "${LLVM_MAIN_SRC_DIR}/cmake/modules/GetSVN.cmake")
 
   # Mark the generated header as being generated.
-  set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc"
+  set_source_files_properties("${version_inc}"
     PROPERTIES GENERATED TRUE
                HEADER_FILE_ONLY TRUE)
 
   # Tell Version.cpp that it needs to build with -DHAVE_SVN_VERSION_INC.
   set_source_files_properties(Version.cpp
     PROPERTIES COMPILE_DEFINITIONS "HAVE_SVN_VERSION_INC")
-  set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc")
 else()
+  # Not producing a VC revision include.
   set(version_inc)
 endif()
 
