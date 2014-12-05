@@ -484,10 +484,9 @@ private:
                              const GlobalVariable *SrcGV);
 
   bool linkGlobalValueProto(GlobalValue *GV);
-  GlobalValue *linkGlobalVariableProto(const GlobalVariable *SGVar,
-                                       GlobalValue *DGV);
+  GlobalValue *linkGlobalVariableProto(const GlobalVariable *SGVar);
   GlobalValue *linkFunctionProto(const Function *SF, GlobalValue *DGV);
-  GlobalValue *linkGlobalAliasProto(const GlobalAlias *SGA, GlobalValue *DGV);
+  GlobalValue *linkGlobalAliasProto(const GlobalAlias *SGA);
 
   bool linkModuleFlagsMetadata();
 
@@ -1023,11 +1022,11 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     NewGV = DGV;
   } else {
     if (auto *SGVar = dyn_cast<GlobalVariable>(SGV))
-      NewGV = linkGlobalVariableProto(SGVar, DGV);
+      NewGV = linkGlobalVariableProto(SGVar);
     else if (auto *SF = dyn_cast<Function>(SGV))
       NewGV = linkFunctionProto(SF, DGV);
     else
-      NewGV = linkGlobalAliasProto(cast<GlobalAlias>(SGV), DGV);
+      NewGV = linkGlobalAliasProto(cast<GlobalAlias>(SGV));
   }
 
   if (!NewGV)
@@ -1069,8 +1068,8 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
 
 /// Loop through the global variables in the src module and merge them into the
 /// dest module.
-GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
-                                                   GlobalValue *DGV) {
+GlobalValue *
+ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar) {
   // No linking to be performed or linking from the source: simply create an
   // identical version of the symbol over in the dest module... the
   // initializer will be filled in later by LinkGlobalInits.
@@ -1102,8 +1101,7 @@ GlobalValue *ModuleLinker::linkFunctionProto(const Function *SF,
 }
 
 /// Set up prototypes for any aliases that come over from the source module.
-GlobalValue *ModuleLinker::linkGlobalAliasProto(const GlobalAlias *SGA,
-                                                GlobalValue *DGV) {
+GlobalValue *ModuleLinker::linkGlobalAliasProto(const GlobalAlias *SGA) {
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
   auto *PTy = cast<PointerType>(TypeMap.get(SGA->getType()));
