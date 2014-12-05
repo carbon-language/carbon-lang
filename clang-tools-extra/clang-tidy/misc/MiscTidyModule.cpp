@@ -15,6 +15,7 @@
 #include "SwappedArgumentsCheck.h"
 #include "UndelegatedConstructor.h"
 #include "UnusedRAII.h"
+#include "UniqueptrResetRelease.h"
 #include "UseOverride.h"
 
 namespace clang {
@@ -30,6 +31,8 @@ public:
         "misc-swapped-arguments");
     CheckFactories.registerCheck<UndelegatedConstructorCheck>(
         "misc-undelegated-constructor");
+    CheckFactories.registerCheck<UniqueptrResetRelease>(
+        "misc-uniqueptr-reset-release");
     CheckFactories.registerCheck<UnusedRAIICheck>("misc-unused-raii");
     CheckFactories.registerCheck<UseOverride>("misc-use-override");
   }

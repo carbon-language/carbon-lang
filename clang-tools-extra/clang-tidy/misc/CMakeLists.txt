@@ -7,6 +7,7 @@ add_clang_library(clangTidyMiscModule
   SwappedArgumentsCheck.cpp
   UndelegatedConstructor.cpp
   UnusedRAII.cpp
+  UniqueptrResetRelease.cpp
   UseOverride.cpp
 
   LINK_LIBS
