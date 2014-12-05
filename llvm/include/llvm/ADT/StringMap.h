@@ -179,19 +179,6 @@ public:
     return Create(Key, ValueTy());
   }
 
-  /// GetStringMapEntryFromValue - Given a value that is known to be embedded
-  /// into a StringMapEntry, return the StringMapEntry itself.
-  static StringMapEntry &GetStringMapEntryFromValue(ValueTy &V) {
-    StringMapEntry *EPtr = 0;
-    char *Ptr = reinterpret_cast<char*>(&V) -
-                  (reinterpret_cast<char*>(&EPtr->second) -
-                   reinterpret_cast<char*>(EPtr));
-    return *reinterpret_cast<StringMapEntry*>(Ptr);
-  }
-  static const StringMapEntry &GetStringMapEntryFromValue(const ValueTy &V) {
-    return GetStringMapEntryFromValue(const_cast<ValueTy&>(V));
-  }
-
   /// GetStringMapEntryFromKeyData - Given key data that is known to be embedded
   /// into a StringMapEntry, return the StringMapEntry itself.
   static StringMapEntry &GetStringMapEntryFromKeyData(const char *KeyData) {
