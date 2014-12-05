@@ -49,6 +49,7 @@ namespace llvm {
       RET_FLAG,    // Return with a flag operand.
       BR_JT,       // Jump table.
       BARRIER,     // Memory barrier.
+      COMBINE,
       WrapperJT,
       WrapperCP,
       WrapperCombineII,

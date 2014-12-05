@@ -95,6 +95,8 @@ multiclass CMP64_rr<string OpcStr, PatFrag OpNode> {
 //===----------------------------------------------------------------------===//
 def SDTHexagonI64I32I32 : SDTypeProfile<1, 2,
   [SDTCisVT<0, i64>, SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
+  
+def HexagonCOMBINE : SDNode<"HexagonISD::COMBINE", SDTHexagonI64I32I32>;
 
 def HexagonWrapperCombineII :
   SDNode<"HexagonISD::WrapperCombineII", SDTHexagonI64I32I32>;
@@ -267,6 +269,39 @@ def C2_mux: ALU32_rr<(outs IntRegs:$Rd),
   let Inst{4-0} = Rd;
 }
 
+def: Pat<(i32 (select (i1 PredRegs:$Pu), (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))),
+         (C2_mux PredRegs:$Pu, IntRegs:$Rs, IntRegs:$Rt)>;
+
+// Combines the two immediates into a double register.
+// Increase complexity to make it greater than any complexity of a combine
+// that involves a register.
+
+let isReMaterializable = 1, isMoveImm = 1, isAsCheapAsAMove = 1,
+    isExtentSigned = 1, isExtendable = 1, opExtentBits = 8, opExtendable = 1,
+    AddedComplexity = 75, isCodeGenOnly = 0 in
+def A2_combineii: ALU32Inst <(outs DoubleRegs:$Rdd), (ins s8Ext:$s8, s8Imm:$S8),
+  "$Rdd = combine(#$s8, #$S8)",
+  [(set (i64 DoubleRegs:$Rdd),
+        (i64 (HexagonCOMBINE(i32 s8ExtPred:$s8), (i32 s8ImmPred:$S8))))]> {
+    bits<5> Rdd;
+    bits<8> s8;
+    bits<8> S8;
+
+    let IClass = 0b0111;
+    let Inst{27-23} = 0b11000;
+    let Inst{22-16} = S8{7-1};
+    let Inst{13}    = S8{0};
+    let Inst{12-5}  = s8;
+    let Inst{4-0}   = Rdd;
+  }
+
+// Nop.
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
+  let IClass = 0b0111;
+  let Inst{27-24} = 0b1111;
+}
+
 multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                        bit isPredNew> {
   let isPredicatedNew = isPredNew in
@@ -400,9 +435,6 @@ multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
 let isCodeGenOnly=0 in
 defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
 
-def: Pat<(i32 (select (i1 PredRegs:$Pu), (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))),
-         (C2_mux PredRegs:$Pu, IntRegs:$Rs, IntRegs:$Rt)>;
-
 // Combines the two integer registers SRC1 and SRC2 into a double register.
 let isPredicable = 1 in
 class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
@@ -490,13 +522,6 @@ def AND_ri : ALU32_ri<(outs IntRegs:$dst),
             "$dst = and($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
                                            s10ExtPred:$src2))]>, ImmRegRel;
-
-// Nop.
-let hasSideEffects = 0, isCodeGenOnly = 0 in
-def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
-  let IClass = 0b0111;
-  let Inst{27-24} = 0b1111;
-}
 
 // Rd32=sub(#s10,Rs32)
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 10,
