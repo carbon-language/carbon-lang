@@ -63,12 +63,37 @@ SANITIZER_INTERFACE_ATTRIBUTE THREADLOCAL dfsan_label __dfsan_arg_tls[64];
 // account for the double byte representation of shadow labels and move the
 // address into the shadow memory range.  See the function shadow_for below.
 
+// On Linux/MIPS64, memory is laid out as follows:
+//
+// +--------------------+ 0x10000000000 (top of memory)
+// | application memory |
+// +--------------------+ 0xF000008000 (kAppAddr)
+// |                    |
+// |       unused       |
+// |                    |
+// +--------------------+ 0x2200000000 (kUnusedAddr)
+// |    union table     |
+// +--------------------+ 0x2000000000 (kUnionTableAddr)
+// |   shadow memory    |
+// +--------------------+ 0x0000010000 (kShadowAddr)
+// | reserved by kernel |
+// +--------------------+ 0x0000000000
+
 typedef atomic_dfsan_label dfsan_union_table_t[kNumLabels][kNumLabels];
 
+#if defined(__x86_64__)
 static const uptr kShadowAddr = 0x10000;
 static const uptr kUnionTableAddr = 0x200000000000;
 static const uptr kUnusedAddr = kUnionTableAddr + sizeof(dfsan_union_table_t);
 static const uptr kAppAddr = 0x700000008000;
+#elif defined(__mips64)
+static const uptr kShadowAddr = 0x10000;
+static const uptr kUnionTableAddr = 0x2000000000;
+static const uptr kUnusedAddr = kUnionTableAddr + sizeof(dfsan_union_table_t);
+static const uptr kAppAddr = 0xF000008000;
+#else
+# error "DFSan not supported for this platform!"
+#endif
 
 static atomic_dfsan_label *union_table(dfsan_label l1, dfsan_label l2) {
   return &(*(dfsan_union_table_t *) kUnionTableAddr)[l1][l2];
