@@ -467,7 +467,7 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
   case llvm::Triple::Win32:
     if (triple.getEnvironment() == llvm::Triple::MSVC ||
         triple.getEnvironment() == llvm::Triple::Itanium ||
-        triple.getObjectFormat() == llvm::Triple::MachO)
+        triple.isOSBinFormatMachO())
       return;
     break;
   }
