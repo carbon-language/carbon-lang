@@ -2069,6 +2069,21 @@ TEST_F(FormatTest, FormatsNSEnums) {
                      "  // Information about aThirdDecentlyLongValue.\n"
                      "  aThirdDecentlyLongValue\n"
                      "};");
+  verifyGoogleFormat("typedef NS_OPTIONS(NSInteger, MyType) {\n"
+                     "  a = 1,\n"
+                     "  b = 2,\n"
+                     "  c = 3,\n"
+                     "};");
+  verifyGoogleFormat("typedef CF_ENUM(NSInteger, MyType) {\n"
+                     "  a = 1,\n"
+                     "  b = 2,\n"
+                     "  c = 3,\n"
+                     "};");
+  verifyGoogleFormat("typedef CF_OPTIONS(NSInteger, MyType) {\n"
+                     "  a = 1,\n"
+                     "  b = 2,\n"
+                     "  c = 3,\n"
+                     "};");
 }
 
 TEST_F(FormatTest, FormatsBitfields) {

@@ -747,7 +747,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       break;
     case tok::kw_typedef:
       nextToken();
-      if (FormatTok->is(Keywords.kw_NS_ENUM))
+      if (FormatTok->isOneOf(Keywords.kw_NS_ENUM, Keywords.kw_NS_OPTIONS,
+                             Keywords.kw_CF_ENUM, Keywords.kw_CF_OPTIONS))
         parseEnum();
       break;
     case tok::kw_struct:
