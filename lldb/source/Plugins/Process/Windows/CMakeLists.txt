@@ -5,6 +5,7 @@ include_directories(../Utility)
 
 add_lldb_library(lldbPluginProcessWindows
   DebuggerThread.cpp
+  DynamicLoaderWindows.cpp
   LocalDebugDelegate.cpp
   ProcessWindows.cpp
   RegisterContextWindows_x86.cpp

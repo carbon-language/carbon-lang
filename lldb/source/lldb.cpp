@@ -83,6 +83,7 @@
 #endif
 
 #if defined (_WIN32)
+#include "Plugins/Process/Windows/DynamicLoaderWindows.h"
 #include "Plugins/Process/Windows/ProcessWindows.h"
 #endif
 
@@ -189,6 +190,7 @@ lldb_private::Initialize ()
         ProcessLinux::Initialize();
 #endif
 #if defined(_WIN32)
+        DynamicLoaderWindows::Initialize();
         ProcessWindows::Initialize();
 #endif
 #if defined (__FreeBSD__)
@@ -275,6 +277,10 @@ lldb_private::Terminate ()
 #endif
 
     Debugger::SettingsTerminate ();
+
+#if defined (_WIN32)
+    DynamicLoaderWindows::Terminate();
+#endif
 
 #if defined (__linux__)
     ProcessLinux::Terminate();
