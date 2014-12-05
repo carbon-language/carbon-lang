@@ -215,9 +215,9 @@ extern "C" void *__lsan_thread_start_func(void *arg) {
   int tid = 0;
   while ((tid = atomic_load(&p->tid, memory_order_acquire)) == 0)
     internal_sched_yield();
-  atomic_store(&p->tid, 0, memory_order_release);
   SetCurrentThread(tid);
   ThreadStart(tid, GetTid());
+  atomic_store(&p->tid, 0, memory_order_release);
   return callback(param);
 }
 

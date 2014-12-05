@@ -165,29 +165,53 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
   } while (false)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
+struct ThreadStartParam {
+  atomic_uintptr_t t;
+  atomic_uintptr_t is_registered;
+};
+
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
-  AsanThread *t = (AsanThread*)arg;
+  ThreadStartParam *param = reinterpret_cast<ThreadStartParam *>(arg);
+  AsanThread *t = nullptr;
+  while ((t = reinterpret_cast<AsanThread *>(
+              atomic_load(&param->t, memory_order_acquire))) == 0)
+    internal_sched_yield();
   SetCurrentThread(t);
-  return t->ThreadStart(GetTid());
+  return t->ThreadStart(GetTid(), &param->is_registered);
 }
 
 #if ASAN_INTERCEPT_PTHREAD_CREATE
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
   EnsureMainThreadIDIsCorrect();
-  // Strict init-order checking in thread-hostile.
+  // Strict init-order checking is thread-hostile.
   if (flags()->strict_init_order)
     StopInitOrderChecking();
   GET_STACK_TRACE_THREAD;
   int detached = 0;
   if (attr != 0)
     REAL(pthread_attr_getdetachstate)(attr, &detached);
-
-  u32 current_tid = GetCurrentTidOrInvalid();
-  AsanThread *t = AsanThread::Create(start_routine, arg);
-  CreateThreadContextArgs args = { t, &stack };
-  asanThreadRegistry().CreateThread(*(uptr*)t, detached, current_tid, &args);
-  return REAL(pthread_create)(thread, attr, asan_thread_start, t);
+  ThreadStartParam param;
+  atomic_store(&param.t, 0, memory_order_relaxed);
+  atomic_store(&param.is_registered, 0, memory_order_relaxed);
+  int result = REAL(pthread_create)(thread, attr, asan_thread_start, &param);
+  if (result == 0) {
+    u32 current_tid = GetCurrentTidOrInvalid();
+    AsanThread *t = AsanThread::Create(start_routine, arg);
+    CreateThreadContextArgs args = { t, &stack };
+    asanThreadRegistry().CreateThread(*reinterpret_cast<uptr *>(t), detached,
+                                      current_tid, &args);
+    atomic_store(&param.t, reinterpret_cast<uptr>(t), memory_order_release);
+    // Wait until the AsanThread object is initialized and the ThreadRegistry
+    // entry is in "started" state. One reason for this is that after this
+    // interceptor exits, the child thread's stack may be the only thing holding
+    // the |arg| pointer. This may cause LSan to report a leak if leak checking
+    // happens at a point when the interceptor has already exited, but the stack
+    // range for the child thread is not yet known.
+    while (atomic_load(&param.is_registered, memory_order_acquire) == 0)
+      internal_sched_yield();
+  }
+  return result;
 }
 #endif  // ASAN_INTERCEPT_PTHREAD_CREATE
 
@@ -703,7 +727,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, uptr stack_size,
                    DWORD (__stdcall *start_routine)(void*), void* arg,
                    DWORD thr_flags, void* tid) {
-  // Strict init-order checking in thread-hostile.
+  // Strict init-order checking is thread-hostile.
   if (flags()->strict_init_order)
     StopInitOrderChecking();
   GET_STACK_TRACE_THREAD;

@@ -155,9 +155,13 @@ void AsanThread::Init() {
   AsanPlatformThreadInit();
 }
 
-thread_return_t AsanThread::ThreadStart(uptr os_id) {
+thread_return_t AsanThread::ThreadStart(
+    uptr os_id, atomic_uintptr_t *signal_thread_is_registered) {
   Init();
   asanThreadRegistry().StartThread(tid(), os_id, 0);
+  if (signal_thread_is_registered)
+    atomic_store(signal_thread_is_registered, 1, memory_order_release);
+
   if (common_flags()->use_sigaltstack) SetAlternateSignalStack();
 
   if (!start_routine_) {

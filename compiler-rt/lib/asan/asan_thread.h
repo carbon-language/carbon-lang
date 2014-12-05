@@ -60,7 +60,8 @@ class AsanThread {
   void Destroy();
 
   void Init();  // Should be called from the thread itself.
-  thread_return_t ThreadStart(uptr os_id);
+  thread_return_t ThreadStart(uptr os_id,
+                              atomic_uintptr_t *signal_thread_is_registered);
 
   uptr stack_top() { return stack_top_; }
   uptr stack_bottom() { return stack_bottom_; }

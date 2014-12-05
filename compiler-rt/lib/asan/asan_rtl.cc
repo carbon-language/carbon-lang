@@ -680,7 +680,8 @@ static void AsanInitInternal() {
       0, true, 0, &create_main_args);
   CHECK_EQ(0, main_tid);
   SetCurrentThread(main_thread);
-  main_thread->ThreadStart(internal_getpid());
+  main_thread->ThreadStart(internal_getpid(),
+                           /* signal_thread_is_registered */ nullptr);
   force_interface_symbols();  // no-op.
   SanitizerInitializeUnwinder();
 
