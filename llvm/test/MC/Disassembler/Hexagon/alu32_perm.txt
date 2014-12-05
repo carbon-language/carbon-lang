@@ -1,0 +1,6 @@
+# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+
+0x11 0xc0 0x15 0x70
+# CHECK: r17 = aslh(r21)
+0x11 0xc0 0x35 0x70
+# CHECK: r17 = asrh(r21)

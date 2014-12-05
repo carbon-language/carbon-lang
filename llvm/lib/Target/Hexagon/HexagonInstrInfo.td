@@ -319,6 +319,7 @@ multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
   }
 }
 
+let isCodeGenOnly=0 in
 defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
 
 let CextOpcode = "MUX", InputType = "reg", hasNewValue = 1 in
@@ -434,7 +435,7 @@ def AND_ri : ALU32_ri<(outs IntRegs:$dst),
                                            s10ExtPred:$src2))]>, ImmRegRel;
 
 // Nop.
-let hasSideEffects = 0 in
+let hasSideEffects = 0, isCodeGenOnly = 0 in
 def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
   let IClass = 0b0111;
   let Inst{27-24} = 0b1111;
@@ -676,7 +677,7 @@ class T_ALU32_3op_cmp<string mnemonic, bits<2> MinOp, bit IsNeg, bit IsComm>
   let Inst{1-0} = Pd;
 }
 
-let Itinerary = ALU32_3op_tc_2early_SLOT0123 in {
+let Itinerary = ALU32_3op_tc_2early_SLOT0123, isCodeGenOnly = 0 in {
   def C2_cmpeq   : T_ALU32_3op_cmp< "cmp.eq",  0b00, 0, 1>;
   def C2_cmpgt   : T_ALU32_3op_cmp< "cmp.gt",  0b10, 0, 0>;
   def C2_cmpgtu  : T_ALU32_3op_cmp< "cmp.gtu", 0b11, 0, 0>;
