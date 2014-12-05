@@ -51,14 +51,14 @@ public:
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName()
+    lldb_private::ConstString
+    GetPluginName() override
     {
         return GetPluginNameStatic();
     }
     
-    virtual uint32_t
-    GetPluginVersion()
+    uint32_t
+    GetPluginVersion() override
     {
         return 1;
     }
@@ -66,35 +66,35 @@ public:
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
-    virtual lldb_private::Error
+    lldb_private::Error
     ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
                        lldb::ModuleSP &module_sp,
-                       const lldb_private::FileSpecList *module_search_paths_ptr);
+                       const lldb_private::FileSpecList *module_search_paths_ptr) override;
 
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription () override
     {
         return GetDescriptionStatic();
     }
 
-    virtual void
-    GetStatus (lldb_private::Stream &strm);
+    void
+    GetStatus (lldb_private::Stream &strm) override;
 
     virtual lldb_private::Error
     GetSymbolFile (const lldb_private::FileSpec &platform_file, 
                    const lldb_private::UUID *uuid_ptr,
                    lldb_private::FileSpec &local_file);
 
-    virtual lldb_private::Error
+    lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,
                      lldb::ModuleSP &module_sp,
                      const lldb_private::FileSpecList *module_search_paths_ptr,
                      lldb::ModuleSP *old_module_sp_ptr,
-                     bool *did_create_ptr);
+                     bool *did_create_ptr) override;
 
-    virtual bool
+    bool
     GetSupportedArchitectureAtIndex (uint32_t idx, 
-                                     lldb_private::ArchSpec &arch);
+                                     lldb_private::ArchSpec &arch) override;
     
     void
     AddClangModuleCompilationOptions (std::vector<std::string> &options) override
