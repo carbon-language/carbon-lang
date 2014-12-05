@@ -753,19 +753,19 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
                 if (!language_runtime)
                     break;
 
-                TypeVendor *type_vendor = language_runtime->GetTypeVendor();
+                DeclVendor *decl_vendor = language_runtime->GetDeclVendor();
 
-                if (!type_vendor)
+                if (!decl_vendor)
                     break;
 
                 bool append = false;
                 uint32_t max_matches = 1;
-                std::vector <ClangASTType> types;
+                std::vector <clang::NamedDecl *> decls;
 
-                if (!type_vendor->FindTypes(name,
+                if (!decl_vendor->FindDecls(name,
                                             append,
                                             max_matches,
-                                            types))
+                                            decls))
                     break;
 
                 if (log)
@@ -774,10 +774,11 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
                                 current_id,
                                 name.GetCString());
                 }
-
-                ClangASTType copied_clang_type (GuardedCopyType(types[0]));
-
-                if (!copied_clang_type)
+                
+                clang::Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &decls[0]->getASTContext(), decls[0]);
+                clang::NamedDecl *copied_named_decl = copied_decl ? dyn_cast<clang::NamedDecl>(copied_decl) : nullptr;
+                
+                if (!copied_named_decl)
                 {
                     if (log)
                         log->Printf("  CAS::FEVD[%u] - Couldn't export a type from the runtime",
@@ -786,7 +787,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
                     break;
                 }
 
-                context.AddTypeDecl(copied_clang_type);
+                context.AddNamedDecl(copied_named_decl);
             }
             while(0);
         }
@@ -1184,30 +1185,26 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
         if (!language_runtime)
             break;
 
-        TypeVendor *type_vendor = language_runtime->GetTypeVendor();
+        DeclVendor *decl_vendor = language_runtime->GetDeclVendor();
 
-        if (!type_vendor)
+        if (!decl_vendor)
             break;
 
         ConstString interface_name(interface_decl->getNameAsString().c_str());
         bool append = false;
         uint32_t max_matches = 1;
-        std::vector <ClangASTType> types;
+        std::vector <clang::NamedDecl *> decls;
 
-        if (!type_vendor->FindTypes(interface_name,
+        if (!decl_vendor->FindDecls(interface_name,
                                     append,
                                     max_matches,
-                                    types))
+                                    decls))
             break;
 
-        const clang::Type *runtime_clang_type = QualType::getFromOpaquePtr(types[0].GetOpaqueQualType()).getTypePtr();
-
-        const ObjCInterfaceType *runtime_interface_type = dyn_cast<ObjCInterfaceType>(runtime_clang_type);
-
-        if (!runtime_interface_type)
+        ObjCInterfaceDecl *runtime_interface_decl = dyn_cast<ObjCInterfaceDecl>(decls[0]);
+        
+        if (!runtime_interface_decl)
             break;
-
-        ObjCInterfaceDecl *runtime_interface_decl = runtime_interface_type->getDecl();
 
         FindObjCMethodDeclsWithOrigin(current_id,
                                       context,
@@ -1354,29 +1351,25 @@ ClangASTSource::FindObjCPropertyAndIvarDecls (NameSearchContext &context)
         if (!language_runtime)
             return;
 
-        TypeVendor *type_vendor = language_runtime->GetTypeVendor();
+        DeclVendor *decl_vendor = language_runtime->GetDeclVendor();
 
-        if (!type_vendor)
+        if (!decl_vendor)
             break;
 
         bool append = false;
         uint32_t max_matches = 1;
-        std::vector <ClangASTType> types;
+        std::vector <clang::NamedDecl *> decls;
 
-        if (!type_vendor->FindTypes(class_name,
+        if (!decl_vendor->FindDecls(class_name,
                                     append,
                                     max_matches,
-                                    types))
+                                    decls))
             break;
 
-        const clang::Type *runtime_clang_type = QualType::getFromOpaquePtr(types[0].GetOpaqueQualType()).getTypePtr();
-
-        const ObjCInterfaceType *runtime_interface_type = dyn_cast<ObjCInterfaceType>(runtime_clang_type);
-
-        if (!runtime_interface_type)
+        DeclFromUser<const ObjCInterfaceDecl> runtime_iface_decl(dyn_cast<ObjCInterfaceDecl>(decls[0]));
+        
+        if (!runtime_iface_decl.IsValid())
             break;
-
-        DeclFromUser<const ObjCInterfaceDecl> runtime_iface_decl(runtime_interface_type->getDecl());
 
         if (log)
             log->Printf("CAS::FOPD[%d] trying runtime (ObjCInterfaceDecl*)%p/(ASTContext*)%p...",
