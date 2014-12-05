@@ -25,6 +25,11 @@ template <typename I, typename E> E vector_adapter(I &iter)
     return *iter;
 }
     
+template <typename I, typename E> E list_adapter(I &iter)
+{
+    return *iter;
+}
+    
 template <typename C, typename E, E (*A)(typename C::const_iterator &)> class AdaptedConstIterator
 {
 public:

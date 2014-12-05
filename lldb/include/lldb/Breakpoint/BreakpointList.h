@@ -204,10 +204,24 @@ protected:
     bp_collection::const_iterator
     GetBreakpointIDConstIterator(lldb::break_id_t breakID) const;
 
+    Mutex &
+    GetMutex () const
+    {
+        return m_mutex;
+    }
+
     mutable Mutex m_mutex;
     bp_collection m_breakpoints;  // The breakpoint list, currently a list.
     lldb::break_id_t m_next_break_id;
     bool m_is_internal;
+
+public:
+    typedef LockingAdaptedIterable<bp_collection, lldb::BreakpointSP, list_adapter> BreakpointIterable;
+    BreakpointIterable
+    Breakpoints()
+    {
+        return BreakpointIterable(m_breakpoints, GetMutex());
+    }
 
 private:
     DISALLOW_COPY_AND_ASSIGN (BreakpointList);
