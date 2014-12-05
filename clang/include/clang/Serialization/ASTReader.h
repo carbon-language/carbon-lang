@@ -1113,11 +1113,12 @@ private:
   serialization::InputFile getInputFile(ModuleFile &F, unsigned ID,
                                         bool Complain = true);
 
-public:
-  void ResolveImportedPath(ModuleFile &M, std::string &Filename);
-  static void ResolveImportedPath(std::string &Filename, StringRef Prefix);
+  /// \brief Get a FileEntry out of stored-in-PCH filename, making sure we take
+  /// into account all the necessary relocations.
+  const FileEntry *getFileEntry(StringRef filename);
 
-private:
+  void MaybeAddSystemRootToFilename(ModuleFile &M, std::string &Filename);
+
   struct ImportedModule {
     ModuleFile *Mod;
     ModuleFile *ImportedBy;
@@ -1140,7 +1141,7 @@ private:
                                  const ModuleFile *ImportedBy,
                                  unsigned ClientLoadCapabilities);
   ASTReadResult ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities);
-  bool ParseLineTable(ModuleFile &F, const RecordData &Record);
+  bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);
   bool ReadSourceManagerBlock(ModuleFile &F);
   llvm::BitstreamCursor &SLocCursorForID(int ID);
   SourceLocation getImportLocation(ModuleFile *F);
@@ -2043,9 +2044,6 @@ public:
 
   // \brief Read a string
   static std::string ReadString(const RecordData &Record, unsigned &Idx);
-
-  // \brief Read a path
-  std::string ReadPath(ModuleFile &F, const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a version tuple.
   static VersionTuple ReadVersionTuple(const RecordData &Record, unsigned &Idx);

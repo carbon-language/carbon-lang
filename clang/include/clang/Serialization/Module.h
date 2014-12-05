@@ -125,9 +125,6 @@ public:
   /// \brief The name of the module.
   std::string ModuleName;
 
-  /// \brief The base directory of the module.
-  std::string BaseDirectory;
-
   std::string getTimestampFilename() const {
     return FileName + ".timestamp";
   }

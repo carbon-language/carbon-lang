@@ -1063,44 +1063,33 @@ void ASTWriter::WriteBlockInfoBlock() {
 ///
 /// \param Filename the file name to adjust.
 ///
-/// \param BaseDir When non-NULL, the PCH file is a relocatable AST file and
-/// the returned filename will be adjusted by this root directory.
+/// \param isysroot When non-NULL, the PCH file is a relocatable PCH file and
+/// the returned filename will be adjusted by this system root.
 ///
 /// \returns either the original filename (if it needs no adjustment) or the
 /// adjusted filename (which points into the @p Filename parameter).
 static const char *
-adjustFilenameForRelocatableAST(const char *Filename, StringRef BaseDir) {
+adjustFilenameForRelocatablePCH(const char *Filename, StringRef isysroot) {
   assert(Filename && "No file name to adjust?");
 
-  if (BaseDir.empty())
+  if (isysroot.empty())
     return Filename;
 
   // Verify that the filename and the system root have the same prefix.
   unsigned Pos = 0;
-  for (; Filename[Pos] && Pos < BaseDir.size(); ++Pos)
-    if (Filename[Pos] != BaseDir[Pos])
+  for (; Filename[Pos] && Pos < isysroot.size(); ++Pos)
+    if (Filename[Pos] != isysroot[Pos])
       return Filename; // Prefixes don't match.
 
   // We hit the end of the filename before we hit the end of the system root.
   if (!Filename[Pos])
     return Filename;
 
-  // If there's not a path separator at the end of the base directory nor
-  // immediately after it, then this isn't within the base directory.
-  if (!llvm::sys::path::is_separator(Filename[Pos])) {
-    if (!llvm::sys::path::is_separator(BaseDir.back()))
-      return Filename;
-  } else {
-    // If the file name has a '/' at the current position, skip over the '/'.
-    // We distinguish relative paths from absolute paths by the
-    // absence of '/' at the beginning of relative paths.
-    //
-    // FIXME: This is wrong. We distinguish them by asking if the path is
-    // absolute, which isn't the same thing. And there might be multiple '/'s
-    // in a row. Use a better mechanism to indicate whether we have emitted an
-    // absolute or relative path.
+  // If the file name has a '/' at the current position, skip over the '/'.
+  // We distinguish sysroot-based includes from absolute includes by the
+  // absence of '/' at the beginning of sysroot-based includes.
+  if (Filename[Pos] == '/')
     ++Pos;
-  }
 
   return Filename + Pos;
 }
@@ -1137,8 +1126,6 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   Record.push_back(VERSION_MINOR);
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
-  assert((!WritingModule || isysroot.empty()) &&
-         "writing module as a relocatable PCH?");
   Record.push_back(!isysroot.empty());
   Record.push_back(ASTHasCompilerErrors);
   Stream.EmitRecordWithBlob(MetadataAbbrevCode, Record,
@@ -1149,8 +1136,8 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   Record.push_back(getSignature());
   Stream.EmitRecord(SIGNATURE, Record);
 
+  // Module name
   if (WritingModule) {
-    // Module name
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(MODULE_NAME));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
@@ -1160,42 +1147,25 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     Stream.EmitRecordWithBlob(AbbrevCode, Record, WritingModule->Name);
   }
 
-  if (WritingModule && WritingModule->Directory) {
-    // Module directory.
-    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(MODULE_DIRECTORY));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Directory
-    unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
-    RecordData Record;
-    Record.push_back(MODULE_DIRECTORY);
-
-    SmallString<128> BaseDir(WritingModule->Directory->getName());
-    Context.getSourceManager().getFileManager().FixupRelativePath(BaseDir);
-    llvm::sys::fs::make_absolute(BaseDir);
-    Stream.EmitRecordWithBlob(AbbrevCode, Record, BaseDir);
-
-    // Write out all other paths relative to the base directory if possible.
-    BaseDirectory.assign(BaseDir.begin(), BaseDir.end());
-  } else if (!isysroot.empty()) {
-    // Write out paths relative to the sysroot if possible.
-    BaseDirectory = isysroot;
-  }
-
   // Module map file
   if (WritingModule) {
     Record.clear();
+    auto addModMap = [&](const FileEntry *F) {
+      SmallString<128> ModuleMap(F->getName());
+      llvm::sys::fs::make_absolute(ModuleMap);
+      AddString(ModuleMap.str(), Record);
+    };
 
     auto &Map = PP.getHeaderSearchInfo().getModuleMap();
 
     // Primary module map file.
-    AddPath(Map.getModuleMapFileForUniquing(WritingModule)->getName(), Record);
+    addModMap(Map.getModuleMapFileForUniquing(WritingModule));
 
     // Additional module map files.
-    if (auto *AdditionalModMaps =
-            Map.getAdditionalModuleMapFiles(WritingModule)) {
+    if (auto *AdditionalModMaps = Map.getAdditionalModuleMapFiles(WritingModule)) {
       Record.push_back(AdditionalModMaps->size());
       for (const FileEntry *F : *AdditionalModMaps)
-        AddPath(F->getName(), Record);
+        addModMap(F);
     } else {
       Record.push_back(0);
     }
@@ -1219,7 +1189,9 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
       Record.push_back((*M)->File->getSize());
       Record.push_back((*M)->File->getModificationTime());
       Record.push_back((*M)->Signature);
-      AddPath((*M)->FileName, Record);
+      const std::string &FileName = (*M)->FileName;
+      Record.push_back(FileName.size());
+      Record.append(FileName.begin(), FileName.end());
     }
     Stream.EmitRecord(IMPORTS, Record);
   }
@@ -1367,10 +1339,17 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     FileAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
     unsigned FileAbbrevCode = Stream.EmitAbbrev(FileAbbrev);
 
+    SmallString<128> MainFilePath(MainFile->getName());
+
+    llvm::sys::fs::make_absolute(MainFilePath);
+
+    const char *MainFileNameStr = MainFilePath.c_str();
+    MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr,
+                                                      isysroot);
     Record.clear();
     Record.push_back(ORIGINAL_FILE);
     Record.push_back(SM.getMainFileID().getOpaqueValue());
-    EmitRecordWithPath(FileAbbrevCode, Record, MainFile->getName());
+    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
   }
 
   Record.clear();
@@ -1396,6 +1375,7 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
 
   WriteInputFiles(Context.SourceMgr,
                   PP.getHeaderSearchInfo().getHeaderSearchOpts(),
+                  isysroot,
                   PP.getLangOpts().Modules);
   Stream.ExitBlock();
 }
@@ -1411,6 +1391,7 @@ namespace  {
 
 void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
                                 HeaderSearchOptions &HSOpts,
+                                StringRef isysroot,
                                 bool Modules) {
   using namespace llvm;
   Stream.EnterSubblock(INPUT_FILES_BLOCK_ID, 4);
@@ -1481,8 +1462,23 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
     // Whether this file was overridden.
     Record.push_back(Entry.BufferOverridden);
 
-    EmitRecordWithPath(IFAbbrevCode, Record, Entry.File->getName());
-  }
+    // Turn the file name into an absolute path, if it isn't already.
+    const char *Filename = Entry.File->getName();
+    SmallString<128> FilePath(Filename);
+    
+    // Ask the file manager to fixup the relative path for us. This will 
+    // honor the working directory.
+    SourceMgr.getFileManager().FixupRelativePath(FilePath);
+    
+    // FIXME: This call to make_absolute shouldn't be necessary, the
+    // call to FixupRelativePath should always return an absolute path.
+    llvm::sys::fs::make_absolute(FilePath);
+    Filename = FilePath.c_str();
+    
+    Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+
+    Stream.EmitRecordWithBlob(IFAbbrevCode, Record, Filename);
+  }  
 
   Stream.ExitBlock();
 
@@ -1592,9 +1588,6 @@ namespace {
       // The hash is based only on size/time of the file, so that the reader can
       // match even when symlinking or excess path elements ("foo/../", "../")
       // change the form of the name. However, complete path is still the key.
-      //
-      // FIXME: Using the mtime here will cause problems for explicit module
-      // imports.
       return llvm::hash_combine(key.FE->getSize(),
                                 key.FE->getModificationTime());
     }
@@ -1675,7 +1668,7 @@ namespace {
 /// \brief Write the header search block for the list of files that 
 ///
 /// \param HS The header search structure to save.
-void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS) {
+void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
   SmallVector<const FileEntry *, 16> FilesByUID;
   HS.getFileMgr().GetUniqueIDMapping(FilesByUID);
   
@@ -1699,16 +1692,17 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS) {
         (HFI.isModuleHeader && !HFI.isCompilingModuleHeader))
       continue;
 
-    // Massage the file path into an appropriate form.
+    // Turn the file name into an absolute path, if it isn't already.
     const char *Filename = File->getName();
-    SmallString<128> FilenameTmp(Filename);
-    if (PreparePathForOutput(FilenameTmp)) {
-      // If we performed any translation on the file name at all, we need to
-      // save this string, since the generator will refer to it later.
-      Filename = strdup(FilenameTmp.c_str());
+    Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+      
+    // If we performed any translation on the file name at all, we need to
+    // save this string, since the generator will refer to it later.
+    if (Filename != File->getName()) {
+      Filename = strdup(Filename);
       SavedStrings.push_back(Filename);
     }
-
+    
     HeaderFileInfoTrait::key_type key = { File, Filename };
     Generator.insert(key, HFI, GeneratorTrait);
     ++NumHeaderSearchEntries;
@@ -1758,7 +1752,8 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS) {
 /// errors), we probably won't have to create file entries for any of
 /// the files in the AST.
 void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
-                                        const Preprocessor &PP) {
+                                        const Preprocessor &PP,
+                                        StringRef isysroot) {
   RecordData Record;
 
   // Enter the source manager block.
@@ -1907,10 +1902,17 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     LineTableInfo &LineTable = SourceMgr.getLineTable();
 
     Record.clear();
-    // Emit the file names.
+    // Emit the file names
     Record.push_back(LineTable.getNumFilenames());
-    for (unsigned I = 0, N = LineTable.getNumFilenames(); I != N; ++I)
-      AddPath(LineTable.getFilename(I), Record);
+    for (unsigned I = 0, N = LineTable.getNumFilenames(); I != N; ++I) {
+      // Emit the file name
+      const char *Filename = LineTable.getFilename(I);
+      Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+      unsigned FilenameLen = Filename? strlen(Filename) : 0;
+      Record.push_back(FilenameLen);
+      if (FilenameLen)
+        Record.insert(Record.end(), Filename, Filename + FilenameLen);
+    }
 
     // Emit the line entries
     for (LineTableInfo::iterator L = LineTable.begin(), LEnd = LineTable.end();
@@ -2541,7 +2543,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Record.clear();
       for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
         unsigned ImportedID = getSubmoduleID(Mod->Imports[I]);
-        assert(ImportedID && "Unknown submodule!");
+        assert(ImportedID && "Unknown submodule!");                                           
         Record.push_back(ImportedID);
       }
       Stream.EmitRecord(SUBMODULE_IMPORTS, Record);
@@ -4075,47 +4077,6 @@ void ASTWriter::AddString(StringRef Str, RecordDataImpl &Record) {
   Record.insert(Record.end(), Str.begin(), Str.end());
 }
 
-bool ASTWriter::PreparePathForOutput(SmallVectorImpl<char> &Path) {
-  bool Changed = false;
-
-  if (!llvm::sys::path::is_absolute(StringRef(Path.data(), Path.size()))) {
-    // Ask the file manager to fixup the relative path for us. This will
-    // honor the working directory.
-    if (Context)
-      Context->getSourceManager().getFileManager().FixupRelativePath(Path);
-
-    // We want an absolute path even if we weren't given a spelling for the
-    // current working directory.
-    llvm::sys::fs::make_absolute(Path);
-
-    Changed = true;
-  }
-
-  // Remove a prefix to make the path relative, if relevant.
-  const char *PathBegin = Path.data();
-  const char *PathPtr =
-      adjustFilenameForRelocatableAST(PathBegin, BaseDirectory);
-  if (PathPtr != PathBegin) {
-    Path.erase(Path.begin(), Path.begin() + (PathPtr - PathBegin));
-    Changed = true;
-  }
-
-  return Changed;
-}
-
-void ASTWriter::AddPath(StringRef Path, RecordDataImpl &Record) {
-  SmallString<128> FilePath(Path);
-  PreparePathForOutput(FilePath);
-  AddString(FilePath, Record);
-}
-
-void ASTWriter::EmitRecordWithPath(unsigned Abbrev, RecordDataImpl &Record,
-                                   StringRef Path) {
-  SmallString<128> FilePath(Path);
-  PreparePathForOutput(FilePath);
-  Stream.EmitRecordWithBlob(Abbrev, Record, FilePath);
-}
-
 void ASTWriter::AddVersionTuple(const VersionTuple &Version,
                                 RecordDataImpl &Record) {
   Record.push_back(Version.getMajor());
@@ -4200,7 +4161,6 @@ void ASTWriter::WriteAST(Sema &SemaRef,
   Context = nullptr;
   PP = nullptr;
   this->WritingModule = nullptr;
-  this->BaseDirectory.clear();
 
   WritingAST = false;
 }
@@ -4591,11 +4551,11 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     Stream.EmitRecord(DECL_UPDATE_OFFSETS, DeclUpdatesOffsetsRecord);
   WriteCXXBaseSpecifiersOffsets();
   WriteFileDeclIDsMap();
-  WriteSourceManagerBlock(Context.getSourceManager(), PP);
+  WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
 
   WriteComments();
   WritePreprocessor(PP, isModule);
-  WriteHeaderSearch(PP.getHeaderSearchInfo());
+  WriteHeaderSearch(PP.getHeaderSearchInfo(), isysroot);
   WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
   WriteIdentifierTable(PP, SemaRef.IdResolver, isModule);

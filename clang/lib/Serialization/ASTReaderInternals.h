@@ -194,8 +194,8 @@ typedef llvm::OnDiskChainedHashTable<ASTSelectorLookupTrait>
 ///
 /// The on-disk hash table contains a mapping from each header path to 
 /// information about that header (how many times it has been included, its
-/// controlling macro, etc.). Note that we actually hash based on the size
-/// and mtime, and support "deep" comparisons of file names based on current
+/// controlling macro, etc.). Note that we actually hash based on the 
+/// filename, and support "deep" comparisons of file names based on current
 /// inode numbers, so that the search can cope with non-normalized path names
 /// and symlinks.
 class HeaderFileInfoTrait {
@@ -211,7 +211,6 @@ public:
     off_t Size;
     time_t ModTime;
     const char *Filename;
-    bool Imported;
   };
   typedef const internal_key_type &internal_key_ref;
   
