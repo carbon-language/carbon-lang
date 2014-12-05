@@ -21,8 +21,8 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/DeclVendor.h"
 #include "lldb/Symbol/Type.h"
-#include "lldb/Symbol/TypeVendor.h"
 #include "lldb/Target/LanguageRuntime.h"
 
 namespace lldb_private {
@@ -385,8 +385,8 @@ public:
     virtual ObjCISA
     GetParentClass(ObjCISA isa);
     
-    virtual TypeVendor *
-    GetTypeVendor()
+    virtual DeclVendor *
+    GetDeclVendor()
     {
         return NULL;
     }

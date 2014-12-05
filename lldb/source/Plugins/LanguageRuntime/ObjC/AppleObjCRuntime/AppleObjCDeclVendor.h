@@ -1,4 +1,4 @@
-//===-- AppleObjCSymbolVendor.h ---------------------------------*- C++ -*-===//
+//===-- AppleObjCDeclVendor.h -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_AppleObjCSymbolVendor_h_
-#define liblldb_AppleObjCSymbolVendor_h_
+#ifndef liblldb_AppleObjCDeclVendor_h_
+#define liblldb_AppleObjCDeclVendor_h_
 
 // C Includes
 // C++ Includes
@@ -20,30 +20,24 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/TypeVendor.h"
+#include "lldb/Symbol/DeclVendor.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 
 namespace lldb_private {
 
 class AppleObjCExternalASTSource;
     
-class AppleObjCTypeVendor : public TypeVendor
+class AppleObjCDeclVendor : public DeclVendor
 {
 public:
-    AppleObjCTypeVendor(ObjCLanguageRuntime &runtime);
+    AppleObjCDeclVendor(ObjCLanguageRuntime &runtime);
     
     virtual uint32_t
-    FindTypes (const ConstString &name,
+    FindDecls (const ConstString &name,
                bool append,
                uint32_t max_matches,
-               std::vector <ClangASTType> &types);
-    
-    virtual clang::ASTContext *
-    GetClangASTContext ()
-    {
-        return m_ast_ctx.getASTContext();
-    }
-    
+               std::vector <clang::NamedDecl *> &decls);
+        
     friend class AppleObjCExternalASTSource;
 private:
     clang::ObjCInterfaceDecl   *GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa);
@@ -61,4 +55,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_AppleObjCSymbolVendor_h_
+#endif  // liblldb_AppleObjCDeclVendor_h_

@@ -138,8 +138,8 @@ public:
     virtual void
     UpdateISAToDescriptorMapIfNeeded();
     
-    virtual TypeVendor *
-    GetTypeVendor();
+    virtual DeclVendor *
+    GetDeclVendor();
 
 protected:
     virtual lldb::BreakpointResolverSP
@@ -188,7 +188,7 @@ protected:
     
     HashTableSignature m_hash_signature;
     lldb::addr_t m_isa_hash_table_ptr;
-    std::unique_ptr<TypeVendor> m_type_vendor_ap;
+    std::unique_ptr<DeclVendor> m_decl_vendor_ap;
 private:
     AppleObjCRuntimeV1(Process *process);
 };

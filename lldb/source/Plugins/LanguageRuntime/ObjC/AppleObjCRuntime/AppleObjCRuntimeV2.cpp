@@ -44,10 +44,11 @@
 #include "AppleObjCRuntimeV2.h"
 #include "AppleObjCClassDescriptorV2.h"
 #include "AppleObjCTypeEncodingParser.h"
-#include "AppleObjCTypeVendor.h"
+#include "AppleObjCDeclVendor.h"
 #include "AppleObjCTrampolineHandler.h"
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclObjC.h"
 
 #include <vector>
 
@@ -346,7 +347,7 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
     m_get_shared_cache_class_info_code(),
     m_get_shared_cache_class_info_args (LLDB_INVALID_ADDRESS),
     m_get_shared_cache_class_info_args_mutex (Mutex::eMutexTypeNormal),
-    m_type_vendor_ap (),
+    m_decl_vendor_ap (),
     m_isa_hash_table_ptr (LLDB_INVALID_ADDRESS),
     m_hash_signature (),
     m_has_object_getClass (false),
@@ -401,12 +402,12 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                 else
                 {
                     // try to go for a ClangASTType at least
-                    TypeVendor* vendor = GetTypeVendor();
+                    DeclVendor* vendor = GetDeclVendor();
                     if (vendor)
                     {
-                        std::vector<ClangASTType> types;
-                        if (vendor->FindTypes(class_name, false, 1, types) && types.size() && types.at(0).IsValid())
-                            class_type_or_name.SetClangASTType(types.at(0));
+                        std::vector<clang::NamedDecl*> decls;
+                        if (vendor->FindDecls(class_name, false, 1, decls) && decls.size())
+                            class_type_or_name.SetClangASTType(ClangASTContext::GetTypeForDecl(decls[0]));
                     }
                 }
             }
@@ -1576,13 +1577,13 @@ AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
     return ObjCLanguageRuntime::GetActualTypeName(isa);
 }
 
-TypeVendor *
-AppleObjCRuntimeV2::GetTypeVendor()
+DeclVendor *
+AppleObjCRuntimeV2::GetDeclVendor()
 {
-    if (!m_type_vendor_ap.get())
-        m_type_vendor_ap.reset(new AppleObjCTypeVendor(*this));
+    if (!m_decl_vendor_ap.get())
+        m_decl_vendor_ap.reset(new AppleObjCDeclVendor(*this));
     
-    return m_type_vendor_ap.get();
+    return m_decl_vendor_ap.get();
 }
 
 lldb::addr_t

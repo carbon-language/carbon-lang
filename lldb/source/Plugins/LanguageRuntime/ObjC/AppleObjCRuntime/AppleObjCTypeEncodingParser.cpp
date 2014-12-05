@@ -240,23 +240,22 @@ AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_
                 name.erase(less_than_pos);
         }
         
-        TypeVendor *type_vendor = m_runtime.GetTypeVendor();
+        DeclVendor *decl_vendor = m_runtime.GetDeclVendor();
         
-        assert (type_vendor); // how are we parsing type encodings for expressions if a type vendor isn't in play?
-        assert (type_vendor->GetClangASTContext() == &ast_ctx); // it doesn't make sense for us to be looking in other places
+        assert (decl_vendor); // how are we parsing type encodings for expressions if a type vendor isn't in play?
         
         const bool append = false;
         const uint32_t max_matches = 1;
-        std::vector<ClangASTType> types;
+        std::vector<clang::NamedDecl *> decls;
         
-        uint32_t num_types = type_vendor->FindTypes(ConstString(name),
+        uint32_t num_types = decl_vendor->FindDecls(ConstString(name),
                                                     append,
                                                     max_matches,
-                                                    types);
+                                                    decls);
 
         assert(num_types); // how can a type be mentioned in runtime type signatures and not be in the runtime?
-
-        return types[0].GetPointerType().GetQualType();
+        
+        return ClangASTContext::GetTypeForDecl(decls[0]).GetPointerType().GetQualType();
     }
     else
     {

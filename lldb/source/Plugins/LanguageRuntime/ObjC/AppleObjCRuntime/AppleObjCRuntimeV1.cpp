@@ -9,7 +9,7 @@
 
 #include "AppleObjCRuntimeV1.h"
 #include "AppleObjCTrampolineHandler.h"
-#include "AppleObjCTypeVendor.h"
+#include "AppleObjCDeclVendor.h"
 
 #include "clang/AST/Type.h"
 
@@ -445,11 +445,11 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
     }
 }
 
-TypeVendor *
-AppleObjCRuntimeV1::GetTypeVendor()
+DeclVendor *
+AppleObjCRuntimeV1::GetDeclVendor()
 {
-    if (!m_type_vendor_ap.get())
-        m_type_vendor_ap.reset(new AppleObjCTypeVendor(*this));
+    if (!m_decl_vendor_ap.get())
+        m_decl_vendor_ap.reset(new AppleObjCDeclVendor(*this));
     
-    return m_type_vendor_ap.get();
+    return m_decl_vendor_ap.get();
 }

@@ -99,8 +99,8 @@ public:
     virtual ClassDescriptorSP
     GetClassDescriptorFromISA (ObjCISA isa);
     
-    virtual TypeVendor *
-    GetTypeVendor();
+    virtual DeclVendor *
+    GetDeclVendor();
     
     virtual lldb::addr_t
     LookupRuntimeSymbol (const ConstString &name);
@@ -280,7 +280,7 @@ private:
     lldb::addr_t                            m_get_shared_cache_class_info_args;
     Mutex                                   m_get_shared_cache_class_info_args_mutex;
 
-    std::unique_ptr<TypeVendor>               m_type_vendor_ap;
+    std::unique_ptr<DeclVendor>               m_decl_vendor_ap;
     lldb::addr_t                            m_isa_hash_table_ptr;
     HashTableSignature                      m_hash_signature;
     bool                                    m_has_object_getClass;

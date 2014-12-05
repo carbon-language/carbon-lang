@@ -26,6 +26,7 @@
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
+#include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/OptionValueBoolean.h"
@@ -1346,6 +1347,9 @@ public:
 
     SourceManager &
     GetSourceManager ();
+    
+    ClangModulesDeclVendor *
+    GetClangModulesDeclVendor ();
 
     //------------------------------------------------------------------
     // Methods.
@@ -1383,6 +1387,7 @@ protected:
     std::unique_ptr<ClangASTContext> m_scratch_ast_context_ap;
     std::unique_ptr<ClangASTSource> m_scratch_ast_source_ap;
     std::unique_ptr<ClangASTImporter> m_ast_importer_ap;
+    std::unique_ptr<ClangModulesDeclVendor> m_clang_modules_decl_vendor_ap;
     ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
     std::unique_ptr<SourceManager> m_source_manager_ap;

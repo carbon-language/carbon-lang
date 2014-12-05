@@ -2028,6 +2028,22 @@ Target::GetSourceManager ()
     return *m_source_manager_ap;
 }
 
+ClangModulesDeclVendor *
+Target::GetClangModulesDeclVendor ()
+{
+    static Mutex s_clang_modules_decl_vendor_mutex; // If this is contended we can make it per-target
+    
+    {
+        Mutex::Locker clang_modules_decl_vendor_locker(s_clang_modules_decl_vendor_mutex);
+        
+        if (!m_clang_modules_decl_vendor_ap)
+        {
+            m_clang_modules_decl_vendor_ap.reset(ClangModulesDeclVendor::Create(*this));
+        }
+    }
+    
+    return m_clang_modules_decl_vendor_ap.get();
+}
 
 Target::StopHookSP
 Target::CreateStopHook ()

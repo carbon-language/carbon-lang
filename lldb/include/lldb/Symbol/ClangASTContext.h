@@ -212,10 +212,13 @@ public:
                  ClangASTType type2,
                  bool ignore_qualifiers = false);
     
-    ClangASTType
+    static ClangASTType
+    GetTypeForDecl (clang::NamedDecl *decl);
+    
+    static ClangASTType
     GetTypeForDecl (clang::TagDecl *decl);
     
-    ClangASTType
+    static ClangASTType
     GetTypeForDecl (clang::ObjCInterfaceDecl *objc_decl);
     
     template <typename RecordDeclType>

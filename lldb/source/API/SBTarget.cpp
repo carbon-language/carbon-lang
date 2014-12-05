@@ -2315,14 +2315,19 @@ SBTarget::FindFirstType (const char* typename_cstr)
             
             if (objc_language_runtime)
             {
-                TypeVendor *objc_type_vendor = objc_language_runtime->GetTypeVendor();
+                DeclVendor *objc_decl_vendor = objc_language_runtime->GetDeclVendor();
                 
-                if (objc_type_vendor)
+                if (objc_decl_vendor)
                 {
-                    std::vector <ClangASTType> types;
+                    std::vector <clang::NamedDecl *> decls;
                     
-                    if (objc_type_vendor->FindTypes(const_typename, true, 1, types) > 0)
-                        return SBType(types[0]);
+                    if (objc_decl_vendor->FindDecls(const_typename, true, 1, decls) > 0)
+                    {
+                        if (ClangASTType type = ClangASTContext::GetTypeForDecl(decls[0]))
+                        {
+                            return SBType(type);
+                        }
+                    }
                 }
             }
         }
@@ -2388,17 +2393,20 @@ SBTarget::FindTypes (const char* typename_cstr)
             
             if (objc_language_runtime)
             {
-                TypeVendor *objc_type_vendor = objc_language_runtime->GetTypeVendor();
+                DeclVendor *objc_decl_vendor = objc_language_runtime->GetDeclVendor();
                 
-                if (objc_type_vendor)
+                if (objc_decl_vendor)
                 {
-                    std::vector <ClangASTType> types;
+                    std::vector <clang::NamedDecl *> decls;
                     
-                    if (objc_type_vendor->FindTypes(const_typename, true, UINT32_MAX, types))
+                    if (objc_decl_vendor->FindDecls(const_typename, true, 1, decls) > 0)
                     {
-                        for (ClangASTType &type : types)
+                        for (clang::NamedDecl *decl : decls)
                         {
-                            sb_type_list.Append(SBType(type));
+                            if (ClangASTType type = ClangASTContext::GetTypeForDecl(decl))
+                            {
+                                sb_type_list.Append(SBType(type));
+                            }
                         }
                     }
                 }
