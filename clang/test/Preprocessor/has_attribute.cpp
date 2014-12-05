@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown -std=c++11 -E %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -fms-compatibility -std=c++11 -E %s -o - | FileCheck %s
 
 // CHECK: has_cxx11_carries_dep
 #if __has_cpp_attribute(carries_dependency)
@@ -50,4 +50,19 @@
 // CHECK: has_cxx14_deprecated_vers
 #if __has_cpp_attribute(deprecated) == 201309
   int has_cxx14_deprecated_vers();
+#endif
+
+// CHECK: has_declspec_uuid
+#if __has_declspec_attribute(uuid)
+  int has_declspec_uuid();
+#endif
+
+// CHECK: has_declspec_uuid2
+#if __has_declspec_attribute(__uuid__)
+  int has_declspec_uuid2();
+#endif
+
+// CHECK: does_not_have_declspec_fallthrough
+#if !__has_declspec_attribute(fallthrough)
+  int does_not_have_declspec_fallthrough();
 #endif

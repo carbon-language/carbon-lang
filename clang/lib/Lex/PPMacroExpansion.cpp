@@ -118,6 +118,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_extension    = RegisterBuiltinMacro(*this, "__has_extension");
   Ident__has_builtin      = RegisterBuiltinMacro(*this, "__has_builtin");
   Ident__has_attribute    = RegisterBuiltinMacro(*this, "__has_attribute");
+  Ident__has_declspec = RegisterBuiltinMacro(*this, "__has_declspec_attribute");
   Ident__has_include      = RegisterBuiltinMacro(*this, "__has_include");
   Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
   Ident__has_warning      = RegisterBuiltinMacro(*this, "__has_warning");
@@ -1381,6 +1382,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
              II == Ident__has_builtin   ||
              II == Ident__is_identifier ||
              II == Ident__has_attribute ||
+             II == Ident__has_declspec  ||
              II == Ident__has_cpp_attribute) {
     // The argument to these builtins should be a parenthesized identifier.
     SourceLocation StartLoc = Tok.getLocation();
@@ -1427,6 +1429,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
                            getTargetInfo().getTriple(), getLangOpts());
     else if (II == Ident__has_cpp_attribute)
       Value = hasAttribute(AttrSyntax::CXX, ScopeII, FeatureII,
+                           getTargetInfo().getTriple(), getLangOpts());
+    else if (II == Ident__has_declspec)
+      Value = hasAttribute(AttrSyntax::Declspec, nullptr, FeatureII,
                            getTargetInfo().getTriple(), getLangOpts());
     else if (II == Ident__has_extension)
       Value = HasExtension(*this, FeatureII);

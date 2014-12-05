@@ -164,6 +164,33 @@ The attribute name can also be specified with a preceding and following ``__``
 (double underscore) to avoid interference from a macro with the same name.  For
 instance, ``__always_inline__`` can be used instead of ``always_inline``.
 
+
+``__has_declspec_attribute``
+----------------------------
+
+This function-like macro takes a single identifier argument that is the name of
+an attribute implemented as a Microsoft-style ``__declspec`` attribute.  It
+evaluates to 1 if the attribute is supported by the current compilation target,
+or 0 if not.  It can be used like this:
+
+.. code-block:: c++
+
+  #ifndef __has_declspec_attribute         // Optional of course.
+    #define __has_declspec_attribute(x) 0  // Compatibility with non-clang compilers.
+  #endif
+
+  ...
+  #if __has_declspec_attribute(dllexport)
+  #define DLLEXPORT __declspec(dllexport)
+  #else
+  #define DLLEXPORT
+  #endif
+  ...
+
+The attribute name can also be specified with a preceding and following ``__``
+(double underscore) to avoid interference from a macro with the same name.  For
+instance, ``__dllexport__`` can be used instead of ``dllexport``.
+
 ``__is_identifier``
 -------------------
 
