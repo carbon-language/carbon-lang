@@ -1,8 +1,8 @@
 # RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
 #
 # RUN: lld -flavor link /out:%t.dll /dll /entry:init \
-# RUN:   /export:exportfn1 /export:exportfn2 /lldmoduledeffile:%t.def -- %t.obj
-# RUN: FileCheck -check-prefix=CHECK1 %s < %t.def
+# RUN:   /export:exportfn1 /export:exportfn2 /lldmoduledeffile:%t1.def -- %t.obj
+# RUN: FileCheck -check-prefix=CHECK1 %s < %t1.def
 
 CHECK1: LIBRARY "exportlib2.test.tmp.dll"
 CHECK1: EXPORTS
@@ -11,11 +11,11 @@ CHECK1:   exportfn2 @2
 CHECK1:   exportfn3@256 @3
 
 # RUN: lld -flavor link /out:%t.dll /dll /entry:init \
-# RUN:   /def:%p/Inputs/exports.def /lldmoduledeffile:%t.def -- %t.obj
-# RUN: FileCheck -check-prefix=CHECK2 %s < %t.def
+# RUN:   /def:%p/Inputs/exports2.def /lldmoduledeffile:%t2.def -- %t.obj
+# RUN: FileCheck -check-prefix=CHECK2 %s < %t2.def
 
 CHECK2: LIBRARY "exportlib2.test.tmp.dll"
 CHECK2: EXPORTS
 CHECK2:   exportfn1 @5
-CHECK2:   exportfn2 @6
-CHECK2:   exportfn3@256 @7
+CHECK2:   exportfn3@256 @6
+CHECK2:   exportfn7@8 @7

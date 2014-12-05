@@ -35,6 +35,8 @@ createModuleDefinitionFile(const PECOFFLinkingContext &ctx) {
     os << "  ";
     if (!desc.externalName.empty()) {
       os << desc.externalName;
+    } else if (!desc.mangledName.empty()) {
+      os << ctx.undecorateSymbol(desc.mangledName);
     } else {
       os << ctx.undecorateSymbol(desc.name);
     }

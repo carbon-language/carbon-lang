@@ -1,0 +1,6 @@
+; This is a comment line
+
+EXPORTS
+  exportfn1 @5   ; foo
+  exportfn7
+  exportfn5=exportfn6 PRIVATE
