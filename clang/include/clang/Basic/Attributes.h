@@ -18,8 +18,6 @@ namespace clang {
 class IdentifierInfo;
 
 enum class AttrSyntax {
-  /// Is the attribute identifier generally known for any syntax?
-  Generic,
   /// Is the identifier known as a GNU-style attribute?
   GNU,
   /// Is the identifier known as a __declspec-style attribute?

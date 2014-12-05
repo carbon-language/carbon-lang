@@ -48,3 +48,8 @@ int has_no_volatile_attribute();
 #if !__has_attribute(dllexport)
   int does_not_have_dllexport();
 #endif
+
+// CHECK: does_not_have_uuid
+#if !__has_attribute(uuid)
+  int does_not_have_uuid
+#endif

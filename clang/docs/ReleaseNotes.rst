@@ -47,7 +47,11 @@ sections with improvements to Clang's support for those languages.
 Major New Features
 ------------------
 
-- A big one.
+- The __has_attribute built-in macro no longer queries for attributes across
+  multiple attribute syntaxes (GNU, C++11, __declspec, etc). Instead, it only
+  queries GNU-style attributes. With the addition of __has_cpp_attribute and
+  __has_declspec_attribute, this allows for more precise coverage of attribute
+  syntax querying.
 
 
 Improvements to Clang's diagnostics
