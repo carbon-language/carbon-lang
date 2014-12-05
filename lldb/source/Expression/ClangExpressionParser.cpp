@@ -106,7 +106,7 @@ public:
     
     virtual void moduleImport(SourceLocation import_location,
                               ModuleIdPath path,
-                              const clang::Module */*null*/)
+                              const clang::Module * /*null*/)
     {
         std::vector<llvm::StringRef> string_path;
         
@@ -143,7 +143,8 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
                                               bool generate_debug_info) :
     m_expr (expr),
     m_compiler (),
-    m_code_generator ()
+    m_code_generator (),
+    m_pp_callbacks(nullptr)
 {
     // 1. Create a new compiler instance.
     m_compiler.reset(new CompilerInstance());
@@ -405,7 +406,7 @@ ClangExpressionParser::Parse (Stream &stream)
 
     int num_errors = 0;
     
-    if (m_pp_callbacks->hasErrors())
+    if (m_pp_callbacks && m_pp_callbacks->hasErrors())
     {
         num_errors++;
         
