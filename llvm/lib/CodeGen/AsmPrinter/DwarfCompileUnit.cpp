@@ -746,14 +746,17 @@ void DwarfCompileUnit::addAddress(DIE &Die, dwarf::Attribute Attribute,
                                   bool Indirect) {
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
 
+  bool validReg;
   if (Location.isReg() && !Indirect)
-    addRegisterOpPiece(*Loc, Location.getReg());
-  else {
-    addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
-    if (Indirect && !Location.isReg()) {
-      addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
-    }
-  }
+    validReg = addRegisterOpPiece(*Loc, Location.getReg());
+  else
+    validReg = addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
+
+  if (!validReg)
+    return;
+
+  if (!Location.isReg() && Indirect)
+    addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
 
   // Now attach the location information to the DIE.
   addBlock(Die, Attribute, Loc);
@@ -769,25 +772,29 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
   unsigned N = DV.getNumAddrElements();
   unsigned i = 0;
+  bool validReg;
   if (Location.isReg()) {
     if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_plus) {
       assert(!DV.getVariable().isIndirect() &&
              "double indirection not handled");
       // If first address element is OpPlus then emit
       // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
-      addRegisterOffset(*Loc, Location.getReg(), DV.getAddrElement(1));
+      validReg = addRegisterOffset(*Loc, Location.getReg(), DV.getAddrElement(1));
       i = 2;
     } else if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_deref) {
       assert(!DV.getVariable().isIndirect() &&
              "double indirection not handled");
-      addRegisterOpPiece(*Loc, Location.getReg(),
-                         DV.getExpression().getPieceSize(),
-                         DV.getExpression().getPieceOffset());
+      validReg = addRegisterOpPiece(*Loc, Location.getReg(),
+                                 DV.getExpression().getPieceSize(),
+                                 DV.getExpression().getPieceOffset());
       i = 3;
     } else
-      addRegisterOpPiece(*Loc, Location.getReg());
+      validReg = addRegisterOpPiece(*Loc, Location.getReg());
   } else
-    addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
+    validReg = addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
+
+  if (!validReg)
+    return;
 
   for (; i < N; ++i) {
     uint64_t Element = DV.getAddrElement(i);

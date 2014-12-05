@@ -401,7 +401,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DINameSpace NS) {
 /// addRegisterOp - Add register operand.
 // FIXME: Ideally, this would share the implementation with
 // AsmPrinter::EmitDwarfRegOpPiece.
-void DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
+bool DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
                                    unsigned SizeInBits, unsigned OffsetInBits) {
   const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
   int DWReg = RI->getDwarfRegNum(Reg, false);
@@ -416,11 +416,8 @@ void DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
       Idx = RI->getSubRegIndex(*SR, Reg);
   }
 
-  if (DWReg < 0) {
-    DEBUG(dbgs() << "Invalid Dwarf register number.\n");
-    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_nop);
-    return;
-  }
+  if (DWReg < 0)
+    return false;
 
   // Emit register.
   if (DWReg < 32)
@@ -460,13 +457,17 @@ void DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
       addUInt(TheDie, dwarf::DW_FORM_data1, PieceSizeInBits/SizeOfByte);
     }
   }
+  return true;
 }
 
 /// addRegisterOffset - Add register offset.
-void DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
+bool DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
                                   int64_t Offset) {
   const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
-  unsigned DWReg = RI->getDwarfRegNum(Reg, false);
+  int DWReg = RI->getDwarfRegNum(Reg, false);
+  if (DWReg < 0)
+    return false;
+
   const TargetRegisterInfo *TRI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
   if (Reg == TRI->getFrameRegister(*Asm->MF))
     // If variable offset is based in frame register then use fbreg.
@@ -478,6 +479,7 @@ void DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
     addUInt(TheDie, dwarf::DW_FORM_udata, DWReg);
   }
   addSInt(TheDie, dwarf::DW_FORM_sdata, Offset);
+  return true;
 }
 
 /* Byref variables, in Blocks, are declared by the programmer as "SomeType
@@ -581,10 +583,14 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
   // variable's location.
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
 
+  bool validReg;
   if (Location.isReg())
-    addRegisterOpPiece(*Loc, Location.getReg());
+    validReg = addRegisterOpPiece(*Loc, Location.getReg());
   else
-    addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
+    validReg = addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
+
+  if (!validReg)
+    return;
 
   // If we started with a pointer to the __Block_byref... struct, then
   // the first thing we need to do is dereference the pointer (DW_OP_deref).
