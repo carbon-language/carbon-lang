@@ -1518,9 +1518,6 @@ bool ModuleLinker::run() {
     Function *SF = LazilyLinkFunctions.back();
     LazilyLinkFunctions.pop_back();
 
-    if (!SF)
-      continue;
-
     Function *DF = cast<Function>(ValueMap[SF]);
     if (SF->hasPrefixData()) {
       // Link in the prefix data.
@@ -1532,11 +1529,8 @@ bool ModuleLinker::run() {
     if (std::error_code EC = SF->materialize())
       return emitError(EC.message());
 
-    // Skip if no body (function is external).
-    if (SF->isDeclaration())
-      continue;
-
     // Link in function body.
+    assert(!SF->isDeclaration());
     linkFunctionBody(DF, SF);
     SF->Dematerialize();
   }
