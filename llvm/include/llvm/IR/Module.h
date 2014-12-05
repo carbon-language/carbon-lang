@@ -150,7 +150,7 @@ public:
 
   /// The named metadata iterators.
   typedef NamedMDListType::iterator             named_metadata_iterator;
-  /// The named metadata constant interators.
+  /// The named metadata constant iterators.
   typedef NamedMDListType::const_iterator const_named_metadata_iterator;
 
   /// This enumeration defines the supported behaviors of module flags.
@@ -485,7 +485,7 @@ public:
   std::error_code materialize(GlobalValue *GV);
   /// If the GlobalValue is read in, and if the GVMaterializer supports it,
   /// release the memory for the function, and set it up to be materialized
-  /// lazily. If !isDematerializable(), this method is a noop.
+  /// lazily. If !isDematerializable(), this method is a no-op.
   void Dematerialize(GlobalValue *GV);
 
   /// Make sure all GlobalValues in this Module are fully read.
