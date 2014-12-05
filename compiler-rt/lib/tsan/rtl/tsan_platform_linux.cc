@@ -324,6 +324,9 @@ static void CheckAndProtect() {
   ProtectRange(kLoAppMemEnd, kShadowBeg);
   ProtectRange(kShadowEnd, kMetaShadowBeg);
   ProtectRange(kMetaShadowEnd, kTraceMemBeg);
+  // Memory for traces is mapped lazily in MapThreadTrace.
+  // Protect the whole range for now, so that user does not map something here.
+  ProtectRange(kTraceMemBeg, kTraceMemEnd);
   ProtectRange(kTraceMemEnd, kHeapMemBeg);
   ProtectRange(kHeapMemEnd + PrimaryAllocator::AdditionalSize(), kHiAppMemBeg);
 }
