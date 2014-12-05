@@ -37,6 +37,7 @@
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
+#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
@@ -288,8 +289,7 @@ struct ShadowMapping {
   bool OrShadowOffset;
 };
 
-static ShadowMapping getShadowMapping(const Module &M, int LongSize) {
-  llvm::Triple TargetTriple(M.getTargetTriple());
+static ShadowMapping getShadowMapping(Triple &TargetTriple, int LongSize) {
   bool IsAndroid = TargetTriple.getEnvironment() == llvm::Triple::Android;
   bool IsIOS = TargetTriple.isiOS();
   bool IsFreeBSD = TargetTriple.isOSFreeBSD();
@@ -385,6 +385,7 @@ struct AddressSanitizer : public FunctionPass {
 
   LLVMContext *C;
   const DataLayout *DL;
+  Triple TargetTriple;
   int LongSize;
   Type *IntptrTy;
   ShadowMapping Mapping;
@@ -430,6 +431,7 @@ class AddressSanitizerModule : public ModulePass {
   Type *IntptrTy;
   LLVMContext *C;
   const DataLayout *DL;
+  Triple TargetTriple;
   ShadowMapping Mapping;
   Function *AsanPoisonGlobals;
   Function *AsanUnpoisonGlobals;
@@ -1042,37 +1044,47 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
 
   if (G->hasSection()) {
     StringRef Section(G->getSection());
-    // Ignore the globals from the __OBJC section. The ObjC runtime assumes
-    // those conform to /usr/lib/objc/runtime.h, so we can't add redzones to
-    // them.
-    if (Section.startswith("__OBJC,") ||
-        Section.startswith("__DATA, __objc_")) {
-      DEBUG(dbgs() << "Ignoring ObjC runtime global: " << *G << "\n");
-      return false;
-    }
-    // See http://code.google.com/p/address-sanitizer/issues/detail?id=32
-    // Constant CFString instances are compiled in the following way:
-    //  -- the string buffer is emitted into
-    //     __TEXT,__cstring,cstring_literals
-    //  -- the constant NSConstantString structure referencing that buffer
-    //     is placed into __DATA,__cfstring
-    // Therefore there's no point in placing redzones into __DATA,__cfstring.
-    // Moreover, it causes the linker to crash on OS X 10.7
-    if (Section.startswith("__DATA,__cfstring")) {
-      DEBUG(dbgs() << "Ignoring CFString: " << *G << "\n");
-      return false;
-    }
-    // The linker merges the contents of cstring_literals and removes the
-    // trailing zeroes.
-    if (Section.startswith("__TEXT,__cstring,cstring_literals")) {
-      DEBUG(dbgs() << "Ignoring a cstring literal: " << *G << "\n");
-      return false;
-    }
-    if (Section.startswith("__TEXT,__objc_methname,cstring_literals")) {
-      DEBUG(dbgs() << "Ignoring objc_methname cstring global: " << *G << "\n");
-      return false;
-    }
 
+    if (TargetTriple.isOSBinFormatMachO()) {
+      StringRef ParsedSegment, ParsedSection;
+      unsigned TAA = 0, StubSize = 0;
+      bool TAAParsed;
+      std::string ErrorCode =
+        MCSectionMachO::ParseSectionSpecifier(Section, ParsedSegment,
+                                              ParsedSection, TAA, TAAParsed,
+                                              StubSize);
+      if (!ErrorCode.empty()) {
+        report_fatal_error("Invalid section specifier '" + ParsedSection +
+                           "': " + ErrorCode + ".");
+      }
+
+      // Ignore the globals from the __OBJC section. The ObjC runtime assumes
+      // those conform to /usr/lib/objc/runtime.h, so we can't add redzones to
+      // them.
+      if (ParsedSegment == "__OBJC" ||
+          (ParsedSegment == "__DATA" && ParsedSection.startswith("__objc_"))) {
+        DEBUG(dbgs() << "Ignoring ObjC runtime global: " << *G << "\n");
+        return false;
+      }
+      // See http://code.google.com/p/address-sanitizer/issues/detail?id=32
+      // Constant CFString instances are compiled in the following way:
+      //  -- the string buffer is emitted into
+      //     __TEXT,__cstring,cstring_literals
+      //  -- the constant NSConstantString structure referencing that buffer
+      //     is placed into __DATA,__cfstring
+      // Therefore there's no point in placing redzones into __DATA,__cfstring.
+      // Moreover, it causes the linker to crash on OS X 10.7
+      if (ParsedSegment == "__DATA" && ParsedSection == "__cfstring") {
+        DEBUG(dbgs() << "Ignoring CFString: " << *G << "\n");
+        return false;
+      }
+      // The linker merges the contents of cstring_literals and removes the
+      // trailing zeroes.
+      if (ParsedSegment == "__TEXT" && (TAA & MachO::S_CSTRING_LITERALS)) {
+        DEBUG(dbgs() << "Ignoring a cstring literal: " << *G << "\n");
+        return false;
+      }
+    }
 
     // Callbacks put into the CRT initializer/terminator sections
     // should not be instrumented.
@@ -1256,7 +1268,8 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   C = &(M.getContext());
   int LongSize = DL->getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
-  Mapping = getShadowMapping(M, LongSize);
+  TargetTriple = Triple(M.getTargetTriple());
+  Mapping = getShadowMapping(TargetTriple, LongSize);
   initializeCallbacks(M);
 
   bool Changed = false;
@@ -1338,6 +1351,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
   C = &(M.getContext());
   LongSize = DL->getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
+  TargetTriple = Triple(M.getTargetTriple());
 
   AsanCtorFunction = Function::Create(
       FunctionType::get(Type::getVoidTy(*C), false),
@@ -1350,7 +1364,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
   AsanInitFunction->setLinkage(Function::ExternalLinkage);
   IRB.CreateCall(AsanInitFunction);
 
-  Mapping = getShadowMapping(M, LongSize);
+  Mapping = getShadowMapping(TargetTriple, LongSize);
 
   appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority);
   return true;
