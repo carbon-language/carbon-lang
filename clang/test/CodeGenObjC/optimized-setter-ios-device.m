@@ -26,8 +26,8 @@
 @synthesize atomicPropertyCopy;
 @end
 
-// CHECK: call arm_aapcscc void @objc_setProperty_nonatomic
-// CHECK: call arm_aapcscc void @objc_setProperty_nonatomic_copy
-// CHECK: call arm_aapcscc void @objc_setProperty_atomic
-// CHECK: call arm_aapcscc void @objc_setProperty_atomic_copy
+// CHECK: call void @objc_setProperty_nonatomic
+// CHECK: call void @objc_setProperty_nonatomic_copy
+// CHECK: call void @objc_setProperty_atomic
+// CHECK: call void @objc_setProperty_atomic_copy
 

@@ -3838,7 +3838,42 @@ public:
     // FIXME: Should we just treat this as a feature?
     IsThumb = getTriple().getArchName().startswith("thumb");
 
-    setABI("aapcs-linux");
+    // FIXME: This duplicates code from the driver that sets the -target-abi
+    // option - this code is used if -target-abi isn't passed and should
+    // be unified in some way.
+    if (Triple.isOSBinFormatMachO()) {
+      // The backend is hardwired to assume AAPCS for M-class processors, ensure
+      // the frontend matches that.
+      if (Triple.getEnvironment() == llvm::Triple::EABI ||
+          Triple.getOS() == llvm::Triple::UnknownOS ||
+          StringRef(CPU).startswith("cortex-m")) {
+        setABI("aapcs");
+      } else {
+        setABI("apcs-gnu");
+      }
+    } else if (Triple.isOSWindows()) {
+      // FIXME: this is invalid for WindowsCE
+      setABI("aapcs");
+    } else {
+      // Select the default based on the platform.
+      switch (Triple.getEnvironment()) {
+      case llvm::Triple::Android:
+      case llvm::Triple::GNUEABI:
+      case llvm::Triple::GNUEABIHF:
+        setABI("aapcs-linux");
+        break;
+      case llvm::Triple::EABIHF:
+      case llvm::Triple::EABI:
+        setABI("aapcs");
+        break;
+      default:
+        if (Triple.getOS() == llvm::Triple::NetBSD)
+          setABI("apcs-gnu");
+        else
+          setABI("aapcs");
+        break;
+      }
+    }
 
     // ARM targets default to using the ARM C++ ABI.
     TheCXXABI.set(TargetCXXABI::GenericARM);
