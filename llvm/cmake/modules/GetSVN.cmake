@@ -19,13 +19,78 @@ get_filename_component(LLVM_DIR "${LLVM_DIR}" PATH)
 # Handle strange terminals
 set(ENV{TERM} "dumb")
 
+macro(get_source_info_svn path revision repository)
+  # FindSubversion does not work with symlinks. See PR 8437
+  if (NOT IS_SYMLINK "${path}")
+    find_package(Subversion)
+  endif()
+  if (Subversion_FOUND)
+    subversion_wc_info( ${path} Project )
+    if (Project_WC_REVISION)
+      set(${revision} ${Project_WC_REVISION} PARENT_SCOPE)
+    endif()
+    if (Project_WC_URL)
+      set(${repository} ${Project_WC_URL} PARENT_SCOPE)
+    endif()
+  endif()
+endmacro()
+
+macro(get_source_info_git_svn path revision repository)
+  find_program(git_executable NAMES git git.exe git.cmd)
+  if (git_executable)
+    execute_process(COMMAND ${git_executable} svn info
+      WORKING_DIRECTORY ${path}
+      TIMEOUT 5
+      RESULT_VARIABLE git_result
+      OUTPUT_VARIABLE git_output)
+    if (git_result EQUAL 0)
+      string(REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
+        "\\2" git_svn_rev "${git_output}")
+      set(${revision} ${git_svn_rev} PARENT_SCOPE)
+      string(REGEX REPLACE "^(.*\n)?URL: ([^\n]+).*"
+        "\\2" git_url "${git_output}")
+      set(${repository} ${git_url} PARENT_SCOPE)
+    endif()
+  endif()
+endmacro()
+
+macro(get_source_info_git path revision repository)
+  find_program(git_executable NAMES git git.exe git.cmd)
+  if (git_executable)
+    execute_process(COMMAND ${git_executable} log -1 --pretty=format:%H
+      WORKING_DIRECTORY ${path}
+      TIMEOUT 5
+      RESULT_VARIABLE git_result
+      OUTPUT_VARIABLE git_output)
+    if (git_result EQUAL 0)
+      set(${revision} ${git_output} PARENT_SCOPE)
+    endif()
+    execute_process(COMMAND ${git_executable} remote -v
+      WORKING_DIRECTORY ${path}
+      TIMEOUT 5
+      RESULT_VARIABLE git_result
+      OUTPUT_VARIABLE git_output)
+    if (git_result EQUAL 0)
+      string(REGEX REPLACE "^(.*\n)?[^ \t]+[ \t]+([^ \t\n]+)[ \t]+\\(fetch\\).*"
+        "\\2" git_url "${git_output}")
+      set(${repository} "${git_url}" PARENT_SCOPE)
+    endif()
+  endif()
+endmacro()
+
+function(get_source_info path revision repository)
+  if (EXISTS "${path}/.svn")
+    get_source_info_svn("${path}" revision repository)
+  elseif (EXISTS "${path}/.git/svn")
+    get_source_info_git_svn("${path}" revision repository)
+  elseif (EXISTS "${path}/.git")
+    get_source_info_git("${path}" revision repository)
+  endif()
+endfunction()
+
 function(append_info name path)
-  execute_process(COMMAND "${LLVM_DIR}/utils/GetSourceVersion" "${path}"
-    OUTPUT_VARIABLE revision)
+  get_source_info("${path}" revision repository)
   string(STRIP "${revision}" revision)
-  execute_process(COMMAND "${LLVM_DIR}/utils/GetRepositoryPath" "${path}"
-    OUTPUT_VARIABLE repository
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
   string(STRIP "${repository}" repository)
   file(APPEND "${HEADER_FILE}.txt"
     "#define ${name}_REVISION \"${revision}\"\n")
