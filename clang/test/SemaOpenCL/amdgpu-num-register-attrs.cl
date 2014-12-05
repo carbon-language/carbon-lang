@@ -32,3 +32,9 @@ __attribute__((amdgpu_num_vgpr(4294967296))) kernel void foo13() {} // expected-
 __attribute__((amdgpu_num_sgpr(4294967296))) kernel void foo14() {} // expected-error {{integer constant expression evaluates to value 4294967296 that cannot be represented in a 32-bit unsigned integer type}}
 
 __attribute__((amdgpu_num_sgpr(4294967296), amdgpu_num_vgpr(4294967296))) kernel void foo15() {} // expected-error 2 {{integer constant expression evaluates to value 4294967296 that cannot be represented in a 32-bit unsigned integer type}}
+
+
+// Make sure it is accepted with kernel keyword before the attribute.
+kernel __attribute__((amdgpu_num_vgpr(40))) void foo16() {}
+
+kernel __attribute__((amdgpu_num_sgpr(40))) void foo17() {}

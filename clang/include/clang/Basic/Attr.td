@@ -905,7 +905,11 @@ def AMDGPUNumVGPR : InheritableAttr {
   let Spellings = [GNU<"amdgpu_num_vgpr">];
   let Args = [UnsignedArgument<"NumVGPR">];
   let Documentation = [AMDGPUNumVGPRDocs];
-  let Subjects = SubjectList<[OpenCLKernelFunction], ErrorDiag,
+
+// FIXME: This should be for OpenCLKernelFunction, but is not to
+// workaround needing to see kernel attribute before others to know if
+// this should be rejected on non-kernels.
+  let Subjects = SubjectList<[Function], ErrorDiag,
                              "ExpectedKernelFunction">;
 }
 
@@ -913,7 +917,7 @@ def AMDGPUNumSGPR : InheritableAttr {
   let Spellings = [GNU<"amdgpu_num_sgpr">];
   let Args = [UnsignedArgument<"NumSGPR">];
   let Documentation = [AMDGPUNumSGPRDocs];
-  let Subjects = SubjectList<[OpenCLKernelFunction], ErrorDiag,
+  let Subjects = SubjectList<[Function], ErrorDiag,
                               "ExpectedKernelFunction">;
 }
 
