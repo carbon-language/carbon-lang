@@ -72,6 +72,11 @@ public:
 
   template <typename T> class atom_iterator; // forward reference
 
+  /// For allocating any objects owned by this File.
+  llvm::BumpPtrAllocator &allocator() const {
+    return _allocator;
+  }
+
   /// \brief For use interating over DefinedAtoms in this File.
   typedef atom_iterator<DefinedAtom>  defined_iterator;
 
@@ -206,6 +211,7 @@ protected:
   static atom_collection_empty<UndefinedAtom>     _noUndefinedAtoms;
   static atom_collection_empty<SharedLibraryAtom> _noSharedLibraryAtoms;
   static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
+  mutable llvm::BumpPtrAllocator                  _allocator;
 
 private:
   StringRef _path;
