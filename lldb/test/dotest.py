@@ -1011,7 +1011,7 @@ def setupSysPath():
     # Assume lldb-mi is in same place as lldb
     # If not found, disable the lldb-mi tests
     global dont_do_lldbmi_test
-    if is_exe(lldbExec + "-mi"):
+    if lldbExec and is_exe(lldbExec + "-mi"):
         lldbMiExec = lldbExec + "-mi"
     if not lldbMiExec:
         dont_do_lldbmi_test = True
