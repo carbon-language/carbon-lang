@@ -525,17 +525,7 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
 /// copy additional attributes (those not needed to construct a GlobalValue)
 /// from the SrcGV to the DestGV.
 static void copyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
-  // Use the maximum alignment, rather than just copying the alignment of SrcGV.
-  auto *DestGO = dyn_cast<GlobalObject>(DestGV);
-  unsigned Alignment;
-  if (DestGO)
-    Alignment = std::max(DestGO->getAlignment(), SrcGV->getAlignment());
-
   DestGV->copyAttributesFrom(SrcGV);
-
-  if (DestGO)
-    DestGO->setAlignment(Alignment);
-
   forceRenaming(DestGV, SrcGV->getName());
 }
 
@@ -1051,6 +1041,9 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     if (auto *NewGO = dyn_cast<GlobalObject>(NewGV)) {
       if (C)
         NewGO->setComdat(C);
+
+      if (DGV && DGV->hasCommonLinkage() && SGV->hasCommonLinkage())
+        NewGO->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
     }
 
     // Make sure to remember this mapping.
@@ -1072,13 +1065,9 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
 GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
                                                    GlobalValue *DGV,
                                                    bool LinkFromSrc) {
-  unsigned Alignment = 0;
   bool ClearConstant = false;
 
   if (DGV) {
-    if (DGV->hasCommonLinkage() && SGVar->hasCommonLinkage())
-      Alignment = std::max(SGVar->getAlignment(), DGV->getAlignment());
-
     auto *DGVar = dyn_cast<GlobalVariable>(DGV);
     if (!SGVar->isConstant() || (DGVar && !DGVar->isConstant()))
       ClearConstant = true;
@@ -1086,8 +1075,6 @@ GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
 
   if (!LinkFromSrc) {
     if (auto *NewGVar = dyn_cast<GlobalVariable>(DGV)) {
-      if (Alignment)
-        NewGVar->setAlignment(Alignment);
       if (NewGVar->isDeclaration() && ClearConstant)
         NewGVar->setConstant(false);
     }
@@ -1102,9 +1089,6 @@ GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
       SGVar->isConstant(), SGVar->getLinkage(), /*init*/ nullptr,
       SGVar->getName(), /*insertbefore*/ nullptr, SGVar->getThreadLocalMode(),
       SGVar->getType()->getAddressSpace());
-
-  if (Alignment)
-    NewDGV->setAlignment(Alignment);
 
   return NewDGV;
 }
