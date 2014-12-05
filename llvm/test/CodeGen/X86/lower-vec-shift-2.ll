@@ -44,14 +44,10 @@ entry:
 define <2 x i64> @test3(<2 x i64> %A, <2 x i64> %B) {
 ; SSE2-LABEL: test3:
 ; SSE2:       # BB#0
-; SSE2-NEXT:    movd  %xmm1, %rax
-; SSE2-NEXT:    movd  %eax, %xmm1
 ; SSE2-NEXT:    psllq  %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ; AVX-LABEL: test3:
 ; AVX:       # BB#0
-; AVX-NEXT:    vmovq  %xmm1, %rax
-; AVX-NEXT:    vmovd  %eax, %xmm1
 ; AVX-NEXT:    vpsllq  %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 entry:
@@ -103,14 +99,10 @@ entry:
 define <2 x i64> @test6(<2 x i64> %A, <2 x i64> %B) {
 ; SSE2-LABEL: test6:
 ; SSE2:       # BB#0
-; SSE2-NEXT:    movd  %xmm1, %rax
-; SSE2-NEXT:    movd  %eax, %xmm1
 ; SSE2-NEXT:    psrlq  %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ; AVX-LABEL: test6:
 ; AVX:       # BB#0
-; AVX-NEXT:    vmovq  %xmm1, %rax
-; AVX-NEXT:    vmovd  %eax, %xmm1
 ; AVX-NEXT:    vpsrlq  %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 entry:
