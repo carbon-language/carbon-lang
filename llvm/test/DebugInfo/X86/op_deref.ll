@@ -23,6 +23,9 @@
 ; ASM-CHECK: DEBUG_VALUE: vla <- RCX
 ; ASM-CHECK: DW_OP_breg2
 
+; RUN: llvm-as %s -o - | llvm-dis - | FileCheck %s --check-prefix=PRETTY-PRINT
+; PRETTY-PRINT: [ DW_TAG_expression ] [DW_OP_deref]
+
 define void @testVLAwithSize(i32 %s) nounwind uwtable ssp {
 entry:
   %s.addr = alloca i32, align 4

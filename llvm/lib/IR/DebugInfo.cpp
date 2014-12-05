@@ -1415,6 +1415,9 @@ void DIExpression::printInternal(raw_ostream &OS) const {
       OS << " offset=" << Offset << ", size=" << Size;
       break;
     }
+    case DW_OP_deref:
+      // No arguments.
+      break;
     default:
       // Else bail out early. This may be a line table entry.
       OS << "Unknown]";
