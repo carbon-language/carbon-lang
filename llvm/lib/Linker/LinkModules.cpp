@@ -1021,15 +1021,12 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     return false;
 
   GlobalValue *NewGV;
-  if (auto *SGVar = dyn_cast<GlobalVariable>(SGV)) {
+  if (auto *SGVar = dyn_cast<GlobalVariable>(SGV))
     NewGV = linkGlobalVariableProto(SGVar, DGV, LinkFromSrc);
-    if (!NewGV)
-      return true;
-  } else if (auto *SF = dyn_cast<Function>(SGV)) {
+  else if (auto *SF = dyn_cast<Function>(SGV))
     NewGV = linkFunctionProto(SF, DGV, LinkFromSrc);
-  } else {
+  else
     NewGV = linkGlobalAliasProto(cast<GlobalAlias>(SGV), DGV, LinkFromSrc);
-  }
 
   if (NewGV) {
     if (NewGV != DGV)
