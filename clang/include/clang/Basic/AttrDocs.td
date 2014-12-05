@@ -698,7 +698,8 @@ The semantics are as follows:
 - 0 implies the default no limit on register usage.
 
 - Ignored on older VLIW subtargets which did not have separate scalar
-and vector registers, R600 through Northern Islands.
+  and vector registers, R600 through Northern Islands.
+
 }];
 }
 
