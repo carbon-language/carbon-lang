@@ -202,6 +202,33 @@ def: BinOp32_pat<or,  A2_or,  i32>;
 def: BinOp32_pat<sub, A2_sub, i32>;
 def: BinOp32_pat<xor, A2_xor, i32>;
 
+let hasSideEffects = 0, hasNewValue = 1, isCompare = 1, InputType = "reg"  in
+class T_ALU32_3op_cmp<string mnemonic, bits<2> MinOp, bit IsNeg, bit IsComm>
+  : ALU32_rr<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
+             "$Pd = "#mnemonic#"($Rs, $Rt)",
+             [], "", ALU32_3op_tc_1_SLOT0123>, ImmRegRel {
+  let CextOpcode = mnemonic;
+  let isCommutable = IsComm;
+  bits<5> Rs;
+  bits<5> Rt;
+  bits<2> Pd;
+
+  let IClass = 0b1111;
+  let Inst{27-24} = 0b0010;
+  let Inst{22-21} = MinOp;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{4} = IsNeg;
+  let Inst{3-2} = 0b00;
+  let Inst{1-0} = Pd;
+}
+
+let Itinerary = ALU32_3op_tc_2early_SLOT0123, isCodeGenOnly = 0 in {
+  def C2_cmpeq   : T_ALU32_3op_cmp< "cmp.eq",  0b00, 0, 1>;
+  def C2_cmpgt   : T_ALU32_3op_cmp< "cmp.gt",  0b10, 0, 0>;
+  def C2_cmpgtu  : T_ALU32_3op_cmp< "cmp.gtu", 0b11, 0, 0>;
+}
+
 multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                        bit isPredNew> {
   let isPredicatedNew = isPredNew in
@@ -667,34 +694,6 @@ def : Pat <(sext_inreg (i32 IntRegs:$src1), i16),
 //===----------------------------------------------------------------------===//
 // ALU32/PRED +
 //===----------------------------------------------------------------------===//
-
-
-let hasSideEffects = 0, hasNewValue = 1, isCompare = 1, InputType = "reg"  in
-class T_ALU32_3op_cmp<string mnemonic, bits<2> MinOp, bit IsNeg, bit IsComm>
-  : ALU32_rr<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
-             "$Pd = "#mnemonic#"($Rs, $Rt)",
-             [], "", ALU32_3op_tc_1_SLOT0123>, ImmRegRel {
-  let CextOpcode = mnemonic;
-  let isCommutable = IsComm;
-  bits<5> Rs;
-  bits<5> Rt;
-  bits<2> Pd;
-
-  let IClass = 0b1111;
-  let Inst{27-24} = 0b0010;
-  let Inst{22-21} = MinOp;
-  let Inst{20-16} = Rs;
-  let Inst{12-8} = Rt;
-  let Inst{4} = IsNeg;
-  let Inst{3-2} = 0b00;
-  let Inst{1-0} = Pd;
-}
-
-let Itinerary = ALU32_3op_tc_2early_SLOT0123, isCodeGenOnly = 0 in {
-  def C2_cmpeq   : T_ALU32_3op_cmp< "cmp.eq",  0b00, 0, 1>;
-  def C2_cmpgt   : T_ALU32_3op_cmp< "cmp.gt",  0b10, 0, 0>;
-  def C2_cmpgtu  : T_ALU32_3op_cmp< "cmp.gtu", 0b11, 0, 0>;
-}
 
 class T_ALU64_rr<string mnemonic, string suffix, bits<4> RegType,
                  bits<3> MajOp, bits<3> MinOp, bit OpsRev, bit IsComm,
