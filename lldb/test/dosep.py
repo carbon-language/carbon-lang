@@ -7,15 +7,29 @@ Run the test suite using a separate process for each test file.
 import multiprocessing
 import os
 import platform
+import shlex
+import subprocess
 import sys
 
 from optparse import OptionParser
 
-# Command template of the invocation of the test driver.
-template = '%s %s/dotest.py %s -p %s %s'
+def try_timeout(command):
+    if not sys.platform.startswith("win32"):
+        try:
+            return {0: "passed", 124: "timed out"}.get(
+                subprocess.call(["timeout", "5m"] + command), "failed")
+        except OSError:
+            pass
+        try:
+            return {0: "passed", 124: "timed out"}.get(
+                subprocess.call(["gtimeout", "5m"] + command), "failed")
+        except OSError:
+            pass
+    return "passed" if subprocess.call(command) == 0 else "failed"
 
 def process_dir(root, files, test_root, dotest_options):
     """Examine a directory for tests, and invoke any found within it."""
+    timed_out = []
     failed = []
     passed = []
     for name in files:
@@ -29,12 +43,17 @@ def process_dir(root, files, test_root, dotest_options):
         if os.path.islink(path):
             continue
 
-        command = template % (sys.executable, test_root, dotest_options if dotest_options else "", name, root)
-        if 0 != os.system(command):
+        command = ([sys.executable, "%s/dotest.py" % test_root] +
+                   (shlex.split(dotest_options) if dotest_options else []) +
+                   ["-p", name, root])
+        exit_status = try_timeout(command)
+        if "passed" != exit_status:
+            if "timed out" == exit_status:
+                timed_out.append(name)
             failed.append(name)
         else:
             passed.append(name)
-    return (failed, passed)
+    return (timed_out, failed, passed)
 
 in_q = None
 out_q = None
@@ -66,15 +85,17 @@ def walk_and_invoke(test_root, dotest_options, num_threads):
         for work_item in test_work_items:
             test_results.append(process_dir_worker(work_item))
 
+    timed_out = []
     failed = []
     passed = []
 
     for test_result in test_results:
-        (dir_failed, dir_passed) = test_result
+        (dir_timed_out, dir_failed, dir_passed) = test_result
+        timed_out += dir_timed_out
         failed += dir_failed
         passed += dir_passed
 
-    return (failed, passed)
+    return (timed_out, failed, passed)
 
 def main():
     test_root = sys.path[0]
@@ -107,7 +128,8 @@ Run lldb test suite using a separate process for each test file.
         num_threads = 1
 
     system_info = " ".join(platform.uname())
-    (failed, passed) = walk_and_invoke(test_root, dotest_options, num_threads)
+    (timed_out, failed, passed) = walk_and_invoke(test_root, dotest_options,
+                                                  num_threads)
     num_tests = len(failed) + len(passed)
 
     print "Ran %d tests." % num_tests
@@ -115,7 +137,9 @@ Run lldb test suite using a separate process for each test file.
         failed.sort()
         print "Failing Tests (%d)" % len(failed)
         for f in failed:
-          print "FAIL: LLDB (suite) :: %s (%s)" % (f, system_info)
+            print "%s: LLDB (suite) :: %s (%s)" % (
+                "TIMEOUT" if f in timed_out else "FAIL", f, system_info
+            )
         sys.exit(1)
     sys.exit(0)
 
