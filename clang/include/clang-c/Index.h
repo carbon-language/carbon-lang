@@ -2126,7 +2126,7 @@ enum CXCursorKind {
    */
   CXCursor_MSAsmStmt                     = 229,
 
-  /** \brief The null satement ";": C99 6.8.3p3.
+  /** \brief The null statement ";": C99 6.8.3p3.
    *
    * This cursor kind is used to describe the null statement.
    */
@@ -2141,7 +2141,7 @@ enum CXCursorKind {
    */
   CXCursor_OMPParallelDirective          = 232,
 
-  /** \brief OpenMP simd directive.
+  /** \brief OpenMP SIMD directive.
    */
   CXCursor_OMPSimdDirective              = 233,
 
@@ -2209,11 +2209,11 @@ enum CXCursorKind {
    */
   CXCursor_OMPAtomicDirective            = 249,
 
-  /** \brief OpenMP for simd directive.
+  /** \brief OpenMP for SIMD directive.
    */
   CXCursor_OMPForSimdDirective           = 250,
 
-  /** \brief OpenMP parallel for simd directive.
+  /** \brief OpenMP parallel for SIMD directive.
    */
   CXCursor_OMPParallelForSimdDirective   = 251,
 
@@ -3345,7 +3345,7 @@ CINDEX_LINKAGE enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor);
 
 /**
  * \brief Represents the storage classes as declared in the source. CX_SC_Invalid
- * was added for the clase that the passed cursor in not a declaration.
+ * was added for the case that the passed cursor in not a declaration.
  */
 enum CX_StorageClass {
   CX_SC_Invalid,
