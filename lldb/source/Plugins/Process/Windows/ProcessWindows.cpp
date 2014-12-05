@@ -16,7 +16,9 @@
 
 // Other libraries and framework includes
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostProcess.h"
@@ -521,13 +523,26 @@ ProcessWindows::OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_add
     ModuleSP module = GetTarget().GetSharedModule(module_spec, &error);
     bool load_addr_changed = false;
     module->SetLoadAddress(GetTarget(), module_addr, false, load_addr_changed);
+
+    ModuleList loaded_modules;
+    loaded_modules.Append(module);
+    GetTarget().ModulesDidLoad(loaded_modules);
 }
 
 void
 ProcessWindows::OnUnloadDll(lldb::addr_t module_addr)
 {
-    // TODO: Figure out how to get the ModuleSP loaded at the specified address and remove
-    // it from the target's module list.
+    Address resolved_addr;
+    if (GetTarget().ResolveLoadAddress(module_addr, resolved_addr))
+    {
+        ModuleSP module = resolved_addr.GetModule();
+        if (module)
+        {
+            ModuleList unloaded_modules;
+            unloaded_modules.Append(module);
+            GetTarget().ModulesDidUnload(unloaded_modules, false);
+        }
+    }
 }
 
 void
