@@ -478,121 +478,6 @@ multiclass ALU32_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   }
 }
 
-//===----------------------------------------------------------------------===//
-// template class for non-predicated alu32_2op instructions
-// - aslh, asrh, sxtb, sxth, zxth
-//===----------------------------------------------------------------------===//
-let hasNewValue = 1, opNewValue = 0 in
-class T_ALU32_2op <string mnemonic, bits<3> minOp> :
-    ALU32Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rs),
-    "$Rd = "#mnemonic#"($Rs)", [] > {
-  bits<5> Rd;
-  bits<5> Rs;
-
-  let IClass = 0b0111;
-
-  let Inst{27-24} = 0b0000;
-  let Inst{23-21} = minOp;
-  let Inst{13} = 0b0;
-  let Inst{4-0} = Rd;
-  let Inst{20-16} = Rs;
-}
-  
-//===----------------------------------------------------------------------===//
-// template class for predicated alu32_2op instructions
-// - aslh, asrh, sxtb, sxth, zxtb, zxth
-//===----------------------------------------------------------------------===//
-let hasSideEffects = 0, validSubTargets = HasV4SubT,
-    hasNewValue = 1, opNewValue = 0 in
-class T_ALU32_2op_Pred <string mnemonic, bits<3> minOp, bit isPredNot, 
-    bit isPredNew > :
-    ALU32Inst <(outs IntRegs:$Rd), (ins PredRegs:$Pu, IntRegs:$Rs),
-    !if(isPredNot, "if (!$Pu", "if ($Pu")
-    #!if(isPredNew, ".new) ",") ")#"$Rd = "#mnemonic#"($Rs)"> {
-  bits<5> Rd;
-  bits<2> Pu;
-  bits<5> Rs;
-
-  let IClass = 0b0111;
-
-  let Inst{27-24} = 0b0000;
-  let Inst{23-21} = minOp;
-  let Inst{13} = 0b1;
-  let Inst{11} = isPredNot;
-  let Inst{10} = isPredNew;
-  let Inst{4-0} = Rd;
-  let Inst{9-8} = Pu;
-  let Inst{20-16} = Rs;
-}
-
-multiclass ALU32_2op_Pred<string mnemonic, bits<3> minOp, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    def NAME : T_ALU32_2op_Pred<mnemonic, minOp, PredNot, 0>;
-
-    // Predicate new
-    let isPredicatedNew = 1 in
-    def NAME#new : T_ALU32_2op_Pred<mnemonic, minOp, PredNot, 1>;
-  }
-}
-
-multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
-  let BaseOpcode = mnemonic in {
-    let isPredicable = 1, hasSideEffects = 0 in
-    def A2_#NAME : T_ALU32_2op<mnemonic, minOp>;
-
-    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
-      defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
-      defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
-    }
-  }
-}
-
-let isCodeGenOnly = 0 in {
-defm aslh : ALU32_2op_base<"aslh", 0b000>, PredNewRel;
-defm asrh : ALU32_2op_base<"asrh", 0b001>, PredNewRel;
-defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
-defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
-defm zxth : ALU32_2op_base<"zxth", 0b110>, PredNewRel;
-}
-
-// Rd=zxtb(Rs): assembler mapped to Rd=and(Rs,#255).
-// Compiler would want to generate 'zxtb' instead of 'and' becuase 'zxtb' has
-// predicated forms while 'and' doesn't. Since integrated assembler can't
-// handle 'mapped' instructions, we need to encode 'zxtb' same as 'and' where
-// immediate operand is set to '255'.
-
-let hasNewValue = 1, opNewValue = 0 in
-class T_ZXTB: ALU32Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rs),
-  "$Rd = zxtb($Rs)", [] > { // Rd = and(Rs,255)
-    bits<5> Rd;
-    bits<5> Rs;
-    bits<10> s10 = 255;
-
-    let IClass = 0b0111;
-
-    let Inst{27-22} = 0b011000;
-    let Inst{4-0} = Rd;
-    let Inst{20-16} = Rs;
-    let Inst{21} = s10{9};
-    let Inst{13-5} = s10{8-0};
-}
-
-//Rd=zxtb(Rs): assembler mapped to "Rd=and(Rs,#255)
-multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
-  let BaseOpcode = mnemonic in {
-    let isPredicable = 1, hasSideEffects = 0 in
-    def A2_#NAME : T_ZXTB;
-
-    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
-      defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
-      defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
-    }
-  }
-}
-
-let isCodeGenOnly=0 in
-defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
-
 // Combines the two integer registers SRC1 and SRC2 into a double register.
 let isPredicable = 1 in
 class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
@@ -764,7 +649,6 @@ def TFCR : CRInst<(outs CRRegs:$dst), (ins IntRegs:$src1),
 //===----------------------------------------------------------------------===//
 // ALU32/PERM +
 //===----------------------------------------------------------------------===//
-
 // Scalar mux register immediate.
 let hasSideEffects = 0, isExtentSigned = 1, CextOpcode = "MUX",
     InputType = "imm", hasNewValue = 1, isExtendable = 1, opExtentBits = 8 in
@@ -821,6 +705,121 @@ def C2_muxii: ALU32Inst <(outs IntRegs:$Rd),
     let Inst{12-5}  = s8;
     let Inst{4-0}   = Rd;
   }
+
+//===----------------------------------------------------------------------===//
+// template class for non-predicated alu32_2op instructions
+// - aslh, asrh, sxtb, sxth, zxth
+//===----------------------------------------------------------------------===//
+let hasNewValue = 1, opNewValue = 0 in
+class T_ALU32_2op <string mnemonic, bits<3> minOp> :
+    ALU32Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rs),
+    "$Rd = "#mnemonic#"($Rs)", [] > {
+  bits<5> Rd;
+  bits<5> Rs;
+
+  let IClass = 0b0111;
+
+  let Inst{27-24} = 0b0000;
+  let Inst{23-21} = minOp;
+  let Inst{13} = 0b0;
+  let Inst{4-0} = Rd;
+  let Inst{20-16} = Rs;
+}
+
+//===----------------------------------------------------------------------===//
+// template class for predicated alu32_2op instructions
+// - aslh, asrh, sxtb, sxth, zxtb, zxth
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, validSubTargets = HasV4SubT,
+    hasNewValue = 1, opNewValue = 0 in
+class T_ALU32_2op_Pred <string mnemonic, bits<3> minOp, bit isPredNot, 
+    bit isPredNew > :
+    ALU32Inst <(outs IntRegs:$Rd), (ins PredRegs:$Pu, IntRegs:$Rs),
+    !if(isPredNot, "if (!$Pu", "if ($Pu")
+    #!if(isPredNew, ".new) ",") ")#"$Rd = "#mnemonic#"($Rs)"> {
+  bits<5> Rd;
+  bits<2> Pu;
+  bits<5> Rs;
+
+  let IClass = 0b0111;
+
+  let Inst{27-24} = 0b0000;
+  let Inst{23-21} = minOp;
+  let Inst{13} = 0b1;
+  let Inst{11} = isPredNot;
+  let Inst{10} = isPredNew;
+  let Inst{4-0} = Rd;
+  let Inst{9-8} = Pu;
+  let Inst{20-16} = Rs;
+}
+
+multiclass ALU32_2op_Pred<string mnemonic, bits<3> minOp, bit PredNot> {
+  let isPredicatedFalse = PredNot in {
+    def NAME : T_ALU32_2op_Pred<mnemonic, minOp, PredNot, 0>;
+
+    // Predicate new
+    let isPredicatedNew = 1 in
+    def NAME#new : T_ALU32_2op_Pred<mnemonic, minOp, PredNot, 1>;
+  }
+}
+
+multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
+  let BaseOpcode = mnemonic in {
+    let isPredicable = 1, hasSideEffects = 0 in
+    def A2_#NAME : T_ALU32_2op<mnemonic, minOp>;
+
+    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
+      defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
+      defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
+    }
+  }
+}
+
+let isCodeGenOnly = 0 in {
+defm aslh : ALU32_2op_base<"aslh", 0b000>, PredNewRel;
+defm asrh : ALU32_2op_base<"asrh", 0b001>, PredNewRel;
+defm sxtb : ALU32_2op_base<"sxtb", 0b101>, PredNewRel;
+defm sxth : ALU32_2op_base<"sxth", 0b111>, PredNewRel;
+defm zxth : ALU32_2op_base<"zxth", 0b110>, PredNewRel;
+}
+
+// Rd=zxtb(Rs): assembler mapped to Rd=and(Rs,#255).
+// Compiler would want to generate 'zxtb' instead of 'and' becuase 'zxtb' has
+// predicated forms while 'and' doesn't. Since integrated assembler can't
+// handle 'mapped' instructions, we need to encode 'zxtb' same as 'and' where
+// immediate operand is set to '255'.
+
+let hasNewValue = 1, opNewValue = 0 in
+class T_ZXTB: ALU32Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rs),
+  "$Rd = zxtb($Rs)", [] > { // Rd = and(Rs,255)
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<10> s10 = 255;
+
+    let IClass = 0b0111;
+
+    let Inst{27-22} = 0b011000;
+    let Inst{4-0} = Rd;
+    let Inst{20-16} = Rs;
+    let Inst{21} = s10{9};
+    let Inst{13-5} = s10{8-0};
+}
+
+//Rd=zxtb(Rs): assembler mapped to "Rd=and(Rs,#255)
+multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
+  let BaseOpcode = mnemonic in {
+    let isPredicable = 1, hasSideEffects = 0 in
+    def A2_#NAME : T_ZXTB;
+
+    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
+      defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
+      defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
+    }
+  }
+}
+
+let isCodeGenOnly=0 in
+defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
 
 let hasSideEffects = 0 in
 def COMBINE_ii : ALU32_ii<(outs DoubleRegs:$dst),
