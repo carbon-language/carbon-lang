@@ -302,6 +302,10 @@ ProcessWindows::RefreshStateAfterStop()
     if (active_exception->GetExceptionCode() == EXCEPTION_BREAKPOINT)
     {
         uint64_t pc = register_context->GetPC();
+        // TODO(zturner): The current EIP is AFTER the BP opcode, which is one byte.  So
+        // to find the breakpoint, move the PC back.  A better way to do this is probably
+        // to ask the Platform how big a breakpoint opcode is.
+        --pc;
         BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc));
         lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
         bool should_stop = true;
