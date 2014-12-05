@@ -6995,13 +6995,18 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   if (IsAllConstants)
     return SDValue();
 
-  // For AVX-length vectors, build the individual 128-bit pieces and use
+  // For AVX-length vectors, see if we can use a vector load to get all of the
+  // elements, otherwise build the individual 128-bit pieces and use
   // shuffles to put them in place.
   if (VT.is256BitVector() || VT.is512BitVector()) {
     SmallVector<SDValue, 64> V;
     for (unsigned i = 0; i != NumElems; ++i)
       V.push_back(Op.getOperand(i));
 
+    // Check for a build vector of consecutive loads.
+    if (SDValue LD = EltsFromConsecutiveLoads(VT, V, dl, DAG, false))
+      return LD;
+    
     EVT HVT = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems/2);
 
     // Build both the lower and upper subvector.
