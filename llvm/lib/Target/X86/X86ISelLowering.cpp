@@ -18444,30 +18444,27 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
     } else {
       if (Amt.getOpcode() == ISD::EXTRACT_SUBVECTOR)
         Amt = Amt.getOperand(0);
-      if (Amt.getOpcode() == ISD::VECTOR_SHUFFLE &&
-               cast<ShuffleVectorSDNode>(Amt)->isSplat()) {
+
+      ShuffleVectorSDNode *SVN = dyn_cast<ShuffleVectorSDNode>(Amt);
+      if (SVN && SVN->isSplat()) {
+        unsigned SplatIdx = (unsigned)SVN->getSplatIndex();
         SDValue InVec = Amt.getOperand(0);
         if (InVec.getOpcode() == ISD::BUILD_VECTOR) {
-          unsigned NumElts = InVec.getValueType().getVectorNumElements();
-          unsigned i = 0;
-          for (; i != NumElts; ++i) {
-            SDValue Arg = InVec.getOperand(i);
-            if (Arg.getOpcode() == ISD::UNDEF) continue;
-            BaseShAmt = Arg;
-            break;
-          }
+          assert((SplatIdx < InVec.getValueType().getVectorNumElements()) &&
+                 "Unexpected shuffle index found!");
+          BaseShAmt = InVec.getOperand(SplatIdx);
         } else if (InVec.getOpcode() == ISD::INSERT_VECTOR_ELT) {
            if (ConstantSDNode *C =
                dyn_cast<ConstantSDNode>(InVec.getOperand(2))) {
-             unsigned SplatIdx =
-               cast<ShuffleVectorSDNode>(Amt)->getSplatIndex();
              if (C->getZExtValue() == SplatIdx)
                BaseShAmt = InVec.getOperand(1);
            }
         }
-        if (!BaseShAmt.getNode())
-          BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Amt,
-                                  DAG.getIntPtrConstant(0));
+
+        if (!BaseShAmt)
+          // Avoid introducing an extract element from a shuffle.
+          BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, InVec,
+                                    DAG.getIntPtrConstant(SplatIdx));
       }
     }
 
