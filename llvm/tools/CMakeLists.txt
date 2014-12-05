@@ -68,17 +68,7 @@ else()
   ignore_llvm_tool_subdirectory(llvm-lto)
 endif()
 
-if( LLVM_ENABLE_PIC )
-  # TODO: support other systems:
-  if( (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-      OR (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") )
-    add_llvm_tool_subdirectory(gold)
-  else()
-    ignore_llvm_tool_subdirectory(gold)
-  endif()
-else()
-  ignore_llvm_tool_subdirectory(gold)
-endif()
+add_llvm_tool_subdirectory(gold)
 
 add_llvm_external_project(clang)
 add_llvm_external_project(llgo)

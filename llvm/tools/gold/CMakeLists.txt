@@ -3,11 +3,7 @@ set(LLVM_BINUTILS_INCDIR "" CACHE PATH
 
 set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/gold.exports)
 
-if( NOT LLVM_BINUTILS_INCDIR )
-  # Nothing to say.
-elseif( NOT EXISTS "${LLVM_BINUTILS_INCDIR}/plugin-api.h" )
-  message(STATUS "plugin-api.h not found. gold plugin excluded from the build.")
-else()
+if( LLVM_ENABLE_PIC AND LLVM_BINUTILS_INCDIR )
   include_directories( ${LLVM_BINUTILS_INCDIR} )
 
   # Because off_t is used in the public API, the largefile parts are required for
