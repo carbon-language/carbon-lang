@@ -606,15 +606,23 @@ StringRef DiagnosticIDs::getNearestOption(diag::Flavor Flavor,
 bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
   Diagnostic Info(&Diag);
 
-  if (Diag.SuppressAllDiagnostics)
-    return false;
-
   assert(Diag.getClient() && "DiagnosticClient not set!");
 
   // Figure out the diagnostic level of this message.
   unsigned DiagID = Info.getID();
   DiagnosticIDs::Level DiagLevel
     = getDiagnosticLevel(DiagID, Info.getLocation(), Diag);
+
+  // Update counts for DiagnosticErrorTrap even if a fatal error occurred
+  // or diagnostics are suppressed.
+  if (DiagLevel >= DiagnosticIDs::Error) {
+    ++Diag.TrapNumErrorsOccurred;
+    if (isUnrecoverable(DiagID))
+      ++Diag.TrapNumUnrecoverableErrorsOccurred;
+  }
+
+  if (Diag.SuppressAllDiagnostics)
+    return false;
 
   if (DiagLevel != DiagnosticIDs::Note) {
     // Record that a fatal error occurred only when we see a second
@@ -625,13 +633,6 @@ bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
       Diag.FatalErrorOccurred = true;
 
     Diag.LastDiagLevel = DiagLevel;
-  }
-
-  // Update counts for DiagnosticErrorTrap even if a fatal error occurred.
-  if (DiagLevel >= DiagnosticIDs::Error) {
-    ++Diag.TrapNumErrorsOccurred;
-    if (isUnrecoverable(DiagID))
-      ++Diag.TrapNumUnrecoverableErrorsOccurred;
   }
 
   // If a fatal error has already been emitted, silence all subsequent
