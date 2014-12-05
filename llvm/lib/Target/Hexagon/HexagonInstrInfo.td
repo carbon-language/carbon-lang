@@ -391,6 +391,28 @@ multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
             []>;
 }
 
+let hasSideEffects = 0, hasNewValue = 1 in
+class T_tfr16<bit isHi>
+  : ALU32Inst <(outs IntRegs:$Rx), (ins IntRegs:$src1, u16Imm:$u16),
+  "$Rx"#!if(isHi, ".h", ".l")#" = #$u16",
+  [], "$src1 = $Rx" > {
+    bits<5> Rx;
+    bits<16> u16;
+
+    let IClass = 0b0111;
+    let Inst{27-26} = 0b00;
+    let Inst{25-24} = !if(isHi, 0b10, 0b01);
+    let Inst{23-22} = u16{15-14};
+    let Inst{21}    = 0b1;
+    let Inst{20-16} = Rx;
+    let Inst{13-0}  = u16{13-0};
+  }
+
+let isCodeGenOnly = 0 in {
+def A2_tfril: T_tfr16<0>;
+def A2_tfrih: T_tfr16<1>;
+}
+
 multiclass ALU32_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   let isPredicatedFalse = PredNot in {
     defm _c#NAME : ALU32_Pbase<mnemonic, RC, PredNot, 0>;
