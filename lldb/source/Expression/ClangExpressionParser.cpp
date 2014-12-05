@@ -22,6 +22,7 @@
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Expression/IRInterpreter.h"
@@ -91,6 +92,47 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 
     return P.str();
 }
+
+class ClangExpressionParser::LLDBPreprocessorCallbacks : public PPCallbacks
+{
+    ClangModulesDeclVendor  &m_decl_vendor;
+    StreamString             m_error_stream;
+    bool                     m_has_errors = false;
+public:
+    LLDBPreprocessorCallbacks(ClangModulesDeclVendor &decl_vendor) :
+        m_decl_vendor(decl_vendor)
+    {
+    }
+    
+    virtual void moduleImport(SourceLocation import_location,
+                              ModuleIdPath path,
+                              const clang::Module */*null*/)
+    {
+        std::vector<llvm::StringRef> string_path;
+        
+        for (const std::pair<IdentifierInfo *, SourceLocation> &component : path)
+        {
+            string_path.push_back(component.first->getName());
+        }
+     
+        StreamString error_stream;
+        
+        if (!m_decl_vendor.AddModule(string_path, m_error_stream))
+        {
+            m_has_errors = true;
+        }
+    }
+    
+    bool hasErrors()
+    {
+        return m_has_errors;
+    }
+    
+    const std::string &getErrorString()
+    {
+        return m_error_stream.GetString();
+    }
+};
 
 //===----------------------------------------------------------------------===//
 // Implementation of ClangExpressionParser
@@ -248,7 +290,14 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
 
     m_compiler->createFileManager();
     m_compiler->createPreprocessor(TU_Complete);
-
+    
+    if (ClangModulesDeclVendor *decl_vendor = target_sp->GetClangModulesDeclVendor())
+    {
+        std::unique_ptr<PPCallbacks> pp_callbacks(new LLDBPreprocessorCallbacks(*decl_vendor));
+        m_pp_callbacks = static_cast<LLDBPreprocessorCallbacks*>(pp_callbacks.get());
+        m_compiler->getPreprocessor().addPPCallbacks(std::move(pp_callbacks));
+    }
+        
     // 6. Most of this we get from the CompilerInstance, but we
     // also want to give the context an ExternalASTSource.
     m_selector_table.reset(new SelectorTable());
@@ -259,6 +308,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
                                                                  m_compiler->getPreprocessor().getIdentifierTable(),
                                                                  *m_selector_table.get(),
                                                                  *m_builtin_context.get()));
+    
     ast_context->InitBuiltinTypes(m_compiler->getTarget());
 
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap();
@@ -354,13 +404,18 @@ ClangExpressionParser::Parse (Stream &stream)
     TextDiagnosticBuffer::const_iterator diag_iterator;
 
     int num_errors = 0;
+    
+    if (m_pp_callbacks->hasErrors())
+    {
+        num_errors++;
+        
+        stream.PutCString(m_pp_callbacks->getErrorString().c_str());
+    }
 
     for (diag_iterator = diag_buf->warn_begin();
          diag_iterator != diag_buf->warn_end();
          ++diag_iterator)
         stream.Printf("warning: %s\n", (*diag_iterator).second.c_str());
-
-    num_errors = 0;
 
     for (diag_iterator = diag_buf->err_begin();
          diag_iterator != diag_buf->err_end();

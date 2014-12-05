@@ -1327,6 +1327,16 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 return;
             }
         }
+        
+        std::vector<clang::NamedDecl *> decls_from_modules;
+        
+        if (target)
+        {
+            if (ClangModulesDeclVendor *decl_vendor = target->GetClangModulesDeclVendor())
+            {
+                decl_vendor->FindDecls(name, false, UINT32_MAX, decls_from_modules);
+            }
+        }
 
         if (!context.m_found.variable)
         {
@@ -1402,6 +1412,19 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                             extern_symbol = sym_ctx.symbol;
                         else
                             non_extern_symbol = sym_ctx.symbol;
+                    }
+                }
+                
+                if (!context.m_found.function_with_type_info)
+                {
+                    for (clang::NamedDecl *decl : decls_from_modules)
+                    {
+                        if (llvm::isa<clang::FunctionDecl>(decl))
+                        {
+                            clang::NamedDecl *copied_decl = llvm::cast<FunctionDecl>(m_ast_importer->CopyDecl(m_ast_context, &decl->getASTContext(), decl));
+                            context.AddNamedDecl(copied_decl);
+                            context.m_found.function_with_type_info = true;
+                        }
                     }
                 }
 
