@@ -111,7 +111,10 @@ private:
 
   /// \brief The module we're currently writing, if any.
   Module *WritingModule;
-                    
+
+  /// \brief The base directory for any relative paths we emit.
+  std::string BaseDirectory;
+
   /// \brief Indicates when the AST writing is actively performing
   /// serialization, rather than just queueing updates.
   bool WritingAST;
@@ -457,13 +460,11 @@ private:
                          StringRef isysroot, const std::string &OutputFile);
   void WriteInputFiles(SourceManager &SourceMgr,
                        HeaderSearchOptions &HSOpts,
-                       StringRef isysroot,
                        bool Modules);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
-                               const Preprocessor &PP,
-                               StringRef isysroot);
+                               const Preprocessor &PP);
   void WritePreprocessor(const Preprocessor &PP, bool IsModule);
-  void WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot);
+  void WriteHeaderSearch(const HeaderSearch &HS);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WriteSubmodules(Module *WritingModule);
                                         
@@ -539,7 +540,8 @@ public:
   /// writing a precompiled header.
   ///
   /// \param isysroot if non-empty, write a relocatable file whose headers
-  /// are relative to the given system root.
+  /// are relative to the given system root. If we're writing a module, its
+  /// build directory will be used in preference to this if both are available.
   void WriteAST(Sema &SemaRef,
                 const std::string &OutputFile,
                 Module *WritingModule, StringRef isysroot,
@@ -685,6 +687,17 @@ public:
 
   /// \brief Add a string to the given record.
   void AddString(StringRef Str, RecordDataImpl &Record);
+
+  /// \brief Convert a path from this build process into one that is appropriate
+  /// for emission in the module file.
+  bool PreparePathForOutput(SmallVectorImpl<char> &Path);
+
+  /// \brief Add a path to the given record.
+  void AddPath(StringRef Path, RecordDataImpl &Record);
+
+  /// \brief Emit the current record with the given path as a blob.
+  void EmitRecordWithPath(unsigned Abbrev, RecordDataImpl &Record,
+                          StringRef Path);
 
   /// \brief Add a version tuple to the given record
   void AddVersionTuple(const VersionTuple &Version, RecordDataImpl &Record);
