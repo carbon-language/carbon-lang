@@ -197,10 +197,8 @@ INTERCEPTOR(int, pthread_create, void *thread,
   int result = REAL(pthread_create)(thread, attr, asan_thread_start, &param);
   if (result == 0) {
     u32 current_tid = GetCurrentTidOrInvalid();
-    AsanThread *t = AsanThread::Create(start_routine, arg);
-    CreateThreadContextArgs args = { t, &stack };
-    asanThreadRegistry().CreateThread(*reinterpret_cast<uptr *>(t), detached,
-                                      current_tid, &args);
+    AsanThread *t =
+        AsanThread::Create(start_routine, arg, current_tid, &stack, detached);
     atomic_store(&param.t, reinterpret_cast<uptr>(t), memory_order_release);
     // Wait until the AsanThread object is initialized and the ThreadRegistry
     // entry is in "started" state. One reason for this is that after this
@@ -739,10 +737,8 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
                                     &param, thr_flags, tid);
   if (result) {
     u32 current_tid = GetCurrentTidOrInvalid();
-    AsanThread *t = AsanThread::Create(start_routine, arg);
-    CreateThreadContextArgs args = { t, &stack };
-    asanThreadRegistry().CreateThread(*reinterpret_cast<uptr *>(t), detached,
-                                      current_tid, &args);
+    AsanThread *t =
+        AsanThread::Create(start_routine, arg, current_tid, &stack, detached);
     atomic_store(&param.t, reinterpret_cast<uptr>(t), memory_order_release);
     // The pthread_create interceptor waits here, so we do the same for
     // consistency.

@@ -674,11 +674,10 @@ static void AsanInitInternal() {
   InitTlsSize();
 
   // Create main thread.
-  AsanThread *main_thread = AsanThread::Create(0, 0);
-  CreateThreadContextArgs create_main_args = { main_thread, 0 };
-  u32 main_tid = asanThreadRegistry().CreateThread(
-      0, true, 0, &create_main_args);
-  CHECK_EQ(0, main_tid);
+  AsanThread *main_thread = AsanThread::Create(
+      /* start_routine */ nullptr, /* arg */ nullptr, /* parent_tid */ 0,
+      /* stack */ nullptr, /* detached */ true);
+  CHECK_EQ(0, main_thread->tid());
   SetCurrentThread(main_thread);
   main_thread->ThreadStart(internal_getpid(),
                            /* signal_thread_is_registered */ nullptr);

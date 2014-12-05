@@ -27,6 +27,11 @@ namespace __asan {
 
 // AsanThreadContext implementation.
 
+struct CreateThreadContextArgs {
+  AsanThread *thread;
+  StackTrace *stack;
+};
+
 void AsanThreadContext::OnCreated(void *arg) {
   CreateThreadContextArgs *args = static_cast<CreateThreadContextArgs*>(arg);
   if (args->stack)
@@ -75,13 +80,17 @@ AsanThreadContext *GetThreadContextByTidLocked(u32 tid) {
 
 // AsanThread implementation.
 
-AsanThread *AsanThread::Create(thread_callback_t start_routine,
-                               void *arg) {
+AsanThread *AsanThread::Create(thread_callback_t start_routine, void *arg,
+                               u32 parent_tid, StackTrace *stack,
+                               bool detached) {
   uptr PageSize = GetPageSizeCached();
   uptr size = RoundUpTo(sizeof(AsanThread), PageSize);
   AsanThread *thread = (AsanThread*)MmapOrDie(size, __func__);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
+  CreateThreadContextArgs args = { thread, stack };
+  asanThreadRegistry().CreateThread(*reinterpret_cast<uptr *>(thread), detached,
+                                    parent_tid, &args);
 
   return thread;
 }

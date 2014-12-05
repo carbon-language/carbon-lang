@@ -264,9 +264,8 @@ ALWAYS_INLINE
 void asan_register_worker_thread(int parent_tid, StackTrace *stack) {
   AsanThread *t = GetCurrentThread();
   if (!t) {
-    t = AsanThread::Create(0, 0);
-    CreateThreadContextArgs args = { t, stack };
-    asanThreadRegistry().CreateThread(*(uptr*)t, true, parent_tid, &args);
+    t = AsanThread::Create(/* start_routine */ nullptr, /* arg */ nullptr,
+                           parent_tid, stack, /* detached */ true);
     t->Init();
     asanThreadRegistry().StartThread(t->tid(), 0, 0);
     SetCurrentThread(t);
