@@ -5,7 +5,7 @@
 ; void start() {
 ;   unsigned size;
 ;   foo(&size);
-;   if (size != 0) {
+;   if (size != 0) { // Work around a bug to preserve the dbg.value.
 ;   }
 ; }
 
