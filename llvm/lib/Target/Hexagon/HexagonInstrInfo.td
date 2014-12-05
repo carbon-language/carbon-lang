@@ -91,7 +91,7 @@ multiclass CMP64_rr<string OpcStr, PatFrag OpNode> {
 }
 
 //===----------------------------------------------------------------------===//
-// ALU32/ALU (Instructions with register-register form)
+// ALU32/ALU +
 //===----------------------------------------------------------------------===//
 def SDTHexagonI64I32I32 : SDTypeProfile<1, 2,
   [SDTCisVT<0, i64>, SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
@@ -153,6 +153,19 @@ class T_ALU32_3op_pred<string mnemonic, bits<3> MajOp, bits<3> MinOp,
   let Inst{7} = PredNot;
   let Inst{6-5} = Pu;
   let Inst{4-0} = Rd;
+}
+
+class T_ALU32_combineh<string Op1, string Op2, bits<3> MajOp, bits<3> MinOp,
+                      bit OpsRev>
+  : T_ALU32_3op<"", MajOp, MinOp, OpsRev, 0> {
+  let AsmString = "$Rd = combine($Rs"#Op1#", $Rt"#Op2#")";
+}
+
+let isCodeGenOnly = 0 in {
+def A2_combine_hh : T_ALU32_combineh<".h", ".h", 0b011, 0b100, 1>;
+def A2_combine_hl : T_ALU32_combineh<".h", ".l", 0b011, 0b101, 1>;
+def A2_combine_lh : T_ALU32_combineh<".l", ".h", 0b011, 0b110, 1>;
+def A2_combine_ll : T_ALU32_combineh<".l", ".l", 0b011, 0b111, 1>;
 }
 
 multiclass T_ALU32_3op_p<string mnemonic, bits<3> MajOp, bits<3> MinOp,
