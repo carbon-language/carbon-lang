@@ -229,6 +229,44 @@ let Itinerary = ALU32_3op_tc_2early_SLOT0123, isCodeGenOnly = 0 in {
   def C2_cmpgtu  : T_ALU32_3op_cmp< "cmp.gtu", 0b11, 0, 0>;
 }
 
+// Patfrag to convert the usual comparison patfrags (e.g. setlt) to ones
+// that reverse the order of the operands.
+class RevCmp<PatFrag F> : PatFrag<(ops node:$rhs, node:$lhs), F.Fragment>;
+
+// Pats for compares. They use PatFrags as operands, not SDNodes,
+// since seteq/setgt/etc. are defined as ParFrags.
+class T_cmp32_rr_pat<InstHexagon MI, PatFrag Op, ValueType VT>
+  : Pat<(VT (Op (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))),
+        (VT (MI IntRegs:$Rs, IntRegs:$Rt))>;
+
+def: T_cmp32_rr_pat<C2_cmpeq,  seteq, i1>;
+def: T_cmp32_rr_pat<C2_cmpgt,  setgt, i1>;
+def: T_cmp32_rr_pat<C2_cmpgtu, setugt, i1>;
+
+def: T_cmp32_rr_pat<C2_cmpgt,  RevCmp<setlt>,  i1>;
+def: T_cmp32_rr_pat<C2_cmpgtu, RevCmp<setult>, i1>;
+
+let CextOpcode = "MUX", InputType = "reg", hasNewValue = 1 in
+def C2_mux: ALU32_rr<(outs IntRegs:$Rd),
+                     (ins PredRegs:$Pu, IntRegs:$Rs, IntRegs:$Rt),
+      "$Rd = mux($Pu, $Rs, $Rt)", [], "", ALU32_3op_tc_1_SLOT0123>, ImmRegRel {
+  bits<5> Rd;
+  bits<2> Pu;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let CextOpcode = "mux";
+  let InputType = "reg";
+  let hasSideEffects = 0;
+  let IClass = 0b1111;
+
+  let Inst{27-24} = 0b0100;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{6-5} = Pu;
+  let Inst{4-0} = Rd;
+}
+
 multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                        bit isPredNew> {
   let isPredicatedNew = isPredNew in
@@ -361,27 +399,6 @@ multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
 
 let isCodeGenOnly=0 in
 defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
-
-let CextOpcode = "MUX", InputType = "reg", hasNewValue = 1 in
-def C2_mux: ALU32_rr<(outs IntRegs:$Rd),
-                     (ins PredRegs:$Pu, IntRegs:$Rs, IntRegs:$Rt),
-      "$Rd = mux($Pu, $Rs, $Rt)", [], "", ALU32_3op_tc_1_SLOT0123>, ImmRegRel {
-  bits<5> Rd;
-  bits<2> Pu;
-  bits<5> Rs;
-  bits<5> Rt;
-
-  let CextOpcode = "mux";
-  let InputType = "reg";
-  let hasSideEffects = 0;
-  let IClass = 0b1111;
-
-  let Inst{27-24} = 0b0100;
-  let Inst{20-16} = Rs;
-  let Inst{12-8} = Rt;
-  let Inst{6-5} = Pu;
-  let Inst{4-0} = Rd;
-}
 
 def: Pat<(i32 (select (i1 PredRegs:$Pu), (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))),
          (C2_mux PredRegs:$Pu, IntRegs:$Rs, IntRegs:$Rt)>;
@@ -740,23 +757,6 @@ def A2_xorp : T_ALU64_logical<"xor", 0b100, 0, 1, 0>;
 def: Pat<(i64 (and I64:$Rs, I64:$Rt)), (A2_andp I64:$Rs, I64:$Rt)>;
 def: Pat<(i64 (or  I64:$Rs, I64:$Rt)), (A2_orp  I64:$Rs, I64:$Rt)>;
 def: Pat<(i64 (xor I64:$Rs, I64:$Rt)), (A2_xorp I64:$Rs, I64:$Rt)>;
-
-// Patfrag to convert the usual comparison patfrags (e.g. setlt) to ones
-// that reverse the order of the operands.
-class RevCmp<PatFrag F> : PatFrag<(ops node:$rhs, node:$lhs), F.Fragment>;
-
-// Pats for compares. They use PatFrags as operands, not SDNodes,
-// since seteq/setgt/etc. are defined as ParFrags.
-class T_cmp32_rr_pat<InstHexagon MI, PatFrag Op, ValueType VT>
-  : Pat<(VT (Op (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))),
-        (VT (MI IntRegs:$Rs, IntRegs:$Rt))>;
-
-def: T_cmp32_rr_pat<C2_cmpeq,  seteq, i1>;
-def: T_cmp32_rr_pat<C2_cmpgt,  setgt, i1>;
-def: T_cmp32_rr_pat<C2_cmpgtu, setugt, i1>;
-
-def: T_cmp32_rr_pat<C2_cmpgt,  RevCmp<setlt>,  i1>;
-def: T_cmp32_rr_pat<C2_cmpgtu, RevCmp<setult>, i1>;
 
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
