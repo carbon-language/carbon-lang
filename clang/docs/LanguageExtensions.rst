@@ -143,8 +143,8 @@ the same name.  For instance, ``gnu::__const__`` can be used instead of
 -------------------
 
 This function-like macro takes a single identifier argument that is the name of
-an attribute.  It evaluates to 1 if the attribute is supported by the current
-compilation target, or 0 if not.  It can be used like this:
+a GNU-style attribute.  It evaluates to 1 if the attribute is supported by the
+current compilation target, or 0 if not.  It can be used like this:
 
 .. code-block:: c++
 
