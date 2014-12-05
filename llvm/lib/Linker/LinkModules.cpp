@@ -485,11 +485,9 @@ private:
 
   bool linkGlobalValueProto(GlobalValue *GV);
   GlobalValue *linkGlobalVariableProto(const GlobalVariable *SGVar,
-                                       GlobalValue *DGV, bool LinkFromSrc);
-  GlobalValue *linkFunctionProto(const Function *SF, GlobalValue *DGV,
-                                 bool LinkFromSrc);
-  GlobalValue *linkGlobalAliasProto(const GlobalAlias *SGA, GlobalValue *DGV,
-                                    bool LinkFromSrc);
+                                       GlobalValue *DGV);
+  GlobalValue *linkFunctionProto(const Function *SF, GlobalValue *DGV);
+  GlobalValue *linkGlobalAliasProto(const GlobalAlias *SGA, GlobalValue *DGV);
 
   bool linkModuleFlagsMetadata();
 
@@ -1021,12 +1019,16 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     return false;
 
   GlobalValue *NewGV;
-  if (auto *SGVar = dyn_cast<GlobalVariable>(SGV))
-    NewGV = linkGlobalVariableProto(SGVar, DGV, LinkFromSrc);
-  else if (auto *SF = dyn_cast<Function>(SGV))
-    NewGV = linkFunctionProto(SF, DGV, LinkFromSrc);
-  else
-    NewGV = linkGlobalAliasProto(cast<GlobalAlias>(SGV), DGV, LinkFromSrc);
+  if (!LinkFromSrc) {
+    NewGV = DGV;
+  } else {
+    if (auto *SGVar = dyn_cast<GlobalVariable>(SGV))
+      NewGV = linkGlobalVariableProto(SGVar, DGV);
+    else if (auto *SF = dyn_cast<Function>(SGV))
+      NewGV = linkFunctionProto(SF, DGV);
+    else
+      NewGV = linkGlobalAliasProto(cast<GlobalAlias>(SGV), DGV);
+  }
 
   if (!NewGV)
     return false;
@@ -1068,11 +1070,7 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
 /// Loop through the global variables in the src module and merge them into the
 /// dest module.
 GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
-                                                   GlobalValue *DGV,
-                                                   bool LinkFromSrc) {
-  if (!LinkFromSrc)
-    return DGV;
-
+                                                   GlobalValue *DGV) {
   // No linking to be performed or linking from the source: simply create an
   // identical version of the symbol over in the dest module... the
   // initializer will be filled in later by LinkGlobalInits.
@@ -1088,11 +1086,7 @@ GlobalValue *ModuleLinker::linkGlobalVariableProto(const GlobalVariable *SGVar,
 /// Link the function in the source module into the destination module if
 /// needed, setting up mapping information.
 GlobalValue *ModuleLinker::linkFunctionProto(const Function *SF,
-                                             GlobalValue *DGV,
-                                             bool LinkFromSrc) {
-  if (!LinkFromSrc)
-    return DGV;
-
+                                             GlobalValue *DGV) {
   // If the function is to be lazily linked, don't create it just yet.
   // The ValueMaterializerTy will deal with creating it if it's used.
   if (!DGV && (SF->hasLocalLinkage() || SF->hasLinkOnceLinkage() ||
@@ -1109,11 +1103,7 @@ GlobalValue *ModuleLinker::linkFunctionProto(const Function *SF,
 
 /// Set up prototypes for any aliases that come over from the source module.
 GlobalValue *ModuleLinker::linkGlobalAliasProto(const GlobalAlias *SGA,
-                                                GlobalValue *DGV,
-                                                bool LinkFromSrc) {
-  if (!LinkFromSrc)
-    return DGV;
-
+                                                GlobalValue *DGV) {
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
   auto *PTy = cast<PointerType>(TypeMap.get(SGA->getType()));
