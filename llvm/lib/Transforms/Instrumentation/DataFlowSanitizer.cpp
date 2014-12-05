@@ -49,6 +49,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/DebugInfo.h"
@@ -414,6 +415,11 @@ FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
 }
 
 bool DataFlowSanitizer::doInitialization(Module &M) {
+  llvm::Triple TargetTriple(M.getTargetTriple());
+  bool IsX86_64 = TargetTriple.getArch() == llvm::Triple::x86_64;
+  bool IsMIPS64 = TargetTriple.getArch() == llvm::Triple::mips64 ||
+                  TargetTriple.getArch() == llvm::Triple::mips64el;
+
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   if (!DLP)
     report_fatal_error("data layout missing");
@@ -425,8 +431,13 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   ShadowPtrTy = PointerType::getUnqual(ShadowTy);
   IntptrTy = DL->getIntPtrType(*Ctx);
   ZeroShadow = ConstantInt::getSigned(ShadowTy, 0);
-  ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x700000000000LL);
   ShadowPtrMul = ConstantInt::getSigned(IntptrTy, ShadowWidth / 8);
+  if (IsX86_64)
+    ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x700000000000LL);
+  else if (IsMIPS64)
+    ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0xF000000000LL);
+  else
+    report_fatal_error("unsupported triple");
 
   Type *DFSanUnionArgs[2] = { ShadowTy, ShadowTy };
   DFSanUnionFnTy =
