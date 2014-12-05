@@ -1250,8 +1250,6 @@ PlatformDarwin::SDKSupportsModules (SDKType sdk_type, uint32_t major, uint32_t m
 {
     switch (sdk_type)
     {
-        default:
-            return false;
         case SDKType::MacOSX:
             if (major > 10 || (major == 10 && minor >= 10))
                 return true;
@@ -1366,8 +1364,6 @@ PlatformDarwin::GetSDKDirectoryForModules (SDKType sdk_type)
 {
     switch (sdk_type)
     {
-        default:
-            return FileSpec();
         case SDKType::MacOSX:
         case SDKType::iPhoneSimulator:
         case SDKType::iPhoneOS:
@@ -1380,8 +1376,6 @@ PlatformDarwin::GetSDKDirectoryForModules (SDKType sdk_type)
     
     switch (sdk_type)
     {
-        default:
-            return FileSpec();
         case SDKType::MacOSX:
             sdks_spec.AppendPathComponent("MacOSX.platform");
             break;
