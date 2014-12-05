@@ -1514,48 +1514,32 @@ bool ModuleLinker::run() {
   linkGlobalInits();
 
   // Process vector of lazily linked in functions.
-  bool LinkedInAnyFunctions;
-  do {
-    LinkedInAnyFunctions = false;
+  while (!LazilyLinkFunctions.empty()) {
+    Function *SF = LazilyLinkFunctions.back();
+    LazilyLinkFunctions.pop_back();
 
-    for(std::vector<Function*>::iterator I = LazilyLinkFunctions.begin(),
-        E = LazilyLinkFunctions.end(); I != E; ++I) {
-      Function *SF = *I;
-      if (!SF)
-        continue;
+    if (!SF)
+      continue;
 
-      Function *DF = cast<Function>(ValueMap[SF]);
-      if (SF->hasPrefixData()) {
-        // Link in the prefix data.
-        DF->setPrefixData(MapValue(SF->getPrefixData(),
-                                   ValueMap,
-                                   RF_None,
-                                   &TypeMap,
-                                   &ValMaterializer));
-      }
-
-      // Materialize if needed.
-      if (std::error_code EC = SF->materialize())
-        return emitError(EC.message());
-
-      // Skip if no body (function is external).
-      if (SF->isDeclaration())
-        continue;
-
-      // Erase from vector *before* the function body is linked - linkFunctionBody could
-      // invalidate I.
-      LazilyLinkFunctions.erase(I);
-
-      // Link in function body.
-      linkFunctionBody(DF, SF);
-      SF->Dematerialize();
-
-      // Set flag to indicate we may have more functions to lazily link in
-      // since we linked in a function.
-      LinkedInAnyFunctions = true;
-      break;
+    Function *DF = cast<Function>(ValueMap[SF]);
+    if (SF->hasPrefixData()) {
+      // Link in the prefix data.
+      DF->setPrefixData(MapValue(SF->getPrefixData(), ValueMap, RF_None,
+                                 &TypeMap, &ValMaterializer));
     }
-  } while (LinkedInAnyFunctions);
+
+    // Materialize if needed.
+    if (std::error_code EC = SF->materialize())
+      return emitError(EC.message());
+
+    // Skip if no body (function is external).
+    if (SF->isDeclaration())
+      continue;
+
+    // Link in function body.
+    linkFunctionBody(DF, SF);
+    SF->Dematerialize();
+  }
 
   return false;
 }
