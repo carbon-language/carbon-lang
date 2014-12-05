@@ -731,13 +731,25 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
   if (flags()->strict_init_order)
     StopInitOrderChecking();
   GET_STACK_TRACE_THREAD;
-  u32 current_tid = GetCurrentTidOrInvalid();
-  AsanThread *t = AsanThread::Create(start_routine, arg);
-  CreateThreadContextArgs args = { t, &stack };
   bool detached = false;  // FIXME: how can we determine it on Windows?
-  asanThreadRegistry().CreateThread(*(uptr*)t, detached, current_tid, &args);
-  return REAL(CreateThread)(security, stack_size,
-                            asan_thread_start, t, thr_flags, tid);
+  ThreadStartParam param;
+  atomic_store(&param.t, 0, memory_order_relaxed);
+  atomic_store(&param.is_registered, 0, memory_order_relaxed);
+  DWORD result = REAL(CreateThread)(security, stack_size, asan_thread_start,
+                                    &param, thr_flags, tid);
+  if (result) {
+    u32 current_tid = GetCurrentTidOrInvalid();
+    AsanThread *t = AsanThread::Create(start_routine, arg);
+    CreateThreadContextArgs args = { t, &stack };
+    asanThreadRegistry().CreateThread(*reinterpret_cast<uptr *>(t), detached,
+                                      current_tid, &args);
+    atomic_store(&param.t, reinterpret_cast<uptr>(t), memory_order_release);
+    // The pthread_create interceptor waits here, so we do the same for
+    // consistency.
+    while (atomic_load(&param.is_registered, memory_order_acquire) == 0)
+      internal_sched_yield();
+  }
+  return result;
 }
 
 namespace __asan {
