@@ -71,8 +71,16 @@ TEST(Suppressions, TypeStrings) {
       !internal_strcmp(SuppressionTypeString(SuppressionDeadlock), "deadlock"));
   CHECK(!internal_strcmp(SuppressionTypeString(SuppressionVptrCheck),
                          "vptr_check"));
+  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionInterceptorName),
+                         "interceptor_name"));
+  CHECK(
+      !internal_strcmp(SuppressionTypeString(SuppressionInterceptorViaFunction),
+                       "interceptor_via_fun"));
+  CHECK(
+      !internal_strcmp(SuppressionTypeString(SuppressionInterceptorViaLibrary),
+                       "interceptor_via_lib"));
   // Ensure this test is up-to-date when suppression types are added.
-  CHECK_EQ(9, SuppressionTypeCount);
+  CHECK_EQ(12, SuppressionTypeCount);
 }
 
 class SuppressionContextTest : public ::testing::Test {

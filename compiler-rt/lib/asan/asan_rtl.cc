@@ -21,6 +21,7 @@
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
+#include "asan_suppressions.h"
 #include "asan_thread.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_flags.h"
@@ -690,6 +691,8 @@ static void AsanInitInternal() {
     Atexit(__lsan::DoLeakCheck);
   }
 #endif  // CAN_SANITIZE_LEAKS
+
+  InitializeSuppressions();
 
   VReport(1, "AddressSanitizer Init done\n");
 }

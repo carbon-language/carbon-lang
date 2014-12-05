@@ -28,6 +28,9 @@ enum SuppressionType {
   SuppressionLib,
   SuppressionDeadlock,
   SuppressionVptrCheck,
+  SuppressionInterceptorName,
+  SuppressionInterceptorViaFunction,
+  SuppressionInterceptorViaLibrary,
   SuppressionTypeCount
 };
 
