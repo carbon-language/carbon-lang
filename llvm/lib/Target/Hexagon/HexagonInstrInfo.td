@@ -375,12 +375,68 @@ multiclass Addri_base<string mnemonic, SDNode OpNode> {
 let isCodeGenOnly = 0 in
 defm ADD_ri : Addri_base<"add", add>, ImmRegRel, PredNewRel;
 
+//===----------------------------------------------------------------------===//
+// Template class used for the following ALU32 instructions.
+// Rd=and(Rs,#s10)
+// Rd=or(Rs,#s10)
+//===----------------------------------------------------------------------===//
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 10,
+InputType = "imm", hasNewValue = 1 in
+class T_ALU32ri_logical <string mnemonic, SDNode OpNode, bits<2> MinOp>
+  : ALU32_ri <(outs IntRegs:$Rd),
+              (ins IntRegs:$Rs, s10Ext:$s10),
+  "$Rd = "#mnemonic#"($Rs, #$s10)" ,
+  [(set (i32 IntRegs:$Rd), (OpNode (i32 IntRegs:$Rs), s10ExtPred:$s10))]> {
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<10> s10;
+    let CextOpcode = mnemonic;
+
+    let IClass = 0b0111;
+
+    let Inst{27-24} = 0b0110;
+    let Inst{23-22} = MinOp;
+    let Inst{21}    = s10{9};
+    let Inst{20-16} = Rs;
+    let Inst{13-5}  = s10{8-0};
+    let Inst{4-0}   = Rd;
+  }
+
+let isCodeGenOnly = 0 in {
+def OR_ri  : T_ALU32ri_logical<"or", or, 0b10>, ImmRegRel;
+def AND_ri : T_ALU32ri_logical<"and", and, 0b00>, ImmRegRel;
+}
+
+// Subtract register from immediate
+// Rd32=sub(#s10,Rs32)
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 10,
+CextOpcode = "sub", InputType = "imm", hasNewValue = 1, isCodeGenOnly = 0 in
+def SUB_ri: ALU32_ri <(outs IntRegs:$Rd), (ins s10Ext:$s10, IntRegs:$Rs),
+  "$Rd = sub(#$s10, $Rs)" ,
+  [(set IntRegs:$Rd, (sub s10ExtPred:$s10, IntRegs:$Rs))] > ,
+  ImmRegRel {
+    bits<5> Rd;
+    bits<10> s10;
+    bits<5> Rs;
+
+    let IClass = 0b0111;
+
+    let Inst{27-22} = 0b011001;
+    let Inst{21}    = s10{9};
+    let Inst{20-16} = Rs;
+    let Inst{13-5}  = s10{8-0};
+    let Inst{4-0}   = Rd;
+  }
+
 // Nop.
 let hasSideEffects = 0, isCodeGenOnly = 0 in
 def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
   let IClass = 0b0111;
   let Inst{27-24} = 0b1111;
 }
+// Rd = not(Rs) gets mapped to Rd=sub(#-1, Rs).
+def : Pat<(not (i32 IntRegs:$src1)),
+          (SUB_ri -1, (i32 IntRegs:$src1))>;
 
 multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                        bit isPredNew> {
@@ -567,35 +623,6 @@ class COMBINE_imm<Operand imm1, Operand imm2, PatLeaf pat1, PatLeaf pat2> :
 
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8 in
 def COMBINE_Ii : COMBINE_imm<s8Ext, s8Imm, s8ExtPred, s8ImmPred>;
-
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 10,
-CextOpcode = "OR", InputType = "imm" in
-def OR_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s10Ext:$src2),
-            "$dst = or($src1, #$src2)",
-            [(set (i32 IntRegs:$dst), (or (i32 IntRegs:$src1),
-                                          s10ExtPred:$src2))]>, ImmRegRel;
-
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 10,
-InputType = "imm", CextOpcode = "AND" in
-def AND_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s10Ext:$src2),
-            "$dst = and($src1, #$src2)",
-            [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
-                                           s10ExtPred:$src2))]>, ImmRegRel;
-
-// Rd32=sub(#s10,Rs32)
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 10,
-CextOpcode = "SUB", InputType = "imm" in
-def SUB_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins s10Ext:$src1, IntRegs:$src2),
-            "$dst = sub(#$src1, $src2)",
-            [(set IntRegs:$dst, (sub s10ExtPred:$src1, IntRegs:$src2))]>,
-            ImmRegRel;
-
-// Rd = not(Rs) gets mapped to Rd=sub(#-1, Rs).
-def : Pat<(not (i32 IntRegs:$src1)),
-          (SUB_ri -1, (i32 IntRegs:$src1))>;
 
 // Rd = neg(Rs) gets mapped to Rd=sub(#0, Rs).
 // Pattern definition for 'neg' was not necessary.
