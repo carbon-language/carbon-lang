@@ -291,7 +291,10 @@ namespace clang {
       MODULE_MAP_FILE = 14,
 
       /// \brief Record code for the signature that identifiers this AST file.
-      SIGNATURE = 15
+      SIGNATURE = 15,
+
+      /// \brief Record code for the module build directory.
+      MODULE_DIRECTORY = 16,
     };
 
     /// \brief Record types that occur within the input-files block
