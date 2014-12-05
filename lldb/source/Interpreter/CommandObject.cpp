@@ -49,7 +49,7 @@ CommandObject::CommandObject
     uint32_t flags
 ) :
     m_interpreter (interpreter),
-    m_cmd_name (name),
+    m_cmd_name (name ? name : ""),
     m_cmd_help_short (),
     m_cmd_help_long (),
     m_cmd_syntax (),

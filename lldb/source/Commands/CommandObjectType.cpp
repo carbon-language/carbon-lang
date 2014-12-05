@@ -16,6 +16,7 @@
 #include <ctype.h>
 
 // C++ Includes
+#include <functional>
 
 #include "llvm/ADT/StringRef.h"
 
@@ -31,6 +32,11 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadList.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -4231,6 +4237,84 @@ CommandObjectTypeFilterAdd::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
+template <typename FormatterType>
+class CommandObjectFormatterInfo : public CommandObjectRaw
+{
+public:
+    typedef std::function<typename FormatterType::SharedPointer(ValueObject&)> DiscoveryFunction;
+    CommandObjectFormatterInfo (CommandInterpreter &interpreter,
+                                const char* formatter_name,
+                                DiscoveryFunction discovery_func) :
+    CommandObjectRaw(interpreter,
+                     nullptr,
+                     nullptr,
+                     nullptr,
+                     eFlagRequiresFrame),
+    m_formatter_name(formatter_name ? formatter_name : ""),
+    m_discovery_function(discovery_func)
+    {
+        StreamString name;
+        name.Printf("type %s info", formatter_name);
+        SetCommandName(name.GetData());
+        StreamString help;
+        help.Printf("This command evaluates the provided expression and shows which %s is applied to the resulting value (if any).", formatter_name);
+        SetHelp(help.GetData());
+        StreamString syntax;
+        syntax.Printf("type %s info <expr>", formatter_name);
+        SetSyntax(syntax.GetData());
+    }
+    
+    virtual
+    ~CommandObjectFormatterInfo ()
+    {
+    }
+    
+protected:
+    virtual bool
+    DoExecute (const char *command, CommandReturnObject &result)
+    {
+        auto target_sp = m_interpreter.GetDebugger().GetSelectedTarget();
+        auto frame_sp = target_sp->GetProcessSP()->GetThreadList().GetSelectedThread()->GetSelectedFrame();
+        ValueObjectSP result_valobj_sp;
+        EvaluateExpressionOptions options;
+        lldb::ExpressionResults expr_result = target_sp->EvaluateExpression(command, frame_sp.get(), result_valobj_sp, options);
+        if (expr_result == eExpressionCompleted && result_valobj_sp)
+        {
+            result_valobj_sp = result_valobj_sp->GetQualifiedRepresentationIfAvailable(target_sp->GetPreferDynamicValue(), target_sp->GetEnableSyntheticValue());
+            typename FormatterType::SharedPointer formatter_sp = m_discovery_function(*result_valobj_sp);
+            if (formatter_sp)
+            {
+                std::string description(formatter_sp->GetDescription());
+                result.AppendMessageWithFormat("%s applied to (%s) %s is: %s\n",
+                                               m_formatter_name.c_str(),
+                                               result_valobj_sp->GetDisplayTypeName().AsCString("<unknown>"),
+                                               command,
+                                               description.c_str());
+                result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                result.AppendMessageWithFormat("no %s applies to (%s) %s\n",
+                                               m_formatter_name.c_str(),
+                                               result_valobj_sp->GetDisplayTypeName().AsCString("<unknown>"),
+                                               command);
+                result.SetStatus(lldb::eReturnStatusSuccessFinishNoResult);
+            }
+            return true;
+        }
+        else
+        {
+            result.AppendError("failed to evaluate expression");
+            result.SetStatus(lldb::eReturnStatusFailed);
+            return false;
+        }
+    }
+
+private:
+    std::string m_formatter_name;
+    DiscoveryFunction m_discovery_function;
+};
+
 class CommandObjectTypeFormat : public CommandObjectMultiword
 {
 public:
@@ -4244,6 +4328,11 @@ public:
         LoadSubCommand ("clear",  CommandObjectSP (new CommandObjectTypeFormatClear (interpreter)));
         LoadSubCommand ("delete", CommandObjectSP (new CommandObjectTypeFormatDelete (interpreter)));
         LoadSubCommand ("list",   CommandObjectSP (new CommandObjectTypeFormatList (interpreter)));
+        LoadSubCommand ("info",   CommandObjectSP (new CommandObjectFormatterInfo<TypeFormatImpl>(interpreter,
+                                                                                                  "format",
+                                                                                                  [](ValueObject& valobj) -> TypeFormatImpl::SharedPointer {
+                                                                                                      return valobj.GetValueFormat();
+                                                                                                  })));
     }
 
 
@@ -4267,6 +4356,11 @@ public:
         LoadSubCommand ("clear",         CommandObjectSP (new CommandObjectTypeSynthClear (interpreter)));
         LoadSubCommand ("delete",        CommandObjectSP (new CommandObjectTypeSynthDelete (interpreter)));
         LoadSubCommand ("list",          CommandObjectSP (new CommandObjectTypeSynthList (interpreter)));
+        LoadSubCommand ("info",          CommandObjectSP (new CommandObjectFormatterInfo<SyntheticChildren>(interpreter,
+                                                                                                            "synthetic",
+                                                                                                            [](ValueObject& valobj) -> SyntheticChildren::SharedPointer {
+                                                                                                                return valobj.GetSyntheticChildren();
+                                                                                                            })));
     }
     
     
@@ -4332,6 +4426,11 @@ public:
         LoadSubCommand ("clear",         CommandObjectSP (new CommandObjectTypeSummaryClear (interpreter)));
         LoadSubCommand ("delete",        CommandObjectSP (new CommandObjectTypeSummaryDelete (interpreter)));
         LoadSubCommand ("list",          CommandObjectSP (new CommandObjectTypeSummaryList (interpreter)));
+        LoadSubCommand ("info",          CommandObjectSP (new CommandObjectFormatterInfo<TypeSummaryImpl>(interpreter,
+                                                                                                          "summary",
+                                                                                                            [](ValueObject& valobj) -> TypeSummaryImpl::SharedPointer {
+                                                                                                                return valobj.GetSummaryFormat();
+                                                                                                            })));
     }
     
     
