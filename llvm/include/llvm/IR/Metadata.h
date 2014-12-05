@@ -63,8 +63,9 @@ class MDString : public Metadata {
   virtual void anchor();
   MDString(const MDString &) LLVM_DELETED_FUNCTION;
 
+  StringMapEntry<MDString> *Entry;
   explicit MDString(LLVMContext &Context)
-      : Metadata(Context, Value::MDStringVal) {}
+      : Metadata(Context, Value::MDStringVal), Entry(nullptr) {}
 
   /// \brief Shadow Value::getName() to prevent its use.
   StringRef getName() const LLVM_DELETED_FUNCTION;

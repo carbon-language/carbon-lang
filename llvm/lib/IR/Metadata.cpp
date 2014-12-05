@@ -48,11 +48,13 @@ MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   bool WasInserted = Store.insert(Entry);
   (void)WasInserted;
   assert(WasInserted && "Expected entry to be inserted");
+  Entry->second.Entry = Entry;
   return &Entry->second;
 }
 
 StringRef MDString::getString() const {
-  return StringMapEntry<MDString>::GetStringMapEntryFromValue(*this).first();
+  assert(Entry && "Expected to find string map entry");
+  return Entry->first();
 }
 
 //===----------------------------------------------------------------------===//
