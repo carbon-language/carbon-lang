@@ -567,8 +567,7 @@ define <16 x i16> @sext_16i8_to_16i16(<16 x i8> *%ptr) {
 ;
 ; AVX2-LABEL: sext_16i8_to_16i16:
 ; AVX2:       # BB#0: # %entry
-; AVX2-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX2-NEXT:    vpmovsxbw %xmm0, %ymm0
+; AVX2-NEXT:    vpmovsxbw (%rdi), %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; X32-SSE41-LABEL: sext_16i8_to_16i16:
