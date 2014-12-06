@@ -1735,7 +1735,7 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                              bool Delegating, llvm::Value *This,
                                              const CXXConstructExpr *E) {
   // If this is a trivial constructor, just emit what's needed.
-  if (D->isTrivial()) {
+  if (D->isTrivial() && !D->getParent()->mayInsertExtraPadding()) {
     if (E->getNumArgs() == 0) {
       // Trivial default constructor, no codegen required.
       assert(D->isDefaultConstructor() &&
@@ -1785,7 +1785,8 @@ void
 CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This, llvm::Value *Src,
                                         const CXXConstructExpr *E) {
-  if (D->isTrivial()) {
+  if (D->isTrivial() &&
+      !D->getParent()->mayInsertExtraPadding()) {
     assert(E->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
     assert(D->isCopyOrMoveConstructor() &&
            "trivial 1-arg ctor not a copy/move ctor");

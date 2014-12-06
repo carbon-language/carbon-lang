@@ -229,6 +229,7 @@ struct ClassWithTrivialCopy {
 
 void MakeTrivialCopy(ClassWithTrivialCopy *s1, ClassWithTrivialCopy *s2) {
   *s1 = *s2;
+  ClassWithTrivialCopy s3(*s2);
 }
 
 // CHECK-LABEL: define void @_Z15MakeTrivialCopyP20ClassWithTrivialCopyS0_
