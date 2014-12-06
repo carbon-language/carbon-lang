@@ -137,6 +137,7 @@ std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
     // error if they are imported in the same translation.
     SmallString<256> AbsModuleMapPath(ModuleMapPath);
     llvm::sys::fs::make_absolute(AbsModuleMapPath);
+    llvm::sys::path::native(AbsModuleMapPath);
     llvm::APInt Code(64, llvm::hash_value(AbsModuleMapPath.str().lower()));
     SmallString<128> HashStr;
     Code.toStringUnsigned(HashStr, /*Radix*/36);
