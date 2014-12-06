@@ -219,7 +219,7 @@ private:
   Materializer;                   ///< Used to materialize GlobalValues
   std::string ModuleID;           ///< Human readable identifier for the module
   std::string TargetTriple;       ///< Platform target triple Module compiled on
-                                  ///< Format:<arch><sub>-<vendor>-<sys>-<abi>
+                                  ///< Format: (arch)(sub)-(vendor)-(sys0-(abi)
   void *NamedMDSymTab;            ///< NamedMDNode names.
   // Allow lazy initialization in const method.
   mutable RandomNumberGenerator *RNG; ///< The random number generator for this module.
