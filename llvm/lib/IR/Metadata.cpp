@@ -639,6 +639,8 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
   
   // Handle the case when we're adding/updating metadata on an instruction.
   if (Node) {
+    assert(!Node->isFunctionLocal() &&
+           "Function-local metadata cannot be attached to instructions");
     LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
     assert(!Info.empty() == hasMetadataHashEntry() &&
            "HasMetadata bit is wonked");

@@ -2359,8 +2359,12 @@ std::error_code BitcodeReader::ParseMetadataAttachment() {
           MDKindMap.find(Kind);
         if (I == MDKindMap.end())
           return Error(BitcodeError::InvalidID);
-        Value *Node = MDValueList.getValueFwdRef(Record[i+1]);
-        Inst->setMetadata(I->second, cast<MDNode>(Node));
+        MDNode *Node = cast<MDNode>(MDValueList.getValueFwdRef(Record[i+1]));
+        if (Node->isFunctionLocal())
+          // Drop the attachment.  This used to be legal, but there's no
+          // upgrade path.
+          break;
+        Inst->setMetadata(I->second, Node);
         if (I->second == LLVMContext::MD_tbaa)
           InstsWithTBAATag.push_back(Inst);
       }
