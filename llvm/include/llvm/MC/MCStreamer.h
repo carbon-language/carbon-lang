@@ -49,14 +49,14 @@ typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
 ///
 /// If target foo wants to use this, it should implement 3 classes:
 /// * FooTargetStreamer : public MCTargetStreamer
-/// * FooTargetAsmSreamer : public FooTargetStreamer
+/// * FooTargetAsmStreamer : public FooTargetStreamer
 /// * FooTargetELFStreamer : public FooTargetStreamer
 ///
 /// FooTargetStreamer should have a pure virtual method for each directive. For
 /// example, for a ".bar symbol_name" directive, it should have
 /// virtual emitBar(const MCSymbol &Symbol) = 0;
 ///
-/// The FooTargetAsmSreamer and FooTargetELFStreamer classes implement the
+/// The FooTargetAsmStreamer and FooTargetELFStreamer classes implement the
 /// method. The assembly streamer just prints ".bar symbol_name". The object
 /// streamer does whatever is needed to implement .bar in the object file.
 ///
@@ -66,8 +66,9 @@ typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
 /// MCTargetStreamer &TS = OutStreamer.getTargetStreamer();
 /// FooTargetStreamer &ATS = static_cast<FooTargetStreamer &>(TS);
 ///
-/// The base classes FooTargetAsmSreamer and FooTargetELFStreamer should *never*
-/// be treated differently. Callers should always talk to a FooTargetStreamer.
+/// The base classes FooTargetAsmStreamer and FooTargetELFStreamer should
+/// *never* be treated differently. Callers should always talk to a
+/// FooTargetStreamer.
 class MCTargetStreamer {
 protected:
   MCStreamer &Streamer;
