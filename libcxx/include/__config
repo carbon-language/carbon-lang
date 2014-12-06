@@ -713,4 +713,9 @@ extern "C" void __sanitizer_annotate_contiguous_container(
 #  define _LIBCPP_WEAK __attribute__((__weak__))
 #endif
 
+#if defined(_LIBCPP_HAS_NO_MONOTONIC_CLOCK) && !defined(_LIBCPP_HAS_NO_THREADS)
+#  error _LIBCPP_HAS_NO_MONOTONIC_CLOCK may only be defined when \
+         _LIBCPP_HAS_NO_THREADS is defined.
+#endif
+
 #endif  // _LIBCPP_CONFIG
