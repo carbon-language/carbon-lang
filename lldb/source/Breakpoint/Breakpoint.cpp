@@ -65,6 +65,19 @@ Breakpoint::Breakpoint(Target &target,
     m_being_created = false;
 }
 
+Breakpoint::Breakpoint (Target &new_target, Breakpoint &source_bp) :
+    m_being_created(true),
+    m_hardware(source_bp.m_hardware),
+    m_target(new_target),
+    m_options (source_bp.m_options),
+    m_locations(*this),
+    m_resolve_indirect_symbols(source_bp.m_resolve_indirect_symbols)
+{
+    // Now go through and copy the filter & resolver:
+    m_resolver_sp = source_bp.m_resolver_sp->CopyForBreakpoint(*this);
+    m_filter_sp = source_bp.m_filter_sp->CopyForBreakpoint(*this);
+}
+
 //----------------------------------------------------------------------
 // Destructor
 //----------------------------------------------------------------------
@@ -72,24 +85,16 @@ Breakpoint::~Breakpoint()
 {
 }
 
+const lldb::TargetSP
+Breakpoint::GetTargetSP ()
+{
+    return m_target.shared_from_this();
+}
+
 bool
 Breakpoint::IsInternal () const
 {
     return LLDB_BREAK_ID_IS_INTERNAL(m_bid);
-}
-
-
-
-Target&
-Breakpoint::GetTarget ()
-{
-    return m_target;
-}
-
-const Target&
-Breakpoint::GetTarget () const
-{
-    return m_target;
 }
 
 BreakpointLocationSP

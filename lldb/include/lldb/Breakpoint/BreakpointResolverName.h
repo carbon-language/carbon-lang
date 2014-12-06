@@ -85,7 +85,12 @@ public:
         return V->getResolverID() == BreakpointResolver::NameResolver;
     }
 
+    lldb::BreakpointResolverSP
+    CopyForBreakpoint (Breakpoint &breakpoint) override;
+
 protected:
+    BreakpointResolverName(const BreakpointResolverName &rhs);
+
     struct LookupInfo
     {
         ConstString name;
@@ -113,8 +118,6 @@ protected:
 
     void
     AddNameLookup (const ConstString &name, uint32_t name_type_mask);
-private:
-    DISALLOW_COPY_AND_ASSIGN(BreakpointResolverName);
 };
 
 } // namespace lldb_private

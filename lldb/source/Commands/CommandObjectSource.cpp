@@ -421,7 +421,7 @@ protected:
             {
                 const bool show_inlines = true;
                 m_breakpoint_locations.Reset (start_file, 0, show_inlines);
-                SearchFilter target_search_filter (m_exe_ctx.GetTargetSP());
+                SearchFilterForUnconstrainedSearches target_search_filter (m_exe_ctx.GetTargetSP());
                 target_search_filter.Search (m_breakpoint_locations);
             }
             
@@ -682,7 +682,7 @@ protected:
                         m_breakpoint_locations.Clear();
                         const bool show_inlines = true;
                         m_breakpoint_locations.Reset (*sc.comp_unit, 0, show_inlines);
-                        SearchFilter target_search_filter (target->shared_from_this());
+                        SearchFilterForUnconstrainedSearches target_search_filter (target->shared_from_this());
                         target_search_filter.Search (m_breakpoint_locations);
                     }
                     
@@ -743,7 +743,7 @@ protected:
                     {
                         const bool show_inlines = true;
                         m_breakpoint_locations.Reset (last_file_sp->GetFileSpec(), 0, show_inlines);
-                        SearchFilter target_search_filter (target->shared_from_this());
+                        SearchFilterForUnconstrainedSearches target_search_filter (target->shared_from_this());
                         target_search_filter.Search (m_breakpoint_locations);
                     }
                 }
@@ -846,7 +846,7 @@ protected:
                     {
                         const bool show_inlines = true;
                         m_breakpoint_locations.Reset (*sc.comp_unit, 0, show_inlines);
-                        SearchFilter target_search_filter (target->shared_from_this());
+                        SearchFilterForUnconstrainedSearches target_search_filter (target->shared_from_this());
                         target_search_filter.Search (m_breakpoint_locations);
                     }
                     else

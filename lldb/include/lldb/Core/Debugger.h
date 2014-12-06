@@ -383,7 +383,7 @@ public:
 
     // This is for use in the command interpreter, when you either want the selected target, or if no target
     // is present you want to prime the dummy target with entities that will be copied over to new targets.
-    Target *GetSelectedOrDummyTarget();
+    Target *GetSelectedOrDummyTarget(bool prefer_dummy = false);
     Target *GetDummyTarget();
 
 protected:

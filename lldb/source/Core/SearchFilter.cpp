@@ -119,6 +119,15 @@ SearchFilter::Dump (Stream *s) const
 
 }
 
+lldb::SearchFilterSP
+SearchFilter::CopyForBreakpoint (Breakpoint &breakpoint)
+{
+    SearchFilterSP ret_sp = DoCopyForBreakpoint (breakpoint);
+    TargetSP target_sp = breakpoint.GetTargetSP();
+    ret_sp->SetTarget(target_sp);
+    return ret_sp;
+}
+
 //----------------------------------------------------------------------
 // UTILITY Functions to help iterate down through the elements of the
 // SymbolContext.
@@ -281,29 +290,36 @@ SearchFilter::DoFunctionIteration (Function *function, const SymbolContext &cont
 }
 
 //----------------------------------------------------------------------
-//  SearchFilterForNonModuleSpecificSearches:
+//  SearchFilterForUnconstrainedSearches:
 //  Selects a shared library matching a given file spec, consulting the targets "black list".
 //----------------------------------------------------------------------
 
-    bool 
-    SearchFilterForNonModuleSpecificSearches::ModulePasses (const FileSpec &module_spec)
-    {
-        if (m_target_sp->ModuleIsExcludedForNonModuleSpecificSearches (module_spec))
-            return false;
-        else
-            return true;
-    }
-    
-    bool
-    SearchFilterForNonModuleSpecificSearches::ModulePasses (const lldb::ModuleSP &module_sp)
-    {
-        if (!module_sp)
-            return true;
-        else if (m_target_sp->ModuleIsExcludedForNonModuleSpecificSearches (module_sp))
-            return false;
-        else
-            return true;
-    }
+bool
+SearchFilterForUnconstrainedSearches::ModulePasses (const FileSpec &module_spec)
+{
+    if (m_target_sp->ModuleIsExcludedForUnconstrainedSearches (module_spec))
+        return false;
+    else
+        return true;
+}
+
+bool
+SearchFilterForUnconstrainedSearches::ModulePasses (const lldb::ModuleSP &module_sp)
+{
+    if (!module_sp)
+        return true;
+    else if (m_target_sp->ModuleIsExcludedForUnconstrainedSearches (module_sp))
+        return false;
+    else
+        return true;
+}
+
+lldb::SearchFilterSP
+SearchFilterForUnconstrainedSearches::DoCopyForBreakpoint (Breakpoint &breakpoint)
+{
+    SearchFilterSP ret_sp(new SearchFilterForUnconstrainedSearches(*this));
+    return ret_sp;
+}
 
 //----------------------------------------------------------------------
 //  SearchFilterByModule:
@@ -449,6 +465,14 @@ SearchFilterByModule::Dump (Stream *s) const
 {
 
 }
+
+lldb::SearchFilterSP
+SearchFilterByModule::DoCopyForBreakpoint (Breakpoint &breakpoint)
+{
+    SearchFilterSP ret_sp(new SearchFilterByModule(*this));
+    return ret_sp;
+}
+
 //----------------------------------------------------------------------
 //  SearchFilterByModuleList:
 //  Selects a shared library matching a given file spec
@@ -458,7 +482,8 @@ SearchFilterByModule::Dump (Stream *s) const
 // SearchFilterByModuleList constructors
 //----------------------------------------------------------------------
 
-SearchFilterByModuleList::SearchFilterByModuleList (const lldb::TargetSP &target_sp, const FileSpecList &module_list) :
+SearchFilterByModuleList::SearchFilterByModuleList (const lldb::TargetSP &target_sp,
+                                                    const FileSpecList &module_list) :
     SearchFilter (target_sp),
     m_module_spec_list (module_list)
 {
@@ -622,6 +647,14 @@ SearchFilterByModuleList::Dump (Stream *s) const
 {
 
 }
+
+lldb::SearchFilterSP
+SearchFilterByModuleList::DoCopyForBreakpoint (Breakpoint &breakpoint)
+{
+    SearchFilterSP ret_sp(new SearchFilterByModuleList(*this));
+    return ret_sp;
+}
+
 
 //----------------------------------------------------------------------
 //  SearchFilterByModuleListAndCU:
@@ -812,5 +845,12 @@ void
 SearchFilterByModuleListAndCU::Dump (Stream *s) const
 {
 
+}
+
+lldb::SearchFilterSP
+SearchFilterByModuleListAndCU::DoCopyForBreakpoint (Breakpoint &breakpoint)
+{
+    SearchFilterSP ret_sp(new SearchFilterByModuleListAndCU(*this));
+    return ret_sp;
 }
 

@@ -3418,12 +3418,16 @@ Debugger::GetDummyTarget()
 }
 
 Target *
-Debugger::GetSelectedOrDummyTarget()
+Debugger::GetSelectedOrDummyTarget(bool prefer_dummy)
 {
-    Target *return_target = m_target_list.GetSelectedTarget().get();
-    if (return_target)
-        return return_target;
-
+    Target *target = nullptr;
+    if (!prefer_dummy)
+    {
+        target = m_target_list.GetSelectedTarget().get();
+        if (target)
+            return target;
+    }
+    
     return GetDummyTarget();
 }
 

@@ -389,6 +389,10 @@ one command per line.\n" );
                 }
                 break;
 
+            case 'D':
+                m_use_dummy = true;
+                break;
+
             default:
                 break;
             }
@@ -405,6 +409,7 @@ one command per line.\n" );
             m_stop_on_error = true;
             m_one_liner.clear();
             m_function_name.clear();
+            m_use_dummy = false;
         }
 
         const OptionDefinition*
@@ -428,13 +433,14 @@ one command per line.\n" );
         std::string m_one_liner;
         bool m_stop_on_error;
         std::string m_function_name;
+        bool m_use_dummy;
     };
 
 protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
 
         if (target == NULL)
         {
@@ -580,6 +586,9 @@ CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_2,   false, "python-function",     'F', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePythonFunction,
         "Give the name of a Python function to run as command for this breakpoint. Be sure to give a module name if appropriate."},
     
+    { LLDB_OPT_SET_ALL, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+        "Sets Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
+
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -594,7 +603,8 @@ public:
         CommandObjectParsed (interpreter, 
                              "delete",
                              "Delete the set of commands from a breakpoint.",
-                             NULL)
+                             NULL),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData bp_id_arg;
@@ -614,11 +624,70 @@ public:
     virtual
     ~CommandObjectBreakpointCommandDelete () {}
 
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
+            m_use_dummy (false)
+        {
+        }
+
+        virtual
+        ~CommandOptions () {}
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'D':
+                    m_use_dummy = true;
+                    break;
+
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+
+            return error;
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_use_dummy = false;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+        bool m_use_dummy;
+    };
+
 protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
 
         if (target == NULL)
         {
@@ -679,7 +748,19 @@ protected:
         }
         return result.Succeeded();
     }
+private:
+    CommandOptions m_options;
 };
+
+OptionDefinition
+CommandObjectBreakpointCommandDelete::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+        "Delete commands from Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
+
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+};
+
 
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointCommandList

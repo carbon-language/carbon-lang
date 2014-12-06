@@ -1025,9 +1025,9 @@ CommandObject::GetDummyTarget()
 }
 
 Target *
-CommandObject::GetSelectedOrDummyTarget()
+CommandObject::GetSelectedOrDummyTarget(bool prefer_dummy)
 {
-    return m_interpreter.GetDebugger().GetSelectedOrDummyTarget();
+    return m_interpreter.GetDebugger().GetSelectedOrDummyTarget(prefer_dummy);
 }
 
 bool

@@ -62,6 +62,9 @@ public:
         return V->getResolverID() == BreakpointResolver::AddressResolver;
     }
 
+    lldb::BreakpointResolverSP
+    CopyForBreakpoint (Breakpoint &breakpoint) override;
+
 protected:
     Address m_addr;
 

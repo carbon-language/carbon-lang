@@ -55,6 +55,9 @@ public:
         return V->getResolverID() == BreakpointResolver::FileRegexResolver;
     }
 
+    lldb::BreakpointResolverSP
+    CopyForBreakpoint (Breakpoint &breakpoint) override;
+
 protected:
     friend class Breakpoint;
     RegularExpression m_regex; // This is the line expression that we are looking for.

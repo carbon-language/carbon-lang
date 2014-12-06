@@ -100,9 +100,6 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
 
     CheckInWithManager();
 
-    if (!m_is_dummy_target)
-        PrimeFromDummyTarget(m_debugger.GetDummyTarget());
-
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Target::Target()", static_cast<void*>(this));
@@ -119,7 +116,15 @@ Target::PrimeFromDummyTarget(Target *target)
         return;
 
     m_stop_hooks = target->m_stop_hooks;
-
+    
+    for (BreakpointSP breakpoint_sp : target->m_breakpoint_list.Breakpoints())
+    {
+        if (breakpoint_sp->IsInternal())
+            continue;
+            
+        BreakpointSP new_bp (new Breakpoint (*this, *breakpoint_sp.get()));
+        AddBreakpoint (new_bp, false);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -346,7 +351,7 @@ Target::CreateBreakpoint (lldb::addr_t addr, bool internal, bool hardware)
 BreakpointSP
 Target::CreateBreakpoint (Address &addr, bool internal, bool hardware)
 {
-    SearchFilterSP filter_sp(new SearchFilterForNonModuleSpecificSearches (shared_from_this()));
+    SearchFilterSP filter_sp(new SearchFilterForUnconstrainedSearches (shared_from_this()));
     BreakpointResolverSP resolver_sp (new BreakpointResolverAddress (NULL, addr));
     return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware, false);
 }
@@ -446,7 +451,7 @@ Target::GetSearchFilterForModule (const FileSpec *containingModule)
     else
     {
         if (m_search_filter_sp.get() == NULL)
-            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (shared_from_this()));
+            m_search_filter_sp.reset (new SearchFilterForUnconstrainedSearches (shared_from_this()));
         filter_sp = m_search_filter_sp;
     }
     return filter_sp;
@@ -465,7 +470,7 @@ Target::GetSearchFilterForModuleList (const FileSpecList *containingModules)
     else
     {
         if (m_search_filter_sp.get() == NULL)
-            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (shared_from_this()));
+            m_search_filter_sp.reset (new SearchFilterForUnconstrainedSearches (shared_from_this()));
         filter_sp = m_search_filter_sp;
     }
     return filter_sp;
@@ -526,29 +531,35 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
     {
         bp_sp.reset(new Breakpoint (*this, filter_sp, resolver_sp, request_hardware, resolve_indirect_symbols));
         resolver_sp->SetBreakpoint (bp_sp.get());
-
-        if (internal)
-            m_internal_breakpoint_list.Add (bp_sp, false);
-        else
-            m_breakpoint_list.Add (bp_sp, true);
-
-        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
-        if (log)
-        {
-            StreamString s;
-            bp_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
-            log->Printf ("Target::%s (internal = %s) => break_id = %s\n", __FUNCTION__, internal ? "yes" : "no", s.GetData());
-        }
-
-        bp_sp->ResolveBreakpoint();
+        AddBreakpoint (bp_sp, internal);
     }
-    
-    if (!internal && bp_sp)
+    return bp_sp;
+}
+
+void
+Target::AddBreakpoint (lldb::BreakpointSP bp_sp, bool internal)
+{
+    if (!bp_sp)
+        return;
+    if (internal)
+        m_internal_breakpoint_list.Add (bp_sp, false);
+    else
+        m_breakpoint_list.Add (bp_sp, true);
+
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    if (log)
+    {
+        StreamString s;
+        bp_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
+        log->Printf ("Target::%s (internal = %s) => break_id = %s\n", __FUNCTION__, bp_sp->IsInternal() ? "yes" : "no", s.GetData());
+    }
+
+    bp_sp->ResolveBreakpoint();
+
+    if (!internal)
     {
         m_last_created_breakpoint = bp_sp;
     }
-    
-    return bp_sp;
 }
 
 bool
@@ -1238,7 +1249,7 @@ Target::ModulesDidUnload (ModuleList &module_list, bool delete_locations)
 }
 
 bool
-Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_file_spec)
+Target::ModuleIsExcludedForUnconstrainedSearches (const FileSpec &module_file_spec)
 {
     if (GetBreakpointsConsultPlatformAvoidList())
     {
@@ -1252,7 +1263,7 @@ Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_fil
         {
             for (size_t i  = 0; i < num_modules; i++)
             {
-                if (!ModuleIsExcludedForNonModuleSpecificSearches (matchingModules.GetModuleAtIndex(i)))
+                if (!ModuleIsExcludedForUnconstrainedSearches (matchingModules.GetModuleAtIndex(i)))
                     return false;
             }
             return true;
@@ -1262,12 +1273,12 @@ Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_fil
 }
 
 bool
-Target::ModuleIsExcludedForNonModuleSpecificSearches (const lldb::ModuleSP &module_sp)
+Target::ModuleIsExcludedForUnconstrainedSearches (const lldb::ModuleSP &module_sp)
 {
     if (GetBreakpointsConsultPlatformAvoidList())
     {
         if (m_platform_sp)
-            return m_platform_sp->ModuleIsExcludedForNonModuleSpecificSearches (*this, module_sp);
+            return m_platform_sp->ModuleIsExcludedForUnconstrainedSearches (*this, module_sp);
     }
     return false;
 }

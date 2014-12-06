@@ -66,7 +66,7 @@ public:
                    lldb_private::ProcessInstanceInfoList &process_infos) override;
 
     bool
-    ModuleIsExcludedForNonModuleSpecificSearches(lldb_private::Target &target,
+    ModuleIsExcludedForUnconstrainedSearches(lldb_private::Target &target,
 						 const lldb::ModuleSP &module_sp) override;
 
     bool

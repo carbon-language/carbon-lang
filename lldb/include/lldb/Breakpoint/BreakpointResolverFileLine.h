@@ -58,6 +58,9 @@ public:
         return V->getResolverID() == BreakpointResolver::FileLineResolver;
     }
 
+    lldb::BreakpointResolverSP
+    CopyForBreakpoint (Breakpoint &breakpoint) override;
+
 protected:
     friend class Breakpoint;
     FileSpec m_file_spec; // This is the file spec we are looking for.

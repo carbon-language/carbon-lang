@@ -121,6 +121,17 @@ BreakpointResolverName::~BreakpointResolverName ()
 {
 }
 
+BreakpointResolverName::BreakpointResolverName(const BreakpointResolverName &rhs) :
+    BreakpointResolver(rhs.m_breakpoint, BreakpointResolver::NameResolver),
+    m_lookups(rhs.m_lookups),
+    m_class_name(rhs.m_class_name),
+    m_regex(rhs.m_regex),
+    m_match_type (rhs.m_match_type),
+    m_skip_prologue (rhs.m_skip_prologue)
+{
+
+}
+
 void
 BreakpointResolverName::AddNameLookup (const ConstString &name, uint32_t name_type_mask)
 {
@@ -371,3 +382,10 @@ BreakpointResolverName::Dump (Stream *s) const
 
 }
 
+lldb::BreakpointResolverSP
+BreakpointResolverName::CopyForBreakpoint (Breakpoint &breakpoint)
+{
+    lldb::BreakpointResolverSP ret_sp(new BreakpointResolverName(*this));
+    ret_sp->SetBreakpoint(&breakpoint);
+    return ret_sp;
+}

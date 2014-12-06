@@ -95,3 +95,10 @@ BreakpointResolverFileRegex::Dump (Stream *s) const
 
 }
 
+lldb::BreakpointResolverSP
+BreakpointResolverFileRegex::CopyForBreakpoint (Breakpoint &breakpoint)
+{
+    lldb::BreakpointResolverSP ret_sp(new BreakpointResolverFileRegex(&breakpoint, m_regex));
+    return ret_sp;
+}
+

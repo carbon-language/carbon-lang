@@ -44,6 +44,8 @@ namespace lldb_private {
 class BreakpointResolver :
    public Searcher
 {
+friend class Breakpoint;
+
 public:
     //------------------------------------------------------------------
     /// The breakpoint resolver need to have a breakpoint for "ResolveBreakpoint
@@ -122,7 +124,8 @@ public:
         AddressResolver,  // This is an instance of BreakpointResolverAddress
         NameResolver,      // This is an instance of BreakpointResolverName
         FileRegexResolver,
-        ExceptionResolver
+        ExceptionResolver,
+        LastKnownResolverType = ExceptionResolver
     };
 
     //------------------------------------------------------------------
@@ -132,6 +135,9 @@ public:
     unsigned getResolverID() const {
         return SubclassID;
     }
+
+    virtual lldb::BreakpointResolverSP
+    CopyForBreakpoint (Breakpoint &breakpoint) = 0;
 
 protected:
     //------------------------------------------------------------------

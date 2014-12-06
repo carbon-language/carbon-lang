@@ -10,6 +10,7 @@
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/SearchFilter.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -19,15 +20,20 @@ class ExceptionSearchFilter : public SearchFilter
 {
 public:
     ExceptionSearchFilter (const lldb::TargetSP &target_sp,
-                           lldb::LanguageType language) :
+                           lldb::LanguageType language,
+                           bool update_module_list = true) :
         SearchFilter (target_sp),
         m_language (language),
         m_language_runtime (NULL),
         m_filter_sp ()
     {
-        UpdateModuleListIfNeeded ();
+        if (update_module_list)
+            UpdateModuleListIfNeeded ();
     }
-    
+
+    virtual
+    ~ExceptionSearchFilter() {};
+
     virtual bool
     ModulePasses (const lldb::ModuleSP &module_sp)
     {
@@ -67,6 +73,12 @@ protected:
     LanguageType m_language;
     LanguageRuntime *m_language_runtime;
     SearchFilterSP m_filter_sp;
+
+    SearchFilterSP
+    DoCopyForBreakpoint(Breakpoint &breakpoint) override
+    {
+        return SearchFilterSP(new ExceptionSearchFilter(TargetSP(), m_language, false));
+    }
 
     void
     UpdateModuleListIfNeeded ()
@@ -174,6 +186,12 @@ public:
         return V->getResolverID() == BreakpointResolver::ExceptionResolver;
     }
 protected:
+    BreakpointResolverSP
+    CopyForBreakpoint (Breakpoint &breakpoint) override
+    {
+        return BreakpointResolverSP(new ExceptionBreakpointResolver(m_language, m_catch_bp, m_throw_bp));
+    }
+
     bool
     SetActualResolver()
     {

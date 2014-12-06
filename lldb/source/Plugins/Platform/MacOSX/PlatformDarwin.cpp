@@ -666,7 +666,7 @@ PlatformDarwin::FindProcesses (const ProcessInstanceInfoMatch &match_info,
 }
 
 bool
-PlatformDarwin::ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp)
+PlatformDarwin::ModuleIsExcludedForUnconstrainedSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp)
 {
     if (!module_sp)
         return false;

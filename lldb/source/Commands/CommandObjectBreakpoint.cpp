@@ -145,6 +145,10 @@ public:
                     m_condition.assign(option_arg);
                     break;
 
+                case 'D':
+                    m_use_dummy = true;
+                    break;
+
                 case 'E':
                 {
                     LanguageType language = LanguageRuntime::GetLanguageTypeFromString (option_arg);
@@ -324,6 +328,7 @@ public:
             m_language = eLanguageTypeUnknown;
             m_skip_prologue = eLazyBoolCalculate;
             m_one_shot = false;
+            m_use_dummy = false;
         }
     
         const OptionDefinition*
@@ -359,15 +364,17 @@ public:
         lldb::LanguageType m_language;
         LazyBool m_skip_prologue;
         bool m_one_shot;
+        bool m_use_dummy;
 
     };
 
 protected:
     virtual bool
     DoExecute (Args& command,
-             CommandReturnObject &result)
+              CommandReturnObject &result)
     {
-        Target *target = GetSelectedOrDummyTarget();
+        Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
+
         if (target == nullptr)
         {
             result.AppendError ("Invalid target.  Must set target before setting breakpoints (see 'target create' command).");
@@ -709,6 +716,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SKIP_PROLOGUE, false, "skip-prologue", 'K', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,
         "sKip the prologue if the breakpoint is at the beginning of a function.  If not set the target.skip-prologue setting is used." },
 
+    { LLDB_OPT_SET_ALL, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+        "Sets Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
+
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -766,7 +776,8 @@ public:
             m_name_passed (false),
             m_queue_passed (false),
             m_condition_passed (false),
-            m_one_shot_passed (false)
+            m_one_shot_passed (false),
+            m_use_dummy (false)
         {
         }
 
@@ -791,6 +802,9 @@ public:
                 case 'd':
                     m_enable_passed = true;
                     m_enable_value = false;
+                    break;
+                case 'D':
+                    m_use_dummy = true;
                     break;
                 case 'e':
                     m_enable_passed = true;
@@ -888,6 +902,7 @@ public:
             m_name_passed = false;
             m_condition_passed = false;
             m_one_shot_passed = false;
+            m_use_dummy = false;
         }
         
         const OptionDefinition*
@@ -918,6 +933,7 @@ public:
         bool m_queue_passed;
         bool m_condition_passed;
         bool m_one_shot_passed;
+        bool m_use_dummy;
 
     };
 
@@ -925,7 +941,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = GetSelectedOrDummyTarget();
+        Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
         if (target == NULL)
         {
             result.AppendError ("Invalid target.  No existing target or breakpoints.");
@@ -1024,6 +1040,8 @@ CommandObjectBreakpointModify::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "condition",    'c', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeExpression, "The breakpoint stops only if this condition expression evaluates to true."},
 { LLDB_OPT_SET_1,   false, "enable",       'e', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone, "Enable the breakpoint."},
 { LLDB_OPT_SET_2,   false, "disable",      'd', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone, "Disable the breakpoint."},
+{ LLDB_OPT_SET_ALL, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone, "Sets Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
+
 { 0,                false, NULL,            0 , 0,                 NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -1293,7 +1311,8 @@ public:
 
         CommandOptions (CommandInterpreter &interpreter) :
             Options (interpreter),
-            m_level (lldb::eDescriptionLevelBrief)  // Breakpoint List defaults to brief descriptions
+            m_level (lldb::eDescriptionLevelBrief),
+            m_use_dummy(false)
         {
         }
 
@@ -1310,6 +1329,9 @@ public:
             {
                 case 'b':
                     m_level = lldb::eDescriptionLevelBrief;
+                    break;
+                case 'D':
+                    m_use_dummy = true;
                     break;
                 case 'f':
                     m_level = lldb::eDescriptionLevelFull;
@@ -1333,6 +1355,7 @@ public:
         {
             m_level = lldb::eDescriptionLevelFull;
             m_internal = false;
+            m_use_dummy = false;
         }
 
         const OptionDefinition *
@@ -1350,13 +1373,15 @@ public:
         lldb::DescriptionLevel m_level;
 
         bool m_internal;
+        bool m_use_dummy;
     };
 
 protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = GetSelectedOrDummyTarget();
+        Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
+
         if (target == NULL)
         {
             result.AppendError ("Invalid target. No current target or breakpoints.");
@@ -1437,6 +1462,9 @@ CommandObjectBreakpointList::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_3, false, "verbose", 'v', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
         "Explain everything we know about the breakpoint (for debugging debugger bugs)." },
+
+    { LLDB_OPT_SET_ALL, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+        "List Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
 
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
@@ -1656,7 +1684,8 @@ public:
         CommandObjectParsed (interpreter,
                              "breakpoint delete",
                              "Delete the specified breakpoint(s).  If no breakpoints are specified, delete them all.",
-                             NULL)
+                             NULL),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandObject::AddIDsArgumentData(arg, eArgTypeBreakpointID, eArgTypeBreakpointIDRange);
@@ -1667,11 +1696,78 @@ public:
     virtual
     ~CommandObjectBreakpointDelete () {}
 
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
+            m_use_dummy (false),
+            m_force (false)
+        {
+        }
+
+        virtual
+        ~CommandOptions () {}
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'f':
+                    m_force = true;
+                    break;
+
+                case 'D':
+                    m_use_dummy = true;
+                    break;
+
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+
+            return error;
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_use_dummy = false;
+            m_force = false;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+        bool m_use_dummy;
+        bool m_force;
+    };
+
 protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Target *target = GetSelectedOrDummyTarget();
+        Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
+
         if (target == NULL)
         {
             result.AppendError ("Invalid target. No existing target or breakpoints.");
@@ -1695,7 +1791,7 @@ protected:
 
         if (command.GetArgumentCount() == 0)
         {
-            if (!m_interpreter.Confirm ("About to delete all breakpoints, do you want to do that?", true))
+            if (!m_options.m_force && !m_interpreter.Confirm ("About to delete all breakpoints, do you want to do that?", true))
             {
                 result.AppendMessage("Operation cancelled...");
             }
@@ -1748,6 +1844,20 @@ protected:
         }
         return result.Succeeded();
     }
+private:
+    CommandOptions m_options;
+};
+
+OptionDefinition
+CommandObjectBreakpointDelete::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "force", 'f', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+        "Delete all breakpoints without querying for confirmation."},
+
+    { LLDB_OPT_SET_1, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+        "Delete Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
+
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------

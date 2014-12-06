@@ -109,3 +109,11 @@ BreakpointResolverAddress::Dump (Stream *s) const
 {
 
 }
+
+lldb::BreakpointResolverSP
+BreakpointResolverAddress::CopyForBreakpoint (Breakpoint &breakpoint)
+{
+    lldb::BreakpointResolverSP ret_sp(new BreakpointResolverAddress(&breakpoint, m_addr));
+    return ret_sp;
+}
+

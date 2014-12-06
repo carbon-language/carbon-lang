@@ -501,6 +501,8 @@ TargetList::CreateTargetInternal (Debugger &debugger,
             Mutex::Locker locker(m_target_list_mutex);
             m_selected_target_idx = m_target_list.size();
             m_target_list.push_back(target_sp);
+            // Now prime this from the dummy target:
+            target_sp->PrimeFromDummyTarget(debugger.GetDummyTarget());
         }
         else
         {

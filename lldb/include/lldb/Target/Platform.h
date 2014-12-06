@@ -581,7 +581,7 @@ namespace lldb_private {
         // The platform will return "true" from this call if the passed in module happens to be one of these.
         
         virtual bool
-        ModuleIsExcludedForNonModuleSpecificSearches (Target &target, const lldb::ModuleSP &module_sp)
+        ModuleIsExcludedForUnconstrainedSearches (Target &target, const lldb::ModuleSP &module_sp)
         {
             return false;
         }

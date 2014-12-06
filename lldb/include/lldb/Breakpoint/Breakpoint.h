@@ -553,10 +553,19 @@ public:
     ///     This breakpoint's Target.
     //------------------------------------------------------------------
     Target &
-    GetTarget ();
+    GetTarget ()
+    {
+        return m_target;
+    }
 
     const Target &
-    GetTarget () const;
+    GetTarget () const
+    {
+        return m_target;
+    }
+
+    const lldb::TargetSP
+    GetTargetSP ();
 
     void
     GetResolverDescription (Stream *s);
@@ -615,6 +624,18 @@ public:
         return m_hardware;
     }
 
+    lldb::BreakpointResolverSP
+    GetResolver()
+    {
+        return m_resolver_sp;
+    }
+
+    lldb::SearchFilterSP
+    GetSearchFilter()
+    {
+        return m_filter_sp;
+    }
+
 protected:
     friend class Target;
     //------------------------------------------------------------------
@@ -665,6 +686,11 @@ protected:
     IgnoreCountShouldStop ();
 
 private:
+    // This one should only be used by Target to copy breakpoints from target to target - primarily from the dummy
+    // target to prime new targets.
+    Breakpoint (Target &new_target,
+                Breakpoint &bp_to_copy_from);
+
     //------------------------------------------------------------------
     // For Breakpoint only
     //------------------------------------------------------------------

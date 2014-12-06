@@ -225,8 +225,10 @@ public:
     virtual void
     Dump (Stream *s) const;
 
-protected:
+    lldb::SearchFilterSP
+    CopyForBreakpoint (Breakpoint &breakpoint);
 
+protected:
     // These are utility functions to assist with the search iteration.  They are used by the
     // default Search method.
 
@@ -248,26 +250,40 @@ protected:
                          const SymbolContext &context,
                          Searcher &searcher);
 
+    virtual lldb::SearchFilterSP
+    DoCopyForBreakpoint (Breakpoint &breakpoint) = 0;
+
+    void
+    SetTarget(lldb::TargetSP &target_sp)
+    {
+        m_target_sp = target_sp;
+    }
+
     lldb::TargetSP m_target_sp;   // Every filter has to be associated with a target for
                                   // now since you need a starting place for the search.
 };
 
 //----------------------------------------------------------------------
-/// @class SearchFilterForNonModuleSpecificSearches SearchFilter.h "lldb/Core/SearchFilter.h"
-/// @brief This is a SearchFilter that searches through all modules.  It also consults the Target::ModuleIsExcludedForNonModuleSpecificSearches.
+/// @class SearchFilterForUnconstrainedSearches SearchFilter.h "lldb/Core/SearchFilter.h"
+/// @brief This is a SearchFilter that searches through all modules.  It also consults the Target::ModuleIsExcludedForUnconstrainedSearches.
 //----------------------------------------------------------------------
-class SearchFilterForNonModuleSpecificSearches :
+class SearchFilterForUnconstrainedSearches :
     public SearchFilter
 {
 public:
-    SearchFilterForNonModuleSpecificSearches (const lldb::TargetSP &targetSP) : SearchFilter(targetSP) {}
-    ~SearchFilterForNonModuleSpecificSearches () {}
+    SearchFilterForUnconstrainedSearches (const lldb::TargetSP &target_sp) : SearchFilter(target_sp) {}
+    ~SearchFilterForUnconstrainedSearches () {}
     
     virtual bool 
     ModulePasses (const FileSpec &module_spec);
     
     virtual bool
     ModulePasses (const lldb::ModuleSP &module_sp);
+
+protected:
+    lldb::SearchFilterSP
+    DoCopyForBreakpoint (Breakpoint &breakpoint) override;
+
 };
 
 //----------------------------------------------------------------------
@@ -328,6 +344,10 @@ public:
     virtual void
     Search (Searcher &searcher);
 
+protected:
+    lldb::SearchFilterSP
+    DoCopyForBreakpoint (Breakpoint &breakpoint) override;
+
 private:
     FileSpec m_module_spec;
 };
@@ -385,6 +405,10 @@ public:
     virtual void
     Search (Searcher &searcher);
 
+protected:
+    lldb::SearchFilterSP
+    DoCopyForBreakpoint (Breakpoint &breakpoint) override;
+
 private:
     FileSpecList m_module_spec_list;
 };
@@ -436,6 +460,10 @@ public:
 
     virtual void
     Search (Searcher &searcher);
+    
+protected:
+    lldb::SearchFilterSP
+    DoCopyForBreakpoint (Breakpoint &breakpoint) override;
 
 private:
     FileSpecList m_module_spec_list;

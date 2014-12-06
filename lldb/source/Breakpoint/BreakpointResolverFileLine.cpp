@@ -110,3 +110,14 @@ BreakpointResolverFileLine::Dump (Stream *s) const
 
 }
 
+lldb::BreakpointResolverSP
+BreakpointResolverFileLine::CopyForBreakpoint (Breakpoint &breakpoint)
+{
+    lldb::BreakpointResolverSP ret_sp(new BreakpointResolverFileLine(&breakpoint,
+                                                                     m_file_spec,
+                                                                     m_line_number,
+                                                                     m_inlines,
+                                                                     m_skip_prologue));
+
+    return ret_sp;
+}
