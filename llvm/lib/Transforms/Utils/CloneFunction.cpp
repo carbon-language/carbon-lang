@@ -164,13 +164,13 @@ static MDNode* FindSubprogram(const Function *F, DebugInfoFinder &Finder) {
 
 // Add an operand to an existing MDNode. The new operand will be added at the
 // back of the operand list.
-static void AddOperand(DICompileUnit CU, MDNode *Node, Value *Operand) {
-  SmallVector<Value*, 16> Operands;
-  for (unsigned i = 0; i < Node->getNumOperands(); i++) {
-    Operands.push_back(Node->getOperand(i));
-  }
-  Operands.push_back(Operand);
-  CU.replaceSubprograms(DIArray(MDNode::get(CU->getContext(), Operands)));
+static void AddOperand(DICompileUnit CU, DIArray SPs, Value *NewSP) {
+  SmallVector<Value *, 16> NewSPs;
+  NewSPs.reserve(SPs->getNumOperands() + 1);
+  for (unsigned I = 0, E = SPs->getNumOperands(); I != E; ++I)
+    NewSPs.push_back(SPs->getOperand(I));
+  NewSPs.push_back(NewSP);
+  CU.replaceSubprograms(DIArray(MDNode::get(CU->getContext(), NewSPs)));
 }
 
 // Clone the module-level debug info associated with OldFunc. The cloned data
