@@ -206,7 +206,7 @@ class Test:
         if safe_test_path:
             class_name = safe_name + "." + "/".join(safe_test_path) 
         else:
-            class_name = safe_name
+            class_name = safe_name + "." + safe_name
 
         xml = "<testcase classname='" + class_name + "' name='" + \
             test_name + "'"
