@@ -17,9 +17,9 @@
 // RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -I %S/Inputs/modules-with-same-name/DependsOnA -include-pch %t-A.pch %s -fsyntax-only 2>&1 | FileCheck -check-prefix=CHECK-NOA %s
 // CHECK-NOA: module 'A' in AST file '{{.*A.*pcm}}' (imported by AST file '{{.*DependsOnA.*pcm}}') is not defined in any loaded module map
 
-// Use the PCH and have it resolve the the other A
+// Use the PCH and have it resolve to the other A
 // RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -I %S/Inputs/modules-with-same-name/DependsOnA -I %S/Inputs/modules-with-same-name/path2/A -include-pch %t-A.pch %s -fsyntax-only 2>&1 | FileCheck -check-prefix=CHECK-WRONGA %s
-// CHECK-WRONGA: module 'A' imported by AST file '{{.*DependsOnA.*pcm}}' found in a different module map file ({{.*path2.*}}) than when the importing AST file was built ({{.*path1.*}})
+// CHECK-WRONGA: module 'A' was built in directory '{{.*Inputs.modules-with-same-name.path1.A}}' but now resides in directory '{{.*Inputs.modules-with-same-name.path2.A}}'
 
 #ifndef HEADER
 #define HEADER

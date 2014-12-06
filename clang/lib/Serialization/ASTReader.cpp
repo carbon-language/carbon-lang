@@ -2508,9 +2508,31 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         Listener->ReadModuleName(F.ModuleName);
       break;
 
-    case MODULE_DIRECTORY:
-      F.BaseDirectory = Blob;
+    case MODULE_DIRECTORY: {
+      assert(!F.ModuleName.empty() &&
+             "MODULE_DIRECTORY found before MODULE_NAME");
+      // If we've already loaded a module map file covering this module, we may
+      // have a better path for it (relative to the current build).
+      Module *M = PP.getHeaderSearchInfo().lookupModule(F.ModuleName);
+      if (M && M->Directory) {
+        // If we're implicitly loading a module, the base directory can't
+        // change between the build and use.
+        if (F.Kind != MK_ExplicitModule) {
+          const DirectoryEntry *BuildDir =
+              PP.getFileManager().getDirectory(Blob);
+          if (!BuildDir || BuildDir != M->Directory) {
+            if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
+              Diag(diag::err_imported_module_relocated)
+                  << F.ModuleName << Blob << M->Directory->getName();
+            return OutOfDate;
+          }
+        }
+        F.BaseDirectory = M->Directory->getName();
+      } else {
+        F.BaseDirectory = Blob;
+      }
       break;
+    }
 
     case MODULE_MAP_FILE:
       if (ASTReadResult Result =

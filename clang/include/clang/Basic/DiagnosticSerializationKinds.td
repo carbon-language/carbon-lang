@@ -58,6 +58,9 @@ def err_imported_module_not_found : Error<
 def err_imported_module_modmap_changed : Error<
     "module '%0' imported by AST file '%1' found in a different module map file"
     " (%2) than when the importing AST file was built (%3)">, DefaultFatal;
+def err_imported_module_relocated : Error<
+    "module '%0' was built in directory '%1' but now resides in "
+    "directory '%2'">, DefaultFatal;
 def err_module_different_modmap : Error<
     "module '%0' %select{uses|does not use}1 additional module map '%2'"
     "%select{| not}1 used when the module was built">;
