@@ -371,6 +371,14 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
     AttachHeaderIncludeGen(*PP, /*ShowAllHeaders=*/false, /*OutputPath=*/"",
                            /*ShowDepth=*/true, /*MSStyle=*/true);
   }
+
+  // Load all explictly-specified module map files.
+  for (const auto &Filename : getFrontendOpts().ModuleMapFiles) {
+    if (auto *File = getFileManager().getFile(Filename))
+      PP->getHeaderSearchInfo().loadModuleMapFile(File, /*IsSystem*/false);
+    else
+      getDiagnostics().Report(diag::err_module_map_not_found) << Filename;
+  }
 }
 
 // ASTContext

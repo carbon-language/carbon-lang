@@ -129,9 +129,6 @@ public:
   /// of computing the module hash.
   llvm::SetVector<std::string> ModulesIgnoreMacros;
 
-  /// \brief The set of user-provided module-map-files.
-  llvm::SetVector<std::string> ModuleMapFiles;
-
   /// \brief The set of user-provided virtual filesystem overlay files.
   std::vector<std::string> VFSOverlayFiles;
 

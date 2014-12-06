@@ -233,6 +233,9 @@ public:
   /// The list of plugins to load.
   std::vector<std::string> Plugins;
 
+  /// \brief The list of module map files to load before processing the input.
+  std::vector<std::string> ModuleMapFiles;
+
   /// \brief The list of additional prebuilt module files to load before
   /// processing the input.
   std::vector<std::string> ModuleFiles;
