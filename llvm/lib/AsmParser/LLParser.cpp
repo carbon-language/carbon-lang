@@ -4668,7 +4668,11 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
   if (Lex.getKind() == lltok::rbrace)
     return false;
 
+  bool IsLocal = false;
   do {
+    if (IsLocal)
+      return TokError("unexpected operand after function-local metadata");
+
     // Null is a special case since it is typeless.
     if (EatIfPresent(lltok::kw_null)) {
       Elts.push_back(nullptr);
@@ -4678,6 +4682,15 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
     Value *V = nullptr;
     if (ParseTypeAndValue(V, PFS)) return true;
     Elts.push_back(V);
+
+    if (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal())
+      return TokError("unexpected nested function-local metadata");
+    if (!V->getType()->isMetadataTy() && !isa<Constant>(V)) {
+      assert(PFS && "Unexpected function-local metadata without PFS");
+      if (Elts.size() > 1)
+        return TokError("unexpected function-local metadata");
+      IsLocal = true;
+    }
   } while (EatIfPresent(lltok::comma));
 
   return false;

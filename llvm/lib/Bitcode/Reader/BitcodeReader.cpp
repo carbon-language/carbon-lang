@@ -1072,7 +1072,6 @@ std::error_code BitcodeReader::ParseMetadata() {
       break;
     }
 
-    bool IsFunctionLocal = false;
     // Read a record.
     Record.clear();
     unsigned Code = Stream.readRecord(Entry.ID, Record);
@@ -1100,9 +1099,34 @@ std::error_code BitcodeReader::ParseMetadata() {
       }
       break;
     }
-    case bitc::METADATA_FN_NODE:
-      IsFunctionLocal = true;
-      // fall-through
+    case bitc::METADATA_FN_NODE: {
+      // This is a function-local node.
+      if (Record.size() % 2 == 1)
+        return Error(BitcodeError::InvalidRecord);
+
+      // If this isn't a single-operand node that directly references
+      // non-metadata, we're dropping it.  This used to be legal, but there's
+      // no upgrade path.
+      auto dropRecord = [&] {
+        MDValueList.AssignValue(MDNode::get(Context, None), NextMDValueNo++);
+      };
+      if (Record.size() != 2) {
+        dropRecord();
+        break;
+      }
+
+      Type *Ty = getTypeByID(Record[0]);
+      if (Ty->isMetadataTy() || Ty->isVoidTy()) {
+        dropRecord();
+        break;
+      }
+
+      Value *Elts[] = {ValueList.getValueFwdRef(Record[1], Ty)};
+      Value *V = MDNode::getWhenValsUnresolved(Context, Elts,
+                                               /*IsFunctionLocal*/ true);
+      MDValueList.AssignValue(V, NextMDValueNo++);
+      break;
+    }
     case bitc::METADATA_NODE: {
       if (Record.size() % 2 == 1)
         return Error(BitcodeError::InvalidRecord);
@@ -1120,8 +1144,8 @@ std::error_code BitcodeReader::ParseMetadata() {
         else
           Elts.push_back(nullptr);
       }
-      Value *V = MDNode::getWhenValsUnresolved(Context, Elts, IsFunctionLocal);
-      IsFunctionLocal = false;
+      Value *V = MDNode::getWhenValsUnresolved(Context, Elts,
+                                               /*IsFunctionLocal*/ false);
       MDValueList.AssignValue(V, NextMDValueNo++);
       break;
     }

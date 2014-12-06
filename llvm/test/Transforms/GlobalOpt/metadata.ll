@@ -13,14 +13,15 @@ define i32 @main(i32 %argc, i8** %argv) {
 }
 
 define void @foo(i32 %x) {
-  call void @llvm.foo(metadata !{i8*** @G, i32 %x})
-; CHECK: call void @llvm.foo(metadata !{null, i32 %x})
+  call void @llvm.foo(metadata !{i8*** @G})
+; CHECK: call void @llvm.foo(metadata !0)
   ret void
 }
 
 declare void @llvm.foo(metadata) nounwind readnone
 
 !named = !{!0}
+; CHECK: !named = !{!0}
 
 !0 = metadata !{i8*** @G}
 ; CHECK: !0 = metadata !{null}

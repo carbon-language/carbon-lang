@@ -185,43 +185,20 @@ static const Function *getFunctionForValue(Value *V) {
   return nullptr;
 }
 
-#ifndef NDEBUG
-static const Function *assertLocalFunction(const MDNode *N) {
-  if (!N->isFunctionLocal()) return nullptr;
-
-  // FIXME: This does not handle cyclic function local metadata.
-  const Function *F = nullptr, *NewF = nullptr;
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    if (Value *V = N->getOperand(i)) {
-      if (MDNode *MD = dyn_cast<MDNode>(V))
-        NewF = assertLocalFunction(MD);
-      else
-        NewF = getFunctionForValue(V);
-    }
-    if (!F)
-      F = NewF;
-    else
-      assert((NewF == nullptr || F == NewF) &&
-             "inconsistent function-local metadata");
-  }
-  return F;
-}
-#endif
-
 // getFunction - If this metadata is function-local and recursively has a
 // function-local operand, return the first such operand's parent function.
 // Otherwise, return null. getFunction() should not be used for performance-
 // critical code because it recursively visits all the MDNode's operands.  
 const Function *MDNode::getFunction() const {
-#ifndef NDEBUG
-  return assertLocalFunction(this);
-#else
-  if (!isFunctionLocal()) return nullptr;
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (const Function *F = getFunctionForValue(getOperand(i)))
-      return F;
-  return nullptr;
-#endif
+  if (!isFunctionLocal())
+    return nullptr;
+  assert(getNumOperands() == 1 &&
+         "Expected one operand for function-local metadata");
+  assert(getOperand(0) &&
+         "Expected non-null operand for function-local metadata");
+  assert(!getOperand(0)->getType()->isMetadataTy() &&
+         "Expected non-metadata as operand of function-local metadata");
+  return getFunctionForValue(getOperand(0));
 }
 
 /// \brief Check if the Value  would require a function-local MDNode.
@@ -258,6 +235,14 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
   case FL_Yes:
     isFunctionLocal = true;
     break;
+  }
+
+  if (isFunctionLocal) {
+    assert(Vals.size() == 1 &&
+           "Expected exactly one operand for function-local metadata");
+    assert(Vals[0] && "Expected non-null operand for function-local metadata");
+    assert(!Vals[0]->getType()->isMetadataTy() &&
+           "Expected non-metadata as operand of function-local metadata");
   }
 
   // Coallocate space for the node and Operands together, then placement new.
@@ -323,6 +308,8 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   // Handle this case by implicitly dropping the MDNode reference to null.
   // Likewise if the MDNode is function-local but for a different function.
   if (To && isFunctionLocalValue(To)) {
+    assert(!To->getType()->isMetadataTy() &&
+           "Expected non-metadata as operand of function-local metadata");
     if (!isFunctionLocal())
       To = nullptr;
     else {
@@ -337,6 +324,14 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   
   if (From == To)
     return;
+
+  // If this MDValue was previously function-local but no longer is, clear
+  // its function-local flag.
+  if (isFunctionLocal() && !(To && isFunctionLocalValue(To))) {
+    assert(getNumOperands() == 1 &&
+           "Expected function-local metadata to have exactly one operand");
+    setValueSubclassData(getSubclassDataFromValue() & ~FunctionLocalBit);
+  }
 
   // If this node is already not being uniqued (because one of the operands
   // already went to null), then there is nothing else to do here.
@@ -377,22 +372,6 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
 
   N->Hash = Key.Hash;
   Store.insert(N);
-
-  // If this MDValue was previously function-local but no longer is, clear
-  // its function-local flag.
-  if (isFunctionLocal() && !isFunctionLocalValue(To)) {
-    bool isStillFunctionLocal = false;
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-      Value *V = getOperand(i);
-      if (!V) continue;
-      if (isFunctionLocalValue(V)) {
-        isStillFunctionLocal = true;
-        break;
-      }
-    }
-    if (!isStillFunctionLocal)
-      setValueSubclassData(getSubclassDataFromValue() & ~FunctionLocalBit);
-  }
 }
 
 MDNode *MDNode::concatenate(MDNode *A, MDNode *B) {
