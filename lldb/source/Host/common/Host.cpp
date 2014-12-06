@@ -44,7 +44,6 @@
 // C++ includes
 #include <limits>
 
-#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Core/ArchSpec.h"
@@ -557,7 +556,8 @@ Host::RunShellCommand (const char *command,
     
     if (working_dir)
         launch_info.SetWorkingDirectory(working_dir);
-    llvm::SmallString<PATH_MAX> output_file_path;
+    char output_file_path_buffer[PATH_MAX];
+    const char *output_file_path = NULL;
     
     if (command_output_ptr)
     {
@@ -567,19 +567,21 @@ Host::RunShellCommand (const char *command,
         FileSpec tmpdir_file_spec;
         if (HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
         {
-            tmpdir_file_spec.AppendPathComponent("lldb-shell-output.%%%%%%");
-            llvm::sys::fs::createUniqueFile(tmpdir_file_spec.GetPath().c_str(), output_file_path);
+            tmpdir_file_spec.AppendPathComponent("lldb-shell-output.XXXXXX");
+            strncpy(output_file_path_buffer, tmpdir_file_spec.GetPath().c_str(), sizeof(output_file_path_buffer));
         }
         else
         {
-            llvm::sys::fs::createTemporaryFile("lldb-shell-output.%%%%%%", "", output_file_path);
+            strncpy(output_file_path_buffer, "/tmp/lldb-shell-output.XXXXXX", sizeof(output_file_path_buffer));
         }
+        
+        output_file_path = ::mktemp(output_file_path_buffer);
     }
     
     launch_info.AppendSuppressFileAction (STDIN_FILENO, true, false);
-    if (!output_file_path.empty())
+    if (output_file_path)
     {
-        launch_info.AppendOpenFileAction(STDOUT_FILENO, output_file_path.c_str(), false, true);
+        launch_info.AppendOpenFileAction(STDOUT_FILENO, output_file_path, false, true);
         launch_info.AppendDuplicateFileAction(STDOUT_FILENO, STDERR_FILENO);
     }
     else
@@ -638,7 +640,7 @@ Host::RunShellCommand (const char *command,
             if (command_output_ptr)
             {
                 command_output_ptr->clear();
-                FileSpec file_spec(output_file_path.c_str(), File::eOpenOptionRead);
+                FileSpec file_spec(output_file_path, File::eOpenOptionRead);
                 uint64_t file_size = file_spec.GetByteSize();
                 if (file_size > 0)
                 {
@@ -657,9 +659,8 @@ Host::RunShellCommand (const char *command,
         shell_info->can_delete.SetValue(true, eBroadcastAlways);
     }
 
-    FileSpec output_file_spec(output_file_path.c_str(), false);
-    if (FileSystem::GetFileExists(output_file_spec))
-        FileSystem::Unlink(output_file_path.c_str());
+    if (output_file_path)
+        ::unlink (output_file_path);
     // Handshake with the monitor thread, or just let it know in advance that
     // it can delete "shell_info" in case we timed out and were not able to kill
     // the process...

@@ -27,7 +27,7 @@ FileSystem::MakeDirectory(const char *path, uint32_t file_permissions)
     // On Win32, the mode parameter is ignored, as Windows files and directories support a
     // different permission model than POSIX.
     Error error;
-    if (!::CreateDirectory(path, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
+    if (!::CreateDirectory(path, NULL))
         error.SetError(::GetLastError(), lldb::eErrorTypeWin32);
     return error;
 }

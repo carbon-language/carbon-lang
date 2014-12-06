@@ -18,9 +18,7 @@
 #include "lldb/Host/HostInfoBase.h"
 
 #include "llvm/ADT/Triple.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/raw_ostream.h"
 
 #include <thread>
 
@@ -266,23 +264,19 @@ HostInfoBase::ComputeTempFileDirectory(FileSpec &file_spec)
     if (!tmpdir_cstr)
         return false;
 
-    FileSpec temp_file_spec(tmpdir_cstr, false);
-    temp_file_spec.AppendPathComponent("lldb");
-    if (!FileSystem::MakeDirectory(temp_file_spec.GetPath().c_str(), eFilePermissionsDirectoryDefault).Success())
+    StreamString pid_tmpdir;
+    pid_tmpdir.Printf("%s/lldb", tmpdir_cstr);
+    if (!FileSystem::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault).Success())
         return false;
 
-    std::string pid_str;
-    llvm::raw_string_ostream pid_stream(pid_str);
-    pid_stream << Host::GetCurrentProcessID();
-    temp_file_spec.AppendPathComponent(pid_stream.str().c_str());
-    std::string final_path = temp_file_spec.GetPath();
-    if (!FileSystem::MakeDirectory(final_path.c_str(), eFilePermissionsDirectoryDefault).Success())
+    pid_tmpdir.Printf("/%" PRIu64, Host::GetCurrentProcessID());
+    if (!FileSystem::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault).Success())
         return false;
 
     // Make an atexit handler to clean up the process specify LLDB temp dir
     // and all of its contents.
     ::atexit(CleanupProcessSpecificLLDBTempDir);
-    file_spec.GetDirectory().SetCStringWithLength(final_path.c_str(), final_path.size());
+    file_spec.GetDirectory().SetCStringWithLength(pid_tmpdir.GetString().c_str(), pid_tmpdir.GetString().size());
     return true;
 }
 
