@@ -36,7 +36,7 @@ if(DEFINED llvm_vc AND DEFINED clang_vc)
     ${CMAKE_COMMAND} "-DFIRST_SOURCE_DIR=${LLVM_MAIN_SRC_DIR}"
                      "-DFIRST_NAME=LLVM"
                      "-DSECOND_SOURCE_DIR=${CLANG_SOURCE_DIR}"
-                     "-DSECOND_NAME=SVN"
+                     "-DSECOND_NAME=CLANG"
                      "-DHEADER_FILE=${version_inc}"
                      -P "${LLVM_MAIN_SRC_DIR}/cmake/modules/GetSVN.cmake")
 
