@@ -1350,7 +1350,7 @@ static ICmpInst::Predicate areGlobalsPotentiallyEqual(const GlobalValue *GV1,
                                                       const GlobalValue *GV2) {
   // Don't try to decide equality of aliases.
   if (!isa<GlobalAlias>(GV1) && !isa<GlobalAlias>(GV2))
-    if (!GV1->hasExternalWeakLinkage() && !GV2->hasExternalWeakLinkage())
+    if (!GV1->hasExternalWeakLinkage() || !GV2->hasExternalWeakLinkage())
       return ICmpInst::ICMP_NE;
   return ICmpInst::BAD_ICMP_PREDICATE;
 }
