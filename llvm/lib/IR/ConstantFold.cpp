@@ -1348,9 +1348,12 @@ static FCmpInst::Predicate evaluateFCmpRelation(Constant *V1, Constant *V2) {
 
 static ICmpInst::Predicate areGlobalsPotentiallyEqual(const GlobalValue *GV1,
                                                       const GlobalValue *GV2) {
+  auto isLinkageUnsafeForEquality = [](const GlobalValue *GV) {
+    return GV->hasExternalWeakLinkage() || GV->hasWeakAnyLinkage();
+  };
   // Don't try to decide equality of aliases.
   if (!isa<GlobalAlias>(GV1) && !isa<GlobalAlias>(GV2))
-    if (!GV1->hasExternalWeakLinkage() || !GV2->hasExternalWeakLinkage())
+    if (!isLinkageUnsafeForEquality(GV1) && !isLinkageUnsafeForEquality(GV2))
       return ICmpInst::ICMP_NE;
   return ICmpInst::BAD_ICMP_PREDICATE;
 }
