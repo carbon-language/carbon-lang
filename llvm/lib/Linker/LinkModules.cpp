@@ -1593,8 +1593,7 @@ bool Linker::StructTypeKeyInfo::isEqual(const StructType *LHS,
 
 void Linker::IdentifiedStructTypeSet::addNonOpaque(StructType *Ty) {
   assert(!Ty->isOpaque());
-  bool &Entry = NonOpaqueStructTypes[Ty];
-  Entry = true;
+  NonOpaqueStructTypes.insert(Ty);
 }
 
 void Linker::IdentifiedStructTypeSet::addOpaque(StructType *Ty) {
@@ -1609,7 +1608,7 @@ Linker::IdentifiedStructTypeSet::findNonOpaque(ArrayRef<Type *> ETypes,
   auto I = NonOpaqueStructTypes.find_as(Key);
   if (I == NonOpaqueStructTypes.end())
     return nullptr;
-  return I->first;
+  return *I;
 }
 
 bool Linker::IdentifiedStructTypeSet::hasType(StructType *Ty) {
@@ -1618,7 +1617,7 @@ bool Linker::IdentifiedStructTypeSet::hasType(StructType *Ty) {
   auto I = NonOpaqueStructTypes.find(Ty);
   if (I == NonOpaqueStructTypes.end())
     return false;
-  return I->first == Ty;
+  return *I == Ty;
 }
 
 void Linker::init(Module *M, DiagnosticHandlerFunction DiagnosticHandler) {

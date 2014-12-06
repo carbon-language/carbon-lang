@@ -47,8 +47,7 @@ public:
     static bool isEqual(const StructType *LHS, const StructType *RHS);
   };
 
-  typedef DenseMap<StructType *, bool, StructTypeKeyInfo>
-      NonOpaqueStructTypeSet;
+  typedef DenseSet<StructType *, StructTypeKeyInfo> NonOpaqueStructTypeSet;
   typedef DenseSet<StructType *> OpaqueStructTypeSet;
 
   struct IdentifiedStructTypeSet {

@@ -313,11 +313,11 @@ public:
   BumpPtrAllocator TypeAllocator;
   
   DenseMap<unsigned, IntegerType*> IntegerTypes;
-  
-  typedef DenseMap<FunctionType*, bool, FunctionTypeKeyInfo> FunctionTypeMap;
-  FunctionTypeMap FunctionTypes;
-  typedef DenseMap<StructType*, bool, AnonStructTypeKeyInfo> StructTypeMap;
-  StructTypeMap AnonStructTypes;
+
+  typedef DenseSet<FunctionType *, FunctionTypeKeyInfo> FunctionTypeSet;
+  FunctionTypeSet FunctionTypes;
+  typedef DenseSet<StructType *, AnonStructTypeKeyInfo> StructTypeSet;
+  StructTypeSet AnonStructTypes;
   StringMap<StructType*> NamedStructTypes;
   unsigned NamedStructTypesUniqueID;
     
