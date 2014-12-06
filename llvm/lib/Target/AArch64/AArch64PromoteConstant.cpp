@@ -193,7 +193,7 @@ private:
     // Inserting into the DenseMap may invalidate existing iterator.
     // Keep a copy of the key to find the iterator to erase.
     Instruction *OldInstr = IPI->first;
-    InsertPts.insert(InsertionPoints::value_type(NewPt, IPI->second));
+    InsertPts[NewPt] = std::move(IPI->second);
     // Erase IPI.
     IPI = InsertPts.find(OldInstr);
     InsertPts.erase(IPI);

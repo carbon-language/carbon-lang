@@ -33,8 +33,6 @@ class GVMaterializer;
 class LLVMContext;
 class RandomNumberGenerator;
 class StructType;
-template<typename T> struct DenseMapInfo;
-template<typename KeyT, typename ValueT, typename KeyInfoT> class DenseMap;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module> {
