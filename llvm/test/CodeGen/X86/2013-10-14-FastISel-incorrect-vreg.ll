@@ -41,7 +41,7 @@ entry:
     i1 false, label %label_end
   ]
 default:
-  unreachable
+  br label %label_end
 
 label_true:
   br label %label_end
@@ -80,7 +80,7 @@ entry:
     i1 false, label %label_end
   ]
 default:
-  unreachable
+  br label %label_end
 
 label_true:
   br label %label_end
@@ -119,7 +119,7 @@ entry:
     i1 false, label %label_end
   ]
 default:
-  unreachable
+  br label %label_end
 
 label_true:
   br label %label_end
