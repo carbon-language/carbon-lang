@@ -1340,17 +1340,30 @@ FileSpec::IsSourceImplementationFile () const
 bool
 FileSpec::IsRelativeToCurrentWorkingDirectory () const
 {
-    const char *directory = m_directory.GetCString();
-    if (directory && directory[0])
+    const char *dir = m_directory.GetCString();
+    llvm::StringRef directory(dir ? dir : "");
+
+    if (directory.size() > 0)
     {
-        // If the path doesn't start with '/' or '~', return true
-        switch (directory[0])
+        if (m_syntax == ePathSyntaxWindows)
         {
-        case '/':
-        case '~':
-            return false;
-        default:
+            if (directory.size() >= 2 && directory[1] == ':')
+                return false;
+            if (directory[0] == '/')
+                return false;
             return true;
+        }
+        else
+        {
+            // If the path doesn't start with '/' or '~', return true
+            switch (directory[0])
+            {
+                case '/':
+                case '~':
+                    return false;
+                default:
+                    return true;
+            }
         }
     }
     else if (m_filename)
