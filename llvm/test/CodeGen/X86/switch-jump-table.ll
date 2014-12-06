@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 < %s | FileCheck %s
+; RUN: llc -mtriple=i686-unknown-unknown < %s | FileCheck %s
 
 
 ; An unreachable default destination is replaced with the most popular case label.
