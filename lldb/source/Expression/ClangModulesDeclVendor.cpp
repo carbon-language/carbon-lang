@@ -110,6 +110,7 @@ StoringDiagnosticConsumer::DumpDiagnostics (Stream &error_stream)
         {
             default:
                 error_stream.PutCString(diag.second.c_str());
+                error_stream.PutChar('\n');
                 break;
             case clang::DiagnosticsEngine::Level::Ignored:
                 break;
