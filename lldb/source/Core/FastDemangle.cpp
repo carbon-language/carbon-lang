@@ -2039,11 +2039,15 @@ private:
         switch (*m_read_ptr)
         {
             case 's':
+                ++m_read_ptr;
                 TryParseDiscriminator(); // Optional and ignored
                 WRITE("::string literal");
                 break;
             case 'd':
+                ++m_read_ptr;
                 TryParseNumber(); // Optional and ignored
+                if (!Parse('_'))
+                    return false;
                 WriteNamespaceSeparator();
                 if (!ParseName())
                     return false;
