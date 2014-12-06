@@ -2106,7 +2106,7 @@ ClangASTContext::SetMetadata (clang::ASTContext *ast,
                               ClangASTMetadata &metadata)
 {
     ClangExternalASTSourceCommon *external_source =
-        static_cast<ClangExternalASTSourceCommon*>(ast->getExternalSource());
+        ClangExternalASTSourceCommon::Lookup(ast->getExternalSource());
     
     if (external_source)
         external_source->SetMetadata(object, metadata);
@@ -2117,7 +2117,7 @@ ClangASTContext::GetMetadata (clang::ASTContext *ast,
                               const void *object)
 {
     ClangExternalASTSourceCommon *external_source =
-        static_cast<ClangExternalASTSourceCommon*>(ast->getExternalSource());
+        ClangExternalASTSourceCommon::Lookup(ast->getExternalSource());
     
     if (external_source && external_source->HasMetadata(object))
         return external_source->GetMetadata(object);

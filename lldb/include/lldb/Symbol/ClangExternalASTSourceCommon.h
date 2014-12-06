@@ -169,10 +169,13 @@ public:
     ClangExternalASTSourceCommon();
     ~ClangExternalASTSourceCommon();
 
-    virtual ClangASTMetadata *GetMetadata(const void *object);
-    virtual void SetMetadata(const void *object, ClangASTMetadata &metadata);
-    virtual bool HasMetadata(const void *object);
-private:
+    ClangASTMetadata *GetMetadata(const void *object);
+    void SetMetadata(const void *object, ClangASTMetadata &metadata);
+    bool HasMetadata(const void *object);
+    
+    static ClangExternalASTSourceCommon *
+    Lookup(clang::ExternalASTSource *source);
+private:    
     typedef llvm::DenseMap<const void *, ClangASTMetadata> MetadataMap;
     
     MetadataMap m_metadata;
