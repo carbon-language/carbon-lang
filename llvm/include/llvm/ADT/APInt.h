@@ -91,8 +91,6 @@ class APInt {
     APINT_WORD_SIZE = static_cast<unsigned int>(sizeof(uint64_t))
   };
 
-  friend struct DenseMapAPIntKeyInfo;
-
   /// \brief Fast internal constructor
   ///
   /// This constructor is used only internally for speed of construction of
@@ -279,6 +277,7 @@ public:
   /// Simply makes *this a copy of that.
   /// @brief Copy Constructor.
   APInt(const APInt &that) : BitWidth(that.BitWidth), VAL(0) {
+    assert(BitWidth && "bitwidth too small");
     if (isSingleWord())
       VAL = that.VAL;
     else
