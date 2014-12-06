@@ -200,9 +200,16 @@ class Test:
     def getJUnitXML(self):
         test_name = self.path_in_suite[-1]
         test_path = self.path_in_suite[:-1]
+        safe_test_path = [x.replace(".","_") for x in test_path]
         safe_name = self.suite.name.replace(".","-")
-        xml = "<testcase classname='" + safe_name + "." + \
-            "/".join(test_path) + "'" + " name='" + test_name + "'"
+
+        if safe_test_path:
+            class_name = safe_name + "." + "/".join(safe_test_path) 
+        else:
+            class_name = safe_name
+
+        xml = "<testcase classname='" + class_name + "' name='" + \
+            test_name + "'"
         xml += " time='%.2f'" % (self.result.elapsed,)
         if self.result.code.isFailure:
             xml += ">\n\t<failure >\n" + escape(self.result.output)
