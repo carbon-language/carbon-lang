@@ -4618,19 +4618,21 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
       // The extraction can just take the second half
       Src.ShuffleVec =
           DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT, Src.ShuffleVec,
-                      DAG.getIntPtrConstant(NumSrcElts));
+                      DAG.getConstant(NumSrcElts, MVT::i64));
       Src.WindowBase = -NumSrcElts;
     } else if (Src.MaxElt < NumSrcElts) {
       // The extraction can just take the first half
-      Src.ShuffleVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT,
-                                   Src.ShuffleVec, DAG.getIntPtrConstant(0));
+      Src.ShuffleVec =
+          DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT, Src.ShuffleVec,
+                      DAG.getConstant(0, MVT::i64));
     } else {
       // An actual VEXT is needed
-      SDValue VEXTSrc1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT,
-                                     Src.ShuffleVec, DAG.getIntPtrConstant(0));
+      SDValue VEXTSrc1 =
+          DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT, Src.ShuffleVec,
+                      DAG.getConstant(0, MVT::i64));
       SDValue VEXTSrc2 =
           DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT, Src.ShuffleVec,
-                      DAG.getIntPtrConstant(NumSrcElts));
+                      DAG.getConstant(NumSrcElts, MVT::i64));
       unsigned Imm = Src.MinElt * getExtFactor(VEXTSrc1);
 
       Src.ShuffleVec = DAG.getNode(AArch64ISD::EXT, dl, DestVT, VEXTSrc1,
@@ -7760,9 +7762,9 @@ static SDValue performExtendCombine(SDNode *N,
   EVT InNVT = EVT::getVectorVT(*DAG.getContext(), SrcVT.getVectorElementType(),
                                LoVT.getVectorNumElements());
   Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, InNVT, Src,
-                   DAG.getIntPtrConstant(0));
+                   DAG.getConstant(0, MVT::i64));
   Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, InNVT, Src,
-                   DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+                   DAG.getConstant(InNVT.getVectorNumElements(), MVT::i64));
   Lo = DAG.getNode(N->getOpcode(), DL, LoVT, Lo);
   Hi = DAG.getNode(N->getOpcode(), DL, HiVT, Hi);
 
@@ -7884,9 +7886,9 @@ static SDValue performSTORECombine(SDNode *N,
   EVT HalfVT =
       EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(), NumElts);
   SDValue SubVector0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, StVal,
-                                   DAG.getIntPtrConstant(0));
+                                   DAG.getConstant(0, MVT::i64));
   SDValue SubVector1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, StVal,
-                                   DAG.getIntPtrConstant(NumElts));
+                                   DAG.getConstant(NumElts, MVT::i64));
   SDValue BasePtr = S->getBasePtr();
   SDValue NewST1 =
       DAG.getStore(S->getChain(), DL, SubVector0, BasePtr, S->getPointerInfo(),
