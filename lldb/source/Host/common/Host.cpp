@@ -557,8 +557,7 @@ Host::RunShellCommand (const char *command,
     
     if (working_dir)
         launch_info.SetWorkingDirectory(working_dir);
-    llvm::SmallString<MAX_PATH> output_file_path;
-    char output_file_path_buffer[PATH_MAX];
+    llvm::SmallString<PATH_MAX> output_file_path;
     
     if (command_output_ptr)
     {
