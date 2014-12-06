@@ -46,48 +46,33 @@ class Type;
 class Value;
 
 struct DenseMapAPIntKeyInfo {
-  struct KeyTy {
-    APInt val;
-    Type *type;
-    KeyTy(const APInt &V, Type *Ty) : val(V), type(Ty) {}
-    bool operator==(const KeyTy &that) const {
-      return type == that.type && this->val == that.val;
-    }
-    bool operator!=(const KeyTy &that) const { return !this->operator==(that); }
-    friend hash_code hash_value(const KeyTy &Key) {
-      return hash_combine(Key.type, Key.val);
-    }
-  };
-  static inline KeyTy getEmptyKey() { return KeyTy(APInt(1, 0), nullptr); }
-  static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1, 1), nullptr); }
-  static unsigned getHashValue(const KeyTy &Key) {
+  static inline APInt getEmptyKey() {
+    APInt V(nullptr, 0);
+    V.VAL = 0;
+    return V;
+  }
+  static inline APInt getTombstoneKey() {
+    APInt V(nullptr, 0);
+    V.VAL = 1;
+    return V;
+  }
+  static unsigned getHashValue(const APInt &Key) {
     return static_cast<unsigned>(hash_value(Key));
   }
-  static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) { return LHS == RHS; }
+  static bool isEqual(const APInt &LHS, const APInt &RHS) {
+    return LHS.getBitWidth() == RHS.getBitWidth() && LHS == RHS;
+  }
 };
 
 struct DenseMapAPFloatKeyInfo {
-  struct KeyTy {
-    APFloat val;
-    KeyTy(const APFloat &V) : val(V) {}
-    bool operator==(const KeyTy &that) const {
-      return this->val.bitwiseIsEqual(that.val);
-    }
-    bool operator!=(const KeyTy &that) const { return !this->operator==(that); }
-    friend hash_code hash_value(const KeyTy &Key) {
-      return hash_combine(Key.val);
-    }
-  };
-  static inline KeyTy getEmptyKey() {
-    return KeyTy(APFloat(APFloat::Bogus, 1));
-  }
-  static inline KeyTy getTombstoneKey() {
-    return KeyTy(APFloat(APFloat::Bogus, 2));
-  }
-  static unsigned getHashValue(const KeyTy &Key) {
+  static inline APFloat getEmptyKey() { return APFloat(APFloat::Bogus, 1); }
+  static inline APFloat getTombstoneKey() { return APFloat(APFloat::Bogus, 2); }
+  static unsigned getHashValue(const APFloat &Key) {
     return static_cast<unsigned>(hash_value(Key));
   }
-  static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) { return LHS == RHS; }
+  static bool isEqual(const APFloat &LHS, const APFloat &RHS) {
+    return LHS.bitwiseIsEqual(RHS);
+  }
 };
 
 struct AnonStructTypeKeyInfo {
@@ -269,12 +254,10 @@ public:
   LLVMContext::YieldCallbackTy YieldCallback;
   void *YieldOpaqueHandle;
 
-  typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt *,
-                   DenseMapAPIntKeyInfo> IntMapTy;
+  typedef DenseMap<APInt, ConstantInt *, DenseMapAPIntKeyInfo> IntMapTy;
   IntMapTy IntConstants;
 
-  typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP *,
-                   DenseMapAPFloatKeyInfo> FPMapTy;
+  typedef DenseMap<APFloat, ConstantFP *, DenseMapAPFloatKeyInfo> FPMapTy;
   FPMapTy FPConstants;
 
   FoldingSet<AttributeImpl> AttrsSet;
