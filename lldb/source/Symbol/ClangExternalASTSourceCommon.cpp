@@ -30,7 +30,7 @@ ClangExternalASTSourceCommon::Lookup(clang::ExternalASTSource *source)
     
     ASTSourceMap::iterator iter = source_map.find(source);
     
-    if (iter == source_map.end())
+    if (iter != source_map.end())
     {
         return iter->second;
     }
