@@ -1,13 +1,15 @@
 @AUTO_GEN_COMMENT@
-config.cxx_under_test        = "@LIBCXX_COMPILER@"
-config.std                   = "@LIBCXX_STD_VERSION@"
-config.libcxx_src_root       = "@LIBCXX_SOURCE_DIR@"
-config.libcxx_obj_root       = "@LIBCXX_BINARY_DIR@"
-config.python_executable     = "@PYTHON_EXECUTABLE@"
-config.enable_shared         = @LIBCXX_ENABLE_SHARED@
-config.cxx_abi               = "@LIBCXX_CXX_ABI_LIBNAME@"
-config.llvm_use_sanitizer    = "@LLVM_USE_SANITIZER@"
-config.abi_library_path      = "@LIBCXX_CXX_ABI_LIBRARY_PATH@"
+config.cxx_under_test           = "@LIBCXX_COMPILER@"
+config.std                      = "@LIBCXX_STD_VERSION@"
+config.libcxx_src_root          = "@LIBCXX_SOURCE_DIR@"
+config.libcxx_obj_root          = "@LIBCXX_BINARY_DIR@"
+config.python_executable        = "@PYTHON_EXECUTABLE@"
+config.enable_shared            = "@LIBCXX_ENABLE_SHARED@"
+config.enable_threads           = "@LIBCXX_ENABLE_THREADS@"
+config.enable_monotonic_clock   = "@LIBCXX_ENABLE_MONOTONIC_CLOCK@"
+config.cxx_abi                  = "@LIBCXX_CXX_ABI_LIBNAME@"
+config.llvm_use_sanitizer       = "@LLVM_USE_SANITIZER@"
+config.abi_library_path         = "@LIBCXX_CXX_ABI_LIBRARY_PATH@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@LIBCXX_SOURCE_DIR@/test/lit.cfg")

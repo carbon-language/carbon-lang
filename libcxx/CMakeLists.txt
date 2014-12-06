@@ -42,6 +42,10 @@ option(LIBCXX_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBCXX_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 option(LIBCXX_ENABLE_CXX1Y "Enable -std=c++1y and use of c++1y language features if the compiler supports it." OFF)
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
+option(LIBCXX_ENABLE_THREADS "Build libc++ with support for threads." ON)
+option(LIBCXX_ENABLE_MONOTONIC_CLOCK
+  "Build libc++ with support for a monotonic clock.
+   This option may only be used when LIBCXX_ENABLE_THREADS=OFF." ON)
 option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
 if (LIBCXX_BUILT_STANDALONE)
   set(LLVM_USE_SANITIZER "" CACHE STRING
@@ -204,6 +208,18 @@ endif()
 # This is the _ONLY_ place where add_definitions is called.
 if (MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
+# LIBCXX_ENABLE_THREADS configuration
+if (NOT LIBCXX_ENABLE_THREADS)
+  add_definitions(-D_LIBCPP_HAS_NO_THREADS)
+  if (NOT LIBCXX_ENABLE_MONOTONIC_CLOCK)
+    add_definitions(-D_LIBCPP_HAS_NO_MONOTONIC_CLOCK)
+  endif()
+# Ensure LIBCXX_ENABLE_MONOTONIC_CLOCK is set to ON.
+elseif(NOT LIBCXX_ENABLE_MONOTONIC_CLOCK)
+  message(FATAL_ERROR "LIBCXX_ENABLE_MONOTONIC_CLOCK can only be set to OFF"
+                      " when LIBCXX_ENABLE_THREADS is also set to OFF.")
 endif()
 
 # Configure for sanitizers. If LIBCXX_BUILT_STANDALONE then we have to do
