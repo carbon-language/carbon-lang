@@ -22,7 +22,8 @@ class AMDGPUMCInstLower {
 
   // This must be kept in sync with the SISubtarget class in SIInstrInfo.td
   enum SISubtarget {
-    SI = 0
+    SI = 0,
+    VI = 1
   };
 
   MCContext &Ctx;

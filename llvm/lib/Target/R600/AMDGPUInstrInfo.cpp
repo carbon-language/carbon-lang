@@ -342,7 +342,7 @@ int AMDGPUInstrInfo::getMaskedMIMGOp(uint16_t Opcode, unsigned Channels) const {
 namespace llvm {
 namespace AMDGPU {
 int getMCOpcode(uint16_t Opcode, unsigned Gen) {
-  return getMCOpcode(Opcode);
+  return getMCOpcodeGen(Opcode, (enum Subtarget)Gen);
 }
 }
 }

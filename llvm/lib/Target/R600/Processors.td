@@ -108,3 +108,9 @@ def : Proc<"kaveri",     SI_Itin, [FeatureSeaIslands]>;
 def : Proc<"hawaii",     SI_Itin, [FeatureSeaIslands]>;
 
 def : Proc<"mullins",    SI_Itin, [FeatureSeaIslands]>;
+
+def : Proc<"tonga",      SI_Itin, [FeatureVolcanicIslands]>;
+
+def : Proc<"iceland",      SI_Itin, [FeatureVolcanicIslands]>;
+
+def : Proc<"carrizo",      SI_Itin, [FeatureVolcanicIslands]>;

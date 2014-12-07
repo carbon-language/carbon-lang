@@ -40,8 +40,13 @@ AMDGPUMCInstLower::AMDGPUMCInstLower(MCContext &ctx, const AMDGPUSubtarget &st):
 { }
 
 enum AMDGPUMCInstLower::SISubtarget
-AMDGPUMCInstLower::AMDGPUSubtargetToSISubtarget(unsigned) const {
-  return AMDGPUMCInstLower::SI;
+AMDGPUMCInstLower::AMDGPUSubtargetToSISubtarget(unsigned Gen) const {
+  switch (Gen) {
+  default:
+    return AMDGPUMCInstLower::SI;
+  case AMDGPUSubtarget::VOLCANIC_ISLANDS:
+    return AMDGPUMCInstLower::VI;
+  }
 }
 
 unsigned AMDGPUMCInstLower::getMCOpcode(unsigned MIOpcode) const {
