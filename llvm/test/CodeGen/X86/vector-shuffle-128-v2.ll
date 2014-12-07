@@ -686,7 +686,7 @@ define <2 x i64> @shuffle_v2i64_z0(<2 x i64> %a) {
 ;
 ; AVX-LABEL: shuffle_v2i64_z0:
 ; AVX:       # BB#0:
-; AVX-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7]
+; AVX-NEXT:    vpslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7]
 ; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> zeroinitializer, <2 x i32> <i32 2, i32 0>
   ret <2 x i64> %shuffle
