@@ -95,9 +95,10 @@ void ScopAnnotator::pushLoop(Loop *L, bool IsParallel) {
 
   BasicBlock *Header = L->getHeader();
   MDNode *Id = getID(Header->getContext());
-  Value *Args[] = {Id};
+  assert(Id->getOperand(0) == Id && "Expected Id to be a self-reference");
+  assert(Id->getNumOperands() == 1 && "Unexpected extra operands in Id");
   MDNode *Ids = ParallelLoops.empty()
-                    ? MDNode::get(Header->getContext(), Args)
+                    ? Id
                     : MDNode::concatenate(ParallelLoops.back(), Id);
   ParallelLoops.push_back(Ids);
 }
