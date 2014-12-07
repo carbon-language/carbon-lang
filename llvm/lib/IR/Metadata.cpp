@@ -353,7 +353,9 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   // anymore.  This commonly occurs during destruction, and uniquing these
   // brings little reuse.  Also, this means we don't need to include
   // isFunctionLocal bits in the hash for MDNodes.
-  if (!To) {
+  //
+  // Also drop uniquing if this has a reference to itself.
+  if (!To || To == this) {
     setIsNotUniqued();
     return;
   }
@@ -406,6 +408,18 @@ MDNode *MDNode::intersect(MDNode *A, MDNode *B) {
       }
   }
 
+  // Handle alias scope self-references specially.
+  //
+  // FIXME: This preserves long-standing behaviour, but is it really the right
+  // behaviour?  Or was that an unintended side-effect of node uniquing?
+  if (!Vals.empty())
+    if (MDNode *N = dyn_cast_or_null<MDNode>(Vals[0]))
+      if (N->getNumOperands() == Vals.size() && N == N->getOperand(0)) {
+        for (unsigned I = 1, E = Vals.size(); I != E; ++I)
+          if (Vals[I] != N->getOperand(I))
+            return MDNode::get(A->getContext(), Vals);
+        return N;
+      }
   return MDNode::get(A->getContext(), Vals);
 }
 

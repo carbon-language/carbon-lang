@@ -123,6 +123,46 @@ TEST_F(MDNodeTest, Delete) {
   delete I;
 }
 
+TEST_F(MDNodeTest, SelfReference) {
+  // !0 = metadata !{metadata !0}
+  // !1 = metadata !{metadata !0}
+  {
+    MDNode *Temp = MDNode::getTemporary(Context, None);
+    Value *Args[] = {Temp};
+    MDNode *Self = MDNode::get(Context, Args);
+    Self->replaceOperandWith(0, Self);
+    MDNode::deleteTemporary(Temp);
+    ASSERT_EQ(Self, Self->getOperand(0));
+
+    // Self-references should be distinct, so MDNode::get() should grab a
+    // uniqued node that references Self, not Self.
+    Args[0] = Self;
+    MDNode *Ref1 = MDNode::get(Context, Args);
+    MDNode *Ref2 = MDNode::get(Context, Args);
+    EXPECT_NE(Self, Ref1);
+    EXPECT_EQ(Ref1, Ref2);
+  }
+
+  // !0 = metadata !{metadata !0, metadata !{}}
+  // !1 = metadata !{metadata !0, metadata !{}}
+  {
+    MDNode *Temp = MDNode::getTemporary(Context, None);
+    Value *Args[] = {Temp, MDNode::get(Context, None)};
+    MDNode *Self = MDNode::get(Context, Args);
+    Self->replaceOperandWith(0, Self);
+    MDNode::deleteTemporary(Temp);
+    ASSERT_EQ(Self, Self->getOperand(0));
+
+    // Self-references should be distinct, so MDNode::get() should grab a
+    // uniqued node that references Self, not Self itself.
+    Args[0] = Self;
+    MDNode *Ref1 = MDNode::get(Context, Args);
+    MDNode *Ref2 = MDNode::get(Context, Args);
+    EXPECT_NE(Self, Ref1);
+    EXPECT_EQ(Ref1, Ref2);
+  }
+}
+
 TEST(NamedMDNodeTest, Search) {
   LLVMContext Context;
   Constant *C = ConstantInt::get(Type::getInt32Ty(Context), 1);
