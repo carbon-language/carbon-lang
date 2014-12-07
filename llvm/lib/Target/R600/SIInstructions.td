@@ -96,37 +96,46 @@ defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
 //===----------------------------------------------------------------------===//
 
 let isMoveImm = 1 in {
-let isReMaterializable = 1 in {
-def S_MOV_B32 : SOP1_32 <0x00000003, "s_mov_b32", []>;
-def S_MOV_B64 : SOP1_64 <0x00000004, "s_mov_b64", []>;
-} // let isRematerializeable = 1
-def S_CMOV_B32 : SOP1_32 <0x00000005, "s_cmov_b32", []>;
-def S_CMOV_B64 : SOP1_64 <0x00000006, "s_cmov_b64", []>;
+  let isReMaterializable = 1 in {
+    def S_MOV_B32 : SOP1_32 <0x00000003, "s_mov_b32", []>;
+    def S_MOV_B64 : SOP1_64 <0x00000004, "s_mov_b64", []>;
+  } // let isRematerializeable = 1
+
+  let Uses = [SCC] in {
+    def S_CMOV_B32 : SOP1_32 <0x00000005, "s_cmov_b32", []>;
+    def S_CMOV_B64 : SOP1_64 <0x00000006, "s_cmov_b64", []>;
+  } // End Uses = [SCC]
 } // End isMoveImm = 1
 
-def S_NOT_B32 : SOP1_32 <0x00000007, "s_not_b32",
-  [(set i32:$dst, (not i32:$src0))]
->;
+let Defs = [SCC] in {
+  def S_NOT_B32 : SOP1_32 <0x00000007, "s_not_b32",
+    [(set i32:$dst, (not i32:$src0))]
+  >;
 
-def S_NOT_B64 : SOP1_64 <0x00000008, "s_not_b64",
-  [(set i64:$dst, (not i64:$src0))]
->;
-def S_WQM_B32 : SOP1_32 <0x00000009, "s_wqm_b32", []>;
-def S_WQM_B64 : SOP1_64 <0x0000000a, "s_wqm_b64", []>;
+  def S_NOT_B64 : SOP1_64 <0x00000008, "s_not_b64",
+    [(set i64:$dst, (not i64:$src0))]
+  >;
+  def S_WQM_B32 : SOP1_32 <0x00000009, "s_wqm_b32", []>;
+  def S_WQM_B64 : SOP1_64 <0x0000000a, "s_wqm_b64", []>;
+} // End Defs = [SCC]
+
+
 def S_BREV_B32 : SOP1_32 <0x0000000b, "s_brev_b32",
   [(set i32:$dst, (AMDGPUbrev i32:$src0))]
 >;
 def S_BREV_B64 : SOP1_64 <0x0000000c, "s_brev_b64", []>;
 
-////def S_BCNT0_I32_B32 : SOP1_BCNT0 <0x0000000d, "s_bcnt0_i32_b32", []>;
-////def S_BCNT0_I32_B64 : SOP1_BCNT0 <0x0000000e, "s_bcnt0_i32_b64", []>;
-def S_BCNT1_I32_B32 : SOP1_32 <0x0000000f, "s_bcnt1_i32_b32",
-  [(set i32:$dst, (ctpop i32:$src0))]
->;
-def S_BCNT1_I32_B64 : SOP1_32_64 <0x00000010, "s_bcnt1_i32_b64", []>;
+let Defs = [SCC] in {
+  //def S_BCNT0_I32_B32 : SOP1_BCNT0 <0x0000000d, "s_bcnt0_i32_b32", []>;
+  //def S_BCNT0_I32_B64 : SOP1_BCNT0 <0x0000000e, "s_bcnt0_i32_b64", []>;
+  def S_BCNT1_I32_B32 : SOP1_32 <0x0000000f, "s_bcnt1_i32_b32",
+    [(set i32:$dst, (ctpop i32:$src0))]
+  >;
+  def S_BCNT1_I32_B64 : SOP1_32_64 <0x00000010, "s_bcnt1_i32_b64", []>;
+} // End Defs = [SCC]
 
-////def S_FF0_I32_B32 : SOP1_32 <0x00000011, "s_ff0_i32_b32", []>;
-////def S_FF0_I32_B64 : SOP1_FF0 <0x00000012, "s_ff0_i32_b64", []>;
+//def S_FF0_I32_B32 : SOP1_32 <0x00000011, "s_ff0_i32_b32", []>;
+//def S_FF0_I32_B64 : SOP1_FF0 <0x00000012, "s_ff0_i32_b64", []>;
 def S_FF1_I32_B32 : SOP1_32 <0x00000013, "s_ff1_i32_b32",
   [(set i32:$dst, (cttz_zero_undef i32:$src0))]
 >;
@@ -159,7 +168,7 @@ def S_SETPC_B64 : SOP1_64 <0x00000020, "s_setpc_b64", []>;
 def S_SWAPPC_B64 : SOP1_64 <0x00000021, "s_swappc_b64", []>;
 def S_RFE_B64 : SOP1_64 <0x00000022, "s_rfe_b64", []>;
 
-let hasSideEffects = 1, Uses = [EXEC], Defs = [EXEC] in {
+let hasSideEffects = 1, Uses = [EXEC], Defs = [EXEC, SCC] in {
 
 def S_AND_SAVEEXEC_B64 : SOP1_64 <0x00000024, "s_and_saveexec_b64", []>;
 def S_OR_SAVEEXEC_B64 : SOP1_64 <0x00000025, "s_or_saveexec_b64", []>;
@@ -170,7 +179,7 @@ def S_NAND_SAVEEXEC_B64 : SOP1_64 <0x00000029, "s_nand_saveexec_b64", []>;
 def S_NOR_SAVEEXEC_B64 : SOP1_64 <0x0000002a, "s_nor_saveexec_b64", []>;
 def S_XNOR_SAVEEXEC_B64 : SOP1_64 <0x0000002b, "s_xnor_saveexec_b64", []>;
 
-} // End hasSideEffects = 1
+} // End hasSideEffects = 1, Uses = [EXEC], Defs = [EXEC, SCC]
 
 def S_QUADMASK_B32 : SOP1_32 <0x0000002c, "s_quadmask_b32", []>;
 def S_QUADMASK_B64 : SOP1_64 <0x0000002d, "s_quadmask_b64", []>;
@@ -180,7 +189,9 @@ def S_MOVRELD_B32 : SOP1_32 <0x00000030, "s_movreld_b32", []>;
 def S_MOVRELD_B64 : SOP1_64 <0x00000031, "s_movreld_b64", []>;
 //def S_CBRANCH_JOIN : SOP1_ <0x00000032, "s_cbranch_join", []>;
 def S_MOV_REGRD_B32 : SOP1_32 <0x00000033, "s_mov_regrd_b32", []>;
-def S_ABS_I32 : SOP1_32 <0x00000034, "s_abs_i32", []>;
+let Defs = [SCC] in {
+  def S_ABS_I32 : SOP1_32 <0x00000034, "s_abs_i32", []>;
+} // End Defs = [SCC]
 def S_MOV_FED_B32 : SOP1_32 <0x00000035, "s_mov_fed_b32", []>;
 
 //===----------------------------------------------------------------------===//
@@ -209,7 +220,6 @@ def S_ADDC_U32 : SOP2_32 <0x00000004, "s_addc_u32",
 def S_SUBB_U32 : SOP2_32 <0x00000005, "s_subb_u32",
   [(set i32:$dst, (sube (i32 SSrc_32:$src0), (i32 SSrc_32:$src1)))]>;
 } // End Uses = [SCC]
-} // End Defs = [SCC]
 
 def S_MIN_I32 : SOP2_32 <0x00000006, "s_min_i32",
   [(set i32:$dst, (AMDGPUsmin i32:$src0, i32:$src1))]
@@ -223,14 +233,18 @@ def S_MAX_I32 : SOP2_32 <0x00000008, "s_max_i32",
 def S_MAX_U32 : SOP2_32 <0x00000009, "s_max_u32",
   [(set i32:$dst, (AMDGPUumax i32:$src0, i32:$src1))]
 >;
+} // End Defs = [SCC]
 
 def S_CSELECT_B32 : SOP2_SELECT_32 <
   0x0000000a, "s_cselect_b32",
   []
 >;
 
-def S_CSELECT_B64 : SOP2_64 <0x0000000b, "s_cselect_b64", []>;
+let Uses = [SCC] in {
+  def S_CSELECT_B64 : SOP2_64 <0x0000000b, "s_cselect_b64", []>;
+} // End Uses = [SCC]
 
+let Defs = [SCC] in {
 def S_AND_B32 : SOP2_32 <0x0000000e, "s_and_b32",
   [(set i32:$dst, (and i32:$src0, i32:$src1))]
 >;
@@ -264,9 +278,11 @@ def S_NOR_B32 : SOP2_32 <0x0000001a, "s_nor_b32", []>;
 def S_NOR_B64 : SOP2_64 <0x0000001b, "s_nor_b64", []>;
 def S_XNOR_B32 : SOP2_32 <0x0000001c, "s_xnor_b32", []>;
 def S_XNOR_B64 : SOP2_64 <0x0000001d, "s_xnor_b64", []>;
+} // End Defs = [SCC]
 
 // Use added complexity so these patterns are preferred to the VALU patterns.
 let AddedComplexity = 1 in {
+let Defs = [SCC] in {
 
 def S_LSHL_B32 : SOP2_32 <0x0000001e, "s_lshl_b32",
   [(set i32:$dst, (shl i32:$src0, i32:$src1))]
@@ -286,7 +302,7 @@ def S_ASHR_I32 : SOP2_32 <0x00000022, "s_ashr_i32",
 def S_ASHR_I64 : SOP2_SHIFT_64 <0x00000023, "s_ashr_i64",
   [(set i64:$dst, (sra i64:$src0, i32:$src1))]
 >;
-
+} // End Defs = [SCC]
 
 def S_BFM_B32 : SOP2_32 <0x00000024, "s_bfm_b32", []>;
 def S_BFM_B64 : SOP2_64 <0x00000025, "s_bfm_b64", []>;
@@ -296,12 +312,17 @@ def S_MUL_I32 : SOP2_32 <0x00000026, "s_mul_i32",
 
 } // End AddedComplexity = 1
 
+let Defs = [SCC] in {
 def S_BFE_U32 : SOP2_32 <0x00000027, "s_bfe_u32", []>;
 def S_BFE_I32 : SOP2_32 <0x00000028, "s_bfe_i32", []>;
 def S_BFE_U64 : SOP2_64 <0x00000029, "s_bfe_u64", []>;
 def S_BFE_I64 : SOP2_64_32 <0x0000002a, "s_bfe_i64", []>;
+} // End Defs = [SCC]
+
 //def S_CBRANCH_G_FORK : SOP2_ <0x0000002b, "s_cbranch_g_fork", []>;
+let Defs = [SCC] in {
 def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "s_absdiff_i32", []>;
+} // End Defs = [SCC]
 
 //===----------------------------------------------------------------------===//
 // SOPC Instructions
