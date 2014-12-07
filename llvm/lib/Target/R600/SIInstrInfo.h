@@ -45,6 +45,8 @@ private:
                          const TargetRegisterClass *RC,
                          const MachineOperand &Op) const;
 
+  void swapOperands(MachineBasicBlock::iterator Inst) const;
+
   void splitScalar64BitUnaryOp(SmallVectorImpl<MachineInstr *> &Worklist,
                                MachineInstr *Inst, unsigned Opcode) const;
 

@@ -1356,6 +1356,14 @@ unsigned SIInstrInfo::split64BitImm(SmallVectorImpl<MachineInstr *> &Worklist,
   return Dst;
 }
 
+// Change the order of operands from (0, 1, 2) to (0, 2, 1)
+void SIInstrInfo::swapOperands(MachineBasicBlock::iterator Inst) const {
+  assert(Inst->getNumExplicitOperands() == 3);
+  MachineOperand Op1 = Inst->getOperand(1);
+  Inst->RemoveOperand(1);
+  Inst->addOperand(Op1);
+}
+
 bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
                                  const MachineOperand *MO) const {
   const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
@@ -1930,6 +1938,25 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       Inst->eraseFromParent();
       continue;
     }
+
+    case AMDGPU::S_LSHL_B32:
+      if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
+        NewOpcode = AMDGPU::V_LSHLREV_B32_e64;
+        swapOperands(Inst);
+      }
+      break;
+    case AMDGPU::S_ASHR_I32:
+      if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
+        NewOpcode = AMDGPU::V_ASHRREV_I32_e64;
+        swapOperands(Inst);
+      }
+      break;
+    case AMDGPU::S_LSHR_B32:
+      if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
+        NewOpcode = AMDGPU::V_LSHRREV_B32_e64;
+        swapOperands(Inst);
+      }
+      break;
 
     case AMDGPU::S_BFE_U64:
     case AMDGPU::S_BFM_B64:

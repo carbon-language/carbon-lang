@@ -892,7 +892,19 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getNode(AMDGPUISD::RSQ_LEGACY, DL, VT, Op.getOperand(1));
 
     case Intrinsic::AMDGPU_rsq_clamped:
-      return DAG.getNode(AMDGPUISD::RSQ_CLAMPED, DL, VT, Op.getOperand(1));
+      if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
+        Type *Type = VT.getTypeForEVT(*DAG.getContext());
+        APFloat Max = APFloat::getLargest(Type->getFltSemantics());
+        APFloat Min = APFloat::getLargest(Type->getFltSemantics(), true);
+
+        SDValue Rsq = DAG.getNode(AMDGPUISD::RSQ, DL, VT, Op.getOperand(1));
+        SDValue Tmp = DAG.getNode(ISD::FMINNUM, DL, VT, Rsq,
+                                  DAG.getConstantFP(Max, VT));
+        return DAG.getNode(ISD::FMAXNUM, DL, VT, Tmp,
+                           DAG.getConstantFP(Min, VT));
+      } else {
+        return DAG.getNode(AMDGPUISD::RSQ_CLAMPED, DL, VT, Op.getOperand(1));
+      }
 
     case Intrinsic::AMDGPU_ldexp:
       return DAG.getNode(AMDGPUISD::LDEXP, DL, VT, Op.getOperand(1),
@@ -1035,6 +1047,9 @@ SDValue AMDGPUTargetLowering::CombineFMinMax(SDLoc DL,
   case ISD::SETOLT:
   case ISD::SETLE:
   case ISD::SETLT: {
+    if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+      break;
+
     // We need to permute the operands to get the correct NaN behavior. The
     // selected operand is the second one based on the failing compare with NaN,
     // so permute it based on the compare type the hardware uses.
@@ -1048,6 +1063,9 @@ SDValue AMDGPUTargetLowering::CombineFMinMax(SDLoc DL,
   case ISD::SETOGE:
   case ISD::SETUGT:
   case ISD::SETOGT: {
+    if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+      break;
+
     if (LHS == True)
       return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, RHS, LHS);
     return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, LHS, RHS);
