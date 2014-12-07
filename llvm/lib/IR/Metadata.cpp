@@ -376,6 +376,25 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   Store.insert(N);
 }
 
+/// \brief Get a node, or a self-reference that looks like it.
+///
+/// Special handling for finding self-references, for use by \a
+/// MDNode::concatenate() and \a MDNode::intersect() to maintain behaviour from
+/// when self-referencing nodes were still uniqued.  If the first operand has
+/// the same operands as \c Ops, return the first operand instead.
+static MDNode *getOrSelfReference(LLVMContext &Context, ArrayRef<Value *> Ops) {
+  if (!Ops.empty())
+    if (MDNode *N = dyn_cast_or_null<MDNode>(Ops[0]))
+      if (N->getNumOperands() == Ops.size() && N == N->getOperand(0)) {
+        for (unsigned I = 1, E = Ops.size(); I != E; ++I)
+          if (Ops[I] != N->getOperand(I))
+            return MDNode::get(Context, Ops);
+        return N;
+      }
+
+  return MDNode::get(Context, Ops);
+}
+
 MDNode *MDNode::concatenate(MDNode *A, MDNode *B) {
   if (!A)
     return B;
@@ -391,7 +410,9 @@ MDNode *MDNode::concatenate(MDNode *A, MDNode *B) {
   for (unsigned i = 0, ie = B->getNumOperands(); i != ie; ++i)
     Vals[j++] = B->getOperand(i);
 
-  return MDNode::get(A->getContext(), Vals);
+  // FIXME: This preserves long-standing behaviour, but is it really the right
+  // behaviour?  Or was that an unintended side-effect of node uniquing?
+  return getOrSelfReference(A->getContext(), Vals);
 }
 
 MDNode *MDNode::intersect(MDNode *A, MDNode *B) {
@@ -408,19 +429,9 @@ MDNode *MDNode::intersect(MDNode *A, MDNode *B) {
       }
   }
 
-  // Handle alias scope self-references specially.
-  //
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
-  if (!Vals.empty())
-    if (MDNode *N = dyn_cast_or_null<MDNode>(Vals[0]))
-      if (N->getNumOperands() == Vals.size() && N == N->getOperand(0)) {
-        for (unsigned I = 1, E = Vals.size(); I != E; ++I)
-          if (Vals[I] != N->getOperand(I))
-            return MDNode::get(A->getContext(), Vals);
-        return N;
-      }
-  return MDNode::get(A->getContext(), Vals);
+  return getOrSelfReference(A->getContext(), Vals);
 }
 
 MDNode *MDNode::getMostGenericFPMath(MDNode *A, MDNode *B) {
