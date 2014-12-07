@@ -209,7 +209,7 @@ public:
 
   /// \brief Return true if the given offset Size in bytes can be folded into
   /// the immediate offsets of a memory instruction for the given address space.
-  static bool canFoldOffset(unsigned OffsetSize, unsigned AS) LLVM_READNONE;
+  bool canFoldOffset(unsigned OffsetSize, unsigned AS) const;
 
   /// \brief Return true if this 64-bit VALU instruction has a 32-bit encoding.
   /// This function will return false if you pass it a 32-bit instruction.

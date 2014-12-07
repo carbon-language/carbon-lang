@@ -171,6 +171,10 @@ def IMM16bit : PatLeaf <(imm),
   [{return isUInt<16>(N->getZExtValue());}]
 >;
 
+def IMM20bit : PatLeaf <(imm),
+  [{return isUInt<20>(N->getZExtValue());}]
+>;
+
 def IMM32bit : PatLeaf <(imm),
   [{return isUInt<32>(N->getZExtValue());}]
 >;

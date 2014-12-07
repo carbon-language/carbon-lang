@@ -9,10 +9,6 @@
 // Instruction definitions for VI and newer.
 //===----------------------------------------------------------------------===//
 
-def isVI : Predicate <
-  "Subtarget.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS"
->;
-
 let SubtargetPredicate = isVI in {
 
 def V_LDEXP_F32 : VOP3InstVI <0x288, "v_ldexp_f32", VOP_F32_F32_I32,
@@ -51,6 +47,16 @@ def : Pat <
   (int_SI_tid),
   (V_MBCNT_HI_U32_B32 0xffffffff,
                       (V_MBCNT_LO_U32_B32 0xffffffff, 0))
+>;
+
+//===----------------------------------------------------------------------===//
+// SMEM Patterns
+//===----------------------------------------------------------------------===//
+
+// 1. Offset as 8bit DWORD immediate
+def : Pat <
+  (SIload_constant v4i32:$sbase, IMM20bit:$offset),
+  (S_BUFFER_LOAD_DWORD_IMM $sbase, (as_i32imm $offset))
 >;
 
 //===----------------------------------------------------------------------===//

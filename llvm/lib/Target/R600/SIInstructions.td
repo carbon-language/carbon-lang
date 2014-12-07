@@ -34,6 +34,9 @@ def isSICI : Predicate<
 >;
 def isCI : Predicate<"Subtarget.getGeneration() "
                       ">= AMDGPUSubtarget::SEA_ISLANDS">;
+def isVI : Predicate <
+  "Subtarget.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS"
+>;
 
 def HasFlatAddressSpace : Predicate<"Subtarget.hasFlatAddressSpace()">;
 
@@ -1974,7 +1977,7 @@ def : Pat <
 
 multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
 
-  // 1. Offset as 8bit DWORD immediate
+  // 1. SI-CI: Offset as 8bit DWORD immediate
   def : Pat <
     (constant_load (add i64:$sbase, (i64 IMM8bitDWORD:$offset))),
     (vt (Instr_IMM $sbase, (as_dword_i32imm $offset)))
@@ -1993,6 +1996,28 @@ multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
   >;
 }
 
+multiclass SMRD_Pattern_vi <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
+
+  // 1. VI: Offset as 20bit immediate in bytes
+  def : Pat <
+    (constant_load (add i64:$sbase, (i64 IMM20bit:$offset))),
+    (vt (Instr_IMM $sbase, (as_i32imm $offset)))
+  >;
+
+  // 2. Offset loaded in an 32bit SGPR
+  def : Pat <
+    (constant_load (add i64:$sbase, (i64 IMM32bit:$offset))),
+    (vt (Instr_SGPR $sbase, (S_MOV_B32 (i32 (as_i32imm $offset)))))
+  >;
+
+  // 3. No offset at all
+  def : Pat <
+    (constant_load i64:$sbase),
+    (vt (Instr_IMM $sbase, 0))
+  >;
+}
+
+let Predicates = [isSICI] in {
 defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, f32>;
 defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, v2i32>;
@@ -2000,12 +2025,27 @@ defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v4i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v8i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX16_IMM, S_LOAD_DWORDX16_SGPR, v16i32>;
+} // End Predicates = [isSICI]
+
+let Predicates = [isVI] in {
+defm : SMRD_Pattern_vi <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, f32>;
+defm : SMRD_Pattern_vi <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
+defm : SMRD_Pattern_vi <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, v2i32>;
+defm : SMRD_Pattern_vi <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v4i32>;
+defm : SMRD_Pattern_vi <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
+defm : SMRD_Pattern_vi <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v8i32>;
+defm : SMRD_Pattern_vi <S_LOAD_DWORDX16_IMM, S_LOAD_DWORDX16_SGPR, v16i32>;
+} // End Predicates = [isVI]
+
+let Predicates = [isSICI] in {
 
 // 1. Offset as 8bit DWORD immediate
 def : Pat <
   (SIload_constant v4i32:$sbase, IMM8bitDWORD:$offset),
   (S_BUFFER_LOAD_DWORD_IMM $sbase, (as_dword_i32imm $offset))
 >;
+
+} // End Predicates = [isSICI]
 
 // 2. Offset loaded in an 32bit SGPR
 def : Pat <

@@ -2156,7 +2156,12 @@ MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(SDValue(RSrc, 0));
     Ops.push_back(N->getOperand(0));
-    Ops.push_back(DAG.getConstant(Offset->getSExtValue() << 2, MVT::i32));
+
+    // The immediate offset is in dwords on SI and in bytes on VI.
+    if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+      Ops.push_back(DAG.getConstant(Offset->getSExtValue(), MVT::i32));
+    else
+      Ops.push_back(DAG.getConstant(Offset->getSExtValue() << 2, MVT::i32));
 
     // Copy remaining operands so we keep any chain and glue nodes that follow
     // the normal operands.
