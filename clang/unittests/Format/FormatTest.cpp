@@ -8372,6 +8372,11 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "  [object someMethod:@{ @\"a\" : @\"b\" }];\n"
                "}",
                AllmanBraceStyle);
+  verifyFormat("int f()\n"
+               "{ // comment\n"
+               "  return 42;\n"
+               "}",
+               AllmanBraceStyle);
 
   AllmanBraceStyle.ColumnLimit = 19;
   verifyFormat("void f() { int i; }", AllmanBraceStyle);

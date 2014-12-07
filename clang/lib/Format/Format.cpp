@@ -665,6 +665,9 @@ public:
     }
     if (I[1]->First->is(TT_FunctionLBrace) &&
         Style.BreakBeforeBraces != FormatStyle::BS_Attach) {
+      if (I[1]->Last->is(TT_LineComment))
+        return 0;
+
       // Check for Limit <= 2 to account for the " {".
       if (Limit <= 2 || (Style.ColumnLimit == 0 && containsMustBreak(TheLine)))
         return 0;
