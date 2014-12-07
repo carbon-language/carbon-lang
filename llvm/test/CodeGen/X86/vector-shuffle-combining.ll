@@ -1119,20 +1119,10 @@ define <4 x i32> @combine_nested_undef_test28(<4 x i32> %A, <4 x i32> %B) {
 }
 
 define <4 x float> @combine_test1(<4 x float> %a, <4 x float> %b) {
-; SSE2-LABEL: combine_test1:
-; SSE2:       # BB#0:
-; SSE2-NEXT:    movaps %xmm1, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSSE3-LABEL: combine_test1:
-; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: combine_test1:
-; SSE41:       # BB#0:
-; SSE41-NEXT:    movaps %xmm1, %xmm0
-; SSE41-NEXT:    retq
+; SSE-LABEL: combine_test1:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test1:
 ; AVX:       # BB#0:
@@ -1237,20 +1227,10 @@ define <4 x float> @combine_test5(<4 x float> %a, <4 x float> %b) {
 }
 
 define <4 x i32> @combine_test6(<4 x i32> %a, <4 x i32> %b) {
-; SSE2-LABEL: combine_test6:
-; SSE2:       # BB#0:
-; SSE2-NEXT:    movaps %xmm1, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSSE3-LABEL: combine_test6:
-; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: combine_test6:
-; SSE41:       # BB#0:
-; SSE41-NEXT:    movaps %xmm1, %xmm0
-; SSE41-NEXT:    retq
+; SSE-LABEL: combine_test6:
+; SSE:       # BB#0:
+; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test6:
 ; AVX:       # BB#0:
@@ -1577,23 +1557,11 @@ define <4 x i32> @combine_test20(<4 x i32> %a, <4 x i32> %b) {
 ; FIXME: Do any of these really make sense? Are they redundant with the above tests?
 
 define <4 x float> @combine_test1b(<4 x float> %a, <4 x float> %b) {
-; SSE2-LABEL: combine_test1b:
-; SSE2:       # BB#0:
-; SSE2-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,1,2,0]
-; SSE2-NEXT:    movaps %xmm1, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSSE3-LABEL: combine_test1b:
-; SSSE3:       # BB#0:
-; SSSE3-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,1,2,0]
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: combine_test1b:
-; SSE41:       # BB#0:
-; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,1,2,0]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
-; SSE41-NEXT:    retq
+; SSE-LABEL: combine_test1b:
+; SSE:       # BB#0:
+; SSE-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,1,2,0]
+; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test1b:
 ; AVX:       # BB#0:
@@ -1655,23 +1623,11 @@ define <4 x float> @combine_test3b(<4 x float> %a, <4 x float> %b) {
 }
 
 define <4 x float> @combine_test4b(<4 x float> %a, <4 x float> %b) {
-; SSE2-LABEL: combine_test4b:
-; SSE2:       # BB#0:
-; SSE2-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
-; SSE2-NEXT:    movaps %xmm1, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSSE3-LABEL: combine_test4b:
-; SSSE3:       # BB#0:
-; SSSE3-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: combine_test4b:
-; SSE41:       # BB#0:
-; SSE41-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
-; SSE41-NEXT:    movaps %xmm1, %xmm0
-; SSE41-NEXT:    retq
+; SSE-LABEL: combine_test4b:
+; SSE:       # BB#0:
+; SSE-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
+; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test4b:
 ; AVX:       # BB#0:
