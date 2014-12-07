@@ -1066,13 +1066,25 @@ entry:
   ret <16 x i8> %s.2.0
 }
 
-define void @constant_gets_selected() {
-; ALL-LABEL: constant_gets_selected:
-; ALL-NOT movd $0, {{%xmm[0-9]+}}
+define void @constant_gets_selected(<4 x i32>* %ptr1, <4 x i32>* %ptr2) {
+; SSE-LABEL: constant_gets_selected:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    xorps %xmm0, %xmm0
+; SSE-NEXT:    movaps %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, (%rsi)
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: constant_gets_selected:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    vmovaps %xmm0, (%rdi)
+; AVX-NEXT:    vmovaps %xmm0, (%rsi)
+; AVX-NEXT:    retq
+entry:
   %weird_zero = bitcast <4 x i32> zeroinitializer to <16 x i8>
   %shuffle.i = shufflevector <16 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 0, i8 0, i8 0, i8 0>, <16 x i8> %weird_zero, <16 x i32> <i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27>
   %weirder_zero = bitcast <16 x i8> %shuffle.i to <4 x i32>
-  store <4 x i32> %weirder_zero, <4 x i32>* undef, align 16
-  store <4 x i32> zeroinitializer, <4 x i32>* undef, align 16
+  store <4 x i32> %weirder_zero, <4 x i32>* %ptr1, align 16
+  store <4 x i32> zeroinitializer, <4 x i32>* %ptr2, align 16
   ret void
 }
