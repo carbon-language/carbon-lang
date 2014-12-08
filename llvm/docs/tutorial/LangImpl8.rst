@@ -1,267 +1,425 @@
-======================================================
-Kaleidoscope: Conclusion and other useful LLVM tidbits
-======================================================
+=======================================================
+Kaleidoscope: Extending the Language: Debug Information
+=======================================================
 
 .. contents::
    :local:
 
-Tutorial Conclusion
-===================
+Chapter 8 Introduction
+======================
 
-Welcome to the final chapter of the "`Implementing a language with
-LLVM <index.html>`_" tutorial. In the course of this tutorial, we have
-grown our little Kaleidoscope language from being a useless toy, to
-being a semi-interesting (but probably still useless) toy. :)
+Welcome to Chapter 8 of the "`Implementing a language with
+LLVM <index.html>`_" tutorial. In chapters 1 through 7, we've built a
+decent little programming language with functions and variables.
+What happens if something goes wrong though, how do you debug your
+program?
 
-It is interesting to see how far we've come, and how little code it has
-taken. We built the entire lexer, parser, AST, code generator, and an
-interactive run-loop (with a JIT!) by-hand in under 700 lines of
-(non-comment/non-blank) code.
+Source level debugging uses formatted data that helps a debugger
+translate from binary and the state of the machine back to the
+source that the programmer wrote. In LLVM we generally use a format
+called `DWARF <http://dwarfstd.org>`_. DWARF is a compact encoding
+that represents types, source locations, and variable locations. 
 
-Our little language supports a couple of interesting features: it
-supports user defined binary and unary operators, it uses JIT
-compilation for immediate evaluation, and it supports a few control flow
-constructs with SSA construction.
+The short summary of this chapter is that we'll go through the
+various things you have to add to a programming language to
+support debug info, and how you translate that into DWARF.
 
-Part of the idea of this tutorial was to show you how easy and fun it
-can be to define, build, and play with languages. Building a compiler
-need not be a scary or mystical process! Now that you've seen some of
-the basics, I strongly encourage you to take the code and hack on it.
-For example, try adding:
+Caveat: For now we can't debug via the JIT, so we'll need to compile
+our program down to something small and standalone. As part of this
+we'll make a few modifications to the running of the language and
+how programs are compiled. This means that we'll have a source file
+with a simple program written in Kaleidoscope rather than the
+interactive JIT. It does involve a limitation that we can only
+have one "top level" command at a time to reduce the number of
+changes necessary.
 
--  **global variables** - While global variables have questional value
-   in modern software engineering, they are often useful when putting
-   together quick little hacks like the Kaleidoscope compiler itself.
-   Fortunately, our current setup makes it very easy to add global
-   variables: just have value lookup check to see if an unresolved
-   variable is in the global variable symbol table before rejecting it.
-   To create a new global variable, make an instance of the LLVM
-   ``GlobalVariable`` class.
--  **typed variables** - Kaleidoscope currently only supports variables
-   of type double. This gives the language a very nice elegance, because
-   only supporting one type means that you never have to specify types.
-   Different languages have different ways of handling this. The easiest
-   way is to require the user to specify types for every variable
-   definition, and record the type of the variable in the symbol table
-   along with its Value\*.
--  **arrays, structs, vectors, etc** - Once you add types, you can start
-   extending the type system in all sorts of interesting ways. Simple
-   arrays are very easy and are quite useful for many different
-   applications. Adding them is mostly an exercise in learning how the
-   LLVM `getelementptr <../LangRef.html#i_getelementptr>`_ instruction
-   works: it is so nifty/unconventional, it `has its own
-   FAQ <../GetElementPtr.html>`_! If you add support for recursive types
-   (e.g. linked lists), make sure to read the `section in the LLVM
-   Programmer's Manual <../ProgrammersManual.html#TypeResolve>`_ that
-   describes how to construct them.
--  **standard runtime** - Our current language allows the user to access
-   arbitrary external functions, and we use it for things like "printd"
-   and "putchard". As you extend the language to add higher-level
-   constructs, often these constructs make the most sense if they are
-   lowered to calls into a language-supplied runtime. For example, if
-   you add hash tables to the language, it would probably make sense to
-   add the routines to a runtime, instead of inlining them all the way.
--  **memory management** - Currently we can only access the stack in
-   Kaleidoscope. It would also be useful to be able to allocate heap
-   memory, either with calls to the standard libc malloc/free interface
-   or with a garbage collector. If you would like to use garbage
-   collection, note that LLVM fully supports `Accurate Garbage
-   Collection <../GarbageCollection.html>`_ including algorithms that
-   move objects and need to scan/update the stack.
--  **debugger support** - LLVM supports generation of `DWARF Debug
-   info <../SourceLevelDebugging.html>`_ which is understood by common
-   debuggers like GDB. Adding support for debug info is fairly
-   straightforward. The best way to understand it is to compile some
-   C/C++ code with "``clang -g -O0``" and taking a look at what it
-   produces.
--  **exception handling support** - LLVM supports generation of `zero
-   cost exceptions <../ExceptionHandling.html>`_ which interoperate with
-   code compiled in other languages. You could also generate code by
-   implicitly making every function return an error value and checking
-   it. You could also make explicit use of setjmp/longjmp. There are
-   many different ways to go here.
--  **object orientation, generics, database access, complex numbers,
-   geometric programming, ...** - Really, there is no end of crazy
-   features that you can add to the language.
--  **unusual domains** - We've been talking about applying LLVM to a
-   domain that many people are interested in: building a compiler for a
-   specific language. However, there are many other domains that can use
-   compiler technology that are not typically considered. For example,
-   LLVM has been used to implement OpenGL graphics acceleration,
-   translate C++ code to ActionScript, and many other cute and clever
-   things. Maybe you will be the first to JIT compile a regular
-   expression interpreter into native code with LLVM?
+Here's the sample program we'll be compiling:
 
-Have fun - try doing something crazy and unusual. Building a language
-like everyone else always has, is much less fun than trying something a
-little crazy or off the wall and seeing how it turns out. If you get
-stuck or want to talk about it, feel free to email the `llvmdev mailing
-list <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_: it has lots
-of people who are interested in languages and are often willing to help
-out.
+.. code-block:: python
 
-Before we end this tutorial, I want to talk about some "tips and tricks"
-for generating LLVM IR. These are some of the more subtle things that
-may not be obvious, but are very useful if you want to take advantage of
-LLVM's capabilities.
+   def fib(x)
+     if x < 3 then
+       1
+     else
+       fib(x-1)+fib(x-2);
 
-Properties of the LLVM IR
-=========================
+   fib(10)
 
-We have a couple common questions about code in the LLVM IR form - lets
-just get these out of the way right now, shall we?
 
-Target Independence
--------------------
+Why is this a hard problem?
+===========================
 
-Kaleidoscope is an example of a "portable language": any program written
-in Kaleidoscope will work the same way on any target that it runs on.
-Many other languages have this property, e.g. lisp, java, haskell,
-javascript, python, etc (note that while these languages are portable,
-not all their libraries are).
+Debug information is a hard problem for a few different reasons - mostly
+centered around optimized code. First, optimization makes keeping source
+locations more difficult. In LLVM IR we keep the original source location
+for each IR level instruction on the instruction. Optimization passes
+should keep the source locations for newly created instructions, but merged
+instructions only get to keep a single location - this can cause jumping
+around when stepping through optimized programs. Secondly, optimization
+can move variables in ways that are either optimized out, shared in memory
+with other variables, or difficult to track. For the purposes of this
+tutorial we're going to avoid optimization (as you'll see with one of the
+next sets of patches).
 
-One nice aspect of LLVM is that it is often capable of preserving target
-independence in the IR: you can take the LLVM IR for a
-Kaleidoscope-compiled program and run it on any target that LLVM
-supports, even emitting C code and compiling that on targets that LLVM
-doesn't support natively. You can trivially tell that the Kaleidoscope
-compiler generates target-independent code because it never queries for
-any target-specific information when generating code.
+Ahead-of-Time Compilation Mode
+==============================
 
-The fact that LLVM provides a compact, target-independent,
-representation for code gets a lot of people excited. Unfortunately,
-these people are usually thinking about C or a language from the C
-family when they are asking questions about language portability. I say
-"unfortunately", because there is really no way to make (fully general)
-C code portable, other than shipping the source code around (and of
-course, C source code is not actually portable in general either - ever
-port a really old application from 32- to 64-bits?).
+To highlight only the aspects of adding debug information to a source
+language without needing to worry about the complexities of JIT debugging
+we're going to make a few changes to Kaleidoscope to support compiling
+the IR emitted by the front end into a simple standalone program that
+you can execute, debug, and see results.
 
-The problem with C (again, in its full generality) is that it is heavily
-laden with target specific assumptions. As one simple example, the
-preprocessor often destructively removes target-independence from the
-code when it processes the input text:
+First we make our anonymous function that contains our top level
+statement be our "main":
 
-.. code-block:: c
+.. code-block:: udiff
 
-    #ifdef __i386__
-      int X = 1;
-    #else
-      int X = 42;
-    #endif
+-    PrototypeAST *Proto = new PrototypeAST("", std::vector<std::string>());
++    PrototypeAST *Proto = new PrototypeAST("main", std::vector<std::string>());
 
-While it is possible to engineer more and more complex solutions to
-problems like this, it cannot be solved in full generality in a way that
-is better than shipping the actual source code.
+just with the simple change of giving it a name.
 
-That said, there are interesting subsets of C that can be made portable.
-If you are willing to fix primitive types to a fixed size (say int =
-32-bits, and long = 64-bits), don't care about ABI compatibility with
-existing binaries, and are willing to give up some other minor features,
-you can have portable code. This can make sense for specialized domains
-such as an in-kernel language.
+Then we're going to remove the command line code wherever it exists:
 
-Safety Guarantees
------------------
+.. code-block:: udiff
 
-Many of the languages above are also "safe" languages: it is impossible
-for a program written in Java to corrupt its address space and crash the
-process (assuming the JVM has no bugs). Safety is an interesting
-property that requires a combination of language design, runtime
-support, and often operating system support.
+@@ -1129,7 +1129,6 @@ static void HandleTopLevelExpression() {
+ /// top ::= definition | external | expression | ';'
+ static void MainLoop() {
+   while (1) {
+-    fprintf(stderr, "ready> ");
+     switch (CurTok) {
+     case tok_eof:
+       return;
+@@ -1184,7 +1183,6 @@ int main() {
+   BinopPrecedence['*'] = 40; // highest.
+ 
+   // Prime the first token.
+-  fprintf(stderr, "ready> ");
+   getNextToken();
+ 
+Lastly we're going to disable all of the optimization passes and the JIT so
+that the only thing that happens after we're done parsing and generating
+code is that the llvm IR goes to standard error:
 
-It is certainly possible to implement a safe language in LLVM, but LLVM
-IR does not itself guarantee safety. The LLVM IR allows unsafe pointer
-casts, use after free bugs, buffer over-runs, and a variety of other
-problems. Safety needs to be implemented as a layer on top of LLVM and,
-conveniently, several groups have investigated this. Ask on the `llvmdev
-mailing list <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_ if
-you are interested in more details.
+.. code-block:: udiff
 
-Language-Specific Optimizations
--------------------------------
+@@ -1108,17 +1108,8 @@ static void HandleExtern() {
+ static void HandleTopLevelExpression() {
+   // Evaluate a top-level expression into an anonymous function.
+   if (FunctionAST *F = ParseTopLevelExpr()) {
+-    if (Function *LF = F->Codegen()) {
+-      // We're just doing this to make sure it executes.
+-      TheExecutionEngine->finalizeObject();
+-      // JIT the function, returning a function pointer.
+-      void *FPtr = TheExecutionEngine->getPointerToFunction(LF);
+-
+-      // Cast it to the right type (takes no arguments, returns a double) so we
+-      // can call it as a native function.
+-      double (*FP)() = (double (*)())(intptr_t)FPtr;
+-      // Ignore the return value for this.
+-      (void)FP;
++    if (!F->Codegen()) {
++      fprintf(stderr, "Error generating code for top level expr");
+     }
+   } else {
+     // Skip token for error recovery.
+@@ -1439,11 +1459,11 @@ int main() {
+   // target lays out data structures.
+   TheModule->setDataLayout(TheExecutionEngine->getDataLayout());
+   OurFPM.add(new DataLayoutPass());
++#if 0
+   OurFPM.add(createBasicAliasAnalysisPass());
+   // Promote allocas to registers.
+   OurFPM.add(createPromoteMemoryToRegisterPass());
+@@ -1218,7 +1210,7 @@ int main() {
+   OurFPM.add(createGVNPass());
+   // Simplify the control flow graph (deleting unreachable blocks, etc).
+   OurFPM.add(createCFGSimplificationPass());
+-
++  #endif
+   OurFPM.doInitialization();
+ 
+   // Set the global so the code gen can use this.
 
-One thing about LLVM that turns off many people is that it does not
-solve all the world's problems in one system (sorry 'world hunger',
-someone else will have to solve you some other day). One specific
-complaint is that people perceive LLVM as being incapable of performing
-high-level language-specific optimization: LLVM "loses too much
-information".
+This relatively small set of changes get us to the point that we can compile
+our piece of Kaleidoscope language down to an executable program via this
+command line:
 
-Unfortunately, this is really not the place to give you a full and
-unified version of "Chris Lattner's theory of compiler design". Instead,
-I'll make a few observations:
+.. code-block:: bash
 
-First, you're right that LLVM does lose information. For example, as of
-this writing, there is no way to distinguish in the LLVM IR whether an
-SSA-value came from a C "int" or a C "long" on an ILP32 machine (other
-than debug info). Both get compiled down to an 'i32' value and the
-information about what it came from is lost. The more general issue
-here, is that the LLVM type system uses "structural equivalence" instead
-of "name equivalence". Another place this surprises people is if you
-have two types in a high-level language that have the same structure
-(e.g. two different structs that have a single int field): these types
-will compile down into a single LLVM type and it will be impossible to
-tell what it came from.
+Kaleidoscope-Ch8 < fib.ks | & clang -x ir -
 
-Second, while LLVM does lose information, LLVM is not a fixed target: we
-continue to enhance and improve it in many different ways. In addition
-to adding new features (LLVM did not always support exceptions or debug
-info), we also extend the IR to capture important information for
-optimization (e.g. whether an argument is sign or zero extended,
-information about pointers aliasing, etc). Many of the enhancements are
-user-driven: people want LLVM to include some specific feature, so they
-go ahead and extend it.
+which gives an a.out/a.exe in the current working directory.
 
-Third, it is *possible and easy* to add language-specific optimizations,
-and you have a number of choices in how to do it. As one trivial
-example, it is easy to add language-specific optimization passes that
-"know" things about code compiled for a language. In the case of the C
-family, there is an optimization pass that "knows" about the standard C
-library functions. If you call "exit(0)" in main(), it knows that it is
-safe to optimize that into "return 0;" because C specifies what the
-'exit' function does.
+Compile Unit
+============
 
-In addition to simple library knowledge, it is possible to embed a
-variety of other language-specific information into the LLVM IR. If you
-have a specific need and run into a wall, please bring the topic up on
-the llvmdev list. At the very worst, you can always treat LLVM as if it
-were a "dumb code generator" and implement the high-level optimizations
-you desire in your front-end, on the language-specific AST.
+The top level container for a section of code in DWARF is a compile unit.
+This contains the type and function data for an individual translation unit
+(read: one file of source code). So the first thing we need to do is
+construct one for our fib.ks file.
 
-Tips and Tricks
-===============
+DWARF Emission Setup
+====================
 
-There is a variety of useful tips and tricks that you come to know after
-working on/with LLVM that aren't obvious at first glance. Instead of
-letting everyone rediscover them, this section talks about some of these
-issues.
+Similar to the ``IRBuilder`` class we have a
+```DIBuilder`` <http://llvm.org/doxygen/classllvm_1_1DIBuilder.html>`_ class
+that helps in constructing debug metadata for an llvm IR file. It
+corresponds 1:1 similarly to ``IRBuilder`` and llvm IR, but with nicer names.
+Using it does require that you be more familiar with DWARF terminology than
+you needed to be with ``IRBuilder`` and ``Instruction`` names, but if you
+read through the general documentation on the
+```Metadata Format`` <http://llvm.org/docs/SourceLevelDebugging.html>`_ it
+should be a little more clear. We'll be using this class to construct all
+of our IR level descriptions. Construction for it takes a module so we
+need to construct it shortly after we construct our module. We've left it
+as a global static variable to make it a bit easier to use.
 
-Implementing portable offsetof/sizeof
--------------------------------------
+Next we're going to create a small container to cache some of our frequent
+data. The first will be our compile unit, but we'll also write a bit of
+code for our one type since we won't have to worry about multiple typed
+expressions:
 
-One interesting thing that comes up, if you are trying to keep the code
-generated by your compiler "target independent", is that you often need
-to know the size of some LLVM type or the offset of some field in an
-llvm structure. For example, you might need to pass the size of a type
-into a function that allocates memory.
+.. code-block:: c++
 
-Unfortunately, this can vary widely across targets: for example the
-width of a pointer is trivially target-specific. However, there is a
-`clever way to use the getelementptr
-instruction <http://nondot.org/sabre/LLVMNotes/SizeOf-OffsetOf-VariableSizedStructs.txt>`_
-that allows you to compute this in a portable way.
+  static DIBuilder *DBuilder;
 
-Garbage Collected Stack Frames
-------------------------------
+  struct DebugInfo {
+    DICompileUnit TheCU;
+    DIType DblTy;
 
-Some languages want to explicitly manage their stack frames, often so
-that they are garbage collected or to allow easy implementation of
-closures. There are often better ways to implement these features than
-explicit stack frames, but `LLVM does support
-them, <http://nondot.org/sabre/LLVMNotes/ExplicitlyManagedStackFrames.txt>`_
-if you want. It requires your front-end to convert the code into
-`Continuation Passing
-Style <http://en.wikipedia.org/wiki/Continuation-passing_style>`_ and
-the use of tail calls (which LLVM also supports).
+    DIType getDoubleTy();
+  } KSDbgInfo;
+
+  DIType DebugInfo::getDoubleTy() {
+    if (DblTy.isValid())
+      return DblTy;
+
+    DblTy = DBuilder->createBasicType("double", 64, 64, dwarf::DW_ATE_float);
+    return DblTy;
+  }
+
+And then later on in ``main`` when we're constructing our module:
+
+.. code-block:: c++
+
+  DBuilder = new DIBuilder(*TheModule);
+
+  KSDbgInfo.TheCU = DBuilder->createCompileUnit(
+      dwarf::DW_LANG_C, "fib.ks", ".", "Kaleidoscope Compiler", 0, "", 0);
+
+There are a couple of things to note here. First, while we're producing a
+compile unit for a language called Kaleidoscope we used the language
+constant for C. This is because a debugger wouldn't necessarily understand
+the calling conventions or default ABI for a language it doesn't recognize
+and we follow the C ABI in our llvm code generation so it's the closest
+thing to accurate. This ensures we can actually call functions from the
+debugger and have them execute. Secondly, you'll see the "fib.ks" in the
+call to ``createCompileUnit``. This is a default hard coded value since
+we're using shell redirection to put our source into the Kaleidoscope
+compiler. In a usual front end you'd have an input file name and it would
+go there.
+
+One last thing as part of emitting debug information via DIBuilder is that
+we need to "finalize" the debug information. The reasons are part of the
+underlying API for DIBuilder, but make sure you do this near the end of
+main:
+
+.. code-block:: c++
+
+  DBuilder->finalize();
+
+before you dump out the module.
+
+Functions
+=========
+
+Now that we have our ``Compile Unit`` and our source locations, we can add
+function definitions to the debug info. So in ``PrototypeAST::Codegen`` we
+add a few lines of code to describe a context for our subprogram, in this
+case the "File", and the actual definition of the function itself.
+
+So the context:
+
+.. code-block:: c++
+
+  DIFile Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
+                                     KSDbgInfo.TheCU.getDirectory());
+
+giving us a DIFile and asking the ``Compile Unit`` we created above for the
+directory and filename where we are currently. Then, for now, we use some
+source locations of 0 (since our AST doesn't currently have source location
+information) and construct our function definition:
+
+.. code-block:: c++
+
+  DIDescriptor FContext(Unit);
+  unsigned LineNo = 0;
+  unsigned ScopeLine = 0;
+  DISubprogram SP = DBuilder->createFunction(
+      FContext, Name, StringRef(), Unit, LineNo,
+      CreateFunctionType(Args.size(), Unit), false /* internal linkage */,
+      true /* definition */, ScopeLine, DIDescriptor::FlagPrototyped, false, F);
+
+and we now have a DISubprogram that contains a reference to all of our metadata
+for the function.
+
+Source Locations
+================
+
+The most important thing for debug information is accurate source location -
+this makes it possible to map your source code back. We have a problem though,
+Kaleidoscope really doesn't have any source location information in the lexer
+or parser so we'll need to add it.
+
+.. code-block:: c++
+
+   struct SourceLocation {
+     int Line;
+     int Col;
+   };
+   static SourceLocation CurLoc;
+   static SourceLocation LexLoc = {1, 0};
+
+   static int advance() {
+     int LastChar = getchar();
+
+     if (LastChar == '\n' || LastChar == '\r') {
+       LexLoc.Line++;
+       LexLoc.Col = 0;
+     } else
+       LexLoc.Col++;
+     return LastChar;
+   }
+
+In this set of code we've added some functionality on how to keep track of the
+line and column of the "source file". As we lex every token we set our current
+current "lexical location" to the assorted line and column for the beginning
+of the token. We do this by overriding all of the previous calls to
+``getchar()`` with our new ``advance()`` that keeps track of the information
+and then we have added to all of our AST classes a source location:
+
+.. code-block:: c++
+
+   class ExprAST {
+     SourceLocation Loc;
+
+     public:
+       int getLine() const { return Loc.Line; }
+       int getCol() const { return Loc.Col; }
+       ExprAST(SourceLocation Loc = CurLoc) : Loc(Loc) {}
+       virtual std::ostream &dump(std::ostream &out, int ind) {
+         return out << ':' << getLine() << ':' << getCol() << '\n';
+       }
+
+that we pass down through when we create a new expression:
+
+.. code-block:: c++
+
+   LHS = new BinaryExprAST(BinLoc, BinOp, LHS, RHS);
+
+giving us locations for each of our expressions and variables.
+
+From this we can make sure to tell ``DIBuilder`` when we're at a new source
+location so it can use that when we generate the rest of our code and make
+sure that each instruction has source location information. We do this
+by constructing another small function:
+
+.. code-block:: c++
+
+  void DebugInfo::emitLocation(ExprAST *AST) {
+    DIScope *Scope;
+    if (LexicalBlocks.empty())
+      Scope = &TheCU;
+    else
+      Scope = LexicalBlocks.back();
+    Builder.SetCurrentDebugLocation(
+        DebugLoc::get(AST->getLine(), AST->getCol(), DIScope(*Scope)));
+  }
+
+that both tells the main ``IRBuilder`` where we are, but also what scope
+we're in. Since we've just created a function above we can either be in
+the main file scope (like when we created our function), or now we can be
+in the function scope we just created. To represent this we create a stack
+of scopes:
+
+.. code-block:: c++
+
+   std::vector<DIScope *> LexicalBlocks;
+   std::map<const PrototypeAST *, DIScope> FnScopeMap;
+
+and keep a map of each function to the scope that it represents (a DISubprogram
+is also a DIScope).
+
+Then we make sure to:
+
+.. code-block:: c++
+
+   KSDbgInfo.emitLocation(this);
+
+emit the location every time we start to generate code for a new AST, and
+also:
+
+.. code-block:: c++
+
+  KSDbgInfo.FnScopeMap[this] = SP;
+
+store the scope (function) when we create it and use it:
+
+  KSDbgInfo.LexicalBlocks.push_back(&KSDbgInfo.FnScopeMap[Proto]);
+
+when we start generating the code for each function.
+
+One interesting thing to note at this point is that various debuggers have
+assumptions based on how code and debug information was generated for them
+in the past. In this case we need to do a little bit of a hack to avoid
+generating line information for the function prologue so that the debugger
+knows to skip over those instructions when setting a breakpoint. So in
+``FunctionAST::CodeGen`` we add a couple of lines:
+
+.. code-block:: c++
+
+  // Unset the location for the prologue emission (leading instructions with no
+  // location in a function are considered part of the prologue and the debugger
+  // will run past them when breaking on a function)
+  KSDbgInfo.emitLocation(nullptr);
+
+and then emit a new location when we actually start generating code for the
+body of the function:
+
+.. code-block:: c++
+
+  KSDbgInfo.emitLocation(Body);
+
+also, don't forget to pop the scope back off of your scope stack at the
+end of the code generation for the function:
+
+.. code-block:: c++
+
+  // Pop off the lexical block for the function since we added it
+  // unconditionally.
+  KSDbgInfo.LexicalBlocks.pop_back();
+
+
+Full Code Listing
+=================
+
+Here is the complete code listing for our running example, enhanced with
+debug information. To build this example, use:
+
+.. code-block:: bash
+
+    # Compile
+    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core jit native` -O3 -o toy
+    # Run
+    ./toy
+
+Here is the code:
+
+.. literalinclude:: ../../examples/Kaleidoscope/Chapter8/toy.cpp
+   :language: c++
+
+`Next: Conclusion and other useful LLVM tidbits <LangImpl9.html>`_
 
