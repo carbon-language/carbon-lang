@@ -1309,6 +1309,90 @@ def SUB64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
 // Pipelined looping instructions.
 
 // Logical operations on predicates.
+let hasSideEffects = 0 in
+class T_LOGICAL_1OP<string MnOp, bits<2> OpBits>
+    : CRInst<(outs PredRegs:$Pd), (ins PredRegs:$Ps),
+             "$Pd = " # MnOp # "($Ps)", [], "", CR_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<2> Ps;
+
+  let IClass = 0b0110;
+  let Inst{27-23} = 0b10111;
+  let Inst{22-21} = OpBits;
+  let Inst{20} = 0b0;
+  let Inst{17-16} = Ps;
+  let Inst{13} = 0b0;
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def C2_any8 : T_LOGICAL_1OP<"any8", 0b00>;
+def C2_all8 : T_LOGICAL_1OP<"all8", 0b01>;
+def C2_not  : T_LOGICAL_1OP<"not",  0b10>;
+}
+
+def: Pat<(i1 (not (i1 PredRegs:$Ps))),
+         (C2_not PredRegs:$Ps)>;
+
+let hasSideEffects = 0 in
+class T_LOGICAL_2OP<string MnOp, bits<3> OpBits, bit IsNeg, bit Rev>
+    : CRInst<(outs PredRegs:$Pd), (ins PredRegs:$Ps, PredRegs:$Pt),
+             "$Pd = " # MnOp # "($Ps, " # !if (IsNeg,"!","") # "$Pt)",
+             [], "", CR_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<2> Ps;
+  bits<2> Pt;
+
+  let IClass = 0b0110;
+  let Inst{27-24} = 0b1011;
+  let Inst{23-21} = OpBits;
+  let Inst{20} = 0b0;
+  let Inst{17-16} = !if(Rev,Pt,Ps);  // Rs and Rt are reversed for some
+  let Inst{13} = 0b0;                // instructions.
+  let Inst{9-8} = !if(Rev,Ps,Pt);
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def C2_and  : T_LOGICAL_2OP<"and", 0b000, 0, 1>;
+def C2_or   : T_LOGICAL_2OP<"or",  0b001, 0, 1>;
+def C2_xor  : T_LOGICAL_2OP<"xor", 0b010, 0, 0>;
+def C2_andn : T_LOGICAL_2OP<"and", 0b011, 1, 1>;
+def C2_orn  : T_LOGICAL_2OP<"or",  0b111, 1, 1>;
+}
+
+def: Pat<(i1 (and I1:$Ps, I1:$Pt)),       (C2_and  I1:$Ps, I1:$Pt)>;
+def: Pat<(i1 (or  I1:$Ps, I1:$Pt)),       (C2_or   I1:$Ps, I1:$Pt)>;
+def: Pat<(i1 (xor I1:$Ps, I1:$Pt)),       (C2_xor  I1:$Ps, I1:$Pt)>;
+def: Pat<(i1 (and I1:$Ps, (not I1:$Pt))), (C2_andn I1:$Ps, I1:$Pt)>;
+def: Pat<(i1 (or  I1:$Ps, (not I1:$Pt))), (C2_orn  I1:$Ps, I1:$Pt)>;
+
+let hasSideEffects = 0, hasNewValue = 1, isCodeGenOnly = 0 in
+def C2_vitpack : SInst<(outs IntRegs:$Rd), (ins PredRegs:$Ps, PredRegs:$Pt),
+      "$Rd = vitpack($Ps, $Pt)", [], "", S_2op_tc_1_SLOT23> {
+  bits<5> Rd;
+  bits<2> Ps;
+  bits<2> Pt;
+
+  let IClass = 0b1000;
+  let Inst{27-24} = 0b1001;
+  let Inst{22-21} = 0b00;
+  let Inst{17-16} = Ps;
+  let Inst{9-8} = Pt;
+  let Inst{4-0} = Rd;
+}
+
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def C2_mask : SInst<(outs DoubleRegs:$Rd), (ins PredRegs:$Pt),
+      "$Rd = mask($Pt)", [], "", S_2op_tc_1_SLOT23> {
+  bits<5> Rd;
+  bits<2> Pt;
+
+  let IClass = 0b1000;
+  let Inst{27-24} = 0b0110;
+  let Inst{9-8} = Pt;
+  let Inst{4-0} = Rd;
+}
 def AND_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1, PredRegs:$src2),
              "$dst = and($src1, $src2)",
              [(set (i1 PredRegs:$dst), (and (i1 PredRegs:$src1),
