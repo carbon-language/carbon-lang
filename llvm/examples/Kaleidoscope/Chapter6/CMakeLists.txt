@@ -6,7 +6,7 @@ set(LLVM_LINK_COMPONENTS
   MC
   ScalarOpts
   Support
-  nativecodegen
+  native
   mcjit
   )
 

@@ -7,7 +7,7 @@ set(LLVM_LINK_COMPONENTS
   ScalarOpts
   Support
   TransformUtils
-  nativecodegen
+  native
   mcjit
   )
 
