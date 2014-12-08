@@ -858,52 +858,6 @@ def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
 // ALU32/PRED +
 //===----------------------------------------------------------------------===//
 
-class T_ALU64_rr<string mnemonic, string suffix, bits<4> RegType,
-                 bits<3> MajOp, bits<3> MinOp, bit OpsRev, bit IsComm,
-                 string Op2Pfx>
-  : ALU64_rr<(outs DoubleRegs:$Rd), (ins DoubleRegs:$Rs, DoubleRegs:$Rt),
-             "$Rd = " #mnemonic# "($Rs, " #Op2Pfx# "$Rt)" #suffix, [],
-             "", ALU64_tc_1_SLOT23> {
-  let hasSideEffects = 0;
-  let isCommutable = IsComm;
-
-  bits<5> Rs;
-  bits<5> Rt;
-  bits<5> Rd;
-
-  let IClass = 0b1101;
-  let Inst{27-24} = RegType;
-  let Inst{23-21} = MajOp;
-  let Inst{20-16} = !if (OpsRev,Rt,Rs);
-  let Inst{12-8} = !if (OpsRev,Rs,Rt);
-  let Inst{7-5} = MinOp;
-  let Inst{4-0} = Rd;
-}
-
-class T_ALU64_arith<string mnemonic, bits<3> MajOp, bits<3> MinOp, bit IsSat,
-                    bit OpsRev, bit IsComm>
-  : T_ALU64_rr<mnemonic, !if(IsSat,":sat",""), 0b0011, MajOp, MinOp, OpsRev,
-               IsComm, "">;
-
-def A2_addp : T_ALU64_arith<"add", 0b000, 0b111, 0, 0, 1>;
-def A2_subp : T_ALU64_arith<"sub", 0b001, 0b111, 0, 1, 0>;
-
-def: Pat<(i64 (add I64:$Rs, I64:$Rt)), (A2_addp I64:$Rs, I64:$Rt)>;
-def: Pat<(i64 (sub I64:$Rs, I64:$Rt)), (A2_subp I64:$Rs, I64:$Rt)>;
-
-class T_ALU64_logical<string mnemonic, bits<3> MinOp, bit OpsRev, bit IsComm,
-                      bit IsNeg>
-  : T_ALU64_rr<mnemonic, "", 0b0011, 0b111, MinOp, OpsRev, IsComm,
-               !if(IsNeg,"~","")>;
-
-def A2_andp : T_ALU64_logical<"and", 0b000, 0, 1, 0>;
-def A2_orp  : T_ALU64_logical<"or",  0b010, 0, 1, 0>;
-def A2_xorp : T_ALU64_logical<"xor", 0b100, 0, 1, 0>;
-
-def: Pat<(i64 (and I64:$Rs, I64:$Rt)), (A2_andp I64:$Rs, I64:$Rt)>;
-def: Pat<(i64 (or  I64:$Rs, I64:$Rt)), (A2_orp  I64:$Rs, I64:$Rt)>;
-def: Pat<(i64 (xor I64:$Rs, I64:$Rt)), (A2_xorp I64:$Rs, I64:$Rt)>;
-
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
    // Return the byte immediate const-1 as an SDNode.
@@ -1174,6 +1128,56 @@ def: T_cmp64_rr_pat<C2_cmpgtp,  setgt>;
 def: T_cmp64_rr_pat<C2_cmpgtup, setugt>;
 def: T_cmp64_rr_pat<C2_cmpgtp,  RevCmp<setlt>>;
 def: T_cmp64_rr_pat<C2_cmpgtup, RevCmp<setult>>;
+
+class T_ALU64_rr<string mnemonic, string suffix, bits<4> RegType,
+                 bits<3> MajOp, bits<3> MinOp, bit OpsRev, bit IsComm,
+                 string Op2Pfx>
+  : ALU64_rr<(outs DoubleRegs:$Rd), (ins DoubleRegs:$Rs, DoubleRegs:$Rt),
+             "$Rd = " #mnemonic# "($Rs, " #Op2Pfx# "$Rt)" #suffix, [],
+             "", ALU64_tc_1_SLOT23> {
+  let hasSideEffects = 0;
+  let isCommutable = IsComm;
+
+  bits<5> Rs;
+  bits<5> Rt;
+  bits<5> Rd;
+
+  let IClass = 0b1101;
+  let Inst{27-24} = RegType;
+  let Inst{23-21} = MajOp;
+  let Inst{20-16} = !if (OpsRev,Rt,Rs);
+  let Inst{12-8} = !if (OpsRev,Rs,Rt);
+  let Inst{7-5} = MinOp;
+  let Inst{4-0} = Rd;
+}
+
+class T_ALU64_arith<string mnemonic, bits<3> MajOp, bits<3> MinOp, bit IsSat,
+                    bit OpsRev, bit IsComm>
+  : T_ALU64_rr<mnemonic, !if(IsSat,":sat",""), 0b0011, MajOp, MinOp, OpsRev,
+               IsComm, "">;
+
+let isCodeGenOnly = 0 in {
+def A2_addp : T_ALU64_arith<"add", 0b000, 0b111, 0, 0, 1>;
+def A2_subp : T_ALU64_arith<"sub", 0b001, 0b111, 0, 1, 0>;
+}
+
+def: Pat<(i64 (add I64:$Rs, I64:$Rt)), (A2_addp I64:$Rs, I64:$Rt)>;
+def: Pat<(i64 (sub I64:$Rs, I64:$Rt)), (A2_subp I64:$Rs, I64:$Rt)>;
+
+class T_ALU64_logical<string mnemonic, bits<3> MinOp, bit OpsRev, bit IsComm,
+                      bit IsNeg>
+  : T_ALU64_rr<mnemonic, "", 0b0011, 0b111, MinOp, OpsRev, IsComm,
+               !if(IsNeg,"~","")>;
+
+let isCodeGenOnly = 0 in {
+def A2_andp : T_ALU64_logical<"and", 0b000, 0, 1, 0>;
+def A2_orp  : T_ALU64_logical<"or",  0b010, 0, 1, 0>;
+def A2_xorp : T_ALU64_logical<"xor", 0b100, 0, 1, 0>;
+}
+
+def: Pat<(i64 (and I64:$Rs, I64:$Rt)), (A2_andp I64:$Rs, I64:$Rt)>;
+def: Pat<(i64 (or  I64:$Rs, I64:$Rt)), (A2_orp  I64:$Rs, I64:$Rt)>;
+def: Pat<(i64 (xor I64:$Rs, I64:$Rt)), (A2_xorp I64:$Rs, I64:$Rt)>;
 
 def ADD64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
                                                      DoubleRegs:$src2),
