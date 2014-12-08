@@ -243,6 +243,11 @@ void USRGenerator::VisitFunctionDecl(const FunctionDecl *D) {
       Out << 'S';
     if (unsigned quals = MD->getTypeQualifiers())
       Out << (char)('0' + quals);
+    switch (MD->getRefQualifier()) {
+    case RQ_None: break;
+    case RQ_LValue: Out << '&'; break;
+    case RQ_RValue: Out << "&&"; break;
+    }
   }
 }
 
