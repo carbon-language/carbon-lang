@@ -99,6 +99,7 @@ void sleep_for(const chrono::duration<Rep, Period>& rel_time);
 #include <tuple>
 #endif
 #include <pthread.h>
+#include <sched.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
