@@ -492,7 +492,7 @@ private:
 
   void linkAppendingVarInit(const AppendingVarInfo &AVI);
   void linkGlobalInits();
-  void linkFunctionBody(Function *Dst, Function *Src);
+  bool linkFunctionBody(Function *Dst, Function *Src);
   void linkAliasBodies();
   void linkNamedMDNodes();
 };
@@ -1170,8 +1170,12 @@ void ModuleLinker::linkGlobalInits() {
 /// Copy the source function over into the dest function and fix up references
 /// to values. At this point we know that Dest is an external function, and
 /// that Src is not.
-void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
+bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   assert(Src && Dst && Dst->isDeclaration() && !Src->isDeclaration());
+
+  // Materialize if needed.
+  if (std::error_code EC = Src->materialize())
+    return emitError(EC.message());
 
   // Go through and convert function arguments over, remembering the mapping.
   Function::arg_iterator DI = Dst->arg_begin();
@@ -1200,6 +1204,8 @@ void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
        I != E; ++I)
     ValueMap.erase(I);
 
+  Src->Dematerialize();
+  return false;
 }
 
 /// Insert all of the aliases in Src into the Dest module.
@@ -1485,16 +1491,12 @@ bool ModuleLinker::run() {
       DF->setPrologueData(MapValue(
           SF->getPrologueData(), ValueMap, RF_None, &TypeMap, &ValMaterializer));
 
-    // Materialize if needed.
-    if (std::error_code EC = SF->materialize())
-      return emitError(EC.message());
-
     // Skip if no body (function is external).
     if (SF->isDeclaration())
       continue;
 
-    linkFunctionBody(DF, SF);
-    SF->Dematerialize();
+    if (linkFunctionBody(DF, SF))
+      return true;
   }
 
   // Resolve all uses of aliases with aliasees.
@@ -1525,14 +1527,9 @@ bool ModuleLinker::run() {
                                  &TypeMap, &ValMaterializer));
     }
 
-    // Materialize if needed.
-    if (std::error_code EC = SF->materialize())
-      return emitError(EC.message());
-
     // Link in function body.
-    assert(!SF->isDeclaration());
-    linkFunctionBody(DF, SF);
-    SF->Dematerialize();
+    if (linkFunctionBody(DF, SF))
+      return true;
   }
 
   return false;
