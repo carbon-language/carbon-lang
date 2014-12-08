@@ -195,11 +195,11 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
 
         // TODO: Handle FPImm?
         if (Src.isImm()) {
-          if (isInt<16>(Src.getImm()) && !TII->isInlineConstant(Src)) {
+          if (isInt<16>(Src.getImm()) && !TII->isInlineConstant(Src))
             MI.setDesc(TII->get(AMDGPU::S_MOVK_I32));
-            continue;
-          }
         }
+
+        continue;
       }
 
       if (!TII->hasVALU32BitEncoding(MI.getOpcode()))
