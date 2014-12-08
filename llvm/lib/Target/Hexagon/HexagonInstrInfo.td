@@ -208,6 +208,13 @@ def: BinOp32_pat<xor, A2_xor, i32>;
 let OutOperandList = (outs DoubleRegs:$Rd), hasNewValue = 0,
     isCodeGenOnly = 0 in {
   def S2_packhl    : T_ALU32_3op  <"packhl",  0b101, 0b100, 0, 0>;
+
+  let isPredicable = 1 in
+    def A2_combinew  : T_ALU32_3op  <"combine", 0b101, 0b000, 0, 0>;
+
+  // Conditional combinew uses "newt/f" instead of "t/fnew".
+  def C2_ccombinewt    : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 0, 0>;
+  def C2_ccombinewf    : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 1, 0>;
 }
 
 let hasSideEffects = 0, hasNewValue = 1, isCompare = 1, InputType = "reg"  in
