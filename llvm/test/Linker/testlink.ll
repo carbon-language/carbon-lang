@@ -24,46 +24,46 @@
 
 
 ; This should stay the same
-; CHECK: @MyIntList = global %intlist { %intlist* null, i32 17 }
+; CHECK-DAG: @MyIntList = global %intlist { %intlist* null, i32 17 }
 @MyIntList = global %intlist { %intlist* null, i32 17 }
 
 
 ; Nothing to link here.
 
-; CHECK: @0 = external global i32
+; CHECK-DAG: @0 = external global i32
 @0 = external global i32
-; CHECK: @Inte = global i32 1
+; CHECK-DAG: @Inte = global i32 1
 @Inte = global i32 1
 
 ; Intern1 is intern in both files, rename testlink2's.
-; CHECK: @Intern1 = internal constant i32 42
+; CHECK-DAG: @Intern1 = internal constant i32 42
 @Intern1 = internal constant i32 42
 
 ; This should get renamed since there is a definition that is non-internal in
 ; the other module.
-; CHECK: @Intern2{{[0-9]+}} = internal constant i32 792
+; CHECK-DAG: @Intern2{{[0-9]+}} = internal constant i32 792
 @Intern2 = internal constant i32 792
 
 
-; CHECK: @MyVarPtr = linkonce global { i32* } { i32* @MyVar }
+; CHECK-DAG: @MyVarPtr = linkonce global { i32* } { i32* @MyVar }
 @MyVarPtr = linkonce global { i32* } { i32* @MyVar }
 
-; CHECK: @MyVar = global i32 4
+; CHECK-DAG: @MyVar = global i32 4
 @MyVar = external global i32
 
 ; Take value from other module.
-; CHECK: AConst = constant i32 1234
+; CHECK-DAG: AConst = constant i32 1234
 @AConst = linkonce constant i32 123
 
 ; Renamed version of Intern1.
-; CHECK: @Intern1{{[0-9]+}} = internal constant i32 52
+; CHECK-DAG: @Intern1{{[0-9]+}} = internal constant i32 52
 
 
 ; Globals linked from testlink2.
-; CHECK: @Intern2 = constant i32 12345
+; CHECK-DAG: @Intern2 = constant i32 12345
 
-; CHECK: @MyIntListPtr = constant 
-; CHECK: @1 = constant i32 412
+; CHECK-DAG: @MyIntListPtr = constant
+; CHECK-DAG: @1 = constant i32 412
 
 
 declare i32 @foo(i32)
