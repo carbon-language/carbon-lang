@@ -112,3 +112,10 @@ void test_paren_suffix() {
   foo::bar({5, 6});  // expected-error-re {{no member named 'bar' in namespace 'foo'{{$}}}} \
                      // expected-error {{expected expression}}
 }
+
+const int kNum = 10;  // expected-note {{'kNum' declared here}}
+class SomeClass {
+  int Kind;
+public:
+  explicit SomeClass() : Kind(kSum) {}  // expected-error {{use of undeclared identifier 'kSum'; did you mean 'kNum'?}}
+};
