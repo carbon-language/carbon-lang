@@ -1177,6 +1177,17 @@ bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   if (std::error_code EC = Src->materialize())
     return emitError(EC.message());
 
+  // Link in the prefix data.
+  if (Src->hasPrefixData())
+    Dst->setPrefixData(MapValue(Src->getPrefixData(), ValueMap, RF_None,
+                               &TypeMap, &ValMaterializer));
+
+  // Link in the prologue data.
+  if (Src->hasPrologueData())
+    Dst->setPrologueData(MapValue(Src->getPrologueData(), ValueMap, RF_None,
+                                 &TypeMap, &ValMaterializer));
+
+
   // Go through and convert function arguments over, remembering the mapping.
   Function::arg_iterator DI = Dst->arg_begin();
   for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();
@@ -1485,17 +1496,6 @@ bool ModuleLinker::run() {
       continue;
 
     Function *DF = cast<Function>(ValueMap[&SF]);
-
-    // Link in the prefix data.
-    if (SF.hasPrefixData())
-      DF->setPrefixData(MapValue(SF.getPrefixData(), ValueMap, RF_None,
-                                 &TypeMap, &ValMaterializer));
-
-    // Link in the prologue data.
-    if (SF.hasPrologueData())
-      DF->setPrologueData(MapValue(SF.getPrologueData(), ValueMap, RF_None,
-                                   &TypeMap, &ValMaterializer));
-
     if (linkFunctionBody(DF, &SF))
       return true;
   }
@@ -1522,13 +1522,6 @@ bool ModuleLinker::run() {
     LazilyLinkFunctions.pop_back();
 
     Function *DF = cast<Function>(ValueMap[SF]);
-    if (SF->hasPrefixData()) {
-      // Link in the prefix data.
-      DF->setPrefixData(MapValue(SF->getPrefixData(), ValueMap, RF_None,
-                                 &TypeMap, &ValMaterializer));
-    }
-
-    // Link in function body.
     if (linkFunctionBody(DF, SF))
       return true;
   }
