@@ -1153,17 +1153,16 @@ void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
 /// referenced are in Dest.
 void ModuleLinker::linkGlobalInits() {
   // Loop over all of the globals in the src module, mapping them over as we go
-  for (Module::const_global_iterator I = SrcM->global_begin(),
-       E = SrcM->global_end(); I != E; ++I) {
-
+  for (GlobalVariable &Src : SrcM->globals()) {
     // Only process initialized GV's or ones not already in dest.
-    if (!I->hasInitializer() || DoNotLinkFromSource.count(I)) continue;
+    if (!Src.hasInitializer() || DoNotLinkFromSource.count(&Src))
+      continue;
 
     // Grab destination global variable.
-    GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[I]);
+    GlobalVariable *Dst = cast<GlobalVariable>(ValueMap[&Src]);
     // Figure out what the initializer looks like in the dest module.
-    DGV->setInitializer(MapValue(I->getInitializer(), ValueMap,
-                                 RF_None, &TypeMap, &ValMaterializer));
+    Dst->setInitializer(MapValue(Src.getInitializer(), ValueMap, RF_None,
+                                 &TypeMap, &ValMaterializer));
   }
 }
 
@@ -1221,12 +1220,11 @@ bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
 
 /// Insert all of the aliases in Src into the Dest module.
 void ModuleLinker::linkAliasBodies() {
-  for (Module::alias_iterator I = SrcM->alias_begin(), E = SrcM->alias_end();
-       I != E; ++I) {
-    if (DoNotLinkFromSource.count(I))
+  for (GlobalAlias &Src : SrcM->aliases()) {
+    if (DoNotLinkFromSource.count(&Src))
       continue;
-    if (Constant *Aliasee = I->getAliasee()) {
-      GlobalAlias *DA = cast<GlobalAlias>(ValueMap[I]);
+    if (Constant *Aliasee = Src.getAliasee()) {
+      GlobalAlias *DA = cast<GlobalAlias>(ValueMap[&Src]);
       Constant *Val =
           MapValue(Aliasee, ValueMap, RF_None, &TypeMap, &ValMaterializer);
       DA->setAliasee(Val);
