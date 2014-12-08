@@ -188,3 +188,10 @@ define <16 x i8> @test_v16i8_blocked([7 x double], [2 x <16 x i8>] %in) {
   %val = extractvalue [2 x <16 x i8>] %in, 0
   ret <16 x i8> %val
 }
+
+define half @test_f16_blocked([7 x double], [2 x half] %in) {
+; CHECK-LABEL: test_f16_blocked:
+; CHECK: ldr h0, [sp]
+  %val = extractvalue [2 x half] %in, 0
+  ret half %val
+}

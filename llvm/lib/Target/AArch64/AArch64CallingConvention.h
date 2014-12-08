@@ -28,6 +28,9 @@ using namespace llvm;
 static const uint16_t XRegList[] = {AArch64::X0, AArch64::X1, AArch64::X2,
                                     AArch64::X3, AArch64::X4, AArch64::X5,
                                     AArch64::X6, AArch64::X7};
+static const uint16_t HRegList[] = {AArch64::H0, AArch64::H1, AArch64::H2,
+                                    AArch64::H3, AArch64::H4, AArch64::H5,
+                                    AArch64::H6, AArch64::H7};
 static const uint16_t SRegList[] = {AArch64::S0, AArch64::S1, AArch64::S2,
                                     AArch64::S3, AArch64::S4, AArch64::S5,
                                     AArch64::S6, AArch64::S7};
@@ -88,6 +91,8 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   ArrayRef<uint16_t> RegList;
   if (LocVT.SimpleTy == MVT::i64)
     RegList = XRegList;
+  else if (LocVT.SimpleTy == MVT::f16)
+    RegList = HRegList;
   else if (LocVT.SimpleTy == MVT::f32 || LocVT.is32BitVector())
     RegList = SRegList;
   else if (LocVT.SimpleTy == MVT::f64 || LocVT.is64BitVector())
