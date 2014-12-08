@@ -396,14 +396,20 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
             Args shell_arguments;
             std::string safe_arg;
             shell_arguments.AppendArgument (shell_executable.c_str());
-            shell_arguments.AppendArgument ("-c");
+            const llvm::Triple &triple = GetArchitecture().GetTriple();
+            if (triple.getOS() == llvm::Triple::Win32 && !triple.isWindowsCygwinEnvironment())
+                shell_arguments.AppendArgument("/C");
+            else
+                shell_arguments.AppendArgument("-c");
+
             StreamString shell_command;
             if (will_debug)
             {
                 // Add a modified PATH environment variable in case argv[0]
-                // is a relative path
+                // is a relative path.
                 const char *argv0 = argv[0];
-                if (argv0 && (argv0[0] != '/' && argv0[0] != '~'))
+                FileSpec arg_spec(argv0, false);
+                if (arg_spec.IsRelativeToCurrentWorkingDirectory())
                 {
                     // We have a relative path to our executable which may not work if
                     // we just try to run "a.out" (without it being converted to "./a.out")
@@ -434,7 +440,8 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                     shell_command.PutCString(new_path.c_str());
                 }
 
-                shell_command.PutCString ("exec");
+                if (triple.getOS() != llvm::Triple::Win32 || triple.isWindowsCygwinEnvironment())
+                    shell_command.PutCString("exec");
 
                 // Only Apple supports /usr/bin/arch being able to specify the architecture
                 if (GetArchitecture().IsValid() &&                                          // Valid architecture
