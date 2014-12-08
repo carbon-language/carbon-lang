@@ -43,7 +43,7 @@ D: LLDB
 
 N: Peter Collingbourne
 E: peter@pcc.me.uk
-D: libclc
+D: libclc, llgo
 
 N: Anshuman Dasgupta
 E: adasgupt@codeaurora.org
