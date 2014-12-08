@@ -916,9 +916,6 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   // a quick pass now to see if we can.
   if (!CurFn->doesNotThrow())
     TryMarkNoThrow(CurFn);
-
-  PGO.emitInstrumentationData();
-  PGO.destroyRegionCounters();
 }
 
 /// ContainsLabel - Return true if the statement contains a label in it.  If

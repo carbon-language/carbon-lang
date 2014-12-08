@@ -345,9 +345,6 @@ void CodeGenModule::Release() {
   if (ObjCRuntime)
     if (llvm::Function *ObjCInitFunction = ObjCRuntime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
-  if (getCodeGenOpts().ProfileInstrGenerate)
-    if (llvm::Function *PGOInit = CodeGenPGO::emitInitialization(*this))
-      AddGlobalCtor(PGOInit, 0);
   if (PGOReader && PGOStats.hasDiagnostics())
     PGOStats.reportDiagnostics(getDiags(), getCodeGenOpts().MainFileName);
   EmitCtorList(GlobalCtors, "llvm.global_ctors");

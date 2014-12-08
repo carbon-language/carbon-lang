@@ -508,8 +508,6 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   Cnt.beginRegion(Builder);
   EmitCompoundStmtWithoutScope(*cast<CompoundStmt>(OMD->getBody()));
   FinishFunction(OMD->getBodyRBrace());
-  PGO.emitInstrumentationData();
-  PGO.destroyRegionCounters();
 }
 
 /// emitStructGetterCall - Call the runtime function to load a property

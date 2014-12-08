@@ -366,6 +366,12 @@ void EmitAssemblyHelper::CreatePasses() {
       MPM->add(createStripSymbolsPass(true));
   }
 
+  if (CodeGenOpts.ProfileInstrGenerate) {
+    InstrProfOptions Options;
+    Options.NoRedZone = CodeGenOpts.DisableRedZone;
+    MPM->add(createInstrProfilingPass(Options));
+  }
+
   PMBuilder.populateModulePassManager(*MPM);
 }
 

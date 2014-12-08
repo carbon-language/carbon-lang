@@ -32,37 +32,27 @@ class CodeGenPGO {
 private:
   CodeGenModule &CGM;
   std::string FuncName;
-  llvm::GlobalValue::LinkageTypes VarLinkage;
+  llvm::GlobalVariable *FuncNameVar;
 
   unsigned NumRegionCounters;
   uint64_t FunctionHash;
-  llvm::GlobalVariable *RegionCounters;
   std::unique_ptr<llvm::DenseMap<const Stmt *, unsigned>> RegionCounterMap;
   std::unique_ptr<llvm::DenseMap<const Stmt *, uint64_t>> StmtCountMap;
   std::vector<uint64_t> RegionCounts;
   uint64_t CurrentRegionCount;
-  std::string CoverageMapping;
   /// \brief A flag that is set to true when this function doesn't need
   /// to have coverage mapping data.
   bool SkipCoverageMapping;
 
 public:
   CodeGenPGO(CodeGenModule &CGM)
-      : CGM(CGM), NumRegionCounters(0), FunctionHash(0),
-        RegionCounters(nullptr), CurrentRegionCount(0),
+      : CGM(CGM), NumRegionCounters(0), FunctionHash(0), CurrentRegionCount(0),
         SkipCoverageMapping(false) {}
 
   /// Whether or not we have PGO region data for the current function. This is
   /// false both when we have no data at all and when our data has been
   /// discarded.
   bool haveRegionCounts() const { return !RegionCounts.empty(); }
-
-  /// Get the string used to identify this function in the profile data.
-  /// For functions with local linkage, this includes the main file name.
-  StringRef getFuncName() const { return StringRef(FuncName); }
-  std::string getFuncVarName(StringRef VarName) const {
-    return ("__llvm_profile_" + VarName + "_" + FuncName).str();
-  }
 
   /// Return the counter value of the current region.
   uint64_t getCurrentRegionCount() const { return CurrentRegionCount; }
@@ -110,13 +100,6 @@ public:
   /// generates global variables or associates PGO data with each of the
   /// counters depending on whether we are generating or using instrumentation.
   void assignRegionCounters(const Decl *D, llvm::Function *Fn);
-  /// Emit static data structures for instrumentation data.
-  void emitInstrumentationData();
-  /// Clean up region counter state. Must be called if assignRegionCounters is
-  /// used.
-  void destroyRegionCounters();
-  /// Emit static initialization code, if any.
-  static llvm::Function *emitInitialization(CodeGenModule &CGM);
   /// Emit a coverage mapping range with a counter zero
   /// for an unused declaration.
   void emitEmptyCounterMapping(const Decl *D, StringRef FuncName,
@@ -124,7 +107,7 @@ public:
 private:
   void setFuncName(llvm::Function *Fn);
   void setFuncName(StringRef Name, llvm::GlobalValue::LinkageTypes Linkage);
-  void setVarLinkage(llvm::GlobalValue::LinkageTypes Linkage);
+  void createFuncNameVar(llvm::GlobalValue::LinkageTypes Linkage);
   void mapRegionCounters(const Decl *D);
   void computeRegionCounts(const Decl *D);
   void applyFunctionAttributes(llvm::IndexedInstrProfReader *PGOReader,
@@ -132,7 +115,6 @@ private:
   void loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader,
                         bool IsInMainFile);
   void emitCounterVariables();
-  llvm::GlobalVariable *buildDataVar();
   void emitCounterRegionMapping(const Decl *D);
 
   /// Emit code to increment the counter at the given index
