@@ -33,8 +33,10 @@ class PlatformCommandTestCase(TestBase):
 
     def test_shell(self):
         """ Test that the platform shell command can invoke ls. """
-        self.expect("platform shell ls /",
-            substrs = ["dev", "tmp", "usr"])
+        if sys.platform.startswith("win32"):
+          self.expect("platform shell dir c:\\", substrs = ["Windows", "Program Files"])
+        else:
+          self.expect("platform shell ls /", substrs = ["dev", "tmp", "usr"])
 
     def test_shell_builtin(self):
         """ Test a shell built-in command (echo) """
