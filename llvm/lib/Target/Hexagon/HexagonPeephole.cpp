@@ -184,7 +184,7 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
 
       // Look for P=NOT(P).
       if (!DisablePNotP &&
-          (MI->getOpcode() == Hexagon::NOT_p)) {
+          (MI->getOpcode() == Hexagon::C2_not)) {
         assert (MI->getNumOperands() == 2);
         MachineOperand &Dst = MI->getOperand(0);
         MachineOperand &Src  = MI->getOperand(1);

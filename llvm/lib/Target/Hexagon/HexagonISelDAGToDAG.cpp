@@ -322,21 +322,21 @@ static unsigned doesIntrinsicContainPredicate(unsigned ID)
     case Intrinsic::hexagon_C2_tfrpr:
       return Hexagon::TFR_RsPd;
     case Intrinsic::hexagon_C2_and:
-      return Hexagon::AND_pp;
+      return Hexagon::C2_and;
     case Intrinsic::hexagon_C2_xor:
-      return Hexagon::XOR_pp;
+      return Hexagon::C2_xor;
     case Intrinsic::hexagon_C2_or:
-      return Hexagon::OR_pp;
+      return Hexagon::C2_or;
     case Intrinsic::hexagon_C2_not:
-      return Hexagon::NOT_p;
+      return Hexagon::C2_not;
     case Intrinsic::hexagon_C2_any8:
-      return Hexagon::ANY_pp;
+      return Hexagon::C2_any8;
     case Intrinsic::hexagon_C2_all8:
-      return Hexagon::ALL_pp;
+      return Hexagon::C2_all8;
     case Intrinsic::hexagon_C2_vitpack:
-      return Hexagon::VITPACK_pp;
+      return Hexagon::C2_vitpack;
     case Intrinsic::hexagon_C2_mask:
-      return Hexagon::MASK_p;
+      return Hexagon::C2_mask;
     case Intrinsic::hexagon_C2_mux:
       return Hexagon::C2_mux;
 
@@ -936,7 +936,7 @@ SDNode *HexagonDAGToDAGISel::SelectSelect(SDNode *N) {
                 N00.getNode()->getValueType(N00.getResNo()) == MVT::i32) {
               SDNode *SextNode = CurDAG->getMachineNode(Hexagon::A2_sxth, dl,
                                                         MVT::i32, N000);
-              SDNode *Result = CurDAG->getMachineNode(Hexagon::MAXw_rr, dl,
+              SDNode *Result = CurDAG->getMachineNode(Hexagon::A2_max, dl,
                                                       MVT::i32,
                                                       SDValue(SextNode, 0),
                                                       N1);
@@ -960,7 +960,7 @@ SDNode *HexagonDAGToDAGISel::SelectSelect(SDNode *N) {
                 N00.getNode()->getValueType(N00.getResNo()) == MVT::i32) {
               SDNode *SextNode = CurDAG->getMachineNode(Hexagon::A2_sxth, dl,
                                                         MVT::i32, N000);
-              SDNode *Result = CurDAG->getMachineNode(Hexagon::MINw_rr, dl,
+              SDNode *Result = CurDAG->getMachineNode(Hexagon::A2_min, dl,
                                                       MVT::i32,
                                                       SDValue(SextNode, 0),
                                                       N1);
@@ -1297,11 +1297,11 @@ SDNode *HexagonDAGToDAGISel::SelectConstant(SDNode *N) {
                                           SDValue(IntRegTFR, 0));
 
       // not(Pd)
-      SDNode* NotPd = CurDAG->getMachineNode(Hexagon::NOT_p, dl, MVT::i1,
+      SDNode* NotPd = CurDAG->getMachineNode(Hexagon::C2_not, dl, MVT::i1,
                                              SDValue(Pd, 0));
 
       // xor(not(Pd))
-      Result = CurDAG->getMachineNode(Hexagon::XOR_pp, dl, MVT::i1,
+      Result = CurDAG->getMachineNode(Hexagon::C2_xor, dl, MVT::i1,
                                       SDValue(Pd, 0), SDValue(NotPd, 0));
 
       // We have just built:

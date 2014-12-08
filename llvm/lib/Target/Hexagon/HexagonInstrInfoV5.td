@@ -290,36 +290,36 @@ def : Pat<(i1 (setule (f64 DoubleRegs:$src1), (fpimm:$src2))),
 
 // ne.
 def : Pat<(i1 (setone (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (NOT_p (FCMPOEQ32_rr IntRegs:$src1, IntRegs:$src2)))>,
+      (i1 (C2_not (FCMPOEQ32_rr IntRegs:$src1, IntRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setone (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (NOT_p (FCMPOEQ64_rr DoubleRegs:$src1, DoubleRegs:$src2)))>,
+      (i1 (C2_not (FCMPOEQ64_rr DoubleRegs:$src1, DoubleRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (NOT_p (FCMPUEQ32_rr IntRegs:$src1, IntRegs:$src2)))>,
+      (i1 (C2_not (FCMPUEQ32_rr IntRegs:$src1, IntRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (NOT_p (FCMPUEQ64_rr DoubleRegs:$src1, DoubleRegs:$src2)))>,
+      (i1 (C2_not (FCMPUEQ64_rr DoubleRegs:$src1, DoubleRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setone (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (NOT_p (FCMPOEQ32_rr IntRegs:$src1, (f32 (TFRI_f fpimm:$src2)))))>,
+      (i1 (C2_not (FCMPOEQ32_rr IntRegs:$src1, (f32 (TFRI_f fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setone (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (NOT_p (FCMPOEQ64_rr DoubleRegs:$src1,
+      (i1 (C2_not (FCMPOEQ64_rr DoubleRegs:$src1,
                               (f64 (CONST64_Float_Real fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (NOT_p (FCMPUEQ32_rr IntRegs:$src1,  (f32 (TFRI_f fpimm:$src2)))))>,
+      (i1 (C2_not (FCMPUEQ32_rr IntRegs:$src1,  (f32 (TFRI_f fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (NOT_p (FCMPUEQ64_rr DoubleRegs:$src1,
+      (i1 (C2_not (FCMPUEQ64_rr DoubleRegs:$src1,
                               (f64 (CONST64_Float_Real fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 

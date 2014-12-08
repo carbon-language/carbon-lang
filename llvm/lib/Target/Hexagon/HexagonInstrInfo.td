@@ -1179,106 +1179,6 @@ def: Pat<(i64 (and I64:$Rs, I64:$Rt)), (A2_andp I64:$Rs, I64:$Rt)>;
 def: Pat<(i64 (or  I64:$Rs, I64:$Rt)), (A2_orp  I64:$Rs, I64:$Rt)>;
 def: Pat<(i64 (xor I64:$Rs, I64:$Rt)), (A2_xorp I64:$Rs, I64:$Rt)>;
 
-def ADD64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-               "$dst = add($src1, $src2)",
-               [(set (i64 DoubleRegs:$dst), (add (i64 DoubleRegs:$src1),
-                                                 (i64 DoubleRegs:$src2)))]>;
-
-// Logical operations.
-def AND_rr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-               "$dst = and($src1, $src2)",
-               [(set (i64 DoubleRegs:$dst), (and (i64 DoubleRegs:$src1),
-                                                 (i64 DoubleRegs:$src2)))]>;
-
-def OR_rr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                    DoubleRegs:$src2),
-              "$dst = or($src1, $src2)",
-              [(set (i64 DoubleRegs:$dst), (or (i64 DoubleRegs:$src1),
-                                               (i64 DoubleRegs:$src2)))]>;
-
-def XOR_rr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-               "$dst = xor($src1, $src2)",
-               [(set (i64 DoubleRegs:$dst), (xor (i64 DoubleRegs:$src1),
-                                                 (i64 DoubleRegs:$src2)))]>;
-
-// Maximum.
-def MAXw_rr : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-              "$dst = max($src2, $src1)",
-              [(set (i32 IntRegs:$dst),
-                    (i32 (select (i1 (setlt (i32 IntRegs:$src2),
-                                            (i32 IntRegs:$src1))),
-                                 (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>;
-
-def MAXUw_rr : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-              "$dst = maxu($src2, $src1)",
-              [(set (i32 IntRegs:$dst),
-                    (i32 (select (i1 (setult (i32 IntRegs:$src2),
-                                             (i32 IntRegs:$src1))),
-                                 (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>;
-
-def MAXd_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                    DoubleRegs:$src2),
-              "$dst = max($src2, $src1)",
-              [(set (i64 DoubleRegs:$dst),
-                    (i64 (select (i1 (setlt (i64 DoubleRegs:$src2),
-                                            (i64 DoubleRegs:$src1))),
-                                 (i64 DoubleRegs:$src1),
-                                 (i64 DoubleRegs:$src2))))]>;
-
-def MAXUd_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-              "$dst = maxu($src2, $src1)",
-              [(set (i64 DoubleRegs:$dst),
-                    (i64 (select (i1 (setult (i64 DoubleRegs:$src2),
-                                             (i64 DoubleRegs:$src1))),
-                                 (i64 DoubleRegs:$src1),
-                                 (i64 DoubleRegs:$src2))))]>;
-
-// Minimum.
-def MINw_rr : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-              "$dst = min($src2, $src1)",
-              [(set (i32 IntRegs:$dst),
-                    (i32 (select (i1 (setgt (i32 IntRegs:$src2),
-                                            (i32 IntRegs:$src1))),
-                                 (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>;
-
-def MINUw_rr : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-              "$dst = minu($src2, $src1)",
-              [(set (i32 IntRegs:$dst),
-                    (i32 (select (i1 (setugt (i32 IntRegs:$src2),
-                                             (i32 IntRegs:$src1))),
-                                 (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>;
-
-def MINd_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                    DoubleRegs:$src2),
-              "$dst = min($src2, $src1)",
-              [(set (i64 DoubleRegs:$dst),
-                    (i64 (select (i1 (setgt (i64 DoubleRegs:$src2),
-                                            (i64 DoubleRegs:$src1))),
-                                 (i64 DoubleRegs:$src1),
-                                 (i64 DoubleRegs:$src2))))]>;
-
-def MINUd_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-              "$dst = minu($src2, $src1)",
-              [(set (i64 DoubleRegs:$dst),
-                    (i64 (select (i1 (setugt (i64 DoubleRegs:$src2),
-                                             (i64 DoubleRegs:$src1))),
-                                 (i64 DoubleRegs:$src1),
-                                 (i64 DoubleRegs:$src2))))]>;
-
-// Subtract.
-def SUB64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-               "$dst = sub($src1, $src2)",
-               [(set (i64 DoubleRegs:$dst), (sub (i64 DoubleRegs:$src1),
-                                                 (i64 DoubleRegs:$src2)))]>;
-
-// Subtract halfword.
-
 //===----------------------------------------------------------------------===//
 // ALU64/ALU -
 //===----------------------------------------------------------------------===//
@@ -1393,29 +1293,6 @@ def C2_mask : SInst<(outs DoubleRegs:$Rd), (ins PredRegs:$Pt),
   let Inst{9-8} = Pt;
   let Inst{4-0} = Rd;
 }
-def AND_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1, PredRegs:$src2),
-             "$dst = and($src1, $src2)",
-             [(set (i1 PredRegs:$dst), (and (i1 PredRegs:$src1),
-                                            (i1 PredRegs:$src2)))]>;
-
-let hasSideEffects = 0 in
-def AND_pnotp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1,
-                                                 PredRegs:$src2),
-                "$dst = and($src1, !$src2)",
-                []>;
-
-def ANY_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1),
-             "$dst = any8($src1)",
-             []>;
-
-def ALL_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1),
-             "$dst = all8($src1)",
-             []>;
-
-def VITPACK_pp : SInst<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                 PredRegs:$src2),
-             "$dst = vitpack($src1, $src2)",
-             []>;
 
 def VALIGN_rrp : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
                                                     DoubleRegs:$src2,
@@ -1428,25 +1305,6 @@ def VSPLICE_rrp : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
                                                      PredRegs:$src3),
              "$dst = vspliceb($src1, $src2, $src3)",
              []>;
-
-def MASK_p : SInst<(outs DoubleRegs:$dst), (ins PredRegs:$src1),
-             "$dst = mask($src1)",
-             []>;
-
-def NOT_p : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1),
-             "$dst = not($src1)",
-             [(set (i1 PredRegs:$dst), (not (i1 PredRegs:$src1)))]>;
-
-def OR_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1, PredRegs:$src2),
-            "$dst = or($src1, $src2)",
-            [(set (i1 PredRegs:$dst), (or (i1 PredRegs:$src1),
-                                          (i1 PredRegs:$src2)))]>;
-
-def XOR_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1, PredRegs:$src2),
-             "$dst = xor($src1, $src2)",
-             [(set (i1 PredRegs:$dst), (xor (i1 PredRegs:$src1),
-                                            (i1 PredRegs:$src2)))]>;
-
 
 // User control register transfer.
 //===----------------------------------------------------------------------===//
@@ -2861,7 +2719,7 @@ def : Pat <(and (i32 IntRegs:$src1), 255),
 //     Add(p1, false) should never be produced,
 //     if it does, it got to be mapped to NOOP.
 def : Pat <(add (i1 PredRegs:$src1), -1),
-      (NOT_p (i1 PredRegs:$src1))>;
+      (C2_not (i1 PredRegs:$src1))>;
 
 // Map from p0 = pnot(p0); r0 = mux(p0, #i, #j) => r0 = mux(p0, #j, #i).
 def : Pat <(select (not (i1 PredRegs:$src1)), s8ImmPred:$src2, s8ImmPred:$src3),
@@ -2887,7 +2745,7 @@ def : Pat <(brcond (not (i1 PredRegs:$src1)), bb:$offset),
 
 // Map from p2 = pnot(p2); p1 = and(p0, p2) => p1 = and(p0, !p2).
 def : Pat <(and (i1 PredRegs:$src1), (not (i1 PredRegs:$src2))),
-      (i1 (AND_pnotp (i1 PredRegs:$src1), (i1 PredRegs:$src2)))>;
+      (i1 (C2_andn (i1 PredRegs:$src1), (i1 PredRegs:$src2)))>;
 
 
 let AddedComplexity = 100 in
@@ -2977,8 +2835,8 @@ def : Pat <(select (i1 PredRegs:$src1), (i64 DoubleRegs:$src2),
 // From LegalizeDAG.cpp: (B1 ? B2 : B3) <=> (B1 & B2)|(!B1&B3).
 def : Pat <(select (i1 PredRegs:$src1), (i1 PredRegs:$src2),
                    (i1 PredRegs:$src3)),
-      (OR_pp (AND_pp (i1 PredRegs:$src1), (i1 PredRegs:$src2)),
-             (AND_pp (NOT_p (i1 PredRegs:$src1)), (i1 PredRegs:$src3)))>;
+      (C2_or (C2_and (i1 PredRegs:$src1), (i1 PredRegs:$src2)),
+             (C2_and (C2_not (i1 PredRegs:$src1)), (i1 PredRegs:$src3)))>;
 
 // Map Pd = load(addr) -> Rs = load(addr); Pd = Rs.
 def : Pat<(i1 (load ADDRriS11_2:$addr)),
@@ -3034,41 +2892,41 @@ def : Pat<(i64 (anyext (i32 IntRegs:$src1))),
 // Map cmple -> cmpgt.
 // rs <= rt -> !(rs > rt).
 def : Pat<(i1 (setle (i32 IntRegs:$src1), s10ExtPred:$src2)),
-      (i1 (NOT_p (C2_cmpgti (i32 IntRegs:$src1), s10ExtPred:$src2)))>;
+      (i1 (C2_not (C2_cmpgti (i32 IntRegs:$src1), s10ExtPred:$src2)))>;
 
 // rs <= rt -> !(rs > rt).
 def : Pat<(i1 (setle (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (NOT_p (C2_cmpgt (i32 IntRegs:$src1), (i32 IntRegs:$src2))))>;
+      (i1 (C2_not (C2_cmpgt (i32 IntRegs:$src1), (i32 IntRegs:$src2))))>;
 
 // Rss <= Rtt -> !(Rss > Rtt).
 def : Pat<(i1 (setle (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (C2_cmpgtp (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
+      (i1 (C2_not (C2_cmpgtp (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
 
 // Map cmpne -> cmpeq.
 // Hexagon_TODO: We should improve on this.
 // rs != rt -> !(rs == rt).
 def : Pat <(i1 (setne (i32 IntRegs:$src1), s10ExtPred:$src2)),
-      (i1 (NOT_p(i1 (C2_cmpeqi (i32 IntRegs:$src1), s10ExtPred:$src2))))>;
+      (i1 (C2_not(i1 (C2_cmpeqi (i32 IntRegs:$src1), s10ExtPred:$src2))))>;
 
 // Map cmpne(Rs) -> !cmpeqe(Rs).
 // rs != rt -> !(rs == rt).
 def : Pat <(i1 (setne (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (NOT_p (i1 (C2_cmpeq (i32 IntRegs:$src1), (i32 IntRegs:$src2)))))>;
+      (i1 (C2_not (i1 (C2_cmpeq (i32 IntRegs:$src1), (i32 IntRegs:$src2)))))>;
 
 // Convert setne back to xor for hexagon since we compute w/ pred registers.
 def : Pat <(i1 (setne (i1 PredRegs:$src1), (i1 PredRegs:$src2))),
-      (i1 (XOR_pp (i1 PredRegs:$src1), (i1 PredRegs:$src2)))>;
+      (i1 (C2_xor (i1 PredRegs:$src1), (i1 PredRegs:$src2)))>;
 
 // Map cmpne(Rss) -> !cmpew(Rss).
 // rs != rt -> !(rs == rt).
 def : Pat <(i1 (setne (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (i1 (C2_cmpeqp (i64 DoubleRegs:$src1),
+      (i1 (C2_not (i1 (C2_cmpeqp (i64 DoubleRegs:$src1),
                                      (i64 DoubleRegs:$src2)))))>;
 
 // Map cmpge(Rs, Rt) -> !(cmpgt(Rs, Rt).
 // rs >= rt -> !(rt > rs).
 def : Pat <(i1 (setge (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (NOT_p (i1 (C2_cmpgt (i32 IntRegs:$src2), (i32 IntRegs:$src1)))))>;
+      (i1 (C2_not (i1 (C2_cmpgt (i32 IntRegs:$src2), (i32 IntRegs:$src1)))))>;
 
 // cmpge(Rs, Imm) -> cmpgt(Rs, Imm-1)
 def : Pat <(i1 (setge (i32 IntRegs:$src1), s8ExtPred:$src2)),
@@ -3077,14 +2935,14 @@ def : Pat <(i1 (setge (i32 IntRegs:$src1), s8ExtPred:$src2)),
 // Map cmpge(Rss, Rtt) -> !cmpgt(Rtt, Rss).
 // rss >= rtt -> !(rtt > rss).
 def : Pat <(i1 (setge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (i1 (C2_cmpgtp (i64 DoubleRegs:$src2),
+      (i1 (C2_not (i1 (C2_cmpgtp (i64 DoubleRegs:$src2),
                                 (i64 DoubleRegs:$src1)))))>;
 
 // Map cmplt(Rs, Imm) -> !cmpge(Rs, Imm).
 // !cmpge(Rs, Imm) -> !cmpgt(Rs, Imm-1).
 // rs < rt -> !(rs >= rt).
 def : Pat <(i1 (setlt (i32 IntRegs:$src1), s8ExtPred:$src2)),
-      (i1 (NOT_p (C2_cmpgti (i32 IntRegs:$src1), (DEC_CONST_SIGNED s8ExtPred:$src2))))>;
+      (i1 (C2_not (C2_cmpgti (i32 IntRegs:$src1), (DEC_CONST_SIGNED s8ExtPred:$src2))))>;
 
 // Map cmplt(Rs, Rt) -> cmpgt(Rt, Rs).
 // rs < rt -> rt > rs.
@@ -3123,22 +2981,22 @@ def : Pat <(i1 (setugt (i32 IntRegs:$src1), u9ExtPred:$src2)),
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).
 def : Pat <(i1 (setuge (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (NOT_p (C2_cmpgtu (i32 IntRegs:$src2), (i32 IntRegs:$src1))))>;
+      (i1 (C2_not (C2_cmpgtu (i32 IntRegs:$src2), (i32 IntRegs:$src1))))>;
 
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).
 def : Pat <(i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1))))>;
+      (i1 (C2_not (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1))))>;
 
 // Map from cmpleu(Rs, Rt) -> !cmpgtu(Rs, Rt).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
 def : Pat <(i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (NOT_p (C2_cmpgtu (i32 IntRegs:$src1), (i32 IntRegs:$src2))))>;
+      (i1 (C2_not (C2_cmpgtu (i32 IntRegs:$src1), (i32 IntRegs:$src2))))>;
 
 // Map from cmpleu(Rss, Rtt) -> !cmpgtu(Rss, Rtt-1).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
 def : Pat <(i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (C2_cmpgtup (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
+      (i1 (C2_not (C2_cmpgtup (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
 
 // Sign extends.
 // i1 -> i32
