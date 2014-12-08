@@ -432,7 +432,7 @@ CMICmdCmdStackListArguments::Execute(void)
     {
         lldb::SBFrame frame = thread.GetFrameAtIndex(i);
         CMICmnMIValueList miValueList(true);
-        const MIuint maskVarTypes = 0x1000;
+        const MIuint maskVarTypes = CMICmnLLDBDebugSessionInfo::eVariableType_Arguments;
         if (!rSessionInfo.MIResponseFormVariableInfo3(frame, maskVarTypes, miValueList))
             return MIstatus::failure;
         const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%d", i));
@@ -600,7 +600,7 @@ CMICmdCmdStackListLocals::Execute(void)
     MIunused(nFrames);
     lldb::SBFrame frame = (nFrame != UINT64_MAX) ? thread.GetFrameAtIndex(nFrame) : thread.GetSelectedFrame();
     CMICmnMIValueList miValueList(true);
-    const MIuint maskVarTypes = 0x0110;
+    const MIuint maskVarTypes = CMICmnLLDBDebugSessionInfo::eVariableType_Locals;
     if (!rSessionInfo.MIResponseFormVariableInfo(frame, maskVarTypes, miValueList))
         return MIstatus::failure;
 

@@ -103,6 +103,19 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
         MIuint m_nBrkPtThreadId;        // Restrict the breakpoint to the specified thread-id
     };
 
+    // Enumerations:
+  public:
+    //++ ===================================================================
+    // Details: The type of variable used by MIResponseFormVariableInfo family functions.
+    //--
+    enum VariableType_e
+    {
+        eVariableType_InScope   = (1u << 0), // In scope only.
+        eVariableType_Statics   = (1u << 1), // Statics.
+        eVariableType_Locals    = (1u << 2), // Locals.
+        eVariableType_Arguments = (1u << 3)  // Arguments.
+    };
+
     // Typedefs:
   public:
     typedef std::vector<uint32_t> VecActiveThreadId_t;

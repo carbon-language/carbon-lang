@@ -1077,7 +1077,7 @@ CMICmnLLDBDebuggerHandleEvents::MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, c
     if (bOk)
     {
         CMICmnMIValueList miValueList(true);
-        const MIuint maskVarTypes = 0x1000;
+        const MIuint maskVarTypes = CMICmnLLDBDebugSessionInfo::eVariableType_Arguments;
         bOk = rSession.MIResponseFormVariableInfo2(frame, maskVarTypes, miValueList);
 
         CMICmnMIValueTuple miValueTuple;
@@ -1153,7 +1153,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
 
     // Function args
     CMICmnMIValueList miValueList(true);
-    const MIuint maskVarTypes = 0x1000;
+    const MIuint maskVarTypes = CMICmnLLDBDebugSessionInfo::eVariableType_Arguments;
     if (!rSession.MIResponseFormVariableInfo2(frame, maskVarTypes, miValueList))
         return MIstatus::failure;
     CMICmnMIValueTuple miValueTuple;

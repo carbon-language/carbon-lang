@@ -20,6 +20,7 @@ int main (int argc, char const *argv[])
     printf("argc=%d\n", argc);
     a = a_MyFunction();
     b = b_MyFunction();
+    //BP_localstest
     if (doloop)
         infloop();
     if (argc > 1 && *argv[1] == 'l') {

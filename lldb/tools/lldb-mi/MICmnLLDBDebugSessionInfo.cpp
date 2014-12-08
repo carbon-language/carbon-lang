@@ -254,7 +254,7 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MI
 
         // Function args
         CMICmnMIValueList miValueList(true);
-        const MIuint maskVarTypes = 0x1000;
+        const MIuint maskVarTypes = eVariableType_Arguments;
         if (!MIResponseFormVariableInfo(frame, maskVarTypes, miValueList))
             return MIstatus::failure;
 
@@ -327,7 +327,7 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames2(const SMICmdData &vCmdData, const M
 
         // Function args
         CMICmnMIValueList miValueList(true);
-        const MIuint maskVarTypes = 0x1000;
+        const MIuint maskVarTypes = eVariableType_Arguments;
         if (!MIResponseFormVariableInfo2(frame, maskVarTypes, miValueList))
             return MIstatus::failure;
 
@@ -647,10 +647,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo2(const SMICmdData &vCmdData
 //          tuple type object past in.
 // Type:    Method.
 // Args:    vrFrame         - (R)   LLDB thread object.
-//          vMaskVarTypes   - (R)   0x1000 = arguments,
-//                                  0x0100 = locals,
-//                                  0x0010 = statics,
-//                                  0x0001 = in scope only.
+//          vMaskVarTypes   - (R)   Construed according to VariableType_e.
 //          vwrMIValueList  - (W)   MI value list object.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
@@ -663,10 +660,10 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo2(const lldb::SBFrame &vrF
     bool bOk = MIstatus::success;
     lldb::SBFrame &rFrame = const_cast<lldb::SBFrame &>(vrFrame);
 
-    const bool bArg = (vMaskVarTypes & 0x1000);
-    const bool bLocals = (vMaskVarTypes & 0x0100);
-    const bool bStatics = (vMaskVarTypes & 0x0010);
-    const bool bInScopeOnly = (vMaskVarTypes & 0x0001);
+    const bool bArg = (vMaskVarTypes & eVariableType_Arguments);
+    const bool bLocals = (vMaskVarTypes & eVariableType_Locals);
+    const bool bStatics = (vMaskVarTypes & eVariableType_Statics);
+    const bool bInScopeOnly = (vMaskVarTypes & eVariableType_InScope);
     lldb::SBValueList listArg = rFrame.GetVariables(bArg, bLocals, bStatics, bInScopeOnly);
     const MIuint nArgs = listArg.GetSize();
     for (MIuint i = 0; bOk && (i < nArgs); i++)
@@ -690,10 +687,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo2(const lldb::SBFrame &vrF
 //          tuple type object past in.
 // Type:    Method.
 // Args:    vrFrame         - (R)   LLDB thread object.
-//          vMaskVarTypes   - (R)   0x1000 = arguments,
-//                                  0x0100 = locals,
-//                                  0x0010 = statics,
-//                                  0x0001 = in scope only.
+//          vMaskVarTypes   - (R)   Construed according to VariableType_e.
 //          vwrMIValueList  - (W)   MI value list object.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
@@ -706,10 +700,10 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo(const lldb::SBFrame &vrFr
     bool bOk = MIstatus::success;
     lldb::SBFrame &rFrame = const_cast<lldb::SBFrame &>(vrFrame);
 
-    const bool bArg = (vMaskVarTypes & 0x1000);
-    const bool bLocals = (vMaskVarTypes & 0x0100);
-    const bool bStatics = (vMaskVarTypes & 0x0010);
-    const bool bInScopeOnly = (vMaskVarTypes & 0x0001);
+    const bool bArg = (vMaskVarTypes & eVariableType_Arguments);
+    const bool bLocals = (vMaskVarTypes & eVariableType_Locals);
+    const bool bStatics = (vMaskVarTypes & eVariableType_Statics);
+    const bool bInScopeOnly = (vMaskVarTypes & eVariableType_InScope);
     const MIuint nMaxRecusiveDepth = 10;
     MIuint nCurrentRecursiveDepth = 0;
     lldb::SBValueList listArg = rFrame.GetVariables(bArg, bLocals, bStatics, bInScopeOnly);
@@ -730,10 +724,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo(const lldb::SBFrame &vrFr
 //          tuple type object past in.
 // Type:    Method.
 // Args:    vrFrame         - (R)   LLDB thread object.
-//          vMaskVarTypes   - (R)   0x1000 = arguments,
-//                                  0x0100 = locals,
-//                                  0x0010 = statics,
-//                                  0x0001 = in scope only.
+//          vMaskVarTypes   - (R)   Construed according to VariableType_e.
 //          vwrMIValueList  - (W)   MI value list object.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
@@ -746,10 +737,10 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo3(const lldb::SBFrame &vrF
     bool bOk = MIstatus::success;
     lldb::SBFrame &rFrame = const_cast<lldb::SBFrame &>(vrFrame);
 
-    const bool bArg = (vMaskVarTypes & 0x1000);
-    const bool bLocals = (vMaskVarTypes & 0x0100);
-    const bool bStatics = (vMaskVarTypes & 0x0010);
-    const bool bInScopeOnly = (vMaskVarTypes & 0x0001);
+    const bool bArg = (vMaskVarTypes & eVariableType_Arguments);
+    const bool bLocals = (vMaskVarTypes & eVariableType_Locals);
+    const bool bStatics = (vMaskVarTypes & eVariableType_Statics);
+    const bool bInScopeOnly = (vMaskVarTypes & eVariableType_InScope);
     const MIuint nMaxRecusiveDepth = 10;
     MIuint nCurrentRecursiveDepth = 0;
     lldb::SBValueList listArg = rFrame.GetVariables(bArg, bLocals, bStatics, bInScopeOnly);
