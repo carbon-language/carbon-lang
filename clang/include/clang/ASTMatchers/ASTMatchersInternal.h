@@ -44,6 +44,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/VariadicFunction.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -1618,6 +1619,23 @@ public:
 
 private:
   const Matcher<InnerTBase> InnerMatcher;
+};
+
+/// \brief A simple memoizer of T(*)() functions.
+///
+/// It will call the passed 'Func' template parameter at most once.
+/// Used to support AST_MATCHER_FUNCTION() macro.
+template <typename Matcher, Matcher (*Func)()> class MemoizedMatcher {
+  struct Wrapper {
+    Wrapper() : M(Func()) {}
+    Matcher M;
+  };
+
+public:
+  static const Matcher &getInstance() {
+    static llvm::ManagedStatic<Wrapper> Instance;
+    return Instance->M;
+  }
 };
 
 // Define the create() method out of line to silence a GCC warning about
