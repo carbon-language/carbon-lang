@@ -1,4 +1,10 @@
-; RUN: llvm-link %s %p/Inputs/comdat9.ll -S -o - | FileCheck %s
+; RUN: llvm-link %s -S -o - | FileCheck %s
+
+$c = comdat any
+@a = alias void ()* @f
+define internal void @f() comdat $c {
+  ret void
+}
 
 ; CHECK: $c = comdat any
 ; CHECK: @a = alias void ()* @f
