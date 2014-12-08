@@ -492,7 +492,7 @@ private:
 
   void linkAppendingVarInit(const AppendingVarInfo &AVI);
   void linkGlobalInits();
-  bool linkFunctionBody(Function *Dst, Function *Src);
+  bool linkFunctionBody(Function &Src);
   void linkAliasBodies();
   void linkNamedMDNodes();
 };
@@ -1169,27 +1169,28 @@ void ModuleLinker::linkGlobalInits() {
 /// Copy the source function over into the dest function and fix up references
 /// to values. At this point we know that Dest is an external function, and
 /// that Src is not.
-bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
-  assert(Src && Dst && Dst->isDeclaration() && !Src->isDeclaration());
+bool ModuleLinker::linkFunctionBody(Function &Src) {
+  Function *Dst = cast<Function>(ValueMap[&Src]);
+  assert(Dst && Dst->isDeclaration() && !Src.isDeclaration());
 
   // Materialize if needed.
-  if (std::error_code EC = Src->materialize())
+  if (std::error_code EC = Src.materialize())
     return emitError(EC.message());
 
   // Link in the prefix data.
-  if (Src->hasPrefixData())
-    Dst->setPrefixData(MapValue(Src->getPrefixData(), ValueMap, RF_None,
+  if (Src.hasPrefixData())
+    Dst->setPrefixData(MapValue(Src.getPrefixData(), ValueMap, RF_None,
                                &TypeMap, &ValMaterializer));
 
   // Link in the prologue data.
-  if (Src->hasPrologueData())
-    Dst->setPrologueData(MapValue(Src->getPrologueData(), ValueMap, RF_None,
+  if (Src.hasPrologueData())
+    Dst->setPrologueData(MapValue(Src.getPrologueData(), ValueMap, RF_None,
                                  &TypeMap, &ValMaterializer));
 
 
   // Go through and convert function arguments over, remembering the mapping.
   Function::arg_iterator DI = Dst->arg_begin();
-  for (Argument &Arg : Src->args()) {
+  for (Argument &Arg : Src.args()) {
     DI->setName(Arg.getName());  // Copy the name over.
 
     // Add a mapping to our mapping.
@@ -1198,7 +1199,7 @@ bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   }
 
   // Splice the body of the source function into the dest function.
-  Dst->getBasicBlockList().splice(Dst->end(), Src->getBasicBlockList());
+  Dst->getBasicBlockList().splice(Dst->end(), Src.getBasicBlockList());
 
   // At this point, all of the instructions and values of the function are now
   // copied over.  The only problem is that they are still referencing values in
@@ -1210,10 +1211,10 @@ bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
                        &ValMaterializer);
 
   // There is no need to map the arguments anymore.
-  for (Argument &Arg : Src->args())
+  for (Argument &Arg : Src.args())
     ValueMap.erase(&Arg);
 
-  Src->Dematerialize();
+  Src.Dematerialize();
   return false;
 }
 
@@ -1492,8 +1493,7 @@ bool ModuleLinker::run() {
     if (DoNotLinkFromSource.count(&SF))
       continue;
 
-    Function *DF = cast<Function>(ValueMap[&SF]);
-    if (linkFunctionBody(DF, &SF))
+    if (linkFunctionBody(SF))
       return true;
   }
 
@@ -1518,8 +1518,7 @@ bool ModuleLinker::run() {
     Function *SF = LazilyLinkFunctions.back();
     LazilyLinkFunctions.pop_back();
 
-    Function *DF = cast<Function>(ValueMap[SF]);
-    if (linkFunctionBody(DF, SF))
+    if (linkFunctionBody(*SF))
       return true;
   }
 
