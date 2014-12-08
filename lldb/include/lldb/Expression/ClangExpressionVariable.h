@@ -65,6 +65,11 @@ class ClangExpressionVariable
 public:
     ClangExpressionVariable(ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size);
 
+    ClangExpressionVariable (ExecutionContextScope *exe_scope,
+                             Value &value,
+                             const ConstString &name,
+                             uint16_t flags = EVNone);
+    
     ClangExpressionVariable(const lldb::ValueObjectSP &valobj_sp);
 
     //----------------------------------------------------------------------

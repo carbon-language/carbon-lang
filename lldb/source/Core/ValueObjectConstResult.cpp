@@ -122,9 +122,10 @@ ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
 ValueObjectSP
 ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
                                 Value &value,
-                                const ConstString &name)
+                                const ConstString &name,
+                                Module *module)
 {
-    return (new ValueObjectConstResult (exe_scope, value, name))->GetSP();
+    return (new ValueObjectConstResult (exe_scope, value, name, module))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
@@ -222,15 +223,18 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
                                                 const Value &value,
-                                                const ConstString &name) :
+                                                const ConstString &name,
+                                                Module *module) :
     ValueObject (exe_scope),
     m_type_name (),
     m_byte_size (0),
     m_impl(this)
 {
     m_value = value;
-    m_value.GetData(m_data);
     m_name = name;
+    ExecutionContext exe_ctx;
+    exe_scope->CalculateExecutionContext(exe_ctx);
+    m_error = m_value.GetValueAsData(&exe_ctx, m_data, 0, module);
 }
 
 ValueObjectConstResult::~ValueObjectConstResult()

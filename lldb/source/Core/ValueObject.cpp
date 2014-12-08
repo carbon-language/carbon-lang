@@ -37,6 +37,9 @@
 #include "lldb/DataFormatters/StringPrinter.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 
+#include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
+
 #include "lldb/Host/Endian.h"
 
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -4179,4 +4182,27 @@ bool
 ValueObject::CanProvideValue ()
 {
     return (false == GetClangType().IsAggregateType());
+}
+
+ValueObjectSP
+ValueObject::Persist ()
+{
+    if (!UpdateValueIfNeeded())
+        return nullptr;
+    
+    TargetSP target_sp(GetTargetSP());
+    if (!target_sp)
+        return nullptr;
+    
+    ConstString name(target_sp->GetPersistentVariables().GetNextPersistentVariableName());
+    
+    ClangExpressionVariableSP clang_var_sp(new ClangExpressionVariable(target_sp.get(), GetValue(), name));
+    if (clang_var_sp)
+    {
+        clang_var_sp->m_live_sp = clang_var_sp->m_frozen_sp;
+        clang_var_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
+        target_sp->GetPersistentVariables().AddVariable(clang_var_sp);
+    }
+    
+    return clang_var_sp->GetValueObject();
 }

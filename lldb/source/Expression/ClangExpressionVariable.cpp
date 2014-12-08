@@ -28,6 +28,17 @@ ClangExpressionVariable::ClangExpressionVariable(ExecutionContextScope *exe_scop
 {
 }
 
+ClangExpressionVariable::ClangExpressionVariable (ExecutionContextScope *exe_scope,
+                                                  Value &value,
+                                                  const ConstString &name,
+                                                  uint16_t flags) :
+    m_parser_vars(),
+    m_jit_vars (),
+    m_flags (flags),
+    m_frozen_sp (ValueObjectConstResult::Create (exe_scope, value, name))
+{
+}
+
 ClangExpressionVariable::ClangExpressionVariable (const lldb::ValueObjectSP &valobj_sp) :
     m_parser_vars(),
     m_jit_vars (),

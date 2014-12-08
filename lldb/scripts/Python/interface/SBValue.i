@@ -413,6 +413,9 @@ public:
 	lldb::SBAddress
 	GetAddress();
     
+    lldb::SBValue
+    Persist ();
+             
     %feature("docstring", "Returns an expression path for this value."
     ) GetExpressionPath;
     bool

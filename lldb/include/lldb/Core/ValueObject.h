@@ -814,6 +814,9 @@ public:
                     const DumpValueObjectOptions& options);
 
 
+    lldb::ValueObjectSP
+    Persist ();
+    
     // returns true if this is a char* or a char[]
     // if it is a char* and check_pointer is true,
     // it also checks that the pointer is valid

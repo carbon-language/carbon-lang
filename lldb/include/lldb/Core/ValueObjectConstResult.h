@@ -59,7 +59,8 @@ public:
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
             Value &value,
-            const ConstString &name);
+            const ConstString &name,
+            Module* module = nullptr);
 
     // When an expression fails to evaluate, we return an error
     static lldb::ValueObjectSP
@@ -172,7 +173,8 @@ private:
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             const Value &value,
-                            const ConstString &name);
+                            const ConstString &name,
+                            Module* module = nullptr);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             const Error& error);

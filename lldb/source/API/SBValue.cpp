@@ -1892,3 +1892,16 @@ SBValue::WatchPointee (bool resolve_location, bool read, bool write, SBError &er
         sb_watchpoint = Dereference().Watch (resolve_location, read, write, error);
     return sb_watchpoint;
 }
+
+lldb::SBValue
+SBValue::Persist ()
+{
+    ValueLocker locker;
+    lldb::ValueObjectSP value_sp(GetSP(locker));
+    SBValue persisted_sb;
+    if (value_sp)
+    {
+        persisted_sb.SetSP(value_sp->Persist());
+    }
+    return persisted_sb;
+}
