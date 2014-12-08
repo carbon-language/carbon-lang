@@ -1189,12 +1189,12 @@ bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
 
   // Go through and convert function arguments over, remembering the mapping.
   Function::arg_iterator DI = Dst->arg_begin();
-  for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();
-       I != E; ++I, ++DI) {
-    DI->setName(I->getName());  // Copy the name over.
+  for (Argument &Arg : Src->args()) {
+    DI->setName(Arg.getName());  // Copy the name over.
 
     // Add a mapping to our mapping.
-    ValueMap[I] = DI;
+    ValueMap[&Arg] = DI;
+    ++DI;
   }
 
   // Splice the body of the source function into the dest function.
@@ -1204,15 +1204,14 @@ bool ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   // copied over.  The only problem is that they are still referencing values in
   // the Source function as operands.  Loop through all of the operands of the
   // functions and patch them up to point to the local versions.
-  for (Function::iterator BB = Dst->begin(), BE = Dst->end(); BB != BE; ++BB)
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      RemapInstruction(I, ValueMap, RF_IgnoreMissingEntries, &TypeMap,
+  for (BasicBlock &BB : *Dst)
+    for (Instruction &I : BB)
+      RemapInstruction(&I, ValueMap, RF_IgnoreMissingEntries, &TypeMap,
                        &ValMaterializer);
 
   // There is no need to map the arguments anymore.
-  for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();
-       I != E; ++I)
-    ValueMap.erase(I);
+  for (Argument &Arg : Src->args())
+    ValueMap.erase(&Arg);
 
   Src->Dematerialize();
   return false;
