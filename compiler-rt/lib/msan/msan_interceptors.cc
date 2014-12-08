@@ -400,55 +400,63 @@ INTERCEPTOR(char *, strncat, char *dest, const char *src, SIZE_T n) {  // NOLINT
   __msan_unpoison(endptr, sizeof(*endptr));         \
   return res;
 
-#define INTERCEPTOR_STRTO(ret_type, func)                        \
-  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr) { \
-    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr);        \
+#define INTERCEPTOR_STRTO(ret_type, func, char_type)                       \
+  INTERCEPTOR(ret_type, func, const char_type *nptr, char_type **endptr) { \
+    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr);                  \
   }
 
-#define INTERCEPTOR_STRTO_BASE(ret_type, func)                             \
-  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr, int base) { \
-    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, base);            \
+#define INTERCEPTOR_STRTO_BASE(ret_type, func, char_type)                \
+  INTERCEPTOR(ret_type, func, const char_type *nptr, char_type **endptr, \
+              int base) {                                                \
+    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, base);          \
   }
 
-#define INTERCEPTOR_STRTO_LOC(ret_type, func)                               \
-  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr, void *loc) { \
-    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, loc);              \
-  }
-
-#define INTERCEPTOR_STRTO_BASE_LOC(ret_type, func)                       \
-  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr, int base, \
+#define INTERCEPTOR_STRTO_LOC(ret_type, func, char_type)                 \
+  INTERCEPTOR(ret_type, func, const char_type *nptr, char_type **endptr, \
               void *loc) {                                               \
+    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, loc);           \
+  }
+
+#define INTERCEPTOR_STRTO_BASE_LOC(ret_type, func, char_type)            \
+  INTERCEPTOR(ret_type, func, const char_type *nptr, char_type **endptr, \
+              int base, void *loc) {                                     \
     INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, base, loc);     \
   }
 
-INTERCEPTOR_STRTO(double, strtod)                                    // NOLINT
-INTERCEPTOR_STRTO(float, strtof)                                     // NOLINT
-INTERCEPTOR_STRTO(long double, strtold)                              // NOLINT
-INTERCEPTOR_STRTO_BASE(long, strtol)                                 // NOLINT
-INTERCEPTOR_STRTO_BASE(long long, strtoll)                           // NOLINT
-INTERCEPTOR_STRTO_BASE(unsigned long, strtoul)                       // NOLINT
-INTERCEPTOR_STRTO_BASE(unsigned long long, strtoull)                 // NOLINT
-INTERCEPTOR_STRTO_LOC(double, strtod_l)                              // NOLINT
-INTERCEPTOR_STRTO_LOC(double, __strtod_l)                            // NOLINT
-INTERCEPTOR_STRTO_LOC(double, __strtod_internal)                     // NOLINT
-INTERCEPTOR_STRTO_LOC(float, strtof_l)                               // NOLINT
-INTERCEPTOR_STRTO_LOC(float, __strtof_l)                             // NOLINT
-INTERCEPTOR_STRTO_LOC(float, __strtof_internal)                      // NOLINT
-INTERCEPTOR_STRTO_LOC(long double, strtold_l)                        // NOLINT
-INTERCEPTOR_STRTO_LOC(long double, __strtold_l)                      // NOLINT
-INTERCEPTOR_STRTO_LOC(long double, __strtold_internal)               // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(long, strtol_l)                           // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(long, __strtol_l)                         // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(long, __strtol_internal)                  // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(long long, strtoll_l)                     // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(long long, __strtoll_l)                   // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(long long, __strtoll_internal)            // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(unsigned long, strtoul_l)                 // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(unsigned long, __strtoul_l)               // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(unsigned long, __strtoul_internal)        // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(unsigned long long, strtoull_l)           // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(unsigned long long, __strtoull_l)         // NOLINT
-INTERCEPTOR_STRTO_BASE_LOC(unsigned long long, __strtoull_internal)  // NOLINT
+#define INTERCEPTORS_STRTO(ret_type, func, char_type)      \
+  INTERCEPTOR_STRTO(ret_type, func, char_type)             \
+  INTERCEPTOR_STRTO_LOC(ret_type, func##_l, char_type)     \
+  INTERCEPTOR_STRTO_LOC(ret_type, __##func##_l, char_type) \
+  INTERCEPTOR_STRTO_LOC(ret_type, __##func##_internal, char_type)
+
+#define INTERCEPTORS_STRTO_BASE(ret_type, func, char_type)      \
+  INTERCEPTOR_STRTO_BASE(ret_type, func, char_type)             \
+  INTERCEPTOR_STRTO_BASE_LOC(ret_type, func##_l, char_type)     \
+  INTERCEPTOR_STRTO_BASE_LOC(ret_type, __##func##_l, char_type) \
+  INTERCEPTOR_STRTO_BASE_LOC(ret_type, __##func##_internal, char_type)
+
+INTERCEPTORS_STRTO(double, strtod, char)                     // NOLINT
+INTERCEPTORS_STRTO(float, strtof, char)                      // NOLINT
+INTERCEPTORS_STRTO(long double, strtold, char)               // NOLINT
+INTERCEPTORS_STRTO_BASE(long, strtol, char)                  // NOLINT
+INTERCEPTORS_STRTO_BASE(long long, strtoll, char)            // NOLINT
+INTERCEPTORS_STRTO_BASE(unsigned long, strtoul, char)        // NOLINT
+INTERCEPTORS_STRTO_BASE(unsigned long long, strtoull, char)  // NOLINT
+
+INTERCEPTORS_STRTO(double, wcstod, wchar_t)                     // NOLINT
+INTERCEPTORS_STRTO(float, wcstof, wchar_t)                      // NOLINT
+INTERCEPTORS_STRTO(long double, wcstold, wchar_t)               // NOLINT
+INTERCEPTORS_STRTO_BASE(long, wcstol, wchar_t)                  // NOLINT
+INTERCEPTORS_STRTO_BASE(long long, wcstoll, wchar_t)            // NOLINT
+INTERCEPTORS_STRTO_BASE(unsigned long, wcstoul, wchar_t)        // NOLINT
+INTERCEPTORS_STRTO_BASE(unsigned long long, wcstoull, wchar_t)  // NOLINT
+
+#define INTERCEPT_STRTO(func) \
+  INTERCEPT_FUNCTION(func); \
+  INTERCEPT_FUNCTION(func##_l); \
+  INTERCEPT_FUNCTION(__##func##_l); \
+  INTERCEPT_FUNCTION(__##func##_internal);
+
 
 // FIXME: support *wprintf in common format interceptors.
 INTERCEPTOR(int, vswprintf, void *str, uptr size, void *format, va_list ap) {
@@ -608,13 +616,6 @@ INTERCEPTOR(wchar_t *, wmemmove, wchar_t *dest, const wchar_t *src, SIZE_T n) {
 INTERCEPTOR(int, wcscmp, const wchar_t *s1, const wchar_t *s2) {
   ENSURE_MSAN_INITED();
   int res = REAL(wcscmp)(s1, s2);
-  return res;
-}
-
-INTERCEPTOR(double, wcstod, const wchar_t *nptr, wchar_t **endptr) {
-  ENSURE_MSAN_INITED();
-  double res = REAL(wcstod)(nptr, endptr);
-  __msan_unpoison(endptr, sizeof(*endptr));
   return res;
 }
 
@@ -1580,34 +1581,20 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(gcvt);
   INTERCEPT_FUNCTION(strcat);  // NOLINT
   INTERCEPT_FUNCTION(strncat);  // NOLINT
-  INTERCEPT_FUNCTION(strtod);
-  INTERCEPT_FUNCTION(strtof);
-  INTERCEPT_FUNCTION(strtold);
-  INTERCEPT_FUNCTION(strtol);
-  INTERCEPT_FUNCTION(strtoll);
-  INTERCEPT_FUNCTION(strtoul);
-  INTERCEPT_FUNCTION(strtoull);
-  INTERCEPT_FUNCTION(strtod_l);
-  INTERCEPT_FUNCTION(__strtod_l);
-  INTERCEPT_FUNCTION(__strtod_internal);
-  INTERCEPT_FUNCTION(strtof_l);
-  INTERCEPT_FUNCTION(__strtof_l);
-  INTERCEPT_FUNCTION(__strtof_internal);
-  INTERCEPT_FUNCTION(strtold_l);
-  INTERCEPT_FUNCTION(__strtold_l);
-  INTERCEPT_FUNCTION(__strtold_internal);
-  INTERCEPT_FUNCTION(strtol_l);
-  INTERCEPT_FUNCTION(__strtol_l);
-  INTERCEPT_FUNCTION(__strtol_internal);
-  INTERCEPT_FUNCTION(strtoll_l);
-  INTERCEPT_FUNCTION(__strtoll_l);
-  INTERCEPT_FUNCTION(__strtoll_internal);
-  INTERCEPT_FUNCTION(strtoul_l);
-  INTERCEPT_FUNCTION(__strtoul_l);
-  INTERCEPT_FUNCTION(__strtoul_internal);
-  INTERCEPT_FUNCTION(strtoull_l);
-  INTERCEPT_FUNCTION(__strtoull_l);
-  INTERCEPT_FUNCTION(__strtoull_internal);
+  INTERCEPT_STRTO(strtod);
+  INTERCEPT_STRTO(strtof);
+  INTERCEPT_STRTO(strtold);
+  INTERCEPT_STRTO(strtol);
+  INTERCEPT_STRTO(strtoul);
+  INTERCEPT_STRTO(strtoll);
+  INTERCEPT_STRTO(strtoull);
+  INTERCEPT_STRTO(wcstod);
+  INTERCEPT_STRTO(wcstof);
+  INTERCEPT_STRTO(wcstold);
+  INTERCEPT_STRTO(wcstol);
+  INTERCEPT_STRTO(wcstoul);
+  INTERCEPT_STRTO(wcstoll);
+  INTERCEPT_STRTO(wcstoull);
   INTERCEPT_FUNCTION(vswprintf);
   INTERCEPT_FUNCTION(swprintf);
   INTERCEPT_FUNCTION(strxfrm);
@@ -1624,7 +1611,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(wcschr);
   INTERCEPT_FUNCTION(wcscpy);
   INTERCEPT_FUNCTION(wcscmp);
-  INTERCEPT_FUNCTION(wcstod);
   INTERCEPT_FUNCTION(getenv);
   INTERCEPT_FUNCTION(setenv);
   INTERCEPT_FUNCTION(putenv);
