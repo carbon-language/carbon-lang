@@ -560,7 +560,6 @@ void USRGenerator::VisitType(QualType T) {
           c = 'v'; break;
         case BuiltinType::Bool:
           c = 'b'; break;
-        case BuiltinType::Char_U:
         case BuiltinType::UChar:
           c = 'c'; break;
         case BuiltinType::Char16:
@@ -577,6 +576,7 @@ void USRGenerator::VisitType(QualType T) {
           c = 'k'; break;
         case BuiltinType::UInt128:
           c = 'j'; break;
+        case BuiltinType::Char_U:
         case BuiltinType::Char_S:
           c = 'C'; break;
         case BuiltinType::SChar:
