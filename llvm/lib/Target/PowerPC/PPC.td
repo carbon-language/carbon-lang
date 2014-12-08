@@ -104,9 +104,6 @@ def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
 def FeatureVSX       : SubtargetFeature<"vsx","HasVSX", "true",
                                         "Enable VSX instructions",
                                         [FeatureAltivec]>;
-def FeatureP8Vector  : SubtargetFeature<"power8-vector", "HasP8Vector", "true",
-                                        "Enable POWER8 vector instructions",
-                                        [FeatureVSX, FeatureAltivec]>;
 
 def DeprecatedMFTB   : SubtargetFeature<"", "DeprecatedMFTB", "true",
                                         "Treat mftb as deprecated">;
@@ -119,6 +116,7 @@ def DeprecatedDST    : SubtargetFeature<"", "DeprecatedDST", "true",
 // CMPB         p6, p6x, p7        cmpb
 // DFP          p6, p6x, p7        decimal floating-point instructions
 // POPCNTB      p5 through p7      popcntb and related instructions
+// VSX          p7                 vector-scalar instruction set
 
 //===----------------------------------------------------------------------===//
 // ABI Selection                                                              //
@@ -303,7 +301,7 @@ def : ProcessorModel<"pwr6x", G5Model,
                    FeatureFPRND, Feature64Bit,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : ProcessorModel<"pwr7", P7Model,
-                  [DirectivePwr7, FeatureAltivec,
+                  [DirectivePwr7, FeatureAltivec, FeatureVSX,
                    FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
@@ -312,7 +310,7 @@ def : ProcessorModel<"pwr7", P7Model,
                    Feature64Bit /*, Feature64BitRegs */,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : ProcessorModel<"pwr8", P7Model /* FIXME: Update to P8Model when available */,
-                  [DirectivePwr8, FeatureAltivec,
+                  [DirectivePwr8, FeatureAltivec, FeatureVSX,
                    FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
