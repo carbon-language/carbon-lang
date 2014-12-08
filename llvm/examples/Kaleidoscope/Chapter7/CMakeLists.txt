@@ -8,6 +8,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   TransformUtils
   nativecodegen
+  mcjit
   )
 
 set(LLVM_REQUIRES_RTTI 1)

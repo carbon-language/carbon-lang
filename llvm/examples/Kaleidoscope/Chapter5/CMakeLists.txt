@@ -7,6 +7,7 @@ set(LLVM_LINK_COMPONENTS
   ScalarOpts
   Support
   nativecodegen
+  mcjit
   )
 
 add_llvm_example(Kaleidoscope-Ch5
