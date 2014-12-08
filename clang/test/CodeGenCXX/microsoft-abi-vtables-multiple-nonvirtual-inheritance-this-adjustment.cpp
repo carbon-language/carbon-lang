@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -fno-rtti -triple=i386-pc-win32 -emit-llvm -o %t.ll -fdump-vtable-layouts >%t
 // RUN: FileCheck %s < %t
-// RUN: FileCheck --check-prefix=MANGLING %s < %t.ll
+// RUN: FileCheck --check-prefix=BITCODE %s < %t.ll
 
 namespace test1 {
 struct A {
@@ -29,8 +29,8 @@ struct X : A, B {
   // CHECK-LABEL: VFTable indices for 'test1::X' (1 entry).
   // CHECK-NEXT:   0 | void test1::X::g()
 
-  // MANGLING-DAG: @"\01??_7X@test1@@6BA@1@@"
-  // MANGLING-DAG: @"\01??_7X@test1@@6BB@1@@"
+  // BITCODE-DAG: @"\01??_7X@test1@@6BA@1@@"
+  // BITCODE-DAG: @"\01??_7X@test1@@6BB@1@@"
 
   virtual void g();
 } x;
@@ -71,9 +71,9 @@ struct X : A, B, C {
   // CHECK-NEXT:   via vfptr at offset 4
   // CHECK-NEXT:   0 | void test2::X::g()
 
-  // MANGLING-DAG: @"\01??_7X@test2@@6BA@1@@"
-  // MANGLING-DAG: @"\01??_7X@test2@@6BB@1@@"
-  // MANGLING-DAG: @"\01??_7X@test2@@6BC@1@@"
+  // BITCODE-DAG: @"\01??_7X@test2@@6BA@1@@"
+  // BITCODE-DAG: @"\01??_7X@test2@@6BB@1@@"
+  // BITCODE-DAG: @"\01??_7X@test2@@6BC@1@@"
 
   virtual void g();
 } x;
@@ -137,4 +137,43 @@ struct X: C, D {
 } x;
 
 void build_vftable(X *obj) { obj->g(); }
+}
+
+namespace test4 {
+struct A {
+  virtual void foo();
+};
+struct B {
+  virtual int filler();
+  virtual int operator-();
+  virtual int bar();
+};
+struct C : public A, public B {
+  virtual int filler();
+  virtual int operator-();
+  virtual int bar();
+};
+
+// BITCODE-LABEL: define {{.*}}\01?ffun@test4@@YAXAAUC@1@@Z
+void ffun(C &c) {
+  // BITCODE: load
+  // BITCODE: bitcast
+  // BITCODE: bitcast
+  // BITCODE: [[THIS1:%.+]] = bitcast %"struct.test4::C"* {{.*}} to i8*
+  // BITCODE: [[THIS2:%.+]] = getelementptr inbounds i8* [[THIS1]], i32 4
+  // BITCODE-NEXT: call x86_thiscallcc {{.*}}(i8* [[THIS2]])
+  c.bar();
+}
+
+// BITCODE-LABEL: define {{.*}}\01?fop@test4@@YAXAAUC@1@@Z
+void fop(C &c) {
+  // BITCODE: load
+  // BITCODE: bitcast
+  // BITCODE: bitcast
+  // BITCODE: [[THIS1:%.+]] = bitcast %"struct.test4::C"* {{.*}} to i8*
+  // BITCODE: [[THIS2:%.+]] = getelementptr inbounds i8* [[THIS1]], i32 4
+  // BITCODE-NEXT: call x86_thiscallcc {{.*}}(i8* [[THIS2]])
+  -c;
+}
+
 }
