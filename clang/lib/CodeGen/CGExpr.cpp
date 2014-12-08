@@ -3133,6 +3133,8 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
 
     RValue RV = EmitAnyExpr(E->getRHS());
     LValue LV = EmitCheckedLValue(E->getLHS(), TCK_Store);
+    if (CGDebugInfo *DI = getDebugInfo())
+      DI->EmitLocation(Builder, E->getLocStart());
     EmitStoreThroughLValue(RV, LV);
     return LV;
   }
