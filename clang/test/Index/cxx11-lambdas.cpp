@@ -30,4 +30,4 @@ struct X {
 // CHECK-INDEX: [indexEntityReference]: kind: typedef | name: Integer | USR: c:cxx11-lambdas.cpp@T@Integer | lang: C | cursor: TypeRef=Integer:3:13 | loc: 7:38
 // CHECK-INDEX: [indexEntityReference]: kind: variable | name: localA | USR: c:cxx11-lambdas.cpp@100@S@X@F@f#@localA | lang: C | cursor: DeclRefExpr=localA:6:9 | loc: 8:14
 // CHECK-INDEX: [indexEntityReference]: kind: variable | name: localB | USR: c:cxx11-lambdas.cpp@100@S@X@F@f#@localB | lang: C | cursor: DeclRefExpr=localB:6:17 | loc: 8:23
-// CHECK-INDEX: [indexEntityReference]: kind: variable | name: x | USR: c:cxx11-lambdas.cpp@157@S@X@F@f#@Ca@F@operator()#I#1@x | lang: C | cursor: DeclRefExpr=x:7:46 | loc: 8:32
+// CHECK-INDEX: [indexEntityReference]: kind: variable | name: x | USR: c:cxx11-lambdas.cpp@157@S@X@F@f#@Sa@F@operator()#I#1@x | lang: C | cursor: DeclRefExpr=x:7:46 | loc: 8:32
