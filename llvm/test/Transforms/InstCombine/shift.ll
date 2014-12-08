@@ -57,7 +57,7 @@ define <4 x i32> @test5_zero_vector(<4 x i32> %A) {
 define <4 x i32> @test5_non_splat_vector(<4 x i32> %A) {
 ; CHECK-LABEL: @test5_non_splat_vector(
 ; CHECK-NOT: ret <4 x i32> undef
-  %B = shl <4 x i32> %A, <i32 32, i32 1, i32 2, i32 3>
+  %B = lshr <4 x i32> %A, <i32 32, i32 1, i32 2, i32 3>
   ret <4 x i32> %B
 }
 
