@@ -166,15 +166,6 @@ define i1 @and_icmp1(i32 %x, i32 %y) {
 ; CHECK: %[[cmp:.*]] = icmp ult i32 %x, %y
 ; CHECK: ret i1 %[[cmp]]
 
-define i1 @and_icmp2(i32 %x, i32 %y) {
-  %1 = icmp ult i32 %x, %y
-  %2 = icmp eq i32 %y, 0
-  %3 = and i1 %1, %2
-  ret i1 %3
-}
-; CHECK-LABEL: @and_icmp2(
-; CHECK: ret i1 false
-
 define i1 @or_icmp1(i32 %x, i32 %y) {
   %1 = icmp ult i32 %x, %y
   %2 = icmp ne i32 %y, 0

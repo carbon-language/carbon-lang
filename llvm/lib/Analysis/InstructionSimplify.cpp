@@ -1476,11 +1476,6 @@ static Value *simplifyUnsignedRangeCheck(ICmpInst *ZeroICmp,
     return UnsignedICmp;
   }
 
-  // X < Y && Y == 0  -->  false
-  if (UnsignedPred == ICmpInst::ICMP_ULT && EqPred == ICmpInst::ICMP_EQ &&
-      IsAnd)
-    return getFalse(UnsignedICmp->getType());
-
   return nullptr;
 }
 
