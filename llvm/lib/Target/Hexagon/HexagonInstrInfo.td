@@ -961,8 +961,108 @@ def TSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
 
 //===----------------------------------------------------------------------===//
 // ALU64/ALU +
+//===----------------------------------------------------------------------===//// Add.
 //===----------------------------------------------------------------------===//
-// Add.
+// Template Class
+// Add/Subtract halfword
+// Rd=add(Rt.L,Rs.[HL])[:sat]
+// Rd=sub(Rt.L,Rs.[HL])[:sat]
+// Rd=add(Rt.[LH],Rs.[HL])[:sat][:<16]
+// Rd=sub(Rt.[LH],Rs.[HL])[:sat][:<16]
+//===----------------------------------------------------------------------===//
+
+let  hasNewValue = 1, opNewValue = 0 in
+class T_XTYPE_ADD_SUB <bits<2> LHbits, bit isSat, bit hasShift, bit isSub>
+  : ALU64Inst <(outs IntRegs:$Rd), (ins IntRegs:$Rt, IntRegs:$Rs),
+  "$Rd = "#!if(isSub,"sub","add")#"($Rt."
+          #!if(hasShift, !if(LHbits{1},"h","l"),"l") #", $Rs."
+          #!if(hasShift, !if(LHbits{0},"h)","l)"), !if(LHbits{1},"h)","l)"))
+          #!if(isSat,":sat","")
+          #!if(hasShift,":<<16",""), [], "", ALU64_tc_1_SLOT23> {
+    bits<5> Rd;
+    bits<5> Rt;
+    bits<5> Rs;
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b01010;
+    let Inst{22} = hasShift;
+    let Inst{21} = isSub;
+    let Inst{7} = isSat;
+    let Inst{6-5} = LHbits;
+    let Inst{4-0} = Rd;
+    let Inst{12-8} = Rt;
+    let Inst{20-16} = Rs;
+  }
+
+//Rd=sub(Rt.L,Rs.[LH])
+let isCodeGenOnly = 0 in {
+def A2_subh_l16_ll : T_XTYPE_ADD_SUB <0b00, 0, 0, 1>;
+def A2_subh_l16_hl : T_XTYPE_ADD_SUB <0b10, 0, 0, 1>;
+}
+
+let isCodeGenOnly = 0 in {
+//Rd=add(Rt.L,Rs.[LH])
+def A2_addh_l16_ll : T_XTYPE_ADD_SUB <0b00, 0, 0, 0>;
+def A2_addh_l16_hl : T_XTYPE_ADD_SUB <0b10, 0, 0, 0>;
+}
+
+let Itinerary = ALU64_tc_2_SLOT23, Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  //Rd=sub(Rt.L,Rs.[LH]):sat
+  def A2_subh_l16_sat_ll : T_XTYPE_ADD_SUB <0b00, 1, 0, 1>;
+  def A2_subh_l16_sat_hl : T_XTYPE_ADD_SUB <0b10, 1, 0, 1>;
+
+  //Rd=add(Rt.L,Rs.[LH]):sat
+  def A2_addh_l16_sat_ll : T_XTYPE_ADD_SUB <0b00, 1, 0, 0>;
+  def A2_addh_l16_sat_hl : T_XTYPE_ADD_SUB <0b10, 1, 0, 0>;
+}
+
+//Rd=sub(Rt.[LH],Rs.[LH]):<<16
+let isCodeGenOnly = 0 in {
+def A2_subh_h16_ll : T_XTYPE_ADD_SUB <0b00, 0, 1, 1>;
+def A2_subh_h16_lh : T_XTYPE_ADD_SUB <0b01, 0, 1, 1>;
+def A2_subh_h16_hl : T_XTYPE_ADD_SUB <0b10, 0, 1, 1>;
+def A2_subh_h16_hh : T_XTYPE_ADD_SUB <0b11, 0, 1, 1>;
+}
+
+//Rd=add(Rt.[LH],Rs.[LH]):<<16
+let isCodeGenOnly = 0 in {
+def A2_addh_h16_ll : T_XTYPE_ADD_SUB <0b00, 0, 1, 0>;
+def A2_addh_h16_lh : T_XTYPE_ADD_SUB <0b01, 0, 1, 0>;
+def A2_addh_h16_hl : T_XTYPE_ADD_SUB <0b10, 0, 1, 0>;
+def A2_addh_h16_hh : T_XTYPE_ADD_SUB <0b11, 0, 1, 0>;
+}
+
+let Itinerary = ALU64_tc_2_SLOT23, Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  //Rd=sub(Rt.[LH],Rs.[LH]):sat:<<16
+  def A2_subh_h16_sat_ll : T_XTYPE_ADD_SUB <0b00, 1, 1, 1>;
+  def A2_subh_h16_sat_lh : T_XTYPE_ADD_SUB <0b01, 1, 1, 1>;
+  def A2_subh_h16_sat_hl : T_XTYPE_ADD_SUB <0b10, 1, 1, 1>;
+  def A2_subh_h16_sat_hh : T_XTYPE_ADD_SUB <0b11, 1, 1, 1>;
+
+  //Rd=add(Rt.[LH],Rs.[LH]):sat:<<16
+  def A2_addh_h16_sat_ll : T_XTYPE_ADD_SUB <0b00, 1, 1, 0>;
+  def A2_addh_h16_sat_lh : T_XTYPE_ADD_SUB <0b01, 1, 1, 0>;
+  def A2_addh_h16_sat_hl : T_XTYPE_ADD_SUB <0b10, 1, 1, 0>;
+  def A2_addh_h16_sat_hh : T_XTYPE_ADD_SUB <0b11, 1, 1, 0>;
+}
+
+// Add halfword.
+def: Pat<(sext_inreg (add I32:$src1, I32:$src2), i16),
+         (A2_addh_l16_ll I32:$src1, I32:$src2)>;
+
+def: Pat<(sra (add (shl I32:$src1, (i32 16)), I32:$src2), (i32 16)),
+         (A2_addh_l16_hl I32:$src1, I32:$src2)>;
+
+def: Pat<(shl (add I32:$src1, I32:$src2), (i32 16)),
+         (A2_addh_h16_ll I32:$src1, I32:$src2)>;
+
+// Subtract halfword.
+def: Pat<(sext_inreg (sub I32:$src1, I32:$src2), i16),
+         (A2_subh_l16_ll I32:$src1, I32:$src2)>;
+
+def: Pat<(shl (sub I32:$src1, I32:$src2), (i32 16)),
+         (A2_subh_h16_ll I32:$src1, I32:$src2)>;
+
 def ADD64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
                                                      DoubleRegs:$src2),
                "$dst = add($src1, $src2)",
