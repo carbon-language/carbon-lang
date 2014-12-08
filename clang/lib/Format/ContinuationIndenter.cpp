@@ -206,9 +206,12 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   if (Current.is(TT_SelectorName) && State.Stack.back().ObjCSelectorNameFound &&
       State.Stack.back().BreakBeforeParameter)
     return true;
-  if (Previous.ClosesTemplateDeclaration && Current.NestingLevel == 0 &&
-      !Current.isTrailingComment())
-    return true;
+  if (Current.NestingLevel == 0 && !Current.isTrailingComment()) {
+    if (Previous.ClosesTemplateDeclaration)
+      return true;
+    if (Previous.is(TT_LeadingJavaAnnotation) && Current.isNot(tok::l_paren))
+      return true;
+  }
 
   // If the return type spans multiple lines, wrap before the function name.
   if (Current.isOneOf(TT_FunctionDeclarationName ,tok::kw_operator) &&
