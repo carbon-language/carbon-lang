@@ -6,6 +6,7 @@ void f(tuple<int, float, double>);
 class TestCls {
   void meth() &;
   void meth() &&;
+  void meth(int&&);
 };
 
 // RUN: c-index-test -test-load-source-usrs all -std=c++11 %s | FileCheck %s
@@ -14,3 +15,4 @@ class TestCls {
 
 // CHECK: usrs-cxx0x.cpp c:@C@TestCls@F@meth#& Extent=[7:3 - 7:16]
 // CHECK: usrs-cxx0x.cpp c:@C@TestCls@F@meth#&& Extent=[8:3 - 8:17]
+// CHECK: usrs-cxx0x.cpp c:@C@TestCls@F@meth#&&I# Extent=[9:3 - 9:19]

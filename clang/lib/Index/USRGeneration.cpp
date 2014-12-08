@@ -643,6 +643,11 @@ void USRGenerator::VisitType(QualType T) {
       T = PT->getPointeeType();
       continue;
     }
+    if (const RValueReferenceType *RT = T->getAs<RValueReferenceType>()) {
+      Out << "&&";
+      T = RT->getPointeeType();
+      continue;
+    }
     if (const ReferenceType *RT = T->getAs<ReferenceType>()) {
       Out << '&';
       T = RT->getPointeeType();
