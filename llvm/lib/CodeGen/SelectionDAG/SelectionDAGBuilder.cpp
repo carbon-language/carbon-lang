@@ -5570,6 +5570,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     visitGCRelocate(I);
     return nullptr;
   }
+  case Intrinsic::instrprof_increment:
+    llvm_unreachable("instrprof failed to lower an increment");
   }
 }
 

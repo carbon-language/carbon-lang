@@ -5,6 +5,7 @@ add_llvm_library(LLVMInstrumentation
   GCOVProfiling.cpp
   MemorySanitizer.cpp
   Instrumentation.cpp
+  InstrProfiling.cpp
   SanitizerCoverage.cpp
   ThreadSanitizer.cpp
   )

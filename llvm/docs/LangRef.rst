@@ -7492,6 +7492,50 @@ time library.
 This instrinsic does *not* empty the instruction pipeline. Modifications
 of the current function are outside the scope of the intrinsic.
 
+'``llvm.instrprof_increment``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare void @llvm.instrprof_increment(i8* <name>, i64 <hash>,
+                                             i32 <num-counters>, i32 <index>)
+
+Overview:
+"""""""""
+
+The '``llvm.instrprof_increment``' intrinsic can be emitted by a
+frontend for use with instrumentation based profiling. These will be
+lowered by the ``-instrprof`` pass to generate execution counts of a
+program at runtime.
+
+Arguments:
+""""""""""
+
+The first argument is a pointer to a global variable containing the
+name of the entity being instrumented. This should generally be the
+(mangled) function name for a set of counters.
+
+The second argument is a hash value that can be used by the consumer
+of the profile data to detect changes to the instrumented source, and
+the third is the number of counters associated with ``name``. It is an
+error if ``hash`` or ``num-counters`` differ between two instances of
+``instrprof_increment`` that refer to the same name.
+
+The last argument refers to which of the counters for ``name`` should
+be incremented. It should be a value between 0 and ``num-counters``.
+
+Semantics:
+""""""""""
+
+This intrinsic represents an increment of a profiling counter. It will
+cause the ``-instrprof`` pass to generate the appropriate data
+structures and the code to increment the appropriate value, in a
+format that can be written out by a compiler runtime and consumed via
+the ``llvm-profdata`` tool.
+
 Standard C Library Intrinsics
 -----------------------------
 

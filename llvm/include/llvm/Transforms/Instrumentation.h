@@ -63,6 +63,18 @@ struct GCOVOptions {
 ModulePass *createGCOVProfilerPass(const GCOVOptions &Options =
                                    GCOVOptions::getDefault());
 
+/// Options for the frontend instrumentation based profiling pass.
+struct InstrProfOptions {
+  InstrProfOptions() : NoRedZone(false) {}
+
+  // Add the 'noredzone' attribute to added runtime library calls.
+  bool NoRedZone;
+};
+
+/// Insert frontend instrumentation based profiling.
+ModulePass *createInstrProfilingPass(
+    const InstrProfOptions &Options = InstrProfOptions());
+
 // Insert AddressSanitizer (address sanity checking) instrumentation
 FunctionPass *createAddressSanitizerFunctionPass();
 ModulePass *createAddressSanitizerModulePass();

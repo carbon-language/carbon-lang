@@ -291,6 +291,12 @@ def int_stackprotector : Intrinsic<[], [llvm_ptr_ty, llvm_ptrptr_ty], []>;
 def int_stackprotectorcheck : Intrinsic<[], [llvm_ptrptr_ty],
                                         [IntrReadWriteArgMem]>;
 
+// A counter increment for instrumentation based profiling.
+def int_instrprof_increment : Intrinsic<[],
+                                        [llvm_ptr_ty, llvm_i64_ty,
+                                         llvm_i32_ty, llvm_i32_ty],
+                                        []>;
+
 //===------------------- Standard C Library Intrinsics --------------------===//
 //
 

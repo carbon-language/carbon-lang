@@ -121,6 +121,7 @@ void initializeEarlyIfConverterPass(PassRegistry&);
 void initializeEdgeBundlesPass(PassRegistry&);
 void initializeExpandPostRAPass(PassRegistry&);
 void initializeGCOVProfilerPass(PassRegistry&);
+void initializeInstrProfilingPass(PassRegistry&);
 void initializeAddressSanitizerPass(PassRegistry&);
 void initializeAddressSanitizerModulePass(PassRegistry&);
 void initializeMemorySanitizerPass(PassRegistry&);
