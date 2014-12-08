@@ -29,8 +29,18 @@ define linkonce_odr void @foo4() noinline {
 ; CHECK: r v1
 @v1 = linkonce_odr constant i32 32
 
+define i32 @useV1() {
+  %x = load i32* @v1
+  ret i32 %x
+}
+
 ; CHECK: V v2
 @v2 = linkonce_odr global i32 32
+
+define i32 @useV2() {
+  %x = load i32* @v2
+  ret i32 %x
+}
 
 declare void @f(void()*)
 

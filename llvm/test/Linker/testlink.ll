@@ -39,14 +39,19 @@
 ; CHECK-DAG: @Intern1 = internal constant i32 42
 @Intern1 = internal constant i32 42
 
+@UseIntern1 = global i32* @Intern1
+
 ; This should get renamed since there is a definition that is non-internal in
 ; the other module.
 ; CHECK-DAG: @Intern2{{[0-9]+}} = internal constant i32 792
 @Intern2 = internal constant i32 792
 
+@UseIntern2 = global i32* @Intern2
 
 ; CHECK-DAG: @MyVarPtr = linkonce global { i32* } { i32* @MyVar }
 @MyVarPtr = linkonce global { i32* } { i32* @MyVar }
+
+@UseMyVarPtr = global { i32* }* @MyVarPtr
 
 ; CHECK-DAG: @MyVar = global i32 4
 @MyVar = external global i32

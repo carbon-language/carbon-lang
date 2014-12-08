@@ -17,6 +17,8 @@
 ;; Intern in both testlink[12].ll
 @Intern1 = internal constant i32 52
 
+@Use2Intern1 = global i32* @Intern1
+
 ;; Intern in one but not in other
 @Intern2 = constant i32 12345
 
