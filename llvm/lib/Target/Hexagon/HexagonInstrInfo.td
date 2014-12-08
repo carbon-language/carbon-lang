@@ -204,6 +204,12 @@ def: BinOp32_pat<or,  A2_or,  i32>;
 def: BinOp32_pat<sub, A2_sub, i32>;
 def: BinOp32_pat<xor, A2_xor, i32>;
 
+// A few special cases producing register pairs:
+let OutOperandList = (outs DoubleRegs:$Rd), hasNewValue = 0,
+    isCodeGenOnly = 0 in {
+  def S2_packhl    : T_ALU32_3op  <"packhl",  0b101, 0b100, 0, 0>;
+}
+
 let hasSideEffects = 0, hasNewValue = 1, isCompare = 1, InputType = "reg"  in
 class T_ALU32_3op_cmp<string mnemonic, bits<2> MinOp, bit IsNeg, bit IsComm>
   : ALU32_rr<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
