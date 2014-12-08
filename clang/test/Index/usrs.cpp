@@ -90,6 +90,11 @@ void funWithChar(signed char c) {}
 struct { int x; } embedS1;
 struct { int x; } embedS2;
 
+template <typename T>
+class TC1 {
+  void meth(TC1);
+};
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:1 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
@@ -165,3 +170,5 @@ struct { int x; } embedS2;
 
 // CHECK: usrs.cpp c:usrs.cpp@S@usrs.cpp@1483@FI@x Extent=[90:10 - 90:15]
 // CHECK: usrs.cpp c:usrs.cpp@S@usrs.cpp@1510@FI@x Extent=[91:10 - 91:15]
+
+// CHECK: usrs.cpp c:@ST>1#T@TC1@F@meth#>@ST>1#T@TC11t0.0# Extent=[95:3 - 95:17]

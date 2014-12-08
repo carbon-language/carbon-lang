@@ -706,6 +706,10 @@ void USRGenerator::VisitType(QualType T) {
       Out << ':' << DNT->getIdentifier()->getName();
       return;
     }
+    if (const InjectedClassNameType *InjT = T->getAs<InjectedClassNameType>()) {
+      T = InjT->getInjectedSpecializationType();
+      continue;
+    }
     
     // Unhandled type.
     Out << ' ';
