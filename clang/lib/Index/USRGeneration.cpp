@@ -471,8 +471,12 @@ void USRGenerator::VisitTagDecl(const TagDecl *D) {
       Buf[off] = 'A';
       Out << '@' << *TD;
     }
-    else
+  else {
+    if (D->isEmbeddedInDeclarator() && !D->isFreeStanding()) {
+      printLoc(Out, D->getLocation(), Context->getSourceManager(), true);
+    } else
       Buf[off] = 'a';
+  }
   }
   
   // For a class template specialization, mangle the template arguments.

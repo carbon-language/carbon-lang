@@ -87,6 +87,9 @@ void funWithChar(char c) {}
 void funWithChar(unsigned char c) {}
 void funWithChar(signed char c) {}
 
+struct { int x; } embedS1;
+struct { int x; } embedS2;
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:1 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
@@ -159,3 +162,6 @@ void funWithChar(signed char c) {}
 // CHECK: usrs.cpp c:@F@funWithChar#C# Extent=[86:1 - 86:28]
 // CHECK: usrs.cpp c:@F@funWithChar#c# Extent=[87:1 - 87:37]
 // CHECK: usrs.cpp c:@F@funWithChar#r# Extent=[88:1 - 88:35]
+
+// CHECK: usrs.cpp c:usrs.cpp@S@usrs.cpp@1483@FI@x Extent=[90:10 - 90:15]
+// CHECK: usrs.cpp c:usrs.cpp@S@usrs.cpp@1510@FI@x Extent=[91:10 - 91:15]
