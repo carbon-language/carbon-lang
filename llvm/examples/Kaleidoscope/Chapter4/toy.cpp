@@ -1,5 +1,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
@@ -512,6 +514,7 @@ static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F->Codegen()) {
+      TheExecutionEngine->finalizeObject();
       // JIT the function, returning a function pointer.
       void *FPtr = TheExecutionEngine->getPointerToFunction(LF);
       
@@ -557,6 +560,8 @@ double putchard(double X) {
 
 int main() {
   InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
+  InitializeNativeTargetAsmParser();
   LLVMContext &Context = getGlobalContext();
 
   // Install standard binary operators.
@@ -576,8 +581,10 @@ int main() {
 
   // Create the JIT.  This takes ownership of the module.
   std::string ErrStr;
-  TheExecutionEngine =
-      EngineBuilder(std::move(Owner)).setErrorStr(&ErrStr).create();
+  TheExecutionEngine = EngineBuilder(std::move(Owner))
+                           .setErrorStr(&ErrStr)
+                           .setMCJITMemoryManager(new SectionMemoryManager())
+                           .create();
   if (!TheExecutionEngine) {
     fprintf(stderr, "Could not create ExecutionEngine: %s\n", ErrStr.c_str());
     exit(1);
