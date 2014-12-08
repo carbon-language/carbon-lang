@@ -1444,10 +1444,11 @@ int main() {
 
   // Create the JIT.  This takes ownership of the module.
   std::string ErrStr;
-  TheExecutionEngine = EngineBuilder(std::move(Owner))
-                           .setErrorStr(&ErrStr)
-                           .setMCJITMemoryManager(new SectionMemoryManager())
-                           .create();
+  TheExecutionEngine =
+      EngineBuilder(std::move(Owner))
+          .setErrorStr(&ErrStr)
+          .setMCJITMemoryManager(llvm::make_unique<SectionMemoryManager>())
+          .create();
   if (!TheExecutionEngine) {
     fprintf(stderr, "Could not create ExecutionEngine: %s\n", ErrStr.c_str());
     exit(1);
