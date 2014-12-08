@@ -1475,27 +1475,28 @@ bool ModuleLinker::run() {
 
   // Link in the function bodies that are defined in the source module into
   // DstM.
-  for (Module::iterator SF = SrcM->begin(), E = SrcM->end(); SF != E; ++SF) {
-    // Skip if not linking from source.
-    if (DoNotLinkFromSource.count(SF)) continue;
-
-    Function *DF = cast<Function>(ValueMap[SF]);
-
-    // Link in the prefix data.
-    if (SF->hasPrefixData())
-      DF->setPrefixData(MapValue(
-          SF->getPrefixData(), ValueMap, RF_None, &TypeMap, &ValMaterializer));
-
-    // Link in the prologue data.
-    if (SF->hasPrologueData())
-      DF->setPrologueData(MapValue(
-          SF->getPrologueData(), ValueMap, RF_None, &TypeMap, &ValMaterializer));
-
+  for (Function &SF : *SrcM) {
     // Skip if no body (function is external).
-    if (SF->isDeclaration())
+    if (SF.isDeclaration())
       continue;
 
-    if (linkFunctionBody(DF, SF))
+    // Skip if not linking from source.
+    if (DoNotLinkFromSource.count(&SF))
+      continue;
+
+    Function *DF = cast<Function>(ValueMap[&SF]);
+
+    // Link in the prefix data.
+    if (SF.hasPrefixData())
+      DF->setPrefixData(MapValue(SF.getPrefixData(), ValueMap, RF_None,
+                                 &TypeMap, &ValMaterializer));
+
+    // Link in the prologue data.
+    if (SF.hasPrologueData())
+      DF->setPrologueData(MapValue(SF.getPrologueData(), ValueMap, RF_None,
+                                   &TypeMap, &ValMaterializer));
+
+    if (linkFunctionBody(DF, &SF))
       return true;
   }
 
