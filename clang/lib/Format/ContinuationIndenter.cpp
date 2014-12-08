@@ -766,7 +766,8 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     //       ParameterToInnerFunction));
     if (*I > prec::Unknown)
       NewParenState.LastSpace = std::max(NewParenState.LastSpace, State.Column);
-    NewParenState.StartOfFunctionCall = State.Column;
+    if (*I != prec::Conditional)
+      NewParenState.StartOfFunctionCall = State.Column;
 
     // Always indent conditional expressions. Never indent expression where
     // the 'operator' is ',', ';' or an assignment (i.e. *I <=

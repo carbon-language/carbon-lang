@@ -373,6 +373,11 @@ TEST_F(FormatTestJava, NeverAlignAfterReturn) {
                "    .bbbbbbbbbbbbbbbbbbb()\n"
                "    .ccccccccccccccccccc();",
                getStyleWithColumns(40));
+  verifyFormat("return aaaaaaaaaaaaaaaaaaa()\n"
+               "    .bbbbbbbbbbbbbbbbbbb(\n"
+               "         ccccccccccccccc)\n"
+               "    .ccccccccccccccccccc();",
+               getStyleWithColumns(40));
 }
 
 TEST_F(FormatTestJava, FormatsInnerBlocks) {
