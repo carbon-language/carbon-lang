@@ -24,4 +24,4 @@ add_custom_command(OUTPUT ${llvm_ranlib}
                    DEPENDS llvm-ar)
 
 add_custom_target(llvm-ranlib ALL DEPENDS ${llvm_ranlib})
-install(FILES "${llvm_ranlib}" DESTINATION bin)
+install(SCRIPT install_symlink.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
