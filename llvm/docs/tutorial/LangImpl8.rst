@@ -75,8 +75,8 @@ statement be our "main":
 
 .. code-block:: udiff
 
--    PrototypeAST *Proto = new PrototypeAST("", std::vector<std::string>());
-+    PrototypeAST *Proto = new PrototypeAST("main", std::vector<std::string>());
+  -    PrototypeAST *Proto = new PrototypeAST("", std::vector<std::string>());
+  +    PrototypeAST *Proto = new PrototypeAST("main", std::vector<std::string>());
 
 just with the simple change of giving it a name.
 
@@ -84,20 +84,20 @@ Then we're going to remove the command line code wherever it exists:
 
 .. code-block:: udiff
 
-@@ -1129,7 +1129,6 @@ static void HandleTopLevelExpression() {
- /// top ::= definition | external | expression | ';'
- static void MainLoop() {
-   while (1) {
--    fprintf(stderr, "ready> ");
-     switch (CurTok) {
-     case tok_eof:
-       return;
-@@ -1184,7 +1183,6 @@ int main() {
-   BinopPrecedence['*'] = 40; // highest.
+  @@ -1129,7 +1129,6 @@ static void HandleTopLevelExpression() {
+   /// top ::= definition | external | expression | ';'
+   static void MainLoop() {
+     while (1) {
+  -    fprintf(stderr, "ready> ");
+       switch (CurTok) {
+       case tok_eof:
+         return;
+  @@ -1184,7 +1183,6 @@ int main() {
+     BinopPrecedence['*'] = 40; // highest.
  
-   // Prime the first token.
--  fprintf(stderr, "ready> ");
-   getNextToken();
+     // Prime the first token.
+  -  fprintf(stderr, "ready> ");
+     getNextToken();
  
 Lastly we're going to disable all of the optimization passes and the JIT so
 that the only thing that happens after we're done parsing and generating
@@ -105,43 +105,43 @@ code is that the llvm IR goes to standard error:
 
 .. code-block:: udiff
 
-@@ -1108,17 +1108,8 @@ static void HandleExtern() {
- static void HandleTopLevelExpression() {
-   // Evaluate a top-level expression into an anonymous function.
-   if (FunctionAST *F = ParseTopLevelExpr()) {
--    if (Function *LF = F->Codegen()) {
--      // We're just doing this to make sure it executes.
--      TheExecutionEngine->finalizeObject();
--      // JIT the function, returning a function pointer.
--      void *FPtr = TheExecutionEngine->getPointerToFunction(LF);
--
--      // Cast it to the right type (takes no arguments, returns a double) so we
--      // can call it as a native function.
--      double (*FP)() = (double (*)())(intptr_t)FPtr;
--      // Ignore the return value for this.
--      (void)FP;
-+    if (!F->Codegen()) {
-+      fprintf(stderr, "Error generating code for top level expr");
-     }
-   } else {
-     // Skip token for error recovery.
-@@ -1439,11 +1459,11 @@ int main() {
-   // target lays out data structures.
-   TheModule->setDataLayout(TheExecutionEngine->getDataLayout());
-   OurFPM.add(new DataLayoutPass());
-+#if 0
-   OurFPM.add(createBasicAliasAnalysisPass());
-   // Promote allocas to registers.
-   OurFPM.add(createPromoteMemoryToRegisterPass());
-@@ -1218,7 +1210,7 @@ int main() {
-   OurFPM.add(createGVNPass());
-   // Simplify the control flow graph (deleting unreachable blocks, etc).
-   OurFPM.add(createCFGSimplificationPass());
--
-+  #endif
-   OurFPM.doInitialization();
+  @@ -1108,17 +1108,8 @@ static void HandleExtern() {
+   static void HandleTopLevelExpression() {
+     // Evaluate a top-level expression into an anonymous function.
+     if (FunctionAST *F = ParseTopLevelExpr()) {
+  -    if (Function *LF = F->Codegen()) {
+  -      // We're just doing this to make sure it executes.
+  -      TheExecutionEngine->finalizeObject();
+  -      // JIT the function, returning a function pointer.
+  -      void *FPtr = TheExecutionEngine->getPointerToFunction(LF);
+  -
+  -      // Cast it to the right type (takes no arguments, returns a double) so we
+  -      // can call it as a native function.
+  -      double (*FP)() = (double (*)())(intptr_t)FPtr;
+  -      // Ignore the return value for this.
+  -      (void)FP;
+  +    if (!F->Codegen()) {
+  +      fprintf(stderr, "Error generating code for top level expr");
+       }
+     } else {
+       // Skip token for error recovery.
+  @@ -1439,11 +1459,11 @@ int main() {
+     // target lays out data structures.
+     TheModule->setDataLayout(TheExecutionEngine->getDataLayout());
+     OurFPM.add(new DataLayoutPass());
+  +#if 0
+     OurFPM.add(createBasicAliasAnalysisPass());
+     // Promote allocas to registers.
+     OurFPM.add(createPromoteMemoryToRegisterPass());
+  @@ -1218,7 +1210,7 @@ int main() {
+     OurFPM.add(createGVNPass());
+     // Simplify the control flow graph (deleting unreachable blocks, etc).
+     OurFPM.add(createCFGSimplificationPass());
+  -
+  +  #endif
+     OurFPM.doInitialization();
  
-   // Set the global so the code gen can use this.
+     // Set the global so the code gen can use this.
 
 This relatively small set of changes get us to the point that we can compile
 our piece of Kaleidoscope language down to an executable program via this
@@ -149,7 +149,7 @@ command line:
 
 .. code-block:: bash
 
-Kaleidoscope-Ch8 < fib.ks | & clang -x ir -
+  Kaleidoscope-Ch8 < fib.ks | & clang -x ir -
 
 which gives an a.out/a.exe in the current working directory.
 
