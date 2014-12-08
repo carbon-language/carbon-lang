@@ -79,6 +79,10 @@ void rdar9371763() {
   foo.bar();
 }
 
+template <class T> typename T::A someTemplFn() {}
+template <class T> typename T::B someTemplFn() {}
+template <class T> int someTemplFn() {}
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:1 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
@@ -143,4 +147,6 @@ void rdar9371763() {
 // CHECK: usrs.cpp c:usrs.cpp@aN@C@RDar9371763_Foo@F@bar# Extent=[75:1 - 75:31]
 // CHECK: usrs.cpp c:@F@rdar9371763# Extent=[77:1 - 80:2]
 // CHECK: usrs.cpp c:usrs.cpp@1204@F@rdar9371763#@foo Extent=[78:3 - 78:22]
-
+// CHECK: usrs.cpp c:@FT@>1#TsomeTemplFn#^type-parameter-0-0:::A# Extent=[82:1 - 82:50]
+// CHECK: usrs.cpp c:@FT@>1#TsomeTemplFn#^type-parameter-0-0:::B# Extent=[83:1 - 83:50]
+// CHECK: usrs.cpp c:@FT@>1#TsomeTemplFn#I# Extent=[84:1 - 84:40]

@@ -198,7 +198,9 @@ void USRGenerator::VisitFunctionDecl(const FunctionDecl *D) {
     return;
 
   VisitDeclContext(D->getDeclContext());
+  bool IsTemplate = false;
   if (FunctionTemplateDecl *FunTmpl = D->getDescribedFunctionTemplate()) {
+    IsTemplate = true;
     Out << "@FT@";
     VisitTemplateParameterList(FunTmpl->getTemplateParameters());
   } else
@@ -226,6 +228,15 @@ void USRGenerator::VisitFunctionDecl(const FunctionDecl *D) {
   }
   if (D->isVariadic())
     Out << '.';
+  if (IsTemplate) {
+    // Function templates can be overloaded by return type, for example:
+    // \code
+    //   template <class T> typename T::A foo() {}
+    //   template <class T> typename T::B foo() {}
+    // \endcode
+    Out << '#';
+    VisitType(D->getReturnType());
+  }
   Out << '#';
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     if (MD->isStatic())
@@ -666,6 +677,18 @@ void USRGenerator::VisitType(QualType T) {
       Out << Spec->getNumArgs();
       for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
         VisitTemplateArgument(Spec->getArg(I));
+      return;
+    }
+    if (const DependentNameType *DNT = T->getAs<DependentNameType>()) {
+      Out << '^';
+      // FIXME: Encode the qualifier, don't just print it.
+      PrintingPolicy PO(Ctx.getLangOpts());
+      PO.SuppressTagKeyword = true;
+      PO.SuppressUnwrittenScope = true;
+      PO.ConstantArraySizeAsWritten = false;
+      PO.AnonymousTagLocations = false;
+      DNT->getQualifier()->print(Out, PO);
+      Out << ':' << DNT->getIdentifier()->getName();
       return;
     }
     

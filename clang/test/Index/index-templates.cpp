@@ -191,11 +191,11 @@ void foo<float, 9, FxnTmplEnum_B, FxnTmpl_Var + 7>(float Value);
 // CHECK-LOAD: index-templates.cpp:111:6: FunctionDecl=foo:111:6 [Specialization of foo:107:6] [Template arg 0: kind: 1, type: float] [Template arg 1: kind: 4, intval: 9] [Template arg 2: kind: 4, intval: 1] [Template arg 3: kind: 4, intval: 14] Extent=[110:1 - 111:64]
 
 // RUN: c-index-test -test-load-source-usrs all -fno-delayed-template-parsing %s | FileCheck -check-prefix=CHECK-USRS %s
-// CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22S0_# Extent=[3:1 - 4:22]
+// CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22S0_#v# Extent=[3:1 - 4:22]
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@70 Extent=[3:10 - 3:20]
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@82 Extent=[3:22 - 3:29]
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@91 Extent=[3:31 - 3:67]
-// CHECK-USRS: index-templates.cpp c:index-templates.cpp@136@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22S0_#@x Extent=[4:8 - 4:21]
+// CHECK-USRS: index-templates.cpp c:index-templates.cpp@136@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22S0_#v#@x Extent=[4:8 - 4:21]
 // CHECK-USRS: index-templates.cpp c:@CT>1#T@allocator Extent=[6:1 - 6:37]
 // CHECK-USRS: index-templates.cpp c:index-templates.cpp@162 Extent=[6:10 - 6:20]
 // CHECK-USRS: index-templates.cpp c:@CT>2#T#T@vector Extent=[8:1 - 11:2]
