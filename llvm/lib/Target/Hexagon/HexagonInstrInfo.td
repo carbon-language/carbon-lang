@@ -80,16 +80,6 @@ multiclass ALU32_rr_ri<string OpcStr, SDNode OpNode> {
                                                    (i32 IntRegs:$c)))]>;
 }
 
-// Multi-class for compare ops.
-let isCompare = 1 in {
-multiclass CMP64_rr<string OpcStr, PatFrag OpNode> {
-  def rr : ALU64_rr<(outs PredRegs:$dst), (ins DoubleRegs:$b, DoubleRegs:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
-                 [(set (i1 PredRegs:$dst),
-                       (OpNode (i64 DoubleRegs:$b), (i64 DoubleRegs:$c)))]>;
-}
-}
-
 //===----------------------------------------------------------------------===//
 // ALU32/ALU +
 //===----------------------------------------------------------------------===//
@@ -1150,18 +1140,46 @@ let AddedComplexity = 200 in {
   defm: MinMax_pats<setult, A2_minu, A2_maxu>;
 }
 
+class T_cmp64_rr<string mnemonic, bits<3> MinOp, bit IsComm>
+  : ALU64_rr<(outs PredRegs:$Pd), (ins DoubleRegs:$Rs, DoubleRegs:$Rt),
+             "$Pd = "#mnemonic#"($Rs, $Rt)", [], "", ALU64_tc_2early_SLOT23> {
+  let isCompare = 1;
+  let isCommutable = IsComm;
+  let hasSideEffects = 0;
+
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let IClass = 0b1101;
+  let Inst{27-21} = 0b0010100;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{7-5} = MinOp;
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def C2_cmpeqp  : T_cmp64_rr<"cmp.eq",  0b000, 1>;
+def C2_cmpgtp  : T_cmp64_rr<"cmp.gt",  0b010, 0>;
+def C2_cmpgtup : T_cmp64_rr<"cmp.gtu", 0b100, 0>;
+}
+
+class T_cmp64_rr_pat<InstHexagon MI, PatFrag CmpOp>
+  : Pat<(i1 (CmpOp (i64 DoubleRegs:$Rs), (i64 DoubleRegs:$Rt))),
+        (i1 (MI DoubleRegs:$Rs, DoubleRegs:$Rt))>;
+
+def: T_cmp64_rr_pat<C2_cmpeqp,  seteq>;
+def: T_cmp64_rr_pat<C2_cmpgtp,  setgt>;
+def: T_cmp64_rr_pat<C2_cmpgtup, setugt>;
+def: T_cmp64_rr_pat<C2_cmpgtp,  RevCmp<setlt>>;
+def: T_cmp64_rr_pat<C2_cmpgtup, RevCmp<setult>>;
+
 def ADD64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
                                                      DoubleRegs:$src2),
                "$dst = add($src1, $src2)",
                [(set (i64 DoubleRegs:$dst), (add (i64 DoubleRegs:$src1),
                                                  (i64 DoubleRegs:$src2)))]>;
-
-// Add halfword.
-
-// Compare.
-defm CMPEHexagon4 : CMP64_rr<"cmp.eq", seteq>;
-defm CMPGT64 : CMP64_rr<"cmp.gt", setgt>;
-defm CMPGTU64 : CMP64_rr<"cmp.gtu", setugt>;
 
 // Logical operations.
 def AND_rr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
@@ -2839,7 +2857,7 @@ def : Pat <(brcond (i1 (setlt (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 
 def : Pat <(brcond (i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
                    bb:$offset),
-      (JMP_f (CMPGTU64rr (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)),
+      (JMP_f (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)),
                    bb:$offset)>;
 
 def : Pat <(brcond (i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
@@ -2849,7 +2867,7 @@ def : Pat <(brcond (i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 
 def : Pat <(brcond (i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
                    bb:$offset),
-      (JMP_f (CMPGTU64rr (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
+      (JMP_f (C2_cmpgtup (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                 bb:$offset)>;
 
 // Map from a 64-bit select to an emulated 64-bit mux.
@@ -2936,7 +2954,7 @@ def : Pat<(i1 (setle (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 
 // Rss <= Rtt -> !(Rss > Rtt).
 def : Pat<(i1 (setle (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (CMPGT64rr (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
+      (i1 (NOT_p (C2_cmpgtp (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
 
 // Map cmpne -> cmpeq.
 // Hexagon_TODO: We should improve on this.
@@ -2956,7 +2974,7 @@ def : Pat <(i1 (setne (i1 PredRegs:$src1), (i1 PredRegs:$src2))),
 // Map cmpne(Rss) -> !cmpew(Rss).
 // rs != rt -> !(rs == rt).
 def : Pat <(i1 (setne (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (i1 (CMPEHexagon4rr (i64 DoubleRegs:$src1),
+      (i1 (NOT_p (i1 (C2_cmpeqp (i64 DoubleRegs:$src1),
                                      (i64 DoubleRegs:$src2)))))>;
 
 // Map cmpge(Rs, Rt) -> !(cmpgt(Rs, Rt).
@@ -2971,7 +2989,7 @@ def : Pat <(i1 (setge (i32 IntRegs:$src1), s8ExtPred:$src2)),
 // Map cmpge(Rss, Rtt) -> !cmpgt(Rtt, Rss).
 // rss >= rtt -> !(rtt > rss).
 def : Pat <(i1 (setge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (i1 (CMPGT64rr (i64 DoubleRegs:$src2),
+      (i1 (NOT_p (i1 (C2_cmpgtp (i64 DoubleRegs:$src2),
                                 (i64 DoubleRegs:$src1)))))>;
 
 // Map cmplt(Rs, Imm) -> !cmpge(Rs, Imm).
@@ -2989,7 +3007,7 @@ def : Pat <(i1 (setlt (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 // Map cmplt(Rss, Rtt) -> cmpgt(Rtt, Rss).
 // rss < rtt -> (rtt > rss).
 def : Pat <(i1 (setlt (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (CMPGT64rr (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
+      (i1 (C2_cmpgtp (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
 
 // Map from cmpltu(Rs, Rd) -> cmpgtu(Rd, Rs)
 // rs < rt -> rt > rs.
@@ -3000,7 +3018,7 @@ def : Pat <(i1 (setult (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 // Map from cmpltu(Rss, Rdd) -> cmpgtu(Rdd, Rss).
 // rs < rt -> rt > rs.
 def : Pat <(i1 (setult (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (CMPGTU64rr (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
+      (i1 (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
 
 // Generate cmpgeu(Rs, #0) -> cmpeq(Rs, Rs)
 def : Pat <(i1 (setuge (i32 IntRegs:$src1), 0)),
@@ -3022,7 +3040,7 @@ def : Pat <(i1 (setuge (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).
 def : Pat <(i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (CMPGTU64rr (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1))))>;
+      (i1 (NOT_p (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1))))>;
 
 // Map from cmpleu(Rs, Rt) -> !cmpgtu(Rs, Rt).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
@@ -3032,7 +3050,7 @@ def : Pat <(i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 // Map from cmpleu(Rss, Rtt) -> !cmpgtu(Rss, Rtt-1).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
 def : Pat <(i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (NOT_p (CMPGTU64rr (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
+      (i1 (NOT_p (C2_cmpgtup (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
 
 // Sign extends.
 // i1 -> i32

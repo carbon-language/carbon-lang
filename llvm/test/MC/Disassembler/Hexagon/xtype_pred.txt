@@ -1,0 +1,8 @@
+# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+
+0x03 0xde 0x94 0xd2
+# CHECK: p3 = cmp.eq(r21:20, r31:30)
+0x43 0xde 0x94 0xd2
+# CHECK: p3 = cmp.gt(r21:20, r31:30)
+0x83 0xde 0x94 0xd2
+# CHECK: p3 = cmp.gtu(r21:20, r31:30)

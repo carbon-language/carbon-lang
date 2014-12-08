@@ -346,11 +346,11 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
 
   // Set mask and the first source register.
   switch (Opc) {
-    case Hexagon::CMPEHexagon4rr:
+    case Hexagon::C2_cmpeqp:
     case Hexagon::C2_cmpeqi:
     case Hexagon::C2_cmpeq:
-    case Hexagon::CMPGT64rr:
-    case Hexagon::CMPGTU64rr:
+    case Hexagon::C2_cmpgtp:
+    case Hexagon::C2_cmpgtup:
     case Hexagon::C2_cmpgtui:
     case Hexagon::C2_cmpgtu:
     case Hexagon::C2_cmpgti:
@@ -380,10 +380,10 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
 
   // Set the value/second source register.
   switch (Opc) {
-    case Hexagon::CMPEHexagon4rr:
+    case Hexagon::C2_cmpeqp:
     case Hexagon::C2_cmpeq:
-    case Hexagon::CMPGT64rr:
-    case Hexagon::CMPGTU64rr:
+    case Hexagon::C2_cmpgtp:
+    case Hexagon::C2_cmpgtup:
     case Hexagon::C2_cmpgtu:
     case Hexagon::C2_cmpgt:
     case Hexagon::CMPbEQrr_sbsb_V4:
