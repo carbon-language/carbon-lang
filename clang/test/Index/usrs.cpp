@@ -95,7 +95,7 @@ class TC1 {
   void meth(TC1);
 };
 
-// RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
+// RUN: c-index-test -test-load-source-usrs all -fno-delayed-template-parsing %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:1 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
 // CHECK: usrs.cpp c:@N@foo@F@bar#I# Extent=[3:3 - 3:18]
