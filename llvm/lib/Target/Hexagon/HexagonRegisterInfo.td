@@ -97,6 +97,12 @@ let Namespace = "Hexagon" in {
   def P2 : Rp<2, "p2">, DwarfRegNum<[65]>;
   def P3 : Rp<3, "p3">, DwarfRegNum<[66]>;
 
+  // Fake register to represent USR.OVF bit. Artihmetic/saturating instruc-
+  // tions modify this bit, and multiple such instructions are allowed in the
+  // same packet. We need to ignore output dependencies on this bit, but not
+  // on the entire USR.
+  def USR_OVF : Rc<?, "usr.ovf">;
+
   // Control registers.
   def SA0 : Rc<0, "sa0">, DwarfRegNum<[67]>;
   def LC0 : Rc<1, "lc0">, DwarfRegNum<[68]>;

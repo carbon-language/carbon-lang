@@ -170,6 +170,18 @@ def A2_combine_lh : T_ALU32_combineh<".l", ".h", 0b011, 0b110, 1>;
 def A2_combine_ll : T_ALU32_combineh<".l", ".l", 0b011, 0b111, 1>;
 }
 
+class T_ALU32_3op_sfx<string mnemonic, string suffix, bits<3> MajOp,
+                      bits<3> MinOp, bit OpsRev, bit IsComm>
+  : T_ALU32_3op<"", MajOp, MinOp, OpsRev, IsComm> {
+  let AsmString = "$Rd = "#mnemonic#"($Rs, $Rt)"#suffix;
+}
+
+let Defs = [USR_OVF], Itinerary = ALU32_3op_tc_2_SLOT0123, 
+    isCodeGenOnly = 0 in {
+  def A2_addsat   : T_ALU32_3op_sfx<"add",    ":sat", 0b110, 0b010, 0, 1>;
+  def A2_subsat   : T_ALU32_3op_sfx<"sub",    ":sat", 0b110, 0b110, 1, 0>;
+}
+
 multiclass T_ALU32_3op_p<string mnemonic, bits<3> MajOp, bits<3> MinOp,
                          bit OpsRev> {
   def t    : T_ALU32_3op_pred<mnemonic, MajOp, MinOp, OpsRev, 0, 0>;
@@ -834,11 +846,10 @@ multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
 let isCodeGenOnly=0 in
 defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
 
-let hasSideEffects = 0 in
-def COMBINE_ii : ALU32_ii<(outs DoubleRegs:$dst),
-            (ins s8Imm:$src1, s8Imm:$src2),
-            "$dst = combine(#$src1, #$src2)",
-            []>;
+def: Pat<(shl I32:$src1, (i32 16)),   (A2_aslh I32:$src1)>;
+def: Pat<(sra I32:$src1, (i32 16)),   (A2_asrh I32:$src1)>;
+def: Pat<(sext_inreg I32:$src1, i8),  (A2_sxtb I32:$src1)>;
+def: Pat<(sext_inreg I32:$src1, i16), (A2_sxth I32:$src1)>;
 
 // Mux.
 def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
@@ -847,17 +858,6 @@ def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
             "$dst = vmux($src1, $src2, $src3)",
             []>;
 
-def : Pat <(shl (i32 IntRegs:$src1), (i32 16)),
-           (A2_aslh IntRegs:$src1)>;
-
-def : Pat <(sra (i32 IntRegs:$src1), (i32 16)),
-           (A2_asrh IntRegs:$src1)>;
-
-def : Pat <(sext_inreg (i32 IntRegs:$src1), i8),
-           (A2_sxtb IntRegs:$src1)>;
-
-def : Pat <(sext_inreg (i32 IntRegs:$src1), i16),
-           (A2_sxth IntRegs:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // ALU32/PERM -
