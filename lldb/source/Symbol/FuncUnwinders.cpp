@@ -11,6 +11,7 @@
 #include "lldb/Core/Address.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
+#include "lldb/Symbol/CompactUnwindInfo.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/UnwindTable.h"
@@ -47,12 +48,13 @@ FuncUnwinders::~FuncUnwinders ()
 }
 
 UnwindPlanSP
-FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
+FuncUnwinders::GetUnwindPlanAtCallSite (Target &target, int current_offset)
 {
     Mutex::Locker locker (m_mutex);
     if (m_tried_unwind_at_call_site == false && m_unwind_plan_call_site_sp.get() == nullptr)
     {
         m_tried_unwind_at_call_site = true;
+
         // We have cases (e.g. with _sigtramp on Mac OS X) where the hand-written eh_frame unwind info for a
         // function does not cover the entire range of the function and so the FDE only lists a subset of the
         // address range.  If we try to look up the unwind info by the starting address of the function 
@@ -65,12 +67,22 @@ FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
             if (current_offset != -1)
                 current_pc.SetOffset (current_pc.GetOffset() + current_offset);
 
-            DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
-            if (eh_frame)
+            CompactUnwindInfo *compact_unwind = m_unwind_table.GetCompactUnwindInfo();
+            if (compact_unwind)
             {
                 m_unwind_plan_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-                if (!eh_frame->GetUnwindPlan (current_pc, *m_unwind_plan_call_site_sp))
+                if (!compact_unwind->GetUnwindPlan (target, current_pc, *m_unwind_plan_call_site_sp))
                     m_unwind_plan_call_site_sp.reset();
+            }
+            if (m_unwind_plan_call_site_sp.get() == nullptr)
+            {
+                DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
+                if (eh_frame)
+                {
+                    m_unwind_plan_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+                    if (!eh_frame->GetUnwindPlan (current_pc, *m_unwind_plan_call_site_sp))
+                        m_unwind_plan_call_site_sp.reset();
+                }
             }
         }
     }
@@ -92,14 +104,23 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Target& target, Thread& thread, int c
             {
                 // For 0th frame on i386 & x86_64, we fetch eh_frame and try using assembly profiler
                 // to augment it into asynchronous unwind table.
-                GetUnwindPlanAtCallSite(current_offset);
-                if (m_unwind_plan_call_site_sp) 
+                DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
+                if (eh_frame)
                 {
-                    UnwindPlan* plan = new UnwindPlan (*m_unwind_plan_call_site_sp);
-                    if (assembly_profiler_sp->AugmentUnwindPlanFromCallSite (m_range, thread, *plan)) 
+                    UnwindPlanSP unwind_plan (new UnwindPlan (lldb::eRegisterKindGeneric));
+                    if (m_range.GetBaseAddress().IsValid())
                     {
-                        m_unwind_plan_non_call_site_sp.reset (plan);
-                        return m_unwind_plan_non_call_site_sp;
+                        Address current_pc (m_range.GetBaseAddress ());
+                        if (current_offset != -1)
+                            current_pc.SetOffset (current_pc.GetOffset() + current_offset);
+                        if (eh_frame->GetUnwindPlan (current_pc, *unwind_plan))
+                        {
+                            if (assembly_profiler_sp->AugmentUnwindPlanFromCallSite (m_range, thread, *unwind_plan)) 
+                            {
+                                m_unwind_plan_non_call_site_sp = unwind_plan;
+                                return m_unwind_plan_non_call_site_sp;
+                            }
+                        }
                     }
                 }
             }
@@ -211,12 +232,12 @@ FuncUnwinders::GetUnwindAssemblyProfiler ()
 }
 
 Address
-FuncUnwinders::GetLSDAAddress ()
+FuncUnwinders::GetLSDAAddress (Target &target)
 {
     Address lsda_addr;
     Mutex::Locker locker (m_mutex);
 
-    GetUnwindPlanAtCallSite (-1);
+    GetUnwindPlanAtCallSite (target, -1);
 
     if (m_unwind_plan_call_site_sp && m_unwind_plan_call_site_sp->GetLSDAAddress().IsValid())
     {
@@ -228,12 +249,12 @@ FuncUnwinders::GetLSDAAddress ()
 
 
 Address
-FuncUnwinders::GetPersonalityRoutinePtrAddress ()
+FuncUnwinders::GetPersonalityRoutinePtrAddress (Target &target)
 {
     Address personality_addr;
     Mutex::Locker locker (m_mutex);
 
-    GetUnwindPlanAtCallSite (-1);
+    GetUnwindPlanAtCallSite (target, -1);
 
     if (m_unwind_plan_call_site_sp && m_unwind_plan_call_site_sp->GetPersonalityFunctionPtr().IsValid())
     {

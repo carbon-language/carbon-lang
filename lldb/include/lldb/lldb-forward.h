@@ -66,6 +66,7 @@ class   CommandInterpreterRunOptions;
 class   CommandObject;
 class   CommandReturnObject;
 class   Communication;
+class   CompactUnwindInfo;
 class   CompileUnit;
 class   Condition;
 class   Connection;

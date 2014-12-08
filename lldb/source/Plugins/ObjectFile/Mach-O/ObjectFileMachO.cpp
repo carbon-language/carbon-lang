@@ -1276,7 +1276,9 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                     const lldb::SectionType section_type = section_sp->GetType();
                     switch (section_type)
                     {
-                    case eSectionTypeInvalid:               return eAddressClassUnknown;
+                    case eSectionTypeInvalid:
+                        return eAddressClassUnknown;
+
                     case eSectionTypeCode:
                         if (m_header.cputype == llvm::MachO::CPU_TYPE_ARM)
                         {
@@ -1287,7 +1289,9 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                         }
                         return eAddressClassCode;
 
-                    case eSectionTypeContainer:             return eAddressClassUnknown;
+                    case eSectionTypeContainer:
+                        return eAddressClassUnknown;
+
                     case eSectionTypeData:
                     case eSectionTypeDataCString:
                     case eSectionTypeDataCStringPointers:
@@ -1300,6 +1304,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                     case eSectionTypeDataObjCMessageRefs:
                     case eSectionTypeDataObjCCFStrings:
                         return eAddressClassData;
+
                     case eSectionTypeDebug:
                     case eSectionTypeDWARFDebugAbbrev:
                     case eSectionTypeDWARFDebugAranges:
@@ -1317,12 +1322,17 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                     case eSectionTypeDWARFAppleNamespaces:
                     case eSectionTypeDWARFAppleObjC:
                         return eAddressClassDebug;
-                    case eSectionTypeEHFrame:               return eAddressClassRuntime;
+
+                    case eSectionTypeEHFrame:
+                    case eSectionTypeCompactUnwind:
+                        return eAddressClassRuntime;
+
                     case eSectionTypeELFSymbolTable:
                     case eSectionTypeELFDynamicSymbols:
                     case eSectionTypeELFRelocationEntries:
                     case eSectionTypeELFDynamicLinkInfo:
-                    case eSectionTypeOther:                 return eAddressClassUnknown;
+                    case eSectionTypeOther:
+                        return eAddressClassUnknown;
                     }
                 }
             }
@@ -1745,6 +1755,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                     static ConstString g_sect_name_dwarf_apple_namespaces ("__apple_namespac");
                                     static ConstString g_sect_name_dwarf_apple_objc ("__apple_objc");
                                     static ConstString g_sect_name_eh_frame ("__eh_frame");
+                                    static ConstString g_sect_name_compact_unwind ("__unwind_info");
                                     static ConstString g_sect_name_text ("__text");
                                     static ConstString g_sect_name_data ("__data");
 
@@ -1785,6 +1796,8 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                         sect_type = eSectionTypeDataObjCMessageRefs;
                                     else if (section_name == g_sect_name_eh_frame)
                                         sect_type = eSectionTypeEHFrame;
+                                    else if (section_name == g_sect_name_compact_unwind)
+                                        sect_type = eSectionTypeCompactUnwind;
                                     else if (section_name == g_sect_name_cfstring)
                                         sect_type = eSectionTypeDataObjCCFStrings;
                                     else if (section_name == g_sect_name_objc_data ||

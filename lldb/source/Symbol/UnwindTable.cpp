@@ -17,6 +17,7 @@
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
+#include "lldb/Symbol/CompactUnwindInfo.h"
 
 // There is one UnwindTable object per ObjectFile.
 // It contains a list of Unwind objects -- one per function, populated lazily -- for the ObjectFile.
@@ -30,7 +31,8 @@ UnwindTable::UnwindTable (ObjectFile& objfile) :
     m_unwinds (),
     m_initialized (false),
     m_mutex (),
-    m_eh_frame (nullptr)
+    m_eh_frame (nullptr),
+    m_compact_unwind (nullptr)
 {
 }
 
@@ -55,6 +57,11 @@ UnwindTable::Initialize ()
         if (sect.get())
         {
             m_eh_frame = new DWARFCallFrameInfo(m_object_file, sect, eRegisterKindGCC, true);
+        }
+        sect = sl->FindSectionByType (eSectionTypeCompactUnwind, true);
+        if (sect.get())
+        {
+            m_compact_unwind = new CompactUnwindInfo(m_object_file, sect);
         }
     }
     
@@ -152,6 +159,13 @@ UnwindTable::GetEHFrameInfo ()
 {
     Initialize();
     return m_eh_frame;
+}
+
+CompactUnwindInfo *
+UnwindTable::GetCompactUnwindInfo ()
+{
+    Initialize();
+    return m_compact_unwind;
 }
 
 bool

@@ -1085,6 +1085,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
         unwind_plan_source += " plus augmentation from assembly parsing";
         unwind_plan.SetSourceName (unwind_plan_source.c_str());
         unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+        unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
     }
     return true;
 }

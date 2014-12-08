@@ -3759,7 +3759,7 @@ protected:
                 result.GetOutputStream().Printf ("\n");
             }
 
-            UnwindPlanSP callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(-1);
+            UnwindPlanSP callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(*target, -1);
             if (callsite_unwind_plan.get())
             {
                 result.GetOutputStream().Printf("Synchronous (restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);

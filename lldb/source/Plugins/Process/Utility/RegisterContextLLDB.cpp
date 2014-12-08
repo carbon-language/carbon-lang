@@ -808,10 +808,10 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // is properly encoded in the eh_frame section, so prefer that if available.
     // On other platforms we may need to provide a platform-specific UnwindPlan which encodes the details of
     // how to unwind out of sigtramp.
-    if (m_frame_type == eTrapHandlerFrame)
+    if (m_frame_type == eTrapHandlerFrame && process)
     {
         m_fast_unwind_plan_sp.reset();
-        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
+        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (process->GetTarget(), m_current_offset_backed_up_one);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc) && unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolYes)
         {
             return unwind_plan_sp;
@@ -826,7 +826,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // But there is not.
     if (process && process->GetDynamicLoader() && process->GetDynamicLoader()->AlwaysRelyOnEHUnwindInfo (m_sym_ctx))
     {
-        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
+        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (process->GetTarget(), m_current_offset_backed_up_one);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
         {
             UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan because the DynamicLoader suggested we prefer it",
@@ -856,7 +856,10 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     }
 
     // Typically this is unwind info from an eh_frame section intended for exception handling; only valid at call sites
-    unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
+    if (process)
+    {
+        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (process->GetTarget(), m_current_offset_backed_up_one);
+    }
     int valid_offset = -1;
     if (IsUnwindPlanValidForCurrentPC(unwind_plan_sp, valid_offset))
     {

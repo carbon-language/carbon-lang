@@ -483,6 +483,8 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
                 stack_size = *((uint32_t*) (function_start + offset_to_subl_insn));
 
                 stack_size += stack_adjust * 8;
+
+                printf ("large stack ");
             }
             
             printf ("frameless function: stack size %d, register count %d ", stack_size * 8, register_count);
@@ -698,6 +700,8 @@ print_encoding_i386 (struct baton baton, uint8_t *function_start, uint32_t encod
                 stack_size = *((uint32_t*) (function_start + offset_to_subl_insn));
 
                 stack_size += stack_adjust * 4;
+
+                printf ("large stack ");
             }
             
             printf ("frameless function: stack size %d, register count %d ", stack_size * 4, register_count);
@@ -1175,7 +1179,7 @@ int main (int argc, char **argv)
     while (encoding_idx < header.commonEncodingsArrayCount)
     {
         uint32_t encoding = *((uint32_t*) common_encodings);
-        printf ("    Common Encoding [%d]: 0x%x", encoding_idx, encoding);
+        printf ("    Common Encoding [%d]: 0x%x ", encoding_idx, encoding);
         print_encoding (baton, NULL, encoding);
         printf ("\n");
         common_encodings += sizeof (uint32_t);

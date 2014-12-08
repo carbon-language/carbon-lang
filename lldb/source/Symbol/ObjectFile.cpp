@@ -371,6 +371,7 @@ ObjectFile::GetAddressClass (addr_t file_addr)
                     case eSectionTypeDWARFAppleObjC:
                         return eAddressClassDebug;
                     case eSectionTypeEHFrame:
+                    case eSectionTypeCompactUnwind:
                         return eAddressClassRuntime;
                     case eSectionTypeELFSymbolTable:
                     case eSectionTypeELFDynamicSymbols:

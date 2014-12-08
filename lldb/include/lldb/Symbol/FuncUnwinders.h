@@ -42,7 +42,7 @@ public:
     // offset value will have already been decremented by 1 to stay within the bounds of the 
     // correct function body.
     lldb::UnwindPlanSP
-    GetUnwindPlanAtCallSite (int current_offset);
+    GetUnwindPlanAtCallSite (Target &target, int current_offset);
 
     lldb::UnwindPlanSP
     GetUnwindPlanAtNonCallSite (Target& target, lldb_private::Thread& thread, int current_offset);
@@ -73,14 +73,14 @@ public:
     // If any of the UnwindPlans have the address of the LSDA region for this function,
     // this will return it.  
     Address
-    GetLSDAAddress ();
+    GetLSDAAddress (Target &target);
 
     // A function may have a Personality Routine associated with it -- used in the
     // processing of throwing an exception.  If any of the UnwindPlans have the
     // address of the personality routine, this will return it.  Read the target-pointer
     // at this address to get the personality function address.
     Address
-    GetPersonalityRoutinePtrAddress ();
+    GetPersonalityRoutinePtrAddress (Target &target);
 
 private:
 

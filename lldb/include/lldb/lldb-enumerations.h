@@ -570,6 +570,7 @@ namespace lldb {
         eSectionTypeELFRelocationEntries, // Elf SHT_REL or SHT_REL section
         eSectionTypeELFDynamicLinkInfo,   // Elf SHT_DYNAMIC section
         eSectionTypeEHFrame,
+        eSectionTypeCompactUnwind,        // compact unwind section in Mach-O, __TEXT,__unwind_info
         eSectionTypeOther
         
     } SectionType;

@@ -31,6 +31,9 @@ public:
     lldb_private::DWARFCallFrameInfo *
     GetEHFrameInfo ();
 
+    lldb_private::CompactUnwindInfo *
+    GetCompactUnwindInfo ();
+
     lldb::FuncUnwindersSP
     GetFuncUnwindersContainingAddress (const Address& addr, SymbolContext &sc);
 
@@ -63,6 +66,7 @@ private:
     Mutex               m_mutex;
 
     DWARFCallFrameInfo* m_eh_frame;
+    CompactUnwindInfo  *m_compact_unwind;
     
     DISALLOW_COPY_AND_ASSIGN (UnwindTable);
 };

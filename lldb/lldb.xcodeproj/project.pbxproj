@@ -703,6 +703,8 @@
 		94EA27CE17DE91750070F505 /* LibCxxUnorderedMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA27CD17DE91750070F505 /* LibCxxUnorderedMap.cpp */; };
 		94F48F251A01C687005C0EC6 /* StringPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94F48F241A01C687005C0EC6 /* StringPrinter.cpp */; };
 		94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */; };
+		964463EC1A330C0500154ED8 /* CompactUnwindInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 964463EB1A330C0500154ED8 /* CompactUnwindInfo.cpp */; };
+		964463EE1A330C1B00154ED8 /* CompactUnwindInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 964463ED1A330C1B00154ED8 /* CompactUnwindInfo.h */; };
 		966C6B7918E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7A18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7B18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
@@ -2106,6 +2108,8 @@
 		961FABB81235DE1600F93A47 /* FuncUnwinders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FuncUnwinders.cpp; path = source/Symbol/FuncUnwinders.cpp; sourceTree = "<group>"; };
 		961FABB91235DE1600F93A47 /* UnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindPlan.cpp; path = source/Symbol/UnwindPlan.cpp; sourceTree = "<group>"; };
 		961FABBA1235DE1600F93A47 /* UnwindTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindTable.cpp; path = source/Symbol/UnwindTable.cpp; sourceTree = "<group>"; };
+		964463EB1A330C0500154ED8 /* CompactUnwindInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompactUnwindInfo.cpp; path = source/Symbol/CompactUnwindInfo.cpp; sourceTree = "<group>"; };
+		964463ED1A330C1B00154ED8 /* CompactUnwindInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompactUnwindInfo.h; path = include/lldb/Symbol/CompactUnwindInfo.h; sourceTree = "<group>"; };
 		966C6B7818E6A56A0093F5EC /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = /usr/lib/libz.dylib; sourceTree = "<absolute>"; };
 		9A19A6A51163BB7E00E0D453 /* SBValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBValue.h; path = include/lldb/API/SBValue.h; sourceTree = "<group>"; };
 		9A19A6AD1163BB9800E0D453 /* SBValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBValue.cpp; path = source/API/SBValue.cpp; sourceTree = "<group>"; };
@@ -3449,6 +3453,8 @@
 				26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */,
 				266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */,
 				266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */,
+				964463ED1A330C1B00154ED8 /* CompactUnwindInfo.h */,
+				964463EB1A330C0500154ED8 /* CompactUnwindInfo.cpp */,
 				26BC7C5710F1B6E900F91463 /* CompileUnit.h */,
 				26BC7F1510F1B8EC00F91463 /* CompileUnit.cpp */,
 				26BC7C5810F1B6E900F91463 /* Declaration.h */,
@@ -4619,6 +4625,7 @@
 				490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */,
 				26EFC4CE18CFAF0D00865D87 /* ObjectFileJIT.h in Headers */,
 				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
+				964463EE1A330C1B00154ED8 /* CompactUnwindInfo.h in Headers */,
 				AF77E0901A033C700096C0EA /* ABISysV_ppc.h in Headers */,
 				260A39A619647A3A004B4130 /* Pipe.h in Headers */,
 				26D1804516CEE12500EDFB5B /* KQueue.h in Headers */,
@@ -5123,6 +5130,7 @@
 				2689001A13353DDE00698AC0 /* CommandObjectFrame.cpp in Sources */,
 				2689001B13353DDE00698AC0 /* CommandObjectHelp.cpp in Sources */,
 				23F4034D1926E0F60046DC9B /* NativeRegisterContextRegisterInfo.cpp in Sources */,
+				964463EC1A330C0500154ED8 /* CompactUnwindInfo.cpp in Sources */,
 				2689001D13353DDE00698AC0 /* CommandObjectLog.cpp in Sources */,
 				262173A318395D4600C52091 /* SectionLoadHistory.cpp in Sources */,
 				2689001E13353DDE00698AC0 /* CommandObjectMemory.cpp in Sources */,

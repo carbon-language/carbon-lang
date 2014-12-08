@@ -9,6 +9,7 @@ add_lldb_library(lldbSymbol
   ClangExternalASTSourceCommon.cpp
   ClangNamespaceDecl.cpp
   CompileUnit.cpp
+  CompactUnwindInfo.cpp
   Declaration.cpp
   DWARFCallFrameInfo.cpp
   Function.cpp
