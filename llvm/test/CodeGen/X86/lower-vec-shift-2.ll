@@ -11,9 +11,8 @@ define <8 x i16> @test1(<8 x i16> %A, <8 x i16> %B) {
 ; SSE2-NEXT:    retq
 ; AVX-LABEL: test1:
 ; AVX:       # BB#0
-; AVX-NEXT:    vmovd  %xmm1, %eax
-; AVX-NEXT:    movzwl  %ax, %eax
-; AVX-NEXT:    vmovd  %eax, %xmm1
+; AVX-NEXT:    vpxor  %xmm2, %xmm2, %xmm2
+; AVX-NEXT:    vpblendw  {{.*#+}} xmm1 = xmm1[0],xmm2[1,2,3,4,5,6,7]
 ; AVX-NEXT:    vpsllw  %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 entry:
@@ -66,9 +65,8 @@ define <8 x i16> @test4(<8 x i16> %A, <8 x i16> %B) {
 ; SSE2-NEXT:    retq
 ; AVX-LABEL: test4:
 ; AVX:       # BB#0
-; AVX-NEXT:    vmovd  %xmm1, %eax
-; AVX-NEXT:    movzwl  %ax, %eax
-; AVX-NEXT:    vmovd  %eax, %xmm1
+; AVX-NEXT:    vpxor  %xmm2, %xmm2, %xmm2
+; AVX-NEXT:    vpblendw  {{.*#+}} xmm1 = xmm1[0],xmm2[1,2,3,4,5,6,7]
 ; AVX-NEXT:    vpsrlw  %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 entry:
@@ -121,9 +119,8 @@ define <8 x i16> @test7(<8 x i16> %A, <8 x i16> %B) {
 ; SSE2-NEXT:    retq
 ; AVX-LABEL: test7:
 ; AVX:       # BB#0
-; AVX-NEXT:    vmovd  %xmm1, %eax
-; AVX-NEXT:    movzwl  %ax, %eax
-; AVX-NEXT:    vmovd  %eax, %xmm1
+; AVX-NEXT:    vpxor  %xmm2, %xmm2, %xmm2
+; AVX-NEXT:    vpblendw  {{.*#+}} xmm1 = xmm1[0],xmm2[1,2,3,4,5,6,7]
 ; AVX-NEXT:    vpsraw  %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 entry:
