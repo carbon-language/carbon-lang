@@ -1348,12 +1348,24 @@ static FCmpInst::Predicate evaluateFCmpRelation(Constant *V1, Constant *V2) {
 
 static ICmpInst::Predicate areGlobalsPotentiallyEqual(const GlobalValue *GV1,
                                                       const GlobalValue *GV2) {
-  auto isLinkageUnsafeForEquality = [](const GlobalValue *GV) {
-    return GV->hasExternalWeakLinkage() || GV->hasWeakAnyLinkage();
+  auto isGlobalUnsafeForEquality = [](const GlobalValue *GV) {
+    if (GV->hasExternalWeakLinkage() || GV->hasWeakAnyLinkage())
+      return true;
+    if (const auto *GVar = dyn_cast<GlobalVariable>(GV)) {
+      Type *Ty = GVar->getType()->getPointerElementType();
+      // A global with opaque type might end up being zero sized.
+      if (!Ty->isSized())
+        return true;
+      // A global with an empty type might lie at the address of any other
+      // global.
+      if (Ty->isEmptyTy())
+        return true;
+    }
+    return false;
   };
   // Don't try to decide equality of aliases.
   if (!isa<GlobalAlias>(GV1) && !isa<GlobalAlias>(GV2))
-    if (!isLinkageUnsafeForEquality(GV1) && !isLinkageUnsafeForEquality(GV2))
+    if (!isGlobalUnsafeForEquality(GV1) && !isGlobalUnsafeForEquality(GV2))
       return ICmpInst::ICMP_NE;
   return ICmpInst::BAD_ICMP_PREDICATE;
 }
