@@ -569,8 +569,9 @@ void USRGenerator::VisitType(QualType T) {
         case BuiltinType::UInt128:
           c = 'j'; break;
         case BuiltinType::Char_S:
-        case BuiltinType::SChar:
           c = 'C'; break;
+        case BuiltinType::SChar:
+          c = 'r'; break;
         case BuiltinType::WChar_S:
         case BuiltinType::WChar_U:
           c = 'W'; break;
