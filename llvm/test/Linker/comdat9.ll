@@ -6,8 +6,14 @@ define internal void @f() comdat $c {
   ret void
 }
 
-; CHECK: $c = comdat any
-; CHECK: @a = alias void ()* @f
-; CHECK: define internal void @f() comdat $c {
-; CHECK:   ret void
-; CHECK: }
+; CHECK-DAG: $c = comdat any
+; CHECK-DAG: @a = alias void ()* @f
+; CHECK-DAG: define internal void @f() comdat $c
+
+$f2 = comdat largest
+define internal void @f2() comdat $f2 {
+  ret void
+}
+
+; CHECK-DAG: $f2 = comdat largest
+; CHECK-DAG: define internal void @f2() comdat $f2

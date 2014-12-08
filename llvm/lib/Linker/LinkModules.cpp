@@ -1482,6 +1482,15 @@ bool ModuleLinker::run() {
   for (unsigned i = 0, e = AppendingVars.size(); i != e; ++i)
     linkAppendingVarInit(AppendingVars[i]);
 
+  for (const auto &Entry : DstM->getComdatSymbolTable()) {
+    const Comdat &C = Entry.getValue();
+    if (C.getSelectionKind() == Comdat::Any)
+      continue;
+    const GlobalValue *GV = SrcM->getNamedValue(C.getName());
+    assert(GV);
+    MapValue(GV, ValueMap, RF_None, &TypeMap, &ValMaterializer);
+  }
+
   // Link in the function bodies that are defined in the source module into
   // DstM.
   for (Function &SF : *SrcM) {
