@@ -1705,3 +1705,17 @@ bool HexagonTargetLowering::IsEligibleForTailCallOptimization(
   // information is not available.
   return true;
 }
+
+// Return true when the given node fits in a positive half word.
+bool llvm::isPositiveHalfWord(SDNode *N) {
+  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
+  if (CN && CN->getSExtValue() > 0 && isInt<16>(CN->getSExtValue()))
+    return true;
+
+  switch (N->getOpcode()) {
+  default:
+    return false;
+  case ISD::SIGN_EXTEND_INREG:
+    return true;
+  }
+}

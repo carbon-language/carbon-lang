@@ -144,3 +144,8 @@ def CRRegs : RegisterClass<"Hexagon", [i32], 32,
                                 (sequence "M%u", 0, 1), PC, GP)> {
   let Size = 32;
 }
+
+def PositiveHalfWord : PatLeaf<(i32 IntRegs:$a),
+[{
+  return isPositiveHalfWord(N);
+}]>;

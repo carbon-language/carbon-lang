@@ -21,6 +21,10 @@
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
+
+// Return true when the given node fits in a positive half word.
+bool isPositiveHalfWord(SDNode *N);
+
   namespace HexagonISD {
     enum {
       FIRST_NUMBER = ISD::BUILTIN_OP_END,

@@ -1,0 +1,4 @@
+# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+
+0x11 0xde 0x14 0xd0
+# CHECK: r17 = parity(r21:20, r31:30)

@@ -1063,6 +1063,93 @@ def: Pat<(sext_inreg (sub I32:$src1, I32:$src2), i16),
 def: Pat<(shl (sub I32:$src1, I32:$src2), (i32 16)),
          (A2_subh_h16_ll I32:$src1, I32:$src2)>;
 
+let hasSideEffects = 0, hasNewValue = 1, isCodeGenOnly = 0 in
+def S2_parityp: ALU64Inst<(outs IntRegs:$Rd),
+      (ins DoubleRegs:$Rs, DoubleRegs:$Rt),
+      "$Rd = parity($Rs, $Rt)", [], "", ALU64_tc_2_SLOT23> {
+  bits<5> Rd;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let IClass = 0b1101;
+  let Inst{27-24} = 0b0000;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{4-0} = Rd;
+}
+
+let hasNewValue = 1, opNewValue = 0, hasSideEffects = 0 in
+class T_XTYPE_MIN_MAX < bit isMax, bit isUnsigned >
+  : ALU64Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rt, IntRegs:$Rs),
+  "$Rd = "#!if(isMax,"max","min")#!if(isUnsigned,"u","")
+          #"($Rt, $Rs)", [], "", ALU64_tc_2_SLOT23> {
+    bits<5> Rd;
+    bits<5> Rt;
+    bits<5> Rs;
+
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b01011;
+    let Inst{22-21} = !if(isMax, 0b10, 0b01);
+    let Inst{7} = isUnsigned;
+    let Inst{4-0} = Rd;
+    let Inst{12-8} = !if(isMax, Rs, Rt);
+    let Inst{20-16} = !if(isMax, Rt, Rs);
+  }
+
+let isCodeGenOnly = 0 in {
+def A2_min  : T_XTYPE_MIN_MAX < 0, 0 >;
+def A2_minu : T_XTYPE_MIN_MAX < 0, 1 >;
+def A2_max  : T_XTYPE_MIN_MAX < 1, 0 >;
+def A2_maxu : T_XTYPE_MIN_MAX < 1, 1 >;
+}
+
+// Here, depending on  the operand being selected, we'll either generate a
+// min or max instruction.
+// Ex:
+// (a>b)?a:b --> max(a,b) => Here check performed is '>' and the value selected
+// is the larger of two. So, the corresponding HexagonInst is passed in 'Inst'.
+// (a>b)?b:a --> min(a,b) => Here check performed is '>' but the smaller value
+// is selected and the corresponding HexagonInst is passed in 'SwapInst'.
+
+multiclass T_MinMax_pats <PatFrag Op, RegisterClass RC, ValueType VT,
+                          InstHexagon Inst, InstHexagon SwapInst> {
+  def: Pat<(select (i1 (Op (VT RC:$src1), (VT RC:$src2))),
+                   (VT RC:$src1), (VT RC:$src2)),
+           (Inst RC:$src1, RC:$src2)>;
+  def: Pat<(select (i1 (Op (VT RC:$src1), (VT RC:$src2))),
+                   (VT RC:$src2), (VT RC:$src1)),
+           (SwapInst RC:$src1, RC:$src2)>;
+}
+
+
+multiclass MinMax_pats <PatFrag Op, InstHexagon Inst, InstHexagon SwapInst> {
+  defm: T_MinMax_pats<Op, IntRegs, i32, Inst, SwapInst>;
+
+  def: Pat<(sext_inreg (i32 (select (i1 (Op (i32 PositiveHalfWord:$src1),
+                                            (i32 PositiveHalfWord:$src2))),
+                                    (i32 PositiveHalfWord:$src1),
+                                    (i32 PositiveHalfWord:$src2))), i16),
+           (Inst IntRegs:$src1, IntRegs:$src2)>;
+
+  def: Pat<(sext_inreg (i32 (select (i1 (Op (i32 PositiveHalfWord:$src1),
+                                            (i32 PositiveHalfWord:$src2))),
+                                    (i32 PositiveHalfWord:$src2),
+                                    (i32 PositiveHalfWord:$src1))), i16),
+           (SwapInst IntRegs:$src1, IntRegs:$src2)>;
+}
+
+let AddedComplexity = 200 in {
+  defm: MinMax_pats<setge,  A2_max,  A2_min>;
+  defm: MinMax_pats<setgt,  A2_max,  A2_min>;
+  defm: MinMax_pats<setle,  A2_min,  A2_max>;
+  defm: MinMax_pats<setlt,  A2_min,  A2_max>;
+  defm: MinMax_pats<setuge, A2_maxu, A2_minu>;
+  defm: MinMax_pats<setugt, A2_maxu, A2_minu>;
+  defm: MinMax_pats<setule, A2_minu, A2_maxu>;
+  defm: MinMax_pats<setult, A2_minu, A2_maxu>;
+}
+
 def ADD64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
                                                      DoubleRegs:$src2),
                "$dst = add($src1, $src2)",
