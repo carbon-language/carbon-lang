@@ -21,6 +21,8 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/UnwindPlan.h"
 
+#include "llvm/Support/MathExtras.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -109,7 +111,8 @@ namespace lldb_private {
 #endif
 
 #define EXTRACT_BITS(value, mask) \
-        ( (value >> __builtin_ctz(mask)) & (((1 << __builtin_popcount(mask)))-1) )
+        ( (value >> llvm::countTrailingZeros(static_cast<uint32_t>(mask), llvm::ZB_Width)) & \
+          (((1 << llvm::CountPopulation_32(static_cast<uint32_t>(mask))))-1) )
 
 
 
