@@ -880,6 +880,7 @@ bool UnwrappedLineParser::tryToParseLambda() {
     case tok::amp:
     case tok::star:
     case tok::kw_const:
+    case tok::comma:
     case tok::less:
     case tok::greater:
     case tok::identifier:
