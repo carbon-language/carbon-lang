@@ -869,9 +869,12 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
 
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
                            &declRef, VK_RValue);
+      // FIXME: Pass a specific location for the expr init so that the store is
+      // attributed to a reasonable location - otherwise it may be attributed to
+      // locations of subexpressions in the initialization.
       EmitExprAsInit(&l2r, &blockFieldPseudoVar,
                      MakeAddrLValue(blockField, type, align),
-                     /*captured by init*/ false);
+                     /*captured by init*/ false, SourceLocation());
     }
 
     // Activate the cleanup if layout pushed one.

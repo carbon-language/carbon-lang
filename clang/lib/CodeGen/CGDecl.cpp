@@ -1126,7 +1126,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   if (!constant) {
     LValue lv = MakeAddrLValue(Loc, type, alignment);
     lv.setNonGC(true);
-    return EmitExprAsInit(Init, &D, lv, capturedByInit);
+    return EmitExprAsInit(Init, &D, lv, capturedByInit, D.getLocation());
   }
 
   if (!emission.IsConstantAggregate) {

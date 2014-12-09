@@ -50,9 +50,17 @@ void f3() {
       complex_sink() += complex_src();
 }
 
+// CHECK-LABEL: define
+void f4() {
+#line 500
+  auto x // CHECK: store {{.*}} !dbg [[DBG_F4:!.*]]
+      = src();
+}
+
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
 // CHECK: [[DBG_FOO_COMPLEX]] = metadata !{i32 204,
 // CHECK: [[DBG_F2]] = metadata !{i32 300,
 // CHECK: [[DBG_F3]] = metadata !{i32 400,
+// CHECK: [[DBG_F4]] = metadata !{i32 500,
