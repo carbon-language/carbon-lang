@@ -17,11 +17,14 @@
 #define LLD_READER_WRITER_ELF_TARGET_HANDLER_H
 
 #include "Layout.h"
+#include "lld/Core/Atom.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/STDExtras.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include <memory>
 #include <vector>
@@ -39,11 +42,35 @@ template <class ELFT> class TargetLayout;
 
 template <class ELFT> class TargetRelocationHandler {
 public:
+  /// Constructor
+  TargetRelocationHandler(ELFLinkingContext &targetInfo)
+      : _context(targetInfo) {}
+
   virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                           const lld::AtomLayout &,
                                           const Reference &) const = 0;
 
+  void unhandledReferenceType(const Atom &atom, const Reference &ref) const {
+    llvm::errs() << "Unhandled reference type in file " << atom.file().path()
+                 << ": reference from " << atom.name() << "+"
+                 << ref.offsetInAtom() << " to " << ref.target()->name()
+                 << "+" << ref.addend() << " of type ";
+
+    StringRef kindValStr;
+    if (!_context.registry().referenceKindToString(ref.kindNamespace(),
+                                                   ref.kindArch(),
+                                                   ref.kindValue(),
+                                                   kindValStr)) {
+      kindValStr = "unknown";
+    }
+
+    llvm::errs() << ref.kindValue() << " (" << kindValStr << ")\n";
+    llvm::report_fatal_error("unhandled reference type");
+  }
+
   virtual ~TargetRelocationHandler() {}
+private:
+  ELFLinkingContext &_context;
 };
 
 /// \brief TargetHandler contains all the information responsible to handle a

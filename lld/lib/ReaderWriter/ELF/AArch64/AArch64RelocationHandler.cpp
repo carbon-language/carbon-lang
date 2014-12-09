@@ -461,15 +461,8 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(location, relocVAddress,
                                            targetVAddress, ref.addend());
     break;
-  default: {
-    std::string str;
-    llvm::raw_string_ostream s(str);
-    s << "Unhandled relocation: " << atom._atom->file().path() << ":"
-      << atom._atom->name() << "@" << ref.offsetInAtom() << " "
-      << "#" << ref.kindValue();
-    s.flush();
-    llvm_unreachable(str.c_str());
-  }
+  default:
+    unhandledReferenceType(*atom._atom, ref);
   }
 
   return std::error_code();

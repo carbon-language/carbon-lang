@@ -22,7 +22,7 @@ MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &ctx)
     : DefaultTargetHandler(ctx), _ctx(ctx),
       _runtimeFile(new MipsRuntimeFile<Mips32ElELFType>(ctx)),
       _targetLayout(new MipsTargetLayout<Mips32ElELFType>(ctx)),
-      _relocationHandler(new MipsTargetRelocationHandler(*_targetLayout)) {}
+      _relocationHandler(new MipsTargetRelocationHandler(*_targetLayout, ctx)) {}
 
 std::unique_ptr<Writer> MipsTargetHandler::getWriter() {
   switch (_ctx.getOutputELFType()) {

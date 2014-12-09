@@ -156,8 +156,6 @@ template <class Derived> class AArch64RelocationPass : public Pass {
     case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
       static_cast<Derived *>(this)->handleGOT(ref);
       break;
-    default:
-      llvm_unreachable("Unhandled type in handleReference");
     }
   }
 

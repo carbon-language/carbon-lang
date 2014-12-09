@@ -51,4 +51,4 @@ X86TargetHandler::X86TargetHandler(X86LinkingContext &context)
     : DefaultTargetHandler(context), _x86LinkingContext(context),
       _x86TargetLayout(new X86TargetLayout<X86ELFType>(context)),
       _x86RelocationHandler(
-          new X86TargetRelocationHandler(*_x86TargetLayout.get())) {}
+          new X86TargetRelocationHandler(context)) {}

@@ -20,7 +20,7 @@ typedef llvm::object::ELFType<llvm::support::little, 2, false> X86ELFType;
 class X86TargetRelocationHandler final
     : public TargetRelocationHandler<X86ELFType> {
 public:
-  X86TargetRelocationHandler(X86TargetLayout<X86ELFType> &) {}
+  using TargetRelocationHandler<X86ELFType>::TargetRelocationHandler;
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,

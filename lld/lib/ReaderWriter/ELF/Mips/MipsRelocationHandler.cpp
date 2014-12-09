@@ -179,12 +179,8 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
   case LLD_R_MIPS_STO_PLT:
     // Do nothing.
     break;
-  default: {
-    std::string str;
-    llvm::raw_string_ostream s(str);
-    s << "Unhandled Mips relocation: " << ref.kindValue();
-    llvm_unreachable(s.str().c_str());
-  }
+  default:
+    unhandledReferenceType(*atom._atom, ref);
   }
 
   endian::write<uint32_t, little, 2>(location, ins);

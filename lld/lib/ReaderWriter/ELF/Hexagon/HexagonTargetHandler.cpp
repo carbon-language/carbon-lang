@@ -22,8 +22,8 @@ HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &context)
     : DefaultTargetHandler(context), _hexagonLinkingContext(context),
       _hexagonRuntimeFile(new HexagonRuntimeFile<HexagonELFType>(context)),
       _hexagonTargetLayout(new HexagonTargetLayout<HexagonELFType>(context)),
-      _hexagonRelocationHandler(
-          new HexagonTargetRelocationHandler(*_hexagonTargetLayout.get())) {}
+      _hexagonRelocationHandler(new HexagonTargetRelocationHandler(
+          *_hexagonTargetLayout.get(), context)) {}
 
 std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
   switch (_hexagonLinkingContext.getOutputELFType()) {

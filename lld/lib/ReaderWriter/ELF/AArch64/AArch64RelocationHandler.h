@@ -21,7 +21,7 @@ template <class ELFT> class AArch64TargetLayout;
 class AArch64TargetRelocationHandler final
     : public TargetRelocationHandler<AArch64ELFType> {
 public:
-  AArch64TargetRelocationHandler() {}
+  using TargetRelocationHandler<AArch64ELFType>::TargetRelocationHandler;
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,

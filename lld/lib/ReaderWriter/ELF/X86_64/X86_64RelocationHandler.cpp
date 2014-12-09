@@ -122,15 +122,8 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_DTPMOD64:
   case R_X86_64_DTPOFF64:
     break;
-  default: {
-    std::string str;
-    llvm::raw_string_ostream s(str);
-    s << "Unhandled relocation: " << atom._atom->file().path() << ":"
-      << atom._atom->name() << "@" << ref.offsetInAtom() << " "
-      << "#" << ref.kindValue();
-    s.flush();
-    llvm_unreachable(str.c_str());
-  }
+  default:
+    unhandledReferenceType(*atom._atom, ref);
   }
 
   return std::error_code();

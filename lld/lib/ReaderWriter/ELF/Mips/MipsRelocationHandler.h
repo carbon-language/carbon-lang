@@ -19,8 +19,10 @@ class MipsTargetHandler;
 class MipsTargetRelocationHandler final
     : public TargetRelocationHandler<Mips32ElELFType> {
 public:
-  MipsTargetRelocationHandler(MipsTargetLayout<Mips32ElELFType> &layout)
-      : _mipsTargetLayout(layout) {}
+  MipsTargetRelocationHandler(MipsTargetLayout<Mips32ElELFType> &layout,
+                              ELFLinkingContext &targetInfo)
+      : TargetRelocationHandler<Mips32ElELFType>(targetInfo),
+        _mipsTargetLayout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,

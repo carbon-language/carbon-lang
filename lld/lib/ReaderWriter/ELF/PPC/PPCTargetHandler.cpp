@@ -51,13 +51,8 @@ std::error_code PPCTargetRelocationHandler::applyRelocation(
     relocB24PCREL(location, relocVAddress, targetVAddress, ref.addend());
     break;
 
-  default : {
-    std::string str;
-    llvm::raw_string_ostream s(str);
-    s << "Unhandled PowerPC relocation: #" << ref.kindValue();
-    s.flush();
-    llvm_unreachable(str.c_str());
-  }
+  default:
+    unhandledReferenceType(*atom._atom, ref);
   }
 
   return std::error_code();

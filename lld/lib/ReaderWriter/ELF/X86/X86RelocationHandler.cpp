@@ -51,13 +51,8 @@ std::error_code X86TargetRelocationHandler::applyRelocation(
   case R_386_PC32:
     relocPC32(location, relocVAddress, targetVAddress, ref.addend());
     break;
-  default: {
-    std::string str;
-    llvm::raw_string_ostream s(str);
-    s << "Unhandled I386 relocation # " << ref.kindValue();
-    s.flush();
-    llvm_unreachable(str.c_str());
-  }
+  default:
+    unhandledReferenceType(*atom._atom, ref);
   }
 
   return std::error_code();
