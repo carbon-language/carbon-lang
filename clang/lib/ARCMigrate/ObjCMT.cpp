@@ -242,7 +242,8 @@ namespace {
                                   const NSAPI &NS, edit::Commit &commit,
                                   const ParentMap *PMap) {
     if (!Msg || Msg->isImplicit() ||
-        Msg->getReceiverKind() != ObjCMessageExpr::Instance)
+        (Msg->getReceiverKind() != ObjCMessageExpr::Instance &&
+         Msg->getReceiverKind() != ObjCMessageExpr::SuperInstance))
       return false;
     const ObjCMethodDecl *Method = Msg->getMethodDecl();
     if (!Method)
@@ -260,12 +261,17 @@ namespace {
       return false;
     
     SourceRange MsgRange = Msg->getSourceRange();
+    bool ReceiverIsSuper =
+      (Msg->getReceiverKind() == ObjCMessageExpr::SuperInstance);
+    // for 'super' receiver is nullptr.
     const Expr *receiver = Msg->getInstanceReceiver();
-    bool NeedsParen = subscriptOperatorNeedsParens(receiver);
+    bool NeedsParen =
+      ReceiverIsSuper ? false : subscriptOperatorNeedsParens(receiver);
     bool IsGetter = (Msg->getNumArgs() == 0);
     if (IsGetter) {
       // Find space location range between receiver expression and getter method.
-      SourceLocation BegLoc = receiver->getLocEnd();
+      SourceLocation BegLoc =
+        ReceiverIsSuper ? Msg->getSuperLoc() : receiver->getLocEnd();
       BegLoc = PP.getLocForEndOfToken(BegLoc);
       SourceLocation EndLoc = Msg->getSelectorLoc(0);
       SourceRange SpaceRange(BegLoc, EndLoc);
@@ -285,9 +291,8 @@ namespace {
       commit.replace(SourceRange(MsgRange.getBegin(), MsgRange.getBegin()), "");
       commit.replace(SourceRange(MsgRange.getEnd(), MsgRange.getEnd()), "");
     } else {
-      SourceRange ReceiverRange = receiver->getSourceRange();
       if (NeedsParen)
-        commit.insertWrap("(", ReceiverRange, ")");
+        commit.insertWrap("(", receiver->getSourceRange(), ")");
       std::string PropertyDotString = ".";
       PropertyDotString += Prop->getName();
       PropertyDotString += " =";
@@ -295,7 +300,8 @@ namespace {
       const Expr *RHS = Args[0];
       if (!RHS)
         return false;
-      SourceLocation BegLoc = ReceiverRange.getEnd();
+      SourceLocation BegLoc =
+        ReceiverIsSuper ? Msg->getSuperLoc() : receiver->getLocEnd();
       BegLoc = PP.getLocForEndOfToken(BegLoc);
       SourceLocation EndLoc = RHS->getLocStart();
       EndLoc = EndLoc.getLocWithOffset(-1);
