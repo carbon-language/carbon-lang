@@ -1533,6 +1533,9 @@ bool ModuleLinker::run() {
     GlobalValue *SGV = LazilyLinkGlobalValues.back();
     LazilyLinkGlobalValues.pop_back();
 
+    if (auto F = dyn_cast<Function>(SGV))
+      if (F->isDeclaration())
+        continue;
     if (linkGlobalValueBody(*SGV))
       return true;
   }
