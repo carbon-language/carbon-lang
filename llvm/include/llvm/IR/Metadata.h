@@ -141,9 +141,11 @@ public:
   typedef MetadataTracking::OwnerTy OwnerTy;
 
 private:
-  SmallDenseMap<void *, OwnerTy, 4> UseMap;
+  uint64_t NextIndex;
+  SmallDenseMap<void *, std::pair<OwnerTy, uint64_t>, 4> UseMap;
 
 public:
+  ReplaceableMetadataImpl() : NextIndex(0) {}
   ~ReplaceableMetadataImpl() {
     assert(UseMap.empty() && "Cannot destroy in-use replaceable metadata");
   }

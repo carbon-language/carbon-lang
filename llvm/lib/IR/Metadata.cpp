@@ -121,9 +121,14 @@ void MetadataAsValue::untrack() {
 }
 
 void ReplaceableMetadataImpl::addRef(void *Ref, OwnerTy Owner) {
-  bool WasInserted = UseMap.insert(std::make_pair(Ref, Owner)).second;
+  bool WasInserted =
+      UseMap.insert(std::make_pair(Ref, std::make_pair(Owner, NextIndex)))
+          .second;
   (void)WasInserted;
   assert(WasInserted && "Expected to add a reference");
+
+  ++NextIndex;
+  assert(NextIndex != 0 && "Unexpected overflow");
 }
 
 void ReplaceableMetadataImpl::dropRef(void *Ref) {
@@ -136,15 +141,17 @@ void ReplaceableMetadataImpl::moveRef(void *Ref, void *New,
                                       const Metadata &MD) {
   auto I = UseMap.find(Ref);
   assert(I != UseMap.end() && "Expected to move a reference");
-  OwnerTy Owner = I->second;
+  auto OwnerAndIndex = I->second;
   UseMap.erase(I);
-  addRef(New, Owner);
+  bool WasInserted = UseMap.insert(std::make_pair(New, OwnerAndIndex)).second;
+  (void)WasInserted;
+  assert(WasInserted && "Expected to add a reference");
 
   // Check that the references are direct if there's no owner.
   (void)MD;
-  assert((Owner || *static_cast<Metadata **>(Ref) == &MD) &&
+  assert((OwnerAndIndex.first || *static_cast<Metadata **>(Ref) == &MD) &&
          "Reference without owner must be direct");
-  assert((Owner || *static_cast<Metadata **>(New) == &MD) &&
+  assert((OwnerAndIndex.first || *static_cast<Metadata **>(New) == &MD) &&
          "Reference without owner must be direct");
 }
 
@@ -155,9 +162,14 @@ void ReplaceableMetadataImpl::replaceAllUsesWith(Metadata *MD) {
     return;
 
   // Copy out uses since UseMap will get touched below.
-  SmallVector<std::pair<void *, OwnerTy>, 8> Uses(UseMap.begin(), UseMap.end());
+  typedef std::pair<void *, std::pair<OwnerTy, uint64_t>> UseTy;
+  SmallVector<UseTy, 8> Uses(UseMap.begin(), UseMap.end());
+  std::sort(Uses.begin(), Uses.end(), [](const UseTy &L, const UseTy &R) {
+    return L.second.second < R.second.second;
+  });
   for (const auto &Pair : Uses) {
-    if (!Pair.second) {
+    OwnerTy Owner = Pair.second.first;
+    if (!Owner) {
       // Update unowned tracking references directly.
       Metadata *&Ref = *static_cast<Metadata **>(Pair.first);
       Ref = MD;
@@ -167,17 +179,17 @@ void ReplaceableMetadataImpl::replaceAllUsesWith(Metadata *MD) {
     }
 
     // Check for MetadataAsValue.
-    if (Pair.second.is<MetadataAsValue *>()) {
-      Pair.second.get<MetadataAsValue *>()->handleChangedMetadata(MD);
+    if (Owner.is<MetadataAsValue *>()) {
+      Owner.get<MetadataAsValue *>()->handleChangedMetadata(MD);
       continue;
     }
 
     // There's a Metadata owner -- dispatch.
-    Metadata *Owner = Pair.second.get<Metadata *>();
-    switch (Owner->getMetadataID()) {
+    Metadata *OwnerMD = Owner.get<Metadata *>();
+    switch (OwnerMD->getMetadataID()) {
 #define HANDLE_METADATA_LEAF(CLASS)                                            \
   case Metadata::CLASS##Kind:                                                  \
-    cast<CLASS>(Owner)->handleChangedOperand(Pair.first, MD);                  \
+    cast<CLASS>(OwnerMD)->handleChangedOperand(Pair.first, MD);                \
     continue;
 #include "llvm/IR/Metadata.def"
     default:
@@ -197,23 +209,28 @@ void ReplaceableMetadataImpl::resolveAllUses(bool ResolveUsers) {
   }
 
   // Copy out uses since UseMap could get touched below.
-  SmallVector<std::pair<void *, OwnerTy>, 8> Uses(UseMap.begin(), UseMap.end());
+  typedef std::pair<void *, std::pair<OwnerTy, uint64_t>> UseTy;
+  SmallVector<UseTy, 8> Uses(UseMap.begin(), UseMap.end());
+  std::sort(Uses.begin(), Uses.end(), [](const UseTy &L, const UseTy &R) {
+    return L.second.second < R.second.second;
+  });
   UseMap.clear();
   for (const auto &Pair : Uses) {
-    if (!Pair.second)
+    auto Owner = Pair.second.first;
+    if (!Owner)
       continue;
-    if (Pair.second.is<MetadataAsValue *>())
+    if (Owner.is<MetadataAsValue *>())
       continue;
 
     // Resolve GenericMDNodes that point at this.
-    auto *Owner = dyn_cast<GenericMDNode>(Pair.second.get<Metadata *>());
-    if (!Owner)
+    auto *OwnerMD = dyn_cast<GenericMDNode>(Owner.get<Metadata *>());
+    if (!OwnerMD)
       continue;
-    if (Owner->isResolved())
+    if (OwnerMD->isResolved())
       continue;
-    Owner->decrementUnresolvedOperands();
-    if (!Owner->hasUnresolvedOperands())
-      Owner->resolve();
+    OwnerMD->decrementUnresolvedOperands();
+    if (!OwnerMD->hasUnresolvedOperands())
+      OwnerMD->resolve();
   }
 }
 
