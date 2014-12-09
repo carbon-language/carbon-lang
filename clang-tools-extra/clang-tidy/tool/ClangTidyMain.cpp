@@ -324,8 +324,9 @@ int clangTidyMain(int argc, const char **argv) {
 
   printStats(Stats);
   if (DisableFixes)
-    llvm::errs() << "Found compiler errors, but -fix-error was not specified.\n"
-                    "Fixes have NOT been applied.\n\n";
+    llvm::errs()
+        << "Found compiler errors, but -fix-errors was not specified.\n"
+           "Fixes have NOT been applied.\n\n";
 
   if (EnableCheckProfile)
     printProfileData(Profile, llvm::errs());
