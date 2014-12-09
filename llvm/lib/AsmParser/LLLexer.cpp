@@ -757,7 +757,13 @@ lltok::Kind LLLexer::LexIdentifier() {
       isxdigit(static_cast<unsigned char>(TokStart[3]))) {
     int len = CurPtr-TokStart-3;
     uint32_t bits = len * 4;
-    APInt Tmp(bits, StringRef(TokStart+3, len), 16);
+    StringRef HexStr(TokStart + 3, len);
+    if (!std::all_of(HexStr.begin(), HexStr.end(), isxdigit)) {
+      // Bad token, return it as an error.
+      CurPtr = TokStart+3;
+      return lltok::Error;
+    }
+    APInt Tmp(bits, HexStr, 16);
     uint32_t activeBits = Tmp.getActiveBits();
     if (activeBits > 0 && activeBits < bits)
       Tmp = Tmp.trunc(activeBits);
