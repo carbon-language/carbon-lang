@@ -2833,9 +2833,6 @@ void InnerLoopVectorizer::vectorizeLoop() {
     }
 
     // Fix the vector-loop phi.
-    // We created the induction variable so we know that the
-    // preheader is the first entry.
-    BasicBlock *VecPreheader = Induction->getIncomingBlock(0);
 
     // Reductions do not have to start at zero. They can start with
     // any loop invariant values.
@@ -2847,7 +2844,8 @@ void InnerLoopVectorizer::vectorizeLoop() {
       // Make sure to add the reduction stat value only to the
       // first unroll part.
       Value *StartVal = (part == 0) ? VectorStart : Identity;
-      cast<PHINode>(VecRdxPhi[part])->addIncoming(StartVal, VecPreheader);
+      cast<PHINode>(VecRdxPhi[part])->addIncoming(StartVal,
+                                                  LoopVectorPreHeader);
       cast<PHINode>(VecRdxPhi[part])->addIncoming(Val[part],
                                                   LoopVectorBody.back());
     }
