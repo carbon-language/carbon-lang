@@ -1120,12 +1120,12 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   // will take a value storing address of the memory for variable, not
   // alloca itself.
   SmallVector<int64_t, 4> NewDIExpr;
+  NewDIExpr.push_back(dwarf::DW_OP_deref);
   if (DIExpr) {
     for (unsigned i = 0, n = DIExpr.getNumElements(); i < n; ++i) {
       NewDIExpr.push_back(DIExpr.getElement(i));
     }
   }
-  NewDIExpr.insert(NewDIExpr.begin(), dwarf::DW_OP_deref);
 
   // Insert llvm.dbg.declare in the same basic block as the original alloca,
   // and remove old llvm.dbg.declare.
