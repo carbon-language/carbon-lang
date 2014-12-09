@@ -1520,10 +1520,14 @@ multiclass MTBUF_Load_Helper <bits<3> op, string opName,
 //===----------------------------------------------------------------------===//
 
 class MUBUF_si <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
-  MUBUF <outs, ins, asm, pattern>, MUBUFe <op>;
+  MUBUF <outs, ins, asm, pattern>, MUBUFe <op> {
+  let lds  = 0;
+}
 
 class MUBUF_vi <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
-  MUBUF <outs, ins, asm, pattern>, MUBUFe_vi <op>;
+  MUBUF <outs, ins, asm, pattern>, MUBUFe_vi <op> {
+  let lds = 0;
+}
 
 class MUBUFAddr64Table <bit is_addr64, string suffix = ""> {
 
@@ -1609,7 +1613,7 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
                               ValueType load_vt = i32,
                               SDPatternOperator ld = null_frag> {
 
-  let lds = 0, mayLoad = 1 in {
+  let mayLoad = 1 in {
 
     let addr64 = 0 in {
 
@@ -1704,7 +1708,7 @@ multiclass MUBUF_Load_Helper_vi <bits<7> op, string asm, RegisterClass regClass,
 multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass,
                           ValueType store_vt, SDPatternOperator st> {
 
-  let addr64 = 0, lds = 0 in {
+  let addr64 = 0 in {
 
     def "" : MUBUF_si <
       op, (outs),
@@ -1739,7 +1743,7 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
       >;
     } // end offen = 1, idxen = 0
 
-  } // End addr64 = 0, lds = 0
+  } // End addr64 = 0
 
   def _ADDR64 : MUBUF_si <
     op, (outs),
@@ -1757,7 +1761,6 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
       let idxen = 0;
       let glc = 0;
       let addr64 = 1;
-      let lds = 0;
       let slc = 0;
       let tfe = 0;
       let soffset = 128; // ZERO
