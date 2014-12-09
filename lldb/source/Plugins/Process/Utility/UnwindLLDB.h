@@ -48,7 +48,8 @@ protected:
             eRegisterSavedAtMemoryLocation,     // register is saved at a specific word of target mem (target_memory_location)
             eRegisterInRegister,                // register is available in a (possible other) register (register_number)
             eRegisterSavedAtHostMemoryLocation, // register is saved at a word in lldb's address space
-            eRegisterValueInferred              // register val was computed (and is in inferred_value)
+            eRegisterValueInferred,             // register val was computed (and is in inferred_value)
+            eRegisterInLiveRegisterContext      // register value is in a live (stack frame #0) register
         };
         int type;
         union

@@ -384,6 +384,14 @@ UnwindLLDB::SearchForSavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         UnwindLLDB::RegisterSearchResult result;
         result = m_frames[frame_num]->reg_ctx_lldb_sp->SavedLocationForRegister (lldb_regnum, regloc);
 
+        // We descended down to the live register context aka stack frame 0 and are reading the value
+        // out of a live register.
+        if (result == UnwindLLDB::RegisterSearchResult::eRegisterFound
+            && regloc.type == UnwindLLDB::RegisterLocation::eRegisterInLiveRegisterContext)
+        {
+            return true;
+        }
+
         // If we have unwind instructions saying that register N is saved in register M in the middle of
         // the stack (and N can equal M here, meaning the register was not used in this function), then
         // change the register number we're looking for to M and keep looking for a concrete  location 
