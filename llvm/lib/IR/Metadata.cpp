@@ -495,6 +495,14 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
     setOperand(Op, New);
     return;
   }
+  if (InRAUW) {
+    // We just hit a recursion due to RAUW.  Set the operand and move on, since
+    // we're about to be deleted.
+    //
+    // FIXME: Can this cycle really happen?
+    setOperand(Op, New);
+    return;
+  }
 
   auto &Store = getContext().pImpl->MDNodeSet;
   Store.erase(this);
@@ -550,6 +558,7 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   // Collision.
   if (!isResolved()) {
     // Still unresolved, so RAUW.
+    InRAUW = true;
     ReplaceableUses->replaceAllUsesWith(*I);
     delete this;
     return;

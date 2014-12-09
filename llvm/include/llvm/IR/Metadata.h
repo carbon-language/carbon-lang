@@ -49,6 +49,7 @@ class Metadata {
 protected:
   /// \brief Storage flag for non-uniqued, otherwise unowned, metadata.
   bool IsDistinctInContext : 1;
+  bool InRAUW : 1;
   // TODO: expose remaining bits to subclasses.
 
   unsigned short SubclassData16;
@@ -65,8 +66,8 @@ public:
 
 protected:
   Metadata(unsigned ID)
-      : SubclassID(ID), IsDistinctInContext(false), SubclassData16(0),
-        SubclassData32(0) {}
+      : SubclassID(ID), IsDistinctInContext(false), InRAUW(false),
+        SubclassData16(0), SubclassData32(0) {}
   ~Metadata() {}
 
   /// \brief Store this in a big non-uniqued untyped bucket.
