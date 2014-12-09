@@ -43,20 +43,20 @@ int main()
     
     static_assert ( !(o1 < o1), "" );
     static_assert ( !(o1 < o2), "" );
-    static_assert (   o1 < o3 , "" );
-    static_assert (   o1 < o4 , "" );
-    static_assert (   o1 < o5 , "" );
+    static_assert (  (o1 < o3), "" );
+    static_assert (  (o1 < o4), "" );
+    static_assert (  (o1 < o5), "" );
 
     static_assert ( !(o2 < o1), "" );
     static_assert ( !(o2 < o2), "" );
-    static_assert (   o2 < o3 , "" );
-    static_assert (   o2 < o4 , "" );
-    static_assert (   o2 < o5 , "" );
+    static_assert (  (o2 < o3), "" );
+    static_assert (  (o2 < o4), "" );
+    static_assert (  (o2 < o5), "" );
 
     static_assert ( !(o3 < o1), "" );
     static_assert ( !(o3 < o2), "" );
     static_assert ( !(o3 < o3), "" );
-    static_assert (   o3 < o4 , "" );
+    static_assert (  (o3 < o4), "" );
     static_assert ( !(o3 < o5), "" );
 
     static_assert ( !(o4 < o1), "" );
@@ -68,7 +68,7 @@ int main()
     static_assert ( !(o5 < o1), "" );
     static_assert ( !(o5 < o2), "" );
     static_assert ( !(o5 < o3), "" );
-    static_assert (   o5 < o4 , "" );
+    static_assert (  (o5 < o4), "" );
     static_assert ( !(o5 < o5), "" );
     }
 #endif
