@@ -151,11 +151,11 @@ const std::string &CodeGenTarget::getName() const {
 }
 
 std::string CodeGenTarget::getInstNamespace() const {
-  for (inst_iterator i = inst_begin(), e = inst_end(); i != e; ++i) {
+  for (const CodeGenInstruction *Inst : instructions()) {
     // Make sure not to pick up "TargetOpcode" by accidentally getting
     // the namespace off the PHI instruction or something.
-    if ((*i)->Namespace != "TargetOpcode")
-      return (*i)->Namespace;
+    if (Inst->Namespace != "TargetOpcode")
+      return Inst->Namespace;
   }
 
   return "";
@@ -307,9 +307,8 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
   }
   unsigned EndOfPredefines = InstrsByEnum.size();
 
-  for (DenseMap<const Record*, CodeGenInstruction*>::const_iterator
-       I = Insts.begin(), E = Insts.end(); I != E; ++I) {
-    const CodeGenInstruction *CGI = I->second;
+  for (const auto &I : Insts) {
+    const CodeGenInstruction *CGI = I.second;
     if (CGI->Namespace != "TargetOpcode")
       InstrsByEnum.push_back(CGI);
   }
@@ -339,9 +338,7 @@ void CodeGenTarget::reverseBitsForLittleEndianEncoding() {
     return;
 
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
-  for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
-       I != E; ++I) {
-    Record *R = *I;
+  for (Record *R : Insts) {
     if (R->getValueAsString("Namespace") == "TargetOpcode" ||
         R->getValueAsBit("isPseudo"))
       continue;
