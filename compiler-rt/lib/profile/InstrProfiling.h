@@ -57,9 +57,6 @@ const char *__llvm_profile_end_names(void);
 uint64_t *__llvm_profile_begin_counters(void);
 uint64_t *__llvm_profile_end_counters(void);
 
-#define PROFILE_RANGE_SIZE(Range) \
-  (__llvm_profile_end_ ## Range () - __llvm_profile_begin_ ## Range ())
-
 /*!
  * \brief Write instrumentation data to the current file.
  *
