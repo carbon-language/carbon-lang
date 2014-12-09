@@ -144,14 +144,14 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
   return VM[V] = ConstantPointerNull::get(cast<PointerType>(NewTy));
 }
 
-static Metadata *map(ValueToValueMapTy &VM, const Metadata *Key,
+static Metadata *mapToMetadata(ValueToValueMapTy &VM, const Metadata *Key,
                      Metadata *Val) {
   VM.MD()[Key].reset(Val);
   return Val;
 }
 
 static Metadata *mapToSelf(ValueToValueMapTy &VM, const Metadata *MD) {
-  return map(VM, MD, const_cast<Metadata *>(MD));
+  return mapToMetadata(VM, MD, const_cast<Metadata *>(MD));
 }
 
 static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
@@ -182,7 +182,7 @@ static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
     //
     //    assert(MappedV && "Referenced metadata not in value map!");
     if (MappedV)
-      return map(VM, MD, ValueAsMetadata::get(MappedV));
+      return mapToMetadata(VM, MD, ValueAsMetadata::get(MappedV));
     return nullptr;
   }
 
@@ -214,7 +214,7 @@ static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
 
   // Create a dummy node in case we have a metadata cycle.
   MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
-  map(VM, Node, Dummy);
+  mapToMetadata(VM, Node, Dummy);
 
   // Check all operands to see if any need to be remapped.
   for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
@@ -232,7 +232,7 @@ static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
     MDNode *NewMD = MDNode::get(Node->getContext(), Elts);
     Dummy->replaceAllUsesWith(NewMD);
     MDNode::deleteTemporary(Dummy);
-    return map(VM, Node, NewMD);
+    return mapToMetadata(VM, Node, NewMD);
   }
 
   // No operands needed remapping.  Use an identity mapping.
