@@ -454,8 +454,12 @@ public:
   /// \param IsSystem Whether this module map file is in a system header
   /// directory, and therefore should be considered a system module.
   ///
+  /// \param HomeDir The directory in which relative paths within this module
+  ///        map file will be resolved.
+  ///
   /// \returns true if an error occurred, false otherwise.
-  bool parseModuleMapFile(const FileEntry *File, bool IsSystem);
+  bool parseModuleMapFile(const FileEntry *File, bool IsSystem,
+                          const DirectoryEntry *HomeDir);
     
   /// \brief Dump the contents of the module map, for debugging purposes.
   void dump();

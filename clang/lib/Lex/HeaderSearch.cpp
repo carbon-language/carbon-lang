@@ -1113,11 +1113,10 @@ HeaderSearch::findModuleForHeader(const FileEntry *File) const {
   return ModMap.findModuleForHeader(File);
 }
 
-static const FileEntry *getPrivateModuleMap(StringRef ModuleMapPath,
-                                            const DirectoryEntry *Directory,
+static const FileEntry *getPrivateModuleMap(const FileEntry *File,
                                             FileManager &FileMgr) {
-  StringRef Filename = llvm::sys::path::filename(ModuleMapPath);
-  SmallString<128>  PrivateFilename(Directory->getName());
+  StringRef Filename = llvm::sys::path::filename(File->getName());
+  SmallString<128>  PrivateFilename(File->getDir()->getName());
   if (Filename == "module.map")
     llvm::sys::path::append(PrivateFilename, "module_private.map");
   else if (Filename == "module.modulemap")
@@ -1128,7 +1127,25 @@ static const FileEntry *getPrivateModuleMap(StringRef ModuleMapPath,
 }
 
 bool HeaderSearch::loadModuleMapFile(const FileEntry *File, bool IsSystem) {
-  switch (loadModuleMapFileImpl(File, IsSystem)) {
+  // Find the directory for the module. For frameworks, that may require going
+  // up from the 'Modules' directory.
+  const DirectoryEntry *Dir = nullptr;
+  if (getHeaderSearchOpts().ModuleMapFileHomeIsCwd)
+    Dir = FileMgr.getDirectory(".");
+  else {
+    Dir = File->getDir();
+    StringRef DirName(Dir->getName());
+    if (llvm::sys::path::filename(DirName) == "Modules") {
+      DirName = llvm::sys::path::parent_path(DirName);
+      if (DirName.endswith(".framework"))
+        Dir = FileMgr.getDirectory(DirName);
+      // FIXME: This assert can fail if there's a race between the above check
+      // and the removal of the directory.
+      assert(Dir && "parent must exist");
+    }
+  }
+
+  switch (loadModuleMapFileImpl(File, IsSystem, Dir)) {
   case LMM_AlreadyLoaded:
   case LMM_NewlyLoaded:
     return false;
@@ -1140,7 +1157,8 @@ bool HeaderSearch::loadModuleMapFile(const FileEntry *File, bool IsSystem) {
 }
 
 HeaderSearch::LoadModuleMapResult
-HeaderSearch::loadModuleMapFileImpl(const FileEntry *File, bool IsSystem) {
+HeaderSearch::loadModuleMapFileImpl(const FileEntry *File, bool IsSystem,
+                                    const DirectoryEntry *Dir) {
   assert(File && "expected FileEntry");
 
   // Check whether we've already loaded this module map, and mark it as being
@@ -1149,15 +1167,14 @@ HeaderSearch::loadModuleMapFileImpl(const FileEntry *File, bool IsSystem) {
   if (!AddResult.second)
     return AddResult.first->second ? LMM_AlreadyLoaded : LMM_InvalidModuleMap;
 
-  if (ModMap.parseModuleMapFile(File, IsSystem)) {
+  if (ModMap.parseModuleMapFile(File, IsSystem, Dir)) {
     LoadedModuleMaps[File] = false;
     return LMM_InvalidModuleMap;
   }
 
   // Try to load a corresponding private module map.
-  if (const FileEntry *PMMFile =
-          getPrivateModuleMap(File->getName(), File->getDir(), FileMgr)) {
-    if (ModMap.parseModuleMapFile(PMMFile, IsSystem)) {
+  if (const FileEntry *PMMFile = getPrivateModuleMap(File, FileMgr)) {
+    if (ModMap.parseModuleMapFile(PMMFile, IsSystem, Dir)) {
       LoadedModuleMaps[File] = false;
       return LMM_InvalidModuleMap;
     }
@@ -1231,7 +1248,8 @@ HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir, bool IsSystem,
     return KnownDir->second ? LMM_AlreadyLoaded : LMM_InvalidModuleMap;
 
   if (const FileEntry *ModuleMapFile = lookupModuleMapFile(Dir, IsFramework)) {
-    LoadModuleMapResult Result = loadModuleMapFileImpl(ModuleMapFile, IsSystem);
+    LoadModuleMapResult Result =
+        loadModuleMapFileImpl(ModuleMapFile, IsSystem, Dir);
     // Add Dir explicitly in case ModuleMapFile is in a subdirectory.
     // E.g. Foo.framework/Modules/module.modulemap
     //      ^Dir                  ^ModuleMapFile
