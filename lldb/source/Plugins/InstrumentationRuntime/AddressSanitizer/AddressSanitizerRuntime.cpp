@@ -9,21 +9,22 @@
 
 #include "AddressSanitizerRuntime.h"
 
+#include "lldb/Breakpoint/StoppointCallbackContext.h"
+#include "lldb/Core/Debugger.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/PluginManager.h"
-#include "lldb/Core/ModuleList.h"
-#include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Core/Module.h"
-#include "lldb/Target/Target.h"
-#include "lldb/Target/Thread.h"
-#include "lldb/Target/StopInfo.h"
-#include "lldb/Symbol/Symbol.h"
-#include "lldb/Breakpoint/StoppointCallbackContext.h"
-#include "lldb/Core/ValueObject.h"
-#include "lldb/Target/InstrumentationRuntimeStopInfo.h"
-#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Symbol/Symbol.h"
+#include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Target/InstrumentationRuntimeStopInfo.h"
+#include "lldb/Target/StopInfo.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -249,8 +250,14 @@ AddressSanitizerRuntime::NotifyBreakpointHit(void *baton, StoppointCallbackConte
     ThreadSP thread = context->exe_ctx_ref.GetThreadSP();
     thread->SetStopInfo(InstrumentationRuntimeStopInfo::CreateStopReasonWithInstrumentationData(*thread, description.c_str(), report));
 
-    instance->m_runtime_module->ReportWarning("AddressSanitizer report breakpoint hit. Use 'thread info -s' to get extended information about the report.\n");
-    
+    if (instance->m_process)
+    {
+        StreamFileSP stream_sp (instance->m_process->GetTarget().GetDebugger().GetOutputFile());
+        if (stream_sp)
+        {
+            stream_sp->Printf ("AddressSanitizer report breakpoint hit. Use 'thread info -s' to get extended information about the report.\n");
+        }
+    }
     // Return true to stop the target, false to just let the target run.
     return true;
 }
@@ -283,8 +290,15 @@ AddressSanitizerRuntime::Activate()
     breakpoint->SetBreakpointKind ("address-sanitizer-report");
     m_breakpoint_id = breakpoint->GetID();
     
-    m_runtime_module->ReportWarning("AddressSanitizer debugger support is active. Memory error breakpoint has been installed and you can now use the 'memory history' command.\n");
-    
+    if (m_process)
+    {
+        StreamFileSP stream_sp (m_process->GetTarget().GetDebugger().GetOutputFile());
+        if (stream_sp)
+        {
+                stream_sp->Printf ("AddressSanitizer debugger support is active. Memory error breakpoint has been installed and you can now use the 'memory history' command.\n");
+        }
+    }
+
     m_is_active = true;
 }
 
