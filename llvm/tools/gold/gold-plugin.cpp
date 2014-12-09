@@ -303,7 +303,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   }
 
   ErrorOr<std::unique_ptr<object::IRObjectFile>> ObjOrErr =
-      object::IRObjectFile::createIRObjectFile(BufferRef, Context);
+      object::IRObjectFile::create(BufferRef, Context);
   std::error_code EC = ObjOrErr.getError();
   if (EC == BitcodeError::InvalidBitcodeSignature ||
       EC == object::object_error::invalid_file_type ||
@@ -563,7 +563,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
 
   MemoryBufferRef BufferRef(StringRef((const char *)View, File.filesize), "");
   ErrorOr<std::unique_ptr<object::IRObjectFile>> ObjOrErr =
-      object::IRObjectFile::createIRObjectFile(BufferRef, Context);
+      object::IRObjectFile::create(BufferRef, Context);
 
   if (std::error_code EC = ObjOrErr.getError())
     message(LDPL_FATAL, "Could not read bitcode from file : %s",

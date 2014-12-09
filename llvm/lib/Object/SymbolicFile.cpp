@@ -33,7 +33,7 @@ ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
   switch (Type) {
   case sys::fs::file_magic::bitcode:
     if (Context)
-      return IRObjectFile::createIRObjectFile(Object, *Context);
+      return IRObjectFile::create(Object, *Context);
   // Fallthrough
   case sys::fs::file_magic::unknown:
   case sys::fs::file_magic::archive:
@@ -69,7 +69,7 @@ ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
     if (!BCData)
       return std::move(Obj);
 
-    return IRObjectFile::createIRObjectFile(
+    return IRObjectFile::create(
         MemoryBufferRef(BCData->getBuffer(), Object.getBufferIdentifier()),
         *Context);
   }

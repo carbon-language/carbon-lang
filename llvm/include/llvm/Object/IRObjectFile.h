@@ -65,8 +65,8 @@ public:
   static ErrorOr<MemoryBufferRef>
   findBitcodeInMemBuffer(MemoryBufferRef Object);
 
-  static ErrorOr<std::unique_ptr<IRObjectFile>>
-  createIRObjectFile(MemoryBufferRef Object, LLVMContext &Context);
+  static ErrorOr<std::unique_ptr<IRObjectFile>> create(MemoryBufferRef Object,
+                                                       LLVMContext &Context);
 };
 }
 }

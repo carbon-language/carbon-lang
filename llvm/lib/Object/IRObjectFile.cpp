@@ -290,8 +290,8 @@ ErrorOr<MemoryBufferRef> IRObjectFile::findBitcodeInMemBuffer(MemoryBufferRef Ob
 }
 
 ErrorOr<std::unique_ptr<IRObjectFile>>
-llvm::object::IRObjectFile::createIRObjectFile(MemoryBufferRef Object,
-                                               LLVMContext &Context) {
+llvm::object::IRObjectFile::create(MemoryBufferRef Object,
+                                   LLVMContext &Context) {
   ErrorOr<MemoryBufferRef> BCOrErr = findBitcodeInMemBuffer(Object);
   if (!BCOrErr)
     return BCOrErr.getError();
