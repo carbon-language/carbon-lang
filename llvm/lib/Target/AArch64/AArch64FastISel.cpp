@@ -753,7 +753,7 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
     if (Addr.getOffsetReg())
       break;
 
-    if (DL.getTypeSizeInBits(Ty) != 8)
+    if (!Ty || DL.getTypeSizeInBits(Ty) != 8)
       break;
 
     const Value *LHS = U->getOperand(0);
