@@ -1,4 +1,8 @@
-; RUN: llc < %s -march=ppc64le -mcpu=pwr8 -mattr=+altivec | FileCheck %s
+; RUN: llc < %s -march=ppc64le -mcpu=pwr8 -mattr=+altivec -mattr=-vsx | FileCheck %s
+
+; Currently VSX support is disabled for this test because we generate lxsdx
+; instead of lfd, and stxsdx instead of stfd.  That is a poor choice when we
+; have reg+imm addressing, and is on the list of things to be fixed.
 
 target datalayout = "e-m:e-i64:64-n32:64"
 target triple = "powerpc64le-unknown-linux-gnu"

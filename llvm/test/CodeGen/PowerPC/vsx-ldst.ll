@@ -9,6 +9,14 @@
 ; RUN: grep stxvw4x < %t | count 3
 ; RUN: grep stxvd2x < %t | count 3
 
+;; Note: The LE test variant is disabled until LE support for VSX is enabled,
+;; as otherwise we fail to get the expected counts.
+
+; R;UN: llc -mcpu=pwr8 -mattr=+vsx -O2 -mtriple=powerpc64le-unknown-linux-gnu < %s > %t
+; R;UN: grep lxvd2x < %t | count 6
+; R;UN: grep stxvd2x < %t | count 6
+; R;UN: grep xxpermdi < %t | count 12
+
 @vsi = global <4 x i32> <i32 -1, i32 2, i32 -3, i32 4>, align 16
 @vui = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
 @vf = global <4 x float> <float -1.500000e+00, float 2.500000e+00, float -3.500000e+00, float 4.500000e+00>, align 16
