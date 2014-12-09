@@ -82,7 +82,7 @@
 
 // We don't have ThreadState in these methods, so this is an ugly hack that
 // works only in C++.
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 # define CPP_STAT_INC(typ) StatInc(cur_thread(), typ)
 #else
 # define CPP_STAT_INC(typ) (void)0

@@ -24,7 +24,7 @@
 
 namespace __tsan {
 
-#ifdef TSAN_GO
+#ifdef SANITIZER_GO
 const bool kGoMode = true;
 const bool kCppMode = false;
 const char *const kTsanOptionsEnv = "GORACE";

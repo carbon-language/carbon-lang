@@ -66,7 +66,7 @@ static void StackStripMain(SymbolizedStack *frames) {
 
   if (last_frame2 == 0)
     return;
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   const char *last = last_frame->info.function;
   const char *last2 = last_frame2->info.function;
   // Strip frame above 'main'
@@ -111,7 +111,7 @@ static ReportStack *SymbolizeStack(StackTrace trace) {
   SymbolizedStack *top = nullptr;
   for (uptr si = 0; si < trace.size; si++) {
     const uptr pc = trace.trace[si];
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
     // We obtain the return address, but we're interested in the previous
     // instruction.
     const uptr pc1 = StackTrace::GetPreviousInstructionPc(pc);
@@ -204,7 +204,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx, bool suppressable) {
     rt->stack->suppressable = suppressable;
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 static ThreadContext *FindThreadByUidLocked(int unique_id) {
   ctx->thread_registry->CheckLocked();
   for (unsigned i = 0; i < kMaxTid; i++) {
@@ -249,7 +249,7 @@ ThreadContext *IsThreadStackOrTls(uptr addr, bool *is_stack) {
 #endif
 
 void ScopedReport::AddThread(int unique_tid, bool suppressable) {
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   AddThread(FindThreadByUidLocked(unique_tid), suppressable);
 #endif
 }
@@ -304,7 +304,7 @@ void ScopedReport::AddDeadMutex(u64 id) {
 void ScopedReport::AddLocation(uptr addr, uptr size) {
   if (addr == 0)
     return;
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   int fd = -1;
   int creat_tid = -1;
   u32 creat_stack = 0;
@@ -354,7 +354,7 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
 #endif
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 void ScopedReport::AddSleep(u32 stack_id) {
   rep_->sleep = SymbolizeStackId(stack_id);
 }
@@ -644,7 +644,7 @@ void ReportRace(ThreadState *thr) {
 
   rep.AddLocation(addr_min, addr_max - addr_min);
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   {  // NOLINT
     Shadow s(thr->racy_state[1]);
     if (s.epoch() <= thr->last_sleep_clock.get(s.tid()))
@@ -665,7 +665,7 @@ void PrintCurrentStack(ThreadState *thr, uptr pc) {
 }
 
 void PrintCurrentStackSlow(uptr pc) {
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   BufferedStackTrace *ptrace =
       new(internal_alloc(MBlockStackTrace, sizeof(BufferedStackTrace)))
           BufferedStackTrace();

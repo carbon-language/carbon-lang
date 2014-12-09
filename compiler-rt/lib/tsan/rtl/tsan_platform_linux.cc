@@ -87,7 +87,7 @@ void FillProfileCallback(uptr p, uptr rss, bool file,
     mem[MemShadow] += rss;
   else if (p >= kMetaShadowBeg && p < kMetaShadowEnd)
     mem[MemMeta] += rss;
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   else if (p >= kHeapMemBeg && p < kHeapMemEnd)
     mem[MemHeap] += rss;
   else if (p >= kLoAppMemBeg && p < kLoAppMemEnd)
@@ -132,7 +132,7 @@ void FlushShadowMemory() {
 #endif
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 static void ProtectRange(uptr beg, uptr end) {
   CHECK_LE(beg, end);
   if (beg == end)
@@ -303,7 +303,7 @@ static void CheckAndProtect() {
   ProtectRange(kTraceMemEnd, kHeapMemBeg);
   ProtectRange(kHeapMemEnd + PrimaryAllocator::AdditionalSize(), kHiAppMemBeg);
 }
-#endif  // #ifndef TSAN_GO
+#endif  // #ifndef SANITIZER_GO
 
 void InitializePlatform() {
   DisableCoreDumperIfNecessary();
@@ -337,7 +337,7 @@ void InitializePlatform() {
       ReExec();
   }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   CheckAndProtect();
   InitTlsSize();
   InitDataSeg();
@@ -348,7 +348,7 @@ bool IsGlobalVar(uptr addr) {
   return g_data_start && addr >= g_data_start && addr < g_data_end;
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 // Extract file descriptors passed to glibc internal __res_iclose function.
 // This is required to properly "close" the fds, because we do not see internal
 // closes within glibc. The code is a pure hack.

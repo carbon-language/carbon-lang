@@ -33,7 +33,7 @@ static const char *const std_suppressions =
 "race:std::_Sp_counted_ptr_inplace<std::thread::_Impl\n";
 
 // Can be overriden in frontend.
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 extern "C" const char *WEAK __tsan_default_suppressions() {
   return 0;
 }
@@ -46,7 +46,7 @@ static bool suppressions_inited = false;
 void InitializeSuppressions() {
   CHECK(!suppressions_inited);
   SuppressionContext::InitIfNecessary();
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   SuppressionContext::Get()->Parse(__tsan_default_suppressions());
   SuppressionContext::Get()->Parse(std_suppressions);
 #endif

@@ -50,7 +50,7 @@ void FlushShadowMemory() {
 void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive) {
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 void InitializeShadowMemory() {
   uptr shadow = (uptr)MmapFixedNoReserve(kShadowBeg,
     kShadowEnd - kShadowBeg);
@@ -73,7 +73,7 @@ void InitializePlatform() {
   DisableCoreDumperIfNecessary();
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
     void *abstime), void *c, void *m, void *abstime,
     void(*cleanup)(void *arg), void *arg) {

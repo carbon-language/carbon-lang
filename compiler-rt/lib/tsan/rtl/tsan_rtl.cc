@@ -43,7 +43,7 @@ extern "C" void __tsan_resume() {
 
 namespace __tsan {
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
 #endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
@@ -73,7 +73,7 @@ static ThreadContextBase *CreateThreadContext(u32 tid) {
   return new(mem) ThreadContext(tid);
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 static const u32 kThreadQuarantineSize = 16;
 #else
 static const u32 kThreadQuarantineSize = 64;
@@ -102,7 +102,7 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   // , ignore_reads_and_writes()
   // , ignore_interceptors()
   , clock(tid, reuse_count)
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   , jmp_bufs(MBlockJmpBuf)
 #endif
   , tid(tid)
@@ -111,7 +111,7 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   , stk_size(stk_size)
   , tls_addr(tls_addr)
   , tls_size(tls_size)
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   , last_sleep_clock(tid)
 #endif
 {
@@ -127,7 +127,7 @@ static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
 }
 
 static void BackgroundThread(void *arg) {
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   // This is a non-initialized non-user thread, nothing to see here.
   // We don't use ScopedIgnoreInterceptors, because we want ignores to be
   // enabled even when the thread function exits (e.g. during pthread thread
@@ -191,7 +191,7 @@ static void BackgroundThread(void *arg) {
     if (mprof_fd != kInvalidFd)
       MemoryProfiler(ctx, mprof_fd, i);
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
     // Flush symbolizer cache if requested.
     if (flags()->flush_symbolizer_ms > 0) {
       u64 last = atomic_load(&ctx->last_symbolize_time_ns,
@@ -211,7 +211,7 @@ static void StartBackgroundThread() {
   ctx->background_thread = internal_start_thread(&BackgroundThread, 0);
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 static void StopBackgroundThread() {
   atomic_store(&ctx->stop_background_thread, 1, memory_order_relaxed);
   internal_join_thread(ctx->background_thread);
@@ -308,7 +308,7 @@ void Initialize(ThreadState *thr) {
   ctx = new(ctx_placeholder) Context;
   const char *options = GetEnv(kTsanOptionsEnv);
   InitializeFlags(&ctx->flags, options);
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   InitializeAllocator();
 #endif
   InitializeInterceptors();
@@ -316,18 +316,18 @@ void Initialize(ThreadState *thr) {
   InitializePlatform();
   InitializeMutex();
   InitializeDynamicAnnotations();
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   InitializeShadowMemory();
 #endif
   // Setup correct file descriptor for error reports.
   __sanitizer_set_report_path(common_flags()->log_path);
   InitializeSuppressions();
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   InitializeLibIgnore();
   Symbolizer::GetOrInit()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 #endif
   StartBackgroundThread();
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   SetSandboxingCallback(StopBackgroundThread);
 #endif
   if (common_flags()->detect_deadlocks)
@@ -364,7 +364,7 @@ int Finalize(ThreadState *thr) {
   CommonSanitizerReportMutex.Unlock();
   ctx->report_mtx.Unlock();
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   if (common_flags()->verbosity)
     AllocatorPrintStats();
 #endif
@@ -373,7 +373,7 @@ int Finalize(ThreadState *thr) {
 
   if (ctx->nreported) {
     failed = true;
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
     Printf("ThreadSanitizer: reported %d warnings\n", ctx->nreported);
 #else
     Printf("Found %d data race(s)\n", ctx->nreported);
@@ -388,7 +388,7 @@ int Finalize(ThreadState *thr) {
 
   if (common_flags()->print_suppressions)
     PrintMatchedSuppressions();
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   if (flags()->print_benign)
     PrintMatchedBenignRaces();
 #endif
@@ -400,7 +400,7 @@ int Finalize(ThreadState *thr) {
   return failed ? flags()->exitcode : 0;
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 void ForkBefore(ThreadState *thr, uptr pc) {
   ctx->thread_registry->Lock();
   ctx->report_mtx.Lock();
@@ -433,7 +433,7 @@ void ForkChildAfter(ThreadState *thr, uptr pc) {
 }
 #endif
 
-#ifdef TSAN_GO
+#ifdef SANITIZER_GO
 NOINLINE
 void GrowShadowStack(ThreadState *thr) {
   const int sz = thr->shadow_stack_end - thr->shadow_stack;
@@ -452,7 +452,7 @@ u32 CurrentStackId(ThreadState *thr, uptr pc) {
   if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
     return 0;
   if (pc != 0) {
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
     DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #else
     if (thr->shadow_stack_pos == thr->shadow_stack_end)
@@ -498,7 +498,7 @@ uptr TraceParts() {
   return TraceSize() / kTracePartSize;
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 extern "C" void __tsan_trace_switch() {
   TraceSwitch(cur_thread());
 }
@@ -531,7 +531,7 @@ void HandleRace(ThreadState *thr, u64 *shadow_mem,
   thr->racy_state[0] = cur.raw();
   thr->racy_state[1] = old.raw();
   thr->racy_shadow_addr = shadow_mem;
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   HACKY_CALL(__tsan_report_race);
 #else
   ReportRace(thr);
@@ -917,7 +917,7 @@ void FuncEntry(ThreadState *thr, uptr pc) {
   // Shadow stack maintenance can be replaced with
   // stack unwinding during trace switch (which presumably must be faster).
   DCHECK_GE(thr->shadow_stack_pos, thr->shadow_stack);
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #else
   if (thr->shadow_stack_pos == thr->shadow_stack_end)
@@ -937,7 +937,7 @@ void FuncExit(ThreadState *thr) {
   }
 
   DCHECK_GT(thr->shadow_stack_pos, thr->shadow_stack);
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #endif
   thr->shadow_stack_pos--;
@@ -948,7 +948,7 @@ void ThreadIgnoreBegin(ThreadState *thr, uptr pc) {
   thr->ignore_reads_and_writes++;
   CHECK_GT(thr->ignore_reads_and_writes, 0);
   thr->fast_state.SetIgnoreBit();
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   if (!ctx->after_multithreaded_fork)
     thr->mop_ignore_set.Add(CurrentStackId(thr, pc));
 #endif
@@ -960,7 +960,7 @@ void ThreadIgnoreEnd(ThreadState *thr, uptr pc) {
   CHECK_GE(thr->ignore_reads_and_writes, 0);
   if (thr->ignore_reads_and_writes == 0) {
     thr->fast_state.ClearIgnoreBit();
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
     thr->mop_ignore_set.Reset();
 #endif
   }
@@ -970,7 +970,7 @@ void ThreadIgnoreSyncBegin(ThreadState *thr, uptr pc) {
   DPrintf("#%d: ThreadIgnoreSyncBegin\n", thr->tid);
   thr->ignore_sync++;
   CHECK_GT(thr->ignore_sync, 0);
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   if (!ctx->after_multithreaded_fork)
     thr->sync_ignore_set.Add(CurrentStackId(thr, pc));
 #endif
@@ -980,7 +980,7 @@ void ThreadIgnoreSyncEnd(ThreadState *thr, uptr pc) {
   DPrintf("#%d: ThreadIgnoreSyncEnd\n", thr->tid);
   thr->ignore_sync--;
   CHECK_GE(thr->ignore_sync, 0);
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   if (thr->ignore_sync == 0)
     thr->sync_ignore_set.Reset();
 #endif
@@ -1014,7 +1014,7 @@ void build_consistency_shadow8() {}
 
 }  // namespace __tsan
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 // Must be included in this file to make sure everything is inlined.
 #include "tsan_interface_inl.h"
 #endif

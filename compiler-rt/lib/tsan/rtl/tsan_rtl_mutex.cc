@@ -88,7 +88,7 @@ void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
 void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   DPrintf("#%d: MutexDestroy %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexDestroy);
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
   // Global mutexes not marked as LINKER_INITIALIZED
   // cause tons of not interesting reports, so just ignore it.
   if (IsGlobalVar(addr))
@@ -405,7 +405,7 @@ void ReleaseStore(ThreadState *thr, uptr pc, uptr addr) {
   s->mtx.Unlock();
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 static void UpdateSleepClockCallback(ThreadContextBase *tctx_base, void *arg) {
   ThreadState *thr = reinterpret_cast<ThreadState*>(arg);
   ThreadContext *tctx = static_cast<ThreadContext*>(tctx_base);

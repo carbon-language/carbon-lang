@@ -71,7 +71,7 @@ ReportDesc::~ReportDesc() {
   // FIXME(dvyukov): it must be leaking a lot of memory.
 }
 
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 
 const int kThreadBufSize = 32;
 const char *thread_name(char *buf, int tid) {
@@ -344,7 +344,7 @@ void PrintReport(const ReportDesc *rep) {
   Printf("==================\n");
 }
 
-#else  // #ifndef TSAN_GO
+#else  // #ifndef SANITIZER_GO
 
 const int kMainThreadId = 1;
 
