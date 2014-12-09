@@ -55,7 +55,6 @@ public:
   }
   ~TrackingMDRef() { untrack(); }
 
-  LLVM_EXPLICIT operator bool() const { return get(); }
   Metadata *get() const { return MD; }
   operator Metadata *() const { return get(); }
   Metadata *operator->() const { return get(); }
@@ -121,7 +120,6 @@ public:
     return *this;
   }
 
-  LLVM_EXPLICIT operator bool() const { return get(); }
   T *get() const { return (T *)Ref.get(); }
   operator T *() const { return get(); }
   T *operator->() const { return get(); }

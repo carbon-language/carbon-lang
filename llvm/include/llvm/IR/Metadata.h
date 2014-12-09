@@ -525,7 +525,6 @@ public:
   MDOperand() : MD(nullptr) {}
   ~MDOperand() { untrack(); }
 
-  LLVM_EXPLICIT operator bool() const { return get(); }
   Metadata *get() const { return MD; }
   operator Metadata *() const { return get(); }
   Metadata *operator->() const { return get(); }

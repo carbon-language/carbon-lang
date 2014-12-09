@@ -662,7 +662,7 @@ static void VerifySubsetOf(const MDNode *LHS, const MDNode *RHS) {
     const MDNode *E = cast<MDNode>(LHS->getOperand(i));
     bool found = false;
     for (unsigned j = 0; !found && j != RHS->getNumOperands(); ++j)
-      found = E == RHS->getOperand(j);
+      found = (E == cast<MDNode>(RHS->getOperand(j)));
     assert(found && "Losing a member during member list replacement");
   }
 }
