@@ -659,6 +659,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVUPSZrr,      X86::VMOVUPSZrm,          0 },
     { X86::VPABSDZrr,       X86::VPABSDZrm,           0 },
     { X86::VPABSQZrr,       X86::VPABSQZrm,           0 },
+    { X86::VBROADCASTSSZr,  X86::VBROADCASTSSZm,      TB_NO_REVERSE },
+    { X86::VBROADCASTSDZr,  X86::VBROADCASTSDZm,      TB_NO_REVERSE },
     // AVX-512 foldable instructions (256-bit versions)
     { X86::VMOVAPDZ256rr,      X86::VMOVAPDZ256rm,          TB_ALIGN_32 },
     { X86::VMOVAPSZ256rr,      X86::VMOVAPSZ256rm,          TB_ALIGN_32 },
@@ -670,6 +672,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVDQU64Z256rr,    X86::VMOVDQU64Z256rm,        0 },
     { X86::VMOVUPDZ256rr,      X86::VMOVUPDZ256rm,          0 },
     { X86::VMOVUPSZ256rr,      X86::VMOVUPSZ256rm,          0 },
+    { X86::VBROADCASTSSZ256r,  X86::VBROADCASTSSZ256m,      TB_NO_REVERSE },
+    { X86::VBROADCASTSDZ256r,  X86::VBROADCASTSDZ256m,      TB_NO_REVERSE },
     // AVX-512 foldable instructions (256-bit versions)
     { X86::VMOVAPDZ128rr,      X86::VMOVAPDZ128rm,          TB_ALIGN_16 },
     { X86::VMOVAPSZ128rr,      X86::VMOVAPSZ128rm,          TB_ALIGN_16 },
@@ -681,6 +685,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVDQU64Z128rr,    X86::VMOVDQU64Z128rm,        0 },
     { X86::VMOVUPDZ128rr,      X86::VMOVUPDZ128rm,          0 },
     { X86::VMOVUPSZ128rr,      X86::VMOVUPSZ128rm,          0 },
+    { X86::VBROADCASTSSZ128r,  X86::VBROADCASTSSZ128m,      TB_NO_REVERSE },
 
     // AES foldable instructions
     { X86::AESIMCrr,              X86::AESIMCrm,              TB_ALIGN_16 },
@@ -1321,6 +1326,13 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VALIGNQrri,        X86::VALIGNQrmi,          0 },
     { X86::VALIGNDrri,        X86::VALIGNDrmi,          0 },
     { X86::VPMULUDQZrr,       X86::VPMULUDQZrm,         0 },
+    { X86::VBROADCASTSSZrkz,  X86::VBROADCASTSSZmkz,    TB_NO_REVERSE },
+    { X86::VBROADCASTSDZrkz,  X86::VBROADCASTSDZmkz,    TB_NO_REVERSE },
+
+    // AVX-512{F,VL} foldable instructions
+    { X86::VBROADCASTSSZ256rkz,  X86::VBROADCASTSSZ256mkz,      TB_NO_REVERSE },
+    { X86::VBROADCASTSDZ256rkz,  X86::VBROADCASTSDZ256mkz,      TB_NO_REVERSE },
+    { X86::VBROADCASTSSZ128rkz,  X86::VBROADCASTSSZ128mkz,      TB_NO_REVERSE },
 
     // AES foldable instructions
     { X86::AESDECLASTrr,      X86::AESDECLASTrm,        TB_ALIGN_16 },
@@ -1501,7 +1513,12 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VBLENDMPDZrr,          X86::VBLENDMPDZrm,          0 },
     { X86::VBLENDMPSZrr,          X86::VBLENDMPSZrm,          0 },
     { X86::VPBLENDMDZrr,          X86::VPBLENDMDZrm,          0 },
-    { X86::VPBLENDMQZrr,          X86::VPBLENDMQZrm,          0 }
+    { X86::VPBLENDMQZrr,          X86::VPBLENDMQZrm,          0 },
+    { X86::VBROADCASTSSZrk,       X86::VBROADCASTSSZmk,       TB_NO_REVERSE },
+    { X86::VBROADCASTSDZrk,       X86::VBROADCASTSDZmk,       TB_NO_REVERSE },
+    { X86::VBROADCASTSSZ256rk,    X86::VBROADCASTSSZ256mk,    TB_NO_REVERSE },
+    { X86::VBROADCASTSDZ256rk,    X86::VBROADCASTSDZ256mk,    TB_NO_REVERSE },
+    { X86::VBROADCASTSSZ128rk,    X86::VBROADCASTSSZ128mk,    TB_NO_REVERSE }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl3); i != e; ++i) {

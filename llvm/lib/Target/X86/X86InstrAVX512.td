@@ -651,6 +651,44 @@ let ExeDomain = SSEPackedDouble in {
                               avx512vl_f64_info>, VEX_W, EVEX_CD8<64, CD8VT1>;
 }
 
+// SrcRC_v and SrcRC_s are RegisterClasses for vector and scalar
+// representations of source
+multiclass avx512_broadcast_pat<string InstName, SDNode OpNode,
+                                X86VectorVTInfo _, RegisterClass SrcRC_v,
+                                RegisterClass SrcRC_s> {
+  def : Pat<(_.VT (OpNode  (!cast<ValueType>(_.EltTypeName) SrcRC_s:$src))),
+            (!cast<Instruction>(InstName##"r")
+              (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
+
+  let AddedComplexity = 30 in {
+    def : Pat<(_.VT (vselect _.KRCWM:$mask,
+                (OpNode (!cast<ValueType>(_.EltTypeName) SrcRC_s:$src)),
+                _.RC:$src0)),
+              (!cast<Instruction>(InstName##"rk") _.RC:$src0, _.KRCWM:$mask,
+                (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
+
+    def : Pat<(_.VT(vselect _.KRCWM:$mask,
+                (OpNode (!cast<ValueType>(_.EltTypeName) SrcRC_s:$src)),
+                _.ImmAllZerosV)),
+              (!cast<Instruction>(InstName##"rkz") _.KRCWM:$mask,
+                (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
+  }
+}
+
+defm : avx512_broadcast_pat<"VBROADCASTSSZ", X86VBroadcast, v16f32_info,
+                            VR128X, FR32X>;
+defm : avx512_broadcast_pat<"VBROADCASTSDZ", X86VBroadcast, v8f64_info,
+                            VR128X, FR64X>;
+
+let Predicates = [HasVLX] in {
+  defm : avx512_broadcast_pat<"VBROADCASTSSZ256", X86VBroadcast,
+                              v8f32x_info, VR128X, FR32X>;
+  defm : avx512_broadcast_pat<"VBROADCASTSSZ128", X86VBroadcast,
+                              v4f32x_info, VR128X, FR32X>;
+  defm : avx512_broadcast_pat<"VBROADCASTSDZ256", X86VBroadcast,
+                              v4f64x_info, VR128X, FR64X>;
+}
+
 def : Pat<(v16f32 (X86VBroadcast (loadf32 addr:$src))),
           (VBROADCASTSSZm addr:$src)>;
 def : Pat<(v8f64 (X86VBroadcast (loadf64 addr:$src))),
