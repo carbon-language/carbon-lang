@@ -30,10 +30,10 @@ using namespace polly;
 ///    '!n = metadata !{metadata !n, arg0, arg1}'
 ///
 /// @return The self referencing id metadata node.
-static MDNode *getID(LLVMContext &Ctx, Value *arg0 = nullptr,
-                     Value *arg1 = nullptr) {
+static MDNode *getID(LLVMContext &Ctx, Metadata *arg0 = nullptr,
+                     Metadata *arg1 = nullptr) {
   MDNode *ID;
-  SmallVector<Value *, 3> Args;
+  SmallVector<Metadata *, 3> Args;
   // Use a temporary node to safely create a unique pointer for the first arg.
   MDNode *TempNode = MDNode::getTemporary(Ctx, None);
   // Reserve operand 0 for loop id self reference.
@@ -78,7 +78,7 @@ void ScopAnnotator::buildAliasScopes(Scop &S) {
       if (BasePtr == AliasScopePair.first)
         continue;
 
-      Value *Args = {AliasScopePair.second};
+      Metadata *Args = {AliasScopePair.second};
       AliasScopeList =
           MDNode::concatenate(AliasScopeList, MDNode::get(Ctx, Args));
     }
