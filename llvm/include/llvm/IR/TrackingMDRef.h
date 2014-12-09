@@ -78,6 +78,9 @@ public:
     return !MD || !MetadataTracking::isReplaceable(*MD);
   }
 
+  bool operator==(const TrackingMDRef &X) const { return MD == X.MD; }
+  bool operator!=(const TrackingMDRef &X) const { return MD != X.MD; }
+
 private:
   void track() {
     if (MD)
@@ -123,6 +126,9 @@ public:
   operator T *() const { return get(); }
   T *operator->() const { return get(); }
   T &operator*() const { return *get(); }
+
+  bool operator==(const TypedTrackingMDRef &X) const { return Ref == X.Ref; }
+  bool operator!=(const TypedTrackingMDRef &X) const { return Ref != X.Ref; }
 
   void reset() { Ref.reset(); }
   void reset(T *MD) { Ref.reset(static_cast<Metadata *>(MD)); }
