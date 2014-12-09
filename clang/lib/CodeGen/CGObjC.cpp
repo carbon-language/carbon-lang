@@ -1938,9 +1938,8 @@ llvm::Value *CodeGenFunction::EmitARCRetainBlock(llvm::Value *value,
       = cast<llvm::CallInst>(result->stripPointerCasts());
     assert(call->getCalledValue() == CGM.getARCEntrypoints().objc_retainBlock);
 
-    SmallVector<llvm::Value*,1> args;
     call->setMetadata("clang.arc.copy_on_escape",
-                      llvm::MDNode::get(Builder.getContext(), args));
+                      llvm::MDNode::get(Builder.getContext(), None));
   }
 
   return result;
@@ -1982,8 +1981,8 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
                             "clang.arc.retainAutoreleasedReturnValueMarker");
       assert(metadata->getNumOperands() <= 1);
       if (metadata->getNumOperands() == 0) {
-        llvm::Value *string = llvm::MDString::get(getLLVMContext(), assembly);
-        metadata->addOperand(llvm::MDNode::get(getLLVMContext(), string));
+        metadata->addOperand(llvm::MDNode::get(
+            getLLVMContext(), llvm::MDString::get(getLLVMContext(), assembly)));
       }
     }
   }
@@ -2016,9 +2015,8 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value,
   llvm::CallInst *call = EmitNounwindRuntimeCall(fn, value);
 
   if (precise == ARCImpreciseLifetime) {
-    SmallVector<llvm::Value*,1> args;
     call->setMetadata("clang.imprecise_release",
-                      llvm::MDNode::get(Builder.getContext(), args));
+                      llvm::MDNode::get(Builder.getContext(), None));
   }
 }
 

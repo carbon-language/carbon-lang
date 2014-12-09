@@ -5214,9 +5214,10 @@ void NVPTXTargetCodeGenInfo::addNVVMMetadata(llvm::Function *F, StringRef Name,
   // Get "nvvm.annotations" metadata node
   llvm::NamedMDNode *MD = M->getOrInsertNamedMetadata("nvvm.annotations");
 
-  llvm::Value *MDVals[] = {
-      F, llvm::MDString::get(Ctx, Name),
-      llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), Operand)};
+  llvm::Metadata *MDVals[] = {
+      llvm::ConstantAsMetadata::get(F), llvm::MDString::get(Ctx, Name),
+      llvm::ConstantAsMetadata::get(
+          llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), Operand))};
   // Append metadata to nvvm.annotations
   MD->addOperand(llvm::MDNode::get(Ctx, MDVals));
 }
@@ -5928,20 +5929,24 @@ void TCETargetCodeGenInfo::SetTargetAttributes(const Decl *D,
         llvm::NamedMDNode *OpenCLMetadata = 
             M.getModule().getOrInsertNamedMetadata("opencl.kernel_wg_size_info");
 
-        SmallVector<llvm::Value*, 5> Operands;
-        Operands.push_back(F);
+        SmallVector<llvm::Metadata *, 5> Operands;
+        Operands.push_back(llvm::ConstantAsMetadata::get(F));
 
-        Operands.push_back(llvm::Constant::getIntegerValue(M.Int32Ty, 
-                             llvm::APInt(32, Attr->getXDim())));
-        Operands.push_back(llvm::Constant::getIntegerValue(M.Int32Ty,
-                             llvm::APInt(32, Attr->getYDim())));
-        Operands.push_back(llvm::Constant::getIntegerValue(M.Int32Ty, 
-                             llvm::APInt(32, Attr->getZDim())));
+        Operands.push_back(
+            llvm::ConstantAsMetadata::get(llvm::Constant::getIntegerValue(
+                M.Int32Ty, llvm::APInt(32, Attr->getXDim()))));
+        Operands.push_back(
+            llvm::ConstantAsMetadata::get(llvm::Constant::getIntegerValue(
+                M.Int32Ty, llvm::APInt(32, Attr->getYDim()))));
+        Operands.push_back(
+            llvm::ConstantAsMetadata::get(llvm::Constant::getIntegerValue(
+                M.Int32Ty, llvm::APInt(32, Attr->getZDim()))));
 
         // Add a boolean constant operand for "required" (true) or "hint" (false)
         // for implementing the work_group_size_hint attr later. Currently 
         // always true as the hint is not yet implemented.
-        Operands.push_back(llvm::ConstantInt::getTrue(Context));
+        Operands.push_back(
+            llvm::ConstantAsMetadata::get(llvm::ConstantInt::getTrue(Context)));
         OpenCLMetadata->addOperand(llvm::MDNode::get(Context, Operands));
       }
     }
@@ -6705,8 +6710,8 @@ void XCoreTargetCodeGenInfo::emitTargetMD(const Decl *D, llvm::GlobalValue *GV,
   SmallStringEnc Enc;
   if (getTypeString(Enc, D, CGM, TSC)) {
     llvm::LLVMContext &Ctx = CGM.getModule().getContext();
-    llvm::SmallVector<llvm::Value *, 2> MDVals;
-    MDVals.push_back(GV);
+    llvm::SmallVector<llvm::Metadata *, 2> MDVals;
+    MDVals.push_back(llvm::ConstantAsMetadata::get(GV));
     MDVals.push_back(llvm::MDString::get(Ctx, Enc.str()));
     llvm::NamedMDNode *MD =
       CGM.getModule().getOrInsertNamedMetadata("xcore.typestrings");

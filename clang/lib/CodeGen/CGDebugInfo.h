@@ -65,7 +65,7 @@ class CGDebugInfo {
   llvm::DIType BlockLiteralGeneric;
 
   /// TypeCache - Cache of previously constructed Types.
-  llvm::DenseMap<const void *, llvm::WeakVH> TypeCache;
+  llvm::DenseMap<const void *, llvm::TrackingMDRef> TypeCache;
 
   struct ObjCInterfaceCacheEntry {
     const ObjCInterfaceType *Type;
@@ -85,15 +85,16 @@ class CGDebugInfo {
 
   /// ReplaceMap - Cache of forward declared types to RAUW at the end of
   /// compilation.
-  std::vector<std::pair<const TagType *, llvm::WeakVH>> ReplaceMap;
+  std::vector<std::pair<const TagType *, llvm::TrackingMDRef>> ReplaceMap;
 
   /// \brief Cache of replaceable forward declarartions (functions and
   /// variables) to RAUW at the end of compilation.
-  std::vector<std::pair<const DeclaratorDecl *, llvm::WeakVH>> FwdDeclReplaceMap;
+  std::vector<std::pair<const DeclaratorDecl *, llvm::TrackingMDRef>>
+      FwdDeclReplaceMap;
 
   // LexicalBlockStack - Keep track of our current nested lexical block.
-  std::vector<llvm::TrackingVH<llvm::MDNode> > LexicalBlockStack;
-  llvm::DenseMap<const Decl *, llvm::WeakVH> RegionMap;
+  std::vector<llvm::TrackingMDNodeRef> LexicalBlockStack;
+  llvm::DenseMap<const Decl *, llvm::TrackingMDRef> RegionMap;
   // FnBeginRegionCount - Keep track of LexicalBlockStack counter at the
   // beginning of a function. This is used to pop unbalanced regions at
   // the end of a function.
@@ -104,14 +105,15 @@ class CGDebugInfo {
   llvm::BumpPtrAllocator DebugInfoNames;
   StringRef CWDName;
 
-  llvm::DenseMap<const char *, llvm::WeakVH> DIFileCache;
-  llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
+  llvm::DenseMap<const char *, llvm::TrackingMDRef> DIFileCache;
+  llvm::DenseMap<const FunctionDecl *, llvm::TrackingMDRef> SPCache;
   /// \brief Cache declarations relevant to DW_TAG_imported_declarations (C++
   /// using declarations) that aren't covered by other more specific caches.
-  llvm::DenseMap<const Decl *, llvm::WeakVH> DeclCache;
-  llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
-  llvm::DenseMap<const NamespaceAliasDecl *, llvm::WeakVH> NamespaceAliasCache;
-  llvm::DenseMap<const Decl *, llvm::WeakVH> StaticDataMemberCache;
+  llvm::DenseMap<const Decl *, llvm::TrackingMDRef> DeclCache;
+  llvm::DenseMap<const NamespaceDecl *, llvm::TrackingMDRef> NameSpaceCache;
+  llvm::DenseMap<const NamespaceAliasDecl *, llvm::TrackingMDRef>
+      NamespaceAliasCache;
+  llvm::DenseMap<const Decl *, llvm::TrackingMDRef> StaticDataMemberCache;
 
   /// Helper functions for getOrCreateType.
   unsigned Checksum(const ObjCInterfaceDecl *InterfaceDecl);
@@ -162,14 +164,12 @@ class CGDebugInfo {
                                              llvm::DIFile F,
                                              llvm::DIType RecordTy);
 
-  void CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
-                                 llvm::DIFile F,
-                                 SmallVectorImpl<llvm::Value *> &E,
+  void CollectCXXMemberFunctions(const CXXRecordDecl *Decl, llvm::DIFile F,
+                                 SmallVectorImpl<llvm::Metadata *> &E,
                                  llvm::DIType T);
 
-  void CollectCXXBases(const CXXRecordDecl *Decl,
-                       llvm::DIFile F,
-                       SmallVectorImpl<llvm::Value *> &EltTys,
+  void CollectCXXBases(const CXXRecordDecl *Decl, llvm::DIFile F,
+                       SmallVectorImpl<llvm::Metadata *> &EltTys,
                        llvm::DIType RecordTy);
 
   llvm::DIArray
@@ -192,23 +192,21 @@ class CGDebugInfo {
 
   // Helpers for collecting fields of a record.
   void CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
-                                 SmallVectorImpl<llvm::Value *> &E,
+                                 SmallVectorImpl<llvm::Metadata *> &E,
                                  llvm::DIType RecordTy);
   llvm::DIDerivedType CreateRecordStaticField(const VarDecl *Var,
                                               llvm::DIType RecordTy,
                                               const RecordDecl* RD);
   void CollectRecordNormalField(const FieldDecl *Field, uint64_t OffsetInBits,
                                 llvm::DIFile F,
-                                SmallVectorImpl<llvm::Value *> &E,
-                                llvm::DIType RecordTy,
-                                const RecordDecl* RD);
+                                SmallVectorImpl<llvm::Metadata *> &E,
+                                llvm::DIType RecordTy, const RecordDecl *RD);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
-                           SmallVectorImpl<llvm::Value *> &E,
+                           SmallVectorImpl<llvm::Metadata *> &E,
                            llvm::DICompositeType RecordTy);
 
-  void CollectVTableInfo(const CXXRecordDecl *Decl,
-                         llvm::DIFile F,
-                         SmallVectorImpl<llvm::Value *> &EltTys);
+  void CollectVTableInfo(const CXXRecordDecl *Decl, llvm::DIFile F,
+                         SmallVectorImpl<llvm::Metadata *> &EltTys);
 
   // CreateLexicalBlock - Create a new lexical block node and push it on
   // the stack.

@@ -1296,11 +1296,11 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   llvm::Value *imp = LookupIMPSuper(CGF, ObjCSuper, cmd, MSI);
   imp = EnforceType(Builder, imp, MSI.MessengerType);
 
-  llvm::Value *impMD[] = {
+  llvm::Metadata *impMD[] = {
       llvm::MDString::get(VMContext, Sel.getAsString()),
       llvm::MDString::get(VMContext, Class->getSuperClass()->getNameAsString()),
-      llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), IsClassMessage)
-   };
+      llvm::ConstantAsMetadata::get(llvm::ConstantInt::get(
+          llvm::Type::getInt1Ty(VMContext), IsClassMessage))};
   llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD);
 
   llvm::Instruction *call;
@@ -1371,12 +1371,11 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   cmd = EnforceType(Builder, cmd, SelectorTy);
   Receiver = EnforceType(Builder, Receiver, IdTy);
 
-  llvm::Value *impMD[] = {
-        llvm::MDString::get(VMContext, Sel.getAsString()),
-        llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
-        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext),
-                               Class!=nullptr)
-   };
+  llvm::Metadata *impMD[] = {
+      llvm::MDString::get(VMContext, Sel.getAsString()),
+      llvm::MDString::get(VMContext, Class ? Class->getNameAsString() : ""),
+      llvm::ConstantAsMetadata::get(llvm::ConstantInt::get(
+          llvm::Type::getInt1Ty(VMContext), Class != nullptr))};
   llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD);
 
   CallArgList ActualArgs;

@@ -4278,11 +4278,10 @@ void CGObjCCommonMac::EmitImageInfo() {
                         eImageInfo_GCOnly);
 
       // Require that GC be specified and set to eImageInfo_GarbageCollected.
-      llvm::Value *Ops[2] = {
-        llvm::MDString::get(VMContext, "Objective-C Garbage Collection"),
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                               eImageInfo_GarbageCollected)
-      };
+      llvm::Metadata *Ops[2] = {
+          llvm::MDString::get(VMContext, "Objective-C Garbage Collection"),
+          llvm::ConstantAsMetadata::get(llvm::ConstantInt::get(
+              llvm::Type::getInt32Ty(VMContext), eImageInfo_GarbageCollected))};
       Mod.addModuleFlag(llvm::Module::Require, "Objective-C GC Only",
                         llvm::MDNode::get(VMContext, Ops));
     }

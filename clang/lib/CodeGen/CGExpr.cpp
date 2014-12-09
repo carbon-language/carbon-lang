@@ -1415,8 +1415,8 @@ llvm::Value *CodeGenFunction::EmitExtVectorElementLValue(LValue LV) {
 RValue CodeGenFunction::EmitLoadOfGlobalRegLValue(LValue LV) {
   assert((LV.getType()->isIntegerType() || LV.getType()->isPointerType()) &&
          "Bad type for register variable");
-  llvm::MDNode *RegName = dyn_cast<llvm::MDNode>(LV.getGlobalReg());
-  assert(RegName && "Register LValue is not metadata");
+  llvm::MDNode *RegName = cast<llvm::MDNode>(
+      cast<llvm::MetadataAsValue>(LV.getGlobalReg())->getMetadata());
 
   // We accept integer and pointer types only
   llvm::Type *OrigTy = CGM.getTypes().ConvertType(LV.getType());
@@ -1426,7 +1426,8 @@ RValue CodeGenFunction::EmitLoadOfGlobalRegLValue(LValue LV) {
   llvm::Type *Types[] = { Ty };
 
   llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::read_register, Types);
-  llvm::Value *Call = Builder.CreateCall(F, RegName);
+  llvm::Value *Call = Builder.CreateCall(
+      F, llvm::MetadataAsValue::get(Ty->getContext(), RegName));
   if (OrigTy->isPointerTy())
     Call = Builder.CreateIntToPtr(Call, OrigTy);
   return RValue::get(Call);
@@ -1680,7 +1681,8 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 void CodeGenFunction::EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst) {
   assert((Dst.getType()->isIntegerType() || Dst.getType()->isPointerType()) &&
          "Bad type for register variable");
-  llvm::MDNode *RegName = dyn_cast<llvm::MDNode>(Dst.getGlobalReg());
+  llvm::MDNode *RegName = cast<llvm::MDNode>(
+      cast<llvm::MetadataAsValue>(Dst.getGlobalReg())->getMetadata());
   assert(RegName && "Register LValue is not metadata");
 
   // We accept integer and pointer types only
@@ -1694,7 +1696,8 @@ void CodeGenFunction::EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst) {
   llvm::Value *Value = Src.getScalarVal();
   if (OrigTy->isPointerTy())
     Value = Builder.CreatePtrToInt(Value, Ty);
-  Builder.CreateCall2(F, RegName, Value);
+  Builder.CreateCall2(F, llvm::MetadataAsValue::get(Ty->getContext(), RegName),
+                      Value);
 }
 
 // setObjCGCLValueClass - sets class of the lvalue for the purpose of
@@ -1889,10 +1892,12 @@ static LValue EmitGlobalNamedRegister(const VarDecl *VD,
   if (M->getNumOperands() == 0) {
     llvm::MDString *Str = llvm::MDString::get(CGM.getLLVMContext(),
                                               Asm->getLabel());
-    llvm::Value *Ops[] = { Str };
+    llvm::Metadata *Ops[] = {Str};
     M->addOperand(llvm::MDNode::get(CGM.getLLVMContext(), Ops));
   }
-  return LValue::MakeGlobalReg(M->getOperand(0), VD->getType(), Alignment);
+  return LValue::MakeGlobalReg(
+      llvm::MetadataAsValue::get(CGM.getLLVMContext(), M->getOperand(0)),
+      VD->getType(), Alignment);
 }
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {

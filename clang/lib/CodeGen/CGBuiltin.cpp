@@ -5932,8 +5932,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_movntdq256:
   case X86::BI__builtin_ia32_movnti:
   case X86::BI__builtin_ia32_movnti64: {
-    llvm::MDNode *Node = llvm::MDNode::get(getLLVMContext(),
-                                           Builder.getInt32(1));
+    llvm::MDNode *Node = llvm::MDNode::get(
+        getLLVMContext(), llvm::ConstantAsMetadata::get(Builder.getInt32(1)));
 
     // Convert the type of the pointer to a pointer to the stored type.
     Value *BC = Builder.CreateBitCast(Ops[0],

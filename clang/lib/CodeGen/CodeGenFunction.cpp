@@ -349,9 +349,9 @@ void CodeGenFunction::EmitMCountInstrumentation() {
 // information in the program executable. The argument information stored
 // includes the argument name, its type, the address and access qualifiers used.
 static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
-                                 CodeGenModule &CGM,llvm::LLVMContext &Context,
-                                 SmallVector <llvm::Value*, 5> &kernelMDArgs,
-                                 CGBuilderTy& Builder, ASTContext &ASTCtx) {
+                                 CodeGenModule &CGM, llvm::LLVMContext &Context,
+                                 SmallVector<llvm::Metadata *, 5> &kernelMDArgs,
+                                 CGBuilderTy &Builder, ASTContext &ASTCtx) {
   // Create MDNodes that represent the kernel arg metadata.
   // Each MDNode is a list in the form of "key", N number of values which is
   // the same number of values as their are kernel arguments.
@@ -359,28 +359,28 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
   const PrintingPolicy &Policy = ASTCtx.getPrintingPolicy();
 
   // MDNode for the kernel argument address space qualifiers.
-  SmallVector<llvm::Value*, 8> addressQuals;
+  SmallVector<llvm::Metadata *, 8> addressQuals;
   addressQuals.push_back(llvm::MDString::get(Context, "kernel_arg_addr_space"));
 
   // MDNode for the kernel argument access qualifiers (images only).
-  SmallVector<llvm::Value*, 8> accessQuals;
+  SmallVector<llvm::Metadata *, 8> accessQuals;
   accessQuals.push_back(llvm::MDString::get(Context, "kernel_arg_access_qual"));
 
   // MDNode for the kernel argument type names.
-  SmallVector<llvm::Value*, 8> argTypeNames;
+  SmallVector<llvm::Metadata *, 8> argTypeNames;
   argTypeNames.push_back(llvm::MDString::get(Context, "kernel_arg_type"));
 
   // MDNode for the kernel argument base type names.
-  SmallVector<llvm::Value*, 8> argBaseTypeNames;
+  SmallVector<llvm::Metadata *, 8> argBaseTypeNames;
   argBaseTypeNames.push_back(
       llvm::MDString::get(Context, "kernel_arg_base_type"));
 
   // MDNode for the kernel argument type qualifiers.
-  SmallVector<llvm::Value*, 8> argTypeQuals;
+  SmallVector<llvm::Metadata *, 8> argTypeQuals;
   argTypeQuals.push_back(llvm::MDString::get(Context, "kernel_arg_type_qual"));
 
   // MDNode for the kernel argument names.
-  SmallVector<llvm::Value*, 8> argNames;
+  SmallVector<llvm::Metadata *, 8> argNames;
   argNames.push_back(llvm::MDString::get(Context, "kernel_arg_name"));
 
   for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
@@ -392,8 +392,8 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
       QualType pointeeTy = ty->getPointeeType();
 
       // Get address qualifier.
-      addressQuals.push_back(Builder.getInt32(ASTCtx.getTargetAddressSpace(
-        pointeeTy.getAddressSpace())));
+      addressQuals.push_back(llvm::ConstantAsMetadata::get(Builder.getInt32(
+          ASTCtx.getTargetAddressSpace(pointeeTy.getAddressSpace()))));
 
       // Get argument type name.
       std::string typeName =
@@ -432,7 +432,8 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
         AddrSpc =
           CGM.getContext().getTargetAddressSpace(LangAS::opencl_global);
 
-      addressQuals.push_back(Builder.getInt32(AddrSpc));
+      addressQuals.push_back(
+          llvm::ConstantAsMetadata::get(Builder.getInt32(AddrSpc)));
 
       // Get argument type name.
       std::string typeName = ty.getUnqualifiedType().getAsString(Policy);
@@ -495,8 +496,8 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
 
   llvm::LLVMContext &Context = getLLVMContext();
 
-  SmallVector <llvm::Value*, 5> kernelMDArgs;
-  kernelMDArgs.push_back(Fn);
+  SmallVector<llvm::Metadata *, 5> kernelMDArgs;
+  kernelMDArgs.push_back(llvm::ConstantAsMetadata::get(Fn));
 
   GenOpenCLArgMetadata(FD, Fn, CGM, Context, kernelMDArgs, Builder,
                        getContext());
@@ -507,33 +508,31 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
     bool isSignedInteger =
         hintQTy->isSignedIntegerType() ||
         (hintEltQTy && hintEltQTy->getElementType()->isSignedIntegerType());
-    llvm::Value *attrMDArgs[] = {
-      llvm::MDString::get(Context, "vec_type_hint"),
-      llvm::UndefValue::get(CGM.getTypes().ConvertType(A->getTypeHint())),
-      llvm::ConstantInt::get(
-          llvm::IntegerType::get(Context, 32),
-          llvm::APInt(32, (uint64_t)(isSignedInteger ? 1 : 0)))
-    };
+    llvm::Metadata *attrMDArgs[] = {
+        llvm::MDString::get(Context, "vec_type_hint"),
+        llvm::ConstantAsMetadata::get(llvm::UndefValue::get(
+            CGM.getTypes().ConvertType(A->getTypeHint()))),
+        llvm::ConstantAsMetadata::get(llvm::ConstantInt::get(
+            llvm::IntegerType::get(Context, 32),
+            llvm::APInt(32, (uint64_t)(isSignedInteger ? 1 : 0))))};
     kernelMDArgs.push_back(llvm::MDNode::get(Context, attrMDArgs));
   }
 
   if (const WorkGroupSizeHintAttr *A = FD->getAttr<WorkGroupSizeHintAttr>()) {
-    llvm::Value *attrMDArgs[] = {
-      llvm::MDString::get(Context, "work_group_size_hint"),
-      Builder.getInt32(A->getXDim()),
-      Builder.getInt32(A->getYDim()),
-      Builder.getInt32(A->getZDim())
-    };
+    llvm::Metadata *attrMDArgs[] = {
+        llvm::MDString::get(Context, "work_group_size_hint"),
+        llvm::ConstantAsMetadata::get(Builder.getInt32(A->getXDim())),
+        llvm::ConstantAsMetadata::get(Builder.getInt32(A->getYDim())),
+        llvm::ConstantAsMetadata::get(Builder.getInt32(A->getZDim()))};
     kernelMDArgs.push_back(llvm::MDNode::get(Context, attrMDArgs));
   }
 
   if (const ReqdWorkGroupSizeAttr *A = FD->getAttr<ReqdWorkGroupSizeAttr>()) {
-    llvm::Value *attrMDArgs[] = {
-      llvm::MDString::get(Context, "reqd_work_group_size"),
-      Builder.getInt32(A->getXDim()),
-      Builder.getInt32(A->getYDim()),
-      Builder.getInt32(A->getZDim())
-    };
+    llvm::Metadata *attrMDArgs[] = {
+        llvm::MDString::get(Context, "reqd_work_group_size"),
+        llvm::ConstantAsMetadata::get(Builder.getInt32(A->getXDim())),
+        llvm::ConstantAsMetadata::get(Builder.getInt32(A->getYDim())),
+        llvm::ConstantAsMetadata::get(Builder.getInt32(A->getZDim()))};
     kernelMDArgs.push_back(llvm::MDNode::get(Context, attrMDArgs));
   }
 

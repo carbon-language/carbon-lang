@@ -24,40 +24,39 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
       Attrs.VectorizerEnable == LoopAttributes::VecUnspecified)
     return nullptr;
 
-  SmallVector<Value *, 4> Args;
+  SmallVector<Metadata *, 4> Args;
   // Reserve operand 0 for loop id self reference.
   MDNode *TempNode = MDNode::getTemporary(Ctx, None);
   Args.push_back(TempNode);
 
   // Setting vectorizer.width
   if (Attrs.VectorizerWidth > 0) {
-    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.vectorize.width"),
-                      ConstantInt::get(Type::getInt32Ty(Ctx),
-                                       Attrs.VectorizerWidth) };
+    Metadata *Vals[] = {MDString::get(Ctx, "llvm.loop.vectorize.width"),
+                        ConstantAsMetadata::get(ConstantInt::get(
+                            Type::getInt32Ty(Ctx), Attrs.VectorizerWidth))};
     Args.push_back(MDNode::get(Ctx, Vals));
   }
 
   // Setting vectorizer.unroll
   if (Attrs.VectorizerUnroll > 0) {
-    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.interleave.count"),
-                      ConstantInt::get(Type::getInt32Ty(Ctx),
-                                       Attrs.VectorizerUnroll) };
+    Metadata *Vals[] = {MDString::get(Ctx, "llvm.loop.interleave.count"),
+                        ConstantAsMetadata::get(ConstantInt::get(
+                            Type::getInt32Ty(Ctx), Attrs.VectorizerUnroll))};
     Args.push_back(MDNode::get(Ctx, Vals));
   }
 
   // Setting vectorizer.enable
   if (Attrs.VectorizerEnable != LoopAttributes::VecUnspecified) {
-    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.vectorize.enable"),
-                      ConstantInt::get(Type::getInt1Ty(Ctx),
-                                       (Attrs.VectorizerEnable ==
-                                        LoopAttributes::VecEnable)) };
+    Metadata *Vals[] = {
+        MDString::get(Ctx, "llvm.loop.vectorize.enable"),
+        ConstantAsMetadata::get(ConstantInt::get(
+            Type::getInt1Ty(Ctx),
+            (Attrs.VectorizerEnable == LoopAttributes::VecEnable)))};
     Args.push_back(MDNode::get(Ctx, Vals));
   }
 
-  MDNode *LoopID = MDNode::get(Ctx, Args);
-  assert(LoopID->use_empty() && "LoopID should not be used");
-
   // Set the first operand to itself.
+  MDNode *LoopID = MDNode::get(Ctx, Args);
   LoopID->replaceOperandWith(0, LoopID);
   MDNode::deleteTemporary(TempNode);
   return LoopID;
