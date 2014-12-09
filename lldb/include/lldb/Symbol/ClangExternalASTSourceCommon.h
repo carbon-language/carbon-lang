@@ -179,11 +179,6 @@ private:
     typedef llvm::DenseMap<const void *, ClangASTMetadata> MetadataMap;
     
     MetadataMap m_metadata;
-    uint64_t    m_magic;        ///< Because we don't have RTTI, we must take it
-                                ///< on faith that any valid ExternalASTSource that
-                                ///< we try to use the *Metadata APIs on inherits
-                                ///< from ClangExternalASTSourceCommon.  This magic
-                                ///< number exists to enforce that.
 };
 
 }
