@@ -418,11 +418,11 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                  unsigned DestReg, unsigned SrcReg,
                                  bool KillSrc) const {
   if (Hexagon::IntRegsRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::TFR), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(Hexagon::A2_tfr), DestReg).addReg(SrcReg);
     return;
   }
   if (Hexagon::DoubleRegsRegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, I, DL, get(Hexagon::TFR64), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(Hexagon::A2_tfrp), DestReg).addReg(SrcReg);
     return;
   }
   if (Hexagon::PredRegsRegClass.contains(SrcReg, DestReg)) {
@@ -436,13 +436,13 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     // We can have an overlap between single and double reg: r1:0 = r0.
     if(SrcReg == RI.getSubReg(DestReg, Hexagon::subreg_loreg)) {
         // r1:0 = r0
-        BuildMI(MBB, I, DL, get(Hexagon::TFRI), (RI.getSubReg(DestReg,
+        BuildMI(MBB, I, DL, get(Hexagon::A2_tfrsi), (RI.getSubReg(DestReg,
                 Hexagon::subreg_hireg))).addImm(0);
     } else {
         // r1:0 = r1 or no overlap.
-        BuildMI(MBB, I, DL, get(Hexagon::TFR), (RI.getSubReg(DestReg,
+        BuildMI(MBB, I, DL, get(Hexagon::A2_tfr), (RI.getSubReg(DestReg,
                 Hexagon::subreg_loreg))).addReg(SrcReg);
-        BuildMI(MBB, I, DL, get(Hexagon::TFRI), (RI.getSubReg(DestReg,
+        BuildMI(MBB, I, DL, get(Hexagon::A2_tfrsi), (RI.getSubReg(DestReg,
                 Hexagon::subreg_hireg))).addImm(0);
     }
     return;
@@ -648,7 +648,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   const int Opc = MI->getOpcode();
 
   switch(Opc) {
-  case Hexagon::TFRI:
+  case Hexagon::A2_tfrsi:
     return isInt<12>(MI->getOperand(1).getImm());
 
   case Hexagon::STrid:
@@ -1278,14 +1278,14 @@ bool HexagonInstrInfo::
 isConditionalTransfer (const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
     default: return false;
-    case Hexagon::TFR_cPt:
-    case Hexagon::TFR_cNotPt:
-    case Hexagon::TFRI_cPt:
-    case Hexagon::TFRI_cNotPt:
-    case Hexagon::TFR_cdnPt:
-    case Hexagon::TFR_cdnNotPt:
-    case Hexagon::TFRI_cdnPt:
-    case Hexagon::TFRI_cdnNotPt:
+    case Hexagon::A2_tfrt:
+    case Hexagon::A2_tfrf:
+    case Hexagon::C2_cmoveit:
+    case Hexagon::C2_cmoveif:
+    case Hexagon::A2_tfrtnew:
+    case Hexagon::A2_tfrfnew:
+    case Hexagon::C2_cmovenewit:
+    case Hexagon::C2_cmovenewif:
       return true;
   }
 }

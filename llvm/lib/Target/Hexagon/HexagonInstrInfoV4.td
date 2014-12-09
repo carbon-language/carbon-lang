@@ -2874,7 +2874,7 @@ def : Pat<(truncstorei8 (i32 IntRegs:$src1),
 //       to "r0 = 1; memw(#foo) = r0"
 let AddedComplexity = 100 in
 def : Pat<(store (i1 -1), (HexagonCONST32_GP tglobaladdr:$global)),
-          (STb_GP_V4 tglobaladdr:$global, (TFRI 1))>;
+          (STb_GP_V4 tglobaladdr:$global, (A2_tfrsi 1))>;
 
 def : Pat<(atomic_store_16 (HexagonCONST32_GP tglobaladdr:$global),
                            (i32 IntRegs:$src1)),

@@ -458,19 +458,19 @@ def CONVERT_sf2ud_nchop : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src),
 
 // Bitcast is different than [fp|sint|uint]_to_[sint|uint|fp].
 def : Pat <(i32 (bitconvert (f32 IntRegs:$src))),
-           (i32 (TFR IntRegs:$src))>,
+           (i32 (A2_tfr IntRegs:$src))>,
           Requires<[HasV5T]>;
 
 def : Pat <(f32 (bitconvert (i32 IntRegs:$src))),
-           (f32 (TFR IntRegs:$src))>,
+           (f32 (A2_tfr IntRegs:$src))>,
           Requires<[HasV5T]>;
 
 def : Pat <(i64 (bitconvert (f64 DoubleRegs:$src))),
-           (i64 (TFR64 DoubleRegs:$src))>,
+           (i64 (A2_tfrp DoubleRegs:$src))>,
           Requires<[HasV5T]>;
 
 def : Pat <(f64 (bitconvert (i64 DoubleRegs:$src))),
-           (f64 (TFR64 DoubleRegs:$src))>,
+           (f64 (A2_tfrp DoubleRegs:$src))>,
           Requires<[HasV5T]>;
 
 // Floating point fused multiply-add.

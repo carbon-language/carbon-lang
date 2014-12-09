@@ -172,7 +172,7 @@ void HexagonFixupHwLoops::convertLoopInstr(MachineFunction &MF,
       .addReg(MII->getOperand(1).getReg());
   } else {
     // Trip count is an immediate.
-    BuildMI(*MBB, MII, DL, TII->get(Hexagon::TFRI), Scratch)
+    BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrsi), Scratch)
       .addImm(MII->getOperand(1).getImm());
     BuildMI(*MBB, MII, DL, TII->get(Hexagon::TFCR), Hexagon::LC0)
       .addReg(Scratch);

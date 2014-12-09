@@ -114,7 +114,7 @@ static bool isCombinableInstType(MachineInstr *MI,
                                  const HexagonInstrInfo *TII,
                                  bool ShouldCombineAggressively) {
   switch(MI->getOpcode()) {
-  case Hexagon::TFR: {
+  case Hexagon::A2_tfr: {
     // A COPY instruction can be combined if its arguments are IntRegs (32bit).
     assert(MI->getOperand(0).isReg() && MI->getOperand(1).isReg());
 
@@ -124,7 +124,7 @@ static bool isCombinableInstType(MachineInstr *MI,
       Hexagon::IntRegsRegClass.contains(SrcReg);
   }
 
-  case Hexagon::TFRI: {
+  case Hexagon::A2_tfrsi: {
     // A transfer-immediate can be combined if its argument is a signed 8bit
     // value.
     assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
@@ -158,11 +158,11 @@ static bool isCombinableInstType(MachineInstr *MI,
 }
 
 static bool isGreaterThan8BitTFRI(MachineInstr *I) {
-  return I->getOpcode() == Hexagon::TFRI &&
+  return I->getOpcode() == Hexagon::A2_tfrsi &&
     !isInt<8>(I->getOperand(1).getImm());
 }
 static bool isGreaterThan6BitTFRI(MachineInstr *I) {
-  return I->getOpcode() == Hexagon::TFRI &&
+  return I->getOpcode() == Hexagon::A2_tfrsi &&
     !isUInt<6>(I->getOperand(1).getImm());
 }
 
@@ -171,11 +171,11 @@ static bool isGreaterThan6BitTFRI(MachineInstr *I) {
 static bool areCombinableOperations(const TargetRegisterInfo *TRI,
                                     MachineInstr *HighRegInst,
                                     MachineInstr *LowRegInst) {
-  assert((HighRegInst->getOpcode() == Hexagon::TFR ||
-          HighRegInst->getOpcode() == Hexagon::TFRI ||
+  assert((HighRegInst->getOpcode() == Hexagon::A2_tfr ||
+          HighRegInst->getOpcode() == Hexagon::A2_tfrsi ||
           HighRegInst->getOpcode() == Hexagon::TFRI_V4) &&
-         (LowRegInst->getOpcode() == Hexagon::TFR ||
-          LowRegInst->getOpcode() == Hexagon::TFRI ||
+         (LowRegInst->getOpcode() == Hexagon::A2_tfr ||
+          LowRegInst->getOpcode() == Hexagon::A2_tfrsi ||
           LowRegInst->getOpcode() == Hexagon::TFRI_V4) &&
          "Assume individual instructions are of a combinable type");
 
