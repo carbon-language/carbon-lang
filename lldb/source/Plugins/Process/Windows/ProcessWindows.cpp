@@ -41,6 +41,8 @@
 #include "ProcessWindows.h"
 #include "TargetThreadWindows.h"
 
+#include "llvm/Support/raw_ostream.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -236,7 +238,7 @@ Error
 ProcessWindows::DoResume()
 {
     Error error;
-    if (GetPrivateState() == eStateStopped)
+    if (GetPrivateState() == eStateStopped || GetPrivateState() == eStateCrashed)
     {
         if (m_session_data->m_debugger->GetActiveException())
         {
@@ -299,9 +301,9 @@ ProcessWindows::RefreshStateAfterStop()
     ThreadSP stop_thread = m_thread_list.GetSelectedThread();
     RegisterContextSP register_context = stop_thread->GetRegisterContext();
 
+    uint64_t pc = register_context->GetPC();
     if (active_exception->GetExceptionCode() == EXCEPTION_BREAKPOINT)
     {
-        uint64_t pc = register_context->GetPC();
         // TODO(zturner): The current EIP is AFTER the BP opcode, which is one byte.  So
         // to find the breakpoint, move the PC back.  A better way to do this is probably
         // to ask the Platform how big a breakpoint opcode is.
@@ -316,6 +318,14 @@ ProcessWindows::RefreshStateAfterStop()
         }
 
         stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, break_id, should_stop);
+        stop_thread->SetStopInfo(stop_info);
+    }
+    else
+    {
+        std::string desc;
+        llvm::raw_string_ostream desc_stream(desc);
+        desc_stream << "Exception " << active_exception->GetExceptionCode() << " encountered at address " << pc;
+        stop_info = StopInfo::CreateStopReasonWithException(*stop_thread, desc_stream.str().c_str());
         stop_thread->SetStopInfo(stop_info);
     }
 }
