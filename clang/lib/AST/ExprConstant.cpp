@@ -1422,6 +1422,12 @@ static bool IsWeakLValue(const LValue &Value) {
   return Decl && Decl->isWeak();
 }
 
+static bool isZeroSized(const LValue &Value) {
+  const ValueDecl *Decl = GetLValueBaseDecl(Value);
+  return Decl && isa<VarDecl>(Decl) &&
+         Decl->getASTContext().getTypeSize(Decl->getType()) == 0;
+}
+
 static bool EvalPointerValueAsBool(const APValue &Value, bool &Result) {
   // A null base expression indicates a null pointer.  These are always
   // evaluatable, and they are false unless the offset is zero.
@@ -6978,6 +6984,10 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
              isOnePastTheEndOfCompleteObject(Info.Ctx, RHSValue)) ||
             (RHSValue.Base && RHSValue.Offset.isZero() &&
              isOnePastTheEndOfCompleteObject(Info.Ctx, LHSValue)))
+          return Error(E);
+        // We can't tell whether an object is at the same address as another
+        // zero sized object.
+        if (isZeroSized(LHSValue) || isZeroSized(RHSValue))
           return Error(E);
         // Pointers with different bases cannot represent the same object.
         // (Note that clang defaults to -fmerge-all-constants, which can

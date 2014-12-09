@@ -1955,3 +1955,9 @@ namespace EmptyClass {
   constexpr E2 e2b(e2); // expected-error {{constant expression}} expected-note{{read of non-const}} expected-note {{in call}}
   constexpr E3 e3b(e3);
 }
+
+namespace PR21786 {
+  extern void (*start[])();
+  extern void (*end[])();
+  static_assert(&start != &end, ""); // expected-error {{constant expression}}
+}
