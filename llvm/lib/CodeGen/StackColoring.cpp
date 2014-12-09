@@ -463,7 +463,8 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
     if (!VI.Var)
       continue;
     if (SlotRemap.count(VI.Slot)) {
-      DEBUG(dbgs()<<"Remapping debug info for ["<<VI.Var->getName()<<"].\n");
+      DEBUG(dbgs() << "Remapping debug info for ["
+                   << DIVariable(VI.Var).getName() << "].\n");
       VI.Slot = SlotRemap[VI.Slot];
       FixedDbg++;
     }

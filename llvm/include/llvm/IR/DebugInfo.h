@@ -168,8 +168,9 @@ public:
 
   bool Verify() const;
 
-  operator MDNode *() const { return const_cast<MDNode *>(DbgNode); }
-  MDNode *operator->() const { return const_cast<MDNode *>(DbgNode); }
+  MDNode *get() const { return const_cast<MDNode *>(DbgNode); }
+  operator MDNode *() const { return get(); }
+  MDNode *operator->() const { return get(); }
 
   // An explicit operator bool so that we can do testing of DI values
   // easily.
@@ -740,7 +741,7 @@ public:
 
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
   DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
-  Value *getValue() const;
+  Metadata *getValue() const;
   StringRef getFilename() const { return getFieldAs<DIFile>(4).getFilename(); }
   StringRef getDirectory() const {
     return getFieldAs<DIFile>(4).getDirectory();

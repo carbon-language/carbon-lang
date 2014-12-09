@@ -52,8 +52,7 @@ namespace llvm {
       t_EmptyArray,               // No value:  []
       t_Constant,                 // Value in ConstantVal.
       t_InlineAsm,                // Value in StrVal/StrVal2/UIntVal.
-      t_MDNode,                   // Value in MDNodeVal.
-      t_MDString,                 // Value in MDStringVal.
+      t_Metadata,                 // Value in MetadataVal.
       t_ConstantStruct,           // Value in ConstantStructElts.
       t_PackedConstantStruct      // Value in ConstantStructElts.
     } Kind;
@@ -64,8 +63,7 @@ namespace llvm {
     APSInt APSIntVal;
     APFloat APFloatVal;
     Constant *ConstantVal;
-    MDNode *MDNodeVal;
-    MDString *MDStringVal;
+    MetadataAsValue *MetadataVal;
     Constant **ConstantStructElts;
 
     ValID() : Kind(t_LocalID), APFloatVal(0.0) {}
@@ -115,8 +113,8 @@ namespace llvm {
     StringMap<std::pair<Type*, LocTy> > NamedTypes;
     std::vector<std::pair<Type*, LocTy> > NumberedTypes;
 
-    std::vector<TrackingVH<MDNode> > NumberedMetadata;
-    std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> > ForwardRefMDNodes;
+    std::vector<TrackingMDNodeRef> NumberedMetadata;
+    std::map<unsigned, std::pair<MDNodeFwdDecl *, LocTy>> ForwardRefMDNodes;
 
     // Global Value reference information.
     std::map<std::string, std::pair<GlobalValue*, LocTy> > ForwardRefVals;
@@ -382,9 +380,12 @@ namespace llvm {
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant *> &Elts);
     bool parseOptionalComdat(Comdat *&C);
-    bool ParseMetadataListValue(ValID &ID, PerFunctionState *PFS);
-    bool ParseMetadataValue(ValID &ID, PerFunctionState *PFS);
-    bool ParseMDNodeVector(SmallVectorImpl<Value*> &, PerFunctionState *PFS);
+    bool ParseMetadataAsValue(ValID &ID, PerFunctionState *PFS);
+    bool ParseMetadata(Metadata *&MD, PerFunctionState *PFS);
+    bool ParseMDNode(MDNode *&MD);
+    bool ParseMDNodeOrLocal(Metadata *&MD, PerFunctionState *PFS);
+    bool ParseMDNodeVector(SmallVectorImpl<Metadata *> &,
+                           PerFunctionState *PFS);
     bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);
 
     // Function Parsing.

@@ -172,29 +172,29 @@ struct FunctionTypeKeyInfo {
 /// the operands.
 struct GenericMDNodeInfo {
   struct KeyTy {
-    ArrayRef<Value *> Ops;
+    ArrayRef<Metadata *> RawOps;
+    ArrayRef<MDOperand> Ops;
     unsigned Hash;
 
-    KeyTy(ArrayRef<Value *> Ops)
-        : Ops(Ops), Hash(hash_combine_range(Ops.begin(), Ops.end())) {}
+    KeyTy(ArrayRef<Metadata *> Ops)
+        : RawOps(Ops), Hash(hash_combine_range(Ops.begin(), Ops.end())) {}
 
-    KeyTy(GenericMDNode *N, SmallVectorImpl<Value *> &Storage) {
-      Storage.resize(N->getNumOperands());
-      for (unsigned I = 0, E = N->getNumOperands(); I != E; ++I)
-        Storage[I] = N->getOperand(I);
-      Ops = Storage;
-      Hash = hash_combine_range(Ops.begin(), Ops.end());
-    }
+    KeyTy(GenericMDNode *N)
+        : Ops(N->op_begin(), N->op_end()), Hash(N->getHash()) {}
 
     bool operator==(const GenericMDNode *RHS) const {
       if (RHS == getEmptyKey() || RHS == getTombstoneKey())
         return false;
-      if (Hash != RHS->getHash() || Ops.size() != RHS->getNumOperands())
+      if (Hash != RHS->getHash())
         return false;
-      for (unsigned I = 0, E = Ops.size(); I != E; ++I)
-        if (Ops[I] != RHS->getOperand(I))
-          return false;
-      return true;
+      assert((RawOps.empty() || Ops.empty()) && "Two sets of operands?");
+      return RawOps.empty() ? compareOps(Ops, RHS) : compareOps(RawOps, RHS);
+    }
+    template <class T>
+    static bool compareOps(ArrayRef<T> Ops, const GenericMDNode *RHS) {
+      if (Ops.size() != RHS->getNumOperands())
+        return false;
+      return std::equal(Ops.begin(), Ops.end(), RHS->op_begin());
     }
   };
   static inline GenericMDNode *getEmptyKey() {
@@ -215,29 +215,6 @@ struct GenericMDNodeInfo {
   }
 };
 
-/// DebugRecVH - This is a CallbackVH used to keep the Scope -> index maps
-/// up to date as MDNodes mutate.  This class is implemented in DebugLoc.cpp.
-class DebugRecVH : public CallbackVH {
-  /// Ctx - This is the LLVM Context being referenced.
-  LLVMContextImpl *Ctx;
-  
-  /// Idx - The index into either ScopeRecordIdx or ScopeInlinedAtRecords that
-  /// this reference lives in.  If this is zero, then it represents a
-  /// non-canonical entry that has no DenseMap value.  This can happen due to
-  /// RAUW.
-  int Idx;
-public:
-  DebugRecVH(MDNode *n, LLVMContextImpl *ctx, int idx)
-    : CallbackVH(n), Ctx(ctx), Idx(idx) {}
-  
-  MDNode *get() const {
-    return cast_or_null<MDNode>(getValPtr());
-  }
-
-  void deleted() override;
-  void allUsesReplacedWith(Value *VNew) override;
-};
-  
 class LLVMContextImpl {
 public:
   /// OwnedModules - The set of modules instantiated in this context, and which
@@ -265,6 +242,8 @@ public:
   FoldingSet<AttributeSetNode> AttrsSetNodes;
 
   StringMap<MDString> MDStringCache;
+  DenseMap<Value *, ValueAsMetadata *> ValuesAsMetadata;
+  DenseMap<Metadata *, MetadataAsValue *> MetadataAsValues;
 
   DenseSet<GenericMDNode *, GenericMDNodeInfo> MDNodeSet;
 
@@ -301,7 +280,8 @@ public:
   ConstantInt *TheFalseVal;
   
   LeakDetectorImpl<Value> LLVMObjects;
-  
+  LeakDetectorImpl<Metadata> LLVMMDObjects;
+
   // Basic type instances.
   Type VoidTy, LabelTy, HalfTy, FloatTy, DoubleTy, MetadataTy;
   Type X86_FP80Ty, FP128Ty, PPC_FP128Ty, X86_MMXTy;
@@ -335,32 +315,14 @@ public:
   
   /// CustomMDKindNames - Map to hold the metadata string to ID mapping.
   StringMap<unsigned> CustomMDKindNames;
-  
-  typedef std::pair<unsigned, TrackingVH<MDNode> > MDPairTy;
+
+  typedef std::pair<unsigned, TrackingMDNodeRef> MDPairTy;
   typedef SmallVector<MDPairTy, 2> MDMapTy;
 
   /// MetadataStore - Collection of per-instruction metadata used in this
   /// context.
   DenseMap<const Instruction *, MDMapTy> MetadataStore;
   
-  /// ScopeRecordIdx - This is the index in ScopeRecords for an MDNode scope
-  /// entry with no "inlined at" element.
-  DenseMap<MDNode*, int> ScopeRecordIdx;
-  
-  /// ScopeRecords - These are the actual mdnodes (in a value handle) for an
-  /// index.  The ValueHandle ensures that ScopeRecordIdx stays up to date if
-  /// the MDNode is RAUW'd.
-  std::vector<DebugRecVH> ScopeRecords;
-  
-  /// ScopeInlinedAtIdx - This is the index in ScopeInlinedAtRecords for an
-  /// scope/inlined-at pair.
-  DenseMap<std::pair<MDNode*, MDNode*>, int> ScopeInlinedAtIdx;
-  
-  /// ScopeInlinedAtRecords - These are the actual mdnodes (in value handles)
-  /// for an index.  The ValueHandle ensures that ScopeINlinedAtIdx stays up
-  /// to date.
-  std::vector<std::pair<DebugRecVH, DebugRecVH> > ScopeInlinedAtRecords;
-
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to
   /// instructions in different blocks at the same location.

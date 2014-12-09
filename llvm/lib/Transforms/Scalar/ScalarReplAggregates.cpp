@@ -1068,12 +1068,14 @@ public:
   void run(AllocaInst *AI, const SmallVectorImpl<Instruction*> &Insts) {
     // Remember which alloca we're promoting (for isInstInList).
     this->AI = AI;
-    if (MDNode *DebugNode = MDNode::getIfExists(AI->getContext(), AI)) {
-      for (User *U : DebugNode->users())
-        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
-          DDIs.push_back(DDI);
-        else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(U))
-          DVIs.push_back(DVI);
+    if (auto *L = LocalAsMetadata::getIfExists(AI)) {
+      if (auto *DebugNode = MetadataAsValue::getIfExists(AI->getContext(), L)) {
+        for (User *U : DebugNode->users())
+          if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
+            DDIs.push_back(DDI);
+          else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(U))
+            DVIs.push_back(DVI);
+      }
     }
 
     LoadAndStorePromoter::run(Insts);
@@ -1420,7 +1422,7 @@ bool SROA::performPromotion(Function &F) {
   AssumptionTracker *AT = &getAnalysis<AssumptionTracker>();
 
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
-  DIBuilder DIB(*F.getParent());
+  DIBuilder DIB(*F.getParent(), /*AllowUnresolved*/ false);
   bool Changed = false;
   SmallVector<Instruction*, 64> Insts;
   while (1) {

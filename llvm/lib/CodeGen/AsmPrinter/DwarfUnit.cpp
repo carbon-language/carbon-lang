@@ -1192,10 +1192,10 @@ DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
     addType(ParamDIE, resolve(VP.getType()));
   if (!VP.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
-  if (Value *Val = VP.getValue()) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(Val))
+  if (Metadata *Val = VP.getValue()) {
+    if (ConstantInt *CI = mdconst::dyn_extract<ConstantInt>(Val))
       addConstantValue(ParamDIE, CI, resolve(VP.getType()));
-    else if (GlobalValue *GV = dyn_cast<GlobalValue>(Val)) {
+    else if (GlobalValue *GV = mdconst::dyn_extract<GlobalValue>(Val)) {
       // For declaration non-type template parameters (such as global values and
       // functions)
       DIELoc *Loc = new (DIEValueAllocator) DIELoc();

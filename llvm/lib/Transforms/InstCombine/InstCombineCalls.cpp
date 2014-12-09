@@ -119,15 +119,14 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
         // If the memcpy has metadata describing the members, see if we can
         // get the TBAA tag describing our copy.
         if (MDNode *M = MI->getMetadata(LLVMContext::MD_tbaa_struct)) {
-          if (M->getNumOperands() == 3 &&
-              M->getOperand(0) &&
-              isa<ConstantInt>(M->getOperand(0)) &&
-              cast<ConstantInt>(M->getOperand(0))->isNullValue() &&
+          if (M->getNumOperands() == 3 && M->getOperand(0) &&
+              mdconst::hasa<ConstantInt>(M->getOperand(0)) &&
+              mdconst::extract<ConstantInt>(M->getOperand(0))->isNullValue() &&
               M->getOperand(1) &&
-              isa<ConstantInt>(M->getOperand(1)) &&
-              cast<ConstantInt>(M->getOperand(1))->getValue() == Size &&
-              M->getOperand(2) &&
-              isa<MDNode>(M->getOperand(2)))
+              mdconst::hasa<ConstantInt>(M->getOperand(1)) &&
+              mdconst::extract<ConstantInt>(M->getOperand(1))->getValue() ==
+                  Size &&
+              M->getOperand(2) && isa<MDNode>(M->getOperand(2)))
             CopyMD = cast<MDNode>(M->getOperand(2));
         }
       }
@@ -1129,7 +1128,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           cast<Constant>(RHS)->isNullValue()) {
         LoadInst* LI = cast<LoadInst>(LHS);
         if (isValidAssumeForContext(II, LI, DL, DT)) {
-          MDNode* MD = MDNode::get(II->getContext(), ArrayRef<Value*>());
+          MDNode *MD = MDNode::get(II->getContext(), None);
           LI->setMetadata(LLVMContext::MD_nonnull, MD);
           return EraseInstFromFunction(*II);
         }

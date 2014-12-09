@@ -308,7 +308,7 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
 
   // Walk the existing metadata, adding the complete (perhaps cyclic) chain to
   // the set.
-  SmallVector<const Value *, 16> Queue(MD.begin(), MD.end());
+  SmallVector<const Metadata *, 16> Queue(MD.begin(), MD.end());
   while (!Queue.empty()) {
     const MDNode *M = cast<MDNode>(Queue.pop_back_val());
     for (unsigned i = 0, ie = M->getNumOperands(); i != ie; ++i)
@@ -320,12 +320,12 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
   // Now we have a complete set of all metadata in the chains used to specify
   // the noalias scopes and the lists of those scopes.
   SmallVector<MDNode *, 16> DummyNodes;
-  DenseMap<const MDNode *, TrackingVH<MDNode> > MDMap;
+  DenseMap<const MDNode *, TrackingMDNodeRef> MDMap;
   for (SetVector<const MDNode *>::iterator I = MD.begin(), IE = MD.end();
        I != IE; ++I) {
     MDNode *Dummy = MDNode::getTemporary(CalledFunc->getContext(), None);
     DummyNodes.push_back(Dummy);
-    MDMap[*I] = Dummy;
+    MDMap[*I].reset(Dummy);
   }
 
   // Create new metadata nodes to replace the dummy nodes, replacing old
@@ -333,17 +333,17 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
   // node.
   for (SetVector<const MDNode *>::iterator I = MD.begin(), IE = MD.end();
        I != IE; ++I) {
-    SmallVector<Value *, 4> NewOps;
+    SmallVector<Metadata *, 4> NewOps;
     for (unsigned i = 0, ie = (*I)->getNumOperands(); i != ie; ++i) {
-      const Value *V = (*I)->getOperand(i);
+      const Metadata *V = (*I)->getOperand(i);
       if (const MDNode *M = dyn_cast<MDNode>(V))
         NewOps.push_back(MDMap[M]);
       else
-        NewOps.push_back(const_cast<Value *>(V));
+        NewOps.push_back(const_cast<Metadata *>(V));
     }
 
-    MDNode *NewM = MDNode::get(CalledFunc->getContext(), NewOps),
-           *TempM = MDMap[*I];
+    MDNode *NewM = MDNode::get(CalledFunc->getContext(), NewOps);
+    MDNodeFwdDecl *TempM = cast<MDNodeFwdDecl>(MDMap[*I]);
 
     TempM->replaceAllUsesWith(NewM);
   }
@@ -516,7 +516,7 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
       // need to go through several PHIs to see it, and thus could be
       // repeated in the Objects list.
       SmallPtrSet<const Value *, 4> ObjSet;
-      SmallVector<Value *, 4> Scopes, NoAliases;
+      SmallVector<Metadata *, 4> Scopes, NoAliases;
 
       SmallSetVector<const Argument *, 4> NAPtrArgs;
       for (unsigned i = 0, ie = PtrArgs.size(); i != ie; ++i) {
@@ -869,8 +869,9 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
         if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(BI)) {
           LLVMContext &Ctx = BI->getContext();
           MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt(Ctx);
-          DVI->setOperand(2, createInlinedVariable(DVI->getVariable(), 
-                                                   InlinedAt, Ctx));
+          DVI->setOperand(2, MetadataAsValue::get(
+                                 Ctx, createInlinedVariable(DVI->getVariable(),
+                                                            InlinedAt, Ctx)));
         }
       }
     }

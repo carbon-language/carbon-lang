@@ -4714,7 +4714,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return nullptr;
   case Intrinsic::read_register: {
     Value *Reg = I.getArgOperand(0);
-    SDValue RegName = DAG.getMDNode(cast<MDNode>(Reg));
+    SDValue RegName =
+        DAG.getMDNode(cast<MDNode>(cast<MetadataAsValue>(Reg)->getMetadata()));
     EVT VT = TLI.getValueType(I.getType());
     setValue(&I, DAG.getNode(ISD::READ_REGISTER, sdl, VT, RegName));
     return nullptr;
@@ -4723,7 +4724,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     Value *Reg = I.getArgOperand(0);
     Value *RegValue = I.getArgOperand(1);
     SDValue Chain = getValue(RegValue).getOperand(0);
-    SDValue RegName = DAG.getMDNode(cast<MDNode>(Reg));
+    SDValue RegName =
+        DAG.getMDNode(cast<MDNode>(cast<MetadataAsValue>(Reg)->getMetadata()));
     DAG.setRoot(DAG.getNode(ISD::WRITE_REGISTER, sdl, MVT::Other, Chain,
                             RegName, getValue(RegValue)));
     return nullptr;

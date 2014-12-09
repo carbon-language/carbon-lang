@@ -167,7 +167,7 @@ bool AddDiscriminators::runOnFunction(Function &F) {
   bool Changed = false;
   Module *M = F.getParent();
   LLVMContext &Ctx = M->getContext();
-  DIBuilder Builder(*M);
+  DIBuilder Builder(*M, /*AllowUnresolved*/ false);
 
   // Traverse all the blocks looking for instructions in different
   // blocks that are at the same file:line location.

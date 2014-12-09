@@ -62,8 +62,6 @@ bool LLParser::ValidateEndOfModule() {
             NumberedMetadata[SlotNo] == nullptr)
           return Error(MDList[i].Loc, "use of undefined metadata '!" +
                        Twine(SlotNo) + "'");
-        assert(!NumberedMetadata[SlotNo]->isFunctionLocal() &&
-               "Unexpected function-local metadata");
         Inst->setMetadata(MDList[i].MDKind, NumberedMetadata[SlotNo]);
       }
     }
@@ -169,6 +167,10 @@ bool LLParser::ValidateEndOfModule() {
                  "use of undefined metadata '!" +
                  Twine(ForwardRefMDNodes.begin()->first) + "'");
 
+  // Resolve metadata cycles.
+  for (auto &N : NumberedMetadata)
+    if (auto *G = cast_or_null<GenericMDNode>(N))
+      G->resolveCycles();
 
   // Look for intrinsic functions and CallInst that need to be upgraded
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; )
@@ -561,12 +563,12 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
   if (Result) return false;
 
   // Otherwise, create MDNode forward reference.
-  MDNode *FwdNode = MDNode::getTemporary(Context, None);
+  MDNodeFwdDecl *FwdNode = MDNode::getTemporary(Context, None);
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
 
   if (NumberedMetadata.size() <= MID)
     NumberedMetadata.resize(MID+1);
-  NumberedMetadata[MID] = FwdNode;
+  NumberedMetadata[MID].reset(FwdNode);
   Result = FwdNode;
   return false;
 }
@@ -609,23 +611,18 @@ bool LLParser::ParseStandaloneMetadata() {
 
   LocTy TyLoc;
   Type *Ty = nullptr;
-  SmallVector<Value *, 16> Elts;
+  MDNode *Init;
   if (ParseUInt32(MetadataID) ||
       ParseToken(lltok::equal, "expected '=' here") ||
       ParseType(Ty, TyLoc) ||
       ParseToken(lltok::exclaim, "Expected '!' here") ||
-      ParseToken(lltok::lbrace, "Expected '{' here") ||
-      ParseMDNodeVector(Elts, nullptr) ||
-      ParseToken(lltok::rbrace, "expected end of metadata node"))
+      ParseMDNode(Init))
     return true;
 
-  MDNode *Init = MDNode::get(Context, Elts);
-
   // See if this was forward referenced, if so, handle it.
-  std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
-    FI = ForwardRefMDNodes.find(MetadataID);
+  auto FI = ForwardRefMDNodes.find(MetadataID);
   if (FI != ForwardRefMDNodes.end()) {
-    MDNode *Temp = FI->second.first;
+    auto *Temp = FI->second.first;
     Temp->replaceAllUsesWith(Init);
     MDNode::deleteTemporary(Temp);
     ForwardRefMDNodes.erase(FI);
@@ -637,7 +634,7 @@ bool LLParser::ParseStandaloneMetadata() {
 
     if (NumberedMetadata[MetadataID] != nullptr)
       return TokError("Metadata id is already used");
-    NumberedMetadata[MetadataID] = Init;
+    NumberedMetadata[MetadataID].reset(Init);
   }
 
   return false;
@@ -1527,18 +1524,15 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     if (ParseToken(lltok::exclaim, "expected '!' here"))
       return true;
 
-    // This code is similar to that of ParseMetadataValue, however it needs to
+    // This code is similar to that of ParseMetadata, however it needs to
     // have special-case code for a forward reference; see the comments on
     // ForwardRefInstMetadata for details. Also, MDStrings are not supported
     // at the top level here.
     if (Lex.getKind() == lltok::lbrace) {
-      ValID ID;
-      if (ParseMetadataListValue(ID, PFS))
+      MDNode *N;
+      if (ParseMDNode(N))
         return true;
-      assert(ID.Kind == ValID::t_MDNode);
-      if (ID.MDNodeVal->isFunctionLocal())
-        return Error(Loc, "unexpected function-local metadata");
-      Inst->setMetadata(MDK, ID.MDNodeVal);
+      Inst->setMetadata(MDK, N);
     } else {
       unsigned NodeID = 0;
       if (ParseMDNodeID(Node, NodeID))
@@ -2395,7 +2389,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     ID.Kind = ValID::t_LocalName;
     break;
   case lltok::exclaim:   // !42, !{...}, or !"foo"
-    return ParseMetadataValue(ID, PFS);
+    return ParseMetadataAsValue(ID, PFS);
   case lltok::APSInt:
     ID.APSIntVal = Lex.getAPSIntVal();
     ID.Kind = ValID::t_APSInt;
@@ -2935,45 +2929,69 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant *> &Elts) {
   return false;
 }
 
-bool LLParser::ParseMetadataListValue(ValID &ID, PerFunctionState *PFS) {
-  assert(Lex.getKind() == lltok::lbrace);
-  Lex.Lex();
-
-  SmallVector<Value*, 16> Elts;
-  if (ParseMDNodeVector(Elts, PFS) ||
-      ParseToken(lltok::rbrace, "expected end of metadata node"))
+bool LLParser::ParseMDNode(MDNode *&MD) {
+  SmallVector<Metadata *, 16> Elts;
+  if (ParseMDNodeVector(Elts, nullptr))
     return true;
 
-  ID.MDNodeVal = MDNode::get(Context, Elts);
-  ID.Kind = ValID::t_MDNode;
+  MD = MDNode::get(Context, Elts);
   return false;
 }
 
-/// ParseMetadataValue
+bool LLParser::ParseMDNodeOrLocal(Metadata *&MD, PerFunctionState *PFS) {
+  SmallVector<Metadata *, 16> Elts;
+  if (ParseMDNodeVector(Elts, PFS))
+    return true;
+
+  // Check for function-local metadata masquerading as an MDNode.
+  if (PFS && Elts.size() == 1 && Elts[0] && isa<LocalAsMetadata>(Elts[0])) {
+    MD = Elts[0];
+    return false;
+  }
+
+  MD = MDNode::get(Context, Elts);
+  return false;
+}
+
+bool LLParser::ParseMetadataAsValue(ValID &ID, PerFunctionState *PFS) {
+  Metadata *MD;
+  if (ParseMetadata(MD, PFS))
+    return true;
+
+  ID.Kind = ValID::t_Metadata;
+  ID.MetadataVal = MetadataAsValue::get(Context, MD);
+  return false;
+}
+
+/// ParseMetadata
 ///  ::= !42
 ///  ::= !{...}
 ///  ::= !"string"
-bool LLParser::ParseMetadataValue(ValID &ID, PerFunctionState *PFS) {
+bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
   assert(Lex.getKind() == lltok::exclaim);
   Lex.Lex();
 
   // MDNode:
   // !{ ... }
   if (Lex.getKind() == lltok::lbrace)
-    return ParseMetadataListValue(ID, PFS);
+    return ParseMDNodeOrLocal(MD, PFS);
 
   // Standalone metadata reference
   // !42
   if (Lex.getKind() == lltok::APSInt) {
-    if (ParseMDNodeID(ID.MDNodeVal)) return true;
-    ID.Kind = ValID::t_MDNode;
+    MDNode *N;
+    if (ParseMDNodeID(N))
+      return true;
+    MD = N;
     return false;
   }
 
   // MDString:
   //   ::= '!' STRINGCONSTANT
-  if (ParseMDString(ID.MDStringVal)) return true;
-  ID.Kind = ValID::t_MDString;
+  MDString *S;
+  if (ParseMDString(S))
+    return true;
+  MD = S;
   return false;
 }
 
@@ -3006,15 +3024,10 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
                        (ID.UIntVal>>1)&1, (InlineAsm::AsmDialect(ID.UIntVal>>2)));
     return false;
   }
-  case ValID::t_MDNode:
+  case ValID::t_Metadata:
     if (!Ty->isMetadataTy())
       return Error(ID.Loc, "metadata value must have metadata type");
-    V = ID.MDNodeVal;
-    return false;
-  case ValID::t_MDString:
-    if (!Ty->isMetadataTy())
-      return Error(ID.Loc, "metadata value must have metadata type");
-    V = ID.MDStringVal;
+    V = ID.MetadataVal;
     return false;
   case ValID::t_GlobalName:
     V = GetGlobalVal(ID.StrVal, Ty, ID.Loc);
@@ -4668,13 +4681,16 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 //===----------------------------------------------------------------------===//
 
 /// ParseMDNodeVector
-///   ::= Element (',' Element)*
+///   ::= { Element (',' Element)* }
 /// Element
 ///   ::= 'null' | TypeAndValue
-bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
+bool LLParser::ParseMDNodeVector(SmallVectorImpl<Metadata *> &Elts,
                                  PerFunctionState *PFS) {
+  assert(Lex.getKind() == lltok::lbrace);
+  Lex.Lex();
+
   // Check for an empty list.
-  if (Lex.getKind() == lltok::rbrace)
+  if (EatIfPresent(lltok::rbrace))
     return false;
 
   bool IsLocal = false;
@@ -4688,13 +4704,26 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
       continue;
     }
 
-    Value *V = nullptr;
-    if (ParseTypeAndValue(V, PFS)) return true;
-    Elts.push_back(V);
+    Type *Ty = nullptr;
+    if (ParseType(Ty))
+      return true;
 
-    if (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal())
-      return TokError("unexpected nested function-local metadata");
-    if (!V->getType()->isMetadataTy() && !isa<Constant>(V)) {
+    if (Ty->isMetadataTy()) {
+      // No function-local metadata here.
+      Metadata *MD = nullptr;
+      if (ParseMetadata(MD, nullptr))
+        return true;
+      Elts.push_back(MD);
+      continue;
+    }
+
+    Value *V = nullptr;
+    if (ParseValue(Ty, V, PFS))
+      return true;
+    assert(V && "Expected valid value");
+    Elts.push_back(ValueAsMetadata::get(V));
+
+    if (isa<LocalAsMetadata>(Elts.back())) {
       assert(PFS && "Unexpected function-local metadata without PFS");
       if (Elts.size() > 1)
         return TokError("unexpected function-local metadata");
@@ -4702,7 +4731,7 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
     }
   } while (EatIfPresent(lltok::comma));
 
-  return false;
+  return ParseToken(lltok::rbrace, "expected end of metadata node");
 }
 
 //===----------------------------------------------------------------------===//

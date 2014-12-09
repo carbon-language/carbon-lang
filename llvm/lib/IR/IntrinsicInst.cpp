@@ -49,15 +49,25 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
   return dyn_cast<GlobalVariable>(C);
 }
 
+static Value *getValueImpl(Value *Op) {
+  auto *MD = cast<MetadataAsValue>(Op)->getMetadata();
+  if (auto *V = dyn_cast<ValueAsMetadata>(MD))
+    return V->getValue();
+
+  // When the value goes to null, it gets replaced by an empty MDNode.
+  assert(!cast<MDNode>(MD)->getNumOperands() && "Expected an empty MDNode");
+  return nullptr;
+}
+
 //===----------------------------------------------------------------------===//
 /// DbgDeclareInst - This represents the llvm.dbg.declare instruction.
 ///
 
 Value *DbgDeclareInst::getAddress() const {
-  if (MDNode* MD = cast_or_null<MDNode>(getArgOperand(0)))
-    return MD->getOperand(0);
-  else
+  if (!getArgOperand(0))
     return nullptr;
+
+  return getValueImpl(getArgOperand(0));
 }
 
 //===----------------------------------------------------------------------===//
@@ -65,9 +75,7 @@ Value *DbgDeclareInst::getAddress() const {
 ///
 
 const Value *DbgValueInst::getValue() const {
-  return cast<MDNode>(getArgOperand(0))->getOperand(0);
+  return const_cast<DbgValueInst *>(this)->getValue();
 }
 
-Value *DbgValueInst::getValue() {
-  return cast<MDNode>(getArgOperand(0))->getOperand(0);
-}
+Value *DbgValueInst::getValue() { return getValueImpl(getArgOperand(0)); }

@@ -98,7 +98,8 @@ DiagnosticInfoInlineAsm::DiagnosticInfoInlineAsm(const Instruction &I,
       Instr(&I) {
   if (const MDNode *SrcLoc = I.getMetadata("srcloc")) {
     if (SrcLoc->getNumOperands() != 0)
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(SrcLoc->getOperand(0)))
+      if (const auto *CI =
+              mdconst::dyn_extract<ConstantInt>(SrcLoc->getOperand(0)))
         LocCookie = CI->getZExtValue();
   }
 }

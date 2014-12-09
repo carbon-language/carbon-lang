@@ -120,6 +120,21 @@ LLVMContextImpl::~LLVMContextImpl() {
     delete &*Elem;
   }
 
+  // Destroy MetadataAsValues.
+  {
+    SmallVector<MetadataAsValue *, 8> MDVs;
+    MDVs.reserve(MetadataAsValues.size());
+    for (auto &Pair : MetadataAsValues)
+      MDVs.push_back(Pair.second);
+    MetadataAsValues.clear();
+    for (auto *V : MDVs)
+      delete V;
+  }
+
+  // Destroy ValuesAsMetadata.
+  for (auto &Pair : ValuesAsMetadata)
+    delete Pair.second;
+
   // Destroy MDNodes.  ~MDNode can move and remove nodes between the MDNodeSet
   // and the NonUniquedMDNodes sets, so copy the values out first.
   SmallVector<GenericMDNode *, 8> MDNodes;

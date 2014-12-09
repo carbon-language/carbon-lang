@@ -40,7 +40,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
 
   // Global values do not need to be seeded into the VM if they
   // are using the identity mapping.
-  if (isa<GlobalValue>(V) || isa<MDString>(V))
+  if (isa<GlobalValue>(V))
     return VM[V] = const_cast<Value*>(V);
   
   if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
@@ -56,57 +56,24 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
     
     return VM[V] = const_cast<Value*>(V);
   }
-  
 
-  if (const MDNode *MD = dyn_cast<MDNode>(V)) {
+  if (const auto *MDV = dyn_cast<MetadataAsValue>(V)) {
+    const Metadata *MD = MDV->getMetadata();
     // If this is a module-level metadata and we know that nothing at the module
     // level is changing, then use an identity mapping.
-    if (!MD->isFunctionLocal() && (Flags & RF_NoModuleLevelChanges))
-      return VM[V] = const_cast<Value*>(V);
-    
-    // Create a dummy node in case we have a metadata cycle.
-    MDNode *Dummy = MDNode::getTemporary(V->getContext(), None);
-    VM[V] = Dummy;
-    
-    // Check all operands to see if any need to be remapped.
-    for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
-      Value *OP = MD->getOperand(i);
-      if (!OP) continue;
-      Value *Mapped_OP = MapValue(OP, VM, Flags, TypeMapper, Materializer);
-      // Use identity map if Mapped_Op is null and we can ignore missing
-      // entries.
-      if (Mapped_OP == OP ||
-          (Mapped_OP == nullptr && (Flags & RF_IgnoreMissingEntries)))
-        continue;
+    if (!isa<LocalAsMetadata>(MD) && (Flags & RF_NoModuleLevelChanges))
+      return VM[V] = const_cast<Value *>(V);
 
-      // Ok, at least one operand needs remapping.  
-      SmallVector<Value*, 4> Elts;
-      Elts.reserve(MD->getNumOperands());
-      for (i = 0; i != e; ++i) {
-        Value *Op = MD->getOperand(i);
-        if (!Op)
-          Elts.push_back(nullptr);
-        else {
-          Value *Mapped_Op = MapValue(Op, VM, Flags, TypeMapper, Materializer);
-          // Use identity map if Mapped_Op is null and we can ignore missing
-          // entries.
-          if (Mapped_Op == nullptr && (Flags & RF_IgnoreMissingEntries))
-            Mapped_Op = Op;
-          Elts.push_back(Mapped_Op);
-        }
-      }
-      MDNode *NewMD = MDNode::get(V->getContext(), Elts);
-      Dummy->replaceAllUsesWith(NewMD);
-      VM[V] = NewMD;
-      MDNode::deleteTemporary(Dummy);
-      return NewMD;
-    }
+    auto *MappedMD = MapValue(MD, VM, Flags, TypeMapper, Materializer);
+    if (MD == MappedMD || (!MappedMD && (Flags & RF_IgnoreMissingEntries)))
+      return VM[V] = const_cast<Value *>(V);
 
-    VM[V] = const_cast<Value*>(V);
-    MDNode::deleteTemporary(Dummy);
-
-    // No operands needed remapping.  Use an identity mapping.
-    return const_cast<Value*>(V);
+    // FIXME: This assert crashes during bootstrap, but I think it should be
+    // correct.  For now, just match behaviour from before the metadata/value
+    // split.
+    //
+    //    assert(MappedMD && "Referenced metadata value not in value map");
+    return VM[V] = MetadataAsValue::get(V->getContext(), MappedMD);
   }
 
   // Okay, this either must be a constant (which may or may not be mappable) or
@@ -175,6 +142,120 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
     return VM[V] = ConstantAggregateZero::get(NewTy);
   assert(isa<ConstantPointerNull>(C));
   return VM[V] = ConstantPointerNull::get(cast<PointerType>(NewTy));
+}
+
+static Metadata *map(ValueToValueMapTy &VM, const Metadata *Key,
+                     Metadata *Val) {
+  VM.MD()[Key].reset(Val);
+  return Val;
+}
+
+static Metadata *mapToSelf(ValueToValueMapTy &VM, const Metadata *MD) {
+  return map(VM, MD, const_cast<Metadata *>(MD));
+}
+
+static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
+                              RemapFlags Flags,
+                              ValueMapTypeRemapper *TypeMapper,
+                              ValueMaterializer *Materializer) {
+  // If the value already exists in the map, use it.
+  if (Metadata *NewMD = VM.MD().lookup(MD).get())
+    return NewMD;
+
+  if (isa<MDString>(MD))
+    return mapToSelf(VM, MD);
+
+  if (isa<ConstantAsMetadata>(MD))
+    if ((Flags & RF_NoModuleLevelChanges))
+      return mapToSelf(VM, MD);
+
+  if (const auto *VMD = dyn_cast<ValueAsMetadata>(MD)) {
+    Value *MappedV =
+        MapValue(VMD->getValue(), VM, Flags, TypeMapper, Materializer);
+    if (VMD->getValue() == MappedV ||
+        (!MappedV && (Flags & RF_IgnoreMissingEntries)))
+      return mapToSelf(VM, MD);
+
+    // FIXME: This assert crashes during bootstrap, but I think it should be
+    // correct.  For now, just match behaviour from before the metadata/value
+    // split.
+    //
+    //    assert(MappedV && "Referenced metadata not in value map!");
+    if (MappedV)
+      return map(VM, MD, ValueAsMetadata::get(MappedV));
+    return nullptr;
+  }
+
+  const MDNode *Node = cast<MDNode>(MD);
+  assert(Node->isResolved() && "Unexpected unresolved node");
+
+  auto getMappedOp = [&](Metadata *Op) -> Metadata *{
+    if (!Op)
+      return nullptr;
+    if (Metadata *MappedOp =
+            MapValueImpl(Op, VM, Flags, TypeMapper, Materializer))
+      return MappedOp;
+    // Use identity map if MappedOp is null and we can ignore missing entries.
+    if (Flags & RF_IgnoreMissingEntries)
+      return Op;
+
+    // FIXME: This assert crashes during bootstrap, but I think it should be
+    // correct.  For now, just match behaviour from before the metadata/value
+    // split.
+    //
+    //    llvm_unreachable("Referenced metadata not in value map!");
+    return nullptr;
+  };
+
+  // If this is a module-level metadata and we know that nothing at the
+  // module level is changing, then use an identity mapping.
+  if (Flags & RF_NoModuleLevelChanges)
+    return mapToSelf(VM, MD);
+
+  // Create a dummy node in case we have a metadata cycle.
+  MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
+  map(VM, Node, Dummy);
+
+  // Check all operands to see if any need to be remapped.
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
+    Metadata *Op = Node->getOperand(I);
+    Metadata *MappedOp = getMappedOp(Op);
+    if (Op == MappedOp)
+      continue;
+
+    // Ok, at least one operand needs remapping.
+    SmallVector<Metadata *, 4> Elts;
+    Elts.reserve(Node->getNumOperands());
+    for (I = 0; I != E; ++I)
+      Elts.push_back(getMappedOp(Node->getOperand(I)));
+
+    MDNode *NewMD = MDNode::get(Node->getContext(), Elts);
+    Dummy->replaceAllUsesWith(NewMD);
+    MDNode::deleteTemporary(Dummy);
+    return map(VM, Node, NewMD);
+  }
+
+  // No operands needed remapping.  Use an identity mapping.
+  mapToSelf(VM, MD);
+  MDNode::deleteTemporary(Dummy);
+  return const_cast<Metadata *>(MD);
+}
+
+Metadata *llvm::MapValue(const Metadata *MD, ValueToValueMapTy &VM,
+                         RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
+                         ValueMaterializer *Materializer) {
+  Metadata *NewMD = MapValueImpl(MD, VM, Flags, TypeMapper, Materializer);
+  if (NewMD && NewMD != MD)
+    if (auto *G = dyn_cast<GenericMDNode>(NewMD))
+      G->resolveCycles();
+  return NewMD;
+}
+
+MDNode *llvm::MapValue(const MDNode *MD, ValueToValueMapTy &VM,
+                       RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
+                       ValueMaterializer *Materializer) {
+  return cast<MDNode>(MapValue(static_cast<const Metadata *>(MD), VM, Flags,
+                               TypeMapper, Materializer));
 }
 
 /// RemapInstruction - Convert the instruction operands from referencing the

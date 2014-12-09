@@ -713,8 +713,7 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     if (HasWeight)
       for (unsigned MD_i = 1, MD_e = MD->getNumOperands(); MD_i < MD_e;
            ++MD_i) {
-        ConstantInt* CI = dyn_cast<ConstantInt>(MD->getOperand(MD_i));
-        assert(CI);
+        ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(MD_i));
         Weights.push_back(CI->getValue().getZExtValue());
       }
     for (SwitchInst::CaseIt i = SI->case_end(), e = SI->case_begin(); i != e;) {
@@ -819,7 +818,7 @@ static void GetBranchWeights(TerminatorInst *TI,
   MDNode *MD = TI->getMetadata(LLVMContext::MD_prof);
   assert(MD);
   for (unsigned i = 1, e = MD->getNumOperands(); i < e; ++i) {
-    ConstantInt *CI = cast<ConstantInt>(MD->getOperand(i));
+    ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(i));
     Weights.push_back(CI->getValue().getZExtValue());
   }
 
@@ -2037,8 +2036,10 @@ static bool ExtractBranchMetadata(BranchInst *BI,
          "Looking for probabilities on unconditional branch?");
   MDNode *ProfileData = BI->getMetadata(LLVMContext::MD_prof);
   if (!ProfileData || ProfileData->getNumOperands() != 3) return false;
-  ConstantInt *CITrue = dyn_cast<ConstantInt>(ProfileData->getOperand(1));
-  ConstantInt *CIFalse = dyn_cast<ConstantInt>(ProfileData->getOperand(2));
+  ConstantInt *CITrue =
+      mdconst::dyn_extract<ConstantInt>(ProfileData->getOperand(1));
+  ConstantInt *CIFalse =
+      mdconst::dyn_extract<ConstantInt>(ProfileData->getOperand(2));
   if (!CITrue || !CIFalse) return false;
   ProbTrue = CITrue->getValue().getZExtValue();
   ProbFalse = CIFalse->getValue().getZExtValue();

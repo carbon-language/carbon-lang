@@ -438,43 +438,58 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
   }
 }
 
-void BitcodeReaderMDValueList::AssignValue(Value *V, unsigned Idx) {
+void BitcodeReaderMDValueList::AssignValue(Metadata *MD, unsigned Idx) {
   if (Idx == size()) {
-    push_back(V);
+    push_back(MD);
     return;
   }
 
   if (Idx >= size())
     resize(Idx+1);
 
-  WeakVH &OldV = MDValuePtrs[Idx];
-  if (!OldV) {
-    OldV = V;
+  TrackingMDRef &OldMD = MDValuePtrs[Idx];
+  if (!OldMD) {
+    OldMD.reset(MD);
     return;
   }
 
   // If there was a forward reference to this value, replace it.
-  MDNode *PrevVal = cast<MDNode>(OldV);
-  OldV->replaceAllUsesWith(V);
-  MDNode::deleteTemporary(PrevVal);
-  // Deleting PrevVal sets Idx value in MDValuePtrs to null. Set new
-  // value for Idx.
-  MDValuePtrs[Idx] = V;
+  MDNodeFwdDecl *PrevMD = cast<MDNodeFwdDecl>(OldMD.get());
+  PrevMD->replaceAllUsesWith(MD);
+  MDNode::deleteTemporary(PrevMD);
+  --NumFwdRefs;
 }
 
-Value *BitcodeReaderMDValueList::getValueFwdRef(unsigned Idx) {
+Metadata *BitcodeReaderMDValueList::getValueFwdRef(unsigned Idx) {
   if (Idx >= size())
     resize(Idx + 1);
 
-  if (Value *V = MDValuePtrs[Idx]) {
-    assert(V->getType()->isMetadataTy() && "Type mismatch in value table!");
-    return V;
-  }
+  if (Metadata *MD = MDValuePtrs[Idx])
+    return MD;
 
   // Create and return a placeholder, which will later be RAUW'd.
-  Value *V = MDNode::getTemporary(Context, None);
-  MDValuePtrs[Idx] = V;
-  return V;
+  AnyFwdRefs = true;
+  ++NumFwdRefs;
+  Metadata *MD = MDNode::getTemporary(Context, None);
+  MDValuePtrs[Idx].reset(MD);
+  return MD;
+}
+
+void BitcodeReaderMDValueList::tryToResolveCycles() {
+  if (!AnyFwdRefs)
+    // Nothing to do.
+    return;
+
+  if (NumFwdRefs)
+    // Still forward references... can't resolve cycles.
+    return;
+
+  // Resolve any cycles.
+  for (auto &MD : MDValuePtrs) {
+    assert(!(MD && isa<MDNodeFwdDecl>(MD)) && "Unexpected forward reference");
+    if (auto *G = dyn_cast_or_null<GenericMDNode>(MD))
+      G->resolveCycles();
+  }
 }
 
 Type *BitcodeReader::getTypeByID(unsigned ID) {
@@ -1066,6 +1081,7 @@ std::error_code BitcodeReader::ParseMetadata() {
     case BitstreamEntry::Error:
       return Error(BitcodeError::MalformedBlock);
     case BitstreamEntry::EndBlock:
+      MDValueList.tryToResolveCycles();
       return std::error_code();
     case BitstreamEntry::Record:
       // The interesting case.
@@ -1100,13 +1116,13 @@ std::error_code BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_FN_NODE: {
-      // This is a function-local node.
+      // This is a LocalAsMetadata record, the only type of function-local
+      // metadata.
       if (Record.size() % 2 == 1)
         return Error(BitcodeError::InvalidRecord);
 
-      // If this isn't a single-operand node that directly references
-      // non-metadata, we're dropping it.  This used to be legal, but there's
-      // no upgrade path.
+      // If this isn't a LocalAsMetadata record, we're dropping it.  This used
+      // to be legal, but there's no upgrade path.
       auto dropRecord = [&] {
         MDValueList.AssignValue(MDNode::get(Context, None), NextMDValueNo++);
       };
@@ -1121,10 +1137,9 @@ std::error_code BitcodeReader::ParseMetadata() {
         break;
       }
 
-      Value *Elts[] = {ValueList.getValueFwdRef(Record[1], Ty)};
-      Value *V = MDNode::getWhenValsUnresolved(Context, Elts,
-                                               /*IsFunctionLocal*/ true);
-      MDValueList.AssignValue(V, NextMDValueNo++);
+      MDValueList.AssignValue(
+          LocalAsMetadata::get(ValueList.getValueFwdRef(Record[1], Ty)),
+          NextMDValueNo++);
       break;
     }
     case bitc::METADATA_NODE: {
@@ -1132,28 +1147,30 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error(BitcodeError::InvalidRecord);
 
       unsigned Size = Record.size();
-      SmallVector<Value*, 8> Elts;
+      SmallVector<Metadata *, 8> Elts;
       for (unsigned i = 0; i != Size; i += 2) {
         Type *Ty = getTypeByID(Record[i]);
         if (!Ty)
           return Error(BitcodeError::InvalidRecord);
         if (Ty->isMetadataTy())
           Elts.push_back(MDValueList.getValueFwdRef(Record[i+1]));
-        else if (!Ty->isVoidTy())
-          Elts.push_back(ValueList.getValueFwdRef(Record[i+1], Ty));
-        else
+        else if (!Ty->isVoidTy()) {
+          auto *MD =
+              ValueAsMetadata::get(ValueList.getValueFwdRef(Record[i + 1], Ty));
+          assert(isa<ConstantAsMetadata>(MD) &&
+                 "Expected non-function-local metadata");
+          Elts.push_back(MD);
+        } else
           Elts.push_back(nullptr);
       }
-      Value *V = MDNode::getWhenValsUnresolved(Context, Elts,
-                                               /*IsFunctionLocal*/ false);
-      MDValueList.AssignValue(V, NextMDValueNo++);
+      MDValueList.AssignValue(MDNode::get(Context, Elts), NextMDValueNo++);
       break;
     }
     case bitc::METADATA_STRING: {
       std::string String(Record.begin(), Record.end());
       llvm::UpgradeMDStringConstant(String);
-      Value *V = MDString::get(Context, String);
-      MDValueList.AssignValue(V, NextMDValueNo++);
+      Metadata *MD = MDString::get(Context, String);
+      MDValueList.AssignValue(MD, NextMDValueNo++);
       break;
     }
     case bitc::METADATA_KIND: {
@@ -2359,12 +2376,12 @@ std::error_code BitcodeReader::ParseMetadataAttachment() {
           MDKindMap.find(Kind);
         if (I == MDKindMap.end())
           return Error(BitcodeError::InvalidID);
-        MDNode *Node = cast<MDNode>(MDValueList.getValueFwdRef(Record[i+1]));
-        if (Node->isFunctionLocal())
+        Metadata *Node = MDValueList.getValueFwdRef(Record[i + 1]);
+        if (isa<LocalAsMetadata>(Node))
           // Drop the attachment.  This used to be legal, but there's no
           // upgrade path.
           break;
-        Inst->setMetadata(I->second, Node);
+        Inst->setMetadata(I->second, cast<MDNode>(Node));
         if (I->second == LLVMContext::MD_tbaa)
           InstsWithTBAATag.push_back(Inst);
       }

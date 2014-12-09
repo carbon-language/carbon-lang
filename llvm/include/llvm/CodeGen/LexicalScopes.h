@@ -48,6 +48,8 @@ public:
   LexicalScope(LexicalScope *P, const MDNode *D, const MDNode *I, bool A)
       : Parent(P), Desc(D), InlinedAtLocation(I), AbstractScope(A),
         LastInsn(nullptr), FirstInsn(nullptr), DFSIn(0), DFSOut(0) {
+    assert((!D || D->isResolved()) && "Expected resolved node");
+    assert((!I || I->isResolved()) && "Expected resolved node");
     if (Parent)
       Parent->addChild(this);
   }
@@ -116,8 +118,8 @@ public:
 
 private:
   LexicalScope *Parent;                        // Parent to this scope.
-  AssertingVH<const MDNode> Desc;              // Debug info descriptor.
-  AssertingVH<const MDNode> InlinedAtLocation; // Location at which this
+  const MDNode *Desc;                          // Debug info descriptor.
+  const MDNode *InlinedAtLocation;             // Location at which this
                                                // scope is inlined.
   bool AbstractScope;                          // Abstract Scope
   SmallVector<LexicalScope *, 4> Children;     // Scopes defined in scope.

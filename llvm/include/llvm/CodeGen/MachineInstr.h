@@ -1139,7 +1139,10 @@ public:
   /// setDebugLoc - Replace current source information with new such.
   /// Avoid using this, the constructor argument is preferable.
   ///
-  void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
+  void setDebugLoc(const DebugLoc dl) {
+    debugLoc = dl;
+    assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
+  }
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.

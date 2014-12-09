@@ -18,10 +18,31 @@
 
 using namespace llvm;
 
+static Metadata *unwrapMetadata(LLVMValueRef VRef) {
+  Value *V = unwrap(VRef);
+  if (!V)
+    return nullptr;
+  if (auto *MD = dyn_cast<MetadataAsValue>(V))
+    return MD->getMetadata();
+  return ValueAsMetadata::get(V);
+}
+
+static SmallVector<Metadata *, 8> unwrapMetadataArray(LLVMValueRef *Data,
+                                                      size_t Length) {
+  SmallVector<Metadata *, 8> Elements;
+  for (size_t I = 0; I != Length; ++I)
+    Elements.push_back(unwrapMetadata(Data[I]));
+  return Elements;
+}
+
 namespace {
 template <typename T> T unwrapDI(LLVMValueRef v) {
-  return v ? T(unwrap<MDNode>(v)) : T();
+  return T(cast_or_null<MDNode>(unwrapMetadata(v)));
 }
+}
+
+static LLVMValueRef wrapDI(DIDescriptor N) {
+  return wrap(MetadataAsValue::get(N->getContext(), N));
 }
 
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
@@ -47,14 +68,14 @@ LLVMValueRef LLVMDIBuilderCreateCompileUnit(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   DICompileUnit CU = D->createCompileUnit(Lang, File, Dir, Producer, Optimized,
                                           Flags, RuntimeVersion);
-  return wrap(CU);
+  return wrapDI(CU);
 }
 
 LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef Dref, const char *File,
                                      const char *Dir) {
   DIBuilder *D = unwrap(Dref);
   DIFile F = D->createFile(File, Dir);
-  return wrap(F);
+  return wrapDI(F);
 }
 
 LLVMValueRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef Dref,
@@ -64,7 +85,7 @@ LLVMValueRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   DILexicalBlock LB = D->createLexicalBlock(
       unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line, Column);
-  return wrap(LB);
+  return wrapDI(LB);
 }
 
 LLVMValueRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef Dref,
@@ -74,7 +95,7 @@ LLVMValueRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   DILexicalBlockFile LBF = D->createLexicalBlockFile(
       unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Discriminator);
-  return wrap(LBF);
+  return wrapDI(LBF);
 }
 
 LLVMValueRef LLVMDIBuilderCreateFunction(
@@ -87,7 +108,7 @@ LLVMValueRef LLVMDIBuilderCreateFunction(
       unwrapDI<DIDescriptor>(Scope), Name, LinkageName, unwrapDI<DIFile>(File),
       Line, unwrapDI<DICompositeType>(CompositeType), IsLocalToUnit,
       IsDefinition, ScopeLine, Flags, IsOptimized, unwrap<Function>(Func));
-  return wrap(SP);
+  return wrapDI(SP);
 }
 
 LLVMValueRef LLVMDIBuilderCreateLocalVariable(
@@ -98,7 +119,7 @@ LLVMValueRef LLVMDIBuilderCreateLocalVariable(
   DIVariable V = D->createLocalVariable(
       Tag, unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, ArgNo);
-  return wrap(V);
+  return wrapDI(V);
 }
 
 LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Dref,
@@ -107,7 +128,7 @@ LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Dref,
                                           unsigned Encoding) {
   DIBuilder *D = unwrap(Dref);
   DIBasicType T = D->createBasicType(Name, SizeInBits, AlignInBits, Encoding);
-  return wrap(T);
+  return wrapDI(T);
 }
 
 LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef Dref,
@@ -118,7 +139,7 @@ LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   DIDerivedType T = D->createPointerType(unwrapDI<DIType>(PointeeType),
                                          SizeInBits, AlignInBits, Name);
-  return wrap(T);
+  return wrapDI(T);
 }
 
 LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref,
@@ -127,7 +148,7 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT = D->createSubroutineType(
       unwrapDI<DIFile>(File), unwrapDI<DITypeArray>(ParameterTypes));
-  return wrap(CT);
+  return wrapDI(CT);
 }
 
 LLVMValueRef LLVMDIBuilderCreateStructType(
@@ -139,7 +160,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       SizeInBits, AlignInBits, Flags, unwrapDI<DIType>(DerivedFrom),
       unwrapDI<DIArray>(ElementTypes));
-  return wrap(CT);
+  return wrapDI(CT);
 }
 
 LLVMValueRef LLVMDIBuilderCreateMemberType(
@@ -150,7 +171,7 @@ LLVMValueRef LLVMDIBuilderCreateMemberType(
   DIDerivedType DT = D->createMemberType(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       SizeInBits, AlignInBits, OffsetInBits, Flags, unwrapDI<DIType>(Ty));
-  return wrap(DT);
+  return wrapDI(DT);
 }
 
 LLVMValueRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef Dref,
@@ -162,7 +183,7 @@ LLVMValueRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef Dref,
   DICompositeType CT =
       D->createArrayType(SizeInBits, AlignInBits, unwrapDI<DIType>(ElementType),
                          unwrapDI<DIArray>(Subscripts));
-  return wrap(CT);
+  return wrapDI(CT);
 }
 
 LLVMValueRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Dref, LLVMValueRef Ty,
@@ -172,40 +193,36 @@ LLVMValueRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Dref, LLVMValueRef Ty,
   DIDerivedType DT =
       D->createTypedef(unwrapDI<DIType>(Ty), Name, unwrapDI<DIFile>(File), Line,
                        unwrapDI<DIDescriptor>(Context));
-  return wrap(DT);
+  return wrapDI(DT);
 }
 
 LLVMValueRef LLVMDIBuilderGetOrCreateSubrange(LLVMDIBuilderRef Dref, int64_t Lo,
                                               int64_t Count) {
   DIBuilder *D = unwrap(Dref);
   DISubrange S = D->getOrCreateSubrange(Lo, Count);
-  return wrap(S);
+  return wrapDI(S);
 }
 
 LLVMValueRef LLVMDIBuilderGetOrCreateArray(LLVMDIBuilderRef Dref,
                                            LLVMValueRef *Data, size_t Length) {
   DIBuilder *D = unwrap(Dref);
-  Value **DataValue = unwrap(Data);
-  ArrayRef<Value *> Elements(DataValue, Length);
-  DIArray A = D->getOrCreateArray(Elements);
-  return wrap(A);
+  DIArray A = D->getOrCreateArray(unwrapMetadataArray(Data, Length));
+  return wrapDI(A);
 }
 
 LLVMValueRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Dref,
                                                LLVMValueRef *Data,
                                                size_t Length) {
   DIBuilder *D = unwrap(Dref);
-  Value **DataValue = unwrap(Data);
-  ArrayRef<Value *> Elements(DataValue, Length);
-  DITypeArray A = D->getOrCreateTypeArray(Elements);
-  return wrap(A);
+  DITypeArray A = D->getOrCreateTypeArray(unwrapMetadataArray(Data, Length));
+  return wrapDI(A);
 }
 
 LLVMValueRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef Dref, int64_t *Addr,
                                            size_t Length) {
   DIBuilder *D = unwrap(Dref);
   DIExpression Expr = D->createExpression(ArrayRef<int64_t>(Addr, Length));
-  return wrap(Expr);
+  return wrapDI(Expr);
 }
 
 LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Dref,

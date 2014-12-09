@@ -125,8 +125,13 @@ void TypeFinder::incorporateType(Type *Ty) {
 /// other ways.  GlobalValues, basic blocks, instructions, and inst operands are
 /// all explicitly enumerated.
 void TypeFinder::incorporateValue(const Value *V) {
-  if (const MDNode *M = dyn_cast<MDNode>(V))
-    return incorporateMDNode(M);
+  if (const auto *M = dyn_cast<MetadataAsValue>(V)) {
+    if (const auto *N = dyn_cast<MDNode>(M->getMetadata()))
+      return incorporateMDNode(N);
+    if (const auto *MDV = dyn_cast<ValueAsMetadata>(M->getMetadata()))
+      return incorporateValue(MDV->getValue());
+    return;
+  }
 
   if (!isa<Constant>(V) || isa<GlobalValue>(V)) return;
 
@@ -152,11 +157,21 @@ void TypeFinder::incorporateValue(const Value *V) {
 /// find types hiding within.
 void TypeFinder::incorporateMDNode(const MDNode *V) {
   // Already visited?
-  if (!VisitedConstants.insert(V).second)
+  if (!VisitedMetadata.insert(V).second)
     return;
 
   // Look in operands for types.
-  for (unsigned i = 0, e = V->getNumOperands(); i != e; ++i)
-    if (Value *Op = V->getOperand(i))
-      incorporateValue(Op);
+  for (unsigned i = 0, e = V->getNumOperands(); i != e; ++i) {
+    Metadata *Op = V->getOperand(i);
+    if (!Op)
+      continue;
+    if (auto *N = dyn_cast<MDNode>(Op)) {
+      incorporateMDNode(N);
+      continue;
+    }
+    if (auto *C = dyn_cast<ConstantAsMetadata>(Op)) {
+      incorporateValue(C->getValue());
+      continue;
+    }
+  }
 }

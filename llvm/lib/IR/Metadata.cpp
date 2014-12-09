@@ -28,14 +28,312 @@
 
 using namespace llvm;
 
-Metadata::Metadata(LLVMContext &Context, unsigned ID)
-    : Value(Type::getMetadataTy(Context), ID) {}
+MetadataAsValue::MetadataAsValue(Type *Ty, Metadata *MD)
+    : Value(Ty, MetadataAsValueVal), MD(MD) {
+  track();
+}
+
+MetadataAsValue::~MetadataAsValue() {
+  getType()->getContext().pImpl->MetadataAsValues.erase(MD);
+  untrack();
+}
+
+/// \brief Canonicalize metadata arguments to intrinsics.
+///
+/// To support bitcode upgrades (and assembly semantic sugar) for \a
+/// MetadataAsValue, we need to canonicalize certain metadata.
+///
+///   - nullptr is replaced by an empty MDNode.
+///   - An MDNode with a single null operand is replaced by an empty MDNode.
+///   - An MDNode whose only operand is a \a ConstantAsMetadata gets skipped.
+///
+/// This maintains readability of bitcode from when metadata was a type of
+/// value, and these bridges were unnecessary.
+static Metadata *canonicalizeMetadataForValue(LLVMContext &Context,
+                                              Metadata *MD) {
+  if (!MD)
+    // !{}
+    return MDNode::get(Context, None);
+
+  // Return early if this isn't a single-operand MDNode.
+  auto *N = dyn_cast<MDNode>(MD);
+  if (!N || N->getNumOperands() != 1)
+    return MD;
+
+  if (!N->getOperand(0))
+    // !{}
+    return MDNode::get(Context, None);
+
+  if (auto *C = dyn_cast<ConstantAsMetadata>(N->getOperand(0)))
+    // Look through the MDNode.
+    return C;
+
+  return MD;
+}
+
+MetadataAsValue *MetadataAsValue::get(LLVMContext &Context, Metadata *MD) {
+  MD = canonicalizeMetadataForValue(Context, MD);
+  auto *&Entry = Context.pImpl->MetadataAsValues[MD];
+  if (!Entry)
+    Entry = new MetadataAsValue(Type::getMetadataTy(Context), MD);
+  return Entry;
+}
+
+MetadataAsValue *MetadataAsValue::getIfExists(LLVMContext &Context,
+                                              Metadata *MD) {
+  MD = canonicalizeMetadataForValue(Context, MD);
+  auto &Store = Context.pImpl->MetadataAsValues;
+  auto I = Store.find(MD);
+  return I == Store.end() ? nullptr : I->second;
+}
+
+void MetadataAsValue::handleChangedMetadata(Metadata *MD) {
+  LLVMContext &Context = getContext();
+  MD = canonicalizeMetadataForValue(Context, MD);
+  auto &Store = Context.pImpl->MetadataAsValues;
+
+  // Stop tracking the old metadata.
+  Store.erase(this->MD);
+  untrack();
+  this->MD = nullptr;
+
+  // Start tracking MD, or RAUW if necessary.
+  auto *&Entry = Store[MD];
+  if (Entry) {
+    replaceAllUsesWith(Entry);
+    delete this;
+    return;
+  }
+
+  this->MD = MD;
+  track();
+  Entry = this;
+}
+
+void MetadataAsValue::track() {
+  if (MD)
+    MetadataTracking::track(&MD, *MD, *this);
+}
+
+void MetadataAsValue::untrack() {
+  if (MD)
+    MetadataTracking::untrack(MD);
+}
+
+void ReplaceableMetadataImpl::addRef(void *Ref, OwnerTy Owner) {
+  bool WasInserted = UseMap.insert(std::make_pair(Ref, Owner)).second;
+  (void)WasInserted;
+  assert(WasInserted && "Expected to add a reference");
+}
+
+void ReplaceableMetadataImpl::dropRef(void *Ref) {
+  bool WasErased = UseMap.erase(Ref);
+  (void)WasErased;
+  assert(WasErased && "Expected to drop a reference");
+}
+
+void ReplaceableMetadataImpl::moveRef(void *Ref, void *New,
+                                      const Metadata &MD) {
+  auto I = UseMap.find(Ref);
+  assert(I != UseMap.end() && "Expected to move a reference");
+  OwnerTy Owner = I->second;
+  UseMap.erase(I);
+  addRef(New, Owner);
+
+  // Check that the references are direct if there's no owner.
+  (void)MD;
+  assert((Owner || *static_cast<Metadata **>(Ref) == &MD) &&
+         "Reference without owner must be direct");
+  assert((Owner || *static_cast<Metadata **>(New) == &MD) &&
+         "Reference without owner must be direct");
+}
+
+void ReplaceableMetadataImpl::replaceAllUsesWith(Metadata *MD) {
+  assert(!(MD && isa<MDNodeFwdDecl>(MD)) && "Expected non-temp node");
+
+  if (UseMap.empty())
+    return;
+
+  // Copy out uses since UseMap will get touched below.
+  SmallVector<std::pair<void *, OwnerTy>, 8> Uses(UseMap.begin(), UseMap.end());
+  for (const auto &Pair : Uses) {
+    if (!Pair.second) {
+      // Update unowned tracking references directly.
+      Metadata *&Ref = *static_cast<Metadata **>(Pair.first);
+      Ref = MD;
+      MetadataTracking::track(Ref);
+      UseMap.erase(Pair.first);
+      continue;
+    }
+
+    // Check for MetadataAsValue.
+    if (Pair.second.is<MetadataAsValue *>()) {
+      Pair.second.get<MetadataAsValue *>()->handleChangedMetadata(MD);
+      continue;
+    }
+
+    // There's a Metadata owner -- dispatch.
+    Metadata *Owner = Pair.second.get<Metadata *>();
+    switch (Owner->getMetadataID()) {
+#define HANDLE_METADATA_LEAF(CLASS)                                            \
+  case Metadata::CLASS##Kind:                                                  \
+    cast<CLASS>(Owner)->handleChangedOperand(Pair.first, MD);                  \
+    continue;
+#include "llvm/IR/Metadata.def"
+    default:
+      llvm_unreachable("Invalid metadata subclass");
+    }
+  }
+  assert(UseMap.empty() && "Expected all uses to be replaced");
+}
+
+void ReplaceableMetadataImpl::resolveAllUses(bool ResolveUsers) {
+  if (UseMap.empty())
+    return;
+
+  if (!ResolveUsers) {
+    UseMap.clear();
+    return;
+  }
+
+  // Copy out uses since UseMap could get touched below.
+  SmallVector<std::pair<void *, OwnerTy>, 8> Uses(UseMap.begin(), UseMap.end());
+  UseMap.clear();
+  for (const auto &Pair : Uses) {
+    if (!Pair.second)
+      continue;
+    if (Pair.second.is<MetadataAsValue *>())
+      continue;
+
+    // Resolve GenericMDNodes that point at this.
+    auto *Owner = dyn_cast<GenericMDNode>(Pair.second.get<Metadata *>());
+    if (!Owner)
+      continue;
+    if (Owner->isResolved())
+      continue;
+    Owner->decrementUnresolvedOperands();
+    if (!Owner->hasUnresolvedOperands())
+      Owner->resolve();
+  }
+}
+
+static Function *getLocalFunction(Value *V) {
+  assert(V && "Expected value");
+  if (auto *A = dyn_cast<Argument>(V))
+    return A->getParent();
+  if (BasicBlock *BB = cast<Instruction>(V)->getParent())
+    return BB->getParent();
+  return nullptr;
+}
+
+ValueAsMetadata *ValueAsMetadata::get(Value *V) {
+  assert(V && "Unexpected null Value");
+
+  auto &Context = V->getContext();
+  auto *&Entry = Context.pImpl->ValuesAsMetadata[V];
+  if (!Entry) {
+    assert((isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V)) &&
+           "Expected constant or function-local value");
+    assert(!V->NameAndIsUsedByMD.getInt() &&
+           "Expected this to be the only metadata use");
+    V->NameAndIsUsedByMD.setInt(true);
+    if (auto *C = dyn_cast<Constant>(V))
+      Entry = new ConstantAsMetadata(Context, C);
+    else
+      Entry = new LocalAsMetadata(Context, V);
+  }
+
+  return Entry;
+}
+
+ValueAsMetadata *ValueAsMetadata::getIfExists(Value *V) {
+  assert(V && "Unexpected null Value");
+  return V->getContext().pImpl->ValuesAsMetadata.lookup(V);
+}
+
+void ValueAsMetadata::handleDeletion(Value *V) {
+  assert(V && "Expected valid value");
+
+  auto &Store = V->getType()->getContext().pImpl->ValuesAsMetadata;
+  auto I = Store.find(V);
+  if (I == Store.end())
+    return;
+
+  // Remove old entry from the map.
+  ValueAsMetadata *MD = I->second;
+  assert(MD && "Expected valid metadata");
+  assert(MD->getValue() == V && "Expected valid mapping");
+  Store.erase(I);
+
+  // Delete the metadata.
+  MD->replaceAllUsesWith(nullptr);
+  delete MD;
+}
+
+void ValueAsMetadata::handleRAUW(Value *From, Value *To) {
+  assert(From && "Expected valid value");
+  assert(To && "Expected valid value");
+  assert(From != To && "Expected changed value");
+  assert(From->getType() == To->getType() && "Unexpected type change");
+
+  LLVMContext &Context = From->getType()->getContext();
+  auto &Store = Context.pImpl->ValuesAsMetadata;
+  auto I = Store.find(From);
+  if (I == Store.end()) {
+    assert(!From->NameAndIsUsedByMD.getInt() &&
+           "Expected From not to be used by metadata");
+    return;
+  }
+
+  // Remove old entry from the map.
+  assert(From->NameAndIsUsedByMD.getInt() &&
+         "Expected From to be used by metadata");
+  From->NameAndIsUsedByMD.setInt(false);
+  ValueAsMetadata *MD = I->second;
+  assert(MD && "Expected valid metadata");
+  assert(MD->getValue() == From && "Expected valid mapping");
+  Store.erase(I);
+
+  if (isa<LocalAsMetadata>(MD)) {
+    if (auto *C = dyn_cast<Constant>(To)) {
+      // Local became a constant.
+      MD->replaceAllUsesWith(ConstantAsMetadata::get(C));
+      delete MD;
+      return;
+    }
+    if (getLocalFunction(From) && getLocalFunction(To) &&
+        getLocalFunction(From) != getLocalFunction(To)) {
+      // Function changed.
+      MD->replaceAllUsesWith(nullptr);
+      delete MD;
+      return;
+    }
+  } else if (!isa<Constant>(To)) {
+    // Changed to function-local value.
+    MD->replaceAllUsesWith(nullptr);
+    delete MD;
+    return;
+  }
+
+  auto *&Entry = Store[To];
+  if (Entry) {
+    // The target already exists.
+    MD->replaceAllUsesWith(Entry);
+    delete MD;
+    return;
+  }
+
+  // Update MD in place (and update the map entry).
+  assert(!To->NameAndIsUsedByMD.getInt() &&
+         "Expected this to be the only metadata use");
+  To->NameAndIsUsedByMD.setInt(true);
+  MD->V = To;
+  Entry = MD;
+}
 
 //===----------------------------------------------------------------------===//
 // MDString implementation.
 //
-
-void MDString::anchor() { }
 
 MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   auto &Store = Context.pImpl->MDStringCache;
@@ -43,8 +341,7 @@ MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   if (I != Store.end())
     return &I->second;
 
-  auto *Entry =
-      StringMapEntry<MDString>::Create(Str, Store.getAllocator(), Context);
+  auto *Entry = StringMapEntry<MDString>::Create(Str, Store.getAllocator());
   bool WasInserted = Store.insert(Entry);
   (void)WasInserted;
   assert(WasInserted && "Expected entry to be inserted");
@@ -58,322 +355,253 @@ StringRef MDString::getString() const {
 }
 
 //===----------------------------------------------------------------------===//
-// MDNodeOperand implementation.
-//
-
-// Use CallbackVH to hold MDNode operands.
-namespace llvm {
-class MDNodeOperand : public CallbackVH {
-  MDNode *getParent() {
-    MDNodeOperand *Cur = this;
-
-    while (Cur->getValPtrInt() != 1)
-      ++Cur;
-
-    assert(Cur->getValPtrInt() == 1 &&
-           "Couldn't find the end of the operand list!");
-    return reinterpret_cast<MDNode *>(Cur + 1);
-  }
-
-public:
-  MDNodeOperand() {}
-  virtual ~MDNodeOperand();
-
-  void set(Value *V) {
-    unsigned IsLast = this->getValPtrInt();
-    this->setValPtr(V);
-    this->setAsLastOperand(IsLast);
-  }
-
-  /// \brief Accessor method to mark the operand as the first in the list.
-  void setAsLastOperand(unsigned I) { this->setValPtrInt(I); }
-
-  void deleted() override;
-  void allUsesReplacedWith(Value *NV) override;
-};
-} // end namespace llvm.
-
-// Provide out-of-line definition to prevent weak vtable.
-MDNodeOperand::~MDNodeOperand() {}
-
-void MDNodeOperand::deleted() {
-  getParent()->replaceOperand(this, nullptr);
-}
-
-void MDNodeOperand::allUsesReplacedWith(Value *NV) {
-  getParent()->replaceOperand(this, NV);
-}
-
-//===----------------------------------------------------------------------===//
 // MDNode implementation.
 //
 
-/// \brief Get the MDNodeOperand's coallocated on the end of the MDNode.
-static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
-  // Use <= instead of < to permit a one-past-the-end address.
-  assert(Op <= N->getNumOperands() && "Invalid operand number");
-  return reinterpret_cast<MDNodeOperand *>(N) - N->getNumOperands() + Op;
-}
-
-void MDNode::replaceOperandWith(unsigned i, Value *Val) {
-  MDNodeOperand *Op = getOperandPtr(this, i);
-  replaceOperand(Op, Val);
-}
-
 void *MDNode::operator new(size_t Size, unsigned NumOps) {
-  void *Ptr = ::operator new(Size + NumOps * sizeof(MDNodeOperand));
-  MDNodeOperand *Op = static_cast<MDNodeOperand *>(Ptr);
-  if (NumOps) {
-    MDNodeOperand *Last = Op + NumOps;
-    for (; Op != Last; ++Op)
-      new (Op) MDNodeOperand();
-    (Op - 1)->setAsLastOperand(1);
-  }
-  return Op;
+  void *Ptr = ::operator new(Size + NumOps * sizeof(MDOperand));
+  MDOperand *First = new (Ptr) MDOperand[NumOps];
+  return First + NumOps;
 }
 
 void MDNode::operator delete(void *Mem) {
   MDNode *N = static_cast<MDNode *>(Mem);
-  MDNodeOperand *Op = static_cast<MDNodeOperand *>(Mem);
-  for (unsigned I = 0, E = N->NumOperands; I != E; ++I)
-    (--Op)->~MDNodeOperand();
-  ::operator delete(Op);
+  MDOperand *Last = static_cast<MDOperand *>(Mem);
+  ::operator delete(Last - N->NumOperands);
 }
 
-MDNode::MDNode(LLVMContext &C, unsigned ID, ArrayRef<Value *> Vals,
-               bool isFunctionLocal)
-    : Metadata(C, ID) {
-  NumOperands = Vals.size();
+MDNode::MDNode(LLVMContext &Context, unsigned ID, ArrayRef<Metadata *> MDs)
+    : Metadata(ID), Context(Context), NumOperands(MDs.size()),
+      MDNodeSubclassData(0) {
+  for (unsigned I = 0, E = MDs.size(); I != E; ++I)
+    setOperand(I, MDs[I]);
+}
 
-  if (isFunctionLocal)
-    setValueSubclassData(getSubclassDataFromValue() | FunctionLocalBit);
+bool MDNode::isResolved() const {
+  if (isa<MDNodeFwdDecl>(this))
+    return false;
+  return cast<GenericMDNode>(this)->isResolved();
+}
 
-  // Initialize the operand list.
-  unsigned i = 0;
-  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op + NumOperands;
-       Op != E; ++Op, ++i)
-    Op->set(Vals[i]);
+static bool isOperandUnresolved(Metadata *Op) {
+  if (auto *N = dyn_cast_or_null<MDNode>(Op))
+    return !N->isResolved();
+  return false;
+}
+
+GenericMDNode::GenericMDNode(LLVMContext &C, ArrayRef<Metadata *> Vals)
+    : MDNode(C, GenericMDNodeKind, Vals) {
+  // Check whether any operands are unresolved, requiring re-uniquing.
+  for (const auto &Op : operands())
+    if (isOperandUnresolved(Op))
+      incrementUnresolvedOperands();
+
+  if (hasUnresolvedOperands())
+    ReplaceableUses.reset(new ReplaceableMetadataImpl);
 }
 
 GenericMDNode::~GenericMDNode() {
-  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-  if (isNotUniqued()) {
+  LLVMContextImpl *pImpl = getContext().pImpl;
+  if (isStoredDistinctInContext())
     pImpl->NonUniquedMDNodes.erase(this);
-  } else {
+  else
     pImpl->MDNodeSet.erase(this);
+}
+
+void GenericMDNode::resolve() {
+  assert(!isResolved() && "Expected this to be unresolved");
+
+  // Move the map, so that this immediately looks resolved.
+  auto Uses = std::move(ReplaceableUses);
+  SubclassData32 = 0;
+  assert(isResolved() && "Expected this to be resolved");
+
+  // Drop RAUW support.
+  Uses->resolveAllUses();
+}
+
+void GenericMDNode::resolveCycles() {
+  if (isResolved())
+    return;
+
+  // Resolve this node immediately.
+  resolve();
+
+  // Resolve all operands.
+  for (const auto &Op : operands()) {
+    if (!Op)
+      continue;
+    assert(!isa<MDNodeFwdDecl>(Op) &&
+           "Expected all forward declarations to be resolved");
+    if (auto *N = dyn_cast<GenericMDNode>(Op))
+      if (!N->isResolved())
+        N->resolveCycles();
   }
 }
 
-void GenericMDNode::dropAllReferences() {
-  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op + NumOperands;
-       Op != E; ++Op)
-    Op->set(nullptr);
+void MDNode::dropAllReferences() {
+  for (unsigned I = 0, E = NumOperands; I != E; ++I)
+    setOperand(I, nullptr);
+  if (auto *G = dyn_cast<GenericMDNode>(this))
+    if (!G->isResolved()) {
+      G->ReplaceableUses->resolveAllUses(/* ResolveUsers */ false);
+      G->ReplaceableUses.reset();
+    }
 }
 
-static const Function *getFunctionForValue(Value *V) {
-  if (!V) return nullptr;
-  if (Instruction *I = dyn_cast<Instruction>(V)) {
-    BasicBlock *BB = I->getParent();
-    return BB ? BB->getParent() : nullptr;
+namespace llvm {
+/// \brief Make MDOperand transparent for hashing.
+///
+/// This overload of an implementation detail of the hashing library makes
+/// MDOperand hash to the same value as a \a Metadata pointer.
+///
+/// Note that overloading \a hash_value() as follows:
+///
+/// \code
+///     size_t hash_value(const MDOperand &X) { return hash_value(X.get()); }
+/// \endcode
+///
+/// does not cause MDOperand to be transparent.  In particular, a bare pointer
+/// doesn't get hashed before it's combined, whereas \a MDOperand would.
+static const Metadata *get_hashable_data(const MDOperand &X) { return X.get(); }
+}
+
+void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
+  unsigned Op = static_cast<MDOperand *>(Ref) - op_begin();
+  assert(Op < getNumOperands() && "Expected valid operand");
+
+  if (isStoredDistinctInContext()) {
+    assert(isResolved() && "Expected distinct node to be resolved");
+
+    // This node is not uniqued.  Just set the operand and be done with it.
+    setOperand(Op, New);
+    return;
   }
-  if (Argument *A = dyn_cast<Argument>(V))
-    return A->getParent();
-  if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
-    return BB->getParent();
-  if (MDNode *MD = dyn_cast<MDNode>(V))
-    return MD->getFunction();
-  return nullptr;
+
+  auto &Store = getContext().pImpl->MDNodeSet;
+  Store.erase(this);
+
+  Metadata *Old = getOperand(Op);
+  setOperand(Op, New);
+
+  // Drop uniquing for self-reference cycles or if an operand drops to null.
+  //
+  // FIXME: Stop dropping uniquing when an operand drops to null.  The original
+  // motivation was to prevent madness during teardown of LLVMContextImpl, but
+  // dropAllReferences() fixes that problem in a better way.  (It's just here
+  // now for better staging of semantic changes.)
+  if (New == this || !New) {
+    storeDistinctInContext();
+    setHash(0);
+    if (!isResolved())
+      resolve();
+    return;
+  }
+
+  // Re-calculate the hash.
+  setHash(hash_combine_range(op_begin(), op_end()));
+#ifndef NDEBUG
+  {
+    SmallVector<Metadata *, 8> MDs(op_begin(), op_end());
+    unsigned RawHash = hash_combine_range(MDs.begin(), MDs.end());
+    assert(getHash() == RawHash &&
+           "Expected hash of MDOperand to equal hash of Metadata*");
+  }
+#endif
+
+  // Re-unique the node.
+  GenericMDNodeInfo::KeyTy Key(this);
+  auto I = Store.find_as(Key);
+  if (I == Store.end()) {
+    Store.insert(this);
+
+    if (!isResolved()) {
+      // Check if the last unresolved operand has just been resolved; if so,
+      // resolve this as well.
+      if (isOperandUnresolved(Old))
+        decrementUnresolvedOperands();
+      if (isOperandUnresolved(New))
+        incrementUnresolvedOperands();
+      if (!hasUnresolvedOperands())
+        resolve();
+    }
+
+    return;
+  }
+
+  // Collision.
+  if (!isResolved()) {
+    // Still unresolved, so RAUW.
+    ReplaceableUses->replaceAllUsesWith(*I);
+    delete this;
+    return;
+  }
+
+  // Store in non-uniqued form if this node has already been resolved.
+  setHash(0);
+  storeDistinctInContext();
 }
 
-// getFunction - If this metadata is function-local and recursively has a
-// function-local operand, return the first such operand's parent function.
-// Otherwise, return null. getFunction() should not be used for performance-
-// critical code because it recursively visits all the MDNode's operands.  
-const Function *MDNode::getFunction() const {
-  if (!isFunctionLocal())
-    return nullptr;
-  assert(getNumOperands() == 1 &&
-         "Expected one operand for function-local metadata");
-  assert(getOperand(0) &&
-         "Expected non-null operand for function-local metadata");
-  assert(!getOperand(0)->getType()->isMetadataTy() &&
-         "Expected non-metadata as operand of function-local metadata");
-  return getFunctionForValue(getOperand(0));
-}
-
-/// \brief Check if the Value  would require a function-local MDNode.
-static bool isFunctionLocalValue(Value *V) {
-  return isa<Instruction>(V) || isa<Argument>(V) || isa<BasicBlock>(V) ||
-         (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal());
-}
-
-MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
-                          FunctionLocalness FL, bool Insert) {
+MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Metadata *> MDs,
+                          bool Insert) {
   auto &Store = Context.pImpl->MDNodeSet;
 
-  GenericMDNodeInfo::KeyTy Key(Vals);
+  GenericMDNodeInfo::KeyTy Key(MDs);
   auto I = Store.find_as(Key);
   if (I != Store.end())
     return *I;
   if (!Insert)
     return nullptr;
 
-  bool isFunctionLocal = false;
-  switch (FL) {
-  case FL_Unknown:
-    for (Value *V : Vals) {
-      if (!V) continue;
-      if (isFunctionLocalValue(V)) {
-        isFunctionLocal = true;
-        break;
-      }
-    }
-    break;
-  case FL_No:
-    isFunctionLocal = false;
-    break;
-  case FL_Yes:
-    isFunctionLocal = true;
-    break;
-  }
-
-  if (isFunctionLocal) {
-    assert(Vals.size() == 1 &&
-           "Expected exactly one operand for function-local metadata");
-    assert(Vals[0] && "Expected non-null operand for function-local metadata");
-    assert(!Vals[0]->getType()->isMetadataTy() &&
-           "Expected non-metadata as operand of function-local metadata");
-  }
-
   // Coallocate space for the node and Operands together, then placement new.
-  GenericMDNode *N =
-      new (Vals.size()) GenericMDNode(Context, Vals, isFunctionLocal);
-
-  N->Hash = Key.Hash;
+  GenericMDNode *N = new (MDs.size()) GenericMDNode(Context, MDs);
+  N->setHash(Key.Hash);
   Store.insert(N);
   return N;
 }
 
-MDNode *MDNode::get(LLVMContext &Context, ArrayRef<Value*> Vals) {
-  return getMDNode(Context, Vals, FL_Unknown);
-}
-
-MDNode *MDNode::getWhenValsUnresolved(LLVMContext &Context,
-                                      ArrayRef<Value*> Vals,
-                                      bool isFunctionLocal) {
-  return getMDNode(Context, Vals, isFunctionLocal ? FL_Yes : FL_No);
-}
-
-MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Value*> Vals) {
-  return getMDNode(Context, Vals, FL_Unknown, false);
-}
-
-MDNode *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals) {
-  MDNode *N = new (Vals.size()) MDNodeFwdDecl(Context, Vals, FL_No);
-  N->setValueSubclassData(N->getSubclassDataFromValue() | NotUniquedBit);
+MDNodeFwdDecl *MDNode::getTemporary(LLVMContext &Context,
+                                    ArrayRef<Metadata *> MDs) {
+  MDNodeFwdDecl *N = new (MDs.size()) MDNodeFwdDecl(Context, MDs);
   LeakDetector::addGarbageObject(N);
   return N;
 }
 
 void MDNode::deleteTemporary(MDNode *N) {
-  assert(N->use_empty() && "Temporary MDNode has uses!");
   assert(isa<MDNodeFwdDecl>(N) && "Expected forward declaration");
-  assert((N->getSubclassDataFromValue() & NotUniquedBit) &&
-         "Temporary MDNode does not have NotUniquedBit set!");
   LeakDetector::removeGarbageObject(N);
   delete cast<MDNodeFwdDecl>(N);
 }
 
-/// \brief Return specified operand.
-Value *MDNode::getOperand(unsigned i) const {
-  assert(i < getNumOperands() && "Invalid operand number");
-  return *getOperandPtr(const_cast<MDNode*>(this), i);
-}
-
-void MDNode::setIsNotUniqued() {
-  setValueSubclassData(getSubclassDataFromValue() | NotUniquedBit);
-  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+void MDNode::storeDistinctInContext() {
+  assert(!IsDistinctInContext && "Expected newly distinct metadata");
+  IsDistinctInContext = true;
   auto *G = cast<GenericMDNode>(this);
-  G->Hash = 0;
-  pImpl->NonUniquedMDNodes.insert(G);
+  G->setHash(0);
+  getContext().pImpl->NonUniquedMDNodes.insert(G);
 }
 
 // Replace value from this node's operand list.
-void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
-  Value *From = *Op;
-
-  // If is possible that someone did GV->RAUW(inst), replacing a global variable
-  // with an instruction or some other function-local object.  If this is a
-  // non-function-local MDNode, it can't point to a function-local object.
-  // Handle this case by implicitly dropping the MDNode reference to null.
-  // Likewise if the MDNode is function-local but for a different function.
-  if (To && isFunctionLocalValue(To)) {
-    assert(!To->getType()->isMetadataTy() &&
-           "Expected non-metadata as operand of function-local metadata");
-    if (!isFunctionLocal())
-      To = nullptr;
-    else {
-      const Function *F = getFunction();
-      const Function *FV = getFunctionForValue(To);
-      // Metadata can be function-local without having an associated function.
-      // So only consider functions to have changed if non-null.
-      if (F && FV && F != FV)
-        To = nullptr;
-    }
-  }
-  
-  if (From == To)
+void MDNode::replaceOperandWith(unsigned I, Metadata *New) {
+  if (getOperand(I) == New)
     return;
 
-  // If this MDValue was previously function-local but no longer is, clear
-  // its function-local flag.
-  if (isFunctionLocal() && !(To && isFunctionLocalValue(To))) {
-    assert(getNumOperands() == 1 &&
-           "Expected function-local metadata to have exactly one operand");
-    setValueSubclassData(getSubclassDataFromValue() & ~FunctionLocalBit);
-  }
-
-  // If this node is already not being uniqued (because one of the operands
-  // already went to null), then there is nothing else to do here.
-  if (isNotUniqued()) {
-    Op->set(To);
+  if (auto *N = dyn_cast<GenericMDNode>(this)) {
+    N->handleChangedOperand(mutable_begin() + I, New);
     return;
   }
 
-  auto &Store = getContext().pImpl->MDNodeSet;
-  auto *N = cast<GenericMDNode>(this);
+  assert(isa<MDNodeFwdDecl>(this) && "Expected an MDNode");
+  setOperand(I, New);
+}
 
-  // Remove "this" from the context map.
-  Store.erase(N);
-
-  // Update the operand.
-  Op->set(To);
-
-  // If we are dropping an argument to null, we choose to not unique the MDNode
-  // anymore.  This commonly occurs during destruction, and uniquing these
-  // brings little reuse.  Also, this means we don't need to include
-  // isFunctionLocal bits in the hash for MDNodes.
-  //
-  // Also drop uniquing if this has a reference to itself.
-  if (!To || To == this) {
-    setIsNotUniqued();
-    return;
-  }
-
-  // Now that the node is out of the table, get ready to reinsert it.  First,
-  // check to see if another node with the same operands already exists in the
-  // set.  If so, then this node is redundant.
-  SmallVector<Value *, 8> Vals;
-  GenericMDNodeInfo::KeyTy Key(N, Vals);
-  auto I = Store.find_as(Key);
-  if (I != Store.end()) {
-    N->replaceAllUsesWith(*I);
-    delete N;
-    return;
-  }
-
-  N->Hash = Key.Hash;
-  Store.insert(N);
+void MDNode::setOperand(unsigned I, Metadata *New) {
+  assert(I < NumOperands);
+  if (isStoredDistinctInContext() || isa<MDNodeFwdDecl>(this))
+    // No need for a callback, this isn't uniqued.
+    mutable_begin()[I].reset(New, nullptr);
+  else
+    mutable_begin()[I].reset(New, this);
 }
 
 /// \brief Get a node, or a self-reference that looks like it.
@@ -382,7 +610,8 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
 /// MDNode::concatenate() and \a MDNode::intersect() to maintain behaviour from
 /// when self-referencing nodes were still uniqued.  If the first operand has
 /// the same operands as \c Ops, return the first operand instead.
-static MDNode *getOrSelfReference(LLVMContext &Context, ArrayRef<Value *> Ops) {
+static MDNode *getOrSelfReference(LLVMContext &Context,
+                                  ArrayRef<Metadata *> Ops) {
   if (!Ops.empty())
     if (MDNode *N = dyn_cast_or_null<MDNode>(Ops[0]))
       if (N->getNumOperands() == Ops.size() && N == N->getOperand(0)) {
@@ -401,45 +630,44 @@ MDNode *MDNode::concatenate(MDNode *A, MDNode *B) {
   if (!B)
     return A;
 
-  SmallVector<Value *, 4> Vals(A->getNumOperands() +
-                               B->getNumOperands());
+  SmallVector<Metadata *, 4> MDs(A->getNumOperands() + B->getNumOperands());
 
   unsigned j = 0;
   for (unsigned i = 0, ie = A->getNumOperands(); i != ie; ++i)
-    Vals[j++] = A->getOperand(i);
+    MDs[j++] = A->getOperand(i);
   for (unsigned i = 0, ie = B->getNumOperands(); i != ie; ++i)
-    Vals[j++] = B->getOperand(i);
+    MDs[j++] = B->getOperand(i);
 
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
-  return getOrSelfReference(A->getContext(), Vals);
+  return getOrSelfReference(A->getContext(), MDs);
 }
 
 MDNode *MDNode::intersect(MDNode *A, MDNode *B) {
   if (!A || !B)
     return nullptr;
 
-  SmallVector<Value *, 4> Vals;
+  SmallVector<Metadata *, 4> MDs;
   for (unsigned i = 0, ie = A->getNumOperands(); i != ie; ++i) {
-    Value *V = A->getOperand(i);
+    Metadata *MD = A->getOperand(i);
     for (unsigned j = 0, je = B->getNumOperands(); j != je; ++j)
-      if (V == B->getOperand(j)) {
-        Vals.push_back(V);
+      if (MD == B->getOperand(j)) {
+        MDs.push_back(MD);
         break;
       }
   }
 
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
-  return getOrSelfReference(A->getContext(), Vals);
+  return getOrSelfReference(A->getContext(), MDs);
 }
 
 MDNode *MDNode::getMostGenericFPMath(MDNode *A, MDNode *B) {
   if (!A || !B)
     return nullptr;
 
-  APFloat AVal = cast<ConstantFP>(A->getOperand(0))->getValueAPF();
-  APFloat BVal = cast<ConstantFP>(B->getOperand(0))->getValueAPF();
+  APFloat AVal = mdconst::extract<ConstantFP>(A->getOperand(0))->getValueAPF();
+  APFloat BVal = mdconst::extract<ConstantFP>(B->getOperand(0))->getValueAPF();
   if (AVal.compare(BVal) == APFloat::cmpLessThan)
     return A;
   return B;
@@ -453,25 +681,27 @@ static bool canBeMerged(const ConstantRange &A, const ConstantRange &B) {
   return !A.intersectWith(B).isEmptySet() || isContiguous(A, B);
 }
 
-static bool tryMergeRange(SmallVectorImpl<Value *> &EndPoints, ConstantInt *Low,
-                          ConstantInt *High) {
+static bool tryMergeRange(SmallVectorImpl<ConstantInt *> &EndPoints,
+                          ConstantInt *Low, ConstantInt *High) {
   ConstantRange NewRange(Low->getValue(), High->getValue());
   unsigned Size = EndPoints.size();
-  APInt LB = cast<ConstantInt>(EndPoints[Size - 2])->getValue();
-  APInt LE = cast<ConstantInt>(EndPoints[Size - 1])->getValue();
+  APInt LB = EndPoints[Size - 2]->getValue();
+  APInt LE = EndPoints[Size - 1]->getValue();
   ConstantRange LastRange(LB, LE);
   if (canBeMerged(NewRange, LastRange)) {
     ConstantRange Union = LastRange.unionWith(NewRange);
     Type *Ty = High->getType();
-    EndPoints[Size - 2] = ConstantInt::get(Ty, Union.getLower());
-    EndPoints[Size - 1] = ConstantInt::get(Ty, Union.getUpper());
+    EndPoints[Size - 2] =
+        cast<ConstantInt>(ConstantInt::get(Ty, Union.getLower()));
+    EndPoints[Size - 1] =
+        cast<ConstantInt>(ConstantInt::get(Ty, Union.getUpper()));
     return true;
   }
   return false;
 }
 
-static void addRange(SmallVectorImpl<Value *> &EndPoints, ConstantInt *Low,
-                     ConstantInt *High) {
+static void addRange(SmallVectorImpl<ConstantInt *> &EndPoints,
+                     ConstantInt *Low, ConstantInt *High) {
   if (!EndPoints.empty())
     if (tryMergeRange(EndPoints, Low, High))
       return;
@@ -493,31 +723,33 @@ MDNode *MDNode::getMostGenericRange(MDNode *A, MDNode *B) {
 
   // First, walk both lists in older of the lower boundary of each interval.
   // At each step, try to merge the new interval to the last one we adedd.
-  SmallVector<Value*, 4> EndPoints;
+  SmallVector<ConstantInt *, 4> EndPoints;
   int AI = 0;
   int BI = 0;
   int AN = A->getNumOperands() / 2;
   int BN = B->getNumOperands() / 2;
   while (AI < AN && BI < BN) {
-    ConstantInt *ALow = cast<ConstantInt>(A->getOperand(2 * AI));
-    ConstantInt *BLow = cast<ConstantInt>(B->getOperand(2 * BI));
+    ConstantInt *ALow = mdconst::extract<ConstantInt>(A->getOperand(2 * AI));
+    ConstantInt *BLow = mdconst::extract<ConstantInt>(B->getOperand(2 * BI));
 
     if (ALow->getValue().slt(BLow->getValue())) {
-      addRange(EndPoints, ALow, cast<ConstantInt>(A->getOperand(2 * AI + 1)));
+      addRange(EndPoints, ALow,
+               mdconst::extract<ConstantInt>(A->getOperand(2 * AI + 1)));
       ++AI;
     } else {
-      addRange(EndPoints, BLow, cast<ConstantInt>(B->getOperand(2 * BI + 1)));
+      addRange(EndPoints, BLow,
+               mdconst::extract<ConstantInt>(B->getOperand(2 * BI + 1)));
       ++BI;
     }
   }
   while (AI < AN) {
-    addRange(EndPoints, cast<ConstantInt>(A->getOperand(2 * AI)),
-             cast<ConstantInt>(A->getOperand(2 * AI + 1)));
+    addRange(EndPoints, mdconst::extract<ConstantInt>(A->getOperand(2 * AI)),
+             mdconst::extract<ConstantInt>(A->getOperand(2 * AI + 1)));
     ++AI;
   }
   while (BI < BN) {
-    addRange(EndPoints, cast<ConstantInt>(B->getOperand(2 * BI)),
-             cast<ConstantInt>(B->getOperand(2 * BI + 1)));
+    addRange(EndPoints, mdconst::extract<ConstantInt>(B->getOperand(2 * BI)),
+             mdconst::extract<ConstantInt>(B->getOperand(2 * BI + 1)));
     ++BI;
   }
 
@@ -525,8 +757,8 @@ MDNode *MDNode::getMostGenericRange(MDNode *A, MDNode *B) {
   // the last and first ones.
   unsigned Size = EndPoints.size();
   if (Size > 4) {
-    ConstantInt *FB = cast<ConstantInt>(EndPoints[0]);
-    ConstantInt *FE = cast<ConstantInt>(EndPoints[1]);
+    ConstantInt *FB = EndPoints[0];
+    ConstantInt *FE = EndPoints[1];
     if (tryMergeRange(EndPoints, FB, FE)) {
       for (unsigned i = 0; i < Size - 2; ++i) {
         EndPoints[i] = EndPoints[i + 2];
@@ -538,26 +770,29 @@ MDNode *MDNode::getMostGenericRange(MDNode *A, MDNode *B) {
   // If in the end we have a single range, it is possible that it is now the
   // full range. Just drop the metadata in that case.
   if (EndPoints.size() == 2) {
-    ConstantRange Range(cast<ConstantInt>(EndPoints[0])->getValue(),
-                        cast<ConstantInt>(EndPoints[1])->getValue());
+    ConstantRange Range(EndPoints[0]->getValue(), EndPoints[1]->getValue());
     if (Range.isFullSet())
       return nullptr;
   }
 
-  return MDNode::get(A->getContext(), EndPoints);
+  SmallVector<Metadata *, 4> MDs;
+  MDs.reserve(EndPoints.size());
+  for (auto *I : EndPoints)
+    MDs.push_back(ConstantAsMetadata::get(I));
+  return MDNode::get(A->getContext(), MDs);
 }
 
 //===----------------------------------------------------------------------===//
 // NamedMDNode implementation.
 //
 
-static SmallVector<TrackingVH<MDNode>, 4> &getNMDOps(void *Operands) {
-  return *(SmallVector<TrackingVH<MDNode>, 4> *)Operands;
+static SmallVector<TrackingMDRef, 4> &getNMDOps(void *Operands) {
+  return *(SmallVector<TrackingMDRef, 4> *)Operands;
 }
 
 NamedMDNode::NamedMDNode(const Twine &N)
     : Name(N.str()), Parent(nullptr),
-      Operands(new SmallVector<TrackingVH<MDNode>, 4>()) {}
+      Operands(new SmallVector<TrackingMDRef, 4>()) {}
 
 NamedMDNode::~NamedMDNode() {
   dropAllReferences();
@@ -570,14 +805,13 @@ unsigned NamedMDNode::getNumOperands() const {
 
 MDNode *NamedMDNode::getOperand(unsigned i) const {
   assert(i < getNumOperands() && "Invalid Operand number!");
-  return &*getNMDOps(Operands)[i];
+  auto *N = getNMDOps(Operands)[i].get();
+  if (N && i > 10000)
+    N->dump();
+  return cast_or_null<MDNode>(N);
 }
 
-void NamedMDNode::addOperand(MDNode *M) {
-  assert(!M->isFunctionLocal() &&
-         "NamedMDNode operands must not be function-local!");
-  getNMDOps(Operands).push_back(TrackingVH<MDNode>(M));
-}
+void NamedMDNode::addOperand(MDNode *M) { getNMDOps(Operands).emplace_back(M); }
 
 void NamedMDNode::eraseFromParent() {
   getParent()->eraseNamedMetadata(this);
@@ -636,7 +870,7 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
       continue;
     }
 
-    Info[I] = Info.back();
+    Info[I] = std::move(Info.back());
     Info.pop_back();
     --E;
   }
@@ -664,8 +898,6 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
   
   // Handle the case when we're adding/updating metadata on an instruction.
   if (Node) {
-    assert(!Node->isFunctionLocal() &&
-           "Function-local metadata cannot be attached to instructions");
     LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
     assert(!Info.empty() == hasMetadataHashEntry() &&
            "HasMetadata bit is wonked");
@@ -675,13 +907,14 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
       // Handle replacement of an existing value.
       for (auto &P : Info)
         if (P.first == KindID) {
-          P.second = Node;
+          P.second.reset(Node);
           return;
         }
     }
 
     // No replacement, just add it to the list.
-    Info.push_back(std::make_pair(KindID, Node));
+    Info.emplace_back(std::piecewise_construct, std::make_tuple(KindID),
+                      std::make_tuple(Node));
     return;
   }
 
@@ -703,7 +936,7 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
   // Handle removal of an existing value.
   for (unsigned i = 0, e = Info.size(); i != e; ++i)
     if (Info[i].first == KindID) {
-      Info[i] = Info.back();
+      Info[i] = std::move(Info.back());
       Info.pop_back();
       assert(!Info.empty() && "Removing last entry should be handled above");
       return;
@@ -720,8 +953,8 @@ void Instruction::setAAMetadata(const AAMDNodes &N) {
 MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg)
-    return DbgLoc.getAsMDNode(getContext());
-  
+    return DbgLoc.getAsMDNode();
+
   if (!hasMetadataHashEntry()) return nullptr;
   
   LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
@@ -739,8 +972,8 @@ void Instruction::getAllMetadataImpl(
   
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (!DbgLoc.isUnknown()) {
-    Result.push_back(std::make_pair((unsigned)LLVMContext::MD_dbg,
-                                    DbgLoc.getAsMDNode(getContext())));
+    Result.push_back(
+        std::make_pair((unsigned)LLVMContext::MD_dbg, DbgLoc.getAsMDNode()));
     if (!hasMetadataHashEntry()) return;
   }
   
@@ -751,7 +984,9 @@ void Instruction::getAllMetadataImpl(
     getContext().pImpl->MetadataStore.find(this)->second;
   assert(!Info.empty() && "Shouldn't have called this");
 
-  Result.append(Info.begin(), Info.end());
+  Result.reserve(Result.size() + Info.size());
+  for (auto &I : Info)
+    Result.push_back(std::make_pair(I.first, cast<MDNode>(I.second.get())));
 
   // Sort the resulting array so it is stable.
   if (Result.size() > 1)
@@ -767,7 +1002,9 @@ void Instruction::getAllMetadataOtherThanDebugLocImpl(
   const LLVMContextImpl::MDMapTy &Info =
     getContext().pImpl->MetadataStore.find(this)->second;
   assert(!Info.empty() && "Shouldn't have called this");
-  Result.append(Info.begin(), Info.end());
+  Result.reserve(Result.size() + Info.size());
+  for (auto &I : Info)
+    Result.push_back(std::make_pair(I.first, cast<MDNode>(I.second.get())));
 
   // Sort the resulting array so it is stable.
   if (Result.size() > 1)

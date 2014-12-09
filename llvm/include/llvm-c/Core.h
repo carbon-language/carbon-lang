@@ -1157,8 +1157,6 @@ LLVMTypeRef LLVMX86MMXType(void);
   macro(Argument)                           \
   macro(BasicBlock)                         \
   macro(InlineAsm)                          \
-  macro(MDNode)                             \
-  macro(MDString)                           \
   macro(User)                               \
     macro(Constant)                         \
       macro(BlockAddress)                   \
@@ -1306,6 +1304,9 @@ LLVMBool LLVMIsUndef(LLVMValueRef Val);
 #define LLVM_DECLARE_VALUE_CAST(name) \
   LLVMValueRef LLVMIsA##name(LLVMValueRef Val);
 LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DECLARE_VALUE_CAST)
+
+LLVMValueRef LLVMIsAMDNode(LLVMValueRef Val);
+LLVMValueRef LLVMIsAMDString(LLVMValueRef Val);
 
 /**
  * @}

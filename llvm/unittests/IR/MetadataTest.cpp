@@ -13,7 +13,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
-#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 using namespace llvm;
@@ -80,17 +79,18 @@ TEST_F(MDNodeTest, Simple) {
 
   MDString *s1 = MDString::get(Context, StringRef(&x[0], 3));
   MDString *s2 = MDString::get(Context, StringRef(&y[0], 3));
-  ConstantInt *CI = ConstantInt::get(getGlobalContext(), APInt(8, 0));
+  ConstantAsMetadata *CI = ConstantAsMetadata::get(
+      ConstantInt::get(getGlobalContext(), APInt(8, 0)));
 
-  std::vector<Value *> V;
+  std::vector<Metadata *> V;
   V.push_back(s1);
   V.push_back(CI);
   V.push_back(s2);
 
   MDNode *n1 = MDNode::get(Context, V);
-  Value *const c1 = n1;
+  Metadata *const c1 = n1;
   MDNode *n2 = MDNode::get(Context, c1);
-  Value *const c2 = n2;
+  Metadata *const c2 = n2;
   MDNode *n3 = MDNode::get(Context, V);
   MDNode *n4 = MDNode::getIfExists(Context, V);
   MDNode *n5 = MDNode::getIfExists(Context, c1);
@@ -99,7 +99,7 @@ TEST_F(MDNodeTest, Simple) {
   EXPECT_EQ(n1, n3);
   EXPECT_EQ(n4, n1);
   EXPECT_EQ(n5, n2);
-  EXPECT_EQ(n6, (Value*)nullptr);
+  EXPECT_EQ(n6, (Metadata *)nullptr);
 
   EXPECT_EQ(3u, n1->getNumOperands());
   EXPECT_EQ(s1, n1->getOperand(0));
@@ -114,9 +114,9 @@ TEST_F(MDNodeTest, Delete) {
   Constant *C = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 1);
   Instruction *I = new BitCastInst(C, Type::getInt32Ty(getGlobalContext()));
 
-  Value *const V = I;
+  Metadata *const V = LocalAsMetadata::get(I);
   MDNode *n = MDNode::get(Context, V);
-  WeakVH wvh = n;
+  TrackingMDRef wvh(n);
 
   EXPECT_EQ(n, wvh);
 
@@ -128,7 +128,7 @@ TEST_F(MDNodeTest, SelfReference) {
   // !1 = metadata !{metadata !0}
   {
     MDNode *Temp = MDNode::getTemporary(Context, None);
-    Value *Args[] = {Temp};
+    Metadata *Args[] = {Temp};
     MDNode *Self = MDNode::get(Context, Args);
     Self->replaceOperandWith(0, Self);
     MDNode::deleteTemporary(Temp);
@@ -147,7 +147,7 @@ TEST_F(MDNodeTest, SelfReference) {
   // !1 = metadata !{metadata !0, metadata !{}}
   {
     MDNode *Temp = MDNode::getTemporary(Context, None);
-    Value *Args[] = {Temp, MDNode::get(Context, None)};
+    Metadata *Args[] = {Temp, MDNode::get(Context, None)};
     MDNode *Self = MDNode::get(Context, Args);
     Self->replaceOperandWith(0, Self);
     MDNode::deleteTemporary(Temp);
@@ -163,13 +163,59 @@ TEST_F(MDNodeTest, SelfReference) {
   }
 }
 
+typedef MetadataTest MetadataAsValueTest;
+
+TEST_F(MetadataAsValueTest, MDNode) {
+  MDNode *N = MDNode::get(Context, None);
+  auto *V = MetadataAsValue::get(Context, N);
+  EXPECT_TRUE(V->getType()->isMetadataTy());
+  EXPECT_EQ(N, V->getMetadata());
+
+  auto *V2 = MetadataAsValue::get(Context, N);
+  EXPECT_EQ(V, V2);
+}
+
+TEST_F(MetadataAsValueTest, MDNodeMDNode) {
+  MDNode *N = MDNode::get(Context, None);
+  Metadata *Ops[] = {N};
+  MDNode *N2 = MDNode::get(Context, Ops);
+  auto *V = MetadataAsValue::get(Context, N2);
+  EXPECT_TRUE(V->getType()->isMetadataTy());
+  EXPECT_EQ(N2, V->getMetadata());
+
+  auto *V2 = MetadataAsValue::get(Context, N2);
+  EXPECT_EQ(V, V2);
+
+  auto *V3 = MetadataAsValue::get(Context, N);
+  EXPECT_TRUE(V3->getType()->isMetadataTy());
+  EXPECT_NE(V, V3);
+  EXPECT_EQ(N, V3->getMetadata());
+}
+
+TEST_F(MetadataAsValueTest, MDNodeConstant) {
+  auto *C = ConstantInt::getTrue(Context);
+  auto *MD = ConstantAsMetadata::get(C);
+  Metadata *Ops[] = {MD};
+  auto *N = MDNode::get(Context, Ops);
+
+  auto *V = MetadataAsValue::get(Context, MD);
+  EXPECT_TRUE(V->getType()->isMetadataTy());
+  EXPECT_EQ(MD, V->getMetadata());
+
+  auto *V2 = MetadataAsValue::get(Context, N);
+  EXPECT_EQ(MD, V2->getMetadata());
+  EXPECT_EQ(V, V2);
+}
+
 TEST(NamedMDNodeTest, Search) {
   LLVMContext Context;
-  Constant *C = ConstantInt::get(Type::getInt32Ty(Context), 1);
-  Constant *C2 = ConstantInt::get(Type::getInt32Ty(Context), 2);
+  ConstantAsMetadata *C =
+      ConstantAsMetadata::get(ConstantInt::get(Type::getInt32Ty(Context), 1));
+  ConstantAsMetadata *C2 =
+      ConstantAsMetadata::get(ConstantInt::get(Type::getInt32Ty(Context), 2));
 
-  Value *const V = C;
-  Value *const V2 = C2;
+  Metadata *const V = C;
+  Metadata *const V2 = C2;
   MDNode *n = MDNode::get(Context, V);
   MDNode *n2 = MDNode::get(Context, V2);
 

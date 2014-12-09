@@ -275,7 +275,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F,
   Load->setAtomic(Monotonic);
   Load->setAlignment(1);
   Load->setMetadata(F.getParent()->getMDKindID("nosanitize"),
-                    MDNode::get(*C, ArrayRef<llvm::Value *>()));
+                    MDNode::get(*C, None));
   Value *Cmp = IRB.CreateICmpEQ(Constant::getNullValue(Int8Ty), Load);
   Instruction *Ins = SplitBlockAndInsertIfThen(
       Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));

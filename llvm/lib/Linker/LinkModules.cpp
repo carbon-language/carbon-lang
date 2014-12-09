@@ -1265,7 +1265,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
   SmallSetVector<MDNode*, 16> Requirements;
   for (unsigned I = 0, E = DstModFlags->getNumOperands(); I != E; ++I) {
     MDNode *Op = DstModFlags->getOperand(I);
-    ConstantInt *Behavior = cast<ConstantInt>(Op->getOperand(0));
+    ConstantInt *Behavior = mdconst::extract<ConstantInt>(Op->getOperand(0));
     MDString *ID = cast<MDString>(Op->getOperand(1));
 
     if (Behavior->getZExtValue() == Module::Require) {
@@ -1280,7 +1280,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
   bool HasErr = false;
   for (unsigned I = 0, E = SrcModFlags->getNumOperands(); I != E; ++I) {
     MDNode *SrcOp = SrcModFlags->getOperand(I);
-    ConstantInt *SrcBehavior = cast<ConstantInt>(SrcOp->getOperand(0));
+    ConstantInt *SrcBehavior =
+        mdconst::extract<ConstantInt>(SrcOp->getOperand(0));
     MDString *ID = cast<MDString>(SrcOp->getOperand(1));
     MDNode *DstOp = Flags.lookup(ID);
     unsigned SrcBehaviorValue = SrcBehavior->getZExtValue();
@@ -1303,7 +1304,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     }
 
     // Otherwise, perform a merge.
-    ConstantInt *DstBehavior = cast<ConstantInt>(DstOp->getOperand(0));
+    ConstantInt *DstBehavior =
+        mdconst::extract<ConstantInt>(DstOp->getOperand(0));
     unsigned DstBehaviorValue = DstBehavior->getZExtValue();
 
     // If either flag has override behavior, handle it first.
@@ -1317,7 +1319,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
       continue;
     } else if (SrcBehaviorValue == Module::Override) {
       // Update the destination flag to that of the source.
-      DstOp->replaceOperandWith(0, SrcBehavior);
+      DstOp->replaceOperandWith(0, ConstantAsMetadata::get(SrcBehavior));
       DstOp->replaceOperandWith(2, SrcOp->getOperand(2));
       continue;
     }
@@ -1352,29 +1354,26 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     case Module::Append: {
       MDNode *DstValue = cast<MDNode>(DstOp->getOperand(2));
       MDNode *SrcValue = cast<MDNode>(SrcOp->getOperand(2));
-      unsigned NumOps = DstValue->getNumOperands() + SrcValue->getNumOperands();
-      Value **VP, **Values = VP = new Value*[NumOps];
-      for (unsigned i = 0, e = DstValue->getNumOperands(); i != e; ++i, ++VP)
-        *VP = DstValue->getOperand(i);
-      for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i, ++VP)
-        *VP = SrcValue->getOperand(i);
-      DstOp->replaceOperandWith(2, MDNode::get(DstM->getContext(),
-                                               ArrayRef<Value*>(Values,
-                                                                NumOps)));
-      delete[] Values;
+      SmallVector<Metadata *, 8> MDs;
+      MDs.reserve(DstValue->getNumOperands() + SrcValue->getNumOperands());
+      for (unsigned i = 0, e = DstValue->getNumOperands(); i != e; ++i)
+        MDs.push_back(DstValue->getOperand(i));
+      for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i)
+        MDs.push_back(SrcValue->getOperand(i));
+      DstOp->replaceOperandWith(2, MDNode::get(DstM->getContext(), MDs));
       break;
     }
     case Module::AppendUnique: {
-      SmallSetVector<Value*, 16> Elts;
+      SmallSetVector<Metadata *, 16> Elts;
       MDNode *DstValue = cast<MDNode>(DstOp->getOperand(2));
       MDNode *SrcValue = cast<MDNode>(SrcOp->getOperand(2));
       for (unsigned i = 0, e = DstValue->getNumOperands(); i != e; ++i)
         Elts.insert(DstValue->getOperand(i));
       for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i)
         Elts.insert(SrcValue->getOperand(i));
-      DstOp->replaceOperandWith(2, MDNode::get(DstM->getContext(),
-                                               ArrayRef<Value*>(Elts.begin(),
-                                                                Elts.end())));
+      DstOp->replaceOperandWith(
+          2, MDNode::get(DstM->getContext(),
+                         makeArrayRef(Elts.begin(), Elts.end())));
       break;
     }
     }
@@ -1384,7 +1383,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
   for (unsigned I = 0, E = Requirements.size(); I != E; ++I) {
     MDNode *Requirement = Requirements[I];
     MDString *Flag = cast<MDString>(Requirement->getOperand(0));
-    Value *ReqValue = Requirement->getOperand(1);
+    Metadata *ReqValue = Requirement->getOperand(1);
 
     MDNode *Op = Flags[Flag];
     if (!Op || Op->getOperand(2) != ReqValue) {

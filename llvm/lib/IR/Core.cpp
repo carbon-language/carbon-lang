@@ -556,12 +556,17 @@ int LLVMHasMetadata(LLVMValueRef Inst) {
 }
 
 LLVMValueRef LLVMGetMetadata(LLVMValueRef Inst, unsigned KindID) {
-  return wrap(unwrap<Instruction>(Inst)->getMetadata(KindID));
+  auto *I = unwrap<Instruction>(Inst);
+  assert(I && "Expected instruction");
+  if (auto *MD = I->getMetadata(KindID))
+    return wrap(MetadataAsValue::get(I->getContext(), MD));
+  return nullptr;
 }
 
 void LLVMSetMetadata(LLVMValueRef Inst, unsigned KindID, LLVMValueRef MD) {
-  unwrap<Instruction>(Inst)
-      ->setMetadata(KindID, MD ? unwrap<MDNode>(MD) : nullptr);
+  MDNode *N =
+      MD ? cast<MDNode>(unwrap<MetadataAsValue>(MD)->getMetadata()) : nullptr;
+  unwrap<Instruction>(Inst)->setMetadata(KindID, N);
 }
 
 /*--.. Conversion functions ................................................--*/
@@ -572,6 +577,21 @@ void LLVMSetMetadata(LLVMValueRef Inst, unsigned KindID, LLVMValueRef MD) {
   }
 
 LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DEFINE_VALUE_CAST)
+
+LLVMValueRef LLVMIsAMDNode(LLVMValueRef Val) {
+  if (auto *MD = dyn_cast_or_null<MetadataAsValue>(unwrap(Val)))
+    if (isa<MDNode>(MD->getMetadata()) ||
+        isa<ValueAsMetadata>(MD->getMetadata()))
+      return Val;
+  return nullptr;
+}
+
+LLVMValueRef LLVMIsAMDString(LLVMValueRef Val) {
+  if (auto *MD = dyn_cast_or_null<MetadataAsValue>(unwrap(Val)))
+    if (isa<MDString>(MD->getMetadata()))
+      return Val;
+  return nullptr;
+}
 
 /*--.. Operations on Uses ..................................................--*/
 LLVMUseRef LLVMGetFirstUse(LLVMValueRef Val) {
@@ -598,10 +618,28 @@ LLVMValueRef LLVMGetUsedValue(LLVMUseRef U) {
 }
 
 /*--.. Operations on Users .................................................--*/
+
+static LLVMValueRef getMDNodeOperandImpl(LLVMContext &Context, const MDNode *N,
+                                         unsigned Index) {
+  Metadata *Op = N->getOperand(Index);
+  if (!Op)
+    return nullptr;
+  if (auto *C = dyn_cast<ConstantAsMetadata>(Op))
+    return wrap(C->getValue());
+  return wrap(MetadataAsValue::get(Context, Op));
+}
+
 LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index) {
   Value *V = unwrap(Val);
-  if (MDNode *MD = dyn_cast<MDNode>(V))
-      return wrap(MD->getOperand(Index));
+  if (auto *MD = dyn_cast<MetadataAsValue>(V)) {
+    if (auto *L = dyn_cast<ValueAsMetadata>(MD->getMetadata())) {
+      assert(Index == 0 && "Function-local metadata can only have one operand");
+      return wrap(L->getValue());
+    }
+    return getMDNodeOperandImpl(V->getContext(),
+                                cast<MDNode>(MD->getMetadata()), Index);
+  }
+
   return wrap(cast<User>(V)->getOperand(Index));
 }
 
@@ -616,8 +654,9 @@ void LLVMSetOperand(LLVMValueRef Val, unsigned Index, LLVMValueRef Op) {
 
 int LLVMGetNumOperands(LLVMValueRef Val) {
   Value *V = unwrap(Val);
-  if (MDNode *MD = dyn_cast<MDNode>(V))
-      return MD->getNumOperands();
+  if (isa<MetadataAsValue>(V))
+    return LLVMGetMDNodeNumOperands(Val);
+
   return cast<User>(V)->getNumOperands();
 }
 
@@ -658,7 +697,9 @@ LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty) {
 
 LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const char *Str,
                                    unsigned SLen) {
-  return wrap(MDString::get(*unwrap(C), StringRef(Str, SLen)));
+  LLVMContext &Context = *unwrap(C);
+  return wrap(MetadataAsValue::get(
+      Context, MDString::get(Context, StringRef(Str, SLen))));
 }
 
 LLVMValueRef LLVMMDString(const char *Str, unsigned SLen) {
@@ -667,8 +708,29 @@ LLVMValueRef LLVMMDString(const char *Str, unsigned SLen) {
 
 LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
                                  unsigned Count) {
-  return wrap(MDNode::get(*unwrap(C),
-                          makeArrayRef(unwrap<Value>(Vals, Count), Count)));
+  LLVMContext &Context = *unwrap(C);
+  SmallVector<Metadata *, 8> MDs;
+  for (auto *OV : makeArrayRef(Vals, Count)) {
+    Value *V = unwrap(OV);
+    Metadata *MD;
+    if (!V)
+      MD = nullptr;
+    else if (auto *C = dyn_cast<Constant>(V))
+      MD = ConstantAsMetadata::get(C);
+    else if (auto *MDV = dyn_cast<MetadataAsValue>(V)) {
+      MD = MDV->getMetadata();
+      assert(!isa<LocalAsMetadata>(MD) && "Unexpected function-local metadata "
+                                          "outside of direct argument to call");
+    } else {
+      // This is function-local metadata.  Pretend to make an MDNode.
+      assert(Count == 1 &&
+             "Expected only one operand to function-local metadata");
+      return wrap(MetadataAsValue::get(Context, LocalAsMetadata::get(V)));
+    }
+
+    MDs.push_back(MD);
+  }
+  return wrap(MetadataAsValue::get(Context, MDNode::get(Context, MDs)));
 }
 
 LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count) {
@@ -676,25 +738,35 @@ LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count) {
 }
 
 const char *LLVMGetMDString(LLVMValueRef V, unsigned* Len) {
-  if (const MDString *S = dyn_cast<MDString>(unwrap(V))) {
-    *Len = S->getString().size();
-    return S->getString().data();
-  }
+  if (const auto *MD = dyn_cast<MetadataAsValue>(unwrap(V)))
+    if (const MDString *S = dyn_cast<MDString>(MD->getMetadata())) {
+      *Len = S->getString().size();
+      return S->getString().data();
+    }
   *Len = 0;
   return nullptr;
 }
 
 unsigned LLVMGetMDNodeNumOperands(LLVMValueRef V)
 {
-  return cast<MDNode>(unwrap(V))->getNumOperands();
+  auto *MD = cast<MetadataAsValue>(unwrap(V));
+  if (isa<ValueAsMetadata>(MD->getMetadata()))
+    return 1;
+  return cast<MDNode>(MD->getMetadata())->getNumOperands();
 }
 
 void LLVMGetMDNodeOperands(LLVMValueRef V, LLVMValueRef *Dest)
 {
-  const MDNode *N = cast<MDNode>(unwrap(V));
+  auto *MD = cast<MetadataAsValue>(unwrap(V));
+  if (auto *MDV = dyn_cast<ValueAsMetadata>(MD->getMetadata())) {
+    *Dest = wrap(MDV->getValue());
+    return;
+  }
+  const auto *N = cast<MDNode>(MD->getMetadata());
   const unsigned numOperands = N->getNumOperands();
+  LLVMContext &Context = unwrap(V)->getContext();
   for (unsigned i = 0; i < numOperands; i++)
-    Dest[i] = wrap(N->getOperand(i));
+    Dest[i] = getMDNodeOperandImpl(Context, N, i);
 }
 
 unsigned LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const char* name)
@@ -710,8 +782,9 @@ void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRe
   NamedMDNode *N = unwrap(M)->getNamedMetadata(name);
   if (!N)
     return;
+  LLVMContext &Context = unwrap(M)->getContext();
   for (unsigned i=0;i<N->getNumOperands();i++)
-    Dest[i] = wrap(N->getOperand(i));
+    Dest[i] = wrap(MetadataAsValue::get(Context, N->getOperand(i)));
 }
 
 void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const char* name,
@@ -720,9 +793,9 @@ void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const char* name,
   NamedMDNode *N = unwrap(M)->getOrInsertNamedMetadata(name);
   if (!N)
     return;
-  MDNode *Op = Val ? unwrap<MDNode>(Val) : nullptr;
-  if (Op)
-    N->addOperand(Op);
+  if (!Val)
+    return;
+  N->addOperand(cast<MDNode>(unwrap<MetadataAsValue>(Val)->getMetadata()));
 }
 
 /*--.. Operations on scalar constants ......................................--*/
@@ -2092,13 +2165,16 @@ void LLVMDisposeBuilder(LLVMBuilderRef Builder) {
 /*--.. Metadata builders ...................................................--*/
 
 void LLVMSetCurrentDebugLocation(LLVMBuilderRef Builder, LLVMValueRef L) {
-  MDNode *Loc = L ? unwrap<MDNode>(L) : nullptr;
+  MDNode *Loc =
+      L ? cast<MDNode>(unwrap<MetadataAsValue>(L)->getMetadata()) : nullptr;
   unwrap(Builder)->SetCurrentDebugLocation(DebugLoc::getFromDILocation(Loc));
 }
 
 LLVMValueRef LLVMGetCurrentDebugLocation(LLVMBuilderRef Builder) {
-  return wrap(unwrap(Builder)->getCurrentDebugLocation()
-              .getAsMDNode(unwrap(Builder)->getContext()));
+  LLVMContext &Context = unwrap(Builder)->getContext();
+  return wrap(MetadataAsValue::get(
+      Context,
+      unwrap(Builder)->getCurrentDebugLocation().getAsMDNode(Context)));
 }
 
 void LLVMSetInstDebugLocation(LLVMBuilderRef Builder, LLVMValueRef Inst) {

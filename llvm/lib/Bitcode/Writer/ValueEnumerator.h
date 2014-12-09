@@ -30,6 +30,8 @@ class BasicBlock;
 class Comdat;
 class Function;
 class Module;
+class Metadata;
+class LocalAsMetadata;
 class MDNode;
 class NamedMDNode;
 class AttributeSet;
@@ -58,9 +60,10 @@ private:
   typedef UniqueVector<const Comdat *> ComdatSetType;
   ComdatSetType Comdats;
 
-  std::vector<const Value *> MDValues;
-  SmallVector<const MDNode *, 8> FunctionLocalMDs;
-  ValueMapType MDValueMap;
+  std::vector<const Metadata *> MDs;
+  SmallVector<const LocalAsMetadata *, 8> FunctionLocalMDs;
+  typedef DenseMap<const Metadata *, unsigned> MetadataMapType;
+  MetadataMapType MDValueMap;
 
   typedef DenseMap<AttributeSet, unsigned> AttributeGroupMapType;
   AttributeGroupMapType AttributeGroupMap;
@@ -88,7 +91,7 @@ private:
 
   /// When a function is incorporated, this is the size of the MDValues list
   /// before incorporation.
-  unsigned NumModuleMDValues;
+  unsigned NumModuleMDs;
 
   unsigned FirstFuncConstantID;
   unsigned FirstInstID;
@@ -100,8 +103,11 @@ public:
 
   void dump() const;
   void print(raw_ostream &OS, const ValueMapType &Map, const char *Name) const;
+  void print(raw_ostream &OS, const MetadataMapType &Map,
+             const char *Name) const;
 
   unsigned getValueID(const Value *V) const;
+  unsigned getMetadataID(const Metadata *V) const;
 
   unsigned getTypeID(Type *T) const {
     TypeMapType::const_iterator I = TypeMap.find(T);
@@ -134,8 +140,8 @@ public:
   }
 
   const ValueList &getValues() const { return Values; }
-  const std::vector<const Value *> &getMDValues() const { return MDValues; }
-  const SmallVectorImpl<const MDNode *> &getFunctionLocalMDValues() const {
+  const std::vector<const Metadata *> &getMDs() const { return MDs; }
+  const SmallVectorImpl<const LocalAsMetadata *> &getFunctionLocalMDs() const {
     return FunctionLocalMDs;
   }
   const TypeList &getTypes() const { return Types; }
@@ -167,8 +173,8 @@ private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
 
   void EnumerateMDNodeOperands(const MDNode *N);
-  void EnumerateMetadata(const Value *MD);
-  void EnumerateFunctionLocalMetadata(const MDNode *N);
+  void EnumerateMetadata(const Metadata *MD);
+  void EnumerateFunctionLocalMetadata(const LocalAsMetadata *Local);
   void EnumerateNamedMDNode(const NamedMDNode *NMD);
   void EnumerateValue(const Value *V);
   void EnumerateType(Type *T);

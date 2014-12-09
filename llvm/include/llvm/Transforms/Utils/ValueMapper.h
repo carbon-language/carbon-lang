@@ -71,20 +71,23 @@ namespace llvm {
                   ValueMapTypeRemapper *TypeMapper = nullptr,
                   ValueMaterializer *Materializer = nullptr);
 
+  Metadata *MapValue(const Metadata *MD, ValueToValueMapTy &VM,
+                     RemapFlags Flags = RF_None,
+                     ValueMapTypeRemapper *TypeMapper = nullptr,
+                     ValueMaterializer *Materializer = nullptr);
+
+  /// MapValue - provide versions that preserve type safety for MDNodes.
+  MDNode *MapValue(const MDNode *MD, ValueToValueMapTy &VM,
+                   RemapFlags Flags = RF_None,
+                   ValueMapTypeRemapper *TypeMapper = nullptr,
+                   ValueMaterializer *Materializer = nullptr);
+
   void RemapInstruction(Instruction *I, ValueToValueMapTy &VM,
                         RemapFlags Flags = RF_None,
                         ValueMapTypeRemapper *TypeMapper = nullptr,
                         ValueMaterializer *Materializer = nullptr);
 
-  /// MapValue - provide versions that preserve type safety for MDNode and
-  /// Constants.
-  inline MDNode *MapValue(const MDNode *V, ValueToValueMapTy &VM,
-                          RemapFlags Flags = RF_None,
-                          ValueMapTypeRemapper *TypeMapper = nullptr,
-                          ValueMaterializer *Materializer = nullptr) {
-    return cast<MDNode>(MapValue((const Value*)V, VM, Flags, TypeMapper,
-                                 Materializer));
-  }
+  /// MapValue - provide versions that preserve type safety for Constants.
   inline Constant *MapValue(const Constant *V, ValueToValueMapTy &VM,
                             RemapFlags Flags = RF_None,
                             ValueMapTypeRemapper *TypeMapper = nullptr,

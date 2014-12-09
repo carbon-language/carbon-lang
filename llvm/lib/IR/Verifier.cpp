@@ -102,6 +102,13 @@ struct VerifierSupport {
     }
   }
 
+  void WriteMetadata(const Metadata *MD) {
+    if (!MD)
+      return;
+    MD->printAsOperand(OS, true, M);
+    OS << '\n';
+  }
+
   void WriteType(Type *T) {
     if (!T)
       return;
@@ -125,6 +132,24 @@ struct VerifierSupport {
     WriteValue(V2);
     WriteValue(V3);
     WriteValue(V4);
+    Broken = true;
+  }
+
+  void CheckFailed(const Twine &Message, const Metadata *V1, const Metadata *V2,
+                   const Metadata *V3 = nullptr, const Metadata *V4 = nullptr) {
+    OS << Message.str() << "\n";
+    WriteMetadata(V1);
+    WriteMetadata(V2);
+    WriteMetadata(V3);
+    WriteMetadata(V4);
+    Broken = true;
+  }
+
+  void CheckFailed(const Twine &Message, const Metadata *V1,
+                   const Value *V2 = nullptr) {
+    OS << Message.str() << "\n";
+    WriteMetadata(V1);
+    WriteValue(V2);
     Broken = true;
   }
 
@@ -167,7 +192,7 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   SmallPtrSet<Instruction *, 16> InstsInThisBlock;
 
   /// \brief Keep track of the metadata nodes that have been checked already.
-  SmallPtrSet<MDNode *, 32> MDNodes;
+  SmallPtrSet<Metadata *, 32> MDNodes;
 
   /// \brief The personality function referenced by the LandingPadInsts.
   /// All LandingPadInsts within the same function must use the same
@@ -261,7 +286,9 @@ private:
   void visitAliaseeSubExpr(SmallPtrSetImpl<const GlobalAlias *> &Visited,
                            const GlobalAlias &A, const Constant &C);
   void visitNamedMDNode(const NamedMDNode &NMD);
-  void visitMDNode(MDNode &MD, Function *F);
+  void visitMDNode(MDNode &MD);
+  void visitMetadataAsValue(MetadataAsValue &MD, Function *F);
+  void visitValueAsMetadata(ValueAsMetadata &MD, Function *F);
   void visitComdat(const Comdat &C);
   void visitModuleIdents(const Module &M);
   void visitModuleFlags(const Module &M);
@@ -560,46 +587,77 @@ void Verifier::visitNamedMDNode(const NamedMDNode &NMD) {
     if (!MD)
       continue;
 
-    Assert1(!MD->isFunctionLocal(),
-            "Named metadata operand cannot be function local!", MD);
-    visitMDNode(*MD, nullptr);
+    visitMDNode(*MD);
   }
 }
 
-void Verifier::visitMDNode(MDNode &MD, Function *F) {
+void Verifier::visitMDNode(MDNode &MD) {
   // Only visit each node once.  Metadata can be mutually recursive, so this
   // avoids infinite recursion here, as well as being an optimization.
   if (!MDNodes.insert(&MD).second)
     return;
 
   for (unsigned i = 0, e = MD.getNumOperands(); i != e; ++i) {
-    Value *Op = MD.getOperand(i);
+    Metadata *Op = MD.getOperand(i);
     if (!Op)
       continue;
-    if (isa<Constant>(Op) || isa<MDString>(Op))
-      continue;
-    if (MDNode *N = dyn_cast<MDNode>(Op)) {
-      Assert2(MD.isFunctionLocal() || !N->isFunctionLocal(),
-              "Global metadata operand cannot be function local!", &MD, N);
-      visitMDNode(*N, F);
+    Assert2(!isa<LocalAsMetadata>(Op), "Invalid operand for global metadata!",
+            &MD, Op);
+    if (auto *N = dyn_cast<MDNode>(Op)) {
+      visitMDNode(*N);
       continue;
     }
-    Assert2(MD.isFunctionLocal(), "Invalid operand for global metadata!", &MD, Op);
-
-    // If this was an instruction, bb, or argument, verify that it is in the
-    // function that we expect.
-    Function *ActualF = nullptr;
-    if (Instruction *I = dyn_cast<Instruction>(Op))
-      ActualF = I->getParent()->getParent();
-    else if (BasicBlock *BB = dyn_cast<BasicBlock>(Op))
-      ActualF = BB->getParent();
-    else if (Argument *A = dyn_cast<Argument>(Op))
-      ActualF = A->getParent();
-    assert(ActualF && "Unimplemented function local metadata case!");
-
-    Assert2(ActualF == F, "function-local metadata used in wrong function",
-            &MD, Op);
+    if (auto *V = dyn_cast<ValueAsMetadata>(Op)) {
+      visitValueAsMetadata(*V, nullptr);
+      continue;
+    }
   }
+
+  // Check these last, so we diagnose problems in operands first.
+  Assert1(!isa<MDNodeFwdDecl>(MD), "Expected no forward declarations!", &MD);
+  Assert1(MD.isResolved(), "All nodes should be resolved!", &MD);
+}
+
+void Verifier::visitValueAsMetadata(ValueAsMetadata &MD, Function *F) {
+  Assert1(MD.getValue(), "Expected valid value", &MD);
+  Assert2(!MD.getValue()->getType()->isMetadataTy(),
+          "Unexpected metadata round-trip through values", &MD, MD.getValue());
+
+  auto *L = dyn_cast<LocalAsMetadata>(&MD);
+  if (!L)
+    return;
+
+  Assert1(F, "function-local metadata used outside a function", L);
+
+  // If this was an instruction, bb, or argument, verify that it is in the
+  // function that we expect.
+  Function *ActualF = nullptr;
+  if (Instruction *I = dyn_cast<Instruction>(L->getValue())) {
+    Assert2(I->getParent(), "function-local metadata not in basic block", L, I);
+    ActualF = I->getParent()->getParent();
+  } else if (BasicBlock *BB = dyn_cast<BasicBlock>(L->getValue()))
+    ActualF = BB->getParent();
+  else if (Argument *A = dyn_cast<Argument>(L->getValue()))
+    ActualF = A->getParent();
+  assert(ActualF && "Unimplemented function local metadata case!");
+
+  Assert1(ActualF == F, "function-local metadata used in wrong function", L);
+}
+
+void Verifier::visitMetadataAsValue(MetadataAsValue &MDV, Function *F) {
+  Metadata *MD = MDV.getMetadata();
+  if (auto *N = dyn_cast<MDNode>(MD)) {
+    visitMDNode(*N);
+    return;
+  }
+
+  // Only visit each node once.  Metadata can be mutually recursive, so this
+  // avoids infinite recursion here, as well as being an optimization.
+  if (!MDNodes.insert(MD).second)
+    return;
+
+  if (auto *V = dyn_cast<ValueAsMetadata>(MD))
+    visitValueAsMetadata(*V, F);
 }
 
 void Verifier::visitComdat(const Comdat &C) {
@@ -650,7 +708,7 @@ void Verifier::visitModuleFlags(const Module &M) {
   for (unsigned I = 0, E = Requirements.size(); I != E; ++I) {
     const MDNode *Requirement = Requirements[I];
     const MDString *Flag = cast<MDString>(Requirement->getOperand(0));
-    const Value *ReqValue = Requirement->getOperand(1);
+    const Metadata *ReqValue = Requirement->getOperand(1);
 
     const MDNode *Op = SeenIDs.lookup(Flag);
     if (!Op) {
@@ -679,7 +737,7 @@ Verifier::visitModuleFlag(const MDNode *Op,
   Module::ModFlagBehavior MFB;
   if (!Module::isValidModFlagBehavior(Op->getOperand(0), MFB)) {
     Assert1(
-        dyn_cast<ConstantInt>(Op->getOperand(0)),
+        mdconst::dyn_extract<ConstantInt>(Op->getOperand(0)),
         "invalid behavior operand in module flag (expected constant integer)",
         Op->getOperand(0));
     Assert1(false,
@@ -1907,9 +1965,11 @@ void Verifier::visitRangeMetadata(Instruction& I,
   
   ConstantRange LastRange(1); // Dummy initial value
   for (unsigned i = 0; i < NumRanges; ++i) {
-    ConstantInt *Low = dyn_cast<ConstantInt>(Range->getOperand(2*i));
+    ConstantInt *Low =
+        mdconst::dyn_extract<ConstantInt>(Range->getOperand(2 * i));
     Assert1(Low, "The lower limit must be an integer!", Low);
-    ConstantInt *High = dyn_cast<ConstantInt>(Range->getOperand(2*i + 1));
+    ConstantInt *High =
+        mdconst::dyn_extract<ConstantInt>(Range->getOperand(2 * i + 1));
     Assert1(High, "The upper limit must be an integer!", High);
     Assert1(High->getType() == Low->getType() &&
             High->getType() == Ty, "Range types must match instruction type!",
@@ -1932,9 +1992,9 @@ void Verifier::visitRangeMetadata(Instruction& I,
   }
   if (NumRanges > 2) {
     APInt FirstLow =
-      dyn_cast<ConstantInt>(Range->getOperand(0))->getValue();
+        mdconst::dyn_extract<ConstantInt>(Range->getOperand(0))->getValue();
     APInt FirstHigh =
-      dyn_cast<ConstantInt>(Range->getOperand(1))->getValue();
+        mdconst::dyn_extract<ConstantInt>(Range->getOperand(1))->getValue();
     ConstantRange FirstRange(FirstLow, FirstHigh);
     Assert1(FirstRange.intersectWith(LastRange).isEmptySet(),
             "Intervals are overlapping", Range);
@@ -2278,8 +2338,8 @@ void Verifier::visitInstruction(Instruction &I) {
     Assert1(I.getType()->isFPOrFPVectorTy(),
             "fpmath requires a floating point result!", &I);
     Assert1(MD->getNumOperands() == 1, "fpmath takes one operand!", &I);
-    Value *Op0 = MD->getOperand(0);
-    if (ConstantFP *CFP0 = dyn_cast_or_null<ConstantFP>(Op0)) {
+    if (ConstantFP *CFP0 =
+            mdconst::dyn_extract_or_null<ConstantFP>(MD->getOperand(0))) {
       APFloat Accuracy = CFP0->getValueAPF();
       Assert1(Accuracy.isFiniteNonZero() && !Accuracy.isNegative(),
               "fpmath accuracy not a positive number!", &I);
@@ -2496,8 +2556,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   // If the intrinsic takes MDNode arguments, verify that they are either global
   // or are local to *this* function.
   for (unsigned i = 0, e = CI.getNumArgOperands(); i != e; ++i)
-    if (MDNode *MD = dyn_cast<MDNode>(CI.getArgOperand(i)))
-      visitMDNode(*MD, CI.getParent()->getParent());
+    if (auto *MD = dyn_cast<MetadataAsValue>(CI.getArgOperand(i)))
+      visitMetadataAsValue(*MD, CI.getParent()->getParent());
 
   switch (ID) {
   default:
@@ -2509,11 +2569,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "constant int", &CI);
     break;
   case Intrinsic::dbg_declare: {  // llvm.dbg.declare
-    Assert1(CI.getArgOperand(0) && isa<MDNode>(CI.getArgOperand(0)),
-                "invalid llvm.dbg.declare intrinsic call 1", &CI);
-    MDNode *MD = cast<MDNode>(CI.getArgOperand(0));
-    Assert1(MD->getNumOperands() == 1,
-                "invalid llvm.dbg.declare intrinsic call 2", &CI);
+    Assert1(CI.getArgOperand(0) && isa<MetadataAsValue>(CI.getArgOperand(0)),
+            "invalid llvm.dbg.declare intrinsic call 1", &CI);
   } break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:

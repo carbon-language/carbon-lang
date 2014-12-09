@@ -880,11 +880,9 @@ static void AppendMDNodeToInstForPtr(unsigned NodeId,
                                      Sequence OldSeq,
                                      Sequence NewSeq) {
   MDNode *Node = nullptr;
-  Value *tmp[3] = {PtrSourceMDNodeID,
-                   SequenceToMDString(Inst->getContext(),
-                                      OldSeq),
-                   SequenceToMDString(Inst->getContext(),
-                                      NewSeq)};
+  Metadata *tmp[3] = {PtrSourceMDNodeID,
+                      SequenceToMDString(Inst->getContext(), OldSeq),
+                      SequenceToMDString(Inst->getContext(), NewSeq)};
   Node = MDNode::get(Inst->getContext(), tmp);
 
   Inst->setMetadata(NodeId, Node);

@@ -36,10 +36,10 @@ TEST_F(MDBuilderTest, createFPMath) {
   EXPECT_EQ(MD0, (MDNode *)nullptr);
   EXPECT_NE(MD1, (MDNode *)nullptr);
   EXPECT_EQ(MD1->getNumOperands(), 1U);
-  Value *Op = MD1->getOperand(0);
-  EXPECT_TRUE(isa<ConstantFP>(Op));
-  EXPECT_TRUE(Op->getType()->isFloatingPointTy());
-  ConstantFP *Val = cast<ConstantFP>(Op);
+  Metadata *Op = MD1->getOperand(0);
+  EXPECT_TRUE(mdconst::hasa<ConstantFP>(Op));
+  ConstantFP *Val = mdconst::extract<ConstantFP>(Op);
+  EXPECT_TRUE(Val->getType()->isFloatingPointTy());
   EXPECT_TRUE(Val->isExactlyValue(1.0));
 }
 TEST_F(MDBuilderTest, createRangeMetadata) {
@@ -50,10 +50,10 @@ TEST_F(MDBuilderTest, createRangeMetadata) {
   EXPECT_EQ(R0, (MDNode *)nullptr);
   EXPECT_NE(R1, (MDNode *)nullptr);
   EXPECT_EQ(R1->getNumOperands(), 2U);
-  EXPECT_TRUE(isa<ConstantInt>(R1->getOperand(0)));
-  EXPECT_TRUE(isa<ConstantInt>(R1->getOperand(1)));
-  ConstantInt *C0 = cast<ConstantInt>(R1->getOperand(0));
-  ConstantInt *C1 = cast<ConstantInt>(R1->getOperand(1));
+  EXPECT_TRUE(mdconst::hasa<ConstantInt>(R1->getOperand(0)));
+  EXPECT_TRUE(mdconst::hasa<ConstantInt>(R1->getOperand(1)));
+  ConstantInt *C0 = mdconst::extract<ConstantInt>(R1->getOperand(0));
+  ConstantInt *C1 = mdconst::extract<ConstantInt>(R1->getOperand(1));
   EXPECT_EQ(C0->getValue(), A);
   EXPECT_EQ(C1->getValue(), B);
 }
@@ -101,7 +101,8 @@ TEST_F(MDBuilderTest, createTBAANode) {
   EXPECT_EQ(N0->getOperand(1), R);
   EXPECT_EQ(N1->getOperand(1), R);
   EXPECT_EQ(N2->getOperand(1), R);
-  EXPECT_TRUE(isa<ConstantInt>(N2->getOperand(2)));
-  EXPECT_EQ(cast<ConstantInt>(N2->getOperand(2))->getZExtValue(), 1U);
+  EXPECT_TRUE(mdconst::hasa<ConstantInt>(N2->getOperand(2)));
+  EXPECT_EQ(mdconst::extract<ConstantInt>(N2->getOperand(2))->getZExtValue(),
+            1U);
 }
 }

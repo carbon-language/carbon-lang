@@ -2,6 +2,6 @@
 
 define void @foo(i32 %v) {
 entry:
-; CHECK: <stdin>:[[@LINE+1]]:{{[0-9]+}}: error: unexpected function-local metadata
+; CHECK: <stdin>:[[@LINE+1]]:{{[0-9]+}}: error: invalid use of function-local name
   ret void, !foo !{i32 %v}
 }

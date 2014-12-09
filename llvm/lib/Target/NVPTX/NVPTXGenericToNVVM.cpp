@@ -394,31 +394,34 @@ void GenericToNVVM::remapNamedMDNode(Module *M, NamedMDNode *N) {
 MDNode *GenericToNVVM::remapMDNode(Module *M, MDNode *N) {
 
   bool OperandChanged = false;
-  SmallVector<Value *, 8> NewOperands;
+  SmallVector<Metadata *, 8> NewOperands;
   unsigned NumOperands = N->getNumOperands();
 
   // Check if any operand is or contains a global variable in  GVMap, and thus
   // converted to another value.
   for (unsigned i = 0; i < NumOperands; ++i) {
-    Value *Operand = N->getOperand(i);
-    Value *NewOperand = Operand;
+    Metadata *Operand = N->getOperand(i);
+    Metadata *NewOperand = Operand;
     if (Operand) {
-      if (isa<GlobalVariable>(Operand)) {
-        GVMapTy::iterator I = GVMap.find(cast<GlobalVariable>(Operand));
-        if (I != GVMap.end()) {
-          NewOperand = I->second;
-          if (++i < NumOperands) {
-            NewOperands.push_back(NewOperand);
-            // Address space of the global variable follows the global variable
-            // in the global variable debug info (see createGlobalVariable in
-            // lib/Analysis/DIBuilder.cpp).
-            NewOperand =
-                ConstantInt::get(Type::getInt32Ty(M->getContext()),
-                                 I->second->getType()->getAddressSpace());
+      if (auto *N = dyn_cast<MDNode>(Operand)) {
+        NewOperand = remapMDNode(M, N);
+      } else if (auto *C = dyn_cast<ConstantAsMetadata>(Operand)) {
+        if (auto *G = dyn_cast<GlobalVariable>(C->getValue())) {
+          GVMapTy::iterator I = GVMap.find(G);
+          if (I != GVMap.end()) {
+            NewOperand = ConstantAsMetadata::get(I->second);
+            if (++i < NumOperands) {
+              NewOperands.push_back(NewOperand);
+              // Address space of the global variable follows the global
+              // variable
+              // in the global variable debug info (see createGlobalVariable in
+              // lib/Analysis/DIBuilder.cpp).
+              NewOperand = ConstantAsMetadata::get(
+                  ConstantInt::get(Type::getInt32Ty(M->getContext()),
+                                   I->second->getType()->getAddressSpace()));
+            }
           }
         }
-      } else if (isa<MDNode>(Operand)) {
-        NewOperand = remapMDNode(M, cast<MDNode>(Operand));
       }
     }
     OperandChanged |= Operand != NewOperand;

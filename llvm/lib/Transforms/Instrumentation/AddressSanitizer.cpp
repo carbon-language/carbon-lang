@@ -220,8 +220,10 @@ struct LocationMetadata {
     assert(MDN->getNumOperands() == 3);
     MDString *MDFilename = cast<MDString>(MDN->getOperand(0));
     Filename = MDFilename->getString();
-    LineNo = cast<ConstantInt>(MDN->getOperand(1))->getLimitedValue();
-    ColumnNo = cast<ConstantInt>(MDN->getOperand(2))->getLimitedValue();
+    LineNo =
+        mdconst::extract<ConstantInt>(MDN->getOperand(1))->getLimitedValue();
+    ColumnNo =
+        mdconst::extract<ConstantInt>(MDN->getOperand(2))->getLimitedValue();
   }
 };
 
@@ -249,23 +251,22 @@ class GlobalsMetadata {
     for (auto MDN : Globals->operands()) {
       // Metadata node contains the global and the fields of "Entry".
       assert(MDN->getNumOperands() == 5);
-      Value *V = MDN->getOperand(0);
+      auto *GV = mdconst::extract_or_null<GlobalVariable>(MDN->getOperand(0));
       // The optimizer may optimize away a global entirely.
-      if (!V)
+      if (!GV)
         continue;
-      GlobalVariable *GV = cast<GlobalVariable>(V);
       // We can already have an entry for GV if it was merged with another
       // global.
       Entry &E = Entries[GV];
-      if (Value *Loc = MDN->getOperand(1))
-        E.SourceLoc.parse(cast<MDNode>(Loc));
-      if (Value *Name = MDN->getOperand(2)) {
-        MDString *MDName = cast<MDString>(Name);
-        E.Name = MDName->getString();
-      }
-      ConstantInt *IsDynInit = cast<ConstantInt>(MDN->getOperand(3));
+      if (auto *Loc = cast_or_null<MDNode>(MDN->getOperand(1)))
+        E.SourceLoc.parse(Loc);
+      if (auto *Name = cast_or_null<MDString>(MDN->getOperand(2)))
+        E.Name = Name->getString();
+      ConstantInt *IsDynInit =
+          mdconst::extract<ConstantInt>(MDN->getOperand(3));
       E.IsDynInit |= IsDynInit->isOne();
-      ConstantInt *IsBlacklisted = cast<ConstantInt>(MDN->getOperand(4));
+      ConstantInt *IsBlacklisted =
+          mdconst::extract<ConstantInt>(MDN->getOperand(4));
       E.IsBlacklisted |= IsBlacklisted->isOne();
     }
   }
@@ -496,9 +497,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   AllocaForValueMapTy AllocaForValue;
 
   FunctionStackPoisoner(Function &F, AddressSanitizer &ASan)
-      : F(F), ASan(ASan), DIB(*F.getParent()), C(ASan.C),
-        IntptrTy(ASan.IntptrTy), IntptrPtrTy(PointerType::get(IntptrTy, 0)),
-        Mapping(ASan.Mapping),
+      : F(F), ASan(ASan), DIB(*F.getParent(), /*AllowUnresolved*/ false),
+        C(ASan.C), IntptrTy(ASan.IntptrTy),
+        IntptrPtrTy(PointerType::get(IntptrTy, 0)), Mapping(ASan.Mapping),
         StackAlignment(1 << Mapping.Scale) {}
 
   bool runOnFunction() {

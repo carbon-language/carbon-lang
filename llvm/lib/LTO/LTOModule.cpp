@@ -604,7 +604,7 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
 /// parseMetadata - Parse metadata from the module
 void LTOModule::parseMetadata() {
   // Linker Options
-  if (Value *Val = getModule().getModuleFlag("Linker Options")) {
+  if (Metadata *Val = getModule().getModuleFlag("Linker Options")) {
     MDNode *LinkerOptions = cast<MDNode>(Val);
     for (unsigned i = 0, e = LinkerOptions->getNumOperands(); i != e; ++i) {
       MDNode *MDOptions = cast<MDNode>(LinkerOptions->getOperand(i));

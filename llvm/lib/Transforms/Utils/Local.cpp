@@ -137,7 +137,8 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
           SmallVector<uint32_t, 8> Weights;
           for (unsigned MD_i = 1, MD_e = MD->getNumOperands(); MD_i < MD_e;
                ++MD_i) {
-            ConstantInt* CI = dyn_cast<ConstantInt>(MD->getOperand(MD_i));
+            ConstantInt *CI =
+                mdconst::dyn_extract<ConstantInt>(MD->getOperand(MD_i));
             assert(CI);
             Weights.push_back(CI->getValue().getZExtValue());
           }
@@ -208,8 +209,10 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
                                                SI->getDefaultDest());
       MDNode *MD = SI->getMetadata(LLVMContext::MD_prof);
       if (MD && MD->getNumOperands() == 3) {
-        ConstantInt *SICase = dyn_cast<ConstantInt>(MD->getOperand(2));
-        ConstantInt *SIDef = dyn_cast<ConstantInt>(MD->getOperand(1));
+        ConstantInt *SICase =
+            mdconst::dyn_extract<ConstantInt>(MD->getOperand(2));
+        ConstantInt *SIDef =
+            mdconst::dyn_extract<ConstantInt>(MD->getOperand(1));
         assert(SICase && SIDef);
         // The TrueWeight should be the weight for the single case of SI.
         NewBr->setMetadata(LLVMContext::MD_prof,
@@ -1048,7 +1051,7 @@ static bool isArray(AllocaInst *AI) {
 /// LowerDbgDeclare - Lowers llvm.dbg.declare intrinsics into appropriate set
 /// of llvm.dbg.value intrinsics.
 bool llvm::LowerDbgDeclare(Function &F) {
-  DIBuilder DIB(*F.getParent());
+  DIBuilder DIB(*F.getParent(), /*AllowUnresolved*/ false);
   SmallVector<DbgDeclareInst *, 4> Dbgs;
   for (auto &FI : F)
     for (BasicBlock::iterator BI : FI)
@@ -1091,10 +1094,11 @@ bool llvm::LowerDbgDeclare(Function &F) {
 /// FindAllocaDbgDeclare - Finds the llvm.dbg.declare intrinsic describing the
 /// alloca 'V', if any.
 DbgDeclareInst *llvm::FindAllocaDbgDeclare(Value *V) {
-  if (MDNode *DebugNode = MDNode::getIfExists(V->getContext(), V))
-    for (User *U : DebugNode->users())
-      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
-        return DDI;
+  if (auto *L = LocalAsMetadata::getIfExists(V))
+    if (auto *MDV = MetadataAsValue::getIfExists(V->getContext(), L))
+      for (User *U : MDV->users())
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
+          return DDI;
 
   return nullptr;
 }

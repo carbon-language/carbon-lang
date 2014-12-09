@@ -260,8 +260,8 @@ void Module::eraseNamedMetadata(NamedMDNode *NMD) {
   NamedMDList.erase(NMD);
 }
 
-bool Module::isValidModFlagBehavior(Value *V, ModFlagBehavior &MFB) {
-  if (ConstantInt *Behavior = dyn_cast<ConstantInt>(V)) {
+bool Module::isValidModFlagBehavior(Metadata *MD, ModFlagBehavior &MFB) {
+  if (ConstantInt *Behavior = mdconst::dyn_extract<ConstantInt>(MD)) {
     uint64_t Val = Behavior->getLimitedValue();
     if (Val >= ModFlagBehaviorFirstVal && Val <= ModFlagBehaviorLastVal) {
       MFB = static_cast<ModFlagBehavior>(Val);
@@ -285,7 +285,7 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
       // Check the operands of the MDNode before accessing the operands.
       // The verifier will actually catch these failures.
       MDString *Key = cast<MDString>(Flag->getOperand(1));
-      Value *Val = Flag->getOperand(2);
+      Metadata *Val = Flag->getOperand(2);
       Flags.push_back(ModuleFlagEntry(MFB, Key, Val));
     }
   }
@@ -293,7 +293,7 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
 
 /// Return the corresponding value if Key appears in module flags, otherwise
 /// return null.
-Value *Module::getModuleFlag(StringRef Key) const {
+Metadata *Module::getModuleFlag(StringRef Key) const {
   SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
   getModuleFlagsMetadata(ModuleFlags);
   for (const ModuleFlagEntry &MFE : ModuleFlags) {
@@ -321,12 +321,16 @@ NamedMDNode *Module::getOrInsertModuleFlagsMetadata() {
 /// metadata. It will create the module-level flags named metadata if it doesn't
 /// already exist.
 void Module::addModuleFlag(ModFlagBehavior Behavior, StringRef Key,
-                           Value *Val) {
+                           Metadata *Val) {
   Type *Int32Ty = Type::getInt32Ty(Context);
-  Value *Ops[3] = {
-    ConstantInt::get(Int32Ty, Behavior), MDString::get(Context, Key), Val
-  };
+  Metadata *Ops[3] = {
+      ConstantAsMetadata::get(ConstantInt::get(Int32Ty, Behavior)),
+      MDString::get(Context, Key), Val};
   getOrInsertModuleFlagsMetadata()->addOperand(MDNode::get(Context, Ops));
+}
+void Module::addModuleFlag(ModFlagBehavior Behavior, StringRef Key,
+                           Constant *Val) {
+  addModuleFlag(Behavior, Key, ConstantAsMetadata::get(Val));
 }
 void Module::addModuleFlag(ModFlagBehavior Behavior, StringRef Key,
                            uint32_t Val) {
@@ -336,7 +340,7 @@ void Module::addModuleFlag(ModFlagBehavior Behavior, StringRef Key,
 void Module::addModuleFlag(MDNode *Node) {
   assert(Node->getNumOperands() == 3 &&
          "Invalid number of operands for module flag!");
-  assert(isa<ConstantInt>(Node->getOperand(0)) &&
+  assert(mdconst::hasa<ConstantInt>(Node->getOperand(0)) &&
          isa<MDString>(Node->getOperand(1)) &&
          "Invalid operand types for module flag!");
   getOrInsertModuleFlagsMetadata()->addOperand(Node);
@@ -459,10 +463,10 @@ void Module::dropAllReferences() {
 }
 
 unsigned Module::getDwarfVersion() const {
-  Value *Val = getModuleFlag("Dwarf Version");
+  auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("Dwarf Version"));
   if (!Val)
     return dwarf::DWARF_VERSION;
-  return cast<ConstantInt>(Val)->getZExtValue();
+  return cast<ConstantInt>(Val->getValue())->getZExtValue();
 }
 
 Comdat *Module::getOrInsertComdat(StringRef Name) {
@@ -472,12 +476,13 @@ Comdat *Module::getOrInsertComdat(StringRef Name) {
 }
 
 PICLevel::Level Module::getPICLevel() const {
-  Value *Val = getModuleFlag("PIC Level");
+  auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("PIC Level"));
 
   if (Val == NULL)
     return PICLevel::Default;
 
-  return static_cast<PICLevel::Level>(cast<ConstantInt>(Val)->getZExtValue());
+  return static_cast<PICLevel::Level>(
+      cast<ConstantInt>(Val->getValue())->getZExtValue());
 }
 
 void Module::setPICLevel(PICLevel::Level PL) {

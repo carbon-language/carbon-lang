@@ -3810,8 +3810,10 @@ static bool extractBranchMetadata(BranchInst *BI,
   if (!ProfileData || ProfileData->getNumOperands() != 3)
     return false;
 
-  const auto *CITrue = dyn_cast<ConstantInt>(ProfileData->getOperand(1));
-  const auto *CIFalse = dyn_cast<ConstantInt>(ProfileData->getOperand(2));
+  const auto *CITrue =
+      mdconst::dyn_extract<ConstantInt>(ProfileData->getOperand(1));
+  const auto *CIFalse =
+      mdconst::dyn_extract<ConstantInt>(ProfileData->getOperand(2));
   if (!CITrue || !CIFalse)
     return false;
 

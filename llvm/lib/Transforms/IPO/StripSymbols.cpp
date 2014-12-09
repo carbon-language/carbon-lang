@@ -301,8 +301,8 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
   // For each compile unit, find the live set of global variables/functions and
   // replace the current list of potentially dead global variables/functions
   // with the live list.
-  SmallVector<Value *, 64> LiveGlobalVariables;
-  SmallVector<Value *, 64> LiveSubprograms;
+  SmallVector<Metadata *, 64> LiveGlobalVariables;
+  SmallVector<Metadata *, 64> LiveSubprograms;
   DenseSet<const MDNode *> VisitedSet;
 
   for (DICompileUnit DIC : F.compile_units()) {

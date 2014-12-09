@@ -196,7 +196,8 @@ bool BranchProbabilityInfo::calcMetadataWeights(BasicBlock *BB) {
   SmallVector<uint32_t, 2> Weights;
   Weights.reserve(TI->getNumSuccessors());
   for (unsigned i = 1, e = WeightsNode->getNumOperands(); i != e; ++i) {
-    ConstantInt *Weight = dyn_cast<ConstantInt>(WeightsNode->getOperand(i));
+    ConstantInt *Weight =
+        mdconst::dyn_extract<ConstantInt>(WeightsNode->getOperand(i));
     if (!Weight)
       return false;
     Weights.push_back(

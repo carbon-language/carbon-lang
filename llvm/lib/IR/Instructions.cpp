@@ -796,11 +796,8 @@ void BranchInst::swapSuccessors() {
     return;
 
   // The first operand is the name. Fetch them backwards and build a new one.
-  Value *Ops[] = {
-    ProfileData->getOperand(0),
-    ProfileData->getOperand(2),
-    ProfileData->getOperand(1)
-  };
+  Metadata *Ops[] = {ProfileData->getOperand(0), ProfileData->getOperand(2),
+                     ProfileData->getOperand(1)};
   setMetadata(LLVMContext::MD_prof,
               MDNode::get(ProfileData->getContext(), Ops));
 }
@@ -2076,7 +2073,7 @@ float FPMathOperator::getFPAccuracy() const {
       cast<Instruction>(this)->getMetadata(LLVMContext::MD_fpmath);
   if (!MD)
     return 0.0;
-  ConstantFP *Accuracy = cast<ConstantFP>(MD->getOperand(0));
+  ConstantFP *Accuracy = mdconst::extract<ConstantFP>(MD->getOperand(0));
   return Accuracy->getValueAPF().convertToFloat();
 }
 

@@ -397,7 +397,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_Metadata:
     OS << '<';
-    getMetadata()->printAsOperand(OS, /*PrintType=*/false);
+    getMetadata()->printAsOperand(OS);
     OS << '>';
     break;
   case MachineOperand::MO_MCSymbol:
@@ -537,7 +537,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
   if (const MDNode *TBAAInfo = MMO.getAAInfo().TBAA) {
     OS << "(tbaa=";
     if (TBAAInfo->getNumOperands() > 0)
-      TBAAInfo->getOperand(0)->printAsOperand(OS, /*PrintType=*/false);
+      TBAAInfo->getOperand(0)->printAsOperand(OS);
     else
       OS << "<unknown>";
     OS << ")";
@@ -548,7 +548,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
     OS << "(alias.scope=";
     if (ScopeInfo->getNumOperands() > 0)
       for (unsigned i = 0, ie = ScopeInfo->getNumOperands(); i != ie; ++i) {
-        ScopeInfo->getOperand(i)->printAsOperand(OS, /*PrintType=*/false);
+        ScopeInfo->getOperand(i)->printAsOperand(OS);
         if (i != ie-1)
           OS << ",";
       }
@@ -562,7 +562,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
     OS << "(noalias=";
     if (NoAliasInfo->getNumOperands() > 0)
       for (unsigned i = 0, ie = NoAliasInfo->getNumOperands(); i != ie; ++i) {
-        NoAliasInfo->getOperand(i)->printAsOperand(OS, /*PrintType=*/false);
+        NoAliasInfo->getOperand(i)->printAsOperand(OS);
         if (i != ie-1)
           OS << ",";
       }
@@ -599,6 +599,8 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MCInstrDesc &tid,
   : MCID(&tid), Parent(nullptr), Operands(nullptr), NumOperands(0),
     Flags(0), AsmPrinterFlags(0),
     NumMemRefs(0), MemRefs(nullptr), debugLoc(dl) {
+  assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
+
   // Reserve space for the expected number of operands.
   if (unsigned NumOps = MCID->getNumOperands() +
     MCID->getNumImplicitDefs() + MCID->getNumImplicitUses()) {
@@ -617,6 +619,8 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
     Flags(0), AsmPrinterFlags(0),
     NumMemRefs(MI.NumMemRefs), MemRefs(MI.MemRefs),
     debugLoc(MI.getDebugLoc()) {
+  assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
+
   CapOperands = OperandCapacity::get(MI.getNumOperands());
   Operands = MF.allocateOperandArray(CapOperands);
 
@@ -1960,7 +1964,8 @@ void MachineInstr::emitError(StringRef Msg) const {
     if (getOperand(i-1).isMetadata() &&
         (LocMD = getOperand(i-1).getMetadata()) &&
         LocMD->getNumOperands() != 0) {
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocMD->getOperand(0))) {
+      if (const ConstantInt *CI =
+              mdconst::dyn_extract<ConstantInt>(LocMD->getOperand(0))) {
         LocCookie = CI->getZExtValue();
         break;
       }

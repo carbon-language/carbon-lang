@@ -464,15 +464,15 @@ emitModuleFlags(MCStreamer &Streamer,
       continue;
 
     StringRef Key = MFE.Key->getString();
-    Value *Val = MFE.Val;
+    Metadata *Val = MFE.Val;
 
     if (Key == "Objective-C Image Info Version") {
-      VersionVal = cast<ConstantInt>(Val)->getZExtValue();
+      VersionVal = mdconst::extract<ConstantInt>(Val)->getZExtValue();
     } else if (Key == "Objective-C Garbage Collection" ||
                Key == "Objective-C GC Only" ||
                Key == "Objective-C Is Simulated" ||
                Key == "Objective-C Image Swift Version") {
-      ImageInfoFlags |= cast<ConstantInt>(Val)->getZExtValue();
+      ImageInfoFlags |= mdconst::extract<ConstantInt>(Val)->getZExtValue();
     } else if (Key == "Objective-C Image Info Section") {
       SectionVal = cast<MDString>(Val)->getString();
     } else if (Key == "Linker Options") {
@@ -966,7 +966,7 @@ emitModuleFlags(MCStreamer &Streamer,
        i = ModuleFlags.begin(), e = ModuleFlags.end(); i != e; ++i) {
     const Module::ModuleFlagEntry &MFE = *i;
     StringRef Key = MFE.Key->getString();
-    Value *Val = MFE.Val;
+    Metadata *Val = MFE.Val;
     if (Key == "Linker Options") {
       LinkerOptions = cast<MDNode>(Val);
       break;

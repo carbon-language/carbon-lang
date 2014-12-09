@@ -762,6 +762,7 @@ protected:
       ValueList(VTs.VTs), UseList(nullptr),
       NumOperands(Ops.size()), NumValues(VTs.NumVTs),
       debugLoc(dl), IROrder(Order) {
+    assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
     assert(NumOperands == Ops.size() &&
            "NumOperands wasn't wide enough for its operands!");
     assert(NumValues == VTs.NumVTs &&
@@ -780,6 +781,7 @@ protected:
       SubclassData(0), NodeId(-1), OperandList(nullptr), ValueList(VTs.VTs),
       UseList(nullptr), NumOperands(0), NumValues(VTs.NumVTs), debugLoc(dl),
       IROrder(Order) {
+    assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
     assert(NumValues == VTs.NumVTs &&
            "NumValues wasn't wide enough for its operands!");
   }

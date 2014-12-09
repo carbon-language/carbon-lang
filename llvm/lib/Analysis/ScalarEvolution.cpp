@@ -3750,8 +3750,10 @@ static Optional<ConstantRange> GetRangeFromMetadata(Value *V) {
       assert(NumRanges >= 1);
 
       for (unsigned i = 0; i < NumRanges; ++i) {
-        ConstantInt *Lower = cast<ConstantInt>(MD->getOperand(2*i + 0));
-        ConstantInt *Upper = cast<ConstantInt>(MD->getOperand(2*i + 1));
+        ConstantInt *Lower =
+            mdconst::extract<ConstantInt>(MD->getOperand(2 * i + 0));
+        ConstantInt *Upper =
+            mdconst::extract<ConstantInt>(MD->getOperand(2 * i + 1));
         ConstantRange Range(Lower->getValue(), Upper->getValue());
         TotalRange = TotalRange.unionWith(Range);
       }

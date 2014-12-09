@@ -260,14 +260,15 @@ static MDNode *getNodeField(const MDNode *DbgNode, unsigned Elt) {
   return dyn_cast_or_null<MDNode>(DbgNode->getOperand(Elt));
 }
 
-static DIExpression getExpression(Value *VarOperand, Function *F) {
+static MetadataAsValue *getExpression(Value *VarOperand, Function *F) {
   // Old-style DIVariables have an optional expression as the 8th element.
-  DIExpression Expr(getNodeField(cast<MDNode>(VarOperand), 8));
+  DIExpression Expr(getNodeField(
+      cast<MDNode>(cast<MetadataAsValue>(VarOperand)->getMetadata()), 8));
   if (!Expr) {
-    DIBuilder DIB(*F->getParent());
+    DIBuilder DIB(*F->getParent(), /*AllowUnresolved*/ false);
     Expr = DIB.createExpression();
   }
-  return Expr;
+  return MetadataAsValue::get(F->getContext(), Expr);
 }
 
 // UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the
@@ -306,8 +307,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Builder.SetInsertPoint(CI->getParent(), CI);
 
       Module *M = F->getParent();
-      SmallVector<Value *, 1> Elts;
-      Elts.push_back(ConstantInt::get(Type::getInt32Ty(C), 1));
+      SmallVector<Metadata *, 1> Elts;
+      Elts.push_back(
+          ConstantAsMetadata::get(ConstantInt::get(Type::getInt32Ty(C), 1)));
       MDNode *Node = MDNode::get(C, Elts);
 
       Value *Arg0 = CI->getArgOperand(0);
@@ -578,22 +580,18 @@ void llvm::UpgradeInstWithTBAATag(Instruction *I) {
     return;
 
   if (MD->getNumOperands() == 3) {
-    Value *Elts[] = {
-      MD->getOperand(0),
-      MD->getOperand(1)
-    };
+    Metadata *Elts[] = {MD->getOperand(0), MD->getOperand(1)};
     MDNode *ScalarType = MDNode::get(I->getContext(), Elts);
     // Create a MDNode <ScalarType, ScalarType, offset 0, const>
-    Value *Elts2[] = {
-      ScalarType, ScalarType,
-      Constant::getNullValue(Type::getInt64Ty(I->getContext())),
-      MD->getOperand(2)
-    };
+    Metadata *Elts2[] = {ScalarType, ScalarType,
+                         ConstantAsMetadata::get(Constant::getNullValue(
+                             Type::getInt64Ty(I->getContext()))),
+                         MD->getOperand(2)};
     I->setMetadata(LLVMContext::MD_tbaa, MDNode::get(I->getContext(), Elts2));
   } else {
     // Create a MDNode <MD, MD, offset 0>
-    Value *Elts[] = {MD, MD,
-      Constant::getNullValue(Type::getInt64Ty(I->getContext()))};
+    Metadata *Elts[] = {MD, MD, ConstantAsMetadata::get(Constant::getNullValue(
+                                    Type::getInt64Ty(I->getContext())))};
     I->setMetadata(LLVMContext::MD_tbaa, MDNode::get(I->getContext(), Elts));
   }
 }

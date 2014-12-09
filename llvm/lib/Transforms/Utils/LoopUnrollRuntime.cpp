@@ -217,9 +217,9 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
   }
   if (NewLoop) {
     // Add unroll disable metadata to disable future unrolling for this loop.
-    SmallVector<Value *, 4> Vals;
+    SmallVector<Metadata *, 4> MDs;
     // Reserve first location for self reference to the LoopID metadata node.
-    Vals.push_back(nullptr);
+    MDs.push_back(nullptr);
     MDNode *LoopID = NewLoop->getLoopID();
     if (LoopID) {
       // First remove any existing loop unrolling metadata.
@@ -230,17 +230,18 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
           const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
           IsUnrollMetadata = S && S->getString().startswith("llvm.loop.unroll.");
         }
-        if (!IsUnrollMetadata) Vals.push_back(LoopID->getOperand(i));
+        if (!IsUnrollMetadata)
+          MDs.push_back(LoopID->getOperand(i));
       }
     }
 
     LLVMContext &Context = NewLoop->getHeader()->getContext();
-    SmallVector<Value *, 1> DisableOperands;
+    SmallVector<Metadata *, 1> DisableOperands;
     DisableOperands.push_back(MDString::get(Context, "llvm.loop.unroll.disable"));
     MDNode *DisableNode = MDNode::get(Context, DisableOperands);
-    Vals.push_back(DisableNode);
+    MDs.push_back(DisableNode);
 
-    MDNode *NewLoopID = MDNode::get(Context, Vals);
+    MDNode *NewLoopID = MDNode::get(Context, MDs);
     // Set operand 0 to refer to the loop id itself.
     NewLoopID->replaceOperandWith(0, NewLoopID);
     NewLoop->setLoopID(NewLoopID);

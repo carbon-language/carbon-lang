@@ -37,7 +37,6 @@ class GlobalVariable;
 class InlineAsm;
 class Instruction;
 class LLVMContext;
-class MDNode;
 class Module;
 class StringRef;
 class Twine;
@@ -70,9 +69,9 @@ class Value {
   Type *VTy;
   Use *UseList;
 
-  friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
+  friend class ValueAsMetadata; // Allow access to NameAndIsUsedByMD.
   friend class ValueHandleBase;
-  ValueName *Name;
+  PointerIntPair<ValueName *, 1> NameAndIsUsedByMD;
 
   const unsigned char SubclassID;   // Subclass identifier (for isa/dyn_cast)
   unsigned char HasValueHandle : 1; // Has a ValueHandle pointing to this?
@@ -226,10 +225,14 @@ public:
   LLVMContext &getContext() const;
 
   // \brief All values can potentially be named.
-  bool hasName() const { return Name != nullptr; }
-  ValueName *getValueName() const { return Name; }
-  void setValueName(ValueName *VN) { Name = VN; }
+  bool hasName() const { return getValueName() != nullptr; }
+  ValueName *getValueName() const { return NameAndIsUsedByMD.getPointer(); }
+  void setValueName(ValueName *VN) { NameAndIsUsedByMD.setPointer(VN); }
 
+private:
+  void destroyValueName();
+
+public:
   /// \brief Return a constant reference to the value's name.
   ///
   /// This is cheap and guaranteed to return the same reference as long as the
@@ -352,9 +355,7 @@ public:
     ConstantStructVal,        // This is an instance of ConstantStruct
     ConstantVectorVal,        // This is an instance of ConstantVector
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
-    GenericMDNodeVal,         // This is an instance of GenericMDNode
-    MDNodeFwdDeclVal,         // This is an instance of MDNodeFwdDecl
-    MDStringVal,              // This is an instance of MDString
+    MetadataAsValueVal,       // This is an instance of MetadataAsValue
     InlineAsmVal,             // This is an instance of InlineAsm
     InstructionVal,           // This is an instance of Instruction
     // Enum values starting at InstructionVal are used for Instructions;
@@ -403,6 +404,9 @@ public:
 
   /// \brief Return true if there is a value handle associated with this value.
   bool hasValueHandle() const { return HasValueHandle; }
+
+  /// \brief Return true if there is metadata referencing this value.
+  bool isUsedByMetadata() const { return NameAndIsUsedByMD.getInt(); }
 
   /// \brief Strip off pointer casts, all-zero GEPs, and aliases.
   ///
@@ -684,13 +688,6 @@ template <> struct isa_impl<GlobalValue, Value> {
 template <> struct isa_impl<GlobalObject, Value> {
   static inline bool doit(const Value &Val) {
     return isa<GlobalVariable>(Val) || isa<Function>(Val);
-  }
-};
-
-template <> struct isa_impl<MDNode, Value> {
-  static inline bool doit(const Value &Val) {
-    return Val.getValueID() == Value::GenericMDNodeVal ||
-           Val.getValueID() == Value::MDNodeFwdDeclVal;
   }
 };
 

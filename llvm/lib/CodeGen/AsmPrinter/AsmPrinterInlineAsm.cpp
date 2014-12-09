@@ -64,7 +64,7 @@ static void srcMgrDiagHandler(const SMDiagnostic &Diag, void *diagInfo) {
 
     if (LocInfo->getNumOperands() != 0)
       if (const ConstantInt *CI =
-          dyn_cast<ConstantInt>(LocInfo->getOperand(ErrorLine)))
+              mdconst::dyn_extract<ConstantInt>(LocInfo->getOperand(ErrorLine)))
         LocCookie = CI->getZExtValue();
   }
 
@@ -467,7 +467,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
     if (MI->getOperand(i-1).isMetadata() &&
         (LocMD = MI->getOperand(i-1).getMetadata()) &&
         LocMD->getNumOperands() != 0) {
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocMD->getOperand(0))) {
+      if (const ConstantInt *CI =
+              mdconst::dyn_extract<ConstantInt>(LocMD->getOperand(0))) {
         LocCookie = CI->getZExtValue();
         break;
       }

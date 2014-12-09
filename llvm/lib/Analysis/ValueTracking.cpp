@@ -312,8 +312,10 @@ void llvm::computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
   // Use the high end of the ranges to find leading zeros.
   unsigned MinLeadingZeros = BitWidth;
   for (unsigned i = 0; i < NumRanges; ++i) {
-    ConstantInt *Lower = cast<ConstantInt>(Ranges.getOperand(2*i + 0));
-    ConstantInt *Upper = cast<ConstantInt>(Ranges.getOperand(2*i + 1));
+    ConstantInt *Lower =
+        mdconst::extract<ConstantInt>(Ranges.getOperand(2 * i + 0));
+    ConstantInt *Upper =
+        mdconst::extract<ConstantInt>(Ranges.getOperand(2 * i + 1));
     ConstantRange Range(Lower->getValue(), Upper->getValue());
     if (Range.isWrappedSet())
       MinLeadingZeros = 0; // -1 has no zeros
@@ -1504,8 +1506,10 @@ static bool rangeMetadataExcludesValue(MDNode* Ranges,
   const unsigned NumRanges = Ranges->getNumOperands() / 2;
   assert(NumRanges >= 1);
   for (unsigned i = 0; i < NumRanges; ++i) {
-    ConstantInt *Lower = cast<ConstantInt>(Ranges->getOperand(2*i + 0));
-    ConstantInt *Upper = cast<ConstantInt>(Ranges->getOperand(2*i + 1));
+    ConstantInt *Lower =
+        mdconst::extract<ConstantInt>(Ranges->getOperand(2 * i + 0));
+    ConstantInt *Upper =
+        mdconst::extract<ConstantInt>(Ranges->getOperand(2 * i + 1));
     ConstantRange Range(Lower->getValue(), Upper->getValue());
     if (Range.contains(Value))
       return false;

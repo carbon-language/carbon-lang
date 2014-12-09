@@ -38,8 +38,8 @@ void ValueSymbolTable::reinsertValue(Value* V) {
   assert(V->hasName() && "Can't insert nameless Value into symbol table");
 
   // Try inserting the name, assuming it won't conflict.
-  if (vmap.insert(V->Name)) {
-    //DEBUG(dbgs() << " Inserted value: " << V->Name << ": " << *V << "\n");
+  if (vmap.insert(V->getValueName())) {
+    //DEBUG(dbgs() << " Inserted value: " << V->getValueName() << ": " << *V << "\n");
     return;
   }
   
@@ -47,8 +47,8 @@ void ValueSymbolTable::reinsertValue(Value* V) {
   SmallString<256> UniqueName(V->getName().begin(), V->getName().end());
 
   // The name is too already used, just free it so we can allocate a new name.
-  V->Name->Destroy();
-  
+  V->getValueName()->Destroy();
+
   unsigned BaseSize = UniqueName.size();
   while (1) {
     // Trim any suffix off and append the next number.
@@ -59,7 +59,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
     auto IterBool = vmap.insert(std::make_pair(UniqueName, V));
     if (IterBool.second) {
       // Newly inserted name.  Success!
-      V->Name = &*IterBool.first;
+      V->setValueName(&*IterBool.first);
      //DEBUG(dbgs() << " Inserted value: " << UniqueName << ": " << *V << "\n");
       return;
     }

@@ -21,11 +21,16 @@ MDString *MDBuilder::createString(StringRef Str) {
   return MDString::get(Context, Str);
 }
 
+ConstantAsMetadata *MDBuilder::createConstant(Constant *C) {
+  return ConstantAsMetadata::get(C);
+}
+
 MDNode *MDBuilder::createFPMath(float Accuracy) {
   if (Accuracy == 0.0)
     return nullptr;
   assert(Accuracy > 0.0 && "Invalid fpmath accuracy!");
-  Value *Op = ConstantFP::get(Type::getFloatTy(Context), Accuracy);
+  auto *Op =
+      createConstant(ConstantFP::get(Type::getFloatTy(Context), Accuracy));
   return MDNode::get(Context, Op);
 }
 
@@ -38,12 +43,12 @@ MDNode *MDBuilder::createBranchWeights(uint32_t TrueWeight,
 MDNode *MDBuilder::createBranchWeights(ArrayRef<uint32_t> Weights) {
   assert(Weights.size() >= 2 && "Need at least two branch weights!");
 
-  SmallVector<Value *, 4> Vals(Weights.size() + 1);
+  SmallVector<Metadata *, 4> Vals(Weights.size() + 1);
   Vals[0] = createString("branch_weights");
 
   Type *Int32Ty = Type::getInt32Ty(Context);
   for (unsigned i = 0, e = Weights.size(); i != e; ++i)
-    Vals[i + 1] = ConstantInt::get(Int32Ty, Weights[i]);
+    Vals[i + 1] = createConstant(ConstantInt::get(Int32Ty, Weights[i]));
 
   return MDNode::get(Context, Vals);
 }
@@ -56,7 +61,8 @@ MDNode *MDBuilder::createRange(const APInt &Lo, const APInt &Hi) {
 
   // Return the range [Lo, Hi).
   Type *Ty = IntegerType::get(Context, Lo.getBitWidth());
-  Value *Range[2] = {ConstantInt::get(Ty, Lo), ConstantInt::get(Ty, Hi)};
+  Metadata *Range[2] = {createConstant(ConstantInt::get(Ty, Lo)),
+                        createConstant(ConstantInt::get(Ty, Hi))};
   return MDNode::get(Context, Range);
 }
 
@@ -64,7 +70,7 @@ MDNode *MDBuilder::createAnonymousAARoot(StringRef Name, MDNode *Extra) {
   // To ensure uniqueness the root node is self-referential.
   MDNode *Dummy = MDNode::getTemporary(Context, None);
 
-  SmallVector<Value *, 3> Args(1, Dummy);
+  SmallVector<Metadata *, 3> Args(1, Dummy);
   if (Extra)
     Args.push_back(Extra);
   if (!Name.empty())
@@ -92,10 +98,10 @@ MDNode *MDBuilder::createTBAANode(StringRef Name, MDNode *Parent,
                                   bool isConstant) {
   if (isConstant) {
     Constant *Flags = ConstantInt::get(Type::getInt64Ty(Context), 1);
-    Value *Ops[3] = {createString(Name), Parent, Flags};
+    Metadata *Ops[3] = {createString(Name), Parent, createConstant(Flags)};
     return MDNode::get(Context, Ops);
   } else {
-    Value *Ops[2] = {createString(Name), Parent};
+    Metadata *Ops[2] = {createString(Name), Parent};
     return MDNode::get(Context, Ops);
   }
 }
@@ -105,18 +111,18 @@ MDNode *MDBuilder::createAliasScopeDomain(StringRef Name) {
 }
 
 MDNode *MDBuilder::createAliasScope(StringRef Name, MDNode *Domain) {
-  Value *Ops[2] = { createString(Name), Domain };
+  Metadata *Ops[2] = {createString(Name), Domain};
   return MDNode::get(Context, Ops);
 }
 
 /// \brief Return metadata for a tbaa.struct node with the given
 /// struct field descriptions.
 MDNode *MDBuilder::createTBAAStructNode(ArrayRef<TBAAStructField> Fields) {
-  SmallVector<Value *, 4> Vals(Fields.size() * 3);
+  SmallVector<Metadata *, 4> Vals(Fields.size() * 3);
   Type *Int64 = Type::getInt64Ty(Context);
   for (unsigned i = 0, e = Fields.size(); i != e; ++i) {
-    Vals[i * 3 + 0] = ConstantInt::get(Int64, Fields[i].Offset);
-    Vals[i * 3 + 1] = ConstantInt::get(Int64, Fields[i].Size);
+    Vals[i * 3 + 0] = createConstant(ConstantInt::get(Int64, Fields[i].Offset));
+    Vals[i * 3 + 1] = createConstant(ConstantInt::get(Int64, Fields[i].Size));
     Vals[i * 3 + 2] = Fields[i].TBAA;
   }
   return MDNode::get(Context, Vals);
@@ -126,12 +132,12 @@ MDNode *MDBuilder::createTBAAStructNode(ArrayRef<TBAAStructField> Fields) {
 /// with the given name, a list of pairs (offset, field type in the type DAG).
 MDNode *MDBuilder::createTBAAStructTypeNode(
     StringRef Name, ArrayRef<std::pair<MDNode *, uint64_t>> Fields) {
-  SmallVector<Value *, 4> Ops(Fields.size() * 2 + 1);
+  SmallVector<Metadata *, 4> Ops(Fields.size() * 2 + 1);
   Type *Int64 = Type::getInt64Ty(Context);
   Ops[0] = createString(Name);
   for (unsigned i = 0, e = Fields.size(); i != e; ++i) {
     Ops[i * 2 + 1] = Fields[i].first;
-    Ops[i * 2 + 2] = ConstantInt::get(Int64, Fields[i].second);
+    Ops[i * 2 + 2] = createConstant(ConstantInt::get(Int64, Fields[i].second));
   }
   return MDNode::get(Context, Ops);
 }
@@ -141,7 +147,7 @@ MDNode *MDBuilder::createTBAAStructTypeNode(
 MDNode *MDBuilder::createTBAAScalarTypeNode(StringRef Name, MDNode *Parent,
                                             uint64_t Offset) {
   ConstantInt *Off = ConstantInt::get(Type::getInt64Ty(Context), Offset);
-  Value *Ops[3] = {createString(Name), Parent, Off};
+  Metadata *Ops[3] = {createString(Name), Parent, createConstant(Off)};
   return MDNode::get(Context, Ops);
 }
 
@@ -150,6 +156,7 @@ MDNode *MDBuilder::createTBAAScalarTypeNode(StringRef Name, MDNode *Parent,
 MDNode *MDBuilder::createTBAAStructTagNode(MDNode *BaseType, MDNode *AccessType,
                                            uint64_t Offset) {
   Type *Int64 = Type::getInt64Ty(Context);
-  Value *Ops[3] = {BaseType, AccessType, ConstantInt::get(Int64, Offset)};
+  Metadata *Ops[3] = {BaseType, AccessType,
+                      createConstant(ConstantInt::get(Int64, Offset))};
   return MDNode::get(Context, Ops);
 }

@@ -44,9 +44,8 @@ static inline Type *checkType(Type *Ty) {
 }
 
 Value::Value(Type *ty, unsigned scid)
-    : VTy(checkType(ty)), UseList(nullptr), Name(nullptr), SubclassID(scid),
-      HasValueHandle(0), SubclassOptionalData(0), SubclassData(0),
-      NumOperands(0) {
+    : VTy(checkType(ty)), UseList(nullptr), SubclassID(scid), HasValueHandle(0),
+      SubclassOptionalData(0), SubclassData(0), NumOperands(0) {
   // FIXME: Why isn't this in the subclass gunk??
   // Note, we cannot call isa<CallInst> before the CallInst has been
   // constructed.
@@ -63,6 +62,8 @@ Value::~Value() {
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsDeleted(this);
+  if (isUsedByMetadata())
+    ValueAsMetadata::handleDeletion(this);
 
 #ifndef NDEBUG      // Only in -g mode...
   // Check to make sure that there are no uses of this value that are still
@@ -82,11 +83,17 @@ Value::~Value() {
 
   // If this value is named, destroy the name.  This should not be in a symtab
   // at this point.
-  if (Name && SubclassID != MDStringVal)
-    Name->Destroy();
+  destroyValueName();
 
   // There should be no uses of this object anymore, remove it.
   LeakDetector::removeGarbageObject(this);
+}
+
+void Value::destroyValueName() {
+  ValueName *Name = getValueName();
+  if (Name)
+    Name->Destroy();
+  setValueName(nullptr);
 }
 
 bool Value::hasNUses(unsigned N) const {
@@ -146,9 +153,7 @@ static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
   } else if (Argument *A = dyn_cast<Argument>(V)) {
     if (Function *P = A->getParent())
       ST = &P->getValueSymbolTable();
-  } else if (isa<MDString>(V))
-    return true;
-  else {
+  } else {
     assert(isa<Constant>(V) && "Unknown value type!");
     return true;  // no name is setable for this.
   }
@@ -159,14 +164,12 @@ StringRef Value::getName() const {
   // Make sure the empty string is still a C string. For historical reasons,
   // some clients want to call .data() on the result and expect it to be null
   // terminated.
-  if (!Name) return StringRef("", 0);
-  return Name->getKey();
+  if (!getValueName())
+    return StringRef("", 0);
+  return getValueName()->getKey();
 }
 
 void Value::setName(const Twine &NewName) {
-  assert(SubclassID != MDStringVal &&
-         "Cannot set the name of MDString with this method!");
-
   // Fast path for common IRBuilder case of setName("") when there is no name.
   if (NewName.isTriviallyEmpty() && !hasName())
     return;
@@ -193,20 +196,17 @@ void Value::setName(const Twine &NewName) {
   if (!ST) { // No symbol table to update?  Just do the change.
     if (NameRef.empty()) {
       // Free the name for this value.
-      Name->Destroy();
-      Name = nullptr;
+      destroyValueName();
       return;
     }
 
-    if (Name)
-      Name->Destroy();
-
     // NOTE: Could optimize for the case the name is shrinking to not deallocate
     // then reallocated.
+    destroyValueName();
 
     // Create the new name.
-    Name = ValueName::Create(NameRef);
-    Name->setValue(this);
+    setValueName(ValueName::Create(NameRef));
+    getValueName()->setValue(this);
     return;
   }
 
@@ -214,21 +214,18 @@ void Value::setName(const Twine &NewName) {
   // then reallocated.
   if (hasName()) {
     // Remove old name.
-    ST->removeValueName(Name);
-    Name->Destroy();
-    Name = nullptr;
+    ST->removeValueName(getValueName());
+    destroyValueName();
 
     if (NameRef.empty())
       return;
   }
 
   // Name is changing to something new.
-  Name = ST->createValueName(NameRef, this);
+  setValueName(ST->createValueName(NameRef, this));
 }
 
 void Value::takeName(Value *V) {
-  assert(SubclassID != MDStringVal && "Cannot take the name of an MDString!");
-
   ValueSymbolTable *ST = nullptr;
   // If this value has a name, drop it.
   if (hasName()) {
@@ -242,9 +239,8 @@ void Value::takeName(Value *V) {
 
     // Remove old name.
     if (ST)
-      ST->removeValueName(Name);
-    Name->Destroy();
-    Name = nullptr;
+      ST->removeValueName(getValueName());
+    destroyValueName();
   }
 
   // Now we know that this has no name.
@@ -270,9 +266,9 @@ void Value::takeName(Value *V) {
   // This works even if both values have no symtab yet.
   if (ST == VST) {
     // Take the name!
-    Name = V->Name;
-    V->Name = nullptr;
-    Name->setValue(this);
+    setValueName(V->getValueName());
+    V->setValueName(nullptr);
+    getValueName()->setValue(this);
     return;
   }
 
@@ -280,10 +276,10 @@ void Value::takeName(Value *V) {
   // then reinsert it into ST.
 
   if (VST)
-    VST->removeValueName(V->Name);
-  Name = V->Name;
-  V->Name = nullptr;
-  Name->setValue(this);
+    VST->removeValueName(V->getValueName());
+  setValueName(V->getValueName());
+  V->setValueName(nullptr);
+  getValueName()->setValue(this);
 
   if (ST)
     ST->reinsertValue(this);
@@ -334,6 +330,8 @@ void Value::replaceAllUsesWith(Value *New) {
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsRAUWd(this, New);
+  if (isUsedByMetadata())
+    ValueAsMetadata::handleRAUW(this, New);
 
   while (!use_empty()) {
     Use &U = *UseList;
