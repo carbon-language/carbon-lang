@@ -805,6 +805,26 @@ void BranchInst::swapSuccessors() {
               MDNode::get(ProfileData->getContext(), Ops));
 }
 
+bool BranchInst::getBranchWeights(uint64_t &TrueWeight,
+                                  uint64_t &FalseWeight) const {
+  if (isUnconditional())
+    return false;
+
+  auto *MD = getMetadata(LLVMContext::MD_prof);
+  if (!MD || MD->getNumOperands() != 3)
+    return false;
+
+  auto *TrueCI = dyn_cast<ConstantInt>(MD->getOperand(1));
+  auto *FalseCI = dyn_cast<ConstantInt>(MD->getOperand(2));
+  if (!TrueCI || !FalseCI)
+    return false;
+
+  TrueWeight = TrueCI->getValue().getZExtValue();
+  FalseWeight = FalseCI->getValue().getZExtValue();
+
+  return true;
+}
+
 BasicBlock *BranchInst::getSuccessorV(unsigned idx) const {
   return getSuccessor(idx);
 }

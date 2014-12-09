@@ -2535,6 +2535,10 @@ public:
   /// continues to map correctly to each operand.
   void swapSuccessors();
 
+  /// \brief Retrieve the probabilities of a conditional branch. Returns true on
+  /// success, or returns false if no or invalid metadata was found.
+  bool getBranchWeights(uint64_t &TrueWeight, uint64_t &FalseWeight) const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::Br);
