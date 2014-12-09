@@ -1784,6 +1784,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
   case MVT::v8i16: OpcodeIndex = 1; break;
   case MVT::v4f32:
   case MVT::v4i32: OpcodeIndex = 2; break;
+  case MVT::v2f64:
   case MVT::v2i64: OpcodeIndex = 3;
     assert(NumVecs == 1 && "v2i64 type only supported for VLD1");
     break;
@@ -1920,6 +1921,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
   case MVT::v8i16: OpcodeIndex = 1; break;
   case MVT::v4f32:
   case MVT::v4i32: OpcodeIndex = 2; break;
+  case MVT::v2f64:
   case MVT::v2i64: OpcodeIndex = 3;
     assert(NumVecs == 1 && "v2i64 type only supported for VST1");
     break;

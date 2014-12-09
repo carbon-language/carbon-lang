@@ -117,6 +117,15 @@ define void @vst1Qi64(i64* %A, <2 x i64>* %B) nounwind {
 	ret void
 }
 
+define void @vst1Qf64(double* %A, <2 x double>* %B) nounwind {
+;CHECK-LABEL: vst1Qf64:
+;CHECK: vst1.64
+	%tmp0 = bitcast double* %A to i8*
+	%tmp1 = load <2 x double>* %B
+	call void @llvm.arm.neon.vst1.v2f64(i8* %tmp0, <2 x double> %tmp1, i32 1)
+	ret void
+}
+
 declare void @llvm.arm.neon.vst1.v8i8(i8*, <8 x i8>, i32) nounwind
 declare void @llvm.arm.neon.vst1.v4i16(i8*, <4 x i16>, i32) nounwind
 declare void @llvm.arm.neon.vst1.v2i32(i8*, <2 x i32>, i32) nounwind
@@ -128,3 +137,4 @@ declare void @llvm.arm.neon.vst1.v8i16(i8*, <8 x i16>, i32) nounwind
 declare void @llvm.arm.neon.vst1.v4i32(i8*, <4 x i32>, i32) nounwind
 declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
 declare void @llvm.arm.neon.vst1.v2i64(i8*, <2 x i64>, i32) nounwind
+declare void @llvm.arm.neon.vst1.v2f64(i8*, <2 x double>, i32) nounwind

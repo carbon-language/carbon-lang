@@ -119,6 +119,14 @@ define <2 x i64> @vld1Qi64(i64* %A) nounwind {
 	ret <2 x i64> %tmp1
 }
 
+define <2 x double> @vld1Qf64(double* %A) nounwind {
+;CHECK-LABEL: vld1Qf64:
+;CHECK: vld1.64
+	%tmp0 = bitcast double* %A to i8*
+	%tmp1 = call <2 x double> @llvm.arm.neon.vld1.v2f64(i8* %tmp0, i32 1)
+	ret <2 x double> %tmp1
+}
+
 declare <8 x i8>  @llvm.arm.neon.vld1.v8i8(i8*, i32) nounwind readonly
 declare <4 x i16> @llvm.arm.neon.vld1.v4i16(i8*, i32) nounwind readonly
 declare <2 x i32> @llvm.arm.neon.vld1.v2i32(i8*, i32) nounwind readonly
@@ -130,6 +138,7 @@ declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*, i32) nounwind readonly
 declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*, i32) nounwind readonly
 declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
 declare <2 x i64> @llvm.arm.neon.vld1.v2i64(i8*, i32) nounwind readonly
+declare <2 x double> @llvm.arm.neon.vld1.v2f64(i8*, i32) nounwind readonly
 
 ; Radar 8355607
 ; Do not crash if the vld1 result is not used.
