@@ -14,9 +14,11 @@
 // C++ Includes
 #include <map>
 #include <vector>
-// Other libraries and framework includes
-// Project includes
 
+// Other libraries and framework includes
+#include "llvm/ADT/SmallVector.h"
+
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"
@@ -270,12 +272,6 @@ public:
             m_mod_id = new_id;
         }
         
-        bool
-        IsFirstEvaluation () const
-        {
-            return m_first_update;
-        }
-        
         void
         SetNeedsUpdate ()
         {
@@ -324,7 +320,6 @@ public:
         ProcessModID m_mod_id; // This is the stop id when this ValueObject was last evaluated.
         ExecutionContextRef m_exe_ctx_ref;
         bool m_needs_update;
-        bool m_first_update;
     };
 
     const EvaluationPoint &
@@ -1103,6 +1098,8 @@ protected:
     ProcessModID                m_user_id_of_forced_summary;
     AddressType                 m_address_type_of_ptr_or_ref_children;
     
+    llvm::SmallVector<uint8_t, 16> m_value_checksum;
+    
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,
@@ -1207,6 +1204,9 @@ protected:
     const char *
     GetLocationAsCStringImpl (const Value& value,
                               const DataExtractor& data);
+    
+    bool
+    IsChecksumEmpty ();
     
 private:
     //------------------------------------------------------------------

@@ -98,6 +98,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_type_validator_sp(),
     m_user_id_of_forced_summary(),
     m_address_type_of_ptr_or_ref_children(eAddressTypeInvalid),
+    m_value_checksum(),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -147,6 +148,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_type_validator_sp(),
     m_user_id_of_forced_summary(),
     m_address_type_of_ptr_or_ref_children(child_ptr_or_ref_addr_type),
+    m_value_checksum(),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -192,7 +194,7 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
         return m_error.Success();
     }
 
-    bool first_update = m_update_point.IsFirstEvaluation();
+    bool first_update = IsChecksumEmpty();
     
     if (m_update_point.NeedsUpdating())
     {
@@ -221,9 +223,34 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
             m_error.Clear();
 
             // Call the pure virtual function to update the value
+            
+            bool need_compare_checksums = false;
+            llvm::SmallVector<uint8_t, 16> old_checksum;
+            
+            if (!first_update && CanProvideValue())
+            {
+                need_compare_checksums = true;
+                old_checksum.resize(m_value_checksum.size());
+                std::copy(m_value_checksum.begin(), m_value_checksum.end(), old_checksum.begin());
+            }
+            
             bool success = UpdateValue ();
             
             SetValueIsValid (success);
+            
+            if (success)
+            {
+                const uint64_t max_checksum_size = 128;
+                m_data.Checksum(m_value_checksum,
+                                max_checksum_size);
+            }
+            else
+            {
+                need_compare_checksums = false;
+                m_value_checksum.clear();
+            }
+            
+            assert (old_checksum.empty() == !need_compare_checksums);
             
             if (first_update)
                 SetValueDidChange (false);
@@ -233,6 +260,11 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
                 // as changed if the value used to be valid and now isn't
                 SetValueDidChange (value_was_valid);
             }
+            else if (need_compare_checksums)
+            {
+                SetValueDidChange(memcmp(&old_checksum[0], &m_value_checksum[0], m_value_checksum.size()));
+            }
+            
         }
         else
         {
@@ -498,7 +530,6 @@ ValueObject::SetValueIsValid (bool b)
 bool
 ValueObject::GetValueDidChange ()
 {
-    GetValueAsCString ();
     return m_value_did_change;
 }
 
@@ -3834,16 +3865,14 @@ ValueObject::CastPointerType (const char *name, TypeSP &type_sp)
 ValueObject::EvaluationPoint::EvaluationPoint () :
     m_mod_id(),
     m_exe_ctx_ref(),
-    m_needs_update (true),
-    m_first_update (true)
+    m_needs_update (true)
 {
 }
 
 ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope, bool use_selected):
     m_mod_id(),
     m_exe_ctx_ref(),
-    m_needs_update (true),
-    m_first_update (true)
+    m_needs_update (true)
 {
     ExecutionContext exe_ctx(exe_scope);
     TargetSP target_sp (exe_ctx.GetTargetSP());
@@ -3887,8 +3916,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
 ValueObject::EvaluationPoint::EvaluationPoint (const ValueObject::EvaluationPoint &rhs) :
     m_mod_id(),
     m_exe_ctx_ref(rhs.m_exe_ctx_ref),
-    m_needs_update (true),
-    m_first_update (true)
+    m_needs_update (true)
 {
 }
 
@@ -3982,7 +4010,6 @@ ValueObject::EvaluationPoint::SetUpdated ()
     ProcessSP process_sp(m_exe_ctx_ref.GetProcessSP());
     if (process_sp)
         m_mod_id = process_sp->GetModID();
-    m_first_update = false;
     m_needs_update = false;
 }
         
@@ -4183,7 +4210,17 @@ ValueObject::GetPreferredDisplayLanguage ()
 bool
 ValueObject::CanProvideValue ()
 {
-    return (false == GetClangType().IsAggregateType());
+    // we need to support invalid types as providers of values because some bare-board
+    // debugging scenarios have no notion of types, but still manage to have raw numeric
+    // values for things like registers. sigh.
+    const ClangASTType &type(GetClangType());
+    return (false == type.IsValid()) || (0 != (type.GetTypeInfo() & eTypeHasValue));
+}
+
+bool
+ValueObject::IsChecksumEmpty ()
+{
+    return m_value_checksum.empty();
 }
 
 ValueObjectSP

@@ -13,9 +13,13 @@
 
 
 #include "lldb/lldb-private.h"
+
+#include "llvm/ADT/SmallVector.h"
+
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
+#include <vector>
 
 namespace lldb_private {
 
@@ -1309,6 +1313,11 @@ public:
             return size - offset;
         return 0;
     }
+    
+    void
+    Checksum (llvm::SmallVectorImpl<uint8_t> &dest,
+              uint64_t max_data = 0);
+    
 
 protected:
     
