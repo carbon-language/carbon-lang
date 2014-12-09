@@ -1300,7 +1300,9 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
         TopFileIsModule = true;
 
       auto &ModuleFile = CI.ModuleFileOverrides[ModuleName];
-      if (!ModuleFile.empty() && ModuleFile != ModuleFileStack.back())
+      if (!ModuleFile.empty() &&
+          CI.getFileManager().getFile(ModuleFile) !=
+              CI.getFileManager().getFile(ModuleFileStack.back()))
         CI.getDiagnostics().Report(SourceLocation(),
                                    diag::err_conflicting_module_files)
             << ModuleName << ModuleFile << ModuleFileStack.back();
