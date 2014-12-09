@@ -68,18 +68,6 @@ def : T_CMP_pat <C2_cmpeqi,  seteq,  s10ImmPred>;
 def : T_CMP_pat <C2_cmpgti,  setgt,  s10ImmPred>;
 def : T_CMP_pat <C2_cmpgtui, setugt, u9ImmPred>;
 
-// Multi-class for logical operators.
-multiclass ALU32_rr_ri<string OpcStr, SDNode OpNode> {
-  def rr : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
-                 [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$b),
-                                                   (i32 IntRegs:$c)))]>;
-  def ri : ALU32_ri<(outs IntRegs:$dst), (ins s10Imm:$b, IntRegs:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "(#$b, $c)")),
-                 [(set (i32 IntRegs:$dst), (OpNode s10Imm:$b,
-                                                   (i32 IntRegs:$c)))]>;
-}
-
 //===----------------------------------------------------------------------===//
 // ALU32/ALU +
 //===----------------------------------------------------------------------===//
@@ -449,16 +437,6 @@ def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
 def : Pat<(not (i32 IntRegs:$src1)),
           (SUB_ri -1, (i32 IntRegs:$src1))>;
 
-multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
-                       bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : ALU32_rr<(outs RC:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs: $src3),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
-            ") $dst = ")#mnemonic#"($src2, $src3)",
-            []>;
-}
-
 let hasSideEffects = 0, hasNewValue = 1 in
 class T_tfr16<bit isHi>
   : ALU32Inst <(outs IntRegs:$Rx), (ins IntRegs:$src1, u16Imm:$u16),
@@ -479,14 +457,6 @@ class T_tfr16<bit isHi>
 let isCodeGenOnly = 0 in {
 def A2_tfril: T_tfr16<0>;
 def A2_tfrih: T_tfr16<1>;
-}
-
-multiclass ALU32_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ALU32_Pbase<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ALU32_Pbase<mnemonic, RC, PredNot, 1>;
-  }
 }
 
 // Conditional transfer is an alias to conditional "Rd = add(Rs, #0)".
