@@ -78,13 +78,15 @@ uint64_t LLLexer::HexIntToVal(const char *Buffer, const char *End) {
 void LLLexer::HexToIntPair(const char *Buffer, const char *End,
                            uint64_t Pair[2]) {
   Pair[0] = 0;
-  for (int i=0; i<16; i++, Buffer++) {
-    assert(Buffer != End);
-    Pair[0] *= 16;
-    Pair[0] += hexDigitValue(*Buffer);
+  if (End - Buffer >= 16) {
+    for (int i = 0; i < 16; i++, Buffer++) {
+      assert(Buffer != End);
+      Pair[0] *= 16;
+      Pair[0] += hexDigitValue(*Buffer);
+    }
   }
   Pair[1] = 0;
-  for (int i=0; i<16 && Buffer != End; i++, Buffer++) {
+  for (int i = 0; i < 16 && Buffer != End; i++, Buffer++) {
     Pair[1] *= 16;
     Pair[1] += hexDigitValue(*Buffer);
   }
