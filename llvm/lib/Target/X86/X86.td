@@ -433,6 +433,10 @@ def : Proc<"amdfam10",        [FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
                                FeaturePOPCNT, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
+def : Proc<"barcelona",       [FeatureSSE4A,
+                               Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
+                               FeaturePOPCNT, FeatureSlowBTMem,
+                               FeatureSlowSHLD]>;
 // Bobcat
 def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeaturePRFCHW, FeatureLZCNT, FeaturePOPCNT,

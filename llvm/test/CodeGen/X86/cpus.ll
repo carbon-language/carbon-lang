@@ -1,32 +1,28 @@
-; RUN: llc < %s -o /dev/null -mcpu=prescott
-; RUN: llc < %s -o /dev/null -mcpu=nocona
-; RUN: llc < %s -o /dev/null -mcpu=core2
-; RUN: llc < %s -o /dev/null -mcpu=penryn
-; RUN: llc < %s -o /dev/null -mcpu=nehalem
-; RUN: llc < %s -o /dev/null -mcpu=westmere
-; RUN: llc < %s -o /dev/null -mcpu=sandybridge
-; RUN: llc < %s -o /dev/null -mcpu=ivybridge
-; RUN: llc < %s -o /dev/null -mcpu=haswell
-; RUN: llc < %s -o /dev/null -mcpu=broadwell
-; RUN: llc < %s -o /dev/null -mcpu=bonnell
-; RUN: llc < %s -o /dev/null -mcpu=silvermont
-; RUN: llc < %s -o /dev/null -mcpu=k8
-; RUN: llc < %s -o /dev/null -mcpu=opteron
-; RUN: llc < %s -o /dev/null -mcpu=athlon64
-; RUN: llc < %s -o /dev/null -mcpu=athlon-fx
-; RUN: llc < %s -o /dev/null -mcpu=k8-sse3
-; RUN: llc < %s -o /dev/null -mcpu=opteron-sse3
-; RUN: llc < %s -o /dev/null -mcpu=athlon64-sse3
-; RUN: llc < %s -o /dev/null -mcpu=amdfam10
-; RUN: llc < %s -o /dev/null -mcpu=barcelona
-; RUN: llc < %s -o /dev/null -mcpu=bdver1
-; RUN: llc < %s -o /dev/null -mcpu=bdver2
-; RUN: llc < %s -o /dev/null -mcpu=bdver3
-; RUN: llc < %s -o /dev/null -mcpu=bdver4
-; RUN: llc < %s -o /dev/null -mcpu=btver1
-; RUN: llc < %s -o /dev/null -mcpu=btver2
-; RUN: llc < %s -o /dev/null -mcpu=winchip-c6
-; RUN: llc < %s -o /dev/null -mcpu=winchip2
-; RUN: llc < %s -o /dev/null -mcpu=c3
-; RUN: llc < %s -o /dev/null -mcpu=c3-2
-; RUN: llc < %s -o /dev/null -mcpu=geode
+; Test that the CPU names work.
+;
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=nocona 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=core2 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=penryn 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=nehalem 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=westmere 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=sandybridge 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=ivybridge 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=haswell 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=broadwell 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=bonnell 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=silvermont 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=k8 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=opteron 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=athlon64 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=athlon-fx 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=k8-sse3 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=opteron-sse3 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=athlon64-sse3 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=amdfam10 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=barcelona 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=bdver1 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=bdver2 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=bdver3 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=bdver4 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=btver1 2>&1 | count 0
+; RUN: llc < %s -o /dev/null -mtriple=x86_64-unknown-unknown -mcpu=btver2 2>&1 | count 0
