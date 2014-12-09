@@ -123,8 +123,12 @@ void %(check_name)s::registerMatchers(MatchFinder *Finder) {
 
 void %(check_name)s::check(const MatchFinder::MatchResult &Result) {
   // FIXME: Add callback implementation.
-  const FunctionDecl *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
-  diag(MatchedDecl->getLocation(), "Dummy warning");
+  const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
+  if (MatchedDecl->getName().startswith("awesome_"))
+    return;
+  diag(MatchedDecl->getLocation(), "function '%%0' is insufficiently awesome")
+      << MatchedDecl->getName()
+      << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
 }
 
 } // namespace tidy
@@ -174,25 +178,32 @@ def adapt_module(module_path, module, check_name, check_name_camel):
 
 # Adds a test for the check.
 def write_test(module_path, module, check_name):
+  check_name_dashes = module + '-' + check_name
   filename = os.path.join(module_path, '../../test/clang-tidy',
-                          module + '-' + check_name + '.cpp')
+                          check_name_dashes + '.cpp')
   with open(filename, 'w') as f:
-    f.write('// RUN: $(dirname %s)/check_clang_tidy.sh %s ' + module + '-' + 
-            check_name + ' %t\n')
-    f.write("""// REQUIRES: shell
+    f.write(
+"""// RUN: $(dirname %%s)/check_clang_tidy.sh %%s %(check_name_dashes)s %%t
+// REQUIRES: shell
 
-// FIXME: Add something that trigger the check here
+// FIXME: Add something that triggers the check here.
 void f();
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: Dummy warning
+// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: function 'f' is insufficiently awesome [%(check_name_dashes)s]
 
-// FIXME: Add something that doesn't trigger the check here
-int i;
-// CHECK-MESSAGES-NOT: warning:""")
+// FIXME: Verify the applied fix.
+//   * Make the CHECK patterns specific enough and try to make verified lines
+//     unique to avoid incorrect matches.
+//   * Use {{}} for regular expressions.
+// CHECK-FIXES: {{^}}void awesome_f();{{$}}
+
+// FIXME: Add something that doesn't trigger the check here.
+void awesome_f2();
+""" % {"check_name_dashes" : check_name_dashes})
 
 def main():
   if len(sys.argv) != 3:
     print 'Usage: add_new_check.py <module> <check>, e.g.\n'
-    print 'add_new_check.py misc else-after-return\n'
+    print 'add_new_check.py misc awesome-functions\n'
     return
 
   module = sys.argv[1]
