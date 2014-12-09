@@ -24,7 +24,23 @@ func (fr *frame) concatenateStrings(lhs, rhs *govalue) *govalue {
 	return newValue(result[0], types.Typ[types.String])
 }
 
+func (fr *frame) compareStringEmpty(v llvm.Value) *govalue {
+	len := fr.builder.CreateExtractValue(v, 1, "")
+	result := fr.builder.CreateIsNull(len, "")
+	result = fr.builder.CreateZExt(result, llvm.Int8Type(), "")
+	return newValue(result, types.Typ[types.Bool])
+}
+
 func (fr *frame) compareStrings(lhs, rhs *govalue, op token.Token) *govalue {
+	if op == token.EQL {
+		if lhs.value.IsNull() {
+			return fr.compareStringEmpty(rhs.value)
+		}
+		if rhs.value.IsNull() {
+			return fr.compareStringEmpty(lhs.value)
+		}
+	}
+
 	result := fr.runtime.strcmp.call(fr, lhs.value, rhs.value)[0]
 	zero := llvm.ConstNull(fr.types.inttype)
 	var pred llvm.IntPredicate
