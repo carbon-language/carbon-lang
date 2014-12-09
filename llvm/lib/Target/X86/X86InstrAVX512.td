@@ -661,48 +661,58 @@ def : Pat<(int_x86_avx512_vbroadcast_ss_512 addr:$src),
 def : Pat<(int_x86_avx512_vbroadcast_sd_512 addr:$src),
           (VBROADCASTSDZm addr:$src)>;
 
-multiclass avx512_int_broadcast_reg<bits<8> opc, string OpcodeStr,
-                          RegisterClass SrcRC, RegisterClass KRC> {
-  def Zrr : AVX5128I<opc, MRMSrcReg, (outs VR512:$dst), (ins SrcRC:$src),
-                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                   []>, EVEX, EVEX_V512;
-  def Zkrr : AVX5128I<opc, MRMSrcReg, (outs VR512:$dst),
-                   (ins KRC:$mask, SrcRC:$src),
-                   !strconcat(OpcodeStr,
-                        "\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}"),
-                   []>, EVEX, EVEX_V512, EVEX_KZ;
+multiclass avx512_int_broadcast_reg<bits<8> opc, X86VectorVTInfo _,
+                                    RegisterClass SrcRC> {
+  defm r : AVX512_maskable_in_asm<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                           (ins SrcRC:$src),  "vpbroadcast"##_.Suffix,
+                           "$src", "$src", []>, T8PD, EVEX;
 }
 
-defm VPBROADCASTDr  : avx512_int_broadcast_reg<0x7C, "vpbroadcastd", GR32, VK16WM>;
-defm VPBROADCASTQr  : avx512_int_broadcast_reg<0x7C, "vpbroadcastq", GR64, VK8WM>,
-                                            VEX_W;
+multiclass avx512_int_broadcast_reg_vl<bits<8> opc, AVX512VLVectorVTInfo _,
+                                       RegisterClass SrcRC, Predicate prd> {
+  let Predicates = [prd] in
+    defm Z : avx512_int_broadcast_reg<opc, _.info512, SrcRC>, EVEX_V512;
+  let Predicates = [prd, HasVLX] in {
+    defm Z256 : avx512_int_broadcast_reg<opc, _.info256, SrcRC>, EVEX_V256;
+    defm Z128 : avx512_int_broadcast_reg<opc, _.info128, SrcRC>, EVEX_V128;
+  }
+}
+
+defm VPBROADCASTBr : avx512_int_broadcast_reg_vl<0x7A, avx512vl_i8_info, GR32,
+                                                 HasBWI>;
+defm VPBROADCASTWr : avx512_int_broadcast_reg_vl<0x7B, avx512vl_i16_info, GR32,
+                                                 HasBWI>;
+defm VPBROADCASTDr : avx512_int_broadcast_reg_vl<0x7C, avx512vl_i32_info, GR32,
+                                                 HasAVX512>;
+defm VPBROADCASTQr : avx512_int_broadcast_reg_vl<0x7C, avx512vl_i64_info, GR64,
+                                                 HasAVX512>, VEX_W;
 
 def : Pat <(v16i32 (X86vzext VK16WM:$mask)),
-           (VPBROADCASTDrZkrr VK16WM:$mask, (i32 (MOV32ri 0x1)))>;
+           (VPBROADCASTDrZrkz VK16WM:$mask, (i32 (MOV32ri 0x1)))>;
 
 def : Pat <(v8i64 (X86vzext VK8WM:$mask)),
-           (VPBROADCASTQrZkrr VK8WM:$mask, (i64 (MOV64ri 0x1)))>;
+           (VPBROADCASTQrZrkz VK8WM:$mask, (i64 (MOV64ri 0x1)))>;
 
 def : Pat<(v16i32 (X86VBroadcast (i32 GR32:$src))),
-        (VPBROADCASTDrZrr GR32:$src)>;
+        (VPBROADCASTDrZr GR32:$src)>;
 def : Pat<(v16i32 (X86VBroadcastm VK16WM:$mask, (i32 GR32:$src))),
-        (VPBROADCASTDrZkrr VK16WM:$mask, GR32:$src)>;
+        (VPBROADCASTDrZrkz VK16WM:$mask, GR32:$src)>;
 def : Pat<(v8i64 (X86VBroadcast (i64 GR64:$src))),
-        (VPBROADCASTQrZrr GR64:$src)>;
+        (VPBROADCASTQrZr GR64:$src)>;
 def : Pat<(v8i64 (X86VBroadcastm VK8WM:$mask, (i64 GR64:$src))),
-        (VPBROADCASTQrZkrr VK8WM:$mask, GR64:$src)>;
+        (VPBROADCASTQrZrkz VK8WM:$mask, GR64:$src)>;
 
 def : Pat<(v16i32 (int_x86_avx512_pbroadcastd_i32_512 (i32 GR32:$src))),
-        (VPBROADCASTDrZrr GR32:$src)>;
+        (VPBROADCASTDrZr GR32:$src)>;
 def : Pat<(v8i64 (int_x86_avx512_pbroadcastq_i64_512 (i64 GR64:$src))),
-        (VPBROADCASTQrZrr GR64:$src)>;
+        (VPBROADCASTQrZr GR64:$src)>;
 
 def : Pat<(v16i32 (int_x86_avx512_mask_pbroadcast_d_gpr_512 (i32 GR32:$src),
                    (v16i32 immAllZerosV), (i16 GR16:$mask))),
-          (VPBROADCASTDrZkrr (COPY_TO_REGCLASS GR16:$mask, VK16WM), GR32:$src)>;
+          (VPBROADCASTDrZrkz (COPY_TO_REGCLASS GR16:$mask, VK16WM), GR32:$src)>;
 def : Pat<(v8i64 (int_x86_avx512_mask_pbroadcast_q_gpr_512 (i64 GR64:$src),
                    (bc_v8i64 (v16i32 immAllZerosV)), (i8 GR8:$mask))),
-          (VPBROADCASTQrZkrr (COPY_TO_REGCLASS GR8:$mask, VK8WM), GR64:$src)>;
+          (VPBROADCASTQrZrkz (COPY_TO_REGCLASS GR8:$mask, VK8WM), GR64:$src)>;
 
 multiclass avx512_int_broadcast_rm<bits<8> opc, string OpcodeStr,
                           X86MemOperand x86memop, PatFrag ld_frag,
