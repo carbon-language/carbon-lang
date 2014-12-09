@@ -1111,7 +1111,7 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   if (!DIVar)
     return false;
 
-  // Create a copy of the original DIDescriptor for user variable, appending
+  // Create a copy of the original DIDescriptor for user variable, prepending
   // "deref" operation to a list of address elements, as new llvm.dbg.declare
   // will take a value storing address of the memory for variable, not
   // alloca itself.
@@ -1121,7 +1121,7 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
       NewDIExpr.push_back(DIExpr.getElement(i));
     }
   }
-  NewDIExpr.push_back(dwarf::DW_OP_deref);
+  NewDIExpr.insert(NewDIExpr.begin(), dwarf::DW_OP_deref);
 
   // Insert llvm.dbg.declare in the same basic block as the original alloca,
   // and remove old llvm.dbg.declare.
