@@ -237,6 +237,8 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
 
 GlobalValue *IRObjectFile::getSymbolGV(DataRefImpl Symb) { return getGV(Symb); }
 
+std::unique_ptr<Module> IRObjectFile::takeModule() { return std::move(M); }
+
 basic_symbol_iterator IRObjectFile::symbol_begin_impl() const {
   Module::const_iterator I = M->begin();
   DataRefImpl Ret;

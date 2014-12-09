@@ -49,7 +49,7 @@ public:
   Module &getModule() {
     return *M;
   }
-  std::unique_ptr<Module> takeModule() { return std::move(M); }
+  std::unique_ptr<Module> takeModule();
 
   static inline bool classof(const Binary *v) {
     return v->isIR();
