@@ -45,7 +45,8 @@ typedef enum
 #define COND_AL     0xE    // Always (unconditional)    Always (unconditional)        Any
 #define COND_UNCOND 0xF
 
-static inline const char *ARMCondCodeToString(uint32_t CC)
+static inline const char *
+ARMCondCodeToString(uint32_t CC)
 {
     switch (CC) {
     default: assert(0 && "Unknown condition code");
@@ -65,6 +66,37 @@ static inline const char *ARMCondCodeToString(uint32_t CC)
     case COND_LE:  return "le";
     case COND_AL:  return "al";
     }
+}
+
+static inline bool
+ARMConditionPassed(const uint32_t condition, const uint32_t cpsr)
+{
+    const uint32_t cpsr_n = (cpsr >> 31) & 1u; // Negative condition code flag
+    const uint32_t cpsr_z = (cpsr >> 30) & 1u; // Zero condition code flag
+    const uint32_t cpsr_c = (cpsr >> 29) & 1u; // Carry condition code flag
+    const uint32_t cpsr_v = (cpsr >> 28) & 1u; // Overflow condition code flag
+
+    switch (condition) {
+        case COND_EQ: return (cpsr_z == 1);
+        case COND_NE: return (cpsr_z == 0);
+        case COND_CS: return (cpsr_c == 1);
+        case COND_CC: return (cpsr_c == 0);
+        case COND_MI: return (cpsr_n == 1);
+        case COND_PL: return (cpsr_n == 0);
+        case COND_VS: return (cpsr_v == 1);
+        case COND_VC: return (cpsr_v == 0);
+        case COND_HI: return ((cpsr_c == 1) && (cpsr_z == 0));
+        case COND_LS: return ((cpsr_c == 0) || (cpsr_z == 1));
+        case COND_GE: return (cpsr_n == cpsr_v);
+        case COND_LT: return (cpsr_n != cpsr_v);
+        case COND_GT: return ((cpsr_z == 0) && (cpsr_n == cpsr_v));
+        case COND_LE: return ((cpsr_z == 1) || (cpsr_n != cpsr_v));
+        case COND_AL:
+        case COND_UNCOND:
+        default:
+            return true;
+    }
+    return false;
 }
 
 // Bit positions for CPSR

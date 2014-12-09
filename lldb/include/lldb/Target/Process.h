@@ -2867,7 +2867,12 @@ public:
     {
         return m_os_ap.get();
     }
-    
+
+    ArchSpec::StopInfoOverrideCallbackType
+    GetStopInfoOverrideCallback () const
+    {
+        return m_stop_info_override_callback;
+    }
 
     virtual LanguageRuntime *
     GetLanguageRuntime (lldb::LanguageType language, bool retry_if_null = true);
@@ -3178,6 +3183,7 @@ protected:
     ProcessRunLock              m_public_run_lock;
     ProcessRunLock              m_private_run_lock;
     Predicate<bool>             m_currently_handling_event; // This predicate is set in HandlePrivateEvent while all its business is being done.
+    ArchSpec::StopInfoOverrideCallbackType m_stop_info_override_callback;
     bool                        m_currently_handling_do_on_removals;
     bool                        m_resume_requested;         // If m_currently_handling_event or m_currently_handling_do_on_removals are true, Resume will only request a resume, using this flag to check.
     bool                        m_finalize_called;

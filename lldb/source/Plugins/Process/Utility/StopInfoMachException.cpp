@@ -423,9 +423,11 @@ StopInfoMachException::CreateStopReasonWithMachException
                                 wp_sp->SetHardwareIndex((uint32_t)exc_sub_sub_code);
                             return StopInfo::CreateStopReasonWithWatchpointID(thread, wp_sp->GetID());
                         }
-                        // EXC_ARM_DA_DEBUG seems to be reused for EXC_BREAKPOINT as well as EXC_BAD_ACCESS
-                        if (thread.GetTemporaryResumeState() == eStateStepping)
-                            return StopInfo::CreateStopReasonToTrace(thread);
+                        else
+                        {
+                            is_actual_breakpoint = true;
+                            is_trace_if_actual_breakpoint_missing = true;
+                        }
                     }
                     else if (exc_code == 1) // EXC_ARM_BREAKPOINT
                     {

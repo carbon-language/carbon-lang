@@ -719,6 +719,7 @@ Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_s
     m_public_run_lock (),
     m_private_run_lock (),
     m_currently_handling_event(false),
+    m_stop_info_override_callback (NULL),
     m_finalize_called(false),
     m_clear_thread_plans_on_stop (false),
     m_force_next_event_delivery(false),
@@ -846,6 +847,7 @@ Process::Finalize()
     m_language_runtimes.clear();
     m_instrumentation_runtimes.clear();
     m_next_event_action_ap.reset();
+    m_stop_info_override_callback = NULL;
 //#ifdef LLDB_CONFIGURATION_DEBUG
 //    StreamFile s(stdout, false);
 //    EventSP event_sp;
@@ -3002,6 +3004,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
     m_system_runtime_ap.reset();
     m_os_ap.reset();
     m_process_input_reader.reset();
+    m_stop_info_override_callback = NULL;
 
     Module *exe_module = m_target.GetExecutableModulePointer();
     if (exe_module)
@@ -3093,6 +3096,8 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                             ResumePrivateStateThread ();
                         else
                             StartPrivateStateThread ();
+
+                        m_stop_info_override_callback = GetTarget().GetArchitecture().GetStopInfoOverrideCallback();
                     }
                     else if (state == eStateExited)
                     {
@@ -3270,6 +3275,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
     m_jit_loaders_ap.reset();
     m_system_runtime_ap.reset();
     m_os_ap.reset();
+    m_stop_info_override_callback = NULL;
     
     lldb::pid_t attach_pid = attach_info.GetProcessID();
     Error error;
@@ -3527,6 +3533,8 @@ Process::CompleteAttach ()
                          exe_module_sp ? exe_module_sp->GetFileSpec().GetPath().c_str () : "<none>");
         }
     }
+
+    m_stop_info_override_callback = process_arch.GetStopInfoOverrideCallback();
 }
 
 Error
@@ -6239,6 +6247,7 @@ Process::DidExec ()
     m_instrumentation_runtimes.clear();
     m_thread_list.DiscardThreadPlans();
     m_memory_cache.Clear(true);
+    m_stop_info_override_callback = NULL;
     DoDidExec();
     CompleteAttach ();
     // Flush the process (threads and all stack frames) after running CompleteAttach()

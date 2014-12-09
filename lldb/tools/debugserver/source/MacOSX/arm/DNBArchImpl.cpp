@@ -63,8 +63,9 @@
 // I'm seeing this, instead.
 #define WATCHPOINT_OCCURRED     ((uint32_t)(10u))
 
-static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
-static const uint8_t g_thumb_breakpoint_opcode[] = { 0xFE, 0xDE };
+// 0xE120BE70
+static const uint8_t g_arm_breakpoint_opcode[] = { 0x70, 0xBE, 0x20, 0xE1 };
+static const uint8_t g_thumb_breakpoint_opcode[] = { 0x70, 0xBE };
 
 // A watchpoint may need to be implemented using two watchpoint registers.
 // e.g. watching an 8-byte region when the device can only watch 4-bytes.
@@ -105,6 +106,15 @@ static uint32_t LoHi[16] = { 0 };
 #define MNEMONIC_STRING_SIZE 32
 #define OPERAND_STRING_SIZE 128
 
+// Returns true if the first 16 bit opcode of a thumb instruction indicates
+// the instruction will be a 32 bit thumb opcode
+static bool
+IsThumb32Opcode (uint16_t opcode)
+{
+    if (((opcode & 0xE000) == 0xE000) && (opcode & 0x1800))
+        return true;
+    return false;
+}
 
 void
 DNBArchMachARM::Initialize()
@@ -584,7 +594,7 @@ DNBArchMachARM::EnableHardwareSingleStep (bool enable)
             uint16_t opcode;
             if (sizeof(opcode) == m_thread->Process()->Task().ReadMemory(m_state.context.gpr.__pc, sizeof(opcode), &opcode))
             {
-                if (((opcode & 0xE000) == 0xE000) && opcode & 0x1800)
+                if (IsThumb32Opcode(opcode))
                 {
                     // 32 bit thumb opcode...
                     if (m_state.context.gpr.__pc & 2)

@@ -1315,6 +1315,7 @@ protected:
     lldb::ProcessWP     m_process_wp;           ///< The process that owns this thread.
     lldb::StopInfoSP    m_stop_info_sp;         ///< The private stop reason for this thread
     uint32_t            m_stop_info_stop_id;    // This is the stop id for which the StopInfo is valid.  Can use this so you know that
+    uint32_t            m_stop_info_override_stop_id;    // The stop ID containing the last time the stop info was checked against the stop info override
     // the thread's m_stop_info_sp is current and you don't have to fetch it again
     const uint32_t      m_index_id;             ///< A unique 1 based index assigned to each thread for easy UI/command line access.
     lldb::RegisterContextSP m_reg_context_sp;   ///< The register context for this thread's current register state.

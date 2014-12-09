@@ -279,6 +279,7 @@ Thread::Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id) :
     m_process_wp (process.shared_from_this()),
     m_stop_info_sp (),
     m_stop_info_stop_id (0),
+    m_stop_info_override_stop_id (0),
     m_index_id (use_invalid_index_id ? LLDB_INVALID_INDEX32 : process.GetNextThreadIndexID(tid)),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
@@ -466,6 +467,24 @@ Thread::GetPrivateStopInfo ()
                     SetStopInfo (StopInfoSP());
             }
         }
+
+        // The stop info can be manually set by calling Thread::SetStopInfo()
+        // prior to this function ever getting called, so we can't rely on
+        // "m_stop_info_stop_id != process_stop_id" as the condition for
+        // the if statement below, we must also check the stop info to see
+        // if we need to override it. See the header documentation in
+        // Process::GetStopInfoOverrideCallback() for more information on
+        // the stop info override callback.
+        if (m_stop_info_override_stop_id != process_stop_id)
+        {
+            m_stop_info_override_stop_id = process_stop_id;
+            if (m_stop_info_sp)
+            {
+                ArchSpec::StopInfoOverrideCallbackType callback = GetProcess()->GetStopInfoOverrideCallback();
+                if (callback)
+                    callback(*this);
+            }
+        }
     }
     return m_stop_info_sp;
 }
@@ -643,7 +662,8 @@ Thread::SetupForResume ()
         lldb::RegisterContextSP reg_ctx_sp (GetRegisterContext());
         if (reg_ctx_sp)
         {
-            BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(reg_ctx_sp->GetPC());
+            const addr_t thread_pc = reg_ctx_sp->GetPC();
+            BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(thread_pc);
             if (bp_site_sp)
             {
                 // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
@@ -651,7 +671,17 @@ Thread::SetupForResume ()
                     
                 ThreadPlan *cur_plan = GetCurrentPlan();
 
-                if (cur_plan->GetKind() != ThreadPlan::eKindStepOverBreakpoint)
+                bool push_step_over_bp_plan = false;
+                if (cur_plan->GetKind() == ThreadPlan::eKindStepOverBreakpoint)
+                {
+                    ThreadPlanStepOverBreakpoint *bp_plan = (ThreadPlanStepOverBreakpoint *)cur_plan;
+                    if (bp_plan->GetBreakpointLoadAddress() != thread_pc)
+                        push_step_over_bp_plan = true;
+                }
+                else
+                    push_step_over_bp_plan = true;
+
+                if (push_step_over_bp_plan)
                 {
                     ThreadPlanSP step_bp_plan_sp (new ThreadPlanStepOverBreakpoint (*this));
                     if (step_bp_plan_sp)
