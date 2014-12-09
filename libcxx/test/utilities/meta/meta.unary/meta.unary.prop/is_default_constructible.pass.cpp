@@ -35,6 +35,11 @@ class Empty
 {
 };
 
+class NoDefaultConstructor
+{
+	NoDefaultConstructor(int) {}
+};
+
 class NotEmpty
 {
 public:
@@ -81,6 +86,7 @@ int main()
     test_is_not_default_constructible<int&>();
     test_is_not_default_constructible<char[]>();
     test_is_not_default_constructible<Abstract>();
+    test_is_not_default_constructible<NoDefaultConstructor>();
 #if __has_feature(cxx_access_control_sfinae) 
     test_is_not_default_constructible<B>();
 #endif
