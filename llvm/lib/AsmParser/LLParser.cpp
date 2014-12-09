@@ -869,7 +869,9 @@ bool LLParser::ParseUnnamedAttrGrp() {
   LocTy AttrGrpLoc = Lex.getLoc();
   Lex.Lex();
 
-  assert(Lex.getKind() == lltok::AttrGrpID);
+  if (Lex.getKind() != lltok::AttrGrpID)
+    return TokError("expected attribute group id");
+
   unsigned VarID = Lex.getUIntVal();
   std::vector<unsigned> unused;
   LocTy BuiltinLoc;
