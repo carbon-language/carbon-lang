@@ -3869,12 +3869,12 @@ bool CodeGenPrepare::splitBranchCondition(Function &F) {
       continue;
 
     unsigned Opc;
-    Instruction *Cond1, *Cond2;
-    if (match(LogicOp, m_And(m_OneUse(m_Instruction(Cond1)),
-                             m_OneUse(m_Instruction(Cond2)))))
+    Value *Cond1, *Cond2;
+    if (match(LogicOp, m_And(m_OneUse(m_Value(Cond1)),
+                             m_OneUse(m_Value(Cond2)))))
       Opc = Instruction::And;
-    else if (match(LogicOp, m_Or(m_OneUse(m_Instruction(Cond1)),
-                                 m_OneUse(m_Instruction(Cond2)))))
+    else if (match(LogicOp, m_Or(m_OneUse(m_Value(Cond1)),
+                                 m_OneUse(m_Value(Cond2)))))
       Opc = Instruction::Or;
     else
       continue;
@@ -3897,7 +3897,7 @@ bool CodeGenPrepare::splitBranchCondition(Function &F) {
     auto *Br1 = cast<BranchInst>(BB.getTerminator());
     Br1->setCondition(Cond1);
     LogicOp->eraseFromParent();
-    Cond2->removeFromParent();
+
     // Depending on the conditon we have to either replace the true or the false
     // successor of the original branch instruction.
     if (Opc == Instruction::And)
@@ -3907,7 +3907,10 @@ bool CodeGenPrepare::splitBranchCondition(Function &F) {
 
     // Fill in the new basic block.
     auto *Br2 = IRBuilder<>(TmpBB).CreateCondBr(Cond2, TBB, FBB);
-    Cond2->insertBefore(Br2);
+    if (auto *I = dyn_cast<Instruction>(Cond2)) {
+      I->removeFromParent();
+      I->insertBefore(Br2);
+    }
 
     // Update PHI nodes in both successors. The original BB needs to be
     // replaced in one succesor's PHI nodes, because the branch comes now from

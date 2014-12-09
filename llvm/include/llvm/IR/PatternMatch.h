@@ -68,10 +68,6 @@ struct class_match {
 
 /// m_Value() - Match an arbitrary value and ignore it.
 inline class_match<Value> m_Value() { return class_match<Value>(); }
-/// m_Instruction() - Match an arbitrary instruction and ignore it.
-inline class_match<Instruction> m_Instruction() {
-  return class_match<Instruction>();
-}
 /// m_BinOp() - Match an arbitrary binary operation and ignore it.
 inline class_match<BinaryOperator> m_BinOp() {
   return class_match<BinaryOperator>();
@@ -310,9 +306,6 @@ struct bind_ty {
 
 /// m_Value - Match a value, capturing it if we match.
 inline bind_ty<Value> m_Value(Value *&V) { return V; }
-
-/// m_Instruction - Match a instruction, capturing it if we match.
-inline bind_ty<Instruction> m_Instruction(Instruction *&I) { return I; }
 
 /// m_BinOp - Match a instruction, capturing it if we match.
 inline bind_ty<BinaryOperator> m_BinOp(BinaryOperator *&I) { return I; }
