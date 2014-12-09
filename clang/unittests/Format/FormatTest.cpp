@@ -2624,6 +2624,9 @@ TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
   EXPECT_EQ("SOME_WEIRD_LOG_MACRO << SomeThing;",
             format("SOME_WEIRD_LOG_MACRO\n"
                    "<< SomeThing;"));
+
+  verifyFormat("VISIT_GL_CALL(GenBuffers, void, (GLsizei n, GLuint* buffers), "
+               "(n, buffers))\n", getChromiumStyle(FormatStyle::LK_Cpp));
 }
 
 TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
