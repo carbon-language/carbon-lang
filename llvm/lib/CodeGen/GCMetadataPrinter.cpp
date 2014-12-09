@@ -18,10 +18,10 @@ GCMetadataPrinter::GCMetadataPrinter() { }
 
 GCMetadataPrinter::~GCMetadataPrinter() { }
 
-void GCMetadataPrinter::beginAssembly(AsmPrinter &AP) {
+void GCMetadataPrinter::beginAssembly(Module &M, AsmPrinter &AP) {
   // Default is no action.
 }
 
-void GCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
+void GCMetadataPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
   // Default is no action.
 }

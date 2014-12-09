@@ -55,16 +55,14 @@ namespace llvm {
 
   public:
     GCStrategy &getStrategy() { return *S; }
-    const Module &getModule() const { return S->getModule(); }
 
     /// begin/end - Iterate over the collected function metadata.
     iterator begin() { return S->begin(); }
     iterator end()   { return S->end();   }
 
     /// beginAssembly/finishAssembly - Emit module metadata as assembly code.
-    virtual void beginAssembly(AsmPrinter &AP);
-
-    virtual void finishAssembly(AsmPrinter &AP);
+    virtual void beginAssembly(Module &M, AsmPrinter &AP);
+    virtual void finishAssembly(Module &M, AsmPrinter &AP);
 
     virtual ~GCMetadataPrinter();
   };

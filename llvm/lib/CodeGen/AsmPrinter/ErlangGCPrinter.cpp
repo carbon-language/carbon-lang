@@ -36,8 +36,8 @@ namespace {
 
   class ErlangGCPrinter : public GCMetadataPrinter {
   public:
-    void beginAssembly(AsmPrinter &AP) override;
-    void finishAssembly(AsmPrinter &AP) override;
+    void beginAssembly(Module &M, AsmPrinter &AP) override;
+    void finishAssembly(Module &M, AsmPrinter &AP) override;
   };
 
 }
@@ -47,9 +47,9 @@ X("erlang", "erlang-compatible garbage collector");
 
 void llvm::linkErlangGCPrinter() { }
 
-void ErlangGCPrinter::beginAssembly(AsmPrinter &AP) { }
+void ErlangGCPrinter::beginAssembly(Module &M, AsmPrinter &AP) { }
 
-void ErlangGCPrinter::finishAssembly(AsmPrinter &AP) {
+void ErlangGCPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
   MCStreamer &OS = AP.OutStreamer;
   unsigned IntPtrSize =
       AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();

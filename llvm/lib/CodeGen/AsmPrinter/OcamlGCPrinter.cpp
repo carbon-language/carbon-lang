@@ -34,8 +34,8 @@ namespace {
 
   class OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
-    void beginAssembly(AsmPrinter &AP) override;
-    void finishAssembly(AsmPrinter &AP) override;
+    void beginAssembly(Module &M, AsmPrinter &AP) override;
+    void finishAssembly(Module &M, AsmPrinter &AP) override;
   };
 
 }
@@ -67,12 +67,12 @@ static void EmitCamlGlobal(const Module &M, AsmPrinter &AP, const char *Id) {
   AP.OutStreamer.EmitLabel(Sym);
 }
 
-void OcamlGCMetadataPrinter::beginAssembly(AsmPrinter &AP) {
+void OcamlGCMetadataPrinter::beginAssembly(Module &M, AsmPrinter &AP) {
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
-  EmitCamlGlobal(getModule(), AP, "code_begin");
+  EmitCamlGlobal(M, AP, "code_begin");
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
-  EmitCamlGlobal(getModule(), AP, "data_begin");
+  EmitCamlGlobal(M, AP, "data_begin");
 }
 
 /// emitAssembly - Print the frametable. The ocaml frametable format is thus:
@@ -91,21 +91,21 @@ void OcamlGCMetadataPrinter::beginAssembly(AsmPrinter &AP) {
 /// (FrameSize and LiveOffsets would overflow). FrameTablePrinter will abort if
 /// either condition is detected in a function which uses the GC.
 ///
-void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
+void OcamlGCMetadataPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
   unsigned IntPtrSize =
       AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
-  EmitCamlGlobal(getModule(), AP, "code_end");
+  EmitCamlGlobal(M, AP, "code_end");
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
-  EmitCamlGlobal(getModule(), AP, "data_end");
+  EmitCamlGlobal(M, AP, "data_end");
 
   // FIXME: Why does ocaml emit this??
   AP.OutStreamer.EmitIntValue(0, IntPtrSize);
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
-  EmitCamlGlobal(getModule(), AP, "frametable");
+  EmitCamlGlobal(M, AP, "frametable");
 
   int NumDescriptors = 0;
   for (iterator I = begin(), IE = end(); I != IE; ++I) {

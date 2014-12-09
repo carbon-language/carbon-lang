@@ -59,7 +59,6 @@ namespace llvm {
     
   private:
     friend class GCModuleInfo;
-    const Module *M;
     std::string Name;
     
     list_type Functions;
@@ -83,10 +82,6 @@ namespace llvm {
     /// getName - The name of the GC strategy, for debugging.
     /// 
     const std::string &getName() const { return Name; }
-
-    /// getModule - The module within which the GC strategy is operating.
-    /// 
-    const Module &getModule() const { return *M; }
 
     /// needsSafePoitns - True if safe points of any kind are required. By
     //                    default, none are recorded.
