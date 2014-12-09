@@ -33,6 +33,7 @@
 #include "llvm/Support/UniqueLock.h"
 #include "llvm/Support/type_traits.h"
 #include <iterator>
+#include <memory>
 
 namespace llvm {
 
