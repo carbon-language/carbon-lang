@@ -12,17 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/PatternMatch.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
-using namespace llvm::PatternMatch;
 
 #define DEBUG_TYPE "instcombine"
 
@@ -348,142 +345,6 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
   return NewLoad;
 }
 
-/// \brief Combine integer loads to vector stores when the integers bits are
-/// just a concatenation of non-integer (and non-vector) types.
-///
-/// This specifically matches the pattern of loading an integer, right-shifting,
-/// trucating, and casting it to a non-integer type. When the shift is an exact
-/// multiple of the result non-integer type's size, this is more naturally
-/// expressed as a load of a vector and an extractelement. This shows up largely
-/// because large integers are sometimes used to represent a "generic" load or
-/// store, and only later optimization may uncover that there is a more natural
-/// type to represent the load with.
-static Instruction *combineIntegerLoadToVectorLoad(InstCombiner &IC,
-                                                   LoadInst &LI) {
-  // FIXME: This is probably a reasonable transform to make for atomic stores.
-  assert(LI.isSimple() && "Do not call for non-simple stores!");
-
-  const DataLayout &DL = *IC.getDataLayout();
-  unsigned BaseBits = LI.getType()->getIntegerBitWidth();
-  Type *ElementTy = nullptr;
-  int ElementSize;
-
-  // We match any number of element extractions from the loaded integer. Each of
-  // these should be RAUW'ed with an actual extract element instruction at the
-  // given index of a loaded vector.
-  struct ExtractedElement {
-    Instruction *Element;
-    int Index;
-  };
-  SmallVector<ExtractedElement, 2> Elements;
-
-  // Lambda to match the bit cast in the extracted element (which is the root
-  // pattern matched). Accepts the instruction and shifted bits, returns false
-  // if at any point we failed to match a suitable bitcast for element
-  // extraction.
-  auto MatchCast = [&](Instruction *I, unsigned ShiftBits) {
-    // The truncate must be casted to some element type. This cast can only be
-    // a bitcast or an inttoptr cast which is the same size.
-    if (!isa<BitCastInst>(I)) {
-      if (auto *PC = dyn_cast<IntToPtrInst>(I)) {
-        // Ensure that the pointer and integer have the exact same size.
-        if (PC->getOperand(0)->getType()->getIntegerBitWidth() !=
-            DL.getTypeSizeInBits(PC->getType()))
-          return false;
-      } else {
-        // We only support bitcast and inttoptr.
-        return false;
-      }
-    }
-
-    // All of the elements inserted need to be the same type. Either capture the
-    // first element type or check this element type against the previous
-    // element types.
-    if (!ElementTy) {
-      ElementTy = I->getType();
-      // We don't handle integers, sub-vectors, or any aggregate types. We
-      // handle pointers and floating ponit types.
-      if (!ElementTy->isSingleValueType() || ElementTy->isIntegerTy() ||
-          ElementTy->isVectorTy())
-        return false;
-
-      ElementSize = DL.getTypeSizeInBits(ElementTy);
-      // The base integer size and the shift need to be multiples of the element
-      // size in bits.
-      if (BaseBits % ElementSize || ShiftBits % ElementSize)
-        return false;
-    } else if (ElementTy != I->getType()) {
-      return false;
-    }
-
-    // Compute the vector index and store the element with it.
-    int Index =
-        (DL.isLittleEndian() ? ShiftBits : BaseBits - ElementSize - ShiftBits) /
-        ElementSize;
-    ExtractedElement E = {I, Index};
-    Elements.push_back(std::move(E));
-    return true;
-  };
-
-  // Lambda to match the truncate in the extracted element. Accepts the
-  // instruction and shifted bits. Returns false if at any point we failed to
-  // match a suitable truncate for element extraction.
-  auto MatchTruncate = [&](Instruction *I, unsigned ShiftBits) {
-    // Handle the truncate to the bit size of the element.
-    auto *T = dyn_cast<TruncInst>(I);
-    if (!T)
-      return false;
-
-    // Walk all the users of the truncate, whuch must all be bitcasts.
-    for (User *TU : T->users())
-      if (!MatchCast(cast<Instruction>(TU), ShiftBits))
-        return false;
-    return true;
-  };
-
-  for (User *U : LI.users()) {
-    Instruction *I = cast<Instruction>(U);
-
-    // Strip off a logical shift right and retain the shifted amount.
-    ConstantInt *ShiftC;
-    if (!match(I, m_LShr(m_Value(), m_ConstantInt(ShiftC)))) {
-      // This must be a direct truncate.
-      if (!MatchTruncate(I, 0))
-        return nullptr;
-      continue;
-    }
-
-    unsigned ShiftBits = ShiftC->getLimitedValue(BaseBits);
-    // We can't handle shifts of more than the number of bits in the integer.
-    if (ShiftBits == BaseBits)
-      return nullptr;
-
-    // Match all the element extraction users of the shift.
-    for (User *IU : I->users())
-      if (!MatchTruncate(cast<Instruction>(IU), ShiftBits))
-        return nullptr;
-  }
-
-  // If didn't find any extracted elements, there is nothing to do here.
-  if (Elements.empty())
-    return nullptr;
-
-  // Create a vector load and rewrite all of the elements extracted as
-  // extractelement instructions.
-  VectorType *VTy = VectorType::get(ElementTy, BaseBits / ElementSize);
-  LoadInst *NewLI = combineLoadToNewType(IC, LI, VTy);
-
-  for (const auto &E : Elements) {
-    IC.Builder->SetInsertPoint(E.Element);
-    E.Element->replaceAllUsesWith(
-        IC.Builder->CreateExtractElement(NewLI, IC.Builder->getInt32(E.Index)));
-    IC.EraseInstFromFunction(*E.Element);
-  }
-
-  // Return the original load to indicate it has been combined away.
-  return &LI;
-}
-
 /// \brief Combine loads to match the type of value their uses after looking
 /// through intervening bitcasts.
 ///
@@ -512,8 +373,6 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
 
 
   // Fold away bit casts of the loaded value by loading the desired type.
-  // FIXME: We should also canonicalize loads of vectors when their elements are
-  // cast to other types.
   if (LI.hasOneUse())
     if (auto *BC = dyn_cast<BitCastInst>(LI.user_back())) {
       LoadInst *NewLoad = combineLoadToNewType(IC, LI, BC->getDestTy());
@@ -522,12 +381,8 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
       return &LI;
     }
 
-  // Try to combine integer loads into vector loads when the integer is just
-  // loading a bag of bits that are casted into vector element chunks.
-  if (LI.getType()->isIntegerTy())
-    if (Instruction *R = combineIntegerLoadToVectorLoad(IC, LI))
-      return R;
-
+  // FIXME: We should also canonicalize loads of vectors when their elements are
+  // cast to other types.
   return nullptr;
 }
 
@@ -636,201 +491,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   return nullptr;
 }
 
-/// \brief Helper to combine a store to use a new value.
-///
-/// This just does the work of combining a store to use a new value, potentially
-/// of a different type. It handles metadata, etc., and returns the new
-/// instruction. The new value is stored to a bitcast of the pointer argument to
-/// the original store.
-///
-/// Note that this will create the instructions with whatever insert point the
-/// \c InstCombiner currently is using.
-static StoreInst *combineStoreToNewValue(InstCombiner &IC, StoreInst &OldSI,
-                                         Value *V) {
-  Value *Ptr = OldSI.getPointerOperand();
-  unsigned AS = OldSI.getPointerAddressSpace();
-  SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
-  OldSI.getAllMetadata(MD);
-
-  StoreInst *NewSI = IC.Builder->CreateAlignedStore(
-      V, IC.Builder->CreateBitCast(Ptr, V->getType()->getPointerTo(AS)),
-      OldSI.getAlignment());
-  for (const auto &MDPair : MD) {
-    unsigned ID = MDPair.first;
-    MDNode *N = MDPair.second;
-    // Note, essentially every kind of metadata should be preserved here! This
-    // routine is supposed to clone a store instruction changing *only its
-    // type*. The only metadata it makes sense to drop is metadata which is
-    // invalidated when the pointer type changes. This should essentially
-    // never be the case in LLVM, but we explicitly switch over only known
-    // metadata to be conservatively correct. If you are adding metadata to
-    // LLVM which pertains to stores, you almost certainly want to add it
-    // here.
-    switch (ID) {
-    case LLVMContext::MD_dbg:
-    case LLVMContext::MD_tbaa:
-    case LLVMContext::MD_prof:
-    case LLVMContext::MD_fpmath:
-    case LLVMContext::MD_tbaa_struct:
-    case LLVMContext::MD_alias_scope:
-    case LLVMContext::MD_noalias:
-    case LLVMContext::MD_nontemporal:
-    case LLVMContext::MD_mem_parallel_loop_access:
-    case LLVMContext::MD_nonnull:
-      // All of these directly apply.
-      NewSI->setMetadata(ID, N);
-      break;
-
-    case LLVMContext::MD_invariant_load:
-    case LLVMContext::MD_range:
-      break;
-    }
-  }
-  return NewSI;
-}
-
-/// \brief Combine integer stores to vector stores when the integers bits are
-/// just a concatenation of non-integer (and non-vector) types.
-///
-/// This specifically matches the pattern of taking a sequence of non-integer
-/// types, casting them to integers, extending, shifting, and or-ing them
-/// together to make a concatenation, and then storing the result. This shows up
-/// because large integers are sometimes used to represent a "generic" load or
-/// store, and only later optimization may uncover that there is a more natural
-/// type to represent the store with.
-///
-/// \returns true if the store was successfully combined away. This indicates
-/// the caller must erase the store instruction. We have to let the caller erase
-/// the store instruction sas otherwise there is no way to signal whether it was
-/// combined or not: IC.EraseInstFromFunction returns a null pointer.
-static bool combineIntegerStoreToVectorStore(InstCombiner &IC, StoreInst &SI) {
-  // FIXME: This is probably a reasonable transform to make for atomic stores.
-  assert(SI.isSimple() && "Do not call for non-simple stores!");
-
-  Instruction *OrigV = dyn_cast<Instruction>(SI.getValueOperand());
-  if (!OrigV)
-    return false;
-
-  // We only handle values which are used entirely to store to memory. If the
-  // value is used directly as an SSA value, then even if there are matching
-  // element insertion and element extraction, we rely on basic integer
-  // combining to forward the bits and delete the intermediate math. Here we
-  // just need to clean up the places where it actually reaches memory.
-  SmallVector<StoreInst *, 2> Stores;
-  for (User *U : OrigV->users())
-    if (auto *SIU = dyn_cast<StoreInst>(U))
-      Stores.push_back(SIU);
-    else
-      return false;
-
-  const DataLayout &DL = *IC.getDataLayout();
-  unsigned BaseBits = OrigV->getType()->getIntegerBitWidth();
-  Type *ElementTy = nullptr;
-  int ElementSize;
-
-  // We need to match some number of element insertions into an integer. Each
-  // insertion takes the form of an element value (and type), index (multiple of
-  // the bitwidth of the type) of insertion, and the base it was inserted into.
-  struct InsertedElement {
-    Value *Base;
-    Value *Element;
-    int Index;
-  };
-  auto MatchInsertedElement = [&](Value *V) -> Optional<InsertedElement> {
-    // Handle a null input to make it easy to loop over bases.
-    if (!V)
-      return Optional<InsertedElement>();
-
-    assert(!V->getType()->isVectorTy() && "Must not be a vector.");
-    assert(V->getType()->isIntegerTy() && "Must be an integer value.");
-
-    Value *Base = nullptr, *Cast;
-    ConstantInt *ShiftC = nullptr;
-    auto InsertPattern = m_CombineOr(
-        m_Shl(m_OneUse(m_ZExt(m_OneUse(m_Value(Cast)))), m_ConstantInt(ShiftC)),
-        m_ZExt(m_OneUse(m_Value(Cast))));
-    if (!match(V, m_CombineOr(m_CombineOr(m_Or(m_OneUse(m_Value(Base)),
-                                               m_OneUse(InsertPattern)),
-                                          m_Or(m_OneUse(InsertPattern),
-                                               m_OneUse(m_Value(Base)))),
-                              InsertPattern)))
-      return Optional<InsertedElement>();
-
-    Value *Element;
-    if (auto *BC = dyn_cast<BitCastInst>(Cast)) {
-      // Bit casts are trivially correct here.
-      Element = BC->getOperand(0);
-    } else if (auto *PC = dyn_cast<PtrToIntInst>(Cast)) {
-      Element = PC->getOperand(0);
-      // If this changes the bit width at all, reject it.
-      if (PC->getType()->getIntegerBitWidth() !=
-          DL.getTypeSizeInBits(Element->getType()))
-        return Optional<InsertedElement>();
-    } else {
-      // All other casts are rejected.
-      return Optional<InsertedElement>();
-    }
-
-    // We can't handle shifts wider than the number of bits in the integer.
-    unsigned ShiftBits = ShiftC ? ShiftC->getLimitedValue(BaseBits) : 0;
-    if (ShiftBits == BaseBits)
-      return Optional<InsertedElement>();
-
-    // All of the elements inserted need to be the same type. Either capture the
-    // first element type or check this element type against the previous
-    // element types.
-    if (!ElementTy) {
-      ElementTy = Element->getType();
-      // The base integer size and the shift need to be multiples of the element
-      // size in bits.
-      ElementSize = DL.getTypeSizeInBits(ElementTy);
-      if (BaseBits % ElementSize || ShiftBits % ElementSize)
-        return Optional<InsertedElement>();
-    } else if (ElementTy != Element->getType()) {
-      return Optional<InsertedElement>();
-    }
-
-    // We don't handle integers, sub-vectors, or any aggregate types. We
-    // handle pointers and floating ponit types.
-    if (!ElementTy->isSingleValueType() || ElementTy->isIntegerTy() ||
-        ElementTy->isVectorTy())
-      return Optional<InsertedElement>();
-
-    int Index =
-        (DL.isLittleEndian() ? ShiftBits : BaseBits - ElementSize - ShiftBits) /
-        ElementSize;
-    InsertedElement Result = {Base, Element, Index};
-    return Result;
-  };
-
-  SmallVector<InsertedElement, 2> Elements;
-  Value *V = OrigV;
-  while (Optional<InsertedElement> E = MatchInsertedElement(V)) {
-    V = E->Base;
-    Elements.push_back(std::move(*E));
-  }
-  // If searching for elements found none, or didn't terminate in either an
-  // undef or a direct zext, we can't form a vector.
-  if (Elements.empty() || (V && !isa<UndefValue>(V)))
-    return false;
-
-  // Build a storable vector by looping over the inserted elements.
-  VectorType *VTy = VectorType::get(ElementTy, BaseBits / ElementSize);
-  V = UndefValue::get(VTy);
-  IC.Builder->SetInsertPoint(OrigV);
-  for (const auto &E : Elements)
-    V = IC.Builder->CreateInsertElement(V, E.Element,
-                                        IC.Builder->getInt32(E.Index));
-
-  for (StoreInst *OldSI : Stores) {
-    IC.Builder->SetInsertPoint(OldSI);
-    combineStoreToNewValue(IC, *OldSI, V);
-    if (OldSI != &SI)
-      IC.EraseInstFromFunction(*OldSI);
-  }
-  return true;
-}
-
 /// \brief Combine stores to match the type of value being stored.
 ///
 /// The core idea here is that the memory does not have any intrinsic type and
@@ -857,19 +517,51 @@ static bool combineStoreToValueType(InstCombiner &IC, StoreInst &SI) {
   if (!SI.isSimple())
     return false;
 
+  Value *Ptr = SI.getPointerOperand();
   Value *V = SI.getValueOperand();
+  unsigned AS = SI.getPointerAddressSpace();
+  SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
+  SI.getAllMetadata(MD);
 
   // Fold away bit casts of the stored value by storing the original type.
   if (auto *BC = dyn_cast<BitCastInst>(V)) {
-    combineStoreToNewValue(IC, SI, BC->getOperand(0));
+    V = BC->getOperand(0);
+    StoreInst *NewStore = IC.Builder->CreateAlignedStore(
+        V, IC.Builder->CreateBitCast(Ptr, V->getType()->getPointerTo(AS)),
+        SI.getAlignment());
+    for (const auto &MDPair : MD) {
+      unsigned ID = MDPair.first;
+      MDNode *N = MDPair.second;
+      // Note, essentially every kind of metadata should be preserved here! This
+      // routine is supposed to clone a store instruction changing *only its
+      // type*. The only metadata it makes sense to drop is metadata which is
+      // invalidated when the pointer type changes. This should essentially
+      // never be the case in LLVM, but we explicitly switch over only known
+      // metadata to be conservatively correct. If you are adding metadata to
+      // LLVM which pertains to stores, you almost certainly want to add it
+      // here.
+      switch (ID) {
+      case LLVMContext::MD_dbg:
+      case LLVMContext::MD_tbaa:
+      case LLVMContext::MD_prof:
+      case LLVMContext::MD_fpmath:
+      case LLVMContext::MD_tbaa_struct:
+      case LLVMContext::MD_alias_scope:
+      case LLVMContext::MD_noalias:
+      case LLVMContext::MD_nontemporal:
+      case LLVMContext::MD_mem_parallel_loop_access:
+      case LLVMContext::MD_nonnull:
+        // All of these directly apply.
+        NewStore->setMetadata(ID, N);
+        break;
+
+      case LLVMContext::MD_invariant_load:
+      case LLVMContext::MD_range:
+        break;
+      }
+    }
     return true;
   }
-
-  // If this is an integer store and we have data layout, look for a pattern of
-  // storing a vector as an integer (modeled as a bag of bits).
-  if (V->getType()->isIntegerTy() && IC.getDataLayout() &&
-      combineIntegerStoreToVectorStore(IC, SI))
-    return true;
 
   // FIXME: We should also canonicalize loads of vectors when their elements are
   // cast to other types.
