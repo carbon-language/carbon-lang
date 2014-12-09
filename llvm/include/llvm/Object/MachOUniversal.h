@@ -58,7 +58,7 @@ public:
 
     ErrorOr<std::unique_ptr<MachOObjectFile>> getAsObjectFile() const;
 
-    std::error_code getAsArchive(std::unique_ptr<Archive> &Result) const;
+    ErrorOr<std::unique_ptr<Archive>> getAsArchive() const;
   };
 
   class object_iterator {

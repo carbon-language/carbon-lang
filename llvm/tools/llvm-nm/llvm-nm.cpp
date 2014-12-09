@@ -1069,7 +1069,6 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
             ArchFound = true;
             ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr =
                 I->getAsObjectFile();
-            std::unique_ptr<Archive> A;
             std::string ArchiveName;
             std::string ArchitectureName;
             ArchiveName.clear();
@@ -1086,7 +1085,9 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
               }
               dumpSymbolNamesFromObject(Obj, false, ArchiveName,
                                         ArchitectureName);
-            } else if (!I->getAsArchive(A)) {
+            } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr =
+                           I->getAsArchive()) {
+              std::unique_ptr<Archive> &A = *AOrErr;
               for (Archive::child_iterator AI = A->child_begin(),
                                            AE = A->child_end();
                    AI != AE; ++AI) {
@@ -1133,13 +1134,14 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
            I != E; ++I) {
         if (HostArchName == I->getArchTypeName()) {
           ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr = I->getAsObjectFile();
-          std::unique_ptr<Archive> A;
           std::string ArchiveName;
           ArchiveName.clear();
           if (ObjOrErr) {
             ObjectFile &Obj = *ObjOrErr.get();
             dumpSymbolNamesFromObject(Obj, false);
-          } else if (!I->getAsArchive(A)) {
+          } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr =
+                         I->getAsArchive()) {
+            std::unique_ptr<Archive> &A = *AOrErr;
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
                  AI != AE; ++AI) {
@@ -1170,7 +1172,6 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
                                                E = UB->end_objects();
          I != E; ++I) {
       ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr = I->getAsObjectFile();
-      std::unique_ptr<Archive> A;
       std::string ArchiveName;
       std::string ArchitectureName;
       ArchiveName.clear();
@@ -1189,7 +1190,8 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
           outs() << ":\n";
         }
         dumpSymbolNamesFromObject(Obj, false, ArchiveName, ArchitectureName);
-      } else if (!I->getAsArchive(A)) {
+      } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr = I->getAsArchive()) {
+        std::unique_ptr<Archive> &A = *AOrErr;
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
           ErrorOr<std::unique_ptr<Binary>> ChildOrErr =

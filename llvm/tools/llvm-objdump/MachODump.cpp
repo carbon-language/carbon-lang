@@ -340,7 +340,6 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
             ArchFound = true;
             ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr =
                 I->getAsObjectFile();
-            std::unique_ptr<Archive> A;
             std::string ArchitectureName = "";
             if (ArchFlags.size() > 1)
               ArchitectureName = I->getArchTypeName();
@@ -348,7 +347,9 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
               ObjectFile &O = *ObjOrErr.get();
               if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(&O))
                 DisassembleInputMachO2(Filename, MachOOF, "", ArchitectureName);
-            } else if (!I->getAsArchive(A)) {
+            } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr =
+                           I->getAsArchive()) {
+              std::unique_ptr<Archive> &A = *AOrErr;
               outs() << "Archive : " << Filename;
               if (!ArchitectureName.empty())
                 outs() << " (architecture " << ArchitectureName << ")";
@@ -384,14 +385,15 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
            I != E; ++I) {
         if (HostArchName == I->getArchTypeName()) {
           ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr = I->getAsObjectFile();
-          std::unique_ptr<Archive> A;
           std::string ArchiveName;
           ArchiveName.clear();
           if (ObjOrErr) {
             ObjectFile &O = *ObjOrErr.get();
             if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(&O))
               DisassembleInputMachO2(Filename, MachOOF);
-          } else if (!I->getAsArchive(A)) {
+          } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr =
+                         I->getAsArchive()) {
+            std::unique_ptr<Archive> &A = *AOrErr;
             outs() << "Archive : " << Filename << "\n";
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
@@ -415,7 +417,6 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                                                E = UB->end_objects();
          I != E; ++I) {
       ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr = I->getAsObjectFile();
-      std::unique_ptr<Archive> A;
       std::string ArchitectureName = "";
       if (moreThanOneArch)
         ArchitectureName = I->getArchTypeName();
@@ -423,7 +424,8 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         ObjectFile &Obj = *ObjOrErr.get();
         if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(&Obj))
           DisassembleInputMachO2(Filename, MachOOF, "", ArchitectureName);
-      } else if (!I->getAsArchive(A)) {
+      } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr = I->getAsArchive()) {
+        std::unique_ptr<Archive> &A = *AOrErr;
         outs() << "Archive : " << Filename;
         if (!ArchitectureName.empty())
           outs() << " (architecture " << ArchitectureName << ")";
