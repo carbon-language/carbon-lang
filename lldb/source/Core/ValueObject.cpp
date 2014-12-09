@@ -2540,6 +2540,46 @@ ValueObject::IsBaseClass (uint32_t& depth)
 void
 ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat epformat)
 {
+    // synthetic children do not actually "exist" as part of the hierarchy, and sometimes they are consed up in ways
+    // that don't make sense from an underlying language/API standpoint. So, use a special code path here to return
+    // something that can hopefully be used in expression
+    if (m_is_synthetic_children_generated)
+    {
+        UpdateValueIfNeeded();
+        
+        if (m_value.GetValueType() == Value::eValueTypeLoadAddress)
+        {
+            if (IsPointerOrReferenceType())
+            {
+                s.Printf("((%s)0x%" PRIx64 ")",
+                         GetTypeName().AsCString("void"),
+                         GetValueAsUnsigned(0));
+                return;
+            }
+            else
+            {
+                uint64_t load_addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                if (load_addr != LLDB_INVALID_ADDRESS)
+                {
+                    s.Printf("(*( (%s *)0x%" PRIx64 "))",
+                             GetTypeName().AsCString("void"),
+                             load_addr);
+                    return;
+                }
+            }
+        }
+        
+        if (CanProvideValue())
+        {
+            s.Printf("((%s)%s)",
+                     GetTypeName().AsCString("void"),
+                     GetValueAsCString());
+            return;
+        }
+        
+        return;
+    }
+    
     const bool is_deref_of_parent = IsDereferenceOfParent ();
 
     if (is_deref_of_parent && epformat == eGetExpressionPathFormatDereferencePointers)
