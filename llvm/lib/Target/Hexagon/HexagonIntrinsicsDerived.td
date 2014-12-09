@@ -13,7 +13,7 @@
 //
 def : Pat <(mul DoubleRegs:$src1, DoubleRegs:$src2),
       (i64
-       (COMBINE_rr
+       (A2_combinew
         (HEXAGON_M2_maci
          (HEXAGON_M2_maci
           (i32

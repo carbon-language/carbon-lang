@@ -217,6 +217,8 @@ let OutOperandList = (outs DoubleRegs:$Rd), hasNewValue = 0,
   // Conditional combinew uses "newt/f" instead of "t/fnew".
   def C2_ccombinewt    : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 0, 0>;
   def C2_ccombinewf    : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 1, 0>;
+  def C2_ccombinewnewt : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 0, 1>;
+  def C2_ccombinewnewf : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 1, 1>;
 }
 
 let hasSideEffects = 0, hasNewValue = 1, isCompare = 1, InputType = "reg"  in
@@ -492,37 +494,6 @@ multiclass ALU32_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
     defm _cdn#NAME : ALU32_Pbase<mnemonic, RC, PredNot, 1>;
   }
 }
-
-// Combines the two integer registers SRC1 and SRC2 into a double register.
-let isPredicable = 1 in
-class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
-                           (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = combine($src1, $src2)",
-            [(set (i64 DoubleRegs:$dst),
-              (i64 (HexagonWrapperCombineRR (i32 IntRegs:$src1),
-                                            (i32 IntRegs:$src2))))]>;
-
-multiclass Combine_base {
-  let BaseOpcode = "combine" in {
-    def NAME : T_Combine;
-    let hasSideEffects = 0, isPredicated = 1 in {
-      defm Pt : ALU32_Pred<"combine", DoubleRegs, 0>;
-      defm NotPt : ALU32_Pred<"combine", DoubleRegs, 1>;
-    }
-  }
-}
-
-defm COMBINE_rr : Combine_base, PredNewRel;
-
-// Combines the two immediates SRC1 and SRC2 into a double register.
-class COMBINE_imm<Operand imm1, Operand imm2, PatLeaf pat1, PatLeaf pat2> :
-  ALU32_ii<(outs DoubleRegs:$dst), (ins imm1:$src1, imm2:$src2),
-  "$dst = combine(#$src1, #$src2)",
-  [(set (i64 DoubleRegs:$dst),
-        (i64 (HexagonWrapperCombineII (i32 pat1:$src1), (i32 pat2:$src2))))]>;
-
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8 in
-def COMBINE_Ii : COMBINE_imm<s8Ext, s8Imm, s8ExtPred, s8ImmPred>;
 
 // Rd = neg(Rs) gets mapped to Rd=sub(#0, Rs).
 // Pattern definition for 'neg' was not necessary.
@@ -2797,7 +2768,7 @@ def : Pat <(and (i1 PredRegs:$src1), (not (i1 PredRegs:$src2))),
 
 let AddedComplexity = 100 in
 def : Pat <(i64 (zextloadi1 (HexagonCONST32 tglobaladdr:$global))),
-      (i64 (COMBINE_rr (TFRI 0),
+      (i64 (A2_combinew (TFRI 0),
                        (LDriub_indexed (CONST32_set tglobaladdr:$global), 0)))>,
       Requires<[NoV4T]>;
 
@@ -2867,7 +2838,7 @@ def : Pat <(brcond (i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
 // Hexagon does not support 64-bit MUXes; so emulate with combines.
 def : Pat <(select (i1 PredRegs:$src1), (i64 DoubleRegs:$src2),
                    (i64 DoubleRegs:$src3)),
-      (i64 (COMBINE_rr (i32 (C2_mux (i1 PredRegs:$src1),
+      (i64 (A2_combinew (i32 (C2_mux (i1 PredRegs:$src1),
                                     (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
                                                          subreg_hireg)),
                                     (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src3),
@@ -3052,7 +3023,7 @@ def : Pat <(i32 (sext (i1 PredRegs:$src1))),
 
 // i1 -> i64
 def : Pat <(i64 (sext (i1 PredRegs:$src1))),
-      (i64 (COMBINE_rr (TFRI -1), (C2_muxii (i1 PredRegs:$src1), -1, 0)))>;
+      (i64 (A2_combinew (TFRI -1), (C2_muxii (i1 PredRegs:$src1), -1, 0)))>;
 
 // Convert sign-extended load back to load and sign extend.
 // i8 -> i64
@@ -3082,58 +3053,58 @@ def : Pat <(i32 (zext (i1 PredRegs:$src1))),
 
 // i1 -> i64
 def : Pat <(i64 (zext (i1 PredRegs:$src1))),
-      (i64 (COMBINE_rr (TFRI 0), (C2_muxii (i1 PredRegs:$src1), 1, 0)))>,
+      (i64 (A2_combinew (TFRI 0), (C2_muxii (i1 PredRegs:$src1), 1, 0)))>,
       Requires<[NoV4T]>;
 
 // i32 -> i64
 def : Pat <(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (COMBINE_rr (TFRI 0), (i32 IntRegs:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (i32 IntRegs:$src1)))>,
       Requires<[NoV4T]>;
 
 // i8 -> i64
 def:  Pat <(i64 (zextloadi8 ADDRriS11_0:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriub ADDRriS11_0:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (LDriub ADDRriS11_0:$src1)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi8 (add (i32 IntRegs:$src1),
                                 s11_0ExtPred:$offset))),
-      (i64 (COMBINE_rr (TFRI 0), (LDriub_indexed IntRegs:$src1,
+      (i64 (A2_combinew (TFRI 0), (LDriub_indexed IntRegs:$src1,
                                   s11_0ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
 // i1 -> i64
 def:  Pat <(i64 (zextloadi1 ADDRriS11_0:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriub ADDRriS11_0:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (LDriub ADDRriS11_0:$src1)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi1 (add (i32 IntRegs:$src1),
                                 s11_0ExtPred:$offset))),
-      (i64 (COMBINE_rr (TFRI 0), (LDriub_indexed IntRegs:$src1,
+      (i64 (A2_combinew (TFRI 0), (LDriub_indexed IntRegs:$src1,
                                   s11_0ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
 // i16 -> i64
 def:  Pat <(i64 (zextloadi16 ADDRriS11_1:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriuh ADDRriS11_1:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (LDriuh ADDRriS11_1:$src1)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi16 (add (i32 IntRegs:$src1),
                                   s11_1ExtPred:$offset))),
-      (i64 (COMBINE_rr (TFRI 0), (LDriuh_indexed IntRegs:$src1,
+      (i64 (A2_combinew (TFRI 0), (LDriuh_indexed IntRegs:$src1,
                                   s11_1ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
 // i32 -> i64
 def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriw ADDRriS11_2:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (LDriw ADDRriS11_2:$src1)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 100 in
 def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (COMBINE_rr (TFRI 0), (LDriw_indexed IntRegs:$src1,
+      (i64 (A2_combinew (TFRI 0), (LDriw_indexed IntRegs:$src1,
                                   s11_2ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
@@ -3159,20 +3130,20 @@ def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zextloadi32 (i32 (add IntRegs:$src2,
                                          s11_2ExtPred:$offset2)))))),
-        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         (LDriw_indexed IntRegs:$src2,
                                        s11_2ExtPred:$offset2)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
-        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         (LDriw ADDRriS11_2:$srcLow)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zext (i32 IntRegs:$srcLow))))),
-        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         IntRegs:$srcLow))>;
 
 let AddedComplexity = 100 in
@@ -3180,26 +3151,26 @@ def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zextloadi32 (i32 (add IntRegs:$src2,
                                          s11_2ExtPred:$offset2)))))),
-        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         (LDriw_indexed IntRegs:$src2,
                                        s11_2ExtPred:$offset2)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
-        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         (LDriw ADDRriS11_2:$srcLow)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zext (i32 IntRegs:$srcLow))))),
-        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         IntRegs:$srcLow))>;
 
 // Any extended 64-bit load.
 // anyext i32 -> i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriw ADDRriS11_2:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (LDriw ADDRriS11_2:$src1)))>,
       Requires<[NoV4T]>;
 
 // When there is an offset we should prefer the pattern below over the pattern above.
@@ -3214,25 +3185,25 @@ def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
 // ********************************************
 let AddedComplexity = 100 in
 def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (COMBINE_rr (TFRI 0), (LDriw_indexed IntRegs:$src1,
+      (i64 (A2_combinew (TFRI 0), (LDriw_indexed IntRegs:$src1,
                                   s11_2ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
 // anyext i16 -> i64.
 def:  Pat <(i64 (extloadi16 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDrih ADDRriS11_2:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (LDrih ADDRriS11_2:$src1)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (extloadi16 (add (i32 IntRegs:$src1),
                                   s11_1ExtPred:$offset))),
-      (i64 (COMBINE_rr (TFRI 0), (LDrih_indexed IntRegs:$src1,
+      (i64 (A2_combinew (TFRI 0), (LDrih_indexed IntRegs:$src1,
                                   s11_1ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
 // Map from Rdd = zxtw(Rs) -> Rdd = combine(0, Rs).
 def : Pat<(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (COMBINE_rr (TFRI 0), (i32 IntRegs:$src1)))>,
+      (i64 (A2_combinew (TFRI 0), (i32 IntRegs:$src1)))>,
       Requires<[NoV4T]>;
 
 // Multiply 64-bit unsigned and use upper result.
@@ -3240,7 +3211,7 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
       (i64
        (MPYU64_acc
         (i64
-         (COMBINE_rr
+         (A2_combinew
           (TFRI 0),
            (i32
             (EXTRACT_SUBREG
@@ -3251,7 +3222,7 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                  (i64
                   (MPYU64_acc
                    (i64
-                    (COMBINE_rr (TFRI 0),
+                    (A2_combinew (TFRI 0),
                      (i32
                       (EXTRACT_SUBREG
                        (i64
@@ -3275,7 +3246,7 @@ def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
       (i64
        (MPY64_acc
         (i64
-         (COMBINE_rr (TFRI 0),
+         (A2_combinew (TFRI 0),
           (i32
            (EXTRACT_SUBREG
             (i64
@@ -3285,7 +3256,7 @@ def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                 (i64
                  (MPY64_acc
                   (i64
-                   (COMBINE_rr (TFRI 0),
+                   (A2_combinew (TFRI 0),
                     (i32
                      (EXTRACT_SUBREG
                       (i64

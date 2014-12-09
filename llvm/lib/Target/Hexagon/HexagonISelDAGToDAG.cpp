@@ -523,7 +523,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadZeroExtend64(LoadSDNode *LD,
                                                 TargetConstVal, Chain);
       SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::TFRI, dl, MVT::i32,
                                                 TargetConst0);
-      SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::COMBINE_rr, dl,
+      SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::A2_combinew, dl,
                                                 MVT::i64, MVT::Other,
                                                 SDValue(Result_2,0),
                                                 SDValue(Result_1,0));
@@ -550,7 +550,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadZeroExtend64(LoadSDNode *LD,
                                               Base, TargetConst0, Chain);
     SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::TFRI, dl, MVT::i32,
                                               TargetConst0);
-    SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::COMBINE_rr, dl,
+    SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::A2_combinew, dl,
                                               MVT::i64, MVT::Other,
                                               SDValue(Result_2,0),
                                               SDValue(Result_1,0));
@@ -1183,7 +1183,7 @@ SDNode *HexagonDAGToDAGISel::SelectZeroExtend(SDNode *N) {
         SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::TFRI, dl,
                                                   MVT::i32,
                                                   TargetConst0);
-        SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::COMBINE_rr, dl,
+        SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::A2_combinew, dl,
                                                   MVT::i64, MVT::Other,
                                                   SDValue(Result_2, 0),
                                                   SDValue(Result_1, 0));
