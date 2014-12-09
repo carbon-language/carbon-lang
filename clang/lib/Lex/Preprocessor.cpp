@@ -672,7 +672,8 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
   // keyword when we're in a caching lexer, because caching lexers only get
   // used in contexts where import declarations are disallowed.
   if (LastTokenWasAt && II.isModulesImport() && !InMacroArgs && 
-      !DisableMacroExpansion && getLangOpts().Modules && 
+      !DisableMacroExpansion &&
+      (getLangOpts().Modules || getLangOpts().DebuggerSupport) && 
       CurLexerKind != CLK_CachingLexer) {
     ModuleImportLoc = Identifier.getLocation();
     ModuleImportPath.clear();
@@ -745,12 +746,14 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
   }
 
   // If we have a non-empty module path, load the named module.
-  if (!ModuleImportPath.empty() && getLangOpts().Modules) {
-    Module *Imported = TheModuleLoader.loadModule(ModuleImportLoc,
-                                                  ModuleImportPath,
-                                                  Module::MacrosVisible,
-                                                  /*IsIncludeDirective=*/false);
-    if (Callbacks)
+  if (!ModuleImportPath.empty()) {
+    Module *Imported = nullptr;
+    if (getLangOpts().Modules)
+      Imported = TheModuleLoader.loadModule(ModuleImportLoc,
+                                            ModuleImportPath,
+                                            Module::MacrosVisible,
+                                            /*IsIncludeDirective=*/false);
+    if (Callbacks && (getLangOpts().Modules || getLangOpts().DebuggerSupport))
       Callbacks->moduleImport(ModuleImportLoc, ModuleImportPath, Imported);
   }
 }

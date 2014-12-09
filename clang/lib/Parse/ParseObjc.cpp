@@ -79,7 +79,7 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
     SingleDecl = ParseObjCPropertyDynamic(AtLoc);
     break;
   case tok::objc_import:
-    if (getLangOpts().Modules)
+    if (getLangOpts().Modules || getLangOpts().DebuggerSupport)
       return ParseModuleImport(AtLoc);
     Diag(AtLoc, diag::err_atimport);
     SkipUntil(tok::semi);
@@ -2024,7 +2024,13 @@ StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
 
   if (Tok.isObjCAtKeyword(tok::objc_autoreleasepool))
     return ParseObjCAutoreleasePoolStmt(AtLoc);
-  
+
+  if (Tok.isObjCAtKeyword(tok::objc_import) &&
+      getLangOpts().DebuggerSupport) {
+    SkipUntil(tok::semi);
+    return Actions.ActOnNullStmt(Tok.getLocation());
+  }
+
   ExprResult Res(ParseExpressionWithLeadingAt(AtLoc));
   if (Res.isInvalid()) {
     // If the expression is invalid, skip ahead to the next semicolon. Not
