@@ -1211,7 +1211,7 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init, const ValueDecl *D,
     ComplexPairTy complex = EmitComplexExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreOfComplex(complex, lvalue, /*init*/ true);
+    EmitStoreOfComplex(complex, lvalue, /*init*/ true, DbgLoc);
     return;
   }
   case TEK_Aggregate:

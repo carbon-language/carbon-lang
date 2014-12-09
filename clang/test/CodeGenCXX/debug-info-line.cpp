@@ -57,6 +57,13 @@ void f4() {
       = src();
 }
 
+// CHECK-LABEL: define
+void f5() {
+#line 600
+  auto x // CHECK: store float {{.*}} !dbg [[DBG_F5:!.*]]
+      = complex_src();
+}
+
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
@@ -64,3 +71,4 @@ void f4() {
 // CHECK: [[DBG_F2]] = metadata !{i32 300,
 // CHECK: [[DBG_F3]] = metadata !{i32 400,
 // CHECK: [[DBG_F4]] = metadata !{i32 500,
+// CHECK: [[DBG_F5]] = metadata !{i32 600,
