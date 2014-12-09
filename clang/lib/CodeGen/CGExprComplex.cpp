@@ -82,7 +82,7 @@ public:
   /// EmitStoreOfComplex - Store the specified real/imag parts into the
   /// specified value pointer.
   void EmitStoreOfComplex(ComplexPairTy Val, LValue LV, bool isInit,
-                          SourceLocation DbgLoc = SourceLocation());
+                          SourceLocation DbgLoc);
 
   /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
   ComplexPairTy EmitComplexToComplexCast(ComplexPairTy Val, QualType SrcType,
@@ -869,7 +869,8 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
   // Truncate the result and store it into the LHS lvalue.
   if (LHSTy->isAnyComplexType()) {
     ComplexPairTy ResVal = EmitComplexToComplexCast(Result, OpInfo.Ty, LHSTy);
-    EmitStoreOfComplex(ResVal, LHS, /*isInit*/ false);
+    // FIXME
+    EmitStoreOfComplex(ResVal, LHS, /*isInit*/ false, SourceLocation());
     Val = RValue::getComplex(ResVal);
   } else {
     llvm::Value *ResVal =
@@ -914,8 +915,7 @@ LValue ComplexExprEmitter::EmitBinAssignLValue(const BinaryOperator *E,
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // Store the result value into the LHS lvalue.
-  // FIXME
-  EmitStoreOfComplex(Val, LHS, /*isInit*/ false);
+  EmitStoreOfComplex(Val, LHS, /*isInit*/ false, E->getLocStart());
 
   return LHS;
 }

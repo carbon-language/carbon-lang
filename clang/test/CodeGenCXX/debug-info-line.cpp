@@ -1,14 +1,16 @@
 // RUN: %clang_cc1 -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
 
 int &src();
-int* sink();
+int *sink();
 __complex float complex_src();
+__complex float *complex_sink();
 
+// CHECK-LABEL: define
 void f1() {
 #line 100
   * // The store for the assignment should be attributed to the start of the
-    // assignment expression here, regardless of the location of subexpressions.
-  sink() = src();
+      // assignment expression here, regardless of the location of subexpressions.
+      sink() = src();
   // CHECK: store {{.*}}, !dbg [[DBG_F1:!.*]]
 }
 
@@ -19,22 +21,27 @@ struct foo {
   foo();
 };
 
+// CHECK-LABEL: define
 foo::foo()
-  :
+    :
 #line 200
-    i
-    (src()),
-    // CHECK: store i32 {{.*}} !dbg [[DBG_FOO_VALUE:!.*]]
-    j
-    (src()),
-    // CHECK: store i32* {{.*}} !dbg [[DBG_FOO_REF:!.*]]
-    k
-    (complex_src())
-    // CHECK: store float {{.*}} !dbg [[DBG_FOO_COMPLEX:!.*]]
-{
+      i // CHECK: store i32 {{.*}} !dbg [[DBG_FOO_VALUE:!.*]]
+      (src()),
+      j // CHECK: store i32* {{.*}} !dbg [[DBG_FOO_REF:!.*]]
+      (src()),
+      k // CHECK: store float {{.*}} !dbg [[DBG_FOO_COMPLEX:!.*]]
+      (complex_src()) {
+}
+
+// CHECK-LABEL: define
+void f2() {
+#line 300
+  * // CHECK: store float {{.*}} !dbg [[DBG_F2_COMPLEX:!.*]]
+      complex_sink() = complex_src();
 }
 
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
-// CHECK: [[DBG_FOO_REF]] = metadata !{i32 203,
-// CHECK: [[DBG_FOO_COMPLEX]] = metadata !{i32 206,
+// CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
+// CHECK: [[DBG_FOO_COMPLEX]] = metadata !{i32 204,
+// CHECK: [[DBG_F2_COMPLEX]] = metadata !{i32 300,
