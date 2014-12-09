@@ -33,15 +33,26 @@ foo::foo()
       (complex_src()) {
 }
 
+// skip C1
+// CHECK-LABEL: define
+
 // CHECK-LABEL: define
 void f2() {
 #line 300
-  * // CHECK: store float {{.*}} !dbg [[DBG_F2_COMPLEX:!.*]]
+  * // CHECK: store float {{.*}} !dbg [[DBG_F2:!.*]]
       complex_sink() = complex_src();
+}
+
+// CHECK-LABEL: define
+void f3() {
+#line 400
+  * // CHECK: store float {{.*}} !dbg [[DBG_F3:!.*]]
+      complex_sink() += complex_src();
 }
 
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
 // CHECK: [[DBG_FOO_COMPLEX]] = metadata !{i32 204,
-// CHECK: [[DBG_F2_COMPLEX]] = metadata !{i32 300,
+// CHECK: [[DBG_F2]] = metadata !{i32 300,
+// CHECK: [[DBG_F3]] = metadata !{i32 400,

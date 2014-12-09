@@ -869,8 +869,7 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
   // Truncate the result and store it into the LHS lvalue.
   if (LHSTy->isAnyComplexType()) {
     ComplexPairTy ResVal = EmitComplexToComplexCast(Result, OpInfo.Ty, LHSTy);
-    // FIXME
-    EmitStoreOfComplex(ResVal, LHS, /*isInit*/ false, SourceLocation());
+    EmitStoreOfComplex(ResVal, LHS, /*isInit*/ false, E->getLocStart());
     Val = RValue::getComplex(ResVal);
   } else {
     llvm::Value *ResVal =
