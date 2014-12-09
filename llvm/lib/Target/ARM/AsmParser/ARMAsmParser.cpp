@@ -1860,16 +1860,7 @@ public:
     if (isImm())
       return addImmOperands(Inst, N);
 
-    if (Inst.getOpcode() == ARM::ADDri &&
-      Inst.getOperand(1).getReg() == ARM::PC) {
-      // Instructions of the form [ADD <rd>, pc, #imm] are manually aliased
-      // in processInstruction() to use ADR. We must keep the immediate in
-      // its unencoded form in order to not clash with this aliasing.
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::rotr32(ModImm.Bits,
-                                                          ModImm.Rot)));
-    } else {
-      Inst.addOperand(MCOperand::CreateImm(ModImm.Bits | (ModImm.Rot << 7)));
-    }
+    Inst.addOperand(MCOperand::CreateImm(ModImm.Bits | (ModImm.Rot << 7)));
   }
 
   void addModImmNotOperands(MCInst &Inst, unsigned N) const {
@@ -6680,7 +6671,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.setOpcode(ARM::ADR);
     TmpInst.addOperand(Inst.getOperand(0));
     if (Inst.getOperand(2).isImm()) {
-      TmpInst.addOperand(Inst.getOperand(2));
+      // Immediate (mod_imm) will be in its encoded form, we must unencode it
+      // before passing it to the ADR instruction.
+      unsigned Enc = Inst.getOperand(2).getImm();
+      TmpInst.addOperand(MCOperand::CreateImm(
+        ARM_AM::rotr32(Enc & 0xFF, (Enc & 0xF00) >> 7)));
     } else {
       // Turn PC-relative expression into absolute expression.
       // Reading PC provides the start of the current instruction + 8 and
