@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 
     // Write new file to disk
     std::error_code EC;
-    llvm::raw_fd_ostream FileStream(FileName, EC, llvm::sys::fs::F_Text);
+    llvm::raw_fd_ostream FileStream(FileName, EC, llvm::sys::fs::F_None);
     if (EC) {
       llvm::errs() << "Could not open " << FileName << " for writing\n";
       continue;

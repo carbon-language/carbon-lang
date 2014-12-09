@@ -1,0 +1,8 @@
+---
+MainSourceFile:      source1.cpp
+Replacements:    
+  - FilePath:        $(path)/crlf.cpp
+    Offset:          79
+    Length:          1
+    ReplacementText: nullptr
+...
