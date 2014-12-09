@@ -89,6 +89,24 @@ namespace lldb_private {
         typedef std::shared_ptr<SyntheticChildrenFrontEnd> SharedPointer;
         typedef std::unique_ptr<SyntheticChildrenFrontEnd> AutoPointer;
         
+    protected:
+        lldb::ValueObjectSP
+        CreateValueObjectFromExpression (const char* name,
+                                         const char* expression,
+                                         const ExecutionContext& exe_ctx);
+        
+        lldb::ValueObjectSP
+        CreateValueObjectFromAddress (const char* name,
+                                      uint64_t address,
+                                      const ExecutionContext& exe_ctx,
+                                      ClangASTType type);
+        
+        lldb::ValueObjectSP
+        CreateValueObjectFromData (const char* name,
+                                   const DataExtractor& data,
+                                   const ExecutionContext& exe_ctx,
+                                   ClangASTType type);
+        
     private:
         bool m_valid;
         DISALLOW_COPY_AND_ASSIGN(SyntheticChildrenFrontEnd);

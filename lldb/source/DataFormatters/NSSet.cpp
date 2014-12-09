@@ -469,10 +469,10 @@ lldb_private::formatters::NSSetISyntheticFrontEnd::GetChildAtIndex (size_t idx)
                            process_sp->GetAddressByteSize());
         
         set_item.valobj_sp =
-            ValueObject::CreateValueObjectFromData(idx_name.GetData(),
-                                                   data,
-                                                   m_exe_ctx_ref,
-                                                   m_backend.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
+            CreateValueObjectFromData(idx_name.GetData(),
+                                      data,
+                                      m_exe_ctx_ref,
+                                      m_backend.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
     }
     return set_item.valobj_sp;
 }
@@ -637,10 +637,10 @@ lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
                            process_sp->GetAddressByteSize());
         
         set_item.valobj_sp =
-            ValueObject::CreateValueObjectFromData(idx_name.GetData(),
-                                                   data,
-                                                   m_exe_ctx_ref,
-                                                   m_backend.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
+            CreateValueObjectFromData(idx_name.GetData(),
+                                      data,
+                                      m_exe_ctx_ref,
+                                      m_backend.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
     }
     return set_item.valobj_sp;
 }

@@ -1130,7 +1130,7 @@ lldb_private::formatters::VectorIteratorSyntheticFrontEnd::Update()
         return false;
     Error err;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
-    m_item_sp = ValueObject::CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, item_ptr->GetClangType().GetPointeeType());
+    m_item_sp = CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, item_ptr->GetClangType().GetPointeeType());
     if (err.Fail())
         m_item_sp.reset();
     return false;

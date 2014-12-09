@@ -308,7 +308,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::GetChildAtIndex (size_
     
     StreamString name;
     name.Printf("[%" PRIu64 "]", (uint64_t)idx);
-    return (m_children[idx] = ValueObject::CreateValueObjectFromData(name.GetData(), data, m_backend.GetExecutionContextRef(), m_element_type));
+    return (m_children[idx] = CreateValueObjectFromData(name.GetData(), data, m_backend.GetExecutionContextRef(), m_element_type));
 }
 
 bool

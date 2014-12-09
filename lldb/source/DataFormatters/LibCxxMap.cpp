@@ -420,7 +420,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
     }
     StreamString name;
     name.Printf("[%" PRIu64 "]", (uint64_t)idx);
-    auto potential_child_sp = ValueObject::CreateValueObjectFromData(name.GetData(), data, m_backend.GetExecutionContextRef(), m_element_type);
+    auto potential_child_sp = CreateValueObjectFromData(name.GetData(), data, m_backend.GetExecutionContextRef(), m_element_type);
     if (potential_child_sp)
     {
         switch (potential_child_sp->GetNumChildren())

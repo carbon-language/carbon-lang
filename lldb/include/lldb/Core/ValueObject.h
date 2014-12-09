@@ -779,6 +779,12 @@ public:
         return false;
     }
     
+    bool
+    IsSyntheticChildrenGenerated ();
+    
+    void
+    SetSyntheticChildrenGenerated (bool b);
+    
     virtual SymbolContextScope *
     GetSymbolContextScope();
     
@@ -1106,7 +1112,8 @@ protected:
                         m_is_bitfield_for_scalar:1,
                         m_is_child_at_offset:1,
                         m_is_getting_summary:1,
-                        m_did_calculate_complete_objc_class_type:1;
+                        m_did_calculate_complete_objc_class_type:1,
+                        m_is_synthetic_children_generated:1;
     
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName

@@ -143,7 +143,7 @@ lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetChildAtIndex (si
     if (bit_set && buffer_sp && buffer_sp->GetBytes())
         *(buffer_sp->GetBytes()) = 1; // regardless of endianness, anything non-zero is true
     StreamString name; name.Printf("[%" PRIu64 "]", (uint64_t)idx);
-    ValueObjectSP retval_sp(ValueObject::CreateValueObjectFromData(name.GetData(), DataExtractor(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize()), m_exe_ctx_ref, m_bool_type));
+    ValueObjectSP retval_sp(CreateValueObjectFromData(name.GetData(), DataExtractor(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize()), m_exe_ctx_ref, m_bool_type));
     if (retval_sp)
         m_children[idx] = retval_sp;
     return retval_sp;
@@ -378,7 +378,7 @@ lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEnd::GetChildAtIndex (siz
                 return lldb::ValueObjectSP();
             uint64_t count = 1 + shared_owners_sp->GetValueAsUnsigned(0);
             DataExtractor data(&count, 8, m_byte_order, m_ptr_size);
-            m_count_sp = ValueObject::CreateValueObjectFromData("count", data, valobj_sp->GetExecutionContextRef(), shared_owners_sp->GetClangType());
+            m_count_sp = CreateValueObjectFromData("count", data, valobj_sp->GetExecutionContextRef(), shared_owners_sp->GetClangType());
         }
         return m_count_sp;
     }
@@ -391,7 +391,7 @@ lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEnd::GetChildAtIndex (siz
                 return lldb::ValueObjectSP();
             uint64_t count = 1 + shared_weak_owners_sp->GetValueAsUnsigned(0);
             DataExtractor data(&count, 8, m_byte_order, m_ptr_size);
-            m_weak_count_sp = ValueObject::CreateValueObjectFromData("count", data, valobj_sp->GetExecutionContextRef(), shared_weak_owners_sp->GetClangType());
+            m_weak_count_sp = CreateValueObjectFromData("count", data, valobj_sp->GetExecutionContextRef(), shared_weak_owners_sp->GetClangType());
         }
         return m_weak_count_sp;
     }

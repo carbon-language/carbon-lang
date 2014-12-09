@@ -341,10 +341,10 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetChildAtIndex (size_t idx
     object_at_idx += (pyhs_idx * m_ptr_size);
     StreamString idx_name;
     idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
-    lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(),
-                                                                              object_at_idx,
-                                                                              m_exe_ctx_ref,
-                                                                              m_id_type);
+    lldb::ValueObjectSP retval_sp = CreateValueObjectFromAddress(idx_name.GetData(),
+                                                                 object_at_idx,
+                                                                 m_exe_ctx_ref,
+                                                                 m_id_type);
     m_children.push_back(retval_sp);
     return retval_sp;
 }
@@ -604,7 +604,10 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (size_t idx
         return lldb::ValueObjectSP();
     StreamString idx_name;
     idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
-    lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(), object_at_idx, m_exe_ctx_ref, m_id_type);
+    lldb::ValueObjectSP retval_sp = CreateValueObjectFromAddress(idx_name.GetData(),
+                                                                 object_at_idx,
+                                                                 m_exe_ctx_ref,
+                                                                 m_id_type);
     m_children.push_back(retval_sp);
     return retval_sp;
 }

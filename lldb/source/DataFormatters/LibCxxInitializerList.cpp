@@ -89,7 +89,7 @@ lldb_private::formatters::LibcxxInitializerListSyntheticFrontEnd::GetChildAtInde
     offset = offset + m_start->GetValueAsUnsigned(0);
     StreamString name;
     name.Printf("[%" PRIu64 "]", (uint64_t)idx);
-    ValueObjectSP child_sp = ValueObject::CreateValueObjectFromAddress(name.GetData(), offset, m_backend.GetExecutionContextRef(), m_element_type);
+    ValueObjectSP child_sp = CreateValueObjectFromAddress(name.GetData(), offset, m_backend.GetExecutionContextRef(), m_element_type);
     m_children[idx] = child_sp;
     return child_sp;
 }

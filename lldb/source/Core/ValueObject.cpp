@@ -107,7 +107,8 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_bitfield_for_scalar(false),
     m_is_child_at_offset(false),
     m_is_getting_summary(false),
-    m_did_calculate_complete_objc_class_type(false)
+    m_did_calculate_complete_objc_class_type(false),
+    m_is_synthetic_children_generated(parent.m_is_synthetic_children_generated)
 {
     m_manager->ManageObject(this);
 }
@@ -155,7 +156,8 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_is_bitfield_for_scalar(false),
     m_is_child_at_offset(false),
     m_is_getting_summary(false),
-    m_did_calculate_complete_objc_class_type(false)
+    m_did_calculate_complete_objc_class_type(false),
+    m_is_synthetic_children_generated(false)
 {
     m_manager = new ValueObjectManager();
     m_manager->ManageObject (this);
@@ -4205,4 +4207,16 @@ ValueObject::Persist ()
     }
     
     return clang_var_sp->GetValueObject();
+}
+
+bool
+ValueObject::IsSyntheticChildrenGenerated ()
+{
+    return m_is_synthetic_children_generated;
+}
+
+void
+ValueObject::SetSyntheticChildrenGenerated (bool b)
+{
+    m_is_synthetic_children_generated = b;
 }
