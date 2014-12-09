@@ -341,7 +341,8 @@ MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   if (I != Store.end())
     return &I->second;
 
-  auto *Entry = StringMapEntry<MDString>::Create(Str, Store.getAllocator());
+  auto *Entry =
+      StringMapEntry<MDString>::Create(Str, Store.getAllocator(), MDString());
   bool WasInserted = Store.insert(Entry);
   (void)WasInserted;
   assert(WasInserted && "Expected entry to be inserted");
