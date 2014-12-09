@@ -378,14 +378,18 @@ StringRef MDString::getString() const {
 
 void *MDNode::operator new(size_t Size, unsigned NumOps) {
   void *Ptr = ::operator new(Size + NumOps * sizeof(MDOperand));
-  MDOperand *First = new (Ptr) MDOperand[NumOps];
-  return First + NumOps;
+  MDOperand *O = static_cast<MDOperand *>(Ptr);
+  for (MDOperand *E = O + NumOps; O != E; ++O)
+    (void)new (O) MDOperand;
+  return O;
 }
 
 void MDNode::operator delete(void *Mem) {
   MDNode *N = static_cast<MDNode *>(Mem);
-  MDOperand *Last = static_cast<MDOperand *>(Mem);
-  ::operator delete(Last - N->NumOperands);
+  MDOperand *O = static_cast<MDOperand *>(Mem);
+  for (MDOperand *E = O - N->NumOperands; O != E; --O)
+    (O - 1)->~MDOperand();
+  ::operator delete(O);
 }
 
 MDNode::MDNode(LLVMContext &Context, unsigned ID, ArrayRef<Metadata *> MDs)
