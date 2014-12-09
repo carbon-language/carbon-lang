@@ -1,9 +1,4 @@
-; Note: This test is disabled until VSX is enabled for LE, as otherwise
-; we don't get the correct code gen.
-; RUN: llc -mcpu=pwr8 -mtriple=powerpc64-unknown-linux-gnu < %s
-; FIXME: Remove this and all above lines when VSX is enabled for LE.
-
-; R;UN: llc -mcpu=pwr8 -mattr=+vsx -mtriple=powerpc64le-unknown-linux-gnu < %s | FileCheck %s
+; RUN: llc -mcpu=pwr8 -mattr=+vsx -mtriple=powerpc64le-unknown-linux-gnu < %s | FileCheck %s
 
 define <2 x double> @testi0(<2 x double>* %p1, double* %p2) {
   %v = load <2 x double>* %p1

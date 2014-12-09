@@ -1,13 +1,7 @@
-;; Note: This test case disable VSX until LE support is enabled, as
-;; otherwise we fail trying to deal with the @llvm.ppc.vsx.* builtins
-;; for loads and stores.
-; RUN: llc -mcpu=pwr8 -O2 -mtriple=powerpc64-unknown-linux-gnu < %s
-;; FIXME: Delete this and above lines when VSX LE support enabled.
-
-; R;UN: llc -mcpu=pwr8 -mattr=+vsx -O2 -mtriple=powerpc64le-unknown-linux-gnu < %s > %t
-; R;UN: grep lxvd2x < %t | count 18
-; R;UN: grep stxvd2x < %t | count 18
-; R;UN: grep xxpermdi < %t | count 36
+; RUN: llc -mcpu=pwr8 -mattr=+vsx -O2 -mtriple=powerpc64le-unknown-linux-gnu < %s > %t
+; RUN: grep lxvd2x < %t | count 18
+; RUN: grep stxvd2x < %t | count 18
+; RUN: grep xxpermdi < %t | count 36
 
 @vf = global <4 x float> <float -1.500000e+00, float 2.500000e+00, float -3.500000e+00, float 4.500000e+00>, align 16
 @vd = global <2 x double> <double 3.500000e+00, double -7.500000e+00>, align 16
