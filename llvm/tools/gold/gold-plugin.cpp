@@ -625,7 +625,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
         // Since we use the regular lib/Linker, we cannot just internalize GV
         // now or it will not be copied to the merged module. Instead we force
         // it to be copied and then internalize it.
-        Internalize.insert(Sym.name);
+        Internalize.insert(GV->getName());
       }
       break;
     }
@@ -638,7 +638,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       // Gold might have selected a linkonce_odr and preempted a weak_odr.
       // In that case we have to make sure we don't end up internalizing it.
       if (!GV->isDiscardableIfUnused())
-        Maybe.erase(Sym.name);
+        Maybe.erase(GV->getName());
 
       // fall-through
     case LDPR_PREEMPTED_REG:
@@ -651,7 +651,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       // and in that module the address might be significant, but that
       // copy will be LDPR_PREEMPTED_IR.
       if (GV->hasLinkOnceODRLinkage())
-        Maybe.insert(Sym.name);
+        Maybe.insert(GV->getName());
       keepGlobalValue(*GV, KeptAliases);
       break;
     }
