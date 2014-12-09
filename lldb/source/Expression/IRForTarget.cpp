@@ -18,6 +18,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueSymbolTable.h"
 
 #include "clang/AST/ASTContext.h"
@@ -410,10 +411,10 @@ IRForTarget::DeclForGlobal (const GlobalValue *global_val, Module *module)
         if (metadata_node->getNumOperands() != 2)
             continue;
 
-        if (metadata_node->getOperand(0) != global_val)
+        if (mdconst::dyn_extract_or_null<GlobalValue>(metadata_node->getOperand(0)) != global_val)
             continue;
 
-        ConstantInt *constant_int = dyn_cast<ConstantInt>(metadata_node->getOperand(1));
+        ConstantInt *constant_int = mdconst::dyn_extract<ConstantInt>(metadata_node->getOperand(1));
 
         if (!constant_int)
             return NULL;
@@ -638,11 +639,11 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
                                                      reinterpret_cast<uint64_t>(result_decl),
                                                      false);
 
-    llvm::Value* values[2];
-    values[0] = new_result_global;
-    values[1] = new_constant_int;
+    llvm::Metadata *values[2];
+    values[0] = ConstantAsMetadata::get(new_result_global);
+    values[1] = ConstantAsMetadata::get(new_constant_int);
 
-    ArrayRef<Value*> value_ref(values, 2);
+    ArrayRef<Metadata *> value_ref(values, 2);
 
     MDNode *persistent_global_md = MDNode::get(m_module->getContext(), value_ref);
     NamedMDNode *named_metadata = m_module->getNamedMetadata("clang.global.decl.ptrs");
@@ -1214,7 +1215,7 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc)
     if (!alloc_md || !alloc_md->getNumOperands())
         return false;
 
-    ConstantInt *constant_int = dyn_cast<ConstantInt>(alloc_md->getOperand(0));
+    ConstantInt *constant_int = mdconst::dyn_extract<ConstantInt>(alloc_md->getOperand(0));
 
     if (!constant_int)
         return false;
@@ -1245,11 +1246,11 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc)
 
     NamedMDNode *named_metadata = m_module->getOrInsertNamedMetadata("clang.global.decl.ptrs");
 
-    llvm::Value* values[2];
-    values[0] = persistent_global;
-    values[1] = constant_int;
+    llvm::Metadata *values[2];
+    values[0] = ConstantAsMetadata::get(persistent_global);
+    values[1] = ConstantAsMetadata::get(constant_int);
 
-    ArrayRef<llvm::Value*> value_ref(values, 2);
+    ArrayRef<llvm::Metadata *> value_ref(values, 2);
 
     MDNode *persistent_global_md = MDNode::get(m_module->getContext(), value_ref);
     named_metadata->addOperand(persistent_global_md);
