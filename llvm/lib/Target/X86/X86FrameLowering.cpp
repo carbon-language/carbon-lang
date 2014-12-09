@@ -1892,13 +1892,11 @@ convertArgMovsToPushes(MachineFunction &MF, MachineBasicBlock &MBB,
   for (auto MMI = MovMap.rbegin(), MME = MovMap.rend(); MMI != MME; ++MMI) {
     MachineBasicBlock::iterator MOV = MMI->second;
     MachineOperand PushOp = MOV->getOperand(X86::AddrNumOperands);
-    int PushOpcode;
     if (MOV->getOpcode() == X86::MOV32mi) {
       int64_t Val = PushOp.getImm();
       BuildMI(MBB, Call, DL, TII.get(getPUSHiOpcode(false, Val)))
         .addImm(Val);
     } else {
-      PushOpcode = X86::PUSH32r;
       BuildMI(MBB, Call, DL, TII.get(X86::PUSH32r))
         .addReg(PushOp.getReg());
     }
