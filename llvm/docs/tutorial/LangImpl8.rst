@@ -372,6 +372,46 @@ store the scope (function) when we create it and use it:
 
 when we start generating the code for each function.
 
+also, don't forget to pop the scope back off of your scope stack at the
+end of the code generation for the function:
+
+.. code-block:: c++
+
+  // Pop off the lexical block for the function since we added it
+  // unconditionally.
+  KSDbgInfo.LexicalBlocks.pop_back();
+
+Variables
+=========
+
+Now that we have functions, we need to be able to print out the variables
+we have in scope. Let's get our function arguments set up so we can get
+decent backtraces and see how our functions are being called. It isn't
+a lot of code, and we generally handle it when we're creating the
+argument allocas in ``PrototypeAST::CreateArgumentAllocas``.
+
+.. code-block:: c++
+
+  DIScope *Scope = KSDbgInfo.LexicalBlocks.back();
+  DIFile Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
+                                     KSDbgInfo.TheCU.getDirectory());
+  DIVariable D = DBuilder->createLocalVariable(dwarf::DW_TAG_arg_variable,
+                                               *Scope, Args[Idx], Unit, Line,
+                                               KSDbgInfo.getDoubleTy(), Idx);
+
+  Instruction *Call = DBuilder->insertDeclare(
+      Alloca, D, DBuilder->createExpression(), Builder.GetInsertBlock());
+  Call->setDebugLoc(DebugLoc::get(Line, 0, *Scope));
+
+Here we're doing a few things. First, we're grabbing our current scope
+for the variable so we can say what range of code our variable is valid
+through. Second, we're creating the variable, giving it the scope,
+the name, source location, type, and since it's an argument, the argument
+index. Third, we create an ``lvm.dbg.declare`` call to indicate at the IR
+level that we've got a variable in an alloca (and it gives a starting
+location for the variable). Lastly, we set a source location for the
+beginning of the scope on the declare.
+
 One interesting thing to note at this point is that various debuggers have
 assumptions based on how code and debug information was generated for them
 in the past. In this case we need to do a little bit of a hack to avoid
@@ -393,15 +433,9 @@ body of the function:
 
   KSDbgInfo.emitLocation(Body);
 
-also, don't forget to pop the scope back off of your scope stack at the
-end of the code generation for the function:
-
-.. code-block:: c++
-
-  // Pop off the lexical block for the function since we added it
-  // unconditionally.
-  KSDbgInfo.LexicalBlocks.pop_back();
-
+With this we have enough debug information to set breakpoints in functions,
+print out argument variables, and call functions. Not too bad for just a
+few simple lines of code!
 
 Full Code Listing
 =================
