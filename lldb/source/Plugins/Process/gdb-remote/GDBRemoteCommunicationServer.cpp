@@ -1274,7 +1274,6 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     }
 
     std::string s;
-#if !defined(__linux__)
     if (HostInfo::GetOSBuildString(s))
     {
         response.PutCString ("os_build:");
@@ -1287,7 +1286,6 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
         response.PutCStringAsRawHex8(s.c_str());
         response.PutChar(';');
     }
-#endif
 
 #if defined(__APPLE__)
 

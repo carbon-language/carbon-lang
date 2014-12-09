@@ -88,6 +88,35 @@ finished:
     return success;
 }
 
+bool
+HostInfoLinux::GetOSBuildString(std::string &s)
+{
+    struct utsname un;
+    ::memset(&un, 0, sizeof(utsname));
+    s.clear();
+
+    if (uname(&un) < 0)
+        return false;
+
+    s.assign(un.release);
+    return true;
+}
+
+bool
+HostInfoLinux::GetOSKernelDescription(std::string &s)
+{
+    struct utsname un;
+
+    ::memset(&un, 0, sizeof(utsname));
+    s.clear();
+
+    if (uname(&un) < 0)
+        return false;
+
+    s.assign(un.version);
+    return true;
+}
+
 llvm::StringRef
 HostInfoLinux::GetDistributionId()
 {
