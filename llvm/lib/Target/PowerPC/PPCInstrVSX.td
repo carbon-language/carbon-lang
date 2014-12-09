@@ -793,6 +793,8 @@ def : InstAlias<"xxswapd $XT, $XB",
                 (XXPERMDI vsrc:$XT, vsrc:$XB, vsrc:$XB, 2)>;
 
 let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
+
+let Predicates = [IsBigEndian] in {
 def : Pat<(v2f64 (scalar_to_vector f64:$A)),
           (v2f64 (SUBREG_TO_REG (i64 1), $A, sub_64))>;
 
@@ -800,6 +802,18 @@ def : Pat<(f64 (vector_extract v2f64:$S, 0)),
           (f64 (EXTRACT_SUBREG $S, sub_64))>;
 def : Pat<(f64 (vector_extract v2f64:$S, 1)),
           (f64 (EXTRACT_SUBREG (XXPERMDI $S, $S, 2), sub_64))>;
+}
+
+let Predicates = [IsLittleEndian] in {
+def : Pat<(v2f64 (scalar_to_vector f64:$A)),
+          (v2f64 (XXPERMDI (SUBREG_TO_REG (i64 1), $A, sub_64),
+                           (SUBREG_TO_REG (i64 1), $A, sub_64), 0))>;
+
+def : Pat<(f64 (vector_extract v2f64:$S, 0)),
+          (f64 (EXTRACT_SUBREG (XXPERMDI $S, $S, 2), sub_64))>;
+def : Pat<(f64 (vector_extract v2f64:$S, 1)),
+          (f64 (EXTRACT_SUBREG $S, sub_64))>;
+}
 
 // Additional fnmsub patterns: -a*c + b == -(a*c - b)
 def : Pat<(fma (fneg f64:$A), f64:$C, f64:$B),
