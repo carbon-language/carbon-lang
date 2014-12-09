@@ -640,8 +640,7 @@ private:
   };
 
   LoadModuleMapResult loadModuleMapFileImpl(const FileEntry *File,
-                                            bool IsSystem,
-                                            const DirectoryEntry *Dir);
+                                            bool IsSystem);
 
   /// \brief Try to load the module map file in the given directory.
   ///
