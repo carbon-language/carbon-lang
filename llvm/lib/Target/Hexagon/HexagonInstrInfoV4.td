@@ -3016,7 +3016,7 @@ def : Pat <(i64 (load (HexagonCONST32_GP tglobaladdr:$global))),
 // Map from Pd = load(globaladdress) -> Rd = memb(globaladdress), Pd = Rd
 let AddedComplexity = 100 in
 def : Pat <(i1 (load (HexagonCONST32_GP tglobaladdr:$global))),
-           (i1 (TFR_PdRs (i32 (LDb_GP_V4 tglobaladdr:$global))))>;
+           (i1 (C2_tfrrp (i32 (LDb_GP_V4 tglobaladdr:$global))))>;
 
 // When the Interprocedural Global Variable optimizer realizes that a certain
 // global variable takes only two constant values, it shrinks the global to

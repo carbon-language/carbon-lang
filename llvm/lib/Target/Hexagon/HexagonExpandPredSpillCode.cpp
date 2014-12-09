@@ -103,7 +103,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::A2_add),
                     HEXAGON_RESERVED_REG_1)
               .addReg(FP).addReg(HEXAGON_RESERVED_REG_1);
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_RsPd),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrpr),
                       HEXAGON_RESERVED_REG_2).addReg(SrcReg);
             BuildMI(*MBB, MII, MI->getDebugLoc(),
                     TII->get(Hexagon::STriw_indexed))
@@ -112,7 +112,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
           } else {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::ADD_ri),
                       HEXAGON_RESERVED_REG_1).addReg(FP).addImm(Offset);
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_RsPd),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrpr),
                       HEXAGON_RESERVED_REG_2).addReg(SrcReg);
             BuildMI(*MBB, MII, MI->getDebugLoc(),
                           TII->get(Hexagon::STriw_indexed))
@@ -121,7 +121,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
               .addReg(HEXAGON_RESERVED_REG_2);
           }
         } else {
-          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_RsPd),
+          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrpr),
                     HEXAGON_RESERVED_REG_2).addReg(SrcReg);
           BuildMI(*MBB, MII, MI->getDebugLoc(),
                         TII->get(Hexagon::STriw_indexed)).
@@ -154,7 +154,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
                       HEXAGON_RESERVED_REG_2)
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0);
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_PdRs),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrrp),
                       DstReg).addReg(HEXAGON_RESERVED_REG_2);
           } else {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::ADD_ri),
@@ -163,13 +163,13 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
                       HEXAGON_RESERVED_REG_2)
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0);
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_PdRs),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrrp),
                       DstReg).addReg(HEXAGON_RESERVED_REG_2);
           }
         } else {
           BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::LDriw),
                     HEXAGON_RESERVED_REG_2).addReg(FP).addImm(Offset);
-          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_PdRs),
+          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrrp),
                     DstReg).addReg(HEXAGON_RESERVED_REG_2);
         }
         MII = MBB->erase(MI);

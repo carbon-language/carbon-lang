@@ -893,11 +893,6 @@ def TSTBIT_rr : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
     [(set (i1 PredRegs:$dst),
           (setne (and (shl 1, (i32 IntRegs:$src2)), (i32 IntRegs:$src1)), 0))]>;
 
-def TSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-    "$dst = tstbit($src1, $src2)",
-    [(set (i1 PredRegs:$dst),
-          (setne (and (shl 1, (u5ImmPred:$src2)), (i32 IntRegs:$src1)), 0))]>;
-
 //===----------------------------------------------------------------------===//
 // ALU32/PRED -
 //===----------------------------------------------------------------------===//
@@ -2216,6 +2211,7 @@ def SXTW : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src1),
 //===----------------------------------------------------------------------===//
 // STYPE/BIT +
 //===----------------------------------------------------------------------===//
+
 // clrbit.
 def CLRBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
             "$dst = clrbit($src1, #$src2)",
@@ -2259,15 +2255,66 @@ def TOGBIT_31 : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
 def : Pat <(xor (i32 IntRegs:$src1), -2147483648),
       (TOGBIT_31 (i32 IntRegs:$src1), 31)>;
 
-// Predicate transfer.
-let hasSideEffects = 0 in
-def TFR_RsPd : SInst<(outs IntRegs:$dst), (ins PredRegs:$src1),
-               "$dst = $src1  /* Should almost never emit this. */",
-               []>;
+//===----------------------------------------------------------------------===//
+// STYPE/BIT -
+//===----------------------------------------------------------------------===//
 
-def TFR_PdRs : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1),
-               "$dst = $src1  /* Should almost never emit this. */",
-               [(set (i1 PredRegs:$dst), (trunc (i32 IntRegs:$src1)))]>;
+//===----------------------------------------------------------------------===//
+// STYPE/PRED +
+//===----------------------------------------------------------------------===//
+
+// Predicate transfer.
+let hasSideEffects = 0, hasNewValue = 1, isCodeGenOnly = 0 in
+def C2_tfrpr : SInst<(outs IntRegs:$Rd), (ins PredRegs:$Ps),
+      "$Rd = $Ps", [], "", S_2op_tc_1_SLOT23> {
+  bits<5> Rd;
+  bits<2> Ps;
+
+  let IClass = 0b1000;
+  let Inst{27-24} = 0b1001;
+  let Inst{22} = 0b1;
+  let Inst{17-16} = Ps;
+  let Inst{4-0} = Rd;
+}
+
+// Transfer general register to predicate.
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def C2_tfrrp: SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs),
+      "$Pd = $Rs", [], "", S_2op_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<5> Rs;
+
+  let IClass = 0b1000;
+  let Inst{27-21} = 0b0101010;
+  let Inst{20-16} = Rs;
+  let Inst{1-0} = Pd;
+}
+
+let hasSideEffects = 0 in
+class T_TEST_BIT_IMM<string MnOp, bits<3> MajOp>
+    : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, u5Imm:$u5),
+            "$Pd = "#MnOp#"($Rs, #$u5)",
+            [], "", S_2op_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<5> u5;
+  let IClass = 0b1000;
+  let Inst{27-24} = 0b0101;
+  let Inst{23-21} = MajOp;
+  let Inst{20-16} = Rs;
+  let Inst{13} = 0;
+  let Inst{12-8} = u5;
+  let Inst{1-0} = Pd;
+}
+
+def S2_tstbit_i : T_TEST_BIT_IMM<"tstbit", 0b000>;
+
+let AddedComplexity = 20 in { // Complexity greater than cmp reg-imm.
+  def: Pat<(i1 (trunc (i32 IntRegs:$Rs))),
+           (S2_tstbit_i IntRegs:$Rs, 0)>;
+}
+
+
 //===----------------------------------------------------------------------===//
 // STYPE/PRED -
 //===----------------------------------------------------------------------===//
@@ -2840,7 +2887,7 @@ def : Pat <(select (i1 PredRegs:$src1), (i1 PredRegs:$src2),
 
 // Map Pd = load(addr) -> Rs = load(addr); Pd = Rs.
 def : Pat<(i1 (load ADDRriS11_2:$addr)),
-      (i1 (TFR_PdRs (i32 (LDrib ADDRriS11_2:$addr))))>;
+      (i1 (C2_tfrrp (i32 (LDrib ADDRriS11_2:$addr))))>;
 
 // Map for truncating from 64 immediates to 32 bit immediates.
 def : Pat<(i32 (trunc (i64 DoubleRegs:$src))),
@@ -2848,7 +2895,7 @@ def : Pat<(i32 (trunc (i64 DoubleRegs:$src))),
 
 // Map for truncating from i64 immediates to i1 bit immediates.
 def :  Pat<(i1 (trunc (i64 DoubleRegs:$src))),
-       (i1 (TFR_PdRs (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
+       (i1 (C2_tfrrp (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
                                           subreg_loreg))))>;
 
 // Map memb(Rs) = Rdd -> memb(Rs) = Rt.
