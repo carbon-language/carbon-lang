@@ -610,7 +610,8 @@ def C2_cmovenewif : T_TFRI_Pred<1, 1>;
 let InputType = "imm", isExtendable = 1, isExtentSigned = 1,
     CextOpcode = "TFR", BaseOpcode = "TFRI", hasNewValue = 1, opNewValue = 0,
     isAsCheapAsAMove = 1 , opExtendable = 1, opExtentBits = 16, isMoveImm = 1,
-    isPredicated = 0, isPredicable = 1, isReMaterializable = 1 in
+    isPredicated = 0, isPredicable = 1, isReMaterializable = 1,
+    isCodeGenOnly = 0 in
 def A2_tfrsi : ALU32Inst<(outs IntRegs:$Rd), (ins s16Ext:$s16), "$Rd = #$s16",
     [(set (i32 IntRegs:$Rd), s16ExtPred:$s16)], "", ALU32_2op_tc_1_SLOT0123>,
     ImmRegRel, PredRel {
