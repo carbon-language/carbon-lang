@@ -68,6 +68,18 @@ struct class_match {
 
 /// m_Value() - Match an arbitrary value and ignore it.
 inline class_match<Value> m_Value() { return class_match<Value>(); }
+/// m_Instruction() - Match an arbitrary instruction and ignore it.
+inline class_match<Instruction> m_Instruction() {
+  return class_match<Instruction>();
+}
+/// m_BinOp() - Match an arbitrary binary operation and ignore it.
+inline class_match<BinaryOperator> m_BinOp() {
+  return class_match<BinaryOperator>();
+}
+/// m_Cmp() - Matches any compare instruction and ignore it.
+inline class_match<CmpInst> m_Cmp() {
+  return class_match<CmpInst>();
+}
 /// m_ConstantInt() - Match an arbitrary ConstantInt and ignore it.
 inline class_match<ConstantInt> m_ConstantInt() {
   return class_match<ConstantInt>();
@@ -299,6 +311,12 @@ struct bind_ty {
 /// m_Value - Match a value, capturing it if we match.
 inline bind_ty<Value> m_Value(Value *&V) { return V; }
 
+/// m_Instruction - Match a instruction, capturing it if we match.
+inline bind_ty<Instruction> m_Instruction(Instruction *&I) { return I; }
+
+/// m_BinOp - Match a instruction, capturing it if we match.
+inline bind_ty<BinaryOperator> m_BinOp(BinaryOperator *&I) { return I; }
+
 /// m_ConstantInt - Match a ConstantInt, capturing the value if we match.
 inline bind_ty<ConstantInt> m_ConstantInt(ConstantInt *&CI) { return CI; }
 
@@ -388,6 +406,30 @@ inline specific_intval m_SpecificInt(uint64_t V) { return specific_intval(V); }
 /// m_ConstantInt - Match a ConstantInt and bind to its value.  This does not
 /// match ConstantInts wider than 64-bits.
 inline bind_const_intval_ty m_ConstantInt(uint64_t &V) { return V; }
+
+//===----------------------------------------------------------------------===//
+// Matcher for any binary operator.
+//
+template<typename LHS_t, typename RHS_t>
+struct AnyBinaryOp_match {
+  LHS_t L;
+  RHS_t R;
+
+  AnyBinaryOp_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (auto *I = dyn_cast<BinaryOperator>(V))
+      return L.match(I->getOperand(0)) && R.match(I->getOperand(1));
+    return false;
+  }
+};
+
+template<typename LHS, typename RHS>
+inline AnyBinaryOp_match<LHS, RHS>
+m_BinOp(const LHS &L, const RHS &R) {
+  return AnyBinaryOp_match<LHS, RHS>(L, R);
+}
 
 //===----------------------------------------------------------------------===//
 // Matchers for specific binary operators.
@@ -701,17 +743,21 @@ struct CmpClass_match {
 };
 
 template<typename LHS, typename RHS>
+inline CmpClass_match<LHS, RHS, CmpInst, CmpInst::Predicate>
+m_Cmp(CmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
+  return CmpClass_match<LHS, RHS, CmpInst, CmpInst::Predicate>(Pred, L, R);
+}
+
+template<typename LHS, typename RHS>
 inline CmpClass_match<LHS, RHS, ICmpInst, ICmpInst::Predicate>
 m_ICmp(ICmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
-  return CmpClass_match<LHS, RHS,
-                        ICmpInst, ICmpInst::Predicate>(Pred, L, R);
+  return CmpClass_match<LHS, RHS, ICmpInst, ICmpInst::Predicate>(Pred, L, R);
 }
 
 template<typename LHS, typename RHS>
 inline CmpClass_match<LHS, RHS, FCmpInst, FCmpInst::Predicate>
 m_FCmp(FCmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
-  return CmpClass_match<LHS, RHS,
-                        FCmpInst, FCmpInst::Predicate>(Pred, L, R);
+  return CmpClass_match<LHS, RHS, FCmpInst, FCmpInst::Predicate>(Pred, L, R);
 }
 
 //===----------------------------------------------------------------------===//
