@@ -787,32 +787,35 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   if (Ty->isFunctionTy() || Ty->isLabelTy())
     return Error(TyLoc, "invalid type for global variable");
 
-  GlobalVariable *GV = nullptr;
+  GlobalValue *GVal = nullptr;
 
   // See if the global was forward referenced, if so, use the global.
   if (!Name.empty()) {
-    if (GlobalValue *GVal = M->getNamedValue(Name)) {
+    GVal = M->getNamedValue(Name);
+    if (GVal) {
       if (!ForwardRefVals.erase(Name) || !isa<GlobalValue>(GVal))
         return Error(NameLoc, "redefinition of global '@" + Name + "'");
-      GV = cast<GlobalVariable>(GVal);
     }
   } else {
     std::map<unsigned, std::pair<GlobalValue*, LocTy> >::iterator
       I = ForwardRefValIDs.find(NumberedVals.size());
     if (I != ForwardRefValIDs.end()) {
-      GV = cast<GlobalVariable>(I->second.first);
+      GVal = I->second.first;
       ForwardRefValIDs.erase(I);
     }
   }
 
-  if (!GV) {
+  GlobalVariable *GV;
+  if (!GVal) {
     GV = new GlobalVariable(*M, Ty, false, GlobalValue::ExternalLinkage, nullptr,
                             Name, nullptr, GlobalVariable::NotThreadLocal,
                             AddrSpace);
   } else {
-    if (GV->getType()->getElementType() != Ty)
+    if (GVal->getType()->getElementType() != Ty)
       return Error(TyLoc,
             "forward reference and definition of global have different types");
+
+    GV = cast<GlobalVariable>(GVal);
 
     // Move the forward-reference to the correct spot in the module.
     M->getGlobalList().splice(M->global_end(), M->getGlobalList(), GV);
