@@ -81,6 +81,10 @@ namespace lldb_private {
         bool
         GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info) override;
 
+        uint32_t
+        FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                       ProcessInstanceInfoList &process_infos) override;
+
         bool
         GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch) override;
 

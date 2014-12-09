@@ -457,6 +457,25 @@ PlatformLinux::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_inf
     return success;
 }
 
+uint32_t
+PlatformLinux::FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                              ProcessInstanceInfoList &process_infos)
+{
+    uint32_t match_count = 0;
+    if (IsHost())
+    {
+        // Let the base class figure out the host details
+        match_count = Platform::FindProcesses (match_info, process_infos);
+    }
+    else
+    {
+        // If we are remote, we can only return results if we are connected
+        if (m_remote_platform_sp)
+            match_count = m_remote_platform_sp->FindProcesses (match_info, process_infos);
+    }
+    return match_count;
+}
+
 bool
 PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
