@@ -1613,7 +1613,7 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
                               ValueType load_vt = i32,
                               SDPatternOperator ld = null_frag> {
 
-  let mayLoad = 1 in {
+  let mayLoad = 1, mayStore = 0 in {
 
     let addr64 = 0 in {
 
