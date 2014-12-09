@@ -516,6 +516,9 @@ def expectedFailureFreeBSD(bugnumber=None, compilers=None):
 def expectedFailureLinux(bugnumber=None, compilers=None):
     if bugnumber: return expectedFailureOS('linux', bugnumber, compilers)
 
+def expectedFailureWindows(bugnumber=None, compilers=None):
+    if bugnumber: return expectedFailureOS('win32', bugnumber, compilers)
+
 def skipIfRemote(func):
     """Decorate the item to skip tests if testing remotely."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
