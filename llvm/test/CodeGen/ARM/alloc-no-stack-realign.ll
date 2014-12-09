@@ -8,21 +8,30 @@
 
 define void @test1(<16 x float>* noalias sret %agg.result) nounwind ssp "no-realign-stack" {
 entry:
-; NO-REALIGN: test1
-; NO-REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #48
-; NO-REALIGN: vst1.64
-; NO-REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #32
-; NO-REALIGN: vst1.64
-; NO-REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #16
-; NO-REALIGN: vst1.64
-; NO-REALIGN: vst1.64
-; NO-REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #48
-; NO-REALIGN: vst1.64
-; NO-REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #32
-; NO-REALIGN: vst1.64
-; NO-REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #16
-; NO-REALIGN: vst1.64
-; NO-REALIGN: vst1.64
+; NO-REALIGN-LABEL: test1
+; NO-REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R1:[0-9]+]]:128]
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R1]], #16
+; NO-REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R1]], #32
+; NO-REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R1]], #48
+; NO-REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R1:[0-9]+]], #48
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R1]], #32
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R1]], #16
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R1]]:128]
+
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R0:0]], #48
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R0]], #32
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: add r[[R2:[0-9]+]], r[[R1]], #16
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R0]]:128]
  %retval = alloca <16 x float>, align 16
  %0 = load <16 x float>* @T3_retval, align 16
  store <16 x float> %0, <16 x float>* %retval
@@ -33,22 +42,32 @@ entry:
 
 define void @test2(<16 x float>* noalias sret %agg.result) nounwind ssp {
 entry:
-; REALIGN: test2
+; REALIGN-LABEL: test2
 ; REALIGN: bic sp, sp, #63
-; REALIGN: orr [[R2:r[0-9]+]], [[R1:r[0-9]+]], #48
-; REALIGN: vst1.64
-; REALIGN: orr [[R2:r[0-9]+]], [[R1:r[0-9]+]], #32
-; REALIGN: vst1.64
-; REALIGN: orr [[R2:r[0-9]+]], [[R1:r[0-9]+]], #16
-; REALIGN: vst1.64
-; REALIGN: vst1.64
-; REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #48
-; REALIGN: vst1.64
-; REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #32
-; REALIGN: vst1.64
-; REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #16
-; REALIGN: vst1.64
-; REALIGN: vst1.64
+; REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R1:[0-9]+]]:128]
+; REALIGN: add r[[R2:[0-9]+]], r[[R1]], #16
+; REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; REALIGN: add r[[R2:[0-9]+]], r[[R1]], #32
+; REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; REALIGN: add r[[R2:[0-9]+]], r[[R1]], #48
+; REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+
+
+; REALIGN: orr r[[R2:[0-9]+]], r[[R1:[0-9]+]], #48
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; REALIGN: orr r[[R2:[0-9]+]], r[[R1]], #32
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; REALIGN: orr r[[R2:[0-9]+]], r[[R1]], #16
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R1]]:128]
+
+; REALIGN: add r[[R1:[0-9]+]], r[[R0:0]], #48
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R1]]:128]
+; REALIGN: add r[[R1:[0-9]+]], r[[R0]], #32
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R1]]:128]
+; REALIGN: add r[[R1:[0-9]+]], r[[R0]], #16
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R1]]:128]
+; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R0]]:128]
  %retval = alloca <16 x float>, align 16
  %0 = load <16 x float>* @T3_retval, align 16
  store <16 x float> %0, <16 x float>* %retval
