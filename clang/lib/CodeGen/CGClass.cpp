@@ -616,7 +616,7 @@ void CodeGenFunction::EmitInitializerForField(FieldDecl *Field, LValue LHS,
     }
     break;
   case TEK_Complex:
-    EmitComplexExprIntoLValue(Init, LHS, /*isInit*/ true);
+    EmitComplexExprIntoLValue(Init, LHS, /*isInit*/ true, DbgLoc);
     break;
   case TEK_Aggregate: {
     llvm::Value *ArrayIndexVar = nullptr;

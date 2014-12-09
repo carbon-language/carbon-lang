@@ -81,7 +81,8 @@ public:
 
   /// EmitStoreOfComplex - Store the specified real/imag parts into the
   /// specified value pointer.
-  void EmitStoreOfComplex(ComplexPairTy Val, LValue LV, bool isInit);
+  void EmitStoreOfComplex(ComplexPairTy Val, LValue LV, bool isInit,
+                          SourceLocation DbgLoc = SourceLocation());
 
   /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
   ComplexPairTy EmitComplexToComplexCast(ComplexPairTy Val, QualType SrcType,
@@ -333,9 +334,12 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfLValue(LValue lvalue,
 
 /// EmitStoreOfComplex - Store the specified real/imag parts into the
 /// specified value pointer.
-void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val,
-                                            LValue lvalue,
-                                            bool isInit) {
+void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, LValue lvalue,
+                                            bool isInit,
+                                            SourceLocation DbgLoc) {
+  if (auto *DI = CGF.getDebugInfo())
+    DI->EmitLocation(CGF.Builder, DbgLoc);
+
   if (lvalue.getType()->isAtomicType())
     return CGF.EmitAtomicStore(RValue::getComplex(Val), lvalue, isInit);
 
@@ -910,6 +914,7 @@ LValue ComplexExprEmitter::EmitBinAssignLValue(const BinaryOperator *E,
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // Store the result value into the LHS lvalue.
+  // FIXME
   EmitStoreOfComplex(Val, LHS, /*isInit*/ false);
 
   return LHS;
@@ -1038,18 +1043,19 @@ ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E, bool IgnoreReal,
 }
 
 void CodeGenFunction::EmitComplexExprIntoLValue(const Expr *E, LValue dest,
-                                                bool isInit) {
+                                                bool isInit,
+                                                SourceLocation DbgLoc) {
   assert(E && getComplexType(E->getType()) &&
          "Invalid complex expression to emit");
   ComplexExprEmitter Emitter(*this);
   ComplexPairTy Val = Emitter.Visit(const_cast<Expr*>(E));
-  Emitter.EmitStoreOfComplex(Val, dest, isInit);
+  Emitter.EmitStoreOfComplex(Val, dest, isInit, DbgLoc);
 }
 
 /// EmitStoreOfComplex - Store a complex number into the specified l-value.
 void CodeGenFunction::EmitStoreOfComplex(ComplexPairTy V, LValue dest,
-                                         bool isInit) {
-  ComplexExprEmitter(*this).EmitStoreOfComplex(V, dest, isInit);
+                                         bool isInit, SourceLocation DbgLoc) {
+  ComplexExprEmitter(*this).EmitStoreOfComplex(V, dest, isInit, DbgLoc);
 }
 
 /// EmitLoadOfComplex - Load a complex number from the specified address.
