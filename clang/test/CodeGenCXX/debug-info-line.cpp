@@ -64,6 +64,17 @@ void f5() {
       = complex_src();
 }
 
+struct agg { int i; };
+agg agg_src();
+
+// CHECK-LABEL: define
+void f6() {
+  agg x;
+#line 700
+  x // CHECK: call void @llvm.memcpy{{.*}} !dbg [[DBG_F6:!.*]]
+      = agg_src();
+}
+
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
@@ -72,3 +83,4 @@ void f5() {
 // CHECK: [[DBG_F3]] = metadata !{i32 400,
 // CHECK: [[DBG_F4]] = metadata !{i32 500,
 // CHECK: [[DBG_F5]] = metadata !{i32 600,
+// CHECK: [[DBG_F6]] = metadata !{i32 700,

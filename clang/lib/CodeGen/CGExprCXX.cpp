@@ -187,6 +187,8 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorMemberCallExpr(
         unsigned ArgsToSkip = isa<CXXOperatorCallExpr>(CE) ? 1 : 0;
         llvm::Value *RHS =
             EmitLValue(*(CE->arg_begin() + ArgsToSkip)).getAddress();
+        if (auto *DI = getDebugInfo())
+          DI->EmitLocation(Builder, CE->getLocStart());
         EmitAggregateAssign(This, RHS, CE->getType());
         return RValue::get(This);
       }
