@@ -8870,11 +8870,9 @@ static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
 
 /// CombineBaseUpdate - Target-specific DAG combine function for VLDDUP and
 /// NEON load/store intrinsics to merge base address updates.
+/// The caller is assumed to have checked legality.
 static SDValue CombineBaseUpdate(SDNode *N,
                                  TargetLowering::DAGCombinerInfo &DCI) {
-  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
-    return SDValue();
-
   SelectionDAG &DAG = DCI.DAG;
   bool isIntrinsic = (N->getOpcode() == ISD::INTRINSIC_VOID ||
                       N->getOpcode() == ISD::INTRINSIC_W_CHAIN);
@@ -8965,6 +8963,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
     }
 
     // Create the new updating load/store node.
+    // First, create an SDVTList for the new updating node's results.
     EVT Tys[6];
     unsigned NumResultVecs = (isLoad ? NumVecs : 0);
     unsigned n;
@@ -8973,6 +8972,8 @@ static SDValue CombineBaseUpdate(SDNode *N,
     Tys[n++] = MVT::i32;
     Tys[n] = MVT::Other;
     SDVTList SDTys = DAG.getVTList(makeArrayRef(Tys, NumResultVecs+2));
+
+    // Then, gather the new node's operands.
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(N->getOperand(0)); // incoming chain
     Ops.push_back(N->getOperand(AddrOpIdx));
@@ -8980,7 +8981,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
     for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i) {
       Ops.push_back(N->getOperand(i));
     }
-    MemIntrinsicSDNode *MemInt = cast<MemIntrinsicSDNode>(N);
+    MemSDNode *MemInt = cast<MemSDNode>(N);
     SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys,
                                            Ops, MemInt->getMemoryVT(),
                                            MemInt->getMemOperand());
@@ -8997,6 +8998,14 @@ static SDValue CombineBaseUpdate(SDNode *N,
     break;
   }
   return SDValue();
+}
+
+static SDValue PerformVLDCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  return CombineBaseUpdate(N, DCI);
 }
 
 /// CombineVLDDUP - For a VDUPLANE node N, check if its source operand is a
@@ -9846,7 +9855,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ARMISD::VLD2DUP:
   case ARMISD::VLD3DUP:
   case ARMISD::VLD4DUP:
-    return CombineBaseUpdate(N, DCI);
+    return PerformVLDCombine(N, DCI);
   case ARMISD::BUILD_VECTOR:
     return PerformARMBUILD_VECTORCombine(N, DCI);
   case ISD::INTRINSIC_VOID:
@@ -9866,7 +9875,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
     case Intrinsic::arm_neon_vst2lane:
     case Intrinsic::arm_neon_vst3lane:
     case Intrinsic::arm_neon_vst4lane:
-      return CombineBaseUpdate(N, DCI);
+      return PerformVLDCombine(N, DCI);
     default: break;
     }
     break;
