@@ -16790,6 +16790,13 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
     return DAG.getNode(ISD::VSELECT, dl, VT, VMask, Op, PreservedSrc);
 }
 
+/// \brief Creates an SDNode for a predicated scalar operation.
+/// \returns (X86vselect \p Mask, \p Op, \p PreservedSrc).
+/// The mask is comming as MVT::i8 and it should be truncated
+/// to MVT::i1 while lowering masking intrinsics.
+/// The main difference between ScalarMaskingNode and VectorMaskingNode is using
+/// "X86select" instead of "vselect". We just can't create the "vselect" node for 
+/// a scalar instruction.
 static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
                                     SDValue PreservedSrc,
                                     const X86Subtarget *Subtarget,

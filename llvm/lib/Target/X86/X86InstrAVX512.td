@@ -2,6 +2,7 @@
 // EltVT).  These are things like the register class for the writemask, etc.
 // The idea is to pass one of these as the template argument rather than the
 // individual arguments.
+// The template is also used for scalar types, in this case numelts is 1.
 class X86VectorVTInfo<int numelts, ValueType EltVT, RegisterClass rc,
                       string suffix = ""> {
   RegisterClass RC = rc;
@@ -23,11 +24,13 @@ class X86VectorVTInfo<int numelts, ValueType EltVT, RegisterClass rc,
   // Suffix used in the instruction mnemonic.
   string Suffix = suffix;
 
-  int NumEltsInVT = !if (!eq (NumElts, 1),
-                         !if (!eq (EltVT.Size, 32), 4,
-                         !if (!eq (EltVT.Size, 64), 2, NumElts)), NumElts);
-
-  string VTName = "v" # NumEltsInVT # EltVT;
+  // VTName is a string name for vector VT. For vector types it will be
+  // v # NumElts # EltVT, so for vector of 8 elements of i32 it will be v8i32
+  // It is a little bit complex for scalar types, where NumElts = 1.
+  // In this case we build v4f32 or v2f64
+  string VTName = "v" # !if (!eq (NumElts, 1),
+                        !if (!eq (EltVT.Size, 32), 4,
+                        !if (!eq (EltVT.Size, 64), 2, NumElts)), NumElts) # EltVT;
 
   // The vector VT.
   ValueType VT = !cast<ValueType>(VTName);
@@ -120,7 +123,8 @@ def v2i64x_info  : X86VectorVTInfo<2,  i64, VR128X, "q">;
 def v4f32x_info  : X86VectorVTInfo<4,  f32, VR128X, "ps">;
 def v2f64x_info  : X86VectorVTInfo<2,  f64, VR128X, "pd">;
 
-// the scalar staff
+// We map scalar types to the smallest (128-bit) vector type
+// with the appropriate element type. This allows to use the same masking logic.
 def f32x_info    : X86VectorVTInfo<1,  f32, VR128X, "ss">;
 def f64x_info    : X86VectorVTInfo<1,  f64, VR128X, "sd">;
 
