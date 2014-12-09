@@ -738,67 +738,49 @@ define i32 @test56(i32 %x) {
 
 
 define i32 @test57(i32 %x) {
-  %shr = lshr i32 %x, 1
-  %shl = shl i32 %shr, 4
-  %and = and i32 %shl, 16
-  ret i32 %and
-; CHECK-LABEL: @test57(
-; CHECK: shl i32 %x, 3
-}
-
-define i32 @test58(i32 %x) {
-  %shr = lshr i32 %x, 1
-  %shl = shl i32 %shr, 4
-  %or = or i32 %shl, 8
-  ret i32 %or
-; CHECK-LABEL: @test58(
-; CHECK: shl i32 %x, 3
-}
-
-define i32 @test59(i32 %x) {
   %shr = ashr i32 %x, 1
   %shl = shl i32 %shr, 4
   %or = or i32 %shl, 7
   ret i32 %or
-; CHECK-LABEL: @test59(
+; CHECK-LABEL: @test57(
 ; CHECK: %shl = shl i32 %shr1, 4
 }
 
 
-define i32 @test60(i32 %x) {
+define i32 @test58(i32 %x) {
   %shr = ashr i32 %x, 4
   %shl = shl i32 %shr, 1
   %or = or i32 %shl, 1
   ret i32 %or
-; CHECK-LABEL: @test60(
+; CHECK-LABEL: @test58(
 ; CHECK: ashr i32 %x, 3
 }
 
 
-define i32 @test61(i32 %x) {
+define i32 @test59(i32 %x) {
   %shr = ashr i32 %x, 4
   %shl = shl i32 %shr, 1
   %or = or i32 %shl, 2
   ret i32 %or
-; CHECK-LABEL: @test61(
+; CHECK-LABEL: @test59(
 ; CHECK: ashr i32 %x, 4
 }
 
 ; propagate "exact" trait
-define i32 @test62(i32 %x) {
+define i32 @test60(i32 %x) {
   %shr = ashr exact i32 %x, 4
   %shl = shl i32 %shr, 1
   %or = or i32 %shl, 1
   ret i32 %or
-; CHECK-LABEL: @test62(
+; CHECK-LABEL: @test60(
 ; CHECK: ashr exact i32 %x, 3
 }
 
 ; PR17026
-; CHECK-LABEL: @test63(
+; CHECK-LABEL: @test61(
 ; CHECK-NOT: sh
 ; CHECK: ret
-define void @test63(i128 %arg) {
+define void @test61(i128 %arg) {
 bb:
   br i1 undef, label %bb1, label %bb12
 
@@ -830,29 +812,29 @@ bb12:                                             ; preds = %bb11, %bb8, %bb
   ret void
 }
 
-define i32 @test64(i32 %a) {
-; CHECK-LABEL: @test64(
+define i32 @test62(i32 %a) {
+; CHECK-LABEL: @test62(
 ; CHECK-NEXT: ret i32 undef
   %b = ashr i32 %a, 32  ; shift all bits out
   ret i32 %b
 }
 
-define <4 x i32> @test64_splat_vector(<4 x i32> %a) {
-; CHECK-LABEL: @test64_splat_vector
+define <4 x i32> @test62_splat_vector(<4 x i32> %a) {
+; CHECK-LABEL: @test62_splat_vector
 ; CHECK-NEXT: ret <4 x i32> undef
   %b = ashr <4 x i32> %a, <i32 32, i32 32, i32 32, i32 32>  ; shift all bits out
   ret <4 x i32> %b
 }
 
-define <4 x i32> @test64_non_splat_vector(<4 x i32> %a) {
-; CHECK-LABEL: @test64_non_splat_vector
+define <4 x i32> @test62_non_splat_vector(<4 x i32> %a) {
+; CHECK-LABEL: @test62_non_splat_vector
 ; CHECK-NOT: ret <4 x i32> undef
   %b = ashr <4 x i32> %a, <i32 32, i32 0, i32 1, i32 2>  ; shift all bits out
   ret <4 x i32> %b
 }
 
-define <2 x i65> @test_65(<2 x i64> %t) {
-; CHECK-LABEL: @test_65
+define <2 x i65> @test_63(<2 x i64> %t) {
+; CHECK-LABEL: @test_63
   %a = zext <2 x i64> %t to <2 x i65>
   %sext = shl <2 x i65> %a, <i65 33, i65 33>
   %b = ashr <2 x i65> %sext, <i65 33, i65 33>
