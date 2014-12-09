@@ -597,17 +597,19 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   ArrayRef<VarDecl *> ArrayIndexes;
   if (MemberInit->getNumArrayIndices())
     ArrayIndexes = MemberInit->getArrayIndexes();
-  CGF.EmitInitializerForField(Field, LHS, MemberInit->getInit(), ArrayIndexes);
+  CGF.EmitInitializerForField(Field, LHS, MemberInit->getInit(), ArrayIndexes,
+                              MemberInit->getMemberLocation());
 }
 
-void CodeGenFunction::EmitInitializerForField(FieldDecl *Field,
-                                              LValue LHS, Expr *Init,
-                                             ArrayRef<VarDecl *> ArrayIndexes) {
+void CodeGenFunction::EmitInitializerForField(FieldDecl *Field, LValue LHS,
+                                              Expr *Init,
+                                              ArrayRef<VarDecl *> ArrayIndexes,
+                                              SourceLocation DbgLoc) {
   QualType FieldType = Field->getType();
   switch (getEvaluationKind(FieldType)) {
   case TEK_Scalar:
     if (LHS.isSimple()) {
-      EmitExprAsInit(Init, Field, LHS, false);
+      EmitExprAsInit(Init, Field, LHS, false, DbgLoc);
     } else {
       RValue RHS = RValue::get(EmitScalarExpr(Init));
       EmitStoreThroughLValue(RHS, LHS);
