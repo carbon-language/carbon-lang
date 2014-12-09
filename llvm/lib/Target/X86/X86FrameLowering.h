@@ -76,6 +76,16 @@ public:
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                  MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI) const override;
+
+private:
+  /// convertArgMovsToPushes - This method tries to convert a call sequence
+  /// that uses sub and mov instructions to put the argument onto the stack
+  /// into a series of pushes.
+  /// Returns true if the transformation succeeded, false if not.
+  bool convertArgMovsToPushes(MachineFunction &MF, 
+                              MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I, 
+                              uint64_t Amount) const;
 };
 
 } // End llvm namespace

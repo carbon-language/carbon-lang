@@ -19,7 +19,7 @@ define void @g() {
   call x86_stdcallcc void @f(%Foo* inalloca %b)
 ; CHECK: calll   _f@8
 ; CHECK-NOT: %esp
-; CHECK: subl $4, %esp
+; CHECK: pushl
 ; CHECK: calll   _i@4
   call x86_stdcallcc void @i(i32 0)
   ret void

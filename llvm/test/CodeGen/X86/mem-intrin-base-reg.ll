@@ -63,7 +63,7 @@ spill_vectors:
 ; CHECK-LABEL: _memcpy_vla_vector:
 ; CHECK: andl $-16, %esp
 ; CHECK: movl %esp, %esi
-; CHECK: movl $128, {{.*}}(%esp)
+; CHECK: pushl $128
 ; CHECK: calll _memcpy
 ; CHECK: calll __chkstk
 

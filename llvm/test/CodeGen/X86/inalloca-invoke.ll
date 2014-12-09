@@ -37,7 +37,7 @@ blah:
 invoke.cont:
   call void @begin(%Iter* sret %beg)
 
-; CHECK:  movl %[[beg]],
+; CHECK:  pushl %[[beg]]
 ; CHECK:  calll _begin
 
   invoke void @reverse(%frame.reverse* inalloca align 4 %rev_args)

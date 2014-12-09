@@ -93,6 +93,15 @@ static unsigned getANDriOpcode(bool IsLP64, int64_t Imm) {
   return X86::AND32ri;
 }
 
+static unsigned getPUSHiOpcode(bool IsLP64, int64_t Imm) {
+  // We don't support LP64 for now.
+  assert(!IsLP64);
+
+  if (isInt<8>(Imm))
+    return X86::PUSH32i8;
+  return X86::PUSHi32;
+}
+
 static unsigned getLEArOpcode(unsigned IsLP64) {
   return IsLP64 ? X86::LEA64r : X86::LEA32r;
 }
@@ -1802,6 +1811,103 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
 #endif
 }
 
+bool X86FrameLowering::
+convertArgMovsToPushes(MachineFunction &MF, MachineBasicBlock &MBB,
+                       MachineBasicBlock::iterator I, uint64_t Amount) const {
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
+    MF.getSubtarget().getRegisterInfo());
+  unsigned StackPtr = RegInfo.getStackRegister();
+
+  // Scan the call setup sequence for the pattern we're looking for.
+  // We only handle a simple case now - a sequence of MOV32mi or MOV32mr
+  // instructions, that push a sequence of 32-bit values onto the stack, with
+  // no gaps.  
+  std::map<int64_t, MachineBasicBlock::iterator> MovMap;
+  do {
+    int Opcode = I->getOpcode();
+    if (Opcode != X86::MOV32mi && Opcode != X86::MOV32mr)
+      break;
+ 
+    // We only want movs of the form:
+    // movl imm/r32, k(%ecx)
+    // If we run into something else, bail
+    // Note that AddrBaseReg may, counterintuitively, not be a register...
+    if (!I->getOperand(X86::AddrBaseReg).isReg() || 
+        (I->getOperand(X86::AddrBaseReg).getReg() != StackPtr) ||
+        !I->getOperand(X86::AddrScaleAmt).isImm() ||
+        (I->getOperand(X86::AddrScaleAmt).getImm() != 1) ||
+        (I->getOperand(X86::AddrIndexReg).getReg() != X86::NoRegister) ||
+        (I->getOperand(X86::AddrSegmentReg).getReg() != X86::NoRegister) ||
+        !I->getOperand(X86::AddrDisp).isImm())
+      return false;
+
+    int64_t StackDisp = I->getOperand(X86::AddrDisp).getImm();
+    
+    // We don't want to consider the unaligned case.
+    if (StackDisp % 4)
+      return false;
+
+    // If the same stack slot is being filled twice, something's fishy.
+    if (!MovMap.insert(std::pair<int64_t, MachineInstr*>(StackDisp, I)).second)
+      return false;
+
+    ++I;
+  } while (I != MBB.end());
+
+  // We now expect the end of the sequence - a call and a stack adjust.
+  if (I == MBB.end())
+    return false;
+  if (!I->isCall())
+    return false;
+  MachineBasicBlock::iterator Call = I;
+  if ((++I)->getOpcode() != TII.getCallFrameDestroyOpcode())
+    return false;
+
+  // Now, go through the map, and see that we don't have any gaps,
+  // but only a series of 32-bit MOVs.
+  // Since std::map provides ordered iteration, the original order
+  // of the MOVs doesn't matter.
+  int64_t ExpectedDist = 0;
+  for (auto MMI = MovMap.begin(), MME = MovMap.end(); MMI != MME; 
+       ++MMI, ExpectedDist += 4)
+    if (MMI->first != ExpectedDist)
+      return false;
+
+  // Ok, everything looks fine. Do the transformation.
+  DebugLoc DL = I->getDebugLoc();
+
+  // It's possible the original stack adjustment amount was larger than
+  // that done by the pushes. If so, we still need a SUB.
+  Amount -= ExpectedDist;
+  if (Amount) {
+    MachineInstr* Sub = BuildMI(MBB, Call, DL,
+                          TII.get(getSUBriOpcode(false, Amount)), StackPtr)
+                  .addReg(StackPtr).addImm(Amount);
+    Sub->getOperand(3).setIsDead();
+  }
+
+  // Now, iterate through the map in reverse order, and replace the movs
+  // with pushes. MOVmi/MOVmr doesn't have any defs, so need to replace uses.
+  for (auto MMI = MovMap.rbegin(), MME = MovMap.rend(); MMI != MME; ++MMI) {
+    MachineBasicBlock::iterator MOV = MMI->second;
+    MachineOperand PushOp = MOV->getOperand(X86::AddrNumOperands);
+    int PushOpcode;
+    if (MOV->getOpcode() == X86::MOV32mi) {
+      int64_t Val = PushOp.getImm();
+      BuildMI(MBB, Call, DL, TII.get(getPUSHiOpcode(false, Val)))
+        .addImm(Val);
+    } else {
+      PushOpcode = X86::PUSH32r;
+      BuildMI(MBB, Call, DL, TII.get(X86::PUSH32r))
+        .addReg(PushOp.getReg());
+    }
+    MBB.erase(MOV);
+  }
+
+  return true;
+}
+
 void X86FrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
@@ -1809,21 +1915,20 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
                                        MF.getSubtarget().getRegisterInfo());
   unsigned StackPtr = RegInfo.getStackRegister();
-  bool reseveCallFrame = hasReservedCallFrame(MF);
+  bool reserveCallFrame = hasReservedCallFrame(MF);
   int Opcode = I->getOpcode();
   bool isDestroy = Opcode == TII.getCallFrameDestroyOpcode();
   const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool IsLP64 = STI.isTarget64BitLP64();
   DebugLoc DL = I->getDebugLoc();
-  uint64_t Amount = !reseveCallFrame ? I->getOperand(0).getImm() : 0;
+  uint64_t Amount = !reserveCallFrame ? I->getOperand(0).getImm() : 0;
   uint64_t CalleeAmt = isDestroy ? I->getOperand(1).getImm() : 0;
   I = MBB.erase(I);
 
-  if (!reseveCallFrame) {
+  if (!reserveCallFrame) {
     // If the stack pointer can be changed after prologue, turn the
     // adjcallstackup instruction into a 'sub ESP, <amt>' and the
     // adjcallstackdown instruction into 'add ESP, <amt>'
-    // TODO: consider using push / pop instead of sub + store / add
     if (Amount == 0)
       return;
 
@@ -1838,6 +1943,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
     MachineInstr *New = nullptr;
     if (Opcode == TII.getCallFrameSetupOpcode()) {
+      // Try to convert movs to the stack into pushes.
+      // We currently only look for a pattern that appears in 32-bit
+      // calling conventions.
+      if (!IsLP64 && convertArgMovsToPushes(MF, MBB, I, Amount))
+        return;
+
       New = BuildMI(MF, DL, TII.get(getSUBriOpcode(IsLP64, Amount)),
                     StackPtr)
         .addReg(StackPtr)

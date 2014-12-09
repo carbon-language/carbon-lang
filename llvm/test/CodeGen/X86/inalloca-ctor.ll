@@ -17,16 +17,16 @@ entry:
 ; CHECK: movl %esp,
   call void @Foo_ctor(%Foo* %c)
 ; CHECK: leal 12(%{{.*}}),
-; CHECK: subl $4, %esp
-; CHECK: calll _Foo_ctor
+; CHECK-NEXT: pushl
+; CHECK-NEXT: calll _Foo_ctor
 ; CHECK: addl $4, %esp
   %b = getelementptr %frame* %args, i32 0, i32 1
   store i32 42, i32* %b
 ; CHECK: movl $42,
   %a = getelementptr %frame* %args, i32 0, i32 0
   call void @Foo_ctor(%Foo* %a)
-; CHECK: subl $4, %esp
-; CHECK: calll _Foo_ctor
+; CHECK-NEXT: pushl
+; CHECK-NEXT: calll _Foo_ctor
 ; CHECK: addl $4, %esp
   call void @f(%frame* inalloca %args)
 ; CHECK: calll   _f

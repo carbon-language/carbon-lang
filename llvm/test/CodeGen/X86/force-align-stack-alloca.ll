@@ -33,14 +33,14 @@ define i64 @g(i32 %i) nounwind {
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ;
 ; Next we set up the memset call, and then undo it.
-; CHECK:      subl   $32, %esp
+; CHECK:      subl   $20, %esp
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ; CHECK:      calll  memset
 ; CHECK-NEXT: addl   $32, %esp
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ;
 ; Next we set up the call to 'f'.
-; CHECK:      subl   $32, %esp
+; CHECK:      subl   $28, %esp
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ; CHECK:      calll  f
 ; CHECK-NEXT: addl   $32, %esp
