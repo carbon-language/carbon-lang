@@ -30,6 +30,7 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueMap.h"
@@ -165,6 +166,7 @@ typedef DenseMap<Instruction *, TypeIsSExt> InstrToOrigTy;
     bool DupRetToEnableTailCallOpts(BasicBlock *BB);
     bool PlaceDbgValues(Function &F);
     bool sinkAndCmp(Function &F);
+    bool splitBranchCondition(Function &F);
   };
 }
 
@@ -218,8 +220,10 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   // into a single target instruction, push the mask and compare into branch
   // users. Do this before OptimizeBlock -> OptimizeInst ->
   // OptimizeCmpExpression, which perturbs the pattern being searched for.
-  if (!DisableBranchOpts)
+  if (!DisableBranchOpts) {
     EverMadeChange |= sinkAndCmp(F);
+    EverMadeChange |= splitBranchCondition(F);
+  }
 
   bool MadeChange = true;
   while (MadeChange) {
@@ -3792,6 +3796,210 @@ bool CodeGenPrepare::sinkAndCmp(Function &F) {
       ++NumAndCmpsMoved;
       DEBUG(BrccUser->getParent()->dump());
     }
+  }
+  return MadeChange;
+}
+
+/// \brief Scale down both weights to fit into uint32_t.
+static void scaleWeights(uint64_t &NewTrue, uint64_t &NewFalse) {
+  uint64_t NewMax = (NewTrue > NewFalse) ? NewTrue : NewFalse;
+  uint32_t Scale = (NewMax / UINT32_MAX) + 1;
+  NewTrue = NewTrue / Scale;
+  NewFalse = NewFalse / Scale;
+}
+
+/// \brief Some targets prefer to split a conditional branch like:
+/// \code
+///   %0 = icmp ne i32 %a, 0
+///   %1 = icmp ne i32 %b, 0
+///   %or.cond = or i1 %0, %1
+///   br i1 %or.cond, label %TrueBB, label %FalseBB
+/// \endcode
+/// into multiple branch instructions like:
+/// \code
+///   bb1:
+///     %0 = icmp ne i32 %a, 0
+///     br i1 %0, label %TrueBB, label %bb2
+///   bb2:
+///     %1 = icmp ne i32 %b, 0
+///     br i1 %1, label %TrueBB, label %FalseBB
+/// \endcode
+/// This usually allows instruction selection to do even further optimizations
+/// and combine the compare with the branch instruction. Currently this is
+/// applied for targets which have "cheap" jump instructions.
+///
+/// FIXME: Remove the (equivalent?) implementation in SelectionDAG.
+///
+bool CodeGenPrepare::splitBranchCondition(Function &F) {
+  if (!TM || TM->Options.EnableFastISel != true ||
+      !TLI || TLI->isJumpExpensive())
+    return false;
+
+  bool MadeChange = false;
+  for (auto &BB : F) {
+    // Does this BB end with the following?
+    //   %cond1 = icmp|fcmp|binary instruction ...
+    //   %cond2 = icmp|fcmp|binary instruction ...
+    //   %cond.or = or|and i1 %cond1, cond2
+    //   br i1 %cond.or label %dest1, label %dest2"
+    BinaryOperator *LogicOp;
+    BasicBlock *TBB, *FBB;
+    if (!match(BB.getTerminator(), m_Br(m_OneUse(m_BinOp(LogicOp)), TBB, FBB)))
+      continue;
+
+    unsigned Opc;
+    Instruction *Cond1, *Cond2;
+    if (match(LogicOp, m_And(m_OneUse(m_Instruction(Cond1)),
+                             m_OneUse(m_Instruction(Cond2)))))
+      Opc = Instruction::And;
+    else if (match(LogicOp, m_Or(m_OneUse(m_Instruction(Cond1)),
+                                 m_OneUse(m_Instruction(Cond2)))))
+      Opc = Instruction::Or;
+    else
+      continue;
+
+    if (!match(Cond1, m_CombineOr(m_Cmp(), m_BinOp())) ||
+        !match(Cond2, m_CombineOr(m_Cmp(), m_BinOp()))   )
+      continue;
+
+    DEBUG(dbgs() << "Before branch condition splitting\n"; BB.dump());
+
+    // Create a new BB.
+    auto *InsertBefore = std::next(Function::iterator(BB))
+        .getNodePtrUnchecked();
+    auto TmpBB = BasicBlock::Create(BB.getContext(),
+                                    BB.getName() + ".cond.split",
+                                    BB.getParent(), InsertBefore);
+
+    // Update original basic block by using the first condition directly by the
+    // branch instruction and removing the no longer needed and/or instruction.
+    auto *Br1 = cast<BranchInst>(BB.getTerminator());
+    Br1->setCondition(Cond1);
+    LogicOp->eraseFromParent();
+    Cond2->removeFromParent();
+    // Depending on the conditon we have to either replace the true or the false
+    // successor of the original branch instruction.
+    if (Opc == Instruction::And)
+      Br1->setSuccessor(0, TmpBB);
+    else
+      Br1->setSuccessor(1, TmpBB);
+
+    // Fill in the new basic block.
+    auto *Br2 = IRBuilder<>(TmpBB).CreateCondBr(Cond2, TBB, FBB);
+    Cond2->insertBefore(Br2);
+
+    // Update PHI nodes in both successors. The original BB needs to be
+    // replaced in one succesor's PHI nodes, because the branch comes now from
+    // the newly generated BB (NewBB). In the other successor we need to add one
+    // incoming edge to the PHI nodes, because both branch instructions target
+    // now the same successor. Depending on the original branch condition
+    // (and/or) we have to swap the successors (TrueDest, FalseDest), so that
+    // we perfrom the correct update for the PHI nodes.
+    // This doesn't change the successor order of the just created branch
+    // instruction (or any other instruction).
+    if (Opc == Instruction::Or)
+      std::swap(TBB, FBB);
+
+    // Replace the old BB with the new BB.
+    for (auto &I : *TBB) {
+      PHINode *PN = dyn_cast<PHINode>(&I);
+      if (!PN)
+        break;
+      int i;
+      while ((i = PN->getBasicBlockIndex(&BB)) >= 0)
+        PN->setIncomingBlock(i, TmpBB);
+    }
+
+    // Add another incoming edge form the new BB.
+    for (auto &I : *FBB) {
+      PHINode *PN = dyn_cast<PHINode>(&I);
+      if (!PN)
+        break;
+      auto *Val = PN->getIncomingValueForBlock(&BB);
+      PN->addIncoming(Val, TmpBB);
+    }
+
+    // Update the branch weights (from SelectionDAGBuilder::
+    // FindMergedConditions).
+    if (Opc == Instruction::Or) {
+      // Codegen X | Y as:
+      // BB1:
+      //   jmp_if_X TBB
+      //   jmp TmpBB
+      // TmpBB:
+      //   jmp_if_Y TBB
+      //   jmp FBB
+      //
+
+      // We have flexibility in setting Prob for BB1 and Prob for NewBB.
+      // The requirement is that
+      //   TrueProb for BB1 + (FalseProb for BB1 * TrueProb for TmpBB)
+      //     = TrueProb for orignal BB.
+      // Assuming the orignal weights are A and B, one choice is to set BB1's
+      // weights to A and A+2B, and set TmpBB's weights to A and 2B. This choice
+      // assumes that
+      //   TrueProb for BB1 == FalseProb for BB1 * TrueProb for TmpBB.
+      // Another choice is to assume TrueProb for BB1 equals to TrueProb for
+      // TmpBB, but the math is more complicated.
+      uint64_t TrueWeight, FalseWeight;
+      if (Br1->getBranchWeights(TrueWeight, FalseWeight)) {
+        uint64_t NewTrueWeight = TrueWeight;
+        uint64_t NewFalseWeight = TrueWeight + 2 * FalseWeight;
+        scaleWeights(NewTrueWeight, NewFalseWeight);
+        Br1->setMetadata(LLVMContext::MD_prof, MDBuilder(Br1->getContext())
+                         .createBranchWeights(TrueWeight, FalseWeight));
+
+        NewTrueWeight = TrueWeight;
+        NewFalseWeight = 2 * FalseWeight;
+        scaleWeights(NewTrueWeight, NewFalseWeight);
+        Br2->setMetadata(LLVMContext::MD_prof, MDBuilder(Br2->getContext())
+                         .createBranchWeights(TrueWeight, FalseWeight));
+      }
+    } else {
+      // Codegen X & Y as:
+      // BB1:
+      //   jmp_if_X TmpBB
+      //   jmp FBB
+      // TmpBB:
+      //   jmp_if_Y TBB
+      //   jmp FBB
+      //
+      //  This requires creation of TmpBB after CurBB.
+
+      // We have flexibility in setting Prob for BB1 and Prob for TmpBB.
+      // The requirement is that
+      //   FalseProb for BB1 + (TrueProb for BB1 * FalseProb for TmpBB)
+      //     = FalseProb for orignal BB.
+      // Assuming the orignal weights are A and B, one choice is to set BB1's
+      // weights to 2A+B and B, and set TmpBB's weights to 2A and B. This choice
+      // assumes that
+      //   FalseProb for BB1 == TrueProb for BB1 * FalseProb for TmpBB.
+      uint64_t TrueWeight, FalseWeight;
+      if (Br1->getBranchWeights(TrueWeight, FalseWeight)) {
+        uint64_t NewTrueWeight = 2 * TrueWeight + FalseWeight;
+        uint64_t NewFalseWeight = FalseWeight;
+        scaleWeights(NewTrueWeight, NewFalseWeight);
+        Br1->setMetadata(LLVMContext::MD_prof, MDBuilder(Br1->getContext())
+                         .createBranchWeights(TrueWeight, FalseWeight));
+
+        NewTrueWeight = 2 * TrueWeight;
+        NewFalseWeight = FalseWeight;
+        scaleWeights(NewTrueWeight, NewFalseWeight);
+        Br2->setMetadata(LLVMContext::MD_prof, MDBuilder(Br2->getContext())
+                         .createBranchWeights(TrueWeight, FalseWeight));
+      }
+    }
+
+    // Request DOM Tree update.
+    // Note: No point in getting fancy here, since the DT info is never
+    // available to CodeGenPrepare and the existing update code is broken
+    // anyways.
+    ModifiedDT = true;
+
+    MadeChange = true;
+
+    DEBUG(dbgs() << "After branch condition splitting\n"; BB.dump();
+          TmpBB->dump());
   }
   return MadeChange;
 }
