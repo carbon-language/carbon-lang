@@ -116,7 +116,7 @@ IRObjectFile::IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> Mod)
 IRObjectFile::~IRObjectFile() {
  }
 
-static const GlobalValue *getGV(DataRefImpl &Symb) {
+static GlobalValue *getGV(DataRefImpl &Symb) {
   if ((Symb.p & 3) == 3)
     return nullptr;
 
@@ -235,10 +235,7 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   return Res;
 }
 
-const GlobalValue *IRObjectFile::getSymbolGV(DataRefImpl Symb) const {
-  const GlobalValue *GV = getGV(Symb);
-  return GV;
-}
+GlobalValue *IRObjectFile::getSymbolGV(DataRefImpl Symb) { return getGV(Symb); }
 
 basic_symbol_iterator IRObjectFile::symbol_begin_impl() const {
   Module::const_iterator I = M->begin();

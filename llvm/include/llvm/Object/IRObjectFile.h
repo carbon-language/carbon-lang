@@ -36,7 +36,10 @@ public:
   std::error_code printSymbolName(raw_ostream &OS,
                                   DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
-  const GlobalValue *getSymbolGV(DataRefImpl Symb) const;
+  GlobalValue *getSymbolGV(DataRefImpl Symb);
+  const GlobalValue *getSymbolGV(DataRefImpl Symb) const {
+    return const_cast<IRObjectFile *>(this)->getSymbolGV(Symb);
+  }
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
 
@@ -46,6 +49,7 @@ public:
   Module &getModule() {
     return *M;
   }
+  std::unique_ptr<Module> takeModule() { return std::move(M); }
 
   static inline bool classof(const Binary *v) {
     return v->isIR();
