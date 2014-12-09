@@ -219,7 +219,7 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
 bool
 MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
                                              unsigned Type) const {
-  // FIXME: This is extremelly conservative. This really needs to use a
+  // FIXME: This is extremely conservative. This really needs to use a
   // whitelist with a clear explanation for why each realocation needs to
   // point to the symbol, not to the section.
   switch (Type) {
