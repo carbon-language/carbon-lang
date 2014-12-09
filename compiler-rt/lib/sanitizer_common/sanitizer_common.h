@@ -66,6 +66,7 @@ bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
 void FlushUnneededShadowMemory(uptr addr, uptr size);
 void IncreaseTotalMmap(uptr size);
 void DecreaseTotalMmap(uptr size);
+uptr GetRSS();
 
 // InternalScopedBuffer can be used instead of large stack arrays to
 // keep frame size low.

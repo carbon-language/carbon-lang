@@ -375,6 +375,10 @@ uptr internal_rename(const char *oldpath, const char *newpath) {
   UNIMPLEMENTED();
 }
 
+uptr GetRSS() {
+  return 0;
+}
+
 // ---------------------- BlockingMutex ---------------- {{{1
 const uptr LOCK_UNINITIALIZED = 0;
 const uptr LOCK_READY = (uptr)-1;

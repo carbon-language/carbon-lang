@@ -251,7 +251,6 @@ uptr ALWAYS_INLINE GetThreadTraceHeader(int tid) {
 void InitializePlatform();
 void FlushShadowMemory();
 void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive);
-uptr GetRSS();
 
 void *internal_start_thread(void(*func)(void*), void *arg);
 void internal_join_thread(void *th);
