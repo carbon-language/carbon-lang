@@ -274,11 +274,11 @@ public:
     SearchFilterForUnconstrainedSearches (const lldb::TargetSP &target_sp) : SearchFilter(target_sp) {}
     ~SearchFilterForUnconstrainedSearches () {}
     
-    virtual bool 
-    ModulePasses (const FileSpec &module_spec);
+    bool 
+    ModulePasses (const FileSpec &module_spec) override;
     
-    virtual bool
-    ModulePasses (const lldb::ModuleSP &module_sp);
+    bool
+    ModulePasses (const lldb::ModuleSP &module_sp) override;
 
 protected:
     lldb::SearchFilterSP
@@ -317,32 +317,32 @@ public:
     const SearchFilterByModule&
     operator=(const SearchFilterByModule& rhs);
 
-    virtual bool
-    ModulePasses (const lldb::ModuleSP &module_sp);
+    bool
+    ModulePasses (const lldb::ModuleSP &module_sp) override;
 
-    virtual bool
-    ModulePasses (const FileSpec &spec);
+    bool
+    ModulePasses (const FileSpec &spec) override;
 
-    virtual bool
-    AddressPasses (Address &address);
+    bool
+    AddressPasses (Address &address) override;
 
-    virtual bool
-    CompUnitPasses (FileSpec &fileSpec);
+    bool
+    CompUnitPasses (FileSpec &fileSpec) override;
 
-    virtual bool
-    CompUnitPasses (CompileUnit &compUnit);
+    bool
+    CompUnitPasses (CompileUnit &compUnit) override;
 
-    virtual void
-    GetDescription(Stream *s);
+    void
+    GetDescription(Stream *s) override;
 
-    virtual uint32_t
-    GetFilterRequiredItems ();
+    uint32_t
+    GetFilterRequiredItems () override;
 
-    virtual void
-    Dump (Stream *s) const;
+    void
+    Dump (Stream *s) const override;
 
-    virtual void
-    Search (Searcher &searcher);
+    void
+    Search (Searcher &searcher) override;
 
 protected:
     lldb::SearchFilterSP
@@ -378,32 +378,32 @@ public:
     const SearchFilterByModuleList&
     operator=(const SearchFilterByModuleList& rhs);
 
-    virtual bool
-    ModulePasses (const lldb::ModuleSP &module_sp);
+    bool
+    ModulePasses (const lldb::ModuleSP &module_sp) override;
 
-    virtual bool
-    ModulePasses (const FileSpec &spec);
+    bool
+    ModulePasses (const FileSpec &spec) override;
 
-    virtual bool
-    AddressPasses (Address &address);
+    bool
+    AddressPasses (Address &address) override;
 
-    virtual bool
-    CompUnitPasses (FileSpec &fileSpec);
+    bool
+    CompUnitPasses (FileSpec &fileSpec) override;
 
-    virtual bool
-    CompUnitPasses (CompileUnit &compUnit);
+    bool
+    CompUnitPasses (CompileUnit &compUnit) override;
 
-    virtual void
-    GetDescription(Stream *s);
+    void
+    GetDescription(Stream *s) override;
 
-    virtual uint32_t
-    GetFilterRequiredItems ();
+    uint32_t
+    GetFilterRequiredItems () override;
 
-    virtual void
-    Dump (Stream *s) const;
+    void
+    Dump (Stream *s) const override;
     
-    virtual void
-    Search (Searcher &searcher);
+    void
+    Search (Searcher &searcher) override;
 
 protected:
     lldb::SearchFilterSP
@@ -440,26 +440,26 @@ public:
     const SearchFilterByModuleListAndCU&
     operator=(const SearchFilterByModuleListAndCU& rhs);
 
-    virtual bool
-    AddressPasses (Address &address);
+    bool
+    AddressPasses (Address &address) override;
 
-    virtual bool
-    CompUnitPasses (FileSpec &fileSpec);
+    bool
+    CompUnitPasses (FileSpec &fileSpec) override;
 
-    virtual bool
-    CompUnitPasses (CompileUnit &compUnit);
+    bool
+    CompUnitPasses (CompileUnit &compUnit) override;
 
-    virtual void
-    GetDescription(Stream *s);
+    void
+    GetDescription(Stream *s) override;
 
-    virtual uint32_t
-    GetFilterRequiredItems ();
+    uint32_t
+    GetFilterRequiredItems () override;
 
-    virtual void
-    Dump (Stream *s) const;
+    void
+    Dump (Stream *s) const override;
 
-    virtual void
-    Search (Searcher &searcher);
+    void
+    Search (Searcher &searcher) override;
     
 protected:
     lldb::SearchFilterSP
