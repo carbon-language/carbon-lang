@@ -72,6 +72,15 @@ void f6() {
       = agg_src();
 }
 
+// CHECK-LABEL: define
+void f7() {
+  int *src1();
+  int src2();
+#line 800
+  int x = ( // CHECK: load {{.*}} !dbg [[DBG_F7:!.*]]
+      src1())[src2()];
+}
+
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
@@ -81,3 +90,4 @@ void f6() {
 // CHECK: [[DBG_F4]] = metadata !{i32 500,
 // CHECK: [[DBG_F5]] = metadata !{i32 600,
 // CHECK: [[DBG_F6]] = metadata !{i32 700,
+// CHECK: [[DBG_F7]] = metadata !{i32 800,
