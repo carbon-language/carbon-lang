@@ -197,8 +197,8 @@ void DataLayout::reset(StringRef Desc) {
 static std::pair<StringRef, StringRef> split(StringRef Str, char Separator) {
   assert(!Str.empty() && "parse error, string can't be empty here");
   std::pair<StringRef, StringRef> Split = Str.split(Separator);
-  assert((!Split.second.empty() || Split.first == Str) &&
-         "a trailing separator is not allowed");
+  if (Split.second.empty() && Split.first != Str)
+    report_fatal_error("Trailing separator in datalayout string");
   return Split;
 }
 
@@ -213,7 +213,8 @@ static unsigned getInt(StringRef R) {
 
 /// Convert bits into bytes. Assert if not a byte width multiple.
 static unsigned inBytes(unsigned Bits) {
-  assert(Bits % 8 == 0 && "number of bits must be a byte width multiple");
+  if (Bits % 8)
+    report_fatal_error("number of bits must be a byte width multiple");
   return Bits / 8;
 }
 
@@ -251,10 +252,16 @@ void DataLayout::parseSpecifier(StringRef Desc) {
         report_fatal_error("Invalid address space, must be a 24bit integer");
 
       // Size.
+      if (Rest.empty())
+        report_fatal_error(
+            "Missing size specification for pointer in datalayout string");
       Split = split(Rest, ':');
       unsigned PointerMemSize = inBytes(getInt(Tok));
 
       // ABI alignment.
+      if (Rest.empty())
+        report_fatal_error(
+            "Missing alignment specification for pointer in datalayout string");
       Split = split(Rest, ':');
       unsigned PointerABIAlign = inBytes(getInt(Tok));
 
