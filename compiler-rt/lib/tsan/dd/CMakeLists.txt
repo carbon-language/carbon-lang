@@ -5,21 +5,9 @@ include_directories(../..)
 set(DD_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_no_rtti_flag(DD_CFLAGS)
 
-if("${CMAKE_BUILD_TYPE}" EQUAL "Release")
-  set(DD_COMMON_DEFINITIONS DEBUG=0)
-else()
-  set(DD_COMMON_DEFINITIONS DEBUG=1)
-endif()
-
-set(DD_DYNAMIC_DEFINITIONS DYNAMIC=1)
-
 set(DD_SOURCES
   dd_rtl.cc
   dd_interceptors.cc
-)
-
-set(DD_HEADERS
-  dd_rtl.h
 )
 
 set(DD_LINKLIBS)
@@ -35,12 +23,11 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-    CFLAGS ${DD_CFLAGS}
-    DEFS ${DD_COMMON_DEFINITIONS})
+    CFLAGS ${DD_CFLAGS})
+  add_dependencies(dd clang_rt.dd-${arch})
 
   add_compiler_rt_object_library(RTDD ${arch}
-    SOURCES ${DD_SOURCES} CFLAGS ${DD_CFLAGS}
-    DEFS ${DD_COMMON_DEFINITIONS} ${DD_DYNAMIC_DEFINITIONS})
+    SOURCES ${DD_SOURCES} CFLAGS ${DD_CFLAGS})
 
   add_compiler_rt_runtime(clang_rt.dyndd-${arch} ${arch} SHARED
     SOURCES $<TARGET_OBJECTS:RTDD.${arch}>
@@ -48,7 +35,7 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
   target_link_libraries(clang_rt.dyndd-${arch} ${DD_LINKLIBS})
+  add_dependencies(dd clang_rt.dyndd-${arch})
 endif()
 
 add_dependencies(compiler-rt dd)
-

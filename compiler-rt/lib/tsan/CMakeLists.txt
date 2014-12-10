@@ -13,12 +13,6 @@ append_list_if(COMPILER_RT_HAS_WFRAME_LARGER_THAN_FLAG -Wframe-larger-than=512 T
 append_list_if(COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors TSAN_RTL_CFLAGS)
 # FIXME: Add support for --sysroot=. compile flag:
 
-if("${CMAKE_BUILD_TYPE}" EQUAL "Release")
-  set(TSAN_COMMON_DEFINITIONS DEBUG=0)
-else()
-  set(TSAN_COMMON_DEFINITIONS DEBUG=1)
-endif()
-
 set(TSAN_SOURCES
   rtl/tsan_clock.cc
   rtl/tsan_flags.cc
