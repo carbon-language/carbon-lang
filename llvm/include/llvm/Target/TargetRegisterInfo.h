@@ -45,6 +45,7 @@ public:
   const vt_iterator VTs;
   const uint32_t *SubClassMask;
   const uint16_t *SuperRegIndices;
+  const unsigned LaneMask;
   const sc_iterator SuperClasses;
   ArrayRef<MCPhysReg> (*OrderFunc)(const MachineFunction&);
 
@@ -189,6 +190,13 @@ public:
   ///
   ArrayRef<MCPhysReg> getRawAllocationOrder(const MachineFunction &MF) const {
     return OrderFunc ? OrderFunc(MF) : makeArrayRef(begin(), getNumRegs());
+  }
+
+  /// Returns the combination of all lane masks of register in this class.
+  /// The lane masks of the registers are the combination of all lane masks
+  /// of their subregisters.
+  unsigned getLaneMask() const {
+    return LaneMask;
   }
 };
 

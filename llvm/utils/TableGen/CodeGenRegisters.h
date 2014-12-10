@@ -283,6 +283,8 @@ namespace llvm {
     int CopyCost;
     bool Allocatable;
     std::string AltOrderSelect;
+    /// Contains the combination of the lane masks of all subregisters.
+    unsigned LaneMask;
 
     // Return the Record that defined this class, or NULL if the class was
     // created by TableGen.
@@ -525,7 +527,7 @@ namespace llvm {
     void computeComposites();
 
     // Compute a lane mask for each sub-register index.
-    void computeSubRegIndexLaneMasks();
+    void computeSubRegLaneMasks();
 
   public:
     CodeGenRegBank(RecordKeeper&);

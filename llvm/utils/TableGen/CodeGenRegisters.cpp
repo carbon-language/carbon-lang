@@ -661,7 +661,8 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   : TheDef(R),
     Name(R->getName()),
     TopoSigs(RegBank.getNumTopoSigs()),
-    EnumValue(-1) {
+    EnumValue(-1),
+    LaneMask(0) {
   // Rename anonymous register classes.
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
     static unsigned AnonCounter = 0;
@@ -1165,7 +1166,7 @@ void CodeGenRegBank::computeComposites() {
 //
 // Conservatively share a lane mask bit if two sub-register indices overlap in
 // some registers, but not in others. That shouldn't happen a lot.
-void CodeGenRegBank::computeSubRegIndexLaneMasks() {
+void CodeGenRegBank::computeSubRegLaneMasks() {
   // First assign individual bits to all the leaf indices.
   unsigned Bit = 0;
   // Determine mask of lanes that cover their registers.
@@ -1201,6 +1202,17 @@ void CodeGenRegBank::computeSubRegIndexLaneMasks() {
     // no longer assume that the lanes are covering their registers.
     if (!Idx.AllSuperRegsCovered)
       CoveringLanes &= ~Mask;
+  }
+
+  // Compute lane mask combinations for register classes.
+  for (auto &RegClass : RegClasses) {
+    unsigned LaneMask = 0;
+    for (const auto &SubRegIndex : SubRegIndices) {
+      if (RegClass.getSubClassWithSubReg(&SubRegIndex) != &RegClass)
+        continue;
+      LaneMask |= SubRegIndex.LaneMask;
+    }
+    RegClass.LaneMask = LaneMask;
   }
 }
 
@@ -1689,7 +1701,7 @@ void CodeGenRegBank::computeRegUnitSets() {
 
 void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
-  computeSubRegIndexLaneMasks();
+  computeSubRegLaneMasks();
 
   // Compute a weight for each register unit created during getSubRegs.
   // This may create adopted register units (with unit # >= NumNativeRegUnits).

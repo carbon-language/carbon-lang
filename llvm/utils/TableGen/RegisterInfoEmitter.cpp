@@ -1171,7 +1171,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
          << "MCRegisterClasses[" << RC.getName() << "RegClassID],\n    "
          << "VTLists + " << VTSeqs.get(RC.VTs) << ",\n    " << RC.getName()
          << "SubClassMask,\n    SuperRegIdxSeqs + "
-         << SuperRegIdxSeqs.get(SuperRegIdxLists[RC.EnumValue]) << ",\n    ";
+         << SuperRegIdxSeqs.get(SuperRegIdxLists[RC.EnumValue]) << ",\n    "
+         << format("0x%08x,\n    ", RC.LaneMask);
       if (RC.getSuperClasses().empty())
         OS << "NullRegClasses,\n    ";
       else
