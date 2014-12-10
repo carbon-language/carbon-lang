@@ -154,6 +154,12 @@ namespace llvm {
     bool shrinkToUses(LiveInterval *li,
                       SmallVectorImpl<MachineInstr*> *dead = nullptr);
 
+    /// Specialized version of
+    /// shrinkToUses(LiveInterval *li, SmallVectorImpl<MachineInstr*> *dead)
+    /// that works on a subregister live range and only looks at uses matching
+    /// the lane mask of the subregister range.
+    bool shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg);
+
     /// extendToIndices - Extend the live range of LI to reach all points in
     /// Indices. The points in the Indices array must be jointly dominated by
     /// existing defs in LI. PHI-defs are added as needed to maintain SSA form.
@@ -421,11 +427,6 @@ namespace llvm {
     void computeRegUnitRange(LiveRange&, unsigned Unit);
     void computeVirtRegInterval(LiveInterval&);
 
-    /// Specialized version of
-    /// shrinkToUses(LiveInterval *li, SmallVectorImpl<MachineInstr*> *dead)
-    /// that works on a subregister live range and only looks at uses matching
-    /// the lane mask of the subregister range.
-    bool shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg);
 
     /// Helper function for repairIntervalsInRange(), walks backwards and
     /// creates/modifies live segments in @p LR to match the operands found.
