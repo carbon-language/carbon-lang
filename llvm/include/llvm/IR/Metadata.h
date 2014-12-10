@@ -598,7 +598,7 @@ protected:
   }
 
   MDNode(LLVMContext &Context, unsigned ID, ArrayRef<Metadata *> MDs);
-  ~MDNode() { dropAllReferences(); }
+  ~MDNode() {}
 
   void dropAllReferences();
   void storeDistinctInContext();
@@ -766,7 +766,7 @@ class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
 
   MDNodeFwdDecl(LLVMContext &C, ArrayRef<Metadata *> Vals)
       : MDNode(C, MDNodeFwdDeclKind, Vals) {}
-  ~MDNodeFwdDecl() {}
+  ~MDNodeFwdDecl() { dropAllReferences(); }
 
 public:
   static bool classof(const Metadata *MD) {

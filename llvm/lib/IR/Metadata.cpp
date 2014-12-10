@@ -428,6 +428,7 @@ GenericMDNode::~GenericMDNode() {
     pImpl->NonUniquedMDNodes.erase(this);
   else
     pImpl->MDNodeSet.erase(this);
+  dropAllReferences();
 }
 
 void GenericMDNode::resolve() {
