@@ -151,6 +151,7 @@ namespace clang {
     Decl *VisitObjCMethodDecl(ObjCMethodDecl *D);
     Decl *VisitObjCCategoryDecl(ObjCCategoryDecl *D);
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
+    Decl *VisitLinkageSpecDecl(LinkageSpecDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     Decl *VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
     Decl *VisitObjCImplementationDecl(ObjCImplementationDecl *D);
@@ -3468,6 +3469,35 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
     return nullptr;
 
   return ToProto;
+}
+
+Decl *ASTNodeImporter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
+  DeclContext *LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+
+  SourceLocation ExternLoc = Importer.Import(D->getExternLoc());
+  SourceLocation LangLoc = Importer.Import(D->getLocation());
+
+  bool HasBraces = D->hasBraces();
+ 
+  LinkageSpecDecl *ToLinkageSpec = LinkageSpecDecl::Create(Importer.getToContext(),
+                                                           DC,
+                                                           ExternLoc,
+                                                           LangLoc,
+                                                           D->getLanguage(),
+                                                           HasBraces);
+
+  if (HasBraces) {
+    SourceLocation RBraceLoc = Importer.Import(D->getRBraceLoc());
+    ToLinkageSpec->setRBraceLoc(RBraceLoc);
+  }
+
+  ToLinkageSpec->setLexicalDeclContext(LexicalDC);
+  LexicalDC->addDeclInternal(ToLinkageSpec);
+
+  Importer.Imported(D, ToLinkageSpec);
+
+  return ToLinkageSpec;
 }
 
 bool ASTNodeImporter::ImportDefinition(ObjCInterfaceDecl *From, 
