@@ -367,6 +367,24 @@ unsigned AArch64FastISel::materializeFP(const ConstantFP *CFP, MVT VT) {
     return fastEmitInst_i(Opc, TLI.getRegClassFor(VT), Imm);
   }
 
+  // For the MachO large code model materialize the FP constant in code.
+  if (Subtarget->isTargetMachO() && TM.getCodeModel() == CodeModel::Large) {
+    unsigned Opc1 = Is64Bit ? AArch64::MOVi64imm : AArch64::MOVi32imm;
+    const TargetRegisterClass *RC = Is64Bit ?
+        &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+
+    unsigned TmpReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc1), TmpReg)
+        .addImm(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
+
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(TmpReg, getKillRegState(true));
+
+    return ResultReg;
+  }
+
   // Materialize via constant pool.  MachineConstantPool wants an explicit
   // alignment.
   unsigned Align = DL.getPrefTypeAlignment(CFP->getType());

@@ -387,6 +387,13 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM)
     setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
   }
 
+  // Make floating-point constants legal for the large code model, so they don't
+  // become loads from the constant pool.
+  if (Subtarget->isTargetMachO() && TM.getCodeModel() == CodeModel::Large) {
+    setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
+    setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
+  }
+
   // AArch64 does not have floating-point extending loads, i1 sign-extending
   // load, floating-point truncating stores, or v2i32->v2i16 truncating store.
   setLoadExtAction(ISD::EXTLOAD, MVT::f16, Expand);

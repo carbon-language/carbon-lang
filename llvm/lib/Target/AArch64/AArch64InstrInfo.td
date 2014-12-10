@@ -481,6 +481,24 @@ def trunc_imm : SDNodeXForm<imm, [{
 def : Pat<(i64 i64imm_32bit:$src),
           (SUBREG_TO_REG (i64 0), (MOVi32imm (trunc_imm imm:$src)), sub_32)>;
 
+// Materialize FP constants via MOVi32imm/MOVi64imm (MachO large code model).
+def bitcast_fpimm_to_i32 : SDNodeXForm<fpimm, [{
+return CurDAG->getTargetConstant(
+  N->getValueAPF().bitcastToAPInt().getZExtValue(), MVT::i32);
+}]>;
+
+def bitcast_fpimm_to_i64 : SDNodeXForm<fpimm, [{
+return CurDAG->getTargetConstant(
+  N->getValueAPF().bitcastToAPInt().getZExtValue(), MVT::i64);
+}]>;
+
+
+def : Pat<(f32 fpimm:$in),
+  (COPY_TO_REGCLASS (MOVi32imm (bitcast_fpimm_to_i32 f32:$in)), FPR32)>;
+def : Pat<(f64 fpimm:$in),
+  (COPY_TO_REGCLASS (MOVi64imm (bitcast_fpimm_to_i64 f64:$in)), FPR64)>;
+
+
 // Deal with the various forms of (ELF) large addressing with MOVZ/MOVK
 // sequences.
 def : Pat<(AArch64WrapperLarge tglobaladdr:$g3, tglobaladdr:$g2,
