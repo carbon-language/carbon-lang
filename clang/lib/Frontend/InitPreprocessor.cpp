@@ -662,7 +662,12 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
                    TI.getTypeWidth(TI.getWCharType()), TI, Builder);
   DefineTypeSizeof("__SIZEOF_WINT_T__",
                    TI.getTypeWidth(TI.getWIntType()), TI, Builder);
-  if (TI.hasInt128Type())
+  // This is a temporary workaround while MIPS64 has not yet fully supported
+  // 128-bit integers. But declaration of int128 type is necessary even though
+  // __SIZEOF_INT128__ is undefined because c++ standard header files like
+  // limits throw error message if __int128 is not available.
+  if (TI.hasInt128Type() && !(TI.getTriple().getArch() == llvm::Triple::mips64el
+                   || TI.getTriple().getArch() == llvm::Triple::mips64))
     DefineTypeSizeof("__SIZEOF_INT128__", 128, TI, Builder);
 
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Builder);
