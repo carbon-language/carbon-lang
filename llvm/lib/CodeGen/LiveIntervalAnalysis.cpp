@@ -767,6 +767,8 @@ public:
         continue;
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         LiveInterval &LI = LIS.getInterval(Reg);
+        // TODO: handle subranges instead of dropping them
+        LI.clearSubRanges();
         updateRange(LI, Reg);
         continue;
       }

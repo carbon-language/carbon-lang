@@ -204,6 +204,25 @@ namespace llvm {
     const_vni_iterator vni_begin() const { return valnos.begin(); }
     const_vni_iterator vni_end() const   { return valnos.end(); }
 
+    /// Constructs a new LiveRange object.
+    LiveRange() {
+    }
+
+    /// Constructs a new LiveRange object by copying segments and valnos from
+    /// another LiveRange.
+    LiveRange(const LiveRange &Other, BumpPtrAllocator &Allocator) {
+      // Duplicate valnos.
+      for (LiveRange::const_vni_iterator I = Other.vni_begin(),
+           E = Other.vni_end(); I != E; ++I) {
+        createValueCopy(*I, Allocator);
+      }
+      // Now we can copy segments and remap their valnos.
+      for (LiveRange::const_iterator I = Other.begin(), E = Other.end();
+           I != E; ++I) {
+        segments.push_back(Segment(I->start, I->end, valnos[I->valno->id]));
+      }
+    }
+
     /// advanceTo - Advance the specified iterator to point to the Segment
     /// containing the specified position, or end() if the position is past the
     /// end of the range.  If no Segment contains this position, but the
@@ -543,11 +562,106 @@ namespace llvm {
   public:
     typedef LiveRange super;
 
+    /// A live range for subregisters. The LaneMask specifies which parts of the
+    /// super register are covered by the interval.
+    /// (@sa TargetRegisterInfo::getSubRegIndexLaneMask()).
+    class SubRange : public LiveRange {
+    public:
+      SubRange *Next;
+      unsigned LaneMask;
+
+      /// Constructs a new SubRange object.
+      SubRange(unsigned LaneMask)
+        : Next(nullptr), LaneMask(LaneMask) {
+      }
+
+      /// Constructs a new SubRange object by copying liveness from @p Other.
+      SubRange(unsigned LaneMask, const LiveRange &Other,
+               BumpPtrAllocator &Allocator)
+        : LiveRange(Other, Allocator), Next(nullptr), LaneMask(LaneMask) {
+      }
+    };
+
+  private:
+    SubRange *SubRanges; ///< Single linked list of subregister live ranges.
+
+  public:
     const unsigned reg;  // the register or stack slot of this interval.
     float weight;        // weight of this interval
 
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), weight(Weight) {}
+      : SubRanges(nullptr), reg(Reg), weight(Weight) {}
+
+    template<typename T>
+    class SingleLinkedListIterator {
+      T *P;
+    public:
+      SingleLinkedListIterator<T>(T *P) : P(P) {}
+      SingleLinkedListIterator<T> &operator++() {
+        P = P->Next;
+        return *this;
+      }
+      SingleLinkedListIterator<T> &operator++(int) {
+        SingleLinkedListIterator res = *this;
+        ++*this;
+        return res;
+      }
+      bool operator!=(const SingleLinkedListIterator<T> &Other) {
+        return P != Other.operator->();
+      }
+      bool operator==(const SingleLinkedListIterator<T> &Other) {
+        return P == Other.operator->();
+      }
+      T &operator*() const {
+        return *P;
+      }
+      T *operator->() const {
+        return P;
+      }
+    };
+
+    typedef SingleLinkedListIterator<SubRange> subrange_iterator;
+    subrange_iterator subrange_begin() {
+      return subrange_iterator(SubRanges);
+    }
+    subrange_iterator subrange_end() {
+      return subrange_iterator(nullptr);
+    }
+
+    typedef SingleLinkedListIterator<const SubRange> const_subrange_iterator;
+    const_subrange_iterator subrange_begin() const {
+      return const_subrange_iterator(SubRanges);
+    }
+    const_subrange_iterator subrange_end() const {
+      return const_subrange_iterator(nullptr);
+    }
+
+    /// Creates a new empty subregister live range. The range is added at the
+    /// beginning of the subrange list; subrange iterators stay valid.
+    SubRange *createSubRange(BumpPtrAllocator &Allocator, unsigned LaneMask) {
+      SubRange *Range = new (Allocator) SubRange(LaneMask);
+      appendSubRange(Range);
+      return Range;
+    }
+
+    /// Like createSubRange() but the new range is filled with a copy of the
+    /// liveness information in @p CopyFrom.
+    SubRange *createSubRangeFrom(BumpPtrAllocator &Allocator, unsigned LaneMask,
+                                 const LiveRange &CopyFrom) {
+      SubRange *Range = new (Allocator) SubRange(LaneMask, CopyFrom, Allocator);
+      appendSubRange(Range);
+      return Range;
+    }
+
+    /// Returns true if subregister liveness information is available.
+    bool hasSubRanges() const {
+      return SubRanges != nullptr;
+    }
+
+    /// Removes all subregister liveness information.
+    void clearSubRanges() {
+      SubRanges = nullptr;
+    }
 
     /// getSize - Returns the sum of sizes of all the LiveRange's.
     ///
@@ -572,9 +686,23 @@ namespace llvm {
     void print(raw_ostream &OS) const;
     void dump() const;
 
+    /// \brief Walks the interval and assert if any invariants fail to hold.
+    ///
+    /// Note that this is a no-op when asserts are disabled.
+#ifdef NDEBUG
+    void verify(const MachineRegisterInfo *MRI = nullptr) const {}
+#else
+    void verify(const MachineRegisterInfo *MRI = nullptr) const;
+#endif
+
   private:
     LiveInterval& operator=(const LiveInterval& rhs) LLVM_DELETED_FUNCTION;
 
+    /// Appends @p Range to SubRanges list.
+    void appendSubRange(SubRange *Range) {
+      Range->Next = SubRanges;
+      SubRanges = Range;
+    }
   };
 
   inline raw_ostream &operator<<(raw_ostream &OS, const LiveInterval &LI) {

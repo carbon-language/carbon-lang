@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
@@ -641,6 +642,11 @@ void LiveRange::print(raw_ostream &OS) const {
 void LiveInterval::print(raw_ostream &OS) const {
   OS << PrintReg(reg) << ' ';
   super::print(OS);
+  // Print subranges
+  for (const_subrange_iterator I = subrange_begin(), E = subrange_end();
+       I != E; ++I) {
+    OS << format(" L%04X ", I->LaneMask) << *I;
+  }
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -667,6 +673,27 @@ void LiveRange::verify() const {
       if (I->end == std::next(I)->start)
         assert(I->valno != std::next(I)->valno);
     }
+  }
+}
+
+void LiveInterval::verify(const MachineRegisterInfo *MRI) const {
+  super::verify();
+
+  // Make sure SubRanges are fine and LaneMasks are disjunct.
+  unsigned Mask = 0;
+  unsigned MaxMask = MRI != nullptr ? MRI->getMaxLaneMaskForVReg(reg) : ~0u;
+  for (const_subrange_iterator I = subrange_begin(), E = subrange_end(); I != E;
+       ++I) {
+    // Subrange lanemask should be disjunct to any previous subrange masks.
+    assert((Mask & I->LaneMask) == 0);
+    Mask |= I->LaneMask;
+
+    // subrange mask should not contained in maximum lane mask for the vreg.
+    assert((Mask & ~MaxMask) == 0);
+
+    I->verify();
+    // Main liverange should cover subrange.
+    assert(covers(*I));
   }
 }
 #endif
@@ -959,6 +986,8 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
     } else
       *J++ = *I;
   }
+  // TODO: do not cheat anymore by simply cleaning all subranges
+  LI.clearSubRanges();
   LI.segments.erase(J, E);
 
   // Transfer VNInfos to their new owners and renumber them.

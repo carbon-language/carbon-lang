@@ -391,6 +391,14 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
     }
 }
 
+unsigned MachineRegisterInfo::getMaxLaneMaskForVReg(unsigned Reg) const
+{
+  // Lane masks are only defined for vregs.
+  assert(TargetRegisterInfo::isVirtualRegister(Reg));
+  const TargetRegisterClass &TRC = *getRegClass(Reg);
+  return TRC.getLaneMask();
+}
+
 #ifndef NDEBUG
 void MachineRegisterInfo::dumpUses(unsigned Reg) const {
   for (MachineInstr &I : use_instructions(Reg))
