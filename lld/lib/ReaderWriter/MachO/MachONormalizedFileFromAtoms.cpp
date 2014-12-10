@@ -462,7 +462,7 @@ void Util::layoutSectionsInSegment(SegmentInfo *seg, uint64_t &addr) {
   seg->address = addr;
   for (SectionInfo *sect : seg->sections) {
     sect->address = alignTo(addr, sect->alignment);
-    addr += sect->size;
+    addr = sect->address + sect->size;
   }
   seg->size = llvm::RoundUpToAlignment(addr - seg->address,_context.pageSize());
 }
