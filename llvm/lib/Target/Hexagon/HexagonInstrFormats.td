@@ -186,7 +186,7 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
   string InputType = "";    // Input is "imm" or "reg" type.
   string isMEMri = "false"; // Set to "true" for load/store with MEMri operand.
   string isFloat = "false"; // Set to "true" for the floating-point load/store.
-  string isBrTaken = ""; // Set to "true"/"false" for jump instructions
+  string isBrTaken = !if(isTaken, "true", "false"); // Set to "true"/"false" for jump instructions
 
   let PredSense = !if(isPredicated, !if(isPredicatedFalse, "false", "true"),
                                     "");

@@ -264,7 +264,7 @@ bool HexagonPacketizer::runOnMachineFunction(MachineFunction &Fn) {
 
 
 static bool IsIndirectCall(MachineInstr* MI) {
-  return ((MI->getOpcode() == Hexagon::CALLR) ||
+  return ((MI->getOpcode() == Hexagon::J2_callr) ||
           (MI->getOpcode() == Hexagon::CALLRv3));
 }
 
@@ -366,7 +366,7 @@ static bool IsRegDependence(const SDep::Kind DepType) {
 }
 
 static bool IsDirectJump(MachineInstr* MI) {
-  return (MI->getOpcode() == Hexagon::JMP);
+  return (MI->getOpcode() == Hexagon::J2_jump);
 }
 
 static bool IsSchedBarrier(MachineInstr* MI) {

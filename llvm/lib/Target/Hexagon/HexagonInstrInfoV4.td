@@ -2204,7 +2204,7 @@ def CMPbEQri_V4 : MInst<(outs PredRegs:$dst),
 
 def : Pat <(brcond (i1 (setne (and (i32 IntRegs:$src1), 255), u8ImmPred:$src2)),
                        bb:$offset),
-      (JMP_f (CMPbEQri_V4 (i32 IntRegs:$src1), u8ImmPred:$src2),
+      (J2_jumpf (CMPbEQri_V4 (i32 IntRegs:$src1), u8ImmPred:$src2),
                 bb:$offset)>,
       Requires<[HasV4T]>;
 

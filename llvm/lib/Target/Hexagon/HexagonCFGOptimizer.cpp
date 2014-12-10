@@ -59,13 +59,13 @@ private:
 char HexagonCFGOptimizer::ID = 0;
 
 static bool IsConditionalBranch(int Opc) {
-  return (Opc == Hexagon::JMP_t) || (Opc == Hexagon::JMP_f)
-    || (Opc == Hexagon::JMP_tnew_t) || (Opc == Hexagon::JMP_fnew_t);
+  return (Opc == Hexagon::J2_jumpt) || (Opc == Hexagon::J2_jumpf)
+    || (Opc == Hexagon::J2_jumptnewpt) || (Opc == Hexagon::J2_jumpfnewpt);
 }
 
 
 static bool IsUnconditionalJump(int Opc) {
-  return (Opc == Hexagon::JMP);
+  return (Opc == Hexagon::J2_jump);
 }
 
 
@@ -75,20 +75,20 @@ HexagonCFGOptimizer::InvertAndChangeJumpTarget(MachineInstr* MI,
   const HexagonInstrInfo *QII = QTM.getSubtargetImpl()->getInstrInfo();
   int NewOpcode = 0;
   switch(MI->getOpcode()) {
-  case Hexagon::JMP_t:
-    NewOpcode = Hexagon::JMP_f;
+  case Hexagon::J2_jumpt:
+    NewOpcode = Hexagon::J2_jumpf;
     break;
 
-  case Hexagon::JMP_f:
-    NewOpcode = Hexagon::JMP_t;
+  case Hexagon::J2_jumpf:
+    NewOpcode = Hexagon::J2_jumpt;
     break;
 
-  case Hexagon::JMP_tnew_t:
-    NewOpcode = Hexagon::JMP_fnew_t;
+  case Hexagon::J2_jumptnewpt:
+    NewOpcode = Hexagon::J2_jumpfnewpt;
     break;
 
-  case Hexagon::JMP_fnew_t:
-    NewOpcode = Hexagon::JMP_tnew_t;
+  case Hexagon::J2_jumpfnewpt:
+    NewOpcode = Hexagon::J2_jumptnewpt;
     break;
 
   default:
@@ -163,8 +163,8 @@ bool HexagonCFGOptimizer::runOnMachineFunction(MachineFunction &Fn) {
         // The target of the unconditional branch must be JumpAroundTarget.
         // TODO: If not, we should not invert the unconditional branch.
         MachineBasicBlock* CondBranchTarget = nullptr;
-        if ((MI->getOpcode() == Hexagon::JMP_t) ||
-            (MI->getOpcode() == Hexagon::JMP_f)) {
+        if ((MI->getOpcode() == Hexagon::J2_jumpt) ||
+            (MI->getOpcode() == Hexagon::J2_jumpf)) {
           CondBranchTarget = MI->getOperand(1).getMBB();
         }
 
