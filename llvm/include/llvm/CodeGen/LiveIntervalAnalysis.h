@@ -393,14 +393,17 @@ namespace llvm {
     /// Compute RegMaskSlots and RegMaskBits.
     void computeRegMasks();
 
-    /// \brief Walk the values in the given interval and compute which ones
-    /// are dead.  Dead values are not deleted, however:
+    /// \brief Walk the values in the @p LR live range and compute which ones
+    /// are dead in live range @p Segments.  Dead values are not deleted,
+    /// however:
     /// - Dead PHIDef values are marked as unused.
-    /// - New dead machine instructions are added to the dead vector.
+    /// - if @p dead != nullptr then dead operands are marked as such and
+    ///   completely dead machine instructions are added to the @p dead vector.
     /// - CanSeparate is set to true if the interval may have been separated
     ///   into multiple connected components.
-    void computeDeadValues(LiveInterval *li, LiveRange &LR, bool *CanSeparate,
-                           SmallVectorImpl<MachineInstr*> *dead);
+    void computeDeadValues(LiveRange &Segments, LiveRange &LR,
+                           bool *CanSeparate = nullptr, unsigned Reg = 0,
+                           SmallVectorImpl<MachineInstr*> *dead = nullptr);
 
     static LiveInterval* createInterval(unsigned Reg);
 
@@ -410,6 +413,12 @@ namespace llvm {
     void computeLiveInRegUnits();
     void computeRegUnitRange(LiveRange&, unsigned Unit);
     void computeVirtRegInterval(LiveInterval&);
+
+    /// Specialized version of
+    /// shrinkToUses(LiveInterval *li, SmallVectorImpl<MachineInstr*> *dead)
+    /// that works on a subregister live range and only looks at uses matching
+    /// the lane mask of the subregister range.
+    bool shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg);
 
     class HMEditor;
   };

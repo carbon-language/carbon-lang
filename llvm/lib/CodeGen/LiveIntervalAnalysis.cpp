@@ -185,7 +185,7 @@ void LiveIntervals::computeVirtRegInterval(LiveInterval &LI) {
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
   LRCalc->createDeadDefs(LI);
   LRCalc->extendToUses(LI);
-  computeDeadValues(&LI, LI, nullptr, nullptr);
+  computeDeadValues(LI, LI);
 }
 
 void LiveIntervals::computeVirtRegs() {
@@ -312,6 +312,70 @@ void LiveIntervals::computeLiveInRegUnits() {
 }
 
 
+static void createSegmentsForValues(LiveRange &LR,
+      iterator_range<LiveInterval::vni_iterator> VNIs) {
+  for (auto VNI : VNIs) {
+    if (VNI->isUnused())
+      continue;
+    SlotIndex Def = VNI->def;
+    LR.addSegment(LiveRange::Segment(Def, Def.getDeadSlot(), VNI));
+  }
+}
+
+typedef SmallVector<std::pair<SlotIndex, VNInfo*>, 16> ShrinkToUsesWorkList;
+
+static void extendSegmentsToUses(LiveRange &LR, const SlotIndexes &Indexes,
+                                 ShrinkToUsesWorkList &WorkList,
+                                 const LiveRange &OldRange) {
+  // Keep track of the PHIs that are in use.
+  SmallPtrSet<VNInfo*, 8> UsedPHIs;
+  // Blocks that have already been added to WorkList as live-out.
+  SmallPtrSet<MachineBasicBlock*, 16> LiveOut;
+
+  // Extend intervals to reach all uses in WorkList.
+  while (!WorkList.empty()) {
+    SlotIndex Idx = WorkList.back().first;
+    VNInfo *VNI = WorkList.back().second;
+    WorkList.pop_back();
+    const MachineBasicBlock *MBB = Indexes.getMBBFromIndex(Idx.getPrevSlot());
+    SlotIndex BlockStart = Indexes.getMBBStartIdx(MBB);
+
+    // Extend the live range for VNI to be live at Idx.
+    if (VNInfo *ExtVNI = LR.extendInBlock(BlockStart, Idx)) {
+      assert(ExtVNI == VNI && "Unexpected existing value number");
+      (void)ExtVNI;
+      // Is this a PHIDef we haven't seen before?
+      if (!VNI->isPHIDef() || VNI->def != BlockStart ||
+          !UsedPHIs.insert(VNI).second)
+        continue;
+      // The PHI is live, make sure the predecessors are live-out.
+      for (auto &Pred : MBB->predecessors()) {
+        if (!LiveOut.insert(Pred).second)
+          continue;
+        SlotIndex Stop = Indexes.getMBBEndIdx(Pred);
+        // A predecessor is not required to have a live-out value for a PHI.
+        if (VNInfo *PVNI = OldRange.getVNInfoBefore(Stop))
+          WorkList.push_back(std::make_pair(Stop, PVNI));
+      }
+      continue;
+    }
+
+    // VNI is live-in to MBB.
+    DEBUG(dbgs() << " live-in at " << BlockStart << '\n');
+    LR.addSegment(LiveRange::Segment(BlockStart, Idx, VNI));
+
+    // Make sure VNI is live-out from the predecessors.
+    for (auto &Pred : MBB->predecessors()) {
+      if (!LiveOut.insert(Pred).second)
+        continue;
+      SlotIndex Stop = Indexes.getMBBEndIdx(Pred);
+      assert(OldRange.getVNInfoBefore(Stop) == VNI &&
+             "Wrong value out of predecessor");
+      WorkList.push_back(std::make_pair(Stop, VNI));
+    }
+  }
+}
+
 /// shrinkToUses - After removing some uses of a register, shrink its live
 /// range to just the remaining uses. This method does not compute reaching
 /// defs for new uses, and it doesn't remove dead defs.
@@ -320,11 +384,15 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   DEBUG(dbgs() << "Shrink: " << *li << '\n');
   assert(TargetRegisterInfo::isVirtualRegister(li->reg)
          && "Can only shrink virtual registers");
-  // Find all the values used, including PHI kills.
-  SmallVector<std::pair<SlotIndex, VNInfo*>, 16> WorkList;
 
-  // Blocks that have already been added to WorkList as live-out.
-  SmallPtrSet<MachineBasicBlock*, 16> LiveOut;
+  // Shrink subregister live ranges.
+  for (LiveInterval::subrange_iterator I = li->subrange_begin(),
+       E = li->subrange_end(); I != E; ++I) {
+    shrinkToUses(*I, li->reg);
+  }
+
+  // Find all the values used, including PHI kills.
+  ShrinkToUsesWorkList WorkList;
 
   // Visit all instructions reading li->reg.
   for (MachineRegisterInfo::reg_instr_iterator
@@ -355,65 +423,12 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
 
   // Create new live ranges with only minimal live segments per def.
   LiveRange NewLR;
-  for (LiveInterval::vni_iterator I = li->vni_begin(), E = li->vni_end();
-       I != E; ++I) {
-    VNInfo *VNI = *I;
-    if (VNI->isUnused())
-      continue;
-    NewLR.addSegment(LiveRange::Segment(VNI->def, VNI->def.getDeadSlot(), VNI));
-  }
-
-  // Keep track of the PHIs that are in use.
-  SmallPtrSet<VNInfo*, 8> UsedPHIs;
-
-  // Extend intervals to reach all uses in WorkList.
-  while (!WorkList.empty()) {
-    SlotIndex Idx = WorkList.back().first;
-    VNInfo *VNI = WorkList.back().second;
-    WorkList.pop_back();
-    const MachineBasicBlock *MBB = getMBBFromIndex(Idx.getPrevSlot());
-    SlotIndex BlockStart = getMBBStartIdx(MBB);
-
-    // Extend the live range for VNI to be live at Idx.
-    if (VNInfo *ExtVNI = NewLR.extendInBlock(BlockStart, Idx)) {
-      (void)ExtVNI;
-      assert(ExtVNI == VNI && "Unexpected existing value number");
-      // Is this a PHIDef we haven't seen before?
-      if (!VNI->isPHIDef() || VNI->def != BlockStart ||
-          !UsedPHIs.insert(VNI).second)
-        continue;
-      // The PHI is live, make sure the predecessors are live-out.
-      for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
-           PE = MBB->pred_end(); PI != PE; ++PI) {
-        if (!LiveOut.insert(*PI).second)
-          continue;
-        SlotIndex Stop = getMBBEndIdx(*PI);
-        // A predecessor is not required to have a live-out value for a PHI.
-        if (VNInfo *PVNI = li->getVNInfoBefore(Stop))
-          WorkList.push_back(std::make_pair(Stop, PVNI));
-      }
-      continue;
-    }
-
-    // VNI is live-in to MBB.
-    DEBUG(dbgs() << " live-in at " << BlockStart << '\n');
-    NewLR.addSegment(LiveRange::Segment(BlockStart, Idx, VNI));
-
-    // Make sure VNI is live-out from the predecessors.
-    for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
-         PE = MBB->pred_end(); PI != PE; ++PI) {
-      if (!LiveOut.insert(*PI).second)
-        continue;
-      SlotIndex Stop = getMBBEndIdx(*PI);
-      assert(li->getVNInfoBefore(Stop) == VNI &&
-             "Wrong value out of predecessor");
-      WorkList.push_back(std::make_pair(Stop, VNI));
-    }
-  }
+  createSegmentsForValues(NewLR, make_range(li->vni_begin(), li->vni_end()));
+  extendSegmentsToUses(NewLR, *Indexes, WorkList, *li);
 
   // Handle dead values.
-  bool CanSeparate = false;
-  computeDeadValues(li, NewLR, &CanSeparate, dead);
+  bool CanSeparate;
+  computeDeadValues(NewLR, *li, &CanSeparate, li->reg, dead);
 
   // Move the trimmed segments back.
   li->segments.swap(NewLR.segments);
@@ -421,37 +436,93 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   return CanSeparate;
 }
 
-void LiveIntervals::computeDeadValues(LiveInterval *li,
-                                      LiveRange &LR,
-                                      bool *CanSeparate,
+void LiveIntervals::computeDeadValues(LiveRange &Segments, LiveRange &LR,
+                                      bool *CanSeparateRes, unsigned Reg,
                                       SmallVectorImpl<MachineInstr*> *dead) {
-  for (LiveInterval::vni_iterator I = li->vni_begin(), E = li->vni_end();
-       I != E; ++I) {
-    VNInfo *VNI = *I;
+  bool CanSeparate = false;
+  for (auto VNI : make_range(LR.vni_begin(), LR.vni_end())) {
     if (VNI->isUnused())
       continue;
-    LiveRange::iterator LRI = LR.FindSegmentContaining(VNI->def);
-    assert(LRI != LR.end() && "Missing segment for PHI");
+    LiveRange::iterator LRI = Segments.FindSegmentContaining(VNI->def);
+    assert(LRI != Segments.end() && "Missing segment for PHI");
     if (LRI->end != VNI->def.getDeadSlot())
       continue;
     if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
       VNI->markUnused();
-      LR.removeSegment(LRI->start, LRI->end);
+      Segments.removeSegment(LRI->start, LRI->end);
       DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
-      if (CanSeparate)
-        *CanSeparate = true;
-    } else {
+      CanSeparate = true;
+    } else if (dead != nullptr) {
       // This is a dead def. Make sure the instruction knows.
       MachineInstr *MI = getInstructionFromIndex(VNI->def);
       assert(MI && "No instruction defining live value");
-      MI->addRegisterDead(li->reg, TRI);
+      MI->addRegisterDead(Reg, TRI);
       if (dead && MI->allDefsAreDead()) {
         DEBUG(dbgs() << "All defs dead: " << VNI->def << '\t' << *MI);
         dead->push_back(MI);
       }
     }
   }
+  if (CanSeparateRes != nullptr)
+    *CanSeparateRes = CanSeparate;
+}
+
+bool LiveIntervals::shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg)
+{
+  DEBUG(dbgs() << "Shrink: " << SR << '\n');
+  assert(TargetRegisterInfo::isVirtualRegister(Reg)
+         && "Can only shrink virtual registers");
+  // Find all the values used, including PHI kills.
+  ShrinkToUsesWorkList WorkList;
+
+  // Visit all instructions reading Reg.
+  SlotIndex LastIdx;
+  for (MachineOperand &MO : MRI->reg_operands(Reg)) {
+    MachineInstr *UseMI = MO.getParent();
+    if (UseMI->isDebugValue())
+      continue;
+    // Maybe the operand is for a subregister we don't care about.
+    unsigned SubReg = MO.getSubReg();
+    if (SubReg != 0) {
+      unsigned SubRegMask = TRI->getSubRegIndexLaneMask(SubReg);
+      if ((SubRegMask & SR.LaneMask) == 0)
+        continue;
+    }
+    // We only need to visit each instruction once.
+    SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot();
+    if (Idx == LastIdx)
+      continue;
+    LastIdx = Idx;
+
+    LiveQueryResult LRQ = SR.Query(Idx);
+    VNInfo *VNI = LRQ.valueIn();
+    // For Subranges it is possible that only undef values are left in that
+    // part of the subregister, so there is no real liverange at the use
+    if (!VNI)
+      continue;
+
+    // Special case: An early-clobber tied operand reads and writes the
+    // register one slot early.
+    if (VNInfo *DefVNI = LRQ.valueDefined())
+      Idx = DefVNI->def;
+
+    WorkList.push_back(std::make_pair(Idx, VNI));
+  }
+
+  // Create a new live ranges with only minimal live segments per def.
+  LiveRange NewLR;
+  createSegmentsForValues(NewLR, make_range(SR.vni_begin(), SR.vni_end()));
+  extendSegmentsToUses(NewLR, *Indexes, WorkList, SR);
+
+  // Handle dead values.
+  bool CanSeparate;
+  computeDeadValues(NewLR, SR, &CanSeparate);
+
+  // Move the trimmed ranges back.
+  SR.segments.swap(NewLR.segments);
+  DEBUG(dbgs() << "Shrunk: " << SR << '\n');
+  return CanSeparate;
 }
 
 void LiveIntervals::extendToIndices(LiveRange &LR,
