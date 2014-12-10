@@ -48,6 +48,9 @@ public:
   virtual std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
                                            bool &IsDefault) const = 0;
 
+  virtual uint64_t getSectionFlags(SectionRef Sec) const = 0;
+  virtual uint32_t getSectionType(SectionRef Sec) const = 0;
+
   static inline bool classof(const Binary *v) { return v->isELF(); }
 };
 
@@ -97,10 +100,7 @@ protected:
   bool isSectionText(DataRefImpl Sec) const override;
   bool isSectionData(DataRefImpl Sec) const override;
   bool isSectionBSS(DataRefImpl Sec) const override;
-  bool isSectionRequiredForExecution(DataRefImpl Sec) const override;
   bool isSectionVirtual(DataRefImpl Sec) const override;
-  bool isSectionZeroInit(DataRefImpl Sec) const override;
-  bool isSectionReadOnlyData(DataRefImpl Sec) const override;
   bool sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb) const override;
   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
@@ -201,6 +201,9 @@ public:
   std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
                                    bool &IsDefault) const override;
 
+  uint64_t getSectionFlags(SectionRef Sec) const override;
+  uint32_t getSectionType(SectionRef Sec) const override;
+
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
   unsigned getArch() const override;
@@ -259,6 +262,18 @@ std::error_code ELFObjectFile<ELFT>::getSymbolVersion(SymbolRef SymRef,
     return Ver.getError();
   Version = *Ver;
   return object_error::success;
+}
+
+template <class ELFT>
+uint64_t ELFObjectFile<ELFT>::getSectionFlags(SectionRef Sec) const {
+  DataRefImpl DRI = Sec.getRawDataRefImpl();
+  return toELFShdrIter(DRI)->sh_flags;
+}
+
+template <class ELFT>
+uint32_t ELFObjectFile<ELFT>::getSectionType(SectionRef Sec) const {
+  DataRefImpl DRI = Sec.getRawDataRefImpl();
+  return toELFShdrIter(DRI)->sh_type;
 }
 
 template <class ELFT>
@@ -452,24 +467,8 @@ bool ELFObjectFile<ELFT>::isSectionBSS(DataRefImpl Sec) const {
 }
 
 template <class ELFT>
-bool ELFObjectFile<ELFT>::isSectionRequiredForExecution(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_flags & ELF::SHF_ALLOC;
-}
-
-template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
   return toELFShdrIter(Sec)->sh_type == ELF::SHT_NOBITS;
-}
-
-template <class ELFT>
-bool ELFObjectFile<ELFT>::isSectionZeroInit(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_type == ELF::SHT_NOBITS;
-}
-
-template <class ELFT>
-bool ELFObjectFile<ELFT>::isSectionReadOnlyData(DataRefImpl Sec) const {
-  Elf_Shdr_Iter EShdr = toELFShdrIter(Sec);
-  return !(EShdr->sh_flags & (ELF::SHF_WRITE | ELF::SHF_EXECINSTR));
 }
 
 template <class ELFT>

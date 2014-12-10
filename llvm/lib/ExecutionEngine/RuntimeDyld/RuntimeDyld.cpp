@@ -16,7 +16,7 @@
 #include "RuntimeDyldELF.h"
 #include "RuntimeDyldImpl.h"
 #include "RuntimeDyldMachO.h"
-#include "llvm/Object/ELF.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MutexGuard.h"
 
@@ -263,6 +263,34 @@ computeAllocationSizeForSections(std::vector<uint64_t> &SectionSizes,
   return TotalSize;
 }
 
+static bool isRequiredForExecution(const SectionRef &Section) {
+  const ObjectFile *Obj = Section.getObject();
+  if (auto *ELFObj = dyn_cast<object::ELFObjectFileBase>(Obj))
+    return ELFObj->getSectionFlags(Section) & ELF::SHF_ALLOC;
+  assert(isa<MachOObjectFile>(Obj));
+  return true;
+ }
+
+static bool isReadOnlyData(const SectionRef &Section) {
+  const ObjectFile *Obj = Section.getObject();
+  if (auto *ELFObj = dyn_cast<object::ELFObjectFileBase>(Obj))
+    return !(ELFObj->getSectionFlags(Section) &
+             (ELF::SHF_WRITE | ELF::SHF_EXECINSTR));
+  assert(isa<MachOObjectFile>(Obj));
+  return false;
+}
+
+static bool isZeroInit(const SectionRef &Section) {
+  const ObjectFile *Obj = Section.getObject();
+  if (auto *ELFObj = dyn_cast<object::ELFObjectFileBase>(Obj))
+    return ELFObj->getSectionType(Section) == ELF::SHT_NOBITS;
+
+  auto *MachO = cast<MachOObjectFile>(Obj);
+  unsigned SectionType = MachO->getSectionType(Section);
+  return SectionType == MachO::S_ZEROFILL ||
+         SectionType == MachO::S_GB_ZEROFILL;
+}
+
 // Compute an upper bound of the memory size that is required to load all
 // sections
 void RuntimeDyldImpl::computeTotalAllocSize(const ObjectFile &Obj,
@@ -281,7 +309,7 @@ void RuntimeDyldImpl::computeTotalAllocSize(const ObjectFile &Obj,
        SI != SE; ++SI) {
     const SectionRef &Section = *SI;
 
-    bool IsRequired = Section.isRequiredForExecution();
+    bool IsRequired = isRequiredForExecution(Section);
 
     // Consider only the sections that are required to be loaded for execution
     if (IsRequired) {
@@ -289,7 +317,7 @@ void RuntimeDyldImpl::computeTotalAllocSize(const ObjectFile &Obj,
       uint64_t DataSize = Section.getSize();
       uint64_t Alignment64 = Section.getAlignment();
       bool IsCode = Section.isText();
-      bool IsReadOnly = Section.isReadOnlyData();
+      bool IsReadOnly = isReadOnlyData(Section);
       Check(Section.getName(Name));
       unsigned Alignment = (unsigned)Alignment64 & 0xffffffffL;
 
@@ -462,10 +490,10 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
   unsigned PaddingSize = 0;
   unsigned StubBufSize = 0;
   StringRef Name;
-  bool IsRequired = Section.isRequiredForExecution();
+  bool IsRequired = isRequiredForExecution(Section);
   bool IsVirtual = Section.isVirtual();
-  bool IsZeroInit = Section.isZeroInit();
-  bool IsReadOnly = Section.isReadOnlyData();
+  bool IsZeroInit = isZeroInit(Section);
+  bool IsReadOnly = isReadOnlyData(Section);
   uint64_t DataSize = Section.getSize();
   Check(Section.getName(Name));
 

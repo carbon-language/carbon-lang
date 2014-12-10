@@ -593,9 +593,6 @@ protected:
   bool isSectionData(DataRefImpl Sec) const override;
   bool isSectionBSS(DataRefImpl Sec) const override;
   bool isSectionVirtual(DataRefImpl Sec) const override;
-  bool isSectionZeroInit(DataRefImpl Sec) const override;
-  bool isSectionReadOnlyData(DataRefImpl Sec) const override;
-  bool isSectionRequiredForExecution(DataRefImpl Sec) const override;
   bool sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb) const override;
   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;

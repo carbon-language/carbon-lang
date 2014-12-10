@@ -105,10 +105,7 @@ public:
   bool isText() const;
   bool isData() const;
   bool isBSS() const;
-  bool isRequiredForExecution() const;
   bool isVirtual() const;
-  bool isZeroInit() const;
-  bool isReadOnlyData() const;
 
   bool containsSymbol(SymbolRef S) const;
 
@@ -121,6 +118,7 @@ public:
   section_iterator getRelocatedSection() const;
 
   DataRefImpl getRawDataRefImpl() const;
+  const ObjectFile *getObject() const;
 };
 
 /// SymbolRef - This is a value type class that represents a single symbol in
@@ -233,11 +231,8 @@ protected:
   virtual bool isSectionText(DataRefImpl Sec) const = 0;
   virtual bool isSectionData(DataRefImpl Sec) const = 0;
   virtual bool isSectionBSS(DataRefImpl Sec) const = 0;
-  virtual bool isSectionRequiredForExecution(DataRefImpl Sec) const = 0;
   // A section is 'virtual' if its contents aren't present in the object image.
   virtual bool isSectionVirtual(DataRefImpl Sec) const = 0;
-  virtual bool isSectionZeroInit(DataRefImpl Sec) const = 0;
-  virtual bool isSectionReadOnlyData(DataRefImpl Sec) const = 0;
   virtual bool sectionContainsSymbol(DataRefImpl Sec,
                                      DataRefImpl Symb) const = 0;
   virtual relocation_iterator section_rel_begin(DataRefImpl Sec) const = 0;
@@ -417,20 +412,8 @@ inline bool SectionRef::isBSS() const {
   return OwningObject->isSectionBSS(SectionPimpl);
 }
 
-inline bool SectionRef::isRequiredForExecution() const {
-  return OwningObject->isSectionRequiredForExecution(SectionPimpl);
-}
-
 inline bool SectionRef::isVirtual() const {
   return OwningObject->isSectionVirtual(SectionPimpl);
-}
-
-inline bool SectionRef::isZeroInit() const {
-  return OwningObject->isSectionZeroInit(SectionPimpl);
-}
-
-inline bool SectionRef::isReadOnlyData() const {
-  return OwningObject->isSectionReadOnlyData(SectionPimpl);
 }
 
 inline bool SectionRef::containsSymbol(SymbolRef S) const {
@@ -452,6 +435,10 @@ inline section_iterator SectionRef::getRelocatedSection() const {
 
 inline DataRefImpl SectionRef::getRawDataRefImpl() const {
   return SectionPimpl;
+}
+
+inline const ObjectFile *SectionRef::getObject() const {
+  return OwningObject;
 }
 
 /// RelocationRef

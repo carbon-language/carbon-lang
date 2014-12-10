@@ -362,37 +362,9 @@ bool COFFObjectFile::isSectionBSS(DataRefImpl Ref) const {
   return Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
 }
 
-bool COFFObjectFile::isSectionRequiredForExecution(DataRefImpl Ref) const {
-  // Sections marked 'Info', 'Remove', or 'Discardable' aren't required for
-  // execution.
-  const coff_section *Sec = toSec(Ref);
-  return !(Sec->Characteristics &
-           (COFF::IMAGE_SCN_LNK_INFO | COFF::IMAGE_SCN_LNK_REMOVE |
-            COFF::IMAGE_SCN_MEM_DISCARDABLE));
-}
-
 bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
   return Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-}
-
-bool COFFObjectFile::isSectionZeroInit(DataRefImpl Ref) const {
-  const coff_section *Sec = toSec(Ref);
-  return Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-}
-
-bool COFFObjectFile::isSectionReadOnlyData(DataRefImpl Ref) const {
-  const coff_section *Sec = toSec(Ref);
-  // Check if it's any sort of data section.
-  if (!(Sec->Characteristics & (COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
-                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)))
-    return false;
-  // If it's writable or executable or contains code, it isn't read-only data.
-  if (Sec->Characteristics &
-      (COFF::IMAGE_SCN_CNT_CODE | COFF::IMAGE_SCN_MEM_EXECUTE |
-       COFF::IMAGE_SCN_MEM_WRITE))
-    return false;
-  return true;
 }
 
 bool COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
