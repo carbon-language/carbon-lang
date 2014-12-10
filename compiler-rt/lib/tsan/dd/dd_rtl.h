@@ -18,8 +18,7 @@
 
 namespace __dsan {
 
-struct Flags : CommonFlags, DDFlags {
-};
+typedef DDFlags Flags;
 
 struct Mutex {
   DDMutex dd;

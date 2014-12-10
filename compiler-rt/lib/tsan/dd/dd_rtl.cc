@@ -70,16 +70,14 @@ void InitializeFlags(Flags *f, const char *env) {
   // Default values.
   f->second_deadlock_stack = false;
 
-  SetCommonFlagsDefaults(f);
+  CommonFlags *cf = common_flags();
+  SetCommonFlagsDefaults(cf);
   // Override some common flags defaults.
-  f->allow_addr2line = true;
+  cf->allow_addr2line = true;
 
   // Override from command line.
   ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack", "");
-  ParseCommonFlagsFromString(f, env);
-
-  // Copy back to common flags.
-  *common_flags() = *f;
+  ParseCommonFlagsFromString(cf, env);
 }
 
 void Initialize() {
@@ -88,7 +86,6 @@ void Initialize() {
 
   InitializeInterceptors();
   InitializeFlags(flags(), GetEnv("DSAN_OPTIONS"));
-  common_flags()->symbolize = true;
   ctx->dd = DDetector::Create(flags());
 }
 
