@@ -793,11 +793,10 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     case llvm::Triple::EABI:
       ABIName = "aapcs";
       break;
+    // This is also the case for netbsd.
+    case llvm::Triple::GNU:
     default:
-      if (Triple.getOS() == llvm::Triple::NetBSD)
-        ABIName = "apcs-gnu";
-      else
-        ABIName = "aapcs";
+      ABIName = "apcs-gnu";
       break;
     }
   }
