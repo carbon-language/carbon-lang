@@ -63,6 +63,10 @@ static cl::opt<bool> EnablePrecomputePhysRegs(
 static bool EnablePrecomputePhysRegs = false;
 #endif // NDEBUG
 
+static cl::opt<bool> EnableSubRegLiveness(
+  "enable-subreg-liveness", cl::Hidden, cl::init(true),
+  cl::desc("Enable subregister liveness tracking."));
+
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<AliasAnalysis>();
@@ -116,6 +120,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   AA = &getAnalysis<AliasAnalysis>();
   Indexes = &getAnalysis<SlotIndexes>();
   DomTree = &getAnalysis<MachineDominatorTree>();
+
+  if (EnableSubRegLiveness && MF->getSubtarget().enableSubRegLiveness())
+    MRI->enableSubRegLiveness(true);
+
   if (!LRCalc)
     LRCalc = new LiveRangeCalc();
 

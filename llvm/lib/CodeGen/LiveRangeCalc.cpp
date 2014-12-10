@@ -55,7 +55,7 @@ void LiveRangeCalc::createDeadDefs(LiveInterval &LI) {
     const MachineInstr *MI = MO.getParent();
     SlotIndex Idx = getDefIndex(*Indexes, *MI, MO.isEarlyClobber());
     unsigned SubReg = MO.getSubReg();
-    if (SubReg != 0 || LI.hasSubRanges()) {
+    if (LI.hasSubRanges() || (SubReg != 0 && MRI->tracksSubRegLiveness())) {
       unsigned Mask = SubReg != 0 ? TRI.getSubRegIndexLaneMask(SubReg)
                                   : MRI->getMaxLaneMaskForVReg(Reg);
 
@@ -179,7 +179,8 @@ void LiveRangeCalc::extendToUses(LiveInterval &LI) {
       continue;
     SlotIndex Idx = getUseIndex(*Indexes, MO);
     unsigned SubReg = MO.getSubReg();
-    if (MO.isUse() && (LI.hasSubRanges() || SubReg != 0)) {
+    if (MO.isUse() && (LI.hasSubRanges() ||
+                       (MRI->tracksSubRegLiveness() && SubReg != 0))) {
       unsigned Mask = SubReg != 0
         ? TRI.getSubRegIndexLaneMask(SubReg)
         : Mask = MRI->getMaxLaneMaskForVReg(Reg);

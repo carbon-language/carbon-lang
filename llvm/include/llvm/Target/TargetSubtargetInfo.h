@@ -168,6 +168,11 @@ public:
   virtual std::unique_ptr<PBQPRAConstraint> getCustomPBQPConstraints() const {
     return nullptr;
   }
+
+  /// Enable tracking of subregister liveness in register allocator.
+  virtual bool enableSubRegLiveness() const {
+    return false;
+  }
 };
 
 } // End llvm namespace
