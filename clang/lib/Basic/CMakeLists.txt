@@ -38,7 +38,7 @@ if(DEFINED llvm_vc AND DEFINED clang_vc)
     ${CMAKE_COMMAND} "-DFIRST_SOURCE_DIR=${LLVM_MAIN_SRC_DIR}"
                      "-DFIRST_NAME=LLVM"
                      "-DSECOND_SOURCE_DIR=${CLANG_SOURCE_DIR}"
-                     "-DSECOND_NAME=CLANG"
+                     "-DSECOND_NAME=SVN"
                      "-DHEADER_FILE=${version_inc}"
                      -P "${get_svn_script}")
 
