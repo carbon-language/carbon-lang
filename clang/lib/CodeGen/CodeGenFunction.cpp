@@ -63,6 +63,12 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
     FMF.setNoNaNs();
     FMF.setNoInfs();
   }
+  if (CGM.getCodeGenOpts().NoNaNsFPMath) {
+    FMF.setNoNaNs();
+  }
+  if (CGM.getCodeGenOpts().NoSignedZeros) {
+    FMF.setNoSignedZeros();
+  }
   Builder.SetFastMathFlags(FMF);
 }
 
