@@ -247,8 +247,8 @@ void DataLayout::parseSpecifier(StringRef Desc) {
     case 'p': {
       // Address space.
       unsigned AddrSpace = Tok.empty() ? 0 : getInt(Tok);
-      assert(AddrSpace < 1 << 24 &&
-             "Invalid address space, must be a 24bit integer");
+      if (!isUInt<24>(AddrSpace))
+        report_fatal_error("Invalid address space, must be a 24bit integer");
 
       // Size.
       Split = split(Rest, ':');
@@ -285,8 +285,9 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       // Bit size.
       unsigned Size = Tok.empty() ? 0 : getInt(Tok);
 
-      assert((AlignType != AGGREGATE_ALIGN || Size == 0) &&
-             "These specifications don't have a size");
+      if (AlignType == AGGREGATE_ALIGN && Size != 0)
+        report_fatal_error(
+            "Sized aggregate specification in datalayout string");
 
       // ABI alignment.
       Split = split(Rest, ':');
@@ -306,7 +307,9 @@ void DataLayout::parseSpecifier(StringRef Desc) {
     case 'n':  // Native integer types.
       for (;;) {
         unsigned Width = getInt(Tok);
-        assert(Width != 0 && "width must be non-zero");
+        if (Width == 0)
+          report_fatal_error(
+              "Zero width native integer type in datalayout string");
         LegalIntWidths.push_back(Width);
         if (Rest.empty())
           break;
@@ -322,7 +325,7 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       assert(Rest.size() == 1);
       switch(Rest[0]) {
       default:
-        llvm_unreachable("Unknown mangling in datalayout string");
+        report_fatal_error("Unknown mangling in datalayout string");
       case 'e':
         ManglingMode = MM_ELF;
         break;
@@ -338,7 +341,7 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       }
       break;
     default:
-      llvm_unreachable("Unknown specifier in datalayout string");
+      report_fatal_error("Unknown specifier in datalayout string");
       break;
     }
   }
