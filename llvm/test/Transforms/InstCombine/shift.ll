@@ -84,14 +84,14 @@ define <4 x i32> @test5a_non_splat_vector(<4 x i32> %A) {
 
 define i32 @test5b() {
 ; CHECK-LABEL: @test5b(
-; CHECK: ret i32 -1
+; CHECK: ret i32 0
         %B = ashr i32 undef, 2  ;; top two bits must be equal, so not undef
         ret i32 %B
 }
 
 define i32 @test5b2(i32 %A) {
 ; CHECK-LABEL: @test5b2(
-; CHECK: ret i32 -1
+; CHECK: ret i32 0
         %B = ashr i32 undef, %A  ;; top %A bits must be equal, so not undef
         ret i32 %B
 }

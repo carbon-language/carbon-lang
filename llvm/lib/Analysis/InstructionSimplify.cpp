@@ -1422,11 +1422,11 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
   if (match(Op0, m_AllOnes()))
     return Op0;
 
-  // undef >>a X -> all ones
+  // undef >>a X -> 0
   // undef >>a X -> undef (if it's exact)
   if (match(Op0, m_Undef()))
     return isExact ? UndefValue::get(Op0->getType())
-                   : Constant::getAllOnesValue(Op0->getType());
+                   : Constant::getNullValue(Op0->getType());
 
   // (X << A) >> A -> X
   Value *X;
