@@ -28,17 +28,19 @@ find_first_existing_vc_file(clang_vc "${CLANG_SOURCE_DIR}")
 # The VC revision include that we want to generate.
 set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc")
 
+set(get_svn_script "${LLVM_MAIN_SRC_DIR}/cmake/modules/GetSVN.cmake")
+
 if(DEFINED llvm_vc AND DEFINED clang_vc)
   # Create custom target to generate the VC revision include.
   add_custom_command(OUTPUT "${version_inc}"
-    DEPENDS "${llvm_vc}" "${clang_vc}"
+    DEPENDS "${llvm_vc}" "${clang_vc}" "${get_svn_script}"
     COMMAND
     ${CMAKE_COMMAND} "-DFIRST_SOURCE_DIR=${LLVM_MAIN_SRC_DIR}"
                      "-DFIRST_NAME=LLVM"
                      "-DSECOND_SOURCE_DIR=${CLANG_SOURCE_DIR}"
                      "-DSECOND_NAME=CLANG"
                      "-DHEADER_FILE=${version_inc}"
-                     -P "${LLVM_MAIN_SRC_DIR}/cmake/modules/GetSVN.cmake")
+                     -P "${get_svn_script}")
 
   # Mark the generated header as being generated.
   set_source_files_properties("${version_inc}"
