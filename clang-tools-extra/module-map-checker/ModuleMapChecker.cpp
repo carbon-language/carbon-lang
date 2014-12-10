@@ -292,8 +292,21 @@ bool ModuleMapChecker::loadModuleMap() {
   // which doesn't forward the BeginSourceFile call, we do it explicitly here.
   DC.BeginSourceFile(*LangOpts, nullptr);
 
+  // Figure out the home directory for the module map file.
+  // FIXME: Add an option to specify this.
+  const DirectoryEntry *Dir = ModuleMapEntry->getDir();
+  StringRef DirName(Dir->getName());
+  if (llvm::sys::path::filename(DirName) == "Modules") {
+    DirName = llvm::sys::path::parent_path(DirName);
+    if (DirName.endswith(".framework"))
+      Dir = FileMgr->getDirectory(DirName);
+    // FIXME: This assert can fail if there's a race between the above check
+    // and the removal of the directory.
+    assert(Dir && "parent must exist");
+  }
+
   // Parse module.map file into module map.
-  if (ModMap->parseModuleMapFile(ModuleMapEntry, false))
+  if (ModMap->parseModuleMapFile(ModuleMapEntry, false, Dir))
     return false;
 
   // Do matching end call.
