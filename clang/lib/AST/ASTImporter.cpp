@@ -3480,12 +3480,13 @@ Decl *ASTNodeImporter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 
   bool HasBraces = D->hasBraces();
  
-  LinkageSpecDecl *ToLinkageSpec = LinkageSpecDecl::Create(Importer.getToContext(),
-                                                           DC,
-                                                           ExternLoc,
-                                                           LangLoc,
-                                                           D->getLanguage(),
-                                                           HasBraces);
+  LinkageSpecDecl *ToLinkageSpec =
+    LinkageSpecDecl::Create(Importer.getToContext(),
+                            DC,
+                            ExternLoc,
+                            LangLoc,
+                            D->getLanguage(),
+                            HasBraces);
 
   if (HasBraces) {
     SourceLocation RBraceLoc = Importer.Import(D->getRBraceLoc());
