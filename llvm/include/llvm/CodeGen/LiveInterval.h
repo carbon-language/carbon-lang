@@ -217,6 +217,14 @@ namespace llvm {
       return I;
     }
 
+    const_iterator advanceTo(const_iterator I, SlotIndex Pos) const {
+      assert(I != end());
+      if (Pos >= endIndex())
+        return end();
+      while (I->end <= Pos) ++I;
+      return I;
+    }
+
     /// find - Return an iterator pointing to the first segment that ends after
     /// Pos, or end(). This is the same as advanceTo(begin(), Pos), but faster
     /// when searching large ranges.
