@@ -1548,19 +1548,27 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
     // A live segment can end with either a redefinition, a kill flag on a
     // use, or a dead flag on a def.
     bool hasRead = false;
+    bool hasSubRegDef = false;
     for (ConstMIBundleOperands MOI(MI); MOI.isValid(); ++MOI) {
       if (!MOI->isReg() || MOI->getReg() != Reg)
         continue;
       if (LaneMask != 0 &&
           (LaneMask & TRI->getSubRegIndexLaneMask(MOI->getSubReg())) == 0)
         continue;
+      if (MOI->isDef() && MOI->getSubReg() != 0)
+        hasSubRegDef = true;
       if (MOI->readsReg())
         hasRead = true;
     }
     if (!S.end.isDead()) {
       if (!hasRead) {
-        report("Instruction ending live segment doesn't read the register", MI);
-        *OS << S << " in " << LR << '\n';
+        // When tracking subregister liveness, the main range must start new
+        // values on partial register writes, even if there is no read.
+        if (!MRI->tracksSubRegLiveness() || LaneMask != 0 || !hasSubRegDef) {
+          report("Instruction ending live segment doesn't read the register",
+                 MI);
+          *OS << S << " in " << LR << '\n';
+        }
       }
     }
   }
