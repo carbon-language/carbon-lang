@@ -22,6 +22,7 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -192,6 +193,51 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
                                valobj_sp,
                                options);
     return valobj_sp;
+}
+
+bool
+lldb_private::formatters::FunctionPointerSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
+{
+    std::string destination;
+    StreamString sstr;
+    AddressType func_ptr_address_type = eAddressTypeInvalid;
+    addr_t func_ptr_address = valobj.GetPointerValue (&func_ptr_address_type);
+    if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
+    {
+        switch (func_ptr_address_type)
+        {
+            case eAddressTypeInvalid:
+            case eAddressTypeFile:
+            case eAddressTypeHost:
+                break;
+                
+            case eAddressTypeLoad:
+            {
+                ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+                
+                Address so_addr;
+                Target *target = exe_ctx.GetTargetPtr();
+                if (target && target->GetSectionLoadList().IsEmpty() == false)
+                {
+                    if (target->GetSectionLoadList().ResolveLoadAddress(func_ptr_address, so_addr))
+                    {
+                        so_addr.Dump (&sstr,
+                                      exe_ctx.GetBestExecutionContextScope(),
+                                      Address::DumpStyleResolvedDescription,
+                                      Address::DumpStyleSectionNameOffset);
+                    }
+                }
+            }
+                break;
+        }
+    }
+    if (sstr.GetSize() > 0)
+    {
+        stream.Printf("(%s)", sstr.GetData());
+        return true;
+    }
+    else
+        return false;
 }
 
 bool

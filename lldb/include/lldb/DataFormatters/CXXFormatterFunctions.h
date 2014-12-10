@@ -61,6 +61,9 @@ namespace lldb_private {
         GetOSXEpoch ();
         
         bool
+        FunctionPointerSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // C++ function pointer
+        
+        bool
         Char16StringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // char16_t* and unichar*
         
         bool

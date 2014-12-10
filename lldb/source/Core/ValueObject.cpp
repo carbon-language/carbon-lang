@@ -902,66 +902,11 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
                                         GetName().GetCString(),
                                         summary_ptr->GetDescription().c_str());*/
     
-    if (UpdateValueIfNeeded (false))
+    if (UpdateValueIfNeeded (false) && summary_ptr)
     {
-        if (summary_ptr)
-        {
-            if (HasSyntheticValue())
-                m_synthetic_value->UpdateValueIfNeeded(); // the summary might depend on the synthetic children being up-to-date (e.g. ${svar%#})
-            summary_ptr->FormatObject(this, destination, options);
-        }
-        else
-        {
-            ClangASTType clang_type = GetClangType();
-            
-            // Do some default printout for function pointers
-            if (clang_type)
-            {
-                if (clang_type.IsFunctionPointerType ())
-                {
-                    StreamString sstr;
-                    AddressType func_ptr_address_type = eAddressTypeInvalid;
-                    addr_t func_ptr_address = GetPointerValue (&func_ptr_address_type);
-                    if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
-                    {
-                        switch (func_ptr_address_type)
-                        {
-                            case eAddressTypeInvalid:
-                            case eAddressTypeFile:
-                                break;
-                                
-                            case eAddressTypeLoad:
-                            {
-                                ExecutionContext exe_ctx (GetExecutionContextRef());
-                                
-                                Address so_addr;
-                                Target *target = exe_ctx.GetTargetPtr();
-                                if (target && target->GetSectionLoadList().IsEmpty() == false)
-                                {
-                                    if (target->GetSectionLoadList().ResolveLoadAddress(func_ptr_address, so_addr))
-                                    {
-                                        so_addr.Dump (&sstr, 
-                                                      exe_ctx.GetBestExecutionContextScope(), 
-                                                      Address::DumpStyleResolvedDescription, 
-                                                      Address::DumpStyleSectionNameOffset);
-                                    }
-                                }
-                            }
-                                break;
-                                
-                            case eAddressTypeHost:
-                                break;
-                        }
-                    }
-                    if (sstr.GetSize() > 0)
-                    {
-                        destination.assign (1, '(');
-                        destination.append (sstr.GetData(), sstr.GetSize());
-                        destination.append (1, ')');
-                    }
-                }
-            }
-        }
+        if (HasSyntheticValue())
+            m_synthetic_value->UpdateValueIfNeeded(); // the summary might depend on the synthetic children being up-to-date (e.g. ${svar%#})
+        summary_ptr->FormatObject(this, destination, options);
     }
     m_is_getting_summary = false;
     return !destination.empty();

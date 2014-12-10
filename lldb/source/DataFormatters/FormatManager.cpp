@@ -1568,6 +1568,17 @@ FormatManager::LoadHardcodedFormatters()
     }
     {
         // insert code to load summaries here
+        m_hardcoded_summaries.push_back(
+                                        [](lldb_private::ValueObject& valobj,
+                                            lldb::DynamicValueType,
+                                            FormatManager&) -> TypeSummaryImpl::SharedPointer {
+                                            static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags(), lldb_private::formatters::FunctionPointerSummaryProvider, "Function pointer summary provider"));
+                                            if (valobj.GetClangType().IsFunctionPointerType())
+                                            {
+                                                return formatter_sp;
+                                            }
+                                            return nullptr;
+                                        });
     }
     {
         // insert code to load synthetics here
