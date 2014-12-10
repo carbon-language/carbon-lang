@@ -708,6 +708,8 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
         else
             m_target->GetImages().FindTypes(null_sc, name, exact_match, 1, types);
 
+        bool found_a_type = false;
+        
         if (types.GetSize())
         {
             lldb::TypeSP type_sp = types.GetTypeAtIndex(0);
@@ -736,8 +738,62 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
             }
 
             context.AddTypeDecl(copied_clang_type);
+            
+            found_a_type = true;
         }
-        else
+        
+        if (!found_a_type)
+        {
+            // Try the modules next.
+            
+            do
+            {
+                if (ClangModulesDeclVendor *modules_decl_vendor = m_target->GetClangModulesDeclVendor())
+                {
+                    bool append = false;
+                    uint32_t max_matches = 1;
+                    std::vector <clang::NamedDecl *> decls;
+                    
+                    if (!modules_decl_vendor->FindDecls(name,
+                                                        append,
+                                                        max_matches,
+                                                        decls))
+                        break;
+
+                    if (log)
+                    {
+                        log->Printf("  CAS::FEVD[%u] Matching entity found for \"%s\" in the modules",
+                                    current_id,
+                                    name.GetCString());
+                    }
+                    
+                    clang::NamedDecl *const decl_from_modules = decls[0];
+                    
+                    if (llvm::isa<clang::TypeDecl>(decl_from_modules) ||
+                        llvm::isa<clang::ObjCContainerDecl>(decl_from_modules) ||
+                        llvm::isa<clang::EnumConstantDecl>(decl_from_modules))
+                    {
+                        clang::Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &decl_from_modules->getASTContext(), decl_from_modules);
+                        clang::NamedDecl *copied_named_decl = copied_decl ? dyn_cast<clang::NamedDecl>(copied_decl) : nullptr;
+                        
+                        if (!copied_named_decl)
+                        {
+                            if (log)
+                                log->Printf("  CAS::FEVD[%u] - Couldn't export a type from the modules",
+                                            current_id);
+                            
+                            break;
+                        }
+                        
+                        context.AddNamedDecl(copied_named_decl);
+                        
+                        found_a_type = true;
+                    }
+                }
+            } while (0);
+        }
+        
+        if (!found_a_type)
         {
             do
             {
@@ -896,31 +952,44 @@ FindObjCMethodDeclsWithOrigin (unsigned int current_id,
     }
 
     DeclarationName original_decl_name(original_selector);
-
-    ObjCInterfaceDecl::lookup_result result = original_interface_decl->lookup(original_decl_name);
-
-    if (result.empty())
-        return false;
-
-    if (!result[0])
-        return false;
-
-    for (NamedDecl *named_decl : result)
+    
+    llvm::SmallVector<NamedDecl *, 1> methods;
+    
+    ClangASTContext::GetCompleteDecl(original_ctx, original_interface_decl);
+    
+    if (ObjCMethodDecl *instance_method_decl = original_interface_decl->lookupInstanceMethod(original_selector))
     {
+        methods.push_back(instance_method_decl);
+    }
+    else if (ObjCMethodDecl *class_method_decl = original_interface_decl->lookupClassMethod(original_selector))
+    {
+        methods.push_back(class_method_decl);
+    }
+    
+    if (methods.empty())
+    {
+        return false;
+    }
+    
+    for (NamedDecl *named_decl : methods)
+    {
+        if (!named_decl)
+            continue;
+        
         ObjCMethodDecl *result_method = dyn_cast<ObjCMethodDecl>(named_decl);
 
         if (!result_method)
-            return false;
+            continue;
 
         Decl *copied_decl = ast_importer->CopyDecl(ast_context, &result_method->getASTContext(), result_method);
 
         if (!copied_decl)
-            return false;
+            continue;
 
         ObjCMethodDecl *copied_method_decl = dyn_cast<ObjCMethodDecl>(copied_decl);
 
         if (!copied_method_decl)
-            return false;
+            continue;
 
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -1170,10 +1239,43 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
         return;
     }
     while (0);
+    
+    do
+    {
+        // Check the modules only if the debug information didn't have a complete interface.
+        
+        if (ClangModulesDeclVendor *modules_decl_vendor = m_target->GetClangModulesDeclVendor())
+        {
+            ConstString interface_name(interface_decl->getNameAsString().c_str());
+            bool append = false;
+            uint32_t max_matches = 1;
+            std::vector <clang::NamedDecl *> decls;
+            
+            if (!modules_decl_vendor->FindDecls(interface_name,
+                                                append,
+                                                max_matches,
+                                                decls))
+                break;
+
+            ObjCInterfaceDecl *interface_decl_from_modules = dyn_cast<ObjCInterfaceDecl>(decls[0]);
+            
+            if (!interface_decl_from_modules)
+                break;
+            
+            if (FindObjCMethodDeclsWithOrigin(current_id,
+                                              context,
+                                              interface_decl_from_modules,
+                                              m_ast_context,
+                                              m_ast_importer,
+                                              "in modules"))
+                return;
+        }
+    }
+    while (0);
 
     do
     {
-        // Check the runtime only if the debug information didn't have a complete interface.
+        // Check the runtime only if the debug information didn't have a complete interface and the modules don't get us anywhere.
 
         lldb::ProcessSP process(m_target->GetProcessSP());
 
@@ -1336,10 +1438,50 @@ ClangASTSource::FindObjCPropertyAndIvarDecls (NameSearchContext &context)
         return;
     }
     while(0);
+    
+    do
+    {
+        // Check the modules only if the debug information didn't have a complete interface.
+        
+        ClangModulesDeclVendor *modules_decl_vendor = m_target->GetClangModulesDeclVendor();
+        
+        if (!modules_decl_vendor)
+            break;
+        
+        bool append = false;
+        uint32_t max_matches = 1;
+        std::vector <clang::NamedDecl *> decls;
+        
+        if (!modules_decl_vendor->FindDecls(class_name,
+                                            append,
+                                            max_matches,
+                                            decls))
+            break;
+        
+        DeclFromUser<const ObjCInterfaceDecl> interface_decl_from_modules(dyn_cast<ObjCInterfaceDecl>(decls[0]));
+        
+        if (!interface_decl_from_modules.IsValid())
+            break;
+        
+        if (log)
+            log->Printf("CAS::FOPD[%d] trying module (ObjCInterfaceDecl*)%p/(ASTContext*)%p...",
+                        current_id,
+                        static_cast<const void*>(interface_decl_from_modules.decl),
+                        static_cast<void*>(&interface_decl_from_modules->getASTContext()));
+        
+        if (FindObjCPropertyAndIvarDeclsWithOrigin(current_id,
+                                                   context,
+                                                   *m_ast_context,
+                                                   m_ast_importer,
+                                                   interface_decl_from_modules))
+            return;
+    }
+    while(0);
 
     do
     {
-        // Check the runtime only if the debug information didn't have a complete interface.
+        // Check the runtime only if the debug information didn't have a complete interface
+        // and nothing was in the modules.
 
         lldb::ProcessSP process(m_target->GetProcessSP());
 
@@ -1366,22 +1508,22 @@ ClangASTSource::FindObjCPropertyAndIvarDecls (NameSearchContext &context)
                                     decls))
             break;
 
-        DeclFromUser<const ObjCInterfaceDecl> runtime_iface_decl(dyn_cast<ObjCInterfaceDecl>(decls[0]));
+        DeclFromUser<const ObjCInterfaceDecl> interface_decl_from_runtime(dyn_cast<ObjCInterfaceDecl>(decls[0]));
         
-        if (!runtime_iface_decl.IsValid())
+        if (!interface_decl_from_runtime.IsValid())
             break;
 
         if (log)
             log->Printf("CAS::FOPD[%d] trying runtime (ObjCInterfaceDecl*)%p/(ASTContext*)%p...",
                         current_id,
-                        static_cast<const void*>(runtime_iface_decl.decl),
-                        static_cast<void*>(&runtime_iface_decl->getASTContext()));
+                        static_cast<const void*>(interface_decl_from_runtime.decl),
+                        static_cast<void*>(&interface_decl_from_runtime->getASTContext()));
 
         if (FindObjCPropertyAndIvarDeclsWithOrigin(current_id,
                                                    context,
                                                    *m_ast_context,
                                                    m_ast_importer,
-                                                   runtime_iface_decl))
+                                                   interface_decl_from_runtime))
             return;
     }
     while(0);
