@@ -405,6 +405,12 @@ namespace llvm {
     /// scanning the Other range starting at I.
     bool overlapsFrom(const LiveRange &Other, const_iterator I) const;
 
+    /// Returns true if all segments of the @p Other live range are completely
+    /// covered by this live range.
+    /// Adjacent live ranges do not affect the covering:the liverange
+    /// [1,5](5,10] covers (3,7].
+    bool covers(const LiveRange &Other) const;
+
     /// Add the specified Segment to this range, merging segments as
     /// appropriate.  This returns an iterator to the inserted segment (which
     /// may have grown since it was inserted).

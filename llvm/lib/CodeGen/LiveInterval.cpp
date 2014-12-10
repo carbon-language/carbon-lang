@@ -185,6 +185,27 @@ bool LiveRange::overlaps(SlotIndex Start, SlotIndex End) const {
   return I != begin() && (--I)->end > Start;
 }
 
+bool LiveRange::covers(const LiveRange &Other) const {
+  if (empty())
+    return Other.empty();
+
+  const_iterator I = begin();
+  for (const_iterator O = Other.begin(), OE = Other.end(); O != OE; ++O) {
+    I = advanceTo(I, O->start);
+    if (I == end() || I->start > O->start)
+      return false;
+
+    // Check adjacent live segments and see if we can get behind O->end.
+    while (I->end < O->end) {
+      const_iterator Last = I;
+      // Get next segment and abort if it was not adjacent.
+      ++I;
+      if (I == end() || Last->end != I->start)
+        return false;
+    }
+  }
+  return true;
+}
 
 /// ValNo is dead, remove it.  If it is the largest value number, just nuke it
 /// (and any other deleted values neighboring it), otherwise mark it as ~1U so
