@@ -82,7 +82,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDsym()
         self.do_stdout_stderr_redirection()
 
-    # This one actually should work on Windows, since it doesn't call GetSTDOUT, GetSTDERR, or PutSTDIN.
+    @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
     @python_api_test
     @dwarf_test
     def test_stdout_stderr_redirection_with_dwarf(self):
