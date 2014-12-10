@@ -174,3 +174,17 @@ define i32 @test21(i32 %a) {
   %b = sdiv i32 %a, 0
   ret i32 %b
 }
+
+; CHECK-LABEL: @test22
+; CHECK: ret i32 undef
+define i32 @test22(i32 %a) {
+  %b = ashr exact i32 undef, %a
+  ret i32 %b
+}
+
+; CHECK-LABEL: @test23
+; CHECK: ret i32 undef
+define i32 @test23(i32 %a) {
+  %b = lshr exact i32 undef, %a
+  ret i32 %b
+}

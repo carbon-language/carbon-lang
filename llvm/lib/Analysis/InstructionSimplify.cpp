@@ -1387,8 +1387,10 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
       return V;
 
   // undef >>l X -> 0
+  // undef >>l X -> undef (if it's exact)
   if (match(Op0, m_Undef()))
-    return Constant::getNullValue(Op0->getType());
+    return isExact ? UndefValue::get(Op0->getType())
+                   : Constant::getNullValue(Op0->getType());
 
   // (X << A) >> A -> X
   Value *X;
@@ -1421,8 +1423,10 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
     return Op0;
 
   // undef >>a X -> all ones
+  // undef >>a X -> undef (if it's exact)
   if (match(Op0, m_Undef()))
-    return Constant::getAllOnesValue(Op0->getType());
+    return isExact ? UndefValue::get(Op0->getType())
+                   : Constant::getAllOnesValue(Op0->getType());
 
   // (X << A) >> A -> X
   Value *X;
