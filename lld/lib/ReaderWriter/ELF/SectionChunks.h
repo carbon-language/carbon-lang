@@ -1188,9 +1188,9 @@ public:
       _entries[_dt_fini_arraysz].d_un.d_val = finiArray->memSize();
     }
     if (const auto *al = getInitAtomLayout())
-      _entries[_dt_init].d_un.d_val = al->_virtualAddr;
+      _entries[_dt_init].d_un.d_val = getAtomVirtualAddress(al);
     if (const auto *al = getFiniAtomLayout())
-      _entries[_dt_fini].d_un.d_val = al->_virtualAddr;
+      _entries[_dt_fini].d_un.d_val = getAtomVirtualAddress(al);
     if (_layout.hasDynamicRelocationTable()) {
       auto relaTbl = _layout.getDynamicRelocationTable();
       _entries[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
@@ -1208,6 +1208,14 @@ public:
 
 protected:
   EntriesT _entries;
+
+  /// \brief Return a virtual address (maybe adjusted) for the atom layout
+  /// Some targets like microMIPS and ARM Thumb use the last bit
+  /// of a symbol's value to mark 'compressed' code. This function allows
+  /// to adjust a virtal address before using it in the dynamic table tag.
+  virtual uint64_t getAtomVirtualAddress(const AtomLayout *al) const {
+    return al->_virtualAddr;
+  }
 
 private:
   std::size_t _dt_hash;
