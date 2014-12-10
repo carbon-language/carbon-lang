@@ -32,6 +32,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -838,9 +839,17 @@ public:
         continue;
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         LiveInterval &LI = LIS.getInterval(Reg);
-        // TODO: handle subranges instead of dropping them
-        LI.clearSubRanges();
-        updateRange(LI, Reg);
+        if (LI.hasSubRanges()) {
+          unsigned SubReg = MO->getSubReg();
+          unsigned LaneMask = TRI.getSubRegIndexLaneMask(SubReg);
+          for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
+               SE = LI.subrange_end(); S != SE; ++S) {
+            if ((S->LaneMask & LaneMask) == 0)
+              continue;
+            updateRange(*S, Reg, S->LaneMask);
+          }
+        }
+        updateRange(LI, Reg, 0);
         continue;
       }
 
@@ -848,7 +857,7 @@ public:
       // precomputed live range.
       for (MCRegUnitIterator Units(Reg, &TRI); Units.isValid(); ++Units)
         if (LiveRange *LR = getRegUnitLI(*Units))
-          updateRange(*LR, *Units);
+          updateRange(*LR, *Units, 0);
     }
     if (hasRegMask)
       updateRegMaskSlots();
@@ -857,21 +866,24 @@ public:
 private:
   /// Update a single live range, assuming an instruction has been moved from
   /// OldIdx to NewIdx.
-  void updateRange(LiveRange &LR, unsigned Reg) {
+  void updateRange(LiveRange &LR, unsigned Reg, unsigned LaneMask) {
     if (!Updated.insert(&LR).second)
       return;
     DEBUG({
       dbgs() << "     ";
-      if (TargetRegisterInfo::isVirtualRegister(Reg))
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         dbgs() << PrintReg(Reg);
-      else
+        if (LaneMask != 0)
+          dbgs() << format(" L%04X", LaneMask);
+      } else {
         dbgs() << PrintRegUnit(Reg, &TRI);
+      }
       dbgs() << ":\t" << LR << '\n';
     });
     if (SlotIndex::isEarlierInstr(OldIdx, NewIdx))
       handleMoveDown(LR);
     else
-      handleMoveUp(LR, Reg);
+      handleMoveUp(LR, Reg, LaneMask);
     DEBUG(dbgs() << "        -->\t" << LR << '\n');
     LR.verify();
   }
@@ -984,7 +996,7 @@ private:
   ///    Hoist kill to NewIdx, then scan for last kill between NewIdx and
   ///    OldIdx.
   ///
-  void handleMoveUp(LiveRange &LR, unsigned Reg) {
+  void handleMoveUp(LiveRange &LR, unsigned Reg, unsigned LaneMask) {
     // First look for a kill at OldIdx.
     LiveRange::iterator I = LR.find(OldIdx.getBaseIndex());
     LiveRange::iterator E = LR.end();
@@ -1005,7 +1017,7 @@ private:
       if (I == E || !SlotIndex::isSameInstr(I->start, OldIdx)) {
         // No def, search for the new kill.
         // This can never be an early clobber kill since there is no def.
-        std::prev(I)->end = findLastUseBefore(Reg).getRegSlot();
+        std::prev(I)->end = findLastUseBefore(Reg, LaneMask).getRegSlot();
         return;
       }
     }
@@ -1061,15 +1073,17 @@ private:
   }
 
   // Return the last use of reg between NewIdx and OldIdx.
-  SlotIndex findLastUseBefore(unsigned Reg) {
+  SlotIndex findLastUseBefore(unsigned Reg, unsigned LaneMask) {
 
     if (TargetRegisterInfo::isVirtualRegister(Reg)) {
       SlotIndex LastUse = NewIdx;
-      for (MachineRegisterInfo::use_instr_nodbg_iterator
-             UI = MRI.use_instr_nodbg_begin(Reg),
-             UE = MRI.use_instr_nodbg_end();
-           UI != UE; ++UI) {
-        const MachineInstr* MI = &*UI;
+      for (MachineOperand &MO : MRI.use_nodbg_operands(Reg)) {
+        unsigned SubReg = MO.getSubReg();
+        if (SubReg != 0 && LaneMask != 0
+            && (TRI.getSubRegIndexLaneMask(SubReg) & LaneMask) == 0)
+          continue;
+
+        const MachineInstr *MI = MO.getParent();
         SlotIndex InstSlot = LIS.getSlotIndexes()->getInstructionIndex(MI);
         if (InstSlot > LastUse && InstSlot < OldIdx)
           LastUse = InstSlot;
