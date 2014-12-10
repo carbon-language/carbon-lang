@@ -669,6 +669,10 @@ namespace llvm {
       SubRanges = nullptr;
     }
 
+    /// Removes all subranges without any segments (subranges without segments
+    /// are not considered valid and should only exist temporarily).
+    void removeEmptySubRanges();
+
     /// getSize - Returns the sum of sizes of all the LiveRange's.
     ///
     unsigned getSize() const;

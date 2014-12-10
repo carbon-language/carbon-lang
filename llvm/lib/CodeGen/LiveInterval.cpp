@@ -592,6 +592,23 @@ VNInfo *LiveRange::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   return V2;
 }
 
+void LiveInterval::removeEmptySubRanges() {
+  SubRange **NextPtr = &SubRanges;
+  SubRange *I = *NextPtr;
+  while (I != nullptr) {
+    if (!I->empty()) {
+      NextPtr = &I->Next;
+      I = *NextPtr;
+      continue;
+    }
+    // Skip empty subranges until we find the first nonempty one.
+    do {
+      I = I->Next;
+    } while (I != nullptr && I->empty());
+    *NextPtr = I;
+  }
+}
+
 unsigned LiveInterval::getSize() const {
   unsigned Sum = 0;
   for (const_iterator I = begin(), E = end(); I != E; ++I)
