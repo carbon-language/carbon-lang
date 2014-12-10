@@ -266,6 +266,7 @@ void VirtRegRewriter::addMBBLiveIns() {
 }
 
 void VirtRegRewriter::rewrite() {
+  bool NoSubRegLiveness = !MRI->tracksSubRegLiveness();
   SmallVector<unsigned, 8> SuperDeads;
   SmallVector<unsigned, 8> SuperDefs;
   SmallVector<unsigned, 8> SuperKills;
@@ -347,7 +348,8 @@ void VirtRegRewriter::rewrite() {
           // A virtual register kill refers to the whole register, so we may
           // have to add <imp-use,kill> operands for the super-register.  A
           // partial redef always kills and redefines the super-register.
-          if (MO.readsReg() && (MO.isDef() || MO.isKill()))
+          if (NoSubRegLiveness && MO.readsReg()
+              && (MO.isDef() || MO.isKill()))
             SuperKills.push_back(PhysReg);
 
           if (MO.isDef()) {
@@ -358,10 +360,12 @@ void VirtRegRewriter::rewrite() {
             MO.setIsUndef(false);
 
             // Also add implicit defs for the super-register.
-            if (MO.isDead())
-              SuperDeads.push_back(PhysReg);
-            else
-              SuperDefs.push_back(PhysReg);
+            if (NoSubRegLiveness) {
+              if (MO.isDead())
+                SuperDeads.push_back(PhysReg);
+              else
+                SuperDefs.push_back(PhysReg);
+            }
           }
 
           // PhysReg operands cannot have subregister indexes.

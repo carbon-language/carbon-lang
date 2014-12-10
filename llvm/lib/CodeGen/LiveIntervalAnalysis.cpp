@@ -671,6 +671,30 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
         CancelKill = true;
         break;
       }
+
+      // If an instruction writes to a subregister, a new segment starts in the
+      // LiveInterval. In this case adding Kill-Flags is incorrect if no
+      // super registers defs/uses are appended to the instruction which is
+      // what we do when subregister liveness tracking is enabled.
+      if (MRI->tracksSubRegLiveness()) {
+        // Next segment has to be adjacent in the subregister write case.
+        LiveRange::iterator N = std::next(RI);
+        if (N != LI->end() && N->start == RI->end) {
+          // See if we have a partial write operand
+          bool IsFullWrite = false;
+          for (MachineInstr::const_mop_iterator MOp = MI->operands_begin(),
+               MOpE = MI->operands_end(); MOp != MOpE; ++MOp) {
+            if (MOp->isReg() && !MOp->isDef() && MOp->getReg() == Reg
+                && MOp->getSubReg() == 0) {
+              IsFullWrite = true;
+              break;
+            }
+          }
+          if (!IsFullWrite)
+            CancelKill = true;
+        }
+      }
+
       if (CancelKill)
         MI->clearRegisterKills(Reg, nullptr);
       else
