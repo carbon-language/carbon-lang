@@ -1,0 +1,6 @@
+# RUN: llvm-mc -triple hexagon -disassemble < %s | FileCheck %s
+
+0x00 0xc1 0x15 0x51
+# CHECK: if (p1) callr r21
+0x00 0xc3 0x35 0x51
+# CHECK: if (!p3) callr r21

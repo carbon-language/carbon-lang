@@ -1383,6 +1383,34 @@ multiclass JMPR_base<string BaseOp> {
   }
 }
 
+let isCall = 1, hasSideEffects = 1 in
+class JUMPR_MISC_CALLR<bit isPred, bit isPredNot,
+               dag InputDag = (ins IntRegs:$Rs)>
+  : JRInst<(outs), InputDag,
+      !if(isPred, !if(isPredNot, "if (!$Pu) callr $Rs",
+                                 "if ($Pu) callr $Rs"),
+                                 "callr $Rs"),
+      [], "", J_tc_2early_SLOT2> {
+    bits<5> Rs;
+    bits<2> Pu;
+    let isPredicated = isPred;
+    let isPredicatedFalse = isPredNot;
+
+    let IClass = 0b0101;
+    let Inst{27-25} = 0b000;
+    let Inst{24-23} = !if (isPred, 0b10, 0b01);
+    let Inst{22} = 0;
+    let Inst{21} = isPredNot;
+    let Inst{9-8} = !if (isPred, Pu, 0b00);
+    let Inst{20-16} = Rs;
+
+  }
+
+let Defs = VolatileV3.Regs, isCodeGenOnly = 0 in {
+  def J2_callrt : JUMPR_MISC_CALLR<1, 0, (ins PredRegs:$Pu, IntRegs:$Rs)>;
+  def J2_callrf : JUMPR_MISC_CALLR<1, 1, (ins PredRegs:$Pu, IntRegs:$Rs)>;
+}
+
 let isTerminator = 1, hasSideEffects = 0 in {
 let isBranch = 1 in
 defm JMP : JMP_base<"JMP">, PredNewRel;

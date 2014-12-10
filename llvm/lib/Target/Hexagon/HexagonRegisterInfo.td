@@ -145,6 +145,14 @@ def CRRegs : RegisterClass<"Hexagon", [i32], 32,
   let Size = 32;
 }
 
+def VolatileV3 {
+  list<Register> Regs = [D0, D1, D2, D3, D4, D5, D6, D7,
+                         R28, R31,
+                         P0, P1, P2, P3,
+                         M0, M1,
+                         LC0, LC1, SA0, SA1, USR_OVF];
+}
+
 def PositiveHalfWord : PatLeaf<(i32 IntRegs:$a),
 [{
   return isPositiveHalfWord(N);
