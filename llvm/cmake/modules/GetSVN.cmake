@@ -20,6 +20,11 @@ get_filename_component(LLVM_DIR "${LLVM_DIR}" PATH)
 set(ENV{TERM} "dumb")
 
 macro(get_source_info_svn path revision repository)
+  # If svn is a bat file, find_program(Subversion) doesn't find it.
+  # Explicitly search for that here; Subversion_SVN_EXECUTABLE will override
+  # the find_program call in FindSubversion.cmake.
+  find_program(Subversion_SVN_EXECUTABLE NAMES svn svn.bat)
+
   # FindSubversion does not work with symlinks. See PR 8437
   if (NOT IS_SYMLINK "${path}")
     find_package(Subversion)
