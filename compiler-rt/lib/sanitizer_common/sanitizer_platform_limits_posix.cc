@@ -1005,8 +1005,12 @@ CHECK_SIZE_AND_OFFSET(__sysctl_args, newlen);
 
 CHECK_TYPE_SIZE(__kernel_uid_t);
 CHECK_TYPE_SIZE(__kernel_gid_t);
+
+#if !defined(__aarch64__)
 CHECK_TYPE_SIZE(__kernel_old_uid_t);
 CHECK_TYPE_SIZE(__kernel_old_gid_t);
+#endif
+
 CHECK_TYPE_SIZE(__kernel_off_t);
 CHECK_TYPE_SIZE(__kernel_loff_t);
 CHECK_TYPE_SIZE(__kernel_fd_set);
