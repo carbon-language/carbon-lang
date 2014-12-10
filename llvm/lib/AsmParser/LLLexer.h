@@ -82,6 +82,7 @@ namespace llvm {
     lltok::Kind LexDollar();
     lltok::Kind LexExclaim();
     lltok::Kind LexPercent();
+    lltok::Kind LexVar(lltok::Kind Var, lltok::Kind VarID);
     lltok::Kind LexQuote();
     lltok::Kind Lex0x();
     lltok::Kind LexHash();

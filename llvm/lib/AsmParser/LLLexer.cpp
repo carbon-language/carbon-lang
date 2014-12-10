@@ -257,46 +257,7 @@ void LLLexer::SkipLineComment() {
 ///   GlobalVar   @[-a-zA-Z$._][-a-zA-Z$._0-9]*
 ///   GlobalVarID @[0-9]+
 lltok::Kind LLLexer::LexAt() {
-  // Handle AtStringConstant: @\"[^\"]*\"
-  if (CurPtr[0] == '"') {
-    ++CurPtr;
-
-    while (1) {
-      int CurChar = getNextChar();
-
-      if (CurChar == EOF) {
-        Error("end of file in global variable name");
-        return lltok::Error;
-      }
-      if (CurChar == '"') {
-        StrVal.assign(TokStart+2, CurPtr-1);
-        UnEscapeLexed(StrVal);
-        if (StringRef(StrVal).find_first_of(0) != StringRef::npos) {
-          Error("Null bytes are not allowed in names");
-          return lltok::Error;
-        }
-        return lltok::GlobalVar;
-      }
-    }
-  }
-
-  // Handle GlobalVarName: @[-a-zA-Z$._][-a-zA-Z$._0-9]*
-  if (ReadVarName())
-    return lltok::GlobalVar;
-
-  // Handle GlobalVarID: @[0-9]+
-  if (isdigit(static_cast<unsigned char>(CurPtr[0]))) {
-    for (++CurPtr; isdigit(static_cast<unsigned char>(CurPtr[0])); ++CurPtr)
-      /*empty*/;
-
-    uint64_t Val = atoull(TokStart+1, CurPtr);
-    if ((unsigned)Val != Val)
-      Error("invalid value number (too large)!");
-    UIntVal = unsigned(Val);
-    return lltok::GlobalID;
-  }
-
-  return lltok::Error;
+  return LexVar(lltok::GlobalVar, lltok::GlobalID);
 }
 
 lltok::Kind LLLexer::LexDollar() {
@@ -372,22 +333,35 @@ bool LLLexer::ReadVarName() {
   return false;
 }
 
-/// LexPercent - Lex all tokens that start with a % character:
-///   LocalVar   ::= %\"[^\"]*\"
-///   LocalVar   ::= %[-a-zA-Z$._][-a-zA-Z$._0-9]*
-///   LocalVarID ::= %[0-9]+
-lltok::Kind LLLexer::LexPercent() {
-  // Handle LocalVarName: %\"[^\"]*\"
+lltok::Kind LLLexer::LexVar(lltok::Kind Var, lltok::Kind VarID) {
+  // Handle StringConstant: \"[^\"]*\"
   if (CurPtr[0] == '"') {
     ++CurPtr;
-    return ReadString(lltok::LocalVar);
+
+    while (1) {
+      int CurChar = getNextChar();
+
+      if (CurChar == EOF) {
+        Error("end of file in global variable name");
+        return lltok::Error;
+      }
+      if (CurChar == '"') {
+        StrVal.assign(TokStart+2, CurPtr-1);
+        UnEscapeLexed(StrVal);
+        if (StringRef(StrVal).find_first_of(0) != StringRef::npos) {
+          Error("Null bytes are not allowed in names");
+          return lltok::Error;
+        }
+        return Var;
+      }
+    }
   }
 
-  // Handle LocalVarName: %[-a-zA-Z$._][-a-zA-Z$._0-9]*
+  // Handle VarName: [-a-zA-Z$._][-a-zA-Z$._0-9]*
   if (ReadVarName())
-    return lltok::LocalVar;
+    return Var;
 
-  // Handle LocalVarID: %[0-9]+
+  // Handle VarID: [0-9]+
   if (isdigit(static_cast<unsigned char>(CurPtr[0]))) {
     for (++CurPtr; isdigit(static_cast<unsigned char>(CurPtr[0])); ++CurPtr)
       /*empty*/;
@@ -396,10 +370,17 @@ lltok::Kind LLLexer::LexPercent() {
     if ((unsigned)Val != Val)
       Error("invalid value number (too large)!");
     UIntVal = unsigned(Val);
-    return lltok::LocalVarID;
+    return VarID;
   }
-
   return lltok::Error;
+}
+
+/// LexPercent - Lex all tokens that start with a % character:
+///   LocalVar   ::= %\"[^\"]*\"
+///   LocalVar   ::= %[-a-zA-Z$._][-a-zA-Z$._0-9]*
+///   LocalVarID ::= %[0-9]+
+lltok::Kind LLLexer::LexPercent() {
+  return LexVar(lltok::LocalVar, lltok::LocalVarID);
 }
 
 /// LexQuote - Lex all tokens that start with a " character:
