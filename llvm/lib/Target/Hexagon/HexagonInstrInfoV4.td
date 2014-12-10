@@ -206,6 +206,32 @@ def COMBINE_iI_V4 : ALU32_ii<(outs DoubleRegs:$dst),
 // ALU32/PERM +
 //===----------------------------------------------------------------------===//
 
+// Combine a word and an immediate into a register pair.
+let hasSideEffects = 0, isExtentSigned = 1, isExtendable = 1,
+    opExtentBits = 8 in
+class T_Combine1 <bits<2> MajOp, dag ins, string AsmStr>
+  : ALU32Inst <(outs DoubleRegs:$Rdd), ins, AsmStr> {
+    bits<5> Rdd;
+    bits<5> Rs;
+    bits<8> s8;
+
+    let IClass      = 0b0111;
+    let Inst{27-24} = 0b0011;
+    let Inst{22-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{13}    = 0b1;
+    let Inst{12-5}  = s8;
+    let Inst{4-0}   = Rdd;
+  }
+
+let opExtendable = 2, isCodeGenOnly = 0 in
+def A4_combineri : T_Combine1<0b00, (ins IntRegs:$Rs, s8Ext:$s8),
+                                    "$Rdd = combine($Rs, #$s8)">;
+
+let opExtendable = 1, isCodeGenOnly = 0 in
+def A4_combineir : T_Combine1<0b01, (ins s8Ext:$s8, IntRegs:$Rs),
+                                    "$Rdd = combine(#$s8, $Rs)">;
+
 //===----------------------------------------------------------------------===//
 // LD +
 //===----------------------------------------------------------------------===//
