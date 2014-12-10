@@ -37,7 +37,7 @@ typedef NS_ENUM(NSUInteger, UITableViewCellStyle) {
     UIViewAutoresizingFlexibleBottomMargin
 };
 
-typedef NS_ENUM(NSInteger, UIViewAnimationTransition) {
+typedef NS_ENUM(unsigned int, UIViewAnimationTransition) {
     UIViewAnimationTransitionNone,
     UIViewAnimationTransitionFlipFromLeft,
     UIViewAnimationTransitionFlipFromRight,
@@ -45,7 +45,7 @@ typedef NS_ENUM(NSInteger, UIViewAnimationTransition) {
     UIViewAnimationTransitionCurlDown,
 };
 
-typedef NS_OPTIONS(NSUInteger, UITableView) {
+typedef NS_OPTIONS(unsigned int, UITableView) {
     UIViewOne   = 0,
     UIViewTwo   = 1 << 0,
     UIViewThree = 1 << 1,
@@ -62,7 +62,7 @@ typedef NS_OPTIONS(NSUInteger, UI) {
   UIFour = 0x100
 };
 
-typedef NS_OPTIONS(NSUInteger, UIPOWER2) {
+typedef NS_OPTIONS(unsigned int, UIPOWER2) {
   UIP2One = 0,
   UIP2Two = 0x1,
   UIP2three = 0x8,
@@ -80,7 +80,7 @@ typedef NS_ENUM(NSInteger, UIK) {
   UIKTwo = 2,
 };
 
-typedef NS_ENUM(NSInteger, NSTickMarkPosition)  {
+typedef NS_ENUM(unsigned int, NSTickMarkPosition)  {
     NSTickMarkBelow = 0,
     NSTickMarkAbove = 1,
     NSTickMarkLeft = NSTickMarkAbove,
@@ -150,7 +150,7 @@ typedef NS_OPTIONS(NSUInteger, NSFOptions) {
     NSFCopyIn NS_ENUM_AVAILABLE(10_5, 6_0) = (1UL << 16),      
 };
 
-typedef NS_ENUM(NSInteger, UIP) {
+typedef NS_ENUM(unsigned int, UIP) {
   UIP0One = 0,
   UIP0Two = 1,
   UIP0Three = 2,
@@ -158,7 +158,7 @@ typedef NS_ENUM(NSInteger, UIP) {
   UIP0Last = 0x100
 };
 
-typedef NS_OPTIONS(NSUInteger, UIP_3) {
+typedef NS_OPTIONS(unsigned int, UIP_3) {
   UIPZero = 0x0,
   UIPOne = 0x1,
   UIPTwo = 0x2,
@@ -166,7 +166,7 @@ typedef NS_OPTIONS(NSUInteger, UIP_3) {
   UIPHundred = 0x100
 };
 
-typedef NS_ENUM(NSInteger, UIP4_3) {
+typedef NS_ENUM(unsigned int, UIP4_3) {
   UIP4Zero = 0x0,
   UIP4One = 0x1,
   UIP4Two = 0x2,
@@ -174,14 +174,14 @@ typedef NS_ENUM(NSInteger, UIP4_3) {
   UIP4Hundred = 100
 };
 
-typedef NS_OPTIONS(NSUInteger, UIP5_3) {
+typedef NS_OPTIONS(unsigned int, UIP5_3) {
   UIP5Zero = 0x0,
   UIP5Two = 0x2,
   UIP510 = 0x3,
   UIP5Hundred = 0x4
 };
 
-typedef NS_ENUM(NSInteger, UIP6_3) {
+typedef NS_ENUM(unsigned int, UIP6_3) {
   UIP6Zero = 0x0,
   UIP6One = 0x1,
   UIP6Two = 0x2,
@@ -189,7 +189,7 @@ typedef NS_ENUM(NSInteger, UIP6_3) {
   UIP6Hundred = 0x100
 };
 
-typedef NS_ENUM(NSInteger, UIP7_3) {
+typedef NS_ENUM(unsigned int, UIP7_3) {
   UIP7Zero = 0x0,
   UIP7One = 1,
   UIP7Two = 0x2,
@@ -198,7 +198,7 @@ typedef NS_ENUM(NSInteger, UIP7_3) {
 };
 
 
-typedef NS_ENUM(NSInteger, UIP8_3) {
+typedef NS_ENUM(unsigned int, UIP8_3) {
   Random = 0,
   Random1 = 2,
   Random2 = 4,
@@ -298,19 +298,19 @@ typedef enum : NSUInteger {
 } Thing;
 
 // rdar://18498539
-typedef NS_ENUM(NSInteger, NumericEnum) {
+typedef NS_ENUM(unsigned int, NumericEnum) {
     one = 1
 };
 
-typedef NS_ENUM(NSInteger, NumericEnum2) {
+typedef NS_ENUM(unsigned int, NumericEnum2) {
     Two = 2
 };
 
-typedef NS_ENUM(NSInteger, NumericEnum3) {
+typedef NS_ENUM(unsigned int, NumericEnum3) {
     Three = 3
 };
 
-typedef NS_OPTIONS(NSUInteger, NumericEnum4) {
+typedef NS_OPTIONS(unsigned int, NumericEnum4) {
     Four = 4
 };
 

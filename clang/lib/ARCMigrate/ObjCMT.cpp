@@ -763,12 +763,21 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   return false;
 }
 
-static void rewriteToNSMacroDecl(const EnumDecl *EnumDcl,
+static void rewriteToNSMacroDecl(ASTContext &Ctx,
+                                 const EnumDecl *EnumDcl,
                                 const TypedefDecl *TypedefDcl,
                                 const NSAPI &NS, edit::Commit &commit,
                                  bool IsNSIntegerType) {
-  std::string ClassString =
-    IsNSIntegerType ? "NS_ENUM(NSInteger, " : "NS_OPTIONS(NSUInteger, ";
+  QualType EnumUnderlyingT = EnumDcl->getPromotionType();
+  assert(!EnumUnderlyingT.isNull()
+         && "rewriteToNSMacroDecl - underlying enum type is null");
+  
+  PrintingPolicy Policy(Ctx.getPrintingPolicy());
+  std::string TypeString = EnumUnderlyingT.getAsString(Policy);
+  std::string ClassString = IsNSIntegerType ? "NS_ENUM(" : "NS_OPTIONS(";
+  ClassString += TypeString;
+  ClassString += ", ";
+  
   ClassString += TypedefDcl->getIdentifier()->getName();
   ClassString += ')';
   SourceRange R(EnumDcl->getLocStart(), EnumDcl->getLocStart());
@@ -927,7 +936,7 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
         if (!InsertFoundation(Ctx, TypedefDcl->getLocStart()))
           return false;
         edit::Commit commit(*Editor);
-        rewriteToNSMacroDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit, !NSOptions);
+        rewriteToNSMacroDecl(Ctx, EnumDcl, TypedefDcl, *NSAPIObj, commit, !NSOptions);
         Editor->commit(commit);
         return true;
       }

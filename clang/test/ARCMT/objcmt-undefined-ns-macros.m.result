@@ -18,9 +18,9 @@ typedef NS_OPTIONS(NSUInteger, UITableStyle) {
 
 
 typedef
-  NS_ENUM(NSInteger, NumericEnum2) { two = 1 };
+  NS_ENUM(unsigned int, NumericEnum2) { two = 1 };
 
-typedef NS_ENUM(NSInteger, NumericEnum3) { three = 1 };
+typedef NS_ENUM(unsigned int, NumericEnum3) { three = 1 };
 
-typedef NS_ENUM(NSInteger, NumericEnum4) { four = 1 };
+typedef NS_ENUM(unsigned int, NumericEnum4) { four = 1 };
 
