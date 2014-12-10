@@ -218,14 +218,12 @@ namespace llvm {
     /// another LiveRange.
     LiveRange(const LiveRange &Other, BumpPtrAllocator &Allocator) {
       // Duplicate valnos.
-      for (LiveRange::const_vni_iterator I = Other.vni_begin(),
-           E = Other.vni_end(); I != E; ++I) {
-        createValueCopy(*I, Allocator);
+      for (const VNInfo *VNI : Other.valnos) {
+        createValueCopy(VNI, Allocator);
       }
       // Now we can copy segments and remap their valnos.
-      for (LiveRange::const_iterator I = Other.begin(), E = Other.end();
-           I != E; ++I) {
-        segments.push_back(Segment(I->start, I->end, valnos[I->valno->id]));
+      for (const Segment &S : Other.segments) {
+        segments.push_back(Segment(S.start, S.end, valnos[S.valno->id]));
       }
     }
 
@@ -523,9 +521,9 @@ namespace llvm {
     /// Returns true if the live range is zero length, i.e. no live segments
     /// span instructions. It doesn't pay to spill such a range.
     bool isZeroLength(SlotIndexes *Indexes) const {
-      for (const_iterator i = begin(), e = end(); i != e; ++i)
-        if (Indexes->getNextNonNullIndex(i->start).getBaseIndex() <
-            i->end.getBaseIndex())
+      for (const Segment &S : segments)
+        if (Indexes->getNextNonNullIndex(S.start).getBaseIndex() <
+            S.end.getBaseIndex())
           return false;
       return true;
     }

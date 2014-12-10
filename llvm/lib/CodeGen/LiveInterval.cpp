@@ -191,13 +191,13 @@ bool LiveRange::covers(const LiveRange &Other) const {
     return Other.empty();
 
   const_iterator I = begin();
-  for (const_iterator O = Other.begin(), OE = Other.end(); O != OE; ++O) {
-    I = advanceTo(I, O->start);
-    if (I == end() || I->start > O->start)
+  for (const Segment &O : Other.segments) {
+    I = advanceTo(I, O.start);
+    if (I == end() || I->start > O.start)
       return false;
 
-    // Check adjacent live segments and see if we can get behind O->end.
-    while (I->end < O->end) {
+    // Check adjacent live segments and see if we can get behind O.end.
+    while (I->end < O.end) {
       const_iterator Last = I;
       // Get next segment and abort if it was not adjacent.
       ++I;
@@ -226,8 +226,8 @@ void LiveRange::markValNoForDeletion(VNInfo *ValNo) {
 void LiveRange::RenumberValues() {
   SmallPtrSet<VNInfo*, 8> Seen;
   valnos.clear();
-  for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    VNInfo *VNI = I->valno;
+  for (const Segment &S : segments) {
+    VNInfo *VNI = S.valno;
     if (!Seen.insert(VNI).second)
       continue;
     assert(!VNI->isUnused() && "Unused valno used by live segment");
@@ -483,8 +483,8 @@ void LiveRange::join(LiveRange &Other,
   // This can leave Other in an invalid state because we're not coalescing
   // touching segments that now have identical values. That's OK since Other is
   // not supposed to be valid after calling join();
-  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I)
-    I->valno = NewVNInfo[RHSValNoAssignments[I->valno->id]];
+  for (Segment &S : Other.segments)
+    S.valno = NewVNInfo[RHSValNoAssignments[S.valno->id]];
 
   // Update val# info. Renumber them and make sure they all belong to this
   // LiveRange now. Also remove dead val#'s.
@@ -504,8 +504,8 @@ void LiveRange::join(LiveRange &Other,
 
   // Okay, now insert the RHS live segments into the LHS.
   LiveRangeUpdater Updater(this);
-  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I)
-    Updater.add(*I);
+  for (Segment &S : Other.segments)
+    Updater.add(S);
 }
 
 /// Merge all of the segments in RHS into this live range as the specified
@@ -515,8 +515,8 @@ void LiveRange::join(LiveRange &Other,
 void LiveRange::MergeSegmentsInAsValue(const LiveRange &RHS,
                                        VNInfo *LHSValNo) {
   LiveRangeUpdater Updater(this);
-  for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I)
-    Updater.add(I->start, I->end, LHSValNo);
+  for (const Segment &S : RHS.segments)
+    Updater.add(S.start, S.end, LHSValNo);
 }
 
 /// MergeValueInAsValue - Merge all of the live segments of a specific val#
@@ -528,9 +528,9 @@ void LiveRange::MergeValueInAsValue(const LiveRange &RHS,
                                     const VNInfo *RHSValNo,
                                     VNInfo *LHSValNo) {
   LiveRangeUpdater Updater(this);
-  for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I)
-    if (I->valno == RHSValNo)
-      Updater.add(I->start, I->end, LHSValNo);
+  for (const Segment &S : RHS.segments)
+    if (S.valno == RHSValNo)
+      Updater.add(S.start, S.end, LHSValNo);
 }
 
 /// MergeValueNumberInto - This method is called when two value nubmers
@@ -611,8 +611,8 @@ void LiveInterval::removeEmptySubRanges() {
 
 unsigned LiveInterval::getSize() const {
   unsigned Sum = 0;
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
-    Sum += I->start.distance(I->end);
+  for (const Segment &S : segments)
+    Sum += S.start.distance(S.end);
   return Sum;
 }
 
@@ -630,9 +630,9 @@ void LiveRange::print(raw_ostream &OS) const {
   if (empty())
     OS << "EMPTY";
   else {
-    for (const_iterator I = begin(), E = end(); I != E; ++I) {
-      OS << *I;
-      assert(I->valno == getValNumInfo(I->valno->id) && "Bad VNInfo");
+    for (const Segment &S : segments) {
+      OS << S;
+      assert(S.valno == getValNumInfo(S.valno->id) && "Bad VNInfo");
     }
   }
 
@@ -757,14 +757,14 @@ void LiveRangeUpdater::print(raw_ostream &OS) const {
   OS << " updater with gap = " << (ReadI - WriteI)
      << ", last start = " << LastStart
      << ":\n  Area 1:";
-  for (LiveRange::const_iterator I = LR->begin(); I != WriteI; ++I)
-    OS << ' ' << *I;
+  for (const auto &S : make_range(LR->begin(), WriteI))
+    OS << ' ' << S;
   OS << "\n  Spills:";
   for (unsigned I = 0, E = Spills.size(); I != E; ++I)
     OS << ' ' << Spills[I];
   OS << "\n  Area 2:";
-  for (LiveRange::const_iterator I = ReadI, E = LR->end(); I != E; ++I)
-    OS << ' ' << *I;
+  for (const auto &S : make_range(ReadI, LR->end()))
+    OS << ' ' << S;
   OS << '\n';
 }
 
@@ -925,9 +925,7 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
   const VNInfo *used = nullptr, *unused = nullptr;
 
   // Determine connections.
-  for (LiveInterval::const_vni_iterator I = LI->vni_begin(), E = LI->vni_end();
-       I != E; ++I) {
-    const VNInfo *VNI = *I;
+  for (const VNInfo *VNI : LI->valnos) {
     // Group all unused values into one class.
     if (VNI->isUnused()) {
       if (unused)

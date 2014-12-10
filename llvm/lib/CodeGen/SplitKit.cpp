@@ -120,10 +120,9 @@ void SplitAnalysis::analyzeUses() {
 
   // First get all the defs from the interval values. This provides the correct
   // slots for early clobbers.
-  for (LiveInterval::const_vni_iterator I = CurLI->vni_begin(),
-       E = CurLI->vni_end(); I != E; ++I)
-    if (!(*I)->isPHIDef() && !(*I)->isUnused())
-      UseSlots.push_back((*I)->def);
+  for (const VNInfo *VNI : CurLI->valnos)
+    if (!VNI->isPHIDef() && !VNI->isUnused())
+      UseSlots.push_back(VNI->def);
 
   // Get use slots form the use-def chain.
   const MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -727,9 +726,7 @@ void SplitEditor::hoistCopiesForSize() {
 
   // Find the nearest common dominator for parent values with multiple
   // back-copies.  If a single back-copy dominates, put it in DomPair.second.
-  for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
-       VI != VE; ++VI) {
-    VNInfo *VNI = *VI;
+  for (VNInfo *VNI : LI->valnos) {
     if (VNI->isUnused())
       continue;
     VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(VNI->def);
@@ -802,9 +799,7 @@ void SplitEditor::hoistCopiesForSize() {
   // Remove redundant back-copies that are now known to be dominated by another
   // def with the same value.
   SmallVector<VNInfo*, 8> BackCopies;
-  for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
-       VI != VE; ++VI) {
-    VNInfo *VNI = *VI;
+  for (VNInfo *VNI : LI->valnos) {
     if (VNI->isUnused())
       continue;
     VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(VNI->def);
@@ -823,16 +818,15 @@ void SplitEditor::hoistCopiesForSize() {
 bool SplitEditor::transferValues() {
   bool Skipped = false;
   RegAssignMap::const_iterator AssignI = RegAssign.begin();
-  for (LiveInterval::const_iterator ParentI = Edit->getParent().begin(),
-         ParentE = Edit->getParent().end(); ParentI != ParentE; ++ParentI) {
-    DEBUG(dbgs() << "  blit " << *ParentI << ':');
-    VNInfo *ParentVNI = ParentI->valno;
+  for (const LiveRange::Segment &S : Edit->getParent()) {
+    DEBUG(dbgs() << "  blit " << S << ':');
+    VNInfo *ParentVNI = S.valno;
     // RegAssign has holes where RegIdx 0 should be used.
-    SlotIndex Start = ParentI->start;
+    SlotIndex Start = S.start;
     AssignI.advanceTo(Start);
     do {
       unsigned RegIdx;
-      SlotIndex End = ParentI->end;
+      SlotIndex End = S.end;
       if (!AssignI.valid()) {
         RegIdx = 0;
       } else if (AssignI.start() <= Start) {
@@ -917,7 +911,7 @@ bool SplitEditor::transferValues() {
         ++MBB;
       }
       Start = End;
-    } while (Start != ParentI->end);
+    } while (Start != S.end);
     DEBUG(dbgs() << '\n');
   }
 
@@ -930,9 +924,7 @@ bool SplitEditor::transferValues() {
 
 void SplitEditor::extendPHIKillRanges() {
     // Extend live ranges to be live-out for successor PHI values.
-  for (LiveInterval::const_vni_iterator I = Edit->getParent().vni_begin(),
-       E = Edit->getParent().vni_end(); I != E; ++I) {
-    const VNInfo *PHIVNI = *I;
+  for (const VNInfo *PHIVNI : Edit->getParent().valnos) {
     if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
       continue;
     unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
@@ -1006,12 +998,11 @@ void SplitEditor::deleteRematVictims() {
   SmallVector<MachineInstr*, 8> Dead;
   for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I){
     LiveInterval *LI = &LIS.getInterval(*I);
-    for (LiveInterval::const_iterator LII = LI->begin(), LIE = LI->end();
-           LII != LIE; ++LII) {
+    for (const LiveRange::Segment &S : LI->segments) {
       // Dead defs end at the dead slot.
-      if (LII->end != LII->valno->def.getDeadSlot())
+      if (S.end != S.valno->def.getDeadSlot())
         continue;
-      MachineInstr *MI = LIS.getInstructionFromIndex(LII->valno->def);
+      MachineInstr *MI = LIS.getInstructionFromIndex(S.valno->def);
       assert(MI && "Missing instruction for dead def");
       MI->addRegisterDead(LI->reg, &TRI);
 
@@ -1036,9 +1027,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
   // the inserted copies.
 
   // Add the original defs from the parent interval.
-  for (LiveInterval::const_vni_iterator I = Edit->getParent().vni_begin(),
-         E = Edit->getParent().vni_end(); I != E; ++I) {
-    const VNInfo *ParentVNI = *I;
+  for (const VNInfo *ParentVNI : Edit->getParent().valnos) {
     if (ParentVNI->isUnused())
       continue;
     unsigned RegIdx = RegAssign.lookup(ParentVNI->def);

@@ -1643,9 +1643,8 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
 
 void MachineVerifier::verifyLiveRange(const LiveRange &LR, unsigned Reg,
                                       unsigned LaneMask) {
-  for (LiveRange::const_vni_iterator I = LR.vni_begin(), E = LR.vni_end();
-       I != E; ++I)
-    verifyLiveRangeValue(LR, *I, Reg, LaneMask);
+  for (const VNInfo *VNI : LR.valnos)
+    verifyLiveRangeValue(LR, VNI, Reg, LaneMask);
 
   for (LiveRange::const_iterator I = LR.begin(), E = LR.end(); I != E; ++I)
     verifyLiveRangeSegment(LR, I, Reg, LaneMask);

@@ -554,19 +554,18 @@ bool RegisterCoalescer::hasOtherReachingDefs(LiveInterval &IntA,
   if (LIS->hasPHIKill(IntA, AValNo))
     return true;
 
-  for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
-       AI != AE; ++AI) {
-    if (AI->valno != AValNo) continue;
+  for (LiveRange::Segment &ASeg : IntA.segments) {
+    if (ASeg.valno != AValNo) continue;
     LiveInterval::iterator BI =
-      std::upper_bound(IntB.begin(), IntB.end(), AI->start);
+      std::upper_bound(IntB.begin(), IntB.end(), ASeg.start);
     if (BI != IntB.begin())
       --BI;
-    for (; BI != IntB.end() && AI->end >= BI->start; ++BI) {
+    for (; BI != IntB.end() && ASeg.end >= BI->start; ++BI) {
       if (BI->valno == BValNo)
         continue;
-      if (BI->start <= AI->start && BI->end > AI->start)
+      if (BI->start <= ASeg.start && BI->end > ASeg.start)
         return true;
-      if (BI->start > AI->start && BI->start < AI->end)
+      if (BI->start > ASeg.start && BI->start < ASeg.end)
         return true;
     }
   }
@@ -578,10 +577,10 @@ bool RegisterCoalescer::hasOtherReachingDefs(LiveInterval &IntA,
 static void addSegmentsWithValNo(LiveRange &Dst, VNInfo *DstValNo,
                                  const LiveRange &Src, const VNInfo *SrcValNo)
 {
-  for (LiveRange::const_iterator I = Src.begin(), E = Src.end(); I != E; ++I) {
-    if (I->valno != SrcValNo)
+  for (const LiveRange::Segment &S : Src.segments) {
+    if (S.valno != SrcValNo)
       continue;
-    Dst.addSegment(LiveRange::Segment(I->start, I->end, DstValNo));
+    Dst.addSegment(LiveRange::Segment(S.start, S.end, DstValNo));
   }
 }
 
