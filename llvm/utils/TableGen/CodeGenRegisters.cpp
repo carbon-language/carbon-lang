@@ -1763,6 +1763,41 @@ void CodeGenRegBank::computeRegUnitSets() {
   }
 }
 
+void CodeGenRegBank::computeRegUnitLaneMasks() {
+  for (auto &Register : Registers) {
+    // Create an initial lane mask for all register units.
+    const auto &RegUnits = Register.getRegUnits();
+    CodeGenRegister::RegUnitLaneMaskList RegUnitLaneMasks(RegUnits.size(), 0);
+    // Iterate through SubRegisters.
+    typedef CodeGenRegister::SubRegMap SubRegMap;
+    const SubRegMap &SubRegs = Register.getSubRegs();
+    for (SubRegMap::const_iterator S = SubRegs.begin(),
+         SE = SubRegs.end(); S != SE; ++S) {
+      CodeGenRegister *SubReg = S->second;
+      // Ignore non-leaf subregisters, their lane masks are fully covered by
+      // the leaf subregisters anyway.
+      if (SubReg->getSubRegs().size() != 0)
+        continue;
+      CodeGenSubRegIndex *SubRegIndex = S->first;
+      const CodeGenRegister *SubRegister = S->second;
+      unsigned LaneMask = SubRegIndex->LaneMask;
+      // Distribute LaneMask to Register Units touched.
+      for (const auto &SUI : SubRegister->getRegUnits()) {
+        bool Found = false;
+        for (size_t u = 0, ue = RegUnits.size(); u < ue; ++u) {
+          if (SUI == RegUnits[u]) {
+            RegUnitLaneMasks[u] |= LaneMask;
+            assert(!Found);
+            Found = true;
+          }
+        }
+        assert(Found);
+      }
+    }
+    Register.setRegUnitLaneMasks(RegUnitLaneMasks);
+  }
+}
+
 void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
   computeSubRegLaneMasks();
@@ -1774,6 +1809,8 @@ void CodeGenRegBank::computeDerivedInfo() {
   // Compute a unique set of RegUnitSets. One for each RegClass and inferred
   // supersets for the union of overlapping sets.
   computeRegUnitSets();
+
+  computeRegUnitLaneMasks();
 
   // Get the weight of each set.
   for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx)

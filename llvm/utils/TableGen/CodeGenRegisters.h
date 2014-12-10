@@ -198,6 +198,7 @@ namespace llvm {
 
     // List of register units in ascending order.
     typedef SmallVector<unsigned, 16> RegUnitList;
+    typedef SmallVector<unsigned, 16> RegUnitLaneMaskList;
 
     // How many entries in RegUnitList are native?
     unsigned NumNativeRegUnits;
@@ -206,9 +207,17 @@ namespace llvm {
     // This is only valid after computeSubRegs() completes.
     const RegUnitList &getRegUnits() const { return RegUnits; }
 
+    ArrayRef<unsigned> getRegUnitLaneMasks() const {
+      return makeArrayRef(RegUnitLaneMasks).slice(0, NumNativeRegUnits);
+    }
+
     // Get the native register units. This is a prefix of getRegUnits().
     ArrayRef<unsigned> getNativeRegUnits() const {
       return makeArrayRef(RegUnits).slice(0, NumNativeRegUnits);
+    }
+
+    void setRegUnitLaneMasks(const RegUnitLaneMaskList &LaneMasks) {
+      RegUnitLaneMasks = LaneMasks;
     }
 
     // Inherit register units from subregisters.
@@ -253,6 +262,7 @@ namespace llvm {
     SuperRegList SuperRegs;
     DenseMap<const CodeGenRegister*, CodeGenSubRegIndex*> SubReg2Idx;
     RegUnitList RegUnits;
+    RegUnitLaneMaskList RegUnitLaneMasks;
   };
 
 
@@ -543,6 +553,10 @@ namespace llvm {
 
     // Compute a lane mask for each sub-register index.
     void computeSubRegLaneMasks();
+
+    /// Computes a lane mask for each register unit enumerated by a physical
+    /// register.
+    void computeRegUnitLaneMasks();
 
   public:
     CodeGenRegBank(RecordKeeper&);
