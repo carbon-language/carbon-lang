@@ -92,9 +92,6 @@ public:
       return false;
     }
   }
-
-  /// \brief Create Internal files for Init/Fini
-  void createInternalFiles(std::vector<std::unique_ptr<File>> &) const override;
 };
 } // end namespace elf
 } // end namespace lld

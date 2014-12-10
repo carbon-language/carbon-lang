@@ -1134,6 +1134,14 @@ public:
       dyn.d_tag = DT_FINI_ARRAYSZ;
       _dt_fini_arraysz = addEntry(dyn);
     }
+    if (getInitAtomLayout()) {
+      dyn.d_tag = DT_INIT;
+      _dt_init = addEntry(dyn);
+    }
+    if (getFiniAtomLayout()) {
+      dyn.d_tag = DT_FINI;
+      _dt_fini = addEntry(dyn);
+    }
   }
 
   /// \brief Dynamic table tag for .got.plt section referencing.
@@ -1179,6 +1187,10 @@ public:
       _entries[_dt_fini_array].d_un.d_val = finiArray->virtualAddr();
       _entries[_dt_fini_arraysz].d_un.d_val = finiArray->memSize();
     }
+    if (const auto *al = getInitAtomLayout())
+      _entries[_dt_init].d_un.d_val = al->_virtualAddr;
+    if (const auto *al = getFiniAtomLayout())
+      _entries[_dt_fini].d_un.d_val = al->_virtualAddr;
     if (_layout.hasDynamicRelocationTable()) {
       auto relaTbl = _layout.getDynamicRelocationTable();
       _entries[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
@@ -1215,9 +1227,25 @@ private:
   std::size_t _dt_fini_array;
   std::size_t _dt_fini_arraysz;
   std::size_t _dt_textrel;
+  std::size_t _dt_init;
+  std::size_t _dt_fini;
   TargetLayout<ELFT> &_layout;
   DynamicSymbolTable<ELFT> *_dynamicSymbolTable;
   HashSection<ELFT> *_hashTable;
+
+  const AtomLayout *getInitAtomLayout() {
+    auto al = _layout.findAtomLayoutByName(this->_context.initFunction());
+    if (al && isa<DefinedAtom>(al->_atom))
+      return al;
+    return nullptr;
+  }
+
+  const AtomLayout *getFiniAtomLayout() {
+    auto al = _layout.findAtomLayoutByName(this->_context.finiFunction());
+    if (al && isa<DefinedAtom>(al->_atom))
+      return al;
+    return nullptr;
+  }
 };
 
 template <class ELFT> class InterpSection : public Section<ELFT> {

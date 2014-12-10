@@ -80,16 +80,13 @@ TEST_F(GnuLdParserTest, EntryJoined) {
 TEST_F(GnuLdParserTest, Init) {
   EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "-init", "foo",
                     "-init", "bar", nullptr));
-  EXPECT_EQ(2, _context->initFunctions().size());
-  EXPECT_EQ("foo", _context->initFunctions()[0]);
-  EXPECT_EQ("bar", _context->initFunctions()[1]);
+  EXPECT_EQ("bar", _context->initFunction());
 }
 
 TEST_F(GnuLdParserTest, InitJoined) {
   EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "-init=foo",
                     nullptr));
-  EXPECT_EQ(1, _context->initFunctions().size());
-  EXPECT_EQ("foo", _context->initFunctions()[0]);
+  EXPECT_EQ("foo", _context->initFunction());
 }
 
 // --soname

@@ -63,7 +63,7 @@ ELFLinkingContext::ELFLinkingContext(
       _useShlibUndefines(true), _dynamicLinkerArg(false),
       _noAllowDynamicLibraries(false), _mergeRODataToTextSegment(true),
       _demangle(true), _alignSegments(true), _outputMagic(OutputMagic::DEFAULT),
-      _sysrootPath("") {}
+      _initFunction("_init"), _finiFunction("_fini"), _sysrootPath("") {}
 
 void ELFLinkingContext::addPasses(PassManager &pm) {
   if (_runLayoutPass)

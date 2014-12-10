@@ -428,11 +428,11 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_init:
-      ctx->addInitFunction(inputArg->getValue());
+      ctx->setInitFunction(inputArg->getValue());
       break;
 
     case OPT_fini:
-      ctx->addFiniFunction(inputArg->getValue());
+      ctx->setFiniFunction(inputArg->getValue());
       break;
 
     case OPT_output_filetype:

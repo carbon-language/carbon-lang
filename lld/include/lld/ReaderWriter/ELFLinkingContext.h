@@ -204,26 +204,24 @@ public:
   /// Get the entry symbol name
   StringRef entrySymbolName() const override;
 
-  /// add to the list of initializer functions
-  void addInitFunction(StringRef name) { _initFunctions.push_back(name); }
+  /// \brief Set new initializer function
+  void setInitFunction(StringRef name) { _initFunction = name; }
 
-  /// add to the list of finalizer functions
-  void addFiniFunction(StringRef name) { _finiFunctions.push_back(name); }
+  /// \brief Return an initializer function name.
+  /// Either default "_init" or configured by the -init command line option.
+  StringRef initFunction() const { return _initFunction; }
+
+  /// \brief Set new finalizer function
+  void setFiniFunction(StringRef name) { _finiFunction = name; }
+
+  /// \brief Return a finalizer function name.
+  /// Either default "_fini" or configured by the -fini command line option.
+  StringRef finiFunction() const { return _finiFunction; }
 
   /// Add an absolute symbol. Used for --defsym.
   void addInitialAbsoluteSymbol(StringRef name, uint64_t addr) {
     _absoluteSymbols[name] = addr;
   }
-
-  /// Return the list of initializer symbols that are specified in the
-  /// linker command line, using the -init option.
-  range<const StringRef *> initFunctions() const {
-    return _initFunctions;
-  }
-
-  /// Return the list of finalizer symbols that are specified in the
-  /// linker command line, using the -fini option.
-  range<const StringRef *> finiFunctions() const { return _finiFunctions; }
 
   void setSharedObjectName(StringRef soname) {
     _soname = soname;
@@ -324,8 +322,8 @@ protected:
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;
   StringRef _dynamicLinkerPath;
-  StringRefVector _initFunctions;
-  StringRefVector _finiFunctions;
+  StringRef _initFunction;
+  StringRef _finiFunction;
   StringRef _sysrootPath;
   StringRef _soname;
   StringRefVector _rpathList;
