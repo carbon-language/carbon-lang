@@ -183,7 +183,7 @@ void LiveRangeCalc::extendToUses(LiveInterval &LI) {
                        (MRI->tracksSubRegLiveness() && SubReg != 0))) {
       unsigned Mask = SubReg != 0
         ? TRI.getSubRegIndexLaneMask(SubReg)
-        : Mask = MRI->getMaxLaneMaskForVReg(Reg);
+        : MRI->getMaxLaneMaskForVReg(Reg);
 
       // If this is the first time we see a subregister def/use. Initialize
       // subranges by creating a copy of the main range.
