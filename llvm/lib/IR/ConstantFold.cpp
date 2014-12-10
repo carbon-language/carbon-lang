@@ -27,12 +27,14 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include <limits>
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 //===----------------------------------------------------------------------===//
 //                ConstantFold*Instruction Implementations
@@ -923,19 +925,27 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       // X * undef -> 0       otherwise
       return Constant::getNullValue(C1->getType());
     }
-    case Instruction::UDiv:
     case Instruction::SDiv:
+    case Instruction::UDiv:
+      // X / undef -> undef
+      if (match(C1, m_Zero()))
+        return C2;
+      // undef / 0 -> undef
       // undef / 1 -> undef
-      if (Opcode == Instruction::UDiv || Opcode == Instruction::SDiv)
-        if (ConstantInt *CI2 = dyn_cast<ConstantInt>(C2))
-          if (CI2->isOne())
-            return C1;
-      // FALL THROUGH
+      if (match(C2, m_Zero()) || match(C2, m_One()))
+        return C1;
+      // undef / X -> 0       otherwise
+      return Constant::getNullValue(C1->getType());
     case Instruction::URem:
     case Instruction::SRem:
-      if (!isa<UndefValue>(C2))                    // undef / X -> 0
-        return Constant::getNullValue(C1->getType());
-      return C2;                                   // X / undef -> undef
+      // X % undef -> undef
+      if (match(C2, m_Undef()))
+        return C2;
+      // undef % 0 -> undef
+      if (match(C2, m_Zero()))
+        return C1;
+      // undef % X -> 0       otherwise
+      return Constant::getNullValue(C1->getType());
     case Instruction::Or:                          // X | undef -> -1
       if (isa<UndefValue>(C1) && isa<UndefValue>(C2)) // undef | undef -> undef
         return C1;

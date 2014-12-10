@@ -188,3 +188,10 @@ define i32 @test23(i32 %a) {
   %b = lshr exact i32 undef, %a
   ret i32 %b
 }
+
+; CHECK-LABEL: @test24
+; CHECK: ret i32 undef
+define i32 @test24(i32 %a) {
+  %b = udiv i32 undef, 0
+  ret i32 %b
+}
