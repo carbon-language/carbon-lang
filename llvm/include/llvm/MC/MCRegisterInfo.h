@@ -233,6 +233,7 @@ public:
   // These iterators are allowed to sub-class DiffListIterator and access
   // internal list pointers.
   friend class MCSubRegIterator;
+  friend class MCSubRegIndexIterator;
   friend class MCSuperRegIterator;
   friend class MCRegUnitIterator;
   friend class MCRegUnitMaskIterator;
@@ -458,6 +459,38 @@ public:
     // Initially, the iterator points to Reg itself.
     if (!IncludeSelf)
       ++*this;
+  }
+};
+
+/// Iterator that enumerates the sub-registers of a Reg and the associated
+/// sub-register indices.
+class MCSubRegIndexIterator {
+  MCSubRegIterator SRIter;
+  const uint16_t *SRIndex;
+public:
+  /// Constructs an iterator that traverses subregisters and their
+  /// associated subregister indices.
+  MCSubRegIndexIterator(unsigned Reg, const MCRegisterInfo *MCRI)
+    : SRIter(Reg, MCRI) {
+    SRIndex = MCRI->SubRegIndices + MCRI->get(Reg).SubRegIndices;
+  }
+
+  /// Returns current sub-register.
+  unsigned getSubReg() const {
+    return *SRIter;
+  }
+  /// Returns sub-register index of the current sub-register.
+  unsigned getSubRegIndex() const {
+    return *SRIndex;
+  }
+
+  /// Returns true if this iterator is not yet at the end.
+  bool isValid() const { return SRIter.isValid(); }
+
+  /// Moves to the next position.
+  void operator++() {
+    ++SRIter;
+    ++SRIndex;
   }
 };
 
