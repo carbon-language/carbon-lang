@@ -7,6 +7,15 @@ import signal
 import subprocess
 import sys
 
+def to_bytes(str):
+    # Encode to UTF-8 to get binary data.
+    return str.encode('utf-8')
+
+def to_string(bytes):
+    if isinstance(bytes, str):
+        return bytes
+    return to_bytes(bytes)
+
 def detectCPUs():
     """
     Detects the number of CPUs on a system. Cribbed from pp.
@@ -155,11 +164,6 @@ def executeCommand(command, cwd=None, env=None):
     # Detect Ctrl-C in subprocess.
     if exitCode == -signal.SIGINT:
         raise KeyboardInterrupt
-
-    def to_string(bytes):
-        if isinstance(bytes, str):
-            return bytes
-        return bytes.encode('utf-8')
 
     # Ensure the resulting output is always of string type.
     try:

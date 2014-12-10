@@ -7,6 +7,7 @@ import tempfile
 import lit.ShUtil as ShUtil
 import lit.Test as Test
 import lit.util
+from lit.util import to_bytes, to_string
 
 class InternalShellError(Exception):
     def __init__(self, command, message):
@@ -325,16 +326,8 @@ def parseIntegratedTestScriptCommands(source_path):
     # UTF-8, so we convert the outputs to UTF-8 before returning. This way the
     # remaining code can work with "strings" agnostic of the executing Python
     # version.
-    
-    def to_bytes(str):
-        # Encode to UTF-8 to get binary data.
-        return str.encode('utf-8')
-    def to_string(bytes):
-        if isinstance(bytes, str):
-            return bytes
-        return to_bytes(bytes)
-        
-    keywords = ('RUN:', 'XFAIL:', 'REQUIRES:', 'END.')
+
+    keywords = ['RUN:', 'XFAIL:', 'REQUIRES:', 'UNSUPPORTED:', 'END.']
     keywords_re = re.compile(
         to_bytes("(%s)(.*)\n" % ("|".join(k for k in keywords),)))
 
@@ -368,11 +361,15 @@ def parseIntegratedTestScriptCommands(source_path):
     finally:
         f.close()
 
+
 def parseIntegratedTestScript(test, normalize_slashes=False,
-                              extra_substitutions=[]):
+                              extra_substitutions=[], require_script=True):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'REQUIRES'
-    information. The RUN lines also will have variable substitution performed.
+    and 'UNSUPPORTED' information. The RUN lines also will have variable
+    substitution performed. If 'require_script' is False an empty script may be
+    returned. This can be used for test formats where the actual script is
+    optional or ignored.
     """
 
     # Get the temporary location, this is always relative to the test suite
@@ -417,6 +414,7 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     # Collect the test lines from the script.
     script = []
     requires = []
+    unsupported = []
     for line_number, command_type, ln in \
             parseIntegratedTestScriptCommands(sourcepath):
         if command_type == 'RUN':
@@ -441,6 +439,8 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
             test.xfails.extend([s.strip() for s in ln.split(',')])
         elif command_type == 'REQUIRES':
             requires.extend([s.strip() for s in ln.split(',')])
+        elif command_type == 'UNSUPPORTED':
+            unsupported.extend([s.strip() for s in ln.split(',')])
         elif command_type == 'END':
             # END commands are only honored if the rest of the line is empty.
             if not ln.strip():
@@ -465,11 +465,11 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
               for ln in script]
 
     # Verify the script contains a run line.
-    if not script:
+    if require_script and not script:
         return lit.Test.Result(Test.UNRESOLVED, "Test has no run line!")
 
     # Check for unterminated run lines.
-    if script[-1][-1] == '\\':
+    if script and script[-1][-1] == '\\':
         return lit.Test.Result(Test.UNRESOLVED,
                                "Test has unterminated run lines (with '\\')")
 
@@ -480,6 +480,12 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
         msg = ', '.join(missing_required_features)
         return lit.Test.Result(Test.UNSUPPORTED,
                                "Test requires the following features: %s" % msg)
+    unsupported_features = [f for f in unsupported
+                            if f in test.config.available_features]
+    if unsupported_features:
+        msg = ', '.join(unsupported_features)
+        return lit.Test.Result(Test.UNSUPPORTED,
+                    "Test is unsupported with the following features: %s" % msg)
 
     return script,tmpBase,execdir
 
