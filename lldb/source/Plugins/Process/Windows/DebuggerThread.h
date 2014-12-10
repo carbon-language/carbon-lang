@@ -10,13 +10,13 @@
 #ifndef liblldb_Plugins_Process_Windows_DebuggerThread_H_
 #define liblldb_Plugins_Process_Windows_DebuggerThread_H_
 
+#include <memory>
+
 #include "ForwardDecl.h"
 #include "lldb/Host/HostProcess.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/Predicate.h"
 #include "lldb/Host/windows/windows.h"
-
-#include <memory>
 
 namespace lldb_private
 {
@@ -45,10 +45,10 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
     {
         return m_main_thread;
     }
-    ExceptionRecord *
+    std::weak_ptr<ExceptionRecord>
     GetActiveException()
     {
-        return m_active_exception.get();
+        return m_active_exception;
     }
 
     Error StopDebugging(bool terminate);
@@ -74,7 +74,7 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
     HostThread m_main_thread; // The main thread of the inferior.
     HANDLE m_image_file;      // The image file of the process being debugged.
 
-    ExceptionRecordUP m_active_exception; // The current exception waiting to be handled
+    ExceptionRecordSP m_active_exception; // The current exception waiting to be handled
 
     Predicate<ExceptionResult> m_exception_pred; // A predicate which gets signalled when an exception
                                                  // is finished processing and the debug loop can be
