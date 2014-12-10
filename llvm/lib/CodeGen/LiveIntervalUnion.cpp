@@ -26,14 +26,14 @@ using namespace llvm;
 
 
 // Merge a LiveInterval's segments. Guarantee no overlaps.
-void LiveIntervalUnion::unify(LiveInterval &VirtReg) {
-  if (VirtReg.empty())
+void LiveIntervalUnion::unify(LiveInterval &VirtReg, const LiveRange &Range) {
+  if (Range.empty())
     return;
   ++Tag;
 
   // Insert each of the virtual register's live segments into the map.
-  LiveInterval::iterator RegPos = VirtReg.begin();
-  LiveInterval::iterator RegEnd = VirtReg.end();
+  LiveRange::const_iterator RegPos = Range.begin();
+  LiveRange::const_iterator RegEnd = Range.end();
   SegmentIter SegPos = Segments.find(RegPos->start);
 
   while (SegPos.valid()) {
@@ -53,14 +53,14 @@ void LiveIntervalUnion::unify(LiveInterval &VirtReg) {
 }
 
 // Remove a live virtual register's segments from this union.
-void LiveIntervalUnion::extract(LiveInterval &VirtReg) {
-  if (VirtReg.empty())
+void LiveIntervalUnion::extract(LiveInterval &VirtReg, const LiveRange &Range) {
+  if (Range.empty())
     return;
   ++Tag;
 
   // Remove each of the virtual register's live segments from the map.
-  LiveInterval::iterator RegPos = VirtReg.begin();
-  LiveInterval::iterator RegEnd = VirtReg.end();
+  LiveRange::const_iterator RegPos = Range.begin();
+  LiveRange::const_iterator RegEnd = Range.end();
   SegmentIter SegPos = Segments.find(RegPos->start);
 
   for (;;) {
@@ -70,7 +70,7 @@ void LiveIntervalUnion::extract(LiveInterval &VirtReg) {
       return;
 
     // Skip all segments that may have been coalesced.
-    RegPos = VirtReg.advanceTo(RegPos, SegPos.start());
+    RegPos = Range.advanceTo(RegPos, SegPos.start());
     if (RegPos == RegEnd)
       return;
 
