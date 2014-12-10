@@ -241,6 +241,7 @@ For API clients and LLVM developers.
    BigEndianNEON
    CoverageMappingFormat
    Statepoints
+   MergeFunctions
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -336,6 +337,9 @@ For API clients and LLVM developers.
 :doc:`Statepoints`
   This describes a set of experimental extensions for garbage
   collection support.
+
+:doc:`MergeFunctions`
+  Describes functions merging optimization.
 
 Development Process Documentation
 =================================

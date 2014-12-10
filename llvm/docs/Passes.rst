@@ -891,17 +891,24 @@ calls, or transforming sets of stores into ``memset``\ s.
 
 This pass looks for equivalent functions that are mergable and folds them.
 
-A hash is computed from the function, based on its type and number of basic
-blocks.
+Total-ordering is introduced among the functions set: we define comparison
+that answers for every two functions which of them is greater. It allows to
+arrange functions into the binary tree.
 
-Once all hashes are computed, we perform an expensive equality comparison on
-each function pair.  This takes n^2/2 comparisons per bucket, so it's important
-that the hash function be high quality.  The equality comparison iterates
-through each instruction in each basic block.
+For every new function we check for equivalent in tree.
 
-When a match is found the functions are folded.  If both functions are
-overridable, we move the functionality into a new internal function and leave
-two overridable thunks to it.
+If equivalent exists we fold such functions. If both functions are overridable,
+we move the functionality into a new internal function and leave two
+overridable thunks to it.
+
+If there is no equivalent, then we add this function to tree.
+
+Lookup routine has O(log(n)) complexity, while whole merging process has
+complexity of O(n*log(n)).
+
+Read
+:doc:`this <MergeFunctions>`
+article for more details.
 
 ``-mergereturn``: Unify function exit nodes
 -------------------------------------------
