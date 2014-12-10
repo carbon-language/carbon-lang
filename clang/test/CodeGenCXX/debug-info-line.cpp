@@ -2,8 +2,8 @@
 
 int &src();
 int *sink();
-__complex float complex_src();
-__complex float *complex_sink();
+extern "C" __complex float complex_src();
+extern "C" __complex float *complex_sink();
 
 // CHECK-LABEL: define
 void f1() {
@@ -33,10 +33,7 @@ foo::foo()
       (complex_src()) {
 }
 
-// skip C1
-// CHECK-LABEL: define
-
-// CHECK-LABEL: define
+// CHECK-LABEL: define {{.*}}f2{{.*}}
 void f2() {
 #line 300
   * // CHECK: store float {{.*}} !dbg [[DBG_F2:!.*]]
