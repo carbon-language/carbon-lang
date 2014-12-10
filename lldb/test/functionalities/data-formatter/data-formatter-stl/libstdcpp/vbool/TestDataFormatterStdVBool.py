@@ -26,6 +26,7 @@ class StdVBoolDataFormatterTestCase(TestBase):
                           # of mis-match is version of libstdc++ supported by
                           # the data-formatters.
     @dwarf_test
+    @skipIfWindows # http://llvm.org/pr21800
     @skipIfDarwin
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
