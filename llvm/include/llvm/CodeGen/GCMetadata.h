@@ -80,8 +80,8 @@ namespace llvm {
   };
 
 
-  /// GCFunctionInfo - Garbage collection metadata for a single function.
-  ///
+  /// Garbage collection metadata for a single function.  Currently, this
+  /// information only applies to GCStrategies which use GCRoot.
   class GCFunctionInfo {
   public:
     typedef std::vector<GCPoint>::iterator iterator;
@@ -161,8 +161,9 @@ namespace llvm {
   };
 
 
-  /// GCModuleInfo - Garbage collection metadata for a whole module.
-  ///
+  /// An analysis pass which caches information about the entire Module.
+  /// Records both the function level information used by GCRoots and a
+  /// cache of the 'active' gc strategy objects for the current Module.
   class GCModuleInfo : public ImmutablePass {
     typedef StringMap<GCStrategy*> strategy_map_type;
     typedef std::vector<std::unique_ptr<GCStrategy>> list_type;

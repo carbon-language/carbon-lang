@@ -51,7 +51,9 @@ namespace llvm {
   
   /// GCStrategy describes a garbage collector algorithm's code generation
   /// requirements, and provides overridable hooks for those needs which cannot
-  /// be abstractly described.
+  /// be abstractly described.  GCStrategy objects currently must be looked up
+  /// through the GCModuleInfo analysis pass.  They are owned by the analysis
+  /// pass and recreated every time that pass is invalidated.
   class GCStrategy {
   public:
     typedef std::vector<std::unique_ptr<GCFunctionInfo>> list_type;
