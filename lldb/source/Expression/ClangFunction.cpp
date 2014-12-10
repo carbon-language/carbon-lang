@@ -57,8 +57,8 @@ ClangFunction::ClangFunction
     const ValueList &arg_value_list,
     const char *name
 ) :
-    m_parser(),
     m_execution_unit_sp(),
+    m_parser(),
     m_jit_module_wp(),
     m_name (name ? name : "<unknown>"),
     m_function_ptr (NULL),

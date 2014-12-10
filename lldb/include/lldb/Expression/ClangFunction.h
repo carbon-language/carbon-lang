@@ -411,8 +411,10 @@ private:
     // For ClangFunction only
     //------------------------------------------------------------------
 
-    std::unique_ptr<ClangExpressionParser> m_parser;                 ///< The parser responsible for compiling the function.
+    // Note: the parser needs to be destructed before the execution unit, so
+    // declare the the execution unit first.
     std::shared_ptr<IRExecutionUnit> m_execution_unit_sp;
+    std::unique_ptr<ClangExpressionParser> m_parser;                 ///< The parser responsible for compiling the function.
     lldb::ModuleWP                  m_jit_module_wp;
     std::string                     m_name;                         ///< The name of this clang function - for debugging purposes.
     
