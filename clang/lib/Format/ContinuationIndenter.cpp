@@ -520,8 +520,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
         (Current.MatchingParen &&
          Current.MatchingParen->BlockKind == BK_BracedInit))
       return State.Stack[State.Stack.size() - 2].LastSpace;
-    else
-      return State.FirstIndent;
+    return State.FirstIndent;
   }
   if (Current.is(tok::identifier) && Current.Next &&
       Current.Next->is(TT_DictLiteral))
@@ -532,11 +531,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
       State.Stack.back().FirstLessLess != 0)
     return State.Stack.back().FirstLessLess;
   if (NextNonComment->isMemberAccess()) {
-    if (State.Stack.back().CallContinuation == 0) {
+    if (State.Stack.back().CallContinuation == 0)
       return ContinuationIndent;
-    } else {
-      return State.Stack.back().CallContinuation;
-    }
+    return State.Stack.back().CallContinuation;
   }
   if (State.Stack.back().QuestionColumn != 0 &&
       ((NextNonComment->is(tok::colon) &&
@@ -554,26 +551,22 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
   if (NextNonComment->is(TT_SelectorName)) {
     if (!State.Stack.back().ObjCSelectorNameFound) {
-      if (NextNonComment->LongestObjCSelectorName == 0) {
+      if (NextNonComment->LongestObjCSelectorName == 0)
         return State.Stack.back().Indent;
-      } else {
-        return State.Stack.back().Indent +
-               NextNonComment->LongestObjCSelectorName -
-               NextNonComment->ColumnWidth;
-      }
-    } else if (!State.Stack.back().AlignColons) {
-      return State.Stack.back().Indent;
-    } else if (State.Stack.back().ColonPos > NextNonComment->ColumnWidth) {
-      return State.Stack.back().ColonPos - NextNonComment->ColumnWidth;
-    } else {
-      return State.Stack.back().Indent;
+      return State.Stack.back().Indent +
+             NextNonComment->LongestObjCSelectorName -
+             NextNonComment->ColumnWidth;
     }
+    if (!State.Stack.back().AlignColons)
+      return State.Stack.back().Indent;
+    if (State.Stack.back().ColonPos > NextNonComment->ColumnWidth)
+      return State.Stack.back().ColonPos - NextNonComment->ColumnWidth;
+    return State.Stack.back().Indent;
   }
   if (NextNonComment->is(TT_ArraySubscriptLSquare)) {
     if (State.Stack.back().StartOfArraySubscripts != 0)
       return State.Stack.back().StartOfArraySubscripts;
-    else
-      return ContinuationIndent;
+    return ContinuationIndent;
   }
   if (NextNonComment->is(TT_StartOfName) ||
       Previous.isOneOf(tok::coloncolon, tok::equal)) {
