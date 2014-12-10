@@ -34,8 +34,8 @@ public:
     virtual
     ~ExceptionSearchFilter() {};
 
-    virtual bool
-    ModulePasses (const lldb::ModuleSP &module_sp)
+    bool
+    ModulePasses (const lldb::ModuleSP &module_sp) override
     {
         UpdateModuleListIfNeeded ();
         if (m_filter_sp)
@@ -43,8 +43,8 @@ public:
         return false;
     }
     
-    virtual bool
-    ModulePasses (const FileSpec &spec)
+    bool
+    ModulePasses (const FileSpec &spec) override
     {
         UpdateModuleListIfNeeded ();
         if (m_filter_sp)
@@ -53,16 +53,16 @@ public:
         
     }
     
-    virtual void
-    Search (Searcher &searcher)
+    void
+    Search (Searcher &searcher) override
     {
         UpdateModuleListIfNeeded ();
         if (m_filter_sp)
             m_filter_sp->Search (searcher);
     }
 
-    virtual void
-    GetDescription (Stream *s)
+    void
+    GetDescription (Stream *s) override
     {
         UpdateModuleListIfNeeded ();
         if (m_filter_sp)
@@ -136,11 +136,11 @@ public:
     {
     }
     
-    virtual Searcher::CallbackReturn
+    Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
                     SymbolContext &context,
                     Address *addr,
-                    bool containing)
+                    bool containing) override
     {
         
         if (SetActualResolver())
@@ -149,8 +149,8 @@ public:
             return eCallbackReturnStop;
     }
     
-    virtual Searcher::Depth
-    GetDepth ()
+    Searcher::Depth
+    GetDepth () override
     {
         if (SetActualResolver())
             return m_actual_resolver_sp->GetDepth();
@@ -158,8 +158,8 @@ public:
             return eDepthTarget;
     }
     
-    virtual void
-    GetDescription (Stream *s)
+    void
+    GetDescription (Stream *s) override
     {
         s->Printf ("Exception breakpoint (catch: %s throw: %s)",
                    m_catch_bp ? "on" : "off",
@@ -175,8 +175,8 @@ public:
             s->Printf (" the correct runtime exception handler will be determined when you run");
     }
 
-    virtual void
-    Dump (Stream *s) const
+    void
+    Dump (Stream *s) const override
     {
     }
     
