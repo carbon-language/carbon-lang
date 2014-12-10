@@ -6023,7 +6023,10 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 
     return NewLd;
   }
-  if (NumElems == 4 && LastLoadedElt == 1 &&
+  
+  //TODO: The code below fires only for for loading the low v2i32 / v2f32
+  //of a v4i32 / v4f32. It's probably worth generalizing.
+  if (NumElems == 4 && LastLoadedElt == 1 && (EltVT.getSizeInBits() == 32) &&
       DAG.getTargetLoweringInfo().isTypeLegal(MVT::v2i64)) {
     SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
     SDValue Ops[] = { LDBase->getChain(), LDBase->getBasePtr() };

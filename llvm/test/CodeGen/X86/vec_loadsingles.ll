@@ -14,6 +14,25 @@ define <4 x float> @merge_2_floats(float* nocapture %p) nounwind readonly {
 ; ALL-NEXT: retq
 }
 
+; Test-case generated due to a crash when trying to treat loading the first
+; two i64s of a <4 x i64> as a load of two i32s.
+define <4 x i64> @merge_2_floats_into_4() {
+  %1 = load i64** undef, align 8
+  %2 = getelementptr inbounds i64* %1, i64 0
+  %3 = load i64* %2
+  %4 = insertelement <4 x i64> undef, i64 %3, i32 0
+  %5 = load i64** undef, align 8
+  %6 = getelementptr inbounds i64* %5, i64 1
+  %7 = load i64* %6
+  %8 = insertelement <4 x i64> %4, i64 %7, i32 1
+  %9 = shufflevector <4 x i64> %8, <4 x i64> undef, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  ret <4 x i64> %9
+  
+; ALL-LABEL: merge_2_floats_into_4
+; ALL: vmovups
+; ALL-NEXT: retq
+}
+
 define <4 x float> @merge_4_floats(float* %ptr) {
   %a = load float* %ptr, align 8
   %vec = insertelement <4 x float> undef, float %a, i32 0
