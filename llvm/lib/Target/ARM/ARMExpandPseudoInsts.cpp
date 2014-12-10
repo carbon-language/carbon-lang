@@ -980,7 +980,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned LDRLITOpc = IsARM ? ARM::LDRi12 : ARM::tLDRpci;
       unsigned PICAddOpc =
           IsARM
-              ? (Opcode == ARM::LDRLIT_ga_pcrel_ldr ? ARM::PICADD : ARM::PICLDR)
+              ? (Opcode == ARM::LDRLIT_ga_pcrel_ldr ? ARM::PICLDR : ARM::PICADD)
               : ARM::tPICADD;
 
       // We need a new const-pool entry to load from.

@@ -5315,6 +5315,7 @@ def LDRLIT_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                                        (ARMWrapperPIC tglobaladdr:$addr))]>,
                       Requires<[IsARM, DontUseMovt]>;
 
+let AddedComplexity = 10 in
 def LDRLIT_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                               NoItinerary,
                               [(set GPR:$dst,

@@ -8,7 +8,7 @@
 ;PIC:   foo2
 ;PIC:   ldr [[R0:r[0-9]+]], [[LABEL0:LCPI[0-9_]+]]
 ;PIC: [[LABEL1:LPC0_1]]:
-;PIC:   ldr [[R1:r[0-9]+]], [pc, [[R0]]]
+;PIC:   add [[R1:r[0-9]+]], pc, [[R0]]
 ;PIC:   ldr [[R2:r[0-9]+]], {{\[}}[[R1]]{{\]}}
 ;PIC:   ldr {{r[0-9]+}}, {{\[}}[[R2]]{{\]}}
 

@@ -33,8 +33,8 @@ false:
 ; CHECK-ARM-PIC-LABEL: foo:
 ; CHECK-ARM-PIC: ldr [[VAR_OFFSET:r[0-9]+]], LCPI0_0
 ; CHECK-ARM-PIC: LPC0_0:
-; CHECK-ARM-PIC-NEXT: ldr r0, [pc, [[VAR_OFFSET]]]
-; CHECK-ARM-PIC: ldr {{r[1-9][0-9]?}}, [r0, #4]
+; CHECK-ARM-PIC-NEXT: add r0, pc, [[VAR_OFFSET]]
+; CHECK-ARM-PIC: ldr {{r[0-9]+}}, [r0, #4]
 
 ; CHECK-ARM-PIC: LCPI0_0:
 ; CHECK-ARM-PIC-NEXT: .long _var-(LPC0_0+8)
