@@ -119,6 +119,12 @@ namespace llvm {
       return isDeadDef() ? nullptr : LateVal;
     }
 
+    /// Returns the value alive at the end of the instruction, if any. This can
+    /// be a live-through value, a live def or a dead def.
+    VNInfo *valueOutOrDead() const {
+      return LateVal;
+    }
+
     /// Return the value defined by this instruction, if any. This includes
     /// dead defs, it is the value created by the instruction's def operands.
     VNInfo *valueDefined() const {
