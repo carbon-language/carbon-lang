@@ -99,6 +99,16 @@ void f9(int i) {
       src1)[src2()];
 }
 
+void *operator new(unsigned long, void *);
+
+// CHECK-LABEL: define
+void f10() {
+  void *void_src();
+  ( // CHECK: store {{.*}} !dbg [[DBG_F10:!.*]]
+#line 1100
+      new (void_src()) int(src()));
+}
+
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
@@ -111,3 +121,4 @@ void f9(int i) {
 // CHECK: [[DBG_F7]] = metadata !{i32 800,
 // CHECK: [[DBG_F8]] = metadata !{i32 900,
 // CHECK: [[DBG_F9]] = metadata !{i32 1000,
+// CHECK: [[DBG_F10]] = metadata !{i32 1100,

@@ -754,14 +754,15 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
 }
 
 static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const Expr *Init,
-                                    QualType AllocType, llvm::Value *NewPtr) {
+                                    QualType AllocType, llvm::Value *NewPtr,
+                                    SourceLocation DbgLoc = SourceLocation()) {
   // FIXME: Refactor with EmitExprAsInit.
   CharUnits Alignment = CGF.getContext().getTypeAlignInChars(AllocType);
   switch (CGF.getEvaluationKind(AllocType)) {
   case TEK_Scalar:
-    CGF.EmitScalarInit(Init, nullptr, CGF.MakeAddrLValue(NewPtr, AllocType,
-                                                         Alignment),
-                       false);
+    CGF.EmitScalarInit(Init, nullptr,
+                       CGF.MakeAddrLValue(NewPtr, AllocType, Alignment), false,
+                       DbgLoc);
     return;
   case TEK_Complex:
     CGF.EmitComplexExprIntoLValue(Init, CGF.MakeAddrLValue(NewPtr, AllocType,
@@ -1023,7 +1024,8 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
     CGF.EmitNewArrayInitializer(E, ElementType, NewPtr, NumElements,
                                 AllocSizeWithoutCookie);
   else if (const Expr *Init = E->getInitializer())
-    StoreAnyExprIntoOneUnit(CGF, Init, E->getAllocatedType(), NewPtr);
+    StoreAnyExprIntoOneUnit(CGF, Init, E->getAllocatedType(), NewPtr,
+                            E->getStartLoc());
 }
 
 /// Emit a call to an operator new or operator delete function, as implicitly
