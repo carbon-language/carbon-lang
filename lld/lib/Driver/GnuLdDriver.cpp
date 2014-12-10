@@ -295,7 +295,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   }
 
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
-  std::stack<Group *> groupStack;
+  std::stack<int> groupStack;
+  int numfiles = 0;
 
   ELFFileNode::Attributes attributes;
 
@@ -468,16 +469,21 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
     }
 
-    case OPT_start_group: {
-      std::unique_ptr<Group> group(new Group());
-      groupStack.push(group.get());
-      inputGraph->addInputElement(std::move(group));
+    case OPT_start_group:
+      groupStack.push(numfiles);
       break;
-    }
 
-    case OPT_end_group:
+    case OPT_end_group: {
+      if (groupStack.empty()) {
+        diagnostics << "stray --end-group\n";
+        return false;
+      }
+      int startGroupPos = groupStack.top();
+      inputGraph->addInputElement(
+          llvm::make_unique<GroupEnd>(numfiles - startGroupPos));
       groupStack.pop();
       break;
+    }
 
     case OPT_z: {
       StringRef extOpt = inputArg->getValue();
@@ -552,11 +558,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         }
       }
       std::unique_ptr<InputElement> inputFile(inputNode);
-      if (groupStack.empty()) {
-        inputGraph->addInputElement(std::move(inputFile));
-      } else {
-        groupStack.top()->addFile(std::move(inputFile));
-      }
+      ++numfiles;
+      inputGraph->addInputElement(std::move(inputFile));
       break;
     }
 

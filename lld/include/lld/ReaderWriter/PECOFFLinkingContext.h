@@ -29,7 +29,6 @@ using llvm::COFF::WindowsSubsystem;
 static const uint8_t DEFAULT_DOS_STUB[128] = {'M', 'Z'};
 
 namespace lld {
-class Group;
 
 class PECOFFLinkingContext : public LinkingContext {
 public:
@@ -318,8 +317,7 @@ public:
   void setEntryNode(SimpleFileNode *node) { _entryNode = node; }
   SimpleFileNode *getEntryNode() const { return _entryNode; }
 
-  void setLibraryGroup(Group *group) { _libraryGroup = group; }
-  Group *getLibraryGroup() const { return _libraryGroup; }
+  void addLibraryFile(std::unique_ptr<FileNode> file);
 
   void setModuleDefinitionFile(const std::string val) {
     _moduleDefinitionFile = val;
@@ -440,9 +438,6 @@ private:
 
   // The node containing the entry point file.
   SimpleFileNode *_entryNode;
-
-  // The PECOFFGroup that contains all the .lib files.
-  Group *_libraryGroup;
 
   // Name of the temporary file for lib.exe subcommand. For debugging
   // only.

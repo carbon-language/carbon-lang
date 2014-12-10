@@ -23,18 +23,6 @@
 
 namespace lld {
 
-
-class DarwinInputGraph : public InputGraph {
-public:
-  DarwinInputGraph() : _librariesPhase(false), _repeatLibraries(false) { }
-  ErrorOr<File &> getNextFile() override;
-  void notifyProgress() override;
-private:
-  bool _librariesPhase;
-  bool _repeatLibraries;
-};
-
-
 /// \brief Represents a MachO File
 class MachOFileNode : public FileNode {
 public:

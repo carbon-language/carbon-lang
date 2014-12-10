@@ -59,12 +59,6 @@ public:
   /// assigned in the way files are resolved.
   virtual ErrorOr<File &> getNextFile();
 
-  /// Notifies the current input element of Resolver made some progress on
-  /// resolving undefined symbols using the current file. Group (representing
-  /// --start-group and --end-group) uses that notification to make a decision
-  /// whether it should iterate over again or terminate or not.
-  virtual void notifyProgress();
-
   /// Adds an observer of getNextFile(). Each time a new file is about to be
   /// returned from getNextFile(), registered observers are called with the file
   /// being returned.
@@ -76,13 +70,17 @@ public:
   /// \brief Adds a node at the beginning of the InputGraph
   void addInputElementFront(std::unique_ptr<InputElement>);
 
-  /// Normalize the InputGraph. It calls expand() on each node and then replace
-  /// it with getReplacements() results.
+  /// Normalize the InputGraph. It calls getReplacements() on each element.
   void normalize();
 
-  range<InputElementIterT> inputElements() {
-    return make_range(_inputArgs.begin(), _inputArgs.end());
+  InputElementVectorT &inputElements() {
+    return _inputArgs;
   }
+
+  // Returns the current group size if we are at an --end-group.
+  // Otherwise returns 0.
+  int getGroupSize();
+  void skipGroup();
 
   // \brief Returns the number of input files.
   size_t size() const { return _inputArgs.size(); }
@@ -108,8 +106,8 @@ class InputElement {
 public:
   /// Each input element in the graph can be a File or a control
   enum class Kind : uint8_t {
-    Group,      // Represents a type associated with Group
-    File        // Represents a type associated with File Nodes
+    File,       // Represents a type associated with File Nodes
+    GroupEnd,
   };
 
   InputElement(Kind type) : _kind(type) {}
@@ -129,15 +127,8 @@ public:
   /// Get the next file to be processed by the resolver
   virtual ErrorOr<File &> getNextFile() = 0;
 
-  /// Refer InputGraph::notifyProgress(). By default, it does nothing. Only
-  /// Group is interested in this message.
-  virtual void notifyProgress() {};
-
   /// \brief Reset the next index
   virtual void resetNextIndex() = 0;
-
-  /// Returns true if we want to replace this node with children.
-  virtual void expand() {}
 
   /// Get the elements that we want to expand with.
   virtual bool getReplacements(InputGraph::InputElementVectorT &) {
@@ -148,73 +139,31 @@ protected:
   Kind _kind; // The type of the Element
 };
 
-/// \brief A Control node which contains a group of InputElements
-/// This affects the resolver so that it resolves undefined symbols
-/// in the group completely before looking at other input files that
-/// follow the group
-class Group : public InputElement {
+// This is a marker for --end-group. getSize() returns the number of
+// files between the corresponding --start-group and this marker.
+class GroupEnd : public InputElement {
 public:
-  Group()
-      : InputElement(InputElement::Kind::Group), _currentElementIndex(0),
-        _nextElementIndex(0), _madeProgress(false) {}
+  GroupEnd(int size) : InputElement(Kind::GroupEnd), _size(size) {}
+
+  int getSize() const { return _size; }
 
   static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::Group;
-  }
-
-  /// \brief Process input element and add it to the group
-  bool addFile(std::unique_ptr<InputElement> element) {
-    _elements.push_back(std::move(element));
-    return true;
-  }
-
-  range<InputGraph::InputElementIterT> elements() {
-    return make_range(_elements.begin(), _elements.end());
-  }
-
-  void resetNextIndex() override {
-    _madeProgress = false;
-    _currentElementIndex = 0;
-    _nextElementIndex = 0;
-    for (std::unique_ptr<InputElement> &elem : _elements)
-      elem->resetNextIndex();
+    return a->kind() == Kind::GroupEnd;
   }
 
   /// \brief Parse the group members.
   std::error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
-    for (std::unique_ptr<InputElement> &ei : _elements)
-      if (std::error_code ec = ei->parse(ctx, diag))
-        return ec;
     return std::error_code();
   }
 
-  /// If Resolver made a progress using the current file, it's ok to revisit
-  /// files in this group in future.
-  void notifyProgress() override {
-    for (std::unique_ptr<InputElement> &elem : _elements)
-      elem->notifyProgress();
-    _madeProgress = true;
+  ErrorOr<File &> getNextFile() override {
+    llvm_unreachable("shouldn't be here.");
   }
 
-  ErrorOr<File &> getNextFile() override;
+  void resetNextIndex() override {}
 
-  void expand() override {
-    for (std::unique_ptr<InputElement> &elt : _elements)
-      elt->expand();
-    std::vector<std::unique_ptr<InputElement>> result;
-    for (std::unique_ptr<InputElement> &elt : _elements) {
-      if (elt->getReplacements(result))
-        continue;
-      result.push_back(std::move(elt));
-    }
-    _elements.swap(result);
-  }
-
-protected:
-  InputGraph::InputElementVectorT _elements;
-  uint32_t _currentElementIndex;
-  uint32_t _nextElementIndex;
-  bool _madeProgress;
+private:
+  int _size;
 };
 
 /// \brief Represents an Input file in the graph
@@ -252,6 +201,8 @@ public:
 
   /// \brief add a file to the list of files
   virtual void addFiles(InputGraph::FileVectorT files) {
+    assert(files.size() == 1);
+    assert(_files.empty());
     for (std::unique_ptr<File> &ai : files)
       _files.push_back(std::move(ai));
   }
@@ -259,6 +210,8 @@ public:
   /// \brief Reset the file index if the resolver needs to process
   /// the node again.
   void resetNextIndex() override { _nextFileIndex = 0; }
+
+  bool getReplacements(InputGraph::InputElementVectorT &result) override;
 
 protected:
   /// \brief Read the file into _buffer.
@@ -276,6 +229,10 @@ protected:
 class SimpleFileNode : public FileNode {
 public:
   SimpleFileNode(StringRef path) : FileNode(path) {}
+  SimpleFileNode(StringRef path, std::unique_ptr<File> f)
+      : FileNode(path) {
+    _files.push_back(std::move(f));
+  }
 
   virtual ~SimpleFileNode() {}
 

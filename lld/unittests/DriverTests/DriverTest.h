@@ -37,18 +37,6 @@ protected:
     llvm_unreachable("not handling other types of input files");
   }
 
-  // Convenience method for getting i'th input files name.
-  std::string inputFile(int index1, int index2) {
-    Group *group = dyn_cast<Group>(
-        linkingContext()->getInputGraph().inputElements()[index1].get());
-    if (!group)
-      llvm_unreachable("not handling other types of input files");
-    FileNode *file = dyn_cast<FileNode>(group->elements()[index2].get());
-    if (!file)
-      llvm_unreachable("not handling other types of input files");
-    return *file->getPath(*linkingContext());
-  }
-
   // For unit tests to call driver with various command lines.
   bool parse(const char *args, ...) {
     // Construct command line options from varargs.

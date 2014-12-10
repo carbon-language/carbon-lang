@@ -87,6 +87,23 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
       "<command line option /include>");
 }
 
+void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
+  GroupEnd *currentGroupEnd;
+  int pos = -1;
+  std::vector<std::unique_ptr<InputElement>> &elements
+      = getInputGraph().inputElements();
+  for (int i = 0, e = elements.size(); i < e; ++i) {
+    if ((currentGroupEnd = dyn_cast<GroupEnd>(elements[i].get()))) {
+      pos = i;
+      break;
+    }
+  }
+  assert(pos >= 0);
+  elements.insert(elements.begin() + pos, std::move(file));
+  elements[pos + 1] = llvm::make_unique<GroupEnd>(
+      currentGroupEnd->getSize() + 1);
+}
+
 bool PECOFFLinkingContext::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) {
   // Create a file for __ImageBase.
@@ -109,7 +126,7 @@ bool PECOFFLinkingContext::createImplicitFiles(
   auto exportNode = llvm::make_unique<SimpleFileNode>("<export>");
   exportNode->appendInputFile(
       llvm::make_unique<pecoff::ExportedSymbolRenameFile>(*this, syms));
-  getLibraryGroup()->addFile(std::move(exportNode));
+  addLibraryFile(std::move(exportNode));
 
   // Create a file for the entry point function.
   getEntryNode()->appendInputFile(
