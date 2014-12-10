@@ -199,6 +199,8 @@ static std::pair<StringRef, StringRef> split(StringRef Str, char Separator) {
   std::pair<StringRef, StringRef> Split = Str.split(Separator);
   if (Split.second.empty() && Split.first != Str)
     report_fatal_error("Trailing separator in datalayout string");
+  if (!Split.second.empty() && Split.first.empty())
+    report_fatal_error("Expected token before separator in datalayout string");
   return Split;
 }
 
@@ -297,6 +299,9 @@ void DataLayout::parseSpecifier(StringRef Desc) {
             "Sized aggregate specification in datalayout string");
 
       // ABI alignment.
+      if (Rest.empty())
+        report_fatal_error(
+            "Missing alignment specification in datalayout string");
       Split = split(Rest, ':');
       unsigned ABIAlign = inBytes(getInt(Tok));
 
@@ -328,8 +333,12 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       break;
     }
     case 'm':
-      assert(Tok.empty());
-      assert(Rest.size() == 1);
+      if (!Tok.empty())
+        report_fatal_error("Unexpected trailing characters after mangling specifier in datalayout string");
+      if (Rest.empty())
+        report_fatal_error("Expected mangling specifier in datalayout string");
+      if (Rest.size() > 1)
+        report_fatal_error("Unknown mangling specifier in datalayout string");
       switch(Rest[0]) {
       default:
         report_fatal_error("Unknown mangling in datalayout string");
