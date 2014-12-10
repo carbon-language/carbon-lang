@@ -1003,6 +1003,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.DisableModuleHash = Args.hasArg(OPT_fdisable_module_hash);
   // -fmodules implies -fmodule-maps
   Opts.ModuleMaps = Args.hasArg(OPT_fmodule_maps) || Args.hasArg(OPT_fmodules);
+  Opts.ModuleMapFileHomeIsCwd = Args.hasArg(OPT_fmodule_map_file_home_is_cwd);
   Opts.ModuleCachePruneInterval =
       getLastArgIntValue(Args, OPT_fmodules_prune_interval, 7 * 24 * 60 * 60);
   Opts.ModuleCachePruneAfter =
