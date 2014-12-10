@@ -9,7 +9,7 @@ __attribute__((always_inline))
 int test2() { return 0; }
 // OPTSIZE: @test2{{.*}}[[ATTR2:#[0-9]+]]
 
-__attribute__((optnone))
+__attribute__((optnone)) __attribute__((minsize))
 int test3() { return 0; }
 // PRESENT-DAG: @test3{{.*}}[[ATTR3:#[0-9]+]]
 

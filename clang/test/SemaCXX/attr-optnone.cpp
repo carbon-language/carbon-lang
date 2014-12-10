@@ -6,9 +6,6 @@ int bar() __attribute__((optnone)) __attribute__((noinline));
 int baz() __attribute__((always_inline)) __attribute__((optnone)); // expected-error{{'always_inline' and 'optnone' attributes are not compatible}}
 int quz() __attribute__((optnone)) __attribute__((always_inline)); // expected-error{{'optnone' and 'always_inline' attributes are not compatible}}
 
-int bay() __attribute__((minsize)) __attribute__((optnone)); // expected-error{{'minsize' and 'optnone' attributes are not compatible}}
-int quy() __attribute__((optnone)) __attribute__((minsize)); // expected-error{{'optnone' and 'minsize' attributes are not compatible}}
-
 __forceinline __attribute__((optnone)) int bax(); // expected-error{{'__forceinline' and 'optnone' attributes are not compatible}}
 __attribute__((optnone)) __forceinline int qux(); // expected-error{{'optnone' and '__forceinline' attributes are not compatible}}
 

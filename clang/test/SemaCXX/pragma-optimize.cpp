@@ -55,13 +55,6 @@ int __attribute__((always_inline)) baz(int z) {
 }
 // CHECK-DAG: @_Z3bazi{{.*}} [[ATTRBAZ:#[0-9]+]]
 
-// This function definition will not be decorated with `optnone` because the
-// attribute would conflict with `minsize`.
-int __attribute__((minsize)) bax(int z) {
-    return foo(z, 2);
-}
-// CHECK-DAG: @_Z3baxi{{.*}} [[ATTRBAX:#[0-9]+]]
-
 #pragma clang optimize on
 
 // The function "int wombat(int param)" created by the macro is not
@@ -151,7 +144,6 @@ int yet_another_normal(int x) {
 // Check that the other functions do NOT have optnone.
 // CHECK-DAG-NOT: attributes [[ATTRFOO]] = { {{.*}}optnone{{.*}} }
 // CHECK-DAG-NOT: attributes [[ATTRBAZ]] = { {{.*}}optnone{{.*}} }
-// CHECK-DAG-NOT: attributes [[ATTRBAX]] = { {{.*}}optnone{{.*}} }
 // CHECK-DAG-NOT: attributes [[ATTRWOMBAT]] = { {{.*}}optnone{{.*}} }
 // CHECK-DAG-NOT: attributes [[ATTRCONTAINER]] = { {{.*}}optnone{{.*}} }
 // CHECK-DAG-NOT: attributes [[ATTRTWICE]] = { {{.*}}optnone{{.*}} }
