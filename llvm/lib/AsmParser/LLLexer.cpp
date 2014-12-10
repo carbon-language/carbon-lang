@@ -393,7 +393,12 @@ lltok::Kind LLLexer::LexQuote() {
 
   if (CurPtr[0] == ':') {
     ++CurPtr;
-    kind = lltok::LabelStr;
+    if (StringRef(StrVal).find_first_of(0) != StringRef::npos) {
+      Error("Null bytes are not allowed in names");
+      kind = lltok::Error;
+    } else {
+      kind = lltok::LabelStr;
+    }
   }
 
   return kind;
