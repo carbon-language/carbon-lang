@@ -90,6 +90,15 @@ void f8() {
       src1)[src2()];
 }
 
+// CHECK-LABEL: define
+void f9(int i) {
+  int src1[1][i];
+  int src2();
+#line 1000
+  auto x = ( // CHECK: getelementptr {{.*}} !dbg [[DBG_F9:!.*]]
+      src1)[src2()];
+}
+
 // CHECK: [[DBG_F1]] = metadata !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = metadata !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = metadata !{i32 202,
@@ -101,3 +110,4 @@ void f8() {
 // CHECK: [[DBG_F6]] = metadata !{i32 700,
 // CHECK: [[DBG_F7]] = metadata !{i32 800,
 // CHECK: [[DBG_F8]] = metadata !{i32 900,
+// CHECK: [[DBG_F9]] = metadata !{i32 1000,
