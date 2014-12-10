@@ -420,6 +420,15 @@ namespace llvm {
     /// the lane mask of the subregister range.
     bool shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg);
 
+    /// Helper function for repairIntervalsInRange(), walks backwards and
+    /// creates/modifies live segments in @p LR to match the operands found.
+    /// Only full operands or operands with subregisters matching @p LaneMask
+    /// are considered.
+    void repairOldRegInRange(MachineBasicBlock::iterator Begin,
+                             MachineBasicBlock::iterator End,
+                             const SlotIndex endIdx, LiveRange &LR,
+                             unsigned Reg, unsigned LaneMask = ~0u);
+
     class HMEditor;
   };
 } // End llvm namespace
