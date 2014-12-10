@@ -4923,7 +4923,10 @@ SourceLocation ASTImporter::Import(SourceLocation FromLoc) {
   FromLoc = FromSM.getSpellingLoc(FromLoc);
   std::pair<FileID, unsigned> Decomposed = FromSM.getDecomposedLoc(FromLoc);
   SourceManager &ToSM = ToContext.getSourceManager();
-  return ToSM.getLocForStartOfFile(Import(Decomposed.first))
+  FileID ToFileID = Import(Decomposed.first);
+  if (ToFileID.isInvalid())
+    return SourceLocation();
+  return ToSM.getLocForStartOfFile(ToFileID)
              .getLocWithOffset(Decomposed.second);
 }
 
@@ -4954,6 +4957,8 @@ FileID ASTImporter::Import(FileID FromID) {
     // FIXME: We definitely want to re-use the existing MemoryBuffer, rather
     // than mmap the files several times.
     const FileEntry *Entry = ToFileManager.getFile(Cache->OrigEntry->getName());
+    if (!Entry)
+      return FileID();
     ToID = ToSM.createFileID(Entry, ToIncludeLoc, 
                              FromSLoc.getFile().getFileCharacteristic());
   } else {
