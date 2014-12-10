@@ -84,6 +84,10 @@ static union {
   float float_val2;
 };
 
+void PR21858() {
+  void int_val2();
+}
+
 void f() {
   int_val2 = 0;
   float_val2 = 0.0;
