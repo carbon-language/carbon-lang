@@ -1917,7 +1917,7 @@ void JoinVals::pruneValues(JoinVals &Other,
       break;
     case CR_Replace: {
       // This value takes precedence over the value in Other.LI.
-      LIS->pruneValue(&Other.LI, Def, &EndPoints);
+      LIS->pruneValue(Other.LI, Def, &EndPoints);
       // Check if we're replacing an IMPLICIT_DEF value. The IMPLICIT_DEF
       // instructions are only inserted to provide a live-out value for PHI
       // predecessors, so the instruction should simply go away once its value
@@ -1951,7 +1951,7 @@ void JoinVals::pruneValues(JoinVals &Other,
         // We can no longer trust the value mapping computed by
         // computeAssignment(), the value that was originally copied could have
         // been replaced.
-        LIS->pruneValue(&LI, Def, &EndPoints);
+        LIS->pruneValue(LI, Def, &EndPoints);
         DEBUG(dbgs() << "\t\tpruned all of " << PrintReg(LI.reg) << " at "
                      << Def << ": " << LI << '\n');
       }

@@ -542,26 +542,25 @@ void LiveIntervals::extendToIndices(LiveRange &LR,
     LRCalc->extend(LR, Indices[i]);
 }
 
-void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
+void LiveIntervals::pruneValue(LiveRange &LR, SlotIndex Kill,
                                SmallVectorImpl<SlotIndex> *EndPoints) {
-  LiveQueryResult LRQ = LI->Query(Kill);
-  VNInfo *VNI = LRQ.valueOut();
+  LiveQueryResult LRQ = LR.Query(Kill);
+  VNInfo *VNI = LRQ.valueOutOrDead();
   if (!VNI)
     return;
 
   MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(Kill);
-  SlotIndex MBBStart, MBBEnd;
-  std::tie(MBBStart, MBBEnd) = Indexes->getMBBRange(KillMBB);
+  SlotIndex MBBEnd = Indexes->getMBBEndIdx(KillMBB);
 
   // If VNI isn't live out from KillMBB, the value is trivially pruned.
   if (LRQ.endPoint() < MBBEnd) {
-    LI->removeSegment(Kill, LRQ.endPoint());
+    LR.removeSegment(Kill, LRQ.endPoint());
     if (EndPoints) EndPoints->push_back(LRQ.endPoint());
     return;
   }
 
   // VNI is live out of KillMBB.
-  LI->removeSegment(Kill, MBBEnd);
+  LR.removeSegment(Kill, MBBEnd);
   if (EndPoints) EndPoints->push_back(MBBEnd);
 
   // Find all blocks that are reachable from KillMBB without leaving VNI's live
@@ -578,8 +577,9 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
       MachineBasicBlock *MBB = *I;
 
       // Check if VNI is live in to MBB.
+      SlotIndex MBBStart, MBBEnd;
       std::tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
-      LiveQueryResult LRQ = LI->Query(MBBStart);
+      LiveQueryResult LRQ = LR.Query(MBBStart);
       if (LRQ.valueIn() != VNI) {
         // This block isn't part of the VNI segment. Prune the search.
         I.skipChildren();
@@ -588,17 +588,27 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
 
       // Prune the search if VNI is killed in MBB.
       if (LRQ.endPoint() < MBBEnd) {
-        LI->removeSegment(MBBStart, LRQ.endPoint());
+        LR.removeSegment(MBBStart, LRQ.endPoint());
         if (EndPoints) EndPoints->push_back(LRQ.endPoint());
         I.skipChildren();
         continue;
       }
 
       // VNI is live through MBB.
-      LI->removeSegment(MBBStart, MBBEnd);
+      LR.removeSegment(MBBStart, MBBEnd);
       if (EndPoints) EndPoints->push_back(MBBEnd);
       ++I;
     }
+  }
+}
+
+void LiveIntervals::pruneValue(LiveInterval &LI, SlotIndex Kill,
+                               SmallVectorImpl<SlotIndex> *EndPoints) {
+  pruneValue((LiveRange&)LI, Kill, EndPoints);
+
+  for (LiveInterval::subrange_iterator SR = LI.subrange_begin(),
+       SE = LI.subrange_end(); SR != SE; ++SR) {
+    pruneValue(*SR, Kill, nullptr);
   }
 }
 

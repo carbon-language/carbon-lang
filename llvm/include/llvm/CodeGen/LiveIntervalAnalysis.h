@@ -164,14 +164,21 @@ namespace llvm {
     /// See also LiveRangeCalc::extend().
     void extendToIndices(LiveRange &LR, ArrayRef<SlotIndex> Indices);
 
-    /// pruneValue - If an LI value is live at Kill, prune its live range by
-    /// removing any liveness reachable from Kill. Add live range end points to
+
+    /// If @p LR has a live value at @p Kill, prune its live range by removing
+    /// any liveness reachable from Kill. Add live range end points to
     /// EndPoints such that extendToIndices(LI, EndPoints) will reconstruct the
     /// value's live range.
     ///
     /// Calling pruneValue() and extendToIndices() can be used to reconstruct
     /// SSA form after adding defs to a virtual register.
-    void pruneValue(LiveInterval *LI, SlotIndex Kill,
+    void pruneValue(LiveRange &LR, SlotIndex Kill,
+                    SmallVectorImpl<SlotIndex> *EndPoints);
+
+    /// Subregister aware variant of pruneValue(LiveRange &LR, SlotIndex Kill,
+    /// SmallVectorImpl<SlotIndex> &EndPoints). Prunes the value in the main
+    /// range and all sub ranges.
+    void pruneValue(LiveInterval &LI, SlotIndex Kill,
                     SmallVectorImpl<SlotIndex> *EndPoints);
 
     SlotIndexes *getSlotIndexes() const {
