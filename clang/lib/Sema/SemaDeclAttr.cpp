@@ -3146,9 +3146,21 @@ static void handleAlwaysInlineAttr(Sema &S, Decl *D,
                               Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleMinSizeAttr(Sema &S, Decl *D,
+                              const AttributeList &Attr) {
+  if (checkAttrMutualExclusion<OptimizeNoneAttr>(S, D, Attr))
+    return;
+
+  D->addAttr(::new (S.Context)
+             MinSizeAttr(Attr.getRange(), S.Context,
+                         Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleOptimizeNoneAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   if (checkAttrMutualExclusion<AlwaysInlineAttr>(S, D, Attr))
+    return;
+  if (checkAttrMutualExclusion<MinSizeAttr>(S, D, Attr))
     return;
 
   D->addAttr(::new (S.Context)
@@ -4340,7 +4352,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleExtVectorTypeAttr(S, scope, D, Attr);
     break;
   case AttributeList::AT_MinSize:
-    handleSimpleAttribute<MinSizeAttr>(S, D, Attr);
+    handleMinSizeAttr(S, D, Attr);
     break;
   case AttributeList::AT_OptimizeNone:
     handleOptimizeNoneAttr(S, D, Attr);
