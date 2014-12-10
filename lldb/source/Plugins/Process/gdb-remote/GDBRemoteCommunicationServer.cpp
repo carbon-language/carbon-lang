@@ -430,6 +430,10 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
             packet_result = Handle_vAttach (packet);
             break;
 
+        case StringExtractorGDBRemote::eServerPacketType_D:
+            packet_result = Handle_D (packet);
+            break;
+
         case StringExtractorGDBRemote::eServerPacketType_qThreadStopInfo:
             packet_result = Handle_qThreadStopInfo (packet);
             break;
@@ -4190,8 +4194,73 @@ GDBRemoteCommunicationServer::Handle_vAttach (StringExtractorGDBRemote &packet)
 
     // Notify we attached by sending a stop packet.
     return SendStopReasonForState (m_debugged_process_sp->GetState (), true);
+}
 
-    return PacketResult::Success;
+GDBRemoteCommunicationServer::PacketResult
+GDBRemoteCommunicationServer::Handle_D (StringExtractorGDBRemote &packet)
+{
+    Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
+
+    // We don't support if we're not llgs.
+    if (!IsGdbServer())
+        return SendUnimplementedResponse ("only supported for lldb-gdbserver");
+
+    // Scope for mutex locker.
+    Mutex::Locker locker (m_spawned_pids_mutex);
+
+    // Fail if we don't have a current process.
+    if (!m_debugged_process_sp || (m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID))
+    {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s failed, no process available", __FUNCTION__);
+        return SendErrorResponse (0x15);
+    }
+
+    if (m_spawned_pids.find(m_debugged_process_sp->GetID ()) == m_spawned_pids.end())
+    {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s failed to find PID %" PRIu64 " in spawned pids list",
+                         __FUNCTION__, m_debugged_process_sp->GetID ());
+        return SendErrorResponse (0x1);
+    }
+
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+
+    // Consume the ';' after D.
+    packet.SetFilePos (1);
+    if (packet.GetBytesLeft ())
+    {
+        if (packet.GetChar () != ';')
+            return SendIllFormedResponse (packet, "D missing expected ';'");
+
+        // Grab the PID from which we will detach (assume hex encoding).
+        pid = packet.GetU32 (LLDB_INVALID_PROCESS_ID, 16);
+        if (pid == LLDB_INVALID_PROCESS_ID)
+            return SendIllFormedResponse (packet, "D failed to parse the process id");
+    }
+
+    if (pid != LLDB_INVALID_PROCESS_ID &&
+        m_debugged_process_sp->GetID () != pid)
+    {
+        return SendIllFormedResponse (packet, "Invalid pid");
+    }
+
+    if (m_stdio_communication.IsConnected ())
+    {
+        m_stdio_communication.StopReadThread ();
+    }
+
+    const Error error = m_debugged_process_sp->Detach ();
+    if (error.Fail ())
+    {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s failed to detach from pid %" PRIu64 ": %s\n",
+                         __FUNCTION__, m_debugged_process_sp->GetID (), error.AsCString ());
+        return SendErrorResponse (0x01);
+    }
+
+    m_spawned_pids.erase (m_debugged_process_sp->GetID ());
+    return SendOKResponse ();
 }
 
 GDBRemoteCommunicationServer::PacketResult

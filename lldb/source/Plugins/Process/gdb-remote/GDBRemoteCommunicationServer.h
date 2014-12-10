@@ -460,6 +460,9 @@ protected:
     Handle_vAttach (StringExtractorGDBRemote &packet);
 
     PacketResult
+    Handle_D (StringExtractorGDBRemote &packet);
+
+    PacketResult
     Handle_qThreadStopInfo (StringExtractorGDBRemote &packet);
 
     void
