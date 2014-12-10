@@ -28,6 +28,7 @@
 // tell linker it can break up file at label boundaries
 #define FILE_LEVEL_DIRECTIVE .subsections_via_symbols
 #define SYMBOL_IS_FUNC(name)
+#define CONST_SECTION .const
 
 #elif defined(__ELF__)
 
@@ -39,10 +40,11 @@
 #else
 #define SYMBOL_IS_FUNC(name) .type name,@function
 #endif
+#define CONST_SECTION .section .rodata
 
 #else // !__APPLE__ && !__ELF__
 
-#define HIDDEN_DIRECTIVE(name)
+#define HIDDEN(name)
 #define LOCAL_LABEL(name) .L ## name
 #define FILE_LEVEL_DIRECTIVE
 #define SYMBOL_IS_FUNC(name)                                                   \
@@ -50,6 +52,7 @@
     .scl 2 SEPARATOR                                                           \
     .type 32 SEPARATOR                                                         \
   .endef
+#define CONST_SECTION .section .rdata,"rd"
 
 #endif
 
