@@ -62,6 +62,8 @@ private:
                            const std::string &ClassName);
   void emitComposeSubRegIndices(raw_ostream &OS, CodeGenRegBank &RegBank,
                                 const std::string &ClassName);
+  void emitComposeSubRegIndexLaneMask(raw_ostream &OS, CodeGenRegBank &RegBank,
+                                      const std::string &ClassName);
 };
 } // End anonymous namespace
 
@@ -687,6 +689,95 @@ RegisterInfoEmitter::emitComposeSubRegIndices(raw_ostream &OS,
   OS << "}\n\n";
 }
 
+void
+RegisterInfoEmitter::emitComposeSubRegIndexLaneMask(raw_ostream &OS,
+                                                    CodeGenRegBank &RegBank,
+                                                    const std::string &ClName) {
+  // See the comments in computeSubRegLaneMasks() for our goal here.
+  const auto &SubRegIndices = RegBank.getSubRegIndices();
+
+  // Create a list of Mask+Rotate operations, with equivalent entries merged.
+  SmallVector<unsigned, 4> SubReg2SequenceIndexMap;
+  SmallVector<SmallVector<MaskRolPair, 1>, 4> Sequences;
+  for (const auto &Idx : SubRegIndices) {
+    const SmallVector<MaskRolPair, 1> &IdxSequence
+      = Idx.CompositionLaneMaskTransform;
+
+    unsigned Found = ~0u;
+    unsigned SIdx = 0;
+    unsigned NextSIdx;
+    for (size_t s = 0, se = Sequences.size(); s != se; ++s, SIdx = NextSIdx) {
+      SmallVectorImpl<MaskRolPair> &Sequence = Sequences[s];
+      NextSIdx = SIdx + Sequence.size() + 1;
+      if (Sequence.size() != IdxSequence.size())
+        continue;
+      bool Identical = true;
+      for (size_t o = 0, oe = Sequence.size(); o != oe; ++o) {
+        if (Sequence[o] != IdxSequence[o]) {
+          Identical = false;
+          break;
+        }
+      }
+      if (Identical) {
+        Found = SIdx;
+        break;
+      }
+    }
+    if (Found == ~0u) {
+      Sequences.push_back(IdxSequence);
+      Found = SIdx;
+    }
+    SubReg2SequenceIndexMap.push_back(Found);
+  }
+
+  OS << "unsigned " << ClName
+     << "::composeSubRegIndexLaneMaskImpl(unsigned IdxA, unsigned LaneMask)"
+        " const {\n";
+
+  OS << "  struct MaskRolOp {\n"
+        "    unsigned Mask;\n"
+        "    uint8_t  RotateLeft;\n"
+        "  };\n"
+        "  static const MaskRolOp Seqs[] = {\n";
+  unsigned Idx = 0;
+  for (size_t s = 0, se = Sequences.size(); s != se; ++s) {
+    OS << "    ";
+    const SmallVectorImpl<MaskRolPair> &Sequence = Sequences[s];
+    for (size_t p = 0, pe = Sequence.size(); p != pe; ++p) {
+      const MaskRolPair &P = Sequence[p];
+      OS << format("{ 0x%08X, %2u }, ", P.Mask, P.RotateLeft);
+    }
+    OS << "{ 0, 0 }";
+    if (s+1 != se)
+      OS << ", ";
+    OS << "  // Sequence " << Idx << "\n";
+    Idx += Sequence.size() + 1;
+  }
+  OS << "  };\n"
+        "  static const MaskRolOp *CompositeSequences[] = {\n";
+  for (size_t i = 0, e = SubRegIndices.size(); i != e; ++i) {
+    OS << "    ";
+    unsigned Idx = SubReg2SequenceIndexMap[i];
+    OS << format("&Seqs[%u]", Idx);
+    if (i+1 != e)
+      OS << ",";
+    OS << " // to " << SubRegIndices[i].getName() << "\n";
+  }
+  OS << "  };\n\n";
+
+  OS << "  --IdxA; assert(IdxA < " << SubRegIndices.size()
+     << " && \"Subregister index out of bounds\");\n"
+        "  unsigned Result = 0;\n"
+        "  for (const MaskRolOp *Ops = CompositeSequences[IdxA]; Ops->Mask != 0; ++Ops)"
+        " {\n"
+        "    unsigned Masked = LaneMask & Ops->Mask;\n"
+        "    Result |= (Masked << Ops->RotateLeft) & 0xFFFFFFFF;\n"
+        "    Result |= (Masked >> ((32 - Ops->RotateLeft) & 0x1F));\n"
+        "  }\n"
+        "  return Result;\n"
+        "}\n";
+}
+
 //
 // runMCDesc - Print out MC register descriptions.
 //
@@ -967,6 +1058,8 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
   if (!RegBank.getSubRegIndices().empty()) {
     OS << "  unsigned composeSubRegIndicesImpl"
        << "(unsigned, unsigned) const override;\n"
+       << "  unsigned composeSubRegIndexLaneMaskImpl"
+       << "(unsigned, unsigned) const override;\n"
        << "  const TargetRegisterClass *getSubClassWithSubReg"
        << "(const TargetRegisterClass*, unsigned) const override;\n";
   }
@@ -1214,8 +1307,10 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   auto SubRegIndicesSize =
       std::distance(SubRegIndices.begin(), SubRegIndices.end());
 
-  if (!SubRegIndices.empty())
+  if (!SubRegIndices.empty()) {
     emitComposeSubRegIndices(OS, RegBank, ClassName);
+    emitComposeSubRegIndexLaneMask(OS, RegBank, ClassName);
+  }
 
   // Emit getSubClassWithSubReg.
   if (!SubRegIndices.empty()) {

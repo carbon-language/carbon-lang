@@ -1192,6 +1192,70 @@ void CodeGenRegBank::computeSubRegLaneMasks() {
     }
   }
 
+  // Compute transformation sequences for composeSubRegIndexLaneMask. The idea
+  // here is that for each possible target subregister we look at the leafs
+  // in the subregister graph that compose for this target and create
+  // transformation sequences for the lanemasks. Each step in the sequence
+  // consists of a bitmask and a bitrotate operation. As the rotation amounts
+  // are usually the same for many subregisters we can easily combine the steps
+  // by combining the masks.
+  for (const auto &Idx : SubRegIndices) {
+    const auto &Composites = Idx.getComposites();
+    auto &LaneTransforms = Idx.CompositionLaneMaskTransform;
+    // Go through all leaf subregisters and find the ones that compose with Idx.
+    // These make out all possible valid bits in the lane mask we want to
+    // transform. Looking only at the leafs ensure that only a single bit in
+    // the mask is set.
+    unsigned NextBit = 0;
+    for (auto &Idx2 : SubRegIndices) {
+      // Skip non-leaf subregisters.
+      if (!Idx2.getComposites().empty())
+        continue;
+      // Replicate the behaviour from the lane mask generation loop above.
+      unsigned SrcBit = NextBit;
+      unsigned SrcMask = 1u << SrcBit;
+      if (NextBit < 31)
+        ++NextBit;
+      assert(Idx2.LaneMask == SrcMask);
+
+      // Get the composed subregister if there is any.
+      auto C = Composites.find(&Idx2);
+      if (C == Composites.end())
+        continue;
+      const CodeGenSubRegIndex *Composite = C->second;
+      // The Composed subreg should be a leaf subreg too
+      assert(Composite->getComposites().empty());
+
+      // Create Mask+Rotate operation and merge with existing ops if possible.
+      unsigned DstBit = Log2_32(Composite->LaneMask);
+      int Shift = DstBit - SrcBit;
+      uint8_t RotateLeft = Shift >= 0 ? (uint8_t)Shift : 32+Shift;
+      for (auto &I : LaneTransforms) {
+        if (I.RotateLeft == RotateLeft) {
+          I.Mask |= SrcMask;
+          SrcMask = 0;
+        }
+      }
+      if (SrcMask != 0) {
+        MaskRolPair MaskRol = { SrcMask, RotateLeft };
+        LaneTransforms.push_back(MaskRol);
+      }
+    }
+    // Optimize if the transformation consists of one step only: Set mask to
+    // 0xffffffff (including some irrelevant invalid bits) so that it should
+    // merge with more entries later while compressing the table.
+    if (LaneTransforms.size() == 1)
+      LaneTransforms[0].Mask = ~0u;
+
+    // Further compression optimization: For invalid compositions resulting
+    // in a sequence with 0 entries we can just pick any other. Choose
+    // Mask 0xffffffff with Rotation 0.
+    if (LaneTransforms.size() == 0) {
+      MaskRolPair P = { ~0u, 0 };
+      LaneTransforms.push_back(P);
+    }
+  }
+
   // FIXME: What if ad-hoc aliasing introduces overlaps that aren't represented
   // by the sub-register graph? This doesn't occur in any known targets.
 

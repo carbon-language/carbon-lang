@@ -510,6 +510,15 @@ public:
     return composeSubRegIndicesImpl(a, b);
   }
 
+  /// Transforms a LaneMask computed for one subregister to the lanemask that
+  /// would have been computed when composing the subsubregisters with IdxA
+  /// first. @sa composeSubRegIndices()
+  unsigned composeSubRegIndexLaneMask(unsigned IdxA, unsigned LaneMask) const {
+    if (!IdxA)
+      return LaneMask;
+    return composeSubRegIndexLaneMaskImpl(IdxA, LaneMask);
+  }
+
   /// Debugging helper: dump register in human readable form to dbgs() stream.
   static void dumpReg(unsigned Reg, unsigned SubRegIndex = 0,
                       const TargetRegisterInfo* TRI = nullptr);
@@ -517,6 +526,12 @@ public:
 protected:
   /// Overridden by TableGen in targets that have sub-registers.
   virtual unsigned composeSubRegIndicesImpl(unsigned, unsigned) const {
+    llvm_unreachable("Target has no sub-registers");
+  }
+
+  /// Overridden by TableGen in targets that have sub-registers.
+  virtual unsigned
+  composeSubRegIndexLaneMaskImpl(unsigned, unsigned) const {
     llvm_unreachable("Target has no sub-registers");
   }
 
