@@ -1066,7 +1066,18 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
     if (!regsLive.count(Reg)) {
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         // Reserved registers may be used even when 'dead'.
-        if (!isReserved(Reg))
+        bool Bad = !isReserved(Reg);
+        // We are fine if just any subregister has a defined value.
+        if (Bad) {
+          for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid();
+               ++SubRegs) {
+            if (regsLive.count(*SubRegs)) {
+              Bad = false;
+              break;
+            }
+          }
+        }
+        if (Bad)
           report("Using an undefined physical register", MO, MONum);
       } else if (MRI->def_empty(Reg)) {
         report("Reading virtual register without a def", MO, MONum);
