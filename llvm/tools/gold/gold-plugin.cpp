@@ -480,51 +480,10 @@ static const char *getResolutionName(ld_plugin_symbol_resolution R) {
   llvm_unreachable("Unknown resolution");
 }
 
-static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
-  Module *M = GO->getParent();
-  GlobalObject *Ret;
-  if (auto *F = dyn_cast<Function>(GO)) {
-    if (F->materialize())
-      message(LDPL_FATAL, "LLVM gold plugin has failed to read a function");
-
-    auto *NewF = Function::Create(F->getFunctionType(), F->getLinkage(),
-                                  F->getName(), M);
-
-    ValueToValueMapTy VM;
-    Function::arg_iterator NewI = NewF->arg_begin();
-    for (auto &Arg : F->args()) {
-      NewI->setName(Arg.getName());
-      VM[&Arg] = NewI;
-      ++NewI;
-    }
-
-    NewF->getBasicBlockList().splice(NewF->end(), F->getBasicBlockList());
-    for (auto &BB : *NewF) {
-      for (auto &Inst : BB)
-        RemapInstruction(&Inst, VM, RF_IgnoreMissingEntries);
-    }
-
-    Ret = NewF;
-    F->deleteBody();
-  } else {
-    auto *Var = cast<GlobalVariable>(GO);
-    Ret = new GlobalVariable(
-        *M, Var->getType()->getElementType(), Var->isConstant(),
-        Var->getLinkage(), Var->getInitializer(), Var->getName(),
-        nullptr, Var->getThreadLocalMode(), Var->getType()->getAddressSpace(),
-        Var->isExternallyInitialized());
-    Var->setInitializer(nullptr);
-  }
-  Ret->copyAttributesFrom(GO);
-  Ret->setLinkage(GlobalValue::InternalLinkage);
-  Ret->setComdat(GO->getComdat());
-
-  return Ret;
-}
-
 namespace {
 class LocalValueMaterializer : public ValueMaterializer {
   DenseSet<GlobalValue *> &Dropped;
+  DenseMap<GlobalObject *, GlobalObject *> LocalVersions;
 
 public:
   LocalValueMaterializer(DenseSet<GlobalValue *> &Dropped) : Dropped(Dropped) {}
@@ -533,13 +492,39 @@ public:
 }
 
 Value *LocalValueMaterializer::materializeValueFor(Value *V) {
-  auto *GV = dyn_cast<GlobalValue>(V);
-  if (!GV)
+  auto *GO = dyn_cast<GlobalObject>(V);
+  if (!GO)
     return nullptr;
-  if (!Dropped.count(GV))
+
+  auto I = LocalVersions.find(GO);
+  if (I != LocalVersions.end())
+    return I->second;
+
+  if (!Dropped.count(GO))
     return nullptr;
-  assert(!isa<GlobalAlias>(GV) && "Found alias point to weak alias.");
-  return makeInternalReplacement(cast<GlobalObject>(GV));
+
+  Module &M = *GO->getParent();
+  GlobalValue::LinkageTypes L = GO->getLinkage();
+  GlobalObject *Declaration;
+  if (auto *F = dyn_cast<Function>(GO)) {
+    Declaration = Function::Create(F->getFunctionType(), L, "", &M);
+  } else {
+    auto *Var = cast<GlobalVariable>(GO);
+    Declaration = new GlobalVariable(M, Var->getType()->getElementType(),
+                                     Var->isConstant(), L,
+                                     /*Initializer*/ nullptr);
+  }
+  Declaration->takeName(GO);
+  Declaration->copyAttributesFrom(GO);
+
+  GO->setLinkage(GlobalValue::InternalLinkage);
+  GO->setName(Declaration->getName());
+  Dropped.erase(GO);
+  GO->replaceAllUsesWith(Declaration);
+
+  LocalVersions[Declaration] = GO;
+
+  return GO;
 }
 
 static Constant *mapConstantToLocalCopy(Constant *C, ValueToValueMapTy &VM,
@@ -670,8 +655,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
     // expression is being dropped. If that is the case, that GV must be copied.
     Constant *Aliasee = GA->getAliasee();
     Constant *Replacement = mapConstantToLocalCopy(Aliasee, VM, &Materializer);
-    if (Aliasee != Replacement)
-      GA->setAliasee(Replacement);
+    GA->setAliasee(Replacement);
   }
 
   for (auto *GV : Drop)
