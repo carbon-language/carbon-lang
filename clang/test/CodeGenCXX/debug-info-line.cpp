@@ -99,7 +99,7 @@ void f9(int i) {
       src1)[src2()];
 }
 
-void *operator new(unsigned long, void *);
+void *operator new(decltype(sizeof(1)), void *);
 
 // CHECK-LABEL: define
 void f10() {
