@@ -508,6 +508,7 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
   SmallVector<std::pair<unsigned, VNInfo*>, 8> WorkList;
   WorkList.push_back(std::make_pair(UseReg, UseVNI));
 
+  LiveInterval &OrigLI = LIS.getInterval(Original);
   do {
     unsigned Reg;
     VNInfo *VNI;
@@ -521,8 +522,11 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
 
     // Trace through PHI-defs created by live range splitting.
     if (VNI->isPHIDef()) {
-      // Stop at original PHIs.  We don't know the value at the predecessors.
-      if (VNI->def == OrigVNI->def) {
+      // Stop at original PHIs.  We don't know the value at the
+      // predecessors. Look up the VNInfo for the current definition
+      // in OrigLI, to properly determine whether or not this phi was
+      // added by splitting.
+      if (VNI->def == OrigLI.getVNInfoAt(VNI->def)->def) {
         DEBUG(dbgs() << "orig phi value\n");
         SVI->second.DefByOrigPHI = true;
         SVI->second.AllDefsAreReloads = false;
@@ -542,7 +546,6 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
       // Separate all values dominated by OrigVNI into PHIs and non-PHIs.
       SmallVector<VNInfo*, 8> PHIs, NonPHIs;
       LiveInterval &LI = LIS.getInterval(Reg);
-      LiveInterval &OrigLI = LIS.getInterval(Original);
 
       for (LiveInterval::vni_iterator VI = LI.vni_begin(), VE = LI.vni_end();
            VI != VE; ++VI) {
