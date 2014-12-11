@@ -34,7 +34,7 @@ struct LeakDetector {
   /// pointers.  This should be called when objects are created, or if they are
   /// taken out of an owning collection.
   ///
-  static void addGarbageObject(void *Object) {
+  template <class T> static void addGarbageObject(T *Object) {
 #ifndef NDEBUG
     addGarbageObjectImpl(Object);
 #endif
@@ -44,7 +44,7 @@ struct LeakDetector {
   /// our "garbage" objects.  This should be called when an object is added to
   /// an "owning" collection.
   ///
-  static void removeGarbageObject(void *Object) {
+  template <class T> static void removeGarbageObject(T *Object) {
 #ifndef NDEBUG
     removeGarbageObjectImpl(Object);
 #endif
@@ -63,25 +63,15 @@ struct LeakDetector {
 #endif
   }
 
-  /// Overload the normal methods to work better with Value*'s because they are
-  /// by far the most common in LLVM.  This does not affect the actual
-  /// functioning of this class, it just makes the warning messages nicer.
-  ///
-  static void addGarbageObject(const Value *Object) {
-#ifndef NDEBUG
-    addGarbageObjectImpl(Object);
-#endif
-  }
-  static void removeGarbageObject(const Value *Object) {
-#ifndef NDEBUG
-    removeGarbageObjectImpl(Object);
-#endif
-  }
-
 private:
-  // If we are debugging, the actual implementations will be called...
+  /// Overload the normal methods to work better with Value* because they are
+  /// by far the most common in LLVM.
+  ///
+  /// Besides making the warning messages nicer, this hides errors by storing
+  /// Value* in a different leak-detection container than other classes.
   static void addGarbageObjectImpl(const Value *Object);
   static void removeGarbageObjectImpl(const Value *Object);
+
   static void addGarbageObjectImpl(void *Object);
   static void removeGarbageObjectImpl(void *Object);
   static void checkForGarbageImpl(LLVMContext &C, const std::string &Message);
