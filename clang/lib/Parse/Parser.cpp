@@ -1224,26 +1224,23 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 ///         string-literal
 ///
 ExprResult Parser::ParseAsmStringLiteral() {
-  switch (Tok.getKind()) {
-    case tok::string_literal:
-      break;
-    case tok::utf8_string_literal:
-    case tok::utf16_string_literal:
-    case tok::utf32_string_literal:
-    case tok::wide_string_literal: {
-      SourceLocation L = Tok.getLocation();
-      Diag(Tok, diag::err_asm_operand_wide_string_literal)
-        << (Tok.getKind() == tok::wide_string_literal)
-        << SourceRange(L, L);
-      return ExprError();
-    }
-    default:
-      Diag(Tok, diag::err_expected_string_literal)
-        << /*Source='in...'*/0 << "'asm'";
-      return ExprError();
+  if (!isTokenStringLiteral()) {
+    Diag(Tok, diag::err_expected_string_literal)
+      << /*Source='in...'*/0 << "'asm'";
+    return ExprError();
   }
 
-  return ParseStringLiteralExpression();
+  ExprResult AsmString(ParseStringLiteralExpression());
+  if (!AsmString.isInvalid()) {
+    const auto *SL = cast<StringLiteral>(AsmString.get());
+    if (!SL->isAscii()) {
+      Diag(Tok, diag::err_asm_operand_wide_string_literal)
+        << SL->isWide()
+        << SL->getSourceRange();
+      return ExprError();
+    }
+  }
+  return AsmString;
 }
 
 /// ParseSimpleAsm
