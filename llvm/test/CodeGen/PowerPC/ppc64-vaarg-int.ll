@@ -16,5 +16,5 @@ declare void @llvm.va_start(i8*) nounwind
 
 ; CHECK: @intvaarg
 ; Make sure that the va pointer is incremented by 8 (not 4).
-; CHECK: addi{{.*}}, 8
+; CHECK: addi{{.*}}, 1, 64 
 

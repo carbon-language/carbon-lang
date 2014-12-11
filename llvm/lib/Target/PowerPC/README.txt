@@ -184,25 +184,6 @@ http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
 
 ===-------------------------------------------------------------------------===
 
-Compile offsets from allocas:
-
-int *%test() {
-        %X = alloca { int, int }
-        %Y = getelementptr {int,int}* %X, int 0, uint 1
-        ret int* %Y
-}
-
-into a single add, not two:
-
-_test:
-        addi r2, r1, -8
-        addi r3, r2, 4
-        blr
-
---> important for C++.
-
-===-------------------------------------------------------------------------===
-
 No loads or stores of the constants should be needed:
 
 struct foo { double X, Y; };
