@@ -141,3 +141,15 @@ void yet_another_evil_nonnull_func(int* pointer)
  }
 }
 
+void pr21668_1(__attribute__((nonnull)) const char *p, const char *s) {
+  if (p) // expected-warning {{nonnull parameter 'p' will evaluate to 'true' on first encounter}}
+    ;
+  if (s) // No warning
+    ;
+}
+
+void pr21668_2(__attribute__((nonnull)) const char *p) {
+  p = 0;
+  if (p) // No warning
+    ;
+}

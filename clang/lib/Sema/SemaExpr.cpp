@@ -9243,7 +9243,7 @@ static void RecordModifiableNonNullParam(Sema &S, const Expr *Exp) {
   if (!Param)
     return;
   if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(Param->getDeclContext()))
-    if (!FD->hasAttr<NonNullAttr>())
+    if (!FD->hasAttr<NonNullAttr>() && !Param->hasAttr<NonNullAttr>())
       return;
   if (FunctionScopeInfo *FD = S.getCurFunction())
     if (!FD->ModifiedNonNullParams.count(Param))

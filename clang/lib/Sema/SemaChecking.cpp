@@ -6766,7 +6766,8 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
         }
         if (!AttrNonNull.empty())
           for (unsigned i = 0; i < NumArgs; ++i)
-            if (FD->getParamDecl(i) == PV && AttrNonNull[i]) {
+            if (FD->getParamDecl(i) == PV &&
+                (AttrNonNull[i] || PV->hasAttr<NonNullAttr>())) {
               std::string Str;
               llvm::raw_string_ostream S(Str);
               E->printPretty(S, nullptr, getPrintingPolicy());
