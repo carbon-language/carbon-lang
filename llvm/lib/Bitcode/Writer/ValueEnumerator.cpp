@@ -521,15 +521,9 @@ void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
 void ValueEnumerator::EnumerateMDNodeOperands(const MDNode *N) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     Metadata *MD = N->getOperand(i);
-    if (!MD) {
-      EnumerateType(Type::getVoidTy(N->getContext()));
+    if (!MD)
       continue;
-    }
     assert(!isa<LocalAsMetadata>(MD) && "MDNodes cannot be function-local");
-    if (auto *C = dyn_cast<ConstantAsMetadata>(MD)) {
-      EnumerateValue(C->getValue());
-      continue;
-    }
     EnumerateMetadata(MD);
   }
 }

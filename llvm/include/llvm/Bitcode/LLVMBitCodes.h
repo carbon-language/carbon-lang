@@ -137,8 +137,8 @@ namespace bitc {
 
   enum MetadataCodes {
     METADATA_STRING        = 1,   // MDSTRING:      [values]
-    // 2 is unused.
-    // 3 is unused.
+    METADATA_VALUE         = 2,   // VALUE:         [type num, value num]
+    METADATA_NODE          = 3,   // NODE:          [n x md num]
     METADATA_NAME          = 4,   // STRING:        [values]
     // 5 is unused.
     METADATA_KIND          = 6,   // [n x [id, name]]

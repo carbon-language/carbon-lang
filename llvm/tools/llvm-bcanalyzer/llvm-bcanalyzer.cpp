@@ -266,6 +266,8 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::METADATA_STRING:      return "METADATA_STRING";
     case bitc::METADATA_NAME:        return "METADATA_NAME";
     case bitc::METADATA_KIND:        return "METADATA_KIND";
+    case bitc::METADATA_NODE:        return "METADATA_NODE";
+    case bitc::METADATA_VALUE:       return "METADATA_VALUE";
     case bitc::METADATA_OLD_NODE:    return "METADATA_OLD_NODE";
     case bitc::METADATA_OLD_FN_NODE: return "METADATA_OLD_FN_NODE";
     case bitc::METADATA_NAMED_NODE:  return "METADATA_NAMED_NODE";

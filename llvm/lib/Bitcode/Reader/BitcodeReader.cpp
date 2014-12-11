@@ -1166,6 +1166,27 @@ std::error_code BitcodeReader::ParseMetadata() {
       MDValueList.AssignValue(MDNode::get(Context, Elts), NextMDValueNo++);
       break;
     }
+    case bitc::METADATA_VALUE: {
+      if (Record.size() != 2)
+        return Error(BitcodeError::InvalidRecord);
+
+      Type *Ty = getTypeByID(Record[0]);
+      if (Ty->isMetadataTy() || Ty->isVoidTy())
+        return Error(BitcodeError::InvalidRecord);
+
+      MDValueList.AssignValue(
+          ValueAsMetadata::get(ValueList.getValueFwdRef(Record[1], Ty)),
+          NextMDValueNo++);
+      break;
+    }
+    case bitc::METADATA_NODE: {
+      SmallVector<Metadata *, 8> Elts;
+      Elts.reserve(Record.size());
+      for (unsigned ID : Record)
+        Elts.push_back(ID ? MDValueList.getValueFwdRef(ID - 1) : nullptr);
+      MDValueList.AssignValue(MDNode::get(Context, Elts), NextMDValueNo++);
+      break;
+    }
     case bitc::METADATA_STRING: {
       std::string String(Record.begin(), Record.end());
       llvm::UpgradeMDStringConstant(String);
