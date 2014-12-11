@@ -270,7 +270,7 @@ bool AArch64PassConfig::addILPOpts() {
 void AArch64PassConfig::addPreRegAlloc() {
   // Use AdvSIMD scalar instructions whenever profitable.
   if (TM->getOptLevel() != CodeGenOpt::None && EnableAdvSIMDScalar) {
-    addPass(createAArch64AdvSIMDScalar(), false);
+    addPass(createAArch64AdvSIMDScalar());
     // The AdvSIMD pass may produce copies that can be rewritten to
     // be register coaleascer friendly.
     addPass(&PeepholeOptimizerID);
@@ -280,7 +280,7 @@ void AArch64PassConfig::addPreRegAlloc() {
 void AArch64PassConfig::addPostRegAlloc() {
   // Change dead register definitions to refer to the zero register.
   if (TM->getOptLevel() != CodeGenOpt::None && EnableDeadRegisterElimination)
-    addPass(createAArch64DeadRegisterDefinitions(), false);
+    addPass(createAArch64DeadRegisterDefinitions());
   if (TM->getOptLevel() != CodeGenOpt::None &&
       (TM->getSubtarget<AArch64Subtarget>().isCortexA53() ||
        TM->getSubtarget<AArch64Subtarget>().isCortexA57()) &&
@@ -291,7 +291,7 @@ void AArch64PassConfig::addPostRegAlloc() {
 
 void AArch64PassConfig::addPreSched2() {
   // Expand some pseudo instructions to allow proper scheduling.
-  addPass(createAArch64ExpandPseudoPass(), false);
+  addPass(createAArch64ExpandPseudoPass());
   // Use load/store pair instructions when possible.
   if (TM->getOptLevel() != CodeGenOpt::None && EnableLoadStoreOpt)
     addPass(createAArch64LoadStoreOptimizationPass());
@@ -299,10 +299,10 @@ void AArch64PassConfig::addPreSched2() {
 
 void AArch64PassConfig::addPreEmitPass() {
   if (EnableA53Fix835769)
-    addPass(createAArch64A53Fix835769(), false);
+    addPass(createAArch64A53Fix835769());
   // Relax conditional branch instructions if they're otherwise out of
   // range of their destination.
-  addPass(createAArch64BranchRelaxation(), false);
+  addPass(createAArch64BranchRelaxation());
   if (TM->getOptLevel() != CodeGenOpt::None && EnableCollectLOH &&
       TM->getSubtarget<AArch64Subtarget>().isTargetMachO())
     addPass(createAArch64CollectLOHPass());

@@ -226,7 +226,7 @@ void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 // print out the code after the passes.
 void MipsPassConfig::addPreEmitPass() {
   MipsTargetMachine &TM = getMipsTargetMachine();
-  addPass(createMipsDelaySlotFillerPass(TM), false);
-  addPass(createMipsLongBranchPass(TM), false);
+  addPass(createMipsDelaySlotFillerPass(TM));
+  addPass(createMipsLongBranchPass(TM));
   addPass(createMipsConstantIslandPass(TM));
 }
