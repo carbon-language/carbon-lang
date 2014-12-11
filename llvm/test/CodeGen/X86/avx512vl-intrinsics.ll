@@ -67,7 +67,7 @@ define i8 @test_mask_pcmpgt_q_256(<4 x i64> %a, <4 x i64> %b, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.pcmpgt.q.256(<4 x i64>, <4 x i64>, i8)
 
 define <8 x i8> @test_cmp_d_256(<8 x i32> %a0, <8 x i32> %a1) {
-; CHECK_LABEL: test_cmp_d_256
+; CHECK-LABEL: test_cmp_d_256
 ; CHECK: vpcmpeqd %ymm1, %ymm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.d.256(<8 x i32> %a0, <8 x i32> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -96,7 +96,7 @@ define <8 x i8> @test_cmp_d_256(<8 x i32> %a0, <8 x i32> %a1) {
 }
 
 define <8 x i8> @test_mask_cmp_d_256(<8 x i32> %a0, <8 x i32> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_cmp_d_256
+; CHECK-LABEL: test_mask_cmp_d_256
 ; CHECK: vpcmpeqd %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.d.256(<8 x i32> %a0, <8 x i32> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -127,7 +127,7 @@ define <8 x i8> @test_mask_cmp_d_256(<8 x i32> %a0, <8 x i32> %a1, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.cmp.d.256(<8 x i32>, <8 x i32>, i32, i8) nounwind readnone
 
 define <8 x i8> @test_ucmp_d_256(<8 x i32> %a0, <8 x i32> %a1) {
-; CHECK_LABEL: test_ucmp_d_256
+; CHECK-LABEL: test_ucmp_d_256
 ; CHECK: vpcmpequd %ymm1, %ymm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.d.256(<8 x i32> %a0, <8 x i32> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -156,7 +156,7 @@ define <8 x i8> @test_ucmp_d_256(<8 x i32> %a0, <8 x i32> %a1) {
 }
 
 define <8 x i8> @test_mask_ucmp_d_256(<8 x i32> %a0, <8 x i32> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_ucmp_d_256
+; CHECK-LABEL: test_mask_ucmp_d_256
 ; CHECK: vpcmpequd %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.d.256(<8 x i32> %a0, <8 x i32> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -187,7 +187,7 @@ define <8 x i8> @test_mask_ucmp_d_256(<8 x i32> %a0, <8 x i32> %a1, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.ucmp.d.256(<8 x i32>, <8 x i32>, i32, i8) nounwind readnone
 
 define <8 x i8> @test_cmp_q_256(<4 x i64> %a0, <4 x i64> %a1) {
-; CHECK_LABEL: test_cmp_q_256
+; CHECK-LABEL: test_cmp_q_256
 ; CHECK: vpcmpeqq %ymm1, %ymm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.q.256(<4 x i64> %a0, <4 x i64> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -216,7 +216,7 @@ define <8 x i8> @test_cmp_q_256(<4 x i64> %a0, <4 x i64> %a1) {
 }
 
 define <8 x i8> @test_mask_cmp_q_256(<4 x i64> %a0, <4 x i64> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_cmp_q_256
+; CHECK-LABEL: test_mask_cmp_q_256
 ; CHECK: vpcmpeqq %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.q.256(<4 x i64> %a0, <4 x i64> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -247,7 +247,7 @@ define <8 x i8> @test_mask_cmp_q_256(<4 x i64> %a0, <4 x i64> %a1, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.cmp.q.256(<4 x i64>, <4 x i64>, i32, i8) nounwind readnone
 
 define <8 x i8> @test_ucmp_q_256(<4 x i64> %a0, <4 x i64> %a1) {
-; CHECK_LABEL: test_ucmp_q_256
+; CHECK-LABEL: test_ucmp_q_256
 ; CHECK: vpcmpequq %ymm1, %ymm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.q.256(<4 x i64> %a0, <4 x i64> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -276,7 +276,7 @@ define <8 x i8> @test_ucmp_q_256(<4 x i64> %a0, <4 x i64> %a1) {
 }
 
 define <8 x i8> @test_mask_ucmp_q_256(<4 x i64> %a0, <4 x i64> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_ucmp_q_256
+; CHECK-LABEL: test_mask_ucmp_q_256
 ; CHECK: vpcmpequq %ymm1, %ymm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.q.256(<4 x i64> %a0, <4 x i64> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -373,7 +373,7 @@ define i8 @test_mask_pcmpgt_q_128(<2 x i64> %a, <2 x i64> %b, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.pcmpgt.q.128(<2 x i64>, <2 x i64>, i8)
 
 define <8 x i8> @test_cmp_d_128(<4 x i32> %a0, <4 x i32> %a1) {
-; CHECK_LABEL: test_cmp_d_128
+; CHECK-LABEL: test_cmp_d_128
 ; CHECK: vpcmpeqd %xmm1, %xmm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.d.128(<4 x i32> %a0, <4 x i32> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -402,7 +402,7 @@ define <8 x i8> @test_cmp_d_128(<4 x i32> %a0, <4 x i32> %a1) {
 }
 
 define <8 x i8> @test_mask_cmp_d_128(<4 x i32> %a0, <4 x i32> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_cmp_d_128
+; CHECK-LABEL: test_mask_cmp_d_128
 ; CHECK: vpcmpeqd %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.d.128(<4 x i32> %a0, <4 x i32> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -433,7 +433,7 @@ define <8 x i8> @test_mask_cmp_d_128(<4 x i32> %a0, <4 x i32> %a1, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.cmp.d.128(<4 x i32>, <4 x i32>, i32, i8) nounwind readnone
 
 define <8 x i8> @test_ucmp_d_128(<4 x i32> %a0, <4 x i32> %a1) {
-; CHECK_LABEL: test_ucmp_d_128
+; CHECK-LABEL: test_ucmp_d_128
 ; CHECK: vpcmpequd %xmm1, %xmm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.d.128(<4 x i32> %a0, <4 x i32> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -462,7 +462,7 @@ define <8 x i8> @test_ucmp_d_128(<4 x i32> %a0, <4 x i32> %a1) {
 }
 
 define <8 x i8> @test_mask_ucmp_d_128(<4 x i32> %a0, <4 x i32> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_ucmp_d_128
+; CHECK-LABEL: test_mask_ucmp_d_128
 ; CHECK: vpcmpequd %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.d.128(<4 x i32> %a0, <4 x i32> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -493,7 +493,7 @@ define <8 x i8> @test_mask_ucmp_d_128(<4 x i32> %a0, <4 x i32> %a1, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.ucmp.d.128(<4 x i32>, <4 x i32>, i32, i8) nounwind readnone
 
 define <8 x i8> @test_cmp_q_128(<2 x i64> %a0, <2 x i64> %a1) {
-; CHECK_LABEL: test_cmp_q_128
+; CHECK-LABEL: test_cmp_q_128
 ; CHECK: vpcmpeqq %xmm1, %xmm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.q.128(<2 x i64> %a0, <2 x i64> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -522,7 +522,7 @@ define <8 x i8> @test_cmp_q_128(<2 x i64> %a0, <2 x i64> %a1) {
 }
 
 define <8 x i8> @test_mask_cmp_q_128(<2 x i64> %a0, <2 x i64> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_cmp_q_128
+; CHECK-LABEL: test_mask_cmp_q_128
 ; CHECK: vpcmpeqq %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.cmp.q.128(<2 x i64> %a0, <2 x i64> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -553,7 +553,7 @@ define <8 x i8> @test_mask_cmp_q_128(<2 x i64> %a0, <2 x i64> %a1, i8 %mask) {
 declare i8 @llvm.x86.avx512.mask.cmp.q.128(<2 x i64>, <2 x i64>, i32, i8) nounwind readnone
 
 define <8 x i8> @test_ucmp_q_128(<2 x i64> %a0, <2 x i64> %a1) {
-; CHECK_LABEL: test_ucmp_q_128
+; CHECK-LABEL: test_ucmp_q_128
 ; CHECK: vpcmpequq %xmm1, %xmm0, %k0 ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.q.128(<2 x i64> %a0, <2 x i64> %a1, i32 0, i8 -1)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -582,7 +582,7 @@ define <8 x i8> @test_ucmp_q_128(<2 x i64> %a0, <2 x i64> %a1) {
 }
 
 define <8 x i8> @test_mask_ucmp_q_128(<2 x i64> %a0, <2 x i64> %a1, i8 %mask) {
-; CHECK_LABEL: test_mask_ucmp_q_128
+; CHECK-LABEL: test_mask_ucmp_q_128
 ; CHECK: vpcmpequq %xmm1, %xmm0, %k0 {%k1} ##
   %res0 = call i8 @llvm.x86.avx512.mask.ucmp.q.128(<2 x i64> %a0, <2 x i64> %a1, i32 0, i8 %mask)
   %vec0 = insertelement <8 x i8> undef, i8 %res0, i32 0
@@ -611,3 +611,90 @@ define <8 x i8> @test_mask_ucmp_q_128(<2 x i64> %a0, <2 x i64> %a1, i8 %mask) {
 }
 
 declare i8 @llvm.x86.avx512.mask.ucmp.q.128(<2 x i64>, <2 x i64>, i32, i8) nounwind readnone
+
+; CHECK-LABEL: compr1
+; CHECK: vcompresspd %zmm0
+define void @compr1(i8* %addr, <8 x double> %data, i8 %mask) {
+  call void @llvm.x86.avx512.mask.compress.store.pd.512(i8* %addr, <8 x double> %data, i8 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.compress.store.pd.512(i8* %addr, <8 x double> %data, i8 %mask)
+
+; CHECK-LABEL: compr2
+; CHECK: vcompresspd %ymm0
+define void @compr2(i8* %addr, <4 x double> %data, i8 %mask) {
+  call void @llvm.x86.avx512.mask.compress.store.pd.256(i8* %addr, <4 x double> %data, i8 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.compress.store.pd.256(i8* %addr, <4 x double> %data, i8 %mask)
+
+; CHECK-LABEL: compr3
+; CHECK: vcompressps %xmm0
+define void @compr3(i8* %addr, <4 x float> %data, i8 %mask) {
+  call void @llvm.x86.avx512.mask.compress.store.ps.128(i8* %addr, <4 x float> %data, i8 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.compress.store.ps.128(i8* %addr, <4 x float> %data, i8 %mask)
+
+; CHECK-LABEL: compr4
+; CHECK: vcompresspd %zmm0, %zmm0 {%k1} {z} ## encoding: [0x62,0xf2,0xfd,0xc9,0x8a,0xc0]
+define <8 x double> @compr4(i8* %addr, <8 x double> %data, i8 %mask) {
+  %res = call <8 x double> @llvm.x86.avx512.mask.compress.pd.512(<8 x double> %data, <8 x double> zeroinitializer, i8 %mask)
+  ret <8 x double> %res
+}
+
+declare <8 x double> @llvm.x86.avx512.mask.compress.pd.512(<8 x double> %data, <8 x double> %src0, i8 %mask)
+
+; CHECK-LABEL: compr5
+; CHECK: vcompresspd %ymm0, %ymm1 {%k1}  ## encoding: [0x62,0xf2,0xfd,0x29,0x8a,0xc1]
+define <4 x double> @compr5(<4 x double> %data, <4 x double> %src0, i8 %mask) {
+  %res = call <4 x double> @llvm.x86.avx512.mask.compress.pd.256( <4 x double> %data, <4 x double> %src0, i8 %mask)
+  ret <4 x double> %res
+}
+
+declare <4 x double> @llvm.x86.avx512.mask.compress.pd.256(<4 x double> %data, <4 x double> %src0, i8 %mask)
+
+; CHECK-LABEL: compr6
+; CHECK: vcompressps %xmm0
+define <4 x float> @compr6(<4 x float> %data, i8 %mask) {
+  %res = call <4 x float> @llvm.x86.avx512.mask.compress.ps.128(<4 x float> %data, <4 x float>zeroinitializer, i8 %mask)
+  ret <4 x float> %res
+}
+
+declare <4 x float> @llvm.x86.avx512.mask.compress.ps.128(<4 x float> %data, <4 x float> %src0, i8 %mask)
+
+; CHECK-LABEL: compr7
+; CHECK-NOT: vcompress
+; CHECK: vmovapd
+define void @compr7(i8* %addr, <8 x double> %data) {
+  call void @llvm.x86.avx512.mask.compress.store.pd.512(i8* %addr, <8 x double> %data, i8 -1)
+  ret void
+}
+
+; CHECK-LABEL: compr8
+; CHECK-NOT: vcompressps %xmm0
+define <4 x float> @compr8(<4 x float> %data) {
+  %res = call <4 x float> @llvm.x86.avx512.mask.compress.ps.128(<4 x float> %data, <4 x float>zeroinitializer, i8 -1)
+  ret <4 x float> %res
+}
+
+; CHECK-LABEL: compr9
+; CHECK: vpcompressq %zmm0, (%rdi) {%k1}  ## encoding: [0x62,0xf2,0xfd,0x49,0x8b,0x07]
+define void @compr9(i8* %addr, <8 x i64> %data, i8 %mask) {
+  call void @llvm.x86.avx512.mask.compress.store.q.512(i8* %addr, <8 x i64> %data, i8 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.compress.store.q.512(i8* %addr, <8 x i64> %data, i8 %mask)
+
+; CHECK-LABEL: compr10
+; CHECK: vpcompressd %xmm0, %xmm0 {%k1} {z} ## encoding: [0x62,0xf2,0x7d,0x89,0x8b,0xc0]
+define <4 x i32> @compr10(<4 x i32> %data, i8 %mask) {
+  %res = call <4 x i32> @llvm.x86.avx512.mask.compress.d.128(<4 x i32> %data, <4 x i32>zeroinitializer, i8 %mask)
+  ret <4 x i32> %res
+}
+
+declare <4 x i32> @llvm.x86.avx512.mask.compress.d.128(<4 x i32> %data, <4 x i32> %src0, i8 %mask)

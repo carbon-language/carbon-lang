@@ -379,6 +379,10 @@ namespace llvm {
       FMADDSUB,
       FMSUBADD,
 
+      // Compress and expand
+      COMPRESS,
+      EXPAND,
+
       // Save xmm argument registers to the stack, according to %al. An operator
       // is needed so that this can be expanded with control flow.
       VASTART_SAVE_XMM_REGS,

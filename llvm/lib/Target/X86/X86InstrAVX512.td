@@ -5281,3 +5281,51 @@ multiclass avx512_convert_mask_to_vector<string OpcodeStr> {
 }
 
 defm VPMOVM2 : avx512_convert_mask_to_vector<"vpmovm2">;
+
+//===----------------------------------------------------------------------===//
+// AVX-512 - COMPRESS and EXPAND
+//
+multiclass compress_by_vec_width<bits<8> opc, X86VectorVTInfo _,
+                                 string OpcodeStr> {
+  def rrkz : AVX5128I<opc, MRMDestReg, (outs _.RC:$dst),
+              (ins _.KRCWM:$mask, _.RC:$src),
+              OpcodeStr # "\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}",
+              [(set _.RC:$dst, (_.VT (X86compress _.KRCWM:$mask, _.RC:$src,
+                                      _.ImmAllZerosV)))]>, EVEX_KZ;
+
+  let Constraints = "$src0 = $dst" in
+  def rrk : AVX5128I<opc, MRMDestReg, (outs _.RC:$dst),
+                    (ins _.RC:$src0, _.KRCWM:$mask, _.RC:$src),
+                    OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
+                    [(set _.RC:$dst, (_.VT (X86compress _.KRCWM:$mask, _.RC:$src,
+                                            _.RC:$src0)))]>, EVEX_K;
+
+  let mayStore = 1 in {
+  def mrk : AVX5128I<opc, MRMDestMem, (outs),
+              (ins _.MemOp:$dst, _.KRCWM:$mask, _.RC:$src),
+              OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
+              [(store (_.VT (X86compress _.KRCWM:$mask, _.RC:$src, undef)),
+                addr:$dst)]>,
+              EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
+  }
+}
+
+multiclass compress_by_elt_width<bits<8> opc, string OpcodeStr,
+                                 AVX512VLVectorVTInfo VTInfo> {
+  defm Z : compress_by_vec_width<opc, VTInfo.info512, OpcodeStr>, EVEX_V512;
+
+  let Predicates = [HasVLX] in {
+    defm Z256 : compress_by_vec_width<opc, VTInfo.info256, OpcodeStr>, EVEX_V256;
+    defm Z128 : compress_by_vec_width<opc, VTInfo.info128, OpcodeStr>, EVEX_V128;
+  }
+}
+
+defm VPCOMPRESSD : compress_by_elt_width <0x8B, "vpcompressd", avx512vl_i32_info>,
+                                         EVEX;
+defm VPCOMPRESSQ : compress_by_elt_width <0x8B, "vpcompressq", avx512vl_i64_info>,
+                                         EVEX, VEX_W;
+defm VCOMPRESSPS : compress_by_elt_width <0x8A, "vcompressps", avx512vl_f32_info>,
+                                         EVEX;
+defm VCOMPRESSPD : compress_by_elt_width <0x8A, "vcompresspd", avx512vl_f64_info>,
+                                         EVEX, VEX_W;
+
