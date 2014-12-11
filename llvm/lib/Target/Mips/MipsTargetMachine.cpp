@@ -170,9 +170,9 @@ public:
   void addIRPasses() override;
   bool addInstSelector() override;
   void addMachineSSAOptimization() override;
-  void addPreEmitPass() override;
+  bool addPreEmitPass() override;
 
-  void addPreRegAlloc() override;
+  bool addPreRegAlloc() override;
 
 };
 } // namespace
@@ -203,9 +203,13 @@ void MipsPassConfig::addMachineSSAOptimization() {
   TargetPassConfig::addMachineSSAOptimization();
 }
 
-void MipsPassConfig::addPreRegAlloc() {
-  if (getOptLevel() == CodeGenOpt::None)
+bool MipsPassConfig::addPreRegAlloc() {
+  if (getOptLevel() == CodeGenOpt::None) {
     addPass(createMipsOptimizePICCallPass(getMipsTargetMachine()));
+    return true;
+  }
+  else
+    return false;
 }
 
 void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
@@ -224,9 +228,10 @@ void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 // Implemented by targets that want to run passes immediately before
 // machine code is emitted. return true if -print-machineinstrs should
 // print out the code after the passes.
-void MipsPassConfig::addPreEmitPass() {
+bool MipsPassConfig::addPreEmitPass() {
   MipsTargetMachine &TM = getMipsTargetMachine();
   addPass(createMipsDelaySlotFillerPass(TM));
   addPass(createMipsLongBranchPass(TM));
   addPass(createMipsConstantIslandPass(TM));
+  return true;
 }

@@ -103,10 +103,10 @@ public:
   }
 
   bool addInstSelector() override;
-  void addPreRegAlloc() override;
-  void addPostRegAlloc() override;
-  void addPreSched2() override;
-  void addPreEmitPass() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
@@ -131,45 +131,51 @@ bool HexagonPassConfig::addInstSelector() {
   return false;
 }
 
-void HexagonPassConfig::addPreRegAlloc() {
+bool HexagonPassConfig::addPreRegAlloc() {
   if (getOptLevel() != CodeGenOpt::None)
     if (!DisableHardwareLoops)
-      addPass(createHexagonHardwareLoops(), false);
+      addPass(createHexagonHardwareLoops());
+  return false;
 }
 
-void HexagonPassConfig::addPostRegAlloc() {
+bool HexagonPassConfig::addPostRegAlloc() {
   const HexagonTargetMachine &TM = getHexagonTargetMachine();
   if (getOptLevel() != CodeGenOpt::None)
     if (!DisableHexagonCFGOpt)
-      addPass(createHexagonCFGOptimizer(TM), false);
+      addPass(createHexagonCFGOptimizer(TM));
+  return false;
 }
 
-void HexagonPassConfig::addPreSched2() {
+bool HexagonPassConfig::addPreSched2() {
   const HexagonTargetMachine &TM = getHexagonTargetMachine();
 
-  addPass(createHexagonCopyToCombine(), false);
+  addPass(createHexagonCopyToCombine());
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(&IfConverterID, false);
+    addPass(&IfConverterID);
   addPass(createHexagonSplitConst32AndConst64(TM));
+  printAndVerify("After hexagon split const32/64 pass");
+  return true;
 }
 
-void HexagonPassConfig::addPreEmitPass() {
+bool HexagonPassConfig::addPreEmitPass() {
   const HexagonTargetMachine &TM = getHexagonTargetMachine();
   bool NoOpt = (getOptLevel() == CodeGenOpt::None);
 
   if (!NoOpt)
-    addPass(createHexagonNewValueJump(), false);
+    addPass(createHexagonNewValueJump());
 
   // Expand Spill code for predicate registers.
-  addPass(createHexagonExpandPredSpillCode(TM), false);
+  addPass(createHexagonExpandPredSpillCode(TM));
 
   // Split up TFRcondsets into conditional transfers.
-  addPass(createHexagonSplitTFRCondSets(TM), false);
+  addPass(createHexagonSplitTFRCondSets(TM));
 
   // Create Packets.
   if (!NoOpt) {
     if (!DisableHardwareLoops)
-      addPass(createHexagonFixupHwLoops(), false);
-    addPass(createHexagonPacketizer(), false);
+      addPass(createHexagonFixupHwLoops());
+    addPass(createHexagonPacketizer());
   }
+
+  return false;
 }

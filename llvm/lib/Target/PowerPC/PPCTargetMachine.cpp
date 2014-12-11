@@ -162,9 +162,9 @@ public:
   bool addPreISel() override;
   bool addILPOpts() override;
   bool addInstSelector() override;
-  void addPreRegAlloc() override;
-  void addPreSched2() override;
-  void addPreEmitPass() override;
+  bool addPreRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
@@ -216,24 +216,28 @@ bool PPCPassConfig::addInstSelector() {
   return false;
 }
 
-void PPCPassConfig::addPreRegAlloc() {
+bool PPCPassConfig::addPreRegAlloc() {
   initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
   insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
              &PPCVSXFMAMutateID);
+  return false;
 }
 
-void PPCPassConfig::addPreSched2() {
-  addPass(createPPCVSXCopyCleanupPass(), false);
+bool PPCPassConfig::addPreSched2() {
+  addPass(createPPCVSXCopyCleanupPass());
 
   if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
+
+  return true;
 }
 
-void PPCPassConfig::addPreEmitPass() {
+bool PPCPassConfig::addPreEmitPass() {
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createPPCEarlyReturnPass(), false);
+    addPass(createPPCEarlyReturnPass());
   // Must run branch selection immediately preceding the asm printer.
-  addPass(createPPCBranchSelectionPass(), false);
+  addPass(createPPCBranchSelectionPass());
+  return false;
 }
 
 void PPCTargetMachine::addAnalysisPasses(PassManagerBase &PM) {

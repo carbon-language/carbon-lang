@@ -110,7 +110,8 @@ public:
 
   void addIRPasses() override;
   bool addInstSelector() override;
-  void addPostRegAlloc() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
   void addMachineSSAOptimization() override;
 
   FunctionPass *createTargetRegisterAllocator(bool) override;
@@ -182,8 +183,10 @@ bool NVPTXPassConfig::addInstSelector() {
   return false;
 }
 
-void NVPTXPassConfig::addPostRegAlloc() {
-  addPass(createNVPTXPrologEpilogPass(), false);
+bool NVPTXPassConfig::addPreRegAlloc() { return false; }
+bool NVPTXPassConfig::addPostRegAlloc() {
+  addPass(createNVPTXPrologEpilogPass());
+  return false;
 }
 
 FunctionPass *NVPTXPassConfig::createTargetRegisterAllocator(bool) {

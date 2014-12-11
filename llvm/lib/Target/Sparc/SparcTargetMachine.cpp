@@ -53,7 +53,7 @@ public:
 
   void addIRPasses() override;
   bool addInstSelector() override;
-  void addPreEmitPass() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
@@ -72,8 +72,12 @@ bool SparcPassConfig::addInstSelector() {
   return false;
 }
 
-void SparcPassConfig::addPreEmitPass(){
+/// addPreEmitPass - This pass may be implemented by targets that want to run
+/// passes immediately before machine code is emitted.  This should return
+/// true if -print-machineinstrs should print out the code after the passes.
+bool SparcPassConfig::addPreEmitPass(){
   addPass(createSparcDelaySlotFillerPass(getSparcTargetMachine()));
+  return true;
 }
 
 void SparcV8TargetMachine::anchor() { }

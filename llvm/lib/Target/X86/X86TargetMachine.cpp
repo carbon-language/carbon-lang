@@ -154,8 +154,9 @@ public:
   void addIRPasses() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
-  void addPostRegAlloc() override;
-  void addPreEmitPass() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
@@ -187,19 +188,32 @@ bool X86PassConfig::addILPOpts() {
   return true;
 }
 
-void X86PassConfig::addPostRegAlloc() {
-  addPass(createX86FloatingPointStackifierPass());
+bool X86PassConfig::addPreRegAlloc() {
+  return false;  // -print-machineinstr shouldn't print after this.
 }
 
-void X86PassConfig::addPreEmitPass() {
-  if (getOptLevel() != CodeGenOpt::None && getX86Subtarget().hasSSE2())
-    addPass(createExecutionDependencyFixPass(&X86::VR128RegClass));
+bool X86PassConfig::addPostRegAlloc() {
+  addPass(createX86FloatingPointStackifierPass());
+  return true;  // -print-machineinstr should print after this.
+}
 
-  if (UseVZeroUpper)
+bool X86PassConfig::addPreEmitPass() {
+  bool ShouldPrint = false;
+  if (getOptLevel() != CodeGenOpt::None && getX86Subtarget().hasSSE2()) {
+    addPass(createExecutionDependencyFixPass(&X86::VR128RegClass));
+    ShouldPrint = true;
+  }
+
+  if (UseVZeroUpper) {
     addPass(createX86IssueVZeroUpperPass());
+    ShouldPrint = true;
+  }
 
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(createX86PadShortFunctions());
     addPass(createX86FixupLEAs());
+    ShouldPrint = true;
   }
+
+  return ShouldPrint;
 }
