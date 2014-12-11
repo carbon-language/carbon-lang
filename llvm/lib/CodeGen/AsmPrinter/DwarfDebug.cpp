@@ -1722,8 +1722,6 @@ void DwarfDebug::emitDebugLocValue(ByteStreamer &Streamer,
       Streamer.EmitInt8(dwarf::DW_OP_constu, "DW_OP_constu");
       Streamer.EmitULEB128(Value.getInt());
     }
-   if (getDwarfVersion() >= 4)
-      Streamer.EmitInt8(dwarf::DW_OP_stack_value, "DW_OP_stack_value");
   } else if (Value.isLocation()) {
     MachineLocation Loc = Value.getLoc();
     DIExpression Expr = Value.getExpression();
