@@ -662,10 +662,10 @@ TEST_F(FileSystemTest, FileMapping) {
   }
 
   // Map it back in read-only
-  fs::mapped_file_region mfr(Twine(TempPath),
-                             fs::mapped_file_region::readonly,
-                             0,
-                             0,
+  int FD;
+  EC = fs::openFileForRead(Twine(TempPath), FD);
+  ASSERT_NO_ERROR(EC);
+  fs::mapped_file_region mfr(FD, false, fs::mapped_file_region::readonly, 0, 0,
                              EC);
   ASSERT_NO_ERROR(EC);
 
@@ -673,13 +673,10 @@ TEST_F(FileSystemTest, FileMapping) {
   EXPECT_EQ(StringRef(mfr.const_data()), Val);
 
   // Unmap temp file
-
-  fs::mapped_file_region m(Twine(TempPath),
-                             fs::mapped_file_region::readonly,
-                             0,
-                             0,
-                             EC);
+  fs::mapped_file_region m(FD, false, fs::mapped_file_region::readonly, 0, 0,
+                           EC);
   ASSERT_NO_ERROR(EC);
+  ASSERT_EQ(close(FD), 0);
   const char *Data = m.const_data();
   fs::mapped_file_region mfrrv(std::move(m));
   EXPECT_EQ(mfrrv.const_data(), Data);

@@ -470,34 +470,6 @@ std::error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) 
   return std::error_code();
 }
 
-mapped_file_region::mapped_file_region(const Twine &path,
-                                       mapmode mode,
-                                       uint64_t length,
-                                       uint64_t offset,
-                                       std::error_code &ec)
-  : Mode(mode)
-  , Size(length)
-  , Mapping() {
-  // Make sure that the requested size fits within SIZE_T.
-  if (length > std::numeric_limits<size_t>::max()) {
-    ec = make_error_code(errc::invalid_argument);
-    return;
-  }
-
-  SmallString<128> path_storage;
-  StringRef name = path.toNullTerminatedStringRef(path_storage);
-  int oflags = (mode == readonly) ? O_RDONLY : O_RDWR;
-  int ofd = ::open(name.begin(), oflags);
-  if (ofd == -1) {
-    ec = std::error_code(errno, std::generic_category());
-    return;
-  }
-
-  ec = init(ofd, true, offset);
-  if (ec)
-    Mapping = nullptr;
-}
-
 mapped_file_region::mapped_file_region(int fd,
                                        bool closefd,
                                        mapmode mode,
@@ -526,11 +498,6 @@ mapped_file_region::~mapped_file_region() {
 mapped_file_region::mapped_file_region(mapped_file_region &&other)
   : Mode(other.Mode), Size(other.Size), Mapping(other.Mapping) {
   other.Mapping = nullptr;
-}
-
-mapped_file_region::mapmode mapped_file_region::flags() const {
-  assert(Mapping && "Mapping failed but used anyway!");
-  return Mode;
 }
 
 uint64_t mapped_file_region::size() const {

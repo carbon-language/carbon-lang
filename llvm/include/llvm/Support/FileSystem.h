@@ -654,23 +654,6 @@ public:
   mapped_file_region(mapped_file_region&&);
   mapped_file_region &operator =(mapped_file_region&&);
 
-  /// Construct a mapped_file_region at \a path starting at \a offset of length
-  /// \a length and with access \a mode.
-  ///
-  /// \param path Path to the file to map. If it does not exist it will be
-  ///             created.
-  /// \param mode How to map the memory.
-  /// \param length Number of bytes to map in starting at \a offset. If the file
-  ///               is shorter than this, it will be extended. If \a length is
-  ///               0, the entire file will be mapped.
-  /// \param offset Byte offset from the beginning of the file where the map
-  ///               should begin. Must be a multiple of
-  ///               mapped_file_region::alignment().
-  /// \param ec This is set to errc::success if the map was constructed
-  ///           successfully. Otherwise it is set to a platform dependent error.
-  mapped_file_region(const Twine &path, mapmode mode, uint64_t length,
-                     uint64_t offset, std::error_code &ec);
-
   /// \param fd An open file descriptor to map. mapped_file_region takes
   ///   ownership if closefd is true. It must have been opended in the correct
   ///   mode.
@@ -679,7 +662,6 @@ public:
 
   ~mapped_file_region();
 
-  mapmode flags() const;
   uint64_t size() const;
   char *data() const;
 

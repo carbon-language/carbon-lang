@@ -551,49 +551,6 @@ std::error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) 
   return std::error_code();
 }
 
-mapped_file_region::mapped_file_region(const Twine &path,
-                                       mapmode mode,
-                                       uint64_t length,
-                                       uint64_t offset,
-                                       std::error_code &ec)
-  : Mode(mode)
-  , Size(length)
-  , Mapping()
-  , FileDescriptor()
-  , FileHandle(INVALID_HANDLE_VALUE)
-  , FileMappingHandle() {
-  SmallVector<wchar_t, 128> path_utf16;
-
-  // Convert path to UTF-16.
-  if ((ec = widenPath(path, path_utf16)))
-    return;
-
-  // Get file handle for creating a file mapping.
-  FileHandle = ::CreateFileW(c_str(path_utf16),
-                             Mode == readonly ? GENERIC_READ
-                                              : GENERIC_READ | GENERIC_WRITE,
-                             Mode == readonly ? FILE_SHARE_READ
-                                              : 0,
-                             0,
-                             Mode == readonly ? OPEN_EXISTING
-                                              : OPEN_ALWAYS,
-                             Mode == readonly ? FILE_ATTRIBUTE_READONLY
-                                              : FILE_ATTRIBUTE_NORMAL,
-                             0);
-  if (FileHandle == INVALID_HANDLE_VALUE) {
-    ec = windows_error(::GetLastError());
-    return;
-  }
-
-  FileDescriptor = 0;
-  ec = init(FileDescriptor, true, offset);
-  if (ec) {
-    Mapping = FileMappingHandle = 0;
-    FileHandle = INVALID_HANDLE_VALUE;
-    FileDescriptor = 0;
-  }
-}
-
 mapped_file_region::mapped_file_region(int fd,
                                        bool closefd,
                                        mapmode mode,
@@ -638,11 +595,6 @@ mapped_file_region::mapped_file_region(mapped_file_region &&other)
   other.Mapping = other.FileMappingHandle = 0;
   other.FileHandle = INVALID_HANDLE_VALUE;
   other.FileDescriptor = 0;
-}
-
-mapped_file_region::mapmode mapped_file_region::flags() const {
-  assert(Mapping && "Mapping failed but used anyway!");
-  return Mode;
 }
 
 uint64_t mapped_file_region::size() const {
