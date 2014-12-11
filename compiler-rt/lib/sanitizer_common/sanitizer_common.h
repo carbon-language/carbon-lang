@@ -129,9 +129,6 @@ void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback);
 
 // IO
 void RawWrite(const char *buffer);
-bool PrintsToTty();
-// Caching version of PrintsToTty(). Not thread-safe.
-bool PrintsToTtyCached();
 bool ColorizeReports();
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
@@ -147,11 +144,33 @@ void SetPrintfAndReportCallback(void (*callback)(const char *));
 
 // Can be used to prevent mixing error reports from different sanitizers.
 extern StaticSpinMutex CommonSanitizerReportMutex;
-void MaybeOpenReportFile();
-extern fd_t report_fd;
-extern bool log_to_file;
-extern char report_path_prefix[kMaxPathLength];
-extern uptr report_fd_pid;
+
+struct ReportFile {
+  void Write(const char *buffer, uptr length);
+  bool PrintsToTty();
+  void SetReportPath(const char *path);
+
+  // Don't use fields directly. They are only declared public to allow
+  // aggregate initialization.
+
+  // Protects fields below.
+  StaticSpinMutex *mu;
+  // Opened file descriptor. Defaults to stderr. It may be equal to
+  // kInvalidFd, in which case new file will be opened when necessary.
+  fd_t fd;
+  // Path prefix of report file, set via __sanitizer_set_report_path.
+  char path_prefix[kMaxPathLength];
+  // Full path to report, obtained as <path_prefix>.PID
+  char full_path[kMaxPathLength];
+  // PID of the process that opened fd. If a fork() occurs,
+  // the PID of child will be different from fd_pid.
+  uptr fd_pid;
+
+ private:
+  void ReopenIfNecessary();
+};
+extern ReportFile report_file;
+
 extern uptr stoptheworld_tracer_pid;
 extern uptr stoptheworld_tracer_ppid;
 

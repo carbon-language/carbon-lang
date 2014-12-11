@@ -26,19 +26,66 @@ uptr GetPageSizeCached() {
   return PageSize;
 }
 
+StaticSpinMutex report_file_mu;
+ReportFile report_file = {&report_file_mu, kStderrFd, "", "", 0};
 
-// By default, dump to stderr. If |log_to_file| is true and |report_fd_pid|
-// isn't equal to the current PID, try to obtain file descriptor by opening
-// file "report_path_prefix.<PID>".
-fd_t report_fd = kStderrFd;
+void RawWrite(const char *buffer) {
+  report_file.Write(buffer, internal_strlen(buffer));
+}
 
-// Set via __sanitizer_set_report_path.
-bool log_to_file = false;
-char report_path_prefix[sizeof(report_path_prefix)];
+void ReportFile::ReopenIfNecessary() {
+  mu->CheckLocked();
+  if (fd == kStdoutFd || fd == kStderrFd) return;
 
-// PID of process that opened |report_fd|. If a fork() occurs, the PID of the
-// child thread will be different from |report_fd_pid|.
-uptr report_fd_pid = 0;
+  uptr pid = internal_getpid();
+  // If in tracer, use the parent's file.
+  if (pid == stoptheworld_tracer_pid)
+    pid = stoptheworld_tracer_ppid;
+  if (fd != kInvalidFd) {
+    // If the report file is already opened by the current process,
+    // do nothing. Otherwise the report file was opened by the parent
+    // process, close it now.
+    if (fd_pid == pid)
+      return;
+    else
+      internal_close(fd);
+  }
+
+  internal_snprintf(full_path, kMaxPathLength, "%s.%zu", path_prefix, pid);
+  uptr openrv = OpenFile(full_path, true);
+  if (internal_iserror(openrv)) {
+    const char *ErrorMsgPrefix = "ERROR: Can't open file: ";
+    internal_write(kStderrFd, ErrorMsgPrefix, internal_strlen(ErrorMsgPrefix));
+    internal_write(kStderrFd, full_path, internal_strlen(full_path));
+    Die();
+  }
+  fd = openrv;
+  fd_pid = pid;
+}
+
+void ReportFile::SetReportPath(const char *path) {
+  if (!path)
+    return;
+  uptr len = internal_strlen(path);
+  if (len > sizeof(path_prefix) - 100) {
+    Report("ERROR: Path is too long: %c%c%c%c%c%c%c%c...\n",
+           path[0], path[1], path[2], path[3],
+           path[4], path[5], path[6], path[7]);
+    Die();
+  }
+
+  SpinMutexLock l(mu);
+  if (fd != kStdoutFd && fd != kStderrFd && fd != kInvalidFd)
+    internal_close(fd);
+  fd = kInvalidFd;
+  if (internal_strcmp(path, "stdout") == 0) {
+    fd = kStdoutFd;
+  } else if (internal_strcmp(path, "stderr") == 0) {
+    fd = kStderrFd;
+  } else {
+    internal_snprintf(path_prefix, kMaxPathLength, "%s", path);
+  }
+}
 
 // PID of the tracer task in StopTheWorld. It shares the address space with the
 // main process, but has a different PID and thus requires special handling.
@@ -230,30 +277,7 @@ using namespace __sanitizer;  // NOLINT
 
 extern "C" {
 void __sanitizer_set_report_path(const char *path) {
-  if (!path)
-    return;
-  uptr len = internal_strlen(path);
-  if (len > sizeof(report_path_prefix) - 100) {
-    Report("ERROR: Path is too long: %c%c%c%c%c%c%c%c...\n",
-           path[0], path[1], path[2], path[3],
-           path[4], path[5], path[6], path[7]);
-    Die();
-  }
-  if (report_fd != kStdoutFd &&
-      report_fd != kStderrFd &&
-      report_fd != kInvalidFd)
-    internal_close(report_fd);
-  report_fd = kInvalidFd;
-  log_to_file = false;
-  if (internal_strcmp(path, "stdout") == 0) {
-    report_fd = kStdoutFd;
-  } else if (internal_strcmp(path, "stderr") == 0) {
-    report_fd = kStderrFd;
-  } else {
-    internal_strncpy(report_path_prefix, path, sizeof(report_path_prefix));
-    report_path_prefix[len] = '\0';
-    log_to_file = true;
-  }
+  report_file.SetReportPath(path);
 }
 
 void __sanitizer_report_error_summary(const char *error_summary) {

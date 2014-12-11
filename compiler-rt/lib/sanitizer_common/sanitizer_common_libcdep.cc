@@ -18,30 +18,21 @@
 
 namespace __sanitizer {
 
-bool PrintsToTty() {
-  MaybeOpenReportFile();
-  return internal_isatty(report_fd) != 0;
-}
-
-bool PrintsToTtyCached() {
-  // FIXME: Add proper Windows support to AnsiColorDecorator and re-enable color
-  // printing on Windows.
-  if (SANITIZER_WINDOWS)
-    return 0;
-
-  static int cached = 0;
-  static bool prints_to_tty;
-  if (!cached) {  // Not thread-safe.
-    prints_to_tty = PrintsToTty();
-    cached = 1;
-  }
-  return prints_to_tty;
+bool ReportFile::PrintsToTty() {
+  SpinMutexLock l(mu);
+  ReopenIfNecessary();
+  return internal_isatty(fd) != 0;
 }
 
 bool ColorizeReports() {
+  // FIXME: Add proper Windows support to AnsiColorDecorator and re-enable color
+  // printing on Windows.
+  if (SANITIZER_WINDOWS)
+    return false;
+
   const char *flag = common_flags()->color;
   return internal_strcmp(flag, "always") == 0 ||
-         (internal_strcmp(flag, "auto") == 0 && PrintsToTtyCached());
+         (internal_strcmp(flag, "auto") == 0 && report_file.PrintsToTty());
 }
 
 static void (*sandboxing_callback)();

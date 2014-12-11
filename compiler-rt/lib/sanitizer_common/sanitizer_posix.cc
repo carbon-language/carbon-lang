@@ -286,37 +286,13 @@ char *FindPathToBinary(const char *name) {
   return 0;
 }
 
-void MaybeOpenReportFile() {
-  if (!log_to_file) return;
-  uptr pid = internal_getpid();
-  // If in tracer, use the parent's file.
-  if (pid == stoptheworld_tracer_pid)
-    pid = stoptheworld_tracer_ppid;
-  if (report_fd_pid == pid) return;
-  InternalScopedString report_path_full(kMaxPathLength);
-  report_path_full.append("%s.%zu", report_path_prefix, pid);
-  uptr openrv = OpenFile(report_path_full.data(), true);
-  if (internal_iserror(openrv)) {
-    report_fd = kStderrFd;
-    log_to_file = false;
-    Report("ERROR: Can't open file: %s\n", report_path_full.data());
-    Die();
-  }
-  if (report_fd != kInvalidFd) {
-    // We're in the child. Close the parent's log.
-    internal_close(report_fd);
-  }
-  report_fd = openrv;
-  report_fd_pid = pid;
-}
-
-void RawWrite(const char *buffer) {
-  static const char *kRawWriteError =
-      "RawWrite can't output requested buffer!\n";
-  uptr length = (uptr)internal_strlen(buffer);
-  MaybeOpenReportFile();
-  if (length != internal_write(report_fd, buffer, length)) {
-    internal_write(report_fd, kRawWriteError, internal_strlen(kRawWriteError));
+void ReportFile::Write(const char *buffer, uptr length) {
+  SpinMutexLock l(mu);
+  static const char *kWriteError =
+      "ReportFile::Write() can't output requested buffer!\n";
+  ReopenIfNecessary();
+  if (length != internal_write(fd, buffer, length)) {
+    internal_write(fd, kWriteError, internal_strlen(kWriteError));
     Die();
   }
 }
