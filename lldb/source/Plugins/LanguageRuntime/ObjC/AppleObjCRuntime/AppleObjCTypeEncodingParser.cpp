@@ -253,7 +253,14 @@ AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_
                                                     max_matches,
                                                     decls);
 
-        assert(num_types); // how can a type be mentioned in runtime type signatures and not be in the runtime?
+        // The user can forward-declare something that has no definition.  The runtime doesn't prohibit this at all.
+        // This is a rare and very weird case.  We keep this assert in debug builds so we catch other weird cases.
+#ifdef LLDB_CONFIGURATION_DEBUG
+        assert(num_types);
+#else
+        if (!num_types)
+            return ast_ctx.getObjCIdType();
+#endif
         
         return ClangASTContext::GetTypeForDecl(decls[0]).GetPointerType().GetQualType();
     }
