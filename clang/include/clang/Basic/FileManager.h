@@ -274,6 +274,9 @@ public:
   static void modifyFileEntry(FileEntry *File, off_t Size,
                               time_t ModificationTime);
 
+  /// \brief Remove any './' components from a path.
+  static bool removeDotPaths(SmallVectorImpl<char> &Path);
+
   /// \brief Retrieve the canonical name for a given directory.
   ///
   /// This is a very expensive operation, despite its results being cached,

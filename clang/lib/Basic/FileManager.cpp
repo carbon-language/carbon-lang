@@ -513,15 +513,47 @@ void FileManager::modifyFileEntry(FileEntry *File,
   File->ModTime = ModificationTime;
 }
 
+/// Remove '.' path components from the given absolute path.
+/// \return \c true if any changes were made.
+// FIXME: Move this to llvm::sys::path.
+bool FileManager::removeDotPaths(SmallVectorImpl<char> &Path) {
+  using namespace llvm::sys;
+
+  SmallVector<StringRef, 16> ComponentStack;
+  StringRef P(Path.data(), Path.size());
+
+  // Skip the root path, then look for traversal in the components.
+  StringRef Rel = path::relative_path(P);
+  bool AnyDots = false;
+  for (StringRef C : llvm::make_range(path::begin(Rel), path::end(Rel))) {
+    if (C == ".") {
+      AnyDots = true;
+      continue;
+    }
+    ComponentStack.push_back(C);
+  }
+
+  if (!AnyDots)
+    return false;
+
+  SmallString<256> Buffer = path::root_path(P);
+  for (StringRef C : ComponentStack)
+    path::append(Buffer, C);
+
+  Path.swap(Buffer);
+  return true;
+}
+
 StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
   // FIXME: use llvm::sys::fs::canonical() when it gets implemented
-#ifdef LLVM_ON_UNIX
   llvm::DenseMap<const DirectoryEntry *, llvm::StringRef>::iterator Known
     = CanonicalDirNames.find(Dir);
   if (Known != CanonicalDirNames.end())
     return Known->second;
 
   StringRef CanonicalName(Dir->getName());
+
+#ifdef LLVM_ON_UNIX
   char CanonicalNameBuf[PATH_MAX];
   if (realpath(Dir->getName(), CanonicalNameBuf)) {
     unsigned Len = strlen(CanonicalNameBuf);
@@ -529,12 +561,15 @@ StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
     memcpy(Mem, CanonicalNameBuf, Len);
     CanonicalName = StringRef(Mem, Len);
   }
+#else
+  SmallString<256> CanonicalNameBuf(CanonicalName);
+  llvm::sys::fs::make_absolute(CanonicalNameBuf);
+  llvm::sys::path::native(CanonicalNameBuf);
+  removeDotPaths(CanonicalNameBuf);
+#endif
 
   CanonicalDirNames.insert(std::make_pair(Dir, CanonicalName));
   return CanonicalName;
-#else
-  return StringRef(Dir->getName());
-#endif
 }
 
 void FileManager::PrintStats() const {

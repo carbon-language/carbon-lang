@@ -57,40 +57,13 @@ void ModuleDependencyCollector::writeFileMap() {
   VFSWriter.write(OS);
 }
 
-/// Remove traversal (ie, . or ..) from the given absolute path.
-static void removePathTraversal(SmallVectorImpl<char> &Path) {
-  using namespace llvm::sys;
-  SmallVector<StringRef, 16> ComponentStack;
-  StringRef P(Path.data(), Path.size());
-
-  // Skip the root path, then look for traversal in the components.
-  StringRef Rel = path::relative_path(P);
-  for (StringRef C : llvm::make_range(path::begin(Rel), path::end(Rel))) {
-    if (C == ".")
-      continue;
-    if (C == "..") {
-      assert(ComponentStack.size() && "Path traverses out of parent");
-      ComponentStack.pop_back();
-    } else
-      ComponentStack.push_back(C);
-  }
-
-  // The stack is now the path without any directory traversal.
-  SmallString<256> Buffer = path::root_path(P);
-  for (StringRef C : ComponentStack)
-    path::append(Buffer, C);
-
-  // Put the result in Path.
-  Path.swap(Buffer);
-}
-
 std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
   using namespace llvm::sys;
 
   // We need an absolute path to append to the root.
   SmallString<256> AbsoluteSrc = Src;
   fs::make_absolute(AbsoluteSrc);
-  removePathTraversal(AbsoluteSrc);
+  FileManager::removeDotPaths(AbsoluteSrc);
 
   // Build the destination path.
   SmallString<256> Dest = Collector.getDest();

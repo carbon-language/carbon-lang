@@ -131,16 +131,24 @@ std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
     llvm::sys::path::append(Result, ModuleName + ".pcm");
   } else {
     // Construct the name <ModuleName>-<hash of ModuleMapPath>.pcm which should
-    // be globally unique to this particular module. To avoid false-negatives
-    // on case-insensitive filesystems, we use lower-case, which is safe because
-    // to cause a collision the modules must have the same name, which is an
-    // error if they are imported in the same translation.
-    SmallString<256> AbsModuleMapPath(ModuleMapPath);
-    llvm::sys::fs::make_absolute(AbsModuleMapPath);
-    llvm::sys::path::native(AbsModuleMapPath);
-    llvm::APInt Code(64, llvm::hash_value(AbsModuleMapPath.str().lower()));
+    // ideally be globally unique to this particular module. Name collisions
+    // in the hash are safe (because any translation unit can only import one
+    // module with each name), but result in a loss of caching.
+    //
+    // To avoid false-negatives, we form as canonical a path as we can, and map
+    // to lower-case in case we're on a case-insensitive file system.
+   auto *Dir =
+        FileMgr.getDirectory(llvm::sys::path::parent_path(ModuleMapPath));
+    if (!Dir)
+      return std::string();
+    auto DirName = FileMgr.getCanonicalName(Dir);
+    auto FileName = llvm::sys::path::filename(ModuleMapPath);
+
+    llvm::hash_code Hash =
+        llvm::hash_combine(DirName.lower(), FileName.lower());
+
     SmallString<128> HashStr;
-    Code.toStringUnsigned(HashStr, /*Radix*/36);
+    llvm::APInt(64, size_t(Hash)).toStringUnsigned(HashStr, /*Radix*/36);
     llvm::sys::path::append(Result, ModuleName + "-" + HashStr.str() + ".pcm");
   }
   return Result.str().str();

@@ -1058,6 +1058,21 @@ void ASTWriter::WriteBlockInfoBlock() {
   Stream.ExitBlock();
 }
 
+/// \brief Prepares a path for being written to an AST file by converting it
+/// to an absolute path and removing nested './'s.
+///
+/// \return \c true if the path was changed.
+bool cleanPathForOutput(FileManager &FileMgr, SmallVectorImpl<char> &Path) {
+  bool Changed = false;
+
+  if (!llvm::sys::path::is_absolute(StringRef(Path.data(), Path.size()))) {
+    llvm::sys::fs::make_absolute(Path);
+    Changed = true;
+  }
+
+  return Changed | FileMgr.removeDotPaths(Path);
+}
+
 /// \brief Adjusts the given filename to only write out the portion of the
 /// filename that is not part of the system root directory.
 ///
@@ -1170,8 +1185,7 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     Record.push_back(MODULE_DIRECTORY);
 
     SmallString<128> BaseDir(WritingModule->Directory->getName());
-    Context.getSourceManager().getFileManager().FixupRelativePath(BaseDir);
-    llvm::sys::fs::make_absolute(BaseDir);
+    cleanPathForOutput(Context.getSourceManager().getFileManager(), BaseDir);
     Stream.EmitRecordWithBlob(AbbrevCode, Record, BaseDir);
 
     // Write out all other paths relative to the base directory if possible.
@@ -4076,20 +4090,10 @@ void ASTWriter::AddString(StringRef Str, RecordDataImpl &Record) {
 }
 
 bool ASTWriter::PreparePathForOutput(SmallVectorImpl<char> &Path) {
-  bool Changed = false;
+  assert(Context && "should have context when outputting path");
 
-  if (!llvm::sys::path::is_absolute(StringRef(Path.data(), Path.size()))) {
-    // Ask the file manager to fixup the relative path for us. This will
-    // honor the working directory.
-    if (Context)
-      Context->getSourceManager().getFileManager().FixupRelativePath(Path);
-
-    // We want an absolute path even if we weren't given a spelling for the
-    // current working directory.
-    llvm::sys::fs::make_absolute(Path);
-
-    Changed = true;
-  }
+  bool Changed =
+      cleanPathForOutput(Context->getSourceManager().getFileManager(), Path);
 
   // Remove a prefix to make the path relative, if relevant.
   const char *PathBegin = Path.data();
