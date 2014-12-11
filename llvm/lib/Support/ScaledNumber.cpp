@@ -169,6 +169,8 @@ static std::string toStringAPFloat(uint64_t D, int E, unsigned Precision) {
   int Shift = 63 - (NewE - E);
   assert(Shift <= LeadingZeros);
   assert(Shift == LeadingZeros || NewE == ScaledNumbers::MaxScale);
+  assert((Shift & (1u << std::numeric_limits<int>::digits)) == 0 &&
+         "undefined behavior");
   D <<= Shift;
   E = NewE;
 

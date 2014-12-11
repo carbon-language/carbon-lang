@@ -323,6 +323,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
       if (i+1 >= argc)
         return Handler->error("requires a value!");
       // Steal the next argument, like for '-o filename'
+      assert(argv && "null check");
       Value = argv[++i];
     }
     break;
@@ -356,6 +357,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
   while (NumAdditionalVals > 0) {
     if (i+1 >= argc)
       return Handler->error("not enough values!");
+    assert(argv && "null check");
     Value = argv[++i];
 
     if (CommaSeparateAndAddOccurrence(Handler, i, ArgName, Value, MultiArg))
