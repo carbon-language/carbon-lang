@@ -197,9 +197,9 @@ public:
   void addIRPasses() override;
   bool addPreISel() override;
   bool addInstSelector() override;
-  bool addPreRegAlloc() override;
-  bool addPreSched2() override;
-  bool addPreEmitPass() override;
+  void addPreRegAlloc() override;
+  void addPreSched2() override;
+  void addPreEmitPass() override;
 };
 } // namespace
 
@@ -241,59 +241,53 @@ bool ARMPassConfig::addInstSelector() {
   return false;
 }
 
-bool ARMPassConfig::addPreRegAlloc() {
+void ARMPassConfig::addPreRegAlloc() {
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createARMLoadStoreOptimizationPass(true));
+    addPass(createARMLoadStoreOptimizationPass(true), false);
   if (getOptLevel() != CodeGenOpt::None && getARMSubtarget().isCortexA9())
-    addPass(createMLxExpansionPass());
+    addPass(createMLxExpansionPass(), false);
   // Since the A15SDOptimizer pass can insert VDUP instructions, it can only be
   // enabled when NEON is available.
   if (getOptLevel() != CodeGenOpt::None && getARMSubtarget().isCortexA15() &&
     getARMSubtarget().hasNEON() && !DisableA15SDOptimization) {
     addPass(createA15SDOptimizerPass());
   }
-  return true;
 }
 
-bool ARMPassConfig::addPreSched2() {
+void ARMPassConfig::addPreSched2() {
   if (getOptLevel() != CodeGenOpt::None) {
-    addPass(createARMLoadStoreOptimizationPass());
-    printAndVerify("After ARM load / store optimizer");
+    addPass(createARMLoadStoreOptimizationPass(), false);
 
     if (getARMSubtarget().hasNEON())
-      addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
+      addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass), false);
   }
 
   // Expand some pseudo instructions into multiple instructions to allow
   // proper scheduling.
-  addPass(createARMExpandPseudoPass());
+  addPass(createARMExpandPseudoPass(), false);
 
   if (getOptLevel() != CodeGenOpt::None) {
     if (!getARMSubtarget().isThumb1Only()) {
       // in v8, IfConversion depends on Thumb instruction widths
       if (getARMSubtarget().restrictIT() &&
           !getARMSubtarget().prefers32BitThumb())
-        addPass(createThumb2SizeReductionPass());
-      addPass(&IfConverterID);
+        addPass(createThumb2SizeReductionPass(), false);
+      addPass(&IfConverterID, false);
     }
   }
   if (getARMSubtarget().isThumb2())
     addPass(createThumb2ITBlockPass());
-
-  return true;
 }
 
-bool ARMPassConfig::addPreEmitPass() {
+void ARMPassConfig::addPreEmitPass() {
   if (getARMSubtarget().isThumb2()) {
     if (!getARMSubtarget().prefers32BitThumb())
-      addPass(createThumb2SizeReductionPass());
+      addPass(createThumb2SizeReductionPass(), false);
 
     // Constant island pass work on unbundled instructions.
-    addPass(&UnpackMachineBundlesID);
+    addPass(&UnpackMachineBundlesID, false);
   }
 
-  addPass(createARMOptimizeBarriersPass());
+  addPass(createARMOptimizeBarriersPass(), false);
   addPass(createARMConstantIslandPass());
-
-  return true;
 }

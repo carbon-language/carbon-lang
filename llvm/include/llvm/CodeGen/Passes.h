@@ -105,6 +105,7 @@ private:
   AnalysisID StopAfter;
   bool Started;
   bool Stopped;
+  bool AddingMachinePasses;
 
 protected:
   TargetMachine *TM;
@@ -259,12 +260,9 @@ protected:
     return false;
   }
 
-  /// addPreRegAlloc - This method may be implemented by targets that want to
-  /// run passes immediately before register allocation. This should return
-  /// true if -print-machineinstrs should print after these passes.
-  virtual bool addPreRegAlloc() {
-    return false;
-  }
+  /// This method may be implemented by targets that want to run passes
+  /// immediately before register allocation.
+  virtual void addPreRegAlloc() { }
 
   /// createTargetRegisterAllocator - Create the register allocator pass for
   /// this target at the current optimization level.
@@ -290,24 +288,16 @@ protected:
     return false;
   }
 
-  /// addPostRegAlloc - This method may be implemented by targets that want to
-  /// run passes after register allocation pass pipeline but before
-  /// prolog-epilog insertion.  This should return true if -print-machineinstrs
-  /// should print after these passes.
-  virtual bool addPostRegAlloc() {
-    return false;
-  }
+  /// This method may be implemented by targets that want to run passes after
+  /// register allocation pass pipeline but before prolog-epilog insertion.
+  virtual void addPostRegAlloc() { }
 
   /// Add passes that optimize machine instructions after register allocation.
   virtual void addMachineLateOptimization();
 
-  /// addPreSched2 - This method may be implemented by targets that want to
-  /// run passes after prolog-epilog insertion and before the second instruction
-  /// scheduling pass.  This should return true if -print-machineinstrs should
-  /// print after these passes.
-  virtual bool addPreSched2() {
-    return false;
-  }
+  /// This method may be implemented by targets that want to run passes after
+  /// prolog-epilog insertion and before the second instruction scheduling pass.
+  virtual void addPreSched2() { }
 
   /// addGCPasses - Add late codegen passes that analyze code for garbage
   /// collection. This should return true if GC info should be printed after
@@ -317,24 +307,30 @@ protected:
   /// Add standard basic block placement passes.
   virtual void addBlockPlacement();
 
-  /// addPreEmitPass - This pass may be implemented by targets that want to run
-  /// passes immediately before machine code is emitted.  This should return
-  /// true if -print-machineinstrs should print out the code after the passes.
-  virtual bool addPreEmitPass() {
-    return false;
-  }
+  /// This pass may be implemented by targets that want to run passes
+  /// immediately before machine code is emitted.
+  virtual void addPreEmitPass() { }
 
   /// Utilities for targets to add passes to the pass manager.
   ///
 
   /// Add a CodeGen pass at this point in the pipeline after checking overrides.
   /// Return the pass that was added, or zero if no pass was added.
-  AnalysisID addPass(AnalysisID PassID);
+  /// @p printAfter    if true and adding a machine function pass add an extra
+  ///                  machine printer pass afterwards
+  /// @p verifyAfter   if true and adding a machine function pass add an extra
+  ///                  machine verification pass afterwards.
+  AnalysisID addPass(AnalysisID PassID, bool verifyAfter = true,
+                     bool printAfter = true);
 
   /// Add a pass to the PassManager if that pass is supposed to be run, as
   /// determined by the StartAfter and StopAfter options. Takes ownership of the
   /// pass.
-  void addPass(Pass *P);
+  /// @p printAfter    if true and adding a machine function pass add an extra
+  ///                  machine printer pass afterwards
+  /// @p verifyAfter   if true and adding a machine function pass add an extra
+  ///                  machine verification pass afterwards.
+  void addPass(Pass *P, bool verifyAfter = true, bool printAfter = true);
 
   /// addMachinePasses helper to create the target-selected or overriden
   /// regalloc pass.
@@ -343,7 +339,14 @@ protected:
   /// printAndVerify - Add a pass to dump then verify the machine function, if
   /// those steps are enabled.
   ///
-  void printAndVerify(const char *Banner);
+  void printAndVerify(const std::string &Banner);
+
+  /// Add a pass to print the machine function if printing is enabled.
+  void addPrintPass(const std::string &Banner);
+
+  /// Add a pass to perform basic verification of the machine function if
+  /// verification is enabled.
+  void addVerifyPass(const std::string &Banner);
 };
 } // namespace llvm
 

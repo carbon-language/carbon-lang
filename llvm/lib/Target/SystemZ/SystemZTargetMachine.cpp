@@ -46,8 +46,8 @@ public:
 
   void addIRPasses() override;
   bool addInstSelector() override;
-  bool addPreSched2() override;
-  bool addPreEmitPass() override;
+  void addPreSched2() override;
+  void addPreEmitPass() override;
 };
 } // end anonymous namespace
 
@@ -60,14 +60,13 @@ bool SystemZPassConfig::addInstSelector() {
   return false;
 }
 
-bool SystemZPassConfig::addPreSched2() {
+void SystemZPassConfig::addPreSched2() {
   if (getOptLevel() != CodeGenOpt::None &&
       getSystemZTargetMachine().getSubtargetImpl()->hasLoadStoreOnCond())
     addPass(&IfConverterID);
-  return true;
 }
 
-bool SystemZPassConfig::addPreEmitPass() {
+void SystemZPassConfig::addPreEmitPass() {
   // We eliminate comparisons here rather than earlier because some
   // transformations can change the set of available CC values and we
   // generally want those transformations to have priority.  This is
@@ -92,11 +91,10 @@ bool SystemZPassConfig::addPreEmitPass() {
   // between the comparison and the branch, but it isn't clear whether
   // preventing that would be a win or not.
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createSystemZElimComparePass(getSystemZTargetMachine()));
+    addPass(createSystemZElimComparePass(getSystemZTargetMachine()), false);
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createSystemZShortenInstPass(getSystemZTargetMachine()));
+    addPass(createSystemZShortenInstPass(getSystemZTargetMachine()), false);
   addPass(createSystemZLongBranchPass(getSystemZTargetMachine()));
-  return true;
 }
 
 TargetPassConfig *SystemZTargetMachine::createPassConfig(PassManagerBase &PM) {
