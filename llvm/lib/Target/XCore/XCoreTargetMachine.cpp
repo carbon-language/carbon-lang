@@ -48,7 +48,7 @@ public:
   void addIRPasses() override;
   bool addPreISel() override;
   bool addInstSelector() override;
-  bool addPreEmitPass() override;
+  void addPreEmitPass() override;
 };
 } // namespace
 
@@ -72,9 +72,8 @@ bool XCorePassConfig::addInstSelector() {
   return false;
 }
 
-bool XCorePassConfig::addPreEmitPass() {
-  addPass(createXCoreFrameToArgsOffsetEliminationPass());
-  return false;
+void XCorePassConfig::addPreEmitPass() {
+  addPass(createXCoreFrameToArgsOffsetEliminationPass(), false);
 }
 
 // Force static initialization.
