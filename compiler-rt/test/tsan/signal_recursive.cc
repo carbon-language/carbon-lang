@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "process_sleep.h"
+
 static const int kSigSuspend = SIGUSR1;
 static const int kSigRestart = SIGUSR2;
 static sigset_t g_suspend_handler_mask;
@@ -59,33 +61,30 @@ static void RestartHandler(int sig) {
 }
 
 static void StopWorld(pthread_t thread) {
-  int result = pthread_kill(thread, kSigSuspend);
-  if (result != 0)
+  if (pthread_kill(thread, kSigSuspend) != 0)
     fail("pthread_kill failed");
 
-  while ((result = sem_wait(&g_thread_suspend_ack_sem)) != 0) {
-    if (result != EINTR) {
+  while (sem_wait(&g_thread_suspend_ack_sem) != 0) {
+    if (errno != EINTR)
       fail("sem_wait failed");
-    }
   }
 }
 
 static void StartWorld(pthread_t thread) {
-  int result = pthread_kill(thread, kSigRestart);
-  if (result != 0)
+  if (pthread_kill(thread, kSigRestart) != 0)
     fail("pthread_kill failed");
 
-  while ((result = sem_wait(&g_thread_suspend_ack_sem)) != 0) {
-    if (result != EINTR) {
+  while (sem_wait(&g_thread_suspend_ack_sem) != 0) {
+    if (errno != EINTR)
       fail("sem_wait failed");
-    }
   }
 }
 
 static void CollectGarbage(pthread_t thread) {
   StopWorld(thread);
   // Walk stacks
-    StartWorld(thread);
+  process_sleep(1);
+  StartWorld(thread);
 }
 
 static void Init() {
@@ -118,9 +117,11 @@ void* BusyThread(void *arg) {
 int main(int argc, const char *argv[]) {
   Init();
   pthread_t busy_thread;
-  pthread_create(&busy_thread, NULL, &BusyThread, NULL);
+  if (pthread_create(&busy_thread, NULL, &BusyThread, NULL) != 0)
+    fail("pthread_create failed");
   CollectGarbage(busy_thread);
-  pthread_join(busy_thread, 0);
+  if (pthread_join(busy_thread, 0) != 0)
+    fail("pthread_join failed");
   fprintf(stderr, "DONE\n");
   return 0;
 }
