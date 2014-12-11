@@ -453,7 +453,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
       SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::i32,
                                                 MVT::Other, Base, TargetConst,
                                                 Chain);
-      SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::SXTW, dl, MVT::i64,
+      SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_sxtw, dl, MVT::i64,
                                                 SDValue(Result_1, 0));
       MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
       MemOp[0] = LD->getMemOperand();
@@ -474,7 +474,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
     SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
                                               MVT::Other, Base, TargetConst0,
                                               Chain);
-    SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::SXTW, dl,
+    SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_sxtw, dl,
                                                 MVT::i64, SDValue(Result_1, 0));
     SDNode* Result_3 = CurDAG->getMachineNode(Hexagon::ADD_ri, dl,
                                               MVT::i32, Base, TargetConstVal,

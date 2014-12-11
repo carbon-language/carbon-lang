@@ -133,7 +133,7 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr *MI = MII;
       // Look for sign extends:
       // %vreg170<def> = SXTW %vreg166
-      if (!DisableOptSZExt && MI->getOpcode() == Hexagon::SXTW) {
+      if (!DisableOptSZExt && MI->getOpcode() == Hexagon::A2_sxtw) {
         assert (MI->getNumOperands() == 2);
         MachineOperand &Dst = MI->getOperand(0);
         MachineOperand &Src  = MI->getOperand(1);

@@ -3249,7 +3249,7 @@ def:  Pat <(i64 (zextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
       (i64 (COMBINE_Ir_V4 0, (LDriub_abs_V4 tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (sextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (SXTW (LDrib_abs_V4 tglobaladdr:$addr)))>;
+      (i64 (A2_sxtw (LDrib_abs_V4 tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (extloadi8 FoldGlobalAddr:$addr)),
       (i64 (COMBINE_Ir_V4 0, (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
@@ -3258,7 +3258,7 @@ def:  Pat <(i64 (zextloadi8 FoldGlobalAddr:$addr)),
       (i64 (COMBINE_Ir_V4 0, (LDriub_abs_V4 FoldGlobalAddr:$addr)))>;
 
 def:  Pat <(i64 (sextloadi8 FoldGlobalAddr:$addr)),
-      (i64 (SXTW (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
+      (i64 (A2_sxtw (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
 }
 // i16 -> i64 loads
 // We need a complexity of 120 here to override preceding handling of
@@ -3273,7 +3273,7 @@ def:  Pat <(i64 (zextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (SXTW (LDrih_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A2_sxtw (LDrih_abs_V4 tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (extloadi16 FoldGlobalAddr:$addr)),
@@ -3285,7 +3285,7 @@ def:  Pat <(i64 (zextloadi16 FoldGlobalAddr:$addr)),
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi16 FoldGlobalAddr:$addr)),
-      (i64 (SXTW (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A2_sxtw (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 }
 // i32->i64 loads
@@ -3301,7 +3301,7 @@ def:  Pat <(i64 (zextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (SXTW (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A2_sxtw (LDriw_abs_V4 tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (extloadi32 FoldGlobalAddr:$addr)),
@@ -3313,7 +3313,7 @@ def:  Pat <(i64 (zextloadi32 FoldGlobalAddr:$addr)),
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi32 FoldGlobalAddr:$addr)),
-      (i64 (SXTW (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A2_sxtw (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 }
 
