@@ -94,4 +94,19 @@ entry:
   ret void
 }
 
+; Check that pushing the addresses of globals (Or generally, things that 
+; aren't exactly immediates) isn't broken.
+; Fixes PR21878.
+; NORMAL-LABEL: test6
+; NORMAL: pushl    $_ext
+; NORMAL-NEXT: call
+declare void @f(i8*)
+@ext = external constant i8
 
+define void @test6() {
+  call void @f(i8* @ext)
+  br label %bb
+bb:
+  alloca i32
+  ret void
+}

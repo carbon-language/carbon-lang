@@ -93,13 +93,14 @@ static unsigned getANDriOpcode(bool IsLP64, int64_t Imm) {
   return X86::AND32ri;
 }
 
-static unsigned getPUSHiOpcode(bool IsLP64, int64_t Imm) {
+static unsigned getPUSHiOpcode(bool IsLP64, MachineOperand MO) {
   // We don't support LP64 for now.
   assert(!IsLP64);
 
-  if (isInt<8>(Imm))
+  if (MO.isImm() && isInt<8>(MO.getImm()))
     return X86::PUSH32i8;
-  return X86::PUSHi32;
+
+  return X86::PUSHi32;;
 }
 
 static unsigned getLEArOpcode(unsigned IsLP64) {
@@ -1892,14 +1893,13 @@ convertArgMovsToPushes(MachineFunction &MF, MachineBasicBlock &MBB,
   for (auto MMI = MovMap.rbegin(), MME = MovMap.rend(); MMI != MME; ++MMI) {
     MachineBasicBlock::iterator MOV = MMI->second;
     MachineOperand PushOp = MOV->getOperand(X86::AddrNumOperands);
-    if (MOV->getOpcode() == X86::MOV32mi) {
-      int64_t Val = PushOp.getImm();
-      BuildMI(MBB, Call, DL, TII.get(getPUSHiOpcode(false, Val)))
-        .addImm(Val);
-    } else {
-      BuildMI(MBB, Call, DL, TII.get(X86::PUSH32r))
-        .addReg(PushOp.getReg());
-    }
+
+    // Replace MOVmr with PUSH32r, and MOVmi with PUSHi of appropriate size
+    int PushOpcode = X86::PUSH32r;
+    if (MOV->getOpcode() == X86::MOV32mi)
+      PushOpcode = getPUSHiOpcode(false, PushOp);
+
+    BuildMI(MBB, Call, DL, TII.get(PushOpcode)).addOperand(PushOp);
     MBB.erase(MOV);
   }
 
