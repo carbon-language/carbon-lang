@@ -221,3 +221,19 @@ void Test9(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2
   (void)(__bridge Class)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'Class'}}
   (void)(__bridge CFErrorRef)c; // expected-warning {{'__unsafe_unretained Class' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
 }
+
+// rdar://19157264
+#if __has_feature(objc_bridge_id)
+typedef struct __attribute__((objc_bridge(id))) __CFFoo *CFFooRef;
+#endif
+
+id convert(CFFooRef obj) {
+  (void)(NSError *)obj; // expected-error {{cast of C pointer type 'CFFooRef' (aka 'struct __CFFoo *') to Objective-C pointer type 'NSError *' requires a bridged cast}} \
+                        // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+                        // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFFooRef' (aka 'struct __CFFoo *') into ARC}}
+  (void) (__bridge NSError *)obj;
+  (void) (id)obj;       // expected-error {{cast of C pointer type 'CFFooRef' (aka 'struct __CFFoo *') to Objective-C pointer type 'id' requires a bridged cast}} \
+                        // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+                        // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFFooRef' (aka 'struct __CFFoo *') into ARC}}
+  return (__bridge id)obj;
+}
