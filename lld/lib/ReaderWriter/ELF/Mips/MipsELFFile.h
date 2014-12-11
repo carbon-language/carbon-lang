@@ -80,49 +80,15 @@ public:
 
 template <class ELFT> class MipsELFFile : public ELFFile<ELFT> {
 public:
-  MipsELFFile(StringRef name, bool atomizeStrings)
-      : ELFFile<ELFT>(name, atomizeStrings) {}
-
-  MipsELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-              std::error_code &ec)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings, ec) {}
+  MipsELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
+      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
 
   static ErrorOr<std::unique_ptr<MipsELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-    std::error_code ec;
     std::unique_ptr<MipsELFFile<ELFT>> file(
-        new MipsELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
-
-    file->_objFile.reset(
-        new llvm::object::ELFFile<ELFT>(mb.release()->getBuffer(), ec));
-
-    if (ec)
+        new MipsELFFile<ELFT>(std::move(mb), atomizeStrings));
+    if (std::error_code ec = file->parse())
       return ec;
-
-    // Read input sections from the input file that need to be converted to
-    // atoms
-    if ((ec = file->createAtomizableSections()))
-      return ec;
-
-    // For mergeable strings, we would need to split the section into various
-    // atoms
-    if ((ec = file->createMergeableAtoms()))
-      return ec;
-
-    // Create the necessary symbols that are part of the section that we
-    // created in createAtomizableSections function
-    if ((ec = file->createSymbolsFromAtomizableSections()))
-      return ec;
-
-    // Create the appropriate atoms from the file
-    if ((ec = file->createAtoms()))
-      return ec;
-
-    // Retrieve some auxiliary data like GP value, TLS section address etc
-    // from the object file.
-    if ((ec = file->readAuxData()))
-      return ec;
-
     return std::move(file);
   }
 
@@ -136,6 +102,14 @@ public:
   /// \brief .tdata section address plus fixed offset.
   uint64_t getTPOffset() const { return *_tpOff; }
   uint64_t getDTPOffset() const { return *_dtpOff; }
+
+  std::error_code parse() override {
+    if (std::error_code ec = ELFFile<ELFT>::parse())
+      return ec;
+    // Retrieve some auxiliary data like GP value, TLS section address etc
+    // from the object file.
+    return readAuxData();
+  }
 
 private:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;

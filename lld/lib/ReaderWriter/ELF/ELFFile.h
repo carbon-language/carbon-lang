@@ -115,8 +115,14 @@ template <class ELFT> class ELFFile : public File {
   typedef typename MergedSectionMapT::iterator MergedSectionMapIterT;
 
 public:
-  ELFFile(StringRef name, bool atomizeStrings = false)
-      : File(name, kindObject), _ordinal(0), _doStringsMerge(atomizeStrings) {}
+  ELFFile(StringRef name)
+      : File(name, kindObject), _ordinal(0), _doStringsMerge(false) {}
+
+  ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings = false)
+      : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
+        _ordinal(0), _doStringsMerge(atomizeStrings) {}
+
+  virtual std::error_code parse();
 
   static ErrorOr<std::unique_ptr<ELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings);
@@ -354,6 +360,7 @@ protected:
   /// \brief Sections that have merge string property
   std::vector<const Elf_Shdr *> _mergeStringSections;
 
+  std::unique_ptr<MemoryBuffer> _mb;
   int64_t _ordinal;
 
   /// \brief the cached options relevant while reading the ELF File
@@ -412,34 +419,39 @@ ErrorOr<std::unique_ptr<ELFFile<ELFT>>>
 ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
   std::error_code ec;
   std::unique_ptr<ELFFile<ELFT>> file(
-      new ELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
+      new ELFFile<ELFT>(std::move(mb), atomizeStrings));
+  if (std::error_code ec = file->parse())
+    return ec;
+  return std::move(file);
+}
 
-  file->_objFile.reset(
-      new llvm::object::ELFFile<ELFT>(mb.release()->getBuffer(), ec));
-
+template <class ELFT>
+std::error_code ELFFile<ELFT>::parse() {
+  std::error_code ec;
+  _objFile.reset(
+      new llvm::object::ELFFile<ELFT>(_mb.release()->getBuffer(), ec));
   if (ec)
     return ec;
 
   // Read input sections from the input file that need to be converted to
   // atoms
-  if ((ec = file->createAtomizableSections()))
+  if ((ec = createAtomizableSections()))
     return ec;
 
   // For mergeable strings, we would need to split the section into various
   // atoms
-  if ((ec = file->createMergeableAtoms()))
+  if ((ec = createMergeableAtoms()))
     return ec;
 
   // Create the necessary symbols that are part of the section that we
   // created in createAtomizableSections function
-  if ((ec = file->createSymbolsFromAtomizableSections()))
+  if ((ec = createSymbolsFromAtomizableSections()))
     return ec;
 
   // Create the appropriate atoms from the file
-  if ((ec = file->createAtoms()))
+  if ((ec = createAtoms()))
     return ec;
-
-  return std::move(file);
+  return std::error_code();
 }
 
 template <class ELFT> Reference::KindArch ELFFile<ELFT>::kindArch() {

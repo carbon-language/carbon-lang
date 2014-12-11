@@ -19,44 +19,15 @@ class X86LinkingContext;
 
 template <class ELFT> class X86ELFFile : public ELFFile<ELFT> {
 public:
-  X86ELFFile(StringRef name, bool atomizeStrings)
-      : ELFFile<ELFT>(name, atomizeStrings) {}
-
-  X86ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-             std::error_code &ec)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings, ec) {}
+  X86ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
+      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
 
   static ErrorOr<std::unique_ptr<X86ELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-    std::error_code ec;
     std::unique_ptr<X86ELFFile<ELFT>> file(
-        new X86ELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
-
-    file->_objFile.reset(
-        new llvm::object::ELFFile<ELFT>(mb.release()->getBuffer(), ec));
-
-    if (ec)
+        new X86ELFFile<ELFT>(std::move(mb), atomizeStrings));
+    if (std::error_code ec = file->parse())
       return ec;
-
-    // Read input sections from the input file that need to be converted to
-    // atoms
-    if ((ec = file->createAtomizableSections()))
-      return ec;
-
-    // For mergeable strings, we would need to split the section into various
-    // atoms
-    if ((ec = file->createMergeableAtoms()))
-      return ec;
-
-    // Create the necessary symbols that are part of the section that we
-    // created in createAtomizableSections function
-    if ((ec = file->createSymbolsFromAtomizableSections()))
-      return ec;
-
-    // Create the appropriate atoms from the file
-    if ((ec = file->createAtoms()))
-      return ec;
-
     return std::move(file);
   }
 };
