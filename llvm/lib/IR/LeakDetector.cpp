@@ -14,6 +14,7 @@
 #include "llvm/IR/LeakDetector.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -39,6 +40,11 @@ void LeakDetector::addGarbageObjectImpl(const Value *Object) {
   pImpl->LLVMObjects.addGarbage(Object);
 }
 
+void LeakDetector::addGarbageObjectImpl(const MDNode *Object) {
+  LLVMContextImpl *pImpl = Object->getContext().pImpl;
+  pImpl->LLVMMDObjects.addGarbage(Object);
+}
+
 void LeakDetector::removeGarbageObjectImpl(void *Object) {
   sys::SmartScopedLock<true> Lock(*ObjectsLock);
   Objects->removeGarbage(Object);
@@ -49,6 +55,11 @@ void LeakDetector::removeGarbageObjectImpl(const Value *Object) {
   pImpl->LLVMObjects.removeGarbage(Object);
 }
 
+void LeakDetector::removeGarbageObjectImpl(const MDNode *Object) {
+  LLVMContextImpl *pImpl = Object->getContext().pImpl;
+  pImpl->LLVMMDObjects.removeGarbage(Object);
+}
+
 void LeakDetector::checkForGarbageImpl(LLVMContext &Context, 
                                        const std::string &Message) {
   LLVMContextImpl *pImpl = Context.pImpl;
@@ -56,10 +67,12 @@ void LeakDetector::checkForGarbageImpl(LLVMContext &Context,
   
   Objects->setName("GENERIC");
   pImpl->LLVMObjects.setName("LLVM");
+  pImpl->LLVMMDObjects.setName("LLVM-MD");
   
   // use non-short-circuit version so that both checks are performed
   if (Objects->hasGarbage(Message) |
-      pImpl->LLVMObjects.hasGarbage(Message))
+      pImpl->LLVMObjects.hasGarbage(Message) |
+      pImpl->LLVMMDObjects.hasGarbage(Message))
     errs() << "\nThis is probably because you removed an object, but didn't "
            << "delete it.  Please check your code for memory leaks.\n";
 

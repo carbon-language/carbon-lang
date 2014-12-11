@@ -16,6 +16,7 @@
 #define LLVM_LIB_IR_LEAKSCONTEXT_H
 
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -29,6 +30,10 @@ struct PrinterTrait {
 template<>
 struct PrinterTrait<Value> {
   static void print(const Value* P) { errs() << *P; }
+};
+
+template <> struct PrinterTrait<Metadata> {
+  static void print(const Metadata *P) { P->print(errs()); }
 };
 
 template <typename T>

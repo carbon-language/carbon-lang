@@ -28,6 +28,7 @@ namespace llvm {
 
 class LLVMContext;
 class Value;
+class MDNode;
 
 struct LeakDetector {
   /// addGarbageObject - Add a pointer to the internal set of "garbage" object
@@ -71,6 +72,18 @@ private:
   /// Value* in a different leak-detection container than other classes.
   static void addGarbageObjectImpl(const Value *Object);
   static void removeGarbageObjectImpl(const Value *Object);
+
+  /// Overload the normal methods to work better with MDNode* to improve error
+  /// messages.
+  ///
+  /// For better or worse, this hides errors when other types are added as
+  /// garbage, deleted without being removed, and an MDNode is allocated in the
+  /// same spot.
+  ///
+  /// \note Only handle \a MDNode for now, since we can't always get access to
+  /// an \a LLVMContext for other \a Metadata types.
+  static void addGarbageObjectImpl(const MDNode *Object);
+  static void removeGarbageObjectImpl(const MDNode *Object);
 
   static void addGarbageObjectImpl(void *Object);
   static void removeGarbageObjectImpl(void *Object);
