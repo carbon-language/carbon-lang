@@ -81,6 +81,7 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
             else
             {
                 Clear();
+                printf("error: register sets must have valid names\n");
                 return 0;
             }
         }
@@ -121,6 +122,8 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                 if (reg_info.name == NULL)
                 {
                     Clear();
+                    printf("error: registers must have valid names\n");
+                    reg_info_dict.Dump();
                     return 0;
                 }
                     
@@ -290,6 +293,7 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                     if (!success)
                     {
                         Clear();
+                        reg_info_dict.Dump();
                         return 0;
                     }
                 }
@@ -297,6 +301,8 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                 if (bitsize == 0)
                 {
                     Clear();
+                    printf("error: invalid or missing 'bitsize' key/value pair in register dictionary\n");
+                    reg_info_dict.Dump();
                     return 0;
                 }
 
@@ -308,6 +314,8 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                     if (Args::StringToFormat(format_cstr, reg_info.format, NULL).Fail())
                     {
                         Clear();
+                        printf("error: invalid 'format' value in register dictionary\n");
+                        reg_info_dict.Dump();
                         return 0;
                     }
                 }
@@ -326,6 +334,8 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                 if (static_cast<size_t>(set) >= m_sets.size())
                 {
                     Clear();
+                    printf("error: invalid 'set' value in register dictionary, valid values are 0 - %i\n", (int)set);
+                    reg_info_dict.Dump();
                     return 0;
                 }
 
@@ -409,6 +419,8 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
             else
             {
                 Clear();
+                printf("error: items in the 'registers' array must be dictionaries\n");
+                regs.Dump();
                 return 0;
             }
         }
