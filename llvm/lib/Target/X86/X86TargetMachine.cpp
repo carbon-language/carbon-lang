@@ -193,13 +193,13 @@ void X86PassConfig::addPostRegAlloc() {
 
 void X86PassConfig::addPreEmitPass() {
   if (getOptLevel() != CodeGenOpt::None && getX86Subtarget().hasSSE2())
-    addPass(createExecutionDependencyFixPass(&X86::VR128RegClass), false);
+    addPass(createExecutionDependencyFixPass(&X86::VR128RegClass));
 
   if (UseVZeroUpper)
-    addPass(createX86IssueVZeroUpperPass(), false);
+    addPass(createX86IssueVZeroUpperPass());
 
   if (getOptLevel() != CodeGenOpt::None) {
-    addPass(createX86PadShortFunctions(), false);
+    addPass(createX86PadShortFunctions());
     addPass(createX86FixupLEAs());
   }
 }

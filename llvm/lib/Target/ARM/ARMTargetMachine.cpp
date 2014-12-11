@@ -243,9 +243,9 @@ bool ARMPassConfig::addInstSelector() {
 
 void ARMPassConfig::addPreRegAlloc() {
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createARMLoadStoreOptimizationPass(true), false);
+    addPass(createARMLoadStoreOptimizationPass(true));
   if (getOptLevel() != CodeGenOpt::None && getARMSubtarget().isCortexA9())
-    addPass(createMLxExpansionPass(), false);
+    addPass(createMLxExpansionPass());
   // Since the A15SDOptimizer pass can insert VDUP instructions, it can only be
   // enabled when NEON is available.
   if (getOptLevel() != CodeGenOpt::None && getARMSubtarget().isCortexA15() &&
@@ -256,23 +256,23 @@ void ARMPassConfig::addPreRegAlloc() {
 
 void ARMPassConfig::addPreSched2() {
   if (getOptLevel() != CodeGenOpt::None) {
-    addPass(createARMLoadStoreOptimizationPass(), false);
+    addPass(createARMLoadStoreOptimizationPass());
 
     if (getARMSubtarget().hasNEON())
-      addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass), false);
+      addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
   }
 
   // Expand some pseudo instructions into multiple instructions to allow
   // proper scheduling.
-  addPass(createARMExpandPseudoPass(), false);
+  addPass(createARMExpandPseudoPass());
 
   if (getOptLevel() != CodeGenOpt::None) {
     if (!getARMSubtarget().isThumb1Only()) {
       // in v8, IfConversion depends on Thumb instruction widths
       if (getARMSubtarget().restrictIT() &&
           !getARMSubtarget().prefers32BitThumb())
-        addPass(createThumb2SizeReductionPass(), false);
-      addPass(&IfConverterID, false);
+        addPass(createThumb2SizeReductionPass());
+      addPass(&IfConverterID);
     }
   }
   if (getARMSubtarget().isThumb2())
@@ -282,12 +282,12 @@ void ARMPassConfig::addPreSched2() {
 void ARMPassConfig::addPreEmitPass() {
   if (getARMSubtarget().isThumb2()) {
     if (!getARMSubtarget().prefers32BitThumb())
-      addPass(createThumb2SizeReductionPass(), false);
+      addPass(createThumb2SizeReductionPass());
 
     // Constant island pass work on unbundled instructions.
-    addPass(&UnpackMachineBundlesID, false);
+    addPass(&UnpackMachineBundlesID);
   }
 
-  addPass(createARMOptimizeBarriersPass(), false);
+  addPass(createARMOptimizeBarriersPass());
   addPass(createARMConstantIslandPass());
 }
