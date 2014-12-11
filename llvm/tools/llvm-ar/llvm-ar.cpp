@@ -413,8 +413,6 @@ class NewArchiveIterator {
   object::Archive::child_iterator OldI;
 
   StringRef NewFilename;
-  mutable int NewFD;
-  mutable sys::fs::file_status NewStatus;
 
 public:
   NewArchiveIterator(object::Archive::child_iterator I, StringRef Name);
@@ -426,7 +424,7 @@ public:
   object::Archive::child_iterator getOld() const;
 
   StringRef getNew() const;
-  int getFD() const;
+  int getFD(sys::fs::file_status &NewStatus) const;
   const sys::fs::file_status &getStatus() const;
 };
 }
@@ -438,7 +436,7 @@ NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
     : IsNewMember(false), Name(Name), OldI(I) {}
 
 NewArchiveIterator::NewArchiveIterator(StringRef NewFilename, StringRef Name)
-    : IsNewMember(true), Name(Name), NewFilename(NewFilename), NewFD(-1) {}
+    : IsNewMember(true), Name(Name), NewFilename(NewFilename) {}
 
 StringRef NewArchiveIterator::getName() const { return Name; }
 
@@ -454,10 +452,9 @@ StringRef NewArchiveIterator::getNew() const {
   return NewFilename;
 }
 
-int NewArchiveIterator::getFD() const {
+int NewArchiveIterator::getFD(sys::fs::file_status &NewStatus) const {
   assert(IsNewMember);
-  if (NewFD != -1)
-    return NewFD;
+  int NewFD;
   failIfError(sys::fs::openFileForRead(NewFilename, NewFD), NewFilename);
   assert(NewFD != -1);
 
@@ -470,12 +467,6 @@ int NewArchiveIterator::getFD() const {
     failIfError(make_error_code(errc::is_a_directory), NewFilename);
 
   return NewFD;
-}
-
-const sys::fs::file_status &NewArchiveIterator::getStatus() const {
-  assert(IsNewMember);
-  assert(NewFD != -1 && "Must call getFD first");
-  return NewStatus;
 }
 
 template <typename T>
@@ -768,6 +759,7 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
 
   std::vector<std::unique_ptr<MemoryBuffer>> Buffers;
   std::vector<MemoryBufferRef> Members;
+  std::vector<sys::fs::file_status> NewMemberStatus;
 
   for (unsigned I = 0, N = NewMembers.size(); I < N; ++I) {
     NewArchiveIterator &Member = NewMembers[I];
@@ -775,11 +767,14 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
 
     if (Member.isNewMember()) {
       StringRef Filename = Member.getNew();
-      int FD = Member.getFD();
-      const sys::fs::file_status &Status = Member.getStatus();
+      NewMemberStatus.resize(NewMemberStatus.size() + 1);
+      sys::fs::file_status &Status = NewMemberStatus.back();
+      int FD = Member.getFD(Status);
       ErrorOr<std::unique_ptr<MemoryBuffer>> MemberBufferOrErr =
           MemoryBuffer::getOpenFile(FD, Filename, Status.getSize(), false);
       failIfError(MemberBufferOrErr.getError(), Filename);
+      if (close(FD) != 0)
+        fail("Could not close file");
       Buffers.push_back(std::move(MemberBufferOrErr.get()));
       MemberRef = Buffers.back()->getMemBufferRef();
     } else {
@@ -804,6 +799,7 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
 
   unsigned MemberNum = 0;
   unsigned LongNameMemberNum = 0;
+  unsigned NewMemberNum = 0;
   for (std::vector<NewArchiveIterator>::iterator I = NewMembers.begin(),
                                                  E = NewMembers.end();
        I != E; ++I, ++MemberNum) {
@@ -820,7 +816,8 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
     MemoryBufferRef File = Members[MemberNum];
     if (I->isNewMember()) {
       StringRef FileName = I->getNew();
-      const sys::fs::file_status &Status = I->getStatus();
+      const sys::fs::file_status &Status = NewMemberStatus[NewMemberNum];
+      NewMemberNum++;
 
       StringRef Name = sys::path::filename(FileName);
       if (Name.size() < 16)
