@@ -699,6 +699,9 @@ class AVX5128I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, T8PD,
         Requires<[HasAVX512]>;
+class AVX5128IBase : T8PD {
+  Domain ExeDomain = SSEPackedInt;
+}
 class AVX512XS8I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, T8XS,
