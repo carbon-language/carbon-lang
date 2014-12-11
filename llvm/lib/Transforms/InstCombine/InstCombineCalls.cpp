@@ -733,7 +733,22 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // TODO: eventually we should lower this intrinsic to IR
     if (auto CIWidth = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
       if (auto CIStart = dyn_cast<ConstantInt>(II->getArgOperand(3))) {
-        if (CIWidth->equalsInt(64) && CIStart->isZero()) {
+        unsigned Index = CIStart->getZExtValue();
+        // From AMD documentation: "a value of zero in the field length is
+        // defined as length of 64".
+        unsigned Length = CIWidth->equalsInt(0) ? 64 : CIWidth->getZExtValue();
+
+        // From AMD documentation: "If the sum of the bit index + length field
+        // is greater than 64, the results are undefined".
+
+        // Note that both field index and field length are 8-bit quantities.
+        // Since variables 'Index' and 'Length' are unsigned values
+        // obtained from zero-extending field index and field length
+        // respectively, their sum should never wrap around.
+        if ((Index + Length) > 64)
+          return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
+
+        if (Length == 64 && Index == 0) {
           Value *Vec = II->getArgOperand(1);
           Value *Undef = UndefValue::get(Vec->getType());
           const uint32_t Mask[] = { 0, 2 };
