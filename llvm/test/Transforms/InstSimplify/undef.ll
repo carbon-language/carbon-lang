@@ -191,28 +191,28 @@ define i32 @test23(i32 %a) {
 
 ; CHECK-LABEL: @test24
 ; CHECK: ret i32 undef
-define i32 @test24(i32 %a) {
+define i32 @test24() {
   %b = udiv i32 undef, 0
   ret i32 %b
 }
 
 ; CHECK-LABEL: @test25
 ; CHECK: ret i32 undef
-define i32 @test25(i32 %a) {
+define i32 @test25() {
   %b = lshr i32 0, undef
   ret i32 %b
 }
 
 ; CHECK-LABEL: @test26
 ; CHECK: ret i32 undef
-define i32 @test26(i32 %a) {
+define i32 @test26() {
   %b = ashr i32 0, undef
   ret i32 %b
 }
 
 ; CHECK-LABEL: @test27
 ; CHECK: ret i32 undef
-define i32 @test27(i32 %a) {
+define i32 @test27() {
   %b = shl i32 0, undef
   ret i32 %b
 }
