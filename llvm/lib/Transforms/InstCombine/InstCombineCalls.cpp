@@ -369,29 +369,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (LHSKnownNegative && RHSKnownNegative) {
         // The sign bit is set in both cases: this MUST overflow.
         // Create a simple add instruction, and insert it into the struct.
-        Value *Add = Builder->CreateAdd(LHS, RHS);
-        Add->takeName(&CI);
-        Constant *V[] = {
-          UndefValue::get(LHS->getType()),
-          ConstantInt::getTrue(II->getContext())
-        };
-        StructType *ST = cast<StructType>(II->getType());
-        Constant *Struct = ConstantStruct::get(ST, V);
-        return InsertValueInst::Create(Struct, Add, 0);
+        return CreateOverflowTuple(II, Builder->CreateAdd(LHS, RHS), true,
+                                    /*ReUseName*/true);
       }
 
       if (LHSKnownPositive && RHSKnownPositive) {
         // The sign bit is clear in both cases: this CANNOT overflow.
         // Create a simple add instruction, and insert it into the struct.
-        Value *Add = Builder->CreateNUWAdd(LHS, RHS);
-        Add->takeName(&CI);
-        Constant *V[] = {
-          UndefValue::get(LHS->getType()),
-          ConstantInt::getFalse(II->getContext())
-        };
-        StructType *ST = cast<StructType>(II->getType());
-        Constant *Struct = ConstantStruct::get(ST, V);
-        return InsertValueInst::Create(Struct, Add, 0);
+        return CreateOverflowTuple(II, Builder->CreateNUWAdd(LHS, RHS), false);
       }
     }
   }
@@ -413,13 +398,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
       // X + 0 -> {X, false}
       if (RHS->isZero()) {
-        Constant *V[] = {
-          UndefValue::get(II->getArgOperand(0)->getType()),
-          ConstantInt::getFalse(II->getContext())
-        };
-        Constant *Struct =
-          ConstantStruct::get(cast<StructType>(II->getType()), V);
-        return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
+        return CreateOverflowTuple(II, II->getArgOperand(0), false,
+                                    /*ReUseName*/false);
       }
     }
 
@@ -428,37 +408,27 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (II->getIntrinsicID() == Intrinsic::sadd_with_overflow) {
       Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
       if (WillNotOverflowSignedAdd(LHS, RHS, II)) {
-        Value *Add = Builder->CreateNSWAdd(LHS, RHS);
-        Add->takeName(&CI);
-        Constant *V[] = {UndefValue::get(Add->getType()), Builder->getFalse()};
-        StructType *ST = cast<StructType>(II->getType());
-        Constant *Struct = ConstantStruct::get(ST, V);
-        return InsertValueInst::Create(Struct, Add, 0);
+        return CreateOverflowTuple(II, Builder->CreateNSWAdd(LHS, RHS), false);
       }
     }
 
     break;
   case Intrinsic::usub_with_overflow:
-  case Intrinsic::ssub_with_overflow:
+  case Intrinsic::ssub_with_overflow: {
+    Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
     // undef - X -> undef
     // X - undef -> undef
-    if (isa<UndefValue>(II->getArgOperand(0)) ||
-        isa<UndefValue>(II->getArgOperand(1)))
+    if (isa<UndefValue>(LHS) || isa<UndefValue>(RHS))
       return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
 
-    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
+    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(RHS)) {
       // X - 0 -> {X, false}
-      if (RHS->isZero()) {
-        Constant *V[] = {
-          UndefValue::get(II->getArgOperand(0)->getType()),
-          ConstantInt::getFalse(II->getContext())
-        };
-        Constant *Struct =
-          ConstantStruct::get(cast<StructType>(II->getType()), V);
-        return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
+      if (ConstRHS->isZero()) {
+        return CreateOverflowTuple(II, LHS, false, /*ReUseName*/false);
       }
     }
     break;
+  }
   case Intrinsic::umul_with_overflow: {
     Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
     unsigned BitWidth = cast<IntegerType>(LHS->getType())->getBitWidth();
@@ -479,13 +449,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     bool Overflow;
     LHSMax.umul_ov(RHSMax, Overflow);
     if (!Overflow) {
-      Value *Mul = Builder->CreateNUWMul(LHS, RHS, "umul_with_overflow");
-      Constant *V[] = {
-        UndefValue::get(LHS->getType()),
-        Builder->getFalse()
-      };
-      Constant *Struct = ConstantStruct::get(cast<StructType>(II->getType()),V);
-      return InsertValueInst::Create(Struct, Mul, 0);
+      return CreateOverflowTuple(II, Builder->CreateNUWMul(LHS, RHS), false);
     }
   } // FALL THROUGH
   case Intrinsic::smul_with_overflow:
@@ -509,13 +473,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
       // X * 1 -> {X, false}
       if (RHSI->equalsInt(1)) {
-        Constant *V[] = {
-          UndefValue::get(II->getArgOperand(0)->getType()),
-          ConstantInt::getFalse(II->getContext())
-        };
-        Constant *Struct =
-          ConstantStruct::get(cast<StructType>(II->getType()), V);
-        return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
+        return CreateOverflowTuple(II, II->getArgOperand(0), false,
+                                    /*ReUseName*/false);
       }
     }
     break;
