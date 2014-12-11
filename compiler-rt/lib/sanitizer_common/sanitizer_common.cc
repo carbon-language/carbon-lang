@@ -258,12 +258,9 @@ void IncreaseTotalMmap(uptr size) {
   if (!common_flags()->mmap_limit_mb) return;
   uptr total_mmaped =
       atomic_fetch_add(&g_total_mmaped, size, memory_order_relaxed) + size;
-  if ((total_mmaped >> 20) > common_flags()->mmap_limit_mb) {
-    // Since for now mmap_limit_mb is not a user-facing flag, just CHECK.
-    uptr mmap_limit_mb = common_flags()->mmap_limit_mb;
-    common_flags()->mmap_limit_mb = 0;  // Allow mmap in CHECK.
-    RAW_CHECK(total_mmaped >> 20 < mmap_limit_mb);
-  }
+  // Since for now mmap_limit_mb is not a user-facing flag, just kill
+  // a program. Use RAW_CHECK to avoid extra mmaps in reporting.
+  RAW_CHECK((total_mmaped >> 20) < common_flags()->mmap_limit_mb);
 }
 
 void DecreaseTotalMmap(uptr size) {
