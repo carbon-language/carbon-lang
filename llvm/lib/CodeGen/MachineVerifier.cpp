@@ -243,10 +243,10 @@ namespace {
 
   struct MachineVerifierPass : public MachineFunctionPass {
     static char ID; // Pass ID, replacement for typeid
-    const char *const Banner;
+    const std::string Banner;
 
-    MachineVerifierPass(const char *b = nullptr)
-      : MachineFunctionPass(ID), Banner(b) {
+    MachineVerifierPass(const std::string &banner = nullptr)
+      : MachineFunctionPass(ID), Banner(banner) {
         initializeMachineVerifierPassPass(*PassRegistry::getPassRegistry());
       }
 
@@ -256,7 +256,7 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &MF) override {
-      MF.verify(this, Banner);
+      MF.verify(this, Banner.c_str());
       return false;
     }
   };
@@ -267,7 +267,7 @@ char MachineVerifierPass::ID = 0;
 INITIALIZE_PASS(MachineVerifierPass, "machineverifier",
                 "Verify generated machine code", false, false)
 
-FunctionPass *llvm::createMachineVerifierPass(const char *Banner) {
+FunctionPass *llvm::createMachineVerifierPass(const std::string &Banner) {
   return new MachineVerifierPass(Banner);
 }
 
