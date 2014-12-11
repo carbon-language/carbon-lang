@@ -103,7 +103,7 @@ def COND_O : PatLeaf <(cond), [{return N->get() == ISD::SETO;}]>;
 def COND_UO : PatLeaf <(cond), [{return N->get() == ISD::SETUO;}]>;
 
 //===----------------------------------------------------------------------===//
-// PatLeafs for unsigned comparisons
+// PatLeafs for unsigned / unordered comparisons
 //===----------------------------------------------------------------------===//
 
 def COND_UEQ : PatLeaf <(cond), [{return N->get() == ISD::SETUEQ;}]>;
