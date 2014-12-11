@@ -6,6 +6,8 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// REQUIRES: long_tests
 
 // <algorithm>
 
