@@ -79,10 +79,9 @@ bool foreachUnit(const TargetRegisterInfo *TRI, LiveInterval &VRegInterval,
     for (MCRegUnitMaskIterator Units(PhysReg, TRI); Units.isValid(); ++Units) {
       unsigned Unit = (*Units).first;
       unsigned Mask = (*Units).second;
-      for (LiveInterval::subrange_iterator S = VRegInterval.subrange_begin(),
-           SE = VRegInterval.subrange_end(); S != SE; ++S) {
-        if (S->LaneMask & Mask) {
-          if (Func(Unit, *S))
+      for (LiveInterval::SubRange &S : VRegInterval.subranges()) {
+        if (S.LaneMask & Mask) {
+          if (Func(Unit, S))
             return true;
           break;
         }

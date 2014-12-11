@@ -66,22 +66,21 @@ void LiveRangeCalc::createDeadDefs(LiveInterval &LI) {
         LI.createSubRangeFrom(*Alloc, ClassMask, LI);
       }
 
-      for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
-           SE = LI.subrange_end(); S != SE; ++S) {
+      for (LiveInterval::SubRange &S : LI.subranges()) {
         // A Mask for subregs common to the existing subrange and current def.
-        unsigned Common = S->LaneMask & Mask;
+        unsigned Common = S.LaneMask & Mask;
         if (Common == 0)
           continue;
         // A Mask for subregs covered by the subrange but not the current def.
-        unsigned LRest = S->LaneMask & ~Mask;
+        unsigned LRest = S.LaneMask & ~Mask;
         LiveInterval::SubRange *CommonRange;
         if (LRest != 0) {
           // Split current subrange into Common and LRest ranges.
-          S->LaneMask = LRest;
-          CommonRange = LI.createSubRangeFrom(*Alloc, Common, *S);
+          S.LaneMask = LRest;
+          CommonRange = LI.createSubRangeFrom(*Alloc, Common, S);
         } else {
-          assert(Common == S->LaneMask);
-          CommonRange = &*S;
+          assert(Common == S.LaneMask);
+          CommonRange = &S;
         }
         CommonRange->createDeadDef(Idx, *Alloc);
         Mask &= ~Common;
@@ -162,8 +161,9 @@ void LiveRangeCalc::extendToUses(LiveInterval &LI) {
   const TargetRegisterInfo &TRI = *MRI->getTargetRegisterInfo();
   SmallVector<LiveOutData,2> LiveOuts;
   unsigned NumSubRanges = 0;
-  for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
-       SE = LI.subrange_end(); S != SE; ++S, ++NumSubRanges) {
+  for (const auto &S : LI.subranges()) {
+    (void)S;
+    ++NumSubRanges;
     LiveOuts.push_back(LiveOutData());
     LiveOuts.back().reset(MF->getNumBlockIDs());
   }

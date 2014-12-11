@@ -1657,15 +1657,14 @@ void MachineVerifier::verifyLiveInterval(const LiveInterval &LI) {
   if (TargetRegisterInfo::isVirtualRegister(Reg)) {
     unsigned Mask = 0;
     unsigned MaxMask = MRI->getMaxLaneMaskForVReg(Reg);
-    for (LiveInterval::const_subrange_iterator I = LI.subrange_begin(),
-         E = LI.subrange_end(); I != E; ++I) {
-      if ((Mask & I->LaneMask) != 0)
+    for (const LiveInterval::SubRange &SR : LI.subranges()) {
+      if ((Mask & SR.LaneMask) != 0)
         report("Lane masks of sub ranges overlap in live interval", MF, LI);
-      if ((I->LaneMask & ~MaxMask) != 0)
+      if ((SR.LaneMask & ~MaxMask) != 0)
         report("Subrange lanemask is invalid", MF, LI);
-      Mask |= I->LaneMask;
-      verifyLiveRange(*I, LI.reg, I->LaneMask);
-      if (!LI.covers(*I))
+      Mask |= SR.LaneMask;
+      verifyLiveRange(SR, LI.reg, SR.LaneMask);
+      if (!LI.covers(SR))
         report("A Subrange is not covered by the main range", MF, LI);
     }
   } else if (LI.hasSubRanges()) {

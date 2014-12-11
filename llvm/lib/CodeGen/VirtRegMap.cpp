@@ -253,16 +253,15 @@ void VirtRegRewriter::addMBBLiveIns() {
     assert(PhysReg != VirtRegMap::NO_PHYS_REG && "Unmapped virtual register.");
 
     if (LI.hasSubRanges()) {
-      for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
-           SE = LI.subrange_end(); S != SE; ++S) {
-        for (const auto &Seg : S->segments) {
+      for (LiveInterval::SubRange &S : LI.subranges()) {
+        for (const auto &Seg : S.segments) {
           if (!Indexes->findLiveInMBBs(Seg.start, Seg.end, LiveIn))
             continue;
           for (MCSubRegIndexIterator SR(PhysReg, TRI); SR.isValid(); ++SR) {
             unsigned SubReg = SR.getSubReg();
             unsigned SubRegIndex = SR.getSubRegIndex();
             unsigned SubRegLaneMask = TRI->getSubRegIndexLaneMask(SubRegIndex);
-            if ((SubRegLaneMask & S->LaneMask) == 0)
+            if ((SubRegLaneMask & S.LaneMask) == 0)
               continue;
             for (unsigned i = 0, e = LiveIn.size(); i != e; ++i) {
               if (!LiveIn[i]->isLiveIn(SubReg))

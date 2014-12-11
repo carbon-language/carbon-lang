@@ -288,10 +288,9 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
           RegsToErase.push_back(Reg);
         } else {
           // Also remove the value in subranges.
-          for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
-               SE = LI.subrange_end(); S != SE; ++S) {
-            if (VNInfo *SVNI = S->getVNInfoAt(Idx))
-              S->removeValNo(SVNI);
+          for (LiveInterval::SubRange &S : LI.subranges()) {
+            if (VNInfo *SVNI = S.getVNInfoAt(Idx))
+              S.removeValNo(SVNI);
           }
         }
       }

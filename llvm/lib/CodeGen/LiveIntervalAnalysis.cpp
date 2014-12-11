@@ -395,9 +395,8 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
          && "Can only shrink virtual registers");
 
   // Shrink subregister live ranges.
-  for (LiveInterval::subrange_iterator I = li->subrange_begin(),
-       E = li->subrange_end(); I != E; ++I) {
-    shrinkToUses(*I, li->reg);
+  for (LiveInterval::SubRange &S : li->subranges()) {
+    shrinkToUses(S, li->reg);
   }
 
   // Find all the values used, including PHI kills.
@@ -606,9 +605,8 @@ void LiveIntervals::pruneValue(LiveInterval &LI, SlotIndex Kill,
                                SmallVectorImpl<SlotIndex> *EndPoints) {
   pruneValue((LiveRange&)LI, Kill, EndPoints);
 
-  for (LiveInterval::subrange_iterator SR = LI.subrange_begin(),
-       SE = LI.subrange_end(); SR != SE; ++SR) {
-    pruneValue(*SR, Kill, nullptr);
+  for (LiveInterval::SubRange &SR : LI.subranges()) {
+    pruneValue(SR, Kill, nullptr);
   }
 }
 
@@ -882,11 +880,10 @@ public:
         if (LI.hasSubRanges()) {
           unsigned SubReg = MO->getSubReg();
           unsigned LaneMask = TRI.getSubRegIndexLaneMask(SubReg);
-          for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
-               SE = LI.subrange_end(); S != SE; ++S) {
-            if ((S->LaneMask & LaneMask) == 0)
+          for (LiveInterval::SubRange &S : LI.subranges()) {
+            if ((S.LaneMask & LaneMask) == 0)
               continue;
-            updateRange(*S, Reg, S->LaneMask);
+            updateRange(S, Reg, S.LaneMask);
           }
         }
         updateRange(LI, Reg, 0);
@@ -1322,9 +1319,8 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
     if (!LI.hasAtLeastOneValue())
       continue;
 
-    for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
-         SE = LI.subrange_end(); S != SE; ++S) {
-      repairOldRegInRange(Begin, End, endIdx, *S, Reg, S->LaneMask);
+    for (LiveInterval::SubRange &S : LI.subranges()) {
+      repairOldRegInRange(Begin, End, endIdx, S, Reg, S.LaneMask);
     }
     repairOldRegInRange(Begin, End, endIdx, LI, Reg);
   }

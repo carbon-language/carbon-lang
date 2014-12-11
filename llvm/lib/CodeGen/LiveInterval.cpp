@@ -660,9 +660,8 @@ void LiveInterval::print(raw_ostream &OS) const {
   OS << PrintReg(reg) << ' ';
   super::print(OS);
   // Print subranges
-  for (const_subrange_iterator I = subrange_begin(), E = subrange_end();
-       I != E; ++I) {
-    OS << format(" L%04X ", I->LaneMask) << *I;
+  for (const SubRange &SR : subranges()) {
+    OS << format(" L%04X ", SR.LaneMask) << SR;
   }
 }
 
@@ -699,18 +698,17 @@ void LiveInterval::verify(const MachineRegisterInfo *MRI) const {
   // Make sure SubRanges are fine and LaneMasks are disjunct.
   unsigned Mask = 0;
   unsigned MaxMask = MRI != nullptr ? MRI->getMaxLaneMaskForVReg(reg) : ~0u;
-  for (const_subrange_iterator I = subrange_begin(), E = subrange_end(); I != E;
-       ++I) {
+  for (const SubRange &SR : subranges()) {
     // Subrange lanemask should be disjunct to any previous subrange masks.
-    assert((Mask & I->LaneMask) == 0);
-    Mask |= I->LaneMask;
+    assert((Mask & SR.LaneMask) == 0);
+    Mask |= SR.LaneMask;
 
     // subrange mask should not contained in maximum lane mask for the vreg.
     assert((Mask & ~MaxMask) == 0);
 
-    I->verify();
+    SR.verify();
     // Main liverange should cover subrange.
-    assert(covers(*I));
+    assert(covers(SR));
   }
 }
 #endif

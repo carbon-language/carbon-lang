@@ -640,6 +640,14 @@ namespace llvm {
       return const_subrange_iterator(nullptr);
     }
 
+    iterator_range<subrange_iterator> subranges() {
+      return make_range(subrange_begin(), subrange_end());
+    }
+
+    iterator_range<const_subrange_iterator> subranges() const {
+      return make_range(subrange_begin(), subrange_end());
+    }
+
     /// Creates a new empty subregister live range. The range is added at the
     /// beginning of the subrange list; subrange iterators stay valid.
     SubRange *createSubRange(BumpPtrAllocator &Allocator, unsigned LaneMask) {
