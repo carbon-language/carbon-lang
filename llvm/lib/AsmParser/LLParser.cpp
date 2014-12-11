@@ -2968,8 +2968,8 @@ bool LLParser::ParseMetadataAsValue(ValID &ID, PerFunctionState *PFS) {
 ///  ::= !{...}
 ///  ::= !"string"
 bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
-  assert(Lex.getKind() == lltok::exclaim);
-  Lex.Lex();
+  if (ParseToken(lltok::exclaim, "expected '!' here"))
+    return true;
 
   // MDNode:
   // !{ ... }
