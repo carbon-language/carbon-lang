@@ -4686,8 +4686,8 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'null' | TypeAndValue
 bool LLParser::ParseMDNodeVector(SmallVectorImpl<Metadata *> &Elts,
                                  PerFunctionState *PFS) {
-  assert(Lex.getKind() == lltok::lbrace);
-  Lex.Lex();
+  if (ParseToken(lltok::lbrace, "expected '{' here"))
+    return true;
 
   // Check for an empty list.
   if (EatIfPresent(lltok::rbrace))
