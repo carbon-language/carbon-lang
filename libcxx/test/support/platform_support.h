@@ -48,6 +48,13 @@
 #include <unistd.h> // close
 #endif
 
+#if defined(_NEWLIB_VERSION) && defined(__STRICT_ANSI__)
+// Newlib provies this, but in the header it's under __STRICT_ANSI__
+extern "C" {
+  int mkstemp(char*);
+}
+#endif
+
 inline
 std::string
 get_temp_file_name()
