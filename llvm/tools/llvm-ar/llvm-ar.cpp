@@ -685,10 +685,11 @@ static void writeStringTable(raw_fd_ostream &Out,
   Out.seek(Pos);
 }
 
-static void
-writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
-                 ArrayRef<MemoryBufferRef> Buffers,
-                 std::vector<std::pair<unsigned, unsigned>> &MemberOffsetRefs) {
+// Returns the offset of the first reference to a member offset.
+static unsigned writeSymbolTable(raw_fd_ostream &Out,
+                                 ArrayRef<NewArchiveIterator> Members,
+                                 ArrayRef<MemoryBufferRef> Buffers,
+                                 std::vector<unsigned> &MemberOffsetRefs) {
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
   std::string NameBuf;
@@ -723,14 +724,14 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
       failIfError(S.printName(NameOS));
       NameOS << '\0';
       ++NumSyms;
-      MemberOffsetRefs.push_back(std::make_pair(Out.tell(), MemberNum));
+      MemberOffsetRefs.push_back(MemberNum);
       print32BE(Out, 0);
     }
   }
   Out << NameOS.str();
 
   if (StartOffset == 0)
-    return;
+    return 0;
 
   if (Out.tell() % 2)
     Out << '\0';
@@ -741,6 +742,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
   Out.seek(StartOffset);
   print32BE(Out, NumSyms);
   Out.seek(Pos);
+  return StartOffset + 4;
 }
 
 static void
@@ -755,7 +757,7 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
   raw_fd_ostream &Out = Output.os();
   Out << "!<arch>\n";
 
-  std::vector<std::pair<unsigned, unsigned> > MemberOffsetRefs;
+  std::vector<unsigned> MemberOffsetRefs;
 
   std::vector<std::unique_ptr<MemoryBuffer>> Buffers;
   std::vector<MemoryBufferRef> Members;
@@ -787,31 +789,25 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
     Members.push_back(MemberRef);
   }
 
+  unsigned MemberReferenceOffset = 0;
   if (Symtab) {
-    writeSymbolTable(Out, NewMembers, Members, MemberOffsetRefs);
+    MemberReferenceOffset =
+        writeSymbolTable(Out, NewMembers, Members, MemberOffsetRefs);
   }
 
   std::vector<unsigned> StringMapIndexes;
   writeStringTable(Out, NewMembers, StringMapIndexes);
 
-  std::vector<std::pair<unsigned, unsigned> >::iterator MemberRefsI =
-      MemberOffsetRefs.begin();
-
   unsigned MemberNum = 0;
   unsigned LongNameMemberNum = 0;
   unsigned NewMemberNum = 0;
+  std::vector<unsigned> MemberOffset;
   for (std::vector<NewArchiveIterator>::iterator I = NewMembers.begin(),
                                                  E = NewMembers.end();
        I != E; ++I, ++MemberNum) {
 
     unsigned Pos = Out.tell();
-    while (MemberRefsI != MemberOffsetRefs.end() &&
-           MemberRefsI->second == MemberNum) {
-      Out.seek(MemberRefsI->first);
-      print32BE(Out, Pos);
-      ++MemberRefsI;
-    }
-    Out.seek(Pos);
+    MemberOffset.push_back(Pos);
 
     MemoryBufferRef File = Members[MemberNum];
     if (I->isNewMember()) {
@@ -848,6 +844,12 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
 
     if (Out.tell() % 2)
       Out << '\n';
+  }
+
+  if (MemberReferenceOffset) {
+    Out.seek(MemberReferenceOffset);
+    for (unsigned MemberNum : MemberOffsetRefs)
+      print32BE(Out, MemberOffset[MemberNum]);
   }
 
   Output.keep();
