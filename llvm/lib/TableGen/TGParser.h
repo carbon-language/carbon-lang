@@ -55,7 +55,7 @@ namespace llvm {
 class TGParser {
   TGLexer Lex;
   std::vector<std::vector<LetRecord> > LetStack;
-  std::map<std::string, MultiClass*> MultiClasses;
+  std::map<std::string, std::unique_ptr<MultiClass>> MultiClasses;
 
   /// Loops - Keep track of any foreach loops we are within.
   ///
