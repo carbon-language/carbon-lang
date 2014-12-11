@@ -64,11 +64,8 @@ static int createDependencyFile(const TGParser &Parser, const char *argv0) {
     return 1;
   }
   DepOut.os() << OutputFilename << ":";
-  const TGLexer::DependenciesMapTy &Dependencies = Parser.getDependencies();
-  for (TGLexer::DependenciesMapTy::const_iterator I = Dependencies.begin(),
-                                                  E = Dependencies.end();
-       I != E; ++I) {
-    DepOut.os() << " " << I->first;
+  for (const auto &Dep : Parser.getDependencies()) {
+    DepOut.os() << ' ' << Dep.first;
   }
   DepOut.os() << "\n";
   DepOut.keep();
