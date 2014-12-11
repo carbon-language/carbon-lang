@@ -215,7 +215,7 @@ void ARMSubtarget::initializeEnvironment() {
 
 void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (CPUString.empty()) {
-    if (isTargetIOS() && TargetTriple.getArchName().endswith("v7s"))
+    if (isTargetDarwin() && TargetTriple.getArchName().endswith("v7s"))
       // Default to the Swift CPU when targeting armv7s/thumbv7s.
       CPUString = "swift";
     else

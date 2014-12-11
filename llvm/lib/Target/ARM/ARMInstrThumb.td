@@ -1297,7 +1297,7 @@ def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
                               AddrModeNone, 0, IndexModeNone,
                               Pseudo, NoItinerary, "", "",
                               [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
-                             Requires<[IsThumb, IsIOS]>;
+                             Requires<[IsThumb]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

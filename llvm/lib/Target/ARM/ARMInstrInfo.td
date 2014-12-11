@@ -263,8 +263,6 @@ def IsNotMClass      : Predicate<"!Subtarget->isMClass()">,
                                                     "!armv*m">;
 def IsARM            : Predicate<"!Subtarget->isThumb()">,
                                  AssemblerPredicate<"!ModeThumb", "arm-mode">;
-def IsIOS            : Predicate<"Subtarget->isTargetIOS()">;
-def IsNotIOS         : Predicate<"!Subtarget->isTargetIOS()">;
 def IsMachO          : Predicate<"Subtarget->isTargetMachO()">;
 def IsNotMachO       : Predicate<"!Subtarget->isTargetMachO()">;
 def IsNaCl           : Predicate<"Subtarget->isTargetNaCl()">;
@@ -5262,7 +5260,7 @@ let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
 def Int_eh_sjlj_longjmp : PseudoInst<(outs), (ins GPR:$src, GPR:$scratch),
                              NoItinerary,
                          [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
-                                Requires<[IsARM, IsIOS]>;
+                                Requires<[IsARM]>;
 }
 
 // eh.sjlj.dispatchsetup pseudo-instruction.
