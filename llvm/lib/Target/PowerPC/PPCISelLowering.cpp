@@ -58,8 +58,6 @@ extern cl::opt<bool> ANDIGlueBug;
 PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
     : TargetLowering(TM),
       Subtarget(*TM.getSubtargetImpl()) {
-  setPow2SDivIsCheap();
-
   // Use _setjmp/_longjmp instead of setjmp/longjmp.
   setUseUnderscoreSetJmp(true);
   setUseUnderscoreLongJmp(true);
@@ -8929,6 +8927,36 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
   }
 
   return SDValue();
+}
+
+SDValue
+PPCTargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
+                                  SelectionDAG &DAG,
+                                  std::vector<SDNode *> *Created) const {
+  // fold (sdiv X, pow2)
+  EVT VT = N->getValueType(0);
+  if ((VT != MVT::i32 && VT != MVT::i64) ||
+      !(Divisor.isPowerOf2() || (-Divisor).isPowerOf2()))
+    return SDValue();
+
+  SDLoc DL(N);
+  SDValue N0 = N->getOperand(0);
+
+  bool IsNegPow2 = (-Divisor).isPowerOf2();
+  unsigned Lg2 = (IsNegPow2 ? -Divisor : Divisor).countTrailingZeros();
+  SDValue ShiftAmt = DAG.getConstant(Lg2, VT);
+
+  SDValue Op = DAG.getNode(PPCISD::SRA_ADDZE, DL, VT, N0, ShiftAmt);
+  if (Created)
+    Created->push_back(Op.getNode());
+
+  if (IsNegPow2) {
+    Op = DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, VT), Op);
+    if (Created)
+      Created->push_back(Op.getNode());
+  }
+
+  return Op;
 }
 
 //===----------------------------------------------------------------------===//

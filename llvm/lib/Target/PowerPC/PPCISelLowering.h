@@ -94,6 +94,12 @@ namespace llvm {
       /// code.
       SRL, SRA, SHL,
 
+      /// The combination of sra[wd]i and addze used to implemented signed
+      /// integer division by a power of 2. The first operand is the dividend,
+      /// and the second is the constant shift amount (representing the
+      /// divisor).
+      SRA_ADDZE,
+
       /// CALL - A direct function call.
       /// CALL_NOP is a call with the special NOP which follows 64-bit
       /// SVR4 calls.
@@ -424,6 +430,9 @@ namespace llvm {
     SDValue expandVSXStoreForLE(SDNode *N, DAGCombinerInfo &DCI) const;
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
+
+    SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
+                          std::vector<SDNode *> *Created) const override;
 
     unsigned getRegisterByName(const char* RegName, EVT VT) const override;
 
