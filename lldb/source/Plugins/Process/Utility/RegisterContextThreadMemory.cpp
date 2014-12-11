@@ -59,7 +59,7 @@ RegisterContextThreadMemory::UpdateRegisterContext ()
                 {
                     OperatingSystem *os = process_sp->GetOperatingSystem ();
                     if (os->IsOperatingSystemPluginThread (thread_sp))
-                        m_reg_ctx_sp = os->CreateRegisterContextForThread (thread_sp.get(), LLDB_INVALID_ADDRESS);
+                        m_reg_ctx_sp = os->CreateRegisterContextForThread (thread_sp.get(), m_register_data_addr);
                 }                
             }
         }
