@@ -379,6 +379,7 @@ static void ReadNullSepFileToArray(const char *path, char ***arr,
   }
   (*arr)[count] = 0;
 }
+#endif
 
 uptr GetRSS() {
   uptr fd = OpenFile("/proc/self/statm", false);
@@ -406,8 +407,6 @@ uptr GetRSS() {
     rss = rss * 10 + *pos++ - '0';
   return rss * 4096;
 }
-
-#endif
 
 static void GetArgsAndEnv(char*** argv, char*** envp) {
 #if !SANITIZER_GO
