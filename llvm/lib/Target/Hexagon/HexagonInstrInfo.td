@@ -2226,6 +2226,8 @@ class T_S2op_1_di <string mnemonic, bits<2> MajOp, bits<3> MinOp>
 let isCodeGenOnly = 0 in
 def A2_sxtw   : T_S2op_1_di <"sxtw", 0b01, 0b000>;
 
+def: Pat <(i64 (sext I32:$src)), (A2_sxtw I32:$src)>;
+
 //===----------------------------------------------------------------------===//
 // STYPE/ALU -
 //===----------------------------------------------------------------------===//
