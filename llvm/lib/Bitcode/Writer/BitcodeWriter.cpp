@@ -800,7 +800,7 @@ static void WriteModuleMetadata(const Module *M,
       }
 
       // Code: [strchar x N]
-      Record.append(MDS->begin(), MDS->end());
+      Record.append(MDS->bytes_begin(), MDS->bytes_end());
 
       // Emit the finished record.
       Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);

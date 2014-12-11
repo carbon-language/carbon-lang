@@ -91,6 +91,13 @@ namespace llvm {
 
     iterator end() const { return Data + Length; }
 
+    const unsigned char *bytes_begin() const {
+      return reinterpret_cast<const unsigned char *>(begin());
+    }
+    const unsigned char *bytes_end() const {
+      return reinterpret_cast<const unsigned char *>(end());
+    }
+
     /// @}
     /// @name String Operations
     /// @{

@@ -459,6 +459,9 @@ public:
   /// \brief Pointer to one byte past the end of the string.
   iterator end() const { return getString().end(); }
 
+  const unsigned char *bytes_begin() const { return getString().bytes_begin(); }
+  const unsigned char *bytes_end() const { return getString().bytes_end(); }
+
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast.
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDStringKind;
