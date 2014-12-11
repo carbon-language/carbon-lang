@@ -872,6 +872,12 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
           DVI->setOperand(2, MetadataAsValue::get(
                                  Ctx, createInlinedVariable(DVI->getVariable(),
                                                             InlinedAt, Ctx)));
+        } else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI)) {
+          LLVMContext &Ctx = BI->getContext();
+          MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt(Ctx);
+          DDI->setOperand(1, MetadataAsValue::get(
+                                 Ctx, createInlinedVariable(DDI->getVariable(),
+                                                            InlinedAt, Ctx)));
         }
       }
     }
