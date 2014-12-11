@@ -754,14 +754,14 @@ static void WriteLocalAsMetadata(const LocalAsMetadata *MD,
                                  const ValueEnumerator &VE,
                                  BitstreamWriter &Stream,
                                  SmallVectorImpl<uint64_t> &Record) {
-  WriteValueAsMetadataImpl(MD, VE, Stream, Record, bitc::METADATA_FN_NODE);
+  WriteValueAsMetadataImpl(MD, VE, Stream, Record, bitc::METADATA_OLD_FN_NODE);
 }
 
 static void WriteConstantAsMetadata(const ConstantAsMetadata *MD,
                                     const ValueEnumerator &VE,
                                     BitstreamWriter &Stream,
                                     SmallVectorImpl<uint64_t> &Record) {
-  WriteValueAsMetadataImpl(MD, VE, Stream, Record, bitc::METADATA_NODE);
+  WriteValueAsMetadataImpl(MD, VE, Stream, Record, bitc::METADATA_OLD_NODE);
 }
 
 static void WriteMDNode(const MDNode *N,
@@ -784,7 +784,7 @@ static void WriteMDNode(const MDNode *N,
     Record.push_back(VE.getTypeID(Type::getMetadataTy(N->getContext())));
     Record.push_back(VE.getMetadataID(MD));
   }
-  Stream.EmitRecord(bitc::METADATA_NODE, Record, 0);
+  Stream.EmitRecord(bitc::METADATA_OLD_NODE, Record, 0);
   Record.clear();
 }
 

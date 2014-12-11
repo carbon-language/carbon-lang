@@ -1115,7 +1115,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       }
       break;
     }
-    case bitc::METADATA_FN_NODE: {
+    case bitc::METADATA_OLD_FN_NODE: {
       // This is a LocalAsMetadata record, the only type of function-local
       // metadata.
       if (Record.size() % 2 == 1)
@@ -1142,7 +1142,7 @@ std::error_code BitcodeReader::ParseMetadata() {
           NextMDValueNo++);
       break;
     }
-    case bitc::METADATA_NODE: {
+    case bitc::METADATA_OLD_NODE: {
       if (Record.size() % 2 == 1)
         return Error(BitcodeError::InvalidRecord);
 
