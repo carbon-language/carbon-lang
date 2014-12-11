@@ -1040,8 +1040,10 @@ void MicrosoftCXXNameMangler::mangleIntegerLiteral(const llvm::APSInt &Value,
   // Make sure booleans are encoded as 0/1.
   if (IsBoolean && Value.getBoolValue())
     mangleNumber(1);
-  else
+  else if (Value.isSigned())
     mangleNumber(Value.getSExtValue());
+  else
+    mangleNumber(Value.getZExtValue());
 }
 
 void MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
