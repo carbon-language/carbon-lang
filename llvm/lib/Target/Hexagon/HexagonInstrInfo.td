@@ -1541,7 +1541,7 @@ def : Pat < (i64 (load ADDRriS11_3:$addr)),
 
 
 // Load - Base with Immediate offset addressing mode
-multiclass LD_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
+multiclass LD_Idxd_Pbase2<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit isNot, bit isPredNew> {
   let isPredicatedNew = isPredNew in
   def NAME : LDInst2<(outs RC:$dst),
@@ -1551,17 +1551,17 @@ multiclass LD_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
             []>;
 }
 
-multiclass LD_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
+multiclass LD_Idxd_Pred2<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit PredNot> {
   let isPredicatedFalse = PredNot in {
-    defm _c#NAME : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
+    defm _c#NAME : LD_Idxd_Pbase2<mnemonic, RC, predImmOp, PredNot, 0>;
     // Predicate new
-    defm _cdn#NAME : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 1>;
+    defm _cdn#NAME : LD_Idxd_Pbase2<mnemonic, RC, predImmOp, PredNot, 1>;
   }
 }
 
 let isExtendable = 1, hasSideEffects = 0 in
-multiclass LD_Idxd<string mnemonic, string CextOp, RegisterClass RC,
+multiclass LD_Idxd2<string mnemonic, string CextOp, RegisterClass RC,
                    Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
                    bits<5> PredImmBits> {
 
@@ -1574,31 +1574,31 @@ multiclass LD_Idxd<string mnemonic, string CextOp, RegisterClass RC,
 
     let opExtendable = 3, isExtentSigned = 0, opExtentBits = PredImmBits,
         isPredicated = 1 in {
-      defm Pt : LD_Idxd_Pred<mnemonic, RC, predImmOp, 0 >;
-      defm NotPt : LD_Idxd_Pred<mnemonic, RC, predImmOp, 1 >;
+      defm Pt : LD_Idxd_Pred2<mnemonic, RC, predImmOp, 0 >;
+      defm NotPt : LD_Idxd_Pred2<mnemonic, RC, predImmOp, 1 >;
     }
   }
 }
 
 let addrMode = BaseImmOffset in {
   let accessSize = ByteAccess in {
-    defm LDrib_indexed: LD_Idxd <"memb", "LDrib", IntRegs, s11_0Ext, u6_0Ext,
+    defm LDrib_indexed: LD_Idxd2 <"memb", "LDrib", IntRegs, s11_0Ext, u6_0Ext,
                                   11, 6>, AddrModeRel;
-    defm LDriub_indexed: LD_Idxd <"memub" , "LDriub", IntRegs, s11_0Ext, u6_0Ext,
+    defm LDriub_indexed: LD_Idxd2 <"memub" , "LDriub", IntRegs, s11_0Ext, u6_0Ext,
                                    11, 6>, AddrModeRel;
   }
   let accessSize = HalfWordAccess in {
-    defm LDrih_indexed: LD_Idxd <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
+    defm LDrih_indexed: LD_Idxd2 <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
                                  12, 7>, AddrModeRel;
-    defm LDriuh_indexed: LD_Idxd <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext,
+    defm LDriuh_indexed: LD_Idxd2 <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext,
                                   12, 7>, AddrModeRel;
   }
   let accessSize = WordAccess in
-    defm LDriw_indexed: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext,
+    defm LDriw_indexed: LD_Idxd2 <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext,
                                  13, 8>, AddrModeRel;
 
   let accessSize = DoubleWordAccess in
-    defm LDrid_indexed: LD_Idxd <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext,
+    defm LDrid_indexed: LD_Idxd2 <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext,
                                  14, 9>, AddrModeRel;
 }
 
