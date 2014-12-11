@@ -12,6 +12,8 @@
 #ifndef HEADER
 #define HEADER
 
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+
 #ifdef __stdcall
 // __stdcall is defined as __attribute__((__stdcall__)) for targeting mingw32.
 #undef __stdcall

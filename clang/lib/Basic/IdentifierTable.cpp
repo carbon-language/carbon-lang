@@ -122,7 +122,7 @@ namespace {
 
 /// \brief Translates flags as specified in TokenKinds.def into keyword status
 /// in the given language standard.
-static KeywordStatus GetKeywordStatus(const LangOptions &LangOpts,
+static KeywordStatus getKeywordStatus(const LangOptions &LangOpts,
                                       unsigned Flags) {
   if (Flags == KEYALL) return KS_Enabled;
   if (LangOpts.CPlusPlus && (Flags & KEYCXX)) return KS_Enabled;
@@ -151,7 +151,7 @@ static KeywordStatus GetKeywordStatus(const LangOptions &LangOpts,
 static void AddKeyword(StringRef Keyword,
                        tok::TokenKind TokenCode, unsigned Flags,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
-  KeywordStatus AddResult = GetKeywordStatus(LangOpts, Flags);
+  KeywordStatus AddResult = getKeywordStatus(LangOpts, Flags);
 
   // Don't add this keyword under MSVCCompat.
   if (LangOpts.MSVCCompat && (Flags & KEYNOMS))
@@ -207,6 +207,31 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
   if (LangOpts.ParseUnknownAnytype)
     AddKeyword("__unknown_anytype", tok::kw___unknown_anytype, KEYALL,
                LangOpts, *this);
+}
+
+/// \brief Checks if the specified token kind represents a keyword in the
+/// specified language.
+/// \returns Status of the keyword in the language.
+static KeywordStatus getTokenKwStatus(const LangOptions &LangOpts,
+                                      tok::TokenKind K) {
+  switch (K) {
+#define KEYWORD(NAME, FLAGS) \
+  case tok::kw_##NAME: return getKeywordStatus(LangOpts, FLAGS);
+#include "clang/Basic/TokenKinds.def"
+  default: return KS_Disabled;
+  }
+}
+
+/// \brief Returns true if the identifier represents a keyword in the
+/// specified language.
+bool IdentifierInfo::isKeyword(const LangOptions &LangOpts) {
+  switch (getTokenKwStatus(LangOpts, getTokenID())) {
+  case KS_Enabled:
+  case KS_Extension:
+    return true;
+  default:
+    return false;
+  }
 }
 
 tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
