@@ -95,9 +95,9 @@ static cl::opt<bool> AsmVerbose("asm-verbose",
 
 static int compileModule(char **, LLVMContext &);
 
-static tool_output_file *GetOutputStream(const char *TargetName,
-                                         Triple::OSType OS,
-                                         const char *ProgName) {
+static std::unique_ptr<tool_output_file>
+GetOutputStream(const char *TargetName, Triple::OSType OS,
+                const char *ProgName) {
   // If we don't yet have an output filename, make one.
   if (OutputFilename.empty()) {
     if (InputFilename == "-")
@@ -151,10 +151,10 @@ static tool_output_file *GetOutputStream(const char *TargetName,
   sys::fs::OpenFlags OpenFlags = sys::fs::F_None;
   if (!Binary)
     OpenFlags |= sys::fs::F_Text;
-  tool_output_file *FDOut = new tool_output_file(OutputFilename, EC, OpenFlags);
+  auto FDOut = llvm::make_unique<tool_output_file>(OutputFilename, EC,
+                                                   OpenFlags);
   if (EC) {
     errs() << EC.message() << '\n';
-    delete FDOut;
     return nullptr;
   }
 
