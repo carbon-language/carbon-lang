@@ -1107,10 +1107,18 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
 
   // Verify VOP*
   if (isVOP1(Opcode) || isVOP2(Opcode) || isVOP3(Opcode) || isVOPC(Opcode)) {
+    // Only look at the true operands. Only a real operand can use the constant
+    // bus, and we don't want to check pseudo-operands like the source modifier
+    // flags.
+    const int OpIndices[] = { Src0Idx, Src1Idx, Src2Idx };
+
     unsigned ConstantBusCount = 0;
     unsigned SGPRUsed = AMDGPU::NoRegister;
-    for (int i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI->getOperand(i);
+    for (int OpIdx : OpIndices) {
+      if (OpIdx == -1)
+        break;
+
+      const MachineOperand &MO = MI->getOperand(OpIdx);
       if (usesConstantBus(MRI, MO)) {
         if (MO.isReg()) {
           if (MO.getReg() != SGPRUsed)
