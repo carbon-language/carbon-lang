@@ -6177,6 +6177,22 @@ multiclass SS41I_pmovx_avx2_patterns<string OpcPrefix, SDNode ExtOp> {
   def : Pat<(v4i64 (ExtOp (v4i32 VR128:$src))),
             (!cast<I>(OpcPrefix#DQYrr) VR128:$src)>;
 
+  // On AVX2, we also support 256bit inputs.
+  def : Pat<(v16i16 (ExtOp (v32i8 VR256:$src))),
+            (!cast<I>(OpcPrefix#BWYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v8i32 (ExtOp (v32i8 VR256:$src))),
+            (!cast<I>(OpcPrefix#BDYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v4i64 (ExtOp (v32i8 VR256:$src))),
+            (!cast<I>(OpcPrefix#BQYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
+  def : Pat<(v8i32 (ExtOp (v16i16 VR256:$src))),
+            (!cast<I>(OpcPrefix#WDYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v4i64 (ExtOp (v16i16 VR256:$src))),
+            (!cast<I>(OpcPrefix#WQYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
+  def : Pat<(v4i64 (ExtOp (v8i32 VR256:$src))),
+            (!cast<I>(OpcPrefix#DQYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
   // AVX2 Register-Memory patterns
   def : Pat<(v16i16 (ExtOp (bc_v16i8 (loadv2i64 addr:$src)))),
             (!cast<I>(OpcPrefix#BWYrm) addr:$src)>;
