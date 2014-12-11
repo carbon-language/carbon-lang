@@ -111,13 +111,14 @@ static ReportStack *SymbolizeStack(StackTrace trace) {
   SymbolizedStack *top = nullptr;
   for (uptr si = 0; si < trace.size; si++) {
     const uptr pc = trace.trace[si];
+    uptr pc1 = pc;
 #ifndef SANITIZER_GO
     // We obtain the return address, but we're interested in the previous
     // instruction.
-    const uptr pc1 = StackTrace::GetPreviousInstructionPc(pc);
+    if ((pc & kExternalPCBit) == 0)
+      pc1 = StackTrace::GetPreviousInstructionPc(pc);
 #else
     // FIXME(dvyukov): Go sometimes uses address of a function as top pc.
-    uptr pc1 = pc;
     if (si != trace.size - 1)
       pc1 -= 1;
 #endif
