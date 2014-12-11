@@ -1960,4 +1960,12 @@ namespace PR21786 {
   extern void (*start[])();
   extern void (*end[])();
   static_assert(&start != &end, ""); // expected-error {{constant expression}}
+
+  struct Foo;
+  struct Bar {
+    static const Foo x;
+    static const Foo y;
+  };
+  static_assert(&Bar::x != nullptr, "");
+  static_assert(&Bar::x != &Bar::y, ""); // expected-error {{constant expression}}
 }

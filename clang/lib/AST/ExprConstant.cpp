@@ -1424,8 +1424,11 @@ static bool IsWeakLValue(const LValue &Value) {
 
 static bool isZeroSized(const LValue &Value) {
   const ValueDecl *Decl = GetLValueBaseDecl(Value);
-  return Decl && isa<VarDecl>(Decl) &&
-         Decl->getASTContext().getTypeSize(Decl->getType()) == 0;
+  if (Decl && isa<VarDecl>(Decl)) {
+    QualType Ty = Decl->getType();
+    return Ty->isIncompleteType() || Decl->getASTContext().getTypeSize(Ty) == 0;
+  }
+  return false;
 }
 
 static bool EvalPointerValueAsBool(const APValue &Value, bool &Result) {
@@ -6987,7 +6990,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
           return Error(E);
         // We can't tell whether an object is at the same address as another
         // zero sized object.
-        if (isZeroSized(LHSValue) || isZeroSized(RHSValue))
+        if ((RHSValue.Base && isZeroSized(LHSValue)) ||
+            (LHSValue.Base && isZeroSized(RHSValue)))
           return Error(E);
         // Pointers with different bases cannot represent the same object.
         // (Note that clang defaults to -fmerge-all-constants, which can
