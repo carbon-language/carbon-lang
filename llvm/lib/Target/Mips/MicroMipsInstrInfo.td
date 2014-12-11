@@ -261,8 +261,7 @@ class MoveMM16<string opstr, RegisterOperand RO, bit isComm = 0,
   let isReMaterializable = 1;
 }
 
-class LoadImmMM16<string opstr, Operand Od, RegisterOperand RO,
-                  SDPatternOperator imm_type = null_frag> :
+class LoadImmMM16<string opstr, Operand Od, RegisterOperand RO> :
   MicroMipsInst16<(outs RO:$rd), (ins Od:$imm),
                   !strconcat(opstr, "\t$rd, $imm"), [], NoItinerary, FrmI> {
   let isReMaterializable = 1;
@@ -440,8 +439,8 @@ def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
 def MFLO16_MM : MoveFromHILOMM<"mflo", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x12>;
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
-def LI16_MM : LoadImmMM16<"li16", li_simm7, GPRMM16Opnd, immLi16>,
-              LI_FM_MM16, IsAsCheapAsAMove;
+def LI16_MM : LoadImmMM16<"li16", li_simm7, GPRMM16Opnd>, LI_FM_MM16,
+              IsAsCheapAsAMove;
 def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
 def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;
 def JRC16_MM : JumpRegCMM16<"jrc", GPR32Opnd>, JALR_FM_MM16<0x0d>;
@@ -685,6 +684,13 @@ let Predicates = [InMicroMips] in {
 //===----------------------------------------------------------------------===//
 // MicroMips arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
+
+def : MipsPat<(i32 immLi16:$imm),
+              (LI16_MM immLi16:$imm)>;
+def : MipsPat<(i32 immSExt16:$imm),
+              (ADDiu_MM ZERO, immSExt16:$imm)>;
+def : MipsPat<(i32 immZExt16:$imm),
+              (ORi_MM ZERO, immZExt16:$imm)>;
 
 def : MipsPat<(add GPRMM16:$src, immSExtAddiur2:$imm),
               (ADDIUR2_MM GPRMM16:$src, immSExtAddiur2:$imm)>;

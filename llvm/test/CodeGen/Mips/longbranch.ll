@@ -123,7 +123,7 @@ end:
 
 ; MICROMIPS:   $[[BB0]]:
 ; MICROMIPS:        lw      $[[R1:[0-9]+]], %got(x)($[[GP]])
-; MICROMIPS:        addiu   $[[R2:[0-9]+]], $zero, 1
+; MICROMIPS:        li16    $[[R2:[0-9]+]], 1
 ; MICROMIPS:        sw      $[[R2]], 0($[[R1]])
 ; MICROMIPS:   $[[BB2]]:
 ; MICROMIPS:        jr      $ra

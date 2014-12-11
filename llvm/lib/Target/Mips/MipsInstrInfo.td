@@ -1654,10 +1654,12 @@ class StoreRegImmPat<Instruction StoreInst, ValueType ValTy> :
   MipsPat<(store ValTy:$v, addrRegImm:$a), (StoreInst ValTy:$v, addrRegImm:$a)>;
 
 // Small immediates
+let AdditionalPredicates = [NotInMicroMips] in {
 def : MipsPat<(i32 immSExt16:$in),
               (ADDiu ZERO, imm:$in)>;
 def : MipsPat<(i32 immZExt16:$in),
               (ORi ZERO, imm:$in)>;
+}
 def : MipsPat<(i32 immLow16Zero:$in),
               (LUi (HI16 imm:$in))>;
 
