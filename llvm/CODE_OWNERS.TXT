@@ -20,6 +20,10 @@ N: Rafael Avila de Espindola
 E: rafael.espindola@gmail.com
 D: Gold plugin (tools/gold/*)
 
+N: Justin Bogner
+E: mail@justinbogner.com
+D: InstrProfiling and related parts of ProfileData
+
 N: Chandler Carruth
 E: chandlerc@gmail.com
 E: chandlerc@google.com
@@ -40,6 +44,10 @@ D: Debug Information, autotools/configure/make build, inline assembly
 N: Greg Clayton
 E: gclayton@apple.com
 D: LLDB
+
+N: Marshall Clow
+E: mclow.lists@gmail.com
+D: libc++
 
 N: Peter Collingbourne
 E: peter@pcc.me.uk
@@ -65,9 +73,9 @@ N: James Grosbach
 E: grosbach@apple.com
 D: MC layer
 
-N: Marshall Clow
-E: mclow.lists@gmail.com
-D: libc++
+N: Duncan P. N. Exon Smith
+E: dexonsmith@apple.com
+D: Branch weights and BlockFrequencyInfo
 
 N: Justin Holewinski
 E: jholewinski@nvidia.com
@@ -101,6 +109,10 @@ D: Everything not covered by someone else
 N: Tim Northover
 E: t.p.northover@gmail.com
 D: AArch64 backend
+
+N: Diego Novillo
+E: dnovillo@google.com
+D: SampleProfile and related parts of ProfileData
 
 N: Jakob Olesen
 E: stoklund@2pi.dk
@@ -158,15 +170,3 @@ D: libLTO, IR Linker
 N: Peter Zotov
 E: whitequark@whitequark.org
 D: OCaml bindings
-
-N: Justin Bogner
-E: mail@justinbogner.com
-D: InstrProfiling and related parts of ProfileData
-
-N: Diego Novillo
-E: dnovillo@google.com
-D: SampleProfile and related parts of ProfileData
-
-N: Duncan P. N. Exon Smith
-E: dexonsmith@apple.com
-D: Branch weights and BlockFrequencyInfo
