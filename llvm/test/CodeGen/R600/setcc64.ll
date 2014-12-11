@@ -78,10 +78,8 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}f64_ueq:
-; SI: v_cmp_u_f64
-; SI: v_cmp_eq_f64
-; SI: s_or_b64
-; SI: v_cndmask_b32
+; SI: v_cmp_nlg_f64_e32 vcc
+; SI-NEXT: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1, vcc
 define void @f64_ueq(i32 addrspace(1)* %out, double %a, double %b) {
 entry:
   %0 = fcmp ueq double %a, %b

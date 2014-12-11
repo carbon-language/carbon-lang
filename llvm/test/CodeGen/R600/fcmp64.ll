@@ -61,7 +61,7 @@ define void @fne_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; CHECK-LABEL: {{^}}feq_f64:
-; CHECK: v_cmp_eq_f64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
+; CHECK: v_cmp_nlg_f64_e32 vcc, {{v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 define void @feq_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {
    %r0 = load double addrspace(1)* %in1
