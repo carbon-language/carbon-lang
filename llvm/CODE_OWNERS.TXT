@@ -33,10 +33,6 @@ N: Evan Cheng
 E: evan.cheng@apple.com
 D: ARM target, parts of code generator not covered by someone else
 
-N: Renato Golin
-E: renato.golin@linaro.org
-D: ARM Linux support
-
 N: Eric Christopher
 E: echristo@gmail.com
 D: Debug Information, autotools/configure/make build, inline assembly
@@ -57,9 +53,17 @@ N: Anshuman Dasgupta
 E: adasgupt@codeaurora.org
 D: Hexagon Backend
 
+N: Duncan P. N. Exon Smith
+E: dexonsmith@apple.com
+D: Branch weights and BlockFrequencyInfo
+
 N: Hal Finkel
 E: hfinkel@anl.gov
 D: BBVectorize, the loop reroller, alias analysis and the PowerPC target
+
+N: Renato Golin
+E: renato.golin@linaro.org
+D: ARM Linux support
 
 N: Venkatraman Govindaraju
 E: venkatra@cs.wisc.edu
@@ -72,10 +76,6 @@ D: Polly
 N: James Grosbach
 E: grosbach@apple.com
 D: MC layer
-
-N: Duncan P. N. Exon Smith
-E: dexonsmith@apple.com
-D: Branch weights and BlockFrequencyInfo
 
 N: Justin Holewinski
 E: jholewinski@nvidia.com
