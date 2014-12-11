@@ -637,7 +637,6 @@ public:
 
 private:
   /// Platform-specific mapping state.
-  mapmode Mode;
   uint64_t Size;
   void *Mapping;
 #ifdef LLVM_ON_WIN32
@@ -646,19 +645,14 @@ private:
   void *FileMappingHandle;
 #endif
 
-  std::error_code init(int FD, bool CloseFD, uint64_t Offset);
+  std::error_code init(int FD, uint64_t Offset, mapmode Mode);
 
 public:
-  typedef char char_type;
-
-  mapped_file_region(mapped_file_region&&);
-  mapped_file_region &operator =(mapped_file_region&&);
-
   /// \param fd An open file descriptor to map. mapped_file_region takes
   ///   ownership if closefd is true. It must have been opended in the correct
   ///   mode.
-  mapped_file_region(int fd, bool closefd, mapmode mode, uint64_t length,
-                     uint64_t offset, std::error_code &ec);
+  mapped_file_region(int fd, mapmode mode, uint64_t length, uint64_t offset,
+                     std::error_code &ec);
 
   ~mapped_file_region();
 

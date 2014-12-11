@@ -62,31 +62,6 @@
 
 using namespace llvm;
 
-namespace {
-  /// This class automatically closes the given file descriptor when it goes out
-  /// of scope. You can take back explicit ownership of the file descriptor by
-  /// calling take(). The destructor does not verify that close was successful.
-  /// Therefore, never allow this class to call close on a file descriptor that
-  /// has been read from or written to.
-  struct AutoFD {
-    int FileDescriptor;
-
-    AutoFD(int fd) : FileDescriptor(fd) {}
-    ~AutoFD() {
-      if (FileDescriptor >= 0)
-        ::close(FileDescriptor);
-    }
-
-    int take() {
-      int ret = FileDescriptor;
-      FileDescriptor = -1;
-      return ret;
-    }
-
-    operator int() const {return FileDescriptor;}
-  };
-}
-
 namespace llvm {
 namespace sys  {
 namespace fs {
@@ -440,11 +415,8 @@ std::error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
 #endif
 }
 
-std::error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
-  AutoFD ScopedFD(FD);
-  if (!CloseFD)
-    ScopedFD.take();
-
+std::error_code mapped_file_region::init(int FD, uint64_t Offset,
+                                         mapmode Mode) {
   // Figure out how large the file is.
   struct stat FileInfo;
   if (fstat(FD, &FileInfo) == -1)
@@ -470,22 +442,16 @@ std::error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) 
   return std::error_code();
 }
 
-mapped_file_region::mapped_file_region(int fd,
-                                       bool closefd,
-                                       mapmode mode,
-                                       uint64_t length,
-                                       uint64_t offset,
-                                       std::error_code &ec)
-  : Mode(mode)
-  , Size(length)
-  , Mapping() {
+mapped_file_region::mapped_file_region(int fd, mapmode mode, uint64_t length,
+                                       uint64_t offset, std::error_code &ec)
+    : Size(length), Mapping() {
   // Make sure that the requested size fits within SIZE_T.
   if (length > std::numeric_limits<size_t>::max()) {
     ec = make_error_code(errc::invalid_argument);
     return;
   }
 
-  ec = init(fd, closefd, offset);
+  ec = init(fd, offset, mode);
   if (ec)
     Mapping = nullptr;
 }
@@ -495,11 +461,6 @@ mapped_file_region::~mapped_file_region() {
     ::munmap(Mapping, Size);
 }
 
-mapped_file_region::mapped_file_region(mapped_file_region &&other)
-  : Mode(other.Mode), Size(other.Size), Mapping(other.Mapping) {
-  other.Mapping = nullptr;
-}
-
 uint64_t mapped_file_region::size() const {
   assert(Mapping && "Mapping failed but used anyway!");
   return Size;
@@ -507,7 +468,6 @@ uint64_t mapped_file_region::size() const {
 
 char *mapped_file_region::data() const {
   assert(Mapping && "Mapping failed but used anyway!");
-  assert(Mode != readonly && "Cannot get non-const data for readonly mapping!");
   return reinterpret_cast<char*>(Mapping);
 }
 

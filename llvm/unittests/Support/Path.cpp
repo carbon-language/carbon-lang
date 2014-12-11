@@ -649,11 +649,7 @@ TEST_F(FileSystemTest, FileMapping) {
   StringRef Val("hello there");
   {
     fs::mapped_file_region mfr(FileDescriptor,
-                               true,
-                               fs::mapped_file_region::readwrite,
-                               4096,
-                               0,
-                               EC);
+                               fs::mapped_file_region::readwrite, 4096, 0, EC);
     ASSERT_NO_ERROR(EC);
     std::copy(Val.begin(), Val.end(), mfr.data());
     // Explicitly add a 0.
@@ -665,21 +661,16 @@ TEST_F(FileSystemTest, FileMapping) {
   int FD;
   EC = fs::openFileForRead(Twine(TempPath), FD);
   ASSERT_NO_ERROR(EC);
-  fs::mapped_file_region mfr(FD, false, fs::mapped_file_region::readonly, 0, 0,
-                             EC);
+  fs::mapped_file_region mfr(FD, fs::mapped_file_region::readonly, 0, 0, EC);
   ASSERT_NO_ERROR(EC);
 
   // Verify content
   EXPECT_EQ(StringRef(mfr.const_data()), Val);
 
   // Unmap temp file
-  fs::mapped_file_region m(FD, false, fs::mapped_file_region::readonly, 0, 0,
-                           EC);
+  fs::mapped_file_region m(FD, fs::mapped_file_region::readonly, 0, 0, EC);
   ASSERT_NO_ERROR(EC);
   ASSERT_EQ(close(FD), 0);
-  const char *Data = m.const_data();
-  fs::mapped_file_region mfrrv(std::move(m));
-  EXPECT_EQ(mfrrv.const_data(), Data);
 }
 
 TEST(Support, NormalizePath) {

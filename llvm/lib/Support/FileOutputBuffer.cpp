@@ -18,6 +18,12 @@
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#else
+#include <io.h>
+#endif
+
 using llvm::sys::fs::mapped_file_region;
 
 namespace llvm {
@@ -72,9 +78,12 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size,
     return EC;
 
   auto MappedFile = llvm::make_unique<mapped_file_region>(
-      FD, true, mapped_file_region::readwrite, Size, 0, EC);
+      FD, mapped_file_region::readwrite, Size, 0, EC);
+  int Ret = close(FD);
   if (EC)
     return EC;
+  if (Ret)
+    return std::error_code(errno, std::generic_category());
 
   Result.reset(
       new FileOutputBuffer(std::move(MappedFile), FilePath, TempFilePath));
