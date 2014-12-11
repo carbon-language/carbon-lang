@@ -17,11 +17,3 @@ using namespace llvm;
 GCMetadataPrinter::GCMetadataPrinter() { }
 
 GCMetadataPrinter::~GCMetadataPrinter() { }
-
-void GCMetadataPrinter::beginAssembly(Module &M, AsmPrinter &AP) {
-  // Default is no action.
-}
-
-void GCMetadataPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
-  // Default is no action.
-}

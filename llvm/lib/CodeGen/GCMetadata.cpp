@@ -91,12 +91,14 @@ GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
     return *I->second;
   
   GCStrategy *S = getOrCreateStrategy(F.getParent(), F.getGC());
-  GCFunctionInfo *GFI = S->insertFunctionInfo(F);
+  Functions.push_back(make_unique<GCFunctionInfo>(F, *S));
+  GCFunctionInfo *GFI = Functions.back().get();
   FInfoMap[&F] = GFI;
   return *GFI;
 }
 
 void GCModuleInfo::clear() {
+  Functions.clear();
   FInfoMap.clear();
   StrategyMap.clear();
   StrategyList.clear();

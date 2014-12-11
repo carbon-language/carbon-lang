@@ -115,12 +115,6 @@ bool GCStrategy::findCustomSafePoints(GCFunctionInfo& FI, MachineFunction &F) {
   llvm_unreachable(nullptr);
 }
 
-
-GCFunctionInfo *GCStrategy::insertFunctionInfo(const Function &F) {
-  Functions.push_back(make_unique<GCFunctionInfo>(F, *this));
-  return Functions.back().get();
-}
-
 // -----------------------------------------------------------------------------
 
 INITIALIZE_PASS_BEGIN(LowerIntrinsics, "gc-lowering", "GC Lowering",

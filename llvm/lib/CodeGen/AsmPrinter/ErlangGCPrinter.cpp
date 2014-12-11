@@ -36,8 +36,8 @@ namespace {
 
   class ErlangGCPrinter : public GCMetadataPrinter {
   public:
-    void beginAssembly(Module &M, AsmPrinter &AP) override;
-    void finishAssembly(Module &M, AsmPrinter &AP) override;
+    void finishAssembly(Module &M, GCModuleInfo &Info,
+                        AsmPrinter &AP) override;
   };
 
 }
@@ -47,9 +47,8 @@ X("erlang", "erlang-compatible garbage collector");
 
 void llvm::linkErlangGCPrinter() { }
 
-void ErlangGCPrinter::beginAssembly(Module &M, AsmPrinter &AP) { }
-
-void ErlangGCPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
+void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
+                                     AsmPrinter &AP) {
   MCStreamer &OS = AP.OutStreamer;
   unsigned IntPtrSize =
       AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
@@ -60,9 +59,13 @@ void ErlangGCPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
                    SectionKind::getDataRel()));
 
   // For each function...
-  for (iterator FI = begin(), FE = end(); FI != FE; ++FI) {
+  for (GCModuleInfo::FuncInfoVec::iterator FI = Info.funcinfo_begin(),
+         IE = Info.funcinfo_end();
+       FI != IE; ++FI) {
     GCFunctionInfo &MD = **FI;
-
+    if (MD.getStrategy().getName() != getStrategy().getName())
+      // this function is managed by some other GC
+      continue;
     /** A compact GC layout. Emit this data structure:
      *
      * struct {

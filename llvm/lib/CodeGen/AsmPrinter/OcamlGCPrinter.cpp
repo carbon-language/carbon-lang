@@ -34,8 +34,10 @@ namespace {
 
   class OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
-    void beginAssembly(Module &M, AsmPrinter &AP) override;
-    void finishAssembly(Module &M, AsmPrinter &AP) override;
+    void beginAssembly(Module &M, GCModuleInfo &Info,
+                       AsmPrinter &AP) override;
+    void finishAssembly(Module &M, GCModuleInfo &Info,
+                        AsmPrinter &AP) override;
   };
 
 }
@@ -67,7 +69,8 @@ static void EmitCamlGlobal(const Module &M, AsmPrinter &AP, const char *Id) {
   AP.OutStreamer.EmitLabel(Sym);
 }
 
-void OcamlGCMetadataPrinter::beginAssembly(Module &M, AsmPrinter &AP) {
+void OcamlGCMetadataPrinter::beginAssembly(Module &M, GCModuleInfo &Info,
+                                           AsmPrinter &AP) {
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(M, AP, "code_begin");
 
@@ -91,7 +94,8 @@ void OcamlGCMetadataPrinter::beginAssembly(Module &M, AsmPrinter &AP) {
 /// (FrameSize and LiveOffsets would overflow). FrameTablePrinter will abort if
 /// either condition is detected in a function which uses the GC.
 ///
-void OcamlGCMetadataPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
+void OcamlGCMetadataPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
+                                            AsmPrinter &AP) {
   unsigned IntPtrSize =
       AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
 
@@ -108,8 +112,12 @@ void OcamlGCMetadataPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
   EmitCamlGlobal(M, AP, "frametable");
 
   int NumDescriptors = 0;
-  for (iterator I = begin(), IE = end(); I != IE; ++I) {
+  for (GCModuleInfo::FuncInfoVec::iterator I = Info.funcinfo_begin(),
+         IE = Info.funcinfo_end(); I != IE; ++I) {
     GCFunctionInfo &FI = **I;
+    if (FI.getStrategy().getName() != getStrategy().getName())
+      // this function is managed by some other GC
+      continue;
     for (GCFunctionInfo::iterator J = FI.begin(), JE = FI.end(); J != JE; ++J) {
       NumDescriptors++;
     }
@@ -122,8 +130,12 @@ void OcamlGCMetadataPrinter::finishAssembly(Module &M, AsmPrinter &AP) {
   AP.EmitInt16(NumDescriptors);
   AP.EmitAlignment(IntPtrSize == 4 ? 2 : 3);
 
-  for (iterator I = begin(), IE = end(); I != IE; ++I) {
+  for (GCModuleInfo::FuncInfoVec::iterator I = Info.funcinfo_begin(),
+         IE = Info.funcinfo_end(); I != IE; ++I) {
     GCFunctionInfo &FI = **I;
+    if (FI.getStrategy().getName() != getStrategy().getName())
+      // this function is managed by some other GC
+      continue;
 
     uint64_t FrameSize = FI.getFrameSize();
     if (FrameSize >= 1<<16) {

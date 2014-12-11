@@ -55,15 +55,9 @@ namespace llvm {
   /// through the GCModuleInfo analysis pass.  They are owned by the analysis
   /// pass and recreated every time that pass is invalidated.
   class GCStrategy {
-  public:
-    typedef std::vector<std::unique_ptr<GCFunctionInfo>> list_type;
-    typedef list_type::iterator iterator;
-    
   private:
     friend class GCModuleInfo;
     std::string Name;
-    
-    list_type Functions;
     
   protected:
     unsigned NeededSafePoints; ///< Bitmask of required safe points.
@@ -126,15 +120,6 @@ namespace llvm {
     ///                the back-end (assembler, JIT, or otherwise).
     bool usesMetadata() const { return UsesMetadata; }
     
-    /// begin/end - Iterators for function metadata.
-    /// 
-    iterator begin() { return Functions.begin(); }
-    iterator end()   { return Functions.end();   }
-
-    /// insertFunctionMetadata - Creates metadata for a function.
-    /// 
-    GCFunctionInfo *insertFunctionInfo(const Function &F);
-
     /// initializeCustomLowering/performCustomLowering - If any of the actions
     /// are set to custom, performCustomLowering must be overriden to transform
     /// the corresponding actions to LLVM IR. initializeCustomLowering is
