@@ -1539,6 +1539,22 @@ static bool isOperandClass(const TreePatternNode *N, StringRef Class) {
 
   return false;
 }
+
+static void emitTooManyOperandsError(TreePattern &TP,
+                                     StringRef InstName,
+                                     unsigned Expected,
+                                     unsigned Actual) {
+  TP.error("Instruction '" + InstName + "' was provided " + Twine(Actual) +
+           " operands but expected only " + Twine(Expected) + "!");
+}
+
+static void emitTooFewOperandsError(TreePattern &TP,
+                                    StringRef InstName,
+                                    unsigned Actual) {
+  TP.error("Instruction '" + InstName +
+           "' expects more than the provided " + Twine(Actual) + " operands!");
+}
+
 /// ApplyTypeConstraints - Apply all of the type constraints relevant to
 /// this node and its children in the tree.  This returns true if it makes a
 /// change, false otherwise.  If a type contradiction is found, flag an error.
@@ -1741,8 +1757,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 
       // Verify that we didn't run out of provided operands.
       if (ChildNo >= getNumChildren()) {
-        TP.error("Instruction '" + getOperator()->getName() +
-                 "' expects more operands than were provided.");
+        emitTooFewOperandsError(TP, getOperator()->getName(), getNumChildren());
         return false;
       }
 
@@ -1766,8 +1781,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
             // And the remaining sub-operands against subsequent children.
             for (unsigned Arg = 1; Arg < NumArgs; ++Arg) {
               if (ChildNo >= getNumChildren()) {
-                TP.error("Instruction '" + getOperator()->getName() +
-                         "' expects more operands than were provided.");
+                emitTooFewOperandsError(TP, getOperator()->getName(),
+                                        getNumChildren());
                 return false;
               }
               Child = getChild(ChildNo++);
@@ -1787,8 +1802,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     }
 
     if (!InstInfo.Operands.isVariadic && ChildNo != getNumChildren()) {
-      TP.error("Instruction '" + getOperator()->getName() +
-               "' was provided too many operands!");
+      emitTooManyOperandsError(TP, getOperator()->getName(),
+                               ChildNo, getNumChildren());
       return false;
     }
 
