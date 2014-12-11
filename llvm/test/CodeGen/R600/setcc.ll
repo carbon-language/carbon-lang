@@ -97,11 +97,8 @@ entry:
 ; R600-DAG: AND_INT
 ; R600-DAG: SETNE_INT
 
-; SI-DAG: v_cmp_o_f32_e32 vcc
-; SI-DAG: v_cmp_neq_f32_e64 [[CMP1:s\[[0-9]+:[0-9]+\]]]
-; SI: s_and_b64 [[AND:s\[[0-9]+:[0-9]+\]]], [[CMP1]], vcc
-; SI: v_cndmask_b32_e64 [[VRESULT:v[0-9]+]], 0, -1, [[AND]]
-; SI: buffer_store_dword [[VRESULT]]
+; SI: v_cmp_lg_f32_e32 vcc
+; SI-NEXT: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1, vcc
 define void @f32_one(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp one float %a, %b

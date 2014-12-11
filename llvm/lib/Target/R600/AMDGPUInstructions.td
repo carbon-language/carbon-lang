@@ -73,6 +73,11 @@ def COND_OEQ : PatLeaf <
   [{return N->get() == ISD::SETOEQ || N->get() == ISD::SETEQ;}]
 >;
 
+def COND_ONE : PatLeaf <
+  (cond),
+  [{return N->get() == ISD::SETONE || N->get() == ISD::SETNE;}]
+>;
+
 def COND_OGT : PatLeaf <
   (cond),
   [{return N->get() == ISD::SETOGT || N->get() == ISD::SETGT;}]
@@ -93,10 +98,6 @@ def COND_OLE : PatLeaf <
   [{return N->get() == ISD::SETOLE || N->get() == ISD::SETLE;}]
 >;
 
-def COND_UNE : PatLeaf <
-  (cond),
-  [{return N->get() == ISD::SETUNE || N->get() == ISD::SETNE;}]
->;
 
 def COND_O : PatLeaf <(cond), [{return N->get() == ISD::SETO;}]>;
 def COND_UO : PatLeaf <(cond), [{return N->get() == ISD::SETUO;}]>;
@@ -105,10 +106,19 @@ def COND_UO : PatLeaf <(cond), [{return N->get() == ISD::SETUO;}]>;
 // PatLeafs for unsigned comparisons
 //===----------------------------------------------------------------------===//
 
+def COND_UEQ : PatLeaf <(cond), [{return N->get() == ISD::SETUEQ;}]>;
+def COND_UNE : PatLeaf <(cond), [{return N->get() == ISD::SETUNE;}]>;
 def COND_UGT : PatLeaf <(cond), [{return N->get() == ISD::SETUGT;}]>;
 def COND_UGE : PatLeaf <(cond), [{return N->get() == ISD::SETUGE;}]>;
 def COND_ULT : PatLeaf <(cond), [{return N->get() == ISD::SETULT;}]>;
 def COND_ULE : PatLeaf <(cond), [{return N->get() == ISD::SETULE;}]>;
+
+// XXX - For some reason R600 version is preferring to use unordered
+// for setne?
+def COND_UNE_NE : PatLeaf <
+  (cond),
+  [{return N->get() == ISD::SETUNE || N->get() == ISD::SETNE;}]
+>;
 
 //===----------------------------------------------------------------------===//
 // PatLeafs for signed comparisons

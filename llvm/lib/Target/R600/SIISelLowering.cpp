@@ -62,14 +62,12 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   computeRegisterProperties();
 
   // Condition Codes
-  setCondCodeAction(ISD::SETONE, MVT::f32, Expand);
   setCondCodeAction(ISD::SETUEQ, MVT::f32, Expand);
   setCondCodeAction(ISD::SETUGE, MVT::f32, Expand);
   setCondCodeAction(ISD::SETUGT, MVT::f32, Expand);
   setCondCodeAction(ISD::SETULE, MVT::f32, Expand);
   setCondCodeAction(ISD::SETULT, MVT::f32, Expand);
 
-  setCondCodeAction(ISD::SETONE, MVT::f64, Expand);
   setCondCodeAction(ISD::SETUEQ, MVT::f64, Expand);
   setCondCodeAction(ISD::SETUGE, MVT::f64, Expand);
   setCondCodeAction(ISD::SETUGT, MVT::f64, Expand);
