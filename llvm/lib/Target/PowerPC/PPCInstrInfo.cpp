@@ -230,10 +230,12 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 
   // Normal instructions can be commuted the obvious way.
   if (MI->getOpcode() != PPC::RLWIMI &&
-      MI->getOpcode() != PPC::RLWIMIo &&
-      MI->getOpcode() != PPC::RLWIMI8 &&
-      MI->getOpcode() != PPC::RLWIMI8o)
+      MI->getOpcode() != PPC::RLWIMIo)
     return TargetInstrInfo::commuteInstruction(MI, NewMI);
+  // Note that RLWIMI can be commuted as a 32-bit instruction, but not as a
+  // 64-bit instruction (so we don't handle PPC::RLWIMI8 here), because
+  // changing the relative order of the mask operands might change what happens
+  // to the high-bits of the mask (and, thus, the result).
 
   // Cannot commute if it has a non-zero rotate count.
   if (MI->getOperand(3).getImm() != 0)

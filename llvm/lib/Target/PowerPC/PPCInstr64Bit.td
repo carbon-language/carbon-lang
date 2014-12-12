@@ -547,6 +547,11 @@ defm EXTSB8 : XForm_11r<31, 954, (outs g8rc:$rA), (ins g8rc:$rS),
 defm EXTSH8 : XForm_11r<31, 922, (outs g8rc:$rA), (ins g8rc:$rS),
                         "extsh", "$rA, $rS", IIC_IntSimple,
                         [(set i64:$rA, (sext_inreg i64:$rS, i16))]>;
+
+defm SLW8  : XForm_6r<31,  24, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
+                      "slw", "$rA, $rS, $rB", IIC_IntGeneral, []>;
+defm SRW8  : XForm_6r<31, 536, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
+                      "srw", "$rA, $rS, $rB", IIC_IntGeneral, []>;
 } // Interpretation64Bit
 
 // For fast-isel:
@@ -645,7 +650,11 @@ defm RLWINM8 : MForm_2r<21, (outs g8rc:$rA),
                         "rlwinm", "$rA, $rS, $SH, $MB, $ME", IIC_IntGeneral,
                         []>;
 
-let isCommutable = 1 in {
+defm RLWNM8  : MForm_2r<23, (outs g8rc:$rA),
+                        (ins g8rc:$rS, g8rc:$rB, u5imm:$MB, u5imm:$ME),
+                        "rlwnm", "$rA, $rS, $rB, $MB, $ME", IIC_IntGeneral,
+                        []>;
+
 // RLWIMI can be commuted if the rotate amount is zero.
 let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 defm RLWIMI8 : MForm_2r<20, (outs g8rc:$rA),
@@ -653,7 +662,6 @@ defm RLWIMI8 : MForm_2r<20, (outs g8rc:$rA),
                         u5imm:$ME), "rlwimi", "$rA, $rS, $SH, $MB, $ME",
                         IIC_IntRotate, []>, PPC970_DGroup_Cracked,
                         RegConstraint<"$rSi = $rA">, NoEncode<"$rSi">;
-}
 
 let isSelect = 1 in
 def ISEL8   : AForm_4<31, 15,
