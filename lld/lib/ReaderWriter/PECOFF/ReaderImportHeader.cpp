@@ -197,31 +197,31 @@ private:
 
 class FileImportLibrary : public File {
 public:
-  FileImportLibrary(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec,
-                    MachineTypes machine)
-      : File(mb->getBufferIdentifier(), kindSharedLibrary), _machine(machine) {
-    const char *buf = mb->getBufferStart();
-    const char *end = mb->getBufferEnd();
+  FileImportLibrary(std::unique_ptr<MemoryBuffer> mb, MachineTypes machine)
+      : File(mb->getBufferIdentifier(), kindSharedLibrary),
+        _mb(std::move(mb)),  _machine(machine) {}
+
+  std::error_code doParse() override {
+    const char *buf = _mb->getBufferStart();
+    const char *end = _mb->getBufferEnd();
 
     // The size of the string that follows the header.
     uint32_t dataSize = *reinterpret_cast<const support::ulittle32_t *>(
-                             buf + offsetof(COFF::ImportHeader, SizeOfData));
+        buf + offsetof(COFF::ImportHeader, SizeOfData));
 
     // Check if the total size is valid.
-    if (std::size_t(end - buf) != sizeof(COFF::ImportHeader) + dataSize) {
-      ec = make_error_code(NativeReaderError::unknown_file_format);
-      return;
-    }
+    if (std::size_t(end - buf) != sizeof(COFF::ImportHeader) + dataSize)
+      return make_error_code(NativeReaderError::unknown_file_format);
 
     uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(
-                         buf + offsetof(COFF::ImportHeader, OrdinalHint));
+        buf + offsetof(COFF::ImportHeader, OrdinalHint));
     StringRef symbolName(buf + sizeof(COFF::ImportHeader));
     StringRef dllName(buf + sizeof(COFF::ImportHeader) + symbolName.size() + 1);
 
     // TypeInfo is a bitfield. The least significant 2 bits are import
     // type, followed by 3 bit import name type.
     uint16_t typeInfo = *reinterpret_cast<const support::ulittle16_t *>(
-                             buf + offsetof(COFF::ImportHeader, TypeInfo));
+        buf + offsetof(COFF::ImportHeader, TypeInfo));
     int type = typeInfo & 0x3;
     int nameType = (typeInfo >> 2) & 0x7;
 
@@ -235,7 +235,7 @@ public:
     if (type == llvm::COFF::IMPORT_CODE)
       addFuncAtom(symbolName, dllName, dataAtom);
 
-    ec = std::error_code();
+    return std::error_code();
   }
 
   const atom_collection<DefinedAtom> &defined() const override {
@@ -309,6 +309,7 @@ private:
     return *str;
   }
 
+  std::unique_ptr<MemoryBuffer> _mb;
   MachineTypes _machine;
 };
 
@@ -326,12 +327,8 @@ public:
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File> > &result) const override {
-    std::error_code ec;
-    auto file = std::unique_ptr<File>(
-        new FileImportLibrary(std::move(mb), ec, _machine));
-    if (ec)
-      return ec;
-    result.push_back(std::move(file));
+    auto *file = new FileImportLibrary(std::move(mb), _machine);
+    result.push_back(std::unique_ptr<File>(file));
     return std::error_code();
   }
 

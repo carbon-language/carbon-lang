@@ -122,7 +122,7 @@ public:
       : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
         _ordinal(0), _doStringsMerge(atomizeStrings) {}
 
-  virtual std::error_code parse();
+  virtual std::error_code doParse() override;
 
   static ErrorOr<std::unique_ptr<ELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings);
@@ -417,19 +417,15 @@ public:
 template <class ELFT>
 ErrorOr<std::unique_ptr<ELFFile<ELFT>>>
 ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-  std::error_code ec;
   std::unique_ptr<ELFFile<ELFT>> file(
       new ELFFile<ELFT>(std::move(mb), atomizeStrings));
-  if (std::error_code ec = file->parse())
-    return ec;
   return std::move(file);
 }
 
 template <class ELFT>
-std::error_code ELFFile<ELFT>::parse() {
+std::error_code ELFFile<ELFT>::doParse() {
   std::error_code ec;
-  _objFile.reset(
-      new llvm::object::ELFFile<ELFT>(_mb.release()->getBuffer(), ec));
+  _objFile.reset(new llvm::object::ELFFile<ELFT>(_mb.release()->getBuffer(), ec));
   if (ec)
     return ec;
 

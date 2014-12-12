@@ -712,9 +712,32 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
 
 /// Converts normalized mach-o file into an lld::File and lld::Atoms.
 ErrorOr<std::unique_ptr<lld::File>>
-normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
-                        bool copyRefs) {
+objectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
+              bool copyRefs) {
   std::unique_ptr<MachOFile> file(new MachOFile(path));
+  if (std::error_code ec = normalizedObjectToAtoms(
+        file.get(), normalizedFile, copyRefs))
+    return ec;
+  return std::unique_ptr<File>(std::move(file));
+}
+
+ErrorOr<std::unique_ptr<lld::File>>
+dylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
+             bool copyRefs) {
+  // Instantiate SharedLibraryFile object.
+  std::unique_ptr<MachODylibFile> file(new MachODylibFile(path));
+  normalizedDylibToAtoms(file.get(), normalizedFile, copyRefs);
+  return std::unique_ptr<File>(std::move(file));
+}
+
+} // anonymous namespace
+
+namespace normalized {
+
+std::error_code
+normalizedObjectToAtoms(MachOFile *file,
+                        const NormalizedFile &normalizedFile,
+                        bool copyRefs) {
   bool scatterable = ((normalizedFile.flags & MH_SUBSECTIONS_VIA_SYMBOLS) != 0);
 
   // Create atoms from each section.
@@ -811,18 +834,17 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   for (const DefinedAtom* defAtom : file->defined()) {
     reinterpret_cast<const SimpleDefinedAtom*>(defAtom)->sortReferences();
   }
-
-  return std::unique_ptr<File>(std::move(file));
+  return std::error_code();
 }
 
-ErrorOr<std::unique_ptr<lld::File>>
-normalizedDylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
+std::error_code
+normalizedDylibToAtoms(MachODylibFile *file,
+                       const NormalizedFile &normalizedFile,
                        bool copyRefs) {
-  // Instantiate SharedLibraryFile object.
-  std::unique_ptr<MachODylibFile> file(
-      new MachODylibFile(path, normalizedFile.installName,
-                         normalizedFile.compatVersion,
-                         normalizedFile.currentVersion));
+  file->setInstallName(normalizedFile.installName);
+  file->setCompatVersion(normalizedFile.compatVersion);
+  file->setCurrentVersion(normalizedFile.currentVersion);
+
   // Tell MachODylibFile object about all symbols it exports.
   if (!normalizedFile.exportInfo.empty()) {
     // If exports trie exists, use it instead of traditional symbol table.
@@ -843,13 +865,8 @@ normalizedDylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
     if (dep.kind == llvm::MachO::LC_REEXPORT_DYLIB)
       file->addReExportedDylib(dep.path);
   }
-
-  return std::unique_ptr<File>(std::move(file));
+  return std::error_code();
 }
-
-} // anonymous namespace
-
-namespace normalized {
 
 void relocatableSectionInfoForContentType(DefinedAtom::ContentType atomType,
                                           StringRef &segmentName,
@@ -881,9 +898,9 @@ normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   switch (normalizedFile.fileType) {
   case MH_DYLIB:
   case MH_DYLIB_STUB:
-    return normalizedDylibToAtoms(normalizedFile, path, copyRefs);
+    return dylibToAtoms(normalizedFile, path, copyRefs);
   case MH_OBJECT:
-    return normalizedObjectToAtoms(normalizedFile, path, copyRefs);
+    return objectToAtoms(normalizedFile, path, copyRefs);
   default:
     llvm_unreachable("unhandled MachO file type!");
   }

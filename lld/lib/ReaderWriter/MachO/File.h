@@ -24,6 +24,9 @@ using lld::mach_o::normalized::Section;
 
 class MachOFile : public SimpleFile {
 public:
+  MachOFile(MemoryBuffer *mb, MachOLinkingContext *ctx)
+      : SimpleFile(mb->getBufferIdentifier()), _mb(mb), _ctx(ctx) {}
+
   MachOFile(StringRef path) : SimpleFile(path) {}
 
   void addDefinedAtom(StringRef name, Atom::Scope scope,
@@ -172,6 +175,19 @@ public:
       visitor(offAndAtom.atom, offAndAtom.offset);
   }
 
+  std::error_code doParse() override {
+    // Convert binary file to normalized mach-o.
+    std::unique_ptr<MemoryBuffer>mb(_mb);
+    auto normFile = normalized::readBinary(mb, _ctx->arch());
+    mb.release();
+    if (std::error_code ec = normFile.getError())
+      return ec;
+    // Convert normalized mach-o to atoms.
+    if (std::error_code ec = normalized::normalizedObjectToAtoms(
+            this, **normFile, false))
+      return ec;
+    return std::error_code();
+  }
   
 private:
   struct SectionOffsetAndAtom { uint64_t offset;  MachODefinedAtom *atom; };
@@ -190,17 +206,18 @@ private:
                          std::vector<SectionOffsetAndAtom>>  SectionToAtoms;
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
 
+  MemoryBuffer           *_mb;
+  MachOLinkingContext    *_ctx;
   SectionToAtoms          _sectionAtoms;
   NameToAtom              _undefAtoms;
 };
 
 class MachODylibFile : public SharedLibraryFile {
 public:
-  MachODylibFile(StringRef path, StringRef installName, uint32_t compatVersion,
-                 uint32_t currentVersion)
-      : SharedLibraryFile(path), _installName(installName),
-        _currentVersion(currentVersion), _compatVersion(compatVersion) {
-  }
+  MachODylibFile(MemoryBuffer *mb, MachOLinkingContext *ctx)
+      : SharedLibraryFile(mb->getBufferIdentifier()), _mb(mb), _ctx(ctx) {}
+
+  MachODylibFile(StringRef path) : SharedLibraryFile(path) {}
 
   const SharedLibraryAtom *exports(StringRef name, bool isData) const override {
     // Pass down _installName so that if this requested symbol
@@ -241,10 +258,12 @@ public:
   }
 
   StringRef installName() { return _installName; }
-
   uint32_t currentVersion() { return _currentVersion; }
-
   uint32_t compatVersion() { return _compatVersion; }
+
+  void setInstallName(StringRef name) { _installName = name; }
+  void setCompatVersion(uint32_t version) { _compatVersion = version; }
+  void setCurrentVersion(uint32_t version) { _currentVersion = version; }
 
   typedef std::function<MachODylibFile *(StringRef)> FindDylib;
 
@@ -252,6 +271,20 @@ public:
     for (ReExportedDylib &entry : _reExportedDylibs) {
       entry.file = find(entry.path);
     }
+  }
+
+  std::error_code doParse() override {
+    // Convert binary file to normalized mach-o.
+    std::unique_ptr<MemoryBuffer>mb(_mb);
+    auto normFile = normalized::readBinary(mb, _ctx->arch());
+    mb.release();
+    if (std::error_code ec = normFile.getError())
+      return ec;
+    // Convert normalized mach-o to atoms.
+    if (std::error_code ec = normalized::normalizedDylibToAtoms(
+            this, **normFile, false))
+      return ec;
+    return std::error_code();
   }
 
 private:
@@ -295,6 +328,8 @@ private:
     bool                      weakDef;
   };
 
+  MemoryBuffer                              *_mb;
+  MachOLinkingContext                       *_ctx;
   StringRef                                  _installName;
   uint32_t                                   _currentVersion;
   uint32_t                                   _compatVersion;

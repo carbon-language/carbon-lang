@@ -1351,6 +1351,7 @@ public:
     for (const File *file : createdFiles) {
       // Note: parseFile() should return vector of *const* File
       File *f = const_cast<File *>(file);
+      f->setLastError(std::error_code());
       result.emplace_back(f);
     }
     return make_error_code(lld::YamlReaderError::success);

@@ -24,11 +24,8 @@ public:
 
   static ErrorOr<std::unique_ptr<X86_64ELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-    std::unique_ptr<X86_64ELFFile<ELFT>> file(
+    return std::unique_ptr<X86_64ELFFile<ELFT>>(
         new X86_64ELFFile<ELFT>(std::move(mb), atomizeStrings));
-    if (std::error_code ec = file->parse())
-      return ec;
-    return std::move(file);
   }
 };
 

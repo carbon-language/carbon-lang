@@ -19,11 +19,14 @@ class PPCLinkingContext;
 
 template <class ELFT> class PPCELFFile : public ELFFile<ELFT> {
 public:
-  PPCELFFile(StringRef name) : ELFFile<ELFT>(name) {}
+  PPCELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
+      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
 
-  PPCELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-             TargetHandlerBase *handler, std::error_code &ec)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings, handler, ec) {}
+  static ErrorOr<std::unique_ptr<PPCELFFile>>
+  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
+    return std::unique_ptr<PPCELFFile<ELFT>>(
+        new PPCELFFile<ELFT>(std::move(mb), atomizeStrings));
+  }
 };
 
 template <class ELFT> class PPCDynamicFile : public DynamicFile<ELFT> {

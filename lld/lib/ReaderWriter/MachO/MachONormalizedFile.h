@@ -285,6 +285,16 @@ readYaml(std::unique_ptr<MemoryBuffer> &mb);
 /// Writes a yaml encoded mach-o files given an in-memory normalized view.
 std::error_code writeYaml(const NormalizedFile &file, raw_ostream &out);
 
+std::error_code
+normalizedObjectToAtoms(MachOFile *file,
+                        const NormalizedFile &normalizedFile,
+                        bool copyRefs);
+
+std::error_code
+normalizedDylibToAtoms(MachODylibFile *file,
+                       const NormalizedFile &normalizedFile,
+                       bool copyRefs);
+
 /// Takes in-memory normalized dylib or object and parses it into lld::File
 ErrorOr<std::unique_ptr<lld::File>>
 normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,

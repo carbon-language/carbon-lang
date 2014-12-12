@@ -85,11 +85,8 @@ public:
 
   static ErrorOr<std::unique_ptr<MipsELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-    std::unique_ptr<MipsELFFile<ELFT>> file(
+    return std::unique_ptr<MipsELFFile<ELFT>>(
         new MipsELFFile<ELFT>(std::move(mb), atomizeStrings));
-    if (std::error_code ec = file->parse())
-      return ec;
-    return std::move(file);
   }
 
   bool isPIC() const {
@@ -103,8 +100,8 @@ public:
   uint64_t getTPOffset() const { return *_tpOff; }
   uint64_t getDTPOffset() const { return *_dtpOff; }
 
-  std::error_code parse() override {
-    if (std::error_code ec = ELFFile<ELFT>::parse())
+  std::error_code doParse() override {
+    if (std::error_code ec = ELFFile<ELFT>::doParse())
       return ec;
     // Retrieve some auxiliary data like GP value, TLS section address etc
     // from the object file.

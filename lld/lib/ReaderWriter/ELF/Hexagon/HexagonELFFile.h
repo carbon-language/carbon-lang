@@ -119,11 +119,8 @@ public:
 
   static ErrorOr<std::unique_ptr<HexagonELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-    std::unique_ptr<HexagonELFFile<ELFT>> file(
+    return std::unique_ptr<HexagonELFFile<ELFT>>(
         new HexagonELFFile<ELFT>(std::move(mb), atomizeStrings));
-    if (std::error_code ec = file->parse())
-      return ec;
-    return std::move(file);
   }
 
   virtual bool isCommonSymbol(const Elf_Sym *symbol) const {

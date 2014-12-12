@@ -505,14 +505,39 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   return std::move(f);
 }
 
-class MachOReader : public Reader {
+class MachOObjectReader : public Reader {
 public:
-  MachOReader(MachOLinkingContext &ctx) : _ctx(ctx) {}
+  MachOObjectReader(MachOLinkingContext &ctx) : _ctx(ctx) {}
 
   bool canParse(file_magic magic, StringRef ext,
                 const MemoryBuffer &mb) const override {
     switch (magic) {
     case llvm::sys::fs::file_magic::macho_object:
+      return (mb.getBufferSize() > 32);
+    default:
+      return false;
+    }
+  }
+
+  std::error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
+            std::vector<std::unique_ptr<File>> &result) const override {
+    auto *file = new MachOFile(mb.get(), &_ctx);
+    result.push_back(std::unique_ptr<MachOFile>(file));
+    return std::error_code();
+  }
+
+private:
+  MachOLinkingContext &_ctx;
+};
+
+class MachODylibReader : public Reader {
+public:
+  MachODylibReader(MachOLinkingContext &ctx) : _ctx(ctx) {}
+
+  bool canParse(file_magic magic, StringRef ext,
+                const MemoryBuffer &mb) const override {
+    switch (magic) {
     case llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib:
     case llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
       return (mb.getBufferSize() > 32);
@@ -524,30 +549,22 @@ public:
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
             std::vector<std::unique_ptr<File>> &result) const override {
-    // Convert binary file to normalized mach-o.
-    auto normFile = readBinary(mb, _ctx.arch());
-    if (std::error_code ec = normFile.getError())
-      return ec;
-    // Convert normalized mach-o to atoms.
-    auto file = normalizedToAtoms(**normFile, mb->getBufferIdentifier(), false);
-    if (std::error_code ec = file.getError())
-      return ec;
-
-    result.push_back(std::move(*file));
-
+    auto *file = new MachODylibFile(mb.get(), &_ctx);
+    result.push_back(std::unique_ptr<MachODylibFile>(file));
     return std::error_code();
   }
+
 private:
   MachOLinkingContext &_ctx;
 };
-
 
 } // namespace normalized
 } // namespace mach_o
 
 void Registry::addSupportMachOObjects(MachOLinkingContext &ctx) {
   MachOLinkingContext::Arch arch = ctx.arch();
-  add(std::unique_ptr<Reader>(new mach_o::normalized::MachOReader(ctx)));
+  add(std::unique_ptr<Reader>(new mach_o::normalized::MachOObjectReader(ctx)));
+  add(std::unique_ptr<Reader>(new mach_o::normalized::MachODylibReader(ctx)));
   addKindTable(Reference::KindNamespace::mach_o, ctx.archHandler().kindArch(), 
                ctx.archHandler().kindStrings());
   add(std::unique_ptr<YamlIOTaggedDocumentHandler>(

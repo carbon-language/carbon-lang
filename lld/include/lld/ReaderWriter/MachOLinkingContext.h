@@ -26,6 +26,7 @@ namespace lld {
 namespace mach_o {
 class ArchHandler;
 class MachODylibFile;
+class MachOFile;
 }
 
 class MachOLinkingContext : public LinkingContext {

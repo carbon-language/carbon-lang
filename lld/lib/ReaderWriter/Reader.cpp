@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lld/Core/File.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Errc.h"
@@ -38,9 +39,16 @@ Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
   StringRef extension = llvm::sys::path::extension(mb->getBufferIdentifier());
 
   // Ask each registered reader if it can handle this file type or extension.
-  for (const std::unique_ptr<Reader> &reader : _readers)
-    if (reader->canParse(fileType, extension, *mb))
-      return reader->parseFile(mb, *this, result);
+  for (const std::unique_ptr<Reader> &reader : _readers) {
+    if (!reader->canParse(fileType, extension, *mb))
+      continue;
+    if (std::error_code ec = reader->parseFile(mb, *this, result))
+      return ec;
+    for (std::unique_ptr<File> &file : result)
+      if (std::error_code ec = file->parse())
+        return ec;
+    return std::error_code();
+  }
 
   // No Reader could parse this file.
   return make_error_code(llvm::errc::executable_format_error);

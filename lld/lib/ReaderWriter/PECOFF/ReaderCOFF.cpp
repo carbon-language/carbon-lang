@@ -55,6 +55,21 @@ using namespace lld;
 
 namespace {
 
+class BumpPtrStringSaver : public llvm::cl::StringSaver {
+public:
+  const char *SaveString(const char *str) override {
+    size_t len = strlen(str);
+    std::lock_guard<std::mutex> lock(_allocMutex);
+    char *copy = _alloc.Allocate<char>(len + 1);
+    memcpy(copy, str, len + 1);
+    return copy;
+  }
+
+private:
+  llvm::BumpPtrAllocator _alloc;
+  std::mutex _allocMutex;
+};
+
 class FileCOFF : public File {
 private:
   typedef std::vector<llvm::object::COFFSymbolRef> SymbolVectorT;
@@ -66,10 +81,12 @@ private:
 public:
   typedef const std::map<std::string, std::string> StringMap;
 
-  FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec);
+  FileCOFF(std::unique_ptr<MemoryBuffer> mb, PECOFFLinkingContext &ctx)
+    : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
+      _compatibleWithSEH(false), _ordinal(0),
+      _machineType(llvm::COFF::MT_Invalid), _ctx(ctx) {}
 
-  std::error_code parse();
-  StringRef getLinkerDirectives() const { return _directives; }
+  std::error_code doParse() override;
   bool isCompatibleWithSEH() const { return _compatibleWithSEH; }
   llvm::COFF::MachineTypes getMachineType() { return _machineType; }
 
@@ -97,6 +114,11 @@ public:
   void addUndefinedSymbol(StringRef sym) {
     _undefinedAtoms._atoms.push_back(new (_alloc) COFFUndefinedAtom(*this, sym));
   }
+
+  AliasAtom *createAlias(StringRef name, const DefinedAtom *target);
+  void createAlternateNameAtoms();
+  std::error_code parseDirectiveSection(
+    StringRef directives, std::set<StringRef> *undefinedSymbols);
 
   mutable llvm::BumpPtrAllocator _alloc;
 
@@ -155,9 +177,6 @@ private:
   // The target type of the object.
   Reference::KindArch _referenceArch;
 
-  // The contents of .drectve section.
-  StringRef _directives;
-
   // True if the object has "@feat.00" symbol.
   bool _compatibleWithSEH;
 
@@ -192,21 +211,8 @@ private:
 
   uint64_t _ordinal;
   llvm::COFF::MachineTypes _machineType;
-};
-
-class BumpPtrStringSaver : public llvm::cl::StringSaver {
-public:
-  const char *SaveString(const char *str) override {
-    size_t len = strlen(str);
-    std::lock_guard<std::mutex> lock(_allocMutex);
-    char *copy = _alloc.Allocate<char>(len + 1);
-    memcpy(copy, str, len + 1);
-    return copy;
-  }
-
-private:
-  llvm::BumpPtrAllocator _alloc;
-  std::mutex _allocMutex;
+  PECOFFLinkingContext &_ctx;
+  mutable BumpPtrStringSaver _stringSaver;
 };
 
 // Converts the COFF symbol attribute to the LLD's atom attribute.
@@ -290,33 +296,54 @@ DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
   }
 }
 
-FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
-    : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
-      _compatibleWithSEH(false), _ordinal(0),
-      _machineType(llvm::COFF::MT_Invalid) {
+StringRef getMachineName(llvm::COFF::MachineTypes Type) {
+  switch (Type) {
+  default: llvm_unreachable("unsupported machine type");
+  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
+    return "ARM";
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    return "X86";
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    return "X64";
+  }
+}
+
+std::error_code FileCOFF::doParse() {
   auto binaryOrErr = llvm::object::createBinary(_mb->getMemBufferRef());
-  if ((ec = binaryOrErr.getError()))
-    return;
+  if (std::error_code ec = binaryOrErr.getError())
+    return ec;
   std::unique_ptr<llvm::object::Binary> bin = std::move(binaryOrErr.get());
 
   _obj.reset(dyn_cast<const llvm::object::COFFObjectFile>(bin.get()));
-  if (!_obj) {
-    ec = make_error_code(llvm::object::object_error::invalid_file_type);
-    return;
-  }
+  if (!_obj)
+    return make_error_code(llvm::object::object_error::invalid_file_type);
   bin.release();
 
   _machineType = static_cast<llvm::COFF::MachineTypes>(_obj->getMachine());
 
+  if (getMachineType() != llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN &&
+      getMachineType() != _ctx.getMachineType()) {
+    llvm::errs() << "module machine type '"
+                 << getMachineName(getMachineType())
+                 << "' conflicts with target machine type '"
+                 << getMachineName(_ctx.getMachineType()) << "'\n";
+    return NativeReaderError::conflicting_target_machine;
+  }
+
+  // The set to contain the symbols specified as arguments of
+  // /INCLUDE option.
+  std::set<StringRef> undefinedSymbols;
+
+  // Interpret .drectve section if the section has contents.
   // Read .drectve section if exists.
   ArrayRef<uint8_t> directives;
-  if ((ec = getSectionContents(".drectve", directives)))
-    return;
+  if (std::error_code ec = getSectionContents(".drectve", directives))
+    return ec;
   if (!directives.empty())
-    _directives = ArrayRefToString(directives);
-}
+    if (std::error_code ec = parseDirectiveSection(
+          ArrayRefToString(directives), &undefinedSymbols))
+      return ec;
 
-std::error_code FileCOFF::parse() {
   if (std::error_code ec = getReferenceArch(_referenceArch))
     return ec;
 
@@ -329,7 +356,7 @@ std::error_code FileCOFF::parse() {
 
   createAbsoluteAtoms(symbols, _absoluteAtoms._atoms);
   if (std::error_code ec =
-          createUndefinedAtoms(symbols, _undefinedAtoms._atoms))
+      createUndefinedAtoms(symbols, _undefinedAtoms._atoms))
     return ec;
   if (std::error_code ec = createDefinedSymbols(symbols, _definedAtoms._atoms))
     return ec;
@@ -337,6 +364,37 @@ std::error_code FileCOFF::parse() {
     return ec;
   if (std::error_code ec = maybeCreateSXDataAtoms())
     return ec;
+
+  // Check for /SAFESEH.
+  if (_ctx.requireSEH() && !isCompatibleWithSEH()) {
+    llvm::errs() << "/SAFESEH is specified, but "
+                 << _mb->getBufferIdentifier()
+                 << " is not compatible with SEH.\n";
+    return llvm::object::object_error::parse_failed;
+  }
+
+  // Add /INCLUDE'ed symbols to the file as if they existed in the
+  // file as undefined symbols.
+  for (StringRef sym : undefinedSymbols)
+    addUndefinedSymbol(sym);
+
+  // One can define alias symbols using /alternatename:<sym>=<sym> option.
+  // The mapping for /alternatename is in the context object. This helper
+  // function iterate over defined atoms and create alias atoms if needed.
+  createAlternateNameAtoms();
+
+  // Acquire the mutex to mutate _ctx.
+  std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
+
+  // In order to emit SEH table, all input files need to be compatible with
+  // SEH. Disable SEH if the file being read is not compatible.
+  if (!isCompatibleWithSEH())
+    _ctx.setSafeSEH(false);
+
+  if (_ctx.deadStrip())
+    for (StringRef sym : undefinedSymbols)
+      _ctx.addDeadStripRoot(sym);
+
   return std::error_code();
 }
 
@@ -804,6 +862,67 @@ std::error_code FileCOFF::getSectionContents(StringRef sectionName,
   return std::error_code();
 }
 
+AliasAtom *FileCOFF::createAlias(StringRef name,
+                                 const DefinedAtom *target) {
+  AliasAtom *alias = new (_alloc) AliasAtom(*this, name);
+  alias->addReference(Reference::KindNamespace::all, Reference::KindArch::all,
+                      Reference::kindLayoutAfter, 0, target, 0);
+  alias->setMerge(DefinedAtom::mergeAsWeak);
+  if (target->contentType() == DefinedAtom::typeCode)
+    alias->setDeadStrip(DefinedAtom::deadStripNever);
+  return alias;
+}
+
+void FileCOFF::createAlternateNameAtoms() {
+  std::vector<AliasAtom *> aliases;
+  for (const DefinedAtom *atom : defined()) {
+    auto it = _ctx.alternateNames().find(atom->name());
+    if (it != _ctx.alternateNames().end())
+      aliases.push_back(createAlias(it->second, atom));
+  }
+  for (AliasAtom *alias : aliases)
+    addDefinedAtom(alias);
+}
+
+// Interpret the contents of .drectve section. If exists, the section contains
+// a string containing command line options. The linker is expected to
+// interpret the options as if they were given via the command line.
+//
+// The section mainly contains /defaultlib (-l in Unix), but can contain any
+// options as long as they are valid.
+std::error_code
+FileCOFF::parseDirectiveSection(StringRef directives,
+                                std::set<StringRef> *undefinedSymbols) {
+  DEBUG(llvm::dbgs() << ".drectve: " << directives << "\n");
+
+  // Split the string into tokens, as the shell would do for argv.
+  SmallVector<const char *, 16> tokens;
+  tokens.push_back("link"); // argv[0] is the command name. Will be ignored.
+  llvm::cl::TokenizeWindowsCommandLine(directives, _stringSaver, tokens);
+  tokens.push_back(nullptr);
+
+  // Calls the command line parser to interpret the token string as if they
+  // were given via the command line.
+  int argc = tokens.size() - 1;
+  const char **argv = &tokens[0];
+  std::string errorMessage;
+  llvm::raw_string_ostream stream(errorMessage);
+  bool parseFailed = !WinLinkDriver::parse(argc, argv, _ctx, stream,
+                                           /*isDirective*/ true,
+                                           undefinedSymbols);
+  stream.flush();
+  // Print error message if error.
+  if (parseFailed) {
+    auto msg = Twine("Failed to parse '") + directives + "'\n"
+    + "Reason: " + errorMessage;
+    return make_dynamic_error_code(msg);
+  }
+  if (!errorMessage.empty()) {
+    llvm::errs() << "lld warning: " << errorMessage << "\n";
+  }
+  return std::error_code();
+}
+
 /// Returns the target machine type of the current object file.
 std::error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
   switch (_obj->getMachine()) {
@@ -945,18 +1064,6 @@ StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
   return StringRef(*contents).trim();
 }
 
-StringRef getMachineName(llvm::COFF::MachineTypes Type) {
-  switch (Type) {
-  default: llvm_unreachable("unsupported machine type");
-  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
-    return "ARM";
-  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
-    return "X86";
-  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
-    return "X64";
-  }
-}
-
 class COFFObjectReader : public Reader {
 public:
   COFFObjectReader(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
@@ -967,136 +1074,16 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     // Parse the memory buffer as PECOFF file.
-    const char *mbName = mb->getBufferIdentifier();
-    std::error_code ec;
-    std::unique_ptr<FileCOFF> file(new FileCOFF(std::move(mb), ec));
-    if (ec)
-      return ec;
-
-    if (file->getMachineType() != llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN &&
-        file->getMachineType() != _ctx.getMachineType()) {
-      llvm::errs() << "module machine type '"
-                   << getMachineName(file->getMachineType())
-                   << "' conflicts with target machine type '"
-                   << getMachineName(_ctx.getMachineType()) << "'\n";
-      return NativeReaderError::conflicting_target_machine;
-    }
-
-    // The set to contain the symbols specified as arguments of
-    // /INCLUDE option.
-    std::set<StringRef> undefinedSymbols;
-
-    // Interpret .drectve section if the section has contents.
-    StringRef directives = file->getLinkerDirectives();
-    if (!directives.empty())
-      if (std::error_code ec = handleDirectiveSection(
-              directives, &undefinedSymbols))
-        return ec;
-
-    if (std::error_code ec = file->parse())
-      return ec;
-
-    // Check for /SAFESEH.
-    if (_ctx.requireSEH() && !file->isCompatibleWithSEH()) {
-      llvm::errs() << "/SAFESEH is specified, but " << mbName
-                   << " is not compatible with SEH.\n";
-      return llvm::object::object_error::parse_failed;
-    }
-
-    // Add /INCLUDE'ed symbols to the file as if they existed in the
-    // file as undefined symbols.
-    for (StringRef sym : undefinedSymbols)
-      file->addUndefinedSymbol(sym);
-
-    // One can define alias symbols using /alternatename:<sym>=<sym> option.
-    // The mapping for /alternatename is in the context object. This helper
-    // function iterate over defined atoms and create alias atoms if needed.
-    createAlternateNameAtoms(*file);
-
-    // Acquire the mutex to mutate _ctx.
-    std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
-
-    // In order to emit SEH table, all input files need to be compatible with
-    // SEH. Disable SEH if the file being read is not compatible.
-    if (!file->isCompatibleWithSEH())
-      _ctx.setSafeSEH(false);
-
-    if (_ctx.deadStrip())
-      for (StringRef sym : undefinedSymbols)
-        _ctx.addDeadStripRoot(sym);
-
-    result.push_back(std::move(file));
+    auto *file = new FileCOFF(std::move(mb), _ctx);
+    result.push_back(std::unique_ptr<File>(file));
     return std::error_code();
   }
 
 private:
-  // Interpret the contents of .drectve section. If exists, the section contains
-  // a string containing command line options. The linker is expected to
-  // interpret the options as if they were given via the command line.
-  //
-  // The section mainly contains /defaultlib (-l in Unix), but can contain any
-  // options as long as they are valid.
-  std::error_code handleDirectiveSection(StringRef directives,
-                                         std::set<StringRef> *undefinedSymbols) const {
-    DEBUG(llvm::dbgs() << ".drectve: " << directives << "\n");
-
-    // Split the string into tokens, as the shell would do for argv.
-    SmallVector<const char *, 16> tokens;
-    tokens.push_back("link"); // argv[0] is the command name. Will be ignored.
-    llvm::cl::TokenizeWindowsCommandLine(directives, _stringSaver, tokens);
-    tokens.push_back(nullptr);
-
-    // Calls the command line parser to interpret the token string as if they
-    // were given via the command line.
-    int argc = tokens.size() - 1;
-    const char **argv = &tokens[0];
-    std::string errorMessage;
-    llvm::raw_string_ostream stream(errorMessage);
-    bool parseFailed = !WinLinkDriver::parse(argc, argv, _ctx, stream,
-                                             /*isDirective*/ true,
-                                             undefinedSymbols);
-    stream.flush();
-    // Print error message if error.
-    if (parseFailed) {
-      auto msg = Twine("Failed to parse '") + directives + "'\n"
-        + "Reason: " + errorMessage;
-      return make_dynamic_error_code(msg);
-    }
-    if (!errorMessage.empty()) {
-      llvm::errs() << "lld warning: " << errorMessage << "\n";
-    }
-    return std::error_code();
-  }
-
-  AliasAtom *createAlias(FileCOFF &file, StringRef name,
-                         const DefinedAtom *target) const {
-    AliasAtom *alias = new (file._alloc) AliasAtom(file, name);
-    alias->addReference(Reference::KindNamespace::all, Reference::KindArch::all,
-                        Reference::kindLayoutAfter, 0, target, 0);
-    alias->setMerge(DefinedAtom::mergeAsWeak);
-    if (target->contentType() == DefinedAtom::typeCode)
-      alias->setDeadStrip(DefinedAtom::deadStripNever);
-    return alias;
-  }
-
-  // Iterates over defined atoms and create alias atoms if needed.
-  void createAlternateNameAtoms(FileCOFF &file) const {
-    std::vector<AliasAtom *> aliases;
-    for (const DefinedAtom *atom : file.defined()) {
-      auto it = _ctx.alternateNames().find(atom->name());
-      if (it != _ctx.alternateNames().end())
-        aliases.push_back(createAlias(file, it->second, atom));
-    }
-    for (AliasAtom *alias : aliases) {
-      file.addDefinedAtom(alias);
-    }
-  }
-
   PECOFFLinkingContext &_ctx;
-  mutable BumpPtrStringSaver _stringSaver;
 };
 
 using namespace llvm::COFF;
