@@ -1,5 +1,3 @@
-# XFAIL: python2.5
-
 # RUN: %{lit} -j 1 -v %{inputs}/test-data --output %t.results.out > %t.out
 # RUN: FileCheck < %t.results.out %s
 

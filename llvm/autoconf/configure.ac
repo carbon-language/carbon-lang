@@ -1421,23 +1421,23 @@ else
     AC_MSG_WARN([specified python ($PYTHON) is not usable, searching path])
   fi
 
-  AC_PATH_PROG([PYTHON], [python python2 python26],
+  AC_PATH_PROG([PYTHON], [python python2 python27],
                [AC_MSG_RESULT([not found])
-                AC_MSG_ERROR([could not find python 2.5 or higher])])
+                AC_MSG_ERROR([could not find python 2.7 or higher])])
 fi
 
-AC_MSG_CHECKING([for python >= 2.5])
+AC_MSG_CHECKING([for python >= 2.7])
 ac_python_version=`$PYTHON -V 2>&1 | cut -d' ' -f2`
 ac_python_version_major=`echo $ac_python_version | cut -d'.' -f1`
 ac_python_version_minor=`echo $ac_python_version | cut -d'.' -f2`
 ac_python_version_patch=`echo $ac_python_version | cut -d'.' -f3`
 if test "$ac_python_version_major" -gt "2" || \
    (test "$ac_python_version_major" -eq "2" && \
-    test "$ac_python_version_minor" -ge "5") ; then
+    test "$ac_python_version_minor" -ge "7") ; then
   AC_MSG_RESULT([$PYTHON ($ac_python_version)])
 else
   AC_MSG_RESULT([not found])
-  AC_MSG_FAILURE([found python $ac_python_version ($PYTHON); required >= 2.5])
+  AC_MSG_FAILURE([found python $ac_python_version ($PYTHON); required >= 2.7])
 fi
 
 dnl===-----------------------------------------------------------------------===

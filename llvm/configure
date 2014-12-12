@@ -8159,8 +8159,8 @@ else
 echo "$as_me: WARNING: specified python ($PYTHON) is not usable, searching path" >&2;}
   fi
 
-  # Extract the first word of "python python2 python26", so it can be a program name with args.
-set dummy python python2 python26; ac_word=$2
+  # Extract the first word of "python python2 python27", so it can be a program name with args.
+set dummy python python2 python27; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
 if test "${ac_cv_path_PYTHON+set}" = set; then
@@ -8188,8 +8188,8 @@ IFS=$as_save_IFS
 
   test -z "$ac_cv_path_PYTHON" && ac_cv_path_PYTHON="{ echo "$as_me:$LINENO: result: not found" >&5
 echo "${ECHO_T}not found" >&6; }
-                { { echo "$as_me:$LINENO: error: could not find python 2.5 or higher" >&5
-echo "$as_me: error: could not find python 2.5 or higher" >&2;}
+                { { echo "$as_me:$LINENO: error: could not find python 2.7 or higher" >&5
+echo "$as_me: error: could not find python 2.7 or higher" >&2;}
    { (exit 1); exit 1; }; }"
   ;;
 esac
@@ -8206,23 +8206,23 @@ fi
 
 fi
 
-{ echo "$as_me:$LINENO: checking for python >= 2.5" >&5
-echo $ECHO_N "checking for python >= 2.5... $ECHO_C" >&6; }
+{ echo "$as_me:$LINENO: checking for python >= 2.7" >&5
+echo $ECHO_N "checking for python >= 2.7... $ECHO_C" >&6; }
 ac_python_version=`$PYTHON -V 2>&1 | cut -d' ' -f2`
 ac_python_version_major=`echo $ac_python_version | cut -d'.' -f1`
 ac_python_version_minor=`echo $ac_python_version | cut -d'.' -f2`
 ac_python_version_patch=`echo $ac_python_version | cut -d'.' -f3`
 if test "$ac_python_version_major" -gt "2" || \
    (test "$ac_python_version_major" -eq "2" && \
-    test "$ac_python_version_minor" -ge "5") ; then
+    test "$ac_python_version_minor" -ge "7") ; then
   { echo "$as_me:$LINENO: result: $PYTHON ($ac_python_version)" >&5
 echo "${ECHO_T}$PYTHON ($ac_python_version)" >&6; }
 else
   { echo "$as_me:$LINENO: result: not found" >&5
 echo "${ECHO_T}not found" >&6; }
-  { { echo "$as_me:$LINENO: error: found python $ac_python_version ($PYTHON); required >= 2.5
+  { { echo "$as_me:$LINENO: error: found python $ac_python_version ($PYTHON); required >= 2.7
 See \`config.log' for more details." >&5
-echo "$as_me: error: found python $ac_python_version ($PYTHON); required >= 2.5
+echo "$as_me: error: found python $ac_python_version ($PYTHON); required >= 2.7
 See \`config.log' for more details." >&2;}
    { (exit 1); exit 1; }; }
 fi

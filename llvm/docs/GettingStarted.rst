@@ -164,7 +164,7 @@ Package                                                     Version      Notes
 =========================================================== ============ ==========================================
 `GNU Make <http://savannah.gnu.org/projects/make>`_         3.79, 3.79.1 Makefile/build processor
 `GCC <http://gcc.gnu.org/>`_                                >=4.7.0      C/C++ compiler\ :sup:`1`
-`python <http://www.python.org/>`_                          >=2.5        Automated test suite\ :sup:`2`
+`python <http://www.python.org/>`_                          >=2.7        Automated test suite\ :sup:`2`
 `GNU M4 <http://savannah.gnu.org/projects/m4>`_             1.4          Macro processor for configuration\ :sup:`3`
 `GNU Autoconf <http://www.gnu.org/software/autoconf/>`_     2.60         Configuration script builder\ :sup:`3`
 `GNU Automake <http://www.gnu.org/software/automake/>`_     1.9.6        aclocal macro generator\ :sup:`3`
