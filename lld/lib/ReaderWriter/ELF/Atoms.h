@@ -479,8 +479,6 @@ public:
 
   ContentPermissions permissions() const override { return permR__; }
 
-  virtual bool isThumb() const { return false; }
-
   ArrayRef<uint8_t> rawContent() const override { return _contentData; }
 
   DefinedAtom::reference_iterator begin() const override {
