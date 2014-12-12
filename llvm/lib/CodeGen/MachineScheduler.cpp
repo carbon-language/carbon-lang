@@ -430,9 +430,11 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
       // instruction stream until we find the nearest boundary.
       unsigned NumRegionInstrs = 0;
       MachineBasicBlock::iterator I = RegionEnd;
-      for(;I != MBB->begin(); --I, --RemainingInstrs, ++NumRegionInstrs) {
+      for(;I != MBB->begin(); --I, --RemainingInstrs) {
         if (isSchedBoundary(std::prev(I), MBB, MF, TII, IsPostRA))
           break;
+        if (!I->isDebugValue())
+          ++NumRegionInstrs;
       }
       // Notify the scheduler of the region, even if we may skip scheduling
       // it. Perhaps it still needs to be bundled.
