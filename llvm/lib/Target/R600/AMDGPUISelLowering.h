@@ -124,6 +124,9 @@ public:
 
   bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
   bool ShouldShrinkFPConstant(EVT VT) const override;
+  bool shouldReduceLoadWidth(SDNode *Load,
+                             ISD::LoadExtType ExtType,
+                             EVT ExtVT) const override;
 
   bool isLoadBitCastBeneficial(EVT, EVT) const override;
   SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,

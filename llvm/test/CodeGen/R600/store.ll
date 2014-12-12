@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK --check-prefix=FUNC %s
-; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck --check-prefix=CM-CHECK --check-prefix=FUNC %s
-; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI-CHECK -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG-CHECK -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=cayman < %s | FileCheck -check-prefix=CM-CHECK -check-prefix=FUNC %s
 
 ;===------------------------------------------------------------------------===;
 ; Global Address Space
@@ -17,16 +17,18 @@ entry:
 ; i8 store
 ; EG-CHECK-LABEL: {{^}}store_i8:
 ; EG-CHECK: MEM_RAT MSKOR T[[RW_GPR:[0-9]]].XW, T{{[0-9]}}.X
-; EG-CHECK: VTX_READ_8 [[VAL:T[0-9]\.X]], [[VAL]]
+
 ; IG 0: Get the byte index and truncate the value
-; EG-CHECK: AND_INT T{{[0-9]}}.[[BI_CHAN:[XYZW]]], KC0[2].Y, literal.x
-; EG-CHECK-NEXT: AND_INT * T{{[0-9]}}.[[TRUNC_CHAN:[XYZW]]], [[VAL]], literal.y
+; EG-CHECK: AND_INT * T{{[0-9]}}.[[BI_CHAN:[XYZW]]], KC0[2].Y, literal.x
+; EG-CHECK: LSHL T{{[0-9]}}.[[SHIFT_CHAN:[XYZW]]], PV.[[BI_CHAN]], literal.x
+; EG-CHECK: AND_INT * T{{[0-9]}}.[[TRUNC_CHAN:[XYZW]]], KC0[2].Z, literal.y
 ; EG-CHECK-NEXT: 3(4.203895e-45), 255(3.573311e-43)
+
+
 ; IG 1: Truncate the calculated the shift amount for the mask
-; EG-CHECK: LSHL * T{{[0-9]}}.[[SHIFT_CHAN:[XYZW]]], PV.[[BI_CHAN]], literal.x
-; EG-CHECK-NEXT: 3
+
 ; IG 2: Shift the value and the mask
-; EG-CHECK: LSHL T[[RW_GPR]].X, T{{[0-9]}}.[[TRUNC_CHAN]], PV.[[SHIFT_CHAN]]
+; EG-CHECK: LSHL T[[RW_GPR]].X, PS, PV.[[SHIFT_CHAN]]
 ; EG-CHECK: LSHL * T[[RW_GPR]].W, literal.x, PV.[[SHIFT_CHAN]]
 ; EG-CHECK-NEXT: 255
 ; IG 3: Initialize the Y and Z channels to zero
@@ -46,16 +48,21 @@ entry:
 ; i16 store
 ; EG-CHECK-LABEL: {{^}}store_i16:
 ; EG-CHECK: MEM_RAT MSKOR T[[RW_GPR:[0-9]]].XW, T{{[0-9]}}.X
-; EG-CHECK: VTX_READ_16 [[VAL:T[0-9]\.X]], [[VAL]]
+
 ; IG 0: Get the byte index and truncate the value
-; EG-CHECK: AND_INT T{{[0-9]}}.[[BI_CHAN:[XYZW]]], KC0[2].Y, literal.x
-; EG-CHECK: AND_INT * T{{[0-9]}}.[[TRUNC_CHAN:[XYZW]]], [[VAL]], literal.y
+
+
+; EG-CHECK: AND_INT * T{{[0-9]}}.[[BI_CHAN:[XYZW]]], KC0[2].Y, literal.x
+; EG-CHECK-NEXT: 3(4.203895e-45),
+
+; EG-CHECK: LSHL T{{[0-9]}}.[[SHIFT_CHAN:[XYZW]]], PV.[[BI_CHAN]], literal.x
+; EG-CHECK: AND_INT * T{{[0-9]}}.[[TRUNC_CHAN:[XYZW]]], KC0[2].Z, literal.y
+
 ; EG-CHECK-NEXT: 3(4.203895e-45), 65535(9.183409e-41)
 ; IG 1: Truncate the calculated the shift amount for the mask
-; EG-CHECK: LSHL * T{{[0-9]}}.[[SHIFT_CHAN:[XYZW]]], PV.[[BI_CHAN]], literal.x
-; EG-CHECK: 3
+
 ; IG 2: Shift the value and the mask
-; EG-CHECK: LSHL T[[RW_GPR]].X, T{{[0-9]}}.[[TRUNC_CHAN]], PV.[[SHIFT_CHAN]]
+; EG-CHECK: LSHL T[[RW_GPR]].X, PS, PV.[[SHIFT_CHAN]]
 ; EG-CHECK: LSHL * T[[RW_GPR]].W, literal.x, PV.[[SHIFT_CHAN]]
 ; EG-CHECK-NEXT: 65535
 ; IG 3: Initialize the Y and Z channels to zero

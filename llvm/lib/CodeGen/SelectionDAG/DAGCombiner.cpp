@@ -6036,6 +6036,9 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       LN0->getMemoryVT().getSizeInBits() < ExtVT.getSizeInBits() + ShAmt)
     return SDValue();
 
+  if (!TLI.shouldReduceLoadWidth(LN0, ExtType, ExtVT))
+    return SDValue();
+
   EVT PtrType = N0.getOperand(1).getValueType();
 
   if (PtrType == MVT::Untyped || PtrType.isExtended())

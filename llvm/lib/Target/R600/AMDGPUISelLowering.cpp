@@ -432,6 +432,29 @@ bool AMDGPUTargetLowering::ShouldShrinkFPConstant(EVT VT) const {
   return (ScalarVT != MVT::f32 && ScalarVT != MVT::f64);
 }
 
+bool AMDGPUTargetLowering::shouldReduceLoadWidth(SDNode *N,
+                                                 ISD::LoadExtType,
+                                                 EVT NewVT) const {
+
+  unsigned NewSize = NewVT.getStoreSizeInBits();
+
+  // If we are reducing to a 32-bit load, this is always better.
+  if (NewSize == 32)
+    return true;
+
+  EVT OldVT = N->getValueType(0);
+  unsigned OldSize = OldVT.getStoreSizeInBits();
+
+  // Don't produce extloads from sub 32-bit types. SI doesn't have scalar
+  // extloads, so doing one requires using a buffer_load. In cases where we
+  // still couldn't use a scalar load, using the wider load shouldn't really
+  // hurt anything.
+
+  // If the old size already had to be an extload, there's no harm in continuing
+  // to reduce the width.
+  return (OldSize < 32);
+}
+
 bool AMDGPUTargetLowering::isLoadBitCastBeneficial(EVT LoadTy,
                                                    EVT CastTy) const {
   if (LoadTy.getSizeInBits() != CastTy.getSizeInBits())
