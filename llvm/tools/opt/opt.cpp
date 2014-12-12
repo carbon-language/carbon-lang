@@ -340,7 +340,7 @@ int main(int argc, char **argv) {
   // Load the input module...
   std::unique_ptr<Module> M = parseIRFile(InputFilename, Err, Context);
 
-  if (!M.get()) {
+  if (!M) {
     Err.print(argv[0], errs());
     return 1;
   }
@@ -389,7 +389,7 @@ int main(int argc, char **argv) {
     // The user has asked to use the new pass manager and provided a pipeline
     // string. Hand off the rest of the functionality to the new code for that
     // layer.
-    return runPassPipeline(argv[0], Context, *M.get(), Out.get(), PassPipeline,
+    return runPassPipeline(argv[0], Context, *M, Out.get(), PassPipeline,
                            OK, VK)
                ? 0
                : 1;
@@ -409,10 +409,10 @@ int main(int argc, char **argv) {
   Passes.add(TLI);
 
   // Add an appropriate DataLayout instance for this module.
-  const DataLayout *DL = M.get()->getDataLayout();
+  const DataLayout *DL = M->getDataLayout();
   if (!DL && !DefaultDataLayout.empty()) {
     M->setDataLayout(DefaultDataLayout);
-    DL = M.get()->getDataLayout();
+    DL = M->getDataLayout();
   }
 
   if (DL)
@@ -425,7 +425,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<TargetMachine> TM(Machine);
 
   // Add internal analysis passes from the target machine.
-  if (TM.get())
+  if (TM)
     TM->addAnalysisPasses(Passes);
 
   std::unique_ptr<FunctionPassManager> FPasses;
@@ -433,7 +433,7 @@ int main(int argc, char **argv) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (DL)
       FPasses->add(new DataLayoutPass());
-    if (TM.get())
+    if (TM)
       TM->addAnalysisPasses(*FPasses);
 
   }
@@ -578,7 +578,7 @@ int main(int argc, char **argv) {
   cl::PrintOptionValues();
 
   // Now that we have all of the passes ready, run them.
-  Passes.run(*M.get());
+  Passes.run(*M);
 
   // Declare success.
   if (!NoOutput || PrintBreakpoints)
