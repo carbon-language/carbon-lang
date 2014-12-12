@@ -97,15 +97,15 @@ void LLIChildTarget::handleMessage(LLIMessageType messageType) {
 // Incoming message handlers
 void LLIChildTarget::handleAllocateSpace() {
   // Read and verify the message data size.
-  uint32_t DataSize;
+  uint32_t DataSize = 0;
   int rc = ReadBytes(&DataSize, 4);
   (void)rc;
   assert(rc == 4);
   assert(DataSize == 8);
 
   // Read the message arguments.
-  uint32_t Alignment;
-  uint32_t AllocSize;
+  uint32_t Alignment = 0;
+  uint32_t AllocSize = 0;
   rc = ReadBytes(&Alignment, 4);
   assert(rc == 4);
   rc = ReadBytes(&AllocSize, 4);
@@ -121,13 +121,13 @@ void LLIChildTarget::handleAllocateSpace() {
 
 void LLIChildTarget::handleLoadSection(bool IsCode) {
   // Read the message data size.
-  uint32_t DataSize;
+  uint32_t DataSize = 0;
   int rc = ReadBytes(&DataSize, 4);
   (void)rc;
   assert(rc == 4);
 
   // Read the target load address.
-  uint64_t Addr;
+  uint64_t Addr = 0;
   rc = ReadBytes(&Addr, 8);
   assert(rc == 8);
   size_t BufferSize = DataSize - 8;
@@ -150,14 +150,14 @@ void LLIChildTarget::handleLoadSection(bool IsCode) {
 
 void LLIChildTarget::handleExecute() {
   // Read the message data size.
-  uint32_t DataSize;
+  uint32_t DataSize = 0;
   int rc = ReadBytes(&DataSize, 4);
   (void)rc;
   assert(rc == 4);
   assert(DataSize == 8);
 
   // Read the target address.
-  uint64_t Addr;
+  uint64_t Addr = 0;
   rc = ReadBytes(&Addr, 8);
   assert(rc == 8);
 
