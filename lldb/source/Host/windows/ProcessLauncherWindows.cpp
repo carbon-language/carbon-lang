@@ -38,6 +38,13 @@ ProcessLauncherWindows::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
     startupinfo.hStdInput = stdin_handle;
     startupinfo.hStdOutput = stdout_handle;
 
+    const char *hide_console_var = getenv("LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE");
+    if (hide_console_var && llvm::StringRef(hide_console_var).equals_lower("true"))
+    {
+        startupinfo.dwFlags |= STARTF_USESHOWWINDOW;
+        startupinfo.wShowWindow = SW_HIDE;
+    }
+
     DWORD flags = CREATE_NEW_CONSOLE;
     if (launch_info.GetFlags().Test(eLaunchFlagDebug))
         flags |= DEBUG_ONLY_THIS_PROCESS;

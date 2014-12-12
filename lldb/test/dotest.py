@@ -554,6 +554,10 @@ def parseOptionsAndInitTestdirs():
     X('-v', 'Do verbose mode of unittest framework (print out each test case invocation)')
     X('-w', 'Insert some wait time (currently 0.5 sec) between consecutive test cases')
     X('-T', 'Obtain and dump svn information for this checkout of LLDB (off by default)')
+    group.add_argument('--enable-crash-dialog', dest='disable_crash_dialog', action='store_false', help='(Windows only) When LLDB crashes, display the Windows crash dialog.')
+    group.add_argument('--show-inferior-console', dest='hide_inferior_console', action='store_false', help='(Windows only) When launching an inferior, dont hide its console window.')
+    group.set_defaults(disable_crash_dialog=True)
+    group.set_defaults(hide_inferior_console=True)
 
     # Remove the reference to our helper function
     del X
@@ -774,6 +778,10 @@ def parseOptionsAndInitTestdirs():
     # argparse makes sure we have a number
     if args.sharp:
         count = args.sharp
+
+    if sys.platform.startswith('win32'):
+        os.environ['LLDB_DISABLE_CRASH_DIALOG'] = str(args.disable_crash_dialog)
+        os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(args.hide_inferior_console)
 
     if do_help == True:
         usage(parser)

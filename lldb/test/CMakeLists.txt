@@ -42,6 +42,24 @@ set(LLDB_TEST_COMMON_ARGS
   -u CFLAGS
   )
 
+if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  set(LLDB_TEST_DEBUG_TEST_CRASHES
+    0
+    CACHE BOOL "(Windows only) Enables debugging of tests in the test suite by showing the crash dialog when lldb crashes")
+
+  set(LLDB_TEST_HIDE_CONSOLE_WINDOWS
+    1
+    CACHE BOOL "(Windows only) Hides the console window for an inferior when it is launched through the test suite")
+
+  if (LLDB_TEST_DEBUG_TEST_CRASHES)
+    set(LLDB_TEST_COMMON_ARGS ${LLDB_TEST_COMMON_ARGS} --enable-crash-dialog)
+  endif()
+
+  if (NOT LLDB_TEST_HIDE_CONSOLE_WINDOWS)
+    set(LLDB_TEST_COMMON_ARGS ${LLDB_TEST_COMMON_ARGS} --show-inferior-console)
+  endif()
+endif()
+
 add_python_test_target(check-lldb-single
   ${LLDB_SOURCE_DIR}/test/dotest.py
   "${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}"
@@ -51,7 +69,7 @@ add_python_test_target(check-lldb-single
 set(LLDB_DOSEP_ARGS -o;\"-q;${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}\")
 
 # If tests crash cause LLDB to crash, or things are otherwise unstable, or if machine-parsable
-# output is desired (i.e. in continuous integration contexts) check-lldb-sep is a better target.
+# output is desired (i.e. in continuous integration contexts) check-lldb-single is a better target.
 add_python_test_target(check-lldb
   ${LLDB_SOURCE_DIR}/test/dosep.py
   "${LLDB_DOSEP_ARGS}"
