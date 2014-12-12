@@ -203,7 +203,7 @@ class MemoryBufferMMapFile : public MemoryBuffer {
 
 public:
   MemoryBufferMMapFile(bool RequiresNullTerminator, int FD, uint64_t Len,
-                       uint64_t Offset, std::error_code EC)
+                       uint64_t Offset, std::error_code &EC)
       : MFR(FD, sys::fs::mapped_file_region::readonly,
             getLegalMapSize(Len, Offset), getLegalMapOffset(Offset), EC) {
     if (!EC) {
