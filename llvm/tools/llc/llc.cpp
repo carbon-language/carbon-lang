@@ -271,10 +271,10 @@ static int compileModule(char **argv, LLVMContext &Context) {
   Options.MCOptions.MCUseDwarfDirectory = EnableDwarfDirectory;
   Options.MCOptions.AsmVerbose = AsmVerbose;
 
-  std::unique_ptr<TargetMachine> target(
+  std::unique_ptr<TargetMachine> Target(
       TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU, FeaturesStr,
                                      Options, RelocModel, CMModel, OLvl));
-  assert(target.get() && "Could not allocate target machine!");
+  assert(Target && "Could not allocate target machine!");
 
   // If we don't have a module then just exit now. We do this down
   // here since the CPU/Feature help is underneath the target machine
@@ -283,7 +283,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
     return 0;
 
   assert(M && "Should have exited if we didn't have a module!");
-  TargetMachine &Target = *target.get();
 
   if (GenerateSoftFloatCalls)
     FloatABIForCalls = FloatABI::Soft;
@@ -303,7 +302,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
   PM.add(TLI);
 
   // Add the target data from the target machine, if it exists, or the module.
-  if (const DataLayout *DL = Target.getSubtargetImpl()->getDataLayout())
+  if (const DataLayout *DL = Target->getSubtargetImpl()->getDataLayout())
     M->setDataLayout(DL);
   PM.add(new DataLayoutPass());
 
@@ -336,8 +335,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     }
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitFile(PM, FOS, FileType, NoVerify,
-                                   StartAfterID, StopAfterID)) {
+    if (Target->addPassesToEmitFile(PM, FOS, FileType, NoVerify,
+                                    StartAfterID, StopAfterID)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       return 1;
