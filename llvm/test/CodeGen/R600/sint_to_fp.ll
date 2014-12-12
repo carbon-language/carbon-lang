@@ -42,7 +42,7 @@ define void @sint_to_fp_v4i32(<4 x float> addrspace(1)* %out, <4 x i32> addrspac
 
 ; FUNC-LABEL: {{^}}sint_to_fp_i1_f32:
 ; SI: v_cmp_eq_i32_e64 [[CMP:s\[[0-9]+:[0-9]\]]],
-; SI-NEXT: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, 1.0, [[CMP]]
+; SI-NEXT: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0.0, 1.0, [[CMP]]
 ; SI: buffer_store_dword [[RESULT]],
 ; SI: s_endpgm
 define void @sint_to_fp_i1_f32(float addrspace(1)* %out, i32 %in) {
