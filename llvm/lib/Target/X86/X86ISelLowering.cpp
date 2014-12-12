@@ -1570,6 +1570,13 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::SETCC,              MVT::v4i1, Custom);
     setOperationAction(ISD::SETCC,              MVT::v2i1, Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v8i1, Legal);
+
+    setOperationAction(ISD::AND,                MVT::v8i32, Legal);
+    setOperationAction(ISD::OR,                 MVT::v8i32, Legal);
+    setOperationAction(ISD::XOR,                MVT::v8i32, Legal);
+    setOperationAction(ISD::AND,                MVT::v4i32, Legal);
+    setOperationAction(ISD::OR,                 MVT::v4i32, Legal);
+    setOperationAction(ISD::XOR,                MVT::v4i32, Legal);
   }
 
   // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
