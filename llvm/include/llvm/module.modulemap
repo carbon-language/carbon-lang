@@ -75,8 +75,9 @@ module LLVM_IR {
   exclude header "IR/PassManager.h"
   exclude header "IR/LegacyPassManager.h"
 
-  // This is intended for (repeated) textual inclusion.
+  // These are intended for (repeated) textual inclusion.
   textual header "IR/Instruction.def"
+  textual header "IR/Metadata.def"
 }
 
 module LLVM_LegacyPassManager {
