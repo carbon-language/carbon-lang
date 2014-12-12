@@ -47,7 +47,7 @@ D: libc++
 
 N: Peter Collingbourne
 E: peter@pcc.me.uk
-D: libclc, llgo
+D: llgo
 
 N: Anshuman Dasgupta
 E: adasgupt@codeaurora.org
@@ -153,7 +153,7 @@ D: Windows parts of Support, Object, ar, nm, objdump, ranlib, size
 N: Tom Stellard
 E: thomas.stellard@amd.com
 E: mesa-dev@lists.freedesktop.org
-D: Release manager for the 3.5 branch, R600 Backend
+D: Release manager for the 3.5 branch, R600 Backend, libclc
 
 N: Evgeniy Stepanov
 E: eugenis@google.com
