@@ -5,6 +5,7 @@
 // RUN: %clangxx_asan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 %s -o %t && %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -o %t && %run %t 2>&1 | FileCheck %s
+// XFAIL: freebsd
 #include <stdlib.h>
 #include <stdio.h>
 
