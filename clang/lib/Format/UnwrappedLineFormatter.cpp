@@ -593,6 +593,15 @@ unsigned UnwrappedLineFormatter::analyzeSolutionSpace(LineState &InitialState,
   return Penalty;
 }
 
+static void printLineState(const LineState &State) {
+  llvm::dbgs() << "State: ";
+  for (const ParenState &P : State.Stack) {
+    llvm::dbgs() << P.Indent << "|" << P.LastSpace << "|" << P.NestedBlockIndent
+                 << " ";
+  }
+  llvm::dbgs() << State.NextToken->TokenText << "\n";
+}
+
 void UnwrappedLineFormatter::reconstructPath(LineState &State,
                                              StateNode *Current) {
   std::deque<StateNode *> Path;
@@ -608,6 +617,7 @@ void UnwrappedLineFormatter::reconstructPath(LineState &State,
     Penalty += Indenter->addTokenToState(State, (*I)->NewLine, false);
 
     DEBUG({
+      printLineState((*I)->Previous->State);
       if ((*I)->NewLine) {
         llvm::dbgs() << "Penalty for placing "
                      << (*I)->Previous->State.NextToken->Tok.getName() << ": "
@@ -648,13 +658,8 @@ bool UnwrappedLineFormatter::formatChildren(LineState &State, bool NewLine,
     return true;
 
   if (NewLine) {
-    int AdditionalIndent =
-        State.FirstIndent - State.Line->Level * Style.IndentWidth;
-    if (State.Stack.size() < 2 ||
-        !State.Stack[State.Stack.size() - 2].NestedBlockInlined) {
-      AdditionalIndent = State.Stack.back().Indent -
-                         Previous.Children[0]->Level * Style.IndentWidth;
-    }
+    int AdditionalIndent = State.Stack.back().Indent -
+                           Previous.Children[0]->Level * Style.IndentWidth;
 
     Penalty += format(Previous.Children, DryRun, AdditionalIndent,
                       /*FixBadIndentation=*/true);

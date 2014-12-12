@@ -409,8 +409,9 @@ struct FormatToken {
   /// list that should be indented with a block indent.
   bool opensBlockTypeList(const FormatStyle &Style) const {
     return is(TT_ArrayInitializerLSquare) ||
-           (is(tok::l_brace) && (BlockKind == BK_Block || is(TT_DictLiteral) ||
-                                 !Style.Cpp11BracedListStyle));
+           (is(tok::l_brace) &&
+            (BlockKind == BK_Block || is(TT_DictLiteral) ||
+             (!Style.Cpp11BracedListStyle && NestingLevel == 0)));
   }
 
   /// \brief Same as opensBlockTypeList, but for the closing token.

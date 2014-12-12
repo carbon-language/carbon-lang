@@ -206,14 +206,13 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "    style: {direction: ''}\n"
                "  }\n"
                "};");
-  // FIXME: The formatting here probably isn't ideal.
   EXPECT_EQ("abc = xyz ?\n"
             "          function() {\n"
             "            return 1;\n"
             "          } :\n"
             "          function() {\n"
-            "  return -1;\n"
-            "};",
+            "            return -1;\n"
+            "          };",
             format("abc=xyz?function(){return 1;}:function(){return -1;};"));
 
   verifyFormat("var closure = goog.bind(\n"
@@ -254,6 +253,23 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "    return 1;\n"
                "  }\n"
                "};");
+  verifyFormat("this.someObject.doSomething(aaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "    .then(goog.bind(function(aaaaaaaaaaa) {\n"
+               "      someFunction();\n"
+               "      someFunction();\n"
+               "    }, this), aaaaaaaaaaaaaaaaa);");
+
+  // FIXME: This is not ideal yet.
+  verifyFormat("someFunction(goog.bind(\n"
+               "                 function() {\n"
+               "                   doSomething();\n"
+               "                   doSomething();\n"
+               "                 },\n"
+               "                 this),\n"
+               "             goog.bind(function() {\n"
+               "               doSomething();\n"
+               "               doSomething();\n"
+               "             }, this));");
 }
 
 TEST_F(FormatTestJS, InliningFunctionLiterals) {
@@ -341,7 +357,10 @@ TEST_F(FormatTestJS, MultipleFunctionLiterals) {
 
   verifyFormat("getSomeLongPromise()\n"
                "    .then(function(value) { body(); })\n"
-               "    .thenCatch(function(error) { body(); });");
+               "    .thenCatch(function(error) {\n"
+               "      body();\n"
+               "      body();\n"
+               "    });");
   verifyFormat("getSomeLongPromise()\n"
                "    .then(function(value) {\n"
                "      body();\n"
@@ -351,6 +370,11 @@ TEST_F(FormatTestJS, MultipleFunctionLiterals) {
                "      body();\n"
                "      body();\n"
                "    });");
+
+  // FIXME: This is bad, but it used to be formatted correctly by accident.
+  verifyFormat("getSomeLongPromise().then(function(value) {\n"
+               "  body();\n"
+               "}).thenCatch(function(error) { body(); });");
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {
