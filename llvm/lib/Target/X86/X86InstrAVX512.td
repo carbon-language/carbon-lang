@@ -3,9 +3,10 @@
 // The idea is to pass one of these as the template argument rather than the
 // individual arguments.
 // The template is also used for scalar types, in this case numelts is 1.
-class X86VectorVTInfo<int numelts, ValueType EltVT, RegisterClass rc,
+class X86VectorVTInfo<int numelts, ValueType eltvt, RegisterClass rc,
                       string suffix = ""> {
   RegisterClass RC = rc;
+  ValueType EltVT = eltvt;
   int NumElts = numelts;
 
   // Corresponding mask register class.
@@ -656,20 +657,18 @@ let ExeDomain = SSEPackedDouble in {
 multiclass avx512_broadcast_pat<string InstName, SDNode OpNode,
                                 X86VectorVTInfo _, RegisterClass SrcRC_v,
                                 RegisterClass SrcRC_s> {
-  def : Pat<(_.VT (OpNode  (!cast<ValueType>(_.EltTypeName) SrcRC_s:$src))),
+  def : Pat<(_.VT (OpNode  (_.EltVT SrcRC_s:$src))),
             (!cast<Instruction>(InstName##"r")
               (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
 
   let AddedComplexity = 30 in {
     def : Pat<(_.VT (vselect _.KRCWM:$mask,
-                (OpNode (!cast<ValueType>(_.EltTypeName) SrcRC_s:$src)),
-                _.RC:$src0)),
+                (OpNode (_.EltVT SrcRC_s:$src)), _.RC:$src0)),
               (!cast<Instruction>(InstName##"rk") _.RC:$src0, _.KRCWM:$mask,
                 (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
 
     def : Pat<(_.VT(vselect _.KRCWM:$mask,
-                (OpNode (!cast<ValueType>(_.EltTypeName) SrcRC_s:$src)),
-                _.ImmAllZerosV)),
+                (OpNode (_.EltVT SrcRC_s:$src)), _.ImmAllZerosV)),
               (!cast<Instruction>(InstName##"rkz") _.KRCWM:$mask,
                 (COPY_TO_REGCLASS SrcRC_s:$src, SrcRC_v))>;
   }
