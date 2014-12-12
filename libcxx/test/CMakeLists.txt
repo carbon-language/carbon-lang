@@ -30,6 +30,7 @@ if(PYTHONINTERP_FOUND)
   pythonize_bool(LIBCXX_ENABLE_EXCEPTIONS)
   pythonize_bool(LIBCXX_ENABLE_RTTI)
   pythonize_bool(LIBCXX_ENABLE_SHARED)
+  pythonize_bool(LIBCXX_BUILD_32_BITS)
   pythonize_bool(LIBCXX_ENABLE_THREADS)
   pythonize_bool(LIBCXX_ENABLE_MONOTONIC_CLOCK)
 
