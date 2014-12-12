@@ -3670,6 +3670,22 @@ bool RecordDecl::mayInsertExtraPadding(bool EmitRemark) const {
   return ReasonToReject < 0;
 }
 
+const FieldDecl *RecordDecl::findFirstNamedDataMember() const {
+  for (const auto *I : fields()) {
+    if (I->getIdentifier())
+      return I;
+
+    if (const RecordType *RT = I->getType()->getAs<RecordType>())
+      if (const FieldDecl *NamedDataMember =
+          RT->getDecl()->findFirstNamedDataMember())
+        return NamedDataMember;
+  }
+
+  // We didn't find a named data member.
+  return nullptr;
+}
+
+
 //===----------------------------------------------------------------------===//
 // BlockDecl Implementation
 //===----------------------------------------------------------------------===//

@@ -29,12 +29,33 @@ using namespace clang;
 
 namespace {
 
+/// According to Itanium C++ ABI 5.1.2:
+/// the name of an anonymous union is considered to be
+/// the name of the first named data member found by a pre-order,
+/// depth-first, declaration-order walk of the data members of
+/// the anonymous union.
+/// If there is no such data member (i.e., if all of the data members
+/// in the union are unnamed), then there is no way for a program to
+/// refer to the anonymous union, and there is therefore no need to mangle its name.
+///
+/// Returns the name of anonymous union VarDecl or nullptr if it is not found.
+static const IdentifierInfo *findAnonymousUnionVarDeclName(const VarDecl& VD) {
+  const RecordType *RT = VD.getType()->getAs<RecordType>();
+  assert(RT && "type of VarDecl is expected to be RecordType.");
+  assert(RT->getDecl()->isUnion() && "RecordType is expected to be a union.");
+  if (const FieldDecl *FD = RT->getDecl()->findFirstNamedDataMember()) {
+    return FD->getIdentifier();
+  }
+
+  return nullptr;
+}
+
 /// \brief Keeps track of the mangled names of lambda expressions and block
 /// literals within a particular context.
 class ItaniumNumberingContext : public MangleNumberingContext {
   llvm::DenseMap<const Type *, unsigned> ManglingNumbers;
-  llvm::DenseMap<IdentifierInfo *, unsigned> VarManglingNumbers;
-  llvm::DenseMap<IdentifierInfo *, unsigned> TagManglingNumbers;
+  llvm::DenseMap<const IdentifierInfo *, unsigned> VarManglingNumbers;
+  llvm::DenseMap<const IdentifierInfo *, unsigned> TagManglingNumbers;
 
 public:
   unsigned getManglingNumber(const CXXMethodDecl *CallOperator) override {
@@ -60,7 +81,12 @@ public:
 
   /// Variable decls are numbered by identifier.
   unsigned getManglingNumber(const VarDecl *VD, unsigned) override {
-    return ++VarManglingNumbers[VD->getIdentifier()];
+    const IdentifierInfo *Identifier = VD->getIdentifier();
+    if (!Identifier) {
+      // VarDecl without an identifier represents an anonymous union declaration.
+      Identifier = findAnonymousUnionVarDeclName(*VD);
+    }
+    return ++VarManglingNumbers[Identifier];
   }
 
   unsigned getManglingNumber(const TagDecl *TD, unsigned) override {

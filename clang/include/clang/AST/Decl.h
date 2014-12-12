@@ -3274,6 +3274,10 @@ public:
   /// intra-object-overflow bugs.
   bool mayInsertExtraPadding(bool EmitRemark = false) const;
 
+  /// Finds the first data member which has a name.
+  /// nullptr is returned if no named data member exists.
+  const FieldDecl *findFirstNamedDataMember() const;  
+
 private:
   /// \brief Deserialize just the fields.
   void LoadFieldsFromExternalStorage() const;

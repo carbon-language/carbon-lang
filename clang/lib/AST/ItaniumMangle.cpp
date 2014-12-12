@@ -117,7 +117,7 @@ class ItaniumMangleContextImpl : public ItaniumMangleContext {
   typedef std::pair<const DeclContext*, IdentifierInfo*> DiscriminatorKeyTy;
   llvm::DenseMap<DiscriminatorKeyTy, unsigned> Discriminator;
   llvm::DenseMap<const NamedDecl*, unsigned> Uniquifier;
-  
+
 public:
   explicit ItaniumMangleContextImpl(ASTContext &Context,
                                     DiagnosticsEngine &Diags)
@@ -1050,24 +1050,6 @@ void CXXNameMangler::mangleUnresolvedName(NestedNameSpecifier *qualifier,
   mangleUnqualifiedName(nullptr, name, knownArity);
 }
 
-static const FieldDecl *FindFirstNamedDataMember(const RecordDecl *RD) {
-  assert(RD->isAnonymousStructOrUnion() &&
-         "Expected anonymous struct or union!");
-  
-  for (const auto *I : RD->fields()) {
-    if (I->getIdentifier())
-      return I;
-    
-    if (const RecordType *RT = I->getType()->getAs<RecordType>())
-      if (const FieldDecl *NamedDataMember = 
-          FindFirstNamedDataMember(RT->getDecl()))
-        return NamedDataMember;
-  }
-
-  // We didn't find a named data member.
-  return nullptr;
-}
-
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
                                            DeclarationName Name,
                                            unsigned KnownArity) {
@@ -1104,9 +1086,9 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
 
     if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
       // We must have an anonymous union or struct declaration.
-      const RecordDecl *RD = 
+      const RecordDecl *RD =
         cast<RecordDecl>(VD->getType()->getAs<RecordType>()->getDecl());
-      
+
       // Itanium C++ ABI 5.1.2:
       //
       //   For the purposes of mangling, the name of an anonymous union is
@@ -1116,14 +1098,16 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       //   the data members in the union are unnamed), then there is no way for
       //   a program to refer to the anonymous union, and there is therefore no
       //   need to mangle its name.
-      const FieldDecl *FD = FindFirstNamedDataMember(RD);
+      assert(RD->isAnonymousStructOrUnion()
+             && "Expected anonymous struct or union!");
+      const FieldDecl *FD = RD->findFirstNamedDataMember();
 
       // It's actually possible for various reasons for us to get here
       // with an empty anonymous struct / union.  Fortunately, it
       // doesn't really matter what name we generate.
       if (!FD) break;
       assert(FD->getIdentifier() && "Data member name isn't an identifier!");
-      
+
       mangleSourceName(FD->getIdentifier());
       break;
     }
@@ -3758,7 +3742,7 @@ void ItaniumMangleContextImpl::mangleCXXName(const NamedDecl *D,
                                  "Mangling declaration");
 
   CXXNameMangler Mangler(*this, Out, D);
-  return Mangler.mangle(D);
+  Mangler.mangle(D);
 }
 
 void ItaniumMangleContextImpl::mangleCXXCtor(const CXXConstructorDecl *D,
@@ -3947,3 +3931,4 @@ ItaniumMangleContext *
 ItaniumMangleContext::create(ASTContext &Context, DiagnosticsEngine &Diags) {
   return new ItaniumMangleContextImpl(Context, Diags);
 }
+
