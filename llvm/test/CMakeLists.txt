@@ -32,7 +32,6 @@ set(LLVM_TEST_DEPENDS
           llvm-dis
           llvm-dsymutil
           llvm-dwarfdump
-          llvm-dsymutil
           llvm-extract
           llvm-link
           llvm-lto
