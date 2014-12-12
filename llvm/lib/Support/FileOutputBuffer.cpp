@@ -91,16 +91,10 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size,
   return std::error_code();
 }
 
-std::error_code FileOutputBuffer::commit(int64_t NewSmallerSize) {
+std::error_code FileOutputBuffer::commit() {
   // Unmap buffer, letting OS flush dirty pages to file on disk.
   Region.reset();
 
-  // If requested, resize file as part of commit.
-  if ( NewSmallerSize != -1 ) {
-    std::error_code EC = sys::fs::resize_file(Twine(TempPath), NewSmallerSize);
-    if (EC)
-      return EC;
-  }
 
   // Rename file to final name.
   return sys::fs::rename(Twine(TempPath), Twine(FinalPath));

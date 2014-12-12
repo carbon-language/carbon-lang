@@ -80,14 +80,13 @@ TEST(FileOutputBuffer, Test) {
     memcpy(Buffer->getBufferStart(), "AABBCCDDEEFFGGHHIIJJ", 20);
     // Write to end of buffer to verify it is writable.
     memcpy(Buffer->getBufferEnd() - 20, "AABBCCDDEEFFGGHHIIJJ", 20);
-    // Commit buffer, but size down to smaller size
-    ASSERT_NO_ERROR(Buffer->commit(5000));
+    ASSERT_NO_ERROR(Buffer->commit());
   }
 
   // Verify file is correct size.
   uint64_t File3Size;
   ASSERT_NO_ERROR(fs::file_size(Twine(File3), File3Size));
-  ASSERT_EQ(File3Size, 5000ULL);
+  ASSERT_EQ(File3Size, 8192000ULL);
   ASSERT_NO_ERROR(fs::remove(File3.str()));
 
   // TEST 4: Verify file can be made executable.

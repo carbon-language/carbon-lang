@@ -66,7 +66,7 @@ public:
   /// is called, the file is deleted in the destructor. The optional parameter
   /// is used if it turns out you want the file size to be smaller than
   /// initially requested.
-  std::error_code commit(int64_t NewSmallerSize = -1);
+  std::error_code commit();
 
   /// If this object was previously committed, the destructor just deletes
   /// this object.  If this object was not committed, the destructor
