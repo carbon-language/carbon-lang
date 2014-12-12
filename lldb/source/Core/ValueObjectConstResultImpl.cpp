@@ -30,13 +30,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-// this macro enables a simpler implementation for some method calls in this object that relies only upon
-// ValueObject knowing how to set the address type of its children correctly. the alternative implementation
-// relies on being able to create a target copy of the frozen object, which makes it less bug-prone but less
-// efficient as well. once we are confident the faster implementation is bug-free, this macro (and the slower
-// implementations) can go
-#define TRIVIAL_IMPL 1
-
 ValueObjectConstResultImpl::ValueObjectConstResultImpl (ValueObject* valobj,
                                                         lldb::addr_t live_address) :
     m_impl_backend(valobj),
@@ -70,16 +63,7 @@ ValueObjectConstResultImpl::Dereference (Error &error)
     if (m_impl_backend == NULL)
         return lldb::ValueObjectSP();
     
-#if defined (TRIVIAL_IMPL) && TRIVIAL_IMPL == 1
     return m_impl_backend->ValueObject::Dereference(error);
-#else
-    m_impl_backend->UpdateValueIfNeeded(false);
-        
-    if (NeedsDerefOnTarget())
-        return DerefOnTarget()->Dereference(error);
-    else
-        return m_impl_backend->ValueObject::Dereference(error);
-#endif
 }
 
 ValueObject *
@@ -152,16 +136,7 @@ ValueObjectConstResultImpl::GetSyntheticChildAtOffset (uint32_t offset, const Cl
     if (m_impl_backend == NULL)
         return lldb::ValueObjectSP();
 
-#if defined (TRIVIAL_IMPL) && TRIVIAL_IMPL == 1
     return m_impl_backend->ValueObject::GetSyntheticChildAtOffset(offset, type, can_create);
-#else
-    m_impl_backend->UpdateValueIfNeeded(false);
-    
-    if (NeedsDerefOnTarget())
-        return DerefOnTarget()->GetSyntheticChildAtOffset(offset, type, can_create);
-    else
-        return m_impl_backend->ValueObject::GetSyntheticChildAtOffset(offset, type, can_create);
-#endif
 }
 
 lldb::ValueObjectSP
@@ -224,14 +199,5 @@ ValueObjectConstResultImpl::GetPointeeData (DataExtractor& data,
 {
     if (m_impl_backend == NULL)
         return 0;
-#if defined (TRIVIAL_IMPL) && TRIVIAL_IMPL == 1
     return m_impl_backend->ValueObject::GetPointeeData(data, item_idx, item_count);
-#else
-    m_impl_backend->UpdateValueIfNeeded(false);
-    
-    if (NeedsDerefOnTarget() && m_impl_backend->IsPointerType())
-        return DerefOnTarget()->GetPointeeData(data, item_idx, item_count);
-    else
-        return m_impl_backend->ValueObject::GetPointeeData(data, item_idx, item_count);
-#endif
 }
