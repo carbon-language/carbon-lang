@@ -74,23 +74,23 @@ class ExprFormattersTestCase(TestBase):
             substrs = ['(int *) $', '= 0x', ' -> 13'])
 
         self.expect("expression foo1",
-            substrs = ['(foo) $', ' = a = 12, a_ptr = ', ' -> 13, i = 24, i_ptr = ', ' -> 25'])
+            substrs = ['(foo) $', ' a = 12', 'a_ptr = ', ' -> 13','i = 24','i_ptr = ', ' -> 25'])
 
-        self.expect("expression new foo(47)",
-            substrs = ['(foo *) $', ' a = 47, a_ptr = ', ' -> 48, i = 94, i_ptr = ', ' -> 95'])
+        self.expect("expression --ptr-depth=1 -- new foo(47)",
+            substrs = ['(foo *) $', 'a = 47','a_ptr = ', ' -> 48','i = 94','i_ptr = ', ' -> 95'])
 
         self.expect("expression foo2",
-            substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 243'])
+            substrs = ['(foo) $', 'a = 121','a_ptr = ', ' -> 122','i = 242','i_ptr = ', ' -> 243'])
 
         object_name = self.res.GetOutput()
         object_name = object_name[7:]
         object_name = object_name[0:object_name.find(' =')]
 
         self.expect("frame variable foo2",
-                    substrs = ['(foo)', 'foo2', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 243'])
+                    substrs = ['(foo)', 'foo2', 'a = 121','a_ptr = ', ' -> 122','i = 242','i_ptr = ', ' -> 243'])
         
         self.expect("expression $" + object_name,
-            substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 243', ', h = 245 , k = 247'])
+            substrs = ['(foo) $', 'a = 121','a_ptr = ', ' -> 122','i = 242','i_ptr = ', ' -> 243', 'h = 245','k = 247'])
 
         self.runCmd("type summary delete foo")
         self.runCmd("type synthetic add --python-class foosynth.FooSyntheticProvider foo")
@@ -105,7 +105,7 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("type summary add -F formatters.foo_SummaryProvider foo")
 
         self.expect("expression foo2",
-            substrs = ['(foo) $', ' = a = 7777, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 8888'])
+            substrs = ['(foo) $', 'a = 7777','a_ptr = ', ' -> 122','i = 242','i_ptr = ', ' -> 8888'])
 
         self.expect("expression $" + object_name + '.a',
             substrs = ['7777'])
@@ -114,7 +114,7 @@ class ExprFormattersTestCase(TestBase):
             substrs = ['8888'])
 
         self.expect("expression $" + object_name,
-            substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 8888', 'h = 245 , k = 247'])
+            substrs = ['(foo) $', 'a = 121', 'a_ptr = ', ' -> 122', 'i = 242', 'i_ptr = ', ' -> 8888', 'h = 245','k = 247'])
 
         self.runCmd("type summary delete foo")
         self.runCmd("type synthetic add --python-class foosynth.FooSyntheticProvider foo")
@@ -128,7 +128,7 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("type summary add -F formatters.foo_SummaryProvider foo")
 
         self.expect("expression $" + object_name,
-                    substrs = ['(foo) $', ' = a = 121, a_ptr = ', ' -> 122, i = 242, i_ptr = ', ' -> 8888', 'h = 9999 , k = 247'])
+                    substrs = ['(foo) $', 'a = 121','a_ptr = ', ' -> 122','i = 242', 'i_ptr = ', ' -> 8888', 'h = 245','k = 247'])
 
         process = self.dbg.GetSelectedTarget().GetProcess()
         thread = process.GetThreadAtIndex(0)
