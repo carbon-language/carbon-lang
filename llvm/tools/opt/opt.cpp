@@ -555,8 +555,8 @@ int main(int argc, char **argv) {
 
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses->doInitialization();
-    for (Module::iterator F = M->begin(), E = M->end(); F != E; ++F)
-      FPasses->run(*F);
+    for (Function &F : *M)
+      FPasses->run(F);
     FPasses->doFinalization();
   }
 
