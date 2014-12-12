@@ -41,23 +41,22 @@ syn keyword llvmKeyword alignstack alwaysinline appending arm_aapcs_vfpcc
 syn keyword llvmKeyword arm_aapcscc arm_apcscc asm atomic available_externally
 syn keyword llvmKeyword blockaddress byval c catch cc ccc cleanup coldcc common
 syn keyword llvmKeyword constant datalayout declare default define deplibs
-syn keyword llvmKeyword dllexport dllimport except extern_weak external fastcc
-syn keyword llvmKeyword filter gc global hidden initialexec inlinehint inreg
-syn keyword llvmKeyword intel_ocl_bicc inteldialect internal
-syn keyword llvmKeyword linkonce linkonce_odr
-syn keyword llvmKeyword localdynamic localexec minsize module monotonic
-syn keyword llvmKeyword msp430_intrcc naked nest noalias nocapture
-syn keyword llvmKeyword noimplicitfloat noinline nonlazybind noredzone noreturn
-syn keyword llvmKeyword nounwind optnone optsize personality private protected
-syn keyword llvmKeyword ptx_device ptx_kernel readnone readonly release
-syn keyword llvmKeyword returns_twice sanitize_thread sanitize_memory
-syn keyword llvmKeyword section seq_cst sideeffect signext singlethread
-syn keyword llvmKeyword spir_func spir_kernel sret ssp sspreq sspstrong
-syn keyword llvmKeyword tail target thread_local to triple unnamed_addr
-syn keyword llvmKeyword unordered uwtable volatile weak weak_odr
-syn keyword llvmKeyword x86_fastcallcc x86_stdcallcc x86_thiscallcc x86_64_sysvcc
-syn keyword llvmKeyword x86_64_win64cc zeroext
-syn keyword llvmKeyword uselistorder uselistorder_bb
+syn keyword llvmKeyword dllexport dllimport except extern_weak external
+syn keyword llvmKeyword externally_initialized fastcc filter gc global hidden
+syn keyword llvmKeyword initialexec inlinehint inreg intel_ocl_bicc inteldialect
+syn keyword llvmKeyword internal linkonce linkonce_odr localdynamic localexec
+syn keyword llvmKeyword minsize module monotonic msp430_intrcc naked nest
+syn keyword llvmKeyword noalias nocapture noimplicitfloat noinline nonlazybind
+syn keyword llvmKeyword noredzone noreturn nounwind optnone optsize personality
+syn keyword llvmKeyword private protected ptx_device ptx_kernel readnone
+syn keyword llvmKeyword readonly release returns_twice sanitize_thread
+syn keyword llvmKeyword sanitize_memory section seq_cst sideeffect signext
+syn keyword llvmKeyword singlethread spir_func spir_kernel sret ssp sspreq
+syn keyword llvmKeyword sspstrong tail target thread_local to triple
+syn keyword llvmKeyword unnamed_addr unordered uwtable volatile weak weak_odr
+syn keyword llvmKeyword x86_fastcallcc x86_stdcallcc x86_thiscallcc
+syn keyword llvmKeyword x86_64_sysvcc x86_64_win64cc zeroext uselistorder
+syn keyword llvmKeyword uselistorder_bb
 
 " Obsolete keywords.
 syn keyword llvmError  getresult begin end
