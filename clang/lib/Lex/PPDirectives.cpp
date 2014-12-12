@@ -104,8 +104,7 @@ void Preprocessor::DiscardUntilEndOfDirective() {
 enum MacroDiag {
   MD_NoWarn,        //> Not a reserved identifier
   MD_KeywordDef,    //> Macro hides keyword, enabled by default
-  MD_KeywordUndef,  //> #undef keyword, enabled by default
-  MD_WarnStrict     //> Other reserved id, disabled by default
+  MD_ReservedMacro  //> #define of #undef reserved id, disabled by default
 };
 
 /// \brief Checks if the specified identifier is reserved in the specified
@@ -132,7 +131,8 @@ static MacroDiag shouldWarnOnMacroDef(Preprocessor &PP, IdentifierInfo *II) {
   const LangOptions &Lang = PP.getLangOpts();
   StringRef Text = II->getName();
   if (isReservedId(Text, Lang))
-    return MD_WarnStrict;
+    return MD_ReservedMacro;
+  // Do not warn on keyword undef.  It is generally harmless and widely used.
   if (II->isKeyword(Lang))
     return MD_KeywordDef;
   if (Lang.CPlusPlus && (Text.equals("override") || Text.equals("final")))
@@ -142,13 +142,10 @@ static MacroDiag shouldWarnOnMacroDef(Preprocessor &PP, IdentifierInfo *II) {
 
 static MacroDiag shouldWarnOnMacroUndef(Preprocessor &PP, IdentifierInfo *II) {
   const LangOptions &Lang = PP.getLangOpts();
-  if (II->isKeyword(Lang))
-    return MD_KeywordUndef;
   StringRef Text = II->getName();
-  if (Lang.CPlusPlus && (Text.equals("override") || Text.equals("final")))
-    return MD_KeywordUndef;
+  // Do not warn on keyword undef.  It is generally harmless and widely used.
   if (isReservedId(Text, Lang))
-    return MD_WarnStrict;
+    return MD_ReservedMacro;
   return MD_NoWarn;
 }
 
@@ -203,10 +200,8 @@ bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
       D = shouldWarnOnMacroUndef(*this, II);
     if (D == MD_KeywordDef)
       Diag(MacroNameTok, diag::warn_pp_macro_hides_keyword);
-    if (D == MD_KeywordUndef)
+    if (D == MD_ReservedMacro)
       Diag(MacroNameTok, diag::warn_pp_macro_is_reserved_id);
-    else if (D == MD_WarnStrict)
-      Diag(MacroNameTok, diag::warn_pp_defundef_reserved_ident);
   }
 
   // Okay, we got a good identifier.

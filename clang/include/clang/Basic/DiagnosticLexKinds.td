@@ -291,12 +291,10 @@ def note_pp_ambiguous_macro_chosen : Note<
 def note_pp_ambiguous_macro_other : Note<
   "other definition of %0">;
 def warn_pp_macro_hides_keyword : Warning<
-  "keyword or reserved identifier is hidden by macro definition">,
+  "keyword is hidden by macro definition">,
   InGroup<KeywordAsMacro>;
 def warn_pp_macro_is_reserved_id : Warning<
-  "macro name is a keyword or reserved identifier">, InGroup<KeywordAsMacro>;
-def warn_pp_defundef_reserved_ident : Warning<
-  "reserved identifier is used as macro name">, DefaultIgnore,
+  "macro name is a reserved identifier">, DefaultIgnore,
   InGroup<ReservedIdAsMacro>;
 
 def pp_invalid_string_literal : Warning<
