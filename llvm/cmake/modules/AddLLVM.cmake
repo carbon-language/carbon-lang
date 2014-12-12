@@ -161,7 +161,9 @@ function(add_link_opts target_name)
   if(LLVM_LINKER_IS_GOLD)
     # With gold gc-sections is always safe.
     set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,--gc-sections -Wl,--icf=safe")
+                 LINK_FLAGS " -Wl,--gc-sections")
+    # Note that there is a bug with -Wl,--icf=safe so it is not safe
+    # to enable. See https://sourceware.org/bugzilla/show_bug.cgi?id=17704.
   endif()
 
   if(NOT LLVM_NO_DEAD_STRIP)
