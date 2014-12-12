@@ -1038,17 +1038,21 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
 }
 
 /// \brief Generate Min/Max node
-SDValue AMDGPUTargetLowering::CombineFMinMax(SDLoc DL,
-                                             EVT VT,
-                                             SDValue LHS,
-                                             SDValue RHS,
-                                             SDValue True,
-                                             SDValue False,
-                                             SDValue CC,
-                                             SelectionDAG &DAG) const {
+SDValue AMDGPUTargetLowering::CombineFMinMaxLegacy(SDLoc DL,
+                                                   EVT VT,
+                                                   SDValue LHS,
+                                                   SDValue RHS,
+                                                   SDValue True,
+                                                   SDValue False,
+                                                   SDValue CC,
+                                                   DAGCombinerInfo &DCI) const {
+  if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+    return SDValue();
+
   if (!(LHS == True && RHS == False) && !(LHS == False && RHS == True))
     return SDValue();
 
+  SelectionDAG &DAG = DCI.DAG;
   ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
   switch (CCOpcode) {
   case ISD::SETOEQ:
@@ -1065,33 +1069,51 @@ SDValue AMDGPUTargetLowering::CombineFMinMax(SDLoc DL,
   case ISD::SETO:
     break;
   case ISD::SETULE:
-  case ISD::SETULT:
+  case ISD::SETULT: {
+    // Unordered.
+    //
+    // We will allow this before legalization since we expand unordered compares
+    // ordinarily.
+    if (LHS == True)
+      return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, RHS, LHS);
+    return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, LHS, RHS);
+  }
   case ISD::SETOLE:
   case ISD::SETOLT:
   case ISD::SETLE:
   case ISD::SETLT: {
-    if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
-      break;
+    // Ordered. Assume ordered for undefined.
+
+    // Only do this after legalization to avoid interfering with other combines
+    // which might occur.
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG &&
+        !DCI.isCalledByLegalizer())
+      return SDValue();
 
     // We need to permute the operands to get the correct NaN behavior. The
     // selected operand is the second one based on the failing compare with NaN,
     // so permute it based on the compare type the hardware uses.
     if (LHS == True)
-      return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, RHS, LHS);
-    return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, LHS, RHS);
+      return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, LHS, RHS);
+    return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, RHS, LHS);
   }
-  case ISD::SETGT:
-  case ISD::SETGE:
   case ISD::SETUGE:
-  case ISD::SETOGE:
-  case ISD::SETUGT:
-  case ISD::SETOGT: {
-    if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
-      break;
-
+  case ISD::SETUGT: {
     if (LHS == True)
       return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, RHS, LHS);
     return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, LHS, RHS);
+  }
+  case ISD::SETGT:
+  case ISD::SETGE:
+  case ISD::SETOGE:
+  case ISD::SETOGT: {
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG &&
+        !DCI.isCalledByLegalizer())
+      return SDValue();
+
+    if (LHS == True)
+      return DAG.getNode(AMDGPUISD::FMAX_LEGACY, DL, VT, LHS, RHS);
+    return DAG.getNode(AMDGPUISD::FMIN_LEGACY, DL, VT, RHS, LHS);
   }
   case ISD::SETCC_INVALID:
     llvm_unreachable("Invalid setcc condcode!");
@@ -2276,24 +2298,6 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       simplifyI24(N1, DCI);
       return SDValue();
     }
-  case ISD::SELECT_CC: {
-    SDLoc DL(N);
-    EVT VT = N->getValueType(0);
-
-    if (VT == MVT::f32 ||
-        (VT == MVT::f64 &&
-         Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS)) {
-      SDValue LHS = N->getOperand(0);
-      SDValue RHS = N->getOperand(1);
-      SDValue True = N->getOperand(2);
-      SDValue False = N->getOperand(3);
-      SDValue CC = N->getOperand(4);
-
-      return CombineFMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
-    }
-
-    break;
-  }
   case ISD::SELECT: {
     SDValue Cond = N->getOperand(0);
     if (Cond.getOpcode() == ISD::SETCC) {
@@ -2306,11 +2310,8 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue True = N->getOperand(1);
       SDValue False = N->getOperand(2);
 
-      if (VT == MVT::f32 ||
-          (VT == MVT::f64 &&
-           Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS)) {
-        return CombineFMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
-      }
+      if (VT == MVT::f32)
+        return CombineFMinMaxLegacy(DL, VT, LHS, RHS, True, False, CC, DCI);
 
       // TODO: Implement min / max Evergreen instructions.
       if (VT == MVT::i32 &&

@@ -1514,6 +1514,7 @@ let isCommutable = 1 in {
 defm V_MAC_LEGACY_F32 : VOP2Inst <vop2<0x6>, "v_mac_legacy_f32",
   VOP_F32_F32_F32
 >;
+} // End isCommutable = 1
 
 defm V_MIN_LEGACY_F32 : VOP2Inst <vop2<0xd>, "v_min_legacy_f32",
   VOP_F32_F32_F32, AMDGPUfmin_legacy
@@ -1522,6 +1523,7 @@ defm V_MAX_LEGACY_F32 : VOP2Inst <vop2<0xe>, "v_max_legacy_f32",
   VOP_F32_F32_F32, AMDGPUfmax_legacy
 >;
 
+let isCommutable = 1 in {
 defm V_LSHR_B32 : VOP2Inst <vop2<0x15>, "v_lshr_b32", VOP_I32_I32_I32, srl>;
 defm V_ASHR_I32 : VOP2Inst <vop2<0x17>, "v_ashr_i32",
   VOP_I32_I32_I32, sra

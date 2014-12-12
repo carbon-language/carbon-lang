@@ -19,7 +19,7 @@ define void @test_fmin_legacy_f32(<4 x float> addrspace(1)* %out, <4 x float> in
 ; FUNC-LABEL: @test_fmin_legacy_ule_f32
 ; SI: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; SI: v_min_legacy_f32_e32 {{v[0-9]+}}, [[A]], [[B]]
+; SI: v_min_legacy_f32_e32 {{v[0-9]+}}, [[B]], [[A]]
 define void @test_fmin_legacy_ule_f32(float addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
   %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
@@ -73,7 +73,7 @@ define void @test_fmin_legacy_olt_f32(float addrspace(1)* %out, float addrspace(
 ; FUNC-LABEL: @test_fmin_legacy_ult_f32
 ; SI: buffer_load_dword [[A:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; SI: buffer_load_dword [[B:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; SI: v_min_legacy_f32_e32 {{v[0-9]+}}, [[A]], [[B]]
+; SI: v_min_legacy_f32_e32 {{v[0-9]+}}, [[B]], [[A]]
 define void @test_fmin_legacy_ult_f32(float addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
   %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
