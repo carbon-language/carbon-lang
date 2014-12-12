@@ -63,7 +63,7 @@ def AMDGPUldexp : SDNode<"AMDGPUISD::LDEXP", AMDGPULdExpOp>;
 //   x < nan ? x : nan -> nan
 //   nan < x ? nan : x -> x
 def AMDGPUfmax_legacy : SDNode<"AMDGPUISD::FMAX_LEGACY", SDTFPBinOp,
-  [SDNPAssociative]
+  []
 >;
 
 def AMDGPUclamp : SDNode<"AMDGPUISD::CLAMP", SDTFPTernaryOp, []>;
@@ -81,7 +81,7 @@ def AMDGPUumax : SDNode<"AMDGPUISD::UMAX", SDTIntBinOp,
 
 // out = min(a, b) a and b are floats, where a nan comparison fails.
 def AMDGPUfmin_legacy : SDNode<"AMDGPUISD::FMIN_LEGACY", SDTFPBinOp,
-  [SDNPAssociative]
+  []
 >;
 
 // out = min(a, b) a and b are signed ints
