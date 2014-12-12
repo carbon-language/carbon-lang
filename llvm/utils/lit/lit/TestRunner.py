@@ -153,7 +153,7 @@ def executeShCmd(cmd, cfg, cwd, results):
                                           stderr = stderr,
                                           env = cfg.environment,
                                           close_fds = kUseCloseFDs))
-        except OSError, e:
+        except OSError as e:
             raise InternalShellError(j, 'Could not create process due to {}'.format(e))
 
         # Immediately close stdin for any process taking stdin from us.
