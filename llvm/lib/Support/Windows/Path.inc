@@ -278,7 +278,6 @@ std::error_code resize_file(int FD, uint64_t Size) {
 #else
   errno_t error = ::_chsize(FD, Size);
 #endif
-  ::close(FD);
   return std::error_code(error, std::generic_category());
 }
 
