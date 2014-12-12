@@ -564,7 +564,39 @@ int PR21643() {
   // CHECK: store i32 %[[new]], i32* %[[atomicdst]], align 4
   // CHECK: %[[ret:.*]] = load i32* %[[atomicdst]], align 4
   // CHECK: ret i32 %[[ret]]
+}
 
+int PR17306_1(volatile _Atomic(int) *i) {
+  // CHECK-LABEL: @PR17306_1
+  // CHECK:      %[[i_addr:.*]] = alloca i32
+  // CHECK-NEXT: %[[atomicdst:.*]] = alloca i32
+  // CHECK-NEXT: store i32* %i, i32** %[[i_addr]]
+  // CHECK-NEXT: %[[addr:.*]] = load i32** %[[i_addr]]
+  // CHECK-NEXT: %[[res:.*]] = load atomic volatile i32* %[[addr]] seq_cst
+  // CHECK-NEXT: store i32 %[[res]], i32* %[[atomicdst]]
+  // CHECK-NEXT: %[[retval:.*]] = load i32* %[[atomicdst]]
+  // CHECK-NEXT: ret i32 %[[retval]]
+  return __c11_atomic_load(i, memory_order_seq_cst);
+}
+
+int PR17306_2(volatile int *i, int value) {
+  // CHECK-LABEL: @PR17306_2
+  // CHECK:      %[[i_addr:.*]] = alloca i32*
+  // CHECK-NEXT: %[[value_addr:.*]] = alloca i32
+  // CHECK-NEXT: %[[atomictmp:.*]] = alloca i32
+  // CHECK-NEXT: %[[atomicdst:.*]] = alloca i32
+  // CHECK-NEXT: store i32* %i, i32** %[[i_addr]]
+  // CHECK-NEXT: store i32 %value, i32* %[[value_addr]]
+  // CHECK-NEXT: %[[i_lval:.*]] = load i32** %[[i_addr]]
+  // CHECK-NEXT: %[[value:.*]] = load i32* %[[value_addr]]
+  // CHECK-NEXT: store i32 %[[value]], i32* %[[atomictmp]]
+  // CHECK-NEXT: %[[value_lval:.*]] = load i32* %[[atomictmp]]
+  // CHECK-NEXT: %[[old_val:.*]] = atomicrmw volatile add i32* %[[i_lval]], i32 %[[value_lval]] seq_cst
+  // CHECK-NEXT: %[[new_val:.*]] = add i32 %[[old_val]], %[[value_lval]]
+  // CHECK-NEXT: store i32 %[[new_val]], i32* %[[atomicdst]]
+  // CHECK-NEXT: %[[retval:.*]] = load i32* %[[atomicdst]]
+  // CHECK-NEXT: ret i32 %[[retval]]
+  return __atomic_add_fetch(i, value, memory_order_seq_cst);
 }
 
 #endif

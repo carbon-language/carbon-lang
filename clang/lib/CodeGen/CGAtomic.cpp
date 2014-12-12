@@ -588,9 +588,12 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     break;
   }
 
+  QualType RValTy = E->getType().getUnqualifiedType();
+
   auto GetDest = [&] {
-    if (!E->getType()->isVoidType() && !Dest)
-      Dest = CreateMemTemp(E->getType(), ".atomicdst");
+    if (!RValTy->isVoidType() && !Dest) {
+      Dest = CreateMemTemp(RValTy, ".atomicdst");
+    }
     return Dest;
   };
 
@@ -755,7 +758,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
           Builder.CreateBitCast(GetDest(), ResVal->getType()->getPointerTo()));
       StoreDest->setAlignment(Align);
     }
-    return convertTempToRValue(Dest, E->getType(), E->getExprLoc());
+    return convertTempToRValue(Dest, RValTy, E->getExprLoc());
   }
 
   bool IsStore = E->getOp() == AtomicExpr::AO__c11_atomic_store ||
@@ -810,9 +813,9 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       // enforce that in general.
       break;
     }
-    if (E->getType()->isVoidType())
+    if (RValTy->isVoidType())
       return RValue::get(nullptr);
-    return convertTempToRValue(OrigDest, E->getType(), E->getExprLoc());
+    return convertTempToRValue(OrigDest, RValTy, E->getExprLoc());
   }
 
   // Long case, when Order isn't obviously constant.
@@ -878,9 +881,9 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
 
   // Cleanup and return
   Builder.SetInsertPoint(ContBB);
-  if (E->getType()->isVoidType())
+  if (RValTy->isVoidType())
     return RValue::get(nullptr);
-  return convertTempToRValue(OrigDest, E->getType(), E->getExprLoc());
+  return convertTempToRValue(OrigDest, RValTy, E->getExprLoc());
 }
 
 llvm::Value *AtomicInfo::emitCastToAtomicIntPointer(llvm::Value *addr) const {
