@@ -194,7 +194,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         return m_address_of_backend;
     }
     else
-        return lldb::ValueObjectSP();
+        return m_impl_backend->ValueObject::AddressOf(error);
 }
 
 lldb::addr_t
