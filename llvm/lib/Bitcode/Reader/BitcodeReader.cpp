@@ -1116,6 +1116,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_OLD_FN_NODE: {
+      // FIXME: Remove in 4.0.
       // This is a LocalAsMetadata record, the only type of function-local
       // metadata.
       if (Record.size() % 2 == 1)
@@ -1143,6 +1144,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_OLD_NODE: {
+      // FIXME: Remove in 4.0.
       if (Record.size() % 2 == 1)
         return Error(BitcodeError::InvalidRecord);
 
