@@ -200,6 +200,9 @@ enum {
   // Tag_FP_HP_extension, (=36), uleb128
   AllowHPFP = 1, // Allow use of Half Precision FP
 
+  // Tag_FP_16bit_format, (=38), uleb128
+  FP16FormatIEEE = 1,
+
   // Tag_MPextension_use, (=42), uleb128
   AllowMP = 1, // Allow use of MP extensions
 

@@ -782,6 +782,13 @@ void ARMAsmPrinter::emitAttributes() {
   if (Subtarget->hasFP16())
       ATS.emitAttribute(ARMBuildAttrs::FP_HP_extension, ARMBuildAttrs::AllowHPFP);
 
+  // FIXME: To support emitting this build attribute as GCC does, the
+  // -mfp16-format option and associated plumbing must be
+  // supported. For now the __fp16 type is exposed by default, so this
+  // attribute should be emitted with value 1.
+  ATS.emitAttribute(ARMBuildAttrs::ABI_FP_16bit_format,
+                    ARMBuildAttrs::FP16FormatIEEE);
+
   if (Subtarget->hasMPExtension())
       ATS.emitAttribute(ARMBuildAttrs::MPextension_use, ARMBuildAttrs::AllowMP);
 
