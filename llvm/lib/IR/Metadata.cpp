@@ -173,7 +173,8 @@ void ReplaceableMetadataImpl::replaceAllUsesWith(Metadata *MD) {
       // Update unowned tracking references directly.
       Metadata *&Ref = *static_cast<Metadata **>(Pair.first);
       Ref = MD;
-      MetadataTracking::track(Ref);
+      if (MD)
+        MetadataTracking::track(Ref);
       UseMap.erase(Pair.first);
       continue;
     }

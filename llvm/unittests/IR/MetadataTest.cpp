@@ -207,6 +207,53 @@ TEST_F(MetadataAsValueTest, MDNodeConstant) {
   EXPECT_EQ(V, V2);
 }
 
+typedef MetadataTest ValueAsMetadataTest;
+
+TEST_F(ValueAsMetadataTest, UpdatesOnRAUW) {
+  Type *Ty = Type::getInt1PtrTy(Context);
+  std::unique_ptr<GlobalVariable> GV0(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  auto *MD = ValueAsMetadata::get(GV0.get());
+  EXPECT_TRUE(MD->getValue() == GV0.get());
+  ASSERT_TRUE(GV0->use_empty());
+
+  std::unique_ptr<GlobalVariable> GV1(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  GV0->replaceAllUsesWith(GV1.get());
+  EXPECT_TRUE(MD->getValue() == GV1.get());
+}
+
+typedef MetadataTest TrackingMDRefTest;
+
+TEST_F(TrackingMDRefTest, UpdatesOnRAUW) {
+  Type *Ty = Type::getInt1PtrTy(Context);
+  std::unique_ptr<GlobalVariable> GV0(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  TypedTrackingMDRef<ValueAsMetadata> MD(ValueAsMetadata::get(GV0.get()));
+  EXPECT_TRUE(MD->getValue() == GV0.get());
+  ASSERT_TRUE(GV0->use_empty());
+
+  std::unique_ptr<GlobalVariable> GV1(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  GV0->replaceAllUsesWith(GV1.get());
+  EXPECT_TRUE(MD->getValue() == GV1.get());
+
+  // Reset it, so we don't inadvertently test deletion.
+  MD.reset();
+}
+
+TEST_F(TrackingMDRefTest, UpdatesOnDeletion) {
+  Type *Ty = Type::getInt1PtrTy(Context);
+  std::unique_ptr<GlobalVariable> GV(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  TypedTrackingMDRef<ValueAsMetadata> MD(ValueAsMetadata::get(GV.get()));
+  EXPECT_TRUE(MD->getValue() == GV.get());
+  ASSERT_TRUE(GV->use_empty());
+
+  GV.reset();
+  EXPECT_TRUE(!MD);
+}
+
 TEST(NamedMDNodeTest, Search) {
   LLVMContext Context;
   ConstantAsMetadata *C =
