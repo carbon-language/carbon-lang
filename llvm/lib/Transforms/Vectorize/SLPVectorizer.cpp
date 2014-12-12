@@ -439,6 +439,13 @@ public:
   /// \returns true if the memory operations A and B are consecutive.
   bool isConsecutiveAccess(Value *A, Value *B);
 
+  /// For consecutive loads (+(+ v0, v1)(+ v2, v3)), Left had v0 and v2
+  /// while Right had v1 and v3, which prevented bundling them into
+  /// a vector of loads. Rorder them so that Left now has v0 and v1
+  /// while Right has v2 and v3 enabling their bundling into a vector.
+  void reorderIfConsecutiveLoads(SmallVectorImpl<Value *> &Left,
+                                 SmallVectorImpl<Value *> &Right);
+
   /// \brief Perform LICM and CSE on the newly generated gather sequences.
   void optimizeGatherSequence();
 
@@ -1234,6 +1241,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       if (isa<BinaryOperator>(VL0) && VL0->isCommutative()) {
         ValueList Left, Right;
         reorderInputsAccordingToOpcode(VL, Left, Right);
+        reorderIfConsecutiveLoads (Left, Right);
         buildTree_rec(Left, Depth + 1);
         buildTree_rec(Right, Depth + 1);
         return;
@@ -1818,6 +1826,19 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   return X == PtrSCEVB;
 }
 
+void BoUpSLP::reorderIfConsecutiveLoads(SmallVectorImpl<Value *> &Left,
+                                        SmallVectorImpl<Value *> &Right) {
+  for (unsigned i = 0, e = Left.size(); i < e - 1; ++i) {
+    if (!isa<LoadInst>(Left[i]) || !isa<LoadInst>(Right[i]))
+      return;
+    if (!(isConsecutiveAccess(Left[i], Right[i]) &&
+          isConsecutiveAccess(Right[i], Left[i + 1])))
+      continue;
+    else
+      std::swap(Left[i + 1], Right[i]);
+  }
+}
+
 void BoUpSLP::setInsertPointAfterBundle(ArrayRef<Value *> VL) {
   Instruction *VL0 = cast<Instruction>(VL[0]);
   BasicBlock::iterator NextInst = VL0;
@@ -2048,9 +2069,10 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     case Instruction::Or:
     case Instruction::Xor: {
       ValueList LHSVL, RHSVL;
-      if (isa<BinaryOperator>(VL0) && VL0->isCommutative())
+      if (isa<BinaryOperator>(VL0) && VL0->isCommutative()) {
         reorderInputsAccordingToOpcode(E->Scalars, LHSVL, RHSVL);
-      else
+        reorderIfConsecutiveLoads(LHSVL, RHSVL);
+      } else
         for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
           LHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
           RHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(1));
