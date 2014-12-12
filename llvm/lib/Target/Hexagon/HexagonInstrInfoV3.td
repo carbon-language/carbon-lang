@@ -21,12 +21,51 @@ def callv3nr : SDNode<"HexagonISD::CALLv3nr", SDT_SPCall,
 // J +
 //===----------------------------------------------------------------------===//
 // Call subroutine.
-let isCall = 1, hasSideEffects = 0,
-  Defs = [D0, D1, D2, D3, D4, D5, D6, D7, R28, R31,
-                P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
-  def CALLv3 : JInst<(outs), (ins calltarget:$dst),
-             "call $dst", []>, Requires<[HasV3T]>;
+let isCall = 1, hasSideEffects = 1, validSubTargets = HasV3SubT,
+    Defs = VolatileV3.Regs, isPredicable = 1,
+    isExtended = 0, isExtendable = 1, opExtendable = 0,
+    isExtentSigned = 1, opExtentBits = 24, opExtentAlign = 2 in
+class T_Call<string ExtStr>
+  : JInst<(outs), (ins calltarget:$dst),
+      "call " # ExtStr # "$dst", [], "", J_tc_2early_SLOT23> {
+  let BaseOpcode = "call";
+  bits<24> dst;
+
+  let IClass = 0b0101;
+  let Inst{27-25} = 0b101;
+  let Inst{24-16,13-1} = dst{23-2};
+  let Inst{0} = 0b0;
 }
+
+let isCall = 1, hasSideEffects = 1, validSubTargets = HasV3SubT,
+    Defs = VolatileV3.Regs, isPredicated = 1,
+    isExtended = 0, isExtendable = 1, opExtendable = 1,
+    isExtentSigned = 1, opExtentBits = 17, opExtentAlign = 2 in
+class T_CallPred<bit IfTrue, string ExtStr>
+  : JInst<(outs), (ins PredRegs:$Pu, calltarget:$dst),
+      CondStr<"$Pu", IfTrue, 0>.S # "call " # ExtStr # "$dst",
+      [], "", J_tc_2early_SLOT23> {
+  let BaseOpcode = "call";
+  let isPredicatedFalse = !if(IfTrue,0,1);
+  bits<2> Pu;
+  bits<17> dst;
+
+  let IClass = 0b0101;
+  let Inst{27-24} = 0b1101;
+  let Inst{23-22,20-16,13,7-1} = dst{16-2};
+  let Inst{21} = !if(IfTrue,0,1);
+  let Inst{11} = 0b0;
+  let Inst{9-8} = Pu;
+}
+
+multiclass T_Calls<string ExtStr> {
+  def NAME : T_Call<ExtStr>;
+  def t    : T_CallPred<1, ExtStr>;
+  def f    : T_CallPred<0, ExtStr>;
+}
+
+let isCodeGenOnly = 0 in
+defm J2_call: T_Calls<"">, PredRel;
 
 //===----------------------------------------------------------------------===//
 // J -
@@ -100,8 +139,8 @@ Requires<[HasV3T]>;
 
 // Map call instruction
 def : Pat<(call (i32 IntRegs:$dst)),
-      (CALLRv3 (i32 IntRegs:$dst))>, Requires<[HasV3T]>;
+      (J2_call (i32 IntRegs:$dst))>, Requires<[HasV3T]>;
 def : Pat<(call tglobaladdr:$dst),
-      (CALLv3 tglobaladdr:$dst)>, Requires<[HasV3T]>;
+      (J2_call tglobaladdr:$dst)>, Requires<[HasV3T]>;
 def : Pat<(call texternalsym:$dst),
-      (CALLv3 texternalsym:$dst)>, Requires<[HasV3T]>;
+      (J2_call texternalsym:$dst)>, Requires<[HasV3T]>;

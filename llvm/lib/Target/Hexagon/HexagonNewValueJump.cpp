@@ -176,7 +176,7 @@ static bool commonChecksToProhibitNewValueJump(bool afterRA,
     return false;
 
   // if call in path, bail out.
-  if (MII->getOpcode() == Hexagon::CALLv3)
+  if (MII->getOpcode() == Hexagon::J2_call)
     return false;
 
   // if NVJ is running prior to RA, do the following checks.
