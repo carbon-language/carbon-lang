@@ -947,16 +947,22 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return emitSEL_D(MI, BB);
 
   case Mips::PseudoSELECT_I:
+  case Mips::PseudoSELECT_I64:
   case Mips::PseudoSELECT_S:
   case Mips::PseudoSELECT_D32:
+  case Mips::PseudoSELECT_D64:
     return emitPseudoSELECT(MI, BB, false, Mips::BNE);
   case Mips::PseudoSELECTFP_F_I:
+  case Mips::PseudoSELECTFP_F_I64:
   case Mips::PseudoSELECTFP_F_S:
   case Mips::PseudoSELECTFP_F_D32:
+  case Mips::PseudoSELECTFP_F_D64:
     return emitPseudoSELECT(MI, BB, true, Mips::BC1F);
   case Mips::PseudoSELECTFP_T_I:
+  case Mips::PseudoSELECTFP_T_I64:
   case Mips::PseudoSELECTFP_T_S:
   case Mips::PseudoSELECTFP_T_D32:
+  case Mips::PseudoSELECTFP_T_D64:
     return emitPseudoSELECT(MI, BB, true, Mips::BC1T);
   }
 }

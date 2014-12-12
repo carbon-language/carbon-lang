@@ -284,13 +284,19 @@ let usesCustomInserter = 1 in {
 }
 
 def PseudoSELECT_I : Select_Pseudo<GPR32Opnd>;
+def PseudoSELECT_I64 : Select_Pseudo<GPR64Opnd>;
 def PseudoSELECT_S : Select_Pseudo<FGR32Opnd>;
-def PseudoSELECT_D32 : Select_Pseudo<AFGR64Opnd>;
+def PseudoSELECT_D32 : Select_Pseudo<AFGR64Opnd>, FGR_32;
+def PseudoSELECT_D64 : Select_Pseudo<FGR64Opnd>, FGR_64;
 
 def PseudoSELECTFP_T_I : SelectFP_Pseudo_T<GPR32Opnd>;
+def PseudoSELECTFP_T_I64 : SelectFP_Pseudo_T<GPR64Opnd>;
 def PseudoSELECTFP_T_S : SelectFP_Pseudo_T<FGR32Opnd>;
-def PseudoSELECTFP_T_D32 : SelectFP_Pseudo_T<AFGR64Opnd>;
+def PseudoSELECTFP_T_D32 : SelectFP_Pseudo_T<AFGR64Opnd>, FGR_32;
+def PseudoSELECTFP_T_D64 : SelectFP_Pseudo_T<FGR64Opnd>, FGR_64;
 
 def PseudoSELECTFP_F_I : SelectFP_Pseudo_F<GPR32Opnd>;
+def PseudoSELECTFP_F_I64 : SelectFP_Pseudo_F<GPR64Opnd>;
 def PseudoSELECTFP_F_S : SelectFP_Pseudo_F<FGR32Opnd>;
-def PseudoSELECTFP_F_D32 : SelectFP_Pseudo_F<AFGR64Opnd>;
+def PseudoSELECTFP_F_D32 : SelectFP_Pseudo_F<AFGR64Opnd>, FGR_32;
+def PseudoSELECTFP_F_D64 : SelectFP_Pseudo_F<FGR64Opnd>, FGR_64;

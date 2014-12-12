@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=mips -mcpu=mips2 | FileCheck %s \
-; RUN:    -check-prefix=ALL -check-prefix=M2
+; RUN:    -check-prefix=ALL -check-prefix=M2 -check-prefix=M2-M3
 ; RUN: llc < %s -march=mips -mcpu=mips32 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=CMOV \
 ; RUN:    -check-prefix=CMOV-32 -check-prefix=CMOV-32R1
@@ -8,6 +8,8 @@
 ; RUN:    -check-prefix=CMOV-32 -check-prefix=CMOV-32R2
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=SEL -check-prefix=SEL-32
+; RUN: llc < %s -march=mips64 -mcpu=mips3 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=M3 -check-prefix=M2-M3
 ; RUN: llc < %s -march=mips64 -mcpu=mips4 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=CMOV -check-prefix=CMOV-64
 ; RUN: llc < %s -march=mips64 -mcpu=mips64 | FileCheck %s \
@@ -22,13 +24,13 @@ define signext i1 @tst_select_i1_i1(i1 signext %s,
 entry:
   ; ALL-LABEL: tst_select_i1_i1:
 
-  ; M2:     andi    $[[T0:[0-9]+]], $4, 1
-  ; M2:     bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
-  ; M2:     nop
-  ; M2:     move    $5, $6
-  ; M2:     $[[BB0]]:
-  ; M2:     jr      $ra
-  ; M2:     move    $2, $5
+  ; M2-M3:  andi    $[[T0:[0-9]+]], $4, 1
+  ; M2-M3:  bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:  nop
+  ; M2-M3:  move    $5, $6
+  ; M2-M3:  $[[BB0]]:
+  ; M2-M3:  jr      $ra
+  ; M2-M3:  move    $2, $5
 
   ; CMOV:   andi    $[[T0:[0-9]+]], $4, 1
   ; CMOV:   movn    $6, $5, $[[T0]]
@@ -47,13 +49,13 @@ define signext i8 @tst_select_i1_i8(i1 signext %s,
 entry:
   ; ALL-LABEL: tst_select_i1_i8:
 
-  ; M2:     andi    $[[T0:[0-9]+]], $4, 1
-  ; M2:     bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
-  ; M2:     nop
-  ; M2:     move    $5, $6
-  ; M2:     $[[BB0]]:
-  ; M2:     jr      $ra
-  ; M2:     move    $2, $5
+  ; M2-M3:  andi    $[[T0:[0-9]+]], $4, 1
+  ; M2-M3:  bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:  nop
+  ; M2-M3:  move    $5, $6
+  ; M2-M3:  $[[BB0]]:
+  ; M2-M3:  jr      $ra
+  ; M2-M3:  move    $2, $5
 
   ; CMOV:   andi    $[[T0:[0-9]+]], $4, 1
   ; CMOV:   movn    $6, $5, $[[T0]]
@@ -72,13 +74,13 @@ define signext i32 @tst_select_i1_i32(i1 signext %s,
 entry:
   ; ALL-LABEL: tst_select_i1_i32:
 
-  ; M2:     andi    $[[T0:[0-9]+]], $4, 1
-  ; M2:     bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
-  ; M2:     nop
-  ; M2:     move    $5, $6
-  ; M2:     $[[BB0]]:
-  ; M2:     jr      $ra
-  ; M2:     move    $2, $5
+  ; M2-M3:  andi    $[[T0:[0-9]+]], $4, 1
+  ; M2-M3:  bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:  nop
+  ; M2-M3:  move    $5, $6
+  ; M2-M3:  $[[BB0]]:
+  ; M2-M3:  jr      $ra
+  ; M2-M3:  move    $2, $5
 
   ; CMOV:   andi    $[[T0:[0-9]+]], $4, 1
   ; CMOV:   movn    $6, $5, $[[T0]]
@@ -127,6 +129,14 @@ entry:
   ; SEL-32:     seleqz  $[[T6:[0-9]+]], $[[T5]], $[[T0]]
   ; SEL-32:     or      $3, $[[T4]], $[[T6]]
 
+  ; M3:         andi    $[[T0:[0-9]+]], $4, 1
+  ; M3:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M3:         nop
+  ; M3:         move    $5, $6
+  ; M3:         $[[BB0]]:
+  ; M3:         jr      $ra
+  ; M3:         move    $2, $5
+
   ; CMOV-64:    andi    $[[T0:[0-9]+]], $4, 1
   ; CMOV-64:    movn    $6, $5, $[[T0]]
   ; CMOV-64:    move    $2, $6
@@ -145,14 +155,16 @@ define float @tst_select_i1_float(i1 signext %s, float %x, float %y) {
 entry:
   ; ALL-LABEL: tst_select_i1_float:
 
-  ; M2:         andi    $[[T0:[0-9]+]], $4, 1
-  ; M2:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M2-M3:      andi    $[[T0:[0-9]+]], $4, 1
+  ; M2-M3:      bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         jr      $ra
   ; M2:         mtc1    $6, $f0
-  ; M2:         $[[BB0]]:
-  ; M2:         jr      $ra
+  ; M3:         mov.s   $f13, $f14
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr      $ra
   ; M2:         mtc1    $5, $f0
+  ; M3:         mov.s   $f0, $f13
 
   ; CMOV-32:    mtc1    $6, $f0
   ; CMOV-32:    mtc1    $5, $f1
@@ -179,13 +191,14 @@ define float @tst_select_i1_float_reordered(float %x, float %y,
 entry:
   ; ALL-LABEL: tst_select_i1_float_reordered:
 
-  ; M2:         andi    $[[T0:[0-9]+]], $6, 1
-  ; M2:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M2-M3:      andi    $[[T0:[0-9]+]], $6, 1
+  ; M2-M3:      bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.s   $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr      $ra
-  ; M2:         mov.s   $f0, $f12
+  ; M3:         mov.s   $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr      $ra
+  ; M2-M3:      mov.s   $f0, $f12
 
   ; CMOV-32:    andi    $[[T0:[0-9]+]], $6, 1
   ; CMOV-32:    movn.s  $f14, $f12, $[[T0]]
@@ -232,6 +245,14 @@ entry:
   ; SEL-32:     mtc1    $4, $f0
   ; SEL-32:     sel.d   $f0, $[[F1]], $[[F0]]
 
+  ; M3:         andi    $[[T0:[0-9]+]], $4, 1
+  ; M3:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M3:         nop
+  ; M3:         mov.d   $f13, $f14
+  ; M3:         $[[BB0]]:
+  ; M3:         jr      $ra
+  ; M3:         mov.d   $f0, $f13
+
   ; CMOV-64:    andi    $[[T0:[0-9]+]], $4, 1
   ; CMOV-64:    movn.d  $f14, $f13, $[[T0]]
   ; CMOV-64:    mov.d   $f0, $f14
@@ -265,6 +286,14 @@ entry:
   ; SEL-32:     mtc1    $[[T0]], $f0
   ; SEL-32:     sel.d   $f0, $f14, $f12
 
+  ; M3:         andi    $[[T0:[0-9]+]], $6, 1
+  ; M3:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M3:         nop
+  ; M3:         mov.d   $f12, $f13
+  ; M3:         $[[BB0]]:
+  ; M3:         jr      $ra
+  ; M3:         mov.d   $f0, $f12
+
   ; CMOV-64:    andi    $[[T0:[0-9]+]], $6, 1
   ; CMOV-64:    movn.d  $f13, $f12, $[[T0]]
   ; CMOV-64:    mov.d   $f0, $f13
@@ -280,12 +309,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_olt_float:
 
   ; M2:         c.olt.s   $f12, $f14
-  ; M2:         bc1t      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.olt.s   $f12, $f13
+  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.s     $f0, $f12
+  ; M3:         mov.s     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.s     $f0, $f12
 
   ; CMOV-32:    c.olt.s   $f12, $f14
   ; CMOV-32:    movt.s    $f14, $f12, $fcc0
@@ -310,12 +341,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_ole_float:
 
   ; M2:         c.ole.s   $f12, $f14
-  ; M2:         bc1t      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ole.s   $f12, $f13
+  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.s     $f0, $f12
+  ; M3:         mov.s     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.s     $f0, $f12
 
   ; CMOV-32:    c.ole.s   $f12, $f14
   ; CMOV-32:    movt.s    $f14, $f12, $fcc0
@@ -340,12 +373,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_ogt_float:
 
   ; M2:         c.ule.s   $f12, $f14
-  ; M2:         bc1f      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ule.s   $f12, $f13
+  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.s     $f0, $f12
+  ; M3:         mov.s     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.s     $f0, $f12
 
   ; CMOV-32:    c.ule.s   $f12, $f14
   ; CMOV-32:    movf.s    $f14, $f12, $fcc0
@@ -370,12 +405,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_oge_float:
 
   ; M2:         c.ult.s   $f12, $f14
-  ; M2:         bc1f      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ult.s   $f12, $f13
+  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.s     $f0, $f12
+  ; M3:         mov.s     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.s     $f0, $f12
 
   ; CMOV-32:    c.ult.s   $f12, $f14
   ; CMOV-32:    movf.s    $f14, $f12, $fcc0
@@ -400,12 +437,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_oeq_float:
 
   ; M2:         c.eq.s    $f12, $f14
-  ; M2:         bc1t      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.eq.s    $f12, $f13
+  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.s     $f0, $f12
+  ; M3:         mov.s     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.s     $f0, $f12
 
   ; CMOV-32:    c.eq.s    $f12, $f14
   ; CMOV-32:    movt.s    $f14, $f12, $fcc0
@@ -430,12 +469,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_one_float:
 
   ; M2:         c.ueq.s   $f12, $f14
-  ; M2:         bc1f      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ueq.s   $f12, $f13
+  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.s     $f0, $f12
+  ; M3:         mov.s     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.s     $f0, $f12
 
   ; CMOV-32:    c.ueq.s   $f12, $f14
   ; CMOV-32:    movf.s    $f14, $f12, $fcc0
@@ -467,12 +508,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_olt_double:
 
   ; M2:         c.olt.d   $f12, $f14
-  ; M2:         bc1t      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.olt.d   $f12, $f13
+  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.d     $f0, $f12
+  ; M3:         mov.d     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.d     $f0, $f12
 
   ; CMOV-32:    c.olt.d   $f12, $f14
   ; CMOV-32:    movt.d    $f14, $f12, $fcc0
@@ -497,12 +540,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_ole_double:
 
   ; M2:         c.ole.d   $f12, $f14
-  ; M2:         bc1t      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ole.d   $f12, $f13
+  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.d     $f0, $f12
+  ; M3:         mov.d     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.d     $f0, $f12
 
   ; CMOV-32:    c.ole.d   $f12, $f14
   ; CMOV-32:    movt.d    $f14, $f12, $fcc0
@@ -527,12 +572,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_ogt_double:
 
   ; M2:         c.ule.d   $f12, $f14
-  ; M2:         bc1f      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ule.d   $f12, $f13
+  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.d     $f0, $f12
+  ; M3:         mov.d     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.d     $f0, $f12
 
   ; CMOV-32:    c.ule.d   $f12, $f14
   ; CMOV-32:    movf.d    $f14, $f12, $fcc0
@@ -557,12 +604,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_oge_double:
 
   ; M2:         c.ult.d   $f12, $f14
-  ; M2:         bc1f      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ult.d   $f12, $f13
+  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.d     $f0, $f12
+  ; M3:         mov.d     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.d     $f0, $f12
 
   ; CMOV-32:    c.ult.d   $f12, $f14
   ; CMOV-32:    movf.d    $f14, $f12, $fcc0
@@ -587,12 +636,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_oeq_double:
 
   ; M2:         c.eq.d    $f12, $f14
-  ; M2:         bc1t      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.eq.d    $f12, $f13
+  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.d     $f0, $f12
+  ; M3:         mov.d     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.d     $f0, $f12
 
   ; CMOV-32:    c.eq.d    $f12, $f14
   ; CMOV-32:    movt.d    $f14, $f12, $fcc0
@@ -617,12 +668,14 @@ entry:
   ; ALL-LABEL: tst_select_fcmp_one_double:
 
   ; M2:         c.ueq.d   $f12, $f14
-  ; M2:         bc1f      $[[BB0:BB[0-9_]+]]
-  ; M2:         nop
+  ; M3:         c.ueq.d   $f12, $f13
+  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
-  ; M2:         $[[BB0]]:
-  ; M2:         jr        $ra
-  ; M2:         mov.d     $f0, $f12
+  ; M3:         mov.d     $f12, $f13
+  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      jr        $ra
+  ; M2-M3:      mov.d     $f0, $f12
 
   ; CMOV-32:    c.ueq.d   $f12, $f14
   ; CMOV-32:    movf.d    $f14, $f12, $fcc0
