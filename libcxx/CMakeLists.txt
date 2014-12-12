@@ -47,6 +47,7 @@ option(LIBCXX_BUILD_32_BITS "Build 32 bit libc++" OFF)
 option(LIBCXX_ENABLE_MONOTONIC_CLOCK
   "Build libc++ with support for a monotonic clock.
    This option may only be used when LIBCXX_ENABLE_THREADS=OFF." ON)
+option(LIBCXX_INSTALL_HEADERS "Install the libc++ headers." ON)
 option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
 if (LIBCXX_BUILT_STANDALONE)
   set(LLVM_USE_SANITIZER "" CACHE STRING
