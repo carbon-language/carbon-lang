@@ -312,6 +312,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
     // than the buffer. Directly write the chunk that is a multiple of the
     // preferred buffer size and put the remainder in the buffer.
     if (LLVM_UNLIKELY(OutBufCur == OutBufStart)) {
+      assert(NumBytes != 0 && "undefined behavior");
       size_t BytesToWrite = Size - (Size % NumBytes);
       write_impl(Ptr, BytesToWrite);
       size_t BytesRemaining = Size - BytesToWrite;

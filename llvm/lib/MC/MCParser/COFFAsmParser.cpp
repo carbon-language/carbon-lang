@@ -582,7 +582,7 @@ bool COFFAsmParser::ParseSEHDirectiveHandlerData(StringRef, SMLoc) {
 }
 
 bool COFFAsmParser::ParseSEHDirectivePushReg(StringRef, SMLoc L) {
-  unsigned Reg;
+  unsigned Reg = 0;
   if (ParseSEHRegisterNumber(Reg))
     return true;
 
@@ -595,7 +595,7 @@ bool COFFAsmParser::ParseSEHDirectivePushReg(StringRef, SMLoc L) {
 }
 
 bool COFFAsmParser::ParseSEHDirectiveSetFrame(StringRef, SMLoc L) {
-  unsigned Reg;
+  unsigned Reg = 0;
   int64_t Off;
   if (ParseSEHRegisterNumber(Reg))
     return true;
@@ -636,7 +636,7 @@ bool COFFAsmParser::ParseSEHDirectiveAllocStack(StringRef, SMLoc) {
 }
 
 bool COFFAsmParser::ParseSEHDirectiveSaveReg(StringRef, SMLoc L) {
-  unsigned Reg;
+  unsigned Reg = 0;
   int64_t Off;
   if (ParseSEHRegisterNumber(Reg))
     return true;
@@ -663,7 +663,7 @@ bool COFFAsmParser::ParseSEHDirectiveSaveReg(StringRef, SMLoc L) {
 // FIXME: This method is inherently x86-specific. It should really be in the
 // x86 backend.
 bool COFFAsmParser::ParseSEHDirectiveSaveXMM(StringRef, SMLoc L) {
-  unsigned Reg;
+  unsigned Reg = 0;
   int64_t Off;
   if (ParseSEHRegisterNumber(Reg))
     return true;

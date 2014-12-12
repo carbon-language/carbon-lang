@@ -812,7 +812,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
             return VarInit::get(MCName, RV->getType());
           }
         }
-
+        assert(CurRec && "NULL pointer");
         if (Record *D = (CurRec->getRecords()).getDef(Name))
           return DefInit::get(D);
 

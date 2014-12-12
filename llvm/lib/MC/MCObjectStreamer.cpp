@@ -405,7 +405,9 @@ void MCObjectStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
 }
 
 void MCObjectStreamer::EmitZeros(uint64_t NumBytes) {
-  unsigned ItemSize = getCurrentSection().first->isVirtualSection() ? 0 : 1;
+  const MCSection *Sec = getCurrentSection().first;
+  assert(Sec && "need a section");
+  unsigned ItemSize = Sec->isVirtualSection() ? 0 : 1;
   insert(new MCFillFragment(0, ItemSize, NumBytes));
 }
 

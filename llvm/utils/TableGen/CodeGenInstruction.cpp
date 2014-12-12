@@ -537,7 +537,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
   // If both are Operands with the same MVT, allow the conversion. It's
   // up to the user to make sure the values are appropriate, just like
   // for isel Pat's.
-  if (InstOpRec->isSubClassOf("Operand") &&
+  if (InstOpRec->isSubClassOf("Operand") && ADI &&
       ADI->getDef()->isSubClassOf("Operand")) {
     // FIXME: What other attributes should we check here? Identical
     // MIOperandInfo perhaps?

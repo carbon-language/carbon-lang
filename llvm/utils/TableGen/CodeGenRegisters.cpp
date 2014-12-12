@@ -146,6 +146,7 @@ void CodeGenRegister::buildObjectGraph(CodeGenRegBank &RegBank) {
 }
 
 const std::string &CodeGenRegister::getName() const {
+  assert(TheDef && "no def");
   return TheDef->getName();
 }
 

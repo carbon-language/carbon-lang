@@ -2569,8 +2569,10 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       I->error("set destination should be a register!");
 
     DefInit *Val = dyn_cast<DefInit>(Dest->getLeafValue());
-    if (!Val)
+    if (!Val) {
       I->error("set destination should be a register!");
+      continue;
+    }
 
     if (Val->getDef()->isSubClassOf("RegisterClass") ||
         Val->getDef()->isSubClassOf("ValueType") ||

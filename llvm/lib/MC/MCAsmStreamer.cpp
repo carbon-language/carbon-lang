@@ -682,7 +682,10 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
       // We truncate our partial emission to fit within the bounds of the
       // emission domain.  This produces nicer output and silences potential
       // truncation warnings when round tripping through another assembler.
-      ValueToEmit &= ~0ULL >> (64 - EmissionSize * 8);
+      uint64_t Shift = 64 - EmissionSize * 8;
+      assert(Shift < std::numeric_limits<unsigned long long>::digits &&
+             "undefined behavior");
+      ValueToEmit &= ~0ULL >> Shift;
       EmitIntValue(ValueToEmit, EmissionSize);
       Emitted += EmissionSize;
     }

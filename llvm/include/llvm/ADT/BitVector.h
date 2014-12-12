@@ -450,6 +450,7 @@ public:
 
     // Grow the bitvector to have enough elements.
     Capacity = RHSWords;
+    assert(Capacity > 0 && "negative capacity?");
     BitWord *NewBits = (BitWord *)std::malloc(Capacity * sizeof(BitWord));
     std::memcpy(NewBits, RHS.Bits, Capacity * sizeof(BitWord));
 
