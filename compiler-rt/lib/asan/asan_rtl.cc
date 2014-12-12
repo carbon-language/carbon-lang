@@ -299,21 +299,32 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Override from command line.
   ParseFlagsFromString(f, env);
+  if (env)
+    VReport(1, "Parsed ASAN_OPTIONS: %s\n", env);
+
+  // If ASan starts in deactivated state, stash and clear some flags.
+  // Otherwise, let activation flags override current settings.
+  if (flags()->start_deactivated)
+    AsanStartDeactivated();
+  else
+    ParseExtraActivationFlags();
+
   if (common_flags()->help) {
     PrintFlagDescriptions();
   }
 
+  // Flag validation:
   if (!CAN_SANITIZE_LEAKS && cf->detect_leaks) {
     Report("%s: detect_leaks is not supported on this platform.\n",
            SanitizerToolName);
     cf->detect_leaks = false;
   }
-
   // Make "strict_init_order" imply "check_initialization_order".
   // TODO(samsonov): Use a single runtime flag for an init-order checker.
   if (f->strict_init_order) {
     f->check_initialization_order = true;
   }
+  CHECK_LE(flags()->min_uar_stack_size_log, flags()->max_uar_stack_size_log);
 }
 
 // Parse flags that may change between startup and activation.
@@ -574,20 +585,11 @@ static void AsanInitInternal() {
   SetCheckFailedCallback(AsanCheckFailed);
   SetPrintfAndReportCallback(AppendToErrorMessageBuffer);
 
-  if (!flags()->start_deactivated)
-    ParseExtraActivationFlags();
-
   __sanitizer_set_report_path(common_flags()->log_path);
+
+  // Enable UAR detection, if required.
   __asan_option_detect_stack_use_after_return =
       flags()->detect_stack_use_after_return;
-  CHECK_LE(flags()->min_uar_stack_size_log, flags()->max_uar_stack_size_log);
-
-  if (options) {
-    VReport(1, "Parsed ASAN_OPTIONS: %s\n", options);
-  }
-
-  if (flags()->start_deactivated)
-    AsanStartDeactivated();
 
   // Re-exec ourselves if we need to set additional env or command line args.
   MaybeReexec();
