@@ -102,19 +102,6 @@ GCStrategy::GCStrategy() :
   UsesMetadata(false)
 {}
 
-bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
-
-bool GCStrategy::performCustomLowering(Function &F) {
-  dbgs() << "gc " << getName() << " must override performCustomLowering.\n";
-  llvm_unreachable("must override performCustomLowering");
-}
-
-
-bool GCStrategy::findCustomSafePoints(GCFunctionInfo& FI, MachineFunction &F) {
-  dbgs() << "gc " << getName() << " must override findCustomSafePoints.\n";
-  llvm_unreachable(nullptr);
-}
-
 // -----------------------------------------------------------------------------
 
 INITIALIZE_PASS_BEGIN(LowerIntrinsics, "gc-lowering", "GC Lowering",
