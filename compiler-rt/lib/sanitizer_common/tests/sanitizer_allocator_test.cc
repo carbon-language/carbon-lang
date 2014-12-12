@@ -29,7 +29,7 @@
 // Too slow for debug build
 #if TSAN_DEBUG == 0
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 static const uptr kAllocatorSpace = 0x700000000000ULL;
 static const uptr kAllocatorSize  = 0x010000000000ULL;  // 1T.
 static const u64 kAddressSpaceSize = 1ULL << 47;
@@ -39,6 +39,8 @@ typedef SizeClassAllocator64<
 
 typedef SizeClassAllocator64<
   kAllocatorSpace, kAllocatorSize, 16, CompactSizeClassMap> Allocator64Compact;
+#elif defined(__mips64)
+static const u64 kAddressSpaceSize = 1ULL << 40;
 #else
 static const u64 kAddressSpaceSize = 1ULL << 32;
 #endif
@@ -140,7 +142,7 @@ void TestSizeClassAllocator() {
   delete a;
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator64) {
   TestSizeClassAllocator<Allocator64>();
 }
@@ -184,7 +186,7 @@ void SizeClassAllocatorMetadataStress() {
   delete a;
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator64>();
 }
@@ -192,7 +194,7 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
 TEST(SanitizerCommon, SizeClassAllocator64CompactMetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator64Compact>();
 }
-#endif  // SANITIZER_WORDSIZE == 64
+#endif  // SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator32CompactMetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator32Compact>();
 }
@@ -221,7 +223,7 @@ void SizeClassAllocatorGetBlockBeginStress() {
   delete a;
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator64GetBlockBegin) {
   SizeClassAllocatorGetBlockBeginStress<Allocator64>();
 }
@@ -231,7 +233,7 @@ TEST(SanitizerCommon, SizeClassAllocator64CompactGetBlockBegin) {
 TEST(SanitizerCommon, SizeClassAllocator32CompactGetBlockBegin) {
   SizeClassAllocatorGetBlockBeginStress<Allocator32Compact>();
 }
-#endif  // SANITIZER_WORDSIZE == 64
+#endif  // SANITIZER_CAN_USE_ALLOCATOR64
 
 struct TestMapUnmapCallback {
   static int map_count, unmap_count;
@@ -241,7 +243,7 @@ struct TestMapUnmapCallback {
 int TestMapUnmapCallback::map_count;
 int TestMapUnmapCallback::unmap_count;
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
   TestMapUnmapCallback::map_count = 0;
   TestMapUnmapCallback::unmap_count = 0;
@@ -322,7 +324,7 @@ void FailInAssertionOnOOM() {
   a.TestOnlyUnmap();
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
   EXPECT_DEATH(FailInAssertionOnOOM<Allocator64>(), "Out of memory");
 }
@@ -465,7 +467,7 @@ void TestCombinedAllocator() {
   a->TestOnlyUnmap();
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, CombinedAllocator64) {
   TestCombinedAllocator<Allocator64,
       LargeMmapAllocator<>,
@@ -521,7 +523,7 @@ void TestSizeClassAllocatorLocalCache() {
   delete a;
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator64LocalCache) {
   TestSizeClassAllocatorLocalCache<
       SizeClassAllocatorLocalCache<Allocator64> >();
@@ -538,7 +540,7 @@ TEST(SanitizerCommon, SizeClassAllocator32CompactLocalCache) {
       SizeClassAllocatorLocalCache<Allocator32Compact> >();
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 typedef SizeClassAllocatorLocalCache<Allocator64> AllocatorCache;
 static AllocatorCache static_allocator_cache;
 
@@ -694,7 +696,7 @@ void TestSizeClassAllocatorIteration() {
   delete a;
 }
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, SizeClassAllocator64Iteration) {
   TestSizeClassAllocatorIteration<Allocator64>();
 }
@@ -769,7 +771,7 @@ TEST(SanitizerCommon, LargeMmapAllocatorBlockBegin) {
 }
 
 
-#if SANITIZER_WORDSIZE == 64
+#if SANITIZER_CAN_USE_ALLOCATOR64
 // Regression test for out-of-memory condition in PopulateFreeList().
 TEST(SanitizerCommon, SizeClassAllocator64PopulateFreeListOOM) {
   // In a world where regions are small and chunks are huge...

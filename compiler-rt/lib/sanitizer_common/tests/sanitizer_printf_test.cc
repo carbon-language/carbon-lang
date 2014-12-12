@@ -28,14 +28,11 @@ TEST(Printf, Basic) {
       (unsigned)10, (unsigned long)11, // NOLINT
       (void*)0x123, "_string_");
   EXPECT_EQ(len, strlen(buf));
-  void *ptr;
-  if (sizeof(ptr) == 4) {
-    EXPECT_STREQ("a-1b-2c4294967292e5fahbq"
-                 "0x00000123e_string_r", buf);
-  } else {
-    EXPECT_STREQ("a-1b-2c4294967292e5fahbq"
-                 "0x000000000123e_string_r", buf);
-  }
+
+  std::string expectedString = "a-1b-2c4294967292e5fahbq0x";
+  expectedString += std::string(SANITIZER_POINTER_FORMAT_LENGTH - 3, '0');
+  expectedString += "123e_string_r";
+  EXPECT_STREQ(expectedString.c_str(), buf);
 }
 
 TEST(Printf, OverflowStr) {

@@ -2,6 +2,9 @@ include(CompilerRTCompile)
 
 clang_compiler_add_cxx_check()
 
+# FIXME: use SANITIZER_COMMON_SUPPORTED_ARCH here
+filter_available_targets(SANITIZER_UNITTEST_SUPPORTED_ARCH x86_64 i386 mips64 mips64el)
+
 set(SANITIZER_UNITTESTS
   sanitizer_allocator_test.cc
   sanitizer_atomic_test.cc
@@ -157,24 +160,18 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
                              $<TARGET_OBJECTS:RTSanitizerCommon.osx>)
   else()
     if(CAN_TARGET_x86_64)
-      add_sanitizer_common_lib("RTSanitizerCommon.test.x86_64"
-                               $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
-                               $<TARGET_OBJECTS:RTSanitizerCommonLibc.x86_64>)
       add_sanitizer_common_lib("RTSanitizerCommon.test.nolibc.x86_64"
                                $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>)
     endif()
-    if(CAN_TARGET_i386)
-      add_sanitizer_common_lib("RTSanitizerCommon.test.i386"
-                               $<TARGET_OBJECTS:RTSanitizerCommon.i386>
-                               $<TARGET_OBJECTS:RTSanitizerCommonLibc.i386>)
-    endif()
+    foreach(arch ${SANITIZER_UNITTEST_SUPPORTED_ARCH})
+      add_sanitizer_common_lib("RTSanitizerCommon.test.${arch}"
+                               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+                               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
+    endforeach()
   endif()
-  if(CAN_TARGET_x86_64)
-    add_sanitizer_tests_for_arch(x86_64)
-  endif()
-  if(CAN_TARGET_i386)
-    add_sanitizer_tests_for_arch(i386)
-  endif()
+  foreach(arch ${SANITIZER_UNITTEST_SUPPORTED_ARCH})
+    add_sanitizer_tests_for_arch(${arch})
+  endforeach()
 endif()
 
 if(ANDROID)
