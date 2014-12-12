@@ -6,10 +6,10 @@
 // expected-no-diagnostics
 
 // RUN: FileCheck %s -check-prefix=VFS -input-file %t/vfs/vfs.yaml
-// VFS-DAG: 'name': "SubFramework.h"
-// VFS-DAG: 'name': "Treasure.h"
-// VFS-DAG: 'name': "Module.h"
-// VFS-DAG: 'name': "Sub.h"
-// VFS-DAG: 'name': "Sub2.h"
+// VFS: 'name': "SubFramework.h"
+// VFS: 'name': "Treasure.h"
+// VFS: 'name': "Module.h"
+// VFS: 'name': "Sub.h"
+// VFS: 'name': "Sub2.h"
 
 @import Module;

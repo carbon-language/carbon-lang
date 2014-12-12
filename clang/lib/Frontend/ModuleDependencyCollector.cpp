@@ -63,6 +63,10 @@ std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
   // We need an absolute path to append to the root.
   SmallString<256> AbsoluteSrc = Src;
   fs::make_absolute(AbsoluteSrc);
+  // Canonicalize to a native path to avoid mixed separator styles.
+  path::native(AbsoluteSrc);
+  // TODO: We probably need to handle .. as well as . in order to have valid
+  // input to the YAMLVFSWriter.
   FileManager::removeDotPaths(AbsoluteSrc);
 
   // Build the destination path.
