@@ -263,3 +263,34 @@ defm : MovnPats<GPR32, FGR64, MOVN_I_D64, XOR>, INSN_MIPS4_32_NOT_32R6_64R6,
        FGR_64;
 defm : MovnPats<GPR64, FGR64, MOVN_I64_D64, XOR64>, INSN_MIPS4_32_NOT_32R6_64R6,
        FGR_64;
+
+// For targets that don't have conditional-move instructions
+// we have to match SELECT nodes with pseudo instructions.
+let usesCustomInserter = 1 in {
+  class Select_Pseudo<RegisterOperand RC> :
+    PseudoSE<(outs RC:$dst), (ins GPR32Opnd:$cond, RC:$T, RC:$F),
+            [(set RC:$dst, (select GPR32Opnd:$cond, RC:$T, RC:$F))]>,
+    ISA_MIPS1_NOT_4_32;
+
+  class SelectFP_Pseudo_T<RegisterOperand RC> :
+    PseudoSE<(outs RC:$dst), (ins GPR32Opnd:$cond, RC:$T, RC:$F),
+             [(set RC:$dst, (MipsCMovFP_T RC:$T, GPR32Opnd:$cond, RC:$F))]>,
+    ISA_MIPS1_NOT_4_32;
+
+  class SelectFP_Pseudo_F<RegisterOperand RC> :
+    PseudoSE<(outs RC:$dst), (ins GPR32Opnd:$cond, RC:$T, RC:$F),
+             [(set RC:$dst, (MipsCMovFP_F RC:$T, GPR32Opnd:$cond, RC:$F))]>,
+    ISA_MIPS1_NOT_4_32;
+}
+
+def PseudoSELECT_I : Select_Pseudo<GPR32Opnd>;
+def PseudoSELECT_S : Select_Pseudo<FGR32Opnd>;
+def PseudoSELECT_D32 : Select_Pseudo<AFGR64Opnd>;
+
+def PseudoSELECTFP_T_I : SelectFP_Pseudo_T<GPR32Opnd>;
+def PseudoSELECTFP_T_S : SelectFP_Pseudo_T<FGR32Opnd>;
+def PseudoSELECTFP_T_D32 : SelectFP_Pseudo_T<AFGR64Opnd>;
+
+def PseudoSELECTFP_F_I : SelectFP_Pseudo_F<GPR32Opnd>;
+def PseudoSELECTFP_F_S : SelectFP_Pseudo_F<FGR32Opnd>;
+def PseudoSELECTFP_F_D32 : SelectFP_Pseudo_F<AFGR64Opnd>;
