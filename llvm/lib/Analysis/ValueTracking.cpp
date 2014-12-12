@@ -511,6 +511,10 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
       return;
     }
 
+    // The remaining tests are all recursive, so bail out if we hit the limit.
+    if (Depth == MaxDepth)
+      continue;
+
     Value *A, *B;
     auto m_V = m_CombineOr(m_Specific(V),
                            m_CombineOr(m_PtrToInt(m_Specific(V)),
