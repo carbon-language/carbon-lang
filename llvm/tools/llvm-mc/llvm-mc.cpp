@@ -204,16 +204,15 @@ static const Target *GetTarget(const char *ProgName) {
   return TheTarget;
 }
 
-static tool_output_file *GetOutputStream() {
+static std::unique_ptr<tool_output_file> GetOutputStream() {
   if (OutputFilename == "")
     OutputFilename = "-";
 
   std::error_code EC;
-  tool_output_file *Out =
-      new tool_output_file(OutputFilename, EC, sys::fs::F_None);
+  auto Out = llvm::make_unique<tool_output_file>(OutputFilename, EC,
+                                                 sys::fs::F_None);
   if (EC) {
     errs() << EC.message() << '\n';
-    delete Out;
     return nullptr;
   }
 
@@ -435,7 +434,7 @@ int main(int argc, char **argv) {
     FeaturesStr = Features.getString();
   }
 
-  std::unique_ptr<tool_output_file> Out(GetOutputStream());
+  std::unique_ptr<tool_output_file> Out = GetOutputStream();
   if (!Out)
     return 1;
 
