@@ -14,9 +14,9 @@ define <4 x i64> @test256_1(<4 x i64> %x, <4 x i64> %y) nounwind {
 ; CHECK: vpcmpgtq {{.*%k[0-7]}}
 ; CHECK: vmovdqa64 {{.*}}%k1
 ; CHECK: ret
-define <4 x i64> @test256_2(<4 x i64> %x, <4 x i64> %y) nounwind {
+define <4 x i64> @test256_2(<4 x i64> %x, <4 x i64> %y, <4 x i64> %x1) nounwind {
   %mask = icmp sgt <4 x i64> %x, %y
-  %max = select <4 x i1> %mask, <4 x i64> %x, <4 x i64> %y
+  %max = select <4 x i1> %mask, <4 x i64> %x1, <4 x i64> %y
   ret <4 x i64> %max
 }
 
@@ -34,9 +34,9 @@ define <8 x i32> @test256_3(<8 x i32> %x, <8 x i32> %y, <8 x i32> %x1) nounwind 
 ; CHECK: vpcmpnleuq {{.*%k[0-7]}}
 ; CHECK: vmovdqa64 {{.*}}%k1
 ; CHECK: ret
-define <4 x i64> @test256_4(<4 x i64> %x, <4 x i64> %y) nounwind {
+define <4 x i64> @test256_4(<4 x i64> %x, <4 x i64> %y, <4 x i64> %x1) nounwind {
   %mask = icmp ugt <4 x i64> %x, %y
-  %max = select <4 x i1> %mask, <4 x i64> %x, <4 x i64> %y
+  %max = select <4 x i1> %mask, <4 x i64> %x1, <4 x i64> %y
   ret <4 x i64> %max
 }
 
@@ -204,9 +204,9 @@ define <2 x i64> @test128_1(<2 x i64> %x, <2 x i64> %y) nounwind {
 ; CHECK: vpcmpgtq {{.*%k[0-7]}}
 ; CHECK: vmovdqa64 {{.*}}%k1
 ; CHECK: ret
-define <2 x i64> @test128_2(<2 x i64> %x, <2 x i64> %y) nounwind {
+define <2 x i64> @test128_2(<2 x i64> %x, <2 x i64> %y, <2 x i64> %x1) nounwind {
   %mask = icmp sgt <2 x i64> %x, %y
-  %max = select <2 x i1> %mask, <2 x i64> %x, <2 x i64> %y
+  %max = select <2 x i1> %mask, <2 x i64> %x1, <2 x i64> %y
   ret <2 x i64> %max
 }
 
@@ -224,9 +224,9 @@ define <4 x i32> @test128_3(<4 x i32> %x, <4 x i32> %y, <4 x i32> %x1) nounwind 
 ; CHECK: vpcmpnleuq {{.*%k[0-7]}}
 ; CHECK: vmovdqa64 {{.*}}%k1
 ; CHECK: ret
-define <2 x i64> @test128_4(<2 x i64> %x, <2 x i64> %y) nounwind {
+define <2 x i64> @test128_4(<2 x i64> %x, <2 x i64> %y, <2 x i64> %x1) nounwind {
   %mask = icmp ugt <2 x i64> %x, %y
-  %max = select <2 x i1> %mask, <2 x i64> %x, <2 x i64> %y
+  %max = select <2 x i1> %mask, <2 x i64> %x1, <2 x i64> %y
   ret <2 x i64> %max
 }
 

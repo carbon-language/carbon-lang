@@ -14,9 +14,9 @@ define <64 x i8> @test1(<64 x i8> %x, <64 x i8> %y) nounwind {
 ; CHECK: vpcmpgtb {{.*%k[0-7]}}
 ; CHECK: vmovdqu8 {{.*}}%k1
 ; CHECK: ret
-define <64 x i8> @test2(<64 x i8> %x, <64 x i8> %y) nounwind {
+define <64 x i8> @test2(<64 x i8> %x, <64 x i8> %y, <64 x i8> %x1) nounwind {
   %mask = icmp sgt <64 x i8> %x, %y
-  %max = select <64 x i1> %mask, <64 x i8> %x, <64 x i8> %y
+  %max = select <64 x i1> %mask, <64 x i8> %x1, <64 x i8> %y
   ret <64 x i8> %max
 }
 
@@ -34,9 +34,9 @@ define <32 x i16> @test3(<32 x i16> %x, <32 x i16> %y, <32 x i16> %x1) nounwind 
 ; CHECK: vpcmpnleub {{.*%k[0-7]}}
 ; CHECK: vmovdqu8 {{.*}}%k1
 ; CHECK: ret
-define <64 x i8> @test4(<64 x i8> %x, <64 x i8> %y) nounwind {
+define <64 x i8> @test4(<64 x i8> %x, <64 x i8> %y, <64 x i8> %x1) nounwind {
   %mask = icmp ugt <64 x i8> %x, %y
-  %max = select <64 x i1> %mask, <64 x i8> %x, <64 x i8> %y
+  %max = select <64 x i1> %mask, <64 x i8> %x1, <64 x i8> %y
   ret <64 x i8> %max
 }
 

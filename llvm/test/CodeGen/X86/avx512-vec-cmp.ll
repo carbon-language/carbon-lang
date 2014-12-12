@@ -37,15 +37,15 @@ define <16 x i32> @test3(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %yp) nounwin
   ret <16 x i32> %max
 }
 
-define <16 x i32> @test4_unsigned(<16 x i32> %x, <16 x i32> %y) nounwind {
+define <16 x i32> @test4_unsigned(<16 x i32> %x, <16 x i32> %y, <16 x i32> %x1) nounwind {
 ; CHECK-LABEL: test4_unsigned:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpnltud %zmm1, %zmm0, %k1
-; CHECK-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa32 %zmm2, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %mask = icmp uge <16 x i32> %x, %y
-  %max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %y
+  %max = select <16 x i1> %mask, <16 x i32> %x1, <16 x i32> %y
   ret <16 x i32> %max
 }
 
@@ -61,15 +61,15 @@ define <8 x i64> @test5(<8 x i64> %x, <8 x i64> %y) nounwind {
   ret <8 x i64> %max
 }
 
-define <8 x i64> @test6_unsigned(<8 x i64> %x, <8 x i64> %y) nounwind {
+define <8 x i64> @test6_unsigned(<8 x i64> %x, <8 x i64> %y, <8 x i64> %x1) nounwind {
 ; CHECK-LABEL: test6_unsigned:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpnleuq %zmm1, %zmm0, %k1
-; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa64 %zmm2, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %mask = icmp ugt <8 x i64> %x, %y
-  %max = select <8 x i1> %mask, <8 x i64> %x, <8 x i64> %y
+  %max = select <8 x i1> %mask, <8 x i64> %x1, <8 x i64> %y
   ret <8 x i64> %max
 }
 
@@ -196,15 +196,15 @@ define <8 x i64> @test15(<8 x i64>%a, <8 x i64>%b) {
   ret <8 x i64>%res
 }
 
-define <16 x i32> @test16(<16 x i32> %x, <16 x i32> %y) nounwind {
+define <16 x i32> @test16(<16 x i32> %x, <16 x i32> %y, <16 x i32> %x1) nounwind {
 ; CHECK-LABEL: test16:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpled %zmm0, %zmm1, %k1
-; CHECK-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa32 %zmm2, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %mask = icmp sge <16 x i32> %x, %y
-  %max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %y
+  %max = select <16 x i1> %mask, <16 x i32> %x1, <16 x i32> %y
   ret <16 x i32> %max
 }
 
