@@ -31,8 +31,8 @@ enum AllocType {
 static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
-void InitializeAllocator();
-void ReInitializeAllocator();
+void InitializeAllocator(bool may_return_null, uptr quarantine_size);
+void ReInitializeAllocator(bool may_return_null, uptr quarantine_size);
 
 class AsanChunkView {
  public:

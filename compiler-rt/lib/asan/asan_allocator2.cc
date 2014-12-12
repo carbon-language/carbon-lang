@@ -253,13 +253,14 @@ struct QuarantineCallback {
   AllocatorCache *cache_;
 };
 
-void InitializeAllocator() {
-  allocator.Init();
-  quarantine.Init((uptr)flags()->quarantine_size, kMaxThreadLocalQuarantine);
+void InitializeAllocator(bool may_return_null, uptr quarantine_size) {
+  allocator.Init(may_return_null);
+  quarantine.Init(quarantine_size, kMaxThreadLocalQuarantine);
 }
 
-void ReInitializeAllocator() {
-  quarantine.Init((uptr)flags()->quarantine_size, kMaxThreadLocalQuarantine);
+void ReInitializeAllocator(bool may_return_null, uptr quarantine_size) {
+  allocator.SetMayReturnNull(may_return_null);
+  quarantine.Init(quarantine_size, kMaxThreadLocalQuarantine);
 }
 
 static void *Allocate(uptr size, uptr alignment, BufferedStackTrace *stack,
@@ -297,7 +298,7 @@ static void *Allocate(uptr size, uptr alignment, BufferedStackTrace *stack,
   if (size > kMaxAllowedMallocSize || needed_size > kMaxAllowedMallocSize) {
     Report("WARNING: AddressSanitizer failed to allocate %p bytes\n",
            (void*)size);
-    return AllocatorReturnNull();
+    return allocator.ReturnNullOrDie();
   }
 
   AsanThread *t = GetCurrentThread();
@@ -598,7 +599,7 @@ void *asan_malloc(uptr size, BufferedStackTrace *stack) {
 
 void *asan_calloc(uptr nmemb, uptr size, BufferedStackTrace *stack) {
   if (CallocShouldReturnNullDueToOverflow(size, nmemb))
-    return AllocatorReturnNull();
+    return allocator.ReturnNullOrDie();
   void *ptr = Allocate(nmemb * size, 8, stack, FROM_MALLOC, false);
   // If the memory comes from the secondary allocator no need to clear it
   // as it comes directly from mmap.

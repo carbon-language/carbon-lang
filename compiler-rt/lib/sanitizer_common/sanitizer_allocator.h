@@ -23,8 +23,8 @@
 
 namespace __sanitizer {
 
-// Depending on allocator_may_return_null either return 0 or crash.
-void *AllocatorReturnNull();
+// Prints error message and kills the program.
+void NORETURN ReportAllocatorCannotReturnNull();
 
 // SizeClassMap maps allocation sizes into size classes and back.
 // Class 0 corresponds to size 0.
@@ -1002,9 +1002,10 @@ struct SizeClassAllocatorLocalCache {
 template <class MapUnmapCallback = NoOpMapUnmapCallback>
 class LargeMmapAllocator {
  public:
-  void Init() {
+  void Init(bool may_return_null) {
     internal_memset(this, 0, sizeof(*this));
     page_size_ = GetPageSizeCached();
+    atomic_store(&may_return_null_, may_return_null, memory_order_relaxed);
   }
 
   void *Allocate(AllocatorStats *stat, uptr size, uptr alignment) {
@@ -1012,7 +1013,9 @@ class LargeMmapAllocator {
     uptr map_size = RoundUpMapSize(size);
     if (alignment > page_size_)
       map_size += alignment;
-    if (map_size < size) return AllocatorReturnNull();  // Overflow.
+    // Overflow.
+    if (map_size < size)
+      return ReturnNullOrDie();
     uptr map_beg = reinterpret_cast<uptr>(
         MmapOrDie(map_size, "LargeMmapAllocator"));
     CHECK(IsAligned(map_beg, page_size_));
@@ -1046,6 +1049,16 @@ class LargeMmapAllocator {
       stat->Add(AllocatorStatMapped, map_size);
     }
     return reinterpret_cast<void*>(res);
+  }
+
+  void *ReturnNullOrDie() {
+    if (atomic_load(&may_return_null_, memory_order_acquire))
+      return 0;
+    ReportAllocatorCannotReturnNull();
+  }
+
+  void SetMayReturnNull(bool may_return_null) {
+    atomic_store(&may_return_null_, may_return_null, memory_order_release);
   }
 
   void Deallocate(AllocatorStats *stat, void *p) {
@@ -1226,6 +1239,7 @@ class LargeMmapAllocator {
   struct Stats {
     uptr n_allocs, n_frees, currently_allocated, max_allocated, by_size_log[64];
   } stats;
+  atomic_uint8_t may_return_null_;
   SpinMutex mutex_;
 };
 
@@ -1239,10 +1253,11 @@ template <class PrimaryAllocator, class AllocatorCache,
           class SecondaryAllocator>  // NOLINT
 class CombinedAllocator {
  public:
-  void Init() {
+  void Init(bool may_return_null) {
     primary_.Init();
-    secondary_.Init();
+    secondary_.Init(may_return_null);
     stats_.Init();
+    atomic_store(&may_return_null_, may_return_null, memory_order_relaxed);
   }
 
   void *Allocate(AllocatorCache *cache, uptr size, uptr alignment,
@@ -1251,7 +1266,7 @@ class CombinedAllocator {
     if (size == 0)
       size = 1;
     if (size + alignment < size)
-      return AllocatorReturnNull();
+      return ReturnNullOrDie();
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
     void *res;
@@ -1265,6 +1280,17 @@ class CombinedAllocator {
     if (cleared && res && from_primary)
       internal_bzero_aligned16(res, RoundUpTo(size, 16));
     return res;
+  }
+
+  void *ReturnNullOrDie() {
+    if (atomic_load(&may_return_null_, memory_order_acquire))
+      return 0;
+    ReportAllocatorCannotReturnNull();
+  }
+
+  void SetMayReturnNull(bool may_return_null) {
+    secondary_.SetMayReturnNull(may_return_null);
+    atomic_store(&may_return_null_, may_return_null, memory_order_release);
   }
 
   void Deallocate(AllocatorCache *cache, void *p) {
@@ -1379,6 +1405,7 @@ class CombinedAllocator {
   PrimaryAllocator primary_;
   SecondaryAllocator secondary_;
   AllocatorGlobalStats stats_;
+  atomic_uint8_t may_return_null_;
 };
 
 // Returns true if calloc(size, n) should return 0 due to overflow in size*n.

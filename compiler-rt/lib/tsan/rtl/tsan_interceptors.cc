@@ -505,14 +505,10 @@ TSAN_INTERCEPTOR(void*, __libc_memalign, uptr align, uptr sz) {
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
   if (cur_thread()->in_symbolizer)
     return __libc_calloc(size, n);
-  if (__sanitizer::CallocShouldReturnNullDueToOverflow(size, n))
-    return AllocatorReturnNull();
   void *p = 0;
   {
     SCOPED_INTERCEPTOR_RAW(calloc, size, n);
-    p = user_alloc(thr, pc, n * size);
-    if (p)
-      internal_memset(p, 0, n * size);
+    p = user_calloc(thr, pc, size, n);
   }
   invoke_malloc_hook(p, n * size);
   return p;

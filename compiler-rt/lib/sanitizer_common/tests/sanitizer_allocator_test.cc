@@ -14,7 +14,6 @@
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_flags.h"
 
 #include "sanitizer_test_utils.h"
 #include "sanitizer_pthread_wrappers.h"
@@ -299,7 +298,7 @@ TEST(SanitizerCommon, LargeMmapAllocatorMapUnmapCallback) {
   TestMapUnmapCallback::map_count = 0;
   TestMapUnmapCallback::unmap_count = 0;
   LargeMmapAllocator<TestMapUnmapCallback> a;
-  a.Init();
+  a.Init(/* may_return_null */ false);
   AllocatorStats stats;
   stats.Init();
   void *x = a.Allocate(&stats, 1 << 20, 1);
@@ -333,7 +332,7 @@ TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
 #if !defined(_WIN32)  // FIXME: This currently fails on Windows.
 TEST(SanitizerCommon, LargeMmapAllocator) {
   LargeMmapAllocator<> a;
-  a.Init();
+  a.Init(/* may_return_null */ false);
   AllocatorStats stats;
   stats.Init();
 
@@ -415,25 +414,22 @@ void TestCombinedAllocator() {
       CombinedAllocator<PrimaryAllocator, AllocatorCache, SecondaryAllocator>
       Allocator;
   Allocator *a = new Allocator;
-  a->Init();
+  a->Init(/* may_return_null */ true);
 
   AllocatorCache cache;
   memset(&cache, 0, sizeof(cache));
   a->InitCache(&cache);
 
-  bool allocator_may_return_null = common_flags()->allocator_may_return_null;
-  common_flags()->allocator_may_return_null = true;
   EXPECT_EQ(a->Allocate(&cache, -1, 1), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, -1, 1024), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, (uptr)-1 - 1024, 1), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, (uptr)-1 - 1024, 1024), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, (uptr)-1 - 1023, 1024), (void*)0);
 
-  common_flags()->allocator_may_return_null = false;
+  // Set to false
+  a->SetMayReturnNull(false);
   EXPECT_DEATH(a->Allocate(&cache, -1, 1),
                "allocator is terminating the process");
-  // Restore the original value.
-  common_flags()->allocator_may_return_null = allocator_may_return_null;
 
   const uptr kNumAllocs = 100000;
   const uptr kNumIter = 10;
@@ -708,7 +704,7 @@ TEST(SanitizerCommon, SizeClassAllocator32Iteration) {
 
 TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
   LargeMmapAllocator<> a;
-  a.Init();
+  a.Init(/* may_return_null */ false);
   AllocatorStats stats;
   stats.Init();
 
@@ -735,7 +731,7 @@ TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
 
 TEST(SanitizerCommon, LargeMmapAllocatorBlockBegin) {
   LargeMmapAllocator<> a;
-  a.Init();
+  a.Init(/* may_return_null */ false);
   AllocatorStats stats;
   stats.Init();
 

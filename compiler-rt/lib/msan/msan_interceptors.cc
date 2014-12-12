@@ -925,10 +925,8 @@ INTERCEPTOR(SSIZE_T, recvfrom, int fd, void *buf, SIZE_T len, int flags,
 }
 
 INTERCEPTOR(void *, calloc, SIZE_T nmemb, SIZE_T size) {
-  if (CallocShouldReturnNullDueToOverflow(size, nmemb))
-    return AllocatorReturnNull();
   GET_MALLOC_STACK_TRACE;
-  if (!msan_inited) {
+  if (UNLIKELY(!msan_inited)) {
     // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.
     const SIZE_T kCallocPoolSize = 1024;
     static uptr calloc_memory_for_dlsym[kCallocPoolSize];
@@ -939,7 +937,7 @@ INTERCEPTOR(void *, calloc, SIZE_T nmemb, SIZE_T size) {
     CHECK(allocated < kCallocPoolSize);
     return mem;
   }
-  return MsanReallocate(&stack, 0, nmemb * size, sizeof(u64), true);
+  return MsanCalloc(&stack, nmemb, size);
 }
 
 INTERCEPTOR(void *, realloc, void *ptr, SIZE_T size) {

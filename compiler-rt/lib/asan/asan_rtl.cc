@@ -658,7 +658,8 @@ static void AsanInitInternal() {
   AsanTSDInit(PlatformTSDDtor);
   InstallDeadlySignalHandlers(AsanOnSIGSEGV);
 
-  InitializeAllocator();
+  InitializeAllocator(common_flags()->allocator_may_return_null,
+                      flags()->quarantine_size);
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.

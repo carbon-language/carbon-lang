@@ -125,6 +125,7 @@ char *GetProcSelfMaps();
 void InitializeInterceptors();
 
 void MsanAllocatorThreadFinish();
+void *MsanCalloc(StackTrace *stack, uptr nmemb, uptr size);
 void *MsanReallocate(StackTrace *stack, void *oldp, uptr size,
                      uptr alignment, bool zeroise);
 void MsanDeallocate(StackTrace *stack, void *ptr);
