@@ -289,8 +289,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     FloatABIForCalls = FloatABI::Soft;
 
   // Figure out where we are going to send the output.
-  std::unique_ptr<tool_output_file> Out(
-      GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]));
+  std::unique_ptr<tool_output_file> Out =
+      GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]);
   if (!Out) return 1;
 
   // Build up all of the passes that we want to do to the module.
