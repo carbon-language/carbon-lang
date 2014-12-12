@@ -1269,16 +1269,19 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         // type of OpI doesn't enter into things at all.  We simply evaluate
         // in whichever source type is larger, then convert to the
         // destination type.
-        if (LHSWidth < SrcWidth)
-          LHSOrig = Builder->CreateFPExt(LHSOrig, RHSOrig->getType());
-        else if (RHSWidth <= SrcWidth)
-          RHSOrig = Builder->CreateFPExt(RHSOrig, LHSOrig->getType());
-        if (LHSOrig != OpI->getOperand(0) || RHSOrig != OpI->getOperand(1)) {
-          Value *ExactResult = Builder->CreateFRem(LHSOrig, RHSOrig);
-          if (Instruction *RI = dyn_cast<Instruction>(ExactResult))
-            RI->copyFastMathFlags(OpI);
-          return CastInst::CreateFPCast(ExactResult, CI.getType());
+        if (SrcWidth != OpWidth) {
+          if (LHSWidth < SrcWidth)
+            LHSOrig = Builder->CreateFPExt(LHSOrig, RHSOrig->getType());
+          else if (RHSWidth <= SrcWidth)
+            RHSOrig = Builder->CreateFPExt(RHSOrig, LHSOrig->getType());
+          if (LHSOrig != OpI->getOperand(0) || RHSOrig != OpI->getOperand(1)) {
+            Value *ExactResult = Builder->CreateFRem(LHSOrig, RHSOrig);
+            if (Instruction *RI = dyn_cast<Instruction>(ExactResult))
+              RI->copyFastMathFlags(OpI);
+            return CastInst::CreateFPCast(ExactResult, CI.getType());
+          }
         }
+        break;
     }
 
     // (fptrunc (fneg x)) -> (fneg (fptrunc x))

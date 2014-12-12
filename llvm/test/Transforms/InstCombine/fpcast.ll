@@ -73,3 +73,15 @@ define float @test7(double %V) {
 ; CHECK-NEXT: %[[trunc:.*]] = fptrunc double %frem to float
 ; CHECK-NEXT: ret float %trunc
 }
+
+define float @test8(float %V) {
+  %fext = fpext float %V to double
+  %frem = frem double %fext, 1.000000e-01
+  %trunc = fptrunc double %frem to float
+  ret float %trunc
+; CHECK-LABEL: @test8
+; CHECK-NEXT: %[[fext:.*]]  = fpext float %V to double
+; CHECK-NEXT: %[[frem:.*]]  = frem double %fext, 1.000000e-01
+; CHECK-NEXT: %[[trunc:.*]] = fptrunc double %frem to float
+; CHECK-NEXT: ret float %trunc
+}
