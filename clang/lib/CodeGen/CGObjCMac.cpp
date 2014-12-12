@@ -244,9 +244,9 @@ public:
     Params.push_back(Ctx.getPointerDiffType()->getCanonicalTypeUnqualified());
     Params.push_back(Ctx.BoolTy);
     llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(IdType, false, Params,
-                                                          FunctionType::ExtInfo(),
-                                                          RequiredArgs::All));
+        Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(
+            IdType, false, false, Params, FunctionType::ExtInfo(),
+            RequiredArgs::All));
     return CGM.CreateRuntimeFunction(FTy, "objc_getProperty");
   }
 
@@ -264,10 +264,9 @@ public:
     Params.push_back(Ctx.BoolTy);
     Params.push_back(Ctx.BoolTy);
     llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(Ctx.VoidTy, false,
-                                                          Params,
-                                                          FunctionType::ExtInfo(),
-                                                          RequiredArgs::All));
+        Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(
+            Ctx.VoidTy, false, false, Params, FunctionType::ExtInfo(),
+            RequiredArgs::All));
     return CGM.CreateRuntimeFunction(FTy, "objc_setProperty");
   }
 
@@ -291,10 +290,9 @@ public:
     Params.push_back(IdType);
     Params.push_back(Ctx.getPointerDiffType()->getCanonicalTypeUnqualified());
     llvm::FunctionType *FTy =
-    Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(Ctx.VoidTy, false,
-                                                        Params,
-                                                        FunctionType::ExtInfo(),
-                                                        RequiredArgs::All));
+        Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(
+            Ctx.VoidTy, false, false, Params, FunctionType::ExtInfo(),
+            RequiredArgs::All));
     const char *name;
     if (atomic && copy)
       name = "objc_setProperty_atomic_copy";
@@ -319,10 +317,9 @@ public:
     Params.push_back(Ctx.BoolTy);
     Params.push_back(Ctx.BoolTy);
     llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(Ctx.VoidTy, false,
-                                                          Params,
-                                                          FunctionType::ExtInfo(),
-                                                          RequiredArgs::All));
+        Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(
+            Ctx.VoidTy, false, false, Params, FunctionType::ExtInfo(),
+            RequiredArgs::All));
     return CGM.CreateRuntimeFunction(FTy, "objc_copyStruct");
   }
   
@@ -339,7 +336,7 @@ public:
     Params.push_back(Ctx.VoidPtrTy);
     Params.push_back(Ctx.VoidPtrTy);
     llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(Ctx.VoidTy, false,
+      Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(Ctx.VoidTy, false, false,
                                                           Params,
                                                           FunctionType::ExtInfo(),
                                                           RequiredArgs::All));
@@ -353,10 +350,9 @@ public:
     SmallVector<CanQualType,1> Params;
     Params.push_back(Ctx.getCanonicalParamType(Ctx.getObjCIdType()));
     llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(Ctx.VoidTy, false,
-                                                          Params,
-                                                          FunctionType::ExtInfo(),
-                                                      RequiredArgs::All));
+        Types.GetFunctionType(Types.arrangeLLVMFunctionInfo(
+            Ctx.VoidTy, false, false, Params, FunctionType::ExtInfo(),
+            RequiredArgs::All));
     return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
   }
 

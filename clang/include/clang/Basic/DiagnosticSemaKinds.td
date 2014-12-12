@@ -6917,6 +6917,17 @@ def err_convertvector_non_vector_type : Error<
 def err_convertvector_incompatible_vector : Error<
   "first two arguments to __builtin_convertvector must have the same number of elements">;
 
+def err_first_argument_to_cwsc_not_call : Error<
+  "first argument to __builtin_call_with_static_chain must be a non-member call expression">;
+def err_first_argument_to_cwsc_block_call : Error<
+  "first argument to __builtin_call_with_static_chain must not be a block call">;
+def err_first_argument_to_cwsc_builtin_call : Error<
+  "first argument to __builtin_call_with_static_chain must not be a builtin call">;
+def err_first_argument_to_cwsc_pdtor_call : Error<
+  "first argument to __builtin_call_with_static_chain must not be a pseudo-destructor call">;
+def err_second_argument_to_cwsc_not_pointer : Error<
+  "second argument to __builtin_call_with_static_chain must be of pointer type">;
+
 def err_vector_incorrect_num_initializers : Error<
   "%select{too many|too few}0 elements in vector initialization (expected %1 elements, have %2)">;
 def err_altivec_empty_initializer : Error<"expected initializer">;

@@ -1037,9 +1037,9 @@ static RValue EmitNewDeleteCall(CodeGenFunction &CGF,
   llvm::Instruction *CallOrInvoke;
   llvm::Value *CalleeAddr = CGF.CGM.GetAddrOfFunction(Callee);
   RValue RV =
-      CGF.EmitCall(CGF.CGM.getTypes().arrangeFreeFunctionCall(Args, CalleeType),
-                   CalleeAddr, ReturnValueSlot(), Args,
-                   Callee, &CallOrInvoke);
+      CGF.EmitCall(CGF.CGM.getTypes().arrangeFreeFunctionCall(
+                       Args, CalleeType, /*chainCall=*/false),
+                   CalleeAddr, ReturnValueSlot(), Args, Callee, &CallOrInvoke);
 
   /// C++1y [expr.new]p10:
   ///   [In a new-expression,] an implementation is allowed to omit a call

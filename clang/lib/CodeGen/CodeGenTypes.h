@@ -248,7 +248,8 @@ public:
                                                   CXXCtorType CtorKind,
                                                   unsigned ExtraArgs);
   const CGFunctionInfo &arrangeFreeFunctionCall(const CallArgList &Args,
-                                                const FunctionType *Ty);
+                                                const FunctionType *Ty,
+                                                bool ChainCall);
   const CGFunctionInfo &arrangeFreeFunctionCall(QualType ResTy,
                                                 const CallArgList &args,
                                                 FunctionType::ExtInfo info,
@@ -273,7 +274,8 @@ public:
   ///
   /// \param argTypes - must all actually be canonical as params
   const CGFunctionInfo &arrangeLLVMFunctionInfo(CanQualType returnType,
-                                                bool IsInstanceMethod,
+                                                bool instanceMethod,
+                                                bool chainCall,
                                                 ArrayRef<CanQualType> argTypes,
                                                 FunctionType::ExtInfo info,
                                                 RequiredArgs args);

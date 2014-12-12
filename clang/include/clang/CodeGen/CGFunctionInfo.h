@@ -352,6 +352,9 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
   /// Whether this is an instance method.
   unsigned InstanceMethod : 1;
 
+  /// Whether this is a chain call.
+  unsigned ChainCall : 1;
+
   /// Whether this function is noreturn.
   unsigned NoReturn : 1;
 
@@ -360,7 +363,7 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
 
   /// How many arguments to pass inreg.
   unsigned HasRegParm : 1;
-  unsigned RegParm : 4;
+  unsigned RegParm : 3;
 
   RequiredArgs Required;
 
@@ -380,7 +383,8 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
 
 public:
   static CGFunctionInfo *create(unsigned llvmCC,
-                                bool InstanceMethod,
+                                bool instanceMethod,
+                                bool chainCall,
                                 const FunctionType::ExtInfo &extInfo,
                                 CanQualType resultType,
                                 ArrayRef<CanQualType> argTypes,
@@ -411,6 +415,8 @@ public:
   }
 
   bool isInstanceMethod() const { return InstanceMethod; }
+
+  bool isChainCall() const { return ChainCall; }
 
   bool isNoReturn() const { return NoReturn; }
 
@@ -462,6 +468,7 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddInteger(getASTCallingConvention());
     ID.AddBoolean(InstanceMethod);
+    ID.AddBoolean(ChainCall);
     ID.AddBoolean(NoReturn);
     ID.AddBoolean(ReturnsRetained);
     ID.AddBoolean(HasRegParm);
@@ -473,12 +480,14 @@ public:
   }
   static void Profile(llvm::FoldingSetNodeID &ID,
                       bool InstanceMethod,
+                      bool ChainCall,
                       const FunctionType::ExtInfo &info,
                       RequiredArgs required,
                       CanQualType resultType,
                       ArrayRef<CanQualType> argTypes) {
     ID.AddInteger(info.getCC());
     ID.AddBoolean(InstanceMethod);
+    ID.AddBoolean(ChainCall);
     ID.AddBoolean(info.getNoReturn());
     ID.AddBoolean(info.getProducesResult());
     ID.AddBoolean(info.getHasRegParm());

@@ -185,7 +185,8 @@ static llvm::Value *EmitOverflowIntrinsic(CodeGenFunction &CGF,
 }
 
 RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
-                                        unsigned BuiltinID, const CallExpr *E) {
+                                        unsigned BuiltinID, const CallExpr *E,
+                                        ReturnValueSlot ReturnValue) {
   // See if we can constant fold this builtin.  If so, don't emit it at all.
   Expr::EvalResult Result;
   if (E->EvaluateAsRValue(Result, CGM.getContext()) &&
@@ -1566,6 +1567,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__noop:
     // __noop always evaluates to an integer literal zero.
     return RValue::get(ConstantInt::get(IntTy, 0));
+  case Builtin::BI__builtin_call_with_static_chain: {
+    const CallExpr *Call = cast<CallExpr>(E->getArg(0));
+    const Expr *Chain = E->getArg(1);
+    return EmitCall(Call->getCallee()->getType(),
+                    EmitScalarExpr(Call->getCallee()), Call, ReturnValue,
+                    Call->getCalleeDecl(), EmitScalarExpr(Chain));
+  }
   case Builtin::BI_InterlockedExchange:
   case Builtin::BI_InterlockedExchangePointer:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);

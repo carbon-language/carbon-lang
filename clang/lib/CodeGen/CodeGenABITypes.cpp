@@ -67,5 +67,6 @@ CodeGenABITypes::arrangeFreeFunctionCall(CanQualType returnType,
                                          FunctionType::ExtInfo info,
                                          RequiredArgs args) {
   return CGM->getTypes().arrangeLLVMFunctionInfo(
-      returnType, /*IsInstanceMethod=*/false, argTypes, info, args);
+      returnType, /*IsInstanceMethod=*/false, /*IsChainCall=*/false, argTypes,
+      info, args);
 }

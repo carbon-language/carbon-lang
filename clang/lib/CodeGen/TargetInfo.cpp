@@ -1146,6 +1146,10 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
     }
   }
 
+  // The chain argument effectively gives us another free register.
+  if (FI.isChainCall())
+    ++State.FreeRegs;
+
   bool UsedInAlloca = false;
   for (auto &I : FI.arguments()) {
     I.info = classifyArgumentType(I.type, State);
@@ -2686,6 +2690,10 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // integer register.
   if (FI.getReturnInfo().isIndirect())
     --freeIntRegs;
+
+  // The chain argument effectively gives us another free register.
+  if (FI.isChainCall())
+    ++freeIntRegs;
 
   unsigned NumRequiredArgs = FI.getNumRequiredArgs();
   // AMD64-ABI 3.2.3p3: Once arguments are classified, the registers

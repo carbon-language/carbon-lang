@@ -139,6 +139,69 @@ static void SemaBuiltinMemChkCall(Sema &S, FunctionDecl *FDecl,
   S.Diag(SL, diag::warn_memcpy_chk_overflow) << SR << FnName;
 }
 
+static bool SemaBuiltinCallWithStaticChain(Sema &S, CallExpr *BuiltinCall) {
+  if (checkArgCount(S, BuiltinCall, 2))
+    return true;
+
+  SourceLocation BuiltinLoc = BuiltinCall->getLocStart();
+  Expr *Builtin = BuiltinCall->getCallee()->IgnoreImpCasts();
+  Expr *Call = BuiltinCall->getArg(0);
+  Expr *Chain = BuiltinCall->getArg(1);
+
+  if (Call->getStmtClass() != Stmt::CallExprClass) {
+    S.Diag(BuiltinLoc, diag::err_first_argument_to_cwsc_not_call)
+        << Call->getSourceRange();
+    return true;
+  }
+
+  auto CE = cast<CallExpr>(Call);
+  if (CE->getCallee()->getType()->isBlockPointerType()) {
+    S.Diag(BuiltinLoc, diag::err_first_argument_to_cwsc_block_call)
+        << Call->getSourceRange();
+    return true;
+  }
+
+  const Decl *TargetDecl = CE->getCalleeDecl();
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl))
+    if (FD->getBuiltinID()) {
+      S.Diag(BuiltinLoc, diag::err_first_argument_to_cwsc_builtin_call)
+          << Call->getSourceRange();
+      return true;
+    }
+
+  if (isa<CXXPseudoDestructorExpr>(CE->getCallee()->IgnoreParens())) {
+    S.Diag(BuiltinLoc, diag::err_first_argument_to_cwsc_pdtor_call)
+        << Call->getSourceRange();
+    return true;
+  }
+
+  ExprResult ChainResult = S.UsualUnaryConversions(Chain);
+  if (ChainResult.isInvalid())
+    return true;
+  if (!ChainResult.get()->getType()->isPointerType()) {
+    S.Diag(BuiltinLoc, diag::err_second_argument_to_cwsc_not_pointer)
+        << Chain->getSourceRange();
+    return true;
+  }
+
+  QualType ReturnTy = CE->getCallReturnType();
+  QualType ArgTys[2] = { ReturnTy, ChainResult.get()->getType() };
+  QualType BuiltinTy = S.Context.getFunctionType(
+      ReturnTy, ArgTys, FunctionProtoType::ExtProtoInfo());
+  QualType BuiltinPtrTy = S.Context.getPointerType(BuiltinTy);
+
+  Builtin =
+      S.ImpCastExprToType(Builtin, BuiltinPtrTy, CK_BuiltinFnToFnPtr).get();
+
+  BuiltinCall->setType(CE->getType());
+  BuiltinCall->setValueKind(CE->getValueKind());
+  BuiltinCall->setObjectKind(CE->getObjectKind());
+  BuiltinCall->setCallee(Builtin);
+  BuiltinCall->setArg(1, ChainResult.get());
+
+  return false;
+}
+
 ExprResult
 Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
                                CallExpr *TheCall) {
@@ -392,6 +455,11 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
   case Builtin::BI__builtin___snprintf_chk:
   case Builtin::BI__builtin___vsnprintf_chk:
     SemaBuiltinMemChkCall(*this, FDecl, TheCall, 1, 3);
+    break;
+
+  case Builtin::BI__builtin_call_with_static_chain:
+    if (SemaBuiltinCallWithStaticChain(*this, TheCall))
+      return ExprError();
     break;
   }
 
