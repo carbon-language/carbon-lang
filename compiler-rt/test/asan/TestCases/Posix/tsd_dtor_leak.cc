@@ -34,6 +34,13 @@ int main() {
     fprintf(stderr, "heap size: new: %zd old: %zd\n", new_heap_size, old_heap_size);
     if (old_heap_size)
       assert(old_heap_size == new_heap_size);
+#if defined(__FreeBSD__)
+    // On FreeBSD SYSCALL(sched_yielld) allocates some more space during the
+    // 2nd attempt.
+    if (i > 0)
+      old_heap_size = new_heap_size;
+#else
     old_heap_size = new_heap_size;
+#endif
   }
 }
