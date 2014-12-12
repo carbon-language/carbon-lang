@@ -418,9 +418,6 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
 
   int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
   int prot = (Mode == readonly) ? PROT_READ : (PROT_READ | PROT_WRITE);
-#ifdef MAP_FILE
-  flags |= MAP_FILE;
-#endif
   Mapping = ::mmap(nullptr, Size, prot, flags, FD, Offset);
   if (Mapping == MAP_FAILED)
     return std::error_code(errno, std::generic_category());
