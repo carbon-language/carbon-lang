@@ -336,11 +336,11 @@ std::error_code copy_file(const Twine &From, const Twine &To);
 
 /// @brief Resize path to size. File is resized as if by POSIX truncate().
 ///
-/// @param path Input path.
+/// @param path Input file descriptor.
 /// @param size Size to resize to.
 /// @returns errc::success if \a path has been resized to \a size, otherwise a
 ///          platform-specific error_code.
-std::error_code resize_file(const Twine &path, uint64_t size);
+std::error_code resize_file(int FD, uint64_t Size);
 
 /// @}
 /// @name Physical Observers

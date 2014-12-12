@@ -272,21 +272,13 @@ std::error_code rename(const Twine &from, const Twine &to) {
   return ec;
 }
 
-std::error_code resize_file(const Twine &path, uint64_t size) {
-  SmallVector<wchar_t, 128> path_utf16;
-
-  if (std::error_code ec = widenPath(path, path_utf16))
-    return ec;
-
-  int fd = ::_wopen(path_utf16.begin(), O_BINARY | _O_RDWR, S_IWRITE);
-  if (fd == -1)
-    return std::error_code(errno, std::generic_category());
+std::error_code resize_file(int FD, uint64_t Size) {
 #ifdef HAVE__CHSIZE_S
-  errno_t error = ::_chsize_s(fd, size);
+  errno_t error = ::_chsize_s(FD, Size);
 #else
-  errno_t error = ::_chsize(fd, size);
+  errno_t error = ::_chsize(FD, Size);
 #endif
-  ::close(fd);
+  ::close(FD);
   return std::error_code(error, std::generic_category());
 }
 

@@ -286,11 +286,8 @@ std::error_code rename(const Twine &from, const Twine &to) {
   return std::error_code();
 }
 
-std::error_code resize_file(const Twine &path, uint64_t size) {
-  SmallString<128> path_storage;
-  StringRef p = path.toNullTerminatedStringRef(path_storage);
-
-  if (::truncate(p.begin(), size) == -1)
+std::error_code resize_file(int FD, uint64_t Size) {
+  if (::ftruncate(FD, Size) == -1)
     return std::error_code(errno, std::generic_category());
 
   return std::error_code();

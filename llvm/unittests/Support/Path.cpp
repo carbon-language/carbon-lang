@@ -638,6 +638,16 @@ TEST_F(FileSystemTest, CarriageReturn) {
 }
 #endif
 
+TEST_F(FileSystemTest, Resize) {
+  int FD;
+  SmallString<64> TempPath;
+  ASSERT_NO_ERROR(fs::createTemporaryFile("prefix", "temp", FD, TempPath));
+  ASSERT_NO_ERROR(fs::resize_file(FD, 123));
+  fs::file_status Status;
+  ASSERT_NO_ERROR(fs::status(FD, Status));
+  ASSERT_EQ(Status.getSize(), 123U);
+}
+
 TEST_F(FileSystemTest, FileMapping) {
   // Create a temp file.
   int FileDescriptor;
