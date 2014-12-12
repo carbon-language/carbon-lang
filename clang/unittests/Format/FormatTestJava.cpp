@@ -418,5 +418,12 @@ TEST_F(FormatTestJava, FormatsLambdas) {
                getStyleWithColumns(40));
 }
 
+TEST_F(FormatTestJava, BreaksStringLiterals) {
+  // FIXME: String literal breaking is currently disabled for Java and JS, as it
+  // requires strings to be merged using "+" which we don't support.
+  EXPECT_EQ("\"some text other\";",
+            format("\"some text other\";", getStyleWithColumns(14)));
+}
+
 } // end namespace tooling
 } // end namespace clang

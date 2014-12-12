@@ -923,6 +923,12 @@ static bool getRawStringLiteralPrefixPostfix(StringRef Text, StringRef &Prefix,
 unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
                                                     LineState &State,
                                                     bool DryRun) {
+  // FIXME: String literal breaking is currently disabled for Java and JS, as
+  // it requires strings to be merged using "+" which we don't support.
+  if (Style.Language == FormatStyle::LK_Java ||
+      Style.Language == FormatStyle::LK_JavaScript)
+    return 0;
+
   // Don't break multi-line tokens other than block comments. Instead, just
   // update the state.
   if (Current.isNot(TT_BlockComment) && Current.IsMultiline)
