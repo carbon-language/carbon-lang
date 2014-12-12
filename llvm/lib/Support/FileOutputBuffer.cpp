@@ -77,6 +77,10 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size,
   if (EC)
     return EC;
 
+  EC = sys::fs::resize_file(FD, Size);
+  if (EC)
+    return EC;
+
   auto MappedFile = llvm::make_unique<mapped_file_region>(
       FD, mapped_file_region::readwrite, Size, 0, EC);
   int Ret = close(FD);

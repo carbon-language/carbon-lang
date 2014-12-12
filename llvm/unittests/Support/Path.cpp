@@ -654,12 +654,15 @@ TEST_F(FileSystemTest, FileMapping) {
   SmallString<64> TempPath;
   ASSERT_NO_ERROR(
       fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
+  unsigned Size = 4096;
+  ASSERT_NO_ERROR(fs::resize_file(FileDescriptor, Size));
+
   // Map in temp file and add some content
   std::error_code EC;
   StringRef Val("hello there");
   {
     fs::mapped_file_region mfr(FileDescriptor,
-                               fs::mapped_file_region::readwrite, 4096, 0, EC);
+                               fs::mapped_file_region::readwrite, Size, 0, EC);
     ASSERT_NO_ERROR(EC);
     std::copy(Val.begin(), Val.end(), mfr.data());
     // Explicitly add a 0.
@@ -671,14 +674,14 @@ TEST_F(FileSystemTest, FileMapping) {
   int FD;
   EC = fs::openFileForRead(Twine(TempPath), FD);
   ASSERT_NO_ERROR(EC);
-  fs::mapped_file_region mfr(FD, fs::mapped_file_region::readonly, 0, 0, EC);
+  fs::mapped_file_region mfr(FD, fs::mapped_file_region::readonly, Size, 0, EC);
   ASSERT_NO_ERROR(EC);
 
   // Verify content
   EXPECT_EQ(StringRef(mfr.const_data()), Val);
 
   // Unmap temp file
-  fs::mapped_file_region m(FD, fs::mapped_file_region::readonly, 0, 0, EC);
+  fs::mapped_file_region m(FD, fs::mapped_file_region::readonly, Size, 0, EC);
   ASSERT_NO_ERROR(EC);
   ASSERT_EQ(close(FD), 0);
 }

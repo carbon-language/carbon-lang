@@ -414,19 +414,7 @@ std::error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
 
 std::error_code mapped_file_region::init(int FD, uint64_t Offset,
                                          mapmode Mode) {
-  // Figure out how large the file is.
-  struct stat FileInfo;
-  if (fstat(FD, &FileInfo) == -1)
-    return std::error_code(errno, std::generic_category());
-  uint64_t FileSize = FileInfo.st_size;
-
-  if (Size == 0)
-    Size = FileSize;
-  else if (FileSize < Size) {
-    // We need to grow the file.
-    if (ftruncate(FD, Size) == -1)
-      return std::error_code(errno, std::generic_category());
-  }
+  assert(Size != 0);
 
   int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
   int prot = (Mode == readonly) ? PROT_READ : (PROT_READ | PROT_WRITE);
