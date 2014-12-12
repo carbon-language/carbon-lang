@@ -227,10 +227,7 @@ public:
     Pass(PT_PassManager, ID), PMDataManager(),
     PMTopLevelManager(new FPPassManager()), wasRun(false) {}
 
-  /// add - Add a pass to the queue of passes to run.  This passes ownership of
-  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
-  /// will be destroyed as well, so there is no need to delete the pass.  This
-  /// implies that all passes MUST be allocated with 'new'.
+  /// \copydoc FunctionPassManager::add()
   void add(Pass *P) {
     schedulePass(P);
   }
@@ -398,10 +395,7 @@ public:
     Pass(PT_PassManager, ID), PMDataManager(),
                               PMTopLevelManager(new MPPassManager()) {}
 
-  /// add - Add a pass to the queue of passes to run.  This passes ownership of
-  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
-  /// will be destroyed as well, so there is no need to delete the pass.  This
-  /// implies that all passes MUST be allocated with 'new'.
+  /// \copydoc PassManager::add()
   void add(Pass *P) {
     schedulePass(P);
   }
@@ -1389,11 +1383,6 @@ FunctionPassManager::~FunctionPassManager() {
   delete FPM;
 }
 
-/// add - Add a pass to the queue of passes to run.  This passes
-/// ownership of the Pass to the PassManager.  When the
-/// PassManager_X is destroyed, the pass will be destroyed as well, so
-/// there is no need to delete the pass. (TODO delete passes.)
-/// This implies that all passes MUST be allocated with 'new'.
 void FunctionPassManager::add(Pass *P) {
   FPM->add(P);
 }
@@ -1749,10 +1738,6 @@ PassManager::~PassManager() {
   delete PM;
 }
 
-/// add - Add a pass to the queue of passes to run.  This passes ownership of
-/// the Pass to the PassManager.  When the PassManager is destroyed, the pass
-/// will be destroyed as well, so there is no need to delete the pass.  This
-/// implies that all passes MUST be allocated with 'new'.
 void PassManager::add(Pass *P) {
   PM->add(P);
 }

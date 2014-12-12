@@ -37,9 +37,10 @@ class PassManagerBase {
 public:
   virtual ~PassManagerBase();
 
-  /// add - Add a pass to the queue of passes to run.  This passes ownership of
+  /// Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
   /// will be destroyed as well, so there is no need to delete the pass.  This
+  /// may even destroy the pass right away if it is found to be redundant. This
   /// implies that all passes MUST be allocated with 'new'.
   virtual void add(Pass *P) = 0;
 };
@@ -51,10 +52,6 @@ public:
   PassManager();
   ~PassManager();
 
-  /// add - Add a pass to the queue of passes to run.  This passes ownership of
-  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
-  /// will be destroyed as well, so there is no need to delete the pass.  This
-  /// implies that all passes MUST be allocated with 'new'.
   void add(Pass *P) override;
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
@@ -75,11 +72,6 @@ public:
   explicit FunctionPassManager(Module *M);
   ~FunctionPassManager();
 
-  /// add - Add a pass to the queue of passes to run.  This passes
-  /// ownership of the Pass to the PassManager.  When the
-  /// PassManager_X is destroyed, the pass will be destroyed as well, so
-  /// there is no need to delete the pass.
-  /// This implies that all passes MUST be allocated with 'new'.
   void add(Pass *P) override;
 
   /// run - Execute all of the passes scheduled for execution.  Keep
