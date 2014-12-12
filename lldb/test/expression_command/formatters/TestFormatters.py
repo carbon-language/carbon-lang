@@ -128,7 +128,7 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("type summary add -F formatters.foo_SummaryProvider foo")
 
         self.expect("expression $" + object_name,
-                    substrs = ['(foo) $', 'a = 121','a_ptr = ', ' -> 122','i = 242', 'i_ptr = ', ' -> 8888', 'h = 245','k = 247'])
+                    substrs = ['(foo) $', 'a = 121','a_ptr = ', ' -> 122','i = 242', 'i_ptr = ', ' -> 8888','k = 247'])
 
         process = self.dbg.GetSelectedTarget().GetProcess()
         thread = process.GetThreadAtIndex(0)

@@ -41,23 +41,6 @@ ValueObjectConstResultImpl::ValueObjectConstResultImpl (ValueObject* valobj,
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResultImpl::DerefOnTarget()
-{
-    if (m_load_addr_backend.get() == NULL)
-    {
-        lldb::addr_t tgt_address = m_impl_backend->GetPointerValue();
-        ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
-        m_load_addr_backend = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                              m_impl_backend->GetClangType(),
-                                                              m_impl_backend->GetName(),
-                                                              tgt_address,
-                                                              eAddressTypeLoad,
-                                                              exe_ctx.GetAddressByteSize());
-    }
-    return m_load_addr_backend;
-}
-
-lldb::ValueObjectSP
 ValueObjectConstResultImpl::Dereference (Error &error)
 {
     if (m_impl_backend == NULL)

@@ -47,13 +47,6 @@ public:
     lldb::ValueObjectSP
     AddressOf (Error &error);
     
-    bool
-    NeedsDerefOnTarget()
-    {
-        m_impl_backend->UpdateValueIfNeeded(false);
-        return (m_impl_backend->GetValue().GetValueType() == Value::eValueTypeHostAddress);
-    }
-    
     lldb::addr_t
     GetLiveAddress()
     {
@@ -67,9 +60,6 @@ public:
         m_live_address = addr;
         m_live_address_type = address_type;
     }
-    
-    lldb::ValueObjectSP
-    DerefOnTarget();
     
     virtual lldb::addr_t
     GetAddressOf (bool scalar_is_load_address = true,
