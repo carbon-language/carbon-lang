@@ -53,10 +53,9 @@ public:
 
   /// \brief Parse a supplied buffer (already filled with the contents of a
   /// file) and create a File object.
-  ///
-  /// The resulting File object may take ownership of the MemoryBuffer.
+  /// The resulting File object takes ownership of the MemoryBuffer.
   virtual std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const = 0;
 };
 
@@ -94,7 +93,7 @@ public:
 
   /// Walk the list of registered Readers and find one that can parse the
   /// supplied file and parse it.
-  std::error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+  std::error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
                             std::vector<std::unique_ptr<File>> &result) const;
 
   /// Walk the list of registered kind tables to convert a Reference Kind

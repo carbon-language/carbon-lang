@@ -1325,14 +1325,12 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
-    // Note: we do not take ownership of the MemoryBuffer.  That is
-    // because yaml may produce multiple File objects, so there is no
-    // *one* File to take ownership.  Therefore, the yaml File objects
-    // produced must make copies of all strings that come from YAML I/O.
-    // Otherwise the strings will become invalid when this MemoryBuffer
-    // is deallocated.
+    // Note: we do not store the unique pointer to the MemoryBuffer,
+    // so the buffer will be deallocated at end of this function.
+    // That's OK since the YAML file contents are parsed and consumed
+    // in this function.
 
     // Create YAML Input Reader.
     YamlContext yamlContext;

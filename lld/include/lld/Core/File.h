@@ -19,6 +19,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <functional>
+#include <memory>
 #include <vector>
 
 namespace lld {
@@ -170,6 +171,15 @@ public:
     return _lastError.getValue();
   }
 
+  // Usually each file owns a std::unique_ptr<MemoryBuffer>.
+  // However, there's one special case. If a file is an archive file,
+  // the archive file and its children all shares the same memory buffer.
+  // This method is used by the ArchiveFile to give its children
+  // co-ownership of the buffer.
+  void setSharedMemoryBuffer(std::shared_ptr<MemoryBuffer> mb) {
+    _sharedMemoryBuffer = mb;
+  }
+
 protected:
   /// \brief only subclasses of File can be instantiated
   File(StringRef p, Kind kind)
@@ -236,6 +246,7 @@ private:
   StringRef _path;
   Kind              _kind;
   mutable uint64_t  _ordinal;
+  std::shared_ptr<MemoryBuffer> _sharedMemoryBuffer;
 };
 
 /// \brief A mutable File.

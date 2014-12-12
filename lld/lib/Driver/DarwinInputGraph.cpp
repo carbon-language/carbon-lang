@@ -24,18 +24,20 @@ std::error_code MachOFileNode::parse(const LinkingContext &ctx,
   ErrorOr<StringRef> filePath = getPath(ctx);
   if (std::error_code ec = filePath.getError())
     return ec;
-
-  if (std::error_code ec = getBuffer(*filePath))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr =
+      MemoryBuffer::getFileOrSTDIN(*filePath);
+  if (std::error_code ec = mbOrErr.getError())
     return ec;
+  std::unique_ptr<MemoryBuffer> mb = std::move(mbOrErr.get());
 
   _context.addInputFileDependency(*filePath);
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 
-  narrowFatBuffer(*filePath);
+  narrowFatBuffer(mb, *filePath);
 
   std::vector<std::unique_ptr<File>> parsedFiles;
-  if (std::error_code ec = ctx.registry().parseFile(_buffer, parsedFiles))
+  if (std::error_code ec = ctx.registry().parseFile(std::move(mb), parsedFiles))
     return ec;
   for (std::unique_ptr<File> &pf : parsedFiles) {
     // If file is a dylib, inform LinkingContext about it.
@@ -61,19 +63,20 @@ std::error_code MachOFileNode::parse(const LinkingContext &ctx,
 
 /// If buffer contains a fat file, find required arch in fat buffer and
 /// switch buffer to point to just that required slice.
-void MachOFileNode::narrowFatBuffer(StringRef filePath) {
+void MachOFileNode::narrowFatBuffer(std::unique_ptr<MemoryBuffer> &mb,
+                                    StringRef filePath) {
   // Check if buffer is a "fat" file that contains needed arch.
   uint32_t offset;
   uint32_t size;
-  if (!_context.sliceFromFatFile(*_buffer, offset, size)) {
+  if (!_context.sliceFromFatFile(*mb, offset, size)) {
     return;
   }
   // Create new buffer containing just the needed slice.
   auto subuf = MemoryBuffer::getFileSlice(filePath, size, offset);
   if (subuf.getError())
     return;
-  // The assignment to _buffer will release previous buffer.
-  _buffer = std::move(subuf.get());
+  // The assignment to mb will release previous buffer.
+  mb = std::move(subuf.get());
 }
 
 

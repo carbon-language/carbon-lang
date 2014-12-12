@@ -53,7 +53,7 @@ public:
   }
 
 private:
- void narrowFatBuffer(StringRef filePath);
+  void narrowFatBuffer(std::unique_ptr<MemoryBuffer> &mb, StringRef filePath);
 
   MachOLinkingContext &_context;
   std::unique_ptr<const ArchiveLibraryFile> _archiveFile;

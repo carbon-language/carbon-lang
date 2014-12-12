@@ -27,7 +27,9 @@ std::error_code PECOFFFileNode::parse(const LinkingContext &ctx,
     return ec;
   }
 
-  if (std::error_code ec = getBuffer(*filePath)) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+      MemoryBuffer::getFileOrSTDIN(*filePath);
+  if (std::error_code ec = mb.getError()) {
     diagnostics << "Cannot open file: " << *filePath << "\n";
     return ec;
   }
@@ -35,7 +37,7 @@ std::error_code PECOFFFileNode::parse(const LinkingContext &ctx,
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 
-  return ctx.registry().parseFile(_buffer, _files);
+  return ctx.registry().parseFile(std::move(mb.get()), _files);
 }
 
 ErrorOr<File &> PECOFFFileNode::getNextFile() {

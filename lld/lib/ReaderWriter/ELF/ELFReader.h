@@ -33,7 +33,7 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
@@ -72,7 +72,7 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));

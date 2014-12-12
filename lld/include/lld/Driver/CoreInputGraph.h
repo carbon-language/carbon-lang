@@ -44,8 +44,7 @@ public:
     if (std::error_code ec = mb.getError())
       return ec;
 
-    _buffer = std::move(mb.get());
-    return ctx.registry().parseFile(_buffer, _files);
+    return ctx.registry().parseFile(std::move(mb.get()), _files);
   }
 
   /// \brief Return the file that has to be processed by the resolver

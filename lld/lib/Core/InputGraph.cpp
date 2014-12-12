@@ -94,17 +94,6 @@ void InputGraph::skipGroup() {
     _nextElementIndex++;
 }
 
-/// \brief Read the file into _buffer.
-std::error_code FileNode::getBuffer(StringRef filePath) {
-  // Create a memory buffer
-  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
-      MemoryBuffer::getFileOrSTDIN(filePath);
-  if (std::error_code ec = mb.getError())
-    return ec;
-  _buffer = std::move(mb.get());
-  return std::error_code();
-}
-
 bool FileNode::getReplacements(InputGraph::InputElementVectorT &result) {
   if (_files.size() < 2)
     return false;

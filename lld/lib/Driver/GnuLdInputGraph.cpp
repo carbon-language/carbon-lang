@@ -20,14 +20,17 @@ std::error_code ELFFileNode::parse(const LinkingContext &ctx,
   ErrorOr<StringRef> filePath = getPath(ctx);
   if (std::error_code ec = filePath.getError())
     return ec;
-  if (std::error_code ec = getBuffer(*filePath))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+      MemoryBuffer::getFileOrSTDIN(*filePath);
+  if (std::error_code ec = mb.getError())
     return ec;
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 
   if (_attributes._isWholeArchive) {
     std::vector<std::unique_ptr<File>> parsedFiles;
-    if (std::error_code ec = ctx.registry().parseFile(_buffer, parsedFiles))
+    if (std::error_code ec = ctx.registry().parseFile(
+            std::move(mb.get()), parsedFiles))
       return ec;
     assert(parsedFiles.size() == 1);
     std::unique_ptr<File> f(parsedFiles[0].release());
@@ -42,7 +45,7 @@ std::error_code ELFFileNode::parse(const LinkingContext &ctx,
     _files.push_back(std::move(f));
     return std::error_code();
   }
-  return ctx.registry().parseFile(_buffer, _files);
+  return ctx.registry().parseFile(std::move(mb.get()), _files);
 }
 
 /// \brief Parse the GnuLD Script
@@ -51,13 +54,15 @@ std::error_code GNULdScript::parse(const LinkingContext &ctx,
   ErrorOr<StringRef> filePath = getPath(ctx);
   if (std::error_code ec = filePath.getError())
     return ec;
-  if (std::error_code ec = getBuffer(*filePath))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+      MemoryBuffer::getFileOrSTDIN(*filePath);
+  if (std::error_code ec = mb.getError())
     return ec;
 
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 
-  _lexer.reset(new script::Lexer(std::move(_buffer)));
+  _lexer.reset(new script::Lexer(std::move(mb.get())));
   _parser.reset(new script::Parser(*_lexer.get()));
 
   _linkerScript = _parser->parse();

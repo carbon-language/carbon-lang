@@ -325,7 +325,7 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
             std::vector<std::unique_ptr<File> > &result) const override {
     auto *file = new FileImportLibrary(std::move(mb), _machine);
     result.push_back(std::unique_ptr<File>(file));

@@ -24,8 +24,8 @@ using lld::mach_o::normalized::Section;
 
 class MachOFile : public SimpleFile {
 public:
-  MachOFile(MemoryBuffer *mb, MachOLinkingContext *ctx)
-      : SimpleFile(mb->getBufferIdentifier()), _mb(mb), _ctx(ctx) {}
+  MachOFile(std::unique_ptr<MemoryBuffer> mb, MachOLinkingContext *ctx)
+      : SimpleFile(mb->getBufferIdentifier()), _mb(std::move(mb)), _ctx(ctx) {}
 
   MachOFile(StringRef path) : SimpleFile(path) {}
 
@@ -177,9 +177,7 @@ public:
 
   std::error_code doParse() override {
     // Convert binary file to normalized mach-o.
-    std::unique_ptr<MemoryBuffer>mb(_mb);
-    auto normFile = normalized::readBinary(mb, _ctx->arch());
-    mb.release();
+    auto normFile = normalized::readBinary(_mb, _ctx->arch());
     if (std::error_code ec = normFile.getError())
       return ec;
     // Convert normalized mach-o to atoms.
@@ -206,16 +204,17 @@ private:
                          std::vector<SectionOffsetAndAtom>>  SectionToAtoms;
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
 
-  MemoryBuffer           *_mb;
-  MachOLinkingContext    *_ctx;
-  SectionToAtoms          _sectionAtoms;
-  NameToAtom              _undefAtoms;
+  std::unique_ptr<MemoryBuffer> _mb;
+  MachOLinkingContext          *_ctx;
+  SectionToAtoms                _sectionAtoms;
+  NameToAtom                     _undefAtoms;
 };
 
 class MachODylibFile : public SharedLibraryFile {
 public:
-  MachODylibFile(MemoryBuffer *mb, MachOLinkingContext *ctx)
-      : SharedLibraryFile(mb->getBufferIdentifier()), _mb(mb), _ctx(ctx) {}
+  MachODylibFile(std::unique_ptr<MemoryBuffer> mb, MachOLinkingContext *ctx)
+      : SharedLibraryFile(mb->getBufferIdentifier()),
+        _mb(std::move(mb)), _ctx(ctx) {}
 
   MachODylibFile(StringRef path) : SharedLibraryFile(path) {}
 
@@ -275,9 +274,7 @@ public:
 
   std::error_code doParse() override {
     // Convert binary file to normalized mach-o.
-    std::unique_ptr<MemoryBuffer>mb(_mb);
-    auto normFile = normalized::readBinary(mb, _ctx->arch());
-    mb.release();
+    auto normFile = normalized::readBinary(_mb, _ctx->arch());
     if (std::error_code ec = normFile.getError())
       return ec;
     // Convert normalized mach-o to atoms.
@@ -328,7 +325,7 @@ private:
     bool                      weakDef;
   };
 
-  MemoryBuffer                              *_mb;
+  std::unique_ptr<MemoryBuffer>              _mb;
   MachOLinkingContext                       *_ctx;
   StringRef                                  _installName;
   uint32_t                                   _currentVersion;

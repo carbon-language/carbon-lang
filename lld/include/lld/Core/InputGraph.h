@@ -214,12 +214,8 @@ public:
   bool getReplacements(InputGraph::InputElementVectorT &result) override;
 
 protected:
-  /// \brief Read the file into _buffer.
-  std::error_code getBuffer(StringRef filePath);
-
   StringRef _path;                       // The path of the Input file
   InputGraph::FileVectorT _files;        // A vector of lld File objects
-  std::unique_ptr<MemoryBuffer> _buffer; // Memory buffer to actual contents
 
   // The next file that would be processed by the resolver
   uint32_t _nextFileIndex;

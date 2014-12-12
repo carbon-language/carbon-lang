@@ -30,7 +30,7 @@ void Registry::add(std::unique_ptr<YamlIOTaggedDocumentHandler> handler) {
 }
 
 std::error_code
-Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
+Registry::parseFile(std::unique_ptr<MemoryBuffer> mb,
                     std::vector<std::unique_ptr<File>> &result) const {
   // Get file type.
   StringRef content(mb->getBufferStart(), mb->getBufferSize());
@@ -42,7 +42,7 @@ Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
   for (const std::unique_ptr<Reader> &reader : _readers) {
     if (!reader->canParse(fileType, extension, *mb))
       continue;
-    if (std::error_code ec = reader->parseFile(mb, *this, result))
+    if (std::error_code ec = reader->parseFile(std::move(mb), *this, result))
       return ec;
     for (std::unique_ptr<File> &file : result)
       if (std::error_code ec = file->parse())

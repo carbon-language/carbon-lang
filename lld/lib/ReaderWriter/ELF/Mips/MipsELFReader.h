@@ -49,12 +49,12 @@ public:
         _flagMerger(flagMerger) {}
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
             std::vector<std::unique_ptr<File>> &result) const override {
     auto &hdr = *elfHeader(*mb);
     if (std::error_code ec = _flagMerger.merge(hdr.getFileClass(), hdr.e_flags))
       return ec;
-    return BaseReaderType::parseFile(mb, registry, result);
+    return BaseReaderType::parseFile(std::move(mb), registry, result);
   }
 
 private:
@@ -72,12 +72,12 @@ public:
         _flagMerger(flagMerger) {}
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
             std::vector<std::unique_ptr<File>> &result) const override {
     auto &hdr = *elfHeader(*mb);
     if (std::error_code ec = _flagMerger.merge(hdr.getFileClass(), hdr.e_flags))
       return ec;
-    return BaseReaderType::parseFile(mb, registry, result);
+    return BaseReaderType::parseFile(std::move(mb), registry, result);
   }
 
 private:
