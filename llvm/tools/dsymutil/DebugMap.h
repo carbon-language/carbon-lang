@@ -104,7 +104,7 @@ public:
   bool addSymbol(llvm::StringRef SymName, uint64_t ObjectAddress,
                  uint64_t LinkedAddress);
 
-  /// \bried Lookup a symbol mapping.
+  /// \brief Lookup a symbol mapping.
   /// \returns null if the symbol isn't found.
   const SymbolMapping *lookupSymbol(StringRef SymbolName) const;
 
