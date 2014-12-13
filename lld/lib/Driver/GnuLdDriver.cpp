@@ -111,8 +111,8 @@ maybeExpandResponseFiles(int argc, const char **argv, BumpPtrAllocator &alloc) {
 }
 
 // Get the Input file magic for creating appropriate InputGraph nodes.
-static std::error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
-                                    llvm::sys::fs::file_magic &magic) {
+static std::error_code
+getFileMagic(StringRef path, llvm::sys::fs::file_magic &magic) {
   std::error_code ec = llvm::sys::fs::identify_magic(path, magic);
   if (ec)
     return ec;
@@ -206,6 +206,16 @@ getArchType(const llvm::Triple &triple, StringRef value) {
   default:
     return llvm::None;
   }
+}
+
+static bool isLinkerScript(StringRef path, raw_ostream &diag) {
+  llvm::sys::fs::file_magic magic = llvm::sys::fs::file_magic::unknown;
+  std::error_code ec = getFileMagic(path, magic);
+  if (ec) {
+    diag << "unknown input file format for file " << path << "\n";
+    return false;
+  }
+  return magic == llvm::sys::fs::file_magic::unknown;
 }
 
 bool GnuLdDriver::applyEmulation(llvm::Triple &triple,
@@ -499,48 +509,36 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
     case OPT_INPUT:
     case OPT_l: {
-      bool isDashlPrefix = (inputArg->getOption().getID() == OPT_l);
-      attributes.setDashlPrefix(isDashlPrefix);
-      bool isELFFileNode = true;
-      StringRef userPath = inputArg->getValue();
-      std::string resolvedInputPath = userPath;
+      bool dashL = (inputArg->getOption().getID() == OPT_l);
+      attributes.setDashlPrefix(dashL);
+      StringRef path = inputArg->getValue();
+      std::string realpath = path;
 
       // If the path was referred to by using a -l argument, let's search
       // for the file in the search path.
-      if (isDashlPrefix) {
-        ErrorOr<StringRef> resolvedPath = ctx->searchLibrary(userPath);
-        if (!resolvedPath) {
-          diagnostics << " Unable to find library -l" << userPath << "\n";
+      if (dashL) {
+        ErrorOr<StringRef> pathOrErr = ctx->searchLibrary(path);
+        if (!pathOrErr) {
+          diagnostics << " Unable to find library -l" << path << "\n";
           return false;
         }
-        resolvedInputPath = resolvedPath->str();
+        realpath = pathOrErr->str();
       }
-      // FIXME: Calling getFileMagic() is expensive.  It would be better to
-      // wire up the LdScript parser into the registry.
-      llvm::sys::fs::file_magic magic = llvm::sys::fs::file_magic::unknown;
-      if (!llvm::sys::fs::exists(resolvedInputPath)) {
-        diagnostics << "lld: cannot find file " << userPath << "\n";
+      if (!llvm::sys::fs::exists(realpath)) {
+        diagnostics << "lld: cannot find file " << path << "\n";
         return false;
       }
-      std::error_code ec = getFileMagic(*ctx, resolvedInputPath, magic);
-      if (ec) {
-        diagnostics << "lld: unknown input file format for file " << userPath
-                    << "\n";
-        return false;
-      }
-      if (!userPath.endswith(".objtxt") &&
-          magic == llvm::sys::fs::file_magic::unknown)
-        isELFFileNode = false;
+      bool isScript =
+          (!path.endswith(".objtxt") && isLinkerScript(realpath, diagnostics));
       FileNode *inputNode = nullptr;
-      if (isELFFileNode) {
-        inputNode = new ELFFileNode(*ctx, userPath, attributes);
-      } else {
-        inputNode = new ELFGNULdScript(*ctx, resolvedInputPath);
-        ec = inputNode->parse(*ctx, diagnostics);
-        if (ec) {
-          diagnostics << userPath << ": Error parsing linker script\n";
+      if (isScript) {
+        inputNode = new ELFGNULdScript(*ctx, realpath);
+        if (inputNode->parse(*ctx, diagnostics)) {
+          diagnostics << path << ": Error parsing linker script\n";
           return false;
         }
+      } else {
+        inputNode = new ELFFileNode(*ctx, path, attributes);
       }
       std::unique_ptr<InputElement> inputFile(inputNode);
       ++numfiles;
