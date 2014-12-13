@@ -332,3 +332,27 @@ int test(Foo f) {
   return 0;
 }
 };
+
+namespace testMemberExprDeclarationNameInfo {
+  // The AST should only have the corrected name with no mention of 'data_'.
+  // FIXME: the second typo is being printed out with the location of the first
+  // because the TypoCorrection objects contain the SourceRange but the
+  // UnqualifiedTyposCorrected cache is keyed on IdentifierInfo.
+  void f(int);
+  struct S {
+    int data;  // expected-note 2{{'data' declared here}}
+    void m_fn1() {
+      data_[] =  // expected-error 2{{use of undeclared identifier 'data_'}}  expected-error {{expected expression}}
+          f(data_);
+    }
+  };
+}
+
+namespace testArraySubscriptIndex {
+  struct S {
+    int foodata;  // expected-note {{'foodata' declared here}}
+    void m_fn1() {
+      (+)[foodata_];  // expected-error{{expected expression}} expected-error {{use of undeclared identifier 'foodata_'; did you mean 'foodata'}}
+    }
+  };
+}

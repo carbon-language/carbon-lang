@@ -1366,7 +1366,9 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
                                               Idx.get(), RLoc);
       } else {
         (void)Actions.CorrectDelayedTyposInExpr(LHS);
+        (void)Actions.CorrectDelayedTyposInExpr(Idx);
         LHS = ExprError();
+        Idx = ExprError();
       }
 
       // Match the ']'.

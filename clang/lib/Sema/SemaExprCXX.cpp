@@ -5961,9 +5961,10 @@ static ExprResult attemptRecovery(Sema &SemaRef,
     NewSS = *SS;
 
   if (auto *ND = TC.getCorrectionDecl()) {
+    R.setLookupName(ND->getDeclName());
     R.addDecl(ND);
     if (ND->isCXXClassMember()) {
-      // Figure out the correct naming class to ad to the LookupResult.
+      // Figure out the correct naming class to add to the LookupResult.
       CXXRecordDecl *Record = nullptr;
       if (auto *NNS = TC.getCorrectionSpecifier())
         Record = NNS->getAsType()->getAsCXXRecordDecl();
