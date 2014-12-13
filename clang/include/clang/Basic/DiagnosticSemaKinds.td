@@ -1875,6 +1875,8 @@ def err_enable_if_never_constant_expr : Error<
   "'enable_if' attribute expression never produces a constant expression">;
 def err_constexpr_body_no_return : Error<
   "no return statement in constexpr function">;
+def err_constexpr_return_missing_expr : Error<
+  "non-void constexpr function %0 should return a value">;
 def warn_cxx11_compat_constexpr_body_no_return : Warning<
   "constexpr function with no return statements is incompatible with C++ "
   "standards before C++14">, InGroup<CXXPre14Compat>, DefaultIgnore;

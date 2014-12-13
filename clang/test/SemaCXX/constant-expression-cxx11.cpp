@@ -1969,3 +1969,8 @@ namespace PR21786 {
   static_assert(&Bar::x != nullptr, "");
   static_assert(&Bar::x != &Bar::y, ""); // expected-error {{constant expression}}
 }
+
+namespace PR21859 {
+  constexpr int Fun() { return; } // expected-error {{non-void constexpr function 'Fun' should return a value}}
+  constexpr int Var = Fun(); // expected-error {{constexpr variable 'Var' must be initialized by a constant expression}}
+}
