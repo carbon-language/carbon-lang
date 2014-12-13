@@ -163,21 +163,6 @@ static bool parseZOption(StringRef opt, uint64_t &val) {
   return true;
 }
 
-llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
-  if (_attributes._isDashlPrefix)
-    return _elfLinkingContext.searchLibrary(_path);
-  return _elfLinkingContext.searchFile(_path, _attributes._isSysRooted);
-}
-
-std::string ELFFileNode::errStr(std::error_code errc) {
-  if (errc == llvm::errc::no_such_file_or_directory) {
-    if (_attributes._isDashlPrefix)
-      return (Twine("Unable to find library -l") + _path).str();
-    return (Twine("Unable to find file ") + _path).str();
-  }
-  return FileNode::errStr(errc);
-}
-
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
                           raw_ostream &diagnostics) {
   BumpPtrAllocator alloc;

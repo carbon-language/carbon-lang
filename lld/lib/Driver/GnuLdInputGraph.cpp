@@ -9,10 +9,26 @@
 
 #include "lld/Driver/GnuLdInputGraph.h"
 #include "lld/ReaderWriter/LinkerScript.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 
 using namespace lld;
+
+llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
+  if (_attributes._isDashlPrefix)
+    return _elfLinkingContext.searchLibrary(_path);
+  return _elfLinkingContext.searchFile(_path, _attributes._isSysRooted);
+}
+
+std::string ELFFileNode::errStr(std::error_code errc) {
+  if (errc == llvm::errc::no_such_file_or_directory) {
+    if (_attributes._isDashlPrefix)
+      return (Twine("Unable to find library -l") + _path).str();
+    return (Twine("Unable to find file ") + _path).str();
+  }
+  return FileNode::errStr(errc);
+}
 
 /// \brief Parse the input file to lld::File.
 std::error_code ELFFileNode::parse(const LinkingContext &ctx,
