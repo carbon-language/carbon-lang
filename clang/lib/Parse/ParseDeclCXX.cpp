@@ -2608,7 +2608,10 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
         Diag(ConsumeToken(), diag::err_default_special_members);
       return ExprError();
     }
-
+  }
+  if (const auto *PD = dyn_cast_or_null<MSPropertyDecl>(D)) {
+    Diag(Tok, diag::err_ms_property_initializer) << PD;
+    return ExprError();
   }
   return ParseInitializer();
 }

@@ -602,6 +602,8 @@ def err_ms_property_expected_accessor_name : Error<
   "expected name of accessor method">;
 def err_ms_property_expected_comma_or_rparen : Error<
   "expected ',' or ')' at end of property accessor list">;
+def err_ms_property_initializer : Error<
+  "property declaration cannot have an in-class initializer">;
 
 /// C++ Templates
 def err_expected_template : Error<"expected template">;

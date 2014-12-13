@@ -2656,13 +2656,14 @@ void Sema::ActOnFinishCXXInClassMemberInitializer(Decl *D,
   // Pop the notional constructor scope we created earlier.
   PopFunctionScopeInfo(nullptr, D);
 
-  FieldDecl *FD = cast<FieldDecl>(D);
-  assert(FD->getInClassInitStyle() != ICIS_NoInit &&
+  FieldDecl *FD = dyn_cast<FieldDecl>(D);
+  assert((isa<MSPropertyDecl>(D) || FD->getInClassInitStyle() != ICIS_NoInit) &&
          "must set init style when field is created");
 
   if (!InitExpr) {
-    FD->setInvalidDecl();
-    FD->removeInClassInitializer();
+    D->setInvalidDecl();
+    if (FD)
+      FD->removeInClassInitializer();
     return;
   }
 
