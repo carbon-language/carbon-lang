@@ -63,6 +63,41 @@ CXXSyntheticChildren::GetDescription()
     return sstr.GetString();
 }
 
+lldb::ValueObjectSP
+SyntheticChildrenFrontEnd::CreateValueObjectFromExpression (const char* name,
+                                                            const char* expression,
+                                                            const ExecutionContext& exe_ctx)
+{
+    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromExpression(name, expression, exe_ctx));
+    if (valobj_sp)
+        valobj_sp->SetSyntheticChildrenGenerated(true);
+    return valobj_sp;
+}
+
+lldb::ValueObjectSP
+SyntheticChildrenFrontEnd::CreateValueObjectFromAddress (const char* name,
+                                                         uint64_t address,
+                                                         const ExecutionContext& exe_ctx,
+                                                         ClangASTType type)
+{
+    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromAddress(name, address, exe_ctx, type));
+    if (valobj_sp)
+        valobj_sp->SetSyntheticChildrenGenerated(true);
+    return valobj_sp;
+}
+
+lldb::ValueObjectSP
+SyntheticChildrenFrontEnd::CreateValueObjectFromData (const char* name,
+                                                      const DataExtractor& data,
+                                                      const ExecutionContext& exe_ctx,
+                                                      ClangASTType type)
+{
+    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromData(name, data, exe_ctx, type));
+    if (valobj_sp)
+        valobj_sp->SetSyntheticChildrenGenerated(true);
+    return valobj_sp;
+}
+
 #ifndef LLDB_DISABLE_PYTHON
 
 ScriptedSyntheticChildren::FrontEnd::FrontEnd(std::string pclass, ValueObject &backend) :
@@ -109,41 +144,6 @@ ScriptedSyntheticChildren::GetDescription()
                 m_python_class.c_str());
     
     return sstr.GetString();
-}
-
-lldb::ValueObjectSP
-SyntheticChildrenFrontEnd::CreateValueObjectFromExpression (const char* name,
-                                                            const char* expression,
-                                                            const ExecutionContext& exe_ctx)
-{
-    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromExpression(name, expression, exe_ctx));
-    if (valobj_sp)
-        valobj_sp->SetSyntheticChildrenGenerated(true);
-    return valobj_sp;
-}
-
-lldb::ValueObjectSP
-SyntheticChildrenFrontEnd::CreateValueObjectFromAddress (const char* name,
-                                                         uint64_t address,
-                                                         const ExecutionContext& exe_ctx,
-                                                         ClangASTType type)
-{
-    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromAddress(name, address, exe_ctx, type));
-    if (valobj_sp)
-        valobj_sp->SetSyntheticChildrenGenerated(true);
-    return valobj_sp;
-}
-
-lldb::ValueObjectSP
-SyntheticChildrenFrontEnd::CreateValueObjectFromData (const char* name,
-                                                      const DataExtractor& data,
-                                                      const ExecutionContext& exe_ctx,
-                                                      ClangASTType type)
-{
-    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromData(name, data, exe_ctx, type));
-    if (valobj_sp)
-        valobj_sp->SetSyntheticChildrenGenerated(true);
-    return valobj_sp;
 }
 
 #endif // #ifndef LLDB_DISABLE_PYTHON
