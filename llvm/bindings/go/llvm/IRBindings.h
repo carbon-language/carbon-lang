@@ -37,6 +37,8 @@ void LLVMAddFunctionAttr2(LLVMValueRef Fn, uint64_t PA);
 uint64_t LLVMGetFunctionAttr2(LLVMValueRef Fn);
 void LLVMRemoveFunctionAttr2(LLVMValueRef Fn, uint64_t PA);
 
+LLVMMetadataRef LLVMConstantAsMetadata(LLVMValueRef Val);
+
 LLVMMetadataRef LLVMMDString2(LLVMContextRef C, const char *Str, unsigned SLen);
 LLVMMetadataRef LLVMMDNode2(LLVMContextRef C, LLVMMetadataRef *MDs,
                             unsigned Count);

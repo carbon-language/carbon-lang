@@ -50,6 +50,10 @@ void LLVMRemoveFunctionAttr2(LLVMValueRef Fn, uint64_t PA) {
   Func->setAttributes(PALnew);
 }
 
+LLVMMetadataRef LLVMConstantAsMetadata(LLVMValueRef C) {
+  return wrap(ConstantAsMetadata::get(unwrap<Constant>(C)));
+}
+
 LLVMMetadataRef LLVMMDString2(LLVMContextRef C, const char *Str, unsigned SLen) {
   return wrap(MDString::get(*unwrap(C), StringRef(Str, SLen)));
 }
