@@ -248,6 +248,7 @@
 // RUN:     /Gs1000 \
 // RUN:     /GT \
 // RUN:     /GX \
+// RUN:     /Gv \
 // RUN:     /Gz \
 // RUN:     /GZ \
 // RUN:     /H \
