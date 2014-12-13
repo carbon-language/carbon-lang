@@ -45,6 +45,8 @@ void LLVMAddNamedMetadataOperand2(LLVMModuleRef M, const char *name,
                                   LLVMMetadataRef Val);
 void LLVMSetMetadata2(LLVMValueRef Inst, unsigned KindID, LLVMMetadataRef MD);
 
+void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New);
+
 void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
                                   unsigned Col, LLVMMetadataRef Scope,
                                   LLVMMetadataRef InlinedAt);

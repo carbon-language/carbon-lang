@@ -75,6 +75,12 @@ void LLVMSetMetadata2(LLVMValueRef Inst, unsigned KindID, LLVMMetadataRef MD) {
   unwrap<Instruction>(Inst)->setMetadata(KindID, N);
 }
 
+void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
+  auto *Node = unwrap<MDNodeFwdDecl>(MD);
+  Node->replaceAllUsesWith(unwrap<MDNode>(New));
+  MDNode::deleteTemporary(Node);
+}
+
 void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
                                   unsigned Col, LLVMMetadataRef Scope,
                                   LLVMMetadataRef InlinedAt) {
