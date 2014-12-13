@@ -121,7 +121,7 @@ type DICompileUnit struct {
 }
 
 // CreateCompileUnit creates compile unit debug metadata.
-func (d *DIBuilder) CreateCompileUnit(cu DICompileUnit) Value {
+func (d *DIBuilder) CreateCompileUnit(cu DICompileUnit) Metadata {
 	file := C.CString(cu.File)
 	defer C.free(unsafe.Pointer(file))
 	dir := C.CString(cu.Dir)
@@ -139,28 +139,28 @@ func (d *DIBuilder) CreateCompileUnit(cu DICompileUnit) Value {
 		flags,
 		C.unsigned(cu.RuntimeVersion),
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // CreateCompileUnit creates file debug metadata.
-func (d *DIBuilder) CreateFile(filename, dir string) Value {
+func (d *DIBuilder) CreateFile(filename, dir string) Metadata {
 	cfilename := C.CString(filename)
 	defer C.free(unsafe.Pointer(cfilename))
 	cdir := C.CString(dir)
 	defer C.free(unsafe.Pointer(cdir))
 	result := C.LLVMDIBuilderCreateFile(d.ref, cfilename, cdir)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DILexicalBlock holds the values for creating lexical block debug metadata.
 type DILexicalBlock struct {
-	File   Value
+	File   Metadata
 	Line   int
 	Column int
 }
 
 // CreateCompileUnit creates lexical block debug metadata.
-func (d *DIBuilder) CreateLexicalBlock(diScope Value, b DILexicalBlock) Value {
+func (d *DIBuilder) CreateLexicalBlock(diScope Metadata, b DILexicalBlock) Metadata {
 	result := C.LLVMDIBuilderCreateLexicalBlock(
 		d.ref,
 		diScope.C,
@@ -168,22 +168,22 @@ func (d *DIBuilder) CreateLexicalBlock(diScope Value, b DILexicalBlock) Value {
 		C.unsigned(b.Line),
 		C.unsigned(b.Column),
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
-func (d *DIBuilder) CreateLexicalBlockFile(diScope Value, diFile Value, discriminator int) Value {
+func (d *DIBuilder) CreateLexicalBlockFile(diScope Metadata, diFile Metadata, discriminator int) Metadata {
 	result := C.LLVMDIBuilderCreateLexicalBlockFile(d.ref, diScope.C, diFile.C,
 		C.unsigned(discriminator))
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DIFunction holds the values for creating function debug metadata.
 type DIFunction struct {
 	Name         string
 	LinkageName  string
-	File         Value
+	File         Metadata
 	Line         int
-	Type         Value
+	Type         Metadata
 	LocalToUnit  bool
 	IsDefinition bool
 	ScopeLine    int
@@ -193,7 +193,7 @@ type DIFunction struct {
 }
 
 // CreateCompileUnit creates function debug metadata.
-func (d *DIBuilder) CreateFunction(diScope Value, f DIFunction) Value {
+func (d *DIBuilder) CreateFunction(diScope Metadata, f DIFunction) Metadata {
 	name := C.CString(f.Name)
 	defer C.free(unsafe.Pointer(name))
 	linkageName := C.CString(f.LinkageName)
@@ -213,16 +213,16 @@ func (d *DIBuilder) CreateFunction(diScope Value, f DIFunction) Value {
 		boolToCInt(f.Optimized),
 		f.Function.C,
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DILocalVariable holds the values for creating local variable debug metadata.
 type DILocalVariable struct {
 	Tag            dwarf.Tag
 	Name           string
-	File           Value
+	File           Metadata
 	Line           int
-	Type           Value
+	Type           Metadata
 	AlwaysPreserve bool
 	Flags          int
 
@@ -232,7 +232,7 @@ type DILocalVariable struct {
 }
 
 // CreateLocalVariable creates local variable debug metadata.
-func (d *DIBuilder) CreateLocalVariable(scope Value, v DILocalVariable) Value {
+func (d *DIBuilder) CreateLocalVariable(scope Metadata, v DILocalVariable) Metadata {
 	name := C.CString(v.Name)
 	defer C.free(unsafe.Pointer(name))
 	result := C.LLVMDIBuilderCreateLocalVariable(
@@ -247,7 +247,7 @@ func (d *DIBuilder) CreateLocalVariable(scope Value, v DILocalVariable) Value {
 		C.unsigned(v.Flags),
 		C.unsigned(v.ArgNo),
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DIBasicType holds the values for creating basic type debug metadata.
@@ -259,7 +259,7 @@ type DIBasicType struct {
 }
 
 // CreateBasicType creates basic type debug metadata.
-func (d *DIBuilder) CreateBasicType(t DIBasicType) Value {
+func (d *DIBuilder) CreateBasicType(t DIBasicType) Metadata {
 	name := C.CString(t.Name)
 	defer C.free(unsafe.Pointer(name))
 	result := C.LLVMDIBuilderCreateBasicType(
@@ -269,19 +269,19 @@ func (d *DIBuilder) CreateBasicType(t DIBasicType) Value {
 		C.uint64_t(t.AlignInBits),
 		C.unsigned(t.Encoding),
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DIPointerType holds the values for creating pointer type debug metadata.
 type DIPointerType struct {
-	Pointee     Value
+	Pointee     Metadata
 	SizeInBits  uint64
 	AlignInBits uint64 // optional
 	Name        string // optional
 }
 
 // CreateBasicType creates basic type debug metadata.
-func (d *DIBuilder) CreatePointerType(t DIPointerType) Value {
+func (d *DIBuilder) CreatePointerType(t DIPointerType) Metadata {
 	name := C.CString(t.Name)
 	defer C.free(unsafe.Pointer(name))
 	result := C.LLVMDIBuilderCreatePointerType(
@@ -291,40 +291,40 @@ func (d *DIBuilder) CreatePointerType(t DIPointerType) Value {
 		C.uint64_t(t.AlignInBits),
 		name,
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DISubroutineType holds the values for creating subroutine type debug metadata.
 type DISubroutineType struct {
 	// File is the file in which the subroutine type is defined.
-	File Value
+	File Metadata
 
 	// Parameters contains the subroutine parameter types,
 	// including the return type at the 0th index.
-	Parameters []Value
+	Parameters []Metadata
 }
 
 // CreateSubroutineType creates subroutine type debug metadata.
-func (d *DIBuilder) CreateSubroutineType(t DISubroutineType) Value {
+func (d *DIBuilder) CreateSubroutineType(t DISubroutineType) Metadata {
 	params := d.getOrCreateTypeArray(t.Parameters)
 	result := C.LLVMDIBuilderCreateSubroutineType(d.ref, t.File.C, params.C)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DIStructType holds the values for creating struct type debug metadata.
 type DIStructType struct {
 	Name        string
-	File        Value
+	File        Metadata
 	Line        int
 	SizeInBits  uint64
 	AlignInBits uint64
 	Flags       int
-	DerivedFrom Value
-	Elements    []Value
+	DerivedFrom Metadata
+	Elements    []Metadata
 }
 
 // CreateStructType creates struct type debug metadata.
-func (d *DIBuilder) CreateStructType(scope Value, t DIStructType) Value {
+func (d *DIBuilder) CreateStructType(scope Metadata, t DIStructType) Metadata {
 	elements := d.getOrCreateArray(t.Elements)
 	name := C.CString(t.Name)
 	defer C.free(unsafe.Pointer(name))
@@ -340,23 +340,23 @@ func (d *DIBuilder) CreateStructType(scope Value, t DIStructType) Value {
 		t.DerivedFrom.C,
 		elements.C,
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DIMemberType holds the values for creating member type debug metadata.
 type DIMemberType struct {
 	Name         string
-	File         Value
+	File         Metadata
 	Line         int
 	SizeInBits   uint64
 	AlignInBits  uint64
 	OffsetInBits uint64
 	Flags        int
-	Type         Value
+	Type         Metadata
 }
 
 // CreateMemberType creates struct type debug metadata.
-func (d *DIBuilder) CreateMemberType(scope Value, t DIMemberType) Value {
+func (d *DIBuilder) CreateMemberType(scope Metadata, t DIMemberType) Metadata {
 	name := C.CString(t.Name)
 	defer C.free(unsafe.Pointer(name))
 	result := C.LLVMDIBuilderCreateMemberType(
@@ -371,7 +371,7 @@ func (d *DIBuilder) CreateMemberType(scope Value, t DIMemberType) Value {
 		C.unsigned(t.Flags),
 		t.Type.C,
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DISubrange describes an integer value range.
@@ -384,13 +384,13 @@ type DISubrange struct {
 type DIArrayType struct {
 	SizeInBits  uint64
 	AlignInBits uint64
-	ElementType Value
+	ElementType Metadata
 	Subscripts  []DISubrange
 }
 
 // CreateArrayType creates struct type debug metadata.
-func (d *DIBuilder) CreateArrayType(t DIArrayType) Value {
-	subscriptsSlice := make([]Value, len(t.Subscripts))
+func (d *DIBuilder) CreateArrayType(t DIArrayType) Metadata {
+	subscriptsSlice := make([]Metadata, len(t.Subscripts))
 	for i, s := range t.Subscripts {
 		subscriptsSlice[i] = d.getOrCreateSubrange(s.Lo, s.Count)
 	}
@@ -402,20 +402,20 @@ func (d *DIBuilder) CreateArrayType(t DIArrayType) Value {
 		t.ElementType.C,
 		subscripts.C,
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // DITypedef holds the values for creating typedef type debug metadata.
 type DITypedef struct {
-	Type    Value
+	Type    Metadata
 	Name    string
-	File    Value
+	File    Metadata
 	Line    int
-	Context Value
+	Context Metadata
 }
 
 // CreateTypedef creates typedef type debug metadata.
-func (d *DIBuilder) CreateTypedef(t DITypedef) Value {
+func (d *DIBuilder) CreateTypedef(t DITypedef) Metadata {
 	name := C.CString(t.Name)
 	defer C.free(unsafe.Pointer(name))
 	result := C.LLVMDIBuilderCreateTypedef(
@@ -426,67 +426,59 @@ func (d *DIBuilder) CreateTypedef(t DITypedef) Value {
 		C.unsigned(t.Line),
 		t.Context.C,
 	)
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // getOrCreateSubrange gets a metadata node for the specified subrange,
 // creating if required.
-func (d *DIBuilder) getOrCreateSubrange(lo, count int64) Value {
+func (d *DIBuilder) getOrCreateSubrange(lo, count int64) Metadata {
 	result := C.LLVMDIBuilderGetOrCreateSubrange(d.ref, C.int64_t(lo), C.int64_t(count))
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // getOrCreateArray gets a metadata node containing the specified values,
 // creating if required.
-func (d *DIBuilder) getOrCreateArray(values []Value) Value {
+func (d *DIBuilder) getOrCreateArray(values []Metadata) Metadata {
 	if len(values) == 0 {
-		return Value{}
+		return Metadata{}
 	}
-	var data *C.LLVMValueRef
-	length := len(values)
-	if length > 0 {
-		data = &values[0].C
-	}
+	data, length := llvmMetadataRefs(values)
 	result := C.LLVMDIBuilderGetOrCreateArray(d.ref, data, C.size_t(length))
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // getOrCreateTypeArray gets a metadata node for a type array containing the
 // specified values, creating if required.
-func (d *DIBuilder) getOrCreateTypeArray(values []Value) Value {
+func (d *DIBuilder) getOrCreateTypeArray(values []Metadata) Metadata {
 	if len(values) == 0 {
-		return Value{}
+		return Metadata{}
 	}
-	var data *C.LLVMValueRef
-	length := len(values)
-	if length > 0 {
-		data = &values[0].C
-	}
+	data, length := llvmMetadataRefs(values)
 	result := C.LLVMDIBuilderGetOrCreateTypeArray(d.ref, data, C.size_t(length))
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // CreateExpression creates a new descriptor for the specified
 // variable which has a complex address expression for its address.
-func (d *DIBuilder) CreateExpression(addr []int64) Value {
+func (d *DIBuilder) CreateExpression(addr []int64) Metadata {
 	var data *C.int64_t
 	if len(addr) > 0 {
 		data = (*C.int64_t)(unsafe.Pointer(&addr[0]))
 	}
 	result := C.LLVMDIBuilderCreateExpression(d.ref, data, C.size_t(len(addr)))
-	return Value{C: result}
+	return Metadata{C: result}
 }
 
 // InsertDeclareAtEnd inserts a call to llvm.dbg.declare at the end of the
 // specified basic block for the given value and associated debug metadata.
-func (d *DIBuilder) InsertDeclareAtEnd(v, diVarInfo, expr Value, bb BasicBlock) Value {
+func (d *DIBuilder) InsertDeclareAtEnd(v Value, diVarInfo, expr Metadata, bb BasicBlock) Value {
 	result := C.LLVMDIBuilderInsertDeclareAtEnd(d.ref, v.C, diVarInfo.C, expr.C, bb.C)
 	return Value{C: result}
 }
 
 // InsertValueAtEnd inserts a call to llvm.dbg.value at the end of the
 // specified basic block for the given value and associated debug metadata.
-func (d *DIBuilder) InsertValueAtEnd(v, diVarInfo, expr Value, offset uint64, bb BasicBlock) Value {
+func (d *DIBuilder) InsertValueAtEnd(v Value, diVarInfo, expr Metadata, offset uint64, bb BasicBlock) Value {
 	result := C.LLVMDIBuilderInsertValueAtEnd(d.ref, v.C, C.uint64_t(offset), diVarInfo.C, expr.C, bb.C)
 	return Value{C: result}
 }

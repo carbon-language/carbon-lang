@@ -15,11 +15,18 @@
 #define LLVM_BINDINGS_GO_LLVM_IRBINDINGS_H
 
 #include "llvm-c/Core.h"
+#ifdef __cplusplus
+#include "llvm/IR/Metadata.h"
+#include "llvm/Support/CBindingWrapping.h"
+#endif
+
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct LLVMOpaqueMetadata *LLVMMetadataRef;
 
 // These functions duplicate the LLVM*FunctionAttr functions in the stable C
 // API. We cannot use the existing functions because they take 32-bit attribute
@@ -30,8 +37,31 @@ void LLVMAddFunctionAttr2(LLVMValueRef Fn, uint64_t PA);
 uint64_t LLVMGetFunctionAttr2(LLVMValueRef Fn);
 void LLVMRemoveFunctionAttr2(LLVMValueRef Fn, uint64_t PA);
 
+LLVMMetadataRef LLVMMDString2(LLVMContextRef C, const char *Str, unsigned SLen);
+LLVMMetadataRef LLVMMDNode2(LLVMContextRef C, LLVMMetadataRef *MDs,
+                            unsigned Count);
+
+void LLVMAddNamedMetadataOperand2(LLVMModuleRef M, const char *name,
+                                  LLVMMetadataRef Val);
+void LLVMSetMetadata2(LLVMValueRef Inst, unsigned KindID, LLVMMetadataRef MD);
+
+void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
+                                  unsigned Col, LLVMMetadataRef Scope,
+                                  LLVMMetadataRef InlinedAt);
+
 #ifdef __cplusplus
 }
+
+namespace llvm {
+
+DEFINE_ISA_CONVERSION_FUNCTIONS(Metadata, LLVMMetadataRef)
+
+inline Metadata **unwrap(LLVMMetadataRef *Vals) {
+  return reinterpret_cast<Metadata**>(Vals);
+}
+
+}
+
 #endif
 
 #endif
