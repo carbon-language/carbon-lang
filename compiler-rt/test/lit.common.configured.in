@@ -30,7 +30,7 @@ set_default("emulator", "@COMPILER_RT_EMULATOR@")
 # apply substitution.
 try:
   config.llvm_tools_dir = config.llvm_tools_dir % lit_config.params
-except KeyError,e:
+except KeyError as e:
   key, = e.args
   lit_config.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key, key))
 

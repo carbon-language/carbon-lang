@@ -17,7 +17,7 @@ config.host_os = "@HOST_OS@"
 try:
   config.llvm_tools_dir = config.llvm_tools_dir % lit_config.params
   config.llvm_build_mode = config.llvm_build_mode % lit_config.params
-except KeyError,e:
+except KeyError as e:
   key, = e.args
   lit_config.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key, key))
 
