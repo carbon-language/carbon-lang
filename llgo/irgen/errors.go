@@ -36,10 +36,10 @@ const (
 func (fr *frame) setBranchWeightMetadata(br llvm.Value, trueweight, falseweight uint64) {
 	mdprof := llvm.MDKindID("prof")
 
-	mdnode := llvm.MDNode([]llvm.Value{
-		llvm.MDString("branch_weights"),
-		llvm.ConstInt(llvm.Int32Type(), trueweight, false),
-		llvm.ConstInt(llvm.Int32Type(), falseweight, false),
+	mdnode := llvm.GlobalContext().MDNode([]llvm.Metadata{
+		llvm.GlobalContext().MDString("branch_weights"),
+		llvm.ConstInt(llvm.Int32Type(), trueweight, false).ConstantAsMetadata(),
+		llvm.ConstInt(llvm.Int32Type(), falseweight, false).ConstantAsMetadata(),
 	})
 
 	br.SetMetadata(mdprof, mdnode)

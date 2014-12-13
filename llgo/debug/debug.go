@@ -42,22 +42,21 @@ type DIBuilder struct {
 	// builder is the current builder; there is one per CU.
 	builder    *llvm.DIBuilder
 	module     llvm.Module
-	files      map[*token.File]llvm.Value
-	cu, fn, lb llvm.Value
+	files      map[*token.File]llvm.Metadata
+	cu, fn, lb llvm.Metadata
 	fnFile     string
-	debugScope []llvm.Value
 	sizes      types.Sizes
 	fset       *token.FileSet
 	prefixMaps []PrefixMap
 	types      typeutil.Map
-	voidType   llvm.Value
+	voidType   llvm.Metadata
 }
 
 // NewDIBuilder creates a new debug information builder.
 func NewDIBuilder(sizes types.Sizes, module llvm.Module, fset *token.FileSet, prefixMaps []PrefixMap) *DIBuilder {
 	var d DIBuilder
 	d.module = module
-	d.files = make(map[*token.File]llvm.Value)
+	d.files = make(map[*token.File]llvm.Metadata)
 	d.sizes = sizes
 	d.fset = fset
 	d.prefixMaps = prefixMaps
@@ -71,7 +70,7 @@ func (d *DIBuilder) Destroy() {
 	d.builder.Destroy()
 }
 
-func (d *DIBuilder) scope() llvm.Value {
+func (d *DIBuilder) scope() llvm.Metadata {
 	if d.lb.C != nil {
 		return d.lb
 	}
@@ -90,8 +89,8 @@ func (d *DIBuilder) remapFilePath(path string) string {
 	return path
 }
 
-func (d *DIBuilder) getFile(file *token.File) llvm.Value {
-	if diFile := d.files[file]; !diFile.IsNil() {
+func (d *DIBuilder) getFile(file *token.File) llvm.Metadata {
+	if diFile := d.files[file]; diFile.C != nil {
 		return diFile
 	}
 	diFile := d.builder.CreateFile(d.remapFilePath(file.Name()), "")
@@ -102,7 +101,7 @@ func (d *DIBuilder) getFile(file *token.File) llvm.Value {
 // createCompileUnit creates and returns debug metadata for the compile
 // unit as a whole, using the first file in the file set as a representative
 // (the choice of file is arbitrary).
-func (d *DIBuilder) createCompileUnit() llvm.Value {
+func (d *DIBuilder) createCompileUnit() llvm.Metadata {
 	var file *token.File
 	d.fset.Iterate(func(f *token.File) bool {
 		file = f
@@ -123,7 +122,7 @@ func (d *DIBuilder) createCompileUnit() llvm.Value {
 // PushFunction creates debug metadata for the specified function,
 // and pushes it onto the scope stack.
 func (d *DIBuilder) PushFunction(fnptr llvm.Value, sig *types.Signature, pos token.Pos) {
-	var diFile llvm.Value
+	var diFile llvm.Metadata
 	var line int
 	if file := d.fset.File(pos); file != nil {
 		d.fnFile = file.Name()
@@ -143,8 +142,8 @@ func (d *DIBuilder) PushFunction(fnptr llvm.Value, sig *types.Signature, pos tok
 
 // PopFunction pops the previously pushed function off the scope stack.
 func (d *DIBuilder) PopFunction() {
-	d.lb = llvm.Value{nil}
-	d.fn = llvm.Value{nil}
+	d.lb = llvm.Metadata{}
+	d.fn = llvm.Metadata{}
 	d.fnFile = ""
 }
 
@@ -155,7 +154,7 @@ func (d *DIBuilder) Declare(b llvm.Builder, v ssa.Value, llv llvm.Value, paramIn
 	if paramIndex >= 0 {
 		tag = tagArgVariable
 	}
-	var diFile llvm.Value
+	var diFile llvm.Metadata
 	var line int
 	if file := d.fset.File(v.Pos()); file != nil {
 		line = file.Line(v.Pos())
@@ -184,18 +183,13 @@ func (d *DIBuilder) SetLocation(b llvm.Builder, pos token.Pos) {
 		return
 	}
 	position := d.fset.Position(pos)
-	d.lb = llvm.Value{nil}
+	d.lb = llvm.Metadata{}
 	if position.Filename != d.fnFile && position.Filename != "" {
 		// This can happen rarely, e.g. in init functions.
 		diFile := d.builder.CreateFile(d.remapFilePath(position.Filename), "")
 		d.lb = d.builder.CreateLexicalBlockFile(d.scope(), diFile, 0)
 	}
-	b.SetCurrentDebugLocation(llvm.MDNode([]llvm.Value{
-		llvm.ConstInt(llvm.Int32Type(), uint64(position.Line), false),
-		llvm.ConstInt(llvm.Int32Type(), uint64(position.Column), false),
-		d.scope(),
-		llvm.Value{},
-	}))
+	b.SetCurrentDebugLocation(uint(position.Line), uint(position.Column), d.scope(), llvm.Metadata{})
 }
 
 // Finalize must be called after all compilation units are translated,
@@ -203,41 +197,41 @@ func (d *DIBuilder) SetLocation(b llvm.Builder, pos token.Pos) {
 func (d *DIBuilder) Finalize() {
 	d.module.AddNamedMetadataOperand(
 		"llvm.module.flags",
-		llvm.MDNode([]llvm.Value{
-			llvm.ConstInt(llvm.Int32Type(), 2, false), // Warn on mismatch
-			llvm.MDString("Dwarf Version"),
-			llvm.ConstInt(llvm.Int32Type(), 4, false),
+		llvm.GlobalContext().MDNode([]llvm.Metadata{
+			llvm.ConstInt(llvm.Int32Type(), 2, false).ConstantAsMetadata(), // Warn on mismatch
+			llvm.GlobalContext().MDString("Dwarf Version"),
+			llvm.ConstInt(llvm.Int32Type(), 4, false).ConstantAsMetadata(),
 		}),
 	)
 	d.module.AddNamedMetadataOperand(
 		"llvm.module.flags",
-		llvm.MDNode([]llvm.Value{
-			llvm.ConstInt(llvm.Int32Type(), 1, false), // Error on mismatch
-			llvm.MDString("Debug Info Version"),
-			llvm.ConstInt(llvm.Int32Type(), 1, false),
+		llvm.GlobalContext().MDNode([]llvm.Metadata{
+			llvm.ConstInt(llvm.Int32Type(), 1, false).ConstantAsMetadata(), // Error on mismatch
+			llvm.GlobalContext().MDString("Debug Info Version"),
+			llvm.ConstInt(llvm.Int32Type(), 2, false).ConstantAsMetadata(),
 		}),
 	)
 	d.builder.Finalize()
 }
 
 // DIType maps a Go type to DIType debug metadata value.
-func (d *DIBuilder) DIType(t types.Type) llvm.Value {
+func (d *DIBuilder) DIType(t types.Type) llvm.Metadata {
 	return d.typeDebugDescriptor(t, types.TypeString(nil, t))
 }
 
-func (d *DIBuilder) typeDebugDescriptor(t types.Type, name string) llvm.Value {
+func (d *DIBuilder) typeDebugDescriptor(t types.Type, name string) llvm.Metadata {
 	// Signature needs to be handled specially, to preprocess
 	// methods, moving the receiver to the parameter list.
 	if t, ok := t.(*types.Signature); ok {
 		return d.descriptorSignature(t, name)
 	}
 	if t == nil {
-		if d.voidType.IsNil() {
+		if d.voidType.C == nil {
 			d.voidType = d.builder.CreateBasicType(llvm.DIBasicType{Name: "void"})
 		}
 		return d.voidType
 	}
-	if dt, ok := d.types.At(t).(llvm.Value); ok {
+	if dt, ok := d.types.At(t).(llvm.Metadata); ok {
 		return dt
 	}
 	dt := d.descriptor(t, name)
@@ -245,7 +239,7 @@ func (d *DIBuilder) typeDebugDescriptor(t types.Type, name string) llvm.Value {
 	return dt
 }
 
-func (d *DIBuilder) descriptor(t types.Type, name string) llvm.Value {
+func (d *DIBuilder) descriptor(t types.Type, name string) llvm.Metadata {
 	switch t := t.(type) {
 	case *types.Basic:
 		return d.descriptorBasic(t, name)
@@ -270,7 +264,7 @@ func (d *DIBuilder) descriptor(t types.Type, name string) llvm.Value {
 	}
 }
 
-func (d *DIBuilder) descriptorBasic(t *types.Basic, name string) llvm.Value {
+func (d *DIBuilder) descriptorBasic(t *types.Basic, name string) llvm.Metadata {
 	switch t.Kind() {
 	case types.String:
 		return d.typeDebugDescriptor(types.NewStruct([]*types.Var{
@@ -310,7 +304,7 @@ func (d *DIBuilder) descriptorBasic(t *types.Basic, name string) llvm.Value {
 	}
 }
 
-func (d *DIBuilder) descriptorPointer(t *types.Pointer) llvm.Value {
+func (d *DIBuilder) descriptorPointer(t *types.Pointer) llvm.Metadata {
 	return d.builder.CreatePointerType(llvm.DIPointerType{
 		Pointee:     d.DIType(t.Elem()),
 		SizeInBits:  uint64(d.sizes.Sizeof(t) * 8),
@@ -318,13 +312,13 @@ func (d *DIBuilder) descriptorPointer(t *types.Pointer) llvm.Value {
 	})
 }
 
-func (d *DIBuilder) descriptorStruct(t *types.Struct, name string) llvm.Value {
+func (d *DIBuilder) descriptorStruct(t *types.Struct, name string) llvm.Metadata {
 	fields := make([]*types.Var, t.NumFields())
 	for i := range fields {
 		fields[i] = t.Field(i)
 	}
 	offsets := d.sizes.Offsetsof(fields)
-	members := make([]llvm.Value, len(fields))
+	members := make([]llvm.Metadata, len(fields))
 	for i, f := range fields {
 		// TODO(axw) file/line where member is defined.
 		t := f.Type()
@@ -345,11 +339,11 @@ func (d *DIBuilder) descriptorStruct(t *types.Struct, name string) llvm.Value {
 	})
 }
 
-func (d *DIBuilder) descriptorNamed(t *types.Named) llvm.Value {
+func (d *DIBuilder) descriptorNamed(t *types.Named) llvm.Metadata {
 	// Create a placeholder for the named type, to terminate cycles.
-	placeholder := llvm.MDNode(nil)
+	placeholder := llvm.GlobalContext().TemporaryMDNode(nil)
 	d.types.Set(t, placeholder)
-	var diFile llvm.Value
+	var diFile llvm.Metadata
 	var line int
 	if file := d.fset.File(t.Obj().Pos()); file != nil {
 		line = file.Line(t.Obj().Pos())
@@ -365,7 +359,7 @@ func (d *DIBuilder) descriptorNamed(t *types.Named) llvm.Value {
 	return typedef
 }
 
-func (d *DIBuilder) descriptorArray(t *types.Array, name string) llvm.Value {
+func (d *DIBuilder) descriptorArray(t *types.Array, name string) llvm.Metadata {
 	return d.builder.CreateArrayType(llvm.DIArrayType{
 		SizeInBits:  uint64(d.sizes.Sizeof(t) * 8),
 		AlignInBits: uint64(d.sizes.Alignof(t) * 8),
@@ -374,7 +368,7 @@ func (d *DIBuilder) descriptorArray(t *types.Array, name string) llvm.Value {
 	})
 }
 
-func (d *DIBuilder) descriptorSlice(t *types.Slice, name string) llvm.Value {
+func (d *DIBuilder) descriptorSlice(t *types.Slice, name string) llvm.Metadata {
 	sliceStruct := types.NewStruct([]*types.Var{
 		types.NewVar(0, nil, "ptr", types.NewPointer(t.Elem())),
 		types.NewVar(0, nil, "len", types.Typ[types.Int]),
@@ -383,17 +377,17 @@ func (d *DIBuilder) descriptorSlice(t *types.Slice, name string) llvm.Value {
 	return d.typeDebugDescriptor(sliceStruct, name)
 }
 
-func (d *DIBuilder) descriptorMap(t *types.Map, name string) llvm.Value {
+func (d *DIBuilder) descriptorMap(t *types.Map, name string) llvm.Metadata {
 	// FIXME: This should be DW_TAG_pointer_type to __go_map.
 	return d.descriptorBasic(types.Typ[types.Uintptr], name)
 }
 
-func (d *DIBuilder) descriptorChan(t *types.Chan, name string) llvm.Value {
+func (d *DIBuilder) descriptorChan(t *types.Chan, name string) llvm.Metadata {
 	// FIXME: This should be DW_TAG_pointer_type to __go_channel.
 	return d.descriptorBasic(types.Typ[types.Uintptr], name)
 }
 
-func (d *DIBuilder) descriptorInterface(t *types.Interface, name string) llvm.Value {
+func (d *DIBuilder) descriptorInterface(t *types.Interface, name string) llvm.Metadata {
 	ifaceStruct := types.NewStruct([]*types.Var{
 		types.NewVar(0, nil, "type", types.NewPointer(types.Typ[types.Uint8])),
 		types.NewVar(0, nil, "data", types.NewPointer(types.Typ[types.Uint8])),
@@ -401,7 +395,7 @@ func (d *DIBuilder) descriptorInterface(t *types.Interface, name string) llvm.Va
 	return d.typeDebugDescriptor(ifaceStruct, name)
 }
 
-func (d *DIBuilder) descriptorSignature(t *types.Signature, name string) llvm.Value {
+func (d *DIBuilder) descriptorSignature(t *types.Signature, name string) llvm.Metadata {
 	// If there's a receiver change the receiver to an
 	// additional (first) parameter, and take the value of
 	// the resulting signature instead.
@@ -416,11 +410,11 @@ func (d *DIBuilder) descriptorSignature(t *types.Signature, name string) llvm.Va
 		t := types.NewSignature(nil, nil, params, t.Results(), t.Variadic())
 		return d.typeDebugDescriptor(t, name)
 	}
-	if dt, ok := d.types.At(t).(llvm.Value); ok {
+	if dt, ok := d.types.At(t).(llvm.Metadata); ok {
 		return dt
 	}
 
-	var returnType llvm.Value
+	var returnType llvm.Metadata
 	results := t.Results()
 	switch n := results.Len(); n {
 	case 0:
@@ -441,16 +435,16 @@ func (d *DIBuilder) descriptorSignature(t *types.Signature, name string) llvm.Va
 		returnType = d.typeDebugDescriptor(types.NewStruct(fields, nil), "")
 	}
 
-	var paramTypes []llvm.Value
+	var paramTypes []llvm.Metadata
 	params := t.Params()
 	if params != nil && params.Len() > 0 {
-		paramTypes = make([]llvm.Value, params.Len()+1)
+		paramTypes = make([]llvm.Metadata, params.Len()+1)
 		paramTypes[0] = returnType
 		for i := range paramTypes[1:] {
 			paramTypes[i+1] = d.DIType(params.At(i).Type())
 		}
 	} else {
-		paramTypes = []llvm.Value{returnType}
+		paramTypes = []llvm.Metadata{returnType}
 	}
 
 	// TODO(axw) get position of type definition for File field
