@@ -40,7 +40,7 @@ static void printIntegral(const TemplateArgument &TemplArg,
   const ::clang::Type *T = TemplArg.getIntegralType().getTypePtr();
   const llvm::APSInt &Val = TemplArg.getAsIntegral();
 
-  if (const EnumType* ET = T->getAs<EnumType>()) {
+  if (const EnumType *ET = T->getAs<EnumType>()) {
     for (const EnumConstantDecl* ECD : ET->getDecl()->enumerators()) {
       if (ECD->getInitVal() == Val) {
         ECD->printQualifiedName(Out, Policy);
