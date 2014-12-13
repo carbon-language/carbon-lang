@@ -24,8 +24,6 @@
 #include "lldb/lldb-enumerations.h"
 
 #include "lldb/Core/ValueObject.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
-#include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
     class SyntheticChildrenFrontEnd
@@ -385,37 +383,10 @@ namespace lldb_private {
         }
         
         void
-        AddExpressionPath (const std::string& path)
-        {
-            bool need_add_dot = true;
-            if (path[0] == '.' ||
-                (path[0] == '-' && path[1] == '>') ||
-                path[0] == '[')
-                need_add_dot = false;
-            // add a '.' symbol to help forgetful users
-            if(!need_add_dot)
-                m_expression_paths.push_back(path);
-            else
-                m_expression_paths.push_back(std::string(".") + path);
-        }
+        AddExpressionPath (const std::string& path);
         
         bool
-        SetExpressionPathAtIndex (size_t i, const std::string& path)
-        {
-            if (i >= GetCount())
-                return false;
-            bool need_add_dot = true;
-            if (path[0] == '.' ||
-                (path[0] == '-' && path[1] == '>') ||
-                path[0] == '[')
-                need_add_dot = false;
-            // add a '.' symbol to help forgetful users
-            if(!need_add_dot)
-                m_expression_paths[i] = path;
-            else
-                m_expression_paths[i] = std::string(".") + path;
-            return true;
-        }
+        SetExpressionPathAtIndex (size_t i, const std::string& path);
         
         bool
         IsScripted ()
@@ -467,24 +438,7 @@ namespace lldb_private {
             }
             
             virtual size_t
-            GetIndexOfChildWithName (const ConstString &name)
-            {
-                const char* name_cstr = name.GetCString();
-                for (size_t i = 0; i < filter->GetCount(); i++)
-                {
-                    const char* expr_cstr = filter->GetExpressionPathAtIndex(i);
-                    if (expr_cstr)
-                    {
-                        if (*expr_cstr == '.')
-                            expr_cstr++;
-                        else if (*expr_cstr == '-' && *(expr_cstr+1) == '>')
-                            expr_cstr += 2;
-                    }
-                    if (!::strcmp(name_cstr, expr_cstr))
-                        return i;
-                }
-                return UINT32_MAX;
-            }
+            GetIndexOfChildWithName (const ConstString &name);
             
             typedef std::shared_ptr<SyntheticChildrenFrontEnd> SharedPointer;
             
@@ -605,59 +559,28 @@ namespace lldb_private {
                       ValueObject &backend);
             
             bool
-            IsValid ()
-            {
-                return m_wrapper_sp.get() != nullptr && m_wrapper_sp->operator bool() && m_interpreter != nullptr;
-            }
+            IsValid ();
             
             virtual
             ~FrontEnd ();
             
             virtual size_t
-            CalculateNumChildren ()
-            {
-                if (!m_wrapper_sp || m_interpreter == NULL)
-                    return 0;
-                return m_interpreter->CalculateNumChildren(m_wrapper_sp);
-            }
+            CalculateNumChildren ();
             
             virtual lldb::ValueObjectSP
             GetChildAtIndex (size_t idx);
             
             virtual bool
-            Update ()
-            {
-                if (!m_wrapper_sp || m_interpreter == NULL)
-                    return false;
-                
-                return m_interpreter->UpdateSynthProviderInstance(m_wrapper_sp);
-            }
+            Update ();
             
             virtual bool
-            MightHaveChildren ()
-            {
-                if (!m_wrapper_sp || m_interpreter == NULL)
-                    return false;
-                
-                return m_interpreter->MightHaveChildrenSynthProviderInstance(m_wrapper_sp);
-            }
+            MightHaveChildren ();
             
             virtual size_t
-            GetIndexOfChildWithName (const ConstString &name)
-            {
-                if (!m_wrapper_sp || m_interpreter == NULL)
-                    return UINT32_MAX;
-                return m_interpreter->GetIndexOfChildWithName(m_wrapper_sp, name.GetCString());
-            }
+            GetIndexOfChildWithName (const ConstString &name);
             
             virtual lldb::ValueObjectSP
-            GetSyntheticValue ()
-            {
-                if (!m_wrapper_sp || m_interpreter == NULL)
-                    return nullptr;
-                
-                return m_interpreter->GetSyntheticValue(m_wrapper_sp);
-            }
+            GetSyntheticValue ();
             
             typedef std::shared_ptr<SyntheticChildrenFrontEnd> SharedPointer;
             

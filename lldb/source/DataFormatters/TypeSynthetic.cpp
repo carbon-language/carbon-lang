@@ -23,12 +23,66 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/DataFormatters/TypeSynthetic.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
+
+void
+TypeFilterImpl::AddExpressionPath (const std::string& path)
+{
+    bool need_add_dot = true;
+    if (path[0] == '.' ||
+        (path[0] == '-' && path[1] == '>') ||
+        path[0] == '[')
+        need_add_dot = false;
+    // add a '.' symbol to help forgetful users
+    if(!need_add_dot)
+        m_expression_paths.push_back(path);
+    else
+        m_expression_paths.push_back(std::string(".") + path);
+}
+
+bool
+TypeFilterImpl::SetExpressionPathAtIndex (size_t i, const std::string& path)
+{
+    if (i >= GetCount())
+        return false;
+    bool need_add_dot = true;
+    if (path[0] == '.' ||
+        (path[0] == '-' && path[1] == '>') ||
+        path[0] == '[')
+        need_add_dot = false;
+    // add a '.' symbol to help forgetful users
+    if(!need_add_dot)
+        m_expression_paths[i] = path;
+    else
+        m_expression_paths[i] = std::string(".") + path;
+    return true;
+}
+
+size_t
+TypeFilterImpl::FrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    const char* name_cstr = name.GetCString();
+    for (size_t i = 0; i < filter->GetCount(); i++)
+    {
+        const char* expr_cstr = filter->GetExpressionPathAtIndex(i);
+        if (expr_cstr)
+        {
+            if (*expr_cstr == '.')
+                expr_cstr++;
+            else if (*expr_cstr == '-' && *(expr_cstr+1) == '>')
+                expr_cstr += 2;
+        }
+        if (!::strcmp(name_cstr, expr_cstr))
+            return i;
+    }
+    return UINT32_MAX;
+}
 
 std::string
 TypeFilterImpl::GetDescription()
@@ -131,6 +185,55 @@ ScriptedSyntheticChildren::FrontEnd::GetChildAtIndex (size_t idx)
         return lldb::ValueObjectSP();
     
     return m_interpreter->GetChildAtIndex(m_wrapper_sp, idx);
+}
+
+bool
+ScriptedSyntheticChildren::FrontEnd::IsValid ()
+{
+    return m_wrapper_sp.get() != nullptr && m_wrapper_sp->operator bool() && m_interpreter != nullptr;
+}
+
+size_t
+ScriptedSyntheticChildren::FrontEnd::CalculateNumChildren ()
+{
+    if (!m_wrapper_sp || m_interpreter == NULL)
+        return 0;
+    return m_interpreter->CalculateNumChildren(m_wrapper_sp);
+}
+
+bool
+ScriptedSyntheticChildren::FrontEnd::Update ()
+{
+    if (!m_wrapper_sp || m_interpreter == NULL)
+        return false;
+    
+    return m_interpreter->UpdateSynthProviderInstance(m_wrapper_sp);
+}
+
+bool
+ScriptedSyntheticChildren::FrontEnd::MightHaveChildren ()
+{
+    if (!m_wrapper_sp || m_interpreter == NULL)
+        return false;
+    
+    return m_interpreter->MightHaveChildrenSynthProviderInstance(m_wrapper_sp);
+}
+
+size_t
+ScriptedSyntheticChildren::FrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    if (!m_wrapper_sp || m_interpreter == NULL)
+        return UINT32_MAX;
+    return m_interpreter->GetIndexOfChildWithName(m_wrapper_sp, name.GetCString());
+}
+
+lldb::ValueObjectSP
+ScriptedSyntheticChildren::FrontEnd::GetSyntheticValue ()
+{
+    if (!m_wrapper_sp || m_interpreter == NULL)
+        return nullptr;
+    
+    return m_interpreter->GetSyntheticValue(m_wrapper_sp);
 }
 
 std::string
