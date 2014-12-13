@@ -268,7 +268,8 @@ protected:
             ProcessSP process_sp (target->GetProcessSP());
             if (process_sp)
             {
-                if (stream.GetData())
+                const char *data = stream.GetData();
+                if (data && strlen(data) > 0)
                     result.AppendMessage(stream.GetData());
                 result.AppendMessageWithFormat ("Process %" PRIu64 " launched: '%s' (%s)\n", process_sp->GetID(), exe_module_sp->GetFileSpec().GetPath().c_str(), archname);
                 result.SetStatus (eReturnStatusSuccessFinishResult);

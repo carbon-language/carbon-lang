@@ -1044,7 +1044,6 @@ Process::HandleProcessStateChangedEvent (const EventSP &event_sp,
     {
         case eStateInvalid:
         case eStateUnloaded:
-        case eStateConnected:
         case eStateAttaching:
         case eStateLaunching:
         case eStateStepping:
@@ -1060,6 +1059,7 @@ Process::HandleProcessStateChangedEvent (const EventSP &event_sp,
             }
             break;
 
+        case eStateConnected:
         case eStateRunning:
             // Don't be chatty when we run...
             break;
