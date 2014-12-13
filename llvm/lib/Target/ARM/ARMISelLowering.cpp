@@ -567,7 +567,6 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
     setTargetDAGCombine(ISD::FP_TO_SINT);
     setTargetDAGCombine(ISD::FP_TO_UINT);
     setTargetDAGCombine(ISD::FDIV);
-    setTargetDAGCombine(ISD::LOAD);
 
     // It is legal to extload from v4i8 to v4i16 or v4i32.
     MVT Tys[6] = {MVT::v8i8, MVT::v4i8, MVT::v2i8,
@@ -8869,18 +8868,15 @@ static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
                               DAG.getUNDEF(VT), NewMask.data());
 }
 
-/// CombineBaseUpdate - Target-specific DAG combine function for VLDDUP,
-/// NEON load/store intrinsics, and generic vector load/stores, to merge
-/// base address updates.
-/// For generic load/stores, the memory type is assumed to be a vector.
+/// CombineBaseUpdate - Target-specific DAG combine function for VLDDUP and
+/// NEON load/store intrinsics to merge base address updates.
 /// The caller is assumed to have checked legality.
 static SDValue CombineBaseUpdate(SDNode *N,
                                  TargetLowering::DAGCombinerInfo &DCI) {
   SelectionDAG &DAG = DCI.DAG;
   bool isIntrinsic = (N->getOpcode() == ISD::INTRINSIC_VOID ||
                       N->getOpcode() == ISD::INTRINSIC_W_CHAIN);
-  bool isStore = N->getOpcode() == ISD::STORE;
-  unsigned AddrOpIdx = ((isIntrinsic || isStore) ? 2 : 1);
+  unsigned AddrOpIdx = (isIntrinsic ? 2 : 1);
   SDValue Addr = N->getOperand(AddrOpIdx);
 
   // Search for a use of the address operand that is an increment.
@@ -8941,10 +8937,6 @@ static SDValue CombineBaseUpdate(SDNode *N,
       case ARMISD::VLD2DUP: NewOpc = ARMISD::VLD2DUP_UPD; NumVecs = 2; break;
       case ARMISD::VLD3DUP: NewOpc = ARMISD::VLD3DUP_UPD; NumVecs = 3; break;
       case ARMISD::VLD4DUP: NewOpc = ARMISD::VLD4DUP_UPD; NumVecs = 4; break;
-      case ISD::LOAD:       NewOpc = ARMISD::VLD1_UPD;
-        NumVecs = 1; isLaneOp = false; break;
-      case ISD::STORE:      NewOpc = ARMISD::VST1_UPD;
-        NumVecs = 1; isLoad = false; isLaneOp = false; break;
       }
     }
 
@@ -8952,11 +8944,8 @@ static SDValue CombineBaseUpdate(SDNode *N,
     EVT VecTy;
     if (isLoad)
       VecTy = N->getValueType(0);
-    else if (isIntrinsic)
-      VecTy = N->getOperand(AddrOpIdx+1).getValueType();
     else
-      VecTy = N->getOperand(1).getValueType();
-
+      VecTy = N->getOperand(AddrOpIdx+1).getValueType();
     unsigned NumBytes = NumVecs * VecTy.getSizeInBits() / 8;
     if (isLaneOp)
       NumBytes /= VecTy.getVectorNumElements();
@@ -8989,13 +8978,8 @@ static SDValue CombineBaseUpdate(SDNode *N,
     Ops.push_back(N->getOperand(0)); // incoming chain
     Ops.push_back(N->getOperand(AddrOpIdx));
     Ops.push_back(Inc);
-    if (StoreSDNode *StN = dyn_cast<StoreSDNode>(N)) {
-      // Try to match the intrinsic's signature
-      Ops.push_back(StN->getValue());
-      Ops.push_back(DAG.getConstant(StN->getAlignment(), MVT::i32));
-    } else {
-      for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i)
-        Ops.push_back(N->getOperand(i));
+    for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i) {
+      Ops.push_back(N->getOperand(i));
     }
     MemSDNode *MemInt = cast<MemSDNode>(N);
     SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys,
@@ -9137,17 +9121,6 @@ static SDValue PerformVDUPLANECombine(SDNode *N,
   return DCI.DAG.getNode(ISD::BITCAST, SDLoc(N), VT, Op);
 }
 
-static SDValue PerformLOADCombine(SDNode *N,
-                                  TargetLowering::DAGCombinerInfo &DCI) {
-  EVT VT = N->getValueType(0);
-
-  // If this is a legal vector load, try to combine it into a VLD1_UPD.
-  if (VT.isVector() && DCI.DAG.getTargetLoweringInfo().isTypeLegal(VT))
-    return CombineBaseUpdate(N, DCI);
-
-  return SDValue();
-}
-
 /// PerformSTORECombine - Target-specific dag combine xforms for
 /// ISD::STORE.
 static SDValue PerformSTORECombine(SDNode *N,
@@ -9287,10 +9260,6 @@ static SDValue PerformSTORECombine(SDNode *N,
                         St->isNonTemporal(), St->getAlignment(),
                         St->getAAInfo());
   }
-
-  // If this is a legal vector store, try to combine it into a VST1_UPD.
-  if (VT.isVector() && DCI.DAG.getTargetLoweringInfo().isTypeLegal(VT))
-    return CombineBaseUpdate(N, DCI);
 
   return SDValue();
 }
@@ -9883,7 +9852,6 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ANY_EXTEND: return PerformExtendCombine(N, DCI.DAG, Subtarget);
   case ISD::SELECT_CC:  return PerformSELECT_CCCombine(N, DCI.DAG, Subtarget);
   case ARMISD::CMOV: return PerformCMOVCombine(N, DCI.DAG);
-  case ISD::LOAD:       return PerformLOADCombine(N, DCI);
   case ARMISD::VLD2DUP:
   case ARMISD::VLD3DUP:
   case ARMISD::VLD4DUP:
