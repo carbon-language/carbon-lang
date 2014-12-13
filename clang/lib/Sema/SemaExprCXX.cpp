@@ -6105,7 +6105,7 @@ public:
     auto Result = BaseTransform::RebuildCallExpr(Callee, LParenLoc, Args,
                                                  RParenLoc, ExecConfig);
     if (auto *OE = dyn_cast<OverloadExpr>(Callee)) {
-      if (!Result.isInvalid() && Result.get()) {
+      if (Result.isUsable()) {
         Expr *ResultCall = Result.get();
         if (auto *BE = dyn_cast<CXXBindTemporaryExpr>(ResultCall))
           ResultCall = BE->getSubExpr();
