@@ -293,7 +293,8 @@ public:
 
   SmallBitVector &set(unsigned Idx) {
     if (isSmall()) {
-      assert(Idx <= std::numeric_limits<uintptr_t>::digits &&
+      assert(Idx <= static_cast<unsigned>(
+                        std::numeric_limits<uintptr_t>::digits) &&
              "undefined behavior");
       setSmallBits(getSmallBits() | (uintptr_t(1) << Idx));
     }
