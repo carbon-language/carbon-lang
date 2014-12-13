@@ -172,6 +172,8 @@
 // (/Zs is for syntax-only)
 // RUN: %clang_cl /Zs \
 // RUN:    /analyze- \
+// RUN:    /cgthreads4 \
+// RUN:    /cgthreads8 \
 // RUN:    /d2Zi+ \
 // RUN:    /errorReport:foo \
 // RUN:    /FS \
