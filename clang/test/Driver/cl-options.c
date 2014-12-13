@@ -175,6 +175,7 @@
 // RUN:    /d2Zi+ \
 // RUN:    /errorReport:foo \
 // RUN:    /FS \
+// RUN:    /Gd \
 // RUN:    /GF \
 // RUN:    /GS- \
 // RUN:    /kernel- \
