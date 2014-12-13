@@ -60,6 +60,12 @@ LLVMMetadataRef LLVMMDNode2(LLVMContextRef C, LLVMMetadataRef *MDs,
       MDNode::get(*unwrap(C), ArrayRef<Metadata *>(unwrap(MDs), Count)));
 }
 
+LLVMMetadataRef LLVMTemporaryMDNode(LLVMContextRef C, LLVMMetadataRef *MDs,
+                                    unsigned Count) {
+  return wrap(MDNode::getTemporary(*unwrap(C),
+                                   ArrayRef<Metadata *>(unwrap(MDs), Count)));
+}
+
 void LLVMAddNamedMetadataOperand2(LLVMModuleRef M, const char *name,
                                   LLVMMetadataRef Val) {
   NamedMDNode *N = unwrap(M)->getOrInsertNamedMetadata(name);

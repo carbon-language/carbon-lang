@@ -749,6 +749,11 @@ func (c Context) MDNode(mds []Metadata) (md Metadata) {
 	md.C = C.LLVMMDNode2(c.C, ptr, nvals)
 	return
 }
+func (c Context) TemporaryMDNode(mds []Metadata) (md Metadata) {
+	ptr, nvals := llvmMetadataRefs(mds)
+	md.C = C.LLVMTemporaryMDNode(c.C, ptr, nvals)
+	return
+}
 
 // Operations on scalar constants
 func ConstInt(t Type, n uint64, signExtend bool) (v Value) {
