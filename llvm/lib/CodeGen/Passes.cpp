@@ -520,7 +520,7 @@ void TargetPassConfig::addMachinePasses() {
            .equals("option-unspecified")) {
     const PassRegistry *PR = PassRegistry::getPassRegistry();
     const PassInfo *TPI = PR->getPassInfo(PrintMachineInstrs.getValue());
-    const PassInfo *IPI = PR->getPassInfo(StringRef("print-machineinstrs"));
+    const PassInfo *IPI = PR->getPassInfo(StringRef("machineinstr-printer"));
     assert (TPI && IPI && "Pass ID not registered!");
     const char *TID = (const char *)(TPI->getTypeInfo());
     const char *IID = (const char *)(IPI->getTypeInfo());

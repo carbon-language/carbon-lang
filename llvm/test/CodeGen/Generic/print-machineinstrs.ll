@@ -3,7 +3,7 @@
 ; RUN: llc < %s -O3 -debug-pass=Structure -print-machineinstrs= -o /dev/null 2>&1 | FileCheck %s
 
 define i64 @foo(i64 %a, i64 %b) nounwind {
-; CHECK: -branch-folder -print-machineinstrs
+; CHECK: -branch-folder  -machineinstr-printer
 ; CHECK: Control Flow Optimizer
 ; CHECK-NEXT: MachineFunction Printer
 ; CHECK: Machine code for function foo:
