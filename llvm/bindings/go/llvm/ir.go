@@ -729,20 +729,9 @@ func (c Context) MDString(str string) (v Value) {
 	v.C = C.LLVMMDStringInContext(c.C, cstr, C.unsigned(len(str)))
 	return
 }
-func MDString(str string) (v Value) {
-	cstr := C.CString(str)
-	defer C.free(unsafe.Pointer(cstr))
-	v.C = C.LLVMMDString(cstr, C.unsigned(len(str)))
-	return
-}
 func (c Context) MDNode(vals []Value) (v Value) {
 	ptr, nvals := llvmValueRefs(vals)
 	v.C = C.LLVMMDNodeInContext(c.C, ptr, nvals)
-	return
-}
-func MDNode(vals []Value) (v Value) {
-	ptr, nvals := llvmValueRefs(vals)
-	v.C = C.LLVMMDNode(ptr, nvals)
 	return
 }
 
