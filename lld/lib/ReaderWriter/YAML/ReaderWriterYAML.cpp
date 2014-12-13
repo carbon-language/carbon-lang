@@ -1327,11 +1327,6 @@ public:
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
-    // Note: we do not store the unique pointer to the MemoryBuffer,
-    // so the buffer will be deallocated at end of this function.
-    // That's OK since the YAML file contents are parsed and consumed
-    // in this function.
-
     // Create YAML Input Reader.
     YamlContext yamlContext;
     yamlContext._registry = &_registry;
@@ -1346,10 +1341,12 @@ public:
     if (yin.error())
       return make_error_code(lld::YamlReaderError::illegal_value);
 
+    std::shared_ptr<MemoryBuffer> smb(mb.release());
     for (const File *file : createdFiles) {
       // Note: parseFile() should return vector of *const* File
       File *f = const_cast<File *>(file);
       f->setLastError(std::error_code());
+      f->setSharedMemoryBuffer(smb);
       result.emplace_back(f);
     }
     return make_error_code(lld::YamlReaderError::success);
