@@ -54,7 +54,7 @@ struct B { A<int> x; B(B& a) : x(a.x) {} };
 struct X2 {
   X2(); // expected-note{{candidate constructor}}
   X2(X2&);	// expected-note {{candidate constructor}}
-  template<typename T> X2(T);
+  template<typename T> X2(T); // expected-note {{candidate template ignored: instantiation would take its own class type by value}}
 };
 
 X2 test(bool Cond, X2 x2) {
@@ -125,4 +125,52 @@ namespace PR8182 {
     foo f3 = f1;
   }
 
+}
+
+// Don't blow out the stack trying to call an illegal constructor
+// instantiation.  We intentionally allow implicit instantiations to
+// exist, so make sure they're unusable.
+//
+// rdar://19199836
+namespace self_by_value {
+  template <class T, class U> struct A {
+    A() {}
+    A(const A<T,U> &o) {}
+    A(A<T,T> o) {}
+  };
+
+  void helper(A<int,float>);
+
+  void test1(A<int,int> a) {
+    helper(a);
+  }
+  void test2() {
+    helper(A<int,int>());
+  }
+}
+
+namespace self_by_value_2 {
+  template <class T, class U> struct A {
+    A() {} // expected-note {{not viable: requires 0 arguments}}
+    A(A<T,U> &o) {} // expected-note {{not viable: expects an l-value}}
+    A(A<T,T> o) {} // expected-note {{ignored: instantiation takes its own class type by value}}
+  };
+
+  void helper_A(A<int,int>); // expected-note {{passing argument to parameter here}}
+  void test_A() {
+    helper_A(A<int,int>()); // expected-error {{no matching constructor}}
+  }
+}
+
+namespace self_by_value_3 {
+  template <class T, class U> struct A {
+    A() {}
+    A(A<T,U> &o) {}
+    A(A<T,T> o) {}
+  };
+
+  void helper_A(A<int,int>);
+  void test_A(A<int,int> b) {
+    helper_A(b);
+  }
 }

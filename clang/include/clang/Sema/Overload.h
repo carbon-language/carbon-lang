@@ -553,6 +553,17 @@ namespace clang {
     /// conversion.
     ovl_fail_trivial_conversion,
 
+    /// This conversion candidate was not considered because it is
+    /// an illegal instantiation of a constructor temploid: it is
+    /// callable with one argument, we only have one argument, and
+    /// its first parameter type is exactly the type of the class.
+    ///
+    /// Defining such a constructor directly is illegal, and
+    /// template-argument deduction is supposed to ignore such
+    /// instantiations, but we can still get one with the right
+    /// kind of implicit instantiation.
+    ovl_fail_illegal_constructor,
+
     /// This conversion candidate is not viable because its result
     /// type is not implicitly convertible to the desired type.
     ovl_fail_bad_final_conversion,

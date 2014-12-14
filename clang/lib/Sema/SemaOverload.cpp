@@ -5586,18 +5586,6 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   // Overload resolution is always an unevaluated context.
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
-  if (Constructor) {
-    // C++ [class.copy]p3:
-    //   A member function template is never instantiated to perform the copy
-    //   of a class object to an object of its class type.
-    QualType ClassType = Context.getTypeDeclType(Constructor->getParent());
-    if (Args.size() == 1 &&
-        Constructor->isSpecializationCopyingObject() &&
-        (Context.hasSameUnqualifiedType(ClassType, Args[0]->getType()) ||
-         IsDerivedFrom(Args[0]->getType(), ClassType)))
-      return;
-  }
-
   // Add this candidate
   OverloadCandidate &Candidate = CandidateSet.addCandidate(Args.size());
   Candidate.FoundDecl = FoundDecl;
@@ -5606,6 +5594,21 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   Candidate.IsSurrogate = false;
   Candidate.IgnoreObjectArgument = false;
   Candidate.ExplicitCallArguments = Args.size();
+
+  if (Constructor) {
+    // C++ [class.copy]p3:
+    //   A member function template is never instantiated to perform the copy
+    //   of a class object to an object of its class type.
+    QualType ClassType = Context.getTypeDeclType(Constructor->getParent());
+    if (Args.size() == 1 &&
+        Constructor->isSpecializationCopyingObject() &&
+        (Context.hasSameUnqualifiedType(ClassType, Args[0]->getType()) ||
+         IsDerivedFrom(Args[0]->getType(), ClassType))) {
+      Candidate.Viable = false;
+      Candidate.FailureKind = ovl_fail_illegal_constructor;
+      return;
+    }
+  }
 
   unsigned NumParams = Proto->getNumParams();
 
@@ -9234,6 +9237,13 @@ static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
 
   case ovl_fail_bad_deduction:
     return DiagnoseBadDeduction(S, Cand, NumArgs);
+
+  case ovl_fail_illegal_constructor: {
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_illegal_constructor)
+      << (Fn->getPrimaryTemplate() ? 1 : 0);
+    MaybeEmitInheritedConstructorNote(S, Fn);
+    return;
+  }
 
   case ovl_fail_trivial_conversion:
   case ovl_fail_bad_final_conversion:

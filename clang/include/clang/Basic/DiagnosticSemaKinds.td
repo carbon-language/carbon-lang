@@ -2847,6 +2847,9 @@ def note_ovl_candidate : Note<"candidate "
     "|volatile and restrict|const, volatile, and restrict}4)}2">;
 
 def note_ovl_candidate_inherited_constructor : Note<"inherited from here">;
+def note_ovl_candidate_illegal_constructor : Note<
+    "candidate %select{constructor|template}0 ignored: "
+    "instantiation %select{takes|would take}0 its own class type by value">;
 def note_ovl_candidate_bad_deduction : Note<
     "candidate template ignored: failed template argument deduction">;
 def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: "
