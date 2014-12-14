@@ -40,13 +40,6 @@ private:
   bool _parsed;
 };
 
-/// \brief Represents a PECOFF Library File
-class PECOFFLibraryNode : public PECOFFFileNode {
-public:
-  PECOFFLibraryNode(PECOFFLinkingContext &ctx, StringRef path)
-      : PECOFFFileNode(ctx, path) {}
-};
-
 } // namespace lld
 
 #endif

@@ -1364,7 +1364,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     path = ctx.allocate(path);
     if (isLibraryFile(path)) {
       libraries.push_back(std::unique_ptr<FileNode>(
-          new PECOFFLibraryNode(ctx, getLibraryPath(ctx, path))));
+          new PECOFFFileNode(ctx, getLibraryPath(ctx, path))));
     } else {
       files.push_back(std::unique_ptr<FileNode>(
           new PECOFFFileNode(ctx, getObjectPath(ctx, path))));
@@ -1390,7 +1390,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     for (const StringRef path : defaultLibs)
       if (!ctx.hasNoDefaultLib(path))
         libraries.push_back(std::unique_ptr<FileNode>(
-            new PECOFFLibraryNode(ctx, getLibraryPath(ctx, path.lower()))));
+            new PECOFFFileNode(ctx, getLibraryPath(ctx, path.lower()))));
 
   if (files.empty() && !isReadingDirectiveSection) {
     diag << "No input files\n";
