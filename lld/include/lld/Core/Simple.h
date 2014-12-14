@@ -15,12 +15,13 @@
 #ifndef LLD_CORE_SIMPLE_H
 #define LLD_CORE_SIMPLE_H
 
-#include "llvm/ADT/ilist.h"
-#include "llvm/ADT/ilist_node.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/UndefinedAtom.h"
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 
 namespace lld {
 

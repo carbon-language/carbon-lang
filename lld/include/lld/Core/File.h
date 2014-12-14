@@ -12,7 +12,6 @@
 
 #include "lld/Core/AbsoluteAtom.h"
 #include "lld/Core/DefinedAtom.h"
-#include "lld/Core/LinkingContext.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/range.h"

@@ -9,6 +9,7 @@
 
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/LLVM.h"
+#include "lld/Core/LinkingContext.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Archive.h"
