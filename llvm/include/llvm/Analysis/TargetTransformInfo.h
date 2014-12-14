@@ -274,8 +274,8 @@ public:
   /// AVX2 allows masks for consecutive load and store for i32 and i64 elements.
   /// AVX-512 architecture will also allow masks for non-consecutive memory
   /// accesses.
-  virtual bool isLegalPredicatedStore(Type *DataType, int Consecutive) const;
-  virtual bool isLegalPredicatedLoad (Type *DataType, int Consecutive) const;
+  virtual bool isLegalMaskedStore(Type *DataType, int Consecutive) const;
+  virtual bool isLegalMaskedLoad (Type *DataType, int Consecutive) const;
 
   /// \brief Return the cost of the scaling factor used in the addressing
   /// mode represented by AM for this target, for a load/store

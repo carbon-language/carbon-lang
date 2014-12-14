@@ -111,8 +111,8 @@ public:
                          Type *Ty) const override;
   unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
                          Type *Ty) const override;
-  bool isLegalPredicatedLoad (Type *DataType, int Consecutive) const override;
-  bool isLegalPredicatedStore(Type *DataType, int Consecutive) const override;
+  bool isLegalMaskedLoad (Type *DataType, int Consecutive) const override;
+  bool isLegalMaskedStore(Type *DataType, int Consecutive) const override;
 
   /// @}
 };
@@ -1159,7 +1159,7 @@ unsigned X86TTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
   return X86TTI::getIntImmCost(Imm, Ty);
 }
 
-bool X86TTI::isLegalPredicatedLoad(Type *DataType, int Consecutive) const {
+bool X86TTI::isLegalMaskedLoad(Type *DataType, int Consecutive) const {
   int ScalarWidth = DataType->getScalarSizeInBits();
   
   // Todo: AVX512 allows gather/scatter, works with strided and random as well
@@ -1170,7 +1170,7 @@ bool X86TTI::isLegalPredicatedLoad(Type *DataType, int Consecutive) const {
   return false;
 }
 
-bool X86TTI::isLegalPredicatedStore(Type *DataType, int Consecutive) const {
-  return isLegalPredicatedLoad(DataType, Consecutive);
+bool X86TTI::isLegalMaskedStore(Type *DataType, int Consecutive) const {
+  return isLegalMaskedLoad(DataType, Consecutive);
 }
 

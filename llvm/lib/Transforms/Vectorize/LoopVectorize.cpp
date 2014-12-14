@@ -1871,7 +1871,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 
     if (Reverse) {
       // If the address is consecutive but reversed, then the
-      // wide store needs to start at the last vector element.
+      // wide load needs to start at the last vector element.
       PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF));
       PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
     }
@@ -5341,7 +5341,7 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
     case Instruction::SDiv:
     case Instruction::URem:
     case Instruction::SRem:
-             return false;
+      return false;
     }
   }
 
@@ -5385,7 +5385,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     MaxVectorSize = 1;
   }
 
-  assert(MaxVectorSize <= 32 && "Did not expect to pack so many elements"
+  assert(MaxVectorSize <= 64 && "Did not expect to pack so many elements"
          " into one vector!");
 
   unsigned VF = MaxVectorSize;

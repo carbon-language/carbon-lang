@@ -101,13 +101,13 @@ bool TargetTransformInfo::isLegalICmpImmediate(int64_t Imm) const {
   return PrevTTI->isLegalICmpImmediate(Imm);
 }
 
-bool TargetTransformInfo::isLegalPredicatedLoad(Type *DataType,
-                                                int Consecutive) const {
+bool TargetTransformInfo::isLegalMaskedLoad(Type *DataType,
+                                            int Consecutive) const {
   return false;
 }
 
-bool TargetTransformInfo::isLegalPredicatedStore(Type *DataType,
-                                                 int Consecutive) const {
+bool TargetTransformInfo::isLegalMaskedStore(Type *DataType,
+                                             int Consecutive) const {
   return false;
 }
 
