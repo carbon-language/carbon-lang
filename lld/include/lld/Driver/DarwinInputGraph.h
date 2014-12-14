@@ -34,16 +34,6 @@ public:
   std::error_code parse(const LinkingContext &ctx,
                         raw_ostream &diagnostics) override;
 
-  /// \brief Return the file that has to be processed by the resolver
-  /// to resolve atoms. This iterates over all the files thats part
-  /// of this node. Returns no_more_files when there are no files to be
-  /// processed
-  ErrorOr<File &> getNextFile() override {
-    if (_files.size() == _nextFileIndex)
-      return make_error_code(InputGraphError::no_more_files);
-    return *_files[_nextFileIndex++];
-  }
-
   void setLoadWholeArchive(bool value=true) {
     _isWholeArchive = value;
   }

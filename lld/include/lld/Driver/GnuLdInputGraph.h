@@ -87,16 +87,6 @@ public:
     }
   }
 
-  /// \brief Return the file that has to be processed by the resolver
-  /// to resolve atoms. This iterates over all the files thats part
-  /// of this node. Returns no_more_files when there are no files to be
-  /// processed
-  ErrorOr<File &> getNextFile() override {
-    if (_nextFileIndex == _files.size())
-      return make_error_code(InputGraphError::no_more_files);
-    return *_files[_nextFileIndex++];
-  }
-
 private:
   llvm::BumpPtrAllocator _alloc;
   const ELFLinkingContext &_elfLinkingContext;
@@ -133,11 +123,6 @@ public:
     for (std::unique_ptr<InputElement> &elt : _expandElements)
       result.push_back(std::move(elt));
     return true;
-  }
-
-  /// Unused functions for ELFGNULdScript Nodes.
-  ErrorOr<File &> getNextFile() override {
-    return make_error_code(InputGraphError::no_more_files);
   }
 
   // Linker Script will be expanded and replaced with other elements

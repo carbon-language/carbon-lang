@@ -40,12 +40,6 @@ std::error_code PECOFFFileNode::parse(const LinkingContext &ctx,
   return ctx.registry().parseFile(std::move(mb.get()), _files);
 }
 
-ErrorOr<File &> PECOFFFileNode::getNextFile() {
-  if (_nextFileIndex == _files.size())
-    return make_error_code(InputGraphError::no_more_files);
-  return *_files[_nextFileIndex++];
-}
-
 ErrorOr<StringRef> PECOFFFileNode::getPath(const LinkingContext &) const {
   if (isCOFFLibraryFileExtension(_path))
     return _ctx.searchLibraryFile(_path);

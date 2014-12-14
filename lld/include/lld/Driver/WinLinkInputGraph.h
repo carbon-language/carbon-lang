@@ -37,8 +37,6 @@ public:
   std::error_code parse(const LinkingContext &ctx,
                         raw_ostream &diagnostics) override;
 
-  ErrorOr<File &> getNextFile() override;
-
 protected:
   const PECOFFLinkingContext &_ctx;
 

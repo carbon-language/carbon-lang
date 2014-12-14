@@ -213,6 +213,14 @@ public:
 
   bool getReplacements(InputGraph::InputElementVectorT &result) override;
 
+  /// \brief Return the next File thats part of this node to the
+  /// resolver.
+  ErrorOr<File &> getNextFile() override {
+    if (_nextFileIndex == _files.size())
+      return make_error_code(InputGraphError::no_more_files);
+    return *_files[_nextFileIndex++];
+  }
+
 protected:
   StringRef _path;                       // The path of the Input file
   InputGraph::FileVectorT _files;        // A vector of lld File objects
@@ -240,14 +248,6 @@ public:
   /// \brief parse the input element
   std::error_code parse(const LinkingContext &, raw_ostream &) override {
     return std::error_code();
-  }
-
-  /// \brief Return the next File thats part of this node to the
-  /// resolver.
-  ErrorOr<File &> getNextFile() override {
-    if (_nextFileIndex == _files.size())
-      return make_error_code(InputGraphError::no_more_files);
-    return *_files[_nextFileIndex++];
   }
 };
 } // namespace lld
