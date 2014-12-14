@@ -56,13 +56,13 @@ private:
   typedef std::function<void(StringRef, bool)> UndefCallback;
 
   bool undefinesAdded(int count);
-  ErrorOr<File &> nextFile(bool &inGroup);
+  File *nextFile(bool &inGroup);
 
   /// \brief Add section group/.gnu.linkonce if it does not exist previously.
   void maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom);
 
   /// \brief The main function that iterates over the files to resolve
-  bool resolveUndefines();
+  void resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
   bool checkUndefines();

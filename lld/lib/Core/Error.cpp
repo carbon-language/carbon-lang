@@ -97,33 +97,6 @@ const std::error_category &lld::LinkerScriptReaderCategory() {
   return o;
 }
 
-class _InputGraphErrorCategory : public std::error_category {
-public:
-  const char *name() const LLVM_NOEXCEPT override {
-    return "lld.inputGraph.parse";
-  }
-
-  std::string message(int ev) const override {
-    switch (static_cast<InputGraphError>(ev)) {
-    case InputGraphError::success:
-      return "Success";
-    case InputGraphError::failure:
-      return "failure";
-    case InputGraphError::no_more_elements:
-      return "no more elements";
-    case InputGraphError::no_more_files:
-      return "no more files";
-    }
-    llvm_unreachable("An enumerator of InputGraphError does not have a "
-                     "message defined.");
-  }
-};
-
-const std::error_category &lld::InputGraphErrorCategory() {
-  static _InputGraphErrorCategory i;
-  return i;
-}
-
 class _ReaderErrorCategory : public std::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {

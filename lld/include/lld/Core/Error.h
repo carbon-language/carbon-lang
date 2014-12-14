@@ -58,20 +58,6 @@ inline std::error_code make_error_code(LinkerScriptReaderError e) {
   return std::error_code(static_cast<int>(e), LinkerScriptReaderCategory());
 }
 
-/// \brief Errors returned by InputGraph functionality
-const std::error_category &InputGraphErrorCategory();
-
-enum class InputGraphError {
-  success = 0,
-  failure = 1,
-  no_more_elements,
-  no_more_files
-};
-
-inline std::error_code make_error_code(InputGraphError e) {
-  return std::error_code(static_cast<int>(e), InputGraphErrorCategory());
-}
-
 /// \brief Errors returned by Reader.
 const std::error_category &ReaderErrorCategory();
 
@@ -102,7 +88,6 @@ struct is_error_code_enum<lld::NativeReaderError> : std::true_type {};
 template <> struct is_error_code_enum<lld::YamlReaderError> : std::true_type {};
 template <>
 struct is_error_code_enum<lld::LinkerScriptReaderError> : std::true_type {};
-template <> struct is_error_code_enum<lld::InputGraphError> : std::true_type {};
 template <> struct is_error_code_enum<lld::ReaderError> : std::true_type {};
 }
 

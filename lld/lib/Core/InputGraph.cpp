@@ -15,24 +15,24 @@ using namespace lld;
 
 InputGraph::~InputGraph() { }
 
-ErrorOr<File &> InputGraph::getNextFile() {
+File *InputGraph::getNextFile() {
   // Try to get the next file of _currentInputElement. If the current input
   // element points to an archive file, and there's a file left in the archive,
   // it will succeed. If not, try to get the next file in the input graph.
   for (;;) {
     if (_currentInputElement) {
-      ErrorOr<File &> next = _currentInputElement->getNextFile();
-      if (next.getError() != InputGraphError::no_more_files) {
+      File *next = _currentInputElement->getNextFile();
+      if (next) {
         for (const std::function<void(File *)> &observer : _observers)
-          observer(&next.get());
-        return std::move(next);
+          observer(next);
+        return next;
       }
     }
 
-    ErrorOr<InputElement *> elt = getNextInputElement();
-    if (elt.getError() == InputGraphError::no_more_elements || *elt == nullptr)
-      return make_error_code(InputGraphError::no_more_files);
-    _currentInputElement = *elt;
+    InputElement *elt = getNextInputElement();
+    if (!elt)
+      return nullptr;
+    _currentInputElement = elt;
   }
 }
 
@@ -56,9 +56,9 @@ bool InputGraph::dump(raw_ostream &diagnostics) {
 }
 
 /// \brief Helper functions for the resolver
-ErrorOr<InputElement *> InputGraph::getNextInputElement() {
+InputElement *InputGraph::getNextInputElement() {
   if (_nextElementIndex >= _inputArgs.size())
-    return make_error_code(InputGraphError::no_more_elements);
+    return nullptr;
   InputElement *elem = _inputArgs[_nextElementIndex++].get();
   if (isa<GroupEnd>(elem))
     return getNextInputElement();

@@ -238,7 +238,7 @@ bool Resolver::undefinesAdded(int n) {
   return false;
 }
 
-ErrorOr<File &> Resolver::nextFile(bool &inGroup) {
+File *Resolver::nextFile(bool &inGroup) {
   if (size_t groupSize = _context.getInputGraph().getGroupSize()) {
     // We are at the end of the current group. If one or more new
     // undefined atom has been added in the last groupSize files, we
@@ -251,32 +251,29 @@ ErrorOr<File &> Resolver::nextFile(bool &inGroup) {
   if (_fileIndex < _files.size()) {
     // We are still in the current group.
     inGroup = true;
-    return *_files[_fileIndex++];
+    return _files[_fileIndex++];
   }
   // We are not in a group. Get a new file.
-  ErrorOr<File &> file = _context.getInputGraph().getNextFile();
-  if (std::error_code ec = file.getError()) {
-    if (ec != InputGraphError::no_more_files)
-      llvm::errs() << "Error occurred in getNextFile: " << ec.message() << "\n";
-    return ec;
-  }
+  File *file = _context.getInputGraph().getNextFile();
+  if (!file)
+    return nullptr;
   _files.push_back(&*file);
   ++_fileIndex;
   inGroup = false;
-  return *file;
+  return file;
 }
 
 // Keep adding atoms until _context.getNextFile() returns an error. This
 // function is where undefined atoms are resolved.
-bool Resolver::resolveUndefines() {
+void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
   for (;;) {
     bool inGroup = false;
     bool undefAdded = false;
-    ErrorOr<File &> file = nextFile(inGroup);
-    if (std::error_code ec = file.getError())
-      return ec == InputGraphError::no_more_files;
+    File *file = nextFile(inGroup);
+    if (!file)
+      return;
     switch (file->kind()) {
     case File::kindObject:
       if (inGroup)
@@ -446,8 +443,7 @@ void Resolver::removeCoalescedAwayAtoms() {
 }
 
 bool Resolver::resolve() {
-  if (!resolveUndefines())
-    return false;
+  resolveUndefines();
   updateReferences();
   deadStripOptimize();
   if (checkUndefines())

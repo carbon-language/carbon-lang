@@ -54,14 +54,14 @@ public:
   }
 
   StringRef getNext() {
-    ErrorOr<File &> file = _graph->getNextFile();
-    EXPECT_TRUE(!file.getError());
-    return file.get().path();
+    File *file = _graph->getNextFile();
+    EXPECT_TRUE(file);
+    return file->path();
   }
 
   void expectEnd() {
-    ErrorOr<File &> file = _graph->getNextFile();
-    EXPECT_EQ(file.getError(), InputGraphError::no_more_files);
+    File *file = _graph->getNextFile();
+    EXPECT_TRUE(file == nullptr);
   }
 
 protected:
