@@ -4802,7 +4802,7 @@ bool Sema::ProcessAccessDeclAttributeList(AccessSpecDecl *ASDecl,
                                           const AttributeList *AttrList) {
   for (const AttributeList* l = AttrList; l; l = l->getNext()) {
     if (l->getKind() == AttributeList::AT_Annotate) {
-      handleAnnotateAttr(*this, ASDecl, *l);
+      ProcessDeclAttribute(*this, nullptr, ASDecl, *l, l->isCXX11Attribute());
     } else {
       Diag(l->getLoc(), diag::err_only_annotate_after_access_spec);
       return true;

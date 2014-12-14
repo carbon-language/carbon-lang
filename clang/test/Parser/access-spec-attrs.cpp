@@ -5,6 +5,7 @@ public __attribute__((unavailable)): // expected-error {{access specifier can on
   void foo();
 private __attribute__((annotate("foobar"))):
     void bar();
+private __attribute__((annotate())): // expected-error {{'annotate' attribute takes one argument}}
 };
 
 void f(X x) {
