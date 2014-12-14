@@ -1217,7 +1217,8 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
                                           CAT->getElementType(), CGF);
 
     // Emit initializer elements.
-    llvm::Type *CommonElementType = nullptr;
+    llvm::Type *CommonElementType =
+        getTypes().ConvertType(CAT->getElementType());
     for (unsigned I = 0; I < NumElements; ++I) {
       llvm::Constant *C = Filler;
       if (I < NumInitElts)

@@ -1411,8 +1411,10 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     // anything here.
     if (!E->getType()->isVariableArrayType()) {
       assert(isa<llvm::PointerType>(V->getType()) && "Expected pointer");
-      assert(isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
-                                 ->getElementType()) &&
+      V = CGF.Builder.CreatePointerCast(
+          V, ConvertType(E->getType())->getPointerTo());
+
+      assert(isa<llvm::ArrayType>(V->getType()->getPointerElementType()) &&
              "Expected pointer to array");
       V = Builder.CreateStructGEP(V, 0, "arraydecay");
     }
