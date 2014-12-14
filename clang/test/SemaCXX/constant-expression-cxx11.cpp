@@ -1960,6 +1960,7 @@ namespace PR21786 {
   extern void (*start[])();
   extern void (*end[])();
   static_assert(&start != &end, ""); // expected-error {{constant expression}}
+  static_assert(&start != nullptr, "");
 
   struct Foo;
   struct Bar {
@@ -1967,7 +1968,7 @@ namespace PR21786 {
     static const Foo y;
   };
   static_assert(&Bar::x != nullptr, "");
-  static_assert(&Bar::x != &Bar::y, ""); // expected-error {{constant expression}}
+  static_assert(&Bar::x != &Bar::y, "");
 }
 
 namespace PR21859 {

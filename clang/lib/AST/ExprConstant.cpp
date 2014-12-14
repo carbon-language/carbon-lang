@@ -1426,7 +1426,9 @@ static bool isZeroSized(const LValue &Value) {
   const ValueDecl *Decl = GetLValueBaseDecl(Value);
   if (Decl && isa<VarDecl>(Decl)) {
     QualType Ty = Decl->getType();
-    return Ty->isIncompleteType() || Decl->getASTContext().getTypeSize(Ty) == 0;
+    if (Ty->isArrayType())
+      return Ty->isIncompleteType() ||
+             Decl->getASTContext().getTypeSize(Ty) == 0;
   }
   return false;
 }
