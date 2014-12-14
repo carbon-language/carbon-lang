@@ -1269,6 +1269,9 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
                E->placement_arg_end(), /* CalleeDecl */ nullptr,
                /*ParamsToSkip*/ 1);
 
+  if (auto *DI = getDebugInfo())
+    DI->EmitLocation(Builder, E->getLocStart());
+
   // Emit the allocation call.  If the allocator is a global placement
   // operator, just "inline" it directly.
   RValue RV;

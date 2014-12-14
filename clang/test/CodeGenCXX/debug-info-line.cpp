@@ -99,12 +99,13 @@ void f9(int i) {
       src1)[src2()];
 }
 
-void *operator new(decltype(sizeof(1)), void *);
+inline void *operator new(decltype(sizeof(1)), void *p) noexcept { return p; }
 
 // CHECK-LABEL: define
 void f10() {
   void *void_src();
-  ( // CHECK: store {{.*}} !dbg [[DBG_F10:!.*]]
+  ( // CHECK: icmp {{.*}} !dbg [[DBG_F10_ICMP:.*]]
+    // CHECK: store {{.*}} !dbg [[DBG_F10_STORE:!.*]]
 #line 1100
       new (void_src()) int(src()));
 }
@@ -121,4 +122,5 @@ void f10() {
 // CHECK: [[DBG_F7]] = metadata !{i32 800,
 // CHECK: [[DBG_F8]] = metadata !{i32 900,
 // CHECK: [[DBG_F9]] = metadata !{i32 1000,
-// CHECK: [[DBG_F10]] = metadata !{i32 1100,
+// CHECK: [[DBG_F10_ICMP]] = metadata !{i32 1100,
+// CHECK: [[DBG_F10_STORE]] = metadata !{i32 1100,
