@@ -11,10 +11,6 @@
 
 namespace lld {
 
-bool isCOFFLibraryFileExtension(StringRef path) {
-  return path.endswith_lower(".lib") || path.endswith_lower(".imp");
-}
-
 /// \brief Parse the input file to lld::File.
 std::error_code PECOFFFileNode::parse(const LinkingContext &ctx,
                                       raw_ostream &diagnostics) {

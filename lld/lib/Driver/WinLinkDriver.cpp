@@ -282,10 +282,14 @@ static bool parseManifest(StringRef option, bool &enable, bool &embed,
   return true;
 }
 
-StringRef getObjectPath(PECOFFLinkingContext &ctx, StringRef path) {
+static bool isLibraryFile(StringRef path) {
+  return path.endswith_lower(".lib") || path.endswith_lower(".imp");
+}
+
+static StringRef getObjectPath(PECOFFLinkingContext &ctx, StringRef path) {
   std::string result;
-  if (isCOFFLibraryFileExtension(path)) {
-    result =ctx.searchLibraryFile(path);
+  if (isLibraryFile(path)) {
+    result = ctx.searchLibraryFile(path);
   } else if (llvm::sys::path::extension(path).empty()) {
     result = path.str() + ".obj";
   } else {
@@ -294,8 +298,8 @@ StringRef getObjectPath(PECOFFLinkingContext &ctx, StringRef path) {
   return ctx.allocate(result);
 }
 
-StringRef getLibraryPath(PECOFFLinkingContext &ctx, StringRef path) {
-  std::string result = isCOFFLibraryFileExtension(path)
+static StringRef getLibraryPath(PECOFFLinkingContext &ctx, StringRef path) {
+  std::string result = isLibraryFile(path)
       ? ctx.searchLibraryFile(path)
       : ctx.searchLibraryFile(path.str() + ".lib");
   return ctx.allocate(result);
@@ -1358,7 +1362,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Prepare objects to add them to input graph.
   for (StringRef path : inputFiles) {
     path = ctx.allocate(path);
-    if (isCOFFLibraryFileExtension(path)) {
+    if (isLibraryFile(path)) {
       libraries.push_back(std::unique_ptr<FileNode>(
           new PECOFFLibraryNode(ctx, getLibraryPath(ctx, path))));
     } else {

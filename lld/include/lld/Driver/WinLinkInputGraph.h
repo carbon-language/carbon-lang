@@ -23,8 +23,6 @@
 
 namespace lld {
 
-extern bool isCOFFLibraryFileExtension(StringRef path);
-
 /// \brief Represents a PECOFF File
 class PECOFFFileNode : public FileNode {
 public:
