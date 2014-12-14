@@ -902,24 +902,6 @@ unsigned ContinuationIndenter::addMultilineToken(const FormatToken &Current,
   return 0;
 }
 
-static bool getRawStringLiteralPrefixPostfix(StringRef Text, StringRef &Prefix,
-                                             StringRef &Postfix) {
-  if (Text.startswith(Prefix = "R\"") || Text.startswith(Prefix = "uR\"") ||
-      Text.startswith(Prefix = "UR\"") || Text.startswith(Prefix = "u8R\"") ||
-      Text.startswith(Prefix = "LR\"")) {
-    size_t ParenPos = Text.find('(');
-    if (ParenPos != StringRef::npos) {
-      StringRef Delimiter =
-          Text.substr(Prefix.size(), ParenPos - Prefix.size());
-      Prefix = Text.substr(0, ParenPos + 1);
-      Postfix = Text.substr(Text.size() - 2 - Delimiter.size());
-      return Postfix.front() == ')' && Postfix.back() == '"' &&
-             Postfix.substr(1).startswith(Delimiter);
-    }
-  }
-  return false;
-}
-
 unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
                                                     LineState &State,
                                                     bool DryRun) {
@@ -977,8 +959,7 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
           Text.startswith(Prefix = "u\"") || Text.startswith(Prefix = "U\"") ||
           Text.startswith(Prefix = "u8\"") ||
           Text.startswith(Prefix = "L\""))) ||
-        (Text.startswith(Prefix = "_T(\"") && Text.endswith(Postfix = "\")")) ||
-        getRawStringLiteralPrefixPostfix(Text, Prefix, Postfix)) {
+        (Text.startswith(Prefix = "_T(\"") && Text.endswith(Postfix = "\")"))) {
       Token.reset(new BreakableStringLiteral(
           Current, State.Line->Level, StartColumn, Prefix, Postfix,
           State.Line->InPPDirective, Encoding, Style));
