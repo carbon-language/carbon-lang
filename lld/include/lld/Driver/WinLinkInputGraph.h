@@ -31,8 +31,6 @@ public:
   PECOFFFileNode(PECOFFLinkingContext &ctx, StringRef path)
       : FileNode(path), _ctx(ctx), _parsed(false) {}
 
-  ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
-
   /// \brief Parse the input file to lld::File.
   std::error_code parse(const LinkingContext &ctx,
                         raw_ostream &diagnostics) override;
@@ -49,8 +47,6 @@ class PECOFFLibraryNode : public PECOFFFileNode {
 public:
   PECOFFLibraryNode(PECOFFLinkingContext &ctx, StringRef path)
       : PECOFFFileNode(ctx, path) {}
-
-  ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 };
 
 } // namespace lld

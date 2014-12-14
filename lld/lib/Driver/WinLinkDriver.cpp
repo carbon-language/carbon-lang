@@ -282,6 +282,25 @@ static bool parseManifest(StringRef option, bool &enable, bool &embed,
   return true;
 }
 
+StringRef getObjectPath(PECOFFLinkingContext &ctx, StringRef path) {
+  std::string result;
+  if (isCOFFLibraryFileExtension(path)) {
+    result =ctx.searchLibraryFile(path);
+  } else if (llvm::sys::path::extension(path).empty()) {
+    result = path.str() + ".obj";
+  } else {
+    result = path;
+  }
+  return ctx.allocate(result);
+}
+
+StringRef getLibraryPath(PECOFFLinkingContext &ctx, StringRef path) {
+  std::string result = isCOFFLibraryFileExtension(path)
+      ? ctx.searchLibraryFile(path)
+      : ctx.searchLibraryFile(path.str() + ".lib");
+  return ctx.allocate(result);
+}
+
 // Returns true if the given file is a Windows resource file.
 static bool isResoruceFile(StringRef path) {
   llvm::sys::fs::file_magic fileType;
@@ -1340,9 +1359,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   for (StringRef path : inputFiles) {
     path = ctx.allocate(path);
     if (isCOFFLibraryFileExtension(path)) {
-      libraries.push_back(std::unique_ptr<FileNode>(new PECOFFLibraryNode(ctx, path)));
+      libraries.push_back(std::unique_ptr<FileNode>(
+          new PECOFFLibraryNode(ctx, getLibraryPath(ctx, path))));
     } else {
-      files.push_back(std::unique_ptr<FileNode>(new PECOFFFileNode(ctx, path)));
+      files.push_back(std::unique_ptr<FileNode>(
+          new PECOFFFileNode(ctx, getObjectPath(ctx, path))));
     }
   }
 
@@ -1365,7 +1386,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     for (const StringRef path : defaultLibs)
       if (!ctx.hasNoDefaultLib(path))
         libraries.push_back(std::unique_ptr<FileNode>(
-                              new PECOFFLibraryNode(ctx, ctx.allocate(path.lower()))));
+            new PECOFFLibraryNode(ctx, getLibraryPath(ctx, path.lower()))));
 
   if (files.empty() && !isReadingDirectiveSection) {
     diag << "No input files\n";
