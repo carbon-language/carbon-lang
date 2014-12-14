@@ -8127,6 +8127,10 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
     }
   }
 
+  // The operands of a select that must be truncated when the select is
+  // promoted because the operand is actually part of the to-be-promoted set.
+  DenseMap<SDNode *, EVT> SelectTruncOp[2];
+
   // Make sure that this is a self-contained cluster of operations (which
   // is not quite the same thing as saying that everything has only one
   // use).
@@ -8141,18 +8145,19 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
       if (User != N && !Visited.count(User))
         return SDValue();
 
-      // Make sure that we're not going to promote the non-output-value
-      // operand(s) or SELECT or SELECT_CC.
-      // FIXME: Although we could sometimes handle this, and it does occur in
-      // practice that one of the condition inputs to the select is also one of
-      // the outputs, we currently can't deal with this.
+      // If we're going to promote the non-output-value operand(s) or SELECT or
+      // SELECT_CC, record them for truncation.
       if (User->getOpcode() == ISD::SELECT) {
         if (User->getOperand(0) == Inputs[i])
-          return SDValue();
+          SelectTruncOp[0].insert(std::make_pair(User,
+                                    User->getOperand(0).getValueType()));
       } else if (User->getOpcode() == ISD::SELECT_CC) {
-        if (User->getOperand(0) == Inputs[i] ||
-            User->getOperand(1) == Inputs[i])
-          return SDValue();
+        if (User->getOperand(0) == Inputs[i])
+          SelectTruncOp[0].insert(std::make_pair(User,
+                                    User->getOperand(0).getValueType()));
+        if (User->getOperand(1) == Inputs[i])
+          SelectTruncOp[1].insert(std::make_pair(User,
+                                    User->getOperand(1).getValueType()));
       }
     }
   }
@@ -8165,18 +8170,19 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
       if (User != N && !Visited.count(User))
         return SDValue();
 
-      // Make sure that we're not going to promote the non-output-value
-      // operand(s) or SELECT or SELECT_CC.
-      // FIXME: Although we could sometimes handle this, and it does occur in
-      // practice that one of the condition inputs to the select is also one of
-      // the outputs, we currently can't deal with this.
+      // If we're going to promote the non-output-value operand(s) or SELECT or
+      // SELECT_CC, record them for truncation.
       if (User->getOpcode() == ISD::SELECT) {
         if (User->getOperand(0) == PromOps[i])
-          return SDValue();
+          SelectTruncOp[0].insert(std::make_pair(User,
+                                    User->getOperand(0).getValueType()));
       } else if (User->getOpcode() == ISD::SELECT_CC) {
-        if (User->getOperand(0) == PromOps[i] ||
-            User->getOperand(1) == PromOps[i])
-          return SDValue();
+        if (User->getOperand(0) == PromOps[i])
+          SelectTruncOp[0].insert(std::make_pair(User,
+                                    User->getOperand(0).getValueType()));
+        if (User->getOperand(1) == PromOps[i])
+          SelectTruncOp[1].insert(std::make_pair(User,
+                                    User->getOperand(1).getValueType()));
       }
     }
   }
@@ -8257,6 +8263,19 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
       continue;
     }
 
+    // For SELECT and SELECT_CC nodes, we do a similar check for any
+    // to-be-promoted comparison inputs.
+    if (PromOp.getOpcode() == ISD::SELECT ||
+        PromOp.getOpcode() == ISD::SELECT_CC) {
+      if ((SelectTruncOp[0].count(PromOp.getNode()) &&
+           PromOp.getOperand(0).getValueType() != N->getValueType(0)) ||
+          (SelectTruncOp[1].count(PromOp.getNode()) &&
+           PromOp.getOperand(1).getValueType() != N->getValueType(0))) {
+        PromOps.insert(PromOps.begin(), PromOp);
+        continue;
+      }
+    }
+
     SmallVector<SDValue, 3> Ops(PromOp.getNode()->op_begin(),
                                 PromOp.getNode()->op_end());
 
@@ -8273,6 +8292,18 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
         Ops[C+i] = DAG.getZExtOrTrunc(Ops[C+i], dl, N->getValueType(0));
       else
         Ops[C+i] = DAG.getAnyExtOrTrunc(Ops[C+i], dl, N->getValueType(0));
+    }
+
+    // If we've promoted the comparison inputs of a SELECT or SELECT_CC,
+    // truncate them again to the original value type.
+    if (PromOp.getOpcode() == ISD::SELECT ||
+        PromOp.getOpcode() == ISD::SELECT_CC) {
+      auto SI0 = SelectTruncOp[0].find(PromOp.getNode());
+      if (SI0 != SelectTruncOp[0].end())
+        Ops[0] = DAG.getNode(ISD::TRUNCATE, dl, SI0->second, Ops[0]);
+      auto SI1 = SelectTruncOp[1].find(PromOp.getNode());
+      if (SI1 != SelectTruncOp[1].end())
+        Ops[1] = DAG.getNode(ISD::TRUNCATE, dl, SI1->second, Ops[1]);
     }
 
     DAG.ReplaceAllUsesOfValueWith(PromOp,
