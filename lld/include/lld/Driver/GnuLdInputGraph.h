@@ -74,19 +74,6 @@ public:
   /// \brief Parse the input file to lld::File.
   std::error_code parse(const LinkingContext &, raw_ostream &) override;
 
-  /// \brief This is used by Group Nodes, when there is a need to reset the
-  /// the file to be processed next. When handling a group node that contains
-  /// Input elements, if the group node has to be reprocessed, the linker needs
-  /// to start processing files as part of the input element from beginning.
-  /// Reset the next file index to 0 only if the node is an archive library.
-  void resetNextIndex() override {
-    auto kind = _files[0]->kind();
-    if (kind == File::kindSharedLibrary ||
-        (kind == File::kindArchiveLibrary && !_attributes._isWholeArchive)) {
-      _nextFileIndex = 0;
-    }
-  }
-
 private:
   llvm::BumpPtrAllocator _alloc;
   const ELFLinkingContext &_elfLinkingContext;
@@ -124,11 +111,6 @@ public:
       result.push_back(std::move(elt));
     return true;
   }
-
-  // Linker Script will be expanded and replaced with other elements
-  // by InputGraph::normalize(), so at link time it does not exist in
-  // the tree. No need to handle this message.
-  void resetNextIndex() override {}
 
 private:
   InputGraph::InputElementVectorT _expandElements;

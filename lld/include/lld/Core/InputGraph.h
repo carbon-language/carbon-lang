@@ -127,9 +127,6 @@ public:
   /// Get the next file to be processed by the resolver
   virtual ErrorOr<File &> getNextFile() = 0;
 
-  /// \brief Reset the next index
-  virtual void resetNextIndex() = 0;
-
   /// Get the elements that we want to expand with.
   virtual bool getReplacements(InputGraph::InputElementVectorT &) {
     return false;
@@ -159,8 +156,6 @@ public:
   ErrorOr<File &> getNextFile() override {
     llvm_unreachable("shouldn't be here.");
   }
-
-  void resetNextIndex() override {}
 
 private:
   int _size;
@@ -206,10 +201,6 @@ public:
     for (std::unique_ptr<File> &ai : files)
       _files.push_back(std::move(ai));
   }
-
-  /// \brief Reset the file index if the resolver needs to process
-  /// the node again.
-  void resetNextIndex() override { _nextFileIndex = 0; }
 
   bool getReplacements(InputGraph::InputElementVectorT &result) override;
 
