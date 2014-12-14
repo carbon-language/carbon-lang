@@ -36,3 +36,5 @@ int foo() {
   y a = x;
   return x + a - z;
 }
+
+<<<<<<<>>>>>>> // expected-error {{expected identifier}}

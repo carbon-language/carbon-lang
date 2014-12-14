@@ -2588,8 +2588,8 @@ static const char *FindConflictEnd(const char *CurPtr, const char *BufferEnd,
   size_t Pos = RestOfBuffer.find(Terminator);
   while (Pos != StringRef::npos) {
     // Must occur at start of line.
-    if (RestOfBuffer[Pos-1] != '\r' &&
-        RestOfBuffer[Pos-1] != '\n') {
+    if (Pos == 0 ||
+        (RestOfBuffer[Pos - 1] != '\r' && RestOfBuffer[Pos - 1] != '\n')) {
       RestOfBuffer = RestOfBuffer.substr(Pos+TermLen);
       Pos = RestOfBuffer.find(Terminator);
       continue;
