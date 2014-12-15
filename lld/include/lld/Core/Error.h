@@ -58,19 +58,6 @@ inline std::error_code make_error_code(LinkerScriptReaderError e) {
   return std::error_code(static_cast<int>(e), LinkerScriptReaderCategory());
 }
 
-/// \brief Errors returned by Reader.
-const std::error_category &ReaderErrorCategory();
-
-enum class ReaderError {
-  success = 0,
-  unknown_file_format = 1
-};
-
-inline std::error_code make_error_code(ReaderError e) {
-  return std::error_code(static_cast<int>(e), ReaderErrorCategory());
-}
-
-
 /// Creates an error_code object that has associated with it an arbitrary
 /// error messsage.  The value() of the error_code will always be non-zero
 /// but its value is meaningless. The messsage() will be (a copy of) the 
@@ -88,7 +75,6 @@ struct is_error_code_enum<lld::NativeReaderError> : std::true_type {};
 template <> struct is_error_code_enum<lld::YamlReaderError> : std::true_type {};
 template <>
 struct is_error_code_enum<lld::LinkerScriptReaderError> : std::true_type {};
-template <> struct is_error_code_enum<lld::ReaderError> : std::true_type {};
 }
 
 #endif

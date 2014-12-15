@@ -97,34 +97,8 @@ const std::error_category &lld::LinkerScriptReaderCategory() {
   return o;
 }
 
-class _ReaderErrorCategory : public std::error_category {
-public:
-  const char *name() const LLVM_NOEXCEPT override {
-    return "lld.inputGraph.parse";
-  }
-
-  std::string message(int ev) const override {
-    switch (static_cast<ReaderError>(ev)) {
-    case ReaderError::success:
-      return "Success";
-    case ReaderError::unknown_file_format:
-      return "File format for the input file is not recognized by this flavor";
-    }
-    llvm_unreachable("An enumerator of ReaderError does not have a "
-                     "message defined.");
-  }
-};
-
-const std::error_category &lld::ReaderErrorCategory() {
-  static _ReaderErrorCategory i;
-  return i;
-}
-
-
-
 
 namespace lld {
-
 
 /// Temporary class to enable make_dynamic_error_code() until
 /// llvm::ErrorOr<> is updated to work with error encapsulations 

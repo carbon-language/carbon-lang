@@ -123,9 +123,8 @@ getFileMagic(StringRef path, llvm::sys::fs::file_magic &magic) {
   case llvm::sys::fs::file_magic::unknown:
     return std::error_code();
   default:
-    break;
+    return make_dynamic_error_code(StringRef("unknown type of object file"));
   }
-  return make_error_code(ReaderError::unknown_file_format);
 }
 
 // Parses an argument of --defsym=<sym>=<number>
