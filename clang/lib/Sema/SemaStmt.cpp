@@ -730,9 +730,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   assert(SS == getCurFunction()->SwitchStack.back() &&
          "switch stack missing push/pop!");
 
+  getCurFunction()->SwitchStack.pop_back();
+
   if (!BodyStmt) return StmtError();
   SS->setBody(BodyStmt, SwitchLoc);
-  getCurFunction()->SwitchStack.pop_back();
 
   Expr *CondExpr = SS->getCond();
   if (!CondExpr) return StmtError();

@@ -220,3 +220,12 @@ bool bar0() {
   case bar5: ;  // expected-error{{use of undeclared identifier 'bar5'}}
 }
 }
+
+namespace pr21841 {
+void fn1() {
+  switch (0)
+    switch (0  // expected-note{{to match this '('}}
+    {  // expected-error{{expected ')'}}
+    }
+} // expected-error{{expected statement}}
+}
