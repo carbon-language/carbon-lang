@@ -276,6 +276,24 @@ public:
             a value that represents the variable expression path'''
             return self.GetValueForVariablePath(var_expr_path)
 
+        def get_registers_access(self):
+            class registers_access(object):
+                '''A helper object that exposes a flattened view of registers, masking away the notion of register sets for easy scripting.'''
+                def __init__(self, regs):
+                    self.regs = regs
+
+                def __getitem__(self, key):
+                    if type(key) is str:
+                        for i in range(0,len(self.regs)):
+                            rs = self.regs[i]
+                            for j in range (0,rs.num_children):
+                                reg = rs.GetChildAtIndex(j)
+                                if reg.name == key: return reg
+                    else:
+                        return lldb.SBValue()
+
+            return registers_access(self.registers)
+
         __swig_getmethods__["pc"] = GetPC
         __swig_setmethods__["pc"] = SetPC
         if _newclass: pc = property(GetPC, SetPC)
@@ -345,6 +363,12 @@ public:
 
         __swig_getmethods__["regs"] = GetRegisters
         if _newclass: regs = property(GetRegisters, None, doc='''A read only property that returns a list() that contains a collection of lldb.SBValue objects that represent the CPU registers for this stack frame.''')
+
+        __swig_getmethods__["register"] = get_registers_access
+        if _newclass: register = property(get_registers_access, None, doc='''A read only property that returns an helper object providing a flattened indexable view of the CPU registers for this stack frame.''')
+
+        __swig_getmethods__["reg"] = get_registers_access
+        if _newclass: reg = property(get_registers_access, None, doc='''A read only property that returns an helper object providing a flattened indexable view of the CPU registers for this stack frame''')
 
     %}
 };
