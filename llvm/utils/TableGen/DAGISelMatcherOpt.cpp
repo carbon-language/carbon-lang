@@ -511,11 +511,10 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
     Scope->resetChild(i, NewOptionsToMatch[i]);
 }
 
-Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher,
-                               const CodeGenDAGPatterns &CGP) {
-  std::unique_ptr<Matcher> MatcherPtr(TheMatcher);
+void
+llvm::OptimizeMatcher(std::unique_ptr<Matcher> &MatcherPtr,
+                      const CodeGenDAGPatterns &CGP) {
   ContractNodes(MatcherPtr, CGP);
   SinkPatternPredicates(MatcherPtr);
   FactorNodes(MatcherPtr);
-  return MatcherPtr.release();
 }

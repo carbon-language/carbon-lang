@@ -157,12 +157,12 @@ void DAGISelEmitter::run(raw_ostream &OS) {
     }
   }
 
-  Matcher *TheMatcher = new ScopeMatcher(PatternMatchers);
+  std::unique_ptr<Matcher> TheMatcher =
+    llvm::make_unique<ScopeMatcher>(PatternMatchers);
 
-  TheMatcher = OptimizeMatcher(TheMatcher, CGP);
+  OptimizeMatcher(TheMatcher, CGP);
   //Matcher->dump();
-  EmitMatcherTable(TheMatcher, CGP, OS);
-  delete TheMatcher;
+  EmitMatcherTable(TheMatcher.get(), CGP, OS);
 }
 
 namespace llvm {
