@@ -483,21 +483,22 @@ uint64_t AliasAnalysis::getTypeStoreSize(Type *Ty) {
 }
 
 /// canBasicBlockModify - Return true if it is possible for execution of the
-/// specified basic block to modify the value pointed to by Ptr.
+/// specified basic block to modify the location Loc.
 ///
 bool AliasAnalysis::canBasicBlockModify(const BasicBlock &BB,
                                         const Location &Loc) {
-  return canInstructionRangeModify(BB.front(), BB.back(), Loc);
+  return canInstructionRangeModRef(BB.front(), BB.back(), Loc, Mod);
 }
 
-/// canInstructionRangeModify - Return true if it is possible for the execution
-/// of the specified instructions to modify the value pointed to by Ptr.  The
-/// instructions to consider are all of the instructions in the range of [I1,I2]
-/// INCLUSIVE.  I1 and I2 must be in the same basic block.
-///
-bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
+/// canInstructionRangeModRef - Return true if it is possible for the
+/// execution of the specified instructions to mod\ref (according to the
+/// mode) the location Loc. The instructions to consider are all
+/// of the instructions in the range of [I1,I2] INCLUSIVE.
+/// I1 and I2 must be in the same basic block.  
+bool AliasAnalysis::canInstructionRangeModRef(const Instruction &I1,
                                               const Instruction &I2,
-                                              const Location &Loc) {
+                                              const Location &Loc,
+                                              const ModRefResult Mode) {
   assert(I1.getParent() == I2.getParent() &&
          "Instructions not in same basic block!");
   BasicBlock::const_iterator I = &I1;
@@ -505,7 +506,7 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
   ++E;  // Convert from inclusive to exclusive range.
 
   for (; I != E; ++I) // Check every instruction in range
-    if (getModRefInfo(I, Loc) & Mod)
+    if (getModRefInfo(I, Loc) & Mode)
       return true;
   return false;
 }
