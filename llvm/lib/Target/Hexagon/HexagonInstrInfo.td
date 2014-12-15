@@ -1783,6 +1783,52 @@ def M2_mpy_hh_s1: T_M2_mpy<0b11, 0, 0, 1, 0>;
 def M2_mpy_hh_s0: T_M2_mpy<0b11, 0, 0, 0, 0>;
 }
 
+//Rd=mpyu(Rs.[H|L],Rt.[H|L])[:<<1]
+let isCodeGenOnly = 0 in {
+def M2_mpyu_ll_s1: T_M2_mpy<0b00, 0, 0, 1, 1>;
+def M2_mpyu_ll_s0: T_M2_mpy<0b00, 0, 0, 0, 1>;
+def M2_mpyu_lh_s1: T_M2_mpy<0b01, 0, 0, 1, 1>;
+def M2_mpyu_lh_s0: T_M2_mpy<0b01, 0, 0, 0, 1>;
+def M2_mpyu_hl_s1: T_M2_mpy<0b10, 0, 0, 1, 1>;
+def M2_mpyu_hl_s0: T_M2_mpy<0b10, 0, 0, 0, 1>;
+def M2_mpyu_hh_s1: T_M2_mpy<0b11, 0, 0, 1, 1>;
+def M2_mpyu_hh_s0: T_M2_mpy<0b11, 0, 0, 0, 1>;
+}
+
+//Rd=mpy(Rs.[H|L],Rt.[H|L])[:<<1]:rnd
+let isCodeGenOnly = 0 in {
+def M2_mpy_rnd_ll_s1: T_M2_mpy <0b00, 0, 1, 1, 0>;
+def M2_mpy_rnd_ll_s0: T_M2_mpy <0b00, 0, 1, 0, 0>;
+def M2_mpy_rnd_lh_s1: T_M2_mpy <0b01, 0, 1, 1, 0>;
+def M2_mpy_rnd_lh_s0: T_M2_mpy <0b01, 0, 1, 0, 0>;
+def M2_mpy_rnd_hl_s1: T_M2_mpy <0b10, 0, 1, 1, 0>;
+def M2_mpy_rnd_hl_s0: T_M2_mpy <0b10, 0, 1, 0, 0>;
+def M2_mpy_rnd_hh_s1: T_M2_mpy <0b11, 0, 1, 1, 0>;
+def M2_mpy_rnd_hh_s0: T_M2_mpy <0b11, 0, 1, 0, 0>;
+}
+
+//Rd=mpy(Rs.[H|L],Rt.[H|L])[:<<1][:sat]
+//Rd=mpy(Rs.[H|L],Rt.[H|L])[:<<1][:rnd][:sat]
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  def M2_mpy_sat_ll_s1: T_M2_mpy <0b00, 1, 0, 1, 0>;
+  def M2_mpy_sat_ll_s0: T_M2_mpy <0b00, 1, 0, 0, 0>;
+  def M2_mpy_sat_lh_s1: T_M2_mpy <0b01, 1, 0, 1, 0>;
+  def M2_mpy_sat_lh_s0: T_M2_mpy <0b01, 1, 0, 0, 0>;
+  def M2_mpy_sat_hl_s1: T_M2_mpy <0b10, 1, 0, 1, 0>;
+  def M2_mpy_sat_hl_s0: T_M2_mpy <0b10, 1, 0, 0, 0>;
+  def M2_mpy_sat_hh_s1: T_M2_mpy <0b11, 1, 0, 1, 0>;
+  def M2_mpy_sat_hh_s0: T_M2_mpy <0b11, 1, 0, 0, 0>;
+
+  def M2_mpy_sat_rnd_ll_s1: T_M2_mpy <0b00, 1, 1, 1, 0>;
+  def M2_mpy_sat_rnd_ll_s0: T_M2_mpy <0b00, 1, 1, 0, 0>;
+  def M2_mpy_sat_rnd_lh_s1: T_M2_mpy <0b01, 1, 1, 1, 0>;
+  def M2_mpy_sat_rnd_lh_s0: T_M2_mpy <0b01, 1, 1, 0, 0>;
+  def M2_mpy_sat_rnd_hl_s1: T_M2_mpy <0b10, 1, 1, 1, 0>;
+  def M2_mpy_sat_rnd_hl_s0: T_M2_mpy <0b10, 1, 1, 0, 0>;
+  def M2_mpy_sat_rnd_hh_s1: T_M2_mpy <0b11, 1, 1, 1, 0>;
+  def M2_mpy_sat_rnd_hh_s0: T_M2_mpy <0b11, 1, 1, 0, 0>;
+}
+
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 8 in
