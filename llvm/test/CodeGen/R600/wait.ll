@@ -41,5 +41,5 @@ attributes #0 = { "ShaderType"="1" }
 attributes #1 = { noduplicate nounwind }
 attributes #2 = { nounwind readnone }
 
-!0 = metadata !{metadata !1, metadata !1, i64 0, i32 1}
-!1 = metadata !{metadata !"const", null}
+!0 = !{!1, !1, i64 0, i32 1}
+!1 = !{!"const", null}

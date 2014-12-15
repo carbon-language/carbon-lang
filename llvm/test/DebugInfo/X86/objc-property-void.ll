@@ -56,9 +56,9 @@ entry:
   %self.addr = alloca %0*, align 8
   %_cmd.addr = alloca i8*, align 8
   store %0* %self, %0** %self.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%0** %self.addr}, metadata !24, metadata !{metadata !"0x102"}), !dbg !26
+  call void @llvm.dbg.declare(metadata %0** %self.addr, metadata !24, metadata !{!"0x102"}), !dbg !26
   store i8* %_cmd, i8** %_cmd.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %_cmd.addr}, metadata !27, metadata !{metadata !"0x102"}), !dbg !26
+  call void @llvm.dbg.declare(metadata i8** %_cmd.addr, metadata !27, metadata !{!"0x102"}), !dbg !26
   ret void, !dbg !29
 }
 
@@ -72,33 +72,33 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18, !19, !20, !21, !22}
 !llvm.ident = !{!23}
 
-!0 = metadata !{metadata !"0x11\0016\00\000\00\002\00\000", metadata !1, metadata !2, metadata !3, metadata !9, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [] [DW_LANG_ObjC]
-!1 = metadata !{metadata !"-", metadata !""}
-!2 = metadata !{}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x13\00Foo\001\000\008\000\00512\0016", metadata !5, metadata !6, null, metadata !7, null, null, null} ; [ DW_TAG_structure_type ] [Foo] [line 1, size 0, align 8, offset 0] [def] [from ]
-!5 = metadata !{metadata !"<stdin>", metadata !""}
-!6 = metadata !{metadata !"0x29", metadata !5}          ; [ DW_TAG_file_type ] []
-!7 = metadata !{metadata !8}
-!8 = metadata !{metadata !"0x4200\00foo\002\00\00\002117", metadata !6, null} ; [ DW_TAG_APPLE_property ] [foo] [line 2, properties 2117]
-!9 = metadata !{metadata !10}
-!10 = metadata !{metadata !"0x2e\00-[Foo foo]\00-[Foo foo]\00\005\001\001\000\006\00256\000\005", metadata !5, metadata !6, metadata !11, null, void (%0*, i8*)* @"\01-[Foo foo]", null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 5] [local] [def] [-[Foo foo]]
-!11 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!12 = metadata !{null, metadata !13, metadata !14}
-!13 = metadata !{metadata !"0xf\00\000\0064\0064\000\001088", null, null, metadata !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from Foo]
-!14 = metadata !{metadata !"0x16\00SEL\005\000\000\000\0064", metadata !5, null, metadata !15} ; [ DW_TAG_typedef ] [SEL] [line 5, size 0, align 0, offset 0] [artificial] [from ]
-!15 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !16} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_selector]
-!16 = metadata !{metadata !"0x13\00objc_selector\000\000\000\000\004\000", metadata !1, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [objc_selector] [line 0, size 0, align 0, offset 0] [decl] [from ]
-!17 = metadata !{i32 1, metadata !"Objective-C Version", i32 2}
-!18 = metadata !{i32 1, metadata !"Objective-C Image Info Version", i32 0}
-!19 = metadata !{i32 1, metadata !"Objective-C Image Info Section", metadata !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
-!20 = metadata !{i32 4, metadata !"Objective-C Garbage Collection", i32 0}
-!21 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
-!22 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!23 = metadata !{metadata !""}
-!24 = metadata !{metadata !"0x101\00self\0016777216\001088", metadata !10, null, metadata !25} ; [ DW_TAG_arg_variable ] [self] [line 0]
-!25 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from Foo]
-!26 = metadata !{i32 0, i32 0, metadata !10, null}
-!27 = metadata !{metadata !"0x101\00_cmd\0033554432\0064", metadata !10, null, metadata !28} ; [ DW_TAG_arg_variable ] [_cmd] [line 0]
-!28 = metadata !{metadata !"0x16\00SEL\005\000\000\000\000", metadata !5, null, metadata !15} ; [ DW_TAG_typedef ] [SEL] [line 5, size 0, align 0, offset 0] [from ]
-!29 = metadata !{i32 5, i32 0, metadata !10, null}
+!0 = !{!"0x11\0016\00\000\00\002\00\000", !1, !2, !3, !9, !2, !2} ; [ DW_TAG_compile_unit ] [] [DW_LANG_ObjC]
+!1 = !{!"-", !""}
+!2 = !{}
+!3 = !{!4}
+!4 = !{!"0x13\00Foo\001\000\008\000\00512\0016", !5, !6, null, !7, null, null, null} ; [ DW_TAG_structure_type ] [Foo] [line 1, size 0, align 8, offset 0] [def] [from ]
+!5 = !{!"<stdin>", !""}
+!6 = !{!"0x29", !5}          ; [ DW_TAG_file_type ] []
+!7 = !{!8}
+!8 = !{!"0x4200\00foo\002\00\00\002117", !6, null} ; [ DW_TAG_APPLE_property ] [foo] [line 2, properties 2117]
+!9 = !{!10}
+!10 = !{!"0x2e\00-[Foo foo]\00-[Foo foo]\00\005\001\001\000\006\00256\000\005", !5, !6, !11, null, void (%0*, i8*)* @"\01-[Foo foo]", null, null, !2} ; [ DW_TAG_subprogram ] [line 5] [local] [def] [-[Foo foo]]
+!11 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!12 = !{null, !13, !14}
+!13 = !{!"0xf\00\000\0064\0064\000\001088", null, null, !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from Foo]
+!14 = !{!"0x16\00SEL\005\000\000\000\0064", !5, null, !15} ; [ DW_TAG_typedef ] [SEL] [line 5, size 0, align 0, offset 0] [artificial] [from ]
+!15 = !{!"0xf\00\000\0064\0064\000\000", null, null, !16} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_selector]
+!16 = !{!"0x13\00objc_selector\000\000\000\000\004\000", !1, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [objc_selector] [line 0, size 0, align 0, offset 0] [decl] [from ]
+!17 = !{i32 1, !"Objective-C Version", i32 2}
+!18 = !{i32 1, !"Objective-C Image Info Version", i32 0}
+!19 = !{i32 1, !"Objective-C Image Info Section", !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
+!20 = !{i32 4, !"Objective-C Garbage Collection", i32 0}
+!21 = !{i32 2, !"Dwarf Version", i32 2}
+!22 = !{i32 1, !"Debug Info Version", i32 2}
+!23 = !{!""}
+!24 = !{!"0x101\00self\0016777216\001088", !10, null, !25} ; [ DW_TAG_arg_variable ] [self] [line 0]
+!25 = !{!"0xf\00\000\0064\0064\000\000", null, null, !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from Foo]
+!26 = !{i32 0, i32 0, !10, null}
+!27 = !{!"0x101\00_cmd\0033554432\0064", !10, null, !28} ; [ DW_TAG_arg_variable ] [_cmd] [line 0]
+!28 = !{!"0x16\00SEL\005\000\000\000\000", !5, null, !15} ; [ DW_TAG_typedef ] [SEL] [line 5, size 0, align 0, offset 0] [from ]
+!29 = !{i32 5, i32 0, !10, null}

@@ -99,5 +99,5 @@ define i32 @s3() {
 
 
 !nvvm.annotations = !{!1, !2}
-!1 = metadata !{i64 addrspace(1)* @tex0, metadata !"texture", i32 1}
-!2 = metadata !{i64 addrspace(1)* @surf0, metadata !"surface", i32 1}
+!1 = !{i64 addrspace(1)* @tex0, !"texture", i32 1}
+!2 = !{i64 addrspace(1)* @surf0, !"surface", i32 1}

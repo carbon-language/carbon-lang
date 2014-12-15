@@ -37,4 +37,4 @@ exit:
 
 declare i1 @foo()
 
-!0 = metadata !{metadata !"branch_weights", i32 4294967295, i32 1}
+!0 = !{!"branch_weights", i32 4294967295, i32 1}

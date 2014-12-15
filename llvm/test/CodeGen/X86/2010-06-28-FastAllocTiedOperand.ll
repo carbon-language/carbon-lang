@@ -19,4 +19,4 @@ entry:
   ret i32 %asmresult
 }
 
-!0 = metadata !{i32 108}
+!0 = !{i32 108}

@@ -25,5 +25,5 @@ while.end:                                        ; preds = %while.body, %while.
 
 attributes #0 = { noinline nounwind }
 
-!0 = metadata !{}
+!0 = !{}
 

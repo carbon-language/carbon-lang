@@ -18,7 +18,7 @@
 define void @_Z3runv() nounwind uwtable {
 entry:
   %x = alloca i32, align 32
-  call void @llvm.dbg.declare(metadata !{i32* %x}, metadata !9, metadata !{metadata !"0x102"}), !dbg !12
+  call void @llvm.dbg.declare(metadata i32* %x, metadata !9, metadata !{!"0x102"}), !dbg !12
   ret void, !dbg !13
 }
 
@@ -27,17 +27,17 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!15}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.2 (trunk 155696:155697) (llvm/trunk 155696)\000\00\000\00\000", metadata !14, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{}
-!3 = metadata !{metadata !5}
-!5 = metadata !{metadata !"0x2e\00run\00run\00_Z3runv\001\000\001\000\006\00256\000\001", metadata !14, metadata !6, metadata !7, null, void ()* @_Z3runv, null, null, metadata !1} ; [ DW_TAG_subprogram ]
-!6 = metadata !{metadata !"0x29", metadata !14} ; [ DW_TAG_file_type ]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!8 = metadata !{null}
-!9 = metadata !{metadata !"0x100\00x\002\000", metadata !10, metadata !6, metadata !11} ; [ DW_TAG_auto_variable ]
-!10 = metadata !{metadata !"0xb\001\0012\000", metadata !14, metadata !5} ; [ DW_TAG_lexical_block ]
-!11 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
-!12 = metadata !{i32 2, i32 7, metadata !10, null}
-!13 = metadata !{i32 3, i32 1, metadata !10, null}
-!14 = metadata !{metadata !"test.cc", metadata !"/home/samsonov/debuginfo"}
-!15 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x11\004\00clang version 3.2 (trunk 155696:155697) (llvm/trunk 155696)\000\00\000\00\000", !14, !1, !1, !3, !1,  !1} ; [ DW_TAG_compile_unit ]
+!1 = !{}
+!3 = !{!5}
+!5 = !{!"0x2e\00run\00run\00_Z3runv\001\000\001\000\006\00256\000\001", !14, !6, !7, null, void ()* @_Z3runv, null, null, !1} ; [ DW_TAG_subprogram ]
+!6 = !{!"0x29", !14} ; [ DW_TAG_file_type ]
+!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !{null}
+!9 = !{!"0x100\00x\002\000", !10, !6, !11} ; [ DW_TAG_auto_variable ]
+!10 = !{!"0xb\001\0012\000", !14, !5} ; [ DW_TAG_lexical_block ]
+!11 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
+!12 = !{i32 2, i32 7, !10, null}
+!13 = !{i32 3, i32 1, !10, null}
+!14 = !{!"test.cc", !"/home/samsonov/debuginfo"}
+!15 = !{i32 1, !"Debug Info Version", i32 2}

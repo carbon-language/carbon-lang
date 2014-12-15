@@ -56,4 +56,4 @@ define %0* @test1() nounwind {
 
 declare %0* @foo()
 
-!0 = metadata !{}
+!0 = !{}

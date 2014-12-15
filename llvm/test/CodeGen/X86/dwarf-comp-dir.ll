@@ -7,15 +7,15 @@ target triple = "x86_64-unknown-linux-gnu"
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!5}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.1 (trunk 143523)\001\00\000\00\000", metadata !4, metadata !2, metadata !7, metadata !2, metadata !2, null} ; [ DW_TAG_compile_unit ]
-!2 = metadata !{}
-!3 = metadata !{metadata !"0x29", metadata !4} ; [ DW_TAG_file_type ]
-!4 = metadata !{metadata !"empty.c", metadata !"/home/nlewycky"}
-!6 = metadata !{metadata !"0x13\00foo\001\008\008\000\000\000", metadata !4, null, null, metadata !2, null, null, metadata !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo] [line 1, size 8, align 8, offset 0] [def] [from ]
-!7 = metadata !{metadata !6}
+!0 = !{!"0x11\0012\00clang version 3.1 (trunk 143523)\001\00\000\00\000", !4, !2, !7, !2, !2, null} ; [ DW_TAG_compile_unit ]
+!2 = !{}
+!3 = !{!"0x29", !4} ; [ DW_TAG_file_type ]
+!4 = !{!"empty.c", !"/home/nlewycky"}
+!6 = !{!"0x13\00foo\001\008\008\000\000\000", !4, null, null, !2, null, null, !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo] [line 1, size 8, align 8, offset 0] [def] [from ]
+!7 = !{!6}
 
 ; The important part of the following check is that dir = #0.
 ;                        Dir  Mod Time   File Len   File Name
 ;                        ---- ---------- ---------- ---------------------------
 ; CHECK: file_names[  1]    0 0x00000000 0x00000000 empty.c
-!5 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!5 = !{i32 1, !"Debug Info Version", i32 2}

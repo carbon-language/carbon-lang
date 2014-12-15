@@ -23,4 +23,4 @@ define void @foo(i32* %a, i32* %b) {
 
 
 !nvvm.annotations = !{!0}
-!0 = metadata !{void (i32*, i32*)* @foo, metadata !"kernel", i32 1}
+!0 = !{void (i32*, i32*)* @foo, !"kernel", i32 1}

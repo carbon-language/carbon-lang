@@ -3,7 +3,7 @@
 ; RUN: llvm-link %t.bc %t2.bc
 
 
-!21 = metadata !{i32 42, metadata !"foobar"}
+!21 = !{i32 42, !"foobar"}
 
 declare i8 @llvm.something(metadata %a)
 define void @foo() {

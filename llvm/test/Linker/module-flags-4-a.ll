@@ -4,7 +4,7 @@
 
 ; CHECK: linking module flags 'bar': does not have the required value
 
-!0 = metadata !{ i32 1, metadata !"foo", i32 37 }
-!1 = metadata !{ i32 1, metadata !"bar", i32 927 }
+!0 = !{ i32 1, !"foo", i32 37 }
+!1 = !{ i32 1, !"bar", i32 927 }
 
 !llvm.module.flags = !{ !0, !1 }

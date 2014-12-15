@@ -12,4 +12,4 @@ entry:
 ; CHECK-NEXT: %tobool = icmp ne i8 %a, 0
 ; CHECK-NEXT: ret i1 %tobool
 
-!0 = metadata !{i8 0, i8 2}
+!0 = !{i8 0, i8 2}

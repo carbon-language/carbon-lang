@@ -1,5 +1,5 @@
 ; Inject metadata to set the .gcno file location
-; RUN: echo '!19 = metadata !{metadata !"%/T/return-block.ll", metadata !0}' > %t1
+; RUN: echo '!19 = !{!"%/T/return-block.ll", !0}' > %t1
 ; RUN: cat %s %t1 > %t2
 ; RUN: opt -insert-gcov-profiling -disable-output %t2
 ; RUN: llvm-cov gcov -n -dump %T/return-block.gcno 2>&1 | FileCheck %s
@@ -38,25 +38,25 @@ attributes #2 = { nounwind }
 !llvm.module.flags = !{!11, !12}
 !llvm.ident = !{!13}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.6.0 (trunk 223182)\001\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !8, metadata !2} ; [ DW_TAG_compile_unit ] [return-block.c] [DW_LANG_C99]
-!1 = metadata !{metadata !".../llvm/test/Transforms/GCOVProfiling/return-block.ll", metadata !""}
-!2 = metadata !{}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00test\00test\00\005\000\001\000\000\000\001\005", metadata !1, metadata !5, metadata !6, null, void ()* @test, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 5] [def] [test]
-!5 = metadata !{metadata !"0x29", metadata !1}    ; [ DW_TAG_file_type ] [return-block.c]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", null, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{null}
-!8 = metadata !{metadata !9}
-!9 = metadata !{metadata !"0x34\00A\00A\00\003\000\001", null, metadata !5, metadata !10, i32* @A, null} ; [ DW_TAG_variable ] [A] [line 3] [def]
-!10 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!11 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!12 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
-!13 = metadata !{metadata !"clang version 3.6.0 (trunk 223182)"}
-!14 = metadata !{i32 6, i32 3, metadata !4, null}
-!15 = metadata !{i32 7, i32 7, metadata !4, null}
-!16 = metadata !{i32 8, i32 5, metadata !17, null}
-!17 = metadata !{metadata !"0xb\007\007\000", metadata !1, metadata !4} ; [ DW_TAG_lexical_block ] [return-block.c]
-!18 = metadata !{i32 9, i32 1, metadata !4, null}
+!0 = !{!"0x11\0012\00clang version 3.6.0 (trunk 223182)\001\00\000\00\001", !1, !2, !2, !3, !8, !2} ; [ DW_TAG_compile_unit ] [return-block.c] [DW_LANG_C99]
+!1 = !{!".../llvm/test/Transforms/GCOVProfiling/return-block.ll", !""}
+!2 = !{}
+!3 = !{!4}
+!4 = !{!"0x2e\00test\00test\00\005\000\001\000\000\000\001\005", !1, !5, !6, null, void ()* @test, null, null, !2} ; [ DW_TAG_subprogram ] [line 5] [def] [test]
+!5 = !{!"0x29", !1}    ; [ DW_TAG_file_type ] [return-block.c]
+!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{null}
+!8 = !{!9}
+!9 = !{!"0x34\00A\00A\00\003\000\001", null, !5, !10, i32* @A, null} ; [ DW_TAG_variable ] [A] [line 3] [def]
+!10 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!11 = !{i32 2, !"Dwarf Version", i32 4}
+!12 = !{i32 2, !"Debug Info Version", i32 2}
+!13 = !{!"clang version 3.6.0 (trunk 223182)"}
+!14 = !{i32 6, i32 3, !4, null}
+!15 = !{i32 7, i32 7, !4, null}
+!16 = !{i32 8, i32 5, !17, null}
+!17 = !{!"0xb\007\007\000", !1, !4} ; [ DW_TAG_lexical_block ] [return-block.c]
+!18 = !{i32 9, i32 1, !4, null}
 
 ; There should be no destination edges for block 1.
 ; CHECK: Block : 0 Counter : 0

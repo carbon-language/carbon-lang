@@ -31,7 +31,7 @@ attributes #0 = { nounwind "fp-contract-model"="standard" "relocation-model"="pi
 
 !opencl.kernels = !{!0, !1, !2, !3}
 
-!0 = metadata !{void (i32 addrspace(1)*, i32)* @loop_ge}
-!1 = metadata !{null}
-!2 = metadata !{null}
-!3 = metadata !{null}
+!0 = !{void (i32 addrspace(1)*, i32)* @loop_ge}
+!1 = !{null}
+!2 = !{null}
+!3 = !{null}

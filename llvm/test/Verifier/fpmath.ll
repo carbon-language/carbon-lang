@@ -22,10 +22,10 @@ define void @fpmath1(i32 %i, float %f, <2 x float> %g) {
   ret void
 }
 
-!0 = metadata !{ float 1.0 }
-!1 = metadata !{ }
-!2 = metadata !{ float 1.0, float 1.0 }
-!3 = metadata !{ i32 1 }
-!4 = metadata !{ float -1.0 }
-!5 = metadata !{ float 0.0 }
-!6 = metadata !{ float 0x7FFFFFFF00000000 }
+!0 = !{ float 1.0 }
+!1 = !{ }
+!2 = !{ float 1.0, float 1.0 }
+!3 = !{ i32 1 }
+!4 = !{ float -1.0 }
+!5 = !{ float 0.0 }
+!6 = !{ float 0x7FFFFFFF00000000 }

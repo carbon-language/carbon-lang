@@ -27,10 +27,10 @@ define void @func() #0 {
 entry:
   %y.addr.i = alloca i32, align 4
   %x = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %x}, metadata !15, metadata !{metadata !"0x102"}), !dbg !17
+  call void @llvm.dbg.declare(metadata i32* %x, metadata !15, metadata !{!"0x102"}), !dbg !17
   %0 = load volatile i32* %x, align 4, !dbg !18
   store i32 %0, i32* %y.addr.i, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %y.addr.i}, metadata !19, metadata !{metadata !"0x102"}), !dbg !20
+  call void @llvm.dbg.declare(metadata i32* %y.addr.i, metadata !19, metadata !{!"0x102"}), !dbg !20
   %1 = load i32* %y.addr.i, align 4, !dbg !21
   %tobool.i = icmp ne i32 %1, 0, !dbg !21
   %cond.i = select i1 %tobool.i, i32 4, i32 7, !dbg !21
@@ -48,26 +48,26 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!12, !13}
 !llvm.ident = !{!14}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.5.0 \000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/inline-seldag-test.c] [DW_LANG_C99]
-!1 = metadata !{metadata !"inline-seldag-test.c", metadata !"/tmp/dbginfo"}
-!2 = metadata !{}
-!3 = metadata !{metadata !4, metadata !8}
-!4 = metadata !{metadata !"0x2e\00func\00func\00\004\000\001\000\006\000\000\004", metadata !1, metadata !5, metadata !6, null, void ()* @func, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 4] [def] [func]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/inline-seldag-test.c]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{null}
-!8 = metadata !{metadata !"0x2e\00f\00f\00\001\000\001\000\006\00256\000\001", metadata !1, metadata !5, metadata !9, null, null, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 1] [def] [f]
-!9 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !10, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!10 = metadata !{metadata !11, metadata !11}
-!11 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!12 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!13 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!14 = metadata !{metadata !"clang version 3.5.0 "}
-!15 = metadata !{metadata !"0x100\00x\005\000", metadata !4, metadata !5, metadata !16} ; [ DW_TAG_auto_variable ] [x] [line 5]
-!16 = metadata !{metadata !"0x35\00\000\000\000\000\000", null, null, metadata !11} ; [ DW_TAG_volatile_type ] [line 0, size 0, align 0, offset 0] [from int]
-!17 = metadata !{i32 5, i32 0, metadata !4, null}
-!18 = metadata !{i32 6, i32 7, metadata !4, null}
-!19 = metadata !{metadata !"0x101\00y\0016777217\000", metadata !8, metadata !5, metadata !11} ; [ DW_TAG_arg_variable ] [y] [line 1]
-!20 = metadata !{i32 1, i32 0, metadata !8, metadata !18}
-!21 = metadata !{i32 2, i32 0, metadata !8, metadata !18}
-!22 = metadata !{i32 7, i32 0, metadata !4, null}
+!0 = !{!"0x11\0012\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/inline-seldag-test.c] [DW_LANG_C99]
+!1 = !{!"inline-seldag-test.c", !"/tmp/dbginfo"}
+!2 = !{}
+!3 = !{!4, !8}
+!4 = !{!"0x2e\00func\00func\00\004\000\001\000\006\000\000\004", !1, !5, !6, null, void ()* @func, null, null, !2} ; [ DW_TAG_subprogram ] [line 4] [def] [func]
+!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/inline-seldag-test.c]
+!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{null}
+!8 = !{!"0x2e\00f\00f\00\001\000\001\000\006\00256\000\001", !1, !5, !9, null, null, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [f]
+!9 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !10, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = !{!11, !11}
+!11 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!12 = !{i32 2, !"Dwarf Version", i32 4}
+!13 = !{i32 1, !"Debug Info Version", i32 2}
+!14 = !{!"clang version 3.5.0 "}
+!15 = !{!"0x100\00x\005\000", !4, !5, !16} ; [ DW_TAG_auto_variable ] [x] [line 5]
+!16 = !{!"0x35\00\000\000\000\000\000", null, null, !11} ; [ DW_TAG_volatile_type ] [line 0, size 0, align 0, offset 0] [from int]
+!17 = !{i32 5, i32 0, !4, null}
+!18 = !{i32 6, i32 7, !4, null}
+!19 = !{!"0x101\00y\0016777217\000", !8, !5, !11} ; [ DW_TAG_arg_variable ] [y] [line 1]
+!20 = !{i32 1, i32 0, !8, !18}
+!21 = !{i32 2, i32 0, !8, !18}
+!22 = !{i32 7, i32 0, !4, null}

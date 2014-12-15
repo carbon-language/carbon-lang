@@ -70,5 +70,5 @@ if.end17:                                         ; preds = %if.else13, %if.then
 ; Function Attrs: noduplicate nounwind
 declare void @llvm.cuda.syncthreads() #2
 
-!0 = metadata !{void (float*)* @foo, metadata !"kernel", i32 1}
-!1 = metadata !{null, metadata !"align", i32 8}
+!0 = !{void (float*)* @foo, !"kernel", i32 1}
+!1 = !{null, !"align", i32 8}

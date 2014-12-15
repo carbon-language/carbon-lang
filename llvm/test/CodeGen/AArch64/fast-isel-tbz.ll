@@ -291,5 +291,5 @@ bb2:
   ret i32 0
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 0, i32 2147483647}
-!1 = metadata !{metadata !"branch_weights", i32 2147483647, i32 0}
+!0 = !{!"branch_weights", i32 0, i32 2147483647}
+!1 = !{!"branch_weights", i32 2147483647, i32 0}

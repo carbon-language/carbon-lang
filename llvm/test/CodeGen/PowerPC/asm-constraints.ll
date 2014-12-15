@@ -40,5 +40,5 @@ attributes #1 = { nounwind }
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"clang version 3.6.0 (trunk 217557)"}
-!1 = metadata !{i32 67, i32 91, i32 110, i32 126}
+!0 = !{!"clang version 3.6.0 (trunk 217557)"}
+!1 = !{i32 67, i32 91, i32 110, i32 126}

@@ -23,7 +23,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 define void @foo() #0 {
 entry:
   %x = alloca %struct.__block_byref_x, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.__block_byref_x* %x}, metadata !12, metadata !22), !dbg !23
+  call void @llvm.dbg.declare(metadata %struct.__block_byref_x* %x, metadata !12, metadata !22), !dbg !23
   %byref.isa = getelementptr inbounds %struct.__block_byref_x* %x, i32 0, i32 0, !dbg !24
   store i8* null, i8** %byref.isa, !dbg !24
   %byref.forwarding = getelementptr inbounds %struct.__block_byref_x* %x, i32 0, i32 1, !dbg !24
@@ -58,30 +58,30 @@ attributes #3 = { nounwind }
 !llvm.module.flags = !{!8, !9, !10}
 !llvm.ident = !{!11}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.6.0 (trunk 223120) (llvm/trunk 223119)\000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/block.c] [DW_LANG_C99]
-!1 = metadata !{metadata !"block.c", metadata !"/tmp"}
-!2 = metadata !{}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00foo\00foo\00\003\000\001\000\000\000\000\003", metadata !1, metadata !5, metadata !6, null, void ()* @foo, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 3] [def] [foo]
-!5 = metadata !{metadata !"0x29", metadata !1}    ; [ DW_TAG_file_type ] [/tmp/block.c]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", null, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{null}
-!8 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
-!9 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
-!10 = metadata !{i32 1, metadata !"PIC Level", i32 2}
-!11 = metadata !{metadata !"clang version 3.6.0 (trunk 223120) (llvm/trunk 223119)"}
-!12 = metadata !{metadata !"0x100\00x\004\000", metadata !4, metadata !5, metadata !13} ; [ DW_TAG_auto_variable ] [x] [line 4]
-!13 = metadata !{metadata !"0x13\00\000\00224\000\000\0016\000", metadata !1, metadata !5, null, metadata !14, null, null, null} ; [ DW_TAG_structure_type ] [line 0, size 224, align 0, offset 0] [def] [from ]
-!14 = metadata !{metadata !15, metadata !17, metadata !18, metadata !20, metadata !21}
-!15 = metadata !{metadata !"0xd\00__isa\000\0064\0064\000\000", metadata !1, metadata !5, metadata !16} ; [ DW_TAG_member ] [__isa] [line 0, size 64, align 64, offset 0] [from ]
-!16 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
-!17 = metadata !{metadata !"0xd\00__forwarding\000\0064\0064\0064\000", metadata !1, metadata !5, metadata !16} ; [ DW_TAG_member ] [__forwarding] [line 0, size 64, align 64, offset 64] [from ]
-!18 = metadata !{metadata !"0xd\00__flags\000\0032\0032\00128\000", metadata !1, metadata !5, metadata !19} ; [ DW_TAG_member ] [__flags] [line 0, size 32, align 32, offset 128] [from int]
-!19 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!20 = metadata !{metadata !"0xd\00__size\000\0032\0032\00160\000", metadata !1, metadata !5, metadata !19} ; [ DW_TAG_member ] [__size] [line 0, size 32, align 32, offset 160] [from int]
-!21 = metadata !{metadata !"0xd\00x\000\0032\0032\00192\000", metadata !1, metadata !5, metadata !19} ; [ DW_TAG_member ] [x] [line 0, size 32, align 32, offset 192] [from int]
-!22 = metadata !{metadata !"0x102\0034\008\006\0034\0024"} ; [ DW_TAG_expression ] [DW_OP_plus 8] [DW_OP_deref] [DW_OP_plus 24]
-!23 = metadata !{i32 4, i32 15, metadata !4, null}
-!24 = metadata !{i32 4, i32 3, metadata !4, null}
-!25 = metadata !{i32 5, i32 3, metadata !4, null}
-!26 = metadata !{i32 6, i32 1, metadata !4, null}
+!0 = !{!"0x11\0012\00clang version 3.6.0 (trunk 223120) (llvm/trunk 223119)\000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/block.c] [DW_LANG_C99]
+!1 = !{!"block.c", !"/tmp"}
+!2 = !{}
+!3 = !{!4}
+!4 = !{!"0x2e\00foo\00foo\00\003\000\001\000\000\000\000\003", !1, !5, !6, null, void ()* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 3] [def] [foo]
+!5 = !{!"0x29", !1}    ; [ DW_TAG_file_type ] [/tmp/block.c]
+!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{null}
+!8 = !{i32 2, !"Dwarf Version", i32 2}
+!9 = !{i32 2, !"Debug Info Version", i32 2}
+!10 = !{i32 1, !"PIC Level", i32 2}
+!11 = !{!"clang version 3.6.0 (trunk 223120) (llvm/trunk 223119)"}
+!12 = !{!"0x100\00x\004\000", !4, !5, !13} ; [ DW_TAG_auto_variable ] [x] [line 4]
+!13 = !{!"0x13\00\000\00224\000\000\0016\000", !1, !5, null, !14, null, null, null} ; [ DW_TAG_structure_type ] [line 0, size 224, align 0, offset 0] [def] [from ]
+!14 = !{!15, !17, !18, !20, !21}
+!15 = !{!"0xd\00__isa\000\0064\0064\000\000", !1, !5, !16} ; [ DW_TAG_member ] [__isa] [line 0, size 64, align 64, offset 0] [from ]
+!16 = !{!"0xf\00\000\0064\0064\000\000", null, null, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
+!17 = !{!"0xd\00__forwarding\000\0064\0064\0064\000", !1, !5, !16} ; [ DW_TAG_member ] [__forwarding] [line 0, size 64, align 64, offset 64] [from ]
+!18 = !{!"0xd\00__flags\000\0032\0032\00128\000", !1, !5, !19} ; [ DW_TAG_member ] [__flags] [line 0, size 32, align 32, offset 128] [from int]
+!19 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!20 = !{!"0xd\00__size\000\0032\0032\00160\000", !1, !5, !19} ; [ DW_TAG_member ] [__size] [line 0, size 32, align 32, offset 160] [from int]
+!21 = !{!"0xd\00x\000\0032\0032\00192\000", !1, !5, !19} ; [ DW_TAG_member ] [x] [line 0, size 32, align 32, offset 192] [from int]
+!22 = !{!"0x102\0034\008\006\0034\0024"} ; [ DW_TAG_expression ] [DW_OP_plus 8] [DW_OP_deref] [DW_OP_plus 24]
+!23 = !{i32 4, i32 15, !4, null}
+!24 = !{i32 4, i32 3, !4, null}
+!25 = !{i32 5, i32 3, !4, null}
+!26 = !{i32 6, i32 1, !4, null}

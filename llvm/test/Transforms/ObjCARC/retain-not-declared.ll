@@ -64,6 +64,6 @@ lpad100:                                          ; preds = %invoke.cont93
 
 declare i32 @__gxx_personality_v0(...)
 
-!0 = metadata !{}
+!0 = !{}
 
 ; CHECK: attributes [[NUW]] = { nounwind }

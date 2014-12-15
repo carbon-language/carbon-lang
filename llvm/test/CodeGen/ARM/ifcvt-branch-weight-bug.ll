@@ -59,5 +59,5 @@ declare %classL* @_ZN1M1JI1LS1_EcvPS1_Ev(%classM2*)
 declare void @_ZN1F10handleMoveEb(%classF*, i1 zeroext)
 declare void @_Z3fn1v()
 
-!0 = metadata !{metadata !"clang version 3.5"}
-!1 = metadata !{metadata !"branch_weights", i32 62, i32 62}
+!0 = !{!"clang version 3.5"}
+!1 = !{!"branch_weights", i32 62, i32 62}

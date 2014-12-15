@@ -87,5 +87,5 @@ lpad:
 declare i8 @dummy();
 declare i32 @__gxx_personality_v0(...)
 
-!0 = metadata !{i8 0, i8 2}
-!1 = metadata !{i8 5, i8 7}
+!0 = !{i8 0, i8 2}
+!1 = !{i8 5, i8 7}

@@ -364,29 +364,29 @@ for.exit:
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
-!1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
-!2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
-!3 = metadata !{metadata !"branch_weights", i32 4, i32 3, i32 2, i32 1}
-!4 = metadata !{metadata !"branch_weights", i32 4, i32 3, i32 2, i32 1}
-!5 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 5}
-!6 = metadata !{metadata !"branch_weights", i32 1, i32 3}
-!7 = metadata !{metadata !"branch_weights", i32 33, i32 9, i32 8, i32 7}
-!8 = metadata !{metadata !"branch_weights", i32 33, i32 9, i32 8}
-!9 = metadata !{metadata !"branch_weights", i32 7, i32 6}
-!10 = metadata !{metadata !"branch_weights", i32 672646, i32 21604207}
-!11 = metadata !{metadata !"branch_weights", i32 6960, i32 21597248}
+!0 = !{!"branch_weights", i32 3, i32 5}
+!1 = !{!"branch_weights", i32 1, i32 1}
+!2 = !{!"branch_weights", i32 1, i32 2}
+!3 = !{!"branch_weights", i32 4, i32 3, i32 2, i32 1}
+!4 = !{!"branch_weights", i32 4, i32 3, i32 2, i32 1}
+!5 = !{!"branch_weights", i32 7, i32 6, i32 5}
+!6 = !{!"branch_weights", i32 1, i32 3}
+!7 = !{!"branch_weights", i32 33, i32 9, i32 8, i32 7}
+!8 = !{!"branch_weights", i32 33, i32 9, i32 8}
+!9 = !{!"branch_weights", i32 7, i32 6}
+!10 = !{!"branch_weights", i32 672646, i32 21604207}
+!11 = !{!"branch_weights", i32 6960, i32 21597248}
 
-; CHECK: !0 = metadata !{metadata !"branch_weights", i32 5, i32 11}
-; CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 5}
-; CHECK: !2 = metadata !{metadata !"branch_weights", i32 7, i32 1, i32 2}
-; CHECK: !3 = metadata !{metadata !"branch_weights", i32 49, i32 12, i32 24, i32 35}
-; CHECK: !4 = metadata !{metadata !"branch_weights", i32 11, i32 5}
-; CHECK: !5 = metadata !{metadata !"branch_weights", i32 17, i32 15} 
-; CHECK: !6 = metadata !{metadata !"branch_weights", i32 9, i32 7}
-; CHECK: !7 = metadata !{metadata !"branch_weights", i32 17, i32 9, i32 8, i32 7, i32 17}
-; CHECK: !8 = metadata !{metadata !"branch_weights", i32 24, i32 33}
-; CHECK: !9 = metadata !{metadata !"branch_weights", i32 8, i32 33}
+; CHECK: !0 = !{!"branch_weights", i32 5, i32 11}
+; CHECK: !1 = !{!"branch_weights", i32 1, i32 5}
+; CHECK: !2 = !{!"branch_weights", i32 7, i32 1, i32 2}
+; CHECK: !3 = !{!"branch_weights", i32 49, i32 12, i32 24, i32 35}
+; CHECK: !4 = !{!"branch_weights", i32 11, i32 5}
+; CHECK: !5 = !{!"branch_weights", i32 17, i32 15} 
+; CHECK: !6 = !{!"branch_weights", i32 9, i32 7}
+; CHECK: !7 = !{!"branch_weights", i32 17, i32 9, i32 8, i32 7, i32 17}
+; CHECK: !8 = !{!"branch_weights", i32 24, i32 33}
+; CHECK: !9 = !{!"branch_weights", i32 8, i32 33}
 ;; The false weight prints out as a negative integer here, but inside llvm, we
 ;; treat the weight as an unsigned integer.
-; CHECK: !10 = metadata !{metadata !"branch_weights", i32 112017436, i32 -735157296}
+; CHECK: !10 = !{!"branch_weights", i32 112017436, i32 -735157296}

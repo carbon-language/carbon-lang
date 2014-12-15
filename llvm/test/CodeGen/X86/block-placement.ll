@@ -124,7 +124,7 @@ exit:
   ret i32 %sum
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 4, i32 64}
+!0 = !{!"branch_weights", i32 4, i32 64}
 
 define i32 @test_loop_early_exits(i32 %i, i32* %a) {
 ; Check that we sink early exit blocks out of loop bodies.
@@ -506,7 +506,7 @@ if.end:
   ret void
 }
 
-!1 = metadata !{metadata !"branch_weights", i32 1000, i32 1}
+!1 = !{!"branch_weights", i32 1000, i32 1}
 
 declare i32 @f()
 declare i32 @g()
@@ -542,7 +542,7 @@ exit:
   ret i32 %result
 }
 
-!2 = metadata !{metadata !"branch_weights", i32 3, i32 1}
+!2 = !{!"branch_weights", i32 3, i32 1}
 
 declare i32 @__gxx_personality_v0(...)
 

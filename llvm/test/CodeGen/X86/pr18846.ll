@@ -131,9 +131,9 @@ attributes #1 = { nounwind }
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"clang version 3.5 "}
-!1 = metadata !{metadata !2, metadata !2, i64 0}
-!2 = metadata !{metadata !"float", metadata !3, i64 0}
-!3 = metadata !{metadata !"omnipotent char", metadata !4, i64 0}
-!4 = metadata !{metadata !"Simple C/C++ TBAA"}
-!5 = metadata !{metadata !3, metadata !3, i64 0}
+!0 = !{!"clang version 3.5 "}
+!1 = !{!2, !2, i64 0}
+!2 = !{!"float", !3, i64 0}
+!3 = !{!"omnipotent char", !4, i64 0}
+!4 = !{!"Simple C/C++ TBAA"}
+!5 = !{!3, !3, i64 0}

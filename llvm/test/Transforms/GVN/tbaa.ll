@@ -74,18 +74,18 @@ define i32 @test7(i8* %p, i8* %q) {
 
 declare i32 @foo(i8*) readonly
 
-; CHECK: [[TAGC]] = metadata !{metadata [[TYPEC:!.*]], metadata [[TYPEC]], i64 0}
-; CHECK: [[TYPEC]] = metadata !{metadata !"C", metadata [[TYPEA:!.*]]}
-; CHECK: [[TYPEA]] = metadata !{metadata !"A", metadata !{{.*}}}
-; CHECK: [[TAGB]] = metadata !{metadata [[TYPEB:!.*]], metadata [[TYPEB]], i64 0}
-; CHECK: [[TYPEB]] = metadata !{metadata !"B", metadata [[TYPEA]]}
-; CHECK: [[TAGA]] = metadata !{metadata [[TYPEA]], metadata [[TYPEA]], i64 0}
-!0 = metadata !{metadata !5, metadata !5, i64 0}
-!1 = metadata !{metadata !6, metadata !6, i64 0}
-!2 = metadata !{metadata !"tbaa root", null}
-!3 = metadata !{metadata !7, metadata !7, i64 0}
-!4 = metadata !{metadata !8, metadata !8, i64 0}
-!5 = metadata !{metadata !"C", metadata !6}
-!6 = metadata !{metadata !"A", metadata !2}
-!7 = metadata !{metadata !"B", metadata !6}
-!8 = metadata !{metadata !"another root", null}
+; CHECK: [[TAGC]] = !{[[TYPEC:!.*]], [[TYPEC]], i64 0}
+; CHECK: [[TYPEC]] = !{!"C", [[TYPEA:!.*]]}
+; CHECK: [[TYPEA]] = !{!"A", !{{.*}}}
+; CHECK: [[TAGB]] = !{[[TYPEB:!.*]], [[TYPEB]], i64 0}
+; CHECK: [[TYPEB]] = !{!"B", [[TYPEA]]}
+; CHECK: [[TAGA]] = !{[[TYPEA]], [[TYPEA]], i64 0}
+!0 = !{!5, !5, i64 0}
+!1 = !{!6, !6, i64 0}
+!2 = !{!"tbaa root", null}
+!3 = !{!7, !7, i64 0}
+!4 = !{!8, !8, i64 0}
+!5 = !{!"C", !6}
+!6 = !{!"A", !2}
+!7 = !{!"B", !6}
+!8 = !{!"another root", null}

@@ -18,9 +18,9 @@ declare void @llvm.bar(metadata)
 
 @global = global i32 0
 
-; CHECK: !0 = metadata !{metadata !1, metadata !2, i32* @global, null}
-; CHECK: !1 = metadata !{metadata !2, null}
-; CHECK: !2 = metadata !{}
+; CHECK: !0 = !{!1, !2, i32* @global, null}
+; CHECK: !1 = !{!2, null}
+; CHECK: !2 = !{}
 !0 = metadata !{metadata !1, metadata !2, i32* @global, null}
 !1 = metadata !{metadata !2, null}
 !2 = metadata !{}

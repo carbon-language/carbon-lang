@@ -68,6 +68,6 @@ bb3:
 }
 declare i8 @test6g(i8*)
 
-!0 = metadata !{metadata !1, metadata !1, i64 0}
-!1 = metadata !{metadata !"foo"}
-!2 = metadata !{i8 0, i8 2}
+!0 = !{!1, !1, i64 0}
+!1 = !{!"foo"}
+!2 = !{i8 0, i8 2}

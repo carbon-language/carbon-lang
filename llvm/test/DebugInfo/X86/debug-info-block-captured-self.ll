@@ -67,46 +67,46 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 define internal void @"__24-[Main initWithContext:]_block_invoke"(i8* %.block_descriptor, i8* %obj) #0 {
   %block = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !84
   %block.captured-self = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block, i32 0, i32 5, !dbg !84
-  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block}, metadata !86, metadata !110), !dbg !87
+  call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block, metadata !86, metadata !110), !dbg !87
   ret void, !dbg !87
 }
 
 define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_descriptor, i8* %object) #0 {
   %block = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
   %block.captured-self = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block, i32 0, i32 5, !dbg !103
-  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block}, metadata !105, metadata !109), !dbg !106
+  call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block, metadata !105, metadata !109), !dbg !106
   ret void, !dbg !106
 }
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!108}
-!0 = metadata !{metadata !"0x11\0016\00clang version 3.3 \000\00\002\00\000", metadata !107, metadata !2, metadata !4, metadata !23, metadata !15,  metadata !15} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m] [DW_LANG_ObjC]
-!1 = metadata !{metadata !"0x29", metadata !107} ; [ DW_TAG_file_type ]
-!2 = metadata !{metadata !3}
-!3 = metadata !{metadata !"0x4\00\0020\0032\0032\000\000\000", metadata !107, null, null, metadata !4, null, null, null} ; [ DW_TAG_enumeration_type ] [line 20, size 32, align 32, offset 0] [def] [from ]
-!4 = metadata !{}
-!15 = metadata !{}
-!23 = metadata !{metadata !38, metadata !42}
-!27 = metadata !{metadata !"0x16\00id\0031\000\000\000\000", metadata !107, null, metadata !28} ; [ DW_TAG_typedef ] [id] [line 31, size 0, align 0, offset 0] [from ]
-!28 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !29} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_object]
-!29 = metadata !{metadata !"0x13\00objc_object\000\000\000\000\000\000", metadata !107, null, null, metadata !30, null, null, null} ; [ DW_TAG_structure_type ] [objc_object] [line 0, size 0, align 0, offset 0] [def] [from ]
-!30 = metadata !{metadata !31}
-!31 = metadata !{metadata !"0xd\00isa\000\0064\000\000\000", metadata !107, metadata !29, metadata !32} ; [ DW_TAG_member ] [isa] [line 0, size 64, align 0, offset 0] [from ]
-!32 = metadata !{metadata !"0xf\00\000\0064\000\000\000", null, null, metadata !33} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from objc_class]
-!33 = metadata !{metadata !"0x13\00objc_class\000\000\000\000\004\000", metadata !107, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [objc_class] [line 0, size 0, align 0, offset 0] [decl] [from ]
-!34 = metadata !{metadata !"0x13\00Main\0023\000\000\000\001092\0016", metadata !107, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [Main] [line 23, size 0, align 0, offset 0] [artificial] [decl] [from ]
-!38 = metadata !{metadata !"0x2e\00__24-[Main initWithContext:]_block_invoke\00__24-[Main initWithContext:]_block_invoke\00\0033\001\001\000\006\00256\000\0033", metadata !1, metadata !1, metadata !39, null, void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke", null, null, metadata !15} ; [ DW_TAG_subprogram ] [line 33] [local] [def] [__24-[Main initWithContext:]_block_invoke]
-!39 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", null, null, null, metadata !40, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!40 = metadata !{null, metadata !41, metadata !27}
-!41 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
-!42 = metadata !{metadata !"0x2e\00__24-[Main initWithContext:]_block_invoke_2\00__24-[Main initWithContext:]_block_invoke_2\00\0035\001\001\000\006\00256\000\0035", metadata !1, metadata !1, metadata !39, null, void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke_2", null, null, metadata !15} ; [ DW_TAG_subprogram ] [line 35] [local] [def] [__24-[Main initWithContext:]_block_invoke_2]
-!84 = metadata !{i32 33, i32 0, metadata !38, null}
-!86 = metadata !{metadata !"0x100\00self\0041\000", metadata !38, metadata !1, metadata !34} ; [ DW_TAG_auto_variable ] [self] [line 41]
-!87 = metadata !{i32 41, i32 0, metadata !38, null}
-!103 = metadata !{i32 35, i32 0, metadata !42, null}
-!105 = metadata !{metadata !"0x100\00self\0040\000", metadata !42, metadata !1, metadata !34} ; [ DW_TAG_auto_variable ] [self] [line 40]
-!106 = metadata !{i32 40, i32 0, metadata !42, null}
-!107 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m", metadata !""}
-!108 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!109 = metadata !{metadata !"0x102\0034\0032"} ; [ DW_TAG_expression ] [DW_OP_plus 32]
-!110 = metadata !{metadata !"0x102\0034\0032"} ; [ DW_TAG_expression ] [DW_OP_plus 32]
+!0 = !{!"0x11\0016\00clang version 3.3 \000\00\002\00\000", !107, !2, !4, !23, !15,  !15} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m] [DW_LANG_ObjC]
+!1 = !{!"0x29", !107} ; [ DW_TAG_file_type ]
+!2 = !{!3}
+!3 = !{!"0x4\00\0020\0032\0032\000\000\000", !107, null, null, !4, null, null, null} ; [ DW_TAG_enumeration_type ] [line 20, size 32, align 32, offset 0] [def] [from ]
+!4 = !{}
+!15 = !{}
+!23 = !{!38, !42}
+!27 = !{!"0x16\00id\0031\000\000\000\000", !107, null, !28} ; [ DW_TAG_typedef ] [id] [line 31, size 0, align 0, offset 0] [from ]
+!28 = !{!"0xf\00\000\0064\0064\000\000", null, null, !29} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_object]
+!29 = !{!"0x13\00objc_object\000\000\000\000\000\000", !107, null, null, !30, null, null, null} ; [ DW_TAG_structure_type ] [objc_object] [line 0, size 0, align 0, offset 0] [def] [from ]
+!30 = !{!31}
+!31 = !{!"0xd\00isa\000\0064\000\000\000", !107, !29, !32} ; [ DW_TAG_member ] [isa] [line 0, size 64, align 0, offset 0] [from ]
+!32 = !{!"0xf\00\000\0064\000\000\000", null, null, !33} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from objc_class]
+!33 = !{!"0x13\00objc_class\000\000\000\000\004\000", !107, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [objc_class] [line 0, size 0, align 0, offset 0] [decl] [from ]
+!34 = !{!"0x13\00Main\0023\000\000\000\001092\0016", !107, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [Main] [line 23, size 0, align 0, offset 0] [artificial] [decl] [from ]
+!38 = !{!"0x2e\00__24-[Main initWithContext:]_block_invoke\00__24-[Main initWithContext:]_block_invoke\00\0033\001\001\000\006\00256\000\0033", !1, !1, !39, null, void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke", null, null, !15} ; [ DW_TAG_subprogram ] [line 33] [local] [def] [__24-[Main initWithContext:]_block_invoke]
+!39 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !40, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!40 = !{null, !41, !27}
+!41 = !{!"0xf\00\000\0064\0064\000\000", null, null, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
+!42 = !{!"0x2e\00__24-[Main initWithContext:]_block_invoke_2\00__24-[Main initWithContext:]_block_invoke_2\00\0035\001\001\000\006\00256\000\0035", !1, !1, !39, null, void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke_2", null, null, !15} ; [ DW_TAG_subprogram ] [line 35] [local] [def] [__24-[Main initWithContext:]_block_invoke_2]
+!84 = !{i32 33, i32 0, !38, null}
+!86 = !{!"0x100\00self\0041\000", !38, !1, !34} ; [ DW_TAG_auto_variable ] [self] [line 41]
+!87 = !{i32 41, i32 0, !38, null}
+!103 = !{i32 35, i32 0, !42, null}
+!105 = !{!"0x100\00self\0040\000", !42, !1, !34} ; [ DW_TAG_auto_variable ] [self] [line 40]
+!106 = !{i32 40, i32 0, !42, null}
+!107 = !{!"llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m", !""}
+!108 = !{i32 1, !"Debug Info Version", i32 2}
+!109 = !{!"0x102\0034\0032"} ; [ DW_TAG_expression ] [DW_OP_plus 32]
+!110 = !{!"0x102\0034\0032"} ; [ DW_TAG_expression ] [DW_OP_plus 32]

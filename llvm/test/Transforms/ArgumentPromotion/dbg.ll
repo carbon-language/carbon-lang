@@ -19,8 +19,8 @@ define void @caller(i32** %Y) {
 !llvm.module.flags = !{!0}
 !llvm.dbg.cu = !{!3}
 
-!0 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
-!1 = metadata !{i32 8, i32 0, metadata !2, null}
-!2 = metadata !{metadata !"0x2e\00test\00test\00\003\001\001\000\006\00256\000\003", null, null, null, null, void (i32**)* @test, null, null, null} ; [ DW_TAG_subprogram ]
-!3 = metadata !{metadata !"0x11\004\00clang version 3.5.0 \000\00\000\00\002", null, null, null, metadata !4, null, null} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/pr20038/reduce/<stdin>] [DW_LANG_C_plus_plus]
-!4 = metadata !{metadata !2}
+!0 = !{i32 2, !"Debug Info Version", i32 2}
+!1 = !{i32 8, i32 0, !2, null}
+!2 = !{!"0x2e\00test\00test\00\003\001\001\000\006\00256\000\003", null, null, null, null, void (i32**)* @test, null, null, null} ; [ DW_TAG_subprogram ]
+!3 = !{!"0x11\004\00clang version 3.5.0 \000\00\000\00\002", null, null, null, !4, null, null} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/pr20038/reduce/<stdin>] [DW_LANG_C_plus_plus]
+!4 = !{!2}

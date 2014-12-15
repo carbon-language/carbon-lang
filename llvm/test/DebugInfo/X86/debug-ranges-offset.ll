@@ -31,11 +31,11 @@ entry:
   %call = call i8* @_Znwm(i64 4) #4, !dbg !19
   %_msret = load i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
   %3 = bitcast i8* %call to i32*, !dbg !19
-  tail call void @llvm.dbg.value(metadata !{i32* %3}, i64 0, metadata !9, metadata !{metadata !"0x102"}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !19
   %4 = inttoptr i64 %1 to i64*, !dbg !19
   store i64 %_msret, i64* %4, align 8, !dbg !19
   store volatile i32* %3, i32** %p, align 8, !dbg !19
-  tail call void @llvm.dbg.value(metadata !{i32** %p}, i64 0, metadata !9, metadata !{metadata !"0x102"}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32** %p, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !19
   %p.0.p.0. = load volatile i32** %p, align 8, !dbg !20
   %_msld = load i64* %4, align 8, !dbg !20
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !20
@@ -96,11 +96,11 @@ entry:
   %call.i = call i8* @_Znwm(i64 4) #4, !dbg !30
   %_msret = load i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
   %3 = bitcast i8* %call.i to i32*, !dbg !30
-  tail call void @llvm.dbg.value(metadata !{i32* %3}, i64 0, metadata !32, metadata !{metadata !"0x102"}), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !32, metadata !{!"0x102"}), !dbg !30
   %4 = inttoptr i64 %1 to i64*, !dbg !30
   store i64 %_msret, i64* %4, align 8, !dbg !30
   store volatile i32* %3, i32** %p.i, align 8, !dbg !30
-  tail call void @llvm.dbg.value(metadata !{i32** %p.i}, i64 0, metadata !32, metadata !{metadata !"0x102"}), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32** %p.i, i64 0, metadata !32, metadata !{!"0x102"}), !dbg !30
   %p.i.0.p.0.p.0..i = load volatile i32** %p.i, align 8, !dbg !33
   %_msld = load i64* %4, align 8, !dbg !33
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !33
@@ -202,40 +202,40 @@ attributes #4 = { builtin }
 !llvm.module.flags = !{!16, !17}
 !llvm.ident = !{!18}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)\001\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.cpp] [DW_LANG_C_plus_plus]
-!1 = metadata !{metadata !"foo.cpp", metadata !"/usr/local/google/home/echristo/tmp"}
-!2 = metadata !{}
-!3 = metadata !{metadata !4, metadata !13}
-!4 = metadata !{metadata !"0x2e\00f\00f\00_Z1fv\003\000\001\000\006\00256\001\003", metadata !1, metadata !5, metadata !6, null, void ()* @_Z1fv, null, null, metadata !8} ; [ DW_TAG_subprogram ] [line 3] [def] [f]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/tmp/foo.cpp]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{null}
-!8 = metadata !{metadata !9}
-!9 = metadata !{metadata !"0x100\00p\004\000", metadata !4, metadata !5, metadata !10} ; [ DW_TAG_auto_variable ] [p] [line 4]
-!10 = metadata !{metadata !"0x35\00\000\000\000\000\000", null, null, metadata !11} ; [ DW_TAG_volatile_type ] [line 0, size 0, align 0, offset 0] [from ]
-!11 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !12} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
-!12 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!13 = metadata !{metadata !"0x2e\00main\00main\00\009\000\001\000\006\00256\001\009", metadata !1, metadata !5, metadata !14, null, i32 ()* @main, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 9] [def] [main]
-!14 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !15, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!15 = metadata !{metadata !12}
-!16 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!17 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!18 = metadata !{metadata !"clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)"}
-!19 = metadata !{i32 4, i32 0, metadata !4, null}
-!20 = metadata !{i32 5, i32 0, metadata !21, null}
-!21 = metadata !{metadata !"0xb\005\000\000", metadata !1, metadata !4} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/foo.cpp]
-!22 = metadata !{metadata !"branch_weights", i32 1000, i32 1}
-!23 = metadata !{metadata !24, metadata !24, i64 0}
-!24 = metadata !{metadata !"int", metadata !25, i64 0}
-!25 = metadata !{metadata !"omnipotent char", metadata !26, i64 0}
-!26 = metadata !{metadata !"Simple C/C++ TBAA"}
-!27 = metadata !{metadata !"branch_weights", i32 1, i32 1000}
-!28 = metadata !{i32 6, i32 0, metadata !21, null}
-!29 = metadata !{i32 7, i32 0, metadata !4, null}
-!30 = metadata !{i32 4, i32 0, metadata !4, metadata !31}
-!31 = metadata !{i32 10, i32 0, metadata !13, null}
-!32 = metadata !{metadata !"0x100\00p\004\000", metadata !4, metadata !5, metadata !10, metadata !31} ; [ DW_TAG_auto_variable ] [p] [line 4]
-!33 = metadata !{i32 5, i32 0, metadata !21, metadata !31}
-!34 = metadata !{i32 6, i32 0, metadata !21, metadata !31}
-!35 = metadata !{i32 7, i32 0, metadata !4, metadata !31}
-!36 = metadata !{i32 11, i32 0, metadata !13, null}
+!0 = !{!"0x11\004\00clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)\001\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.cpp] [DW_LANG_C_plus_plus]
+!1 = !{!"foo.cpp", !"/usr/local/google/home/echristo/tmp"}
+!2 = !{}
+!3 = !{!4, !13}
+!4 = !{!"0x2e\00f\00f\00_Z1fv\003\000\001\000\006\00256\001\003", !1, !5, !6, null, void ()* @_Z1fv, null, null, !8} ; [ DW_TAG_subprogram ] [line 3] [def] [f]
+!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/tmp/foo.cpp]
+!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{null}
+!8 = !{!9}
+!9 = !{!"0x100\00p\004\000", !4, !5, !10} ; [ DW_TAG_auto_variable ] [p] [line 4]
+!10 = !{!"0x35\00\000\000\000\000\000", null, null, !11} ; [ DW_TAG_volatile_type ] [line 0, size 0, align 0, offset 0] [from ]
+!11 = !{!"0xf\00\000\0064\0064\000\000", null, null, !12} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
+!12 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!13 = !{!"0x2e\00main\00main\00\009\000\001\000\006\00256\001\009", !1, !5, !14, null, i32 ()* @main, null, null, !2} ; [ DW_TAG_subprogram ] [line 9] [def] [main]
+!14 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !15, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!15 = !{!12}
+!16 = !{i32 2, !"Dwarf Version", i32 4}
+!17 = !{i32 1, !"Debug Info Version", i32 2}
+!18 = !{!"clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)"}
+!19 = !{i32 4, i32 0, !4, null}
+!20 = !{i32 5, i32 0, !21, null}
+!21 = !{!"0xb\005\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/foo.cpp]
+!22 = !{!"branch_weights", i32 1000, i32 1}
+!23 = !{!24, !24, i64 0}
+!24 = !{!"int", !25, i64 0}
+!25 = !{!"omnipotent char", !26, i64 0}
+!26 = !{!"Simple C/C++ TBAA"}
+!27 = !{!"branch_weights", i32 1, i32 1000}
+!28 = !{i32 6, i32 0, !21, null}
+!29 = !{i32 7, i32 0, !4, null}
+!30 = !{i32 4, i32 0, !4, !31}
+!31 = !{i32 10, i32 0, !13, null}
+!32 = !{!"0x100\00p\004\000", !4, !5, !10, !31} ; [ DW_TAG_auto_variable ] [p] [line 4]
+!33 = !{i32 5, i32 0, !21, !31}
+!34 = !{i32 6, i32 0, !21, !31}
+!35 = !{i32 7, i32 0, !4, !31}
+!36 = !{i32 11, i32 0, !13, null}

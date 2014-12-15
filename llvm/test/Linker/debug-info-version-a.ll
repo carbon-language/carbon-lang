@@ -4,13 +4,13 @@
 ; from the other file should be dropped.
 
 ; CHECK-NOT: metadata !{metadata !"b.c", metadata !""}
-; CHECK: metadata !{metadata !"a.c", metadata !""}
+; CHECK:  !"a.c", !""}
 ; CHECK-NOT: metadata !{metadata !"b.c", metadata !""}
 
 !llvm.module.flags = !{ !0 }
 !llvm.dbg.cu = !{!1}
 
-!0 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
-!1 = metadata !{metadata !"0x11\0012\00clang\001\00\000\00\000", metadata !2, metadata !3, metadata !3, metadata !3, null, null} ; [ DW_TAG_compile_unit ]
-!2 = metadata !{metadata !"a.c", metadata !""}
-!3 = metadata !{}
+!0 = !{i32 2, !"Debug Info Version", i32 2}
+!1 = !{!"0x11\0012\00clang\001\00\000\00\000", !2, !3, !3, !3, null, null} ; [ DW_TAG_compile_unit ]
+!2 = !{!"a.c", !""}
+!3 = !{}

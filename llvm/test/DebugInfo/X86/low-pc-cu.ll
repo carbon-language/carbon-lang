@@ -32,15 +32,15 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)\000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/z.c] [DW_LANG_C99]
-!1 = metadata !{metadata !"z.c", metadata !"/usr/local/google/home/echristo"}
-!2 = metadata !{}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00z\00z\00\001\000\001\000\006\00256\000\001", metadata !1, metadata !5, metadata !6, null, void ()* @z, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 1] [def] [z]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/z.c]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{null}
-!8 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!9 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!10 = metadata !{metadata !"clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)"}
-!11 = metadata !{i32 1, i32 0, metadata !4, null}
+!0 = !{!"0x11\0012\00clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)\000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/z.c] [DW_LANG_C99]
+!1 = !{!"z.c", !"/usr/local/google/home/echristo"}
+!2 = !{}
+!3 = !{!4}
+!4 = !{!"0x2e\00z\00z\00\001\000\001\000\006\00256\000\001", !1, !5, !6, null, void ()* @z, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [z]
+!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/z.c]
+!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{null}
+!8 = !{i32 2, !"Dwarf Version", i32 4}
+!9 = !{i32 1, !"Debug Info Version", i32 2}
+!10 = !{!"clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)"}
+!11 = !{i32 1, i32 0, !4, null}

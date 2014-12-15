@@ -62,4 +62,4 @@ declare i8* @objc_msgSend(i8*, i8*, ...)
 
 declare double @floor(double) optsize
 
-!0 = metadata !{}
+!0 = !{}

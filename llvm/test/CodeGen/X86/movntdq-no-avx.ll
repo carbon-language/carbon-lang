@@ -9,4 +9,4 @@ entry:
   ret void
 }
 
-!0 = metadata !{i32 1}
+!0 = !{i32 1}

@@ -4,7 +4,7 @@
 ; Each metadata entry can contain one string only.
 
 !llvm.ident = !{!0}
-!0 = metadata !{metadata !{metadata !"nested metadata"}}
+!0 = !{!{!"nested metadata"}}
 ; CHECK: assembly parsed, but does not verify as correct!
 ; CHECK-NEXT: invalid value for llvm.ident metadata entry operand(the operand should be a string)
 ; CHECK-NEXT: metadata !1

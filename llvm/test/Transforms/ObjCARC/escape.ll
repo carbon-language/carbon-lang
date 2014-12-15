@@ -128,7 +128,7 @@ declare i8* @objc_storeWeak(i8**, i8*)
 declare i8* @not_really_objc_storeWeak(i8**, i8*)
 declare void @objc_release(i8*)
 
-!0 = metadata !{}
+!0 = !{}
 
 ; CHECK: attributes [[NUW]] = { nounwind }
 ; CHECK: attributes #1 = { nounwind ssp }

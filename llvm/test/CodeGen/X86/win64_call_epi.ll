@@ -44,7 +44,7 @@ b:
 done:
     ret void
 }
-!0 = metadata !{metadata !"branch_weights", i32 100, i32 0}
+!0 = !{!"branch_weights", i32 100, i32 0}
 ; WIN64-LABEL: foo2:
 ; WIN64: callq bar
 ; WIN64: nop

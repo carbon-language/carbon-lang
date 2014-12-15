@@ -8,7 +8,7 @@ entry:
 }
 
 !llvm.module.flags = !{!0}
-!0 = metadata !{i32 1, metadata !"PIC Level", i32 2}
+!0 = !{i32 1, !"PIC Level", i32 2}
 ; LARGE-BSS:       [[POFF:\.L[0-9]+\$poff]]:
 ; LARGE-BSS-NEXT:    .long .LTOC-[[PB:\.L[0-9]+\$pb]]
 ; LARGE-BSS-NEXT:  foo:

@@ -15,10 +15,10 @@ b:
   ret void
 }
 
-; CHECK: [[TAGA]] = metadata !{metadata [[TYPEA:!.*]], metadata [[TYPEA]], i64 0}
-; CHECK: [[TYPEA]] = metadata !{metadata !"A", metadata !{{.*}}}
-!0 = metadata !{metadata !3, metadata !3, i64 0}
-!1 = metadata !{metadata !4, metadata !4, i64 0}
-!2 = metadata !{metadata !"test"}
-!3 = metadata !{metadata !"A", metadata !2}
-!4 = metadata !{metadata !"B", metadata !2}
+; CHECK: [[TAGA]] = !{[[TYPEA:!.*]], [[TYPEA]], i64 0}
+; CHECK: [[TYPEA]] = !{!"A", !{{.*}}}
+!0 = !{!3, !3, i64 0}
+!1 = !{!4, !4, i64 0}
+!2 = !{!"test"}
+!3 = !{!"A", !2}
+!4 = !{!"B", !2}

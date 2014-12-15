@@ -8,7 +8,7 @@
 define void @foo(i32 %v) {
 ; CHECK: entry:
 entry:
-; CHECK-NEXT: call void @llvm.bar(metadata !{i32 %v})
+; CHECK-NEXT: call void @llvm.bar(metadata i32 %v)
   call void @llvm.bar(metadata !{i32 %v})
 
 ; Note: these supposedly legal instructions fired an assertion in llvm-as:
@@ -32,4 +32,4 @@ entry:
 
 declare void @llvm.bar(metadata)
 
-; CHECK: !0 = metadata !{}
+; CHECK: !0 = !{}

@@ -27,5 +27,5 @@ for.end:                                          ; preds = %for.body, %entry
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 
-!0 = metadata !{metadata !0, metadata !1}
-!1 = metadata !{metadata !"llvm.loop.vectorize.width", i32 8}
+!0 = !{!0, !1}
+!1 = !{!"llvm.loop.vectorize.width", i32 8}

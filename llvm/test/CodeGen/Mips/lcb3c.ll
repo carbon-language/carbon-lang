@@ -55,5 +55,5 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 attributes #1 = { nounwind }
 
 
-!1 = metadata !{i32 65}
-!2 = metadata !{i32 167}
+!1 = !{i32 65}
+!2 = !{i32 167}

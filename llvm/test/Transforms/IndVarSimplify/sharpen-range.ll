@@ -110,4 +110,4 @@ exit:
   ret void
 }
 
-!0 = metadata !{i32 0, i32 100}
+!0 = !{i32 0, i32 100}

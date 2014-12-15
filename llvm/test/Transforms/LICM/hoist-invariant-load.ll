@@ -37,4 +37,4 @@ for.end:                                          ; preds = %for.cond
 
 declare i8* @objc_msgSend(i8*, i8*, ...) nonlazybind
 
-!0 = metadata !{}
+!0 = !{}

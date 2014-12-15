@@ -32,4 +32,4 @@ define void @print() {
   ret void
 }
 
-!2009 = metadata !{}
+!2009 = !{}

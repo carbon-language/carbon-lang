@@ -34,4 +34,4 @@ oob:
   ret i1 false
 }
 
-!0 = metadata !{i32 1, i32 100}
+!0 = !{i32 1, i32 100}

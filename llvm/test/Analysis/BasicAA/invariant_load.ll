@@ -23,4 +23,4 @@ entry:
 ; CHECK: %add = add nsw i32 %0, 1
 }
 
-!3 = metadata !{}
+!3 = !{}

@@ -38,5 +38,5 @@ bb4:
 
 declare i64 @bar()
 
-!0 = metadata !{metadata !"branch_weights", i32 5128, i32 32}
-!1 = metadata !{metadata !"branch_weights", i32 1024, i32 4136}
+!0 = !{!"branch_weights", i32 5128, i32 32}
+!1 = !{!"branch_weights", i32 1024, i32 4136}

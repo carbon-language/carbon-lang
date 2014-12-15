@@ -53,15 +53,15 @@ attributes #1 = { nounwind sanitize_address "less-precise-fpmad"="false" "no-fra
 !llvm.asan.globals = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}
 
-!0 = metadata !{i32* @global, metadata !6, metadata !"global", i1 false, i1 false}
-!1 = metadata !{i32* @dyn_init_global, metadata !7, metadata !"dyn_init_global", i1 true, i1 false}
-!2 = metadata !{i32* @blacklisted_global, null, null, i1 false, i1 true}
-!3 = metadata !{i32* @_ZZ4funcvE10static_var, metadata !8, metadata !"static_var", i1 false, i1 false}
-!4 = metadata !{[14 x i8]* @.str, metadata !9, metadata !"<string literal>", i1 false, i1 false}
+!0 = !{i32* @global, !6, !"global", i1 false, i1 false}
+!1 = !{i32* @dyn_init_global, !7, !"dyn_init_global", i1 true, i1 false}
+!2 = !{i32* @blacklisted_global, null, null, i1 false, i1 true}
+!3 = !{i32* @_ZZ4funcvE10static_var, !8, !"static_var", i1 false, i1 false}
+!4 = !{[14 x i8]* @.str, !9, !"<string literal>", i1 false, i1 false}
 
-!5 = metadata !{metadata !"clang version 3.5.0 (211282)"}
+!5 = !{!"clang version 3.5.0 (211282)"}
 
-!6 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 5, i32 5}
-!7 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 7, i32 5}
-!8 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 12, i32 14}
-!9 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 14, i32 25}
+!6 = !{!"/tmp/asan-globals.cpp", i32 5, i32 5}
+!7 = !{!"/tmp/asan-globals.cpp", i32 7, i32 5}
+!8 = !{!"/tmp/asan-globals.cpp", i32 12, i32 14}
+!9 = !{!"/tmp/asan-globals.cpp", i32 14, i32 25}

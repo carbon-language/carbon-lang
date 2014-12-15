@@ -139,7 +139,7 @@ define void @example4(i32 %n, i32* noalias nocapture %p, i32* noalias nocapture 
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 64, i32 4}
+!0 = !{!"branch_weights", i32 64, i32 4}
 
 ; We can't vectorize this one because we need a runtime ptr check.
 ;CHECK-LABEL: @example23(

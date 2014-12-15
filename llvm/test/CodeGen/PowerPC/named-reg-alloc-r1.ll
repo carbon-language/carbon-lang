@@ -17,4 +17,4 @@ entry:
 
 declare i32 @llvm.read_register.i32(metadata) nounwind
 
-!0 = metadata !{metadata !"r1\00"}
+!0 = !{!"r1\00"}

@@ -16,5 +16,5 @@ define void @foo(i64 %img, float* %red, i32 %idx) {
 }
 
 !nvvm.annotations = !{!1, !2}
-!1 = metadata !{void (i64, float*, i32)* @foo, metadata !"kernel", i32 1}
-!2 = metadata !{void (i64, float*, i32)* @foo, metadata !"rdwrimage", i32 0}
+!1 = !{void (i64, float*, i32)* @foo, !"kernel", i32 1}
+!2 = !{void (i64, float*, i32)* @foo, !"rdwrimage", i32 0}

@@ -21,7 +21,7 @@ declare void @__crasher_block_invoke(i8* nocapture)
 declare i8* @objc_retainBlock(i8*)
 declare void @__crasher_block_invoke1(i8* nocapture)
 
-!0 = metadata !{}
+!0 = !{}
 
 ; Delete a nested retain+release pair.
 

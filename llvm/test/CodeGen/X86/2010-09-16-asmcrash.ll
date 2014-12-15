@@ -53,4 +53,4 @@ return:                                           ; preds = %while.end, %while.b
   ret void
 }
 
-!0 = metadata !{i32 158484}
+!0 = !{i32 158484}

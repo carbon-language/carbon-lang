@@ -19,15 +19,15 @@ entry:
 !llvm.dbg.sp = !{!1}
 !llvm.dbg.gv = !{!5}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.0 ()\001\00\000\00\000", metadata !9, metadata !4, metadata !4, metadata !10, null, null} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !"0x2e\00bar\00bar\00\002\000\001\000\006\000\000\000", metadata !9, metadata !2, metadata !3, null, void ()* @bar, null, null, null} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [bar]
-!2 = metadata !{metadata !"0x29", metadata !9} ; [ DW_TAG_file_type ]
-!3 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !9, metadata !2, null, metadata !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!4 = metadata !{null}
-!5 = metadata !{metadata !"0x34\00x\00x\00\001\001\001", metadata !0, metadata !2, metadata !6, i32* @x} ; [ DW_TAG_variable ]
-!6 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, metadata !0} ; [ DW_TAG_base_type ]
-!7 = metadata !{i32 2, i32 14, metadata !8, null}
-!8 = metadata !{metadata !"0xb\002\0012\000", metadata !9, metadata !1} ; [ DW_TAG_lexical_block ]
-!9 = metadata !{metadata !"/tmp/two.c", metadata !"/Volumes/Lalgate/Slate/D"}
-!10 = metadata !{metadata !1}
-!11 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x11\0012\00clang version 3.0 ()\001\00\000\00\000", !9, !4, !4, !10, null, null} ; [ DW_TAG_compile_unit ]
+!1 = !{!"0x2e\00bar\00bar\00\002\000\001\000\006\000\000\000", !9, !2, !3, null, void ()* @bar, null, null, null} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [bar]
+!2 = !{!"0x29", !9} ; [ DW_TAG_file_type ]
+!3 = !{!"0x15\00\000\000\000\000\000\000", !9, !2, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !{null}
+!5 = !{!"0x34\00x\00x\00\001\001\001", !0, !2, !6, i32* @x} ; [ DW_TAG_variable ]
+!6 = !{!"0x24\00int\000\0032\0032\000\000\005", null, !0} ; [ DW_TAG_base_type ]
+!7 = !{i32 2, i32 14, !8, null}
+!8 = !{!"0xb\002\0012\000", !9, !1} ; [ DW_TAG_lexical_block ]
+!9 = !{!"/tmp/two.c", !"/Volumes/Lalgate/Slate/D"}
+!10 = !{!1}
+!11 = !{i32 1, !"Debug Info Version", i32 2}

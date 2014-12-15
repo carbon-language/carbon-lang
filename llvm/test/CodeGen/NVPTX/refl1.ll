@@ -36,4 +36,4 @@ attributes #2 = { alwaysinline inlinehint nounwind readnone }
 
 !nvvm.annotations = !{!0}
 
-!0 = metadata !{void (float*)* @foo, metadata !"kernel", i32 1}
+!0 = !{void (float*)* @foo, !"kernel", i32 1}

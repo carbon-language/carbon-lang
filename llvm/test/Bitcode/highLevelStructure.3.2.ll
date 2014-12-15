@@ -75,11 +75,11 @@ entry:
 ; Named metadata Test
 ; CHECK: !name = !{!0, !1, !2}
 !name = !{!0, !1, !2}
-; CHECK: !0 = metadata !{metadata !"zero"}
+; CHECK: !0 = !{!"zero"}
 !0 = metadata !{metadata !"zero"}
-; CHECK: !1 = metadata !{metadata !"one"}
+; CHECK: !1 = !{!"one"}
 !1 = metadata !{metadata !"one"}
-; CHECK: !2 = metadata !{metadata !"two"}
+; CHECK: !2 = !{!"two"}
 !2 = metadata !{metadata !"two"}
 
 

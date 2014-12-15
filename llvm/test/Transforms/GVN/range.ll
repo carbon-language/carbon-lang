@@ -82,20 +82,20 @@ define i32 @test8(i32* %p) {
   ret i32 %c
 }
 
-; CHECK: ![[DISJOINT_RANGE]] = metadata !{i32 0, i32 2, i32 3, i32 5}
-; CHECK: ![[MERGED_RANGE]] = metadata !{i32 0, i32 5}
-; CHECK: ![[MERGED_SIGNED_RANGE]] = metadata !{i32 -3, i32 -2, i32 1, i32 2}
-; CHECK: ![[MERGED_TEST6]] = metadata !{i32 10, i32 1}
-; CHECK: ![[MERGED_TEST7]] = metadata !{i32 3, i32 4, i32 5, i32 2}
+; CHECK: ![[DISJOINT_RANGE]] = !{i32 0, i32 2, i32 3, i32 5}
+; CHECK: ![[MERGED_RANGE]] = !{i32 0, i32 5}
+; CHECK: ![[MERGED_SIGNED_RANGE]] = !{i32 -3, i32 -2, i32 1, i32 2}
+; CHECK: ![[MERGED_TEST6]] = !{i32 10, i32 1}
+; CHECK: ![[MERGED_TEST7]] = !{i32 3, i32 4, i32 5, i32 2}
 
-!0 = metadata !{i32 0, i32 2}
-!1 = metadata !{i32 3, i32 5}
-!2 = metadata !{i32 2, i32 5}
-!3 = metadata !{i32 -3, i32 -2}
-!4 = metadata !{i32 1, i32 2}
-!5 = metadata !{i32 10, i32 1}
-!6 = metadata !{i32 12, i32 13}
-!7 = metadata !{i32 1, i32 2, i32 3, i32 4}
-!8 = metadata !{i32 5, i32 1}
-!9 = metadata !{i32 1, i32 5}
-!10 = metadata !{i32 5, i32 1}
+!0 = !{i32 0, i32 2}
+!1 = !{i32 3, i32 5}
+!2 = !{i32 2, i32 5}
+!3 = !{i32 -3, i32 -2}
+!4 = !{i32 1, i32 2}
+!5 = !{i32 10, i32 1}
+!6 = !{i32 12, i32 13}
+!7 = !{i32 1, i32 2, i32 3, i32 4}
+!8 = !{i32 5, i32 1}
+!9 = !{i32 1, i32 5}
+!10 = !{i32 5, i32 1}

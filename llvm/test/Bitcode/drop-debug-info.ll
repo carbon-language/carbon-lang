@@ -12,17 +12,17 @@ entry:
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.5 (trunk 195495) (llvm/trunk 195495:195504M)\000\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/Users/manmanren/llvm_gmail/release/../llvm/tools/clang/test/CodeGen/debug-info-version.c] [DW_LANG_C99]
-!1 = metadata !{metadata !"../llvm/tools/clang/test/CodeGen/debug-info-version.c", metadata !"/Users/manmanren/llvm_gmail/release"}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00main\00main\00\003\000\001\000\006\00256\000\003", metadata !1, metadata !5, metadata !6, null, i32 ()* @main, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 3] [def] [main]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/Users/manmanren/llvm_gmail/release/../llvm/tools/clang/test/CodeGen/debug-info-version.c]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{metadata !8}
-!8 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
-!12 = metadata !{i32 4, i32 0, metadata !4, null}
+!0 = !{!"0x11\0012\00clang version 3.5 (trunk 195495) (llvm/trunk 195495:195504M)\000\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/Users/manmanren/llvm_gmail/release/../llvm/tools/clang/test/CodeGen/debug-info-version.c] [DW_LANG_C99]
+!1 = !{!"../llvm/tools/clang/test/CodeGen/debug-info-version.c", !"/Users/manmanren/llvm_gmail/release"}
+!2 = !{i32 0}
+!3 = !{!4}
+!4 = !{!"0x2e\00main\00main\00\003\000\001\000\006\00256\000\003", !1, !5, !6, null, i32 ()* @main, null, null, !2} ; [ DW_TAG_subprogram ] [line 3] [def] [main]
+!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/Users/manmanren/llvm_gmail/release/../llvm/tools/clang/test/CodeGen/debug-info-version.c]
+!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{!8}
+!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = !{i32 2, !"Dwarf Version", i32 2}
+!12 = !{i32 4, i32 0, !4, null}
 
 ; WARN: warning: ignoring debug info with an invalid version (0)
 ; CHECK-NOT: !dbg

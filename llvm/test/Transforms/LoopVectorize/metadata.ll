@@ -27,18 +27,18 @@ for.end:                                          ; preds = %for.body
 ; CHECK: store <4 x i32> %{{.*}}, <4 x i32>* %{{.*}}, align 4, !tbaa ![[TINT:[0-9]+]]
 ; CHECK: ret i32 0
 
-; CHECK-DAG: ![[TFLT]] = metadata !{metadata ![[TFLT1:[0-9]+]]
-; CHECK-DAG: ![[TFLT1]] = metadata !{metadata !"float"
+; CHECK-DAG: ![[TFLT]] = !{![[TFLT1:[0-9]+]]
+; CHECK-DAG: ![[TFLT1]] = !{!"float"
 
-; CHECK-DAG: ![[TINT]] = metadata !{metadata ![[TINT1:[0-9]+]]
-; CHECK-DAG: ![[TINT1]] = metadata !{metadata !"int"
+; CHECK-DAG: ![[TINT]] = !{![[TINT1:[0-9]+]]
+; CHECK-DAG: ![[TINT1]] = !{!"int"
 
 attributes #0 = { nounwind uwtable }
 
-!0 = metadata !{metadata !1, metadata !1, i64 0}
-!1 = metadata !{metadata !"float", metadata !2, i64 0}
-!2 = metadata !{metadata !"omnipotent char", metadata !3, i64 0}
-!3 = metadata !{metadata !"Simple C/C++ TBAA"}
-!4 = metadata !{metadata !5, metadata !5, i64 0}
-!5 = metadata !{metadata !"int", metadata !2, i64 0}
+!0 = !{!1, !1, i64 0}
+!1 = !{!"float", !2, i64 0}
+!2 = !{!"omnipotent char", !3, i64 0}
+!3 = !{!"Simple C/C++ TBAA"}
+!4 = !{!5, !5, i64 0}
+!5 = !{!"int", !2, i64 0}
 

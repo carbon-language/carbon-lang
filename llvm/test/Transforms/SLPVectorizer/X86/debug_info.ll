@@ -18,16 +18,16 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: load <2 x double>* {{.*}}, !dbg ![[LOC]]
 ;CHECK: store <2 x double> {{.*}}, !dbg ![[LOC2:[0-9]+]]
 ;CHECK: ret
-;CHECK: ![[LOC]] = metadata !{i32 4, i32 0,
-;CHECK: ![[LOC2]] = metadata !{i32 7, i32 0,
+;CHECK: ![[LOC]] = !{i32 4, i32 0,
+;CHECK: ![[LOC2]] = !{i32 7, i32 0,
 
 define i32 @depth(double* nocapture %A, i32 %m) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{double* %A}, i64 0, metadata !12, metadata !{}), !dbg !19
-  tail call void @llvm.dbg.value(metadata !{i32 %m}, i64 0, metadata !13, metadata !{}), !dbg !19
-  tail call void @llvm.dbg.value(metadata !20, i64 0, metadata !14, metadata !{}), !dbg !21
-  tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !15, metadata !{}), !dbg !21
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !16, metadata !{}), !dbg !23
+  tail call void @llvm.dbg.value(metadata double* %A, i64 0, metadata !12, metadata !{}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 %m, i64 0, metadata !13, metadata !{}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 00, i64 0, metadata !14, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 02, i64 0, metadata !15, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !{}), !dbg !23
   %cmp8 = icmp sgt i32 %m, 0, !dbg !23
   br i1 %cmp8, label %for.body.lr.ph, label %for.end, !dbg !23
 
@@ -57,33 +57,33 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18, !32}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.4 (trunk 187335) (llvm/trunk 187335:187340M)\001\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/Users/nadav/file.c] [DW_LANG_C99]
-!1 = metadata !{metadata !"file.c", metadata !"/Users/nadav"}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00depth\00depth\00\001\000\001\000\006\00256\001\001", metadata !1, metadata !5, metadata !6, null, i32 (double*, i32)* @depth, null, null, metadata !11} ; [ DW_TAG_subprogram ] [line 1] [def] [depth]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/Users/nadav/file.c]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{metadata !8, metadata !9, metadata !8}
-!8 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from double]
-!10 = metadata !{metadata !"0x24\00double\000\0064\0064\000\000\004", null, null} ; [ DW_TAG_base_type ] [double] [line 0, size 64, align 64, offset 0, enc DW_ATE_float]
-!11 = metadata !{metadata !12, metadata !13, metadata !14, metadata !15, metadata !16}
-!12 = metadata !{metadata !"0x101\00A\0016777217\000", metadata !4, metadata !5, metadata !9} ; [ DW_TAG_arg_variable ] [A] [line 1]
-!13 = metadata !{metadata !"0x101\00m\0033554433\000", metadata !4, metadata !5, metadata !8} ; [ DW_TAG_arg_variable ] [m] [line 1]
-!14 = metadata !{metadata !"0x100\00y0\002\000", metadata !4, metadata !5, metadata !10} ; [ DW_TAG_auto_variable ] [y0] [line 2]
-!15 = metadata !{metadata !"0x100\00y1\002\000", metadata !4, metadata !5, metadata !10} ; [ DW_TAG_auto_variable ] [y1] [line 2]
-!16 = metadata !{metadata !"0x100\00i\003\000", metadata !17, metadata !5, metadata !8} ; [ DW_TAG_auto_variable ] [i] [line 3]
-!17 = metadata !{metadata !"0xb\003\000\000", metadata !1, metadata !4} ; [ DW_TAG_lexical_block ] [/Users/nadav/file.c]
-!18 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
-!19 = metadata !{i32 1, i32 0, metadata !4, null}
-!20 = metadata !{double 0.000000e+00}
-!21 = metadata !{i32 2, i32 0, metadata !4, null}
-!22 = metadata !{double 1.000000e+00}
-!23 = metadata !{i32 3, i32 0, metadata !17, null}
-!24 = metadata !{i32 4, i32 0, metadata !25, null}
-!25 = metadata !{metadata !"0xb\003\000\001", metadata !1, metadata !17} ; [ DW_TAG_lexical_block ] [/Users/nadav/file.c]
-!29 = metadata !{i32 5, i32 0, metadata !25, null}
-!30 = metadata !{i32 7, i32 0, metadata !4, null}
-!31 = metadata !{i32 8, i32 0, metadata !4, null}
-!32 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x11\0012\00clang version 3.4 (trunk 187335) (llvm/trunk 187335:187340M)\001\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/Users/nadav/file.c] [DW_LANG_C99]
+!1 = !{!"file.c", !"/Users/nadav"}
+!2 = !{i32 0}
+!3 = !{!4}
+!4 = !{!"0x2e\00depth\00depth\00\001\000\001\000\006\00256\001\001", !1, !5, !6, null, i32 (double*, i32)* @depth, null, null, !11} ; [ DW_TAG_subprogram ] [line 1] [def] [depth]
+!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/Users/nadav/file.c]
+!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{!8, !9, !8}
+!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = !{!"0xf\00\000\0064\0064\000\000", null, null, !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from double]
+!10 = !{!"0x24\00double\000\0064\0064\000\000\004", null, null} ; [ DW_TAG_base_type ] [double] [line 0, size 64, align 64, offset 0, enc DW_ATE_float]
+!11 = !{!12, !13, !14, !15, !16}
+!12 = !{!"0x101\00A\0016777217\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [A] [line 1]
+!13 = !{!"0x101\00m\0033554433\000", !4, !5, !8} ; [ DW_TAG_arg_variable ] [m] [line 1]
+!14 = !{!"0x100\00y0\002\000", !4, !5, !10} ; [ DW_TAG_auto_variable ] [y0] [line 2]
+!15 = !{!"0x100\00y1\002\000", !4, !5, !10} ; [ DW_TAG_auto_variable ] [y1] [line 2]
+!16 = !{!"0x100\00i\003\000", !17, !5, !8} ; [ DW_TAG_auto_variable ] [i] [line 3]
+!17 = !{!"0xb\003\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [/Users/nadav/file.c]
+!18 = !{i32 2, !"Dwarf Version", i32 2}
+!19 = !{i32 1, i32 0, !4, null}
+!20 = !{double 0.000000e+00}
+!21 = !{i32 2, i32 0, !4, null}
+!22 = !{double 1.000000e+00}
+!23 = !{i32 3, i32 0, !17, null}
+!24 = !{i32 4, i32 0, !25, null}
+!25 = !{!"0xb\003\000\001", !1, !17} ; [ DW_TAG_lexical_block ] [/Users/nadav/file.c]
+!29 = !{i32 5, i32 0, !25, null}
+!30 = !{i32 7, i32 0, !4, null}
+!31 = !{i32 8, i32 0, !4, null}
+!32 = !{i32 1, !"Debug Info Version", i32 2}

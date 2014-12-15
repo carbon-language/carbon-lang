@@ -145,8 +145,8 @@ entry:
 attributes #0 = { nounwind uwtable sanitize_address "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind }
 
-!0 = metadata !{i32 98, i32 122, i32 160}
-!1 = metadata !{i32 305, i32 329, i32 367}
-!2 = metadata !{i32 512, i32 537, i32 576}
-!3 = metadata !{i32 721, i32 746, i32 785}
-!4 = metadata !{i32 929, i32 957, i32 999}
+!0 = !{i32 98, i32 122, i32 160}
+!1 = !{i32 305, i32 329, i32 367}
+!2 = !{i32 512, i32 537, i32 576}
+!3 = !{i32 721, i32 746, i32 785}
+!4 = !{i32 929, i32 957, i32 999}

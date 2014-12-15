@@ -8,6 +8,6 @@ entry:
   %0 = load i8* %a, align 8, !tbaa !0
   ret i8 %0
 }
-!0 = metadata !{metadata !2, metadata !2, i64 0}
-!1 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!2 = metadata !{metadata !"vtable pointer", metadata !1}
+!0 = !{!2, !2, i64 0}
+!1 = !{!"Simple C/C++ TBAA", null}
+!2 = !{!"vtable pointer", !1}

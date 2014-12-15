@@ -21,4 +21,4 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 
 !nvvm.annotations = !{!0}
 
-!0 = metadata !{void (%struct.S*, i32*)* @_Z11TakesStruct1SPi, metadata !"kernel", i32 1}
+!0 = !{void (%struct.S*, i32*)* @_Z11TakesStruct1SPi, !"kernel", i32 1}

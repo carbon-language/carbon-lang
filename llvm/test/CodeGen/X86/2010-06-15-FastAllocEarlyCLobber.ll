@@ -26,4 +26,4 @@ entry:
 
 declare i32 @printf(i8*, ...)
 
-!0 = metadata !{i32 191}
+!0 = !{i32 191}

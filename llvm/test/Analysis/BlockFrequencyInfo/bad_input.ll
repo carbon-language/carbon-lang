@@ -23,7 +23,7 @@ for.end:
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 0, i32 3}
+!0 = !{!"branch_weights", i32 0, i32 3}
 
 ; CHECK-LABEL: Printing analysis {{.*}} for function 'infinite_loop'
 ; CHECK-NEXT: block-frequency-info: infinite_loop
@@ -47,4 +47,4 @@ for.end:
   ret void
 }
 
-!1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
+!1 = !{!"branch_weights", i32 1, i32 1}

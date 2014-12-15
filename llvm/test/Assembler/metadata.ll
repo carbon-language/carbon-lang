@@ -11,8 +11,8 @@ define void @test() {
   ret void, !foo !0, !bar !1
 }
 
-!0 = metadata !{i32 662302, i32 26, metadata !1, null}
-!1 = metadata !{i32 4, metadata !"foo"}
+!0 = !{i32 662302, i32 26, !1, null}
+!1 = !{i32 4, !"foo"}
 
 declare void @llvm.dbg.func.start(metadata) nounwind readnone
 

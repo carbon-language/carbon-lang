@@ -123,15 +123,15 @@ for.end:                                          ; preds = %for.body
   ret float %tmp10
 }
 
-; CHECK: [[TAG]] = metadata !{metadata [[TYPE_LL:!.*]], metadata [[TYPE_LL]], i64 0}
-; CHECK: [[TYPE_LL]] = metadata !{metadata !"long long", metadata {{!.*}}}
-!0 = metadata !{metadata !6, metadata !6, i64 0}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!3 = metadata !{metadata !7, metadata !7, i64 0}
-!4 = metadata !{metadata !8, metadata !8, i64 0}
-!5 = metadata !{metadata !9, metadata !9, i64 0}
-!6 = metadata !{metadata !"short", metadata !1}
-!7 = metadata !{metadata !"long long", metadata !1}
-!8 = metadata !{metadata !"int", metadata !1}
-!9 = metadata !{metadata !"float", metadata !1}
+; CHECK: [[TAG]] = !{[[TYPE_LL:!.*]], [[TYPE_LL]], i64 0}
+; CHECK: [[TYPE_LL]] = !{!"long long", {{!.*}}}
+!0 = !{!6, !6, i64 0}
+!1 = !{!"omnipotent char", !2}
+!2 = !{!"Simple C/C++ TBAA", null}
+!3 = !{!7, !7, i64 0}
+!4 = !{!8, !8, i64 0}
+!5 = !{!9, !9, i64 0}
+!6 = !{!"short", !1}
+!7 = !{!"long long", !1}
+!8 = !{!"int", !1}
+!9 = !{!"float", !1}

@@ -217,4 +217,4 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 
 declare i32 @puts(i8* nocapture) nounwind
 
-!3 = metadata !{metadata !"branch_weights", i32 64, i32 4}
+!3 = !{!"branch_weights", i32 64, i32 4}

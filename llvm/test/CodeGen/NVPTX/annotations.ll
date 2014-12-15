@@ -33,14 +33,14 @@ define void @kernel_func_minctasm(float* %a) {
 
 !nvvm.annotations = !{!1, !2, !3, !4, !5, !6, !7, !8}
 
-!1 = metadata !{void (float*)* @kernel_func_maxntid, metadata !"kernel", i32 1}
-!2 = metadata !{void (float*)* @kernel_func_maxntid, metadata !"maxntidx", i32 10, metadata !"maxntidy", i32 20, metadata !"maxntidz", i32 30}
+!1 = !{void (float*)* @kernel_func_maxntid, !"kernel", i32 1}
+!2 = !{void (float*)* @kernel_func_maxntid, !"maxntidx", i32 10, !"maxntidy", i32 20, !"maxntidz", i32 30}
 
-!3 = metadata !{void (float*)* @kernel_func_reqntid, metadata !"kernel", i32 1}
-!4 = metadata !{void (float*)* @kernel_func_reqntid, metadata !"reqntidx", i32 11, metadata !"reqntidy", i32 22, metadata !"reqntidz", i32 33}
+!3 = !{void (float*)* @kernel_func_reqntid, !"kernel", i32 1}
+!4 = !{void (float*)* @kernel_func_reqntid, !"reqntidx", i32 11, !"reqntidy", i32 22, !"reqntidz", i32 33}
 
-!5 = metadata !{void (float*)* @kernel_func_minctasm, metadata !"kernel", i32 1}
-!6 = metadata !{void (float*)* @kernel_func_minctasm, metadata !"minctasm", i32 42}
+!5 = !{void (float*)* @kernel_func_minctasm, !"kernel", i32 1}
+!6 = !{void (float*)* @kernel_func_minctasm, !"minctasm", i32 42}
 
-!7 = metadata !{i64 addrspace(1)* @texture, metadata !"texture", i32 1}
-!8 = metadata !{i64 addrspace(1)* @surface, metadata !"surface", i32 1}
+!7 = !{i64 addrspace(1)* @texture, !"texture", i32 1}
+!8 = !{i64 addrspace(1)* @surface, !"surface", i32 1}

@@ -78,8 +78,8 @@ attributes #3 = { nounwind }
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"LLVM version 3.4 "}
-!1 = metadata !{metadata !2, metadata !2, i64 0}
-!2 = metadata !{metadata !"int", metadata !3, i64 0}
-!3 = metadata !{metadata !"omnipotent char", metadata !4, i64 0}
-!4 = metadata !{metadata !"Simple C/C++ TBAA"}
+!0 = !{!"LLVM version 3.4 "}
+!1 = !{!2, !2, i64 0}
+!2 = !{!"int", !3, i64 0}
+!3 = !{!"omnipotent char", !4, i64 0}
+!4 = !{!"Simple C/C++ TBAA"}

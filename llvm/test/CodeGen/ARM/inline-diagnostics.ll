@@ -13,4 +13,4 @@ define float @inline_func(float %f1, float %f2) #0 {
   ret float %1
 }
 
-!1 = metadata !{i32 271, i32 305}
+!1 = !{i32 271, i32 305}

@@ -117,7 +117,7 @@ entry:
 
 declare void @llvm.prefetch(i8* nocapture, i32, i32, i32) nounwind
 
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"any pointer", metadata !1}
+!0 = !{!"int", !1}
+!1 = !{!"omnipotent char", !2}
+!2 = !{!"Simple C/C++ TBAA"}
+!3 = !{!"any pointer", !1}

@@ -38,5 +38,5 @@ attributes #2 = { nounwind readonly }
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"Snapdragon LLVM ARM Compiler 3.4"}
-!1 = metadata !{metadata !1}
+!0 = !{!"Snapdragon LLVM ARM Compiler 3.4"}
+!1 = !{!1}

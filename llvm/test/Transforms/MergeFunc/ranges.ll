@@ -39,5 +39,5 @@ define i1 @cmp_with_same_range(i8*, i8*) {
   ret i1 %out
 }
 
-!0 = metadata !{i8 0, i8 2}
-!1 = metadata !{i8 5, i8 7}
+!0 = !{i8 0, i8 2}
+!1 = !{i8 5, i8 7}

@@ -29,5 +29,5 @@ entry:
 ; CHECK: popq %rbp
 }
 
-!0 = metadata !{i32 125}
+!0 = !{i32 125}
 

@@ -32,4 +32,4 @@ entry:
   ret void
 }
 
-!0 = metadata !{metadata !0}
+!0 = !{!0}

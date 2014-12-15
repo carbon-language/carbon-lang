@@ -51,11 +51,11 @@ entry:
   ret void
 }
 
-;CHECK-DAG: ![[TBAA]] = metadata !{metadata [[TYPEC:!.*]], metadata [[TYPEC]], i64 0}
-;CHECK-DAG: ![[FP1]] = metadata !{float 5.000000e+00}
-;CHECK-DAG: ![[FP2]] = metadata !{float 2.500000e+00}
-!0 = metadata !{ float 5.0 }
-!1 = metadata !{ float 2.5 }
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"omnipotent char", metadata !2}
-!4 = metadata !{metadata !"double", metadata !3}
+;CHECK-DAG: ![[TBAA]] = !{[[TYPEC:!.*]], [[TYPEC]], i64 0}
+;CHECK-DAG: ![[FP1]] = !{float 5.000000e+00}
+;CHECK-DAG: ![[FP2]] = !{float 2.500000e+00}
+!0 = !{ float 5.0 }
+!1 = !{ float 2.5 }
+!2 = !{!"Simple C/C++ TBAA"}
+!3 = !{!"omnipotent char", !2}
+!4 = !{!"double", !3}

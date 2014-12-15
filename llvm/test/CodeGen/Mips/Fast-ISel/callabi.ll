@@ -474,4 +474,4 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"clang version 3.6.0 (gitosis@dmz-portal.mips.com:clang 43992fe7b17de5553ac06d323cb80cc6723a9ae3) (gitosis@dmz-portal.mips.com:llvm.git 0834e6839eb170197c81bb02e916258d1527e312)"}
+!0 = !{!"clang version 3.6.0 (gitosis@dmz-portal.mips.com:clang 43992fe7b17de5553ac06d323cb80cc6723a9ae3) (gitosis@dmz-portal.mips.com:llvm.git 0834e6839eb170197c81bb02e916258d1527e312)"}

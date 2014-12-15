@@ -81,6 +81,6 @@ attributes #1 = { nounwind readnone }
 
 !opencl.kernels = !{!0, !1, !2}
 
-!0 = metadata !{null}
-!1 = metadata !{null}
-!2 = metadata !{void (i32 addrspace(1)*)* @fill3d}
+!0 = !{null}
+!1 = !{null}
+!2 = !{void (i32 addrspace(1)*)* @fill3d}

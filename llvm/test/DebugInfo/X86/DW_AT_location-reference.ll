@@ -64,7 +64,7 @@ define void @f() nounwind {
 entry:
   %call = tail call i32 @g(i32 0, i32 0) nounwind, !dbg !8
   store i32 %call, i32* @a, align 4, !dbg !8
-  tail call void @llvm.dbg.value(metadata !12, i64 0, metadata !5, metadata !{metadata !"0x102"}), !dbg !13
+  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !5, metadata !{!"0x102"}), !dbg !13
   br label %while.body
 
 while.body:                                       ; preds = %entry, %while.body
@@ -75,10 +75,10 @@ while.body:                                       ; preds = %entry, %while.body
   br i1 %tobool, label %while.end, label %while.body, !dbg !14
 
 while.end:                                        ; preds = %while.body
-  tail call void @llvm.dbg.value(metadata !{i32 %mul}, i64 0, metadata !5, metadata !{metadata !"0x102"}), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32 %mul, i64 0, metadata !5, metadata !{!"0x102"}), !dbg !14
   %call4 = tail call i32 @g(i32 %mul, i32 0) nounwind, !dbg !15
   store i32 %call4, i32* @a, align 4, !dbg !15
-  tail call void @llvm.dbg.value(metadata !16, i64 0, metadata !5, metadata !{metadata !"0x102"}), !dbg !17
+  tail call void @llvm.dbg.value(metadata i32 2, i64 0, metadata !5, metadata !{!"0x102"}), !dbg !17
   br label %while.body9
 
 while.body9:                                      ; preds = %while.end, %while.body9
@@ -89,7 +89,7 @@ while.body9:                                      ; preds = %while.end, %while.b
   br i1 %tobool8, label %while.end13, label %while.body9, !dbg !18
 
 while.end13:                                      ; preds = %while.body9
-  tail call void @llvm.dbg.value(metadata !{i32 %mul12}, i64 0, metadata !5, metadata !{metadata !"0x102"}), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %mul12, i64 0, metadata !5, metadata !{!"0x102"}), !dbg !18
   %call15 = tail call i32 @g(i32 0, i32 %mul12) nounwind, !dbg !19
   store i32 %call15, i32* @a, align 4, !dbg !19
   ret void, !dbg !20
@@ -102,25 +102,25 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!24}
 
-!0 = metadata !{metadata !"0x2e\00f\00f\00\004\000\001\000\006\00256\001\004", metadata !23, metadata !1, metadata !3, null, void ()* @f, null, null, metadata !22} ; [ DW_TAG_subprogram ] [line 4] [def] [f]
-!1 = metadata !{metadata !"0x29", metadata !23} ; [ DW_TAG_file_type ]
-!2 = metadata !{metadata !"0x11\0012\00clang version 3.0 (trunk)\001\00\000\00\001", metadata !23, metadata !4, metadata !4, metadata !21, null,  null} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !23, metadata !1, null, metadata !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!4 = metadata !{null}
-!5 = metadata !{metadata !"0x100\00x\005\000", metadata !6, metadata !1, metadata !7} ; [ DW_TAG_auto_variable ]
-!6 = metadata !{metadata !"0xb\004\0014\000", metadata !23, metadata !0} ; [ DW_TAG_lexical_block ]
-!7 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, metadata !2} ; [ DW_TAG_base_type ]
-!8 = metadata !{i32 6, i32 3, metadata !6, null}
-!12 = metadata !{i32 1}
-!13 = metadata !{i32 7, i32 3, metadata !6, null}
-!14 = metadata !{i32 8, i32 3, metadata !6, null}
-!15 = metadata !{i32 9, i32 3, metadata !6, null}
-!16 = metadata !{i32 2}
-!17 = metadata !{i32 10, i32 3, metadata !6, null}
-!18 = metadata !{i32 11, i32 3, metadata !6, null}
-!19 = metadata !{i32 12, i32 3, metadata !6, null}
-!20 = metadata !{i32 13, i32 1, metadata !6, null}
-!21 = metadata !{metadata !0}
-!22 = metadata !{metadata !5}
-!23 = metadata !{metadata !"simple.c", metadata !"/home/rengol01/temp/tests/dwarf/relocation"}
-!24 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x2e\00f\00f\00\004\000\001\000\006\00256\001\004", !23, !1, !3, null, void ()* @f, null, null, !22} ; [ DW_TAG_subprogram ] [line 4] [def] [f]
+!1 = !{!"0x29", !23} ; [ DW_TAG_file_type ]
+!2 = !{!"0x11\0012\00clang version 3.0 (trunk)\001\00\000\00\001", !23, !4, !4, !21, null,  null} ; [ DW_TAG_compile_unit ]
+!3 = !{!"0x15\00\000\000\000\000\000\000", !23, !1, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !{null}
+!5 = !{!"0x100\00x\005\000", !6, !1, !7} ; [ DW_TAG_auto_variable ]
+!6 = !{!"0xb\004\0014\000", !23, !0} ; [ DW_TAG_lexical_block ]
+!7 = !{!"0x24\00int\000\0032\0032\000\000\005", null, !2} ; [ DW_TAG_base_type ]
+!8 = !{i32 6, i32 3, !6, null}
+!12 = !{i32 1}
+!13 = !{i32 7, i32 3, !6, null}
+!14 = !{i32 8, i32 3, !6, null}
+!15 = !{i32 9, i32 3, !6, null}
+!16 = !{i32 2}
+!17 = !{i32 10, i32 3, !6, null}
+!18 = !{i32 11, i32 3, !6, null}
+!19 = !{i32 12, i32 3, !6, null}
+!20 = !{i32 13, i32 1, !6, null}
+!21 = !{!0}
+!22 = !{!5}
+!23 = !{!"simple.c", !"/home/rengol01/temp/tests/dwarf/relocation"}
+!24 = !{i32 1, !"Debug Info Version", i32 2}

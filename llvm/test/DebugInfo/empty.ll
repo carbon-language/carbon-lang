@@ -24,8 +24,8 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!5}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.1 (trunk 143523)\001\00\000\00\000", metadata !4, metadata !2, metadata !2, metadata !2, metadata !2, null} ; [ DW_TAG_compile_unit ]
-!2 = metadata !{}
-!3 = metadata !{metadata !"0x29", metadata !4} ; [ DW_TAG_file_type ]
-!4 = metadata !{metadata !"empty.c", metadata !"/home/nlewycky"}
-!5 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x11\0012\00clang version 3.1 (trunk 143523)\001\00\000\00\000", !4, !2, !2, !2, !2, null} ; [ DW_TAG_compile_unit ]
+!2 = !{}
+!3 = !{!"0x29", !4} ; [ DW_TAG_file_type ]
+!4 = !{!"empty.c", !"/home/nlewycky"}
+!5 = !{i32 1, !"Debug Info Version", i32 2}

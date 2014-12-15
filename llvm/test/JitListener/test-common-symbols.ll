@@ -34,7 +34,7 @@ if.then:                                          ; preds = %entry
   br label %if.end, !dbg !24
 
 if.end:                                           ; preds = %if.then, %entry
-  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !25, metadata !{metadata !"0x102"}), !dbg !27
+  call void @llvm.dbg.declare(metadata i32* %i, metadata !25, metadata !{!"0x102"}), !dbg !27
   store i32 1, i32* %i, align 4, !dbg !28
   br label %for.cond, !dbg !28
 
@@ -78,36 +78,36 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!35}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.1 ()\001\00\000\00\000", metadata !34, metadata !1, metadata !1, metadata !3, metadata !12, null} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 0}
-!3 = metadata !{metadata !5}
-!5 = metadata !{metadata !"0x2e\00main\00main\00\006\000\001\000\006\000\000\000", metadata !34, metadata !6, metadata !7, null, i32 ()* @main, null, null, metadata !10} ; [ DW_TAG_subprogram ]
-!6 = metadata !{metadata !"0x29", metadata !34} ; [ DW_TAG_file_type ]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, metadata !"", null, metadata !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!8 = metadata !{metadata !9}
-!9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
-!10 = metadata !{metadata !11}
-!11 = metadata !{metadata !"0x24"}                      ; [ DW_TAG_base_type ]
-!12 = metadata !{metadata !14, metadata !15, metadata !17}
-!14 = metadata !{metadata !"0x34\00zero_int\00zero_int\00\001\000\001", null, metadata !6, metadata !9, i32* @zero_int, null} ; [ DW_TAG_variable ]
-!15 = metadata !{metadata !"0x34\00zero_double\00zero_double\00\002\000\001", null, metadata !6, metadata !16, double* @zero_double, null} ; [ DW_TAG_variable ]
-!16 = metadata !{metadata !"0x24\00double\000\0064\0064\000\000\004", null, null} ; [ DW_TAG_base_type ]
-!17 = metadata !{metadata !"0x34\00zero_arr\00zero_arr\00\003\000\001", null, metadata !6, metadata !18, [10 x i32]* @zero_arr, null} ; [ DW_TAG_variable ]
-!18 = metadata !{metadata !"0x1\00\000\00320\0032\000\000", null, metadata !"", metadata !9, metadata !19, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 320, align 32, offset 0] [from int]
-!19 = metadata !{metadata !20}
-!20 = metadata !{metadata !"0x21\000\0010"}        ; [ DW_TAG_subrange_type ]
-!21 = metadata !{i32 7, i32 5, metadata !22, null}
-!22 = metadata !{metadata !"0xb\006\001\000", metadata !34, metadata !5} ; [ DW_TAG_lexical_block ]
-!23 = metadata !{i32 9, i32 5, metadata !22, null}
-!24 = metadata !{i32 10, i32 9, metadata !22, null}
-!25 = metadata !{metadata !"0x100\00i\0012\000", metadata !26, metadata !6, metadata !9} ; [ DW_TAG_auto_variable ]
-!26 = metadata !{metadata !"0xb\0012\005\001", metadata !34, metadata !22} ; [ DW_TAG_lexical_block ]
-!27 = metadata !{i32 12, i32 14, metadata !26, null}
-!28 = metadata !{i32 12, i32 19, metadata !26, null}
-!29 = metadata !{i32 13, i32 9, metadata !30, null}
-!30 = metadata !{metadata !"0xb\0012\0034\002", metadata !34, metadata !26} ; [ DW_TAG_lexical_block ]
-!31 = metadata !{i32 14, i32 5, metadata !30, null}
-!32 = metadata !{i32 12, i32 29, metadata !26, null}
-!33 = metadata !{i32 15, i32 5, metadata !22, null}
-!34 = metadata !{metadata !"test-common-symbols.c", metadata !"/store/store/llvm/build"}
-!35 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x11\0012\00clang version 3.1 ()\001\00\000\00\000", !34, !1, !1, !3, !12, null} ; [ DW_TAG_compile_unit ]
+!1 = !{i32 0}
+!3 = !{!5}
+!5 = !{!"0x2e\00main\00main\00\006\000\001\000\006\000\000\000", !34, !6, !7, null, i32 ()* @main, null, null, !10} ; [ DW_TAG_subprogram ]
+!6 = !{!"0x29", !34} ; [ DW_TAG_file_type ]
+!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, !"", null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !{!9}
+!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
+!10 = !{!11}
+!11 = !{!"0x24"}                      ; [ DW_TAG_base_type ]
+!12 = !{!14, !15, !17}
+!14 = !{!"0x34\00zero_int\00zero_int\00\001\000\001", null, !6, !9, i32* @zero_int, null} ; [ DW_TAG_variable ]
+!15 = !{!"0x34\00zero_double\00zero_double\00\002\000\001", null, !6, !16, double* @zero_double, null} ; [ DW_TAG_variable ]
+!16 = !{!"0x24\00double\000\0064\0064\000\000\004", null, null} ; [ DW_TAG_base_type ]
+!17 = !{!"0x34\00zero_arr\00zero_arr\00\003\000\001", null, !6, !18, [10 x i32]* @zero_arr, null} ; [ DW_TAG_variable ]
+!18 = !{!"0x1\00\000\00320\0032\000\000", null, !"", !9, !19, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 320, align 32, offset 0] [from int]
+!19 = !{!20}
+!20 = !{!"0x21\000\0010"}        ; [ DW_TAG_subrange_type ]
+!21 = !{i32 7, i32 5, !22, null}
+!22 = !{!"0xb\006\001\000", !34, !5} ; [ DW_TAG_lexical_block ]
+!23 = !{i32 9, i32 5, !22, null}
+!24 = !{i32 10, i32 9, !22, null}
+!25 = !{!"0x100\00i\0012\000", !26, !6, !9} ; [ DW_TAG_auto_variable ]
+!26 = !{!"0xb\0012\005\001", !34, !22} ; [ DW_TAG_lexical_block ]
+!27 = !{i32 12, i32 14, !26, null}
+!28 = !{i32 12, i32 19, !26, null}
+!29 = !{i32 13, i32 9, !30, null}
+!30 = !{!"0xb\0012\0034\002", !34, !26} ; [ DW_TAG_lexical_block ]
+!31 = !{i32 14, i32 5, !30, null}
+!32 = !{i32 12, i32 29, !26, null}
+!33 = !{i32 15, i32 5, !22, null}
+!34 = !{!"test-common-symbols.c", !"/store/store/llvm/build"}
+!35 = !{i32 1, !"Debug Info Version", i32 2}

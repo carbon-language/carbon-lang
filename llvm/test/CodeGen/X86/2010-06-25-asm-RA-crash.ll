@@ -16,4 +16,4 @@ entry:
 
 declare x86_stdcallcc void @RtlUnwind(...)
 
-!0 = metadata !{i32 215}
+!0 = !{i32 215}

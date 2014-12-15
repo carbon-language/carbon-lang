@@ -1,9 +1,9 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
 ; RUN: verify-uselistorder %s
 
-!0 = metadata !{metadata !"zero"}
-!1 = metadata !{metadata !"one"}
-!2 = metadata !{metadata !"two"}
+!0 = !{!"zero"}
+!1 = !{!"one"}
+!2 = !{!"two"}
 
 !foo = !{!0, !1, !2}
 ; CHECK: !foo = !{!0, !1, !2}

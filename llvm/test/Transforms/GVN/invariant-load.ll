@@ -27,5 +27,5 @@ entry:
   ret i32 %add
 }
 
-!0 = metadata !{ }
+!0 = !{ }
 

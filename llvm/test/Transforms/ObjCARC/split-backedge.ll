@@ -45,6 +45,6 @@ declare void @objc_release(i8*)
 declare i8* @objc_retain(i8*)
 declare void @use_pointer(i8*)
 
-!0 = metadata !{}
+!0 = !{}
 
 ; CHECK: attributes [[NUW]] = { nounwind }

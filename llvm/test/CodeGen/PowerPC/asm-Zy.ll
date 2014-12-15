@@ -10,5 +10,5 @@ entry:
 ; CHECK: lwbrx 3, 0,
 }
 
-!0 = metadata !{i32 101688}
+!0 = !{i32 101688}
 

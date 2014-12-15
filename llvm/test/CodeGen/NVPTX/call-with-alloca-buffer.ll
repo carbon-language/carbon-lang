@@ -63,4 +63,4 @@ declare void @callee(float*, i8*)
 
 !nvvm.annotations = !{!0}
 
-!0 = metadata !{void (float*)* @kernel_func, metadata !"kernel", i32 1}
+!0 = !{void (float*)* @kernel_func, !"kernel", i32 1}

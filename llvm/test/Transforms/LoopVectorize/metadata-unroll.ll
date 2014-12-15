@@ -37,5 +37,5 @@ define void @inc(i32 %n) nounwind uwtable noinline ssp {
   ret void
 }
 
-!0 = metadata !{metadata !0, metadata !1}
-!1 = metadata !{metadata !"llvm.loop.interleave.count", i32 2}
+!0 = !{!0, !1}
+!1 = !{!"llvm.loop.interleave.count", i32 2}

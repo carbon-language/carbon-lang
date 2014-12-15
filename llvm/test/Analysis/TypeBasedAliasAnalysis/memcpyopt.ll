@@ -18,10 +18,10 @@ define void @foo(i8* nocapture %p, i8* nocapture %q, i8* nocapture %s) nounwind 
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
-; CHECK: [[TAGA]] = metadata !{metadata [[TYPEA:!.*]], metadata [[TYPEA]], i64 0}
-; CHECK: [[TYPEA]] = metadata !{metadata !"A", metadata !{{.*}}}
-!0 = metadata !{metadata !"tbaa root", null}
-!1 = metadata !{metadata !3, metadata !3, i64 0}
-!2 = metadata !{metadata !4, metadata !4, i64 0}
-!3 = metadata !{metadata !"A", metadata !0}
-!4 = metadata !{metadata !"B", metadata !0}
+; CHECK: [[TAGA]] = !{[[TYPEA:!.*]], [[TYPEA]], i64 0}
+; CHECK: [[TYPEA]] = !{!"A", !{{.*}}}
+!0 = !{!"tbaa root", null}
+!1 = !{!3, !3, i64 0}
+!2 = !{!4, !4, i64 0}
+!3 = !{!"A", !0}
+!4 = !{!"B", !0}

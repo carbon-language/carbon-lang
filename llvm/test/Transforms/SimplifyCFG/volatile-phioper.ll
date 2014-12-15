@@ -45,4 +45,4 @@ attributes #0 = { nounwind ssp uwtable "fp-contract-model"="standard" "no-frame-
 attributes #1 = { "fp-contract-model"="standard" "no-frame-pointer-elim" "no-frame-pointer-elim-non-leaf" "relocation-model"="pic" "ssp-buffers-size"="8" }
 attributes #2 = { nounwind }
 
-!0 = metadata !{i32 1039}
+!0 = !{i32 1039}

@@ -104,8 +104,8 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-!3 = metadata !{metadata !3}
-!4 = metadata !{metadata !4}
-!5 = metadata !{metadata !3, metadata !4}
-!6 = metadata !{metadata !6}
-!7 = metadata !{metadata !7}
+!3 = !{!3}
+!4 = !{!4}
+!5 = !{!3, !4}
+!6 = !{!6}
+!7 = !{!7}

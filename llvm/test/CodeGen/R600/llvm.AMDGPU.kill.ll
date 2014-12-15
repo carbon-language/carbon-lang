@@ -19,4 +19,4 @@ declare void @llvm.AMDGPU.kill(float)
 
 attributes #0 = { "ShaderType"="2" }
 
-!0 = metadata !{metadata !"const", null, i32 1}
+!0 = !{!"const", null, i32 1}

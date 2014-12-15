@@ -24,7 +24,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-!0 = metadata !{metadata !0, metadata !1}
-!1 = metadata !{metadata !"llvm.loop.vectorize.width", i32 4}
+!0 = !{!0, !1}
+!1 = !{!"llvm.loop.vectorize.width", i32 4}
 ; CHECK-NOT: !{metadata !"llvm.loop.vectorize.width", i32 4}
-; CHECK: !{metadata !"llvm.loop.interleave.count", i32 1}
+; CHECK: !{!"llvm.loop.interleave.count", i32 1}

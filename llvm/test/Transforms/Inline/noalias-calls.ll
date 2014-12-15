@@ -35,10 +35,10 @@ entry:
 attributes #0 = { nounwind }
 attributes #1 = { nounwind uwtable }
 
-; CHECK: !0 = metadata !{metadata !1}
-; CHECK: !1 = metadata !{metadata !1, metadata !2, metadata !"hello: %c"}
-; CHECK: !2 = metadata !{metadata !2, metadata !"hello"}
-; CHECK: !3 = metadata !{metadata !4}
-; CHECK: !4 = metadata !{metadata !4, metadata !2, metadata !"hello: %a"}
-; CHECK: !5 = metadata !{metadata !4, metadata !1}
+; CHECK: !0 = !{!1}
+; CHECK: !1 = !{!1, !2, !"hello: %c"}
+; CHECK: !2 = !{!2, !"hello"}
+; CHECK: !3 = !{!4}
+; CHECK: !4 = !{!4, !2, !"hello: %a"}
+; CHECK: !5 = !{!4, !1}
 

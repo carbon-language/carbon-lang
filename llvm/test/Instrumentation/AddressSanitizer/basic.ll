@@ -170,4 +170,4 @@ define void @memintr_test(i8* %a, i8* %b) nounwind uwtable sanitize_address {
 ; CHECK: ret void
 
 ; PROF
-; CHECK: ![[PROF]] = metadata !{metadata !"branch_weights", i32 1, i32 100000}
+; CHECK: ![[PROF]] = !{!"branch_weights", i32 1, i32 100000}

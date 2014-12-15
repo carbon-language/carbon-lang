@@ -89,7 +89,7 @@ lpad:                                             ; preds = %entry
 
 !clang.arc.retainAutoreleasedReturnValueMarker = !{!0}
 
-!0 = metadata !{metadata !"mov\09r7, r7\09\09@ marker for objc_retainAutoreleaseReturnValue"}
+!0 = !{!"mov\09r7, r7\09\09@ marker for objc_retainAutoreleaseReturnValue"}
 
 ; CHECK: attributes #0 = { optsize }
 ; CHECK: attributes [[NUW]] = { nounwind }

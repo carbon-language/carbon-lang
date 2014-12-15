@@ -23,5 +23,5 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!0 = metadata !{metadata !"branch_weights", i32 1, i32 9}
-!1 = metadata !{metadata !"branch_weights", i32 4, i32 5}
+!0 = !{!"branch_weights", i32 1, i32 9}
+!1 = !{!"branch_weights", i32 4, i32 5}

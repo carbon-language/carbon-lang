@@ -84,5 +84,5 @@ moduleinfoCtorEntry:
 }
 !llvm.ldc.classinfo._D6Object7__ClassZ = !{!0}
 !llvm.ldc.classinfo._D10ModuleInfo7__ClassZ = !{!1}
-!0 = metadata !{%object.Object undef, i1 false, i1 false}
-!1 = metadata !{%object.ModuleInfo undef, i1 false, i1 false}
+!0 = !{%object.Object undef, i1 false, i1 false}
+!1 = !{%object.ModuleInfo undef, i1 false, i1 false}

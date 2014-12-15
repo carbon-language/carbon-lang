@@ -34,4 +34,4 @@ define i32 @ult_trip_count_with_range(i32 *%ptr0, i32 *%ptr1) {
   ret i32 0
 }
 
-!0 = metadata !{i32 1, i32 100}
+!0 = !{i32 1, i32 100}

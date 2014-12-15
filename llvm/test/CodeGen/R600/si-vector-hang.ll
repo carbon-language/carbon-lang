@@ -96,12 +96,12 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 
 !opencl.kernels = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
 
-!0 = metadata !{null}
-!1 = metadata !{null}
-!2 = metadata !{null}
-!3 = metadata !{void (i8 addrspace(1)*, i8 addrspace(1)*, i8 addrspace(1)*)* @test_8_min_char}
-!4 = metadata !{null}
-!5 = metadata !{null}
-!6 = metadata !{null}
-!7 = metadata !{null}
-!8 = metadata !{null}
+!0 = !{null}
+!1 = !{null}
+!2 = !{null}
+!3 = !{void (i8 addrspace(1)*, i8 addrspace(1)*, i8 addrspace(1)*)* @test_8_min_char}
+!4 = !{null}
+!5 = !{null}
+!6 = !{null}
+!7 = !{null}
+!8 = !{null}

@@ -37,16 +37,16 @@ entry:
   ret i32 0
 }
 
-!1 = metadata !{metadata !2, metadata !2, i64 0}
-!2 = metadata !{metadata !"long", metadata !3, i64 0}
-!3 = metadata !{metadata !"omnipotent char", metadata !4, i64 0}
-!4 = metadata !{metadata !"Simple C/C++ TBAA"}
-!5 = metadata !{metadata !6, metadata !6, i64 0}
-!6 = metadata !{metadata !"int", metadata !3, i64 0}
-!7 = metadata !{metadata !3, metadata !3, i64 0}
-!8 = metadata !{metadata !9, metadata !9, i64 0}
-!9 = metadata !{metadata !"any pointer", metadata !3, i64 0}
-; CHECK: ![[I32]] = metadata !{metadata ![[I32_TYPE:[0-9]+]], metadata ![[I32_TYPE]], i64 0}
-; CHECK: ![[I32_TYPE]] = metadata !{metadata !"int", metadata !{{.*}}, i64 0}
-; CHECK: ![[LONG]] = metadata !{metadata ![[LONG_TYPE:[0-9]+]], metadata ![[LONG_TYPE]], i64 0}
-; CHECK: ![[LONG_TYPE]] = metadata !{metadata !"long", metadata !{{.*}}, i64 0}
+!1 = !{!2, !2, i64 0}
+!2 = !{!"long", !3, i64 0}
+!3 = !{!"omnipotent char", !4, i64 0}
+!4 = !{!"Simple C/C++ TBAA"}
+!5 = !{!6, !6, i64 0}
+!6 = !{!"int", !3, i64 0}
+!7 = !{!3, !3, i64 0}
+!8 = !{!9, !9, i64 0}
+!9 = !{!"any pointer", !3, i64 0}
+; CHECK: ![[I32]] = !{![[I32_TYPE:[0-9]+]], ![[I32_TYPE]], i64 0}
+; CHECK: ![[I32_TYPE]] = !{!"int", !{{.*}}, i64 0}
+; CHECK: ![[LONG]] = !{![[LONG_TYPE:[0-9]+]], ![[LONG_TYPE]], i64 0}
+; CHECK: ![[LONG_TYPE]] = !{!"long", !{{.*}}, i64 0}

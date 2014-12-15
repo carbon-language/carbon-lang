@@ -32,8 +32,8 @@ define i32 @callercaller(i32* %Q) {
   ret i32 %X
 }
 
-!0 = metadata !{metadata !"test"}
-!1 = metadata !{metadata !3, metadata !3, i64 0}
-!2 = metadata !{metadata !4, metadata !4, i64 0}
-!3 = metadata !{metadata !"green", metadata !0}
-!4 = metadata !{metadata !"blue", metadata !0}
+!0 = !{!"test"}
+!1 = !{!3, !3, i64 0}
+!2 = !{!4, !4, i64 0}
+!3 = !{!"green", !0}
+!4 = !{!"blue", !0}

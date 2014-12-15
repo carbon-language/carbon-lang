@@ -527,8 +527,8 @@ attributes #3 = { nounwind "fp-contract-model"="standard" "relocation-model"="pi
 attributes #4 = { nounwind }
 attributes #5 = { nobuiltin }
 
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"short", metadata !1}
-!4 = metadata !{i64 0, i64 4, metadata !0, i64 4, i64 2, metadata !3, i64 8, i64 4, metadata !0, i64 12, i64 2, metadata !3, i64 16, i64 4, metadata !0, i64 20, i64 2, metadata !3}
+!0 = !{!"int", !1}
+!1 = !{!"omnipotent char", !2}
+!2 = !{!"Simple C/C++ TBAA"}
+!3 = !{!"short", !1}
+!4 = !{i64 0, i64 4, !0, i64 4, i64 2, !3, i64 8, i64 4, !0, i64 12, i64 2, !3, i64 16, i64 4, !0, i64 20, i64 2, !3}

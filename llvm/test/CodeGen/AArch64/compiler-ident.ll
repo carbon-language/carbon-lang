@@ -8,5 +8,5 @@ target triple = "aarch64--linux-gnu"
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"some LLVM version"}
+!0 = !{!"some LLVM version"}
 

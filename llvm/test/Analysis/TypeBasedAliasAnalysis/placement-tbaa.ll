@@ -97,14 +97,14 @@ declare noalias i8* @_Znwm(i64)
 
 attributes #0 = { nounwind }
 
-!0 = metadata !{metadata !1, metadata !1, i64 0}
-!1 = metadata !{metadata !"int", metadata !2, i64 0}
-!2 = metadata !{metadata !"omnipotent char", metadata !3, i64 0}
-!3 = metadata !{metadata !"Simple C/C++ TBAA"}
-!4 = metadata !{metadata !5, metadata !5, i64 0}
-!5 = metadata !{metadata !"any pointer", metadata !2, i64 0}
-!6 = metadata !{metadata !7, metadata !8, i64 0}
-!7 = metadata !{metadata !"_ZTS3Foo", metadata !8, i64 0}
-!8 = metadata !{metadata !"long", metadata !2, i64 0}
-!9 = metadata !{metadata !10, metadata !5, i64 0}
-!10 = metadata !{metadata !"_ZTS3Bar", metadata !5, i64 0}
+!0 = !{!1, !1, i64 0}
+!1 = !{!"int", !2, i64 0}
+!2 = !{!"omnipotent char", !3, i64 0}
+!3 = !{!"Simple C/C++ TBAA"}
+!4 = !{!5, !5, i64 0}
+!5 = !{!"any pointer", !2, i64 0}
+!6 = !{!7, !8, i64 0}
+!7 = !{!"_ZTS3Foo", !8, i64 0}
+!8 = !{!"long", !2, i64 0}
+!9 = !{!10, !5, i64 0}
+!10 = !{!"_ZTS3Bar", !5, i64 0}

@@ -16,7 +16,7 @@ for.body:                                         ; preds = %_ZN8nsTArray9Elemen
   %tmp = bitcast %struct.nsTArrayHeader* %add.ptr.i to %struct.nsTArray*
   %arrayidx = getelementptr inbounds %struct.nsTArray* %tmp, i32 %i.06
   %add = add nsw i32 %i.06, 1
-  call void @llvm.dbg.value(metadata !{%struct.nsTArray* %aValues}, i64 0, metadata !0, metadata !{}) nounwind
+  call void @llvm.dbg.value(metadata %struct.nsTArray* %aValues, i64 0, metadata !0, metadata !{}) nounwind
   br label %_ZN8nsTArray9ElementAtEi.exit
 
 _ZN8nsTArray9ElementAtEi.exit:                    ; preds = %for.body
@@ -35,4 +35,4 @@ declare %struct.nsTArrayHeader* @_ZN8nsTArray4Hdr2Ev()
 
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
-!0 = metadata !{metadata !"0x101"}                       ; [ DW_TAG_arg_variable ]
+!0 = !{!"0x101"}                       ; [ DW_TAG_arg_variable ]

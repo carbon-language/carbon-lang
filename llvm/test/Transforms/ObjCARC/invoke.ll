@@ -221,4 +221,4 @@ declare i32 @__objc_personality_v0(...)
 
 ; CHECK: attributes [[NUW]] = { nounwind }
 
-!0 = metadata !{}
+!0 = !{}

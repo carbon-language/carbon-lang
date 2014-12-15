@@ -4,12 +4,12 @@
 !llvm.dbg.cu = !{!5}
 !llvm.module.flags = !{!6}
 
-!0 = metadata !{metadata !"0x2e\00bar\00bar\00_ZN3foo3barEv\003\000\000\000\006\00258\000\003", metadata !4, metadata !1, metadata !2, null, null, null, i32 0, metadata !1} ; [ DW_TAG_subprogram ]
-!1 = metadata !{metadata !"0x29", metadata !4} ; [ DW_TAG_file_type ]
-!2 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !4, metadata !1, null, metadata !3, null} ; [ DW_TAG_subroutine_type ]
-!3 = metadata !{null}
-!4 = metadata !{metadata !"/foo", metadata !"bar.cpp"}
-!5 = metadata !{metadata !"0x11\0012\00\001\00\000\00\000", metadata !4, metadata !3, metadata !3, null, null, null}; [DW_TAG_compile_unit ]
+!0 = !{!"0x2e\00bar\00bar\00_ZN3foo3barEv\003\000\000\000\006\00258\000\003", !4, !1, !2, null, null, null, i32 0, !1} ; [ DW_TAG_subprogram ]
+!1 = !{!"0x29", !4} ; [ DW_TAG_file_type ]
+!2 = !{!"0x15\00\000\000\000\000\000\000", !4, !1, null, !3, null} ; [ DW_TAG_subroutine_type ]
+!3 = !{null}
+!4 = !{!"/foo", !"bar.cpp"}
+!5 = !{!"0x11\0012\00\001\00\000\00\000", !4, !3, !3, null, null, null}; [DW_TAG_compile_unit ]
 
 define <{i32, i32}> @f1() {
 ; CHECK: !dbgx ![[NUMBER:[0-9]+]]
@@ -20,4 +20,4 @@ define <{i32, i32}> @f1() {
 }
 
 ; CHECK: [protected]
-!6 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!6 = !{i32 1, !"Debug Info Version", i32 2}

@@ -170,7 +170,7 @@ for.end:                                          ; preds = %for.body
   ret i32 %1
 }
 
-!0 = metadata !{metadata !0, metadata !1}
-!1 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 1}
-!2 = metadata !{metadata !2, metadata !3}
-!3 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 0}
+!0 = !{!0, !1}
+!1 = !{!"llvm.loop.vectorize.enable", i1 1}
+!2 = !{!2, !3}
+!3 = !{!"llvm.loop.vectorize.enable", i1 0}

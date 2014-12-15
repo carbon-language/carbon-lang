@@ -30,10 +30,10 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-!1 = metadata !{metadata !1, metadata !2, metadata !3, metadata !4}
-!2 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
-!3 = metadata !{metadata !"llvm.loop.unroll.count", i32 4}
-!4 = metadata !{metadata !"llvm.loop.vectorize.width", i32 8}
+!1 = !{!1, !2, !3, !4}
+!2 = !{!"llvm.loop.vectorize.enable", i1 true}
+!3 = !{!"llvm.loop.unroll.count", i32 4}
+!4 = !{!"llvm.loop.vectorize.width", i32 8}
 
 ; #pragma clang loop unroll(full)
 ;
@@ -63,8 +63,8 @@ for.body:                                         ; preds = %entry, %for.body
 for.end:                                          ; preds = %for.body, %entry
   ret void
 }
-!5 = metadata !{metadata !5, metadata !6}
-!6 = metadata !{metadata !"llvm.loop.unroll.full"}
+!5 = !{!5, !6}
+!6 = !{!"llvm.loop.unroll.full"}
 
 ; #pragma clang loop unroll(disable)
 ;
@@ -89,8 +89,8 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-!7 = metadata !{metadata !7, metadata !8}
-!8 = metadata !{metadata !"llvm.loop.unroll.disable"}
+!7 = !{!7, !8}
+!8 = !{!"llvm.loop.unroll.disable"}
 
 ; This function contains two loops which share the same llvm.loop metadata node
 ; with an llvm.loop.unroll.count 2 hint.  Both loops should be unrolled.  This
@@ -134,16 +134,16 @@ for.body3.1:                                      ; preds = %for.body3.1.prehead
 for.inc5.1:                                       ; preds = %for.body3.1
   ret void
 }
-!9 = metadata !{metadata !9, metadata !10}
-!10 = metadata !{metadata !"llvm.loop.unroll.count", i32 2}
+!9 = !{!9, !10}
+!10 = !{!"llvm.loop.unroll.count", i32 2}
 
 
-; CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[VEC_ENABLE:.*]], metadata ![[WIDTH_8:.*]], metadata ![[UNROLL_DISABLE:.*]]}
-; CHECK: ![[VEC_ENABLE]] = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
-; CHECK: ![[WIDTH_8]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 8}
-; CHECK: ![[UNROLL_DISABLE]] = metadata !{metadata !"llvm.loop.unroll.disable"}
-; CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2]], metadata ![[UNROLL_FULL:.*]]}
-; CHECK: ![[UNROLL_FULL]] = metadata !{metadata !"llvm.loop.unroll.full"}
-; CHECK: ![[LOOP_3]] = metadata !{metadata ![[LOOP_3]], metadata ![[UNROLL_DISABLE:.*]]}
-; CHECK: ![[LOOP_4]] = metadata !{metadata ![[LOOP_4]], metadata ![[UNROLL_DISABLE:.*]]}
-; CHECK: ![[LOOP_5]] = metadata !{metadata ![[LOOP_5]], metadata ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_1]] = !{![[LOOP_1]], ![[VEC_ENABLE:.*]], ![[WIDTH_8:.*]], ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[VEC_ENABLE]] = !{!"llvm.loop.vectorize.enable", i1 true}
+; CHECK: ![[WIDTH_8]] = !{!"llvm.loop.vectorize.width", i32 8}
+; CHECK: ![[UNROLL_DISABLE]] = !{!"llvm.loop.unroll.disable"}
+; CHECK: ![[LOOP_2]] = !{![[LOOP_2]], ![[UNROLL_FULL:.*]]}
+; CHECK: ![[UNROLL_FULL]] = !{!"llvm.loop.unroll.full"}
+; CHECK: ![[LOOP_3]] = !{![[LOOP_3]], ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_4]] = !{![[LOOP_4]], ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_5]] = !{![[LOOP_5]], ![[UNROLL_DISABLE:.*]]}

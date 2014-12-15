@@ -64,13 +64,13 @@ entry:
 
 attributes #0 = { nounwind uwtable }
 
-; CHECK: !0 = metadata !{metadata !1}
-; CHECK: !1 = metadata !{metadata !1, metadata !2, metadata !"hello: %a"}
-; CHECK: !2 = metadata !{metadata !2, metadata !"hello"}
-; CHECK: !3 = metadata !{metadata !4, metadata !6}
-; CHECK: !4 = metadata !{metadata !4, metadata !5, metadata !"hello2: %a"}
-; CHECK: !5 = metadata !{metadata !5, metadata !"hello2"}
-; CHECK: !6 = metadata !{metadata !6, metadata !5, metadata !"hello2: %b"}
-; CHECK: !7 = metadata !{metadata !4}
-; CHECK: !8 = metadata !{metadata !6}
+; CHECK: !0 = !{!1}
+; CHECK: !1 = !{!1, !2, !"hello: %a"}
+; CHECK: !2 = !{!2, !"hello"}
+; CHECK: !3 = !{!4, !6}
+; CHECK: !4 = !{!4, !5, !"hello2: %a"}
+; CHECK: !5 = !{!5, !"hello2"}
+; CHECK: !6 = !{!6, !5, !"hello2: %b"}
+; CHECK: !7 = !{!4}
+; CHECK: !8 = !{!6}
 

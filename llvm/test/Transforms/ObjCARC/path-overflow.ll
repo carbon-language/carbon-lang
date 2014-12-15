@@ -2190,4 +2190,4 @@ return:                                           ; No predecessors!
 }
 
 
-!0 = metadata !{}
+!0 = !{}

@@ -47,7 +47,7 @@ define void @bar(float* %red, i32 %idx) {
 
 
 !nvvm.annotations = !{!1, !2, !3}
-!1 = metadata !{void (i64, float*, i32)* @foo, metadata !"kernel", i32 1}
-!2 = metadata !{void (float*, i32)* @bar, metadata !"kernel", i32 1}
-!3 = metadata !{i64 addrspace(1)* @surf0, metadata !"surface", i32 1}
+!1 = !{void (i64, float*, i32)* @foo, !"kernel", i32 1}
+!2 = !{void (float*, i32)* @bar, !"kernel", i32 1}
+!3 = !{i64 addrspace(1)* @surf0, !"surface", i32 1}
 

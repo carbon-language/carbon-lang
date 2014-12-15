@@ -8,4 +8,4 @@ define void @f() nounwind ssp {
   ret void
 }
 
-!0 = metadata !{i32 318437}
+!0 = !{i32 318437}

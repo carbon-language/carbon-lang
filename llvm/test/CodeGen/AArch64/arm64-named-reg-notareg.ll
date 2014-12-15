@@ -10,4 +10,4 @@ entry:
 
 declare i32 @llvm.read_register.i32(metadata) nounwind
 
-!0 = metadata !{metadata !"notareg\00"}
+!0 = !{!"notareg\00"}

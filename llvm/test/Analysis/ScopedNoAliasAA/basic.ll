@@ -22,6 +22,6 @@ entry:
 
 attributes #0 = { nounwind uwtable }
 
-!0 = metadata !{metadata !0, metadata !"some domain"}
-!1 = metadata !{metadata !1, metadata !0, metadata !"some scope"}
+!0 = !{!0, !"some domain"}
+!1 = !{!1, !0, !"some scope"}
 

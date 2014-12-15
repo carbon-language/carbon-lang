@@ -19,10 +19,10 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define i32 @f(i32* nocapture %a, i32 %size) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32* %a}, i64 0, metadata !13, metadata !{}), !dbg !19
-  tail call void @llvm.dbg.value(metadata !{i32 %size}, i64 0, metadata !14, metadata !{}), !dbg !19
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !15, metadata !{}), !dbg !20
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !16, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32* %a, i64 0, metadata !13, metadata !{}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 %size, i64 0, metadata !14, metadata !{}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !15, metadata !{}), !dbg !20
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !{}), !dbg !21
   %cmp4 = icmp eq i32 %size, 0, !dbg !21
   br i1 %cmp4, label %for.end, label %for.body.lr.ph, !dbg !21
 
@@ -35,7 +35,7 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv, !dbg !22
   %0 = load i32* %arrayidx, align 4, !dbg !22
   %add = add i32 %0, %sum.05, !dbg !22
-  tail call void @llvm.dbg.value(metadata !{i32 %add.lcssa}, i64 0, metadata !15, metadata !{}), !dbg !22
+  tail call void @llvm.dbg.value(metadata i32 %add.lcssa, i64 0, metadata !15, metadata !{}), !dbg !22
   %indvars.iv.next = add i64 %indvars.iv, 1, !dbg !21
   tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !16, metadata !{}), !dbg !21
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32, !dbg !21
@@ -63,28 +63,28 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18, !27}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.4 (trunk 185038) (llvm/trunk 185097)\001\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/Volumes/Data/backedup/dev/os/llvm/debug/-] [DW_LANG_C99]
-!1 = metadata !{metadata !"-", metadata !"/Volumes/Data/backedup/dev/os/llvm/debug"}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00f\00f\00\003\000\001\000\006\00256\001\003", metadata !5, metadata !6, metadata !7, null, i32 (i32*, i32)* @f, null, null, metadata !12} ; [ DW_TAG_subprogram ] [line 3] [def] [f]
-!5 = metadata !{metadata !"<stdin>", metadata !"/Volumes/Data/backedup/dev/os/llvm/debug"}
-!6 = metadata !{metadata !"0x29", metadata !5}          ; [ DW_TAG_file_type ] [/Volumes/Data/backedup/dev/os/llvm/debug/<stdin>]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!8 = metadata !{metadata !9, metadata !10, metadata !11}
-!9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !9} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
-!11 = metadata !{metadata !"0x24\00unsigned int\000\0032\0032\000\000\007", null, null} ; [ DW_TAG_base_type ] [unsigned int] [line 0, size 32, align 32, offset 0, enc DW_ATE_unsigned]
-!12 = metadata !{metadata !13, metadata !14, metadata !15, metadata !16}
-!13 = metadata !{metadata !"0x101\00a\0016777219\000", metadata !4, metadata !6, metadata !10} ; [ DW_TAG_arg_variable ] [a] [line 3]
-!14 = metadata !{metadata !"0x101\00size\0033554435\000", metadata !4, metadata !6, metadata !11} ; [ DW_TAG_arg_variable ] [size] [line 3]
-!15 = metadata !{metadata !"0x100\00sum\004\000", metadata !4, metadata !6, metadata !11} ; [ DW_TAG_auto_variable ] [sum] [line 4]
-!16 = metadata !{metadata !"0x100\00i\005\000", metadata !17, metadata !6, metadata !11} ; [ DW_TAG_auto_variable ] [i] [line 5]
-!17 = metadata !{metadata !"0xb\005\000\000", metadata !5, metadata !4} ; [ DW_TAG_lexical_block ] [/Volumes/Data/backedup/dev/os/llvm/debug/<stdin>]
-!18 = metadata !{i32 2, metadata !"Dwarf Version", i32 3}
-!19 = metadata !{i32 3, i32 0, metadata !4, null}
-!20 = metadata !{i32 4, i32 0, metadata !4, null}
-!21 = metadata !{i32 5, i32 0, metadata !17, null}
-!22 = metadata !{i32 6, i32 0, metadata !17, null}
-!26 = metadata !{i32 7, i32 0, metadata !4, null}
-!27 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x11\0012\00clang version 3.4 (trunk 185038) (llvm/trunk 185097)\001\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/Volumes/Data/backedup/dev/os/llvm/debug/-] [DW_LANG_C99]
+!1 = !{!"-", !"/Volumes/Data/backedup/dev/os/llvm/debug"}
+!2 = !{i32 0}
+!3 = !{!4}
+!4 = !{!"0x2e\00f\00f\00\003\000\001\000\006\00256\001\003", !5, !6, !7, null, i32 (i32*, i32)* @f, null, null, !12} ; [ DW_TAG_subprogram ] [line 3] [def] [f]
+!5 = !{!"<stdin>", !"/Volumes/Data/backedup/dev/os/llvm/debug"}
+!6 = !{!"0x29", !5}          ; [ DW_TAG_file_type ] [/Volumes/Data/backedup/dev/os/llvm/debug/<stdin>]
+!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !{!9, !10, !11}
+!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!10 = !{!"0xf\00\000\0064\0064\000\000", null, null, !9} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
+!11 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", null, null} ; [ DW_TAG_base_type ] [unsigned int] [line 0, size 32, align 32, offset 0, enc DW_ATE_unsigned]
+!12 = !{!13, !14, !15, !16}
+!13 = !{!"0x101\00a\0016777219\000", !4, !6, !10} ; [ DW_TAG_arg_variable ] [a] [line 3]
+!14 = !{!"0x101\00size\0033554435\000", !4, !6, !11} ; [ DW_TAG_arg_variable ] [size] [line 3]
+!15 = !{!"0x100\00sum\004\000", !4, !6, !11} ; [ DW_TAG_auto_variable ] [sum] [line 4]
+!16 = !{!"0x100\00i\005\000", !17, !6, !11} ; [ DW_TAG_auto_variable ] [i] [line 5]
+!17 = !{!"0xb\005\000\000", !5, !4} ; [ DW_TAG_lexical_block ] [/Volumes/Data/backedup/dev/os/llvm/debug/<stdin>]
+!18 = !{i32 2, !"Dwarf Version", i32 3}
+!19 = !{i32 3, i32 0, !4, null}
+!20 = !{i32 4, i32 0, !4, null}
+!21 = !{i32 5, i32 0, !17, null}
+!22 = !{i32 6, i32 0, !17, null}
+!26 = !{i32 7, i32 0, !4, null}
+!27 = !{i32 1, !"Debug Info Version", i32 2}

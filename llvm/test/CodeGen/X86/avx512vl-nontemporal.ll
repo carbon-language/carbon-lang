@@ -31,4 +31,4 @@ define void @f128(<4 x float> %A, <4 x float> %AA, i8* %B, <2 x double> %C, <2 x
   store <2 x double> %C2, <2 x double>* %cast2, align 64, !nontemporal !0
   ret void
 }
-!0 = metadata !{i32 1}
+!0 = !{i32 1}

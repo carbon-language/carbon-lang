@@ -41,9 +41,9 @@ entry:
 ; CHECK: ret void
 }
 
-!0 = metadata !{i64 0, i64 2}
-!1 = metadata !{i64 3, i64 5}
+!0 = !{i64 0, i64 2}
+!1 = !{i64 3, i64 5}
 
-!2 = metadata !{ float 5.0 }
-!3 = metadata !{ float 2.5 }
+!2 = !{ float 5.0 }
+!3 = !{ float 2.5 }
 

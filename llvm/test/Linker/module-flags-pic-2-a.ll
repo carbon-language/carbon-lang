@@ -3,7 +3,7 @@
 
 ; test linking modules with two different PIC levels
 
-!0 = metadata !{ i32 1, metadata !"PIC Level", i32 1 }
+!0 = !{ i32 1, !"PIC Level", i32 1 }
 
 !llvm.module.flags = !{!0}
 

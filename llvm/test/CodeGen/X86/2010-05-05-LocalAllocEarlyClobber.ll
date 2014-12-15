@@ -29,4 +29,4 @@ entry:
   ret i8* %1
 }
 
-!0 = metadata !{i32 79}
+!0 = !{i32 79}

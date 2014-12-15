@@ -11,10 +11,10 @@
 ; CHECK: !named = !{!0, !0}
 !named = !{!0}
 
-; CHECK: !0 = metadata !{metadata !1}
-!0 = metadata !{metadata !1}
+; CHECK: !0 = !{!1}
+!0 = !{!1}
 
-; CHECK: !1 = metadata !{}
-!1 = metadata !{}
+; CHECK: !1 = !{}
+!1 = !{}
 
 ; CHECK-NOT: !2

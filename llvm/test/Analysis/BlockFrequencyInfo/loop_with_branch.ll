@@ -40,5 +40,5 @@ exit:
 declare i1 @foo0(i32)
 declare i2 @foo1(i32)
 
-!0 = metadata !{metadata !"branch_weights", i32 1, i32 3}
-!1 = metadata !{metadata !"branch_weights", i32 1, i32 2, i32 3}
+!0 = !{!"branch_weights", i32 1, i32 3}
+!1 = !{!"branch_weights", i32 1, i32 2, i32 3}

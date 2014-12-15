@@ -40,6 +40,6 @@ exit:
   ret i32 0
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 4, i32 1}
-!1 = metadata !{metadata !"branch_weights", i32 128, i32 1}
-!2 = metadata !{metadata !"branch_weights", i32 1, i32 1}
+!0 = !{!"branch_weights", i32 4, i32 1}
+!1 = !{!"branch_weights", i32 128, i32 1}
+!2 = !{!"branch_weights", i32 1, i32 1}

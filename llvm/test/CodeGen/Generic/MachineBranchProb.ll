@@ -32,4 +32,4 @@ return:
   ret i32 %retval.0
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 4, i32 4, i32 64}
+!0 = !{!"branch_weights", i32 7, i32 6, i32 4, i32 4, i32 64}

@@ -61,8 +61,8 @@ for.end:
   ret void
 }
 
-!1 = metadata !{metadata !1, metadata !2}
-!2 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
+!1 = !{!1, !2}
+!2 = !{!"llvm.loop.vectorize.enable", i1 true}
 
 ;
 ; Test #2
@@ -84,5 +84,5 @@ return:
   ret i32 0
 }
 
-!3 = metadata !{metadata !3, metadata !4}
-!4 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
+!3 = !{!3, !4}
+!4 = !{!"llvm.loop.vectorize.enable", i1 true}

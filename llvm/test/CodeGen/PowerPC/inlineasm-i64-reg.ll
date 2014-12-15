@@ -105,4 +105,4 @@ if.end40:
 attributes #0 = { alwaysinline inlinehint nounwind }
 attributes #1 = { nounwind }
 
-!0 = metadata !{i32 -2146895770}
+!0 = !{i32 -2146895770}

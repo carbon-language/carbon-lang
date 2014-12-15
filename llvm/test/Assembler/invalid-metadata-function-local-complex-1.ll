@@ -2,7 +2,7 @@
 
 define void @foo(i32 %v) {
 entry:
-; CHECK: <stdin>:[[@LINE+1]]:{{[0-9]+}}: error: unexpected operand after function-local metadata
+; CHECK: <stdin>:[[@LINE+1]]:{{[0-9]+}}: error: invalid use of function-local name
   call void @llvm.bar(metadata !{i32 %v, i32 0})
   ret void
 }

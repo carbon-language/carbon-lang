@@ -11,8 +11,8 @@ entry:
   %p.addr = alloca i32, align 4
   %r = alloca i32, align 4
   store i32 %p, i32* %p.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %p.addr}, metadata !10, metadata !{metadata !"0x102"}), !dbg !11
-  call void @llvm.dbg.declare(metadata !{i32* %r}, metadata !12, metadata !{metadata !"0x102"}), !dbg !14
+  call void @llvm.dbg.declare(metadata i32* %p.addr, metadata !10, metadata !{!"0x102"}), !dbg !11
+  call void @llvm.dbg.declare(metadata i32* %r, metadata !12, metadata !{!"0x102"}), !dbg !14
   %0 = load i32* %p.addr, align 4, !dbg !14
   %add = add nsw i32 %0, 1, !dbg !14
   store i32 %add, i32* %r, align 4, !dbg !14
@@ -33,30 +33,30 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!17}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.3 (trunk 169314)\001\00\000\00\000", metadata !16, metadata !1, metadata !1, metadata !3, metadata !1, null} ; [ DW_TAG_compile_unit ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc] [DW_LANG_C_plus_plus]
-!1 = metadata !{i32 0}
-!3 = metadata !{metadata !5}
-!5 = metadata !{metadata !"0x2e\00zzz\00zzz\00_Z3zzzi\001\000\001\000\006\00256\000\001", metadata !16, metadata !6, metadata !7, null, i32 (i32)* @_Z3zzzi, null, null, metadata !1} ; [ DW_TAG_subprogram ] [line 1] [def] [zzz]
-!6 = metadata !{metadata !"0x29", metadata !16} ; [ DW_TAG_file_type ]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!8 = metadata !{metadata !9, metadata !9}
-!9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = metadata !{metadata !"0x101\00p\0016777217\000", metadata !5, metadata !6, metadata !9} ; [ DW_TAG_arg_variable ] [p] [line 1]
-!11 = metadata !{i32 1, i32 0, metadata !5, null}
-!12 = metadata !{metadata !"0x100\00r\002\000", metadata !13, metadata !6, metadata !9} ; [ DW_TAG_auto_variable ] [r] [line 2]
+!0 = !{!"0x11\004\00clang version 3.3 (trunk 169314)\001\00\000\00\000", !16, !1, !1, !3, !1, null} ; [ DW_TAG_compile_unit ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc] [DW_LANG_C_plus_plus]
+!1 = !{i32 0}
+!3 = !{!5}
+!5 = !{!"0x2e\00zzz\00zzz\00_Z3zzzi\001\000\001\000\006\00256\000\001", !16, !6, !7, null, i32 (i32)* @_Z3zzzi, null, null, !1} ; [ DW_TAG_subprogram ] [line 1] [def] [zzz]
+!6 = !{!"0x29", !16} ; [ DW_TAG_file_type ]
+!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !{!9, !9}
+!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!10 = !{!"0x101\00p\0016777217\000", !5, !6, !9} ; [ DW_TAG_arg_variable ] [p] [line 1]
+!11 = !{i32 1, i32 0, !5, null}
+!12 = !{!"0x100\00r\002\000", !13, !6, !9} ; [ DW_TAG_auto_variable ] [r] [line 2]
 
 ; Verify that debug descriptors for argument and local variable will be replaced
 ; with descriptors that end with OpDeref (encoded as 2).
 ;   CHECK: ![[ARG_ID]] = {{.*}} ; [ DW_TAG_arg_variable ] [p] [line 1]
-;   CHECK: ![[OPDEREF]] = metadata !{metadata !"0x102\006"}
+;   CHECK: ![[OPDEREF]] = !{!"0x102\006"}
 ;   CHECK: ![[VAR_ID]] = {{.*}} ; [ DW_TAG_auto_variable ] [r] [line 2]
 ; Verify that there are no more variable descriptors.
 ;   CHECK-NOT: DW_TAG_arg_variable
 ;   CHECK-NOT: DW_TAG_auto_variable
 
 
-!13 = metadata !{metadata !"0xb\001\000\000", metadata !16, metadata !5} ; [ DW_TAG_lexical_block ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc]
-!14 = metadata !{i32 2, i32 0, metadata !13, null}
-!15 = metadata !{i32 3, i32 0, metadata !13, null}
-!16 = metadata !{metadata !"a.cc", metadata !"/usr/local/google/llvm_cmake_clang/tmp/debuginfo"}
-!17 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!13 = !{!"0xb\001\000\000", !16, !5} ; [ DW_TAG_lexical_block ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc]
+!14 = !{i32 2, i32 0, !13, null}
+!15 = !{i32 3, i32 0, !13, null}
+!16 = !{!"a.cc", !"/usr/local/google/llvm_cmake_clang/tmp/debuginfo"}
+!17 = !{i32 1, !"Debug Info Version", i32 2}

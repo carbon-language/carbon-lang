@@ -41,5 +41,5 @@ define double @test4(double %x, double %y) {
   ret double %foo
 }
 
-!0 = metadata !{ float 5.0 }
-!1 = metadata !{ float 2.5 }
+!0 = !{ float 5.0 }
+!1 = !{ float 2.5 }

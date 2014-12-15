@@ -13,5 +13,5 @@ entry:
   ret void
 }
 
-!0 = metadata !{i32 662302, null}
+!0 = !{i32 662302, null}
 !foo = !{ !0 }

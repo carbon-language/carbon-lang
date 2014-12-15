@@ -443,9 +443,9 @@ exit:
   ret <4 x float> %next_acc
 }
 
-!0 = metadata !{ metadata !"root" }
-!1 = metadata !{ metadata !"set1", metadata !0 }
-!2 = metadata !{ metadata !"set2", metadata !0 }
-!3 = metadata !{ metadata !3 }
-!4 = metadata !{ float 4.0 }
-!5 = metadata !{ i64 0, i64 8, null }
+!0 = !{ !"root" }
+!1 = !{ !"set1", !0 }
+!2 = !{ !"set2", !0 }
+!3 = !{ !3 }
+!4 = !{ float 4.0 }
+!5 = !{ i64 0, i64 8, null }

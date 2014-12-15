@@ -43,8 +43,8 @@ for.end:
   ret void
 }
 
-!1 = metadata !{metadata !1, metadata !2}
-!2 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
+!1 = !{!1, !2}
+!2 = !{!"llvm.loop.vectorize.enable", i1 true}
 
 ;
 ; This loop will not be vectorized as the trip count is below the threshold.
@@ -69,5 +69,5 @@ for.end:
   ret void
 }
 
-!3 = metadata !{metadata !3}
+!3 = !{!3}
 

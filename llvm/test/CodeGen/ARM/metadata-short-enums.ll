@@ -9,8 +9,8 @@ define i32 @f(i64 %z) {
 
 !llvm.module.flags = !{!0, !1}
 
-!0 = metadata !{i32 1, metadata !"wchar_size", i32 4}
-!1 = metadata !{i32 1, metadata !"min_enum_size", i32 1}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 1, !"min_enum_size", i32 1}
 
 ; CHECK: .eabi_attribute 18, 4   @ Tag_ABI_PCS_wchar_t
 ; CHECK: .eabi_attribute 26, 1   @ Tag_ABI_enum_size

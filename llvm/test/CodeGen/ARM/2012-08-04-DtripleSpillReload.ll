@@ -169,4 +169,4 @@ define arm_aapcs_vfpcc void @foo(float, i1 zeroext, i1 zeroext) nounwind uwtable
 
 declare arm_aapcs_vfpcc void @bar(%0*, float)
 
-!0 = metadata !{metadata !"branch_weights", i32 64, i32 4}
+!0 = !{!"branch_weights", i32 64, i32 4}

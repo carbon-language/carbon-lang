@@ -49,4 +49,4 @@ cont:                                             ; preds = %handler.dynamic_typ
   ret void
 }
 
-!0 = metadata !{}
+!0 = !{}

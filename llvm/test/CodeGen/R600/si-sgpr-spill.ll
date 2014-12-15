@@ -686,7 +686,7 @@ attributes #2 = { readnone }
 attributes #3 = { readonly }
 attributes #4 = { nounwind readonly }
 
-!0 = metadata !{metadata !"const", null, i32 1}
+!0 = !{!"const", null, i32 1}
 
 ; CHECK-LABEL: {{^}}main1:
 ; CHECK: s_endpgm

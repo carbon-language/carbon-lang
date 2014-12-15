@@ -22,25 +22,25 @@ entry:
 
 attributes #0 = { nounwind uwtable }
 
-!0 = metadata !{metadata !0, metadata !"some domain"}
-!1 = metadata !{metadata !1, metadata !"some other domain"}
+!0 = !{!0, !"some domain"}
+!1 = !{!1, !"some other domain"}
 
 ; Two scopes (which must be self-referential to avoid being "uniqued"):
-!2 = metadata !{metadata !2, metadata !0, metadata !"a scope in dom0"}
-!3 = metadata !{metadata !2}
+!2 = !{!2, !0, !"a scope in dom0"}
+!3 = !{!2}
 
-!4 = metadata !{metadata !4, metadata !0, metadata !"another scope in dom0"}
-!5 = metadata !{metadata !4}
+!4 = !{!4, !0, !"another scope in dom0"}
+!5 = !{!4}
 
 ; A list of the two scopes.
-!6 = metadata !{metadata !2, metadata !4}
+!6 = !{!2, !4}
 
 ; Another scope in the second domain
-!7 = metadata !{metadata !7, metadata !1, metadata !"another scope in dom1"}
-!8 = metadata !{metadata !7}
+!7 = !{!7, !1, !"another scope in dom1"}
+!8 = !{!7}
 
 ; A list of scopes from both domains.
-!9 = metadata !{metadata !2, metadata !4, metadata !7}
+!9 = !{!2, !4, !7}
 
 ; CHECK: NoAlias:   %0 = load float* %c, align 4, !alias.scope !0 <->   store float %0, float* %arrayidx.i, align 4, !noalias !6
 ; CHECK: NoAlias:   %0 = load float* %c, align 4, !alias.scope !0 <->   store float %1, float* %arrayidx.i2, align 4, !noalias !6

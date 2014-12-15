@@ -8,4 +8,4 @@
 
 
 !nvvm.annotations = !{!0}
-!0 = metadata !{i32 addrspace(1)* @managed_g, metadata !"managed", i32 1}
+!0 = !{i32 addrspace(1)* @managed_g, !"managed", i32 1}

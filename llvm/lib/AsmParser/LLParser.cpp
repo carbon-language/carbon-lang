@@ -609,13 +609,16 @@ bool LLParser::ParseStandaloneMetadata() {
   Lex.Lex();
   unsigned MetadataID = 0;
 
-  LocTy TyLoc;
-  Type *Ty = nullptr;
   MDNode *Init;
   if (ParseUInt32(MetadataID) ||
-      ParseToken(lltok::equal, "expected '=' here") ||
-      ParseType(Ty, TyLoc) ||
-      ParseToken(lltok::exclaim, "Expected '!' here") ||
+      ParseToken(lltok::equal, "expected '=' here"))
+    return true;
+
+  // Detect common error, from old metadata syntax.
+  if (Lex.getKind() == lltok::Type)
+    return TokError("unexpected type in metadata definition");
+
+  if (ParseToken(lltok::exclaim, "Expected '!' here") ||
       ParseMDNode(Init))
     return true;
 
@@ -1705,11 +1708,11 @@ bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices,
 //===----------------------------------------------------------------------===//
 
 /// ParseType - Parse a type.
-bool LLParser::ParseType(Type *&Result, bool AllowVoid) {
+bool LLParser::ParseType(Type *&Result, const Twine &Msg, bool AllowVoid) {
   SMLoc TypeLoc = Lex.getLoc();
   switch (Lex.getKind()) {
   default:
-    return TokError("expected type");
+    return TokError(Msg);
   case lltok::Type:
     // Type ::= 'float' | 'void' (etc)
     Result = Lex.getTyVal();
@@ -1853,9 +1856,14 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
     if (ParseType(ArgTy, ArgLoc))
       return true;
 
-    // Otherwise, handle normal operands.
-    if (ParseOptionalParamAttrs(ArgAttrs) || ParseValue(ArgTy, V, PFS))
-      return true;
+    if (ArgTy->isMetadataTy()) {
+      if (ParseMetadataAsValue(V, PFS))
+        return true;
+    } else {
+      // Otherwise, handle normal operands.
+      if (ParseOptionalParamAttrs(ArgAttrs) || ParseValue(ArgTy, V, PFS))
+        return true;
+    }
     ArgList.push_back(ParamInfo(ArgLoc, V, AttributeSet::get(V->getContext(),
                                                              AttrIndex++,
                                                              ArgAttrs)));
@@ -2388,8 +2396,6 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     ID.StrVal = Lex.getStrVal();
     ID.Kind = ValID::t_LocalName;
     break;
-  case lltok::exclaim:   // !42, !{...}, or !"foo"
-    return ParseMetadataAsValue(ID, PFS);
   case lltok::APSInt:
     ID.APSIntVal = Lex.getAPSIntVal();
     ID.Kind = ValID::t_APSInt;
@@ -2931,50 +2937,76 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant *> &Elts) {
 
 bool LLParser::ParseMDNode(MDNode *&MD) {
   SmallVector<Metadata *, 16> Elts;
-  if (ParseMDNodeVector(Elts, nullptr))
+  if (ParseMDNodeVector(Elts))
     return true;
 
   MD = MDNode::get(Context, Elts);
   return false;
 }
 
-bool LLParser::ParseMDNodeOrLocal(Metadata *&MD, PerFunctionState *PFS) {
-  SmallVector<Metadata *, 16> Elts;
-  if (ParseMDNodeVector(Elts, PFS))
-    return true;
-
-  // Check for function-local metadata masquerading as an MDNode.
-  if (PFS && Elts.size() == 1 && Elts[0] && isa<LocalAsMetadata>(Elts[0])) {
-    MD = Elts[0];
-    return false;
-  }
-
-  MD = MDNode::get(Context, Elts);
-  return false;
-}
-
-bool LLParser::ParseMetadataAsValue(ValID &ID, PerFunctionState *PFS) {
+/// ParseMetadataAsValue
+///  ::= metadata i32 %local
+///  ::= metadata i32 @global
+///  ::= metadata i32 7
+///  ::= metadata !0
+///  ::= metadata !{...}
+///  ::= metadata !"string"
+bool LLParser::ParseMetadataAsValue(Value *&V, PerFunctionState &PFS) {
+  // Note: the type 'metadata' has already been parsed.
   Metadata *MD;
-  if (ParseMetadata(MD, PFS))
+  if (ParseMetadata(MD, &PFS))
     return true;
 
-  ID.Kind = ValID::t_Metadata;
-  ID.MetadataVal = MetadataAsValue::get(Context, MD);
+  V = MetadataAsValue::get(Context, MD);
+  return false;
+}
+
+/// ParseValueAsMetadata
+///  ::= i32 %local
+///  ::= i32 @global
+///  ::= i32 7
+bool LLParser::ParseValueAsMetadata(Metadata *&MD, PerFunctionState *PFS) {
+  Type *Ty;
+  LocTy Loc;
+  if (ParseType(Ty, "expected metadata operand", Loc))
+    return true;
+  if (Ty->isMetadataTy())
+    return Error(Loc, "invalid metadata-value-metadata roundtrip");
+
+  Value *V;
+  if (ParseValue(Ty, V, PFS))
+    return true;
+
+  MD = ValueAsMetadata::get(V);
   return false;
 }
 
 /// ParseMetadata
+///  ::= i32 %local
+///  ::= i32 @global
+///  ::= i32 7
 ///  ::= !42
 ///  ::= !{...}
 ///  ::= !"string"
 bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
-  if (ParseToken(lltok::exclaim, "expected '!' here"))
-    return true;
+  // ValueAsMetadata:
+  // <type> <value>
+  if (Lex.getKind() != lltok::exclaim)
+    return ParseValueAsMetadata(MD, PFS);
+
+  // '!'.
+  assert(Lex.getKind() == lltok::exclaim && "Expected '!' here");
+  Lex.Lex();
 
   // MDNode:
   // !{ ... }
-  if (Lex.getKind() == lltok::lbrace)
-    return ParseMDNodeOrLocal(MD, PFS);
+  if (Lex.getKind() == lltok::lbrace) {
+    MDNode *N;
+    if (ParseMDNode(N))
+      return true;
+    MD = N;
+    return false;
+  }
 
   // Standalone metadata reference
   // !42
@@ -3024,11 +3056,6 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
                        (ID.UIntVal>>1)&1, (InlineAsm::AsmDialect(ID.UIntVal>>2)));
     return false;
   }
-  case ValID::t_Metadata:
-    if (!Ty->isMetadataTy())
-      return Error(ID.Loc, "metadata value must have metadata type");
-    V = ID.MetadataVal;
-    return false;
   case ValID::t_GlobalName:
     V = GetGlobalVal(ID.StrVal, Ty, ID.Loc);
     return V == nullptr;
@@ -4684,8 +4711,7 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= { Element (',' Element)* }
 /// Element
 ///   ::= 'null' | TypeAndValue
-bool LLParser::ParseMDNodeVector(SmallVectorImpl<Metadata *> &Elts,
-                                 PerFunctionState *PFS) {
+bool LLParser::ParseMDNodeVector(SmallVectorImpl<Metadata *> &Elts) {
   if (ParseToken(lltok::lbrace, "expected '{' here"))
     return true;
 
@@ -4693,42 +4719,17 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Metadata *> &Elts,
   if (EatIfPresent(lltok::rbrace))
     return false;
 
-  bool IsLocal = false;
   do {
-    if (IsLocal)
-      return TokError("unexpected operand after function-local metadata");
-
     // Null is a special case since it is typeless.
     if (EatIfPresent(lltok::kw_null)) {
       Elts.push_back(nullptr);
       continue;
     }
 
-    Type *Ty = nullptr;
-    if (ParseType(Ty))
+    Metadata *MD;
+    if (ParseMetadata(MD, nullptr))
       return true;
-
-    if (Ty->isMetadataTy()) {
-      // No function-local metadata here.
-      Metadata *MD = nullptr;
-      if (ParseMetadata(MD, nullptr))
-        return true;
-      Elts.push_back(MD);
-      continue;
-    }
-
-    Value *V = nullptr;
-    if (ParseValue(Ty, V, PFS))
-      return true;
-    assert(V && "Expected valid value");
-    Elts.push_back(ValueAsMetadata::get(V));
-
-    if (isa<LocalAsMetadata>(Elts.back())) {
-      assert(PFS && "Unexpected function-local metadata without PFS");
-      if (Elts.size() > 1)
-        return TokError("unexpected function-local metadata");
-      IsLocal = true;
-    }
+    Elts.push_back(MD);
   } while (EatIfPresent(lltok::comma));
 
   return ParseToken(lltok::rbrace, "expected end of metadata node");

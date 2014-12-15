@@ -27,4 +27,4 @@ define void @metadata_kernel(float* %a) {
 
 !nvvm.annotations = !{!1}
 
-!1 = metadata !{void (float*)* @metadata_kernel, metadata !"kernel", i32 1}
+!1 = !{void (float*)* @metadata_kernel, !"kernel", i32 1}

@@ -23,4 +23,4 @@ x:                                                ; preds = %x, %entry
 attributes #0 = { noreturn nounwind optsize "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="true" }
 attributes #1 = { nounwind }
 
-!1 = metadata !{i32 45}
+!1 = !{i32 45}

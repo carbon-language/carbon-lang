@@ -36,8 +36,8 @@ define i16 @zero_sign_bit2(i16 %a, i16 %b) {
 
 declare i16 @bounded(i16 %input);
 declare i32 @__gxx_personality_v0(...);
-!0 = metadata !{i16 0, i16 32768} ; [0, 32767]
-!1 = metadata !{i16 0, i16 32769} ; [0, 32768]
+!0 = !{i16 0, i16 32768} ; [0, 32767]
+!1 = !{i16 0, i16 32769} ; [0, 32768]
 
 define i16 @add_bounded_values(i16 %a, i16 %b) {
 ; CHECK-LABEL: @add_bounded_values(

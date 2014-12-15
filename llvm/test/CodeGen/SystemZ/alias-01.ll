@@ -14,6 +14,6 @@ define void @f1(<16 x i32> *%src1, <16 x float> *%dest) {
   ret void
 }
 
-!0 = metadata !{ metadata !"root" }
-!1 = metadata !{ metadata !"set1", metadata !0 }
-!2 = metadata !{ metadata !"set2", metadata !0 }
+!0 = !{ !"root" }
+!1 = !{ !"set1", !0 }
+!2 = !{ !"set2", !0 }

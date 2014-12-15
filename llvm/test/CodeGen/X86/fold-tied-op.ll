@@ -70,15 +70,15 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"clang version 3.6 (trunk 219587)"}
-!1 = metadata !{metadata !2, metadata !2, i64 0}
-!2 = metadata !{metadata !"int", metadata !3, i64 0}
-!3 = metadata !{metadata !"omnipotent char", metadata !4, i64 0}
-!4 = metadata !{metadata !"Simple C/C++ TBAA"}
-!5 = metadata !{metadata !6, metadata !2, i64 0}
-!6 = metadata !{metadata !"XXH_state64_t", metadata !2, i64 0, metadata !2, i64 4, metadata !7, i64 8, metadata !7, i64 16, metadata !7, i64 24}
-!7 = metadata !{metadata !"long long", metadata !3, i64 0}
-!8 = metadata !{metadata !6, metadata !7, i64 16}
-!9 = metadata !{metadata !6, metadata !7, i64 24}
-!10 = metadata !{metadata !6, metadata !7, i64 8}
-!11 = metadata !{metadata !7, metadata !7, i64 0}
+!0 = !{!"clang version 3.6 (trunk 219587)"}
+!1 = !{!2, !2, i64 0}
+!2 = !{!"int", !3, i64 0}
+!3 = !{!"omnipotent char", !4, i64 0}
+!4 = !{!"Simple C/C++ TBAA"}
+!5 = !{!6, !2, i64 0}
+!6 = !{!"XXH_state64_t", !2, i64 0, !2, i64 4, !7, i64 8, !7, i64 16, !7, i64 24}
+!7 = !{!"long long", !3, i64 0}
+!8 = !{!6, !7, i64 16}
+!9 = !{!6, !7, i64 24}
+!10 = !{!6, !7, i64 8}
+!11 = !{!7, !7, i64 0}

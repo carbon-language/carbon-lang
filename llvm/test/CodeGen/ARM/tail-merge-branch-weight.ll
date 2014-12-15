@@ -39,6 +39,6 @@ L3:                                           ; preds = %L0, %L1, %L2
   ret i32 %retval.0
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 200, i32 800}
-!1 = metadata !{metadata !"branch_weights", i32 600, i32 400}
-!2 = metadata !{metadata !"branch_weights", i32 300, i32 700}
+!0 = !{!"branch_weights", i32 200, i32 800}
+!1 = !{!"branch_weights", i32 600, i32 400}
+!2 = !{!"branch_weights", i32 300, i32 700}

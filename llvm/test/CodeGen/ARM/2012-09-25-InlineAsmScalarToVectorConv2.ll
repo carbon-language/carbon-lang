@@ -8,4 +8,4 @@ define hidden void @f(i32* %corr, i32 %order) nounwind ssp {
   ret void
 }
 
-!0 = metadata !{i32 257}
+!0 = !{i32 257}

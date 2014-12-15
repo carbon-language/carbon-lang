@@ -25,7 +25,7 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 }
 
-!0 = metadata !{metadata !3, metadata !3, i64 0}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!3 = metadata !{metadata !"short", metadata !1}
+!0 = !{!3, !3, i64 0}
+!1 = !{!"omnipotent char", !2}
+!2 = !{!"Simple C/C++ TBAA", null}
+!3 = !{!"short", !1}

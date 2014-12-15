@@ -5,5 +5,5 @@
 
 ; CHECK: !name = !{!0}
 !name = !{!0}
-; CHECK: !0 = metadata !{metadata !"\80"}
-!0 = metadata !{metadata !"\80"}
+; CHECK: !0 = !{!"\80"}
+!0 = !{!"\80"}

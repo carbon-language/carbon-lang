@@ -113,8 +113,8 @@ for.end:                                          ; preds = %for.cond
 ; CHECK-NEXT: store i32 %storemerge, i32* %gi, align 4, !tbaa !0
 }
 
-!0 = metadata !{metadata !4, metadata !4, i64 0}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"float", metadata !1}
-!4 = metadata !{metadata !"int", metadata !1}
+!0 = !{!4, !4, i64 0}
+!1 = !{!"omnipotent char", !2}
+!2 = !{!"Simple C/C++ TBAA"}
+!3 = !{!"float", !1}
+!4 = !{!"int", !1}

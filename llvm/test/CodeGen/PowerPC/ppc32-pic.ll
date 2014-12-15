@@ -8,7 +8,7 @@ entry:
 }
 
 !llvm.module.flags = !{!0}
-!0 = metadata !{i32 1, metadata !"PIC Level", i32 1}
+!0 = !{i32 1, !"PIC Level", i32 1}
 ; SMALL-BSS-LABEL:foo:
 ; SMALL-BSS:         bl _GLOBAL_OFFSET_TABLE_@local-4
 ; SMALL-BSS:         mflr 30

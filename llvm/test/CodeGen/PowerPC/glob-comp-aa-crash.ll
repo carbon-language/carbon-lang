@@ -130,10 +130,10 @@ attributes #4 = { optsize }
 attributes #5 = { nounwind optsize }
 attributes #6 = { noreturn optsize }
 
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"bool", metadata !1}
-!4 = metadata !{i8 0, i8 2}
-!5 = metadata !{metadata !0, metadata !0, i64 0}
-!6 = metadata !{metadata !3, metadata !3, i64 0}
+!0 = !{!"any pointer", !1}
+!1 = !{!"omnipotent char", !2}
+!2 = !{!"Simple C/C++ TBAA"}
+!3 = !{!"bool", !1}
+!4 = !{i8 0, i8 2}
+!5 = !{!0, !0, i64 0}
+!6 = !{!3, !3, i64 0}

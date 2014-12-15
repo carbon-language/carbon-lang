@@ -28,4 +28,4 @@ define void @test3(<2 x double>* %dst) {
   ret void
 }
 
-!1 = metadata !{i32 1}
+!1 = !{i32 1}

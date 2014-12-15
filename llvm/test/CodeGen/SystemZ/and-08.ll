@@ -371,8 +371,8 @@ define void @f26(i64 *%ptr1, i64 *%ptr2) {
   ret void
 }
 
-!0 = metadata !{ metadata !"root" }
-!1 = metadata !{ metadata !"set1", metadata !0 }
-!2 = metadata !{ metadata !"set2", metadata !0 }
-!3 = metadata !{ metadata !1, metadata !1, i64 0}
-!4 = metadata !{ metadata !2, metadata !2, i64 0}
+!0 = !{ !"root" }
+!1 = !{ !"set1", !0 }
+!2 = !{ !"set2", !0 }
+!3 = !{ !1, !1, i64 0}
+!4 = !{ !2, !2, i64 0}

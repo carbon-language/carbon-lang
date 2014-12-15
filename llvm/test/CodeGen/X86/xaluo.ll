@@ -755,4 +755,4 @@ declare {i16, i1} @llvm.umul.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.umul.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.umul.with.overflow.i64(i64, i64) nounwind readnone
 
-!0 = metadata !{metadata !"branch_weights", i32 0, i32 2147483647}
+!0 = !{!"branch_weights", i32 0, i32 2147483647}

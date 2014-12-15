@@ -79,7 +79,7 @@ define void @f9(i32 %a, i32 %b) nounwind optsize {
   ret void
 }
 
-!0 = metadata !{i32 81}
+!0 = !{i32 81}
 
 ; CHECK-LABEL: f9:
 ; CHECK: 	cmn.w	r0, r1

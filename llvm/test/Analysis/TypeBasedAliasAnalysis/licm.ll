@@ -29,9 +29,9 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 }
 
-!0 = metadata !{metadata !"root", null}
-!1 = metadata !{metadata !6, metadata !6, i64 0}
-!2 = metadata !{metadata !7, metadata !7, i64 0}
+!0 = !{!"root", null}
+!1 = !{!6, !6, i64 0}
+!2 = !{!7, !7, i64 0}
 
 ; LICM shouldn't hoist anything here.
 
@@ -56,10 +56,10 @@ loop:
   br label %loop
 }
 
-!3 = metadata !{metadata !"pointer", metadata !8}
-!4 = metadata !{metadata !8, metadata !8, i64 0}
-!5 = metadata !{metadata !9, metadata !9, i64 0}
-!6 = metadata !{metadata !"pointer", metadata !0}
-!7 = metadata !{metadata !"double", metadata !0}
-!8 = metadata !{metadata !"char", metadata !9}
-!9 = metadata !{metadata !"root", null}
+!3 = !{!"pointer", !8}
+!4 = !{!8, !8, i64 0}
+!5 = !{!9, !9, i64 0}
+!6 = !{!"pointer", !0}
+!7 = !{!"double", !0}
+!8 = !{!"char", !9}
+!9 = !{!"root", null}

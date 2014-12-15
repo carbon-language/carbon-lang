@@ -2,5 +2,5 @@
 ;
 ; RUN: true
 
-!0 = metadata !{i32 41}
+!0 = !{i32 41}
 !llvm.stuff = !{!0}

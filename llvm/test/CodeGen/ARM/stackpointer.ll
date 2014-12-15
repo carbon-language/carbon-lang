@@ -22,4 +22,4 @@ declare void @llvm.write_register.i32(metadata, i32) nounwind
 
 ; register unsigned long current_stack_pointer asm("sp");
 ; CHECK-NOT: .asciz  "sp"
-!0 = metadata !{metadata !"sp\00"}
+!0 = !{!"sp\00"}

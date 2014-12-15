@@ -86,4 +86,4 @@ declare void @objc_destroyWeak(i8**)
 
 ; CHECK: attributes [[NUW]] = { nounwind }
 
-!0 = metadata !{}
+!0 = !{}

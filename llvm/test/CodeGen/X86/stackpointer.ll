@@ -25,4 +25,4 @@ declare void @llvm.write_register.i64(metadata, i64) nounwind
 
 ; register unsigned long current_stack_pointer asm("rsp");
 ; CHECK-NOT: .asciz  "rsp"
-!0 = metadata !{metadata !"rsp\00"}
+!0 = !{!"rsp\00"}

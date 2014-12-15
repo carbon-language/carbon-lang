@@ -43,7 +43,7 @@ exit:
   ret i32 %result
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 64, i32 4}
+!0 = !{!"branch_weights", i32 64, i32 4}
 
 define i32 @test3(i32 %i, i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) {
 ; CHECK: Printing analysis {{.*}} for function 'test3'
@@ -87,7 +87,7 @@ exit:
   ret i32 %result
 }
 
-!1 = metadata !{metadata !"branch_weights", i32 4, i32 4, i32 64, i32 4, i32 4}
+!1 = !{!"branch_weights", i32 4, i32 4, i32 64, i32 4, i32 4}
 
 define i32 @test4(i32 %x) nounwind uwtable readnone ssp {
 ; CHECK: Printing analysis {{.*}} for function 'test4'
@@ -114,7 +114,7 @@ return:
   ret i32 %retval.0
 }
 
-!2 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 4, i32 4, i32 64}
+!2 = !{!"branch_weights", i32 7, i32 6, i32 4, i32 4, i32 64}
 
 declare void @coldfunc() cold
 

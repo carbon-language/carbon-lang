@@ -77,12 +77,12 @@ attributes #2 = { nounwind optsize }
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"clang version 3.5 "}
-!1 = metadata !{metadata !2, metadata !3, i64 0}
-!2 = metadata !{metadata !"", metadata !3, i64 0, metadata !3, i64 4, metadata !3, i64 8}
-!3 = metadata !{metadata !"int", metadata !4, i64 0}
-!4 = metadata !{metadata !"omnipotent char", metadata !5, i64 0}
-!5 = metadata !{metadata !"Simple C/C++ TBAA"}
-!6 = metadata !{metadata !2, metadata !3, i64 8}
-!7 = metadata !{metadata !3, metadata !3, i64 0}
-!8 = metadata !{metadata !2, metadata !3, i64 4}
+!0 = !{!"clang version 3.5 "}
+!1 = !{!2, !3, i64 0}
+!2 = !{!"", !3, i64 0, !3, i64 4, !3, i64 8}
+!3 = !{!"int", !4, i64 0}
+!4 = !{!"omnipotent char", !5, i64 0}
+!5 = !{!"Simple C/C++ TBAA"}
+!6 = !{!2, !3, i64 8}
+!7 = !{!3, !3, i64 0}
+!8 = !{!2, !3, i64 4}

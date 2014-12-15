@@ -274,7 +274,7 @@ return:                                           ; preds = %if.end, %if.then
 
 declare i1 @llvm.expect.i1(i1, i1) nounwind readnone
 
-; CHECK: !0 = metadata !{metadata !"branch_weights", i32 64, i32 4}
-; CHECK: !1 = metadata !{metadata !"branch_weights", i32 4, i32 64}
-; CHECK: !2 = metadata !{metadata !"branch_weights", i32 4, i32 64, i32 4}
-; CHECK: !3 = metadata !{metadata !"branch_weights", i32 64, i32 4, i32 4}
+; CHECK: !0 = !{!"branch_weights", i32 64, i32 4}
+; CHECK: !1 = !{!"branch_weights", i32 4, i32 64}
+; CHECK: !2 = !{!"branch_weights", i32 4, i32 64, i32 4}
+; CHECK: !3 = !{!"branch_weights", i32 64, i32 4, i32 4}

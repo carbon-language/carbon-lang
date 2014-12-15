@@ -35,12 +35,12 @@ define i32 (i8*, i32*, double*)*** @test2() {
   ret i32 (i8*, i32*, double*)*** %tmp2
 }
 
-; CHECK: !0 = metadata !{metadata !1, metadata !1, i64 0}
-; CHECK: !1 = metadata !{metadata !"float", metadata !2}
+; CHECK: !0 = !{!1, !1, i64 0}
+; CHECK: !1 = !{!"float", !2}
 
-!0 = metadata !{metadata !"Simple C/C++ TBAA"}
-!1 = metadata !{metadata !"omnipotent char", metadata !0}
-!2 = metadata !{metadata !5, metadata !5, i64 0}
-!3 = metadata !{i64 0, i64 4, metadata !2}
-!4 = metadata !{i64 0, i64 8, null}
-!5 = metadata !{metadata !"float", metadata !0}
+!0 = !{!"Simple C/C++ TBAA"}
+!1 = !{!"omnipotent char", !0}
+!2 = !{!5, !5, i64 0}
+!3 = !{i64 0, i64 4, !2}
+!4 = !{i64 0, i64 8, null}
+!5 = !{!"float", !0}

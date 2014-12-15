@@ -16,17 +16,17 @@ entry:
 !llvm.dbg.cu = !{!7}
 !llvm.module.flags = !{!9, !10}
 
-!0 = metadata !{i32 1, i32 0, metadata !1, null}
-!1 = metadata !{metadata !"0x2e\00function\00function\00\001\000\001\000\006\000\000\001", metadata !2, metadata !3, metadata !4, null, void ()* @function, null, null, metadata !6} ; [ DW_TAG_subprogram ], [line 1], [def], [function]
-!2 = metadata !{metadata !"/Users/compnerd/work/llvm/test/MC/ARM/reduced.c", metadata !"/Users/compnerd/work/llvm"}
-!3 = metadata !{metadata !"0x29", metadata !2} ; [ DW_TAG_file_type] [/Users/compnerd/work/llvm/test/MC/ARM/reduced.c]
-!4 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !5, null, null, null} ; [ DW_TAG_subroutine_type ], [line 0, size 0, align 0, offset 0] [from ]
-!5 = metadata !{null}
-!6 = metadata !{}
-!7 = metadata !{metadata !"0x11\0012\00clang version 3.5.0\000\00\000\00\001", metadata !2, metadata !6, metadata !6, metadata !8, metadata !6, metadata !6} ; [ DW_TAG_compile_unit ] [/Users/compnerd/work/llvm/test/MC/ARM/reduced.c] [DW_LANG_C99]
-!8 = metadata !{metadata !1}
-!9 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!10 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{i32 1, i32 0, !1, null}
+!1 = !{!"0x2e\00function\00function\00\001\000\001\000\006\000\000\001", !2, !3, !4, null, void ()* @function, null, null, !6} ; [ DW_TAG_subprogram ], [line 1], [def], [function]
+!2 = !{!"/Users/compnerd/work/llvm/test/MC/ARM/reduced.c", !"/Users/compnerd/work/llvm"}
+!3 = !{!"0x29", !2} ; [ DW_TAG_file_type] [/Users/compnerd/work/llvm/test/MC/ARM/reduced.c]
+!4 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !5, null, null, null} ; [ DW_TAG_subroutine_type ], [line 0, size 0, align 0, offset 0] [from ]
+!5 = !{null}
+!6 = !{}
+!7 = !{!"0x11\0012\00clang version 3.5.0\000\00\000\00\001", !2, !6, !6, !8, !6, !6} ; [ DW_TAG_compile_unit ] [/Users/compnerd/work/llvm/test/MC/ARM/reduced.c] [DW_LANG_C99]
+!8 = !{!1}
+!9 = !{i32 2, !"Dwarf Version", i32 4}
+!10 = !{i32 1, !"Debug Info Version", i32 2}
 
 ; CHECK-ITANIUM: Relocations [
 ; CHECK-ITANIUM:   Section {{.*}} .debug_info {

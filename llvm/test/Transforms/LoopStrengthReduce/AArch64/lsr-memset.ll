@@ -96,6 +96,6 @@ done:                                             ; preds = %while.cond, %while.
   ret i8* %dest
 }
 
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA"}
-!2 = metadata !{metadata !"long long", metadata !0}
+!0 = !{!"omnipotent char", !1}
+!1 = !{!"Simple C/C++ TBAA"}
+!2 = !{!"long long", !0}

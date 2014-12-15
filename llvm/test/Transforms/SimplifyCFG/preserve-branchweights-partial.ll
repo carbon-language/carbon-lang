@@ -34,4 +34,4 @@ if.end:
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 1, i32 0}
+!0 = !{!"branch_weights", i32 1, i32 0}

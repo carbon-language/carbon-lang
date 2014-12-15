@@ -31,4 +31,4 @@ for.inc20:                                        ; preds = %for.cond2
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 112017436, i32 -735157296}
+!0 = !{!"branch_weights", i32 112017436, i32 -735157296}

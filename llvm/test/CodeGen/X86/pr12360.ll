@@ -22,7 +22,7 @@ entry:
   ret i1 %tobool
 }
 
-!0 = metadata !{i8 0, i8 2}
+!0 = !{i8 0, i8 2}
 
 
 ; check that we don't build a "trunc" from i1 to i1, which would assert.

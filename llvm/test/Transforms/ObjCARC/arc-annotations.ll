@@ -73,11 +73,11 @@ return:
   ret void
 }
 
-!0 = metadata !{}
+!0 = !{}
 
-; CHECK: ![[ANN0]] = metadata !{metadata !"(test0,%x)", metadata !"S_Use", metadata !"S_None"}
-; CHECK: ![[ANN1]] = metadata !{metadata !"(test0,%x)", metadata !"S_None", metadata !"S_Retain"}
-; CHECK: ![[ANN2]] = metadata !{metadata !"(test0,%x)", metadata !"S_Release", metadata !"S_Use"}
-; CHECK: ![[ANN3]] = metadata !{metadata !"(test0,%x)", metadata !"S_None", metadata !"S_Release"}
-; CHECK: ![[ANN4]] = metadata !{metadata !"(test0,%x)", metadata !"S_Retain", metadata !"S_None"}
+; CHECK: ![[ANN0]] = !{!"(test0,%x)", !"S_Use", !"S_None"}
+; CHECK: ![[ANN1]] = !{!"(test0,%x)", !"S_None", !"S_Retain"}
+; CHECK: ![[ANN2]] = !{!"(test0,%x)", !"S_Release", !"S_Use"}
+; CHECK: ![[ANN3]] = !{!"(test0,%x)", !"S_None", !"S_Release"}
+; CHECK: ![[ANN4]] = !{!"(test0,%x)", !"S_Retain", !"S_None"}
 

@@ -432,4 +432,4 @@ exit:
 
 ; CHECK: attributes [[NUW]] = { nounwind }
 
-!0 = metadata !{}
+!0 = !{}

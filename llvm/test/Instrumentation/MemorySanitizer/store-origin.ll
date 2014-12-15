@@ -11,8 +11,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind
 define void @Store(i32* nocapture %p, i32 %x) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32* %p}, i64 0, metadata !11, metadata !{metadata !"0x102"}), !dbg !16
-  tail call void @llvm.dbg.value(metadata !{i32 %x}, i64 0, metadata !12, metadata !{metadata !"0x102"}), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !12, metadata !{!"0x102"}), !dbg !16
   store i32 %x, i32* %p, align 4, !dbg !17, !tbaa !18
   ret void, !dbg !22
 }
@@ -27,29 +27,29 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!13, !14}
 !llvm.ident = !{!15}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.5.0 (204220)\001\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/build0/../2.cc] [DW_LANG_C99]
-!1 = metadata !{metadata !"../2.cc", metadata !"/tmp/build0"}
-!2 = metadata !{}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00Store\00Store\00\001\000\001\000\006\00256\001\001", metadata !1, metadata !5, metadata !6, null, void (i32*, i32)* @Store, null, null, metadata !10} ; [ DW_TAG_subprogram ] [line 1] [def] [Store]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/tmp/build0/../2.cc]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{null, metadata !8, metadata !9}
-!8 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !9} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
-!9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = metadata !{metadata !11, metadata !12}
-!11 = metadata !{metadata !"0x101\00p\0016777217\000", metadata !4, metadata !5, metadata !8} ; [ DW_TAG_arg_variable ] [p] [line 1]
-!12 = metadata !{metadata !"0x101\00x\0033554433\000", metadata !4, metadata !5, metadata !9} ; [ DW_TAG_arg_variable ] [x] [line 1]
-!13 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!14 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!15 = metadata !{metadata !"clang version 3.5.0 (204220)"}
-!16 = metadata !{i32 1, i32 0, metadata !4, null}
-!17 = metadata !{i32 2, i32 0, metadata !4, null}
-!18 = metadata !{metadata !19, metadata !19, i64 0}
-!19 = metadata !{metadata !"int", metadata !20, i64 0}
-!20 = metadata !{metadata !"omnipotent char", metadata !21, i64 0}
-!21 = metadata !{metadata !"Simple C/C++ TBAA"}
-!22 = metadata !{i32 3, i32 0, metadata !4, null}
+!0 = !{!"0x11\0012\00clang version 3.5.0 (204220)\001\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/build0/../2.cc] [DW_LANG_C99]
+!1 = !{!"../2.cc", !"/tmp/build0"}
+!2 = !{}
+!3 = !{!4}
+!4 = !{!"0x2e\00Store\00Store\00\001\000\001\000\006\00256\001\001", !1, !5, !6, null, void (i32*, i32)* @Store, null, null, !10} ; [ DW_TAG_subprogram ] [line 1] [def] [Store]
+!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/build0/../2.cc]
+!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{null, !8, !9}
+!8 = !{!"0xf\00\000\0064\0064\000\000", null, null, !9} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
+!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!10 = !{!11, !12}
+!11 = !{!"0x101\00p\0016777217\000", !4, !5, !8} ; [ DW_TAG_arg_variable ] [p] [line 1]
+!12 = !{!"0x101\00x\0033554433\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [x] [line 1]
+!13 = !{i32 2, !"Dwarf Version", i32 4}
+!14 = !{i32 1, !"Debug Info Version", i32 2}
+!15 = !{!"clang version 3.5.0 (204220)"}
+!16 = !{i32 1, i32 0, !4, null}
+!17 = !{i32 2, i32 0, !4, null}
+!18 = !{!19, !19, i64 0}
+!19 = !{!"int", !20, i64 0}
+!20 = !{!"omnipotent char", !21, i64 0}
+!21 = !{!"Simple C/C++ TBAA"}
+!22 = !{i32 3, i32 0, !4, null}
 
 
 ; CHECK: @Store

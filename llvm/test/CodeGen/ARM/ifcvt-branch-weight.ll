@@ -38,5 +38,5 @@ return:
   ret i8 1
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 4, i32 12}
-!1 = metadata !{metadata !"branch_weights", i32 8, i32 16}
+!0 = !{!"branch_weights", i32 4, i32 12}
+!1 = !{!"branch_weights", i32 8, i32 16}

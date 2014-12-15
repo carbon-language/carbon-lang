@@ -19,4 +19,4 @@ define void @f(<4 x float> %A, i8* %B, <2 x double> %C, i32 %D, <2 x i64> %E) {
   ret void
 }
 
-!0 = metadata !{i32 1}
+!0 = !{i32 1}

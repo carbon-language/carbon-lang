@@ -1264,7 +1264,6 @@ static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
       Out << ' ';
       WriteAsOperandInternal(Out, V, TypePrinter, Machine, Context);
     } else {
-      Out << "metadata ";
       WriteAsOperandInternal(Out, MD, TypePrinter, Machine, Context);
     }
     if (mi + 1 != me)
@@ -1381,13 +1380,9 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Metadata *MD,
   assert((FromValue || !isa<LocalAsMetadata>(V)) &&
          "Unexpected function-local metadata outside of value argument");
 
-  if (FromValue)
-    Out << "!{";
   TypePrinter->print(V->getValue()->getType(), Out);
   Out << ' ';
   WriteAsOperandInternal(Out, V->getValue(), TypePrinter, Machine, Context);
-  if (FromValue)
-    Out << "}";
 }
 
 void AssemblyWriter::init() {
@@ -2378,7 +2373,7 @@ static void WriteMDNodeComment(const MDNode *Node,
 }
 
 void AssemblyWriter::writeMDNode(unsigned Slot, const MDNode *Node) {
-  Out << '!' << Slot << " = metadata ";
+  Out << '!' << Slot << " = ";
   printMDNodeBody(Node);
 }
 

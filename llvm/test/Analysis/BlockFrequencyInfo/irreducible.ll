@@ -31,8 +31,8 @@ return:
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 1, i32 7}
-!1 = metadata !{metadata !"branch_weights", i32 3, i32 4}
+!0 = !{!"branch_weights", i32 1, i32 7}
+!1 = !{!"branch_weights", i32 3, i32 4}
 
 ; Irreducible control flow
 ; ========================
@@ -112,7 +112,7 @@ exit:
   ret void
 }
 
-!2 = metadata !{metadata !"branch_weights", i32 3, i32 1}
+!2 = !{!"branch_weights", i32 3, i32 1}
 
 ; Testcase #2
 ; ===========
@@ -156,7 +156,7 @@ exit:
   ret void
 }
 
-!3 = metadata !{metadata !"branch_weights", i32 2, i32 2, i32 2}
+!3 = !{!"branch_weights", i32 2, i32 2, i32 2}
 
 ; A true loop with irreducible control flow inside.
 define void @loop_around_irreducible(i1 %x) {
@@ -186,8 +186,8 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!4 = metadata !{metadata !"branch_weights", i32 1, i32 1}
-!5 = metadata !{metadata !"branch_weights", i32 3, i32 1}
+!4 = !{!"branch_weights", i32 1, i32 1}
+!5 = !{!"branch_weights", i32 3, i32 1}
 
 ; Two unrelated irreducible SCCs.
 define void @two_sccs(i1 %x) {
@@ -225,9 +225,9 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!6 = metadata !{metadata !"branch_weights", i32 3, i32 1}
-!7 = metadata !{metadata !"branch_weights", i32 1, i32 1}
-!8 = metadata !{metadata !"branch_weights", i32 4, i32 1}
+!6 = !{!"branch_weights", i32 3, i32 1}
+!7 = !{!"branch_weights", i32 1, i32 1}
+!8 = !{!"branch_weights", i32 4, i32 1}
 
 ; A true loop inside irreducible control flow.
 define void @loop_inside_irreducible(i1 %x) {
@@ -257,9 +257,9 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!9 = metadata !{metadata !"branch_weights", i32 1, i32 1}
-!10 = metadata !{metadata !"branch_weights", i32 3, i32 1}
-!11 = metadata !{metadata !"branch_weights", i32 2, i32 1}
+!9 = !{!"branch_weights", i32 1, i32 1}
+!10 = !{!"branch_weights", i32 3, i32 1}
+!11 = !{!"branch_weights", i32 2, i32 1}
 
 ; Irreducible control flow in a branch that's in a true loop.
 define void @loop_around_branch_with_irreducible(i1 %x) {
@@ -301,8 +301,8 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!12 = metadata !{metadata !"branch_weights", i32 3, i32 1}
-!13 = metadata !{metadata !"branch_weights", i32 1, i32 1}
+!12 = !{!"branch_weights", i32 3, i32 1}
+!13 = !{!"branch_weights", i32 1, i32 1}
 
 ; Irreducible control flow between two true loops.
 define void @loop_around_branch_with_irreducible_around_loop(i1 %x) {
@@ -348,10 +348,10 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!14 = metadata !{metadata !"branch_weights", i32 2, i32 1}
-!15 = metadata !{metadata !"branch_weights", i32 1, i32 1}
-!16 = metadata !{metadata !"branch_weights", i32 3, i32 1}
-!17 = metadata !{metadata !"branch_weights", i32 4, i32 1}
+!14 = !{!"branch_weights", i32 2, i32 1}
+!15 = !{!"branch_weights", i32 1, i32 1}
+!16 = !{!"branch_weights", i32 3, i32 1}
+!17 = !{!"branch_weights", i32 4, i32 1}
 
 ; An irreducible SCC with a non-header.
 define void @nonheader(i1 %x) {
@@ -377,9 +377,9 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!18 = metadata !{metadata !"branch_weights", i32 1, i32 1}
-!19 = metadata !{metadata !"branch_weights", i32 1, i32 3}
-!20 = metadata !{metadata !"branch_weights", i32 3, i32 1}
+!18 = !{!"branch_weights", i32 1, i32 1}
+!19 = !{!"branch_weights", i32 1, i32 3}
+!20 = !{!"branch_weights", i32 3, i32 1}
 
 ; An irreducible SCC with an irreducible sub-SCC.  In the current version of
 ; -block-freq, this means an extra header.
@@ -416,6 +416,6 @@ exit:
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
   ret void
 }
-!21 = metadata !{metadata !"branch_weights", i32 2, i32 1}
-!22 = metadata !{metadata !"branch_weights", i32 1, i32 1}
-!23 = metadata !{metadata !"branch_weights", i32 8, i32 1, i32 3, i32 12}
+!21 = !{!"branch_weights", i32 2, i32 1}
+!22 = !{!"branch_weights", i32 1, i32 1}
+!23 = !{!"branch_weights", i32 8, i32 1, i32 3, i32 12}

@@ -59,11 +59,11 @@ attributes #0 = { nounwind optsize "less-precise-fpmad"="false" "no-frame-pointe
 attributes #1 = { nounwind }
 
 
-!1 = metadata !{metadata !2, metadata !2, i64 0}
-!2 = metadata !{metadata !"int", metadata !3, i64 0}
-!3 = metadata !{metadata !"omnipotent char", metadata !4, i64 0}
-!4 = metadata !{metadata !"Simple C/C++ TBAA"}
-!5 = metadata !{i32 58}
-!6 = metadata !{i32 108}
-!7 = metadata !{i32 190}
-!8 = metadata !{i32 243}
+!1 = !{!2, !2, i64 0}
+!2 = !{!"int", !3, i64 0}
+!3 = !{!"omnipotent char", !4, i64 0}
+!4 = !{!"Simple C/C++ TBAA"}
+!5 = !{i32 58}
+!6 = !{i32 108}
+!7 = !{i32 190}
+!8 = !{i32 243}

@@ -16,4 +16,4 @@ success:
   ret i64 0
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 0, i32 2147483647}
+!0 = !{!"branch_weights", i32 0, i32 2147483647}

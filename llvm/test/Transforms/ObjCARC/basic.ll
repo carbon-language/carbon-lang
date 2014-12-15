@@ -2679,8 +2679,8 @@ define {<2 x float>, <2 x float>} @"\01-[A z]"({}* %self, i8* nocapture %_cmd) n
 invoke.cont:
   %0 = bitcast {}* %self to i8*
   %1 = tail call i8* @objc_retain(i8* %0) nounwind
-  tail call void @llvm.dbg.value(metadata !{{}* %self}, i64 0, metadata !0, metadata !{})
-  tail call void @llvm.dbg.value(metadata !{{}* %self}, i64 0, metadata !0, metadata !{})
+  tail call void @llvm.dbg.value(metadata {}* %self, i64 0, metadata !0, metadata !{})
+  tail call void @llvm.dbg.value(metadata {}* %self, i64 0, metadata !0, metadata !{})
   %ivar = load i64* @"OBJC_IVAR_$_A.myZ", align 8
   %add.ptr = getelementptr i8* %0, i64 %ivar
   %tmp1 = bitcast i8* %add.ptr to float*
@@ -3011,9 +3011,9 @@ define void @test67(i8* %x) {
 
 !llvm.module.flags = !{!1}
 
-!0 = metadata !{}
-!1 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{}
+!1 = !{i32 1, !"Debug Info Version", i32 2}
 
 ; CHECK: attributes #0 = { nounwind readnone }
 ; CHECK: attributes [[NUW]] = { nounwind }
-; CHECK: ![[RELEASE]] = metadata !{}
+; CHECK: ![[RELEASE]] = !{}

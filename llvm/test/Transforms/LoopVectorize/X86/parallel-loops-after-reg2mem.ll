@@ -46,4 +46,4 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-!3 = metadata !{metadata !3}
+!3 = !{!3}

@@ -16,4 +16,4 @@ define void @f(<16 x float> %A, <16 x float> %AA, i8* %B, <8 x double> %C, <8 x 
   ret void
 }
 
-!0 = metadata !{i32 1}
+!0 = !{i32 1}

@@ -9,8 +9,8 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
 
-!0 = metadata !{metadata !"0x11\0012\00clang version 3.4 (trunk 188230) (llvm/trunk 188234)\000\00\000\00foo.dwo\000", metadata !1, metadata !2, metadata !2, metadata !2, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.c] [DW_LANG_C99]
-!1 = metadata !{metadata !"foo.c", metadata !"/usr/local/google/home/echristo/tmp"}
-!2 = metadata !{}
-!3 = metadata !{i32 2, metadata !"Dwarf Version", i32 3}
-!4 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = !{!"0x11\0012\00clang version 3.4 (trunk 188230) (llvm/trunk 188234)\000\00\000\00foo.dwo\000", !1, !2, !2, !2, !2, !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.c] [DW_LANG_C99]
+!1 = !{!"foo.c", !"/usr/local/google/home/echristo/tmp"}
+!2 = !{}
+!3 = !{i32 2, !"Dwarf Version", i32 3}
+!4 = !{i32 1, !"Debug Info Version", i32 2}

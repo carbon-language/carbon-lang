@@ -84,12 +84,12 @@ if.else:
   ret void
 }
 
-!0 = metadata !{}
-!1 = metadata !{metadata !5, metadata !5, i64 0}
-!2 = metadata !{metadata !6, metadata !6, i64 0}
-!3 = metadata !{metadata !7, metadata !7, i64 0}
-!4 = metadata !{metadata !8, metadata !8, i64 0}
-!5 = metadata !{metadata !"red", metadata !0}
-!6 = metadata !{metadata !"blu", metadata !0}
-!7 = metadata !{metadata !"outer space"}
-!8 = metadata !{metadata !"brick red", metadata !5}
+!0 = !{}
+!1 = !{!5, !5, i64 0}
+!2 = !{!6, !6, i64 0}
+!3 = !{!7, !7, i64 0}
+!4 = !{!8, !8, i64 0}
+!5 = !{!"red", !0}
+!6 = !{!"blu", !0}
+!7 = !{!"outer space"}
+!8 = !{!"brick red", !5}

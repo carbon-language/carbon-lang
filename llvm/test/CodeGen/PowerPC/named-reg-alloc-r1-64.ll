@@ -15,4 +15,4 @@ entry:
 
 declare i64 @llvm.read_register.i64(metadata) nounwind
 
-!0 = metadata !{metadata !"r1\00"}
+!0 = !{!"r1\00"}

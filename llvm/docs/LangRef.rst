@@ -170,7 +170,7 @@ symbol table entries. Here is an example of the "hello world" module:
     }
 
     ; Named metadata
-    !0 = metadata !{i32 42, null, metadata !"string"}
+    !0 = !{i32 42, null, !"string"}
     !foo = !{!0}
 
 This example is made up of a :ref:`global variable <globalvars>` named
@@ -827,9 +827,9 @@ operands for a named metadata.
 Syntax::
 
     ; Some unnamed metadata nodes, which are referenced by the named metadata.
-    !0 = metadata !{metadata !"zero"}
-    !1 = metadata !{metadata !"one"}
-    !2 = metadata !{metadata !"two"}
+    !0 = !{!"zero"}
+    !1 = !{!"one"}
+    !2 = !{!"two"}
     ; A named metadata.
     !name = !{!0, !1, !2}
 
@@ -2330,11 +2330,11 @@ constants and smaller complex constants.
     having to print large zero initializers (e.g. for large arrays) and
     is always exactly equivalent to using explicit zero initializers.
 **Metadata node**
-    A metadata node is a structure-like constant with :ref:`metadata
-    type <t_metadata>`. For example:
-    "``metadata !{ i32 0, metadata !"test" }``". Unlike other
-    constants that are meant to be interpreted as part of the
-    instruction stream, metadata is a place to attach additional
+    A metadata node is a constant tuple without types.  For example:
+    "``!{!0, !{!2, !0}, !"test"}``".  Metadata can reference constant values,
+    for example: "``!{!0, i32 0, i8* @global, i64 (i64)* @function, !"str"}``".
+    Unlike other typed constants that are meant to be interpreted as part of
+    the instruction stream, metadata is a place to attach additional
     information such as debug info.
 
 Global Variable and Function Addresses
@@ -2808,15 +2808,21 @@ occurs on.
 
 .. _metadata:
 
-Metadata Nodes and Metadata Strings
------------------------------------
+Metadata
+========
 
 LLVM IR allows metadata to be attached to instructions in the program
 that can convey extra information about the code to the optimizers and
 code generator. One example application of metadata is source-level
 debug information. There are two metadata primitives: strings and nodes.
-All metadata has the ``metadata`` type and is identified in syntax by a
-preceding exclamation point ('``!``').
+
+Metadata does not have a type, and is not a value.  If referenced from a
+``call`` instruction, it uses the ``metadata`` type.
+
+All metadata are identified in syntax by a exclamation point ('``!``').
+
+Metadata Nodes and Metadata Strings
+-----------------------------------
 
 A metadata string is a string surrounded by double quotes. It can
 contain any character by escaping non-printable characters with
@@ -2830,7 +2836,7 @@ their operand. For example:
 
 .. code-block:: llvm
 
-    !{ metadata !"test\00", i32 10}
+    !{ !"test\00", i32 10}
 
 A :ref:`named metadata <namedmetadatastructure>` is a collection of
 metadata nodes, which can be looked up in the module symbol table. For
@@ -2838,7 +2844,7 @@ example:
 
 .. code-block:: llvm
 
-    !foo =  metadata !{!4, !3}
+    !foo = !{!4, !3}
 
 Metadata can be used as function arguments. Here ``llvm.dbg.value``
 function is using two metadata arguments:
@@ -2871,10 +2877,10 @@ to three fields, e.g.:
 
 .. code-block:: llvm
 
-    !0 = metadata !{ metadata !"an example type tree" }
-    !1 = metadata !{ metadata !"int", metadata !0 }
-    !2 = metadata !{ metadata !"float", metadata !0 }
-    !3 = metadata !{ metadata !"const float", metadata !2, i64 1 }
+    !0 = !{ !"an example type tree" }
+    !1 = !{ !"int", !0 }
+    !2 = !{ !"float", !0 }
+    !3 = !{ !"const float", !2, i64 1 }
 
 The first field is an identity field. It can be any value, usually a
 metadata string, which uniquely identifies the type. The most important
@@ -2914,7 +2920,7 @@ its tbaa tag. e.g.:
 
 .. code-block:: llvm
 
-    !4 = metadata !{ i64 0, i64 4, metadata !1, i64 8, i64 4, metadata !2 }
+    !4 = !{ i64 0, i64 4, !1, i64 8, i64 4, !2 }
 
 This describes a struct with two fields. The first is at offset 0 bytes
 with size 4 bytes, and has tbaa tag !1. The second is at offset 8 bytes
@@ -2957,18 +2963,18 @@ For example,
 .. code-block:: llvm
 
     ; Two scope domains:
-    !0 = metadata !{metadata !0}
-    !1 = metadata !{metadata !1}
+    !0 = !{!0}
+    !1 = !{!1}
 
     ; Some scopes in these domains:
-    !2 = metadata !{metadata !2, metadata !0}
-    !3 = metadata !{metadata !3, metadata !0}
-    !4 = metadata !{metadata !4, metadata !1}
+    !2 = !{!2, !0}
+    !3 = !{!3, !0}
+    !4 = !{!4, !1}
 
     ; Some scope lists:
-    !5 = metadata !{metadata !4} ; A list containing only scope !4
-    !6 = metadata !{metadata !4, metadata !3, metadata !2}
-    !7 = metadata !{metadata !3}
+    !5 = !{!4} ; A list containing only scope !4
+    !6 = !{!4, !3, !2}
+    !7 = !{!3}
 
     ; These two instructions don't alias:
     %0 = load float* %c, align 4, !alias.scope !5
@@ -3005,7 +3011,7 @@ number representing the maximum relative error, for example:
 
 .. code-block:: llvm
 
-    !0 = metadata !{ float 2.5 } ; maximum acceptable inaccuracy is 2.5 ULPs
+    !0 = !{ float 2.5 } ; maximum acceptable inaccuracy is 2.5 ULPs
 
 '``range``' Metadata
 ^^^^^^^^^^^^^^^^^^^^
@@ -3037,10 +3043,10 @@ Examples:
       %d = invoke i8 @bar() to label %cont
              unwind label %lpad, !range !3 ; Can only be -2, -1, 3, 4 or 5
     ...
-    !0 = metadata !{ i8 0, i8 2 }
-    !1 = metadata !{ i8 255, i8 2 }
-    !2 = metadata !{ i8 0, i8 2, i8 3, i8 6 }
-    !3 = metadata !{ i8 -2, i8 0, i8 3, i8 6 }
+    !0 = !{ i8 0, i8 2 }
+    !1 = !{ i8 255, i8 2 }
+    !2 = !{ i8 0, i8 2, i8 3, i8 6 }
+    !3 = !{ i8 -2, i8 0, i8 3, i8 6 }
 
 '``llvm.loop``'
 ^^^^^^^^^^^^^^^
@@ -3060,8 +3066,8 @@ constructs:
 
 .. code-block:: llvm
 
-    !0 = metadata !{ metadata !0 }
-    !1 = metadata !{ metadata !1 }
+    !0 = !{!0}
+    !1 = !{!1}
 
 The loop identifier metadata can be used to specify additional
 per-loop metadata. Any operands after the first operand can be treated
@@ -3072,8 +3078,8 @@ suggests an unroll factor to the loop unroller:
 
       br i1 %exitcond, label %._crit_edge, label %.lr.ph, !llvm.loop !0
     ...
-    !0 = metadata !{ metadata !0, metadata !1 }
-    !1 = metadata !{ metadata !"llvm.loop.unroll.count", i32 4 }
+    !0 = !{!0, !1}
+    !1 = !{!"llvm.loop.unroll.count", i32 4}
 
 '``llvm.loop.vectorize``' and '``llvm.loop.interleave``'
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3098,7 +3104,7 @@ example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.loop.interleave.count", i32 4 }
+   !0 = !{!"llvm.loop.interleave.count", i32 4}
 
 Note that setting ``llvm.loop.interleave.count`` to 1 disables interleaving
 multiple iterations of the loop.  If ``llvm.loop.interleave.count`` is set to 0
@@ -3114,8 +3120,8 @@ is a bit.  If the bit operand value is 1 vectorization is enabled. A value of
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.loop.vectorize.enable", i1 0 }
-   !1 = metadata !{ metadata !"llvm.loop.vectorize.enable", i1 1 }
+   !0 = !{!"llvm.loop.vectorize.enable", i1 0}
+   !1 = !{!"llvm.loop.vectorize.enable", i1 1}
 
 '``llvm.loop.vectorize.width``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3126,7 +3132,7 @@ operand is an integer specifying the width. For example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.loop.vectorize.width", i32 4 }
+   !0 = !{!"llvm.loop.vectorize.width", i32 4}
 
 Note that setting ``llvm.loop.vectorize.width`` to 1 disables
 vectorization of the loop.  If ``llvm.loop.vectorize.width`` is set to
@@ -3153,7 +3159,7 @@ example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.loop.unroll.count", i32 4 }
+   !0 = !{!"llvm.loop.unroll.count", i32 4}
 
 If the trip count of the loop is less than the unroll count the loop
 will be partially unrolled.
@@ -3166,7 +3172,7 @@ which is the string ``llvm.loop.unroll.disable``.  For example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.loop.unroll.disable" }
+   !0 = !{!"llvm.loop.unroll.disable"}
 
 '``llvm.loop.unroll.full``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3177,7 +3183,7 @@ For example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.loop.unroll.full" }
+   !0 = !{!"llvm.loop.unroll.full"}
 
 '``llvm.mem``'
 ^^^^^^^^^^^^^^^
@@ -3228,7 +3234,7 @@ metadata types that refer to the same loop identifier metadata.
 
    for.end:
    ...
-   !0 = metadata !{ metadata !0 }
+   !0 = !{!0}
 
 It is also possible to have nested parallel loops. In that case the
 memory accesses refer to a list of loop identifier metadata nodes instead of
@@ -3258,9 +3264,9 @@ the loop identifier metadata node directly:
 
    outer.for.end:                                          ; preds = %for.body
    ...
-   !0 = metadata !{ metadata !1, metadata !2 } ; a list of loop identifiers
-   !1 = metadata !{ metadata !1 } ; an identifier for the inner loop
-   !2 = metadata !{ metadata !2 } ; an identifier for the outer loop
+   !0 = !{!1, !2} ; a list of loop identifiers
+   !1 = !{!1} ; an identifier for the inner loop
+   !2 = !{!2} ; an identifier for the outer loop
 
 Module Flags Metadata
 =====================
@@ -3344,12 +3350,12 @@ An example of module flags:
 
 .. code-block:: llvm
 
-    !0 = metadata !{ i32 1, metadata !"foo", i32 1 }
-    !1 = metadata !{ i32 4, metadata !"bar", i32 37 }
-    !2 = metadata !{ i32 2, metadata !"qux", i32 42 }
-    !3 = metadata !{ i32 3, metadata !"qux",
-      metadata !{
-        metadata !"foo", i32 1
+    !0 = !{ i32 1, !"foo", i32 1 }
+    !1 = !{ i32 4, !"bar", i32 37 }
+    !2 = !{ i32 2, !"qux", i32 42 }
+    !3 = !{ i32 3, !"qux",
+      !{
+        !"foo", i32 1
       }
     }
     !llvm.module.flags = !{ !0, !1, !2, !3 }
@@ -3370,7 +3376,7 @@ An example of module flags:
 
    ::
 
-       metadata !{ metadata !"foo", i32 1 }
+       !{ !"foo", i32 1 }
 
    The behavior is to emit an error if the ``llvm.module.flags`` does not
    contain a flag with the ID ``!"foo"`` that has the value '1' after linking is
@@ -3446,10 +3452,10 @@ For example, the following metadata section specifies two separate sets of
 linker options, presumably to link against ``libz`` and the ``Cocoa``
 framework::
 
-    !0 = metadata !{ i32 6, metadata !"Linker Options",
-       metadata !{
-          metadata !{ metadata !"-lz" },
-          metadata !{ metadata !"-framework", metadata !"Cocoa" } } }
+    !0 = !{ i32 6, !"Linker Options",
+       !{
+          !{ !"-lz" },
+          !{ !"-framework", !"Cocoa" } } }
     !llvm.module.flags = !{ !0 }
 
 The metadata encoding as lists of lists of options, as opposed to a collapsed
@@ -3495,8 +3501,8 @@ compiled with a ``wchar_t`` width of 4 bytes, and the underlying type of an
 enum is the smallest type which can represent all of its values::
 
     !llvm.module.flags = !{!0, !1}
-    !0 = metadata !{i32 1, metadata !"short_wchar", i32 1}
-    !1 = metadata !{i32 1, metadata !"short_enum", i32 0}
+    !0 = !{i32 1, !"short_wchar", i32 1}
+    !1 = !{i32 1, !"short_enum", i32 0}
 
 .. _intrinsicglobalvariables:
 
@@ -7270,7 +7276,7 @@ Syntax:
       declare i64 @llvm.read_register.i64(metadata)
       declare void @llvm.write_register.i32(metadata, i32 @value)
       declare void @llvm.write_register.i64(metadata, i64 @value)
-      !0 = metadata !{metadata !"sp\00"}
+      !0 = !{!"sp\00"}
 
 Overview:
 """""""""

@@ -43,5 +43,5 @@ return:
 
 declare i32 @_xfn(<2 x double>) #4
 
-!3 = metadata !{metadata !"int", metadata !4, i64 0}
-!4 = metadata !{metadata !3, metadata !3, i64 0}
+!3 = !{!"int", !4, i64 0}
+!4 = !{!3, !3, i64 0}

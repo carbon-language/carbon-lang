@@ -57,10 +57,10 @@ F:
         ret i32 123
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 1, i32 2}
-!1 = metadata !{metadata !"branch_weights", i32 3, i32 4}
-!2 = metadata !{metadata !"branch_weights", i32 5, i32 6}
-!3 = metadata !{metadata !"branch_weights", i32 7, i32 8}
+!0 = !{!"branch_weights", i32 1, i32 2}
+!1 = !{!"branch_weights", i32 3, i32 4}
+!2 = !{!"branch_weights", i32 5, i32 6}
+!3 = !{!"branch_weights", i32 7, i32 8}
 ; Base case shouldn't change.
 ; CHECK: !0 = {{.*}} i32 1, i32 2}
 ; Ensure that the branch metadata is reversed to match the reversals above.

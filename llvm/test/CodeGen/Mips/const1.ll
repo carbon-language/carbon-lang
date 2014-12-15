@@ -32,4 +32,4 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 
 !llvm.ident = !{!0}
 
-!0 = metadata !{metadata !"clang version 3.4 (gitosis@dmz-portal.mips.com:clang.git b754974ec32ab712ea7d8b52cd8037b24e7d6ed3) (gitosis@dmz-portal.mips.com:llvm.git 8e211187b501bc73edb938fde0019c9a20bcffd5)"}
+!0 = !{!"clang version 3.4 (gitosis@dmz-portal.mips.com:clang.git b754974ec32ab712ea7d8b52cd8037b24e7d6ed3) (gitosis@dmz-portal.mips.com:llvm.git 8e211187b501bc73edb938fde0019c9a20bcffd5)"}

@@ -115,6 +115,6 @@ for.end:                                          ; preds = %for.cond.for.end_cr
   ret i16 %res.0.lcssa
 }
 
-; CHECK: !0 = metadata !{metadata !0, metadata !1}
-; CHECK: !1 = metadata !{metadata !"llvm.loop.unroll.disable"}
+; CHECK: !0 = !{!0, !1}
+; CHECK: !1 = !{!"llvm.loop.unroll.disable"}
 

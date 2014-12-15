@@ -32,10 +32,10 @@ entry:
 
 attributes #0 = { nounwind uwtable }
 
-!0 = metadata !{metadata !1, metadata !3}
-!1 = metadata !{metadata !1, metadata !2, metadata !"some scope"}
-!2 = metadata !{metadata !2, metadata !"some domain"}
-!3 = metadata !{metadata !3, metadata !2, metadata !"some other scope"}
-!4 = metadata !{metadata !1}
-!5 = metadata !{metadata !3}
+!0 = !{!1, !3}
+!1 = !{!1, !2, !"some scope"}
+!2 = !{!2, !"some domain"}
+!3 = !{!3, !2, !"some other scope"}
+!4 = !{!1}
+!5 = !{!3}
 

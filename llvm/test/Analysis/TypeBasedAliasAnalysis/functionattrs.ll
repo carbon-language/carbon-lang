@@ -77,10 +77,10 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8*, i8*, i64, i32, i1) nounwind
 ; CHECK: attributes #2 = { nounwind readonly }
 
 ; Root note.
-!0 = metadata !{ }
+!0 = !{ }
 
 ; Invariant memory.
-!1 = metadata !{metadata !3, metadata !3, i64 0, i1 1 }
+!1 = !{!3, !3, i64 0, i1 1 }
 ; Not invariant memory.
-!2 = metadata !{metadata !3, metadata !3, i64 0, i1 0 }
-!3 = metadata !{ metadata !"foo", metadata !0 }
+!2 = !{!3, !3, i64 0, i1 0 }
+!3 = !{ !"foo", !0 }

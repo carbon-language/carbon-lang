@@ -53,7 +53,7 @@ entry:
   %19 = inttoptr i64 %18 to i8*
   %20 = load i8* %19
   %21 = icmp ne i8 %20, 0
-  call void @llvm.dbg.declare(metadata !{i32* %3}, metadata !23, metadata !28)
+  call void @llvm.dbg.declare(metadata i32* %3, metadata !23, metadata !28)
   br i1 %21, label %22, label %28
 
 ; <label>:22                                      ; preds = %entry
@@ -70,7 +70,7 @@ entry:
 
 ; <label>:28                                      ; preds = %22, %entry
   store i32 %0, i32* %3, align 4
-  call void @llvm.dbg.declare(metadata !{%struct.A* %agg.result}, metadata !24, metadata !{metadata !"0x102"}), !dbg !25
+  call void @llvm.dbg.declare(metadata %struct.A* %agg.result, metadata !24, metadata !{!"0x102"}), !dbg !25
   call void @_ZN1AC1Ev(%struct.A* %agg.result), !dbg !25
   store i64 1172321806, i64* %4, !dbg !26
   %29 = inttoptr i64 %10 to i32*, !dbg !26
@@ -147,32 +147,32 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22, !27}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.4 \000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/crash.cpp] [DW_LANG_C_plus_plus]
-!1 = metadata !{metadata !"crash.cpp", metadata !"/tmp"}
-!2 = metadata !{}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00func\00func\00_Z4funci\006\000\001\000\006\00256\000\006", metadata !1, metadata !5, metadata !6, null, void (%struct.A*, i32)* @_Z4funci, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 6] [def] [func]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/tmp/crash.cpp]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{metadata !8, metadata !21}
-!8 = metadata !{metadata !"0x13\00A\001\008\008\000\000\000", metadata !1, null, null, metadata !9, null, null, null} ; [ DW_TAG_structure_type ] [A] [line 1, size 8, align 8, offset 0] [def] [from ]
-!9 = metadata !{metadata !10, metadata !15}
-!10 = metadata !{metadata !"0x2e\00A\00A\00\002\000\000\000\006\00256\000\002", metadata !1, metadata !8, metadata !11, null, null, null, i32 0, metadata !14} ; [ DW_TAG_subprogram ] [line 2] [A]
-!11 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!12 = metadata !{null, metadata !13}
-!13 = metadata !{metadata !"0xf\00\000\0064\0064\000\001088", i32 0, null, metadata !8} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from A]
-!14 = metadata !{i32 786468}
-!15 = metadata !{metadata !"0x2e\00A\00A\00\003\000\000\000\006\00256\000\003", metadata !1, metadata !8, metadata !16, null, null, null, i32 0, metadata !20} ; [ DW_TAG_subprogram ] [line 3] [A]
-!16 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !17, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!17 = metadata !{null, metadata !13, metadata !18}
-!18 = metadata !{metadata !"0x10\00\000\000\000\000\000", null, null, metadata !19} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from ]
-!19 = metadata !{metadata !"0x26\00\000\000\000\000\000", null, null, metadata !8} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from A]
-!20 = metadata !{i32 786468}
-!21 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!22 = metadata !{i32 2, metadata !"Dwarf Version", i32 3}
-!23 = metadata !{metadata !"0x101\00\0016777222\000", metadata !4, metadata !5, metadata !21} ; [ DW_TAG_arg_variable ] [line 6]
-!24 = metadata !{metadata !"0x100\00a\007\008192", metadata !4, metadata !5, metadata !8} ; [ DW_TAG_auto_variable ] [a] [line 7]
-!25 = metadata !{i32 7, i32 0, metadata !4, null}
-!26 = metadata !{i32 8, i32 0, metadata !4, null}
-!27 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!28 = metadata !{metadata !"0x102\006"} ; [ DW_TAG_expression ] [DW_OP_deref]
+!0 = !{!"0x11\004\00clang version 3.4 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/crash.cpp] [DW_LANG_C_plus_plus]
+!1 = !{!"crash.cpp", !"/tmp"}
+!2 = !{}
+!3 = !{!4}
+!4 = !{!"0x2e\00func\00func\00_Z4funci\006\000\001\000\006\00256\000\006", !1, !5, !6, null, void (%struct.A*, i32)* @_Z4funci, null, null, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [func]
+!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/crash.cpp]
+!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !{!8, !21}
+!8 = !{!"0x13\00A\001\008\008\000\000\000", !1, null, null, !9, null, null, null} ; [ DW_TAG_structure_type ] [A] [line 1, size 8, align 8, offset 0] [def] [from ]
+!9 = !{!10, !15}
+!10 = !{!"0x2e\00A\00A\00\002\000\000\000\006\00256\000\002", !1, !8, !11, null, null, null, i32 0, !14} ; [ DW_TAG_subprogram ] [line 2] [A]
+!11 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!12 = !{null, !13}
+!13 = !{!"0xf\00\000\0064\0064\000\001088", i32 0, null, !8} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from A]
+!14 = !{i32 786468}
+!15 = !{!"0x2e\00A\00A\00\003\000\000\000\006\00256\000\003", !1, !8, !16, null, null, null, i32 0, !20} ; [ DW_TAG_subprogram ] [line 3] [A]
+!16 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !17, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!17 = !{null, !13, !18}
+!18 = !{!"0x10\00\000\000\000\000\000", null, null, !19} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from ]
+!19 = !{!"0x26\00\000\000\000\000\000", null, null, !8} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from A]
+!20 = !{i32 786468}
+!21 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!22 = !{i32 2, !"Dwarf Version", i32 3}
+!23 = !{!"0x101\00\0016777222\000", !4, !5, !21} ; [ DW_TAG_arg_variable ] [line 6]
+!24 = !{!"0x100\00a\007\008192", !4, !5, !8} ; [ DW_TAG_auto_variable ] [a] [line 7]
+!25 = !{i32 7, i32 0, !4, null}
+!26 = !{i32 8, i32 0, !4, null}
+!27 = !{i32 1, !"Debug Info Version", i32 2}
+!28 = !{!"0x102\006"} ; [ DW_TAG_expression ] [DW_OP_deref]

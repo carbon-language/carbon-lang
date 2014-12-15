@@ -37,7 +37,7 @@ define i32 @test3(i32* %p, i32* %q) {
 
 declare i32 @foo(i32*) readonly
 
-!0 = metadata !{metadata !0}
-!1 = metadata !{metadata !1}
-!2 = metadata !{metadata !0, metadata !1}
+!0 = !{!0}
+!1 = !{!1}
+!2 = !{!0, !1}
 

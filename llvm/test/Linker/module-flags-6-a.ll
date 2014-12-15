@@ -4,6 +4,6 @@
 
 ; CHECK: linking module flags 'foo': IDs have conflicting values
 
-!0 = metadata !{ i32 1, metadata !"foo", i32 37 }
+!0 = !{ i32 1, !"foo", i32 37 }
 
 !llvm.module.flags = !{ !0 }

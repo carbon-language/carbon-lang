@@ -27,7 +27,7 @@ B4:
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 4, i32 124}
+!0 = !{!"branch_weights", i32 4, i32 124}
 
 ; CHECK: Machine code for function test1:
 ; CHECK: Successors according to CFG: BB#1(8) BB#2(248)
@@ -51,4 +51,4 @@ B3:
   ret void
 }
 
-!1 = metadata !{metadata !"branch_weights", i32 248, i32 8}
+!1 = !{!"branch_weights", i32 248, i32 8}

@@ -29,15 +29,15 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.6.0 \000\00\000\00\002", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [D:\/<stdin>] [DW_LANG_C_plus_plus]
-!1 = metadata !{metadata !"<stdin>", metadata !"D:\5C"}
-!2 = metadata !{}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00bar\00bar\00\002\000\001\000\000\00256\000\002", metadata !5, metadata !6, metadata !7, null, i32 (i32)* @"\01?bar@foo@@YAHH@Z", null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 2] [def] [bar]
-!5 = metadata !{metadata !"src.cpp", metadata !"D:\5C"}
-!6 = metadata !{metadata !"0x29", metadata !5}    ; [ DW_TAG_file_type ] [D:\/src.cpp]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", null, null, null, metadata !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!8 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!9 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
-!10 = metadata !{metadata !"clang version 3.6.0 "}
-!11 = metadata !{i32 3, i32 0, metadata !4, null}
+!0 = !{!"0x11\004\00clang version 3.6.0 \000\00\000\00\002", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [D:\/<stdin>] [DW_LANG_C_plus_plus]
+!1 = !{!"<stdin>", !"D:\5C"}
+!2 = !{}
+!3 = !{!4}
+!4 = !{!"0x2e\00bar\00bar\00\002\000\001\000\000\00256\000\002", !5, !6, !7, null, i32 (i32)* @"\01?bar@foo@@YAHH@Z", null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [bar]
+!5 = !{!"src.cpp", !"D:\5C"}
+!6 = !{!"0x29", !5}    ; [ DW_TAG_file_type ] [D:\/src.cpp]
+!7 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !{i32 2, !"Dwarf Version", i32 4}
+!9 = !{i32 2, !"Debug Info Version", i32 2}
+!10 = !{!"clang version 3.6.0 "}
+!11 = !{i32 3, i32 0, !4, null}

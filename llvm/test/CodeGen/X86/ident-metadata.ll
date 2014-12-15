@@ -5,5 +5,5 @@
 ; CHECK: .ident  "clang version x.x"
 ; CHECK-NEXT: .ident  "something else"
 !llvm.ident = !{!0, !1}
-!0 = metadata !{metadata !"clang version x.x"}
-!1 = metadata !{metadata !"something else"}
+!0 = !{!"clang version x.x"}
+!1 = !{!"something else"}

@@ -54,8 +54,8 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-!1 = metadata !{metadata !1, metadata !2}
-!2 = metadata !{metadata !"llvm.loop.unroll.disable"}
+!1 = !{!1, !2}
+!2 = !{!"llvm.loop.unroll.disable"}
 
 ; loop64 has a high enough count that it should *not* be unrolled by
 ; the default unrolling heuristic.  It serves as the control for the
@@ -105,8 +105,8 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-!3 = metadata !{metadata !3, metadata !4}
-!4 = metadata !{metadata !"llvm.loop.unroll.full"}
+!3 = !{!3, !4}
+!4 = !{!"llvm.loop.unroll.full"}
 
 ; #pragma clang loop unroll_count(4)
 ; Loop should be unrolled 4 times.
@@ -135,8 +135,8 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-!5 = metadata !{metadata !5, metadata !6}
-!6 = metadata !{metadata !"llvm.loop.unroll.count", i32 4}
+!5 = !{!5, !6}
+!6 = !{!"llvm.loop.unroll.count", i32 4}
 
 ; #pragma clang loop unroll(full)
 ; Full unrolling is requested, but loop has a dynamic trip count so
@@ -165,7 +165,7 @@ for.body:                                         ; preds = %entry, %for.body
 for.end:                                          ; preds = %for.body, %entry
   ret void
 }
-!8 = metadata !{metadata !8, metadata !4}
+!8 = !{!8, !4}
 
 ; #pragma clang loop unroll_count(4)
 ; Loop has a dynamic trip count.  Unrolling should occur, but no
@@ -202,7 +202,7 @@ for.body:                                         ; preds = %entry, %for.body
 for.end:                                          ; preds = %for.body, %entry
   ret void
 }
-!9 = metadata !{metadata !9, metadata !6}
+!9 = !{!9, !6}
 
 ; #pragma clang loop unroll_count(1)
 ; Loop should not be unrolled
@@ -228,8 +228,8 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-!10 = metadata !{metadata !10, metadata !11}
-!11 = metadata !{metadata !"llvm.loop.unroll.count", i32 1}
+!10 = !{!10, !11}
+!11 = !{!"llvm.loop.unroll.count", i32 1}
 
 ; #pragma clang loop unroll(full)
 ; Loop has very high loop count (1 million) and full unrolling was requested.
@@ -256,4 +256,4 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-!12 = metadata !{metadata !12, metadata !4}
+!12 = !{!12, !4}

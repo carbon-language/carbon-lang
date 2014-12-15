@@ -52,8 +52,8 @@ for.end:
   ret void
 }
 
-!1 = metadata !{metadata !1, metadata !2}
-!2 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
+!1 = !{!1, !2}
+!2 = !{!"llvm.loop.vectorize.enable", i1 true}
 
 ;
 ; This method will not be vectorized, as scalar cost is lower than any of vector costs.
@@ -89,5 +89,5 @@ for.end:
 declare float @llvm.sin.f32(float) nounwind readnone
 
 ; Dummy metadata
-!3 = metadata !{metadata !3}
+!3 = !{!3}
 

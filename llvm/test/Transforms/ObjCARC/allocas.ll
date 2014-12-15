@@ -495,6 +495,6 @@ arraydestroy.done1:
   ret void
 }
 
-!0 = metadata !{}
+!0 = !{}
 
 declare i32 @__gxx_personality_v0(...)

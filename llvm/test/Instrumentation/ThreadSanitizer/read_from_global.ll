@@ -54,6 +54,6 @@ entry:
 ; CHECK: = load
 ; CHECK: ret void
 
-!0 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!1 = metadata !{metadata !"vtable pointer", metadata !0}
-!2 = metadata !{metadata !1, metadata !1, i64 0}
+!0 = !{!"Simple C/C++ TBAA", null}
+!1 = !{!"vtable pointer", !0}
+!2 = !{!1, !1, i64 0}

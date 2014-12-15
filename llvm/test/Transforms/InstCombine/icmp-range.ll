@@ -55,7 +55,7 @@ define i1 @test_nonzero6(i8* %argw) {
 }
 
 
-!0 = metadata !{i32 1, i32 6} 
-!1 = metadata !{i32 0, i32 6} 
-!2 = metadata !{i8 0, i8 1} 
-!3 = metadata !{i8 0, i8 6} 
+!0 = !{i32 1, i32 6} 
+!1 = !{i32 0, i32 6} 
+!2 = !{i8 0, i8 1} 
+!3 = !{i8 0, i8 6} 
