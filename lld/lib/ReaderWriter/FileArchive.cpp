@@ -65,9 +65,6 @@ public:
     return result.release();
   }
 
-  /// \brief Load all members of the archive?
-  virtual bool isWholeArchive() const { return _isWholeArchive; }
-
   /// \brief parse each member
   std::error_code
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
@@ -221,7 +218,6 @@ private:
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
-  bool _isWholeArchive;
   bool _logLoading;
   mutable std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
 };
