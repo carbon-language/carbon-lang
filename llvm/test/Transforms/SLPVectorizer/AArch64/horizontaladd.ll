@@ -6,7 +6,7 @@ target triple = "aarch64--linux-gnu"
 ;   return (a[0] + a[1]) + (a[2] + a[3]);
 ; }
 
-; CHECK_LABEL: @hadd
+; CHECK-LABEL: @hadd
 ; CHECK: load <2 x float>*
 ; CHECK: fadd <2 x float>
 ; CHECK: extractelement <2 x float>
