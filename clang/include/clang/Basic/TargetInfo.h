@@ -370,6 +370,15 @@ public:
   /// \brief Return the maximum width lock-free atomic operation which can be
   /// inlined given the supported features of the given target.
   unsigned getMaxAtomicInlineWidth() const { return MaxAtomicInlineWidth; }
+  /// \brief Returns true if the given target supports lock-free atomic
+  /// operations at the specified width and alignment.
+  virtual bool hasBuiltinAtomic(uint64_t AtomicSizeInBits,
+                                uint64_t AlignmentInBits) const {
+    return AtomicSizeInBits <= AlignmentInBits &&
+           AtomicSizeInBits <= getMaxAtomicInlineWidth() &&
+           (AtomicSizeInBits <= getCharWidth() ||
+            llvm::isPowerOf2_64(AtomicSizeInBits / getCharWidth()));
+  }
 
   /// \brief Return the maximum vector alignment supported for the given target.
   unsigned getMaxVectorAlign() const { return MaxVectorAlign; }
