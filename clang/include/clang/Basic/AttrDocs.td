@@ -1264,7 +1264,8 @@ entire application without optimization.  Avoiding optimization on the
 specified function can improve the quality of the debugging information
 for that function.
 
-This attribute is incompatible with the ``always_inline`` attribute.
+This attribute is incompatible with the ``always_inline`` and ``minsize``
+attributes.
   }];
 }
 

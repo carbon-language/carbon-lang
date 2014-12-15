@@ -769,9 +769,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     // OptimizeNone wins over OptimizeForSize, MinSize, AlwaysInline.
     assert(!F->hasFnAttribute(llvm::Attribute::OptimizeForSize) &&
            "OptimizeNone and OptimizeForSize on same function!");
-    // FIXME: Change these to asserts.
-    F->removeFnAttr(llvm::Attribute::MinSize);
-    F->removeFnAttr(llvm::Attribute::AlwaysInline);
+    assert(!F->hasFnAttribute(llvm::Attribute::MinSize) &&
+           "OptimizeNone and MinSize on same function!");
+    assert(!F->hasFnAttribute(llvm::Attribute::AlwaysInline) &&
+           "OptimizeNone and AlwaysInline on same function!");
 
     // Attribute 'inlinehint' has no effect on 'optnone' functions.
     // Explicitly remove it from the set of function attributes.
