@@ -232,26 +232,25 @@ void LiveRangeCalc::extendToUses(LiveInterval &LI) {
 
 void LiveRangeCalc::updateFromLiveIns(LiveOutData &LiveOuts) {
   LiveRangeUpdater Updater;
-  for (SmallVectorImpl<LiveInBlock>::iterator I = LiveIn.begin(),
-         E = LiveIn.end(); I != E; ++I) {
-    if (!I->DomNode)
+  for (const LiveInBlock &I : LiveIn) {
+    if (!I.DomNode)
       continue;
-    MachineBasicBlock *MBB = I->DomNode->getBlock();
-    assert(I->Value && "No live-in value found");
+    MachineBasicBlock *MBB = I.DomNode->getBlock();
+    assert(I.Value && "No live-in value found");
     SlotIndex Start, End;
     std::tie(Start, End) = Indexes->getMBBRange(MBB);
 
-    if (I->Kill.isValid())
+    if (I.Kill.isValid())
       // Value is killed inside this block.
-      End = I->Kill;
+      End = I.Kill;
     else {
       // The value is live-through, update LiveOut as well.
       // Defer the Domtree lookup until it is needed.
       assert(LiveOuts.Seen.test(MBB->getNumber()));
-      LiveOuts.Map[MBB] = LiveOutPair(I->Value, nullptr);
+      LiveOuts.Map[MBB] = LiveOutPair(I.Value, nullptr);
     }
-    Updater.setDest(&I->LR);
-    Updater.add(Start, End, I->Value);
+    Updater.setDest(&I.LR);
+    Updater.add(Start, End, I.Value);
   }
   LiveIn.clear();
 }
@@ -413,9 +412,8 @@ void LiveRangeCalc::updateSSA(LiveOutData &LiveOuts) {
     Changes = 0;
     // Propagate live-out values down the dominator tree, inserting phi-defs
     // when necessary.
-    for (SmallVectorImpl<LiveInBlock>::iterator I = LiveIn.begin(),
-           E = LiveIn.end(); I != E; ++I) {
-      MachineDomTreeNode *Node = I->DomNode;
+    for (LiveInBlock &I : LiveIn) {
+      MachineDomTreeNode *Node = I.DomNode;
       // Skip block if the live-in value has already been determined.
       if (!Node)
         continue;
@@ -471,25 +469,25 @@ void LiveRangeCalc::updateSSA(LiveOutData &LiveOuts) {
         assert(Alloc && "Need VNInfo allocator to create PHI-defs");
         SlotIndex Start, End;
         std::tie(Start, End) = Indexes->getMBBRange(MBB);
-        LiveRange &LR = I->LR;
+        LiveRange &LR = I.LR;
         VNInfo *VNI = LR.getNextValue(Start, *Alloc);
-        I->Value = VNI;
+        I.Value = VNI;
         // This block is done, we know the final value.
-        I->DomNode = nullptr;
+        I.DomNode = nullptr;
 
         // Add liveness since updateFromLiveIns now skips this node.
-        if (I->Kill.isValid())
-          LR.addSegment(LiveInterval::Segment(Start, I->Kill, VNI));
+        if (I.Kill.isValid())
+          LR.addSegment(LiveInterval::Segment(Start, I.Kill, VNI));
         else {
           LR.addSegment(LiveInterval::Segment(Start, End, VNI));
           LOP = LiveOutPair(VNI, Node);
         }
       } else if (IDomValue.first) {
         // No phi-def here. Remember incoming value.
-        I->Value = IDomValue.first;
+        I.Value = IDomValue.first;
 
         // If the IDomValue is killed in the block, don't propagate through.
-        if (I->Kill.isValid())
+        if (I.Kill.isValid())
           continue;
 
         // Propagate IDomValue if it isn't killed:
