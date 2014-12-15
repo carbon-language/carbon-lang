@@ -56,8 +56,6 @@ static void AsanDie() {
   }
   if (common_flags()->coverage)
     __sanitizer_cov_dump();
-  if (death_callback)
-    death_callback();
   if (flags()->abort_on_error)
     Abort();
   internal__exit(flags()->exitcode);
@@ -341,7 +339,6 @@ void ParseExtraActivationFlags() {
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
 bool asan_init_is_running;
-void (*death_callback)(void);
 
 #if !ASAN_FIXED_MAPPING
 uptr kHighMemEnd, kMidMemBeg, kMidMemEnd;
@@ -767,7 +764,7 @@ void NOINLINE __asan_handle_no_return() {
 }
 
 void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
-  death_callback = callback;
+  SetUserDieCallback(callback);
 }
 
 // Initialize as requested from instrumented application code.

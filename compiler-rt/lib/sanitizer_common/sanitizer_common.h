@@ -245,6 +245,7 @@ bool SanitizerGetThreadName(char *name, int max_len);
 // to do tool-specific job.
 typedef void (*DieCallbackType)(void);
 void SetDieCallback(DieCallbackType);
+void SetUserDieCallback(DieCallbackType);
 DieCallbackType GetDieCallback();
 typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
                                        u64, u64);

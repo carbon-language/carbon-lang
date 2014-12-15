@@ -120,6 +120,9 @@ extern "C" {
   // Print the stack trace leading to this call. Useful for debugging user code.
   void __sanitizer_print_stack_trace();
 
+  // Sets the callback to be called right before death on error.
+  // Passing 0 will unset the callback.
+  void __sanitizer_set_death_callback(void (*callback)(void));
 #ifdef __cplusplus
 }  // extern "C"
 #endif

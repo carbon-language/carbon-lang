@@ -94,19 +94,23 @@ uptr stoptheworld_tracer_pid = 0;
 // writing to the same log file.
 uptr stoptheworld_tracer_ppid = 0;
 
-static DieCallbackType DieCallback;
+static DieCallbackType InternalDieCallback, UserDieCallback;
 void SetDieCallback(DieCallbackType callback) {
-  DieCallback = callback;
+  InternalDieCallback = callback;
+}
+void SetUserDieCallback(DieCallbackType callback) {
+  UserDieCallback = callback;
 }
 
 DieCallbackType GetDieCallback() {
-  return DieCallback;
+  return InternalDieCallback;
 }
 
 void NORETURN Die() {
-  if (DieCallback) {
-    DieCallback();
-  }
+  if (UserDieCallback)
+    UserDieCallback();
+  if (InternalDieCallback)
+    InternalDieCallback();
   internal__exit(1);
 }
 
@@ -279,5 +283,10 @@ void __sanitizer_set_report_path(const char *path) {
 
 void __sanitizer_report_error_summary(const char *error_summary) {
   Printf("%s\n", error_summary);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_set_death_callback(void (*callback)(void)) {
+  SetUserDieCallback(callback);
 }
 }  // extern "C"
