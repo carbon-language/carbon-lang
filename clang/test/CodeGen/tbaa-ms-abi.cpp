@@ -16,7 +16,7 @@ StructB::StructB() {
 // CHECK: store i32 42, i32* {{.*}}, !tbaa [[TAG_A_i32:!.*]]
 }
 
-// CHECK: [[TYPE_INT:!.*]] = metadata !{metadata !"int", metadata [[TYPE_CHAR:!.*]], i64 0}
-// CHECK: [[TYPE_CHAR]] = metadata !{metadata !"omnipotent char", metadata
-// CHECK: [[TAG_A_i32]] = metadata !{metadata [[TYPE_A:!.*]], metadata [[TYPE_INT]], i64 0}
-// CHECK: [[TYPE_A]] = metadata !{metadata !"?AUStructA@@", metadata [[TYPE_INT]], i64 0}
+// CHECK: [[TYPE_INT:!.*]] = !{!"int", [[TYPE_CHAR:!.*]], i64 0}
+// CHECK: [[TYPE_CHAR]] = !{!"omnipotent char", !
+// CHECK: [[TAG_A_i32]] = !{[[TYPE_A:!.*]], [[TYPE_INT]], i64 0}
+// CHECK: [[TYPE_A]] = !{!"?AUStructA@@", [[TYPE_INT]], i64 0}

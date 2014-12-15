@@ -379,6 +379,6 @@ void call_nonnull_variadic(int a, int *b) {
   nonnull_variadic(a, b);
 }
 
-// CHECK-UBSAN: ![[WEIGHT_MD]] = metadata !{metadata !"branch_weights", i32 1048575, i32 1}
+// CHECK-UBSAN: ![[WEIGHT_MD]] = !{!"branch_weights", i32 1048575, i32 1}
 
 // CHECK-TRAP: attributes [[NR_NUW]] = { noreturn nounwind }

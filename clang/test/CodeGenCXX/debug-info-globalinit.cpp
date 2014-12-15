@@ -34,5 +34,5 @@ int main(void) {}
 // CHECK-NOT: __cxx_global_var_init
 // CHECK: store i32 %[[C2]], i32* @_ZL1k, align 4, !dbg
 // 
-// CHECK: ![[LINE]] = metadata !{i32 13, i32
-// CHECK: ![[LINE2]] = metadata !{i32 15, i32
+// CHECK: ![[LINE]] = !{i32 13, i32
+// CHECK: ![[LINE2]] = !{i32 15, i32

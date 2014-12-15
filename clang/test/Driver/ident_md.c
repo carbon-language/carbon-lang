@@ -2,5 +2,5 @@
 // Verify that clang version appears in the llvm.ident metadata.
 
 // CHECK: !llvm.ident = !{{{.*}}}
-// CHECK: !{{[0-9]+}} = metadata !{metadata !{{.*}}
+// CHECK: !{{[0-9]+}} = !{!{{.*}}
 

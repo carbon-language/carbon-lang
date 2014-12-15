@@ -6,50 +6,50 @@ kernel void foo(__global int * restrict X, const int Y,
   *X = Y + anotherArg;
 }
 
-// CHECK: metadata !{metadata !"kernel_arg_addr_space", i32 1, i32 0, i32 0, i32 2}
-// CHECK: metadata !{metadata !"kernel_arg_access_qual", metadata !"none", metadata !"none", metadata !"none", metadata !"none"}
-// CHECK: metadata !{metadata !"kernel_arg_type", metadata !"int*", metadata !"int", metadata !"int", metadata !"float*"}
-// CHECK: metadata !{metadata !"kernel_arg_base_type", metadata !"int*", metadata !"int", metadata !"int", metadata !"float*"}
-// CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !"restrict", metadata !"const", metadata !"volatile", metadata !"restrict const"}
-// ARGINFO: metadata !{metadata !"kernel_arg_name", metadata !"X", metadata !"Y", metadata !"anotherArg", metadata !"Z"}
-// NO-ARGINFO-NOT: metadata !{metadata !"kernel_arg_name", metadata !"X", metadata !"Y", metadata !"anotherArg", metadata !"Z"}
+// CHECK:  !{!"kernel_arg_addr_space", i32 1, i32 0, i32 0, i32 2}
+// CHECK:  !{!"kernel_arg_access_qual", !"none", !"none", !"none", !"none"}
+// CHECK:  !{!"kernel_arg_type", !"int*", !"int", !"int", !"float*"}
+// CHECK:  !{!"kernel_arg_base_type", !"int*", !"int", !"int", !"float*"}
+// CHECK:  !{!"kernel_arg_type_qual", !"restrict", !"const", !"volatile", !"restrict const"}
+// ARGINFO: !{!"kernel_arg_name", !"X", !"Y", !"anotherArg", !"Z"}
+// NO-ARGINFO-NOT: !{!"kernel_arg_name", !"X", !"Y", !"anotherArg", !"Z"}
 
 kernel void foo2(read_only image1d_t img1, image2d_t img2, write_only image2d_array_t img3) {
 }
-// CHECK: metadata !{metadata !"kernel_arg_addr_space", i32 1, i32 1, i32 1}
-// CHECK: metadata !{metadata !"kernel_arg_access_qual", metadata !"read_only", metadata !"read_only", metadata !"write_only"}
-// CHECK: metadata !{metadata !"kernel_arg_type", metadata !"image1d_t", metadata !"image2d_t", metadata !"image2d_array_t"}
-// CHECK: metadata !{metadata !"kernel_arg_base_type", metadata !"image1d_t", metadata !"image2d_t", metadata !"image2d_array_t"}
-// CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !"", metadata !"", metadata !""}
-// ARGINFO: metadata !{metadata !"kernel_arg_name", metadata !"img1", metadata !"img2", metadata !"img3"}
-// NO-ARGINFO-NOT: metadata !{metadata !"kernel_arg_name", metadata !"img1", metadata !"img2", metadata !"img3"}
+// CHECK:  !{!"kernel_arg_addr_space", i32 1, i32 1, i32 1}
+// CHECK:  !{!"kernel_arg_access_qual", !"read_only", !"read_only", !"write_only"}
+// CHECK:  !{!"kernel_arg_type", !"image1d_t", !"image2d_t", !"image2d_array_t"}
+// CHECK:  !{!"kernel_arg_base_type", !"image1d_t", !"image2d_t", !"image2d_array_t"}
+// CHECK:  !{!"kernel_arg_type_qual", !"", !"", !""}
+// ARGINFO: !{!"kernel_arg_name", !"img1", !"img2", !"img3"}
+// NO-ARGINFO-NOT: !{!"kernel_arg_name", !"img1", !"img2", !"img3"}
 
 kernel void foo3(__global half * X) {
 }
-// CHECK: metadata !{metadata !"kernel_arg_addr_space", i32 1}
-// CHECK: metadata !{metadata !"kernel_arg_access_qual", metadata !"none"}
-// CHECK: metadata !{metadata !"kernel_arg_type", metadata !"half*"}
-// CHECK: metadata !{metadata !"kernel_arg_base_type", metadata !"half*"}
-// CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !""}
-// ARGINFO: metadata !{metadata !"kernel_arg_name", metadata !"X"}
-// NO-ARGINFO-NOT: metadata !{metadata !"kernel_arg_name", metadata !"X"}
+// CHECK:  !{!"kernel_arg_addr_space", i32 1}
+// CHECK:  !{!"kernel_arg_access_qual", !"none"}
+// CHECK:  !{!"kernel_arg_type", !"half*"}
+// CHECK:  !{!"kernel_arg_base_type", !"half*"}
+// CHECK:  !{!"kernel_arg_type_qual", !""}
+// ARGINFO: !{!"kernel_arg_name", !"X"}
+// NO-ARGINFO-NOT: !{!"kernel_arg_name", !"X"}
 
 typedef unsigned int myunsignedint;
 kernel void foo4(__global unsigned int * X, __global myunsignedint * Y) {
 }
-// CHECK: metadata !{metadata !"kernel_arg_addr_space", i32 1, i32 1}
-// CHECK: metadata !{metadata !"kernel_arg_access_qual", metadata !"none", metadata !"none"}
-// CHECK: metadata !{metadata !"kernel_arg_type", metadata !"uint*", metadata !"myunsignedint*"}
-// CHECK: metadata !{metadata !"kernel_arg_base_type", metadata !"uint*", metadata !"uint*"}
-// CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !"", metadata !""}
-// ARGINFO: metadata !{metadata !"kernel_arg_name", metadata !"X", metadata !"Y"}
-// NO-ARGINFO-NOT: metadata !{metadata !"kernel_arg_name", metadata !"X", metadata !"Y"}
+// CHECK:  !{!"kernel_arg_addr_space", i32 1, i32 1}
+// CHECK:  !{!"kernel_arg_access_qual", !"none", !"none"}
+// CHECK:  !{!"kernel_arg_type", !"uint*", !"myunsignedint*"}
+// CHECK:  !{!"kernel_arg_base_type", !"uint*", !"uint*"}
+// CHECK:  !{!"kernel_arg_type_qual", !"", !""}
+// ARGINFO: !{!"kernel_arg_name", !"X", !"Y"}
+// NO-ARGINFO-NOT: !{!"kernel_arg_name", !"X", !"Y"}
 
 typedef image1d_t myImage;
 kernel void foo5(read_only myImage img1, write_only image1d_t img2) {
 }
-// CHECK: metadata !{metadata !"kernel_arg_access_qual", metadata !"read_only", metadata !"write_only"}
-// CHECK: metadata !{metadata !"kernel_arg_type", metadata !"myImage", metadata !"image1d_t"}
-// CHECK: metadata !{metadata !"kernel_arg_base_type", metadata !"image1d_t", metadata !"image1d_t"}
-// ARGINFO: metadata !{metadata !"kernel_arg_name", metadata !"img1", metadata !"img2"}
-// NO-ARGINFO-NOT: metadata !{metadata !"kernel_arg_name", metadata !"img1", metadata !"img2"}
+// CHECK:  !{!"kernel_arg_access_qual", !"read_only", !"write_only"}
+// CHECK:  !{!"kernel_arg_type", !"myImage", !"image1d_t"}
+// CHECK:  !{!"kernel_arg_base_type", !"image1d_t", !"image1d_t"}
+// ARGINFO: !{!"kernel_arg_name", !"img1", !"img2"}
+// NO-ARGINFO-NOT: !{!"kernel_arg_name", !"img1", !"img2"}

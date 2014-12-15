@@ -11,7 +11,7 @@
 void foo(char c)
 {
   int i;
-  // CHECK: ![[CONV]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[CONV]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   i = c;
-  // CHECK: ![[RET]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
 }

@@ -10,14 +10,14 @@
 #pragma comment(linker," /bar=" BAR)
 
 // CHECK: !llvm.module.flags = !{{{.*}}}
-// CHECK: !{{[0-9]+}} = metadata !{i32 6, metadata !"Linker Options", metadata ![[link_opts:[0-9]+]]}
-// CHECK: ![[link_opts]] = metadata !{metadata ![[msvcrt:[0-9]+]], metadata ![[kernel32:[0-9]+]], metadata ![[USER32:[0-9]+]], metadata ![[bar:[0-9]+]]}
-// CHECK: ![[msvcrt]] = metadata !{metadata !"/DEFAULTLIB:msvcrt.lib"}
-// CHECK: ![[kernel32]] = metadata !{metadata !"/DEFAULTLIB:kernel32.lib"}
-// CHECK: ![[USER32]] = metadata !{metadata !"/DEFAULTLIB:USER32.LIB"}
-// CHECK: ![[bar]] = metadata !{metadata !" /bar=2"}
+// CHECK: !{{[0-9]+}} = !{i32 6, !"Linker Options", ![[link_opts:[0-9]+]]}
+// CHECK: ![[link_opts]] = !{![[msvcrt:[0-9]+]], ![[kernel32:[0-9]+]], ![[USER32:[0-9]+]], ![[bar:[0-9]+]]}
+// CHECK: ![[msvcrt]] = !{!"/DEFAULTLIB:msvcrt.lib"}
+// CHECK: ![[kernel32]] = !{!"/DEFAULTLIB:kernel32.lib"}
+// CHECK: ![[USER32]] = !{!"/DEFAULTLIB:USER32.LIB"}
+// CHECK: ![[bar]] = !{!" /bar=2"}
 
-// LINUX: metadata !{metadata !"-lmsvcrt.lib"}
-// LINUX: metadata !{metadata !"-lkernel32"}
-// LINUX: metadata !{metadata !"-lUSER32.LIB"}
-// LINUX: metadata !{metadata !" /bar=2"}
+// LINUX: !{!"-lmsvcrt.lib"}
+// LINUX: !{!"-lkernel32"}
+// LINUX: !{!"-lUSER32.LIB"}
+// LINUX: !{!" /bar=2"}

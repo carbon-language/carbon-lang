@@ -15,4 +15,4 @@ void f(_Bool *x, _Bool *y) {
 // CHECK: store i32 [[TOMEM]]
 // CHECK: ret void
 
-// CHECK: metadata !{i32 0, i32 2}
+// CHECK:  i32 0, i32 2}

@@ -11,4 +11,4 @@ int main() {
 	int j = foo(1);
 	return 0;
 }
-// CHECK: metadata !"0x34\00b\00b\00\00{{.*}}",
+// CHECK: !"0x34\00b\00b\00\00{{.*}}",

@@ -55,15 +55,15 @@ typedef enum {
 // CHECK-NEXT:   %[[MEM2:.*]] = alloca i8*, align 8
 // CHECK:        store i8* [[BLOCK_DESC:%.*]], i8** %[[MEM1]], align 8
 // CHECK:        %[[TMP0:.*]] = load i8** %[[MEM1]]
-// CHECK:        call void @llvm.dbg.value(metadata !{i8* %[[TMP0]]}, i64 0, metadata ![[BDMD:[0-9]+]], metadata !{{.*}})
-// CHECK:        call void @llvm.dbg.declare(metadata !{i8* [[BLOCK_DESC]]}, metadata ![[BDMD:[0-9]+]], metadata !{{.*}})
+// CHECK:        call void @llvm.dbg.value(metadata i8* %[[TMP0]], i64 0, metadata ![[BDMD:[0-9]+]], metadata !{{.*}})
+// CHECK:        call void @llvm.dbg.declare(metadata i8* [[BLOCK_DESC]], metadata ![[BDMD:[0-9]+]], metadata !{{.*}})
 // CHECK:        %[[TMP1:.*]] = bitcast
 // CHECK-NEXT:   store
-// CHECK:        call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** {{.*}}}, metadata ![[SELF:.*]], metadata !{{.*}})
+// CHECK:        call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** {{[^,]*}}, metadata ![[SELF:.*]], metadata !{{.*}})
 // make sure we are still in the same function
 // CHECK: define {{.*}}__copy_helper_block_
 // Metadata
-// CHECK:        ![[MAIN:.*]] = metadata !{metadata !"0x13\00Main\0023\00{{.*}}", {{.*}} ; [ DW_TAG_structure_type ] [Main] [line 23,
+// CHECK:        ![[MAIN:.*]] = !{!"0x13\00Main\0023\00{{.*}}", {{.*}} ; [ DW_TAG_structure_type ] [Main] [line 23,
 // CHECK:        ![[PMAIN:.*]] = {{.*}}![[MAIN]]} ; [ DW_TAG_pointer_type ]{{.*}}from Main
-// CHECK:        ![[BDMD]] = metadata {{.*}}.block_descriptor
+// CHECK:        ![[BDMD]] = {{.*}}.block_descriptor
 // CHECK:        ![[SELF]] = {{.*}}![[PMAIN]]{{.*}}[ DW_TAG_auto_variable ] [self] [line 40]

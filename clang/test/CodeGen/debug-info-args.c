@@ -2,8 +2,8 @@
 
 int somefunc(char *x, int y, double z) {
   
-  // CHECK: metadata ![[NUM:[^,]*]], null, null, null} ; [ DW_TAG_subroutine_type
-  // CHECK: ![[NUM]] = {{metadata !{metadata ![^,]*, metadata ![^,]*, metadata ![^,]*, metadata ![^,]*}}}
+  // CHECK: ![[NUM:[^,]*]], null, null, null} ; [ DW_TAG_subroutine_type
+  // CHECK: ![[NUM]] = {{!{![^,]*, ![^,]*, ![^,]*, ![^,]*}}}
   
   return y;
 }

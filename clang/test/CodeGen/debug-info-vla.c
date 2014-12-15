@@ -2,7 +2,7 @@
 
 void testVLAwithSize(int s)
 {
-// CHECK: metadata !{metadata !"0x100\00vla\00[[@LINE+1]]\008192", metadata {{.*}}, metadata {{.*}}, metadata {{.*}}} ; [ DW_TAG_auto_variable ] [vla] [line [[@LINE+1]]]
+// CHECK:  !"0x100\00vla\00[[@LINE+1]]\008192", {{.*}}, {{.*}}, {{.*}}} ; [ DW_TAG_auto_variable ] [vla] [line [[@LINE+1]]]
   int vla[s];
   int i;
   for (i = 0; i < s; i++) {

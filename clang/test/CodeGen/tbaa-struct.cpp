@@ -62,14 +62,14 @@ void copy5(struct six *a, struct six *b) {
 }
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %{{.*}}, i64 6, i32 1, i1 false), !tbaa.struct [[TS5:!.*]]
 
-// CHECK: [[TS]] = metadata !{i64 0, i64 2, metadata !{{.*}}, i64 4, i64 4, metadata !{{.*}}, i64 8, i64 1, metadata !{{.*}}, i64 12, i64 4, metadata !{{.*}}}
-// CHECK: [[CHAR:!.*]] = metadata !{metadata !"omnipotent char", metadata !{{.*}}}
-// CHECK: [[TAG_INT:!.*]] = metadata !{metadata [[INT:!.*]], metadata [[INT]], i64 0}
-// CHECK: [[INT]] = metadata !{metadata !"int", metadata [[CHAR]]
-// CHECK: [[TAG_CHAR:!.*]] = metadata !{metadata [[CHAR]], metadata [[CHAR]], i64 0}
+// CHECK: [[TS]] = !{i64 0, i64 2, !{{.*}}, i64 4, i64 4, !{{.*}}, i64 8, i64 1, !{{.*}}, i64 12, i64 4, !{{.*}}}
+// CHECK: [[CHAR:!.*]] = !{!"omnipotent char", !{{.*}}}
+// CHECK: [[TAG_INT:!.*]] = !{[[INT:!.*]], [[INT]], i64 0}
+// CHECK: [[INT]] = !{!"int", [[CHAR]]
+// CHECK: [[TAG_CHAR:!.*]] = !{[[CHAR]], [[CHAR]], i64 0}
 // (offset, size) = (0,1) char; (4,2) short; (8,4) int; (12,1) char; (16,4) int; (20,4) int
-// CHECK: [[TS2]] = metadata !{i64 0, i64 1, metadata !{{.*}}, i64 4, i64 2, metadata !{{.*}}, i64 8, i64 4, metadata !{{.*}}, i64 12, i64 1, metadata !{{.*}}, i64 16, i64 4, metadata {{.*}}, i64 20, i64 4, metadata {{.*}}}
+// CHECK: [[TS2]] = !{i64 0, i64 1, !{{.*}}, i64 4, i64 2, !{{.*}}, i64 8, i64 4, !{{.*}}, i64 12, i64 1, !{{.*}}, i64 16, i64 4, {{.*}}, i64 20, i64 4, {{.*}}}
 // (offset, size) = (0,8) char; (0,2) char; (4,8) char
-// CHECK: [[TS3]] = metadata !{i64 0, i64 8, metadata !{{.*}}, i64 0, i64 2, metadata !{{.*}}, i64 4, i64 8, metadata !{{.*}}}
-// CHECK: [[TS4]] = metadata !{i64 0, i64 1, metadata [[TAG_CHAR]], i64 1, i64 4, metadata [[TAG_INT]], i64 1, i64 1, metadata [[TAG_CHAR]], i64 2, i64 1, metadata [[TAG_CHAR]]}
-// CHECK: [[TS5]] = metadata !{i64 0, i64 1, metadata [[TAG_CHAR]], i64 4, i64 4, metadata [[TAG_INT]], i64 4, i64 1, metadata [[TAG_CHAR]], i64 5, i64 1, metadata [[TAG_CHAR]]}
+// CHECK: [[TS3]] = !{i64 0, i64 8, !{{.*}}, i64 0, i64 2, !{{.*}}, i64 4, i64 8, !{{.*}}}
+// CHECK: [[TS4]] = !{i64 0, i64 1, [[TAG_CHAR]], i64 1, i64 4, [[TAG_INT]], i64 1, i64 1, [[TAG_CHAR]], i64 2, i64 1, [[TAG_CHAR]]}
+// CHECK: [[TS5]] = !{i64 0, i64 1, [[TAG_CHAR]], i64 4, i64 4, [[TAG_INT]], i64 4, i64 1, [[TAG_CHAR]], i64 5, i64 1, [[TAG_CHAR]]}

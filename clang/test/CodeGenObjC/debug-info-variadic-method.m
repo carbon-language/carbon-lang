@@ -10,7 +10,7 @@
 @implementation Foo
 - (void) Bar: (int) n, ...
 {
-  // CHECK: metadata ![[NUM:[^,]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
-  // CHECK: ![[NUM]] = {{metadata !{null, metadata ![^,]*, metadata ![^,]*, metadata ![^,]*, null}}}    
+  // CHECK: ![[NUM:[^,]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
+  // CHECK: ![[NUM]] = {{!{null, ![^,]*, ![^,]*, ![^,]*, null}}}    
 }
 @end

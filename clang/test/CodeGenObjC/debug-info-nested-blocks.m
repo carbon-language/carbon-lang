@@ -23,4 +23,4 @@ void bar(void) {
 //
 // CHECK: define {{.*}}void @__bar_block_invoke_3(i8* %.block_descriptor)
 // CHECK: %[[BLOCKADDR:.*]] = alloca <{{.*}}>*, align
-// CHECK: call void @llvm.dbg.declare(metadata !{{.*}}%[[BLOCKADDR]]
+// CHECK: call void @llvm.dbg.declare(metadata {{.*}}%[[BLOCKADDR]]

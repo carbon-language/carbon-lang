@@ -136,10 +136,10 @@ e16 g16(e16 *x) {
 // CHECK: ret
 
 
-// CHECK: [[RANGE_i8_0_2]] = metadata !{i8 0, i8 2}
-// CHECK: [[RANGE_i32_0_32]] = metadata !{i32 0, i32 32}
-// CHECK: [[RANGE_i32_m16_16]] = metadata !{i32 -16, i32 16}
-// CHECK: [[RANGE_i32_m32_32]] = metadata !{i32 -32, i32 32}
-// CHECK: [[RANGE_i32_m1_1]] = metadata !{i32 -1, i32 1}
-// CHECK: [[RANGE_i32_m64_64]] = metadata !{i32 -64, i32 64}
-// CHECK: [[RANGE_i64_0_2pow33]] = metadata !{i64 0, i64 8589934592}
+// CHECK: [[RANGE_i8_0_2]] = !{i8 0, i8 2}
+// CHECK: [[RANGE_i32_0_32]] = !{i32 0, i32 32}
+// CHECK: [[RANGE_i32_m16_16]] = !{i32 -16, i32 16}
+// CHECK: [[RANGE_i32_m32_32]] = !{i32 -32, i32 32}
+// CHECK: [[RANGE_i32_m1_1]] = !{i32 -1, i32 1}
+// CHECK: [[RANGE_i32_m64_64]] = !{i32 -64, i32 64}
+// CHECK: [[RANGE_i64_0_2pow33]] = !{i64 0, i64 8589934592}

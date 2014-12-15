@@ -44,4 +44,4 @@ void fn2(struct p4_Thread *val) {
 // CHECK: call void @llvm.write_register.i[[bits]](metadata !0, i[[bits]] %[[regw]])
 
 // CHECK: !llvm.named.register.sp = !{!0}
-// CHECK: !0 = metadata !{metadata !"sp"}
+// CHECK: !0 = !{!"sp"}

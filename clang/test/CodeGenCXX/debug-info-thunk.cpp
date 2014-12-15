@@ -14,4 +14,4 @@ struct C : A, B {
 
 void C::f() { }
 
-// CHECK: metadata !{metadata !"0x2e\00\00\00_ZThn{{[48]}}_N1C1fEv\0015\00{{.*}}", {{.*}} ; [ DW_TAG_subprogram ] [line 15] [def]{{$}}
+// CHECK:  !"0x2e\00\00\00_ZThn{{[48]}}_N1C1fEv\0015\00{{.*}}", {{.*}} ; [ DW_TAG_subprogram ] [line 15] [def]{{$}}

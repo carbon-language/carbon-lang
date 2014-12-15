@@ -60,12 +60,12 @@ void throws() {
   // PGOUSE: ret void
 }
 
-// PGOUSE-DAG: ![[TH1]] = metadata !{metadata !"branch_weights", i32 101, i32 2}
-// PGOUSE-DAG: ![[TH2]] = metadata !{metadata !"branch_weights", i32 67, i32 35}
-// PGOUSE-DAG: ![[TH3]] = metadata !{metadata !"branch_weights", i32 34, i32 34}
-// PGOUSE-DAG: ![[TH4]] = metadata !{metadata !"branch_weights", i32 18, i32 18}
-// PGOUSE-EXC: ![[TH5]] = metadata !{metadata !"branch_weights", i32 34, i32 18}
-// PGOUSE-DAG: ![[TH6]] = metadata !{metadata !"branch_weights", i32 101, i32 1}
+// PGOUSE-DAG: ![[TH1]] = !{!"branch_weights", i32 101, i32 2}
+// PGOUSE-DAG: ![[TH2]] = !{!"branch_weights", i32 67, i32 35}
+// PGOUSE-DAG: ![[TH3]] = !{!"branch_weights", i32 34, i32 34}
+// PGOUSE-DAG: ![[TH4]] = !{!"branch_weights", i32 18, i32 18}
+// PGOUSE-EXC: ![[TH5]] = !{!"branch_weights", i32 34, i32 18}
+// PGOUSE-DAG: ![[TH6]] = !{!"branch_weights", i32 101, i32 1}
 
 int main(int argc, const char *argv[]) {
   throws();

@@ -27,7 +27,7 @@ public:
     // CTRUSE-NOT: br {{.*}} !prof ![0-9]+
     // CTRUSE: ret
   }
-  // CTRUSE: ![[SC1]] = metadata !{metadata !"branch_weights", i32 100, i32 2}
+  // CTRUSE: ![[SC1]] = !{!"branch_weights", i32 100, i32 2}
 
   // DTRGEN-LABEL: define {{.*}} @_ZN6SimpleD2Ev(
   // DTRUSE-LABEL: define {{.*}} @_ZN6SimpleD2Ev(
@@ -40,7 +40,7 @@ public:
     // DTRUSE-NOT: br {{.*}} !prof ![0-9]+
     // DTRUSE: ret
   }
-  // DTRUSE: ![[SD1]] = metadata !{metadata !"branch_weights", i32 100, i32 2}
+  // DTRUSE: ![[SD1]] = !{!"branch_weights", i32 100, i32 2}
 
   // MTHGEN-LABEL: define {{.*}} @_ZN6Simple6methodEv(
   // MTHUSE-LABEL: define {{.*}} @_ZN6Simple6methodEv(
@@ -53,7 +53,7 @@ public:
     // MTHUSE-NOT: br {{.*}} !prof ![0-9]+
     // MTHUSE: ret
   }
-  // MTHUSE: ![[SM1]] = metadata !{metadata !"branch_weights", i32 100, i32 2}
+  // MTHUSE: ![[SM1]] = !{!"branch_weights", i32 100, i32 2}
 };
 
 // WRPGEN-LABEL: define {{.*}} @_Z14simple_wrapperv(
@@ -70,7 +70,7 @@ void simple_wrapper() {
   // WRPUSE-NOT: br {{.*}} !prof ![0-9]+
   // WRPUSE: ret
 }
-// WRPUSE: ![[SW1]] = metadata !{metadata !"branch_weights", i32 101, i32 2}
+// WRPUSE: ![[SW1]] = !{!"branch_weights", i32 101, i32 2}
 
 int main(int argc, const char *argv[]) {
   simple_wrapper();

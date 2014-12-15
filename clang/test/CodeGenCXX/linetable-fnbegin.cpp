@@ -4,10 +4,10 @@
 // CHECK: define{{.*}}bar
 // CHECK-NOT: define
 // CHECK: ret {{.*}}, !dbg [[DBG:.*]]
-// CHECK: [[HPP:.*]] = metadata !{metadata !"./template.hpp",
-// CHECK: [[SP:.*]] = metadata !{metadata !"0x2e\00{{.*}}", metadata [[HPP]],{{.*}}[ DW_TAG_subprogram ] [line 22] [def] [bar]
+// CHECK: [[HPP:.*]] = !{!"./template.hpp",
+// CHECK: [[SP:.*]] = !{!"0x2e\00{{.*}}", [[HPP]],{{.*}}[ DW_TAG_subprogram ] [line 22] [def] [bar]
 // We shouldn't need a lexical block for this function.
-// CHECK: [[DBG]] = metadata !{i32 23, i32 0, metadata [[SP]], null}
+// CHECK: [[DBG]] = !{i32 23, i32 0, [[SP]], null}
 
 
 # 1 "./template.h" 1

@@ -2,7 +2,7 @@
 // Radar 8801045
 // Do not emit AT_MIPS_linkage_name for static variable i
 
-// CHECK: metadata !{metadata !"0x34\00i\00i\00\00{{.*}}"
+// CHECK:  !"0x34\00i\00i\00\00{{.*}}"
 
 @interface A {
 }

@@ -8,4 +8,4 @@ int foo(int a, int b) { int c = a + b;
 }
 
 // Without column information we wouldn't change locations for b.
-// CHECK: metadata !{i32 4, i32 20,
+// CHECK:  i32 4, i32 20,

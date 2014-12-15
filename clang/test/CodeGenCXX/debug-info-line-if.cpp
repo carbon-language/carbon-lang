@@ -48,8 +48,8 @@ int main() {
   // CHECK: br label
   // CHECK: br label {{.*}}, !dbg [[DBG4:!.*]]
 
-  // CHECK: [[DBG1]] = metadata !{i32 100, i32 0, metadata !{{.*}}, null}
-  // CHECK: [[DBG2]] = metadata !{i32 200, i32 0, metadata !{{.*}}, null}
-  // CHECK: [[DBG3]] = metadata !{i32 300, i32 0, metadata !{{.*}}, null}
-  // CHECK: [[DBG4]] = metadata !{i32 401, i32 0, metadata !{{.*}}, null}
+  // CHECK: [[DBG1]] = !{i32 100, i32 0, !{{.*}}, null}
+  // CHECK: [[DBG2]] = !{i32 200, i32 0, !{{.*}}, null}
+  // CHECK: [[DBG3]] = !{i32 300, i32 0, !{{.*}}, null}
+  // CHECK: [[DBG4]] = !{i32 401, i32 0, !{{.*}}, null}
 }

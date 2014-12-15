@@ -57,52 +57,52 @@ typedef signed char BOOL;
 // CHECK: ![[TESTNOSIDEEFFECT:.*]] = {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+1]]] [local] [def] [-[AppDelegate testNoSideEffect:]]
 - (int)testNoSideEffect:(NSString *)foo {
   int x = 1;
-  // CHECK: ![[ARC1]] = metadata !{i32 [[@LINE+1]], i32 0, metadata ![[TESTNOSIDEEFFECT]], null}
+  // CHECK: ![[ARC1]] = !{i32 [[@LINE+1]], i32 0, ![[TESTNOSIDEEFFECT]], null}
   return 1; // Return expression
-  // CHECK: ![[RET1]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET1]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
 }           // Cleanup + Ret
 
 - (int)testNoCleanup {
-  // CHECK: ![[RET2]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET2]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   return 1;
 }
 
 - (int)testSideEffect:(NSString *)foo {
-  // CHECK: ![[MSG3]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[MSG3]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   return [self testNoSideEffect :foo];
-  // CHECK: ![[RET3]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET3]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
 }
 
 - (int)testMultiline:(NSString *)foo {
-  // CHECK: ![[MSG4]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[MSG4]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   int r = [self testSideEffect :foo];
-  // CHECK: ![[EXP4]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[EXP4]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   return r;
-  // CHECK: ![[RET4]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET4]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
 }
 
 - (void)testVoid:(NSString *)foo {
-  // CHECK: ![[ARC5]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[ARC5]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   return;
-  // CHECK: ![[RET5]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET5]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
 }
 
 - (void)testVoidNoReturn:(NSString *)foo {
-  // CHECK: ![[MSG6]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[MSG6]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   [self testVoid :foo];
-  // CHECK: ![[RET6]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET6]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
 }
 
 - (int)testNoCleanupSideEffect {
-  // CHECK: ![[MSG7]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[MSG7]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   [self testVoid :@"foo"];
-  // CHECK: ![[RET7]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[RET7]] = !{i32 [[@LINE+1]], i32 0, !{{.*}}, null}
   return 1;
 }
 
 - (void)testCleanupVoid:(BOOL)skip withDelegate: (AppDelegate *) delegate {
   static BOOL skip_all;
-  // CHECK: ![[SKIP1]] = metadata !{i32 [[@LINE+1]], i32 0,
+  // CHECK: ![[SKIP1]] = !{i32 [[@LINE+1]], i32 0,
   if (!skip_all) {
     if (!skip) {
       return;
@@ -112,8 +112,8 @@ typedef signed char BOOL;
       [delegate testVoid :s];
     }
   }
-  // CHECK: ![[RET8]] = metadata !{i32 [[@LINE+2]], i32 0,
-  // CHECK: ![[ARC8]] = metadata !{i32 [[@LINE+1]], i32 0,
+  // CHECK: ![[RET8]] = !{i32 [[@LINE+2]], i32 0,
+  // CHECK: ![[ARC8]] = !{i32 [[@LINE+1]], i32 0,
 }
 
 

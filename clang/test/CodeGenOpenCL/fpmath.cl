@@ -22,4 +22,4 @@ double dpscalardiv(double a, double b) {
   return a / b;
 }
 
-// CHECK: ![[MD]] = metadata !{float 2.500000e+00}
+// CHECK: ![[MD]] = !{float 2.500000e+00}

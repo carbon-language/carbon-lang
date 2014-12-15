@@ -8,4 +8,4 @@ __kernel void kernel_function() {
 }
 // CHECK-LABEL: define void @kernel_function()
 
-// CHECK: !{{[0-9]+}} = metadata !{void ()* @kernel_function, metadata !"kernel", i32 1}
+// CHECK: !{{[0-9]+}} = !{void ()* @kernel_function, !"kernel", i32 1}

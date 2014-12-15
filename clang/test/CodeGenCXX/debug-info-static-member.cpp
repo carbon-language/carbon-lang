@@ -33,15 +33,15 @@ int main()
 // why the definition of "a" comes before the declarations while
 // "b" and "c" come after.
 
-// CHECK: metadata !"_ZTS1X"} ; [ DW_TAG_enumeration_type ] [X]
-// CHECK: metadata !"_ZTS1C"} ; [ DW_TAG_class_type ] [C]
-// CHECK: ![[DECL_A:[0-9]+]] = metadata {{.*}} [ DW_TAG_member ] [a] [line {{.*}}, size 0, align 0, offset 0] [static]
-// CHECK: metadata !"0xd\00const_a\00{{.*}}", {{.*}}, i1 true} ; [ DW_TAG_member ] [const_a] [line {{.*}}, size 0, align 0, offset 0] [static]
-// CHECK: ![[DECL_B:[0-9]+]] = metadata !{metadata !"0xd\00b\00{{.*}}", {{.*}} [ DW_TAG_member ] [b] [line {{.*}}, size 0, align 0, offset 0] [protected] [static]
-// CHECK: metadata !"0xd\00const_b\00{{.*}}", {{.*}}, float 0x{{.*}}} ; [ DW_TAG_member ] [const_b] [line {{.*}}, size 0, align 0, offset 0] [protected] [static]
-// CHECK: ![[DECL_C:[0-9]+]] = metadata !{metadata !"0xd\00c\00{{.*}}", {{.*}} [ DW_TAG_member ] [c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
-// CHECK: metadata !"0xd\00const_c\00{{.*}}", {{.*}} [ DW_TAG_member ] [const_c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
-// CHECK: metadata !"0xd\00x_a\00{{.*}}", {{.*}} [ DW_TAG_member ] [x_a] {{.*}} [public] [static]
+// CHECK: !"_ZTS1X"} ; [ DW_TAG_enumeration_type ] [X]
+// CHECK: !"_ZTS1C"} ; [ DW_TAG_class_type ] [C]
+// CHECK: ![[DECL_A:[0-9]+]] = {{.*}} [ DW_TAG_member ] [a] [line {{.*}}, size 0, align 0, offset 0] [static]
+// CHECK: !"0xd\00const_a\00{{.*}}", {{.*}}, i1 true} ; [ DW_TAG_member ] [const_a] [line {{.*}}, size 0, align 0, offset 0] [static]
+// CHECK: ![[DECL_B:[0-9]+]] = !{!"0xd\00b\00{{.*}}", {{.*}} [ DW_TAG_member ] [b] [line {{.*}}, size 0, align 0, offset 0] [protected] [static]
+// CHECK: !"0xd\00const_b\00{{.*}}", {{.*}}, float 0x{{.*}}} ; [ DW_TAG_member ] [const_b] [line {{.*}}, size 0, align 0, offset 0] [protected] [static]
+// CHECK: ![[DECL_C:[0-9]+]] = !{!"0xd\00c\00{{.*}}", {{.*}} [ DW_TAG_member ] [c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
+// CHECK: !"0xd\00const_c\00{{.*}}", {{.*}} [ DW_TAG_member ] [const_c] [line {{.*}}, size 0, align 0, offset 0] [public] [static]
+// CHECK: !"0xd\00x_a\00{{.*}}", {{.*}} [ DW_TAG_member ] [x_a] {{.*}} [public] [static]
 
 // CHECK: ; [ DW_TAG_structure_type ] [static_decl_templ<int>] {{.*}} [def]
 // CHECK: ; [ DW_TAG_member ] [static_decl_templ_var]
@@ -76,9 +76,9 @@ int static_decl_templ_ref() {
   return static_decl_templ<int>::static_decl_templ_var;
 }
 
-// CHECK: metadata !{metadata !"0x34\00a\00{{.*}}", null, {{.*}} @_ZN1C1aE, metadata ![[DECL_A]]} ; [ DW_TAG_variable ] [a] {{.*}} [def]
-// CHECK: metadata !{metadata !"0x34\00b\00{{.*}}", null, {{.*}} @_ZN1C1bE, metadata ![[DECL_B]]} ; [ DW_TAG_variable ] [b] {{.*}} [def]
-// CHECK: metadata !{metadata !"0x34\00c\00{{.*}}", null, {{.*}} @_ZN1C1cE, metadata ![[DECL_C]]} ; [ DW_TAG_variable ] [c] {{.*}} [def]
+// CHECK:  !"0x34\00a\00{{.*}}", null, {{.*}} @_ZN1C1aE, ![[DECL_A]]} ; [ DW_TAG_variable ] [a] {{.*}} [def]
+// CHECK:  !"0x34\00b\00{{.*}}", null, {{.*}} @_ZN1C1bE, ![[DECL_B]]} ; [ DW_TAG_variable ] [b] {{.*}} [def]
+// CHECK:  !"0x34\00c\00{{.*}}", null, {{.*}} @_ZN1C1cE, ![[DECL_C]]} ; [ DW_TAG_variable ] [c] {{.*}} [def]
 
 // CHECK-NOT: ; [ DW_TAG_variable ] [anon_static_decl_var]
 
@@ -101,4 +101,4 @@ struct y {
 int y::z;
 }
 
-// CHECK: metadata !{metadata !"0x34\00z\00{{.*}}", metadata [[NS_X]], {{.*}} ; [ DW_TAG_variable ] [z] {{.*}} [def]
+// CHECK:  !"0x34\00z\00{{.*}}", [[NS_X]], {{.*}} ; [ DW_TAG_variable ] [z] {{.*}} [def]

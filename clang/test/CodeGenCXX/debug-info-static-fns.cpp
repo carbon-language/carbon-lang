@@ -7,4 +7,4 @@ namespace A {
 }
 
 // Verify that a is present and mangled.
-// CHECK: metadata !"0x2e\00a\00a\00_ZN1AL1aEi\00{{.*}}", {{.*}}, i32 (i32)* @_ZN1AL1aEi, {{.*}} ; [ DW_TAG_subprogram ] [line 4] [local] [def] [a]
+// CHECK: !"0x2e\00a\00a\00_ZN1AL1aEi\00{{.*}}", {{.*}}, i32 (i32)* @_ZN1AL1aEi, {{.*}} ; [ DW_TAG_subprogram ] [line 4] [local] [def] [a]

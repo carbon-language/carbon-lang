@@ -14,8 +14,8 @@ Kernel1()
 }
 }
 
-// CHECK: !{{[0-9]+}} = metadata !{void ()* @Kernel1, metadata !"maxntidx", i32 256}
-// CHECK: !{{[0-9]+}} = metadata !{void ()* @Kernel1, metadata !"minctasm", i32 2}
+// CHECK: !{{[0-9]+}} = !{void ()* @Kernel1, !"maxntidx", i32 256}
+// CHECK: !{{[0-9]+}} = !{void ()* @Kernel1, !"minctasm", i32 2}
 
 // Test only max threads per block. Min cta per sm defaults to 0, and
 // CodeGen doesn't output a zero value for minctasm.
@@ -27,4 +27,4 @@ Kernel2()
 }
 }
 
-// CHECK: !{{[0-9]+}} = metadata !{void ()* @Kernel2, metadata !"maxntidx", i32 256}
+// CHECK: !{{[0-9]+}} = !{void ()* @Kernel2, !"maxntidx", i32 256}

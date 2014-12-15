@@ -21,7 +21,7 @@ class OuterClass
   OuterClass(const Foo *); // line 10
 };
 OuterClass::InnerClass OuterClass::theInnerClass; // This toplevel decl causes InnerClass to be generated.
-// CHECK0: metadata !"0x2e\00OuterClass\00{{.*}}\00[[@LINE+1]]"{{.*}}, metadata ![[DECL]], metadata {{![0-9]+}}} ; [ DW_TAG_subprogram ] [line [[@LINE+1]]] [def] [OuterClass]
+// CHECK0: !"0x2e\00OuterClass\00{{.*}}\00[[@LINE+1]]"{{.*}}, ![[DECL]], {{![0-9]+}}} ; [ DW_TAG_subprogram ] [line [[@LINE+1]]] [def] [OuterClass]
 OuterClass::OuterClass(const Foo *meta) { } // line 13
 
 
@@ -37,7 +37,7 @@ class OuterClass1
     InnerClass1();
   } theInnerClass1;
 // CHECK1: [[DECL:[0-9]+]] = {{.*}} ; [ DW_TAG_subprogram ] [line [[@LINE+2]]] [Bar]
-// CHECK1: metadata !"0x2e\00Bar\00{{.*}}\00[[@LINE+4]]"{{.*}}, metadata ![[DECL]], metadata {{![0-9]+}}} ; [ DW_TAG_subprogram ] [line [[@LINE+4]]] [def] [Bar]
+// CHECK1: !"0x2e\00Bar\00{{.*}}\00[[@LINE+4]]"{{.*}}, ![[DECL]], {{![0-9]+}}} ; [ DW_TAG_subprogram ] [line [[@LINE+4]]] [def] [Bar]
   void Bar(const Foo1 *);
 };
 OuterClass1::InnerClass1 OuterClass1::theInnerClass1;
@@ -58,5 +58,5 @@ class OuterClass2
   ~OuterClass2(); // line 10
 };
 OuterClass2::InnerClass2 OuterClass2::theInnerClass2;
-// CHECK2: metadata !"0x2e\00~OuterClass2\00{{.*}}\00[[@LINE+1]]"{{.*}}, metadata ![[DECL]], metadata {{.*}}} ; [ DW_TAG_subprogram ] [line [[@LINE+1]]] [def] [~OuterClass2]
+// CHECK2: !"0x2e\00~OuterClass2\00{{.*}}\00[[@LINE+1]]"{{.*}}, ![[DECL]], {{.*}}} ; [ DW_TAG_subprogram ] [line [[@LINE+1]]] [def] [~OuterClass2]
 OuterClass2::~OuterClass2() { }

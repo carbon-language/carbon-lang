@@ -27,16 +27,16 @@ void test1(struct Test1MA *p1, struct Test1 *p2) {
   // PATH: store i32 3, i32* {{%.*}}, !tbaa [[TAG_test1_x:!.*]]
   p2->x = 3;
 }
-// CHECK: metadata !{metadata !"any pointer", metadata [[TYPE_CHAR:!.*]],
-// CHECK: [[TYPE_CHAR]] = metadata !{metadata !"omnipotent char", metadata [[TAG_CXX_TBAA:!.*]],
-// CHECK: [[TAG_CXX_TBAA]] = metadata !{metadata !"Simple C/C++ TBAA"}
-// CHECK: [[TAG_CHAR]] = metadata !{metadata [[TYPE_CHAR]], metadata [[TYPE_CHAR]], i64 0}
-// CHECK: [[TAG_INT]] = metadata !{metadata [[TYPE_INT:!.*]], metadata [[TYPE_INT]], i64 0}
-// CHECK: [[TYPE_INT]] = metadata !{metadata !"int", metadata [[TYPE_CHAR]]
+// CHECK:  !"any pointer", [[TYPE_CHAR:!.*]],
+// CHECK: [[TYPE_CHAR]] = !{!"omnipotent char", [[TAG_CXX_TBAA:!.*]],
+// CHECK: [[TAG_CXX_TBAA]] = !{!"Simple C/C++ TBAA"}
+// CHECK: [[TAG_CHAR]] = !{[[TYPE_CHAR]], [[TYPE_CHAR]], i64 0}
+// CHECK: [[TAG_INT]] = !{[[TYPE_INT:!.*]], [[TYPE_INT]], i64 0}
+// CHECK: [[TYPE_INT]] = !{!"int", [[TYPE_CHAR]]
 
-// PATH: [[TYPE_CHAR:!.*]] = metadata !{metadata !"omnipotent char", metadata !{{.*}}
-// PATH: [[TAG_CHAR]] = metadata !{metadata [[TYPE_CHAR]], metadata [[TYPE_CHAR]], i64 0}
-// PATH: [[TAG_INT]] = metadata !{metadata [[TYPE_INT:!.*]], metadata [[TYPE_INT]], i64 0}
-// PATH: [[TYPE_INT]] = metadata !{metadata !"int", metadata [[TYPE_CHAR]]
-// PATH: [[TAG_test1_x]] = metadata !{metadata [[TYPE_test1:!.*]], metadata [[TYPE_INT]], i64 0}
-// PATH: [[TYPE_test1]] = metadata !{metadata !"Test1", metadata [[TYPE_INT]], i64 0}
+// PATH: [[TYPE_CHAR:!.*]] = !{!"omnipotent char", !{{.*}}
+// PATH: [[TAG_CHAR]] = !{[[TYPE_CHAR]], [[TYPE_CHAR]], i64 0}
+// PATH: [[TAG_INT]] = !{[[TYPE_INT:!.*]], [[TYPE_INT]], i64 0}
+// PATH: [[TYPE_INT]] = !{!"int", [[TYPE_CHAR]]
+// PATH: [[TAG_test1_x]] = !{[[TYPE_test1:!.*]], [[TYPE_INT]], i64 0}
+// PATH: [[TYPE_test1]] = !{!"Test1", [[TYPE_INT]], i64 0}

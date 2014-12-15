@@ -37,14 +37,14 @@ int use_autolink_sub3() {
 // NOTE: "autolink_sub" is intentionally not linked.
 
 // CHECK: !llvm.module.flags = !{{{.*}}}
-// CHECK: !{{[0-9]+}} = metadata !{i32 6, metadata !"Linker Options", metadata ![[AUTOLINK_OPTIONS:[0-9]+]]}
-// CHECK: ![[AUTOLINK_OPTIONS]] = metadata !{metadata ![[AUTOLINK_PCH:[0-9]+]], metadata ![[AUTOLINK_FRAMEWORK:[0-9]+]], metadata ![[AUTOLINK:[0-9]+]], metadata ![[DEPENDSONMODULE:[0-9]+]], metadata ![[MODULE:[0-9]+]], metadata ![[NOUMBRELLA:[0-9]+]]}
-// CHECK: ![[AUTOLINK_PCH]] = metadata !{metadata !"{{(-l|/DEFAULTLIB:)}}autolink_from_pch{{(\.lib)?}}"}
-// CHECK: ![[AUTOLINK_FRAMEWORK]] = metadata !{metadata !"-framework", metadata !"autolink_framework"}
-// CHECK: ![[AUTOLINK]] = metadata !{metadata !"{{(-l|/DEFAULTLIB:)}}autolink{{(\.lib)?}}"}
-// CHECK: ![[DEPENDSONMODULE]] = metadata !{metadata !"-framework", metadata !"DependsOnModule"}
-// CHECK: ![[MODULE]] = metadata !{metadata !"-framework", metadata !"Module"}
-// CHECK: ![[NOUMBRELLA]] = metadata !{metadata !"-framework", metadata !"NoUmbrella"}
+// CHECK: !{{[0-9]+}} = !{i32 6, !"Linker Options", ![[AUTOLINK_OPTIONS:[0-9]+]]}
+// CHECK: ![[AUTOLINK_OPTIONS]] = !{![[AUTOLINK_PCH:[0-9]+]], ![[AUTOLINK_FRAMEWORK:[0-9]+]], ![[AUTOLINK:[0-9]+]], ![[DEPENDSONMODULE:[0-9]+]], ![[MODULE:[0-9]+]], ![[NOUMBRELLA:[0-9]+]]}
+// CHECK: ![[AUTOLINK_PCH]] = !{!"{{(-l|/DEFAULTLIB:)}}autolink_from_pch{{(\.lib)?}}"}
+// CHECK: ![[AUTOLINK_FRAMEWORK]] = !{!"-framework", !"autolink_framework"}
+// CHECK: ![[AUTOLINK]] = !{!"{{(-l|/DEFAULTLIB:)}}autolink{{(\.lib)?}}"}
+// CHECK: ![[DEPENDSONMODULE]] = !{!"-framework", !"DependsOnModule"}
+// CHECK: ![[MODULE]] = !{!"-framework", !"Module"}
+// CHECK: ![[NOUMBRELLA]] = !{!"-framework", !"NoUmbrella"}
 
 // CHECK-AUTOLINK-DISABLED: !llvm.module.flags
 // CHECK-AUTOLINK-DISABLED-NOT: "Linker Options"

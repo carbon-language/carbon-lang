@@ -10,6 +10,6 @@ int main (void) {
   return 0;
 }
 
-// VER2: metadata !{i32 2, metadata !"Dwarf Version", i32 2}
-// VER3: metadata !{i32 2, metadata !"Dwarf Version", i32 3}
-// VER4: metadata !{i32 2, metadata !"Dwarf Version", i32 4}
+// VER2: !{i32 2, !"Dwarf Version", i32 2}
+// VER3: !{i32 2, !"Dwarf Version", i32 3}
+// VER4: !{i32 2, !"Dwarf Version", i32 4}

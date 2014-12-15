@@ -86,14 +86,14 @@ void template_test(double *List, int Length) {
   for_template_define_test<double>(List, Length, Value);
 }
 
-// CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[UNROLL_FULL:.*]]}
-// CHECK: ![[UNROLL_FULL]] = metadata !{metadata !"llvm.loop.unroll.full"}
-// CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2:.*]], metadata ![[UNROLL_DISABLE:.*]]}
-// CHECK: ![[UNROLL_DISABLE]] = metadata !{metadata !"llvm.loop.unroll.disable"}
-// CHECK: ![[LOOP_3]] = metadata !{metadata ![[LOOP_3]], metadata ![[UNROLL_8:.*]]}
-// CHECK: ![[UNROLL_8]] = metadata !{metadata !"llvm.loop.unroll.count", i32 8}
-// CHECK: ![[LOOP_4]] = metadata !{metadata ![[LOOP_4]], metadata ![[UNROLL_4:.*]]}
-// CHECK: ![[UNROLL_4]] = metadata !{metadata !"llvm.loop.unroll.count", i32 4}
-// CHECK: ![[LOOP_5]] = metadata !{metadata ![[LOOP_5]], metadata ![[UNROLL_8:.*]]}
-// CHECK: ![[LOOP_6]] = metadata !{metadata ![[LOOP_6]], metadata ![[UNROLL_8:.*]]}
-// CHECK: ![[LOOP_7]] = metadata !{metadata ![[LOOP_7]], metadata ![[UNROLL_8:.*]]}
+// CHECK: ![[LOOP_1]] = !{![[LOOP_1]], ![[UNROLL_FULL:.*]]}
+// CHECK: ![[UNROLL_FULL]] = !{!"llvm.loop.unroll.full"}
+// CHECK: ![[LOOP_2]] = !{![[LOOP_2:.*]], ![[UNROLL_DISABLE:.*]]}
+// CHECK: ![[UNROLL_DISABLE]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: ![[LOOP_3]] = !{![[LOOP_3]], ![[UNROLL_8:.*]]}
+// CHECK: ![[UNROLL_8]] = !{!"llvm.loop.unroll.count", i32 8}
+// CHECK: ![[LOOP_4]] = !{![[LOOP_4]], ![[UNROLL_4:.*]]}
+// CHECK: ![[UNROLL_4]] = !{!"llvm.loop.unroll.count", i32 4}
+// CHECK: ![[LOOP_5]] = !{![[LOOP_5]], ![[UNROLL_8:.*]]}
+// CHECK: ![[LOOP_6]] = !{![[LOOP_6]], ![[UNROLL_8:.*]]}
+// CHECK: ![[LOOP_7]] = !{![[LOOP_7]], ![[UNROLL_8:.*]]}
