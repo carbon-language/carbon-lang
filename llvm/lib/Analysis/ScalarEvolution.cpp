@@ -6094,14 +6094,19 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool ControlsExit) {
     return ExitLimit(Distance, MaxBECount);
   }
 
-  // If Step is a power of two that evenly divides Start we know that the loop
-  // will always terminate.  Start may not be a constant so we just have the
-  // number of trailing zeros available.  This is safe even in presence of
-  // overflow as the recurrence will overflow to exactly 0.
-  const APInt &StepV = StepC->getValue()->getValue();
-  if (StepV.isPowerOf2() &&
-      GetMinTrailingZeros(getNegativeSCEV(Start)) >= StepV.countTrailingZeros())
-    return getUDivExactExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
+  // As a special case, handle the instance where Step is a positive power of
+  // two. In this case, determining whether Step divides Distance evenly can be
+  // done by counting and comparing the number of trailing zeros of Step and
+  // Distance.
+  if (!CountDown) {
+    const APInt &StepV = StepC->getValue()->getValue();
+    // StepV.isPowerOf2() returns true if StepV is an positive power of two.  It
+    // also returns true if StepV is maximally negative (eg, INT_MIN), but that
+    // case is not handled as this code is guarded by !CountDown.
+    if (StepV.isPowerOf2() &&
+        GetMinTrailingZeros(Distance) >= StepV.countTrailingZeros())
+      return getUDivExactExpr(Distance, Step);
+  }
 
   // If the condition controls loop exit (the loop exits only if the expression
   // is true) and the addition is no-wrap we can use unsigned divide to
