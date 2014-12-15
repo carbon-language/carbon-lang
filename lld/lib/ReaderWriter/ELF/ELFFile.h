@@ -122,8 +122,6 @@ public:
       : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
         _ordinal(0), _doStringsMerge(atomizeStrings) {}
 
-  virtual std::error_code doParse() override;
-
   static ErrorOr<std::unique_ptr<ELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings);
 
@@ -170,6 +168,8 @@ protected:
       StringRef symbolName, StringRef sectionName, const Elf_Sym *symbol,
       const Elf_Shdr *section, ArrayRef<uint8_t> symContent,
       ArrayRef<uint8_t> secContent);
+
+  std::error_code doParse() override;
 
   /// \brief Iterate over Elf_Rela relocations list and create references.
   virtual void createRelocationReferences(const Elf_Sym &symbol,

@@ -39,17 +39,6 @@ public:
       : ArchiveLibraryFile(path), _mb(std::shared_ptr<MemoryBuffer>(mb.release())),
         _registry(reg), _logLoading(logLoading) {}
 
-  std::error_code doParse() override {
-    // Make Archive object which will be owned by FileArchive object.
-    std::error_code ec;
-    _archive.reset(new Archive(_mb->getMemBufferRef(), ec));
-    if (ec)
-      return ec;
-    if ((ec = buildTableOfContents()))
-      return ec;
-    return std::error_code();
-  }
-
   virtual ~FileArchive() {}
 
   /// \brief Check if any member of the archive contains an Atom with the
@@ -134,6 +123,18 @@ public:
     for (const auto &e : _symbolMemberMap)
       ret.insert(e.first);
     return ret;
+  }
+
+protected:
+  std::error_code doParse() override {
+    // Make Archive object which will be owned by FileArchive object.
+    std::error_code ec;
+    _archive.reset(new Archive(_mb->getMemBufferRef(), ec));
+    if (ec)
+      return ec;
+    if ((ec = buildTableOfContents()))
+      return ec;
+    return std::error_code();
   }
 
 private:

@@ -55,6 +55,7 @@ public:
         *this, name, _soname, sym->second._symbol);
   }
 
+protected:
   std::error_code doParse() override {
     std::error_code ec;
     _objFile.reset(

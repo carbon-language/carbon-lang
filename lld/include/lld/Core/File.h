@@ -154,10 +154,6 @@ public:
   /// all AbsoluteAtoms in this File.
   virtual const atom_collection<AbsoluteAtom> &absolute() const = 0;
 
-  /// \brief Subclasses should override this method to parse the
-  /// memory buffer passed to this file's constructor.
-  virtual std::error_code doParse() { return std::error_code(); }
-
   /// \brief If a file is parsed using a different method than doParse(),
   /// one must use this method to set the last error status, so that
   /// doParse will not be called twice. Only YAML reader uses this
@@ -183,6 +179,10 @@ protected:
   /// \brief only subclasses of File can be instantiated
   File(StringRef p, Kind kind)
       : _path(p), _kind(kind), _ordinal(UINT64_MAX) {}
+
+  /// \brief Subclasses should override this method to parse the
+  /// memory buffer passed to this file's constructor.
+  virtual std::error_code doParse() { return std::error_code(); }
 
   /// \brief This is a convenience class for File subclasses which manage their
   /// atoms as a simple std::vector<>.

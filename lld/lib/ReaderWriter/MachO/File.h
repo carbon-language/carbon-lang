@@ -175,6 +175,7 @@ public:
       visitor(offAndAtom.atom, offAndAtom.offset);
   }
 
+protected:
   std::error_code doParse() override {
     // Convert binary file to normalized mach-o.
     auto normFile = normalized::readBinary(_mb, _ctx->arch());

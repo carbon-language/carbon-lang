@@ -100,6 +100,7 @@ public:
   uint64_t getTPOffset() const { return *_tpOff; }
   uint64_t getDTPOffset() const { return *_dtpOff; }
 
+protected:
   std::error_code doParse() override {
     if (std::error_code ec = ELFFile<ELFT>::doParse())
       return ec;
