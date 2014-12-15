@@ -2008,6 +2008,54 @@ def M2_mpyud_nac_lh_s1: T_M2_mpyd_acc <0b01, 1, 1, 1>;
 def M2_mpyud_nac_ll_s1: T_M2_mpyd_acc <0b00, 1, 1, 1>;
 }
 
+let hasNewValue = 1, opNewValue = 0 in
+class T_MType_mpy <string mnemonic, bits<4> RegTyBits, RegisterClass RC,
+                   bits<3> MajOp, bits<3> MinOp, bit isSat = 0, bit isRnd = 0,
+                   string op2Suffix = "", bit isRaw = 0, bit isHi = 0 >
+  : MInst <(outs IntRegs:$dst), (ins RC:$src1, RC:$src2),
+  "$dst = "#mnemonic
+           #"($src1, $src2"#op2Suffix#")"
+           #!if(MajOp{2}, ":<<1", "")
+           #!if(isRnd, ":rnd", "")
+           #!if(isSat, ":sat", "")
+           #!if(isRaw, !if(isHi, ":raw:hi", ":raw:lo"), ""), [] > {
+    bits<5> dst;
+    bits<5> src1;
+    bits<5> src2;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = RegTyBits;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13}    = 0b0;
+    let Inst{12-8}  = src2;
+    let Inst{7-5}   = MinOp;
+    let Inst{4-0}   = dst;
+  }
+
+class T_MType_rr1  <string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                    bit isSat = 0, bit isRnd = 0 >
+  : T_MType_mpy<mnemonic, 0b1101, IntRegs, MajOp, MinOp, isSat, isRnd>;
+
+class T_MType_rr2 <string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                   bit isSat = 0, bit isRnd = 0, string op2str = "" >
+  : T_MType_mpy<mnemonic, 0b1101, IntRegs, MajOp, MinOp, isSat, isRnd, op2str>;
+
+let CextOpcode = "mpyi", InputType = "reg", isCodeGenOnly = 0 in
+def M2_mpyi    : T_MType_rr1 <"mpyi", 0b000, 0b000>, ImmRegRel;
+
+let isCodeGenOnly = 0 in
+def M2_mpyu_up : T_MType_rr1 <"mpyu", 0b010, 0b001>;
+
+let isCodeGenOnly = 0 in
+def M2_dpmpyss_rnd_s0 : T_MType_rr1 <"mpy", 0b001, 0b001, 0, 1>;
+
+let isCodeGenOnly = 0 in {
+def M2_hmmpyh_rs1 : T_MType_rr2 <"mpy", 0b101, 0b100, 1, 1, ".h">;
+def M2_hmmpyl_rs1 : T_MType_rr2 <"mpy", 0b111, 0b100, 1, 1, ".l">;
+}
+
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 8 in
