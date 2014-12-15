@@ -2034,6 +2034,10 @@ class T_MType_mpy <string mnemonic, bits<4> RegTyBits, RegisterClass RC,
     let Inst{4-0}   = dst;
   }
 
+class T_MType_dd  <string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                   bit isSat = 0, bit isRnd = 0 >
+  : T_MType_mpy <mnemonic, 0b1001, DoubleRegs, MajOp, MinOp, isSat, isRnd>;
+
 class T_MType_rr1  <string mnemonic, bits<3> MajOp, bits<3> MinOp,
                     bit isSat = 0, bit isRnd = 0 >
   : T_MType_mpy<mnemonic, 0b1101, IntRegs, MajOp, MinOp, isSat, isRnd>;
@@ -2045,8 +2049,10 @@ class T_MType_rr2 <string mnemonic, bits<3> MajOp, bits<3> MinOp,
 let CextOpcode = "mpyi", InputType = "reg", isCodeGenOnly = 0 in
 def M2_mpyi    : T_MType_rr1 <"mpyi", 0b000, 0b000>, ImmRegRel;
 
-let isCodeGenOnly = 0 in
+let isCodeGenOnly = 0 in {
+def M2_mpy_up  : T_MType_rr1 <"mpy",  0b000, 0b001>;
 def M2_mpyu_up : T_MType_rr1 <"mpyu", 0b010, 0b001>;
+}
 
 let isCodeGenOnly = 0 in
 def M2_dpmpyss_rnd_s0 : T_MType_rr1 <"mpy", 0b001, 0b001, 0, 1>;
@@ -2055,6 +2061,125 @@ let isCodeGenOnly = 0 in {
 def M2_hmmpyh_rs1 : T_MType_rr2 <"mpy", 0b101, 0b100, 1, 1, ".h">;
 def M2_hmmpyl_rs1 : T_MType_rr2 <"mpy", 0b111, 0b100, 1, 1, ".l">;
 }
+
+// V4 Instructions
+let isCodeGenOnly = 0 in {
+def M2_mpysu_up : T_MType_rr1 <"mpysu", 0b011, 0b001, 0>;
+def M2_mpy_up_s1_sat : T_MType_rr1 <"mpy", 0b111, 0b000, 1>;
+
+def M2_hmmpyh_s1 : T_MType_rr2 <"mpy", 0b101, 0b000, 1, 0, ".h">;
+def M2_hmmpyl_s1 : T_MType_rr2 <"mpy", 0b101, 0b001, 1, 0, ".l">;
+}
+
+def: Pat<(i32 (mul   I32:$src1, I32:$src2)), (M2_mpyi    I32:$src1, I32:$src2)>;
+def: Pat<(i32 (mulhs I32:$src1, I32:$src2)), (M2_mpy_up  I32:$src1, I32:$src2)>;
+def: Pat<(i32 (mulhu I32:$src1, I32:$src2)), (M2_mpyu_up I32:$src1, I32:$src2)>;
+
+let hasNewValue = 1, opNewValue = 0 in
+class T_MType_mpy_ri <bit isNeg, Operand ImmOp, list<dag> pattern>
+  : MInst < (outs IntRegs:$Rd), (ins IntRegs:$Rs, ImmOp:$u8),
+  "$Rd ="#!if(isNeg, "- ", "+ ")#"mpyi($Rs, #$u8)" ,
+   pattern, "", M_tc_3x_SLOT23> {
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<8> u8;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b0000;
+    let Inst{23} = isNeg;
+    let Inst{13} = 0b0;
+    let Inst{4-0} = Rd;
+    let Inst{20-16} = Rs;
+    let Inst{12-5} = u8;
+  }
+
+let isExtendable = 1, opExtentBits = 8, opExtendable = 2, isCodeGenOnly = 0 in
+def M2_mpysip : T_MType_mpy_ri <0, u8Ext,
+                [(set (i32 IntRegs:$Rd), (mul IntRegs:$Rs, u8ExtPred:$u8))]>;
+
+let isCodeGenOnly = 0 in
+def M2_mpysin :  T_MType_mpy_ri <1, u8Imm,
+                [(set (i32 IntRegs:$Rd), (ineg (mul IntRegs:$Rs,
+                                                    u8ImmPred:$u8)))]>;
+
+// Assember mapped to M2_mpyi
+let isAsmParserOnly = 1 in
+def M2_mpyui : MInst<(outs IntRegs:$dst),
+                     (ins IntRegs:$src1, IntRegs:$src2),
+  "$dst = mpyui($src1, $src2)">;
+
+// Rd=mpyi(Rs,#m9)
+// s9 is NOT the same as m9 - but it works.. so far.
+// Assembler maps to either Rd=+mpyi(Rs,#u8) or Rd=-mpyi(Rs,#u8)
+// depending on the value of m9. See Arch Spec.
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 9,
+    CextOpcode = "mpyi", InputType = "imm", hasNewValue = 1 in
+def M2_mpysmi : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, s9Ext:$src2),
+    "$dst = mpyi($src1, #$src2)",
+    [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
+                                   s9ExtPred:$src2))]>, ImmRegRel;
+
+let hasNewValue = 1, isExtendable = 1,  opExtentBits = 8, opExtendable = 3,
+    InputType = "imm" in
+class T_MType_acc_ri <string mnemonic, bits<3> MajOp, Operand ImmOp,
+                      list<dag> pattern = []>
+ : MInst < (outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2, ImmOp:$src3),
+  "$dst "#mnemonic#"($src2, #$src3)",
+  pattern, "$src1 = $dst", M_tc_2_SLOT23> {
+    bits<5> dst;
+    bits<5> src2;
+    bits<8> src3;
+
+    let IClass = 0b1110;
+
+    let Inst{27-26} = 0b00;
+    let Inst{25-23} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{13} = 0b0;
+    let Inst{12-5} = src3;
+    let Inst{4-0} = dst;
+  }
+
+let InputType = "reg", hasNewValue = 1 in
+class T_MType_acc_rr <string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                      bit isSwap = 0, list<dag> pattern = [], bit hasNot = 0,
+                      bit isSat = 0, bit isShift = 0>
+  : MInst < (outs IntRegs:$dst),
+            (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3),
+  "$dst "#mnemonic#"($src2, "#!if(hasNot, "~$src3)","$src3)")
+                          #!if(isShift, ":<<1", "")
+                          #!if(isSat, ":sat", ""),
+  pattern, "$src1 = $dst", M_tc_2_SLOT23 > {
+    bits<5> dst;
+    bits<5> src2;
+    bits<5> src3;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1111;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = !if(isSwap, src3, src2);
+    let Inst{13} = 0b0;
+    let Inst{12-8} = !if(isSwap, src2, src3);
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = dst;
+  }
+
+let CextOpcode = "MPYI_acc", Itinerary = M_tc_3x_SLOT23, isCodeGenOnly = 0 in {
+  def M2_macsip : T_MType_acc_ri <"+= mpyi", 0b010, u8Ext,
+                  [(set (i32 IntRegs:$dst),
+                        (add (mul IntRegs:$src2, u8ExtPred:$src3),
+                             IntRegs:$src1))]>, ImmRegRel;
+
+  def M2_maci   : T_MType_acc_rr <"+= mpyi", 0b000, 0b000, 0,
+                 [(set (i32 IntRegs:$dst),
+                       (add (mul IntRegs:$src2, IntRegs:$src3),
+                            IntRegs:$src1))]>, ImmRegRel;
+}
+
+let Itinerary = M_tc_3x_SLOT23, isCodeGenOnly = 0 in
+def M2_macsin : T_MType_acc_ri <"-= mpyi", 0b011, u8Ext>;
 
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
@@ -2096,16 +2221,6 @@ def MPYI_acc_ri : MInst_acc<(outs IntRegs:$dst),
             "$dst += mpyi($src2, #$src3)",
             [(set (i32 IntRegs:$dst),
                   (add (mul (i32 IntRegs:$src2), u8ExtPred:$src3),
-                       (i32 IntRegs:$src1)))],
-            "$src1 = $dst">, ImmRegRel;
-
-// Rx+=mpyi(Rs,Rt)
-let CextOpcode = "MPYI_acc", InputType = "reg" in
-def MPYI_acc_rr : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "$dst += mpyi($src2, $src3)",
-            [(set (i32 IntRegs:$dst),
-                  (add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
                        (i32 IntRegs:$src1)))],
             "$src1 = $dst">, ImmRegRel;
 
