@@ -206,6 +206,7 @@ void TokenLexer::ExpandFunctionArguments() {
                                            ExpansionLocStart,
                                            ExpansionLocEnd);
       }
+      Res.setFlag(Token::StringifiedInMacro);
 
       // The stringified/charified string leading space flag gets set to match
       // the #/#@ operator.
@@ -405,6 +406,14 @@ void TokenLexer::ExpandFunctionArguments() {
   }
 }
 
+/// \brief Checks if two tokens form wide string literal.
+static bool isWideStringLiteralFromMacro(const Token &FirstTok,
+                                         const Token &SecondTok) {
+  return FirstTok.is(tok::identifier) &&
+         FirstTok.getIdentifierInfo()->isStr("L") && SecondTok.isLiteral() &&
+         SecondTok.stringifiedInMacro();
+}
+
 /// Lex - Lex and return a token from this macro stream.
 ///
 bool TokenLexer::Lex(Token &Tok) {
@@ -435,7 +444,13 @@ bool TokenLexer::Lex(Token &Tok) {
 
   // If this token is followed by a token paste (##) operator, paste the tokens!
   // Note that ## is a normal token when not expanding a macro.
-  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash) && Macro) {
+  if (!isAtEnd() && Macro &&
+      (Tokens[CurToken].is(tok::hashhash) ||
+       // Special processing of L#x macros in -fms-compatibility mode.
+       // Microsoft compiler is able to form a wide string literal from
+       // 'L#macro_arg' construct in a function-like macro.
+       (PP.getLangOpts().MSVCCompat &&
+        isWideStringLiteralFromMacro(Tok, Tokens[CurToken])))) {
     // When handling the microsoft /##/ extension, the final token is
     // returned by PasteTokens, not the pasted token.
     if (PasteTokens(Tok))
@@ -511,9 +526,10 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   SourceLocation StartLoc = Tok.getLocation();
   SourceLocation PasteOpLoc;
   do {
-    // Consume the ## operator.
+    // Consume the ## operator if any.
     PasteOpLoc = Tokens[CurToken].getLocation();
-    ++CurToken;
+    if (Tokens[CurToken].is(tok::hashhash))
+      ++CurToken;
     assert(!isAtEnd() && "No token on the RHS of a paste operator!");
 
     // Get the RHS token.
