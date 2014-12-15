@@ -269,3 +269,8 @@ vshufpd $11, %ymm0, %ymm1, %ymm2
 # CHECK: ymm2 = ymm1[1],ymm0[1],ymm1[2],ymm0[3]
 vshufpd $11, (%rax), %ymm1, %ymm2
 # CHECK: ymm2 = ymm1[1],mem[1],ymm1[2],mem[3]
+
+vinsertps $16, %xmm0, %xmm1, %xmm2
+# CHECK: xmm2 = xmm1[0],xmm0[0],xmm1[2,3]
+vinsertps $16, (%rax), %xmm1, %xmm2
+# CHECK: xmm2 = xmm1[0],mem[0],xmm1[2,3]
