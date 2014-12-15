@@ -20,12 +20,10 @@
 //--
 
 // Third Party Headers:
-#if !defined(_MSC_VER)
+#if defined(__APPLE__)
 #include <sys/select.h>
-#include <unistd.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#endif              // !defined( _MSC_VER )
+#include <unistd.h> // For STDIN_FILENO
+#endif              // defined( __APPLE__ )
 #include <string.h> // For std::strerror()
 
 // In-house headers:
@@ -155,20 +153,27 @@ CMICmnStreamStdinLinux::Shutdown(void)
 bool
 CMICmnStreamStdinLinux::InputAvailable(bool &vwbAvail)
 {
-#if !defined(_WIN32)
+#if defined(__APPLE__)
     // The code below is needed on OSX where lldb-mi hangs when doing -exec-run.
     // The hang seems to come from calling fgets and fileno from different thread.
     // Although this problem was not observed on Linux.
-    // A solution based on 'select' was also proposed but it seems to slow things down
-    // a lot.
-    int nBytesWaiting;
-    if (::ioctl(STDIN_FILENO, FIONREAD, &nBytesWaiting) == -1)
+    // A solution based on 'ioctl' was initially committed but it seems to make
+    // lldb-mi takes much more processor time. The solution based on 'select' works
+    // well but it seems to slow the execution of lldb-mi tests a lot on Linux.
+    // As a result, this code is #defined to run only on OSX.
+    fd_set setOfStdin;
+    FD_ZERO(&setOfStdin);
+    FD_SET(STDIN_FILENO, &setOfStdin);
+
+    // Wait while input would be available
+    if (::select(STDIN_FILENO + 1, &setOfStdin, nullptr, nullptr, nullptr) == -1)
     {
         vwbAvail = false;
-        return MIstatus::failure;;
+        return MIstatus::failure;
     }
-    vwbAvail = (nBytesWaiting > 0);
-#endif // !defined( _WIN32 )
+
+#endif // defined( __APPLE__ )
+    vwbAvail = true;
     return MIstatus::success;
 }
 
@@ -206,3 +211,15 @@ CMICmnStreamStdinLinux::ReadLine(CMIUtilString &vwErrMsg)
     return pText;
 }
 
+//++ ------------------------------------------------------------------------------------
+// Details: Interrupt current and prevent new ReadLine operations.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+void
+CMICmnStreamStdinLinux::InterruptReadLine(void)
+{
+    fclose(stdin);
+}

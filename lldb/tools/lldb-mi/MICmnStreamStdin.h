@@ -66,6 +66,7 @@ class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, 
       public:
         virtual bool InputAvailable(bool &vwbAvail) = 0;
         virtual const MIchar *ReadLine(CMIUtilString &vwErrMsg) = 0;
+        virtual void InterruptReadLine(void){};
 
         /* dtor */ virtual ~IOSStdinHandler(void){};
     };
@@ -82,6 +83,7 @@ class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, 
     void SetCtrlCHit(void);
     bool SetVisitor(IStreamStdin &vrVisitor);
     bool SetOSStdinHandler(IOSStdinHandler &vrHandler);
+    void OnExitHandler(void);
 
     // Overridden:
   public:

@@ -435,3 +435,15 @@ CMICmnStreamStdin::SetOSStdinHandler(IOSStdinHandler &vrHandler)
     return MIstatus::success;
 }
 
+//++ ------------------------------------------------------------------------------------
+// Details: Do some actions before exiting.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+void
+CMICmnStreamStdin::OnExitHandler(void)
+{
+    m_pStdinReadHandler->InterruptReadLine();
+}
