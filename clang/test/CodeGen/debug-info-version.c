@@ -5,4 +5,4 @@ int main (void) {
 }
 
 // CHECK:  i32 2, !"Debug Info Version", i32 2}
-// NO_DEBUG-NOT: metadata !"Debug Info Version"
+// NO_DEBUG-NOT: !"Debug Info Version"
