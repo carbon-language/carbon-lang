@@ -257,7 +257,13 @@ FUNCTIONS.asan_iossim_dynamic := $(AsanFunctions) $(AsanCXXFunctions) \
 FUNCTIONS.ubsan_osx := $(UbsanFunctions) $(UbsanCXXFunctions) \
                        $(SanitizerCommonFunctions)
 
+CCKEXT_PROFILE_FUNCTIONS := \
+	InstrProfiling \
+	InstrProfilingBuffer \
+	InstrProfilingPlatformDarwin
+
 CCKEXT_COMMON_FUNCTIONS := \
+	$(CCKEXT_PROFILE_FUNCTIONS) \
 	absvdi2 \
 	absvsi2 \
 	addvdi3 \
