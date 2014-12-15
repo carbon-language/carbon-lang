@@ -2178,8 +2178,48 @@ let CextOpcode = "MPYI_acc", Itinerary = M_tc_3x_SLOT23, isCodeGenOnly = 0 in {
                             IntRegs:$src1))]>, ImmRegRel;
 }
 
+let CextOpcode = "ADD_acc", isCodeGenOnly = 0 in {
+  let isExtentSigned = 1 in
+  def M2_accii : T_MType_acc_ri <"+= add", 0b100, s8Ext,
+                 [(set (i32 IntRegs:$dst),
+                       (add (add (i32 IntRegs:$src2), s8_16ExtPred:$src3),
+                            (i32 IntRegs:$src1)))]>, ImmRegRel;
+
+  def M2_acci  : T_MType_acc_rr <"+= add",  0b000, 0b001, 0,
+                 [(set (i32 IntRegs:$dst),
+                       (add (add (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
+                            (i32 IntRegs:$src1)))]>, ImmRegRel;
+}
+
+let CextOpcode = "SUB_acc", isCodeGenOnly = 0 in {
+  let isExtentSigned = 1 in
+  def M2_naccii : T_MType_acc_ri <"-= add", 0b101, s8Ext>, ImmRegRel;
+
+  def M2_nacci  : T_MType_acc_rr <"-= add",  0b100, 0b001, 0>, ImmRegRel;
+}
+
 let Itinerary = M_tc_3x_SLOT23, isCodeGenOnly = 0 in
 def M2_macsin : T_MType_acc_ri <"-= mpyi", 0b011, u8Ext>;
+
+let isCodeGenOnly = 0 in {
+def M2_xor_xacc : T_MType_acc_rr < "^= xor", 0b100, 0b011, 0>;
+def M2_subacc : T_MType_acc_rr <"+= sub",  0b000, 0b011, 1>;
+}
+
+class T_MType_acc_pat1 <InstHexagon MI, SDNode firstOp, SDNode secOp,
+                        PatLeaf ImmPred>
+  : Pat <(secOp IntRegs:$src1, (firstOp IntRegs:$src2, ImmPred:$src3)),
+         (MI IntRegs:$src1, IntRegs:$src2, ImmPred:$src3)>;
+
+class T_MType_acc_pat2 <InstHexagon MI, SDNode firstOp, SDNode secOp>
+  : Pat <(i32 (secOp IntRegs:$src1, (firstOp IntRegs:$src2, IntRegs:$src3))),
+         (MI IntRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
+
+def : T_MType_acc_pat2 <M2_xor_xacc, xor, xor>;
+def : T_MType_acc_pat1 <M2_macsin, mul, sub, u8ExtPred>;
+
+def : T_MType_acc_pat1 <M2_naccii, add, sub, s8_16ExtPred>;
+def : T_MType_acc_pat2 <M2_nacci, add, sub>;
 
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
@@ -2307,16 +2347,6 @@ def MPYU64_sub : MInst_acc<(outs DoubleRegs:$dst),
                             (i64 (anyext (i32 IntRegs:$src3))))))],
             "$src1 = $dst">;
 
-
-let InputType = "reg", CextOpcode = "ADD_acc" in
-def ADDrr_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, IntRegs:$src3),
-             "$dst += add($src2, $src3)",
-             [(set (i32 IntRegs:$dst), (add (add (i32 IntRegs:$src2),
-                                                 (i32 IntRegs:$src3)),
-                                            (i32 IntRegs:$src1)))],
-             "$src1 = $dst">, ImmRegRel;
-
 let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
 InputType = "imm", CextOpcode = "ADD_acc" in
 def ADDri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
@@ -2325,15 +2355,6 @@ def ADDri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
              [(set (i32 IntRegs:$dst), (add (add (i32 IntRegs:$src2),
                                                  s8_16ExtPred:$src3),
                                             (i32 IntRegs:$src1)))],
-             "$src1 = $dst">, ImmRegRel;
-
-let CextOpcode = "SUB_acc", InputType = "reg" in
-def SUBrr_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, IntRegs:$src3),
-             "$dst -= add($src2, $src3)",
-             [(set (i32 IntRegs:$dst),
-                   (sub (i32 IntRegs:$src1), (add (i32 IntRegs:$src2),
-                                                  (i32 IntRegs:$src3))))],
              "$src1 = $dst">, ImmRegRel;
 
 let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
