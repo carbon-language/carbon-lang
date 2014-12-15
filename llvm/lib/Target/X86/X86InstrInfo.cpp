@@ -4379,23 +4379,43 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 static bool hasPartialRegUpdate(unsigned Opcode) {
   switch (Opcode) {
   case X86::CVTSI2SSrr:
+  case X86::CVTSI2SSrm:
   case X86::CVTSI2SS64rr:
+  case X86::CVTSI2SS64rm:
   case X86::CVTSI2SDrr:
+  case X86::CVTSI2SDrm:
   case X86::CVTSI2SD64rr:
+  case X86::CVTSI2SD64rm:
   case X86::CVTSD2SSrr:
+  case X86::CVTSD2SSrm:
   case X86::Int_CVTSD2SSrr:
+  case X86::Int_CVTSD2SSrm:
   case X86::CVTSS2SDrr:
+  case X86::CVTSS2SDrm:
   case X86::Int_CVTSS2SDrr:
+  case X86::Int_CVTSS2SDrm:
   case X86::RCPSSr:
+  case X86::RCPSSm:
   case X86::RCPSSr_Int:
+  case X86::RCPSSm_Int:
   case X86::ROUNDSDr:
+  case X86::ROUNDSDm:
   case X86::ROUNDSDr_Int:
   case X86::ROUNDSSr:
+  case X86::ROUNDSSm:
   case X86::ROUNDSSr_Int:
   case X86::RSQRTSSr:
+  case X86::RSQRTSSm:
   case X86::RSQRTSSr_Int:
+  case X86::RSQRTSSm_Int:
   case X86::SQRTSSr:
+  case X86::SQRTSSm:
   case X86::SQRTSSr_Int:
+  case X86::SQRTSSm_Int:
+  case X86::SQRTSDr:
+  case X86::SQRTSDm:
+  case X86::SQRTSDr_Int:
+  case X86::SQRTSDm_Int:
     return true;
   }
 
