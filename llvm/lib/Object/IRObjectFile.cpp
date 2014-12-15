@@ -181,6 +181,8 @@ void IRObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
     Res = (Index << 2) | 3;
     break;
   }
+  default:
+    llvm_unreachable("unreachable case");
   }
 
   Symb.p = Res;

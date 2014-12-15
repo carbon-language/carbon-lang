@@ -76,7 +76,9 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, DWARFUnit *u,
 static void dumpApplePropertyAttribute(raw_ostream &OS, uint64_t Val) {
   OS << " (";
   do {
-    uint64_t Bit = 1ULL << countTrailingZeros(Val);
+    uint64_t Shift = countTrailingZeros(Val);
+    assert(Shift < 64 && "undefined behavior");
+    uint64_t Bit = 1ULL << Shift;
     if (const char *PropName = ApplePropertyString(Bit))
       OS << PropName;
     else

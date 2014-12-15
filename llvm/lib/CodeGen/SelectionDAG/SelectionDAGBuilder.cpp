@@ -566,6 +566,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, SDLoc DL,
   } else if (NumParts > 0) {
     // If the intermediate type was expanded, split each the value into
     // legal parts.
+    assert(NumIntermediates != 0 && "division by zero");
     assert(NumParts % NumIntermediates == 0 &&
            "Must expand into a divisible number of parts!");
     unsigned Factor = NumParts / NumIntermediates;
@@ -1408,7 +1409,7 @@ SelectionDAGBuilder::EmitBranchForMergedCondition(const Value *Cond,
         if (TM.Options.NoNaNsFPMath)
           Condition = getFCmpCodeWithoutNaN(Condition);
       } else {
-        Condition = ISD::SETEQ; // silence warning.
+        (void)Condition; // silence warning.
         llvm_unreachable("Unknown compare instruction");
       }
 

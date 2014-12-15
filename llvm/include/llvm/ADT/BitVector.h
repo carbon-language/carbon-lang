@@ -239,6 +239,7 @@ public:
   }
 
   BitVector &set(unsigned Idx) {
+    assert(Bits && "Bits never allocated");
     Bits[Idx / BITWORD_SIZE] |= BitWord(1) << (Idx % BITWORD_SIZE);
     return *this;
   }
@@ -546,6 +547,7 @@ private:
 
   void grow(unsigned NewSize) {
     Capacity = std::max(NumBitWords(NewSize), Capacity * 2);
+    assert(Capacity > 0 && "realloc-ing zero space");
     Bits = (BitWord *)std::realloc(Bits, Capacity * sizeof(BitWord));
 
     clear_unused_bits();

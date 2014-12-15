@@ -129,6 +129,7 @@ void MachineRegisterInfo::verifyUseList(unsigned Reg) const {
              << " use list MachineOperand " << MO
              << " has no parent instruction.\n";
       Valid = false;
+      continue;
     }
     MachineOperand *MO0 = &MI->getOperand(0);
     unsigned NumOps = MI->getNumOperands();

@@ -8577,7 +8577,9 @@ static SDValue PerformBFICombine(SDNode *N,
     unsigned InvMask = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
     unsigned LSB = countTrailingZeros(~InvMask);
     unsigned Width = (32 - countLeadingZeros(~InvMask)) - LSB;
-    unsigned Mask = (1 << Width)-1;
+    assert(Width < std::numeric_limits<unsigned>::digits &&
+           "undefined behavior");
+    unsigned Mask = (1u << Width) - 1;
     unsigned Mask2 = N11C->getZExtValue();
     if ((Mask & (~Mask2)) == 0)
       return DCI.DAG.getNode(ARMISD::BFI, SDLoc(N), N->getValueType(0),

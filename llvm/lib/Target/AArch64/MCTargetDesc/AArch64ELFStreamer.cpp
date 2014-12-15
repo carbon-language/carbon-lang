@@ -177,7 +177,9 @@ private:
     MCELF::SetType(SD, ELF::STT_NOTYPE);
     MCELF::SetBinding(SD, ELF::STB_LOCAL);
     SD.setExternal(false);
-    Symbol->setSection(*getCurrentSection().first);
+    auto Sec = getCurrentSection().first;
+    assert(Sec && "need a section");
+    Symbol->setSection(*Sec);
 
     const MCExpr *Value = MCSymbolRefExpr::Create(Start, getContext());
     Symbol->setVariableValue(Value);

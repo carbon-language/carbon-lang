@@ -276,12 +276,14 @@ public:
   }
 
   const StringTableOffset &getStringTableOffset() const {
+    assert(isSet() && "COFFSymbolRef points to nothing!");
     return CS16 ? CS16->Name.Offset : CS32->Name.Offset;
   }
 
   uint32_t getValue() const { return CS16 ? CS16->Value : CS32->Value; }
 
   int32_t getSectionNumber() const {
+    assert(isSet() && "COFFSymbolRef points to nothing!");
     if (CS16) {
       // Reserved sections are returned as negative numbers.
       if (CS16->SectionNumber <= COFF::MaxNumberOfSections16)
@@ -291,13 +293,18 @@ public:
     return static_cast<int32_t>(CS32->SectionNumber);
   }
 
-  uint16_t getType() const { return CS16 ? CS16->Type : CS32->Type; }
+  uint16_t getType() const {
+    assert(isSet() && "COFFSymbolRef points to nothing!");
+    return CS16 ? CS16->Type : CS32->Type;
+  }
 
   uint8_t getStorageClass() const {
+    assert(isSet() && "COFFSymbolRef points to nothing!");
     return CS16 ? CS16->StorageClass : CS32->StorageClass;
   }
 
   uint8_t getNumberOfAuxSymbols() const {
+    assert(isSet() && "COFFSymbolRef points to nothing!");
     return CS16 ? CS16->NumberOfAuxSymbols : CS32->NumberOfAuxSymbols;
   }
 
@@ -360,6 +367,8 @@ public:
   }
 
 private:
+  bool isSet() const { return CS16 || CS32; }
+
   const coff_symbol16 *CS16;
   const coff_symbol32 *CS32;
 };

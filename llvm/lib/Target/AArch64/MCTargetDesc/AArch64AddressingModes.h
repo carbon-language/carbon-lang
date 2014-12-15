@@ -236,6 +236,7 @@ static inline bool processLogicalImmediate(uint64_t Imm, unsigned RegSize,
 
   if (isShiftedMask_64(Imm)) {
     I = countTrailingZeros(Imm);
+    assert(I < 64 && "undefined behavior");
     CTO = CountTrailingOnes_64(Imm >> I);
   } else {
     Imm |= ~Mask;

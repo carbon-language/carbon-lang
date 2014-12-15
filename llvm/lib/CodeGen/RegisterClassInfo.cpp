@@ -47,6 +47,7 @@ void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
   }
 
   // Does this MF have different CSRs?
+  assert(TRI && "no register info set");
   const MCPhysReg *CSR = TRI->getCalleeSavedRegs(MF);
   if (Update || CSR != CalleeSaved) {
     // Build a CSRNum map. Every CSR alias gets an entry pointing to the last
@@ -76,6 +77,7 @@ void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
 /// registers filtered out. Volatile registers come first followed by CSR
 /// aliases ordered according to the CSR order specified by the target.
 void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
+  assert(RC && "no register class given");
   RCInfo &RCI = RegClass[RC->getID()];
 
   // Raw register count, including all reserved regs.

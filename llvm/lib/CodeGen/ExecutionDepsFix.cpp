@@ -74,6 +74,8 @@ struct DomainValue {
 
   // Is domain available?
   bool hasDomain(unsigned domain) const {
+    assert(domain < std::numeric_limits<unsigned>::digits &&
+           "undefined behavior");
     return AvailableDomains & (1u << domain);
   }
 
@@ -338,9 +340,11 @@ bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   // All uses of B are referred to A.
   B->Next = retain(A);
 
-  for (unsigned rx = 0; rx != NumRegs; ++rx)
+  for (unsigned rx = 0; rx != NumRegs; ++rx) {
+    assert(LiveRegs && "no space allocated for live registers");
     if (LiveRegs[rx].Value == B)
       setLiveReg(rx, A);
+  }
   return true;
 }
 
@@ -645,6 +649,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   SmallVector<LiveReg, 4> Regs;
   for (SmallVectorImpl<int>::iterator i=used.begin(), e=used.end(); i!=e; ++i) {
     int rx = *i;
+    assert(LiveRegs && "no space allocated for live registers");
     const LiveReg &LR = LiveRegs[rx];
     // This useless DomainValue could have been missed above.
     if (!LR.Value->getCommonDomains(available)) {
@@ -684,9 +689,11 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       continue;
 
     // If latest didn't merge, it is useless now. Kill all registers using it.
-    for (SmallVectorImpl<int>::iterator i=used.begin(), e=used.end(); i!=e; ++i)
-      if (LiveRegs[*i].Value == Latest)
-        kill(*i);
+    for (int i : used) {
+      assert(LiveRegs && "no space allocated for live registers");
+      if (LiveRegs[i].Value == Latest)
+        kill(i);
+    }
   }
 
   // dv is the DomainValue we are going to use for this instruction.
