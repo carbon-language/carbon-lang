@@ -1,0 +1,10 @@
+# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+
+0x11 0xdf 0x95 0xec
+# CHECK: r17 = mpy(r21.l, r31.l):<<1
+0x31 0xdf 0x95 0xec
+# CHECK: r17 = mpy(r21.l, r31.h):<<1
+0x51 0xdf 0x95 0xec
+# CHECK: r17 = mpy(r21.h, r31.l):<<1
+0x71 0xdf 0x95 0xec
+# CHECK: r17 = mpy(r21.h, r31.h):<<1
