@@ -286,6 +286,9 @@ def X86pcmpestri : SDNode<"X86ISD::PCMPESTRI", SDT_PCMPESTRI>;
 def X86compress: SDNode<"X86ISD::COMPRESS", SDTypeProfile<1, 3,
                               [SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>,
                                SDTCisVec<3>, SDTCisVec<1>, SDTCisInt<1>]>, []>;
+def X86expand  : SDNode<"X86ISD::EXPAND", SDTypeProfile<1, 3,
+                              [SDTCisSameAs<0, 3>,
+                               SDTCisVec<3>, SDTCisVec<1>, SDTCisInt<1>]>, []>;
 
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns

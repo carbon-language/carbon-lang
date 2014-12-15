@@ -16963,7 +16963,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                                       Op.getOperand(2), DAG),
                                   Op.getOperand(4), Op.getOperand(3), Subtarget,
                                   DAG);
-    case COMPRESS_TO_REG: {
+    case COMPRESS_EXPAND_IN_REG: {
       SDValue Mask = Op.getOperand(3);
       SDValue DataToCompress = Op.getOperand(1);
       SDValue PassThru = Op.getOperand(2);
@@ -17523,6 +17523,34 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                       DataToCompress, DAG.getUNDEF(VT));
     return DAG.getStore(Chain, dl, Compressed, Addr,
                         MachinePointerInfo(), false, false, 0);
+  }
+  case EXPAND_FROM_MEM: {
+    SDLoc dl(Op);
+    SDValue Mask = Op.getOperand(4);
+    SDValue PathThru = Op.getOperand(3);
+    SDValue Addr = Op.getOperand(2);
+    SDValue Chain = Op.getOperand(0);
+    EVT VT = Op.getValueType();
+
+    if (isAllOnes(Mask)) // return just a load
+      return DAG.getLoad(VT, dl, Chain, Addr, MachinePointerInfo(), false, false,
+                         false, 0);
+    EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                  VT.getVectorNumElements());
+    EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                     Mask.getValueType().getSizeInBits());
+    SDValue VMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
+                                DAG.getNode(ISD::BITCAST, dl, BitcastVT, Mask),
+                                DAG.getIntPtrConstant(0));
+
+    SDValue DataToExpand = DAG.getLoad(VT, dl, Chain, Addr, MachinePointerInfo(),
+                                   false, false, false, 0);
+
+    SmallVector<SDValue, 2> Results;
+    Results.push_back(DAG.getNode(IntrData->Opc0, dl, VT, VMask, DataToExpand,
+                                  PathThru));
+    Results.push_back(Chain);
+    return DAG.getMergeValues(Results, dl);
   }
   }
 }
@@ -19710,6 +19738,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PCMPISTRI:          return "X86ISD::PCMPISTRI";
   case X86ISD::XTEST:              return "X86ISD::XTEST";
   case X86ISD::COMPRESS:           return "X86ISD::COMPRESS";
+  case X86ISD::EXPAND:             return "X86ISD::EXPAND";
   }
 }
 
