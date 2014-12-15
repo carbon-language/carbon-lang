@@ -97,8 +97,8 @@ int main(int, char **argv) {
   }
 
   case 'w':
-    // CHECK-WILD: misaligned.cpp:[[@LINE+3]]:35: runtime error: member access within misaligned address 0x000000000123 for type 'S', which requires 4 byte alignment
-    // CHECK-WILD-NEXT: 0x000000000123: note: pointer points here
+    // CHECK-WILD: misaligned.cpp:[[@LINE+3]]:35: runtime error: member access within misaligned address 0x{{0+}}123 for type 'S', which requires 4 byte alignment
+    // CHECK-WILD-NEXT: 0x{{0+}}123: note: pointer points here
     // CHECK-WILD-NEXT: <memory cannot be printed>
     return static_cast<S*>(wild)->k;
   }
