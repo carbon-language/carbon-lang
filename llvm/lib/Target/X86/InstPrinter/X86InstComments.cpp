@@ -140,11 +140,15 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   case X86::INSERTPSrr:
   case X86::VINSERTPSrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::INSERTPSrm:
+  case X86::VINSERTPSrm:
     DestName = getRegName(MI->getOperand(0).getReg());
     Src1Name = getRegName(MI->getOperand(1).getReg());
-    Src2Name = getRegName(MI->getOperand(2).getReg());
-    if(MI->getOperand(3).isImm())
-      DecodeINSERTPSMask(MI->getOperand(3).getImm(), ShuffleMask);
+    if(MI->getOperand(MI->getNumOperands()-1).isImm())
+      DecodeINSERTPSMask(MI->getOperand(MI->getNumOperands()-1).getImm(),
+                         ShuffleMask);
     break;
 
   case X86::MOVLHPSrr:
