@@ -3857,6 +3857,11 @@ TEST(TypeMatching, MatchesTypes) {
   EXPECT_TRUE(matches("struct S {};", qualType().bind("loc")));
 }
 
+TEST(TypeMatching, MatchesVoid) {
+  EXPECT_TRUE(
+      matches("struct S { void func(); };", methodDecl(returns(voidType()))));
+}
+
 TEST(TypeMatching, MatchesArrayTypes) {
   EXPECT_TRUE(matches("int a[] = {2,3};", arrayType()));
   EXPECT_TRUE(matches("int a[42];", arrayType()));

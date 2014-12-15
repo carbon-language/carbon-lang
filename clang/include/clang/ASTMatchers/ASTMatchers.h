@@ -3211,6 +3211,18 @@ AST_MATCHER_FUNCTION_P_OVERLOAD(internal::BindableMatcher<TypeLoc>, loc,
       new internal::TypeLocTypeMatcher(InnerMatcher));
 }
 
+/// \brief Matches type \c void.
+///
+/// Given
+/// \code
+///  struct S { void func(); };
+/// \endcode
+/// functionDecl(returns(voidType()))
+///   matches "void func();"
+AST_MATCHER(Type, voidType) {
+  return Node.isVoidType();
+}
+
 /// \brief Matches builtin Types.
 ///
 /// Given
