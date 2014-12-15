@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=i686-apple-darwin9
+// RUN: %clang_cc1 %s -triple=i686-apple-darwin9 -verify -DVERIFY
 // RUN: %clang_cc1 %s -E -triple=i686-apple-darwin9
 #ifndef __has_feature
 #error Should have __has_feature
@@ -52,4 +52,11 @@
 
 #if !HAS_BUILTIN(MY_ALIAS_BUILTIN) || !HAS_FEATURE(MY_ALIAS_FEATURE)
 #error Expansion should have occurred
+#endif
+
+#ifdef VERIFY
+// expected-error@+2 {{builtin feature check macro requires a parenthesized identifier}}
+// expected-error@+1 {{expected value in expression}}
+#if __has_feature('x')
+#endif
 #endif
