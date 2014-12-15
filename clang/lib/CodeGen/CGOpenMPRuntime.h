@@ -15,6 +15,7 @@
 #define LLVM_CLANG_LIB_CODEGEN_CGOPENMPRUNTIME_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/OpenMPKinds.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringMap.h"
@@ -66,6 +67,12 @@ private:
     // Call to kmp_int32 __kmpc_cancel_barrier(ident_t *loc, kmp_int32
     // global_tid);
     OMPRTL__kmpc_cancel_barrier,
+    // Calls for static scheduling 'omp for' loops.
+    OMPRTL__kmpc_for_static_init_4,
+    OMPRTL__kmpc_for_static_init_4u,
+    OMPRTL__kmpc_for_static_init_8,
+    OMPRTL__kmpc_for_static_init_8u,
+    OMPRTL__kmpc_for_static_fini,
     // Call to void __kmpc_serialized_parallel(ident_t *loc, kmp_int32
     // global_tid);
     OMPRTL__kmpc_serialized_parallel,
@@ -304,6 +311,53 @@ public:
   ///
   virtual void EmitOMPBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
                                   bool IsExplicit = true);
+
+  /// \brief Check if the specified \a ScheduleKind is static non-chunked.
+  /// This kind of worksharing directive is emitted without outer loop.
+  /// \param ScheduleKind Schedule kind specified in the 'schedule' clause.
+  /// \param Chunked True if chunk is specified in the clause.
+  ///
+  virtual bool isStaticNonchunked(OpenMPScheduleClauseKind ScheduleKind,
+                                  bool Chunked) const;
+
+  /// \brief Call the appropriate runtime routine to initialize it before start
+  /// of loop.
+  ///
+  /// Depending on the loop schedule, it is nesessary to call some runtime
+  /// routine before start of the OpenMP loop to get the loop upper / lower
+  /// bounds \a LB and \a UB and stride \a ST.
+  ///
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param Loc Clang source location.
+  /// \param ScheduleKind Schedule kind, specified by the 'schedule' clause.
+  /// \param IVSize Size of the iteration variable in bits.
+  /// \param IVSigned Sign of the interation variable.
+  /// \param IL Address of the output variable in which the flag of the
+  /// last iteration is returned.
+  /// \param LB Address of the output variable in which the lower iteration
+  /// number is returned.
+  /// \param UB Address of the output variable in which the upper iteration
+  /// number is returned.
+  /// \param ST Address of the output variable in which the stride value is
+  /// returned nesessary to generated the static_chunked scheduled loop.
+  /// \param Chunk Value of the chunk for the static_chunked scheduled loop.
+  /// For the default (nullptr) value, the chunk 1 will be used.
+  ///
+  virtual void EmitOMPForInit(CodeGenFunction &CGF, SourceLocation Loc,
+                              OpenMPScheduleClauseKind SchedKind,
+                              unsigned IVSize, bool IVSigned, llvm::Value *IL,
+                              llvm::Value *LB, llvm::Value *UB, llvm::Value *ST,
+                              llvm::Value *Chunk = nullptr);
+
+  /// \brief Call the appropriate runtime routine to notify that we finished
+  /// all the work with current loop.
+  ///
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param Loc Clang source location.
+  /// \param ScheduleKind Schedule kind, specified by the 'schedule' clause.
+  ///
+  virtual void EmitOMPForFinish(CodeGenFunction &CGF, SourceLocation Loc,
+                                OpenMPScheduleClauseKind ScheduleKind);
 
   /// \brief Emits call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32
   /// global_tid, kmp_int32 num_threads) to generate code for 'num_threads'

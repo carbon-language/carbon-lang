@@ -470,8 +470,110 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 }
 
-void CodeGenFunction::EmitOMPForDirective(const OMPForDirective &) {
-  llvm_unreachable("CodeGen for 'omp for' is not supported yet.");
+/// \brief Emit a helper variable and return corresponding lvalue.
+static LValue EmitOMPHelperVar(CodeGenFunction &CGF,
+                               const DeclRefExpr *Helper) {
+  auto VDecl = cast<VarDecl>(Helper->getDecl());
+  CGF.EmitVarDecl(*VDecl);
+  return CGF.EmitLValue(Helper);
+}
+
+void CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
+  // Emit the loop iteration variable.
+  auto IVExpr = cast<DeclRefExpr>(S.getIterationVariable());
+  auto IVDecl = cast<VarDecl>(IVExpr->getDecl());
+  EmitVarDecl(*IVDecl);
+
+  // Emit the iterations count variable.
+  // If it is not a variable, Sema decided to calculate iterations count on each
+  // iteration (e.g., it is foldable into a constant).
+  if (auto LIExpr = dyn_cast<DeclRefExpr>(S.getLastIteration())) {
+    EmitVarDecl(*cast<VarDecl>(LIExpr->getDecl()));
+    // Emit calculation of the iterations count.
+    EmitIgnoredExpr(S.getCalcLastIteration());
+  }
+
+  auto &RT = CGM.getOpenMPRuntime();
+
+  // Check pre-condition.
+  {
+    // Skip the entire loop if we don't meet the precondition.
+    RegionCounter Cnt = getPGORegionCounter(&S);
+    auto ThenBlock = createBasicBlock("omp.precond.then");
+    auto ContBlock = createBasicBlock("omp.precond.end");
+    EmitBranchOnBoolExpr(S.getPreCond(), ThenBlock, ContBlock, Cnt.getCount());
+    EmitBlock(ThenBlock);
+    Cnt.beginRegion(Builder);
+    // Emit 'then' code.
+    {
+      // Emit helper vars inits.
+      LValue LB =
+          EmitOMPHelperVar(*this, cast<DeclRefExpr>(S.getLowerBoundVariable()));
+      LValue UB =
+          EmitOMPHelperVar(*this, cast<DeclRefExpr>(S.getUpperBoundVariable()));
+      LValue ST =
+          EmitOMPHelperVar(*this, cast<DeclRefExpr>(S.getStrideVariable()));
+      LValue IL =
+          EmitOMPHelperVar(*this, cast<DeclRefExpr>(S.getIsLastIterVariable()));
+
+      OMPPrivateScope LoopScope(*this);
+      EmitPrivateLoopCounters(*this, LoopScope, S.counters());
+
+      // Detect the loop schedule kind and chunk.
+      auto ScheduleKind = OMPC_SCHEDULE_unknown;
+      llvm::Value *Chunk = nullptr;
+      if (auto C = cast_or_null<OMPScheduleClause>(
+              S.getSingleClause(OMPC_schedule))) {
+        ScheduleKind = C->getScheduleKind();
+        if (auto Ch = C->getChunkSize()) {
+          Chunk = EmitScalarExpr(Ch);
+          Chunk = EmitScalarConversion(Chunk, Ch->getType(),
+                                       S.getIterationVariable()->getType());
+        }
+      }
+      const unsigned IVSize = getContext().getTypeSize(IVExpr->getType());
+      const bool IVSigned = IVExpr->getType()->hasSignedIntegerRepresentation();
+      if (RT.isStaticNonchunked(ScheduleKind,
+                                /* Chunked */ Chunk != nullptr)) {
+        // OpenMP [2.7.1, Loop Construct, Description, table 2-1]
+        // When no chunk_size is specified, the iteration space is divided into
+        // chunks that are approximately equal in size, and at most one chunk is
+        // distributed to each thread. Note that the size of the chunks is
+        // unspecified in this case.
+        RT.EmitOMPForInit(*this, S.getLocStart(), ScheduleKind, IVSize, IVSigned,
+                          IL.getAddress(), LB.getAddress(), UB.getAddress(),
+                          ST.getAddress());
+        // UB = min(UB, GlobalUB);
+        EmitIgnoredExpr(S.getEnsureUpperBound());
+        // IV = LB;
+        EmitIgnoredExpr(S.getInit());
+        // while (idx <= UB) { BODY; ++idx; }
+        EmitOMPInnerLoop(S, LoopScope);
+        // Tell the runtime we are done.
+        RT.EmitOMPForFinish(*this, S.getLocStart(), ScheduleKind);
+      } else
+        ErrorUnsupported(&S, "OpenMP loop with requested schedule");
+    }
+    // We're now done with the loop, so jump to the continuation block.
+    EmitBranch(ContBlock);
+    EmitBlock(ContBlock, true);
+  }
+}
+
+void CodeGenFunction::EmitOMPForDirective(const OMPForDirective &S) {
+  RunCleanupsScope DirectiveScope(*this);
+
+  CGDebugInfo *DI = getDebugInfo();
+  if (DI)
+    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
+
+  EmitOMPWorksharingLoop(S);
+
+  // Emit an implicit barrier at the end.
+  CGM.getOpenMPRuntime().EmitOMPBarrierCall(*this, S.getLocStart(),
+                                            /*IsExplicit*/ false);
+  if (DI)
+    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 }
 
 void CodeGenFunction::EmitOMPForSimdDirective(const OMPForSimdDirective &) {
