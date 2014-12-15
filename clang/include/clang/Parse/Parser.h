@@ -339,7 +339,7 @@ private:
   void UnconsumeToken(Token &Consumed) {
       Token Next = Tok;
       PP.EnterToken(Consumed);
-      ConsumeToken();
+      PP.Lex(Tok);
       PP.EnterToken(Next);
   }
 

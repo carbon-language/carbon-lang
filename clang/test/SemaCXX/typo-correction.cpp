@@ -4,6 +4,11 @@
 // afoul the hard-coded limit (escape hatch) of 20 different typos whose
 // correction was attempted by Sema::CorrectTypo
 
+namespace PR21817{
+int a(-rsing[2]); // expected-error {{undeclared identifier 'rsing'; did you mean 'using'?}}
+                  // expected-error@-1 {{expected expression}}
+}
+
 struct errc {
   int v_;
   operator int() const {return v_;}
