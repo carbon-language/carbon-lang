@@ -218,7 +218,7 @@
 
 template <class CharT>
 void
-test(const std::basic_string<CharT>& x, const std::basic_string<CharT>& y)
+test(const std::basic_string<CharT>& x, const std::basic_string<CharT>& y, bool doCStrTests = true)
 {
     typedef std::basic_string<CharT> string;
     typedef std::sub_match<typename string::const_iterator> sub_match;
@@ -248,18 +248,20 @@ test(const std::basic_string<CharT>& x, const std::basic_string<CharT>& y)
     assert((sm1 > y) == (x > y));
     assert((sm1 <= y) == (x <= y));
     assert((sm1 >= y) == (x >= y));
-    assert((x.c_str() == sm2) == (x == y));
-    assert((x.c_str() != sm2) == (x != y));
-    assert((x.c_str() < sm2) == (x < y));
-    assert((x.c_str() > sm2) == (x > y));
-    assert((x.c_str() <= sm2) == (x <= y));
-    assert((x.c_str() >= sm2) == (x >= y));
-    assert((sm1 == y.c_str()) == (x == y));
-    assert((sm1 != y.c_str()) == (x != y));
-    assert((sm1 < y.c_str()) == (x < y));
-    assert((sm1 > y.c_str()) == (x > y));
-    assert((sm1 <= y.c_str()) == (x <= y));
-    assert((sm1 >= y.c_str()) == (x >= y));
+    if (doCStrTests) {
+        assert((x.c_str() == sm2) == (x == y));
+        assert((x.c_str() != sm2) == (x != y));
+        assert((x.c_str() < sm2) == (x < y));
+        assert((x.c_str() > sm2) == (x > y));
+        assert((x.c_str() <= sm2) == (x <= y));
+        assert((x.c_str() >= sm2) == (x >= y));
+        assert((sm1 == y.c_str()) == (x == y));
+        assert((sm1 != y.c_str()) == (x != y));
+        assert((sm1 < y.c_str()) == (x < y));
+        assert((sm1 > y.c_str()) == (x > y));
+        assert((sm1 <= y.c_str()) == (x <= y));
+        assert((sm1 >= y.c_str()) == (x >= y));
+        }
     assert((x[0] == sm2) == (string(1, x[0]) == y));
     assert((x[0] != sm2) == (string(1, x[0]) != y));
     assert((x[0] < sm2) == (string(1, x[0]) < y));
@@ -280,4 +282,6 @@ int main()
     test(std::string("1234"), std::string("123"));
     test(std::wstring(L"123"), std::wstring(L"123"));
     test(std::wstring(L"1234"), std::wstring(L"123"));
+    test(std::string("123\056", 6), std::string("123\056", 6), false);
+    test(std::wstring(L"123\056", 6), std::wstring(L"123\056", 6), false);
 }

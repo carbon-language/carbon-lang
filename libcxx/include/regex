@@ -4926,7 +4926,7 @@ bool
 operator==(const basic_string<typename iterator_traits<_BiIter>::value_type, _ST, _SA>& __x,
            const sub_match<_BiIter>& __y)
 {
-    return __y.compare(__x.c_str()) == 0;
+    return __y.compare(typename sub_match<_BiIter>::string_type(__x.data(), __x.size())) == 0;
 }
 
 template <class _BiIter, class _ST, class _SA>
@@ -4944,7 +4944,7 @@ bool
 operator<(const basic_string<typename iterator_traits<_BiIter>::value_type, _ST, _SA>& __x,
           const sub_match<_BiIter>& __y)
 {
-    return __y.compare(__x.c_str()) > 0;
+    return __y.compare(typename sub_match<_BiIter>::string_type(__x.data(), __x.size())) > 0;
 }
 
 template <class _BiIter, class _ST, class _SA>
@@ -4979,7 +4979,7 @@ bool
 operator==(const sub_match<_BiIter>& __x,
            const basic_string<typename iterator_traits<_BiIter>::value_type, _ST, _SA>& __y)
 {
-    return __x.compare(__y.c_str()) == 0;
+    return __x.compare(typename sub_match<_BiIter>::string_type(__y.data(), __y.size())) == 0;
 }
 
 template <class _BiIter, class _ST, class _SA>
@@ -4997,7 +4997,7 @@ bool
 operator<(const sub_match<_BiIter>& __x,
           const basic_string<typename iterator_traits<_BiIter>::value_type, _ST, _SA>& __y)
 {
-    return __x.compare(__y.c_str()) < 0;
+    return __x.compare(typename sub_match<_BiIter>::string_type(__y.data(), __y.size())) < 0;
 }
 
 template <class _BiIter, class _ST, class _SA>
