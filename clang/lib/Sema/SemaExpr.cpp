@@ -7282,7 +7282,7 @@ static void diagnoseStringPlusInt(Sema &Self, SourceLocation OpLoc,
 
   bool IsStringPlusInt = StrExpr &&
       IndexExpr->getType()->isIntegralOrUnscopedEnumerationType();
-  if (!IsStringPlusInt)
+  if (!IsStringPlusInt || IndexExpr->isValueDependent())
     return;
 
   llvm::APSInt index;

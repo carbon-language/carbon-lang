@@ -64,3 +64,8 @@ void f(int index) {
   consume(A B + sizeof(A) - 1);
 }
 
+template <typename T>
+void PR21848() {
+  (void)(sizeof(T) + ""); // expected-warning {{to a string does not append to the string}} expected-note {{use array indexing to silence this warning}}
+}
+template void PR21848<int>(); // expected-note {{in instantiation of function template specialization 'PR21848<int>' requested here}}
