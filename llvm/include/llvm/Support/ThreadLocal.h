@@ -36,7 +36,7 @@ namespace llvm {
       ThreadLocalImpl();
       virtual ~ThreadLocalImpl();
       void setInstance(const void* d);
-      const void* getInstance();
+      void *getInstance();
       void removeInstance();
     };
 

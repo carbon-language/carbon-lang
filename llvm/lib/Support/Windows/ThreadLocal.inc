@@ -34,7 +34,7 @@ ThreadLocalImpl::~ThreadLocalImpl() {
   TlsFree(*tls);
 }
 
-const void* ThreadLocalImpl::getInstance() {
+void *ThreadLocalImpl::getInstance() {
   DWORD* tls = reinterpret_cast<DWORD*>(&data);
   return TlsGetValue(*tls);
 }

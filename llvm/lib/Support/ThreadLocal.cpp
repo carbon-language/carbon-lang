@@ -31,7 +31,7 @@ void ThreadLocalImpl::setInstance(const void* d) {
   void **pd = reinterpret_cast<void**>(&data);
   *pd = const_cast<void*>(d);
 }
-const void* ThreadLocalImpl::getInstance() {
+void *ThreadLocalImpl::getInstance() {
   void **pd = reinterpret_cast<void**>(&data);
   return *pd;
 }
@@ -72,7 +72,7 @@ void ThreadLocalImpl::setInstance(const void* d) {
   (void) errorcode;
 }
 
-const void* ThreadLocalImpl::getInstance() {
+void *ThreadLocalImpl::getInstance() {
   pthread_key_t* key = reinterpret_cast<pthread_key_t*>(&data);
   return pthread_getspecific(*key);
 }
