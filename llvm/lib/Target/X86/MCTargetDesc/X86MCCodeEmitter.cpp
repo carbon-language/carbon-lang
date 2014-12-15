@@ -590,6 +590,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                            int MemOperand, const MCInst &MI,
                                            const MCInstrDesc &Desc,
                                            raw_ostream &OS) const {
+  assert(!(TSFlags & X86II::LOCK) && "Can't have LOCK VEX.");
+
   uint64_t Encoding = TSFlags & X86II::EncodingMask;
   bool HasEVEX_K = TSFlags & X86II::EVEX_K;
   bool HasVEX_4V = TSFlags & X86II::VEX_4V;
@@ -1109,6 +1111,10 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                                          : X86II::OpSize16))
     EmitByte(0x66, CurByte, OS);
 
+  // Emit the LOCK opcode prefix.
+  if (TSFlags & X86II::LOCK)
+    EmitByte(0xF0, CurByte, OS);
+
   switch (TSFlags & X86II::OpPrefixMask) {
   case X86II::PD:   // 66
     EmitByte(0x66, CurByte, OS);
@@ -1181,10 +1187,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
   if (MemoryOperand != -1) MemoryOperand += CurOp;
-
-  // Emit the lock opcode prefix as needed.
-  if (TSFlags & X86II::LOCK)
-    EmitByte(0xF0, CurByte, OS);
 
   // Emit segment override opcode prefix as needed.
   if (MemoryOperand >= 0)
