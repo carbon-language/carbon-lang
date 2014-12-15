@@ -3111,7 +3111,7 @@ public:
   struct FunctionScopeRAII {
     Sema &S;
     bool Active;
-    FunctionScopeRAII(Sema &S) : Active(true), S(S) {}
+    FunctionScopeRAII(Sema &S) : S(S), Active(true) {}
     ~FunctionScopeRAII() {
       if (Active)
         S.PopFunctionScopeInfo();
