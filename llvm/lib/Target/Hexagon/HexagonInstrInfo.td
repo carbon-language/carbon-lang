@@ -1829,6 +1829,111 @@ let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def M2_mpy_sat_rnd_hh_s0: T_M2_mpy <0b11, 1, 1, 0, 0>;
 }
 
+//===----------------------------------------------------------------------===//
+// Template Class
+// MPYS / Multipy signed/unsigned halfwords and add/subtract the
+// result from the accumulator.
+//Rx [-+]= mpy[u](Rs.[H|L],Rt.[H|L])[:<<1][:sat]
+//===----------------------------------------------------------------------===//
+
+let hasNewValue = 1, opNewValue = 0 in
+class T_M2_mpy_acc < bits<2> LHbits, bit isSat, bit isNac,
+                 bit hasShift, bit isUnsigned >
+  : MInst_acc<(outs IntRegs:$Rx), (ins IntRegs:$dst2, IntRegs:$Rs, IntRegs:$Rt),
+  "$Rx "#!if(isNac,"-= ","+= ")#!if(isUnsigned,"mpyu","mpy")
+                              #"($Rs."#!if(LHbits{1},"h","l")
+                              #", $Rt."#!if(LHbits{0},"h)","l)")
+                              #!if(hasShift,":<<1","")
+                              #!if(isSat,":sat",""),
+  [], "$dst2 = $Rx", M_tc_3x_SLOT23 > {
+    bits<5> Rx;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1110;
+    let Inst{27-24} = 0b1110;
+    let Inst{23} = hasShift;
+    let Inst{22} = isUnsigned;
+    let Inst{21} = isNac;
+    let Inst{7} = isSat;
+    let Inst{6-5} = LHbits;
+    let Inst{4-0} = Rx;
+    let Inst{20-16} = Rs;
+    let Inst{12-8} = Rt;
+  }
+
+//Rx += mpy(Rs.[H|L],Rt.[H|L])[:<<1]
+let isCodeGenOnly = 0 in {
+def M2_mpy_acc_ll_s1: T_M2_mpy_acc <0b00, 0, 0, 1, 0>;
+def M2_mpy_acc_ll_s0: T_M2_mpy_acc <0b00, 0, 0, 0, 0>;
+def M2_mpy_acc_lh_s1: T_M2_mpy_acc <0b01, 0, 0, 1, 0>;
+def M2_mpy_acc_lh_s0: T_M2_mpy_acc <0b01, 0, 0, 0, 0>;
+def M2_mpy_acc_hl_s1: T_M2_mpy_acc <0b10, 0, 0, 1, 0>;
+def M2_mpy_acc_hl_s0: T_M2_mpy_acc <0b10, 0, 0, 0, 0>;
+def M2_mpy_acc_hh_s1: T_M2_mpy_acc <0b11, 0, 0, 1, 0>;
+def M2_mpy_acc_hh_s0: T_M2_mpy_acc <0b11, 0, 0, 0, 0>;
+}
+
+//Rx += mpyu(Rs.[H|L],Rt.[H|L])[:<<1]
+let isCodeGenOnly = 0 in {
+def M2_mpyu_acc_ll_s1: T_M2_mpy_acc <0b00, 0, 0, 1, 1>;
+def M2_mpyu_acc_ll_s0: T_M2_mpy_acc <0b00, 0, 0, 0, 1>;
+def M2_mpyu_acc_lh_s1: T_M2_mpy_acc <0b01, 0, 0, 1, 1>;
+def M2_mpyu_acc_lh_s0: T_M2_mpy_acc <0b01, 0, 0, 0, 1>;
+def M2_mpyu_acc_hl_s1: T_M2_mpy_acc <0b10, 0, 0, 1, 1>;
+def M2_mpyu_acc_hl_s0: T_M2_mpy_acc <0b10, 0, 0, 0, 1>;
+def M2_mpyu_acc_hh_s1: T_M2_mpy_acc <0b11, 0, 0, 1, 1>;
+def M2_mpyu_acc_hh_s0: T_M2_mpy_acc <0b11, 0, 0, 0, 1>;
+}
+
+//Rx -= mpy(Rs.[H|L],Rt.[H|L])[:<<1]
+let isCodeGenOnly = 0 in {
+def M2_mpy_nac_ll_s1: T_M2_mpy_acc <0b00, 0, 1, 1, 0>;
+def M2_mpy_nac_ll_s0: T_M2_mpy_acc <0b00, 0, 1, 0, 0>;
+def M2_mpy_nac_lh_s1: T_M2_mpy_acc <0b01, 0, 1, 1, 0>;
+def M2_mpy_nac_lh_s0: T_M2_mpy_acc <0b01, 0, 1, 0, 0>;
+def M2_mpy_nac_hl_s1: T_M2_mpy_acc <0b10, 0, 1, 1, 0>;
+def M2_mpy_nac_hl_s0: T_M2_mpy_acc <0b10, 0, 1, 0, 0>;
+def M2_mpy_nac_hh_s1: T_M2_mpy_acc <0b11, 0, 1, 1, 0>;
+def M2_mpy_nac_hh_s0: T_M2_mpy_acc <0b11, 0, 1, 0, 0>;
+}
+
+//Rx -= mpyu(Rs.[H|L],Rt.[H|L])[:<<1]
+let isCodeGenOnly = 0 in {
+def M2_mpyu_nac_ll_s1: T_M2_mpy_acc <0b00, 0, 1, 1, 1>;
+def M2_mpyu_nac_ll_s0: T_M2_mpy_acc <0b00, 0, 1, 0, 1>;
+def M2_mpyu_nac_lh_s1: T_M2_mpy_acc <0b01, 0, 1, 1, 1>;
+def M2_mpyu_nac_lh_s0: T_M2_mpy_acc <0b01, 0, 1, 0, 1>;
+def M2_mpyu_nac_hl_s1: T_M2_mpy_acc <0b10, 0, 1, 1, 1>;
+def M2_mpyu_nac_hl_s0: T_M2_mpy_acc <0b10, 0, 1, 0, 1>;
+def M2_mpyu_nac_hh_s1: T_M2_mpy_acc <0b11, 0, 1, 1, 1>;
+def M2_mpyu_nac_hh_s0: T_M2_mpy_acc <0b11, 0, 1, 0, 1>;
+}
+
+//Rx += mpy(Rs.[H|L],Rt.[H|L])[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_mpy_acc_sat_ll_s1: T_M2_mpy_acc <0b00, 1, 0, 1, 0>;
+def M2_mpy_acc_sat_ll_s0: T_M2_mpy_acc <0b00, 1, 0, 0, 0>;
+def M2_mpy_acc_sat_lh_s1: T_M2_mpy_acc <0b01, 1, 0, 1, 0>;
+def M2_mpy_acc_sat_lh_s0: T_M2_mpy_acc <0b01, 1, 0, 0, 0>;
+def M2_mpy_acc_sat_hl_s1: T_M2_mpy_acc <0b10, 1, 0, 1, 0>;
+def M2_mpy_acc_sat_hl_s0: T_M2_mpy_acc <0b10, 1, 0, 0, 0>;
+def M2_mpy_acc_sat_hh_s1: T_M2_mpy_acc <0b11, 1, 0, 1, 0>;
+def M2_mpy_acc_sat_hh_s0: T_M2_mpy_acc <0b11, 1, 0, 0, 0>;
+}
+
+//Rx -= mpy(Rs.[H|L],Rt.[H|L])[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_mpy_nac_sat_ll_s1: T_M2_mpy_acc <0b00, 1, 1, 1, 0>;
+def M2_mpy_nac_sat_ll_s0: T_M2_mpy_acc <0b00, 1, 1, 0, 0>;
+def M2_mpy_nac_sat_lh_s1: T_M2_mpy_acc <0b01, 1, 1, 1, 0>;
+def M2_mpy_nac_sat_lh_s0: T_M2_mpy_acc <0b01, 1, 1, 0, 0>;
+def M2_mpy_nac_sat_hl_s1: T_M2_mpy_acc <0b10, 1, 1, 1, 0>;
+def M2_mpy_nac_sat_hl_s0: T_M2_mpy_acc <0b10, 1, 1, 0, 0>;
+def M2_mpy_nac_sat_hh_s1: T_M2_mpy_acc <0b11, 1, 1, 1, 0>;
+def M2_mpy_nac_sat_hh_s0: T_M2_mpy_acc <0b11, 1, 1, 0, 0>;
+}
+
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 8 in
