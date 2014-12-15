@@ -140,7 +140,7 @@ protected:
     TheJIT.reset(EngineBuilder(std::move(TheModule))
       .setEngineKind(EngineKind::JIT)
       .setErrorStr(&Error)
-      .setMCJITMemoryManager(MemMgr)
+      .setMCJITMemoryManager(std::unique_ptr<RTDyldMemoryManager>(MemMgr))
       .create());
     if (Error.empty() == false)
       errs() << Error;

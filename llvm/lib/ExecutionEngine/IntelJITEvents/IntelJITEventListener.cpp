@@ -149,6 +149,18 @@ void IntelJITEventListener::NotifyObjectEmitted(
           FunctionMessage.line_number_size = 0;
           FunctionMessage.line_number_table = 0;
         } else {
+          // Source line information for the address range is provided as 
+          // a code offset for the start of the corresponding sub-range and
+          // a source line. JIT API treats offsets in LineNumberInfo structures
+          // as the end of the corresponding code region. The start of the code
+          // is taken from the previous element. Need to shift the elements.
+
+          LineNumberInfo last = LineInfo.back();
+          last.Offset = FunctionMessage.method_size;
+          LineInfo.push_back(last);
+          for (size_t i = LineInfo.size() - 2; i > 0; --i)
+            LineInfo[i].LineNumber = LineInfo[i - 1].LineNumber;
+
           SourceFileName = Lines.front().second.FileName;
           FunctionMessage.source_file_name = const_cast<char *>(SourceFileName.c_str());
           FunctionMessage.line_number_size = LineInfo.size();
