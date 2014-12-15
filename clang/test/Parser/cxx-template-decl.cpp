@@ -211,6 +211,19 @@ void Instantiate() {
 
 }
 
+namespace func_tmpl_spec_def_in_func {
+// We failed to diagnose function template specialization definitions inside
+// functions during recovery previously.
+template <class> void FuncTemplate() {}
+void TopLevelFunc() {
+  // expected-error@+2 {{expected a qualified name after 'typename'}}
+  // expected-error@+1 {{function definition is not allowed here}}
+  typename template <> void FuncTemplate<void>() { }
+  // expected-error@+1 {{function definition is not allowed here}}
+  void NonTemplateInner() { }
+}
+}
+
 namespace broken_baseclause {
 template<typename T>
 struct base { };

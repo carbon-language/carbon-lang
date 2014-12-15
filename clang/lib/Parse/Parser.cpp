@@ -890,7 +890,7 @@ Parser::ParseDeclOrFunctionDefInternal(ParsedAttributesWithRange &attrs,
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
-  return ParseDeclGroup(DS, Declarator::FileContext, true);
+  return ParseDeclGroup(DS, Declarator::FileContext);
 }
 
 Parser::DeclGroupPtrTy
