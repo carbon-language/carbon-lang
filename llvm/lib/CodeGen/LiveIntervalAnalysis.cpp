@@ -192,7 +192,8 @@ void LiveIntervals::computeVirtRegInterval(LiveInterval &LI) {
   assert(LRCalc && "LRCalc not initialized.");
   assert(LI.empty() && "Should only compute empty intervals.");
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
-  LRCalc->calculate(LI);
+  LRCalc->createDeadDefs(LI);
+  LRCalc->extendToUses(LI);
   computeDeadValues(LI, LI);
 }
 
@@ -253,12 +254,19 @@ void LiveIntervals::computeRegUnitRange(LiveRange &LR, unsigned Unit) {
   for (MCRegUnitRootIterator Roots(Unit, TRI); Roots.isValid(); ++Roots) {
     for (MCSuperRegIterator Supers(*Roots, TRI, /*IncludeSelf=*/true);
          Supers.isValid(); ++Supers) {
+      if (!MRI->reg_empty(*Supers))
+        LRCalc->createDeadDefs(LR, *Supers);
+    }
+  }
+
+  // Now extend LR to reach all uses.
+  // Ignore uses of reserved registers. We only track defs of those.
+  for (MCRegUnitRootIterator Roots(Unit, TRI); Roots.isValid(); ++Roots) {
+    for (MCSuperRegIterator Supers(*Roots, TRI, /*IncludeSelf=*/true);
+         Supers.isValid(); ++Supers) {
       unsigned Reg = *Supers;
-      if (MRI->reg_empty(Reg))
-        continue;
-      // Ignore uses of reserved registers. We only track defs of those.
-      bool IgnoreUses = MRI->isReserved(Reg);
-      LRCalc->calculate(LR, *Supers, IgnoreUses);
+      if (!MRI->isReserved(Reg) && !MRI->reg_empty(Reg))
+        LRCalc->extendToUses(LR, Reg);
     }
   }
 }
