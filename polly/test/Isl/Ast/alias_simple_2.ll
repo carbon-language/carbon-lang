@@ -49,10 +49,10 @@ for.end:                                          ; preds = %for.end.loopexit, %
   ret void
 }
 
-!0 = metadata !{metadata !""}
-!1 = metadata !{metadata !2, metadata !2, i64 0}
-!2 = metadata !{metadata !"float", metadata !3, i64 0}
-!3 = metadata !{metadata !"omnipotent char", metadata !4, i64 0}
-!4 = metadata !{metadata !"Simple C/C++ TBAA"}
-!5 = metadata !{metadata !6, metadata !6, i64 0}
-!6 = metadata !{metadata !"int", metadata !3, i64 0}
+!0 = !{!""}
+!1 = !{!2, !2, i64 0}
+!2 = !{!"float", !3, i64 0}
+!3 = !{!"omnipotent char", !4, i64 0}
+!4 = !{!"Simple C/C++ TBAA"}
+!5 = !{!6, !6, i64 0}
+!6 = !{!"int", !3, i64 0}

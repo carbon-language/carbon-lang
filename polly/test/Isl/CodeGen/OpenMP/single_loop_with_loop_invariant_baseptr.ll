@@ -44,7 +44,7 @@ exit:
   ret void
 }
 
-!2 = metadata !{metadata !"float", metadata !3, i64 0}
-!3 = metadata !{metadata !"omnipotent char", metadata !4, i64 0}
-!4 = metadata !{metadata !"Simple C/C++ TBAA"}
-!6 = metadata !{metadata !"float *ptr", metadata !3, i64 0}
+!2 = !{!"float", !3, i64 0}
+!3 = !{!"omnipotent char", !4, i64 0}
+!4 = !{!"Simple C/C++ TBAA"}
+!6 = !{!"float *ptr", !3, i64 0}

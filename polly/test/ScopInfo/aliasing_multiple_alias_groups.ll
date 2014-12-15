@@ -32,12 +32,12 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-!0 = metadata !{metadata !1, metadata !1, i64 0}
-!1 = metadata !{metadata !"int", metadata !2, i64 0}
-!2 = metadata !{metadata !"omnipotent char", metadata !3, i64 0}
-!3 = metadata !{metadata !"Simple C/C++ TBAA"}
-!4 = metadata !{metadata !5, metadata !5, i64 0}
-!5 = metadata !{metadata !"float", metadata !2, i64 0}
+!0 = !{!1, !1, i64 0}
+!1 = !{!"int", !2, i64 0}
+!2 = !{!"omnipotent char", !3, i64 0}
+!3 = !{!"Simple C/C++ TBAA"}
+!4 = !{!5, !5, i64 0}
+!5 = !{!"float", !2, i64 0}
 
 ; NOAA: Alias Groups (2):
 ; NOAA-NEXT: {{\[\[}}
