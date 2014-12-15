@@ -1,6 +1,6 @@
-//===- llvm/unittest/Support/ThreadLocalTest.cpp - Therad Local tests   ---===//
+//===- llvm/unittest/Support/StringPoiil.cpp - StringPool tests -----------===//
 //
-//		       The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
