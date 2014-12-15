@@ -2220,6 +2220,65 @@ def : T_MType_acc_pat1 <M2_macsin, mul, sub, u8ExtPred>;
 
 def : T_MType_acc_pat1 <M2_naccii, add, sub, s8_16ExtPred>;
 def : T_MType_acc_pat2 <M2_nacci, add, sub>;
+//===----------------------------------------------------------------------===//
+// Template Class -- Multiply signed/unsigned halfwords with and without
+// saturation and rounding
+//===----------------------------------------------------------------------===//
+class T_M2_mpyd < bits<2> LHbits, bit isRnd, bit hasShift, bit isUnsigned >
+  : MInst < (outs DoubleRegs:$Rdd), (ins IntRegs:$Rs, IntRegs:$Rt),
+  "$Rdd = "#!if(isUnsigned,"mpyu","mpy")#"($Rs."#!if(LHbits{1},"h","l")
+                                       #", $Rt."#!if(LHbits{0},"h)","l)")
+                                       #!if(hasShift,":<<1","")
+                                       #!if(isRnd,":rnd",""),
+  [] > {
+    bits<5> Rdd;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b0100;
+    let Inst{23} = hasShift;
+    let Inst{22} = isUnsigned;
+    let Inst{21} = isRnd;
+    let Inst{6-5} = LHbits;
+    let Inst{4-0} = Rdd;
+    let Inst{20-16} = Rs;
+    let Inst{12-8} = Rt;
+}
+
+let isCodeGenOnly = 0 in {
+def M2_mpyd_hh_s0: T_M2_mpyd<0b11, 0, 0, 0>;
+def M2_mpyd_hl_s0: T_M2_mpyd<0b10, 0, 0, 0>;
+def M2_mpyd_lh_s0: T_M2_mpyd<0b01, 0, 0, 0>;
+def M2_mpyd_ll_s0: T_M2_mpyd<0b00, 0, 0, 0>;
+
+def M2_mpyd_hh_s1: T_M2_mpyd<0b11, 0, 1, 0>;
+def M2_mpyd_hl_s1: T_M2_mpyd<0b10, 0, 1, 0>;
+def M2_mpyd_lh_s1: T_M2_mpyd<0b01, 0, 1, 0>;
+def M2_mpyd_ll_s1: T_M2_mpyd<0b00, 0, 1, 0>;
+
+def M2_mpyd_rnd_hh_s0: T_M2_mpyd<0b11, 1, 0, 0>;
+def M2_mpyd_rnd_hl_s0: T_M2_mpyd<0b10, 1, 0, 0>;
+def M2_mpyd_rnd_lh_s0: T_M2_mpyd<0b01, 1, 0, 0>;
+def M2_mpyd_rnd_ll_s0: T_M2_mpyd<0b00, 1, 0, 0>;
+
+def M2_mpyd_rnd_hh_s1: T_M2_mpyd<0b11, 1, 1, 0>;
+def M2_mpyd_rnd_hl_s1: T_M2_mpyd<0b10, 1, 1, 0>;
+def M2_mpyd_rnd_lh_s1: T_M2_mpyd<0b01, 1, 1, 0>;
+def M2_mpyd_rnd_ll_s1: T_M2_mpyd<0b00, 1, 1, 0>;
+
+//Rdd=mpyu(Rs.[HL],Rt.[HL])[:<<1]
+def M2_mpyud_hh_s0: T_M2_mpyd<0b11, 0, 0, 1>;
+def M2_mpyud_hl_s0: T_M2_mpyd<0b10, 0, 0, 1>;
+def M2_mpyud_lh_s0: T_M2_mpyd<0b01, 0, 0, 1>;
+def M2_mpyud_ll_s0: T_M2_mpyd<0b00, 0, 0, 1>;
+
+def M2_mpyud_hh_s1: T_M2_mpyd<0b11, 0, 1, 1>;
+def M2_mpyud_hl_s1: T_M2_mpyd<0b10, 0, 1, 1>;
+def M2_mpyud_lh_s1: T_M2_mpyd<0b01, 0, 1, 1>;
+def M2_mpyud_ll_s1: T_M2_mpyd<0b00, 0, 1, 1>;
+}
 
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
