@@ -9121,6 +9121,8 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   }
 
   LambdaScopeInfo *LSI = getSema().PushLambdaScope();
+  Sema::FunctionScopeRAII FuncScopeCleanup(getSema());
+
   // Transform the template parameters, and add them to the current
   // instantiation scope. The null case is handled correctly.
   LSI->GLTemplateParameterList = getDerived().TransformTemplateParameterList(
@@ -9145,10 +9147,10 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
           return This->TransformExceptionSpec(OldCallOpFPTL.getBeginLoc(), ESI,
                                               ExceptionStorage, Changed);
         });
+    if (NewCallOpType.isNull())
+      return ExprError();
     NewCallOpTSI = NewCallOpTLBuilder.getTypeSourceInfo(getSema().Context,
                                                         NewCallOpType);
-    if (!NewCallOpTSI)
-      return ExprError();
   }
 
   // Create the local class that will describe the lambda.
@@ -9167,6 +9169,10 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   LSI->CallOperator = NewCallOperator;
 
   getDerived().transformAttrs(E->getCallOperator(), NewCallOperator);
+
+  // TransformLambdaScope will manage the function scope, so we can disable the
+  // cleanup.
+  FuncScopeCleanup.disable();
 
   return getDerived().TransformLambdaScope(E, NewCallOperator, 
       InitCaptureExprsAndTypes);

@@ -425,3 +425,17 @@ namespace lambda_in_default_mem_init {
   }
   template void g<int>();
 }
+
+namespace error_in_transform_prototype {
+  template<class T>
+  void f(T t) {
+    // expected-error@+2 {{type 'int' cannot be used prior to '::' because it has no members}}
+    // expected-error@+1 {{no member named 'ns' in 'error_in_transform_prototype::S'}}
+    auto x = [](typename T::ns::type &k) {};
+  }
+  class S {};
+  void foo() {
+    f(5); // expected-note {{requested here}}
+    f(S()); // expected-note {{requested here}}
+  }
+}
