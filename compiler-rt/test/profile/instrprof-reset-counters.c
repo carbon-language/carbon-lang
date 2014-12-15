@@ -16,4 +16,4 @@ void foo(int N) {
   // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof ![[FOO:[0-9]+]]
   if (N) {}
 }
-// CHECK: ![[FOO]] = metadata !{metadata !"branch_weights", i32 2, i32 1}
+// CHECK: ![[FOO]] = !{!"branch_weights", i32 2, i32 1}
