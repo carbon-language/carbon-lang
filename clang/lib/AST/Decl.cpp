@@ -1192,7 +1192,7 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
   } else {
     const FunctionDecl *FD = cast<FunctionDecl>(OuterD);
     if (!FD->isInlined() &&
-        FD->getTemplateSpecializationKind() == TSK_Undeclared)
+        !isTemplateInstantiation(FD->getTemplateSpecializationKind()))
       return LinkageInfo::none();
 
     LV = getLVForDecl(FD, computation);
