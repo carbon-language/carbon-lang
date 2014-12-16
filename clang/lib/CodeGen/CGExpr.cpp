@@ -1906,6 +1906,21 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   QualType T = E->getType();
 
   if (const auto *VD = dyn_cast<VarDecl>(ND)) {
+    // Check for captured variables.
+    if (E->refersToEnclosingLocal()) {
+      if (auto *FD = LambdaCaptureFields.lookup(VD))
+        return EmitCapturedFieldLValue(*this, FD, CXXABIThisValue);
+      else if (CapturedStmtInfo) {
+        if (auto *V = LocalDeclMap.lookup(VD))
+          return MakeAddrLValue(V, T, Alignment);
+        else
+          return EmitCapturedFieldLValue(*this, CapturedStmtInfo->lookup(VD),
+                                         CapturedStmtInfo->getContextValue());
+      } else
+        return MakeAddrLValue(GetAddrOfBlockDecl(VD, VD->hasAttr<BlocksAttr>()),
+                              T, Alignment);
+    }
+
     // Global Named registers access via intrinsics only
     if (VD->getStorageClass() == SC_Register &&
         VD->hasAttr<AsmLabelAttr>() && !VD->isLocalVarDecl())
@@ -1955,21 +1970,6 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       return EmitThreadPrivateVarDeclLValue(
           *this, VD, T, V, getTypes().ConvertTypeForMem(VD->getType()),
           Alignment, E->getExprLoc());
-
-    // Use special handling for lambdas.
-    if (!V) {
-      if (FieldDecl *FD = LambdaCaptureFields.lookup(VD)) {
-        return EmitCapturedFieldLValue(*this, FD, CXXABIThisValue);
-      } else if (CapturedStmtInfo) {
-        if (const FieldDecl *FD = CapturedStmtInfo->lookup(VD))
-          return EmitCapturedFieldLValue(*this, FD,
-                                         CapturedStmtInfo->getContextValue());
-      }
-
-      assert(isa<BlockDecl>(CurCodeDecl) && E->refersToEnclosingLocal());
-      return MakeAddrLValue(GetAddrOfBlockDecl(VD, isBlockVariable),
-                            T, Alignment);
-    }
 
     assert(V && "DeclRefExpr not entered in LocalDeclMap?");
 

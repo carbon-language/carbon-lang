@@ -20,6 +20,35 @@
 using namespace clang;
 using namespace CodeGen;
 
+namespace {
+/// \brief RAII for emitting code of CapturedStmt without function outlining.
+class InlinedOpenMPRegion {
+  CodeGenFunction &CGF;
+  CodeGenFunction::CGCapturedStmtInfo *PrevCapturedStmtInfo;
+  const Decl *StoredCurCodeDecl;
+
+  /// \brief A class to emit CapturedStmt construct as inlined statement without
+  /// generating a function for outlined code.
+  class CGInlinedOpenMPRegionInfo : public CodeGenFunction::CGCapturedStmtInfo {
+  public:
+    CGInlinedOpenMPRegionInfo() : CGCapturedStmtInfo() {}
+  };
+
+public:
+  InlinedOpenMPRegion(CodeGenFunction &CGF, const Stmt *S)
+      : CGF(CGF), PrevCapturedStmtInfo(CGF.CapturedStmtInfo),
+        StoredCurCodeDecl(CGF.CurCodeDecl) {
+    CGF.CurCodeDecl = cast<CapturedStmt>(S)->getCapturedDecl();
+    CGF.CapturedStmtInfo = new CGInlinedOpenMPRegionInfo();
+  }
+  ~InlinedOpenMPRegion() {
+    delete CGF.CapturedStmtInfo;
+    CGF.CapturedStmtInfo = PrevCapturedStmtInfo;
+    CGF.CurCodeDecl = StoredCurCodeDecl;
+  }
+};
+} // namespace
+
 //===----------------------------------------------------------------------===//
 //                              OpenMP Directive Emission
 //===----------------------------------------------------------------------===//
@@ -417,6 +446,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     }
   }
 
+  InlinedOpenMPRegion Region(*this, S.getAssociatedStmt());
   RunCleanupsScope DirectiveScope(*this);
 
   CGDebugInfo *DI = getDebugInfo();
@@ -561,6 +591,7 @@ void CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
 }
 
 void CodeGenFunction::EmitOMPForDirective(const OMPForDirective &S) {
+  InlinedOpenMPRegion Region(*this, S.getAssociatedStmt());
   RunCleanupsScope DirectiveScope(*this);
 
   CGDebugInfo *DI = getDebugInfo();
@@ -593,8 +624,8 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &) {
 }
 
 void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &S) {
-  CGM.getOpenMPRuntime().EmitOMPMasterRegion(
-      *this, [&]() -> void {
+  CGM.getOpenMPRuntime().EmitOMPMasterRegion(*this, [&]() -> void {
+    InlinedOpenMPRegion Region(*this, S.getAssociatedStmt());
     RunCleanupsScope Scope(*this);
     EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     EnsureInsertPoint();
@@ -604,8 +635,10 @@ void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &S) {
 void CodeGenFunction::EmitOMPCriticalDirective(const OMPCriticalDirective &S) {
   CGM.getOpenMPRuntime().EmitOMPCriticalRegion(
       *this, S.getDirectiveName().getAsString(), [&]() -> void {
+    InlinedOpenMPRegion Region(*this, S.getAssociatedStmt());
     RunCleanupsScope Scope(*this);
-    EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+    EmitStmt(
+        cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     EnsureInsertPoint();
   }, S.getLocStart());
 }

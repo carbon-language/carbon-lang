@@ -4563,16 +4563,12 @@ void RewriteModernObjC::GetBlockDeclRefExprs(Stmt *S) {
         GetBlockDeclRefExprs(*CI);
     }
   // Handle specific things.
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
-    if (DRE->refersToEnclosingLocal()) {
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S))
+    if (DRE->refersToEnclosingLocal() ||
+        HasLocalVariableExternalStorage(DRE->getDecl()))
       // FIXME: Handle enums.
-      if (!isa<FunctionDecl>(DRE->getDecl()))
-        BlockDeclRefs.push_back(DRE);
-      if (HasLocalVariableExternalStorage(DRE->getDecl()))
-        BlockDeclRefs.push_back(DRE);
-    }
-  }
-  
+      BlockDeclRefs.push_back(DRE);
+
   return;
 }
 
@@ -4595,11 +4591,11 @@ void RewriteModernObjC::GetInnerBlockDeclRefExprs(Stmt *S,
     }
   // Handle specific things.
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
-    if (DRE->refersToEnclosingLocal()) {
-      if (!isa<FunctionDecl>(DRE->getDecl()) &&
-          !InnerContexts.count(DRE->getDecl()->getDeclContext()))
+    if (DRE->refersToEnclosingLocal() ||
+        HasLocalVariableExternalStorage(DRE->getDecl())) {
+      if (!InnerContexts.count(DRE->getDecl()->getDeclContext()))
         InnerBlockDeclRefs.push_back(DRE);
-      if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl()))
+      if (VarDecl *Var = cast<VarDecl>(DRE->getDecl()))
         if (Var->isFunctionOrMethodVarDecl())
           ImportedLocalExternalDecls.insert(Var);
     }
@@ -4776,7 +4772,8 @@ Stmt *RewriteModernObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
   // Rewrite the byref variable into BYREFVAR->__forwarding->BYREFVAR 
   // for each DeclRefExp where BYREFVAR is name of the variable.
   ValueDecl *VD = DeclRefExp->getDecl();
-  bool isArrow = DeclRefExp->refersToEnclosingLocal();
+  bool isArrow = DeclRefExp->refersToEnclosingLocal() ||
+                 HasLocalVariableExternalStorage(DeclRefExp->getDecl());
 
   FieldDecl *FD = FieldDecl::Create(*Context, nullptr, SourceLocation(),
                                     SourceLocation(),

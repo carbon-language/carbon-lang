@@ -1602,10 +1602,8 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
       }
 
   bool refersToEnclosingScope =
-    (CurContext != D->getDeclContext() &&
-     D->getDeclContext()->isFunctionOrMethod()) ||
-    (isa<VarDecl>(D) &&
-     cast<VarDecl>(D)->isInitCapture());
+      isa<VarDecl>(D) &&
+      NeedToCaptureVariable(cast<VarDecl>(D), NameInfo.getLoc());
 
   DeclRefExpr *E;
   if (isa<VarTemplateSpecializationDecl>(D)) {
@@ -11799,7 +11797,7 @@ static DeclContext *getParentOfCapturingContextOrNull(DeclContext *DC, VarDecl *
                                  const bool Diagnose, Sema &S) {
   if (isa<BlockDecl>(DC) || isa<CapturedDecl>(DC) || isLambdaCallOperator(DC))
     return getLambdaAwareParentOfDeclContext(DC);
-  else {
+  else if (Var->hasLocalStorage()) {
     if (Diagnose)
        diagnoseUncapturableValueReference(S, Loc, Var, DC);
   }
@@ -12241,7 +12239,7 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation ExprLoc,
                               QualType &CaptureType,
                               QualType &DeclRefType,
 						                const unsigned *const FunctionScopeIndexToStopAt) {
-  bool Nested = false;
+  bool Nested = Var->isInitCapture();
   
   DeclContext *DC = CurContext;
   const unsigned MaxFunctionScopesIndex = FunctionScopeIndexToStopAt 
@@ -12259,8 +12257,13 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation ExprLoc,
   
   // If the variable is declared in the current context (and is not an 
   // init-capture), there is no need to capture it.
-  if (!Var->isInitCapture() && Var->getDeclContext() == DC) return true;
-  if (!Var->hasLocalStorage()) return true;
+  if (!Nested && Var->getDeclContext() == DC) return true;
+
+  // Capture global variables if it is required to use private copy of this
+  // variable.
+  bool IsGlobal = !Var->hasLocalStorage();
+  if (IsGlobal && !(LangOpts.OpenMP && IsOpenMPCapturedVar(Var)))
+    return true;
 
   // Walk up the stack to determine whether we can capture the variable,
   // performing the "simple" checks that don't depend on type. We stop when
@@ -12281,8 +12284,17 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation ExprLoc,
                                                               ExprLoc, 
                                                               BuildAndDiagnose,
                                                               *this);
-    if (!ParentDC) return true;
-    
+    // We need to check for the parent *first* because, if we *have*
+    // private-captured a global variable, we need to recursively capture it in
+    // intermediate blocks, lambdas, etc.
+    if (!ParentDC) {
+      if (IsGlobal) {
+        FunctionScopesIndex = MaxFunctionScopesIndex - 1;
+        break;
+      }
+      return true;
+    }
+
     FunctionScopeInfo  *FSI = FunctionScopes[FunctionScopesIndex];
     CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FSI);
 
@@ -12506,6 +12518,14 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
   return tryCaptureVariable(Var, Loc, Kind, EllipsisLoc,
                             /*BuildAndDiagnose=*/true, CaptureType,
                             DeclRefType, nullptr);
+}
+
+bool Sema::NeedToCaptureVariable(VarDecl *Var, SourceLocation Loc) {
+  QualType CaptureType;
+  QualType DeclRefType;
+  return !tryCaptureVariable(Var, Loc, TryCapture_Implicit, SourceLocation(),
+                             /*BuildAndDiagnose=*/false, CaptureType,
+                             DeclRefType, nullptr);
 }
 
 QualType Sema::getCapturedDeclRefType(VarDecl *Var, SourceLocation Loc) {

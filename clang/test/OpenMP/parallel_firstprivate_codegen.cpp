@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -triple %itanium_abi_triple -emit-llvm %s -o - | FileCheck %s
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -std=c++11 -triple %itanium_abi_triple -emit-pch -o %t %s
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple %itanium_abi_triple -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -std=c++11 -DLAMBDA -triple %itanium_abi_triple -emit-llvm %s -o - | FileCheck -check-prefix=LAMBDA %s
+// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -fblocks -DBLOCKS -triple %itanium_abi_triple -emit-llvm %s -o - | FileCheck -check-prefix=BLOCKS %s
 // expected-no-diagnostics
 #ifndef HEADER
 #define HEADER
@@ -12,7 +14,7 @@ struct St {
   ~St() {}
 };
 
-volatile int g;
+volatile int g = 1212;
 
 template <class T>
 struct S {
@@ -47,6 +49,83 @@ T tmain() {
 }
 
 int main() {
+#ifdef LAMBDA
+  // LAMBDA: [[G:@.+]] = global i{{[0-9]+}} 1212,
+  // LAMBDA-LABEL: @main
+  // LAMBDA: call void [[OUTER_LAMBDA:@.+]](
+  [&]() {
+  // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
+  // LAMBDA: [[G_LOCAL_REF:%.+]] = getelementptr inbounds %{{.+}}* [[AGG_CAPTURED:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
+  // LAMBDA: store i{{[0-9]+}}* [[G]], i{{[0-9]+}}** [[G_LOCAL_REF]]
+  // LAMBDA: [[ARG:%.+]] = bitcast %{{.+}}* [[AGG_CAPTURED]] to i8*
+  // LAMBDA: call void {{.+}}* @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* [[ARG]])
+#pragma omp parallel firstprivate(g)
+  {
+    // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
+    // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // LAMBDA: store %{{.+}}* [[ARG]], %{{.+}}** [[ARG_REF:%.+]],
+    // LAMBDA: [[ARG:%.+]] = load %{{.+}}** [[ARG_REF]]
+    // LAMBDA: [[G_REF_ADDR:%.+]] = getelementptr inbounds %{{.+}}* [[ARG]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
+    // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}** [[G_REF_ADDR]]
+    // LAMBDA: [[G_VAL:%.+]] = load volatile i{{[0-9]+}}* [[G_REF]]
+    // LAMBDA: store volatile i{{[0-9]+}} [[G_VAL]], i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
+    // LAMBDA: call i32 @__kmpc_cancel_barrier(
+    g = 1;
+    // LAMBDA: store volatile i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
+    // LAMBDA: [[G_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
+    // LAMBDA: store i{{[0-9]+}}* [[G_PRIVATE_ADDR]], i{{[0-9]+}}** [[G_PRIVATE_ADDR_REF]]
+    // LAMBDA: call void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
+    [&]() {
+      // LAMBDA: define {{.+}} void [[INNER_LAMBDA]](%{{.+}}* [[ARG_PTR:%.+]])
+      // LAMBDA: store %{{.+}}* [[ARG_PTR]], %{{.+}}** [[ARG_PTR_REF:%.+]],
+      g = 2;
+      // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}** [[ARG_PTR_REF]]
+      // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
+      // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}** [[G_PTR_REF]]
+      // LAMBDA: store volatile i{{[0-9]+}} 2, i{{[0-9]+}}* [[G_REF]]
+    }();
+  }
+  }();
+  return 0;
+#elif defined(BLOCKS)
+  // BLOCKS: [[G:@.+]] = global i{{[0-9]+}} 1212,
+  // BLOCKS-LABEL: @main
+  // BLOCKS: call void {{%.+}}(i8*
+  ^{
+  // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
+  // BLOCKS: [[G_LOCAL_REF:%.+]] = getelementptr inbounds %{{.+}}* [[AGG_CAPTURED:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
+  // BLOCKS: store i{{[0-9]+}}* [[G]], i{{[0-9]+}}** [[G_LOCAL_REF]]
+  // BLOCKS: [[ARG:%.+]] = bitcast %{{.+}}* [[AGG_CAPTURED]] to i8*
+  // BLOCKS: call void {{.+}}* @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* [[ARG]])
+#pragma omp parallel firstprivate(g)
+  {
+    // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
+    // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // BLOCKS: store %{{.+}}* [[ARG]], %{{.+}}** [[ARG_REF:%.+]],
+    // BLOCKS: [[ARG:%.+]] = load %{{.+}}** [[ARG_REF]]
+    // BLOCKS: [[G_REF_ADDR:%.+]] = getelementptr inbounds %{{.+}}* [[ARG]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
+    // BLOCKS: [[G_REF:%.+]] = load i{{[0-9]+}}** [[G_REF_ADDR]]
+    // BLOCKS: [[G_VAL:%.+]] = load volatile i{{[0-9]+}}* [[G_REF]]
+    // BLOCKS: store volatile i{{[0-9]+}} [[G_VAL]], i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
+    // BLOCKS: call i32 @__kmpc_cancel_barrier(
+    g = 1;
+    // BLOCKS: store volatile i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
+    // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
+    // BLOCKS: i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
+    // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
+    // BLOCKS: call void {{%.+}}(i8*
+    ^{
+      // BLOCKS: define {{.+}} void {{@.+}}(i8*
+      g = 2;
+      // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
+      // BLOCKS: store volatile i{{[0-9]+}} 2, i{{[0-9]+}}*
+      // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
+      // BLOCKS: ret
+    }();
+  }
+  }();
+  return 0;
+#else
   S<float> test;
   int t_var = 0;
   int vec[] = {1, 2};
@@ -58,6 +137,7 @@ int main() {
     s_arr[0] = var;
   }
   return tmain<int>();
+#endif
 }
 
 // CHECK: define {{.*}}i{{[0-9]+}} @main()

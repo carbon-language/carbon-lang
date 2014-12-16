@@ -3448,6 +3448,9 @@ public:
                           TryCaptureKind Kind = TryCapture_Implicit,
                           SourceLocation EllipsisLoc = SourceLocation());
 
+  /// \brief Checks if the variable must be captured.
+  bool NeedToCaptureVariable(VarDecl *Var, SourceLocation Loc);
+
   /// \brief Given a variable, determine the type that a reference to that
   /// variable will have in the given scope.
   QualType getCapturedDeclRefType(VarDecl *Var, SourceLocation Loc);
@@ -7482,6 +7485,10 @@ private:
   void DestroyDataSharingAttributesStack();
   ExprResult VerifyPositiveIntegerConstantInClause(Expr *Op,
                                                    OpenMPClauseKind CKind);
+  /// \brief Checks if the specified variable is used in one of the private
+  /// clauses in OpenMP constructs.
+  bool IsOpenMPCapturedVar(VarDecl *VD);
+
 public:
   ExprResult PerformOpenMPImplicitIntegerConversion(SourceLocation OpLoc,
                                                     Expr *Op);

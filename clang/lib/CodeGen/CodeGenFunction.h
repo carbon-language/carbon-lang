@@ -182,6 +182,8 @@ public:
   /// \brief API for captured statement code generation.
   class CGCapturedStmtInfo {
   public:
+    explicit CGCapturedStmtInfo(CapturedRegionKind K = CR_Default)
+        : Kind(K), ThisValue(nullptr), CXXThisFieldDecl(nullptr) {}
     explicit CGCapturedStmtInfo(const CapturedStmt &S,
                                 CapturedRegionKind K = CR_Default)
       : Kind(K), ThisValue(nullptr), CXXThisFieldDecl(nullptr) {
@@ -614,7 +616,6 @@ public:
     addPrivate(const VarDecl *LocalVD,
                const std::function<llvm::Value *()> &PrivateGen) {
       assert(PerformCleanup && "adding private to dead scope");
-      assert(LocalVD->isLocalVarDecl() && "privatizing non-local variable");
       if (SavedLocals.count(LocalVD) > 0) return false;
       SavedLocals[LocalVD] = CGF.LocalDeclMap.lookup(LocalVD);
       CGF.LocalDeclMap.erase(LocalVD);
