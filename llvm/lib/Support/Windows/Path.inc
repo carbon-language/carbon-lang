@@ -471,7 +471,7 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
   case priv:      flprotect = PAGE_WRITECOPY; break;
   }
 
-  FileMappingHandle =
+  HANDLE FileMappingHandle =
       ::CreateFileMappingW(FileHandle, 0, flprotect,
                            (Offset + Size) >> 32,
                            (Offset + Size) & 0xffffffff,
@@ -519,7 +519,7 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
 mapped_file_region::mapped_file_region(int fd, mapmode mode, uint64_t length,
                                        uint64_t offset, std::error_code &ec)
     : Size(length), Mapping(),
-      FileHandle(INVALID_HANDLE_VALUE), FileMappingHandle() {
+      FileHandle(INVALID_HANDLE_VALUE) {
   FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
   if (FileHandle == INVALID_HANDLE_VALUE) {
     ec = make_error_code(errc::bad_file_descriptor);
@@ -528,7 +528,7 @@ mapped_file_region::mapped_file_region(int fd, mapmode mode, uint64_t length,
 
   ec = init(fd, offset, mode);
   if (ec) {
-    Mapping = FileMappingHandle = 0;
+    Mapping = 0;
     FileHandle = INVALID_HANDLE_VALUE;
   }
 }

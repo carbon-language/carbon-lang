@@ -641,7 +641,6 @@ private:
   void *Mapping;
 #ifdef LLVM_ON_WIN32
   void *FileHandle;
-  void *FileMappingHandle;
 #endif
 
   std::error_code init(int FD, uint64_t Offset, mapmode Mode);
