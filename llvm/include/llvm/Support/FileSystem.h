@@ -640,7 +640,6 @@ private:
   uint64_t Size;
   void *Mapping;
 #ifdef LLVM_ON_WIN32
-  int FileDescriptor;
   void *FileHandle;
   void *FileMappingHandle;
 #endif
