@@ -309,6 +309,7 @@ class SandyBridgeProc<string Name> : ProcessorModel<Name, SandyBridgeModel, [
                                        FeatureCMPXCHG16B,
                                        FeatureFastUAMem,
                                        FeatureSlowUAMem32,
+                                       FeatureVectorUAMem,
                                        FeaturePOPCNT,
                                        FeatureAES,
                                        FeaturePCLMUL
@@ -321,6 +322,7 @@ class IvyBridgeProc<string Name> : ProcessorModel<Name, SandyBridgeModel, [
                                      FeatureCMPXCHG16B,
                                      FeatureFastUAMem,
                                      FeatureSlowUAMem32,
+                                     FeatureVectorUAMem,
                                      FeaturePOPCNT,
                                      FeatureAES,
                                      FeaturePCLMUL,
@@ -335,6 +337,7 @@ class HaswellProc<string Name> : ProcessorModel<Name, HaswellModel, [
                                    FeatureAVX2,
                                    FeatureCMPXCHG16B,
                                    FeatureFastUAMem,
+                                   FeatureVectorUAMem,
                                    FeaturePOPCNT,
                                    FeatureAES,
                                    FeaturePCLMUL,
@@ -357,6 +360,7 @@ class BroadwellProc<string Name> : ProcessorModel<Name, HaswellModel, [
                                      FeatureAVX2,
                                      FeatureCMPXCHG16B,
                                      FeatureFastUAMem,
+                                     FeatureVectorUAMem,
                                      FeaturePOPCNT,
                                      FeatureAES,
                                      FeaturePCLMUL,
@@ -384,7 +388,7 @@ class KnightsLandingProc<string Name> : ProcessorModel<Name, HaswellModel,
                       FeatureAES, FeaturePCLMUL, FeatureRDRAND, FeatureF16C,
                       FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT, FeatureBMI,
                       FeatureBMI2, FeatureFMA, FeatureRTM, FeatureHLE,
-                      FeatureSlowIncDec]>;
+                      FeatureSlowIncDec, FeatureVectorUAMem]>;
 def : KnightsLandingProc<"knl">;
 
 // FIXME: define SKX model
@@ -395,7 +399,7 @@ class SkylakeProc<string Name> : ProcessorModel<Name, HaswellModel,
                       FeatureAES, FeaturePCLMUL, FeatureRDRAND, FeatureF16C,
                       FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT, FeatureBMI,
                       FeatureBMI2, FeatureFMA, FeatureRTM, FeatureHLE,
-                      FeatureSlowIncDec, FeatureSGX]>;
+                      FeatureSlowIncDec, FeatureSGX, FeatureVectorUAMem]>;
 def : SkylakeProc<"skylake">;
 def : SkylakeProc<"skx">; // Legacy alias.
 

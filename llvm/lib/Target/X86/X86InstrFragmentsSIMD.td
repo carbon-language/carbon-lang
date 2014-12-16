@@ -428,16 +428,6 @@ def memop : PatFrag<(ops node:$ptr), (load node:$ptr), [{
          || cast<LoadSDNode>(N)->getAlignment() >= 16;
 }]>;
 
-def memop4 : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  return    Subtarget->hasVectorUAMem()
-         || cast<LoadSDNode>(N)->getAlignment() >= 4;
-}]>;
-
-def memop8 : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  return    Subtarget->hasVectorUAMem()
-         || cast<LoadSDNode>(N)->getAlignment() >= 8;
-}]>;
-
 def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
 def memopfsf64 : PatFrag<(ops node:$ptr), (f64   (memop node:$ptr))>;
 
@@ -454,10 +444,10 @@ def memopv4f64 : PatFrag<(ops node:$ptr), (v4f64 (memop node:$ptr))>;
 def memopv4i64 : PatFrag<(ops node:$ptr), (v4i64 (memop node:$ptr))>;
 
 // 512-bit memop pattern fragments
-def memopv16f32 : PatFrag<(ops node:$ptr), (v16f32 (memop4 node:$ptr))>;
-def memopv8f64  : PatFrag<(ops node:$ptr), (v8f64  (memop8 node:$ptr))>;
-def memopv16i32 : PatFrag<(ops node:$ptr), (v16i32 (memop4 node:$ptr))>;
-def memopv8i64  : PatFrag<(ops node:$ptr), (v8i64  (memop8 node:$ptr))>;
+def memopv16f32 : PatFrag<(ops node:$ptr), (v16f32 (memop node:$ptr))>;
+def memopv8f64  : PatFrag<(ops node:$ptr), (v8f64  (memop node:$ptr))>;
+def memopv16i32 : PatFrag<(ops node:$ptr), (v16i32 (memop node:$ptr))>;
+def memopv8i64  : PatFrag<(ops node:$ptr), (v8i64  (memop node:$ptr))>;
 
 // SSSE3 uses MMX registers for some instructions. They aren't aligned on a
 // 16-byte boundary.
