@@ -639,9 +639,6 @@ private:
   /// Platform-specific mapping state.
   uint64_t Size;
   void *Mapping;
-#ifdef LLVM_ON_WIN32
-  void *FileHandle;
-#endif
 
   std::error_code init(int FD, uint64_t Offset, mapmode Mode);
 

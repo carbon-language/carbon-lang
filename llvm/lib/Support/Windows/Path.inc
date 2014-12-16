@@ -464,6 +464,10 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
   if (Size > std::numeric_limits<SIZE_T>::max())
     return make_error_code(errc::invalid_argument);
 
+  HANDLE FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(FD));
+  if (FileHandle == INVALID_HANDLE_VALUE)
+    return make_error_code(errc::bad_file_descriptor);
+
   DWORD flprotect;
   switch (Mode) {
   case readonly:  flprotect = PAGE_READONLY; break;
@@ -518,19 +522,10 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
 
 mapped_file_region::mapped_file_region(int fd, mapmode mode, uint64_t length,
                                        uint64_t offset, std::error_code &ec)
-    : Size(length), Mapping(),
-      FileHandle(INVALID_HANDLE_VALUE) {
-  FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
-  if (FileHandle == INVALID_HANDLE_VALUE) {
-    ec = make_error_code(errc::bad_file_descriptor);
-    return;
-  }
-
+    : Size(length), Mapping() {
   ec = init(fd, offset, mode);
-  if (ec) {
+  if (ec)
     Mapping = 0;
-    FileHandle = INVALID_HANDLE_VALUE;
-  }
 }
 
 mapped_file_region::~mapped_file_region() {
