@@ -4894,42 +4894,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     for (auto *M : Record->methods())
       DiagnoseAbsenceOfOverrideControl(M);
   }
-  // C++11 [dcl.constexpr]p8: A constexpr specifier for a non-static member
-  // function that is not a constructor declares that member function to be
-  // const. [...] The class of which that function is a member shall be
-  // a literal type.
-  //
-  // If the class has virtual bases, any constexpr members will already have
-  // been diagnosed by the checks performed on the member declaration, so
-  // suppress this (less useful) diagnostic.
-  //
-  // We delay this until we know whether an explicitly-defaulted (or deleted)
-  // destructor for the class is trivial.
-  if (LangOpts.CPlusPlus11 && !Record->isDependentType() &&
-      !Record->isLiteral() && !Record->getNumVBases()) {
-    for (const auto *M : Record->methods()) {
-      if (M->isConstexpr() && M->isInstance() && !isa<CXXConstructorDecl>(M)) {
-        switch (Record->getTemplateSpecializationKind()) {
-        case TSK_ImplicitInstantiation:
-        case TSK_ExplicitInstantiationDeclaration:
-        case TSK_ExplicitInstantiationDefinition:
-          // If a template instantiates to a non-literal type, but its members
-          // instantiate to constexpr functions, the template is technically
-          // ill-formed, but we allow it for sanity.
-          continue;
-
-        case TSK_Undeclared:
-        case TSK_ExplicitSpecialization:
-          RequireLiteralType(M->getLocation(), Context.getRecordType(Record),
-                             diag::err_constexpr_method_non_literal);
-          break;
-        }
-
-        // Only produce one error per class.
-        break;
-      }
-    }
-  }
 
   // ms_struct is a request to use the same ABI rules as MSVC.  Check
   // whether this class uses any C++ features that are implemented

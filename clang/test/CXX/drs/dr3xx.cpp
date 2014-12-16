@@ -206,7 +206,7 @@ namespace dr313 { // dr313: dup 299 c++11
 #endif
 }
 
-namespace dr314 { // dr314: dup 1710
+namespace dr314 { // FIXME 314: dup 1710
   template<typename T> struct A {
     template<typename U> struct B {};
   };
@@ -505,7 +505,7 @@ namespace dr341 {
 
 // dr342: na
 
-namespace dr343 { // dr343: no
+namespace dr343 { // FIXME 343: no
   // FIXME: dup 1710
   template<typename T> struct A {
     template<typename U> struct B {};

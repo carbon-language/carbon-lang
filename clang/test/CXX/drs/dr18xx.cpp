@@ -7,7 +7,7 @@
 // expected-no-diagnostics
 #endif
 
-void dr1891() { // dr1891: yes
+void dr1891() { // dr1891: 3.6
 #if __cplusplus >= 201103L
   int n;
   auto a = []{}; // expected-note 2{{candidate}}

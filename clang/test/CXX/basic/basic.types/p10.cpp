@@ -38,15 +38,14 @@ constexpr ClassTemp<int> classtemplate2[] = {};
 
 //  - it has a trivial destructor
 struct UserProvDtor {
-  constexpr int f() const; // expected-error {{non-literal type 'UserProvDtor' cannot have constexpr members}}
   ~UserProvDtor(); // expected-note {{has a user-provided destructor}}
 };
-
+constexpr int f(UserProvDtor) { return 0; } // expected-error {{'UserProvDtor' is not a literal type}}
 struct NonTrivDtor {
   constexpr NonTrivDtor();
-  constexpr int f() const; // expected-error {{non-literal type 'NonTrivDtor' cannot have constexpr members}}
   virtual ~NonTrivDtor() = default; // expected-note {{has a non-trivial destructor}} expected-note {{because it is virtual}}
 };
+constexpr int f(NonTrivDtor) { return 0; } // expected-error {{'NonTrivDtor' is not a literal type}}
 struct NonTrivDtorBase {
   ~NonTrivDtorBase();
 };
@@ -77,12 +76,12 @@ struct CtorTemplate {
 };
 struct CopyCtorOnly { // expected-note {{'CopyCtorOnly' is not literal because it is not an aggregate and has no constexpr constructors other than copy or move constructors}}
   constexpr CopyCtorOnly(CopyCtorOnly&);
-  constexpr int f() const; // expected-error {{non-literal type 'CopyCtorOnly' cannot have constexpr members}}
 };
+constexpr int f(CopyCtorOnly) { return 0; } // expected-error {{'CopyCtorOnly' is not a literal type}}
 struct MoveCtorOnly { // expected-note {{no constexpr constructors other than copy or move constructors}}
   constexpr MoveCtorOnly(MoveCtorOnly&&);
-  constexpr int f() const; // expected-error {{non-literal type 'MoveCtorOnly' cannot have constexpr members}}
 };
+constexpr int f(MoveCtorOnly) { return 0; } // expected-error {{'MoveCtorOnly' is not a literal type}}
 template<typename T>
 struct CtorArg {
   constexpr CtorArg(T);
@@ -110,8 +109,8 @@ constexpr int f(NonLitMember) {} // expected-error {{1st parameter type 'NonLitM
 struct NonLitBase :
   S { // expected-note {{base class 'S' of non-literal type}}
   constexpr NonLitBase();
-  constexpr int f() const { return 0; } // expected-error {{non-literal type 'NonLitBase' cannot have constexpr members}}
 };
+constexpr int f(NonLitBase) { return 0; } // expected-error {{'NonLitBase' is not a literal type}}
 struct LitMemBase : Agg {
   Agg agg;
 };

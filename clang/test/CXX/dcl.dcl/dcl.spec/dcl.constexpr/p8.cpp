@@ -36,10 +36,10 @@ template<typename T> constexpr T S::ts() { return T(); }
 
 namespace std_example {
 
-  class debug_flag { // expected-note {{not an aggregate and has no constexpr constructors}}
+  class debug_flag {
   public:
     explicit debug_flag(bool);
-    constexpr bool is_on() const; // expected-error {{non-literal type 'std_example::debug_flag' cannot have constexpr members}}
+    constexpr bool is_on() const; // ok (dr1684)
   private:
     bool flag;
   };

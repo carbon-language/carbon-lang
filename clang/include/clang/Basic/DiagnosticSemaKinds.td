@@ -1897,8 +1897,6 @@ def err_constexpr_ctor_missing_init : Error<
   "constexpr constructor must initialize all members">;
 def note_constexpr_ctor_missing_init : Note<
   "member not initialized by constructor">;
-def err_constexpr_method_non_literal : Error<
-  "non-literal type %0 cannot have constexpr members">;
 def note_non_literal_no_constexpr_ctors : Note<
   "%0 is not literal because it is not an aggregate and has no constexpr "
   "constructors other than copy or move constructors">;

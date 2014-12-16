@@ -5,13 +5,13 @@
 
 // expected-no-diagnostics
 
-namespace DR1550 { // dr1550: yes
+namespace dr1550 { // dr1550: yes
   int f(bool b, int n) {
     return (b ? (throw 0) : n) + (b ? n : (throw 0));
   }
 }
 
-namespace DR1560 { // dr1560: 3.5
+namespace dr1560 { // dr1560: 3.5
   void f(bool b, int n) {
     (b ? throw 0 : n) = (b ? n : throw 0) = 0;
   }
