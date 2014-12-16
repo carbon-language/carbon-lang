@@ -89,7 +89,7 @@ define <8 x float> @merge_8_floats(float* %ptr) {
 ; FAST32-NEXT: retq
 
 ; SLOW32: vmovups
-; SLOW32: vinsertf128
+; SLOW32-NEXT: vinsertf128
 ; SLOW32-NEXT: retq
 }
 
@@ -112,7 +112,34 @@ define <4 x double> @merge_4_doubles(double* %ptr) {
 ; FAST32-NEXT: retq
 
 ; SLOW32: vmovups
-; SLOW32: vinsertf128
+; SLOW32-NEXT: vinsertf128
+; SLOW32-NEXT: retq
+}
+
+; PR21771 ( http://llvm.org/bugs/show_bug.cgi?id=21771 ) 
+; Recognize and combine consecutive loads even when the
+; first of the combined loads is offset from the base address.
+define <4 x double> @merge_4_doubles_offset(double* %ptr) {
+  %arrayidx4 = getelementptr inbounds double* %ptr, i64 4
+  %arrayidx5 = getelementptr inbounds double* %ptr, i64 5
+  %arrayidx6 = getelementptr inbounds double* %ptr, i64 6
+  %arrayidx7 = getelementptr inbounds double* %ptr, i64 7
+  %e = load double* %arrayidx4, align 8
+  %f = load double* %arrayidx5, align 8
+  %g = load double* %arrayidx6, align 8
+  %h = load double* %arrayidx7, align 8
+  %vecinit4 = insertelement <4 x double> undef, double %e, i32 0
+  %vecinit5 = insertelement <4 x double> %vecinit4, double %f, i32 1
+  %vecinit6 = insertelement <4 x double> %vecinit5, double %g, i32 2
+  %vecinit7 = insertelement <4 x double> %vecinit6, double %h, i32 3
+  ret <4 x double> %vecinit7
+
+; ALL-LABEL: merge_4_doubles_offset
+; FAST32: vmovups
+; FAST32-NEXT: retq
+
+; SLOW32: vmovups
+; SLOW32-NEXT: vinsertf128
 ; SLOW32-NEXT: retq
 }
 

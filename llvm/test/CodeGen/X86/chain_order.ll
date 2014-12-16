@@ -1,13 +1,13 @@
 ; RUN: llc < %s -mcpu=corei7-avx -mtriple=x86_64-linux | FileCheck %s
 
-;CHECK-LABEL: cftx020:
-;CHECK: vmovsd  (%rdi), %xmm{{.*}}
-;CHECK: vmovsd  16(%rdi), %xmm{{.*}}
-;CHECK: vmovsd  24(%rdi), %xmm{{.*}}
-;CHECK: vmovhpd  8(%rdi), %xmm{{.*}}
-;CHECK: vmovupd %xmm{{.*}}, (%rdi)
-;CHECK: vmovupd %xmm{{.*}}, 16(%rdi)
-;CHECK: ret
+; CHECK-LABEL: cftx020:
+; CHECK: vmovsd  (%rdi), %xmm{{.*}}
+; CHECK-NEXT: vmovsd  16(%rdi), %xmm{{.*}}
+; CHECK-NEXT: vmovhpd  24(%rdi), %xmm{{.*}}
+; CHECK-NEXT: vmovhpd  8(%rdi), %xmm{{.*}}
+; CHECK: vmovupd %xmm{{.*}}, (%rdi)
+; CHECK-NEXT: vmovupd %xmm{{.*}}, 16(%rdi)
+; CHECK: ret
 
 ; A test from pifft (after SLP-vectorization) that fails when we drop the chain on newly merged loads.
 define void @cftx020(double* nocapture %a) {
