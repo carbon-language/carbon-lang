@@ -25,7 +25,11 @@ using std::experimental::optional;
 
 struct X
 {
+#if _LIBCPP_STD_VER > 14
+    constexpr int test() const {return 3;}
+#else
     constexpr int test() {return 3;}
+#endif
 };
 
 #endif  // _LIBCPP_STD_VER > 11
