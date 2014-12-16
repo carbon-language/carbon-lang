@@ -83,3 +83,7 @@ namespace copy_init {
   // allows extraneous braces around initializers.
   Y y3 = { { X(0) }, { 4 } }; // expected-error 2{{illegal initializer type}}
 }
+
+bool PR21836(_Atomic(int) *x) {
+    return *x;
+}
