@@ -2710,6 +2710,14 @@ class T_S2op_1 <string mnemonic, bits<4> RegTyBits, RegisterClass RCOut,
 class T_S2op_1_di <string mnemonic, bits<2> MajOp, bits<3> MinOp>
   : T_S2op_1 <mnemonic, 0b0100, DoubleRegs, IntRegs, MajOp, MinOp, 0>;
 
+let hasNewValue = 1 in
+class T_S2op_1_id <string mnemonic, bits<2> MajOp, bits<3> MinOp, bit isSat = 0>
+  : T_S2op_1 <mnemonic, 0b1000, IntRegs, DoubleRegs, MajOp, MinOp, isSat>;
+
+let hasNewValue = 1 in
+class T_S2op_1_ii <string mnemonic, bits<2> MajOp, bits<3> MinOp, bit isSat = 0>
+  : T_S2op_1 <mnemonic, 0b1100, IntRegs, IntRegs, MajOp, MinOp, isSat>;
+
 // Sign extend word to doubleword
 let isCodeGenOnly = 0 in
 def A2_sxtw   : T_S2op_1_di <"sxtw", 0b01, 0b000>;
@@ -2719,6 +2727,20 @@ def: Pat <(i64 (sext I32:$src)), (A2_sxtw I32:$src)>;
 //===----------------------------------------------------------------------===//
 // STYPE/ALU -
 //===----------------------------------------------------------------------===//
+
+
+// Swizzle the bytes of a word
+let isCodeGenOnly = 0 in
+def A2_swiz : T_S2op_1_ii <"swiz", 0b10, 0b111>;
+
+// Saturate
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  def A2_sat   : T_S2op_1_id <"sat", 0b11, 0b000>;
+  def A2_satb  : T_S2op_1_ii <"satb", 0b11, 0b111>;
+  def A2_satub : T_S2op_1_ii <"satub", 0b11, 0b110>;
+  def A2_sath  : T_S2op_1_ii <"sath", 0b11, 0b100>;
+  def A2_satuh : T_S2op_1_ii <"satuh", 0b11, 0b101>;
+}
 
 //===----------------------------------------------------------------------===//
 // STYPE/BIT +
