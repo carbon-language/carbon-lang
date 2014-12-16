@@ -1,19 +1,21 @@
-; RUN: llc -mtriple=x86_64-linux-gnu %s -o - | FileCheck %s
-; RUN: llc -mtriple=x86_64-linux-gnu -pre-RA-sched=fast %s -o - | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=i386-linux-gnu %s -o - | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=i386-linux-gnu -pre-RA-sched=fast %s -o - | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=x86_64-linux-gnu %s -o - | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=x86_64-linux-gnu -pre-RA-sched=fast %s -o - | FileCheck %s
 
 declare i32 @bar()
 
 define i64 @test_intervening_call(i64* %foo, i64 %bar, i64 %baz) {
 ; CHECK-LABEL: test_intervening_call:
 ; CHECK: cmpxchg
-; CHECK: pushfq
-; CHECK: popq [[FLAGS:%.*]]
+; CHECK: pushf[[LQ:[lq]]]
+; CHECK-NEXT: pop[[LQ]] [[FLAGS:%.*]]
 
-; CHECK: callq bar
+; CHECK-NEXT: call[[LQ]] bar
 
-; CHECK: pushq [[FLAGS]]
-; CHECK: popfq
-; CHECK: jne
+; CHECK-NEXT: push[[LQ]] [[FLAGS]]
+; CHECK-NEXT: popf[[LQ]]
+; CHECK-NEXT: jne
   %cx = cmpxchg i64* %foo, i64 %bar, i64 %baz seq_cst seq_cst
   %p = extractvalue { i64, i1 } %cx, 1
   call i32 @bar()
@@ -68,14 +70,13 @@ define i32 @test_feed_cmov(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: test_feed_cmov:
 
 ; CHECK: cmpxchg
-; CHECK: pushfq
-; CHECK: popq [[FLAGS:%.*]]
+; CHECK: pushf[[LQ:[lq]]]
+; CHECK-NEXT: pop[[LQ]] [[FLAGS:%.*]]
 
-; CHECK: callq bar
+; CHECK-NEXT: call[[LQ]] bar
 
-; CHECK: pushq [[FLAGS]]
-; CHECK: popfq
-
+; CHECK-NEXT: push[[LQ]] [[FLAGS]]
+; CHECK-NEXT: popf[[LQ]]
   %res = cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst seq_cst
   %success = extractvalue { i32, i1 } %res, 1
 

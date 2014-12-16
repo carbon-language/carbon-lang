@@ -954,11 +954,6 @@ def POP32rmr: I<0x8F, MRM0r, (outs GR32:$reg), (ins), "pop{l}\t$reg", [],
                 IIC_POP_REG>, OpSize32, Requires<[Not64BitMode]>;
 def POP32rmm: I<0x8F, MRM0m, (outs), (ins i32mem:$dst), "pop{l}\t$dst", [],
                 IIC_POP_MEM>, OpSize32, Requires<[Not64BitMode]>;
-
-def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", [], IIC_POP_F>,
-                OpSize16;
-def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", [], IIC_POP_FD>,
-                OpSize32, Requires<[Not64BitMode]>;
 } // mayLoad, SchedRW
 
 let mayStore = 1, SchedRW = [WriteStore] in {
@@ -987,13 +982,23 @@ def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
 def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
                    "push{l}\t$imm", [], IIC_PUSH_IMM>, OpSize32,
                    Requires<[Not64BitMode]>;
+} // mayStore, SchedRW
+}
 
+let Defs = [ESP, EFLAGS], Uses = [ESP], mayLoad = 1, hasSideEffects=0,
+    SchedRW = [WriteLoad] in {
+def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", [], IIC_POP_F>,
+                OpSize16;
+def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", [], IIC_POP_FD>,
+                OpSize32, Requires<[Not64BitMode]>;
+}
+
+let Defs = [ESP], Uses = [ESP, EFLAGS], mayStore = 1, hasSideEffects=0,
+    SchedRW = [WriteStore] in {
 def PUSHF16  : I<0x9C, RawFrm, (outs), (ins), "pushf{w}", [], IIC_PUSH_F>,
                  OpSize16;
 def PUSHF32  : I<0x9C, RawFrm, (outs), (ins), "pushf{l|d}", [], IIC_PUSH_F>,
                OpSize32, Requires<[Not64BitMode]>;
-
-} // mayStore, SchedRW
 }
 
 let Defs = [RSP], Uses = [RSP], hasSideEffects=0 in {

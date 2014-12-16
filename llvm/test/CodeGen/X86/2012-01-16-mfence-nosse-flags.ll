@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-linux -mattr=-sse | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=i686-linux -mattr=-sse | FileCheck %s
 ; PR11768
 
 @ptr = external global i8*

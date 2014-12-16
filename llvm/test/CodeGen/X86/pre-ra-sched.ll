@@ -1,4 +1,4 @@
-; RUN-disabled: llc < %s -mtriple=x86_64-apple-macosx -pre-RA-sched=ilp -debug-only=pre-RA-sched \
+; RUN-disabled: llc < %s -verify-machineinstrs -mtriple=x86_64-apple-macosx -pre-RA-sched=ilp -debug-only=pre-RA-sched \
 ; RUN-disabled:     2>&1 | FileCheck %s
 ; RUN: true
 ; REQUIRES: asserts
