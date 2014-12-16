@@ -533,32 +533,6 @@ _foo:
 
 ===-------------------------------------------------------------------------===
 
-We compile:
-
-unsigned test6(unsigned x) { 
-  return ((x & 0x00FF0000) >> 16) | ((x & 0x000000FF) << 16);
-}
-
-into:
-
-_test6:
-        lis r2, 255
-        rlwinm r3, r3, 16, 0, 31
-        ori r2, r2, 255
-        and r3, r3, r2
-        blr
-
-GCC gets it down to:
-
-_test6:
-        rlwinm r0,r3,16,8,15
-        rlwinm r3,r3,16,24,31
-        or r3,r3,r0
-        blr
-
-
-===-------------------------------------------------------------------------===
-
 Consider a function like this:
 
 float foo(float X) { return X + 1234.4123f; }
@@ -651,35 +625,6 @@ it would be better to produce:
 _bar: 
         addic r3,r3,-1
         subfe r3,r3,r3
-        blr
-
-===-------------------------------------------------------------------------===
-
-We currently compile 32-bit bswap:
-
-declare i32 @llvm.bswap.i32(i32 %A)
-define i32 @test(i32 %A) {
-        %B = call i32 @llvm.bswap.i32(i32 %A)
-        ret i32 %B
-}
-
-to:
-
-_test:
-        rlwinm r2, r3, 24, 16, 23
-        slwi r4, r3, 24
-        rlwimi r2, r3, 8, 24, 31
-        rlwimi r4, r3, 8, 8, 15
-        rlwimi r4, r2, 0, 16, 31
-        mr r3, r4
-        blr 
-
-it would be more efficient to produce:
-
-_foo:   mr r0,r3
-        rlwinm r3,r3,8,0xffffffff
-        rlwimi r3,r0,24,0,7
-        rlwimi r3,r0,24,16,23
         blr
 
 ===-------------------------------------------------------------------------===

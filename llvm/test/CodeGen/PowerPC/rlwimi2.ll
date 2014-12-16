@@ -1,7 +1,7 @@
 ; All of these ands and shifts should be folded into rlwimi's
 ; RUN: llc < %s -march=ppc32 -o %t
-; RUN: grep rlwimi %t | count 3
-; RUN: grep srwi   %t | count 1
+; RUN: grep rlwimi %t | count 4
+; RUN: not grep srwi %t
 ; RUN: not grep slwi %t
 
 define i16 @test1(i32 %srcA, i32 %srcB, i32 %alpha) nounwind {

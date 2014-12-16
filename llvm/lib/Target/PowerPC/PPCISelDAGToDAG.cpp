@@ -119,6 +119,7 @@ namespace {
     SDNode *Select(SDNode *N) override;
 
     SDNode *SelectBitfieldInsert(SDNode *N);
+    SDNode *SelectBitPermutation(SDNode *N);
 
     /// SelectCC - Select a comparison of the specified values with the
     /// specified condition code, returning the CR# of the expression.
@@ -529,6 +530,481 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
       return CurDAG->getMachineNode(PPC::RLWIMI, dl, MVT::i32, Ops);
     }
   }
+  return nullptr;
+}
+
+namespace {
+class BitPermutationSelector {
+  struct ValueBit {
+    SDValue V;
+
+    // The bit number in the value, using a convention where bit 0 is the
+    // lowest-order bit.
+    unsigned Idx;
+
+    enum Kind {
+      ConstZero,
+      Variable
+    } K;
+
+    ValueBit(SDValue V, unsigned I, Kind K = Variable)
+      : V(V), Idx(I), K(K) {}
+    ValueBit(Kind K = Variable)
+      : V(SDValue(nullptr, 0)), Idx(UINT32_MAX), K(K) {}
+
+    bool isZero() const {
+      return K == ConstZero;
+    }
+
+    bool hasValue() const {
+      return K == Variable;
+    }
+
+    SDValue getValue() const {
+      assert(hasValue() && "Cannot get the value of a constant bit");
+      return V;
+    }
+
+    unsigned getValueBitIndex() const {
+      assert(hasValue() && "Cannot get the value bit index of a constant bit");
+      return Idx;
+    }
+  };
+
+  // A bit group has the same underlying value and the same rotate factor.
+  struct BitGroup {
+    SDValue V;
+    unsigned RLAmt;
+    unsigned StartIdx, EndIdx;
+
+    BitGroup(SDValue V, unsigned R, unsigned S, unsigned E)
+      : V(V), RLAmt(R), StartIdx(S), EndIdx(E) {
+      DEBUG(dbgs() << "\tbit group for " << V.getNode() << " RLAmt = " << R <<
+                      " [" << S << ", " << E << "]\n");
+    }
+  };
+
+  // Information on each (Value, RLAmt) pair (like the number of groups
+  // associated with each) used to choose the lowering method.
+  struct ValueRotInfo {
+    SDValue V;
+    unsigned RLAmt;
+    unsigned NumGroups;
+    unsigned FirstGroupStartIdx;
+
+    ValueRotInfo()
+      : RLAmt(UINT32_MAX), NumGroups(0), FirstGroupStartIdx(UINT32_MAX) {}
+
+    // For sorting (in reverse order) by NumGroups, and then by
+    // FirstGroupStartIdx.
+    bool operator < (const ValueRotInfo &Other) const {
+      if (NumGroups > Other.NumGroups)
+        return true;
+      else if (NumGroups < Other.NumGroups)
+        return false;
+      else if (FirstGroupStartIdx < Other.FirstGroupStartIdx)
+        return true;
+      return false;
+    }
+  };
+
+  // Return true if something interesting was deduced, return false if we're
+  // providing only a generic representation of V (or something else likewise
+  // uninteresting for instruction selection).
+  bool getValueBits(SDValue V, SmallVector<ValueBit, 64> &Bits) {
+    switch (V.getOpcode()) {
+    default: break;
+    case ISD::ROTL:
+      if (isa<ConstantSDNode>(V.getOperand(1))) {
+        unsigned RotAmt = V.getConstantOperandVal(1);
+
+        SmallVector<ValueBit, 64> LHSBits(Bits.size());
+        getValueBits(V.getOperand(0), LHSBits);
+
+        for (unsigned i = 0; i < Bits.size(); ++i)
+          Bits[i] = LHSBits[i < RotAmt ? i + (Bits.size() - RotAmt) : i - RotAmt];
+
+        return true;
+      }
+      break;
+    case ISD::SHL:
+      if (isa<ConstantSDNode>(V.getOperand(1))) {
+        unsigned ShiftAmt = V.getConstantOperandVal(1);
+
+        SmallVector<ValueBit, 64> LHSBits(Bits.size());
+        getValueBits(V.getOperand(0), LHSBits);
+
+        for (unsigned i = ShiftAmt; i < Bits.size(); ++i)
+          Bits[i] = LHSBits[i - ShiftAmt];
+
+        for (unsigned i = 0; i < ShiftAmt; ++i)
+          Bits[i] = ValueBit(ValueBit::ConstZero);
+
+        return true;
+      }
+      break;
+    case ISD::SRL:
+      if (isa<ConstantSDNode>(V.getOperand(1))) {
+        unsigned ShiftAmt = V.getConstantOperandVal(1);
+
+        SmallVector<ValueBit, 64> LHSBits(Bits.size());
+        getValueBits(V.getOperand(0), LHSBits);
+
+        for (unsigned i = 0; i < Bits.size() - ShiftAmt; ++i)
+          Bits[i] = LHSBits[i + ShiftAmt];
+
+        for (unsigned i = Bits.size() - ShiftAmt; i < Bits.size(); ++i)
+          Bits[i] = ValueBit(ValueBit::ConstZero);
+
+        return true;
+      }
+      break;
+    case ISD::AND:
+      if (isa<ConstantSDNode>(V.getOperand(1))) {
+        uint64_t Mask = V.getConstantOperandVal(1);
+
+        SmallVector<ValueBit, 64> LHSBits(Bits.size());
+        bool LHSTrivial = getValueBits(V.getOperand(0), LHSBits);
+
+        for (unsigned i = 0; i < Bits.size(); ++i)
+          if (((Mask >> i) & 1) == 1)
+            Bits[i] = LHSBits[i];
+          else
+            Bits[i] = ValueBit(ValueBit::ConstZero);
+
+        // Mark this as interesting, only if the LHS was also interesting. This
+        // prevents the overall procedure from matching a single immediate 'and'
+        // (which is non-optimal because such an and might be folded with other
+        // things if we don't select it here).
+        return LHSTrivial;
+      }
+      break;
+    case ISD::OR: {
+      SmallVector<ValueBit, 64> LHSBits(Bits.size()), RHSBits(Bits.size());
+      getValueBits(V.getOperand(0), LHSBits);
+      getValueBits(V.getOperand(1), RHSBits);
+
+      bool AllDisjoint = true;
+      for (unsigned i = 0; i < Bits.size(); ++i)
+        if (LHSBits[i].isZero())
+          Bits[i] = RHSBits[i];
+        else if (RHSBits[i].isZero())
+          Bits[i] = LHSBits[i];
+        else {
+          AllDisjoint = false;
+          break;
+        }
+
+      if (!AllDisjoint)
+        break;
+
+      return true;
+    }
+    }
+
+    for (unsigned i = 0; i < Bits.size(); ++i)
+      Bits[i] = ValueBit(V, i);
+
+    return false;
+  }
+
+  // For each value (except the constant ones), compute the left-rotate amount
+  // to get it from its original to final position.
+  void computeRotationAmounts() {
+    HasZeros = false;
+    RLAmt.resize(Bits.size());
+    for (unsigned i = 0; i < Bits.size(); ++i)
+      if (Bits[i].hasValue()) {
+        unsigned VBI = Bits[i].getValueBitIndex();
+        if (i >= VBI)
+          RLAmt[i] = i - VBI;
+        else
+          RLAmt[i] = Bits.size() - (VBI - i);
+      } else if (Bits[i].isZero()) {
+        HasZeros = true;
+        RLAmt[i] = UINT32_MAX;
+      } else {
+        llvm_unreachable("Unknown value bit type");
+      }
+  }
+
+  // Collect groups of consecutive bits with the same underlying value and
+  // rotation factor.
+  void collectBitGroups() {
+    BitGroups.clear();
+
+    unsigned LastRLAmt = RLAmt[0];
+    SDValue LastValue = Bits[0].hasValue() ? Bits[0].getValue() : SDValue();
+    unsigned LastGroupStartIdx = 0;
+    for (unsigned i = 1; i < Bits.size(); ++i) {
+      unsigned ThisRLAmt = RLAmt[i];
+      SDValue ThisValue = Bits[i].hasValue() ? Bits[i].getValue() : SDValue();
+
+      // If this bit has the same underlying value and the same rotate factor as
+      // the last one, then they're part of the same group.
+      if (ThisRLAmt == LastRLAmt && ThisValue == LastValue)
+        continue;
+
+      if (LastValue.getNode())
+        BitGroups.push_back(BitGroup(LastValue, LastRLAmt, LastGroupStartIdx,
+                                     i-1));
+      LastRLAmt = ThisRLAmt;
+      LastValue = ThisValue;
+      LastGroupStartIdx = i;
+    }
+    if (LastValue.getNode())
+      BitGroups.push_back(BitGroup(LastValue, LastRLAmt, LastGroupStartIdx,
+                                   Bits.size()-1));
+
+    if (BitGroups.empty())
+      return;
+
+    // We might be able to combine the first and last groups.
+    if (BitGroups.size() > 1) {
+      // If the first and last groups are the same, then remove the first group
+      // in favor of the last group, making the ending index of the last group
+      // equal to the ending index of the to-be-removed first group.
+      if (BitGroups[0].StartIdx == 0 &&
+          BitGroups[BitGroups.size()-1].EndIdx == Bits.size()-1 &&
+          BitGroups[0].V == BitGroups[BitGroups.size()-1].V &&
+          BitGroups[0].RLAmt == BitGroups[BitGroups.size()-1].RLAmt) {
+        BitGroups[BitGroups.size()-1].EndIdx = BitGroups[0].EndIdx;
+        BitGroups.erase(BitGroups.begin());
+      }
+    }
+  }
+
+  // Take all (SDValue, RLAmt) pairs and sort them by the number of groups
+  // associated with each. If there is a degeneracy, pick the one that occurs
+  // first (in the final value).
+  void collectValueRotInfo() {
+    ValueRots.clear();
+
+    for (auto &BG : BitGroups) {
+      ValueRotInfo &VRI = ValueRots[std::make_pair(BG.V, BG.RLAmt)];
+      VRI.V = BG.V;
+      VRI.RLAmt = BG.RLAmt;
+      VRI.NumGroups += 1;
+      VRI.FirstGroupStartIdx = std::min(VRI.FirstGroupStartIdx, BG.StartIdx);
+    }
+
+    // Now that we've collected the various ValueRotInfo instances, we need to
+    // sort them.
+    ValueRotsVec.clear();
+    for (auto &I : ValueRots) {
+      ValueRotsVec.push_back(I.second);
+    }
+    std::sort(ValueRotsVec.begin(), ValueRotsVec.end());
+  }
+
+  SDValue getI32Imm(unsigned Imm) {
+    return CurDAG->getTargetConstant(Imm, MVT::i32);
+  }
+
+  // Depending on the number of groups for a particular value, it might be
+  // better to rotate, mask explicitly (using andi/andis), and then or the
+  // result. Select this part of the result first.
+  void SelectAndParts32(SDNode *N, SDValue &Res) {
+    SDLoc dl(N);
+
+    for (ValueRotInfo &VRI : ValueRotsVec) {
+      unsigned Mask = 0;
+      for (unsigned i = 0; i < Bits.size(); ++i) {
+        if (!Bits[i].hasValue() || Bits[i].getValue() != VRI.V)
+          continue;
+        if (RLAmt[i] != VRI.RLAmt)
+          continue;
+        Mask |= (1u << i);
+      }
+
+      // Compute the masks for andi/andis that would be necessary.
+      unsigned ANDIMask = (Mask & UINT16_MAX), ANDISMask = Mask >> 16;
+      assert((ANDIMask != 0 || ANDISMask != 0) &&
+             "No set bits in mask for value bit groups");
+      bool NeedsRotate = VRI.RLAmt != 0;
+
+      // We're trying to minimize the number of instructions. If we have one
+      // group, using one of andi/andis can break even.  If we have three
+      // groups, we can use both andi and andis and break even (to use both
+      // andi and andis we also need to or the results together). We need four
+      // groups if we also need to rotate. To use andi/andis we need to do more
+      // than break even because rotate-and-mask instructions tend to be easier
+      // to schedule.
+
+      // FIXME: We've biased here against using andi/andis, which is right for
+      // POWER cores, but not optimal everywhere. For example, on the A2,
+      // andi/andis have single-cycle latency whereas the rotate-and-mask
+      // instructions take two cycles, and it would be better to bias toward
+      // andi/andis in break-even cases.
+
+      unsigned NumAndInsts = (unsigned) NeedsRotate +
+                             (unsigned) (ANDIMask != 0) +
+                             (unsigned) (ANDISMask != 0) +
+                             (unsigned) (ANDIMask != 0 && ANDISMask != 0) +
+                             (unsigned) (bool) Res;
+      if (NumAndInsts >= VRI.NumGroups)
+        continue;
+
+      SDValue VRot;
+      if (VRI.RLAmt) {
+        SDValue Ops[] =
+          { VRI.V, getI32Imm(VRI.RLAmt), getI32Imm(0), getI32Imm(31) };
+        VRot = SDValue(CurDAG->getMachineNode(PPC::RLWINM, dl, MVT::i32,
+                                              Ops), 0);
+      } else {
+        VRot = VRI.V;
+      }
+
+      SDValue ANDIVal, ANDISVal;
+      if (ANDIMask != 0)
+        ANDIVal = SDValue(CurDAG->getMachineNode(PPC::ANDIo, dl, MVT::i32,
+                            VRot, getI32Imm(ANDIMask)), 0);
+      if (ANDISMask != 0)
+        ANDISVal = SDValue(CurDAG->getMachineNode(PPC::ANDISo, dl, MVT::i32,
+                             VRot, getI32Imm(ANDISMask)), 0);
+
+      SDValue TotalVal;
+      if (!ANDIVal)
+        TotalVal = ANDISVal;
+      else if (!ANDISVal)
+        TotalVal = ANDIVal;
+      else
+        TotalVal = SDValue(CurDAG->getMachineNode(PPC::OR, dl, MVT::i32,
+                             ANDIVal, ANDISVal), 0);
+
+      if (!Res)
+        Res = TotalVal;
+      else
+        Res = SDValue(CurDAG->getMachineNode(PPC::OR, dl, MVT::i32,
+                        Res, TotalVal), 0);
+
+      // Now, remove all groups with this underlying value and rotation
+      // factor.
+      for (auto I = BitGroups.begin(); I != BitGroups.end();) {
+        if (I->V == VRI.V && I->RLAmt == VRI.RLAmt)
+          I = BitGroups.erase(I);
+        else
+          ++I;
+      }
+    }
+  }
+
+  // Instruction selection for the 32-bit case.
+  SDNode *Select32(SDNode *N) {
+    SDLoc dl(N);
+    SDValue Res;
+
+    // Take care of cases that should use andi/andis first.
+    SelectAndParts32(N, Res);
+
+    // If we've not yet selected a 'starting' instruction, and we have no zeros
+    // to fill in, select the (Value, RLAmt) with the highest priority (largest
+    // number of groups), and start with this rotated value.
+    if (!HasZeros && !Res) {
+      ValueRotInfo &VRI = ValueRotsVec[0];
+      if (VRI.RLAmt) {
+        SDValue Ops[] =
+          { VRI.V, getI32Imm(VRI.RLAmt), getI32Imm(0), getI32Imm(31) };
+        Res = SDValue(CurDAG->getMachineNode(PPC::RLWINM, dl, MVT::i32, Ops), 0);
+      } else {
+        Res = VRI.V;
+      }
+
+      // Now, remove all groups with this underlying value and rotation factor.
+      for (auto I = BitGroups.begin(); I != BitGroups.end();) {
+        if (I->V == VRI.V && I->RLAmt == VRI.RLAmt)
+          I = BitGroups.erase(I);
+        else
+          ++I;
+      }
+    }
+
+    // Insert the other groups (one at a time).
+    for (auto &BG : BitGroups) {
+      if (!Res.getNode()) {
+        SDValue Ops[] =
+          { BG.V, getI32Imm(BG.RLAmt), getI32Imm(Bits.size() - BG.EndIdx - 1),
+            getI32Imm(Bits.size() - BG.StartIdx - 1) };
+        Res = SDValue(CurDAG->getMachineNode(PPC::RLWINM, dl, MVT::i32, Ops), 0);
+      } else {
+        SDValue Ops[] =
+          { Res, BG.V, getI32Imm(BG.RLAmt), getI32Imm(Bits.size() - BG.EndIdx - 1),
+            getI32Imm(Bits.size() - BG.StartIdx - 1) };
+        Res = SDValue(CurDAG->getMachineNode(PPC::RLWIMI, dl, MVT::i32, Ops), 0);
+      }
+    }
+
+    return Res.getNode();
+  }
+
+  SmallVector<ValueBit, 64> Bits;
+
+  bool HasZeros;
+  SmallVector<unsigned, 64> RLAmt;
+
+  SmallVector<BitGroup, 16> BitGroups;
+
+  DenseMap<std::pair<SDValue, unsigned>, ValueRotInfo> ValueRots;
+  SmallVector<ValueRotInfo, 16> ValueRotsVec;
+
+  SelectionDAG *CurDAG;
+
+public:
+  BitPermutationSelector(SelectionDAG *DAG)
+    : CurDAG(DAG) {}
+
+  // Here we try to match complex bit permutations into a set of
+  // rotate-and-shift/shift/and/or instructions, using a set of heuristics
+  // known to produce optimial code for common cases (like i32 byte swapping).
+  SDNode *Select(SDNode *N) {
+    Bits.resize(N->getValueType(0).getSizeInBits());
+    if (!getValueBits(SDValue(N, 0), Bits))
+      return nullptr;
+
+    DEBUG(dbgs() << "Considering bit-permutation-based instruction"
+                    " selection for:    ");
+    DEBUG(N->dump(CurDAG));
+
+    // Fill it RLAmt and set HasZeros.
+    computeRotationAmounts();
+
+    // Fill in BitGroups.
+    collectBitGroups();
+    if (BitGroups.empty())
+      return nullptr;
+
+    // Fill in ValueRotsVec.
+    collectValueRotInfo();
+
+    if (Bits.size() == 32) {
+      return Select32(N);
+    } else {
+      assert(Bits.size() == 64 && "Not 64 bits here?");
+      // TODO: The 64-bit case!
+    }
+
+    return nullptr;
+  }
+};
+} // anonymous namespace
+
+SDNode *PPCDAGToDAGISel::SelectBitPermutation(SDNode *N) {
+  if (N->getValueType(0) != MVT::i32 &&
+      N->getValueType(0) != MVT::i64)
+    return nullptr;
+
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::ROTL:
+  case ISD::SHL:
+  case ISD::SRL:
+  case ISD::AND:
+  case ISD::OR: {
+    BitPermutationSelector BPS(CurDAG);
+    return BPS.Select(N);
+  }
+  }
+
   return nullptr;
 }
 
@@ -946,6 +1422,10 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   if (N->getOpcode() == ISD::ADD &&
       N->getOperand(1).getOpcode() == ISD::TargetConstant)
     llvm_unreachable("Invalid ADD with TargetConstant operand");
+
+  // Try matching complex bit permutations before doing anything else.
+  if (SDNode *NN = SelectBitPermutation(N))
+    return NN;
 
   switch (N->getOpcode()) {
   default: break;
