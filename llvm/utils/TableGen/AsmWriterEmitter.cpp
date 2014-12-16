@@ -655,20 +655,26 @@ public:
   std::pair<StringRef, StringRef::iterator> parseName(StringRef::iterator Start,
                                                       StringRef::iterator End) {
     StringRef::iterator I = Start;
+    StringRef::iterator Next;
     if (*I == '{') {
       // ${some_name}
       Start = ++I;
       while (I != End && *I != '}')
         ++I;
+      Next = I;
+      // eat the final '}'
+      if (Next != End)
+        ++Next;
     } else {
       // $name, just eat the usual suspects.
       while (I != End &&
              ((*I >= 'a' && *I <= 'z') || (*I >= 'A' && *I <= 'Z') ||
               (*I >= '0' && *I <= '9') || *I == '_'))
         ++I;
+      Next = I;
     }
 
-    return std::make_pair(StringRef(Start, I - Start), I);
+    return std::make_pair(StringRef(Start, I - Start), Next);
   }
 
   void print(raw_ostream &O) {
