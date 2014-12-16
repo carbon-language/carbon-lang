@@ -181,7 +181,6 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   friend class InstVisitor<Verifier>;
 
   LLVMContext *Context;
-  const DataLayout *DL;
   DominatorTree DT;
 
   /// \brief When verifying a basic block, keep track of all of the
@@ -201,8 +200,7 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
 
 public:
   explicit Verifier(raw_ostream &OS = dbgs())
-      : VerifierSupport(OS), Context(nullptr), DL(nullptr),
-        PersonalityFn(nullptr) {}
+      : VerifierSupport(OS), Context(nullptr), PersonalityFn(nullptr) {}
 
   bool verify(const Function &F) {
     M = F.getParent();
@@ -365,7 +363,6 @@ private:
   void VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
                            const Value *V);
 
-  void VerifyBitcastType(const Value *V, Type *DestTy, Type *SrcTy);
   void VerifyConstantExprBitcastType(const ConstantExpr *CE);
 };
 class DebugInfoVerifier : public VerifierSupport {
@@ -1019,48 +1016,13 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
   }
 }
 
-void Verifier::VerifyBitcastType(const Value *V, Type *DestTy, Type *SrcTy) {
-  // Get the size of the types in bits, we'll need this later
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
-
-  // BitCast implies a no-op cast of type only. No bits change.
-  // However, you can't cast pointers to anything but pointers.
-  Assert1(SrcTy->isPointerTy() == DestTy->isPointerTy(),
-          "Bitcast requires both operands to be pointer or neither", V);
-  Assert1(SrcBitSize == DestBitSize,
-          "Bitcast requires types of same width", V);
-
-  // Disallow aggregates.
-  Assert1(!SrcTy->isAggregateType(),
-          "Bitcast operand must not be aggregate", V);
-  Assert1(!DestTy->isAggregateType(),
-          "Bitcast type must not be aggregate", V);
-
-  // Without datalayout, assume all address spaces are the same size.
-  // Don't check if both types are not pointers.
-  // Skip casts between scalars and vectors.
-  if (!DL ||
-      !SrcTy->isPtrOrPtrVectorTy() ||
-      !DestTy->isPtrOrPtrVectorTy() ||
-      SrcTy->isVectorTy() != DestTy->isVectorTy()) {
-    return;
-  }
-
-  unsigned SrcAS = SrcTy->getPointerAddressSpace();
-  unsigned DstAS = DestTy->getPointerAddressSpace();
-
-  Assert1(SrcAS == DstAS,
-          "Bitcasts between pointers of different address spaces is not legal."
-          "Use AddrSpaceCast instead.", V);
-}
-
 void Verifier::VerifyConstantExprBitcastType(const ConstantExpr *CE) {
-  if (CE->getOpcode() == Instruction::BitCast) {
-    Type *SrcTy = CE->getOperand(0)->getType();
-    Type *DstTy = CE->getType();
-    VerifyBitcastType(CE, DstTy, SrcTy);
-  }
+  if (CE->getOpcode() != Instruction::BitCast)
+    return;
+
+  Assert1(CastInst::castIsValid(Instruction::BitCast, CE->getOperand(0),
+                                CE->getType()),
+          "Invalid bitcast", CE);
 }
 
 bool Verifier::VerifyAttributeCount(AttributeSet Attrs, unsigned Params) {
@@ -1541,9 +1503,9 @@ void Verifier::visitIntToPtrInst(IntToPtrInst &I) {
 }
 
 void Verifier::visitBitCastInst(BitCastInst &I) {
-  Type *SrcTy = I.getOperand(0)->getType();
-  Type *DestTy = I.getType();
-  VerifyBitcastType(&I, DestTy, SrcTy);
+  Assert1(
+      CastInst::castIsValid(Instruction::BitCast, I.getOperand(0), I.getType()),
+      "Invalid bitcast", &I);
   visitInstruction(I);
 }
 
