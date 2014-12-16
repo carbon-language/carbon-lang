@@ -449,7 +449,9 @@ endif
 ifneq "$(DSYM)" ""
 	$(RM) -r "$(DSYM)"
 endif
-	
+ifeq "$(OS)" "Windows_NT"
+	$(RM) "$(EXE).manifest" $(wildcard *.pdb *.ilk)
+endif
 
 #----------------------------------------------------------------------
 # From http://blog.melski.net/tag/debugging-makefiles/
