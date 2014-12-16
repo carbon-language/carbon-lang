@@ -130,3 +130,16 @@ void UseOverload() {
   // expected-error@+1 {{use of undeclared identifier 'resulta'; did you mean 'result'?}}
   Overload(resulta);
 }
+
+namespace PR21925 {
+struct X {
+  int get() { return 7; }  // expected-note {{'get' declared here}}
+};
+void test() {
+  X variable;  // expected-note {{'variable' declared here}}
+
+  // expected-error@+2 {{use of undeclared identifier 'variableX'; did you mean 'variable'?}}
+  // expected-error@+1 {{no member named 'getX' in 'PR21925::X'; did you mean 'get'?}}
+  int x = variableX.getX();
+}
+}
