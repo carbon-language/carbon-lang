@@ -290,12 +290,8 @@ def note_pp_ambiguous_macro_chosen : Note<
   "expanding this definition of %0">;
 def note_pp_ambiguous_macro_other : Note<
   "other definition of %0">;
-def warn_pp_macro_hides_keyword : Warning<
-  "keyword is hidden by macro definition">,
-  InGroup<KeywordAsMacro>;
-def warn_pp_macro_is_reserved_id : Warning<
-  "macro name is a reserved identifier">, DefaultIgnore,
-  InGroup<ReservedIdAsMacro>;
+def warn_pp_macro_hides_keyword : Extension<
+  "keyword is hidden by macro definition">, InGroup<KeywordAsMacro>;
 
 def pp_invalid_string_literal : Warning<
   "invalid string literal, ignoring final '\\'">;
