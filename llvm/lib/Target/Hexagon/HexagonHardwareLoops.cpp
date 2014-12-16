@@ -832,7 +832,7 @@ CountValue *HexagonHardwareLoops::computeCount(MachineLoop *Loop,
 
     // Generate NormR = LSR DistR, Shift.
     unsigned LsrR = MRI->createVirtualRegister(IntRC);
-    const MCInstrDesc &LsrD = TII->get(Hexagon::LSR_ri);
+    const MCInstrDesc &LsrD = TII->get(Hexagon::S2_lsr_i_r);
     BuildMI(*PH, InsertPos, DL, LsrD, LsrR)
       .addReg(AdjR, 0, AdjSR)
       .addImm(Shift);

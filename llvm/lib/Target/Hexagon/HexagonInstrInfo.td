@@ -3106,36 +3106,59 @@ def C2_tfrrp: SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs),
 //===----------------------------------------------------------------------===//
 // STYPE/SHIFT +
 //===----------------------------------------------------------------------===//
+class S_2OpInstImm<string Mnemonic, bits<3>MajOp, bits<3>MinOp,
+                   Operand Imm, list<dag> pattern = [], bit isRnd = 0>
+  : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, Imm:$src2),
+           "$dst = "#Mnemonic#"($src1, #$src2)"#!if(isRnd, ":rnd", ""),
+           pattern> {
+  bits<5> src1;
+  bits<5> dst;
+  let IClass = 0b1000;
+  let Inst{27-24} = 0;
+  let Inst{23-21} = MajOp;
+  let Inst{20-16} = src1;
+  let Inst{7-5} = MinOp;
+  let Inst{4-0} = dst;
+}
+
+class S_2OpInstImmI6<string Mnemonic, SDNode OpNode, bits<3>MinOp>
+  : S_2OpInstImm<Mnemonic, 0b000, MinOp, u6Imm,
+  [(set (i64 DoubleRegs:$dst), (OpNode (i64 DoubleRegs:$src1),
+                                        u6ImmPred:$src2))]> {
+  bits<6> src2;
+  let Inst{13-8} = src2;
+}
+
 // Shift by immediate.
-def ASR_ri : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-             "$dst = asr($src1, #$src2)",
-             [(set (i32 IntRegs:$dst), (sra (i32 IntRegs:$src1),
-                                            u5ImmPred:$src2))]>;
+let isCodeGenOnly = 0 in {
+def S2_asr_i_p : S_2OpInstImmI6<"asr", sra, 0b000>;
+def S2_asl_i_p : S_2OpInstImmI6<"asl", shl, 0b010>;
+def S2_lsr_i_p : S_2OpInstImmI6<"lsr", srl, 0b001>;
+}
 
-def ASRd_ri : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, u6Imm:$src2),
-              "$dst = asr($src1, #$src2)",
-              [(set (i64 DoubleRegs:$dst), (sra (i64 DoubleRegs:$src1),
-                                                u6ImmPred:$src2))]>;
+// Shift left by small amount and add.
+let AddedComplexity = 100, hasNewValue = 1, hasSideEffects = 0,
+    isCodeGenOnly = 0 in
+def S2_addasl_rrri: SInst <(outs IntRegs:$Rd),
+                           (ins IntRegs:$Rt, IntRegs:$Rs, u3Imm:$u3),
+  "$Rd = addasl($Rt, $Rs, #$u3)" ,
+  [(set (i32 IntRegs:$Rd), (add (i32 IntRegs:$Rt),
+                                (shl (i32 IntRegs:$Rs), u3ImmPred:$u3)))],
+  "", S_3op_tc_2_SLOT23> {
+    bits<5> Rd;
+    bits<5> Rt;
+    bits<5> Rs;
+    bits<3> u3;
 
-def ASL : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-          "$dst = asl($src1, #$src2)",
-          [(set (i32 IntRegs:$dst), (shl (i32 IntRegs:$src1),
-                                         u5ImmPred:$src2))]>;
+    let IClass = 0b1100;
 
-def ASLd_ri : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, u6Imm:$src2),
-              "$dst = asl($src1, #$src2)",
-              [(set (i64 DoubleRegs:$dst), (shl (i64 DoubleRegs:$src1),
-                                                u6ImmPred:$src2))]>;
-
-def LSR_ri : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-             "$dst = lsr($src1, #$src2)",
-             [(set (i32 IntRegs:$dst), (srl (i32 IntRegs:$src1),
-                                            u5ImmPred:$src2))]>;
-
-def LSRd_ri : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, u6Imm:$src2),
-              "$dst = lsr($src1, #$src2)",
-              [(set (i64 DoubleRegs:$dst), (srl (i64 DoubleRegs:$src1),
-                                                u6ImmPred:$src2))]>;
+    let Inst{27-21} = 0b0100000;
+    let Inst{20-16} = Rs;
+    let Inst{13}    = 0b0;
+    let Inst{12-8}  = Rt;
+    let Inst{7-5}   = u3;
+    let Inst{4-0}   = Rd;
+  }
 
 // Shift by immediate and add.
 let AddedComplexity = 100 in
@@ -4025,7 +4048,7 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
            (i32
             (EXTRACT_SUBREG
              (i64
-              (LSRd_ri
+              (S2_lsr_i_p
                (i64
                 (M2_dpmpyuu_acc_s0
                  (i64
@@ -4035,7 +4058,7 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                      (i32
                       (EXTRACT_SUBREG
                        (i64
-                        (LSRd_ri
+                        (S2_lsr_i_p
                          (i64
                           (M2_dpmpyuu_s0 
                             (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
@@ -4060,7 +4083,7 @@ def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
           (i32
            (EXTRACT_SUBREG
             (i64
-             (LSRd_ri
+             (S2_lsr_i_p
               (i64
                (M2_dpmpyss_acc_s0
                 (i64
@@ -4070,7 +4093,7 @@ def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                     (i32
                      (EXTRACT_SUBREG
                       (i64
-                       (LSRd_ri
+                       (S2_lsr_i_p
                         (i64
                          (M2_dpmpyuu_s0 
                            (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
