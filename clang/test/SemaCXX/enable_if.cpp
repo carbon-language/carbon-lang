@@ -77,3 +77,44 @@ void test() {
   typedep(1);
   typedep(n);  // expected-note{{in instantiation of function template specialization 'typedep<Nothing>' requested here}}
 }
+
+template <typename T> class C {
+  void f() __attribute__((enable_if(T::expr == 0, ""))) {}
+  void g() { f(); }
+};
+
+int fn3(bool b) __attribute__((enable_if(b, "")));
+template <class T> void test3() {
+  fn3(sizeof(T) == 1);
+}
+
+// FIXME: issue an error (without instantiation) because ::h(T()) is not
+// convertible to bool, because return types aren't overloadable.
+void h(int);
+template <typename T> void outer() {
+  void local_function() __attribute__((enable_if(::h(T()), "")));
+  local_function();
+};
+
+namespace PR20988 {
+  struct Integer {
+    Integer(int);
+  };
+
+  int fn1(const Integer &) __attribute__((enable_if(true, "")));
+  template <class T> void test1() {
+    int &expr = T::expr();
+    fn1(expr);
+  }
+
+  int fn2(const Integer &) __attribute__((enable_if(false, "")));  // expected-note{{candidate disabled}}
+  template <class T> void test2() {
+    int &expr = T::expr();
+    fn2(expr);  // expected-error{{no matching function for call to 'fn2'}}
+  }
+
+  int fn3(bool b) __attribute__((enable_if(b, "")));
+  template <class T> void test3() {
+    fn3(sizeof(T) == 1);
+  }
+}

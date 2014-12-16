@@ -5792,6 +5792,7 @@ EnableIfAttr *Sema::CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
   // Convert the arguments.
   SmallVector<Expr *, 16> ConvertedArgs;
   bool InitializationFailed = false;
+  bool ContainsValueDependentExpr = false;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     if (i == 0 && !MissingImplicitThis && isa<CXXMethodDecl>(Function) &&
         !cast<CXXMethodDecl>(Function)->isStatic() &&
@@ -5804,6 +5805,7 @@ EnableIfAttr *Sema::CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
         InitializationFailed = true;
         break;
       }
+      ContainsValueDependentExpr |= R.get()->isValueDependent();
       ConvertedArgs.push_back(R.get());
     } else {
       ExprResult R =
@@ -5816,6 +5818,7 @@ EnableIfAttr *Sema::CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
         InitializationFailed = true;
         break;
       }
+      ContainsValueDependentExpr |= R.get()->isValueDependent();
       ConvertedArgs.push_back(R.get());
     }
   }
@@ -5826,9 +5829,16 @@ EnableIfAttr *Sema::CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
   for (AttrVec::iterator I = Attrs.begin(); I != E; ++I) {
     APValue Result;
     EnableIfAttr *EIA = cast<EnableIfAttr>(*I);
+    if (EIA->getCond()->isValueDependent()) {
+      // Don't even try now, we'll examine it after instantiation.
+      continue;
+    }
+
     if (!EIA->getCond()->EvaluateWithSubstitution(
-            Result, Context, Function, llvm::makeArrayRef(ConvertedArgs)) ||
-        !Result.isInt() || !Result.getInt().getBoolValue()) {
+            Result, Context, Function, llvm::makeArrayRef(ConvertedArgs))) {
+      if (!ContainsValueDependentExpr)
+        return EIA;
+    } else if (!Result.isInt() || !Result.getInt().getBoolValue()) {
       return EIA;
     }
   }
