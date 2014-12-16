@@ -714,6 +714,7 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm)
   JumpIsExpensive = false;
   PredictableSelectIsExpensive = false;
   MaskAndBranchFoldingIsLegal = false;
+  EnableExtLdPromotion = false;
   HasFloatingPointExceptions = true;
   StackPointerRegisterToSaveRestore = 0;
   ExceptionPointerRegister = 0;
