@@ -659,21 +659,25 @@ func (ctx *manglerContext) mangleFunctionName(f *ssa.Function) string {
 		return b.String()
 	}
 
-	pkg := f.Pkg
-	var pkgobj *types.Package
-	if pkg != nil {
-		pkgobj = pkg.Object
-	} else if f.Signature.Recv() != nil {
-		pkgobj = f.Signature.Recv().Pkg()
-	} else {
+	// Synthetic bound and thunk functions are special cases; they can only be
+	// distinguished using private data that is only exposed via String().
+	if strings.HasSuffix(f.Name(), "$bound") || strings.HasSuffix(f.Name(), "$thunk") {
 		b.WriteString(f.String())
 		return b.String()
 	}
 
+	var pkg *types.Package
+	if f.Pkg != nil {
+		pkg = f.Pkg.Object
+	} else if !f.Object().Exported() {
+		pkg = f.Object().Pkg()
+	}
+
 	if pkg != nil {
-		ctx.manglePackagePath(pkgobj.Path(), &b)
+		ctx.manglePackagePath(pkg.Path(), &b)
 		b.WriteRune('.')
 	}
+
 	if f.Signature.Recv() == nil && f.Name() == "init" {
 		b.WriteString(".import")
 	} else {
