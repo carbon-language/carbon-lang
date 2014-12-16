@@ -43,20 +43,6 @@ installheaders::
 	chmod 644 $(HEADER_DIR)/c++/v1/ext/*
 	chmod 755 $(HEADER_DIR)/c++/v1/experimental
 	chmod 644 $(HEADER_DIR)/c++/v1/experimental/*
-	chmod 755 $(HEADER_DIR)/c++/v1/support
-	chmod 644 $(HEADER_DIR)/c++/v1/support/*
-	chmod 755 $(HEADER_DIR)/c++/v1/support/android
-	chmod 644 $(HEADER_DIR)/c++/v1/support/android/*
-	chmod 755 $(HEADER_DIR)/c++/v1/support/ibm
-	chmod 644 $(HEADER_DIR)/c++/v1/support/ibm/*
-	chmod 755 $(HEADER_DIR)/c++/v1/support/newlib
-	chmod 644 $(HEADER_DIR)/c++/v1/support/newlib/*
-	chmod 755 $(HEADER_DIR)/c++/v1/support/solaris
-	chmod 644 $(HEADER_DIR)/c++/v1/support/solaris/*
-	chmod 755 $(HEADER_DIR)/c++/v1/support/win32
-	chmod 644 $(HEADER_DIR)/c++/v1/support/win32/*
-	chmod 755 $(HEADER_DIR)/c++/v1/support/xlocale
-	chmod 644 $(HEADER_DIR)/c++/v1/support/xlocale/*
 
 install::
 
