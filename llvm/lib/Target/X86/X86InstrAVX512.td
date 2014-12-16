@@ -652,6 +652,9 @@ let ExeDomain = SSEPackedDouble in {
                               avx512vl_f64_info>, VEX_W, EVEX_CD8<64, CD8VT1>;
 }
 
+// avx512_broadcast_pat introduces patterns for broadcast with a scalar argument.
+// Later, we can canonize broadcast instructions before ISel phase and 
+// eliminate additional patterns on ISel.
 // SrcRC_v and SrcRC_s are RegisterClasses for vector and scalar
 // representations of source
 multiclass avx512_broadcast_pat<string InstName, SDNode OpNode,
