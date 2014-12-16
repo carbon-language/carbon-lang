@@ -3283,7 +3283,8 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ClassTemplateSpecialization: {
     const auto *Spec = cast<ClassTemplateSpecializationDecl>(D);
     if (DebugInfo &&
-        Spec->getSpecializationKind() == TSK_ExplicitInstantiationDefinition)
+        Spec->getSpecializationKind() == TSK_ExplicitInstantiationDefinition &&
+        Spec->hasDefinition())
       DebugInfo->completeTemplateDefinition(*Spec);
     break;
   }
