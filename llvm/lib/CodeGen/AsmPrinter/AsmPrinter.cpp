@@ -856,8 +856,6 @@ void AsmPrinter::EmitFunctionBody() {
   OutStreamer.AddBlankLine();
 }
 
-static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP);
-
 bool AsmPrinter::doFinalization(Module &M) {
   // Emit global variables.
   for (const auto &G : M.globals())
@@ -978,7 +976,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     EmitVisibility(Name, Alias.getVisibility());
 
     // Emit the directives as assignments aka .set:
-    OutStreamer.EmitAssignment(Name, lowerConstant(Alias.getAliasee(), *this));
+    OutStreamer.EmitAssignment(Name, lowerConstant(Alias.getAliasee()));
   }
 
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
@@ -1505,10 +1503,8 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalObject *GV) const {
 // Constant emission.
 //===----------------------------------------------------------------------===//
 
-/// lowerConstant - Lower the specified LLVM Constant to an MCExpr.
-///
-static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
-  MCContext &Ctx = AP.OutContext;
+const MCExpr *AsmPrinter::lowerConstant(const Constant *CV) {
+  MCContext &Ctx = OutContext;
 
   if (CV->isNullValue() || isa<UndefValue>(CV))
     return MCConstantExpr::Create(0, Ctx);
@@ -1517,19 +1513,18 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     return MCConstantExpr::Create(CI->getZExtValue(), Ctx);
 
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
-    return MCSymbolRefExpr::Create(AP.getSymbol(GV), Ctx);
+    return MCSymbolRefExpr::Create(getSymbol(GV), Ctx);
 
   if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV))
-    return MCSymbolRefExpr::Create(AP.GetBlockAddressSymbol(BA), Ctx);
+    return MCSymbolRefExpr::Create(GetBlockAddressSymbol(BA), Ctx);
 
   const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV);
   if (!CE) {
     llvm_unreachable("Unknown constant value to lower!");
   }
 
-  if (const MCExpr *RelocExpr =
-          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, *AP.Mang,
-                                                              AP.TM))
+  if (const MCExpr *RelocExpr
+      = getObjFileLowering().getExecutableRelativeSymbol(CE, *Mang, TM))
     return RelocExpr;
 
   switch (CE->getOpcode()) {
@@ -1538,9 +1533,9 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     // opportunities. Attempt to fold the expression using DataLayout as a
     // last resort before giving up.
     if (Constant *C = ConstantFoldConstantExpression(
-            CE, AP.TM.getSubtargetImpl()->getDataLayout()))
+            CE, TM.getSubtargetImpl()->getDataLayout()))
       if (C != CE)
-        return lowerConstant(C, AP);
+        return lowerConstant(C);
 
     // Otherwise report the problem to the user.
     {
@@ -1548,16 +1543,16 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
       raw_string_ostream OS(S);
       OS << "Unsupported expression in static initializer: ";
       CE->printAsOperand(OS, /*PrintType=*/false,
-                     !AP.MF ? nullptr : AP.MF->getFunction()->getParent());
+                     !MF ? nullptr : MF->getFunction()->getParent());
       report_fatal_error(OS.str());
     }
   case Instruction::GetElementPtr: {
-    const DataLayout &DL = *AP.TM.getSubtargetImpl()->getDataLayout();
+    const DataLayout &DL = *TM.getSubtargetImpl()->getDataLayout();
     // Generate a symbolic expression for the byte address
     APInt OffsetAI(DL.getPointerTypeSizeInBits(CE->getType()), 0);
     cast<GEPOperator>(CE)->accumulateConstantOffset(DL, OffsetAI);
 
-    const MCExpr *Base = lowerConstant(CE->getOperand(0), AP);
+    const MCExpr *Base = lowerConstant(CE->getOperand(0));
     if (!OffsetAI)
       return Base;
 
@@ -1573,26 +1568,26 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     // is reasonable to treat their delta as a 32-bit value.
     // FALL THROUGH.
   case Instruction::BitCast:
-    return lowerConstant(CE->getOperand(0), AP);
+    return lowerConstant(CE->getOperand(0));
 
   case Instruction::IntToPtr: {
-    const DataLayout &DL = *AP.TM.getSubtargetImpl()->getDataLayout();
+    const DataLayout &DL = *TM.getSubtargetImpl()->getDataLayout();
     // Handle casts to pointers by changing them into casts to the appropriate
     // integer type.  This promotes constant folding and simplifies this code.
     Constant *Op = CE->getOperand(0);
     Op = ConstantExpr::getIntegerCast(Op, DL.getIntPtrType(CV->getType()),
                                       false/*ZExt*/);
-    return lowerConstant(Op, AP);
+    return lowerConstant(Op);
   }
 
   case Instruction::PtrToInt: {
-    const DataLayout &DL = *AP.TM.getSubtargetImpl()->getDataLayout();
+    const DataLayout &DL = *TM.getSubtargetImpl()->getDataLayout();
     // Support only foldable casts to/from pointers that can be eliminated by
     // changing the pointer to the appropriately sized integer type.
     Constant *Op = CE->getOperand(0);
     Type *Ty = CE->getType();
 
-    const MCExpr *OpExpr = lowerConstant(Op, AP);
+    const MCExpr *OpExpr = lowerConstant(Op);
 
     // We can emit the pointer value into this slot if the slot is an
     // integer slot equal to the size of the pointer.
@@ -1618,8 +1613,8 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor: {
-    const MCExpr *LHS = lowerConstant(CE->getOperand(0), AP);
-    const MCExpr *RHS = lowerConstant(CE->getOperand(1), AP);
+    const MCExpr *LHS = lowerConstant(CE->getOperand(0));
+    const MCExpr *RHS = lowerConstant(CE->getOperand(1));
     switch (CE->getOpcode()) {
     default: llvm_unreachable("Unknown binary operator constant cast expr");
     case Instruction::Add: return MCBinaryExpr::CreateAdd(LHS, RHS, Ctx);
@@ -1988,7 +1983,7 @@ static void emitGlobalConstantImpl(const Constant *CV, AsmPrinter &AP) {
 
   // Otherwise, it must be a ConstantExpr.  Lower it to an MCExpr, then emit it
   // thread the streamer with EmitValue.
-  AP.OutStreamer.EmitValue(lowerConstant(CV, AP), Size);
+  AP.OutStreamer.EmitValue(AP.lowerConstant(CV), Size);
 }
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.

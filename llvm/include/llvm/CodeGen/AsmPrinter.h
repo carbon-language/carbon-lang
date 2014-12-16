@@ -44,6 +44,7 @@ class MachineModuleInfo;
 class MCAsmInfo;
 class MCCFIInstruction;
 class MCContext;
+class MCExpr;
 class MCInst;
 class MCInstrInfo;
 class MCSection;
@@ -237,6 +238,9 @@ public:
   /// This method prints the label for the specified MachineBasicBlock, an
   /// alignment (if present) and a comment describing it if appropriate.
   void EmitBasicBlockStart(const MachineBasicBlock &MBB) const;
+
+  /// Lower the specified LLVM Constant to an MCExpr.
+  const MCExpr *lowerConstant(const Constant *CV);
 
   /// \brief Print a general LLVM constant to the .s file.
   void EmitGlobalConstant(const Constant *CV);
