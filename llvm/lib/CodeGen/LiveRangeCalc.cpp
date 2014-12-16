@@ -19,6 +19,13 @@ using namespace llvm;
 
 #define DEBUG_TYPE "regalloc"
 
+void LiveRangeCalc::resetLiveOutMap() {
+  unsigned NumBlocks = MF->getNumBlockIDs();
+  Seen.clear();
+  Seen.resize(NumBlocks);
+  Map.resize(NumBlocks);
+}
+
 void LiveRangeCalc::reset(const MachineFunction *mf,
                           SlotIndexes *SI,
                           MachineDominatorTree *MDT,
@@ -28,32 +35,36 @@ void LiveRangeCalc::reset(const MachineFunction *mf,
   Indexes = SI;
   DomTree = MDT;
   Alloc = VNIA;
-
-  MainLiveOutData.reset(MF->getNumBlockIDs());
+  resetLiveOutMap();
   LiveIn.clear();
 }
 
 
-static SlotIndex getDefIndex(const SlotIndexes &Indexes, const MachineInstr &MI,
-                             bool EarlyClobber) {
-  // PHI defs begin at the basic block start index.
-  if (MI.isPHI())
-    return Indexes.getMBBStartIdx(MI.getParent());
+static void createDeadDef(SlotIndexes &Indexes, VNInfo::Allocator &Alloc,
+                          LiveRange &LR, const MachineOperand &MO) {
+    const MachineInstr *MI = MO.getParent();
+    SlotIndex DefIdx;
+    if (MI->isPHI())
+      DefIdx = Indexes.getMBBStartIdx(MI->getParent());
+    else
+      DefIdx = Indexes.getInstructionIndex(MI).getRegSlot(MO.isEarlyClobber());
 
-  // Instructions are either normal 'r', or early clobber 'e'.
-  return Indexes.getInstructionIndex(&MI).getRegSlot(EarlyClobber);
+    // Create the def in LR. This may find an existing def.
+    LR.createDeadDef(DefIdx, Alloc);
 }
 
-void LiveRangeCalc::createDeadDefs(LiveInterval &LI) {
+void LiveRangeCalc::calculate(LiveInterval &LI) {
   assert(MRI && Indexes && "call reset() first");
 
+  // Step 1: Create minimal live segments for every definition of Reg.
   // Visit all def operands. If the same instruction has multiple defs of Reg,
-  // LR.createDeadDef() will deduplicate.
+  // createDeadDef() will deduplicate.
   const TargetRegisterInfo &TRI = *MRI->getTargetRegisterInfo();
   unsigned Reg = LI.reg;
-  for (const MachineOperand &MO : MRI->def_operands(Reg)) {
-    const MachineInstr *MI = MO.getParent();
-    SlotIndex Idx = getDefIndex(*Indexes, *MI, MO.isEarlyClobber());
+  for (const MachineOperand &MO : MRI->reg_nodbg_operands(Reg)) {
+    if (!MO.isDef() && !MO.readsReg())
+      continue;
+
     unsigned SubReg = MO.getSubReg();
     if (LI.hasSubRanges() || (SubReg != 0 && MRI->tracksSubRegLiveness())) {
       unsigned Mask = SubReg != 0 ? TRI.getSubRegIndexLaneMask(SubReg)
@@ -82,18 +93,36 @@ void LiveRangeCalc::createDeadDefs(LiveInterval &LI) {
           assert(Common == S.LaneMask);
           CommonRange = &S;
         }
-        CommonRange->createDeadDef(Idx, *Alloc);
+        if (MO.isDef())
+          createDeadDef(*Indexes, *Alloc, *CommonRange, MO);
         Mask &= ~Common;
       }
+      // Create a new SubRange for subregs we did not cover yet.
       if (Mask != 0) {
-        LiveInterval::SubRange *SubRange = LI.createSubRange(*Alloc, Mask);
-        SubRange->createDeadDef(Idx, *Alloc);
+        LiveInterval::SubRange *NewRange = LI.createSubRange(*Alloc, Mask);
+        if (MO.isDef())
+          createDeadDef(*Indexes, *Alloc, *NewRange, MO);
       }
     }
 
-    // Create the def in LR. This may find an existing def.
-    LI.createDeadDef(Idx, *Alloc);
+    // Create the def in the main liverange.
+    if (MO.isDef())
+      createDeadDef(*Indexes, *Alloc, LI, MO);
   }
+
+  // We may have created empty live ranges for partially undefined uses, we
+  // can't keep them because we won't find defs in them later.
+  LI.removeEmptySubRanges();
+
+  // Step 2: Extend live segments to all uses, constructing SSA form as
+  // necessary.
+  for (LiveInterval::SubRange &S : LI.subranges()) {
+    resetLiveOutMap();
+    extendToUses(S, Reg, S.LaneMask);
+  }
+
+  resetLiveOutMap();
+  extendToUses(LI, Reg, ~0u);
 }
 
 
@@ -102,135 +131,67 @@ void LiveRangeCalc::createDeadDefs(LiveRange &LR, unsigned Reg) {
 
   // Visit all def operands. If the same instruction has multiple defs of Reg,
   // LR.createDeadDef() will deduplicate.
-  for (MachineOperand &MO : MRI->def_operands(Reg)) {
-    const MachineInstr *MI = MO.getParent();
-    SlotIndex Idx = getDefIndex(*Indexes, *MI, MO.isEarlyClobber());
-    // Create the def in LR. This may find an existing def.
-    LR.createDeadDef(Idx, *Alloc);
-  }
+  for (MachineOperand &MO : MRI->def_operands(Reg))
+    createDeadDef(*Indexes, *Alloc, LR, MO);
 }
 
 
-static SlotIndex getUseIndex(const SlotIndexes &Indexes,
-                             const MachineOperand &MO) {
-  const MachineInstr *MI = MO.getParent();
-  unsigned OpNo = (&MO - &MI->getOperand(0));
-  if (MI->isPHI()) {
-    assert(!MO.isDef() && "Cannot handle PHI def of partial register.");
-    // The actual place where a phi operand is used is the end of the pred MBB.
-    // PHI operands are paired: (Reg, PredMBB).
-    return Indexes.getMBBEndIdx(MI->getOperand(OpNo+1).getMBB());
-  }
-
-  // Check for early-clobber redefs.
-  bool isEarlyClobber = false;
-  unsigned DefIdx;
-  if (MO.isDef()) {
-    isEarlyClobber = MO.isEarlyClobber();
-  } else if (MI->isRegTiedToDefOperand(OpNo, &DefIdx)) {
-    // FIXME: This would be a lot easier if tied early-clobber uses also
-    // had an early-clobber flag.
-    isEarlyClobber = MI->getOperand(DefIdx).isEarlyClobber();
-  }
-  return Indexes.getInstructionIndex(MI).getRegSlot(isEarlyClobber);
-}
-
-
-void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg) {
-  assert(MRI && Indexes && "call reset() first");
-
+void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg, unsigned Mask) {
   // Visit all operands that read Reg. This may include partial defs.
+  const TargetRegisterInfo &TRI = *MRI->getTargetRegisterInfo();
   for (MachineOperand &MO : MRI->reg_nodbg_operands(Reg)) {
     // Clear all kill flags. They will be reinserted after register allocation
     // by LiveIntervalAnalysis::addKillFlags().
     if (MO.isUse())
       MO.setIsKill(false);
+    else {
+      // We only care about uses, but on the main range (mask ~0u) this includes
+      // the "virtual" reads happening for subregister defs.
+      if (Mask != ~0u)
+        continue;
+    }
+
     if (!MO.readsReg())
       continue;
+    unsigned SubReg = MO.getSubReg();
+    if (SubReg != 0) {
+      unsigned SubRegMask = TRI.getSubRegIndexLaneMask(SubReg);
+      // Ignore uses not covering the current subrange.
+      if ((SubRegMask & Mask) == 0)
+        continue;
+    }
+
+    // Determine the actual place of the use.
+    const MachineInstr *MI = MO.getParent();
+    unsigned OpNo = (&MO - &MI->getOperand(0));
+    SlotIndex UseIdx;
+    if (MI->isPHI()) {
+      assert(!MO.isDef() && "Cannot handle PHI def of partial register.");
+      // The actual place where a phi operand is used is the end of the pred
+      // MBB. PHI operands are paired: (Reg, PredMBB).
+      UseIdx = Indexes->getMBBEndIdx(MI->getOperand(OpNo+1).getMBB());
+    } else {
+      // Check for early-clobber redefs.
+      bool isEarlyClobber = false;
+      unsigned DefIdx;
+      if (MO.isDef())
+        isEarlyClobber = MO.isEarlyClobber();
+      else if (MI->isRegTiedToDefOperand(OpNo, &DefIdx)) {
+        // FIXME: This would be a lot easier if tied early-clobber uses also
+        // had an early-clobber flag.
+        isEarlyClobber = MI->getOperand(DefIdx).isEarlyClobber();
+      }
+      UseIdx = Indexes->getInstructionIndex(MI).getRegSlot(isEarlyClobber);
+    }
+
     // MI is reading Reg. We may have visited MI before if it happens to be
     // reading Reg multiple times. That is OK, extend() is idempotent.
-    SlotIndex Idx = getUseIndex(*Indexes, MO);
-    extend(LR, Idx, Reg, MainLiveOutData);
+    extend(LR, UseIdx, Reg);
   }
 }
 
 
-void LiveRangeCalc::extendToUses(LiveInterval &LI) {
-  assert(MRI && Indexes && "call reset() first");
-
-  const TargetRegisterInfo &TRI = *MRI->getTargetRegisterInfo();
-  SmallVector<LiveOutData,2> LiveOuts;
-  unsigned NumSubRanges = 0;
-  for (const auto &S : LI.subranges()) {
-    (void)S;
-    ++NumSubRanges;
-    LiveOuts.push_back(LiveOutData());
-    LiveOuts.back().reset(MF->getNumBlockIDs());
-  }
-
-  // Visit all operands that read Reg. This may include partial defs.
-  unsigned Reg = LI.reg;
-  for (MachineOperand &MO : MRI->reg_nodbg_operands(Reg)) {
-    // Clear all kill flags. They will be reinserted after register allocation
-    // by LiveIntervalAnalysis::addKillFlags().
-    if (MO.isUse())
-      MO.setIsKill(false);
-    if (!MO.readsReg())
-      continue;
-    SlotIndex Idx = getUseIndex(*Indexes, MO);
-    unsigned SubReg = MO.getSubReg();
-    if (MO.isUse() && (LI.hasSubRanges() ||
-                       (MRI->tracksSubRegLiveness() && SubReg != 0))) {
-      unsigned Mask = SubReg != 0
-        ? TRI.getSubRegIndexLaneMask(SubReg)
-        : MRI->getMaxLaneMaskForVReg(Reg);
-
-      // If this is the first time we see a subregister def/use. Initialize
-      // subranges by creating a copy of the main range.
-      if (!LI.hasSubRanges()) {
-        unsigned ClassMask = MRI->getMaxLaneMaskForVReg(Reg);
-        LI.createSubRangeFrom(*Alloc, ClassMask, LI);
-        LiveOuts.insert(LiveOuts.begin(), LiveOutData());
-        LiveOuts.front().reset(MF->getNumBlockIDs());
-        ++NumSubRanges;
-      }
-      unsigned SubRangeIdx = 0;
-      for (LiveInterval::subrange_iterator S = LI.subrange_begin(),
-           SE = LI.subrange_end(); S != SE; ++S, ++SubRangeIdx) {
-        // A Mask for subregs common to the existing subrange and current def.
-        unsigned Common = S->LaneMask & Mask;
-        if (Common == 0)
-          continue;
-        // A Mask for subregs covered by the subrange but not the current def.
-        unsigned LRest = S->LaneMask & ~Mask;
-        LiveInterval::SubRange *CommonRange;
-        unsigned CommonRangeIdx;
-        if (LRest != 0) {
-          // Split current subrange into Common and LRest ranges.
-          S->LaneMask = LRest;
-          CommonRange = LI.createSubRangeFrom(*Alloc, Common, *S);
-          CommonRangeIdx = 0;
-          LiveOuts.insert(LiveOuts.begin(), LiveOutData());
-          LiveOuts.front().reset(MF->getNumBlockIDs());
-          ++NumSubRanges;
-          ++SubRangeIdx;
-        } else {
-          // The subrange and current def lanemasks match completely.
-          assert(Common == S->LaneMask);
-          CommonRange = &*S;
-          CommonRangeIdx = SubRangeIdx;
-        }
-        extend(*CommonRange, Idx, Reg, LiveOuts[CommonRangeIdx]);
-        Mask &= ~Common;
-      }
-      assert(SubRangeIdx == NumSubRanges);
-    }
-    extend(LI, Idx, Reg, MainLiveOutData);
-  }
-}
-
-
-void LiveRangeCalc::updateFromLiveIns(LiveOutData &LiveOuts) {
+void LiveRangeCalc::updateFromLiveIns() {
   LiveRangeUpdater Updater;
   for (const LiveInBlock &I : LiveIn) {
     if (!I.DomNode)
@@ -246,8 +207,8 @@ void LiveRangeCalc::updateFromLiveIns(LiveOutData &LiveOuts) {
     else {
       // The value is live-through, update LiveOut as well.
       // Defer the Domtree lookup until it is needed.
-      assert(LiveOuts.Seen.test(MBB->getNumber()));
-      LiveOuts.Map[MBB] = LiveOutPair(I.Value, nullptr);
+      assert(Seen.test(MBB->getNumber()));
+      Map[MBB] = LiveOutPair(I.Value, nullptr);
     }
     Updater.setDest(&I.LR);
     Updater.add(Start, End, I.Value);
@@ -256,8 +217,7 @@ void LiveRangeCalc::updateFromLiveIns(LiveOutData &LiveOuts) {
 }
 
 
-void LiveRangeCalc::extend(LiveRange &LR, SlotIndex Kill, unsigned PhysReg,
-                           LiveOutData &LiveOuts) {
+void LiveRangeCalc::extend(LiveRange &LR, SlotIndex Kill, unsigned PhysReg) {
   assert(Kill.isValid() && "Invalid SlotIndex");
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
@@ -273,28 +233,27 @@ void LiveRangeCalc::extend(LiveRange &LR, SlotIndex Kill, unsigned PhysReg,
   // multiple values, and we may need to create even more phi-defs to preserve
   // VNInfo SSA form.  Perform a search for all predecessor blocks where we
   // know the dominating VNInfo.
-  if (findReachingDefs(LR, *KillMBB, Kill, PhysReg, LiveOuts))
+  if (findReachingDefs(LR, *KillMBB, Kill, PhysReg))
     return;
 
   // When there were multiple different values, we may need new PHIs.
-  calculateValues(LiveOuts);
+  calculateValues();
 }
 
 
 // This function is called by a client after using the low-level API to add
 // live-out and live-in blocks.  The unique value optimization is not
 // available, SplitEditor::transferValues handles that case directly anyway.
-void LiveRangeCalc::calculateValues(LiveOutData &LiveOuts) {
+void LiveRangeCalc::calculateValues() {
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
-  updateSSA(LiveOuts);
-  updateFromLiveIns(LiveOuts);
+  updateSSA();
+  updateFromLiveIns();
 }
 
 
 bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
-                                     SlotIndex Kill, unsigned PhysReg,
-                                     LiveOutData &LiveOuts) {
+                                     SlotIndex Kill, unsigned PhysReg) {
   unsigned KillMBBNum = KillMBB.getNumber();
 
   // Block numbers where LR should be live-in.
@@ -328,8 +287,8 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        MachineBasicBlock *Pred = *PI;
 
        // Is this a known live-out block?
-       if (LiveOuts.Seen.test(Pred->getNumber())) {
-         if (VNInfo *VNI = LiveOuts.Map[Pred].first) {
+       if (Seen.test(Pred->getNumber())) {
+         if (VNInfo *VNI = Map[Pred].first) {
            if (TheVNI && TheVNI != VNI)
              UniqueVNI = false;
            TheVNI = VNI;
@@ -343,7 +302,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        // First time we see Pred.  Try to determine the live-out value, but set
        // it as null if Pred is live-through with an unknown value.
        VNInfo *VNI = LR.extendInBlock(Start, End);
-       LiveOuts.setLiveOutValue(Pred, VNI);
+       setLiveOutValue(Pred, VNI);
        if (VNI) {
          if (TheVNI && TheVNI != VNI)
            UniqueVNI = false;
@@ -378,8 +337,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        if (*I == KillMBBNum && Kill.isValid())
          End = Kill;
        else
-         LiveOuts.Map[MF->getBlockNumbered(*I)] =
-           LiveOutPair(TheVNI, nullptr);
+         Map[MF->getBlockNumbered(*I)] = LiveOutPair(TheVNI, nullptr);
        Updater.add(Start, End, TheVNI);
     }
     return true;
@@ -402,7 +360,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
 
 // This is essentially the same iterative algorithm that SSAUpdater uses,
 // except we already have a dominator tree, so we don't have to recompute it.
-void LiveRangeCalc::updateSSA(LiveOutData &LiveOuts) {
+void LiveRangeCalc::updateSSA() {
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
 
@@ -423,23 +381,22 @@ void LiveRangeCalc::updateSSA(LiveOutData &LiveOuts) {
 
       // We need a live-in value to a block with no immediate dominator?
       // This is probably an unreachable block that has survived somehow.
-      bool needPHI = !IDom
-                  || !LiveOuts.Seen.test(IDom->getBlock()->getNumber());
+      bool needPHI = !IDom || !Seen.test(IDom->getBlock()->getNumber());
 
       // IDom dominates all of our predecessors, but it may not be their
       // immediate dominator. Check if any of them have live-out values that are
       // properly dominated by IDom. If so, we need a phi-def here.
       if (!needPHI) {
-        IDomValue = LiveOuts.Map[IDom->getBlock()];
+        IDomValue = Map[IDom->getBlock()];
 
         // Cache the DomTree node that defined the value.
         if (IDomValue.first && !IDomValue.second)
-          LiveOuts.Map[IDom->getBlock()].second = IDomValue.second =
+          Map[IDom->getBlock()].second = IDomValue.second =
             DomTree->getNode(Indexes->getMBBFromIndex(IDomValue.first->def));
 
         for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
                PE = MBB->pred_end(); PI != PE; ++PI) {
-          LiveOutPair &Value = LiveOuts.Map[*PI];
+          LiveOutPair &Value = Map[*PI];
           if (!Value.first || Value.first == IDomValue.first)
             continue;
 
@@ -461,7 +418,7 @@ void LiveRangeCalc::updateSSA(LiveOutData &LiveOuts) {
       // The value may be live-through even if Kill is set, as can happen when
       // we are called from extendRange. In that case LiveOutSeen is true, and
       // LiveOut indicates a foreign or missing value.
-      LiveOutPair &LOP = LiveOuts.Map[MBB];
+      LiveOutPair &LOP = Map[MBB];
 
       // Create a phi-def if required.
       if (needPHI) {
