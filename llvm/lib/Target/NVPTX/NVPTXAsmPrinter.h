@@ -39,13 +39,6 @@
 // A better approach is to clone the MCAsmStreamer to a MCPTXAsmStreamer
 // (subclass of MCStreamer).
 
-// This is defined in AsmPrinter.cpp.
-// Used to process the constant expressions in initializers.
-namespace nvptx {
-const llvm::MCExpr *
-LowerConstant(const llvm::Constant *CV, llvm::AsmPrinter &AP);
-}
-
 namespace llvm {
 
 class LineReader {
@@ -167,7 +160,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
                 O << *Name;
               }
             } else if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(v)) {
-              O << *nvptx::LowerConstant(Cexpr, AP);
+              O << *AP.lowerConstant(Cexpr);
             } else
               llvm_unreachable("symbol type unknown");
             nSym++;
