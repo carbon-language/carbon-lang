@@ -203,7 +203,9 @@ struct StackAdjustingInsts {
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
       BuildMI(MBB, std::next(Info.I), dl,
-              TII.get(TargetOpcode::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
+              TII.get(TargetOpcode::CFI_INSTRUCTION))
+              .addCFIIndex(CFIIndex)
+              .setMIFlags(MachineInstr::FrameSetup);
     }
   }
 };
@@ -451,13 +453,15 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
           nullptr, MRI->getDwarfRegNum(FramePtr, true),
           -(ArgRegsSaveSize - FramePtrOffsetInPush)));
       BuildMI(MBB, AfterPush, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     } else {
       unsigned CFIIndex =
           MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(
               nullptr, MRI->getDwarfRegNum(FramePtr, true)));
       BuildMI(MBB, AfterPush, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     }
   }
 
@@ -491,7 +495,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
         CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
             nullptr, MRI->getDwarfRegNum(Reg, true), MFI->getObjectOffset(FI)));
         BuildMI(MBB, Pos, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-            .addCFIIndex(CFIIndex);
+            .addCFIIndex(CFIIndex)
+            .setMIFlags(MachineInstr::FrameSetup);
         break;
       }
     }
@@ -514,7 +519,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
           unsigned CFIIndex = MMI.addFrameInst(
               MCCFIInstruction::createOffset(nullptr, DwarfReg, Offset));
           BuildMI(MBB, Pos, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-              .addCFIIndex(CFIIndex);
+              .addCFIIndex(CFIIndex)
+              .setMIFlags(MachineInstr::FrameSetup);
         }
         break;
       }
@@ -535,7 +541,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
         unsigned CFIIndex = MMI.addFrameInst(
             MCCFIInstruction::createOffset(nullptr, DwarfReg, Offset));
         BuildMI(MBB, Pos, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-            .addCFIIndex(CFIIndex);
+            .addCFIIndex(CFIIndex)
+            .setMIFlags(MachineInstr::FrameSetup);
       }
     }
   }

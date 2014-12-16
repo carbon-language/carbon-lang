@@ -1117,8 +1117,12 @@ static DebugLoc findPrologueEndLoc(const MachineFunction *MF) {
   for (const auto &MBB : *MF)
     for (const auto &MI : MBB)
       if (!MI.isDebugValue() && !MI.getFlag(MachineInstr::FrameSetup) &&
-          !MI.getDebugLoc().isUnknown())
+        !MI.getDebugLoc().isUnknown()) {
+        // Did the target forget to set the FrameSetup flag for CFI insns?
+        assert(!MI.isCFIInstruction() &&
+               "First non-frame-setup instruction is a CFI instruction.");
         return MI.getDebugLoc();
+      }
   return DebugLoc();
 }
 
