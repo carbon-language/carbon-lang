@@ -22,6 +22,12 @@ namespace {
 class MetadataTest : public testing::Test {
 protected:
   LLVMContext Context;
+  MDNode *getNode() { return MDNode::get(Context, None); }
+  MDNode *getNode(Metadata *MD) { return MDNode::get(Context, MD); }
+  MDNode *getNode(Metadata *MD1, Metadata *MD2) {
+    Metadata *MDs[] = {MD1, MD2};
+    return MDNode::get(Context, MDs);
+  }
 };
 typedef MetadataTest MDStringTest;
 
@@ -161,6 +167,39 @@ TEST_F(MDNodeTest, SelfReference) {
     EXPECT_NE(Self, Ref1);
     EXPECT_EQ(Ref1, Ref2);
   }
+}
+
+TEST_F(MDNodeTest, Print) {
+  Constant *C = ConstantInt::get(Type::getInt32Ty(Context), 7);
+  MDString *S = MDString::get(Context, "foo");
+  MDNode *N0 = getNode();
+  MDNode *N1 = getNode(N0);
+  MDNode *N2 = getNode(N0, N1);
+
+  Metadata *Args[] = {ConstantAsMetadata::get(C), S, nullptr, N0, N1, N2};
+  MDNode *N = MDNode::get(Context, Args);
+
+  std::string Expected;
+  {
+    raw_string_ostream OS(Expected);
+    OS << "metadata !{";
+    C->printAsOperand(OS);
+    OS << ", ";
+    S->printAsOperand(OS, false);
+    OS << ", null";
+    MDNode *Nodes[] = {N0, N1, N2};
+    for (auto *Node : Nodes)
+      OS << ", <" << (void *)Node << ">";
+    OS << "}\n";
+  }
+
+  std::string Actual;
+  {
+    raw_string_ostream OS(Actual);
+    N->print(OS);
+  }
+
+  EXPECT_EQ(Expected, Actual);
 }
 
 typedef MetadataTest MetadataAsValueTest;

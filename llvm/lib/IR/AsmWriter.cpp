@@ -1362,7 +1362,9 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Metadata *MD,
       Machine = new SlotTracker(Context);
     int Slot = Machine->getMetadataSlot(N);
     if (Slot == -1)
-      Out << "<badref>";
+      // Give the pointer value instead of "badref", since this comes up all
+      // the time when debugging.
+      Out << "<" << N << ">";
     else
       Out << '!' << Slot;
     return;
