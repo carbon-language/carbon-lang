@@ -37,6 +37,21 @@ define void @stack_fold_cvtdq2ps(<128 x i32>* %a, <128 x i32>* %b, <128 x float>
   ret void
 }
 
+define void @stack_fold_cvtpd2ps(<128 x double>* %a, <128 x double>* %b, <128 x float>* %c) {
+  ;CHECK-LABEL: stack_fold_cvtpd2ps
+  ;CHECK:   vcvtpd2psy {{[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+
+  %1 = load <128 x double>* %a
+  %2 = load <128 x double>* %b
+  %3 = fadd <128 x double> %1, %2
+  %4 = fsub <128 x double> %1, %2
+  %5 = fptrunc <128 x double> %3 to <128 x float>
+  %6 = fptrunc <128 x double> %4 to <128 x float>
+  %7 = fadd <128 x float> %5, %6
+  store <128 x float> %7, <128 x float>* %c
+  ret void
+}
+
 define void @stack_fold_cvttpd2dq(<64 x double>* %a, <64 x double>* %b, <64 x i32>* %c) #0 {
   ;CHECK-LABEL: stack_fold_cvttpd2dq
   ;CHECK:  vcvttpd2dqy {{[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload

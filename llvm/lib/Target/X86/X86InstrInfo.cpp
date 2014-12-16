@@ -450,6 +450,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::CVTSS2SIrr,      X86::CVTSS2SIrm,          0 },
     { X86::CVTDQ2PSrr,      X86::CVTDQ2PSrm,          TB_ALIGN_16 },
     { X86::CVTPD2DQrr,      X86::CVTPD2DQrm,          TB_ALIGN_16 },
+    { X86::CVTPD2PSrr,      X86::CVTPD2PSrm,          TB_ALIGN_16 },
     { X86::CVTPS2DQrr,      X86::CVTPS2DQrm,          TB_ALIGN_16 },
     { X86::CVTTPD2DQrr,     X86::CVTTPD2DQrm,         TB_ALIGN_16 },
     { X86::CVTTPS2DQrr,     X86::CVTTPS2DQrm,         TB_ALIGN_16 },
@@ -531,6 +532,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VCVTSS2SIrr,     X86::VCVTSS2SIrm,         0 },
     { X86::VCVTDQ2PSrr,     X86::VCVTDQ2PSrm,         0 },
     { X86::VCVTPD2DQrr,     X86::VCVTPD2DQXrm,        0 },
+    { X86::VCVTPD2PSrr,     X86::VCVTPD2PSXrm,        0 },
     { X86::VCVTPS2DQrr,     X86::VCVTPS2DQrm,         0 },
     { X86::VCVTTPD2DQrr,    X86::VCVTTPD2DQXrm,       0 },
     { X86::VCVTTPS2DQrr,    X86::VCVTTPS2DQrm,        0 },
@@ -569,6 +571,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     // AVX 256-bit foldable instructions
     { X86::VCVTDQ2PSYrr,    X86::VCVTDQ2PSYrm,        0 },
     { X86::VCVTPD2DQYrr,    X86::VCVTPD2DQYrm,        0 },
+    { X86::VCVTPD2PSYrr,    X86::VCVTPD2PSYrm,        0 },
     { X86::VCVTPS2DQYrr,    X86::VCVTPS2DQYrm,        0 },
     { X86::VCVTTPD2DQYrr,   X86::VCVTTPD2DQYrm,       0 },
     { X86::VCVTTPS2DQYrr,   X86::VCVTTPS2DQYrm,       0 },
