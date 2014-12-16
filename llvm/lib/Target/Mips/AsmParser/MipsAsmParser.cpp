@@ -147,6 +147,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy parseLSAImm(OperandVector &Operands);
 
   MipsAsmParser::OperandMatchResultTy
+  parseRegisterPair (OperandVector &Operands);
+
+  MipsAsmParser::OperandMatchResultTy
   parseRegisterList (OperandVector  &Operands);
 
   bool searchSymbolAlias(OperandVector &Operands);
@@ -428,7 +431,8 @@ private:
     k_PhysRegister,  /// A physical register from the Mips namespace
     k_RegisterIndex, /// A register index in one or more RegKind.
     k_Token,         /// A simple token
-    k_RegList        /// A physical register list
+    k_RegList,       /// A physical register list
+    k_RegPair        /// A pair of physical register
   } Kind;
 
 public:
@@ -781,6 +785,13 @@ public:
       Inst.addOperand(MCOperand::CreateReg(RegNo));
   }
 
+  void addRegPairOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    unsigned RegNo = getRegPair();
+    Inst.addOperand(MCOperand::CreateReg(RegNo++));
+    Inst.addOperand(MCOperand::CreateReg(RegNo));
+  }
+
   bool isReg() const override {
     // As a special case until we sort out the definition of div/divu, pretend
     // that $0/$zero are k_PhysRegister so that MCK_ZERO works correctly.
@@ -845,6 +856,7 @@ public:
     assert(Kind == k_Token && "Invalid access!");
     return StringRef(Tok.Data, Tok.Length);
   }
+  bool isRegPair() const { return Kind == k_RegPair; }
 
   unsigned getReg() const override {
     // As a special case until we sort out the definition of div/divu, pretend
@@ -884,6 +896,11 @@ public:
   const SmallVectorImpl<unsigned> &getRegList() const {
     assert((Kind == k_RegList) && "Invalid access!");
     return *(RegList.List);
+  }
+
+  unsigned getRegPair() const {
+    assert((Kind == k_RegPair) && "Invalid access!");
+    return RegIdx.Index;
   }
 
   static std::unique_ptr<MipsOperand> CreateToken(StringRef Str, SMLoc S,
@@ -995,6 +1012,15 @@ public:
     return Op;
   }
 
+  static std::unique_ptr<MipsOperand>
+  CreateRegPair(unsigned RegNo, SMLoc S, SMLoc E, MipsAsmParser &Parser) {
+    auto Op = make_unique<MipsOperand>(k_RegPair, Parser);
+    Op->RegIdx.Index = RegNo;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   bool isGPRAsmReg() const {
     return isRegIdx() && RegIdx.Kind & RegKind_GPR && RegIdx.Index <= 31;
   }
@@ -1061,6 +1087,7 @@ public:
     case k_PhysRegister:
     case k_RegisterIndex:
     case k_Token:
+    case k_RegPair:
       break;
     }
   }
@@ -1093,6 +1120,9 @@ public:
       for (auto Reg : (*RegList.List))
         OS << Reg << " ";
       OS <<  ">";
+      break;
+    case k_RegPair:
+      OS << "RegPair<" << RegIdx.Index << "," << RegIdx.Index + 1 << ">";
       break;
     }
   }
@@ -2720,6 +2750,22 @@ MipsAsmParser::parseRegisterList(OperandVector &Operands) {
   SMLoc E = Parser.getTok().getLoc();
   Operands.push_back(MipsOperand::CreateRegList(Regs, S, E, *this));
   parseMemOperand(Operands);
+  return MatchOperand_Success;
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseRegisterPair(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
+
+  SMLoc S = Parser.getTok().getLoc();
+  if (parseAnyRegister(Operands) != MatchOperand_Success)
+    return MatchOperand_ParseFail;
+
+  SMLoc E = Parser.getTok().getLoc();
+  MipsOperand &Op = static_cast<MipsOperand &>(*Operands.back());
+  unsigned Reg = Op.getGPR32Reg();
+  Operands.pop_back();
+  Operands.push_back(MipsOperand::CreateRegPair(Reg, S, E, *this));
   return MatchOperand_Success;
 }
 

@@ -148,6 +148,36 @@ class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
   let DecoderMethod = "DecodeMemMMImm12";
 }
 
+/// A register pair used by load/store pair instructions.
+def RegPairAsmOperand : AsmOperandClass {
+  let Name = "RegPair";
+  let ParserMethod = "parseRegisterPair";
+}
+
+def regpair : Operand<i32> {
+  let EncoderMethod = "getRegisterPairOpValue";
+  let ParserMatchClass = RegPairAsmOperand;
+  let PrintMethod = "printRegisterPair";
+  let DecoderMethod = "DecodeRegPairOperand";
+  let MIOperandInfo = (ops GPR32Opnd, GPR32Opnd);
+}
+
+class StorePairMM<string opstr, InstrItinClass Itin = NoItinerary,
+                  ComplexPattern Addr = addr> :
+  InstSE<(outs), (ins regpair:$rt, mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI, opstr> {
+  let DecoderMethod = "DecodeMemMMImm12";
+  let mayStore = 1;
+}
+
+class LoadPairMM<string opstr, InstrItinClass Itin = NoItinerary,
+                 ComplexPattern Addr = addr> :
+  InstSE<(outs regpair:$rt), (ins mem_mm_12:$addr),
+          !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI, opstr> {
+  let DecoderMethod = "DecodeMemMMImm12";
+  let mayLoad = 1;
+}
+
 class LLBaseMM<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
          !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
@@ -554,6 +584,10 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def LWM32_MM  : LoadMultMM<"lwm32">, LWM_FM_MM<0x5>;
   def SWM16_MM : StoreMultMM16<"swm16">, LWM_FM_MM16<0x5>;
   def LWM16_MM : LoadMultMM16<"lwm16">, LWM_FM_MM16<0x4>;
+
+  /// Load and Store Pair Instructions
+  def SWP_MM  : StorePairMM<"swp">, LWM_FM_MM<0x9>;
+  def LWP_MM  : LoadPairMM<"lwp">, LWM_FM_MM<0x1>;
 
   /// Move Conditional
   def MOVZ_I_MM : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd,

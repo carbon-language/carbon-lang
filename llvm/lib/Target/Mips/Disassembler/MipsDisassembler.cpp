@@ -1222,6 +1222,9 @@ static DecodeStatus DecodeMemMMImm12(MCInst &Inst,
     // fallthrough
   default:
     Inst.addOperand(MCOperand::CreateReg(Reg));
+    if (Inst.getOpcode() == Mips::LWP_MM || Inst.getOpcode() == Mips::SWP_MM)
+      Inst.addOperand(MCOperand::CreateReg(Reg+1));
+
     Inst.addOperand(MCOperand::CreateReg(Base));
     Inst.addOperand(MCOperand::CreateImm(Offset));
   }

@@ -862,4 +862,11 @@ MipsMCCodeEmitter::getRegisterListOpValue16(const MCInst &MI, unsigned OpNo,
   return (MI.getNumOperands() - 4);
 }
 
+unsigned
+MipsMCCodeEmitter::getRegisterPairOpValue(const MCInst &MI, unsigned OpNo,
+                                          SmallVectorImpl<MCFixup> &Fixups,
+                                          const MCSubtargetInfo &STI) const {
+  return getMachineOpValue(MI, MI.getOperand(OpNo), Fixups, STI);
+}
+
 #include "MipsGenMCCodeEmitter.inc"
