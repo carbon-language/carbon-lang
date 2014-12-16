@@ -4023,8 +4023,7 @@ std::unique_ptr<TypoCorrectionConsumer> Sema::makeTypoCorrectionConsumer(
     Scope *S, CXXScopeSpec *SS,
     std::unique_ptr<CorrectionCandidateCallback> CCC,
     DeclContext *MemberContext, bool EnteringContext,
-    const ObjCObjectPointerType *OPT, bool ErrorRecovery,
-    bool &IsUnqualifiedLookup) {
+    const ObjCObjectPointerType *OPT, bool ErrorRecovery) {
 
   if (Diags.hasFatalErrorOccurred() || !getLangOpts().SpellChecking ||
       DisableTypoCorrection)
@@ -4068,6 +4067,14 @@ std::unique_ptr<TypoCorrectionConsumer> Sema::makeTypoCorrectionConsumer(
   if (getLangOpts().AltiVec && Typo->isStr("vector"))
     return nullptr;
 
+  // Provide a stop gap for files that are just seriously broken.  Trying
+  // to correct all typos can turn into a HUGE performance penalty, causing
+  // some files to take minutes to get rejected by the parser.
+  unsigned Limit = getDiagnostics().getDiagnosticOptions().SpellCheckingLimit;
+  if (Limit && TyposCorrected >= Limit)
+    return nullptr;
+  ++TyposCorrected;
+
   // If we're handling a missing symbol error, using modules, and the
   // special search all modules option is used, look for a missing import.
   if (ErrorRecovery && getLangOpts().Modules &&
@@ -4082,13 +4089,8 @@ std::unique_ptr<TypoCorrectionConsumer> Sema::makeTypoCorrectionConsumer(
       *this, TypoName, LookupKind, S, SS, std::move(CCC), MemberContext,
       EnteringContext);
 
-  // If a callback object considers an empty typo correction candidate to be
-  // viable, assume it does not do any actual validation of the candidates.
-  TypoCorrection EmptyCorrection;
-  bool ValidatingCallback = !isCandidateViable(CCCRef, EmptyCorrection);
-
   // Perform name lookup to find visible, similarly-named entities.
-  IsUnqualifiedLookup = false;
+  bool IsUnqualifiedLookup = false;
   DeclContext *QualifiedDC = MemberContext;
   if (MemberContext) {
     LookupVisibleDecls(MemberContext, LookupKind, *Consumer);
@@ -4103,46 +4105,9 @@ std::unique_ptr<TypoCorrectionConsumer> Sema::makeTypoCorrectionConsumer(
     if (!QualifiedDC)
       return nullptr;
 
-    // Provide a stop gap for files that are just seriously broken.  Trying
-    // to correct all typos can turn into a HUGE performance penalty, causing
-    // some files to take minutes to get rejected by the parser.
-    if (TyposCorrected + UnqualifiedTyposCorrected.size() >= 20)
-      return nullptr;
-    ++TyposCorrected;
-
     LookupVisibleDecls(QualifiedDC, LookupKind, *Consumer);
   } else {
     IsUnqualifiedLookup = true;
-    UnqualifiedTyposCorrectedMap::iterator Cached
-      = UnqualifiedTyposCorrected.find(Typo);
-    if (Cached != UnqualifiedTyposCorrected.end()) {
-      // Add the cached value, unless it's a keyword or fails validation. In the
-      // keyword case, we'll end up adding the keyword below.
-      if (Cached->second) {
-        if (!Cached->second.isKeyword() &&
-            isCandidateViable(CCCRef, Cached->second)) {
-          // Do not use correction that is unaccessible in the given scope.
-          NamedDecl *CorrectionDecl = Cached->second.getCorrectionDecl();
-          DeclarationNameInfo NameInfo(CorrectionDecl->getDeclName(),
-                                       CorrectionDecl->getLocation());
-          LookupResult R(*this, NameInfo, LookupOrdinaryName);
-          if (LookupName(R, S))
-            Consumer->addCorrection(Cached->second);
-        }
-      } else {
-        // Only honor no-correction cache hits when a callback that will validate
-        // correction candidates is not being used.
-        if (!ValidatingCallback)
-          return nullptr;
-      }
-    }
-    if (Cached == UnqualifiedTyposCorrected.end()) {
-      // Provide a stop gap for files that are just seriously broken.  Trying
-      // to correct all typos can turn into a HUGE performance penalty, causing
-      // some files to take minutes to get rejected by the parser.
-      if (TyposCorrected + UnqualifiedTyposCorrected.size() >= 20)
-        return nullptr;
-    }
   }
 
   // Determine whether we are going to search in the various namespaces for
@@ -4249,30 +4214,24 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // for CTC_Unknown but not for CTC_ObjCMessageReceiver.
   bool ObjCMessageReceiver = CCC->WantObjCSuper && !CCC->WantRemainingKeywords;
 
-  TypoCorrection EmptyCorrection;
-  bool ValidatingCallback = !isCandidateViable(*CCC, EmptyCorrection);
-
   IdentifierInfo *Typo = TypoName.getName().getAsIdentifierInfo();
-  bool IsUnqualifiedLookup = false;
   auto Consumer = makeTypoCorrectionConsumer(
       TypoName, LookupKind, S, SS, std::move(CCC), MemberContext,
-      EnteringContext, OPT, Mode == CTK_ErrorRecovery, IsUnqualifiedLookup);
+      EnteringContext, OPT, Mode == CTK_ErrorRecovery);
 
   if (!Consumer)
     return TypoCorrection();
 
   // If we haven't found anything, we're done.
   if (Consumer->empty())
-    return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure,
-                            IsUnqualifiedLookup);
+    return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
 
   // Make sure the best edit distance (prior to adding any namespace qualifiers)
   // is not more that about a third of the length of the typo's identifier.
   unsigned ED = Consumer->getBestEditDistance(true);
   unsigned TypoLen = Typo->getName().size();
   if (ED > 0 && TypoLen / ED < 3)
-    return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure,
-                            IsUnqualifiedLookup);
+    return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
 
   TypoCorrection BestTC = Consumer->getNextCorrection();
   TypoCorrection SecondBestTC = Consumer->getNextCorrection();
@@ -4285,8 +4244,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     // If this was an unqualified lookup and we believe the callback
     // object wouldn't have filtered out possible corrections, note
     // that no correction was found.
-    return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure,
-                            IsUnqualifiedLookup && !ValidatingCallback);
+    return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
   }
 
   // If only a single name remains, return that result.
@@ -4298,10 +4256,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     // wasn't actually in scope.
     if (ED == 0 && Result.isKeyword())
       return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
-
-    // Record the correction for unqualified lookup.
-    if (IsUnqualifiedLookup)
-      UnqualifiedTyposCorrected[Typo] = Result;
 
     TypoCorrection TC = Result;
     TC.setCorrectionRange(SS, TypoName);
@@ -4323,10 +4277,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         BestTC.getCorrection().getAsString() != "super")
       return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
 
-    // Record the correction for unqualified lookup.
-    if (IsUnqualifiedLookup)
-      UnqualifiedTyposCorrected[Typo] = BestTC;
-
     BestTC.setCorrectionRange(SS, TypoName);
     return BestTC;
   }
@@ -4334,8 +4284,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // Record the failure's location if needed and return an empty correction. If
   // this was an unqualified lookup and we believe the callback object did not
   // filter out possible corrections, also cache the failure for the typo.
-  return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure,
-                          IsUnqualifiedLookup && !ValidatingCallback);
+  return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
 }
 
 /// \brief Try to "correct" a typo in the source code by finding
@@ -4386,13 +4335,11 @@ TypoExpr *Sema::CorrectTypoDelayed(
   assert(CCC && "CorrectTypoDelayed requires a CorrectionCandidateCallback");
 
   TypoCorrection Empty;
-  bool IsUnqualifiedLookup = false;
   auto Consumer = makeTypoCorrectionConsumer(
       TypoName, LookupKind, S, SS, std::move(CCC), MemberContext,
       EnteringContext, OPT,
       /*SearchModules=*/(Mode == CTK_ErrorRecovery) && getLangOpts().Modules &&
-          getLangOpts().ModulesSearchAll,
-      IsUnqualifiedLookup);
+          getLangOpts().ModulesSearchAll);
 
   if (!Consumer || Consumer->empty())
     return nullptr;

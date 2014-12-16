@@ -81,6 +81,8 @@ VALUE_DIAGOPT(MacroBacktraceLimit, 32, DefaultMacroBacktraceLimit)
 VALUE_DIAGOPT(TemplateBacktraceLimit, 32, DefaultTemplateBacktraceLimit)
 /// Limit depth of constexpr backtrace.
 VALUE_DIAGOPT(ConstexprBacktraceLimit, 32, DefaultConstexprBacktraceLimit)
+/// Limit number of times to perform spell checking.
+VALUE_DIAGOPT(SpellCheckingLimit, 32, DefaultSpellCheckingLimit)
 
 VALUE_DIAGOPT(TabStop, 32, DefaultTabStop) /// The distance between tab stops.
 /// Column limit for formatting message diagnostics, or 0 if unused.
@@ -92,4 +94,3 @@ VALUE_DIAGOPT(MessageLength, 32, 0)
 #undef SEMANTIC_DIAGOPT
 #undef SEMANTIC_ENUM_DIAGOPT
 #undef SEMANTIC_VALUE_DIAGOPT
-

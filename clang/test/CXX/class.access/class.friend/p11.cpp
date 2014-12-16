@@ -24,6 +24,8 @@ namespace test2 {
   void foo() { // expected-note {{'::test2::foo' declared here}}
     struct S1 {
       friend void foo(); // expected-error {{no matching function 'foo' found in local scope; did you mean '::test2::foo'?}}
+      // expected-note@-1{{'::test2::foo' declared here}}
+      // TODO: the above note should go on line 24
     };
 
     void foo(); // expected-note {{local declaration nearly matches}}
@@ -40,17 +42,19 @@ namespace test2 {
     {
       int foo;
       struct S3 {
-        friend void foo(); // expected-error {{no matching function found in local scope}}
+        friend void foo(); // expected-error {{no matching function 'foo' found in local scope; did you mean '::test2::foo'?}}
       };
     }
 
     struct S4 {
       friend void bar(); // expected-error {{no matching function 'bar' found in local scope; did you mean '::test2::bar'?}}
+      // expected-note@-1 2 {{'::test2::bar' declared here}}
+      // TODO: the above two notes should go on line 22
     };
 
     { void bar(); }
     struct S5 {
-      friend void bar(); // expected-error {{no matching function found in local scope}}
+      friend void bar(); // expected-error {{no matching function 'bar' found in local scope; did you mean '::test2::bar'?}}
     };
 
     {
@@ -85,7 +89,7 @@ namespace test2 {
       void quux() {}
       void foo() {
         struct Inner1 {
-          friend void bar(); // expected-error {{no matching function found in local scope}}
+          friend void bar(); // expected-error {{no matching function 'bar' found in local scope; did you mean '::test2::bar'?}}
           friend void quux(); // expected-error {{no matching function found in local scope}}
         };
 

@@ -707,6 +707,9 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ConstexprBacktraceLimit = getLastArgIntValue(
       Args, OPT_fconstexpr_backtrace_limit,
       DiagnosticOptions::DefaultConstexprBacktraceLimit, Diags);
+  Opts.SpellCheckingLimit = getLastArgIntValue(
+      Args, OPT_fspell_checking_limit,
+      DiagnosticOptions::DefaultSpellCheckingLimit, Diags);
   Opts.TabStop = getLastArgIntValue(Args, OPT_ftabstop,
                                     DiagnosticOptions::DefaultTabStop, Diags);
   if (Opts.TabStop == 0 || Opts.TabStop > DiagnosticOptions::MaxTabStop) {
