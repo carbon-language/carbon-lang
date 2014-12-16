@@ -2765,6 +2765,84 @@ def: Pat<(i32 (xor (add (sra (i32 IntRegs:$src), (i32 31)),
                    (sra (i32 IntRegs:$src), (i32 31)))),
          (A2_abs IntRegs:$src)>;
 
+class T_S2op_2 <string mnemonic, bits<4> RegTyBits, RegisterClass RCOut,
+                RegisterClass RCIn, bits<3> MajOp, bits<3> MinOp,
+                bit isSat, bit isRnd, list<dag> pattern = []>
+  : SInst <(outs RCOut:$dst),
+  (ins RCIn:$src, u5Imm:$u5),
+  "$dst = "#mnemonic#"($src, #$u5)"#!if(isSat, ":sat", "")
+                                   #!if(isRnd, ":rnd", ""),
+  pattern, "", S_2op_tc_2_SLOT23> {
+    bits<5> dst;
+    bits<5> src;
+    bits<5> u5;
+
+    let IClass = 0b1000;
+
+    let Inst{27-24} = RegTyBits;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src;
+    let Inst{13} = 0b0;
+    let Inst{12-8} = u5;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = dst;
+  }
+  
+let hasNewValue = 1 in
+class T_S2op_2_ii <string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                   bit isSat = 0, bit isRnd = 0, list<dag> pattern = []>
+  : T_S2op_2 <mnemonic, 0b1100, IntRegs, IntRegs, MajOp, MinOp,
+              isSat, isRnd, pattern>;
+
+class T_S2op_shift <string mnemonic, bits<3> MajOp, bits<3> MinOp, SDNode OpNd>
+  : T_S2op_2_ii <mnemonic, MajOp, MinOp, 0, 0,
+    [(set (i32 IntRegs:$dst), (OpNd (i32 IntRegs:$src),
+                                    (u5ImmPred:$u5)))]>;
+
+// Arithmetic/logical shift right/left by immediate
+let Itinerary = S_2op_tc_1_SLOT23, isCodeGenOnly = 0 in {
+  def S2_asr_i_r : T_S2op_shift <"asr", 0b000, 0b000, sra>;
+  def S2_lsr_i_r : T_S2op_shift <"lsr", 0b000, 0b001, srl>;
+  def S2_asl_i_r : T_S2op_shift <"asl", 0b000, 0b010, shl>;
+}
+
+// Shift left by immediate with saturation
+let Defs = [USR_OVF], isCodeGenOnly = 0 in
+def S2_asl_i_r_sat : T_S2op_2_ii <"asl", 0b010, 0b010, 1>;
+
+// Shift right with round
+let isCodeGenOnly = 0 in
+def S2_asr_i_r_rnd : T_S2op_2_ii <"asr", 0b010, 0b000, 0, 1>;
+
+def: Pat<(i32 (sra (i32 (add (i32 (sra I32:$src1, u5ImmPred:$src2)),
+                             (i32 1))),
+                   (i32 1))),
+         (S2_asr_i_r_rnd IntRegs:$src1, u5ImmPred:$src2)>;
+
+class T_S2op_3<string opc, bits<2>MajOp, bits<3>minOp, bits<1> sat = 0>
+  : SInst<(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rss),
+           "$Rdd = "#opc#"($Rss)"#!if(!eq(sat, 1),":sat","")> {
+  bits<5> Rss;
+  bits<5> Rdd;
+  let IClass = 0b1000;
+  let Inst{27-24} = 0;
+  let Inst{23-22} = MajOp;
+  let Inst{20-16} = Rss;
+  let Inst{7-5} = minOp;
+  let Inst{4-0} = Rdd;
+}
+
+let isCodeGenOnly = 0 in {
+def A2_absp : T_S2op_3 <"abs", 0b10, 0b110>;
+def A2_negp : T_S2op_3 <"neg", 0b10, 0b101>;
+def A2_notp : T_S2op_3 <"not", 0b10, 0b100>;
+}
+
+// Innterleave/deinterleave
+let isCodeGenOnly = 0 in {
+def S2_interleave   : T_S2op_3 <"interleave",   0b11, 0b101>;
+def S2_deinterleave : T_S2op_3 <"deinterleave", 0b11, 0b100>;
+}
 
 //===----------------------------------------------------------------------===//
 // STYPE/BIT +
