@@ -75,6 +75,20 @@ static bool getITDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
   return false;
 }
 
+static bool getARMStoreDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
+                                       std::string &Info) {
+  assert(MI.getNumOperands() > 4 && "expected >4 arguments");
+  for (unsigned OI = 4, OE = MI.getNumOperands(); OI < OE; ++OI) {
+    assert(MI.getOperand(OI).isReg() && "expected register");
+    if (MI.getOperand(OI).getReg() == ARM::SP ||
+        MI.getOperand(OI).getReg() == ARM::PC) {
+      Info = "use of SP or PC in the list is deprecated";
+      return true;
+    }
+  }
+  return false;
+}
+
 #define GET_INSTRINFO_MC_DESC
 #include "ARMGenInstrInfo.inc"
 

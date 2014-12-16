@@ -3167,7 +3167,8 @@ defm LDM : arm_ldst_mult<"ldm", "", 1, 0, LdStMulFrm, IIC_iLoad_m,
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm STM : arm_ldst_mult<"stm", "", 0, 0, LdStMulFrm, IIC_iStore_m,
-                         IIC_iStore_mu>;
+                         IIC_iStore_mu>,
+           ComplexDeprecationPredicate<"ARMStore">;
 
 } // hasSideEffects
 
