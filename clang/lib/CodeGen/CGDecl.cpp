@@ -597,14 +597,13 @@ static void drillIntoBlockVariable(CodeGenFunction &CGF,
 }
 
 void CodeGenFunction::EmitScalarInit(const Expr *init, const ValueDecl *D,
-                                     LValue lvalue, bool capturedByInit,
-                                     SourceLocation DbgLoc) {
+                                     LValue lvalue, bool capturedByInit) {
   Qualifiers::ObjCLifetime lifetime = lvalue.getObjCLifetime();
   if (!lifetime) {
     llvm::Value *value = EmitScalarExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreThroughLValue(RValue::get(value), lvalue, true, DbgLoc);
+    EmitStoreThroughLValue(RValue::get(value), lvalue, true);
     return;
   }
   
@@ -1088,6 +1087,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   if (emission.wasEmittedAsGlobal()) return;
 
   const VarDecl &D = *emission.Variable;
+  ApplyDebugLocation DL(*this, D.getLocation());
   QualType type = D.getType();
 
   // If this local has an initializer, emit it now.
@@ -1126,7 +1126,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   if (!constant) {
     LValue lv = MakeAddrLValue(Loc, type, alignment);
     lv.setNonGC(true);
-    return EmitExprAsInit(Init, &D, lv, capturedByInit, D.getLocation());
+    return EmitExprAsInit(Init, &D, lv, capturedByInit);
   }
 
   if (!emission.IsConstantAggregate) {
@@ -1192,26 +1192,25 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
 /// \param capturedByInit true if the variable is a __block variable
 ///   whose address is potentially changed by the initializer
 void CodeGenFunction::EmitExprAsInit(const Expr *init, const ValueDecl *D,
-                                     LValue lvalue, bool capturedByInit,
-                                     SourceLocation DbgLoc) {
+                                     LValue lvalue, bool capturedByInit) {
   QualType type = D->getType();
 
   if (type->isReferenceType()) {
     RValue rvalue = EmitReferenceBindingToExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreThroughLValue(rvalue, lvalue, true, DbgLoc);
+    EmitStoreThroughLValue(rvalue, lvalue, true);
     return;
   }
   switch (getEvaluationKind(type)) {
   case TEK_Scalar:
-    EmitScalarInit(init, D, lvalue, capturedByInit, DbgLoc);
+    EmitScalarInit(init, D, lvalue, capturedByInit);
     return;
   case TEK_Complex: {
     ComplexPairTy complex = EmitComplexExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreOfComplex(complex, lvalue, /*init*/ true, DbgLoc);
+    EmitStoreOfComplex(complex, lvalue, /*init*/ true);
     return;
   }
   case TEK_Aggregate:
