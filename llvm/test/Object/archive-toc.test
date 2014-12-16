@@ -26,3 +26,11 @@ CHECK:      rw-r--r-- 1002/102      8 2004-11-19 03:24:02.000000000 evenlen
 CHECK-NEXT: rw-r--r-- 1002/102      7 2004-11-19 03:24:02.000000000 oddlen
 CHECK-NEXT: rwxr-xr-x 1002/102   1465 2004-11-19 03:24:02.000000000 very_long_bytecode_file_name.bc
 CHECK-NEXT: rw-r--r-- 1002/102   2280 2004-11-19 03:24:02.000000000 IsNAN.o
+
+Test reading a thin archive created by gnu ar
+RUN: env TZ=GMT llvm-ar tv %p/Inputs/thin.a | FileCheck %s --check-prefix=THIN -strict-whitespace
+
+THIN:      rw-r--r-- 1000/1000      8 2014-12-16 00:56:27.000000000 evenlen
+THIN-NEXT: rw-r--r-- 1000/1000      7 2014-12-16 00:56:27.000000000 oddlen
+THIN-NEXT: rwxr-xr-x 1000/1000   1465 2014-12-16 00:56:27.000000000 very_long_bytecode_file_name.bc
+THIN-NEXT: rw-r--r-- 1000/1000   2280 2014-12-16 00:56:27.000000000 IsNAN.o

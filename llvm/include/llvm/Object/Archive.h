@@ -84,7 +84,7 @@ public:
       return getHeader()->getAccessMode();
     }
     /// \return the size of the archive member without the header or padding.
-    uint64_t getSize() const { return Data.size() - StartOfFile; }
+    uint64_t getSize() const;
 
     StringRef getBuffer() const {
       return StringRef(Data.data() + StartOfFile, getSize());
@@ -173,9 +173,7 @@ public:
     K_COFF
   };
 
-  Kind kind() const { 
-    return Format;
-  }
+  Kind kind() const { return (Kind)Format; }
 
   child_iterator child_begin(bool SkipInternal = true) const;
   child_iterator child_end() const;
@@ -201,7 +199,8 @@ private:
   child_iterator SymbolTable;
   child_iterator StringTable;
   child_iterator FirstRegular;
-  Kind Format;
+  unsigned Format : 2;
+  unsigned IsThin : 1;
 };
 
 }
