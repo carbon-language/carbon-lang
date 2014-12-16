@@ -25,6 +25,11 @@ def I64 : PatLeaf<(i64 DoubleRegs:$R)>;
 def F32 : PatLeaf<(f32 IntRegs:$R)>;
 def F64 : PatLeaf<(f64 DoubleRegs:$R)>;
 
+// Pattern fragments to extract the low and high subregisters from a
+// 64-bit value.
+def LoReg: OutPatFrag<(ops node:$Rs),
+                      (EXTRACT_SUBREG (i64 $Rs), subreg_loreg)>;
+
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
@@ -1744,6 +1749,13 @@ let Defs = [R29, R30, R31], Uses = [R29], hasSideEffects = 0 in {
 //===----------------------------------------------------------------------===//
 // MTYPE/MPYH +
 //===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// Template Class
+// MPYS / Multipy signed/unsigned halfwords
+//Rd=mpy[u](Rs.[H|L],Rt.[H|L])[:<<1][:rnd][:sat]
+//===----------------------------------------------------------------------===//
+
 let hasNewValue = 1, opNewValue = 0 in
 class T_M2_mpy < bits<2> LHbits, bit isSat, bit isRnd,
                  bit hasShift, bit isUnsigned>
@@ -2279,6 +2291,121 @@ def M2_mpyud_hl_s1: T_M2_mpyd<0b10, 0, 1, 1>;
 def M2_mpyud_lh_s1: T_M2_mpyd<0b01, 0, 1, 1>;
 def M2_mpyud_ll_s1: T_M2_mpyd<0b00, 0, 1, 1>;
 }
+//===----------------------------------------------------------------------===//
+// Template Class for xtype mpy:
+// Vector multiply
+// Complex multiply
+// multiply 32X32 and use full result
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0 in
+class T_XTYPE_mpy64 <string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                     bit isSat, bit hasShift, bit isConj>
+   : MInst <(outs DoubleRegs:$Rdd),
+            (ins IntRegs:$Rs, IntRegs:$Rt),
+  "$Rdd = "#mnemonic#"($Rs, $Rt"#!if(isConj,"*)",")")
+                                #!if(hasShift,":<<1","")
+                                #!if(isSat,":sat",""),
+  [] > {
+    bits<5> Rdd;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b0101;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{12-8} = Rt;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rdd;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template Class for xtype mpy with accumulation into 64-bit:
+// Vector multiply
+// Complex multiply
+// multiply 32X32 and use full result
+//===----------------------------------------------------------------------===//
+class T_XTYPE_mpy64_acc <string op1, string op2, bits<3> MajOp, bits<3> MinOp,
+                         bit isSat, bit hasShift, bit isConj>
+  : MInst <(outs DoubleRegs:$Rxx),
+           (ins DoubleRegs:$dst2, IntRegs:$Rs, IntRegs:$Rt),
+  "$Rxx "#op2#"= "#op1#"($Rs, $Rt"#!if(isConj,"*)",")")
+                                   #!if(hasShift,":<<1","")
+                                   #!if(isSat,":sat",""),
+
+  [] , "$dst2 = $Rxx" > {
+    bits<5> Rxx;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b0111;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{12-8} = Rt;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rxx;
+  }
+
+// MPY - Multiply and use full result
+// Rdd = mpy[u](Rs,Rt)
+let isCodeGenOnly = 0 in {
+def M2_dpmpyss_s0 : T_XTYPE_mpy64 < "mpy", 0b000, 0b000, 0, 0, 0>;
+def M2_dpmpyuu_s0 : T_XTYPE_mpy64 < "mpyu", 0b010, 0b000, 0, 0, 0>;
+
+// Rxx[+-]= mpy[u](Rs,Rt)
+def M2_dpmpyss_acc_s0 : T_XTYPE_mpy64_acc < "mpy",  "+", 0b000, 0b000, 0, 0, 0>;
+def M2_dpmpyss_nac_s0 : T_XTYPE_mpy64_acc < "mpy",  "-", 0b001, 0b000, 0, 0, 0>;
+def M2_dpmpyuu_acc_s0 : T_XTYPE_mpy64_acc < "mpyu", "+", 0b010, 0b000, 0, 0, 0>;
+def M2_dpmpyuu_nac_s0 : T_XTYPE_mpy64_acc < "mpyu", "-", 0b011, 0b000, 0, 0, 0>;
+}
+
+def: Pat<(i64 (mul (i64 (anyext (i32 IntRegs:$src1))),
+                   (i64 (anyext (i32 IntRegs:$src2))))),
+         (M2_dpmpyuu_s0 IntRegs:$src1, IntRegs:$src2)>;
+
+def: Pat<(i64 (mul (i64 (sext (i32 IntRegs:$src1))),
+                   (i64 (sext (i32 IntRegs:$src2))))),
+         (M2_dpmpyss_s0 IntRegs:$src1, IntRegs:$src2)>;
+
+def: Pat<(i64 (mul (is_sext_i32:$src1),
+                   (is_sext_i32:$src2))),
+         (M2_dpmpyss_s0 (LoReg DoubleRegs:$src1), (LoReg DoubleRegs:$src2))>;
+
+// Multiply and accumulate, use full result.
+// Rxx[+-]=mpy(Rs,Rt)
+
+def: Pat<(i64 (add (i64 DoubleRegs:$src1),
+                   (mul (i64 (sext (i32 IntRegs:$src2))),
+                        (i64 (sext (i32 IntRegs:$src3)))))),
+         (M2_dpmpyss_acc_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
+
+def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
+                   (mul (i64 (sext (i32 IntRegs:$src2))),
+                        (i64 (sext (i32 IntRegs:$src3)))))),
+         (M2_dpmpyss_nac_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
+
+def: Pat<(i64 (add (i64 DoubleRegs:$src1),
+                   (mul (i64 (anyext (i32 IntRegs:$src2))),
+                        (i64 (anyext (i32 IntRegs:$src3)))))),
+         (M2_dpmpyuu_acc_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
+
+def: Pat<(i64 (add (i64 DoubleRegs:$src1),
+                   (mul (i64 (zext (i32 IntRegs:$src2))),
+                        (i64 (zext (i32 IntRegs:$src3)))))),
+         (M2_dpmpyuu_acc_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
+
+def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
+                   (mul (i64 (anyext (i32 IntRegs:$src2))),
+                        (i64 (anyext (i32 IntRegs:$src3)))))),
+         (M2_dpmpyuu_nac_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
+
+def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
+                   (mul (i64 (zext (i32 IntRegs:$src2))),
+                        (i64 (zext (i32 IntRegs:$src3)))))),
+         (M2_dpmpyuu_nac_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)

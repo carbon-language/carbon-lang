@@ -856,3 +856,12 @@ def symbolHi32 : Operand<i32> {
 def symbolLo32 : Operand<i32> {
   let PrintMethod = "printSymbolLo";
 }
+
+// Return true if for a 32 to 64-bit sign-extended load.
+def is_sext_i32 : PatLeaf<(i64 DoubleRegs:$src1), [{
+  LoadSDNode *LD = dyn_cast<LoadSDNode>(N);
+  if (!LD)
+    return false;
+  return LD->getExtensionType() == ISD::SEXTLOAD &&
+         LD->getMemoryVT().getScalarType() == MVT::i32;
+}]>;
