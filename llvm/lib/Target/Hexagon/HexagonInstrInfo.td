@@ -2688,6 +2688,11 @@ def NOT_rr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1),
                "$dst = not($src1)",
                [(set (i64 DoubleRegs:$dst), (not (i64 DoubleRegs:$src1)))]>;
 
+
+//===----------------------------------------------------------------------===//
+// STYPE/ALU -
+//===----------------------------------------------------------------------===//
+
 let hasSideEffects = 0 in
 class T_S2op_1 <string mnemonic, bits<4> RegTyBits, RegisterClass RCOut,
                 RegisterClass RCIn, bits<2> MajOp, bits<3> MinOp, bit isSat>
@@ -2724,11 +2729,6 @@ def A2_sxtw   : T_S2op_1_di <"sxtw", 0b01, 0b000>;
 
 def: Pat <(i64 (sext I32:$src)), (A2_sxtw I32:$src)>;
 
-//===----------------------------------------------------------------------===//
-// STYPE/ALU -
-//===----------------------------------------------------------------------===//
-
-
 // Swizzle the bytes of a word
 let isCodeGenOnly = 0 in
 def A2_swiz : T_S2op_1_ii <"swiz", 0b10, 0b111>;
@@ -2741,6 +2741,30 @@ let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def A2_sath  : T_S2op_1_ii <"sath", 0b11, 0b100>;
   def A2_satuh : T_S2op_1_ii <"satuh", 0b11, 0b101>;
 }
+
+let Itinerary = S_2op_tc_2_SLOT23, isCodeGenOnly = 0 in {
+  // Absolute value word
+  def A2_abs    : T_S2op_1_ii <"abs", 0b10, 0b100>;
+
+  let Defs = [USR_OVF] in
+  def A2_abssat : T_S2op_1_ii <"abs", 0b10, 0b101, 1>;
+
+  // Negate with saturation
+  let Defs = [USR_OVF] in
+  def A2_negsat : T_S2op_1_ii <"neg", 0b10, 0b110, 1>;
+}
+
+def: Pat<(i32 (select (i1 (setlt (i32 IntRegs:$src), 0)),
+                      (i32 (sub 0, (i32 IntRegs:$src))),
+                      (i32 IntRegs:$src))),
+         (A2_abs IntRegs:$src)>;
+
+let AddedComplexity = 50 in
+def: Pat<(i32 (xor (add (sra (i32 IntRegs:$src), (i32 31)),
+                        (i32 IntRegs:$src)),
+                   (sra (i32 IntRegs:$src), (i32 31)))),
+         (A2_abs IntRegs:$src)>;
+
 
 //===----------------------------------------------------------------------===//
 // STYPE/BIT +
