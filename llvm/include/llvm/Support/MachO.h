@@ -1128,6 +1128,14 @@ namespace llvm {
       sys::swapByteOrder(e.stacksize);
     }
 
+    inline void swapStruct(encryption_info_command &e) {
+      sys::swapByteOrder(e.cmd);
+      sys::swapByteOrder(e.cmdsize);
+      sys::swapByteOrder(e.cryptoff);
+      sys::swapByteOrder(e.cryptsize);
+      sys::swapByteOrder(e.cryptid);
+    }
+
     inline void swapStruct(dysymtab_command &dst) {
       sys::swapByteOrder(dst.cmd);
       sys::swapByteOrder(dst.cmdsize);
