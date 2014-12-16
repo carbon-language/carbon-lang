@@ -63,7 +63,7 @@ TEST_F(MDStringTest, PrintingSimple) {
   std::string Str;
   raw_string_ostream oss(Str);
   s->print(oss);
-  EXPECT_STREQ("metadata !\"testing 1 2 3\"", oss.str().c_str());
+  EXPECT_STREQ("!\"testing 1 2 3\"", oss.str().c_str());
 }
 
 // Test printing of MDString with non-printable characters.
@@ -73,7 +73,7 @@ TEST_F(MDStringTest, PrintingComplex) {
   std::string Str;
   raw_string_ostream oss(Str);
   s->print(oss);
-  EXPECT_STREQ("metadata !\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
+  EXPECT_STREQ("!\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
 }
 
 typedef MetadataTest MDNodeTest;
@@ -182,10 +182,10 @@ TEST_F(MDNodeTest, Print) {
   std::string Expected;
   {
     raw_string_ostream OS(Expected);
-    OS << "metadata !{";
+    OS << "!{";
     C->printAsOperand(OS);
     OS << ", ";
-    S->printAsOperand(OS, false);
+    S->printAsOperand(OS);
     OS << ", null";
     MDNode *Nodes[] = {N0, N1, N2};
     for (auto *Node : Nodes)

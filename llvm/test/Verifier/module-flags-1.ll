@@ -3,10 +3,10 @@
 ; Check that module flags are structurally correct.
 ;
 ; CHECK: incorrect number of operands in module flag
-; CHECK: metadata !0
+; CHECK: !0
 !0 = !{i32 1}
 ; CHECK: invalid behavior operand in module flag (expected constant integer)
-; CHECK: metadata !"foo"
+; CHECK: !"foo"
 !1 = !{!"foo", !"foo", i32 42}
 ; CHECK: invalid behavior operand in module flag (unexpected constant)
 ; CHECK: i32 999
@@ -18,7 +18,7 @@
 ; CHECK: i32 45
 !4 = !{i32 3, !"bla", i32 45}
 ; CHECK: invalid value for 'require' module flag (expected metadata pair)
-; CHECK: metadata !
+; CHECK: !
 !5 = !{i32 3, !"bla", !{i32 46}}
 ; CHECK: invalid value for 'require' module flag (first value operand should be a string)
 ; CHECK: i32 47

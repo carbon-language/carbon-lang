@@ -16,7 +16,6 @@ entry:
 }
 !1 = !{}
 ; CHECK: It should have at least one range!
-; CHECK-NEXT: metadata
 
 define i8 @f3(i8* %x) {
 entry:
@@ -148,4 +147,3 @@ entry:
 }
 !18 = !{}
 ; CHECK: It should have at least one range!
-; CHECK-NEXT: metadata

@@ -2567,7 +2567,6 @@ void Value::printAsOperand(raw_ostream &O, bool PrintType, const Module *M) cons
 void Metadata::print(raw_ostream &ROS) const {
   formatted_raw_ostream OS(ROS);
   if (auto *N = dyn_cast<MDNode>(this)) {
-    OS << "metadata ";
     SlotTracker SlotTable(static_cast<Function *>(nullptr));
     AssemblyWriter W(OS, SlotTable, nullptr, nullptr);
     W.printMDNodeBody(N);
@@ -2580,8 +2579,6 @@ void Metadata::print(raw_ostream &ROS) const {
 void Metadata::printAsOperand(raw_ostream &ROS, bool PrintType,
                               const Module *M) const {
   formatted_raw_ostream OS(ROS);
-  if (PrintType)
-    OS << "metadata ";
 
   std::unique_ptr<TypePrinting> TypePrinter;
   if (PrintType) {

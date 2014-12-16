@@ -7,4 +7,4 @@
 !0 = !{!{!"nested metadata"}}
 ; CHECK: assembly parsed, but does not verify as correct!
 ; CHECK-NEXT: invalid value for llvm.ident metadata entry operand(the operand should be a string)
-; CHECK-NEXT: metadata !1
+; CHECK-NEXT: !1
