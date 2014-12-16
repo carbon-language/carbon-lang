@@ -2947,6 +2947,107 @@ def: Pat<(i32 (or (i32 IntRegs:$Rs), (shl 1, (i32 IntRegs:$Rt)))),
 def: Pat<(i32 (xor (i32 IntRegs:$Rs), (shl 1, (i32 IntRegs:$Rt)))),
          (S2_togglebit_r IntRegs:$Rs, IntRegs:$Rt)>;
 
+// Bit test
+
+let hasSideEffects = 0 in
+class T_TEST_BIT_IMM<string MnOp, bits<3> MajOp>
+    : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, u5Imm:$u5),
+            "$Pd = "#MnOp#"($Rs, #$u5)",
+            [], "", S_2op_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<5> u5;
+  let IClass = 0b1000;
+  let Inst{27-24} = 0b0101;
+  let Inst{23-21} = MajOp;
+  let Inst{20-16} = Rs;
+  let Inst{13} = 0;
+  let Inst{12-8} = u5;
+  let Inst{1-0} = Pd;
+}
+
+let hasSideEffects = 0 in
+class T_TEST_BIT_REG<string MnOp, bit IsNeg>
+    : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
+            "$Pd = "#MnOp#"($Rs, $Rt)",
+            [], "", S_3op_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<5> Rt;
+  let IClass = 0b1100;
+  let Inst{27-22} = 0b011100;
+  let Inst{21} = IsNeg;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def S2_tstbit_i : T_TEST_BIT_IMM<"tstbit", 0b000>;
+def S2_tstbit_r : T_TEST_BIT_REG<"tstbit", 0>;
+}
+
+let AddedComplexity = 20 in { // Complexity greater than cmp reg-imm.
+  def: Pat<(i1 (setne (and (shl 1, u5ImmPred:$u5), (i32 IntRegs:$Rs)), 0)),
+           (S2_tstbit_i IntRegs:$Rs, u5ImmPred:$u5)>;
+  def: Pat<(i1 (setne (and (shl 1, (i32 IntRegs:$Rt)), (i32 IntRegs:$Rs)), 0)),
+           (S2_tstbit_r IntRegs:$Rs, IntRegs:$Rt)>;
+  def: Pat<(i1 (trunc (i32 IntRegs:$Rs))),
+           (S2_tstbit_i IntRegs:$Rs, 0)>;
+  def: Pat<(i1 (trunc (i64 DoubleRegs:$Rs))),
+           (S2_tstbit_i (LoReg DoubleRegs:$Rs), 0)>;
+}
+let hasSideEffects = 0 in
+class T_TEST_BITS_IMM<string MnOp, bits<2> MajOp, bit IsNeg>
+    : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, u6Imm:$u6),
+            "$Pd = "#MnOp#"($Rs, #$u6)",
+            [], "", S_2op_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<6> u6;
+  let IClass = 0b1000;
+  let Inst{27-24} = 0b0101;
+  let Inst{23-22} = MajOp;
+  let Inst{21} = IsNeg;
+  let Inst{20-16} = Rs;
+  let Inst{13-8} = u6;
+  let Inst{1-0} = Pd;
+}
+
+let hasSideEffects = 0 in
+class T_TEST_BITS_REG<string MnOp, bits<2> MajOp, bit IsNeg>
+    : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
+            "$Pd = "#MnOp#"($Rs, $Rt)",
+            [], "", S_3op_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<5> Rt;
+  let IClass = 0b1100;
+  let Inst{27-24} = 0b0111;
+  let Inst{23-22} = MajOp;
+  let Inst{21} = IsNeg;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def C2_bitsclri : T_TEST_BITS_IMM<"bitsclr", 0b10, 0>;
+def C2_bitsclr  : T_TEST_BITS_REG<"bitsclr", 0b10, 0>;
+def C2_bitsset  : T_TEST_BITS_REG<"bitsset", 0b01, 0>;
+}
+
+let AddedComplexity = 20 in { // Complexity greater than compare reg-imm.
+  def: Pat<(i1 (seteq (and (i32 IntRegs:$Rs), u6ImmPred:$u6), 0)),
+           (C2_bitsclri IntRegs:$Rs, u6ImmPred:$u6)>;
+  def: Pat<(i1 (seteq (and (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)), 0)),
+           (C2_bitsclr IntRegs:$Rs, IntRegs:$Rt)>;
+}
+
+let AddedComplexity = 10 in   // Complexity greater than compare reg-reg.
+def: Pat<(i1 (seteq (and (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)), IntRegs:$Rt)),
+         (C2_bitsset IntRegs:$Rs, IntRegs:$Rt)>;
+
 // clrbit.
 def CLRBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
             "$dst = clrbit($src1, #$src2)",
@@ -3023,30 +3124,6 @@ def C2_tfrrp: SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs),
   let Inst{27-21} = 0b0101010;
   let Inst{20-16} = Rs;
   let Inst{1-0} = Pd;
-}
-
-let hasSideEffects = 0 in
-class T_TEST_BIT_IMM<string MnOp, bits<3> MajOp>
-    : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, u5Imm:$u5),
-            "$Pd = "#MnOp#"($Rs, #$u5)",
-            [], "", S_2op_tc_2early_SLOT23> {
-  bits<2> Pd;
-  bits<5> Rs;
-  bits<5> u5;
-  let IClass = 0b1000;
-  let Inst{27-24} = 0b0101;
-  let Inst{23-21} = MajOp;
-  let Inst{20-16} = Rs;
-  let Inst{13} = 0;
-  let Inst{12-8} = u5;
-  let Inst{1-0} = Pd;
-}
-
-def S2_tstbit_i : T_TEST_BIT_IMM<"tstbit", 0b000>;
-
-let AddedComplexity = 20 in { // Complexity greater than cmp reg-imm.
-  def: Pat<(i1 (trunc (i32 IntRegs:$Rs))),
-           (S2_tstbit_i IntRegs:$Rs, 0)>;
 }
 
 
