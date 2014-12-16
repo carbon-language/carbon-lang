@@ -36,15 +36,15 @@ public:
   MipsDisassemblerBase(const MCSubtargetInfo &STI, MCContext &Ctx,
                        bool IsBigEndian)
       : MCDisassembler(STI, Ctx),
-        IsN64(STI.getFeatureBits() & Mips::FeatureN64),
+        IsGP64Bit(STI.getFeatureBits() & Mips::FeatureGP64Bit),
         IsBigEndian(IsBigEndian) {}
 
   virtual ~MipsDisassemblerBase() {}
 
-  bool isN64() const { return IsN64; }
+  bool isGP64Bit() const { return IsGP64Bit; }
 
 private:
-  bool IsN64;
+  bool IsGP64Bit;
 protected:
   bool IsBigEndian;
 };
@@ -974,7 +974,7 @@ static DecodeStatus DecodePtrRegisterClass(MCInst &Inst,
                                            unsigned RegNo,
                                            uint64_t Address,
                                            const void *Decoder) {
-  if (static_cast<const MipsDisassembler *>(Decoder)->isN64())
+  if (static_cast<const MipsDisassembler *>(Decoder)->isGP64Bit())
     return DecodeGPR64RegisterClass(Inst, RegNo, Address, Decoder);
 
   return DecodeGPR32RegisterClass(Inst, RegNo, Address, Decoder);
