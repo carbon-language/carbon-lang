@@ -1492,7 +1492,8 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalObject *GV) const {
 
   if (NumBits == 0) return;   // 1-byte aligned: no need to emit alignment.
 
-  assert(NumBits < std::numeric_limits<unsigned>::digits &&
+  assert(NumBits <
+             static_cast<unsigned>(std::numeric_limits<unsigned>::digits) &&
          "undefined behavior");
   if (getCurrentSection()->getKind().isText())
     OutStreamer.EmitCodeAlignment(1u << NumBits);

@@ -74,7 +74,8 @@ struct DomainValue {
 
   // Is domain available?
   bool hasDomain(unsigned domain) const {
-    assert(domain < std::numeric_limits<unsigned>::digits &&
+    assert(domain <
+               static_cast<unsigned>(std::numeric_limits<unsigned>::digits) &&
            "undefined behavior");
     return AvailableDomains & (1u << domain);
   }
