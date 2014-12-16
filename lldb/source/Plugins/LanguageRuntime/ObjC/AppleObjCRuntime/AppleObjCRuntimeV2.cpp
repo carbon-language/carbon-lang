@@ -554,36 +554,52 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
 size_t
 AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const char *ivar_name)
 {
+    uint32_t ivar_offset = LLDB_INVALID_IVAR_OFFSET;
+
     const char *class_name = parent_ast_type.GetConstTypeName().AsCString();
+    if (class_name && class_name[0] && ivar_name && ivar_name[0])
+    {
+        //----------------------------------------------------------------------
+        // Make the objective C V2 mangled name for the ivar offset from the
+        // class name and ivar name
+        //----------------------------------------------------------------------
+        std::string buffer("OBJC_IVAR_$_");
+        buffer.append (class_name);
+        buffer.push_back ('.');
+        buffer.append (ivar_name);
+        ConstString ivar_const_str (buffer.c_str());
+        
+        //----------------------------------------------------------------------
+        // Try to get the ivar offset address from the symbol table first using
+        // the name we created above
+        //----------------------------------------------------------------------
+        SymbolContextList sc_list;
+        Target &target = m_process->GetTarget();
+        target.GetImages().FindSymbolsWithNameAndType(ivar_const_str, eSymbolTypeObjCIVar, sc_list);
 
-    if (!class_name || *class_name == '\0' || !ivar_name || *ivar_name == '\0')
-        return LLDB_INVALID_IVAR_OFFSET;
-    
-    std::string buffer("OBJC_IVAR_$_");
-    buffer.append (class_name);
-    buffer.push_back ('.');
-    buffer.append (ivar_name);
-    ConstString ivar_const_str (buffer.c_str());
-    
-    SymbolContextList sc_list;
-    Target &target = m_process->GetTarget();
-    
-    target.GetImages().FindSymbolsWithNameAndType(ivar_const_str, eSymbolTypeObjCIVar, sc_list);
+        addr_t ivar_offset_address = LLDB_INVALID_ADDRESS;
 
-    SymbolContext ivar_offset_symbol;
-    if (sc_list.GetSize() != 1 
-        || !sc_list.GetContextAtIndex(0, ivar_offset_symbol) 
-        || ivar_offset_symbol.symbol == NULL)
-        return LLDB_INVALID_IVAR_OFFSET;
-    
-    addr_t ivar_offset_address = ivar_offset_symbol.symbol->GetAddress().GetLoadAddress (&target);
-    
-    Error error;
-    
-    uint32_t ivar_offset = m_process->ReadUnsignedIntegerFromMemory (ivar_offset_address, 
-                                                                     4, 
-                                                                     LLDB_INVALID_IVAR_OFFSET, 
-                                                                     error);
+        Error error;
+        SymbolContext ivar_offset_symbol;
+        if (sc_list.GetSize() == 1 && sc_list.GetContextAtIndex(0, ivar_offset_symbol))
+        {
+            if (ivar_offset_symbol.symbol)
+                ivar_offset_address = ivar_offset_symbol.symbol->GetAddress().GetLoadAddress (&target);
+        }
+
+        //----------------------------------------------------------------------
+        // If we didn't get the ivar offset address from the symbol table, fall
+        // back to getting it from the runtime
+        //----------------------------------------------------------------------
+        if (ivar_offset_address == LLDB_INVALID_ADDRESS)
+            ivar_offset_address = LookupRuntimeSymbol(ivar_const_str);
+
+        if (ivar_offset_address != LLDB_INVALID_ADDRESS)
+            ivar_offset = m_process->ReadUnsignedIntegerFromMemory (ivar_offset_address,
+                                                                    4,
+                                                                    LLDB_INVALID_IVAR_OFFSET,
+                                                                    error);
+    }
     return ivar_offset;
 }
 

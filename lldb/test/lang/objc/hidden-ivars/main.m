@@ -23,9 +23,7 @@
 @end
 
 @interface InheritContainer : InternalDefiner 
-{
-}
-
+@property (nonatomic, strong) NSMutableArray *filteredDataSource;
 -(id)init;
 @end
 
@@ -35,6 +33,7 @@
 {
     if (self = [super initWithFoo:2 andBar:3])
     {
+        self.filteredDataSource = [NSMutableArray arrayWithObjects:@"hello", @"world", nil];
     }
     return self;
 }
