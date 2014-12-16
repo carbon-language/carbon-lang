@@ -596,7 +596,7 @@ class POSIXSymbolizer : public Symbolizer {
     // First, try to use libbacktrace symbolizer (if it's available).
     if (libbacktrace_symbolizer_ != 0) {
       mu_.CheckLocked();
-      if (libbacktrace_symbolizer_->SymbolizeData(info))
+      if (libbacktrace_symbolizer_->SymbolizeData(addr, info))
         return true;
     }
     const char *str = SendCommand(true, module_name, module_offset);

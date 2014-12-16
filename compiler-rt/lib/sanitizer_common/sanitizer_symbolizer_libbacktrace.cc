@@ -173,9 +173,9 @@ SymbolizedStack *LibbacktraceSymbolizer::SymbolizeCode(uptr addr,
   return data.first;
 }
 
-bool LibbacktraceSymbolizer::SymbolizeData(DataInfo *info) {
-  backtrace_syminfo((backtrace_state *)state_, info->address,
-                    SymbolizeDataCallback, ErrorCallback, info);
+bool LibbacktraceSymbolizer::SymbolizeData(uptr addr, DataInfo *info) {
+  backtrace_syminfo((backtrace_state *)state_, addr, SymbolizeDataCallback,
+                    ErrorCallback, info);
   return true;
 }
 
@@ -192,7 +192,7 @@ SymbolizedStack *LibbacktraceSymbolizer::SymbolizeCode(uptr addr,
   return nullptr;
 }
 
-bool LibbacktraceSymbolizer::SymbolizeData(DataInfo *info) {
+bool LibbacktraceSymbolizer::SymbolizeData(uptr addr, DataInfo *info) {
   return false;
 }
 
