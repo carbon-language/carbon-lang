@@ -143,3 +143,7 @@ void test() {
   int x = variableX.getX();
 }
 }
+
+namespace PR21905 {
+int (*a) () = (void)Z;  // expected-error-re {{use of undeclared identifier 'Z'{{$}}}}
+}
