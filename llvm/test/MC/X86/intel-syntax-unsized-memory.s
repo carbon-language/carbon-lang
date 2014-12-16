@@ -24,3 +24,6 @@ vmovdqa [rax], ymm0
 
 // CHECK: vaddps (%rax), %zmm1, %zmm1
 vaddps zmm1, zmm1, [rax]
+
+// CHECK: leal 1(%r15d), %r9d
+lea r9d, [r15d+1]

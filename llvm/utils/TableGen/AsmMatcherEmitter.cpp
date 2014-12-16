@@ -2965,6 +2965,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "      continue;\n";
   OS << "    }\n";
   OS << "\n";
+  OS << "    Inst.clear();\n\n";
   OS << "    if (matchingInlineAsm) {\n";
   OS << "      Inst.setOpcode(it->Opcode);\n";
   OS << "      convertToMapAndConstraints(it->ConvertFn, Operands);\n";
