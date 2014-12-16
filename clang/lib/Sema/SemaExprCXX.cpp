@@ -6082,7 +6082,7 @@ class TransformTypos : public TreeTransform<TransformTypos> {
       return ME->getMemberDecl();
     // FIXME: Add any other expr types that could be be seen by the delayed typo
     // correction TreeTransform for which the corresponding TypoCorrection could
-    // contain multple decls.
+    // contain multiple decls.
     return nullptr;
   }
 
