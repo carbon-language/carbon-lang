@@ -2407,152 +2407,6 @@ def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
                         (i64 (zext (i32 IntRegs:$src3)))))),
          (M2_dpmpyuu_nac_s0 DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
 
-// Multiply and use lower result.
-// Rd=+mpyi(Rs,#u8)
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 8 in
-def MPYI_riu : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u8Ext:$src2),
-              "$dst =+ mpyi($src1, #$src2)",
-              [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                             u8ExtPred:$src2))]>;
-
-// Rd=-mpyi(Rs,#u8)
-def MPYI_rin : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u8Imm:$src2),
-              "$dst =- mpyi($src1, #$src2)",
-              [(set (i32 IntRegs:$dst), (ineg (mul (i32 IntRegs:$src1),
-                                                   u8ImmPred:$src2)))]>;
-
-// Rd=mpyi(Rs,#m9)
-// s9 is NOT the same as m9 - but it works.. so far.
-// Assembler maps to either Rd=+mpyi(Rs,#u8 or Rd=-mpyi(Rs,#u8)
-// depending on the value of m9. See Arch Spec.
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 9,
-CextOpcode = "MPYI", InputType = "imm" in
-def MPYI_ri : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, s9Ext:$src2),
-              "$dst = mpyi($src1, #$src2)",
-              [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                             s9ExtPred:$src2))]>, ImmRegRel;
-
-// Rd=mpyi(Rs,Rt)
-let CextOpcode = "MPYI", InputType = "reg" in
-def MPYI : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-           "$dst = mpyi($src1, $src2)",
-           [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                          (i32 IntRegs:$src2)))]>, ImmRegRel;
-
-// Rx+=mpyi(Rs,#u8)
-let isExtendable = 1, opExtendable = 3, isExtentSigned = 0, opExtentBits = 8,
-CextOpcode = "MPYI_acc", InputType = "imm" in
-def MPYI_acc_ri : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u8Ext:$src3),
-            "$dst += mpyi($src2, #$src3)",
-            [(set (i32 IntRegs:$dst),
-                  (add (mul (i32 IntRegs:$src2), u8ExtPred:$src3),
-                       (i32 IntRegs:$src1)))],
-            "$src1 = $dst">, ImmRegRel;
-
-// Rx-=mpyi(Rs,#u8)
-let isExtendable = 1, opExtendable = 3, isExtentSigned = 0, opExtentBits = 8 in
-def MPYI_sub_ri : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u8Ext:$src3),
-            "$dst -= mpyi($src2, #$src3)",
-            [(set (i32 IntRegs:$dst),
-                  (sub (i32 IntRegs:$src1), (mul (i32 IntRegs:$src2),
-                                                 u8ExtPred:$src3)))],
-            "$src1 = $dst">;
-
-// Multiply and use upper result.
-// Rd=mpy(Rs,Rt.H):<<1:rnd:sat
-// Rd=mpy(Rs,Rt.L):<<1:rnd:sat
-// Rd=mpy(Rs,Rt)
-def MPY : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-          "$dst = mpy($src1, $src2)",
-          [(set (i32 IntRegs:$dst), (mulhs (i32 IntRegs:$src1),
-                                           (i32 IntRegs:$src2)))]>;
-
-// Rd=mpy(Rs,Rt):rnd
-// Rd=mpyu(Rs,Rt)
-def MPYU : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-           "$dst = mpyu($src1, $src2)",
-           [(set (i32 IntRegs:$dst), (mulhu (i32 IntRegs:$src1),
-                                            (i32 IntRegs:$src2)))]>;
-
-// Multiply and use full result.
-// Rdd=mpyu(Rs,Rt)
-def MPYU64 : MInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             "$dst = mpyu($src1, $src2)",
-             [(set (i64 DoubleRegs:$dst),
-                   (mul (i64 (anyext (i32 IntRegs:$src1))),
-                        (i64 (anyext (i32 IntRegs:$src2)))))]>;
-
-// Rdd=mpy(Rs,Rt)
-def MPY64 : MInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             "$dst = mpy($src1, $src2)",
-             [(set (i64 DoubleRegs:$dst),
-                   (mul (i64 (sext (i32 IntRegs:$src1))),
-                        (i64 (sext (i32 IntRegs:$src2)))))]>;
-
-// Multiply and accumulate, use full result.
-// Rxx[+-]=mpy(Rs,Rt)
-// Rxx+=mpy(Rs,Rt)
-def MPY64_acc : MInst_acc<(outs DoubleRegs:$dst),
-            (ins DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "$dst += mpy($src2, $src3)",
-            [(set (i64 DoubleRegs:$dst),
-            (add (mul (i64 (sext (i32 IntRegs:$src2))),
-                      (i64 (sext (i32 IntRegs:$src3)))),
-                 (i64 DoubleRegs:$src1)))],
-            "$src1 = $dst">;
-
-// Rxx-=mpy(Rs,Rt)
-def MPY64_sub : MInst_acc<(outs DoubleRegs:$dst),
-            (ins DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "$dst -= mpy($src2, $src3)",
-            [(set (i64 DoubleRegs:$dst),
-                  (sub (i64 DoubleRegs:$src1),
-                       (mul (i64 (sext (i32 IntRegs:$src2))),
-                            (i64 (sext (i32 IntRegs:$src3))))))],
-            "$src1 = $dst">;
-
-// Rxx[+-]=mpyu(Rs,Rt)
-// Rxx+=mpyu(Rs,Rt)
-def MPYU64_acc : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                            IntRegs:$src2, IntRegs:$src3),
-             "$dst += mpyu($src2, $src3)",
-             [(set (i64 DoubleRegs:$dst),
-                   (add (mul (i64 (anyext (i32 IntRegs:$src2))),
-                             (i64 (anyext (i32 IntRegs:$src3)))),
-                        (i64 DoubleRegs:$src1)))], "$src1 = $dst">;
-
-// Rxx-=mpyu(Rs,Rt)
-def MPYU64_sub : MInst_acc<(outs DoubleRegs:$dst),
-            (ins DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "$dst -= mpyu($src2, $src3)",
-            [(set (i64 DoubleRegs:$dst),
-                  (sub (i64 DoubleRegs:$src1),
-                       (mul (i64 (anyext (i32 IntRegs:$src2))),
-                            (i64 (anyext (i32 IntRegs:$src3))))))],
-            "$src1 = $dst">;
-
-let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
-InputType = "imm", CextOpcode = "ADD_acc" in
-def ADDri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, s8Ext:$src3),
-             "$dst += add($src2, #$src3)",
-             [(set (i32 IntRegs:$dst), (add (add (i32 IntRegs:$src2),
-                                                 s8_16ExtPred:$src3),
-                                            (i32 IntRegs:$src1)))],
-             "$src1 = $dst">, ImmRegRel;
-
-let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
-CextOpcode = "SUB_acc", InputType = "imm" in
-def SUBri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, s8Ext:$src3),
-             "$dst -= add($src2, #$src3)",
-             [(set (i32 IntRegs:$dst), (sub (i32 IntRegs:$src1),
-                                            (add (i32 IntRegs:$src2),
-                                                 s8_16ExtPred:$src3)))],
-             "$src1 = $dst">, ImmRegRel;
-
 //===----------------------------------------------------------------------===//
 // MTYPE/MPYH -
 //===----------------------------------------------------------------------===//
@@ -3892,7 +3746,7 @@ def : Pat<(i64 (zext (i32 IntRegs:$src1))),
 // Multiply 64-bit unsigned and use upper result.
 def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
       (i64
-       (MPYU64_acc
+       (M2_dpmpyuu_acc_s0
         (i64
          (A2_combinew
           (A2_tfrsi 0),
@@ -3901,9 +3755,9 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
              (i64
               (LSRd_ri
                (i64
-                (MPYU64_acc
+                (M2_dpmpyuu_acc_s0
                  (i64
-                  (MPYU64_acc
+                  (M2_dpmpyuu_acc_s0
                    (i64
                     (A2_combinew (A2_tfrsi 0),
                      (i32
@@ -3911,7 +3765,8 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                        (i64
                         (LSRd_ri
                          (i64
-                          (MPYU64 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
+                          (M2_dpmpyuu_s0 
+                            (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
                                                        subreg_loreg)),
                                   (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
                                                        subreg_loreg)))), 32)),
@@ -3927,7 +3782,7 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
 // Multiply 64-bit signed and use upper result.
 def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
       (i64
-       (MPY64_acc
+       (M2_dpmpyss_acc_s0
         (i64
          (A2_combinew (A2_tfrsi 0),
           (i32
@@ -3935,9 +3790,9 @@ def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
             (i64
              (LSRd_ri
               (i64
-               (MPY64_acc
+               (M2_dpmpyss_acc_s0
                 (i64
-                 (MPY64_acc
+                 (M2_dpmpyss_acc_s0
                   (i64
                    (A2_combinew (A2_tfrsi 0),
                     (i32
@@ -3945,7 +3800,8 @@ def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                       (i64
                        (LSRd_ri
                         (i64
-                         (MPYU64 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
+                         (M2_dpmpyuu_s0 
+                           (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
                                                       subreg_loreg)),
                                  (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
                                                       subreg_loreg)))), 32)),
@@ -4066,7 +3922,7 @@ defm LSL : basic_xtype_reg<"lsl", shl>;
 
 // Change the sign of the immediate for Rd=-mpyi(Rs,#u8)
 def : Pat <(mul (i32 IntRegs:$src1), (ineg n8ImmPred:$src2)),
-      (i32 (MPYI_rin (i32 IntRegs:$src1), u8ImmPred:$src2))>;
+      (i32 (M2_mpysin (i32 IntRegs:$src1), u8ImmPred:$src2))>;
 
 //===----------------------------------------------------------------------===//
 // V3 Instructions +

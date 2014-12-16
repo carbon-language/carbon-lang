@@ -19,7 +19,7 @@ def : Pat <(mul DoubleRegs:$src1, DoubleRegs:$src2),
           (i32
            (EXTRACT_SUBREG
             (i64
-             (MPYU64 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
+             (M2_dpmpyuu_s0 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
                                           subreg_loreg)),
                      (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
                                           subreg_loreg)))),
@@ -31,7 +31,8 @@ def : Pat <(mul DoubleRegs:$src1, DoubleRegs:$src2),
         (i32
          (EXTRACT_SUBREG
           (i64
-           (MPYU64 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_loreg)),
+           (M2_dpmpyuu_s0 
+             (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_loreg)),
                    (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
                                         subreg_loreg)))), subreg_loreg))))>;
 

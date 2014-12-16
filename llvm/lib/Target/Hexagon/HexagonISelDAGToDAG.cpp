@@ -900,7 +900,7 @@ SDNode *HexagonDAGToDAGISel::SelectMul(SDNode *N) {
     }
 
     // Generate a mpy instruction.
-    SDNode *Result = CurDAG->getMachineNode(Hexagon::MPY64, dl, MVT::i64,
+    SDNode *Result = CurDAG->getMachineNode(Hexagon::M2_dpmpyss_s0, dl, MVT::i64,
                                             OP0, OP1);
     ReplaceUses(N, Result);
     return Result;
@@ -1079,7 +1079,7 @@ SDNode *HexagonDAGToDAGISel::SelectTruncate(SDNode *N) {
       }
 
       // Generate a mpy instruction.
-      SDNode *Result = CurDAG->getMachineNode(Hexagon::MPY, dl, MVT::i32,
+      SDNode *Result = CurDAG->getMachineNode(Hexagon::M2_mpy_up, dl, MVT::i32,
                                               OP0, OP1);
       ReplaceUses(N, Result);
       return Result;
@@ -1112,7 +1112,7 @@ SDNode *HexagonDAGToDAGISel::SelectSHL(SDNode *N) {
           if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val.getNode()))
             if (isInt<9>(CN->getSExtValue())) {
               SDNode* Result =
-                CurDAG->getMachineNode(Hexagon::MPYI_ri, dl,
+                CurDAG->getMachineNode(Hexagon::M2_mpysmi, dl,
                                        MVT::i32, Mul_0, Val);
               ReplaceUses(N, Result);
               return Result;
@@ -1140,7 +1140,7 @@ SDNode *HexagonDAGToDAGISel::SelectSHL(SDNode *N) {
                     dyn_cast<ConstantSDNode>(Val.getNode()))
                   if (isInt<9>(CN->getSExtValue())) {
                     SDNode* Result =
-                      CurDAG->getMachineNode(Hexagon::MPYI_ri, dl, MVT::i32,
+                      CurDAG->getMachineNode(Hexagon::M2_mpysmi, dl, MVT::i32,
                                              Shl2_0, Val);
                     ReplaceUses(N, Result);
                     return Result;
