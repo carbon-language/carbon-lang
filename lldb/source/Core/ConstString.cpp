@@ -11,6 +11,8 @@
 #include "lldb/Host/Mutex.h"
 #include "llvm/ADT/StringMap.h"
 
+#import <mutex>
+
 using namespace lldb_private;
 
 
@@ -184,25 +186,16 @@ protected:
 // we can't guarantee that some objects won't get destroyed after the
 // global destructor chain is run, and trying to make sure no destructors
 // touch ConstStrings is difficult.  So we leak the pool instead.
-//
-// FIXME: If we are going to keep it this way we should come up with some
-// abstraction to "pthread_once" so we don't have to check the pointer
-// every time.
 //----------------------------------------------------------------------
 static Pool &
 StringPool()
 {
-    static Mutex g_pool_initialization_mutex;
+    static std::once_flag g_pool_initialization_flag;
     static Pool *g_string_pool = NULL;
 
-    if (g_string_pool == NULL)
-    {
-        Mutex::Locker initialization_locker(g_pool_initialization_mutex);
-        if (g_string_pool == NULL)
-        {
-            g_string_pool = new Pool();
-        }
-    }
+    std::call_once(g_pool_initialization_flag, [] () {
+        g_string_pool = new Pool();
+    });
     
     return *g_string_pool;
 }
