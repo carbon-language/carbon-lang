@@ -71,8 +71,6 @@ static void AsanCheckFailed(const char *file, int line, const char *cond,
 }
 
 // -------------------------- Flags ------------------------- {{{1
-static const int kDefaultMallocContextSize = 30;
-
 Flags asan_flags_dont_use_directly;  // use via flags().
 
 static const char *MaybeCallAsanDefaultOptions() {
@@ -93,7 +91,6 @@ static const char *MaybeUseAsanDefaultOptionsCompileDefinition() {
 static void ParseFlagsFromString(Flags *f, const char *str) {
   CommonFlags *cf = common_flags();
   ParseCommonFlagsFromString(cf, str);
-  CHECK((uptr)cf->malloc_context_size <= kStackTraceMax);
   // Please write meaningful flag descriptions when adding new flags.
   ParseFlag(str, &f->quarantine_size, "quarantine_size",
             "Size (in bytes) of quarantine used to detect use-after-free "
@@ -322,7 +319,8 @@ void InitializeFlags(Flags *f, const char *env) {
   if (f->strict_init_order) {
     f->check_initialization_order = true;
   }
-  CHECK_LE(flags()->min_uar_stack_size_log, flags()->max_uar_stack_size_log);
+  CHECK_LE((uptr)cf->malloc_context_size, kStackTraceMax);
+  CHECK_LE(f->min_uar_stack_size_log, f->max_uar_stack_size_log);
 }
 
 // Parse flags that may change between startup and activation.
@@ -571,6 +569,8 @@ static void AsanInitInternal() {
   // initialization steps look at flags().
   const char *options = GetEnv("ASAN_OPTIONS");
   InitializeFlags(flags(), options);
+
+  SetMallocContextSize(common_flags()->malloc_context_size);
 
   InitializeHighMemEnd();
 

@@ -21,6 +21,11 @@
 
 namespace __asan {
 
+static const u32 kDefaultMallocContextSize = 30;
+
+void SetMallocContextSize(u32 size);
+u32 GetMallocContextSize();
+
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.
@@ -93,9 +98,8 @@ void GetStackTraceWithPcBpAndContext(BufferedStackTrace *stack, uptr max_depth,
 #define GET_STACK_TRACE_THREAD                                    \
   GET_STACK_TRACE(kStackTraceMax, true)
 
-#define GET_STACK_TRACE_MALLOC                                    \
-  GET_STACK_TRACE(common_flags()->malloc_context_size,            \
-                  common_flags()->fast_unwind_on_malloc)
+#define GET_STACK_TRACE_MALLOC                                                 \
+  GET_STACK_TRACE(GetMallocContextSize(), common_flags()->fast_unwind_on_malloc)
 
 #define GET_STACK_TRACE_FREE GET_STACK_TRACE_MALLOC
 
