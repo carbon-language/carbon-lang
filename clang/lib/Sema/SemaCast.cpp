@@ -240,10 +240,8 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   QualType DestType = DestTInfo->getType();
 
   // If the type is dependent, we won't do the semantic analysis now.
-  // FIXME: should we check this in a more fine-grained manner?
-  bool TypeDependent = DestType->isDependentType() ||
-                       Ex.get()->isTypeDependent() ||
-                       Ex.get()->isValueDependent();
+  bool TypeDependent =
+      DestType->isDependentType() || Ex.get()->isTypeDependent();
 
   CastOperation Op(*this, DestType, E);
   Op.OpRange = SourceRange(OpLoc, Parens.getEnd());

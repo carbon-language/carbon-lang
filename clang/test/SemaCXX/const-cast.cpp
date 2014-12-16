@@ -64,3 +64,6 @@ short *bad_const_cast_test(char const *volatile *const volatile *var)
   (void)const_cast<int&&>(0); // expected-error {{const_cast from rvalue to reference type 'int &&'}} expected-warning {{C++11}}
   return **var3;
 }
+
+template <typename T>
+char *PR21845() { return const_cast<char *>((void)T::x); } // expected-error {{const_cast from 'void' to 'char *' is not allowed}}
