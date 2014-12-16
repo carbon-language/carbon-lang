@@ -70,36 +70,39 @@ class MapEntry
 {
 public:
     MapEntry () {}
-    MapEntry (ValueObjectSP entry_sp) : m_entry_sp(entry_sp) {}
+    explicit MapEntry (ValueObjectSP entry_sp) : m_entry_sp(entry_sp) {}
     MapEntry (const MapEntry& rhs) : m_entry_sp(rhs.m_entry_sp) {}
-    MapEntry (ValueObject* entry) : m_entry_sp(entry ? entry->GetSP() : ValueObjectSP()) {}
+    explicit MapEntry (ValueObject* entry) : m_entry_sp(entry ? entry->GetSP() : ValueObjectSP()) {}
     
     ValueObjectSP
-    left ()
+    left () const
     {
+        static ConstString g_left("__left_");
         if (!m_entry_sp)
             return m_entry_sp;
-        return m_entry_sp->GetChildMemberWithName(ConstString("__left_"), true);
+        return m_entry_sp->GetChildMemberWithName(g_left, true);
     }
     
     ValueObjectSP
-    right ()
+    right () const
     {
+        static ConstString g_right("__right_");
         if (!m_entry_sp)
             return m_entry_sp;
-        return m_entry_sp->GetChildMemberWithName(ConstString("__right_"), true);
+        return m_entry_sp->GetChildMemberWithName(g_right, true);
     }
     
     ValueObjectSP
-    parent ()
+    parent () const
     {
+        static ConstString g_parent("__parent_");
         if (!m_entry_sp)
             return m_entry_sp;
-        return m_entry_sp->GetChildMemberWithName(ConstString("__parent_"), true);
+        return m_entry_sp->GetChildMemberWithName(g_parent, true);
     }
     
     uint64_t
-    value ()
+    value () const
     {
         if (!m_entry_sp)
             return 0;
@@ -107,7 +110,7 @@ public:
     }
     
     bool
-    error ()
+    error () const
     {
         if (!m_entry_sp)
             return true;
@@ -115,13 +118,13 @@ public:
     }
     
     bool
-    null()
+    null() const
     {
         return (value() == 0);
     }
     
     ValueObjectSP
-    GetEntry ()
+    GetEntry () const
     {
         return m_entry_sp;
     }
@@ -160,27 +163,18 @@ public:
     ValueObjectSP
     advance (size_t count)
     {
+        ValueObjectSP fail(nullptr);
         if (m_error)
-            return lldb::ValueObjectSP();
-        if (count == 0)
-            return m_entry.GetEntry();
-        if (count == 1)
-        {
-            next ();
-            return m_entry.GetEntry();
-        }
+            return fail;
         size_t steps = 0;
         while (count > 0)
         {
-            if (m_error)
-                return lldb::ValueObjectSP();
-            next ();
-            count--;
-            if (m_entry.null())
-                return lldb::ValueObjectSP();
-            steps++;
-            if (steps > m_max_depth)
-                return lldb::ValueObjectSP();
+            next();
+            count--, steps++;
+            if (m_error ||
+                m_entry.null() ||
+                (steps > m_max_depth))
+                return fail;
         }
         return m_entry.GetEntry();
     }
@@ -188,16 +182,39 @@ protected:
     void
     next ()
     {
-        m_entry.SetEntry(increment(m_entry.GetEntry()));
+        if (m_entry.null())
+            return;
+        MapEntry right(m_entry.right());
+        if (right.null() == false)
+        {
+            m_entry = tree_min(std::move(right));
+            return;
+        }
+        size_t steps = 0;
+        while (!is_left_child(m_entry))
+        {
+            if (m_entry.error())
+            {
+                m_error = true;
+                return;
+            }
+            m_entry.SetEntry(m_entry.parent());
+            steps++;
+            if (steps > m_max_depth)
+            {
+                m_entry = MapEntry();
+                return;
+            }
+        }
+        m_entry = MapEntry(m_entry.parent());
     }
 
 private:
-    ValueObjectSP
-    tree_min (ValueObjectSP x_sp)
+    MapEntry
+    tree_min (MapEntry&& x)
     {
-        MapEntry x(x_sp);
         if (x.null())
-            return ValueObjectSP();
+            return MapEntry();
         MapEntry left(x.left());
         size_t steps = 0;
         while (left.null() == false)
@@ -205,42 +222,20 @@ private:
             if (left.error())
             {
                 m_error = true;
-                return lldb::ValueObjectSP();
+                return MapEntry();
             }
-            x.SetEntry(left.GetEntry());
+            x = left;
             left.SetEntry(x.left());
             steps++;
             if (steps > m_max_depth)
-                return lldb::ValueObjectSP();
+                return MapEntry();
         }
-        return x.GetEntry();
+        return x;
     }
-    
-    ValueObjectSP
-    tree_max (ValueObjectSP x_sp)
-    {
-        MapEntry x(x_sp);
-        if (x.null())
-            return ValueObjectSP();
-        MapEntry right(x.right());
-        size_t steps = 0;
-        while (right.null() == false)
-        {
-            if (right.error())
-                return lldb::ValueObjectSP();
-            x.SetEntry(right.GetEntry());
-            right.SetEntry(x.right());
-            steps++;
-            if (steps > m_max_depth)
-                return lldb::ValueObjectSP();
-        }
-        return x.GetEntry();
-    }
-    
+
     bool
-    is_left_child (ValueObjectSP x_sp)
+    is_left_child (const MapEntry& x)
     {
-        MapEntry x(x_sp);
         if (x.null())
             return false;
         MapEntry rhs(x.parent());
@@ -248,31 +243,6 @@ private:
         return x.value() == rhs.value();
     }
     
-    ValueObjectSP
-    increment (ValueObjectSP x_sp)
-    {
-        MapEntry node(x_sp);
-        if (node.null())
-            return ValueObjectSP();
-        MapEntry right(node.right());
-        if (right.null() == false)
-            return tree_min(right.GetEntry());
-        size_t steps = 0;
-        while (!is_left_child(node.GetEntry()))
-        {
-            if (node.error())
-            {
-                m_error = true;
-                return lldb::ValueObjectSP();
-            }
-            node.SetEntry(node.parent());
-            steps++;
-            if (steps > m_max_depth)
-                return lldb::ValueObjectSP();
-        }
-        return node.parent();
-    }
-        
     MapEntry m_entry;
     size_t m_max_depth;
     bool m_error;
