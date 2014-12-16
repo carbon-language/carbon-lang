@@ -330,15 +330,17 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   using namespace options;
   bool Success = true;
 
-  Opts.OptimizationLevel = getOptimizationLevel(Args, IK, Diags);
+  unsigned OptimizationLevel = getOptimizationLevel(Args, IK, Diags);
   // TODO: This could be done in Driver
   unsigned MaxOptLevel = 3;
-  if (Opts.OptimizationLevel > MaxOptLevel) {
-    // If the optimization level is not supported, fall back on the default optimization
+  if (OptimizationLevel > MaxOptLevel) {
+    // If the optimization level is not supported, fall back on the default
+    // optimization
     Diags.Report(diag::warn_drv_optimization_value)
         << Args.getLastArg(OPT_O)->getAsString(Args) << "-O" << MaxOptLevel;
-    Opts.OptimizationLevel = MaxOptLevel;
+    OptimizationLevel = MaxOptLevel;
   }
+  Opts.OptimizationLevel = OptimizationLevel;
 
   // We must always run at least the always inlining pass.
   Opts.setInlining(
