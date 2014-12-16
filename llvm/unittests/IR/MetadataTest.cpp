@@ -130,8 +130,8 @@ TEST_F(MDNodeTest, Delete) {
 }
 
 TEST_F(MDNodeTest, SelfReference) {
-  // !0 = metadata !{metadata !0}
-  // !1 = metadata !{metadata !0}
+  // !0 = !{!0}
+  // !1 = !{!0}
   {
     MDNode *Temp = MDNode::getTemporary(Context, None);
     Metadata *Args[] = {Temp};
@@ -149,8 +149,8 @@ TEST_F(MDNodeTest, SelfReference) {
     EXPECT_EQ(Ref1, Ref2);
   }
 
-  // !0 = metadata !{metadata !0, metadata !{}}
-  // !1 = metadata !{metadata !0, metadata !{}}
+  // !0 = !{!0, !{}}
+  // !1 = !{!0, !{}}
   {
     MDNode *Temp = MDNode::getTemporary(Context, None);
     Metadata *Args[] = {Temp, MDNode::get(Context, None)};
