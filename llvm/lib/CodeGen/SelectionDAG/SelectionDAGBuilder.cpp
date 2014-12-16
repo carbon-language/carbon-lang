@@ -2712,8 +2712,8 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
       !Cases.empty()) {
     // Replace an unreachable default destination with the most popular case
     // destination.
-    DenseMap<const BasicBlock *, uint64_t> Popularity;
-    uint64_t MaxPop = 0;
+    DenseMap<const BasicBlock *, unsigned> Popularity;
+    unsigned MaxPop = 0;
     const BasicBlock *MaxBB = nullptr;
     for (auto I : SI.cases()) {
       const BasicBlock *BB = I.getCaseSuccessor();

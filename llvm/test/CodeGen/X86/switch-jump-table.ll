@@ -6,7 +6,7 @@
 define void @sum2(i32 %x, i32* %to) {
 ; CHECK-LABEL: sum2:
 ; CHECK: movl 4(%esp), [[REG:%e[a-z]{2}]]
-; cmpl $3, [[REG]]
+; CHECK: cmpl $3, [[REG]]
 ; CHECK: jbe .LBB0_1
 ; CHECK: movl $4
 ; CHECK: retl
