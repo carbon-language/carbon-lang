@@ -3103,8 +3103,8 @@ static void PrintSection(const char *sectname, const char *segname,
     outs() << "      addr " << format("0x%016" PRIx64, addr) << "\n";
     outs() << "      size " << format("0x%016" PRIx64, size);
   } else {
-    outs() << "      addr " << format("0x%08" PRIx32, addr) << "\n";
-    outs() << "      size " << format("0x%08" PRIx32, size);
+    outs() << "      addr " << format("0x%08" PRIx64, addr) << "\n";
+    outs() << "      size " << format("0x%08" PRIx64, size);
   }
   if ((flags & MachO::S_ZEROFILL) != 0 && offset + size > object_size)
     outs() << " (past end of file)\n";
