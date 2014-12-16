@@ -9,7 +9,7 @@
 
 // <optional>
 
-// T* optional<T>::operator->();
+// constexpr T* optional<T>::operator->();
 
 #ifdef _LIBCPP_DEBUG
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
@@ -25,8 +25,7 @@ using std::experimental::optional;
 
 struct X
 {
-    int test() const {return 2;}
-    int test() {return 3;}
+    constexpr int test() {return 3;}
 };
 
 #endif  // _LIBCPP_STD_VER > 11
@@ -35,8 +34,8 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-        optional<X> opt(X{});
-        assert(opt->test() == 3);
+        constexpr optional<X> opt(X{});
+        static_assert(opt->test() == 3, "");
     }
 #ifdef _LIBCPP_DEBUG
     {
