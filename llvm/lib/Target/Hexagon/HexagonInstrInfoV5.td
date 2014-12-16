@@ -587,19 +587,19 @@ def : Pat <(i32 (fp_to_sint (f64 DoubleRegs:$src1))),
           Requires<[HasV5T]>;
 
 def : Pat <(fabs (f32 IntRegs:$src1)),
-           (CLRBIT_31 (f32 IntRegs:$src1), 31)>,
+           (S2_clrbit_i (f32 IntRegs:$src1), 31)>,
           Requires<[HasV5T]>;
 
 def : Pat <(fneg (f32 IntRegs:$src1)),
-           (TOGBIT_31 (f32 IntRegs:$src1), 31)>,
+           (S2_togglebit_i (f32 IntRegs:$src1), 31)>,
           Requires<[HasV5T]>;
 
 /*
 def : Pat <(fabs (f64 DoubleRegs:$src1)),
-          (CLRBIT_31 (f32 (EXTRACT_SUBREG DoubleRegs:$src1, subreg_hireg)), 31)>,
+          (S2_clrbit_i (f32 (EXTRACT_SUBREG DoubleRegs:$src1, subreg_hireg)), 31)>,
           Requires<[HasV5T]>;
 
 def : Pat <(fabs (f64 DoubleRegs:$src1)),
-          (CLRBIT_31 (f32 (EXTRACT_SUBREG DoubleRegs:$src1, subreg_hireg)), 31)>,
+          (S2_clrbit_i (f32 (EXTRACT_SUBREG DoubleRegs:$src1, subreg_hireg)), 31)>,
           Requires<[HasV5T]>;
           */

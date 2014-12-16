@@ -3048,51 +3048,23 @@ let AddedComplexity = 10 in   // Complexity greater than compare reg-reg.
 def: Pat<(i1 (seteq (and (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)), IntRegs:$Rt)),
          (C2_bitsset IntRegs:$Rs, IntRegs:$Rt)>;
 
-// clrbit.
-def CLRBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-            "$dst = clrbit($src1, #$src2)",
-            [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
-                                           (not
-                                              (shl 1, u5ImmPred:$src2))))]>;
-
-def CLRBIT_31 : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-            "$dst = clrbit($src1, #$src2)",
-            []>;
-
-// Map from r0 = and(r1, 2147483647) to r0 = clrbit(r1, #31).
-def : Pat <(and (i32 IntRegs:$src1), 2147483647),
-      (CLRBIT_31 (i32 IntRegs:$src1), 31)>;
-
-// setbit.
-def SETBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-            "$dst = setbit($src1, #$src2)",
-            [(set (i32 IntRegs:$dst), (or (i32 IntRegs:$src1),
-                                          (shl 1, u5ImmPred:$src2)))]>;
-
-// Map from r0 = or(r1, -2147483648) to r0 = setbit(r1, #31).
-def SETBIT_31 : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-            "$dst = setbit($src1, #$src2)",
-            []>;
-
-def : Pat <(or (i32 IntRegs:$src1), -2147483648),
-      (SETBIT_31 (i32 IntRegs:$src1), 31)>;
-
-// togglebit.
-def TOGBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-            "$dst = setbit($src1, #$src2)",
-            [(set (i32 IntRegs:$dst), (xor (i32 IntRegs:$src1),
-                                          (shl 1, u5ImmPred:$src2)))]>;
-
-// Map from r0 = xor(r1, -2147483648) to r0 = togglebit(r1, #31).
-def TOGBIT_31 : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-            "$dst = togglebit($src1, #$src2)",
-            []>;
-
-def : Pat <(xor (i32 IntRegs:$src1), -2147483648),
-      (TOGBIT_31 (i32 IntRegs:$src1), 31)>;
-
 //===----------------------------------------------------------------------===//
 // STYPE/BIT -
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// STYPE/COMPLEX +
+//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+// STYPE/COMPLEX -
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// XTYPE/PERM +
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// XTYPE/PERM -
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
