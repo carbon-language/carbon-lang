@@ -2847,6 +2847,105 @@ def S2_deinterleave : T_S2op_3 <"deinterleave", 0b11, 0b100>;
 //===----------------------------------------------------------------------===//
 // STYPE/BIT +
 //===----------------------------------------------------------------------===//
+// Bit count
+
+let hasSideEffects = 0, hasNewValue = 1 in
+class T_COUNT_LEADING<string MnOp, bits<3> MajOp, bits<3> MinOp, bit Is32,
+                dag Out, dag Inp>
+    : SInst<Out, Inp, "$Rd = "#MnOp#"($Rs)", [], "", S_2op_tc_1_SLOT23> {
+  bits<5> Rs;
+  bits<5> Rd;
+  let IClass = 0b1000;
+  let Inst{27} = 0b1;
+  let Inst{26} = Is32;
+  let Inst{25-24} = 0b00;
+  let Inst{23-21} = MajOp;
+  let Inst{20-16} = Rs;
+  let Inst{7-5} = MinOp;
+  let Inst{4-0} = Rd;
+}
+
+class T_COUNT_LEADING_32<string MnOp, bits<3> MajOp, bits<3> MinOp>
+    : T_COUNT_LEADING<MnOp, MajOp, MinOp, 0b1,
+                      (outs IntRegs:$Rd), (ins IntRegs:$Rs)>;
+
+class T_COUNT_LEADING_64<string MnOp, bits<3> MajOp, bits<3> MinOp>
+    : T_COUNT_LEADING<MnOp, MajOp, MinOp, 0b0,
+                      (outs IntRegs:$Rd), (ins DoubleRegs:$Rs)>;
+
+let isCodeGenOnly = 0 in {
+def S2_cl0     : T_COUNT_LEADING_32<"cl0",     0b000, 0b101>;
+def S2_cl1     : T_COUNT_LEADING_32<"cl1",     0b000, 0b110>;
+def S2_ct0     : T_COUNT_LEADING_32<"ct0",     0b010, 0b100>;
+def S2_ct1     : T_COUNT_LEADING_32<"ct1",     0b010, 0b101>;
+def S2_cl0p    : T_COUNT_LEADING_64<"cl0",     0b010, 0b010>;
+def S2_cl1p    : T_COUNT_LEADING_64<"cl1",     0b010, 0b100>;
+def S2_clb     : T_COUNT_LEADING_32<"clb",     0b000, 0b100>;
+def S2_clbp    : T_COUNT_LEADING_64<"clb",     0b010, 0b000>;
+def S2_clbnorm : T_COUNT_LEADING_32<"normamt", 0b000, 0b111>;
+}
+
+def: Pat<(i32 (ctlz I32:$Rs)),                (S2_cl0 I32:$Rs)>;
+def: Pat<(i32 (ctlz (not I32:$Rs))),          (S2_cl1 I32:$Rs)>;
+def: Pat<(i32 (cttz I32:$Rs)),                (S2_ct0 I32:$Rs)>;
+def: Pat<(i32 (cttz (not I32:$Rs))),          (S2_ct1 I32:$Rs)>;
+def: Pat<(i32 (trunc (ctlz I64:$Rss))),       (S2_cl0p I64:$Rss)>;
+def: Pat<(i32 (trunc (ctlz (not I64:$Rss)))), (S2_cl1p I64:$Rss)>;
+
+// Bit set/clear/toggle
+
+let hasSideEffects = 0, hasNewValue = 1 in
+class T_SCT_BIT_IMM<string MnOp, bits<3> MinOp>
+    : SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, u5Imm:$u5),
+            "$Rd = "#MnOp#"($Rs, #$u5)", [], "", S_2op_tc_1_SLOT23> {
+  bits<5> Rd;
+  bits<5> Rs;
+  bits<5> u5;
+  let IClass = 0b1000;
+  let Inst{27-21} = 0b1100110;
+  let Inst{20-16} = Rs;
+  let Inst{13} = 0b0;
+  let Inst{12-8} = u5;
+  let Inst{7-5} = MinOp;
+  let Inst{4-0} = Rd;
+}
+
+let hasSideEffects = 0, hasNewValue = 1 in
+class T_SCT_BIT_REG<string MnOp, bits<2> MinOp>
+    : SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
+            "$Rd = "#MnOp#"($Rs, $Rt)", [], "", S_3op_tc_1_SLOT23> {
+  bits<5> Rd;
+  bits<5> Rs;
+  bits<5> Rt;
+  let IClass = 0b1100;
+  let Inst{27-22} = 0b011010;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{7-6} = MinOp;
+  let Inst{4-0} = Rd;
+}
+
+let isCodeGenOnly = 0 in {
+def S2_clrbit_i    : T_SCT_BIT_IMM<"clrbit",    0b001>;
+def S2_setbit_i    : T_SCT_BIT_IMM<"setbit",    0b000>;
+def S2_togglebit_i : T_SCT_BIT_IMM<"togglebit", 0b010>;
+def S2_clrbit_r    : T_SCT_BIT_REG<"clrbit",    0b01>;
+def S2_setbit_r    : T_SCT_BIT_REG<"setbit",    0b00>;
+def S2_togglebit_r : T_SCT_BIT_REG<"togglebit", 0b10>;
+}
+
+def: Pat<(i32 (and (i32 IntRegs:$Rs), (not (shl 1, u5ImmPred:$u5)))),
+         (S2_clrbit_i IntRegs:$Rs, u5ImmPred:$u5)>;
+def: Pat<(i32 (or (i32 IntRegs:$Rs), (shl 1, u5ImmPred:$u5))),
+         (S2_setbit_i IntRegs:$Rs, u5ImmPred:$u5)>;
+def: Pat<(i32 (xor (i32 IntRegs:$Rs), (shl 1, u5ImmPred:$u5))),
+         (S2_togglebit_i IntRegs:$Rs, u5ImmPred:$u5)>;
+def: Pat<(i32 (and (i32 IntRegs:$Rs), (not (shl 1, (i32 IntRegs:$Rt))))),
+         (S2_clrbit_r IntRegs:$Rs, IntRegs:$Rt)>;
+def: Pat<(i32 (or (i32 IntRegs:$Rs), (shl 1, (i32 IntRegs:$Rt)))),
+         (S2_setbit_r IntRegs:$Rs, IntRegs:$Rt)>;
+def: Pat<(i32 (xor (i32 IntRegs:$Rs), (shl 1, (i32 IntRegs:$Rt)))),
+         (S2_togglebit_r IntRegs:$Rs, IntRegs:$Rt)>;
 
 // clrbit.
 def CLRBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
