@@ -3738,7 +3738,8 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
     } else if (Command.C.cmd == MachO::LC_RPATH) {
       MachO::rpath_command Rpath = Obj->getRpathCommand(Command);
       PrintRpathLoadCommand(Rpath, Command.Ptr);
-    } else if (Command.C.cmd == MachO::LC_VERSION_MIN_MACOSX) {
+    } else if (Command.C.cmd == MachO::LC_VERSION_MIN_MACOSX ||
+               Command.C.cmd == MachO::LC_VERSION_MIN_IPHONEOS) {
       MachO::version_min_command Vd = Obj->getVersionMinLoadCommand(Command);
       PrintVersionMinLoadCommand(Vd);
     } else if (Command.C.cmd == MachO::LC_SOURCE_VERSION) {
