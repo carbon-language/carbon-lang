@@ -13,6 +13,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
+#include "sanitizer_stackdepot.h"
 #include "sanitizer_stacktrace.h"
 #include "sanitizer_symbolizer.h"
 
@@ -57,6 +58,48 @@ void ReportErrorSummary(const char *error_type, StackTrace *stack) {
   AddressInfo ai;
   ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 #endif
+}
+
+void BackgroundThread(void *arg) {
+  uptr hard_rss_limit_mb = common_flags()->hard_rss_limit_mb;
+  uptr prev_reported_rss = 0;
+  uptr prev_reported_stack_depot_size = 0;
+  while (true) {
+    SleepForMillis(100);
+    uptr current_rss_mb = GetRSS() >> 20;
+    if (common_flags()->verbosity) {
+      // If RSS has grown 10% since last time, print some information.
+      if (prev_reported_rss * 11 / 10 < current_rss_mb) {
+        Printf("%s: RSS: %zdMb\n", SanitizerToolName, current_rss_mb);
+        prev_reported_rss = current_rss_mb;
+      }
+      // If stack depot has grown 10% since last time, print it too.
+      StackDepotStats *stack_depot_stats = StackDepotGetStats();
+      if (prev_reported_stack_depot_size * 11 / 10 <
+          stack_depot_stats->allocated) {
+        Printf("%s: StackDepot: %zd ids; %zdM allocated\n",
+               SanitizerToolName,
+               stack_depot_stats->n_uniq_ids,
+               stack_depot_stats->allocated >> 20);
+        prev_reported_stack_depot_size = stack_depot_stats->allocated;
+      }
+    }
+    // Check RSS against the limit.
+    if (hard_rss_limit_mb && hard_rss_limit_mb < current_rss_mb) {
+      Report("%s: hard rss limit exhausted (%zdMb vs %zdMb)\n",
+             SanitizerToolName, hard_rss_limit_mb, current_rss_mb);
+      DumpProcessMap();
+      Die();
+    }
+  }
+}
+
+void MaybeStartBackgroudThread() {
+  if (!SANITIZER_LINUX) return;  // Need to implement/test on other platforms.
+  // Currently, only start the background thread if hard_rss_limit_mb is given.
+  if (!common_flags()->hard_rss_limit_mb) return;
+  if (!real_pthread_create) return;  // Can't spawn the thread anyway.
+  internal_start_thread(BackgroundThread, nullptr);
 }
 
 }  // namespace __sanitizer

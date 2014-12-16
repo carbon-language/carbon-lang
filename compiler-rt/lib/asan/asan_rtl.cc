@@ -658,6 +658,8 @@ static void AsanInitInternal() {
   InitializeAllocator(common_flags()->allocator_may_return_null,
                       flags()->quarantine_size);
 
+  MaybeStartBackgroudThread();
+
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.
   asan_inited = 1;

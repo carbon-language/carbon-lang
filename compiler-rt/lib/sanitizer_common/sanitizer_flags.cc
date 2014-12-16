@@ -140,6 +140,11 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->mmap_limit_mb, "mmap_limit_mb",
             "Limit the amount of mmap-ed memory (excluding shadow) in Mb; "
             "not a user-facing flag, used mosly for testing the tools");
+  ParseFlag(str, &f->hard_rss_limit_mb, "hard_rss_limit_mb",
+            "RSS limit in Mb."
+            " If non-zero, a background thread is spawned at startup"
+            " which periodically reads RSS and aborts the process if the"
+            " limit is reached");
   ParseFlag(str, &f->coverage, "coverage",
       "If set, coverage information will be dumped at program shutdown (if the "
       "coverage instrumentation was enabled at compile time).");

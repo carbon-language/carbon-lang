@@ -252,9 +252,6 @@ void InitializePlatform();
 void FlushShadowMemory();
 void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive);
 
-void *internal_start_thread(void(*func)(void*), void *arg);
-void internal_join_thread(void *th);
-
 // Says whether the addr relates to a global var.
 // Guesses with high probability, may yield both false positives and negatives.
 bool IsGlobalVar(uptr addr);

@@ -98,6 +98,25 @@ int internal_fork();
 // Threading
 uptr internal_sched_yield();
 
+// These functions call appropriate pthread_ functions directly, bypassing
+// the interceptor. They are weak and may not be present in some tools.
+SANITIZER_WEAK_ATTRIBUTE
+int real_pthread_create(void *th, void *attr, void *(*callback)(void *),
+                        void *param);
+SANITIZER_WEAK_ATTRIBUTE
+int real_pthread_join(void *th, void **ret);
+
+#define DEFINE_REAL_PTHREAD_FUNCTIONS                                          \
+  namespace __sanitizer {                                                      \
+  int real_pthread_create(void *th, void *attr, void *(*callback)(void *),     \
+                          void *param) {                                       \
+    return REAL(pthread_create)(th, attr, callback, param);                    \
+  }                                                                            \
+  int real_pthread_join(void *th, void **ret) {                                \
+    return REAL(pthread_join(th, ret));                                        \
+  }                                                                            \
+  }  // namespace __sanitizer
+
 // Error handling
 bool internal_iserror(uptr retval, int *rverrno = 0);
 

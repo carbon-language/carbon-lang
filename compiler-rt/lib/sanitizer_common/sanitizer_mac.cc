@@ -325,6 +325,9 @@ uptr GetRSS() {
   return 0;
 }
 
+void *internal_start_thread(void (*func)(void *arg), void *arg) { return 0; }
+void internal_join_thread(void *th) { return 0; }
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_MAC
