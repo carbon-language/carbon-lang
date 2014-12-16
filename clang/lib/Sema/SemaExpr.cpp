@@ -1590,11 +1590,10 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
   if (getLangOpts().CUDA)
     if (const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext))
       if (const FunctionDecl *Callee = dyn_cast<FunctionDecl>(D)) {
-        CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller),
-                           CalleeTarget = IdentifyCUDATarget(Callee);
-        if (CheckCUDATarget(CallerTarget, CalleeTarget)) {
+        if (CheckCUDATarget(Caller, Callee)) {
           Diag(NameInfo.getLoc(), diag::err_ref_bad_target)
-            << CalleeTarget << D->getIdentifier() << CallerTarget;
+            << IdentifyCUDATarget(Callee) << D->getIdentifier()
+            << IdentifyCUDATarget(Caller);
           Diag(D->getLocation(), diag::note_previous_decl)
             << D->getIdentifier();
           return ExprError();

@@ -146,11 +146,12 @@ struct A7_with_copy_assign {
 struct B7_with_copy_assign : A7_with_copy_assign {
 };
 
-// expected-note@-3 {{copy assignment operator of 'B7_with_copy_assign' is implicitly deleted}}
+// expected-note@-3 {{candidate function (the implicit copy assignment operator) not viable: call to __device__ function from __host__ function}}
+// expected-note@-4 {{candidate function (the implicit move assignment operator) not viable: call to __device__ function from __host__ function}}
 
 void hostfoo7() {
   B7_with_copy_assign b1, b2;
-  b1 = b2; // expected-error {{object of type 'B7_with_copy_assign' cannot be assigned because its copy assignment operator is implicitly deleted}}
+  b1 = b2; // expected-error {{no viable overloaded '='}}
 }
 
 //------------------------------------------------------------------------------
@@ -176,9 +177,10 @@ struct A8_with_move_assign {
 struct B8_with_move_assign : A8_with_move_assign {
 };
 
-// expected-note@-3 {{copy assignment operator of 'B8_with_move_assign' is implicitly deleted because base class 'A8_with_move_assign' has no copy assignment operator}}
+// expected-note@-3 {{candidate function (the implicit copy assignment operator) not viable: call to __device__ function from __host__ function}}
+// expected-note@-4 {{candidate function (the implicit move assignment operator) not viable: call to __device__ function from __host__ function}}
 
 void hostfoo8() {
   B8_with_move_assign b1, b2;
-  b1 = std::move(b2); // expected-error {{object of type 'B8_with_move_assign' cannot be assigned because its copy assignment operator is implicitly deleted}}
+  b1 = std::move(b2); // expected-error {{no viable overloaded '='}}
 }

@@ -62,12 +62,9 @@ Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D) {
 
 bool Sema::CheckCUDATarget(const FunctionDecl *Caller,
                            const FunctionDecl *Callee) {
-  return CheckCUDATarget(IdentifyCUDATarget(Caller),
-                         IdentifyCUDATarget(Callee));
-}
+  CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller),
+                     CalleeTarget = IdentifyCUDATarget(Callee);
 
-bool Sema::CheckCUDATarget(CUDAFunctionTarget CallerTarget,
-                           CUDAFunctionTarget CalleeTarget) {
   // If one of the targets is invalid, the check always fails, no matter what
   // the other target is.
   if (CallerTarget == CFT_InvalidTarget || CalleeTarget == CFT_InvalidTarget)
@@ -90,8 +87,11 @@ bool Sema::CheckCUDATarget(CUDAFunctionTarget CallerTarget,
   // however, in which case the function is compiled for both the host and the
   // device. The __CUDA_ARCH__ macro [...] can be used to differentiate code
   // paths between host and device."
-  bool InDeviceMode = getLangOpts().CUDAIsDevice;
   if (CallerTarget == CFT_HostDevice && CalleeTarget != CFT_HostDevice) {
+    // If the caller is implicit then the check always passes.
+    if (Caller->isImplicit()) return false;
+
+    bool InDeviceMode = getLangOpts().CUDAIsDevice;
     if ((InDeviceMode && CalleeTarget != CFT_Device) ||
         (!InDeviceMode && CalleeTarget != CFT_Host))
       return true;
