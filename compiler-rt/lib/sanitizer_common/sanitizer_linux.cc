@@ -31,6 +31,17 @@
 #include <asm/param.h>
 #endif
 
+// For mips64, syscall(__NR_stat) fills the buffer in the 'struct kernel_stat'
+// format. Struct kernel_stat is defined as 'struct stat' in asm/stat.h. To
+// access stat from asm/stat.h, without conflicting with definition in
+// sys/stat.h, we use this trick.
+#if defined(__mips64)
+#include <sys/types.h>
+#define stat kernel_stat
+#include <asm/stat.h>
+#undef stat
+#endif
+
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -179,6 +190,26 @@ static void stat64_to_stat(struct stat64 *in, struct stat *out) {
 }
 #endif
 
+#if defined(__mips64)
+static void kernel_stat_to_stat(struct kernel_stat *in, struct stat *out) {
+  internal_memset(out, 0, sizeof(*out));
+  out->st_dev = in->st_dev;
+  out->st_ino = in->st_ino;
+  out->st_mode = in->st_mode;
+  out->st_nlink = in->st_nlink;
+  out->st_uid = in->st_uid;
+  out->st_gid = in->st_gid;
+  out->st_rdev = in->st_rdev;
+  out->st_size = in->st_size;
+  out->st_blksize = in->st_blksize;
+  out->st_blocks = in->st_blocks;
+  out->st_atime = in->st_atime_nsec;
+  out->st_mtime = in->st_mtime_nsec;
+  out->st_ctime = in->st_ctime_nsec;
+  out->st_ino = in->st_ino;
+}
+#endif
+
 uptr internal_stat(const char *path, void *buf) {
 #if SANITIZER_FREEBSD
   return internal_syscall(SYSCALL(stat), path, buf);
@@ -186,7 +217,15 @@ uptr internal_stat(const char *path, void *buf) {
   return internal_syscall(SYSCALL(newfstatat), AT_FDCWD, (uptr)path,
                           (uptr)buf, 0);
 #elif SANITIZER_LINUX_USES_64BIT_SYSCALLS
+# if defined(__mips64)
+  // For mips64, stat syscall fills buffer in the format of kernel_stat
+  struct kernel_stat kbuf;
+  int res = internal_syscall(SYSCALL(stat), path, &kbuf);
+  kernel_stat_to_stat(&kbuf, (struct stat *)buf);
+  return res;
+# else
   return internal_syscall(SYSCALL(stat), (uptr)path, (uptr)buf);
+# endif
 #else
   struct stat64 buf64;
   int res = internal_syscall(SYSCALL(stat64), path, &buf64);
