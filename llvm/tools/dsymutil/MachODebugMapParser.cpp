@@ -36,6 +36,7 @@ private:
   object::OwningBinary<object::MachOObjectFile> MainOwningBinary;
   /// Map of the binary symbol addresses.
   StringMap<uint64_t> MainBinarySymbolAddresses;
+  StringRef MainBinaryStrings;
   /// The constructed DebugMap.
   std::unique_ptr<DebugMap> Result;
 
@@ -121,6 +122,7 @@ ErrorOr<std::unique_ptr<DebugMap>> MachODebugMapParser::parse() {
   loadMainBinarySymbols();
   Result = make_unique<DebugMap>();
   const auto &MainBinary = *MainOwningBinary.getBinary();
+  MainBinaryStrings = MainBinary.getStringTableData();
   for (const SymbolRef &Symbol : MainBinary.symbols()) {
     const DataRefImpl &DRI = Symbol.getRawDataRefImpl();
     if (MainBinary.is64Bit())
@@ -142,8 +144,7 @@ void MachODebugMapParser::handleStabSymbolTableEntry(uint32_t StringIndex,
   if (!(Type & MachO::N_STAB))
     return;
 
-  const MachOObjectFile &MachOBinary = *MainOwningBinary.getBinary();
-  const char *Name = &MachOBinary.getStringTableData().data()[StringIndex];
+  const char *Name = &MainBinaryStrings.data()[StringIndex];
 
   // An N_OSO entry represents the start of a new object file description.
   if (Type == MachO::N_OSO)
