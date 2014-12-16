@@ -344,7 +344,7 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   Record.push_back(E->getDecl() != E->getFoundDecl());
   Record.push_back(E->hasTemplateKWAndArgsInfo());
   Record.push_back(E->hadMultipleCandidates());
-  Record.push_back(E->refersToEnclosingLocal());
+  Record.push_back(E->refersToCapturedVariable());
 
   if (E->hasTemplateKWAndArgsInfo()) {
     unsigned NumTemplateArgs = E->getNumTemplateArgs();

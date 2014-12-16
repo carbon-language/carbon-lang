@@ -4166,11 +4166,12 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     if (VDPrivate->isInvalidDecl())
       continue;
     CurContext->addDecl(VDPrivate);
-    auto VDPrivateRefExpr = DeclRefExpr::Create(
-        Context, /*QualifierLoc*/ NestedNameSpecifierLoc(),
-        /*TemplateKWLoc*/ SourceLocation(), VDPrivate,
-        /*isEnclosingLocal*/ false, /*NameLoc*/ SourceLocation(), DE->getType(),
-        /*VK*/ VK_LValue);
+    auto VDPrivateRefExpr =
+        DeclRefExpr::Create(Context, /*QualifierLoc*/ NestedNameSpecifierLoc(),
+                            /*TemplateKWLoc*/ SourceLocation(), VDPrivate,
+                            /*RefersToCapturedVariable*/ false,
+                            /*NameLoc*/ SourceLocation(), DE->getType(),
+                            /*VK*/ VK_LValue);
 
     DSAStack->addDSA(VD, DE, OMPC_private);
     Vars.push_back(DE);
@@ -4391,7 +4392,7 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
       VDInitRefExpr = DeclRefExpr::Create(
           Context, /*QualifierLoc*/ NestedNameSpecifierLoc(),
           /*TemplateKWLoc*/ SourceLocation(), VDInit,
-          /*isEnclosingLocal*/ true, ELoc, Type,
+          /*RefersToCapturedVariable*/ true, ELoc, Type,
           /*VK*/ VK_LValue);
       VDInit->setIsUsed();
       auto Init = DefaultLvalueConversion(VDInitRefExpr).get();
@@ -4409,7 +4410,7 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
           VDPrivate, DefaultLvalueConversion(
                          DeclRefExpr::Create(Context, NestedNameSpecifierLoc(),
                                              SourceLocation(), DE->getDecl(),
-                                             /*isEnclosingLocal=*/true,
+                                             /*RefersToCapturedVariable=*/true,
                                              DE->getExprLoc(), DE->getType(),
                                              /*VK=*/VK_LValue)).get(),
           /*DirectInit=*/false, /*TypeMayContainAuto=*/false);
@@ -4425,7 +4426,7 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     auto VDPrivateRefExpr = DeclRefExpr::Create(
         Context, /*QualifierLoc*/ NestedNameSpecifierLoc(),
         /*TemplateKWLoc*/ SourceLocation(), VDPrivate,
-        /*isEnclosingLocal*/ false, DE->getLocStart(), DE->getType(),
+        /*RefersToCapturedVariable*/ false, DE->getLocStart(), DE->getType(),
         /*VK*/ VK_LValue);
     DSAStack->addDSA(VD, DE, OMPC_firstprivate);
     Vars.push_back(DE);

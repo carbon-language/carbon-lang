@@ -433,7 +433,7 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   E->DeclRefExprBits.HasFoundDecl = Record[Idx++];
   E->DeclRefExprBits.HasTemplateKWAndArgsInfo = Record[Idx++];
   E->DeclRefExprBits.HadMultipleCandidates = Record[Idx++];
-  E->DeclRefExprBits.RefersToEnclosingLocal = Record[Idx++];
+  E->DeclRefExprBits.RefersToCapturedVariable = Record[Idx++];
   unsigned NumTemplateArgs = 0;
   if (E->hasTemplateKWAndArgsInfo())
     NumTemplateArgs = Record[Idx++];

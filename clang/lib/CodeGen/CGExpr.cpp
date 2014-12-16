@@ -1907,7 +1907,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 
   if (const auto *VD = dyn_cast<VarDecl>(ND)) {
     // Check for captured variables.
-    if (E->refersToEnclosingLocal()) {
+    if (E->refersToCapturedVariable()) {
       if (auto *FD = LambdaCaptureFields.lookup(VD))
         return EmitCapturedFieldLValue(*this, FD, CXXABIThisValue);
       else if (CapturedStmtInfo) {
@@ -1916,9 +1916,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
         else
           return EmitCapturedFieldLValue(*this, CapturedStmtInfo->lookup(VD),
                                          CapturedStmtInfo->getContextValue());
-      } else
-        return MakeAddrLValue(GetAddrOfBlockDecl(VD, VD->hasAttr<BlocksAttr>()),
-                              T, Alignment);
+      }
+      assert(isa<BlockDecl>(CurCodeDecl));
+      return MakeAddrLValue(GetAddrOfBlockDecl(VD, VD->hasAttr<BlocksAttr>()),
+                            T, Alignment);
     }
 
     // Global Named registers access via intrinsics only

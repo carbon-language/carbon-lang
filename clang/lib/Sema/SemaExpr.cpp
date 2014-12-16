@@ -1601,7 +1601,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
         }
       }
 
-  bool refersToEnclosingScope =
+  bool RefersToCapturedVariable =
       isa<VarDecl>(D) &&
       NeedToCaptureVariable(cast<VarDecl>(D), NameInfo.getLoc());
 
@@ -1613,15 +1613,15 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
     E = DeclRefExpr::Create(
         Context,
         SS ? SS->getWithLocInContext(Context) : NestedNameSpecifierLoc(),
-        VarSpec->getTemplateKeywordLoc(), D, refersToEnclosingScope,
+        VarSpec->getTemplateKeywordLoc(), D, RefersToCapturedVariable,
         NameInfo.getLoc(), Ty, VK, FoundD, TemplateArgs);
   } else {
     assert(!TemplateArgs && "No template arguments for non-variable"
                             " template specialization references");
-    E = DeclRefExpr::Create(
-        Context,
-        SS ? SS->getWithLocInContext(Context) : NestedNameSpecifierLoc(),
-        SourceLocation(), D, refersToEnclosingScope, NameInfo, Ty, VK, FoundD);
+    E = DeclRefExpr::Create(Context, SS ? SS->getWithLocInContext(Context)
+                                        : NestedNameSpecifierLoc(),
+                            SourceLocation(), D, RefersToCapturedVariable,
+                            NameInfo, Ty, VK, FoundD);
   }
 
   MarkDeclRefReferenced(E);
@@ -8586,7 +8586,7 @@ static NonConstCaptureKind isReferenceToNonConstCapture(Sema &S, Expr *E) {
   // Must be a reference to a declaration from an enclosing scope.
   DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
   if (!DRE) return NCCK_None;
-  if (!DRE->refersToEnclosingLocal()) return NCCK_None;
+  if (!DRE->refersToCapturedVariable()) return NCCK_None;
 
   // The declaration must be a variable which is not declared 'const'.
   VarDecl *var = dyn_cast<VarDecl>(DRE->getDecl());
@@ -11965,7 +11965,7 @@ static bool captureInCapturedRegion(CapturedRegionScopeInfo *RSI,
                                     const bool BuildAndDiagnose, 
                                     QualType &CaptureType,
                                     QualType &DeclRefType, 
-                                    const bool RefersToEnclosingLocal,
+                                    const bool RefersToCapturedVariable,
                                     Sema &S) {
   
   // By default, capture variables by reference.
@@ -11987,7 +11987,7 @@ static bool captureInCapturedRegion(CapturedRegionScopeInfo *RSI,
     Field->setAccess(AS_private);
     RD->addDecl(Field);
  
-    CopyExpr = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal,
+    CopyExpr = new (S.Context) DeclRefExpr(Var, RefersToCapturedVariable,
                                             DeclRefType, VK_LValue, Loc);
     Var->setReferenced(true);
     Var->markUsed(S.Context);
@@ -11995,7 +11995,7 @@ static bool captureInCapturedRegion(CapturedRegionScopeInfo *RSI,
 
   // Actually capture the variable.
   if (BuildAndDiagnose)
-    RSI->addCapture(Var, /*isBlock*/false, ByRef, RefersToEnclosingLocal, Loc,
+    RSI->addCapture(Var, /*isBlock*/false, ByRef, RefersToCapturedVariable, Loc,
                     SourceLocation(), CaptureType, CopyExpr);
   
   
@@ -12009,7 +12009,7 @@ static ExprResult addAsFieldToClosureType(Sema &S,
                                   VarDecl *Var, QualType FieldType, 
                                   QualType DeclRefType,
                                   SourceLocation Loc,
-                                  bool RefersToEnclosingLocal) {
+                                  bool RefersToCapturedVariable) {
   CXXRecordDecl *Lambda = LSI->Lambda;
 
   // Build the non-static data member.
@@ -12038,7 +12038,7 @@ static ExprResult addAsFieldToClosureType(Sema &S,
   // C++ [expr.prim.labda]p12:
   //   An entity captured by a lambda-expression is odr-used (3.2) in
   //   the scope containing the lambda-expression.
-  Expr *Ref = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal, 
+  Expr *Ref = new (S.Context) DeclRefExpr(Var, RefersToCapturedVariable, 
                                           DeclRefType, VK_LValue, Loc);
   Var->setReferenced(true);
   Var->markUsed(S.Context);
@@ -12132,7 +12132,7 @@ static bool captureInLambda(LambdaScopeInfo *LSI,
                             const bool BuildAndDiagnose, 
                             QualType &CaptureType,
                             QualType &DeclRefType, 
-                            const bool RefersToEnclosingLocal,
+                            const bool RefersToCapturedVariable,
                             const Sema::TryCaptureKind Kind, 
                             SourceLocation EllipsisLoc,
                             const bool IsTopScope,
@@ -12206,7 +12206,7 @@ static bool captureInLambda(LambdaScopeInfo *LSI,
   if (BuildAndDiagnose) {
     ExprResult Result = addAsFieldToClosureType(S, LSI, Var, 
                                         CaptureType, DeclRefType, Loc,
-                                        RefersToEnclosingLocal);
+                                        RefersToCapturedVariable);
     if (!Result.isInvalid())
       CopyExpr = Result.get();
   }
@@ -12227,7 +12227,7 @@ static bool captureInLambda(LambdaScopeInfo *LSI,
     
   // Add the capture.
   if (BuildAndDiagnose)
-    LSI->addCapture(Var, /*IsBlock=*/false, ByRef, RefersToEnclosingLocal, 
+    LSI->addCapture(Var, /*IsBlock=*/false, ByRef, RefersToCapturedVariable, 
                     Loc, EllipsisLoc, CaptureType, CopyExpr);
       
   return true;
