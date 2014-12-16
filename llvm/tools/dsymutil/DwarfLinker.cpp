@@ -12,7 +12,7 @@
 namespace llvm {
 namespace dsymutil {
 
-bool linkDwarf(StringRef OutputFilename, const DebugMap &DM) {
+bool linkDwarf(StringRef OutputFilename, const DebugMap &DM, bool Verbose) {
   // Do nothing for now.
   return true;
 }
