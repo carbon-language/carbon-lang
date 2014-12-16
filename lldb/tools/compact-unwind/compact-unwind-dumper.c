@@ -158,6 +158,10 @@ scan_macho_load_commands (struct baton *baton)
                 segment_offset = seg.fileoff;
                 segment_vmaddr = seg.vmaddr;
                 offset += sizeof (struct segment_command_64);
+                if ((seg.flags & SG_PROTECTED_VERSION_1) == SG_PROTECTED_VERSION_1)
+                {
+                    printf ("Segment '%s' is encrypted.\n", segment_name);
+                }
             }
 
             if (*lc_cmd == LC_SEGMENT)
@@ -170,6 +174,10 @@ scan_macho_load_commands (struct baton *baton)
                 segment_offset = seg.fileoff;
                 segment_vmaddr = seg.vmaddr;
                 offset += sizeof (struct segment_command);
+                if ((seg.flags & SG_PROTECTED_VERSION_1) == SG_PROTECTED_VERSION_1)
+                {
+                    printf ("Segment '%s' is encrypted.\n", segment_name);
+                }
             }
 
             if (nsects != 0 && strcmp (segment_name, "__TEXT") == 0)

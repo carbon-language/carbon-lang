@@ -412,6 +412,11 @@ CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address addr
     if (!IsValid ())
         return false;
 
+    // FIXME looking into a problem with getting the wrong compact unwind entry for
+    // _CFRunLoopRun from CoreFoundation in a live process; disabling the Compact 
+    // Unwind plans until I get to the bottom of what's going on there.
+    return false;
+
     addr_t text_section_file_address = LLDB_INVALID_ADDRESS;
     SectionList *sl = m_objfile.GetSectionList ();
     if (sl)
