@@ -37,6 +37,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
@@ -107,6 +108,7 @@ class SanitizerCoverageModule : public ModulePass {
   Function *SanCovIndirCallFunction;
   Function *SanCovModuleInit;
   Function *SanCovTraceEnter, *SanCovTraceBB;
+  InlineAsm *EmptyAsm;
   Type *IntptrTy;
   LLVMContext *C;
 
@@ -146,6 +148,10 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   SanCovModuleInit = checkInterfaceFunction(M.getOrInsertFunction(
       kSanCovModuleInitName, Type::getVoidTy(*C), IntptrTy, nullptr));
   SanCovModuleInit->setLinkage(Function::ExternalLinkage);
+  // We insert an empty inline asm after cov callbacks to avoid callback merge.
+  EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
+                            StringRef(""), StringRef(""),
+                            /*hasSideEffects=*/true);
 
   if (ClExperimentalTracing) {
     SanCovTraceEnter = checkInterfaceFunction(
@@ -283,6 +289,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F,
   IRB.SetCurrentDebugLocation(EntryLoc);
   // __sanitizer_cov gets the PC of the instruction using GET_CALLER_PC.
   IRB.CreateCall(SanCovFunction, Guard);
+  IRB.CreateCall(EmptyAsm);  // Avoids callback merge.
 }
 
 char SanitizerCoverageModule::ID = 0;
