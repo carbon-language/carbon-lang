@@ -148,12 +148,12 @@ define void @merge_nonconst_store(i32 %count, i8 %zz, %struct.A* nocapture %p) n
 }
 
 
-;CHECK-LABEL: merge_loads_i16:
-; load:
-;CHECK: movw
-; store:
-;CHECK: movw
-;CHECK: ret
+; CHECK-LABEL: merge_loads_i16:
+;  load:
+; CHECK: movw
+;  store:
+; CHECK: movw
+; CHECK: ret
 define void @merge_loads_i16(i32 %count, %struct.A* noalias nocapture %q, %struct.A* noalias nocapture %p) nounwind uwtable noinline ssp {
   %1 = icmp sgt i32 %count, 0
   br i1 %1, label %.lr.ph, label %._crit_edge
@@ -181,13 +181,13 @@ define void @merge_loads_i16(i32 %count, %struct.A* noalias nocapture %q, %struc
   ret void
 }
 
-; The loads and the stores are interleved. Can't merge them.
-;CHECK-LABEL: no_merge_loads:
-;CHECK: movb
-;CHECK: movb
-;CHECK: movb
-;CHECK: movb
-;CHECK: ret
+; The loads and the stores are interleaved. Can't merge them.
+; CHECK-LABEL: no_merge_loads:
+; CHECK: movb
+; CHECK: movb
+; CHECK: movb
+; CHECK: movb
+; CHECK: ret
 define void @no_merge_loads(i32 %count, %struct.A* noalias nocapture %q, %struct.A* noalias nocapture %p) nounwind uwtable noinline ssp {
   %1 = icmp sgt i32 %count, 0
   br i1 %1, label %.lr.ph, label %._crit_edge
@@ -216,12 +216,12 @@ a4:                                       ; preds = %4, %.lr.ph
 }
 
 
-;CHECK-LABEL: merge_loads_integer:
-; load:
-;CHECK: movq
-; store:
-;CHECK: movq
-;CHECK: ret
+; CHECK-LABEL: merge_loads_integer:
+;  load:
+; CHECK: movq
+;  store:
+; CHECK: movq
+; CHECK: ret
 define void @merge_loads_integer(i32 %count, %struct.B* noalias nocapture %q, %struct.B* noalias nocapture %p) nounwind uwtable noinline ssp {
   %1 = icmp sgt i32 %count, 0
   br i1 %1, label %.lr.ph, label %._crit_edge
@@ -250,12 +250,12 @@ define void @merge_loads_integer(i32 %count, %struct.B* noalias nocapture %q, %s
 }
 
 
-;CHECK-LABEL: merge_loads_vector:
-; load:
-;CHECK: movups
-; store:
-;CHECK: movups
-;CHECK: ret
+; CHECK-LABEL: merge_loads_vector:
+;  load:
+; CHECK: movups
+;  store:
+; CHECK: movups
+; CHECK: ret
 define void @merge_loads_vector(i32 %count, %struct.B* noalias nocapture %q, %struct.B* noalias nocapture %p) nounwind uwtable noinline ssp {
   %a1 = icmp sgt i32 %count, 0
   br i1 %a1, label %.lr.ph, label %._crit_edge
@@ -291,18 +291,18 @@ block4:                                       ; preds = %4, %.lr.ph
   ret void
 }
 
-;CHECK-LABEL: merge_loads_no_align:
-; load:
-;CHECK: movl
-;CHECK: movl
-;CHECK: movl
-;CHECK: movl
-; store:
-;CHECK: movl
-;CHECK: movl
-;CHECK: movl
-;CHECK: movl
-;CHECK: ret
+; CHECK-LABEL: merge_loads_no_align:
+;  load:
+; CHECK: movl
+; CHECK: movl
+; CHECK: movl
+; CHECK: movl
+;  store:
+; CHECK: movl
+; CHECK: movl
+; CHECK: movl
+; CHECK: movl
+; CHECK: ret
 define void @merge_loads_no_align(i32 %count, %struct.B* noalias nocapture %q, %struct.B* noalias nocapture %p) nounwind uwtable noinline ssp {
   %a1 = icmp sgt i32 %count, 0
   br i1 %a1, label %.lr.ph, label %._crit_edge
