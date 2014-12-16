@@ -773,6 +773,7 @@ def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
 def FavorMemIndirectCall  : Predicate<"!Subtarget->callRegIndirect()">;
 def NotSlowIncDec : Predicate<"!Subtarget->slowIncDec()">;
+def HasFastMem32 : Predicate<"!Subtarget->isUnalignedMem32Slow()">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.

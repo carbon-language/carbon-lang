@@ -8158,6 +8158,49 @@ def : Pat<(vinsert128_insert:$ins (v4f64 VR256:$src1), (loadv2f64 addr:$src2),
                          (INSERT_get_vinsert128_imm VR256:$ins))>;
 }
 
+// Combine two consecutive 16-byte loads with a common destination register into
+// one 32-byte load to that register.
+let Predicates = [HasAVX, HasFastMem32] in {
+  def : Pat<(insert_subvector
+              (v8f32 (insert_subvector undef, (loadv4f32 addr:$src), (iPTR 0))),
+              (loadv4f32 (add addr:$src, (iPTR 16))),
+              (iPTR 4)),
+            (VMOVUPSYrm addr:$src)>;
+
+  def : Pat<(insert_subvector
+              (v4f64 (insert_subvector undef, (loadv2f64 addr:$src), (iPTR 0))),
+              (loadv2f64 (add addr:$src, (iPTR 16))),
+              (iPTR 2)),
+            (VMOVUPDYrm addr:$src)>;
+            
+  def : Pat<(insert_subvector
+              (v32i8 (insert_subvector
+                undef, (bc_v16i8 (loadv2i64 addr:$src)), (iPTR 0))),
+              (bc_v16i8 (loadv2i64 (add addr:$src, (iPTR 16)))),
+              (iPTR 16)),
+            (VMOVDQUYrm addr:$src)>;
+            
+  def : Pat<(insert_subvector
+              (v16i16 (insert_subvector
+                undef, (bc_v8i16 (loadv2i64 addr:$src)), (iPTR 0))),
+              (bc_v8i16 (loadv2i64 (add addr:$src, (iPTR 16)))),
+              (iPTR 8)),
+            (VMOVDQUYrm addr:$src)>;
+            
+  def : Pat<(insert_subvector
+              (v8i32 (insert_subvector
+                undef, (bc_v4i32 (loadv2i64 addr:$src)), (iPTR 0))),
+              (bc_v4i32 (loadv2i64 (add addr:$src, (iPTR 16)))),
+              (iPTR 4)),
+            (VMOVDQUYrm addr:$src)>;
+
+  def : Pat<(insert_subvector
+              (v4i64 (insert_subvector undef, (loadv2i64 addr:$src), (iPTR 0))),
+              (loadv2i64 (add addr:$src, (iPTR 16))),
+              (iPTR 2)),
+            (VMOVDQUYrm addr:$src)>;
+}
+
 let Predicates = [HasAVX1Only] in {
 def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (v2i64 VR128:$src2),
                                    (iPTR imm)),
