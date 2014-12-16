@@ -237,8 +237,7 @@ BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) cons
         
         if (m_thread_spec_ap.get())
             m_thread_spec_ap->GetDescription (s, level);
-        else if (level == eDescriptionLevelBrief)
-            s->PutCString ("thread spec: no ");
+
         if (level == lldb::eDescriptionLevelFull)
         {
             s->IndentLess();

@@ -123,6 +123,18 @@ public:
     
     SBError
     SetScriptCallbackBody (const char *script_body_text);
+
+    bool
+    AddName (const char *new_name);
+
+    void
+    RemoveName (const char *name_to_remove);
+
+    bool
+    MatchesName (const char *name);
+
+    void
+    GetNames (SBStringList &names);
     
     size_t
     GetNumResolvedLocations() const;

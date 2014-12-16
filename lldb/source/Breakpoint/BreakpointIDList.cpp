@@ -159,26 +159,51 @@ BreakpointIDList::InsertStringArray (const char **string_array, size_t array_siz
 //  NEW_ARGS should be a copy of OLD_ARGS, with and ID range specifiers replaced by the members of the range.
 
 void
-BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, CommandReturnObject &result,
+BreakpointIDList::FindAndReplaceIDRanges (Args &old_args,
+                                          Target *target,
+                                          bool allow_locations,
+                                          CommandReturnObject &result,
                                           Args &new_args)
 {
     std::string range_start;
     const char *range_end;
     const char *current_arg;
     const size_t num_old_args = old_args.GetArgumentCount();
+    std::set<std::string> names_found;
 
     for (size_t i = 0; i < num_old_args; ++i)
     {
         bool is_range = false;
+
         current_arg = old_args.GetArgumentAtIndex (i);
+        if (!allow_locations && strchr(current_arg, '.') != nullptr)
+        {
+            result.AppendErrorWithFormat ("Breakpoint locations not allowed, saw location: %s.", current_arg);
+            new_args.Clear();
+            return;
+        }
 
         size_t range_start_len = 0;
         size_t range_end_pos = 0;
+        Error error;
+
         if (BreakpointIDList::StringContainsIDRangeExpression (current_arg, &range_start_len, &range_end_pos))
         {
             is_range = true;
             range_start.assign (current_arg, range_start_len);
             range_end = current_arg + range_end_pos;
+        }
+        else if (BreakpointID::StringIsBreakpointName(current_arg, error))
+        {
+            if (!error.Success())
+            {
+                new_args.Clear();
+                result.AppendError (error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+                return;
+            }
+            else
+                names_found.insert(current_arg);
         }
         else if ((i + 2 < num_old_args)
                  && BreakpointID::IsRangeIdentifier (old_args.GetArgumentAtIndex (i+1))
@@ -339,6 +364,23 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
         else  // else is_range was false
         {
             new_args.AppendArgument (current_arg);
+        }
+    }
+
+    // Okay, now see if we found any names, and if we did, add them:
+    if (target && names_found.size())
+    {
+        for (BreakpointSP bkpt_sp : target->GetBreakpointList().Breakpoints())
+        {
+            for (std::string name : names_found)
+            {
+                if (bkpt_sp->MatchesName(name.c_str()))
+                {
+                    StreamString canonical_id_str;
+                    BreakpointID::GetCanonicalReference (&canonical_id_str, bkpt_sp->GetID(), LLDB_INVALID_BREAK_ID);
+                    new_args.AppendArgument (canonical_id_str.GetData());
+                }
+            }
         }
     }
 

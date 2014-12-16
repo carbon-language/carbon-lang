@@ -38,8 +38,20 @@ public:
     ~CommandObjectMultiwordBreakpoint ();
 
     static void
-    VerifyBreakpointIDs (Args &args, Target *target, CommandReturnObject &result, BreakpointIDList *valid_ids);
+    VerifyBreakpointOrLocationIDs (Args &args, Target *target, CommandReturnObject &result, BreakpointIDList *valid_ids)
+    {
+        VerifyIDs (args, target, true, result, valid_ids);
+    }
 
+    static void
+    VerifyBreakpointIDs (Args &args, Target *target, CommandReturnObject &result, BreakpointIDList *valid_ids)
+    {
+        VerifyIDs (args, target, false, result, valid_ids);
+    }
+
+private:
+    static void
+    VerifyIDs (Args &args, Target *target, bool allow_locations, CommandReturnObject &result, BreakpointIDList *valid_ids);
 };
 
 } // namespace lldb_private

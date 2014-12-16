@@ -18,6 +18,7 @@
 #include "lldb/Breakpoint/BreakpointID.h"
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/Error.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -121,3 +122,19 @@ BreakpointID::ParseCanonicalReference (const char *input, break_id_t *break_id_p
     return false;
 }
 
+bool
+BreakpointID::StringIsBreakpointName(const char *name, Error &error)
+{
+    error.Clear();
+
+    if (name && (name[0] >= 'A' && name[0] <= 'z'))
+    {
+        if (strcspn(name, ".- ") != strlen(name))
+        {
+            error.SetErrorStringWithFormat("invalid breakpoint name: \"%s\"", name);
+        }
+        return true;
+    }
+    else
+        return false;
+}

@@ -93,6 +93,21 @@ public:
 
 
     //------------------------------------------------------------------
+    /// Takes an input string and checks to see whether it is a breakpoint name.
+    /// If it is a mal-formed breakpoint name, error will be set to an appropriate
+    /// error string.
+    ///
+    /// @param[in] input
+    ///     A string containing JUST the breakpoint description.
+    /// @param[out] error
+    ///     If the name is a well-formed breakpoint name, set to success, otherwise set to an error.
+    /// @return
+    ///     \b true if the name is a breakpoint name (as opposed to an ID or range) false otherwise.
+    //------------------------------------------------------------------
+    static bool
+    StringIsBreakpointName (const char *name, Error &error);
+
+    //------------------------------------------------------------------
     /// Takes a breakpoint ID and the breakpoint location id and returns
     /// a string containing the canonical description for the breakpoint
     /// or breakpoint location.

@@ -748,6 +748,22 @@ BreakpointIDRangeHelpTextCallback ()
 }
 
 static const char *
+BreakpointNameHelpTextCallback ()
+{
+    return "A name that can be added to a breakpoint when it is created, or later "
+    "on with the \"breakpoint name add\" command.  "
+    "Breakpoint names can be used to specify breakpoints in all the places breakpoint ID's "
+    "and breakpoint ID ranges can be used.  As such they provide a convenient way to group breakpoints, "
+    "and to operate on breakpoints you create without having to track the breakpoint number.  "
+    "Note, the attributes you set when using a breakpoint name in a breakpoint command don't "
+    "adhere to the name, but instead are set individually on all the breakpoints currently tagged with that name.  Future breakpoints "
+    "tagged with that name will not pick up the attributes previously given using that name.  "
+    "In order to distinguish breakpoint names from breakpoint ID's and ranges, "
+    "names must start with a letter from a-z or A-Z and cannot contain spaces, \".\" or \"-\".  "
+    "Also, breakpoint names can only be applied to breakpoints, not to breakpoint locations.";
+}
+
+static const char *
 GDBFormatHelpTextCallback ()
 {
     return "A GDB format consists of a repeat count, a format letter and a size letter. "
@@ -1112,6 +1128,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeBoolean, "boolean", CommandCompletions::eNoCompletion, { nullptr, false }, "A Boolean value: 'true' or 'false'" },
     { eArgTypeBreakpointID, "breakpt-id", CommandCompletions::eNoCompletion, { BreakpointIDHelpTextCallback, false }, nullptr },
     { eArgTypeBreakpointIDRange, "breakpt-id-list", CommandCompletions::eNoCompletion, { BreakpointIDRangeHelpTextCallback, false }, nullptr },
+    { eArgTypeBreakpointName, "breakpoint-name", CommandCompletions::eNoCompletion, { BreakpointNameHelpTextCallback, false }, nullptr },
     { eArgTypeByteSize, "byte-size", CommandCompletions::eNoCompletion, { nullptr, false }, "Number of bytes to use." },
     { eArgTypeClassName, "class-name", CommandCompletions::eNoCompletion, { nullptr, false }, "Then name of a class from the debug information in the program." },
     { eArgTypeCommandName, "cmd-name", CommandCompletions::eNoCompletion, { nullptr, false }, "A debugger command (may be multiple words), without any options or arguments." },

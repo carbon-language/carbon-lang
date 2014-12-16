@@ -467,7 +467,7 @@ protected:
         }
         
         BreakpointIDList valid_bp_ids;
-        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
         m_bp_options_vec.clear();
         
@@ -714,7 +714,7 @@ protected:
         }
 
         BreakpointIDList valid_bp_ids;
-        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
         if (result.Succeeded())
         {
@@ -824,7 +824,7 @@ protected:
         }
 
         BreakpointIDList valid_bp_ids;
-        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
         if (result.Succeeded())
         {

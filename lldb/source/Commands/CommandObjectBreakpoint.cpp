@@ -20,6 +20,8 @@
 #include "lldb/Breakpoint/BreakpointIDList.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionValueString.h"
+#include "lldb/Interpreter/OptionValueUInt64.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -240,6 +242,13 @@ public:
                     m_func_name_type_mask |= eFunctionNameTypeAuto;
                     break;
 
+                case 'N':
+                    if (BreakpointID::StringIsBreakpointName(option_arg, error))
+                        m_breakpoint_names.push_back (option_arg);
+                    else
+                        error.SetErrorStringWithFormat(error.AsCString());
+                    break;
+
                 case 'o':
                     m_one_shot = true;
                     break;
@@ -329,6 +338,7 @@ public:
             m_skip_prologue = eLazyBoolCalculate;
             m_one_shot = false;
             m_use_dummy = false;
+            m_breakpoint_names.clear();
         }
     
         const OptionDefinition*
@@ -348,6 +358,7 @@ public:
         uint32_t m_line_num;
         uint32_t m_column;
         std::vector<std::string> m_func_names;
+        std::vector<std::string> m_breakpoint_names;
         uint32_t m_func_name_type_mask;
         std::string m_func_regexp;
         std::string m_source_text_regexp;
@@ -558,6 +569,13 @@ protected:
 
             if (!m_options.m_condition.empty())
                 bp->GetOptions()->SetCondition(m_options.m_condition.c_str());
+
+            if (!m_options.m_breakpoint_names.empty())
+            {
+                Error error;  // We don't need to check the error here, since the option parser checked it...
+                for (auto name : m_options.m_breakpoint_names)
+                    bp->AddName(name.c_str(), error);
+            }
             
             bp->SetOneShot (m_options.m_one_shot);
         }
@@ -718,6 +736,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_ALL, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
         "Sets Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
+
+    { LLDB_OPT_SET_ALL, false, "breakpoint-name", 'N', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBreakpointName,
+        "Adds this to the list of names for this breakopint."},
 
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
@@ -954,7 +975,7 @@ protected:
         
         BreakpointIDList valid_bp_ids;
 
-        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
         if (result.Succeeded())
         {
@@ -1106,7 +1127,7 @@ protected:
         {
             // Particular breakpoint selected; enable that breakpoint.
             BreakpointIDList valid_bp_ids;
-            CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+            CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
             if (result.Succeeded())
             {
@@ -1226,7 +1247,7 @@ protected:
             // Particular breakpoint selected; disable that breakpoint.
             BreakpointIDList valid_bp_ids;
 
-            CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+            CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
             if (result.Succeeded())
             {
@@ -1419,7 +1440,7 @@ protected:
         {
             // Particular breakpoints selected; show info about that breakpoint.
             BreakpointIDList valid_bp_ids;
-            CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+            CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
             if (result.Succeeded())
             {
@@ -1806,7 +1827,7 @@ protected:
         {
             // Particular breakpoint selected; disable that breakpoint.
             BreakpointIDList valid_bp_ids;
-            CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+            CommandObjectMultiwordBreakpoint::VerifyBreakpointOrLocationIDs (command, target, result, &valid_bp_ids);
 
             if (result.Succeeded())
             {
@@ -1861,6 +1882,401 @@ CommandObjectBreakpointDelete::CommandOptions::g_option_table[] =
 };
 
 //-------------------------------------------------------------------------
+// CommandObjectBreakpointName
+//-------------------------------------------------------------------------
+
+static OptionDefinition
+g_breakpoint_name_options[] =
+{
+    { LLDB_OPT_SET_1,   false, "name", 'N', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBreakpointName, "Specifies a breakpoint name to use."},
+    { LLDB_OPT_SET_2,   false, "breakpoint-id", 'B', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBreakpointID,   "Specify a breakpoint id to use."},
+    { LLDB_OPT_SET_ALL, false, "dummy-breakpoints", 'D', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+        "Operate on Dummy breakpoints - i.e. breakpoints set before a file is provided, which prime new targets."},
+};
+class BreakpointNameOptionGroup : public OptionGroup
+{
+public:
+    BreakpointNameOptionGroup() :
+        OptionGroup(),
+        m_breakpoint(LLDB_INVALID_BREAK_ID),
+        m_use_dummy (false)
+    {
+
+    }
+
+    virtual
+    ~BreakpointNameOptionGroup ()
+    {
+    }
+    
+    virtual uint32_t
+    GetNumDefinitions ()
+    {
+      return sizeof (g_breakpoint_name_options) / sizeof (OptionDefinition);
+    }
+
+    virtual const OptionDefinition*
+    GetDefinitions ()
+    {
+        return g_breakpoint_name_options;
+    }
+
+    virtual Error
+    SetOptionValue (CommandInterpreter &interpreter,
+                    uint32_t option_idx,
+                    const char *option_value)
+    {
+        Error error;
+        const int short_option = g_breakpoint_name_options[option_idx].short_option;
+      
+        switch (short_option)
+        {
+        case 'N':
+            if (BreakpointID::StringIsBreakpointName(option_value, error) && error.Success())
+                m_name.SetValueFromCString(option_value);
+            break;
+          
+        case 'B':
+            if (m_breakpoint.SetValueFromCString(option_value).Fail())
+                error.SetErrorStringWithFormat ("unrecognized value \"%s\" for breakpoint", option_value);
+            break;
+        case 'D':
+            if (m_use_dummy.SetValueFromCString(option_value).Fail())
+                error.SetErrorStringWithFormat ("unrecognized value \"%s\" for use-dummy", option_value);
+            break;
+
+        default:
+              error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
+              break;
+        }
+        return error;
+    }
+
+    virtual void
+    OptionParsingStarting (CommandInterpreter &interpreter)
+    {
+        m_name.Clear();
+        m_breakpoint.Clear();
+        m_use_dummy.Clear();
+        m_use_dummy.SetDefaultValue(false);
+    }
+
+    OptionValueString m_name;
+    OptionValueUInt64 m_breakpoint;
+    OptionValueBoolean m_use_dummy;
+};
+
+
+class CommandObjectBreakpointNameAdd : public CommandObjectParsed
+{
+public:
+    CommandObjectBreakpointNameAdd (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "add",
+                             "Add a name to the breakpoints provided.",
+                             "breakpoint name add <command-options> <breakpoint-id-list>"),
+        m_name_options(),
+        m_option_group(interpreter)
+        {
+            // Create the first variant for the first (and only) argument for this command.
+            CommandArgumentEntry arg1;
+            CommandArgumentData id_arg;
+            id_arg.arg_type = eArgTypeBreakpointID;
+            id_arg.arg_repetition = eArgRepeatOptional;
+            arg1.push_back(id_arg);
+            m_arguments.push_back (arg1);
+
+            m_option_group.Append (&m_name_options, LLDB_OPT_SET_1, LLDB_OPT_SET_ALL);
+            m_option_group.Finalize();
+        }
+
+    virtual
+    ~CommandObjectBreakpointNameAdd () {}
+
+  Options *
+  GetOptions ()
+  {
+    return &m_option_group;
+  }
+  
+protected:
+    virtual bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        if (!m_name_options.m_name.OptionWasSet())
+        {
+            result.SetError("No name option provided.");
+            return false;
+        }
+
+        Target *target = GetSelectedOrDummyTarget(m_name_options.m_use_dummy.GetCurrentValue());
+
+        if (target == NULL)
+        {
+            result.AppendError ("Invalid target. No existing target or breakpoints.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        Mutex::Locker locker;
+        target->GetBreakpointList().GetListMutex(locker);
+        
+        const BreakpointList &breakpoints = target->GetBreakpointList();
+
+        size_t num_breakpoints = breakpoints.GetSize();
+        if (num_breakpoints == 0)
+        {
+            result.SetError("No breakpoints, cannot add names.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        // Particular breakpoint selected; disable that breakpoint.
+        BreakpointIDList valid_bp_ids;
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+
+        if (result.Succeeded())
+        {
+            if (valid_bp_ids.GetSize() == 0)
+            {
+                result.SetError("No breakpoints specified, cannot add names.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            size_t num_valid_ids = valid_bp_ids.GetSize();
+            for (size_t index = 0; index < num_valid_ids; index++)
+            {
+                lldb::break_id_t bp_id = valid_bp_ids.GetBreakpointIDAtIndex(index).GetBreakpointID();
+                BreakpointSP bp_sp = breakpoints.FindBreakpointByID(bp_id);
+                Error error;  // We don't need to check the error here, since the option parser checked it...
+                bp_sp->AddName(m_name_options.m_name.GetCurrentValue(), error);
+            }
+        }
+
+        return true;
+    }
+
+private:
+    BreakpointNameOptionGroup m_name_options;
+    OptionGroupOptions m_option_group;
+};
+
+
+
+class CommandObjectBreakpointNameDelete : public CommandObjectParsed
+{
+public:
+    CommandObjectBreakpointNameDelete (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "delete",
+                             "Delete a name from the breakpoints provided.",
+                             "breakpoint name delete <command-options> <breakpoint-id-list>"),
+        m_name_options(),
+        m_option_group(interpreter)
+    {
+        // Create the first variant for the first (and only) argument for this command.
+        CommandArgumentEntry arg1;
+        CommandArgumentData id_arg;
+        id_arg.arg_type = eArgTypeBreakpointID;
+        id_arg.arg_repetition = eArgRepeatOptional;
+        arg1.push_back(id_arg);
+        m_arguments.push_back (arg1);
+
+        m_option_group.Append (&m_name_options, LLDB_OPT_SET_1, LLDB_OPT_SET_ALL);
+        m_option_group.Finalize();
+    }
+
+    virtual
+    ~CommandObjectBreakpointNameDelete () {}
+
+  Options *
+  GetOptions ()
+  {
+    return &m_option_group;
+  }
+  
+protected:
+    virtual bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        if (!m_name_options.m_name.OptionWasSet())
+        {
+            result.SetError("No name option provided.");
+            return false;
+        }
+
+        Target *target = GetSelectedOrDummyTarget(m_name_options.m_use_dummy.GetCurrentValue());
+
+        if (target == NULL)
+        {
+            result.AppendError ("Invalid target. No existing target or breakpoints.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        Mutex::Locker locker;
+        target->GetBreakpointList().GetListMutex(locker);
+        
+        const BreakpointList &breakpoints = target->GetBreakpointList();
+
+        size_t num_breakpoints = breakpoints.GetSize();
+        if (num_breakpoints == 0)
+        {
+            result.SetError("No breakpoints, cannot delete names.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        // Particular breakpoint selected; disable that breakpoint.
+        BreakpointIDList valid_bp_ids;
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+
+        if (result.Succeeded())
+        {
+            if (valid_bp_ids.GetSize() == 0)
+            {
+                result.SetError("No breakpoints specified, cannot delete names.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            size_t num_valid_ids = valid_bp_ids.GetSize();
+            for (size_t index = 0; index < num_valid_ids; index++)
+            {
+                lldb::break_id_t bp_id = valid_bp_ids.GetBreakpointIDAtIndex(index).GetBreakpointID();
+                BreakpointSP bp_sp = breakpoints.FindBreakpointByID(bp_id);
+                bp_sp->RemoveName(m_name_options.m_name.GetCurrentValue());
+            }
+        }
+
+        return true;
+    }
+
+private:
+    BreakpointNameOptionGroup m_name_options;
+    OptionGroupOptions m_option_group;
+};
+
+class CommandObjectBreakpointNameList : public CommandObjectParsed
+{
+public:
+    CommandObjectBreakpointNameList (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "list",
+                             "List either the names for a breakpoint or the breakpoints for a given name.",
+                             "breakpoint name list <command-options>"),
+        m_name_options(),
+        m_option_group(interpreter)
+    {
+        m_option_group.Append (&m_name_options);
+        m_option_group.Finalize();
+    }
+
+    virtual
+    ~CommandObjectBreakpointNameList () {}
+
+  Options *
+  GetOptions ()
+  {
+    return &m_option_group;
+  }
+  
+protected:
+protected:
+    virtual bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        Target *target = GetSelectedOrDummyTarget(m_name_options.m_use_dummy.GetCurrentValue());
+
+        if (target == NULL)
+        {
+            result.AppendError ("Invalid target. No existing target or breakpoints.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (m_name_options.m_name.OptionWasSet())
+        {
+            const char *name = m_name_options.m_name.GetCurrentValue();
+            Mutex::Locker locker;
+            target->GetBreakpointList().GetListMutex(locker);
+            
+            BreakpointList &breakpoints = target->GetBreakpointList();
+            for (BreakpointSP bp_sp : breakpoints.Breakpoints())
+            {
+                if (bp_sp->MatchesName(name))
+                {
+                    StreamString s;
+                    bp_sp->GetDescription(&s, eDescriptionLevelBrief);
+                    s.EOL();
+                    result.AppendMessage(s.GetData());
+                }
+            }
+
+        }
+        else if (m_name_options.m_breakpoint.OptionWasSet())
+        {
+            BreakpointSP bp_sp = target->GetBreakpointList().FindBreakpointByID(m_name_options.m_breakpoint.GetCurrentValue());
+            if (bp_sp)
+            {
+                std::vector<std::string> names;
+                bp_sp->GetNames (names);
+                result.AppendMessage ("Names:");
+                for (auto name : names)
+                    result.AppendMessageWithFormat ("    %s\n", name.c_str());
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("Could not find breakpoint %" PRId64 ".\n",
+                                           m_name_options.m_breakpoint.GetCurrentValue());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+        {
+            result.SetError ("Must specify -N or -B option to list.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        return true;
+    }
+
+private:
+    BreakpointNameOptionGroup m_name_options;
+    OptionGroupOptions m_option_group;
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectMultiwordBreakpoint
+//-------------------------------------------------------------------------
+class CommandObjectBreakpointName : public CommandObjectMultiword
+{
+public:
+    CommandObjectBreakpointName (CommandInterpreter &interpreter) :
+        CommandObjectMultiword(interpreter,
+                                "name",
+                                "A set of commands to manage name tags for breakpoints",
+                                "breakpoint name <command> [<command-options>]")
+    {
+        CommandObjectSP add_command_object (new CommandObjectBreakpointNameAdd (interpreter));
+        CommandObjectSP delete_command_object (new CommandObjectBreakpointNameDelete (interpreter));
+        CommandObjectSP list_command_object (new CommandObjectBreakpointNameList (interpreter));
+
+        LoadSubCommand ("add", add_command_object);
+        LoadSubCommand ("delete", delete_command_object);
+        LoadSubCommand ("list", list_command_object);
+
+    }
+
+    virtual
+    ~CommandObjectBreakpointName ()
+    {
+    }
+
+};
+
+
+//-------------------------------------------------------------------------
 // CommandObjectMultiwordBreakpoint
 //-------------------------------------------------------------------------
 #pragma mark MultiwordBreakpoint
@@ -1879,6 +2295,7 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     CommandObjectSP set_command_object (new CommandObjectBreakpointSet (interpreter));
     CommandObjectSP command_command_object (new CommandObjectBreakpointCommand (interpreter));
     CommandObjectSP modify_command_object (new CommandObjectBreakpointModify(interpreter));
+    CommandObjectSP name_command_object (new CommandObjectBreakpointName(interpreter));
 
     list_command_object->SetCommandName ("breakpoint list");
     enable_command_object->SetCommandName("breakpoint enable");
@@ -1888,6 +2305,7 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     set_command_object->SetCommandName("breakpoint set");
     command_command_object->SetCommandName ("breakpoint command");
     modify_command_object->SetCommandName ("breakpoint modify");
+    name_command_object->SetCommandName ("breakpoint name");
 
     LoadSubCommand ("list",       list_command_object);
     LoadSubCommand ("enable",     enable_command_object);
@@ -1897,6 +2315,7 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     LoadSubCommand ("set",        set_command_object);
     LoadSubCommand ("command",    command_command_object);
     LoadSubCommand ("modify",     modify_command_object);
+    LoadSubCommand ("name",       name_command_object);
 }
 
 CommandObjectMultiwordBreakpoint::~CommandObjectMultiwordBreakpoint ()
@@ -1904,13 +2323,17 @@ CommandObjectMultiwordBreakpoint::~CommandObjectMultiwordBreakpoint ()
 }
 
 void
-CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *target, CommandReturnObject &result,
-                                                         BreakpointIDList *valid_ids)
+CommandObjectMultiwordBreakpoint::VerifyIDs (Args &args,
+                                             Target *target,
+                                             bool allow_locations,
+                                             CommandReturnObject &result,
+                                             BreakpointIDList *valid_ids)
 {
     // args can be strings representing 1). integers (for breakpoint ids)
     //                                  2). the full breakpoint & location canonical representation
     //                                  3). the word "to" or a hyphen, representing a range (in which case there
     //                                      had *better* be an entry both before & after of one of the first two types.
+    //                                  4). A breakpoint name
     // If args is empty, we will use the last created breakpoint (if there is one.)
 
     Args temp_args;
@@ -1934,7 +2357,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
     // the new TEMP_ARGS.  Do not copy breakpoint id range strings over; instead generate a list of strings for
     // all the breakpoint ids in the range, and shove all of those breakpoint id strings into TEMP_ARGS.
 
-    BreakpointIDList::FindAndReplaceIDRanges (args, target, result, temp_args);
+    BreakpointIDList::FindAndReplaceIDRanges (args, target, allow_locations, result, temp_args);
 
     // NOW, convert the list of breakpoint id strings in TEMP_ARGS into an actual BreakpointIDList:
 

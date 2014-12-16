@@ -13,6 +13,7 @@
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBStringList.h"
 #include "lldb/API/SBThread.h"
 
 #include "lldb/Breakpoint/Breakpoint.h"
@@ -651,6 +652,83 @@ SBBreakpoint::SetScriptCallbackBody (const char *callback_body_text)
         sb_error.SetErrorString("invalid breakpoint");
 
     return sb_error;
+}
+
+bool
+SBBreakpoint::AddName (const char *new_name)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::AddName (name=%s)",
+                     static_cast<void*>(m_opaque_sp.get()),
+                     new_name);
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        Error error;  // Think I'm just going to swallow the error here, it's probably more annoying to have to provide it.
+        return m_opaque_sp->AddName(new_name, error);
+    }
+
+    return false;
+}
+
+void
+SBBreakpoint::RemoveName (const char *name_to_remove)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::RemoveName (name=%s)",
+                     static_cast<void*>(m_opaque_sp.get()),
+                     name_to_remove);
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        m_opaque_sp->RemoveName(name_to_remove);
+    }
+}
+
+bool
+SBBreakpoint::MatchesName (const char *name)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::MatchesName (name=%s)",
+                     static_cast<void*>(m_opaque_sp.get()),
+                     name);
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        return m_opaque_sp->MatchesName(name);
+    }
+
+    return false;
+}
+
+void
+SBBreakpoint::GetNames (SBStringList &names)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::GetNames ()",
+                     static_cast<void*>(m_opaque_sp.get()));
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        std::vector<std::string> names_vec;
+        m_opaque_sp->GetNames(names_vec);
+        for (std::string name : names_vec)
+        {
+            names.AppendString (name.c_str());
+        }
+    }
 }
 
 lldb_private::Breakpoint *

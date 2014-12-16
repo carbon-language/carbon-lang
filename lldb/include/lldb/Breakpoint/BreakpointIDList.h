@@ -68,7 +68,7 @@ public:
     StringContainsIDRangeExpression (const char *in_string, size_t *range_start_len, size_t *range_end_pos);
 
     static void
-    FindAndReplaceIDRanges (Args &old_args, Target *target, CommandReturnObject &result, Args &new_args);
+    FindAndReplaceIDRanges (Args &old_args, Target *target, bool allow_locations, CommandReturnObject &result, Args &new_args);
 
 private:
     BreakpointIDArray m_breakpoint_ids;
