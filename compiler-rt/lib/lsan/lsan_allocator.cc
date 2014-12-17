@@ -47,7 +47,7 @@ static Allocator allocator;
 static THREADLOCAL AllocatorCache cache;
 
 void InitializeAllocator() {
-  allocator.Init(common_flags()->allocator_may_return_null);
+  allocator.InitIfLinkerInitialized(common_flags()->allocator_may_return_null);
 }
 
 void AllocatorThreadFinish() {

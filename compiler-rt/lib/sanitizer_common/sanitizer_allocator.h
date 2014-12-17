@@ -211,6 +211,7 @@ class AllocatorStats {
   void Init() {
     internal_memset(this, 0, sizeof(*this));
   }
+  void InitIfLinkerInitialized() {}
 
   void Add(AllocatorStat i, uptr v) {
     v += atomic_load(&stats_[i], memory_order_relaxed);
@@ -240,10 +241,13 @@ class AllocatorStats {
 // Global stats, used for aggregation and querying.
 class AllocatorGlobalStats : public AllocatorStats {
  public:
-  void Init() {
-    internal_memset(this, 0, sizeof(*this));
+  void InitIfLinkerInitialized() {
     next_ = this;
     prev_ = this;
+  }
+  void Init() {
+    internal_memset(this, 0, sizeof(*this));
+    InitIfLinkerInitialized();
   }
 
   void Register(AllocatorStats *s) {
@@ -1002,10 +1006,14 @@ struct SizeClassAllocatorLocalCache {
 template <class MapUnmapCallback = NoOpMapUnmapCallback>
 class LargeMmapAllocator {
  public:
-  void Init(bool may_return_null) {
-    internal_memset(this, 0, sizeof(*this));
+  void InitIfLinkerInitialized(bool may_return_null) {
     page_size_ = GetPageSizeCached();
     atomic_store(&may_return_null_, may_return_null, memory_order_relaxed);
+  }
+
+  void Init(bool may_return_null) {
+    internal_memset(this, 0, sizeof(*this));
+    InitIfLinkerInitialized(may_return_null);
   }
 
   void *Allocate(AllocatorStats *stat, uptr size, uptr alignment) {
@@ -1253,11 +1261,21 @@ template <class PrimaryAllocator, class AllocatorCache,
           class SecondaryAllocator>  // NOLINT
 class CombinedAllocator {
  public:
-  void Init(bool may_return_null) {
+  void InitCommon(bool may_return_null) {
     primary_.Init();
+    atomic_store(&may_return_null_, may_return_null, memory_order_relaxed);
+  }
+
+  void InitIfLinkerInitialized(bool may_return_null) {
+    secondary_.InitIfLinkerInitialized(may_return_null);
+    stats_.InitIfLinkerInitialized();
+    InitCommon(may_return_null);
+  }
+
+  void Init(bool may_return_null) {
     secondary_.Init(may_return_null);
     stats_.Init();
-    atomic_store(&may_return_null_, may_return_null, memory_order_relaxed);
+    InitCommon(may_return_null);
   }
 
   void *Allocate(AllocatorCache *cache, uptr size, uptr alignment,
