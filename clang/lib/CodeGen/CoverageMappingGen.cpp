@@ -117,19 +117,6 @@ public:
   }
 };
 
-/// \brief The state of the coverage mapping builder.
-struct SourceMappingState {
-  Counter CurrentRegionCount;
-  const Stmt *CurrentSourceGroup;
-  const Stmt *CurrentUnreachableRegionInitiator;
-
-  SourceMappingState(Counter CurrentRegionCount, const Stmt *CurrentSourceGroup,
-                     const Stmt *CurrentUnreachableRegionInitiator)
-      : CurrentRegionCount(CurrentRegionCount),
-        CurrentSourceGroup(CurrentSourceGroup),
-        CurrentUnreachableRegionInitiator(CurrentUnreachableRegionInitiator) {}
-};
-
 /// \brief Provides the common functionality for the different
 /// coverage mapping region builders.
 class CoverageMappingBuilder {
@@ -356,14 +343,6 @@ public:
     mapSourceCodeRange(LocStart, LocEnd, Count,
                        CurrentUnreachableRegionInitiator, CurrentSourceGroup,
                        Flags);
-  }
-
-  void mapSourceCodeRange(const SourceMappingState &State,
-                          SourceLocation LocStart, SourceLocation LocEnd,
-                          unsigned Flags = 0) {
-    mapSourceCodeRange(LocStart, LocEnd, State.CurrentRegionCount,
-                       State.CurrentUnreachableRegionInitiator,
-                       State.CurrentSourceGroup, Flags);
   }
 
   /// \brief Generate the coverage counter mapping regions from collected
@@ -597,12 +576,6 @@ struct CounterCoverageMappingBuilder
     Writer.write(OS);
   }
 
-  /// \brief Return the current source mapping state.
-  SourceMappingState getCurrentState() const {
-    return SourceMappingState(CurrentRegionCount, CurrentSourceGroup,
-                              CurrentUnreachableRegionInitiator);
-  }
-
   /// \brief Associate the source code range with the current region count.
   void mapSourceCodeRange(SourceLocation LocStart, SourceLocation LocEnd,
                           unsigned Flags = 0) {
@@ -623,11 +596,6 @@ struct CounterCoverageMappingBuilder
     CoverageMappingBuilder::mapSourceCodeRange(
         LocStart, LocStart, CurrentRegionCount,
         SourceMappingRegion::IgnoreIfNotExtended);
-  }
-
-  void mapToken(const SourceMappingState &State, SourceLocation LocStart) {
-    CoverageMappingBuilder::mapSourceCodeRange(
-        State, LocStart, LocStart, SourceMappingRegion::IgnoreIfNotExtended);
   }
 
   void VisitStmt(const Stmt *S) {
@@ -658,14 +626,12 @@ struct CounterCoverageMappingBuilder
   }
 
   void VisitCompoundStmt(const CompoundStmt *S) {
-    SourceMappingState State = getCurrentState();
     mapSourceCodeRange(S->getLBracLoc());
+    mapSourceCodeRange(S->getRBracLoc());
     for (Stmt::const_child_range I = S->children(); I; ++I) {
       if (*I)
         this->Visit(*I);
     }
-    CoverageMappingBuilder::mapSourceCodeRange(State, S->getRBracLoc(),
-                                               S->getRBracLoc());
   }
 
   void VisitReturnStmt(const ReturnStmt *S) {
@@ -917,7 +883,7 @@ struct CounterCoverageMappingBuilder
   void VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
     Visit(E->getCond());
     mapToken(E->getQuestionLoc());
-    auto State = getCurrentState();
+    mapToken(E->getColonLoc());
 
     // Counter tracks the "true" part of a conditional operator. The
     // count in the "false" part will be calculated from this counter.
@@ -925,8 +891,6 @@ struct CounterCoverageMappingBuilder
     Cnt.beginRegion();
     Visit(E->getTrueExpr());
     Cnt.adjustForControlFlow();
-
-    mapToken(State, E->getColonLoc());
 
     Cnt.beginElseRegion();
     Visit(E->getFalseExpr());
