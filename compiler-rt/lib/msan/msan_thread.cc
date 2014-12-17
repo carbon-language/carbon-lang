@@ -79,15 +79,4 @@ thread_return_t MsanThread::ThreadStart() {
   return res;
 }
 
-MsanThread *GetCurrentThread() {
-  return reinterpret_cast<MsanThread *>(MsanTSDGet());
-}
-
-void SetCurrentThread(MsanThread *t) {
-  // Make sure we do not reset the current MsanThread.
-  CHECK_EQ(0, MsanTSDGet());
-  MsanTSDSet(t);
-  CHECK_EQ(t, MsanTSDGet());
-}
-
 } // namespace __msan

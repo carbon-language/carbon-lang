@@ -157,20 +157,26 @@ void InstallAtExitHandler() {
 
 static pthread_key_t tsd_key;
 static bool tsd_key_inited = false;
+
 void MsanTSDInit(void (*destructor)(void *tsd)) {
   CHECK(!tsd_key_inited);
   tsd_key_inited = true;
   CHECK_EQ(0, pthread_key_create(&tsd_key, destructor));
 }
 
-void *MsanTSDGet() {
-  CHECK(tsd_key_inited);
-  return pthread_getspecific(tsd_key);
+static THREADLOCAL MsanThread* msan_current_thread;
+
+MsanThread *GetCurrentThread() {
+  return msan_current_thread;
 }
 
-void MsanTSDSet(void *tsd) {
+void SetCurrentThread(MsanThread *t) {
+  // Make sure we do not reset the current MsanThread.
+  CHECK_EQ(0, msan_current_thread);
+  msan_current_thread = t;
+  // Make sure that MsanTSDDtor gets called at the end.
   CHECK(tsd_key_inited);
-  pthread_setspecific(tsd_key, tsd);
+  pthread_setspecific(tsd_key, (void *)t);
 }
 
 void MsanTSDDtor(void *tsd) {
@@ -180,6 +186,9 @@ void MsanTSDDtor(void *tsd) {
     CHECK_EQ(0, pthread_setspecific(tsd_key, tsd));
     return;
   }
+  msan_current_thread = nullptr;
+  // Make sure that signal handler can not see a stale current thread pointer.
+  atomic_signal_fence(memory_order_seq_cst);
   MsanThread::TSDDtor(tsd);
 }
 
