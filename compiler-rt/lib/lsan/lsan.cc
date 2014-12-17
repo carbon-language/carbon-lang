@@ -52,6 +52,12 @@ extern "C" void __lsan_init() {
 
   if (common_flags()->detect_leaks && common_flags()->leak_check_at_exit)
     Atexit(DoLeakCheck);
+
+  if (common_flags()->coverage) {
+    __sanitizer_cov_init();
+    Atexit(__sanitizer_cov_dump);
+  }
+
   lsan_inited = true;
   lsan_init_is_running = false;
 }
