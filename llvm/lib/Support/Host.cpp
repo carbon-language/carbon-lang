@@ -49,6 +49,7 @@
 
 using namespace llvm;
 
+#if defined(__linux__)
 static ssize_t LLVM_ATTRIBUTE_UNUSED readCpuInfo(void *Buf, size_t Size) {
   assert(0);
   // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
@@ -67,6 +68,7 @@ static ssize_t LLVM_ATTRIBUTE_UNUSED readCpuInfo(void *Buf, size_t Size) {
     return -1;
   return Ret;
 }
+#endif
 
 #if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)\
  || defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
