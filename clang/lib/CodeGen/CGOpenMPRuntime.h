@@ -329,7 +329,7 @@ public:
   ///
   /// \param CGF Reference to current CodeGenFunction.
   /// \param Loc Clang source location.
-  /// \param ScheduleKind Schedule kind, specified by the 'schedule' clause.
+  /// \param SchedKind Schedule kind, specified by the 'schedule' clause.
   /// \param IVSize Size of the iteration variable in bits.
   /// \param IVSigned Sign of the interation variable.
   /// \param IL Address of the output variable in which the flag of the
