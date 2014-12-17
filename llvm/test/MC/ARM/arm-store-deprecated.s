@@ -145,3 +145,9 @@ push:
 @ CHECK: push {sp}
 @ CHECK: ^
 
+	.global single
+	.type single,%function
+single:
+	stmdaeq r0, {r0}
+@ CHECK-NOT: warning
+

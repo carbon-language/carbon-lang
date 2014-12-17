@@ -77,7 +77,10 @@ static bool getITDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
 
 static bool getARMStoreDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                        std::string &Info) {
-  assert(MI.getNumOperands() > 4 && "expected >4 arguments");
+  if (STI.getFeatureBits() & llvm::ARM::ModeThumb)
+    return false;
+
+  assert(MI.getNumOperands() >= 4 && "expected >= 4 arguments");
   for (unsigned OI = 4, OE = MI.getNumOperands(); OI < OE; ++OI) {
     assert(MI.getOperand(OI).isReg() && "expected register");
     if (MI.getOperand(OI).getReg() == ARM::SP ||
