@@ -23,11 +23,22 @@ void bbb(int y) {
       foo(x, y);
   }();
 }
+void ccc();
+void ddd() { ccc(); }
+void ccc() {}
+
+void eee();
+void eee() {}
+void fff() { eee(); }
 
 // CHECK:--- Call graph Dump ---
-// CHECK: Function: < root > calls: mmm foo aaa < > bbb
-// CHECK: Function: bbb calls: < >
-// CHECK: Function: < > calls: foo
-// CHECK: Function: aaa calls: foo
-// CHECK: Function: foo calls: mmm
-// CHECK: Function: mmm calls:
+// CHECK-NEXT: {{Function: < root > calls: mmm foo aaa < > bbb ccc ddd eee fff $}}
+// CHECK-NEXT: {{Function: fff calls: eee $}}
+// CHECK-NEXT: {{Function: eee calls: $}}
+// CHECK-NEXT: {{Function: ddd calls: ccc $}}
+// CHECK-NEXT: {{Function: ccc calls: $}}
+// CHECK-NEXT: {{Function: bbb calls: < > $}}
+// CHECK-NEXT: {{Function: < > calls: foo $}}
+// CHECK-NEXT: {{Function: aaa calls: foo $}}
+// CHECK-NEXT: {{Function: foo calls: mmm $}}
+// CHECK-NEXT: {{Function: mmm calls: $}}
