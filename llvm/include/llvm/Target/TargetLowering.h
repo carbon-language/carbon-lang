@@ -264,11 +264,6 @@ public:
     return MaskAndBranchFoldingIsLegal;
   }
 
-  /// \brief Return true if the target wants to use the optimization that
-  /// turns ext(promotableInst1(...(promotableInstN(load)))) into
-  /// promotedInst1(...(promotedInstN(ext(load)))).
-  bool enableExtLdPromotion() const { return EnableExtLdPromotion; }
-
   /// Return true if the target can combine store(extractelement VectorTy,
   /// Idx).
   /// \p Cost[out] gives the cost of that transformation when this is true.
@@ -1958,9 +1953,6 @@ protected:
   /// MaskAndBranchFoldingIsLegal - Indicates if the target supports folding
   /// a mask of a single bit, a compare, and a branch into a single instruction.
   bool MaskAndBranchFoldingIsLegal;
-
-  /// \see enableExtLdPromotion.
-  bool EnableExtLdPromotion;
 
 protected:
   /// Return true if the value types that can be represented by the specified
