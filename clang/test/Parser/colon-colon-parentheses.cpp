@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify -DPR21815
 // RUN: cp %s %t
 // RUN: not %clang_cc1 -x c++ -fixit %t
 // RUN: %clang_cc1 -x c++ %t
@@ -20,3 +20,11 @@ void foo() {
   a = ::(h;  // expected-error{{unexpected parenthesis after '::'}}
   a = ::i;
 }
+
+#ifdef PR21815
+// expected-error@+4{{C++ requires a type specifier for all declarations}}
+// expected-error@+3{{expected unqualified-id}}
+// expected-error@+3{{expected expression}}
+// expected-error@+1{{expected ';' after top level declarator}}
+a (::(
+#endif
