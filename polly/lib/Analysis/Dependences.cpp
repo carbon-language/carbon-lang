@@ -432,10 +432,14 @@ void Dependences::calculateDependences(Scop &S) {
   DEBUG(printScop(dbgs()));
 }
 
-bool Dependences::runOnScop(Scop &S) {
+void Dependences::recomputeDependences() {
   releaseMemory();
-  calculateDependences(S);
+  calculateDependences(*S);
+}
 
+bool Dependences::runOnScop(Scop &ScopVar) {
+  S = &ScopVar;
+  recomputeDependences();
   return false;
 }
 

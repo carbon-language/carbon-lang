@@ -151,7 +151,13 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
   isl_union_map_free(Dep);
   isl_union_set_free(OriginalDomain);
 
-  return S.restrictDomains(isl_union_set_coalesce(Live));
+  bool Changed = S.restrictDomains(isl_union_set_coalesce(Live));
+
+  // FIXME: We can probably avoid the recomputation of all dependences by
+  // updating them explicitly.
+  if (Changed)
+    D->recomputeDependences();
+  return Changed;
 }
 
 bool DeadCodeElim::runOnScop(Scop &S) {

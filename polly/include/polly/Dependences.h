@@ -121,12 +121,17 @@ public:
     return ReductionDependences;
   }
 
+  /// @brief Recompute dependences from schedule and memory accesses.
+  void recomputeDependences();
+
   bool runOnScop(Scop &S);
   void printScop(raw_ostream &OS) const;
   virtual void releaseMemory();
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 private:
+  Scop *S;
+
   /// @brief The different kinds of dependences we calculate.
   isl_union_map *RAW;
   isl_union_map *WAR;
