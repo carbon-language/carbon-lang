@@ -459,7 +459,7 @@ void ValueEnumerator::print(raw_ostream &OS, const MetadataMapType &Map,
   for (auto I = Map.begin(), E = Map.end(); I != E; ++I) {
     const Metadata *MD = I->first;
     OS << "Metadata: slot = " << I->second << "\n";
-    MD->dump();
+    MD->print(OS);
   }
 }
 
@@ -803,4 +803,3 @@ unsigned ValueEnumerator::getGlobalBasicBlockID(const BasicBlock *BB) const {
   IncorporateFunctionInfoGlobalBBIDs(BB->getParent(), GlobalBasicBlockIDs);
   return getGlobalBasicBlockID(BB);
 }
-
