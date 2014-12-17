@@ -22,7 +22,7 @@
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
-#include "MipsABIInfo.h"
+#include "MCTargetDesc/MipsABIInfo.h"
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER

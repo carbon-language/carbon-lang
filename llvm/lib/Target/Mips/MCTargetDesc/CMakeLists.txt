@@ -1,4 +1,5 @@
 add_llvm_library(LLVMMipsDesc
+  MipsABIInfo.cpp
   MipsABIFlagsSection.cpp
   MipsAsmBackend.cpp
   MipsELFObjectWriter.cpp
