@@ -130,7 +130,7 @@ namespace llvm {
       LC_DATA_IN_CODE         = 0x00000029u,
       LC_SOURCE_VERSION       = 0x0000002Au,
       LC_DYLIB_CODE_SIGN_DRS  = 0x0000002Bu,
-      //                        0x0000002Cu,
+      LC_ENCRYPTION_INFO_64   = 0x0000002Cu,
       LC_LINKER_OPTIONS       = 0x0000002Du,
       LC_LINKER_OPTIMIZATION_HINT = 0x0000002Eu
     };
@@ -842,6 +842,15 @@ namespace llvm {
       uint32_t cryptid;
     };
 
+    struct encryption_info_command_64 {
+      uint32_t cmd;
+      uint32_t cmdsize;
+      uint32_t cryptoff;
+      uint32_t cryptsize;
+      uint32_t cryptid;
+      uint32_t pad;
+    };
+
     struct version_min_command {
       uint32_t cmd;       // LC_VERSION_MIN_MACOSX or
                           // LC_VERSION_MIN_IPHONEOS
@@ -1134,6 +1143,15 @@ namespace llvm {
       sys::swapByteOrder(e.cryptoff);
       sys::swapByteOrder(e.cryptsize);
       sys::swapByteOrder(e.cryptid);
+    }
+
+    inline void swapStruct(encryption_info_command_64 &e) {
+      sys::swapByteOrder(e.cmd);
+      sys::swapByteOrder(e.cmdsize);
+      sys::swapByteOrder(e.cryptoff);
+      sys::swapByteOrder(e.cryptsize);
+      sys::swapByteOrder(e.cryptid);
+      sys::swapByteOrder(e.pad);
     }
 
     inline void swapStruct(dysymtab_command &dst) {
