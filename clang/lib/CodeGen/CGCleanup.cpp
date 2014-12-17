@@ -861,7 +861,10 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
   // Emit the EH cleanup if required.
   if (RequiresEHCleanup) {
-    ApplyDebugLocation AutoRestoreLocation(*this, CurEHLocation);
+    CGDebugInfo *DI = getDebugInfo();
+    SaveAndRestoreLocation AutoRestoreLocation(*this, Builder);
+    if (DI)
+      DI->EmitLocation(Builder, CurEHLocation);
 
     CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
 
