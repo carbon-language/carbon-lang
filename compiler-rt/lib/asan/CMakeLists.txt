@@ -5,6 +5,7 @@ set(ASAN_SOURCES
   asan_activation.cc
   asan_debugging.cc
   asan_fake_stack.cc
+  asan_flags.cc
   asan_globals.cc
   asan_interceptors.cc
   asan_linux.cc

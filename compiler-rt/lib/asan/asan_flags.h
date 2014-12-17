@@ -72,7 +72,8 @@ extern Flags asan_flags_dont_use_directly;
 inline Flags *flags() {
   return &asan_flags_dont_use_directly;
 }
-void InitializeFlags(Flags *f, const char *env);
+void InitializeFlags(Flags *f);
+void ParseFlagsFromString(Flags *f, const char *str);
 
 }  // namespace __asan
 

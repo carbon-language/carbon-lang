@@ -66,7 +66,14 @@ void AsanActivate() {
   flags()->alloc_dealloc_mismatch =
       asan_deactivated_flags.alloc_dealloc_mismatch;
 
-  ParseExtraActivationFlags();
+  // FIXME: Avoid modifying global common_flags() and flags() and restrict the
+  // set of supported flags that can be provided in activation.
+  char buf[100];
+  GetExtraActivationFlags(buf, sizeof(buf));
+  ParseCommonFlagsFromString(common_flags(), buf);
+  ParseFlagsFromString(flags(), buf);
+  if (buf[0] != '\0')
+    VReport(1, "Extra activation flags: %s\n", buf);
 
   SetCanPoisonMemory(asan_deactivated_flags.poison_heap);
   SetMallocContextSize(asan_deactivated_flags.malloc_context_size);

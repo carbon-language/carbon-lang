@@ -107,8 +107,6 @@ void PlatformTSDDtor(void *tsd);
 
 void AppendToErrorMessageBuffer(const char *buffer);
 
-void ParseExtraActivationFlags();
-
 void *AsanDlSymNext(const char *sym);
 
 // Platform-specific options.
