@@ -19,7 +19,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
@@ -417,9 +416,6 @@ class ModuleLinker {
   // Vector of GlobalValues to lazily link in.
   std::vector<GlobalValue *> LazilyLinkGlobalValues;
 
-  /// Functions that have replaced other functions.
-  SmallPtrSet<const Function *, 16> OverridingFunctions;
-
   Linker::DiagnosticHandlerFunction DiagnosticHandler;
 
 public:
@@ -498,7 +494,6 @@ private:
   bool linkGlobalValueBody(GlobalValue &Src);
 
   void linkNamedMDNodes();
-  void stripReplacedSubprograms();
 };
 }
 
@@ -1083,10 +1078,6 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     }
 
     NewGV = copyGlobalValueProto(TypeMap, *DstM, SGV);
-
-    if (DGV && isa<Function>(DGV))
-      if (auto *NewF = dyn_cast<Function>(NewGV))
-        OverridingFunctions.insert(NewF);
   }
 
   NewGV->setUnnamedAddr(HasUnnamedAddr);
@@ -1250,48 +1241,6 @@ void ModuleLinker::linkNamedMDNodes() {
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
       DestNMD->addOperand(MapValue(I->getOperand(i), ValueMap,
                                    RF_None, &TypeMap, &ValMaterializer));
-  }
-}
-
-/// Drop DISubprograms that have been superseded.
-///
-/// FIXME: this creates an asymmetric result: we strip losing subprograms from
-/// DstM, but leave losing subprograms in SrcM.  Instead we should also strip
-/// losers from SrcM, but this requires extra plumbing in MapValue.
-void ModuleLinker::stripReplacedSubprograms() {
-  // Avoid quadratic runtime by returning early when there's nothing to do.
-  if (OverridingFunctions.empty())
-    return;
-
-  // Move the functions now, so the set gets cleared even on early returns.
-  auto Functions = std::move(OverridingFunctions);
-  OverridingFunctions.clear();
-
-  // Drop subprograms whose functions have been overridden by the new compile
-  // unit.
-  NamedMDNode *CompileUnits = DstM->getNamedMetadata("llvm.dbg.cu");
-  if (!CompileUnits)
-    return;
-  for (unsigned I = 0, E = CompileUnits->getNumOperands(); I != E; ++I) {
-    DICompileUnit CU(CompileUnits->getOperand(I));
-    assert(CU && "Expected valid compile unit");
-
-    DITypedArray<DISubprogram> SPs(CU.getSubprograms());
-    assert(SPs && "Expected valid subprogram array");
-
-    SmallVector<Metadata *, 16> NewSPs;
-    NewSPs.reserve(SPs.getNumElements());
-    for (unsigned S = 0, SE = SPs.getNumElements(); S != SE; ++S) {
-      DISubprogram SP = SPs.getElement(S);
-      if (SP && SP.getFunction() && Functions.count(SP.getFunction()))
-        continue;
-
-      NewSPs.push_back(SP);
-    }
-
-    // Redirect operand to the overriding subprogram.
-    if (NewSPs.size() != SPs.getNumElements())
-      CU.replaceSubprograms(DIArray(MDNode::get(DstM->getContext(), NewSPs)));
   }
 }
 
@@ -1559,9 +1508,6 @@ bool ModuleLinker::run() {
       continue;
     linkGlobalValueBody(Src);
   }
-
-  // Strip replaced subprograms before linking together compile units.
-  stripReplacedSubprograms();
 
   // Remap all of the named MDNodes in Src into the DstM module. We do this
   // after linking GlobalValues so that MDNodes that reference GlobalValues
