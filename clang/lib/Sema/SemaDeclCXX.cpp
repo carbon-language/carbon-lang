@@ -8159,7 +8159,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
     // If we weren't able to compute a valid scope, it must be a
     // dependent class scope.
     if (!NamedContext || NamedContext->isRecord()) {
-      auto *RD = dyn_cast<CXXRecordDecl>(NamedContext);
+      auto *RD = dyn_cast_or_null<CXXRecordDecl>(NamedContext);
       if (RD && RequireCompleteDeclContext(const_cast<CXXScopeSpec&>(SS), RD))
         RD = nullptr;
 

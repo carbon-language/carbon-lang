@@ -17,6 +17,11 @@ void f() {
   using X::s; // expected-error{{using declaration cannot refer to class member}}
 }
 
+template <typename T>
+struct PR21933 : T {
+  static void StaticFun() { using T::member; } // expected-error{{using declaration cannot refer to class member}}
+};
+
 struct S {
   static int n;
   struct Q {};
