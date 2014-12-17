@@ -146,6 +146,25 @@ LTOModule *LTOModule::createInContext(const void *mem, size_t length,
   return makeLTOModule(Buffer, options, errMsg, Context);
 }
 
+static ErrorOr<Module *> parseBitcodeFileImpl(MemoryBufferRef Buffer,
+                                              LLVMContext &Context,
+                                              bool ShouldBeLazy) {
+  // Find the buffer.
+  ErrorOr<MemoryBufferRef> MBOrErr =
+      IRObjectFile::findBitcodeInMemBuffer(Buffer);
+  if (std::error_code EC = MBOrErr.getError())
+    return EC;
+
+  if (!ShouldBeLazy)
+    // Parse the full file.
+    return parseBitcodeFile(*MBOrErr, Context);
+
+  // Parse lazily.
+  std::unique_ptr<MemoryBuffer> LightweightBuf =
+      MemoryBuffer::getMemBuffer(*MBOrErr, false);
+  return getLazyBitcodeModule(std::move(LightweightBuf), Context);
+}
+
 LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
                                     TargetOptions options, std::string &errMsg,
                                     LLVMContext *Context) {
@@ -155,13 +174,10 @@ LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
     Context = OwnedContext.get();
   }
 
-  ErrorOr<MemoryBufferRef> MBOrErr =
-      IRObjectFile::findBitcodeInMemBuffer(Buffer);
-  if (std::error_code EC = MBOrErr.getError()) {
-    errMsg = EC.message();
-    return nullptr;
-  }
-  ErrorOr<Module *> MOrErr = parseBitcodeFile(*MBOrErr, *Context);
+  // If we own a context, we know this is being used only for symbol
+  // extraction, not linking.  Be lazy in that case.
+  ErrorOr<Module *> MOrErr = parseBitcodeFileImpl(
+      Buffer, *Context, /* ShouldBeLazy */ static_cast<bool>(OwnedContext));
   if (std::error_code EC = MOrErr.getError()) {
     errMsg = EC.message();
     return nullptr;
