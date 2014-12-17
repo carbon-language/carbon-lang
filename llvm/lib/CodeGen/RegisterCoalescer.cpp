@@ -1501,17 +1501,17 @@ class JoinVals {
   /// Live range we work on.
   LiveRange &LR;
   /// (Main) register we work on.
-  unsigned Reg;
+  const unsigned Reg;
 
   /// This is true when joining sub register ranges, false when joining main
   /// ranges.
-  bool SubRangeJoin;
+  const bool SubRangeJoin;
   /// Whether the current LiveInterval tracks subregister liveness.
-  bool TrackSubRegLiveness;
+  const bool TrackSubRegLiveness;
 
   // Location of this register in the final joined register.
   // Either CP.DstIdx or CP.SrcIdx.
-  unsigned SubIdx;
+  const unsigned SubIdx;
 
   // Values that will be present in the final live range.
   SmallVectorImpl<VNInfo*> &NewVNInfo;
@@ -1602,13 +1602,13 @@ class JoinVals {
   // One entry per value number in LI.
   SmallVector<Val, 8> Vals;
 
-  unsigned computeWriteLanes(const MachineInstr *DefMI, bool &Redef);
-  VNInfo *stripCopies(VNInfo *VNI);
+  unsigned computeWriteLanes(const MachineInstr *DefMI, bool &Redef) const;
+  VNInfo *stripCopies(VNInfo *VNI) const;
   ConflictResolution analyzeValue(unsigned ValNo, JoinVals &Other);
   void computeAssignment(unsigned ValNo, JoinVals &Other);
   bool taintExtent(unsigned, unsigned, JoinVals&,
                    SmallVectorImpl<std::pair<SlotIndex, unsigned> >&);
-  bool usesLanes(MachineInstr *MI, unsigned, unsigned, unsigned);
+  bool usesLanes(const MachineInstr *MI, unsigned, unsigned, unsigned) const;
   bool isPrunedValue(unsigned ValNo, JoinVals &Other);
 
 public:
@@ -1658,7 +1658,8 @@ public:
 /// Compute the bitmask of lanes actually written by DefMI.
 /// Set Redef if there are any partial register definitions that depend on the
 /// previous value of the register.
-unsigned JoinVals::computeWriteLanes(const MachineInstr *DefMI, bool &Redef) {
+unsigned JoinVals::computeWriteLanes(const MachineInstr *DefMI, bool &Redef)
+  const {
   unsigned L = 0;
   for (ConstMIOperands MO(DefMI); MO.isValid(); ++MO) {
     if (!MO->isReg() || MO->getReg() != Reg || !MO->isDef())
@@ -1672,7 +1673,7 @@ unsigned JoinVals::computeWriteLanes(const MachineInstr *DefMI, bool &Redef) {
 }
 
 /// Find the ultimate value that VNI was copied from.
-VNInfo *JoinVals::stripCopies(VNInfo *VNI) {
+VNInfo *JoinVals::stripCopies(VNInfo *VNI) const {
   while (!VNI->isPHIDef()) {
     MachineInstr *MI = Indexes->getInstructionFromIndex(VNI->def);
     assert(MI && "No defining instruction");
@@ -2035,8 +2036,8 @@ taintExtent(unsigned ValNo, unsigned TaintedLanes, JoinVals &Other,
 
 /// Return true if MI uses any of the given Lanes from Reg.
 /// This does not include partial redefinitions of Reg.
-bool JoinVals::usesLanes(MachineInstr *MI, unsigned Reg, unsigned SubIdx,
-                         unsigned Lanes) {
+bool JoinVals::usesLanes(const MachineInstr *MI, unsigned Reg, unsigned SubIdx,
+                         unsigned Lanes) const {
   if (MI->isDebugValue())
     return false;
   for (ConstMIOperands MO(MI); MO.isValid(); ++MO) {
