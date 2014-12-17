@@ -20,7 +20,9 @@
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Intrinsics.h"
 
 using namespace clang;
@@ -3164,6 +3166,26 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
   if (auto Hint = GetValueForARMHint(BuiltinID))
     return Hint;
+
+  if (BuiltinID == ARM::BI__emit) {
+    bool IsThumb = getTarget().getTriple().getArch() == llvm::Triple::thumb;
+    llvm::FunctionType *FTy =
+        llvm::FunctionType::get(VoidTy, /*Variadic=*/false);
+
+    APSInt Value;
+    if (!E->getArg(0)->EvaluateAsInt(Value, CGM.getContext()))
+      llvm_unreachable("Sema will ensure that the parameter is constant");
+
+    uint64_t ZExtValue = Value.zextOrTrunc(IsThumb ? 16 : 32).getZExtValue();
+
+    llvm::InlineAsm *Emit =
+        IsThumb ? InlineAsm::get(FTy, ".inst.n 0x" + utohexstr(ZExtValue), "",
+                                 /*SideEffects=*/true)
+                : InlineAsm::get(FTy, ".inst 0x" + utohexstr(ZExtValue), "",
+                                 /*SideEffects=*/true);
+
+    return Builder.CreateCall(Emit);
+  }
 
   if (BuiltinID == ARM::BI__builtin_arm_dbg) {
     Value *Option = EmitScalarExpr(E->getArg(0));
