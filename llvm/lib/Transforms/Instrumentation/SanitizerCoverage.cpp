@@ -171,10 +171,8 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
 
 bool SanitizerCoverageModule::runOnFunction(Function &F) {
   if (F.empty()) return false;
-  // For now instrument only functions that will also be asan-instrumented.
-  if (!F.hasFnAttribute(Attribute::SanitizeAddress) &&
-      !F.hasFnAttribute(Attribute::SanitizeMemory))
-    return false;
+  if (F.getName().find(".module_ctor") != std::string::npos)
+    return false;  // Should not instrument sanitizer init functions.
   if (CoverageLevel >= 3)
     SplitAllCriticalEdges(F, this);
   SmallVector<Instruction*, 8> IndirCalls;
