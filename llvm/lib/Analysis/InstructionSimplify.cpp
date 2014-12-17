@@ -1338,6 +1338,11 @@ static Value *SimplifyRightShift(unsigned Opcode, Value *Op0, Value *Op1,
   if (Op0 == Op1)
     return Constant::getNullValue(Op0->getType());
 
+  // undef >> X -> 0
+  // undef >> X -> undef (if it's exact)
+  if (match(Op0, m_Undef()))
+    return isExact ? Op0 : Constant::getNullValue(Op0->getType());
+
   // The low bit cannot be shifted out of an exact shift if it is set.
   if (isExact) {
     unsigned BitWidth = Op0->getType()->getScalarSizeInBits();
@@ -1360,8 +1365,9 @@ static Value *SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     return V;
 
   // undef << X -> 0
+  // undef << X -> undef if (if it's NSW/NUW)
   if (match(Op0, m_Undef()))
-    return Constant::getNullValue(Op0->getType());
+    return isNSW || isNUW ? Op0 : Constant::getNullValue(Op0->getType());
 
   // (X >> A) << A -> X
   Value *X;
@@ -1385,12 +1391,6 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
   if (Value *V = SimplifyRightShift(Instruction::LShr, Op0, Op1, isExact, Q,
                                     MaxRecurse))
       return V;
-
-  // undef >>l X -> 0
-  // undef >>l X -> undef (if it's exact)
-  if (match(Op0, m_Undef()))
-    return isExact ? UndefValue::get(Op0->getType())
-                   : Constant::getNullValue(Op0->getType());
 
   // (X << A) >> A -> X
   Value *X;
@@ -1421,12 +1421,6 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
   // all ones >>a X -> all ones
   if (match(Op0, m_AllOnes()))
     return Op0;
-
-  // undef >>a X -> 0
-  // undef >>a X -> undef (if it's exact)
-  if (match(Op0, m_Undef()))
-    return isExact ? UndefValue::get(Op0->getType())
-                   : Constant::getNullValue(Op0->getType());
 
   // (X << A) >> A -> X
   Value *X;
