@@ -654,11 +654,14 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
           Encoding == dwarf::DW_ATE_unsigned_char ||
           Encoding == dwarf::DW_ATE_signed ||
           Encoding == dwarf::DW_ATE_signed_char ||
-          Encoding == dwarf::DW_ATE_UTF || Encoding == dwarf::DW_ATE_boolean) &&
+          Encoding == dwarf::DW_ATE_UTF || Encoding == dwarf::DW_ATE_boolean ||
+          (Ty.getTag() == dwarf::DW_TAG_unspecified_type &&
+           Ty.getName() == "decltype(nullptr)")) &&
          "Unsupported encoding");
   return (Encoding == dwarf::DW_ATE_unsigned ||
           Encoding == dwarf::DW_ATE_unsigned_char ||
-          Encoding == dwarf::DW_ATE_UTF || Encoding == dwarf::DW_ATE_boolean);
+          Encoding == dwarf::DW_ATE_UTF || Encoding == dwarf::DW_ATE_boolean ||
+          Ty.getTag() == dwarf::DW_TAG_unspecified_type);
 }
 
 /// If this type is derived from a base type then return base type size.
