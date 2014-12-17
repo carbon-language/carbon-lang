@@ -1712,6 +1712,9 @@ namespace InitializerList {
     return sum(ints.begin(), ints.end());
   }
   static_assert(sum({1, 2, 3, 4, 5}) == 15, "");
+
+  static_assert(*std::initializer_list<int>{1, 2, 3}.begin() == 1, "");
+  static_assert(std::initializer_list<int>{1, 2, 3}.begin()[2] == 3, "");
 }
 
 namespace StmtExpr {

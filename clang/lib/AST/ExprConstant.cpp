@@ -5474,6 +5474,9 @@ public:
   bool VisitCallExpr(const CallExpr *E) {
     return VisitConstructExpr(E);
   }
+  bool VisitCXXStdInitializerListExpr(const CXXStdInitializerListExpr *E) {
+    return VisitConstructExpr(E);
+  }
 };
 } // end anonymous namespace
 
