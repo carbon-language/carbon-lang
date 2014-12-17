@@ -3989,7 +3989,7 @@ Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result) {
         return DAR_FailedAlreadyDiagnosed;
       }
 
-      QualType Deduced = BuildDecltypeType(Init, Init->getLocStart());
+      QualType Deduced = BuildDecltypeType(Init, Init->getLocStart(), false);
       // FIXME: Support a non-canonical deduced type for 'auto'.
       Deduced = Context.getCanonicalType(Deduced);
       Result = SubstituteAutoTransform(*this, Deduced).Apply(Type);

@@ -1290,6 +1290,13 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
     ControllingExpr = result.get();
   }
 
+  // The controlling expression is an unevaluated operand, so side effects are
+  // likely unintended.
+  if (ActiveTemplateInstantiations.empty() &&
+      ControllingExpr->HasSideEffects(Context, false))
+    Diag(ControllingExpr->getExprLoc(),
+         diag::warn_side_effects_unevaluated_context);
+
   bool TypeErrorFound = false,
        IsResultDependent = ControllingExpr->isTypeDependent(),
        ContainsUnexpandedParameterPack
@@ -3524,6 +3531,12 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *E,
       << ExprKind << E->getSourceRange();
     return true;
   }
+
+  // The operand for sizeof and alignof is in an unevaluated expression context,
+  // so side effects could result in unintended consequences.
+  if ((ExprKind == UETT_SizeOf || ExprKind == UETT_AlignOf) &&
+      ActiveTemplateInstantiations.empty() && E->HasSideEffects(Context, false))
+    Diag(E->getExprLoc(), diag::warn_side_effects_unevaluated_context);
 
   if (CheckObjCTraitOperandConstraints(*this, ExprTy, E->getExprLoc(),
                                        E->getSourceRange(), ExprKind))

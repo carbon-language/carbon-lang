@@ -2866,9 +2866,16 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef,
   return false;
 }
 
-bool Expr::HasSideEffects(const ASTContext &Ctx) const {
+bool Expr::HasSideEffects(const ASTContext &Ctx,
+                          bool IncludePossibleEffects) const {
+  // In circumstances where we care about definite side effects instead of
+  // potential side effects, we want to ignore expressions that are part of a
+  // macro expansion as a potential side effect.
+  if (!IncludePossibleEffects && getExprLoc().isMacroID())
+    return false;
+
   if (isInstantiationDependent())
-    return true;
+    return IncludePossibleEffects;
 
   switch (getStmtClass()) {
   case NoStmtClass:
@@ -2921,21 +2928,27 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
     return false;
 
   case CallExprClass:
+  case CXXOperatorCallExprClass:
+  case CXXMemberCallExprClass:
+  case CUDAKernelCallExprClass:
+  case BlockExprClass:
+  case CXXBindTemporaryExprClass:
+  case UserDefinedLiteralClass:
+    // We don't know a call definitely has side effects, but we can check the
+    // call's operands.
+    if (!IncludePossibleEffects)
+      break;
+    return true;
+
   case MSPropertyRefExprClass:
   case CompoundAssignOperatorClass:
   case VAArgExprClass:
   case AtomicExprClass:
   case StmtExprClass:
-  case CXXOperatorCallExprClass:
-  case CXXMemberCallExprClass:
-  case UserDefinedLiteralClass:
   case CXXThrowExprClass:
   case CXXNewExprClass:
   case CXXDeleteExprClass:
   case ExprWithCleanupsClass:
-  case CXXBindTemporaryExprClass:
-  case BlockExprClass:
-  case CUDAKernelCallExprClass:
     // These always have a side-effect.
     return true;
 
@@ -2971,24 +2984,26 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case InitListExprClass:
     // FIXME: The children for an InitListExpr doesn't include the array filler.
     if (const Expr *E = cast<InitListExpr>(this)->getArrayFiller())
-      if (E->HasSideEffects(Ctx))
+      if (E->HasSideEffects(Ctx, IncludePossibleEffects))
         return true;
     break;
 
   case GenericSelectionExprClass:
     return cast<GenericSelectionExpr>(this)->getResultExpr()->
-        HasSideEffects(Ctx);
+        HasSideEffects(Ctx, IncludePossibleEffects);
 
   case ChooseExprClass:
-    return cast<ChooseExpr>(this)->getChosenSubExpr()->HasSideEffects(Ctx);
+    return cast<ChooseExpr>(this)->getChosenSubExpr()->HasSideEffects(
+        Ctx, IncludePossibleEffects);
 
   case CXXDefaultArgExprClass:
-    return cast<CXXDefaultArgExpr>(this)->getExpr()->HasSideEffects(Ctx);
+    return cast<CXXDefaultArgExpr>(this)->getExpr()->HasSideEffects(
+        Ctx, IncludePossibleEffects);
 
   case CXXDefaultInitExprClass: {
     const FieldDecl *FD = cast<CXXDefaultInitExpr>(this)->getField();
     if (const Expr *E = FD->getInClassInitializer())
-      return E->HasSideEffects(Ctx);
+      return E->HasSideEffects(Ctx, IncludePossibleEffects);
     // If we've not yet parsed the initializer, assume it has side-effects.
     return true;
   }
@@ -3021,7 +3036,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case CXXConstructExprClass:
   case CXXTemporaryObjectExprClass: {
     const CXXConstructExpr *CE = cast<CXXConstructExpr>(this);
-    if (!CE->getConstructor()->isTrivial())
+    if (!CE->getConstructor()->isTrivial() && IncludePossibleEffects)
       return true;
     // A trivial constructor does not add any side-effects of its own. Just look
     // at its arguments.
@@ -3049,7 +3064,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
       const Expr *Subexpr = *I;
       if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Subexpr))
         Subexpr = OVE->getSourceExpr();
-      if (Subexpr->HasSideEffects(Ctx))
+      if (Subexpr->HasSideEffects(Ctx, IncludePossibleEffects))
         return true;
     }
     return false;
@@ -3058,22 +3073,24 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case ObjCBoxedExprClass:
   case ObjCArrayLiteralClass:
   case ObjCDictionaryLiteralClass:
-  case ObjCMessageExprClass:
   case ObjCSelectorExprClass:
   case ObjCProtocolExprClass:
-  case ObjCPropertyRefExprClass:
   case ObjCIsaExprClass:
   case ObjCIndirectCopyRestoreExprClass:
   case ObjCSubscriptRefExprClass:
   case ObjCBridgedCastExprClass:
-    // FIXME: Classify these cases better.
-    return true;
+  case ObjCMessageExprClass:
+  case ObjCPropertyRefExprClass:
+  // FIXME: Classify these cases better.
+    if (IncludePossibleEffects)
+      return true;
+    break;
   }
 
   // Recurse to children.
   for (const_child_range SubStmts = children(); SubStmts; ++SubStmts)
     if (const Stmt *S = *SubStmts)
-      if (cast<Expr>(S)->HasSideEffects(Ctx))
+      if (cast<Expr>(S)->HasSideEffects(Ctx, IncludePossibleEffects))
         return true;
 
   return false;

@@ -132,7 +132,7 @@ void g() {
   D d;
   C c;
   (void)typeid(f(), c); // Should not warn.
-  (void)typeid(f(), d); // expected-warning {{ignoring return value}}
+  (void)typeid(f(), d); // expected-warning {{ignoring return value}} expected-warning {{expression with side effects will be evaluated despite being used as an operand to 'typeid'}}
 
   // The sizeof expression operand is never evaluated.
   (void)sizeof(f(), c); // Should not warn.

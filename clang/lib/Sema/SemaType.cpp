@@ -5518,10 +5518,18 @@ static QualType getDecltypeForExpr(Sema &S, Expr *E) {
   return T;
 }
 
-QualType Sema::BuildDecltypeType(Expr *E, SourceLocation Loc) {
+QualType Sema::BuildDecltypeType(Expr *E, SourceLocation Loc,
+                                 bool AsUnevaluated) {
   ExprResult ER = CheckPlaceholderExpr(E);
   if (ER.isInvalid()) return QualType();
   E = ER.get();
+
+  if (AsUnevaluated && ActiveTemplateInstantiations.empty() &&
+      E->HasSideEffects(Context, false)) {
+    // The expression operand for decltype is in an unevaluated expression
+    // context, so side effects could result in unintended consequences.
+    Diag(E->getExprLoc(), diag::warn_side_effects_unevaluated_context);
+  }
 
   return Context.getDecltypeType(E, getDecltypeForExpr(*this, E));
 }

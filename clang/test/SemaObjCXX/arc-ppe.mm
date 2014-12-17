@@ -13,4 +13,4 @@ void test1() { (void)typeid(NP((void*)(id*)0)); }
 
 class Poly { virtual ~Poly(); };
 Poly& P(void*);
-void test2() { (void)typeid(P((void*)(id*)0)); } // expected-error {{pointer to non-const type 'id'}}
+void test2() { (void)typeid(P((void*)(id*)0)); } // expected-error {{pointer to non-const type 'id'}} expected-warning {{expression with side effects will be evaluated despite being used as an operand to 'typeid'}}

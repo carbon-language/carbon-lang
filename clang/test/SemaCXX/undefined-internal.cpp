@@ -163,7 +163,7 @@ namespace cxx11_odr_rules {
 
     // Check that the checks work with unevaluated contexts
     (void)sizeof(p(A::used1));
-    (void)typeid(p(A::used1)); // xpected-note {{used here}}
+    (void)typeid(p(A::used1)); // expected-warning {{expression with side effects will be evaluated despite being used as an operand to 'typeid'}} xpected-note {{used here}}
 
     // Misc other testing
     a(A::unused, 1 ? A::used2 : A::used2); // xpected-note {{used here}}

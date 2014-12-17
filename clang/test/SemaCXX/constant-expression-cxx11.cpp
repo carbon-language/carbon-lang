@@ -1613,7 +1613,8 @@ namespace TypeId {
   A &g();
   constexpr auto &x = typeid(f());
   constexpr auto &y = typeid(g()); // expected-error{{constant expression}} \
-  // expected-note{{typeid applied to expression of polymorphic type 'TypeId::A' is not allowed in a constant expression}}
+  // expected-note{{typeid applied to expression of polymorphic type 'TypeId::A' is not allowed in a constant expression}} \
+  // expected-warning {{expression with side effects will be evaluated despite being used as an operand to 'typeid'}}
 }
 
 namespace PR14203 {

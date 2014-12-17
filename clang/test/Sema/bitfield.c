@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c11
+// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c11 -Wno-unused-value
+
 enum e0; // expected-note{{forward declaration of 'enum e0'}}
 
 struct a {

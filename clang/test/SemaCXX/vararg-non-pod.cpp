@@ -103,7 +103,7 @@ Base &get_base(...);
 int eat_base(...);
 
 void test_typeid(Base &base) {
-  (void)typeid(get_base(base)); // expected-warning{{cannot pass object of non-POD type 'Base' through variadic function; call will abort at runtime}}
+  (void)typeid(get_base(base)); // expected-warning{{cannot pass object of non-POD type 'Base' through variadic function; call will abort at runtime}} expected-warning{{expression with side effects will be evaluated despite being used as an operand to 'typeid'}}
   (void)typeid(eat_base(base)); // okay
 }
 

@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wunused-value -Wunused-label %s
-// RUN: %clang_cc1 -fsyntax-only -verify -Wunused %s
-// RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
+// RUN: %clang_cc1 -std=c11 -fsyntax-only -verify -Wunused-value -Wunused-label %s
+// RUN: %clang_cc1 -std=c11 -fsyntax-only -verify -Wunused %s
+// RUN: %clang_cc1 -std=c11 -fsyntax-only -verify -Wall %s
 
 int i = 0;
 int j = 0;
@@ -87,4 +87,23 @@ void f0(int a);
 void f1(struct s0 *a) {
   // rdar://8139785
   f0((int)(a->f0 + 1, 10)); // expected-warning {{expression result unused}}
+}
+
+void blah(int a);
+#define GenTest(x) _Generic(x, default : blah)(x)
+
+void unevaluated_operands(void) {
+  int val = 0;
+
+  (void)sizeof(++val); // expected-warning {{expression with side effects has no effect in an unevaluated context}}
+  (void)_Generic(val++, default : 0); // expected-warning {{expression with side effects has no effect in an unevaluated context}}
+  (void)_Alignof(val++);  // expected-warning {{expression with side effects has no effect in an unevaluated context}} expected-warning {{'_Alignof' applied to an expression is a GNU extension}}
+
+  // VLAs can have side effects so long as it's part of the type and not
+  // an expression.
+  (void)sizeof(int[++val]); // Ok
+  (void)_Alignof(int[++val]); // Ok
+
+  // Side effects as part of macro expansion are ok.
+  GenTest(val++);
 }

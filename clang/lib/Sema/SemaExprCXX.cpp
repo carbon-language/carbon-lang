@@ -396,6 +396,7 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                 SourceLocation TypeidLoc,
                                 Expr *E,
                                 SourceLocation RParenLoc) {
+  bool WasEvaluated = false;
   if (E && !E->isTypeDependent()) {
     if (E->getType()->isPlaceholderType()) {
       ExprResult result = CheckPlaceholderExpr(E);
@@ -425,6 +426,7 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
 
         // We require a vtable to query the type at run time.
         MarkVTableUsed(TypeidLoc, RecordD);
+        WasEvaluated = true;
       }
     }
 
@@ -444,6 +446,14 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
   if (E->getType()->isVariablyModifiedType())
     return ExprError(Diag(TypeidLoc, diag::err_variably_modified_typeid)
                      << E->getType());
+  else if (ActiveTemplateInstantiations.empty() &&
+           E->HasSideEffects(Context, WasEvaluated)) {
+    // The expression operand for typeid is in an unevaluated expression
+    // context, so side effects could result in unintended consequences.
+    Diag(E->getExprLoc(), WasEvaluated
+                              ? diag::warn_side_effects_typeid
+                              : diag::warn_side_effects_unevaluated_context);
+  }
 
   return new (Context) CXXTypeidExpr(TypeInfoType.withConst(), E,
                                      SourceRange(TypeidLoc, RParenLoc));
@@ -5622,7 +5632,8 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
   if (CheckArrow(*this, ObjectType, Base, OpKind, OpLoc))
     return ExprError();
 
-  QualType T = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc());
+  QualType T = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc(),
+                                 false);
 
   TypeLocBuilder TLB;
   DecltypeTypeLoc DecltypeTL = TLB.push<DecltypeTypeLoc>(T);
@@ -5690,6 +5701,13 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
 
 ExprResult Sema::BuildCXXNoexceptExpr(SourceLocation KeyLoc, Expr *Operand,
                                       SourceLocation RParen) {
+  if (ActiveTemplateInstantiations.empty() &&
+      Operand->HasSideEffects(Context, false)) {
+    // The expression operand for noexcept is in an unevaluated expression
+    // context, so side effects could result in unintended consequences.
+    Diag(Operand->getExprLoc(), diag::warn_side_effects_unevaluated_context);
+  }
+
   CanThrowResult CanThrow = canThrow(Operand);
   return new (Context)
       CXXNoexceptExpr(Context.BoolTy, Operand, CanThrow, KeyLoc, RParen);

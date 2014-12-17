@@ -586,8 +586,13 @@ public:
 
   /// HasSideEffects - This routine returns true for all those expressions
   /// which have any effect other than producing a value. Example is a function
-  /// call, volatile variable read, or throwing an exception.
-  bool HasSideEffects(const ASTContext &Ctx) const;
+  /// call, volatile variable read, or throwing an exception. If
+  /// IncludePossibleEffects is false, this call treats certain expressions with
+  /// potential side effects (such as function call-like expressions,
+  /// instantiation-dependent expressions, or invocations from a macro) as not
+  /// having side effects.
+  bool HasSideEffects(const ASTContext &Ctx,
+                      bool IncludePossibleEffects = true) const;
 
   /// \brief Determine whether this expression involves a call to any function
   /// that is not trivial.
