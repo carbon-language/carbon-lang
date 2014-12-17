@@ -109,4 +109,42 @@ namespace PtrMem {
   static_assert(!is_same<Ae, Aedb>, ""); // expected-error {{undeclared}} expected-error {{must be a type}}
   static_assert(!is_same<Aecb, Aedb>, ""); // expected-error 2{{undeclared}} expected-error {{must be a type}}
   static_assert(is_same<Aecb, A<int E::*, (int E::*)(int C::*)&B::b>, ""); // expected-error {{undeclared}} expected-error {{not supported}}
+
+  using An = A<int E::*, nullptr>;
+  using A0 = A<int E::*, (int E::*)0>;
+  static_assert(is_same<An, A0>);
+}
+
+namespace DeduceDifferentType {
+  template<int N> struct A {};
+  template<long N> int a(A<N>); // expected-note {{does not have the same type}}
+  int a_imp = a(A<3>()); // expected-error {{no matching function}}
+  int a_exp = a<3>(A<3>());
+
+  template<decltype(nullptr)> struct B {};
+  template<int *P> int b(B<P>); // expected-note {{could not match}} expected-note {{not implicitly convertible}}
+  int b_imp = b(B<nullptr>()); // expected-error {{no matching function}}
+  int b_exp = b<nullptr>(B<nullptr>()); // expected-error {{no matching function}}
+
+  struct X { constexpr operator int() { return 0; } } x;
+  template<X &> struct C {};
+  template<int N> int c(C<N>); // expected-note {{does not have the same type}} expected-note {{not implicitly convertible}}
+  int c_imp = c(C<x>()); // expected-error {{no matching function}}
+  int c_exp = c<x>(C<x>()); // expected-error {{no matching function}}
+
+  struct Z;
+  struct Y { constexpr operator Z&(); } y;
+  struct Z { constexpr operator Y&() { return y; } } z;
+  constexpr Y::operator Z&() { return z; }
+  template<Y &> struct D {};
+  template<Z &z> int d(D<z>); // expected-note {{does not have the same type}}
+  int d_imp = d(D<y>()); // expected-error {{no matching function}}
+  int d_exp = d<y>(D<y>());
+}
+
+namespace DeclMatch {
+  template<typename T, T> int f();
+  template<typename T> class X { friend int f<T, 0>(); static int n; };
+  template<typename T, T> int f() { return X<T>::n; }
+  int k = f<int, 0>(); // ok, friend
 }
