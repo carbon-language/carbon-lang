@@ -36,7 +36,6 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
                        SourceMgr &SM, raw_ostream &Out,
                        MCStreamer &Streamer, bool InAtomicBlock,
                        const MCSubtargetInfo &STI) {
-  // Wrap the vector in a MemoryObject.
   ArrayRef<uint8_t> Data(Bytes.first.data(), Bytes.first.size());
 
   // Disassemble it to strings.

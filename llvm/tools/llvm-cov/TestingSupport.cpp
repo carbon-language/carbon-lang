@@ -12,7 +12,6 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include <system_error>
