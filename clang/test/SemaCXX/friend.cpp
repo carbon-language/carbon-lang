@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++14
 
 friend class A; // expected-error {{'friend' used outside of class}}
 void f() { friend class A; } // expected-error {{'friend' used outside of class}}
@@ -295,4 +295,57 @@ namespace test11 {
   class A {
     friend class __attribute__((visibility("hidden"), noreturn)) B; // expected-warning {{'noreturn' attribute only applies to functions and methods}}
   };
+}
+
+namespace pr21851 {
+// PR21851 was a problem where we assumed that when the friend function redecl
+// lookup found a C++ method, it would necessarily have a qualifier. Below we
+// have some test cases where unqualified lookup finds C++ methods without using
+// qualifiers. Unfortunately, we can't exercise the case of an access check
+// failure because nested classes always have access to the members of outer
+// classes.
+
+void friend_own_method() {
+  class A {
+    void m() {}
+    friend void m();
+  };
+}
+
+void friend_enclosing_method() {
+  class A;
+  class C {
+    int p;
+    friend class A;
+  };
+  class A {
+    void enclosing_friend() {
+      (void)b->p;
+      (void)c->p;
+    }
+    class B {
+      void b(A *a) {
+        (void)a->c->p;
+      }
+      int p;
+      friend void enclosing_friend();
+    };
+    B *b;
+    C *c;
+  };
+}
+
+static auto friend_file_func() {
+  extern void file_scope_friend();
+  class A {
+    int p;
+    friend void file_scope_friend();
+  };
+  return A();
+}
+
+void file_scope_friend() {
+  auto a = friend_file_func();
+  (void)a.p;
+}
 }
