@@ -1,6 +1,6 @@
 // Test for direct coverage writing with dlopen.
 // RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_direct_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%T\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%T\" %s %libdl -o %t
 
 // RUN: rm -rf %T/coverage-direct
 

@@ -10,8 +10,8 @@
 // If the linker doesn't support --export-dynamic (which is ELF-specific),
 // try to link without that option.
 // FIXME: find a better solution.
-// RUN: %clangxx_asan -O0 %s -pthread -o %t -Wl,--export-dynamic || \
-// RUN:     %clangxx_asan -O0 %s -pthread -o %t
+// RUN: %clangxx_asan -O0 %s -pthread %libdl -o %t -Wl,--export-dynamic || \
+// RUN:     %clangxx_asan -O0 %s -pthread %libdl -o %t
 // RUN: ASAN_OPTIONS=strict_init_order=true %run %t 2>&1 | FileCheck %s
 #if !defined(SHARED_LIB)
 #include <dlfcn.h>

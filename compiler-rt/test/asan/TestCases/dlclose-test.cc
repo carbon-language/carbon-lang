@@ -15,13 +15,13 @@
 // REQUIRES: x86_64-supported-target,i386-supported-target
 
 // RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O0 %s -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s %libdl -o %t && %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O1 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O1 %s %libdl -o %t && %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O2 %s -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 %s %libdl -o %t && %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O3 %s -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s %libdl -o %t && %run %t 2>&1 | FileCheck %s
 
 #if !defined(SHARED_LIB)
 #include <assert.h>

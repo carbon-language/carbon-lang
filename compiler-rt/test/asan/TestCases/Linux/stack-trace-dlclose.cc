@@ -2,7 +2,7 @@
 // XFAIL: android
 //
 // RUN: %clangxx_asan -DSHARED %s -shared -o %T/stack_trace_dlclose.so -fPIC
-// RUN: %clangxx_asan -DSO_DIR=\"%T\" %s -o %t
+// RUN: %clangxx_asan -DSO_DIR=\"%T\" %s %libdl -o %t
 // RUN: ASAN_OPTIONS=exitcode=0 %run %t 2>&1 | FileCheck %s
 // XFAIL: arm-linux-gnueabi
 // XFAIL: armv7l-unknown-linux-gnueabihf
