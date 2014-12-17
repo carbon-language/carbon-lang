@@ -127,12 +127,12 @@ typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE, 16,
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<AsanMapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
-    SecondaryAllocator> Allocator;
+    SecondaryAllocator> AsanAllocator;
 
 
 struct AsanThreadLocalMallocStorage {
   uptr quarantine_cache[16];
-  AllocatorCache allocator2_cache;
+  AllocatorCache allocator_cache;
   void CommitBack();
  private:
   // These objects are allocated via mmap() and are zero-initialized.
