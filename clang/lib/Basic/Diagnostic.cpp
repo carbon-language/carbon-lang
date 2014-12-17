@@ -61,6 +61,12 @@ DiagnosticsEngine::DiagnosticsEngine(
   Reset();
 }
 
+DiagnosticsEngine::~DiagnosticsEngine() {
+  // If we own the diagnostic client, destroy it first so that it can access the
+  // engine from its destructor.
+  setClient(nullptr);
+}
+
 void DiagnosticsEngine::setClient(DiagnosticConsumer *client,
                                   bool ShouldOwnClient) {
   Owner.reset(ShouldOwnClient ? client : nullptr);

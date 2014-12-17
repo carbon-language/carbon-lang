@@ -347,6 +347,7 @@ public:
                       DiagnosticOptions *DiagOpts,
                       DiagnosticConsumer *client = nullptr,
                       bool ShouldOwnClient = true);
+  ~DiagnosticsEngine();
 
   const IntrusiveRefCntPtr<DiagnosticIDs> &getDiagnosticIDs() const {
     return Diags;
