@@ -290,9 +290,8 @@ def note_pp_ambiguous_macro_chosen : Note<
   "expanding this definition of %0">;
 def note_pp_ambiguous_macro_other : Note<
   "other definition of %0">;
-// FIXME: Remove DefaultIgnore after reducing noise level.
 def warn_pp_macro_hides_keyword : Extension<
-  "keyword is hidden by macro definition">, InGroup<KeywordAsMacro>, DefaultIgnore;
+  "keyword is hidden by macro definition">, InGroup<KeywordAsMacro>;
 
 def pp_invalid_string_literal : Warning<
   "invalid string literal, ignoring final '\\'">;
