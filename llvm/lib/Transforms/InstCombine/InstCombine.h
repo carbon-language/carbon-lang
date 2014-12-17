@@ -285,6 +285,7 @@ private:
   bool WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS, Instruction *CxtI);
   bool WillNotOverflowSignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
   bool WillNotOverflowUnsignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
+  bool WillNotOverflowSignedMul(Value *LHS, Value *RHS, Instruction *CxtI);
   Value *EmitGEPOffset(User *GEP);
   Instruction *scalarizePHI(ExtractElementInst &EI, PHINode *PN);
   Value *EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask);

@@ -427,6 +427,15 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         return CreateOverflowTuple(II, LHS, false, /*ReUseName*/false);
       }
     }
+    if (II->getIntrinsicID() == Intrinsic::ssub_with_overflow) {
+      if (WillNotOverflowSignedSub(LHS, RHS, II)) {
+        return CreateOverflowTuple(II, Builder->CreateNSWSub(LHS, RHS), false);
+      }
+    } else {
+      if (WillNotOverflowUnsignedSub(LHS, RHS, II)) {
+        return CreateOverflowTuple(II, Builder->CreateNUWSub(LHS, RHS), false);
+      }
+    }
     break;
   }
   case Intrinsic::umul_with_overflow: {
@@ -475,6 +484,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (RHSI->equalsInt(1)) {
         return CreateOverflowTuple(II, II->getArgOperand(0), false,
                                     /*ReUseName*/false);
+      }
+    }
+    if (II->getIntrinsicID() == Intrinsic::smul_with_overflow) {
+      Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
+      if (WillNotOverflowSignedMul(LHS, RHS, II)) {
+        return CreateOverflowTuple(II, Builder->CreateNSWMul(LHS, RHS), false);
       }
     }
     break;

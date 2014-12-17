@@ -1,10 +1,17 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
 
 %overflow.result = type {i8, i1}
+%ov.result.32 = type { i32, i1 }
 
-declare %overflow.result @llvm.uadd.with.overflow.i8(i8, i8)
-declare { i32, i1 } @llvm.sadd.with.overflow.i32(i32, i32)
-declare %overflow.result @llvm.umul.with.overflow.i8(i8, i8)
+
+declare %overflow.result @llvm.uadd.with.overflow.i8(i8, i8) nounwind readnone
+declare %overflow.result @llvm.umul.with.overflow.i8(i8, i8) nounwind readnone
+declare %ov.result.32 @llvm.sadd.with.overflow.i32(i32, i32) nounwind readnone
+declare %ov.result.32 @llvm.uadd.with.overflow.i32(i32, i32) nounwind readnone
+declare %ov.result.32 @llvm.ssub.with.overflow.i32(i32, i32) nounwind readnone
+declare %ov.result.32 @llvm.usub.with.overflow.i32(i32, i32) nounwind readnone
+declare %ov.result.32 @llvm.smul.with.overflow.i32(i32, i32) nounwind readnone
+declare %ov.result.32 @llvm.umul.with.overflow.i32(i32, i32) nounwind readnone
 declare double @llvm.powi.f64(double, i32) nounwind readonly
 declare i32 @llvm.cttz.i32(i32, i1) nounwind readnone
 declare i32 @llvm.ctlz.i32(i32, i1) nounwind readnone
@@ -91,17 +98,92 @@ define i8 @uaddtest7(i8 %A, i8 %B) {
 }
 
 ; PR20194
-define { i32, i1 } @saddtest1(i8 %a, i8 %b) {
+define %ov.result.32 @saddtest_nsw(i8 %a, i8 %b) {
   %A = sext i8 %a to i32
   %B = sext i8 %b to i32
-  %x = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %A, i32 %B)
-  ret { i32, i1 } %x
-; CHECK-LABEL: @saddtest1
+  %x = call %ov.result.32 @llvm.sadd.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @saddtest_nsw
 ; CHECK: %x = add nsw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue { i32, i1 } { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret { i32, i1 } %1
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
+define %ov.result.32 @uaddtest_nuw(i32 %a, i32 %b) {
+  %A = and i32 %a, 2147483647
+  %B = and i32 %b, 2147483647
+  %x = call %ov.result.32 @llvm.uadd.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @uaddtest_nuw
+; CHECK: %x = add nuw i32 %A, %B
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
+}
+
+define %ov.result.32 @ssubtest_nsw(i8 %a, i8 %b) {
+  %A = sext i8 %a to i32
+  %B = sext i8 %b to i32
+  %x = call %ov.result.32 @llvm.ssub.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @ssubtest_nsw
+; CHECK: %x = sub nsw i32 %A, %B
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
+}
+
+define %ov.result.32 @usubtest_nuw(i32 %a, i32 %b) {
+  %A = or i32 %a, 2147483648
+  %B = and i32 %b, 2147483647
+  %x = call %ov.result.32 @llvm.usub.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @usubtest_nuw
+; CHECK: %x = sub nuw i32 %A, %B
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
+}
+
+define %ov.result.32 @smultest1_nsw(i32 %a, i32 %b) {
+  %A = and i32 %a, 4095 ; 0xfff
+  %B = and i32 %b, 524287; 0x7ffff
+  %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @smultest1_nsw
+; CHECK: %x = mul nsw i32 %A, %B
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
+}
+
+define %ov.result.32 @smultest2_nsw(i32 %a, i32 %b) {
+  %A = ashr i32 %a, 16
+  %B = ashr i32 %b, 16
+  %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @smultest2_nsw
+; CHECK: %x = mul nsw i32 %A, %B
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
+}
+
+define %ov.result.32 @smultest3_sw(i32 %a, i32 %b) {
+  %A = ashr i32 %a, 16
+  %B = ashr i32 %b, 15
+  %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @smultest3_sw
+; CHECK: %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
+; CHECK-NEXT:  ret %ov.result.32 %x
+}
+
+define %ov.result.32 @umultest_nuw(i32 %a, i32 %b) {
+  %A = and i32 %a, 65535 ; 0xffff
+  %B = and i32 %b, 65535 ; 0xffff
+  %x = call %ov.result.32 @llvm.umul.with.overflow.i32(i32 %A, i32 %B)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @umultest_nuw
+; CHECK: %x = mul nuw i32 %A, %B
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
+}
 
 define i8 @umultest1(i8 %A, i1* %overflowPtr) {
   %x = call %overflow.result @llvm.umul.with.overflow.i8(i8 0, i8 %A)
@@ -124,9 +206,6 @@ define i8 @umultest2(i8 %A, i1* %overflowPtr) {
 ; CHECK-NEXT: store i1 false, i1* %overflowPtr
 ; CHECK-NEXT: ret i8 %A
 }
-
-%ov.result.32 = type { i32, i1 }
-declare %ov.result.32 @llvm.umul.with.overflow.i32(i32, i32) nounwind readnone
 
 define i32 @umultest3(i32 %n) nounwind {
   %shr = lshr i32 %n, 2
