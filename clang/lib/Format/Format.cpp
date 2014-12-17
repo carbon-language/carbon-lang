@@ -889,7 +889,6 @@ private:
           Column += Style.TabWidth - Column % Style.TabWidth;
           break;
         case '\\':
-          ++Column;
           if (i + 1 == e || (FormatTok->TokenText[i + 1] != '\r' &&
                              FormatTok->TokenText[i + 1] != '\n'))
             FormatTok->Type = TT_ImplicitStringLiteral;

@@ -482,6 +482,8 @@ TEST_F(FormatTestJS, RegexLiteralLength) {
   verifyFormat("var regex =\n"
                "    /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/;",
                getGoogleJSStyleWithColumns(60));
+  verifyFormat("var regex = /\\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/;",
+               getGoogleJSStyleWithColumns(50));
 }
 
 TEST_F(FormatTestJS, RegexLiteralExamples) {
