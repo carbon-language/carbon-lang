@@ -1552,6 +1552,37 @@ define <4 x i32> @combine_test20(<4 x i32> %a, <4 x i32> %b) {
   ret <4 x i32> %2
 }
 
+define <4 x i32> @combine_test21(<8 x i32> %a, <4 x i32>* %ptr) {
+; SSE-LABEL: combine_test21:
+; SSE:       # BB#0:
+; SSE-NEXT:    movdqa %xmm0, %xmm2
+; SSE-NEXT:    punpcklqdq  {{.*#+}} xmm2 = xmm2[0],xmm1[0]
+; SSE-NEXT:    punpckhqdq  {{.*#+}} xmm0 = xmm0[1],xmm1[1]
+; SSE-NEXT:    movdqa %xmm2,
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: combine_test21:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVX1-NEXT:    vpunpcklqdq  {{.*#+}} xmm2 = xmm0[0],xmm1[0]
+; AVX1-NEXT:    vpunpckhqdq  {{.*#+}} xmm0 = xmm0[1],xmm1[1]
+; AVX1-NEXT:    movdqa %xmm2,
+; AVX1-NEXT:    vzeroupper
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: combine_test21:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX2-NEXT:    vpunpcklqdq  {{.*#+}} xmm2 = xmm0[0],xmm1[0]
+; AVX2-NEXT:    vpunpckhqdq  {{.*#+}} xmm0 = xmm0[1],xmm1[1]
+; AVX2-NEXT:    movdqa %xmm2,
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+  %1 = shufflevector <8 x i32> %a, <8 x i32> %a, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  %2 = shufflevector <8 x i32> %a, <8 x i32> %a, <4 x i32> <i32 2, i32 3, i32 6, i32 7>
+  store <4 x i32> %1, <4 x i32>* %ptr, align 16
+  ret <4 x i32> %2
+}
 
 ; Check some negative cases.
 ; FIXME: Do any of these really make sense? Are they redundant with the above tests?

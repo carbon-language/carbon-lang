@@ -3851,6 +3851,14 @@ bool X86TargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
   return true;
 }
 
+bool X86TargetLowering::isExtractSubvectorCheap(EVT ResVT, 
+                                                unsigned Index) const {
+  if (!isOperationLegalOrCustom(ISD::EXTRACT_SUBVECTOR, ResVT))
+    return false;
+
+  return (Index == 0 || Index == ResVT.getVectorNumElements());
+}
+
 /// isUndefOrInRange - Return true if Val is undef or if its value falls within
 /// the specified range (L, H].
 static bool isUndefOrInRange(int Val, int Low, int Hi) {

@@ -10783,9 +10783,6 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       SDValue ExtVal = Extract.getOperand(1);
       unsigned ExtIndex = cast<ConstantSDNode>(ExtVal)->getZExtValue();
       if (Extract.getOperand(0) == VecIn1) {
-        if (ExtIndex > VT.getVectorNumElements())
-          return SDValue();
-
         Mask.push_back(ExtIndex);
         continue;
       }
@@ -10805,20 +10802,34 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       if (VecIn2.getNode())
         return SDValue();
 
-      // We only support widening of vectors which are half the size of the
-      // output registers. For example XMM->YMM widening on X86 with AVX.
-      if (VecIn1.getValueType().getSizeInBits()*2 != VT.getSizeInBits())
-        return SDValue();
-
       // If the input vector type has a different base type to the output
       // vector type, bail out.
       if (VecIn1.getValueType().getVectorElementType() !=
           VT.getVectorElementType())
         return SDValue();
 
-      // Widen the input vector by adding undef values.
-      VecIn1 = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT,
-                           VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
+      // If the input vector is too small, widen it.
+      // We only support widening of vectors which are half the size of the
+      // output registers. For example XMM->YMM widening on X86 with AVX.
+      EVT VecInT = VecIn1.getValueType();
+      if (VecInT.getSizeInBits() * 2 == VT.getSizeInBits()) {
+        // Widen the input vector by adding undef values.
+        VecIn1 = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT,
+                             VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
+      } else if (VecInT.getSizeInBits() == VT.getSizeInBits() * 2) {
+        // If the input vector is too large, try to split it.
+        if (!TLI.isExtractSubvectorCheap(VT, VT.getVectorNumElements()))
+          return SDValue();
+        
+        // Try to replace VecIn1 with two extract_subvectors
+        // No need to update the masks, they should still be correct.
+        VecIn2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, VecIn1, 
+          DAG.getConstant(VT.getVectorNumElements(), TLI.getVectorIdxTy()));
+        VecIn1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, VecIn1,
+          DAG.getConstant(0, TLI.getVectorIdxTy()));
+        UsesZeroVector = false;
+      } else 
+        return SDValue();
     }
 
     if (UsesZeroVector)

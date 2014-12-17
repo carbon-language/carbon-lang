@@ -791,6 +791,10 @@ namespace llvm {
     bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                            Type *Ty) const override;
 
+    /// Return true if EXTRACT_SUBVECTOR is cheap for this result type
+    /// with this index.
+    bool isExtractSubvectorCheap(EVT ResVT, unsigned Index) const override;
+
     /// Intel processors have a unified instruction and data cache
     const char * getClearCacheBuiltinName() const override {
       return nullptr; // nothing to do, move along.

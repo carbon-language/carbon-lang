@@ -1531,6 +1531,15 @@ public:
                                                  Type *Ty) const {
     return false;
   }
+
+  /// Return true if EXTRACT_SUBVECTOR is cheap for this result type
+  /// with this index. This is needed because EXTRACT_SUBVECTOR usually
+  /// has custom lowering that depends on the index of the first element,
+  /// and only the target knows which lowering is cheap.
+  virtual bool isExtractSubvectorCheap(EVT ResVT, unsigned Index) const {
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // Runtime Library hooks
   //
