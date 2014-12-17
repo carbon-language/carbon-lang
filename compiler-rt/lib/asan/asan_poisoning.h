@@ -19,6 +19,10 @@
 
 namespace __asan {
 
+// Enable/disable memory poisoning.
+void SetCanPoisonMemory(bool value);
+bool CanPoisonMemory();
+
 // Poisons the shadow memory for "size" bytes starting from "addr".
 void PoisonShadow(uptr addr, uptr size, u8 value);
 
@@ -34,7 +38,7 @@ void PoisonShadowPartialRightRedzone(uptr addr,
 // performance-critical code with care.
 ALWAYS_INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
                                     u8 value) {
-  DCHECK(flags()->poison_heap);
+  DCHECK(CanPoisonMemory());
   uptr shadow_beg = MEM_TO_SHADOW(aligned_beg);
   uptr shadow_end = MEM_TO_SHADOW(
       aligned_beg + aligned_size - SHADOW_GRANULARITY) + 1;
@@ -68,7 +72,7 @@ ALWAYS_INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
 
 ALWAYS_INLINE void FastPoisonShadowPartialRightRedzone(
     uptr aligned_addr, uptr size, uptr redzone_size, u8 value) {
-  DCHECK(flags()->poison_heap);
+  DCHECK(CanPoisonMemory());
   bool poison_partial = flags()->poison_partial;
   u8 *shadow = (u8*)MEM_TO_SHADOW(aligned_addr);
   for (uptr i = 0; i < redzone_size; i += SHADOW_GRANULARITY, shadow++) {

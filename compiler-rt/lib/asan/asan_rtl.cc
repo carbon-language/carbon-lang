@@ -570,6 +570,7 @@ static void AsanInitInternal() {
   const char *options = GetEnv("ASAN_OPTIONS");
   InitializeFlags(flags(), options);
 
+  SetCanPoisonMemory(flags()->poison_heap);
   SetMallocContextSize(common_flags()->malloc_context_size);
 
   InitializeHighMemEnd();
