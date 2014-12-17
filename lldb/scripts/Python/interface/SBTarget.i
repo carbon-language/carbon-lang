@@ -869,6 +869,12 @@ public:
     lldb::SBValue
     CreateValueFromAddress (const char *name, lldb::SBAddress addr, lldb::SBType type);
 
+    lldb::SBValue
+    CreateValueFromData (const char *name, lldb::SBData data, lldb::SBType type);
+  
+    lldb::SBValue
+    CreateValueFromExpression (const char *name, const char* expr);
+              
     %feature("docstring", "
     Disassemble a specified number of instructions starting at an address.
     Parameters:

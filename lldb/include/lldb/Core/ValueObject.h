@@ -796,11 +796,17 @@ public:
                                      const ExecutionContext& exe_ctx);
     
     static lldb::ValueObjectSP
+    CreateValueObjectFromExpression (const char* name,
+                                     const char* expression,
+                                     const ExecutionContext& exe_ctx,
+                                     const EvaluateExpressionOptions& options);
+    
+    static lldb::ValueObjectSP
     CreateValueObjectFromAddress (const char* name,
                                   uint64_t address,
                                   const ExecutionContext& exe_ctx,
                                   ClangASTType type);
-    
+
     static lldb::ValueObjectSP
     CreateValueObjectFromData (const char* name,
                                const DataExtractor& data,

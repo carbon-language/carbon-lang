@@ -1945,30 +1945,10 @@ SBTarget::CreateValueFromAddress (const char *name, SBAddress addr, SBType type)
     lldb::ValueObjectSP new_value_sp;
     if (IsValid() && name && *name && addr.IsValid() && type.IsValid())
     {
-        lldb::addr_t address(addr.GetLoadAddress(*this));
-        lldb::TypeImplSP type_impl_sp (type.GetSP());
-        ClangASTType pointer_ast_type(type_impl_sp->GetClangASTType(true).GetPointerType ());
-        if (pointer_ast_type)
-        {
-            lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
-
-            ExecutionContext exe_ctx (ExecutionContextRef(ExecutionContext(m_opaque_sp.get(),false)));
-            ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                                               pointer_ast_type,
-                                                                               ConstString(name),
-                                                                               buffer,
-                                                                               exe_ctx.GetByteOrder(),
-                                                                               exe_ctx.GetAddressByteSize()));
-
-            if (ptr_result_valobj_sp)
-            {
-                ptr_result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
-                Error err;
-                new_value_sp = ptr_result_valobj_sp->Dereference(err);
-                if (new_value_sp)
-                    new_value_sp->SetName(ConstString(name));
-            }
-        }
+        lldb::addr_t load_addr(addr.GetLoadAddress(*this));
+        ExecutionContext exe_ctx (ExecutionContextRef(ExecutionContext(m_opaque_sp.get(),false)));
+        ClangASTType ast_type(type.GetSP()->GetClangASTType(true));
+        new_value_sp = ValueObject::CreateValueObjectFromAddress(name, load_addr, exe_ctx, ast_type);
     }
     sb_value.SetSP(new_value_sp);
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -1980,6 +1960,58 @@ SBTarget::CreateValueFromAddress (const char *name, SBAddress addr, SBType type)
                          new_value_sp->GetName().AsCString());
         else
             log->Printf ("SBTarget(%p)::CreateValueFromAddress => NULL",
+                         static_cast<void*>(m_opaque_sp.get()));
+    }
+    return sb_value;
+}
+
+lldb::SBValue
+SBTarget::CreateValueFromData (const char *name, lldb::SBData data, lldb::SBType type)
+{
+    SBValue sb_value;
+    lldb::ValueObjectSP new_value_sp;
+    if (IsValid() && name && *name && data.IsValid() && type.IsValid())
+    {
+        DataExtractorSP extractor(*data);
+        ExecutionContext exe_ctx (ExecutionContextRef(ExecutionContext(m_opaque_sp.get(),false)));
+        ClangASTType ast_type(type.GetSP()->GetClangASTType(true));
+        new_value_sp = ValueObject::CreateValueObjectFromData(name, *extractor, exe_ctx, ast_type);
+    }
+    sb_value.SetSP(new_value_sp);
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+    {
+        if (new_value_sp)
+            log->Printf ("SBTarget(%p)::CreateValueFromData => \"%s\"",
+                         static_cast<void*>(m_opaque_sp.get()),
+                         new_value_sp->GetName().AsCString());
+        else
+            log->Printf ("SBTarget(%p)::CreateValueFromData => NULL",
+                         static_cast<void*>(m_opaque_sp.get()));
+    }
+    return sb_value;
+}
+
+lldb::SBValue
+SBTarget::CreateValueFromExpression (const char *name, const char* expr)
+{
+    SBValue sb_value;
+    lldb::ValueObjectSP new_value_sp;
+    if (IsValid() && name && *name && expr && *expr)
+    {
+        ExecutionContext exe_ctx (ExecutionContextRef(ExecutionContext(m_opaque_sp.get(),false)));
+        new_value_sp = ValueObject::CreateValueObjectFromExpression(name, expr, exe_ctx);
+    }
+    sb_value.SetSP(new_value_sp);
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+    {
+        if (new_value_sp)
+            log->Printf ("SBTarget(%p)::CreateValueFromExpression => \"%s\"",
+                         static_cast<void*>(m_opaque_sp.get()),
+                         new_value_sp->GetName().AsCString());
+        else
+            log->Printf ("SBTarget(%p)::CreateValueFromExpression => NULL",
                          static_cast<void*>(m_opaque_sp.get()));
     }
     return sb_value;

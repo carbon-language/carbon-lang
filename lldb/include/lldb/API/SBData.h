@@ -169,6 +169,7 @@ private:
     friend class SBInstruction;
     friend class SBProcess;
     friend class SBSection;
+    friend class SBTarget;
     friend class SBValue;
 
     lldb::DataExtractorSP  m_opaque_sp;
