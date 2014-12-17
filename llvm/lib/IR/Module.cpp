@@ -47,7 +47,7 @@ template class llvm::SymbolTableListTraits<GlobalAlias, Module>;
 //
 
 Module::Module(StringRef MID, LLVMContext &C)
-    : Context(C), Materializer(), ModuleID(MID), RNG(nullptr), DL("") {
+    : Context(C), Materializer(), ModuleID(MID), DL("") {
   ValSymTab = new ValueSymbolTable();
   NamedMDSymTab = new StringMap<NamedMDNode *>();
   Context.addModule(this);
@@ -62,8 +62,26 @@ Module::~Module() {
   NamedMDList.clear();
   delete ValSymTab;
   delete static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab);
-  delete RNG;
 }
+
+RandomNumberGenerator *Module::createRNG(const Pass* P) const {
+  SmallString<32> Salt(P->getPassName());
+
+  // This RNG is guaranteed to produce the same random stream only
+  // when the Module ID and thus the input filename is the same. This
+  // might be problematic if the input filename extension changes
+  // (e.g. from .c to .bc or .ll).
+  //
+  // We could store this salt in NamedMetadata, but this would make
+  // the parameter non-const. This would unfortunately make this
+  // interface unusable by any Machine passes, since they only have a
+  // const reference to their IR Module. Alternatively we can always
+  // store salt metadata from the Module constructor.
+  Salt += sys::path::filename(getModuleIdentifier());
+
+  return new RandomNumberGenerator(Salt);
+}
+
 
 /// getNamedValue - Return the first global value in the module with
 /// the specified name, of arbitrary type.  This method returns null
@@ -372,16 +390,6 @@ const DataLayout *Module::getDataLayout() const {
   if (DataLayoutStr.empty())
     return nullptr;
   return &DL;
-}
-
-// We want reproducible builds, but ModuleID may be a full path so we just use
-// the filename to salt the RNG (although it is not guaranteed to be unique).
-RandomNumberGenerator &Module::getRNG() const {
-  if (RNG == nullptr) {
-    StringRef Salt = sys::path::filename(ModuleID);
-    RNG = new RandomNumberGenerator(Salt);
-  }
-  return *RNG;
 }
 
 //===----------------------------------------------------------------------===//

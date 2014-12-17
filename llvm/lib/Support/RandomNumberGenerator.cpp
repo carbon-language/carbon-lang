@@ -7,16 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements random number generation (RNG).
+// This file implements deterministic random number generation (RNG).
 // The current implementation is NOT cryptographically secure as it uses
 // the C++11 <random> facilities.
 //
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "rng"
-#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 
 using namespace llvm;
 
@@ -31,31 +31,25 @@ Seed("rng-seed", cl::value_desc("seed"),
 RandomNumberGenerator::RandomNumberGenerator(StringRef Salt) {
   DEBUG(
     if (Seed == 0)
-      errs() << "Warning! Using unseeded random number generator.\n"
+      dbgs() << "Warning! Using unseeded random number generator.\n"
   );
 
-  // Combine seed and salt using std::seed_seq.
-  // Entropy: Seed-low, Seed-high, Salt...
+  // Combine seed and salts using std::seed_seq.
+  // Data: Seed-low, Seed-high, Salt
+  // Note: std::seed_seq can only store 32-bit values, even though we
+  // are using a 64-bit RNG. This isn't a problem since the Mersenne
+  // twister constructor copies these correctly into its initial state.
   std::vector<uint32_t> Data;
-  Data.reserve(2 + Salt.size()/4 + 1);
+  Data.reserve(2 + Salt.size());
   Data.push_back(Seed);
   Data.push_back(Seed >> 32);
 
-  uint32_t Pack = 0;
-  for (size_t I = 0; I < Salt.size(); ++I) {
-    Pack <<= 8;
-    Pack += Salt[I];
-
-    if (I%4 == 3)
-      Data.push_back(Pack);
-  }
-  Data.push_back(Pack);
+  std::copy(Salt.begin(), Salt.end(), Data.end());
 
   std::seed_seq SeedSeq(Data.begin(), Data.end());
   Generator.seed(SeedSeq);
 }
 
-uint64_t RandomNumberGenerator::next(uint64_t Max) {
-  std::uniform_int_distribution<uint64_t> distribution(0, Max - 1);
-  return distribution(Generator);
+uint_fast64_t RandomNumberGenerator::operator()() {
+  return Generator();
 }
