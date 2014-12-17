@@ -1794,6 +1794,7 @@
 		26FFC19614FC072100087D58 /* DYLDRendezvous.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYLDRendezvous.h; sourceTree = "<group>"; };
 		26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderPOSIXDYLD.cpp; sourceTree = "<group>"; };
 		26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderPOSIXDYLD.h; sourceTree = "<group>"; };
+		3F5E8AF31A40D4A500A73232 /* PipeBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PipeBase.h; path = include/lldb/Host/PipeBase.h; sourceTree = "<group>"; };
 		3FDFD6C3199C396E009756A7 /* FileAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileAction.h; path = include/lldb/Target/FileAction.h; sourceTree = "<group>"; };
 		3FDFDDBC199C3A06009756A7 /* FileAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileAction.cpp; path = source/Target/FileAction.cpp; sourceTree = "<group>"; };
 		3FDFDDBE199D345E009756A7 /* FileCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileCache.cpp; path = source/Host/common/FileCache.cpp; sourceTree = "<group>"; };
@@ -3700,6 +3701,7 @@
 				232CB612191E00CC00EF39FC /* NativeThreadProtocol.h */,
 				A36FF33D17D8E98800244D40 /* OptionParser.h */,
 				260A39A519647A3A004B4130 /* Pipe.h */,
+				3F5E8AF31A40D4A500A73232 /* PipeBase.h */,
 				26BC7DD610F1B7D500F91463 /* Predicate.h */,
 				3FDFED2219BA6D55009756A7 /* ProcessRunLock.h */,
 				236124A71986B50E004EFC37 /* Socket.h */,

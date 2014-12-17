@@ -9,18 +9,25 @@
 
 #include "lldb/Host/posix/PipePosix.h"
 
-#include <unistd.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
 
+using namespace lldb;
 using namespace lldb_private;
 
-int Pipe::kInvalidDescriptor = -1;
+int PipePosix::kInvalidDescriptor = -1;
 
 enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
 
 // pipe2 is supported by Linux, FreeBSD v10 and higher.
 // TODO: Add more platforms that support pipe2.
-#define PIPE2_SUPPORTED defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD__ >= 10)
+#if defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD__ >= 10)
+#define PIPE2_SUPPORTED 1
+#else
+#define PIPE2_SUPPORTED 0
+#endif
 
 namespace
 {
@@ -37,26 +44,33 @@ bool SetCloexecFlag(int fd)
 
 }
 
-Pipe::Pipe()
+PipePosix::PipePosix()
 {
-    m_fds[READ] = Pipe::kInvalidDescriptor;
-    m_fds[WRITE] = Pipe::kInvalidDescriptor;
+    m_fds[READ] = PipePosix::kInvalidDescriptor;
+    m_fds[WRITE] = PipePosix::kInvalidDescriptor;
 }
 
-Pipe::~Pipe()
+PipePosix::~PipePosix()
 {
     Close();
 }
 
-bool
-Pipe::Open(bool child_processes_inherit)
+Error
+PipePosix::CreateNew(bool child_processes_inherit)
 {
-    if (IsValid())
-        return true;
+    Error error;
+    if (CanRead() || CanWrite())
+    {
+        error.SetError(EINVAL, eErrorTypePOSIX);
+        return error;
+    }
 
 #if PIPE2_SUPPORTED
     if (::pipe2(m_fds, (child_processes_inherit) ? 0 : O_CLOEXEC) == 0)
-        return true;
+    {
+        error.SetErrorToErrno();
+        return error;
+    }
 #else
     if (::pipe(m_fds) == 0)
     {
@@ -65,118 +79,177 @@ Pipe::Open(bool child_processes_inherit)
         {
             if (!SetCloexecFlag(m_fds[0]) || !SetCloexecFlag(m_fds[1]))
             {
+                error.SetErrorToErrno();
                 Close();
-                return false;
+                return error;
             }
         }
 #endif
-        return true;
+        return error;
     }
 #endif
 
-    m_fds[READ] = Pipe::kInvalidDescriptor;
-    m_fds[WRITE] = Pipe::kInvalidDescriptor;
-    return false;
+    m_fds[READ] = PipePosix::kInvalidDescriptor;
+    m_fds[WRITE] = PipePosix::kInvalidDescriptor;
+    error.SetErrorToErrno();
+    return error;
+}
+
+Error
+PipePosix::CreateNew(llvm::StringRef name, bool child_process_inherit)
+{
+    Error error;
+    if (CanRead() || CanWrite())
+        error.SetErrorString("Pipe is already opened");
+    else if (name.empty())
+        error.SetErrorString("Cannot create named pipe with empty name.");
+    else
+        error.SetErrorString("Not implemented");
+    return error;
+}
+
+Error
+PipePosix::OpenAsReader(llvm::StringRef name, bool child_process_inherit)
+{
+    Error error;
+    if (CanRead() || CanWrite())
+        error.SetErrorString("Pipe is already opened");
+    else if (name.empty())
+        error.SetErrorString("Cannot open named pipe with empty name.");
+    else
+        error.SetErrorString("Not implemented");
+    return error;
+}
+
+Error
+PipePosix::OpenAsWriter(llvm::StringRef name, bool child_process_inherit)
+{
+    Error error;
+    if (CanRead() || CanWrite())
+        error.SetErrorString("Pipe is already opened");
+    else if (name.empty())
+        error.SetErrorString("Cannot create named pipe with empty name.");
+    else
+        error.SetErrorString("Not implemented");
+    return error;
 }
 
 int
-Pipe::GetReadFileDescriptor() const
+PipePosix::GetReadFileDescriptor() const
 {
     return m_fds[READ];
 }
 
 int
-Pipe::GetWriteFileDescriptor() const
+PipePosix::GetWriteFileDescriptor() const
 {
     return m_fds[WRITE];
 }
 
 int
-Pipe::ReleaseReadFileDescriptor()
+PipePosix::ReleaseReadFileDescriptor()
 {
     const int fd = m_fds[READ];
-    m_fds[READ] = Pipe::kInvalidDescriptor;
+    m_fds[READ] = PipePosix::kInvalidDescriptor;
     return fd;
 }
 
 int
-Pipe::ReleaseWriteFileDescriptor()
+PipePosix::ReleaseWriteFileDescriptor()
 {
     const int fd = m_fds[WRITE];
-    m_fds[WRITE] = Pipe::kInvalidDescriptor;
+    m_fds[WRITE] = PipePosix::kInvalidDescriptor;
     return fd;
 }
 
 void
-Pipe::Close()
+PipePosix::Close()
 {
     CloseReadFileDescriptor();
     CloseWriteFileDescriptor();
 }
 
 bool
-Pipe::ReadDescriptorIsValid() const
+PipePosix::CanRead() const
 {
-    return m_fds[READ] != Pipe::kInvalidDescriptor;
+    return m_fds[READ] != PipePosix::kInvalidDescriptor;
 }
 
 bool
-Pipe::WriteDescriptorIsValid() const
+PipePosix::CanWrite() const
 {
-    return m_fds[WRITE] != Pipe::kInvalidDescriptor;
+    return m_fds[WRITE] != PipePosix::kInvalidDescriptor;
 }
 
-bool
-Pipe::IsValid() const
+void
+PipePosix::CloseReadFileDescriptor()
 {
-    return ReadDescriptorIsValid() && WriteDescriptorIsValid();
-}
-
-bool
-Pipe::CloseReadFileDescriptor()
-{
-    if (ReadDescriptorIsValid())
+    if (CanRead())
     {
         int err;
         err = close(m_fds[READ]);
-        m_fds[READ] = Pipe::kInvalidDescriptor;
-        return err == 0;
+        m_fds[READ] = PipePosix::kInvalidDescriptor;
     }
-    return true;
 }
 
-bool
-Pipe::CloseWriteFileDescriptor()
+void
+PipePosix::CloseWriteFileDescriptor()
 {
-    if (WriteDescriptorIsValid())
+    if (CanWrite())
     {
         int err;
         err = close(m_fds[WRITE]);
-        m_fds[WRITE] = Pipe::kInvalidDescriptor;
-        return err == 0;
+        m_fds[WRITE] = PipePosix::kInvalidDescriptor;
     }
-    return true;
 }
 
-
-size_t
-Pipe::Read (void *buf, size_t num_bytes)
+Error
+PipePosix::Read(void *buf, size_t num_bytes, size_t &bytes_read)
 {
-    if (ReadDescriptorIsValid())
+    bytes_read = 0;
+    Error error;
+
+    if (CanRead())
     {
         const int fd = GetReadFileDescriptor();
-        return read (fd, buf, num_bytes);
+        int result = read(fd, buf, num_bytes);
+        if (result >= 0)
+            bytes_read = result;
+        else
+            error.SetErrorToErrno();
     }
-    return 0; // Return 0 since errno won't be set if we didn't call read
+    else
+        error.SetError(EINVAL, eErrorTypePOSIX);
+
+    return error;
 }
 
-size_t
-Pipe::Write (const void *buf, size_t num_bytes)
+Error
+PipePosix::ReadWithTimeout(void *buf, size_t num_bytes, const std::chrono::milliseconds &duration, size_t &bytes_read)
 {
-    if (WriteDescriptorIsValid())
+    bytes_read = 0;
+    Error error;
+    error.SetErrorString("Not implemented");
+    return error;
+}
+
+Error
+PipePosix::Write(const void *buf, size_t num_bytes, size_t &bytes_written)
+{
+    bytes_written = 0;
+    Error error;
+
+    if (CanWrite())
     {
         const int fd = GetWriteFileDescriptor();
-        return write (fd, buf, num_bytes);
+        int result = write(fd, buf, num_bytes);
+        if (result >= 0)
+            bytes_written = result;
+        else
+            error.SetErrorToErrno();
     }
-    return 0; // Return 0 since errno won't be set if we didn't call write
+    else
+        error.SetError(EINVAL, eErrorTypePOSIX);
+
+    return error;
 }

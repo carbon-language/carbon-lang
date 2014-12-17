@@ -4927,9 +4927,10 @@ public:
     bool
     OpenPipes ()
     {
-        if (m_pipe.IsValid())
+        if (m_pipe.CanRead() && m_pipe.CanWrite())
             return true;
-        return m_pipe.Open();
+        Error result = m_pipe.CreateNew(false);
+        return result.Success();
     }
 
     void
@@ -4990,8 +4991,10 @@ public:
                         }
                         if (FD_ISSET (pipe_read_fd, &read_fdset))
                         {
+                            size_t bytes_read;
                             // Consume the interrupt byte
-                            if (m_pipe.Read (&ch, 1) == 1)
+                            Error error = m_pipe.Read(&ch, 1, bytes_read);
+                            if (error.Success())
                             {
                                 switch (ch)
                                 {
@@ -5039,7 +5042,8 @@ public:
     Cancel ()
     {
         char ch = 'q';  // Send 'q' for quit
-        m_pipe.Write (&ch, 1);
+        size_t bytes_written = 0;
+        m_pipe.Write(&ch, 1, bytes_written);
     }
 
     virtual bool
@@ -5053,7 +5057,9 @@ public:
         if (m_active)
         {
             char ch = 'i'; // Send 'i' for interrupt
-            return m_pipe.Write (&ch, 1) == 1;
+            size_t bytes_written = 0;
+            Error result = m_pipe.Write(&ch, 1, bytes_written);
+            return result.Success();
         }
         else
         {
