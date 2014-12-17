@@ -46,7 +46,7 @@ system linker tool.
 Current Status
 --------------
 
-lld can self host on x86-64 Linux and x86 Windows.
+lld can self host on x86-64 FreeBSD and Linux and x86 Windows.
 
 All SingleSource tests in test-suite pass on x86-64 Linux.
 
