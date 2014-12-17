@@ -1689,7 +1689,7 @@ void X86TargetLowering::resetOperationActions() {
 
   // Predictable cmov don't hurt on atom because it's in-order.
   PredictableSelectIsExpensive = !Subtarget->isAtom();
-
+  EnableExtLdPromotion = true;
   setPrefFunctionAlignment(4); // 2^4 bytes.
 
   verifyIntrinsicTables();

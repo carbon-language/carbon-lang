@@ -91,6 +91,16 @@ static cl::opt<bool> StressStoreExtract(
     "stress-cgp-store-extract", cl::Hidden, cl::init(false),
     cl::desc("Stress test store(extract) optimizations in CodeGenPrepare"));
 
+static cl::opt<bool> DisableExtLdPromotion(
+    "disable-cgp-ext-ld-promotion", cl::Hidden, cl::init(false),
+    cl::desc("Disable ext(promotable(ld)) -> promoted(ext(ld)) optimization in "
+             "CodeGenPrepare"));
+
+static cl::opt<bool> StressExtLdPromotion(
+    "stress-cgp-ext-ld-promotion", cl::Hidden, cl::init(false),
+    cl::desc("Stress test ext(promotable(ld)) -> promoted(ext(ld)) "
+             "optimization in CodeGenPrepare"));
+
 namespace {
 typedef SmallPtrSet<Instruction *, 16> SetOfInstrs;
 struct TypeIsSExt {
@@ -99,6 +109,7 @@ struct TypeIsSExt {
   TypeIsSExt(Type *Ty, bool IsSExt) : Ty(Ty), IsSExt(IsSExt) {}
 };
 typedef DenseMap<Instruction *, TypeIsSExt> InstrToOrigTy;
+class TypePromotionTransaction;
 
   class CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
@@ -158,7 +169,7 @@ typedef DenseMap<Instruction *, TypeIsSExt> InstrToOrigTy;
     bool OptimizeMemoryInst(Instruction *I, Value *Addr, Type *AccessTy);
     bool OptimizeInlineAsmInst(CallInst *CS);
     bool OptimizeCallInst(CallInst *CI);
-    bool MoveExtToFormExtLoad(Instruction *I);
+    bool MoveExtToFormExtLoad(Instruction *&I);
     bool OptimizeExtUses(Instruction *I);
     bool OptimizeSelectInst(SelectInst *SI);
     bool OptimizeShuffleVectorInst(ShuffleVectorInst *SI);
@@ -166,6 +177,10 @@ typedef DenseMap<Instruction *, TypeIsSExt> InstrToOrigTy;
     bool DupRetToEnableTailCallOpts(BasicBlock *BB);
     bool PlaceDbgValues(Function &F);
     bool sinkAndCmp(Function &F);
+    bool ExtLdPromotion(TypePromotionTransaction &TPT, LoadInst *&LI,
+                        Instruction *&Inst,
+                        const SmallVectorImpl<Instruction *> &Exts,
+                        unsigned CreatedInst);
     bool splitBranchCondition(Function &F);
   };
 }
@@ -1722,6 +1737,23 @@ static bool MightBeFoldableInst(Instruction *I) {
   }
 }
 
+/// \brief Check whether or not \p Val is a legal instruction for \p TLI.
+/// \note \p Val is assumed to be the product of some type promotion.
+/// Therefore if \p Val has an undefined state in \p TLI, this is assumed
+/// to be legal, as the non-promoted value would have had the same state.
+static bool isPromotedInstructionLegal(const TargetLowering &TLI, Value *Val) {
+  Instruction *PromotedInst = dyn_cast<Instruction>(Val);
+  if (!PromotedInst)
+    return false;
+  int ISDOpcode = TLI.InstructionOpcodeToISD(PromotedInst->getOpcode());
+  // If the ISDOpcode is undefined, it was undefined before the promotion.
+  if (!ISDOpcode)
+    return true;
+  // Otherwise, check if the promoted instruction is legal or not.
+  return TLI.isOperationLegalOrCustom(
+      ISDOpcode, TLI.getValueType(PromotedInst->getType()));
+}
+
 /// \brief Hepler class to perform type promotion.
 class TypePromotionHelper {
   /// \brief Utility function to check whether or not a sign or zero extension
@@ -1751,46 +1783,59 @@ class TypePromotionHelper {
   /// \p PromotedInsts maps the instructions to their type before promotion.
   /// \p CreatedInsts[out] contains how many non-free instructions have been
   /// created to promote the operand of Ext.
+  /// Newly added extensions are inserted in \p Exts.
+  /// Newly added truncates are inserted in \p Truncs.
   /// Should never be called directly.
   /// \return The promoted value which is used instead of Ext.
-  static Value *promoteOperandForTruncAndAnyExt(Instruction *Ext,
-                                                TypePromotionTransaction &TPT,
-                                                InstrToOrigTy &PromotedInsts,
-                                                unsigned &CreatedInsts);
+  static Value *promoteOperandForTruncAndAnyExt(
+      Instruction *Ext, TypePromotionTransaction &TPT,
+      InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts,
+      SmallVectorImpl<Instruction *> *Exts,
+      SmallVectorImpl<Instruction *> *Truncs);
 
   /// \brief Utility function to promote the operand of \p Ext when this
   /// operand is promotable and is not a supported trunc or sext.
   /// \p PromotedInsts maps the instructions to their type before promotion.
   /// \p CreatedInsts[out] contains how many non-free instructions have been
   /// created to promote the operand of Ext.
+  /// Newly added extensions are inserted in \p Exts.
+  /// Newly added truncates are inserted in \p Truncs.
   /// Should never be called directly.
   /// \return The promoted value which is used instead of Ext.
-  static Value *promoteOperandForOther(Instruction *Ext,
-                                       TypePromotionTransaction &TPT,
-                                       InstrToOrigTy &PromotedInsts,
-                                       unsigned &CreatedInsts, bool IsSExt);
+  static Value *
+  promoteOperandForOther(Instruction *Ext, TypePromotionTransaction &TPT,
+                         InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts,
+                         SmallVectorImpl<Instruction *> *Exts,
+                         SmallVectorImpl<Instruction *> *Truncs, bool IsSExt);
 
   /// \see promoteOperandForOther.
-  static Value *signExtendOperandForOther(Instruction *Ext,
-                                          TypePromotionTransaction &TPT,
-                                          InstrToOrigTy &PromotedInsts,
-                                          unsigned &CreatedInsts) {
-    return promoteOperandForOther(Ext, TPT, PromotedInsts, CreatedInsts, true);
+  static Value *
+  signExtendOperandForOther(Instruction *Ext, TypePromotionTransaction &TPT,
+                            InstrToOrigTy &PromotedInsts,
+                            unsigned &CreatedInsts,
+                            SmallVectorImpl<Instruction *> *Exts,
+                            SmallVectorImpl<Instruction *> *Truncs) {
+    return promoteOperandForOther(Ext, TPT, PromotedInsts, CreatedInsts, Exts,
+                                  Truncs, true);
   }
 
   /// \see promoteOperandForOther.
-  static Value *zeroExtendOperandForOther(Instruction *Ext,
-                                          TypePromotionTransaction &TPT,
-                                          InstrToOrigTy &PromotedInsts,
-                                          unsigned &CreatedInsts) {
-    return promoteOperandForOther(Ext, TPT, PromotedInsts, CreatedInsts, false);
+  static Value *
+  zeroExtendOperandForOther(Instruction *Ext, TypePromotionTransaction &TPT,
+                            InstrToOrigTy &PromotedInsts,
+                            unsigned &CreatedInsts,
+                            SmallVectorImpl<Instruction *> *Exts,
+                            SmallVectorImpl<Instruction *> *Truncs) {
+    return promoteOperandForOther(Ext, TPT, PromotedInsts, CreatedInsts, Exts,
+                                  Truncs, false);
   }
 
 public:
   /// Type for the utility function that promotes the operand of Ext.
   typedef Value *(*Action)(Instruction *Ext, TypePromotionTransaction &TPT,
-                           InstrToOrigTy &PromotedInsts,
-                           unsigned &CreatedInsts);
+                           InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts,
+                           SmallVectorImpl<Instruction *> *Exts,
+                           SmallVectorImpl<Instruction *> *Truncs);
   /// \brief Given a sign/zero extend instruction \p Ext, return the approriate
   /// action to promote the operand of \p Ext instead of using Ext.
   /// \return NULL if no promotable action is possible with the current
@@ -1809,6 +1854,12 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
                                         Type *ConsideredExtType,
                                         const InstrToOrigTy &PromotedInsts,
                                         bool IsSExt) {
+  // The promotion helper does not know how to deal with vector types yet.
+  // To be able to fix that, we would need to fix the places where we
+  // statically extend, e.g., constants and such.
+  if (Inst->getType()->isVectorTy())
+    return false;
+
   // We can always get through zext.
   if (isa<ZExtInst>(Inst))
     return true;
@@ -1834,8 +1885,9 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
   // Check if we can use this operand in the extension.
   // If the type is larger than the result type of the extension,
   // we cannot.
-  if (OpndVal->getType()->getIntegerBitWidth() >
-      ConsideredExtType->getIntegerBitWidth())
+  if (!OpndVal->getType()->isIntegerTy() ||
+      OpndVal->getType()->getIntegerBitWidth() >
+          ConsideredExtType->getIntegerBitWidth())
     return false;
 
   // If the operand of the truncate is not an instruction, we will not have
@@ -1900,7 +1952,9 @@ TypePromotionHelper::Action TypePromotionHelper::getAction(
 
 Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
     llvm::Instruction *SExt, TypePromotionTransaction &TPT,
-    InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts) {
+    InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts,
+    SmallVectorImpl<Instruction *> *Exts,
+    SmallVectorImpl<Instruction *> *Truncs) {
   // By construction, the operand of SExt is an instruction. Otherwise we cannot
   // get through it and this method should not be called.
   Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
@@ -1926,8 +1980,11 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
 
   // Check if the extension is still needed.
   Instruction *ExtInst = dyn_cast<Instruction>(ExtVal);
-  if (!ExtInst || ExtInst->getType() != ExtInst->getOperand(0)->getType())
+  if (!ExtInst || ExtInst->getType() != ExtInst->getOperand(0)->getType()) {
+    if (ExtInst && Exts)
+      Exts->push_back(ExtInst);
     return ExtVal;
+  }
 
   // At this point we have: ext ty opnd to ty.
   // Reassign the uses of ExtInst to the opnd and remove ExtInst.
@@ -1938,7 +1995,9 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
 
 Value *TypePromotionHelper::promoteOperandForOther(
     Instruction *Ext, TypePromotionTransaction &TPT,
-    InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts, bool IsSExt) {
+    InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts,
+    SmallVectorImpl<Instruction *> *Exts,
+    SmallVectorImpl<Instruction *> *Truncs, bool IsSExt) {
   // By construction, the operand of Ext is an instruction. Otherwise we cannot
   // get through it and this method should not be called.
   Instruction *ExtOpnd = cast<Instruction>(Ext->getOperand(0));
@@ -1953,6 +2012,8 @@ Value *TypePromotionHelper::promoteOperandForOther(
       ITrunc->removeFromParent();
       // Insert it just after the definition.
       ITrunc->insertAfter(ExtOpnd);
+      if (Truncs)
+        Truncs->push_back(ITrunc);
     }
 
     TPT.replaceAllUsesWith(ExtOpnd, Trunc);
@@ -2013,7 +2074,8 @@ Value *TypePromotionHelper::promoteOperandForOther(
                                    : TPT.createZExt(Ext, Opnd, Ext->getType()));
       ++CreatedInsts;
     }
-
+    if (Exts)
+      Exts->push_back(ExtForOpnd);
     TPT.setOperand(ExtForOpnd, 0, Opnd);
 
     // Move the sign extension before the insertion point.
@@ -2051,16 +2113,7 @@ AddressingModeMatcher::IsPromotionProfitable(unsigned MatchedSize,
   // The promotion is neutral but it may help folding the sign extension in
   // loads for instance.
   // Check that we did not create an illegal instruction.
-  Instruction *PromotedInst = dyn_cast<Instruction>(PromotedOperand);
-  if (!PromotedInst)
-    return false;
-  int ISDOpcode = TLI.InstructionOpcodeToISD(PromotedInst->getOpcode());
-  // If the ISDOpcode is undefined, it was undefined before the promotion.
-  if (!ISDOpcode)
-    return true;
-  // Otherwise, check if the promoted instruction is legal or not.
-  return TLI.isOperationLegalOrCustom(
-      ISDOpcode, TLI.getValueType(PromotedInst->getType()));
+  return isPromotedInstructionLegal(TLI, PromotedOperand);
 }
 
 /// MatchOperationAddr - Given an instruction or constant expr, see if we can
@@ -2254,7 +2307,8 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     TypePromotionTransaction::ConstRestorationPt LastKnownGood =
         TPT.getRestorationPoint();
     unsigned CreatedInsts = 0;
-    Value *PromotedOperand = TPH(Ext, TPT, PromotedInsts, CreatedInsts);
+    Value *PromotedOperand =
+        TPH(Ext, TPT, PromotedInsts, CreatedInsts, nullptr, nullptr);
     // SExt has been moved away.
     // Thus either it will be rematched later in the recursive calls or it is
     // gone. Anyway, we must not fold it into the addressing mode at this point.
@@ -2953,17 +3007,172 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
   return MadeChange;
 }
 
+/// \brief Check if all the uses of \p Inst are equivalent (or free) zero or
+/// sign extensions.
+static bool hasSameExtUse(Instruction *Inst, const TargetLowering &TLI) {
+  assert(!Inst->use_empty() && "Input must have at least one use");
+  const Instruction *FirstUser = cast<Instruction>(*Inst->user_begin());
+  bool IsSExt = isa<SExtInst>(FirstUser);
+  Type *ExtTy = FirstUser->getType();
+  for (const User *U : Inst->users()) {
+    const Instruction *UI = cast<Instruction>(U);
+    if ((IsSExt && !isa<SExtInst>(UI)) || (!IsSExt && !isa<ZExtInst>(UI)))
+      return false;
+    Type *CurTy = UI->getType();
+    // Same input and output types: Same instruction after CSE.
+    if (CurTy == ExtTy)
+      continue;
+
+    // If IsSExt is true, we are in this situation:
+    // a = Inst
+    // b = sext ty1 a to ty2
+    // c = sext ty1 a to ty3
+    // Assuming ty2 is shorter than ty3, this could be turned into:
+    // a = Inst
+    // b = sext ty1 a to ty2
+    // c = sext ty2 b to ty3
+    // However, the last sext is not free.
+    if (IsSExt)
+      return false;
+
+    // This is a ZExt, maybe this is free to extend from one type to another.
+    // In that case, we would not account for a different use.
+    Type *NarrowTy;
+    Type *LargeTy;
+    if (ExtTy->getScalarType()->getIntegerBitWidth() >
+        CurTy->getScalarType()->getIntegerBitWidth()) {
+      NarrowTy = CurTy;
+      LargeTy = ExtTy;
+    } else {
+      NarrowTy = ExtTy;
+      LargeTy = CurTy;
+    }
+
+    if (!TLI.isZExtFree(NarrowTy, LargeTy))
+      return false;
+  }
+  // All uses are the same or can be derived from one another for free.
+  return true;
+}
+
+/// \brief Try to form ExtLd by promoting \p Exts until they reach a
+/// load instruction.
+/// If an ext(load) can be formed, it is returned via \p LI for the load
+/// and \p Inst for the extension.
+/// Otherwise LI == nullptr and Inst == nullptr.
+/// When some promotion happened, \p TPT contains the proper state to
+/// revert them.
+///
+/// \return true when promoting was necessary to expose the ext(load)
+/// opportunity, false otherwise.
+///
+/// Example:
+/// \code
+/// %ld = load i32* %addr
+/// %add = add nuw i32 %ld, 4
+/// %zext = zext i32 %add to i64
+/// \endcode
+/// =>
+/// \code
+/// %ld = load i32* %addr
+/// %zext = zext i32 %ld to i64
+/// %add = add nuw i64 %zext, 4
+/// \encode
+/// Thanks to the promotion, we can match zext(load i32*) to i64.
+bool CodeGenPrepare::ExtLdPromotion(TypePromotionTransaction &TPT,
+                                    LoadInst *&LI, Instruction *&Inst,
+                                    const SmallVectorImpl<Instruction *> &Exts,
+                                    unsigned CreatedInsts = 0) {
+  // Iterate over all the extensions to see if one form an ext(load).
+  for (auto I : Exts) {
+    // Check if we directly have ext(load).
+    if ((LI = dyn_cast<LoadInst>(I->getOperand(0)))) {
+      Inst = I;
+      // No promotion happened here.
+      return false;
+    }
+    // Check whether or not we want to do any promotion.
+    if (!TLI || !TLI->enableExtLdPromotion() || DisableExtLdPromotion)
+      continue;
+    // Get the action to perform the promotion.
+    TypePromotionHelper::Action TPH = TypePromotionHelper::getAction(
+        I, InsertedTruncsSet, *TLI, PromotedInsts);
+    // Check if we can promote.
+    if (!TPH)
+      continue;
+    // Save the current state.
+    TypePromotionTransaction::ConstRestorationPt LastKnownGood =
+        TPT.getRestorationPoint();
+    SmallVector<Instruction *, 4> NewExts;
+    unsigned NewCreatedInsts = 0;
+    // Promote.
+    Value *PromotedVal =
+        TPH(I, TPT, PromotedInsts, NewCreatedInsts, &NewExts, nullptr);
+    assert(PromotedVal &&
+           "TypePromotionHelper should have filtered out those cases");
+
+    // We would be able to merge only one extension in a load.
+    // Therefore, if we have more than 1 new extension we heuristically
+    // cut this search path, because it means we degrade the code quality.
+    // With exactly 2, the transformation is neutral, because we will merge
+    // one extension but leave one. However, we optimistically keep going,
+    // because the new extension may be removed too.
+    unsigned TotalCreatedInsts = CreatedInsts + NewCreatedInsts;
+    if (!StressExtLdPromotion &&
+        (TotalCreatedInsts > 1 ||
+         !isPromotedInstructionLegal(*TLI, PromotedVal))) {
+      // The promotion is not profitable, rollback to the previous state.
+      TPT.rollback(LastKnownGood);
+      continue;
+    }
+    // The promotion is profitable.
+    // Check if it exposes an ext(load).
+    (void)ExtLdPromotion(TPT, LI, Inst, NewExts, TotalCreatedInsts);
+    if (LI && (StressExtLdPromotion || NewCreatedInsts == 0 ||
+               // If we have created a new extension, i.e., now we have two
+               // extensions. We must make sure one of them is merged with
+               // the load, otherwise we may degrade the code quality.
+               (LI->hasOneUse() || hasSameExtUse(LI, *TLI))))
+      // Promotion happened.
+      return true;
+    // If this does not help to expose an ext(load) then, rollback.
+    TPT.rollback(LastKnownGood);
+  }
+  // None of the extension can form an ext(load).
+  LI = nullptr;
+  Inst = nullptr;
+  return false;
+}
+
 /// MoveExtToFormExtLoad - Move a zext or sext fed by a load into the same
 /// basic block as the load, unless conditions are unfavorable. This allows
 /// SelectionDAG to fold the extend into the load.
+/// \p I[in/out] the extension may be modified during the process if some
+/// promotions apply.
 ///
-bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
+bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *&I) {
+  // Try to promote a chain of computation if it allows to form
+  // an extended load.
+  TypePromotionTransaction TPT;
+  TypePromotionTransaction::ConstRestorationPt LastKnownGood =
+    TPT.getRestorationPoint();
+  SmallVector<Instruction *, 1> Exts;
+  Exts.push_back(I);
   // Look for a load being extended.
-  LoadInst *LI = dyn_cast<LoadInst>(I->getOperand(0));
-  if (!LI) return false;
+  LoadInst *LI = nullptr;
+  Instruction *OldExt = I;
+  bool HasPromoted = ExtLdPromotion(TPT, LI, I, Exts);
+  if (!LI || !I) {
+    assert(!HasPromoted && !LI && "If we did not match any load instruction "
+                                  "the code must remain the same");
+    I = OldExt;
+    return false;
+  }
 
   // If they're already in the same block, there's nothing to do.
-  if (LI->getParent() == I->getParent())
+  // Make the cheap checks first if we did not promote.
+  // If we promoted, we need to check if it is indeed profitable.
+  if (!HasPromoted && LI->getParent() == I->getParent())
     return false;
 
   EVT VT = TLI->getValueType(I->getType());
@@ -2973,8 +3182,11 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
   // isn't worthwhile.
   if (!LI->hasOneUse() && TLI &&
       (TLI->isTypeLegal(LoadVT) || !TLI->isTypeLegal(VT)) &&
-      !TLI->isTruncateFree(I->getType(), LI->getType()))
+      !TLI->isTruncateFree(I->getType(), LI->getType())) {
+    I = OldExt;
+    TPT.rollback(LastKnownGood);
     return false;
+  }
 
   // Check whether the target supports casts folded into loads.
   unsigned LType;
@@ -2984,11 +3196,15 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
     assert(isa<SExtInst>(I) && "Unexpected ext type!");
     LType = ISD::SEXTLOAD;
   }
-  if (TLI && !TLI->isLoadExtLegal(LType, LoadVT))
+  if (TLI && !TLI->isLoadExtLegal(LType, LoadVT)) {
+    I = OldExt;
+    TPT.rollback(LastKnownGood);
     return false;
+  }
 
   // Move the extend into the same block as the load, so that SelectionDAG
   // can fold it.
+  TPT.commit();
   I->removeFromParent();
   I->insertAfter(LI);
   ++NumExtsMoved;
