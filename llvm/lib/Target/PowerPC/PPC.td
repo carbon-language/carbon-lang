@@ -311,7 +311,7 @@ def : ProcessorModel<"pwr7", P7Model,
                    FeaturePOPCNTD, FeatureLDBRX,
                    Feature64Bit /*, Feature64BitRegs */,
                    DeprecatedMFTB, DeprecatedDST]>;
-def : ProcessorModel<"pwr8", P7Model /* FIXME: Update to P8Model when available */,
+def : ProcessorModel<"pwr8", P8Model,
                   [DirectivePwr8, FeatureAltivec, FeatureVSX, FeatureP8Vector,
                    FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
