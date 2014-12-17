@@ -2572,6 +2572,11 @@ def : Pat <
   (S_MOV_B64 (i64 (as_i64imm $imm)))
 >;
 
+def : Pat <
+  (f64 InlineFPImm<f64>:$imm),
+  (S_MOV_B64 InlineFPImm<f64>:$imm)
+>;
+
 /********** ===================== **********/
 /********** Interpolation Paterns **********/
 /********** ===================== **********/

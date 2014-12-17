@@ -188,6 +188,10 @@ class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
   return isInlineImmediate(N);
 }]>;
 
+class InlineFPImm <ValueType vt> : PatLeaf <(vt fpimm), [{
+  return isInlineImmediate(N);
+}]>;
+
 class SGPRImm <dag frag> : PatLeaf<frag, [{
   if (TM.getSubtarget<AMDGPUSubtarget>().getGeneration() <
       AMDGPUSubtarget::SOUTHERN_ISLANDS) {

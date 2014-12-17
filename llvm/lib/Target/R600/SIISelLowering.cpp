@@ -1578,31 +1578,30 @@ static bool isSSrc(unsigned RegClass) {
 /// and the immediate value if it's a literal immediate
 int32_t SITargetLowering::analyzeImmediate(const SDNode *N) const {
 
-  union {
-    int32_t I;
-    float F;
-  } Imm;
+  const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
+    getTargetMachine().getSubtargetImpl()->getInstrInfo());
 
   if (const ConstantSDNode *Node = dyn_cast<ConstantSDNode>(N)) {
-    if (Node->getZExtValue() >> 32) {
-        return -1;
-    }
-    Imm.I = Node->getSExtValue();
-  } else if (const ConstantFPSDNode *Node = dyn_cast<ConstantFPSDNode>(N)) {
-    if (N->getValueType(0) != MVT::f32)
+    if (Node->getZExtValue() >> 32)
       return -1;
-    Imm.F = Node->getValueAPF().convertToFloat();
-  } else
-    return -1; // It isn't an immediate
 
-  if ((Imm.I >= -16 && Imm.I <= 64) ||
-      Imm.F == 0.5f || Imm.F == -0.5f ||
-      Imm.F == 1.0f || Imm.F == -1.0f ||
-      Imm.F == 2.0f || Imm.F == -2.0f ||
-      Imm.F == 4.0f || Imm.F == -4.0f)
-    return 0; // It's an inline immediate
+    if (TII->isInlineConstant(Node->getAPIntValue()))
+      return 0;
 
-  return Imm.I; // It's a literal immediate
+    return Node->getZExtValue();
+  }
+
+  if (const ConstantFPSDNode *Node = dyn_cast<ConstantFPSDNode>(N)) {
+    if (TII->isInlineConstant(Node->getValueAPF().bitcastToAPInt()))
+      return 0;
+
+    if (Node->getValueType(0) == MVT::f32)
+      return FloatToBits(Node->getValueAPF().convertToFloat());
+
+    return -1;
+  }
+
+  return -1;
 }
 
 /// \brief Try to fold an immediate directly into an instruction
