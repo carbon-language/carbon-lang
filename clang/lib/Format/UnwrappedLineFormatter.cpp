@@ -593,6 +593,7 @@ unsigned UnwrappedLineFormatter::analyzeSolutionSpace(LineState &InitialState,
   return Penalty;
 }
 
+#ifndef NDEBUG
 static void printLineState(const LineState &State) {
   llvm::dbgs() << "State: ";
   for (const ParenState &P : State.Stack) {
@@ -601,6 +602,7 @@ static void printLineState(const LineState &State) {
   }
   llvm::dbgs() << State.NextToken->TokenText << "\n";
 }
+#endif
 
 void UnwrappedLineFormatter::reconstructPath(LineState &State,
                                              StateNode *Current) {
