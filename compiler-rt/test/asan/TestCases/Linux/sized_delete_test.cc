@@ -8,7 +8,7 @@
 
 // Sized-delete is implemented with a weak delete() definition.
 // Weak symbols are kind of broken on Android.
-// XFAIL: android
+// XFAIL: android, asan-dynamic-runtime
 
 #include <new>
 #include <stdio.h>
