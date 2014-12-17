@@ -16,7 +16,7 @@
 }
 ]
 
-// XFAIL: mingw32,win32
+// XFAIL: mingw32,win32,windows-gnu
 // RUN: c-index-test -index-compile-db %s | FileCheck %s
 
 // CHECK:      [enteredMainFile]: t1.cpp
