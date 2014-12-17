@@ -17,7 +17,13 @@ config.name = 'AddressSanitizer-Unit'
 # Setup test source and exec root. For unit tests, we define
 # it as build directory with ASan unit tests.
 # FIXME: De-hardcode this path.
-config.test_exec_root = "@COMPILER_RT_BINARY_DIR@/lib/asan/tests"
+if @ASAN_TEST_DYNAMIC@:
+  test_dir = "dynamic"
+else:
+  test_dir = "default"
+config.test_exec_root = os.path.join("@COMPILER_RT_BINARY_DIR@",
+                                     "lib", "asan", "tests", test_dir)
+
 config.test_source_root = config.test_exec_root
 
 # Set LD_LIBRARY_PATH to pick dynamic runtime up properly.

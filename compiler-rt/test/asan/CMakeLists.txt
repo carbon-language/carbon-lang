@@ -1,6 +1,7 @@
 set(ASAN_LIT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(ASAN_TESTSUITES)
+set(ASAN_DYNAMIC_TESTSUITES)
 
 macro(get_bits_for_arch arch bits)
   if (${arch} STREQUAL "arm" OR
@@ -78,13 +79,14 @@ else()  # Not Android
       ${CMAKE_CURRENT_BINARY_DIR}/64bitConfig/lit.site.cfg
       )
     list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/64bitConfig)
-    if(COMPILER_RT_BUILD_SHARED_ASAN)
+    if(COMPILER_RT_ASAN_HAS_STATIC_RUNTIME)
       set(ASAN_TEST_CONFIG_SUFFIX "64-Dynamic")
       set(ASAN_TEST_DYNAMIC True)
       configure_lit_site_cfg(
         ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
         ${CMAKE_CURRENT_BINARY_DIR}/64bitConfig-dynamic/lit.site.cfg)
-      list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/64bitConfig-dynamic)
+      list(APPEND ASAN_DYNAMIC_TESTSUITES
+           ${CMAKE_CURRENT_BINARY_DIR}/64bitConfig-dynamic)
     endif()
   endif()
 
@@ -99,13 +101,14 @@ else()  # Not Android
       ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig/lit.site.cfg
       )
     list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig)
-    if(COMPILER_RT_BUILD_SHARED_ASAN)
+    if(COMPILER_RT_ASAN_HAS_STATIC_RUNTIME)
       set(ASAN_TEST_CONFIG_SUFFIX "32-Dynamic")
       set(ASAN_TEST_DYNAMIC True)
       configure_lit_site_cfg(
         ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
         ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic/lit.site.cfg)
-      list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic)
+      list(APPEND ASAN_DYNAMIC_TESTSUITES
+           ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic)
     endif()
   endif()
 
@@ -119,22 +122,17 @@ else()  # Not Android
       ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig/lit.site.cfg
       )
     list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig)
-    if(COMPILER_RT_BUILD_SHARED_ASAN)
+    if(COMPILER_RT_ASAN_HAS_STATIC_RUNTIME)
       set(ASAN_TEST_CONFIG_SUFFIX "32-Dynamic")
       set(ASAN_TEST_DYNAMIC True)
       configure_lit_site_cfg(
         ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
         ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic/lit.site.cfg)
-      list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic)
+      list(APPEND ASAN_DYNAMIC_TESTSUITES
+           ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic)
     endif()
   endif()
 endif()  # Not Android
-
-if(COMPILER_RT_INCLUDE_TESTS)
-  configure_lit_site_cfg(
-    ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
-    ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg)
-endif()
 
 set(ASAN_TEST_DEPS ${SANITIZER_COMMON_LIT_TEST_DEPS})
 if(COMPILER_RT_STANDALONE_BUILD)
@@ -144,13 +142,44 @@ if(COMPILER_RT_STANDALONE_BUILD)
 else()
   list(APPEND ASAN_TEST_DEPS asan)
 endif()
+set(ASAN_DYNAMIC_TEST_DEPS ${ASAN_TEST_DEPS})
 
-# FIXME: support unit test in the android test runner
-if(COMPILER_RT_INCLUDE_TESTS AND NOT ANDROID)
-  list(APPEND ASAN_TEST_DEPS AsanUnitTests)
-  list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/Unit)
+# Add unit tests.
+if(COMPILER_RT_INCLUDE_TESTS)
+  set(ASAN_TEST_DYNAMIC False)
+  configure_lit_site_cfg(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg)
+  if(COMPILER_RT_ASAN_HAS_STATIC_RUNTIME)
+    set(ASAN_TEST_DYNAMIC True)
+    configure_lit_site_cfg(
+      ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
+      ${CMAKE_CURRENT_BINARY_DIR}/Unit/dynamic/lit.site.cfg)
+  endif()
+  # FIXME: support unit test in the android test runner
+  if (NOT ANDROID)
+    list(APPEND ASAN_TEST_DEPS AsanUnitTests)
+    list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/Unit)
+    if(COMPILER_RT_ASAN_HAS_STATIC_RUNTIME)
+      list(APPEND ASAN_DYNAMIC_TEST_DEPS AsanDynamicUnitTests)
+      list(APPEND ASAN_DYNAMIC_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/Unit/dynamic)
+    endif()
+  endif()
 endif()
+
 add_lit_testsuite(check-asan "Running the AddressSanitizer tests"
   ${ASAN_TESTSUITES}
   DEPENDS ${ASAN_TEST_DEPS})
 set_target_properties(check-asan PROPERTIES FOLDER "ASan tests")
+
+if(COMPILER_RT_ASAN_HAS_STATIC_RUNTIME)
+  # Add check-dynamic-asan target (not included in check-all)
+  set(EXCLUDE_FROM_ALL TRUE)
+  add_lit_testsuite(check-asan-dynamic
+                    "Running the AddressSanitizer tests with dynamic runtime"
+                    ${ASAN_DYNAMIC_TESTSUITES}
+                    DEPENDS ${ASAN_DYNAMIC_TEST_DEPS})
+  set_target_properties(check-asan-dynamic
+                        PROPERTIES FOLDER "ASan dynamic tests")
+  set(EXCLUDE_FROM_ALL FALSE)
+endif()

@@ -79,12 +79,10 @@ else()
     add_compiler_rt_object_library(RTAsan_preinit ${arch}
       SOURCES ${ASAN_PREINIT_SOURCES} CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS})
-    if (COMPILER_RT_BUILD_SHARED_ASAN)
-      add_compiler_rt_object_library(RTAsan_dynamic ${arch}
-        SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
-        CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-        DEFS ${ASAN_DYNAMIC_DEFINITIONS})
-    endif()
+    add_compiler_rt_object_library(RTAsan_dynamic ${arch}
+      SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
+      CFLAGS ${ASAN_DYNAMIC_CFLAGS}
+      DEFS ${ASAN_DYNAMIC_DEFINITIONS})
   endforeach()
 endif()
 
@@ -129,28 +127,25 @@ else()
       DEFS ${ASAN_COMMON_DEFINITIONS})
     add_dependencies(asan clang_rt.asan_cxx-${arch})
 
-    if (COMPILER_RT_BUILD_SHARED_ASAN)
-      add_compiler_rt_runtime(clang_rt.asan-preinit-${arch} ${arch} STATIC
-        SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
-        CFLAGS ${ASAN_CFLAGS}
-        DEFS ${ASAN_COMMON_DEFINITIONS})
-      add_dependencies(asan clang_rt.asan-preinit-${arch})
+    add_compiler_rt_runtime(clang_rt.asan-preinit-${arch} ${arch} STATIC
+      SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
+      CFLAGS ${ASAN_CFLAGS}
+      DEFS ${ASAN_COMMON_DEFINITIONS})
+    add_dependencies(asan clang_rt.asan-preinit-${arch})
 
-      if (WIN32)
-        set(SHARED_ASAN_NAME clang_rt.asan_dynamic-${arch}${COMPILER_RT_OS_SUFFIX})
-      else()
-        set(SHARED_ASAN_NAME clang_rt.asan-${arch}${COMPILER_RT_OS_SUFFIX})
-      endif()
-
-      add_compiler_rt_runtime(clang_rt.asan-dynamic-${arch} ${arch} SHARED
-        OUTPUT_NAME ${SHARED_ASAN_NAME}
-        SOURCES $<TARGET_OBJECTS:RTAsan_dynamic.${arch}>
-                ${ASAN_COMMON_RUNTIME_OBJECTS}
-        CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-        DEFS ${ASAN_DYNAMIC_DEFINITIONS})
-      target_link_libraries(clang_rt.asan-dynamic-${arch} ${ASAN_DYNAMIC_LIBS})
-      add_dependencies(asan clang_rt.asan-dynamic-${arch})
+    if (WIN32)
+      set(SHARED_ASAN_NAME clang_rt.asan_dynamic-${arch}${COMPILER_RT_OS_SUFFIX})
+    else()
+      set(SHARED_ASAN_NAME clang_rt.asan-${arch}${COMPILER_RT_OS_SUFFIX})
     endif()
+    add_compiler_rt_runtime(clang_rt.asan-dynamic-${arch} ${arch} SHARED
+      OUTPUT_NAME ${SHARED_ASAN_NAME}
+      SOURCES $<TARGET_OBJECTS:RTAsan_dynamic.${arch}>
+              ${ASAN_COMMON_RUNTIME_OBJECTS}
+      CFLAGS ${ASAN_DYNAMIC_CFLAGS}
+      DEFS ${ASAN_DYNAMIC_DEFINITIONS})
+    target_link_libraries(clang_rt.asan-dynamic-${arch} ${ASAN_DYNAMIC_LIBS})
+    add_dependencies(asan clang_rt.asan-dynamic-${arch})
 
     if (UNIX AND NOT ${arch} STREQUAL "i386" AND NOT ${arch} STREQUAL "i686")
       add_sanitizer_rt_symbols(clang_rt.asan_cxx-${arch})
