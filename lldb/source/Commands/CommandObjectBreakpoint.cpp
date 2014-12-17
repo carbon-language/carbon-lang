@@ -245,8 +245,6 @@ public:
                 case 'N':
                     if (BreakpointID::StringIsBreakpointName(option_arg, error))
                         m_breakpoint_names.push_back (option_arg);
-                    else
-                        error.SetErrorStringWithFormat(error.AsCString());
                     break;
 
                 case 'o':
