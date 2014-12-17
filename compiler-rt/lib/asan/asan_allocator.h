@@ -9,7 +9,7 @@
 //
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
-// ASan-private header for asan_allocator2.cc.
+// ASan-private header for asan_allocator.cc.
 //===----------------------------------------------------------------------===//
 
 #ifndef ASAN_ALLOCATOR_H
