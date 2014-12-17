@@ -13,8 +13,10 @@
 
 let Namespace = "Hexagon" in {
 
-  class HexagonReg<bits<5> num, string n> : Register<n> {
+  class HexagonReg<bits<5> num, string n, list<string> alt = [], 
+                   list<Register> alias = []> : Register<n> {
     field bits<5> Num;
+    let Aliases = alias;
     let HWEncoding{4-0} = num;
   }
 
@@ -26,7 +28,7 @@ let Namespace = "Hexagon" in {
 
   // Registers are identified with 5-bit ID numbers.
   // Ri - 32-bit integer registers.
-  class Ri<bits<5> num, string n> : HexagonReg<num, n> {
+  class Ri<bits<5> num, string n, list<string> alt = []> : HexagonReg<num, n, alt> {
     let Num = num;
   }
 
@@ -53,23 +55,17 @@ let Namespace = "Hexagon" in {
     let Num = num;
   }
 
-  // Rj - aliased integer registers
-  class Rj<string n, Ri R>: HexagonReg<R.Num, n> {
-    let Num = R.Num;
-    let Aliases = [R];
-  }
-
   def subreg_loreg  : SubRegIndex<32>;
   def subreg_hireg  : SubRegIndex<32, 32>;
 
   // Integer registers.
-  foreach I = 0-31 in {
-    def R#I  : Ri<I, "r"#I>,  DwarfRegNum<[I]>;
+  foreach i = 0-28 in {
+    def R#i  : Ri<i, "r"#i>,  DwarfRegNum<[i]>;
   }
 
-  def SP : Rj<"sp", R29>, DwarfRegNum<[29]>;
-  def FP : Rj<"fp", R30>, DwarfRegNum<[30]>;
-  def LR : Rj<"lr", R31>, DwarfRegNum<[31]>;
+  def R29 : Ri<29, "r29", ["sp"]>, DwarfRegNum<[29]>;
+  def R30 : Ri<30, "r30", ["fp"]>, DwarfRegNum<[30]>;
+  def R31 : Ri<31, "r31", ["lr"]>, DwarfRegNum<[31]>;
 
   // Aliases of the R* registers used to hold 64-bit int values (doubles).
   let SubRegIndices = [subreg_loreg, subreg_hireg], CoveredBySubRegs = 1 in {
