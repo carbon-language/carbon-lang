@@ -51,7 +51,6 @@ using namespace llvm;
 
 #if defined(__linux__)
 static ssize_t LLVM_ATTRIBUTE_UNUSED readCpuInfo(void *Buf, size_t Size) {
-  assert(0);
   // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
   // memory buffer because the 'file' has 0 size (it can be read from only
   // as a stream).
