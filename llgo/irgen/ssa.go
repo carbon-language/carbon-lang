@@ -663,7 +663,7 @@ func (fr *frame) value(v ssa.Value) (result *govalue) {
 		return value
 	}
 
-	panic("Instruction not visited yet")
+	panic(fmt.Errorf("Instruction %q not visited yet", v.Name()))
 }
 
 func (fr *frame) llvmvalue(v ssa.Value) llvm.Value {
@@ -696,10 +696,14 @@ func (fr *frame) nilCheck(v ssa.Value, llptr llvm.Value) {
 	}
 }
 
-func (fr *frame) canAvoidElementLoad(refs []ssa.Instruction) bool {
-	for _, ref := range refs {
-		switch ref.(type) {
-		case *ssa.Field, *ssa.Index:
+func (fr *frame) canAvoidElementLoad(ptr ssa.Value) bool {
+	for _, ref := range *ptr.Referrers() {
+		switch ref := ref.(type) {
+		case *ssa.Field:
+		case *ssa.Index:
+			if ref.X != ptr {
+				return false
+			}
 			// ok
 		default:
 			return false
@@ -712,7 +716,7 @@ func (fr *frame) canAvoidElementLoad(refs []ssa.Instruction) bool {
 // If this value is sufficiently large, look through referrers to see if we can
 // avoid a load.
 func (fr *frame) canAvoidLoad(instr *ssa.UnOp, op llvm.Value) bool {
-	if fr.types.Sizeof(instr.Type()) < 16 {
+	if fr.types.Sizeof(instr.Type()) < 2*fr.types.Sizeof(types.Typ[types.Int]) {
 		// Don't bother with small values.
 		return false
 	}
@@ -724,10 +728,16 @@ func (fr *frame) canAvoidLoad(instr *ssa.UnOp, op llvm.Value) bool {
 	// We only know how to avoid loads if they are used to create an interface
 	// or read an element of the structure. If we see any other referrer, abort.
 	for _, ref := range *instr.Referrers() {
-		switch ref.(type) {
+		switch ref := ref.(type) {
 		case *ssa.MakeInterface:
 			esc = true
-		case *ssa.Field, *ssa.Index:
+		case *ssa.Field:
+		case *ssa.Index:
+			if ref.X != instr {
+				// This should never happen, as indices are always of type int
+				// and we don't bother with values smaller than 2*sizeof(int).
+				panic("impossible")
+			}
 			// ok
 		default:
 			return false
@@ -895,7 +905,7 @@ func (fr *frame) instruction(instr ssa.Instruction) {
 		fieldtyp := instr.Type()
 		if p, ok := fr.ptr[instr.X]; ok {
 			field := fr.builder.CreateStructGEP(p, instr.Field, instr.Name())
-			if fr.canAvoidElementLoad(*instr.Referrers()) {
+			if fr.canAvoidElementLoad(instr) {
 				fr.ptr[instr] = field
 			} else {
 				fr.env[instr] = newValue(fr.builder.CreateLoad(field, ""), fieldtyp)
@@ -959,7 +969,7 @@ func (fr *frame) instruction(instr ssa.Instruction) {
 		fr.condBrRuntimeError(cond, gccgoRuntimeErrorARRAY_INDEX_OUT_OF_BOUNDS)
 
 		addr := fr.builder.CreateGEP(arrayptr, []llvm.Value{zero, index}, "")
-		if fr.canAvoidElementLoad(*instr.Referrers()) {
+		if fr.canAvoidElementLoad(instr) {
 			fr.ptr[instr] = addr
 		} else {
 			fr.env[instr] = newValue(fr.builder.CreateLoad(addr, ""), instr.Type())
