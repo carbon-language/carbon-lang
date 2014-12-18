@@ -2,10 +2,10 @@
 // RUN:                                 not %run %t 2>&1 | FileCheck %s
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %run %t 2>&1 | FileCheck %s
 // RUN: TSAN_OPTIONS=detect_deadlocks=0     %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
-// RUN: echo "deadlock:main" > %t.sup
-// RUN: TSAN_OPTIONS="suppressions=%t.sup" %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
-// RUN: echo "deadlock:zzzz" > %t.sup
-// RUN: TSAN_OPTIONS="suppressions=%t.sup" not %run %t 2>&1 | FileCheck %s
+// RUN: echo "deadlock:main" > %t.supp
+// RUN: TSAN_OPTIONS="suppressions='%t.supp'" %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
+// RUN: echo "deadlock:zzzz" > %t.supp
+// RUN: TSAN_OPTIONS="suppressions='%t.supp'" not %run %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 

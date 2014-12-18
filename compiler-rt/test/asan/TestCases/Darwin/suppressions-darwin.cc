@@ -4,17 +4,17 @@
 
 // Check that suppressing the interceptor by name works.
 // RUN: echo "interceptor_name:memmove" > %t.supp
-// RUN: ASAN_OPTIONS=suppressions=%t.supp %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
+// RUN: ASAN_OPTIONS="suppressions='%t.supp'" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
 // Check that suppressing by interceptor name works even without the symbolizer
-// RUN: ASAN_OPTIONS=suppressions=%t.supp:symbolize=false %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
+// RUN: ASAN_OPTIONS="suppressions='%t.supp':symbolize=false" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
 // Check that suppressing all reports from a library works.
 // RUN: echo "interceptor_via_lib:CoreFoundation" > %t.supp
-// RUN: ASAN_OPTIONS=suppressions=%t.supp %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
+// RUN: ASAN_OPTIONS="suppressions='%t.supp'" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
 // Check that suppressing library works even without the symbolizer.
-// RUN: ASAN_OPTIONS=suppressions=%t.supp:symbolize=false %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
+// RUN: ASAN_OPTIONS="suppressions='%t.supp':symbolize=false" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
 #include <CoreFoundation/CoreFoundation.h>
 

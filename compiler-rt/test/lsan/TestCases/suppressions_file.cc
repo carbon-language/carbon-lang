@@ -1,11 +1,11 @@
 // RUN: LSAN_BASE="use_registers=0:use_stacks=0"
 // RUN: %clangxx_lsan %s -o %t
 
-// RUN: echo "leak:*LSanTestLeakingFunc*" > %t.supp1
-// RUN: LSAN_OPTIONS=$LSAN_BASE:suppressions=%t.supp1 not %run %t 2>&1 | FileCheck %s
+// RUN: echo "leak:*LSanTestLeakingFunc*" > %t.supp
+// RUN: LSAN_OPTIONS="$LSAN_BASE:suppressions='%t.supp'" not %run %t 2>&1 | FileCheck %s
 
-// RUN: echo "leak:%t" > %t.supp2
-// RUN: LSAN_OPTIONS=$LSAN_BASE:suppressions="%t.supp2":symbolize=false %run %t
+// RUN: echo "leak:%t" > %t.supp
+// RUN: LSAN_OPTIONS="$LSAN_BASE:suppressions='%t.supp':symbolize=false" %run %t
 
 #include <stdio.h>
 #include <stdlib.h>

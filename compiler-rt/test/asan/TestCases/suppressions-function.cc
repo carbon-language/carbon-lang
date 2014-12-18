@@ -3,8 +3,8 @@
 // RUN: not %run %t 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
 
 // RUN: echo "interceptor_via_fun:crash_function" > %t.supp
-// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS=suppressions=%t.supp %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
-// RUN: %clangxx_asan -O3 %s -o %t && ASAN_OPTIONS=suppressions=%t.supp %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
+// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS="suppressions='%t.supp'" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
+// RUN: %clangxx_asan -O3 %s -o %t && ASAN_OPTIONS="suppressions='%t.supp'" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
 // XFAIL: android
 
