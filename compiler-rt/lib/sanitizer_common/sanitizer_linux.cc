@@ -432,7 +432,7 @@ uptr GetRSS() {
   buf[len] = 0;
   // The format of the file is:
   // 1084 89 69 11 0 79 0
-  // We need the second number which is RSS in 4K units.
+  // We need the second number which is RSS in pages.
   char *pos = buf;
   // Skip the first number.
   while (*pos >= '0' && *pos <= '9')
@@ -444,7 +444,7 @@ uptr GetRSS() {
   uptr rss = 0;
   while (*pos >= '0' && *pos <= '9')
     rss = rss * 10 + *pos++ - '0';
-  return rss * 4096;
+  return rss * GetPageSizeCached();
 }
 
 static void GetArgsAndEnv(char*** argv, char*** envp) {
