@@ -3529,9 +3529,9 @@ std::error_code BitcodeReader::InitStreamFromBuffer() {
 std::error_code BitcodeReader::InitLazyStream() {
   // Check and strip off the bitcode wrapper; BitstreamReader expects never to
   // see it.
-  auto OwnedBytes = make_unique<StreamingMemoryObject>(LazyStreamer);
+  auto OwnedBytes = llvm::make_unique<StreamingMemoryObject>(LazyStreamer);
   StreamingMemoryObject &Bytes = *OwnedBytes;
-  StreamFile = make_unique<BitstreamReader>(std::move(OwnedBytes));
+  StreamFile = llvm::make_unique<BitstreamReader>(std::move(OwnedBytes));
   Stream.init(&*StreamFile);
 
   unsigned char buf[16];
