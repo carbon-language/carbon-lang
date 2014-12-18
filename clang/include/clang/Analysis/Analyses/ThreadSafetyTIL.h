@@ -1369,7 +1369,7 @@ public:
   ArrayRef<BasicBlock*> successors();
 
   ArrayRef<BasicBlock*> successors() const {
-    return const_cast<const Terminator*>(this)->successors();
+    return const_cast<Terminator*>(this)->successors();
   }
 };
 
