@@ -32,9 +32,7 @@
 
 using namespace llvm;
 
-namespace {
-
-static unsigned RRegs[32] = {
+static const MCPhysReg RRegs[32] = {
   PPC::R0,  PPC::R1,  PPC::R2,  PPC::R3,
   PPC::R4,  PPC::R5,  PPC::R6,  PPC::R7,
   PPC::R8,  PPC::R9,  PPC::R10, PPC::R11,
@@ -44,7 +42,7 @@ static unsigned RRegs[32] = {
   PPC::R24, PPC::R25, PPC::R26, PPC::R27,
   PPC::R28, PPC::R29, PPC::R30, PPC::R31
 };
-static unsigned RRegsNoR0[32] = {
+static const MCPhysReg RRegsNoR0[32] = {
   PPC::ZERO,
             PPC::R1,  PPC::R2,  PPC::R3,
   PPC::R4,  PPC::R5,  PPC::R6,  PPC::R7,
@@ -55,7 +53,7 @@ static unsigned RRegsNoR0[32] = {
   PPC::R24, PPC::R25, PPC::R26, PPC::R27,
   PPC::R28, PPC::R29, PPC::R30, PPC::R31
 };
-static unsigned XRegs[32] = {
+static const MCPhysReg XRegs[32] = {
   PPC::X0,  PPC::X1,  PPC::X2,  PPC::X3,
   PPC::X4,  PPC::X5,  PPC::X6,  PPC::X7,
   PPC::X8,  PPC::X9,  PPC::X10, PPC::X11,
@@ -65,7 +63,7 @@ static unsigned XRegs[32] = {
   PPC::X24, PPC::X25, PPC::X26, PPC::X27,
   PPC::X28, PPC::X29, PPC::X30, PPC::X31
 };
-static unsigned XRegsNoX0[32] = {
+static const MCPhysReg XRegsNoX0[32] = {
   PPC::ZERO8,
             PPC::X1,  PPC::X2,  PPC::X3,
   PPC::X4,  PPC::X5,  PPC::X6,  PPC::X7,
@@ -76,7 +74,7 @@ static unsigned XRegsNoX0[32] = {
   PPC::X24, PPC::X25, PPC::X26, PPC::X27,
   PPC::X28, PPC::X29, PPC::X30, PPC::X31
 };
-static unsigned FRegs[32] = {
+static const MCPhysReg FRegs[32] = {
   PPC::F0,  PPC::F1,  PPC::F2,  PPC::F3,
   PPC::F4,  PPC::F5,  PPC::F6,  PPC::F7,
   PPC::F8,  PPC::F9,  PPC::F10, PPC::F11,
@@ -86,7 +84,7 @@ static unsigned FRegs[32] = {
   PPC::F24, PPC::F25, PPC::F26, PPC::F27,
   PPC::F28, PPC::F29, PPC::F30, PPC::F31
 };
-static unsigned VRegs[32] = {
+static const MCPhysReg VRegs[32] = {
   PPC::V0,  PPC::V1,  PPC::V2,  PPC::V3,
   PPC::V4,  PPC::V5,  PPC::V6,  PPC::V7,
   PPC::V8,  PPC::V9,  PPC::V10, PPC::V11,
@@ -96,7 +94,7 @@ static unsigned VRegs[32] = {
   PPC::V24, PPC::V25, PPC::V26, PPC::V27,
   PPC::V28, PPC::V29, PPC::V30, PPC::V31
 };
-static unsigned VSRegs[64] = {
+static const MCPhysReg VSRegs[64] = {
   PPC::VSL0,  PPC::VSL1,  PPC::VSL2,  PPC::VSL3,
   PPC::VSL4,  PPC::VSL5,  PPC::VSL6,  PPC::VSL7,
   PPC::VSL8,  PPC::VSL9,  PPC::VSL10, PPC::VSL11,
@@ -115,7 +113,7 @@ static unsigned VSRegs[64] = {
   PPC::VSH24, PPC::VSH25, PPC::VSH26, PPC::VSH27,
   PPC::VSH28, PPC::VSH29, PPC::VSH30, PPC::VSH31
 };
-static unsigned VSFRegs[64] = {
+static const MCPhysReg VSFRegs[64] = {
   PPC::F0,  PPC::F1,  PPC::F2,  PPC::F3,
   PPC::F4,  PPC::F5,  PPC::F6,  PPC::F7,
   PPC::F8,  PPC::F9,  PPC::F10, PPC::F11,
@@ -134,7 +132,7 @@ static unsigned VSFRegs[64] = {
   PPC::VF24, PPC::VF25, PPC::VF26, PPC::VF27,
   PPC::VF28, PPC::VF29, PPC::VF30, PPC::VF31
 };
-static unsigned CRBITRegs[32] = {
+static const MCPhysReg CRBITRegs[32] = {
   PPC::CR0LT, PPC::CR0GT, PPC::CR0EQ, PPC::CR0UN,
   PPC::CR1LT, PPC::CR1GT, PPC::CR1EQ, PPC::CR1UN,
   PPC::CR2LT, PPC::CR2GT, PPC::CR2EQ, PPC::CR2UN,
@@ -144,7 +142,7 @@ static unsigned CRBITRegs[32] = {
   PPC::CR6LT, PPC::CR6GT, PPC::CR6EQ, PPC::CR6UN,
   PPC::CR7LT, PPC::CR7GT, PPC::CR7EQ, PPC::CR7UN
 };
-static unsigned CRRegs[8] = {
+static const MCPhysReg CRRegs[8] = {
   PPC::CR0, PPC::CR1, PPC::CR2, PPC::CR3,
   PPC::CR4, PPC::CR5, PPC::CR6, PPC::CR7
 };
@@ -209,6 +207,8 @@ EvaluateCRExpr(const MCExpr *E) {
 
   llvm_unreachable("Invalid expression kind!");
 }
+
+namespace {
 
 struct PPCOperand;
 
