@@ -2314,6 +2314,11 @@ MachOObjectFile::getSubFrameworkCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::sub_framework_command>(this, L.Ptr);
 }
 
+MachO::sub_umbrella_command
+MachOObjectFile::getSubUmbrellaCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::sub_umbrella_command>(this, L.Ptr);
+}
+
 MachO::any_relocation_info
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {
   DataRefImpl Sec;

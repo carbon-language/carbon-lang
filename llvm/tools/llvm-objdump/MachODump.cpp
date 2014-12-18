@@ -3690,6 +3690,22 @@ static void PrintSubFrameworkCommand(MachO::sub_framework_command sub,
   }
 }
 
+static void PrintSubUmbrellaCommand(MachO::sub_umbrella_command sub,
+                                    const char *Ptr) {
+  outs() << "          cmd LC_SUB_UMBRELLA\n";
+  outs() << "      cmdsize " << sub.cmdsize;
+  if (sub.cmdsize < sizeof(struct MachO::sub_umbrella_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  if (sub.sub_umbrella < sub.cmdsize) {
+    const char *P = Ptr + sub.sub_umbrella;
+    outs() << " sub_umbrella " << P << " (offset " << sub.sub_umbrella << ")\n";
+  } else {
+    outs() << " sub_umbrella ?(bad offset " << sub.sub_umbrella << ")\n";
+  }
+}
+
 static void PrintDylibCommand(MachO::dylib_command dl, const char *Ptr) {
   if (dl.cmd == MachO::LC_ID_DYLIB)
     outs() << "          cmd LC_ID_DYLIB\n";
@@ -3849,6 +3865,9 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
     } else if (Command.C.cmd == MachO::LC_SUB_FRAMEWORK) {
       MachO::sub_framework_command Sf = Obj->getSubFrameworkCommand(Command);
       PrintSubFrameworkCommand(Sf, Command.Ptr);
+    } else if (Command.C.cmd == MachO::LC_SUB_UMBRELLA) {
+      MachO::sub_umbrella_command Sf = Obj->getSubUmbrellaCommand(Command);
+      PrintSubUmbrellaCommand(Sf, Command.Ptr);
     } else if (Command.C.cmd == MachO::LC_LOAD_DYLIB ||
                Command.C.cmd == MachO::LC_ID_DYLIB ||
                Command.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||
