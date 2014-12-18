@@ -6781,6 +6781,7 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   // Whew!
 
   verifyFormat("return in[42];");
+  verifyFormat("for (auto v : in[1]) {\n}");
   verifyFormat("for (id foo in [self getStuffFor:bla]) {\n"
                "}");
   verifyFormat("[self aaaaa:MACRO(a, b:, c:)];");
