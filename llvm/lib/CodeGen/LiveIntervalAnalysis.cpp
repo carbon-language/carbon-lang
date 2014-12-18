@@ -193,7 +193,7 @@ void LiveIntervals::computeVirtRegInterval(LiveInterval &LI) {
   assert(LI.empty() && "Should only compute empty intervals.");
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
   LRCalc->calculate(LI);
-  computeDeadValues(LI, LI);
+  computeDeadValues(LI, nullptr);
 }
 
 void LiveIntervals::computeVirtRegs() {
@@ -433,49 +433,46 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   createSegmentsForValues(NewLR, make_range(li->vni_begin(), li->vni_end()));
   extendSegmentsToUses(NewLR, *Indexes, WorkList, *li);
 
-  // Handle dead values.
-  bool CanSeparate;
-  computeDeadValues(NewLR, *li, &CanSeparate, li->reg, dead);
-
   // Move the trimmed segments back.
   li->segments.swap(NewLR.segments);
+
+  // Handle dead values.
+  bool CanSeparate = computeDeadValues(*li, dead);
   DEBUG(dbgs() << "Shrunk: " << *li << '\n');
   return CanSeparate;
 }
 
-void LiveIntervals::computeDeadValues(LiveRange &Segments, LiveRange &LR,
-                                      bool *CanSeparateRes, unsigned Reg,
+bool LiveIntervals::computeDeadValues(LiveInterval &LI,
                                       SmallVectorImpl<MachineInstr*> *dead) {
-  bool CanSeparate = false;
-  for (auto VNI : LR.valnos) {
+  bool PHIRemoved = false;
+  for (auto VNI : LI.valnos) {
     if (VNI->isUnused())
       continue;
-    LiveRange::iterator LRI = Segments.FindSegmentContaining(VNI->def);
-    assert(LRI != Segments.end() && "Missing segment for PHI");
-    if (LRI->end != VNI->def.getDeadSlot())
+    LiveRange::iterator I = LI.FindSegmentContaining(VNI->def);
+    assert(I != LI.end() && "Missing segment for VNI");
+    if (I->end != VNI->def.getDeadSlot())
       continue;
     if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
       VNI->markUnused();
-      Segments.removeSegment(LRI->start, LRI->end);
+      LI.removeSegment(I);
       DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
-      CanSeparate = true;
-    } else if (dead != nullptr) {
+      PHIRemoved = true;
+    } else {
       // This is a dead def. Make sure the instruction knows.
       MachineInstr *MI = getInstructionFromIndex(VNI->def);
       assert(MI && "No instruction defining live value");
-      MI->addRegisterDead(Reg, TRI);
+      MI->addRegisterDead(LI.reg, TRI);
       if (dead && MI->allDefsAreDead()) {
         DEBUG(dbgs() << "All defs dead: " << VNI->def << '\t' << *MI);
         dead->push_back(MI);
       }
     }
   }
-  if (CanSeparateRes != nullptr)
-    *CanSeparateRes = CanSeparate;
+  return PHIRemoved;
 }
 
-bool LiveIntervals::shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg)
+void LiveIntervals::shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg)
 {
   DEBUG(dbgs() << "Shrink: " << SR << '\n');
   assert(TargetRegisterInfo::isVirtualRegister(Reg)
@@ -522,14 +519,26 @@ bool LiveIntervals::shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg)
   createSegmentsForValues(NewLR, make_range(SR.vni_begin(), SR.vni_end()));
   extendSegmentsToUses(NewLR, *Indexes, WorkList, SR);
 
-  // Handle dead values.
-  bool CanSeparate;
-  computeDeadValues(NewLR, SR, &CanSeparate);
-
   // Move the trimmed ranges back.
   SR.segments.swap(NewLR.segments);
+
+  // Remove dead PHI value numbers
+  for (auto VNI : SR.valnos) {
+    if (VNI->isUnused())
+      continue;
+    const LiveRange::Segment *Segment = SR.getSegmentContaining(VNI->def);
+    assert(Segment != nullptr && "Missing segment for VNI");
+    if (Segment->end != VNI->def.getDeadSlot())
+      continue;
+    if (VNI->isPHIDef()) {
+      // This is a dead PHI. Remove it.
+      VNI->markUnused();
+      SR.removeSegment(*Segment);
+      DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
+    }
+  }
+
   DEBUG(dbgs() << "Shrunk: " << SR << '\n');
-  return CanSeparate;
 }
 
 void LiveIntervals::extendToIndices(LiveRange &LR,
