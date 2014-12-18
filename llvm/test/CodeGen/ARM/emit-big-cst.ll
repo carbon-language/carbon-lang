@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=thumbv7-unknown-unknown < %s | FileCheck %s
+; RUN: llc -mtriple=thumbv7-unknown-unknown -mattr=apcs < %s | FileCheck %s
 ; Check assembly printing of odd constants.
 
 ; CHECK: bigCst:

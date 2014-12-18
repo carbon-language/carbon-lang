@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-LE
 ; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabihf | FileCheck %s --check-prefix=CHECK-THUMB --check-prefix=CHECK-THUMB-LE
-; RUN: llc < %s -mtriple=armebv7 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-BE
+; RUN: llc < %s -mtriple=armebv7 -mattr=apcs | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-BE
 ; RUN: llc < %s -mtriple=thumbebv7-none-linux-gnueabihf | FileCheck %s --check-prefix=CHECK-THUMB --check-prefix=CHECK-THUMB-BE
 
 define i64 @test1(i64* %ptr, i64 %val) {

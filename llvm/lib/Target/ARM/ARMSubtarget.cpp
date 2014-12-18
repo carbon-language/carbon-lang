@@ -225,8 +225,8 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied
   // based on the architecture version.
-  std::string ArchFS = ARM_MC::ParseARMTriple(TargetTriple.getTriple(),
-                                              CPUString);
+  std::string ArchFS =
+      ARM_MC::ParseARMTriple(TargetTriple.getTriple(), CPUString);
   if (!FS.empty()) {
     if (!ArchFS.empty())
       ArchFS = ArchFS + "," + FS.str();
@@ -246,29 +246,45 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   InstrItins = getInstrItineraryForCPU(CPUString);
 
   if (TargetABI == ARM_ABI_UNKNOWN) {
-    switch (TargetTriple.getEnvironment()) {
-    case Triple::Android:
-    case Triple::EABI:
-    case Triple::EABIHF:
-    case Triple::GNUEABI:
-    case Triple::GNUEABIHF:
-      TargetABI = ARM_ABI_AAPCS;
-      break;
-    default:
-      if (TargetTriple.isOSBinFormatMachO() &&
-          TargetTriple.getOS() == Triple::UnknownOS)
+    // FIXME: This is duplicated code from the front end and should be unified.
+    if (TargetTriple.isOSBinFormatMachO()) {
+      if (TargetTriple.getEnvironment() == llvm::Triple::EABI ||
+          (TargetTriple.getOS() == llvm::Triple::UnknownOS &&
+           TargetTriple.getObjectFormat() == llvm::Triple::MachO) ||
+          CPU.startswith("cortex-m")) {
         TargetABI = ARM_ABI_AAPCS;
-      else
+      } else {
         TargetABI = ARM_ABI_APCS;
-      break;
+      }
+    } else if (TargetTriple.isOSWindows()) {
+      // FIXME: this is invalid for WindowsCE
+      TargetABI = ARM_ABI_AAPCS;
+    } else {
+      // Select the default based on the platform.
+      switch (TargetTriple.getEnvironment()) {
+      case llvm::Triple::Android:
+      case llvm::Triple::GNUEABI:
+      case llvm::Triple::GNUEABIHF:
+      case llvm::Triple::EABIHF:
+      case llvm::Triple::EABI:
+        TargetABI = ARM_ABI_AAPCS;
+        break;
+      case llvm::Triple::GNU:
+	TargetABI = ARM_ABI_APCS;
+	break;
+      default:
+        if (TargetTriple.getOS() == llvm::Triple::NetBSD)
+          TargetABI = ARM_ABI_APCS;
+        else
+          TargetABI = ARM_ABI_AAPCS;
+        break;
+      }
     }
   }
 
   // FIXME: this is invalid for WindowsCE
-  if (isTargetWindows()) {
-    TargetABI = ARM_ABI_AAPCS;
+  if (isTargetWindows())
     NoARM = true;
-  }
 
   if (isAAPCS_ABI())
     stackAlignment = 8;

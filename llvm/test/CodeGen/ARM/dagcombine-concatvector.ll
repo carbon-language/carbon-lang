@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7s-apple-ios3.0.0 -mcpu=generic | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-LE
-; RUN: llc < %s -mtriple=thumbeb -mattr=v7,neon | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-BE
+; RUN: llc < %s -mtriple=thumbeb -mattr=apcs -mattr=v7,neon | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-BE
 
 ; PR15525
 ; CHECK-LABEL: test1:
