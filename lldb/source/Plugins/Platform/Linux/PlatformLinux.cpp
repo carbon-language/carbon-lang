@@ -503,14 +503,20 @@ PlatformLinux::GetStatus (Stream &strm)
     Platform::GetStatus(strm);
 
 #ifndef LLDB_DISABLE_POSIX
-    struct utsname un;
+    // Display local kernel information only when we are running in host mode.
+    // Otherwise, we would end up printing non-Linux information (when running
+    // on Mac OS for example).
+    if (IsHost())
+    {
+        struct utsname un;
 
-    if (uname(&un))
-        return;
+        if (uname(&un))
+            return;
 
-    strm.Printf ("    Kernel: %s\n", un.sysname);
-    strm.Printf ("   Release: %s\n", un.release);
-    strm.Printf ("   Version: %s\n", un.version);
+        strm.Printf ("    Kernel: %s\n", un.sysname);
+        strm.Printf ("   Release: %s\n", un.release);
+        strm.Printf ("   Version: %s\n", un.version);
+    }
 #endif
 }
 
