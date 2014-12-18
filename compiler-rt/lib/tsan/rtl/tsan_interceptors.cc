@@ -2184,6 +2184,16 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
 #undef SANITIZER_INTERCEPT_FGETPWENT
 #undef SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS
 #undef SANITIZER_INTERCEPT_GETPWNAM_R_AND_FRIENDS
+// __tls_get_addr can be called with mis-aligned stack due to:
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58066
+// There are two potential issues:
+// 1. Sanitizer code contains a MOVDQA spill (it does not seem to be the case
+// right now). or 2. ProcessPendingSignal calls user handler which contains
+// MOVDQA spill (this happens right now).
+// Since the interceptor only initializes memory for msan, the simplest solution
+// is to disable the interceptor in tsan (other sanitizers do not call
+// signal handlers from COMMON_INTERCEPTOR_ENTER).
+#undef SANITIZER_INTERCEPT_TLS_GET_ADDR
 
 #define COMMON_INTERCEPT_FUNCTION(name) INTERCEPT_FUNCTION(name)
 

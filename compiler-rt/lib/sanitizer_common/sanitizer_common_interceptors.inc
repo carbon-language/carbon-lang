@@ -3868,6 +3868,12 @@ INTERCEPTOR(__sanitizer_clock_t, times, void *tms) {
 
 #if SANITIZER_INTERCEPT_TLS_GET_ADDR
 #define INIT_TLS_GET_ADDR COMMON_INTERCEPT_FUNCTION(__tls_get_addr)
+// If you see any crashes around this functions, there are 2 known issues with
+// it: 1. __tls_get_addr can be called with mis-aligned stack due to:
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58066
+// 2. It can be called recursively if sanitizer code uses __tls_get_addr
+// to access thread local variables (it should not happen normally,
+// because sanitizers use initial-exec tls model).
 INTERCEPTOR(void *, __tls_get_addr, void *arg) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, __tls_get_addr, arg);
