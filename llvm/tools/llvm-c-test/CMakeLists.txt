@@ -7,7 +7,26 @@ set(LLVM_LINK_COMPONENTS
   Target
   )
 
-if(TARGET LLVM)
+# We should only have llvm-c-test use libLLVM if libLLVM is built with the
+# default list of components. Using libLLVM with custom components can result in
+# build failures.
+
+set (USE_LLVM_DYLIB FALSE)
+
+if (TARGET LLVM)
+  set (USE_LLVM_DYLIB TRUE)
+  if (DEFINED LLVM_DYLIB_COMPONENTS)
+    foreach(c in ${LLVM_LINK_COMPONENTS})
+      list(FIND LLVM_DYLIB_COMPONENTS ${c} C_IDX)
+      if (C_IDX EQUAL -1)
+        set(USE_LLVM_DYLIB FALSE)
+        break()
+      endif()
+    endforeach()
+  endif()
+endif()
+
+if(USE_LLVM_DYLIB)
   set(LLVM_LINK_COMPONENTS)
 endif()
 
@@ -26,7 +45,6 @@ add_llvm_tool(llvm-c-test
   targets.c
   )
 
-# Use libLLVM.so if it is available.
-if(TARGET LLVM)
+if(USE_LLVM_DYLIB)
   target_link_libraries(llvm-c-test LLVM)
 endif()
