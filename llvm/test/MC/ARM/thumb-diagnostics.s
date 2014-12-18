@@ -1,11 +1,11 @@
-@ RUN: not llvm-mc -triple=thumbv6-apple-darwin < %s 2> %t
-@ RUN: FileCheck --check-prefix=CHECK-ERRORS < %t %s
-@ RUN: not llvm-mc -triple=thumbv5-apple-darwin < %s 2> %t
-@ RUN: FileCheck --check-prefix=CHECK-ERRORS-V5 < %t %s
-@ RUN: not llvm-mc -triple=thumbv7m < %s 2> %t
-@ RUN: FileCheck --check-prefix=CHECK-ERRORS-V7M < %t %s
-@ RUN: not llvm-mc -triple=thumbv8 < %s 2> %t
-@ RUN: FileCheck --check-prefix=CHECK-ERRORS-V8 < %t %s
+@ RUN: not llvm-mc -triple=thumbv6-apple-darwin -o /dev/null < %s 2>&1 \
+@ RUN:     | FileCheck --check-prefix=CHECK-ERRORS %s
+@ RUN: not llvm-mc -triple=thumbv5-apple-darwin -o /dev/null < %s 2>&1 \
+@ RUN:     | FileCheck --check-prefix=CHECK-ERRORS-V5 %s
+@ RUN: not llvm-mc -triple=thumbv7m -o /dev/null < %s 2>&1 \
+@ RUN:     | FileCheck --check-prefix=CHECK-ERRORS-V7M %s
+@ RUN: not llvm-mc -triple=thumbv8 -o /dev/null < %s 2>&1 \
+@ RUN:     | FileCheck --check-prefix=CHECK-ERRORS-V8 %s
 
 @ Check for various assembly diagnostic messages on invalid input.
 
