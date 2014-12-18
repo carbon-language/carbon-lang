@@ -500,6 +500,7 @@ public:
 // FIXME: Make this derive from DIType directly & just store the
 // base type in a single DIType field.
 class DICompositeType : public DIDerivedType {
+  friend class DIBuilder;
   friend class DIDescriptor;
   void printInternal(raw_ostream &OS) const;
 
@@ -513,6 +514,8 @@ public:
     assert(!isSubroutineType() && "no elements for DISubroutineType");
     return getFieldAs<DIArray>(4);
   }
+
+private:
   template <typename T>
   void setArrays(DITypedArray<T> Elements, DIArray TParams = DIArray()) {
     assert((!TParams || DbgNode->getNumOperands() == 8) &&
@@ -520,13 +523,18 @@ public:
            "for that!");
     setArraysHelper(Elements, TParams);
   }
+
+public:
   unsigned getRunTimeLang() const {
     return getHeaderFieldAs<unsigned>(7);
   }
   DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(5); }
 
+private:
   /// \brief Set the containing type.
   void setContainingType(DICompositeType ContainingType);
+
+public:
   DIArray getTemplateParams() const { return getFieldAs<DIArray>(6); }
   MDString *getIdentifier() const;
 
