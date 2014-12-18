@@ -179,6 +179,11 @@ TrapFuncName("trap-func", cl::Hidden,
         cl::desc("Emit a call to trap function rather than a trap instruction"),
         cl::init(""));
 
+cl::opt<std::string>
+ABIName("target-abi", cl::Hidden,
+        cl::desc("The name of the ABI to be targeted from the backend."),
+        cl::init(""));
+
 cl::opt<bool>
 EnablePIE("enable-pie",
           cl::desc("Assume the creation of a position independent executable."),
@@ -280,6 +285,7 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.DisableTailCalls = DisableTailCalls;
   Options.StackAlignmentOverride = OverrideStackAlignment;
   Options.TrapFuncName = TrapFuncName;
+  Options.ABIName = ABIName;
   Options.PositionIndependentExecutable = EnablePIE;
   Options.UseInitArray = !UseCtors;
   Options.DataSections = DataSections;

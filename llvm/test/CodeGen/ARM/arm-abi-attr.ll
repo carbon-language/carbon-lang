@@ -1,13 +1,13 @@
 ; RUN: llc -mtriple=arm-linux-gnu < %s | FileCheck %s --check-prefix=APCS
-; RUN: llc -mtriple=arm-linux-gnu -mattr=apcs < %s | \
+; RUN: llc -mtriple=arm-linux-gnu -target-abi=apcs < %s | \
 ; RUN: FileCheck %s --check-prefix=APCS
-; RUN: llc -mtriple=arm-linux-gnueabi -mattr=apcs < %s | \
+; RUN: llc -mtriple=arm-linux-gnueabi -target-abi=apcs < %s | \
 ; RUN: FileCheck %s --check-prefix=APCS
 
 ; RUN: llc -mtriple=arm-linux-gnueabi < %s | FileCheck %s --check-prefix=AAPCS
-; RUN: llc -mtriple=arm-linux-gnueabi -mattr=aapcs < %s | \
+; RUN: llc -mtriple=arm-linux-gnueabi -target-abi=aapcs < %s | \
 ; RUN: FileCheck %s --check-prefix=AAPCS
-; RUN: llc -mtriple=arm-linux-gnu -mattr=aapcs < %s | \
+; RUN: llc -mtriple=arm-linux-gnu -target-abi=aapcs < %s | \
 ; RUN: FileCheck %s --check-prefix=AAPCS
 
 ; The stack is 8 byte aligned on AAPCS and 4 on APCS, so we should get a BIC

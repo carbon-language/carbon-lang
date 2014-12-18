@@ -18,6 +18,7 @@
 #include "ARMSelectionDAGInfo.h"
 #include "ARMSubtarget.h"
 #include "ARMMachineFunctionInfo.h"
+#include "ARMTargetMachine.h"
 #include "Thumb1FrameLowering.h"
 #include "Thumb1InstrInfo.h"
 #include "Thumb2InstrInfo.h"
@@ -147,11 +148,11 @@ ARMSubtarget &ARMSubtarget::initializeSubtargetDependencies(StringRef CPU,
 }
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, const TargetMachine &TM,
+                           const std::string &FS, const ARMBaseTargetMachine &TM,
                            bool IsLittle)
     : ARMGenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       ARMProcClass(None), stackAlignment(4), CPUString(CPU), IsLittle(IsLittle),
-      TargetTriple(TT), Options(TM.Options), TargetABI(ARM_ABI_UNKNOWN),
+      TargetTriple(TT), Options(TM.Options), TM(TM),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS))),
       TSInfo(DL),
       InstrInfo(isThumb1Only()
@@ -245,43 +246,6 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
-  if (TargetABI == ARM_ABI_UNKNOWN) {
-    // FIXME: This is duplicated code from the front end and should be unified.
-    if (TargetTriple.isOSBinFormatMachO()) {
-      if (TargetTriple.getEnvironment() == llvm::Triple::EABI ||
-          (TargetTriple.getOS() == llvm::Triple::UnknownOS &&
-           TargetTriple.getObjectFormat() == llvm::Triple::MachO) ||
-          CPU.startswith("cortex-m")) {
-        TargetABI = ARM_ABI_AAPCS;
-      } else {
-        TargetABI = ARM_ABI_APCS;
-      }
-    } else if (TargetTriple.isOSWindows()) {
-      // FIXME: this is invalid for WindowsCE
-      TargetABI = ARM_ABI_AAPCS;
-    } else {
-      // Select the default based on the platform.
-      switch (TargetTriple.getEnvironment()) {
-      case llvm::Triple::Android:
-      case llvm::Triple::GNUEABI:
-      case llvm::Triple::GNUEABIHF:
-      case llvm::Triple::EABIHF:
-      case llvm::Triple::EABI:
-        TargetABI = ARM_ABI_AAPCS;
-        break;
-      case llvm::Triple::GNU:
-	TargetABI = ARM_ABI_APCS;
-	break;
-      default:
-        if (TargetTriple.getOS() == llvm::Triple::NetBSD)
-          TargetABI = ARM_ABI_APCS;
-        else
-          TargetABI = ARM_ABI_AAPCS;
-        break;
-      }
-    }
-  }
-
   // FIXME: this is invalid for WindowsCE
   if (isTargetWindows())
     NoARM = true;
@@ -344,6 +308,15 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   if ((Bits & ARM::ProcA5 || Bits & ARM::ProcA8) && // Where this matters
       (Options.UnsafeFPMath || isTargetDarwin()))
     UseNEONForSinglePrecisionFP = true;
+}
+
+bool ARMSubtarget::isAPCS_ABI() const {
+  assert(TM.TargetABI != ARMBaseTargetMachine::ARM_ABI_UNKNOWN);
+  return TM.TargetABI == ARMBaseTargetMachine::ARM_ABI_APCS;
+}
+bool ARMSubtarget::isAAPCS_ABI() const {
+  assert(TM.TargetABI != ARMBaseTargetMachine::ARM_ABI_UNKNOWN);
+  return TM.TargetABI == ARMBaseTargetMachine::ARM_ABI_AAPCS;
 }
 
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol.

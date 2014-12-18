@@ -58,3 +58,10 @@ StringRef TargetOptions::getTrapFunctionName() const {
 StringRef TargetOptions::getCFIFuncName() const {
   return CFIFuncName;
 }
+
+/// getABIName - If this returns a non-empty string this represents the
+/// textual name of the ABI that we want the backend to use, e.g. o32, or
+/// aapcs-linux.
+StringRef TargetOptions::getABIName() const {
+  return ABIName;
+}

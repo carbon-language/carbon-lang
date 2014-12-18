@@ -37,6 +37,7 @@ namespace llvm {
 class GlobalValue;
 class StringRef;
 class TargetOptions;
+class ARMBaseTargetMachine;
 
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
@@ -225,18 +226,14 @@ protected:
   /// Options passed via command line that could influence the target
   const TargetOptions &Options;
 
- public:
-  enum {
-    ARM_ABI_UNKNOWN,
-    ARM_ABI_APCS,
-    ARM_ABI_AAPCS // ARM EABI
-  } TargetABI;
+  const ARMBaseTargetMachine &TM;
 
+public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ///
   ARMSubtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, const TargetMachine &TM, bool IsLittle);
+               const std::string &FS, const ARMBaseTargetMachine &TM, bool IsLittle);
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
   /// that still makes it profitable to inline the call.
@@ -388,14 +385,8 @@ public:
     return TargetTriple.getEnvironment() == Triple::Android;
   }
 
-  bool isAPCS_ABI() const {
-    assert(TargetABI != ARM_ABI_UNKNOWN);
-    return TargetABI == ARM_ABI_APCS;
-  }
-  bool isAAPCS_ABI() const {
-    assert(TargetABI != ARM_ABI_UNKNOWN);
-    return TargetABI == ARM_ABI_AAPCS;
-  }
+  bool isAPCS_ABI() const;
+  bool isAAPCS_ABI() const;
 
   bool isThumb() const { return InThumbMode; }
   bool isThumb1Only() const { return InThumbMode && !HasThumb2; }

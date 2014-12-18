@@ -52,6 +52,57 @@ static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
   return make_unique<ARMElfTargetObjectFile>();
 }
 
+static ARMBaseTargetMachine::ARMABI
+computeTargetABI(const Triple &TT, StringRef CPU,
+                 const TargetOptions &Options) {
+  if (Options.getABIName().startswith("aapcs"))
+    return ARMBaseTargetMachine::ARM_ABI_AAPCS;
+  else if (Options.getABIName().startswith("apcs"))
+    return ARMBaseTargetMachine::ARM_ABI_APCS;
+
+  assert(Options.getABIName().empty() && "Unknown target-abi option!");
+
+  ARMBaseTargetMachine::ARMABI TargetABI =
+      ARMBaseTargetMachine::ARM_ABI_UNKNOWN;
+
+  // FIXME: This is duplicated code from the front end and should be unified.
+  if (TT.isOSBinFormatMachO()) {
+    if (TT.getEnvironment() == llvm::Triple::EABI ||
+        (TT.getOS() == llvm::Triple::UnknownOS &&
+         TT.getObjectFormat() == llvm::Triple::MachO) ||
+        CPU.startswith("cortex-m")) {
+      TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS;
+    } else {
+      TargetABI = ARMBaseTargetMachine::ARM_ABI_APCS;
+    }
+  } else if (TT.isOSWindows()) {
+    // FIXME: this is invalid for WindowsCE
+    TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS;
+  } else {
+    // Select the default based on the platform.
+    switch (TT.getEnvironment()) {
+    case llvm::Triple::Android:
+    case llvm::Triple::GNUEABI:
+    case llvm::Triple::GNUEABIHF:
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::EABI:
+      TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS;
+      break;
+    case llvm::Triple::GNU:
+      TargetABI = ARMBaseTargetMachine::ARM_ABI_APCS;
+      break;
+    default:
+      if (TT.getOS() == llvm::Triple::NetBSD)
+	TargetABI = ARMBaseTargetMachine::ARM_ABI_APCS;
+      else
+	TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS;
+      break;
+    }
+  }
+
+  return TargetABI;
+}
+
 /// TargetMachine ctor - Create an ARM architecture model.
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
@@ -60,6 +111,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL, bool isLittle)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      TargetABI(computeTargetABI(Triple(TT), CPU, Options)),
       TLOF(createTLOF(Triple(getTargetTriple()))),
       Subtarget(TT, CPU, FS, *this, isLittle), isLittle(isLittle) {
 

@@ -22,6 +22,13 @@
 namespace llvm {
 
 class ARMBaseTargetMachine : public LLVMTargetMachine {
+public:
+  enum ARMABI {
+    ARM_ABI_UNKNOWN,
+    ARM_ABI_APCS,
+    ARM_ABI_AAPCS // ARM EABI
+  } TargetABI;
+
 protected:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   ARMSubtarget        Subtarget;
