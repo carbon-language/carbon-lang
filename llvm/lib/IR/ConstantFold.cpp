@@ -956,12 +956,18 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       // X >>l undef -> undef
       if (isa<UndefValue>(C2))
         return C2;
+      // undef >>l 0 -> undef
+      if (match(C2, m_Zero()))
+        return C1;
       // undef >>l X -> 0
       return Constant::getNullValue(C1->getType());
     case Instruction::AShr:
       // X >>a undef -> undef
       if (isa<UndefValue>(C2))
         return C2;
+      // undef >>a 0 -> undef
+      if (match(C2, m_Zero()))
+        return C1;
       // TODO: undef >>a X -> undef if the shift is exact
       // undef >>a X -> 0
       return Constant::getNullValue(C1->getType());
@@ -969,6 +975,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       // X << undef -> undef
       if (isa<UndefValue>(C2))
         return C2;
+      // undef << 0 -> undef
+      if (match(C2, m_Zero()))
+        return C1;
       // undef << X -> 0
       return Constant::getNullValue(C1->getType());
     }
