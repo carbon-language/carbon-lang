@@ -590,11 +590,11 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
   } else if (FPU == "neon") {
     Features.push_back("+neon");
   } else if (FPU == "neon-vfpv3") {
-    Features.push_back("+vfpv3");
+    Features.push_back("+vfp3");
     Features.push_back("+neon");
   } else if (FPU == "neon-vfpv4") {
     Features.push_back("+neon");
-    Features.push_back("+vfpv4");
+    Features.push_back("+vfp4");
   } else if (FPU == "none") {
     Features.push_back("-vfp2");
     Features.push_back("-vfp3");

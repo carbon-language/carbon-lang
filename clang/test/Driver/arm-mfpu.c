@@ -88,13 +88,13 @@
 
 // RUN: %clang -target arm-linux-eabi -mfpu=neon-vfpv3 %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON-VFPV3 %s
-// CHECK-NEON-VFPV3: "-target-feature" "+vfpv3"
+// CHECK-NEON-VFPV3: "-target-feature" "+vfp3"
 // CHECK-NEON-VFPV3: "-target-feature" "+neon"
 
 // RUN: %clang -target arm-linux-eabi -mfpu=neon-vfpv4 %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON-VFPV4 %s
 // CHECK-NEON-VFPV4: "-target-feature" "+neon"
-// CHECK-NEON-VFPV4: "-target-feature" "+vfpv4"
+// CHECK-NEON-VFPV4: "-target-feature" "+vfp4"
 
 // RUN: %clang -target arm-linux-eabi -msoft-float %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-FLOAT %s
