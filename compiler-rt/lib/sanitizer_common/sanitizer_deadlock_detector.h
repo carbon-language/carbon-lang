@@ -178,6 +178,7 @@ class DeadlockDetector {
     recycled_nodes_.clear();
     available_nodes_.setAll();
     g_.clear();
+    n_edges_ = 0;
     return getAvailableNode(data);
   }
 
