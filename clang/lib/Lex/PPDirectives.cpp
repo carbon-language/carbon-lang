@@ -100,18 +100,56 @@ void Preprocessor::DiscardUntilEndOfDirective() {
   } while (Tmp.isNot(tok::eod));
 }
 
-static bool shouldWarnOnMacroDef(Preprocessor &PP, IdentifierInfo *II) {
-  const LangOptions &Lang = PP.getLangOpts();
-  StringRef Text = II->getName();
-  // Do not warn on keyword undef.  It is generally harmless and widely used.
-  if (II->isKeyword(Lang))
-    return true;
-  if (Lang.CPlusPlus && (Text.equals("override") || Text.equals("final")))
-    return true;
+/// \brief Enumerates possible cases of #define/#undef a reserved identifier.
+enum MacroDiag {
+  MD_NoWarn,        //> Not a reserved identifier
+  MD_KeywordDef,    //> Macro hides keyword, enabled by default
+  MD_ReservedMacro  //> #define of #undef reserved id, disabled by default
+};
+
+/// \brief Checks if the specified identifier is reserved in the specified
+/// language.
+/// This function does not check if the identifier is a keyword.
+static bool isReservedId(StringRef Text, const LangOptions &Lang) {
+  // C++ [macro.names], C11 7.1.3:
+  // All identifiers that begin with an underscore and either an uppercase
+  // letter or another underscore are always reserved for any use.
+  if (Text.size() >= 2 && Text[0] == '_' &&
+      (isUppercase(Text[1]) || Text[1] == '_'))
+      return true;
+  // C++ [global.names]
+  // Each name that contains a double underscore ... is reserved to the
+  // implementation for any use.
+  if (Lang.CPlusPlus) {
+    if (Text.find("__") != StringRef::npos)
+      return true;
+  }
   return false;
 }
 
-bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
+static MacroDiag shouldWarnOnMacroDef(Preprocessor &PP, IdentifierInfo *II) {
+  const LangOptions &Lang = PP.getLangOpts();
+  StringRef Text = II->getName();
+  if (isReservedId(Text, Lang))
+    return MD_ReservedMacro;
+  if (II->isKeyword(Lang))
+    return MD_KeywordDef;
+  if (Lang.CPlusPlus11 && (Text.equals("override") || Text.equals("final")))
+    return MD_KeywordDef;
+  return MD_NoWarn;
+}
+
+static MacroDiag shouldWarnOnMacroUndef(Preprocessor &PP, IdentifierInfo *II) {
+  const LangOptions &Lang = PP.getLangOpts();
+  StringRef Text = II->getName();
+  // Do not warn on keyword undef.  It is generally harmless and widely used.
+  if (isReservedId(Text, Lang))
+    return MD_ReservedMacro;
+  return MD_NoWarn;
+}
+
+bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef,
+                                  bool *ShadowFlag) {
   // Missing macro name?
   if (MacroNameTok.is(tok::eod))
     return Diag(MacroNameTok, diag::err_pp_missing_macro_name);
@@ -151,12 +189,28 @@ bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
     Diag(MacroNameTok, diag::ext_pp_undef_builtin_macro);
   }
 
-  // Warn if defining/undefining reserved identifier including keywords.
+  // If defining/undefining reserved identifier or a keyword, we need to issue
+  // a warning.
   SourceLocation MacroNameLoc = MacroNameTok.getLocation();
+  if (ShadowFlag)
+    *ShadowFlag = false;
   if (!SourceMgr.isInSystemHeader(MacroNameLoc) &&
       (strcmp(SourceMgr.getBufferName(MacroNameLoc), "<built-in>") != 0)) {
-    if (isDefineUndef == MU_Define && shouldWarnOnMacroDef(*this, II))
-      Diag(MacroNameTok, diag::warn_pp_macro_hides_keyword);
+    MacroDiag D = MD_NoWarn;
+    if (isDefineUndef == MU_Define) {
+      D = shouldWarnOnMacroDef(*this, II);
+    }
+    else if (isDefineUndef == MU_Undef)
+      D = shouldWarnOnMacroUndef(*this, II);
+    if (D == MD_KeywordDef) {
+      // We do not want to warn on some patterns widely used in configuration
+      // scripts.  This requires analyzing next tokens, so do not issue warnings
+      // now, only inform caller.
+      if (ShadowFlag)
+        *ShadowFlag = true;
+    }
+    if (D == MD_ReservedMacro)
+      Diag(MacroNameTok, diag::warn_pp_macro_is_reserved_id);
   }
 
   // Okay, we got a good identifier.
@@ -170,8 +224,10 @@ bool Preprocessor::CheckMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
 /// the macro name is invalid.
 ///
 /// \param MacroNameTok Token that is expected to be a macro name.
-/// \papam isDefineUndef Context in which macro is used.
-void Preprocessor::ReadMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
+/// \param isDefineUndef Context in which macro is used.
+/// \param ShadowFlag Points to a flag that is set if macro shadows a keyword.
+void Preprocessor::ReadMacroName(Token &MacroNameTok, MacroUse isDefineUndef,
+                                 bool *ShadowFlag) {
   // Read the token, don't allow macro expansion on it.
   LexUnexpandedToken(MacroNameTok);
 
@@ -182,7 +238,7 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, MacroUse isDefineUndef) {
     LexUnexpandedToken(MacroNameTok);
   }
 
-  if (!CheckMacroName(MacroNameTok, isDefineUndef))
+  if (!CheckMacroName(MacroNameTok, isDefineUndef, ShadowFlag))
     return;
 
   // Invalid macro name, read and discard the rest of the line and set the
@@ -1918,6 +1974,52 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI, Token &Tok) {
   }
 }
 
+static bool isConfigurationPattern(Token &MacroName, MacroInfo *MI,
+                                   const LangOptions &LOptions) {
+  if (MI->getNumTokens() == 1) {
+    const Token &Value = MI->getReplacementToken(0);
+
+    // Macro that is identity, like '#define inline inline' is a valid pattern.
+    if (MacroName.getKind() == Value.getKind())
+      return true;
+
+    // Macro that maps a keyword to the same keyword decorated with leading/
+    // trailing underscores is a valid pattern:
+    //    #define inline __inline
+    //    #define inline __inline__
+    //    #define inline _inline (in MS compatibility mode)
+    StringRef MacroText = MacroName.getIdentifierInfo()->getName();
+    if (IdentifierInfo *II = Value.getIdentifierInfo()) {
+      if (!II->isKeyword(LOptions))
+        return false;
+      StringRef ValueText = II->getName();
+      StringRef TrimmedValue = ValueText;
+      if (!ValueText.startswith("__")) {
+        if (ValueText.startswith("_"))
+          TrimmedValue = TrimmedValue.drop_front(1);
+        else
+          return false;
+      } else {
+        TrimmedValue = TrimmedValue.drop_front(2);
+        if (TrimmedValue.endswith("__"))
+          TrimmedValue = TrimmedValue.drop_back(2);
+      }
+      return TrimmedValue.equals(MacroText);
+    } else {
+      return false;
+    }
+  }
+
+  // #define inline
+  if ((MacroName.is(tok::kw_extern) || MacroName.is(tok::kw_inline) ||
+       MacroName.is(tok::kw_static) || MacroName.is(tok::kw_const)) &&
+      MI->getNumTokens() == 0) {
+    return true;
+  }
+
+  return false;
+}
+
 /// HandleDefineDirective - Implements \#define.  This consumes the entire macro
 /// line then lets the caller lex the next real token.
 void Preprocessor::HandleDefineDirective(Token &DefineTok,
@@ -1925,7 +2027,8 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   ++NumDefined;
 
   Token MacroNameTok;
-  ReadMacroName(MacroNameTok, MU_Define);
+  bool MacroShadowsKeyword;
+  ReadMacroName(MacroNameTok, MU_Define, &MacroShadowsKeyword);
 
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.is(tok::eod))
@@ -2102,6 +2205,10 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
     }
   }
 
+  if (MacroShadowsKeyword &&
+      !isConfigurationPattern(MacroNameTok, MI, getLangOpts())) {
+    Diag(MacroNameTok, diag::warn_pp_macro_hides_keyword);
+  }
 
   // Disable __VA_ARGS__ again.
   Ident__VA_ARGS__->setIsPoisoned(true);
