@@ -4029,12 +4029,14 @@ def VSTMXCSR : VPSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
                   "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)],
                   IIC_SSE_STMXCSR>, VEX, Sched<[WriteStore]>;
 
-def LDMXCSR : PSI<0xAE, MRM2m, (outs), (ins i32mem:$src),
-                  "ldmxcsr\t$src", [(int_x86_sse_ldmxcsr addr:$src)],
-                  IIC_SSE_LDMXCSR>, Sched<[WriteLoad]>;
-def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
-                  "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)],
-                  IIC_SSE_STMXCSR>, Sched<[WriteStore]>;
+let Predicates = [UseSSE1] in {
+def LDMXCSR : I<0xAE, MRM2m, (outs), (ins i32mem:$src),
+                "ldmxcsr\t$src", [(int_x86_sse_ldmxcsr addr:$src)],
+                IIC_SSE_LDMXCSR>, TB, Sched<[WriteLoad]>;
+def STMXCSR : I<0xAE, MRM3m, (outs), (ins i32mem:$dst),
+                "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)],
+                IIC_SSE_STMXCSR>, TB, Sched<[WriteStore]>;
+}
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Move Aligned/Unaligned Packed Integer Instructions
