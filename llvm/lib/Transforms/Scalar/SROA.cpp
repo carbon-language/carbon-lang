@@ -729,7 +729,9 @@ AllocaSlices::AllocaSlices(const DataLayout &DL, AllocaInst &AI)
   }
 
   Slices.erase(std::remove_if(Slices.begin(), Slices.end(),
-                              std::mem_fun_ref(&Slice::isDead)),
+                              [](const Slice &S) {
+                                return S.isDead();
+                              }),
                Slices.end());
 
 #if __cplusplus >= 201103L && !defined(NDEBUG)
