@@ -462,3 +462,193 @@ entry:
   %d = and <8 x i64> %p1, %c
   ret <8 x i64>%d
 }
+
+; CHECK-LABEL: test_mask_vaddps
+; CHECK: vaddps {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <16 x float> @test_mask_vaddps(<16 x float> %dst, <16 x float> %i,
+                                     <16 x float> %j, <16 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = fadd <16 x float> %i, %j
+  %r = select <16 x i1> %mask, <16 x float> %x, <16 x float> %dst
+  ret <16 x float> %r
+}
+
+; CHECK-LABEL: test_mask_vmulps
+; CHECK: vmulps {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <16 x float> @test_mask_vmulps(<16 x float> %dst, <16 x float> %i,
+                                     <16 x float> %j, <16 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = fmul <16 x float> %i, %j
+  %r = select <16 x i1> %mask, <16 x float> %x, <16 x float> %dst
+  ret <16 x float> %r
+}
+
+; CHECK-LABEL: test_mask_vminps
+; CHECK: vminps {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <16 x float> @test_mask_vminps(<16 x float> %dst, <16 x float> %i,
+                                     <16 x float> %j, <16 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %cmp_res = fcmp olt <16 x float> %i, %j
+  %min = select <16 x i1> %cmp_res, <16 x float> %i, <16 x float> %j
+  %r = select <16 x i1> %mask, <16 x float> %min, <16 x float> %dst
+  ret <16 x float> %r
+}
+
+; CHECK-LABEL: test_mask_vminpd
+; CHECK: vminpd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <8 x double> @test_mask_vminpd(<8 x double> %dst, <8 x double> %i,
+                                     <8 x double> %j, <8 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <8 x i32> %mask1, zeroinitializer
+  %cmp_res = fcmp olt <8 x double> %i, %j
+  %min = select <8 x i1> %cmp_res, <8 x double> %i, <8 x double> %j
+  %r = select <8 x i1> %mask, <8 x double> %min, <8 x double> %dst
+  ret <8 x double> %r
+}
+
+; CHECK-LABEL: test_mask_vmaxps
+; CHECK: vmaxps {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <16 x float> @test_mask_vmaxps(<16 x float> %dst, <16 x float> %i,
+                                     <16 x float> %j, <16 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %cmp_res = fcmp ogt <16 x float> %i, %j
+  %max = select <16 x i1> %cmp_res, <16 x float> %i, <16 x float> %j
+  %r = select <16 x i1> %mask, <16 x float> %max, <16 x float> %dst
+  ret <16 x float> %r
+}
+
+; CHECK-LABEL: test_mask_vmaxpd
+; CHECK: vmaxpd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <8 x double> @test_mask_vmaxpd(<8 x double> %dst, <8 x double> %i,
+                                     <8 x double> %j, <8 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <8 x i32> %mask1, zeroinitializer
+  %cmp_res = fcmp ogt <8 x double> %i, %j
+  %max = select <8 x i1> %cmp_res, <8 x double> %i, <8 x double> %j
+  %r = select <8 x i1> %mask, <8 x double> %max, <8 x double> %dst
+  ret <8 x double> %r
+}
+
+; CHECK-LABEL: test_mask_vsubps
+; CHECK: vsubps {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <16 x float> @test_mask_vsubps(<16 x float> %dst, <16 x float> %i,
+                                     <16 x float> %j, <16 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = fsub <16 x float> %i, %j
+  %r = select <16 x i1> %mask, <16 x float> %x, <16 x float> %dst
+  ret <16 x float> %r
+}
+
+; CHECK-LABEL: test_mask_vdivps
+; CHECK: vdivps {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <16 x float> @test_mask_vdivps(<16 x float> %dst, <16 x float> %i,
+                                     <16 x float> %j, <16 x i32> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = fdiv <16 x float> %i, %j
+  %r = select <16 x i1> %mask, <16 x float> %x, <16 x float> %dst
+  ret <16 x float> %r
+}
+
+; CHECK-LABEL: test_mask_vaddpd
+; CHECK: vaddpd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}}
+; CHECK: ret
+define <8 x double> @test_mask_vaddpd(<8 x double> %dst, <8 x double> %i,
+                                     <8 x double> %j, <8 x i64> %mask1)
+                                     nounwind readnone {
+  %mask = icmp ne <8 x i64> %mask1, zeroinitializer
+  %x = fadd <8 x double> %i, %j
+  %r = select <8 x i1> %mask, <8 x double> %x, <8 x double> %dst
+  ret <8 x double> %r
+}
+
+; CHECK-LABEL: test_maskz_vaddpd
+; CHECK: vaddpd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} {z}}}
+; CHECK: ret
+define <8 x double> @test_maskz_vaddpd(<8 x double> %i, <8 x double> %j,
+                                      <8 x i64> %mask1) nounwind readnone {
+  %mask = icmp ne <8 x i64> %mask1, zeroinitializer
+  %x = fadd <8 x double> %i, %j
+  %r = select <8 x i1> %mask, <8 x double> %x, <8 x double> zeroinitializer
+  ret <8 x double> %r
+}
+
+; CHECK-LABEL: test_mask_fold_vaddpd
+; CHECK: vaddpd (%rdi), {{.*%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}.*}}
+; CHECK: ret
+define <8 x double> @test_mask_fold_vaddpd(<8 x double> %dst, <8 x double> %i,
+                                     <8 x double>* %j,  <8 x i64> %mask1)
+                                     nounwind {
+  %mask = icmp ne <8 x i64> %mask1, zeroinitializer
+  %tmp = load <8 x double>* %j, align 8
+  %x = fadd <8 x double> %i, %tmp
+  %r = select <8 x i1> %mask, <8 x double> %x, <8 x double> %dst
+  ret <8 x double> %r
+}
+
+; CHECK-LABEL: test_maskz_fold_vaddpd
+; CHECK: vaddpd (%rdi), {{.*%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} {z}.*}}
+; CHECK: ret
+define <8 x double> @test_maskz_fold_vaddpd(<8 x double> %i, <8 x double>* %j,
+                                      <8 x i64> %mask1) nounwind {
+  %mask = icmp ne <8 x i64> %mask1, zeroinitializer
+  %tmp = load <8 x double>* %j, align 8
+  %x = fadd <8 x double> %i, %tmp
+  %r = select <8 x i1> %mask, <8 x double> %x, <8 x double> zeroinitializer
+  ret <8 x double> %r
+}
+
+; CHECK-LABEL: test_broadcast_vaddpd
+; CHECK: vaddpd (%rdi){1to8}, %zmm{{.*}}
+; CHECK: ret
+define <8 x double> @test_broadcast_vaddpd(<8 x double> %i, double* %j) nounwind {
+  %tmp = load double* %j
+  %b = insertelement <8 x double> undef, double %tmp, i32 0
+  %c = shufflevector <8 x double> %b, <8 x double> undef,
+                     <8 x i32> zeroinitializer
+  %x = fadd <8 x double> %c, %i
+  ret <8 x double> %x
+}
+
+; CHECK-LABEL: test_mask_broadcast_vaddpd
+; CHECK: vaddpd (%rdi){1to8}, %zmm{{.*{%k[1-7]}.*}}
+; CHECK: ret
+define <8 x double> @test_mask_broadcast_vaddpd(<8 x double> %dst, <8 x double> %i,
+                                      double* %j, <8 x i64> %mask1) nounwind {
+  %mask = icmp ne <8 x i64> %mask1, zeroinitializer
+  %tmp = load double* %j
+  %b = insertelement <8 x double> undef, double %tmp, i32 0
+  %c = shufflevector <8 x double> %b, <8 x double> undef,
+                     <8 x i32> zeroinitializer
+  %x = fadd <8 x double> %c, %i
+  %r = select <8 x i1> %mask, <8 x double> %x, <8 x double> %i
+  ret <8 x double> %r
+}
+
+; CHECK-LABEL: test_maskz_broadcast_vaddpd
+; CHECK: vaddpd (%rdi){1to8}, %zmm{{.*{%k[1-7]} {z}.*}}
+; CHECK: ret
+define <8 x double> @test_maskz_broadcast_vaddpd(<8 x double> %i, double* %j,
+                                       <8 x i64> %mask1) nounwind {
+  %mask = icmp ne <8 x i64> %mask1, zeroinitializer
+  %tmp = load double* %j
+  %b = insertelement <8 x double> undef, double %tmp, i32 0
+  %c = shufflevector <8 x double> %b, <8 x double> undef,
+                     <8 x i32> zeroinitializer
+  %x = fadd <8 x double> %c, %i
+  %r = select <8 x i1> %mask, <8 x double> %x, <8 x double> zeroinitializer
+  ret <8 x double> %r
+}

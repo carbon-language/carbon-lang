@@ -6213,7 +6213,8 @@ static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
   if (!IsLoad)
     return SDValue();
 
-  if (ScalarSize == 32 || (IsGE256 && ScalarSize == 64))
+  if (ScalarSize == 32 || (IsGE256 && ScalarSize == 64) ||
+      (Subtarget->hasVLX() && ScalarSize == 64))
     return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
 
   // The integer check is needed for the 64-bit into 128-bit so it doesn't match

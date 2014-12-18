@@ -3009,6 +3009,7 @@ let Predicates = [HasAVX1Only] in {
 /// classes below
 multiclass basic_sse12_fp_binop_p<bits<8> opc, string OpcodeStr,
                                   SDNode OpNode, SizeItins itins> {
+  let Predicates = [HasAVX, NoVLX] in {
   defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
                                VR128, v4f32, f128mem, loadv4f32,
                                SSEPackedSingle, itins.s, 0>, PS, VEX_4V;
@@ -3022,6 +3023,7 @@ multiclass basic_sse12_fp_binop_p<bits<8> opc, string OpcodeStr,
   defm V#NAME#PDY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"),
                         OpNode, VR256, v4f64, f256mem, loadv4f64,
                         SSEPackedDouble, itins.d, 0>, PD, VEX_4V, VEX_L;
+  }
 
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR128,

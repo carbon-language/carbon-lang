@@ -152,6 +152,7 @@ class X86InstrInfo final : public X86GenInstrInfo {
   RegOp2MemOpTableType RegOp2MemOpTable1;
   RegOp2MemOpTableType RegOp2MemOpTable2;
   RegOp2MemOpTableType RegOp2MemOpTable3;
+  RegOp2MemOpTableType RegOp2MemOpTable4;
 
   /// MemOp2RegOpTable - Load / store unfolding opcode map.
   ///
