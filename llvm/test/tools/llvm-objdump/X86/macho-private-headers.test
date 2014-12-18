@@ -5,6 +5,8 @@
 // RUN:     | FileCheck %s -check-prefix=LOAD
 // RUN: llvm-objdump -p %p/Inputs/linkerOption.macho-x86_64 \
 // RUN:     | FileCheck %s -check-prefix=LD_OPT
+// RUN: llvm-objdump -p %p/Inputs/dylibSubFramework.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=SUB_FRAME
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -379,3 +381,8 @@ LD_OPT:  cmdsize 40
 LD_OPT:    count 2
 LD_OPT:   string #1 -framework
 LD_OPT:   string #2 Foundation
+
+SUB_FRAME: Load command 10
+SUB_FRAME:           cmd LC_SUB_FRAMEWORK
+SUB_FRAME:       cmdsize 16
+SUB_FRAME:      umbrella Bar (offset 12)

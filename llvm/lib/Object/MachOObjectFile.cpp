@@ -2309,6 +2309,10 @@ MachOObjectFile::getEncryptionInfoCommand64(const LoadCommandInfo &L) const {
   return getStruct<MachO::encryption_info_command_64>(this, L.Ptr);
 }
 
+MachO::sub_framework_command
+MachOObjectFile::getSubFrameworkCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::sub_framework_command>(this, L.Ptr);
+}
 
 MachO::any_relocation_info
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {

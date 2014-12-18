@@ -1107,6 +1107,12 @@ namespace llvm {
       sys::swapByteOrder(d.dylib.compatibility_version);
     }
 
+    inline void swapStruct(sub_framework_command &s) {
+      sys::swapByteOrder(s.cmd);
+      sys::swapByteOrder(s.cmdsize);
+      sys::swapByteOrder(s.umbrella);
+    };
+
     inline void swapStruct(dylinker_command &d) {
       sys::swapByteOrder(d.cmd);
       sys::swapByteOrder(d.cmdsize);
