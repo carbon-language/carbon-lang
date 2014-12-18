@@ -34,3 +34,20 @@
      return 0;
 }
 @end
+
+// rdar://19137815
+#pragma clang diagnostic ignored "-Wunused-getter-return-value"
+
+@interface NSObject @end
+
+@interface I : NSObject
+@property (copy) id window;
+@end
+
+@implementation I
+- (void) Meth {
+  [self window];
+  self.window;
+}
+@end
+
