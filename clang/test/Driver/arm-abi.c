@@ -1,12 +1,12 @@
-// The default ABI is apcs
+// The default ABI is aapcs
 // RUN: %clang -target arm--- %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK-APCS-GNU %s
+// RUN:   | FileCheck -check-prefix=CHECK-AAPCS %s
 // RUN: %clang -target armeb--- %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK-APCS-GNU %s
+// RUN:   | FileCheck -check-prefix=CHECK-AAPCS %s
 // RUN: %clang -target thumb--- %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK-APCS-GNU %s
+// RUN:   | FileCheck -check-prefix=CHECK-AAPCS %s
 // RUN: %clang -target thumbeb--- %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK-APCS-GNU %s
+// RUN:   | FileCheck -check-prefix=CHECK-AAPCS %s
 
 // MachO targets default to apcs-gnu, except for m-class processors
 // RUN: %clang -target arm--darwin- -arch armv7s %s -### -o %t.o 2>&1 \
