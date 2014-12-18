@@ -17,6 +17,14 @@
 using namespace lldb;
 using namespace lldb_private;
 
+namespace
+{
+void __stdcall ExitThreadProxy(ULONG_PTR dwExitCode)
+{
+    ::ExitThread(dwExitCode);
+}
+}
+
 HostThreadWindows::HostThreadWindows()
     : HostNativeThreadBase()
     , m_owns_handle(true)
@@ -69,7 +77,7 @@ HostThreadWindows::Cancel()
 {
     Error error;
 
-    DWORD result = ::QueueUserAPC(::ExitThread, m_thread, 0);
+    DWORD result = ::QueueUserAPC(::ExitThreadProxy, m_thread, 0);
     error.SetError(result, eErrorTypeWin32);
     return error;
 }

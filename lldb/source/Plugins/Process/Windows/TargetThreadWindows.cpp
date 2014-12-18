@@ -15,8 +15,11 @@
 
 #include "TargetThreadWindows.h"
 #include "ProcessWindows.h"
-#include "RegisterContextWindows_x86.h"
 #include "UnwindLLDB.h"
+
+#if !defined(_WIN64)
+#include "x86/RegisterContextWindows_x86.h"
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -72,10 +75,19 @@ TargetThreadWindows::CreateRegisterContextForFrameIndex(uint32_t idx)
         switch (arch.GetMachine())
         {
             case llvm::Triple::x86:
+#if defined(_WIN64)
+                // FIXME: This is a Wow64 process, create a RegisterContextWindows_Wow64
+#else
                 m_reg_context_sp.reset(new RegisterContextWindows_x86(*this, idx));
+#endif
                 break;
+            case llvm::Triple::x86_64:
+#if defined(_WIN64)
+                // FIXME: This is a 64-bit process, create a RegisterContextWindows_x86_64
+#else
+                // LLDB is 32-bit, but the target process is 64-bit.  We probably can't debug this.
+#endif
             default:
-                // FIXME: Support x64 by creating a RegisterContextWindows_x86_64
                 break;
         }
     }
