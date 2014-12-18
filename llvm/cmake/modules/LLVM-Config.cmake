@@ -152,29 +152,39 @@ function(llvm_map_components_to_libnames out_libs)
   set(${out_libs} ${expanded_components} PARENT_SCOPE)
 endfunction()
 
+# Perform a post-order traversal of the dependency graph.
+# This duplicates the algorithm used by llvm-config, originally
+# in tools/llvm-config/llvm-config.cpp, function ComputeLibsForComponents.
+function(expand_topologically name required_libs visited_libs)
+  list(FIND visited_libs ${name} found)
+  if( found LESS 0 )
+    list(APPEND visited_libs ${name})
+    set(visited_libs ${visited_libs} PARENT_SCOPE)
+
+    get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${name})
+    foreach( lib_dep ${lib_deps} )
+      expand_topologically(${lib_dep} "${required_libs}" "${visited_libs}")
+      set(required_libs ${required_libs} PARENT_SCOPE)
+      set(visited_libs ${visited_libs} PARENT_SCOPE)
+    endforeach()
+
+    list(APPEND required_libs ${name})
+    set(required_libs ${required_libs} PARENT_SCOPE)
+  endif()
+endfunction()
+
 # Expand dependencies while topologically sorting the list of libraries:
 function(llvm_expand_dependencies out_libs)
   set(expanded_components ${ARGN})
-  list(LENGTH expanded_components lst_size)
-  set(cursor 0)
-  set(processed)
-  while( cursor LESS lst_size )
-    list(GET expanded_components ${cursor} lib)
-    get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${lib})
-    list(APPEND expanded_components ${lib_deps})
-    # Remove duplicates at the front:
-    list(REVERSE expanded_components)
-    list(REMOVE_DUPLICATES expanded_components)
-    list(REVERSE expanded_components)
-    list(APPEND processed ${lib})
-    # Find the maximum index that doesn't have to be re-processed:
-    while(NOT "${expanded_components}" MATCHES "^${processed}.*" )
-      list(REMOVE_AT processed -1)
-    endwhile()
-    list(LENGTH processed cursor)
-    list(LENGTH expanded_components lst_size)
-  endwhile( cursor LESS lst_size )
-  set(${out_libs} ${expanded_components} PARENT_SCOPE)
+
+  set(required_libs)
+  set(visited_libs)
+  foreach( lib ${expanded_components} )
+    expand_topologically(${lib} "${required_libs}" "${visited_libs}")
+  endforeach()
+
+  list(REVERSE required_libs)
+  set(${out_libs} ${required_libs} PARENT_SCOPE)
 endfunction()
 
 function(explicit_map_components_to_libraries out_libs)
