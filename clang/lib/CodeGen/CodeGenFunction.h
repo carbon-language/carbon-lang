@@ -2746,28 +2746,13 @@ public:
                 E = CallArgTypeInfo->param_type_end();
            I != E; ++I, ++Arg) {
         assert(Arg != ArgEnd && "Running over edge of argument list!");
-#ifndef NDEBUG
-        QualType ArgType = *I;
-        QualType ActualArgType = Arg->getType();
-        if (ArgType->isPointerType() && ActualArgType->isPointerType()) {
-          QualType ActualBaseType =
-              ActualArgType->getAs<PointerType>()->getPointeeType();
-          QualType ArgBaseType =
-              ArgType->getAs<PointerType>()->getPointeeType();
-          if (ArgBaseType->isVariableArrayType()) {
-            if (const VariableArrayType *VAT =
-                    getContext().getAsVariableArrayType(ActualBaseType)) {
-              if (!VAT->getSizeExpr())
-                ActualArgType = ArgType;
-            }
-          }
-        }
-        assert(getContext()
-                       .getCanonicalType(ArgType.getNonReferenceType())
-                       .getTypePtr() ==
-                   getContext().getCanonicalType(ActualArgType).getTypePtr() &&
-               "type mismatch in call argument!");
-#endif
+        assert(
+            ((*I)->isVariablyModifiedType() ||
+             getContext()
+                     .getCanonicalType((*I).getNonReferenceType())
+                     .getTypePtr() ==
+                 getContext().getCanonicalType(Arg->getType()).getTypePtr()) &&
+            "type mismatch in call argument!");
         ArgTypes.push_back(*I);
       }
     }
