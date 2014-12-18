@@ -129,7 +129,6 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   case Action::AnalyzeJobClass:
   case Action::MigrateJobClass:
   case Action::VerifyPCHJobClass:
-  case Action::BackendJobClass:
     return getClang();
   }
 

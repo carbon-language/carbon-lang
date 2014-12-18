@@ -165,7 +165,7 @@ const {
       (PhaseArg = DAL.getLastArg(options::OPT__SLASH_P))) {
     FinalPhase = phases::Preprocess;
 
-    // -{fsyntax-only,-analyze,emit-ast} only run up to the compiler.
+    // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
   } else if ((PhaseArg = DAL.getLastArg(options::OPT_fsyntax_only)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_module_file_info)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_verify_pch)) ||
@@ -174,12 +174,9 @@ const {
              (PhaseArg = DAL.getLastArg(options::OPT__migrate)) ||
              (PhaseArg = DAL.getLastArg(options::OPT__analyze,
                                         options::OPT__analyze_auto)) ||
-             (PhaseArg = DAL.getLastArg(options::OPT_emit_ast))) {
+             (PhaseArg = DAL.getLastArg(options::OPT_emit_ast)) ||
+             (PhaseArg = DAL.getLastArg(options::OPT_S))) {
     FinalPhase = phases::Compile;
-
-    // -S only runs up to the backend.
-  } else if ((PhaseArg = DAL.getLastArg(options::OPT_S))) {
-    FinalPhase = phases::Backend;
 
     // -c only runs up to the assembler.
   } else if ((PhaseArg = DAL.getLastArg(options::OPT_c))) {
@@ -852,9 +849,7 @@ void Driver::PrintActions(const Compilation &C) const {
 /// \brief Check whether the given input tree contains any compilation or
 /// assembly actions.
 static bool ContainsCompileOrAssembleAction(const Action *A) {
-  if (isa<CompileJobAction>(A) ||
-      isa<BackendJobAction>(A) ||
-      isa<AssembleJobAction>(A))
+  if (isa<CompileJobAction>(A) || isa<AssembleJobAction>(A))
     return true;
 
   for (Action::const_iterator it = A->begin(), ie = A->end(); it != ie; ++it)
@@ -1351,21 +1346,17 @@ Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
     if (Args.hasArg(options::OPT_verify_pch))
       return llvm::make_unique<VerifyPCHJobAction>(std::move(Input),
                                                    types::TY_Nothing);
-    return llvm::make_unique<CompileJobAction>(std::move(Input),
-                                               types::TY_LLVM_BC);
-  }
-  case phases::Backend: {
     if (IsUsingLTO(Args)) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
-      return llvm::make_unique<BackendJobAction>(std::move(Input), Output);
+      return llvm::make_unique<CompileJobAction>(std::move(Input), Output);
     }
     if (Args.hasArg(options::OPT_emit_llvm)) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LLVM_IR : types::TY_LLVM_BC;
-      return llvm::make_unique<BackendJobAction>(std::move(Input), Output);
+      return llvm::make_unique<CompileJobAction>(std::move(Input), Output);
     }
-    return llvm::make_unique<BackendJobAction>(std::move(Input),
+    return llvm::make_unique<CompileJobAction>(std::move(Input),
                                                types::TY_PP_Asm);
   }
   case phases::Assemble:
@@ -1495,7 +1486,7 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
 
   // See if we should look for a compiler with an integrated assembler. We match
   // bottom up, so what we are actually looking for is an assembler job with a
-  // compiler or backend input.
+  // compiler input.
 
   if (TC->useIntegratedAs() &&
       !C.getArgs().hasArg(options::OPT_save_temps) &&
@@ -1503,14 +1494,12 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
       !C.getArgs().hasArg(options::OPT__SLASH_FA) &&
       !C.getArgs().hasArg(options::OPT__SLASH_Fa) &&
       isa<AssembleJobAction>(JA) &&
-      Inputs->size() == 1 && (isa<CompileJobAction>(*Inputs->begin()) ||
-                              isa<BackendJobAction>(*Inputs->begin()))) {
+      Inputs->size() == 1 && isa<CompileJobAction>(*Inputs->begin())) {
     const Tool *Compiler =
       TC->SelectTool(cast<JobAction>(**Inputs->begin()));
     if (!Compiler)
       return nullptr;
     if (Compiler->hasIntegratedAssembler()) {
-      JA = cast<JobAction>(*Inputs->begin());
       Inputs = &(*Inputs)[0]->getInputs();
       ToolForJob = Compiler;
     }
@@ -1519,12 +1508,6 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
   // Otherwise use the tool for the current job.
   if (!ToolForJob)
     ToolForJob = TC->SelectTool(*JA);
-
-  // Unless OPT_save_temps is enabled, combine the compile and backend jobs.
-  if (isa<BackendJobAction>(JA) &&
-      Inputs->size() == 1 && isa<CompileJobAction>(*Inputs->begin()) &&
-      !C.getArgs().hasArg(options::OPT_save_temps))
-    Inputs = &(*Inputs)[0]->getInputs();
 
   // See if we should use an integrated preprocessor. We do so when we have
   // exactly one input, since this is the only use case we care about
@@ -1768,12 +1751,6 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
       Suffixed += "-";
       Suffixed.append(BoundArch);
     }
-    // When using both -save-temps and -emit-llvm, use a ".tmp.bc" suffix for
-    // the unoptimized bitcode so that it does not get overwritten by the ".bc"
-    // optimized bitcode output.
-    if (!AtTopLevel && C.getArgs().hasArg(options::OPT_emit_llvm) &&
-        JA.getType() == types::TY_LLVM_BC)
-      Suffixed += ".tmp";
     Suffixed += '.';
     Suffixed += Suffix;
     NamedOutput = C.getArgs().MakeArgString(Suffixed.c_str());
@@ -2106,7 +2083,7 @@ bool Driver::ShouldUseClangCompiler(const JobAction &JA) const {
 
   // Otherwise make sure this is an action clang understands.
   if (!isa<PreprocessJobAction>(JA) && !isa<PrecompileJobAction>(JA) &&
-      !isa<CompileJobAction>(JA) && !isa<BackendJobAction>(JA))
+      !isa<CompileJobAction>(JA))
     return false;
 
   return true;

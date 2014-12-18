@@ -18,7 +18,6 @@ const char *phases::getPhaseName(ID Id) {
   case Preprocess: return "preprocessor";
   case Precompile: return "precompiler";
   case Compile: return "compiler";
-  case Backend: return "backend";
   case Assemble: return "assembler";
   case Link: return "linker";
   }
