@@ -149,6 +149,9 @@ GetPrintableImpl<StringElementType::ASCII> (uint8_t* buffer, uint8_t* buffer_end
     
     switch (*buffer)
     {
+        case 0:
+            retval = {"\\0",2};
+            break;
         case '\a':
             retval = {"\\a",2};
             break;
@@ -250,6 +253,9 @@ GetPrintableImpl<StringElementType::UTF8> (uint8_t* buffer, uint8_t* buffer_end,
     {
         switch (codepoint)
         {
+            case 0:
+                retval = {"\\0",2};
+                break;
             case '\a':
                 retval = {"\\a",2};
                 break;
