@@ -3899,6 +3899,9 @@ public:
       case llvm::Triple::EABI:
         setABI("aapcs");
         break;
+      case llvm::Triple::GNU:
+	setABI("apcs-gnu");
+	break;
       default:
         if (Triple.getOS() == llvm::Triple::NetBSD)
           setABI("apcs-gnu");

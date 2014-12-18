@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple arm-linux-gnu -emit-llvm %s -o - | FileCheck %s -check-prefix=ARM
+// RUN: %clang_cc1 -triple arm-linux-gnueabi -emit-llvm %s -o - | FileCheck %s -check-prefix=ARM
 // RUN: %clang_cc1 -triple powerpc-linux-gnu -emit-llvm %s -o - | FileCheck %s -check-prefix=PPC32
 // RUN: %clang_cc1 -triple powerpc64-linux-gnu -emit-llvm %s -o - | FileCheck %s -check-prefix=PPC64
 // RUN: %clang_cc1 -triple mipsel-linux-gnu -emit-llvm %s -o - | FileCheck %s -check-prefix=MIPS32
@@ -31,17 +31,17 @@ void test1(void) {
   (void)__atomic_load(&a1, &a2, memory_order_seq_cst);
   (void)__atomic_store(&a1, &a2, memory_order_seq_cst);
 
-// ARM-LABEL: define arm_aapcscc void @test1
-// ARM: = call arm_aapcscc zeroext i8 @__atomic_load_1(i8* @c1
-// ARM: call arm_aapcscc void @__atomic_store_1(i8* @c1, i8 zeroext
-// ARM: = call arm_aapcscc zeroext i16 @__atomic_load_2(i8* bitcast (i16* @s1 to i8*)
-// ARM: call arm_aapcscc void @__atomic_store_2(i8* bitcast (i16* @s1 to i8*), i16 zeroext
-// ARM: = call arm_aapcscc i32 @__atomic_load_4(i8* bitcast (i32* @i1 to i8*)
-// ARM: call arm_aapcscc void @__atomic_store_4(i8* bitcast (i32* @i1 to i8*), i32
-// ARM: = call arm_aapcscc i64 @__atomic_load_8(i8* bitcast (i64* @ll1 to i8*)
-// ARM: call arm_aapcscc void @__atomic_store_8(i8* bitcast (i64* @ll1 to i8*), i64
-// ARM: call arm_aapcscc void @__atomic_load(i32 100, i8* getelementptr inbounds ([100 x i8]* @a1, i32 0, i32 0), i8* getelementptr inbounds ([100 x i8]* @a2, i32 0, i32 0)
-// ARM: call arm_aapcscc void @__atomic_store(i32 100, i8* getelementptr inbounds ([100 x i8]* @a1, i32 0, i32 0), i8* getelementptr inbounds ([100 x i8]* @a2, i32 0, i32 0)
+// ARM-LABEL: define{{.*}} void @test1
+// ARM: = call{{.*}} zeroext i8 @__atomic_load_1(i8* @c1
+// ARM: call{{.*}} void @__atomic_store_1(i8* @c1, i8 zeroext
+// ARM: = call{{.*}} zeroext i16 @__atomic_load_2(i8* bitcast (i16* @s1 to i8*)
+// ARM: call{{.*}} void @__atomic_store_2(i8* bitcast (i16* @s1 to i8*), i16 zeroext
+// ARM: = call{{.*}} i32 @__atomic_load_4(i8* bitcast (i32* @i1 to i8*)
+// ARM: call{{.*}} void @__atomic_store_4(i8* bitcast (i32* @i1 to i8*), i32
+// ARM: = call{{.*}} i64 @__atomic_load_8(i8* bitcast (i64* @ll1 to i8*)
+// ARM: call{{.*}} void @__atomic_store_8(i8* bitcast (i64* @ll1 to i8*), i64
+// ARM: call{{.*}} void @__atomic_load(i32 100, i8* getelementptr inbounds ([100 x i8]* @a1, i32 0, i32 0), i8* getelementptr inbounds ([100 x i8]* @a2, i32 0, i32 0)
+// ARM: call{{.*}} void @__atomic_store(i32 100, i8* getelementptr inbounds ([100 x i8]* @a1, i32 0, i32 0), i8* getelementptr inbounds ([100 x i8]* @a2, i32 0, i32 0)
 
 // PPC32-LABEL: define void @test1
 // PPC32: = load atomic i8* @c1 seq_cst

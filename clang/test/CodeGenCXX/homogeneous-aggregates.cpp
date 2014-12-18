@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -triple powerpc64le-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=PPC
-// RUN: %clang_cc1 -mfloat-abi hard -triple armv7-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=ARM32
+// RUN: %clang_cc1 -mfloat-abi hard -triple armv7-unknown-linux-gnueabi -emit-llvm -o - %s | FileCheck %s --check-prefix=ARM32
 // RUN: %clang_cc1 -mfloat-abi hard -triple aarch64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=ARM64
 // RUN: %clang_cc1 -mfloat-abi hard -triple x86_64-unknown-windows-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=X64
 
