@@ -751,8 +751,7 @@ Value *FAddCombine::createNaryFAdd
   return LastVal;
 }
 
-Value *FAddCombine::createFSub
-  (Value *Opnd0, Value *Opnd1) {
+Value *FAddCombine::createFSub(Value *Opnd0, Value *Opnd1) {
   Value *V = Builder->CreateFSub(Opnd0, Opnd1);
   if (Instruction *I = dyn_cast<Instruction>(V))
     createInstPostProc(I);
@@ -767,8 +766,7 @@ Value *FAddCombine::createFNeg(Value *V) {
   return NewV;
 }
 
-Value *FAddCombine::createFAdd
-  (Value *Opnd0, Value *Opnd1) {
+Value *FAddCombine::createFAdd(Value *Opnd0, Value *Opnd1) {
   Value *V = Builder->CreateFAdd(Opnd0, Opnd1);
   if (Instruction *I = dyn_cast<Instruction>(V))
     createInstPostProc(I);
@@ -789,8 +787,7 @@ Value *FAddCombine::createFDiv(Value *Opnd0, Value *Opnd1) {
   return V;
 }
 
-void FAddCombine::createInstPostProc(Instruction *NewInstr,
-                                     bool NoNumber) {
+void FAddCombine::createInstPostProc(Instruction *NewInstr, bool NoNumber) {
   NewInstr->setDebugLoc(Instr->getDebugLoc());
 
   // Keep track of the number of instruction created.
@@ -840,8 +837,7 @@ unsigned FAddCombine::calcInstrNumber(const AddendVect &Opnds) {
 // <C, V>             "fmul V, C"      false
 //
 // NOTE: Keep this function in sync with FAddCombine::calcInstrNumber.
-Value *FAddCombine::createAddendVal
-  (const FAddend &Opnd, bool &NeedNeg) {
+Value *FAddCombine::createAddendVal(const FAddend &Opnd, bool &NeedNeg) {
   const FAddendCoef &Coeff = Opnd.getCoef();
 
   if (Opnd.isConstant()) {
