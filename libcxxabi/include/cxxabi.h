@@ -178,6 +178,12 @@ extern void __cxa_decrement_exception_refcount(void* primary_exception) throw();
 // Apple addition to support std::uncaught_exception()
 extern bool __cxa_uncaught_exception() throw();
 
+#ifdef __linux__
+// Linux TLS support. Not yet an official part of the Itanium ABI.
+// https://sourceware.org/glibc/wiki/Destructor%20support%20for%20thread_local%20variables
+extern int __cxa_thread_atexit(void (*)(void *), void *, void *) throw();
+#endif
+
   } // extern "C"
 } // namespace __cxxabiv1
 

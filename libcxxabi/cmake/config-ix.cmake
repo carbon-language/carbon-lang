@@ -38,3 +38,5 @@ check_library_exists(c printf "" LIBCXXABI_HAS_C_LIB)
 check_library_exists(dl dladdr "" LIBCXXABI_HAS_DL_LIB)
 check_library_exists(pthread pthread_once "" LIBCXXABI_HAS_PTHREAD_LIB)
 check_library_exists(gcc_eh _Unwind_GetRegionStart "" LIBCXXABI_HAS_GCC_EH_LIB)
+check_library_exists(c __cxa_thread_atexit_impl ""
+  LIBCXXABI_HAS_CXA_THREAD_ATEXIT_IMPL)

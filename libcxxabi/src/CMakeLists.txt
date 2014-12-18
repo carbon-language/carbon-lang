@@ -19,6 +19,10 @@ set(LIBCXXABI_SOURCES
   typeinfo.cpp
 )
 
+if (UNIX AND NOT (APPLE OR CYGWIN))
+  list(APPEND LIBCXXABI_SOURCES cxa_thread_atexit.cpp)
+endif()
+
 set(LIBCXXABI_HEADERS ../include/cxxabi.h)
 
 # Add all the headers to the project for IDEs.
@@ -43,6 +47,10 @@ else()
 endif()
 
 include_directories("${LIBCXXABI_LIBCXX_INCLUDES}")
+
+if (LIBCXXABI_HAS_CXA_THREAD_ATEXIT_IMPL)
+  add_definitions(-DHAVE___CXA_THREAD_ATEXIT_IMPL)
+endif()
 
 # Generate library list.
 set(libraries ${LIBCXXABI_CXX_ABI_LIBRARIES})
