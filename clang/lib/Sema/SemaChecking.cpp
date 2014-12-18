@@ -6685,11 +6685,11 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
   if (BO && BO->isLogicalOp()) {
     Expr *SubExpr = BO->getLHS()->IgnoreParenImpCasts();
     if (!IsLogicalAndOperator || !isa<StringLiteral>(SubExpr))
-      ::CheckBoolLikeConversion(S, SubExpr, SubExpr->getExprLoc());
+      ::CheckBoolLikeConversion(S, SubExpr, BO->getExprLoc());
 
     SubExpr = BO->getRHS()->IgnoreParenImpCasts();
     if (!IsLogicalAndOperator || !isa<StringLiteral>(SubExpr))
-      ::CheckBoolLikeConversion(S, SubExpr, SubExpr->getExprLoc());
+      ::CheckBoolLikeConversion(S, SubExpr, BO->getExprLoc());
   }
 
   if (const UnaryOperator *U = dyn_cast<UnaryOperator>(E))

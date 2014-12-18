@@ -77,4 +77,18 @@ void test3() {
        (!array && array[0])) {} // expected-warning {{address of array 'array' will always evaluate to 'true'}}
  }
 
-
+// rdar://19256338
+#define SAVE_READ(PTR, RESULT) if( (PTR) && *(PTR) ) *RESULT=*PTR;
+ 
+// Source
+typedef unsigned char Boolean;
+struct HTTPClientPrivate
+{
+   Boolean readSuspended;
+};
+typedef struct HTTPClientPrivate * HTTPClientRef;
+static void _HTTPClientErrorHandler( HTTPClientRef me)
+{
+  Boolean result;
+  SAVE_READ(&me->readSuspended, &result);
+}
