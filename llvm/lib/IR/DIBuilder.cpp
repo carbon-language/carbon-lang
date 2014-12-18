@@ -1205,3 +1205,35 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                    MetadataAsValue::get(VMContext, Expr)};
   return CallInst::Create(ValueFn, Args, "", InsertAtEnd);
 }
+
+void DIBuilder::replaceVTableHolder(DICompositeType &T, DICompositeType VTableHolder) {
+  T.setContainingType(VTableHolder);
+
+  // If this didn't create a self-reference, just return.
+  if (T != VTableHolder)
+    return;
+
+  // Look for unresolved operands.  T has dropped RAUW support and is already
+  // marked resolved, orphaning any cycles underneath it.
+  assert(T->isResolved() && "Expected self-reference to be resolved");
+  for (const MDOperand &O : T->operands())
+    if (auto *N = dyn_cast_or_null<MDNode>(O))
+      trackIfUnresolved(N);
+}
+
+void DIBuilder::replaceArrays(DICompositeType &T, DIArray Elements,
+                              DIArray TParams) {
+  T.setArrays(Elements, TParams);
+
+  // If T isn't resolved, there's no problem.
+  if (!T->isResolved())
+    return;
+
+  // If "T" is resolved, it may be due to a self-reference cycle.  Track the
+  // arrays explicitly if they're unresolved, or else the cycles will be
+  // orphaned.
+  if (Elements)
+    trackIfUnresolved(Elements);
+  if (TParams)
+    trackIfUnresolved(TParams);
+}

@@ -698,6 +698,20 @@ namespace llvm {
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
                                          DIVariable VarInfo, DIExpression Expr,
                                          Instruction *InsertBefore);
+
+    /// \brief Replace the vtable holder in the given composite type.
+    ///
+    /// If this creates a self reference, it may orphan some unresolved cycles
+    /// in the operands of \c T, so \a DIBuilder needs to track that.
+    void replaceVTableHolder(DICompositeType &T, DICompositeType VTableHolder);
+
+    /// \brief Replace arrays on a composite type.
+    ///
+    /// If \c T is resolved, but the arrays aren't -- which can happen if \c T
+    /// has a self-reference -- \a DIBuilder needs to track the array to
+    /// resolve cycles.
+    void replaceArrays(DICompositeType &T, DIArray Elements,
+                       DIArray TParems = DIArray());
   };
 } // end namespace llvm
 
