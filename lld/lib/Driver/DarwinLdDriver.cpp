@@ -709,6 +709,34 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
+  // Handle -rpath <path>
+  if (parsedArgs->hasArg(OPT_rpath)) {
+    switch (ctx.outputMachOType()) {
+      case llvm::MachO::MH_EXECUTE:
+      case llvm::MachO::MH_DYLIB:
+      case llvm::MachO::MH_BUNDLE:
+        if (!ctx.minOS("10.5", "2.0")) {
+          if (ctx.os() == MachOLinkingContext::OS::macOSX) {
+            diagnostics << "error: -rpath can only be used when targeting "
+                           "OS X 10.5 or later\n";
+          } else {
+            diagnostics << "error: -rpath can only be used when targeting "
+                           "iOS 2.0 or later\n";
+          }
+          return false;
+        }
+        break;
+      default:
+        diagnostics << "error: -rpath can only be used when creating "
+                       "a dynamic final linked image\n";
+        return false;
+    }
+
+    for (auto rPath : parsedArgs->filtered(OPT_rpath)) {
+      ctx.addRpath(rPath->getValue());
+    }
+  }
+
   // Handle input files
   for (auto &arg : *parsedArgs) {
     bool upward;

@@ -170,6 +170,9 @@ def dependency_info : Separate<["-"], "dependency_info">,
      HelpText<"Write binary list of files used during link">;
 def S : Flag<["-"], "S">,
      HelpText<"Remove debug information (STABS or DWARF) from the output file">;
+def rpath : Separate<["-"], "rpath">,
+     MetaVarName<"<path>">,
+     HelpText<"Add path to the runpath search path list for image being created">;
 
 def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">;

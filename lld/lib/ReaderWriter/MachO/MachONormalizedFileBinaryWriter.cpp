@@ -428,6 +428,12 @@ uint32_t MachOFileLayout::loadCommandsSize(uint32_t &count) {
     ++count;
   }
 
+  // Add LC_RPATH
+  for (const StringRef &path : _file.rpaths) {
+    size += sizeof(rpath_command) + pointerAlign(path.size()+1);
+    ++count;
+  }
+
   // Add LC_DATA_IN_CODE if needed
   if (!_file.dataInCode.empty()) {
     size += sizeof(linkedit_data_command);
@@ -844,6 +850,21 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       lc[sizeof(dylib_command)+dep.path.size()] = '\0';
       lc += size;
     }
+
+    // Add LC_RPATH
+    for (const StringRef &path : _file.rpaths) {
+      rpath_command *rpc = reinterpret_cast<rpath_command *>(lc);
+      uint32_t size = sizeof(rpath_command) + pointerAlign(path.size()+1);
+      rpc->cmd                         = LC_RPATH;
+      rpc->cmdsize                     = size;
+      rpc->path                        = sizeof(rpath_command); // offset
+      if (_swap)
+        swapStruct(*rpc);
+      memcpy(lc+sizeof(rpath_command), path.begin(), path.size());
+      lc[sizeof(rpath_command)+path.size()] = '\0';
+      lc += size;
+    }
+
     // Add LC_DATA_IN_CODE if needed.
     if (_dataInCodeSize != 0) {
       linkedit_data_command* dl = reinterpret_cast<linkedit_data_command*>(lc);

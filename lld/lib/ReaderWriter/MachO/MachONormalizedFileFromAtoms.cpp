@@ -1210,6 +1210,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   normFile.currentVersion = context.currentVersion();
   normFile.compatVersion = context.compatibilityVersion();
   normFile.pageSize = context.pageSize();
+  normFile.rpaths = context.rpaths();
   util.addDependentDylibs(atomFile, normFile);
   util.copySegmentInfo(normFile);
   util.copySectionInfo(normFile);

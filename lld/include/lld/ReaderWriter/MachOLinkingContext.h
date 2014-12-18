@@ -224,6 +224,9 @@ public:
     _existingPaths.insert(path);
   }
 
+  void addRpath(StringRef rpath);
+  const StringRefVector &rpaths() const { return _rpaths; }
+
   /// Add section alignment constraint on final layout.
   void addSectionAlignment(StringRef seg, StringRef sect, uint8_t align2);
 
@@ -334,6 +337,7 @@ private:
   uint32_t _compatibilityVersion;
   uint32_t _currentVersion;
   StringRef _installName;
+  StringRefVector _rpaths;
   bool _deadStrippableDylib;
   bool _printAtoms;
   bool _testingFileUsage;

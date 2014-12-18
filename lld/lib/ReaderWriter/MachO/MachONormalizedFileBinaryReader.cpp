@@ -460,6 +460,11 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       f->dependentDylibs.push_back(entry);
      }
       break;
+    case LC_RPATH: {
+      const rpath_command *rpc = reinterpret_cast<const rpath_command *>(lc);
+      f->rpaths.push_back(lc + read32(&rpc->path, isBig));
+     }
+      break;
     case LC_DYLD_INFO:
     case LC_DYLD_INFO_ONLY:
       dyldInfo = reinterpret_cast<const dyld_info_command*>(lc);

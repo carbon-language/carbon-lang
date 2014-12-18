@@ -413,6 +413,10 @@ void MachOLinkingContext::setSysLibRoots(const StringRefVector &paths) {
   _syslibRoots = paths;
 }
 
+void MachOLinkingContext::addRpath(StringRef rpath) {
+  _rpaths.push_back(rpath);
+}
+
 void MachOLinkingContext::addModifiedSearchDir(StringRef libPath,
                                                bool isSystemPath) {
   bool addedModifiedPath = false;
