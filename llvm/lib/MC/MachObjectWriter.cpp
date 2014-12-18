@@ -418,7 +418,7 @@ void MachObjectWriter::WriteLinkeditLoadCommand(uint32_t Type,
 static unsigned ComputeLinkerOptionsLoadCommandSize(
   const std::vector<std::string> &Options, bool is64Bit)
 {
-  unsigned Size = sizeof(MachO::linker_options_command);
+  unsigned Size = sizeof(MachO::linker_option_command);
   for (unsigned i = 0, e = Options.size(); i != e; ++i)
     Size += Options[i].size() + 1;
   return RoundUpToAlignment(Size, is64Bit ? 8 : 4);
@@ -431,10 +431,10 @@ void MachObjectWriter::WriteLinkerOptionsLoadCommand(
   uint64_t Start = OS.tell();
   (void) Start;
 
-  Write32(MachO::LC_LINKER_OPTIONS);
+  Write32(MachO::LC_LINKER_OPTION);
   Write32(Size);
   Write32(Options.size());
-  uint64_t BytesWritten = sizeof(MachO::linker_options_command);
+  uint64_t BytesWritten = sizeof(MachO::linker_option_command);
   for (unsigned i = 0, e = Options.size(); i != e; ++i) {
     // Write each string, including the null byte.
     const std::string &Option = Options[i];

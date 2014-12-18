@@ -131,7 +131,7 @@ namespace llvm {
       LC_SOURCE_VERSION       = 0x0000002Au,
       LC_DYLIB_CODE_SIGN_DRS  = 0x0000002Bu,
       LC_ENCRYPTION_INFO_64   = 0x0000002Cu,
-      LC_LINKER_OPTIONS       = 0x0000002Du,
+      LC_LINKER_OPTION        = 0x0000002Du,
       LC_LINKER_OPTIMIZATION_HINT = 0x0000002Eu
     };
 
@@ -874,7 +874,7 @@ namespace llvm {
       uint32_t export_size;
     };
 
-    struct linker_options_command {
+    struct linker_option_command {
       uint32_t cmd;
       uint32_t cmdsize;
       uint32_t count;
@@ -1206,7 +1206,7 @@ namespace llvm {
       sys::swapByteOrder(C.datasize);
     }
 
-    inline void swapStruct(linker_options_command &C) {
+    inline void swapStruct(linker_option_command &C) {
       sys::swapByteOrder(C.cmd);
       sys::swapByteOrder(C.cmdsize);
       sys::swapByteOrder(C.count);

@@ -3,6 +3,8 @@
 // RUN:     | FileCheck %s -check-prefix=EXE
 // RUN: llvm-objdump -p %p/Inputs/dylibLoadKinds.macho-x86_64 \
 // RUN:     | FileCheck %s -check-prefix=LOAD
+// RUN: llvm-objdump -p %p/Inputs/linkerOption.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=LD_OPT
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -366,3 +368,14 @@ LOAD:          name /usr/lib/foo4.dylib (offset 24)
 LOAD:       current version 0.0.0
 LOAD: compatibility version 0.0.0
 
+LD_OPT: Load command 4
+LD_OPT:      cmd LC_LINKER_OPTION
+LD_OPT:  cmdsize 24
+LD_OPT:    count 1
+LD_OPT:   string #1 -lc++
+LD_OPT: Load command 5
+LD_OPT:      cmd LC_LINKER_OPTION
+LD_OPT:  cmdsize 40
+LD_OPT:    count 2
+LD_OPT:   string #1 -framework
+LD_OPT:   string #2 Foundation

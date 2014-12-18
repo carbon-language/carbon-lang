@@ -346,8 +346,8 @@ public:
   getSegmentLoadCommand(const LoadCommandInfo &L) const;
   MachO::segment_command_64
   getSegment64LoadCommand(const LoadCommandInfo &L) const;
-  MachO::linker_options_command
-  getLinkerOptionsLoadCommand(const LoadCommandInfo &L) const;
+  MachO::linker_option_command
+  getLinkerOptionLoadCommand(const LoadCommandInfo &L) const;
   MachO::version_min_command
   getVersionMinLoadCommand(const LoadCommandInfo &L) const;
   MachO::dylib_command

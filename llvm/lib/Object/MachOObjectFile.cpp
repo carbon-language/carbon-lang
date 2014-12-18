@@ -2254,9 +2254,9 @@ MachOObjectFile::getSegment64LoadCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::segment_command_64>(this, L.Ptr);
 }
 
-MachO::linker_options_command
-MachOObjectFile::getLinkerOptionsLoadCommand(const LoadCommandInfo &L) const {
-  return getStruct<MachO::linker_options_command>(this, L.Ptr);
+MachO::linker_option_command
+MachOObjectFile::getLinkerOptionLoadCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::linker_option_command>(this, L.Ptr);
 }
 
 MachO::version_min_command
