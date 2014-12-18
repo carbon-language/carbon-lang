@@ -888,6 +888,14 @@ bool is_other(file_status status) {
          !is_directory(status);
 }
 
+std::error_code is_other(const Twine &Path, bool &Result) {
+  file_status FileStatus;
+  if (std::error_code EC = status(Path, FileStatus))
+    return EC;
+  Result = is_other(FileStatus);
+  return std::error_code();
+}
+
 void directory_entry::replace_filename(const Twine &filename, file_status st) {
   SmallString<128> path(Path.begin(), Path.end());
   path::remove_filename(path);
