@@ -721,7 +721,8 @@ def warn_implements_nscopying : Warning<
 "default assign attribute on property %0 which implements "
 "NSCopying protocol is not appropriate with -fobjc-gc[-only]">;
 
-def warn_multiple_method_decl : Warning<"multiple methods named %0 found">;
+def warn_multiple_method_decl : Warning<"multiple methods named %0 found">,
+  InGroup<ObjCMultipleMethodName>;
 def warn_strict_multiple_method_decl : Warning<
   "multiple methods named %0 found">, InGroup<StrictSelector>, DefaultIgnore;
 def warn_accessor_property_type_mismatch : Warning<

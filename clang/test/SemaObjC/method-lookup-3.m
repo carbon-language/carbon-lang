@@ -71,3 +71,29 @@ struct test4b { float x, y; };
 void test4(id x) {
   (void) [x test4]; //expected-warning {{multiple methods named 'test4' found}}
 }
+
+// rdar://19265296
+#pragma clang diagnostic ignored "-Wobjc-multiple-method-names"
+@interface NSObject 
++ (id)alloc;
++ (id)class;
+- (id) init;
+@end
+
+@class NSString;
+@interface A : NSObject
+- (instancetype)initWithType:(NSString *)whatever;
+@end
+
+@interface Test : NSObject @end
+
+@implementation Test
++ (instancetype)foo
+{
+    return [[[self class] alloc] initWithType:3];
+}
+- (instancetype)initWithType:(int)whatever
+{
+    return [super init];
+}
+@end
