@@ -354,6 +354,7 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("GOT@HA", VK_PPC_GOT_HA)
     .Case("got@ha", VK_PPC_GOT_HA)
     .Case("local", VK_PPC_LOCAL)
+    .Case("LOCAL", VK_PPC_LOCAL)
     .Case("TOCBASE", VK_PPC_TOCBASE)
     .Case("tocbase", VK_PPC_TOCBASE)
     .Case("TOC", VK_PPC_TOC)
