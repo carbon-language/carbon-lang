@@ -120,10 +120,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "msan"
 
-static const uint64_t kShadowMask32 = 1ULL << 31;
-static const uint64_t kShadowMask64 = 1ULL << 46;
-static const uint64_t kOriginOffset32 = 1ULL << 30;
-static const uint64_t kOriginOffset64 = 1ULL << 45;
 static const unsigned kMinOriginAlignment = 4;
 static const unsigned kShadowTLSAlignment = 8;
 
@@ -196,6 +192,64 @@ static cl::opt<bool> ClCheckConstantShadow("msan-check-constant-shadow",
 
 namespace {
 
+// Memory map parameters used in application-to-shadow address calculation.
+// Offset = (Addr & ~AndMask) ^ XorMask
+// Shadow = ShadowBase + Offset
+// Origin = OriginBase + Offset
+struct MemoryMapParams {
+  uint64_t AndMask;
+  uint64_t XorMask;
+  uint64_t ShadowBase;
+  uint64_t OriginBase;
+};
+
+struct PlatformMemoryMapParams {
+  const MemoryMapParams *bits32;
+  const MemoryMapParams *bits64;
+};
+
+// i386 Linux
+static const MemoryMapParams LinuxMemoryMapParams32 = {
+  0x000080000000,  // AndMask
+  0,               // XorMask (not used)
+  0,               // ShadowBase (not used)
+  0x000040000000,  // OriginBase
+};
+
+// x86_64 Linux
+static const MemoryMapParams LinuxMemoryMapParams64 = {
+  0x400000000000,  // AndMask
+  0,               // XorMask (not used)
+  0,               // ShadowBase (not used)
+  0x200000000000,  // OriginBase
+};
+
+// i386 FreeBSD
+static const MemoryMapParams FreeBSDMemoryMapParams32 = {
+  0x000180000000,  // AndMask
+  0x000040000000,  // XorMask
+  0x000020000000,  // ShadowBase
+  0x000700000000,  // OriginBase
+};
+
+// x86_64 FreeBSD
+static const MemoryMapParams FreeBSDMemoryMapParams64 = {
+  0xc00000000000,  // AndMask
+  0x200000000000,  // XorMask
+  0x100000000000,  // ShadowBase
+  0x380000000000,  // OriginBase
+};
+
+static const PlatformMemoryMapParams LinuxMemoryMapParams = {
+  &LinuxMemoryMapParams32,
+  &LinuxMemoryMapParams64,
+};
+
+static const PlatformMemoryMapParams FreeBSDMemoryMapParams = {
+  &FreeBSDMemoryMapParams32,
+  &FreeBSDMemoryMapParams64,
+};
+
 /// \brief An instrumentation pass implementing detection of uninitialized
 /// reads.
 ///
@@ -258,13 +312,9 @@ class MemorySanitizer : public FunctionPass {
   /// \brief MSan runtime replacements for memmove, memcpy and memset.
   Value *MemmoveFn, *MemcpyFn, *MemsetFn;
 
-  /// \brief Address mask used in application-to-shadow address calculation.
-  /// ShadowAddr is computed as ApplicationAddr & ~ShadowMask.
-  uint64_t ShadowMask;
-  /// \brief Offset of the origin shadow from the "normal" shadow.
-  /// OriginAddr is computed as (ShadowAddr + OriginOffset) & ~3ULL
-  uint64_t OriginOffset;
-  /// \brief Branch weights for error reporting.
+  /// \brief Memory map parameters used in application-to-shadow calculation.
+  const MemoryMapParams *MapParams;
+
   MDNode *ColdCallWeights;
   /// \brief Branch weights for origin store.
   MDNode *OriginStoreWeights;
@@ -389,16 +439,21 @@ bool MemorySanitizer::doInitialization(Module &M) {
     report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
 
+  Triple TargetTriple(M.getTargetTriple());
+  const PlatformMemoryMapParams *PlatformMapParams;
+  if (TargetTriple.getOS() == Triple::FreeBSD)
+    PlatformMapParams = &FreeBSDMemoryMapParams;
+  else
+    PlatformMapParams = &LinuxMemoryMapParams;
+
   C = &(M.getContext());
   unsigned PtrSize = DL->getPointerSizeInBits(/* AddressSpace */0);
   switch (PtrSize) {
     case 64:
-      ShadowMask = kShadowMask64;
-      OriginOffset = kOriginOffset64;
+      MapParams = PlatformMapParams->bits64;
       break;
     case 32:
-      ShadowMask = kShadowMask32;
-      OriginOffset = kOriginOffset32;
+      MapParams = PlatformMapParams->bits32;
       break;
     default:
       report_fatal_error("unsupported pointer size");
@@ -724,33 +779,57 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     return IRB.CreateBitCast(V, NoVecTy);
   }
 
+  /// \brief Compute the integer shadow offset that corresponds to a given
+  /// application address.
+  ///
+  /// Offset = (Addr & ~AndMask) ^ XorMask
+  Value *getShadowPtrOffset(Value *Addr, IRBuilder<> &IRB) {
+    uint64_t AndMask = MS.MapParams->AndMask;
+    assert(AndMask != 0 && "AndMask shall be specified");
+    Value *OffsetLong =
+      IRB.CreateAnd(IRB.CreatePointerCast(Addr, MS.IntptrTy),
+                    ConstantInt::get(MS.IntptrTy, ~AndMask));
+
+    uint64_t XorMask = MS.MapParams->XorMask;
+    if (XorMask != 0)
+      OffsetLong = IRB.CreateXor(OffsetLong,
+                                 ConstantInt::get(MS.IntptrTy, XorMask));
+    return OffsetLong;
+  }
+
   /// \brief Compute the shadow address that corresponds to a given application
   /// address.
   ///
-  /// Shadow = Addr & ~ShadowMask.
+  /// Shadow = ShadowBase + Offset
   Value *getShadowPtr(Value *Addr, Type *ShadowTy,
                       IRBuilder<> &IRB) {
-    Value *ShadowLong =
-      IRB.CreateAnd(IRB.CreatePointerCast(Addr, MS.IntptrTy),
-                    ConstantInt::get(MS.IntptrTy, ~MS.ShadowMask));
+    Value *ShadowLong = getShadowPtrOffset(Addr, IRB);
+    uint64_t ShadowBase = MS.MapParams->ShadowBase;
+    if (ShadowBase != 0)
+      ShadowLong =
+        IRB.CreateAdd(ShadowLong,
+                      ConstantInt::get(MS.IntptrTy, ShadowBase));
     return IRB.CreateIntToPtr(ShadowLong, PointerType::get(ShadowTy, 0));
   }
 
   /// \brief Compute the origin address that corresponds to a given application
   /// address.
   ///
-  /// OriginAddr = (ShadowAddr + OriginOffset) & ~3ULL
+  /// OriginAddr = (OriginBase + Offset) & ~3ULL
   Value *getOriginPtr(Value *Addr, IRBuilder<> &IRB, unsigned Alignment) {
-    Value *ShadowLong =
-        IRB.CreateAnd(IRB.CreatePointerCast(Addr, MS.IntptrTy),
-                      ConstantInt::get(MS.IntptrTy, ~MS.ShadowMask));
-    Value *Origin = IRB.CreateAdd(
-        ShadowLong, ConstantInt::get(MS.IntptrTy, MS.OriginOffset));
+    Value *OriginLong = getShadowPtrOffset(Addr, IRB);
+    uint64_t OriginBase = MS.MapParams->OriginBase;
+    if (OriginBase != 0)
+      OriginLong =
+        IRB.CreateAdd(OriginLong,
+                      ConstantInt::get(MS.IntptrTy, OriginBase));
     if (Alignment < kMinOriginAlignment) {
       uint64_t Mask = kMinOriginAlignment - 1;
-      Origin = IRB.CreateAnd(Origin, ConstantInt::get(MS.IntptrTy, ~Mask));
+      OriginLong = IRB.CreateAnd(OriginLong,
+                                 ConstantInt::get(MS.IntptrTy, ~Mask));
     }
-    return IRB.CreateIntToPtr(Origin, PointerType::get(IRB.getInt32Ty(), 0));
+    return IRB.CreateIntToPtr(OriginLong,
+                              PointerType::get(IRB.getInt32Ty(), 0));
   }
 
   /// \brief Compute the shadow address for a given function argument.
