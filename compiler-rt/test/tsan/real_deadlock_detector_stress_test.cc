@@ -1,31 +1,4 @@
-// RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
-
-#if 1
-
-#include <stdio.h>
-
-int main() {
-  // Currently fails with:
-  // CHECK failed: bv_.clearBit(lock_id)
-
-  /*
-  And in cmake build it also fails with:
-  In function `__clang_call_terminate':
-  real_deadlock_detector_stress_test.cc:(.text.__clang_call_terminate
-      [__clang_call_terminate]+0x12): undefined reference to `__cxa_begin_catch'
-  real_deadlock_detector_stress_test.cc:(.text.__clang_call_terminate
-      [__clang_call_terminate]+0x17): undefined reference to `std::terminate()'
-  In function `std::vector<int, std::allocator<int> >::_M_check_len
-      (unsigned long, char const*) const':
-  stl_vector.h:1339: undefined reference to `std::__throw_length_error
-      (char const*)'
-  */
-
-  fprintf(stderr, "DONE\n");
-  return 0;
-}
-
-#else
+// RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 
 #include <pthread.h>
 #include <stdlib.h>
@@ -38,7 +11,7 @@ int main() {
 
 const int kThreads = 4;
 const int kMutexes = 16 << 10;
-const int kIters = 1 << 20;
+const int kIters = 400 << 10;
 const int kMaxPerThread = 10;
 
 const int kStateInited = 0;
@@ -210,6 +183,4 @@ int main() {
 
 // CHECK-NOT: WARNING: ThreadSanitizer
 // CHECK: DONE
-
-#endif
 

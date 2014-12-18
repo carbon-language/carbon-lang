@@ -50,6 +50,8 @@ class DeadlockDetectorTLS {
     if (epoch_ == current_epoch) return;
     bv_.clear();
     epoch_ = current_epoch;
+    n_recursive_locks = 0;
+    n_all_locks_ = 0;
   }
 
   uptr getEpoch() const { return epoch_; }
@@ -83,7 +85,8 @@ class DeadlockDetectorTLS {
       }
     }
     // Printf("remLock: %zx %zx\n", lock_id, epoch_);
-    CHECK(bv_.clearBit(lock_id));
+    if (!bv_.clearBit(lock_id))
+      return;  // probably addLock happened before flush
     if (n_all_locks_) {
       for (sptr i = n_all_locks_ - 1; i >= 0; i--) {
         if (all_locks_with_contexts_[i].lock == static_cast<u32>(lock_id)) {
