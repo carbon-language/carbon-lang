@@ -56,7 +56,8 @@ typedef union
     }s;
 } udwords;
 
-#if __LP64__
+/* MIPS64 issue: PR 20098 */
+#if defined(__LP64__) && !(defined(__mips__) && defined(__clang__))
 #define CRT_HAS_128BIT
 #endif
 
