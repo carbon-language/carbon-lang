@@ -255,3 +255,11 @@ namespace TypoCorrectTemplateMember {
     using A::goobar; // expected-error {{no member named 'goobar' in 'TypoCorrectTemplateMember::A'; did you mean 'foobar'?}}
   };
 }
+
+namespace use_instance_in_static {
+struct A { int n; };
+struct B : A {
+  using A::n;
+  static int f() { return n; } // expected-error {{invalid use of member 'n' in static member function}}
+};
+}
