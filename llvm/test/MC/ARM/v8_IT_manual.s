@@ -554,11 +554,11 @@ pushge {r1, r3, r7}
 @ PUSH, encoding T2 (32-bit)
 @ CHECK: [[@LINE+2]]:1: warning: deprecated instruction in IT block
 it ge
-pushge {r1, r13, r7}
+pushge {r1, r3, r7}
 @ PUSH, encoding T3 (32-bit)
 @ CHECK: [[@LINE+2]]:1: warning: deprecated instruction in IT block
 it ge
-pushge {r13}
+pushge {r3}
 
 @ REV, encoding T1
 @ CHECK: [[@LINE+2]]:1: warning: deprecated instruction in IT block
@@ -614,9 +614,10 @@ stmge r1!, {r2, r3}
 @ CHECK: [[@LINE+2]]:1: warning: deprecated instruction in IT block
 it ge
 stmge r1, {r2, r3}
+@ STM, encoding T3 (32-bit)
 @ CHECK: [[@LINE+2]]:1: warning: deprecated instruction in IT block
 it ge
-stmge r1!, {r2, r13}
+stmge r1!, {r2, r3}
 
 @ LDM, encoding T1
 @ CHECK: [[@LINE+2]]:1: warning: deprecated instruction in IT block
