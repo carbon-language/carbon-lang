@@ -251,7 +251,9 @@ ThreadContext *IsThreadStackOrTls(uptr addr, bool *is_stack) {
 
 void ScopedReport::AddThread(int unique_tid, bool suppressable) {
 #ifndef SANITIZER_GO
-  AddThread(FindThreadByUidLocked(unique_tid), suppressable);
+  const ThreadContext *tctx = FindThreadByUidLocked(unique_tid);
+  if (tctx)
+    AddThread(FindThreadByUidLocked(unique_tid), suppressable);
 #endif
 }
 
