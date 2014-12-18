@@ -285,8 +285,8 @@ INITIALIZE_PASS_END(HexagonHardwareLoops, "hwloops",
 
 /// \brief Returns true if the instruction is a hardware loop instruction.
 static bool isHardwareLoop(const MachineInstr *MI) {
-  return MI->getOpcode() == Hexagon::LOOP0_r ||
-    MI->getOpcode() == Hexagon::LOOP0_i;
+  return MI->getOpcode() == Hexagon::J2_loop0r ||
+    MI->getOpcode() == Hexagon::J2_loop0i;
 }
 
 FunctionPass *llvm::createHexagonHardwareLoops() {
@@ -1086,7 +1086,7 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L) {
     BuildMI(*Preheader, InsertPos, DL, TII->get(TargetOpcode::COPY), CountReg)
       .addReg(TripCount->getReg(), 0, TripCount->getSubReg());
     // Add the Loop instruction to the beginning of the loop.
-    BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::LOOP0_r))
+    BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::J2_loop0r))
       .addMBB(LoopStart)
       .addReg(CountReg);
   } else {
@@ -1095,14 +1095,14 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L) {
     // if the immediate fits in the instructions.  Otherwise, we need to
     // create a new virtual register.
     int64_t CountImm = TripCount->getImm();
-    if (!TII->isValidOffset(Hexagon::LOOP0_i, CountImm)) {
+    if (!TII->isValidOffset(Hexagon::J2_loop0i, CountImm)) {
       unsigned CountReg = MRI->createVirtualRegister(&Hexagon::IntRegsRegClass);
       BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::A2_tfrsi), CountReg)
         .addImm(CountImm);
-      BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::LOOP0_r))
+      BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::J2_loop0r))
         .addMBB(LoopStart).addReg(CountReg);
     } else
-      BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::LOOP0_i))
+      BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::J2_loop0i))
         .addMBB(LoopStart).addImm(CountImm);
   }
 

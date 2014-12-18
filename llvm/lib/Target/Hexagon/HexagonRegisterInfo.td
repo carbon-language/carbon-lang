@@ -57,6 +57,7 @@ let Namespace = "Hexagon" in {
 
   def subreg_loreg  : SubRegIndex<32>;
   def subreg_hireg  : SubRegIndex<32, 32>;
+  def subreg_overflow : SubRegIndex<1, 0>;
 
   // Integer registers.
   foreach i = 0-28 in {
@@ -109,6 +110,10 @@ let Namespace = "Hexagon" in {
   def M0 : Rc<6, "m0">, DwarfRegNum<[71]>;
   def M1 : Rc<7, "m1">, DwarfRegNum<[72]>;
 
+  def USR  : Rc<8,  "usr">,   DwarfRegNum<[74]> {
+    let SubRegIndices = [subreg_overflow];
+    let SubRegs = [USR_OVF];
+  }
   def PC : Rc<9,  "pc">, DwarfRegNum<[32]>; // is the Dwarf number correct?
   def GP : Rc<11, "gp">, DwarfRegNum<[33]>; // is the Dwarf number correct?
 }

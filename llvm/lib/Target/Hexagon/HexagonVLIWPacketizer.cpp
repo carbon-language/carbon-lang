@@ -382,8 +382,8 @@ static bool IsControlFlow(MachineInstr* MI) {
 }
 
 static bool IsLoopN(MachineInstr *MI) {
-  return (MI->getOpcode() == Hexagon::LOOP0_i ||
-          MI->getOpcode() == Hexagon::LOOP0_r);
+  return (MI->getOpcode() == Hexagon::J2_loop0i ||
+          MI->getOpcode() == Hexagon::J2_loop0r);
 }
 
 /// DoesModifyCalleeSavedReg - Returns true if the instruction modifies a
