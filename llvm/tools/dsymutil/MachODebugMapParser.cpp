@@ -21,7 +21,8 @@ using namespace llvm::object;
 class MachODebugMapParser {
 public:
   MachODebugMapParser(StringRef BinaryPath, StringRef PathPrefix = "")
-      : BinaryPath(BinaryPath), PathPrefix(PathPrefix) {}
+      : BinaryPath(BinaryPath), PathPrefix(PathPrefix),
+        CurrentDebugMapObject(nullptr) {}
 
   /// \brief Parses and returns the DebugMap of the input binary.
   /// \returns an error in case the provided BinaryPath doesn't exist
