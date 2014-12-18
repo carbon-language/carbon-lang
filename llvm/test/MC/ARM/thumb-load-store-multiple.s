@@ -1,4 +1,4 @@
-@ RUN: not llvm-mc -triple thumbv7-eabi -filetype asm -o /dev/null %s 2>&1 \
+@ RUN: not llvm-mc -triple thumbv7-eabi -filetype asm -o - %s 2>&1 \
 @ RUN:     | FileCheck %s
 
 	.syntax unified
@@ -69,10 +69,6 @@ push:
 	.global pop
 	.type pop,%function
 pop:
-	pop {sp}
-@ CHECK-NOT: error: SP may not be in the register list
-	pop {sp, pc}
-@ CHECK-NOT: error: SP may not be in the register list
 	pop {lr, pc}
 @ CHECK: error: PC and LR may not be in the register list simultaneously
 @ CHECK: pop {lr, pc}
@@ -83,4 +79,16 @@ pop:
 @ CHECK: error: instruction must be outside of IT block or the last instruction in an IT block
 @ CHECK: popeq {r1, pc}
 @ CHECK:     ^
+
+	.global valid
+	.type valid,%function
+valid:
+	pop {sp}
+@ CHECK: ldr sp, [sp], #4
+	pop {sp, pc}
+@ CHECK: pop.w {sp, pc}
+	push.w {r0}
+@ CHECK: str r0, [sp, #-4]
+	pop.w {r0}
+@ CHECK: ldr r0, [sp], #4
 

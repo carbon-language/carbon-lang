@@ -6282,10 +6282,10 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
                    "writeback register not allowed in register list");
 
     if (Opcode == ARM::t2LDMIA_UPD || Opcode == ARM::t2LDMDB_UPD) {
-      if (validatetLDMRegList(Inst, Operands, 4))
+      if (validatetLDMRegList(Inst, Operands, 3))
         return true;
     } else {
-      if (validatetSTMRegList(Inst, Operands, 4))
+      if (validatetSTMRegList(Inst, Operands, 3))
         return true;
     }
     break;
