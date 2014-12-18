@@ -60,7 +60,6 @@ llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E)
 llvm::Value *
 CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   // Generate the correct selector for this literal's concrete type.
-  const Expr *SubExpr = E->getSubExpr();
   // Get the method.
   const ObjCMethodDecl *BoxingMethod = E->getBoxingMethod();
   assert(BoxingMethod && "BoxingMethod is null");
@@ -73,12 +72,9 @@ CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
   const ObjCInterfaceDecl *ClassDecl = BoxingMethod->getClassInterface();
   llvm::Value *Receiver = Runtime.GetClass(*this, ClassDecl);
-  
-  const ParmVarDecl *argDecl = *BoxingMethod->param_begin();
-  QualType ArgQT = argDecl->getType().getUnqualifiedType();
-  RValue RV = EmitAnyExpr(SubExpr);
+
   CallArgList Args;
-  Args.add(RV, ArgQT);
+  EmitCallArgs(Args, BoxingMethod, E->arg_begin(), E->arg_end());
 
   RValue result = Runtime.GenerateMessageSend(
       *this, ReturnValueSlot(), BoxingMethod->getReturnType(), Sel, Receiver,
