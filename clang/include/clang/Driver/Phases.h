@@ -19,6 +19,7 @@ namespace phases {
     Preprocess,
     Precompile,
     Compile,
+    Backend,
     Assemble,
     Link
   };

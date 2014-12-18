@@ -16,9 +16,10 @@
 
 // COMPILE-AST-PHASES: 0: input,
 // COMPILE-AST-PHASES: , ast
-// COMPILE-AST-PHASES: 1: compiler, {0}, assembler
-// COMPILE-AST-PHASES: 2: assembler, {1}, object
-// COMPILE-AST-PHASES-NOT: 3:
+// COMPILE-AST-PHASES: 1: compiler, {0}, ir
+// COMPILE-AST-PHASES: 2: backend, {1}, assembler
+// COMPILE-AST-PHASES: 3: assembler, {2}, object
+// COMPILE-AST-PHASES-NOT: 4:
 // COMPILE-AST-PHASES: END
 
 // FIXME: There is a problem with compiling AST's in that the input language is

@@ -29,6 +29,7 @@ const char *Action::getClassName(ActionClass AC) {
   case AnalyzeJobClass: return "analyzer";
   case MigrateJobClass: return "migrator";
   case CompileJobClass: return "compiler";
+  case BackendJobClass: return "backend";
   case AssembleJobClass: return "assembler";
   case LinkJobClass: return "linker";
   case LipoJobClass: return "lipo";
@@ -91,6 +92,12 @@ void CompileJobAction::anchor() {}
 CompileJobAction::CompileJobAction(std::unique_ptr<Action> Input,
                                    types::ID OutputType)
     : JobAction(CompileJobClass, std::move(Input), OutputType) {}
+
+void BackendJobAction::anchor() {}
+
+BackendJobAction::BackendJobAction(std::unique_ptr<Action> Input,
+                                   types::ID OutputType)
+    : JobAction(BackendJobClass, std::move(Input), OutputType) {}
 
 void AssembleJobAction::anchor() {}
 
