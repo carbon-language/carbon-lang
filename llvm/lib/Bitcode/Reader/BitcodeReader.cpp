@@ -3529,12 +3529,13 @@ std::error_code BitcodeReader::InitStreamFromBuffer() {
 std::error_code BitcodeReader::InitLazyStream() {
   // Check and strip off the bitcode wrapper; BitstreamReader expects never to
   // see it.
-  StreamingMemoryObject *Bytes = new StreamingMemoryObject(LazyStreamer);
-  StreamFile.reset(new BitstreamReader(Bytes));
+  auto OwnedBytes = make_unique<StreamingMemoryObject>(LazyStreamer);
+  StreamingMemoryObject &Bytes = *OwnedBytes;
+  StreamFile = make_unique<BitstreamReader>(std::move(OwnedBytes));
   Stream.init(&*StreamFile);
 
   unsigned char buf[16];
-  if (Bytes->readBytes(buf, 16, 0) != 16)
+  if (Bytes.readBytes(buf, 16, 0) != 16)
     return Error(BitcodeError::InvalidBitcodeSignature);
 
   if (!isBitcode(buf, buf + 16))
@@ -3544,8 +3545,8 @@ std::error_code BitcodeReader::InitLazyStream() {
     const unsigned char *bitcodeStart = buf;
     const unsigned char *bitcodeEnd = buf + 16;
     SkipBitcodeWrapperHeader(bitcodeStart, bitcodeEnd, false);
-    Bytes->dropLeadingBytes(bitcodeStart - buf);
-    Bytes->setKnownObjectSize(bitcodeEnd - bitcodeStart);
+    Bytes.dropLeadingBytes(bitcodeStart - buf);
+    Bytes.setKnownObjectSize(bitcodeEnd - bitcodeStart);
   }
   return std::error_code();
 }
@@ -3651,20 +3652,15 @@ llvm::getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
   return getLazyBitcodeModuleImpl(std::move(Buffer), Context, false);
 }
 
-Module *llvm::getStreamedBitcodeModule(const std::string &name,
-                                       DataStreamer *streamer,
-                                       LLVMContext &Context,
-                                       std::string *ErrMsg) {
-  Module *M = new Module(name, Context);
-  BitcodeReader *R = new BitcodeReader(streamer, Context);
+ErrorOr<std::unique_ptr<Module>>
+llvm::getStreamedBitcodeModule(StringRef Name, DataStreamer *Streamer,
+                               LLVMContext &Context) {
+  std::unique_ptr<Module> M = make_unique<Module>(Name, Context);
+  BitcodeReader *R = new BitcodeReader(Streamer, Context);
   M->setMaterializer(R);
-  if (std::error_code EC = R->ParseBitcodeInto(M)) {
-    if (ErrMsg)
-      *ErrMsg = EC.message();
-    delete M;  // Also deletes R.
-    return nullptr;
-  }
-  return M;
+  if (std::error_code EC = R->ParseBitcodeInto(M.get()))
+    return EC;
+  return std::move(M);
 }
 
 ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBufferRef Buffer,

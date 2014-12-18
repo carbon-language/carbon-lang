@@ -61,9 +61,8 @@ public:
     init(Start, End);
   }
 
-  BitstreamReader(MemoryObject *bytes) : IgnoreBlockInfoNames(true) {
-    BitcodeBytes.reset(bytes);
-  }
+  BitstreamReader(std::unique_ptr<MemoryObject> BitcodeBytes)
+      : BitcodeBytes(std::move(BitcodeBytes)), IgnoreBlockInfoNames(true) {}
 
   BitstreamReader(BitstreamReader &&Other) {
     *this = std::move(Other);

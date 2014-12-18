@@ -127,15 +127,19 @@ int main(int argc, char **argv) {
   std::unique_ptr<Module> M;
 
   // Use the bitcode streaming interface
-  DataStreamer *streamer = getDataFileStreamer(InputFilename, &ErrorMessage);
-  if (streamer) {
+  DataStreamer *Streamer = getDataFileStreamer(InputFilename, &ErrorMessage);
+  if (Streamer) {
     std::string DisplayFilename;
     if (InputFilename == "-")
       DisplayFilename = "<stdin>";
     else
       DisplayFilename = InputFilename;
-    M.reset(getStreamedBitcodeModule(DisplayFilename, streamer, Context,
-                                     &ErrorMessage));
+    ErrorOr<std::unique_ptr<Module>> MOrErr =
+        getStreamedBitcodeModule(DisplayFilename, Streamer, Context);
+    if (std::error_code EC = MOrErr.getError())
+      ErrorMessage = EC.message();
+    else
+      M = std::move(*MOrErr);
     if(M.get()) {
       if (std::error_code EC = M->materializeAllPermanently()) {
         ErrorMessage = EC.message();

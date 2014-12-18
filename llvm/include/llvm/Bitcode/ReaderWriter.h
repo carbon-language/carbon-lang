@@ -33,14 +33,11 @@ namespace llvm {
   ErrorOr<Module *> getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
                                          LLVMContext &Context);
 
-  /// getStreamedBitcodeModule - Read the header of the specified stream
-  /// and prepare for lazy deserialization and streaming of function bodies.
-  /// On error, this returns null, and fills in *ErrMsg with an error
-  /// description if ErrMsg is non-null.
-  Module *getStreamedBitcodeModule(const std::string &name,
-                                   DataStreamer *streamer,
-                                   LLVMContext &Context,
-                                   std::string *ErrMsg = nullptr);
+  /// Read the header of the specified stream and prepare for lazy
+  /// deserialization and streaming of function bodies.
+  ErrorOr<std::unique_ptr<Module>>
+  getStreamedBitcodeModule(StringRef Name, DataStreamer *Streamer,
+                           LLVMContext &Context);
 
   /// Read the header of the specified bitcode buffer and extract just the
   /// triple information. If successful, this returns a string. On error, this
