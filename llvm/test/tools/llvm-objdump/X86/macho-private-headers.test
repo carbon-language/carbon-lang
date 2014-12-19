@@ -11,6 +11,8 @@
 // RUN:     | FileCheck %s -check-prefix=SUB_UMB
 // RUN: llvm-objdump -p %p/Inputs/dylibSubLibrary.macho-x86_64 \
 // RUN:     | FileCheck %s -check-prefix=SUB_LIB
+// RUN: llvm-objdump -p %p/Inputs/dylibSubClient.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=SUB_CLI
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -400,3 +402,8 @@ SUB_LIB: Load command 5
 SUB_LIB:           cmd LC_SUB_LIBRARY
 SUB_LIB:       cmdsize 20
 SUB_LIB:   sub_library libfoo (offset 12)
+
+SUB_CLI: Load command 10
+SUB_CLI:           cmd LC_SUB_CLIENT
+SUB_CLI:       cmdsize 16
+SUB_CLI:        client bar (offset 12)

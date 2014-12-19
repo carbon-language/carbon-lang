@@ -1125,6 +1125,12 @@ namespace llvm {
       sys::swapByteOrder(s.sub_library);
     }
 
+    inline void swapStruct(sub_client_command &s) {
+      sys::swapByteOrder(s.cmd);
+      sys::swapByteOrder(s.cmdsize);
+      sys::swapByteOrder(s.client);
+    }
+
     inline void swapStruct(dylinker_command &d) {
       sys::swapByteOrder(d.cmd);
       sys::swapByteOrder(d.cmdsize);
