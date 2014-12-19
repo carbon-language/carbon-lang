@@ -67,10 +67,7 @@ PipePosix::CreateNew(bool child_processes_inherit)
 
 #if PIPE2_SUPPORTED
     if (::pipe2(m_fds, (child_processes_inherit) ? 0 : O_CLOEXEC) == 0)
-    {
-        error.SetErrorToErrno();
         return error;
-    }
 #else
     if (::pipe(m_fds) == 0)
     {
