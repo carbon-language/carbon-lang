@@ -52,6 +52,45 @@ entry:
   ret void
 }
 
+; CHECK-LABEL: {{^}}soffset_max_imm:
+; CHECK: buffer_load_dword v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+}}:{{[0-9]+}}], 64 offen glc
+define void @soffset_max_imm([6 x <16 x i8>] addrspace(2)* byval, [17 x <16 x i8>] addrspace(2)* byval, [16 x <4 x i32>] addrspace(2)* byval, [32 x <8 x i32>] addrspace(2)* byval, i32 inreg, i32 inreg, i32, i32, i32, i32, i32, i32, i32, i32) #1 {
+main_body:
+  %tmp0 = getelementptr [6 x <16 x i8>] addrspace(2)* %0, i32 0, i32 0
+  %tmp1 = load <16 x i8> addrspace(2)* %tmp0
+  %tmp2 = shl i32 %6, 2
+  %tmp3 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp1, i32 %tmp2, i32 64, i32 0, i32 1, i32 0, i32 1, i32 0, i32 0)
+  %tmp4 = add i32 %6, 16
+  %tmp5 = bitcast float 0.0 to i32
+  call void @llvm.SI.tbuffer.store.i32(<16 x i8> %tmp1, i32 %tmp5, i32 1, i32 %tmp4, i32 %4, i32 0, i32 4, i32 4, i32 1, i32 0, i32 1, i32 1, i32 0)
+  ret void
+}
+
+; Make sure immediates that aren't inline constants don't get folded into
+; the soffset operand.
+; FIXME: for this test we should be smart enough to shift the immediate into
+; the offset field.
+; CHECK-LABEL: {{^}}soffset_no_fold:
+; CHECK: s_movk_i32 [[SOFFSET:s[0-9]+]], 0x41
+; CHECK: buffer_load_dword v{{[0-9+]}}, v{{[0-9+]}}, s[{{[0-9]+}}:{{[0-9]+}}], [[SOFFSET]] offen glc
+define void @soffset_no_fold([6 x <16 x i8>] addrspace(2)* byval, [17 x <16 x i8>] addrspace(2)* byval, [16 x <4 x i32>] addrspace(2)* byval, [32 x <8 x i32>] addrspace(2)* byval, i32 inreg, i32 inreg, i32, i32, i32, i32, i32, i32, i32, i32) #1 {
+main_body:
+  %tmp0 = getelementptr [6 x <16 x i8>] addrspace(2)* %0, i32 0, i32 0
+  %tmp1 = load <16 x i8> addrspace(2)* %tmp0
+  %tmp2 = shl i32 %6, 2
+  %tmp3 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp1, i32 %tmp2, i32 65, i32 0, i32 1, i32 0, i32 1, i32 0, i32 0)
+  %tmp4 = add i32 %6, 16
+  %tmp5 = bitcast float 0.0 to i32
+  call void @llvm.SI.tbuffer.store.i32(<16 x i8> %tmp1, i32 %tmp5, i32 1, i32 %tmp4, i32 %4, i32 0, i32 4, i32 4, i32 1, i32 0, i32 1, i32 1, i32 0)
+  ret void
+}
+
+declare i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8>, i32, i32, i32, i32, i32, i32, i32, i32) #3
+declare void @llvm.SI.tbuffer.store.i32(<16 x i8>, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32)
+
+attributes #1 = { "ShaderType"="2" "unsafe-fp-math"="true" }
+attributes #3 = { nounwind readonly }
+
 ;;;==========================================================================;;;
 ;;; MUBUF STORE TESTS
 ;;;==========================================================================;;;

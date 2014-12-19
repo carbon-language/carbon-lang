@@ -90,8 +90,9 @@ bool SIMCCodeEmitter::isSrcOperand(const MCInstrDesc &Desc,
          (AMDGPU::SSrc_64RegClassID == RegClass) ||
          (AMDGPU::VSrc_32RegClassID == RegClass) ||
          (AMDGPU::VSrc_64RegClassID == RegClass) ||
-	 (AMDGPU::VCSrc_32RegClassID == RegClass) ||
-	 (AMDGPU::VCSrc_64RegClassID == RegClass);
+         (AMDGPU::VCSrc_32RegClassID == RegClass) ||
+         (AMDGPU::VCSrc_64RegClassID == RegClass) ||
+         (AMDGPU::SCSrc_32RegClassID == RegClass);
 }
 
 uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO) const {

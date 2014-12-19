@@ -222,6 +222,12 @@ def SSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add SReg_32)>;
 def SSrc_64 : RegisterClass<"AMDGPU", [i64, f64, i1], 64, (add SReg_64)>;
 
 //===----------------------------------------------------------------------===//
+//  SCSrc_* Operands with an SGPR or a inline constant
+//===----------------------------------------------------------------------===//
+
+def SCSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add SReg_32)>;
+
+//===----------------------------------------------------------------------===//
 //  VSrc_* Operands with an SGPR, VGPR or a 32-bit immediate
 //===----------------------------------------------------------------------===//
 

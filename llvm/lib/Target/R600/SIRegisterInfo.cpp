@@ -414,6 +414,7 @@ bool SIRegisterInfo::regClassCanUseInlineConstant(int RCID) const {
   default: return false;
   case AMDGPU::VCSrc_32RegClassID:
   case AMDGPU::VCSrc_64RegClassID:
+  case AMDGPU::SCSrc_32RegClassID:
     return true;
   }
 }
