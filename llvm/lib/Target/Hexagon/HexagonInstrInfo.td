@@ -3368,6 +3368,48 @@ defm J2_ploop2s : SPLOOP_ri<"2", 0b10>;
 defm J2_ploop3s : SPLOOP_ri<"3", 0b11>;
 }
 
+// Transfer to/from Control/GPR Guest/GPR
+let hasSideEffects = 0 in
+class TFR_CR_RS_base<RegisterClass CTRC, RegisterClass RC, bit isDouble>
+  : CRInst <(outs CTRC:$dst), (ins RC:$src),
+  "$dst = $src", [], "", CR_tc_3x_SLOT3> {
+    bits<5> dst;
+    bits<5> src;
+
+    let IClass = 0b0110;
+
+    let Inst{27-25} = 0b001;
+    let Inst{24} = isDouble;
+    let Inst{23-21} = 0b001;
+    let Inst{20-16} = src;
+    let Inst{4-0} = dst;
+  }
+let isCodeGenOnly = 0 in
+def A2_tfrrcr : TFR_CR_RS_base<CtrRegs, IntRegs, 0b0>;
+def : InstAlias<"m0 = $Rs", (A2_tfrrcr C6, IntRegs:$Rs)>;
+def : InstAlias<"m1 = $Rs", (A2_tfrrcr C7, IntRegs:$Rs)>;
+
+let hasSideEffects = 0 in
+class TFR_RD_CR_base<RegisterClass RC, RegisterClass CTRC, bit isSingle>
+  : CRInst <(outs RC:$dst), (ins CTRC:$src),
+  "$dst = $src", [], "", CR_tc_3x_SLOT3> {
+    bits<5> dst;
+    bits<5> src;
+
+    let IClass = 0b0110;
+
+    let Inst{27-26} = 0b10;
+    let Inst{25} = isSingle;
+    let Inst{24-21} = 0b0000;
+    let Inst{20-16} = src;
+    let Inst{4-0} = dst;
+  }
+
+let hasNewValue = 1, opNewValue = 0, isCodeGenOnly = 0 in
+def A2_tfrcrr : TFR_RD_CR_base<IntRegs, CtrRegs, 1>;
+def : InstAlias<"$Rd = m0", (A2_tfrcrr IntRegs:$Rd, C6)>;
+def : InstAlias<"$Rd = m1", (A2_tfrcrr IntRegs:$Rd, C7)>;
+
 // TFRI64 - assembly mapped.
 let isReMaterializable = 1 in
 def TFRI64 : ALU64_rr<(outs DoubleRegs:$dst), (ins s8Imm64:$src1),

@@ -49,6 +49,9 @@ public:
 };
 }
 
+static DecodeStatus DecodeCtrRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+  uint64_t Address, const void *Decoder);
+
 static const uint16_t IntRegDecoderTable[] = {
   Hexagon::R0, Hexagon::R1, Hexagon::R2, Hexagon::R3, Hexagon::R4,
   Hexagon::R5, Hexagon::R6, Hexagon::R7, Hexagon::R8, Hexagon::R9,
@@ -78,6 +81,26 @@ static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
 
   unsigned Register = IntRegDecoderTable[RegNo];
+  Inst.addOperand(MCOperand::CreateReg(Register));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeCtrRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+  uint64_t /*Address*/, const void *Decoder) {
+  static const uint16_t CtrlRegDecoderTable[] = {
+    Hexagon::SA0, Hexagon::LC0, Hexagon::SA1, Hexagon::LC1,
+    Hexagon::P3_0, Hexagon::NoRegister, Hexagon::C6, Hexagon::C7,
+    Hexagon::USR, Hexagon::PC, Hexagon::UGP, Hexagon::GP,
+    Hexagon::CS0, Hexagon::CS1, Hexagon::UPCL, Hexagon::UPCH
+  };
+
+  if (RegNo >= sizeof(CtrlRegDecoderTable) / sizeof(CtrlRegDecoderTable[0]))
+    return MCDisassembler::Fail;
+
+  if (CtrlRegDecoderTable[RegNo] == Hexagon::NoRegister)
+    return MCDisassembler::Fail;
+
+  unsigned Register = CtrlRegDecoderTable[RegNo];
   Inst.addOperand(MCOperand::CreateReg(Register));
   return MCDisassembler::Success;
 }
