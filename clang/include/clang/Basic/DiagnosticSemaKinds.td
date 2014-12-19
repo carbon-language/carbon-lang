@@ -6451,7 +6451,13 @@ def err_conv_function_to_array : Error<
 def err_conv_function_to_function : Error<
   "conversion function cannot convert to a function type">;
 def err_conv_function_with_complex_decl : Error<
-  "must use a typedef to declare a conversion to %0">;
+  "cannot specify any part of a return type in the "
+  "declaration of a conversion function"
+  "%select{"
+  "; put the complete type after 'operator'|"
+  "; use a typedef to declare a conversion to %1|"
+  "; use an alias template to declare a conversion to %1|"
+  "}0">;
 def err_conv_function_redeclared : Error<
   "conversion function cannot be redeclared">;
 def warn_conv_to_self_not_used : Warning<

@@ -381,3 +381,9 @@ struct H : A  // expected-error{{expected '{' after base class list}}
 };
 #endif
 }
+
+struct conversion_operator {
+  conversion_operator::* const operator int(); // expected-error {{put the complete type after 'operator'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:3-[[@LINE-1]]:32}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:44-[[@LINE-2]]:44}:" conversion_operator::* const"
+};

@@ -483,3 +483,16 @@ namespace OverloadedOperators {
     int g = a - a;
   }
 }
+
+namespace TrailingReturnTypeForConversionOperator {
+  struct X {
+    operator auto() -> int { return 0; } // expected-error {{cannot specify any part of a return type in the declaration of a conversion function; put the complete type after 'operator'}}
+  } x;
+  int k = x.operator auto();
+
+  struct Y {
+    operator auto() -> int & { // expected-error {{cannot specify}}
+      return 0; // expected-error {{cannot bind to}}
+    }
+  };
+};

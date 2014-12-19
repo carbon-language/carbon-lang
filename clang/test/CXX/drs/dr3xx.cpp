@@ -1219,7 +1219,7 @@ namespace dr391 { // dr391: yes c++11
 
 namespace dr395 { // dr395: yes
   struct S {
-    template <typename T, int N>(&operator T())[N]; // expected-error {{must use a typedef}}
+    template <typename T, int N>(&operator T())[N]; // expected-error {{cannot specify any part of a return type}}
     template <typename T, int N> operator(T (&)[N])(); // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error +{{}}
     template <typename T> operator T *() const { return 0; }
     template <typename T, typename U> operator T U::*() const { return 0; }
